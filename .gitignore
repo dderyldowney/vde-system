@@ -1,5 +1,5 @@
-# Project directories - these are separate projects and should not be in this repo
-projects/*
+# Project directories - track the directory structure, ignore all contents
+projects/**/*
 !projects/.gitignore
 
 # Environment-specific files
