@@ -1,0 +1,33 @@
+services:
+  ruby-dev:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-ruby:latest
+    container_name: ruby-dev
+    hostname: ruby-dev
+    restart: unless-stopped
+    command: sh -c "apt-get update -y && apt-get install -y ruby-full && /usr/sbin/sshd -D"
+
+    ports:
+      - "2227:22"
+
+    volumes:
+      - ../../../projects/ruby:/home/devuser/workspace
+      - ../../../logs/app-logs:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+
+    env_file:
+      - ../../../env-files/ruby.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true
