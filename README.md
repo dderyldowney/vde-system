@@ -53,6 +53,19 @@ $HOME/dev
     └── shutdown-virtual.sh
 ```
 
+### Condensed Version
+
+```
+       * backup/ - SSH config backups and Docker state
+       * configs/ - Docker configurations per language, PostgreSQL, Redis, nginx
+       * data/ - Persistent data directories (MongoDB, PostgreSQL, Redis)
+       * env-files/ - Environment variable files for each VM
+       * logs/ - Application and access logs
+       * projects/ - Project directories mounted into containers
+       * public-ssh-keys/ - SSH public keys for container authentication
+       * scripts/ - Management scripts (start, shutdown, build)
+```
+
 ## User Model
 
 Dockerfile for base user is located at: [configs/docker/base-dev.Dockerfile](configs/docker/base-dev.Dockerfile)
