@@ -1,0 +1,34 @@
+services:
+  js-dev:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-js:latest
+    container_name: js-dev
+    hostname: js-dev
+    restart: unless-stopped
+    command: sh -c "apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs && /usr/sbin/sshd -D"
+
+    ports:
+      - "2224:22"
+
+    volumes:
+      - ../../../projects/js:/home/devuser/workspace
+      - ../../../logs/js:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+
+    env_file:
+      - ../../../env-files/js.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true
+

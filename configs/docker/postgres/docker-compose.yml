@@ -1,0 +1,34 @@
+services:
+  postgres:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/postgres/Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-postgres:latest
+    container_name: postgres
+    hostname: postgres
+    restart: unless-stopped
+
+    ports:
+      - "2225:22"
+      - "5432:5432"
+
+    env_file:
+      - ../../../env-files/postgres.env
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../../configs/postgres/init:/docker-entrypoint-initdb.d
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+
+volumes:
+  postgres_data:
+
+networks:
+  dev-net:
+    external: true
+

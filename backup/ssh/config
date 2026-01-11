@@ -1,0 +1,32 @@
+# Python Dev VM
+Host python-dev
+    HostName localhost
+    Port 2222
+    User devuser
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+
+# Rust Dev VM
+Host rust-dev
+    HostName localhost
+    Port 2223
+    User devuser
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+
+# JavaScript Dev VM
+Host js-dev
+    HostName localhost
+    Port 2224
+    User devuser
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+
+# PostgreSQL VM
+Host postgres-dev
+    HostName localhost
+    Port 2225
+    User devuser
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+

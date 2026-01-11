@@ -1,0 +1,33 @@
+services:
+  c-sharp-dev:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-c-sharp:latest
+    container_name: c-sharp-dev
+    hostname: c-sharp-dev
+    restart: unless-stopped
+    command: sh -c "apt-get update -y && apt-get install -y wget apt-transport-https && wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && dpkg -i /tmp/packages-microsoft-prod.deb && rm /tmp/packages-microsoft-prod.deb && apt-get update -y && apt-get install -y dotnet-sdk-8.0 aspnetcore-runtime-8.0 dotnet-sdk-8.0-langpacks dotnet-apphelp-pack-8.0 && apt-get install -y --no-install-recommends ca-certificates gnupg lsb-release && /usr/sbin/sshd -D"
+
+    ports:
+      - "2226:22"
+
+    volumes:
+      - ../../../projects/c-sharp:/home/devuser/workspace
+      - ../../../logs/app-logs:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+
+    env_file:
+      - ../../../env-files/c-sharp.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true

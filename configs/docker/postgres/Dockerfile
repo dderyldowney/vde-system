@@ -1,0 +1,30 @@
+FROM postgres:latest
+
+ARG USERNAME=devuser
+ARG UID=1000
+ARG GID=1000
+ARG PUBLIC_KEYS_DIR=/public-ssh-keys
+
+# Install SSH and sudo
+RUN apt-get update -y && \
+    apt-get install -y openssh-server sudo && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create devuser (Linux user for SSH)
+RUN groupadd -g ${GID} ${USERNAME} && \
+    useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USERNAME} && \
+    echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} && \
+    chmod 440 /etc/sudoers.d/${USERNAME}
+
+# SSH setup
+RUN mkdir -p /var/run/sshd
+RUN mkdir -p /home/${USERNAME}/.ssh && chmod 700 /home/${USERNAME}/.ssh
+
+# Copy public keys for SSH login
+COPY public-ssh-keys/* /home/${USERNAME}/.ssh/authorized_keys
+RUN chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh/authorized_keys && \
+    chmod 600 /home/${USERNAME}/.ssh/authorized_keys
+
+# Default command for postgres container
+CMD ["docker-entrypoint.sh", "postgres"]
+

@@ -1,0 +1,23 @@
+# Project directories - these are separate projects and should not be in this repo
+projects/*
+!projects/.gitignore
+
+# Environment-specific files
+.env-files/*
+logs/*
+data/postgres/pgdata/*
+public-ssh-keys/*
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
