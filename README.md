@@ -1,6 +1,6 @@
-# Development Environment
+# VDE - Virtual Development Environment
 
-This directory defines a multi-language Docker-based development environment intended for daily engineering work using SSH and VSCode Remote-SSH.
+This VDE defines a multi-language Docker-based development environment intended for daily engineering work using SSH and VSCode Remote-SSH.
 
 ## Supported Languages/Services
 
