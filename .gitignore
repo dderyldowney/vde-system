@@ -1,6 +1,12 @@
-# Project directories - track the directory structure, ignore all contents
-projects/**/*
-!projects/.gitignore
+# Project directories - track immediate child directories, ignore their contents
+projects/*/
+projects/*/*
+!projects/c-sharp/
+!projects/js/
+!projects/python/
+!projects/ruby/
+!projects/rust/
+!projects/todowrite/
 
 # Environment-specific files
 .env-files/*
