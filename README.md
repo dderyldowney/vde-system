@@ -46,7 +46,7 @@ $HOME/dev
 │   ├── python
 │   ├── ruby
 │   ├── rust
-│   └── todowrite
+├── public-ssh-keys
 └── scripts
     ├── build-and-start-dev.sh
     ├── start-virtual.sh
@@ -54,6 +54,9 @@ $HOME/dev
 ```
 
 ## User Model
+
+Dockerfile for base user is located at: [configs/docker/base-dev.Dockerfile](configs/docker/base-dev.Dockerfile)
+Need to modify your user across all virtuals? That's your file.
 
 All containers run as:
 - **Username:** devuser
