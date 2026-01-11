@@ -1,31 +1,24 @@
+# Development Environment
 
-Development Environment
+This directory defines a multi-language Docker-based development environment intended for daily engineering work using SSH and VSCode Remote-SSH.
 
-This directory defines a multi-language Docker-based development environment intended
-for daily engineering work using SSH and VSCode Remote-SSH.
+## Supported Languages/Services
 
-Languages and services supported:
-- Python 3.14
-- Rust (latest)
-- JavaScript
-- PostgreSQL (shared database VM)
+| Language/Service | Port | Description |
+|------------------|------|-------------|
+| Python 3.14 | 2222 | Python development VM |
+| Rust (latest) | 2223 | Rust development VM |
+| JavaScript/Node.js | 2224 | JavaScript/Node.js development VM |
+| C# | - | C# development VM |
+| Ruby | - | Ruby development VM |
+| PostgreSQL | 2225 | Shared database VM |
+| Redis | - | Redis key-value store |
 
-All containers use a consistent non-root user named "devuser".
+All containers use a consistent non-root user named `devuser`.
 
------------------------------------------------------------------------
+## Directory Structure
 
-BASE DIRECTORY
-
-All content lives under:
-
-$HOME/dev
-
-This directory is the root of the entire environment.
-
------------------------------------------------------------------------
-
-DIRECTORY STRUCTURE
-
+```
 $HOME/dev
 ├── backup
 │   └── ssh
@@ -58,47 +51,40 @@ $HOME/dev
     ├── build-and-start-dev.sh
     ├── start-virtual.sh
     └── shutdown-virtual.sh
+```
 
------------------------------------------------------------------------
-
-USER MODEL
+## User Model
 
 All containers run as:
-- Username: devuser
-- Group: sudo
-- Authentication: SSH key only
-- Password login: disabled
+- **Username:** devuser
+- **Group:** sudo
+- **Authentication:** SSH key only
+- **Password login:** disabled
 
 This applies to all language VMs and the PostgreSQL VM.
 
------------------------------------------------------------------------
+## SSH Key Layout
 
-SSH KEY LAYOUT
+**Host (Mac): (Example Only - Use your own keyset!**
+- Private key: `~/.ssh/id_ed25519`
+- Public key copied into containers from: `$HOME/dev/public-ssh-keys/id_ed25519.pub`
 
-Host (Mac):
-- Private key: ~/.ssh/id_ed25519
-- Public key copied into containers from:
-  $HOME/dev/public-ssh-keys/id_ed25519.pub
+**Required permissions:**
+```bash
+chmod 600 ~/.ssh/id_ed25519
+chmod 644 ~/.ssh/id_ed25519.pub
+chmod 600 ~/.ssh/config
+```
 
-Required permissions:
-- chmod 600 ~/.ssh/id_ed25519
-- chmod 644 ~/.ssh/id_ed25519.pub
-- chmod 600 ~/.ssh/config
+## SSH Configuration
 
------------------------------------------------------------------------
+A working SSH config file is stored at: `$HOME/dev/backup/ssh/config`
 
-SSH CONFIGURATION
+Copy it to: `~/.ssh/config`
 
-A working SSH config file is stored at:
-$HOME/dev/backup/ssh/config
+**Example entries:**
 
-Copy it to:
-~/.ssh/config
-Ensure the file permissions above are correct.
-
-
-Example entries:
-
+```ssh-config
 Host python-dev
   HostName localhost
   Port 2222
@@ -126,79 +112,84 @@ Host postgres-dev
   User devuser
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
+```
 
 These entries work for both command-line SSH and VSCode Remote-SSH.
 
------------------------------------------------------------------------
+## PostgreSQL Data Persistence
 
-POSTGRESQL DATA PERSISTENCE
-
-PostgreSQL database files live on the host at:
-$HOME/dev/data/postgres
+PostgreSQL database files live on the host at: `$HOME/dev/data/postgres`
 
 This directory is mounted into the container and persists across rebuilds.
 
-Initial database creation is handled by:
-configs/postgres/01-create-dev-dbs.sql
+Initial database creation is handled by: `configs/postgres/01-create-dev-dbs.sql`
 
------------------------------------------------------------------------
+## Command Reference
 
-SCRIPTS OVERVIEW
+### Start Containers
 
-All scripts live in:
-$HOME/dev/scripts
-
-build-and-start-dev.sh
-- Builds all images
-- Starts all containers
-- Intended for first-time setup
-
-start-virtual.sh
-- Starts containers without rebuilding by default
-- Supports optional rebuild flags
-
-Examples:
+```bash
+# Start all VMs
 ./scripts/start-virtual.sh all
+
+# Start specific VM
 ./scripts/start-virtual.sh python
+./scripts/start-virtual.sh rust
+
+# Start with rebuild (rebuilds images)
 ./scripts/start-virtual.sh rust --rebuild
+
+# Start with full clean rebuild
 ./scripts/start-virtual.sh rust --rebuild --no-cache
+```
 
-shutdown-virtual.sh
-- Stops and removes containers
-- Volumes are preserved
+### Shutdown Containers
 
-Examples:
+```bash
+# Stop all VMs
 ./scripts/shutdown-virtual.sh all
+
+# Stop specific VM
 ./scripts/shutdown-virtual.sh postgres
+./scripts/shutdown-virtual.sh python
+```
 
------------------------------------------------------------------------
+### Initial Setup
 
-REBUILD GUIDELINES
+```bash
+# Build and start all VMs (first-time setup)
+./scripts/build-and-start-dev.sh
 
-No rebuild needed:
+# Rebuild all and start
+./scripts/build-and-start-dev.sh --rebuild
+
+# Full clean rebuild and start
+./scripts/build-and-start-dev.sh --rebuild --no-cache
+```
+
+## Rebuild Guidelines
+
+**No rebuild needed:**
 - Daily development
 - Restarting containers
 
-Use --rebuild when:
+**Use `--rebuild` when:**
 - Dockerfiles change
 - SSH public keys change
 - Environment variables change
 
-Use --rebuild --no-cache only when:
+**Use `--rebuild --no-cache` only when:**
 - Base images change
 - You want a fully clean rebuild
 
------------------------------------------------------------------------
-
-VSCODE REMOTE-SSH
+## VSCode Remote-SSH
 
 1. Install the VSCode Remote-SSH extension
-2. Ensure ~/.ssh/config is installed with correct permissions
-3. Connect using:
-   python-dev
-   rust-dev
-   js-dev
-   postgres-dev
+2. Ensure `~/.ssh/config` is installed with correct permissions
+3. Connect using host names:
+   - `python-dev`
+   - `rust-dev`
+   - `js-dev`
+   - `postgres-dev`
 
 Each container behaves like a lightweight VM suitable for full development workflows.
-
