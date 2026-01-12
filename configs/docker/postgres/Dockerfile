@@ -7,7 +7,7 @@ ARG PUBLIC_KEYS_DIR=/public-ssh-keys
 
 # Install SSH and sudo
 RUN apt-get update -y && \
-    apt-get install -y openssh-server sudo && \
+    apt-get install -y ssh openssh-server sudo && \
     rm -rf /var/lib/apt/lists/*
 
 # Create devuser (Linux user for SSH)
@@ -18,7 +18,7 @@ RUN groupadd -g ${GID} ${USERNAME} && \
 
 # SSH setup
 RUN mkdir -p /var/run/sshd
-RUN mkdir -p /home/${USERNAME}/.ssh && chmod 700 /home/${USERNAME}/.ssh
+RUN mkdir -p /home/${USERNAME}/.ssh && chmod 700 /home/${USERNAME}/.ssh && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
 
 # Copy public keys for SSH login
 COPY public-ssh-keys/* /home/${USERNAME}/.ssh/authorized_keys
@@ -26,5 +26,6 @@ RUN chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh/authorized_keys && \
     chmod 600 /home/${USERNAME}/.ssh/authorized_keys
 
 # Default command for postgres container
-CMD ["docker-entrypoint.sh", "postgres"]
+CMD /usr/sbin/sshd && \
+    exec /usr/local/bin/docker-entrypoint.sh postgres
 
