@@ -18,12 +18,20 @@ RUN groupadd -g ${GID} ${USERNAME} && \
 
 # SSH setup
 RUN mkdir -p /var/run/sshd
-RUN mkdir -p /home/${USERNAME}/.ssh && chmod 700 /home/${USERNAME}/.ssh && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
+RUN mkdir -p /home/${USERNAME}/.ssh && chmod 700 /home/${USERNAME}/.ssh && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh
 
 # Copy public keys for SSH login
 COPY public-ssh-keys/* /home/${USERNAME}/.ssh/authorized_keys
 RUN chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh/authorized_keys && \
     chmod 600 /home/${USERNAME}/.ssh/authorized_keys
+
+# Optional: disable password authentication for SSH (recommended after testing)
+RUN sed -i \
+    -e 's/^#PasswordAuthentication yes/PasswordAuthentication no/' \
+    -e 's/^#KbdInteractiveAuthentication yes/KbdInteractiveAuthentication no/' \
+    -e 's/^#ChallengeResponseAuthentication yes/ChallengeResponseAuthentication no/' \
+    /etc/ssh/sshd_config || true
+
 
 # Default command for postgres container
 CMD /usr/sbin/sshd && \
