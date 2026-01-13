@@ -157,6 +157,8 @@ Both `vde-ai` and `vde-chat` support the following options:
 | `VDE_USE_AI` | Enable LLM-based parsing by default | `1`, `true`, `yes` |
 | `CLAUDE_API_KEY` | Your Claude API key | `sk-ant-...` |
 | `ANTHROPIC_API_KEY` | Your Anthropic API key | `sk-ant-...` |
+| `ANTHROPIC_BASE_URL` | Custom base URL for Anthropic API (optional) | `https://...` |
+| `ANTHROPIC_MODEL` | Custom model to use (optional) | `claude-3-5-sonnet-20241022`, etc. |
 
 ### Setting Up AI Mode
 
@@ -165,8 +167,45 @@ Both `vde-ai` and `vde-chat` support the following options:
 export VDE_USE_AI="true"
 export ANTHROPIC_API_KEY="your-api-key-here"
 
+# Optional: Use a custom base URL (for proxies or alternative endpoints)
+# export ANTHROPIC_BASE_URL="https://your-proxy.example.com/v1"
+
+# Optional: Use a specific model
+# export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
+
 # Reload shell
 source ~/.zshrc
+```
+
+### Custom Base URL Use Cases
+
+The `ANTHROPIC_BASE_URL` option is useful for:
+
+- **Corporate Proxies**: Route API requests through your organization's proxy
+- **Alternative Endpoints**: Use compatible API endpoints or gateways
+- **Local Development**: Test with local mock servers or API simulators
+
+```bash
+# Example: Using a corporate proxy
+export ANTHROPIC_BASE_URL="https://api-gateway.internal.company.com/anthropic/v1"
+
+# Example: Using a custom API gateway
+export ANTHROPIC_BASE_URL="https://my-gateway.example.com/anthropic"
+```
+
+### Model Selection
+
+The `ANTHROPIC_MODEL` option allows you to specify which Claude model to use:
+
+```bash
+# Use the latest Sonnet model (default)
+export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
+
+# Use Haiku for faster responses
+export ANTHROPIC_MODEL="claude-3-5-haiku-20241022"
+
+# Use Opus for more complex reasoning
+export ANTHROPIC_MODEL="claude-3-opus-20240229"
 ```
 
 ---

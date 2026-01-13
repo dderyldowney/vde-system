@@ -942,6 +942,30 @@ Useful environment variables to know about:
 | `VDE_USE_AI` | Enable AI mode by default | `export VDE_USE_AI="true"` |
 | `CLAUDE_API_KEY` | Your Claude API key | `export CLAUDE_API_KEY="sk-..."` |
 | `ANTHROPIC_API_KEY` | Your Anthropic API key | `export ANTHROPIC_API_KEY="sk-..."` |
+| `ANTHROPIC_BASE_URL` | Custom base URL for API requests (optional) | `export ANTHROPIC_BASE_URL="https://..."` |
+| `ANTHROPIC_MODEL` | Custom model to use (optional) | `export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"` |
+
+#### Custom Base URL
+
+Use `ANTHROPIC_BASE_URL` for:
+- Corporate proxies
+- Alternative API endpoints
+- Local development/testing
+
+```bash
+export ANTHROPIC_BASE_URL="https://api-gateway.internal.company.com/anthropic/v1"
+```
+
+#### Model Selection
+
+Use `ANTHROPIC_MODEL` to choose which Claude model to use:
+- `claude-3-5-sonnet-20241022` - Balanced performance (default)
+- `claude-3-5-haiku-20241022` - Faster responses
+- `claude-3-opus-20240229` - Complex reasoning
+
+```bash
+export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
+```
 
 ### Understanding VM Aliases
 
