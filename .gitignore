@@ -11,7 +11,9 @@ projects/*/*
 # Environment-specific files
 .env-files/*
 logs/*
-data/postgres/pgdata/*
+data/postgres/*
+data/redis/*
+data/mongodb/*
 public-ssh-keys/*
 
 # IDE and editor files
