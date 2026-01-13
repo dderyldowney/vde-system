@@ -61,3 +61,11 @@ Host mongodb
     User devuser
     IdentityFile ~/.ssh/id_ed25519
     IdentitiesOnly yes
+
+# Nginx VM
+Host nginx
+    HostName localhost
+    Port 2303
+    User devuser
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes

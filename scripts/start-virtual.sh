@@ -39,7 +39,7 @@ start_service() {
 }
 
 if [ "$SERVICE" = "all" ]; then
-    for svc in python rust js csharp ruby postgres redis mongodb; do
+    for svc in python rust js csharp ruby postgres redis mongodb nginx; do
         start_service "$svc"
     done
 else
