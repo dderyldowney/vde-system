@@ -155,18 +155,26 @@ Both `vde-ai` and `vde-chat` support the following options:
 | Variable | Purpose | Values |
 |----------|---------|--------|
 | `VDE_USE_AI` | Enable LLM-based parsing by default | `1`, `true`, `yes` |
-| `CLAUDE_API_KEY` | Your Claude API key | `sk-ant-...` |
+| `ANTHROPIC_AUTH_TOKEN` | Your Anthropic authentication token (highest priority) | `sk-ant-...` |
 | `ANTHROPIC_API_KEY` | Your Anthropic API key | `sk-ant-...` |
+| `CLAUDE_API_KEY` | Your Claude API key (legacy) | `sk-ant-...` |
 | `ANTHROPIC_BASE_URL` | Custom base URL for Anthropic API (optional) | `https://...` |
 | `ANTHROPIC_MODEL` | Custom model to use (optional) | `claude-3-5-sonnet-20241022`, `glm-4.7`, etc. |
 | `ANTHROPIC_DEFAULT_SONNET_MODEL` | Default model for Anthropic-compatible APIs (optional) | `glm-4.7`, etc. |
+
+### API Key Priority
+
+The system checks for authentication in this order:
+1. `ANTHROPIC_AUTH_TOKEN` (highest priority - recommended)
+2. `ANTHROPIC_API_KEY`
+3. `CLAUDE_API_KEY` (legacy support)
 
 ### Setting Up AI Mode
 
 ```bash
 # Add to ~/.zshrc or ~/.bashrc
 export VDE_USE_AI="true"
-export ANTHROPIC_API_KEY="your-api-key-here"
+export ANTHROPIC_AUTH_TOKEN="your-api-key-here"
 
 # Optional: Use a custom base URL (for proxies or alternative endpoints)
 # export ANTHROPIC_BASE_URL="https://your-proxy.example.com/v1"
@@ -231,7 +239,7 @@ VDE AI Assistant supports Anthropic-compatible APIs from third-party providers:
 ```bash
 export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
 export ANTHROPIC_DEFAULT_SONNET_MODEL="glm-4.7"
-export ANTHROPIC_API_KEY="your-zhipu-api-key"
+export ANTHROPIC_AUTH_TOKEN="your-zhipu-api-key"
 ```
 
 This allows you to use alternative models while maintaining the same VDE AI interface.

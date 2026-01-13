@@ -59,15 +59,23 @@ _get_ai_model() {
 
 # Get the API key
 # Returns: The API key to use
+# Priority: ANTHROPIC_AUTH_TOKEN > ANTHROPIC_API_KEY > CLAUDE_API_KEY
 _get_ai_api_key() {
-    # Check ANTHROPIC_API_KEY first
-    local key="${ANTHROPIC_API_KEY:-}"
+    # Check ANTHROPIC_AUTH_TOKEN first (highest priority)
+    local key="${ANTHROPIC_AUTH_TOKEN:-}"
     if [[ -n "$key" ]]; then
         echo "$key"
         return
     fi
 
-    # Fall back to CLAUDE_API_KEY
+    # Check ANTHROPIC_API_KEY
+    key="${ANTHROPIC_API_KEY:-}"
+    if [[ -n "$key" ]]; then
+        echo "$key"
+        return
+    fi
+
+    # Fall back to CLAUDE_API_KEY (legacy support)
     key="${CLAUDE_API_KEY:-}"
     if [[ -n "$key" ]]; then
         echo "$key"
@@ -93,7 +101,7 @@ call_ai_api() {
     # Get API key
     local api_key
     api_key=$(_get_ai_api_key) || {
-        log_error "No API key found. Set ANTHROPIC_API_KEY or CLAUDE_API_KEY."
+        log_error "No API key found. Set ANTHROPIC_AUTH_TOKEN, ANTHROPIC_API_KEY, or CLAUDE_API_KEY."
         return 1
     }
 

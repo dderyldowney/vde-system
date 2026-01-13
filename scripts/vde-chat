@@ -82,7 +82,9 @@ OPTIONS:
 
 ENVIRONMENT VARIABLES:
   VDE_USE_AI                 Set to "1", "true", or "yes" to enable LLM parsing by default
+  ANTHROPIC_AUTH_TOKEN       Your Anthropic authentication token (highest priority)
   ANTHROPIC_API_KEY          Your Anthropic API key (sk-ant-...)
+  CLAUDE_API_KEY             Your Claude API key (legacy)
   ANTHROPIC_BASE_URL         Optional: Custom base URL (e.g., https://api.z.ai/api/anthropic)
   ANTHROPIC_MODEL            Optional: Custom model to use (e.g., glm-4.7)
   ANTHROPIC_DEFAULT_SONNET_MODEL  Optional: Default model for Anthropic-compatible APIs

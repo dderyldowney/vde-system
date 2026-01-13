@@ -940,11 +940,19 @@ Useful environment variables to know about:
 | Variable | Purpose | Example |
 |----------|---------|---------|
 | `VDE_USE_AI` | Enable AI mode by default | `export VDE_USE_AI="true"` |
+| `ANTHROPIC_AUTH_TOKEN` | Your Anthropic auth token (highest priority) | `export ANTHROPIC_AUTH_TOKEN="sk-..."` |
 | `CLAUDE_API_KEY` | Your Claude API key | `export CLAUDE_API_KEY="sk-..."` |
 | `ANTHROPIC_API_KEY` | Your Anthropic API key | `export ANTHROPIC_API_KEY="sk-..."` |
 | `ANTHROPIC_BASE_URL` | Custom base URL for API requests (optional) | `export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"` |
 | `ANTHROPIC_MODEL` | Custom model to use (optional) | `export ANTHROPIC_MODEL="glm-4.7"` |
 | `ANTHROPIC_DEFAULT_SONNET_MODEL` | Default model for Anthropic-compatible APIs (optional) | `export ANTHROPIC_DEFAULT_SONNET_MODEL="glm-4.7"` |
+
+#### API Key Priority
+
+The system checks for authentication in this order:
+1. `ANTHROPIC_AUTH_TOKEN` (highest priority - recommended)
+2. `ANTHROPIC_API_KEY`
+3. `CLAUDE_API_KEY` (legacy support)
 
 #### Custom Base URL
 
@@ -991,7 +999,7 @@ You can use Anthropic-compatible APIs from third-party providers:
 ```bash
 export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
 export ANTHROPIC_DEFAULT_SONNET_MODEL="glm-4.7"
-export ANTHROPIC_API_KEY="your-zhipu-api-key"
+export ANTHROPIC_AUTH_TOKEN="your-zhipu-api-key"
 ```
 
 ### Understanding VM Aliases
