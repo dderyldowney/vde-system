@@ -29,6 +29,12 @@ source "$SCRIPT_DIR/lib/vm-parser"
 USE_AI=false
 SESSION_HISTORY=()
 
+# AI Configuration (optional)
+# ANTHROPIC_BASE_URL: Custom base URL for Anthropic API (for proxies/alt endpoints)
+# ANTHROPIC_MODEL: Custom model to use (default: claude-3-5-sonnet-20241022)
+VDE_AI_BASE_URL="${ANTHROPIC_BASE_URL:-}"
+VDE_AI_MODEL="${ANTHROPIC_MODEL:-}"
+
 # -----------------------
 # Colors and Formatting
 # -----------------------
@@ -65,7 +71,10 @@ OPTIONS:
   --help, -h   Show this help message
 
 ENVIRONMENT VARIABLES:
-  VDE_USE_AI   Set to "1", "true", or "yes" to enable LLM parsing by default
+  VDE_USE_AI         Set to "1", "true", or "yes" to enable LLM parsing by default
+  ANTHROPIC_API_KEY  Your Anthropic API key (sk-ant-...)
+  ANTHROPIC_BASE_URL Optional: Custom base URL for Anthropic API (for proxies/alt endpoints)
+  ANTHROPIC_MODEL    Optional: Custom model to use (default: claude-3-5-sonnet-20241022)
 
 INTERACTIVE COMMANDS:
   Type your natural language commands and press Enter
