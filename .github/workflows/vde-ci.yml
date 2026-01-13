@@ -105,7 +105,7 @@ jobs:
           # Test VM name extraction
           PLAN=$(generate_plan "start python and go")
           echo "$PLAN" | grep -q "INTENT:start_vm" || { echo "Plan generation failed"; exit 1; }
-          echo "$PLAN" | grep -q "VM:python" || { echo "VM extraction failed"; exit 1; }
+          echo "$PLAN" | grep "^VM:" | grep -q "python" || { echo "VM extraction failed"; exit 1; }
           echo "✓ Plan generation passed"
 
       - name: Test vde-commands library
@@ -187,8 +187,8 @@ jobs:
 
           # Test full stack setup
           PLAN=$(generate_plan "create Python and PostgreSQL")
-          echo "$PLAN" | grep -q "VM:python" || { echo "Full stack plan failed"; exit 1; }
-          echo "$PLAN" | grep -q "VM:postgres" || { echo "Full stack plan failed"; exit 1; }
+          echo "$PLAN" | grep "^VM:" | grep -q "python" || { echo "Full stack plan failed"; exit 1; }
+          echo "$PLAN" | grep "^VM:" | grep -q "postgres" || { echo "Full stack plan failed"; exit 1; }
 
           echo "✓ Daily usage patterns passed"
 
@@ -235,16 +235,21 @@ jobs:
 
       - name: Generate Test SSH Key
         run: |
-          ssh-keygen -t ed25519 -f "$HOME/.ssh/vde_test_key" -N "" -C "vde-ci-test@github-actions"
-          chmod 600 "$HOME/.ssh/vde_test_key"
-          chmod 644 "$HOME/.ssh/vde_test_key.pub"
-          echo "VDE_SSH_KEY=$HOME/.ssh/vde_test_key" >> $GITHUB_ENV
-          echo "VDE_SSH_PUB_KEY=$HOME/.ssh/vde_test_key.pub" >> $GITHUB_ENV
+          # Create SSH directory
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
 
-      - name: Copy SSH key to VDE location
-        run: |
+          # Generate test SSH key pair at default location
+          ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -C "vde-ci-test@github-actions"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          chmod 644 "$HOME/.ssh/id_ed25519.pub"
+
+          # Also copy to public-ssh-keys directory for VDE
           mkdir -p public-ssh-keys
-          cp "$VDE_SSH_PUB_KEY" public-ssh-keys/vde_test.pub
+          cp "$HOME/.ssh/id_ed25519.pub" public-ssh-keys/
+
+          echo "VDE_SSH_KEY=$HOME/.ssh/id_ed25519" >> $GITHUB_ENV
+          echo "VDE_SSH_PUB_KEY=$HOME/.ssh/id_ed25519.pub" >> $GITHUB_ENV
 
       - name: Create VM configuration
         shell: zsh {0}
