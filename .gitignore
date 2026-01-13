@@ -1,10 +1,11 @@
 # Project directories - track immediate child directories, ignore their contents
 projects/*/
 projects/*/*
-!projects/c-sharp/
+!projects/csharp/
 !projects/js/
 !projects/python/
 !projects/ruby/
+!projects/ros/
 !projects/rust/
 
 # Environment-specific files

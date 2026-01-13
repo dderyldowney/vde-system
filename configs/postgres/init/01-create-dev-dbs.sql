@@ -10,8 +10,11 @@ CREATE DATABASE rust_dev_db OWNER devuser;
 CREATE DATABASE js_dev_db OWNER devuser;
 
 -- C# development database
-CREATE DATABASE c-sharp_dev_db OWNER devuser;
+CREATE DATABASE csharp_dev_db OWNER devuser;
 
 -- Ruby development database
 CREATE DATABASE ruby_dev_db OWNER devuser;
+
+-- ROS development database
+CREATE DATABASE ros_dev_db OWNER devuser;
 
