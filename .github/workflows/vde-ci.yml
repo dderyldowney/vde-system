@@ -295,7 +295,7 @@ jobs:
         if: steps.select-vm.outputs.type == 'lang'
         run: |
           COMPOSE_FILE="configs/docker/${{ steps.select-vm.outputs.vm }}/docker-compose.yml"
-          SSH_PORT=$(grep -E "22:.*" "$COMPOSE_FILE" | grep -oE '[0-9]+' | head -1)
+          SSH_PORT=$(grep ':22' "$COMPOSE_FILE" | grep -oE '[0-9]+' | head -1)
           echo "port=$SSH_PORT" >> $GITHUB_OUTPUT
 
       - name: Test SSH Connection
