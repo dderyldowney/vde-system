@@ -25,6 +25,9 @@ services:
       - ../../../configs/postgres/init:/docker-entrypoint-initdb.d
       - ../../../public-ssh-keys:/public-ssh-keys:ro
 
+    networks:
+      - dev-net
+
 networks:
   dev-net:
     external: true
