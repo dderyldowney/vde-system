@@ -21,12 +21,9 @@ services:
       - ../../../env-files/postgres.env
 
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ../../../data/postgres:/var/lib/postgresql/data
       - ../../../configs/postgres/init:/docker-entrypoint-initdb.d
       - ../../../public-ssh-keys:/public-ssh-keys:ro
-
-volumes:
-  postgres_data:
 
 networks:
   dev-net:
