@@ -64,7 +64,7 @@ detect_intent() {
     fi
 
     # Check for create intent (be specific to avoid false matches)
-    if [[ "$input_lower" =~ "create a" ]] || [[ "$input_lower" =~ "create new" ]] || [[ "$input_lower" =~ "make a" ]] || [[ "$input_lower" =~ "make new" ]] || [[ "$input_lower" =~ "set up" ]]; then
+    if [[ "$input_lower" =~ "create a" ]] || [[ "$input_lower" =~ "create new" ]] || [[ "$input_lower" =~ "create " ]] || [[ "$input_lower" =~ "make a" ]] || [[ "$input_lower" =~ "make new" ]] || [[ "$input_lower" =~ "set up" ]]; then
         echo "$INTENT_CREATE_VM"
         return
     fi
@@ -227,7 +227,11 @@ generate_plan() {
     # Output plan
     echo "INTENT:$intent"
     # Convert newlines to spaces for VMs
-    [[ -n "$vms" ]] && echo "VM:${${vms//$'\n'/ }}"
+    if [[ -n "$vms" ]]; then
+        local vm_list
+        vm_list=$(echo "$vms" | tr '\n' ' ' | sed 's/ $//')
+        echo "VM:$vm_list"
+    fi
     [[ -n "$flags" ]] && echo "FLAGS:$flags"
     [[ -n "$filter" ]] && echo "FILTER:$filter"
 }

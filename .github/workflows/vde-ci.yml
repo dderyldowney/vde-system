@@ -248,7 +248,10 @@ jobs:
 
       - name: Create VM configuration
         shell: zsh {0}
-        run: ./scripts/create-virtual-for ${{ steps.select-vm.outputs.vm }}
+        run: |
+          # Remove existing VM config if present (from previous CI runs or repo)
+          rm -rf "configs/docker/${{ steps.select-vm.outputs.vm }}"
+          ./scripts/create-virtual-for ${{ steps.select-vm.outputs.vm }}
 
       - name: Build and Start Docker Container
         shell: zsh {0}
