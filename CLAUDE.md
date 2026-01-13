@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a **Virtual Development Environment (VDE)** providing Docker-based development containers for multiple programming languages (Python, Rust, JavaScript, C#, Ruby) with shared infrastructure services (PostgreSQL, Redis, MongoDB). All containers use SSH for access and are designed for use with VSCode Remote-SSH.
+This is a **Virtual Development Environment (VDE)** providing Docker-based development containers for multiple programming languages (Python, Rust, JavaScript, C#, Ruby) with shared infrastructure services (PostgreSQL, Redis, MongoDB, Nginx). All containers use SSH for access and are designed for use with VSCode Remote-SSH.
 
 ## Architecture
 
@@ -12,7 +12,7 @@ This is a **Virtual Development Environment (VDE)** providing Docker-based devel
 - Each language has its own development container accessible via SSH
 - All containers run as `devuser` (non-root) with sudo privileges
 - SSH key-based authentication only (password auth disabled)
-- Shared services (PostgreSQL, Redis, MongoDB) accessible from all language containers
+- Shared services (PostgreSQL, Redis, MongoDB, Nginx) accessible from all language containers
 
 **Supported Languages:**
 | Language       | SSH Port | Host Alias      |
@@ -25,6 +25,7 @@ This is a **Virtual Development Environment (VDE)** providing Docker-based devel
 | PostgreSQL     | 2300     | postgres        |
 | Redis          | 2301     | redis           |
 | MongoDB        | 2302     | mongodb         |
+| Nginx          | 2303     | nginx           |
 
 ## Container Management
 
@@ -109,9 +110,10 @@ ssh js-dev
 ssh csharp-dev
 ssh ruby-dev
 ssh postgres
+ssh nginx
 
 # VSCode Remote-SSH
-# Use connection name: python-dev, rust-dev, js-dev, csharp-dev, ruby-dev, postgres
+# Use connection name: python-dev, rust-dev, js-dev, csharp-dev, ruby-dev, postgres, nginx
 ```
 
 ## Directory Structure
@@ -119,30 +121,34 @@ ssh postgres
 ```
 $HOME/dev/
 ├── backup/ssh/config           # SSH config template
-├── configs/docker/             # Docker configurations
-│   ├── base-dev.Dockerfile    # Base image for all dev VMs
-│   ├── python/                # Python container config
-│   ├── rust/                  # Rust container config
-│   ├── js/                    # JavaScript container config
-│   ├── csharp/                # C# container config
-│   ├── ruby/                  # Ruby container config
-│   ├── postgres/              # PostgreSQL container config
-│   ├── redis/                 # Redis container config
-│   └── mongodb/               # MongoDB container config
-├── data/                      # Persistent data volumes
+├── configs/                    # Configuration files
+│   ├── docker/                # Docker configurations
+│   │   ├── base-dev.Dockerfile # Base image for all dev VMs
+│   │   ├── python/            # Python container config
+│   │   ├── rust/              # Rust container config
+│   │   ├── js/                # JavaScript container config
+│   │   ├── csharp/            # C# container config
+│   │   ├── ruby/              # Ruby container config
+│   │   ├── postgres/          # PostgreSQL container config
+│   │   ├── redis/             # Redis container config
+│   │   ├── mongodb/           # MongoDB container config
+│   │   └── nginx/             # Nginx container config
+│   └── nginx/                 # Nginx configuration files
+├── data/                       # Persistent data volumes
 │   ├── postgres/              # PostgreSQL data (persisted)
 │   ├── mongodb/               # MongoDB data
 │   └── redis/                 # Redis data
-├── env-files/                 # Environment variable files
-├── logs/                      # Application and access logs
-├── projects/                  # Project source code
-│   ├── python/               # Python projects
-│   ├── rust/                 # Rust projects
-│   ├── js/                   # JavaScript projects
-│   ├── csharp/               # C# projects
-│   └── ruby/                 # Ruby projects
-├── public-ssh-keys/          # SSH public keys for containers
-└── scripts/                  # Management scripts
+├── env-files/                  # Environment variable files
+├── logs/                       # Application and access logs
+│   └── nginx/                 # Nginx access and error logs
+├── projects/                   # Project source code
+│   ├── python/                # Python projects
+│   ├── rust/                  # Rust projects
+│   ├── js/                    # JavaScript projects
+│   ├── csharp/                # C# projects
+│   └── ruby/                  # Ruby projects
+├── public-ssh-keys/           # SSH public keys for containers
+└── scripts/                   # Management scripts
     ├── start-virtual.sh
     ├── shutdown-virtual.sh
     └── build-and-start-dev.sh
@@ -179,6 +185,25 @@ Databases are created via `configs/postgres/01-create-dev-dbs.sql`
 ### Redis
 
 Redis is available as a shared service for caching and data structures.
+
+### Nginx (Port 2303)
+
+Nginx is available as a reverse proxy and web server.
+
+**Configuration:**
+- Config files: `configs/nginx/` (mounted to `/etc/nginx/conf.d`)
+- Logs: `logs/nginx/` (access and error logs)
+- Ports: 80 (HTTP), 443 (HTTPS) exposed on the host
+
+**Example proxy configuration:**
+```nginx
+# Proxy to a Python backend
+location /api/ {
+    proxy_pass http://python-dev:8000/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+}
+```
 
 ## Rebuild Guidelines
 
