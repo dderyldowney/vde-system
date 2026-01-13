@@ -14,7 +14,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "2229:22"
+      - "2301:22"
       - "6379:6379"
 
     env_file:

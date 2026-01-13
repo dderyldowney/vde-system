@@ -11,7 +11,7 @@ shutdown_service() {
 }
 
 if [ "$SERVICE" = "all" ]; then
-    for svc in python rust js csharp ruby ros postgres redis mongodb; do
+    for svc in python rust js csharp ruby postgres redis mongodb; do
         shutdown_service "$svc"
     done
 else

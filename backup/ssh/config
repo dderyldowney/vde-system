@@ -22,18 +22,10 @@ Host js-dev
     IdentityFile ~/.ssh/id_ed25519
     IdentitiesOnly yes
 
-# PostgreSQL VM
-Host postgres
-    HostName localhost
-    Port 2225
-    User devuser
-    IdentityFile ~/.ssh/id_ed25519
-    IdentitiesOnly yes
-
 # C# Dev VM
 Host csharp-dev
     HostName localhost
-    Port 2226
+    Port 2225
     User devuser
     IdentityFile ~/.ssh/id_ed25519
     IdentitiesOnly yes
@@ -41,15 +33,15 @@ Host csharp-dev
 # Ruby Dev VM
 Host ruby-dev
     HostName localhost
-    Port 2227
+    Port 2226
     User devuser
     IdentityFile ~/.ssh/id_ed25519
     IdentitiesOnly yes
 
-# ROS Dev VM
-Host ros-dev
+# PostgreSQL VM
+Host postgres
     HostName localhost
-    Port 2228
+    Port 2300
     User devuser
     IdentityFile ~/.ssh/id_ed25519
     IdentitiesOnly yes
@@ -57,7 +49,7 @@ Host ros-dev
 # Redis VM
 Host redis
     HostName localhost
-    Port 2229
+    Port 2301
     User devuser
     IdentityFile ~/.ssh/id_ed25519
     IdentitiesOnly yes
@@ -65,7 +57,7 @@ Host redis
 # MongoDB VM
 Host mongodb
     HostName localhost
-    Port 2230
+    Port 2302
     User devuser
     IdentityFile ~/.ssh/id_ed25519
     IdentitiesOnly yes

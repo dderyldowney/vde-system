@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a **Virtual Development Environment (VDE)** providing Docker-based development containers for multiple programming languages (Python, Rust, JavaScript, C#, Ruby, ROS) with shared infrastructure services (PostgreSQL, Redis). All containers use SSH for access and are designed for use with VSCode Remote-SSH.
+This is a **Virtual Development Environment (VDE)** providing Docker-based development containers for multiple programming languages (Python, Rust, JavaScript, C#, Ruby) with shared infrastructure services (PostgreSQL, Redis, MongoDB). All containers use SSH for access and are designed for use with VSCode Remote-SSH.
 
 ## Architecture
 
@@ -20,12 +20,11 @@ This is a **Virtual Development Environment (VDE)** providing Docker-based devel
 | Python 3.14    | 2222     | python-dev      |
 | Rust (latest)  | 2223     | rust-dev        |
 | JavaScript/Node| 2224     | js-dev          |
-| PostgreSQL     | 2225     | postgres        |
-| C#             | 2226     | csharp-dev      |
-| Ruby           | 2227     | ruby-dev        |
-| ROS Rolling    | 2228     | ros-dev         |
-| Redis          | 2229     | redis           |
-| MongoDB        | 2230     | mongodb         |
+| C#             | 2225     | csharp-dev      |
+| Ruby           | 2226     | ruby-dev        |
+| PostgreSQL     | 2300     | postgres        |
+| Redis          | 2301     | redis           |
+| MongoDB        | 2302     | mongodb         |
 
 ## Container Management
 
@@ -110,10 +109,9 @@ ssh js-dev
 ssh csharp-dev
 ssh ruby-dev
 ssh postgres
-ssh ros-dev
 
 # VSCode Remote-SSH
-# Use connection name: python-dev, rust-dev, js-dev, csharp-dev, ruby-dev, postgres, ros-dev
+# Use connection name: python-dev, rust-dev, js-dev, csharp-dev, ruby-dev, postgres
 ```
 
 ## Directory Structure
@@ -128,7 +126,6 @@ $HOME/dev/
 │   ├── js/                    # JavaScript container config
 │   ├── csharp/                # C# container config
 │   ├── ruby/                  # Ruby container config
-│   ├── ros/                   # ROS container config
 │   ├── postgres/              # PostgreSQL container config
 │   ├── redis/                 # Redis container config
 │   └── mongodb/               # MongoDB container config
@@ -143,8 +140,7 @@ $HOME/dev/
 │   ├── rust/                 # Rust projects
 │   ├── js/                   # JavaScript projects
 │   ├── csharp/               # C# projects
-│   ├── ruby/                 # Ruby projects
-│   └── ros/                  # ROS projects
+│   └── ruby/                 # Ruby projects
 ├── public-ssh-keys/          # SSH public keys for containers
 └── scripts/                  # Management scripts
     ├── start-virtual.sh
@@ -167,7 +163,7 @@ To modify user setup across all containers, edit the base Dockerfile.
 
 ## Shared Services
 
-### PostgreSQL (Port 2225)
+### PostgreSQL (Port 2300)
 
 PostgreSQL data persists in `data/postgres/` on the host.
 
