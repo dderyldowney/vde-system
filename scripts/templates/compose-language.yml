@@ -1,0 +1,35 @@
+# Template for language VMs
+# Variables: {{NAME}}, {{SSH_PORT}}, {{INSTALL_CMD}}
+services:
+  {{NAME}}-dev:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-{{NAME}}:latest
+    container_name: {{NAME}}-dev
+    hostname: {{NAME}}-dev
+    restart: unless-stopped
+    command: sh -c "{{INSTALL_CMD}} && /usr/sbin/sshd -D"
+
+    ports:
+      - "{{SSH_PORT}}:22"
+
+    volumes:
+      - ../../../projects/{{NAME}}:/home/devuser/workspace
+      - ../../../logs/{{NAME}}:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+
+    env_file:
+      - ../../../env-files/{{NAME}}.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true

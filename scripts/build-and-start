@@ -1,0 +1,38 @@
+#!/usr/bin/env zsh
+set -e
+
+# Source shared library
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+
+# Parse flags
+REBUILD=false
+NOCACHE=false
+
+for arg in "$@"; do
+    case $arg in
+        --rebuild)
+            REBUILD=true
+            ;;
+        --no-cache)
+            NOCACHE=true
+            ;;
+        *)
+            echo "Unknown option: $arg"
+            exit 1
+            ;;
+    esac
+done
+
+# Shutdown all VMs first
+log_info "Shutting down all VMs..."
+"$SCRIPT_DIR/shutdown-virtual" all
+
+# Start all VMs with optional rebuild
+log_info "Starting all VMs..."
+
+for vm in $(get_all_vms); do
+    start_vm "$vm" "$REBUILD" "$NOCACHE"
+done
+
+log_success "All VMs are up!"

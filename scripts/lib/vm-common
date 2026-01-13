@@ -1,0 +1,507 @@
+#!/usr/bin/env zsh
+# VM Common Library for VDE Management Scripts
+# Source this library with: source ./scripts/lib/vm-common
+# Requires: zsh 5.0+ for associative arrays
+
+# -----------------------
+# Constants
+# -----------------------
+# Get the directory where this script is located
+if [[ -n "${ZSH_VERSION:-}" ]]; then
+    # Zsh compatibility - ${(%):-%x} is the current script path
+    readonly VDE_ROOT_DIR="$(cd "$(dirname "${(%):-%x}")/../.." && pwd)"
+else
+    # Bash compatibility - ${BASH_SOURCE[0]} is the current script path
+    readonly VDE_ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+fi
+
+readonly CONFIGS_DIR="$VDE_ROOT_DIR/configs/docker"
+readonly SCRIPTS_DIR="$VDE_ROOT_DIR/scripts"
+readonly TEMPLATES_DIR="$SCRIPTS_DIR/templates"
+readonly DATA_DIR="$SCRIPTS_DIR/data"
+readonly BACKUP_DIR="$VDE_ROOT_DIR/backup"
+readonly VM_TYPES_CONF="$DATA_DIR/vm-types.conf"
+
+# Port ranges
+readonly LANG_PORT_START=2200
+readonly LANG_PORT_END=2299
+readonly SVC_PORT_START=2400
+readonly SVC_PORT_END=2499
+
+# -----------------------
+# Logging Functions
+# -----------------------
+log_info() {
+    echo "[INFO] $*"
+}
+
+log_error() {
+    echo "[ERROR] $*" >&2
+}
+
+log_success() {
+    echo "[SUCCESS] $*"
+}
+
+# -----------------------
+# Config Loading Functions
+# -----------------------
+# Declare associative arrays for VM type data
+typeset -gA VM_TYPE
+typeset -gA VM_ALIASES
+typeset -gA VM_DISPLAY
+typeset -gA VM_INSTALL
+typeset -gA VM_SVC_PORT
+
+load_vm_types() {
+    local conf_file="$VM_TYPES_CONF"
+
+    if [[ ! -f "$conf_file" ]]; then
+        log_error "VM types config not found: $conf_file"
+        return 1
+    fi
+
+    # Clear existing associative arrays using unset
+    unset VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT
+    typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT
+
+    # Skip comments and empty lines
+    while IFS='|' read -r type name vm_aliases display install svc_port; do
+        # Skip comments and empty lines
+        [[ "$type" =~ ^#.*$ ]] && continue
+        [[ -z "$type" ]] && continue
+
+        VM_TYPE[$name]="$type"
+        VM_ALIASES[$name]="$vm_aliases"
+        VM_DISPLAY[$name]="$display"
+        VM_INSTALL[$name]="$install"
+        VM_SVC_PORT[$name]="$svc_port"
+    done < "$conf_file"
+
+    return 0
+}
+
+# -----------------------
+# VM Info Query Function
+# -----------------------
+get_vm_info() {
+    local field=$1
+    local name=$2
+
+    case "$field" in
+        type)
+            echo "${VM_TYPE[$name]:-}"
+            ;;
+        aliases)
+            echo "${VM_ALIASES[$name]:-}"
+            ;;
+        display)
+            echo "${VM_DISPLAY[$name]:-}"
+            ;;
+        install)
+            echo "${VM_INSTALL[$name]:-}"
+            ;;
+        svc_port)
+            echo "${VM_SVC_PORT[$name]:-}"
+            ;;
+        *)
+            log_error "Unknown field: $field"
+            return 1
+            ;;
+    esac
+}
+
+# -----------------------
+# VM Discovery Functions
+# -----------------------
+get_all_vms() {
+    for name in "${(@k)VM_TYPE}"; do
+        echo "$name"
+    done | sort
+}
+
+get_lang_vms() {
+    for name in "${(@k)VM_TYPE}"; do
+        if [[ "${VM_TYPE[$name]}" == "lang" ]]; then
+            echo "$name"
+        fi
+    done | sort
+}
+
+get_service_vms() {
+    for name in "${(@k)VM_TYPE}"; do
+        if [[ "${VM_TYPE[$name]}" == "service" ]]; then
+            echo "$name"
+        fi
+    done | sort
+}
+
+is_known_vm() {
+    local vm=$1
+    [[ -n "${VM_TYPE[$vm]:-}" ]]
+}
+
+is_vm_type() {
+    local vm=$1
+    local expected_type=$2
+    [[ "${VM_TYPE[$vm]:-}" == "$expected_type" ]]
+}
+
+vm_exists() {
+    local vm=$1
+    local compose_file="$CONFIGS_DIR/$vm/docker-compose.yml"
+    [[ -f "$compose_file" ]]
+}
+
+resolve_vm_name() {
+    local input=$1
+
+    # Direct match
+    if is_known_vm "$input"; then
+        echo "$input"
+        return 0
+    fi
+
+    # Check vm_aliases
+    for name in "${(@k)VM_TYPE}"; do
+        local vm_aliases="${VM_ALIASES[$name]}"
+        if [[ ",$vm_aliases," =~ ",$input," ]]; then
+            echo "$name"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# -----------------------
+# Port Management Functions
+# -----------------------
+get_vm_ssh_port() {
+    local vm=$1
+    local compose_file="$CONFIGS_DIR/$vm/docker-compose.yml"
+
+    if [[ ! -f "$compose_file" ]]; then
+        return 1
+    fi
+
+    # Extract the SSH port mapping (format: "XXXX:22")
+    local port_line
+    port_line=$(grep -E '^\s+-\s+"[0-9]+:22"' "$compose_file" | head -1)
+
+    if [[ -z "$port_line" ]]; then
+        return 1
+    fi
+
+    # Extract port number before ":22"
+    local port
+    port=$(echo "$port_line" | sed 's/.*"\([0-9]*\):22".*/\1/')
+    echo "$port"
+}
+
+get_allocated_ports() {
+    local range_start=$1
+    local range_end=$2
+
+    local ports=()
+    local compose_file
+
+    for compose_dir in "$CONFIGS_DIR"/*/; do
+        compose_file="$compose_dir/docker-compose.yml"
+        if [[ -f "$compose_file" ]]; then
+            while IFS= read -r line; do
+                if [[ "$line" =~ ([0-9]+):22 ]]; then
+                    local port="$match[1]"
+                    if [[ $port -ge $range_start && $port -le $range_end ]]; then
+                        ports+=("$port")
+                    fi
+                fi
+            done < "$compose_file"
+        fi
+    done
+
+    # Sort and deduplicate
+    printf '%s\n' "${ports[@]}" | sort -n | uniq
+}
+
+find_next_available_port() {
+    local vm_type=$1
+    local range_start range_end
+
+    case "$vm_type" in
+        lang)
+            range_start=$LANG_PORT_START
+            range_end=$LANG_PORT_END
+            ;;
+        service)
+            range_start=$SVC_PORT_START
+            range_end=$SVC_PORT_END
+            ;;
+        *)
+            log_error "Unknown VM type: $vm_type"
+            return 1
+            ;;
+    esac
+
+    local -a allocated_ports
+    allocated_ports=($(get_allocated_ports "$range_start" "$range_end"))
+
+    for ((port=range_start; port<=range_end; port++)); do
+        if [[ ! " ${allocated_ports[@]} " =~ " ${port} " ]]; then
+            echo "$port"
+            return 0
+        fi
+    done
+
+    log_error "No available ports in range $range_start-$range_end"
+    return 1
+}
+
+# -----------------------
+# Docker Compose Functions
+# -----------------------
+get_compose_file() {
+    local vm=$1
+    echo "$CONFIGS_DIR/$vm/docker-compose.yml"
+}
+
+build_docker_opts() {
+    local rebuild=$1
+    local nocache=$2
+
+    local opts=""
+    if [[ "$rebuild" == "true" ]]; then
+        opts="--build"
+        if [[ "$nocache" == "true" ]]; then
+            opts="$opts --no-cache"
+        fi
+    fi
+    echo "$opts"
+}
+
+start_vm() {
+    local vm=$1
+    local rebuild=$2
+    local nocache=$3
+
+    local compose_file
+    compose_file=$(get_compose_file "$vm")
+
+    if [[ ! -f "$compose_file" ]]; then
+        log_error "Docker compose file not found: $compose_file"
+        return 1
+    fi
+
+    log_info "Starting $vm..."
+
+    local build_opts
+    build_opts=$(build_docker_opts "$rebuild" "$nocache")
+
+    docker-compose -f "$compose_file" up -d $build_opts
+}
+
+stop_vm() {
+    local vm=$1
+
+    local compose_file
+    compose_file=$(get_compose_file "$vm")
+
+    if [[ ! -f "$compose_file" ]]; then
+        log_error "Docker compose file not found: $compose_file"
+        return 1
+    fi
+
+    log_info "Shutting down $vm..."
+    docker-compose -f "$compose_file" down
+}
+
+# -----------------------
+# Template Processing Functions
+# -----------------------
+# render_template takes a template file and variable name-value pairs
+# Usage: render_template template_file NAME "value" OTHER "value"
+render_template() {
+    local template_file=$1
+    shift
+
+    if [[ ! -f "$template_file" ]]; then
+        log_error "Template not found: $template_file"
+        return 1
+    fi
+
+    local content
+    content=$(cat "$template_file")
+
+    # Parse variable name-value pairs
+    while [[ $# -ge 2 ]]; do
+        local var_name="$1"
+        local var_value="$2"
+        shift 2
+
+        # Escape special characters for sed replacement
+        var_value=$(printf '%s\n' "$var_value" | sed 's/[&/\]/\\&/g')
+        content=$(echo "$content" | sed "s/{{$var_name}}/$var_value/g")
+    done
+
+    echo "$content"
+}
+
+# -----------------------
+# SSH Config Functions
+# -----------------------
+get_user_ssh_config() {
+    echo "$HOME/.ssh/config"
+}
+
+backup_ssh_config() {
+    local ssh_config="$HOME/.ssh/config"
+    local backup_path="$BACKUP_DIR/ssh/config.backup.$(date +%Y%m%d_%H%M%S)"
+
+    if [[ -f "$ssh_config" ]]; then
+        cp "$ssh_config" "$backup_path"
+        log_info "Backed up SSH config to: $backup_path"
+    fi
+}
+
+ssh_config_has_entry() {
+    local host_alias=$1
+    local ssh_config="$HOME/.ssh/config"
+
+    if [[ ! -f "$ssh_config" ]]; then
+        return 1
+    fi
+
+    grep -q "^Host $host_alias$" "$ssh_config"
+}
+
+generate_ssh_config_entry() {
+    local host=$1
+    local port=$2
+    local display_name=$3
+    local identity_file="${4:-~/.ssh/id_ed25519}"
+
+    local template_file="$TEMPLATES_DIR/ssh-entry.txt"
+    render_template "$template_file" HOST "$host" SSH_PORT "$port" COMMENT "$display_name Dev VM"
+}
+
+merge_ssh_config_entry() {
+    local host_alias=$1
+    local port=$2
+    local display_name=$3
+    local identity_file="${4:-~/.ssh/id_ed25519}"
+    local ssh_config="$HOME/.ssh/config"
+
+    # Ensure .ssh directory exists
+    mkdir -p "$(dirname "$ssh_config")"
+
+    # Create file if it doesn't exist
+    if [[ ! -f "$ssh_config" ]]; then
+        touch "$ssh_config"
+        chmod 600 "$ssh_config"
+    fi
+
+    # Check if entry already exists
+    if ssh_config_has_entry "$host_alias"; then
+        log_error "SSH config entry for '$host_alias' already exists"
+        return 1
+    fi
+
+    # Backup existing config
+    backup_ssh_config
+
+    # Generate new entry
+    local entry
+    entry=$(generate_ssh_config_entry "$host_alias" "$port" "$display_name" "$identity_file")
+
+    # Append new entry
+    echo "" >> "$ssh_config"
+    echo "$entry" >> "$ssh_config"
+
+    log_success "Added SSH config entry for '$host_alias'"
+    return 0
+}
+
+# -----------------------
+# Validation Functions
+# -----------------------
+validate_vm_name() {
+    local name=$1
+
+    if [[ -z "$name" ]]; then
+        log_error "VM name cannot be empty"
+        return 1
+    fi
+
+    if [[ ! "$name" =~ ^[a-z0-9]+$ ]]; then
+        log_error "VM name must be lowercase alphanumeric (no spaces, hyphens, or special chars)"
+        return 1
+    fi
+
+    return 0
+}
+
+validate_vm_doesnt_exist() {
+    local vm=$1
+
+    if vm_exists "$vm"; then
+        log_error "VM '$vm' already exists (config found at: $CONFIGS_DIR/$vm/)"
+        return 1
+    fi
+    return 0
+}
+
+validate_ssh_key_exists() {
+    local key_path="${1:-$HOME/.ssh/id_ed25519}"
+
+    if [[ ! -f "$key_path" ]]; then
+        log_error "SSH key not found: $key_path"
+        log_error "Please generate an SSH key first: ssh-keygen -t ed25519"
+        return 1
+    fi
+    return 0
+}
+
+# -----------------------
+# Directory Creation Functions
+# -----------------------
+ensure_vm_directories() {
+    local vm=$1
+    local vm_type=$2
+
+    local dirs=()
+
+    if [[ "$vm_type" == "lang" ]]; then
+        dirs=(
+            "$CONFIGS_DIR/$vm"
+            "$VDE_ROOT_DIR/projects/$vm"
+            "$VDE_ROOT_DIR/logs/$vm"
+        )
+    else
+        dirs=(
+            "$CONFIGS_DIR/$vm"
+            "$VDE_ROOT_DIR/data/$vm"
+            "$VDE_ROOT_DIR/logs/$vm"
+        )
+    fi
+
+    for dir in "${dirs[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            mkdir -p "$dir"
+            log_info "Created directory: $dir"
+        fi
+    done
+}
+
+# -----------------------
+# Usage Functions
+# -----------------------
+show_known_vms() {
+    echo "Known language VMs:"
+    get_lang_vms | sed 's/^/  /'
+    echo ""
+    echo "Known service VMs:"
+    get_service_vms | sed 's/^/  /'
+}
+
+# Auto-load VM types when library is sourced
+load_vm_types

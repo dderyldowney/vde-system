@@ -1,0 +1,198 @@
+#!/usr/bin/env zsh
+set -e
+
+# Source shared library
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+
+# -----------------------
+# Usage
+# -----------------------
+show_usage() {
+    cat <<EOF
+Usage: create-virtual-for <vm_name>
+
+Create a new VM with predefined configuration.
+
+Arguments:
+  vm_name    Name of the VM (must be predefined in vm-types.conf)
+
+Examples:
+  create-virtual-for go          # Create Go language VM
+  create-virtual-for couchdb      # Create CouchDB service VM
+
+The script will:
+  1. Validate the VM name
+  2. Auto-allocate SSH port (2200-2299 for languages, 2400-2499 for services)
+  3. Create docker-compose.yml from template
+  4. Create required directories (projects/ or data/, logs/)
+  5. Create environment file (env-files/)
+  6. Add SSH config entry to ~/.ssh/config
+
+Known VMs:
+$(show_known_vms)
+
+EOF
+}
+
+# -----------------------
+# Parse Arguments
+# -----------------------
+if [[ $# -eq 0 ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+    show_usage
+    exit 0
+fi
+
+VM_NAME="$1"
+
+# -----------------------
+# Validation
+# -----------------------
+log_info "Validating configuration for '$VM_NAME'..."
+
+validate_vm_name "$VM_NAME" || exit 1
+
+# Resolve VM name (handles aliases)
+RESOLVED_NAME=$(resolve_vm_name "$VM_NAME" || true)
+if [[ -z "$RESOLVED_NAME" ]]; then
+    log_error "VM '$VM_NAME' is not in the predefined list"
+    echo ""
+    show_known_vms
+    exit 1
+fi
+
+# Use resolved name
+VM_NAME="$RESOLVED_NAME"
+
+validate_vm_doesnt_exist "$VM_NAME" || exit 1
+validate_ssh_key_exists || exit 1
+
+# -----------------------
+# Get VM Configuration
+# -----------------------
+VM_TYPE=$(get_vm_info type "$VM_NAME")
+VM_DISPLAY=$(get_vm_info display "$VM_NAME")
+VM_INSTALL=$(get_vm_info install "$VM_NAME")
+VM_SVC_PORT=$(get_vm_info svc_port "$VM_NAME")
+
+if [[ -z "$VM_TYPE" ]]; then
+    log_error "Could not determine VM type for: $VM_NAME"
+    exit 1
+fi
+
+log_info "VM Type: $VM_TYPE"
+log_info "Display Name: $VM_DISPLAY"
+
+# -----------------------
+# Allocate Port
+# -----------------------
+log_info "Allocating SSH port..."
+SSH_PORT=$(find_next_available_port "$VM_TYPE")
+if [[ $? -ne 0 ]]; then
+    exit 1
+fi
+log_info "Allocated SSH port: $SSH_PORT"
+
+# -----------------------
+# Create Directories
+# -----------------------
+log_info "Creating directory structure..."
+ensure_vm_directories "$VM_NAME" "$VM_TYPE"
+
+# -----------------------
+# Create Docker Compose File
+# -----------------------
+log_info "Creating docker-compose.yml..."
+
+local compose_file="$CONFIGS_DIR/$VM_NAME/docker-compose.yml"
+
+# Select appropriate template
+local template_file
+if [[ "$VM_TYPE" == "lang" ]]; then
+    template_file="$TEMPLATES_DIR/compose-language.yml"
+else
+    template_file="$TEMPLATES_DIR/compose-service.yml"
+fi
+
+# Prepare variables for template and render
+render_template "$template_file" \
+    NAME "$VM_NAME" \
+    SSH_PORT "$SSH_PORT" \
+    INSTALL_CMD "$VM_INSTALL" \
+    SERVICE_PORT "$VM_SVC_PORT" \
+    > "$compose_file"
+
+log_success "Created: $compose_file"
+
+# -----------------------
+# Create Environment File
+# -----------------------
+log_info "Creating environment file..."
+
+local env_file="$VDE_ROOT_DIR/env-files/$VM_NAME.env"
+
+cat > "$env_file" <<EOF
+# Environment variables for $VM_DISPLAY development container
+SSH_PORT=$SSH_PORT
+EOF
+
+if [[ -n "$VM_SVC_PORT" ]]; then
+    # Handle multiple service ports (comma-separated)
+    IFS=',' read -A PORTS <<< "$VM_SVC_PORT"
+    for port in "${PORTS[@]}"; do
+        # Extract port number (could be "80" or "80,443")
+        port=$(echo "$port" | tr -d ' ')
+        # Create env var name based on service
+        upper_name=$(echo "$VM_NAME" | tr '[:lower:]' '[:upper:]')
+        echo "${upper_name}_PORT=$port" >> "$env_file"
+    done
+fi
+
+log_success "Created: $env_file"
+
+# -----------------------
+# Update SSH Config
+# -----------------------
+log_info "Updating SSH configuration..."
+
+local ssh_host
+if [[ "$VM_TYPE" == "lang" ]]; then
+    ssh_host="${VM_NAME}-dev"
+else
+    ssh_host="$VM_NAME"
+fi
+
+if ! merge_ssh_config_entry "$ssh_host" "$SSH_PORT" "$VM_DISPLAY"; then
+    log_error "Failed to update SSH config"
+    log_error "Please manually add the following entry to ~/.ssh/config:"
+    echo ""
+    generate_ssh_config_entry "$ssh_host" "$SSH_PORT" "$VM_DISPLAY"
+    exit 1
+fi
+
+# -----------------------
+# Summary
+# -----------------------
+echo ""
+log_success "VM configuration complete!"
+echo ""
+echo "Created files:"
+echo "  - $compose_file"
+echo "  - $env_file"
+if [[ "$VM_TYPE" == "lang" ]]; then
+    echo "  - $VDE_ROOT_DIR/projects/$VM_NAME/"
+else
+    echo "  - $VDE_ROOT_DIR/data/$VM_NAME/"
+fi
+echo "  - $VDE_ROOT_DIR/logs/$VM_NAME/"
+echo ""
+echo "SSH Configuration:"
+echo "  - Host alias: $ssh_host"
+echo "  - SSH port: $SSH_PORT"
+echo "  - Connect with: ssh $ssh_host"
+echo ""
+echo "Next steps:"
+echo "  1. Review and customize env-files/$VM_NAME.env if needed"
+echo "  2. Start the VM: ./scripts/start-virtual $VM_NAME"
+echo "  3. Connect: ssh $ssh_host"
+echo ""

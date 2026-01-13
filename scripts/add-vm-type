@@ -1,0 +1,251 @@
+#!/usr/bin/env zsh
+set -e
+
+# Source shared library
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+
+# -----------------------
+# Usage
+# -----------------------
+show_usage() {
+    cat <<EOF
+Usage: add-vm-type [OPTIONS] <name> "<install_cmd>" [aliases]
+
+Add a new language or service to the predefined VM types list.
+
+Arguments:
+  name          Name of the VM (e.g., zig, dart, couchdb)
+  install_cmd   Installation command (must be quoted)
+  aliases       Optional comma-separated aliases (e.g., "js,node,nodejs")
+
+Options:
+  --type TYPE       Type of VM: lang or service (default: auto-detect)
+  --svc-port PORT   Service port (required for services, e.g., 5432)
+  --display NAME    Display name (default: auto-generated from name)
+  --help, -h        Show this help message
+
+Examples:
+  # Add a language (auto-detects type as 'lang')
+  add-vm-type zig "apt-get update -y && apt-get install -y zig"
+
+  # Add a language with aliases
+  add-vm-type dart "apt-get update -y && apt-get install -y dart" "dartlang,flutter"
+
+  # Add a service (requires --type and --svc-port)
+  add-vm-type --type service --svc-port 5672 rabbitmq \\
+      "apt-get update -y && apt-get install -y rabbitmq-server" "rabbit"
+
+  # Add with custom display name
+  add-vm-type --display "Zig Language" zig \\
+      "apt-get update -y && apt-get install -y zig"
+
+The script will:
+  1. Validate the VM type and parameters
+  2. Check if the VM name already exists
+  3. Backup the vm-types.conf file
+  4. Append the new entry to vm-types.conf
+  5. Show the diff
+
+After adding a VM type, you can create it with:
+  ./scripts/create-virtual-for <name>
+
+EOF
+}
+
+# -----------------------
+# Parse Arguments
+# -----------------------
+VM_TYPE_STR=""
+SVC_PORT=""
+DISPLAY_NAME=""
+INSTALL_CMD=""
+ALIASES=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --type)
+            VM_TYPE_STR="$2"
+            shift 2
+            ;;
+        --svc-port)
+            SVC_PORT="$2"
+            shift 2
+            ;;
+        --display)
+            DISPLAY_NAME="$2"
+            shift 2
+            ;;
+        --help|-h)
+            show_usage
+            exit 0
+            ;;
+        *)
+            # First positional argument is the name
+            if [[ -z "$VM_NAME" ]]; then
+                VM_NAME="$1"
+            # Second positional argument is the install command
+            elif [[ -z "$INSTALL_CMD" ]]; then
+                INSTALL_CMD="$1"
+            # Third positional argument is aliases
+            elif [[ -z "$ALIASES" ]]; then
+                ALIASES="$1"
+            else
+                log_error "Too many arguments"
+                echo ""
+                show_usage
+                exit 1
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Validate required arguments
+if [[ -z "$VM_NAME" ]] || [[ -z "$INSTALL_CMD" ]]; then
+    log_error "Missing required arguments"
+    echo ""
+    show_usage
+    exit 1
+fi
+
+# -----------------------
+# Auto-detect type if not specified
+# -----------------------
+if [[ -z "$VM_TYPE_STR" ]]; then
+    # If service port is specified, it's a service
+    if [[ -n "$SVC_PORT" ]]; then
+        VM_TYPE_STR="service"
+    else
+        VM_TYPE_STR="lang"
+    fi
+    log_info "Auto-detected VM type as: $VM_TYPE_STR"
+fi
+
+# -----------------------
+# Validation
+# -----------------------
+log_info "Validating configuration..."
+
+# Validate VM type
+if [[ "$VM_TYPE_STR" != "lang" ]] && [[ "$VM_TYPE_STR" != "service" ]]; then
+    log_error "Invalid VM type: $VM_TYPE_STR (must be 'lang' or 'service')"
+    exit 1
+fi
+
+# Validate VM name format
+if [[ ! "$VM_NAME" =~ ^[a-z0-9]+$ ]]; then
+    log_error "VM name must be lowercase alphanumeric (no spaces, hyphens, or special chars)"
+    exit 1
+fi
+
+# Service type requires service port
+if [[ "$VM_TYPE_STR" == "service" ]] && [[ -z "$SVC_PORT" ]]; then
+    log_error "Service type requires --svc-port argument"
+    exit 1
+fi
+
+# Language type should not have service port
+if [[ "$VM_TYPE_STR" == "lang" ]] && [[ -n "$SVC_PORT" ]]; then
+    log_error "Language type should not specify --svc-port"
+    exit 1
+fi
+
+# Auto-generate display name if not specified
+if [[ -z "$DISPLAY_NAME" ]]; then
+    # Capitalize first letter
+    DISPLAY_NAME="$(echo "$VM_NAME" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
+fi
+
+# -----------------------
+# Check if VM already exists
+# -----------------------
+if [[ -n "${VM_TYPE[$VM_NAME]}" ]]; then
+    log_error "VM '$VM_NAME' already exists in vm-types.conf"
+    exit 1
+fi
+if resolve_vm_name "$VM_NAME" > /dev/null 2>&1; then
+    log_error "VM '$VM_NAME' already exists in vm-types.conf"
+    exit 1
+fi
+
+# Check if name conflicts with existing vm_aliases
+for existing_name in "${(@k)VM_TYPE}"; do
+    existing_vm_aliases="${VM_ALIASES[$existing_name]}"
+    if [[ ",$existing_vm_aliases," =~ ",$VM_NAME," ]]; then
+        log_error "VM name '$VM_NAME' conflicts with an alias for '$existing_name'"
+        exit 1
+    fi
+done
+
+# Validate new aliases don't conflict
+if [[ -n "$ALIASES" ]]; then
+    IFS=',' read -A NEW_ALIAS_ARRAY <<< "$ALIASES"
+    for new_alias in "${NEW_ALIAS_ARRAY[@]}"; do
+        new_alias=$(echo "$new_alias" | tr -d ' ')
+        if resolve_vm_name "$new_alias" > /dev/null 2>&1; then
+            existing_vm=$(resolve_vm_name "$new_alias")
+            log_error "Alias '$new_alias' conflicts with existing VM: $existing_vm"
+            exit 1
+        fi
+    done
+fi
+
+# -----------------------
+# Show what will be added
+# -----------------------
+echo ""
+log_info "Will add the following VM type:"
+echo ""
+echo "  Type:         $VM_TYPE_STR"
+echo "  Name:         $VM_NAME"
+echo "  Display:      $DISPLAY_NAME"
+echo "  Aliases:      ${ALIASES:-<none>}"
+echo "  Install:      $INSTALL_CMD"
+if [[ "$VM_TYPE_STR" == "service" ]]; then
+    echo "  Service Port: $SVC_PORT"
+fi
+echo ""
+
+# -----------------------
+# Backup vm-types.conf
+# -----------------------
+log_info "Backing up vm-types.conf..."
+backup_file="$BACKUP_DIR/vm-types.conf.backup.$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$(dirname "$backup_file")"
+cp "$VM_TYPES_CONF" "$backup_file"
+log_success "Backup created: $backup_file"
+
+# -----------------------
+# Append new entry
+# -----------------------
+log_info "Adding entry to vm-types.conf..."
+
+# Format: type|name|vm_aliases|display|install|svc_port
+echo "${VM_TYPE_STR}|${VM_NAME}|${ALIASES}|${DISPLAY_NAME}|${INSTALL_CMD}|${SVC_PORT}" >> "$VM_TYPES_CONF"
+
+log_success "Entry added successfully"
+
+# -----------------------
+# Show diff
+# -----------------------
+log_info "Showing diff..."
+echo ""
+diff "$backup_file" "$VM_TYPES_CONF" || true
+echo ""
+
+# -----------------------
+# Reload VM types
+# -----------------------
+log_info "Reloading VM types..."
+load_vm_types
+
+# -----------------------
+# Summary
+# -----------------------
+log_success "VM type '$VM_NAME' added successfully!"
+echo ""
+echo "Next steps:"
+echo "  1. Create the VM: ./scripts/create-virtual-for $VM_NAME"
+echo "  2. Start the VM: ./scripts/start-virtual $VM_NAME"
+echo ""

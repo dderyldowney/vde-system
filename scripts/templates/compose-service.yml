@@ -1,0 +1,36 @@
+# Template for service VMs
+# Variables: {{NAME}}, {{SSH_PORT}}, {{SERVICE_PORT}}, {{INSTALL_CMD}}
+services:
+  {{NAME}}:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-{{NAME}}:latest
+    container_name: {{NAME}}
+    hostname: {{NAME}}
+    restart: unless-stopped
+    command: sh -c "{{INSTALL_CMD}} && /usr/sbin/sshd -D"
+
+    ports:
+      - "{{SSH_PORT}}:22"
+      - "{{SERVICE_PORT}}:{{SERVICE_PORT}}"
+
+    volumes:
+      - ../../../data/{{NAME}}:/data
+      - ../../../logs/{{NAME}}:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+
+    env_file:
+      - ../../../env-files/{{NAME}}.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true
