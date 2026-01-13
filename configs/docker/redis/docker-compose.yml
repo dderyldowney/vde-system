@@ -1,0 +1,32 @@
+services:
+  redis:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/redis/Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-redis:latest
+    container_name: redis
+    hostname: redis
+    restart: unless-stopped
+
+    ports:
+      - "2229:22"
+      - "6379:6379"
+
+    env_file:
+      - ../../../env-files/redis.env
+
+    volumes:
+      - redis_data:/data
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+
+networks:
+  dev-net:
+    external: true
+
+volumes:
+  redis_data:
