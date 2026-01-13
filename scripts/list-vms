@@ -1,0 +1,109 @@
+#!/usr/bin/env zsh
+set -e
+
+# Source shared library
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+
+# Parse arguments
+LIST_TYPE=""
+FILTER=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --lang|--languages)
+            LIST_TYPE="lang"
+            shift
+            ;;
+        --svc|--services)
+            LIST_TYPE="service"
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: list-vms [OPTIONS] [filter]"
+            echo ""
+            echo "List all predefined VM types (languages and services)."
+            echo ""
+            echo "Options:"
+            echo "  --lang, --languages    List only language VMs"
+            echo "  --svc, --services      List only service VMs"
+            echo "  --help, -h             Show this help message"
+            echo ""
+            echo "Arguments:"
+            echo "  filter                 Optional text filter (searches name, aliases, display)"
+            echo ""
+            echo "Examples:"
+            echo "  list-vms                    # List all VMs"
+            echo "  list-vms --lang             # List only language VMs"
+            echo "  list-vms --svc              # List only service VMs"
+            echo "  list-vms python             # Search for 'python'"
+            echo "  list-vms --lang script      # Search for script in languages"
+            exit 0
+            ;;
+        *)
+            FILTER="$1"
+            shift
+            ;;
+    esac
+done
+
+# Function to display VM info
+display_vm() {
+    local name=$1
+    local type=$2
+    local display=$3
+    local vm_aliases=$4
+
+    # Apply filter if specified
+    if [[ -n "$FILTER" ]]; then
+        if [[ ! "$name" =~ "$FILTER" ]] && [[ ! "$display" =~ "$FILTER" ]] && [[ ! "$vm_aliases" =~ "$FILTER" ]]; then
+            return
+        fi
+    fi
+
+    local marker=""
+    if vm_exists "$name"; then
+        marker=" [CREATED]"
+    fi
+
+    printf "  %-20s %s%s\n" "$name" "$display" "$marker"
+
+    if [[ -n "$vm_aliases" ]]; then
+        printf "    Aliases: %s\n" "$vm_aliases"
+    fi
+
+    if [[ "$type" == "service" ]]; then
+        local svc_port="${VM_SVC_PORT[$name]}"
+        printf "    Service Port: %s\n" "$svc_port"
+    fi
+}
+
+# Header
+echo "Predefined VM Types:"
+echo ""
+
+if [[ "$LIST_TYPE" == "lang" ]]; then
+    echo "Language VMs:"
+    for name in $(get_lang_vms); do
+        display_vm "$name" "lang" "${VM_DISPLAY[$name]}" "${VM_ALIASES[$name]}"
+    done
+elif [[ "$LIST_TYPE" == "service" ]]; then
+    echo "Service VMs:"
+    for name in $(get_service_vms); do
+        display_vm "$name" "service" "${VM_DISPLAY[$name]}" "${VM_ALIASES[$name]}"
+    done
+else
+    echo "Language VMs:"
+    for name in $(get_lang_vms); do
+        display_vm "$name" "lang" "${VM_DISPLAY[$name]}" "${VM_ALIASES[$name]}"
+    done
+    echo ""
+    echo "Service VMs:"
+    for name in $(get_service_vms); do
+        display_vm "$name" "service" "${VM_DISPLAY[$name]}" "${VM_ALIASES[$name]}"
+    done
+fi
+
+echo ""
+echo "To create a VM, run: create-virtual-for <name>"
+echo "To add a new VM type, run: add-vm-type <name> \"<install_cmd>\""

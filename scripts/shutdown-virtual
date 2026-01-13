@@ -1,0 +1,65 @@
+#!/usr/bin/env zsh
+set -e
+
+# Source shared library
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+
+# Parse arguments
+if [[ $# -eq 0 ]]; then
+    echo "Usage: $0 <vm_name1> [vm_name2] ... [all]"
+    echo ""
+    echo "Examples:"
+    echo "  $0 python                    # Stop single VM"
+    echo "  $0 python ruby js            # Stop multiple VMs"
+    echo "  $0 all                       # Stop all VMs"
+    echo ""
+    show_known_vms
+    exit 1
+fi
+
+# Parse VMs
+VMS=()
+
+for arg in "$@"; do
+    case $arg in
+        all)
+            # Expand "all" to all known VMs
+            for vm in $(get_all_vms); do
+                VMS+=("$vm")
+            done
+            ;;
+        *)
+            # Check if it's a known VM or VM type
+            local resolved
+            resolved=$(resolve_vm_name "$arg" || true)
+            if [[ -n "$resolved" ]]; then
+                VMS+=("$resolved")
+            else
+                log_error "Unknown VM: $arg"
+                exit 1
+            fi
+            ;;
+    esac
+done
+
+# If no VMs specified, show usage
+if [[ ${#VMS[@]} -eq 0 ]]; then
+    echo "Usage: $0 <vm_name1> [vm_name2] ... [all]"
+    echo ""
+    show_known_vms
+    exit 1
+fi
+
+# Stop VMs
+log_info "Shutting down ${#VMS[@]} VM(s)..."
+for vm in "${VMS[@]}"; do
+    if ! is_known_vm "$vm"; then
+        log_error "Unknown VM: $vm"
+        exit 1
+    fi
+
+    stop_vm "$vm"
+done
+
+log_success "VM shutdown complete!"

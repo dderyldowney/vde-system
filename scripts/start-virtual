@@ -1,0 +1,75 @@
+#!/usr/bin/env zsh
+set -e
+
+# Source shared library
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+
+# Parse arguments
+if [[ $# -eq 0 ]]; then
+    echo "Usage: start-virtual <vm_name1> [vm_name2] ... [--rebuild] [--no-cache]"
+    echo ""
+    echo "Examples:"
+    echo "  start-virtual python                    # Start single VM"
+    echo "  start-virtual python ruby js            # Start multiple VMs"
+    echo "  start-virtual all                       # Start all VMs"
+    echo "  start-virtual python --rebuild          # Rebuild and start"
+    echo "  start-virtual all --no-cache            # Full rebuild all VMs"
+    echo ""
+    show_known_vms
+    exit 1
+fi
+
+# Parse VMs and flags separately
+VMS=()
+REBUILD=false
+NOCACHE=false
+
+for arg in "$@"; do
+    case $arg in
+        --rebuild)
+            REBUILD=true
+            ;;
+        --no-cache)
+            NOCACHE=true
+            ;;
+        all)
+            # Expand "all" to all known VMs
+            for vm in $(get_all_vms); do
+                VMS+=("$vm")
+            done
+            ;;
+        *)
+            # Check if it's a known VM or VM type
+            local resolved
+            resolved=$(resolve_vm_name "$arg" || true)
+            if [[ -n "$resolved" ]]; then
+                VMS+=("$resolved")
+            else
+                log_error "Unknown VM: $arg"
+                exit 1
+            fi
+            ;;
+    esac
+done
+
+# If no VMs specified (e.g., only flags), show usage
+if [[ ${#VMS[@]} -eq 0 ]]; then
+    echo "Usage: start-virtual <vm_name1> [vm_name2] ... [--rebuild] [--no-cache]"
+    echo ""
+    show_known_vms
+    exit 1
+fi
+
+# Start VMs
+log_info "Starting ${#VMS[@]} VM(s)..."
+for vm in "${VMS[@]}"; do
+    if ! is_known_vm "$vm"; then
+        log_error "Unknown VM: $vm"
+        exit 1
+    fi
+
+    start_vm "$vm" "$REBUILD" "$NOCACHE"
+done
+
+log_success "VM startup complete!"
