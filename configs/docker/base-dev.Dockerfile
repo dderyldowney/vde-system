@@ -7,7 +7,7 @@ ARG GID=1000
 # Install essential packages + SSH + sudo
 RUN apt-get update -y && \
     apt-get upgrade -y && \
-    apt-get install -y sudo openssh-server ca-certificates build-essential zsh tree git curl wget vim neovim && \
+    apt-get install -y sudo openssh-server ca-certificates build-essential zsh tree git curl wget vim neovim redis-tools && \
     rm -rf /var/lib/apt/lists/*
 
 # Create devuser with sudo privileges and SSH setup
