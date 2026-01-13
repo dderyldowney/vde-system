@@ -1,0 +1,28 @@
+services:
+  ros-dev:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/ros/ros-dev.Dockerfile
+    image: dev-ros:latest
+    container_name: ros-dev
+    hostname: ros-dev
+    restart: unless-stopped
+    command: sh -c "/usr/sbin/sshd -D"
+
+    ports:
+      - "2228:22"
+
+    volumes:
+      - ../../../projects/ros:/home/devuser/workspace
+      - ../../../logs/app-logs:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+
+    env_file:
+      - ../../../env-files/ros.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true
