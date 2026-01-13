@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a **Virtual Development Environment (VDE)** providing Docker-based development containers for multiple programming languages (Python, Rust, JavaScript, C#, Ruby) with shared infrastructure services (PostgreSQL, Redis). All containers use SSH for access and are designed for use with VSCode Remote-SSH.
+This is a **Virtual Development Environment (VDE)** providing Docker-based development containers for multiple programming languages (Python, Rust, JavaScript, C#, Ruby, ROS) with shared infrastructure services (PostgreSQL, Redis). All containers use SSH for access and are designed for use with VSCode Remote-SSH.
 
 ## Architecture
 
@@ -12,7 +12,7 @@ This is a **Virtual Development Environment (VDE)** providing Docker-based devel
 - Each language has its own development container accessible via SSH
 - All containers run as `devuser` (non-root) with sudo privileges
 - SSH key-based authentication only (password auth disabled)
-- Shared services (PostgreSQL, Redis) accessible from all language containers
+- Shared services (PostgreSQL, Redis, MongoDB) accessible from all language containers
 
 **Supported Languages:**
 | Language       | SSH Port | Host Alias      |
@@ -21,8 +21,11 @@ This is a **Virtual Development Environment (VDE)** providing Docker-based devel
 | Rust (latest)  | 2223     | rust-dev        |
 | JavaScript/Node| 2224     | js-dev          |
 | PostgreSQL     | 2225     | postgres        |
-| C#             | TBD      | csharp-dev      |
-| Ruby           | TBD      | ruby-dev        |
+| C#             | 2226     | csharp-dev      |
+| Ruby           | 2227     | ruby-dev        |
+| ROS Rolling    | 2228     | ros-dev         |
+| Redis          | 2229     | redis           |
+| MongoDB        | 2230     | mongodb         |
 
 ## Container Management
 
@@ -103,9 +106,14 @@ Host rust-dev
 # Command line
 ssh python-dev
 ssh rust-dev
+ssh js-dev
+ssh csharp-dev
+ssh ruby-dev
+ssh postgres
+ssh ros-dev
 
 # VSCode Remote-SSH
-# Use connection name: python-dev, rust-dev, etc.
+# Use connection name: python-dev, rust-dev, js-dev, csharp-dev, ruby-dev, postgres, ros-dev
 ```
 
 ## Directory Structure
@@ -118,9 +126,12 @@ $HOME/dev/
 │   ├── python/                # Python container config
 │   ├── rust/                  # Rust container config
 │   ├── js/                    # JavaScript container config
-│   ├── c-sharp/               # C# container config
+│   ├── csharp/                # C# container config
 │   ├── ruby/                  # Ruby container config
-│   └── postgres/              # PostgreSQL container config
+│   ├── ros/                   # ROS container config
+│   ├── postgres/              # PostgreSQL container config
+│   ├── redis/                 # Redis container config
+│   └── mongodb/               # MongoDB container config
 ├── data/                      # Persistent data volumes
 │   ├── postgres/              # PostgreSQL data (persisted)
 │   ├── mongodb/               # MongoDB data
@@ -131,8 +142,9 @@ $HOME/dev/
 │   ├── python/               # Python projects
 │   ├── rust/                 # Rust projects
 │   ├── js/                   # JavaScript projects
-│   ├── c-sharp/              # C# projects
-│   └── ruby/                 # Ruby projects
+│   ├── csharp/               # C# projects
+│   ├── ruby/                 # Ruby projects
+│   └── ros/                  # ROS projects
 ├── public-ssh-keys/          # SSH public keys for containers
 └── scripts/                  # Management scripts
     ├── start-virtual.sh

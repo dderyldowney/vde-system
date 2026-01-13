@@ -9,10 +9,12 @@ This VDE defines a multi-language Docker-based development environment intended 
 | Python 3.14 | 2222 | Python development VM |
 | Rust (latest) | 2223 | Rust development VM |
 | JavaScript/Node.js | 2224 | JavaScript/Node.js development VM |
-| C# | - | C# development VM |
-| Ruby | - | Ruby development VM |
+| C# | 2226 | C# development VM |
+| Ruby | 2227 | Ruby development VM |
+| ROS Rolling | 2228 | ROS (Robot Operating System) development VM |
 | PostgreSQL | 2225 | Shared database VM |
-| Redis | - | Redis key-value store |
+| Redis | 2229 | Redis key-value store |
+| MongoDB | 2230 | MongoDB document database |
 
 All containers use a consistent non-root user named `devuser`.
 
@@ -41,10 +43,11 @@ $HOME/dev
 │   ├── access-logs
 │   └── app-logs
 ├── projects
-│   ├── c-sharp
+│   ├── csharp
 │   ├── js
 │   ├── python
 │   ├── ruby
+│   ├── ros
 │   ├── rust
 ├── public-ssh-keys
 └── scripts
@@ -122,9 +125,30 @@ Host js-dev
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
 
+Host csharp-dev
+  HostName localhost
+  Port 2226
+  User devuser
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+
+Host ruby-dev
+  HostName localhost
+  Port 2227
+  User devuser
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+
 Host postgres
   HostName localhost
   Port 2225
+  User devuser
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+
+Host ros-dev
+  HostName localhost
+  Port 2228
   User devuser
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
@@ -206,6 +230,11 @@ Initial database creation is handled by: `configs/postgres/01-create-dev-dbs.sql
    - `python-dev`
    - `rust-dev`
    - `js-dev`
+   - `csharp-dev`
+   - `ruby-dev`
    - `postgres`
+   - `ros-dev`
+   - `redis`
+   - `mongodb`
 
 Each container behaves like a lightweight VM suitable for full development workflows.
