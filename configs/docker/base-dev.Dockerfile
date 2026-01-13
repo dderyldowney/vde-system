@@ -7,7 +7,11 @@ ARG GID=1000
 # Install essential packages + SSH + sudo
 RUN apt-get update -y && \
     apt-get upgrade -y && \
-    apt-get install -y sudo openssh-server ca-certificates build-essential zsh tree git curl wget vim neovim redis-tools && \
+    apt-get install -y sudo openssh-server ca-certificates build-essential zsh tree git curl wget vim neovim redis-tools gnupg && \
+    wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | apt-key add - && \
+    echo "deb [arch=amd64,arm64] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" > /etc/apt/sources.list.d/mongodb-org-7.0.list && \
+    apt-get update -y && \
+    apt-get install -y mongodb-mongosh && \
     rm -rf /var/lib/apt/lists/*
 
 # Create devuser with sudo privileges and SSH setup
