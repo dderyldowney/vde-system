@@ -23,6 +23,14 @@ source "$SCRIPT_DIR/lib/vm-common"
 source "$SCRIPT_DIR/lib/vde-commands"
 source "$SCRIPT_DIR/lib/vde-parser"
 
+# Try to source the AI API library (optional - for LLM-based parsing)
+if [[ -f "$SCRIPT_DIR/lib/vde-ai-api" ]]; then
+    source "$SCRIPT_DIR/lib/vde-ai-api"
+    AI_API_AVAILABLE=true
+else
+    AI_API_AVAILABLE=false
+fi
+
 # AI usage flags (can be enabled via --ai flag or VDE_USE_AI env var)
 USE_AI=false
 DRY_RUN=false
@@ -148,17 +156,35 @@ log_info "Parsing command: $USER_INPUT"
 
 # Check if AI mode is enabled
 if [[ "$USE_AI" == "true" ]]; then
-    # Check for API key
-    if [[ -z "${CLAUDE_API_KEY:-}" ]] && [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
-        log_error "AI mode requested but no API key found"
-        log_error "Set CLAUDE_API_KEY or ANTHROPIC_API_KEY environment variable"
-        log_error "Falling back to pattern-based parsing..."
-        USE_AI=false
-    fi
-fi
+    # Check if AI API library is available
+    if [[ "$AI_API_AVAILABLE" == "true" ]] && ai_api_available; then
+        log_info "Using LLM-based parsing..."
+        # Use AI API to parse the command
+        PLAN=$(parse_command_with_ai "$USER_INPUT" 2>&1)
+        local parse_exit_code=$?
 
-# Generate execution plan
-PLAN=$(generate_plan "$USER_INPUT")
+        if [[ $parse_exit_code -ne 0 ]]; then
+            log_error "AI parsing failed, falling back to pattern-based parsing"
+            log_info "Error was: $PLAN"
+            PLAN=$(generate_plan "$USER_INPUT")
+        else
+            log_info "AI parsing successful"
+        fi
+    else
+        # AI requested but not available
+        if [[ "$AI_API_AVAILABLE" != "true" ]]; then
+            log_error "AI mode requested but vde-ai-api library not found"
+        else
+            log_error "AI mode requested but no API key found"
+            log_error "Set ANTHROPIC_API_KEY or CLAUDE_API_KEY environment variable"
+        fi
+        log_error "Falling back to pattern-based parsing..."
+        PLAN=$(generate_plan "$USER_INPUT")
+    fi
+else
+    # Use pattern-based parsing
+    PLAN=$(generate_plan "$USER_INPUT")
+fi
 
 if [[ "$DRY_RUN" == "true" ]]; then
     echo ""
