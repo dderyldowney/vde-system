@@ -169,8 +169,9 @@ Complete reference for all VDE commands.
 | `VDE_USE_AI` | Set to `1`, `true`, or `yes` to enable LLM-based parsing by default |
 | `CLAUDE_API_KEY` | Your Claude API key for AI mode |
 | `ANTHROPIC_API_KEY` | Your Anthropic API key for AI mode |
-| `ANTHROPIC_BASE_URL` | Custom base URL for Anthropic API (for proxies/alt endpoints) |
-| `ANTHROPIC_MODEL` | Custom model to use (default: claude-3-5-sonnet-20241022) |
+| `ANTHROPIC_BASE_URL` | Custom base URL for Anthropic API (e.g., `https://api.z.ai/api/anthropic`) |
+| `ANTHROPIC_MODEL` | Custom model to use (e.g., `glm-4.7`) |
+| `ANTHROPIC_DEFAULT_SONNET_MODEL` | Default model for Anthropic-compatible APIs |
 
 For more details, see [VDE AI Assistant](./vde-ai-assistant.md).
 

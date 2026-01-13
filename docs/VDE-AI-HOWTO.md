@@ -942,8 +942,9 @@ Useful environment variables to know about:
 | `VDE_USE_AI` | Enable AI mode by default | `export VDE_USE_AI="true"` |
 | `CLAUDE_API_KEY` | Your Claude API key | `export CLAUDE_API_KEY="sk-..."` |
 | `ANTHROPIC_API_KEY` | Your Anthropic API key | `export ANTHROPIC_API_KEY="sk-..."` |
-| `ANTHROPIC_BASE_URL` | Custom base URL for API requests (optional) | `export ANTHROPIC_BASE_URL="https://..."` |
-| `ANTHROPIC_MODEL` | Custom model to use (optional) | `export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"` |
+| `ANTHROPIC_BASE_URL` | Custom base URL for API requests (optional) | `export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"` |
+| `ANTHROPIC_MODEL` | Custom model to use (optional) | `export ANTHROPIC_MODEL="glm-4.7"` |
+| `ANTHROPIC_DEFAULT_SONNET_MODEL` | Default model for Anthropic-compatible APIs (optional) | `export ANTHROPIC_DEFAULT_SONNET_MODEL="glm-4.7"` |
 
 #### Custom Base URL
 
@@ -951,20 +952,46 @@ Use `ANTHROPIC_BASE_URL` for:
 - Corporate proxies
 - Alternative API endpoints
 - Local development/testing
+- Third-party Anthropic-compatible providers
 
 ```bash
+# Corporate proxy
 export ANTHROPIC_BASE_URL="https://api-gateway.internal.company.com/anthropic/v1"
+
+# Zhipu AI (Anthropic-compatible API)
+export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
 ```
 
 #### Model Selection
 
-Use `ANTHROPIC_MODEL` to choose which Claude model to use:
+Use `ANTHROPIC_MODEL` to choose which model to use:
 - `claude-3-5-sonnet-20241022` - Balanced performance (default)
 - `claude-3-5-haiku-20241022` - Faster responses
 - `claude-3-opus-20240229` - Complex reasoning
+- `glm-4.7` - Zhipu AI's GLM model (requires custom base URL)
 
 ```bash
+# Using Claude models
 export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
+
+# Using Zhipu AI's GLM model
+export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="glm-4.7"
+
+# Or specify directly
+export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
+export ANTHROPIC_MODEL="glm-4.7"
+```
+
+#### Third-Party API Providers
+
+You can use Anthropic-compatible APIs from third-party providers:
+
+**Zhipu AI Example:**
+```bash
+export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="glm-4.7"
+export ANTHROPIC_API_KEY="your-zhipu-api-key"
 ```
 
 ### Understanding VM Aliases

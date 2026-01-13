@@ -158,7 +158,8 @@ Both `vde-ai` and `vde-chat` support the following options:
 | `CLAUDE_API_KEY` | Your Claude API key | `sk-ant-...` |
 | `ANTHROPIC_API_KEY` | Your Anthropic API key | `sk-ant-...` |
 | `ANTHROPIC_BASE_URL` | Custom base URL for Anthropic API (optional) | `https://...` |
-| `ANTHROPIC_MODEL` | Custom model to use (optional) | `claude-3-5-sonnet-20241022`, etc. |
+| `ANTHROPIC_MODEL` | Custom model to use (optional) | `claude-3-5-sonnet-20241022`, `glm-4.7`, etc. |
+| `ANTHROPIC_DEFAULT_SONNET_MODEL` | Default model for Anthropic-compatible APIs (optional) | `glm-4.7`, etc. |
 
 ### Setting Up AI Mode
 
@@ -184,10 +185,15 @@ The `ANTHROPIC_BASE_URL` option is useful for:
 - **Corporate Proxies**: Route API requests through your organization's proxy
 - **Alternative Endpoints**: Use compatible API endpoints or gateways
 - **Local Development**: Test with local mock servers or API simulators
+- **Third-Party Providers**: Use Anthropic-compatible API providers
 
 ```bash
 # Example: Using a corporate proxy
 export ANTHROPIC_BASE_URL="https://api-gateway.internal.company.com/anthropic/v1"
+
+# Example: Using Zhipu AI's Anthropic-compatible API
+export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
+export ANTHROPIC_MODEL="glm-4.7"
 
 # Example: Using a custom API gateway
 export ANTHROPIC_BASE_URL="https://my-gateway.example.com/anthropic"
@@ -195,18 +201,40 @@ export ANTHROPIC_BASE_URL="https://my-gateway.example.com/anthropic"
 
 ### Model Selection
 
-The `ANTHROPIC_MODEL` option allows you to specify which Claude model to use:
+The `ANTHROPIC_MODEL` and `ANTHROPIC_DEFAULT_SONNET_MODEL` options allow you to specify which model to use:
 
 ```bash
-# Use the latest Sonnet model (default)
+# Use Claude Sonnet (default)
 export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
 
-# Use Haiku for faster responses
+# Use Claude Haiku for faster responses
 export ANTHROPIC_MODEL="claude-3-5-haiku-20241022"
 
-# Use Opus for more complex reasoning
+# Use Claude Opus for more complex reasoning
 export ANTHROPIC_MODEL="claude-3-opus-20240229"
+
+# Use Zhipu AI's GLM model with Anthropic-compatible API
+export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="glm-4.7"
+
+# Or specify the model directly
+export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
+export ANTHROPIC_MODEL="glm-4.7"
 ```
+
+### Third-Party API Providers
+
+VDE AI Assistant supports Anthropic-compatible APIs from third-party providers:
+
+**Zhipu AI (GLM Models)**
+
+```bash
+export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="glm-4.7"
+export ANTHROPIC_API_KEY="your-zhipu-api-key"
+```
+
+This allows you to use alternative models while maintaining the same VDE AI interface.
 
 ---
 
