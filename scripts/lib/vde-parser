@@ -69,6 +69,12 @@ detect_intent() {
         return
     fi
 
+    # Check for restart intent (must be checked before start/stop)
+    if [[ "$input_lower" =~ "restart" ]] || [[ "$input_lower" =~ "reboot" ]] || [[ "$input_lower" =~ "rebuild" ]]; then
+        echo "$INTENT_RESTART_VM"
+        return
+    fi
+
     # Check for start intent
     if [[ "$input_lower" =~ "start" ]] || [[ "$input_lower" =~ "launch" ]] || [[ "$input_lower" =~ "boot" ]]; then
         echo "$INTENT_START_VM"
@@ -78,12 +84,6 @@ detect_intent() {
     # Check for stop intent
     if [[ "$input_lower" =~ "stop" ]] || [[ "$input_lower" =~ "shutdown" ]] || [[ "$input_lower" =~ "kill" ]]; then
         echo "$INTENT_STOP_VM"
-        return
-    fi
-
-    # Check for restart intent
-    if [[ "$input_lower" =~ "restart" ]] || [[ "$input_lower" =~ "reboot" ]] || [[ "$input_lower" =~ "rebuild" ]]; then
-        echo "$INTENT_RESTART_VM"
         return
     fi
 
@@ -226,7 +226,8 @@ generate_plan() {
 
     # Output plan
     echo "INTENT:$intent"
-    [[ -n "$vms" ]] && echo "VM:$vms"
+    # Convert newlines to spaces for VMs
+    [[ -n "$vms" ]] && echo "VM:${${vms//$'\n'/ }}"
     [[ -n "$flags" ]] && echo "FLAGS:$flags"
     [[ -n "$filter" ]] && echo "FILTER:$filter"
 }
