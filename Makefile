@@ -1,7 +1,7 @@
 # VDE Makefile
 # Targets for testing and development
 
-.PHONY: help test test-unit test-integration test-comprehensive test-coverage lint check clean install-deps coverage-view coverage-clean
+.PHONY: help test test-unit test-integration test-comprehensive test-coverage test-ai-api lint check clean install-deps coverage-view coverage-clean
 
 # Default target
 help:
@@ -22,6 +22,7 @@ help:
 	@echo "  make test-parser          - Run vde-parser comprehensive tests"
 	@echo "  make test-commands        - Run vde-commands comprehensive tests"
 	@echo "  make test-e2e             - Run end-to-end integration tests"
+	@echo "  make test-ai-api          - Run AI API tests"
 	@echo ""
 	@echo "Linting:"
 	@echo "  make lint                - Run all linting checks"
@@ -89,6 +90,14 @@ test-e2e:
 	@chmod +x tests/integration/test_integration_comprehensive.sh
 	@zsh tests/integration/test_integration_comprehensive.sh
 	@echo "✓ End-to-end tests passed"
+
+test-ai-api:
+	@echo "Running AI API tests..."
+	@chmod +x tests/unit/test_vde_ai_api.sh
+	@zsh tests/unit/test_vde_ai_api.sh
+	@chmod +x tests/integration/test_ai_api_integration.sh
+	@zsh tests/integration/test_ai_api_integration.sh
+	@echo "✓ AI API tests passed"
 
 # =============================================================================
 # Code Coverage (requires kcov)

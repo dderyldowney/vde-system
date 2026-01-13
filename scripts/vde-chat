@@ -26,6 +26,14 @@ source "$SCRIPT_DIR/lib/vm-common"
 source "$SCRIPT_DIR/lib/vde-commands"
 source "$SCRIPT_DIR/lib/vm-parser"
 
+# Try to source the AI API library (optional - for LLM-based parsing)
+if [[ -f "$SCRIPT_DIR/lib/vde-ai-api" ]]; then
+    source "$SCRIPT_DIR/lib/vde-ai-api"
+    AI_API_AVAILABLE=true
+else
+    AI_API_AVAILABLE=false
+fi
+
 USE_AI=false
 SESSION_HISTORY=()
 
@@ -278,10 +286,19 @@ main_loop() {
         # Process the command
         echo ""
 
-        # Generate and execute plan
+        if [[ "$USE_AI" == "true" ]] && [[ "$AI_API_AVAILABLE" == "true" ]] && ai_api_available 2>/dev/null; then
         local plan
-        plan=$(generate_plan "$input")
-
+            # Use AI API to parse the command
+            plan=$(parse_command_with_ai "$input" 2>&1)
+            local parse_exit_code=$?
+            if [[ $parse_exit_code -ne 0 ]]; then
+                echo -e "${COLOR_DIM}AI parsing failed, using pattern-based...${COLOR_RESET}"
+                plan=$(generate_plan "$input")
+            fi
+        else
+            # Use pattern-based parsing
+            plan=$(generate_plan "$input")
+        fi
         local result
         result=$(echo "$plan" | execute_plan 2>&1)
         local exit_code=$?

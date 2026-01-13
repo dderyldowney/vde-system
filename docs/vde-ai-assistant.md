@@ -236,6 +236,53 @@ export ANTHROPIC_API_KEY="your-zhipu-api-key"
 
 This allows you to use alternative models while maintaining the same VDE AI interface.
 
+### How AI API Calling Works
+
+When AI mode is enabled (via `--ai` flag or `VDE_USE_AI=1`), the VDE AI Assistant:
+
+1. **Checks for API availability**: Verifies that `vde-ai-api` library exists and API key is set
+2. **Makes API request**: Sends your natural language command to the configured API endpoint
+3. **Parses structured response**: Extracts the execution plan from the AI response
+4. **Executes the plan**: Runs the parsed commands through VDE's execution engine
+5. **Falls back gracefully**: If API calling fails, falls back to pattern-based parsing
+
+**API Request Format:**
+
+The system sends a structured request to the Anthropic Messages API:
+
+```json
+{
+  "model": "claude-3-5-sonnet-20241022",
+  "max_tokens": 1024,
+  "system": "You are a command parser for VDE...",
+  "messages": [
+    {
+      "role": "user",
+      "content": "your natural language command"
+    }
+  ]
+}
+```
+
+**Response Format:**
+
+The AI returns a structured execution plan:
+
+```
+INTENT:start_vm
+VM:python postgres
+FLAGS:rebuild=false nocache=false
+```
+
+**Error Handling:**
+
+- **No API key**: Falls back to pattern-based parsing with warning
+- **API unavailable**: Falls back to pattern-based parsing with warning
+- **API error**: Falls back to pattern-based parsing with error details
+- **Malformed response**: Falls back to pattern-based parsing
+
+This ensures the VDE AI Assistant remains functional even without AI API access.
+
 ---
 
 ## Supported Intents
