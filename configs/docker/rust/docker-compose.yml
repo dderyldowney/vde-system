@@ -15,7 +15,7 @@ services:
     command: sh -c "su devuser -c 'curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y' && /usr/sbin/sshd -D"
 
     ports:
-      - "2223:22"
+      - "2201:22"
 
     volumes:
       - ../../../projects/rust:/home/devuser/workspace

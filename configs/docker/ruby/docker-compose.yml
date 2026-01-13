@@ -15,7 +15,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y ruby-full && /usr/sbin/sshd -D"
 
     ports:
-      - "2226:22"
+      - "2204:22"
 
     volumes:
       - ../../../projects/ruby:/home/devuser/workspace

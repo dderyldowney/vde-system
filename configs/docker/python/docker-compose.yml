@@ -15,7 +15,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y python3 && /usr/sbin/sshd -D"
 
     ports:
-      - "2222:22"
+      - "2200:22"
 
     volumes:
       - ../../../projects/python:/home/devuser/workspace
