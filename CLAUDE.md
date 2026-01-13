@@ -17,15 +17,15 @@ This is a **Virtual Development Environment (VDE)** providing Docker-based devel
 **Supported Languages:**
 | Language       | SSH Port | Host Alias      |
 |----------------|----------|-----------------|
-| Python 3.14    | 2222     | python-dev      |
-| Rust (latest)  | 2223     | rust-dev        |
-| JavaScript/Node| 2224     | js-dev          |
-| C#             | 2225     | csharp-dev      |
-| Ruby           | 2226     | ruby-dev        |
-| PostgreSQL     | 2300     | postgres        |
-| Redis          | 2301     | redis           |
-| MongoDB        | 2302     | mongodb         |
-| Nginx          | 2303     | nginx           |
+| Python 3.14    | 2200     | python-dev      |
+| Rust (latest)  | 2201     | rust-dev        |
+| JavaScript/Node| 2202     | js-dev          |
+| C#             | 2203     | csharp-dev      |
+| Ruby           | 2204     | ruby-dev        |
+| PostgreSQL     | 2400     | postgres        |
+| Redis          | 2401     | redis           |
+| MongoDB        | 2402     | mongodb         |
+| Nginx          | 2403     | nginx           |
 
 ## Container Management
 
@@ -88,14 +88,14 @@ chmod 600 ~/.ssh/config
 ```
 Host python-dev
   HostName localhost
-  Port 2222
+  Port 2200
   User devuser
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
 
 Host rust-dev
   HostName localhost
-  Port 2223
+  Port 2201
   User devuser
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
@@ -169,7 +169,7 @@ To modify user setup across all containers, edit the base Dockerfile.
 
 ## Shared Services
 
-### PostgreSQL (Port 2300)
+### PostgreSQL (Port 2400)
 
 PostgreSQL data persists in `data/postgres/` on the host.
 
@@ -186,7 +186,7 @@ Databases are created via `configs/postgres/01-create-dev-dbs.sql`
 
 Redis is available as a shared service for caching and data structures.
 
-### Nginx (Port 2303)
+### Nginx (Port 2403)
 
 Nginx is available as a reverse proxy and web server.
 

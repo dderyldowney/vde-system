@@ -15,7 +15,7 @@ services:
     command: sh -c "apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs && /usr/sbin/sshd -D"
 
     ports:
-      - "2224:22"
+      - "2202:22"
 
     volumes:
       - ../../../projects/js:/home/devuser/workspace
