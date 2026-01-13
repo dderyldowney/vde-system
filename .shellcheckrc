@@ -1,0 +1,12 @@
+# Shellcheck configuration for VDE scripts
+
+# Source scripts - can't follow non-constant or dynamic sources
+exclude=SC1090
+exclude=SC1091
+
+# Variable appears unused (may be used in sourced files)
+exclude=SC2034
+
+# Allow Zsh-specific features
+exclude=SC2039  # In POSIX sh
+exclude=SC3043  # In POSIX sh
