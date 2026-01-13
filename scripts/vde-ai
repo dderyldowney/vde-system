@@ -1,0 +1,163 @@
+#!/usr/bin/env zsh
+# VDE AI Assistant - Natural Language Command Interface
+# Control the VDE system using natural language commands
+#
+# Usage: vde-ai "your natural language command"
+#        vde-ai [OPTIONS] "your command"
+#
+# Options:
+#   --ai         Enable LLM-based parsing (requires API key)
+#   --dry-run    Show what would happen without executing
+#   --help, -h   Show help message
+#
+# Environment Variables:
+#   VDE_USE_AI   Set to "1", "true", or "yes" to enable LLM parsing by default
+
+set -e
+
+# -----------------------
+# Configuration
+# -----------------------
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+source "$SCRIPT_DIR/lib/vde-commands"
+source "$SCRIPT_DIR/lib/vde-parser"
+
+# AI usage flags (can be enabled via --ai flag or VDE_USE_AI env var)
+USE_AI=false
+DRY_RUN=false
+
+# -----------------------
+# Usage
+# -----------------------
+show_usage() {
+    cat <<'EOF'
+Usage: vde-ai [OPTIONS] "your natural language command"
+
+Control the VDE system using natural language commands.
+
+OPTIONS:
+  --ai         Enable LLM-based parsing (requires CLAUDE_API_KEY or ANTHROPIC_API_KEY)
+  --dry-run    Show what would happen without executing
+  --help, -h   Show this help message
+
+ENVIRONMENT VARIABLES:
+  VDE_USE_AI   Set to "1", "true", or "yes" to enable LLM parsing by default
+
+EXAMPLES:
+  vde-ai "what VMs can I create?"
+  vde-ai "create a Go VM and start it"
+  vde-ai "start Python and PostgreSQL"
+  vde-ai "what's currently running?"
+  vde-ai "stop everything"
+  vde-ai "how do I connect to Python?"
+
+SUPPORTED INTENTS:
+  List VMs:        "list all languages", "show services"
+  Create VMs:      "create a Go VM", "make Python and PostgreSQL"
+  Start VMs:       "start Go", "start everything", "launch Python"
+  Stop VMs:        "stop Go", "shutdown everything"
+  Restart VMs:     "restart Python", "rebuild and start Go"
+  Status:          "what's running?", "show status"
+  Connection Info: "how do I connect to Python?", "SSH into Go"
+  Help:            "help", "what can I do?"
+
+For more information, see: README.md#ai-cli-integration
+EOF
+}
+
+# -----------------------
+# Parse Arguments
+# -----------------------
+USER_INPUT=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --ai)
+            USE_AI=true
+            shift
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            vde_set_dry_run true
+            shift
+            ;;
+        --help|-h)
+            show_usage
+            exit 0
+            ;;
+        -*)
+            log_error "Unknown option: $1"
+            echo ""
+            show_usage
+            exit 1
+            ;;
+        *)
+            # Accumulate user input
+            if [[ -z "$USER_INPUT" ]]; then
+                USER_INPUT="$1"
+            else
+                USER_INPUT="$USER_INPUT $1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Check for VDE_USE_AI environment variable
+if [[ "$USE_AI" == "false" ]]; then
+    case "${VDE_USE_AI:-}" in
+        1|true|yes|TRUE|YES|True)
+            USE_AI=true
+            ;;
+    esac
+fi
+
+# Validate input
+if [[ -z "$USER_INPUT" ]]; then
+    log_error "No command provided"
+    echo ""
+    show_usage
+    exit 1
+fi
+
+# -----------------------
+# Load VM Types
+# -----------------------
+load_vm_types || {
+    log_error "Failed to load VM types"
+    exit 1
+}
+
+# -----------------------
+# Parse and Execute
+# -----------------------
+log_info "Parsing command: $USER_INPUT"
+
+# Check if AI mode is enabled
+if [[ "$USE_AI" == "true" ]]; then
+    # Check for API key
+    if [[ -z "${CLAUDE_API_KEY:-}" ]] && [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+        log_error "AI mode requested but no API key found"
+        log_error "Set CLAUDE_API_KEY or ANTHROPIC_API_KEY environment variable"
+        log_error "Falling back to pattern-based parsing..."
+        USE_AI=false
+    fi
+fi
+
+# Generate execution plan
+PLAN=$(generate_plan "$USER_INPUT")
+
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo ""
+    echo "[DRY RUN] Generated execution plan:"
+    echo "$PLAN"
+    echo ""
+    log_info "Dry run complete - no actions taken"
+    exit 0
+fi
+
+# Execute the plan
+echo ""
+echo "$PLAN" | execute_plan
+exit $?

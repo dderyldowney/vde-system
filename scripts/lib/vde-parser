@@ -1,0 +1,457 @@
+#!/usr/bin/env zsh
+# VDE Natural Language Parser
+# Parses natural language input into structured VDE commands
+# Source this library with: source ./scripts/lib/vde-parser
+
+# -----------------------
+# Dependencies
+# -----------------------
+# This library requires vm-common and vde-commands to be sourced first
+
+# -----------------------
+# Constants
+# -----------------------
+readonly INTENT_LIST_VMS="list_vms"
+readonly INTENT_CREATE_VM="create_vm"
+readonly INTENT_START_VM="start_vm"
+readonly INTENT_STOP_VM="stop_vm"
+readonly INTENT_RESTART_VM="restart_vm"
+readonly INTENT_STATUS="status"
+readonly INTENT_CONNECT="connect"
+readonly INTENT_ADD_VM_TYPE="add_vm_type"
+readonly INTENT_HELP="help"
+
+# -----------------------
+# Intent Detection
+# -----------------------
+
+# Detect the primary intent from user input
+# Args: <input_string>
+# Returns: Intent constant
+detect_intent() {
+    local input="$1"
+    local input_lower
+    input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
+
+    # Check for help intent first
+    if [[ "$input_lower" =~ "help" ]] || [[ "$input_lower" =~ "what can i do" ]] || [[ "$input_lower" =~ "how do i use" ]]; then
+        echo "$INTENT_HELP"
+        return
+    fi
+
+    # Check for list/show intents (check before other patterns)
+    if [[ "$input_lower" =~ "list" ]] || [[ "$input_lower" =~ "show" ]] || [[ "$input_lower" =~ "what available" ]]; then
+        echo "$INTENT_LIST_VMS"
+        return
+    fi
+
+    # Check for "what can I create" or similar patterns
+    if [[ "$input_lower" =~ "what can i" ]] || [[ "$input_lower" =~ "what vms" ]] || [[ "$input_lower" =~ "which vms" ]]; then
+        echo "$INTENT_LIST_VMS"
+        return
+    fi
+
+    # Check for status
+    if [[ "$input_lower" =~ "running" ]] || [[ "$input_lower" =~ "status" ]] || [[ "$input_lower" =~ "current state" ]]; then
+        echo "$INTENT_STATUS"
+        return
+    fi
+
+    # Check for connect intent
+    if [[ "$input_lower" =~ "how do i connect" ]] || [[ "$input_lower" =~ "ssh into" ]] || [[ "$input_lower" =~ "connect to" ]]; then
+        echo "$INTENT_CONNECT"
+        return
+    fi
+
+    # Check for create intent (be specific to avoid false matches)
+    if [[ "$input_lower" =~ "create a" ]] || [[ "$input_lower" =~ "create new" ]] || [[ "$input_lower" =~ "make a" ]] || [[ "$input_lower" =~ "make new" ]] || [[ "$input_lower" =~ "set up" ]]; then
+        echo "$INTENT_CREATE_VM"
+        return
+    fi
+
+    # Check for start intent
+    if [[ "$input_lower" =~ "start" ]] || [[ "$input_lower" =~ "launch" ]] || [[ "$input_lower" =~ "boot" ]]; then
+        echo "$INTENT_START_VM"
+        return
+    fi
+
+    # Check for stop intent
+    if [[ "$input_lower" =~ "stop" ]] || [[ "$input_lower" =~ "shutdown" ]] || [[ "$input_lower" =~ "kill" ]]; then
+        echo "$INTENT_STOP_VM"
+        return
+    fi
+
+    # Check for restart intent
+    if [[ "$input_lower" =~ "restart" ]] || [[ "$input_lower" =~ "reboot" ]] || [[ "$input_lower" =~ "rebuild" ]]; then
+        echo "$INTENT_RESTART_VM"
+        return
+    fi
+
+    # Default: return help intent
+    echo "$INTENT_HELP"
+}
+
+# -----------------------
+# Entity Extraction
+# -----------------------
+
+# Extract VM names from input
+# Args: <input_string>
+# Returns: Space-separated list of VM names
+extract_vm_names() {
+    local input="$1"
+    local input_lower
+    input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
+
+    # First try to find known VM names directly
+    local -a found_vms=()
+    local -a all_vms
+    local alias_list
+    local -a alias_array
+    all_vms=($(get_all_vms))
+
+    # Check each known VM name
+    for vm in "${all_vms[@]}"; do
+        # Check for direct match (word boundaries)
+        if echo "$input_lower" | grep -qw "$vm"; then
+            found_vms+=("$vm")
+            continue
+        fi
+
+        # Check aliases
+        alias_list=$(get_vm_info aliases "$vm")
+        if [[ -n "$alias_list" ]]; then
+            IFS=',' read -A alias_array <<< "$alias_list"
+            for alias in "${alias_array[@]}"; do
+                alias=$(echo "$alias" | tr -d ' ')
+                if echo "$input_lower" | grep -qw "$alias"; then
+                    found_vms+=("$vm")
+                    break
+                fi
+            done
+        fi
+    done
+
+    # Handle "all", "everything"
+    if [[ "$input_lower" =~ "all" ]] || [[ "$input_lower" =~ "everything" ]]; then
+        get_all_vms
+        return
+    fi
+
+    # Handle "all languages"
+    if [[ "$input_lower" =~ "all languages" ]] || [[ "$input_lower" =~ "all lang" ]]; then
+        get_lang_vms
+        return
+    fi
+
+    # Handle "all services"
+    if [[ "$input_lower" =~ "all services" ]] || [[ "$input_lower" =~ "all svc" ]]; then
+        get_service_vms
+        return
+    fi
+
+    # Print found VMs
+    if [[ ${#found_vms[@]} -gt 0 ]]; then
+        printf '%s\n' "${found_vms[@]}"
+    fi
+}
+
+# Extract filter type from input (for listing)
+# Args: <input_string>
+# Returns: "lang", "svc", or "all"
+extract_filter() {
+    local input="$1"
+    local input_lower
+    input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
+
+    if [[ "$input_lower" =~ "language" ]] || [[ "$input_lower" =~ "lang" ]]; then
+        echo "lang"
+    elif [[ "$input_lower" =~ "service" ]] || [[ "$input_lower" =~ "svc" ]]; then
+        echo "svc"
+    else
+        echo "all"
+    fi
+}
+
+# Extract flags from input
+# Args: <input_string>
+# Returns: rebuild=true/false nocache=true/false
+extract_flags() {
+    local input="$1"
+    local input_lower
+    input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
+
+    local rebuild="false"
+    local nocache="false"
+
+    if [[ "$input_lower" =~ "rebuild" ]] || [[ "$input_lower" =~ "re-create" ]]; then
+        rebuild="true"
+    fi
+
+    if [[ "$input_lower" =~ "no-cache" ]] || [[ "$input_lower" =~ "no cache" ]]; then
+        nocache="true"
+    fi
+
+    echo "rebuild=$rebuild nocache=$nocache"
+}
+
+# -----------------------
+# Command Generation
+# -----------------------
+
+# Generate an execution plan from input
+# Args: <input_string>
+# Returns: Structured plan (multi-line)
+generate_plan() {
+    local input="$1"
+
+    # Detect intent
+    local intent
+    intent=$(detect_intent "$input")
+
+    # Extract entities based on intent
+    local vms=""
+    local flags=""
+    local filter="all"
+
+    case "$intent" in
+        "$INTENT_LIST_VMS")
+            filter=$(extract_filter "$input")
+            ;;
+        "$INTENT_CREATE_VM"|"$INTENT_START_VM"|"$INTENT_STOP_VM"|"$INTENT_RESTART_VM"|"$INTENT_STATUS"|"$INTENT_CONNECT")
+            vms=$(extract_vm_names "$input")
+            flags=$(extract_flags "$input")
+            ;;
+    esac
+
+    # Output plan
+    echo "INTENT:$intent"
+    [[ -n "$vms" ]] && echo "VM:$vms"
+    [[ -n "$flags" ]] && echo "FLAGS:$flags"
+    [[ -n "$filter" ]] && echo "FILTER:$filter"
+}
+
+# -----------------------
+# Plan Execution
+# -----------------------
+
+# Execute a generated plan
+# Args: (plan passed via stdin)
+execute_plan() {
+    local intent=""
+    local -a vms=()
+    local rebuild="false"
+    local nocache="false"
+    local filter="all"
+
+    # Parse plan from stdin
+    while IFS= read -r line; do
+        local key="${line%%:*}"
+        local value="${line#*:}"
+
+        case "$key" in
+            INTENT)
+                intent="$value"
+                ;;
+            VM)
+                local vm_list
+                vm_list=$(echo "$value" | tr '\n' ' ')
+                # Trim trailing whitespace and convert to array
+                vm_list=$(echo "$vm_list" | sed 's/[[:space:]]*$//')
+                vms=(${=vm_list})
+                ;;
+            FLAGS)
+                eval "$value"
+                ;;
+            FILTER)
+                filter="$value"
+                ;;
+        esac
+    done
+
+    # Execute based on intent
+    case "$intent" in
+        "$INTENT_LIST_VMS")
+            vde_list_vms "--$filter"
+            return $?
+            ;;
+
+        "$INTENT_STATUS")
+            if [[ ${#vms[@]} -eq 0 ]]; then
+                vde_get_running_vms
+            else
+                for vm in "${vms[@]}"; do
+                    local vm_status
+                    vm_status=$(vde_get_vm_status "$vm")
+                    echo "$vm: $vm_status"
+                done
+            fi
+            return $?
+            ;;
+
+        "$INTENT_CREATE_VM")
+            if [[ ${#vms[@]} -eq 0 ]]; then
+                log_error "No VM specified. Please specify which VM to create."
+                return 1
+            fi
+
+            for vm in "${vms[@]}"; do
+                if ! vde_validate_vm_type "$vm"; then
+                    log_error "Unknown VM type: $vm"
+                    local available
+                    available=$(vde_list_vms | tr '\n' ' ')
+                    log_error "Available VMs: $available"
+                    return 1
+                fi
+
+                if vde_vm_exists "$vm"; then
+                    log_info "VM $vm already exists. Skipping creation."
+                else
+                    vde_create_vm "$vm" || return 1
+                fi
+            done
+            return $?
+            ;;
+
+        "$INTENT_START_VM")
+            if [[ ${#vms[@]} -eq 0 ]]; then
+                log_error "No VM specified. Please specify which VM to start."
+                return 1
+            fi
+
+            for vm in "${vms[@]}"; do
+                if ! vde_vm_exists "$vm"; then
+                    log_error "VM $vm does not exist. Create it first."
+                    return 1
+                fi
+            done
+
+            # Build args array with flags and VMs
+            local -a start_args=()
+            [[ "$rebuild" == "true" ]] && start_args+=(--rebuild)
+            [[ "$nocache" == "true" ]] && start_args+=(--no-cache)
+            start_args+=("${vms[@]}")
+
+            vde_start_multiple_vms "${start_args[@]}"
+            return $?
+            ;;
+
+        "$INTENT_STOP_VM")
+            if [[ ${#vms[@]} -eq 0 ]]; then
+                log_error "No VM specified. Please specify which VM to stop."
+                return 1
+            fi
+
+            vde_stop_multiple_vms "${vms[@]}"
+            return $?
+            ;;
+
+        "$INTENT_RESTART_VM")
+            if [[ ${#vms[@]} -eq 0 ]]; then
+                log_error "No VM specified. Please specify which VM to restart."
+                return 1
+            fi
+
+            for vm in "${vms[@]}"; do
+                vde_restart_vm "$vm" "$rebuild" "$nocache"
+            done
+            return $?
+            ;;
+
+        "$INTENT_CONNECT")
+            if [[ ${#vms[@]} -eq 0 ]]; then
+                log_error "No VM specified. Please specify which VM you want to connect to."
+                return 1
+            fi
+
+            for vm in "${vms[@]}"; do
+                local ssh_info
+                ssh_info=$(vde_get_ssh_info "$vm")
+
+                if [[ -z "$ssh_info" ]]; then
+                    log_error "Could not get SSH info for $vm"
+                else
+                    local ssh_host="${ssh_info%%|*}"
+                    local ssh_port="${ssh_info##*|}"
+                    echo "To connect to $vm:"
+                    echo "  SSH command: ssh $ssh_host"
+                    echo "  Port: $ssh_port"
+                    echo "  Or use VSCode Remote-SSH with host: $ssh_host"
+                fi
+            done
+            return $?
+            ;;
+
+        "$INTENT_HELP")
+            show_ai_help
+            return 0
+            ;;
+
+        *)
+            log_error "Unknown intent: $intent"
+            show_ai_help
+            return 1
+            ;;
+    esac
+}
+
+# -----------------------
+# Help Display
+# -----------------------
+
+# Show AI assistant help
+show_ai_help() {
+    echo "VDE AI Assistant - Natural Language Control"
+    echo ""
+    echo "The VDE AI Assistant helps you control your Virtual Development Environment"
+    echo "using natural language commands."
+    echo ""
+    echo "SUPPORTED INTENTS:"
+    echo "  List VMs"
+    echo "    what VMs can I create?"
+    echo "    show all languages"
+    echo "    list services"
+    echo ""
+    echo "  Create VMs"
+    echo "    create a Go VM"
+    echo "    make a Python container"
+    echo "    set up Rust and PostgreSQL"
+    echo ""
+    echo "  Start VMs"
+    echo "    start Go"
+    echo "    start Python and Rust"
+    echo "    start everything"
+    echo ""
+    echo "  Stop VMs"
+    echo "    stop Go"
+    echo "    shutdown everything"
+    echo ""
+    echo "  Restart VMs"
+    echo "    restart Python"
+    echo "    rebuild and start Go"
+    echo ""
+    echo "  Status"
+    echo "    what is running?"
+    echo "    show status of all VMs"
+    echo ""
+    echo "  Connection Info"
+    echo "    how do I connect to Python?"
+    echo "    SSH into Go VM"
+    echo ""
+    echo "  Help"
+    echo "    help"
+    echo "    what can I do?"
+    echo ""
+    echo "OPTIONS:"
+    echo "  --dry-run    Show what would happen without executing"
+    echo "  --ai         Use LLM-based parsing (if API key available)"
+    echo ""
+    echo "ENVIRONMENT VARIABLES:"
+    echo "  VDE_USE_AI   Set to 1 or true to enable LLM parsing"
+    echo ""
+    echo "EXAMPLES:"
+    echo "  vde-ai create a Go VM and start it"
+    echo "  vde-ai what is currently running?"
+    echo "  vde-ai start Python and PostgreSQL"
+    echo "  vde-ai stop everything"
+}
