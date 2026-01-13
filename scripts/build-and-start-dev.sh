@@ -48,7 +48,7 @@ start_service() {
     docker-compose -f "$compose_file" up -d
 }
 
-for svc in python rust js c-sharp ruby postgres; do
+for svc in python rust js csharp ruby ros postgres redis mongodb; do
     start_service "$svc"
 done
 
