@@ -1,33 +1,40 @@
 # VDE Makefile
 # Targets for testing and development
 
-.PHONY: help test test-unit test-integration lint check clean install-deps
+.PHONY: help test test-unit test-integration test-comprehensive test-coverage lint check clean install-deps
 
 # Default target
 help:
 	@echo "VDE Makefile Targets:"
 	@echo ""
 	@echo "Testing:"
-	@echo "  make test          - Run all tests"
-	@echo "  make test-unit     - Run unit tests only"
-	@echo "  make test-integration - Run integration tests only"
+	@echo "  make test                 - Run all tests"
+	@echo "  make test-unit            - Run unit tests only"
+	@echo "  make test-integration     - Run integration tests only"
+	@echo "  make test-comprehensive   - Run comprehensive test suite (parser + commands)"
+	@echo "  make test-coverage        - Run all tests with coverage report"
+	@echo ""
+	@echo "Specific Test Suites:"
+	@echo "  make test-parser          - Run vde-parser comprehensive tests"
+	@echo "  make test-commands        - Run vde-commands comprehensive tests"
+	@echo "  make test-e2e             - Run end-to-end integration tests"
 	@echo ""
 	@echo "Linting:"
-	@echo "  make lint          - Run all linting checks"
-	@echo "  make check         - Run all tests and linting"
+	@echo "  make lint                - Run all linting checks"
+	@echo "  make check               - Run all tests and linting"
 	@echo ""
 	@echo "Development:"
-	@echo "  make install-deps  - Install development dependencies"
-	@echo "  make clean         - Clean test artifacts"
+	@echo "  make install-deps        - Install development dependencies"
+	@echo "  make clean               - Clean test artifacts"
 	@echo ""
 	@echo "Docker:"
-	@echo "  make test-docker   - Run Docker build test (random VM)"
+	@echo "  make test-docker         - Run Docker build test (random VM)"
 
 # =============================================================================
 # Testing Targets
 # =============================================================================
 
-test: test-unit test-integration
+test: test-unit test-integration test-comprehensive
 	@echo ""
 	@echo "================================"
 	@echo "All Tests Complete"
@@ -54,6 +61,44 @@ test-integration:
 		fi \
 	done
 	@echo "✓ Integration tests passed"
+
+test-comprehensive: test-parser test-commands
+	@echo ""
+	@echo "================================"
+	@echo "Comprehensive Tests Complete"
+	@echo "================================"
+
+test-parser:
+	@echo "Running comprehensive vde-parser tests..."
+	@chmod +x tests/unit/test_vde_parser_comprehensive.sh
+	@zsh tests/unit/test_vde_parser_comprehensive.sh
+	@echo "✓ vde-parser tests passed"
+
+test-commands:
+	@echo "Running comprehensive vde-commands tests..."
+	@chmod +x tests/unit/test_vde_commands_comprehensive.sh
+	@zsh tests/unit/test_vde_commands_comprehensive.sh
+	@echo "✓ vde-commands tests passed"
+
+test-e2e:
+	@echo "Running end-to-end integration tests..."
+	@chmod +x tests/integration/test_integration_comprehensive.sh
+	@zsh tests/integration/test_integration_comprehensive.sh
+	@echo "✓ End-to-end tests passed"
+
+test-coverage: test test-parser test-commands test-e2e
+	@echo ""
+	@echo "================================"
+	@echo "Coverage Report"
+	@echo "================================"
+	@echo "All test suites executed:"
+	@echo "  ✓ Unit tests (vm-common, vde-parser, vde-commands)"
+	@echo "  ✓ Integration tests (patterns, workflows)"
+	@echo "  ✓ Comprehensive vde-parser tests (intent, extraction, planning)"
+	@echo "  ✓ Comprehensive vde-commands tests (queries, actions, batch)"
+	@echo "  ✓ End-to-end integration tests (real-world scenarios)"
+	@echo ""
+	@echo "Total test execution complete."
 
 # =============================================================================
 # Linting Targets

@@ -193,7 +193,43 @@ jobs:
           echo "✓ Daily usage patterns passed"
 
   # =============================================================================
-  # Job 4: Docker Build Tests
+  # Job 4: Comprehensive Tests
+  # =============================================================================
+  comprehensive-tests:
+    name: Comprehensive Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y zsh
+
+      - name: Run comprehensive vde-parser tests
+        shell: zsh {0}
+        run: |
+          echo "Running comprehensive vde-parser tests..."
+          ./tests/unit/test_vde_parser_comprehensive.sh
+          echo "✓ vde-parser comprehensive tests passed"
+
+      - name: Run comprehensive vde-commands tests
+        shell: zsh {0}
+        run: |
+          echo "Running comprehensive vde-commands tests..."
+          ./tests/unit/test_vde_commands_comprehensive.sh
+          echo "✓ vde-commands comprehensive tests passed"
+
+      - name: Run end-to-end integration tests
+        shell: zsh {0}
+        run: |
+          echo "Running end-to-end integration tests..."
+          ./tests/integration/test_integration_comprehensive.sh
+          echo "✓ End-to-end integration tests passed"
+
+  # =============================================================================
+  # Job 5: Docker Build Tests
   # =============================================================================
   docker-build:
     name: Docker Build & SSH Test
@@ -331,12 +367,12 @@ jobs:
         run: ./scripts/shutdown-virtual ${{ steps.select-vm.outputs.vm }} || true
 
   # =============================================================================
-  # Job 5: Summary
+  # Job 6: Summary
   # =============================================================================
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [lint, unit-tests, integration-tests, docker-build]
+    needs: [lint, unit-tests, integration-tests, comprehensive-tests, docker-build]
     if: always()
 
     steps:
@@ -350,12 +386,14 @@ jobs:
           echo "  ┌─ Linting: ${{ needs.lint.result }}"
           echo "  ├─ Unit Tests: ${{ needs.unit-tests.result }}"
           echo "  ├─ Integration Tests: ${{ needs.integration-tests.result }}"
+          echo "  ├─ Comprehensive Tests: ${{ needs.comprehensive-tests.result }}"
           echo "  └─ Docker Build: ${{ needs.docker-build.result }}"
           echo ""
 
           if [[ "${{ needs.lint.result }}" == "failure" ]] || \
              [[ "${{ needs.unit-tests.result }}" == "failure" ]] || \
              [[ "${{ needs.integration-tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.comprehensive-tests.result }}" == "failure" ]] || \
              [[ "${{ needs.docker-build.result }}" == "failure" ]]; then
             echo "::error::CI Pipeline Failed"
             exit 1
