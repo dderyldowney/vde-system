@@ -6,7 +6,6 @@ projects/*/*
 !projects/python/
 !projects/ruby/
 !projects/rust/
-!projects/todowrite/
 
 # Environment-specific files
 .env-files/*

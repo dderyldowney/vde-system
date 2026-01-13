@@ -42,7 +42,7 @@ $HOME/dev
 │   └── app-logs
 ├── projects
 │   ├── c-sharp
-│   ├── javascript
+│   ├── js
 │   ├── python
 │   ├── ruby
 │   ├── rust
@@ -122,7 +122,7 @@ Host js-dev
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
 
-Host postgres-dev
+Host postgres
   HostName localhost
   Port 2225
   User devuser
@@ -206,6 +206,6 @@ Initial database creation is handled by: `configs/postgres/01-create-dev-dbs.sql
    - `python-dev`
    - `rust-dev`
    - `js-dev`
-   - `postgres-dev`
+   - `postgres`
 
 Each container behaves like a lightweight VM suitable for full development workflows.
