@@ -1,7 +1,7 @@
 # VDE Makefile
 # Targets for testing and development
 
-.PHONY: help test test-unit test-integration test-comprehensive test-coverage lint check clean install-deps
+.PHONY: help test test-unit test-integration test-comprehensive test-coverage lint check clean install-deps coverage-view coverage-clean
 
 # Default target
 help:
@@ -12,7 +12,11 @@ help:
 	@echo "  make test-unit            - Run unit tests only"
 	@echo "  make test-integration     - Run integration tests only"
 	@echo "  make test-comprehensive   - Run comprehensive test suite (parser + commands)"
-	@echo "  make test-coverage        - Run all tests with coverage report"
+	@echo "  make test-coverage        - Run all tests with code coverage (kcov required)"
+	@echo "  make coverage-unit        - Run unit tests with code coverage"
+	@echo "  make coverage-integration - Run integration tests with code coverage"
+	@echo "  make coverage-view        - Open coverage report in browser"
+	@echo "  make coverage-clean       - Clean coverage reports"
 	@echo ""
 	@echo "Specific Test Suites:"
 	@echo "  make test-parser          - Run vde-parser comprehensive tests"
@@ -86,19 +90,57 @@ test-e2e:
 	@zsh tests/integration/test_integration_comprehensive.sh
 	@echo "✓ End-to-end tests passed"
 
-test-coverage: test test-parser test-commands test-e2e
-	@echo ""
-	@echo "================================"
-	@echo "Coverage Report"
-	@echo "================================"
-	@echo "All test suites executed:"
-	@echo "  ✓ Unit tests (vm-common, vde-parser, vde-commands)"
-	@echo "  ✓ Integration tests (patterns, workflows)"
-	@echo "  ✓ Comprehensive vde-parser tests (intent, extraction, planning)"
-	@echo "  ✓ Comprehensive vde-commands tests (queries, actions, batch)"
-	@echo "  ✓ End-to-end integration tests (real-world scenarios)"
-	@echo ""
-	@echo "Total test execution complete."
+# =============================================================================
+# Code Coverage (requires kcov)
+# =============================================================================
+
+COVERAGE_DIR := coverage
+COVERAGE_SCRIPT := scripts/coverage.sh
+
+test-coverage:
+	@echo "Running all tests with code coverage..."
+	@if ! command -v kcov >/dev/null 2>&1; then \
+		echo "⚠ kcov not found. Install kcov for code coverage:"; \
+		echo "  macOS: brew install kcov"; \
+		echo "  Ubuntu: sudo apt-get install kcov"; \
+		echo "  Or build from source: https://github.com/SimonKagstrom/kcov"; \
+		exit 1; \
+	fi
+	@chmod +x $(COVERAGE_SCRIPT)
+	@zsh $(COVERAGE_SCRIPT) all
+
+coverage-unit:
+	@echo "Running unit tests with code coverage..."
+	@if ! command -v kcov >/dev/null 2>&1; then \
+		echo "⚠ kcov not found. Install: brew/apt install kcov"; \
+		exit 1; \
+	fi
+	@chmod +x $(COVERAGE_SCRIPT)
+	@zsh $(COVERAGE_SCRIPT) unit
+
+coverage-integration:
+	@echo "Running integration tests with code coverage..."
+	@if ! command -v kcov >/dev/null 2>&1; then \
+		echo "⚠ kcov not found. Install: brew/apt install kcov"; \
+		exit 1; \
+	fi
+	@chmod +x $(COVERAGE_SCRIPT)
+	@zsh $(COVERAGE_SCRIPT) integration
+
+coverage-view:
+	@if [ -f "$(COVERAGE_DIR)/merged/index.html" ]; then \
+		echo "Opening coverage report..."; \
+		open "$(COVERAGE_DIR)/merged/index.html" 2>/dev/null || \
+		xdg-open "$(COVERAGE_DIR)/merged/index.html" 2>/dev/null || \
+		echo "Report available at: $(COVERAGE_DIR)/merged/index.html"; \
+	else \
+		echo "⚠ Coverage report not found. Run 'make test-coverage' first."; \
+	fi
+
+coverage-clean:
+	@echo "Cleaning coverage reports..."
+	@rm -rf $(COVERAGE_DIR)
+	@echo "✓ Coverage reports cleaned"
 
 # =============================================================================
 # Linting Targets
@@ -164,21 +206,24 @@ test-docker:
 
 install-deps:
 	@echo "Installing development dependencies..."
-	@echo "Note: Install shellcheck, shfmt, yamllint based on your OS"
+	@echo "Note: Install shellcheck, shfmt, yamllint, kcov based on your OS"
 	@echo ""
 	@echo "macOS:"
-	@echo "  brew install shellcheck shfmt yamllint"
+	@echo "  brew install shellcheck shfmt yamllint kcov"
 	@echo ""
 	@echo "Ubuntu/Debian:"
-	@echo "  sudo apt-get install shellcheck zsh"
+	@echo "  sudo apt-get install shellcheck zsh kcov"
 	@echo "  go install mvdan.cc/sh/v3/cmd/shfmt@latest"
 	@echo "  pip install yamllint"
+	@echo ""
+	@echo "Other platforms:"
+	@echo "  Build kcov from source: https://github.com/SimonKagstrom/kcov"
 
 # =============================================================================
 # Cleanup
 # =============================================================================
 
-clean:
+clean: coverage-clean
 	@echo "Cleaning test artifacts..."
 	@rm -rf tests/.test-tmp
 	@rm -f tests/*.log

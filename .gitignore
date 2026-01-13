@@ -15,6 +15,7 @@ data/postgres/*
 data/redis/*
 data/mongodb/*
 public-ssh-keys/*
+coverage/*
 
 # IDE and editor files
 .idea/

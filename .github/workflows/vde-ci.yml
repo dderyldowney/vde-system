@@ -229,7 +229,82 @@ jobs:
           echo "✓ End-to-end integration tests passed"
 
   # =============================================================================
-  # Job 5: Docker Build Tests
+  # Job 5: Code Coverage
+  # =============================================================================
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zsh cmake libcurl4-openssl-dev libelf-dev libdw-dev binutils-dev
+
+      - name: Install kcov
+        run: |
+          git clone https://github.com/SimonKagstrom/kcov.git
+          cd kcov
+          cmake .
+          make
+          sudo make install
+          cd ..
+          rm -rf kcov
+
+      - name: Verify kcov installation
+        run: kcov --version
+
+      - name: Run tests with coverage
+        shell: zsh {0}
+        run: |
+          # Make coverage script executable
+          chmod +x scripts/coverage.sh
+
+          # Run coverage for all tests
+          ./scripts/coverage.sh all
+
+      - name: Generate coverage summary
+        run: |
+          if [ -f "coverage/merged/index.html" ]; then
+            # Extract coverage from HTML
+            COVERAGE=$(grep -oP 'covered"[^>]*>\K[0-9.]+' coverage/merged/index.html 2>/dev/null | head -1)
+
+            if [ -n "$COVERAGE" ]; then
+              echo "📊 Code Coverage: ${COVERAGE}%"
+              echo "COVERAGE=${COVERAGE}" >> $GITHUB_ENV
+            else
+              echo "⚠ Could not extract coverage percentage"
+            fi
+          else
+            echo "::warning::Coverage report not found"
+          fi
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/merged/
+          retention-days: 30
+
+      - name: Coverage summary comment
+        run: |
+          echo "╔════════════════════════════════════════════════════════════╗"
+          echo "║                  Code Coverage Report                       ║"
+          echo "╚════════════════════════════════════════════════════════════╝"
+          echo ""
+          if [ -n "$COVERAGE" ]; then
+            echo "Total Coverage: ${COVERAGE}%"
+          else
+            echo "Coverage report generated (see artifacts)"
+          fi
+          echo ""
+
+  # =============================================================================
+  # Job 6: Docker Build Tests
   # =============================================================================
   docker-build:
     name: Docker Build & SSH Test
@@ -367,12 +442,12 @@ jobs:
         run: ./scripts/shutdown-virtual ${{ steps.select-vm.outputs.vm }} || true
 
   # =============================================================================
-  # Job 6: Summary
+  # Job 7: Summary
   # =============================================================================
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [lint, unit-tests, integration-tests, comprehensive-tests, docker-build]
+    needs: [lint, unit-tests, integration-tests, comprehensive-tests, coverage, docker-build]
     if: always()
 
     steps:
@@ -387,6 +462,7 @@ jobs:
           echo "  ├─ Unit Tests: ${{ needs.unit-tests.result }}"
           echo "  ├─ Integration Tests: ${{ needs.integration-tests.result }}"
           echo "  ├─ Comprehensive Tests: ${{ needs.comprehensive-tests.result }}"
+          echo "  ├─ Code Coverage: ${{ needs.coverage.result }}"
           echo "  └─ Docker Build: ${{ needs.docker-build.result }}"
           echo ""
 
@@ -394,6 +470,7 @@ jobs:
              [[ "${{ needs.unit-tests.result }}" == "failure" ]] || \
              [[ "${{ needs.integration-tests.result }}" == "failure" ]] || \
              [[ "${{ needs.comprehensive-tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.coverage.result }}" == "failure" ]] || \
              [[ "${{ needs.docker-build.result }}" == "failure" ]]; then
             echo "::error::CI Pipeline Failed"
             exit 1
