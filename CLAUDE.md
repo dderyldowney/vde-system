@@ -20,7 +20,7 @@ This is a **Virtual Development Environment (VDE)** providing Docker-based devel
 | Python 3.14    | 2222     | python-dev      |
 | Rust (latest)  | 2223     | rust-dev        |
 | JavaScript/Node| 2224     | js-dev          |
-| PostgreSQL     | 2225     | postgres-dev    |
+| PostgreSQL     | 2225     | postgres        |
 | C#             | TBD      | csharp-dev      |
 | Ruby           | TBD      | ruby-dev        |
 
@@ -118,6 +118,8 @@ $HOME/dev/
 │   ├── python/                # Python container config
 │   ├── rust/                  # Rust container config
 │   ├── js/                    # JavaScript container config
+│   ├── c-sharp/               # C# container config
+│   ├── ruby/                  # Ruby container config
 │   └── postgres/              # PostgreSQL container config
 ├── data/                      # Persistent data volumes
 │   ├── postgres/              # PostgreSQL data (persisted)
@@ -160,7 +162,7 @@ PostgreSQL data persists in `data/postgres/` on the host.
 **Connection from language containers:**
 ```bash
 # From python-dev, rust-dev, etc.
-psql -h postgres-dev -U devuser
+psql -h postgres -U devuser
 ```
 
 **Initial database setup:**
@@ -202,7 +204,7 @@ docker ps
 
 # View logs for a container
 docker logs python-dev
-docker logs postgres-dev
+docker logs postgres
 
 # Execute command in running container
 docker exec -it python-dev /bin/zsh
@@ -216,4 +218,4 @@ docker stats
 - Each project under `projects/<language>/` may have its own CLAUDE.md with project-specific guidance
 - The VDE provides the infrastructure; individual projects define their own workflows
 - All containers share the same Docker network for inter-container communication
-- PostgreSQL is accessible from all language containers via hostname `postgres-dev`
+- PostgreSQL is accessible from all language containers via hostname `postgres`

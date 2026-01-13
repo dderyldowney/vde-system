@@ -23,7 +23,7 @@ Host js-dev
     IdentitiesOnly yes
 
 # PostgreSQL VM
-Host postgres-dev
+Host postgres
     HostName localhost
     Port 2225
     User devuser
