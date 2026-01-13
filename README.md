@@ -1787,6 +1787,160 @@ Then rebuild:
 
 ---
 
+## VDE AI Assistant
+
+The VDE AI Assistant provides a natural language interface for controlling your Virtual Development Environment. You can interact with VDE using plain English commands instead of memorizing script names and flags.
+
+### Command-Line Mode
+
+Use `vde-ai` for one-shot commands:
+
+```bash
+# List available VMs
+vde-ai "what VMs can I create?"
+vde-ai "show all languages"
+vde-ai "list services"
+
+# Create VMs
+vde-ai "create a Go VM"
+vde-ai "make Python and PostgreSQL"
+
+# Start VMs
+vde-ai "start Go"
+vde-ai "start Python and Rust"
+vde-ai "start everything"
+
+# Stop VMs
+vde-ai "stop Go"
+vde-ai "shutdown everything"
+
+# Check status
+vde-ai "what is running?"
+vde-ai "show status"
+
+# Get connection info
+vde-ai "how do I connect to Python?"
+vde-ai "SSH into Go VM"
+
+# Restart VMs
+vde-ai "restart Python"
+vde-ai "rebuild and start Go"
+```
+
+### Interactive Chat Mode
+
+Use `vde-chat` for an interactive conversational interface:
+
+```bash
+./scripts/vde-chat
+```
+
+Example session:
+```
+[VDE] → create a Go VM and start it
+[AI] → Creating Go VM...
+       Starting Go VM...
+       Done! Go VM is running.
+
+[VDE] → how do I connect?
+[AI] → SSH command: ssh go-dev
+     Port: 2200
+     Or use VSCode Remote-SSH with host: go-dev
+
+[VDE] → stop everything
+[AI] → Stopping all VMs...
+       Done!
+
+[VDE] → exit
+```
+
+### Options
+
+Both `vde-ai` and `vde-chat` support the following options:
+
+- `--ai`: Enable LLM-based parsing (requires `CLAUDE_API_KEY` or `ANTHROPIC_API_KEY`)
+- `--dry-run`: Show what would happen without executing
+- `--help, -h`: Show help message
+
+### Environment Variables
+
+- `VDE_USE_AI`: Set to `1`, `true`, or `yes` to enable LLM-based parsing by default
+
+### Supported Intents
+
+| Intent | Example Commands |
+|--------|-----------------|
+| **List VMs** | "what VMs can I create?", "show all languages", "list services" |
+| **Create VMs** | "create a Go VM", "make Python and PostgreSQL" |
+| **Start VMs** | "start Go", "start everything", "launch Python" |
+| **Stop VMs** | "stop Go", "shutdown everything" |
+| **Restart VMs** | "restart Python", "rebuild and start Go" |
+| **Status** | "what is running?", "show status" |
+| **Connection Info** | "how do I connect to Python?", "SSH into Go" |
+| **Help** | "help", "what can I do?" |
+
+### How It Works
+
+The AI Assistant uses pattern-based natural language processing to understand your commands:
+
+1. **Intent Detection**: Identifies what you want to do (create, start, stop, etc.)
+2. **Entity Extraction**: Extracts VM names, flags (rebuild, no-cache), and filters
+3. **Plan Generation**: Creates an execution plan
+4. **Execution**: Calls the appropriate VDE scripts with validated parameters
+
+The pattern-based approach is fast and works offline. For more advanced natural language understanding, you can enable LLM-based parsing with the `--ai` flag.
+
+### Examples
+
+#### Simple Workflow
+
+```bash
+$ vde-ai "create a Go VM and start it"
+
+Creating Go VM...
+  - Allocated SSH port: 2200
+  - Created: configs/docker/go/docker-compose.yml
+  - Created: env-files/go.env
+  - Created: projects/go/
+  - Created: logs/go/
+  - Updated SSH config: Host go-dev on port 2200
+
+Starting Go VM...
+  - Building image dev-go:latest...
+  - Starting container go-dev...
+  - Go VM is running!
+
+SSH connect with: ssh go-dev
+```
+
+#### Multi-Container Setup
+
+```bash
+$ vde-ai "I want to work on a Python API with PostgreSQL"
+
+Creating Python VM...
+Creating PostgreSQL VM...
+Starting both VMs...
+
+Done! You can now:
+  - SSH to Python: ssh python-dev
+  - SSH to PostgreSQL: ssh postgres
+  - From Python, connect: psql -h postgres -U devuser
+```
+
+#### Status Queries
+
+```bash
+$ vde-ai "what's currently running?"
+
+Running VMs:
+  - postgres (port 2400) - Uptime: 2h 15m
+  - redis (port 2401) - Uptime: 2h 15m
+  - python-dev (port 2222) - Uptime: 1h 30m
+```
+
+---
+
 ## Troubleshooting
 
 ### Port Conflicts

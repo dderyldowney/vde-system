@@ -1,0 +1,300 @@
+#!/usr/bin/env zsh
+# VDE Chat - Interactive AI Assistant CLI
+# Interactive chat interface for controlling the VDE system
+#
+# Usage: vde-chat [OPTIONS]
+#
+# Options:
+#   --ai         Enable LLM-based parsing (requires API key)
+#   --help, -h   Show help message
+#
+# Environment Variables:
+#   VDE_USE_AI   Set to "1", "true", or "yes" to enable LLM parsing by default
+#
+# Commands:
+#   Type your natural language commands and press Enter
+#   Type "exit", "quit", or "bye" to leave
+#   Type "help" for available commands
+
+set -e
+
+# -----------------------
+# Configuration
+# -----------------------
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+source "$SCRIPT_DIR/lib/vde-commands"
+source "$SCRIPT_DIR/lib/vm-parser"
+
+USE_AI=false
+SESSION_HISTORY=()
+
+# -----------------------
+# Colors and Formatting
+# -----------------------
+# Color codes (disable if not a terminal)
+if [[ -t 1 ]]; then
+    COLOR_RESET='\033[0m'
+    COLOR_PROMPT='\033[1;36m'    # Cyan
+    COLOR_AI='\033[1;33m'        # Yellow
+    COLOR_SUCCESS='\033[1;32m'   # Green
+    COLOR_ERROR='\033[1;31m'     # Red
+    COLOR_INFO='\033[1;34m'      # Blue
+    COLOR_DIM='\033[2m'          # Dim
+else
+    COLOR_RESET=''
+    COLOR_PROMPT=''
+    COLOR_AI=''
+    COLOR_SUCCESS=''
+    COLOR_ERROR=''
+    COLOR_INFO=''
+    COLOR_DIM=''
+fi
+
+# -----------------------
+# Usage
+# -----------------------
+show_usage() {
+    cat <<'EOF'
+Usage: vde-chat [OPTIONS]
+
+Interactive chat interface for controlling the VDE system.
+
+OPTIONS:
+  --ai         Enable LLM-based parsing (requires API key)
+  --help, -h   Show this help message
+
+ENVIRONMENT VARIABLES:
+  VDE_USE_AI   Set to "1", "true", or "yes" to enable LLM parsing by default
+
+INTERACTIVE COMMANDS:
+  Type your natural language commands and press Enter
+  Type "exit", "quit", or "bye" to leave
+  Type "clear" to clear the screen
+  Type "history" to show command history
+  Type "help" for available commands
+
+EXAMPLE SESSION:
+  [VDE] → create a Go VM and start it
+  [AI] → Creating Go VM...
+         Starting Go VM...
+         Done!
+
+  [VDE] → what's running?
+  [AI] → Currently running: go-dev, postgres
+
+  [VDE] → exit
+
+For more information, see: README.md#ai-cli-integration
+EOF
+}
+
+# -----------------------
+# Parse Arguments
+# -----------------------
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --ai)
+            USE_AI=true
+            shift
+            ;;
+        --help|-h)
+            show_usage
+            exit 0
+            ;;
+        *)
+            log_error "Unknown option: $1"
+            echo ""
+            show_usage
+            exit 1
+            ;;
+    esac
+done
+
+# Check for VDE_USE_AI environment variable
+if [[ "$USE_AI" == "false" ]]; then
+    case "${VDE_USE_AI:-}" in
+        1|true|yes|TRUE|YES|True)
+            USE_AI=true
+            ;;
+    esac
+fi
+
+# Check for API key if AI mode is enabled
+if [[ "$USE_AI" == "true" ]]; then
+    if [[ -z "${CLAUDE_API_KEY:-}" ]] && [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+        log_error "AI mode requested but no API key found"
+        log_error "Set CLAUDE_API_KEY or ANTHROPIC_API_KEY environment variable"
+        log_error "Falling back to pattern-based parsing..."
+        USE_AI=false
+    fi
+fi
+
+# -----------------------
+# Load VM Types
+# -----------------------
+load_vm_types || {
+    log_error "Failed to load VM types"
+    exit 1
+}
+
+# -----------------------
+# Session Management
+# -----------------------
+
+# Add command to history
+add_to_history() {
+    local cmd="$1"
+    SESSION_HISTORY+=("$cmd")
+}
+
+# Show command history
+show_history() {
+    if [[ ${#SESSION_HISTORY[@]} -eq 0 ]]; then
+        echo -e "${COLOR_DIM}No commands in this session${COLOR_RESET}"
+        return
+    fi
+
+    echo -e "${COLOR_INFO}Command History:${COLOR_RESET}"
+    local i=1
+    for cmd in "${SESSION_HISTORY[@]}"; do
+        echo "  $i. $cmd"
+        ((i++))
+    done
+}
+
+# Clear screen
+clear_screen() {
+    clear
+    print_welcome
+}
+
+# -----------------------
+# Welcome Message
+# -----------------------
+print_welcome() {
+    cat <<EOF
+
+${COLOR_PROMPT}╔════════════════════════════════════════════════════════════╗${COLOR_RESET}
+${COLOR_PROMPT}║${COLOR_RESET}          ${COLOR_AI}VDE AI Assistant${COLOR_RESET} - Interactive Mode          ${COLOR_PROMPT}║${COLOR_RESET}
+${COLOR_PROMPT}║                                                            ║${COLOR_RESET}
+${COLOR_PROMPT}║${COLOR_RESET}  Control your Virtual Development Environment    ${COLOR_PROMPT}║${COLOR_RESET}
+${COLOR_PROMPT}║${COLOR_RESET}  using natural language commands                 ${COLOR_PROMPT}║${COLOR_RESET}
+${COLOR_PROMPT}╚════════════════════════════════════════════════════════════╝${COLOR_RESET}
+
+${COLOR_DIM}AI Mode:${COLOR_RESET}        $([[ "$USE_AI" == "true" ]] && echo -e "${COLOR_SUCCESS}Enabled (LLM-based)${COLOR_RESET}" || echo "Pattern-based")
+${COLOR_DIM}Available VMs:${COLOR_RESET}   $(get_all_vms | wc -l) language(s), $(get_service_vms | wc -l) service(s)
+
+${COLOR_DIM}Type 'help' for commands or 'exit' to quit${COLOR_RESET}
+EOF
+}
+
+# -----------------------
+# Prompt Helpers
+# -----------------------
+show_prompt() {
+    echo -e -n "${COLOR_PROMPT}[VDE] → ${COLOR_RESET}"
+}
+
+show_ai_response() {
+    echo -e "${COLOR_AI}[AI] → ${COLOR_RESET}"
+}
+
+# -----------------------
+# Special Commands
+# -----------------------
+handle_special_command() {
+    local cmd="$1"
+    local cmd_lower
+    cmd_lower=$(echo "$cmd" | tr '[:upper:]' '[:lower:]')
+
+    case "$cmd_lower" in
+        exit|quit|bye)
+            echo ""
+            echo -e "${COLOR_INFO}Goodbye!${COLOR_RESET}"
+            return 0  # Signal to exit
+            ;;
+        help|'?'|'help me')
+            show_ai_help
+            return 1  # Continue
+            ;;
+        clear|cls)
+            clear_screen
+            return 1  # Continue
+            ;;
+        history)
+            show_history
+            return 1  # Continue
+            ;;
+        '')
+            return 1  # Continue (empty input)
+            ;;
+        *)
+            return 2  # Not a special command
+            ;;
+    esac
+}
+
+# -----------------------
+# Main Loop
+# -----------------------
+main_loop() {
+    print_welcome
+
+    while true; do
+        show_prompt
+        read -r input
+
+        # Handle special commands
+        handle_special_command "$input"
+        local status=$?
+
+        case $status in
+            0)  # Exit requested
+                return 0
+                ;;
+            1)  # Continue to next iteration
+                continue
+                ;;
+            2)  # Not a special command, process as AI command
+                ;;
+        esac
+
+        # Add to history
+        add_to_history "$input"
+
+        # Process the command
+        echo ""
+
+        # Generate and execute plan
+        local plan
+        plan=$(generate_plan "$input")
+
+        local result
+        result=$(echo "$plan" | execute_plan 2>&1)
+        local exit_code=$?
+
+        # Format output
+        show_ai_response
+
+        if [[ $exit_code -eq 0 ]]; then
+            if [[ -n "$result" ]]; then
+                # Indent the result for better readability
+                echo "$result" | while IFS= read -r line; do
+                    echo "       $line"
+                done
+            else
+                echo -e "       ${COLOR_DIM}Done!${COLOR_RESET}"
+            fi
+        else
+            echo -e "${COLOR_ERROR}       Error: $result${COLOR_RESET}"
+        fi
+
+        echo ""
+    done
+}
+
+# -----------------------
+# Run
+# -----------------------
+main_loop
