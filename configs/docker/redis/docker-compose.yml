@@ -24,6 +24,9 @@ services:
       - redis_data:/data
       - ../../../public-ssh-keys:/public-ssh-keys:ro
 
+    networks:
+      - dev-net
+
 networks:
   dev-net:
     external: true

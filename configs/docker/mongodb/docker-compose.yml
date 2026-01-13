@@ -24,6 +24,9 @@ services:
       - ../../../data/mongodb:/data/db
       - ../../../public-ssh-keys:/public-ssh-keys:ro
 
+    networks:
+      - dev-net
+
 networks:
   dev-net:
     external: true
