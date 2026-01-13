@@ -208,7 +208,16 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y zsh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zsh docker-compose-plugin
+
+          # Ensure docker compose v2 is available
+          docker compose version
+
+          # Create symlink for docker-compose compatibility
+          sudo mkdir -p /usr/local/bin
+          sudo ln -sf /usr/libexec/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
 
       - name: Select Random VM for Testing
         id: select-vm
