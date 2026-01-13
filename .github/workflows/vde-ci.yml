@@ -265,6 +265,9 @@ jobs:
           rm -rf "configs/docker/${{ steps.select-vm.outputs.vm }}"
           ./scripts/create-virtual-for ${{ steps.select-vm.outputs.vm }}
 
+      - name: Create Docker network
+        run: docker network create dev-net 2>/dev/null || echo "Network already exists"
+
       - name: Build and Start Docker Container
         shell: zsh {0}
         run: ./scripts/start-virtual ${{ steps.select-vm.outputs.vm }}
