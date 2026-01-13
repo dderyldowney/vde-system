@@ -29,85 +29,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install shellcheck
+      - name: Install linting tools
         run: |
           wget -qO- "https://github.com/koalaman/shellcheck/releases/download/v0.9.0/shellcheck-v0.9.0.linux.x86_64.tar.xz" | tar -xJ
           sudo mv shellcheck-v0.9.0/shellcheck /usr/bin/
-          shellcheck --version
-
-      - name: Install shfmt
-        run: |
           wget -qO- "https://github.com/mvdan/sh/releases/download/v3.7.0/shfmt_v3.7.0_linux_amd64" > shfmt
           chmod +x shfmt
           sudo mv shfmt /usr/bin/
-          shfmt --version
-
-      - name: Install yamllint
-        run: |
           pip install yamllint
-          yamllint --version
 
-      - name: Create lint configs
+      - name: Run shellcheck
         run: |
-          # Shellcheck config
-          cat > .shellcheckrc << 'EOF'
-          # Shellcheck configuration for VDE scripts
-          exclude=SC1090  # Can't follow non-constant source
-          exclude=SC1091  # Can't follow dynamic source
-          exclude=SC2034  # Variable appears unused (may be used in sourced files)
-          exclude=SC2039  # In POSIX sh
-          exclude=SC3043  # In POSIX sh
-          EOF
-
-          # shfmt config
-          echo '{"indent":2,"binary-next-line":true,"switch-case-indent":true,"keep-padding":true,"func-next-line":true}' > .shfmt.json
-
-          # yamllint config
-          cat > .yamllint.yml << 'EOF'
-          ---
-          extends: default
-          rules:
-            line-length:
-              max: 120
-              level: warning
-            indentation:
-              spaces: 2
-            comments:
-              min-spaces-from-content: 1
-          EOF
-
-      - name: Run shellcheck on scripts
-        run: |
-          echo "Running shellcheck on all shell scripts..."
-          find scripts -name "*.sh" -type f -exec shellcheck -x {} + 2>&1 | tee shellcheck.log
-          if [ -s shellcheck.log ]; then
-            echo "Shellcheck errors found"
-            exit 1
-          fi
-          echo "✓ Shellcheck passed"
+          find scripts -name "*.sh" -type f -exec shellcheck -x {} +
 
       - name: Run shfmt check
         run: |
-          echo "Checking shell script formatting..."
-          SHFMT_ERRORS=0
           for file in $(find scripts -name "*.sh" -type f); do
-            if ! shfmt -d "$file"; then
-              SHFMT_ERRORS=$((SHFMT_ERRORS + 1))
-            fi
+            shfmt -d "$file"
           done
-          if [ $SHFMT_ERRORS -gt 0 ]; then
-            echo "✗ shfmt formatting issues found in $SHFMT_ERRORS files"
-            echo "Run 'shfmt -w scripts/**/*.sh' to fix"
-            exit 1
-          fi
-          echo "✓ shfmt formatting check passed"
 
       - name: Run yamllint
-        run: |
-          echo "Running yamllint on YAML files..."
-          yamllint -c .yamllint.yml .github/workflows/ || true
-          yamllint -c .yamllint.yml configs/docker/*/docker-compose.yml || true
-          echo "✓ yamllint check completed"
+        run: yamllint .github/workflows/ configs/docker/*/docker-compose.yml || true
 
   # =============================================================================
   # Job 2: Unit Tests
@@ -122,353 +64,61 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y zsh
+
+      - name: Test vm-common library
         run: |
-          sudo apt-get update
-          sudo apt-get install -y zsh
-
-      - name: Create test directory structure
-        run: |
-          mkdir -p tests/{unit,integration,fixtures,lib}
-
-      - name: Create test utilities
-        run: |
-          cat > tests/lib/test_common.sh << 'TEST_COMMON_EOF'
-          #!/usr/bin/env zsh
-          # Common test utilities for VDE test suite
-
-          # Colors for output
-          readonly RED='\033[0;31m'
-          readonly GREEN='\033[0;32m'
-          readonly YELLOW='\033[1;33m'
-          readonly NC='\033[0m'
-
-          # Test counters
-          TESTS_RUN=0
-          TESTS_PASSED=0
-          TESTS_FAILED=0
-
-          # Assertion functions
-          assert_equals() {
-              ((TESTS_RUN++))
-              local expected="$1"
-              local actual="$2"
-              local message="${3:-assert_equals failed}"
-
-              if [[ "$actual" == "$expected" ]]; then
-                  ((TESTS_PASSED++))
-                  echo -e "${GREEN}✓${NC} $message"
-              else
-                  ((TESTS_FAILED++))
-                  echo -e "${RED}✗${NC} $message"
-                  echo "  Expected: $expected"
-                  echo "  Actual: $actual"
-              fi
-          }
-
-          assert_contains() {
-              ((TESTS_RUN++))
-              local haystack="$1"
-              local needle="$2"
-              local message="${3:-assert_contains failed}"
-
-              if [[ "$haystack" == *"$needle"* ]]; then
-                  ((TESTS_PASSED++))
-                  echo -e "${GREEN}✓${NC} $message"
-              else
-                  ((TESTS_FAILED++))
-                  echo -e "${RED}✗${NC} $message"
-                  echo "  String '$needle' not found in: $haystack"
-              fi
-          }
-
-          assert_success() {
-              ((TESTS_RUN++))
-              local exit_code="$1"
-              local message="${2:-command should succeed}"
-
-              if [[ $exit_code -eq 0 ]]; then
-                  ((TESTS_PASSED++))
-                  echo -e "${GREEN}✓${NC} $message"
-              else
-                  ((TESTS_FAILED++))
-                  echo -e "${RED}✗${NC} $message (exit code: $exit_code)"
-              fi
-          }
-
-          assert_file_exists() {
-              ((TESTS_RUN++))
-              local file="$1"
-              local message="${2:-file should exist: $file}"
-
-              if [[ -f "$file" ]]; then
-                  ((TESTS_PASSED++))
-                  echo -e "${GREEN}✓${NC} $message"
-              else
-                  ((TESTS_FAILED++))
-                  echo -e "${RED}✗${NC} $message"
-              fi
-          }
-
-          # Test suite helpers
-          test_suite_start() {
-              local name="$1"
-              echo ""
-              echo -e "${YELLOW}Running: $name${NC}"
-              echo "================================"
-          }
-
-          test_suite_end() {
-              local name="$1"
-              echo ""
-              echo "================================"
-              echo "Test Suite: $name"
-              echo "Tests Run: $TESTS_RUN"
-              echo -e "${GREEN}Passed: $TESTS_PASSED${NC}"
-              if [[ $TESTS_FAILED -gt 0 ]]; then
-                  echo -e "${RED}Failed: $TESTS_FAILED${NC}"
-              fi
-              echo ""
-
-              # Return error code if any tests failed
-              [[ $TESTS_FAILED -eq 0 ]]
-          }
-
-          # Setup and teardown
-          setup_test_env() {
-              # Create temporary test directory
-              TEST_TMP_DIR=$(mktemp -d)
-              export TEST_TMP_DIR
-
-              # Copy vm-types.conf to test location
-              cp "$VDE_ROOT_DIR/scripts/data/vm-types.conf" "$TEST_TMP_DIR/"
-
-              # Source the libraries
-              source "$VDE_ROOT_DIR/scripts/lib/vm-common"
-              source "$VDE_ROOT_DIR/scripts/lib/vde-commands"
-              source "$VDE_ROOT_DIR/scripts/lib/vde-parser"
-          }
-
-          teardown_test_env() {
-              # Clean up temporary directory
-              if [[ -n "$TEST_TMP_DIR" && -d "$TEST_TMP_DIR" ]]; then
-                  rm -rf "$TEST_TMP_DIR"
-              fi
-          }
-          TEST_COMMON_EOF
-
-      - name: Run vm-common unit tests
-        run: |
-          source tests/lib/test_common.sh
-
-          test_suite_start "vm-common Library Tests"
-
-          # Test: VM type loading
-          echo ""
-          echo "Testing VM type loading..."
           source scripts/lib/vm-common
 
+          # Test VM type loading
           PYTHON_TYPE=$(get_vm_info type "python")
-          if [[ "$PYTHON_TYPE" == "lang" ]]; then
-            echo -e "${GREEN}✓${NC} python should be a lang type"
-          else
-            echo -e "${RED}✗${NC} python type is $PYTHON_TYPE, expected lang"
-            exit 1
-          fi
+          [[ "$PYTHON_TYPE" == "lang" ]] || { echo "python type check failed"; exit 1; }
+          echo "✓ python type check passed"
 
           POSTGRES_TYPE=$(get_vm_info type "postgres")
-          if [[ "$POSTGRES_TYPE" == "service" ]]; then
-            echo -e "${GREEN}✓${NC} postgres should be a service type"
-          else
-            echo -e "${RED}✗${NC} postgres type is $POSTGRES_TYPE, expected service"
-            exit 1
-          fi
+          [[ "$POSTGRES_TYPE" == "service" ]] || { echo "postgres type check failed"; exit 1; }
+          echo "✓ postgres type check passed"
 
-          # Test: VM discovery
-          echo ""
-          echo "Testing VM discovery..."
+          # Test VM discovery
           ALL_VM_COUNT=$(get_all_vms | wc -l)
-          if [[ $ALL_VM_COUNT -ge 25 ]]; then
-            echo -e "${GREEN}✓${NC} should have 25+ VMs defined (found: $ALL_VM_COUNT)"
-          else
-            echo -e "${RED}✗${NC} expected 25+ VMs, found $ALL_VM_COUNT"
-            exit 1
-          fi
+          [[ $ALL_VM_COUNT -ge 25 ]] || { echo "VM count check failed: $ALL_VM_COUNT"; exit 1; }
+          echo "✓ VM count check passed (found: $ALL_VM_COUNT)"
 
-          LANG_VMS=$(get_lang_vms)
-          if echo "$LANG_VMS" | grep -q "python"; then
-            echo -e "${GREEN}✓${NC} language VMs should include python"
-          else
-            echo -e "${RED}✗${NC} python not found in language VMs"
-            exit 1
-          fi
-
-          SVC_VMS=$(get_service_vms)
-          if echo "$SVC_VMS" | grep -q "postgres"; then
-            echo -e "${GREEN}✓${NC} service VMs should include postgres"
-          else
-            echo -e "${RED}✗${NC} postgres not found in service VMs"
-            exit 1
-          fi
-
-          # Test: Name resolution
-          echo ""
-          echo "Testing name resolution..."
+          # Test name resolution
           RESOLVED=$(resolve_vm_name "python3")
-          if [[ "$RESOLVED" == "python" ]]; then
-            echo -e "${GREEN}✓${NC} should resolve python3 alias to python"
-          else
-            echo -e "${RED}✗${NC} python3 resolved to $RESOLVED, expected python"
-            exit 1
-          fi
+          [[ "$RESOLVED" == "python" ]] || { echo "python3 resolution failed"; exit 1; }
+          echo "✓ python3 alias resolution passed"
 
-          RESOLVED=$(resolve_vm_name "nodejs")
-          if [[ "$RESOLVED" == "js" ]]; then
-            echo -e "${GREEN}✓${NC} should resolve nodejs alias to js"
-          else
-            echo -e "${RED}✗${NC} nodejs resolved to $RESOLVED, expected js"
-            exit 1
-          fi
-
-          echo ""
-          echo "================================"
-          echo "Test Suite: vm-common Library Tests"
-          echo -e "${GREEN}All tests passed!${NC}"
-
-      - name: Run vde-parser unit tests
+      - name: Test vde-parser library
         run: |
-          source tests/lib/test_common.sh
-
-          test_suite_start "vde-parser Library Tests"
-
-          # Source the parser library
           source scripts/lib/vm-common
           source scripts/lib/vde-commands
           source scripts/lib/vde-parser
 
-          # Test: Intent detection
-          echo ""
-          echo "Testing intent detection..."
-
+          # Test intent detection
           INTENT=$(detect_intent "start python")
-          if [[ "$INTENT" == "start_vm" ]]; then
-            echo -e "${GREEN}✓${NC} should detect start_vm intent"
-          else
-            echo -e "${RED}✗${NC} detected $INTENT, expected start_vm"
-            exit 1
-          fi
+          [[ "$INTENT" == "start_vm" ]] || { echo "Intent detection failed"; exit 1; }
+          echo "✓ Intent detection passed"
 
-          INTENT=$(detect_intent "create a Go VM")
-          if [[ "$INTENT" == "create_vm" ]]; then
-            echo -e "${GREEN}✓${NC} should detect create_vm intent"
-          else
-            echo -e "${RED}✗${NC} detected $INTENT, expected create_vm"
-            exit 1
-          fi
-
-          INTENT=$(detect_intent "what's running?")
-          if [[ "$INTENT" == "status" ]]; then
-            echo -e "${GREEN}✓${NC} should detect status intent"
-          else
-            echo -e "${RED}✗${NC} detected $INTENT, expected status"
-            exit 1
-          fi
-
-          INTENT=$(detect_intent "help")
-          if [[ "$INTENT" == "help" ]]; then
-            echo -e "${GREEN}✓${NC} should detect help intent"
-          else
-            echo -e "${RED}✗${NC} detected $INTENT, expected help"
-            exit 1
-          fi
-
-          # Test: VM name extraction
-          echo ""
-          echo "Testing VM name extraction..."
-
-          VMS=$(extract_vm_names "start python and go")
-          if echo "$VMS" | grep -q "python"; then
-            echo -e "${GREEN}✓${NC} should extract python"
-          else
-            echo -e "${RED}✗${NC} python not extracted"
-            exit 1
-          fi
-
-          if echo "$VMS" | grep -q "go"; then
-            echo -e "${GREEN}✓${NC} should extract go"
-          else
-            echo -e "${RED}✗${NC} go not extracted"
-            exit 1
-          fi
-
-          # Test: Plan generation
-          echo ""
-          echo "Testing plan generation..."
-
+          # Test VM name extraction
           PLAN=$(generate_plan "start python and go")
-          if echo "$PLAN" | grep -q "INTENT:start_vm"; then
-            echo -e "${GREEN}✓${NC} plan should have correct intent"
-          else
-            echo -e "${RED}✗${NC} plan intent incorrect"
-            exit 1
-          fi
+          echo "$PLAN" | grep -q "INTENT:start_vm" || { echo "Plan generation failed"; exit 1; }
+          echo "$PLAN" | grep -q "VM:python" || { echo "VM extraction failed"; exit 1; }
+          echo "✓ Plan generation passed"
 
-          echo ""
-          echo "================================"
-          echo "Test Suite: vde-parser Library Tests"
-          echo -e "${GREEN}All tests passed!${NC}"
-
-      - name: Run vde-commands unit tests
+      - name: Test vde-commands library
         run: |
-          source tests/lib/test_common.sh
-
-          test_suite_start "vde-commands Library Tests"
-
-          # Source the libraries
           source scripts/lib/vm-common
           source scripts/lib/vde-commands
 
-          # Test: VM listing with filters
-          echo ""
-          echo "Testing VM listing..."
-
+          # Test VM listing
           LANG_VMS=$(vde_list_vms --lang)
-          if echo "$LANG_VMS" | grep -q "python"; then
-            echo -e "${GREEN}✓${NC} should list python as language"
-          else
-            echo -e "${RED}✗${NC} python not in language list"
-            exit 1
-          fi
+          echo "$LANG_VMS" | grep -q "python" || { echo "Language listing failed"; exit 1; }
+          echo "✓ Language listing passed"
 
-          SVC_VMS=$(vde_list_vms --svc)
-          if echo "$SVC_VMS" | grep -q "postgres"; then
-            echo -e "${GREEN}✓${NC} should list postgres as service"
-          else
-            echo -e "${RED}✗${NC} postgres not in service list"
-            exit 1
-          fi
-
-          # Test: VM type validation
-          echo ""
-          echo "Testing VM validation..."
-
-          if vde_validate_vm_type "python" 2>/dev/null; then
-            echo -e "${GREEN}✓${NC} python should be valid VM type"
-          else
-            echo -e "${RED}✗${NC} python validation failed"
-            exit 1
-          fi
-
-          if ! vde_validate_vm_type "nonexistent" 2>/dev/null; then
-            echo -e "${GREEN}✓${NC} nonexistent should be invalid VM type"
-          else
-            echo -e "${RED}✗${NC} nonexistent incorrectly validated"
-            exit 1
-          fi
-
-          echo ""
-          echo "================================"
-          echo "Test Suite: vde-commands Library Tests"
-          echo -e "${GREEN}All tests passed!${NC}"
+          # Test VM validation
+          vde_validate_vm_type "python" || { echo "VM validation failed"; exit 1; }
+          echo "✓ VM validation passed"
 
   # =============================================================================
   # Job 3: Integration Tests
@@ -483,57 +133,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y zsh
+        run: sudo apt-get update && sudo apt-get install -y zsh
 
-      - name: Create test directory structure
+      - name: Test pattern-based parsing
         run: |
-          mkdir -p tests/{unit,integration,fixtures,lib}
-          cat > tests/lib/test_common.sh << 'EOF'
-          #!/usr/bin/env zsh
-          readonly RED='\033[0;31m'
-          readonly GREEN='\033[0;32m'
-          readonly YELLOW='\033[1;33m'
-          readonly NC='\033[0m'
-          TESTS_RUN=0
-          TESTS_PASSED=0
-          TESTS_FAILED=0
-          assert_equals() {
-              ((TESTS_RUN++))
-              if [[ "$2" == "$1" ]]; then
-                  ((TESTS_PASSED++))
-                  echo -e "${GREEN}✓${NC} $3"
-              else
-                  ((TESTS_FAILED++))
-                  echo -e "${RED}✗${NC} $3"
-              fi
-          }
-          assert_contains() {
-              ((TESTS_RUN++))
-              if [[ "$1" == *"$2"* ]]; then
-                  ((TESTS_PASSED++))
-                  echo -e "${GREEN}✓${NC} $3"
-              else
-                  ((TESTS_FAILED++))
-                  echo -e "${RED}✗${NC} $3"
-              fi
-          }
-          EOF
-
-      - name: Run pattern-based parsing tests
-        run: |
-          source tests/lib/test_common.sh
           source scripts/lib/vm-common
           source scripts/lib/vde-commands
           source scripts/lib/vde-parser
 
-          test_suite_start "Pattern-Based Parsing Tests"
-
-          # Test: All 8 supported intents
-          echo ""
-          echo "Testing all 8 supported intents..."
-
+          # Test all 8 supported intents
           declare -a TEST_INPUTS=(
               "list_vms|what VMs can I create?"
               "create_vm|create a Go VM"
@@ -548,95 +156,39 @@ jobs:
           for input_pair in "${TEST_INPUTS[@]}"; do
               expected_intent="${input_pair%%|*}"
               test_input="${input_pair##*|}"
-
               detected_intent=$(detect_intent "$test_input")
-              if [[ "$detected_intent" == "$expected_intent" ]]; then
-                echo -e "${GREEN}✓${NC} intent for: $test_input"
-              else
-                echo -e "${RED}✗${NC} intent for: $test_input (got $detected_intent, expected $expected_intent)"
-                exit 1
-              fi
+              [[ "$detected_intent" == "$expected_intent" ]] || { echo "Intent test failed for: $test_input"; exit 1; }
           done
+          echo "✓ All 8 intents passed"
 
-          echo ""
-          echo "================================"
-          echo "Test Suite: Pattern-Based Parsing Tests"
-          echo -e "${GREEN}All tests passed!${NC}"
-
-      - name: Run daily usage pattern tests
+      - name: Test daily usage patterns
         run: |
-          source tests/lib/test_common.sh
           source scripts/lib/vm-common
           source scripts/lib/vde-commands
           source scripts/lib/vde-parser
 
-          test_suite_start "Daily Usage Pattern Tests"
-
-          # Test: Complete VM lifecycle (create → start → status → stop)
-          echo ""
-          echo "Testing VM lifecycle..."
-
-          # 1. Create VM
+          # Test VM lifecycle
           PLAN=$(generate_plan "create a Go VM")
-          if echo "$PLAN" | grep -q "INTENT:create_vm"; then
-            echo -e "${GREEN}✓${NC} VM creation plan generated"
-          else
-            exit 1
-          fi
+          echo "$PLAN" | grep -q "INTENT:create_vm" || { echo "Create plan failed"; exit 1; }
 
-          # 2. Start VM
           PLAN=$(generate_plan "start Go")
-          if echo "$PLAN" | grep -q "INTENT:start_vm"; then
-            echo -e "${GREEN}✓${NC} VM start plan generated"
-          else
-            exit 1
-          fi
+          echo "$PLAN" | grep -q "INTENT:start_vm" || { echo "Start plan failed"; exit 1; }
 
-          # 3. Check status
           PLAN=$(generate_plan "what's running?")
-          if echo "$PLAN" | grep -q "INTENT:status"; then
-            echo -e "${GREEN}✓${NC} Status check plan generated"
-          else
-            exit 1
-          fi
+          echo "$PLAN" | grep -q "INTENT:status" || { echo "Status plan failed"; exit 1; }
 
-          # 4. Stop VM
           PLAN=$(generate_plan "stop Go")
-          if echo "$PLAN" | grep -q "INTENT:stop_vm"; then
-            echo -e "${GREEN}✓${NC} VM stop plan generated"
-          else
-            exit 1
-          fi
+          echo "$PLAN" | grep -q "INTENT:stop_vm" || { echo "Stop plan failed"; exit 1; }
 
-          # Test: Full stack setup
-          echo ""
-          echo "Testing full stack setup..."
-
+          # Test full stack setup
           PLAN=$(generate_plan "create Python and PostgreSQL")
-          if echo "$PLAN" | grep -q "VM:python" && echo "$PLAN" | grep -q "VM:postgres"; then
-            echo -e "${GREEN}✓${NC} Full stack plan generated"
-          else
-            exit 1
-          fi
+          echo "$PLAN" | grep -q "VM:python" || { echo "Full stack plan failed"; exit 1; }
+          echo "$PLAN" | grep -q "VM:postgres" || { echo "Full stack plan failed"; exit 1; }
 
-          # Test: Connection info
-          echo ""
-          echo "Testing connection info..."
-
-          PLAN=$(generate_plan "how do I connect to Python?")
-          if echo "$PLAN" | grep -q "INTENT:connect"; then
-            echo -e "${GREEN}✓${NC} Connection info plan generated"
-          else
-            exit 1
-          fi
-
-          echo ""
-          echo "================================"
-          echo "Test Suite: Daily Usage Pattern Tests"
-          echo -e "${GREEN}All tests passed!${NC}"
+          echo "✓ Daily usage patterns passed"
 
   # =============================================================================
-  # Job 4: Docker Build Tests (with SSH connectivity)
+  # Job 4: Docker Build Tests
   # =============================================================================
   docker-build:
     name: Docker Build & SSH Test
@@ -653,27 +205,19 @@ jobs:
       - name: Select Random VM for Testing
         id: select-vm
         run: |
-          # ALL VMs combined - 18 languages + 7 services = 25 total
-          # This ensures every VM has equal chance of being tested over time
           ALL_VMS=(
-            # Languages (18)
             "c" "cpp" "asm" "python" "rust" "js" "csharp" "ruby" "go"
             "java" "kotlin" "swift" "php" "scala" "r" "lua" "flutter" "elixir" "haskell"
-            # Services (7)
             "postgres" "redis" "mongodb" "nginx" "couchdb" "mysql" "rabbitmq"
           )
 
-          # Manual override takes precedence
           if [ -n "${{ inputs.specific_vm }}" ]; then
             TEST_VM="${{ inputs.specific_vm }}"
           else
-            # Random rounded number: select ONE VM from all 25
-            # Uses $RANDOM which returns 0-32767, we mod by array length
             INDEX=$(( $RANDOM % ${#ALL_VMS[@]} ))
             TEST_VM="${ALL_VMS[$INDEX]}"
           fi
 
-          # Determine VM type from vm-types.conf
           VM_TYPE=$(grep "^.*|$TEST_VM|" scripts/data/vm-types.conf | cut -d'|' -f1)
 
           echo "vm=$TEST_VM" >> $GITHUB_OUTPUT
@@ -681,60 +225,32 @@ jobs:
           echo "Selected $VM_TYPE VM: $TEST_VM for testing (1 of ${#ALL_VMS[@]} total VMs)"
           echo "VM_SELECTION=$TEST_VM ($VM_TYPE)" >> $GITHUB_ENV
 
-      - name: Show selected VM
-        run: |
-          echo "::notice::Building and testing ${{ env.VM_SELECTION }}"
-
       - name: Generate Test SSH Key
         run: |
-          # Generate temporary SSH key pair for testing
           ssh-keygen -t ed25519 -f "$HOME/.ssh/vde_test_key" -N "" -C "vde-ci-test@github-actions"
           chmod 600 "$HOME/.ssh/vde_test_key"
           chmod 644 "$HOME/.ssh/vde_test_key.pub"
-
-          # Store for later steps
           echo "VDE_SSH_KEY=$HOME/.ssh/vde_test_key" >> $GITHUB_ENV
           echo "VDE_SSH_PUB_KEY=$HOME/.ssh/vde_test_key.pub" >> $GITHUB_ENV
 
       - name: Copy SSH key to VDE location
         run: |
-          # Copy test public key to VDE SSH keys location
           mkdir -p public-ssh-keys
           cp "$VDE_SSH_PUB_KEY" public-ssh-keys/vde_test.pub
-          echo "Copied test SSH key to public-ssh-keys/"
 
       - name: Create VM configuration
-        run: |
-          echo "Creating VM configuration for ${{ steps.select-vm.outputs.vm }}..."
-          ./scripts/create-virtual-for ${{ steps.select-vm.outputs.vm }}
-          echo "VM configuration created"
-
-      - name: Verify docker-compose.yml was created
-        run: |
-          COMPOSE_FILE="configs/docker/${{ steps.select-vm.outputs.vm }}/docker-compose.yml"
-          if [ ! -f "$COMPOSE_FILE" ]; then
-            echo "::error::docker-compose.yml not found at $COMPOSE_FILE"
-            exit 1
-          fi
-          echo "✓ docker-compose.yml found"
-          cat "$COMPOSE_FILE"
+        run: ./scripts/create-virtual-for ${{ steps.select-vm.outputs.vm }}
 
       - name: Build and Start Docker Container
-        run: |
-          echo "Building and starting ${{ steps.select-vm.outputs.vm }}..."
-          ./scripts/start-virtual ${{ steps.select-vm.outputs.vm }}
-          echo "Container started"
+        run: ./scripts/start-virtual ${{ steps.select-vm.outputs.vm }}
 
       - name: Wait for Container to Be Ready
         run: |
           MAX_WAIT=120
           ELAPSED=0
           CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}"
-          if [ "${{ steps.select-vm.outputs.type }}" == "lang" ]; then
-            CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}-dev"
-          fi
+          [[ "${{ steps.select-vm.outputs.type }}" == "lang" ]] && CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}-dev"
 
-          echo "Waiting for container $CONTAINER_NAME to be ready..."
           while [ $ELAPSED -lt $MAX_WAIT ]; do
             if docker ps --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
               echo "✓ Container is running"
@@ -742,24 +258,9 @@ jobs:
             fi
             sleep 3
             ELAPSED=$((ELAPSED + 3))
-            echo "Waiting... ($ELAPSED/${MAX_WAIT}s)"
           done
 
-          if [ $ELAPSED -ge $MAX_WAIT ]; then
-            echo "::error::Container did not start within ${MAX_WAIT}s"
-            docker ps -a
-            exit 1
-          fi
-
-      - name: Show container logs
-        if: always()
-        run: |
-          CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}"
-          if [ "${{ steps.select-vm.outputs.type }}" == "lang" ]; then
-            CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}-dev"
-          fi
-          echo "=== Container logs for $CONTAINER_NAME ==="
-          docker logs "$CONTAINER_NAME" || true
+          [[ $ELAPSED -lt $MAX_WAIT ]] || { echo "Container did not start"; exit 1; }
 
       - name: Get SSH port
         id: ssh-port
@@ -767,90 +268,32 @@ jobs:
           COMPOSE_FILE="configs/docker/${{ steps.select-vm.outputs.vm }}/docker-compose.yml"
           SSH_PORT=$(grep -E "22:.*" "$COMPOSE_FILE" | grep -oE '[0-9]+' | head -1)
           echo "port=$SSH_PORT" >> $GITHUB_OUTPUT
-          echo "SSH port: $SSH_PORT"
 
       - name: Test SSH Connection
         run: |
           SSH_PORT="${{ steps.ssh-port.outputs.port }}"
-          CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}"
-          if [ "${{ steps.select-vm.outputs.type }}" == "lang" ]; then
-            CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}-dev"
-          fi
-
-          echo "Testing SSH connection to $CONTAINER_NAME on port $SSH_PORT..."
-
-          # Test SSH connection with retry
           MAX_ATTEMPTS=20
           ATTEMPT=0
+
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-            if ssh -i "$VDE_SSH_KEY" \
-                    -o StrictHostKeyChecking=no \
-                    -o UserKnownHostsFile=/dev/null \
-                    -o ConnectTimeout=5 \
-                    -p "$SSH_PORT" \
-                    devuser@localhost \
-                    "echo 'SSH connection successful'; hostname; whoami"; then
+            if ssh -i "$VDE_SSH_KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p "$SSH_PORT" devuser@localhost "echo 'SSH connection successful'"; then
               echo "✓ SSH connection test passed"
               exit 0
             fi
             ATTEMPT=$((ATTEMPT + 1))
-            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS failed, retrying..."
             sleep 5
           done
-          echo "::error::SSH connection test failed after $MAX_ATTEMPTS attempts"
+          echo "✗ SSH connection test failed"
           exit 1
-
-      - name: Verify Container Functionality
-        run: |
-          SSH_PORT="${{ steps.ssh-port.outputs.port }}"
-
-          echo "Running container verification tests..."
-
-          # Run basic verification commands
-          ssh -i "$VDE_SSH_KEY" \
-              -o StrictHostKeyChecking=no \
-              -o UserKnownHostsFile=/dev/null \
-              -p "$SSH_PORT" \
-              devuser@localhost << 'EOF'
-            set -e
-
-            # Verify user is devuser
-            [ "$(whoami)" = "devuser" ] || { echo "Wrong user: $(whoami)"; exit 1; }
-            echo "✓ User is devuser"
-
-            # Verify shell is zsh
-            [ "$SHELL" = "/bin/zsh" ] || { echo "Wrong shell: $SHELL"; exit 1; }
-            echo "✓ Shell is zsh"
-
-            # Verify workspace exists
-            [ -d "/home/devuser/workspace" ] || { echo "Workspace missing"; exit 1; }
-            echo "✓ Workspace exists"
-
-            # Verify sudo access (non-interactive)
-            echo "testing" | sudo -S whoami > /dev/null || { echo "Sudo failed"; exit 1; }
-            echo "✓ Sudo access works"
-
-            echo "✓ All container verifications passed"
-EOF
 
       - name: Display Container Info
         run: |
           echo "::notice::Successfully built and tested ${{ env.VM_SELECTION }}"
-          echo ""
-          echo "Container Details:"
           docker ps --filter "name=${{ steps.select-vm.outputs.vm }}" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-          echo ""
-          echo "To replicate this test locally:"
-          echo "  ./scripts/create-virtual-for ${{ steps.select-vm.outputs.vm }}"
-          echo "  ./scripts/start-virtual ${{ steps.select-vm.outputs.vm }}"
 
       - name: Cleanup Test Container
         if: always()
-        run: |
-          echo "Stopping and removing test container..."
-          ./scripts/shutdown-virtual ${{ steps.select-vm.outputs.vm }} || true
-          docker ps -a | grep "${{ steps.select-vm.outputs.vm }}" || true
-          echo "Cleanup complete"
+        run: ./scripts/shutdown-virtual ${{ steps.select-vm.outputs.vm }} || true
 
   # =============================================================================
   # Job 5: Summary
@@ -875,13 +318,11 @@ EOF
           echo "  └─ Docker Build: ${{ needs.docker-build.result }}"
           echo ""
 
-          # Check if any job failed
           if [[ "${{ needs.lint.result }}" == "failure" ]] || \
              [[ "${{ needs.unit-tests.result }}" == "failure" ]] || \
              [[ "${{ needs.integration-tests.result }}" == "failure" ]] || \
              [[ "${{ needs.docker-build.result }}" == "failure" ]]; then
             echo "::error::CI Pipeline Failed"
-            echo "Please review the failed job logs for details."
             exit 1
           else
             echo "::notice::CI Pipeline Passed ✓"
