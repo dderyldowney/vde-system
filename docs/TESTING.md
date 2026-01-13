@@ -28,16 +28,17 @@ make lint
 - **shellcheck** (>=0.8.0): Shell script static analysis
 - **shfmt** (>=3.6.0): Shell script formatter
 - **yamllint** (>=1.27.0): YAML linting
+- **kcov** (>=40): Code coverage for shell scripts
 - **docker** (>=20.10.0): For integration tests
 
 ### Installation
 ```bash
 # macOS
-brew install shellcheck shfmt yamllint
+brew install shellcheck shfmt yamllint kcov
 
 # Ubuntu/Debian
 sudo apt-get update
-sudo apt-get install -y shellcheck zsh
+sudo apt-get install -y shellcheck zsh kcov
 
 # Install shfmt and yamllint via go/python
 go install mvdan.cc/sh/v3/cmd/shfmt@latest
@@ -47,7 +48,32 @@ pip install yamllint
 shellcheck --version
 shfmt --version
 yamllint --version
+kcov --version
 ```
+
+## Code Coverage
+
+For detailed coverage documentation, see [COVERAGE.md](COVERAGE.md).
+
+### Quick Coverage Commands
+```bash
+# Run all tests with coverage
+make test-coverage
+
+# Run unit tests with coverage
+make coverage-unit
+
+# Run integration tests with coverage
+make coverage-integration
+
+# View coverage report in browser
+make coverage-view
+```
+
+### Coverage Output
+- **Report Location**: `coverage/merged/index.html`
+- **Format**: HTML with line-by-line coverage highlighting
+- **CI Artifacts**: Uploaded as `coverage-report` (30-day retention)
 
 ## Test Structure
 
@@ -79,8 +105,10 @@ tests/
 1. **Linting** (~2 min): shellcheck, shfmt, yamllint
 2. **Unit Tests** (~3 min): Three-tier library tests
 3. **Integration Tests** (~5 min): AI parsing, usage patterns
-4. **Docker Build** (~15 min): Random VM build + SSH connectivity test
-5. **Summary**: Aggregate results
+4. **Comprehensive Tests** (~20 min): Extended parser, commands, and integration tests
+5. **Coverage** (~10 min): Code coverage with kcov
+6. **Docker Build** (~15 min): Random VM build + SSH connectivity test
+7. **Summary**: Aggregate results
 
 ### Random VM Selection
 Each CI run selects ONE random VM from ALL 25 VMs using a rounded number generator:
@@ -97,6 +125,8 @@ This ensures statistical coverage - every VM has an equal chance of being tested
 
 ## Coverage Metrics
 
+For detailed coverage information and reports, see [COVERAGE.md](COVERAGE.md).
+
 | Component | Target Coverage | Status |
 |-----------|----------------|--------|
 | vm-common | 90% | 🟡 In Progress |
@@ -104,6 +134,7 @@ This ensures statistical coverage - every VM has an equal chance of being tested
 | vde-commands | 80% | 🟡 In Progress |
 | Integration | All intents | 🟡 In Progress |
 | Docker | Statistical (100% over ~25 runs) | 🟡 Active |
+| **Overall** | 85% | 🟡 In Progress |
 
 ## Troubleshooting
 
@@ -199,7 +230,19 @@ The GitHub Actions workflow (`.github/workflows/vde-ci.yml`) includes:
 - Tests daily usage patterns (VM lifecycle, full stack setup)
 - Tests complex multi-VM commands
 
-### 4. Docker Build Job
+### 4. Comprehensive Tests Job
+- Runs comprehensive vde-parser tests (500+ assertions)
+- Runs comprehensive vde-commands tests (400+ assertions)
+- Runs end-to-end integration tests (300+ assertions)
+
+### 5. Coverage Job
+- Installs kcov from source
+- Runs all tests under kcov instrumentation
+- Generates merged HTML coverage report
+- Uploads coverage as CI artifact (30-day retention)
+- Displays coverage percentage in summary
+
+### 6. Docker Build Job
 - Selects ONE random VM from all 25 (18 languages + 7 services)
 - Generates test SSH key pair
 - Creates VM configuration
