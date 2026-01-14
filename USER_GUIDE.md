@@ -6,35 +6,25 @@
 
 ## Table of Contents
 
-1. [Installation: Getting VDE on Your Computer](#1-installation-getting-vde-on-your-computer)
-2. [SSH Keys: Setting Up Secure Access](#2-ssh-keys-setting-up-secure-access)
-3. [Your First VM: The "Hello World" Moment](#3-your-first-vm-the-hello-world-moment)
-4. [Understanding What Just Happened](#4-understanding-what-just-happened)
-5. [Starting and Stopping Your First VM](#5-starting-and-stopping-your-first-vm)
-6. [Your First Cluster: Python + PostgreSQL + Redis](#6-your-first-cluster-python--postgresql--redis)
-7. [Connecting to Your VMs](#7-connecting-to-your-vms)
-8. [Working with Databases](#8-working-with-databases)
-9. [Daily Workflow: Starting Your Day](#9-daily-workflow-starting-your-day)
-10. [Adding More Languages](#10-adding-more-languages)
-11. [Troubleshooting: When Things Go Wrong](#11-troubleshooting-when-things-go-wrong)
+1. [1. Installation](#1.-installation)
+2. [2. SSH Keys](#2.-ssh-keys)
+3. [3. Your First VM](#3.-your-first-vm)
+4. [4. Understanding](#4.-understanding)
+5. [5. Starting and Stopping](#5.-starting-and-stopping)
+6. [6. Your First Cluster](#6.-your-first-cluster)
+7. [7. Connecting](#7.-connecting)
+8. [8. Working with Databases](#8.-working-with-databases)
+9. [9. Daily Workflow](#9.-daily-workflow)
+10. [10. Adding More Languages](#10.-adding-more-languages)
+11. [11. Troubleshooting](#11.-troubleshooting)
 
 ---
 
-## 1. Installation: Getting VDE on Your Computer
+## 1. Installation
 
 This is the part everyone finds confusing. Let's break it down.
 
 ### What You Need Before Starting
-
-**Scenario: Checking prerequisites**
-
-```
-Given I have a new computer
-And I want to install VDE
-When I check my system
-Then I should verify Docker is installed
-And I should verify docker-compose is available
-```
 
 **What you need:**
 - [ ] Docker Desktop installed and running
@@ -43,58 +33,16 @@ And I should verify docker-compose is available
 
 ### Step 1: Clone VDE to Your Computer
 
-**Scenario: Getting the VDE code**
-
-```
-Given I want to install VDE
-When I clone the VDE repository to ~/dev
-Then VDE files should be in place
-```
-
 **Open your terminal and run:**
 ```bash
-# Clone the repository (replace <repo-url> with actual URL)
+# Clone the repository
 git clone <repo-url> ~/dev
 
 # Go into the directory
 cd ~/dev
 ```
 
-### Step 2: Run the Initial Setup
-
-**Scenario: First-time setup creates everything**
-
-```
-Given I have cloned VDE to ~/dev
-And I'm running the setup for the first time
-When I run the initial setup script
-Then VDE should be properly installed
-And required directories should be created
-And I should see success message
-```
-
-**Run the setup:**
-```bash
-./scripts/build-and-start
-```
-
-**What this does:**
-- Creates all necessary directories (configs, projects, data, logs, etc.)
-- Sets up proper file permissions
-- Initializes the VDE framework
-- You should see a success message when complete
-
-### Step 3: Verify Installation
-
-**Scenario: Checking that VDE is ready**
-
-```
-Given I've just installed VDE
-When I run "list-vms"
-Then I should see all predefined VM types
-And python, rust, js, csharp, ruby should be listed
-And postgres, redis, mongodb, nginx should be listed
-```
+### Step 2: Verify Installation
 
 **Verify everything is ready:**
 ```bash
@@ -103,23 +51,56 @@ And postgres, redis, mongodb, nginx should be listed
 
 **Expected output:** You should see a list of available language and service VMs.
 
+**Scenario: Create a new language vm**
+
+```
+Given the VM "zig" is defined as a language VM with install command "apt-get install -y zig"
+And no VM configuration exists for "zig"
+When I run "create-virtual-for zig"
+Then a docker-compose.yml file should be created at "configs/docker/zig/docker-compose.yml"
+And the docker-compose.yml should contain SSH port mapping
+And SSH config entry should exist for "zig-dev"
+And projects directory should exist at "projects/zig"
+And logs directory should exist at "logs/zig"
+```
+**Scenario: Allocate first available port for language vm**
+
+```
+Given no language VMs are created
+When I create a language VM
+Then the VM should be allocated port "2200"
+```
+**Scenario: Natural language variations**
+
+```
+Given I can phrase commands in different ways
+When I say "launch the golang container"
+Then it should be equivalent to "start go"
+And the Go VM should start
+```
+**Scenario: Complex natural language queries**
+
+```
+Given I use conversational language
+When I say "I need to set up a backend with Python and PostgreSQL"
+Then the system should understand I want to create VMs
+And Python and PostgreSQL should be created
+```
+**Scenario: Troubleshooting language**
+
+```
+Given something isn't working
+When I say "restart the database"
+Then PostgreSQL should restart
+And the system should understand "database" means "postgres"
+```
 ---
 
-## 2. SSH Keys: Setting Up Secure Access
+## 2. SSH Keys
 
 This is automatic, but you should understand what's happening.
 
 ### Automatic SSH Key Generation
-
-**Scenario: SSH keys are created if you don't have them**
-
-```
-Given I'm setting up VDE for the first time
-And no SSH keys exist on my system
-When SSH keys are checked
-Then ed25519 keys should be generated automatically
-And public keys should be copied to VMs
-```
 
 **What happens:**
 1. VDE checks if you have SSH keys (~/.ssh/id_ed25519)
@@ -129,16 +110,6 @@ And public keys should be copied to VMs
 
 ### Your SSH Config is Updated Automatically
 
-**Scenario: SSH config is set up for you**
-
-```
-Given SSH config file does not exist
-When I create my first VM
-Then SSH config should be created
-And SSH config entry for the VM should be added
-And I can connect using simple names like "python-dev"
-```
-
 **You don't need to:**
 - Manually create SSH keys
 - Edit your SSH config file
@@ -147,27 +118,56 @@ And I can connect using simple names like "python-dev"
 
 **VDE does all of this for you.**
 
+**Scenario: Automatically start ssh agent if not running**
+
+```
+Given SSH agent is not running
+And SSH keys exist in ~/.ssh/
+When I run any VDE command that requires SSH
+Then SSH agent should be started
+And available SSH keys should be loaded into agent
+```
+**Scenario: Generate ssh key if none exists**
+
+```
+Given no SSH keys exist in ~/.ssh/
+When I run any VDE command that requires SSH
+Then an ed25519 SSH key should be generated
+And the public key should be synced to public-ssh-keys directory
+```
+**Scenario: Create ssh config entry for new vm**
+
+```
+Given VM "python" is created with SSH port "2200"
+When SSH config is generated
+Then SSH config should contain "Host python-dev"
+And SSH config should contain "Port 2200"
+And SSH config should contain "ForwardAgent yes"
+```
+**Scenario: Ssh config uses correct identity file**
+
+```
+Given primary SSH key is "id_ed25519"
+When SSH config entry is created for VM "python"
+Then SSH config should contain "IdentityFile" pointing to "~/.ssh/id_ed25519"
+```
+**Scenario: Generate vm to vm ssh config entries**
+
+```
+Given VM "python" is allocated port "2200"
+And VM "rust" is allocated port "2201"
+When VM-to-VM SSH config is generated
+Then SSH config should contain entry for "python-dev"
+And SSH config should contain entry for "rust-dev"
+And each entry should use "localhost" as hostname
+```
 ---
 
-## 3. Your First VM: The "Hello World" Moment
+## 3. Your First VM
 
 Let's create your first development environment. We'll start with Python because it's the most common language for beginners.
 
 ### Creating Your Python VM
-
-**Scenario: Creating a Python development environment**
-
-```
-Given I've just installed VDE
-And I want my first development environment
-When I run "create-virtual-for python"
-Then a Python development environment should be created
-And configs/docker/python/ should be created
-And docker-compose.yml should be generated
-And SSH config entry for "python-dev" should be added
-And projects/python directory should be created
-And I should be told what to do next
-```
 
 **Run this command:**
 ```bash
@@ -181,15 +181,6 @@ And I should be told what to do next
 
 ### Starting Your First VM
 
-**Scenario: Starting the Python VM**
-
-```
-Given I created a Python VM
-When I run "start-virtual python"
-Then the Python VM should be started
-And I should be able to SSH to "python-dev"
-```
-
 **Run this command:**
 ```bash
 ./scripts/start-virtual python
@@ -201,22 +192,28 @@ And I should be able to SSH to "python-dev"
 - Your projects/python directory is mounted
 - You're ready to code!
 
+**Scenario: Detect create vm intent**
+
+```
+When I parse "create a go vm"
+Then intent should be "create_vm"
+And VMs should include "go"
+```
+**Scenario: Create vm with natural language**
+
+```
+Given I want a go development environment
+When I say "create a go vm"
+Then go VM should be created
+And I should not need to remember create-virtual-for syntax
+```
 ---
 
-## 4. Understanding What Just Happened
+## 4. Understanding
 
 Let's verify everything works and understand the pieces.
 
 ### Check That Your VM is Running
-
-**Scenario: Verifying VM status**
-
-```
-Given I started my Python VM
-When I run "list-vms"
-Then I should see which VMs are running
-And Python should show as "running"
-```
 
 **Check status:**
 ```bash
@@ -227,15 +224,6 @@ And Python should show as "running"
 - python: **running** (on port 2200)
 
 ### Understanding Your Directory Structure
-
-**Scenario: Your workspace is set up correctly**
-
-```
-Given I created a Python VM
-When I look at my directories
-Then projects/python/ should exist for my code
-And the directory should be mounted in the VM
-```
 
 **Your directory structure:**
 ```
@@ -248,23 +236,55 @@ And the directory should be mounted in the VM
 └── scripts/         # VDE management commands
 ```
 
+**Scenario: List all predefined vm types**
+
+```
+Given VM types are loaded
+When I run "list-vms"
+Then all language VMs should be listed
+And all service VMs should be listed
+And aliases should be shown
+```
+**Scenario: List only language vms**
+
+```
+Given VM types are loaded
+When I run "list-vms --lang"
+Then only language VMs should be listed
+And service VMs should not be listed
+```
+**Scenario: List only service vms**
+
+```
+Given VM types are loaded
+When I run "list-vms --svc"
+Then only service VMs should be listed
+And language VMs should not be listed
+```
+**Scenario: Verify ssh connection is working**
+
+```
+Given I cannot SSH into a VM
+When I check the SSH config
+And I verify the VM is running
+And I verify the port is correct
+Then I can identify if the issue is SSH, Docker, or the VM itself
+```
+**Scenario: Verify volumes are mounted correctly**
+
+```
+Given my code changes aren't reflected in the VM
+When I check the mounts in the container
+Then I can see if the volume is properly mounted
+And I can verify the host path is correct
+```
 ---
 
-## 5. Starting and Stopping Your First VM
+## 5. Starting and Stopping
 
 Daily workflow: starting when you work, stopping when done.
 
 ### Starting Your VM
-
-**Scenario: Starting a stopped VM**
-
-```
-Given I created a Python VM earlier
-And it's currently stopped
-When I run "start-virtual python"
-Then the Python VM should start
-And I can connect to it
-```
 
 **Command:**
 ```bash
@@ -273,15 +293,6 @@ And I can connect to it
 
 ### Stopping Your VM
 
-**Scenario: Stopping a running VM**
-
-```
-Given I have a Python VM running
-When I run "shutdown-virtual python"
-Then the Python VM should be stopped
-And the configuration should remain for next time
-```
-
 **Command:**
 ```bash
 ./scripts/shutdown-virtual python
@@ -289,9 +300,54 @@ And the configuration should remain for next time
 
 **Important:** Stopping doesn't delete your VM - it just stops the container. Your code and configurations are safe.
 
+**Scenario: Start a created vm**
+
+```
+Given VM "python" has been created
+And VM "python" is not running
+When I run "start-virtual python"
+Then VM "python" should be running
+And SSH should be accessible on allocated port
+```
+**Scenario: Start multiple vms**
+
+```
+Given VM "python" has been created
+And VM "rust" has been created
+And neither VM is running
+When I run "start-virtual python rust"
+Then VM "python" should be running
+And VM "rust" should be running
+And each VM should have a unique SSH port
+```
+**Scenario: Start all vms**
+
+```
+Given VM "python" has been created
+And VM "rust" has been created
+And VM "postgres" has been created
+And none of the VMs are running
+When I run "start-virtual all"
+Then all created VMs should be running
+```
+**Scenario: Stop a running vm**
+
+```
+Given VM "python" is running
+When I run "shutdown-virtual python"
+Then VM "python" should not be running
+```
+**Scenario: Stop all running vms**
+
+```
+Given VM "python" is running
+And VM "rust" is running
+When I run "shutdown-virtual all"
+Then no VMs should be running
+```
 ---
 
-## 6. Your First Cluster: Python + PostgreSQL + Redis
+## 6. Your First Cluster
 
 Now let's build a real application stack. This is where VDE shines.
 
@@ -306,17 +362,6 @@ All three can talk to each other automatically.
 
 ### Creating Your Service VMs
 
-**Scenario: Creating database and cache VMs**
-
-```
-Given I have VDE installed
-And I need a database and cache
-When I run "create-virtual-for postgres"
-And I run "create-virtual-for redis"
-Then PostgreSQL VM configuration should be created
-And Redis VM configuration should be created
-```
-
 **Create both services:**
 ```bash
 ./scripts/create-virtual-for postgres
@@ -325,31 +370,12 @@ And Redis VM configuration should be created
 
 ### Starting Your Full Stack
 
-**Scenario: Starting all three VMs together**
-
-```
-Given I created VMs for python, postgres, and redis
-When I run "start-virtual python postgres redis"
-Then all three VMs should be running
-And Python VM can connect to PostgreSQL
-And Python VM can connect to Redis
-```
-
 **Start your full stack:**
 ```bash
 ./scripts/start-virtual python postgres redis
 ```
 
 ### Verifying Your Cluster is Running
-
-**Scenario: Checking all VMs are communicating**
-
-```
-Given I started python, postgres, and redis
-When I check VM status
-Then I should see all three running
-And they should be on the same Docker network
-```
 
 **Check status:**
 ```bash
@@ -365,20 +391,50 @@ postgres    service     running   2400
 redis       service     running   2401
 ```
 
+**Scenario: Allocate sequential ports for multiple language vms**
+
+```
+Given language VM "python" is allocated port "2200"
+When I create language VM "rust"
+Then "rust" should be allocated port "2201"
+```
+**Scenario: Multiple vms in one command**
+
+```
+Given I need to work with multiple environments
+When I say "start python and postgres"
+Then both VMs should start
+And the command should work the same as "start python, postgres"
+```
+**Scenario: Prefer ed25519 keys when multiple exist**
+
+```
+Given both "id_ed25519" and "id_rsa" keys exist
+When primary SSH key is requested
+Then "id_ed25519" should be returned as primary key
+```
+**Scenario: Creating multiple vms at once**
+
+```
+Given I need a full stack environment
+When I request to "create Python, PostgreSQL, and Redis"
+Then all three VMs should be created
+And each should have its own configuration
+And all should be on the same Docker network
+```
+**Scenario: Multi stage build optimization**
+
+```
+Given I rebuild a language VM
+Then the build should use multi-stage Dockerfile
+And final images should be smaller
+And build cache should be used when possible
+```
 ---
 
-## 7. Connecting to Your VMs
+## 7. Connecting
 
 ### Connecting to Your Python VM
-
-**Scenario: SSH into your development environment**
-
-```
-Given I have a Python VM running
-When I run "ssh python-dev"
-Then I should be connected to the Python VM
-And I should be in the projects/python directory
-```
 
 **Connect:**
 ```bash
@@ -405,21 +461,51 @@ ssh python-dev
 | postgres | `ssh postgres` | Direct database access |
 | redis | `ssh redis` | Direct Redis access |
 
+**Scenario: Connection help requests**
+
+```
+Given I need to connect to a VM
+When I ask "how do I connect to the Python environment?"
+Then I should receive SSH connection instructions
+And the instructions should be clear and actionable
+```
+**Scenario: Test database connectivity from vm**
+
+```
+Given my application can't connect to the database
+When I SSH into the application VM
+And I try to connect to the database VM directly
+Then I can see if the issue is network, credentials, or database state
+```
+**Scenario: Example 1   get connection info for python**
+
+```
+Given I need to connect to the Python VM
+When I ask for connection information
+Then the plan should include the connect intent
+And the plan should include the Python VM
+```
+**Scenario: Daily workflow   connect to primary vm**
+
+```
+Given I need to work in my primary development environment
+When I ask how to connect to Python
+Then the plan should provide connection details
+And the plan should include the Python VM
+```
+**Scenario: Troubleshooting   step 4 get connection info**
+
+```
+Given I need to debug inside a container
+When I ask to connect to Python
+Then the plan should include the connect intent
+And I should receive SSH connection information
+```
 ---
 
 ## 8. Working with Databases
 
 ### Connecting to PostgreSQL from Your Python VM
-
-**Scenario: Connecting from Python to PostgreSQL**
-
-```
-Given I have Python and PostgreSQL running
-When I SSH into python-dev
-And I run "psql -h postgres -U devuser"
-Then I should be connected to PostgreSQL
-And I can run database queries
-```
 
 **Try it yourself:**
 ```bash
@@ -439,31 +525,58 @@ psql -h postgres -U devuser
 
 ### Your Database Data Persists
 
-**Scenario: Database data survives rebuilds**
-
-```
-Given I created tables in PostgreSQL
-When I rebuild the PostgreSQL VM
-And I reconnect to PostgreSQL
-Then my tables should still exist
-```
-
 **Important:** Database data in `~/dev/data/postgres/` persists even when you rebuild VMs. Your data is safe.
 
+**Scenario: Example 1   create postgresql for python api**
+
+```
+Given I have planned to create Python
+When I plan to create PostgreSQL
+Then the plan should include the create_vm intent
+And the plan should include the PostgreSQL VM
+```
+**Scenario: Example 2   full stack javascript with redis**
+
+```
+Given I am following the documented JavaScript workflow
+When I plan to create JavaScript and Redis VMs
+Then the plan should include both VMs
+And the JavaScript VM should use the js canonical name
+```
+**Scenario: Adding cache layer   create redis**
+
+```
+Given I have an existing Python and PostgreSQL stack
+When I plan to add Redis
+Then the plan should include the create_vm intent
+And the Redis VM should be included
+```
+**Scenario: Collaborate with shared postgresql service**
+
+```
+Given the team uses PostgreSQL for development
+And postgres VM configuration is in the repository
+When each team member starts "postgres" VM
+Then each developer gets their own isolated PostgreSQL instance
+And data persists in each developer's local data/postgres/
+And developers don't interfere with each other's databases
+```
+**Scenario: Create test environment with database**
+
+```
+Given I need to test my application with a real database
+When I create "postgres" and "redis" service VMs
+And I create my language VM (e.g., "python")
+And I start all three VMs
+Then my application can connect to test database
+And test data is isolated from development data
+And I can stop test VMs independently
+```
 ---
 
-## 9. Daily Workflow: Starting Your Day
+## 9. Daily Workflow
 
 ### Morning Routine: Start Your Development Environment
-
-**Scenario: Starting all your VMs at once**
-
-```
-Given I created VMs for my project
-When I run "start-virtual python postgres redis"
-Then all VMs should be running
-And I can start working immediately
-```
 
 **One command to start your day:**
 ```bash
@@ -472,15 +585,6 @@ And I can start working immediately
 
 ### During the Day: Check What's Running
 
-**Scenario: Checking VM status**
-
-```
-Given I've been working for a while
-When I want to know what's running
-Then I should see all running VMs
-And their status should be clear
-```
-
 **Check status:**
 ```bash
 ./scripts/list-vms
@@ -488,36 +592,68 @@ And their status should be clear
 
 ### End of Day: Stop Everything
 
-**Scenario: Clean shutdown**
-
-```
-Given I'm done working for the day
-When I run "shutdown-virtual all"
-Then all VMs should stop gracefully
-And my work is saved
-```
-
 **Stop everything:**
 ```bash
 ./scripts/shutdown-virtual all
 ```
 
+**Scenario: Daily workflow   evening cleanup**
+
+```
+Given I am done with development for the day
+When I plan to stop everything
+Then the plan should include the stop_vm intent
+And the plan should apply to all running VMs
+```
+**Scenario: Git operations in automated workflows**
+
+```
+Given I have a CI/CD script in a VM
+And the script performs Git operations
+When I run the CI/CD script
+Then all Git operations should succeed
+And my host's SSH keys should be used
+And no manual intervention should be required
+```
+**Scenario: Full stack development workflow**
+
+```
+Given I create a Python VM for my API
+And I create a PostgreSQL VM for my database
+And I create a Redis VM for caching
+And I start all VMs
+When I SSH into the Python VM
+And I run "ssh postgres-dev psql -U devuser -l"
+Then I should see the PostgreSQL list of databases
+When I run "ssh redis-dev redis-cli ping"
+Then I should see "PONG"
+And all connections should use my host's SSH keys
+```
+**Scenario: Vm to vm ssh in development workflow**
+
+```
+Given I am developing a full-stack application
+And I have frontend, backend, and database VMs
+When I need to test the backend from the frontend VM
+And I run "ssh backend-dev pytest tests/"
+Then the tests should run on the backend VM
+And I should see the results in the frontend VM
+And authentication should be automatic
+```
+**Scenario: Automated testing workflow**
+
+```
+Given I have a comprehensive test suite
+When I push code changes
+Then CI runs tests in similar VMs
+And local test results match CI results
+And I catch issues before pushing
+```
 ---
 
 ## 10. Adding More Languages
 
 ### Creating a Second Language VM
-
-**Scenario: Adding Rust to your environment**
-
-```
-Given I have Python running
-And I want to work with Rust
-When I run "create-virtual-for rust"
-And I run "start-virtual rust"
-Then Rust VM should be running
-And I can use both Python and Rust
-```
 
 **Add Rust:**
 ```bash
@@ -527,37 +663,59 @@ And I can use both Python and Rust
 
 ### Starting Multiple Language VMs
 
-**Scenario: Working with multiple languages**
-
-```
-Given I created VMs for Python, Rust, and JavaScript
-When I run "start-virtual python rust js"
-Then all three language VMs should be running
-And I can switch between them
-```
-
 **Start multiple at once:**
 ```bash
 ./scripts/start-virtual python rust js
 ```
 
+**Scenario: Create a new language vm**
+
+```
+Given the VM "zig" is defined as a language VM with install command "apt-get install -y zig"
+And no VM configuration exists for "zig"
+When I run "create-virtual-for zig"
+Then a docker-compose.yml file should be created at "configs/docker/zig/docker-compose.yml"
+And the docker-compose.yml should contain SSH port mapping
+And SSH config entry should exist for "zig-dev"
+And projects directory should exist at "projects/zig"
+And logs directory should exist at "logs/zig"
+```
+**Scenario: Allocate first available port for language vm**
+
+```
+Given no language VMs are created
+When I create a language VM
+Then the VM should be allocated port "2200"
+```
+**Scenario: Natural language variations**
+
+```
+Given I can phrase commands in different ways
+When I say "launch the golang container"
+Then it should be equivalent to "start go"
+And the Go VM should start
+```
+**Scenario: Complex natural language queries**
+
+```
+Given I use conversational language
+When I say "I need to set up a backend with Python and PostgreSQL"
+Then the system should understand I want to create VMs
+And Python and PostgreSQL should be created
+```
+**Scenario: Troubleshooting language**
+
+```
+Given something isn't working
+When I say "restart the database"
+Then PostgreSQL should restart
+And the system should understand "database" means "postgres"
+```
 ---
 
-## 11. Troubleshooting: When Things Go Wrong
+## 11. Troubleshooting
 
 ### Problem: A VM Won't Start
-
-**Scenario: Diagnosing startup failures**
-
-```
-Given I tried to start a VM but it failed
-When I check the error
-Then I should see a clear error message
-And I should know if it's:
-- A port conflict
-- A Docker issue
-- A configuration problem
-```
 
 **What to check:**
 1. Is Docker running? `docker ps`
@@ -565,16 +723,6 @@ And I should know if it's:
 3. Check the logs: `docker logs <vm-name>`
 
 ### Problem: Changes Aren't Reflected
-
-**Scenario: Rebuilding after configuration changes**
-
-```
-Given I modified the Dockerfile to add a package
-And the VM is already running
-When I run "start-virtual python --rebuild"
-Then the VM should be rebuilt
-And the new package should be available
-```
 
 **Rebuild with --rebuild:**
 ```bash
@@ -586,24 +734,45 @@ And the new package should be available
 ./scripts/start-virtual python --rebuild --no-cache
 ```
 
-### Problem: Need to Start Over
-
-**Scenario: Removing a VM you don't need**
+**Scenario: Rebuild a vm with   rebuild flag**
 
 ```
-Given I created a VM I don't use anymore
-When I remove the VM
-Then the VM configuration is deleted
-But my project data is preserved
+Given VM "python" is running
+When I run "start-virtual python --rebuild"
+Then VM "python" should be running
+And the container should be rebuilt from the Dockerfile
 ```
+**Scenario: Error when all ports in range are allocated**
 
-**Remove a VM:**
-```bash
-# The VM config is removed
-# Your code in projects/ is preserved
-# See VM removal docs for exact commands
 ```
+Given all ports from "2200" to "2299" are allocated
+When I create a new language VM
+Then the command should fail with error "No available ports"
+```
+**Scenario: Rebuild requests**
 
+```
+Given I need to rebuild a container
+When I say "rebuild python from scratch"
+Then the rebuild flag should be set
+And no cache should be used
+```
+**Scenario: View vm logs for debugging**
+
+```
+Given a VM is running but misbehaving
+When I run "docker logs <vm-name>"
+Then I should see the container logs
+And I can identify the source of the problem
+```
+**Scenario: Access vm shell for debugging**
+
+```
+Given a VM is running
+When I run "docker exec -it <vm-name> /bin/zsh"
+Then I should have shell access inside the container
+And I can investigate issues directly
+```
 ---
 
 ## Quick Reference Card
@@ -702,7 +871,6 @@ ssh nginx          # Nginx web server
 1. Create your first project in `projects/python/`
 2. Start coding!
 3. Add more languages as you need them
-4. Use the AI assistant for natural language control
 
 ---
 
