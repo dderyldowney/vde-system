@@ -233,11 +233,12 @@ The `tests/lib/test_common.sh` file provides:
 
 ## Best Practices
 
-1. **Write tests for new features**: All new scripts need unit tests
-2. **Run tests before committing**: Use `make test` for full validation
-3. **Mock external dependencies**: Don't rely on real Docker in unit tests
-4. **Test error paths**: Verify failure modes work correctly
-5. **Keep tests fast**: Unit tests should run in seconds, not minutes
+1. **Follow the style guide**: See [STYLE_GUIDE.md](../STYLE_GUIDE.md) for coding standards
+2. **Write tests for new features**: All new scripts need unit tests
+3. **Run tests before committing**: Use `make test` for full validation
+4. **Mock external dependencies**: Don't rely on real Docker in unit tests
+5. **Test error paths**: Verify failure modes work correctly
+6. **Keep tests fast**: Unit tests should run in seconds, not minutes
 
 ## CI Workflow Details
 
