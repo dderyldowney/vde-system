@@ -1,0 +1,296 @@
+#!/usr/bin/env sh
+# VDE Core Library - Essential Functions for VDE
+# Source this library with: source ./scripts/lib/vde-core
+# Requires: zsh 5.0+ or bash 4.0+ for associative arrays (bash 3.x uses fallback)
+#
+# This is the minimal core library containing only essential functions
+# needed for basic VDE operations. It provides:
+# - Logging functions
+# - Constants and directory paths
+# - Basic VM type loading (with caching)
+# - Essential VM info queries
+#
+# For full functionality, source vm-common which includes this core
+# plus SSH, Docker, and template functions.
+#
+# Shell Compatibility: Uses vde-shell-compat for portable operations
+#
+# Return Codes: All functions use standardized return codes from vde-constants:
+#   VDE_SUCCESS (0)        - Operation completed successfully
+#   VDE_ERR_GENERAL (1)    - Unspecified failure
+#   VDE_ERR_INVALID_INPUT (2) - Bad arguments or validation failure
+#   VDE_ERR_NOT_FOUND (3)  - Resource doesn't exist
+
+# -----------------------
+# Source Guard
+# -----------------------
+# Prevent multiple sourcing which causes readonly variable errors
+if [ "${_VDE_CORE_GUARD_LOADED:-}" = "1" ]; then
+    return 0 2>/dev/null || exit 0
+fi
+_VDE_CORE_GUARD_LOADED=1
+
+# -----------------------
+# Bootstrap: Determine VDE Root Directory
+# -----------------------
+# Portable script path detection
+if [ -n "${ZSH_VERSION:-}" ]; then
+    # shellcheck disable=SC2296
+    _VDE_CORE_SCRIPT_PATH="${(%):-%x}"
+elif [ -n "${BASH_VERSION:-}" ]; then
+    _VDE_CORE_SCRIPT_PATH="${BASH_SOURCE[0]:-$0}"
+else
+    _VDE_CORE_SCRIPT_PATH="$0"
+fi
+
+if [ -z "${VDE_CORE_ROOT_DIR:-}" ]; then
+    VDE_CORE_ROOT_DIR="$(cd "$(dirname "$_VDE_CORE_SCRIPT_PATH")/../.." && pwd)"
+    readonly VDE_CORE_ROOT_DIR
+fi
+
+# Only set VDE_ROOT_DIR if not already set (allows vm-common to set it first)
+if [ -z "${VDE_ROOT_DIR:-}" ]; then
+    VDE_ROOT_DIR="$VDE_CORE_ROOT_DIR"
+    readonly VDE_ROOT_DIR
+fi
+
+# -----------------------
+# Source Shell Compatibility Layer
+# -----------------------
+# shellcheck source=vde-shell-compat
+. "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat"
+
+# -----------------------
+# Source Constants Library
+# -----------------------
+# shellcheck source=vde-constants
+. "$VDE_ROOT_DIR/scripts/lib/vde-constants"
+
+# -----------------------
+# Directory Constants
+# -----------------------
+VDE_CORE_CONFIGS_DIR="$VDE_ROOT_DIR/configs/docker"
+readonly VDE_CORE_CONFIGS_DIR
+VDE_CORE_SCRIPTS_DIR="$VDE_ROOT_DIR/scripts"
+readonly VDE_CORE_SCRIPTS_DIR
+VDE_CORE_DATA_DIR="$VDE_CORE_SCRIPTS_DIR/data"
+readonly VDE_CORE_DATA_DIR
+VDE_CORE_CACHE_DIR="$VDE_ROOT_DIR/.cache"
+readonly VDE_CORE_CACHE_DIR
+VDE_CORE_VM_TYPES_CONF="$VDE_CORE_DATA_DIR/vm-types.conf"
+readonly VDE_CORE_VM_TYPES_CONF
+VDE_CORE_VM_TYPES_CACHE="$VDE_CORE_CACHE_DIR/vm-types.cache"
+readonly VDE_CORE_VM_TYPES_CACHE
+
+# -----------------------
+# Logging Functions
+# -----------------------
+
+# log_info - Output an informational message
+log_info() {
+    echo "[INFO] $*"
+    return $VDE_SUCCESS
+}
+
+# log_error - Output an error message to stderr
+log_error() {
+    echo "[ERROR] $*" >&2
+    return $VDE_SUCCESS
+}
+
+# log_success - Output a success message
+log_success() {
+    echo "[SUCCESS] $*"
+    return $VDE_SUCCESS
+}
+
+# log_warning - Output a warning message
+log_warning() {
+    echo "[WARNING] $*"
+    return $VDE_SUCCESS
+}
+
+# -----------------------
+# Core VM Type Data Structures
+# -----------------------
+# Initialize associative arrays using shell-compat layer
+_assoc_init "VDE_CORE_VM_TYPE"
+_assoc_init "VDE_CORE_VM_ALIASES"
+_assoc_init "VDE_CORE_VM_DISPLAY"
+_VDE_CORE_LOADED=0
+
+# -----------------------
+# Cache Helper Functions
+# -----------------------
+
+# _vde_core_ensure_cache_dir - Create cache directory if needed
+_vde_core_ensure_cache_dir() {
+    if [ ! -d "$VDE_CORE_CACHE_DIR" ]; then
+        mkdir -p "$VDE_CORE_CACHE_DIR" 2>/dev/null
+    fi
+    return $VDE_SUCCESS
+}
+
+# _vde_core_get_mtime - Get file modification time
+_vde_core_get_mtime() {
+    local filepath="$1"
+    if [ -f "$filepath" ]; then
+        if [ "$(uname)" = "Darwin" ]; then
+            stat -f %m "$filepath" 2>/dev/null || echo "0"
+        else
+            stat -c %Y "$filepath" 2>/dev/null || echo "0"
+        fi
+    else
+        echo "0"
+    fi
+}
+
+# -----------------------
+# Core VM Type Loading (Minimal)
+# -----------------------
+
+# vde_core_load_types - Load minimal VM type data for core operations
+# Only loads type and aliases, not install commands or service ports
+# Args: none
+# Returns: VDE_SUCCESS (0) or VDE_ERR_NOT_FOUND (3)
+vde_core_load_types() {
+    # Return early if already loaded
+    if [ "$_VDE_CORE_LOADED" -eq 1 ]; then
+        return $VDE_SUCCESS
+    fi
+    
+    local conf_file="$VDE_CORE_VM_TYPES_CONF"
+    
+    if [ ! -f "$conf_file" ]; then
+        return $VDE_ERR_NOT_FOUND
+    fi
+    
+    # Clear existing arrays
+    _assoc_clear "VDE_CORE_VM_TYPE"
+    _assoc_clear "VDE_CORE_VM_ALIASES"
+    _assoc_clear "VDE_CORE_VM_DISPLAY"
+    
+    # Parse only essential fields (type, name, aliases, display)
+    while IFS='|' read -r type name vm_aliases display _rest; do
+        # Skip comments
+        case "$type" in
+            \#*) continue ;;
+        esac
+        # Skip empty lines
+        [ -z "$type" ] && continue
+        
+        _assoc_set "VDE_CORE_VM_TYPE" "$name" "$type"
+        _assoc_set "VDE_CORE_VM_ALIASES" "$name" "$vm_aliases"
+        _assoc_set "VDE_CORE_VM_DISPLAY" "$name" "$display"
+    done < "$conf_file"
+    
+    _VDE_CORE_LOADED=1
+    return $VDE_SUCCESS
+}
+
+# -----------------------
+# Core VM Query Functions
+# -----------------------
+
+# vde_core_get_all_vms - List all known VM names
+vde_core_get_all_vms() {
+    vde_core_load_types
+    _assoc_keys "VDE_CORE_VM_TYPE" | sort
+}
+
+# vde_core_get_vm_type - Get the type of a VM (lang or service)
+vde_core_get_vm_type() {
+    local vm="$1"
+    vde_core_load_types
+    _assoc_get "VDE_CORE_VM_TYPE" "$vm" 2>/dev/null || echo ""
+}
+
+# vde_core_is_known_vm - Check if a VM name is known
+vde_core_is_known_vm() {
+    local vm="$1"
+    vde_core_load_types
+    if _assoc_has_key "VDE_CORE_VM_TYPE" "$vm"; then
+        return $VDE_SUCCESS
+    fi
+    return $VDE_ERR_NOT_FOUND
+}
+
+# -----------------------
+# Lazy Loading Support
+# -----------------------
+# These variables track which optional modules have been loaded
+_VDE_SSH_LOADED=0
+_VDE_DOCKER_LOADED=0
+_VDE_TEMPLATE_LOADED=0
+
+# vde_require_ssh - Ensure SSH functions are available
+# This is a stub that will be replaced by vm-common when fully loaded
+vde_require_ssh() {
+    if [ "$_VDE_SSH_LOADED" -eq 0 ]; then
+        # If we're in core-only mode, we need to source vm-common
+        if [ -z "${CONFIGS_DIR:-}" ]; then
+            # shellcheck source=vm-common
+            . "$VDE_ROOT_DIR/scripts/lib/vm-common"
+        fi
+        _VDE_SSH_LOADED=1
+    fi
+    return $VDE_SUCCESS
+}
+
+# vde_require_docker - Ensure Docker functions are available
+vde_require_docker() {
+    if [ "$_VDE_DOCKER_LOADED" -eq 0 ]; then
+        if [ -z "${CONFIGS_DIR:-}" ]; then
+            # shellcheck source=vm-common
+            . "$VDE_ROOT_DIR/scripts/lib/vm-common"
+        fi
+        _VDE_DOCKER_LOADED=1
+    fi
+    return $VDE_SUCCESS
+}
+
+# vde_require_template - Ensure template functions are available
+vde_require_template() {
+    if [ "$_VDE_TEMPLATE_LOADED" -eq 0 ]; then
+        if [ -z "${CONFIGS_DIR:-}" ]; then
+            # shellcheck source=vm-common
+            . "$VDE_ROOT_DIR/scripts/lib/vm-common"
+        fi
+        _VDE_TEMPLATE_LOADED=1
+    fi
+    return $VDE_SUCCESS
+}
+
+# -----------------------
+# Performance Timing (Debug)
+# -----------------------
+# Set VDE_DEBUG_TIMING=1 to enable timing output
+
+# vde_time_start - Start a timing measurement
+# Args: <label>
+vde_time_start() {
+    local label="$1"
+    if [ "${VDE_DEBUG_TIMING:-0}" = "1" ]; then
+        eval "_VDE_TIME_${label}=\"\$(date +%s%N 2>/dev/null || date +%s)\""
+    fi
+}
+
+# vde_time_end - End a timing measurement and print result
+# Args: <label>
+vde_time_end() {
+    local label="$1"
+    if [ "${VDE_DEBUG_TIMING:-0}" = "1" ]; then
+        local start_var="_VDE_TIME_${label}"
+        local start_time
+        eval "start_time=\"\${${start_var}:-0}\""
+        local end_time
+        end_time=$(date +%s%N 2>/dev/null || date +%s)
+        
+        if [ "$start_time" != "0" ]; then
+            # Calculate duration in milliseconds
+            local duration_ns=$((end_time - start_time))
+            local duration_ms=$((duration_ns / 1000000))
+            echo "[TIMING] $label: ${duration_ms}ms" >&2
+        fi
+    fi
+}

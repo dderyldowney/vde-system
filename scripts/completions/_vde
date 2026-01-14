@@ -1,0 +1,156 @@
+#compdef vde
+# VDE Zsh Completion Script
+#
+# Installation:
+#   Place this file in a directory in your $fpath, e.g.:
+#     ~/.zsh/completion/_vde
+#
+#   Or add to .zshrc:
+#     fpath=(~/.zsh/completion $fpath)
+#     autoload -U compinit && compinit
+
+local -a VDE_COMMANDS
+VDE_COMMANDS=(
+    'create:Create a new VM from a predefined type'
+    'start:Start an existing VM'
+    'stop:Stop a running VM'
+    'restart:Restart a VM'
+    'list:List all VMs'
+    'status:Show VM status'
+    'health:Check VDE health and dependencies'
+    'chat:Interactive AI assistant chat mode'
+    'ai:AI assistant for natural language commands'
+    'help:Show help message'
+)
+
+local -a VDE_VM_TYPES
+VDE_VM_TYPES=(
+    'python:Python development environment'
+    'ruby:Ruby development environment'
+    'rust:Rust development environment'
+    'js:JavaScript/Node.js development environment'
+    'csharp:C# development environment'
+    'postgres:PostgreSQL database service'
+    'redis:Redis cache service'
+    'mongodb:MongoDB database service'
+    'nginx:Nginx web server service'
+)
+
+_vde_complete_vm_names() {
+    local -a created_vms
+    if [ -d "${VDE_ROOT_DIR:-.}/configs/docker" ]; then
+        created_vms=(${(f)"$(ls -1 "${VDE_ROOT_DIR:-.}/configs/docker" 2>/dev/null)"})
+    fi
+    _describe 'VM names' created_vms
+}
+
+_vde_complete_vm_types() {
+    _describe 'VM types' VDE_VM_TYPES
+}
+
+_vde_create() {
+    _arguments \
+        '(-h --help)'{-h,--help}'[Show help message]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output]' \
+        '(-q --quiet)'{-q,--quiet}'[Suppress progress indicators]' \
+        '1:VM type:_vde_complete_vm_types'
+}
+
+_vde_start() {
+    _arguments \
+        '(-h --help)'{-h,--help}'[Show help message]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output]' \
+        '(-r --rebuild)'{-r,--rebuild}'[Rebuild container before starting]' \
+        '(-n --no-cache)'{-n,--no-cache}'[Build without cache]' \
+        '1:VM name:_vde_complete_vm_names'
+}
+
+_vde_stop() {
+    _arguments \
+        '(-h --help)'{-h,--help}'[Show help message]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output]' \
+        '1:VM name:_vde_complete_vm_names'
+}
+
+_vde_restart() {
+    _arguments \
+        '(-h --help)'{-h,--help}'[Show help message]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output]' \
+        '(-r --rebuild)'{-r,--rebuild}'[Rebuild container before starting]' \
+        '1:VM name:_vde_complete_vm_names'
+}
+
+_vde_list() {
+    _arguments \
+        '(-h --help)'{-h,--help}'[Show help message]' \
+        '(-a --all)'{-a,--all}'[Show all VMs including stopped]' \
+        '(--name-only)--name-only[Show only hostnames]' \
+        '(-f --format)'{-f,--format}'[Output format]:format:(table json)'
+}
+
+_vde_status() {
+    _arguments \
+        '(-h --help)'{-h,--help}'[Show help message]' \
+        '1:VM name:_vde_complete_vm_names'
+}
+
+_vde_chat() {
+    _arguments \
+        '(-h --help)'{-h,--help}'[Show help message]' \
+        '(--ai)--ai[Enable LLM-based parsing]' \
+        '(--persistent)--persistent[Enable persistent session]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output]'
+}
+
+_vde_ai() {
+    _arguments \
+        '(-h --help)'{-h,--help}'[Show help message]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output]' \
+        '*::prompt:'
+}
+
+_vde_health() {
+    _arguments \
+        '(-h --help)'{-h,--help}'[Show help message]' \
+        '(-f --format)'{-f,--format}'[Output format]:format:(text json)' \
+        '(-v --verbose)'{-v,--verbose}'[Detailed output]'
+}
+
+_vde() {
+    local state line
+    typeset -A opt_args
+    
+    _arguments -C \
+        '(-h --help)'{-h,--help}'[Show help message]' \
+        '(-v --verbose)'{-v,--verbose}'[Verbose output]' \
+        '(-q --quiet)'{-q,--quiet}'[Suppress output]' \
+        '--version[Show version information]' \
+        '1: :_guard "(^-*)" "command"' \
+        '*::arg:->args'
+    
+    case $state in
+        (command)
+            _describe 'commands' VDE_COMMANDS
+            return
+            ;;
+        (args)
+            local cmd="$line[1]"
+            shift line
+            case $cmd in
+                create) _vde_create "$@" ;;
+                start) _vde_start "$@" ;;
+                stop) _vde_stop "$@" ;;
+                restart) _vde_restart "$@" ;;
+                list) _vde_list "$@" ;;
+                status) _vde_status "$@" ;;
+                chat) _vde_chat "$@" ;;
+                ai) _vde_ai "$@" ;;
+                health) _vde_health "$@" ;;
+                help) _vde_health "$@" ;;
+                *) _default ;;
+            esac
+            ;;
+    esac
+}
+
+_vde "$@"
