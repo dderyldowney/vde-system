@@ -72,48 +72,51 @@ This is a **Virtual Development Environment (VDE)** providing Docker-based devel
 
 ## SSH Configuration
 
-**Requirements:**
-- SSH private key: `~/.ssh/id_ed25519` (or your key)
-- SSH public key must be in: `$HOME/dev/public-ssh-keys/`
-- SSH config: Copy from `backup/ssh/config` to `~/.ssh/config`
+**Automatic SSH Setup:**
+VDE handles all SSH configuration automatically:
+- SSH agent is started and keys are loaded automatically
+- SSH keys are detected automatically (ed25519, RSA, ECDSA, DSA)
+- SSH key is generated if none exists
+- SSH config entries are created automatically
+- No manual configuration required
 
-**Key Permissions:**
+**VM-to-VM Communication:**
+With SSH agent forwarding, VMs can communicate with each other using your host's SSH keys:
 ```bash
-chmod 600 ~/.ssh/id_ed25519
-chmod 644 ~/.ssh/id_ed25519.pub
-chmod 600 ~/.ssh/config
+# From Go VM
+ssh go-dev
+ssh python-dev                # SSH to Python VM using host keys
+ssh rust-dev pwd              # Run command on Rust VM
+scp postgres-dev:/data/file . # Copy from PostgreSQL VM
 ```
 
-**SSH Config Example:**
+**VM-to-Host Communication:**
+Execute commands on host from within any VM:
+```bash
+# From within any VM
+to-host ls ~/dev              # List host's dev directory
+to-host docker ps             # Check host's containers
 ```
-Host python-dev
-  HostName localhost
-  Port 2200
-  User devuser
-  IdentityFile ~/.ssh/id_ed25519
-  IdentitiesOnly yes
 
-Host rust-dev
-  HostName localhost
-  Port 2201
-  User devuser
-  IdentityFile ~/.ssh/id_ed25519
-  IdentitiesOnly yes
+**VM-to-External Communication:**
+Use your host's SSH keys for external services:
+```bash
+# From within any VM
+git clone github.com:user/repo  # Uses your GitHub keys
+git push origin main
 ```
+
+**Key Types Supported:**
+VDE automatically detects and uses any of these: `id_ed25519`, `id_ecdsa`, `id_rsa`, `id_ecdsa_sk`, `id_ed25519_sk`, `id_dsa`
 
 **Connecting:**
 ```bash
 # Command line
 ssh python-dev
 ssh rust-dev
-ssh js-dev
-ssh csharp-dev
-ssh ruby-dev
-ssh postgres
-ssh nginx
 
 # VSCode Remote-SSH
-# Use connection name: python-dev, rust-dev, js-dev, csharp-dev, ruby-dev, postgres, nginx
+# Use connection name: python-dev, rust-dev, etc.
 ```
 
 ## Directory Structure

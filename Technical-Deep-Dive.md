@@ -51,6 +51,103 @@ The VDE (Virtual Development Environment) system is a **template-based, data-dri
 
 ---
 
+## Part 0: SSH Agent Forwarding System
+
+VDE includes a comprehensive SSH agent forwarding system that enables secure VM-to-VM, VM-to-Host, and VM-to-External communication.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Host Machine                            │
+│                                                                  │
+│  ┌──────────────┐         ┌──────────────────────────────────┐ │
+│  │ SSH Keys     │         │ SSH Agent                        │ │
+│  │ ~/.ssh/      │◄────────┤ • Holds private keys             │ │
+│  │ id_ed25519  │         │ • Socket: $SSH_AUTH_SOCK         │ │
+│  │ id_rsa      │         │ • Auto-started by VDE             │ │
+│  │ ...         │         └──────────────▲───────────────────┘ │
+│  └──────────────┘                        │                     │
+│                                          │ Socket Forwarding   │
+│                                          ▼                     │
+│  ┌──────────────────────────────────────────────────────────┐ │
+│  │ Docker Container (VM)                                     │ │
+│  │  • SSH_AUTH_SOCK=/ssh-agent/sock                          │ │
+│  │  • ForwardAgent yes (client config)                       │ │
+│  │  • AllowAgentForwarding yes (server config)               │ │
+│  └──────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Key Functions in vm-common
+
+**SSH Key Management:**
+- `detect_ssh_keys()` - Find all SSH keys in ~/.ssh/
+- `get_primary_ssh_key()` - Select best key (priority: ed25519 > ecdsa > rsa > dsa)
+- `get_ssh_pubkey()` - Get public key for private key
+- `sync_ssh_keys_to_vde()` - Copy all public keys to public-ssh-keys/
+
+**SSH Agent Management:**
+- `ssh_agent_is_running()` - Check if SSH agent is running
+- `ensure_ssh_agent()` - Start agent, load keys (automatic, silent)
+- `ensure_ssh_environment()` - One-call setup for all SSH operations
+
+**SSH Configuration:**
+- `generate_vm_ssh_config()` - Create VM-to-VM SSH config entries
+- `merge_ssh_config_entry()` - Safely add SSH entries to ~/.ssh/config
+- `get_vm_ssh_port()` - Get SSH port for a VM
+
+### Integration Points
+
+**In create-virtual-for:**
+```bash
+ensure_ssh_environment  # Automatic SSH setup
+```
+
+**In start-virtual:**
+```bash
+ensure_ssh_environment  # Automatic SSH setup
+```
+
+**In base-dev.Dockerfile:**
+- `AllowAgentForwarding yes` in sshd_config
+- `ForwardAgent yes` in SSH client config
+- SSH agent forwarding helper script
+- Host communication helper (`to-host` alias)
+
+**In Docker Compose Templates:**
+- Socket mount: `${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro`
+- Environment: `SSH_AUTH_SOCK=/ssh-agent/sock`
+
+### Communication Patterns
+
+**VM → VM:**
+```
+[Go VM] --SSH--> [Host SSH Agent] --SSH--> [Python VM]
+                      (authentication)
+```
+
+**VM → External:**
+```
+[Python VM] --SSH--> [Host SSH Agent] --SSH--> [GitHub/GitLab]
+                         (uses your keys)
+```
+
+**VM → Host:**
+```
+[Python VM] --docker exec--> [Host Docker Daemon]
+                 (direct access)
+```
+
+### Security Model
+
+- **Private keys NEVER leave the host**: Only the authentication socket is forwarded
+- **Read-only mount**: Containers cannot modify the SSH agent socket
+- **Automatic key management**: All keys detected and loaded automatically
+- **No manual configuration**: VDE handles agent startup and key loading
+
+---
+
 ## Part 1: Core Data Structure (vm-types.conf)
 
 Everything starts with the **vm-types.conf** file. This is the single source of truth for all VM types.

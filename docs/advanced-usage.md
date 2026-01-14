@@ -134,15 +134,81 @@ services:
 
 ## Inter-Container Communication
 
-All containers share the `dev-net` Docker network:
+All containers share the `dev-net` Docker network and have SSH agent forwarding enabled.
+
+### VM-to-VM Communication via SSH
+
+With SSH agent forwarding, you can SSH between VMs using your host's SSH keys:
 
 ```bash
-# From python-dev, connect to postgres
-ssh postgres
-psql -h postgres -U devuser
+# From Go VM, connect to Python VM
+ssh go-dev
+ssh python-dev                # Uses your host's SSH keys!
+ssh python-dev pwd            # Run command on Python VM
+scp python-dev:/data/file .   # Copy file from Python VM
+```
 
-# Or from within the container
-docker exec python-dev psql -h postgres -U devuser
+### Full Stack Development
+
+```bash
+# Create a full stack: API, database, cache
+./scripts/create-virtual-for python postgres redis
+./scripts/start-virtual python postgres redis
+
+# From Python VM (API layer)
+ssh python-dev
+ssh postgres-dev psql -U devuser -c "SELECT * FROM users"
+ssh redis-dev redis-cli INCR counter
+```
+
+### Microservices Architecture
+
+```bash
+# Create microservices
+./scripts/create-virtual-for go python rust postgres
+./scripts/start-virtual go python rust postgres
+
+# From Go VM (API gateway)
+ssh go-dev
+# Call other services
+ssh python-dev svc_status
+ssh rust-dev analytics
+ssh postgres-dev "psql -c 'SELECT COUNT(*) FROM orders'"
+```
+
+### Service Mesh Pattern
+
+```bash
+# Create service mesh
+./scripts/create-virtual-for nginx go python postgres redis
+./scripts/start-virtual nginx go python postgres redis
+
+# From Nginx VM (edge router)
+ssh nginx-dev
+# Proxy requests to backend services
+curl http://go-dev:8080/health
+curl http://python-dev:8000/api/status
+```
+
+### Using Host Communication
+
+Execute commands on your host from within any VM:
+
+```bash
+# From within any VM
+to-host ls ~/dev                    # List host's dev directory
+to-host docker ps                   # Check host's containers
+to-host tail -f logs/app.log        # View host's log files
+```
+
+### Git Operations from VMs
+
+Use your host's SSH keys for Git operations from within any VM:
+
+```bash
+# From within any VM
+git clone github.com:user/repo      # Uses your GitHub key
+git push origin main                # Authentication works automatically
 ```
 
 ---

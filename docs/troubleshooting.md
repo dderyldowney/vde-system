@@ -23,6 +23,56 @@ lsof -i :2205
 
 ---
 
+## SSH Agent Issues
+
+**Problem:** SSH agent forwarding not working.
+
+```bash
+# Check SSH agent is running
+ps aux | grep ssh-agent
+
+# Check SSH_AUTH_SOCK is set
+echo $SSH_AUTH_SOCK
+
+# View loaded keys
+ssh-add -l
+
+# Restart SSH agent (VDE does this automatically, but you can manually)
+eval "$(ssh-agent -s)"
+ssh-add
+
+# Check SSH status
+./scripts/ssh-agent-setup
+```
+
+**Problem:** VM-to-VM SSH not working.
+
+```bash
+# Check both VMs are running
+docker ps | grep -E "python|go"
+
+# Regenerate VM SSH config
+./scripts/ssh-agent-setup
+
+# Test SSH connection
+ssh -v python-dev
+```
+
+**Problem:** Git operations fail with authentication errors.
+
+```bash
+# Verify SSH agent has keys
+ssh-add -l
+
+# Add keys if needed
+ssh-add ~/.ssh/id_ed25519
+
+# Test GitHub/GitLab SSH connection
+ssh -T git@github.com
+```
+
+---
+
 ## SSH Connection Issues
 
 **Problem:** Can't connect to a VM via SSH.
