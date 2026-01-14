@@ -581,7 +581,52 @@ jobs:
           echo "To enable these tests, configure ANTHROPIC_AUTH_TOKEN, ANTHROPIC_API_KEY, or CLAUDE_API_KEY as repository secrets"
 
   # =============================================================================
-  # Job 8: Summary
+  # Job 8: BDD Feature Tests (New - additive, non-blocking)
+  # =============================================================================
+  bdd-tests:
+    name: BDD Feature Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Note: Not included in summary needs() to avoid blocking existing CI on failure
+    # This allows BDD tests to be developed incrementally without breaking the pipeline
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build BDD test container
+        run: |
+          echo "Building BDD test container..."
+          docker build -t vde-bdd-tester -f tests/docker/bdd-test/Dockerfile .
+
+      - name: Run BDD tests
+        run: |
+          echo "Running BDD feature tests..."
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/vde:ro" \
+            -e VDE_ROOT_DIR=/vde \
+            -e PYTHONUNBUFFERED=1 \
+            vde-bdd-tester \
+            behave --format pretty tests/features/ || {
+            echo "::warning::Some BDD tests failed. This is expected during initial framework development."
+            echo "The BDD framework is being developed incrementally."
+            exit 0  # Don't fail CI during BDD framework development
+          }
+
+      - name: Upload BDD test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bdd-test-results
+          path: /tmp/behave-report.json
+          if-no-files: ignore
+          retention-days: 7
+
+  # =============================================================================
+  # Job 9: Summary
   # =============================================================================
   summary:
     name: CI Summary

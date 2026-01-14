@@ -27,8 +27,8 @@ Feature: AI Assistant Integration
     Given my request is not clear
     When I say "start my environment"
     Then the AI should ask for clarification
-    Or make a reasonable guess based on context
-    And explain what it's doing
+    And the AI should make a reasonable guess based on context
+    And the AI should explain what it's doing
 
   Scenario: AI remembers context
     Given I just created a Python VM

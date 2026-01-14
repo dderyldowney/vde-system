@@ -35,7 +35,7 @@ Feature: Debugging and Troubleshooting
     When I check what's using the port
     Then I should see which process is using it
     And I can decide to stop the conflicting process
-    Or VDE can allocate a different port
+    And VDE can allocate a different port
 
   Scenario: Verify SSH connection is working
     Given I cannot SSH into a VM

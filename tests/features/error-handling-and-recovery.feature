@@ -105,7 +105,7 @@ Feature: Error Handling and Recovery
     Given an error occurs
     When VDE handles it
     Then the error should be logged
-    With sufficient detail for debugging
+    And the error should have sufficient detail for debugging
     And I can find it in the logs directory
 
   Scenario: Rollback on failure

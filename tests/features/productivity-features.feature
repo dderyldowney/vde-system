@@ -219,7 +219,7 @@ Feature: Productivity Features for Developers
     Given multiple VMs generate logs
     When I check logs for each VM
     Then I can view logs from docker logs command
-    Or I can check logs/<vm>/ directories
+    And I can check logs/<vm>/ directories
     And I can trace issues across services
 
   Scenario: File watching and rebuilds
