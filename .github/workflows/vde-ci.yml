@@ -376,12 +376,17 @@ jobs:
           echo "VDE_SSH_KEY=$HOME/.ssh/id_ed25519" >> $GITHUB_ENV
           echo "VDE_SSH_PUB_KEY=$HOME/.ssh/id_ed25519.pub" >> $GITHUB_ENV
 
-      - name: Create VM configuration
+      - name: Verify VM configuration exists
         shell: zsh {0}
         run: |
-          # Remove existing VM config if present (from previous CI runs or repo)
-          rm -rf "configs/docker/${{ steps.select-vm.outputs.vm }}"
-          ./scripts/create-virtual-for ${{ steps.select-vm.outputs.vm }}
+          # Verify the selected VM has a configuration in the repo
+          VM_CONFIG="configs/docker/${{ steps.select-vm.outputs.vm }}/docker-compose.yml"
+          if [[ ! -f "$VM_CONFIG" ]]; then
+            echo "ERROR: VM configuration not found: $VM_CONFIG"
+            echo "The VM '${{ steps.select-vm.outputs.vm }}' should have a config in the repo."
+            exit 1
+          fi
+          echo "✓ VM configuration exists: $VM_CONFIG"
 
       - name: Create Docker network
         run: docker network create dev-net 2>/dev/null || echo "Network already exists"
