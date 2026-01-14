@@ -39,12 +39,41 @@ When you ran `create-virtual-for go`:
 3. **Directories Created**: `projects/go/`, `logs/go/`
 4. **Environment File**: `env-files/go.env`
 5. **SSH Config**: Entry added to `~/.ssh/config`
+6. **SSH Agent**: Started automatically, keys loaded automatically
+7. **SSH Keys**: Detected or generated automatically
 
 When you ran `start-virtual go`:
 
-1. **Image Built**: Docker image built from base-dev template
-2. **Container Started**: Container `go-dev` started
-3. **SSH Ready**: SSH server running on port 2200
+1. **SSH Environment**: Agent verified, keys ready (automatic)
+2. **Image Built**: Docker image built from base-dev template
+3. **Container Started**: Container `go-dev` started
+4. **SSH Agent Forwarding**: Enabled for VM-to-VM and external communication
+5. **SSH Ready**: SSH server running on port 2200
+
+**All SSH setup is automatic** - no manual configuration required.
+
+---
+
+## VM-to-VM Communication
+
+With SSH agent forwarding, you can communicate between VMs:
+
+```bash
+# Create and start multiple VMs
+./scripts/create-virtual-for python postgres
+./scripts/start-virtual python postgres
+
+# From Python VM, connect to PostgreSQL
+ssh python-dev
+ssh postgres-dev psql -U devuser
+
+# Or from your host
+ssh python-dev
+# Now from within Python VM:
+ssh postgres-dev      # Uses your host's SSH keys!
+```
+
+See [SSH Configuration](./ssh-configuration.md) for complete details.
 
 ---
 

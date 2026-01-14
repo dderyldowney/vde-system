@@ -39,6 +39,8 @@ VDE provides isolated development environments for multiple programming language
 - **VSCode Ready**: Full IDE support via Remote-SSH
 - **AI Integration**: Works seamlessly with Claude Code, Cursor, Copilot
 - **Natural Language Control**: Manage VDE using plain English commands
+- **SSH Agent Forwarding**: VM-to-VM and VM-to-Host communication using your host's SSH keys
+- **Automatic SSH Setup**: VDE handles SSH agent, keys, and configuration automatically
 
 ---
 
@@ -68,6 +70,54 @@ cd ~/workspace
 - Read the [Quick Start guide](docs/quick-start.md) for detailed setup
 - See [Command Reference](docs/command-reference.md) for all available commands
 - Try the [VDE AI Assistant](docs/vde-ai-assistant.md) for natural language control
+
+---
+
+## SSH Agent Forwarding & VM Communication
+
+VDE includes **automatic SSH agent forwarding**, enabling seamless communication between VMs and with external services.
+
+### What This Means
+
+- **VM → VM**: SSH from one VM to another using your host's SSH keys
+- **VM → Host**: Execute commands on your host from within a VM
+- **VM → External**: Use your GitHub/GitLab keys from within any VM
+- **Automatic Setup**: No manual configuration required
+
+### Example: VM-to-VM Communication
+
+```bash
+# From your host
+ssh go-dev                    # Connect to Go VM
+
+# From within Go VM
+ssh python-dev                # SSH to Python VM (uses your host keys!)
+ssh rust-dev pwd              # Check directory on Rust VM
+scp python-dev:/data/file .   # Copy file from Python VM
+
+# Use Git with your credentials
+git clone github.com:user/repo  # Uses your GitHub SSH key
+```
+
+### Example: VM-to-Host Communication
+
+```bash
+# From within any VM
+to-host ls ~/dev              # List host's dev directory
+to-host tail -f logs/app.log  # View host's log files
+```
+
+### How It Works
+
+- VDE automatically starts SSH agent and loads your keys
+- Your SSH keys **never leave** the host machine (security)
+- VMs access keys via SSH agent socket forwarding
+- Works with any SSH key type (ed25519, RSA, ECDSA, DSA)
+- All your SSH keys are automatically detected and used
+
+**No manual setup required** - VDE handles everything when you create or start VMs.
+
+See [SSH Configuration](docs/ssh-configuration.md) for complete details.
 
 ---
 
@@ -165,6 +215,11 @@ pip install fastapi uvicorn psycopg2-binary
 
 # Start all services
 ./scripts/start-virtual python go rust postgres redis
+
+# Services can communicate via SSH (VM-to-VM)
+# From python VM:
+ssh postgres-dev psql -U devuser  # Connect to database
+ssh redis-dev redis-cli           # Connect to cache
 ```
 
 ---

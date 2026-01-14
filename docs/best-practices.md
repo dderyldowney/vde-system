@@ -74,16 +74,22 @@ claude
 
 ### 6. SSH Between Containers
 
-All VMs share the `dev-net` network for inter-container communication.
+All VMs share the `dev-net` network and have SSH agent forwarding enabled.
 
 ```bash
-# From python-dev, connect to postgres
-ssh postgres
+# From python-dev, connect to postgres using host's SSH keys
+ssh postgres-dev
 psql -h localhost -U devuser
 
 # Or use service names as hostnames
 psql -h postgres -U devuser
 ```
+
+**VM-to-VM Best Practices:**
+- Use SSH for service-to-service communication (leverages agent forwarding)
+- All VMs can authenticate using your host's SSH keys
+- Git operations work from any VM using your credentials
+- No need to copy keys to individual VMs
 
 ---
 
@@ -182,16 +188,31 @@ docker system df
 
 ## Security
 
+### SSH Agent Forwarding
+
+VDE uses SSH agent forwarding for secure authentication.
+
+**Security Model:**
+- Private keys **NEVER leave** the host machine
+- Only the authentication socket is forwarded to containers
+- Containers cannot modify the SSH agent socket (read-only mount)
+- All VMs can authenticate using your host's SSH keys
+
+**Best Practices:**
+- Let VDE handle SSH setup automatically (no manual configuration needed)
+- Your SSH keys are automatically detected and loaded
+- Multiple SSH key types are supported (ed25519, RSA, ECDSA, DSA)
+- Use `ssh-agent-setup` script to view SSH status
+
 ### Use SSH Keys Only
 
-Password authentication is disabled. Use SSH keys.
+Password authentication is disabled. VDE automatically generates SSH keys if you don't have any.
 
 ```bash
-# Generate keys if needed
-ssh-keygen -t ed25519
-
-# Copy to VDE
-cp ~/.ssh/id_ed25519.pub ~/dev/public-ssh-keys/
+# VDE handles this automatically - no manual steps needed
+./scripts/create-virtual-for python
+./scripts/start-virtual python
+# SSH keys are detected, generated if needed, and loaded automatically
 ```
 
 ### Keep Containers Updated
