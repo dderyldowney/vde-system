@@ -11,13 +11,14 @@ A modular, template-based Docker development environment supporting 18+ programm
 | Section | Description |
 |---------|-------------|
 | **Getting Started** | [Requirements](docs/requirements.md) • [Quick Start](docs/quick-start.md) |
+| **SSH & Agent Forwarding** | [SSH Configuration](docs/ssh-configuration.md) • [VM Communication](docs/advanced-usage.md#inter-container-communication) • [SSH Troubleshooting](docs/troubleshooting.md#ssh-agent-issues) |
 | **Core Features** | [Available Scripts](docs/available-scripts.md) • [Predefined VM Types](docs/predefined-vm-types.md) • [Command Reference](docs/command-reference.md) |
-| **Configuration** | [Extending VDE](docs/extending-vde.md) • [SSH Configuration](docs/ssh-configuration.md) • [Directory Structure](docs/directory-structure.md) |
+| **Configuration** | [Extending VDE](docs/extending-vde.md) • [Directory Structure](docs/directory-structure.md) |
 | **Development** | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) • [AI CLI Integration](docs/ai-cli-integration.md) • [Development Workflows](docs/development-workflows.md) |
 | **AI Assistant** | [VDE AI Assistant](docs/vde-ai-assistant.md) • [VDE AI HOWTO](docs/VDE-AI-HOWTO.md) |
 | **Contributing** | [Contributing Guide](CONTRIBUTING.md) • [Style Guide](STYLE_GUIDE.md) • [Testing Guide](docs/TESTING.md) |
-| **Reference** | [User Model](docs/user-model.md) • [Architecture](docs/architecture.md) • [Advanced Usage](docs/advanced-usage.md) |
-| **Support** | [Troubleshooting](docs/troubleshooting.md) • [Rebuild Guidelines](docs/rebuild-guidelines.md) • [Best Practices](docs/best-practices.md) |
+| **Reference** | [User Model](docs/user-model.md) • [Architecture](docs/architecture.md) • [Best Practices](docs/best-practices.md) |
+| **Support** | [Troubleshooting](docs/troubleshooting.md) • [Rebuild Guidelines](docs/rebuild-guidelines.md) |
 
 ---
 
@@ -143,7 +144,7 @@ See [SSH Configuration](docs/ssh-configuration.md) for complete details.
 | Document | Description |
 |----------|-------------|
 | [Extending VDE](docs/extending-vde.md) | Add new languages and services |
-| [SSH Configuration](docs/ssh-configuration.md) | SSH setup and troubleshooting |
+| [SSH Configuration & Agent Forwarding](docs/ssh-configuration.md) | SSH setup, agent forwarding, VM-to-VM communication |
 | [Directory Structure](docs/directory-structure.md) | Complete directory layout |
 
 ### Development
@@ -282,8 +283,10 @@ See [Directory Structure](docs/directory-structure.md) for complete details.
 
 | Issue | Solution |
 |-------|----------|
-| Port conflicts | See [Troubleshooting](docs/troubleshooting.md) |
-| SSH connection issues | See [SSH Configuration](docs/ssh-configuration.md) |
+| Port conflicts | See [Troubleshooting → Port Conflicts](docs/troubleshooting.md#port-conflicts) |
+| SSH connection issues | See [SSH Configuration → Troubleshooting](docs/ssh-configuration.md#troubleshooting) |
+| SSH agent not working | See [Troubleshooting → SSH Agent Issues](docs/troubleshooting.md#ssh-agent-issues) |
+| VM-to-VM SSH not working | See [SSH Configuration → VM-to-VM](docs/ssh-configuration.md#vm-to-vm-communication) |
 | Container won't start | See [Rebuild Guidelines](docs/rebuild-guidelines.md) |
 | VSCode can't connect | See [VSCode Remote-SSH](docs/vscode-remote-ssh.md) |
 
