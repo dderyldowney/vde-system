@@ -1,0 +1,236 @@
+#!/usr/bin/env zsh
+#===============================================================================
+# vde - Unified Virtual Development Environment Command
+# Provides a single entry point for all VDE operations
+#
+# Usage: vde <command> [options] [args]
+#
+# Commands:
+#   create <vm>     Create a new VM
+#   start <vm>      Start a VM
+#   stop <vm>       Stop a VM
+#   restart <vm>    Restart a VM
+#   list            List all VMs
+#   status          Show VM status
+#   health          Run system health check
+#   chat            Start AI assistant chat
+#   help            Show this help message
+#
+# Exit codes:
+#   0 - Success
+#   1 - General error
+#   2 - Invalid input
+#   3 - Resource not found
+#===============================================================================
+
+# Determine VDE root directory
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
+
+# Source core libraries (order matters for dependencies)
+# Use &>/dev/null to suppress any output from library sourcing (e.g., function exports)
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-constants" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-errors" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-log" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-log" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-core" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-core" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vm-common" ]] && source "$VDE_ROOT_DIR/scripts/lib/vm-common" &>/dev/null
+
+# Initialize logging
+vde_log_init 2>/dev/null || true
+
+#===============================================================================
+# Command Registry
+#===============================================================================
+
+_VDE_COMMANDS=(
+    "create:Create a new VM:create-virtual-for"
+    "start:Start a VM:start-virtual"
+    "stop:Stop a VM:shutdown-virtual"
+    "list:List all VMs:list-vms"
+    "status:Show VM status:list-vms"
+    "health:Run system health check:vde-health"
+    "chat:Start AI assistant chat:vde-chat"
+    "help:Show this help message:"
+)
+
+#===============================================================================
+# Helper Functions
+#===============================================================================
+
+# vde_show_help - Display help message
+vde_show_help() {
+    cat <<EOF
+Usage: vde <command> [options] [args]
+
+Virtual Development Environment - Unified Command Interface
+
+Commands:
+EOF
+    printf "  %-12s %s\n" "create <vm>" "Create a new VM"
+    printf "  %-12s %s\n" "start <vm>" "Start a VM"
+    printf "  %-12s %s\n" "stop <vm>" "Stop a VM"
+    printf "  %-12s %s\n" "restart <vm>" "Restart a VM"
+    printf "  %-12s %s\n" "list" "List all VMs"
+    printf "  %-12s %s\n" "status" "Show VM status"
+    printf "  %-12s %s\n" "health" "Run system health check"
+    printf "  %-12s %s\n" "chat" "Start AI assistant chat"
+    printf "  %-12s %s\n" "help" "Show this help message"
+
+    cat <<EOF
+
+Options:
+  -h, --help     Show this help message
+  -v, --verbose  Enable verbose output
+  --version      Show version information
+
+Examples:
+  vde list                      # List all VMs
+  vde create python             # Create Python VM
+  vde start python-dev          # Start Python development VM
+  vde stop postgres             # Stop PostgreSQL service
+  vde health                    # Run health check
+  vde chat                      # Start AI assistant
+
+For more information, see: https://github.com/dderyldowney/dev/blob/main/docs/command-reference.md
+EOF
+}
+
+# vde_show_version - Display version information
+vde_show_version() {
+    echo "VDE - Virtual Development Environment"
+    echo "Version: 1.0.0 (Stage 7 - Architectural Enhancements)"
+    echo ""
+    echo "Libraries loaded:"
+    echo "  - vde-constants: OK"
+    echo "  - vde-errors: OK"
+    echo "  - vde-log: OK"
+    echo "  - vde-core: OK"
+    echo "  - vm-common: OK"
+}
+
+# vde_find_command_script - Find the script for a command
+vde_find_command_script() {
+    local cmd="$1"
+    local script=""
+
+    case "$cmd" in
+        create|create-virtual-for)
+            script="$VDE_ROOT_DIR/scripts/create-virtual-for"
+            ;;
+        start|start-virtual)
+            script="$VDE_ROOT_DIR/scripts/start-virtual"
+            ;;
+        stop|shutdown-virtual)
+            script="$VDE_ROOT_DIR/scripts/shutdown-virtual"
+            ;;
+        list|list-vms)
+            script="$VDE_ROOT_DIR/scripts/list-vms"
+            ;;
+        status)
+            script="$VDE_ROOT_DIR/scripts/list-vms"
+            ;;
+        health|vde-health)
+            script="$VDE_ROOT_DIR/scripts/vde-health"
+            ;;
+        chat|vde-chat)
+            script="$VDE_ROOT_DIR/scripts/vde-chat"
+            ;;
+        ai|vde-ai)
+            script="$VDE_ROOT_DIR/scripts/vde-ai"
+            ;;
+        *)
+            echo ""
+            return 1
+            ;;
+    esac
+
+    echo "$script"
+    return 0
+}
+
+# vde_run_command - Run a VDE command
+vde_run_command() {
+    local cmd="$1"
+    shift
+
+    # Find the command script
+    local script
+    script=$(vde_find_command_script "$cmd")
+
+    if [ $? -ne 0 ] || [ -z "$script" ]; then
+        vde_error_simple "Unknown command: $cmd"
+        echo ""
+        echo "Run 'vde help' for available commands."
+        return $VDE_ERR_INVALID_INPUT
+    fi
+
+    # Check if script exists
+    if [ ! -f "$script" ]; then
+        vde_error_simple "Command script not found: $script"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Make script executable if needed
+    if [ ! -x "$script" ]; then
+        chmod +x "$script" 2>/dev/null || true
+    fi
+
+    # Run the command
+    vde_log_info "Running command: $cmd $*" "vde"
+    "$script" "$@"
+    return $?
+}
+
+#===============================================================================
+# Main
+#===============================================================================
+
+# Parse global options first
+VERBOSE=0
+CMD=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            vde_show_help
+            exit 0
+            ;;
+        -v|--verbose)
+            VERBOSE=1
+            export VDE_ERRORS_VERBOSE=1
+            shift
+            ;;
+        --version)
+            vde_show_version
+            exit 0
+            ;;
+        -*)
+            vde_error_simple "Unknown option: $1"
+            echo ""
+            echo "Run 'vde help' for available options."
+            exit $VDE_ERR_INVALID_INPUT
+            ;;
+        *)
+            CMD="$1"
+            shift
+            break
+            ;;
+    esac
+done
+
+# Check if command was provided
+if [ -z "$CMD" ]; then
+    vde_show_help
+    exit 0
+fi
+
+# Handle help as a command (not just an option)
+if [ "$CMD" = "help" ]; then
+    vde_show_help
+    exit 0
+fi
+
+# Run the command with remaining arguments
+vde_run_command "$CMD" "$@"
+exit $?

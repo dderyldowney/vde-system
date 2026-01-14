@@ -263,12 +263,18 @@ ai_api_available() {
 show_ai_config() {
     local base_url
     local model
+    local api_key
 
     base_url=$(_get_ai_base_url)
     model=$(_get_ai_model)
+    api_key=$(_get_ai_api_key 2>/dev/null) || api_key=""
 
     echo "AI API Configuration:"
     echo "  Base URL: $base_url"
     echo "  Model: $model"
-    echo "  API Key: $(_get_ai_api_key >/dev/null 2>&1 && echo "Set (${#API_KEY}) chars" || echo "Not set")"
+    if [[ -n "$api_key" ]]; then
+        echo "  API Key: Set (${#api_key} chars)"
+    else
+        echo "  API Key: Not set"
+    fi
 }

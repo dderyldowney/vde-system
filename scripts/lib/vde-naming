@@ -1,0 +1,160 @@
+#!/usr/bin/env sh
+# VDE Naming Conventions Library
+# Enforces consistent naming for VMs and validates naming patterns
+# Source this library with: source ./scripts/lib/vde-naming
+#
+# Naming Convention:
+#   Language VMs: {name}-dev (e.g., python-dev, rust-dev)
+#   Service VMs: {name} (e.g., postgres, redis)
+#
+# Shell Compatibility: POSIX-compliant (sh, bash, zsh)
+
+if [ "${_VDE_NAMING_LOADED:-}" = "1" ]; then
+    return 0 2>/dev/null || exit 0
+fi
+_VDE_NAMING_LOADED=1
+
+# Patterns
+VDE_NAME_PATTERN='^[a-z0-9]+$'
+VDE_LANG_PATTERN='^[a-z0-9]+-dev$'
+
+# vde_validate_name - Validate a VM name against naming conventions
+vde_validate_name() {
+    local name="$1"
+    local vm_type="${2:-}"
+    
+    if [ -z "$name" ]; then
+        echo "VM name cannot be empty"
+        return 1
+    fi
+    
+    if ! echo "$name" | grep -qE "$VDE_NAME_PATTERN"; then
+        echo "VM name must be lowercase alphanumeric (a-z, 0-9)"
+        return 1
+    fi
+    
+    case "$vm_type" in
+        lang|language)
+            if ! echo "$name" | grep -qE "$VDE_LANG_PATTERN"; then
+                echo "Language VMs must end with '-dev' (e.g., python-dev, rust-dev)"
+                return 1
+            fi
+            ;;
+        service)
+            if echo "$name" | grep -qE "$VDE_LANG_PATTERN"; then
+                echo "Service VMs should NOT end with '-dev' (e.g., postgres, redis)"
+                return 1
+            fi
+            ;;
+    esac
+    
+    return 0
+}
+
+# vde_validate_name_or_fail - Validate and exit on failure
+vde_validate_name_or_fail() {
+    local name="$1"
+    local vm_type="$2"
+    
+    if ! vde_validate_name "$name" "$vm_type"; then
+        local msg
+        msg=$(vde_validate_name "$name" "$vm_type")
+        log_error "$msg"
+        exit $VDE_ERR_INVALID_INPUT
+    fi
+}
+
+# vde_normalize_name - Normalize a name to valid format
+vde_normalize_name() {
+    local name="$1"
+    local vm_type="${2:-}"
+    
+    name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+    name=$(echo "$name" | sed 's/[^a-z0-9]//g')
+    
+    case "$vm_type" in
+        lang|language)
+            name="${name%-dev}"
+            name="${name}-dev"
+            ;;
+    esac
+    
+    echo "$name"
+}
+
+# vde_get_hostname - Get the SSH hostname for a VM
+vde_get_hostname() {
+    local vm="$1"
+
+    if echo "$vm" | grep -qE "$VDE_LANG_PATTERN"; then
+        # Language VM: strip -dev suffix for hostname
+        echo "${vm%-dev}"
+    else
+        # Service VM: use name as-is
+        echo "$vm"
+    fi
+}
+
+# vde_detect_vm_type_from_name - Detect VM type from name
+vde_detect_vm_type_from_name() {
+    local name="$1"
+    
+    if echo "$name" | grep -qE "$VDE_LANG_PATTERN"; then
+        echo "lang"
+    else
+        echo "service"
+    fi
+}
+
+# vde_check_naming_consistency - Check all VMs for naming consistency
+vde_check_naming_consistency() {
+    local configs_dir="${VDE_ROOT_DIR:-.}/configs/docker"
+    
+    if [ ! -d "$configs_dir" ]; then
+        return 0
+    fi
+    
+    for dir in "$configs_dir"/*/; do
+        [ -d "$dir" ] || continue
+        local vm
+        vm=$(basename "$dir")
+        
+        local compose_file="$dir/docker-compose.yml"
+        if [ -f "$compose_file" ]; then
+            local port
+            port=$(grep -oE '[0-9]+:22' "$compose_file" 2>/dev/null | head -1 | cut -d':' -f1)
+            
+            if [ -n "$port" ]; then
+                if [ "$port" -ge 2200 ] && [ "$port" -le 2299 ]; then
+                    if ! echo "$vm" | grep -qE "$VDE_LANG_PATTERN"; then
+                        echo "INCONSISTENT: VM '$vm' has lang port ($port) but missing -dev suffix"
+                    fi
+                elif [ "$port" -ge 2400 ] && [ "$port" -le 2499 ]; then
+                    if echo "$vm" | grep -qE "$VDE_LANG_PATTERN"; then
+                        echo "INCONSISTENT: VM '$vm' has service port ($port) but has -dev suffix"
+                    fi
+                fi
+            fi
+        fi
+    done
+}
+
+# vde_format_name_help - Show naming help
+vde_format_name_help() {
+    cat <<EOF
+VM Naming Conventions:
+
+Language VMs (Development Environments):
+  - Format: <name>-dev (e.g., python-dev, rust-dev, js-dev)
+  - SSH Port Range: 2200-2299
+
+Service VMs (Database/Cache/Web):
+  - Format: <name> (e.g., postgres, redis, mongodb)
+  - SSH Port Range: 2400-2499
+
+Rules:
+  - Names must be lowercase alphanumeric
+  - Language VMs must end with -dev suffix
+  - Service VMs should NOT end with -dev suffix
+EOF
+}
