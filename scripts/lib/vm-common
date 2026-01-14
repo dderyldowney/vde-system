@@ -894,14 +894,20 @@ acquire_lock() {
     local timeout="${2:-$VDE_LOCK_TIMEOUT}"
     local lock_dir
     lock_dir=$(dirname "$lock_file")
-    
+
     # Ensure lock directory exists
     mkdir -p "$lock_dir" 2>/dev/null
-    
+
     # Try to acquire lock with timeout
     local attempts=0
     local max_attempts=$((timeout * 10))  # 100ms intervals
-    
+
+    # Declare variables outside loop to avoid zsh subshell scoping issues
+    local lock_time
+    local current_time
+    local age
+    local sleep_time
+
     while [ $attempts -lt $max_attempts ]; do
         # SECURITY: Use mkdir for atomic lock creation (POSIX atomic)
         if mkdir "${lock_file}.lock" 2>/dev/null; then
@@ -910,15 +916,13 @@ acquire_lock() {
             date +%s > "${lock_file}.lock/timestamp"
             return $VDE_SUCCESS
         fi
-        
+
         # Check if existing lock is stale (older than VDE_STALE_LOCK_AGE)
         if [ -f "${lock_file}.lock/timestamp" ]; then
-            local lock_time
             lock_time=$(cat "${lock_file}.lock/timestamp" 2>/dev/null || echo "0")
-            local current_time
             current_time=$(date +%s)
-            local age=$((current_time - lock_time))
-            
+            age=$((current_time - lock_time))
+
             if [ $age -gt $VDE_STALE_LOCK_AGE ]; then
                 # SECURITY: Stale lock detected, clean it up
                 log_info "Cleaning up stale lock: $lock_file (age: ${age}s)"
@@ -926,9 +930,8 @@ acquire_lock() {
                 continue
             fi
         fi
-        
+
         # Wait with exponential backoff (100ms base, max 1s)
-        local sleep_time
         if [ $attempts -lt 10 ]; then
             sleep_time="0.1"
         elif [ $attempts -lt 50 ]; then
@@ -939,7 +942,7 @@ acquire_lock() {
         sleep "$sleep_time" 2>/dev/null || sleep 1
         attempts=$((attempts + 1))
     done
-    
+
     log_error "SECURITY: Failed to acquire lock after ${timeout}s: $lock_file"
     return $VDE_ERR_LOCK
 }
@@ -974,25 +977,28 @@ release_lock() {
 # Example: cleanup_stale_locks
 cleanup_stale_locks() {
     local locks_dir="$PORT_LOCKS_DIR"
-    
+
     if [ ! -d "$locks_dir" ]; then
         return $VDE_SUCCESS
     fi
-    
+
     local current_time
     current_time=$(date +%s)
-    
+
+    # Declare variables outside loop to avoid zsh subshell scoping issues
+    local lock_time
+    local age
+
     # Use nullglob to handle case where no locks exist
     _enable_nullglob
     local lock_dir
     for lock_dir in "$locks_dir"/*.lock; do
         [ -d "$lock_dir" ] || continue
-        
+
         if [ -f "$lock_dir/timestamp" ]; then
-            local lock_time
             lock_time=$(cat "$lock_dir/timestamp" 2>/dev/null || echo "0")
-            local age=$((current_time - lock_time))
-            
+            age=$((current_time - lock_time))
+
             if [ $age -gt $VDE_STALE_LOCK_AGE ]; then
                 log_info "Cleaning stale lock: $lock_dir"
                 rm -rf "$lock_dir" 2>/dev/null

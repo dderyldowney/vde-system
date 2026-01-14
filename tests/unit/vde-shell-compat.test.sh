@@ -2,7 +2,8 @@
 # Unit Tests for vde-shell-compat Library
 # Tests shell compatibility layer and associative array operations
 
-set -e
+# Don't use set -e as it interferes with test counting
+# set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"

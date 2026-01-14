@@ -50,21 +50,24 @@ _VM_ALIAS_MAP_BUILT=0
 _build_alias_map() {
     # Clear existing map
     _assoc_clear "VM_ALIAS_MAP"
-    
+
     # Get all VMs - convert space-separated to newline-separated for while read
     local all_vms
     all_vms=$(get_all_vms 2>/dev/null)
-    
+
+    # Declare variables outside loop to avoid zsh subshell scoping issues
+    local alias_list
+    local alias_item
+
     # Convert spaces to newlines and iterate
     echo "$all_vms" | tr ' ' '\n' | while IFS= read -r vm; do
         [ -n "$vm" ] || continue
         # Map the canonical name to itself
         _assoc_set "VM_ALIAS_MAP" "$vm" "$vm"
-        
+
         # Get aliases for this VM
-        local alias_list
         alias_list=$(get_vm_info aliases "$vm" 2>/dev/null)
-        
+
         if [ -n "$alias_list" ]; then
             # Split aliases by comma and add each to the map
             echo "$alias_list" | tr ',' '\n' | while IFS= read -r alias_item; do
@@ -76,7 +79,7 @@ _build_alias_map() {
             done
         fi
     done
-    
+
     _VM_ALIAS_MAP_BUILT=1
     return $VDE_SUCCESS
 }
@@ -284,44 +287,52 @@ extract_vm_names() {
 
     # Ensure alias map is built for O(1) lookups
     _ensure_alias_map
-    
+
     # Extract words from input and look up each in the alias map
     # This is O(w) where w is the number of words, instead of O(n×m)
     local found_vms=""
     _assoc_init "seen_vms"  # Track already-found VMs to avoid duplicates
-    
-    # Split input into words (alphanumeric sequences)
+
+    # Declare variables outside loop to avoid zsh subshell scoping issues
+    local canonical
     local word
-    for word in $input_lower; do
+
+    # Use a temp file to collect results (subshell-safe)
+    local tmp_file
+    tmp_file=$(mktemp 2>/dev/null || echo "/tmp/vde-extract-$$")
+
+    # Split input into words (alphanumeric sequences)
+    # Use explicit splitting for zsh/bash compatibility
+    echo "$input_lower" | tr ' ' '\n' | while IFS= read -r word; do
         # Clean the word (remove punctuation, keep only alphanumeric and plus)
         # Note: '#' is removed as it starts comments in shell and is not valid in VM names
         word=$(echo "$word" | tr -cd 'a-z0-9+')
         [ -z "$word" ] && continue
-        
+
         # O(1) lookup in alias map
-        local canonical
         canonical=$(_assoc_get "VM_ALIAS_MAP" "$word" 2>/dev/null)
-        
+
         if [ -n "$canonical" ]; then
             # Check if we've already seen this VM
             if ! _assoc_has_key "seen_vms" "$canonical"; then
-                if [ -n "$found_vms" ]; then
-                    found_vms="$found_vms
-$canonical"
-                else
-                    found_vms="$canonical"
-                fi
                 _assoc_set "seen_vms" "$canonical" "1"
+                echo "$canonical" >> "$tmp_file"
             fi
         fi
     done
-    
+
     # Clean up
     _assoc_clear "seen_vms"
 
+    # Read collected VMs from temp file
+    if [ -f "$tmp_file" ]; then
+        found_vms=$(cat "$tmp_file" 2>/dev/null | tr '\n' ' ' | sed 's/ $//')
+        rm -f "$tmp_file"
+    fi
+
     # Print found VMs
     if [ -n "$found_vms" ]; then
-        echo "$found_vms"
+        echo "$found_vms" | tr ' ' '\n'
     fi
     return $VDE_SUCCESS
 }
@@ -433,7 +444,8 @@ validate_plan_line() {
     # SECURITY: Check if key is in whitelist
     local key_valid=false
     local allowed_key
-    for allowed_key in $ALLOWED_PLAN_KEYS; do
+    # Explicitly word-split ALLOWED_PLAN_KEYS using set
+    for allowed_key in $(echo "$ALLOWED_PLAN_KEYS"); do
         if [ "$key" = "$allowed_key" ]; then
             key_valid=true
             break
@@ -477,7 +489,8 @@ parse_flags() {
     
     # Parse each space-separated token
     local token
-    for token in $flags_string; do
+    # Explicitly word-split flags_string to ensure proper iteration
+    for token in $(echo "$flags_string"); do
         # Extract key=value
         local flag_key="${token%%=*}"
         local flag_value="${token#*=}"
