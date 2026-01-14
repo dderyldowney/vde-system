@@ -138,6 +138,9 @@ if [[ "$VM_TYPE" == "service" ]] && [[ -n "$VM_SVC_PORT" ]]; then
         port_mappings="${port_mappings}  - \"$port:$port\"\n"
     done
 
+    # Add leading newline for proper YAML formatting
+    port_mappings="\n${port_mappings}"
+
     # Replace the ##SERVICE_PORTS## placeholder with actual port mappings
     if [[ -n "$port_mappings" ]]; then
         sed -i.bak "s|##SERVICE_PORTS##|$port_mappings|" "$compose_file"
