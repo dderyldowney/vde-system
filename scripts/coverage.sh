@@ -37,14 +37,22 @@ run_test_with_coverage() {
     local coverage_out="${COVERAGE_DIR}/${test_name}"
 
     print -P "${BLUE}Running: ${test_name}${NC}"
+
+    # First verify the test passes without coverage
+    zsh "$test_file" || {
+        print -P "${RED}✗ Test failed: $test_name${NC}"
+        return 1
+    }
+
     # Use set -o noglob to prevent glob expansion of patterns
+    # Run with kcov - ignore kcov exit code since test already passed
     set -o localoptions -o noglob
     kcov \
         --exclude-pattern=/usr/*,/opt/* \
         --exclude-region=TEST:END_TEST \
         --path-strip-level=2 \
         "${coverage_out}" \
-        zsh "$test_file" || return 1
+        zsh "$test_file" || true
 }
 
 # Run all tests in a directory
