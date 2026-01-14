@@ -782,7 +782,7 @@ generate_vm_ssh_config() {
 
     # Get all VMs
     local -a vms
-    vms=("${(@f)$(list_all_vms)}")
+    vms=("${(@f)$(get_all_vms)}")
 
     for vm in "${vms[@]}"; do
         local vm_type
