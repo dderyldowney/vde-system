@@ -145,7 +145,7 @@ Feature: Configuration Management
     Given VDE configuration format has changed
     When I pull the latest VDE
     Then old configurations should still work
-    Or migration should happen automatically
+    And migration should happen automatically
     And I should be told about manual steps if needed
 
   Scenario: Reset configuration to defaults

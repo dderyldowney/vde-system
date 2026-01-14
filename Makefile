@@ -1,7 +1,7 @@
 # VDE Makefile
 # Targets for testing and development
 
-.PHONY: help test test-unit test-integration test-comprehensive test-coverage test-ai-api test-real-ai-api lint check clean install-deps coverage-view coverage-clean
+.PHONY: help test test-unit test-integration test-comprehensive test-coverage test-ai-api test-real-ai-api test-bdd lint check clean install-deps coverage-view coverage-clean bdd-shell
 
 # Default target
 help:
@@ -17,6 +17,12 @@ help:
 	@echo "  make coverage-integration - Run integration tests with code coverage"
 	@echo "  make coverage-view        - Open coverage report in browser"
 	@echo "  make coverage-clean       - Clean coverage reports"
+	@echo ""
+	@echo "BDD Testing (feature files):"
+	@echo "  make test-bdd            - Run all BDD tests (in container)"
+	@echo "  make test-bdd FEATURE    - Run specific feature (e.g., vm-lifecycle)"
+	@echo "  make test-bdd-no-build   - Run BDD tests without rebuilding container"
+	@echo "  make bdd-shell           - Drop into BDD test container shell"
 	@echo ""
 	@echo "Specific Test Suites:"
 	@echo "  make test-parser          - Run vde-parser comprehensive tests"
@@ -208,6 +214,25 @@ test-docker:
 	./scripts/start-virtual "$$TEST_VM" && \
 	echo "✓ Docker build test passed for $$TEST_VM" && \
 	./scripts/shutdown-virtual "$$TEST_VM"
+
+# =============================================================================
+# BDD Testing (feature files in container)
+# =============================================================================
+
+test-bdd:
+	@echo "Running BDD tests in dedicated container..."
+	@chmod +x tests/run-bdd-tests.sh
+	@./tests/run-bdd-tests.sh
+
+test-bdd-no-build:
+	@echo "Running BDD tests (no container rebuild)..."
+	@chmod +x tests/run-bdd-tests.sh
+	@./tests/run-bdd-tests.sh --no-build
+
+bdd-shell:
+	@echo "Dropping into BDD test container shell..."
+	@chmod +x tests/run-bdd-tests.sh
+	@./tests/run-bdd-tests.sh --shell
 
 # =============================================================================
 # Development Setup

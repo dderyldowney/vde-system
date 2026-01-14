@@ -36,7 +36,7 @@ Feature: Installation and Initial Setup
     Given I'm setting up VDE for the first time
     When SSH keys are checked
     Then if keys exist, they should be detected
-    Or if no keys exist, ed25519 keys should be generated
+    And if no keys exist, ed25519 keys should be generated
     And public keys should be copied to public-ssh-keys/
     And .keep file should exist in public-ssh-keys/
 
@@ -119,7 +119,7 @@ Feature: Installation and Initial Setup
     Given I'm setting up VDE for the first time
     When I create my first VM
     Then required Docker images should be pulled
-    Or base images should be built if needed
+    And base images should be built if needed
     And I should see download/build progress
 
   Scenario: Quick start after installation

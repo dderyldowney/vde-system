@@ -56,7 +56,7 @@ Feature: Docker Operations
     Given vde-network does not exist
     When I start a VM
     Then network should be created automatically
-    Or error should indicate network issue
+    And error should indicate network issue
 
   Scenario: Handle image pull failures
     Given image does not exist locally

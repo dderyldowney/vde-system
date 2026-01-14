@@ -79,7 +79,7 @@ Feature: AI Assistant for Natural Language Control
     Given I make a typo in my command
     When I say "strt the python vm"
     Then the system should still understand my intent
-    Or provide helpful correction suggestions
+    And the system should provide helpful correction suggestions
 
   Scenario: Complex multi-step requests
     Given I want to do multiple things
