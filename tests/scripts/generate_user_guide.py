@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Generate USER_GUIDE.md from BDD test scenarios.
+Generate USER_GUIDE_SCENARIOS.md from BDD test scenarios.
 
-This script reads all feature files and generates a comprehensive user guide
-ordered for users who need step-by-step guidance.
+This script reads all feature files and generates a reference document
+showing all available test scenarios. This is for reference only -
+the main USER_GUIDE.md is maintained manually.
 
 Run: python3 tests/scripts/generate_user_guide.py
 """
@@ -15,7 +16,7 @@ from pathlib import Path
 # Paths
 REPO_ROOT = Path(__file__).parent.parent.parent
 FEATURES_DIR = REPO_ROOT / "tests" / "features"
-OUTPUT_FILE = REPO_ROOT / "USER_GUIDE.md"
+OUTPUT_FILE = REPO_ROOT / "USER_GUIDE_SCENARIOS.md"
 
 # Define the order of sections for user progression
 SECTION_ORDER = [
@@ -120,13 +121,12 @@ def generate_user_guide():
             print(f"Warning: Could not process {feature_file}: {e}")
             continue
 
-    # Write the user guide
+    # Write the scenarios reference
     with open(OUTPUT_FILE, 'w') as f:
         # Header
-        f.write("# VDE User's Guide\n\n")
-        f.write("> **This guide is generated from working BDD test scenarios.** ")
-        f.write("Every workflow below has been tested and verified to work. ")
-        f.write("If you follow these steps, they will work for you too.\n\n")
+        f.write("# VDE Test Scenarios Reference\n\n")
+        f.write("> **This is a reference document showing all BDD test scenarios.** ")
+        f.write("For the user guide, see USER_GUIDE.md\n\n")
         f.write("---\n\n")
 
         # Table of contents
