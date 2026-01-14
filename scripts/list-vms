@@ -1,13 +1,23 @@
 #!/usr/bin/env zsh
+# list-vms - List all predefined VM types
+# Enhanced with --name-only flag and improved formatting
+
 set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib/vm-common"
 
+# Source UX libraries
+if [[ -f "$SCRIPT_DIR/lib/vde-naming" ]]; then
+    source "$SCRIPT_DIR/lib/vde-naming"
+fi
+
 # Parse arguments
 LIST_TYPE=""
 FILTER=""
+NAME_ONLY=false
+SHOW_CREATED=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -19,6 +29,14 @@ while [[ $# -gt 0 ]]; do
             LIST_TYPE="service"
             shift
             ;;
+        --name-only)
+            NAME_ONLY=true
+            shift
+            ;;
+        -a|--all)
+            SHOW_CREATED=true
+            shift
+            ;;
         --help|-h)
             echo "Usage: list-vms [OPTIONS] [filter]"
             echo ""
@@ -27,6 +45,8 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --lang, --languages    List only language VMs"
             echo "  --svc, --services      List only service VMs"
+            echo "  --name-only            Show only VM names (hostnames)"
+            echo "  -a, --all              Show all VMs including created status"
             echo "  --help, -h             Show this help message"
             echo ""
             echo "Arguments:"
@@ -36,6 +56,7 @@ while [[ $# -gt 0 ]]; do
             echo "  list-vms                    # List all VMs"
             echo "  list-vms --lang             # List only language VMs"
             echo "  list-vms --svc              # List only service VMs"
+            echo "  list-vms --name-only        # Show only names/hostnames"
             echo "  list-vms python             # Search for 'python'"
             echo "  list-vms --lang script      # Search for script in languages"
             exit 0
@@ -61,49 +82,107 @@ display_vm() {
         fi
     fi
 
-    local marker=""
-    if vm_exists "$name"; then
-        marker=" [CREATED]"
-    fi
+    if [[ "$NAME_ONLY" == "true" ]]; then
+        # Show hostname (for language VMs: name-dev, for services: name)
+        local hostname
+        hostname=$(vde_get_hostname "$name")
+        printf "%s\n" "$hostname"
+    else
+        local marker=""
+        local status_color=""
 
-    printf "  %-20s %s%s\n" "$name" "$display" "$marker"
+        if vm_exists "$name"; then
+            marker=" [CREATED]"
+            if [[ "$SHOW_CREATED" == "true" ]]; then
+                # Get running status
+                local compose_file="$CONFIGS_DIR/$name/docker-compose.yml"
+                if [[ -f "$compose_file" ]]; then
+                    local running
+                    running=$(docker-compose -f "$compose_file" ps --services --filter "status=running" 2>/dev/null | wc -l)
+                    if [[ "$running" -gt 0 ]]; then
+                        marker=" [RUNNING: $running]"
+                    else
+                        marker=" [STOPPED]"
+                    fi
+                fi
+            fi
+        fi
 
-    if [[ -n "$vm_aliases" ]]; then
-        printf "    Aliases: %s\n" "$vm_aliases"
-    fi
+        printf "  %-20s %s%s\n" "$name" "$display" "$marker"
 
-    if [[ "$type" == "service" ]]; then
-        local svc_port="${VM_SVC_PORT[$name]}"
-        printf "    Service Port: %s\n" "$svc_port"
+        if [[ -n "$vm_aliases" ]]; then
+            printf "    Aliases: %s\n" "$vm_aliases"
+        fi
+
+        if [[ "$type" == "service" ]]; then
+            local svc_port
+            svc_port=$(_assoc_get "VM_SVC_PORT" "$name" 2>/dev/null) || svc_port=""
+            if [[ -n "$svc_port" ]]; then
+                printf "    Service Port: %s\n" "$svc_port"
+            fi
+        fi
     fi
 }
 
-# Header
-echo "Predefined VM Types:"
-echo ""
+# Header (only if not --name-only)
+if [[ "$NAME_ONLY" == "false" ]]; then
+    echo "Predefined VM Types:"
+    echo ""
+fi
 
 if [[ "$LIST_TYPE" == "lang" ]]; then
-    echo "Language VMs:"
+    if [[ "$NAME_ONLY" == "false" ]]; then
+        echo "Language VMs:"
+    fi
+    local name
+    local vm_display
+    local vm_aliases
     for name in $(get_lang_vms); do
-        display_vm "$name" "lang" "${VM_DISPLAY[$name]}" "${VM_ALIASES[$name]}"
+        vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
+        vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
+        display_vm "$name" "lang" "$vm_display" "$vm_aliases"
     done
 elif [[ "$LIST_TYPE" == "service" ]]; then
-    echo "Service VMs:"
+    if [[ "$NAME_ONLY" == "false" ]]; then
+        echo "Service VMs:"
+    fi
+    local name
+    local vm_display
+    local vm_aliases
     for name in $(get_service_vms); do
-        display_vm "$name" "service" "${VM_DISPLAY[$name]}" "${VM_ALIASES[$name]}"
+        vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
+        vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
+        display_vm "$name" "service" "$vm_display" "$vm_aliases"
     done
 else
-    echo "Language VMs:"
+    if [[ "$NAME_ONLY" == "false" ]]; then
+        echo "Language VMs:"
+    fi
+    local name
+    local vm_display
+    local vm_aliases
     for name in $(get_lang_vms); do
-        display_vm "$name" "lang" "${VM_DISPLAY[$name]}" "${VM_ALIASES[$name]}"
+        vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
+        vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
+        display_vm "$name" "lang" "$vm_display" "$vm_aliases"
     done
-    echo ""
-    echo "Service VMs:"
+
+    if [[ "$NAME_ONLY" == "false" ]]; then
+        echo ""
+        echo "Service VMs:"
+    fi
+    local name
+    local vm_display
+    local vm_aliases
     for name in $(get_service_vms); do
-        display_vm "$name" "service" "${VM_DISPLAY[$name]}" "${VM_ALIASES[$name]}"
+        vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
+        vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
+        display_vm "$name" "service" "$vm_display" "$vm_aliases"
     done
 fi
 
-echo ""
-echo "To create a VM, run: create-virtual-for <name>"
-echo "To add a new VM type, run: add-vm-type <name> \"<install_cmd>\""
+if [[ "$NAME_ONLY" == "false" ]]; then
+    echo ""
+    echo "To create a VM, run: create-virtual-for <name>"
+    echo "To add a new VM type, run: add-vm-type <name> \"<install_cmd>\""
+fi
