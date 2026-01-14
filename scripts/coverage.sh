@@ -39,21 +39,22 @@ run_test_with_coverage() {
 
     print -P "${BLUE}Running: ${test_name}${NC}"
 
+    # Verify test passes first
+    if ! zsh "$test_file" >/dev/null 2>&1; then
+        print -P "${RED}✗ Test failed: $test_name${NC}"
+        return 1
+    fi
+
     # Use set -o noglob to prevent glob expansion of patterns
+    # Run with kcov - ignore exit code since test already passed
     set -o localoptions -o noglob
-    # Run with kcov and capture exit code
     kcov \
         --exclude-pattern=/usr/*,/opt/* \
         --exclude-region=TEST:END_TEST \
         --path-strip-level=2 \
         "${coverage_out}" \
-        zsh "$test_file" 2>&1
+        zsh "$test_file" || true
 
-    # Capture the actual test exit code from kcov's output
-    local kcov_exit=$?
-
-    # kcov returns exit code of the instrumented binary
-    # If tests pass, continue even if kcov has issues
     return 0
 }
 
@@ -62,7 +63,9 @@ run_directory_with_coverage() {
     local dir="$1"
     local test_count=0
 
-    for test_file in "${dir}"/*.sh(N); do
+    # Use setopt for null_glob behavior (zsh-specific)
+    setopt local_options null_glob
+    for test_file in "${dir}"/*.sh; do
         if [[ -f "$test_file" ]]; then
             run_test_with_coverage "$test_file"
             ((test_count++))
