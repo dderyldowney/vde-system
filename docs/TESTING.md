@@ -25,31 +25,43 @@ make lint
 ## Prerequisites
 
 ### Required Tools
-- **shellcheck** (>=0.8.0): Shell script static analysis
-- **shfmt** (>=3.6.0): Shell script formatter
-- **yamllint** (>=1.27.0): YAML linting
+- **zsh** (>=5.0): Shell interpreter (all scripts use zsh)
 - **kcov** (>=40): Code coverage for shell scripts
 - **docker** (>=20.10.0): For integration tests
+- **jq** (>=1.5): JSON processing for AI API tests
+
+### Optional Tools
+- **yamllint** (>=1.27.0): YAML linting
+- **shfmt** (>=3.6.0): Shell script formatter (for local use)
 
 ### Installation
 ```bash
 # macOS
-brew install shellcheck shfmt yamllint kcov
+brew install zsh kcov jq
+pip install yamllint
+go install mvdan.cc/sh/v3/cmd/shfmt@latest
 
 # Ubuntu/Debian
 sudo apt-get update
-sudo apt-get install -y shellcheck zsh kcov
+sudo apt-get install -y zsh kcov jq
 
 # Install shfmt and yamllint via go/python
 go install mvdan.cc/sh/v3/cmd/shfmt@latest
 pip install yamllint
 
 # Verify installation
-shellcheck --version
-shfmt --version
-yamllint --version
+zsh --version
 kcov --version
+jq --version
+yamllint --version  # optional
+shfmt --version     # optional
 ```
+
+### Note on Shell Checking
+The VDE codebase uses **zsh-specific syntax** that is not compatible with traditional shellcheck/shfmt tools:
+- **ShellCheck** does NOT support zsh - use `zsh -n script.sh` for syntax checking instead
+- **shfmt** has limited zsh support - can be run locally for basic formatting but may not handle all zsh features
+- CI uses native `zsh -n` for syntax validation (skips test_integration_comprehensive.sh which uses valid multi-line arrays that zsh -n doesn't parse well)
 
 ## Code Coverage
 
@@ -102,13 +114,14 @@ tests/
 - **Manual**: Via GitHub Actions UI with VM selection options
 
 ### Jobs
-1. **Linting** (~2 min): shellcheck, shfmt, yamllint
+1. **Linting** (~2 min): zsh syntax checking, yamllint
 2. **Unit Tests** (~3 min): Three-tier library tests
 3. **Integration Tests** (~5 min): AI parsing, usage patterns
 4. **Comprehensive Tests** (~20 min): Extended parser, commands, and integration tests
 5. **Coverage** (~10 min): Code coverage with kcov
 6. **Docker Build** (~15 min): Random VM build + SSH connectivity test
-7. **Summary**: Aggregate results
+7. **Real AI API** (~2 min): Actual API calls to Anthropic-compatible endpoints (requires credentials)
+8. **Summary**: Aggregate results
 
 ### Random VM Selection
 Each CI run selects ONE random VM from ALL 25 VMs using a rounded number generator:
@@ -178,11 +191,26 @@ ssh -i /tmp/test_key -p 2200 devuser@localhost hostname
 
 ### Linting Errors
 ```bash
-# Fix shell formatting issues
-shfmt -w scripts/**/*.sh
+# Check zsh script syntax
+zsh -n scripts/lib/vm-common
 
-# Run shellcheck to see specific issues
-shellcheck scripts/lib/vm-common
+# Fix yamllint issues
+yamllint .github/workflows/vde-ci.yml
+
+# Run shfmt locally (optional - for basic formatting)
+shfmt -w scripts/**/*.sh tests/**/*.sh
+```
+
+### Coverage Issues
+```bash
+# Run coverage manually to see detailed output
+./scripts/coverage.sh all
+
+# Check coverage report
+cat coverage/merged/index.html | grep -o 'covered"[^>]*>\\K[0-9.]+'
+
+# View in browser
+make coverage-view
 ```
 
 ## Test Utilities
@@ -216,14 +244,16 @@ The `tests/lib/test_common.sh` file provides:
 The GitHub Actions workflow (`.github/workflows/vde-ci.yml`) includes:
 
 ### 1. Linting Job
-- Runs shellcheck on all shell scripts
-- Checks formatting with shfmt
+- Runs `zsh -n` on all zsh scripts for syntax validation
+- Skips test_integration_comprehensive.sh (valid zsh but zsh -n doesn't handle multi-line arrays well)
 - Validates YAML files with yamllint
+- Note: shfmt is NOT run in CI due to zsh compatibility issues
 
 ### 2. Unit Tests Job
 - Tests vm-common library (VM discovery, port allocation, name resolution)
 - Tests vde-parser library (intent detection, entity extraction, plan generation)
 - Tests vde-commands library (VM listing, validation, alias resolution)
+- Tests vde-ai-api library (27 assertions covering env vars, API integration)
 
 ### 3. Integration Tests Job
 - Tests pattern-based parsing (all 8 supported intents)
@@ -238,9 +268,10 @@ The GitHub Actions workflow (`.github/workflows/vde-ci.yml`) includes:
 ### 5. Coverage Job
 - Installs kcov from source
 - Runs all tests under kcov instrumentation
+- Verifies tests pass before running with kcov
+- Handles kcov exit codes properly (kcov may return non-zero even when tests pass)
 - Generates merged HTML coverage report
 - Uploads coverage as CI artifact (30-day retention)
-- Displays coverage percentage in summary
 
 ### 6. Docker Build Job
 - Selects ONE random VM from all 25 (18 languages + 7 services)
@@ -248,9 +279,16 @@ The GitHub Actions workflow (`.github/workflows/vde-ci.yml`) includes:
 - Creates VM configuration
 - Builds and starts Docker container
 - Waits for container to be ready
-- Tests SSH connectivity with retries
+- Tests SSH connectivity with retries (language VMs only)
 - Verifies container functionality (user, shell, workspace, sudo)
 - Displays container info and cleanup
+
+### 7. Real AI API Job
+- Checks for API credentials (ANTHROPIC_AUTH_TOKEN, ANTHROPIC_API_KEY, or CLAUDE_API_KEY)
+- If credentials found, runs actual API calls to test AI integration
+- Tests: simple commands, create VM, multiple VMs, complex natural language
+- Skips gracefully if no credentials configured
+- Supports third-party providers (e.g., Zhipu AI with custom BASE_URL and MODEL)
 
 ## Manual CI Testing
 
