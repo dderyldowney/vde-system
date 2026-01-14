@@ -65,13 +65,13 @@ fi
 VM_NAME="$RESOLVED_NAME"
 
 validate_vm_doesnt_exist "$VM_NAME" || exit 1
-validate_ssh_key_exists || exit 1
 
 # -----------------------
-# Sync SSH Keys
+# SSH Environment (automatic & silent)
 # -----------------------
-log_info "Syncing SSH keys to VDE..."
-sync_ssh_keys_to_vde || exit 1
+# Ensures SSH agent is running, keys are loaded, and VM config exists
+# This is seamless - only prompts if passphrase needed
+ensure_ssh_environment
 
 # -----------------------
 # Get VM Configuration

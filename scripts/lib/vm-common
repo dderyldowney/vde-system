@@ -698,32 +698,68 @@ ssh_agent_is_running() {
     [[ -n "$SSH_AUTH_SOCK" ]] && [[ -S "$SSH_AUTH_SOCK" ]]
 }
 
-# Start SSH agent if not running
+# Start SSH agent silently if not running
+# This is the seamless, automatic function used by VDE scripts
 ensure_ssh_agent() {
+    # If already running, nothing to do
     if ssh_agent_is_running; then
-        log_info "SSH agent already running: $SSH_AUTH_SOCK"
+        return 0
+    fi
+
+    # Start SSH agent silently
+    eval "$(ssh-agent -s)" >/dev/null 2>&1
+    export SSH_AUTH_SOCK
+
+    # Add all available keys to the agent
+    local -a keys
+    keys=("${(@f)$(detect_ssh_keys)}")
+
+    if [[ ${#keys[@]} -eq 0 ]]; then
+        # No keys found - generate one automatically
+        log_info "Generating SSH key for VDE..."
+        ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -C "$(whoami)@$(hostname)-vde" >/dev/null 2>&1
+        sync_ssh_keys_to_vde >/dev/null 2>&1
+        keys=("${(@f)$(detect_ssh_keys)}")
+    fi
+
+    # Try to add keys silently (will prompt for passphrase if needed)
+    local keys_added=0
+    for key in "${keys[@]}"; do
+        if ssh-add "$key" >/dev/null 2>&1; then
+            ((keys_added++))
+        fi
+    done
+
+    return 0
+}
+
+# Verbose version of ensure_ssh_agent for user-facing scripts
+# Shows what's happening and offers to set up auto-start
+setup_ssh_agent_interactive() {
+    if ssh_agent_is_running; then
+        log_success "SSH agent running"
         return 0
     fi
 
     log_info "Starting SSH agent..."
-    eval "$(ssh-agent -s)" >/dev/null
-    export SSH_AUTH_SOCK
+    ensure_ssh_agent
 
-    # Add all available keys to the agent
-    local keys_added=0
+    # Show what was set up
     local -a keys
     keys=("${(@f)$(detect_ssh_keys)}")
+    log_success "SSH agent ready with ${#keys[@]} key(s)"
+}
 
-    for key in "${keys[@]}"; do
-        ssh-add "$key" 2>/dev/null
-        if [[ $? -eq 0 ]]; then
-            ((keys_added++))
-            log_info "  ✓ Added key: ${key:t}"
-        fi
-    done
+# Ensure SSH agent and VM config are set up (called by VM operations)
+ensure_ssh_environment() {
+    # Ensure SSH agent is running
+    ensure_ssh_agent
 
-    log_info "SSH agent started with $keys_added key(s)"
-    log_info "SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
+    # Ensure VM-to-VM SSH config exists
+    if [[ ! -f "$HOME/.ssh/config" ]] || ! grep -q "python-dev" "$HOME/.ssh/config" 2>/dev/null; then
+        generate_vm_ssh_config >/dev/null 2>&1
+    fi
+
     return 0
 }
 
