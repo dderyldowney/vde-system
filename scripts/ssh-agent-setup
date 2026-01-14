@@ -1,0 +1,190 @@
+#!/usr/bin/env zsh
+# VDE SSH Agent Setup Script
+# Sets up SSH agent forwarding for VM-to-VM, VM-to-Host, and VM-to-External communication
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+
+echo ""
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║          VDE SSH Agent Setup                              ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+
+# Function to setup SSH agent in user's shell profile
+setup_ssh_agent_in_profile() {
+    local zprofile="$HOME/.zprofile"
+    local zshrc="$HOME/.zshrc"
+
+    # Check if already configured
+    if grep -q "VDE SSH Agent" "$zprofile" 2>/dev/null; then
+        return 0
+    fi
+
+    log_info "Configuring SSH agent to start automatically in new shells..."
+
+    # Add to .zprofile
+    cat >> "$zprofile" <<'EOF'
+
+# VDE SSH Agent - Start automatically
+if [ -z "$SSH_AUTH_SOCK" ]; then
+    # Check if agent is already running
+    AGENT_PID=$(pgrep ssh-agent | head -1)
+    if [ -n "$AGENT_PID" ]; then
+        # Agent is running, connect to it
+        export SSH_AUTH_SOCK=$(ls -ld /tmp/ssh-*/agent.* 2>/dev/null | grep "$(whoami)" | head -1 | awk '{print $NF}')
+    else
+        # Start new agent
+        eval "$(ssh-agent -s)" >/dev/null
+    fi
+fi
+EOF
+
+    log_success "SSH agent will start automatically in new shells"
+}
+
+# Function to add keys to agent
+add_keys_to_agent() {
+    local keys_added=0
+    local -a keys
+    keys=("${(@f)$(detect_ssh_keys)}")
+
+    if [[ ${#keys[@]} -eq 0 ]]; then
+        log_warning "No SSH keys found. Please generate one first:"
+        echo "  ssh-keygen -t ed25519"
+        return 1
+    fi
+
+    echo ""
+    echo "Adding keys to SSH agent..."
+
+    for key in "${keys[@]}"; do
+        # Check if key has a passphrase
+        if ssh-add "$key" 2>/dev/null; then
+            ((keys_added++))
+            log_success "  ✓ Added: ${key:t}"
+        else
+            # Key might require passphrase
+            log_warning "  ⚠ Skipping: ${key:t} (may require passphrase)"
+            log_info "    Add manually later with: ssh-add ${key}"
+        fi
+    done
+
+    return $keys_added
+}
+
+# Main setup flow
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 1: Checking SSH Agent Status"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+if ssh_agent_is_running; then
+    log_success "SSH agent is already running"
+    echo "  Socket: $SSH_AUTH_SOCK"
+
+    # Show loaded keys
+    echo ""
+    echo "Currently loaded keys:"
+    local key_count
+    key_count=$(ssh-add -l 2>/dev/null | wc -l)
+    if [[ $key_count -gt 0 ]]; then
+        ssh-add -l 2>/dev/null
+    else
+        echo "  (no keys loaded yet)"
+    fi
+else
+    log_warning "SSH agent is not running"
+    echo ""
+    echo "Starting SSH agent..."
+    echo ""
+
+    # Start SSH agent
+    eval "$(ssh-agent -s)" >/dev/null
+    export SSH_AUTH_SOCK
+
+    log_success "SSH agent started!"
+    echo "  PID: $SSH_AGENT_PID"
+    echo "  Socket: $SSH_AUTH_SOCK"
+fi
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 2: Adding SSH Keys to Agent"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+add_keys_to_agent
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 3: Generating VM-to-VM SSH Config"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+generate_vm_ssh_config
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 4: Configuring Auto-Start (Optional)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+if grep -q "VDE SSH Agent" "$HOME/.zprofile" 2>/dev/null; then
+    echo "✓ SSH agent is already configured to auto-start"
+else
+    echo "Would you like SSH agent to start automatically in new shells? [Y/n]"
+    read -r response
+    response=${response:-Y}
+
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        setup_ssh_agent_in_profile
+        log_success "Auto-start configured!"
+    else
+        echo "Skipped. You can manually start agent with:"
+        echo "  eval \$(ssh-agent -s) && ssh-add"
+    fi
+fi
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Usage Examples"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "From host:"
+echo "  ssh python-dev           # Connect to Python VM"
+echo "  ssh rust-dev             # Connect to Rust VM"
+echo ""
+echo "From within a VM:"
+echo "  ssh python-dev           # VM → VM (uses your host keys!)"
+echo "  ssh rust-dev             # VM → VM communication"
+echo "  git@github.com:...       # External services (GitHub, GitLab)"
+echo "  to-host ls ~/dev         # Execute command on host"
+echo ""
+echo "VM → VM Examples:"
+echo "  # From python-dev:"
+echo "  ssh rust-dev pwd              # Check rust-dev directory"
+echo "  scp rust-dev:/data/file .      # Copy file from rust VM"
+echo "  rsync -av rust-dev:/data ./    # Sync directory from rust VM"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Important Notes"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "✓ Your SSH keys NEVER leave the host machine"
+echo "✓ Containers access keys via secure SSH agent forwarding"
+echo "✓ All VMs can communicate with each other using your host keys"
+echo "✓ Restarting VMs does NOT require re-configuration"
+echo ""
+echo "To add a new key later:"
+echo "  ssh-add ~/.ssh/your_new_key"
+echo ""
+echo "To start agent in a new terminal (if auto-start not configured):"
+echo "  eval \$(ssh-agent -s) && ssh-add"
+echo ""
+echo "To rebuild VMs with SSH agent support:"
+echo "  ./scripts/shutdown-virtual <vm>"
+echo "  ./scripts/start-virtual <vm> --rebuild"
+echo ""
+echo "✓ SSH agent setup complete!"
+echo ""

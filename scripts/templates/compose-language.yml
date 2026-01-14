@@ -23,6 +23,11 @@ services:
       - ../../../projects/{{NAME}}:/home/devuser/workspace
       - ../../../logs/{{NAME}}:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
       - ../../../env-files/{{NAME}}.env
