@@ -3,7 +3,7 @@
 Generate USER_GUIDE.md from BDD test scenarios.
 
 This script reads all feature files and generates a comprehensive user guide
-ordered for ZeroToMastery students who need step-by-step hand-holding.
+ordered for users who need step-by-step guidance.
 
 Run: python3 tests/scripts/generate_user_guide.py
 """
@@ -17,7 +17,7 @@ REPO_ROOT = Path(__file__).parent.parent.parent
 FEATURES_DIR = REPO_ROOT / "tests" / "features"
 OUTPUT_FILE = REPO_ROOT / "USER_GUIDE.md"
 
-# Define the order of sections for student progression
+# Define the order of sections for user progression
 SECTION_ORDER = [
     ("installation-setup", "1. Installation: Getting VDE on Your Computer"),
     ("ssh-agent-automatic-setup", "2. SSH Keys: Setting Up Secure Access"),
@@ -123,7 +123,7 @@ def generate_user_guide():
     # Write the user guide
     with open(OUTPUT_FILE, 'w') as f:
         # Header
-        f.write("# VDE User's Guide for ZeroToMastery Students\n\n")
+        f.write("# VDE User's Guide\n\n")
         f.write("> **This guide is generated from working BDD test scenarios.** ")
         f.write("Every workflow below has been tested and verified to work. ")
         f.write("If you follow these steps, they will work for you too.\n\n")

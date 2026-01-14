@@ -1,4 +1,4 @@
-# VDE User's Guide for ZeroToMastery Students
+# VDE User's Guide
 
 > **This guide is generated from working BDD test scenarios.** Every workflow below has been tested and verified to work. If you follow these steps, they will work for you too.
 
