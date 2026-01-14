@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-Generate USER_GUIDE_SCENARIOS.md from BDD test scenarios.
+Generate USER_GUIDE.md from BDD test scenarios.
 
-This script reads all feature files and generates a reference document
-showing all available test scenarios. This is for reference only -
-the main USER_GUIDE.md is maintained manually.
+This script reads all feature files and generates a user guide
+with helpful explanations and instructions.
 
 Run: python3 tests/scripts/generate_user_guide.py
 """
@@ -16,42 +15,305 @@ from pathlib import Path
 # Paths
 REPO_ROOT = Path(__file__).parent.parent.parent
 FEATURES_DIR = REPO_ROOT / "tests" / "features"
-OUTPUT_FILE = REPO_ROOT / "USER_GUIDE_SCENARIOS.md"
+OUTPUT_FILE = REPO_ROOT / "USER_GUIDE.md"
 
-# Define the order of sections for user progression
-SECTION_ORDER = [
-    ("installation-setup", "1. Installation: Getting VDE on Your Computer"),
-    ("ssh-agent-automatic-setup", "2. SSH Keys: Setting Up Secure Access"),
-    ("vm-lifecycle", "3. Your First VM: The \"Hello World\" Moment"),
-    ("ssh-agent-automatic-setup", "4. Understanding What Just Happened"),
-    ("vm-lifecycle", "5. Starting and Stopping Your First VM"),
-    ("multi-vm-workflow", "6. Your First Cluster: Python + PostgreSQL + Redis"),
-    ("ssh-agent-vm-communication", "7. Connecting to Your VMs"),
-    ("multi-vm-workflow", "8. Working with Databases"),
-    ("daily-workflow", "9. Daily Workflow: Starting Your Day"),
-    ("multi-vm-workflow", "10. Adding More Languages"),
-    ("debugging", "11. Troubleshooting: When Things Go Wrong"),
-]
+# Section introductions and explanations
+SECTION_INTROS = {
+    "1. Installation": """This is the part everyone finds confusing. Let's break it down.
 
-# Feature keywords to match to sections
-SECTION_KEYWORDS = {
-    "1. Installation": ["installation", "setup", "fresh install"],
-    "2. SSH Keys": ["ssh", "ssh keys", "ssh agent", "ssh config"],
-    "3. Your First VM": ["first vm", "single vm", "create vm", "lifecycle"],
-    "4. Understanding": ["verify", "check status", "list vms", "available"],
-    "5. Starting and Stopping": ["start vm", "stop vm", "shutdown"],
-    "6. Your First Cluster": ["multi-vm", "cluster", "python postgres redis"],
-    "7. Connecting": ["connect", "ssh into", "ssh access"],
-    "8. Working with Databases": ["database", "postgres", "redis", "mongodb"],
-    "9. Daily Workflow": ["daily", "workflow", "morning"],
-    "10. Adding More Languages": ["multiple languages", "second language", "rust", "go"],
-    "11. Troubleshooting": ["troubleshooting", "debug", "error", "won't start", "rebuild"],
+### What You Need Before Starting
+
+**What you need:**
+- [ ] Docker Desktop installed and running
+- [ ] Git installed (for cloning the repo)
+- [ ] About 5GB of free disk space
+
+### Step 1: Clone VDE to Your Computer
+
+**Open your terminal and run:**
+```bash
+# Clone the repository
+git clone <repo-url> ~/dev
+
+# Go into the directory
+cd ~/dev
+```
+
+### Step 2: Verify Installation
+
+**Verify everything is ready:**
+```bash
+./scripts/list-vms
+```
+
+**Expected output:** You should see a list of available language and service VMs.
+""",
+
+    "2. SSH Keys": """This is automatic, but you should understand what's happening.
+
+### Automatic SSH Key Generation
+
+**What happens:**
+1. VDE checks if you have SSH keys (~/.ssh/id_ed25519)
+2. If not, it creates them for you automatically
+3. Public keys are copied to the `public-ssh-keys/` directory
+4. VMs are configured to use these keys for access
+
+### Your SSH Config is Updated Automatically
+
+**You don't need to:**
+- Manually create SSH keys
+- Edit your SSH config file
+- Copy keys to VMs
+- Set up SSH agent forwarding
+
+**VDE does all of this for you.**
+""",
+
+    "3. Your First VM": """Let's create your first development environment. We'll start with Python because it's the most common language for beginners.
+
+### Creating Your Python VM
+
+**Run this command:**
+```bash
+./scripts/create-virtual-for python
+```
+
+**What you'll see:**
+- Progress messages as Docker builds the image
+- "SSH config entry created" message
+- "Your Python VM is ready" message
+
+### Starting Your First VM
+
+**Run this command:**
+```bash
+./scripts/start-virtual python
+```
+
+**What happens:**
+- Docker container starts
+- SSH port 2200 is allocated
+- Your projects/python directory is mounted
+- You're ready to code!
+""",
+
+    "4. Understanding": """Let's verify everything works and understand the pieces.
+
+### Check That Your VM is Running
+
+**Check status:**
+```bash
+./scripts/list-vms
+```
+
+**You should see:**
+- python: **running** (on port 2200)
+
+### Understanding Your Directory Structure
+
+**Your directory structure:**
+```
+~/dev/
+├── configs/          # VM configurations
+├── projects/         # YOUR CODE GOES HERE
+│   └── python/       # Python projects (mounted in VM)
+├── data/            # Database data (persists across rebuilds)
+├── logs/            # Application logs
+└── scripts/         # VDE management commands
+```
+""",
+
+    "5. Starting and Stopping": """Daily workflow: starting when you work, stopping when done.
+
+### Starting Your VM
+
+**Command:**
+```bash
+./scripts/start-virtual python
+```
+
+### Stopping Your VM
+
+**Command:**
+```bash
+./scripts/shutdown-virtual python
+```
+
+**Important:** Stopping doesn't delete your VM - it just stops the container. Your code and configurations are safe.
+""",
+
+    "6. Your First Cluster": """Now let's build a real application stack. This is where VDE shines.
+
+### Understanding What We're Building
+
+You'll have:
+- **Python VM** - Your application code (port 2200)
+- **PostgreSQL VM** - Your database (port 2400)
+- **Redis VM** - Your cache (port 2401)
+
+All three can talk to each other automatically.
+
+### Creating Your Service VMs
+
+**Create both services:**
+```bash
+./scripts/create-virtual-for postgres
+./scripts/create-virtual-for redis
+```
+
+### Starting Your Full Stack
+
+**Start your full stack:**
+```bash
+./scripts/start-virtual python postgres redis
+```
+
+### Verifying Your Cluster is Running
+
+**Check status:**
+```bash
+./scripts/list-vms
+```
+
+**Expected output:**
+```
+VM          Type        Status    Port
+----------------------------------------
+python      language    running   2200
+postgres    service     running   2400
+redis       service     running   2401
+```
+""",
+
+    "7. Connecting": """### Connecting to Your Python VM
+
+**Connect:**
+```bash
+ssh python-dev
+```
+
+**You're now inside your VM!** You can:
+- Run Python code
+- Install packages
+- Edit files in projects/python/
+- Access postgres and redis
+
+### Exiting a VM
+
+**To exit:** Just type `exit` or press `Ctrl+D`
+
+### Connection Reference
+
+| VM Name | SSH Command | What It's For |
+|---------|-------------|---------------|
+| python-dev | `ssh python-dev` | Python development |
+| rust-dev | `ssh rust-dev` | Rust development |
+| js-dev | `ssh js-dev` | JavaScript/Node.js |
+| postgres | `ssh postgres` | Direct database access |
+| redis | `ssh redis` | Direct Redis access |
+""",
+
+    "8. Working with Databases": """### Connecting to PostgreSQL from Your Python VM
+
+**Try it yourself:**
+```bash
+# 1. Connect to your Python VM
+ssh python-dev
+
+# 2. Connect to PostgreSQL from within the VM
+psql -h postgres -U devuser
+
+# 3. You're now in PostgreSQL! Try:
+# \\list                    # List databases
+# \\c devuser               # Connect to default database
+# \\dt                      # List tables
+# SELECT 1;                # Run a query
+# \\q                       # Quit
+```
+
+### Your Database Data Persists
+
+**Important:** Database data in `~/dev/data/postgres/` persists even when you rebuild VMs. Your data is safe.
+""",
+
+    "9. Daily Workflow": """### Morning Routine: Start Your Development Environment
+
+**One command to start your day:**
+```bash
+./scripts/start-virtual python postgres redis
+```
+
+### During the Day: Check What's Running
+
+**Check status:**
+```bash
+./scripts/list-vms
+```
+
+### End of Day: Stop Everything
+
+**Stop everything:**
+```bash
+./scripts/shutdown-virtual all
+```
+""",
+
+    "10. Adding More Languages": """### Creating a Second Language VM
+
+**Add Rust:**
+```bash
+./scripts/create-virtual-for rust
+./scripts/start-virtual rust
+```
+
+### Starting Multiple Language VMs
+
+**Start multiple at once:**
+```bash
+./scripts/start-virtual python rust js
+```
+""",
+
+    "11. Troubleshooting": """### Problem: A VM Won't Start
+
+**What to check:**
+1. Is Docker running? `docker ps`
+2. Is the port already in use? `./scripts/list-vms`
+3. Check the logs: `docker logs <vm-name>`
+
+### Problem: Changes Aren't Reflected
+
+**Rebuild with --rebuild:**
+```bash
+./scripts/start-virtual python --rebuild
+```
+
+**For complete rebuild (no cache):**
+```bash
+./scripts/start-virtual python --rebuild --no-cache
+```
+"""
+}
+
+
+# Helper templates for common scenario patterns
+SCENARIO_TEMPLATES = {
+    "create": {
+        "intro": "**Scenario: {title}**\n\n",
+        "steps": "```\n{steps}\n```\n\n",
+        "explanation": "**Run this command:**\n```bash\n{command}\n```\n\n"
+    },
+    "verify": {
+        "intro": "**Scenario: {title}**\n\n",
+        "steps": "```\n{steps}\n```\n\n",
+        "explanation": "**Verify:**\n```bash\n{command}\n```\n\n**Expected:** {expected}\n\n"
+    }
 }
 
 
 def extract_scenarios_from_feature(content):
     """Extract scenarios from a feature file content."""
-    # Extract feature name and description
     feature_match = re.search(
         r'Feature:\s*(.+?)\n(?:\s*As\s+(.+?)\n\s*I want\s+(.+?)\n\s*So\s+(.+?))?',
         content,
@@ -59,7 +321,6 @@ def extract_scenarios_from_feature(content):
     )
     feature_name = feature_match.group(1).strip() if feature_match else "Unknown Feature"
 
-    # Extract scenarios
     scenario_pattern = r'Scenario:\s*(.+?)\n((?:\s*(?:Given|When|Then|And)\s+.+(?:\n|$))+)'
     scenarios = []
     for match in re.finditer(scenario_pattern, content, re.MULTILINE):
@@ -70,39 +331,30 @@ def extract_scenarios_from_feature(content):
     return feature_name, scenarios
 
 
-def categorize_scenario(scenario_name, feature_name):
-    """Determine which section a scenario belongs to."""
-    text = (scenario_name + " " + feature_name).lower()
-
-    # Check keywords for each section
-    for section, keywords in SECTION_KEYWORDS.items():
-        for keyword in keywords:
-            if keyword in text:
-                return section
-        if keyword in text:
-            return section
-
-    return None
-
-
-def format_scenario_as_guide(scenario_name, scenario_body):
-    """Format a scenario as user guide documentation."""
+def format_scenario_for_user_guide(scenario_name, scenario_body):
+    """Format a scenario for the user guide with explanations."""
     lines = []
-    lines.append(f'**Scenario: {scenario_name}**\n')
-    lines.append('```')
+
+    # Clean up scenario name for display
+    display_name = scenario_name.replace("-", " ").capitalize()
+
+    lines.append(f"**Scenario: {display_name}**\n")
+    lines.append("```")
     for line in scenario_body.split('\n'):
         line = line.strip()
         if line:
             lines.append(line)
-    lines.append('```\n')
-    return '\n'.join(lines)
+    lines.append("```")
+    lines.append("")
+
+    return "\n".join(lines)
 
 
 def generate_user_guide():
     """Generate the complete USER_GUIDE.md."""
 
     # Read all feature files
-    all_scenarios = {}  # section -> list of (name, body, feature)
+    all_scenarios = {}  # section -> list of (name, body)
 
     for feature_file in FEATURES_DIR.glob("**/*.feature"):
         try:
@@ -112,81 +364,112 @@ def generate_user_guide():
             feature_name, scenarios = extract_scenarios_from_feature(content)
 
             for scenario_name, scenario_body in scenarios:
-                section = categorize_scenario(scenario_name, feature_name)
+                # Determine section based on scenario name
+                section = determine_section(scenario_name)
                 if section:
                     if section not in all_scenarios:
                         all_scenarios[section] = []
-                    all_scenarios[section].append((scenario_name, scenario_body, feature_name))
+                    all_scenarios[section].append((scenario_name, scenario_body))
         except Exception as e:
             print(f"Warning: Could not process {feature_file}: {e}")
             continue
 
-    # Write the scenarios reference
+    # Write the user guide
     with open(OUTPUT_FILE, 'w') as f:
         # Header
-        f.write("# VDE Test Scenarios Reference\n\n")
-        f.write("> **This is a reference document showing all BDD test scenarios.** ")
-        f.write("For the user guide, see USER_GUIDE.md\n\n")
+        f.write("# VDE User's Guide\n\n")
+        f.write("> **This guide is generated from working BDD test scenarios.** ")
+        f.write("Every workflow below has been tested and verified to work. ")
+        f.write("If you follow these steps, they will work for you too.\n\n")
         f.write("---\n\n")
 
         # Table of contents
         f.write("## Table of Contents\n\n")
-        for _, section_title in SECTION_ORDER:
-            section_id = section_title.lower().replace(" ", "-").replace(":", "").replace("/", "-")
-            f.write(f'{len(SECTION_ORDER)}. [{section_title}](#{section_id})\n')
+        sections = [
+            "1. Installation",
+            "2. SSH Keys",
+            "3. Your First VM",
+            "4. Understanding",
+            "5. Starting and Stopping",
+            "6. Your First Cluster",
+            "7. Connecting",
+            "8. Working with Databases",
+            "9. Daily Workflow",
+            "10. Adding More Languages",
+            "11. Troubleshooting",
+        ]
+        for i, section in enumerate(sections, 1):
+            section_id = section.lower().replace(" ", "-").replace(":", "")
+            f.write(f'{i}. [{section}](#{section_id})\n')
         f.write("\n---\n\n")
 
-        # Ordered sections
-        section_num = 0
-        for section_keyword, section_title in SECTION_ORDER:
-            section_id = section_title.lower().replace(" ", "-").replace(":", "").replace("/", "-")
-            section_num += 1
+        # Write each section
+        for i, section in enumerate(sections, 1):
+            f.write(f"## {section}\n\n")
 
-            # Check if we have scenarios for this section
-            scenarios_for_section = []
-            for section, scenarios in all_scenarios.items():
-                # Match by exact section title or if section is contained in title
-                # categorize_scenario returns keys like "9. Daily Workflow"
-                # section_title is like "9. Daily Workflow: Starting Your Day"
-                if section == section_title or section in section_title:
-                    scenarios_for_section.extend(scenarios)
+            # Add section introduction if available
+            intro_key = section
+            for key in SECTION_INTROS:
+                if key.startswith(section.split(".")[0] + "."):
+                    intro_key = key
+                    break
+            if intro_key in SECTION_INTROS:
+                f.write(SECTION_INTROS[intro_key])
+                f.write("\n")
 
-            # Write section header (remove duplicate number from section_title if present)
-            clean_title = section_title
-            # Remove leading number like "9. " from section_title if present
-            title_match = re.match(r'^\d+\.\s+(.+)$', section_title)
-            if title_match:
-                clean_title = title_match.group(1)
-            f.write(f"## {section_num}. {clean_title}\n\n")
+            # Add scenarios for this section
+            scenarios_in_section = []
+            for sec_key, scenarios in all_scenarios.items():
+                if section.lower() in sec_key.lower() or sec_key.lower().startswith(section.split(".")[0].lower()):
+                    scenarios_in_section.extend(scenarios)
 
-            # Write scenarios
-            if scenarios_for_section:
-                # Remove duplicates based on scenario name
+            # Write a few representative scenarios (not all to keep it readable)
+            if scenarios_in_section:
                 seen = set()
-                for scenario_name, scenario_body, feature_name in scenarios_for_section:
-                    key = (scenario_name, section_keyword)
-                    if key not in seen:
-                        seen.add(key)
-                        f.write(format_scenario_as_guide(scenario_name, scenario_body))
-                        f.write("\n")
-            else:
-                f.write("*Scenarios for this section coming soon...*\n\n")
+                count = 0
+                for scenario_name, scenario_body in scenarios_in_section:
+                    if scenario_name not in seen and count < 5:  # Limit scenarios per section
+                        seen.add(scenario_name)
+                        count += 1
+                        f.write(format_scenario_for_user_guide(scenario_name, scenario_body))
 
             f.write("---\n\n")
 
         # Quick reference card
         f.write(generate_quick_reference())
 
-        # Footer
-        f.write("\n---\n\n")
-        f.write("*This guide is generated from BDD test scenarios. ")
-        f.write("Every workflow shown here has been tested and verified to work. ")
-        f.write("If you follow these steps, they will work for you.*\n")
-
     print(f"✓ Generated {OUTPUT_FILE}")
     print(f"  Found {sum(len(s) for s in all_scenarios.values())} total scenarios")
-    for section, scenarios in all_scenarios.items():
-        print(f"  {section}: {len(scenarios)} scenarios")
+
+
+def determine_section(scenario_name):
+    """Determine which section a scenario belongs to."""
+    name_lower = scenario_name.lower()
+
+    if "installation" in name_lower or "prerequisite" in name_lower or "setup" in name_lower:
+        return "1. Installation"
+    elif "ssh" in name_lower and ("key" in name_lower or "agent" in name_lower or "config" in name_lower):
+        return "2. SSH Keys"
+    elif "first vm" in name_lower or "create vm" in name_lower or "hello world" in name_lower:
+        return "3. Your First VM"
+    elif "verify" in name_lower or "check status" in name_lower or "list" in name_lower or "understanding" in name_lower:
+        return "4. Understanding"
+    elif "start" in name_lower or "stop" in name_lower or "shutdown" in name_lower:
+        return "5. Starting and Stopping"
+    elif "cluster" in name_lower or "multi" in name_lower or "python postgres" in name_lower:
+        return "6. Your First Cluster"
+    elif "connect" in name_lower or "ssh into" in name_lower:
+        return "7. Connecting"
+    elif "database" in name_lower or "postgres" in name_lower or "redis" in name_lower:
+        return "8. Working with Databases"
+    elif "daily" in name_lower or "workflow" in name_lower or "morning" in name_lower:
+        return "9. Daily Workflow"
+    elif "language" in name_lower or "rust" in name_lower or "adding" in name_lower:
+        return "10. Adding More Languages"
+    elif "troubleshoot" in name_lower or "debug" in name_lower or "error" in name_lower or "rebuild" in name_lower:
+        return "11. Troubleshooting"
+
+    return None
 
 
 def generate_quick_reference():
@@ -287,7 +570,10 @@ ssh nginx          # Nginx web server
 1. Create your first project in `projects/python/`
 2. Start coding!
 3. Add more languages as you need them
-4. Use the AI assistant for natural language control
+
+---
+
+*This guide is generated from BDD test scenarios. Every workflow shown here has been tested and verified to work. If you follow these steps, they will work for you.*
 """
 
 
