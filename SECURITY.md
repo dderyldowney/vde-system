@@ -20,7 +20,7 @@ If you discover a security vulnerability in VDE, please report it responsibly.
 
 Instead, please send an email to:
 
-- **Email**: security@dderyldowney.com (placeholder - update with actual contact)
+- **Email**: 133974812+dderyldowney@users.noreply.github.com
 - **PGP Key**: [Available on keyserver] (optional - add if you have one)
 
 ### What to Include
@@ -143,7 +143,7 @@ We will publicly disclose vulnerabilities:
 
 For general security questions or concerns:
 
-- **Email**: security@dderyldowney.com (placeholder - update with actual contact)
+- **Email**: 133974812+dderyldowney@users.noreply.github.com
 - **GitHub Security**: Use the "Report a vulnerability" button on this repository
 
 ## Acknowledgments
