@@ -73,6 +73,12 @@ for vm in "${VMS[@]}"; do
         exit 1
     fi
 
+    # Check if VM has been created (has docker-compose.yml)
+    if ! vm_exists "$vm"; then
+        log_error "VM '$vm' is not created yet. Run: ./scripts/create-virtual-for $vm"
+        exit 1
+    fi
+
     start_vm "$vm" "$REBUILD" "$NOCACHE"
 done
 

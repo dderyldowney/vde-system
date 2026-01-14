@@ -293,8 +293,9 @@ extract_vm_names() {
     # Split input into words (alphanumeric sequences)
     local word
     for word in $input_lower; do
-        # Clean the word (remove punctuation)
-        word=$(echo "$word" | tr -cd 'a-z0-9+#')
+        # Clean the word (remove punctuation, keep only alphanumeric and plus)
+        # Note: '#' is removed as it starts comments in shell and is not valid in VM names
+        word=$(echo "$word" | tr -cd 'a-z0-9+')
         [ -z "$word" ] && continue
         
         # O(1) lookup in alias map

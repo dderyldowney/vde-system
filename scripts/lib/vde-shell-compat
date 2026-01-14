@@ -188,11 +188,19 @@ _assoc_set() {
         fi
     else
         # File-based fallback
-        # Sanitize key for filename (replace / with _)
+        # CRITICAL FIX: Use hex encoding to prevent key collisions
+        # Previous simple tr '/' '_' would cause collisions: "a/b" and "a_b" both become "a_b"
+        # Now we encode special characters as %XX hex values
         local safe_key
-        safe_key=$(echo "$key" | tr '/' '_')
+        safe_key=$(printf '%s' "$key" | od -An -tx1 | tr -s ' ' '%' | tr -d '\n' | sed 's/^%//')
+        # Also handle empty keys and very long keys
+        if [ -z "$safe_key" ]; then
+            safe_key="_empty"
+        fi
         mkdir -p "$_VDE_ASSOC_STORAGE_DIR/$array_name"
+        # Store the original key as metadata for validation
         printf '%s' "$value" > "$_VDE_ASSOC_STORAGE_DIR/$array_name/$safe_key"
+        printf '%s' "$key" > "$_VDE_ASSOC_STORAGE_DIR/$array_name/$safe_key.key"
     fi
     return 0
 }
@@ -235,8 +243,12 @@ _assoc_get() {
         fi
     else
         # File-based fallback
+        # Use the same hex encoding as _assoc_set to prevent collisions
         local safe_key
-        safe_key=$(echo "$key" | tr '/' '_')
+        safe_key=$(printf '%s' "$key" | od -An -tx1 | tr -s ' ' '%' | tr -d '\n' | sed 's/^%//')
+        if [ -z "$safe_key" ]; then
+            safe_key="_empty"
+        fi
         local file="$_VDE_ASSOC_STORAGE_DIR/$array_name/$safe_key"
         if [ -f "$file" ]; then
             cat "$file"
@@ -264,18 +276,21 @@ _assoc_keys() {
         fi
     else
         # File-based fallback
+        # Read the original keys from .key metadata files
         local dir="$_VDE_ASSOC_STORAGE_DIR/$array_name"
         local keys=""
         if [ -d "$dir" ]; then
-            # List files, converting _ back to / in keys
-            for f in "$dir"/*; do
+            # List files, but skip the .key metadata files and read original keys from them
+            for f in "$dir"/*.key; do
                 [ -f "$f" ] || continue
                 local k
-                k=$(basename "$f" | tr '_' '/')
-                if [ -n "$keys" ]; then
-                    keys="$keys $k"
-                else
-                    keys="$k"
+                k=$(cat "$f" 2>/dev/null)
+                if [ -n "$k" ]; then
+                    if [ -n "$keys" ]; then
+                        keys="$keys $k"
+                    else
+                        keys="$k"
+                    fi
                 fi
             done
         fi
@@ -310,8 +325,12 @@ _assoc_has_key() {
         fi
     else
         # File-based fallback
+        # Use the same hex encoding as _assoc_set
         local safe_key
-        safe_key=$(echo "$key" | tr '/' '_')
+        safe_key=$(printf '%s' "$key" | od -An -tx1 | tr -s ' ' '%' | tr -d '\n' | sed 's/^%//')
+        if [ -z "$safe_key" ]; then
+            safe_key="_empty"
+        fi
         [ -f "$_VDE_ASSOC_STORAGE_DIR/$array_name/$safe_key" ]
     fi
 }
@@ -335,9 +354,15 @@ _assoc_unset() {
         fi
     else
         # File-based fallback
+        # Use the same hex encoding as _assoc_set
         local safe_key
-        safe_key=$(echo "$key" | tr '/' '_')
+        safe_key=$(printf '%s' "$key" | od -An -tx1 | tr -s ' ' '%' | tr -d '\n' | sed 's/^%//')
+        if [ -z "$safe_key" ]; then
+            safe_key="_empty"
+        fi
+        # Also delete the .key metadata file
         rm -f "$_VDE_ASSOC_STORAGE_DIR/$array_name/$safe_key"
+        rm -f "$_VDE_ASSOC_STORAGE_DIR/$array_name/$safe_key.key"
     fi
     return 0
 }

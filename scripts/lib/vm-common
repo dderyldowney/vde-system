@@ -1062,8 +1062,29 @@ find_next_available_port() {
                 break
             fi
         done
-        
+
+        # CRITICAL FIX: Also check if port is actually in use by another process on host
+        # This prevents collision with non-VDE services (system services, other Docker containers, etc.)
+        local is_in_use=false
         if [ "$is_allocated" = "false" ]; then
+            # Use lsof to check if anything is listening on this port
+            # Try both lsof and netstat for compatibility across platforms
+            if command -v lsof >/dev/null 2>&1; then
+                if lsof -i ":$port" -sTCP:LISTEN -n >/dev/null 2>&1; then
+                    is_in_use=true
+                fi
+            elif command -v netstat >/dev/null 2>&1; then
+                if netstat -an 2>/dev/null | grep -q "\.$port.*LISTEN"; then
+                    is_in_use=true
+                fi
+            fi
+            # Also check Docker port bindings as a fallback
+            if docker ps 2>/dev/null | grep -q "0.0.0.0:$port->"; then
+                is_in_use=true
+            fi
+        fi
+
+        if [ "$is_allocated" = "false" ] && [ "$is_in_use" = "false" ]; then
             # SECURITY: Reserve this port atomically
             local port_lock="$PORT_LOCKS_DIR/port_$port"
             if acquire_lock "$port_lock" 5; then

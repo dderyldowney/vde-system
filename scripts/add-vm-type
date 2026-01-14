@@ -160,18 +160,14 @@ fi
 # -----------------------
 # Check if VM already exists
 # -----------------------
-if [[ -n "${VM_TYPE[$VM_NAME]}" ]]; then
-    log_error "VM '$VM_NAME' already exists in vm-types.conf"
-    exit 1
-fi
-if resolve_vm_name "$VM_NAME" > /dev/null 2>&1; then
+if is_known_vm "$VM_NAME"; then
     log_error "VM '$VM_NAME' already exists in vm-types.conf"
     exit 1
 fi
 
 # Check if name conflicts with existing vm_aliases
-for existing_name in "${(@k)VM_TYPE}"; do
-    existing_vm_aliases="${VM_ALIASES[$existing_name]}"
+for existing_name in $(get_all_vms); do
+    existing_vm_aliases=$(get_vm_info aliases "$existing_name")
     if [[ ",$existing_vm_aliases," =~ ",$VM_NAME," ]]; then
         log_error "VM name '$VM_NAME' conflicts with an alias for '$existing_name'"
         exit 1
@@ -180,8 +176,10 @@ done
 
 # Validate new aliases don't conflict
 if [[ -n "$ALIASES" ]]; then
-    IFS=',' read -A NEW_ALIAS_ARRAY <<< "$ALIASES"
-    for new_alias in "${NEW_ALIAS_ARRAY[@]}"; do
+    # Convert comma-separated to space-separated for iteration
+    local new_aliases_array
+    new_aliases_array=(${(s:,:)ALIASES})
+    for new_alias in "${new_aliases_array[@]}"; do
         new_alias=$(echo "$new_alias" | tr -d ' ')
         if resolve_vm_name "$new_alias" > /dev/null 2>&1; then
             existing_vm=$(resolve_vm_name "$new_alias")
