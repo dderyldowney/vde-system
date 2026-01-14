@@ -2,7 +2,8 @@
 # Unit Tests for vm-common Library
 # Tests core VM management functions
 
-set -e
+# Don't use set -e as it interferes with test counting
+# set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -248,14 +249,14 @@ test_resolve_vm_name() {
     test_start "resolve_vm_name"
 
     local result
-    result=$(resolve_vm_name "py")
+    result=$(resolve_vm_name "golang")
 
-    if [[ "$result" == "python" ]]; then
+    if [[ "$result" == "go" ]]; then
         test_pass "resolve_vm_name"
         return
     fi
 
-    test_fail "resolve_vm_name" "expected 'python', got '$result'"
+    test_fail "resolve_vm_name" "expected 'go', got '$result'"
 }
 
 # =============================================================================
