@@ -2,7 +2,7 @@
 # VDE Coverage Script
 # Runs test suite with code coverage using kcov
 
-set -e
+# Note: Don't use set -e here as we need to handle kcov exit codes explicitly
 
 # Colors for output
 readonly RED='\033[0;31m'
