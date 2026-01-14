@@ -8,11 +8,16 @@ ARG GID=1000
 RUN apt-get update -y && \
     apt-get upgrade -y && \
     apt-get install -y sudo openssh-client openssh-server ca-certificates build-essential zsh tree git curl wget vim neovim redis-tools postgresql-client gnupg socat && \
-    wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | apt-key add - && \
-    echo "deb [arch=amd64,arm64] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" > /etc/apt/sources.list.d/mongodb-org-7.0.list && \
+    # Modern GPG key handling for MongoDB (apt-key is deprecated)
+    install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc -o /tmp/mongodb-server-7.0.asc && \
+    gpg --dearmor -o /etc/apt/keyrings/mongodb-server-7.0.gpg < /tmp/mongodb-server-7.0.asc && \
+    chmod a+r /etc/apt/keyrings/mongodb-server-7.0.gpg && \
+    # Detect architecture dynamically for MongoDB repository
+    echo "deb [signed-by=/etc/apt/keyrings/mongodb-server-7.0.gpg] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" > /etc/apt/sources.list.d/mongodb-org-7.0.list && \
     apt-get update -y && \
     apt-get install -y mongodb-mongosh && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* /tmp/mongodb-server-7.0.asc
 
 # Create devuser with sudo privileges and SSH setup
 RUN groupadd -g ${GID} ${USERNAME} && \
@@ -28,8 +33,19 @@ RUN groupadd -g ${GID} ${USERNAME} && \
     chmod 600 /home/${USERNAME}/.ssh/known_hosts
 
 # Copy public SSH keys into authorized_keys with proper ownership
-COPY --chown=${USERNAME}:${USERNAME} public-ssh-keys/* /home/${USERNAME}/.ssh/authorized_keys
-RUN chmod 600 /home/${USERNAME}/.ssh/authorized_keys
+# Only copy actual public key files (*.pub), skipping .keep and other non-key files
+RUN mkdir -p /home/${USERNAME}/.ssh && \
+    if [ -d /public-ssh-keys ]; then \
+        for key in /public-ssh-keys/*.pub; do \
+            [ -f "$key" ] && cat "$key" >> /home/${USERNAME}/.ssh/authorized_keys; \
+        done; \
+    fi && \
+    if [ -s /home/${USERNAME}/.ssh/authorized_keys ]; then \
+        chmod 600 /home/${USERNAME}/.ssh/authorized_keys && \
+        chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh/authorized_keys; \
+    else \
+        rm -f /home/${USERNAME}/.ssh/authorized_keys; \
+    fi
 
 # Configure SSH server for agent forwarding and security
 RUN sed -i \
@@ -60,18 +76,9 @@ RUN echo '#!/bin/zsh' > /usr/local/bin/ssh-agent-forward && \
     echo 'fi' >> /usr/local/bin/ssh-agent-forward && \
     chmod +x /usr/local/bin/ssh-agent-forward
 
-# Add host access helper script (for accessing host from container)
-RUN echo '#!/bin/zsh' > /usr/local/bin/host-sh && \
-    echo '' >> /usr/local/bin/host-sh && \
-    echo '# Execute command on host via docker exec' >> /usr/local/bin/host-sh && \
-    echo 'host_cmd() {' >> /usr/local/bin/host-sh && \
-    echo '    local container_name=$(/bin/hostname)' >> /usr/local/bin/host-sh && \
-    echo '    docker exec -it "$container_name" "$@" 2>/dev/null || echo "Cannot access host from container"' >> /usr/local/bin/host-sh && \
-    echo '}' >> /usr/local/bin/host-sh && \
-    echo '' >> /usr/local/bin/host-sh && \
-    echo 'alias to-host=host_cmd' >> /usr/local/bin/host-sh && \
-    chmod +x /usr/local/bin/host-sh && \
-    echo 'source /usr/local/bin/host-sh' >> /home/${USERNAME}/.zshrc
+# NOTE: Host access from container removed - the previous implementation was fundamentally broken.
+# It tried to run 'docker exec' from inside the container to access the host, which doesn't work.
+# For host access, use proper Docker bind mounts or SSH from host to container instead.
 
 # Install oh-my-zsh, configure zsh, and setup LazyVim
 RUN su ${USERNAME} -c 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended' && \

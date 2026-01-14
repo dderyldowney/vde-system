@@ -117,7 +117,7 @@ vde_get_vm_info() {
 # Returns: VDE_SUCCESS (0), outputs list of running container names to stdout
 # Example: running=$(vde_get_running_vms)
 vde_get_running_vms() {
-    docker ps --format "{{.Names}}" 2>/dev/null | grep -E "^[a-z]+-dev$|^[a-z]+$" || echo ""
+    docker ps --format "{{.Names}}" 2>/dev/null | grep -E "^[a-z0-9]+-dev$|^[a-z0-9]+$" || echo ""
     return $VDE_SUCCESS
 }
 
@@ -378,7 +378,9 @@ vde_add_vm_type() {
     [ -n "$svc_port" ] && set -- "$@" --svc-port "$svc_port"
     [ -n "$display" ] && set -- "$@" --display "$display"
     set -- "$@" "$name" "$install_cmd"
-    [ -n "$aliases" ] && set -- "$@" $aliases
+    # Note: $aliases is intentionally unquoted here as it contains space-separated aliases
+    # that add-vm-type will treat as a single argument
+    [ -n "$aliases" ] && set -- "$@" "$aliases"
 
     "$VDE_SCRIPTS_DIR/add-vm-type" "$@"
 }
