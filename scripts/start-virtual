@@ -61,6 +61,10 @@ if [[ ${#VMS[@]} -eq 0 ]]; then
     exit 1
 fi
 
+# Ensure SSH environment (automatic & silent)
+# Starts SSH agent, loads keys, generates VM config - all without user interaction
+ensure_ssh_environment
+
 # Start VMs
 log_info "Starting ${#VMS[@]} VM(s)..."
 for vm in "${VMS[@]}"; do
