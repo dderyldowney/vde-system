@@ -128,6 +128,27 @@ render_template "$template_file" \
     SERVICE_PORT "$VM_SVC_PORT" \
     > "$compose_file"
 
+# Handle multiple service ports in docker-compose.yml
+if [[ "$VM_TYPE" == "service" ]] && [[ -n "$VM_SVC_PORT" ]]; then
+    # Generate port mappings for each service port
+    local port_mappings=""
+    IFS=',' read -A PORTS <<< "$VM_SVC_PORT"
+    for port in "${PORTS[@]}"; do
+        port=$(echo "$port" | tr -d ' ')
+        port_mappings="$port_mappings  - \"$port:$port\""
+    done
+
+    # Replace the ##SERVICE_PORTS## placeholder with actual port mappings
+    if [[ -n "$port_mappings" ]]; then
+        sed -i.bak "s|##SERVICE_PORTS##|$port_mappings|" "$compose_file"
+        rm -f "${compose_file}.bak"
+    fi
+else
+    # Remove the placeholder for language VMs or services without ports
+    sed -i.bak "/##SERVICE_PORTS##/d" "$compose_file"
+    rm -f "${compose_file}.bak"
+fi
+
 log_success "Created: $compose_file"
 
 # -----------------------
