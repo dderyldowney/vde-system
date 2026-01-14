@@ -130,12 +130,12 @@ render_template "$template_file" \
 
 # Handle multiple service ports in docker-compose.yml
 if [[ "$VM_TYPE" == "service" ]] && [[ -n "$VM_SVC_PORT" ]]; then
-    # Generate port mappings for each service port
+    # Generate port mappings for each service port (each on a new line)
     local port_mappings=""
     IFS=',' read -A PORTS <<< "$VM_SVC_PORT"
     for port in "${PORTS[@]}"; do
         port=$(echo "$port" | tr -d ' ')
-        port_mappings="$port_mappings  - \"$port:$port\""
+        port_mappings="${port_mappings}  - \"$port:$port\"\n"
     done
 
     # Replace the ##SERVICE_PORTS## placeholder with actual port mappings
