@@ -12,7 +12,8 @@ readonly BLUE='\033[0;34m'
 readonly NC='\033[0m'
 
 # Configuration
-VDE_ROOT_DIR="$(cd "$(dirname "${(%):-%x}")/.." && pwd)"
+# Get script directory using $0 (works with zsh)
+VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 COVERAGE_DIR="${VDE_ROOT_DIR}/coverage"
 COVERAGE_MERGED="${COVERAGE_DIR}/merged"
 

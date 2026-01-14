@@ -115,22 +115,21 @@ call_ai_api() {
     local endpoint="${base_url}/v1/messages"
 
     # Prepare the request body
-    # Using a safe approach for JSON construction
+    # Use jq to safely construct the JSON request
+    # -R: raw input (not JSON)
+    # -s: slurp all input into a single string
+    # -a: use ASCII-only output (properly escapes control characters)
     local request_body
-    request_body=$(cat <<EOF
-{
-  "model": "$model",
-  "max_tokens": 1024,
-  "system": $(echo "$system_prompt" | jq -Rs .),
-  "messages": [
-    {
-      "role": "user",
-      "content": $(echo "$prompt" | jq -Rs .)
-    }
-  ]
-}
-EOF
-)
+    request_body=$(jq -n \
+        --arg model "$model" \
+        --arg system "$system_prompt" \
+        --arg prompt "$prompt" \
+        '{
+            model: $model,
+            max_tokens: 1024,
+            system: $system,
+            messages: [{role: "user", content: $prompt}]
+        }')
 
     # Make the API call
     local response
