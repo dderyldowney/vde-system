@@ -163,28 +163,20 @@ coverage-clean:
 # Linting Targets
 # =============================================================================
 
-lint: lint-shell lint-yaml
+lint: lint-zsh lint-yaml
 	@echo "✓ All linting checks passed"
 
-lint-shell:
-	@echo "Running shellcheck..."
-	@shellcheck -X scripts/*.sh scripts/lib/* scripts/**/*.sh 2>/dev/null || \
-		find scripts -name "*.sh" -type f -exec shellcheck {} + || \
-		echo "shellcheck not installed, skipping"
-	@echo "✓ shellcheck passed"
-	@echo "Running shfmt check..."
-	@SHFMT_ERRORS=0; \
-	for file in $$(find scripts -name "*.sh" -type f); do \
-		if ! shfmt -d "$$file" 2>/dev/null; then \
-			SHFMT_ERRORS=$$((SHFMT_ERRORS + 1)); \
+lint-zsh:
+	@echo "Running zsh syntax check..."
+	@for script in $$(find scripts tests -name "*.sh" -type f); do \
+		if head -1 "$$script" | grep -q "zsh"; then \
+			zsh -n "$$script" || { echo "✗ Syntax error in: $$script"; exit 1; }; \
 		fi \
-	done; \
-	if [ $$SHFMT_ERRORS -gt 0 ]; then \
-		echo "✗ shfmt formatting issues found in $$SHFMT_ERRORS files"; \
-		echo "Run 'shfmt -w scripts/**/*.sh' to fix"; \
-		exit 1; \
-	fi
-	@echo "✓ shfmt check passed"
+	done
+	@echo "✓ All zsh scripts passed syntax check"
+	@echo ""
+	@echo "Note: shfmt is not run in CI due to zsh compatibility issues."
+	@echo "To run locally: shfmt -w scripts/**/*.sh tests/**/*.sh"
 
 lint-yaml:
 	@echo "Running yamllint..."
