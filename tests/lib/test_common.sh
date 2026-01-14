@@ -154,10 +154,20 @@ setup_test_env() {
         source "$VDE_ROOT_DIR/scripts/lib/vde-commands" 2>/dev/null || true
         source "$VDE_ROOT_DIR/scripts/lib/vde-parser" 2>/dev/null || true
     fi
+
+    # Set trap to ensure cleanup happens even on error/exit
+    trap 'teardown_test_env' EXIT INT TERM
 }
 
 # Teardown test environment
 teardown_test_env() {
+    # Clean up SSH agent to prevent CI hangs
+    # This is critical in CI environments where SSH agent can cause jobs to hang
+    if [[ -n "$SSH_AGENT_PID" ]]; then
+        ssh-agent -k >/dev/null 2>&1 || true
+        unset SSH_AUTH_SOCK SSH_AGENT_PID
+    fi
+
     # Clean up temporary directory
     if [[ -n "$TEST_TMP_DIR" && -d "$TEST_TMP_DIR" ]]; then
         rm -rf "$TEST_TMP_DIR"
