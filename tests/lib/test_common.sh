@@ -163,10 +163,14 @@ setup_test_env() {
 teardown_test_env() {
     # Clean up SSH agent to prevent CI hangs
     # This is critical in CI environments where SSH agent can cause jobs to hang
+    # Use kill instead of ssh-agent -k which can hang waiting for input
     if [[ -n "$SSH_AGENT_PID" ]]; then
-        ssh-agent -k >/dev/null 2>&1 || true
+        kill "$SSH_AGENT_PID" >/dev/null 2>&1 || true
         unset SSH_AUTH_SOCK SSH_AGENT_PID
     fi
+
+    # Also kill any ssh-agent processes that might be running
+    pkill -9 ssh-agent >/dev/null 2>&1 || true
 
     # Clean up temporary directory
     if [[ -n "$TEST_TMP_DIR" && -d "$TEST_TMP_DIR" ]]; then
