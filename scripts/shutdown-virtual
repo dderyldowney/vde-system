@@ -18,23 +18,38 @@ if [[ $# -eq 0 ]]; then
     exit 1
 fi
 
+# _vm_has_compose_file - Check if VM has a docker-compose.yml file
+_vm_has_compose_file() {
+    local vm="$1"
+    local compose_file
+    compose_file=$(get_compose_file "$vm" 2>/dev/null) || return 1
+    [[ -f "$compose_file" ]]
+}
+
 # Parse VMs
 VMS=()
 
 for arg in "$@"; do
     case $arg in
         all)
-            # Expand "all" to all known VMs
+            # Expand "all" to VMs that actually have compose files
             for vm in $(get_all_vms); do
-                VMS+=("$vm")
+                if _vm_has_compose_file "$vm"; then
+                    VMS+=("$vm")
+                fi
             done
             ;;
         *)
             # Check if it's a known VM or VM type
             local resolved
-            resolved=$(resolve_vm_name "$arg" || true)
+            resolved=$(resolve_vm_name "$arg" 2>/dev/null) || true
             if [[ -n "$resolved" ]]; then
-                VMS+=("$resolved")
+                # Only add if it has a compose file
+                if _vm_has_compose_file "$resolved"; then
+                    VMS+=("$resolved")
+                else
+                    log_warning "VM '$arg' not created (no compose file)"
+                fi
             else
                 log_error "Unknown VM: $arg"
                 exit 1
@@ -47,6 +62,8 @@ done
 if [[ ${#VMS[@]} -eq 0 ]]; then
     echo "Usage: $0 <vm_name1> [vm_name2] ... [all]"
     echo ""
+    echo "No VMs to stop. Create VMs first with: create-virtual-for <type>"
+    echo ""
     show_known_vms
     exit 1
 fi
@@ -54,11 +71,6 @@ fi
 # Stop VMs
 log_info "Shutting down ${#VMS[@]} VM(s)..."
 for vm in "${VMS[@]}"; do
-    if ! is_known_vm "$vm"; then
-        log_error "Unknown VM: $vm"
-        exit 1
-    fi
-
     stop_vm "$vm"
 done
 
