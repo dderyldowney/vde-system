@@ -415,24 +415,94 @@ jobs:
           COMPOSE_FILE="configs/docker/${{ steps.select-vm.outputs.vm }}/docker-compose.yml"
           SSH_PORT=$(grep ':22' "$COMPOSE_FILE" | grep -oE '[0-9]+' | head -1)
           echo "port=$SSH_PORT" >> $GITHUB_OUTPUT
+          echo "SSH Port: $SSH_PORT"
+
+      - name: Diagnose Container State
+        if: steps.select-vm.outputs.type == 'lang'
+        run: |
+          CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}-dev"
+          SSH_PORT="${{ steps.ssh-port.outputs.port }}"
+
+          echo "=== Container Status ==="
+          docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+          echo ""
+          echo "=== Container Processes ==="
+          docker exec "$CONTAINER_NAME" ps aux 2>/dev/null || echo "Could not list processes"
+
+          echo ""
+          echo "=== SSH Key Check ==="
+          docker exec "$CONTAINER_NAME" ls -la /home/devuser/.ssh/authorized_keys 2>/dev/null || echo "authorized_keys not found"
+
+          echo ""
+          echo "=== Port Listening Check ==="
+          docker exec "$CONTAINER_NAME" netstat -tlnp 2>/dev/null || docker exec "$CONTAINER_NAME" ss -tlnp 2>/dev/null || echo "Could not check ports"
+
+          echo ""
+          echo "=== Container Logs (last 50 lines) ==="
+          docker logs --tail 50 "$CONTAINER_NAME" 2>&1 || true
+
+      - name: Wait for SSH to be Ready
+        if: steps.select-vm.outputs.type == 'lang'
+        run: |
+          CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}-dev"
+          SSH_PORT="${{ steps.ssh-port.outputs.port }}"
+          MAX_WAIT=180
+          ELAPSED=0
+
+          echo "Waiting for SSH daemon to start (max ${MAX_WAIT}s)..."
+          echo "Note: Language install may take 30-90 seconds before SSH starts"
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            # First check if port is open
+            if timeout 1 bash -c "cat < /dev/null > /dev/tcp/localhost/$SSH_PORT" 2>/dev/null; then
+              echo "✓ Port $SSH_PORT is open"
+
+              # Try SSH connection
+              if ssh -i "$VDE_SSH_KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=3 -p "$SSH_PORT" devuser@localhost "echo 'SSH ready'" 2>/dev/null; then
+                echo "✓ SSH is ready and accepting connections"
+                exit 0
+              fi
+            fi
+
+            # Show progress every 15 seconds
+            if [ $((ELAPSED % 15)) -eq 0 ] && [ $ELAPSED -gt 0 ]; then
+              echo "Still waiting... (${ELAPSED}s elapsed)"
+              docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}" || true
+            fi
+
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+          done
+
+          echo "✗ SSH did not become ready within ${MAX_WAIT}s"
+          echo ""
+          echo "=== Final Diagnostics ==="
+          docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          echo ""
+          docker logs --tail 20 "$CONTAINER_NAME" 2>&1 || true
+          exit 1
 
       - name: Test SSH Connection
         if: steps.select-vm.outputs.type == 'lang'
         run: |
           SSH_PORT="${{ steps.ssh-port.outputs.port }}"
-          MAX_ATTEMPTS=20
-          ATTEMPT=0
+          CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}-dev"
 
-          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-            if ssh -i "$VDE_SSH_KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p "$SSH_PORT" devuser@localhost "echo 'SSH connection successful'"; then
-              echo "✓ SSH connection test passed"
-              exit 0
-            fi
-            ATTEMPT=$((ATTEMPT + 1))
-            sleep 5
-          done
-          echo "✗ SSH connection test failed"
-          exit 1
+          echo "Testing SSH connection..."
+          if ssh -i "$VDE_SSH_KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p "$SSH_PORT" devuser@localhost "
+            echo '✓ SSH connection successful'
+            echo 'User:' \$(whoami)
+            echo 'Shell:' \$SHELL
+            echo 'Home:' \$HOME
+            which rust python go node java 2>/dev/null || echo 'Language tools check'
+          "; then
+            echo "✓ SSH connection test passed"
+            exit 0
+          else
+            echo "✗ SSH connection test failed"
+            exit 1
+          fi
 
       - name: Service VMs don't have SSH
         if: steps.select-vm.outputs.type == 'svc'
