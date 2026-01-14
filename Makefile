@@ -1,7 +1,7 @@
 # VDE Makefile
 # Targets for testing and development
 
-.PHONY: help test test-unit test-integration test-comprehensive test-coverage test-ai-api lint check clean install-deps coverage-view coverage-clean
+.PHONY: help test test-unit test-integration test-comprehensive test-coverage test-ai-api test-real-ai-api lint check clean install-deps coverage-view coverage-clean
 
 # Default target
 help:
@@ -22,7 +22,8 @@ help:
 	@echo "  make test-parser          - Run vde-parser comprehensive tests"
 	@echo "  make test-commands        - Run vde-commands comprehensive tests"
 	@echo "  make test-e2e             - Run end-to-end integration tests"
-	@echo "  make test-ai-api          - Run AI API tests"
+	@echo "  make test-ai-api          - Run AI API tests (mocked, no API calls)"
+	@echo "  make test-real-ai-api      - Run real AI API tests (requires API keys)"
 	@echo ""
 	@echo "Linting:"
 	@echo "  make lint                - Run all linting checks"
@@ -98,6 +99,13 @@ test-ai-api:
 	@chmod +x tests/integration/test_ai_api_integration.sh
 	@zsh tests/integration/test_ai_api_integration.sh
 	@echo "✓ AI API tests passed"
+
+test-real-ai-api:
+	@echo "Running real AI API integration tests..."
+	@echo "Note: These tests make actual API calls and require valid credentials"
+	@chmod +x tests/integration/test_real_ai_api.sh
+	@zsh tests/integration/test_real_ai_api.sh
+	@echo "✓ Real AI API tests passed"
 
 # =============================================================================
 # Code Coverage (requires kcov)

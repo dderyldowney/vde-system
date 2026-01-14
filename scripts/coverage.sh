@@ -37,6 +37,8 @@ run_test_with_coverage() {
     local coverage_out="${COVERAGE_DIR}/${test_name}"
 
     print -P "${BLUE}Running: ${test_name}${NC}"
+    # Use set -o noglob to prevent glob expansion of patterns
+    set -o localoptions -o noglob
     kcov \
         --exclude-pattern=/usr/*,/opt/* \
         --exclude-region=TEST:END_TEST \
