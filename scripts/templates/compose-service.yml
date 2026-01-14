@@ -24,6 +24,11 @@ services:
       - ../../../data/{{NAME}}:/data
       - ../../../logs/{{NAME}}:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for service VM communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
       - ../../../env-files/{{NAME}}.env

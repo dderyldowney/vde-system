@@ -693,6 +693,98 @@ validate_ssh_key_exists() {
     validate_or_create_ssh_key
 }
 
+# Check if SSH agent is running
+ssh_agent_is_running() {
+    [[ -n "$SSH_AUTH_SOCK" ]] && [[ -S "$SSH_AUTH_SOCK" ]]
+}
+
+# Start SSH agent if not running
+ensure_ssh_agent() {
+    if ssh_agent_is_running; then
+        log_info "SSH agent already running: $SSH_AUTH_SOCK"
+        return 0
+    fi
+
+    log_info "Starting SSH agent..."
+    eval "$(ssh-agent -s)" >/dev/null
+    export SSH_AUTH_SOCK
+
+    # Add all available keys to the agent
+    local keys_added=0
+    local -a keys
+    keys=("${(@f)$(detect_ssh_keys)}")
+
+    for key in "${keys[@]}"; do
+        ssh-add "$key" 2>/dev/null
+        if [[ $? -eq 0 ]]; then
+            ((keys_added++))
+            log_info "  ✓ Added key: ${key:t}"
+        fi
+    done
+
+    log_info "SSH agent started with $keys_added key(s)"
+    log_info "SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
+    return 0
+}
+
+# Generate SSH config entries for VM-to-VM communication
+generate_vm_ssh_config() {
+    local ssh_config="$HOME/.ssh/config"
+    local need_update=false
+
+    # Ensure .ssh directory and config exist
+    mkdir -p "$(dirname "$ssh_config")"
+    if [[ ! -f "$ssh_config" ]]; then
+        touch "$ssh_config"
+        chmod 600 "$ssh_config"
+    fi
+
+    # Backup existing config
+    backup_ssh_config
+
+    log_info "Generating VM-to-VM SSH config entries..."
+
+    # Get all VMs
+    local -a vms
+    vms=("${(@f)$(list_all_vms)}")
+
+    for vm in "${vms[@]}"; do
+        local vm_type
+        vm_type=$(get_vm_info type "$vm")
+
+        if [[ "$vm_type" == "lang" ]]; then
+            local vm_alias="${vm}-dev"
+            local ssh_port=$(get_vm_ssh_port "$vm")
+
+            if [[ -n "$ssh_port" ]]; then
+                # Check if entry already exists
+                if ! ssh_config_has_entry "$vm_alias"; then
+                    merge_ssh_config_entry "$vm_alias" "localhost" "$vm" "$(get_ssh_identity_file)"
+                    need_update=true
+                fi
+            fi
+        fi
+    done
+
+    if [[ "$need_update" == "false" ]]; then
+        log_info "All VM SSH config entries already up to date"
+    fi
+
+    return 0
+}
+
+# Get SSH port for a VM
+get_vm_ssh_port() {
+    local vm=$1
+    local compose_file="$CONFIGS_DIR/$vm/docker-compose.yml"
+
+    if [[ ! -f "$compose_file" ]]; then
+        return 1
+    fi
+
+    grep ':22' "$compose_file" | grep -oE '[0-9]+' | head -1
+}
+
 # -----------------------
 # Directory Creation Functions
 # -----------------------
