@@ -347,6 +347,244 @@ render_template() {
 }
 
 # -----------------------
+# SSH Key Management Functions
+# -----------------------
+
+# Detect all available SSH private keys in ~/.ssh/
+# Returns a newline-separated list of key filepaths
+detect_ssh_keys() {
+    local ssh_dir="$HOME/.ssh"
+    local found_keys=()
+
+    # Common SSH key patterns (private keys only)
+    local key_patterns=(
+        "id_ed25519"
+        "id_rsa"
+        "id_ecdsa"
+        "id_ecdsa_sk"
+        "id_ed25519_sk"
+        "id_dsa"  # Deprecated but still supported
+    )
+
+    # Check for each key pattern
+    for key_name in "${key_patterns[@]}"; do
+        local key_path="$ssh_dir/$key_name"
+        if [[ -f "$key_path" && -r "$key_path" ]]; then
+            # Verify it's actually a private key (not a .pub file)
+            if [[ "$key_path" != *.pub ]]; then
+                # Check if corresponding .pub file exists (valid keypair)
+                if [[ -f "${key_path}.pub" ]]; then
+                    found_keys+=("$key_path")
+                fi
+            fi
+        fi
+    done
+
+    # Also check for any custom key names (ssh-keygen -t rsa -f mykey)
+    # Look for files that don't match standard patterns but have .pub files
+    setopt local_options null_glob
+    for key_file in "$ssh_dir"/*; do
+        local basename="${key_file:t}"
+        # Skip if it's a pubkey, config, or known_hosts file
+        if [[ "$basename" == *.pub ]] || \
+           [[ "$basename" == "config" ]] || \
+           [[ "$basename" == "known_hosts" ]] || \
+           [[ "$basename" == "authorized_keys" ]] || \
+           [[ "$basename" == *.backup.* ]]; then
+            continue
+        fi
+
+        # Check if this is a private key with a corresponding pubkey
+        if [[ -f "${key_file}.pub" ]]; then
+            # Check if already in our list
+            local already_found=false
+            for found in "${found_keys[@]}"; do
+                if [[ "$found" == "$key_file" ]]; then
+                    already_found=true
+                    break
+                fi
+            done
+            if [[ "$already_found" == "false" ]]; then
+                found_keys+=("$key_file")
+            fi
+        fi
+    done
+
+    # Output all found keys
+    for key in "${found_keys[@]}"; do
+        echo "$key"
+    done
+}
+
+# Get the primary/default SSH key to use for VDE
+# Returns the filepath of the best key to use
+get_primary_ssh_key() {
+    local -a keys
+    keys=("${(@f)$(detect_ssh_keys)}")
+
+    if [[ ${#keys[@]} -eq 0 ]]; then
+        return 1
+    fi
+
+    # If only one key, use it
+    if [[ ${#keys[@]} -eq 1 ]]; then
+        echo "${keys[1]}"
+        return 0
+    fi
+
+    # Multiple keys: try to determine the best one
+    # Priority: ed25519 > ecdsa > rsa > dsa
+    local -a preferred_keys=(
+        "id_ed25519"
+        "id_ecdsa"
+        "id_rsa"
+        "id_dsa"
+    )
+
+    # Check for preferred keys in priority order
+    for preferred in "${preferred_keys[@]}"; do
+        for key in "${keys[@]}"; do
+            local basename="${key:t}"
+            if [[ "$basename" == "$preferred" ]]; then
+                echo "$key"
+                return 0
+            fi
+        done
+    done
+
+    # If no preferred key found, use the first one
+    echo "${keys[1]}"
+    return 0
+}
+
+# Get the corresponding public key file for a private key
+get_ssh_pubkey() {
+    local private_key="$1"
+
+    if [[ -f "${private_key}.pub" ]]; then
+        echo "${private_key}.pub"
+        return 0
+    fi
+
+    return 1
+}
+
+# Sync SSH public keys to VDE's public-ssh-keys directory
+# This ensures all user's public keys are available for container auth
+sync_ssh_keys_to_vde() {
+    local public_keys_dir="$VDE_ROOT_DIR/public-ssh-keys"
+    local keys_copied=0
+    local -a keys
+
+    # Ensure directory exists
+    mkdir -p "$public_keys_dir"
+
+    # Get all private keys and copy their public keys
+    keys=("${(@f)$(detect_ssh_keys)}")
+
+    if [[ ${#keys[@]} -eq 0 ]]; then
+        log_error "No SSH keys found. Please generate an SSH key first."
+        log_error "Recommended: ssh-keygen -t ed25519"
+        return 1
+    fi
+
+    log_info "Syncing ${#keys[@]} SSH key(s) to VDE..."
+
+    # Copy each public key
+    for private_key in "${keys[@]}"; do
+        local pubkey
+        pubkey=$(get_ssh_pubkey "$private_key")
+
+        if [[ -n "$pubkey" && -f "$pubkey" ]]; then
+            local key_name="${pubkey:t}"
+            local dest_path="$public_keys_dir/$key_name"
+
+            # Copy the public key
+            cp "$pubkey" "$dest_path"
+            chmod 644 "$dest_path"
+            ((keys_copied++))
+            log_info "  ✓ Copied: $key_name"
+        fi
+    done
+
+    # Create .keep file if it doesn't exist (for git tracking)
+    if [[ ! -f "$public_keys_dir/.keep" ]]; then
+        touch "$public_keys_dir/.keep"
+    fi
+
+    log_info "Synced $keys_copied public key(s) to: $public_keys_dir"
+    return 0
+}
+
+# Validate that at least one SSH key exists
+# If no keys exist, offer to generate one
+validate_or_create_ssh_key() {
+    local -a keys
+    keys=("${(@f)$(detect_ssh_keys)}")
+
+    if [[ ${#keys[@]} -gt 0 ]]; then
+        log_info "Found ${#keys[@]} SSH key(s)"
+        return 0
+    fi
+
+    # No keys found - offer to generate one
+    log_warning "No SSH keys found in ~/.ssh/"
+    log_warning "VDE requires SSH keys for container authentication."
+
+    # Check if we're in an interactive terminal
+    if [[ -t 0 ]]; then
+        echo ""
+        echo "Would you like to generate an SSH key now? [Y/n]"
+        read -r response
+        response=${response:-Y}
+
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            # Generate ed25519 key (recommended)
+            local key_path="$HOME/.ssh/id_ed25519"
+
+            log_info "Generating SSH key: $key_path"
+            ssh-keygen -t ed25519 -f "$key_path" -N "" -C "$(whoami)@$(hostname)-vde"
+
+            if [[ $? -eq 0 ]]; then
+                log_info "SSH key generated successfully!"
+                log_info "Private key: $key_path"
+                log_info "Public key: ${key_path}.pub"
+
+                # Copy to VDE
+                sync_ssh_keys_to_vde
+                return 0
+            else
+                log_error "Failed to generate SSH key"
+                return 1
+            fi
+        else
+            log_error "SSH key required for VDE to function"
+            return 1
+        fi
+    else
+        # Non-interactive mode
+        log_error "No SSH keys found. Run: ssh-keygen -t ed25519"
+        return 1
+    fi
+}
+
+# Get the identity file path to use for SSH connections
+# This detects the user's primary key automatically
+get_ssh_identity_file() {
+    local primary_key
+    primary_key=$(get_primary_ssh_key)
+
+    if [[ -n "$primary_key" && -f "$primary_key" ]]; then
+        echo "$primary_key"
+        return 0
+    fi
+
+    # Fallback to default (for backward compatibility)
+    echo "$HOME/.ssh/id_ed25519"
+    return 0
+}
+
+# -----------------------
 # SSH Config Functions
 # -----------------------
 get_user_ssh_config() {
@@ -378,17 +616,17 @@ generate_ssh_config_entry() {
     local host=$1
     local port=$2
     local display_name=$3
-    local identity_file="${4:-~/.ssh/id_ed25519}"
+    local identity_file="${4:-$(get_ssh_identity_file)}"
 
     local template_file="$TEMPLATES_DIR/ssh-entry.txt"
-    render_template "$template_file" HOST "$host" SSH_PORT "$port" COMMENT "$display_name Dev VM"
+    render_template "$template_file" HOST "$host" SSH_PORT "$port" COMMENT "$display_name Dev VM" IDENTITY_FILE "$identity_file"
 }
 
 merge_ssh_config_entry() {
     local host_alias=$1
     local port=$2
     local display_name=$3
-    local identity_file="${4:-~/.ssh/id_ed25519}"
+    local identity_file="${4:-$(get_ssh_identity_file)}"
     local ssh_config="$HOME/.ssh/config"
 
     # Ensure .ssh directory exists
@@ -451,14 +689,8 @@ validate_vm_doesnt_exist() {
 }
 
 validate_ssh_key_exists() {
-    local key_path="${1:-$HOME/.ssh/id_ed25519}"
-
-    if [[ ! -f "$key_path" ]]; then
-        log_error "SSH key not found: $key_path"
-        log_error "Please generate an SSH key first: ssh-keygen -t ed25519"
-        return 1
-    fi
-    return 0
+    # Use the new comprehensive validation function
+    validate_or_create_ssh_key
 }
 
 # -----------------------

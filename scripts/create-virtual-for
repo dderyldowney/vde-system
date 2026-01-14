@@ -68,6 +68,12 @@ validate_vm_doesnt_exist "$VM_NAME" || exit 1
 validate_ssh_key_exists || exit 1
 
 # -----------------------
+# Sync SSH Keys
+# -----------------------
+log_info "Syncing SSH keys to VDE..."
+sync_ssh_keys_to_vde || exit 1
+
+# -----------------------
 # Get VM Configuration
 # -----------------------
 VM_TYPE=$(get_vm_info type "$VM_NAME")
