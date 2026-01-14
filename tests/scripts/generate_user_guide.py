@@ -145,11 +145,19 @@ def generate_user_guide():
             # Check if we have scenarios for this section
             scenarios_for_section = []
             for section, scenarios in all_scenarios.items():
-                if section_keyword.lower() in section.lower() or any(kw in section.lower() for kw in SECTION_KEYWORDS.get(section_title, [])):
+                # Match by exact section title or if section is contained in title
+                # categorize_scenario returns keys like "9. Daily Workflow"
+                # section_title is like "9. Daily Workflow: Starting Your Day"
+                if section == section_title or section in section_title:
                     scenarios_for_section.extend(scenarios)
 
-            # Write section header
-            f.write(f"## {section_num}. {section_title}\n\n")
+            # Write section header (remove duplicate number from section_title if present)
+            clean_title = section_title
+            # Remove leading number like "9. " from section_title if present
+            title_match = re.match(r'^\d+\.\s+(.+)$', section_title)
+            if title_match:
+                clean_title = title_match.group(1)
+            f.write(f"## {section_num}. {clean_title}\n\n")
 
             # Write scenarios
             if scenarios_for_section:
@@ -195,16 +203,16 @@ def generate_quick_reference():
 ./scripts/create-virtual-for <name>
 
 # Start VMs
-./scripts/start-virtual.sh <vm1> <vm2> ...
+./scripts/start-virtual <vm1> <vm2> ...
 
 # Stop VMs
-./scripts/shutdown-virtual.sh <vm1> <vm2> ...
+./scripts/shutdown-virtual <vm1> <vm2> ...
 
 # Stop everything
-./scripts/shutdown-virtual.sh all
+./scripts/shutdown-virtual all
 
 # Rebuild a VM
-./scripts/start-virtual.sh <vm> --rebuild
+./scripts/start-virtual <vm> --rebuild
 ```
 
 ### SSH Connections
