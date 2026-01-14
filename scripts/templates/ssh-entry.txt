@@ -3,5 +3,5 @@ Host {{HOST}}
     HostName localhost
     Port {{SSH_PORT}}
     User devuser
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile {{IDENTITY_FILE}}
     IdentitiesOnly yes
