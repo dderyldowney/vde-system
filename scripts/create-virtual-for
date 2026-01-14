@@ -130,22 +130,19 @@ render_template "$template_file" \
 
 # Handle multiple service ports in docker-compose.yml
 if [[ "$VM_TYPE" == "service" ]] && [[ -n "$VM_SVC_PORT" ]]; then
-    # Generate port mappings for each service port (each on a new line)
-    local port_mappings=""
-    IFS=',' read -A PORTS <<< "$VM_SVC_PORT"
-    for port in "${PORTS[@]}"; do
-        port=$(echo "$port" | tr -d ' ')
-        port_mappings="${port_mappings}  - \"$port:$port\"\n"
-    done
-
-    # Add leading newline for proper YAML formatting
-    port_mappings="\n${port_mappings}"
-
-    # Replace the ##SERVICE_PORTS## placeholder with actual port mappings
-    if [[ -n "$port_mappings" ]]; then
-        sed -i.bak "s|##SERVICE_PORTS##|$port_mappings|" "$compose_file"
-        rm -f "${compose_file}.bak"
-    fi
+    # Use shell loop for multiline replacement (sed doesn't handle \n in replacements)
+    while IFS= read -r line; do
+        if [[ "$line" == "  ##SERVICE_PORTS##" ]]; then
+            IFS=',' read -A PORTS <<< "$VM_SVC_PORT"
+            for port in "${PORTS[@]}"; do
+                port=$(echo "$port" | tr -d ' ')
+                echo "  - \"$port:$port\""
+            done
+        else
+            echo "$line"
+        fi
+    done < "$compose_file" > "${compose_file}.tmp"
+    mv "${compose_file}.tmp" "$compose_file"
 else
     # Remove the placeholder for language VMs or services without ports
     sed -i.bak "/##SERVICE_PORTS##/d" "$compose_file"
