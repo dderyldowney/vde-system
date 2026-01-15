@@ -119,7 +119,7 @@ readonly SVC_PORT_END
 # Returns: VDE_SUCCESS (0)
 # Example: log_info "Starting VM python..."
 log_info() {
-    echo "[INFO] $*"
+    echo "[INFO] $*" >&2
     return $VDE_SUCCESS
 }
 
@@ -137,7 +137,7 @@ log_error() {
 # Returns: VDE_SUCCESS (0)
 # Example: log_success "VM started successfully"
 log_success() {
-    echo "[SUCCESS] $*"
+    echo "[SUCCESS] $*" >&2
     return $VDE_SUCCESS
 }
 
@@ -146,7 +146,7 @@ log_success() {
 # Returns: VDE_SUCCESS (0)
 # Example: log_warning "SSH key not found, using default"
 log_warning() {
-    echo "[WARNING] $*"
+    echo "[WARNING] $*" >&2
     return $VDE_SUCCESS
 }
 
@@ -2126,16 +2126,16 @@ ensure_vm_directories() {
     local vm=$1
     local vm_type=$2
 
-    local dirs=""
+    local -a dirs  # Use array for zsh compatibility
 
     if [ "$vm_type" = "lang" ]; then
-        dirs="$CONFIGS_DIR/$vm $VDE_ROOT_DIR/projects/$vm $VDE_ROOT_DIR/logs/$vm"
+        dirs=("$CONFIGS_DIR/$vm" "$VDE_ROOT_DIR/projects/$vm" "$VDE_ROOT_DIR/logs/$vm")
     else
-        dirs="$CONFIGS_DIR/$vm $VDE_ROOT_DIR/data/$vm $VDE_ROOT_DIR/logs/$vm"
+        dirs=("$CONFIGS_DIR/$vm" "$VDE_ROOT_DIR/data/$vm" "$VDE_ROOT_DIR/logs/$vm")
     fi
 
     local dir
-    for dir in $dirs; do
+    for dir in "${dirs[@]}"; do
         if [ ! -d "$dir" ]; then
             mkdir -p "$dir"
             log_info "Created directory: $dir"
