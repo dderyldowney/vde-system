@@ -622,34 +622,64 @@ ssh nginx          # Nginx web server
 | js-dev | 2202 |
 | csharp-dev | 2203 |
 | ruby-dev | 2204 |
+| go-dev | 2205 |
+| java-dev | 2206 |
+| cpp-dev | 2207 |
 | postgres | 2400 |
 | redis | 2401 |
 | mongodb | 2402 |
 | nginx | 2403 |
+| mysql | 2404 |
+| rabbitmq | 2405 |
+| couchdb | 2406 |
+
+**Note:** Ports are auto-allocated from ranges 2200-2299 (languages) and 2400-2499 (services). The ports shown above are defaults for new VMs.
 
 ---
 
 ## Available VM Types
 
+VDE supports **19 language VMs** and **7 service VMs**. Run `./scripts/list-vms` to see all available types.
+
+**Understanding VM Status:**
+- `[CREATED]` = The VM has been created and is ready to use
+- No `[CREATED]` tag = The VM type is available but hasn't been created yet (you can create it with `./scripts/create-virtual-for <name>`)
+
 ### Language VMs (for writing code)
 
 | Language | Command | Aliases | Best For |
 |----------|---------|---------|---------|
-| Python | `create-virtual-for python` | py | Web backends, AI/ML, scripts |
-| Rust | `create-virtual-for rust` | rust-dev | Systems, performance |
-| JavaScript | `create-virtual-for js` | js, node | Web frontends, Node.js |
-| C# | `create-virtual-for csharp` | csharp | .NET development |
-| Ruby | `create-virtual-for ruby` | rb | Rails, scripts |
-| Go | `create-virtual-for go` | golang | Services, microservices |
+| **Python** | `create-virtual-for python` | py, python3 | Web backends, AI/ML, scripts |
+| **Rust** | `create-virtual-for rust` | rust | Systems, performance |
+| **JavaScript** | `create-virtual-for js` | node, nodejs | Web frontends, Node.js |
+| **Go** | `create-virtual-for go` | golang | Services, microservices |
+| **C#** | `create-virtual-for csharp` | dotnet | .NET development |
+| **Ruby** | `create-virtual-for ruby` | rb | Rails, scripts |
+| **Java** | `create-virtual-for java` | jdk | Enterprise applications |
+| **C++** | `create-virtual-for cpp` | c++, gcc | Systems, games |
+| **C** | `create-virtual-for c` | c | Systems programming |
+| **Flutter** | `create-virtual-for flutter` | dart | Mobile development |
+| **PHP** | `create-virtual-for php` | php | Web development |
+| **R** | `create-virtual-for r` | rlang | Data science, statistics |
+| **Scala** | `create-virtual-for scala` | scala | Big data, JVM |
+| **Kotlin** | `create-virtual-for kotlin` | kotlin | Android, JVM |
+| **Swift** | `create-virtual-for swift` | swift | iOS development |
+| **Elixir** | `create-virtual-for elixir` | elixir | Distributed systems |
+| **Haskell** | `create-virtual-for haskell` | ghc | Functional programming |
+| **Lua** | `create-virtual-for lua` | lua | Embedded scripting |
+| **Assembly** | `create-virtual-for asm` | assembler, nasm | Low-level programming |
 
 ### Service VMs (for data & infrastructure)
 
 | Service | Command | Port | Best For |
 |---------|---------|------|----------|
-| PostgreSQL | `create-virtual-for postgres` | 5432 | Relational databases |
-| Redis | `create-virtual-for redis` | 6379 | Caching, queues |
-| MongoDB | `create-virtual-for mongodb` | 27017 | NoSQL databases |
-| Nginx | `create-virtual-for nginx` | 80/443 | Web server, reverse proxy |
+| **PostgreSQL** | `create-virtual-for postgres` | 5432 | Relational databases |
+| **Redis** | `create-virtual-for redis` | 6379 | Caching, queues |
+| **MongoDB** | `create-virtual-for mongodb` | 27017 | NoSQL databases |
+| **MySQL** | `create-virtual-for mysql` | 3306 | Relational databases |
+| **Nginx** | `create-virtual-for nginx` | 80/443 | Web server, reverse proxy |
+| **RabbitMQ** | `create-virtual-for rabbitmq` | 5672/15672 | Message queues |
+| **CouchDB** | `create-virtual-for couchdb` | 5984 | NoSQL databases |
 
 ---
 
@@ -666,7 +696,7 @@ ssh nginx          # Nginx web server
 **Next steps:**
 1. Create your first project in `projects/python/`
 2. Start coding!
-3. Add more languages as you need them
+3. Explore other language and service VMs as needed
 
 ---
 

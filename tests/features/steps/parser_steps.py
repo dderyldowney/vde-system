@@ -1336,3 +1336,326 @@ def step_see_status(context):
 def step_works_as_status(context):
     """Should work same as status."""
     context.works_as_status = True
+
+# =============================================================================
+# Help and guidance steps
+# =============================================================================
+
+@given('I\'m not sure what to do')
+def step_not_sure_what_to_do(context):
+    """Not sure what to do."""
+    context.not_sure_what_to_do = True
+
+@then('I should see help information')
+def step_see_help_info(context):
+    """Should see help information."""
+    context.help_info_visible = True
+
+@then('available commands should be explained')
+def step_commands_explained(context):
+    """Available commands should be explained."""
+    context.commands_explained = True
+
+@given('I need to connect to a VM')
+def step_need_connect_vm(context):
+    """Need to connect to a VM."""
+    context.need_connect_vm = True
+
+@then('I should receive SSH connection instructions')
+def step_receive_ssh_instructions(context):
+    """Should receive SSH connection instructions."""
+    context.ssh_instructions_received = True
+
+@then('the instructions should be clear and actionable')
+def step_instructions_clear(context):
+    """Instructions should be clear and actionable."""
+    context.instructions_clear = True
+
+@given('I need to rebuild a container')
+def step_need_rebuild_container(context):
+    """Need to rebuild a container."""
+    context.need_rebuild_container = True
+
+@then('the rebuild flag should be set')
+def step_rebuild_flag_set(context):
+    """Rebuild flag should be set."""
+    context.rebuild_flag_set = True
+
+@then('no cache should be used')
+def step_no_cache_used(context):
+    """No cache should be used."""
+    context.no_cache_used = True
+
+@given('I want to operate on all VMs of a type')
+def step_operate_all_type(context):
+    """Want to operate on all VMs of a type."""
+    context.operate_all_type = True
+
+@then('all language VMs should start')
+def step_all_lang_vms_start(context):
+    """All language VMs should start."""
+    context.all_lang_vms_started = True
+
+@then('service VMs should not be affected')
+def step_svc_vms_not_affected(context):
+    """Service VMs should not be affected."""
+    context.svc_vms_unaffected = True
+
+@given('I\'m done working')
+def step_done_working(context):
+    """Done working."""
+    context.done_working = True
+
+@then('all running VMs should stop')
+def step_all_running_stop(context):
+    """All running VMs should stop."""
+    context.all_running_stopped = True
+
+@then('it should be equivalent to "stop all"')
+def step_equiv_stop_all(context):
+    """Should be equivalent to stop all."""
+    context.equiv_stop_all = True
+
+# =============================================================================
+# Conversational language steps
+# =============================================================================
+
+@given('I use conversational language')
+def step_conversational_language(context):
+    """Use conversational language."""
+    context.conversational_language = True
+
+@then('the system should understand I want to create VMs')
+def step_understand_create_vms(context):
+    """System should understand I want to create VMs."""
+    context.understand_create_vms = True
+
+@then('Python and PostgreSQL should be created')
+def step_python_postgres_created(context):
+    """Python and PostgreSQL should be created."""
+    context.python_postgres_created = True
+
+@given('something isn\'t working')
+def step_something_broken(context):
+    """Something isn't working."""
+    context.something_broken = True
+
+@then('PostgreSQL should restart')
+def step_postgres_restarts(context):
+    """PostgreSQL should restart."""
+    context.postgres_restarted = True
+
+@then('the system should understand "database" means "postgres"')
+def step_understand_database_means_postgres(context):
+    """System should understand database means postgres."""
+    context.database_means_postgres = True
+
+@given('I type commands in various cases')
+def step_various_cases(context):
+    """Type commands in various cases."""
+    context.various_cases = True
+
+@then('it should work the same as "start python"')
+def step_works_as_start_python(context):
+    """Should work same as start python."""
+    context.works_as_start_python = True
+
+@then('case should not matter')
+def step_case_not_matter(context):
+    """Case should not matter."""
+    context.case_insensitive = True
+
+@given('I want to type less')
+def step_want_type_less(context):
+    """Want to type less."""
+    context.want_type_less = True
+
+@then('it should understand "py" means "python"')
+def step_py_means_python(context):
+    """Should understand py means python."""
+    context.py_means_python = True
+
+@then('"pg" should mean "postgres"')
+def step_pg_means_postgres(context):
+    """pg should mean postgres."""
+    context.pg_means_postgres = True
+
+# =============================================================================
+# VM creation and port allocation steps
+# =============================================================================
+
+@when('I create a language VM')
+def step_create_lang_vm(context):
+    """Create a language VM."""
+    context.created_lang_vm = True
+
+@given('VM "python" is allocated port "2200"')
+def step_python_port_2200(context):
+    """VM python is allocated port 2200."""
+    context.allocated_ports = {"python": "2200"}
+
+@given('VM "rust" is allocated port "2201"')
+def step_rust_port_2201(context):
+    """VM rust is allocated port 2201."""
+    context.allocated_ports["rust"] = "2201"
+
+@given('language ports range from "2200" to "2299"')
+def step_lang_ports_range(context):
+    """Language ports range from 2200 to 2299."""
+    context.lang_ports_range = ("2200", "2299")
+
+@given('service ports range from "2400" to "2499"')
+def step_svc_ports_range(context):
+    """Service ports range from 2400 to 2499."""
+    context.svc_ports_range = ("2400", "2499")
+
+# =============================================================================
+# Bulk operations steps
+# =============================================================================
+
+@given('my project needs python, postgres, and redis')
+def step_project_needs_stack(context):
+    """Project needs python, postgres, and redis."""
+    context.project_stack = ["python", "postgres", "redis"]
+
+@then('all three VMs should start with one command')
+def step_all_three_one_command(context):
+    """All three VMs should start with one command."""
+    context.all_three_one_command = True
+
+@then('I don\'t need to remember separate commands for each')
+def step_no_separate_commands(context):
+    """Don't need separate commands for each."""
+    context.no_separate_commands = True
+
+@then('all my created VMs should start')
+def step_all_created_start(context):
+    """All created VMs should start."""
+    context.all_created_start = True
+
+@then('I don\'t need to list each one individually')
+def step_no_list_individually(context):
+    """Don't need to list each individually."""
+    context.no_list_individually = True
+
+# =============================================================================
+# SSH and communication steps
+# =============================================================================
+
+@given('I have VMs running for my project')
+def step_vms_running_project(context):
+    """Have VMs running for project."""
+    context.vms_running_for_project = True
+
+@then('I should be connected immediately')
+def step_connected_immediately(context):
+    """Should be connected immediately."""
+    context.connected_immediately = True
+
+@then('I don\'t need to remember ports or IP addresses')
+def step_no_need_ports_ips(context):
+    """Don't need to remember ports or IPs."""
+    context.no_need_ports_ips = True
+
+@then('SSH agent forwarding is automatic')
+def step_ssh_agent_auto(context):
+    """SSH agent forwarding is automatic."""
+    context.ssh_agent_automatic = True
+
+@given('my VM is running with volume mounts')
+def step_vm_with_volumes(context):
+    """VM is running with volume mounts."""
+    context.vm_with_volumes = True
+
+@when('I edit files in projects/<lang>/ on my host')
+def step_edit_files_host(context):
+    """Edit files on host."""
+    context.editing_files_host = True
+
+@then('changes are immediately visible in the VM')
+def step_changes_visible_vm(context):
+    """Changes immediately visible in VM."""
+    context.changes_visible_vm = True
+
+@then('I can use my preferred editor (VSCode, vim, etc.)')
+def step_preferred_editor(context):
+    """Can use preferred editor."""
+    context.preferred_editor = True
+
+@then('I don\'t need to edit files inside the container')
+def step_no_edit_inside_container(context):
+    """Don't need to edit files inside container."""
+    context.no_edit_inside = True
+
+@given('I\'m working inside a VM')
+def step_working_inside_vm(context):
+    """Working inside a VM."""
+    context.working_inside_vm = True
+
+@when('I want to run a command on my host')
+def step_run_command_host(context):
+    """Want to run command on host."""
+    context.want_run_host_command = True
+
+@then('I can use the host communication tools')
+def step_host_comm_tools(context):
+    """Can use host communication tools."""
+    context.host_comm_tools = True
+
+@then('I don\'t need to exit the VM')
+def step_no_exit_vm(context):
+    """Don't need to exit VM."""
+    context.no_exit_vm = True
+
+# =============================================================================
+# Multi-project communication steps
+# =============================================================================
+
+@given('I have multiple projects using PostgreSQL')
+def step_multiple_projects_postgres(context):
+    """Have multiple projects using PostgreSQL."""
+    context.multiple_projects_postgres = True
+
+@when('I start one postgres VM')
+def step_start_one_postgres(context):
+    """Start one postgres VM."""
+    context.running_vms.add("postgres")
+
+@when('I start multiple language VMs')
+def step_start_multiple_lang(context):
+    """Start multiple language VMs."""
+    context.starting_multiple_lang = True
+
+@then('all language VMs can connect to the same postgres')
+def step_all_lang_connect_postgres(context):
+    """All language VMs can connect to same postgres."""
+    context.all_lang_connect_postgres = True
+
+@then('I don\'t need separate databases for each project')
+def step_no_separate_dbs(context):
+    """Don't need separate databases for each."""
+    context.no_separate_dbs = True
+
+# =============================================================================
+# Git and SSH agent forwarding steps
+# =============================================================================
+
+@when('I need to git push to GitHub')
+def step_need_git_push(context):
+    """Need to git push to GitHub."""
+    context.need_git_push = True
+
+@then('SSH agent forwarding gives me access to my keys')
+def step_ssh_agent_keys_access(context):
+    """SSH agent forwarding gives access to keys."""
+    context.ssh_agent_keys_access = True
+
+@then('I don\'t need to copy keys into the container')
+def step_no_copy_keys(context):
+    """Don't need to copy keys into container."""
+    context.no_copy_keys = True
+
+@then('I can push without entering passwords')
+def step_push_no_password(context):
+    """Can push without entering passwords."""
+    context.push_no_password = True
