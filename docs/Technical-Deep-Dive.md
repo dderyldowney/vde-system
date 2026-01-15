@@ -1,6 +1,6 @@
 # VDE System: Complete Technical Deep-Dive
 
-[← Back to README](README.md)
+[← Back to README](../README.md)
 
 ---
 
@@ -17,9 +17,12 @@ The VDE (Virtual Development Environment) system is a **template-based, data-dri
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │   │
 │  │  │   scripts/   │  │   configs/   │  │   projects/  │          │   │
 │  │  │              │  │   docker/    │  │              │          │   │
-│  │  │ • lib/       │  │              │  │ • python/    │◄─────┐   │   │
-│  │  │ • templates/ │  │ • base-dev   │  │ • go/        │       │   │   │
-│  │  │ • data/      │  │ • python/    │  │ • rust/      │       │   │   │
+│  │  │ • lib/       │  │              │  │ • c/         │◄─────┐   │   │
+│  │  │   • vde-*    │  │ • base-dev   │  │ • cpp/       │       │   │   │
+│  │  │   • vm-common│  │ • c/         │  │ • python/    │       │   │   │
+│  │  │ • templates/ │  │ • cpp/       │  │ • rust/      │       │   │   │
+│  │  │ • data/      │  │ • python/    │  │ • go/        │       │   │   │
+│  │  │ • vde        │  │ • rust/      │  │ • postgres/  │       │   │   │
 │  │  │ • *.vm       │  │ • go/        │  └──────────────┘       │   │   │
 │  │  └──────────────┘  └──────────────┘                        │   │   │
 │  │                                                             │   │   │
@@ -38,13 +41,13 @@ The VDE (Virtual Development Environment) system is a **template-based, data-dri
                 ▼               ▼               ▼
         ┌──────────────┐ ┌──────────┐ ┌──────────────┐
         │  python-dev  │ │  go-dev  │ │  postgres    │
-        │  :2222       │ │  :2205   │ │  :2400       │
+        │  :2200       │ │  :2207   │ │  :2400       │
         └──────────────┘ └──────────┘ └──────────────┘
                 │               │               │
                 └───────────────┴───────────────┘
                                 │
                         ┌───────▼───────┐
-                        │   dev-net     │
+                        │  vde-network  │
                         │ (Docker Net)  │
                         └───────────────┘
 ```
@@ -148,7 +151,223 @@ ensure_ssh_environment  # Automatic SSH setup
 
 ---
 
-## Part 1: Core Data Structure (vm-types.conf)
+## Part 1: Modular Library Architecture
+
+VDE uses a **modular library architecture** that separates concerns and enables selective loading. All libraries are located in `scripts/lib/` and can be sourced independently.
+
+### Library Dependency Graph
+
+```
+                    ┌─────────────────────┐
+                    │   vde-shell-compat  │
+                    │  (Shell portability) │
+                    └──────────┬───────────┘
+                               │
+                ┌──────────────┴──────────────┐
+                ▼                             ▼
+         ┌─────────────┐              ┌─────────────┐
+         │vde-constants│              │  vde-errors │
+         │(Return codes│              │(Error msgs) │
+         │port ranges) │              └──────┬──────┘
+         └──────┬──────┘                     │
+                │                             │
+                ▼                             ▼
+         ┌─────────────┐              ┌─────────────┐
+         │  vde-log    │◄─────────────│  vde-core   │
+         │ (Logging)   │              │(VM type load│
+         └──────┬──────┘              │    queries) │
+                │                      └──────┬──────┘
+                ▼                             │
+         ┌─────────────┐                      │
+         │ vde-ai-api  │                      │
+         │(AI client)  │                      │
+         └─────────────┘                      │
+                                            │
+                ┌─────────────────────────────┘
+                ▼
+         ┌─────────────┐              ┌─────────────┐
+         │  vde-parser │              │vde-commands │
+         │(NLP parsing)│──────────────▶│(API wrapper)│
+         └─────────────┘              └──────┬──────┘
+                                             │
+                ┌─────────────────────────────┘
+                ▼
+         ┌─────────────┐
+         │  vm-common  │
+         │(Full VDE API│
+         │SSH/Docker/  │
+         │Templates)   │
+         └─────────────┘
+```
+
+### Library Descriptions
+
+| Library | Lines | Purpose |
+|---------|-------|---------|
+| `vde-shell-compat` | 719 | Shell detection, portable associative arrays, date/time operations |
+| `vde-constants` | 204 | Standardized return codes, port ranges, timeouts, error messages |
+| `vde-errors` | 306 | Contextual error messages with remediation steps, color support |
+| `vde-log` | 469 | Structured logging (text/JSON/syslog), rotation, query functions |
+| `vde-core` | 297 | Essential VM operations, type loading with caching, lazy module loading |
+| `vde-ai-api` | 281 | Anthropic API client, natural language command parsing |
+| `vde-parser` | 890 | Natural language parser, intent detection, entity extraction |
+| `vde-commands` | 545 | High-level command wrappers for AI assistant, batch operations |
+| `vm-common` | 2158 | Full VDE API including SSH, Docker, templates (legacy) |
+
+### Core Library: vde-shell-compat
+
+**Purpose:** Provides portable abstractions for shell-specific features across zsh 5.0+, bash 4.0+, and bash 3.x.
+
+**Key Functions:**
+- `_detect_shell()` - Detect current shell (zsh/bash/unknown)
+- `_is_zsh()`, `_is_bash()` - Shell detection predicates
+- `_get_script_path()`, `_get_script_dir()` - Portable script path detection
+- `_assoc_init()`, `_assoc_set()`, `_assoc_get()` - Portable associative array operations
+- `_assoc_keys()`, `_assoc_has_key()` - Array query operations
+- `_date_iso8601()`, `_date_epoch()` - Portable date/time functions
+
+**Critical Fix:** Uses hex encoding (`od -An -tx1`) for associative array keys in bash 3.x fallback to prevent key collisions (e.g., "a/b" and "a_b" both becoming "a_b" with simple character replacement).
+
+### Core Library: vde-constants
+
+**Purpose:** Centralized constants for return codes, port ranges, timeouts, and configuration.
+
+**Return Codes:**
+```bash
+VDE_SUCCESS=0          # Operation completed successfully
+VDE_ERR_GENERAL=1      # Unspecified failure
+VDE_ERR_INVALID_INPUT=2 # Bad arguments or validation failure
+VDE_ERR_NOT_FOUND=3    # Resource doesn't exist
+VDE_ERR_PERMISSION=4   # Insufficient permissions
+VDE_ERR_TIMEOUT=5      # Operation exceeded time limit
+VDE_ERR_EXISTS=6       # Resource already exists
+VDE_ERR_DEPENDENCY=7   # Required dependency missing
+VDE_ERR_DOCKER=8       # Docker operation failure
+VDE_ERR_LOCK=9         # Failed to acquire lock
+```
+
+**Port Ranges:**
+```bash
+VDE_LANG_PORT_START=2200  # Language VMs: 2200-2299
+VDE_LANG_PORT_END=2299
+VDE_SVC_PORT_START=2400   # Service VMs: 2400-2499
+VDE_SVC_PORT_END=2499
+VDE_CONTAINER_SSH_PORT=22 # SSH port inside containers
+```
+
+### Core Library: vde-errors
+
+**Purpose:** Provides contextual error messages with remediation steps and documentation links.
+
+**Key Functions:**
+- `vde_error_show()` - Full error with what/why/how structure
+- `vde_error_simple()` - Simple error message
+- `vde_error_docker_not_running()` - Docker daemon not running
+- `vde_error_port_in_use()` - Port conflict guidance
+- `vde_error_ssh_key_missing()` - SSH key generation instructions
+- `vde_error_vm_not_found()` - VM not found with next steps
+
+**Example Output:**
+```
+Error: Cannot connect to Docker daemon
+Reason: Docker daemon is not running or you don't have permission to access it
+Solution:
+    1. Start Docker: sudo systemctl start docker (Linux) or start Docker Desktop (macOS/Windows)
+    2. Add your user to the docker group: sudo usermod -aG docker $USER
+    3. Log out and back in for group changes to take effect
+Docs: https://github.com/dderyldowney/dev/blob/main/docs/troubleshooting.md#docker-daemon-not-running
+```
+
+### Core Library: vde-log
+
+**Purpose:** Structured logging with multiple output formats and rotation capabilities.
+
+**Features:**
+- Multiple formats: text, JSON, syslog
+- Multiple outputs: stdout, stderr, file
+- Automatic log rotation by size or time
+- Log cleanup by retention policy
+- Query functions: `vde_log_recent()`, `vde_log_grep()`, `vde_log_errors()`
+
+**Usage:**
+```bash
+vde_log_init                    # Initialize logging system
+vde_log_set_level DEBUG         # Set minimum log level
+vde_log_to_file /path/to/log    # Output to file
+vde_log_info "Starting VM" "python"
+vde_log_error "Failed to start" "postgres"
+```
+
+### Core Library: vde-core
+
+**Purpose:** Minimal core library for essential VDE operations without SSH/Docker dependencies.
+
+**Key Functions:**
+- `vde_core_load_types()` - Load VM type data (with caching)
+- `vde_core_get_all_vms()` - List all known VM names
+- `vde_core_get_vm_type()` - Get VM type (lang/service)
+- `vde_core_is_known_vm()` - Check if VM is known
+- `vde_time_start()`, `vde_time_end()` - Performance timing (debug)
+
+**Caching:** Uses `.cache/vm-types.cache` with mtime validation for fast VM type lookups.
+
+### AI & NLP Libraries: vde-ai-api, vde-parser
+
+**Purpose:** Enable natural language interaction with VDE through AI-powered command parsing.
+
+**vde-ai-api Functions:**
+- `call_ai_api()` - Make API call to Anthropic or compatible endpoint
+- `extract_ai_content()` - Extract text content from API response
+- `parse_command_with_ai()` - Parse natural language using AI
+- `ai_api_available()` - Check if API key is configured
+- `show_ai_config()` - Display API configuration
+
+**vde-parser Functions:**
+- `detect_intent()` - Detect user intent (list_vms, create_vm, start_vm, stop_vm, restart_vm, status, connect, help)
+- `extract_vm_names()` - Extract VM names from input using O(1) alias map
+- `extract_flags()` - Extract rebuild/nocache flags
+- `generate_plan()` - Generate structured execution plan
+- `execute_plan()` - Execute parsed plan with validation
+
+**Supported Intents:**
+- `list_vms` - List available VMs (filter: lang/svc/all)
+- `create_vm` - Create new VM configuration
+- `start_vm` - Start one or more VMs
+- `stop_vm` - Stop one or more VMs
+- `restart_vm` - Restart VMs (supports rebuild, nocache)
+- `status` - Check running status
+- `connect` - Show connection information
+- `help` - Display help
+
+### Command Library: vde-commands
+
+**Purpose:** High-level command wrappers designed for AI assistant invocation.
+
+**Query Functions:**
+- `vde_list_vms()` - List VMs with optional filtering
+- `vde_vm_exists()` - Check if VM exists
+- `vde_get_vm_info()` - Get VM information
+- `vde_get_running_vms()` - Get list of running VMs
+- `vde_get_vm_status()` - Get status of specific VM
+- `vde_get_ssh_info()` - Get SSH connection info
+- `vde_resolve_alias()` - Resolve alias to canonical name
+
+**Action Functions:**
+- `vde_create_vm()` - Create a new VM
+- `vde_start_vm()` - Start a VM
+- `vde_stop_vm()` - Stop a VM
+- `vde_restart_vm()` - Restart a VM
+- `vde_start_all()` - Start all VMs
+- `vde_stop_all()` - Stop all VMs
+
+**Batch Operations:**
+- `vde_create_multiple_vms()` - Create multiple VMs
+- `vde_start_multiple_vms()` - Start multiple VMs
+- `vde_stop_multiple_vms()` - Stop multiple VMs
+
+---
+
+## Part 2: Core Data Structure (vm-types.conf)
 
 Everything starts with the **vm-types.conf** file. This is the single source of truth for all VM types.
 
@@ -176,6 +395,40 @@ service|postgres|postgresql|PostgreSQL|apt-get update -y && apt-get install -y p
 | `install_command` | Shell command | Runs during container startup |
 | `service_port` | `5432` or empty | Service port(s) for containers, empty for languages |
 
+**All 18 Language VMs:**
+| Name | Aliases | Display Name | SSH Port Range |
+|------|---------|--------------|---------------|
+| c | c | C | 2200-2217 |
+| cpp | c++,gcc | C++ | 2200-2217 |
+| asm | assembler,nasm | Assembler | 2200-2217 |
+| python | python3 | Python | 2200-2217 |
+| rust | rust | Rust | 2200-2217 |
+| js | node,nodejs | JavaScript | 2200-2217 |
+| csharp | dotnet | C# | 2200-2217 |
+| ruby | ruby | Ruby | 2200-2217 |
+| go | golang | Go | 2200-2217 |
+| java | jdk | Java | 2200-2217 |
+| kotlin | kotlin | Kotlin | 2200-2217 |
+| swift | swift | Swift | 2200-2217 |
+| php | php | PHP | 2200-2217 |
+| scala | scala | Scala | 2200-2217 |
+| r | rlang,r | R | 2200-2217 |
+| lua | lua | Lua | 2200-2217 |
+| flutter | dart,flutter | Flutter | 2200-2217 |
+| elixir | elixir | Elixir | 2200-2217 |
+| haskell | ghc,haskell | Haskell | 2200-2217 |
+
+**All 7 Service VMs:**
+| Name | Aliases | Display Name | SSH Port | Service Port(s) |
+|------|---------|--------------|----------|----------------|
+| postgres | postgresql | PostgreSQL | 2400-2406 | 5432 |
+| redis | redis | Redis | 2400-2406 | 6379 |
+| mongodb | mongo | MongoDB | 2400-2406 | 27017 |
+| nginx | nginx | Nginx | 2400-2406 | 80,443 |
+| couchdb | couchdb | CouchDB | 2400-2406 | 5984 |
+| mysql | mysql | MySQL | 2400-2406 | 3306 |
+| rabbitmq | rabbitmq | RabbitMQ | 2400-2406 | 5672,15672 |
+
 **Why this format:**
 - ✅ Simple to parse (shell built-in `read -A`)
 - ✅ Human-readable and editable
@@ -184,7 +437,7 @@ service|postgres|postgresql|PostgreSQL|apt-get update -y && apt-get install -y p
 
 ---
 
-## Part 2: The Shared Library (lib/vm-common)
+## Part 3: The Full VDE Library (lib/vm-common)
 
 When any script runs, the first thing it does is:
 
@@ -192,49 +445,53 @@ When any script runs, the first thing it does is:
 source "$SCRIPT_DIR/lib/vm-common"
 ```
 
-This loads **508 lines** of shared functionality. Let's break down what happens:
+This loads **2158 lines** of shared functionality. Let's break down what happens:
 
-### 2.1 Constants Initialization (Lines 9-29)
-
-```bash
-# Path calculation (zsh-compatible)
-readonly VDE_ROOT_DIR="$(cd "$(dirname "${(%):-%x}")/../.." && pwd)"
-readonly CONFIGS_DIR="$VDE_ROOT_DIR/configs/docker"
-readonly SCRIPTS_DIR="$VDE_ROOT_DIR/scripts"
-readonly TEMPLATES_DIR="$SCRIPTS_DIR/templates"
-readonly DATA_DIR="$SCRIPTS_DIR/data"
-readonly VM_TYPES_CONF="$DATA_DIR/vm-types.conf"
-
-# Port ranges
-readonly LANG_PORT_START=2200  # Language VMs: 2200-2299
-readonly LANG_PORT_END=2299
-readonly SVC_PORT_START=2400   # Service VMs: 2400-2499
-readonly SVC_PORT_END=2499
-```
-
-**Key technical detail:** The path calculation uses `${(%):-%x}` which is **zsh-specific**. In bash, you'd use `${BASH_SOURCE[0]}`. This is why the scripts require zsh 5.0+.
-
-### 2.2 Associative Array Declaration (Lines 50-54)
+### 3.1 Source Chain (Library Loading Order)
 
 ```bash
-typeset -gA VM_TYPE       # [go]=lang, [postgres]=service
-typeset -gA VM_ALIASES    # [go]=golang, [postgres]=postgresql
-typeset -gA VM_DISPLAY    # [go]=Go, [postgres]=PostgreSQL
-typeset -gA VM_INSTALL    # [go]=apt-get install golang-go
-typeset -gA VM_SVC_PORT   # [go]=, [postgres]=5432
+# 1. vde-shell-compat - Portable shell operations
+. "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat"
+
+# 2. vde-constants - Standardized return codes and constants
+. "$VDE_ROOT_DIR/scripts/lib/vde-constants"
+
+# 3. Directory constants
+CONFIGS_DIR="$VDE_ROOT_DIR/configs/docker"
+SCRIPTS_DIR="$VDE_ROOT_DIR/scripts"
+TEMPLATES_DIR="$SCRIPTS_DIR/templates"
+DATA_DIR="$SCRIPTS_DIR/data"
+VM_TYPES_CONF="$DATA_DIR/vm-types.conf"
 ```
 
-The `-gA` flags mean:
-- `-g`: Global (available to functions that source this library)
-- `-A`: Associative array (requires zsh 5.0+)
+### 3.2 Associative Array Declaration (using shell-compat)
 
-### 2.3 Config Loading (Lines 56-82)
+```bash
+# Uses portable _assoc_init from vde-shell-compat
+_assoc_init "VM_TYPE"       # [go]=lang, [postgres]=service
+_assoc_init "VM_ALIASES"    # [go]=golang, [postgres]=postgresql
+_assoc_init "VM_DISPLAY"    # [go]=Go, [postgres]=PostgreSQL
+_assoc_init "VM_INSTALL"    # [go]=apt-get install golang-go
+_assoc_init "VM_SVC_PORT"   # [go]=, [postgres]=5432
+```
+
+The portable associative arrays work across:
+- **zsh 5.0+**: Native associative arrays with `typeset -gA`
+- **bash 4.0+**: Native associative arrays with `declare -gA`
+- **bash 3.x**: File-based fallback with hex-encoded keys
+
+### 3.3 Config Loading (with Caching)
 
 ```bash
 load_vm_types() {
-    # Clear existing arrays
-    unset VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT
-    typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT
+    local conf_file="$VM_TYPES_CONF"
+    local cache_file="$VM_TYPES_CACHE"
+
+    # Check cache validity
+    if _is_cache_valid "$conf_file" "$cache_file"; then
+        _load_from_cache "$cache_file"
+        return 0
+    fi
 
     # Parse vm-types.conf line by line
     while IFS='|' read -r type name vm_aliases display install svc_port; do
@@ -242,19 +499,22 @@ load_vm_types() {
         [[ "$type" =~ ^#.*$ ]] && continue
         [[ -z "$type" ]] && continue
 
-        # Store in associative arrays
-        VM_TYPE[$name]="$type"
-        VM_ALIASES[$name]="$vm_aliases"
-        VM_DISPLAY[$name]="$display"
-        VM_INSTALL[$name]="$install"
-        VM_SVC_PORT[$name]="$svc_port"
+        # Store in portable associative arrays
+        _assoc_set "VM_TYPE" "$name" "$type"
+        _assoc_set "VM_ALIASES" "$name" "$vm_aliases"
+        _assoc_set "VM_DISPLAY" "$name" "$display"
+        _assoc_set "VM_INSTALL" "$name" "$install"
+        _assoc_set "VM_SVC_PORT" "$name" "$svc_port"
     done < "$conf_file"
+
+    # Write to cache
+    _write_cache "$cache_file"
 }
 ```
 
-**Auto-execution:** At line 507, `load_vm_types` is called automatically when the library is sourced. This means **all associative arrays are populated immediately** when any script starts.
+**Performance:** Caching reduces VM type loading from ~50ms to ~5ms after first load.
 
-### 2.4 Name Resolution (Lines 156-175)
+### 3.4 Name Resolution (with Alias Map)
 
 ```bash
 resolve_vm_name() {
@@ -267,27 +527,120 @@ resolve_vm_name() {
     fi
 
     # Alias lookup: "golang" -> "go"
-    for name in "${(@k)VM_TYPE}"; do
-        local vm_aliases="${VM_ALIASES[$name]}"
-        if [[ ",$vm_aliases," =~ ",$input," ]]; then
-            echo "$name"
-            return 0
-        fi
-    done
+    # Uses O(1) alias map lookup for better performance
+    local canonical
+    canonical=$(_lookup_vm_by_alias "$input" 2>/dev/null)
+    if [[ -n "$canonical" ]]; then
+        echo "$canonical"
+        return 0
+    fi
 
     return 1
 }
 ```
 
-**Why the comma trick:** `,$vm_aliases,` creates `,golang,` so searching for `,golang,` prevents false matches (e.g., "go" wouldn't match "golang").
+**Performance:** The O(1) alias map lookup in `vde-parser` is significantly faster than the O(n×m) nested loop approach for resolving aliases.
 
 ---
 
-## Part 3: Template System
+## Part 4: Unified CLI Command (vde)
+
+VDE provides a **unified command-line interface** through the `vde` script located at `scripts/vde`. This is the recommended way to interact with VDE.
+
+### Usage
+
+```bash
+vde <command> [options] [args]
+```
+
+### Available Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `create <vm>` | Create a new VM | `vde create python` |
+| `start <vm>` | Start a VM | `vde start python` |
+| `stop <vm>` | Stop a VM | `vde stop postgres` |
+| `restart <vm>` | Restart a VM | `vde restart rust` |
+| `list` | List all VMs | `vde list` |
+| `status` | Show VM status | `vde status` |
+| `health` | Run system health check | `vde health` |
+| `chat` | Start AI assistant chat | `vde chat` |
+| `help` | Show help message | `vde help` |
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `-h, --help` | Show help message |
+| `-v, --verbose` | Enable verbose output |
+| `--version` | Show version information |
+
+### Command Aliases
+
+The `vde` command supports several aliases for convenience:
+
+| Input | Resolved To |
+|-------|-------------|
+| `vde create` | `create-virtual-for` |
+| `vde start` | `start-virtual` |
+| `vde stop` | `shutdown-virtual` |
+| `vde list` | `list-vms` |
+| `vde status` | `list-vms` |
+
+### Source Chain
+
+When you run `vde`, it sources libraries in the following order:
+
+```bash
+# 1. vde-shell-compat - Shell portability
+source "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat"
+
+# 2. vde-constants - Return codes, constants
+source "$VDE_ROOT_DIR/scripts/lib/vde-constants"
+
+# 3. vde-errors - Error messages
+source "$VDE_ROOT_DIR/scripts/lib/vde-errors"
+
+# 4. vde-log - Logging system
+source "$VDE_ROOT_DIR/scripts/lib/vde-log"
+
+# 5. vde-core - Core VM operations
+source "$VDE_ROOT_DIR/scripts/lib/vde-core"
+
+# 6. vm-common - Full VDE API
+source "$VDE_ROOT_DIR/scripts/lib/vm-common"
+```
+
+### Examples
+
+```bash
+# List all VMs
+vde list
+
+# Create and start a Python VM
+vde create python
+vde start python
+
+# Start multiple VMs with rebuild
+vde start python rust --rebuild
+
+# Stop all VMs
+vde stop all
+
+# Check system health
+vde health
+
+# Start AI assistant chat
+vde chat
+```
+
+---
+
+## Part 5: Template System
 
 The VDE uses **template variable substitution** to generate docker-compose.yml files.
 
-### 3.1 Language Template (`templates/compose-language.yml`)
+### 5.1 Language Template (`templates/compose-language.yml`)
 
 ```yaml
 services:
@@ -321,7 +674,7 @@ services:
       - dev-net
 ```
 
-### 3.2 Service Template (`templates/compose-service.yml`)
+### 5.2 Service Template (`templates/compose-service.yml`)
 
 ```yaml
 services:
@@ -339,7 +692,7 @@ services:
       # ...
 ```
 
-### 3.3 Template Rendering (Lines 323-347)
+### 5.3 Template Rendering
 
 ```bash
 render_template() {
@@ -377,11 +730,11 @@ render_template "$template_file" \
 
 ---
 
-## Part 4: Port Allocation System
+## Part 6: Port Allocation System
 
 One of the most sophisticated parts of VDE is **automatic port allocation**.
 
-### 4.1 Getting Allocated Ports (Lines 202-225)
+### 6.1 Getting Allocated Ports
 
 ```bash
 get_allocated_ports() {
@@ -420,7 +773,7 @@ get_allocated_ports() {
 3. Extracts the SSH port (2205)
 4. Returns sorted list of all allocated ports
 
-### 4.2 Finding Next Available Port (Lines 227-258)
+### 6.2 Finding Next Available Port
 
 ```bash
 find_next_available_port() {
@@ -466,7 +819,7 @@ find_next_available_port lang
 
 ---
 
-## Part 5: Complete Lifecycle - Creating a Go VM
+## Part 7: Complete Lifecycle - Creating a Go VM
 
 Let's trace exactly what happens when you run:
 
@@ -474,7 +827,15 @@ Let's trace exactly what happens when you run:
 ./scripts/create-virtual-for go
 ```
 
-### Step 1: Script Entry (create-virtual-for:1-6)
+### Step 1: Using the Unified CLI
+
+```bash
+vde create go
+```
+
+This invokes the `vde` script which sources all libraries and then calls `create-virtual-for go`.
+
+### Step 2: Script Entry (create-virtual-for)
 
 ```bash
 #!/usr/bin/env zsh
@@ -493,7 +854,7 @@ VM_INSTALL[go]=apt-get update -y && apt-get install -y golang-go
 VM_SVC_PORT[go]=
 ```
 
-### Step 2: Validation (Lines 46-68)
+### Step 3: Validation
 
 ```bash
 VM_NAME="$1"  # "go"
@@ -511,7 +872,7 @@ validate_ssh_key_exists
 # Checks: does ~/.ssh/id_ed25519 exist? Yes.
 ```
 
-### Step 3: Query VM Configuration (Lines 73-76)
+### Step 4: Query VM Configuration
 
 ```bash
 VM_TYPE=$(get_vm_info type "$VM_NAME")         # "lang"
@@ -520,7 +881,7 @@ VM_INSTALL=$(get_vm_info install "$VM_NAME")   # "apt-get update -y && apt-get i
 VM_SVC_PORT=$(get_vm_info svc_port "$VM_NAME") # "" (empty for languages)
 ```
 
-### Step 4: Allocate SSH Port (Lines 89-94)
+### Step 5: Allocate SSH Port
 
 ```bash
 SSH_PORT=$(find_next_available_port "$VM_TYPE")
@@ -531,7 +892,7 @@ SSH_PORT=$(find_next_available_port "$VM_TYPE")
 log_info "Allocated SSH port: 2200"
 ```
 
-### Step 5: Create Directories (Lines 99-100)
+### Step 6: Create Directories
 
 ```bash
 ensure_vm_directories "$VM_NAME" "$VM_TYPE"
@@ -541,7 +902,7 @@ ensure_vm_directories "$VM_NAME" "$VM_TYPE"
 # - logs/go/
 ```
 
-### Step 6: Generate docker-compose.yml (Lines 105-125)
+### Step 7: Generate docker-compose.yml
 
 ```bash
 template_file="$TEMPLATES_DIR/compose-language.yml"
@@ -572,7 +933,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y golang-go && /usr/sbin/sshd -D"
 ```
 
-### Step 7: Create Environment File (Lines 130-151)
+### Step 8: Create Environment File
 
 ```bash
 env_file="$VDE_ROOT_DIR/env-files/$VM_NAME.env"
@@ -582,7 +943,7 @@ SSH_PORT=2200
 EOF
 ```
 
-### Step 8: Update SSH Config (Lines 156-171)
+### Step 9: Update SSH Config
 
 ```bash
 ssh_host="${VM_NAME}-dev"  # "go-dev" (language VMs get -dev suffix)
@@ -604,7 +965,7 @@ Host go-dev
     IdentitiesOnly yes
 ```
 
-### Step 9: Summary Output
+### Step 10: Summary Output
 
 ```
 [SUCCESS] VM configuration complete!
@@ -622,15 +983,21 @@ SSH Configuration:
 
 Next steps:
   1. Review and customize env-files/go.env if needed
-  2. Start the VM: ./scripts/start-virtual go
+  2. Start the VM: vde start go
   3. Connect: ssh go-dev
 ```
 
 ---
 
-## Part 6: Starting the VM
+## Part 8: Starting the VM
 
 Now you run:
+
+```bash
+vde start go
+```
+
+Or equivalently:
 
 ```bash
 ./scripts/start-virtual go
@@ -657,7 +1024,7 @@ for vm in "${VMS[@]}"; do
 done
 ```
 
-### start_vm Function (lib/vm-common:282-301)
+### start_vm Function (vm-common)
 
 ```bash
 start_vm() {
@@ -735,7 +1102,7 @@ Now the container is running with:
 
 ---
 
-## Part 7: SSH Connection
+## Part 9: SSH Connection
 
 You can now connect:
 
@@ -807,7 +1174,7 @@ Hello from VDE!
 
 ---
 
-## Part 8: Service VMs (Different Pattern)
+## Part 10: Service VMs (Different Pattern)
 
 Service VMs (like PostgreSQL) work differently:
 
@@ -817,7 +1184,7 @@ Service VMs (like PostgreSQL) work differently:
 |--------|-------------|------------|
 | Container name | `go-dev` | `postgres` (no suffix) |
 | SSH host | `go-dev` | `postgres` |
-| Port range | 2200-2299 | 2400-2499 |
+| SSH port range | 2200-2217 (18 languages) | 2400-2406 (7 services) |
 | Volume mount | `projects/go/` | `data/postgres/` |
 | Purpose | Development workspace | Persistent data |
 
@@ -850,20 +1217,20 @@ services:
 
 ---
 
-## Part 9: Inter-Container Communication
+## Part 11: Inter-Container Communication
 
-All containers are on the `dev-net` Docker network, enabling communication:
+All containers are on the `vde-network` Docker network, enabling communication:
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │ python-dev  │     │  postgres   │     │    redis    │
-│   :2222     │     │   :2400     │     │   :2401     │
+│   :2200     │     │   :2400     │     │   :2401     │
 └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
        │                  │                  │
        └──────────────────┴──────────────────┘
                           │
                   ┌───────▼───────┐
-                  │   dev-net     │
+                  │  vde-network  │
                   │ (bridge net)  │
                   └───────────────┘
 ```
@@ -884,12 +1251,15 @@ ssh go-dev
 
 ---
 
-## Part 10: Multi-Container Management
+## Part 12: Multi-Container Management
 
 The scripts support managing multiple VMs at once:
 
 ```bash
-# Start multiple VMs
+# Using the unified CLI
+vde start python go rust postgres redis
+
+# Or using direct scripts
 ./scripts/start-virtual python go rust postgres redis
 
 # This internally does:
@@ -901,6 +1271,8 @@ done
 **Special case: `all` keyword**
 
 ```bash
+vde start all
+# or
 ./scripts/start-virtual all
 ```
 
@@ -921,9 +1293,11 @@ done
 
 ---
 
-## Part 11: Stopping VMs
+## Part 13: Stopping VMs
 
 ```bash
+vde stop go
+# or
 ./scripts/shutdown-virtual go
 ```
 
@@ -945,13 +1319,19 @@ stop_vm() {
 
 ---
 
-## Part 12: Adding New VM Types
+## Part 14: Adding New VM Types
 
 The `add-vm-type` script appends new entries to `vm-types.conf`:
 
 ```bash
 ./scripts/add-vm-type zig \
     "apt-get update -y && apt-get install -y zig"
+```
+
+Or using the unified CLI:
+
+```bash
+vde add-vm-type zig "apt-get update -y && apt-get install -y zig"
 ```
 
 **Flow:**
@@ -967,6 +1347,8 @@ The `add-vm-type` script appends new entries to `vm-types.conf`:
 
 Now you can:
 ```bash
+vde create zig
+# or
 ./scripts/create-virtual-for zig
 ```
 
@@ -1072,30 +1454,48 @@ Connect:
 
 ## Key Design Principles
 
-1. **Data-iven**: All VM types defined in one config file
+1. **Data-Driven**: All VM types defined in one config file
 2. **Template-Based**: docker-compose.yml generated from templates
-3. **Auto-Port-Allocation**: No manual port management
-4. **SSH-First**: Everything accessible via SSH
-5. **Volume-Mounted**: Code persists on host, containers are ephemeral
-6. **Networked**: All containers on dev-net for inter-communication
-7. **Extensible**: Add new languages/services by editing one file
-8. **Idempotent**: Safe to run create-virtual-for multiple times (fails if exists)
-9. **Zsh-Native**: Leverages zsh associative arrays (requires 5.0+)
+3. **Modular Libraries**: Separated concerns (shell-compat, constants, errors, log, core, parser, commands)
+4. **Auto-Port-Allocation**: No manual port management
+5. **SSH-First**: Everything accessible via SSH
+6. **Unified CLI**: Single `vde` command for all operations
+7. **Shell-Portable**: Works on zsh 5.0+, bash 4.0+, bash 3.x (with fallbacks)
+8. **Volume-Mounted**: Code persists on host, containers are ephemeral
+9. **Networked**: All containers on vde-network for inter-communication
+10. **Extensible**: Add new languages/services by editing one file
+11. **Idempotent**: Safe to run create-virtual-for multiple times (fails if exists)
+12. **AI-Ready**: Natural language parsing and AI assistant integration
 
 ---
 
 ## File Reference
 
-### Core Files
+### Core Library Files
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `scripts/lib/vm-common` | 508 | Shared library with all core functions |
+| `scripts/lib/vde-shell-compat` | 719 | Shell detection, portable associative arrays, date/time operations |
+| `scripts/lib/vde-constants` | 204 | Standardized return codes, port ranges, timeouts, configuration |
+| `scripts/lib/vde-errors` | 306 | Contextual error messages with remediation steps |
+| `scripts/lib/vde-log` | 469 | Structured logging (text/JSON/syslog), rotation, query functions |
+| `scripts/lib/vde-core` | 297 | Essential VM operations, type loading with caching |
+| `scripts/lib/vde-ai-api` | 281 | Anthropic API client, natural language command parsing |
+| `scripts/lib/vde-parser` | 890 | Natural language parser, intent detection, entity extraction |
+| `scripts/lib/vde-commands` | 545 | High-level command wrappers for AI assistant |
+| `scripts/lib/vm-common` | 2158 | Full VDE API including SSH, Docker, templates |
+
+### Core Scripts
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `scripts/vde` | 237 | Unified CLI command for all VDE operations |
 | `scripts/data/vm-types.conf` | 34 | VM type definitions (18 languages + 7 services) |
-| `scripts/create-virtual-for` | 199 | Create new VM from predefined type |
-| `scripts/start-virtual` | 85 | Start one or more VMs |
-| `scripts/shutdown-virtual` | 65 | Stop one or more VMs |
-| `scripts/add-vm-type` | 252 | Add new VM type to vm-types.conf |
+| `scripts/create-virtual-for` | 199+ | Create new VM from predefined type |
+| `scripts/start-virtual` | 85+ | Start one or more VMs |
+| `scripts/shutdown-virtual` | 65+ | Stop one or more VMs |
+| `scripts/add-vm-type` | 252+ | Add new VM type to vm-types.conf |
+| `scripts/list-vms` | - | List all VMs and their status |
 
 ### Templates
 
@@ -1119,3 +1519,12 @@ Connect:
 ---
 
 This is the complete VDE system from configuration to container runtime. Every piece serves a specific purpose in the overall architecture of providing isolated, consistent development environments.
+
+The system has evolved from a simple template-based approach to a sophisticated modular architecture with:
+- **Shell portability** across zsh, bash 4.0+, and bash 3.x
+- **Modular libraries** that can be sourced independently
+- **Unified CLI** through the `vde` command
+- **AI-powered natural language** interaction
+- **Structured logging** with rotation and query capabilities
+- **Contextual error messages** with remediation steps
+- **18 language VMs** and **7 service VMs** supported out of the box
