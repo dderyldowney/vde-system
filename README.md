@@ -303,7 +303,7 @@ See [Directory Structure](docs/directory-structure.md) for complete details.
 
 For comprehensive technical documentation, see these in-depth guides:
 
-1. **[Technical Deep Dive](Technical-Deep-Dive.md)** - Complete technical deep-dive of the VDE system architecture and components. [← Back to README](README.md)
+1. **[Technical Deep Dive](docs/Technical-Deep-Dive.md)** - Complete technical deep-dive of the VDE system architecture and components. [← Back to README](../README.md)
 
 2. **[VDE AI Technical Deep Dive](docs/VDE-AI-Technical-Deep-Dive.md)** - Technical analysis of the VDE AI system, covering both the natural language parser and AI agent interfaces. [← Back to README](../README.md)
 
