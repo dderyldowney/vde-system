@@ -24,6 +24,13 @@
 - Most BDD scenarios now use real VDE scripts instead of mocks
 - Tests provide true integration testing value
 
+### ✅ API Documentation Complete
+- Generated comprehensive `docs/API.md` containing entire project API
+- Documented all 8 scripts (vde, create-virtual-for, start-virtual, shutdown-virtual, list-vms, vde-ai, vde-chat, add-vm-type)
+- Documented all 8 library modules (vde-constants, vde-shell-compat, vde-errors, vde-log, vde-core, vm-common, vde-commands, vde-parser)
+- Included complete VM types reference (19 languages, 7 services)
+- Added exit codes, port allocation, and environment variables reference
+
 ---
 
 ## Remaining Work
