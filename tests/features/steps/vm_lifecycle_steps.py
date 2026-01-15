@@ -2339,6 +2339,12 @@ def step_both_running(context):
     context.both_running = True
 
 
+@then('all my VMs should be running')
+def step_all_my_vms_running(context):
+    """All my VMs should be running."""
+    context.all_my_vms_running = True
+
+
 @then('{vm_name} should be running')
 def step_vm_should_run(context, vm_name):
     """VM should be running."""
@@ -2550,12 +2556,6 @@ def step_notified_already_stopped(context):
     context.notified_already_stopped = True
 
 
-@then('no error should occur')
-def step_no_error(context):
-    """No error should occur."""
-    context.no_error = True
-
-
 @when('I restart the postgres virtual machine')
 def step_restart_stopped_vm(context):
     """Restart postgres virtual machine."""
@@ -2574,12 +2574,6 @@ def step_unsure_if_running(context):
     context.unsure_if_running = True
 
 
-@when('I check VM status')
-def step_check_vm_status_given(context):
-    """Check VM status."""
-    context.vm_status_checked = True
-
-
 @then('I should see the current state')
 def step_see_current_state(context):
     """Should see current state."""
@@ -2590,12 +2584,6 @@ def step_see_current_state(context):
 def step_understand_actions(context):
     """Should understand what actions are available."""
     context.understands_actions = True
-
-
-@given('VM "rust" is running')
-def step_rust_running(context):
-    """VM rust is running."""
-    context.running_vms.add("rust")
 
 
 @given('the VM is misbehaving')
@@ -2711,12 +2699,6 @@ def step_host_using_2200(context):
     context.host_using_2200 = True
 
 
-@when('I create a Python VM')
-def step_create_python_vm_when(context):
-    """Create a Python VM."""
-    context.create_python_vm = True
-
-
 @then('port 2201 should be allocated')
 def step_port_2201_allocated(context):
     """Port 2201 should be allocated."""
@@ -2813,12 +2795,6 @@ def step_start_daily_vms(context):
     context.running_vms.add("redis")
 
 
-@then('all my VMs should be running')
-def step_all_my_vms_running(context):
-    """All my VMs should be running."""
-    context.all_my_vms_running = True
-
-
 @then('I should be ready to start working')
 def step_ready_working(context):
     """Should be ready to start working."""
@@ -2837,28 +2813,10 @@ def step_see_running_list(context):
     context.sees_running_list = True
 
 
-@then('each VM should show its status')
-def step_each_vm_status(context):
-    """Each VM should show its status."""
-    context.each_vm_status = True
-
-
 @when('I need connection info for "{vm_name}"')
 def step_need_connection_info(context, vm_name):
     """Need connection info for VM."""
     context.need_connection_for = vm_name
-
-
-@then('I should see the SSH port')
-def step_see_vm_ssh_port(context):
-    """Should see SSH port."""
-    context.sees_vm_ssh_port = True
-
-
-@then('I should see the SSH command')
-def step_see_ssh_command(context):
-    """Should see SSH command."""
-    context.sees_ssh_command = True
 
 
 @when('I\'m done working for the day')
@@ -2872,18 +2830,6 @@ def step_shutdown_all(context):
     """Shutdown all virtual machines."""
     context.running_vms.clear()
     context.shutdown_all = True
-
-
-@then('all VMs should stop gracefully')
-def step_all_stop_gracefully(context):
-    """All VMs should stop gracefully."""
-    context.all_stop_gracefully = True
-
-
-@then('my work should be saved')
-def step_work_saved(context):
-    """Work should be saved."""
-    context.work_saved = True
 
 
 @given('I want to start a new Python project')
@@ -2904,12 +2850,6 @@ def step_python_projects_exist(context):
     context.python_projects_exist = True
 
 
-@given('I\'m working on a Python project')
-def step_working_python_project(context):
-    """Working on Python project."""
-    context.working_python_project = True
-
-
 @given('I want to switch to a Rust project')
 def step_switch_rust_project(context):
     """Switch to Rust project."""
@@ -2926,12 +2866,6 @@ def step_able_start_rust(context):
 def step_both_simultaneous_vms(context):
     """Both VMs can run simultaneously."""
     context.both_simultaneous_vms = True
-
-
-@given('I have a Python VM running')
-def step_python_vm_running_given(context):
-    """Python VM is running."""
-    context.running_vms.add("python")
 
 
 @when('I get SSH info for python')
@@ -3088,12 +3022,6 @@ def step_ssh_socket_mounted(context):
     context.ssh_socket_mounted = True
 
 
-@then('public keys volume should be mounted')
-def step_pubkeys_mounted(context):
-    """Public keys volume should be mounted."""
-    context.pubkeys_mounted = True
-
-
 # =============================================================================
 # Team collaboration and maintenance steps
 # =============================================================================
@@ -3116,31 +3044,10 @@ def step_vms_updated_base(context):
     context.vms_updated_base = True
 
 
-@then('my configurations should be preserved')
-def step_configurations_preserved(context):
-    """Configurations should be preserved."""
-    context.configurations_preserved = True
-
-
-@given('a VM is not working correctly')
-def step_vm_not_working(context):
-    """VM is not working correctly."""
-    context.vm_not_working = True
-
-
+@when('I troubleshoot by rebuilding {vm_name}')
+def step_rebuild_troubleshoot(context, vm_name):
+    """Troubleshoot by rebuilding VM."""
     context.rebuild_troubleshoot = vm_name
-
-
-@then('I should get a fresh VM')
-def step_get_fresh_vm(context):
-    """Should get a fresh VM."""
-    context.fresh_vm = True
-
-
-@then('old issues should be resolved')
-def step_old_issues_resolved(context):
-    """Old issues should be resolved."""
-    context.old_issues_resolved = True
 
 
 @then('I should see all VMs')
@@ -3333,24 +3240,6 @@ def step_able_scale(context):
 # Natural language command steps
 # =============================================================================
 
-@when('I say "what vms do I have"')
-def step_say_what_vms(context):
-    """Say 'what vms do I have'."""
-    context.natural_command = "what vms do I have"
-
-
-@when('I say "list all VMs"')
-def step_say_list_all(context):
-    """Say 'list all VMs'."""
-    context.natural_command = "list all VMs"
-
-
-@when('I say "show me my vms"')
-def step_say_show_vms(context):
-    """Say 'show me my vms'."""
-    context.natural_command = "show me my vms"
-
-
 @then('the system should understand my intent')
 def step_understand_intent(context):
     """System should understand intent."""
@@ -3363,22 +3252,10 @@ def step_run_list_vms(context):
     context.runs_list_vms = True
 
 
-@when('I say "start my python vm"')
-def step_say_start_python(context):
-    """Say 'start my python vm'."""
-    context.natural_command = "start my python vm"
-
-
 @then('it should run "start-virtual python"')
 def step_run_start_python(context):
     """Should run start-virtual python."""
     context.runs_start_python = True
-
-
-@when('I say "I need a rust environment"')
-def step_say_need_rust(context):
-    """Say 'I need a rust environment'."""
-    context.natural_command = "I need a rust environment"
 
 
 @then('it should offer to create a Rust VM')
@@ -3387,22 +3264,10 @@ def step_offer_create_rust(context):
     context.offers_create_rust = True
 
 
-@when('I say "stop everything"')
-def step_say_stop_everything(context):
-    """Say 'stop everything'."""
-    context.natural_command = "stop everything"
-
-
 @then('it should run "shutdown-virtual all"')
 def step_run_shutdown_all(context):
     """Should run shutdown-virtual all."""
     context.runs_shutdown_all = True
-
-
-@when('I say "restart postgres"')
-def step_say_restart_postgres(context):
-    """Say 'restart postgres'."""
-    context.natural_command = "restart postgres"
 
 
 @then('it should run "restart-virtual postgres"')

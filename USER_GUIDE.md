@@ -1,5 +1,3 @@
-✓ Generated /Users/dderyldowney/dev/USER_GUIDE.md
-  Found 225 total scenarios
 ** Every workflow below has been tested and verified to work. If you follow these steps, they will work for you too.
 
 ---
