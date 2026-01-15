@@ -1,6 +1,6 @@
 <p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-** Every workflow below has been tested and verified to work. If you follow these steps, they will work for you too.
+** Every workflow below has been tested and verified to work. If you follow these steps, they will work for you too. **
 
 ---
 
