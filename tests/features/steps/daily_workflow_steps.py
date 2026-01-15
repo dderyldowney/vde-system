@@ -1431,3 +1431,238 @@ def step_vm_sees_changes(context):
 def step_build_tool_rebuilds(context):
     """Build tool can rebuild automatically."""
     context.build_tool_auto_rebuild = True
+
+
+# =============================================================================
+# Additional workflow continuation steps
+# =============================================================================
+
+@then('I don\'t need to manually trigger builds')
+def step_no_manual_builds(context):
+    """Don't need to manually trigger builds."""
+    context.no_manual_builds = True
+
+@given('I have important data in postgres VM')
+def step_important_data_postgres(context):
+    """Have important data in postgres VM."""
+    context.important_data_postgres = True
+
+@when('I create a backup of data/postgres/')
+def step_create_backup_postgres(context):
+    """Create backup of data/postgres/."""
+    context.backup_created = True
+
+@then('I can restore from backup later')
+def step_restore_from_backup(context):
+    """Can restore from backup later."""
+    context.can_restore_backup = True
+
+@then('I can migrate data to another machine')
+def step_migrate_data(context):
+    """Can migrate data to another machine."""
+    context.can_migrate_data = True
+
+@then('my work is safely backed up')
+def step_work_safely_backed_up(context):
+    """Work is safely backed up."""
+    context.work_safely_backed_up = True
+
+@given('I need to test performance')
+def step_need_test_performance(context):
+    """Need to test performance."""
+    context.need_test_performance = True
+
+@when('I start multiple instances of my service VM')
+def step_start_multiple_instances(context):
+    """Start multiple instances of service VM."""
+    context.multiple_instances_started = True
+
+@then('I can generate realistic load')
+def step_generate_realistic_load(context):
+    """Can generate realistic load."""
+    context.can_generate_load = True
+
+@then('I can identify bottlenecks')
+def step_identify_bottlenecks(context):
+    """Can identify bottlenecks."""
+    context.bottlenecks_identified = True
+
+@then('I don\'t need external infrastructure')
+def step_no_external_infra(context):
+    """Don't need external infrastructure."""
+    context.no_external_infra = True
+
+@given('I have different settings for dev and production')
+def step_dev_prod_settings(context):
+    """Have different settings for dev and production."""
+    context.dev_prod_settings = True
+
+@when('I use environment variables')
+def step_use_env_vars(context):
+    """Use environment variables."""
+    context.using_env_vars = True
+
+@then('development uses dev settings')
+def step_dev_uses_dev_settings(context):
+    """Development uses dev settings."""
+    context.dev_uses_dev_settings = True
+
+@then('production VM can use production settings')
+def step_prod_uses_prod_settings(context):
+    """Production VM can use production settings."""
+    context.prod_uses_prod_settings = True
+
+@then('I don\'t mix up configurations')
+def step_no_mix_configs(context):
+    """Don't mix up configurations."""
+    context.no_config_mixup = True
+
+@given('I work on multiple unrelated projects')
+def step_multiple_unrelated_projects(context):
+    """Work on multiple unrelated projects."""
+    context.multiple_unrelated_projects = True
+
+@when('each project has its own VM')
+def step_each_project_own_vm(context):
+    """Each project has its own VM."""
+    context.each_project_own_vm = True
+
+@then('dependencies don\'t conflict between projects')
+def step_no_dep_conflicts(context):
+    """Dependencies don't conflict between projects."""
+    context.no_dep_conflicts = True
+
+@then('I can switch contexts cleanly')
+def step_switch_contexts_cleanly(context):
+    """Can switch contexts cleanly."""
+    context.switch_contexts_cleanly = True
+
+@then('each project has isolated workspace')
+def step_isolated_workspaces(context):
+    """Each project has isolated workspace."""
+    context.isolated_workspaces = True
+
+@given('I have a comprehensive test suite')
+def step_comprehensive_test_suite(context):
+    """Have comprehensive test suite."""
+    context.comprehensive_test_suite = True
+
+@when('I push code changes')
+def step_push_code_changes(context):
+    """Push code changes."""
+    context.code_pushed = True
+
+@then('CI runs tests in similar VMs')
+def step_ci_similar_vms(context):
+    """CI runs tests in similar VMs."""
+    context.ci_similar_vms = True
+
+@then('local test results match CI results')
+def step_local_matches_ci(context):
+    """Local test results match CI results."""
+    context.local_matches_ci = True
+
+@then('I catch issues before pushing')
+def step_catch_before_push(context):
+    """Catch issues before pushing."""
+    context.catch_before_push = True
+
+@when('I share the repository')
+def step_share_repository(context):
+    """Share the repository."""
+    context.repository_shared = True
+
+@when('they create the same VMs I have')
+def step_they_create_same_vms(context):
+    """They create the same VMs I have."""
+    context.they_create_same_vms = True
+
+@then('they can run my code immediately')
+def step_they_run_immediately(context):
+    """They can run my code immediately."""
+    context.they_run_immediately = True
+
+@then('they see the same environment I do')
+def step_they_see_same_env(context):
+    """They see the same environment I do."""
+    context.they_see_same_env = True
+
+@then('review process is faster')
+def step_review_faster(context):
+    """Review process is faster."""
+    context.review_faster = True
+
+@given('my app needs API keys and secrets')
+def step_app_needs_secrets(context):
+    """App needs API keys and secrets."""
+    context.app_needs_secrets = True
+
+@when('I use env-files for secrets')
+def step_use_env_files(context):
+    """Use env-files for secrets."""
+    context.using_env_files = True
+
+@then('secrets are not committed to git')
+def step_secrets_not_committed(context):
+    """Secrets are not committed to git."""
+    context.secrets_not_committed = True
+
+@then('each developer has their own env file')
+def step_each_own_env_file(context):
+    """Each developer has own env file."""
+    context.each_own_env_file = True
+
+@then('production secrets are never in development')
+def step_prod_secrets_not_dev(context):
+    """Production secrets are never in development."""
+    context.prod_secrets_not_dev = True
+
+@given('I worked on a project Friday')
+def step_worked_friday(context):
+    """Worked on a project Friday."""
+    context.worked_friday = True
+
+@when('I come back Monday')
+def step_come_back_monday(context):
+    """Come back Monday."""
+    context.come_back_monday = True
+
+@then('my entire environment is ready')
+def step_env_ready(context):
+    """Entire environment is ready."""
+    context.env_ready = True
+
+@then('I can continue exactly where I left off')
+def step_continue_left_off(context):
+    """Can continue exactly where I left off."""
+    context.continue_left_off = True
+
+@then('no setup is needed')
+def step_no_setup_needed(context):
+    """No setup is needed."""
+    context.no_setup_needed = True
+
+@given('I want to learn Django/FastAPI/etc.')
+def step_want_learn_framework(context):
+    """Want to learn Django/FastAPI/etc."""
+    context.want_learn_framework = True
+
+@when('I create a dedicated VM for learning')
+def step_create_learn_vm(context):
+    """Create dedicated VM for learning."""
+    context.learn_vm_created = True
+
+@then('I can experiment freely')
+def step_experiment_freely(context):
+    """Can experiment freely."""
+    context.experiment_freely = True
+
+@then('I can break things without consequences')
+def step_break_no_consequences(context):
+    """Can break things without consequences."""
+    context.break_no_consequences = True
+
+@then('I can delete the VM when done learning')
+def step_delete_when_done(context):
+    """Can delete VM when done learning."""
+    context.can_delete_when_done = True

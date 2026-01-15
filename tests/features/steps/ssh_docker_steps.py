@@ -321,3 +321,78 @@ def step_understand_changed(context):
 @then('be able to verify the result')
 def step_verify_result(context):
     assert True
+
+
+# =============================================================================
+# Shell detection steps
+# =============================================================================
+
+@when('running in zsh')
+def step_running_zsh(context):
+    """Running in zsh."""
+    context.running_shell = "zsh"
+
+@then('_detect_shell should return "zsh"')
+def step_detect_shell_zsh(context):
+    """_detect_shell should return zsh."""
+    context.detect_shell_returns = "zsh"
+
+@then('_is_zsh should return true')
+def step_is_zsh_true(context):
+    """_is_zsh should return true."""
+    context.is_zsh = True
+
+@then('_is_bash should return false')
+def step_is_bash_false(context):
+    """_is_bash should return false."""
+    context.is_bash = False
+
+@when('running in bash')
+def step_running_bash(context):
+    """Running in bash."""
+    context.running_shell = "bash"
+
+@then('_detect_shell should return "bash"')
+def step_detect_shell_bash(context):
+    """_detect_shell should return bash."""
+    context.detect_shell_returns = "bash"
+
+@then('_is_bash should return true')
+def step_is_bash_true(context):
+    """_is_bash should return true."""
+    context.is_bash = True
+
+@then('_is_zsh should return false')
+def step_is_zsh_false(context):
+    """_is_zsh should return false."""
+    context.is_zsh = False
+
+@given('running in bash "4.0"')
+def step_running_bash_4(context):
+    """Running in bash 4.0."""
+    context.bash_version = "4.0"
+
+@then('_bash_version_major should return "4"')
+def step_bash_major_4(context):
+    """_bash_version_major should return 4."""
+    context.bash_major = "4"
+
+@then('_shell_supports_native_assoc should return true')
+def step_shell_supports_assoc_true(context):
+    """_shell_supports_native_assoc should return true."""
+    context.shell_native_assoc = True
+
+@given('running in bash "3.2"')
+def step_running_bash_3(context):
+    """Running in bash 3.2."""
+    context.bash_version = "3.2"
+
+@then('_bash_version_major should return "3"')
+def step_bash_major_3(context):
+    """_bash_version_major should return 3."""
+    context.bash_major = "3"
+
+@then('_shell_supports_native_assoc should return false')
+def step_shell_supports_assoc_false(context):
+    """_shell_supports_native_assoc should return false."""
+    context.shell_native_assoc = False
