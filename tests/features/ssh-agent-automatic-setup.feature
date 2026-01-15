@@ -56,7 +56,7 @@ Feature: Automatic SSH Setup and Key Management
     Then I should see the SSH agent status
     And I should see my available SSH keys
     And I should see keys loaded in the agent
-    And I should see running VMs
+    And the list-vms command should show available VMs
     And I should see usage examples
 
   Scenario: SSH config auto-generation for all VMs
