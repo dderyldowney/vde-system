@@ -23,7 +23,7 @@ A modular, template-based Docker development environment supporting 18+ programm
 | **Development** | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) • [AI CLI Integration](docs/ai-cli-integration.md) • [Development Workflows](docs/development-workflows.md) |
 | **AI Assistant** | [VDE AI Assistant](docs/vde-ai-assistant.md) • [VDE AI HOWTO](docs/VDE-AI-HOWTO.md) |
 | **Contributing** | [Contributing Guide](CONTRIBUTING.md) • [Style Guide](STYLE_GUIDE.md) • [Testing Guide](docs/TESTING.md) |
-| **Reference** | [User Model](docs/user-model.md) • [Architecture](docs/ARCHITECTURE.md) • [Best Practices](docs/best-practices.md) |
+| **Reference** | [API Reference](docs/API.md) • [User Model](docs/user-model.md) • [Architecture](docs/ARCHITECTURE.md) • [Best Practices](docs/best-practices.md) |
 | **Support** | [Troubleshooting](docs/troubleshooting.md) • [Rebuild Guidelines](docs/rebuild-guidelines.md) |
 
 ---
@@ -167,6 +167,7 @@ See [SSH Configuration](docs/ssh-configuration.md) for complete details.
 
 | Document | Description |
 |----------|-------------|
+| [API Reference](docs/API.md) | Complete API reference for scripts and libraries |
 | [User Model & Naming Conventions](docs/user-model.md) | User account and naming standards |
 | [Architecture](docs/architecture.md) | Technical architecture details |
 | [Advanced Usage](docs/advanced-usage.md) | Advanced techniques and patterns |
