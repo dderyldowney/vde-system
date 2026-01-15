@@ -51,7 +51,10 @@ Scenario: Parse commands with typos
 1. Remove mocks from BDD step definitions
 2. Implement real VM lifecycle operations in the BDD steps
 3. Have tests call actual VDE scripts like `./scripts/start-virtual.sh`
-4. **BDD test runner needs Docker access** (Docker-in-Docker or socket mount)
+
+**Docker Access Setup:** ✅ Infrastructure added
+- CI: `.github/workflows/vde-ci.yml` Job 8 now mounts Docker socket
+- Local: Run `./tests/run-bdd-local.sh` for local testing with Docker access
 
 **Affected Categories:**
 - VM Lifecycle (7 scenarios)
@@ -87,6 +90,8 @@ Scenario: Parse commands with typos
 ### Priority 4 - CI/CD Integration
 - ✅ Added docker-vm-lifecycle.test.sh to GitHub Actions
 - ✅ Integration tests run in CI workflow
+- ✅ BDD tests have Docker socket access in CI (Job 8)
+- ✅ Local BDD test script: `./tests/run-bdd-local.sh`
 
 ---
 
