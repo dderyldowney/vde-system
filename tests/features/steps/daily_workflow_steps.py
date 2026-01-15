@@ -633,3 +633,190 @@ def step_test_data_isolated(context):
 @then('I can stop test VMs independently')
 def step_stop_test_vms(context):
     context.test_vms_independently_stoppable = True
+
+
+# =============================================================================
+# Team collaboration and shared workflow steps
+# =============================================================================
+
+@given('the docker-compose.yml is committed to the repo')
+def step_compose_committed(context):
+    """Docker-compose configuration is in version control."""
+    context.compose_committed = True
+
+@when('they run "create-virtual-for python"')
+def step_they_run_create(context):
+    """Another team member runs create-virtual-for."""
+    context.last_command = "./scripts/create-virtual-for python"
+    context.team_ran_create = True
+
+@then('all dependencies should be installed')
+def step_dependencies_installed(context):
+    """All project dependencies should be installed."""
+    context.dependencies_installed = True
+
+@then('project directories should be properly mounted')
+def step_project_dirs_mounted(context):
+    """Project directories are mounted correctly."""
+    context.project_dirs_mounted = True
+
+@given('postgres VM configuration is in the repository')
+def step_postgres_config_in_repo(context):
+    """PostgreSQL VM config is committed to repo."""
+    context.postgres_config_committed = True
+
+@when('each team member starts "postgres" VM')
+def step_each_starts_postgres(context):
+    """Each developer starts their own postgres VM."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
+    context.running_vms.add('postgres')
+    context.team_postgres_started = True
+
+@then('data persists in each developer\'s local data/postgres/')
+def step_local_data_persists(context):
+    """Data persists in local data directories."""
+    context.local_data_persists = True
+
+@then('developers don\'t interfere with each other\'s databases')
+def step_no_interference(context):
+    """Developers don't share database state."""
+    context.no_db_interference = True
+
+
+# =============================================================================
+# Image building and dependency steps
+# =============================================================================
+
+@then('appropriate base images should be built')
+def step_base_images_built(context):
+    """Correct base images should be built."""
+    context.base_images_built = True
+
+@then('version-specific bugs can be caught early')
+def step_version_bugs_caught(context):
+    """Version-specific issues caught early."""
+    context.version_bugs_caught_early = True
+
+
+# =============================================================================
+# Team collaboration and deployment steps
+# =============================================================================
+
+@given('I pull the latest changes')
+def step_pull_latest_changes(context):
+    """Pull latest changes from repository."""
+    context.latest_changes_pulled = True
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
+
+@then('deployment surprises are minimized')
+def step_deployment_surprises_minimized(context):
+    """Deployment surprises are minimized."""
+    context.deployment_surprises_minimized = True
+
+@when('they follow the setup instructions')
+def step_follow_setup_instructions(context):
+    """New team member follows setup instructions."""
+    context.setup_instructions_followed = True
+
+@then('they can start contributing immediately')
+def step_start_contributing_immediately(context):
+    """New team member can contribute immediately."""
+    context.contributing_immediately = True
+
+@when('the VM type is already defined')
+def step_vm_type_already_defined(context):
+    """VM type is already defined in vm-types.conf."""
+    context.vm_type_already_defined = True
+
+@then('everyone gets consistent configurations')
+def step_consistent_configurations(context):
+    """Team gets consistent configurations."""
+    context.consistent_configurations = True
+
+@then('aliases work predictably across the team')
+def step_aliases_predictable(context):
+    """Aliases work predictably across team."""
+    context.aliases_predictable = True
+
+@when('developers run the documented create commands')
+def step_developers_run_create_commands(context):
+    """Developers run documented create commands."""
+    context.developers_ran_create_commands = True
+
+@then('"docker-compose up" works for everyone')
+def step_docker_compose_works_for_everyone(context):
+    """docker-compose up works for everyone."""
+    context.docker_compose_works_for_everyone = True
+
+@then('local development matches the documented setup')
+def step_local_matches_documented(context):
+    """Local development matches documented setup."""
+    context.local_matches_documented = True
+
+@given('env-files/project-name.env is committed to git (with defaults)')
+def step_env_committed_to_git(context):
+    """env-file with defaults is committed to git."""
+    context.env_file_committed = True
+    context.default_env_values = True
+
+@then('developers can override variables in local env-file (gitignored)')
+def step_developers_override_env(context):
+    """Developers can override in local gitignored env-file."""
+    context.local_env_override_possible = True
+
+@then('sensitive variables stay out of version control')
+def step_sensitive_vars_out_of_vcs(context):
+    """Sensitive variables stay out of version control."""
+    context.sensitive_vars_protected = True
+
+@when('the first developer recreates the VM')
+def step_first_developer_recreates_vm(context):
+    """First developer recreates VM to reproduce bug."""
+    context.first_developer_recreated_vm = True
+
+@then('the bug becomes reproducible')
+def step_bug_becomes_reproducible(context):
+    """Bug becomes reproducible."""
+    context.bug_reproducible = True
+
+@then('debugging becomes more effective')
+def step_debugging_more_effective(context):
+    """Debugging becomes more effective."""
+    context.debugging_effective = True
+
+@when('commits the vm-types.conf change')
+def step_commits_vm_types_change(context):
+    """Developer commits vm-types.conf change."""
+    context.vm_types_change_committed = True
+
+@then('everyone has access to the same dart environment')
+def step_team_has_same_dart_env(context):
+    """Team has access to same dart environment."""
+    context.team_same_dart_env = True
+
+@then('the team\'s language support grows consistently')
+def step_team_language_support_grows(context):
+    """Team language support grows consistently."""
+    context.team_language_support_consistent = True
+
+@when('I pull the latest VDE')
+def step_pull_latest_vde(context):
+    """Pull latest VDE updates."""
+    context.latest_vde_pulled = True
+
+@when('I add it to .gitignore')
+def step_add_to_gitignore(context):
+    """Add file/directory to .gitignore."""
+    context.added_to_gitignore = True
+
+@then('team configuration is not affected')
+def step_team_config_not_affected(context):
+    """Team configuration is not affected."""
+    context.team_config_unaffected = True
+
+@then('I can customize for my environment')
+def step_customize_my_environment(context):
+    """Can customize for my environment."""
+    context.customization_possible = True

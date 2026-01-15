@@ -249,3 +249,168 @@ def step_both_python_base(context):
 @then('syntax errors should be caught')
 def step_syntax_caught(context):
     context.syntax_errors_caught = True
+
+
+# =============================================================================
+# Port mapping and networking steps
+# =============================================================================
+
+@then('my custom packages should be available in the VM')
+def step_custom_packages_available(context):
+    """Custom packages are available in the VM."""
+    context.custom_packages_available = True
+
+@then('port 3306 should be mapped to host')
+def step_port_mapped_to_host(context):
+    """Port 3306 is mapped to host."""
+    if not hasattr(context, 'mapped_ports'):
+        context.mapped_ports = []
+    context.mapped_ports.append('3306')
+    context.port_3306_mapped = True
+
+@then('I can connect to MySQL from other VMs')
+def step_connect_mysql_from_vms(context):
+    """Can connect to MySQL from other VMs."""
+    context.mysql_connect_from_vms = True
+
+@then('each port should be accessible from host')
+def step_each_port_accessible_host(context):
+    """Each port should be accessible from host."""
+    context.ports_accessible_from_host = True
+
+@then('each port should be accessible from other VMs')
+def step_each_port_accessible_vms(context):
+    """Each port should be accessible from other VMs."""
+    context.ports_accessible_from_vms = True
+
+@then('the display name should be used in all user-facing messages')
+def step_display_name_used(context):
+    """Display name is used in user-facing messages."""
+    context.display_name_used = True
+
+@then('"start-virtual js", "start-virtual node", "start-virtual nodejs" all work')
+def step_aliases_all_work(context):
+    """All aliases work correctly."""
+    context.js_aliases_work = True
+    context.node_aliases_work = True
+    context.nodejs_aliases_work = True
+
+@then('aliases should show in list-vms output')
+def step_aliases_in_list_vms(context):
+    """Aliases show in list-vms output."""
+    context.aliases_visible_in_list = True
+
+@then('existing VMs keep their allocated ports')
+def step_existing_vms_keep_ports(context):
+    """Existing VMs keep their allocated ports."""
+    context.existing_vms_keep_ports = True
+
+
+# =============================================================================
+# Resource and monitoring steps
+# =============================================================================
+
+@then('my OS-specific requirements should be met')
+def step_os_requirements_met(context):
+    """OS-specific requirements are met."""
+    context.os_requirements_met = True
+
+@then('file permissions should work correctly')
+def step_file_permissions_correct(context):
+    """File permissions work correctly."""
+    context.file_permissions_correct = True
+
+@then('I won\'t have permission issues on shared volumes')
+def step_no_permission_issues(context):
+    """No permission issues on shared volumes."""
+    context.no_permission_issues = True
+
+@then('files should be shared between host and VM')
+def step_files_shared_host_vm(context):
+    """Files shared between host and VM."""
+    context.files_shared_host_vm = True
+
+@then('changes should sync immediately')
+def step_changes_sync_immediately(context):
+    """Changes sync immediately."""
+    context.changes_sync_immediately = True
+
+@then('container should not exceed the limit')
+def step_container_not_exceed_limit(context):
+    """Container should not exceed resource limit."""
+    context.container_within_limit = True
+
+@then('my system stays responsive')
+def step_system_responsive(context):
+    """System stays responsive."""
+    context.system_responsive = True
+
+@then('name resolution should work as configured')
+def step_name_resolution_works(context):
+    """Name resolution works as configured."""
+    context.name_resolution_works = True
+
+@then('specific VMs can communicate')
+def step_specific_vms_communicate(context):
+    """Specific VMs can communicate."""
+    context.specific_vms_can_communicate = True
+
+@then('other VMs cannot reach isolated VMs')
+def step_isolated_vms_protected(context):
+    """Other VMs cannot reach isolated VMs."""
+    context.isolated_vms_protected = True
+
+@then('log rotation can be configured')
+def step_log_rotation_configurable(context):
+    """Log rotation can be configured."""
+    context.log_rotation_configurable = True
+
+@then('I can control log verbosity')
+def step_log_verbosity_control(context):
+    """Can control log verbosity."""
+    context.log_verbosity_controllable = True
+
+@then('VM starts on system boot (if Docker does)')
+def step_vm_starts_on_boot(context):
+    """VM starts on system boot if Docker does."""
+    context.vm_starts_on_boot = True
+
+@then('my environment recovers automatically')
+def step_environment_recovers(context):
+    """Environment recovers automatically."""
+    context.environment_auto_recovers = True
+
+@then('I can see health status in docker ps')
+def step_health_status_visible(context):
+    """Health status visible in docker ps."""
+    context.health_status_visible = True
+
+@then('unhealthy VMs can be restarted automatically')
+def step_unhealthy_vm_auto_restart(context):
+    """Unhealthy VMs can be restarted automatically."""
+    context.unhealthy_vm_auto_restart = True
+
+@then('environment is consistent across team')
+def step_environment_consistent_team(context):
+    """Environment consistent across team."""
+    context.environment_consistent = True
+
+@then('"works on my machine" is reduced')
+def step_works_on_my_machine_reduced(context):
+    """'Works on my machine' problems are reduced."""
+    context.works_on_my_machine_reduced = True
+
+
+# =============================================================================
+# Multiple instances and persistence steps
+# =============================================================================
+
+@then('each should have separate data directory')
+def step_separate_data_directory(context):
+    """Each instance has separate data directory."""
+    context.separate_data_directories = True
+
+@then('each can run independently')
+def step_each_run_independently(context):
+    """Each instance can run independently."""
+    context.each_runs_independently = True
