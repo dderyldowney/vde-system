@@ -12,6 +12,7 @@ A modular, template-based Docker development environment supporting 18+ programm
 
 | Section | Description |
 |---------|-------------|
+| **📘 User Guide** | [USER_GUIDE.md](USER_GUIDE.md) - Step-by-step guide for new users |
 | **Getting Started** | [Requirements](docs/requirements.md) • [Quick Start](docs/quick-start.md) |
 | **SSH & Agent Forwarding** | [SSH Configuration](docs/ssh-configuration.md) • [VM Communication](docs/advanced-usage.md#inter-container-communication) • [SSH Troubleshooting](docs/troubleshooting.md#ssh-agent-issues) |
 | **Core Features** | [Available Scripts](docs/available-scripts.md) • [Predefined VM Types](docs/predefined-vm-types.md) • [Command Reference](docs/command-reference.md) |
@@ -70,6 +71,7 @@ cd ~/workspace
 ```
 
 **Next Steps:**
+- 📘 **Read the [USER_GUIDE.md](USER_GUIDE.md)** for a complete step-by-step walkthrough
 - Read the [Quick Start guide](docs/quick-start.md) for detailed setup
 - See [Command Reference](docs/command-reference.md) for all available commands
 - Try the [VDE AI Assistant](docs/vde-ai-assistant.md) for natural language control
