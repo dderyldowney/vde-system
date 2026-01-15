@@ -49,18 +49,22 @@ All available programming languages and services that can be created with VDE.
 ## Viewing Available VMs
 
 ```bash
-# List all VMs
-./scripts/list-vms
+# List all VMs (using unified CLI)
+vde list
 
 # List only language VMs
+vde list --lang
+# OR
 ./scripts/list-vms --lang
 
 # List only service VMs
+vde list --svc
+# OR
 ./scripts/list-vms --svc
 
 # Search for specific VMs
-./scripts/list-vms python
-./scripts/list-vms --lang script
+vde list python
+vde list --lang script
 ```
 
 ---

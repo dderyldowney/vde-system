@@ -1057,12 +1057,13 @@ The parser is a testament to the power of Unix philosophy: small, focused tools 
 **Primary file:** `/Users/dderyldowney/dev/scripts/lib/vde-parser`
 
 **Dependencies:**
-- `/Users/dderyldowney/dev/scripts/lib/vm-common`
-- `/Users/dderyldowney/dev/scripts/lib/vde-commands`
+- `/Users/dderyldowney/dev/scripts/lib/vm-common` (VM type queries, validation)
+- `/Users/dderyldowney/dev/scripts/lib/vde-commands` (Safe wrapper functions)
 
 **Configuration:**
-- `/Users/dderyldowney/dev/scripts/data/vm-types.conf`
+- `/Users/dderyldowney/dev/scripts/data/vm-types.conf` (18 languages, 7 services)
 
 **Consumed by:**
-- `/Users/dderyldowney/dev/scripts/vde-ai`
-- `/Users/dderyldowney/dev/scripts/vde-chat`
+- `/Users/dderyldowney/dev/scripts/vde` (via `vde ai` command)
+- `/Users/dderyldowney/dev/scripts/vde-ai` (Natural language CLI)
+- `/Users/dderyldowney/dev/scripts/vde-chat` (Interactive AI assistant)

@@ -110,6 +110,7 @@ readonly INTENT_STOP_VM="stop_vm"
 readonly INTENT_RESTART_VM="restart_vm"
 readonly INTENT_STATUS="status"
 readonly INTENT_CONNECT="connect"
+readonly INTENT_ADD_VM_TYPE="add_vm_type"
 readonly INTENT_HELP="help"
 ```
 
@@ -131,6 +132,7 @@ The function processes input in a specific priority order:
 - "start everything" → `INTENT_START_VM`
 - "how do I connect to Python?" → `INTENT_CONNECT`
 - "rebuild and start Go" → `INTENT_RESTART_VM`
+- "add a new language called Zig" → `INTENT_ADD_VM_TYPE`
 
 ### Entity Extraction
 
@@ -376,14 +378,15 @@ The command-line interface (`scripts/vde-ai`) provides one-shot natural language
 ```zsh
 #!/usr/bin/env zsh
 # Lines 1-15: Header and usage info
-# Lines 16-29: Configuration and library loading
-# Lines 30-67: Usage function
-# Lines 68-122: Argument parsing
-# Lines 123-130: VM type loading
-# Lines 131-163: Execution
+# Lines 16-33: Configuration and library loading
+# Lines 34-46: Usage function
+# Lines 47-90: Argument parsing
+# Lines 91-144: Input validation
+# Lines 145-153: VM type loading
+# Lines 154-189: Parse and execute
 ```
 
-### Library Loading Chain (lines 21-24)
+### Library Loading Chain (lines 22-24)
 
 ```zsh
 source "$SCRIPT_DIR/lib/vm-common"    # Core VM functions
@@ -391,10 +394,23 @@ source "$SCRIPT_DIR/lib/vde-commands"  # AI-safe wrappers
 source "$SCRIPT_DIR/lib/vde-parser"    # Natural language parser
 ```
 
+### Optional AI API Library (lines 26-32)
+
+```zsh
+# Try to source the AI API library (optional - for LLM-based parsing)
+if [[ -f "$SCRIPT_DIR/lib/vde-ai-api" ]]; then
+    source "$SCRIPT_DIR/lib/vde-ai-api"
+    AI_API_AVAILABLE=true
+else
+    AI_API_AVAILABLE=false
+fi
+```
+
 This loading order is critical:
 1. **vm-common**: Must be loaded first (provides base functions)
 2. **vde-commands**: Depends on vm-common
 3. **vde-parser**: Uses both for execution
+4. **vde-ai-api**: Optional, for LLM-enhanced parsing
 
 ### Argument Parsing (lines 74-105)
 
@@ -443,16 +459,39 @@ fi
 
 Allows default AI mode via environment variable.
 
-### API Key Validation (lines 138-146)
+### API Key Validation (lines 160-185)
 
 ```zsh
+# Check if AI mode is enabled
 if [[ "$USE_AI" == "true" ]]; then
-    if [[ -z "${CLAUDE_API_KEY:-}" ]] && [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
-        log_error "AI mode requested but no API key found"
-        log_error "Set CLAUDE_API_KEY or ANTHROPIC_API_KEY environment variable"
+    # Check if AI API library is available
+    if [[ "$AI_API_AVAILABLE" == "true" ]] && ai_api_available; then
+        log_info "Using LLM-based parsing..."
+        # Use AI API to parse the command
+        PLAN=$(parse_command_with_ai "$USER_INPUT" 2>&1)
+        local parse_exit_code=$?
+
+        if [[ $parse_exit_code -ne 0 ]]; then
+            log_error "AI parsing failed, falling back to pattern-based parsing"
+            log_info "Error was: $PLAN"
+            PLAN=$(generate_plan "$USER_INPUT")
+        else
+            log_info "AI parsing successful"
+        fi
+    else
+        # AI requested but not available
+        if [[ "$AI_API_AVAILABLE" != "true" ]]; then
+            log_error "AI mode requested but vde-ai-api library not found"
+        else
+            log_error "AI mode requested but no API key found"
+            log_error "Set ANTHROPIC_API_KEY or CLAUDE_API_KEY environment variable"
+        fi
         log_error "Falling back to pattern-based parsing..."
-        USE_AI=false
+        PLAN=$(generate_plan "$USER_INPUT")
     fi
+else
+    # Use pattern-based parsing
+    PLAN=$(generate_plan "$USER_INPUT")
 fi
 ```
 
@@ -943,12 +982,19 @@ The parser will automatically recognize the new VM.
 
 | File | Purpose | Lines of Code |
 |------|---------|---------------|
-| `scripts/lib/vde-parser` | Natural language parsing | 458 |
+| `scripts/lib/vde-constants` | Centralized constants (return codes, port ranges) | 204 |
+| `scripts/lib/vde-shell-compat` | Shell compatibility layer (zsh/bash) | 719 |
+| `scripts/lib/vde-errors` | Error messages with remediation | 306 |
+| `scripts/lib/vde-log` | Structured logging with rotation | 469 |
+| `scripts/lib/vde-core` | Essential VDE functions (VM types, caching) | 297 |
+| `scripts/lib/vm-common` | Core VM utilities | 508+ |
 | `scripts/lib/vde-commands` | Safe wrapper functions | 385 |
-| `scripts/lib/vm-common` | Core VM utilities | 508 |
-| `scripts/vde-ai` | CLI interface | 164 |
+| `scripts/lib/vde-parser` | Natural language parsing | 458 |
+| `scripts/lib/vde-ai-api` | Optional LLM-based parsing (Anthropic Claude) | ~200 |
+| `scripts/vde` | Unified CLI interface | 237 |
+| `scripts/vde-ai` | CLI interface for natural language commands | 204 |
 | `scripts/vde-chat` | Interactive interface | 301 |
-| `scripts/data/vm-types.conf` | VM type definitions | 34 |
+| `scripts/data/vm-types.conf` | VM type definitions (18 languages, 7 services) | 34 |
 
 ---
 

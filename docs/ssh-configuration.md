@@ -8,14 +8,28 @@ VDE provides **automatic SSH configuration** and **SSH agent forwarding** for se
 
 ## Overview
 
-VDE handles all SSH setup automatically:
+VDE handles all SSH setup automatically through the `vm-common` library and related SSH functions:
 
-- **Automatic SSH key detection**: Finds and uses all your SSH keys (ed25519, RSA, ECDSA, DSA)
+- **Automatic SSH key detection**: Finds and uses all your SSH keys (ed25519, RSA, ECDSA, DSA, security keys)
 - **Automatic SSH agent management**: Starts agent, loads keys, no manual configuration
 - **Automatic SSH config generation**: Creates entries for all VMs in `~/.ssh/config`
 - **SSH agent forwarding**: VMs access your host's SSH keys securely (keys never leave the host)
+- **Port-based authentication**: Each VM gets a unique SSH port for isolation
 
 **No manual setup required** - VDE handles everything when you create or start VMs.
+
+### SSH Key Types Supported
+
+VDE automatically detects and uses any of these key types (in priority order):
+
+- **id_ed25519** (preferred, most secure)
+- **id_ecdsa_sk** (security key)
+- **id_ed25519_sk** (security key)
+- **id_ecdsa**
+- **id_rsa**
+- **id_dsa** (legacy)
+
+Priority order: ed25519 > ecdsa-sk > ed25519-sk > ecdsa > rsa > dsa
 
 ---
 
@@ -212,6 +226,8 @@ scp user@external-server.com:/path/file .
 ```bash
 # Interactive status display
 ./scripts/ssh-agent-setup
+# OR using vde CLI
+vde health  # Includes SSH status check
 ```
 
 This shows:
@@ -415,10 +431,12 @@ All manual steps are now handled by VDE automatically.
 
 1. **Let VDE handle SSH setup**: Don't manually configure SSH agent or keys
 2. **Use VM aliases**: Use `python-dev` instead of `localhost -p 2200`
-3. **Check status with ssh-agent-setup**: Run this script to see SSH status
-4. **Multiple keys are supported**: All your keys are automatically detected and loaded
-5. **Keys never leave the host**: Agent forwarding is secure by design
-6. **VM-to-VM communication**: Use SSH for service-to-service communication
+3. **Use the vde CLI**: Prefer `vde create/start/stop` over direct script calls
+4. **Check status with vde health**: Run `vde health` for comprehensive system status
+5. **Multiple keys are supported**: All your keys are automatically detected and loaded
+6. **Security keys work too**: YubiKey and other security keys are automatically detected
+7. **Keys never leave the host**: Agent forwarding is secure by design
+8. **VM-to-VM communication**: Use SSH for service-to-service communication
 
 ---
 

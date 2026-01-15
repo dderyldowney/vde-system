@@ -1,6 +1,6 @@
 # AI CLI Integration
 
-VDE is designed to work seamlessly with AI-powered CLI tools. These tools can help you write code faster, debug issues, and understand your codebase - all while respecting the VDE architecture.
+VDE provides excellent integration with modern AI CLI tools through its container-based architecture, unified `vde` CLI, and SSH access patterns.
 
 [← Back to README](../README.md)
 
@@ -8,9 +8,22 @@ VDE is designed to work seamlessly with AI-powered CLI tools. These tools can he
 
 ## Overview
 
-VDE provides excellent integration with modern AI CLI tools through its container-based architecture and SSH access patterns.
+VDE provides excellent integration with modern AI CLI tools through its container-based architecture and unified CLI.
 
-### Supported AI Tools
+### VDE's Built-in AI
+
+VDE includes its own natural language interface for controlling VMs:
+
+| Command | Purpose |
+|---------|---------|
+| `vde-ai "command"` | Execute natural language command (one-shot) |
+| `vde-chat` | Interactive AI assistant session |
+| `vde ai "command"` | Same as vde-ai (unified CLI) |
+| `vde chat` | Same as vde-chat (unified CLI) |
+
+**Supported intents:** list, create, start, stop, restart, status, connect, help
+
+### Supported External AI Tools
 
 | Tool | Integration | Best For |
 |------|-------------|----------|
@@ -109,7 +122,7 @@ Create a `.claude/project.md` file in your project directory:
 This is a FastAPI project running in the VDE python-dev container.
 
 ## VM Information
-- **SSH Host**: `python-dev` (localhost:2222)
+- **SSH Host**: `python-dev` (localhost:2203)
 - **Container Name**: `python-dev`
 - **Project Path**: `/home/devuser/workspace` (mounted from `~/dev/projects/python/`)
 - **Host Path**: `~/dev/projects/python/my-api/`
@@ -128,6 +141,7 @@ All commands should be run via SSH in the python-dev container:
 
 **Environment Setup:**
 ```bash
+vde start python  # Start VM first
 ssh python-dev "cd ~/workspace && source .venv/bin/activate"
 ```
 
@@ -242,24 +256,32 @@ This is a microservices application using multiple VDE containers.
 
 **Start all services:**
 ```bash
-./scripts/start-virtual python go rust postgres redis
+vde start python go rust postgres redis
 ```
 
 **Stop all services:**
 ```bash
-./scripts/shutdown-virtual python go rust postgres redis
+vde stop python go rust postgres redis
+```
+
+**Check status:**
+```bash
+vde status
+vde health
 ```
 
 ## Service-Specific Commands
 
 **API Gateway (Python):**
 ```bash
+vde start python
 ssh python-dev "cd ~/workspace && uvicorn main:app --reload"
 ssh python-dev "cd ~/workspace && pytest"
 ```
 
 **User Service (Go):**
 ```bash
+vde start go
 ssh go-dev "cd ~/workspace && go run main.go"
 ssh go-dev "cd ~/workspace && go test ./..."
 ```
@@ -405,14 +427,14 @@ with Redis and PostgreSQL
 Claude: I'll set this up step by step:
 
 1. Create the JS VM:
-./scripts/create-virtual-for js
+vde create js
 
 2. Create the service VMs:
-./scripts/create-virtual-for redis
-./scripts/create-virtual-for postgres
+vde create redis
+vde create postgres
 
 3. Start all VMs:
-./scripts/start-virtual js redis postgres
+vde start js redis postgres
 
 4. Create the project:
 mkdir -p ~/dev/projects/js/myapp
