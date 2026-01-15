@@ -33,41 +33,41 @@ This is a **Virtual Development Environment (VDE)** providing Docker-based devel
 
 ```bash
 # Start all VMs
-./scripts/start-virtual.sh all
+./scripts/start-virtual all
 
 # Start specific VM
-./scripts/start-virtual.sh python
-./scripts/start-virtual.sh rust
+./scripts/start-virtual python
+./scripts/start-virtual rust
 
 # Start with rebuild (when Dockerfiles change)
-./scripts/start-virtual.sh python --rebuild
+./scripts/start-virtual python --rebuild
 
 # Full rebuild with no cache
-./scripts/start-virtual.sh python --rebuild --no-cache
+./scripts/start-virtual python --rebuild --no-cache
 ```
 
 ### Stopping Containers
 
 ```bash
 # Stop all VMs
-./scripts/shutdown-virtual.sh all
+./scripts/shutdown-virtual all
 
 # Stop specific VM
-./scripts/shutdown-virtual.sh python
-./scripts/shutdown-virtual.sh postgres
+./scripts/shutdown-virtual python
+./scripts/shutdown-virtual postgres
 ```
 
 ### Initial Setup
 
 ```bash
 # First-time setup: build and start all containers
-./scripts/build-and-start-dev.sh
+./scripts/build-and-start
 
 # Rebuild all containers
-./scripts/build-and-start-dev.sh --rebuild
+./scripts/build-and-start --rebuild
 
 # Full clean rebuild
-./scripts/build-and-start-dev.sh --rebuild --no-cache
+./scripts/build-and-start --rebuild --no-cache
 ```
 
 ## SSH Configuration
@@ -152,9 +152,9 @@ $HOME/dev/
 │   └── ruby/                  # Ruby projects
 ├── public-ssh-keys/           # SSH public keys for containers
 └── scripts/                   # Management scripts
-    ├── start-virtual.sh
-    ├── shutdown-virtual.sh
-    └── build-and-start-dev.sh
+    ├── start-virtual
+    ├── shutdown-virtual
+    └── build-and-start
 ```
 
 ## User Model
@@ -222,10 +222,10 @@ location /api/ {
 
 ## Development Workflow
 
-1. **Start containers:** `./scripts/start-virtual.sh all`
+1. **Start containers:** `./scripts/start-virtual all`
 2. **Connect via SSH:** `ssh python-dev` or use VSCode Remote-SSH
 3. **Work in projects:** All code in `projects/<language>/` persists on host
-4. **Stop containers:** `./scripts/shutdown-virtual.sh all` (when done)
+4. **Stop containers:** `./scripts/shutdown-virtual all` (when done)
 
 **Data Persistence:**
 - All code in `projects/` persists on the host
@@ -255,3 +255,45 @@ docker stats
 - The VDE provides the infrastructure; individual projects define their own workflows
 - All containers share the same Docker network for inter-container communication
 - PostgreSQL is accessible from all language containers via hostname `postgres`
+
+## Documentation Guidelines
+
+### USER_GUIDE.md Requirements
+
+**CRITICAL:** When generating or modifying USER_GUIDE.md, ALL scenarios MUST show the commands being tested.
+
+Each scenario must include:
+1. **The scenario** (Given/When/Then in Gherkin syntax)
+2. **The actual command** being tested
+3. **The expected output/result**
+
+**Example format:**
+```
+**Scenario: Verifying VM status**
+
+Given I started my Python VM
+When I run "list-vms"
+Then I should see which VMs are running
+And Python should show as "running"
+
+**Check status:**
+```bash
+./scripts/list-vms
+```
+
+**You should see:**
+- python: **running** (on port 2200)
+```
+
+This allows users to learn what commands to run directly from the scenarios.
+
+**Script Names (no .sh extension):**
+- `./scripts/build-and-start` (not build-and-start-dev.sh)
+- `./scripts/start-virtual` (not start-virtual.sh)
+- `./scripts/shutdown-virtual` (not shutdown-virtual.sh)
+
+### Branding Guidelines
+
+- VDE is for **anyone**, not specific to any single group
+- Avoid "ZeroToMastery", "students", or other exclusive language
+- Use inclusive terms: "users", "developers", "you"
