@@ -17,9 +17,10 @@ All code is in `projects/<lang>/` which persists on your host.
 cd ~/dev/projects/python/my-api
 # Edit files, they appear in container at ~/workspace
 
-# Avoid: Editing files only in container
+# Access via SSH - files are mounted from host
 ssh python-dev
-# Files created here may be lost on rebuild
+cd ~/workspace  # Mounted from ~/dev/projects/python/
+# Files persist here even after rebuild
 ```
 
 ### 2. Use VSCode Remote-SSH
