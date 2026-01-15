@@ -395,7 +395,7 @@ service|postgres|postgresql|PostgreSQL|apt-get update -y && apt-get install -y p
 | `install_command` | Shell command | Runs during container startup |
 | `service_port` | `5432` or empty | Service port(s) for containers, empty for languages |
 
-**All 18 Language VMs:**
+**All 19 Language VMs:**
 | Name | Aliases | Display Name | SSH Port Range |
 |------|---------|--------------|---------------|
 | c | c | C | 2200-2217 |
@@ -1184,7 +1184,7 @@ Service VMs (like PostgreSQL) work differently:
 |--------|-------------|------------|
 | Container name | `go-dev` | `postgres` (no suffix) |
 | SSH host | `go-dev` | `postgres` |
-| SSH port range | 2200-2217 (18 languages) | 2400-2406 (7 services) |
+| SSH port range | 2200-2218 (19 languages) | 2400-2406 (7 services) |
 | Volume mount | `projects/go/` | `data/postgres/` |
 | Purpose | Development workspace | Persistent data |
 
@@ -1490,7 +1490,7 @@ Connect:
 | File | Lines | Purpose |
 |------|-------|---------|
 | `scripts/vde` | 237 | Unified CLI command for all VDE operations |
-| `scripts/data/vm-types.conf` | 34 | VM type definitions (18 languages + 7 services) |
+| `scripts/data/vm-types.conf` | 34 | VM type definitions (19 languages + 7 services) |
 | `scripts/create-virtual-for` | 199+ | Create new VM from predefined type |
 | `scripts/start-virtual` | 85+ | Start one or more VMs |
 | `scripts/shutdown-virtual` | 65+ | Stop one or more VMs |
@@ -1527,4 +1527,4 @@ The system has evolved from a simple template-based approach to a sophisticated 
 - **AI-powered natural language** interaction
 - **Structured logging** with rotation and query capabilities
 - **Contextual error messages** with remediation steps
-- **18 language VMs** and **7 service VMs** supported out of the box
+- **19 language VMs** and **7 service VMs** supported out of the box

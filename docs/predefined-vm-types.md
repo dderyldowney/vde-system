@@ -6,7 +6,7 @@ All available programming languages and services that can be created with VDE.
 
 ---
 
-## Language VMs (18 total, ports 2200-2299)
+## Language VMs (19 total, ports 2200-2299)
 
 | Name | Aliases | Display Name | Container Name | SSH Host | Install Command |
 |------|---------|--------------|----------------|----------|-----------------|
