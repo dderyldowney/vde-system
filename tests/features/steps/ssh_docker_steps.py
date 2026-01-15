@@ -27,12 +27,14 @@ def step_ssh_custom(context):
 
 @given('~/.ssh/config contains "Host python-dev"')
 def step_ssh_has_python(context):
-    context.ssh_entries = context.ssh_entries or {}
+    if not hasattr(context, 'ssh_entries'):
+        context.ssh_entries = {}
     context.ssh_entries['python-dev'] = {'port': '2200'}
 
 @given('~/.ssh/config contains python-dev configuration')
 def step_python_config(context):
-    context.ssh_entries = context.ssh_entries or {}
+    if not hasattr(context, 'ssh_entries'):
+        context.ssh_entries = {}
     context.ssh_entries['python-dev'] = {'port': '2200'}
 
 @given('~/.ssh/ contains SSH keys')
