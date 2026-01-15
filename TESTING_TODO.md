@@ -41,11 +41,16 @@ Scenario: Parse commands with typos
 
 ---
 
-## Known Architectural Issues
+## Remaining Work
 
-### BDD Tests Use Mocked Context
+### 2. Fix BDD Test Architecture (16 scenarios)
 
-Many BDD test failures are due to the test architecture using mocked context instead of calling actual VDE scripts. These tests were designed for documentation purposes, not integration testing.
+**Root Cause:** Many BDD tests use mocked context instead of calling actual VDE scripts.
+
+**Action Required:**
+1. Remove mocks from BDD step definitions
+2. Implement real VM lifecycle operations in the BDD steps
+3. Have tests call actual VDE scripts like `./scripts/start-virtual.sh`
 
 **Affected Categories:**
 - VM Lifecycle (7 scenarios)
@@ -53,10 +58,9 @@ Many BDD test failures are due to the test architecture using mocked context ins
 - Cache System (2 scenarios)
 - Docker Operations (2 scenarios)
 
-**Resolution:** These are documented for awareness. Real integration tests exist in:
-- `tests/integration/docker-vm-lifecycle.test.sh` (8/10 passing)
+**Reference:** Shell integration tests show the correct pattern:
+- `tests/integration/docker-vm-lifecycle.test.sh`
 - `tests/integration/test_integration_comprehensive.sh`
-- Shell unit tests in `tests/unit/`
 
 ---
 
