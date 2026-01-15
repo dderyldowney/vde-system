@@ -52,34 +52,68 @@ def step_parse_input(context, input_text):
     context.last_input = input_text
 
     # Simple intent detection patterns (mirrors vde-parser logic)
-    # Order matters - more specific patterns first
-    intent_patterns = {
-        'restart_vm': r'restart|rebuild',
-        'list_vms': r'list|show.*available',
-        'create_vm': r'create|add|new|make',
-        'start_vm': r'start|launch|begin|up',
-        'stop_vm': r'stop|shutdown|kill|halt',
-        'status': r'running|status|current|active|what.*running',
-        'connect': r'connect|ssh|access',
-        'help': r'help|can I do|available commands',
-    }
+    # Order matters - check for "show status" before "show" alone
+    input_lower = input_text.lower()
 
-    detected_intent = None
-    for intent, pattern in intent_patterns.items():
-        if re.search(pattern, input_text.lower()):
-            detected_intent = intent
-            break
+    # Check for status with "show" first (more specific pattern)
+    if re.search(r'show status|status of|check status', input_lower):
+        detected_intent = 'status'
+    # Check for help intent
+    elif re.search(r'help|what can i do|available commands', input_lower):
+        detected_intent = 'help'
+    # Check for list/show intents
+    elif re.search(r'list|show|available', input_lower):
+        # But not "show status" which was handled above
+        detected_intent = 'list_vms'
+    # Check for restart
+    elif re.search(r'restart|rebuild', input_lower):
+        detected_intent = 'restart_vm'
+    # Check for create
+    elif re.search(r'create|add|new|make|set up', input_lower):
+        detected_intent = 'create_vm'
+    # Check for start
+    elif re.search(r'start|launch|begin|up|boot', input_lower):
+        detected_intent = 'start_vm'
+    # Check for stop
+    elif re.search(r'stop|shutdown|kill|halt', input_lower):
+        detected_intent = 'stop_vm'
+    # Check for connect
+    elif re.search(r'connect|ssh|access|how do i connect', input_lower):
+        detected_intent = 'connect'
+    # Check for running/status
+    elif re.search(r'running|status|current|active|what.*running', input_lower):
+        detected_intent = 'status'
+    else:
+        detected_intent = 'help'
 
-    context.detected_intent = detected_intent or 'help'
+    context.detected_intent = detected_intent
     PARSE_RESULTS['intent'] = context.detected_intent
 
-    # Extract VM names
-    vm_keywords = ['python', 'rust', 'go', 'js', 'java', 'ruby', 'php', 'scala',
-                   'postgres', 'redis', 'mongo', 'nginx', 'mysql', 'node', 'nodejs']
-    found_vms = [vm for vm in vm_keywords if vm in input_text.lower()]
+    # Extract VM names - expand to handle common aliases
+    alias_map = {
+        'py': 'python', 'python3': 'python', 'js': 'javascript',
+        'node': 'javascript', 'nodejs': 'javascript',
+        'pg': 'postgres', 'postgresql': 'postgres',
+        'rb': 'ruby', 'c++': 'cpp', 'golang': 'go',
+    }
+    # Merge with context aliases if defined
+    if hasattr(context, 'aliases') and context.aliases:
+        alias_map.update(context.aliases)
+
+    vm_keywords = ['python', 'rust', 'go', 'js', 'java', 'ruby', 'php', 'scala', 'csharp',
+                   'postgres', 'redis', 'mongo', 'mongodb', 'nginx', 'mysql', 'node', 'nodejs',
+                   'javascript', 'cpp', 'elixir', 'haskell', 'swift', 'dart', 'flutter', 'py']
+
+    found_vms = []
+    for vm in vm_keywords:
+        if vm in input_lower:
+            # Check if this is an alias that maps to something else
+            canonical = alias_map.get(vm, vm)
+            if canonical not in found_vms:
+                found_vms.append(canonical)
 
     # Check for "all" keyword or "everything"
-    if re.search(r'\b(all|everything)\b', input_text.lower()):
+    if re.search(r'\b(all|everything)\b', input_lower):
         context.detected_vms = 'all'
     elif found_vms:
         context.detected_vms = found_vms
@@ -88,18 +122,18 @@ def step_parse_input(context, input_text):
         context.detected_vms = []
 
     # Extract filter
-    if 'language' in input_text.lower() or ' lang' in input_text.lower():
+    if 'language' in input_lower or ' lang' in input_lower:
         context.detected_filter = 'lang'
         PARSE_RESULTS['filter'] = 'lang'
-    elif 'service' in input_text.lower() or ' svc' in input_text.lower():
+    elif 'service' in input_lower or ' svc' in input_lower:
         context.detected_filter = 'svc'
         PARSE_RESULTS['filter'] = 'svc'
     else:
         context.detected_filter = None
 
     # Extract flags
-    context.rebuild_flag = bool(re.search(r'rebuild', input_text.lower()))
-    context.nocache_flag = bool(re.search(r'no.?cache|without.?cache', input_text.lower()))
+    context.rebuild_flag = bool(re.search(r'rebuild', input_lower))
+    context.nocache_flag = bool(re.search(r'no.?cache|without.?cache', input_lower))
     PARSE_RESULTS['rebuild'] = context.rebuild_flag
     PARSE_RESULTS['nocache'] = context.nocache_flag
 
@@ -137,7 +171,8 @@ def step_check_filter(context, expected_filter):
 @then('VMs should include "{vm_names}"')
 def step_check_vms_include(context, vm_names):
     """Verify detected VMs include specified names."""
-    vms_list = [v.strip() for v in vm_names.split(",")]
+    # Strip quotes that may be included from the feature file parsing
+    vms_list = [v.strip().strip('"\'') for v in vm_names.split(",")]
     if isinstance(context.detected_vms, list):
         for vm in vms_list:
             assert vm in context.detected_vms, \
@@ -157,7 +192,7 @@ def step_check_vms_all(context):
 @then('VMs should NOT include "{vm_names}"')
 def step_check_vms_not_include(context, vm_names):
     """Verify VMs do NOT include specified names."""
-    vms_list = [v.strip() for v in vm_names.split(",")]
+    vms_list = [v.strip().strip('"\'') for v in vm_names.split(",")]
     if isinstance(context.detected_vms, list):
         for vm in vms_list:
             assert vm not in context.detected_vms, \
