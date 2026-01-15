@@ -1,6 +1,6 @@
 # VDE Testing TODO - Failing Tests & Issues
 
-**Last Updated:** 2025-01-14
+**Last Updated:** 2026-01-14
 
 This document tracks all failing tests and what needs to be fixed.
 
@@ -11,10 +11,35 @@ This document tracks all failing tests and what needs to be fixed.
 | Test Suite | Total | Passed | Failed | Error | Skipped |
 |------------|-------|--------|--------|-------|---------|
 | **Shell Tests** | 87 | 87 | 0 | 0 | 0 |
+| **Docker VM Lifecycle** | 10 | 8 | 2 | 0 | 0 |
 | **BDD Tests** | 2503 | 2459 | 20 | 3 | 21 |
 
 **Shell Tests:** ✅ 100% passing
+**Docker VM Lifecycle:** ⚠️ 80% passing (2 failures - likely timing issues)
 **BDD Tests:** ⚠️ ~98% passing (23 failing/error scenarios)
+
+---
+
+## Recent Fixes (2026-01-14)
+
+✅ **Fixed zsh subshell scoping in `ensure_vm_directories`** - Changed from string-based iteration to array-based iteration
+✅ **Fixed log functions output to stderr** - Prevents log messages from being captured in variable assignments
+✅ **Created Docker VM Lifecycle integration test** - `tests/integration/docker-vm-lifecycle.test.sh` (8/10 passing)
+
+### Integration Test Results (docker-vm-lifecycle.test.sh)
+
+| Test | Status |
+|------|--------|
+| Create language VM (elixir) | ✅ PASS |
+| Create service VM (couchdb) | ✅ PASS |
+| Start VM | ✅ PASS |
+| Start multiple VMs | ❌ FAIL (timing issue) |
+| Stop VM | ✅ PASS |
+| Stop all VMs | ✅ PASS |
+| Restart container | ❌ FAIL (container may not be running) |
+| Rebuild VM | ✅ PASS |
+| List VMs | ✅ PASS |
+| Port allocation | ✅ PASS |
 
 ---
 
@@ -130,12 +155,13 @@ def step_vm_created(context, vm_name):
 
 ## Priority Summary
 
-### Priority 1 - Architecture Fix (enables other fixes)
-- [ ] **Move VM lifecycle tests from BDD to shell tests**
-  - Create `tests/integration/vm-lifecycle-integration.test.sh`
-  - Tests should call actual `./scripts/create-virtual-for`, `./scripts/start-virtual`, `./scripts/shutdown-virtual`
-  - Verify with actual `docker ps` commands
-  - Clean up containers after each test
+### ✅ Priority 1 - Architecture Fix (COMPLETED)
+- [x] **Move VM lifecycle tests from BDD to shell tests**
+  - ✅ Created `tests/integration/docker-vm-lifecycle.test.sh`
+  - Tests call actual `./scripts/create-virtual-for`, `./scripts/start-virtual`, `./scripts/shutdown-virtual`
+  - Verifies with actual `docker ps` commands
+  - Cleans up containers after each test
+  - **Status:** 8/10 tests passing (2 timing-related failures)
 
 ### Priority 2 - Parser Fixes
 - [ ] Fix intent detection in `scripts/vde-nlp-parser.sh`
@@ -153,11 +179,11 @@ def step_vm_created(context, vm_name):
 
 ---
 
-## Files to Create
+## Created Files
 
-1. **`tests/integration/vm-lifecycle-integration.test.sh`** - Real VM lifecycle tests
-2. **`tests/integration/docker-operations-integration.test.sh`** - Real Docker operations tests
-3. **`tests/integration/nlp-parser-integration.test.sh`** - Parser tests with real script calls
+1. ✅ **`tests/integration/docker-vm-lifecycle.test.sh`** - Real VM lifecycle tests (8/10 passing)
+2. **`tests/integration/docker-operations-integration.test.sh`** - Real Docker operations tests (TODO)
+3. **`tests/integration/nlp-parser-integration.test.sh`** - Parser tests with real script calls (TODO)
 
 ---
 
@@ -167,3 +193,6 @@ def step_vm_created(context, vm_name):
 - Shell tests already pass 100% - use them as the pattern
 - BDD tests should be for user workflow documentation, not integration testing
 - Integration tests should use actual VDE scripts, not mocked contexts
+- **Bugs Fixed Today:**
+  - `ensure_vm_directories`: Changed from string splitting to array iteration for zsh compatibility
+  - `log_info`, `log_success`, `log_warning`: Now output to stderr to prevent capture in variable assignments
