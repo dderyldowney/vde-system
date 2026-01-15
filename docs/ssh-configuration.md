@@ -444,7 +444,7 @@ All manual steps are now handled by VDE automatically.
 
 - [Quick Start](quick-start.md) - Getting started with VDE
 - [Advanced Usage](advanced-usage.md) - VM-to-VM communication patterns
-- [Architecture](architecture.md) - Technical architecture details
+- [Architecture](ARCHITECTURE.md) - Technical architecture details
 - [Troubleshooting](troubleshooting.md) - Common issues and solutions
 
 ---

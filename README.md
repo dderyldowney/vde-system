@@ -169,7 +169,7 @@ See [SSH Configuration](docs/ssh-configuration.md) for complete details.
 |----------|-------------|
 | [API Reference](docs/API.md) | Complete API reference for scripts and libraries |
 | [User Model & Naming Conventions](docs/user-model.md) | User account and naming standards |
-| [Architecture](docs/architecture.md) | Technical architecture details |
+| [Architecture](docs/ARCHITECTURE.md) | Technical architecture details |
 | [Advanced Usage](docs/advanced-usage.md) | Advanced techniques and patterns |
 | [Rebuild Guidelines](docs/rebuild-guidelines.md) | When and how to rebuild |
 | [Best Practices](docs/best-practices.md) | Recommended practices |
