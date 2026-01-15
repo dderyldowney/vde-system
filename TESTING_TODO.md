@@ -51,6 +51,7 @@ Scenario: Parse commands with typos
 1. Remove mocks from BDD step definitions
 2. Implement real VM lifecycle operations in the BDD steps
 3. Have tests call actual VDE scripts like `./scripts/start-virtual.sh`
+4. **BDD test runner needs Docker access** (Docker-in-Docker or socket mount)
 
 **Affected Categories:**
 - VM Lifecycle (7 scenarios)
