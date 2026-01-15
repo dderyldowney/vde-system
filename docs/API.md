@@ -1160,4 +1160,6 @@ ssh rabbitmq        # RabbitMQ
 
 ---
 
+[← Back to README](../README.md)
+
 *This API reference is generated from the VDE source code. For the latest updates, see the source files in `scripts/lib/`.*
