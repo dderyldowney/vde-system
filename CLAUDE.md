@@ -4,75 +4,134 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a **Virtual Development Environment (VDE)** providing Docker-based development containers for multiple programming languages (Python, Rust, JavaScript, C#, Ruby) with shared infrastructure services (PostgreSQL, Redis, MongoDB, Nginx). All containers use SSH for access and are designed for use with VSCode Remote-SSH.
+This is a **Virtual Development Environment (VDE)** - a sophisticated Docker-based container orchestration system providing isolated development environments for multiple programming languages (Python, Rust, JavaScript, C#, Ruby) with shared infrastructure services (PostgreSQL, Redis, MongoDB, Nginx).
+
+**Key Capabilities:**
+- Template-based container creation with data-driven configuration
+- Automatic SSH setup with agent forwarding for VM-to-VM communication
+- Natural language control via AI assistant interface
+- Cross-shell compatibility (zsh 5.0+, bash 4.0+, bash 3.x)
+- Comprehensive error handling and structured logging
 
 ## Architecture
 
-**Container Setup:**
+### Container Types
+
+**Language VMs** (SSH ports 2200-2299):
 - Each language has its own development container accessible via SSH
 - All containers run as `devuser` (non-root) with sudo privileges
 - SSH key-based authentication only (password auth disabled)
-- Shared services (PostgreSQL, Redis, MongoDB, Nginx) accessible from all language containers
+- Workspace mounted at `/home/devuser/workspace`
 
-**Supported Languages:**
-| Language       | SSH Port | Host Alias      |
-|----------------|----------|-----------------|
-| Python 3.14    | 2200     | python-dev      |
-| Rust (latest)  | 2201     | rust-dev        |
-| JavaScript/Node| 2202     | js-dev          |
-| C#             | 2203     | csharp-dev      |
-| Ruby           | 2204     | ruby-dev        |
-| PostgreSQL     | 2400     | postgres        |
-| Redis          | 2401     | redis           |
-| MongoDB        | 2402     | mongodb         |
-| Nginx          | 2403     | nginx           |
+**Service VMs** (SSH ports 2400-2499):
+- Shared services accessible from all language containers
+- Data persisted on host in `data/` directory
+
+**Predefined Language VMs** (19 total, ports 2200-2218):
+| Type      | SSH Port | Aliases              | Host Alias    |
+|-----------|----------|----------------------|---------------|
+| C         | 2200     | c                    | c-dev         |
+| C++       | 2201     | cpp, c++, gcc        | cpp-dev       |
+| Assembler | 2202     | asm, assembler, nasm | asm-dev       |
+| Python    | 2203     | python, python3      | python-dev    |
+| Rust      | 2204     | rust                 | rust-dev      |
+| JavaScript| 2205     | js, node, nodejs     | js-dev        |
+| C#        | 2206     | csharp, dotnet       | csharp-dev    |
+| Ruby      | 2207     | ruby                 | ruby-dev      |
+| Go        | 2208     | go, golang           | go-dev        |
+| Java      | 2209     | java, jdk            | java-dev      |
+| Kotlin    | 2210     | kotlin               | kotlin-dev    |
+| Swift     | 2211     | swift                | swift-dev     |
+| PHP       | 2212     | php                  | php-dev       |
+| Scala     | 2213     | scala                | scala-dev     |
+| R         | 2214     | r, rlang             | r-dev         |
+| Lua       | 2215     | lua                  | lua-dev       |
+| Flutter   | 2216     | flutter, dart        | flutter-dev   |
+| Elixir    | 2217     | elixir               | elixir-dev    |
+| Haskell   | 2218     | haskell, ghc         | haskell-dev   |
+
+**Predefined Service VMs** (7 total, ports 2400-2406):
+| Type     | SSH Port | Service Port   | Aliases           |
+|----------|----------|----------------|-------------------|
+| PostgreSQL| 2400    | 5432           | postgres, postgresql |
+| Redis    | 2401     | 6379           | redis             |
+| MongoDB  | 2402     | 27017          | mongodb, mongo    |
+| Nginx    | 2403     | 80, 443        | nginx             |
+| CouchDB  | 2404     | 5984           | couchdb           |
+| MySQL    | 2405     | 3306           | mysql             |
+| RabbitMQ | 2406     | 5672, 15672    | rabbitmq          |
+
+### Modular Library System
+
+All core functionality is organized under `scripts/lib/`:
+
+| Library        | Purpose                          |
+|----------------|----------------------------------|
+| `vde-constants`| Centralized config (return codes, ports, timeouts) |
+| `vde-shell-compat`| Cross-shell compatibility layer |
+| `vde-errors`   | Structured error handling with remediation |
+| `vde-log`      | JSON/text/syslog logging with rotation |
+| `vde-core`     | Basic VDE operations (VM status, SSH checks) |
+| `vm-common`    | Full VM management (Docker, SSH, templates) |
+| `vde-commands` | Safe wrapper functions for AI/CLI validation |
+| `vde-parser`   | Natural language intent detection |
 
 ## Container Management
 
-### Starting Containers
+### Primary Commands
 
 ```bash
-# Start all VMs
-./scripts/start-virtual all
+# Create a new VM (generates docker-compose.yml from template)
+./scripts/create-virtual-for <vm-name>
 
-# Start specific VM
-./scripts/start-virtual python
-./scripts/start-virtual rust
+# Start VM(s)
+./scripts/start-virtual <vm-name>           # Start specific VM
+./scripts/start-virtual all                  # Start all VMs
+./scripts/start-virtual python --rebuild     # Rebuild before starting
 
-# Start with rebuild (when Dockerfiles change)
-./scripts/start-virtual python --rebuild
-
-# Full rebuild with no cache
-./scripts/start-virtual python --rebuild --no-cache
-```
-
-### Stopping Containers
-
-```bash
-# Stop all VMs
+# Stop VM(s)
+./scripts/shutdown-virtual <vm-name>
 ./scripts/shutdown-virtual all
 
-# Stop specific VM
-./scripts/shutdown-virtual python
-./scripts/shutdown-virtual postgres
+# List available and running VMs
+./scripts/list-vms
+
+# Unified CLI entry point (newer approach)
+./scripts/vde <command> [options]
 ```
 
-### Initial Setup
+### AI Assistant Interface
 
 ```bash
-# First-time setup: build and start all containers
-./scripts/build-and-start
+# Natural language control (single command)
+./scripts/vde-ai "start the python and rust vms"
 
-# Rebuild all containers
-./scripts/build-and-start --rebuild
-
-# Full clean rebuild
-./scripts/build-and-start --rebuild --no-cache
+# Interactive AI chat mode
+./scripts/vde-chat
 ```
+
+**Supported Intents:**
+- `list_vms` - List available VMs
+- `create_vm` - Create new VMs
+- `start_vm`/`stop_vm`/`restart_vm` - Container lifecycle
+- `status` - Show running status
+- `connect` - Get SSH connection info
+- `add_vm_type` - Add new VM types dynamically
+
+### Rebuild Guidelines
+
+| Change Type                     | Command                        |
+|---------------------------------|--------------------------------|
+| Daily development              | No rebuild needed              |
+| Dockerfile modified            | `--rebuild`                    |
+| SSH keys changed               | `--rebuild`                    |
+| Environment variables changed  | `--rebuild`                    |
+| Base images updated            | `--rebuild --no-cache`         |
 
 ## SSH Configuration
 
-**Automatic SSH Setup:**
+### Automatic SSH Setup
+
 VDE handles all SSH configuration automatically:
 - SSH agent is started and keys are loaded automatically
 - SSH keys are detected automatically (ed25519, RSA, ECDSA, DSA)
@@ -80,18 +139,19 @@ VDE handles all SSH configuration automatically:
 - SSH config entries are created automatically
 - No manual configuration required
 
+### SSH Agent Forwarding
+
 **VM-to-VM Communication:**
-With SSH agent forwarding, VMs can communicate with each other using your host's SSH keys:
+VMs can SSH to each other using your host's SSH keys (private keys never leave the host):
 ```bash
-# From Go VM
-ssh go-dev
+# From within any VM
 ssh python-dev                # SSH to Python VM using host keys
 ssh rust-dev pwd              # Run command on Rust VM
 scp postgres-dev:/data/file . # Copy from PostgreSQL VM
 ```
 
 **VM-to-Host Communication:**
-Execute commands on host from within any VM:
+Execute commands on host from within any VM via `to-host` wrapper:
 ```bash
 # From within any VM
 to-host ls ~/dev              # List host's dev directory
@@ -109,53 +169,96 @@ git push origin main
 **Key Types Supported:**
 VDE automatically detects and uses any of these: `id_ed25519`, `id_ecdsa`, `id_rsa`, `id_ecdsa_sk`, `id_ed25519_sk`, `id_dsa`
 
-**Connecting:**
-```bash
-# Command line
-ssh python-dev
-ssh rust-dev
-
-# VSCode Remote-SSH
-# Use connection name: python-dev, rust-dev, etc.
-```
-
 ## Directory Structure
 
 ```
 $HOME/dev/
-├── backup/ssh/config           # SSH config template
+├── backup/                     # Configuration backups
+│   └── ssh/config             # SSH config template
 ├── configs/                    # Configuration files
 │   ├── docker/                # Docker configurations
 │   │   ├── base-dev.Dockerfile # Base image for all dev VMs
-│   │   ├── python/            # Python container config
-│   │   ├── rust/              # Rust container config
-│   │   ├── js/                # JavaScript container config
-│   │   ├── csharp/            # C# container config
-│   │   ├── ruby/              # Ruby container config
-│   │   ├── postgres/          # PostgreSQL container config
-│   │   ├── redis/             # Redis container config
-│   │   ├── mongodb/           # MongoDB container config
-│   │   └── nginx/             # Nginx container config
-│   └── nginx/                 # Nginx configuration files
+│   │   ├── python/            # Language container configs
+│   │   ├── rust/
+│   │   ├── js/
+│   │   ├── csharp/
+│   │   ├── ruby/
+│   │   ├── go/
+│   │   ├── postgres/          # Service container configs
+│   │   ├── redis/
+│   │   ├── mongodb/
+│   │   └── nginx/
+│   └── nginx/                 # Nginx reverse proxy configs
 ├── data/                       # Persistent data volumes
 │   ├── postgres/              # PostgreSQL data (persisted)
 │   ├── mongodb/               # MongoDB data
 │   └── redis/                 # Redis data
-├── env-files/                  # Environment variable files
+├── docs/                       # Complete documentation
+│   ├── ARCHITECTURE.md         # System architecture details
+│   ├── USER_GUIDE.md           # User guide with BDD scenarios
+│   └── API.md                  # Internal API documentation
+├── env-files/                  # Environment variable files per VM
 ├── logs/                       # Application and access logs
 │   └── nginx/                 # Nginx access and error logs
-├── projects/                   # Project source code
+├── projects/                   # Project source code (excluded from VDE core)
 │   ├── python/                # Python projects
 │   ├── rust/                  # Rust projects
 │   ├── js/                    # JavaScript projects
 │   ├── csharp/                # C# projects
-│   └── ruby/                  # Ruby projects
+│   ├── ruby/                  # Ruby projects
+│   └── go/                    # Go projects
 ├── public-ssh-keys/           # SSH public keys for containers
-└── scripts/                   # Management scripts
-    ├── start-virtual
-    ├── shutdown-virtual
-    └── build-and-start
+├── scripts/                   # Management scripts and libraries
+│   ├── lib/                   # Core modular libraries
+│   │   ├── vde-constants      # Centralized constants
+│   │   ├── vde-shell-compat   # Shell compatibility layer
+│   │   ├── vde-errors         # Error handling
+│   │   ├── vde-log            # Logging system
+│   │   ├── vde-core           # Core operations
+│   │   ├── vm-common          # VM management
+│   │   ├── vde-commands       # Safe wrappers
+│   │   └── vde-parser         # NL parser
+│   ├── templates/             # Docker Compose templates
+│   │   ├── language-compose.yml.template
+│   │   └── service-compose.yml.template
+│   ├── data/                  # VM type configuration
+│   │   └── vm-types.conf      # Data-driven VM definitions
+│   ├── vde                    # Unified CLI entry point
+│   ├── create-virtual-for     # Create new VMs
+│   ├── start-virtual          # Start VMs
+│   ├── shutdown-virtual       # Stop VMs
+│   ├── list-vms               # List VMs
+│   ├── vde-ai                 # AI command interface
+│   └── vde-chat               # Interactive AI chat
+└── tests/                     # Comprehensive test suite
+    ├── features/              # Behave BDD feature specs
+    └── unit/                  # Unit tests for libraries
 ```
+
+## Data-Driven Configuration
+
+### VM Types Configuration
+
+VM types are defined in `scripts/data/vm-types.conf` (pipe-delimited format):
+
+```
+vm_type|display_name|category|dockerfile_dir|default_ssh_port|service_port|image_prefix
+```
+
+**Adding New VM Types:**
+Simply add a line to `vm-types.conf` - no code changes required:
+```bash
+# Example: Add Elixir VM
+echo "elixir|Elixir|language|elixir|2206||elixir-dev" >> scripts/data/vm-types.conf
+```
+
+### Template System
+
+Docker Compose files are generated from templates in `scripts/templates/`:
+- `language-compose.yml.template` - For language VMs
+- `service-compose.yml.template` - For service VMs
+
+Templates use placeholder variables that are replaced during VM creation.
 
 ## User Model
 
@@ -165,6 +268,7 @@ $HOME/dev/
 - Editor: `neovim` with LazyVim configuration
 - Sudo: Passwordless sudo access
 - Authentication: SSH key only
+- SSH agent: Forwarded from host for VM-to-VM communication
 
 **Base Image:** All language containers extend `configs/docker/base-dev.Dockerfile`
 
@@ -185,9 +289,15 @@ psql -h postgres -U devuser
 **Initial database setup:**
 Databases are created via `configs/postgres/01-create-dev-dbs.sql`
 
-### Redis
+### Redis (Port 2401)
 
 Redis is available as a shared service for caching and data structures.
+Data persists in `data/redis/` on the host.
+
+### MongoDB (Port 2402)
+
+MongoDB is available as a document database service.
+Data persists in `data/mongodb/` on the host.
 
 ### Nginx (Port 2403)
 
@@ -208,28 +318,17 @@ location /api/ {
 }
 ```
 
-## Rebuild Guidelines
-
-**When to rebuild:**
-
-| Change Type                     | Command                        |
-|---------------------------------|--------------------------------|
-| Daily development              | No rebuild needed              |
-| Dockerfile modified            | `--rebuild`                    |
-| SSH keys changed               | `--rebuild`                    |
-| Environment variables changed  | `--rebuild`                    |
-| Base images updated            | `--rebuild --no-cache`         |
-
 ## Development Workflow
 
-1. **Start containers:** `./scripts/start-virtual all`
-2. **Connect via SSH:** `ssh python-dev` or use VSCode Remote-SSH
-3. **Work in projects:** All code in `projects/<language>/` persists on host
-4. **Stop containers:** `./scripts/shutdown-virtual all` (when done)
+1. **Create VM:** `./scripts/create-virtual-for <vm-name>` (first time only)
+2. **Start VMs:** `./scripts/start-virtual all`
+3. **Connect:** `ssh python-dev` or use VSCode Remote-SSH
+4. **Work:** All code in `projects/<language>/` persists on host
+5. **Stop:** `./scripts/shutdown-virtual all` (when done)
 
 **Data Persistence:**
 - All code in `projects/` persists on the host
-- PostgreSQL data in `data/postgres/` persists across container restarts
+- Service data in `data/` persists across container restarts
 - Container state is ephemeral (rebuilds create fresh containers)
 
 ## Common Commands
@@ -247,13 +346,73 @@ docker exec -it python-dev /bin/zsh
 
 # View container resource usage
 docker stats
+
+# List all VMs (available and running)
+./scripts/list-vms
 ```
+
+## Port Allocation
+
+**Language VMs:** Ports 2200-2299 (sequentially allocated)
+**Service VMs:** Ports 2400-2499 (sequentially allocated)
+
+Port allocation is managed via a registry system to prevent conflicts. Ports are tracked in `scripts/data/port-registry` and cached for performance.
+
+## Error Handling
+
+All VDE functions return structured exit codes:
+- `0` - Success
+- `1` - General error
+- `2` - VM not found
+- `3` - Port conflict
+- `4` - Docker error
+- `5` - SSH error
+- `6` - Permission denied
+- `7` - Invalid input
+
+Error messages include remediation suggestions where applicable.
+
+## Logging
+
+The `vde-log` library provides:
+- Multiple output formats: JSON, text, syslog
+- Log rotation support
+- Configurable log levels
+- Structured logging with metadata
+
+Logs are written to `logs/vde.log` by default.
+
+## Testing
+
+The system includes comprehensive tests:
+
+```bash
+# Run BDD feature tests
+cd tests && behave
+
+# Run unit tests (if available)
+cd tests && ./run-unit-tests
+```
+
+**Test Levels:**
+- Feature Tests: BDD-style Gherkin specifications
+- Unit Tests: Individual library function tests
+- Integration Tests: End-to-end workflow validation
+
+## Cross-Shell Compatibility
+
+VDE works across multiple shell versions:
+- **zsh 5.0+** - Full support
+- **bash 4.0+** - Full support with native arrays
+- **bash 3.x** - Fallback support with emulated arrays
+
+The `vde-shell-compat` library provides a unified interface for shell-specific operations.
 
 ## Notes
 
 - Each project under `projects/<language>/` may have its own CLAUDE.md with project-specific guidance
 - The VDE provides the infrastructure; individual projects define their own workflows
-- All containers share the same Docker network for inter-container communication
+- All containers share the same Docker network (`vde-network`) for inter-container communication
 - PostgreSQL is accessible from all language containers via hostname `postgres`
 
 ## Documentation Guidelines
@@ -291,6 +450,7 @@ This allows users to learn what commands to run directly from the scenarios.
 - `./scripts/build-and-start` (not build-and-start-dev.sh)
 - `./scripts/start-virtual` (not start-virtual.sh)
 - `./scripts/shutdown-virtual` (not shutdown-virtual.sh)
+- `./scripts/create-virtual-for` (not create-virtual-for.sh)
 
 ### Branding Guidelines
 
