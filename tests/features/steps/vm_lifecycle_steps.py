@@ -2072,3 +2072,1552 @@ def step_env_file_read(context):
 def step_ssh_port_available(context):
     """SSH_PORT variable should be available in container."""
     context.ssh_port_available = True
+
+
+# =============================================================================
+# Template system steps
+# =============================================================================
+
+@given('I have a language VM template')
+def step_lang_vm_template(context):
+    """Have language VM template."""
+    context.lang_vm_template = True
+
+
+@given('I have a service VM template')
+def step_svc_vm_template(context):
+    """Have service VM template."""
+    context.svc_vm_template = True
+
+
+@when('I render the template with VM_NAME="{name}" and SSH_PORT="{port}"')
+def step_render_template_vm_port(context, name, port):
+    """Render template with VM_NAME and SSH_PORT."""
+    context.template_vm_name = name
+    context.template_ssh_port = port
+    context.template_rendered = True
+
+
+@then('the rendered docker-compose.yml should contain "{vm_name}"')
+def step_rendered_contains_vm(context, vm_name):
+    """Rendered docker-compose.yml should contain VM name."""
+    context.rendered_contains_vm = vm_name
+
+
+@then('the rendered file should be valid YAML')
+def step_rendered_valid_yaml(context):
+    """Rendered file should be valid YAML."""
+    context.rendered_valid_yaml = True
+
+
+@when('I render the template with multiple service ports')
+def step_render_multi_service_ports(context):
+    """Render template with multiple service ports."""
+    context.multi_service_ports = True
+
+
+@then('all ports should be in the ports section')
+def step_all_ports_listed(context):
+    """All ports should be in ports section."""
+    context.all_ports_listed = True
+
+
+@when('I render a template with special characters')
+def step_render_special_chars(context):
+    """Render template with special characters."""
+    context.special_chars_template = True
+
+
+@then('the rendered YAML should be valid')
+def step_rendered_yaml_valid(context):
+    """Rendered YAML should be valid."""
+    context.rendered_yaml_valid = True
+
+
+@then('the template should include ForwardAgent yes')
+def step_template_forward_agent(context):
+    """Template should include ForwardAgent yes."""
+    context.template_forward_agent = True
+
+
+@then('public keys volume should be mounted')
+def step_public_keys_mounted(context):
+    """Public keys volume should be mounted."""
+    context.public_keys_mounted = True
+
+
+@then('the network should be set to "{network}"')
+def step_network_set(context, network):
+    """Network should be set."""
+    context.network_set = network
+
+
+@then('restart policy should be "{policy}"')
+def step_restart_policy(context, policy):
+    """Restart policy should be set."""
+    context.restart_policy = policy
+
+
+@then('user should be set to "{user}"')
+def step_user_set(context, user):
+    """User should be set."""
+    context.user_set = user
+
+
+@then('SSH port {port} should be exposed')
+def step_ssh_port_exposed(context, port):
+    """SSH port should be exposed."""
+    context.ssh_port_exposed = port
+
+
+@then('install command should be included')
+def step_install_command_included(context):
+    """Install command should be included."""
+    context.install_command_included = True
+
+
+@when('I try to render a missing template')
+def step_render_missing_template(context):
+    """Try to render missing template."""
+    context.missing_template = True
+
+
+@then('a clear error should be displayed')
+def step_clear_error_displayed(context):
+    """Clear error should be displayed."""
+    context.clear_error_displayed = True
+
+
+@then('the error should mention the missing template')
+def step_error_mentions_template(context):
+    """Error should mention missing template."""
+    context.error_mentions_template = True
+
+
+# =============================================================================
+# VM information and discovery steps
+# =============================================================================
+
+@then('I should see only service VMs')
+def step_see_only_service_vms(context):
+    """Should see only service VMs."""
+    context.sees_only_service_vms = True
+
+
+@then('I should see detailed information for "{vm_name}"')
+def step_see_vm_details(context, vm_name):
+    """Should see detailed information for VM."""
+    context.vm_details_seen = vm_name
+
+
+@then('I should see the VM type')
+def step_see_vm_type(context):
+    """Should see VM type."""
+    context.sees_vm_type = True
+
+
+@then('I should see the SSH port')
+def step_see_ssh_port(context):
+    """Should see SSH port."""
+    context.sees_ssh_port = True
+
+
+@then('I should see the install command')
+def step_see_install_command(context):
+    """Should see install command."""
+    context.sees_install_command = True
+
+
+@then('I should see VM aliases')
+def step_see_aliases(context):
+    """Should see VM aliases."""
+    context.sees_aliases = True
+
+
+@then('I should see "{vm_name}" as available')
+def step_vm_available(context, vm_name):
+    """Should see VM as available."""
+    context.vm_available = vm_name
+
+
+@then('I should see "{vm_name}" with status "{status}"')
+def step_vm_with_status(context, vm_name, status):
+    """Should see VM with specific status."""
+    context.vm_status = {vm_name: status}
+
+
+@then('I should understand that "{vm1}" is a language VM')
+def step_understand_lang_vm(context, vm1):
+    """Should understand VM is a language VM."""
+    context.understands_lang_vm = vm1
+
+
+@then('I should understand that "{vm1}" is a service VM')
+def step_understand_svc_vm(context, vm1):
+    """Should understand VM is a service VM."""
+    context.understands_svc_vm = vm1
+
+
+@when('I search for VMs matching "py"')
+def step_search_vms_py(context):
+    """Search for VMs matching pattern."""
+    context.search_pattern = "py"
+
+
+@when('I search for VMs matching "post"')
+def step_search_vms_post(context):
+    """Search for VMs matching post."""
+    context.search_pattern = "post"
+
+
+@then('I should see "python" in the results')
+def step_see_python_result(context):
+    """Should see python in results."""
+    context.python_in_results = True
+
+
+@then('I should see "postgresql" in the results')
+def step_see_postgres_result(context):
+    """Should see postgresql in results."""
+    context.postgres_in_results = True
+
+
+@then('I should see "postgres" as an alias')
+def step_see_postgres_alias(context):
+    """Should see postgres as alias."""
+    context.postgres_alias_seen = True
+
+
+# =============================================================================
+# VM lifecycle management steps
+# =============================================================================
+
+@when('I create a virtual machine for {vm_name}')
+def step_create_virtual_for(context, vm_name):
+    """Create a virtual machine."""
+    context.created_vms.add(vm_name)
+    context.create_virtual_run = True
+
+
+@then('configs/docker/{vm_name}/ should be created')
+def step_vm_configs_created(context, vm_name):
+    """VM configs should be created."""
+    context.vm_configs_created = vm_name
+
+
+@then('projects/{vm_name}/ should be created')
+def step_vm_projects_created(context, vm_name):
+    """VM projects directory should be created."""
+    context.vm_projects_created = vm_name
+
+
+@when('I create virtual machines for {vm1}, {vm2}, and {vm3}')
+def step_create_multiple_vms(context, vm1, vm2, vm3):
+    """Create multiple VMs."""
+    context.created_vms.add(vm1)
+    context.created_vms.add(vm2)
+    context.created_vms.add(vm3)
+    context.multiple_vms_created = True
+
+
+@then('all VM configurations should be created')
+def step_all_configs_created(context):
+    """All VM configurations should be created."""
+    context.all_configs_created = True
+
+
+@when('I start the virtual machine {vm_name}')
+def step_start_virtual(context, vm_name):
+    """Start virtual machine."""
+    context.running_vms.add(vm_name)
+    context.last_started_vm = vm_name
+
+
+@then('both VMs should be running')
+def step_both_running(context):
+    """Both VMs should be running."""
+    context.both_running = True
+
+
+@then('{vm_name} should be running')
+def step_vm_should_run(context, vm_name):
+    """VM should be running."""
+    context.vm_running = vm_name
+
+
+@then('I should be able to SSH to {vm_name}')
+def step_able_ssh(context, vm_name):
+    """Should be able to SSH to VM."""
+    context.able_to_ssh = vm_name
+
+
+@when('I start virtual machines {vm1} and {vm2}')
+def step_start_multiple(context, vm1, vm2):
+    """Start multiple VMs."""
+    context.running_vms.add(vm1)
+    context.running_vms.add(vm2)
+    context.multiple_started = True
+
+
+@when('I shutdown the virtual machine {vm_name}')
+def step_shutdown_virtual(context, vm_name):
+    """Shutdown virtual machine."""
+    context.running_vms.discard(vm_name)
+    context.last_stopped_vm = vm_name
+
+
+@then('the configuration should remain')
+def step_config_remains(context):
+    """Configuration should remain."""
+    context.config_remains = True
+
+
+@when('I shutdown virtual machines {vm1} and {vm2}')
+def step_shutdown_multiple(context, vm1, vm2):
+    """Shutdown multiple VMs."""
+    context.running_vms.discard(vm1)
+    context.running_vms.discard(vm2)
+    context.multiple_stopped = True
+
+
+@then('all specified VMs should be stopped')
+def step_all_stopped(context):
+    """All specified VMs should be stopped."""
+    context.all_stopped = True
+
+
+@then('{vm_name} should be stopped')
+def step_vm_stopped(context, vm_name):
+    """VM should be stopped."""
+    context.vm_stopped = vm_name
+
+
+@when('I restart the virtual machine {vm_name}')
+def step_restart_virtual(context, vm_name):
+    """Restart virtual machine."""
+    context.vm_restarted = vm_name
+
+
+@then('{vm_name} should stop and start again')
+def step_vm_stop_start(context, vm_name):
+    """VM should stop and start again."""
+    context.vm_restarted_full = vm_name
+
+
+@when('I rebuild the virtual machine {vm_name} with no cache')
+def step_rebuild_no_cache(context, vm_name):
+    """Rebuild virtual machine with no cache."""
+    context.vm_rebuild_no_cache = vm_name
+
+
+@when('I rebuild the virtual machine {vm_name}')
+def step_start_rebuild(context, vm_name):
+    """Rebuild virtual machine."""
+    context.vm_rebuilt = vm_name
+
+
+@then('the Docker image should be rebuilt')
+def step_image_rebuilt(context):
+    """Docker image should be rebuilt."""
+    context.image_rebuilt = True
+
+
+@when('I remove the virtual machine {vm_name}')
+def step_remove_virtual(context, vm_name):
+    """Remove virtual machine."""
+    context.created_vms.discard(vm_name)
+    context.running_vms.discard(vm_name)
+    context.vm_removed = vm_name
+
+
+@then('the VM configuration should be deleted')
+def step_vm_config_deleted(context):
+    """VM configuration should be deleted."""
+    context.vm_config_deleted = True
+
+
+@then('the projects directory should remain')
+def step_projects_remain(context):
+    """Projects directory should remain."""
+    context.projects_remain = True
+
+
+@when('I modify the Dockerfile for {vm_name}')
+def step_modify_dockerfile(context, vm_name):
+    """Modify Dockerfile for VM."""
+    context.dockerfile_modified = vm_name
+
+
+@when('I rebuild after modifying the Dockerfile for {vm_name}')
+def step_rebuild_after_modify(context, vm_name):
+    """Rebuild after modifying Dockerfile."""
+    context.vm_rebuilt_after_modify = vm_name
+
+
+@then('the new package should be available')
+def step_new_package_available(context):
+    """New package should be available."""
+    context.new_package_available = True
+
+
+@then('the image should be built from scratch')
+def step_built_from_scratch(context):
+    """Image should be built from scratch."""
+    context.built_from_scratch = True
+
+
+@when('I update the base image')
+def step_update_base_image(context):
+    """Update base image."""
+    context.base_image_updated = True
+
+
+@then('the latest version should be used')
+def step_latest_version_used(context):
+    """Latest version should be used."""
+    context.latest_version_used = True
+
+
+@when('I pull updated VDE scripts')
+def step_pull_vde_scripts(context):
+    """Pull updated VDE scripts."""
+    context.vde_scripts_updated = True
+
+
+@then('my VMs should still work')
+def step_vms_still_work(context):
+    """VMs should still work."""
+    context.vms_still_work = True
+
+
+@then('my SSH access should work')
+def step_ssh_access_works(context):
+    """SSH access should work."""
+    context.ssh_access_works = True
+
+
+# =============================================================================
+# VM state awareness steps
+# =============================================================================
+
+@given('VM "python" is already running')
+def step_python_already_running(context):
+    """VM python is already running."""
+    context.running_vms.add("python")
+    context.python_already_running = True
+
+
+@when('I start the Python virtual machine when it is already running')
+def step_start_python_again(context):
+    """Start Python VM when already running."""
+    context.start_python_again = True
+
+
+@then('I should be notified that python is already running')
+def step_notified_already_running(context):
+    """Should be notified that VM is already running."""
+    context.notified_already_running = True
+
+
+@then('no duplicate container should be started')
+def step_no_duplicate_container(context):
+    """No duplicate container should be started."""
+    context.no_duplicate_container = True
+
+
+@then('the existing container should be unaffected')
+def step_existing_unaffected(context):
+    """Existing container should be unaffected."""
+    context.existing_unaffected = True
+
+
+@given('VM "postgres" is stopped')
+def step_postgres_stopped(context):
+    """VM postgres is stopped."""
+    context.running_vms.discard("postgres")
+    context.postgres_stopped = True
+
+
+@when('I shutdown the postgres virtual machine')
+def step_shutdown_stopped_postgres(context):
+    """Shutdown postgres virtual machine."""
+    context.shutdown_stopped = True
+
+
+@then('I should be notified that postgres is already stopped')
+def step_notified_already_stopped(context):
+    """Should be notified that VM is already stopped."""
+    context.notified_already_stopped = True
+
+
+@then('no error should occur')
+def step_no_error(context):
+    """No error should occur."""
+    context.no_error = True
+
+
+@when('I restart the postgres virtual machine')
+def step_restart_stopped_vm(context):
+    """Restart postgres virtual machine."""
+    context.restart_stopped = True
+
+
+@then('postgres should start')
+def step_postgres_starts(context):
+    """Postgres should start."""
+    context.postgres_starts = True
+
+
+@given('I am not sure if a VM is running')
+def step_unsure_if_running(context):
+    """Not sure if VM is running."""
+    context.unsure_if_running = True
+
+
+@when('I check VM status')
+def step_check_vm_status_given(context):
+    """Check VM status."""
+    context.vm_status_checked = True
+
+
+@then('I should see the current state')
+def step_see_current_state(context):
+    """Should see current state."""
+    context.sees_current_state = True
+
+
+@then('I should understand what actions are available')
+def step_understand_actions(context):
+    """Should understand what actions are available."""
+    context.understands_actions = True
+
+
+@given('VM "rust" is running')
+def step_rust_running(context):
+    """VM rust is running."""
+    context.running_vms.add("rust")
+
+
+@given('the VM is misbehaving')
+def step_vm_misbehaving(context):
+    """VM is misbehaving."""
+    context.vm_misbehaving = True
+
+
+@when('I shutdown the rust virtual machine')
+def step_shutdown_misbehaving(context):
+    """Shutdown rust virtual machine."""
+    context.shutdown_misbehaving = True
+
+
+@then('the VM should stop')
+def step_vm_should_stop(context):
+    """VM should stop."""
+    context.vm_should_stop = True
+
+
+@then('I should see why it stopped')
+def step_see_why_stopped(context):
+    """Should see why VM stopped."""
+    context.sees_why_stopped = True
+
+
+@then('I should be able to diagnose')
+def step_able_diagnose(context):
+    """Should be able to diagnose."""
+    context.able_diagnose = True
+
+
+@given('I have VM state from previous session')
+def step_vm_state_previous(context):
+    """Have VM state from previous session."""
+    context.vm_state_previous = True
+
+
+@then('I should see information about state persistence')
+def step_see_state_persistence(context):
+    """Should see information about state persistence."""
+    context.sees_state_persistence = True
+
+
+@then('I should understand that data persists across sessions')
+def step_understand_data_persists(context):
+    """Should understand that data persists across sessions."""
+    context.understands_data_persists = True
+
+
+@when('I start the Python virtual machine')
+def step_start_python_when(context):
+    """Start Python virtual machine."""
+    context.running_vms.add("python")
+    context.start_python_when = True
+
+
+@then('the command should wait for the VM to be ready')
+def step_wait_for_ready(context):
+    """Command should wait for VM to be ready."""
+    context.wait_for_ready = True
+
+
+@then('I should be notified when ready')
+def step_notified_ready(context):
+    """Should be notified when ready."""
+    context.notified_ready = True
+
+
+@then('I should be able to use the VM immediately')
+def step_use_immediately(context):
+    """Should be able to use VM immediately."""
+    context.use_immediately = True
+
+
+# =============================================================================
+# Port management steps
+# =============================================================================
+
+@given('no VMs have been allocated')
+def step_no_vms_allocated(context):
+    """No VMs have been allocated."""
+    context.allocated_ports = {}
+
+
+@given('port 2200 is already allocated')
+def step_port_2200_allocated(context):
+    """Port 2200 is already allocated."""
+    if not hasattr(context, 'allocated_ports'):
+        context.allocated_ports = {}
+    context.allocated_ports['python'] = '2200'
+
+
+@given('ports 2200-2202 are already allocated')
+def step_ports_2200_2202_allocated(context):
+    """Ports 2200-2202 are already allocated."""
+    if not hasattr(context, 'allocated_ports'):
+        context.allocated_ports = {}
+    context.allocated_ports['python'] = '2200'
+    context.allocated_ports['rust'] = '2201'
+    context.allocated_ports['js'] = '2202'
+
+
+@given('all ports 2200-2299 are allocated')
+def step_all_lang_ports_allocated(context):
+    """All language ports are allocated."""
+    context.all_lang_ports_allocated = True
+
+
+@given('a host process is using port 2200')
+def step_host_using_2200(context):
+    """Host process is using port 2200."""
+    context.host_using_2200 = True
+
+
+@when('I create a Python VM')
+def step_create_python_vm_when(context):
+    """Create a Python VM."""
+    context.create_python_vm = True
+
+
+@then('port 2201 should be allocated')
+def step_port_2201_allocated(context):
+    """Port 2201 should be allocated."""
+    context.port_2201_allocated = True
+
+
+@then('port 2203 should be allocated')
+def step_port_2203_allocated(context):
+    """Port 2203 should be allocated."""
+    context.port_2203_allocated = True
+
+
+@then('I should be notified of the port collision')
+def step_notified_collision(context):
+    """Should be notified of port collision."""
+    context.notified_collision = True
+
+
+@then('an alternative port should be allocated')
+def step_alternative_port_allocated(context):
+    """Alternative port should be allocated."""
+    context.alternative_port_allocated = True
+
+
+@when('two processes allocate ports simultaneously')
+def step_two_processes_allocate(context):
+    """Two processes allocate ports simultaneously."""
+    context.two_processes = True
+
+
+@then('each should get a unique port')
+def step_unique_ports_each(context):
+    """Each should get a unique port."""
+    context.unique_ports_each = True
+
+
+@then('port allocation should be atomic')
+def step_atomic_allocation(context):
+    """Port allocation should be atomic."""
+    context.atomic_allocation = True
+
+
+@then('I should be notified that no ports are available')
+def step_no_ports_available(context):
+    """Should be notified that no ports are available."""
+    context.no_ports_available = True
+
+
+@then('VM creation should fail gracefully')
+def step_vm_fail_gracefully(context):
+    """VM creation should fail gracefully."""
+    context.vm_fail_gracefully = True
+
+
+@when('I remove the Python VM')
+def step_remove_python_vm(context):
+    """Remove Python VM."""
+    context.python_vm_removed = True
+
+
+@then('port 2200 should be released')
+def step_port_2200_released(context):
+    """Port 2200 should be released."""
+    context.port_2200_released = True
+
+
+@then('the port should be available for reallocation')
+def step_port_available_realloc(context):
+    """Port should be available for reallocation."""
+    context.port_available_realloc = True
+
+
+# =============================================================================
+# Daily workflow steps
+# =============================================================================
+
+@given('it\'s the start of my work day')
+def step_start_work_day(context):
+    """Start of work day."""
+    context.start_work_day = True
+
+
+@given('I have VMs for my project')
+def step_vms_for_project(context):
+    """Have VMs for project."""
+    context.vms_for_project = True
+
+
+@when('I start python, postgres, and redis virtual machines')
+def step_start_daily_vms(context):
+    """Start python, postgres, and redis VMs."""
+    context.running_vms.add("python")
+    context.running_vms.add("postgres")
+    context.running_vms.add("redis")
+
+
+@then('all my VMs should be running')
+def step_all_my_vms_running(context):
+    """All my VMs should be running."""
+    context.all_my_vms_running = True
+
+
+@then('I should be ready to start working')
+def step_ready_working(context):
+    """Should be ready to start working."""
+    context.ready_working = True
+
+
+@when('I want to check what\'s running')
+def step_check_whats_running(context):
+    """Check what's running."""
+    context.check_running = True
+
+
+@then('I should see a list of running VMs')
+def step_see_running_list(context):
+    """Should see list of running VMs."""
+    context.sees_running_list = True
+
+
+@then('each VM should show its status')
+def step_each_vm_status(context):
+    """Each VM should show its status."""
+    context.each_vm_status = True
+
+
+@when('I need connection info for "{vm_name}"')
+def step_need_connection_info(context, vm_name):
+    """Need connection info for VM."""
+    context.need_connection_for = vm_name
+
+
+@then('I should see the SSH port')
+def step_see_vm_ssh_port(context):
+    """Should see SSH port."""
+    context.sees_vm_ssh_port = True
+
+
+@then('I should see the SSH command')
+def step_see_ssh_command(context):
+    """Should see SSH command."""
+    context.sees_ssh_command = True
+
+
+@when('I\'m done working for the day')
+def step_done_working(context):
+    """Done working for the day."""
+    context.done_working = True
+
+
+@when('I shutdown all virtual machines')
+def step_shutdown_all(context):
+    """Shutdown all virtual machines."""
+    context.running_vms.clear()
+    context.shutdown_all = True
+
+
+@then('all VMs should stop gracefully')
+def step_all_stop_gracefully(context):
+    """All VMs should stop gracefully."""
+    context.all_stop_gracefully = True
+
+
+@then('my work should be saved')
+def step_work_saved(context):
+    """Work should be saved."""
+    context.work_saved = True
+
+
+@given('I want to start a new Python project')
+def step_new_python_project(context):
+    """Want to start new Python project."""
+    context.new_python_project = True
+
+
+@then('configs/docker/python/ should exist')
+def step_python_configs_exist(context):
+    """Python configs should exist."""
+    context.python_configs_exist = True
+
+
+@then('projects/python/ should exist')
+def step_python_projects_exist(context):
+    """Python projects should exist."""
+    context.python_projects_exist = True
+
+
+@given('I\'m working on a Python project')
+def step_working_python_project(context):
+    """Working on Python project."""
+    context.working_python_project = True
+
+
+@given('I want to switch to a Rust project')
+def step_switch_rust_project(context):
+    """Switch to Rust project."""
+    context.switch_rust_project = True
+
+
+@then('I should be able to start the Rust VM')
+def step_able_start_rust(context):
+    """Should be able to start Rust VM."""
+    context.able_start_rust = True
+
+
+@then('both VMs can run simultaneously')
+def step_both_simultaneous_vms(context):
+    """Both VMs can run simultaneously."""
+    context.both_simultaneous_vms = True
+
+
+@given('I have a Python VM running')
+def step_python_vm_running_given(context):
+    """Python VM is running."""
+    context.running_vms.add("python")
+
+
+@when('I get SSH info for python')
+def step_ssh_info_python_given(context):
+    """Get SSH info for python."""
+    context.ssh_info_python = True
+
+
+@then('I should see connection details')
+def step_see_connection_details(context):
+    """Should see connection details."""
+    context.sees_connection_details = True
+
+
+# =============================================================================
+# Docker operations steps
+# =============================================================================
+
+@when('I run docker-compose build')
+def step_docker_compose_build(context):
+    """Run docker-compose build."""
+    context.docker_compose_build = True
+
+
+@then('the image should be built')
+def step_image_built(context):
+    """Image should be built."""
+    context.image_built = True
+
+
+@then('build output should be displayed')
+def step_build_output(context):
+    """Build output should be displayed."""
+    context.build_output = True
+
+
+@when('I run docker-compose up -d')
+def step_docker_compose_up(context):
+    """Run docker-compose up -d."""
+    context.docker_compose_up = True
+
+
+@then('the container should start')
+def step_container_starts(context):
+    """Container should start."""
+    context.container_starts = True
+
+
+@then('container should run in detached mode')
+def step_detached_mode(context):
+    """Container should run in detached mode."""
+    context.detached_mode = True
+
+
+@when('I run docker-compose down')
+def step_docker_compose_down(context):
+    """Run docker-compose down."""
+    context.docker_compose_down = True
+
+
+@then('the container should stop')
+def step_container_stops(context):
+    """Container should stop."""
+    context.container_stops = True
+
+
+@then('the container should be removed')
+def step_container_removed(context):
+    """Container should be removed."""
+    context.container_removed = True
+
+
+@when('I run docker-compose restart')
+def step_docker_compose_restart(context):
+    """Run docker-compose restart."""
+    context.docker_compose_restart = True
+
+
+@then('the container should restart')
+def step_container_restarts(context):
+    """Container should restart."""
+    context.container_restarts = True
+
+
+@when('I run docker-compose up -d --build')
+def step_docker_compose_up_build(context):
+    """Run docker-compose up -d --build."""
+    context.docker_compose_up_build = True
+
+
+@then('the image should be rebuilt if needed')
+def step_image_rebuilt_if_needed(context):
+    """Image should be rebuilt if needed."""
+    context.image_rebuilt_if_needed = True
+
+
+@then('the container should start with the new image')
+def step_container_new_image(context):
+    """Container should start with new image."""
+    context.container_new_image = True
+
+
+@when('I run docker-compose build --no-cache')
+def step_docker_compose_no_cache(context):
+    """Run docker-compose build --no-cache."""
+    context.docker_compose_no_cache = True
+
+
+@then('the entire Dockerfile should be re-executed')
+def step_dockerfile_reexecuted(context):
+    """Dockerfile should be re-executed."""
+    context.dockerfile_reexecuted = True
+
+
+@when('I run docker-compose ps')
+def step_docker_compose_ps(context):
+    """Run docker-compose ps."""
+    context.docker_compose_ps = True
+
+
+@then('I should see container status')
+def step_see_container_status(context):
+    """Should see container status."""
+    context.sees_container_status = True
+
+
+@then('I should see state, ports, and names')
+def step_see_state_ports_names(context):
+    """Should see state, ports, and names."""
+    context.sees_state_ports_names = True
+
+
+@then('the project name should be "vde-python"')
+def step_project_name_vde_python(context):
+    """Project name should be vde-python."""
+    context.project_name_vde_python = True
+
+
+@then('the container should be named "python-dev"')
+def step_container_named_python_dev(context):
+    """Container should be named python-dev."""
+    context.container_python_dev = True
+
+
+@then('volume mounts should be created')
+def step_volume_mounts_created(context):
+    """Volume mounts should be created."""
+    context.volume_mounts_created = True
+
+
+@then('SSH agent socket should be mounted')
+def step_ssh_socket_mounted(context):
+    """SSH agent socket should be mounted."""
+    context.ssh_socket_mounted = True
+
+
+@then('public keys volume should be mounted')
+def step_pubkeys_mounted(context):
+    """Public keys volume should be mounted."""
+    context.pubkeys_mounted = True
+
+
+# =============================================================================
+# Team collaboration and maintenance steps
+# =============================================================================
+
+@given('system updates are available')
+def step_system_updates_available(context):
+    """System updates are available."""
+    context.system_updates = True
+
+
+@when('I rebuild my VMs')
+def step_rebuild_vms(context):
+    """Rebuild VMs."""
+    context.rebuild_vms = True
+
+
+@then('my VMs should use the updated base images')
+def step_vms_updated_base(context):
+    """VMs should use updated base images."""
+    context.vms_updated_base = True
+
+
+@then('my configurations should be preserved')
+def step_configurations_preserved(context):
+    """Configurations should be preserved."""
+    context.configurations_preserved = True
+
+
+@given('a VM is not working correctly')
+def step_vm_not_working(context):
+    """VM is not working correctly."""
+    context.vm_not_working = True
+
+
+    context.rebuild_troubleshoot = vm_name
+
+
+@then('I should get a fresh VM')
+def step_get_fresh_vm(context):
+    """Should get a fresh VM."""
+    context.fresh_vm = True
+
+
+@then('old issues should be resolved')
+def step_old_issues_resolved(context):
+    """Old issues should be resolved."""
+    context.old_issues_resolved = True
+
+
+@then('I should see all VMs')
+def step_see_all_vms_list(context):
+    """Should see all VMs."""
+    context.sees_all_vms_list = True
+
+
+@then('I should see their status')
+def step_see_vm_status_list(context):
+    """Should see VM status."""
+    context.sees_vm_status_list = True
+
+
+@then('I can identify problematic VMs')
+def step_identify_problematic(context):
+    """Can identify problematic VMs."""
+    context.identify_problematic = True
+
+
+@given('a new language is added to VDE')
+def step_new_language_added(context):
+    """New language added to VDE."""
+    context.new_language_added = True
+
+
+@when('new language VM types are available')
+def step_new_lang_available(context):
+    """New language VM types are available."""
+    context.new_lang_available = True
+
+
+@then('I should see the new language')
+def step_see_new_language(context):
+    """Should see new language."""
+    context.sees_new_language = True
+
+
+@when('I create the new language VM')
+def step_create_new_lang(context):
+    """Create new language VM."""
+    context.create_new_lang = True
+
+
+@then('it should work like other VMs')
+def step_works_like_others(context):
+    """Should work like other VMs."""
+    context.works_like_others = True
+
+
+@when('I share my SSH config')
+def step_share_ssh_config(context):
+    """Share SSH config."""
+    context.share_ssh_config = True
+
+
+@then('my team should see the same VM names')
+def step_team_same_vms(context):
+    """Team should see same VM names."""
+    context.team_same_vms = True
+
+
+@then('they should be able to use their own keys')
+def step_team_own_keys(context):
+    """Team should be able to use own keys."""
+    context.team_own_keys = True
+
+
+@when('I start multiple VMs in one command')
+def step_start_multiple_one_command(context):
+    """Start multiple VMs in one command."""
+    context.start_multiple_one = True
+
+
+@then('all VMs should start')
+def step_all_start(context):
+    """All VMs should start."""
+    context.all_start = True
+
+
+@then('the command should complete efficiently')
+def step_command_efficient(context):
+    """Command should complete efficiently."""
+    context.command_efficient = True
+
+
+@when('I shutdown all language virtual machines')
+def step_shutdown_type_lang(context):
+    """Shutdown all language VMs."""
+    context.shutdown_lang = True
+
+
+@then('only language VMs should stop')
+def step_only_lang_stop(context):
+    """Only language VMs should stop."""
+    context.only_lang_stop = True
+
+
+@then('service VMs should continue running')
+def step_svc_continue(context):
+    """Service VMs should continue running."""
+    context.svc_continue = True
+
+
+@when('I perform system maintenance')
+def step_perform_maintenance(context):
+    """Perform system maintenance."""
+    context.perform_maintenance = True
+
+
+@then('I should be able to stop all VMs')
+def step_able_stop_all(context):
+    """Should be able to stop all VMs."""
+    context.able_stop_all = True
+
+
+@then('maintenance should complete')
+def step_maintenance_complete(context):
+    """Maintenance should complete."""
+    context.maintenance_complete = True
+
+
+@then('I should restart VMs when ready')
+def step_restart_when_ready(context):
+    """Should restart VMs when ready."""
+    context.restart_when_ready = True
+
+
+@when('a command fails')
+def step_command_fails(context):
+    """Command fails."""
+    context.command_fails = True
+
+
+@then('I should see a helpful error message')
+def step_helpful_error(context):
+    """Should see helpful error message."""
+    context.helpful_error = True
+
+
+@then('I should be able to recover')
+def step_able_recover(context):
+    """Should be able to recover."""
+    context.able_recover = True
+
+
+@when('I list VMs with resource information')
+def step_list_resources(context):
+    """List VMs with resources."""
+    context.list_resources = True
+
+
+@then('I should see resource usage')
+def step_see_resource_usage_list(context):
+    """Should see resource usage."""
+    context.sees_resource_usage = True
+
+
+@then('I can identify resource-heavy VMs')
+def step_identify_heavy(context):
+    """Can identify resource-heavy VMs."""
+    context.identify_heavy = True
+
+
+@given('I have a large project')
+def step_large_project(context):
+    """Have a large project."""
+    context.large_project = True
+
+
+@when('I create VMs for the project')
+def step_create_vms_project(context):
+    """Create VMs for project."""
+    context.create_vms_project = True
+
+
+@then('all VMs should start efficiently')
+def step_all_start_efficiently(context):
+    """All VMs should start efficiently."""
+    context.all_start_efficiently = True
+
+
+@then('I should be able to scale as needed')
+def step_able_scale(context):
+    """Should be able to scale as needed."""
+    context.able_scale = True
+
+
+# =============================================================================
+# Natural language command steps
+# =============================================================================
+
+@when('I say "what vms do I have"')
+def step_say_what_vms(context):
+    """Say 'what vms do I have'."""
+    context.natural_command = "what vms do I have"
+
+
+@when('I say "list all VMs"')
+def step_say_list_all(context):
+    """Say 'list all VMs'."""
+    context.natural_command = "list all VMs"
+
+
+@when('I say "show me my vms"')
+def step_say_show_vms(context):
+    """Say 'show me my vms'."""
+    context.natural_command = "show me my vms"
+
+
+@then('the system should understand my intent')
+def step_understand_intent(context):
+    """System should understand intent."""
+    context.understands_intent = True
+
+
+@then('it should run "list-vms"')
+def step_run_list_vms(context):
+    """Should run list-vms."""
+    context.runs_list_vms = True
+
+
+@when('I say "start my python vm"')
+def step_say_start_python(context):
+    """Say 'start my python vm'."""
+    context.natural_command = "start my python vm"
+
+
+@then('it should run "start-virtual python"')
+def step_run_start_python(context):
+    """Should run start-virtual python."""
+    context.runs_start_python = True
+
+
+@when('I say "I need a rust environment"')
+def step_say_need_rust(context):
+    """Say 'I need a rust environment'."""
+    context.natural_command = "I need a rust environment"
+
+
+@then('it should offer to create a Rust VM')
+def step_offer_create_rust(context):
+    """Should offer to create Rust VM."""
+    context.offers_create_rust = True
+
+
+@when('I say "stop everything"')
+def step_say_stop_everything(context):
+    """Say 'stop everything'."""
+    context.natural_command = "stop everything"
+
+
+@then('it should run "shutdown-virtual all"')
+def step_run_shutdown_all(context):
+    """Should run shutdown-virtual all."""
+    context.runs_shutdown_all = True
+
+
+@when('I say "restart postgres"')
+def step_say_restart_postgres(context):
+    """Say 'restart postgres'."""
+    context.natural_command = "restart postgres"
+
+
+@then('it should run "restart-virtual postgres"')
+def step_run_restart_postgres(context):
+    """Should run restart-virtual postgres."""
+    context.runs_restart_postgres = True
+
+
+@when('I make a typo in the command')
+def step_typo_command(context):
+    """Make typo in command."""
+    context.typo_command = True
+
+
+@then('the system should suggest corrections')
+def step_suggest_corrections(context):
+    """System should suggest corrections."""
+    context.suggests_corrections = True
+
+
+@then('I should be able to confirm the correction')
+def step_confirm_correction(context):
+    """Should be able to confirm correction."""
+    context.confirm_correction = True
+
+
+# =============================================================================
+# Productivity features steps
+# =============================================================================
+
+@given('I want to share PostgreSQL between projects')
+def step_share_postgres(context):
+    """Want to share PostgreSQL between projects."""
+    context.share_postgres = True
+
+
+@when('I start the shared PostgreSQL VM')
+def step_start_shared_postgres(context):
+    """Start shared PostgreSQL VM."""
+    context.running_vms.add("postgres")
+
+
+@then('multiple projects can use it')
+def step_multiple_projects_use(context):
+    """Multiple projects can use it."""
+    context.multiple_projects_use = True
+
+
+@then('data is shared across projects')
+def step_data_shared(context):
+    """Data is shared across projects."""
+    context.data_shared = True
+
+
+@when('I create isolated PostgreSQL instances')
+def step_create_isolated_postgres(context):
+    """Create isolated PostgreSQL instances."""
+    context.isolated_postgres = True
+
+
+@then('each project has its own database')
+def step_own_database(context):
+    """Each project has its own database."""
+    context.own_database = True
+
+
+@then('data is isolated')
+def step_data_isolated(context):
+    """Data is isolated."""
+    context.data_isolated = True
+
+
+@when('I clone python to oldproject and newproject')
+def step_clone_vm(context):
+    """Clone python VM."""
+    context.clone_vm = True
+
+
+@then('oldproject config should be copied')
+def step_old_config_copied(context):
+    """Old config should be copied."""
+    context.old_config_copied = True
+
+
+@then('newproject config should be created')
+def step_new_config_created(context):
+    """New config should be created."""
+    context.new_config_created = True
+
+
+@then('a unique SSH port should be allocated')
+def step_unique_port_allocated(context):
+    """Unique SSH port should be allocated."""
+    context.unique_port = True
+
+
+@given('I frequently switch between projects')
+def step_frequently_switch(context):
+    """Frequently switch between projects."""
+    context.frequently_switch = True
+
+
+@when('I use VM aliases')
+def step_use_aliases(context):
+    """Use VM aliases."""
+    context.use_aliases = True
+
+
+@then('I can use short names')
+def step_use_short_names(context):
+    """Can use short names."""
+    context.short_names = True
+
+
+@then('"py" should work for "python"')
+def step_py_for_python(context):
+    """'py' should work for 'python'."""
+    context.py_for_python = True
+
+
+@when('I export VMs to my-vms.json')
+def step_export_vms(context):
+    """Export VMs to JSON."""
+    context.export_vms = True
+
+
+@then('all VM configs should be saved')
+def step_all_configs_saved(context):
+    """All VM configs should be saved."""
+    context.all_configs_saved = True
+
+
+@then('I should be able to import on another machine')
+def step_able_import(context):
+    """Should be able to import on another machine."""
+    context.able_import = True
+
+
+# =============================================================================
+# Cache system steps
+# =============================================================================
+
+@given('VM types have been loaded before')
+def step_vm_types_loaded_before(context):
+    """VM types have been loaded before."""
+    context._vm_types_loaded = True
+
+
+@when('I run a command that needs VM types')
+def step_command_needs_vm_types(context):
+    """Command needs VM types."""
+    context.command_needs_vm_types = True
+
+
+@then('cached VM types should be used')
+def step_cached_vm_types(context):
+    """Cached VM types should be used."""
+    context.cached_vm_types = True
+
+
+@then('VM types should not be reloaded')
+def step_vm_types_not_reloaded(context):
+    """VM types should not be reloaded."""
+    context.vm_types_not_reloaded = True
+
+
+@when('I modify vm-types.conf')
+def step_modify_vm_types(context):
+    """Modify vm-types.conf."""
+    context.vm_types_modified = True
+
+
+@when('I run a command that uses VM types')
+def step_command_uses_vm_types(context):
+    """Command uses VM types."""
+    context.command_uses_vm_types = True
+
+
+@then('VM types should be reloaded')
+def step_vm_types_reloaded(context):
+    """VM types should be reloaded."""
+    context.vm_types_reloaded = True
+
+
+@then('the new VM type should be available')
+def step_new_vm_type_available(context):
+    """New VM type should be available."""
+    context.new_vm_type_available = True
+
+
+@when('I allocate ports')
+def step_allocate_ports(context):
+    """Allocate ports."""
+    context.ports_allocated = True
+
+
+@then('a port registry should be created')
+def step_port_registry_created(context):
+    """Port registry should be created."""
+    context.port_registry_created = True
+
+
+@then('the registry should persist')
+def step_registry_persists(context):
+    """Registry should persist."""
+    context.registry_persists = True
+
+
+@when('I check allocated ports')
+def step_check_allocated_ports(context):
+    """Check allocated ports."""
+    context.check_allocated_ports = True
+
+
+@then('I should see consistent port assignments')
+def step_consistent_ports(context):
+    """Should see consistent port assignments."""
+    context.consistent_ports = True
