@@ -102,6 +102,15 @@ cd ~/dev
 
 ### Check That Your VM is Running
 
+**Scenario: Verifying VM status**
+
+```
+Given I started my Python VM
+When I run "list-vms"
+Then I should see which VMs are running
+And Python should show as "running"
+```
+
 **Check status:**
 ```bash
 ./scripts/list-vms
@@ -111,6 +120,15 @@ cd ~/dev
 - python: **running** (on port 2200)
 
 ### Understanding Your Directory Structure
+
+**Scenario: Your workspace is set up correctly**
+
+```
+Given I created a Python VM
+When I look at my directories
+Then projects/python/ should exist for my code
+And the directory should be mounted in the VM
+```
 
 **Your directory structure:**
 ```
@@ -415,23 +433,6 @@ def generate_user_guide():
                     break
             if intro_key in SECTION_INTROS:
                 f.write(SECTION_INTROS[intro_key])
-                f.write("\n")
-
-            # Add scenarios for this section
-            scenarios_in_section = []
-            for sec_key, scenarios in all_scenarios.items():
-                if section.lower() in sec_key.lower() or sec_key.lower().startswith(section.split(".")[0].lower()):
-                    scenarios_in_section.extend(scenarios)
-
-            # Write a few representative scenarios (not all to keep it readable)
-            if scenarios_in_section:
-                seen = set()
-                count = 0
-                for scenario_name, scenario_body in scenarios_in_section:
-                    if scenario_name not in seen and count < 5:  # Limit scenarios per section
-                        seen.add(scenario_name)
-                        count += 1
-                        f.write(format_scenario_for_user_guide(scenario_name, scenario_body))
 
             f.write("---\n\n")
 
