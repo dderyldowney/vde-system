@@ -2020,6 +2020,8 @@ def step_fail_immediately(context):
 @given('VM "python" exists')
 def step_vm_python_exists(context):
     """VM python exists."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add("python")
 
 @then('status should be one of: "running", "stopped", "not_created", "unknown"')
@@ -2045,6 +2047,8 @@ def step_stopped_not_listed(context):
 @given('VM "python" is started')
 def step_vm_python_started(context):
     """VM python is started."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("python")
 
 @then('docker-compose project should be "vde-python"')
@@ -2055,6 +2059,8 @@ def step_compose_project_vde_python(context):
 @given('language VM "python" is started')
 def step_lang_vm_python_started(context):
     """Language VM python is started."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("python")
     context.current_lang_vm = "python"
 

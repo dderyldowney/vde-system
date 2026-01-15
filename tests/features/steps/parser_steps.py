@@ -303,6 +303,8 @@ def step_plan_include_connect(context):
 @given('I have started the PostgreSQL VM')
 def step_started_postgres(context):
     """Have started PostgreSQL VM."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("postgres")
 
 @when('I check if postgres exists')
