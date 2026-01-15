@@ -31,6 +31,11 @@
 - Included complete VM types reference (19 languages, 7 services)
 - Added exit codes, port allocation, and environment variables reference
 
+### ✅ Common Undefined Steps Implemented
+- Added `common_undefined_steps.py` with 100+ step definitions
+- Covers VM status, command execution, SSH connections, file operations
+- Addresses many of the previously undefined 1248 BDD steps
+
 ---
 
 ## Remaining Work
