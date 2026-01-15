@@ -176,9 +176,10 @@ The 2 BDD "failures" are actually architectural issues - they test mocked contex
 - [x] No-cache flag works
 - Note: BDD cache tests use mocked context (architectural issue, not a bug)
 
-### Priority 4 - CI/CD Integration
-- [ ] Update GitHub Actions workflow to run new integration tests
-- [ ] Ensure Docker-in-Docker works in CI
+### ✅ Priority 4 - CI/CD Integration (COMPLETED)
+- [x] Update GitHub Actions workflow to run new integration tests
+- [x] Added docker-vm-lifecycle.test.sh to Job 6 (docker-build)
+- [x] Docker-in-Docker already works in CI (used by Job 6)
 
 ---
 
