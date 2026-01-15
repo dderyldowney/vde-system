@@ -48,6 +48,12 @@ def step_i_have_vm_running(context, vm):
     context.running_vms.add(vm)
 
 # These use {num} which only matches numbers - less likely to conflict
+@given('I have several VMs running')
+def step_have_several_vms_running(context):
+    context.num_vms_running = 3
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
+
 @given('I have {num} VMs running')
 def step_have_n_vms_running(context, num):
     context.num_vms_running = int(num)
