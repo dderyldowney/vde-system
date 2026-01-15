@@ -5,7 +5,7 @@
 ![CI Status](https://github.com/dderyldowney/vde-system/actions/workflows/vde-ci.yml/badge.svg)
 
 
-A modular, template-based Docker development environment supporting 18+ programming languages and 7+ services, all accessible via SSH with consistent user configuration. Designed for daily development work with VSCode Remote-SSH and AI CLI tools.
+A modular, template-based Docker development environment supporting 19+ programming languages and 7+ services, all accessible via SSH with consistent user configuration. Designed for daily development work with VSCode Remote-SSH and AI CLI tools.
 
 **Shell Support:** zsh 5.0+, bash 4.0+, bash 3.x (with fallbacks) — [See Requirements](docs/requirements.md)
 
@@ -40,7 +40,7 @@ VDE provides isolated development environments for multiple programming language
 
 ### Key Features
 
-- **18+ Language VMs**: Python, Rust, Go, Java, JavaScript, C#, Ruby, and more
+- **19+ Language VMs**: Python, Rust, Go, Java, JavaScript, C#, Ruby, and more
 - **7+ Service VMs**: PostgreSQL, Redis, MongoDB, Nginx, MySQL, RabbitMQ, CouchDB
 - **Template-based**: Add new languages/services without code changes
 - **VSCode Ready**: Full IDE support via Remote-SSH
