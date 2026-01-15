@@ -1,6 +1,9 @@
-# VDE - Virtual Development Environment
+<p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
+
+# VDE - Virtualized Development Environment System
 
 ![CI Status](https://github.com/dderyldowney/vde-system/actions/workflows/vde-ci.yml/badge.svg)
+
 
 A modular, template-based Docker development environment supporting 18+ programming languages and 7+ services, all accessible via SSH with consistent user configuration. Designed for daily development work with VSCode Remote-SSH and AI CLI tools.
 
