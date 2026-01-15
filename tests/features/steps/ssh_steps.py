@@ -411,6 +411,8 @@ def step_host_keys_auth(context):
 @given('I have a Go VM running')
 def step_go_vm_running(context):
     """Have Go VM running."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("go")
 
 @given('I have cloned a repository in the Go VM')
@@ -471,6 +473,8 @@ def step_appropriate_key(context):
 @given('I have a Rust VM running')
 def step_rust_vm_running(context):
     """Have Rust VM running."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("rust")
 
 @given('I have a repository with Git submodules')

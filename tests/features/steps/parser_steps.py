@@ -1633,6 +1633,8 @@ def step_multiple_projects_postgres(context):
 @when('I start one postgres VM')
 def step_start_one_postgres(context):
     """Start one postgres VM."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("postgres")
 
 @when('I start multiple language VMs')

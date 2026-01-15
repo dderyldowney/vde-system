@@ -229,7 +229,11 @@ def step_run_port_cleanup(context):
 @when('I remove VM "{vm_name}"')
 def step_remove_vm(context, vm_name):
     """Remove a VM."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.discard(vm_name)
+    if not hasattr(context, 'allocated_ports'):
+        context.allocated_ports = {}
     if vm_name in context.allocated_ports:
         del context.allocated_ports[vm_name]
 
@@ -321,7 +325,8 @@ def step_vm_config_exists(context):
 @then('the command should fail with error "{error}"')
 def step_command_fails_with_error(context, error):
     """Verify command failed with specific error."""
-    assert getattr(context, 'last_exit_code', 0) != 0 or error in context.last_output.lower()
+    last_output = getattr(context, 'last_output', '')
+    assert getattr(context, 'last_exit_code', 0) != 0 or error in last_output.lower()
 
 
 @then('all language VMs should be listed')
