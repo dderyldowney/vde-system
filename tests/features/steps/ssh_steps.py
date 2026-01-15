@@ -305,9 +305,9 @@ def step_backup_created(context):
     assert backup.exists() or getattr(context, 'ssh_config_updated', False)
 
 
-@then('I should see running VMs')
-def step_see_running_vms(context):
-    """Should see running VMs."""
+@then('the list-vms command should show available VMs')
+def step_list_vms_works(context):
+    """Verify list-vms command works and shows available VMs."""
     result = run_vde_command("./scripts/list-vms", timeout=30)
     assert result.returncode == 0 or getattr(context, 'running_vms_visible', False)
 
