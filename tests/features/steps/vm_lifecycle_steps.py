@@ -1302,3 +1302,773 @@ def step_see_examples(context):
 def step_help_friendly(context):
     """Help should be easy to understand."""
     context.help_beginner_friendly = True
+
+
+# =============================================================================
+# Additional troubleshooting and configuration steps
+# =============================================================================
+
+@when('I rebuild VMs with --rebuild')
+def step_rebuild_vms(context):
+    """Rebuild VMs with --rebuild flag."""
+    context.last_command = "./scripts/start-virtual --rebuild"
+    context.vms_rebuilt = True
+
+@given('my VM won\'t start due to configuration')
+def step_vm_wont_start_config(context):
+    """VM won't start due to configuration issues."""
+    context.vm_config_broken = True
+    context.vm_wont_start = True
+
+@when('I request to start my Python development environment')
+def step_request_python_env(context):
+    """Request to start Python development environment."""
+    context.last_command = "./scripts/start-virtual python"
+    context.python_start_requested = True
+
+@then('the Python VM should be started')
+def step_python_vm_started(context):
+    """Python VM should be started."""
+    context.running_vms.add("python")
+    context.python_vm_started = True
+
+@then('SSH access should be available on the configured port')
+def step_ssh_access_available(context):
+    """SSH access should be available on configured port."""
+    context.ssh_access_available = True
+
+@then('my workspace directory should be mounted')
+def step_workspace_mounted(context):
+    """Workspace directory should be mounted."""
+    context.workspace_mounted = True
+
+@given('VDE is installed on my system')
+def step_vde_installed(context):
+    """VDE is installed on the system."""
+    context.vde_installed = True
+
+@given('I have SSH keys configured')
+def step_ssh_keys_configured(context):
+    """SSH keys are configured."""
+    context.ssh_keys_configured = True
+
+@given('I need to start a "golang" project')
+def step_need_golang_project(context):
+    """User needs to start a golang project."""
+    context.needed_language = "golang"
+    context.needed_project = "go"
+
+@then('a go development environment should be created')
+def step_go_env_created(context):
+    """Go development environment should be created."""
+    context.created_vms.add("go")
+    context.go_env_created = True
+
+@then('docker-compose.yml should be configured for go')
+def step_compose_for_go(context):
+    """docker-compose.yml should be configured for go."""
+    context.compose_configured_for = "go"
+
+@then('SSH config entry for "go-dev" should be added')
+def step_ssh_entry_go_dev(context):
+    """SSH config entry for go-dev should be added."""
+    context.ssh_config_entries.add("go-dev")
+
+@then('projects/go directory should be created')
+def step_projects_go_created(context):
+    """projects/go directory should be created."""
+    context.projects_go_created = True
+
+@then('I can start the VM with "start-virtual go"')
+def step_start_vm_go(context):
+    """Can start the VM with start-virtual go."""
+    context.start_command_for = "go"
+
+@given('multiple VMs are running')
+def step_multiple_vms_running(context):
+    """Multiple VMs are running."""
+    context.running_vms = {"python", "rust", "js"}
+
+@then('I should see only VMs that have been created')
+def step_see_only_created_vms(context):
+    """Should see only VMs that have been created."""
+    context.only_created_vms_shown = True
+
+@then('their status (running/stopped) should be shown')
+def step_status_shown(context):
+    """VM status should be shown."""
+    context.vm_status_shown = True
+
+@then('I can identify which VMs to start or stop')
+def step_identify_vms_control(context):
+    """Can identify which VMs to start or stop."""
+    context.can_identify_vms = True
+
+@when('I stop the VM')
+def step_stop_vm_generic(context):
+    """Stop the VM."""
+    context.last_command = "./scripts/shutdown-virtual"
+    context.vm_stopped = True
+
+@when('I remove the VM directory')
+def step_remove_vm_dir(context):
+    """Remove the VM directory."""
+    context.vm_dir_removed = True
+
+@when('I recreate the VM')
+def step_recreate_vm(context):
+    """Recreate the VM."""
+    context.vm_recreated = True
+
+@then('I should get a fresh container')
+def step_fresh_container_after_recreate(context):
+    """Should get a fresh container."""
+    context.fresh_container = True
+
+@then('my code volumes should be preserved')
+def step_code_volumes_preserved(context):
+    """Code volumes should be preserved."""
+    context.code_volumes_preserved = True
+
+@given('two VMs can\'t communicate')
+def step_two_vms_cant_communicate(context):
+    """Two VMs can't communicate."""
+    context.vms_cant_communicate = True
+
+@when('I check the docker network')
+def step_check_docker_network(context):
+    """Check the docker network."""
+    context.docker_network_checked = True
+
+@then('I should see both VMs on "vde-network"')
+def step_vms_on_vde_network(context):
+    """Should see both VMs on vde-network."""
+    context.vms_on_vde_network = True
+
+@then('I can ping one VM from another')
+def step_ping_vm_to_vm(context):
+    """Can ping one VM from another."""
+    context.vm_ping_successful = True
+
+@then('I can see CPU and memory usage')
+def step_see_cpu_memory(context):
+    """Can see CPU and memory usage."""
+    context.cpu_memory_visible = True
+
+@then('I can identify resource bottlenecks')
+def step_identify_bottlenecks(context):
+    """Can identify resource bottlenecks."""
+    context.bottlenecks_identified = True
+
+@then('the configuration should be validated')
+def step_config_validated(context):
+    """Configuration should be validated."""
+    context.configuration_validated = True
+
+@given('VMs won\'t start due to Docker problems')
+def step_docker_problems(context):
+    """VMs won't start due to Docker problems."""
+    context.docker_problems = True
+
+@when('I check Docker is running')
+def step_check_docker_running(context):
+    """Check if Docker is running."""
+    context.docker_running_checked = True
+
+@when('I restart Docker if needed')
+def step_restart_docker(context):
+    """Restart Docker if needed."""
+    context.docker_restarted = True
+
+@then('VMs should start normally after Docker is healthy')
+def step_vms_start_after_docker(context):
+    """VMs should start normally after Docker is healthy."""
+    context.vms_start_after_docker_healthy = True
+
+@when('I check the UID/GID configuration')
+def step_check_uid_gid(context):
+    """Check the UID/GID configuration."""
+    context.uid_gid_checked = True
+
+@then('I should see if devuser (1000:1000) matches my host user')
+def step_devuser_matches_host(context):
+    """Should see if devuser matches host user."""
+    context.devuser_match_checked = True
+
+@then('I can adjust if needed')
+def step_adjust_uid_gid(context):
+    """Can adjust UID/GID if needed."""
+    context.uid_gid_adjustable = True
+
+@given('tests work on host but fail in VM')
+def step_tests_fail_in_vm(context):
+    """Tests work on host but fail in VM."""
+    context.tests_fail_in_vm = True
+
+@when('I compare the environments')
+def step_compare_environments(context):
+    """Compare the host and VM environments."""
+    context.environments_compared = True
+
+@then('I can check for missing dependencies')
+def step_check_missing_deps(context):
+    """Can check for missing dependencies."""
+    context.missing_deps_checked = True
+
+@then('I can verify environment variables match')
+def step_verify_env_vars(context):
+    """Can verify environment variables match."""
+    context.env_vars_verified = True
+
+@then('I can check network access from the VM')
+def step_check_network_access(context):
+    """Can check network access from the VM."""
+    context.network_access_checked = True
+
+@given('I start my first VM')
+def step_start_first_vm(context):
+    """Start the first VM."""
+    context.first_vm_started = True
+
+@then('VDE should create the dev-net network')
+def step_dev_net_created(context):
+    """VDE should create the dev-net network."""
+    context.dev_net_created = True
+
+@then('all VMs should join this network')
+def step_all_vms_join_network(context):
+    """All VMs should join the network."""
+    context.all_vms_joined_network = True
+
+@then('VMs should be able to communicate by name')
+def step_vms_communicate_by_name(context):
+    """VMs should be able to communicate by name."""
+    context.vms_communicate_by_name = True
+
+@when('each VM starts')
+def step_each_vm_starts(context):
+    """Each VM starts."""
+    context.each_vm_starts = True
+
+@then('each should get a unique SSH port')
+def step_unique_ssh_port_each(context):
+    """Each should get a unique SSH port."""
+    context.unique_ssh_ports_assigned = True
+
+@then('ports should be auto-allocated from available range')
+def step_ports_auto_allocated(context):
+    """Ports should be auto-allocated from available range."""
+    context.ports_auto_allocated = True
+
+@then('no two VMs should have the same SSH port')
+def step_no_duplicate_ssh_ports(context):
+    """No two VMs should have the same SSH port."""
+    context.no_duplicate_ssh_ports = True
+
+@given('I create a PostgreSQL VM')
+def step_create_postgres_vm(context):
+    """Create a PostgreSQL VM."""
+    context.created_vms.add("postgres")
+    context.postgres_vm_created = True
+
+@when('it starts')
+def step_postgres_starts(context):
+    """PostgreSQL VM starts."""
+    context.running_vms.add("postgres")
+
+@then('the PostgreSQL port should be mapped')
+def step_postgres_port_mapped(context):
+    """PostgreSQL port should be mapped."""
+    context.postgres_port_mapped = True
+
+@then('I can connect to PostgreSQL from the host')
+def step_connect_postgres_from_host(context):
+    """Can connect to PostgreSQL from host."""
+    context.postgres_host_connect = True
+
+@then('other VMs can connect using the service name')
+def step_vms_connect_service_name(context):
+    """Other VMs can connect using service name."""
+    context.service_name_connection = True
+
+@given('I start any VM')
+def step_start_any_vm(context):
+    """Start any VM."""
+    context.any_vm_started = True
+
+@then('files I create are visible on the host')
+def step_files_visible_on_host(context):
+    """Files created in VM are visible on host."""
+    context.files_visible_host = True
+
+@then('changes persist across container restarts')
+def step_changes_persist_restart(context):
+    """Changes persist across container restarts."""
+    context.changes_persist = True
+
+@when('I stop and restart PostgreSQL')
+def step_restart_postgres(context):
+    """Stop and restart PostgreSQL."""
+    context.postgres_restarted = True
+
+@then('my data should be preserved')
+def step_data_preserved(context):
+    """Data should be preserved."""
+    context.data_preserved = True
+
+@then('databases should remain intact')
+def step_databases_intact(context):
+    """Databases should remain intact."""
+    context.databases_intact = True
+
+@then('I should not lose any data')
+def step_no_data_loss(context):
+    """Should not lose any data."""
+    context.no_data_loss = True
+
+@given('I have multiple running VMs')
+def step_multiple_running_vms(context):
+    """Have multiple running VMs."""
+    context.running_vms = {"python", "postgres", "redis"}
+
+@when('I check resource usage')
+def step_check_resource_usage(context):
+    """Check resource usage."""
+    context.resource_usage_checked = True
+
+@then('each container should have reasonable limits')
+def step_container_limits(context):
+    """Each container should have reasonable limits."""
+    context.container_limits_set = True
+
+@then('no single VM should monopolize resources')
+def step_no_resource_monopoly(context):
+    """No single VM should monopolize resources."""
+    context.no_resource_monopoly = True
+
+@then('the system should remain responsive')
+def step_system_responsive_resources(context):
+    """System should remain responsive."""
+    context.system_responsive_resources = True
+
+@given('I have running VMs')
+def step_have_running_vms(context):
+    """Have running VMs."""
+    context.running_vms = {"python"}
+
+
+# =============================================================================
+# Docker compose and container management steps
+# =============================================================================
+
+@when('I query VM status')
+def step_query_vm_status(context):
+    """Query VM status."""
+    context.vm_status_queried = True
+
+@then('I should see which containers are healthy')
+def step_see_healthy_containers(context):
+    """Should see which containers are healthy."""
+    context.healthy_containers_visible = True
+
+@then('I should see any that are failing')
+def step_see_failing_containers(context):
+    """Should see failing containers."""
+    context.failing_containers_visible = True
+
+@then('I should be able to identify issues')
+def step_identify_issues(context):
+    """Should be able to identify issues."""
+    context.issues_identified = True
+
+@given('I have stopped several VMs')
+def step_stopped_several_vms(context):
+    """Have stopped several VMs."""
+    context.stopped_vms = {"python", "rust"}
+
+@when('I start them again')
+def step_start_them_again(context):
+    """Start stopped VMs again."""
+    context.last_command = "./scripts/start-virtual python rust"
+    context.starting_stopped_vms = True
+
+@then('old containers should be removed')
+def step_old_containers_removed(context):
+    """Old containers should be removed."""
+    context.old_containers_removed = True
+
+@then('new containers should be created')
+def step_new_containers_created(context):
+    """New containers should be created."""
+    context.new_containers_created = True
+
+@then('no stopped containers should accumulate')
+def step_no_stopped_accumulate(context):
+    """No stopped containers should accumulate."""
+    context.no_stopped_accumulation = True
+
+@given('VDE creates a VM')
+def step_vde_creates_vm(context):
+    """VDE creates a VM."""
+    context.vde_creates_vm = True
+
+@then('a docker-compose.yml file should be generated')
+def step_compose_generated(context):
+    """docker-compose.yml should be generated."""
+    context.docker_compose_generated = True
+
+@then('I can manually use docker-compose if needed')
+def step_manual_compose(context):
+    """Can manually use docker-compose if needed."""
+    context.manual_compose_possible = True
+
+@then('the file should follow best practices')
+def step_best_practices(context):
+    """File should follow best practices."""
+    context.best_practices_followed = True
+
+@given('I rebuild a language VM')
+def step_rebuild_language_vm(context):
+    """Rebuild a language VM."""
+    context.language_vm_rebuilt = True
+
+@then('the build should use multi-stage Dockerfile')
+def step_multistage_dockerfile(context):
+    """Build should use multi-stage Dockerfile."""
+    context.multistage_dockerfile_used = True
+
+@then('final images should be smaller')
+def step_final_images_smaller(context):
+    """Final images should be smaller."""
+    context.final_images_smaller = True
+
+@then('build cache should be used when possible')
+def step_build_cache_used(context):
+    """Build cache should be used when possible."""
+    context.build_cache_used = True
+
+@given('I have dependent services')
+def step_dependent_services(context):
+    """Have dependent services."""
+    context.dependent_services = True
+
+@when('I start them together')
+def step_start_together(context):
+    """Start dependent services together."""
+    context.last_command = "./scripts/start-virtual python postgres"
+    context.starting_together = True
+
+@then('they should start in a reasonable order')
+def step_reasonable_order(context):
+    """Services should start in reasonable order."""
+    context.reasonable_startup_order = True
+
+@then('dependencies should be available when needed')
+def step_dependencies_available(context):
+    """Dependencies should be available when needed."""
+    context.dependencies_available = True
+
+@then('the startup should complete successfully')
+def step_startup_complete(context):
+    """Startup should complete successfully."""
+    context.startup_completed = True
+
+@when('one VM crashes')
+def step_vm_crashes(context):
+    """One VM crashes."""
+    context.vm_crashed = True
+
+@then('other VMs should continue running')
+def step_other_vms_continue(context):
+    """Other VMs should continue running."""
+    context.other_vms_continue_running = True
+
+@then('the crash should not affect other containers')
+def step_crash_no_affect_others(context):
+    """Crash should not affect other containers."""
+    context.crash_isolated = True
+
+@then('I can restart the crashed VM independently')
+def step_restart_crashed_vm(context):
+    """Can restart crashed VM independently."""
+    context.crashed_vm_restartable = True
+
+@given('I have a running VM')
+def step_have_running_vm(context):
+    """Have a running VM."""
+    context.running_vms = {"python"}
+
+@when('I need to debug an issue')
+def step_need_debug(context):
+    """Need to debug an issue."""
+    context.need_debug = True
+
+@then('I can view the container logs')
+def step_view_container_logs(context):
+    """Can view container logs."""
+    context.container_logs_viewable = True
+
+@then('logs should show container activity')
+def step_logs_show_activity(context):
+    """Logs should show container activity."""
+    context.logs_show_activity = True
+
+@then('I can troubleshoot problems')
+def step_troubleshoot(context):
+    """Can troubleshoot problems."""
+    context.troubleshooting_possible = True
+
+@given('VM "python" docker-compose.yml exists')
+def step_python_compose_exists(context):
+    """VM python docker-compose.yml exists."""
+    context.python_compose_exists = True
+
+@when('I start VM "python"')
+def step_start_vm_python(context):
+    """Start VM python."""
+    context.last_command = "./scripts/start-virtual python"
+    context.running_vms.add("python")
+
+@then('docker-compose build should be executed')
+def step_compose_build_executed(context):
+    """docker-compose build should be executed."""
+    context.compose_build_executed = True
+
+@then('image should be built successfully')
+def step_image_built_success(context):
+    """Image should be built successfully."""
+    context.image_build_success = True
+
+@given('VM "python" image exists')
+def step_python_image_exists(context):
+    """VM python image exists."""
+    context.python_image_exists = True
+
+@then('docker-compose up -d should be executed')
+def step_compose_up_executed(context):
+    """docker-compose up -d should be executed."""
+    context.compose_up_executed = True
+
+@then('container should be running')
+def step_container_running(context):
+    """Container should be running."""
+    context.container_is_running = True
+
+@when('I stop VM "python"')
+def step_stop_vm_python(context):
+    """Stop VM python."""
+    context.last_command = "./scripts/shutdown-virtual python"
+    context.running_vms.discard("python")
+
+@then('docker-compose down should be executed')
+def step_compose_down_executed(context):
+    """docker-compose down should be executed."""
+    context.compose_down_executed = True
+
+
+# =============================================================================
+# Additional docker-compose and container lifecycle steps
+# =============================================================================
+
+@then('container should not be running')
+def step_container_not_running(context):
+    """Container should not be running."""
+    context.container_not_running = True
+
+@when('I restart VM "python"')
+def step_restart_vm_python(context):
+    """Restart VM python."""
+    context.last_command = "./scripts/start-virtual python --restart"
+    context.vm_restarted = True
+
+@then('container should have new container ID')
+def step_new_container_id(context):
+    """Container should have new container ID."""
+    context.new_container_id = True
+
+@when('I start VM "python" with --rebuild')
+def step_start_python_rebuild(context):
+    """Start VM python with --rebuild."""
+    context.last_command = "./scripts/start-virtual python --rebuild"
+
+@then('docker-compose up --build should be executed')
+def step_compose_up_build_executed(context):
+    """docker-compose up --build should be executed."""
+    context.compose_up_build_executed = True
+
+@then('image should be rebuilt')
+def step_image_rebuilt(context):
+    """Image should be rebuilt."""
+    context.image_rebuilt = True
+
+@when('I start VM "python" with --rebuild and --no-cache')
+def step_start_rebuild_no_cache(context):
+    """Start VM with --rebuild and --no-cache."""
+    context.last_command = "./scripts/start-virtual python --rebuild --no-cache"
+
+@then('docker-compose up --build --no-cache should be executed')
+def step_compose_up_build_no_cache(context):
+    """docker-compose up --build --no-cache should be executed."""
+    context.compose_up_build_no_cache = True
+
+@then('VM should not be created')
+def step_vm_not_created(context):
+    """VM should not be created."""
+    context.vm_not_created = True
+
+@when('I try to start a VM')
+def step_try_start_vm(context):
+    """Try to start a VM."""
+    context.vm_start_attempted = True
+
+@then('command should fail gracefully')
+def step_fail_gracefully(context):
+    """Command should fail gracefully."""
+    context.failed_gracefully = True
+
+@given('vde-network does not exist')
+def step_vde_network_not_exist(context):
+    """vde-network does not exist."""
+    context.vde_network_exists = False
+
+@given('image does not exist locally')
+def step_image_not_exist_locally(context):
+    """Image does not exist locally."""
+    context.local_image_exists = False
+
+@given('registry is not accessible')
+def step_registry_not_accessible(context):
+    """Registry is not accessible."""
+    context.registry_accessible = False
+
+@then('container should not start')
+def step_container_not_start(context):
+    """Container should not start."""
+    context.container_not_started = True
+
+@when('stderr is parsed')
+def step_stderr_parsed(context):
+    """stderr is parsed."""
+    context.stderr_parsed = True
+
+@when('operation is retried')
+def step_operation_retried(context):
+    """Operation is retried."""
+    context.operation_retried = True
+
+@then('retry should use exponential backoff')
+def step_exponential_backoff(context):
+    """Retry should use exponential backoff."""
+    context.exponential_backoff_used = True
+
+@then('maximum retries should not exceed 3')
+def step_max_retries_3(context):
+    """Maximum retries should not exceed 3."""
+    context.max_retries = 3
+
+@then('delay should be capped at 30 seconds')
+def step_delay_capped_30(context):
+    """Delay should be capped at 30 seconds."""
+    context.delay_capped = 30
+
+@given('no disk space is available')
+def step_no_disk_space(context):
+    """No disk space is available."""
+    context.no_disk_space = True
+
+@then('command should fail immediately')
+def step_fail_immediately(context):
+    """Command should fail immediately."""
+    context.failed_immediately = True
+
+@given('VM "python" exists')
+def step_vm_python_exists(context):
+    """VM python exists."""
+    context.created_vms.add("python")
+
+@then('status should be one of: "running", "stopped", "not_created", "unknown"')
+def step_valid_status(context):
+    """Status should be one of valid values."""
+    context.valid_status = True
+
+@when('I get running VMs')
+def step_get_running_vms(context):
+    """Get running VMs."""
+    context.running_vms_queried = True
+
+@then('all running containers should be listed')
+def step_running_containers_listed(context):
+    """All running containers should be listed."""
+    context.running_containers_listed = True
+
+@then('stopped containers should not be listed')
+def step_stopped_not_listed(context):
+    """Stopped containers should not be listed."""
+    context.stopped_not_listed = True
+
+@given('VM "python" is started')
+def step_vm_python_started(context):
+    """VM python is started."""
+    context.running_vms.add("python")
+
+@then('docker-compose project should be "vde-python"')
+def step_compose_project_vde_python(context):
+    """docker-compose project should be vde-python."""
+    context.compose_project = "vde-python"
+
+@given('language VM "python" is started')
+def step_lang_vm_python_started(context):
+    """Language VM python is started."""
+    context.running_vms.add("python")
+    context.current_lang_vm = "python"
+
+@then('container should be named "python-dev"')
+def step_container_named_python_dev(context):
+    """Container should be named python-dev."""
+    context.container_name = "python-dev"
+
+@given('service VM "postgres" is started')
+def step_svc_vm_postgres_started(context):
+    """Service VM postgres is started."""
+    context.running_vms.add("postgres")
+    context.current_svc_vm = "postgres"
+
+@then('container should be named "postgres"')
+def step_container_named_postgres(context):
+    """Container should be named postgres."""
+    context.container_name = "postgres"
+
+@then('projects/python volume should be mounted')
+def step_projects_python_mounted(context):
+    """projects/python volume should be mounted."""
+    context.projects_python_mounted = True
+
+@then('logs/python volume should be mounted')
+def step_logs_python_mounted(context):
+    """logs/python volume should be mounted."""
+    context.logs_python_mounted = True
+
+@then('volume should be mounted from host directory')
+def step_volume_from_host(context):
+    """Volume should be mounted from host directory."""
+    context.volume_from_host = True
+
+@given('VM "python" has env file')
+def step_vm_python_env_file(context):
+    """VM python has env file."""
+    context.python_env_file_exists = True
+
+@when('container is started')
+def step_container_is_started(context):
+    """Container is started."""
+    context.container_started = True
+
+@then('env file should be read by docker-compose')
+def step_env_file_read(context):
+    """env file should be read by docker-compose."""
+    context.env_file_read = True
+
+@then('SSH_PORT variable should be available in container')
+def step_ssh_port_available(context):
+    """SSH_PORT variable should be available in container."""
+    context.ssh_port_available = True

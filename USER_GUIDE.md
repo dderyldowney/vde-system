@@ -366,11 +366,18 @@ And I should be in the projects/python directory
 ssh python-dev
 ```
 
-**You're now inside your VM!** You can:
+**You're now inside your VM!** Important: You're in the `workspace/` directory (inside the VM).
+
+- `workspace/` = **inside the VM** (where you are now)
+- `projects/python/` = **on your host** (the bind mount source)
+
+These are the same files, just accessed from different places. When you edit files in `workspace/` inside the VM, the changes are immediately visible in `projects/python/` on your host, and vice versa.
+
+**What you can do:**
 - Run Python code
 - Install packages
-- Edit files in projects/python/
-- Access postgres and redis
+- Edit files in `workspace/` (changes appear on your host in `projects/python/`)
+- Access postgres and redis via SSH
 
 ### Exiting a VM
 
