@@ -380,11 +380,32 @@ ssh python-dev
 
 | VM Name | SSH Command | What It's For |
 |---------|-------------|---------------|
+| c-dev | `ssh c-dev` | C development |
+| cpp-dev | `ssh cpp-dev` | C++ development |
+| asm-dev | `ssh asm-dev` | Assembler development |
 | python-dev | `ssh python-dev` | Python development |
 | rust-dev | `ssh rust-dev` | Rust development |
 | js-dev | `ssh js-dev` | JavaScript/Node.js |
+| csharp-dev | `ssh csharp-dev` | C# development |
+| ruby-dev | `ssh ruby-dev` | Ruby development |
+| go-dev | `ssh go-dev` | Go development |
+| java-dev | `ssh java-dev` | Java development |
+| kotlin-dev | `ssh kotlin-dev` | Kotlin development |
+| swift-dev | `ssh swift-dev` | Swift development |
+| php-dev | `ssh php-dev` | PHP development |
+| scala-dev | `ssh scala-dev` | Scala development |
+| r-dev | `ssh r-dev` | R development |
+| lua-dev | `ssh lua-dev` | Lua development |
+| flutter-dev | `ssh flutter-dev` | Flutter development |
+| elixir-dev | `ssh elixir-dev` | Elixir development |
+| haskell-dev | `ssh haskell-dev` | Haskell development |
 | postgres | `ssh postgres` | Direct database access |
 | redis | `ssh redis` | Direct Redis access |
+| mongodb | `ssh mongodb` | Direct MongoDB access |
+| nginx | `ssh nginx` | Direct Nginx access |
+| couchdb | `ssh couchdb` | Direct CouchDB access |
+| mysql | `ssh mysql` | Direct MySQL access |
+| rabbitmq | `ssh rabbitmq` | Direct RabbitMQ access |
 ---
 
 ## 8. Working with Databases
@@ -592,57 +613,106 @@ And the new package should be available
 
 ```bash
 # Language VMs
-ssh python-dev     # Python development
-ssh rust-dev       # Rust development
-ssh js-dev         # JavaScript/Node.js
-ssh csharp-dev     # C# development
-ssh ruby-dev       # Ruby development
-ssh go-dev         # Go development
+ssh c-dev           # C development
+ssh cpp-dev         # C++ development
+ssh asm-dev         # Assembler development
+ssh python-dev      # Python development
+ssh rust-dev        # Rust development
+ssh js-dev          # JavaScript/Node.js
+ssh csharp-dev      # C# development
+ssh ruby-dev        # Ruby development
+ssh go-dev          # Go development
+ssh java-dev        # Java development
+ssh kotlin-dev      # Kotlin development
+ssh swift-dev       # Swift development
+ssh php-dev         # PHP development
+ssh scala-dev       # Scala development
+ssh r-dev           # R development
+ssh lua-dev         # Lua development
+ssh flutter-dev     # Flutter development
+ssh elixir-dev      # Elixir development
+ssh haskell-dev     # Haskell development
 
 # Service VMs
-ssh postgres       # PostgreSQL database
-ssh redis          # Redis cache
-ssh mongodb        # MongoDB
-ssh nginx          # Nginx web server
+ssh postgres        # PostgreSQL database
+ssh redis           # Redis cache
+ssh mongodb         # MongoDB
+ssh nginx           # Nginx web server
+ssh couchdb         # CouchDB
+ssh mysql           # MySQL
+ssh rabbitmq        # RabbitMQ
 ```
 
 ### Default Ports
 
 | VM | Port |
 |----|------|
-| python-dev | 2200 |
-| rust-dev | 2201 |
-| js-dev | 2202 |
-| csharp-dev | 2203 |
-| ruby-dev | 2204 |
+| c-dev | 2200 |
+| cpp-dev | 2201 |
+| asm-dev | 2202 |
+| python-dev | 2203 |
+| rust-dev | 2204 |
+| js-dev | 2205 |
+| csharp-dev | 2206 |
+| ruby-dev | 2207 |
+| go-dev | 2208 |
+| java-dev | 2209 |
+| kotlin-dev | 2210 |
+| swift-dev | 2211 |
+| php-dev | 2212 |
+| scala-dev | 2213 |
+| r-dev | 2214 |
+| lua-dev | 2215 |
+| flutter-dev | 2216 |
+| elixir-dev | 2217 |
+| haskell-dev | 2218 |
 | postgres | 2400 |
 | redis | 2401 |
 | mongodb | 2402 |
 | nginx | 2403 |
+| couchdb | 2404 |
+| mysql | 2405 |
+| rabbitmq | 2406 |
 
 ---
 
 ## Available VM Types
 
-### Language VMs (for writing code)
+### Language VMs (19 total, for writing code)
 
 | Language | Command | Aliases | Best For |
 |----------|---------|---------|---------|
-| Python | `create-virtual-for python` | py | Web backends, AI/ML, scripts |
+| C | `create-virtual-for c` | c | Systems programming |
+| C++ | `create-virtual-for cpp` | c++, gcc | Systems, performance |
+| Assembler | `create-virtual-for asm` | assembler, nasm | Low-level programming |
+| Python | `create-virtual-for python` | python3, py | Web backends, AI/ML, scripts |
 | Rust | `create-virtual-for rust` | rust-dev | Systems, performance |
-| JavaScript | `create-virtual-for js` | js, node | Web frontends, Node.js |
-| C# | `create-virtual-for csharp` | csharp | .NET development |
-| Ruby | `create-virtual-for ruby` | rb | Rails, scripts |
+| JavaScript | `create-virtual-for js` | node, nodejs | Web frontends, Node.js |
+| C# | `create-virtual-for csharp` | dotnet, csharp | .NET development |
+| Ruby | `create-virtual-for ruby` | rb, ruby | Rails, scripts |
 | Go | `create-virtual-for go` | golang | Services, microservices |
+| Java | `create-virtual-for java` | jdk | Enterprise applications |
+| Kotlin | `create-virtual-for kotlin` | kotlin | Android, backend |
+| Swift | `create-virtual-for swift` | swift | iOS/macOS development |
+| PHP | `create-virtual-for php` | php | Web development |
+| Scala | `create-virtual-for scala` | scala | Big data, backend |
+| R | `create-virtual-for r` | rlang, r | Data science, statistics |
+| Lua | `create-virtual-for lua` | lua | Embedded scripting |
+| Flutter | `create-virtual-for flutter` | dart, flutter | Mobile apps |
+| Elixir | `create-virtual-for elixir` | elixir | Distributed systems |
+| Haskell | `create-virtual-for haskell` | ghc, haskell | Functional programming |
 
-### Service VMs (for data & infrastructure)
+### Service VMs (7 total, for data & infrastructure)
 
-| Service | Command | Port | Best For |
-|---------|---------|------|----------|
-| PostgreSQL | `create-virtual-for postgres` | 5432 | Relational databases |
-| Redis | `create-virtual-for redis` | 6379 | Caching, queues |
-| MongoDB | `create-virtual-for mongodb` | 27017 | NoSQL databases |
-| Nginx | `create-virtual-for nginx` | 80/443 | Web server, reverse proxy |
+| Service | Command | Aliases | Port | Best For |
+|---------|---------|---------|------|----------|
+| PostgreSQL | `create-virtual-for postgres` | postgresql | 5432 | Relational databases |
+| Redis | `create-virtual-for redis` | redis | 6379 | Caching, queues |
+| MongoDB | `create-virtual-for mongodb` | mongo | 27017 | NoSQL databases |
+| Nginx | `create-virtual-for nginx` | nginx | 80/443 | Web server, reverse proxy |
+| CouchDB | `create-virtual-for couchdb` | couchdb | 5984 | NoSQL databases |
+| MySQL | `create-virtual-for mysql` | mysql | 3306 | Relational databases |
+| RabbitMQ | `create-virtual-for rabbitmq` | rabbitmq | 5672, 15672 | Message queues |
 
 ---
 
