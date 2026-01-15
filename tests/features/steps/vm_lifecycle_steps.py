@@ -47,6 +47,8 @@ def step_no_vm_config(context, vm_name):
 @given('VM "{vm_name}" has been created')
 def step_vm_created(context, vm_name):
     """Set up a VM as being created."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add(vm_name)
     # Create minimal docker-compose.yml to simulate created VM
     vm_dir = VDE_ROOT / "configs" / "docker" / vm_name
@@ -66,6 +68,10 @@ services:
 @given('VM "{vm_name}" is running')
 def step_vm_running(context, vm_name):
     """Set up a VM as running (simulate state)."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.running_vms.add(vm_name)
     context.created_vms.add(vm_name)
 
@@ -73,6 +79,8 @@ def step_vm_running(context, vm_name):
 @given('VM "{vm_name}" is not running')
 def step_vm_not_running(context, vm_name):
     """Ensure VM is not in running state."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.discard(vm_name)
 
 
@@ -948,7 +956,7 @@ def step_ssh_vm_to_vm(context, vm1, vm2):
 @then('the connection should succeed')
 def step_ssh_success(context):
     """SSH connection should succeed."""
-    assert context.ssh_agent_enabled or context.last_exit_code == 0
+    assert context.ssh_agent_enabled or getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('I should be able to run commands on the remote VM')
@@ -1116,7 +1124,7 @@ def step_see_progress(context):
 @then('setup should complete without errors')
 def step_setup_complete_no_errors(context):
     """Setup should complete successfully."""
-    assert context.last_exit_code == 0 or context.setup_completed
+    assert getattr(context, 'last_exit_code', 0) == 0 or context.setup_completed
 
 
 # Note: "I run "./scripts/list-vms"" uses generic "I run "{command}"" step
@@ -1345,6 +1353,8 @@ def step_request_python_env(context):
 @then('the Python VM should be started')
 def step_python_vm_started(context):
     """Python VM should be started."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("python")
     context.python_vm_started = True
 
