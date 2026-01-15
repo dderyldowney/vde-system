@@ -550,6 +550,8 @@ def step_deployment_ssh_keys(context):
 @given('I have a Python VM where I build my application')
 def step_python_build_vm(context):
     """Have Python VM where I build application."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("python")
     context.python_build_vm = True
 
@@ -606,6 +608,8 @@ def step_agent_selects_key(context):
 @given('I have a Node.js VM running')
 def step_node_vm_running(context):
     """Have Node.js VM running."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("js")
 
 @given('I have an npm script that runs Git commands')
@@ -701,6 +705,8 @@ def step_keys_loaded_agent(context):
 @when('I create a Python VM')
 def step_create_python_vm(context):
     """Create a Python VM."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add("python")
 
 @then('an SSH agent should be started automatically')
@@ -751,6 +757,8 @@ def step_no_copy_keys_go(context):
 @given('I have a PostgreSQL VM running')
 def step_postgres_vm_running(context):
     """Have PostgreSQL VM running."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("postgres")
 
 @when('I run "ssh postgres-dev" from within the Python VM')
@@ -801,18 +809,24 @@ def step_output_displayed(context):
 @given('I create a Python VM for my API')
 def step_create_python_api(context):
     """Create Python VM for API."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add("python")
     context.python_api_vm = True
 
 @given('I create a PostgreSQL VM for my database')
 def step_create_postgres_db(context):
     """Create PostgreSQL VM for database."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add("postgres")
     context.postgres_db_vm = True
 
 @given('I create a Redis VM for caching')
 def step_create_redis_cache(context):
     """Create Redis VM for caching."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add("redis")
     context.redis_cache_vm = True
 
