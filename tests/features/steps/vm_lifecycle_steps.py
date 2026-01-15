@@ -1387,6 +1387,8 @@ def step_need_golang_project(context):
 @then('a go development environment should be created')
 def step_go_env_created(context):
     """Go development environment should be created."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add("go")
     context.go_env_created = True
 
@@ -1398,6 +1400,8 @@ def step_compose_for_go(context):
 @then('SSH config entry for "go-dev" should be added')
 def step_ssh_entry_go_dev(context):
     """SSH config entry for go-dev should be added."""
+    if not hasattr(context, 'ssh_config_entries'):
+        context.ssh_config_entries = set()
     context.ssh_config_entries.add("go-dev")
 
 @then('projects/go directory should be created')
@@ -1594,12 +1598,16 @@ def step_no_duplicate_ssh_ports(context):
 @given('I create a PostgreSQL VM')
 def step_create_postgres_vm(context):
     """Create a PostgreSQL VM."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add("postgres")
     context.postgres_vm_created = True
 
 @when('it starts')
 def step_postgres_starts(context):
     """PostgreSQL VM starts."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("postgres")
 
 @then('the PostgreSQL port should be mapped')
@@ -1853,6 +1861,8 @@ def step_python_compose_exists(context):
 def step_start_vm_python(context):
     """Start VM python."""
     context.last_command = "./scripts/start-virtual python"
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("python")
 
 @then('docker-compose build should be executed')
