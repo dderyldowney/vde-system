@@ -1,8 +1,0 @@
-
-# Test VM Dev VM
-Host test-vm
-    HostName localhost
-    Port 2222
-    User devuser
-    IdentityFile /tmp/fake_key
-    IdentitiesOnly yes
