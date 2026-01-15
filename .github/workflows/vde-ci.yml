@@ -513,6 +513,13 @@ jobs:
         if: steps.select-vm.outputs.type == 'svc'
         run: echo "::notice::Service VMs don't have SSH access - skipping SSH test"
 
+      - name: Run Docker VM Lifecycle integration tests
+        shell: zsh {0}
+        run: |
+          echo "Running Docker VM Lifecycle integration tests..."
+          chmod +x tests/integration/docker-vm-lifecycle.test.sh
+          ./tests/integration/docker-vm-lifecycle.test.sh
+
       - name: Display Container Info
         run: |
           echo "::notice::Successfully built and tested ${{ env.VM_SELECTION }}"
