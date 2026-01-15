@@ -17,6 +17,11 @@ data/mongodb/*
 public-ssh-keys/*
 coverage/*
 
+# Backup files
+*.bak
+*.backup.*
+*.backup
+
 # IDE and editor files
 .idea/
 .vscode/
@@ -32,3 +37,7 @@ Thumbs.db
 # Docker
 *.log
 .locks/
+
+# Pythoin cache files
+__pycache__
+
