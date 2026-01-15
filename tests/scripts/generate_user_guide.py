@@ -626,7 +626,7 @@ def generate_user_guide():
         f.write('<p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>\n\n')
 
         # Header
-        f.write("** Every workflow below has been tested and verified to work. If you follow these steps, they will work for you too. **\n\n")
+        f.write("** Every workflow has been tested and verified to work. Follow the steps, they will work for you too. **\n\n")
         f.write("---\n\n")
 
         # Table of contents
