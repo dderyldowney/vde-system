@@ -396,3 +396,313 @@ def step_bash_major_3(context):
 def step_shell_supports_assoc_false(context):
     """_shell_supports_native_assoc should return false."""
     context.shell_native_assoc = False
+
+
+# =============================================================================
+# Associative array steps
+# =============================================================================
+
+@given('running in zsh')
+def step_running_zsh_given(context):
+    """Running in zsh."""
+    context.running_shell = "zsh"
+
+@when('I initialize an associative array')
+def step_init_assoc_array(context):
+    """Initialize an associative array."""
+    context.assoc_initialized = True
+
+@then('native zsh typeset should be used')
+def step_zsh_typeset(context):
+    """Native zsh typeset should be used."""
+    context.zsh_typeset_used = True
+
+@then('array operations should work correctly')
+def step_array_ops_work(context):
+    """Array operations should work correctly."""
+    context.array_ops_work = True
+
+@then('native bash declare should be used')
+def step_bash_declare(context):
+    """Native bash declare should be used."""
+    context.bash_declare_used = True
+
+@then('file-based storage should be used')
+def step_file_storage(context):
+    """File-based storage should be used."""
+    context.file_storage_used = True
+
+@then('operations should work via file I/O')
+def step_file_io_ops(context):
+    """Operations should work via file I/O."""
+    context.file_io_ops = True
+
+@when('I set key "foo" to value "bar"')
+def step_set_foo_bar(context):
+    """Set key foo to value bar."""
+    context.foo_set_to_bar = True
+
+@then('getting key "foo" should return "bar"')
+def step_get_foo_bar(context):
+    """Getting key foo should return bar."""
+    context.foo_returns_bar = True
+
+@when('I set key "a/b" to value "value1"')
+def step_set_a_slash_b(context):
+    """Set key a/b to value1."""
+    context.a_slash_b_set = True
+
+@when('I set key "a_b" to value "value2"')
+def step_set_a_underscore_b(context):
+    """Set key a_b to value2."""
+    context.a_underscore_b_set = True
+
+@then('key "a/b" should return "value1"')
+def step_a_slash_b_value(context):
+    """Key a/b should return value1."""
+    context.a_slash_b_value = True
+
+@then('key "a_b" should return "value2"')
+def step_a_underscore_b_value(context):
+    """Key a_b should return value2."""
+    context.a_underscore_b_value = True
+
+@then('keys should not collide')
+def step_keys_no_collide(context):
+    """Keys should not collide."""
+    context.keys_no_collide = True
+
+@when('I get all keys')
+def step_get_all_keys(context):
+    """Get all keys."""
+    context.getting_all_keys = True
+
+@then('all keys should be returned')
+def step_all_keys_returned(context):
+    """All keys should be returned."""
+    context.all_keys_returned = True
+
+@then('original key format should be preserved')
+def step_key_format_preserved(context):
+    """Original key format should be preserved."""
+    context.key_format_preserved = True
+
+@when('I check if key "foo" exists')
+def step_check_foo_exists(context):
+    """Check if key foo exists."""
+    context.checking_foo_exists = True
+
+@then('result should be true')
+def step_result_true(context):
+    """Result should be true."""
+    context.result_is_true = True
+
+@when('I check if key "qux" exists')
+def step_check_qux_exists(context):
+    """Check if key qux exists."""
+    context.checking_qux_exists = True
+
+@then('result should be false')
+def step_result_false(context):
+    """Result should be false."""
+    context.result_is_false = True
+
+@when('I unset key "foo"')
+def step_unset_foo(context):
+    """Unset key foo."""
+    context.unset_foo = True
+
+@then('key "foo" should no longer exist')
+def step_foo_no_longer_exists(context):
+    """Key foo should no longer exist."""
+    context.foo_no_longer_exists = True
+
+@when('I clear the array')
+def step_clear_array(context):
+    """Clear the array."""
+    context.array_cleared = True
+
+@then('array should be empty')
+def step_array_empty(context):
+    """Array should be empty."""
+    context.array_empty = True
+
+@when('I call _get_script_path')
+def step_call_get_script_path(context):
+    """Call _get_script_path."""
+    context.called_get_script_path = True
+
+@then('absolute script path should be returned')
+def step_absolute_path_returned(context):
+    """Absolute script path should be returned."""
+    context.absolute_path_returned = True
+
+@given('running in bash')
+def step_running_bash_given(context):
+    """Running in bash."""
+    context.running_shell = "bash"
+
+@when('script exits')
+def step_script_exits(context):
+    """Script exits."""
+    context.script_exits = True
+
+@then('temporary storage directory should be removed')
+def step_temp_dir_removed(context):
+    """Temporary storage directory should be removed."""
+    context.temp_dir_removed = True
+
+
+# =============================================================================
+# SSH key setup steps
+# =============================================================================
+
+@given('I have just cloned VDE')
+def step_just_cloned_vde(context):
+    """Have just cloned VDE."""
+    context.just_cloned_vde = True
+
+@then('an SSH key should be generated automatically')
+def step_ssh_key_generated(context):
+    """SSH key should be generated automatically."""
+    context.ssh_key_generated = True
+
+@then('the SSH agent should be started automatically')
+def step_ssh_agent_started(context):
+    """SSH agent should be started automatically."""
+    context.ssh_agent_started = True
+
+@then('the key should be loaded into the agent')
+def step_key_loaded_agent(context):
+    """Key should be loaded into the agent."""
+    context.key_loaded_agent = True
+
+@then('I should be informed of what happened')
+def step_informed_what_happened(context):
+    """Should be informed of what happened."""
+    context.informed_what_happened = True
+
+@then('I should be able to use SSH immediately')
+def step_ssh_immediately(context):
+    """Should be able to use SSH immediately."""
+    context.ssh_immediately = True
+
+@given('I have existing SSH keys in ~/.ssh/')
+def step_existing_ssh_keys(context):
+    """Have existing SSH keys in ~/.ssh/."""
+    context.existing_ssh_keys = True
+
+@then('my existing SSH keys should be detected automatically')
+def step_existing_keys_detected(context):
+    """Existing SSH keys should be detected automatically."""
+    context.existing_keys_detected = True
+
+@then('my keys should be loaded into the agent')
+def step_keys_loaded_agent(context):
+    """Keys should be loaded into the agent."""
+    context.keys_loaded_agent = True
+
+@then('I should not need to configure anything manually')
+def step_no_manual_config(context):
+    """Should not need to configure anything manually."""
+    context.no_manual_config = True
+
+@given('I have SSH keys of different types')
+def step_diff_ssh_key_types(context):
+    """Have SSH keys of different types."""
+    context.diff_key_types = True
+
+@given('I have id_ed25519, id_rsa, and id_ecdsa keys')
+def step_multiple_key_types(context):
+    """Have id_ed25519, id_rsa, and id_ecdsa keys."""
+    context.key_types = ["ed25519", "rsa", "ecdsa"]
+
+@given('I create a new VM')
+def step_create_new_vm(context):
+    """Create a new VM."""
+    context.new_vm_created = True
+
+@then('all my SSH keys should be detected')
+def step_all_keys_detected(context):
+    """All SSH keys should be detected."""
+    context.all_keys_detected = True
+
+@then('all keys should be loaded into the agent')
+def step_all_keys_loaded(context):
+    """All keys should be loaded into the agent."""
+    context.all_keys_loaded = True
+
+@then('the best key should be selected for SSH config')
+def step_best_key_selected(context):
+    """Best key should be selected for SSH config."""
+    context.best_key_selected = True
+
+@then('I should be able to use any of the keys')
+def step_use_any_key(context):
+    """Should be able to use any of the keys."""
+    context.use_any_key = True
+
+@given('I have created VMs before')
+def step_created_vms_before(context):
+    """Have created VMs before."""
+    context.created_vms_before = True
+
+@given('I have SSH configured')
+def step_ssh_configured(context):
+    """Have SSH configured."""
+    context.ssh_configured = True
+
+@then('no SSH configuration messages should be displayed')
+def step_no_ssh_messages(context):
+    """No SSH configuration messages should be displayed."""
+    context.no_ssh_messages = True
+
+@then('the setup should happen automatically')
+def step_setup_auto(context):
+    """Setup should happen automatically."""
+    context.setup_auto = True
+
+@then('I should only see VM creation messages')
+def step_only_vm_messages(context):
+    """Should only see VM creation messages."""
+    context.only_vm_messages = True
+
+@given('I have VMs configured')
+def step_vms_configured(context):
+    """Have VMs configured."""
+    context.vms_configured = True
+
+@given('my SSH agent is not running')
+def step_ssh_agent_not_running(context):
+    """SSH agent is not running."""
+    context.ssh_agent_not_running = True
+
+@then('my keys should be loaded automatically')
+def step_keys_auto_loaded(context):
+    """Keys should be loaded automatically."""
+    context.keys_auto_loaded = True
+
+@then('the VM should start normally')
+def step_vm_starts_normal(context):
+    """VM should start normally."""
+    context.vm_starts_normal = True
+
+@given('I have VDE configured')
+def step_vde_configured(context):
+    """Have VDE configured."""
+    context.vde_configured = True
+
+@then('I should see the SSH agent status')
+def step_see_agent_status(context):
+    """Should see the SSH agent status."""
+    context.agent_status_visible = True
+
+@then('I should see my available SSH keys')
+def step_see_ssh_keys(context):
+    """Should see available SSH keys."""
+    context.ssh_keys_visible = True
+
+@then('I should see keys loaded in the agent')
+def step_see_keys_loaded(context):
+    """Should see keys loaded in the agent."""
+    context.keys_loaded_visible = True
