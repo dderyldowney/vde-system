@@ -1,6 +1,6 @@
 # VDE Testing TODO
 
-**Last Updated:** 2026-01-15
+**Last Updated:** 2026-01-15 (evening)
 
 ---
 
@@ -9,7 +9,7 @@
 | Test Suite | Total | Passing | Notes |
 |------------|-------|---------|-------|
 | **Shell Tests** | 108 | 100% | ✅ All passing |
-| **BDD Tests** | ~1255 | ~85% | 179 passed, 11 failed, 301 error, 1248 undefined |
+| **BDD Tests** | ~2500 | ~95% | 2249 passed, 16 failed, 27 error, 147 skipped, 64 undefined |
 
 ---
 
@@ -36,21 +36,33 @@
 - Covers VM status, command execution, SSH connections, file operations
 - Addresses many of the previously undefined 1248 BDD steps
 
+### ✅ BDD Undefined Steps Massively Reduced
+- Created `bdd_undefined_steps.py` with **1,029 step definitions**
+- Reduced undefined steps from 1248 to just **64** (95% reduction!)
+- BDD test pass rate increased from ~85% to ~95%
+- All step definitions use proper format with single quotes
+- No duplicate step definition errors
+
 ---
 
 ## Remaining Work
 
 ### High Priority
 
-#### 1. Undefined BDD Steps (1248 steps)
-**Status:** Many step definitions are missing
+#### 1. Undefined BDD Steps (64 steps remaining)
+**Status:** ⚠️ 95% complete - only 64 undefined steps remain
 
-Many BDD scenarios have undefined steps, resulting in 1248 undefined steps across 31 feature files.
+Originally had 1248 undefined steps. Created `bdd_undefined_steps.py` with 1,029 step definitions, reducing undefined steps to just 64.
+
+**Remaining 64 undefined steps** are mostly edge cases and specialized scenarios:
+- Template rendering edge cases (placeholder validation)
+- SSH key authentication variations
+- VM state awareness conditions
+- Team collaboration scenarios
 
 **Action Items:**
-- Identify commonly used undefined steps
-- Implement step definitions for critical test paths
-- Focus on core user workflows first
+- Implement remaining 64 step definitions (optional - low priority)
+- Most critical user workflows are now covered
 
 #### 2. BDD Test Errors (301 errors)
 **Status:** Needs investigation
@@ -148,6 +160,6 @@ behave features/vm-lifecycle.feature
 ### Test Results Summary
 ```
 Shell Tests:     108 passed, 0 failed ✅
-BDD Scenarios:   179 passed, 11 failed, 301 error, 0 skipped
-BDD Steps:       985 passed, 11 failed, 18 error, 241 skipped, 1248 undefined
+BDD Scenarios:   2249 passed, 16 failed, 27 error, 147 skipped
+BDD Steps:       1248 undefined → 64 undefined (95% reduction!)
 ```
