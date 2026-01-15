@@ -122,6 +122,10 @@ def step_no_lang_vms(context):
 @given('language VM "{vm_name}" is allocated port "{port}"')
 def step_vm_allocated_port(context, vm_name, port):
     """VM has a port allocated."""
+    if not hasattr(context, 'allocated_ports'):
+        context.allocated_ports = {}
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.allocated_ports[vm_name] = port
     context.created_vms.add(vm_name)
 
@@ -129,6 +133,10 @@ def step_vm_allocated_port(context, vm_name, port):
 @given('ports "{ports}" are allocated')
 def step_ports_allocated(context, ports):
     """Multiple ports are allocated."""
+    if not hasattr(context, 'allocated_ports'):
+        context.allocated_ports = {}
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     port_list = [p.strip() for p in ports.split(",")]
     for i, port in enumerate(port_list):
         vm_name = f"testvm{i}"
@@ -422,24 +430,32 @@ def step_vm_has_port(context, port):
         assert context.last_allocated_port == port
     else:
         # Check if any VM has this port
+        if not hasattr(context, 'allocated_ports'):
+            context.allocated_ports = {}
         assert port in context.allocated_ports.values()
 
 
 @then('"{vm_name}" should be allocated port "{port}"')
 def step_specific_vm_has_port(context, vm_name, port):
     """Verify specific VM has specific port."""
+    if not hasattr(context, 'allocated_ports'):
+        context.allocated_ports = {}
     assert context.allocated_ports.get(vm_name) == port
 
 
 @then('"{vm_name}" should be mapped to port "{port}"')
 def step_vm_mapped_to_port(context, vm_name, port):
     """Verify VM to port mapping in registry."""
+    if not hasattr(context, 'allocated_ports'):
+        context.allocated_ports = {}
     assert context.allocated_ports.get(vm_name) == port
 
 
 @then('"{vm_name}" should still be mapped to port "{port}"')
 def step_vm_still_mapped(context, vm_name, port):
     """Verify VM still mapped to port after cache reload."""
+    if not hasattr(context, 'allocated_ports'):
+        context.allocated_ports = {}
     assert context.allocated_ports.get(vm_name) == port
 
 
@@ -459,6 +475,8 @@ def step_vm_allocated_different_port(context):
 @then('each process should receive a unique port')
 def step_unique_ports(context):
     """Verify each process got unique port."""
+    if not hasattr(context, 'allocated_ports'):
+        context.allocated_ports = {}
     ports = list(context.allocated_ports.values())
     assert len(ports) == len(set(ports))
 
@@ -466,6 +484,8 @@ def step_unique_ports(context):
 @then('no port should be allocated twice')
 def step_no_duplicate_ports(context):
     """Verify no duplicate port allocations."""
+    if not hasattr(context, 'allocated_ports'):
+        context.allocated_ports = {}
     ports = list(context.allocated_ports.values())
     assert len(ports) == len(set(ports))
 
