@@ -23,6 +23,8 @@ def step_python_vm_running(context):
     if not hasattr(context, 'running_vms'):
         context.running_vms = set()
     context.running_vms.add('python')
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add('python')
 
 @given('I have "python" VM running')
@@ -30,6 +32,8 @@ def step_python_vm_running_daily(context):
     if not hasattr(context, 'running_vms'):
         context.running_vms = set()
     context.running_vms.add('python')
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add('python')
 
 @given('I have "rust" VM created but not running')
@@ -105,6 +109,8 @@ def step_postgres_running(context):
     if not hasattr(context, 'running_vms'):
         context.running_vms = set()
     context.running_vms.add('postgres')
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add('postgres')
 
 @given('"postgres" VM is running')
@@ -112,6 +118,8 @@ def step_postgres_vm_running(context):
     if not hasattr(context, 'running_vms'):
         context.running_vms = set()
     context.running_vms.add('postgres')
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add('postgres')
 
 # Duplicate - using ai_steps.py version
@@ -125,6 +133,8 @@ def step_python_currently_running(context):
     if not hasattr(context, 'running_vms'):
         context.running_vms = set()
     context.running_vms.add('python')
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add('python')
     context.python_running = True
 

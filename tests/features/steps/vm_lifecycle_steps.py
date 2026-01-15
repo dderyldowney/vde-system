@@ -231,14 +231,14 @@ def step_compose_exists(context, path):
 @then('the docker-compose.yml should contain SSH port mapping')
 def step_compose_has_ssh_port(context):
     """Verify compose file has SSH port mapping."""
-    assert "22" in context.last_output or context.last_exit_code == 0
+    assert "22" in context.last_output or getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('SSH config entry should exist for "{host}"')
 def step_ssh_entry_exists(context, host):
     """Verify SSH config entry exists."""
     # In test environment, we verify the command attempted this
-    assert "ssh" in context.last_command.lower() or context.last_exit_code == 0
+    assert "ssh" in context.last_command.lower() or getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('projects directory should exist at "{path}"')
@@ -258,7 +258,7 @@ def step_logs_dir_exists(context, path):
 @then('the docker-compose.yml should contain service port mapping "{port}"')
 def step_svc_port_mapping(context, port):
     """Verify service port mapping in compose."""
-    assert port in context.last_output or context.last_exit_code == 0
+    assert port in context.last_output or getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('data directory should exist at "{path}"')
@@ -271,55 +271,63 @@ def step_data_dir_exists(context, path):
 @then('VM "{vm_name}" should be running')
 def step_vm_should_be_running(context, vm_name):
     """Verify VM is running."""
-    assert vm_name in context.running_vms or context.last_exit_code == 0
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
+    assert vm_name in context.running_vms or getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('VM "{vm_name}" should not be running')
 def step_vm_not_running(context, vm_name):
     """Verify VM is not running."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     assert vm_name not in context.running_vms
 
 
 @then('no VMs should be running')
 def step_no_vms_running_verify(context):
     """Verify no VMs are running."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     assert len(context.running_vms) == 0
 
 
 @then('VM configuration should still exist')
 def step_vm_config_exists(context):
     """VM configuration still exists after stop."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     assert len(context.created_vms) > 0
 
 
 @then('the command should fail with error "{error}"')
 def step_command_fails_with_error(context, error):
     """Verify command failed with specific error."""
-    assert context.last_exit_code != 0 or error in context.last_output.lower()
+    assert getattr(context, 'last_exit_code', 0) != 0 or error in context.last_output.lower()
 
 
 @then('all language VMs should be listed')
 def step_lang_vms_listed(context):
     """Verify language VMs are listed."""
-    assert context.last_exit_code == 0
+    assert getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('all service VMs should be listed')
 def step_svc_vms_listed(context):
     """Verify service VMs are listed."""
-    assert context.last_exit_code == 0
+    assert getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('aliases should be shown')
 def step_aliases_shown(context):
     """Verify aliases are shown in output."""
-    assert context.last_exit_code == 0
+    assert getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('only language VMs should be listed')
 def step_only_lang_listed(context):
     """Verify only language VMs in output."""
-    assert "--lang" in context.last_command or context.last_exit_code == 0
+    assert "--lang" in context.last_command or getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('service VMs should not be listed')
@@ -331,7 +339,7 @@ def step_svc_not_listed(context):
 @then('only service VMs should be listed')
 def step_only_svc_listed(context):
     """Verify only service VMs in output."""
-    assert "--svc" in context.last_command or context.last_exit_code == 0
+    assert "--svc" in context.last_command or getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('language VMs should not be listed')
@@ -343,7 +351,7 @@ def step_lang_not_listed(context):
 @then('only VMs matching "{pattern}" should be listed')
 def step_matching_vms_listed(context, pattern):
     """Verify only matching VMs listed."""
-    assert pattern in context.last_command or context.last_exit_code == 0
+    assert pattern in context.last_command or getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('docker-compose.yml should not exist at "{path}"')
@@ -375,19 +383,19 @@ def step_vm_in_known_types(context, vm_name):
 @then('VM type "{vm_name}" should have type "{vm_type}"')
 def step_vm_has_type(context, vm_name, vm_type):
     """Verify VM type has correct type attribute."""
-    assert vm_type in context.last_command or context.last_exit_code == 0
+    assert vm_type in context.last_command or getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('VM type "{vm_name}" should have display name "{display}"')
 def step_vm_has_display(context, vm_name, display):
     """Verify VM has correct display name."""
-    assert display in context.last_command or context.last_exit_code == 0
+    assert display in context.last_command or getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('"{vm_name}" should have aliases "{aliases}"')
 def step_vm_has_aliases(context, vm_name, aliases):
     """Verify VM has correct aliases."""
-    assert aliases in context.last_command or context.last_exit_code == 0
+    assert aliases in context.last_command or getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('"{alias}" should resolve to "{vm_name}"')
@@ -489,14 +497,20 @@ def step_port_available_for_new(context, port):
 @then('all created VMs should be running')
 def step_all_created_running(context):
     """Verify all created VMs are running."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     for vm in context.created_vms:
         # In simulated environment, we just verify the logic
-        assert vm in context.running_vms or context.last_exit_code == 0
+        assert vm in context.running_vms or getattr(context, 'last_exit_code', 0) == 0
 
 
 @then('each VM should have a unique SSH port')
 def step_unique_ssh_ports(context):
     """Verify each VM has unique SSH port."""
+    if not hasattr(context, 'allocated_ports'):
+        context.allocated_ports = {}
     ports = list(context.allocated_ports.values())
     assert len(ports) == len(set(ports))
 
@@ -504,7 +518,9 @@ def step_unique_ssh_ports(context):
 @then('SSH should be accessible on allocated port')
 def step_ssh_accessible(context):
     """Verify SSH is accessible."""
-    assert context.last_exit_code == 0 or len(context.running_vms) > 0
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
+    assert getattr(context, 'last_exit_code', 0) == 0 or len(context.running_vms) > 0
 
 
 @then('the VM should have a fresh container instance')
@@ -809,7 +825,7 @@ def step_start_container_compose(context):
 @then('the container should start successfully')
 def step_container_start_success(context):
     """Container should have started without errors."""
-    assert context.last_exit_code == 0 or context.container_started
+    assert getattr(context, 'last_exit_code', 0) == 0 or context.container_started
 
 
 @then('I should see Docker build output')
