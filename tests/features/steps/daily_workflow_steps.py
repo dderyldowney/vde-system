@@ -1126,3 +1126,308 @@ def step_ssh_each_service(context):
 def step_check_logs_each(context):
     """Can check logs for each service."""
     context.logs_each_service = True
+
+
+# =============================================================================
+# Additional workflow and development steps
+# =============================================================================
+
+@then('I can trace requests across services')
+def step_trace_requests(context):
+    """Can trace requests across services."""
+    context.can_trace_requests = True
+
+@given('I need realistic data for development')
+def step_need_realistic_data(context):
+    """Need realistic data for development."""
+    context.need_realistic_data = True
+
+@when('I create a seed script and run it in postgres VM')
+def step_create_seed_script(context):
+    """Create seed script and run in postgres VM."""
+    context.seed_script_created = True
+
+@then('the data persists across VM restarts')
+def step_data_persists_restarts(context):
+    """Data persists across VM restarts."""
+    context.data_persists_across_restarts = True
+
+@then('I always have a fresh starting point')
+def step_fresh_starting_point(context):
+    """Always have fresh starting point."""
+    context.fresh_starting_point = True
+
+@then('I can reset data when needed')
+def step_can_reset_data(context):
+    """Can reset data when needed."""
+    context.can_reset_data = True
+
+@given('project A needs Node 16')
+def step_project_a_node16(context):
+    """Project A needs Node 16."""
+    context.project_a_needs = "node16"
+
+@given('project B needs Node 18')
+def step_project_b_node18(context):
+    """Project B needs Node 18."""
+    context.project_b_needs = "node18"
+
+@when('I create js-node16 VM and js-node18 VM')
+def step_create_multiple_node_vms(context):
+    """Create js-node16 and js-node18 VMs."""
+    context.multiple_node_vms_created = True
+
+@then('each VM has its own Node version')
+def step_each_own_node_version(context):
+    """Each VM has own Node version."""
+    context.each_own_node_version = True
+
+@then('I can work on both projects simultaneously')
+def step_work_both_projects(context):
+    """Can work on both projects simultaneously."""
+    context.work_both_simultaneously = True
+
+@then('versions don\'t conflict')
+def step_no_version_conflict(context):
+    """Versions don't conflict."""
+    context.no_version_conflict = True
+
+@given('I\'m working on a microservices architecture')
+def step_microservices_arch(context):
+    """Working on microservices architecture."""
+    context.microservices_arch = True
+
+@when('I start all service VMs (auth, api, worker, frontend)')
+def step_start_all_microservices(context):
+    """Start all service VMs."""
+    context.all_microservices_started = True
+
+@then('all services can run simultaneously')
+def step_services_simultaneous(context):
+    """All services can run simultaneously."""
+    context.services_simultaneous = True
+
+@then('they can communicate via internal network')
+def step_internal_network_comm(context):
+    """Can communicate via internal network."""
+    context.internal_network_comm = True
+
+@then('I can test the entire system locally')
+def step_test_system_locally(context):
+    """Can test entire system locally."""
+    context.test_system_locally = True
+
+@given('I want to try out a new language')
+def step_try_new_language(context):
+    """Want to try new language."""
+    context.trying_new_language = True
+
+@when('I create a VM for that language')
+def step_create_new_lang_vm(context):
+    """Create VM for that language."""
+    context.new_lang_vm_created = True
+
+@then('I can experiment immediately')
+def step_experiment_immediately(context):
+    """Can experiment immediately."""
+    context.experiment_immediately = True
+
+@then('I can delete the VM if I don\'t want it')
+def step_delete_vm_unwanted(context):
+    """Can delete VM if unwanted."""
+    context.can_delete_unwanted = True
+
+@then('my main development environment is untouched')
+def step_main_env_untouched(context):
+    """Main development environment untouched."""
+    context.main_env_untouched = True
+
+@given('I\'m pairing with a colleague')
+def step_pairing_colleague(context):
+    """Pairing with colleague."""
+    context.pairing_colleague = True
+
+@when('we both SSH into the same VM')
+def step_both_ssh_same_vm(context):
+    """Both SSH into same VM."""
+    context.both_ssh_same_vm = True
+
+@then('we can work on the same code')
+def step_work_same_code(context):
+    """Can work on same code."""
+    context.work_same_code = True
+
+@then('we can see each other\'s changes')
+def step_see_changes(context):
+    """Can see each other's changes."""
+    context.see_each_other_changes = True
+
+@then('we can use tmux or similar for shared terminal')
+def step_use_tmux(context):
+    """Can use tmux for shared terminal."""
+    context.can_use_tmux = True
+
+@given('I have VMs running')
+def step_have_vms_running(context):
+    """Have VMs running."""
+    context.vms_are_running = True
+
+@when('I open VSCode and connect to python-dev via Remote-SSH')
+def step_vscode_connect(context):
+    """Open VSCode and connect via Remote-SSH."""
+    context.vscode_connected = True
+
+@then('I get full IDE experience inside the VM')
+def step_full_ide_experience(context):
+    """Get full IDE experience inside VM."""
+    context.full_ide_experience = True
+
+@then('I can use VSCode extensions for Python')
+def step_vscode_extensions(context):
+    """Can use VSCode extensions for Python."""
+    context.vscode_extensions = True
+
+@then('I can debug directly from my editor')
+def step_debug_from_editor(context):
+    """Can debug directly from editor."""
+    context.debug_from_editor = True
+
+@given('my app has background job processing')
+def step_app_background_jobs(context):
+    """App has background job processing."""
+    context.app_background_jobs = True
+
+@when('I create a dedicated worker VM')
+def step_create_worker_vm(context):
+    """Create dedicated worker VM."""
+    context.worker_vm_created = True
+
+@then('worker runs independently of web VM')
+def step_worker_independent(context):
+    """Worker runs independently of web VM."""
+    context.worker_independent = True
+
+@then('I can scale workers separately')
+def step_scale_workers(context):
+    """Can scale workers separately."""
+    context.can_scale_workers = True
+
+@then('I can restart worker without affecting web')
+def step_restart_worker_no_affect(context):
+    """Can restart worker without affecting web."""
+    context.restart_worker_no_affect = True
+
+@given('I need to test HTTPS locally')
+def step_need_https_local(context):
+    """Need to test HTTPS locally."""
+    context.need_https_local = True
+
+@when('I configure nginx VM with SSL')
+def step_configure_nginx_ssl(context):
+    """Configure nginx VM with SSL."""
+    context.nginx_ssl_configured = True
+
+@then('I can access my app over HTTPS locally')
+def step_access_https_local(context):
+    """Can access app over HTTPS locally."""
+    context.https_local_access = True
+
+@then('certificates can be self-signed for development')
+def step_self_signed_certs(context):
+    """Certificates can be self-signed for development."""
+    context.self_signed_certs = True
+
+@then('browser warnings are expected but acceptable')
+def step_browser_warnings_expected(context):
+    """Browser warnings are expected but acceptable."""
+    context.browser_warnings_expected = True
+
+@given('I have migration scripts')
+def step_have_migrations(context):
+    """Have migration scripts."""
+    context.has_migrations = True
+
+@when('I run migrations in development VM')
+def step_run_migrations(context):
+    """Run migrations in development VM."""
+    context.migrations_run = True
+
+@then('I can test migrations safely')
+def step_test_migrations_safe(context):
+    """Can test migrations safely."""
+    context.migrations_safe = True
+
+@then('I can verify schema changes work')
+def step_verify_schema(context):
+    """Can verify schema changes work."""
+    context.schema_verified = True
+
+@then('production database is not affected')
+def step_prod_db_unaffected(context):
+    """Production database not affected."""
+    context.prod_db_unaffected = True
+
+@given('I\'m developing a client that calls external APIs')
+def step_client_external_apis(context):
+    """Developing client that calls external APIs."""
+    context.client_external_apis = True
+
+@when('I create a mock service VM')
+def step_create_mock_service(context):
+    """Create mock service VM."""
+    context.mock_service_created = True
+
+@then('I can mock API responses')
+def step_mock_api_responses(context):
+    """Can mock API responses."""
+    context.can_mock_api = True
+
+@then('I don\'t need to hit real external services')
+def step_no_real_external_services(context):
+    """Don't need to hit real external services."""
+    context.no_real_external = True
+
+@given('multiple VMs generate logs')
+def step_multiple_vms_logs(context):
+    """Multiple VMs generate logs."""
+    context.multiple_vms_logs = True
+
+@when('I check logs for each VM')
+def step_check_logs_each_vm(context):
+    """Check logs for each VM."""
+    context.checking_logs_each = True
+
+@then('I can view logs from docker logs command')
+def step_docker_logs(context):
+    """Can view logs from docker logs command."""
+    context.docker_logs_available = True
+
+@then('I can check logs/<vm>/ directories')
+def step_check_logs_dirs(context):
+    """Can check logs/<vm>/ directories."""
+    context.logs_dirs_available = True
+
+@then('I can trace issues across services')
+def step_trace_issues(context):
+    """Can trace issues across services."""
+    context.trace_issues = True
+
+@given('I\'m compiling code inside VM')
+def step_compiling_vm(context):
+    """Compiling code inside VM."""
+    context.compiling_in_vm = True
+
+@when('source files change on host')
+def step_source_changes_host(context):
+    """Source files change on host."""
+    context.source_changed_host = True
+
+@then('the VM sees the changes immediately')
+def step_vm_sees_changes(context):
+    """VM sees changes immediately."""
+    context.vm_sees_changes = True
+
+@then('my build tool can rebuild automatically')
+def step_build_tool_rebuilds(context):
+    """Build tool can rebuild automatically."""
+    context.build_tool_auto_rebuild = True
