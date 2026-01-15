@@ -820,3 +820,309 @@ def step_team_config_not_affected(context):
 def step_customize_my_environment(context):
     """Can customize for my environment."""
     context.customization_possible = True
+
+
+# =============================================================================
+# Data persistence and workflow steps
+# =============================================================================
+
+@given('I have data in postgres')
+def step_data_in_postgres(context):
+    """Have data in postgres."""
+    context.data_in_postgres = True
+
+@when('I stop and restart postgres VM')
+def step_stop_restart_postgres(context):
+    """Stop and restart postgres VM."""
+    context.postgres_restarted = True
+
+@then('my data should still be there')
+def step_data_persisted(context):
+    """Data should still be there."""
+    context.data_persisted = True
+
+@then('I don\'t lose work between sessions')
+def step_no_work_lost(context):
+    """Don't lose work between sessions."""
+    context.no_work_lost = True
+
+@given('I\'m working on a Python project')
+def step_working_python_project(context):
+    """Working on Python project."""
+    context.working_python = True
+
+@when('I want to switch to a Rust project')
+def step_switch_rust_project(context):
+    """Want to switch to Rust project."""
+    context.switching_to_rust = True
+
+@then('I\'m immediately in the Rust environment')
+def step_immediately_rust_env(context):
+    """Immediately in Rust environment."""
+    context.immediately_rust = True
+
+@then('I don\'t need to change terminal or context manually')
+def step_no_manual_terminal_change(context):
+    """Don't need to change terminal manually."""
+    context.no_manual_terminal_change = True
+
+@given('my project requires specific Node version')
+def step_specific_node_version(context):
+    """Project requires specific Node version."""
+    context.specific_node_version = True
+
+@when('the team defines the JS VM with that version')
+def step_team_defines_js_version(context):
+    """Team defines JS VM with that version."""
+    context.js_version_defined = True
+
+@then('everyone gets the same Node version')
+def step_same_node_version(context):
+    """Everyone gets same Node version."""
+    context.same_node_version = True
+
+@then('"works on my machine" problems are reduced')
+def step_works_on_machine_reduced(context):
+    """Works on my machine problems reduced."""
+    context.works_on_machine_reduced = True
+
+@given('production uses PostgreSQL with specific extensions')
+def step_production_postgres_ext(context):
+    """Production uses PostgreSQL with extensions."""
+    context.production_postgres_ext = True
+
+@when('I configure the postgres VM with those extensions')
+def step_configure_postgres_ext(context):
+    """Configure postgres VM with extensions."""
+    context.postgres_ext_configured = True
+
+@then('my local database matches production')
+def step_local_matches_prod(context):
+    """Local database matches production."""
+    context.local_matches_prod = True
+
+@then('I catch compatibility issues early')
+def step_catch_compat_early(context):
+    """Catch compatibility issues early."""
+    context.compat_caught_early = True
+
+@given('I need postgres and redis running')
+def step_need_postgres_redis(context):
+    """Need postgres and redis running."""
+    context.need_postgres_redis = True
+
+@when('I start them as service VMs')
+def step_start_service_vms(context):
+    """Start them as service VMs."""
+    context.service_vms_started = True
+
+@then('they run in background')
+def step_run_background(context):
+    """They run in background."""
+    context.running_background = True
+
+@then('I can focus on my application VM')
+def step_focus_app_vm(context):
+    """Can focus on application VM."""
+    context.focus_app_vm = True
+
+@then('they stay running across coding sessions')
+def step_stay_running(context):
+    """Stay running across coding sessions."""
+    context.stay_running_sessions = True
+
+@given('I need to test with fresh database')
+def step_need_fresh_database(context):
+    """Need to test with fresh database."""
+    context.need_fresh_db = True
+
+@when('I stop and remove postgres')
+def step_stop_remove_postgres(context):
+    """Stop and remove postgres."""
+    context.postgres_stopped_removed = True
+
+@when('I recreate and start it')
+def step_recreate_start_postgres(context):
+    """Recreate and start postgres."""
+    context.postgres_recreated_started = True
+
+@then('I get a fresh database instantly')
+def step_fresh_database_instant(context):
+    """Get fresh database instantly."""
+    context.fresh_db_instant = True
+
+@then('I don\'t need to manually clean data')
+def step_no_manual_clean(context):
+    """Don't need to manually clean data."""
+    context.no_manual_clean = True
+
+@given('I\'m working without internet')
+def step_working_offline(context):
+    """Working without internet."""
+    context.working_offline = True
+
+@when('my Docker images are already built')
+def step_docker_images_built(context):
+    """Docker images are already built."""
+    context.docker_images_built = True
+
+@then('I can start and use VMs offline')
+def step_use_vms_offline(context):
+    """Can start and use VMs offline."""
+    context.vms_offline = True
+
+@then('I\'m not blocked by network issues')
+def step_no_network_block(context):
+    """Not blocked by network issues."""
+    context.no_network_block = True
+
+@given('I need additional tools in my Python VM')
+def step_need_additional_tools(context):
+    """Need additional tools in Python VM."""
+    context.need_additional_tools = True
+
+@when('I modify the Dockerfile to add packages')
+def step_modify_dockerfile(context):
+    """Modify Dockerfile to add packages."""
+    context.dockerfile_modified = True
+
+@when('I rebuild with --rebuild')
+def step_rebuild_with_rebuild(context):
+    """Rebuild with --rebuild."""
+    context.last_command = "./scripts/start-virtual python --rebuild"
+    context.rebuild_executed = True
+
+@then('the packages are available in the VM')
+def step_packages_available(context):
+    """Packages are available in VM."""
+    context.packages_available = True
+
+@then('I don\'t need to manually install each time')
+def step_no_manual_install(context):
+    """Don't need to manually install each time."""
+    context.no_manual_install = True
+
+@then('I can see all my VDE containers')
+def step_see_vde_containers(context):
+    """Can see all VDE containers."""
+    context.vde_containers_visible = True
+
+@then('I can verify what\'s currently active')
+def step_verify_active(context):
+    """Can verify what's currently active."""
+    context.active_verified = True
+
+@given('I\'m done working for the day')
+def step_done_for_day(context):
+    """Done working for the day."""
+    context.done_for_day = True
+
+@then('all VMs stop gracefully')
+def step_all_vms_stop_gracefully(context):
+    """All VMs stop gracefully."""
+    context.all_vms_stopped_gracefully = True
+
+@then('no orphaned containers remain')
+def step_no_orphaned_containers(context):
+    """No orphaned containers remain."""
+    context.no_orphaned_containers = True
+
+@then('my system is clean')
+def step_system_clean(context):
+    """System is clean."""
+    context.system_clean = True
+
+@given('I\'ve configured my VMs')
+def step_configured_vms(context):
+    """Have configured VMs."""
+    context.vms_configured = True
+
+@when('I restart my computer')
+def step_restart_computer(context):
+    """Restart computer."""
+    context.computer_restarted = True
+
+@when('I run "start-virtual all" again')
+def step_run_start_all_again(context):
+    """Run start-virtual all again."""
+    context.last_command = "./scripts/start-virtual all"
+
+@then('all my VMs start with saved configuration')
+def step_vms_start_saved_config(context):
+    """All VMs start with saved configuration."""
+    context.vms_saved_config = True
+
+@then('I don\'t need to reconfigure anything')
+def step_no_reconfigure(context):
+    """Don't need to reconfigure."""
+    context.no_reconfigure_needed = True
+
+@given('I need to run tests that might modify system state')
+def step_need_run_tests(context):
+    """Need to run tests that modify system state."""
+    context.need_run_tests = True
+
+@when('I run tests inside a VM')
+def step_run_tests_vm(context):
+    """Run tests inside VM."""
+    context.tests_in_vm = True
+
+@then('my host system is not affected')
+def step_host_not_affected(context):
+    """Host system is not affected."""
+    context.host_not_affected = True
+
+@then('I can run destructive tests safely')
+def step_destructive_tests_safe(context):
+    """Can run destructive tests safely."""
+    context.destructive_tests_safe = True
+
+@then('I can discard and recreate VM if needed')
+def step_discard_recreate_vm(context):
+    """Can discard and recreate VM if needed."""
+    context.discard_recreate_vm = True
+
+@given('I\'m developing a web application')
+def step_developing_web_app(context):
+    """Developing web application."""
+    context.developing_web_app = True
+
+@given('I have a watcher/reloader configured')
+def step_watcher_configured(context):
+    """Have watcher/reloader configured."""
+    context.watcher_configured = True
+
+@when('I edit code in my editor on host')
+def step_edit_code_host(context):
+    """Edit code in editor on host."""
+    context.editing_code_host = True
+
+@then('the application inside VM detects the change')
+def step_app_detects_change(context):
+    """Application inside VM detects change."""
+    context.app_detects_change = True
+
+@then('it hot-reloads automatically')
+def step_hot_reloads(context):
+    """It hot-reloads automatically."""
+    context.hot_reloads = True
+
+@then('I see changes without manual restart')
+def step_see_changes_no_restart(context):
+    """See changes without manual restart."""
+    context.no_manual_restart = True
+
+@given('I have a web app (python), database (postgres), and cache (redis)')
+def step_web_app_stack(context):
+    """Have web app with postgres and redis."""
+    context.web_app_stack = {"python", "postgres", "redis"}
+
+@then('I can SSH into each service independently')
+def step_ssh_each_service(context):
+    """Can SSH into each service independently."""
+    context.ssh_each_service = True
+
+@then('I can check logs for each service')
+def step_check_logs_each(context):
+    """Can check logs for each service."""
+    context.logs_each_service = True

@@ -368,15 +368,23 @@ ssh python-dev
 
 **You're now inside your VM!** Important: You're in the `workspace/` directory (inside the VM).
 
-- `workspace/` = **inside the VM** (where you are now)
-- `projects/python/` = **on your host** (the bind mount source)
+**CRITICAL DISTINCTION - Read This Carefully:**
 
-These are the same files, just accessed from different places. When you edit files in `workspace/` inside the VM, the changes are immediately visible in `projects/python/` on your host, and vice versa.
+| Perspective | Directory Path | What This Means |
+|------------|---------------|-----------------|
+| **From your HOST** (your computer) | `projects/python/` | This is where you put files on your computer |
+| **From inside the VM** (after SSH) | `workspace/` | This is where you see the same files inside the VM |
+
+**These are the SAME files accessed from two different places:**
+- On your **host**, you work in: `~/dev/projects/python/`
+- Inside the **VM**, you work in: `~/workspace/`
+
+**Important:** Any file you create or edit in `workspace/` (inside the VM) immediately appears in `projects/python/` (on your host), and vice versa. They are linked together by Docker's bind mount.
 
 **What you can do:**
 - Run Python code
 - Install packages
-- Edit files in `workspace/` (changes appear on your host in `projects/python/`)
+- Edit files in `workspace/` (they appear on your host in `projects/python/`)
 - Access postgres and redis via SSH
 
 ### Exiting a VM
@@ -694,10 +702,12 @@ VDE supports **19 language VMs** and **7 service VMs**. Run `./scripts/list-vms`
 - ✅ Knowledge of how to troubleshoot
 
 **Next steps:**
-1. Create your first project in `projects/python/`
+1. Create your first project in `~/dev/projects/python/` (on your **host**), then SSH in to work in `workspace/` (inside the **VM**)
 2. Start coding!
 3. Explore other language and service VMs as needed
 
 ---
+
+*Remember: `projects/<lang>/` = on your host, `workspace/` = inside the VM*
 
 *This guide is generated from BDD test scenarios. Every workflow shown here has been tested and verified to work. If you follow these steps, they will work for you.*
