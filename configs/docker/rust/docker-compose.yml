@@ -1,3 +1,5 @@
+# Template for language VMs
+# Variables: rust, 2202, su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs 
 services:
   rust-dev:
     build:
@@ -12,15 +14,20 @@ services:
     container_name: rust-dev
     hostname: rust-dev
     restart: unless-stopped
-    command: sh -c "su devuser -c 'curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y' && /usr/sbin/sshd -D"
+    command: sh -c "su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs  && /usr/sbin/sshd -D"
 
     ports:
-      - "2201:22"
+      - "2202:22"
 
     volumes:
       - ../../../projects/rust:/home/devuser/workspace
-      - ../../../logs/app-logs:/logs
+      - ../../../logs/rust:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
       - ../../../env-files/rust.env

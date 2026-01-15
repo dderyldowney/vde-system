@@ -1,0 +1,42 @@
+# Template for service VMs
+# Variables: rabbitmq, 2400, 5672,15672, apt-get install -y erlang-nox && (install rabbitmq from repo)
+# SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
+services:
+  rabbitmq:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-rabbitmq:latest
+    container_name: rabbitmq
+    hostname: rabbitmq
+    restart: unless-stopped
+    command: sh -c "apt-get install -y erlang-nox && (install rabbitmq from repo) && /usr/sbin/sshd -D"
+
+    ports:
+      - "2400:22"
+      ##SERVICE_PORTS##
+
+    volumes:
+      - ../../../data/rabbitmq:/data
+      - ../../../logs/rabbitmq:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for service VM communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../env-files/rabbitmq.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true
