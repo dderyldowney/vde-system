@@ -1,6 +1,6 @@
 # Extending VDE
 
-VDE is designed to be easily extensible. You can add support for new programming languages, new services, or customize existing ones without modifying any scripts. The entire system is data-driven through configuration files and templates.
+VDE is designed to be easily extensible. You can add support for new programming languages, new services, or customize existing ones without modifying core library code. The entire system is data-driven through configuration files and templates.
 
 [← Back to README](../README.md)
 
@@ -13,15 +13,16 @@ Before extending VDE, it helps to understand how it works:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         User Request                            │
+│                    vde create zig                              │
 │                    ./create-virtual-for zig                     │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                  vm-common (Shared Library)                     │
-│  • Parses vm-types.conf                                         │
+│  • Parses vm-types.conf (with caching)                          │
 │  • Resolves aliases (ziglang → zig)                             │
-│  • Allocates SSH port (2200-2299 for lang)                      │
+│  • Allocates SSH port (from port registry)                      │
 │  • Validates configuration                                      │
 └────────────────────────────┬────────────────────────────────────┘
                              │
@@ -48,11 +49,12 @@ Before extending VDE, it helps to understand how it works:
 
 | File | Purpose | Edit to Extend |
 |------|---------|----------------|
-| `data/vm-types.conf` | Defines all VM types | ✅ **Yes** - Add new entries |
-| `templates/compose-language.yml` | Language VM template | Rarely - only for structural changes |
-| `templates/compose-service.yml` | Service VM template | Rarely - only for structural changes |
-| `templates/ssh-entry.txt` | SSH config template | Rarely - only for format changes |
-| `lib/vm-common` | Core functions | Never - use templates/config instead |
+| `scripts/data/vm-types.conf` | Defines all VM types | ✅ **Yes** - Add new entries |
+| `scripts/templates/compose-language.yml` | Language VM template | Rarely - only for structural changes |
+| `scripts/templates/compose-service.yml` | Service VM template | Rarely - only for structural changes |
+| `scripts/templates/ssh-entry.txt` | SSH config template | Rarely - only for format changes |
+| `scripts/lib/vm-common` | Core functions | Never - use templates/config instead |
+| `scripts/lib/vde-*` | Modular libraries | Never - use templates/config instead |
 
 ### vm-types.conf Format
 
@@ -94,11 +96,14 @@ You can do this manually or with the `add-vm-type` script.
 # With custom display name
 ./scripts/add-vm-type --display "Zig Language" zig \
     "apt-get update -y && apt-get install -y zig"
+
+# Using the vde CLI
+vde create zig  # Will prompt if zig is not a known VM type
 ```
 
 **Option B: Manual Entry**
 
-Edit `data/vm-types.conf` and add a line:
+Edit `scripts/data/vm-types.conf` and add a line:
 
 ```bash
 # Format: lang|name|aliases|display|install|service_port
@@ -111,12 +116,18 @@ lang|zig|ziglang,z|Zig|apt-get update -y && apt-get install -y zig|
 
 ```bash
 # Create the Zig VM
+vde create zig
+# OR
 ./scripts/create-virtual-for zig
 
 # Verify it was created
+vde list zig
+# OR
 ./scripts/list-vms zig
 
 # Start the VM
+vde start zig
+# OR
 ./scripts/start-virtual zig
 
 # Connect
@@ -220,11 +231,13 @@ Adding a service (database, cache, message queue, etc.) is similar to adding a l
 ./scripts/add-vm-type --type service --svc-port 5672,15672 rabbitmq \
     "apt-get update -y && apt-get install -y rabbitmq-server" \
     "rabbit"
+
+# Using the vde CLI (note: services require explicit --type and --svc-port)
 ```
 
 **Option B: Manual Entry**
 
-Edit `data/vm-types.conf` and add a line:
+Edit `scripts/data/vm-types.conf` and add a line:
 
 ```bash
 # Format: service|name|aliases|display|install|service_port
@@ -237,12 +250,18 @@ service|rabbitmq|rabbit,rabbitmq-server|RabbitMQ|apt-get update -y && apt-get in
 
 ```bash
 # Create the RabbitMQ VM
+vde create rabbitmq
+# OR
 ./scripts/create-virtual-for rabbitmq
 
 # Verify it was created
+vde list --svc rabbitmq
+# OR
 ./scripts/list-vms --svc rabbitmq
 
 # Start the VM
+vde start rabbitmq
+# OR
 ./scripts/start-virtual rabbitmq
 
 # Connect
@@ -419,9 +438,13 @@ After adding a new language or service, validate it:
 
 ```bash
 # 1. Verify it appears in the list
+vde list <name>
+# OR
 ./scripts/list-vms <name>
 
 # 2. Create the VM
+vde create <name>
+# OR
 ./scripts/create-virtual-for <name>
 
 # 3. Check the generated files
@@ -430,6 +453,8 @@ cat env-files/<name>.env
 cat ~/.ssh/config | grep -A 5 "<name>"
 
 # 4. Start the VM
+vde start <name>
+# OR
 ./scripts/start-virtual <name>
 
 # 5. Verify container is running
@@ -441,7 +466,144 @@ ssh <name>
 
 # 7. Verify service port (if applicable)
 docker port <name>
+
+# 8. Run health check
+vde health
+# OR
+./scripts/vde-health
 ```
+
+---
+
+## Library Extension Patterns
+
+VDE's modular library architecture allows for extension without modifying core code.
+
+### Using vde-core for Lightweight Operations
+
+For scripts that don't need full VDE functionality, use `vde-core` instead of `vm-common`:
+
+```zsh
+#!/usr/bin/env sh
+# Lightweight script that only needs to query VM types
+
+source "$SCRIPTS_DIR/lib/vde-core"
+
+# Load VM types (with caching)
+vde_core_load_types
+
+# Query VM information
+if vde_core_is_known_vm "python"; then
+    echo "Python is a known VM type"
+fi
+
+# List all VMs
+vde_core_get_all_vms
+```
+
+### Adding Custom Error Messages
+
+Use `vde-errors` to provide contextual error messages:
+
+```zsh
+source "$SCRIPTS_DIR/lib/vde-errors"
+
+# Show error with remediation
+vde_error_show \
+    "Custom operation failed" \
+    "Because of X condition" \
+    "1. Do this\n2. Do that" \
+    "docs/troubleshooting.md#custom-error"
+```
+
+### Using Structured Logging
+
+Use `vde-log` for structured logging with rotation:
+
+```zsh
+source "$SCRIPTS_DIR/lib/vde-log"
+
+# Initialize logging
+vde_log_init
+
+# Set log level
+vde_log_set_level "DEBUG"
+
+# Set output format
+vde_log_set_format "json"  # or "text", "syslog"
+
+# Log messages
+vde_log_info "Operation started" "my-component"
+vde_log_error "Operation failed" "my-component" "Additional context"
+
+# Query logs
+vde_log_recent 50
+vde_log_errors 100
+vde_log_grep "ERROR.*my-component"
+```
+
+### Shell-Portable Scripts
+
+Use `vde-shell-compat` for scripts that work on both zsh and bash:
+
+```zsh
+source "$SCRIPTS_DIR/lib/vde-shell-compat"
+
+# Detect shell
+if _is_zsh; then
+    echo "Running in zsh $ZSH_VERSION"
+elif _is_bash; then
+    echo "Running in bash $BASH_VERSION"
+fi
+
+# Portable associative arrays
+_assoc_init "MY_DATA"
+_assoc_set "MY_DATA" "key1" "value1"
+value=$(_assoc_get "MY_DATA" "key1")
+
+# Portable date/time
+timestamp=$(_date_iso8601)
+epoch=$(_date_epoch)
+```
+
+### Extending the Parser
+
+To add new intents to the natural language parser:
+
+1. **Edit `scripts/lib/vde-parser`** to add the intent constant:
+```zsh
+readonly INTENT_CUSTOM="custom"
+```
+
+2. **Add detection pattern** in `detect_intent()`:
+```zsh
+if [[ "$input_lower" =~ "custom pattern" ]]; then
+    echo "$INTENT_CUSTOM"
+    return
+fi
+```
+
+3. **Add handler** in `execute_plan()`:
+```zsh
+"$INTENT_CUSTOM")
+    # Your custom logic here
+    return $?
+    ;;
+```
+
+---
+
+## Current VM Types (As of Stage 7)
+
+### Language VMs (18)
+
+c, cpp, asm, python, rust, js, csharp, ruby, go, java, kotlin, swift, php, scala, r, lua, flutter, elixir, haskell
+
+### Service VMs (7)
+
+postgres, redis, mongodb, nginx, couchdb, mysql, rabbitmq
+
+See [predefined-vm-types.md](./predefined-vm-types.md) for detailed information about each VM type.
 
 ---
 
