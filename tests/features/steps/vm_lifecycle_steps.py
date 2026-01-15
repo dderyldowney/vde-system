@@ -114,6 +114,8 @@ def step_vm_types_loaded(context):
 @given('no language VMs are created')
 def step_no_lang_vms(context):
     """No language VMs exist."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.clear()
 
 

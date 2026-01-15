@@ -606,6 +606,8 @@ def step_redis_included(context):
 @given('I have created the Redis VM')
 def step_created_redis(context):
     """Have created Redis VM."""
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     context.created_vms.add("redis")
 
 @when('I plan to start Redis')
@@ -1109,11 +1111,15 @@ def step_web_containers_stopped(context):
 @then('the Python VM should start')
 def step_python_starts(context):
     """Python VM should start."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("python")
 
 @then('the PostgreSQL VM should start')
-def step_postgres_starts(context):
+def step_postgres_starts_parser(context):
     """PostgreSQL VM should start."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("postgres")
 
 @then('only the backend stack should be running')
@@ -1239,12 +1245,16 @@ def step_request_flutter_postgres(context):
 @then('the Flutter VM should start for mobile development')
 def step_flutter_mobile_dev(context):
     """Flutter VM should start for mobile development."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("flutter")
     context.flutter_for_mobile = True
 
 @then('PostgreSQL should start for the backend database')
 def step_postgres_backend(context):
     """PostgreSQL should start for backend database."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("postgres")
     context.postgres_for_backend = True
 
@@ -1301,6 +1311,8 @@ def step_equivalent_start_go(context):
 @then('the Go VM should start')
 def step_go_vm_starts(context):
     """Go VM should start."""
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
     context.running_vms.add("go")
     context.go_vm_started = True
 
