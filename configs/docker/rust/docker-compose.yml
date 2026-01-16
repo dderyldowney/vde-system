@@ -14,7 +14,13 @@ services:
     container_name: rust-dev
     hostname: rust-dev
     restart: unless-stopped
-    command: sh -c "su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs  && /usr/sbin/sshd -D"
+    command: >
+      bash -c "
+        if [ ! -f /home/devuser/.cargo/bin/rustc ]; then
+          sudo -u devuser bash -lc 'curl --proto =https --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
+        fi
+        exec /usr/sbin/sshd -D
+      "
 
     ports:
       - "2203:22"
