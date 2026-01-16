@@ -1,7 +1,6 @@
-#!/usr/bin/env sh
+#!/usr/bin/env zsh
 # build-and-start - Initialize VDE infrastructure and start all VMs
 # First-time setup script for users who have already installed Docker Desktop and git
-# Compatible with bash 4.0+ and zsh 5.0+
 
 set -e
 
