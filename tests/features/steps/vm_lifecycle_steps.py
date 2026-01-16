@@ -975,3 +975,22 @@ def step_old_config_works(context):
 def step_migration_auto(context):
     """Verify migration is automatic."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
+
+
+@then('the container should be rebuilt from the Dockerfile')
+@then('the container should be rebuilt from the Dockerfile')
+def step_container_rebuilt(context):
+    """Verify container was rebuilt from Dockerfile."""
+    # Check that --rebuild was used in the last command
+    if hasattr(context, 'last_command') and context.last_command:
+        assert '--rebuild' in context.last_command, 'Expected --rebuild flag in command'
+    assert context.last_exit_code == 0, f"Rebuild command failed: {context.last_error}"
+
+
+@then('projects directory should still exist at "{path}"')
+@then('projects directory should still exist at "{path}"')
+def step_projects_dir_exists(context, path):
+    """Verify projects directory still exists (not deleted when VM removed)."""
+    full_path = VDE_ROOT / path.lstrip("/")
+    assert full_path.exists(), f"Projects directory not found at {full_path}"
+    assert full_path.is_dir(), f"Path exists but is not a directory: {full_path}"
