@@ -43,3 +43,4 @@ __pycache__
 
 # Test output files
 tests/behave-results.json
+tests/pretty.output
