@@ -8,33 +8,25 @@
 
 ### Highest Priority ⚠️
 
-#### 1. SSH Agent Forwarding (VM-to-VM)
-
-**Status:** Not started - 86 undefined steps
-
-**Feature File:** `tests/features/ssh-agent-forwarding-vm-to-vm.feature`
-
-**Why This Is Critical:**
-- VM-to-VM SSH communication is a core VDE feature
-- Enables containers to communicate with each other
-- Foundation for distributed development workflows
-
-**Action Required:**
-- Implement 86 undefined step definitions
-
----
-
-### High Priority
-
-#### 2. SSH Agent External Git Operations
+#### 1. SSH Agent External Git Operations
 
 **Status:** Not started - 92 undefined steps
 
 **Feature File:** `tests/features/ssh-agent-external-git-operations.feature`
 
+**Why This Is Critical:**
+- Git operations from VMs using host SSH keys is a core feature
+- Enables seamless GitHub/GitLab workflow from within containers
+- Essential for modern development practices
+
+**Action Required:**
+- Implement 92 undefined step definitions
+
 ---
 
-#### 3. SSH Agent VM-to-Host Communication
+### High Priority
+
+#### 2. SSH Agent VM-to-Host Communication
 
 **Status:** Not started - 73 undefined steps
 
@@ -66,9 +58,23 @@
 
 ---
 
+#### SSH Agent Forwarding (VM-to-VM) ✅ COMPLETE
+
+**Status:** 10/10 scenarios passing
+
+**Feature File:** `tests/features/ssh-agent-forwarding-vm-to-vm.feature`
+
+**Completed:**
+- 70+ step definitions implemented
+- All 10 scenarios passing
+- Tests cover: VM-to-VM SSH, SCP between VMs, agent forwarding
+- Key features tested: host key usage, no password required, private keys remain on host
+
+---
+
 ### Medium Priority
 
-#### 4. SSH and Remote Access
+#### 3. SSH and Remote Access
 
 **Status:** Not started - 46 undefined steps
 
@@ -76,29 +82,11 @@
 
 ---
 
-#### 7. Investigate BDD Test Failures
+#### 4. Undefined BDD Steps
 
-**Status:** Tests have failures that need investigation
+**Status:** ~211 undefined steps remaining (91% reduction from original 2248)
 
-**Common Failure Types:**
-- Docker container timing issues (VMs not starting fast enough)
-- Missing preconditions (VMs not created before being started)
-- Assertion mismatches
-- Steps that require real environment (Docker host, SSH keys)
-
-**Action Items:**
-- Distinguish between expected failures (test environment limitations) and actual bugs
-- Add proper setup/teardown for container lifecycle where needed
-- Implement better waiting mechanisms for Docker operations
-- Ensure test isolation (clean state between scenarios)
-
----
-
-#### 5. Undefined BDD Steps
-
-**Status:** ~297 undefined steps remaining (87% reduction from original 2248)
-
-**SSH Steps:** 297 undefined steps across 4 SSH features (ssh-agent-automatic-setup and ssh-configuration are complete)
+**SSH Steps:** 211 undefined steps across 3 SSH features (ssh-agent-automatic-setup, ssh-configuration, and ssh-agent-forwarding-vm-to-vm are complete)
 **Other Steps:** ~53 undefined steps (template rendering, VM state awareness, etc.)
 
 ---
@@ -121,12 +109,12 @@
 |------|-----------|----------|--------|-----------------|
 | ✅ `ssh-agent-automatic-setup.feature` | 12 | 12/12 | COMPLETE | 0 |
 | ✅ `ssh-configuration.feature` | 27 | 23/23 | COMPLETE | 0 |
-| `ssh-agent-forwarding-vm-to-vm.feature` | 10 | 0/10 | Not started | 86 |
+| ✅ `ssh-agent-forwarding-vm-to-vm.feature` | 10 | 10/10 | COMPLETE | 0 |
 | `ssh-agent-external-git-operations.feature` | 10 | 0/10 | Not started | 92 |
 | `ssh-agent-vm-to-host-communication.feature` | 12 | 0/12 | Not started | 73 |
 | `ssh-and-remote-access.feature` | 12 | 0/12 | Not started | 46 |
 
-**Total SSH:** 35/35 scenarios passing (excluding @requires-docker-ssh), 297 undefined steps remaining
+**Total SSH:** 45/45 scenarios passing (excluding @requires-docker-ssh), 211 undefined steps remaining
 
 ---
 
@@ -164,4 +152,5 @@ cd tests
 Shell Tests:     108 passed, 0 failed ✅
 SSH Agent Auto:  12/12 scenarios passing ✅
 SSH Config:      23/23 scenarios passing ✅ (4 require @requires-docker-ssh)
+SSH Agent VM-to-VM: 10/10 scenarios passing ✅
 ```
