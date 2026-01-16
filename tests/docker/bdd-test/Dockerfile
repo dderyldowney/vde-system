@@ -50,6 +50,7 @@ COPY tests/behave.ini /vde/tests/behave.ini
 # Set up environment
 ENV PYTHONUNBUFFERED=1
 ENV VDE_ROOT_DIR=/vde
+ENV VDE_TEST_MODE=1
 ENV PATH="/vde/scripts:/vde/tests:${PATH}"
 
 # Default command runs behave

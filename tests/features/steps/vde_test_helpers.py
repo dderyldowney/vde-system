@@ -26,6 +26,7 @@ def run_vde_command(command, timeout=120, check=False):
     Returns:
         subprocess.CompletedResult with stdout, stderr, returncode
     """
+    env = os.environ.copy()
     full_command = f"cd {VDE_ROOT} && {command}"
     result = subprocess.run(
         full_command,
@@ -33,6 +34,7 @@ def run_vde_command(command, timeout=120, check=False):
         capture_output=True,
         text=True,
         timeout=timeout,
+        env=env,
     )
     return result
 

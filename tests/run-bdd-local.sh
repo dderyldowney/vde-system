@@ -43,7 +43,6 @@ docker run --rm \
     -v "$VDE_ROOT_DIR/logs:/vde/logs" \
     -v "$VDE_ROOT_DIR/public-ssh-keys:/vde/public-ssh-keys" \
     -e VDE_ROOT_DIR=/vde \
-    -e PYTHONUNBUFFERED=1 \
     --network host \
     vde-bdd-tester \
     behave "$@" tests/features/

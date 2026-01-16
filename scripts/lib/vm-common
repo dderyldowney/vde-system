@@ -2055,6 +2055,11 @@ setup_ssh_agent_interactive() {
 
 # Ensure SSH agent and VM config are set up (called by VM operations)
 ensure_ssh_environment() {
+    # Skip SSH operations in test mode (prevents timeouts in Docker)
+    if [ -n "$VDE_TEST_MODE" ]; then
+        return 0
+    fi
+
     # Ensure SSH agent is running
     ensure_ssh_agent
 

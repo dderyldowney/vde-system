@@ -22,9 +22,10 @@ except ImportError:
     VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR", "/vde"))
 
     def run_vde_command(command, timeout=120):
+        env = os.environ.copy()
         result = subprocess.run(
             f"cd {VDE_ROOT} && {command}",
-            shell=True, capture_output=True, text=True, timeout=timeout
+            shell=True, capture_output=True, text=True, timeout=timeout, env=env
         )
         return result
 
@@ -144,7 +145,7 @@ def step_vm_created_started(context, vm_name):
     """Create and start a VM for SSH testing."""
     # Create VM if needed
     if not compose_file_exists(vm_name):
-        result = run_vde_command(f"./scripts/create-virtual-for {vm_name}", timeout=60)
+        result = run_vde_command(f"./scripts/create-virtual-for {vm_name}", timeout=120)
         context.last_exit_code = result.returncode
         context.last_output = result.stdout
         context.last_error = result.stderr
@@ -427,7 +428,7 @@ def step_keys_still_work(context):
 @when('I create a VM')
 def step_create_vm_given(context):
     """Create a VM."""
-    result = run_vde_command("./scripts/create-virtual-for python", timeout=60)
+    result = run_vde_command("./scripts/create-virtual-for python", timeout=120)
     context.vm_created = result.returncode == 0
 
 

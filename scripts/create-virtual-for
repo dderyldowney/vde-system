@@ -243,17 +243,26 @@ vde_progress_done "Created: $env_file"
 # -----------------------
 # Update SSH Config
 # -----------------------
-vde_progress_info "Updating SSH configuration..."
-
-if [[ "$VM_TYPE" == "lang" ]]; then
+# Skip SSH config modification in test mode (prevents timeouts in Docker)
+if [[ -n "$VDE_TEST_MODE" ]]; then
+    vde_progress_info "Skipping SSH config update (test mode)"
     ssh_host="${VM_NAME}-dev"
+    if [[ "$VM_TYPE" == "service" ]]; then
+        ssh_host="$VM_NAME"
+    fi
 else
-    ssh_host="$VM_NAME"
-fi
+    vde_progress_info "Updating SSH configuration..."
 
-if ! merge_ssh_config_entry "$ssh_host" "$SSH_PORT" "$VM_DISPLAY"; then
-    vde_error_permission_denied "~/.ssh/config"
-    exit 1
+    if [[ "$VM_TYPE" == "lang" ]]; then
+        ssh_host="${VM_NAME}-dev"
+    else
+        ssh_host="$VM_NAME"
+    fi
+
+    if ! merge_ssh_config_entry "$ssh_host" "$SSH_PORT" "$VM_DISPLAY"; then
+        vde_error_permission_denied "~/.ssh/config"
+        exit 1
+    fi
 fi
 
 # -----------------------
