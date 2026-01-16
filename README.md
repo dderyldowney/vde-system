@@ -9,12 +9,15 @@ A modular, template-based Docker development environment supporting 19+ programm
 
 **Shell Support:** zsh 5.0+, bash 4.0+, bash 3.x (with fallbacks) — [See Requirements](docs/requirements.md)
 
+> **🎉 New to VDE?** Start here: [**Why Use VDE?**](docs/WHY_USE_VDE.md) — Discover how VDE transforms your development workflow.
+
 ---
 
 ## Quick Links
 
 | Section | Description |
 |---------|-------------|
+| **🎉 Why Use VDE?** | [Why Use VDE?](docs/WHY_USE_VDE.md) - Learn what VDE can do for you |
 | **📘 User Guide** | [USER_GUIDE.md](USER_GUIDE.md) - Step-by-step guide for new users |
 | **Getting Started** | [Requirements](docs/requirements.md) • [Quick Start](docs/quick-start.md) |
 | **SSH & Agent Forwarding** | [SSH Configuration](docs/ssh-configuration.md) • [VM Communication](docs/advanced-usage.md#inter-container-communication) • [SSH Troubleshooting](docs/troubleshooting.md#ssh-agent-issues) |
