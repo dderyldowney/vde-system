@@ -566,7 +566,7 @@ def load_passing_scenarios_from_json():
 
     passing_scenarios = set()
     for feature in data:
-        feature_name = feature.get("feature", {}).get("name", "")
+        feature_name = feature.get("name", "")
         for element in feature.get("elements", []):
             if element.get("type") == "scenario":
                 scenario_name = element.get("name", "")
