@@ -6,41 +6,82 @@
 
 ## Remaining Work
 
+### Highest Priority ⚠️
+
+#### 1. SSH Configuration BDD Scenarios
+
+**Status:** IN PROGRESS - 0/27 scenarios passing, 117 undefined steps
+
+**Feature File:** `tests/features/ssh-configuration.feature`
+
+**Why This Is Critical:**
+- SSH configuration is the foundation for all VM access
+- Without proper SSH config, users cannot connect to their VMs
+- This feature is tested before any other SSH functionality
+
+**Scenarios (27 total):**
+- SSH config file creation and management
+- Host entry generation
+- Port configuration
+- Identity file selection
+- Config backup and restoration
+- Multiple VM configuration
+- Config validation
+- Custom settings preservation
+
+**Action Required:**
+- Implement 117 undefined step definitions in `tests/features/steps/ssh_steps.py`
+- Verify all 27 scenarios pass
+
+---
+
 ### High Priority
 
-#### 1. SSH Agent Automatic Setup BDD Scenarios
+#### 2. SSH Agent Automatic Setup BDD Scenarios ✅ COMPLETE
 
-**Status:** Scenarios exist but many steps are undefined
+**Status:** 12/12 scenarios passing
 
 **Feature File:** `tests/features/ssh-agent-automatic-setup.feature`
 
-**Scenarios (12 total):**
-1. First-time user with no SSH keys
-2. First-time user with existing SSH keys
-3. User with multiple SSH key types
-4. SSH agent setup is silent during normal operations
-5. SSH agent restart if not running
-6. Viewing SSH status
-7. SSH config auto-generation for all VMs
-8. Rebuilding VMs preserves SSH configuration
-9. Automatic key generation preference
-10. Public keys automatically synced to VDE
-11. SSH setup works with different SSH clients
-12. No manual SSH configuration needed
+**Completed:** All scenarios working
 
-**Current Status:**
-- Feature file exists and is active (no @wip tag)
-- Some steps may be undefined (need verification)
+---
 
-**Action Required:**
-- Implement remaining undefined step definitions in `tests/features/steps/ssh_steps.py`
-- Verify scenarios pass with actual SSH setup implementation
+#### 3. SSH Agent Forwarding (VM-to-VM)
+
+**Status:** Not started - 86 undefined steps
+
+**Feature File:** `tests/features/ssh-agent-forwarding-vm-to-vm.feature`
+
+---
+
+#### 4. SSH Agent External Git Operations
+
+**Status:** Not started - 92 undefined steps
+
+**Feature File:** `tests/features/ssh-agent-external-git-operations.feature`
+
+---
+
+#### 5. SSH Agent VM-to-Host Communication
+
+**Status:** Not started - 73 undefined steps
+
+**Feature File:** `tests/features/ssh-agent-vm-to-host-communication.feature`
 
 ---
 
 ### Medium Priority
 
-#### 3. Investigate BDD Test Failures
+#### 6. SSH and Remote Access
+
+**Status:** Not started - 46 undefined steps
+
+**Feature File:** `tests/features/ssh-and-remote-access.feature`
+
+---
+
+#### 7. Investigate BDD Test Failures
 
 **Status:** Tests have failures that need investigation
 
@@ -58,38 +99,20 @@
 
 ---
 
-#### 3. Undefined BDD Steps
+#### 8. Undefined BDD Steps
 
-**Status:** Some steps remain undefined
+**Status:** ~467 undefined steps remaining (79% reduction from original 2248)
 
-**Current Count:** ~53 undefined steps (96% reduction from original 1248)
-**Recent Progress:** Implemented 11 idempotent operations and state communication steps
-
-**Remaining undefined steps** are mostly edge cases:
-- Template rendering edge cases (placeholder validation)
-- SSH key authentication variations
-- VM state awareness conditions
-- Team collaboration scenarios
-- Various feature-specific steps
-
-**Note:** Most critical user workflows are already covered. Implementing remaining steps is optional.
+**SSH Steps:** 414 undefined steps across 5 SSH features
+**Other Steps:** ~53 undefined steps (template rendering, VM state awareness, etc.)
 
 ---
 
 ### Low Priority
 
-#### 4. Fuzzy Matching for Typo Handling
+#### 9. Fuzzy Matching for Typo Handling
 
 **Status:** Enhancement - parser cannot handle typos in user input
-
-**Failing Scenario:**
-```gherkin
-Scenario: Parse commands with typos
-    Given I make a typo in my command
-    When I say "strt the python vm"
-    Then the system should still understand my intent
-    And the system should provide helpful correction suggestions
-```
 
 **Dependencies:** ✅ `thefuzz` (v0.22.1) installed
 
@@ -97,7 +120,34 @@ Scenario: Parse commands with typos
 
 ---
 
+## SSH Feature Files Summary
+
+| File | Scenarios | Passing | Status | Undefined Steps |
+|------|-----------|----------|--------|-----------------|
+| ✅ `ssh-agent-automatic-setup.feature` | 12 | 12/12 | COMPLETE | 0 |
+| ⚠️ `ssh-configuration.feature` | 27 | 0/27 | IN PROGRESS | 117 |
+| `ssh-agent-forwarding-vm-to-vm.feature` | 10 | 0/10 | Not started | 86 |
+| `ssh-agent-external-git-operations.feature` | 10 | 0/10 | Not started | 92 |
+| `ssh-agent-vm-to-host-communication.feature` | 12 | 0/12 | Not started | 73 |
+| `ssh-and-remote-access.feature` | 12 | 0/12 | Not started | 46 |
+
+**Total SSH:** 1/83 scenarios passing, 414 undefined steps
+
+---
+
 ## Running Tests
+
+### SSH Configuration Tests
+```bash
+cd tests
+behave features/ssh-configuration.feature
+```
+
+### All SSH Tests
+```bash
+cd tests
+behave features/*ssh*.feature
+```
 
 ### Shell Tests
 ```bash
@@ -105,31 +155,18 @@ cd tests
 ./run-all-tests.sh
 ```
 
-### BDD Tests (Local with Docker)
-```bash
-cd tests
-./run-bdd-local.sh
-```
-
-### Specific BDD Features
-```bash
-cd tests
-behave features/vm-lifecycle.feature
-```
-
 ---
 
 ## Quick Reference
 
 ### Test File Locations
-- **Shell tests:** `tests/*.test.sh`, `tests/unit/*.test.sh`
+- **SSH step definitions:** `tests/features/steps/ssh_steps.py`
+- **VDE test helpers:** `tests/features/steps/vde_test_helpers.py`
 - **BDD features:** `tests/features/*.feature`
-- **Step definitions:** `tests/features/steps/*.py`, `tests/shared/steps/*.py`
-- **Test configs:** `tests/behave.ini`
 
 ### Current Test Status
 ```
 Shell Tests:     108 passed, 0 failed ✅
-BDD Scenarios:   ~2500 scenarios
-Verified Scenarios: 96
+SSH Agent Auto:  12/12 scenarios passing ✅
+SSH Config:      0/27 scenarios (414 undefined steps total)
 ```
