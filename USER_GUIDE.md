@@ -15,7 +15,7 @@
      - [For Windows Users](#for-windows-users-1)
      - [For macOS (Mac) Users](#for-macos-mac-users-1)
      - [For Linux Users](#for-linux-users-1)
-   - [Quick Checklist: Are You Ready?](#quick-checklist-are-you-ready)
+   - [Quick Checklist: Are You Ready?](#quick-checklist:-are-you-ready)
 2. [2. SSH Keys](#2.-ssh-keys)
 3. [3. Your First VM](#3.-your-first-vm)
 4. [4. Understanding](#4.-understanding)
