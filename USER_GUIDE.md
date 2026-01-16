@@ -686,16 +686,18 @@ docker ps
 
 ## Need Help?
 
-If you run into trouble installing Docker or Git:
+If you run into trouble installing Docker, Git, or shells:
 
 1. **Docker won't start?** Make sure your computer is compatible and you've restarted after installation
 2. **Can't find the terminal?**
-   - Windows: Press Windows key, type "PowerShell" or "Windows Terminal"
+   - Windows: Press Windows key, type "PowerShell", "Windows Terminal", or "Git Bash"
    - Mac: Press Command+Space, type "Terminal"
    - Linux: Press Ctrl+Alt+T
 3. **Permission errors?** Make sure you have administrator rights on your computer
+4. **Shell not found?** On Windows, make sure you installed Git for Windows - it includes Git Bash
+5. **Version too old?** On macOS, use Homebrew to install the latest version. On Linux, use your package manager
 
-Once both Docker and Git are installed and working, you're ready to continue with the VDE setup!
+Once Docker, Git, and a modern shell are installed and working, you're ready to continue with the VDE setup!
 
 ---
 
