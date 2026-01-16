@@ -1044,6 +1044,91 @@ cleanup_stale_locks() {
     return $VDE_SUCCESS
 }
 
+# =============================================================================
+# VM Operation Lock Functions - Conflict Detection
+# =============================================================================
+
+# VM operation locks directory for detecting concurrent operations
+VM_OPS_LOCK_DIR="$VDE_ROOT_DIR/.locks/vms"
+readonly VM_OPS_LOCK_DIR
+
+# acquire_vm_op_lock - Acquire a lock for VM operation to prevent conflicts
+# Args:
+#   vm - VM name to lock
+#   operation - Type of operation (start|stop|restart|rebuild|create)
+# Returns:
+#   VDE_SUCCESS (0) - Lock acquired
+#   VDE_ERR_LOCK (9) - Lock already held (conflict detected)
+# Example: acquire_vm_op_lock python start
+acquire_vm_op_lock() {
+    local vm=$1
+    local operation=${2:-"start"}
+
+    # Create VM operations lock directory if it doesn't exist
+    mkdir -p "$VM_OPS_LOCK_DIR" 2>/dev/null
+
+    local lock_file="$VM_OPS_LOCK_DIR/${vm}.op"
+    local lock_info="$VM_OPS_LOCK_DIR/${vm}.op.info"
+
+    # Check if there's already an active operation on this VM
+    if [ -f "$lock_file.lock/pid" ]; then
+        local lock_pid
+        lock_pid=$(cat "$lock_file.lock/pid" 2>/dev/null)
+
+        # Check if lock is stale (process no longer exists)
+        if [ -n "$lock_pid" ] && [ "$lock_pid" != "$$" ]; then
+            # Check if process is still running
+            if kill -0 "$lock_pid" 2>/dev/null; then
+                # Process is still running - CONFLICT DETECTED
+                # Read operation info for error message
+                local op_type
+                op_type=$(cat "$lock_info" 2>/dev/null || echo "unknown")
+                log_error "CONFLICT: $vm is already being $op_type by process $lock_pid"
+                return $VDE_ERR_LOCK
+            else
+                # Process is dead - clean up stale lock
+                rm -rf "$lock_file.lock" 2>/dev/null
+            fi
+        fi
+    fi
+
+    # Acquire the lock
+    if ! acquire_lock "$lock_file" "$VDE_LOCK_TIMEOUT"; then
+        log_error "Failed to acquire lock for $vm $operation operation"
+        return $VDE_ERR_LOCK
+    fi
+
+    # Write operation info for debugging and conflict reporting
+    echo "$operation" > "$lock_info"
+
+    return $VDE_SUCCESS
+}
+
+# release_vm_op_lock - Release VM operation lock
+# Args: <vm_name> - VM name
+# Returns: VDE_SUCCESS (0)
+release_vm_op_lock() {
+    local vm=$1
+    local lock_file="$VM_OPS_LOCK_DIR/${vm}.op"
+
+    # Only release if we own the lock
+    release_lock "$lock_file"
+
+    return $VDE_SUCCESS
+}
+
+# get_vm_operation_info - Get info about current VM operation if any
+# Args: <vm_name>
+# Outputs: Current operation type or empty if no operation in progress
+get_vm_operation_info() {
+    local vm=$1
+    local lock_info="$VM_OPS_LOCK_DIR/${vm}.op.info"
+
+    if [ -f "$lock_info" ]; then
+        cat "$lock_info" 2>/dev/null
+    fi
+}
+
 # find_next_available_port - Find and atomically reserve the next available port
 # SECURITY: Uses locking to prevent TOCTOU race conditions
 # Args: <vm_type> - Either "lang" or "service"
@@ -1275,6 +1360,14 @@ start_vm() {
         return $VDE_SUCCESS
     fi
 
+    # Acquire operation lock for conflict detection
+    if ! acquire_vm_op_lock "$vm" "start"; then
+        local current_op
+        current_op=$(get_vm_operation_info "$vm")
+        log_error "Cannot start $vm: already being $current_op"
+        return $VDE_ERR_LOCK
+    fi
+
     log_info "Starting $vm..."
 
     local build_opts
@@ -1293,6 +1386,7 @@ start_vm() {
             # Success - clean up and return
             rm -f "$stderr_file" 2>/dev/null
             log_success "Started $vm successfully"
+            release_vm_op_lock "$vm"
             return $VDE_SUCCESS
         fi
         
@@ -1326,10 +1420,11 @@ start_vm() {
     local error_msg
     error_msg=$(_parse_docker_error "$(cat "$stderr_file" 2>/dev/null)")
     rm -f "$stderr_file" 2>/dev/null
-    
+
     log_error "Failed to start $vm after $attempt attempt(s)"
     log_error "$error_msg"
-    
+
+    release_vm_op_lock "$vm"
     return $VDE_ERR_DOCKER
 }
 
@@ -1357,6 +1452,14 @@ stop_vm() {
         return $VDE_SUCCESS
     fi
 
+    # Acquire operation lock for conflict detection
+    if ! acquire_vm_op_lock "$vm" "stop"; then
+        local current_op
+        current_op=$(get_vm_operation_info "$vm")
+        log_error "Cannot stop $vm: already being $current_op"
+        return $VDE_ERR_LOCK
+    fi
+
     log_info "Shutting down $vm..."
 
     # Capture stderr for error handling
@@ -1366,6 +1469,7 @@ stop_vm() {
     if docker-compose -f "$compose_file" down 2>"$stderr_file"; then
         rm -f "$stderr_file" 2>/dev/null
         log_success "Stopped $vm successfully"
+        release_vm_op_lock "$vm"
         return $VDE_SUCCESS
     fi
 
@@ -1376,6 +1480,7 @@ stop_vm() {
     log_error "Failed to stop $vm"
     log_error "$(_parse_docker_error "$stderr_content")"
 
+    release_vm_op_lock "$vm"
     return $VDE_ERR_DOCKER
 }
 
