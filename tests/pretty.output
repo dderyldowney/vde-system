@@ -1,106 +1,129 @@
-Feature: VM Lifecycle Management # features/vm-lifecycle-management.feature:1
+Feature: VM State Awareness # features/vm-state-awareness.feature:1
   As a developer using VDE
-  I want to manage the complete lifecycle of my VMs
-  So I can create, configure, start, stop, and destroy VMs as needed
-  Scenario: Creating a new VM                     # features/vm-lifecycle-management.feature:6
-    Given I want to work with a new language      # features/steps/vm_lifecycle_steps.py:1327
-    When I request to "create a Rust VM"          # features/steps/vm_lifecycle_steps.py:1333
-    Then the VM configuration should be generated # features/steps/vm_lifecycle_steps.py:1340
-    And the Docker image should be built          # features/steps/ssh_docker_steps.py:455
-    And SSH keys should be configured             # features/steps/vm_lifecycle_steps.py:1346
-    And the VM should be ready to use             # features/steps/vm_lifecycle_steps.py:1352
+  I want the system to be aware of VM states
+  So I don't accidentally duplicate operations or cause conflicts
+  Scenario: Starting an already running VM                   # features/vm-state-awareness.feature:6
+    Given I have a Python VM that is already running         # features/steps/parser_steps.py:718
+    When I request to "start python"                         # None
+    Then I should be notified that Python is already running # None
+    And the system should not start a duplicate container    # None
+    And the existing container should remain unaffected      # None
 
-  Scenario: Creating multiple VMs at once                    # features/vm-lifecycle-management.feature:14
-    Given I need a full stack environment                    # features/steps/daily_workflow_steps.py:204
-    When I request to "create Python, PostgreSQL, and Redis" # features/steps/vm_lifecycle_steps.py:1358
-    Then all three VMs should be created                     # features/steps/vm_lifecycle_steps.py:1364
-    And each should have its own configuration               # features/steps/customization_steps.py:613
-    And all should be on the same Docker network             # features/steps/vm_lifecycle_steps.py:1370
+  Scenario: Stopping an already stopped VM                   # features/vm-state-awareness.feature:13
+    Given I have a stopped VM                                # None
+    When I request to "stop postgres"                        # None
+    Then I should be notified that PostgreSQL is not running # None
+    And no error should occur                                # None
+    And the VM should remain stopped                         # None
 
-  Scenario: Starting a created VM       # features/vm-lifecycle-management.feature:21
-    Given I have created a Go VM        # features/steps/vm_lifecycle_steps.py:1376
-    When I request to "start go"        # features/steps/vm_lifecycle_steps.py:1382
-    Then the Go container should start  # features/steps/vm_lifecycle_steps.py:1388
-    And it should be accessible via SSH # features/steps/vm_lifecycle_steps.py:1394
-    And my workspace should be mounted  # features/steps/ssh_steps.py:3149
+  Scenario: Creating an existing VM                                # features/vm-state-awareness.feature:20
+    Given I already have a Go VM configured                        # features/steps/pattern_steps.py:505
+    When I request to "create a Go VM"                             # None
+    Then I should be notified that Go already exists               # None
+    And the system should not overwrite the existing configuration # None
+    And I should be asked if I want to reconfigure it              # None
 
-  Scenario: Starting multiple VMs                      # features/vm-lifecycle-management.feature:28
-    Given I have created several VMs                   # features/steps/vm_lifecycle_steps.py:1400
-    When I request to "start python, go, and postgres" # features/steps/vm_lifecycle_steps.py:1406
-    Then all three VMs should start                    # features/steps/vm_lifecycle_steps.py:1412
-    And they should be able to communicate             # features/steps/vm_lifecycle_steps.py:1418
-    And each should have its own SSH port              # features/steps/parser_steps.py:1210
+  Scenario: Restarting a stopped VM               # features/vm-state-awareness.feature:27
+    Given I have a stopped Rust VM                # features/steps/daily_workflow_steps.py:134
+    When I request to "restart rust"              # features/steps/vm_lifecycle_steps.py:1498
+    Then the system should recognize it's stopped # None
+    And start the Rust VM                         # None
+    And I should be informed that it was started  # None
 
-  Scenario: Checking VM status              # features/vm-lifecycle-management.feature:35
-    Given I have several VMs                # features/steps/vm_lifecycle_steps.py:1424
-    When I request "status of all VMs"      # features/steps/vm_lifecycle_steps.py:1430
-    Then I should see which VMs are running # features/steps/ai_steps.py:466
-    And I should see which VMs are stopped  # features/steps/help_steps.py:36
-    And I should see any error states       # features/steps/debugging_steps.py:263
+  Scenario: Status shows mixed states              # features/vm-state-awareness.feature:34
+    Given I have some running and some stopped VMs # features/steps/daily_workflow_steps.py:144
+    When I request "status"                        # None
+    Then I should see which VMs are running        # None
+    And I should see which VMs are stopped         # None
+    And the states should be clearly distinguished # None
 
-  Scenario: Stopping a running VM          # features/vm-lifecycle-management.feature:42
-    Given I have a running Python VM       # features/steps/vm_lifecycle_steps.py:1438
-    When I request to "stop python"        # features/steps/vm_lifecycle_steps.py:1444
-    Then the Python container should stop  # features/steps/vm_lifecycle_steps.py:1450
-    And the VM configuration should remain # features/steps/vm_lifecycle_steps.py:1456
-    And I can start it again later         # features/steps/vm_lifecycle_steps.py:1462
+  Scenario: Smart start of already running VMs     # features/vm-state-awareness.feature:41
+    Given I have Python and PostgreSQL running     # features/steps/daily_workflow_steps.py:168
+    When I request to "start python and postgres"  # None
+    Then I should be told both are already running # None
+    And no containers should be restarted          # None
+    And the operation should complete immediately  # None
 
-  Scenario: Stopping multiple VMs                # features/vm-lifecycle-management.feature:49
-    Given I have multiple running VMs            # features/steps/vm_lifecycle_steps.py:1468
-    When I request to "stop python and postgres" # features/steps/vm_lifecycle_steps.py:1474
-    Then both VMs should stop                    # features/steps/vm_lifecycle_steps.py:1480
-    And other VMs should remain running          # features/steps/vm_lifecycle_steps.py:1486
+  Scenario: Smart start with mixed states              # features/vm-state-awareness.feature:48
+    Given I have Python running and PostgreSQL stopped # features/steps/daily_workflow_steps.py:183
+    When I request to "start python and postgres"      # None
+    Then I should be told Python is already running    # None
+    And PostgreSQL should be started                   # None
+    And I should be informed of the mixed result       # None
 
-  Scenario: Restarting a VM                     # features/vm-lifecycle-management.feature:55
-    Given I have a running VM                   # features/steps/vm_lifecycle_steps.py:1492
-    When I request to "restart rust"            # features/steps/vm_lifecycle_steps.py:1498
-    Then the Rust VM should stop                # features/steps/vm_lifecycle_steps.py:1504
-    And the Rust VM should start again          # features/steps/vm_lifecycle_steps.py:1510
-    And my workspace should still be accessible # features/steps/vm_lifecycle_steps.py:1516
+  Scenario: Querying specific VM status                     # features/vm-state-awareness.feature:55
+    Given I want to know about a specific VM                # features/steps/daily_workflow_steps.py:198
+    When I ask "is python running?"                         # features/steps/ai_steps.py:169
+    Then I should receive a clear yes/no answer             # None
+    And if it's running, I should see how long it's been up # None
+    And if it's stopped, I should see when it was stopped   # None
 
-  Scenario: Restarting with rebuild                 # features/vm-lifecycle-management.feature:62
-    Given I need to refresh a VM                    # features/steps/vm_lifecycle_steps.py:1522
-    When I request to "restart python with rebuild" # features/steps/vm_lifecycle_steps.py:1528
-    Then the Python VM should be rebuilt            # features/steps/vm_lifecycle_steps.py:1534
-    And the VM should start with the new image      # features/steps/vm_lifecycle_steps.py:1540
-    And my workspace should be preserved            # features/steps/vm_lifecycle_steps.py:1546
+  Scenario: Preventing duplicate operations    # features/vm-state-awareness.feature:62
+    Given I have a running VM                  # features/steps/vm_lifecycle_steps.py:1492
+    When I try to create it again              # None
+    Then the system should prevent duplication # None
+    And notify me of the existing VM           # None
+    And suggest using the existing one         # None
 
-  Scenario: Deleting a VM                          # features/vm-lifecycle-management.feature:69
-    Given I no longer need a VM                    # features/steps/vm_lifecycle_steps.py:1552
-    When I remove its configuration                # features/steps/vm_lifecycle_steps.py:1558
-    Then the VM should be removed                  # features/steps/daily_workflow_steps.py:450
-      Traceback (most recent call last):
-        File "/Users/dderyldowney/Library/Python/3.9/lib/python/site-packages/behave/model.py", line 1991, in run
-          match.run(runner.context)
-        File "/Users/dderyldowney/Library/Python/3.9/lib/python/site-packages/behave/matchers.py", line 105, in run
-          self.func(context, *args, **kwargs)
-        File "features/steps/daily_workflow_steps.py", line 453, in step_vm_removed_check
-          assert context.last_exit_code == 0, f"Failed to remove VM: {context.last_error}"
-        File "/Users/dderyldowney/Library/Python/3.9/lib/python/site-packages/behave/runner.py", line 430, in __getattr__
-          raise AttributeError(msg)
-      AttributeError: 'Context' object has no attribute 'last_exit_code'
+  Scenario: State persistence information  # features/vm-state-awareness.feature:69
+    Given I check VM status                # None
+    When I view the output                 # None
+    Then I should see container uptime     # None
+    And I should see the image version     # None
+    And I should see the last start time   # None
 
-    And the container should be stopped if running # None
-    And the configuration files should be deleted  # None
+  Scenario: Waiting for VM to be ready    # features/vm-state-awareness.feature:76
+    Given I start a VM                    # None
+    When it takes time to be ready        # None
+    Then I should be informed of progress # None
+    And know when it's ready to use       # None
+    And not be left wondering             # None
 
-  Scenario: Rebuilding after code changes         # features/vm-lifecycle-management.feature:76
-    Given I have modified the Dockerfile          # features/steps/vm_lifecycle_steps.py:1570
-    When I request to "rebuild go with no cache"  # features/steps/vm_lifecycle_steps.py:1576
-    Then the Go VM should be rebuilt from scratch # features/steps/vm_lifecycle_steps.py:1582
-    And no cached layers should be used           # features/steps/cache_steps.py:389
-    And the new image should reflect my changes   # features/steps/ssh_docker_steps.py:469
+  Scenario: Notifying about background operations  # features/vm-state-awareness.feature:83
+    Given a VM is being built                      # features/steps/ssh_docker_steps.py:213
+    When I check status                            # None
+    Then I should see it's being built             # None
+    And I should see the progress                  # None
+    And I should know when it will be ready        # None
 
-  Scenario: Upgrading a VM                    # features/vm-lifecycle-management.feature:83
-    Given I want to update the base image     # features/steps/ssh_docker_steps.py:343
-    When I rebuild the VM                     # features/steps/vm_lifecycle_steps.py:1588
-    Then the latest base image should be used # features/steps/ssh_docker_steps.py:462
-    And my configuration should be preserved  # features/steps/customization_steps.py:669
-    And my workspace should remain intact     # features/steps/vm_lifecycle_steps.py:1594
+  Scenario: Conflicting operation detection         # features/vm-state-awareness.feature:90
+    Given I'm rebuilding a VM                       # features/steps/cache_steps.py:130
+    When I try to start it at the same time         # features/steps/cache_steps.py:159
+    Then the conflict should be detected            # features/steps/cache_steps.py:283
+    And I should be notified                        # features/steps/cache_steps.py:293
+      ASSERT FAILED:
 
-  Scenario: Migrating to a new VDE version         # features/vm-lifecycle-management.feature:90
-    Given I have updated VDE scripts               # features/steps/vm_lifecycle_steps.py:1600
-    When I rebuild my VMs                          # features/steps/vm_lifecycle_steps.py:1606
-    Then they should use the new VDE configuration # features/steps/customization_steps.py:753
-    And my data should be preserved                # features/steps/vm_lifecycle_steps.py:1612
-    And my SSH access should continue to work      # features/steps/vm_lifecycle_steps.py:1618
+    And the operations should be queued or rejected # None
+
+  Scenario: State change notifications      # features/vm-state-awareness.feature:97
+    Given a VM's state changes              # features/steps/ssh_docker_steps.py:248
+    When I'm monitoring the system          # None
+    Then I should be notified of the change # None
+    And understand what caused it           # None
+    And know the new state                  # None
+
+  Scenario: Batch operation state awareness  # features/vm-state-awareness.feature:104
+    Given I request to start multiple VMs    # features/steps/cache_steps.py:123
+    When some are already running            # None
+    Then only the stopped VMs should start   # None
+    And I should be told which were skipped  # None
+    And I should see which were started      # None
+
+  Scenario: Idempotent operations                # features/vm-state-awareness.feature:111
+    Given I repeat the same command              # features/steps/vm_lifecycle_steps.py:982
+    When the operation is already complete       # features/steps/vm_lifecycle_steps.py:1011
+    Then the result should be the same           # features/steps/vm_lifecycle_steps.py:1021
+      ASSERT FAILED: No second run recorded
+
+    And no errors should occur                   # None
+    And I should be informed it was already done # None
+
+  Scenario: Clear state communication  # features/vm-state-awareness.feature:118
+    Given any VM operation occurs      # features/steps/vm_lifecycle_steps.py:1077
+    When the operation completes       # features/steps/vm_lifecycle_steps.py:1089
+      ASSERT FAILED: Operation did not complete: /bin/sh: line 0: cd: /vde: No such file or directory
+
+    Then I should see the new state    # None
+    And understand what changed        # None
+    And be able to verify the result   # None
 
