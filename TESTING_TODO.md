@@ -8,26 +8,7 @@
 
 ### High Priority
 
-#### 1. Fix: Revert Incorrect Shebang Changes in SSH Scripts
-
-**Problem:** Commit `b4adfae` incorrectly changed shebangs from `#!/usr/bin/env zsh` to `#!/usr/bin/env sh`
-
-**Why This Is Wrong:**
-- VDE uses bash 4.0+ and zsh 5.0+ features that sh does NOT support
-- See `CLAUDE.md` Cross-Shell Compatibility section
-
-**Files Affected:**
-- `scripts/ssh-agent-setup` - Changed from `#!/usr/bin/env zsh` to `#!/usr/bin/env sh`
-- `scripts/build-and-start` - Shebang may have been changed
-
-**Action Required:**
-- Revert shebangs to use `#!/usr/bin/env bash` or `#!/usr/bin/env zsh`
-- Test scripts work correctly with bash 4.0+ and zsh 5.0+
-- Update commit message documentation to reflect correct approach
-
----
-
-#### 2. SSH Agent Automatic Setup BDD Scenarios
+#### 1. SSH Agent Automatic Setup BDD Scenarios
 
 **Status:** Scenarios exist but many steps are undefined
 
@@ -77,18 +58,19 @@
 
 ---
 
-#### 4. Undefined BDD Steps
+#### 3. Undefined BDD Steps
 
 **Status:** Some steps remain undefined
 
-**Current Count:** ~64 undefined steps (95% reduction from original 1248)
+**Current Count:** ~53 undefined steps (96% reduction from original 1248)
+**Recent Progress:** Implemented 11 idempotent operations and state communication steps
 
 **Remaining undefined steps** are mostly edge cases:
 - Template rendering edge cases (placeholder validation)
 - SSH key authentication variations
 - VM state awareness conditions
 - Team collaboration scenarios
-- Idempotent operation scenarios (e.g., "I repeat the same command")
+- Various feature-specific steps
 
 **Note:** Most critical user workflows are already covered. Implementing remaining steps is optional.
 
@@ -96,7 +78,7 @@
 
 ### Low Priority
 
-#### 5. Fuzzy Matching for Typo Handling
+#### 4. Fuzzy Matching for Typo Handling
 
 **Status:** Enhancement - parser cannot handle typos in user input
 
