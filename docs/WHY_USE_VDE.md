@@ -56,14 +56,42 @@ Even if you've never used Terminal before, we've got you covered.
 
 ---
 
+## One Command to Rule Them All
+
+VDE has a simple, unified command that does everything:
+
+```bash
+./scripts/vde
+```
+
+That's it. One command for everything.
+
+**Need to see what's available?**
+```bash
+./scripts/vde --help
+# or
+./scripts/vde help
+```
+
+This shows you all available actions: creating VMs, starting/stopping, listing, checking status, and more.
+
+**Prefer natural language?** Try the AI assistant:
+```bash
+./scripts/vde-ai "start python and postgres"
+```
+
+VDE figures out what you mean and does it. No need to memorize commands.
+
+---
+
 ## Getting Started: It's This Easy
 
 Ready to have your mind blown? Here's all it takes to get started with Python:
 
 ```bash
 # That's it. Seriously.
-./scripts/create-virtual-for python
-./scripts/start-virtual python
+./scripts/vde create python
+./scripts/vde start python
 ssh python-dev
 ```
 
@@ -81,8 +109,8 @@ You now have a fully-functional Python development environment with:
 ## Want Rust Too? Go Ahead.
 
 ```bash
-./scripts/create-virtual-for rust
-./scripts/start-virtual rust
+./scripts/vde create rust
+./scripts/vde start rust
 ssh rust-dev
 ```
 
@@ -146,10 +174,10 @@ Here's your workflow:
 
 ```bash
 # Create everything
-./scripts/create-virtual-for python js postgres redis
+./scripts/vde create python js postgres redis
 
 # Start everything
-./scripts/start-virtual python js postgres redis
+./scripts/vde start python js postgres redis
 
 # Connect to your Python backend
 ssh python-dev
@@ -178,7 +206,7 @@ That's great! But consider:
 
 ### 🤔 Problem: Learning a New Language
 **Without VDE:** Install language, manage versions, risk breaking your current setup.
-**With VDE:** `./scripts/create-virtual-for elixir` and you're done. Delete it when you're finished.
+**With VDE:** `./scripts/vde create elixir` and you're done. Delete it when you're finished.
 
 ### 🤔 Problem: "Works on My Machine"
 **Without VDE:** Endless debugging of environment differences.
@@ -210,7 +238,7 @@ But if you *do* know Docker, you'll love that VDE generates clean, readable `doc
 
 ## For the Curious: What's Actually Happening?
 
-When you run `./scripts/create-virtual-for python`, VDE:
+When you run `./scripts/vde create python`, VDE:
 
 1. Finds an available SSH port (automatically)
 2. Creates a Docker Compose configuration
@@ -218,9 +246,9 @@ When you run `./scripts/create-virtual-for python`, VDE:
 4. Adds an SSH config entry (`ssh python-dev` will work)
 5. Starts the SSH agent (if not running)
 6. Loads your SSH keys (or generates a pair if you don't have one)
-7. Gets everything ready for `start-virtual`
+7. Gets everything ready for `vde start`
 
-When you run `./scripts/start-virtual python`, VDE:
+When you run `./scripts/vde start python`, VDE:
 
 1. Builds a Docker image with your language pre-installed
 2. Creates a container with:
@@ -338,7 +366,7 @@ We get it. Sometimes you try something and it's not for you. Or maybe you're jus
 
 ```bash
 # 1. Stop any running VMs
-./scripts/shutdown-virtual all
+./scripts/vde stop all
 
 # 2. Delete the VDE directory
 cd ..
@@ -373,8 +401,8 @@ Then delete VDE, and your projects live on.
 
 ```bash
 cd ~/dev  # or wherever you cloned this repo
-./scripts/create-virtual-for python  # or any language you want
-./scripts/start-virtual python
+./scripts/vde create python  # or any language you want
+./scripts/vde start python
 ssh python-dev
 ```
 
@@ -401,6 +429,7 @@ That's it. Welcome to easier development.
 - VM-to-VM communication
 - Natural language control
 - Zero Docker knowledge required
+- One unified command: `./scripts/vde`
 
 **You give it:**
 - Three commands to get started
