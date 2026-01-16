@@ -37,6 +37,7 @@ Feature: AI Assistant for Natural Language Control
     Then go VM should be created
     And I should not need to remember create-virtual-for syntax
 
+  @requires-docker-host
   Scenario: Stop all VMs at once
     Given I have multiple VMs running
     When I say "stop everything" or "shutdown all"

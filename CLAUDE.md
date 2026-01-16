@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working Directory Constraints
+
+**IMPORTANT:** The working directory for this project is `/Users/dderyldowney/dev`.
+
+When running commands, always assume you are in this directory. Use relative paths from here.
+
+**Allowed directories to access outside the project:**
+- `/Users/dderyldowney/.ssh` - For SSH key management
+- `/Users/dderyldowney/.claude` - For Claude Code internal files
+- `/tmp` - For temporary files
+
+**Do NOT access other directories outside `/Users/dderyldowney/dev` without explicit user request.**
+
 ## Overview
 
 This is a **Virtual Development Environment (VDE)** - a sophisticated Docker-based container orchestration system providing isolated development environments for multiple programming languages (Python, Rust, JavaScript, C#, Ruby) with shared infrastructure services (PostgreSQL, Redis, MongoDB, Nginx).

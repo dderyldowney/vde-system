@@ -23,6 +23,9 @@ REBUILD_CONTAINER=true
 SPECIFIC_FEATURE=""
 DROP_IN_SHELL=false
 VERBOSE_OUTPUT=false
+# Default: skip @requires-docker-host tests since they can't pass in Docker-in-Docker
+# These are tested by the shell suite (tests/integration/docker-vm-lifecycle.test.sh)
+BEHAVE_TAGS="--tags=~requires-docker-host"
 
 # Colors
 if [[ -t 1 ]]; then
@@ -61,14 +64,15 @@ ${BOLD}Arguments:${RESET}
 ${BOLD}Options:${RESET}
   --no-build      Skip rebuilding the container
   --rebuild       Force rebuild the container (default)
+  --include-docker Include @requires-docker-host scenarios (will fail in Docker-in-Docker)
   --shell         Drop into container shell instead of running tests
   -v, --verbose   Enable verbose output
   -h, --help      Show this help message
 
 ${BOLD}Examples:${RESET}
-  $0                        # Run all BDD tests
+  $0                        # Run BDD tests (Docker host tests skipped by default)
   $0 vm-lifecycle            # Run only vm-lifecycle.feature
-  $0 --no-build port-management  # Run port tests without rebuild
+  $0 --no-build              # Skip container rebuild
   $0 --shell                 # Drop into container shell
 
 ${BOLD}Available Features:${RESET}
@@ -86,6 +90,11 @@ ${BOLD}Environment Variables:${RESET}
   VDE_BDD_IMAGE    Override Docker image name
   VDE_BDD_NO_CACHE Set to '1' to use cached Docker build
 
+${BOLD}Tags:${RESET}
+  @requires-docker-host  Scenarios needing real Docker host (SKIPPED by default)
+                        These are tested by tests/integration/docker-vm-lifecycle.test.sh
+                        Use --include-docker to attempt running them (will fail in Docker-in-Docker)
+
 EOF
 }
 
@@ -102,6 +111,12 @@ parse_args() {
                 ;;
             --rebuild)
                 REBUILD_CONTAINER=true
+                shift
+                ;;
+            --include-docker)
+                BEHAVE_TAGS=""
+                echo -e "${YELLOW}Note: Including @requires-docker-host tests${RESET}"
+                echo -e "${YELLOW}      These will FAIL in Docker-in-Docker but are tested by shell suite${RESET}"
                 shift
                 ;;
             --shell)
@@ -190,12 +205,21 @@ run_tests() {
         run_cmd="$run_cmd --verbose"
     fi
 
+    # Add tag filters if specified
+    if [[ -n "$BEHAVE_TAGS" ]]; then
+        run_cmd="$run_cmd $BEHAVE_TAGS"
+    fi
+
     run_cmd="$run_cmd $behave_args"
 
     echo ""
+    # IMPORTANT: We do NOT mount configs/, scripts/, or tests/ to protect host files.
+    # The Dockerfile COPYs these into the image, so tests use the copied versions.
+    # Any "deletions" only affect the container's copies, not the host.
+    # We only mount docker socket for container tests and a test workspace.
     docker run --rm \
-        -v "$PROJECT_ROOT:/vde:ro" \
         -v /var/run/docker.sock:/var/run/docker.sock \
+        -v "$PROJECT_ROOT/tests/workspace:/vde/tests/workspace" \
         -e VDE_ROOT_DIR=/vde \
         -e PYTHONUNBUFFERED=1 \
         --network host \
@@ -219,9 +243,10 @@ drop_into_shell() {
     echo -e "Type ${BOLD}exit${RESET} to leave the shell"
     echo ""
 
+    # Use copied files from image to protect host configs
     docker run --rm -it \
-        -v "$PROJECT_ROOT:/vde" \
         -v /var/run/docker.sock:/var/run/docker.sock \
+        -v "$PROJECT_ROOT/tests/workspace:/vde/tests/workspace" \
         -e VDE_ROOT_DIR=/vde \
         --network host \
         "$BDD_IMAGE_NAME" \

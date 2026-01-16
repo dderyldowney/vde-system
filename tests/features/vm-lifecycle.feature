@@ -22,6 +22,7 @@ Feature: VM Lifecycle Management
     And the docker-compose.yml should contain service port mapping "5672"
     And data directory should exist at "data/rabbitmq"
 
+  @requires-docker-host
   Scenario: Start a created VM
     Given VM "python" has been created
     And VM "python" is not running
@@ -29,6 +30,7 @@ Feature: VM Lifecycle Management
     Then VM "python" should be running
     And SSH should be accessible on allocated port
 
+  @requires-docker-host
   Scenario: Start multiple VMs
     Given VM "python" has been created
     And VM "rust" has been created
@@ -38,6 +40,7 @@ Feature: VM Lifecycle Management
     And VM "rust" should be running
     And each VM should have a unique SSH port
 
+  @requires-docker-host
   Scenario: Start all VMs
     Given VM "python" has been created
     And VM "rust" has been created
@@ -46,24 +49,28 @@ Feature: VM Lifecycle Management
     When I run "start-virtual all"
     Then all created VMs should be running
 
+  @requires-docker-host
   Scenario: Stop a running VM
     Given VM "python" is running
     When I run "shutdown-virtual python"
     Then VM "python" should not be running
     But VM configuration should still exist
 
+  @requires-docker-host
   Scenario: Stop all running VMs
     Given VM "python" is running
     And VM "rust" is running
     When I run "shutdown-virtual all"
     Then no VMs should be running
 
+  @requires-docker-host
   Scenario: Restart a VM
     Given VM "python" is running
     When I run "shutdown-virtual python && start-virtual python"
     Then VM "python" should be running
     And the VM should have a fresh container instance
 
+  @requires-docker-host
   Scenario: Rebuild a VM with --rebuild flag
     Given VM "python" is running
     When I run "start-virtual python --rebuild"
