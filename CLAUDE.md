@@ -432,6 +432,32 @@ The VDE system uses specific features of bash and zsh that are NOT available in 
 
 The `vde-shell-compat` library provides a unified interface for shell-specific operations.
 
+### Shell References
+
+**Authoritative Shell Manuals:**
+This project uses **Zsh 5.x** as the primary shell, with **Bash 4.x** as a secondary supported shell. The official PDF manuals for both shells are located at:
+
+- **Zsh 5.x PDF Manual**: `$project_root/docs/shell_manuals/zsh/` - Zsh Reference Card (official)
+- **Bash 4.x PDF Manual**: `$project_root/docs/shell_manuals/bash/` - Bash Reference Card (official)
+
+These are considered **authoritative references** for writing shell code in this project.
+
+**Script Features:**
+The shell scripts in this project leverage advanced features from both shells:
+- **Associative arrays** - `typeset -g array_name` (Zsh 5.x & Bash 4.x)
+- **Key-value hash maps** - `( $k "${(@)array[@]}"` (Zsh 5.x & Bash 4.x)
+- **Pattern matching** - `${var:pattern}` (Zsh 5.x & Bash 4.x)
+- **Process substitution** - `${var:pattern}` (Zsh 5.x & Bash 4.x)
+
+**Shell Compatibility:**
+All scripts MUST use `#!/usr/bin/env zsh` shebang for Zsh scripts.
+
+POSIX compliance is NOT a priority. Use modern shell features that work in both Zsh 5.x and Bash 4.x.
+
+**Resources:**
+- **Zsh Guide**: https://zsh.sourceforge.io/Guide/zshguide.pdf
+- **Bash Guide**: https://tiswww.tis.org/files/bash/bashref.pdf
+
 ## Notes
 
 - Each project under `projects/<language>/` may have its own CLAUDE.md with project-specific guidance
