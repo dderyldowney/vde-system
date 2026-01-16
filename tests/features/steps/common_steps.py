@@ -248,12 +248,6 @@ def step_verify_cache_path(context, path):
     context.cache_path = path
 
 
-@then('cache file should contain all VM type data')
-def step_cache_has_data(context):
-    """Verify cache contains all data."""
-    assert getattr(context, 'vm_types_loaded', False)
-
-
 @then('data should be loaded from cache')
 def step_data_from_cache_verify(context):
     """Verify data came from cache."""

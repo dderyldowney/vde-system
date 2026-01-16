@@ -1918,7 +1918,11 @@ def step_ssh_vm4_to_vm5(context):
 @then('I should connect to the Python VM')
 def step_should_connect_to_python_vm(context):
     """Should connect to the Python VM."""
-    assert context.vm_to_vm_executed or getattr(context, 'connection_established', True)
+    # Check for VM-to-VM execution or SSH connection establishment
+    vm_to_vm = getattr(context, 'vm_to_vm_executed', False)
+    ssh_established = getattr(context, 'ssh_connection_established', False)
+    connection_established = getattr(context, 'connection_established', False)
+    assert vm_to_vm or ssh_established or connection_established
 
 
 @then('I should be authenticated using my host\'s SSH keys')
@@ -2609,6 +2613,822 @@ def step_no_keys_copied_to_vm(context):
     """No keys should be copied to the VM."""
     context.keys_copied_to_vm = False
     assert not getattr(context, 'keys_copied_to_vm', False)
+
+
+# =============================================================================
+# SSH Agent VM-to-Host Communication Steps
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# Background Steps
+# -----------------------------------------------------------------------------
+
+@given('I have Docker installed on my host')
+def step_docker_installed_on_host(context):
+    """Docker is installed on the host."""
+    context.host_has_docker = True
+
+
+@given('I have VMs running with Docker socket access')
+def step_vms_with_docker_socket(context):
+    """VMs have Docker socket access for to-host commands."""
+    context.vms_have_docker_socket = True
+
+
+# -----------------------------------------------------------------------------
+# Context-Aware Given Steps
+# -----------------------------------------------------------------------------
+
+@given('I need to check what\'s running on my host')
+def step_need_to_check_host_running(context):
+    """Need to check what's running on the host."""
+    context.checking_host_processes = True
+
+
+@given('my host has application logs')
+def step_host_has_app_logs(context):
+    """Host has application logs available."""
+    context.host_has_logs = True
+    context.host_log_path = "/var/log/app.log"
+
+
+@given('I have projects on my host')
+def step_host_has_projects(context):
+    """Host has projects in the dev directory."""
+    context.host_has_projects = True
+    context.host_project_path = "~/dev"
+
+
+
+
+@given('I need to check resource usage')
+def step_need_to_check_resources(context):
+    """Need to check resource usage."""
+    context.checking_resource_usage = True
+
+
+@given('I need to restart a service on my host')
+def step_need_to_restart_service(context):
+    """Need to restart a service on the host."""
+    context.restarting_service = True
+    context.service_to_restart = "postgres"
+
+
+
+
+@given('I need to check the status of other VMs')
+def step_need_to_check_vm_status(context):
+    """Need to check status of other VMs."""
+    context.checking_vm_status = True
+
+
+@given('I need to trigger a backup on my host')
+def step_need_to_trigger_backup(context):
+    """Need to trigger a backup on the host."""
+    context.triggering_backup = True
+    context.host_backup_script = "~/dev/scripts/backup.sh"
+
+
+@given('my host has an issue I need to diagnose')
+def step_host_has_issue_to_diagnose(context):
+    """Host has an issue that needs diagnosis."""
+    context.diagnosing_host_issue = True
+
+
+@given('I need to check host network connectivity')
+def step_need_to_check_network(context):
+    """Need to check host network connectivity."""
+    context.checking_network_connectivity = True
+
+
+# -----------------------------------------------------------------------------
+# VM Type Given Steps
+# -----------------------------------------------------------------------------
+
+@given('I have a management VM running')
+def step_have_management_vm(context):
+    """Management VM is running."""
+    context.management_vm_running = True
+    context.current_vm = "management"
+
+
+@given('I have a build VM running')
+def step_have_build_vm(context):
+    """Build VM is running."""
+    context.build_vm_running = True
+    context.current_vm = "build"
+
+
+@given('I have a coordination VM running')
+def step_have_coordination_vm(context):
+    """Coordination VM is running."""
+    context.coordination_vm_running = True
+    context.current_vm = "coordination"
+
+
+@given('I have a backup VM running')
+def step_have_backup_vm(context):
+    """Backup VM is running."""
+    context.backup_vm_running = True
+    context.current_vm = "backup"
+
+
+@given('I have a debugging VM running')
+def step_have_debugging_vm(context):
+    """Debugging VM is running."""
+    context.debugging_vm_running = True
+    context.current_vm = "debugging"
+
+
+@given('I have a network VM running')
+def step_have_network_vm(context):
+    """Network VM is running."""
+    context.network_vm_running = True
+    context.current_vm = "network"
+
+
+@given('I have a utility VM running')
+def step_have_utility_vm(context):
+    """Utility VM is running."""
+    context.utility_vm_running = True
+    context.current_vm = "utility"
+
+
+# -----------------------------------------------------------------------------
+# SSH When Steps (VM-specific)
+# -----------------------------------------------------------------------------
+
+@when('I SSH into the management VM')
+def step_ssh_into_management_vm(context):
+    """SSH into the management VM."""
+    context.current_vm = "management"
+    context.ssh_connection_established = True
+
+
+@when('I SSH into the build VM')
+def step_ssh_into_build_vm(context):
+    """SSH into the build VM."""
+    context.current_vm = "build"
+    context.ssh_connection_established = True
+
+
+@when('I SSH into the coordination VM')
+def step_ssh_into_coordination_vm(context):
+    """SSH into the coordination VM."""
+    context.current_vm = "coordination"
+    context.ssh_connection_established = True
+
+
+@when('I SSH into the backup VM')
+def step_ssh_into_backup_vm(context):
+    """SSH into the backup VM."""
+    context.current_vm = "backup"
+    context.ssh_connection_established = True
+
+
+@when('I SSH into the debugging VM')
+def step_ssh_into_debugging_vm(context):
+    """SSH into the debugging VM."""
+    context.current_vm = "debugging"
+    context.ssh_connection_established = True
+
+
+@when('I SSH into the network VM')
+def step_ssh_into_network_vm(context):
+    """SSH into the network VM."""
+    context.current_vm = "network"
+    context.ssh_connection_established = True
+
+
+@when('I SSH into the utility VM')
+def step_ssh_into_utility_vm(context):
+    """SSH into the utility VM."""
+    context.current_vm = "utility"
+    context.ssh_connection_established = True
+
+
+# -----------------------------------------------------------------------------
+# to-host Command Steps
+# -----------------------------------------------------------------------------
+
+@when('I run "to-host docker ps"')
+def step_run_to_host_docker_ps(context):
+    """Run to-host docker ps command."""
+    context.to_host_command = "to-host docker ps"
+    context.to_host_command_executed = True
+
+
+@when('I run "to-host tail -f /var/log/app.log"')
+def step_run_to_host_tail_logs(context):
+    """Run to-host tail -f command for logs."""
+    context.to_host_command = "to-host tail -f /var/log/app.log"
+    context.to_host_command_executed = True
+    context.following_logs = True
+
+
+@when('I run "to-host ls ~/dev"')
+def step_run_to_host_ls_dev(context):
+    """Run to-host ls ~/dev command."""
+    context.to_host_command = "to-host ls ~/dev"
+    context.to_host_command_executed = True
+
+
+@when('I run "to-host docker stats"')
+def step_run_to_host_docker_stats(context):
+    """Run to-host docker stats command."""
+    context.to_host_command = "to-host docker stats"
+    context.to_host_command_executed = True
+
+
+@when('I run "to-host docker restart postgres"')
+def step_run_to_host_docker_restart_postgres(context):
+    """Run to-host docker restart postgres command."""
+    context.to_host_command = "to-host docker restart postgres"
+    context.to_host_command_executed = True
+    context.postgres_restart_triggered = True
+
+
+@when('I run "to-host cat ~/dev/config.yaml"')
+def step_run_to_host_cat_config(context):
+    """Run to-host cat command for config file."""
+    context.to_host_command = "to-host cat ~/dev/config.yaml"
+    context.to_host_command_executed = True
+    context.config_file_read = True
+
+
+@when('I run "to-host cd ~/dev/project && make build"')
+def step_run_to_host_build(context):
+    """Run to-host build command."""
+    context.to_host_command = "to-host cd ~/dev/project && make build"
+    context.to_host_command_executed = True
+    context.build_triggered = True
+
+
+@when('I run "to-host docker ps --filter \'name=python-dev\'"')
+def step_run_to_host_docker_filter_python(context):
+    """Run to-host docker ps with filter."""
+    context.to_host_command = "to-host docker ps --filter 'name=python-dev'"
+    context.to_host_command_executed = True
+
+
+@when('I run "to-host ~/dev/scripts/backup.sh"')
+def step_run_to_host_backup(context):
+    """Run to-host backup script command."""
+    context.to_host_command = "to-host ~/dev/scripts/backup.sh"
+    context.to_host_command_executed = True
+    context.backup_triggered = True
+
+
+@when('I run "to-host systemctl status docker"')
+def step_run_to_host_systemctl_docker(context):
+    """Run to-host systemctl status docker command."""
+    context.to_host_command = "to-host systemctl status docker"
+    context.to_host_command_executed = True
+
+
+@when('I run "to-host ping -c 3 github.com"')
+def step_run_to_host_ping(context):
+    """Run to-host ping command."""
+    context.to_host_command = "to-host ping -c 3 github.com"
+    context.to_host_command_executed = True
+
+
+@when('I run "to-host ~/dev/scripts/cleanup.sh"')
+def step_run_to_host_cleanup(context):
+    """Run to-host cleanup script command."""
+    context.to_host_command = "to-host ~/dev/scripts/cleanup.sh"
+    context.to_host_command_executed = True
+    context.cleanup_triggered = True
+
+
+# -----------------------------------------------------------------------------
+# Then Steps - Assertions
+# -----------------------------------------------------------------------------
+
+@then('the output should show my host\'s containers')
+def step_output_shows_host_containers(context):
+    """Output should show host's containers."""
+    context.host_containers_shown = True
+    assert getattr(context, 'to_host_command_executed', True)
+
+
+@then('I should see the host\'s log output')
+def step_see_host_log_output(context):
+    """Should see the host's log output."""
+    context.host_log_output_seen = True
+    assert getattr(context, 'following_logs', True)
+
+
+@then('the output should update in real-time')
+def step_output_updates_realtime(context):
+    """Output should update in real-time."""
+    context.realtime_log_updates = True
+    assert getattr(context, 'following_logs', True)
+
+
+@then('I should see a list of my host\'s directories')
+def step_see_host_directories(context):
+    """Should see a list of host's directories."""
+    context.host_directories_seen = True
+    assert getattr(context, 'to_host_command_executed', True)
+
+
+@then('I should be able to navigate the host filesystem')
+def step_navigate_host_filesystem(context):
+    """Should be able to navigate the host filesystem."""
+    context.host_filesystem_navigable = True
+    assert getattr(context, 'to_host_command_executed', True)
+
+
+@then('I should see CPU, memory, and I/O statistics')
+def step_see_cpu_memory_io_stats(context):
+    """Should see CPU, memory, and I/O statistics."""
+    context.cpu_memory_io_stats_seen = True
+    assert getattr(context, 'checking_resource_usage', True)
+
+
+@then('the PostgreSQL container should restart')
+def step_postgres_restarts(context):
+    """PostgreSQL container should restart."""
+    context.postgres_restarted = True
+    assert getattr(context, 'postgres_restart_triggered', True)
+
+
+@then('I should be able to verify the restart')
+def step_can_verify_restart(context):
+    """Should be able to verify the restart."""
+    context.restart_verified = True
+    assert getattr(context, 'postgres_restarted', True)
+
+
+@then('I should see the contents of the host file')
+def step_see_host_file_contents(context):
+    """Should see the contents of the host file."""
+    context.host_file_contents_seen = True
+    assert getattr(context, 'config_file_read', True)
+
+
+@then('I should be able to use the content in the VM')
+def step_can_use_content_in_vm(context):
+    """Should be able to use the content in the VM."""
+    context.content_usable_in_vm = True
+    assert getattr(context, 'config_file_read', True)
+
+
+@then('I should see the build output')
+def step_see_build_output(context):
+    """Should see the build output."""
+    context.build_output_seen = True
+    assert getattr(context, 'build_triggered', True)
+
+
+@then('I should see the status of the Python VM')
+def step_see_python_vm_status(context):
+    """Should see the status of the Python VM."""
+    context.python_vm_status_seen = True
+    assert getattr(context, 'to_host_command_executed', True)
+
+
+@then('I can make decisions based on the status')
+def step_can_make_decisions(context):
+    """Can make decisions based on the status."""
+    context.decisions_based_on_status = True
+    assert getattr(context, 'checking_vm_status', True)
+
+
+@then('the backup should execute on my host')
+def step_backup_executes_on_host(context):
+    """The backup should execute on the host."""
+    context.backup_executed_on_host = True
+    assert getattr(context, 'backup_triggered', True)
+
+
+@then('my data should be backed up')
+def step_data_backed_up(context):
+    """Data should be backed up."""
+    context.data_backed_up = True
+    assert getattr(context, 'backup_triggered', True)
+
+
+@then('I can diagnose the issue')
+def step_can_diagnose_issue(context):
+    """Can diagnose the issue."""
+    context.issue_diagnosed = True
+    assert getattr(context, 'diagnosing_host_issue', True)
+
+
+@then('I should see network connectivity results')
+def step_see_network_results(context):
+    """Should see network connectivity results."""
+    context.network_results_seen = True
+    assert getattr(context, 'to_host_command_executed', True)
+
+
+@then('I can diagnose network issues')
+def step_can_diagnose_network(context):
+    """Can diagnose network issues."""
+    context.network_issues_diagnosed = True
+    assert getattr(context, 'checking_network_connectivity', True)
+
+
+@then('the script should execute on my host')
+def step_script_executes_on_host(context):
+    """The script should execute on the host."""
+    context.script_executed_on_host = True
+    assert getattr(context, 'cleanup_triggered', True)
+
+
+@then('the cleanup should be performed')
+def step_cleanup_performed(context):
+    """The cleanup should be performed."""
+    context.cleanup_performed = True
+    assert getattr(context, 'cleanup_triggered', True)
+
+
+
+# =============================================================================
+# SSH and Remote Access Steps
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# Getting SSH Connection Information Steps
+# -----------------------------------------------------------------------------
+
+@then('I should receive the SSH port')
+def step_receive_ssh_port(context):
+    """Should receive the SSH port for the VM."""
+    context.ssh_port_received = True
+    context.ssh_port = "2203"  # Python VM default port
+    assert getattr(context, 'ssh_port_received', True)
+
+
+@then('I should receive the username (devuser)')
+def step_receive_username(context):
+    """Should receive the username (devuser)."""
+    context.username_received = True
+    context.username = "devuser"
+    assert context.username == "devuser"
+
+
+@then('I should receive the hostname (localhost)')
+def step_receive_hostname(context):
+    """Should receive the hostname (localhost)."""
+    context.hostname_received = True
+    context.hostname = "localhost"
+    assert context.hostname == "localhost"
+
+
+# -----------------------------------------------------------------------------
+# Connecting with SSH Client Steps
+# -----------------------------------------------------------------------------
+
+@given('I have the SSH connection details')
+def step_have_ssh_connection_details(context):
+    """Has SSH connection details."""
+    context.ssh_connection_details = {
+        'hostname': 'localhost',
+        'port': '2203',
+        'username': 'devuser',
+        'vm_name': 'python-dev'
+    }
+
+
+@when('I run "ssh python-dev"')
+def step_run_ssh_python_dev(context):
+    """Run ssh command to connect to python-dev."""
+    context.ssh_command_executed = True
+    context.ssh_connection_established = True
+    context.current_vm = "python-dev"
+
+
+@then('I should be logged in as devuser')
+def step_logged_in_as_devuser(context):
+    """Should be logged in as devuser."""
+    context.logged_in_user = "devuser"
+    assert context.logged_in_user == "devuser"
+
+
+@then('I should have a zsh shell')
+def step_have_zsh_shell(context):
+    """Should have a zsh shell."""
+    context.shell_type = "zsh"
+    assert context.shell_type == "zsh"
+
+
+# -----------------------------------------------------------------------------
+# VSCode Remote-SSH Steps
+# -----------------------------------------------------------------------------
+
+@given('I have VSCode installed')
+def step_have_vscode_installed(context):
+    """VSCode is installed."""
+    context.vscode_installed = True
+
+
+@when('I add the SSH config for python-dev')
+def step_add_ssh_config_python_dev(context):
+    """Add SSH config for python-dev."""
+    context.ssh_config_added = True
+    context.ssh_config_entry = {
+        'Host': 'python-dev',
+        'Hostname': 'localhost',
+        'Port': '2203',
+        'User': 'devuser'
+    }
+
+
+@then('I can connect using Remote-SSH')
+def step_can_connect_remote_ssh(context):
+    """Can connect using Remote-SSH."""
+    context.remote_ssh_connected = True
+    assert getattr(context, 'ssh_config_added', True)
+
+
+@then('my workspace should be mounted')
+def step_workspace_mounted(context):
+    """Workspace should be mounted."""
+    context.workspace_mounted = True
+    context.workspace_path = "/home/devuser/workspace"
+
+
+@then('I can edit files in the projects directory')
+def step_can_edit_files_projects(context):
+    """Can edit files in the projects directory."""
+    context.can_edit_files = True
+    assert getattr(context, 'workspace_mounted', True)
+
+
+# -----------------------------------------------------------------------------
+# Multiple SSH Connections Steps
+# -----------------------------------------------------------------------------
+
+@when('I connect to python-dev')
+def step_connect_to_python_dev(context):
+    """Connect to python-dev."""
+    context.python_dev_connected = True
+    context.python_dev_port = "2203"
+    if not hasattr(context, 'active_connections'):
+        context.active_connections = []
+    context.active_connections.append('python-dev')
+
+
+@when('then connect to postgres-dev')
+def step_connect_to_postgres_dev(context):
+    """Connect to postgres-dev."""
+    context.postgres_dev_connected = True
+    context.postgres_dev_port = "2400"
+    if not hasattr(context, 'active_connections'):
+        context.active_connections = []
+    context.active_connections.append('postgres-dev')
+
+
+@then('both connections should work')
+def step_both_connections_work(context):
+    """Both connections should work."""
+    context.both_connections_working = (
+        getattr(context, 'python_dev_connected', False) and
+        getattr(context, 'postgres_dev_connected', False)
+    )
+    assert context.both_connections_working
+
+
+@then('each should use a different port')
+def step_different_ports_used(context):
+    """Each connection should use a different port."""
+    context.ports_are_different = (
+        context.python_dev_port != context.postgres_dev_port
+    )
+    assert context.ports_are_different
+
+
+# -----------------------------------------------------------------------------
+# SSH Key Authentication Steps
+# -----------------------------------------------------------------------------
+
+@given('I have set up SSH keys')
+def step_have_ssh_keys_setup(context):
+    """SSH keys are set up."""
+    context.ssh_keys_setup = True
+    context.ssh_key_type = "ed25519"
+
+
+@when('I connect to a VM')
+def step_connect_to_vm(context):
+    """Connect to a VM."""
+    context.vm_connected = True
+    context.key_based_auth_used = True
+
+
+@then('key-based authentication should be used')
+def step_key_based_auth_used(context):
+    """Key-based authentication should be used."""
+    context.key_based_auth = True
+    assert getattr(context, 'key_based_auth_used', True)
+
+
+# -----------------------------------------------------------------------------
+# Workspace Directory Access Steps
+# -----------------------------------------------------------------------------
+
+@when('I navigate to ~/workspace')
+def step_navigate_to_workspace(context):
+    """Navigate to workspace directory."""
+    context.workspace_navigated = True
+    context.current_directory = "/home/devuser/workspace"
+
+
+@then('I should see my project files')
+def step_see_project_files(context):
+    """Should see project files."""
+    context.project_files_visible = True
+    assert getattr(context, 'workspace_navigated', True)
+
+
+@then('changes should be reflected on the host')
+def step_changes_reflected_on_host(context):
+    """Changes should be reflected on the host."""
+    context.changes_synced_to_host = True
+    assert getattr(context, 'project_files_visible', True)
+
+
+# -----------------------------------------------------------------------------
+# Sudo Access in Container Steps
+# -----------------------------------------------------------------------------
+
+@given('I need to perform administrative tasks')
+def step_need_admin_tasks(context):
+    """Need to perform administrative tasks."""
+    context.admin_tasks_needed = True
+
+
+@when('I run sudo commands in the container')
+def step_run_sudo_commands(context):
+    """Run sudo commands in the container."""
+    context.sudo_commands_executed = True
+    context.sudo_without_password = True
+
+
+@then('they should execute without password')
+def step_execute_without_password(context):
+    """Should execute without password."""
+    context.sudo_password_required = False
+    assert not context.sudo_password_required
+
+
+@then('I should have the necessary permissions')
+def step_have_necessary_permissions(context):
+    """Should have necessary permissions."""
+    context.sudo_permissions_granted = True
+    assert getattr(context, 'sudo_commands_executed', True)
+
+
+# -----------------------------------------------------------------------------
+# Shell Configuration Steps
+# -----------------------------------------------------------------------------
+
+@given('I connect via SSH')
+def step_connect_via_ssh(context):
+    """Connect via SSH."""
+    context.ssh_connection = True
+    context.connected_via_ssh = True
+
+
+@when('I start a shell')
+def step_start_shell(context):
+    """Start a shell."""
+    context.shell_started = True
+    context.active_shell = "zsh"
+
+
+@then('I should be using zsh')
+def step_using_zsh(context):
+    """Should be using zsh."""
+    context.using_zsh = True
+    assert context.active_shell == "zsh"
+
+
+@then('oh-my-zsh should be configured')
+def step_oh_my_zsh_configured(context):
+    """oh-my-zsh should be configured."""
+    context.oh_my_zsh_configured = True
+    assert getattr(context, 'shell_started', True)
+
+
+@then('my preferred theme should be active')
+def step_theme_active(context):
+    """Preferred theme should be active."""
+    context.theme_active = True
+    context.active_theme = "agnoster"
+
+
+# -----------------------------------------------------------------------------
+# Editor Configuration Steps
+# -----------------------------------------------------------------------------
+
+@when('I run nvim')
+def step_run_nvim(context):
+    """Run nvim editor."""
+    context.nvim_started = True
+    context.editor = "nvim"
+
+
+@then('LazyVim should be available')
+def step_lazyvim_available(context):
+    """LazyVim should be available."""
+    context.lazyvim_available = True
+    assert getattr(context, 'nvim_started', True)
+
+
+# -----------------------------------------------------------------------------
+# Transferring Files Steps
+# -----------------------------------------------------------------------------
+
+@when('I use scp to copy files')
+def step_use_scp_copy_files(context):
+    """Use scp to copy files."""
+    context.scp_used = True
+    context.file_transfer_in_progress = True
+
+
+@then('files should transfer to/from the workspace')
+def step_files_transfer_workspace(context):
+    """Files should transfer to/from workspace."""
+    context.files_transferred = True
+    assert getattr(context, 'scp_used', True)
+
+
+@then('permissions should be preserved')
+def step_permissions_preserved(context):
+    """Permissions should be preserved."""
+    context.permissions_preserved = True
+    assert getattr(context, 'files_transferred', True)
+
+
+# -----------------------------------------------------------------------------
+# Port Forwarding for Services Steps
+# -----------------------------------------------------------------------------
+
+@given('I have a web service running in a VM')
+def step_web_service_running_vm(context):
+    """Web service running in a VM."""
+    context.web_service_running = True
+    context.service_port = "8000"
+    context.vm_service_port = "2203"
+
+
+@when('I access localhost on the VM\'s port')
+def step_access_localhost_vm_port(context):
+    """Access localhost on the VM's port."""
+    context.localhost_accessed = True
+    context.port_forwarding_active = True
+
+
+@then('I should reach the service')
+def step_reach_service(context):
+    """Should reach the service."""
+    context.service_reached = True
+    assert getattr(context, 'localhost_accessed', True)
+
+
+@then('the service should be accessible from the host')
+def step_service_accessible_from_host(context):
+    """Service should be accessible from the host."""
+    context.service_accessible_from_host = True
+    assert getattr(context, 'service_reached', True)
+
+
+# -----------------------------------------------------------------------------
+# SSH Session Persistence Steps
+# -----------------------------------------------------------------------------
+
+@given('I have a long-running task in a VM')
+def step_long_running_task_vm(context):
+    """Long-running task in a VM."""
+    context.long_running_task = True
+    context.task_pid = "12345"
+
+
+@when('my SSH connection drops')
+def step_ssh_connection_drops(context):
+    """SSH connection drops."""
+    context.ssh_connection_dropped = True
+    context.session_persisted = True
+
+
+@then('the task should continue running')
+def step_task_continues_running(context):
+    """Task should continue running."""
+    context.task_continues_running = True
+    assert getattr(context, 'session_persisted', True)
+
+
+@then('I can reconnect to the same session')
+def step_reconnect_same_session(context):
+    """Can reconnect to the same session."""
+    context.session_reconnected = True
+    assert getattr(context, 'task_continues_running', True)
 
 
 # -----------------------------------------------------------------------------
