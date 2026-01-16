@@ -38,6 +38,8 @@ Thumbs.db
 *.log
 .locks/
 
-# Pythoin cache files
+# Python cache files
 __pycache__
 
+# Test output files
+tests/behave-results.json
