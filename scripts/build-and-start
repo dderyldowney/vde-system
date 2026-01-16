@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # build-and-start - Initialize VDE infrastructure and start all VMs
-# First-time setup script that creates directories, sets permissions, and starts VMs
+# First-time setup script for users who have already installed Docker Desktop and git
 
 set -e
 
@@ -28,9 +28,64 @@ for arg in "$@"; do
 done
 
 # =============================================================================
-# Step 1: Create all necessary directories
+# Welcome Message
 # =============================================================================
-log_info "Creating VDE directory structure..."
+echo ""
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║          VDE First-Time Setup                             ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+echo "This script will:"
+echo "  • Create the VDE directory structure"
+echo "  • Set up SSH keys and agent for VM-to-VM communication"
+echo "  • Initialize Docker network"
+echo "  • Start your VMs"
+echo ""
+
+# =============================================================================
+# Step 1: Prerequisites Check
+# =============================================================================
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 1: Checking Prerequisites"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Check Docker
+if ! command -v docker &>/dev/null; then
+    log_error "Docker is not installed or not in PATH"
+    echo "  Please install Docker Desktop first:"
+    echo "  https://www.docker.com/products/docker-desktop/"
+    exit 1
+fi
+
+# Check if Docker daemon is running
+if ! docker info &>/dev/null; then
+    log_error "Docker daemon is not running"
+    echo "  Please start Docker Desktop and try again"
+    exit 1
+fi
+
+log_success "✓ Docker is installed and running"
+
+# Check git
+if ! command -v git &>/dev/null; then
+    log_error "git is not installed or not in PATH"
+    echo "  Please install git first:"
+    echo "  https://git-scm.com/downloads"
+    exit 1
+fi
+
+log_success "✓ git is installed"
+
+echo ""
+
+# =============================================================================
+# Step 2: Create VDE Directory Structure
+# =============================================================================
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 2: Creating VDE Directory Structure"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
 
 # Core directories
 mkdir -p "$CONFIGS_DIR"
@@ -57,12 +112,38 @@ done
 # Log directories for services
 mkdir -p "$VDE_ROOT_DIR/logs/nginx"
 
-log_success "Directory structure created"
+log_success "✓ Directory structure created"
+
+echo ""
 
 # =============================================================================
-# Step 2: Set up proper file permissions
+# Step 3: Set Up SSH Keys and Agent
 # =============================================================================
-log_info "Setting file permissions..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 3: Setting Up SSH Keys and Agent"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "This enables secure VM-to-VM communication without exposing"
+echo "your private keys to containers."
+echo ""
+
+# Run the SSH setup script
+if "$SCRIPT_DIR/ssh-agent-setup" --init; then
+    log_success "✓ SSH environment configured"
+else
+    log_error "✗ SSH setup failed"
+    echo "  You can run this manually later: ./scripts/ssh-agent-setup --init"
+fi
+
+echo ""
+
+# =============================================================================
+# Step 4: Set File Permissions
+# =============================================================================
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 4: Setting File Permissions"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
 
 # Ensure SSH keys directory has correct permissions
 if [ -d "$VDE_ROOT_DIR/public-ssh-keys" ]; then
@@ -72,29 +153,34 @@ fi
 # Ensure scripts are executable
 find "$SCRIPT_DIR" -type f -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
 
-log_success "File permissions set"
+log_success "✓ File permissions set"
+
+echo ""
 
 # =============================================================================
-# Step 3: Initialize VDE framework
+# Step 5: Initialize Docker Network
 # =============================================================================
-log_info "Initializing VDE framework..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 5: Initializing Docker Network"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
 
-# Ensure SSH environment is set up (keys, agent, config)
-ensure_ssh_environment
-
-# Create Docker network if it doesn't exist
-if command -v docker &>/dev/null; then
-    if ! docker network inspect dev-net &>/dev/null; then
-        docker network create dev-net 2>/dev/null || true
-    fi
+if ! docker network inspect vde-network &>/dev/null; then
+    docker network create vde-network >/dev/null 2>&1 || \
+    docker network create dev-net >/dev/null 2>&1 || true
 fi
 
-log_success "VDE framework initialized"
+log_success "✓ Docker network ready"
+
+echo ""
 
 # =============================================================================
-# Step 4: Start all VMs
+# Step 6: Start VMs
 # =============================================================================
-log_info "Starting all VMs..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 6: Starting Your VMs"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
 
 # Get list of VMs that have been created
 VM_STARTED=false
@@ -108,19 +194,72 @@ for vm in $(get_all_vms 2>/dev/null); do
 done
 
 if [ "$VM_STARTED" = false ]; then
-    log_warning "No VMs found. Use './scripts/create-virtual-for <vm>' to create VMs first."
     echo ""
-    echo "Available VM types:"
-    show_known_vms
+    log_warning "No VMs found to start"
     echo ""
-    echo "Example: ./scripts/create-virtual-for python"
+    echo "You can create VMs with:"
+    echo ""
+    echo "  ./scripts/create-virtual-for python"
+    echo "  ./scripts/create-virtual-for rust"
+    echo "  ./scripts/create-virtual-for js"
+    echo ""
+    echo "Then start them:"
+    echo ""
+    echo "  ./scripts/start-virtual python"
+    echo ""
+    echo "Or use create-and-start for convenience:"
+    echo ""
+    echo "  ./scripts/create-and-start python rust js"
+    echo ""
 else
-    log_success "All VMs are up!"
+    log_success "✓ All VMs started"
 fi
 
+# =============================================================================
+# Summary
+# =============================================================================
 echo ""
-echo "VDE infrastructure ready!"
-echo "  - Configs:     $CONFIGS_DIR"
-echo "  - Projects:    $VDE_ROOT_DIR/projects"
-echo "  - Data:        $VDE_ROOT_DIR/data"
-echo "  - Logs:        $VDE_ROOT_DIR/logs"
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║          VDE Setup Complete!                               ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+echo "Your VDE environment is ready!"
+echo ""
+echo "Directory Structure:"
+echo "  Configs:     $CONFIGS_DIR"
+echo "  Projects:    $VDE_ROOT_DIR/projects"
+echo "  Data:        $VDE_ROOT_DIR/data"
+echo "  Logs:        $VDE_ROOT_DIR/logs"
+echo ""
+echo "Quick Start Commands:"
+echo ""
+
+if [ "$VM_STARTED" = true ]; then
+    echo "  # SSH into a running VM"
+    echo "  ssh python-dev               # or rust-dev, js-dev, etc."
+    echo ""
+    echo "  # Check what's running"
+    echo "  ./scripts/list-vms"
+    echo ""
+else
+    echo "  # Create your first VM"
+    echo "  ./scripts/create-virtual-for python"
+    echo "  ./scripts/start-virtual python"
+    echo ""
+    echo "  # Or create and start in one command"
+    echo "  ./scripts/create-and-start python"
+    echo ""
+fi
+
+echo "  # See all available VM types"
+echo "  ./scripts/list-vms"
+echo ""
+echo "  # View SSH status"
+echo "  ./scripts/ssh-agent-setup"
+echo ""
+echo "Documentation:"
+echo "  docs/USER_GUIDE.md           # Comprehensive user guide"
+echo "  docs/ARCHITECTURE.md         # System architecture"
+echo ""
+echo "Happy coding!"
+echo ""
