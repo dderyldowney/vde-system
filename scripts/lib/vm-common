@@ -566,6 +566,37 @@ vm_exists() {
     return $VDE_ERR_NOT_FOUND
 }
 
+# is_vm_running - Check if a VM container is currently running
+# Args: <vm_name>
+# Returns:
+#   VDE_SUCCESS (0) - VM is running
+#   VDE_ERR_NOT_FOUND (3) - VM is not running
+# Example: is_vm_running python && echo "Python is running"
+is_vm_running() {
+    local vm=$1
+    local container_name
+
+    # Ensure VM types are loaded
+    load_vm_types
+
+    # Determine container name based on VM type
+    local vm_type
+    vm_type=$(_assoc_get "VM_TYPE" "$vm" 2>/dev/null)
+
+    if [ "$vm_type" = "lang" ]; then
+        container_name="${vm}-dev"
+    else
+        container_name="$vm"
+    fi
+
+    # Check if container is running
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$container_name"; then
+        return $VDE_SUCCESS
+    fi
+
+    return $VDE_ERR_NOT_FOUND
+}
+
 # resolve_vm_name - Resolve an alias or name to canonical VM name
 # Args: <input> - VM name or alias
 # Returns:
@@ -1238,6 +1269,12 @@ start_vm() {
         return $VDE_ERR_NOT_FOUND
     fi
 
+    # Check if VM is already running (state awareness)
+    if is_vm_running "$vm"; then
+        log_info "$vm is already running"
+        return $VDE_SUCCESS
+    fi
+
     log_info "Starting $vm..."
 
     local build_opts
@@ -1314,25 +1351,31 @@ stop_vm() {
         return $VDE_ERR_NOT_FOUND
     fi
 
+    # Check if VM is already stopped (state awareness)
+    if ! is_vm_running "$vm"; then
+        log_info "$vm is not running"
+        return $VDE_SUCCESS
+    fi
+
     log_info "Shutting down $vm..."
-    
+
     # Capture stderr for error handling
     local stderr_file
     stderr_file=$(mktemp)
-    
+
     if docker-compose -f "$compose_file" down 2>"$stderr_file"; then
         rm -f "$stderr_file" 2>/dev/null
         log_success "Stopped $vm successfully"
         return $VDE_SUCCESS
     fi
-    
+
     local stderr_content
     stderr_content=$(cat "$stderr_file" 2>/dev/null)
     rm -f "$stderr_file" 2>/dev/null
-    
+
     log_error "Failed to stop $vm"
     log_error "$(_parse_docker_error "$stderr_content")"
-    
+
     return $VDE_ERR_DOCKER
 }
 
