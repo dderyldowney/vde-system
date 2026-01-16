@@ -1,53 +1,106 @@
-Feature: VM Information and Discovery # features/vm-information-and-discovery.feature:1
+Feature: VM Lifecycle Management # features/vm-lifecycle-management.feature:1
   As a developer using VDE
-  I want to discover what VMs are available and get information about them
-  So I can make informed decisions about my development environment
-  Scenario: Listing all available VMs                      # features/vm-information-and-discovery.feature:6
-    Given I have VDE installed                             # features/steps/vm_lifecycle_steps.py:1153
-    When I ask "what VMs can I create?"                    # features/steps/ai_steps.py:169
-    Then I should see all available language VMs           # features/steps/vm_lifecycle_steps.py:1159
-    And I should see all available service VMs             # features/steps/vm_lifecycle_steps.py:1166
-    And each VM should have a display name                 # features/steps/vm_lifecycle_steps.py:1173
-    And each VM should show its type (language or service) # features/steps/vm_lifecycle_steps.py:1179
+  I want to manage the complete lifecycle of my VMs
+  So I can create, configure, start, stop, and destroy VMs as needed
+  Scenario: Creating a new VM                     # features/vm-lifecycle-management.feature:6
+    Given I want to work with a new language      # features/steps/vm_lifecycle_steps.py:1327
+    When I request to "create a Rust VM"          # features/steps/vm_lifecycle_steps.py:1333
+    Then the VM configuration should be generated # features/steps/vm_lifecycle_steps.py:1340
+    And the Docker image should be built          # features/steps/ssh_docker_steps.py:455
+    And SSH keys should be configured             # features/steps/vm_lifecycle_steps.py:1346
+    And the VM should be ready to use             # features/steps/vm_lifecycle_steps.py:1352
 
-  Scenario: Listing only language VMs                               # features/vm-information-and-discovery.feature:14
-    Given I want to see only programming language environments      # features/steps/vm_lifecycle_steps.py:1185
-    When I ask "show all languages"                                 # features/steps/ai_steps.py:169
-    Then I should see only language VMs                             # features/steps/parser_steps.py:693
-    And I should not see service VMs                                # features/steps/vm_lifecycle_steps.py:1191
-    And common languages like Python, Go, and Rust should be listed # features/steps/vm_lifecycle_steps.py:1197
+  Scenario: Creating multiple VMs at once                    # features/vm-lifecycle-management.feature:14
+    Given I need a full stack environment                    # features/steps/daily_workflow_steps.py:204
+    When I request to "create Python, PostgreSQL, and Redis" # features/steps/vm_lifecycle_steps.py:1358
+    Then all three VMs should be created                     # features/steps/vm_lifecycle_steps.py:1364
+    And each should have its own configuration               # features/steps/customization_steps.py:613
+    And all should be on the same Docker network             # features/steps/vm_lifecycle_steps.py:1370
 
-  Scenario: Listing only service VMs                        # features/vm-information-and-discovery.feature:21
-    Given I want to see only infrastructure services        # features/steps/vm_lifecycle_steps.py:1203
-    When I ask "show all services"                          # features/steps/ai_steps.py:169
-    Then I should see only service VMs                      # features/steps/vm_lifecycle_steps.py:1209
-    And I should not see language VMs                       # features/steps/help_steps.py:86
-    And services like PostgreSQL and Redis should be listed # features/steps/vm_lifecycle_steps.py:1215
+  Scenario: Starting a created VM       # features/vm-lifecycle-management.feature:21
+    Given I have created a Go VM        # features/steps/vm_lifecycle_steps.py:1376
+    When I request to "start go"        # features/steps/vm_lifecycle_steps.py:1382
+    Then the Go container should start  # features/steps/vm_lifecycle_steps.py:1388
+    And it should be accessible via SSH # features/steps/vm_lifecycle_steps.py:1394
+    And my workspace should be mounted  # features/steps/ssh_steps.py:3149
 
-  Scenario: Getting detailed information about a specific VM  # features/vm-information-and-discovery.feature:28
-    Given I want to know about the Python VM                  # features/steps/vm_lifecycle_steps.py:1221
-    When I request information about "python"                 # features/steps/vm_lifecycle_steps.py:1227
-    Then I should see its display name                        # features/steps/vm_lifecycle_steps.py:1233
-    And I should see its type (language)                      # features/steps/vm_lifecycle_steps.py:1239
-    And I should see any aliases (like py, python3)           # features/steps/customization_steps.py:648
-    And I should see installation details                     # features/steps/vm_lifecycle_steps.py:1245
+  Scenario: Starting multiple VMs                      # features/vm-lifecycle-management.feature:28
+    Given I have created several VMs                   # features/steps/vm_lifecycle_steps.py:1400
+    When I request to "start python, go, and postgres" # features/steps/vm_lifecycle_steps.py:1406
+    Then all three VMs should start                    # features/steps/vm_lifecycle_steps.py:1412
+    And they should be able to communicate             # features/steps/vm_lifecycle_steps.py:1418
+    And each should have its own SSH port              # features/steps/parser_steps.py:1210
 
-  Scenario: Checking if a VM exists                  # features/vm-information-and-discovery.feature:36
-    Given I want to verify a VM type before using it # features/steps/vm_lifecycle_steps.py:1251
-    When I check if "golang" exists                  # features/steps/vm_lifecycle_steps.py:1257
-    Then it should resolve to "go"                   # features/steps/vm_lifecycle_steps.py:1263
-    And the VM should be marked as valid             # features/steps/vm_lifecycle_steps.py:1269
+  Scenario: Checking VM status              # features/vm-lifecycle-management.feature:35
+    Given I have several VMs                # features/steps/vm_lifecycle_steps.py:1424
+    When I request "status of all VMs"      # features/steps/vm_lifecycle_steps.py:1430
+    Then I should see which VMs are running # features/steps/ai_steps.py:466
+    And I should see which VMs are stopped  # features/steps/help_steps.py:36
+    And I should see any error states       # features/steps/debugging_steps.py:263
 
-  Scenario: Discovering VMs by alias                         # features/vm-information-and-discovery.feature:42
-    Given I know a VM by an alias but not its canonical name # features/steps/vm_lifecycle_steps.py:1275
-    When I use the alias "nodejs"                            # features/steps/customization_steps.py:564
-    Then it should resolve to the canonical name "js"        # features/steps/vm_lifecycle_steps.py:1287
-    And I should be able to use either name in commands      # features/steps/vm_lifecycle_steps.py:1293
+  Scenario: Stopping a running VM          # features/vm-lifecycle-management.feature:42
+    Given I have a running Python VM       # features/steps/vm_lifecycle_steps.py:1438
+    When I request to "stop python"        # features/steps/vm_lifecycle_steps.py:1444
+    Then the Python container should stop  # features/steps/vm_lifecycle_steps.py:1450
+    And the VM configuration should remain # features/steps/vm_lifecycle_steps.py:1456
+    And I can start it again later         # features/steps/vm_lifecycle_steps.py:1462
 
-  Scenario: Understanding VM categories                                      # features/vm-information-and-discovery.feature:48
-    Given I am new to VDE                                                    # features/steps/pattern_steps.py:347
-    When I explore available VMs                                             # features/steps/vm_lifecycle_steps.py:1299
-    Then I should understand the difference between language and service VMs # features/steps/vm_lifecycle_steps.py:1305
-    And language VMs should have SSH access                                  # features/steps/vm_lifecycle_steps.py:1311
-    And service VMs should provide infrastructure services                   # features/steps/vm_lifecycle_steps.py:1317
+  Scenario: Stopping multiple VMs                # features/vm-lifecycle-management.feature:49
+    Given I have multiple running VMs            # features/steps/vm_lifecycle_steps.py:1468
+    When I request to "stop python and postgres" # features/steps/vm_lifecycle_steps.py:1474
+    Then both VMs should stop                    # features/steps/vm_lifecycle_steps.py:1480
+    And other VMs should remain running          # features/steps/vm_lifecycle_steps.py:1486
+
+  Scenario: Restarting a VM                     # features/vm-lifecycle-management.feature:55
+    Given I have a running VM                   # features/steps/vm_lifecycle_steps.py:1492
+    When I request to "restart rust"            # features/steps/vm_lifecycle_steps.py:1498
+    Then the Rust VM should stop                # features/steps/vm_lifecycle_steps.py:1504
+    And the Rust VM should start again          # features/steps/vm_lifecycle_steps.py:1510
+    And my workspace should still be accessible # features/steps/vm_lifecycle_steps.py:1516
+
+  Scenario: Restarting with rebuild                 # features/vm-lifecycle-management.feature:62
+    Given I need to refresh a VM                    # features/steps/vm_lifecycle_steps.py:1522
+    When I request to "restart python with rebuild" # features/steps/vm_lifecycle_steps.py:1528
+    Then the Python VM should be rebuilt            # features/steps/vm_lifecycle_steps.py:1534
+    And the VM should start with the new image      # features/steps/vm_lifecycle_steps.py:1540
+    And my workspace should be preserved            # features/steps/vm_lifecycle_steps.py:1546
+
+  Scenario: Deleting a VM                          # features/vm-lifecycle-management.feature:69
+    Given I no longer need a VM                    # features/steps/vm_lifecycle_steps.py:1552
+    When I remove its configuration                # features/steps/vm_lifecycle_steps.py:1558
+    Then the VM should be removed                  # features/steps/daily_workflow_steps.py:450
+      Traceback (most recent call last):
+        File "/Users/dderyldowney/Library/Python/3.9/lib/python/site-packages/behave/model.py", line 1991, in run
+          match.run(runner.context)
+        File "/Users/dderyldowney/Library/Python/3.9/lib/python/site-packages/behave/matchers.py", line 105, in run
+          self.func(context, *args, **kwargs)
+        File "features/steps/daily_workflow_steps.py", line 453, in step_vm_removed_check
+          assert context.last_exit_code == 0, f"Failed to remove VM: {context.last_error}"
+        File "/Users/dderyldowney/Library/Python/3.9/lib/python/site-packages/behave/runner.py", line 430, in __getattr__
+          raise AttributeError(msg)
+      AttributeError: 'Context' object has no attribute 'last_exit_code'
+
+    And the container should be stopped if running # None
+    And the configuration files should be deleted  # None
+
+  Scenario: Rebuilding after code changes         # features/vm-lifecycle-management.feature:76
+    Given I have modified the Dockerfile          # features/steps/vm_lifecycle_steps.py:1570
+    When I request to "rebuild go with no cache"  # features/steps/vm_lifecycle_steps.py:1576
+    Then the Go VM should be rebuilt from scratch # features/steps/vm_lifecycle_steps.py:1582
+    And no cached layers should be used           # features/steps/cache_steps.py:389
+    And the new image should reflect my changes   # features/steps/ssh_docker_steps.py:469
+
+  Scenario: Upgrading a VM                    # features/vm-lifecycle-management.feature:83
+    Given I want to update the base image     # features/steps/ssh_docker_steps.py:343
+    When I rebuild the VM                     # features/steps/vm_lifecycle_steps.py:1588
+    Then the latest base image should be used # features/steps/ssh_docker_steps.py:462
+    And my configuration should be preserved  # features/steps/customization_steps.py:669
+    And my workspace should remain intact     # features/steps/vm_lifecycle_steps.py:1594
+
+  Scenario: Migrating to a new VDE version         # features/vm-lifecycle-management.feature:90
+    Given I have updated VDE scripts               # features/steps/vm_lifecycle_steps.py:1600
+    When I rebuild my VMs                          # features/steps/vm_lifecycle_steps.py:1606
+    Then they should use the new VDE configuration # features/steps/customization_steps.py:753
+    And my data should be preserved                # features/steps/vm_lifecycle_steps.py:1612
+    And my SSH access should continue to work      # features/steps/vm_lifecycle_steps.py:1618
 
