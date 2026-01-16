@@ -69,7 +69,6 @@ if [[ ${#VMS[@]} -eq 0 ]]; then
 fi
 
 # Track batch operation results
-declare -A BATCH_RESULTS
 local stopped_count=0
 local skipped_count=0
 local failed_count=0
@@ -80,7 +79,6 @@ for vm in "${VMS[@]}"; do
     # Check if VM exists (has docker-compose.yml)
     if ! vm_exists "$vm"; then
         log_warning "$vm does not exist - skipped"
-        BATCH_RESULTS[$vm]="skipped:not_created"
         skipped_count=$((skipped_count + 1))
         continue
     fi
@@ -88,7 +86,6 @@ for vm in "${VMS[@]}"; do
     # Check if VM is already stopped (batch state awareness)
     if ! is_vm_running "$vm"; then
         log_info "$vm is already stopped - skipped"
-        BATCH_RESULTS[$vm]="skipped:already_stopped"
         skipped_count=$((skipped_count + 1))
         continue
     fi
@@ -96,11 +93,9 @@ for vm in "${VMS[@]}"; do
     # Try to stop the VM
     if stop_vm "$vm"; then
         log_success "$vm stopped successfully"
-        BATCH_RESULTS[$vm]="stopped"
         stopped_count=$((stopped_count + 1))
     else
         log_error "$vm failed to stop"
-        BATCH_RESULTS[$vm]="failed:stop_error"
         failed_count=$((failed_count + 1))
     fi
 done
@@ -110,38 +105,14 @@ echo ""
 log_info "Batch operation summary:"
 if [ $stopped_count -gt 0 ]; then
     log_success "Stopped: $stopped_count VM(s)"
-    for vm in "${!BATCH_RESULTS[@]}"; do
-        case "${BATCH_RESULTS[$vm]}" in
-            stopped)
-                log_info "  ✓ $vm - stopped"
-                ;;
-        esac
-    done
 fi
 
 if [ $skipped_count -gt 0 ]; then
     log_info "Skipped: $skipped_count VM(s)"
-    for vm in "${!BATCH_RESULTS[@]}"; do
-        case "${BATCH_RESULTS[$vm]}" in
-            skipped:not_created)
-                log_warning "  ○ $vm - not created"
-                ;;
-            skipped:already_stopped)
-                log_info "  ○ $vm - already stopped"
-                ;;
-        esac
-    done
 fi
 
 if [ $failed_count -gt 0 ]; then
     log_error "Failed: $failed_count VM(s)"
-    for vm in "${!BATCH_RESULTS[@]}"; do
-        case "${BATCH_RESULTS[$vm]}" in
-            failed:stop_error)
-                log_error "  ✗ $vm - failed to stop"
-                ;;
-        esac
-    done
 fi
 
 log_success "VM shutdown complete!"
