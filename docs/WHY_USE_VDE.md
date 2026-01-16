@@ -45,7 +45,7 @@ You only need **three things** installed on your computer:
 The [**User Guide**](./USER_GUIDE.md) includes **beginner-friendly, no-knowledge-required tutorials** for:
 
 - Installing Docker Desktop (Mac, Windows, Linux)
-- Installing Git (with screenshots!)
+- Installing Git
 - Checking which shell you're using (bash or zsh)
 
 Even if you've never used Terminal before, we've got you covered.
