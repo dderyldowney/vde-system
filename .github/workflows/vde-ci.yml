@@ -607,38 +607,24 @@ jobs:
           echo "Building BDD test container..."
           docker build -t vde-bdd-tester -f tests/docker/bdd-test/Dockerfile .
 
-      - name: Create VDE directories for testing
-        run: |
-          mkdir -p projects/{python,rust,js,csharp,ruby,go,java}
-          mkdir -p data/{postgres,mongodb,redis}
-          mkdir -p logs/nginx
-          mkdir -p public-ssh-keys
-          mkdir -p .cache .locks
-
-      - name: Generate test SSH key
-        run: |
-          mkdir -p public-ssh-keys
-          ssh-keygen -t ed25519 -f public-ssh-keys/test_id_ed25519 -N "" -C "bdd-test@vde"
-          cp public-ssh-keys/test_id_ed25519.pub public-ssh-keys/id_ed25519.pub
-
       - name: Create Docker network
         run: docker network create dev-net 2>/dev/null || echo "Network exists"
 
       - name: Run BDD tests with Docker socket access
         run: |
           echo "Running BDD feature tests with Docker socket access..."
+          # IMPORTANT: We do NOT mount the workspace to protect host configs.
+          # The Dockerfile COPYs configs/, scripts/, and tests/ into the image.
+          # Tests use the copied files, so any "deletions" only affect the container.
+          # We only mount docker socket for container tests and a test workspace.
           docker run --rm \
-            -v "$GITHUB_WORKSPACE:/vde" \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            -v "$PWD/projects:/vde/projects" \
-            -v "$PWD/data:/vde/data" \
-            -v "$PWD/logs:/vde/logs" \
-            -v "$PWD/public-ssh-keys:/vde/public-ssh-keys" \
+            -v "$PWD/tests/workspace:/vde/tests/workspace" \
             -e VDE_ROOT_DIR=/vde \
             -e PYTHONUNBUFFERED=1 \
             --network host \
             vde-bdd-tester \
-            behave --format pretty tests/features/ || {
+            behave --format pretty --tags=~requires-docker-host tests/features/ || {
             echo "::warning::Some BDD tests failed. This is expected during initial framework development."
             echo "The BDD framework is being developed incrementally."
             exit 0  # Don't fail CI during BDD framework development

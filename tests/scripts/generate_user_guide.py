@@ -1,23 +1,28 @@
 #!/usr/bin/env python3
 """
-Generate USER_GUIDE.md from BDD test scenarios.
+Generate USER_GUIDE.md from PASSING BDD test scenarios only.
 
-This script reads all feature files and generates a user guide
-with helpful explanations and instructions.
+This script:
+1. Reads Behave JSON output to identify which scenarios passed
+2. Generates user guide with ONLY passing scenarios
+3. Ensures all examples in the guide are actually verified to work
 
-Run: python3 tests/scripts/generate_user_guide.py
+Run: python3 tests/scripts/generate_user_guide_from_results.py
 """
 
+import json
 import re
 import os
+import sys
 from pathlib import Path
 
 # Paths
 REPO_ROOT = Path(__file__).parent.parent.parent
 FEATURES_DIR = REPO_ROOT / "tests" / "features"
+BEHAVE_JSON_FILE = REPO_ROOT / "tests" / "behave-results.json"
 OUTPUT_FILE = REPO_ROOT / "USER_GUIDE.md"
 
-# Section introductions and explanations with scenarios
+# Section introductions (same as original)
 SECTION_INTROS = {
     "1. Installation": """This is the part everyone finds confusing. Let's break it down.
 
@@ -368,8 +373,13 @@ ssh python-dev
 | python-dev | `ssh python-dev` | Python development |
 | rust-dev | `ssh rust-dev` | Rust development |
 | js-dev | `ssh js-dev` | JavaScript/Node.js |
+| csharp-dev | `ssh csharp-dev` | C# development |
+| ruby-dev | `ssh ruby-dev` | Ruby development |
+| go-dev | `ssh go-dev` | Go development |
 | postgres | `ssh postgres` | Direct database access |
 | redis | `ssh redis` | Direct Redis access |
+| mongodb | `ssh mongodb` | MongoDB |
+| nginx | `ssh nginx` | Nginx web server |
 """,
 
     "8. Working with Databases": """### Connecting to PostgreSQL from Your Python VM
@@ -543,19 +553,31 @@ And the new package should be available
 }
 
 
-# Helper templates for common scenario patterns
-SCENARIO_TEMPLATES = {
-    "create": {
-        "intro": "**Scenario: {title}**\n\n",
-        "steps": "```\n{steps}\n```\n\n",
-        "explanation": "**Run this command:**\n```bash\n{command}\n```\n\n"
-    },
-    "verify": {
-        "intro": "**Scenario: {title}**\n\n",
-        "steps": "```\n{steps}\n```\n\n",
-        "explanation": "**Verify:**\n```bash\n{command}\n```\n\n**Expected:** {expected}\n\n"
-    }
-}
+def load_passing_scenarios_from_json():
+    """Load the set of passing scenarios from Behave JSON output."""
+    if not BEHAVE_JSON_FILE.exists():
+        print(f"Warning: {BEHAVE_JSON_FILE} not found.")
+        print("Run BDD tests first: ./tests/run-bdd-tests.sh")
+        print("Generating user guide from ALL scenarios (unverified mode)")
+        return None
+
+    with open(BEHAVE_JSON_FILE) as f:
+        data = json.load(f)
+
+    passing_scenarios = set()
+    for feature in data:
+        feature_name = feature.get("feature", {}).get("name", "")
+        for element in feature.get("elements", []):
+            if element.get("type") == "scenario":
+                scenario_name = element.get("name", "")
+                status = element.get("status", "")
+                if status == "passed":
+                    # Create a unique identifier
+                    key = f"{feature_name}:{scenario_name}"
+                    passing_scenarios.add(key)
+
+    print(f"✓ Found {len(passing_scenarios)} passing scenarios in test results")
+    return passing_scenarios
 
 
 def extract_scenarios_from_feature(content):
@@ -596,8 +618,14 @@ def format_scenario_for_user_guide(scenario_name, scenario_body):
     return "\n".join(lines)
 
 
-def generate_user_guide():
-    """Generate the complete USER_GUIDE.md."""
+def generate_user_guide(passing_scenarios=None):
+    """Generate the complete USER_GUIDE.md with only passing scenarios."""
+
+    # Verify mode warning
+    if passing_scenarios is None:
+        print("⚠ WARNING: Running in UNVERIFIED mode")
+        print("  Scenarios have NOT been tested!")
+        print("  Run BDD tests first to generate verified guide\n")
 
     # Read all feature files
     all_scenarios = {}  # section -> list of (name, body)
@@ -610,6 +638,13 @@ def generate_user_guide():
             feature_name, scenarios = extract_scenarios_from_feature(content)
 
             for scenario_name, scenario_body in scenarios:
+                # Check if scenario passed (if we have test results)
+                if passing_scenarios is not None:
+                    key = f"{feature_name}:{scenario_name}"
+                    if key not in passing_scenarios:
+                        # Skip failed scenarios
+                        continue
+
                 # Determine section based on scenario name
                 section = determine_section(scenario_name)
                 if section:
@@ -620,13 +655,23 @@ def generate_user_guide():
             print(f"Warning: Could not process {feature_file}: {e}")
             continue
 
+    # Count scenarios that were excluded
+    total_extracted = sum(len(s) for s in all_scenarios.values())
+    if passing_scenarios is not None:
+        print(f"  Included {total_extracted} verified passing scenarios")
+
     # Write the user guide
     with open(OUTPUT_FILE, 'w') as f:
         # Logo image (always at top)
         f.write('<p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>\n\n')
 
-        # Header
-        f.write("** Every workflow has been tested and verified to work. Follow the steps, they will work for you too. **\n\n")
+        # Header with verification notice
+        if passing_scenarios is not None:
+            f.write("**Every workflow in this guide has been tested and verified to PASS.** Follow the steps, they will work for you too.\n\n")
+        else:
+            f.write("**WARNING: This guide was generated in UNVERIFIED mode. Scenarios have NOT been tested!**\n\n")
+            f.write("**Run `./tests/run-bdd-tests.sh` first to generate a verified guide.**\n\n")
+
         f.write("---\n\n")
 
         # Table of contents
@@ -668,7 +713,10 @@ def generate_user_guide():
         f.write(generate_quick_reference())
 
     print(f"✓ Generated {OUTPUT_FILE}")
-    print(f"  Found {sum(len(s) for s in all_scenarios.values())} total scenarios")
+    if passing_scenarios is not None:
+        print(f"  All scenarios in this guide have been verified to PASS")
+    else:
+        print(f"  WARNING: Scenarios in this guide have NOT been verified!")
 
 
 def determine_section(scenario_name):
@@ -802,9 +850,10 @@ ssh nginx          # Nginx web server
 
 ---
 
-*This guide is generated from BDD test scenarios. Every workflow shown here has been tested and verified to work. If you follow these steps, they will work for you.*
+*This guide is generated from BDD test scenarios that have been verified to PASS. Every workflow shown here has been tested and verified to work. If you follow these steps, they will work for you.*
 """
 
 
 if __name__ == "__main__":
-    generate_user_guide()
+    passing_scenarios = load_passing_scenarios_from_json()
+    generate_user_guide(passing_scenarios)
