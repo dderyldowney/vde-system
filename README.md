@@ -67,13 +67,13 @@ VDE provides isolated development environments for multiple programming language
 cd ~/dev
 
 # 2. List all predefined VM types
-./scripts/list-vms
+./scripts/vde list
 
 # 3. Create a new language VM
-./scripts/create-virtual-for go
+./scripts/vde create go
 
 # 4. Start the VM
-./scripts/start-virtual go
+./scripts/vde start go
 
 # 5. Connect via SSH
 ssh go-dev
@@ -194,20 +194,20 @@ See [SSH Configuration](docs/ssh-configuration.md) for complete details.
 
 ---
 
-## Example Workflows
+## Example Workflows (Build Cool Things!) 🏗️
 
 ### Python API with PostgreSQL
 
 ```bash
-./scripts/create-virtual-for python
-./scripts/create-virtual-for postgres
-./scripts/start-virtual python postgres
+./scripts/vde create python
+./scripts/vde create postgres
+./scripts/vde start python postgres
 ssh python-dev
 cd ~/workspace
 pip install fastapi uvicorn psycopg2-binary
 ```
 
-### Using the AI Assistant
+### Using the AI Assistant (Your Personal Robot Helper!) 🤖
 
 ```bash
 # One-shot commands
@@ -223,7 +223,7 @@ pip install fastapi uvicorn psycopg2-binary
        Done!
 ```
 
-### Microservices Architecture
+### Microservices Architecture (Your Distributed System!) 🌐
 
 ```bash
 # Create VMs for each service
@@ -234,7 +234,7 @@ pip install fastapi uvicorn psycopg2-binary
 ./scripts/create-virtual-for redis    # Cache
 
 # Start all services
-./scripts/start-virtual python go rust postgres redis
+./scripts/vde start python go rust postgres redis
 
 # Services can communicate via SSH (VM-to-VM)
 # From python VM:
@@ -244,7 +244,7 @@ ssh redis-dev redis-cli           # Connect to cache
 
 ---
 
-## AI CLI Integration
+## AI CLI Integration (Works With Your AI Pair Programmers!) 🤖
 
 VDE works seamlessly with modern AI CLI tools:
 
@@ -282,20 +282,16 @@ See [Directory Structure](docs/directory-structure.md) for complete details.
 
 ---
 
-## Support
+## Support (We've Got Your Back!) 🆘
 
 ### Getting Help
 
 ```bash
 # Built-in help
-./scripts/vde-ai "help"
-
-# Interactive help
-./scripts/vde-chat
-[VDE] → help
+./scripts/vde help
 
 # List available VMs
-./scripts/list-vms
+./scripts/vde list
 ```
 
 ### Common Issues
