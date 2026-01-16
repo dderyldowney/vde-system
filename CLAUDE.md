@@ -395,6 +395,53 @@ The `vde-log` library provides:
 
 Logs are written to `logs/vde.log` by default.
 
+## Critical Requirements
+
+### SSH Key Management and Testing Artifacts
+
+**MUST-DO: Clean up test artifacts before committing**
+
+The `public-ssh-keys/` directory must ONLY contain:
+- `.keep` - Git tracking file (empty)
+- Actual user SSH public keys (id_ed25519.pub, id_rsa.pub, etc.)
+
+**Prohibited in public-ssh-keys/:**
+- Test keys (test_id_ed25519, etc.)
+- Temporary testing keys
+- Private keys (NEVER commit private keys)
+- Any keys that don't match the user's actual ~/.ssh/ keys
+
+**Before committing, always verify:**
+```bash
+# Check what's in public-ssh-keys/
+ls -la public-ssh-keys/
+
+# Should only show:
+# - .keep (empty file for git tracking)
+# - *.pub files matching your actual ~/.ssh/*.pub keys
+
+# If you see test artifacts, remove them:
+rm -f public-ssh-keys/test_*
+```
+
+**Why this matters:** The Dockerfile reads from `public-ssh-keys/` during container build to populate `authorized_keys`. Test artifacts cause authentication failures and contaminate the SSH key chain.
+
+### SSH Key Synchronization
+
+**MUST-DO: Ensure SSH keys are synchronized before building VMs**
+
+Before running `create-virtual-for` or `start-virtual`, ensure your SSH keys exist and are synchronized:
+
+```bash
+# The scripts handle this automatically via ensure_ssh_environment(), but verify:
+./scripts/start-virtual <vm-name>  # This calls ensure_ssh_environment automatically
+```
+
+If you regenerate your SSH keys, you must:
+1. Delete old public keys from `public-ssh-keys/`
+2. Run any VDE script (they call `sync_ssh_keys_to_vde()`)
+3. Rebuild affected VMs with `--rebuild`
+
 ## Testing
 
 The system includes comprehensive tests:
