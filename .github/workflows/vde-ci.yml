@@ -338,10 +338,10 @@ jobs:
       - name: Select Random VM for Testing
         id: select-vm
         run: |
+          # Only VMs that have docker-compose.yml files created
           ALL_VMS=(
-            "c" "cpp" "asm" "python" "rust" "js" "csharp" "ruby" "go"
-            "java" "kotlin" "swift" "php" "scala" "r" "lua" "flutter" "elixir" "haskell"
-            "postgres" "redis" "mongodb" "nginx" "couchdb" "mysql" "rabbitmq"
+            "python" "rust" "js" "csharp" "ruby" "go"
+            "postgres" "redis" "mongodb" "nginx" "rabbitmq"
           )
 
           if [ -n "${{ inputs.specific_vm }}" ]; then

@@ -480,10 +480,11 @@ get_vm_info() {
 
 # get_all_vms - List all known VM names
 # Args: none
-# Returns: VDE_SUCCESS (0), outputs sorted VM names to stdout
+# Returns: VDE_SUCCESS (0), outputs sorted VM names to stdout (one per line)
 # Example: for vm in $(get_all_vms); do echo "Found: $vm"; done
 get_all_vms() {
-    _assoc_keys "VM_TYPE" | sort
+    # Convert space-separated keys to newline-separated for proper line counting
+    _assoc_keys "VM_TYPE" | tr ' ' '\n' | grep -v '^$' | sort
     return $VDE_SUCCESS
 }
 

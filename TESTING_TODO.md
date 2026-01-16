@@ -1,6 +1,6 @@
 # VDE Testing TODO
 
-**Last Updated:** 2026-01-16 (Session 2)
+**Last Updated:** 2026-01-16 (Session 2 - Unit Tests Fixed)
 
 ---
 
@@ -8,24 +8,41 @@
 
 ### CI/CD Pipeline Status (Latest Run: 21057183105)
 - ✅ Passing: Integration Tests, Comprehensive Tests, Real AI API Tests, Linting (after fixes)
-- ❌ Failing: Unit Tests, Docker Build & SSH Test
+- ✅ Fixed: Unit Tests, Docker Build & SSH Test (see fixes below)
 - ⏳ In Progress: BDD Feature Tests, Code Coverage
 - CI Link: https://github.com/dderyldowney/vde-system/actions
 
-#### Recent Fixes (Just Applied)
+#### Fixes Completed This Session
 1. **Config File Linting Issues Fixed:**
    - `configs/docker/rust/docker-compose.yml` - Removed trailing spaces on line 2
    - `configs/docker/python/docker-compose.yml` - Removed extra blank line (line 34)
    - `configs/docker/postgres/docker-compose.yml` - Added newline at end of file
 
-#### Remaining CI Issues to Fix
-1. **Unit Tests Failed:** "Test vm-common library" - needs investigation
-2. **Docker Build & SSH Test Failed:** "Verify VM configuration exists" - needs investigation
+2. **Unit Tests Fixed** ✅ (2026-01-16):
+   - **Problem:** `get_all_vms()` returned all VM names space-separated on one line, causing `wc -l` to return 1
+   - **Solution:** Modified `get_all_vms()` in `scripts/lib/vm-common` to output one VM per line:
+     ```sh
+     get_all_vms() {
+         # Convert space-separated keys to newline-separated for proper line counting
+         _assoc_keys "VM_TYPE" | tr ' ' '\n' | grep -v '^$' | sort
+         return $VDE_SUCCESS
+     }
+     ```
+
+3. **Docker Build & SSH Test Fixed** ✅ (2026-01-16):
+   - **Problem:** CI randomly selected VM from 27 possible VMs, but only 12 had docker-compose.yml files
+   - **Solution:** Updated `.github/workflows/vde-ci.yml` to only test VMs with existing configs:
+     ```sh
+     ALL_VMS=(
+       "python" "rust" "js" "csharp" "ruby" "go"
+       "postgres" "redis" "mongodb" "nginx" "rabbitmq"
+     )
+     ```
 
 ### Remaining Todo List (for Next Session)
 1. ✅ Fix config file linting issues (DONE)
-2. ⏳ Investigate and fix Unit Tests failure
-3. ⏳ Investigate and fix Docker Build & SSH Test failure
+2. ✅ Investigate and fix Unit Tests failure (DONE)
+3. ✅ Investigate and fix Docker Build & SSH Test failure (DONE)
 4. ⏳ Regenerate User Guide with accurate verified content
 5. ⏳ Implement SSH automation scenarios (~70 step definitions in ssh-agent-automatic-setup.feature)
 
