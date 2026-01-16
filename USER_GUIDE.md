@@ -807,6 +807,80 @@ And I can connect using simple names like "python-dev"
 
 ## 3. Your First VM
 
+## Meet vde: Your New Best Friend
+
+Before we create your first VM, let's introduce you to the star of the show.
+
+### You Might Notice Something Weird...
+
+As you read through this guide, you'll see scenarios that look like this:
+
+```
+When I run "create-virtual-for python"
+```
+
+But then the actual command we show you is:
+
+```bash
+./scripts/vde create python
+```
+
+**What's going on?** Are we trying to confuse you? Nope!
+
+### Here's the Secret
+
+VDE has a bunch of specialized scripts that do specific things:
+- `create-virtual-for` — Creates new VMs
+- `start-virtual` — Starts VMs
+- `shutdown-virtual` — Stops VMs
+- `list-vms` — Lists all your VMs
+- And more...
+
+**But memorizing all those?** Ugh. No thanks.
+
+### Enter: vde — Your Go-To Guy
+
+The `vde` command is like having a personal assistant who knows exactly which script to run for you. You just tell it what you want in plain English:
+
+```bash
+./scripts/vde create python    # "Hey vde, create a Python VM"
+./scripts/vde start rust      # "Hey vde, start that Rust VM"
+./scripts/vde stop all         # "Hey vde, stop everything"
+./scripts/vde list             # "Hey vde, what's running?"
+```
+
+And vde goes and runs the right script for you. Like magic! ✨
+
+### Why Do the Scenarios Show the Script Names Then?
+
+Great question! The scenarios (those Given-When-Then blocks) show what's *actually happening under the hood*. They're like a behind-the-scenes look at how VDE works.
+
+Think of it like a restaurant:
+- **The scenarios** are like watching in the kitchen — you see the chef chopping, sautéing, plating.
+- **The vde command** is like ordering from the menu — you just say "I want the pasta" and it appears!
+
+### What You Should Remember
+
+| Forget About | Use This Instead |
+|--------------|------------------|
+| `create-virtual-for` | `vde create` |
+| `start-virtual` | `vde start` |
+| `shutdown-virtual` | `vde stop` |
+| `list-vms` | `vde list` |
+
+**That's it.** One command to rule them all.
+
+### tl;dr
+
+- The scenarios show the behind-the-scenes scripts (technical details)
+- You use the `vde` command (easy mode)
+- vde calls those scripts for you, so you don't have to remember which is which
+- vde is your go-to guy. Treat it well. Maybe buy it a coffee sometime. ☕
+
+Now that you know your new best friend, let's create your first VM!
+
+---
+
 Let's create your first development environment. We'll start with Python because it's the most common language for beginners.
 
 ### Creating Your Python VM
