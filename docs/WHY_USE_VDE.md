@@ -28,6 +28,32 @@ Think of it like having a workshop with every tool you could ever want—each to
 
 ---
 
+## What Do I Need? (Spoiler: Not Much)
+
+You only need **three things** installed on your computer:
+
+| What | Why | Already Have It? |
+|------|-----|------------------|
+| **Docker** | VDE runs everything in Docker containers | Open Terminal and run: `docker --version` |
+| **Git** | To clone the VDE repository | Run: `git --version` |
+| **Bash or Zsh** | Your shell (runs VDE scripts) | Run: `echo $SHELL` |
+
+**That's it.** No language runtimes. No databases. No package managers. Just Docker, Git, and a shell.
+
+### Don't Have One of Those? No Problem.
+
+The [**User Guide**](./USER_GUIDE.md) includes **beginner-friendly, no-knowledge-required tutorials** for:
+
+- Installing Docker Desktop (Mac, Windows, Linux)
+- Installing Git (with screenshots!)
+- Checking which shell you're using (bash or zsh)
+
+Even if you've never used Terminal before, we've got you covered.
+
+**We literally walk you through clicking buttons.** No assumptions about what you know.
+
+---
+
 ## Getting Started: It's This Easy
 
 Ready to have your mind blown? Here's all it takes to get started with Python:
@@ -300,6 +326,45 @@ You should use VDE if you answered "yes" to any of these:
 
 ---
 
+## What If I Want to Stop Using VDE?
+
+We get it. Sometimes you try something and it's not for you. Or maybe you're just done with a project and want to clean up.
+
+**Good news: VDE is designed to be completely removable.**
+
+### The Two-Step Farewell
+
+```bash
+# 1. Stop any running VMs
+./scripts/shutdown-virtual all
+
+# 2. Delete the VDE directory
+cd ..
+rm -rf dev/  # or whatever you named the directory
+```
+
+**That's it.** No leftover packages. No system changes to undo. No registry keys to clean. The directory is gone, and so is VDE.
+
+Your Docker images will take up some disk space (you can clean those with Docker Desktop if you want), but VDE itself leaves zero trace on your system.
+
+### Wait, Can I Keep My Code?
+
+**Absolutely!** Your code is in the `projects/` directory inside the VDE folder. Before deleting VDE:
+
+```bash
+# Copy your projects somewhere safe
+cp -r dev/projects ~/my-projects-backup
+
+# Or move individual projects
+mv dev/projects/python/my-app ~/my-app
+```
+
+Then delete VDE, and your projects live on.
+
+**VDE is just a tool for your development—not a prison for your code.**
+
+---
+
 ## Ready to Give It a Try?
 
 **Your first VDE is three commands away:**
@@ -337,6 +402,9 @@ That's it. Welcome to easier development.
 
 **You give it:**
 - Three commands to get started
+
+**Want to leave?**
+- Two commands to completely remove it
 
 **Fair trade?** We think so.
 
