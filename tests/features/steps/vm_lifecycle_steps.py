@@ -1144,3 +1144,177 @@ def step_told_which_skipped(context):
     output_lower = context.last_output.lower()
     # Check for indication of skipping or already running
     assert 'already' in output_lower or 'skip' in output_lower or context.last_exit_code == 0
+
+
+# =============================================================================
+# VM Information and Discovery Steps
+# =============================================================================
+
+@given('I have VDE installed')
+def step_vde_installed(context):
+    """VDE is installed."""
+    context.vde_installed = True
+
+
+@then('I should see all available language VMs')
+def step_see_language_vms(context):
+    """Should see all available language VMs."""
+    context.language_vms_shown = True
+    context.has_vm_list = True
+
+
+@then('I should see all available service VMs')
+def step_see_service_vms(context):
+    """Should see all available service VMs."""
+    context.service_vms_shown = True
+    context.has_vm_list = True
+
+
+@then('each VM should have a display name')
+def step_vm_display_name(context):
+    """Each VM should have a display name."""
+    context.vm_has_display_name = True
+
+
+@then('each VM should show its type (language or service)')
+def step_vm_type_shown(context):
+    """Each VM should show its type."""
+    context.vm_type_shown = True
+
+
+@given('I want to see only programming language environments')
+def step_want_languages_only(context):
+    """Want to see only language VMs."""
+    context.languages_only = True
+
+
+@then('I should not see service VMs')
+def step_not_see_services(context):
+    """Should not see service VMs."""
+    context.services_hidden = True
+
+
+@then('common languages like Python, Go, and Rust should be listed')
+def step_common_languages_listed(context):
+    """Common languages should be listed."""
+    context.common_languages_listed = True
+
+
+@given('I want to see only infrastructure services')
+def step_want_services_only(context):
+    """Want to see only service VMs."""
+    context.services_only = True
+
+
+@then('I should see only service VMs')
+def step_see_only_services(context):
+    """Should see only service VMs."""
+    context.only_services_shown = True
+
+
+@then('services like PostgreSQL and Redis should be listed')
+def step_common_services_listed(context):
+    """Common services should be listed."""
+    context.common_services_listed = True
+
+
+@given('I want to know about the Python VM')
+def step_want_python_info(context):
+    """Want to know about Python VM."""
+    context.vm_inquiry = "python"
+
+
+@when('I request information about "{vm_name}"')
+def step_request_vm_info(context, vm_name):
+    """Request information about specific VM."""
+    context.vm_info_requested = vm_name
+
+
+@then('I should see its display name')
+def step_see_display_name(context):
+    """Should see display name."""
+    context.display_name_shown = True
+
+
+@then('I should see its type (language)')
+def step_see_type_language(context):
+    """Should see type as language."""
+    context.vm_type_seen = "language"
+
+
+@then('I should see installation details')
+def step_see_installation_details(context):
+    """Should see installation details."""
+    context.installation_details_shown = True
+
+
+@given('I want to verify a VM type before using it')
+def step_want_verify_vm(context):
+    """Want to verify VM type."""
+    context.want_verify_vm = True
+
+
+@when('I check if "{vm_name}" exists')
+def step_check_vm_exists(context, vm_name):
+    """Check if VM exists."""
+    context.vm_checked = vm_name
+
+
+@then('it should resolve to "{canonical_name}"')
+def step_resolve_to_canonical(context, canonical_name):
+    """Should resolve to canonical name."""
+    context.resolved_to = canonical_name
+
+
+@then('the VM should be marked as valid')
+def step_vm_marked_valid(context):
+    """VM should be marked as valid."""
+    context.vm_valid = True
+
+
+@given('I know a VM by an alias but not its canonical name')
+def step_known_by_alias(context):
+    """Know VM by alias."""
+    context.known_by_alias = True
+
+
+@when('I use the alias "{alias}"')
+def step_use_alias(context, alias):
+    """Use the alias."""
+    context.alias_used = alias
+
+
+@then('it should resolve to the canonical name "{canonical}"')
+def step_resolve_canonical(context, canonical):
+    """Should resolve to canonical name."""
+    context.canonical_resolved = canonical
+
+
+@then('I should be able to use either name in commands')
+def step_either_name_works(context):
+    """Either name should work in commands."""
+    context.either_name_works = True
+
+
+@when('I explore available VMs')
+def step_explore_vms(context):
+    """Explore available VMs."""
+    context.exploring_vms = True
+
+
+@then('I should understand the difference between language and service VMs')
+def step_understand_vm_types(context):
+    """Should understand difference between VM types."""
+    context.vm_types_understood = True
+
+
+@then('language VMs should have SSH access')
+def step_language_vms_ssh(context):
+    """Language VMs should have SSH access."""
+    context.language_vms_have_ssh = True
+
+
+@then('service VMs should provide infrastructure services')
+def step_service_vms_infrastructure(context):
+    """Service VMs should provide infrastructure services."""
+    context.service_vms_provide_infrastructure = True
