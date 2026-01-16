@@ -756,7 +756,7 @@ And postgres, redis, mongodb, nginx should be listed
 
 **Verify everything is ready:**
 ```bash
-./scripts/list-vms
+./scripts/vde list
 ```
 
 **Expected output:** You should see a list of available language and service VMs.
@@ -826,7 +826,7 @@ And projects/python directory should be created
 
 **Run this command:**
 ```bash
-./scripts/create-virtual-for python
+./scripts/vde create python
 ```
 
 **What you'll see:**
@@ -847,7 +847,7 @@ And I should be able to SSH to "python-dev"
 
 **Run this command:**
 ```bash
-./scripts/start-virtual python
+./scripts/vde start python
 ```
 
 **What happens:**
@@ -874,7 +874,7 @@ And Python should show as "running"
 
 **Check status:**
 ```bash
-./scripts/list-vms
+./scripts/vde list
 ```
 
 **You should see:**
@@ -921,7 +921,7 @@ And I can connect to it
 
 **Command:**
 ```bash
-./scripts/start-virtual python
+./scripts/vde start python
 ```
 
 ### Stopping Your VM
@@ -937,7 +937,7 @@ And the configuration should remain for next time
 
 **Command:**
 ```bash
-./scripts/shutdown-virtual python
+./scripts/vde stop python
 ```
 
 **Important:** Stopping doesn't delete your VM - it just stops the container. Your code and configurations are safe.
@@ -971,8 +971,8 @@ And Redis VM configuration should be created
 
 **Create both services:**
 ```bash
-./scripts/create-virtual-for postgres
-./scripts/create-virtual-for redis
+./scripts/vde create postgres
+./scripts/vde create redis
 ```
 
 ### Starting Your Full Stack
@@ -989,7 +989,7 @@ And Python VM can connect to Redis
 
 **Start your full stack:**
 ```bash
-./scripts/start-virtual python postgres redis
+./scripts/vde start python postgres redis
 ```
 
 ### Verifying Your Cluster is Running
@@ -1005,7 +1005,7 @@ And they should be on the same Docker network
 
 **Check status:**
 ```bash
-./scripts/list-vms
+./scripts/vde list
 ```
 
 **Expected output:**
@@ -1121,7 +1121,7 @@ And I can start working immediately
 
 **One command to start your day:**
 ```bash
-./scripts/start-virtual python postgres redis
+./scripts/vde start python postgres redis
 ```
 
 ### During the Day: Check What's Running
@@ -1137,7 +1137,7 @@ And their status should be clear
 
 **Check status:**
 ```bash
-./scripts/list-vms
+./scripts/vde list
 ```
 
 ### End of Day: Stop Everything
@@ -1153,7 +1153,7 @@ And my work is saved
 
 **Stop everything:**
 ```bash
-./scripts/shutdown-virtual all
+./scripts/vde stop all
 ```
 ---
 
@@ -1174,8 +1174,8 @@ And I can use both Python and Rust
 
 **Add Rust:**
 ```bash
-./scripts/create-virtual-for rust
-./scripts/start-virtual rust
+./scripts/vde create rust
+./scripts/vde start rust
 ```
 
 ### Starting Multiple Language VMs
@@ -1191,7 +1191,7 @@ And I can switch between them
 
 **Start multiple at once:**
 ```bash
-./scripts/start-virtual python rust js
+./scripts/vde start python rust js
 ```
 ---
 
@@ -1213,7 +1213,7 @@ And I should know if it's:
 
 **What to check:**
 1. Is Docker running? `docker ps`
-2. Is the port already in use? `./scripts/list-vms`
+2. Is the port already in use? `./scripts/vde list`
 3. Check the logs: `docker logs <vm-name>`
 
 ### Problem: Changes Aren't Reflected
@@ -1230,12 +1230,12 @@ And the new package should be available
 
 **Rebuild with --rebuild:**
 ```bash
-./scripts/start-virtual python --rebuild
+./scripts/vde start python --rebuild
 ```
 
 **For complete rebuild (no cache):**
 ```bash
-./scripts/start-virtual python --rebuild --no-cache
+./scripts/vde start python --rebuild --no-cache
 ```
 ---
 
@@ -1245,22 +1245,22 @@ And the new package should be available
 
 ```bash
 # See what VMs are available
-./scripts/list-vms
+./scripts/vde list
 
 # Create a new VM
-./scripts/create-virtual-for <name>
+./scripts/vde create <name>
 
 # Start VMs
-./scripts/start-virtual <vm1> <vm2> ...
+./scripts/vde start <vm1> <vm2> ...
 
 # Stop VMs
-./scripts/shutdown-virtual <vm1> <vm2> ...
+./scripts/vde stop <vm1> <vm2> ...
 
 # Stop everything
-./scripts/shutdown-virtual all
+./scripts/vde stop all
 
 # Rebuild a VM
-./scripts/start-virtual <vm> --rebuild
+./scripts/vde start <vm> --rebuild
 ```
 
 ### SSH Connections
@@ -1303,21 +1303,21 @@ ssh nginx          # Nginx web server
 
 | Language | Command | Aliases | Best For |
 |----------|---------|---------|---------|
-| Python | `create-virtual-for python` | py | Web backends, AI/ML, scripts |
-| Rust | `create-virtual-for rust` | rust-dev | Systems, performance |
-| JavaScript | `create-virtual-for js` | js, node | Web frontends, Node.js |
-| C# | `create-virtual-for csharp` | csharp | .NET development |
-| Ruby | `create-virtual-for ruby` | rb | Rails, scripts |
-| Go | `create-virtual-for go` | golang | Services, microservices |
+| Python | `vde create python` | py | Web backends, AI/ML, scripts |
+| Rust | `vde create rust` | rust-dev | Systems, performance |
+| JavaScript | `vde create js` | js, node | Web frontends, Node.js |
+| C# | `vde create csharp` | csharp | .NET development |
+| Ruby | `vde create ruby` | rb | Rails, scripts |
+| Go | `vde create go` | golang | Services, microservices |
 
 ### Service VMs (for data & infrastructure)
 
 | Service | Command | Port | Best For |
 |---------|---------|------|----------|
-| PostgreSQL | `create-virtual-for postgres` | 5432 | Relational databases |
-| Redis | `create-virtual-for redis` | 6379 | Caching, queues |
-| MongoDB | `create-virtual-for mongodb` | 27017 | NoSQL databases |
-| Nginx | `create-virtual-for nginx` | 80/443 | Web server, reverse proxy |
+| PostgreSQL | `vde create postgres` | 5432 | Relational databases |
+| Redis | `vde create redis` | 6379 | Caching, queues |
+| MongoDB | `vde create mongodb` | 27017 | NoSQL databases |
+| Nginx | `vde create nginx` | 80/443 | Web server, reverse proxy |
 
 ---
 
