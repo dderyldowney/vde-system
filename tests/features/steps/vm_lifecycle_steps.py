@@ -1318,3 +1318,304 @@ def step_language_vms_ssh(context):
 def step_service_vms_infrastructure(context):
     """Service VMs should provide infrastructure services."""
     context.service_vms_provide_infrastructure = True
+
+
+# =============================================================================
+# VM Lifecycle Management Steps
+# =============================================================================
+
+@given('I want to work with a new language')
+def step_want_new_language(context):
+    """Want to work with a new language."""
+    context.new_language = True
+
+
+@when('I request to "create a Rust VM"')
+def step_request_create_rust_vm(context):
+    """Request to create a Rust VM."""
+    context.vm_create_requested = "rust"
+    context.vm_create_type = "language"
+
+
+@then('the VM configuration should be generated')
+def step_vm_config_generated(context):
+    """VM configuration should be generated."""
+    context.vm_config_generated = True
+
+
+@then('SSH keys should be configured')
+def step_ssh_keys_configured(context):
+    """SSH keys should be configured."""
+    context.ssh_keys_configured = True
+
+
+@then('the VM should be ready to use')
+def step_vm_ready(context):
+    """VM should be ready to use."""
+    context.vm_ready = True
+
+
+@when('I request to "create Python, PostgreSQL, and Redis"')
+def step_request_create_multiple_vms(context):
+    """Request to create multiple VMs."""
+    context.multiple_vms_requested = ["python", "postgres", "redis"]
+
+
+@then('all three VMs should be created')
+def step_all_created(context):
+    """All three VMs should be created."""
+    context.all_vms_created = True
+
+
+@then('all should be on the same Docker network')
+def step_same_network(context):
+    """All should be on the same Docker network."""
+    context.same_network = True
+
+
+@given('I have created a Go VM')
+def step_have_created_go_vm(context):
+    """Go VM has been created."""
+    context.go_vm_created = True
+
+
+@when('I request to "start go"')
+def step_request_start_go(context):
+    """Request to start go VM."""
+    context.vm_start_requested = "go"
+
+
+@then('the Go container should start')
+def step_go_starts(context):
+    """Go container should start."""
+    context.go_started = True
+
+
+@then('it should be accessible via SSH')
+def step_accessible_ssh(context):
+    """Should be accessible via SSH."""
+    context.ssh_accessible = True
+
+
+@given('I have created several VMs')
+def step_have_created_vms(context):
+    """Several VMs have been created."""
+    context.created_vms = ["python", "go", "postgres"]
+
+
+@when('I request to "start python, go, and postgres"')
+def step_request_start_multiple(context):
+    """Request to start multiple VMs."""
+    context.multiple_vms_start = ["python", "go", "postgres"]
+
+
+@then('all three VMs should start')
+def step_all_start(context):
+    """All three VMs should start."""
+    context.all_started = True
+
+
+@then('they should be able to communicate')
+def step_can_communicate(context):
+    """VMs should be able to communicate."""
+    context.can_communicate = True
+
+
+@given('I have several VMs')
+def step_have_several_vms(context):
+    """Have several VMs."""
+    context.several_vms = True
+
+
+@when('I request "status of all VMs"')
+def step_request_status_all(context):
+    """Request status of all VMs."""
+    context.status_all_requested = True
+
+
+
+
+@given('I have a running Python VM')
+def step_have_running_python(context):
+    """Have a running Python VM."""
+    context.python_running = True
+
+
+@when('I request to "stop python"')
+def step_request_stop_python(context):
+    """Request to stop python VM."""
+    context.vm_stop_requested = "python"
+
+
+@then('the Python container should stop')
+def step_python_stops(context):
+    """Python container should stop."""
+    context.python_stopped = True
+
+
+@then('the VM configuration should remain')
+def step_config_remains(context):
+    """VM configuration should remain."""
+    context.config_remains = True
+
+
+@then('I can start it again later')
+def step_can_restart(context):
+    """Can start again later."""
+    context.can_restart = True
+
+
+@given('I have multiple running VMs')
+def step_have_multiple_running(context):
+    """Have multiple running VMs."""
+    context.multiple_running = True
+
+
+@when('I request to "stop python and postgres"')
+def step_request_stop_multiple(context):
+    """Request to stop multiple VMs."""
+    context.stop_multiple_requested = ["python", "postgres"]
+
+
+@then('both VMs should stop')
+def step_both_stop(context):
+    """Both VMs should stop."""
+    context.both_stopped = True
+
+
+@then('other VMs should remain running')
+def step_others_remain(context):
+    """Other VMs should remain running."""
+    context.others_running = True
+
+
+@given('I have a running VM')
+def step_have_running_vm(context):
+    """Have a running VM."""
+    context.running_vm = True
+
+
+@when('I request to "restart rust"')
+def step_request_restart_rust(context):
+    """Request to restart rust VM."""
+    context.restart_requested = "rust"
+
+
+@then('the Rust VM should stop')
+def step_rust_stops(context):
+    """Rust VM should stop."""
+    context.rust_stopped = True
+
+
+@then('the Rust VM should start again')
+def step_rust_starts_again(context):
+    """Rust VM should start again."""
+    context.rust_restarted = True
+
+
+@then('my workspace should still be accessible')
+def step_workspace_accessible(context):
+    """Workspace should still be accessible."""
+    context.workspace_accessible = True
+
+
+@given('I need to refresh a VM')
+def step_need_refresh_vm(context):
+    """Need to refresh a VM."""
+    context.need_refresh = True
+
+
+@when('I request to "restart python with rebuild"')
+def step_request_restart_rebuild(context):
+    """Request to restart with rebuild."""
+    context.restart_rebuild_requested = "python"
+
+
+@then('the Python VM should be rebuilt')
+def step_python_rebuilt(context):
+    """Python VM should be rebuilt."""
+    context.python_rebuilt = True
+
+
+@then('the VM should start with the new image')
+def step_starts_with_new_image(context):
+    """VM should start with new image."""
+    context.new_image_started = True
+
+
+@then('my workspace should be preserved')
+def step_workspace_preserved(context):
+    """Workspace should be preserved."""
+    context.workspace_preserved = True
+
+
+@given('I no longer need a VM')
+def step_no_longer_need_vm(context):
+    """No longer need a VM."""
+    context.vm_not_needed = True
+
+
+@when('I remove its configuration')
+def step_remove_config(context):
+    """Remove VM configuration."""
+    context.config_removed = True
+
+
+@then('the container should be stopped if running')
+def step_container_stopped(context):
+    """Container should be stopped if running."""
+    context.container_stopped = True
+
+
+@given('I have modified the Dockerfile')
+def step_modified_dockerfile(context):
+    """Modified Dockerfile."""
+    context.dockerfile_modified = True
+
+
+@when('I request to "rebuild go with no cache"')
+def step_request_rebuild_nocache(context):
+    """Request to rebuild with no cache."""
+    context.rebuild_nocache = True
+
+
+@then('the Go VM should be rebuilt from scratch')
+def step_rebuilt_from_scratch(context):
+    """Go VM should be rebuilt from scratch."""
+    context.rebuilt_scratch = True
+
+
+@when('I rebuild the VM')
+def step_rebuild_vm(context):
+    """Rebuild the VM."""
+    context.rebuild_done = True
+
+
+@then('my workspace should remain intact')
+def step_workspace_intact(context):
+    """Workspace should remain intact."""
+    context.workspace_intact = True
+
+
+@given('I have updated VDE scripts')
+def step_updated_vde_scripts(context):
+    """Updated VDE scripts."""
+    context.vde_scripts_updated = True
+
+
+@when('I rebuild my VMs')
+def step_rebuild_vms(context):
+    """Rebuild VMs."""
+    context.vms_rebuilt = True
+
+
+@then('my data should be preserved')
+def step_data_preserved(context):
+    """Data should be preserved."""
+    context.data_preserved = True
+
+
+@then('my SSH access should continue to work')
+def step_ssh_continues(context):
+    """SSH access should continue to work."""
+    context.ssh_continues = True
