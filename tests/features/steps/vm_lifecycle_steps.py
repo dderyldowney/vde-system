@@ -94,6 +94,7 @@ def get_vm_type(vm_name):
 # =============================================================================
 
 @given('the VM "{vm_name}" is defined as a language VM with install command "{cmd}"')
+@given('the VM "{vm_name}" is defined as a language VM with install command "{cmd}"')
 def step_vm_defined_lang(context, vm_name, cmd):
     """Define a VM type as a language VM."""
     context.test_vm_name = vm_name
@@ -102,6 +103,7 @@ def step_vm_defined_lang(context, vm_name, cmd):
 
 
 @given('the VM "{vm_name}" is defined as a service VM with port "{port}"')
+@given('the VM "{vm_name}" is defined as a service VM with port "{port}"')
 def step_vm_defined_svc(context, vm_name, port):
     """Define a VM type as a service VM."""
     context.test_vm_name = vm_name
@@ -109,6 +111,7 @@ def step_vm_defined_svc(context, vm_name, port):
     context.test_vm_port = port
 
 
+@given('no VM configuration exists for "{vm_name}"')
 @given('no VM configuration exists for "{vm_name}"')
 def step_no_vm_config(context, vm_name):
     """Ensure VM configuration doesn't exist."""
@@ -121,6 +124,7 @@ def step_no_vm_config(context, vm_name):
             parent.rmdir()
 
 
+@given('VM "{vm_name}" has been created')
 @given('VM "{vm_name}" has been created')
 def step_vm_created(context, vm_name):
     """Create a VM using the actual VDE script."""
@@ -141,6 +145,7 @@ def step_vm_created(context, vm_name):
     context.last_error = result.stderr
 
 
+@given('VM "{vm_name}" is running')
 @given('VM "{vm_name}" is running')
 def step_vm_running(context, vm_name):
     """Start a VM using the actual VDE script."""
@@ -166,6 +171,7 @@ def step_vm_running(context, vm_name):
 
 
 @given('VM "{vm_name}" is not running')
+@given('VM "{vm_name}" is not running')
 def step_vm_not_running(context, vm_name):
     """Stop a VM using the actual VDE script."""
     result = run_vde_command(f"./scripts/shutdown-virtual {vm_name}", timeout=60)
@@ -183,6 +189,7 @@ def step_vm_not_running(context, vm_name):
 
 
 @given('neither VM is running')
+@given('neither VM is running')
 def step_neither_vm_running(context):
     """Stop both VMs using actual VDE script."""
     run_vde_command("./scripts/shutdown-virtual all", timeout=60)
@@ -192,6 +199,7 @@ def step_neither_vm_running(context):
 
 
 @given('none of the VMs are running')
+@given('none of the VMs are running')
 def step_no_vms_running(context):
     """Stop all VMs using actual VDE script."""
     run_vde_command("./scripts/shutdown-virtual all", timeout=60)
@@ -200,6 +208,7 @@ def step_no_vms_running(context):
         context.running_vms.clear()
 
 
+@given('VM "{vm_name}" is not created')
 @given('VM "{vm_name}" is not created')
 def step_vm_not_created(context, vm_name):
     """Remove VM configuration if it exists."""
@@ -211,12 +220,14 @@ def step_vm_not_created(context, vm_name):
 
 
 @given('VM types are loaded')
+@given('VM types are loaded')
 def step_vm_types_loaded(context):
     """VM types have been loaded from config."""
     vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
     context.vm_types_exist = vm_types_file.exists()
 
 
+@given('no language VMs are created')
 @given('no language VMs are created')
 def step_no_lang_vms(context):
     """No language VMs exist."""
@@ -226,6 +237,7 @@ def step_no_lang_vms(context):
 
 
 @given('language VM "{vm_name}" is allocated port "{port}"')
+@given('language VM "{vm_name}" is allocated port "{port}"')
 def step_vm_allocated_port(context, vm_name, port):
     """VM is created (port allocation happens automatically)."""
     # Port allocation is automatic when VM is created
@@ -233,6 +245,7 @@ def step_vm_allocated_port(context, vm_name, port):
     context.test_port = port
 
 
+@given('ports "{ports}" are allocated')
 @given('ports "{ports}" are allocated')
 def step_ports_allocated(context, ports):
     """Multiple ports are allocated (create multiple VMs)."""
@@ -247,6 +260,7 @@ def step_ports_allocated(context, ports):
 
 
 @given('no service VMs are created')
+@given('no service VMs are created')
 def step_no_svc_vms(context):
     """No service VMs exist."""
     if not hasattr(context, 'created_vms'):
@@ -254,11 +268,13 @@ def step_no_svc_vms(context):
 
 
 @given('a non-VDE process is listening on port "{port}"')
+@given('a non-VDE process is listening on port "{port}"')
 def step_host_port_in_use(context, port):
     """Simulate host port collision (informational for BDD)."""
     context.host_port_in_use = port
 
 
+@given('a Docker container is bound to host port "{port}"')
 @given('a Docker container is bound to host port "{port}"')
 def step_docker_port_in_use(context, port):
     """Simulate Docker port collision (informational for BDD)."""
@@ -266,11 +282,13 @@ def step_docker_port_in_use(context, port):
 
 
 @given('all ports from "{start}" to "{end}" are allocated')
+@given('all ports from "{start}" to "{end}" are allocated')
 def step_all_ports_allocated(context, start, end):
     """All ports in range are allocated (informational for BDD)."""
     context.all_ports_allocated = True
 
 
+@given('a port lock is older than "{seconds}" seconds')
 @given('a port lock is older than "{seconds}" seconds')
 def step_stale_lock(context, seconds):
     """Stale port lock exists (informational for BDD)."""
@@ -282,6 +300,7 @@ def step_stale_lock(context, seconds):
 # =============================================================================
 
 @when('I run "{command}"')
+@when('I run "{command}"')
 def step_run_command(context, command):
     """Execute a VDE command."""
     result = run_vde_command(command, timeout=120)
@@ -292,17 +311,20 @@ def step_run_command(context, command):
 
 
 @when('I create language VM "{vm_name}"')
+@when('I create language VM "{vm_name}"')
 def step_create_specific_lang_vm(context, vm_name):
     """Create a specific language VM."""
     step_vm_created(context, vm_name)
 
 
 @when('I create a service VM')
+@when('I create a service VM')
 def step_create_svc_vm(context):
     """Create a new service VM."""
     context.last_action = "create_svc_vm"
 
 
+@when('I query the port registry')
 @when('I query the port registry')
 def step_query_port_registry(context):
     """Query the port registry."""
@@ -311,11 +333,13 @@ def step_query_port_registry(context):
 
 
 @when('I run port cleanup')
+@when('I run port cleanup')
 def step_run_port_cleanup(context):
     """Run port lock cleanup."""
     context.port_cleanup_run = True
 
 
+@when('I remove VM "{vm_name}"')
 @when('I remove VM "{vm_name}"')
 def step_remove_vm(context, vm_name):
     """Remove a VM."""
@@ -332,12 +356,14 @@ def step_remove_vm(context, vm_name):
 # =============================================================================
 
 @then('a docker-compose.yml file should be created at "{path}"')
+@then('a docker-compose.yml file should be created at "{path}"')
 def step_compose_exists(context, path):
     """Verify docker-compose.yml was created."""
     full_path = VDE_ROOT / path.lstrip("/")
     assert full_path.exists(), f"docker-compose.yml not found at {full_path}"
 
 
+@then('the docker-compose.yml should contain SSH port mapping')
 @then('the docker-compose.yml should contain SSH port mapping')
 def step_compose_has_ssh_port(context):
     """Verify compose file has SSH port mapping."""
@@ -346,6 +372,7 @@ def step_compose_has_ssh_port(context):
 
 
 @then('SSH config entry should exist for "{host}"')
+@then('SSH config entry should exist for "{host}"')
 def step_ssh_entry_exists(context, host):
     """Verify SSH config entry exists."""
     # Check that the VM was created (SSH config is generated by start-virtual)
@@ -353,12 +380,14 @@ def step_ssh_entry_exists(context, host):
 
 
 @then('projects directory should exist at "{path}"')
+@then('projects directory should exist at "{path}"')
 def step_projects_dir_exists(context, path):
     """Verify projects directory exists."""
     full_path = VDE_ROOT / path.lstrip("/")
     assert full_path.exists(), f"Projects directory not found at {full_path}"
 
 
+@then('logs directory should exist at "{path}"')
 @then('logs directory should exist at "{path}"')
 def step_logs_dir_exists(context, path):
     """Verify logs directory exists."""
@@ -369,11 +398,13 @@ def step_logs_dir_exists(context, path):
 
 
 @then('the docker-compose.yml should contain service port mapping "{port}"')
+@then('the docker-compose.yml should contain service port mapping "{port}"')
 def step_svc_port_mapping(context, port):
     """Verify service port mapping in compose."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('data directory should exist at "{path}"')
 @then('data directory should exist at "{path}"')
 def step_data_dir_exists(context, path):
     """Verify data directory exists."""
@@ -382,17 +413,20 @@ def step_data_dir_exists(context, path):
 
 
 @then('VM "{vm_name}" should be running')
+@then('VM "{vm_name}" should be running')
 def step_vm_should_be_running(context, vm_name):
     """Verify VM is running using actual Docker state."""
     assert container_exists(vm_name), f"VM {vm_name} is not running (docker ps check failed)"
 
 
 @then('VM "{vm_name}" should not be running')
+@then('VM "{vm_name}" should not be running')
 def step_vm_not_running_verify(context, vm_name):
     """Verify VM is not running using actual Docker state."""
     assert not container_exists(vm_name), f"VM {vm_name} is running but should not be"
 
 
+@then('no VMs should be running')
 @then('no VMs should be running')
 def step_no_vms_running_verify(context):
     """Verify no VMs are running using actual Docker state."""
@@ -405,11 +439,13 @@ def step_no_vms_running_verify(context):
 
 
 @then('VM configuration should still exist')
+@then('VM configuration should still exist')
 def step_vm_config_exists(context):
     """VM configuration still exists after stop."""
     assert hasattr(context, 'created_vms') and len(context.created_vms) > 0
 
 
+@then('the command should fail with error "{error}"')
 @then('the command should fail with error "{error}"')
 def step_command_fails_with_error(context, error):
     """Verify command failed with specific error."""
@@ -419,6 +455,7 @@ def step_command_fails_with_error(context, error):
 
 
 @then('all language VMs should be listed')
+@then('all language VMs should be listed')
 def step_lang_vms_listed(context):
     """Verify language VMs are listed."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
@@ -426,6 +463,7 @@ def step_lang_vms_listed(context):
     assert 'python' in context.last_output.lower() or 'rust' in context.last_output.lower()
 
 
+@then('all service VMs should be listed')
 @then('all service VMs should be listed')
 def step_svc_vms_listed(context):
     """Verify service VMs are listed."""
@@ -435,11 +473,13 @@ def step_svc_vms_listed(context):
 
 
 @then('aliases should be shown')
+@then('aliases should be shown')
 def step_aliases_shown(context):
     """Verify aliases are shown in list output."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('only language VMs should be listed')
 @then('only language VMs should be listed')
 def step_only_lang_vms_listed(context):
     """Verify only language VMs are listed."""
@@ -449,6 +489,7 @@ def step_only_lang_vms_listed(context):
 
 
 @then('service VMs should not be listed')
+@then('service VMs should not be listed')
 def step_svc_vms_not_listed(context):
     """Verify service VMs are not listed."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
@@ -456,6 +497,7 @@ def step_svc_vms_not_listed(context):
     assert 'postgres' not in context.last_output.lower()
 
 
+@then('only service VMs should be listed')
 @then('only service VMs should be listed')
 def step_only_svc_vms_listed(context):
     """Verify only service VMs are listed."""
@@ -465,6 +507,7 @@ def step_only_svc_vms_listed(context):
 
 
 @then('language VMs should not be listed')
+@then('language VMs should not be listed')
 def step_lang_vms_not_listed(context):
     """Verify language VMs are not listed."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
@@ -472,6 +515,7 @@ def step_lang_vms_not_listed(context):
     assert 'python' not in context.last_output.lower()
 
 
+@then('only VMs matching "{pattern}" should be listed')
 @then('only VMs matching "{pattern}" should be listed')
 def step_only_matching_vms_listed(context, pattern):
     """Verify only matching VMs are listed."""
@@ -481,6 +525,7 @@ def step_only_matching_vms_listed(context, pattern):
 
 
 @then('docker-compose.yml should not exist at "{path}"')
+@then('docker-compose.yml should not exist at "{path}"')
 def step_compose_not_exists(context, path):
     """Verify docker-compose.yml was removed."""
     full_path = VDE_ROOT / path.lstrip("/")
@@ -488,11 +533,13 @@ def step_compose_not_exists(context, path):
 
 
 @then('SSH config entry for "{host}" should be removed')
+@then('SSH config entry for "{host}" should be removed')
 def step_ssh_entry_removed(context, host):
     """Verify SSH config entry was removed."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('the VM should be marked as not created')
 @then('the VM should be marked as not created')
 def step_vm_not_created_verify(context):
     """Verify VM is marked as not created."""
@@ -501,6 +548,7 @@ def step_vm_not_created_verify(context):
         assert not compose_file_exists(context.test_vm_name)
 
 
+@then('"{vm_name}" should be in known VM types')
 @then('"{vm_name}" should be in known VM types')
 def step_vm_in_known_types(context, vm_name):
     """Verify VM is in known types."""
@@ -512,12 +560,14 @@ def step_vm_in_known_types(context, vm_name):
 
 
 @then('VM type "{vm_name}" should have type "{vm_type}"')
+@then('VM type "{vm_name}" should have type "{vm_type}"')
 def step_vm_has_type(context, vm_name, vm_type):
     """Verify VM has correct type."""
     actual_type = get_vm_type(vm_name)
     assert actual_type == vm_type, f"VM {vm_name} has type {actual_type}, expected {vm_type}"
 
 
+@then('VM type "{vm_name}" should have display name "{display}"')
 @then('VM type "{vm_name}" should have display name "{display}"')
 def step_vm_has_display(context, vm_name, display):
     """Verify VM has correct display name."""
@@ -531,6 +581,7 @@ def step_vm_has_display(context, vm_name, display):
 
 
 @then('"{vm_name}" should have aliases "{aliases}"')
+@then('"{vm_name}" should have aliases "{aliases}"')
 def step_vm_has_aliases(context, vm_name, aliases):
     """Verify VM has correct aliases."""
     vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
@@ -542,6 +593,7 @@ def step_vm_has_aliases(context, vm_name, aliases):
     assert False, f"VM {vm_name} not found in types file"
 
 
+@then('"{alias}" should resolve to "{vm_name}"')
 @then('"{alias}" should resolve to "{vm_name}"')
 def step_alias_resolves(context, alias, vm_name):
     """Verify alias resolves to correct VM."""
@@ -555,6 +607,7 @@ def step_alias_resolves(context, alias, vm_name):
 
 
 @then('the VM should be allocated port "{port}"')
+@then('the VM should be allocated port "{port}"')
 def step_vm_has_port(context, port):
     """Verify VM has expected port."""
     # In real system, ports are in docker-compose.yml
@@ -566,6 +619,7 @@ def step_vm_has_port(context, port):
 
 
 @then('"{vm_name}" should be allocated port "{port}"')
+@then('"{vm_name}" should be allocated port "{port}"')
 def step_specific_vm_has_port(context, vm_name, port):
     """Verify specific VM has expected port."""
     compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
@@ -574,6 +628,7 @@ def step_specific_vm_has_port(context, vm_name, port):
         assert port in content, f"Port {port} not found in compose file for {vm_name}"
 
 
+@then('"{vm_name}" should be mapped to port "{port}"')
 @then('"{vm_name}" should be mapped to port "{port}"')
 def step_vm_mapped_to_port(context, vm_name, port):
     """Verify VM is mapped to port."""
@@ -584,6 +639,7 @@ def step_vm_mapped_to_port(context, vm_name, port):
 
 
 @then('"{vm_name}" should still be mapped to port "{port}"')
+@then('"{vm_name}" should still be mapped to port "{port}"')
 def step_vm_still_mapped_to_port(context, vm_name, port):
     """Verify VM is still mapped to same port."""
     compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
@@ -593,11 +649,13 @@ def step_vm_still_mapped_to_port(context, vm_name, port):
 
 
 @then('the VM should NOT be allocated port "{port}"')
+@then('the VM should NOT be allocated port "{port}"')
 def step_vm_not_has_port(context, port):
     """Verify VM doesn't have specific port."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('the VM should be allocated a different available port')
 @then('the VM should be allocated a different available port')
 def step_vm_has_different_port(context):
     """Verify VM got a different port."""
@@ -605,11 +663,13 @@ def step_vm_has_different_port(context):
 
 
 @then('each process should receive a unique port')
+@then('each process should receive a unique port')
 def step_unique_ports(context):
     """Verify each VM has unique port."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('no port should be allocated twice')
 @then('no port should be allocated twice')
 def step_no_duplicate_ports(context):
     """Verify no duplicate ports."""
@@ -617,11 +677,13 @@ def step_no_duplicate_ports(context):
 
 
 @then('the allocated port should be between "{start}" and "{end}"')
+@then('the allocated port should be between "{start}" and "{end}"')
 def step_port_in_range(context, start, end):
     """Verify port is in range."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('the stale lock should be removed')
 @then('the stale lock should be removed')
 def step_stale_lock_removed(context):
     """Verify stale lock was removed."""
@@ -629,11 +691,13 @@ def step_stale_lock_removed(context):
 
 
 @then('the port should be available for allocation')
+@then('the port should be available for allocation')
 def step_port_available(context):
     """Verify port is available."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('port "{port}" should be removed from registry')
 @then('port "{port}" should be removed from registry')
 def step_port_removed(context, port):
     """Verify port was removed."""
@@ -641,11 +705,13 @@ def step_port_removed(context, port):
 
 
 @then('port "{port}" should be available for new VMs')
+@then('port "{port}" should be available for new VMs')
 def step_port_available_new_vm(context, port):
     """Verify port is available for new VMs."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('all created VMs should be running')
 @then('all created VMs should be running')
 def step_all_created_running(context):
     """Verify all created VMs are running."""
@@ -655,11 +721,13 @@ def step_all_created_running(context):
 
 
 @then('each VM should have a unique SSH port')
+@then('each VM should have a unique SSH port')
 def step_unique_ssh_ports(context):
     """Verify each VM has unique SSH port."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('SSH should be accessible on allocated port')
 @then('SSH should be accessible on allocated port')
 def step_ssh_accessible(context):
     """Verify SSH is accessible on allocated port."""
@@ -670,11 +738,13 @@ def step_ssh_accessible(context):
 
 
 @then('the VM should have a fresh container instance')
+@then('the VM should have a fresh container instance')
 def step_fresh_container(context):
     """Verify container was rebuilt."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@when('VM types are loaded for the first time')
 @when('VM types are loaded for the first time')
 def step_vm_types_first_load(context):
     """VM types loaded for first time."""
@@ -682,11 +752,13 @@ def step_vm_types_first_load(context):
 
 
 @then('VM_ALIASES array should be populated')
+@then('VM_ALIASES array should be populated')
 def step_vm_aliases_populated(context):
     """Verify VM_ALIASES is populated."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('VM_DISPLAY array should be populated')
 @then('VM_DISPLAY array should be populated')
 def step_vm_display_populated(context):
     """Verify VM_DISPLAY is populated."""
@@ -694,17 +766,20 @@ def step_vm_display_populated(context):
 
 
 @then('VM_INSTALL array should be populated')
+@then('VM_INSTALL array should be populated')
 def step_vm_install_populated(context):
     """Verify VM_INSTALL is populated."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
 @then('VM_SVC_PORT array should be populated')
+@then('VM_SVC_PORT array should be populated')
 def step_vm_svc_port_populated(context):
     """Verify VM_SVC_PORT is populated."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('comments should start with "#"')
 @then('comments should start with "#"')
 def step_comments_start_with_hash(context):
     """Verify comments in VM types file."""
@@ -718,11 +793,13 @@ def step_comments_start_with_hash(context):
 
 
 @then('each VM should be mapped to its port')
+@then('each VM should be mapped to its port')
 def step_each_vm_mapped(context):
     """Verify each VM has port mapping."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('all allocated ports should be discovered')
 @then('all allocated ports should be discovered')
 def step_ports_discovered(context):
     """Verify all ports are discovered."""
@@ -730,11 +807,13 @@ def step_ports_discovered(context):
 
 
 @then('_VM_TYPES_LOADED flag should be reset')
+@then('_VM_TYPES_LOADED flag should be reset')
 def step_flag_reset(context):
     """Verify flag is reset."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@given('no VM operations have been performed')
 @given('no VM operations have been performed')
 def step_no_vm_operations(context):
     """No VM operations performed yet."""
@@ -742,11 +821,13 @@ def step_no_vm_operations(context):
 
 
 @then('not during initial library sourcing')
+@then('not during initial library sourcing')
 def step_not_initial_sourcing(context):
     """Verify not during initial sourcing."""
     assert True
 
 
+@when('I say something vague like "do something with containers"')
 @when('I say something vague like "do something with containers"')
 def step_vague_input(context):
     """Provide vague input to parser."""
@@ -754,11 +835,13 @@ def step_vague_input(context):
 
 
 @then('the system should provide helpful correction suggestions')
+@then('the system should provide helpful correction suggestions')
 def step_correction_suggestions(context):
     """Verify correction suggestions are provided."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@given('I have cloned the project repository')
 @given('I have cloned the project repository')
 def step_cloned_repo(context):
     """Simulate having cloned the repo."""
@@ -766,11 +849,13 @@ def step_cloned_repo(context):
 
 
 @given('the project contains VDE configuration in configs/')
+@given('the project contains VDE configuration in configs/')
 def step_vde_config_exists(context):
     """VDE config directory exists."""
     assert (VDE_ROOT / "configs").exists()
 
 
+@then('my SSH keys should be automatically configured')
 @then('my SSH keys should be automatically configured')
 def step_ssh_keys_configured(context):
     """Verify SSH keys are configured."""
@@ -778,11 +863,13 @@ def step_ssh_keys_configured(context):
 
 
 @then('I should see available VMs with "list-vms"')
+@then('I should see available VMs with "list-vms"')
 def step_see_available_vms(context):
     """Verify list-vms shows available VMs."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('my existing SSH entries should be preserved')
 @then('my existing SSH entries should be preserved')
 def step_ssh_entries_preserved(context):
     """Verify existing SSH entries are preserved."""
@@ -790,11 +877,13 @@ def step_ssh_entries_preserved(context):
 
 
 @then('I should not lose my personal SSH configurations')
+@then('I should not lose my personal SSH configurations')
 def step_personal_ssh_preserved(context):
     """Verify personal SSH config is preserved."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@when('I check docker-compose config')
 @when('I check docker-compose config')
 def step_check_compose_config(context):
     """Check docker-compose configuration."""
@@ -805,11 +894,13 @@ def step_check_compose_config(context):
 
 
 @then('I should see the effective configuration')
+@then('I should see the effective configuration')
 def step_effective_config(context):
     """Verify effective config is shown."""
     assert context.last_exit_code == 0 or "error" not in context.last_error.lower()
 
 
+@then('errors should be clearly indicated')
 @then('errors should be clearly indicated')
 def step_errors_clear(context):
     """Verify errors are clear."""
@@ -819,11 +910,13 @@ def step_errors_clear(context):
 
 
 @then('I can identify the problematic setting')
+@then('I can identify the problematic setting')
 def step_identify_problem(context):
     """Verify problematic setting is identified."""
     assert context.last_exit_code != 0 or context.last_output
 
 
+@when('I add variables like NODE_ENV=development')
 @when('I add variables like NODE_ENV=development')
 def step_add_env_vars(context):
     """Add environment variables."""
@@ -831,11 +924,13 @@ def step_add_env_vars(context):
 
 
 @then('variables are loaded automatically when VM starts')
+@then('variables are loaded automatically when VM starts')
 def step_vars_loaded(context):
     """Verify env vars are loaded."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('invalid ports should be rejected')
 @then('invalid ports should be rejected')
 def step_invalid_ports_rejected(context):
     """Verify invalid ports are rejected."""
@@ -843,17 +938,20 @@ def step_invalid_ports_rejected(context):
 
 
 @then('missing required fields should be reported')
+@then('missing required fields should be reported')
 def step_missing_fields_reported(context):
     """Verify missing fields are reported."""
     assert context.last_exit_code != 0, "Command should have failed with missing fields"
 
 
 @given('VDE configuration format has changed')
+@given('VDE configuration format has changed')
 def step_config_format_changed(context):
     """Simulate config format change."""
     context.config_format_changed = True
 
 
+@when('I reload VM types')
 @when('I reload VM types')
 def step_reload_vm_types(context):
     """Reload VM types."""
@@ -863,11 +961,13 @@ def step_reload_vm_types(context):
 
 
 @then('old configurations should still work')
+@then('old configurations should still work')
 def step_old_config_works(context):
     """Verify old configs still work."""
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
+@then('migration should happen automatically')
 @then('migration should happen automatically')
 def step_migration_auto(context):
     """Verify migration is automatic."""

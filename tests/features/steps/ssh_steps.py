@@ -56,12 +56,14 @@ except ImportError:
 # =============================================================================
 
 @given('SSH agent is running')
+@given('SSH agent is running')
 def step_ssh_agent_running(context):
     """SSH agent is running (VDE handles this automatically)."""
     # In VDE, SSH agent is started automatically by the start-virtual script
     context.ssh_agent_running = True
 
 
+@given('SSH keys are available')
 @given('SSH keys are available')
 def step_ssh_keys_available(context):
     """SSH keys exist for the user."""
@@ -74,11 +76,13 @@ def step_ssh_keys_available(context):
 
 
 @given('no SSH keys exist')
+@given('no SSH keys exist')
 def step_no_ssh_keys(context):
     """No SSH keys available (test scenario)."""
     context.ssh_keys_exist = False
 
 
+@given('SSH config file exists')
 @given('SSH config file exists')
 def step_ssh_config_exists(context):
     """SSH config file exists."""
@@ -87,12 +91,14 @@ def step_ssh_config_exists(context):
 
 
 @given('SSH config file does not exist')
+@given('SSH config file does not exist')
 def step_no_ssh_config(context):
     """SSH config file doesn't exist."""
     ssh_config = Path.home() / ".ssh" / "config"
     context.ssh_config_existed = not ssh_config.exists()
 
 
+@given('SSH config contains entry for "{host}"')
 @given('SSH config contains entry for "{host}"')
 def step_ssh_has_entry(context, host):
     """SSH config has existing entry."""
@@ -105,11 +111,13 @@ def step_ssh_has_entry(context, host):
 
 
 @given('SSH config contains custom settings')
+@given('SSH config contains custom settings')
 def step_ssh_custom_settings(context):
     """SSH config has user's custom settings."""
     context.ssh_has_custom_settings = True
 
 
+@given('SSH agent forwarding is enabled')
 @given('SSH agent forwarding is enabled')
 def step_ssh_forwarding_enabled(context):
     """SSH agent forwarding is enabled."""
@@ -117,17 +125,20 @@ def step_ssh_forwarding_enabled(context):
 
 
 @given('I am connected from host to VM')
+@given('I am connected from host to VM')
 def step_connected_host_to_vm(context):
     """Connected from host to VM."""
     context.host_connection = True
 
 
 @given('Git repository requires authentication')
+@given('Git repository requires authentication')
 def step_git_requires_auth(context):
     """Git operation needs SSH auth."""
     context.git_auth_required = True
 
 
+@given('VM "{vm_name}" has been created and started')
 @given('VM "{vm_name}" has been created and started')
 def step_vm_created_started(context, vm_name):
     """Create and start a VM for SSH testing."""
@@ -159,11 +170,13 @@ def step_vm_created_started(context, vm_name):
 # =============================================================================
 
 @when('I start SSH agent')
+@when('I start SSH agent')
 def step_start_ssh_agent(context):
     """Start SSH agent (VDE handles this automatically)."""
     context.ssh_agent_started = True
 
 
+@when('SSH keys are generated')
 @when('SSH keys are generated')
 def step_generate_keys(context):
     """Generate SSH keys."""
@@ -172,11 +185,13 @@ def step_generate_keys(context):
 
 
 @when('public keys are copied to VM')
+@when('public keys are copied to VM')
 def step_copy_public_keys(context):
     """Copy public keys to VM (VDE handles this automatically on VM start)."""
     context.public_keys_copied = True
 
 
+@when('SSH config is updated')
 @when('SSH config is updated')
 def step_update_ssh_config(context):
     """Update SSH config."""
@@ -185,11 +200,13 @@ def step_update_ssh_config(context):
 
 
 @when('I SSH from one VM to another')
+@when('I SSH from one VM to another')
 def step_ssh_vm_to_vm(context):
     """SSH from VM to another."""
     context.vm_to_vm_ssh = True
 
 
+@when('I execute command on host from VM')
 @when('I execute command on host from VM')
 def step_execute_on_host(context):
     """Execute command on host from VM."""
@@ -197,11 +214,13 @@ def step_execute_on_host(context):
 
 
 @when('I perform Git operation from VM')
+@when('I perform Git operation from VM')
 def step_git_from_vm(context):
     """Perform Git operation from VM."""
     context.git_operation_from_vm = True
 
 
+@when('I reload the VM types cache')
 @when('I reload the VM types cache')
 def step_reload_cache(context):
     """Reload cache."""
@@ -214,6 +233,7 @@ def step_reload_cache(context):
 # =============================================================================
 
 @then('SSH agent should be started automatically')
+@then('SSH agent should be started automatically')
 def step_agent_auto_started(context):
     """Verify SSH agent auto-started."""
     # Check if ssh-agent is running
@@ -221,6 +241,7 @@ def step_agent_auto_started(context):
     assert result.returncode == 0 or getattr(context, 'ssh_agent_started', False)
 
 
+@then('SSH keys should be auto-generated if none exist')
 @then('SSH keys should be auto-generated if none exist')
 def step_keys_auto_generated(context):
     """Verify keys were generated."""
@@ -234,6 +255,7 @@ def step_keys_auto_generated(context):
 
 
 @then('SSH config entry for "{host}" should be created')
+@then('SSH config entry for "{host}" should be created')
 def step_entry_created(context, host):
     """Verify SSH config entry created."""
     ssh_config = Path.home() / ".ssh" / "config"
@@ -245,6 +267,7 @@ def step_entry_created(context, host):
 
 
 @then('SSH config should preserve existing entries')
+@then('SSH config should preserve existing entries')
 def step_preserve_entries(context):
     """Verify existing SSH config entries preserved."""
     ssh_config = Path.home() / ".ssh" / "config"
@@ -254,6 +277,7 @@ def step_preserve_entries(context):
         assert "Host" in content or len(content) > 0
 
 
+@then('SSH config should not be corrupted')
 @then('SSH config should not be corrupted')
 def step_config_not_corrupted(context):
     """Verify SSH config is valid."""
@@ -266,6 +290,7 @@ def step_config_not_corrupted(context):
 
 
 @then('SSH connection should succeed')
+@then('SSH connection should succeed')
 def step_ssh_success(context):
     """Verify SSH connection succeeded."""
     # Check if any VDE containers are running
@@ -275,6 +300,7 @@ def step_ssh_success(context):
 
 
 @then('host SSH keys should be available in VM')
+@then('host SSH keys should be available in VM')
 def step_keys_in_vm(context):
     """Verify host keys accessible from VM."""
     # In VDE, SSH agent forwarding makes host keys available
@@ -283,6 +309,7 @@ def step_keys_in_vm(context):
 
 
 @then('Git operation should use host SSH keys')
+@then('Git operation should use host SSH keys')
 def step_git_uses_host_keys(context):
     """Verify Git uses host keys."""
     assert getattr(context, 'git_operation_from_vm', False) or \
@@ -290,12 +317,14 @@ def step_git_uses_host_keys(context):
 
 
 @then('config file should be created if it doesn\'t exist')
+@then('config file should be created if it doesn\'t exist')
 def step_config_created(context):
     """Verify SSH config created."""
     ssh_config = Path.home() / ".ssh" / "config"
     assert ssh_config.exists() or getattr(context, 'ssh_config_updated', False)
 
 
+@then('backup should be created before modification')
 @then('backup should be created before modification')
 def step_backup_created(context):
     """Verify backup created."""
@@ -306,12 +335,14 @@ def step_backup_created(context):
 
 
 @then('the list-vms command should show available VMs')
+@then('the list-vms command should show available VMs')
 def step_list_vms_works(context):
     """Verify list-vms command works and shows available VMs."""
     result = run_vde_command("./scripts/list-vms", timeout=30)
     assert result.returncode == 0 or getattr(context, 'running_vms_visible', False)
 
 
+@then('I should see usage examples')
 @then('I should see usage examples')
 def step_see_usage_examples(context):
     """Should see usage examples."""
@@ -320,17 +351,20 @@ def step_see_usage_examples(context):
 
 
 @given('I have created multiple VMs')
+@given('I have created multiple VMs')
 def step_created_multiple_vms(context):
     """Have created multiple VMs."""
     context.multiple_vms_created = True
 
 
 @when('I use SSH to connect to any VM')
+@when('I use SSH to connect to any VM')
 def step_ssh_any_vm(context):
     """Use SSH to connect to any VM."""
     context.ssh_any_vm = True
 
 
+@then('the SSH config entries should exist')
 @then('the SSH config entries should exist')
 def step_ssh_entries_exist(context):
     """SSH config entries should exist."""
@@ -339,11 +373,13 @@ def step_ssh_entries_exist(context):
 
 
 @then('I should be able to use short hostnames')
+@then('I should be able to use short hostnames')
 def step_short_hostnames(context):
     """Should be able to use short hostnames."""
     assert getattr(context, 'short_hostnames', True)
 
 
+@then('I should not need to remember port numbers')
 @then('I should not need to remember port numbers')
 def step_no_remember_ports(context):
     """Should not need to remember port numbers."""
@@ -351,11 +387,13 @@ def step_no_remember_ports(context):
 
 
 @given('I have a running VM with SSH configured')
+@given('I have a running VM with SSH configured')
 def step_running_vm_ssh_configured(context):
     """Have running VM with SSH configured."""
     context.running_vm_ssh_configured = True
 
 
+@when('I shutdown and rebuild the VM')
 @when('I shutdown and rebuild the VM')
 def step_shutdown_rebuild_vm(context):
     """Shutdown and rebuild VM."""
@@ -364,6 +402,7 @@ def step_shutdown_rebuild_vm(context):
 
 
 @then('my SSH configuration should still work')
+@then('my SSH configuration should still work')
 def step_ssh_still_works(context):
     """SSH configuration should still work."""
     ssh_config = Path.home() / ".ssh" / "config"
@@ -371,11 +410,13 @@ def step_ssh_still_works(context):
 
 
 @then('I should not need to reconfigure SSH')
+@then('I should not need to reconfigure SSH')
 def step_no_reconfigure_ssh(context):
     """Should not need to reconfigure SSH."""
     assert getattr(context, 'no_reconfigure_ssh', True)
 
 
+@then('my keys should still work')
 @then('my keys should still work')
 def step_keys_still_work(context):
     """Keys should still work."""
@@ -383,12 +424,14 @@ def step_keys_still_work(context):
 
 
 @when('I create a VM')
+@when('I create a VM')
 def step_create_vm_given(context):
     """Create a VM."""
     result = run_vde_command("./scripts/create-virtual-for python", timeout=60)
     context.vm_created = result.returncode == 0
 
 
+@then('an ed25519 key should be generated')
 @then('an ed25519 key should be generated')
 def step_ed25519_generated(context):
     """ed25519 key should be generated."""
@@ -398,11 +441,13 @@ def step_ed25519_generated(context):
 
 
 @then('ed25519 should be the preferred key type')
+@then('ed25519 should be the preferred key type')
 def step_ed25519_preferred(context):
     """ed25519 should be the preferred key type."""
     assert getattr(context, 'ed25519_preferred', True)
 
 
+@then('the key should be generated with a comment')
 @then('the key should be generated with a comment')
 def step_key_with_comment(context):
     """Key should be generated with a comment."""
@@ -415,11 +460,13 @@ def step_key_with_comment(context):
 # =============================================================================
 
 @given('two processes try to allocate ports simultaneously')
+@given('two processes try to allocate ports simultaneously')
 def step_simultaneous_processes(context):
     """Simulate simultaneous port allocation."""
     context.simultaneous_allocation = True
 
 
+@when('both processes request the next available port')
 @when('both processes request the next available port')
 def step_both_request_port(context):
     """Both processes request port."""
