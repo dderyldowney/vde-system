@@ -1,4 +1,3 @@
-@wip
 Feature: Automatic SSH Setup and Key Management
   As a developer getting started with VDE
   I want SSH to be configured automatically
