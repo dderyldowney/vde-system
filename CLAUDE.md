@@ -435,12 +435,16 @@ The `vde-shell-compat` library provides a unified interface for shell-specific o
 ### Shell References
 
 **Authoritative Shell Manuals:**
-This project uses **Zsh 5.x** as the primary shell, with **Bash 4.x** as a secondary supported shell. The official PDF manuals for both shells are located at:
+This project uses **Zsh 5.x** as the primary shell, with **Bash 4.x** as a secondary supported shell. The official shell manuals are located at:
 
-- **Zsh 5.x PDF Manual**: `$project_root/docs/shell_manuals/zsh/` - Zsh Reference Card (official)
-- **Bash 4.x PDF Manual**: `$project_root/docs/shell_manuals/bash/` - Bash Reference Card (official)
+- **Zsh 5.x**: `$project_root/docs/shell_manuals/zsh/`
+  - `zsh_5_9_us.pdf` - Authoritative PDF reference
+  - `zsh_5_9_us.md` - Searchable Markdown version (for AI/human reading)
+- **Bash 4.x**: `$project_root/docs/shell_manuals/bash/`
+  - `bash_5_3_us.pdf` - Authoritative PDF reference
+  - `bash_5_3_us.md` - Searchable Markdown version (for AI/human reading)
 
-These are considered **authoritative references** for writing shell code in this project.
+The PDFs are the **authoritative references** for writing shell code in this project. Markdown versions are provided for easy searching and AI consumption.
 
 **Script Features:**
 The shell scripts in this project leverage advanced features from both shells:
