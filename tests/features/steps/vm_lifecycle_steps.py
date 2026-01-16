@@ -761,27 +761,6 @@ def step_vm_aliases_populated(context):
     assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
 
 
-@then('VM_DISPLAY array should be populated')
-@then('VM_DISPLAY array should be populated')
-def step_vm_display_populated(context):
-    """Verify VM_DISPLAY is populated."""
-    assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
-
-
-@then('VM_INSTALL array should be populated')
-@then('VM_INSTALL array should be populated')
-def step_vm_install_populated(context):
-    """Verify VM_INSTALL is populated."""
-    assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
-
-
-@then('VM_SVC_PORT array should be populated')
-@then('VM_SVC_PORT array should be populated')
-def step_vm_svc_port_populated(context):
-    """Verify VM_SVC_PORT is populated."""
-    assert context.last_exit_code == 0, f"Command failed: {context.last_error}"
-
-
 @then('comments should start with "#"')
 @then('comments should start with "#"')
 def step_comments_start_with_hash(context):

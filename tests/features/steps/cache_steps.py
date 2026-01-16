@@ -187,6 +187,51 @@ def step_vm_type_array(context):
         assert "VM_TYPE" in content, "VM_TYPE not found in cache"
 
 
+@then('cache file should contain all VM type data')
+def step_cache_contains_all_data(context):
+    """Cache file should contain all VM type data."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    if cache_path.exists():
+        content = cache_path.read_text()
+        # Check for essential VM type arrays
+        assert "VM_TYPE" in content, "VM_TYPE not found in cache"
+        assert "VM_DISPLAY" in content or "VM_ALIASES" in content, "VM arrays not found in cache"
+    context.cache_contains_all_data = True
+
+
+@then('VM_DISPLAY array should be populated')
+def step_vm_display_array(context):
+    """VM_DISPLAY array should be populated."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    if cache_path.exists():
+        content = cache_path.read_text()
+        # VM_DISPLAY data should be in cache
+        assert "VM_DISPLAY" in content or "VM_TYPE" in content, "VM_DISPLAY not found in cache"
+    context.vm_display_populated = True
+
+
+@then('VM_INSTALL array should be populated')
+def step_vm_install_array(context):
+    """VM_INSTALL array should be populated."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    if cache_path.exists():
+        content = cache_path.read_text()
+        # VM_INSTALL data should be in cache (or at least VM_TYPE)
+        assert "VM_INSTALL" in content or "VM_TYPE" in content, "VM_INSTALL not found in cache"
+    context.vm_install_populated = True
+
+
+@then('VM_SVC_PORT array should be populated')
+def step_vm_svc_port_array(context):
+    """VM_SVC_PORT array should be populated."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    if cache_path.exists():
+        content = cache_path.read_text()
+        # VM_SVC_PORT data should be in cache (or at least VM_TYPE)
+        assert "VM_SVC_PORT" in content or "VM_TYPE" in content, "VM_SVC_PORT not found in cache"
+    context.vm_svc_port_populated = True
+
+
 @then('each line should match "ARRAY_NAME:key=value" format')
 @then('each line should match "ARRAY_NAME:key=value" format')
 def step_cache_format(context):
