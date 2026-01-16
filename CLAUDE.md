@@ -414,10 +414,21 @@ cd tests && ./run-unit-tests
 
 ## Cross-Shell Compatibility
 
-VDE works across multiple shell versions:
+**CRITICAL: VDE scripts must use bash 4.0+ or zsh 5.0+ - NOT sh**
+
+The VDE system uses specific features of bash and zsh that are NOT available in POSIX sh:
+- Arrays (bash 4.0+ native, bash 3.x emulated)
+- Certain parameter expansions
+- Process substitution
+- Other shell-specific features
+
+**Supported shells:**
 - **zsh 5.0+** - Full support
 - **bash 4.0+** - Full support with native arrays
 - **bash 3.x** - Fallback support with emulated arrays
+
+**NOT supported:**
+- **sh** - Do NOT use `#!/usr/bin/env sh` or `#!/bin/sh` as shebangs
 
 The `vde-shell-compat` library provides a unified interface for shell-specific operations.
 

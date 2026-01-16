@@ -1,309 +1,6 @@
 # VDE Testing TODO
 
-**Last Updated:** 2026-01-16 (Session 3 - POSIX sh Compatibility & Documentation Fixes)
-
----
-
-## 🚨 Current Session (2026-01-16 - POSIX sh Compatibility)
-
-### Completed This Session
-
-#### 1. POSIX sh Compatibility for SSH Scripts ✅ (2026-01-16)
-**Problem:** SSH scripts used zsh-specific syntax, limiting compatibility across shells
-
-**Solution:**
-- Changed shebangs from `#!/bin/zsh` to `#!/usr/bin/env sh`
-- Removed zsh-specific syntax (arrays, parameter expansion, tail modifier)
-- Refactored `scripts/ssh-agent-setup` to use POSIX-compatible constructs
-- Updated `scripts/build-and-start` for compatibility
-- Added `.gitignore` entry for test artifacts
-
-**Files Changed:**
-- `scripts/build-and-start` (shebang change)
-- `scripts/ssh-agent-setup` (112 lines changed - full POSIX refactor)
-- `.gitignore` (added test artifacts)
-
-**Impact:**
-- Scripts now work with bash 4.0+, zsh 5.0+, and bash 3.x (via compatibility layer)
-- Verified scenarios increased from 92 to 96 in USER_GUIDE.md
-
-#### 2. Quick Checklist Hyperlink Fixes ✅ (2026-01-16)
-**Problem:** Table of Contents link for "Quick Checklist: Are You Ready?" was broken
-
-**Solution:**
-- Fixed anchor link from `#quick-checklist:-are-you-ready` to `#quick-checklist-are-you-ready`
-- Fixed root cause in generation script to properly remove colons from markdown anchors
-- Two commits: first fixed the link, second fixed the generation script
-
-**Files Changed:**
-- `USER_GUIDE.md` (hyperlink correction)
-- `tests/scripts/generate_user_guide.py` (anchor generation fix)
-
----
-
-## Remaining Todo List
-
-### High Priority
-
-#### 1. SSH Agent Automatic Setup Feature ⚠️
-**Status:** NOT IMPLEMENTED - Entire feature tagged with `@wip`
-
-The `ssh-agent-automatic-setup.feature` has scenarios that need step implementations:
-- First-time user with no SSH keys
-- First-time user with existing SSH keys
-- User with multiple SSH key types
-- SSH agent setup is silent during normal operations
-- SSH agent restart if not running
-- Viewing SSH status
-- SSH config auto-generation for all VMs
-- Rebuilding VMs preserves SSH configuration
-- Automatic key generation preference
-- Public keys automatically synced to VDE
-- SSH setup works with different SSH clients
-- No manual SSH configuration needed
-
-**Note:** POSIX sh compatibility for `ssh-agent-setup` is now complete, but BDD scenarios still need implementation.
-
-### Medium Priority
-
-#### 2. BDD Test Errors (16 failed, 27 error)
-**Status:** Needs investigation
-
-**Common Failures:**
-- Docker container timing issues (VMs not starting fast enough)
-- Missing preconditions (VMs not created before being started)
-- Assertion mismatches
-
-**Example failures:**
-```
-ASSERT FAILED: VM python is not running (docker ps check failed)
-ASSERT FAILED: docker-compose.yml not found at expected path
-```
-
-**Action Items:**
-- Add proper setup/teardown for container lifecycle
-- Implement better waiting mechanisms for Docker operations
-- Ensure test isolation (clean state between scenarios)
-
-#### 3. Undefined BDD Steps (64 steps remaining)
-**Status:** ⚠️ 95% complete - only 64 undefined steps remain
-
-**Remaining 64 undefined steps** are mostly edge cases and specialized scenarios:
-- Template rendering edge cases (placeholder validation)
-- SSH key authentication variations
-- VM state awareness conditions
-- Team collaboration scenarios
-
-**Action Items:**
-- Implement remaining 64 step definitions (optional - low priority)
-- Most critical user workflows are already covered
-
-### Low Priority
-
-#### 4. Fuzzy Matching for Typo Handling
-**Status:** Ready to implement (thefuzz installed ✅)
-
-The BDD test "Parse commands with typos" fails because the parser cannot handle typos in user input.
-
-**Dependencies:** ✅ `thefuzz` (v0.22.1) installed
-
-**Implementation Plan:** See [FUZZY_LOGIC_TODO.md](./FUZZY_LOGIC_TODO.md) for detailed implementation steps.
-
----
-
-## Previous Session (2026-01-16 - SSH Automation Implemented)
-
-### CI/CD Pipeline Status (Latest Run: 21057183105)
-- ✅ Passing: Integration Tests, Comprehensive Tests, Real AI API Tests, Linting (after fixes)
-- ✅ Fixed: Unit Tests, Docker Build & SSH Test (see fixes below)
-- ⏳ In Progress: BDD Feature Tests, Code Coverage
-- CI Link: https://github.com/dderyldowney/vde-system/actions
-
-#### Fixes Completed This Session
-1. **Config File Linting Issues Fixed:**
-   - `configs/docker/rust/docker-compose.yml` - Removed trailing spaces on line 2
-   - `configs/docker/python/docker-compose.yml` - Removed extra blank line (line 34)
-   - `configs/docker/postgres/docker-compose.yml` - Added newline at end of file
-
-2. **Unit Tests Fixed** ✅ (2026-01-16):
-   - **Problem:** `get_all_vms()` returned all VM names space-separated on one line, causing `wc -l` to return 1
-   - **Solution:** Modified `get_all_vms()` in `scripts/lib/vm-common` to output one VM per line:
-     ```sh
-     get_all_vms() {
-         # Convert space-separated keys to newline-separated for proper line counting
-         _assoc_keys "VM_TYPE" | tr ' ' '\n' | grep -v '^$' | sort
-         return $VDE_SUCCESS
-     }
-     ```
-
-3. **Docker Build & SSH Test Fixed** ✅ (2026-01-16):
-   - **Problem:** CI randomly selected VM from 27 possible VMs, but only 12 had docker-compose.yml files
-   - **Solution:** Updated `.github/workflows/vde-ci.yml` to only test VMs with existing configs:
-     ```sh
-     ALL_VMS=(
-       "python" "rust" "js" "csharp" "ruby" "go"
-       "postgres" "redis" "mongodb" "nginx" "rabbitmq"
-     )
-     ```
-
-### Completed Todo List (Previous Session)
-1. ✅ Fix config file linting issues (DONE - Session 2)
-2. ✅ Investigate and fix Unit Tests failure (DONE - Session 2)
-3. ✅ Investigate and fix Docker Build & SSH Test failure (DONE - Session 2)
-4. ✅ Regenerate User Guide with accurate verified content (DONE - 96 verified scenarios as of Session 3)
-5. ✅ Implement SSH automation scenarios (DONE - 50 steps implemented, 5/12 scenarios passing)
-6. ✅ POSIX sh compatibility for SSH scripts (DONE - Session 3)
-7. ✅ Fix Quick Checklist hyperlink (DONE - Session 3)
-
-### SSH Automation Scenarios Status (2026-01-16)
-- **Implemented:** ~50 step definitions in `tests/features/steps/ssh_steps.py`
-- **Passing:** 5/12 scenarios (42%)
-- **Failing:** 5 scenarios due to test environment issues (no actual SSH keys/VMs in test env)
-- **Undefined:** 0 steps (all steps have implementations)
-
-**Note:** The failing scenarios are expected in a mock test environment. They require:
-- Actual SSH keys on the host
-- Running Docker containers
-- Real SSH config files
-
-These scenarios document the expected behavior and will pass when run in the full test environment with Docker containers.
-
----
-
-## Previous Session (2026-01-16 mid-night)
-
-### Fixes Completed This Session
-
-#### 1. Host Config Protection ✅
-**Problem:** BDD tests were deleting host configs (e.g., `configs/docker/python/docker-compose.yml`)
-
-**Solution:**
-- Changed BDD test mount from `-v "$PROJECT_ROOT:/vde:rw"` to using COPIED files from Docker image
-- Created `tests/workspace/` for test-specific artifacts
-- Updated both local (`tests/run-bdd-tests.sh`) and CI (`.github/workflows/vde-ci.yml`)
-- Restored accidentally deleted `configs/docker/python/docker-compose.yml`
-
-**Files Changed:**
-- `tests/run-bdd-tests.sh` (lines 196-207)
-- `.github/workflows/vde-ci.yml` (lines 613-631)
-
-#### 2. Verified User Guide Generation ✅
-**Problem:** User guide claimed all examples were "tested and verified" but it just read .feature files directly
-
-**Solution:**
-- Created `tests/scripts/generate_user_guide.py` - reads Behave JSON, includes ONLY PASSING scenarios
-- Created `tests/generate-user-guide.sh` - runs tests → parses JSON → generates verified guide
-- Deleted unverified generation scripts
-- **Latest Update:** Now includes 96 verified scenarios (up from 92)
-
-**Usage:**
-```bash
-./tests/generate-user-guide.sh              # Run all tests, generate verified guide
-./tests/generate-user-guide.sh --skip-docker-host   # Skip Docker host tests (for CI)
-```
-
-#### 3. Docker Host Tests Tagged and Skipped ✅
-**Problem:** BDD scenarios for start/stop/restart can't pass in Docker-in-Docker
-
-**Solution:**
-- Added `@requires-docker-host` tag to 8 scenarios:
-  - "Start a created VM"
-  - "Start multiple VMs"
-  - "Start all VMs"
-  - "Stop a running VM"
-  - "Stop all running VMs"
-  - "Restart a VM"
-  - "Rebuild a VM with --rebuild flag"
-  - "Stop all VMs at once" (ai-assistant-workflow.feature)
-- These are now **skipped by default** in both local and CI tests
-- Shell test suite (`tests/integration/docker-vm-lifecycle.test.sh`) covers these scenarios
-
-**Usage:**
-```bash
-./tests/run-bdd-tests.sh              # Skips @requires-docker-host by default
-./tests/run-bdd-tests.sh --include-docker   # Try to run all (will fail in Docker-in-Docker)
-```
-
-#### 4. Bug Fix: remove-virtual Script ✅
-**Problem:** Script had path bug with extra `/docker/` in COMPOSE_FILE path
-
-**Fix:** Changed from:
-```bash
-COMPOSE_FILE="$CONFIGS_DIR/docker/$VM_NAME/docker-compose.yml"
-```
-To:
-```bash
-COMPOSE_FILE="$CONFIGS_DIR/$VM_NAME/docker-compose.yml"
-```
-
-Since `CONFIGS_DIR` already includes `/docker`, the original path was wrong.
-
-#### 5. Config Files Restored ✅
-**Problem:** Accidental modifications to production configs
-
-**Fixed:**
-- Restored `configs/docker/python/docker-compose.yml` from initial commit
-- Restored `configs/docker/postgres/docker-compose.yml` from yamllint fix commit
-- Restored `configs/docker/rust/docker-compose.yml` and `configs/docker/zig/docker-compose.yml`
-
----
-
-## Test Suite Status
-
-| Test Suite | Total | Passing | Notes |
-|------------|-------|---------|-------|
-| **Shell Tests** | 108 | 100% | ✅ All passing |
-| **BDD Tests** | ~2500 | ~95% | 2249 passed, 16 failed, 27 error, 147 skipped, 64 undefined |
-
----
-
-## Completed Items
-
-### ✅ Duplicate Step Definitions Fixed
-- Fixed duplicate "I should see running VMs" step definition
-- Fixed duplicate "I should see a list of available VMs" step definition
-- Renamed steps to be more specific about their purpose
-
-### ✅ Real VDE Script Integration
-- Most BDD scenarios now use real VDE scripts instead of mocks
-- Tests provide true integration testing value
-
-### ✅ API Documentation Complete
-- Generated comprehensive `docs/API.md` containing entire project API
-- Documented all 8 scripts (vde, create-virtual-for, start-virtual, shutdown-virtual, list-vms, vde-ai, vde-chat, add-vm-type)
-- Documented all 8 library modules (vde-constants, vde-shell-compat, vde-errors, vde-log, vde-core, vm-common, vde-commands, vde-parser)
-- Included complete VM types reference (19 languages, 7 services)
-- Added exit codes, port allocation, and environment variables reference
-
-### ✅ Common Undefined Steps Implemented
-- Added `common_undefined_steps.py` with 100+ step definitions
-- Covers VM status, command execution, SSH connections, file operations
-- Addresses many of the previously undefined 1248 BDD steps
-
-### ✅ BDD Undefined Steps Massively Reduced
-- Created `bdd_undefined_steps.py` with **1,029 step definitions**
-- Reduced undefined steps from 1248 to just **64** (95% reduction!)
-- BDD test pass rate increased from ~85% to ~95%
-- All step definitions use proper format with single quotes
-- No duplicate step definition errors
-
-### ✅ BDD Steps Reorganized to Semantic Homes
-- **Deleted** monolithic `bdd_undefined_steps.py` (7,235 lines)
-- **Distributed** all 1,029 step definitions to appropriate semantic files:
-  - `vm_lifecycle_steps.py` (+100 steps) - VM creation, start, stop, rebuild
-  - `pattern_steps.py` (+50 steps) - Templates, error handling
-  - `ssh_steps.py` (+47 steps) - SSH config, keys, agent
-  - `ssh_docker_steps.py` (+193 steps) - Docker operations
-  - `customization_steps.py` (+354 steps) - Custom VM types
-  - `installation_steps.py` (+95 steps) - Installation, setup
-  - `help_steps.py` (+17 steps) - List VMs, status
-  - `cache_steps.py` (+85 steps) - Cache operations
-  - `productivity_steps.py` (+52 steps) - Team collaboration
-  - `daily_workflow_steps.py` (+15 steps) - Daily patterns
-  - `ai_steps.py` (+95 steps) - AI command parsing
-  - `tests/shared/steps/common_steps.py` (NEW) - Shared utility steps
-- **Improved** codebase organization and maintainability
-- Each step is now located in the file matching its semantic purpose
+**Last Updated:** 2026-01-16
 
 ---
 
@@ -311,48 +8,99 @@ Since `CONFIGS_DIR` already includes `/docker`, the original path was wrong.
 
 ### High Priority
 
-#### 1. Undefined BDD Steps (64 steps remaining)
-**Status:** ⚠️ 95% complete - only 64 undefined steps remain
+#### 1. Fix: Revert Incorrect Shebang Changes in SSH Scripts
 
-Originally had 1248 undefined steps. Implemented 1,029 step definitions distributed across semantic files, reducing undefined steps to just 64.
+**Problem:** Commit `b4adfae` incorrectly changed shebangs from `#!/usr/bin/env zsh` to `#!/usr/bin/env sh`
 
-**Remaining 64 undefined steps** are mostly edge cases and specialized scenarios:
+**Why This Is Wrong:**
+- VDE uses bash 4.0+ and zsh 5.0+ features that sh does NOT support
+- See `CLAUDE.md` Cross-Shell Compatibility section
+
+**Files Affected:**
+- `scripts/ssh-agent-setup` - Changed from `#!/usr/bin/env zsh` to `#!/usr/bin/env sh`
+- `scripts/build-and-start` - Shebang may have been changed
+
+**Action Required:**
+- Revert shebangs to use `#!/usr/bin/env bash` or `#!/usr/bin/env zsh`
+- Test scripts work correctly with bash 4.0+ and zsh 5.0+
+- Update commit message documentation to reflect correct approach
+
+---
+
+#### 2. SSH Agent Automatic Setup BDD Scenarios
+
+**Status:** Scenarios exist but many steps are undefined
+
+**Feature File:** `tests/features/ssh-agent-automatic-setup.feature`
+
+**Scenarios (12 total):**
+1. First-time user with no SSH keys
+2. First-time user with existing SSH keys
+3. User with multiple SSH key types
+4. SSH agent setup is silent during normal operations
+5. SSH agent restart if not running
+6. Viewing SSH status
+7. SSH config auto-generation for all VMs
+8. Rebuilding VMs preserves SSH configuration
+9. Automatic key generation preference
+10. Public keys automatically synced to VDE
+11. SSH setup works with different SSH clients
+12. No manual SSH configuration needed
+
+**Current Status:**
+- Feature file exists and is active (no @wip tag)
+- Some steps may be undefined (need verification)
+
+**Action Required:**
+- Implement remaining undefined step definitions in `tests/features/steps/ssh_steps.py`
+- Verify scenarios pass with actual SSH setup implementation
+
+---
+
+### Medium Priority
+
+#### 3. Investigate BDD Test Failures
+
+**Status:** Tests have failures that need investigation
+
+**Common Failure Types:**
+- Docker container timing issues (VMs not starting fast enough)
+- Missing preconditions (VMs not created before being started)
+- Assertion mismatches
+- Steps that require real environment (Docker host, SSH keys)
+
+**Action Items:**
+- Distinguish between expected failures (test environment limitations) and actual bugs
+- Add proper setup/teardown for container lifecycle where needed
+- Implement better waiting mechanisms for Docker operations
+- Ensure test isolation (clean state between scenarios)
+
+---
+
+#### 4. Undefined BDD Steps
+
+**Status:** Some steps remain undefined
+
+**Current Count:** ~64 undefined steps (95% reduction from original 1248)
+
+**Remaining undefined steps** are mostly edge cases:
 - Template rendering edge cases (placeholder validation)
 - SSH key authentication variations
 - VM state awareness conditions
 - Team collaboration scenarios
+- Idempotent operation scenarios (e.g., "I repeat the same command")
 
-**Action Items:**
-- Implement remaining 64 step definitions (optional - low priority)
-- Most critical user workflows are now covered
+**Note:** Most critical user workflows are already covered. Implementing remaining steps is optional.
 
-#### 2. BDD Test Errors (301 errors)
-**Status:** Needs investigation
+---
 
-**Common Failures:**
-- Docker container timing issues (VMs not starting fast enough)
-- Missing preconditions (VMs not created before being started)
-- Assertion mismatches
+### Low Priority
 
-**Example failures:**
-```
-ASSERT FAILED: VM python is not running (docker ps check failed)
-ASSERT FAILED: docker-compose.yml not found at /vde/configs/docker/zig/docker-compose.yml
-```
+#### 5. Fuzzy Matching for Typo Handling
 
-**Action Items:**
-- Add proper setup/teardown for container lifecycle
-- Implement better waiting mechanisms for Docker operations
-- Ensure test isolation (clean state between scenarios)
+**Status:** Enhancement - parser cannot handle typos in user input
 
-### Medium Priority
-
-#### 3. Fuzzy Matching for Typo Handling
-**Status:** Ready to implement (thefuzz installed ✅)
-
-The BDD test "Parse commands with typos" fails because the parser cannot handle typos in user input.
-
-**Failing Test:**
+**Failing Scenario:**
 ```gherkin
 Scenario: Parse commands with typos
     Given I make a typo in my command
@@ -363,20 +111,7 @@ Scenario: Parse commands with typos
 
 **Dependencies:** ✅ `thefuzz` (v0.22.1) installed
 
-**Implementation Plan:** See [FUZZY_LOGIC_TODO.md](./FUZZY_LOGIC_TODO.md) for detailed implementation steps.
-
----
-
-## Test Coverage Goals
-
-| Component | Current Coverage | Target | Priority |
-|-----------|-----------------|--------|----------|
-| Shell Script Tests | 100% (108/108) | ✅ Met | Done |
-| Core VM Operations | ~85% | 95%+ | High |
-| SSH Configuration | ~90% | 95%+ | Medium |
-| AI/CLI Integration | ~80% | 90%+ | Medium |
-| Error Handling | ~70% | 90%+ | High |
-| Edge Cases | ~60% | 85%+ | Low |
+**Implementation Plan:** See [FUZZY_LOGIC_TODO.md](./FUZZY_LOGIC_TODO.md)
 
 ---
 
@@ -402,15 +137,6 @@ behave features/vm-lifecycle.feature
 
 ---
 
-## Notes
-
-- Shell tests remain the primary integration test method
-- BDD tests now serve as both user workflow documentation AND integration tests
-- For new features, write shell tests first, then document in BDD
-- Run `./tests/run-bdd-local.sh` for local BDD testing with Docker access
-
----
-
 ## Quick Reference
 
 ### Test File Locations
@@ -419,10 +145,9 @@ behave features/vm-lifecycle.feature
 - **Step definitions:** `tests/features/steps/*.py`, `tests/shared/steps/*.py`
 - **Test configs:** `tests/behave.ini`
 
-### Test Results Summary
+### Current Test Status
 ```
 Shell Tests:     108 passed, 0 failed ✅
-BDD Scenarios:   2249 passed, 16 failed, 27 error, 147 skipped
-BDD Steps:       1248 undefined → 64 undefined (95% reduction!)
-Verified Scenarios: 96 (as of Session 3)
+BDD Scenarios:   ~2500 scenarios
+Verified Scenarios: 96
 ```
