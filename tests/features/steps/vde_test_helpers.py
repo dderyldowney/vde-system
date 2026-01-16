@@ -10,8 +10,18 @@ import subprocess
 import time
 import os
 
-# VDE root directory - support both container and local environments
-VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR", "/vde"))
+# VDE root directory - auto-detect from this file's location
+# This file is at tests/features/steps/vde_test_helpers.py
+# VDE root is two levels up from the 'tests' directory
+_current_file = Path(__file__)
+_steps_dir = _current_file.parent
+_features_dir = _steps_dir.parent
+_tests_dir = _features_dir.parent
+_vde_root_detected = _tests_dir.parent  # Go up one more level to reach /Users/dderyldowney/dev
+
+# Support both container and local environments
+# VDE_ROOT_DIR env var can override auto-detection
+VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR", str(_vde_root_detected)))
 
 
 def run_vde_command(command, timeout=120, check=False):
