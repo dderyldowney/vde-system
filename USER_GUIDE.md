@@ -7,6 +7,15 @@
 ## Table of Contents
 
 1. [1. Installation](#1.-installation)
+   - [Installing Docker Desktop](#installing-docker-desktop)
+     - [For Windows Users](#for-windows-users)
+     - [For macOS (Mac) Users](#for-macos-mac-users)
+     - [For Linux Users](#for-linux-users)
+   - [Installing Git](#installing-git)
+     - [For Windows Users](#for-windows-users-1)
+     - [For macOS (Mac) Users](#for-macos-mac-users-1)
+     - [For Linux Users](#for-linux-users-1)
+   - [Quick Checklist: Are You Ready?](#quick-checklist-are-you-ready)
 2. [2. SSH Keys](#2.-ssh-keys)
 3. [3. Your First VM](#3.-your-first-vm)
 4. [4. Understanding](#4.-understanding)
@@ -30,6 +39,417 @@ This is the part everyone finds confusing. Let's break it down.
 - [ ] Docker Desktop installed and running
 - [ ] Git installed (for cloning the repo)
 - [ ] About 5GB of free disk space
+
+---
+
+## Don't Have These Yet? No Problem!
+
+If you don't have Docker Desktop or git installed yet, don't worry! We'll walk you through installing both, step by step. Just follow the instructions for your computer's operating system (Windows, Mac, or Linux).
+
+---
+
+## Installing Docker Desktop
+
+Docker Desktop is the program that runs all your development environments. Think of it as the "engine" that powers your virtual machines.
+
+### For Windows Users
+
+#### Step 1: Check if You Have the Right Version of Windows
+
+Docker Desktop only works on Windows 10 or Windows 11. It also **needs Windows 10/11 Pro, Enterprise, or Education** - it won't work on Windows Home edition (unless you use WSL 2, which we'll cover).
+
+**How to check your Windows version:**
+
+1. Press the **Windows key** on your keyboard (or click Start)
+2. Type **"About your PC"** and press Enter
+3. Look for "Windows specifications"
+4. Under "Edition", you should see **Windows 10 Pro** or **Windows 11 Pro** (or Enterprise/Education)
+
+**If you see Windows Home:** You can still use Docker with WSL 2 (Windows Subsystem for Linux). This is free from Microsoft. Here's how:
+1. Press Windows key, type **"PowerShell"**
+2. Right-click "Windows PowerShell" and select **"Run as administrator"**
+3. Copy and paste this command (right-click in PowerShell to paste):
+   ```
+   wsl --install
+   ```
+4. Press Enter and wait for it to finish
+5. Restart your computer when asked
+
+#### Step 2: Download Docker Desktop for Windows
+
+1. Open your web browser (Chrome, Edge, Firefox, etc.)
+2. Go to: **https://www.docker.com/products/docker-desktop**
+3. Click the big blue button that says **"Download for Windows"**
+4. The file will be named something like `Docker Desktop Installer.exe`
+5. When the download finishes, click the file to open it (usually in the bottom-left corner of your browser)
+
+#### Step 3: Install Docker Desktop
+
+1. A window will pop up asking for permission - click **"Yes"**
+2. You'll see an installer window - make sure these boxes are checked:
+   - ☑ **Use WSL 2 instead of Hyper-V** (recommended)
+3. Click **"Ok"**
+4. Wait for the installation to complete (this may take a few minutes)
+5. Click **"Close"** when it's done
+6. **Restart your computer** when asked
+
+#### Step 4: Start Docker Desktop
+
+1. After your computer restarts, you'll see a Docker icon in your taskbar (bottom of screen) or a notification
+2. Click the Docker icon to start it
+3. A welcome window will appear - accept the terms and click **"Accept"**
+4. Docker will start - wait for the whale icon in your taskbar to stop spinning and turn solid
+5. When the whale is solid (not spinning), Docker is ready!
+
+#### Step 5: Verify Docker is Working
+
+1. Press the **Windows key**, type **"PowerShell"**, and open it
+2. Type this command and press Enter:
+   ```
+   docker --version
+   ```
+3. You should see something like `Docker version 24.x.x, build xxxxx`
+
+**Success!** Docker is installed and running.
+
+---
+
+### For macOS (Mac) Users
+
+#### Step 1: Check if Your Mac is Compatible
+
+Docker Desktop works on:
+- **Intel-based Macs**: macOS 11 or newer (Big Sur, Monterey, Ventura, Sonoma, Sequoia)
+- **Apple Silicon Macs** (M1/M2/M3 chips): macOS 11 or newer
+
+**How to check your macOS version:**
+
+1. Click the **Apple menu** () in the top-left corner of your screen
+2. Select **"About This Mac"**
+3. You'll see the macOS version number and your chip type
+
+#### Step 2: Download Docker Desktop for Mac
+
+1. Open your web browser (Safari, Chrome, Firefox, etc.)
+2. Go to: **https://www.docker.com/products/docker-desktop**
+3. You'll see two options - choose the right one for your Mac:
+   - **"Download for Mac - Apple Chip"** → if you have M1/M2/M3/M4
+   - **"Download for Mac - Intel Chip"** → if you have an Intel processor
+4. The file will be named `Docker.dmg`
+5. When the download finishes, double-click the file to open it (usually in your Downloads folder)
+
+#### Step 3: Install Docker Desktop
+
+1. A window will open showing a Docker icon and a folder called **"Applications"**
+2. **Drag the Docker icon** onto the **"Applications"** folder
+3. Wait for the copy to finish (a few seconds)
+4. Close the window
+5. Open your **Applications** folder (click Go → Applications in the menu bar, or use Spotlight)
+6. Find **Docker** and double-click it
+7. If you see a warning about downloaded from the internet:
+   - Click **"Open"** to confirm
+
+#### Step 4: Complete the Setup
+
+1. Docker will ask for permission - enter your Mac password
+2. Read the Welcome screen and click **"Continue"**
+3. A popup will ask for system permissions:
+   - Click **"Open System Settings"** (or "Open System Preferences")
+   - You'll see Docker under "Login Items" or similar - the switches should be turned on
+   - If any switches are off, click them to turn on (you'll need to enter your password)
+4. Go back to the Docker welcome window and click **"Got it!"** or continue through the setup
+
+#### Step 5: Wait for Docker to Start
+
+1. Look at the top of your screen (menu bar) for a whale icon 🐳
+2. At first, it will be animated (the whale is doing something) - wait for this
+3. When the whale stops moving and becomes solid, Docker is ready!
+
+#### Step 6: Verify Docker is Working
+
+1. Open **Terminal** (press Command+Space, type "Terminal", press Enter)
+2. Type this command and press Enter:
+   ```
+   docker --version
+   ```
+3. You should see something like `Docker version 24.x.x, build xxxxx`
+
+**Success!** Docker is installed and running on your Mac.
+
+---
+
+### For Linux Users
+
+Docker Desktop on Linux works with Ubuntu, Debian, Fedora, and many other distributions.
+
+#### Step 1: Check Your Linux Distribution
+
+First, let's find out which Linux you're using:
+
+1. Open your **Terminal** (press Ctrl+Alt+T)
+2. Type this command and press Enter:
+   ```
+   cat /etc/os-release
+   ```
+3. Look for the `NAME=` line - this tells you your distribution (e.g., "Ubuntu", "Fedora", "Debian")
+
+#### Step 2: Download Docker Desktop
+
+1. Open your web browser
+2. Go to: **https://www.docker.com/products/docker-desktop**
+3. Click **"Download for Linux"**
+4. You'll see options for different Linux versions - click yours:
+   - **Ubuntu/Debian** → `.deb` file
+   - **Fedora/CentOS/Red Hat** → `.rpm` file
+5. The file will download to your **Downloads** folder
+
+#### Step 3: Install Docker Desktop
+
+**For Ubuntu/Debian (.deb file):**
+
+1. Open your terminal
+2. Type these commands one at a time, pressing Enter after each:
+
+   ```bash
+   # Go to your Downloads folder
+   cd ~/Downloads
+
+   # Update your package list
+   sudo apt-get update
+
+   # Install Docker (replace the filename with your actual downloaded file)
+   sudo apt-get install ./docker-desktop-<version>-<arch>.deb
+   ```
+
+   *Note: The actual filename will be something like `docker-desktop-4.25.0-amd64.deb` - type `ls` to see the exact name and use that.*
+
+**For Fedora/CentOS/Red Hat (.rpm file):**
+
+1. Open your terminal
+2. Type these commands one at a time, pressing Enter after each:
+
+   ```bash
+   # Go to your Downloads folder
+   cd ~/Downloads
+
+   # Install Docker (replace the filename with your actual downloaded file)
+   sudo dnf install ./docker-desktop-<version>-<arch>.rpm
+   ```
+
+   *Note: The actual filename will be something like `docker-desktop-4.25.0-x86_64.rpm` - type `ls` to see the exact name and use that.*
+
+3. If asked for confirmation, type **`y`** and press Enter
+
+#### Step 4: Start Docker Desktop
+
+1. After installation, you can start Docker by typing in your terminal:
+   ```
+   systemctl --user start docker-desktop
+   ```
+
+2. To make Docker start automatically when you log in:
+   ```
+   systemctl --user enable docker-desktop
+   ```
+
+3. You should also see a **Docker Desktop** icon in your applications menu - you can click that too!
+
+#### Step 5: Verify Docker is Working
+
+In your terminal, type:
+```
+docker --version
+```
+
+You should see something like `Docker version 24.x.x, build xxxxx`
+
+**Success!** Docker is installed and running on Linux.
+
+---
+
+## Installing Git
+
+Git is a tool for downloading code from the internet (like the VDE code). You'll need it to get VDE onto your computer.
+
+### For Windows Users
+
+#### Option 1: The Easiest Way (Git for Windows)
+
+**Step 1: Download Git for Windows**
+
+1. Open your web browser
+2. Go to: **https://github.com/git-guides/install-git**
+3. Look for the **Windows** section
+4. Click the link that says **"Click here to download"** (or go directly to https://git-scm.com/download/win)
+5. The file will be named something like `Git-2.43.0-64-bit.exe`
+
+**Step 2: Install Git**
+
+1. When the download finishes, click the file to run it
+2. If Windows asks for permission, click **"Yes"**
+3. Click **"Next"** on the welcome screen
+4. Keep clicking **"Next"** to accept all the default settings (they're good for most people)
+5. On the "Choosing the default editor" screen, **Vim** will be selected - we recommend changing this to **Notepad** or **Notepad++** (easier to use)
+6. Keep clicking **"Next"** through the rest
+7. On the final screen, click **"Install"**
+8. Wait for it to finish, then click **"Finish"**
+
+**Step 3: Verify Git is Installed**
+
+1. Press the **Windows key**, type **"PowerShell"**, and open it
+2. Type this command and press Enter:
+   ```
+   git --version
+   ```
+3. You should see something like `git version 2.43.0.windows.1`
+
+**Success!** Git is installed on Windows.
+
+---
+
+### For macOS (Mac) Users
+
+#### The Good News: You Might Already Have Git!
+
+Git comes built-in on macOS. Let's check first:
+
+1. Open **Terminal** (press Command+Space, type "Terminal", press Enter)
+2. Type this and press Enter:
+   ```
+   git --version
+   ```
+3. If you see a version number like `git version 2.39.0`, you already have Git! **You're done!**
+
+#### If You Need to Install Git
+
+If you don't have Git or want a newer version, here's how:
+
+**Option 1: Install with Homebrew (Easiest)**
+
+1. Open Terminal
+2. First, check if you have Homebrew (a package installer for Mac):
+   ```
+   brew --version
+   ```
+3. If you see a version, great! Install Git with:
+   ```
+   brew install git
+   ```
+4. If you DON'T have Homebrew, you can install it first:
+   ```
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   ```
+   Then install Git with: `brew install git`
+
+**Option 2: Download from Git Website**
+
+1. Go to: **https://github.com/git-guides/install-git**
+2. Look for the **macOS** section
+3. Click the download link (or go to https://git-scm.com/download/mac)
+4. This will download a `.dmg` file
+5. Double-click the file to open it
+6. Follow the same steps as installing Docker (drag to Applications)
+
+**Verify Git is Working:**
+
+In Terminal, type:
+```
+git --version
+```
+
+You should see a version number. **Success!**
+
+---
+
+### For Linux Users
+
+#### The Good News: Most Linux Has Git Already!
+
+Let's check if you already have it:
+
+1. Open your terminal
+2. Type:
+   ```
+   git --version
+   ```
+3. If you see a version, you're done!
+
+#### If You Need to Install Git
+
+**For Ubuntu/Debian:**
+```bash
+sudo apt-get update
+sudo apt-get install git
+```
+
+**For Fedora:**
+```bash
+sudo dnf install git
+```
+
+**For CentOS/Red Hat:**
+```bash
+sudo yum install git
+```
+
+**For Arch Linux:**
+```bash
+sudo pacman -S git
+```
+
+**Verify Git is Working:**
+
+In your terminal, type:
+```
+git --version
+```
+
+You should see a version number. **Success!**
+
+---
+
+## Quick Checklist: Are You Ready?
+
+Before moving on, let's make sure everything is installed:
+
+**Open your terminal (PowerShell on Windows, Terminal on Mac/Linux) and run:**
+
+```bash
+# Check Docker
+docker --version
+
+# Check Git
+git --version
+
+# Check Docker is actually running
+docker ps
+```
+
+**What you should see:**
+- `docker --version` → Shows Docker version number
+- `git --version` → Shows Git version number
+- `docker ps` → Shows a list of containers (may be empty, that's OK!)
+
+**If `docker ps` gives an error like "Cannot connect to the Docker daemon":**
+- Docker Desktop isn't running - start it from your applications
+- Wait for the whale icon to stop spinning before trying again
+
+---
+
+## Need Help?
+
+If you run into trouble installing Docker or Git:
+
+1. **Docker won't start?** Make sure your computer is compatible and you've restarted after installation
+2. **Can't find the terminal?**
+   - Windows: Press Windows key, type "PowerShell" or "Windows Terminal"
+   - Mac: Press Command+Space, type "Terminal"
+   - Linux: Press Ctrl+Alt+T
+3. **Permission errors?** Make sure you have administrator rights on your computer
+
+Once both Docker and Git are installed and working, you're ready to continue with the VDE setup!
+
+---
 
 ### Step 1: Clone VDE to Your Computer
 
