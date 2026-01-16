@@ -1,10 +1,117 @@
 # VDE Testing TODO
 
-**Last Updated:** 2026-01-16 (Session 2 - SSH Automation Implemented)
+**Last Updated:** 2026-01-16 (Session 3 - POSIX sh Compatibility & Documentation Fixes)
 
 ---
 
-## 🚨 Current Session (2026-01-16 - After Context Compaction)
+## 🚨 Current Session (2026-01-16 - POSIX sh Compatibility)
+
+### Completed This Session
+
+#### 1. POSIX sh Compatibility for SSH Scripts ✅ (2026-01-16)
+**Problem:** SSH scripts used zsh-specific syntax, limiting compatibility across shells
+
+**Solution:**
+- Changed shebangs from `#!/bin/zsh` to `#!/usr/bin/env sh`
+- Removed zsh-specific syntax (arrays, parameter expansion, tail modifier)
+- Refactored `scripts/ssh-agent-setup` to use POSIX-compatible constructs
+- Updated `scripts/build-and-start` for compatibility
+- Added `.gitignore` entry for test artifacts
+
+**Files Changed:**
+- `scripts/build-and-start` (shebang change)
+- `scripts/ssh-agent-setup` (112 lines changed - full POSIX refactor)
+- `.gitignore` (added test artifacts)
+
+**Impact:**
+- Scripts now work with bash 4.0+, zsh 5.0+, and bash 3.x (via compatibility layer)
+- Verified scenarios increased from 92 to 96 in USER_GUIDE.md
+
+#### 2. Quick Checklist Hyperlink Fixes ✅ (2026-01-16)
+**Problem:** Table of Contents link for "Quick Checklist: Are You Ready?" was broken
+
+**Solution:**
+- Fixed anchor link from `#quick-checklist:-are-you-ready` to `#quick-checklist-are-you-ready`
+- Fixed root cause in generation script to properly remove colons from markdown anchors
+- Two commits: first fixed the link, second fixed the generation script
+
+**Files Changed:**
+- `USER_GUIDE.md` (hyperlink correction)
+- `tests/scripts/generate_user_guide.py` (anchor generation fix)
+
+---
+
+## Remaining Todo List
+
+### High Priority
+
+#### 1. SSH Agent Automatic Setup Feature ⚠️
+**Status:** NOT IMPLEMENTED - Entire feature tagged with `@wip`
+
+The `ssh-agent-automatic-setup.feature` has scenarios that need step implementations:
+- First-time user with no SSH keys
+- First-time user with existing SSH keys
+- User with multiple SSH key types
+- SSH agent setup is silent during normal operations
+- SSH agent restart if not running
+- Viewing SSH status
+- SSH config auto-generation for all VMs
+- Rebuilding VMs preserves SSH configuration
+- Automatic key generation preference
+- Public keys automatically synced to VDE
+- SSH setup works with different SSH clients
+- No manual SSH configuration needed
+
+**Note:** POSIX sh compatibility for `ssh-agent-setup` is now complete, but BDD scenarios still need implementation.
+
+### Medium Priority
+
+#### 2. BDD Test Errors (16 failed, 27 error)
+**Status:** Needs investigation
+
+**Common Failures:**
+- Docker container timing issues (VMs not starting fast enough)
+- Missing preconditions (VMs not created before being started)
+- Assertion mismatches
+
+**Example failures:**
+```
+ASSERT FAILED: VM python is not running (docker ps check failed)
+ASSERT FAILED: docker-compose.yml not found at expected path
+```
+
+**Action Items:**
+- Add proper setup/teardown for container lifecycle
+- Implement better waiting mechanisms for Docker operations
+- Ensure test isolation (clean state between scenarios)
+
+#### 3. Undefined BDD Steps (64 steps remaining)
+**Status:** ⚠️ 95% complete - only 64 undefined steps remain
+
+**Remaining 64 undefined steps** are mostly edge cases and specialized scenarios:
+- Template rendering edge cases (placeholder validation)
+- SSH key authentication variations
+- VM state awareness conditions
+- Team collaboration scenarios
+
+**Action Items:**
+- Implement remaining 64 step definitions (optional - low priority)
+- Most critical user workflows are already covered
+
+### Low Priority
+
+#### 4. Fuzzy Matching for Typo Handling
+**Status:** Ready to implement (thefuzz installed ✅)
+
+The BDD test "Parse commands with typos" fails because the parser cannot handle typos in user input.
+
+**Dependencies:** ✅ `thefuzz` (v0.22.1) installed
+
+**Implementation Plan:** See [FUZZY_LOGIC_TODO.md](./FUZZY_LOGIC_TODO.md) for detailed implementation steps.
+
+---
+
+## Previous Session (2026-01-16 - SSH Automation Implemented)
 
 ### CI/CD Pipeline Status (Latest Run: 21057183105)
 - ✅ Passing: Integration Tests, Comprehensive Tests, Real AI API Tests, Linting (after fixes)
@@ -39,12 +146,14 @@
      )
      ```
 
-### Remaining Todo List (for Next Session)
-1. ✅ Fix config file linting issues (DONE)
-2. ✅ Investigate and fix Unit Tests failure (DONE)
-3. ✅ Investigate and fix Docker Build & SSH Test failure (DONE)
-4. ✅ Regenerate User Guide with accurate verified content (DONE - 92 verified scenarios)
+### Completed Todo List (Previous Session)
+1. ✅ Fix config file linting issues (DONE - Session 2)
+2. ✅ Investigate and fix Unit Tests failure (DONE - Session 2)
+3. ✅ Investigate and fix Docker Build & SSH Test failure (DONE - Session 2)
+4. ✅ Regenerate User Guide with accurate verified content (DONE - 96 verified scenarios as of Session 3)
 5. ✅ Implement SSH automation scenarios (DONE - 50 steps implemented, 5/12 scenarios passing)
+6. ✅ POSIX sh compatibility for SSH scripts (DONE - Session 3)
+7. ✅ Fix Quick Checklist hyperlink (DONE - Session 3)
 
 ### SSH Automation Scenarios Status (2026-01-16)
 - **Implemented:** ~50 step definitions in `tests/features/steps/ssh_steps.py`
@@ -85,6 +194,7 @@ These scenarios document the expected behavior and will pass when run in the ful
 - Created `tests/scripts/generate_user_guide.py` - reads Behave JSON, includes ONLY PASSING scenarios
 - Created `tests/generate-user-guide.sh` - runs tests → parses JSON → generates verified guide
 - Deleted unverified generation scripts
+- **Latest Update:** Now includes 96 verified scenarios (up from 92)
 
 **Usage:**
 ```bash
@@ -136,35 +246,7 @@ Since `CONFIGS_DIR` already includes `/docker`, the original path was wrong.
 - Restored `configs/docker/postgres/docker-compose.yml` from yamllint fix commit
 - Restored `configs/docker/rust/docker-compose.yml` and `configs/docker/zig/docker-compose.yml`
 
-### Not Implemented - Tagged @wip
-
-#### 🚧 ssh-agent-automatic-setup.feature
-**Status:** NOT IMPLEMENTED - Entire feature tagged with `@wip`
-
-This feature has ~70 undefined step definitions across 10 scenarios covering:
-- First-time user with no SSH keys
-- First-time user with existing SSH keys
-- User with multiple SSH key types
-- SSH agent setup is silent during normal operations
-- SSH agent restart if not running
-- Viewing SSH status
-- SSH config auto-generation for all VMs
-- Rebuilding VMs preserves SSH configuration
-- Automatic key generation preference
-- Public keys automatically synced to VDE
-- SSH setup works with different SSH clients
-- No manual SSH configuration needed
-
-**Implementation Plan (NEXT SESSION):**
-1. Review existing step definitions in `ssh_steps.py`, `ssh_docker_steps.py`
-2. Identify which steps can be reused/copied
-3. Implement remaining ~70 step definitions
-4. Remove `@wip` tag
-5. Add scenarios to verified User Guide
-
 ---
-
-
 
 ## Test Suite Status
 
@@ -342,4 +424,5 @@ behave features/vm-lifecycle.feature
 Shell Tests:     108 passed, 0 failed ✅
 BDD Scenarios:   2249 passed, 16 failed, 27 error, 147 skipped
 BDD Steps:       1248 undefined → 64 undefined (95% reduction!)
+Verified Scenarios: 96 (as of Session 3)
 ```
