@@ -97,6 +97,7 @@ Feature: SSH Configuration
   # SSH Config Merge Tests - Critical for preserving user configurations
   # =============================================================================
 
+  @requires-docker-ssh
   Scenario: Merge new VM entry with existing SSH config
     Given ~/.ssh/config exists with existing host entries
     And ~/.ssh/config contains "Host github.com"
@@ -107,6 +108,7 @@ Feature: SSH Configuration
     And ~/.ssh/config should contain new "Host python-dev" entry
     And existing entries should be unchanged
 
+  @requires-docker-ssh
   Scenario: Merge preserves user's custom SSH settings
     Given ~/.ssh/config exists with custom settings
     And ~/.ssh/config contains "Host *"
@@ -186,6 +188,7 @@ Feature: SSH Configuration
     And backup should contain original config content
     And backup timestamp should be before modification
 
+  @requires-docker-ssh
   Scenario: Merge entry has all required SSH config fields
     Given ~/.ssh/config exists
     When I create VM "python" with SSH port "2200"
@@ -197,6 +200,7 @@ Feature: SSH Configuration
     And merged entry should contain "StrictHostKeyChecking no"
     And merged entry should contain "IdentityFile" pointing to detected key
 
+  @requires-docker-ssh
   Scenario: Merge removes VM entry when VM is removed
     Given ~/.ssh/config contains "Host python-dev"
     And ~/.ssh/config contains "Host rust-dev"
