@@ -35,35 +35,43 @@
 
 ## 1. Installation
 
-This is the part everyone finds confusing. Let's break it down.
+Hey there! 👋 Ready to set up your awesome new development playground?
+
+Don't worry — we know setup can feel intimidating. But guess what? You're going to do great, and we'll be right here with you every step of the way.
 
 ### What You Need Before Starting
 
+Think of this like checking your backpack before a hike. You only need a few things:
+
 **What you need:**
-- [ ] Docker Desktop installed and running
-- [ ] Git installed (for cloning the repo)
-- [ ] Zsh 5.0+ or Bash 4.0+ (VDE scripts need these)
-- [ ] About 5GB of free disk space
+- [ ] Docker Desktop installed and running (this is the engine that makes everything go)
+- [ ] Git installed (for downloading the VDE code)
+- [ ] Zsh 5.0+ or Bash 4.0+ (fancy names for your terminal — we'll explain!)
+- [ ] About 5GB of free disk space (roughly the size of a few HD movies)
+
+**Don't have these?** No stress! We'll walk you through getting each one. Just find your computer type below and follow along.
 
 ---
 
-## Don't Have These Yet? No Problem!
+## Let's Get You Set Up! 🚀
 
-If you don't have Docker Desktop or git installed yet, don't worry! We'll walk you through installing both, step by step. Just follow the instructions for your computer's operating system (Windows, Mac, or Linux).
+If you don't have Docker Desktop or git installed yet, that's totally fine! We'll hold your hand through the whole process. Just find your section below — Windows, Mac, or Linux — and follow the steps.
+
+You've got this!
 
 ---
 
 ## Installing Docker Desktop
 
-Docker Desktop is the program that runs all your development environments. Think of it as the "engine" that powers your virtual machines.
+Docker Desktop is the magic engine that runs all your development environments. Think of it like the kitchen where all your coding recipes come to life. 🍳
 
 ### For Windows Users
 
 #### Step 1: Check if You Have the Right Version of Windows
 
-Docker Desktop only works on Windows 10 or Windows 11. It also **needs Windows 10/11 Pro, Enterprise, or Education** - it won't work on Windows Home edition (unless you use WSL 2, which we'll cover).
+Docker Desktop likes Windows 10 or Windows 11. It also prefers **Windows 10/11 Pro, Enterprise, or Education** - it's a bit picky about Windows Home edition (but don't worry, we have a workaround!)
 
-**How to check your Windows version:**
+**Let's check what you have:**
 
 1. Press the **Windows key** on your keyboard (or click Start)
 2. Type **"About your PC"** and press Enter
@@ -115,15 +123,15 @@ Docker Desktop only works on Windows 10 or Windows 11. It also **needs Windows 1
    ```
 3. You should see something like `Docker version 24.x.x, build xxxxx`
 
-**Success!** Docker is installed and running.
+**🎉 Awesome!** Docker is installed and ready to go! You're doing great!
 
 ---
 
 ### For macOS (Mac) Users
 
-#### Step 1: Check if Your Mac is Compatible
+#### Step 1: Check if Your Mac is Friendly with Docker
 
-Docker Desktop works on:
+Good news — most modern Macs work beautifully with Docker! It's happy on:
 - **Intel-based Macs**: macOS 11 or newer (Big Sur, Monterey, Ventura, Sonoma, Sequoia)
 - **Apple Silicon Macs** (M1/M2/M3 chips): macOS 11 or newer
 
@@ -179,17 +187,17 @@ Docker Desktop works on:
    ```
 3. You should see something like `Docker version 24.x.x, build xxxxx`
 
-**Success!** Docker is installed and running on your Mac.
+**✨ Perfect!** Docker is all set up on your Mac! Looking good!
 
 ---
 
 ### For Linux Users
 
-Docker Desktop on Linux works with Ubuntu, Debian, Fedora, and many other distributions.
+Linux users — you're our kind of people! 🐧 Docker Desktop plays nicely with Ubuntu, Debian, Fedora, and many other distributions.
 
-#### Step 1: Check Your Linux Distribution
+#### Step 1: Let's See Which Linux Flavor You Have
 
-First, let's find out which Linux you're using:
+First, let's check which distribution you're rocking:
 
 1. Open your **Terminal** (press Ctrl+Alt+T)
 2. Type this command and press Enter:
@@ -268,13 +276,13 @@ docker --version
 
 You should see something like `Docker version 24.x.x, build xxxxx`
 
-**Success!** Docker is installed and running on Linux.
+**🔥 Boom!** Docker is running on Linux! You're on fire!
 
 ---
 
 ## Installing Git
 
-Git is a tool for downloading code from the internet (like the VDE code). You'll need it to get VDE onto your computer.
+Git is like a digital delivery truck — it downloads code from the internet (like the VDE code) right to your computer. Handy little thing! 📦
 
 ### For Windows Users
 
@@ -308,7 +316,7 @@ Git is a tool for downloading code from the internet (like the VDE code). You'll
    ```
 3. You should see something like `git version 2.43.0.windows.1`
 
-**Success!** Git is installed on Windows.
+**🎊 Sweet!** Git is ready to go on Windows! Halfway there!
 
 ---
 
@@ -316,7 +324,7 @@ Git is a tool for downloading code from the internet (like the VDE code). You'll
 
 #### The Good News: You Might Already Have Git!
 
-Git comes built-in on macOS. Let's check first:
+Macs come with Git built-in! Let's check if you're all set:
 
 1. Open **Terminal** (press Command+Space, type "Terminal", press Enter)
 2. Type this and press Enter:
@@ -362,7 +370,7 @@ In Terminal, type:
 git --version
 ```
 
-You should see a version number. **Success!**
+You should see a version number. **✅ Done!** You've got Git!
 
 ---
 
@@ -370,7 +378,7 @@ You should see a version number. **Success!**
 
 #### The Good News: Most Linux Has Git Already!
 
-Let's check if you already have it:
+Linux is usually prepared for everything. Let's see:
 
 1. Open your terminal
 2. Type:
@@ -409,18 +417,20 @@ In your terminal, type:
 git --version
 ```
 
-You should see a version number. **Success!**
+You should see a version number. **✅ You're set!**
 
 ---
 
 ## Installing Zsh and Bash
 
-VDE scripts require a modern shell to work properly. You need either **Zsh 5.0+** or **Bash 4.0+**. Don't worry - we'll show you how to install them if you don't have them yet.
+Okay, quick confession: "shell" is just a fancy name for the program that runs in your terminal and understands your commands. VDE needs a modern one — specifically **Zsh 5.0+** or **Bash 4.0+**. Sound scary? Don't worry, we'll sort you out!
 
-**Why do I need this?**
-- VDE's management scripts are written in shell and need modern features
-- Older versions of Bash (before 4.0) don't support the features we use
-- Zsh is the default on modern Macs and works great with VDE
+**Why does VDE need this?**
+- VDE's commands are written in shell language (fancy nerd talk for "scripts that run in your terminal")
+- Older shells don't understand some of the cool tricks we use
+- The good news: Zsh comes standard on modern Macs, and most Linux has modern Bash
+
+Think of it like VDE speaks a specific dialect, and we need to make sure your terminal understands it! 🗣️
 
 ### For Windows Users
 
@@ -656,9 +666,9 @@ Log out and log back in for the change to take effect.
 
 ---
 
-## Quick Checklist: Are You Ready?
+## Quick Checklist: Are You Ready? 🎯
 
-Before moving on, let's make sure everything is installed:
+Let's do a quick victory lap before we move on! Open your terminal and run these commands:
 
 **Open your terminal (PowerShell on Windows, Terminal on Mac/Linux) and run:**
 
@@ -674,19 +684,20 @@ docker ps
 ```
 
 **What you should see:**
-- `docker --version` → Shows Docker version number
-- `git --version` → Shows Git version number
-- `docker ps` → Shows a list of containers (may be empty, that's OK!)
+- `docker --version` → Shows Docker version number (like "Docker version 24.x.x")
+- `git --version` → Shows Git version number (like "git version 2.x.x")
+- `docker ps` → Shows a list of containers (might be empty, and that's totally okay!)
 
 **If `docker ps` gives an error like "Cannot connect to the Docker daemon":**
-- Docker Desktop isn't running - start it from your applications
-- Wait for the whale icon to stop spinning before trying again
+- Docker Desktop probably isn't running — just start it from your applications
+- Wait for the whale icon to stop spinning (it's thinking! 🐳)
+- Then try again
 
 ---
 
-## Need Help?
+## Stuck? We Can Help! 🆘
 
-If you run into trouble installing Docker, Git, or shells:
+If you run into any hiccups installing Docker, Git, or shells:
 
 1. **Docker won't start?** Make sure your computer is compatible and you've restarted after installation
 2. **Can't find the terminal?**
@@ -697,7 +708,7 @@ If you run into trouble installing Docker, Git, or shells:
 4. **Shell not found?** On Windows, make sure you installed Git for Windows - it includes Git Bash
 5. **Version too old?** On macOS, use Homebrew to install the latest version. On Linux, use your package manager
 
-Once Docker, Git, and a modern shell are installed and working, you're ready to continue with the VDE setup!
+Once Docker, Git, and a modern shell are installed and working, you're ready for the fun part! You've made it through the setup — you're awesome! 🌟
 
 ---
 
@@ -711,7 +722,7 @@ When I clone the VDE repository to ~/dev
 Then VDE files should be in place
 ```
 
-**Open your terminal and run:**
+**Let's download VDE! Open your terminal and run:**
 ```bash
 # Clone the repository
 git clone <repo-url> ~/dev
@@ -760,11 +771,15 @@ And postgres, redis, mongodb, nginx should be listed
 ```
 
 **Expected output:** You should see a list of available language and service VMs.
+
+**Woohoo! 🎉** You're all set up and ready to go!
 ---
 
 ## 2. SSH Keys
 
-This is automatic, but you should understand what's happening.
+### SSH Keys? Automatic! 🔑
+
+Here's some good news: VDE handles SSH keys for you automatically. We wanted to mention this so you know what's happening, but you don't need to do anything. It's like magic! ✨
 
 ### Automatic SSH Key Generation
 
@@ -802,86 +817,14 @@ And I can connect using simple names like "python-dev"
 - Copy keys to VMs
 - Set up SSH agent forwarding
 
-**VDE does all of this for you.**
+**VDE does all of this for you.** Sit back and relax! ☕
 ---
 
 ## 3. Your First VM
 
-## Meet vde: Your New Best Friend
+## Let's Create Your First VM! 🎉
 
-Before we create your first VM, let's introduce you to the star of the show.
-
-### You Might Notice Something Weird...
-
-As you read through this guide, you'll see scenarios that look like this:
-
-```
-When I run "create-virtual-for python"
-```
-
-But then the actual command we show you is:
-
-```bash
-./scripts/vde create python
-```
-
-**What's going on?** Are we trying to confuse you? Nope!
-
-### Here's the Secret
-
-VDE has a bunch of specialized scripts that do specific things:
-- `create-virtual-for` — Creates new VMs
-- `start-virtual` — Starts VMs
-- `shutdown-virtual` — Stops VMs
-- `list-vms` — Lists all your VMs
-- And more...
-
-**But memorizing all those?** Ugh. No thanks.
-
-### Enter: vde — Your Go-To Guy
-
-The `vde` command is like having a personal assistant who knows exactly which script to run for you. You just tell it what you want in plain English:
-
-```bash
-./scripts/vde create python    # "Hey vde, create a Python VM"
-./scripts/vde start rust      # "Hey vde, start that Rust VM"
-./scripts/vde stop all         # "Hey vde, stop everything"
-./scripts/vde list             # "Hey vde, what's running?"
-```
-
-And vde goes and runs the right script for you. Like magic! ✨
-
-### Why Do the Scenarios Show the Script Names Then?
-
-Great question! The scenarios (those Given-When-Then blocks) show what's *actually happening under the hood*. They're like a behind-the-scenes look at how VDE works.
-
-Think of it like a restaurant:
-- **The scenarios** are like watching in the kitchen — you see the chef chopping, sautéing, plating.
-- **The vde command** is like ordering from the menu — you just say "I want the pasta" and it appears!
-
-### What You Should Remember
-
-| Forget About | Use This Instead |
-|--------------|------------------|
-| `create-virtual-for` | `vde create` |
-| `start-virtual` | `vde start` |
-| `shutdown-virtual` | `vde stop` |
-| `list-vms` | `vde list` |
-
-**That's it.** One command to rule them all.
-
-### tl;dr
-
-- The scenarios show the behind-the-scenes scripts (technical details)
-- You use the `vde` command (easy mode)
-- vde calls those scripts for you, so you don't have to remember which is which
-- vde is your go-to guy. Treat it well. Maybe buy it a coffee sometime. ☕
-
-Now that you know your new best friend, let's create your first VM!
-
----
-
-Let's create your first development environment. We'll start with Python because it's the most common language for beginners.
+You've made it through the setup. That's huge! Now for the fun part — creating your first development environment. We'll start with Python because it's friendly and popular. Perfect for beginners!
 
 ### Creating Your Python VM
 
@@ -908,6 +851,82 @@ And projects/python directory should be created
 - "SSH config entry created" message
 - "Your Python VM is ready" message
 
+**🎊 Exciting!** Your Python VM is being created!
+
+### Meet vde: Your New Best Friend 🤝
+
+Quick — before we start this VM, let's introduce your new best friend!
+
+**You might notice something weird...**
+
+As you read through this guide, you'll see scenarios that say things like:
+
+```
+When I run "create-virtual-for python"
+```
+
+But then the actual command we show you is:
+
+```bash
+./scripts/vde create python
+```
+
+**What's going on?** Are we trying to confuse you? Nope!
+
+### Here's the Secret 🤫
+
+VDE has a bunch of specialized scripts that do specific things:
+- `create-virtual-for` — Creates new VMs
+- `start-virtual` — Starts VMs
+- `shutdown-virtual` — Stops VMs
+- `list-vms` — Lists all your VMs
+- And more...
+
+**But memorizing all those?** Ugh. Who has time for that?
+
+### Enter: vde — Your Go-To Guy 🦸
+
+The `vde` command is like having a personal assistant who knows exactly which script to run. You just tell it what you want:
+
+```bash
+./scripts/vde create python    # "Hey vde, create a Python VM"
+./scripts/vde start rust      # "Hey vde, start that Rust VM"
+./scripts/vde stop all         # "Hey vde, stop everything"
+./scripts/vde list             # "Hey vde, what's running?"
+```
+
+And vde goes and runs the right script for you. Like magic! ✨
+
+### Why Do the Scenarios Show Script Names Then?
+
+Great question! The scenarios (those Given-When-Then blocks) show what's *actually happening under the hood*. They're like a behind-the-scenes look at how VDE works.
+
+Think of it like a restaurant:
+- **The scenarios** are like watching in the kitchen — you see the chef chopping, sautéing, plating
+- **The vde command** is like ordering from the menu — you just say "I want the pasta" and it appears!
+
+### What You Should Remember
+
+| Forget About | Use This Instead |
+|--------------|------------------|
+| `create-virtual-for` | `vde create` |
+| `start-virtual` | `vde start` |
+| `shutdown-virtual` | `vde stop` |
+| `list-vms` | `vde list` |
+
+**That's it!** One command to remember. Easy, right?
+
+### tl;dr
+
+- The scenarios show the behind-the-scenes scripts (technical details)
+- You use the `vde` command (easy mode)
+- vde calls those scripts for you automatically
+- vde is your go-to guy. Maybe buy it a coffee sometime. ☕
+
+---
+
+**Now let's get your Python VM running!**
+
 ### Starting Your First VM
 
 **Scenario: Starting the Python VM**
@@ -929,11 +948,15 @@ And I should be able to SSH to "python-dev"
 - SSH port 2200 is allocated
 - Your projects/python directory is mounted
 - You're ready to code!
+
+**🚀 You're off to the races!**
 ---
 
 ## 4. Understanding
 
-Let's verify everything works and understand the pieces.
+### Let's See What You Built! 🔍
+
+You just created your first VM! That's honestly kind of a big deal. Give yourself a pat on the back! Let's make sure everything is working and understand what you now have.
 
 ### Check That Your VM is Running
 
@@ -979,7 +1002,9 @@ And the directory should be mounted in the VM
 
 ## 5. Starting and Stopping
 
-Daily workflow: starting when you work, stopping when done.
+### Daily Rhythm: Start, Code, Stop, Repeat 🔄
+
+Here's your daily workflow with VDE — simple as can be!
 
 ### Starting Your VM
 
@@ -1014,21 +1039,23 @@ And the configuration should remain for next time
 ./scripts/vde stop python
 ```
 
-**Important:** Stopping doesn't delete your VM - it just stops the container. Your code and configurations are safe.
+**Important:** Stopping doesn't delete your VM — it just pauses it. Your code and configurations are safe and sound! 💾
 ---
 
 ## 6. Your First Cluster
 
-Now let's build a real application stack. This is where VDE shines.
+### Time to Build Something Real! 🏗️
 
-### Understanding What We're Building
+Now let's build a real application stack. This is where VDE really shines — you can have multiple VMs working together like a well-oiled machine.
 
-You'll have:
-- **Python VM** - Your application code (port 2200)
-- **PostgreSQL VM** - Your database (port 2400)
-- **Redis VM** - Your cache (port 2401)
+### What We're Building
 
-All three can talk to each other automatically.
+You'll have a complete tech stack:
+- **Python VM** — Your application code (port 2200)
+- **PostgreSQL VM** — Your database (port 2400)
+- **Redis VM** — Your cache (port 2401)
+
+All three can talk to each other automatically. No networking headaches required!
 
 ### Creating Your Service VMs
 
@@ -1094,7 +1121,9 @@ redis       service     running   2401
 
 ## 7. Connecting
 
-### Connecting to Your Python VM
+### Step Inside Your VM! 🚪
+
+Ready to step into your development environment? Let's SSH in and see what's waiting for you!
 
 **Scenario: SSH into your development environment**
 
@@ -1113,12 +1142,13 @@ ssh python-dev
 **You're now inside your VM!** You can:
 - Run Python code
 - Install packages
-- Edit files in projects/python/
-- Access postgres and redis
+- Edit files in `projects/python/`
+- Access postgres and redis seamlessly
+- Feel like a pro developer (because you are one!) 🌟
 
 ### Exiting a VM
 
-**To exit:** Just type `exit` or press `Ctrl+D`
+**To leave:** Just type `exit` or press `Ctrl+D`. The door is always open!
 
 ### Connection Reference
 
@@ -1138,7 +1168,9 @@ ssh python-dev
 
 ## 8. Working with Databases
 
-### Connecting to PostgreSQL from Your Python VM
+### Databases? No Problem! 🗄️
+
+VDE makes working with databases delightfully simple. Your Python VM can talk to PostgreSQL as easily as if it were running on the same machine (because, well, virtually it is!).
 
 **Scenario: Connecting from Python to PostgreSQL**
 
@@ -1177,12 +1209,16 @@ And I reconnect to PostgreSQL
 Then my tables should still exist
 ```
 
-**Important:** Database data in `~/dev/data/postgres/` persists even when you rebuild VMs. Your data is safe.
+**Important:** Database data in `~/dev/data/postgres/` persists even when you rebuild VMs. Your precious data is safe and sound! 💾
 ---
 
 ## 9. Daily Workflow
 
-### Morning Routine: Start Your Development Environment
+### Your Daily Rhythm: Start, Code, Stop 🔄
+
+Here's how your day with VDE will flow. Nice and simple!
+
+### Morning Routine: Start Your Engines
 
 **Scenario: Starting all your VMs at once**
 
@@ -1198,7 +1234,7 @@ And I can start working immediately
 ./scripts/vde start python postgres redis
 ```
 
-### During the Day: Check What's Running
+### During the Day: Check In on Your VMs
 
 **Scenario: Checking VM status**
 
@@ -1214,7 +1250,7 @@ And their status should be clear
 ./scripts/vde list
 ```
 
-### End of Day: Stop Everything
+### End of Day: Shut It Down
 
 **Scenario: Clean shutdown**
 
@@ -1229,11 +1265,15 @@ And my work is saved
 ```bash
 ./scripts/vde stop all
 ```
+
+**Good night, VDE!** See you tomorrow! 🌙
 ---
 
 ## 10. Adding More Languages
 
-### Creating a Second Language VM
+### Want to Learn More Languages? 🌍
+
+One of the beautiful things about VDE is how easy it is to try new languages! No installation headaches — just create a VM and start coding. Let's add another language to your collection!
 
 **Scenario: Adding Rust to your environment**
 
@@ -1267,9 +1307,15 @@ And I can switch between them
 ```bash
 ./scripts/vde start python rust js
 ```
+
+**Polyglot programmer?** Why not! 😎
 ---
 
 ## 11. Troubleshooting
+
+### Hiccups Happen — We've Got Your Back! 🛠️
+
+Sometimes things don't work perfectly the first time. That's okay! Here's how to handle common issues.
 
 ### Problem: A VM Won't Start
 
@@ -1313,9 +1359,9 @@ And the new package should be available
 ```
 ---
 
-## Quick Reference Card
+## Quick Reference Card 📇
 
-### Essential Commands
+### Essential Commands (Your Cheat Sheet!)
 
 ```bash
 # See what VMs are available
@@ -1333,7 +1379,7 @@ And the new package should be available
 # Stop everything
 ./scripts/vde stop all
 
-# Rebuild a VM
+# Rebuild a VM (when you make config changes)
 ./scripts/vde start <vm> --rebuild
 ```
 
@@ -1395,21 +1441,26 @@ ssh nginx          # Nginx web server
 
 ---
 
-## You're Ready!
+## You're Ready! 🎉
 
-**You now have:**
-- ✅ VDE installed and configured
-- ✅ SSH keys set up automatically
-- ✅ Your first VM created
-- ✅ Understanding of starting/stopping
-- ✅ A full cluster (Python + PostgreSQL + Redis)
-- ✅ Knowledge of how to troubleshoot
+Look at you go! You now have:
+- ✅ VDE installed and configured (you did it!)
+- ✅ SSH keys set up automatically (no manual work!)
+- ✅ Your first VM created (how cool is that?)
+- ✅ Understanding of starting/stopping (like a pro!)
+- ✅ A full cluster ready (Python + PostgreSQL + Redis)
+- ✅ Knowledge to troubleshoot hiccups (you've got this!)
 
-**Next steps:**
+**What's Next?** 🚀
+
 1. Create your first project in `projects/python/`
-2. Start coding!
-3. Add more languages as you need them
+2. Start coding something amazing!
+3. Add more languages whenever you want (Rust? Go? Elixir? They're waiting for you!)
+
+**Remember:** You're learning valuable skills here. Every command you run, every VM you create — you're becoming a better developer. Be proud of yourself!
 
 ---
 
 *This guide is generated from BDD test scenarios that have been verified to PASS. Every workflow shown here has been tested and verified to work. If you follow these steps, they will work for you.*
+
+**Now go build something awesome!** 💪✨
