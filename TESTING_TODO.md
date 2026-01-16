@@ -1,8 +1,126 @@
 # VDE Testing TODO
 
-**Last Updated:** 2026-01-15 (late evening)
+**Last Updated:** 2026-01-16 (mid-night)
 
 ---
+
+## 🚨 Current Session (2026-01-16)
+
+### CI/CD Pipeline Status
+- ✅ All individual CI jobs **PASSED**:
+  - Linting ✅
+  - Unit Tests ✅
+  - Integration Tests ✅
+  - Comprehensive Tests ✅
+  - Docker Build & SSH Test ✅
+  - Real AI API Tests ✅
+  - Code Coverage ✅
+  - BDD Feature Tests ✅
+- ⚠️ Overall status shows "failure" due to warnings (needs investigation)
+- CI Link: https://github.com/dderyldowney/vde-system/actions
+
+### Fixes Completed This Session
+
+#### 1. Host Config Protection ✅
+**Problem:** BDD tests were deleting host configs (e.g., `configs/docker/python/docker-compose.yml`)
+
+**Solution:**
+- Changed BDD test mount from `-v "$PROJECT_ROOT:/vde:rw"` to using COPIED files from Docker image
+- Created `tests/workspace/` for test-specific artifacts
+- Updated both local (`tests/run-bdd-tests.sh`) and CI (`.github/workflows/vde-ci.yml`)
+- Restored accidentally deleted `configs/docker/python/docker-compose.yml`
+
+**Files Changed:**
+- `tests/run-bdd-tests.sh` (lines 196-207)
+- `.github/workflows/vde-ci.yml` (lines 613-631)
+
+#### 2. Verified User Guide Generation ✅
+**Problem:** User guide claimed all examples were "tested and verified" but it just read .feature files directly
+
+**Solution:**
+- Created `tests/scripts/generate_user_guide.py` - reads Behave JSON, includes ONLY PASSING scenarios
+- Created `tests/generate-user-guide.sh` - runs tests → parses JSON → generates verified guide
+- Deleted unverified generation scripts
+
+**Usage:**
+```bash
+./tests/generate-user-guide.sh              # Run all tests, generate verified guide
+./tests/generate-user-guide.sh --skip-docker-host   # Skip Docker host tests (for CI)
+```
+
+#### 3. Docker Host Tests Tagged and Skipped ✅
+**Problem:** BDD scenarios for start/stop/restart can't pass in Docker-in-Docker
+
+**Solution:**
+- Added `@requires-docker-host` tag to 8 scenarios:
+  - "Start a created VM"
+  - "Start multiple VMs"
+  - "Start all VMs"
+  - "Stop a running VM"
+  - "Stop all running VMs"
+  - "Restart a VM"
+  - "Rebuild a VM with --rebuild flag"
+  - "Stop all VMs at once" (ai-assistant-workflow.feature)
+- These are now **skipped by default** in both local and CI tests
+- Shell test suite (`tests/integration/docker-vm-lifecycle.test.sh`) covers these scenarios
+
+**Usage:**
+```bash
+./tests/run-bdd-tests.sh              # Skips @requires-docker-host by default
+./tests/run-bdd-tests.sh --include-docker   # Try to run all (will fail in Docker-in-Docker)
+```
+
+#### 4. Bug Fix: remove-virtual Script ✅
+**Problem:** Script had path bug with extra `/docker/` in COMPOSE_FILE path
+
+**Fix:** Changed from:
+```bash
+COMPOSE_FILE="$CONFIGS_DIR/docker/$VM_NAME/docker-compose.yml"
+```
+To:
+```bash
+COMPOSE_FILE="$CONFIGS_DIR/$VM_NAME/docker-compose.yml"
+```
+
+Since `CONFIGS_DIR` already includes `/docker`, the original path was wrong.
+
+#### 5. Config Files Restored ✅
+**Problem:** Accidental modifications to production configs
+
+**Fixed:**
+- Restored `configs/docker/python/docker-compose.yml` from initial commit
+- Restored `configs/docker/postgres/docker-compose.yml` from yamllint fix commit
+- Restored `configs/docker/rust/docker-compose.yml` and `configs/docker/zig/docker-compose.yml`
+
+### Not Implemented - Tagged @wip
+
+#### 🚧 ssh-agent-automatic-setup.feature
+**Status:** NOT IMPLEMENTED - Entire feature tagged with `@wip`
+
+This feature has ~70 undefined step definitions across 10 scenarios covering:
+- First-time user with no SSH keys
+- First-time user with existing SSH keys
+- User with multiple SSH key types
+- SSH agent setup is silent during normal operations
+- SSH agent restart if not running
+- Viewing SSH status
+- SSH config auto-generation for all VMs
+- Rebuilding VMs preserves SSH configuration
+- Automatic key generation preference
+- Public keys automatically synced to VDE
+- SSH setup works with different SSH clients
+- No manual SSH configuration needed
+
+**Implementation Plan (NEXT SESSION):**
+1. Review existing step definitions in `ssh_steps.py`, `ssh_docker_steps.py`
+2. Identify which steps can be reused/copied
+3. Implement remaining ~70 step definitions
+4. Remove `@wip` tag
+5. Add scenarios to verified User Guide
+
+---
+
+
 
 ## Test Suite Status
 
