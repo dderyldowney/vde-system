@@ -1,6 +1,6 @@
 # VDE Testing TODO
 
-**Last Updated:** 2026-01-15 (evening)
+**Last Updated:** 2026-01-15 (late evening)
 
 ---
 
@@ -43,6 +43,24 @@
 - All step definitions use proper format with single quotes
 - No duplicate step definition errors
 
+### ✅ BDD Steps Reorganized to Semantic Homes
+- **Deleted** monolithic `bdd_undefined_steps.py` (7,235 lines)
+- **Distributed** all 1,029 step definitions to appropriate semantic files:
+  - `vm_lifecycle_steps.py` (+100 steps) - VM creation, start, stop, rebuild
+  - `pattern_steps.py` (+50 steps) - Templates, error handling
+  - `ssh_steps.py` (+47 steps) - SSH config, keys, agent
+  - `ssh_docker_steps.py` (+193 steps) - Docker operations
+  - `customization_steps.py` (+354 steps) - Custom VM types
+  - `installation_steps.py` (+95 steps) - Installation, setup
+  - `help_steps.py` (+17 steps) - List VMs, status
+  - `cache_steps.py` (+85 steps) - Cache operations
+  - `productivity_steps.py` (+52 steps) - Team collaboration
+  - `daily_workflow_steps.py` (+15 steps) - Daily patterns
+  - `ai_steps.py` (+95 steps) - AI command parsing
+  - `tests/shared/steps/common_steps.py` (NEW) - Shared utility steps
+- **Improved** codebase organization and maintainability
+- Each step is now located in the file matching its semantic purpose
+
 ---
 
 ## Remaining Work
@@ -52,7 +70,7 @@
 #### 1. Undefined BDD Steps (64 steps remaining)
 **Status:** ⚠️ 95% complete - only 64 undefined steps remain
 
-Originally had 1248 undefined steps. Created `bdd_undefined_steps.py` with 1,029 step definitions, reducing undefined steps to just 64.
+Originally had 1248 undefined steps. Implemented 1,029 step definitions distributed across semantic files, reducing undefined steps to just 64.
 
 **Remaining 64 undefined steps** are mostly edge cases and specialized scenarios:
 - Template rendering edge cases (placeholder validation)
@@ -154,7 +172,7 @@ behave features/vm-lifecycle.feature
 ### Test File Locations
 - **Shell tests:** `tests/*.test.sh`, `tests/unit/*.test.sh`
 - **BDD features:** `tests/features/*.feature`
-- **Step definitions:** `tests/features/steps/*.py`
+- **Step definitions:** `tests/features/steps/*.py`, `tests/shared/steps/*.py`
 - **Test configs:** `tests/behave.ini`
 
 ### Test Results Summary
