@@ -15,6 +15,10 @@
      - [For Windows Users](#for-windows-users-1)
      - [For macOS (Mac) Users](#for-macos-mac-users-1)
      - [For Linux Users](#for-linux-users-1)
+   - [Installing Zsh and Bash](#installing-zsh-and-bash)
+     - [For Windows Users](#for-windows-users-2)
+     - [For macOS (Mac) Users](#for-macos-mac-users-2)
+     - [For Linux Users](#for-linux-users-2)
    - [Quick Checklist: Are You Ready?](#quick-checklist:-are-you-ready)
 2. [2. SSH Keys](#2.-ssh-keys)
 3. [3. Your First VM](#3.-your-first-vm)
@@ -38,6 +42,7 @@ This is the part everyone finds confusing. Let's break it down.
 **What you need:**
 - [ ] Docker Desktop installed and running
 - [ ] Git installed (for cloning the repo)
+- [ ] Zsh 5.0+ or Bash 4.0+ (VDE scripts need these)
 - [ ] About 5GB of free disk space
 
 ---
@@ -405,6 +410,249 @@ git --version
 ```
 
 You should see a version number. **Success!**
+
+---
+
+## Installing Zsh and Bash
+
+VDE scripts require a modern shell to work properly. You need either **Zsh 5.0+** or **Bash 4.0+**. Don't worry - we'll show you how to install them if you don't have them yet.
+
+**Why do I need this?**
+- VDE's management scripts are written in shell and need modern features
+- Older versions of Bash (before 4.0) don't support the features we use
+- Zsh is the default on modern Macs and works great with VDE
+
+### For Windows Users
+
+#### The Good News: Git for Windows Includes Bash!
+
+If you installed Git for Windows (which you did in the previous section), you **already have Bash**! Git for Windows includes a program called "Git Bash" that gives you a modern Bash shell.
+
+**How to check if you have it:**
+
+1. Press the **Windows key** and type **"Git Bash"**
+2. If you see "Git Bash" in the results, click it to open
+3. A terminal window will open - this is your Bash shell!
+4. Type this and press Enter:
+   ```
+   bash --version
+   ```
+5. You should see something like `GNU bash, version 5.x.x` - this is perfect!
+
+**If you don't see Git Bash:**
+- Reinstall Git for Windows using the instructions from the "Installing Git" section
+- Make sure to select "Git Bash" as one of the components during installation
+
+#### Installing Zsh on Windows (Optional)
+
+Zsh is available on Windows through WSL (Windows Subsystem for Linux):
+
+**If you already have WSL installed (from the Docker section):**
+
+1. Open **PowerShell** and run:
+   ```
+   wsl
+   ```
+2. Once in WSL, install Zsh:
+   ```bash
+   sudo apt-get update
+   sudo apt-get install zsh
+   ```
+3. Check the version:
+   ```bash
+   zsh --version
+   ```
+4. You should see something like `zsh 5.x.x or greater`
+
+**If you don't have WSL:**
+- Don't worry! Git Bash is sufficient for VDE
+- You can install WSL later if you want to use Zsh
+
+#### What Shell Should You Use?
+
+**For VDE on Windows:**
+- **Git Bash** (recommended) - Already installed with Git, works great
+- **WSL + Zsh** (optional) - More powerful, but requires WSL setup
+
+---
+
+### For macOS (Mac) Users
+
+#### The Good News: You Almost Certainly Already Have Zsh!
+
+Modern macOS comes with Zsh as the default shell (since macOS Catalina).
+
+**How to check what shell you have:**
+
+1. Open **Terminal** (press Command+Space, type "Terminal", press Enter)
+2. Check if Zsh is running by default:
+   ```
+   echo $SHELL
+   ```
+3. If you see `/bin/zsh`, you're already using Zsh - great!
+4. Check the Zsh version:
+   ```
+   zsh --version
+   ```
+5. You should see `zsh 5.x.x or greater` - this is perfect!
+
+#### If You Need to Install or Update Zsh
+
+**Check if you need an update:**
+```bash
+zsh --version
+```
+
+If the version is less than 5.0, or if Zsh isn't installed:
+
+**Option 1: Use Homebrew (Easiest)**
+
+1. If you have Homebrew (from the Git section), install the latest Zsh:
+   ```bash
+   brew install zsh
+   ```
+
+2. Set Zsh as your default shell:
+   ```bash
+   chsh -s /bin/zsh
+   ```
+   (You'll need to enter your password)
+
+3. Close and reopen Terminal - you're now using Zsh!
+
+**Option 2: macOS Already Has Zsh (Just Need to Switch)**
+
+If Zsh is installed but not your default:
+
+1. Check if Zsh exists:
+   ```bash
+   ls /bin/zsh
+   ```
+2. If it exists, switch to it:
+   ```bash
+   chsh -s /bin/zsh
+   ```
+3. Close and reopen Terminal
+
+#### Installing Bash on macOS (Optional)
+
+macOS comes with Bash, but it's an older version (3.2.x). For VDE, you can use either Zsh or install a modern Bash.
+
+**If you want the latest Bash:**
+
+```bash
+brew install bash
+```
+
+Check the version:
+```bash
+brew list bash | grep bin
+# This shows where bash is installed, usually /usr/local/bin/bash
+/usr/local/bin/bash --version
+```
+
+You should see `bash 5.x.x or greater`
+
+#### What Shell Should You Use?
+
+**For VDE on macOS:**
+- **Zsh** (recommended) - Already installed, modern, and is the macOS default
+- **Bash** (optional) - Install via Homebrew if you prefer Bash
+
+---
+
+### For Linux Users
+
+#### Check What You Already Have
+
+Most modern Linux distributions come with modern versions of Bash and Zsh pre-installed.
+
+**Check your Bash version:**
+```bash
+bash --version
+```
+
+**Check if Zsh is installed:**
+```bash
+zsh --version
+```
+
+**What you should see:**
+- Bash: `version 4.0 or greater` (most Linux has 4.x or 5.x)
+- Zsh: `version 5.0 or greater` (if installed)
+
+#### If You Need to Install or Upgrade
+
+**For Ubuntu/Debian:**
+
+```bash
+# Install or update Bash
+sudo apt-get update
+sudo apt-get install bash
+
+# Install Zsh
+sudo apt-get install zsh
+```
+
+**For Fedora:**
+
+```bash
+# Install or update Bash
+sudo dnf install bash
+
+# Install Zsh
+sudo dnf install zsh
+```
+
+**For CentOS/Red Hat:**
+
+```bash
+# Install or update Bash
+sudo yum install bash
+
+# Install Zsh
+sudo yum install zsh
+```
+
+**For Arch Linux:**
+
+```bash
+# Install or update Bash
+sudo pacman -S bash
+
+# Install Zsh
+sudo pacman -S zsh
+```
+
+#### Verify Your Installation
+
+**Check Bash version:**
+```bash
+bash --version
+# Should show 4.0 or greater
+```
+
+**Check Zsh version:**
+```bash
+zsh --version
+# Should show 5.0 or greater
+```
+
+#### Make Zsh Your Default Shell (Optional)
+
+If you want to use Zsh instead of Bash as your daily shell:
+
+```bash
+chsh -s $(which zsh)
+```
+
+Log out and log back in for the change to take effect.
+
+#### What Shell Should You Use?
+
+**For VDE on Linux:**
+- **Bash** (recommended) - Almost certainly already installed and modern
+- **Zsh** (optional) - Install if you prefer Zsh's features
 
 ---
 
