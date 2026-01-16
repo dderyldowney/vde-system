@@ -1,6 +1,6 @@
-# Why VDE? Your Development Environment, Simplified.
+<p align="center"><img src="imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-![Developer working peacefully](imgs/coding-coffee.jpg)
+# Why VDE? Your Development Environment, Simplified.
 
 *Imagine having every programming language, every database, every tool you need—all ready to go in seconds. No installation headaches. No version conflicts. No "works on my machine" problems. Just pure development flow.*
 
