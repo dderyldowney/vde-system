@@ -1,56 +1,17 @@
-#!/usr/bin/env sh
+#!/usr/bin/env zsh
 # VDE SSH Agent Setup
 # Automatically sets up SSH keys, agent, and configuration
-# Compatible with bash 4.0+ and zsh 5.0+
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib/vm-common"
 
-# Detect shell
-if [ -n "${ZSH_VERSION:-}" ]; then
-    IS_ZSH=true
-else
-    IS_ZSH=false
-fi
-
-# Helper: Count items in a space-separated list
-_count_items() {
-    local list="$1"
-    local count=0
-    for item in $list; do
-        [ -n "$item" ] && count=$((count + 1))
-    done
-    echo "$count"
-}
-
-# Helper: Get basename (portable)
-_basename() {
-    local path="$1"
-    echo "${path##*/}"
-}
-
-# Helper: Get array element by index (1-based for zsh compatibility)
-_get_item() {
-    local list="$1"
-    local idx="$2"
-    local i=0
-    for item in $list; do
-        [ -n "$item" ] || continue
-        i=$((i + 1))
-        if [ "$i" -eq "$idx" ]; then
-            echo "$item"
-            return
-        fi
-    done
-}
-
 # Parse command line arguments
 ACTION="status"
 FORCE_GENERATE=false
 
-while [ $# -gt 0 ]; do
+while [[ $# -gt 0 ]]; do
     case $1 in
         --init|-i)
             ACTION="init"
@@ -93,7 +54,7 @@ done
 # ==============================================================================
 # Status Display Mode (default)
 # ==============================================================================
-if [ "$ACTION" = "status" ]; then
+if [[ "$ACTION" == "status" ]]; then
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"
     echo "║          VDE SSH Agent Status                            ║"
@@ -119,19 +80,17 @@ if [ "$ACTION" = "status" ]; then
 
     # Available SSH Keys
     echo "Available SSH keys:"
-    keys=$(detect_ssh_keys)
-    key_count=$(_count_items "$keys")
+    local -a keys
+    keys=("${(@f)$(detect_ssh_keys)}")
 
-    if [ "$key_count" -eq 0 ]; then
+    if [[ ${#keys[@]} -eq 0 ]]; then
         echo "  (none found)"
         echo "  Run: $0 --init  to generate keys and set up SSH"
-    elif [ "$key_count" -eq 1 ]; then
-        for key in $keys; do
-            echo "  ✓ $(_basename "$key")"
-        done
+    elif [[ ${#keys[@]} -eq 1 ]]; then
+        echo "  ✓ ${keys[1]:t}"
     else
-        for key in $keys; do
-            echo "  ✓ $(_basename "$key")"
+        for key in "${keys[@]}"; do
+            echo "  ✓ ${key:t}"
         done
     fi
 
@@ -140,8 +99,9 @@ if [ "$ACTION" = "status" ]; then
     # Keys loaded in agent
     if ssh_agent_is_running; then
         echo "Keys loaded in agent:"
+        local key_count
         key_count=$(ssh-add -l 2>/dev/null | wc -l | tr -d ' ')
-        if [ "$key_count" -gt 0 ] 2>/dev/null; then
+        if [[ $key_count -gt 0 ]]; then
             ssh-add -l 2>/dev/null
         else
             echo "  (none loaded)"
@@ -155,11 +115,12 @@ if [ "$ACTION" = "status" ]; then
 
     # Public keys in VDE directory
     echo "Public keys in VDE:"
-    if [ -d "$VDE_ROOT_DIR/public-ssh-keys" ]; then
+    if [[ -d "$VDE_ROOT_DIR/public-ssh-keys" ]]; then
+        local pubkey_count
         pubkey_count=$(ls -1 "$VDE_ROOT_DIR/public-ssh-keys"/*.pub 2>/dev/null | wc -l | tr -d ' ')
-        if [ "$pubkey_count" -gt 0 ] 2>/dev/null; then
+        if [[ $pubkey_count -gt 0 ]]; then
             ls -1 "$VDE_ROOT_DIR/public-ssh-keys"/*.pub 2>/dev/null | while read -r key; do
-                echo "  ✓ $(_basename "$key")"
+                echo "  ✓ ${key:t}"
             done
         else
             echo "  (none)"
@@ -176,7 +137,7 @@ fi
 # ==============================================================================
 # Initialize Mode -- Full SSH setup
 # ==============================================================================
-if [ "$ACTION" = "init" ]; then
+if [[ "$ACTION" == "init" ]]; then
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"
     echo "║          VDE SSH Agent Initialization                    ║"
@@ -189,20 +150,19 @@ if [ "$ACTION" = "init" ]; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
-    keys=$(detect_ssh_keys)
-    key_count=$(_count_items "$keys")
+    local -a keys
+    keys=("${(@f)$(detect_ssh_keys)}")
 
-    if [ "$key_count" -eq 0 ]; then
+    if [[ ${#keys[@]} -eq 0 ]]; then
         log_warning "No SSH keys found"
         echo "  Generating new ed25519 key..."
         ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -C "$(whoami)@$(hostname)-vde"
         log_success "✓ SSH key generated: ~/.ssh/id_ed25519"
-        keys="$HOME/.ssh/id_ed25519"
-        key_count=1
+        keys=("$HOME/.ssh/id_ed25519")
     else
-        log_success "✓ Found $key_count SSH key(s)"
-        for key in $keys; do
-            echo "  • $(_basename "$key")"
+        log_success "✓ Found ${#keys[@]} SSH key(s)"
+        for key in "${keys[@]}"; do
+            echo "  • ${key:t}"
         done
     fi
 
@@ -232,17 +192,17 @@ if [ "$ACTION" = "init" ]; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
-    keys_loaded=0
-    for key in $keys; do
+    local keys_loaded=0
+    for key in "${keys[@]}"; do
         if ssh-add "$key" 2>/dev/null; then
-            log_success "✓ Loaded: $(_basename "$key")"
+            log_success "✓ Loaded: ${key:t}"
             keys_loaded=$((keys_loaded + 1))
         else
-            log_warning "⚠ Could not load: $(_basename "$key") (may require passphrase)"
+            log_warning "⚠ Could not load: ${key:t} (may require passphrase)"
         fi
     done
 
-    if [ "$keys_loaded" -gt 0 ]; then
+    if [[ $keys_loaded -gt 0 ]]; then
         log_success "✓ $keys_loaded key(s) loaded into agent"
     else
         log_warning "⚠ No keys were loaded (keys may have passphrases)"
@@ -297,7 +257,7 @@ fi
 # ==============================================================================
 # Start Mode -- Just start agent and load keys
 # ==============================================================================
-if [ "$ACTION" = "start" ]; then
+if [[ "$ACTION" == "start" ]]; then
     echo ""
     echo "Starting SSH agent and loading keys..."
     echo ""
@@ -313,18 +273,18 @@ if [ "$ACTION" = "start" ]; then
     fi
 
     # Load keys
-    keys=$(detect_ssh_keys)
-    key_count=$(_count_items "$keys")
+    local -a keys
+    keys=("${(@f)$(detect_ssh_keys)}")
 
-    if [ "$key_count" -eq 0 ]; then
+    if [[ ${#keys[@]} -eq 0 ]]; then
         echo "⚠ No SSH keys found. Run: $0 --init"
         exit 1
     fi
 
-    keys_loaded=0
-    for key in $keys; do
+    local keys_loaded=0
+    for key in "${keys[@]}"; do
         if ssh-add "$key" 2>/dev/null; then
-            echo "✓ Loaded: $(_basename "$key")"
+            echo "✓ Loaded: ${key:t}"
             keys_loaded=$((keys_loaded + 1))
         fi
     done
