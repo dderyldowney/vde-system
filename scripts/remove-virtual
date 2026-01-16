@@ -1,0 +1,99 @@
+#!/usr/bin/env zsh
+# remove-virtual - Remove a VM's configuration and files
+# Stops the VM, deletes docker-compose.yml, removes SSH config entry
+
+set -e
+
+# Source shared library
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+
+# Parse arguments
+if [[ $# -eq 0 ]]; then
+    echo "Usage: $0 <vm_name>"
+    echo ""
+    echo "Remove a VM's configuration and files."
+    echo ""
+    echo "This will:"
+    echo "  - Stop the VM if running"
+    echo "  - Delete docker-compose.yml"
+    echo "  - Remove SSH config entry"
+    echo "  - Keep projects directory (your code is safe!)"
+    echo ""
+    show_known_vms
+    exit 1
+fi
+
+VM_NAME="$1"
+
+# Resolve VM name if it's an alias
+RESOLVED_VM=$(resolve_vm_name "$VM_NAME" 2>/dev/null) || true
+if [[ -n "$RESOLVED_VM" ]]; then
+    VM_NAME="$RESOLVED_VM"
+fi
+
+# Get compose file path
+COMPOSE_FILE="$CONFIGS_DIR/docker/$VM_NAME/docker-compose.yml"
+
+# Check if VM exists
+if [[ ! -f "$COMPOSE_FILE" ]]; then
+    vde_error "VM '$VM_NAME' not found (no docker-compose.yml at $COMPOSE_FILE)"
+    exit 1
+fi
+
+vde_info "Removing VM: $VM_NAME"
+
+# Stop the VM if running
+if vm_is_running "$VM_NAME" 2>/dev/null; then
+    vde_info "Stopping VM..."
+    stop_vm "$VM_NAME"
+fi
+
+# Remove docker-compose.yml
+vde_info "Deleting configuration files..."
+rm -f "$COMPOSE_FILE"
+vde_success "Deleted: $COMPOSE_FILE"
+
+# Remove directory if empty
+COMPOSE_DIR="$(dirname "$COMPOSE_FILE")"
+rmdir "$COMPOSE_DIR" 2>/dev/null || true
+
+# Remove env file if exists
+ENV_FILE="$VDE_ROOT_DIR/env-files/$VM_NAME.env"
+if [[ -f "$ENV_FILE" ]]; then
+    rm -f "$ENV_FILE"
+    vde_success "Deleted: $ENV_FILE"
+fi
+
+# Remove logs directory if empty
+LOGS_DIR="$VDE_ROOT_DIR/logs/$VM_NAME"
+if [[ -d "$LOGS_DIR" ]]; then
+    rmdir "$LOGS_DIR" 2>/dev/null && vde_success "Removed empty logs directory" || true
+fi
+
+# Remove SSH config entry (skip in test mode)
+if [[ -z "$VDE_TEST_MODE" ]]; then
+    vde_info "Removing SSH config entry..."
+    if [[ "$VM_TYPE" == "lang" ]]; then
+        ssh_host="${VM_NAME}-dev"
+    else
+        ssh_host="$VM_NAME"
+    fi
+
+    # Remove from SSH config
+    if [[ -f "$HOME/.ssh/config" ]]; then
+        # Create backup
+        cp "$HOME/.ssh/config" "$HOME/.ssh/config.backup"
+
+        # Remove the entry
+        remove_ssh_config_entry "$ssh_host" 2>/dev/null || true
+
+        vde_success "SSH config entry removed for $ssh_host"
+    fi
+else
+    vde_progress_info "Skipping SSH config removal (test mode)"
+fi
+
+vde_success "VM '$VM_NAME' removed successfully!"
+echo ""
+echo "Note: Your projects directory at $VDE_ROOT_DIR/projects/$VM_NAME was preserved."
