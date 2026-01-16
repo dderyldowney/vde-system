@@ -66,7 +66,6 @@ fi
 ensure_ssh_environment
 
 # Track batch operation results
-declare -A BATCH_RESULTS
 local started_count=0
 local skipped_count=0
 local failed_count=0
@@ -76,7 +75,6 @@ log_info "Starting ${#VMS[@]} VM(s)..."
 for vm in "${VMS[@]}"; do
     if ! is_known_vm "$vm"; then
         log_error "Unknown VM: $vm"
-        BATCH_RESULTS[$vm]="failed:unknown"
         failed_count=$((failed_count + 1))
         continue
     fi
@@ -84,7 +82,6 @@ for vm in "${VMS[@]}"; do
     # Check if VM has been created (has docker-compose.yml)
     if ! vm_exists "$vm"; then
         log_error "VM '$vm' is not created yet. Run: ./scripts/create-virtual-for $vm"
-        BATCH_RESULTS[$vm]="failed:not_created"
         failed_count=$((failed_count + 1))
         continue
     fi
@@ -92,7 +89,6 @@ for vm in "${VMS[@]}"; do
     # Check if VM is already running (batch state awareness)
     if is_vm_running "$vm"; then
         log_info "$vm is already running - skipped"
-        BATCH_RESULTS[$vm]="skipped:already_running"
         skipped_count=$((skipped_count + 1))
         continue
     fi
@@ -100,11 +96,9 @@ for vm in "${VMS[@]}"; do
     # Try to start the VM
     if start_vm "$vm" "$REBUILD" "$NOCACHE"; then
         log_success "$vm started successfully"
-        BATCH_RESULTS[$vm]="started"
         started_count=$((started_count + 1))
     else
         log_error "$vm failed to start"
-        BATCH_RESULTS[$vm]="failed:start_error"
         failed_count=$((failed_count + 1))
     fi
 done
@@ -114,35 +108,14 @@ echo ""
 log_info "Batch operation summary:"
 if [ $started_count -gt 0 ]; then
     log_success "Started: $started_count VM(s)"
-    for vm in "${!BATCH_RESULTS[@]}"; do
-        case "${BATCH_RESULTS[$vm]}" in
-            started)
-                log_info "  ✓ $vm - started"
-                ;;
-        esac
-    done
 fi
 
 if [ $skipped_count -gt 0 ]; then
     log_info "Skipped: $skipped_count VM(s) (already running)"
-    for vm in "${!BATCH_RESULTS[@]}"; do
-        case "${BATCH_RESULTS[$vm]}" in
-            skipped:already_running)
-                log_info "  ○ $vm - already running"
-                ;;
-        esac
-    done
 fi
 
 if [ $failed_count -gt 0 ]; then
     log_error "Failed: $failed_count VM(s)"
-    for vm in "${!BATCH_RESULTS[@]}"; do
-        case "${BATCH_RESULTS[$vm]}" in
-            failed:*:*)
-                log_error "  ✗ $vm - ${BATCH_RESULTS[$vm]#*:}"
-                ;;
-        esac
-    done
 fi
 
 log_success "VM startup complete!"
