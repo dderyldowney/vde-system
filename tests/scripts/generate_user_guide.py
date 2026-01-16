@@ -1367,7 +1367,7 @@ def generate_user_guide(passing_scenarios=None):
             section_id = section.lower().replace(" ", "-").replace(":", "")
             f.write(f'{i}. [{section}](#{section_id})\n')
             for subsection, sub_subsections in subsections:
-                subsection_id = subsection.lower().replace(" ", "-").replace("?", "")
+                subsection_id = subsection.lower().replace(" ", "-").replace(":", "").replace("?", "")
                 f.write(f'   - [{subsection}](#{subsection_id})\n')
                 if isinstance(sub_subsections, list):
                     for sub_subsection, sub_subsection_id in sub_subsections:
