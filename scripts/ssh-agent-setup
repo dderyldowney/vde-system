@@ -1,159 +1,295 @@
 #!/usr/bin/env zsh
-# VDE SSH Agent Status & Configuration
-# Shows SSH agent status and helps with manual configuration if needed
+# VDE SSH Agent Setup
+# Automatically sets up SSH keys, agent, and configuration
+
+set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib/vm-common"
 
-echo ""
-echo "╔════════════════════════════════════════════════════════════╗"
-echo "║          VDE SSH Agent Status                            ║"
-echo "╚════════════════════════════════════════════════════════════╝"
-echo ""
+# Parse command line arguments
+ACTION="status"
+FORCE_GENERATE=false
 
-# Check current status
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Current Status"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --init|-i)
+            ACTION="init"
+            shift
+            ;;
+        --start|-s)
+            ACTION="start"
+            shift
+            ;;
+        --generate|-g)
+            FORCE_GENERATE=true
+            shift
+            ;;
+        --help|-h)
+            echo "VDE SSH Agent Setup"
+            echo ""
+            echo "Usage: $0 [ACTION]"
+            echo ""
+            echo "Actions:"
+            echo "  (default)  Show SSH status (no changes)"
+            echo "  --init     Initialize SSH environment (keys, agent, config)"
+            echo "  --start    Start SSH agent and load keys"
+            echo "  --generate Force generate new SSH key"
+            echo "  --help     Show this help"
+            echo ""
+            echo "Examples:"
+            echo "  $0              # Show status only"
+            echo "  $0 --init       # Full setup: keys + agent + config"
+            echo "  $0 --start      # Start agent and load keys"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
 
-# SSH Agent Status
-if ssh_agent_is_running; then
-    log_success "SSH agent is running"
-    echo "  Socket: $SSH_AUTH_SOCK"
-    echo "  PID: ${SSH_AGENT_PID:-unknown}"
-else
-    log_warning "SSH agent is not running"
-    echo "  → Will be started automatically when you create/start VMs"
-fi
+# ==============================================================================
+# Status Display Mode (default)
+# ==============================================================================
+if [[ "$ACTION" == "status" ]]; then
+    echo ""
+    echo "╔════════════════════════════════════════════════════════════╗"
+    echo "║          VDE SSH Agent Status                            ║"
+    echo "╚════════════════════════════════════════════════════════════╝"
+    echo ""
 
-echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Current Status"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
 
-# Available SSH Keys
-echo "Available SSH keys:"
-local -a keys
-keys=("${(@f)$(detect_ssh_keys)}")
-
-if [[ ${#keys[@]} -eq 0 ]]; then
-    echo "  (none found - will be auto-generated when needed)"
-elif [[ ${#keys[@]} -eq 1 ]]; then
-    echo "  ✓ ${keys[1]}"
-else
-    for key in "${keys[@]}"; do
-        echo "  ✓ $key"
-    done
-fi
-
-echo ""
-
-# Keys loaded in agent
-if ssh_agent_is_running; then
-    echo "Keys loaded in agent:"
-    local key_count
-    key_count=$(ssh-add -l 2>/dev/null | wc -l)
-    if [[ $key_count -gt 0 ]]; then
-        ssh-add -l 2>/dev/null
+    # SSH Agent Status
+    if ssh_agent_is_running; then
+        log_success "SSH agent is running"
+        echo "  Socket: $SSH_AUTH_SOCK"
+        echo "  PID: ${SSH_AGENT_PID:-unknown}"
     else
-        echo "  (none loaded - will be auto-loaded when starting VMs)"
+        log_warning "SSH agent is NOT running"
+        echo "  Run: $0 --init  to set up SSH environment"
     fi
-else
-    echo "Keys in agent: (agent not running)"
+
+    echo ""
+
+    # Available SSH Keys
+    echo "Available SSH keys:"
+    local -a keys
+    keys=("${(@f)$(detect_ssh_keys)}")
+
+    if [[ ${#keys[@]} -eq 0 ]]; then
+        echo "  (none found)"
+        echo "  Run: $0 --init  to generate keys and set up SSH"
+    elif [[ ${#keys[@]} -eq 1 ]]; then
+        echo "  ✓ ${keys[1]:t}"
+    else
+        for key in "${keys[@]}"; do
+            echo "  ✓ ${key:t}"
+        done
+    fi
+
+    echo ""
+
+    # Keys loaded in agent
+    if ssh_agent_is_running; then
+        echo "Keys loaded in agent:"
+        local key_count
+        key_count=$(ssh-add -l 2>/dev/null | wc -l | tr -d ' ')
+        if [[ $key_count -gt 0 ]]; then
+            ssh-add -l 2>/dev/null
+        else
+            echo "  (none loaded)"
+            echo "  Run: $0 --start  to load keys into agent"
+        fi
+    else
+        echo "Keys in agent: (agent not running)"
+    fi
+
+    echo ""
+
+    # Public keys in VDE directory
+    echo "Public keys in VDE:"
+    if [[ -d "$VDE_ROOT_DIR/public-ssh-keys" ]]; then
+        local pubkey_count
+        pubkey_count=$(ls -1 "$VDE_ROOT_DIR/public-ssh-keys"/*.pub 2>/dev/null | wc -l | tr -d ' ')
+        if [[ $pubkey_count -gt 0 ]]; then
+            ls -1 "$VDE_ROOT_DIR/public-ssh-keys"/*.pub 2>/dev/null | while read -r key; do
+                echo "  ✓ ${key:t}"
+            done
+        else
+            echo "  (none)"
+            echo "  Run: $0 --init  to sync keys to VDE"
+        fi
+    else
+        echo "  (public-ssh-keys directory not found)"
+    fi
+
+    echo ""
+    exit 0
 fi
 
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "VDE Automation"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "VDE automatically handles SSH setup for you:"
-echo ""
-echo "✓ When creating VMs:"
-echo "  • Generates SSH key if you don't have one"
-echo "  • Starts SSH agent if not running"
-echo "  • Adds your keys to the agent"
-echo "  • Creates VM-to-VM SSH config entries"
-echo ""
-echo "✓ When starting VMs:"
-echo "  • Ensures SSH agent is running"
-echo "  • Verifies keys are loaded"
-echo "  • Enables VM-to-VM communication"
-echo ""
-echo "✓ No manual setup required!"
-echo ""
+# ==============================================================================
+# Initialize Mode -- Full SSH setup
+# ==============================================================================
+if [[ "$ACTION" == "init" ]]; then
+    echo ""
+    echo "╔════════════════════════════════════════════════════════════╗"
+    echo "║          VDE SSH Agent Initialization                    ║"
+    echo "╚════════════════════════════════════════════════════════════╝"
+    echo ""
 
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Usage Examples"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "From host:"
-echo "  ./scripts/create-virtual-for go    # SSH setup happens automatically"
-echo "  ./scripts/start-virtual go        # Agent enabled automatically"
-echo "  ssh go-dev                       # Connect to Go VM"
-echo ""
-echo "From within a VM:"
-echo "  ssh python-dev                   # VM → VM (uses your host keys!)"
-echo "  git clone github.com:user/repo    # External Git operations"
-echo "  to-host ls ~/dev                 # Execute command on host"
-echo ""
-echo "VM → VM Examples:"
-echo "  # From python-dev:"
-echo "  ssh rust-dev pwd                 # Check rust-dev directory"
-echo "  scp rust-dev:/data/file .        # Copy file from rust VM"
-echo "  rsync -av rust-dev:/data ./       # Sync directory from rust VM"
-echo ""
+    # Step 1: Check for existing keys
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Step 1: Checking SSH keys"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
 
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Manual Operations (Optional)"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "Add a new key to agent:"
-echo "  ssh-add ~/.ssh/new_key"
-echo ""
-echo "View loaded keys:"
-echo "  ssh-add -l"
-echo ""
-echo "Stop agent:"
-echo "  ssh-agent -k"
-echo ""
-echo "Restart agent:"
-echo "  eval \$(ssh-agent -s) && ssh-add"
-echo ""
+    local -a keys
+    keys=("${(@f)$(detect_ssh_keys)}")
 
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Important Notes"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "• Your SSH keys NEVER leave the host machine"
-echo "• Containers access keys via SSH agent socket forwarding"
-echo "• All VMs can communicate with each other using your host keys"
-echo "• Restarting VMs does NOT require re-configuration"
-echo "• Everything is automated - no manual setup required!"
-echo ""
+    if [[ ${#keys[@]} -eq 0 ]]; then
+        log_warning "No SSH keys found"
+        echo "  Generating new ed25519 key..."
+        ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -C "$(whoami)@$(hostname)-vde"
+        log_success "✓ SSH key generated: ~/.ssh/id_ed25519"
+        keys=("$HOME/.ssh/id_ed25519")
+    else
+        log_success "✓ Found ${#keys[@]} SSH key(s)"
+        for key in "${keys[@]}"; do
+            echo "  • ${key:t}"
+        done
+    fi
 
-# Check if rebuild is needed
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Existing VMs"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
+    echo ""
 
-local -a existing_vms
-existing_vms=("${(@f)$(get_running_vms)}")
+    # Step 2: Start SSH agent
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Step 2: Starting SSH agent"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
 
-if [[ ${#existing_vms[@]} -gt 0 ]]; then
-    log_info "Running VMs (${#existing_vms[@]}):"
-    for vm in "${existing_vms[@]}"; do
-        echo "  • $vm"
+    if ssh_agent_is_running; then
+        log_info "SSH agent already running"
+    else
+        log_info "Starting SSH agent..."
+        eval "$(ssh-agent -s)" >/dev/null 2>&1
+        export SSH_AUTH_SOCK
+        export SSH_AGENT_PID
+        log_success "✓ SSH agent started (PID: $SSH_AGENT_PID)"
+    fi
+
+    echo ""
+
+    # Step 3: Load keys into agent
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Step 3: Loading keys into SSH agent"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    local keys_loaded=0
+    for key in "${keys[@]}"; do
+        if ssh-add "$key" 2>/dev/null; then
+            log_success "✓ Loaded: ${key:t}"
+            keys_loaded=$((keys_loaded + 1))
+        else
+            log_warning "⚠ Could not load: ${key:t} (may require passphrase)"
+        fi
     done
+
+    if [[ $keys_loaded -gt 0 ]]; then
+        log_success "✓ $keys_loaded key(s) loaded into agent"
+    else
+        log_warning "⚠ No keys were loaded (keys may have passphrases)"
+        echo "  Load manually with: ssh-add ~/.ssh/id_ed25519"
+    fi
+
     echo ""
-    echo "Note: Existing VMs need rebuild for SSH agent support:"
-    echo "  ./scripts/shutdown-virtual <vm>"
-    echo "  ./scripts/start-virtual <vm> --rebuild"
-else
-    echo "No VMs currently running"
+
+    # Step 4: Sync public keys to VDE
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Step 4: Syncing public keys to VDE"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
-    echo "Create your first VM:"
-    echo "  ./scripts/create-virtual-for python"
-    echo "  ./scripts/start-virtual python"
+
+    if sync_ssh_keys_to_vde; then
+        log_success "✓ Public keys synced to public-ssh-keys/"
+    else
+        log_error "✗ Failed to sync keys"
+        exit 1
+    fi
+
+    echo ""
+
+    # Step 5: Generate SSH config
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Step 5: Generating SSH config"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    if generate_vm_ssh_config; then
+        log_success "✓ SSH config updated"
+    else
+        log_warning "⚠ SSH config generation had issues"
+    fi
+
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Setup Complete!"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "Your SSH environment is ready for VDE!"
+    echo ""
+    echo "Next steps:"
+    echo "  • Create a VM: ./scripts/create-virtual-for python"
+    echo "  • Start a VM:  ./scripts/start-virtual python"
+    echo "  • Connect:      ssh python-dev"
+    echo ""
+
+    exit 0
 fi
 
-echo ""
+# ==============================================================================
+# Start Mode -- Just start agent and load keys
+# ==============================================================================
+if [[ "$ACTION" == "start" ]]; then
+    echo ""
+    echo "Starting SSH agent and loading keys..."
+    echo ""
+
+    # Start agent if not running
+    if ssh_agent_is_running; then
+        echo "SSH agent already running"
+    else
+        eval "$(ssh-agent -s)" >/dev/null 2>&1
+        export SSH_AUTH_SOCK
+        export SSH_AGENT_PID
+        echo "✓ SSH agent started"
+    fi
+
+    # Load keys
+    local -a keys
+    keys=("${(@f)$(detect_ssh_keys)}")
+
+    if [[ ${#keys[@]} -eq 0 ]]; then
+        echo "⚠ No SSH keys found. Run: $0 --init"
+        exit 1
+    fi
+
+    local keys_loaded=0
+    for key in "${keys[@]}"; do
+        if ssh-add "$key" 2>/dev/null; then
+            echo "✓ Loaded: ${key:t}"
+            keys_loaded=$((keys_loaded + 1))
+        fi
+    done
+
+    echo ""
+    echo "$keys_loaded key(s) loaded into SSH agent"
+    exit 0
+fi
