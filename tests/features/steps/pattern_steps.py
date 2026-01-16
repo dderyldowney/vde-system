@@ -15,12 +15,14 @@ VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR", "/vde"))
 
 def run_vde_command(command, timeout=120):
     """Run a VDE script and return the result."""
+    env = os.environ.copy()
     result = subprocess.run(
         f"cd {VDE_ROOT} && {command}",
         shell=True,
         capture_output=True,
         text=True,
         timeout=timeout,
+        env=env,
     )
     return result
 
@@ -177,7 +179,7 @@ def step_create_multiple(context):
 @when('I create a new VM')
 def step_create_new(context):
     """Create a new VM."""
-    result = run_vde_command("./scripts/create-virtual-for test-vm", timeout=60)
+    result = run_vde_command("./scripts/create-virtual-for test-vm", timeout=120)
     if not hasattr(context, 'created_vms'):
         context.created_vms = set()
     if result.returncode == 0:

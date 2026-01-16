@@ -30,12 +30,14 @@ VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR", "/vde"))
 
 def run_vde_command(command, timeout=120):
     """Run a VDE script and return the result."""
+    env = os.environ.copy()
     result = subprocess.run(
         f"cd {VDE_ROOT} && {command}",
         shell=True,
         capture_output=True,
         text=True,
         timeout=timeout,
+        env=env,
     )
     return result
 

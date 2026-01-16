@@ -1,4 +1,7 @@
 #!/usr/bin/env zsh
+# build-and-start - Initialize VDE infrastructure and start all VMs
+# First-time setup script that creates directories, sets permissions, and starts VMs
+
 set -e
 
 # Source shared library
@@ -24,15 +27,100 @@ for arg in "$@"; do
     esac
 done
 
-# Shutdown all VMs first
-log_info "Shutting down all VMs..."
-"$SCRIPT_DIR/shutdown-virtual" all
+# =============================================================================
+# Step 1: Create all necessary directories
+# =============================================================================
+log_info "Creating VDE directory structure..."
 
-# Start all VMs with optional rebuild
-log_info "Starting all VMs..."
+# Core directories
+mkdir -p "$CONFIGS_DIR"
+mkdir -p "$TEMPLATES_DIR"
+mkdir -p "$VDE_ROOT_DIR/projects"
+mkdir -p "$VDE_ROOT_DIR/data"
+mkdir -p "$VDE_ROOT_DIR/logs"
+mkdir -p "$VDE_ROOT_DIR/env-files"
+mkdir -p "$VDE_ROOT_DIR/public-ssh-keys"
+mkdir -p "$VDE_ROOT_DIR/.cache"
+mkdir -p "$VDE_ROOT_DIR/.locks"
+mkdir -p "$VDE_ROOT_DIR/.locks/ports"
 
-for vm in $(get_all_vms); do
-    start_vm "$vm" "$REBUILD" "$NOCACHE"
+# Project directories for common languages
+for lang in python rust js csharp ruby go java kotlin scala php swift r lua zig flutter elixir haskell; do
+    mkdir -p "$VDE_ROOT_DIR/projects/$lang"
 done
 
-log_success "All VMs are up!"
+# Data directories for common services
+for svc in postgres mongodb redis nginx couchdb mysql rabbitmq; do
+    mkdir -p "$VDE_ROOT_DIR/data/$svc"
+done
+
+# Log directories for services
+mkdir -p "$VDE_ROOT_DIR/logs/nginx"
+
+log_success "Directory structure created"
+
+# =============================================================================
+# Step 2: Set up proper file permissions
+# =============================================================================
+log_info "Setting file permissions..."
+
+# Ensure SSH keys directory has correct permissions
+if [ -d "$VDE_ROOT_DIR/public-ssh-keys" ]; then
+    chmod 700 "$VDE_ROOT_DIR/public-ssh-keys" 2>/dev/null || true
+fi
+
+# Ensure scripts are executable
+find "$SCRIPT_DIR" -type f -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+
+log_success "File permissions set"
+
+# =============================================================================
+# Step 3: Initialize VDE framework
+# =============================================================================
+log_info "Initializing VDE framework..."
+
+# Ensure SSH environment is set up (keys, agent, config)
+ensure_ssh_environment
+
+# Create Docker network if it doesn't exist
+if command -v docker &>/dev/null; then
+    if ! docker network inspect dev-net &>/dev/null; then
+        docker network create dev-net 2>/dev/null || true
+    fi
+fi
+
+log_success "VDE framework initialized"
+
+# =============================================================================
+# Step 4: Start all VMs
+# =============================================================================
+log_info "Starting all VMs..."
+
+# Get list of VMs that have been created
+VM_STARTED=false
+for vm in $(get_all_vms 2>/dev/null); do
+    COMPOSE_FILE="$CONFIGS_DIR/$vm/docker-compose.yml"
+    if [ -f "$COMPOSE_FILE" ]; then
+        log_info "Starting $vm..."
+        start_vm "$vm" "$REBUILD" "$NOCACHE"
+        VM_STARTED=true
+    fi
+done
+
+if [ "$VM_STARTED" = false ]; then
+    log_warning "No VMs found. Use './scripts/create-virtual-for <vm>' to create VMs first."
+    echo ""
+    echo "Available VM types:"
+    show_known_vms
+    echo ""
+    echo "Example: ./scripts/create-virtual-for python"
+else
+    log_success "All VMs are up!"
+fi
+
+echo ""
+echo "VDE infrastructure ready!"
+echo "  - Configs:     $CONFIGS_DIR"
+echo "  - Projects:    $VDE_ROOT_DIR/projects"
+echo "  - Data:        $VDE_ROOT_DIR/data"
+echo "  - Logs:        $VDE_ROOT_DIR/logs"

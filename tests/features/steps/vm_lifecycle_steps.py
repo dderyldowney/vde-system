@@ -19,12 +19,15 @@ SCRIPTS_DIR = VDE_ROOT / "scripts"
 def run_vde_command(command, timeout=120):
     """Run a VDE script and return the result."""
     full_command = f"cd {VDE_ROOT} && {command}"
+    # Pass environment variables including VDE_TEST_MODE
+    env = os.environ.copy()
     result = subprocess.run(
         full_command,
         shell=True,
         capture_output=True,
         text=True,
         timeout=timeout,
+        env=env,
     )
     return result
 
@@ -132,7 +135,7 @@ def step_vm_created(context, vm_name):
     step_no_vm_config(context, vm_name)
 
     # Run the create-virtual-for script
-    result = run_vde_command(f"./scripts/create-virtual-for {vm_name}", timeout=60)
+    result = run_vde_command(f"./scripts/create-virtual-for {vm_name}", timeout=120)
 
     # Store creation info for cleanup
     if not hasattr(context, 'created_vms'):

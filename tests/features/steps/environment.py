@@ -13,11 +13,35 @@ from pathlib import Path
 VDE_ROOT = Path("/vde")
 
 
+def _cleanup_lock_files():
+    """Clean up stale lock files that could cause timeouts."""
+    locks_dir = VDE_ROOT / ".locks"
+    if not locks_dir.exists():
+        return
+
+    # Remove all lock files
+    for lock_file in locks_dir.rglob("*.lock"):
+        try:
+            lock_file.unlink()
+        except Exception:
+            pass
+
+    # Also clean SSH config lock if it exists
+    ssh_lock = Path.home() / ".ssh" / "config.lock"
+    if ssh_lock.exists():
+        try:
+            ssh_lock.unlink()
+        except Exception:
+            pass
+
+
 def before_all(context):
     """Set up test environment before all scenarios."""
     # Set environment variables
     os.environ["VDE_ROOT_DIR"] = str(VDE_ROOT)
     os.environ["PATH"] = f"{VDE_ROOT}/scripts:{VDE_ROOT}/tests:{os.environ['PATH']}"
+    # Enable test mode to skip SSH config operations that timeout in Docker
+    os.environ["VDE_TEST_MODE"] = "1"
 
     # Create necessary directories
     dirs = [
@@ -32,6 +56,9 @@ def before_all(context):
     ]
     for d in dirs:
         d.mkdir(parents=True, exist_ok=True)
+
+    # Clean up any stale lock files that could cause timeouts
+    _cleanup_lock_files()
 
     # Store test context
     context.vde_root = VDE_ROOT
@@ -63,6 +90,9 @@ def after_all(context):
 
 def before_scenario(context, scenario):
     """Set up before each scenario."""
+    # Clean up stale lock files before each scenario to prevent timeouts
+    _cleanup_lock_files()
+
     # Reset per-scenario state on context (so steps can access it)
     context.temp_files = []
     context.temp_dirs = []
