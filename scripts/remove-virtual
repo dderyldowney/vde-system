@@ -35,6 +35,39 @@ if [[ $# -eq 0 ]]; then
     exit 1
 fi
 
+if [[ "$VM_NAME" == "all" ]]; then
+    # Delete all VMs but keep images, configs, and project
+    log_info "Deleting all VMs..."
+
+    # Get all VMs
+    local vms
+    vms=$(get_all_vms)
+
+    if [[ -z "$vms" ]]; then
+        log_info "No VMs found to delete"
+        exit 0
+    fi
+
+    local vm
+    local deleted_count=0
+
+    for vm in $vms; do
+        if [[ -n "$vm" ]]; then
+            # Recursively call remove-virtual for each VM
+            remove-virtual "$vm" || log_warning "Failed to remove VM: $vm"
+            ((deleted_count++))
+        fi
+    done
+
+    if [[ $deleted_count -gt 0 ]]; then
+        log_success "Deleted $deleted_count VM(s)"
+    else
+        log_info "All VMs already deleted"
+    fi
+
+    exit 0
+fi
+
 VM_NAME="$1"
 
 # Resolve VM name if it's an alias
@@ -48,11 +81,14 @@ COMPOSE_FILE="$CONFIGS_DIR/$VM_NAME/docker-compose.yml"
 
 # Check if VM exists
 if [[ ! -f "$COMPOSE_FILE" ]]; then
-    log_error "VM '$VM_NAME' not found (no docker-compose.yml at $COMPOSE_FILE)"
+    log_error "VM '$VM_NAME' not found (no docker-compose.yml at $VM_NAME)"
     exit 1
 fi
 
 log_info "Removing VM: $VM_NAME"
+
+# Get VM type to determine SSH hostname
+VM_TYPE=$(get_vm_info type "$VM_NAME" 2>/dev/null) || echo "unknown"
 
 # Stop the VM if running
 if vm_is_running "$VM_NAME" 2>/dev/null; then
@@ -85,10 +121,17 @@ fi
 # Remove SSH config entry (skip in test mode)
 if [[ -z "$VDE_TEST_MODE" ]]; then
     log_info "Removing SSH config entry..."
+
+    # Determine SSH hostname based on VM type
+    local ssh_host
     if [[ "$VM_TYPE" == "lang" ]]; then
         ssh_host="${VM_NAME}-dev"
-    else
+    elif [[ "$VM_TYPE" == "service" ]]; then
         ssh_host="$VM_NAME"
+        # Also remove common aliases for services
+        remove_ssh_config_entry "$ssh_host" 2>/dev/null || true
+    else
+        ssh_host="${VM_NAME}-dev"
     fi
 
     # Remove from SSH config

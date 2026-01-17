@@ -5,3 +5,5 @@ Host {{HOST}}
     User devuser
     IdentityFile {{IDENTITY_FILE}}
     IdentitiesOnly yes
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
