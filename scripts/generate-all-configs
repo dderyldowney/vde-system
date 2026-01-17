@@ -1,0 +1,243 @@
+#!/usr/bin/env zsh
+#===============================================================================
+# generate-all-configs - Generate missing docker-compose.yml files for all VM types
+#
+# This script generates docker-compose.yml files for any VM types that are
+# defined in vm-types.conf but don't have a config yet.
+#===============================================================================
+
+# Determine VDE root directory
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VDE_ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Source shared library
+source "$SCRIPT_DIR/lib/vde-shell-compat"
+source "$SCRIPT_DIR/lib/vde-constants"
+source "$SCRIPT_DIR/lib/vde-errors"
+source "$SCRIPT_DIR/lib/vde-log"
+source "$SCRIPT_DIR/lib/vde-core"
+source "$SCRIPT_DIR/lib/vm-common"
+
+# Ensure VM types are loaded
+load_vm_types 2>/dev/null || true
+
+# Port allocations (from vm-types.conf SSH port assignments)
+declare -A SSH_PORTS=(
+  [c]=2200
+  [cpp]=2201
+  [asm]=2202
+  [python]=2203
+  [rust]=2204
+  [js]=2205
+  [csharp]=2206
+  [ruby]=2207
+  [go]=2208
+  [java]=2209
+  [kotlin]=2210
+  [swift]=2211
+  [php]=2212
+  [scala]=2213
+  [r]=2214
+  [lua]=2215
+  [flutter]=2216
+  [elixir]=2217
+  [haskell]=2218
+  [postgres]=2400
+  [redis]=2401
+  [mongodb]=2402
+  [nginx]=2403
+  [couchdb]=2404
+  [mysql]=2405
+  [rabbitmq]=2406
+)
+
+# Service ports (external ports to expose)
+declare -A SERVICE_PORTS=(
+  [postgres]="5432"
+  [redis]="6379"
+  [mongodb]="27017"
+  [nginx]="80,443"
+  [couchdb]="5984"
+  [mysql]="3306"
+  [rabbitmq]="5672,15672"
+)
+
+#===============================================================================
+# Functions
+#===============================================================================
+
+# Generate language docker-compose.yml
+generate_language_config() {
+  local name="$1"
+  local install_cmd="$2"
+  local ssh_port="${SSH_PORTS[$name]}"
+
+  local config_dir="$VDE_ROOT_DIR/configs/docker/${name}"
+  local compose_file="$config_dir/docker-compose.yml"
+
+  mkdir -p "$config_dir"
+
+  cat > "$compose_file" <<EOF
+services:
+  ${name}-dev:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-${name}:latest
+    container_name: ${name}-dev
+    hostname: ${name}-dev
+    restart: unless-stopped
+    command: sh -c "${install_cmd} && /usr/sbin/sshd -D"
+
+    ports:
+      - "${ssh_port}:22"
+
+    volumes:
+      - ../../../projects/${name}:/home/devuser/workspace
+      - ../../../logs/${name}:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - \${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../env-files/${name}.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true
+EOF
+
+  echo "Generated: $compose_file"
+}
+
+# Generate service docker-compose.yml
+generate_service_config() {
+  local name="$1"
+  local install_cmd="$2"
+  local ssh_port="${SSH_PORTS[$name]}"
+  local service_port="${SERVICE_PORTS[$name]}"
+
+  local config_dir="$VDE_ROOT_DIR/configs/docker/${name}"
+  local compose_file="$config_dir/docker-compose.yml"
+
+  mkdir -p "$config_dir"
+
+  # Build port mappings for services
+  local port_mappings=""
+  if [[ -n "$service_port" ]]; then
+    # Split by comma and generate port mappings
+    local -a ports
+    IFS=',' read -rA ports <<< "$service_port"
+    for port in "${ports[@]}"; do
+      port_mappings="${port_mappings}      - \"${port}:${port}\"\n"
+    done
+  fi
+
+  cat > "$compose_file" <<EOF
+services:
+  ${name}:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-${name}:latest
+    container_name: ${name}
+    hostname: ${name}
+    restart: unless-stopped
+    command: sh -c "${install_cmd} && /usr/sbin/sshd -D"
+
+    ports:
+      - "${ssh_port}:22"
+$(echo -e "$port_mappings")
+
+    volumes:
+      - ../../../data/${name}:/data
+      - ../../../logs/${name}:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for service VM communication
+      - \${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../env-files/${name}.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true
+EOF
+
+  echo "Generated: $compose_file"
+}
+
+#===============================================================================
+# Main
+#===============================================================================
+
+main() {
+  echo "Generating missing docker-compose.yml files..."
+  echo ""
+
+  local generated_count=0
+  local skipped_count=0
+
+  # Get all VM types from cache
+  if [[ -f "$VDE_CACHE_DIR/vm-types.cache" ]]; then
+    # Process each VM type
+    while IFS='=' read -r key value; do
+      # Extract VM type from key (format: VM_TYPE:name=value)
+      if [[ "$key" =~ ^VM_TYPE:(.+)$ ]]; then
+        local vm_type="${match[1]}"
+      else
+        continue
+      fi
+
+      # Skip if already has config
+      local config_file="$VDE_ROOT_DIR/configs/docker/${vm_type}/docker-compose.yml"
+      if [[ -f "$config_file" ]]; then
+        ((skipped_count++))
+        continue
+      fi
+
+      # Get VM category and install command
+      local category="$(get_vm_info type "$vm_type" 2>/dev/null || echo "")"
+      local install_cmd="$(get_vm_info install "$vm_type" 2>/dev/null || echo "")"
+
+      if [[ "$category" == "lang" ]]; then
+        generate_language_config "$vm_type" "$install_cmd"
+        ((generated_count++))
+      elif [[ "$category" == "service" ]]; then
+        generate_service_config "$vm_type" "$install_cmd"
+        ((generated_count++))
+      fi
+
+    done < "$VDE_CACHE_DIR/vm-types.cache"
+  fi
+
+  echo ""
+  echo "============================================================================="
+  echo "Generated $generated_count config(s)"
+  echo "Skipped $skipped_count existing config(s)"
+  echo "============================================================================="
+}
+
+main "$@"

@@ -1,0 +1,40 @@
+# Template for language VMs
+# Variables: lua, 2215, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y lua5.4 luarocks
+services:
+  lua-dev:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-lua:latest
+    container_name: lua-dev
+    hostname: lua-dev
+    restart: unless-stopped
+    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y lua5.4 luarocks && /usr/sbin/sshd -D"
+
+    ports:
+      - "2215:22"
+
+    volumes:
+      - ../../../projects/lua:/home/devuser/workspace
+      - ../../../logs/lua:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../env-files/lua.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true

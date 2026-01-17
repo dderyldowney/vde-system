@@ -1,0 +1,40 @@
+# Template for language VMs
+# Variables: swift, 2211, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y binutils git libc6-dev curl
+services:
+  swift-dev:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-swift:latest
+    container_name: swift-dev
+    hostname: swift-dev
+    restart: unless-stopped
+    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y binutils git libc6-dev curl && /usr/sbin/sshd -D"
+
+    ports:
+      - "2211:22"
+
+    volumes:
+      - ../../../projects/swift:/home/devuser/workspace
+      - ../../../logs/swift:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../env-files/swift.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true

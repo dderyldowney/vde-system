@@ -1,0 +1,40 @@
+# Template for language VMs
+# Variables: asm, 2202, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y nasm yasm gdb
+services:
+  asm-dev:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-asm:latest
+    container_name: asm-dev
+    hostname: asm-dev
+    restart: unless-stopped
+    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y nasm yasm gdb && /usr/sbin/sshd -D"
+
+    ports:
+      - "2202:22"
+
+    volumes:
+      - ../../../projects/asm:/home/devuser/workspace
+      - ../../../logs/asm:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../env-files/asm.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true
