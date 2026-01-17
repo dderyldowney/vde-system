@@ -30,6 +30,20 @@ cd ~/workspace  # Your project directory
 
 ---
 
+> **💡 SSH Connection Help**
+>
+> If `ssh go-dev` doesn't work, you can connect manually:
+>
+> ```bash
+> ssh devuser@localhost -p 2200
+> ```
+>
+> **Why?** Your computer's username (like `alex` or `sam`) is different from the container's username (`devuser`). The SSH config above handles this automatically, but the manual command needs `devuser@`.
+>
+> The `-p 2200` is the SSH port (each VM has its own port).
+
+---
+
 ## What Just Happened?
 
 When you ran `create-virtual-for go`:

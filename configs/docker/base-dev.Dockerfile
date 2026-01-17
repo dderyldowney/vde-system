@@ -63,14 +63,16 @@ RUN mkdir -p /home/${USERNAME}/.ssh && \
     chmod 600 /home/${USERNAME}/.ssh/config
 
 # Add SSH agent forwarding helper script
+# Only prints messages in interactive shells to avoid breaking SSH authentication
 RUN echo '#!/bin/zsh' > /usr/local/bin/ssh-agent-forward && \
     echo '' >> /usr/local/bin/ssh-agent-forward && \
     echo '# Setup SSH agent forwarding from host' >> /usr/local/bin/ssh-agent-forward && \
+    echo '# Only print messages in interactive shells (tty check)' >> /usr/local/bin/ssh-agent-forward && \
     echo 'if [[ -n "$SSH_AUTH_SOCK" ]]; then' >> /usr/local/bin/ssh-agent-forward && \
     echo '    export SSH_AUTH_SOCK' >> /usr/local/bin/ssh-agent-forward && \
-    echo '    echo "SSH agent forwarding enabled: $SSH_AUTH_SOCK"' >> /usr/local/bin/ssh-agent-forward && \
+    echo '    [[ -t 1 ]] && echo "SSH agent forwarding enabled: $SSH_AUTH_SOCK"' >> /usr/local/bin/ssh-agent-forward && \
     echo 'else' >> /usr/local/bin/ssh-agent-forward && \
-    echo '    echo "No SSH agent found. Start agent on host with: eval \$(ssh-agent -s) && ssh-add"' >> /usr/local/bin/ssh-agent-forward && \
+    echo '    [[ -t 1 ]] && echo "No SSH agent found. Start agent on host with: eval \$(ssh-agent -s) && ssh-add"' >> /usr/local/bin/ssh-agent-forward && \
     echo 'fi' >> /usr/local/bin/ssh-agent-forward && \
     chmod +x /usr/local/bin/ssh-agent-forward
 

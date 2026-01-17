@@ -1975,9 +1975,9 @@ merge_ssh_config_entry() {
 
     # Check if entry already exists (now safe from race condition)
     if ssh_config_has_entry "$host_alias"; then
-        log_error "SSH config entry for '$host_alias' already exists"
+        # Entry already exists, skip silently
         release_lock "$SSH_CONFIG_LOCK"
-        return 1
+        return 0
     fi
 
     # Backup existing config
@@ -2246,19 +2246,34 @@ generate_vm_ssh_config() {
         [ -n "$vm" ] || continue
         local vm_type
         vm_type=$(get_vm_info type "$vm")
+        local ssh_port
+        ssh_port=$(get_vm_ssh_port "$vm")
+
+        if [ -z "$ssh_port" ]; then
+            continue
+        fi
+
+        # Determine host alias and display name based on VM type
+        local vm_alias
+        local display_name
 
         if [ "$vm_type" = "lang" ]; then
-            local vm_alias="${vm}-dev"
-            local ssh_port
-            ssh_port=$(get_vm_ssh_port "$vm")
+            # Language VMs get -dev suffix
+            vm_alias="${vm}-dev"
+            display_name="$vm Dev VM"
+        elif [ "$vm_type" = "service" ]; then
+            # Service VMs do NOT get -dev suffix - use service name directly
+            vm_alias="$vm"
+            display_name="$vm Service"
+        else
+            # Unknown type, skip
+            continue
+        fi
 
-            if [ -n "$ssh_port" ]; then
-                # Check if entry already exists
-                if ! ssh_config_has_entry "$vm_alias"; then
-                    merge_ssh_config_entry "$vm_alias" "localhost" "$vm" "$(get_ssh_identity_file)"
-                    need_update=true
-                fi
-            fi
+        # Check if entry already exists
+        if ! ssh_config_has_entry "$vm_alias"; then
+            merge_ssh_config_entry "$vm_alias" "$ssh_port" "$display_name" "$(get_ssh_identity_file)"
+            need_update=true
         fi
     done
 
