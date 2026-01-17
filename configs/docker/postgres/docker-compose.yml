@@ -7,7 +7,6 @@ services:
         USERNAME: devuser
         UID: 1000
         GID: 1000
-        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-postgres:latest
     container_name: postgres
     hostname: postgres
@@ -23,7 +22,6 @@ services:
     volumes:
       - ../../../data/postgres:/var/lib/postgresql/data
       - ../../../configs/postgres/init:/docker-entrypoint-initdb.d
-      - ../../../public-ssh-keys:/public-ssh-keys:ro
 
     networks:
       - dev-net

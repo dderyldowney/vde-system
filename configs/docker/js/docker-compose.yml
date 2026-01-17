@@ -8,7 +8,6 @@ services:
         USERNAME: devuser
         UID: 1000
         GID: 1000
-        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-js:latest
     container_name: js-dev
     hostname: js-dev
@@ -23,8 +22,6 @@ services:
 
     volumes:
       - ../../../projects/js:/home/devuser/workspace
-      - ../../../logs/js:/logs
-      - ../../../public-ssh-keys:/public-ssh-keys:ro
 
     env_file:
       - ../../../env-files/js.env
