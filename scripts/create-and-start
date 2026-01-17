@@ -1,0 +1,259 @@
+#!/usr/bin/env zsh
+#===============================================================================
+# create-and-start - Create and start multiple VMs in one command
+#
+# Usage: create-and-start [--rebuild] <vm1> <vm2> ...
+#
+# This script creates and starts multiple VMs sequentially, providing
+# progress feedback and error handling.
+#
+# Options:
+#   --rebuild    Rebuild images before starting
+#===============================================================================
+
+# Determine VDE root directory
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VDE_ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Source shared library
+source "$SCRIPT_DIR/lib/vde-shell-compat"
+source "$SCRIPT_DIR/lib/vde-constants"
+source "$SCRIPT_DIR/lib/vde-errors"
+source "$SCRIPT_DIR/lib/vde-log"
+source "$SCRIPT_DIR/lib/vde-core"
+source "$SCRIPT_DIR/lib/vm-common"
+
+# Initialize logging
+vde_log_init 2>/dev/null || true
+
+#===============================================================================
+# Variables
+#===============================================================================
+
+REBUILD=false
+CREATED_VMS=()
+STARTED_VMS=()
+FAILED_VMS=()
+
+# Colors
+if [[ -t 1 ]]; then
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[0;34m'
+    NC='\033[0m'
+else
+    RED=''
+    GREEN=''
+    YELLOW=''
+    BLUE=''
+    NC=''
+fi
+
+#===============================================================================
+# Helper Functions
+#===============================================================================
+
+print_success() {
+    echo "${GREEN}✓ $1${NC}"
+}
+
+print_error() {
+    echo "${RED}✗ $1${NC}"
+}
+
+print_warning() {
+    echo "${YELLOW}⚠ $1${NC}"
+}
+
+print_info() {
+    echo "${BLUE}ℹ $1${NC}"
+}
+
+#===============================================================================
+# Main
+#===============================================================================
+
+main() {
+    # Parse arguments
+    if [[ $# -eq 0 ]]; then
+        echo "Usage: $0 [--rebuild] <vm1> <vm2> ..."
+        echo ""
+        echo "Create and start multiple VMs in one command."
+        echo ""
+        echo "Options:"
+        echo "  --rebuild    Rebuild images before starting"
+        echo ""
+        echo "Examples:"
+        echo "  $0 python rust go              # Create and start Python, Rust, Go"
+        echo "  $0 --rebuild python             # Rebuild and start Python"
+        echo "  $0 postgres redis               # Create and start services"
+        echo ""
+        exit 1
+    fi
+
+    # Parse options
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --rebuild)
+                REBUILD=true
+                shift
+                ;;
+            -*)
+                print_error "Unknown option: $1"
+                exit 1
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    # Check if any VM names were provided
+    if [[ $# -eq 0 ]]; then
+        print_error "No VM names provided"
+        echo ""
+        echo "Available VM types:"
+        get_all_vm_types 2>/dev/null | sed 's/^/  /' || echo "  (none found)"
+        exit 1
+    fi
+
+    # Get list of VMs to create
+    local vms=("$@")
+
+    echo ""
+    echo "============================================================================="
+    echo "                    Create and Start VMs"
+    echo "============================================================================="
+    echo ""
+    print_info "VMs to create: ${vms[*]}"
+    print_info "Rebuild images: $REBUILD"
+    echo ""
+
+    #===========================================================================
+    # Create VMs
+    #===========================================================================
+
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Step 1: Creating VMs..."
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    for vm in "${vms[@]}"; do
+        print_info "Creating VM: $vm"
+
+        if "$SCRIPT_DIR/create-virtual-for" "$vm" >/dev/null 2>&1; then
+            print_success "Created: $vm"
+            CREATED_VMS+=("$vm")
+        else
+            print_error "Failed to create: $vm"
+            FAILED_VMS+=("$vm")
+        fi
+    done
+
+    echo ""
+    local created_count=${#CREATED_VMS[@]}
+    local failed_count=${#FAILED_VMS[@]}
+
+    if [[ $created_count -gt 0 ]]; then
+        print_success "Created $created_count VM(s)"
+    fi
+
+    if [[ $failed_count -gt 0 ]]; then
+        print_warning "Failed to create $failed_count VM(s): ${FAILED_VMS[*]}"
+    fi
+
+    #===========================================================================
+    # Start VMs
+    #===========================================================================
+
+    if [[ $created_count -eq 0 ]]; then
+        echo ""
+        print_error "No VMs were created, exiting"
+        exit 1
+    fi
+
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Step 2: Starting VMs..."
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    for vm in "${CREATED_VMS[@]}"; do
+        if [[ "$REBUILD" = "true" ]]; then
+            print_info "Starting VM: $vm (with rebuild)"
+            if "$SCRIPT_DIR/start-virtual" "$vm" --rebuild >/dev/null 2>&1; then
+                print_success "Started: $vm"
+                STARTED_VMS+=("$vm")
+            else
+                print_error "Failed to start: $vm"
+                FAILED_VMS+=("$vm")
+            fi
+        else
+            print_info "Starting VM: $vm"
+            if "$SCRIPT_DIR/start-virtual" "$vm" >/dev/null 2>&1; then
+                print_success "Started: $vm"
+                STARTED_VMS+=("$vm")
+            else
+                print_error "Failed to start: $vm"
+                FAILED_VMS+=("$vm")
+            fi
+        fi
+    done
+
+    echo ""
+    local started_count=${#STARTED_VMS[@]}
+
+    if [[ $started_count -gt 0 ]]; then
+        print_success "Started $started_count VM(s)"
+    fi
+
+    #===========================================================================
+    # Summary
+    #===========================================================================
+
+    echo ""
+    echo "============================================================================="
+    echo "                           Summary"
+    echo "============================================================================="
+    echo ""
+
+    if [[ ${#STARTED_VMS[@]} -gt 0 ]]; then
+        echo "Successfully created and started:"
+        for vm in "${STARTED_VMS[@]}"; do
+            echo "  ✓ $vm"
+        done
+    fi
+
+    if [[ ${#FAILED_VMS[@]} -gt 0 ]]; then
+        echo ""
+        print_warning "Failed VMs:"
+        for vm in "${FAILED_VMS[@]}"; do
+            echo "  ✗ $vm"
+        done
+    fi
+
+    echo ""
+    echo "============================================================================="
+    echo ""
+
+    if [[ ${#STARTED_VMS[@]} -gt 0 ]]; then
+        print_info "To connect to a VM:"
+        for vm in "${STARTED_VMS[@]}"; do
+            local vm_type="$(get_vm_info type "$vm" 2>/dev/null || echo "lang")"
+            local ssh_host="$vm"
+            if [[ "$vm_type" == "lang" ]]; then
+                ssh_host="${vm}-dev"
+            fi
+            echo "  ssh $ssh_host"
+        done
+        echo ""
+    fi
+
+    # Exit with error if any VMs failed
+    if [[ ${#FAILED_VMS[@]} -gt 0 ]]; then
+        exit 1
+    fi
+}
+
+main "$@"

@@ -1,0 +1,40 @@
+# Template for language VMs
+# Variables: c, 2200, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y gcc make cmake gdb
+services:
+  c-dev:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-c:latest
+    container_name: c-dev
+    hostname: c-dev
+    restart: unless-stopped
+    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y gcc make cmake gdb && /usr/sbin/sshd -D"
+
+    ports:
+      - "2200:22"
+
+    volumes:
+      - ../../../projects/c:/home/devuser/workspace
+      - ../../../logs/c:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../env-files/c.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true

@@ -1,5 +1,5 @@
 services:
-  rabbitmq:
+  mysql:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -8,20 +8,19 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-rabbitmq:latest
-    container_name: rabbitmq
-    hostname: rabbitmq
+    image: dev-mysql:latest
+    container_name: mysql
+    hostname: mysql
     restart: unless-stopped
-    command: sh -c "apt-get update -y && apt-get install -y erlang-nox && apt-get install -y rabbitmq-server && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y default-mysql-server && /usr/sbin/sshd -D"
 
     ports:
-      - "2406:22"
-      - "5672:5672"
-      - "15672:15672"
+      - "2405:22"
+      - "3306:3306"
 
     volumes:
-      - ../../../data/rabbitmq:/data
-      - ../../../logs/rabbitmq:/logs
+      - ../../../data/mysql:/data
+      - ../../../logs/mysql:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for service VM communication
       - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
@@ -30,7 +29,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/rabbitmq.env
+      - ../../../env-files/mysql.env
 
     networks:
       - dev-net

@@ -1,0 +1,40 @@
+# Template for language VMs
+# Variables: elixir, 2217, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y elixir erlang
+services:
+  elixir-dev:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-elixir:latest
+    container_name: elixir-dev
+    hostname: elixir-dev
+    restart: unless-stopped
+    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y elixir erlang && /usr/sbin/sshd -D"
+
+    ports:
+      - "2217:22"
+
+    volumes:
+      - ../../../projects/elixir:/home/devuser/workspace
+      - ../../../logs/elixir:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../env-files/elixir.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true

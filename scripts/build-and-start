@@ -1,12 +1,30 @@
 #!/usr/bin/env zsh
+#===============================================================================
 # build-and-start - Initialize VDE infrastructure and start all VMs
+#
 # First-time setup script for users who have already installed Docker Desktop and git
+#
+# This script will:
+# • Create the VDE directory structure
+# • Set up SSH keys and agent for VM-to-VM communication
+# • Generate missing docker-compose.yml files for all VM types
+# • Initialize Docker network
+# • Start your VMs
+#===============================================================================
 
 set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vde-shell-compat"
+source "$SCRIPT_DIR/lib/vde-constants"
+source "$SCRIPT_DIR/lib/vde-errors"
+source "$SCRIPT_DIR/lib/vde-log"
+source "$SCRIPT_DIR/lib/vde-core"
 source "$SCRIPT_DIR/lib/vm-common"
+
+# Initialize logging
+vde_log_init 2>/dev/null || true
 
 # Parse flags
 REBUILD=false
@@ -27,9 +45,10 @@ for arg in "$@"; do
     esac
 done
 
-# =============================================================================
+#===============================================================================
 # Welcome Message
-# =============================================================================
+#===============================================================================
+
 echo ""
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║          VDE First-Time Setup                             ║"
@@ -37,14 +56,16 @@ echo "╚═══════════════════════�
 echo ""
 echo "This script will:"
 echo "  • Create the VDE directory structure"
+echo "  • Generate all missing docker-compose.yml files"
 echo "  • Set up SSH keys and agent for VM-to-VM communication"
 echo "  • Initialize Docker network"
-echo "  • Start your VMs"
+echo "  • Set proper file permissions"
 echo ""
 
-# =============================================================================
+#===============================================================================
 # Step 1: Prerequisites Check
-# =============================================================================
+#===============================================================================
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "Step 1: Checking Prerequisites"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -79,9 +100,10 @@ log_success "✓ git is installed"
 
 echo ""
 
-# =============================================================================
+#===============================================================================
 # Step 2: Create VDE Directory Structure
-# =============================================================================
+#===============================================================================
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "Step 2: Creating VDE Directory Structure"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -99,28 +121,35 @@ mkdir -p "$VDE_ROOT_DIR/.cache"
 mkdir -p "$VDE_ROOT_DIR/.locks"
 mkdir -p "$VDE_ROOT_DIR/.locks/ports"
 
-# Project directories for common languages
-for lang in python rust js csharp ruby go java kotlin scala php swift r lua zig flutter elixir haskell; do
-    mkdir -p "$VDE_ROOT_DIR/projects/$lang"
-done
-
-# Data directories for common services
-for svc in postgres mongodb redis nginx couchdb mysql rabbitmq; do
-    mkdir -p "$VDE_ROOT_DIR/data/$svc"
-done
-
-# Log directories for services
-mkdir -p "$VDE_ROOT_DIR/logs/nginx"
-
-log_success "✓ Directory structure created"
+log_success "✓ Core directories created"
 
 echo ""
 
-# =============================================================================
-# Step 3: Set Up SSH Keys and Agent
-# =============================================================================
+#===============================================================================
+# Step 3: Generate Missing Docker Configs
+#===============================================================================
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Step 3: Setting Up SSH Keys and Agent"
+echo "Step 3: Generating Missing Docker Configurations"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Run the generate-all-configs script
+if "$SCRIPT_DIR/generate-all-configs" 2>/dev/null; then
+    log_success "✓ Docker configurations generated"
+else
+    log_error "✗ Failed to generate configurations"
+    exit 1
+fi
+
+echo ""
+
+#===============================================================================
+# Step 4: Set Up SSH Keys and Agent
+#===============================================================================
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 4: Setting Up SSH Keys and Agent"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "This enables secure VM-to-VM communication without exposing"
@@ -128,7 +157,7 @@ echo "your private keys to containers."
 echo ""
 
 # Run the SSH setup script
-if "$SCRIPT_DIR/ssh-agent-setup" --init; then
+if "$SCRIPT_DIR/ssh-agent-setup" --init 2>/dev/null; then
     log_success "✓ SSH environment configured"
 else
     log_error "✗ SSH setup failed"
@@ -137,29 +166,10 @@ fi
 
 echo ""
 
-# =============================================================================
-# Step 4: Set File Permissions
-# =============================================================================
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Step 4: Setting File Permissions"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-
-# Ensure SSH keys directory has correct permissions
-if [ -d "$VDE_ROOT_DIR/public-ssh-keys" ]; then
-    chmod 700 "$VDE_ROOT_DIR/public-ssh-keys" 2>/dev/null || true
-fi
-
-# Ensure scripts are executable
-find "$SCRIPT_DIR" -type f -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
-
-log_success "✓ File permissions set"
-
-echo ""
-
-# =============================================================================
+#===============================================================================
 # Step 5: Initialize Docker Network
-# =============================================================================
+#===============================================================================
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "Step 5: Initializing Docker Network"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -174,50 +184,26 @@ log_success "✓ Docker network ready"
 
 echo ""
 
-# =============================================================================
-# Step 6: Start VMs
-# =============================================================================
+#===============================================================================
+# Step 6: Set File Permissions
+#===============================================================================
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Step 6: Starting Your VMs"
+echo "Step 6: Setting File Permissions"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-# Get list of VMs that have been created
-VM_STARTED=false
-for vm in $(get_all_vms 2>/dev/null); do
-    COMPOSE_FILE="$CONFIGS_DIR/$vm/docker-compose.yml"
-    if [ -f "$COMPOSE_FILE" ]; then
-        log_info "Starting $vm..."
-        start_vm "$vm" "$REBUILD" "$NOCACHE"
-        VM_STARTED=true
-    fi
-done
+# Set proper permissions on directories
+chmod 700 "$VDE_ROOT_DIR/public-ssh-keys" 2>/dev/null || true
+chmod 755 "$VDE_ROOT_DIR/.cache" 2>/dev/null || true
+chmod 755 "$VDE_ROOT_DIR/.locks" 2>/dev/null || true
+chmod 755 "$VDE_ROOT_DIR/.locks/ports" 2>/dev/null || true
 
-if [ "$VM_STARTED" = false ]; then
-    echo ""
-    log_warning "No VMs found to start"
-    echo ""
-    echo "You can create VMs with:"
-    echo ""
-    echo "  ./scripts/create-virtual-for python"
-    echo "  ./scripts/create-virtual-for rust"
-    echo "  ./scripts/create-virtual-for js"
-    echo ""
-    echo "Then start them:"
-    echo ""
-    echo "  ./scripts/start-virtual python"
-    echo ""
-    echo "Or use create-and-start for convenience:"
-    echo ""
-    echo "  ./scripts/create-and-start python rust js"
-    echo ""
-else
-    log_success "✓ All VMs started"
-fi
+# Ensure scripts are executable
+find "$SCRIPT_DIR" -type f -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
 
-# =============================================================================
-# Summary
-# =============================================================================
+log_success "✓ File permissions set"
+
 echo ""
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║          VDE Setup Complete!                               ║"
@@ -225,32 +211,27 @@ echo "╚═══════════════════════�
 echo ""
 echo "Your VDE environment is ready!"
 echo ""
-echo "Directory Structure:"
-echo "  Configs:     $CONFIGS_DIR"
-echo "  Projects:    $VDE_ROOT_DIR/projects"
-echo "  Data:        $VDE_ROOT_DIR/data"
-echo "  Logs:        $VDE_ROOT_DIR/logs"
+echo "Available VM types (all configured):"
+echo ""
+echo "Languages:"
+echo "  c, cpp, asm, python, rust, js, csharp, ruby, go"
+echo "  java, kotlin, swift, php, scala, r, lua, flutter, elixir, haskell"
+echo ""
+echo "Services:"
+echo "  postgres, redis, mongodb, nginx, couchdb, mysql, rabbitmq"
 echo ""
 echo "Quick Start Commands:"
 echo ""
-
-if [ "$VM_STARTED" = true ]; then
-    echo "  # SSH into a running VM"
-    echo "  ssh python-dev               # or rust-dev, js-dev, etc."
-    echo ""
-    echo "  # Check what's running"
-    echo "  ./scripts/list-vms"
-    echo ""
-else
-    echo "  # Create your first VM"
-    echo "  ./scripts/create-virtual-for python"
-    echo "  ./scripts/start-virtual python"
-    echo ""
-    echo "  # Or create and start in one command"
-    echo "  ./scripts/create-and-start python"
-    echo ""
-fi
-
+echo "  # Create and start a VM"
+echo "  ./scripts/create-virtual-for python"
+echo "  ./scripts/start-virtual python"
+echo ""
+echo "  # Or create and start in one command"
+echo "  ./scripts/create-and-start python"
+echo ""
+echo "  # Create and start multiple VMs"
+echo "  ./scripts/create-and-start python rust go"
+echo ""
 echo "  # See all available VM types"
 echo "  ./scripts/list-vms"
 echo ""

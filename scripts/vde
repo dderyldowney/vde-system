@@ -56,6 +56,7 @@ _VDE_COMMANDS=(
     "status:Show VM status:list-vms"
     "health:Run system health check:vde-health"
     "chat:Start AI assistant chat:vde-chat"
+    "create-and-start:Create and start VMs:create-and-start"
     "nuke:Remove all of VDE:nuke-vde"
     "help:Show this help message:"
 )
@@ -83,6 +84,7 @@ EOF
     printf "  %-12s %s\n" "status" "Show VM status"
     printf "  %-12s %s\n" "health" "Run system health check"
     printf "  %-12s %s\n" "chat" "Start AI assistant chat"
+    printf "  %-12s %s\n" "create-and-start" "Create and start VMs"
     printf "  %-12s %s\n" "nuke" "Remove all of VDE"
     printf "  %-12s %s\n" "help" "Show this help message"
 
