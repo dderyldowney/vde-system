@@ -7,7 +7,6 @@ services:
         USERNAME: devuser
         UID: 1000
         GID: 1000
-        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-ruby:latest
     container_name: ruby-dev
     hostname: ruby-dev
@@ -19,8 +18,6 @@ services:
 
     volumes:
       - ../../../projects/ruby:/home/devuser/workspace
-      - ../../../logs/app-logs:/logs
-      - ../../../public-ssh-keys:/public-ssh-keys:ro
 
     env_file:
       - ../../../env-files/ruby.env

@@ -33,19 +33,17 @@ RUN groupadd -g ${GID} ${USERNAME} && \
     chmod 600 /home/${USERNAME}/.ssh/known_hosts
 
 # Copy public SSH keys into authorized_keys with proper ownership
-# Only copy actual public key files (*.pub), skipping .keep and other non-key files
-RUN mkdir -p /home/${USERNAME}/.ssh && \
-    if [ -d /public-ssh-keys ]; then \
-        for key in /public-ssh-keys/*.pub; do \
-            [ -f "$key" ] && cat "$key" >> /home/${USERNAME}/.ssh/authorized_keys; \
-        done; \
-    fi && \
+# Copy from build context (works during build) - keys are baked into image
+# Only copies *.pub files, skipping .keep and other non-key files
+COPY public-ssh-keys/*.pub /tmp/ssh-keys/
+RUN cat /tmp/ssh-keys/*.pub > /home/${USERNAME}/.ssh/authorized_keys 2>/dev/null || true && \
     if [ -s /home/${USERNAME}/.ssh/authorized_keys ]; then \
         chmod 600 /home/${USERNAME}/.ssh/authorized_keys && \
         chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh/authorized_keys; \
     else \
         rm -f /home/${USERNAME}/.ssh/authorized_keys; \
-    fi
+    fi && \
+    rm -rf /tmp/ssh-keys
 
 # Configure SSH server for agent forwarding and security
 RUN sed -i \

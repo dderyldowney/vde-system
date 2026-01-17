@@ -8,7 +8,6 @@ services:
         USERNAME: devuser
         UID: 1000
         GID: 1000
-        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-csharp:latest
     container_name: csharp-dev
     hostname: csharp-dev
@@ -30,8 +29,6 @@ services:
 
     volumes:
       - ../../../projects/csharp:/home/devuser/workspace
-      - ../../../logs/app-logs:/logs
-      - ../../../public-ssh-keys:/public-ssh-keys:ro
 
     env_file:
       - ../../../env-files/csharp.env
