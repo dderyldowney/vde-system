@@ -500,6 +500,11 @@ The shell scripts in this project leverage advanced features from both shells:
 - **Pattern matching** - `${var:pattern}` (Zsh 5.x & Bash 4.x)
 - **Process substitution** - `${var:pattern}` (Zsh 5.x & Bash 4.x)
 
+**Command / Function / Script Modification Rules**
+You MUST triple check every aspect of how a command/function/script works 
+before modifying them. You must thoroughly understand how that 
+command/function/script operates before modifying it. This can not be overriden.
+
 **Shell Compatibility:**
 All scripts MUST use `#!/usr/bin/env zsh` shebang for Zsh scripts.
 
