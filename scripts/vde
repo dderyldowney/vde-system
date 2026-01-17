@@ -10,10 +10,13 @@
 #   start <vm>      Start a VM
 #   stop <vm>       Stop a VM
 #   restart <vm>    Restart a VM
+#   remove <vm>     Remove a VM instance
+#   uninstall <type> Uninstall a language/service completely
 #   list            List all VMs
 #   status          Show VM status
 #   health          Run system health check
 #   chat            Start AI assistant chat
+#   nuke            Remove all of VDE
 #   help            Show this help message
 #
 # Exit codes:
@@ -47,10 +50,13 @@ _VDE_COMMANDS=(
     "create:Create a new VM:create-virtual-for"
     "start:Start a VM:start-virtual"
     "stop:Stop a VM:shutdown-virtual"
+    "remove:Remove a VM:remove-virtual"
+    "uninstall:Uninstall a language/service:uninstall-vm-type"
     "list:List all VMs:list-vms"
     "status:Show VM status:list-vms"
     "health:Run system health check:vde-health"
     "chat:Start AI assistant chat:vde-chat"
+    "nuke:Remove all of VDE:nuke-vde"
     "help:Show this help message:"
 )
 
@@ -71,10 +77,13 @@ EOF
     printf "  %-12s %s\n" "start <vm>" "Start a VM"
     printf "  %-12s %s\n" "stop <vm>" "Stop a VM"
     printf "  %-12s %s\n" "restart <vm>" "Restart a VM"
+    printf "  %-12s %s\n" "remove <vm>" "Remove a VM instance"
+    printf "  %-12s %s\n" "uninstall <type>" "Uninstall a language/service completely"
     printf "  %-12s %s\n" "list" "List all VMs"
     printf "  %-12s %s\n" "status" "Show VM status"
     printf "  %-12s %s\n" "health" "Run system health check"
     printf "  %-12s %s\n" "chat" "Start AI assistant chat"
+    printf "  %-12s %s\n" "nuke" "Remove all of VDE"
     printf "  %-12s %s\n" "help" "Show this help message"
 
     cat <<EOF
@@ -89,8 +98,11 @@ Examples:
   vde create python             # Create Python VM
   vde start python-dev          # Start Python development VM
   vde stop postgres             # Stop PostgreSQL service
+  vde remove rust               # Remove Rust VM instance
+  vde uninstall elixir          # Completely uninstall Elixir from VDE
   vde health                    # Run health check
   vde chat                      # Start AI assistant
+  vde nuke                      # Remove all of VDE (prompts for backup)
 
 For more information, see: https://github.com/dderyldowney/dev/blob/main/docs/command-reference.md
 EOF
@@ -138,6 +150,15 @@ vde_find_command_script() {
             ;;
         ai|vde-ai)
             script="$VDE_ROOT_DIR/scripts/vde-ai"
+            ;;
+        remove|remove-virtual)
+            script="$VDE_ROOT_DIR/scripts/remove-virtual"
+            ;;
+        uninstall|uninstall-vm-type)
+            script="$VDE_ROOT_DIR/scripts/uninstall-vm-type"
+            ;;
+        nuke|nuke-vde)
+            script="$VDE_ROOT_DIR/scripts/nuke-vde"
             ;;
         *)
             echo ""
