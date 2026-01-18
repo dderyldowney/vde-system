@@ -25,7 +25,10 @@ When starting a new session in this project:
    - **`SESSION_STATE.md`** - Session progress, test status, work completed
    - **`TODO.md`** - Current tasks, priorities, and pending work
 
-2. **Perform comprehensive codebase examination:**
+2. **Use available installed plugins**
+   - Use available plugins such as claude-mem:go and lyra:lyra
+
+3. **Perform comprehensive codebase examination:**
    - Explore the full codebase structure to understand current implementation
    - Use the Explore agent to get familiar with architecture and patterns
    - Examine key files: scripts/lib/, tests/, configs/
