@@ -159,6 +159,46 @@ The Explore agent is faster and more efficient at:
 The TODO.md file contains pending work, but you must wait for user authorization
 before starting any of those tasks.
 
+### Step 8: Global MCP Services - Local Tools (MANDATORY)
+
+**Global MCP services are configured in `~/.claude.json` (user scope)**
+
+**Available global MCP services (all projects):**
+| Service | Purpose | Tools |
+|---------|---------|-------|
+| `desktop-commander` | Terminal control, file operations, search | execute_command, read_file, write_file, edit_block, search, list_processes |
+| `mcp-jq` | JSON parsing and manipulation | jq_query, jq_query_file, jq_format, jq_validate, jq_keys |
+
+**MANDATORY: Use MCP tools instead of Bash for local operations**
+
+**Why MCP tools reduce context window creep:**
+- MCP tools return **structured results** instead of raw output
+- No need to pipe commands (e.g., `grep | awk | sed`) - MCP handles it
+- File operations return only requested data, not full file contents
+- Search tools return matches with context, not entire files
+
+**When to use MCP tools:**
+
+| Task | Use MCP | Don't Use Bash |
+|------|---------|----------------|
+| Parse JSON | `mcp-jq: jq_query` | `cat file \| jq ...` |
+| Query JSON file | `mcp-jq: jq_query_file` | `jq '.' file.json` |
+| Format JSON | `mcp-jq: jq_format` | `jq '.' <<< "$json"` |
+| Read file | `desktop-commander: read_file` | `cat file.txt` |
+| Edit file (surgical) | `desktop-commander: edit_block` | `sed -i 's/.../...'` |
+| Search files/content | `desktop-commander: search` | `grep -r pattern ...` |
+| List directory | `desktop-commander: list_directory` | `ls -la` |
+| Execute command | `desktop-commander: execute_command` | Direct Bash tool |
+
+**Context savings example:**
+- Bash `cat large.json | jq '.users[].name'` → reads full file + jq output
+- MCP `jq_query_file(large.json, ".users[].name")` → returns only names
+
+**These services:**
+- Are configured globally (available to all projects)
+- Survive across restarts and `/new` commands
+- Run via npx (no Docker/VM required)
+
 ---
 
 ## Working Directory Constraints
