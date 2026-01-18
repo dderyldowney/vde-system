@@ -1,0 +1,22 @@
+{
+  "$schema": "https://modelcontextprotocol.io/specification/2025-06-18/schema",
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_TOKEN:-}"
+      }
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@smithery-ai/server-sequential-thinking"]
+    },
+    "fetch": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@smithery-ai/fetch"]
+    }
+  }
+}

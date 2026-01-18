@@ -76,6 +76,91 @@ The Explore agent is faster and more efficient at:
 
 ---
 
+## ⚠️ MANDATORY PLANNING & ACCOUNTABILITY ⚠️
+
+**ALL WORK MUST BE PLANNED BEFORE EXECUTION - NO EXCEPTIONS**
+
+### Step 5: Use Plan Mode for All Work (MANDATORY)
+
+**BEFORE doing ANY implementation work, you MUST use plan mode**
+
+**How to enter plan mode:**
+- Use the `/plan` command OR
+- Use the `EnterPlanMode` tool when facing implementation decisions
+- Use `claude-mem:plan` skill for structured planning with memory integration
+
+**What requires plan mode:**
+- Any feature implementation
+- Code modifications affecting existing behavior
+- Multi-file changes (more than 2-3 files)
+- Architectural decisions
+- Refactoring work
+- Any task where multiple approaches are possible
+
+**What does NOT require plan mode:**
+- Single-line or few-line fixes (typos, obvious bugs)
+- Adding a single function with clear requirements
+- Pure research/exploration tasks
+- Simple, obvious implementations
+
+**Plan mode outputs:**
+1. Thorough exploration of the codebase
+2. Understanding of existing patterns and architecture
+3. Implementation approach with design decisions
+4. Critical files to modify
+5. Architectural trade-offs considered
+6. Step-by-step implementation plan
+
+### Step 6: Full Accountability (MANDATORY)
+
+**ALL WORK MUST BE TRACKED AND ACCOUNTABLE**
+
+**Accountability requirements:**
+
+1. **Use TodoWrite tool for all non-trivial tasks**
+   - Create todos at start of work
+   - Mark as in_progress when starting work
+   - Mark as completed IMMEDIATELY after finishing
+   - Only ONE todo should be in_progress at a time
+
+2. **Update SESSION_STATE.md after significant work**
+   - Document what was completed
+   - Note any decisions made
+   - Record test results
+   - Update session number
+
+3. **Update TODO.md as priorities change**
+   - Add new tasks as they're identified
+   - Remove completed tasks
+   - Update task statuses
+
+4. **Commit messages must be descriptive**
+   - Use conventional commit format (feat:, fix:, docs:, test:, refactor:)
+   - Include Co-Authored-By: Claude <noreply@anthropic.com>
+   - Reference related issues when applicable
+
+### Step 7: MCP Services (MANDATORY)
+
+**Project-level MCP servers are configured in `.mcp.json`**
+
+**Available MCP services for VDE:**
+| Service | Purpose |
+|---------|---------|
+| `github` | GitHub API access (PRs, issues, files, search) |
+| `sequential-thinking` | Structured problem-solving and planning |
+| `fetch` | Web requests and external data fetching |
+
+**These services:**
+- Are checked into version control (team-wide availability)
+- Survive across restarts and `/new` commands
+- Are automatically available when working in this project
+
+**DO NOT work on project TODO items until explicitly told to do so.**
+The TODO.md file contains pending work, but you must wait for user authorization
+before starting any of those tasks.
+
+---
+
 ## Working Directory Constraints
 
 **IMPORTANT:** The working directory for this project is `/Users/dderyldowney/dev`.
