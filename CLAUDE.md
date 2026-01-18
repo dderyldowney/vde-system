@@ -15,6 +15,52 @@ When running commands, always assume you are in this directory. Use relative pat
 
 **Do NOT access other directories outside `/Users/dderyldowney/dev` without explicit user request.**
 
+## Git Commit Practices
+
+**CRITICAL: Commit associated work together using multiple commits**
+
+When committing changes to this repository:
+
+1. **Group related changes together** - Each commit should contain logically related changes
+2. **Use multiple commits for different types of work** - Separate commits for:
+   - Feature implementation (code changes)
+   - Test updates (step definitions, test fixes)
+   - Documentation (CLAUDE.md, SESSION_STATE.md, TODO.md)
+   - Configuration changes (docker-compose.yml, env files)
+
+3. **Commit message format** - Use clear, descriptive commit messages:
+   - `feat:` for new features
+   - `fix:` for bug fixes
+   - `docs:` for documentation changes
+   - `test:` for test-related changes
+   - `refactor:` for code refactoring
+
+4. **Before committing, verify:**
+   - No test artifacts in `public-ssh-keys/` (only .keep and user's public keys)
+   - No temporary files or build artifacts
+   - All related changes are grouped in the same commit
+
+5. **Example commit sequence:**
+   ```bash
+   # First commit: Feature implementation
+   git add scripts/feature.sh
+   git commit -m "feat: Add new feature X"
+
+   # Second commit: Test updates
+   git add tests/features/new-feature.feature
+   git commit -m "test: Add BDD tests for feature X"
+
+   # Third commit: Documentation
+   git add CLAUDE.md SESSION_STATE.md
+   git commit -m "docs: Update documentation for feature X"
+   ```
+
+**RATIONALE:** Multiple, focused commits make it easier to:
+- Review changes (smaller, logical chunks)
+- Revert specific changes if needed
+- Understand project history
+- Merge branches selectively
+
 ## Session Startup Context
 
 **CRITICAL: Always read session state files first, then explore codebase**
