@@ -1,6 +1,6 @@
 """
 Behave environment setup and teardown hooks for VDE BDD tests.
-Runs inside the BDD test container.
+Runs inside the BDD test container OR locally on the host.
 """
 
 import os
@@ -9,8 +9,26 @@ import shutil
 import tempfile
 from pathlib import Path
 
-# VDE root directory (inside container)
-VDE_ROOT = Path("/vde")
+# Detect if running in container vs locally on host
+# In container: VDE_ROOT_DIR is set to /vde
+# Locally: VDE_ROOT_DIR is not set or points to a different path
+# Test mode: VDE_TEST_MODE is set to 1 (allows cleanup during local testing)
+IN_CONTAINER = os.environ.get("VDE_ROOT_DIR") == "/vde"
+IN_TEST_MODE = os.environ.get("VDE_TEST_MODE") == "1"
+# Allow cleanup if running in container OR in test mode
+ALLOW_CLEANUP = IN_CONTAINER or IN_TEST_MODE
+HOST_HAS_DOCKER = os.path.exists("/var/run/docker.sock")
+
+# VDE root directory (inside container or on host)
+# Use VDE_PROJECT_ROOT if set, otherwise detect from environment
+project_root = os.environ.get("VDE_PROJECT_ROOT")
+if not project_root or not Path(project_root).exists():
+    # Try VDE_ROOT_DIR (used by test runner), then auto-detect
+    project_root = os.environ.get("VDE_ROOT_DIR")
+    if not project_root or not Path(project_root).exists():
+        # Fall back to parent of tests directory
+        project_root = str(Path(__file__).parent.parent.parent)
+VDE_ROOT = Path(project_root)
 
 
 def _cleanup_lock_files():
@@ -67,6 +85,10 @@ def before_all(context):
     context.created_vms = set()
     context.running_vms = set()
     context.allocated_ports = {}
+    context.last_command = None
+    context.last_output = None
+    context.last_error = None
+    context.last_exit_code = 0  # Default to 0 so assertions pass when no command run
 
 
 def after_all(context):
@@ -101,25 +123,28 @@ def before_scenario(context, scenario):
     context.last_command = None
     context.last_output = None
     context.last_error = None
+    context.last_exit_code = 0  # Default to 0 so assertions pass when no command run
 
 
 def after_scenario(context, scenario):
     """Clean up after each scenario."""
-    # Clean up any test VMs that were created
-    for vm in getattr(context, "created_vms", set()):
-        try:
-            # Remove docker-compose.yml if it exists
-            compose_file = VDE_ROOT / "configs" / "docker" / vm / "docker-compose.yml"
-            if compose_file.exists():
-                compose_file.unlink()
-            # Remove config directory if empty
-            config_dir = compose_file.parent
-            if config_dir.exists() and not list(config_dir.iterdir()):
-                config_dir.rmdir()
-        except Exception:
-            pass
+    # Only delete config files when running inside the container OR in test mode
+    # When running locally without test mode, preserve user's VM configurations
+    if ALLOW_CLEANUP:
+        for vm in getattr(context, "created_vms", set()):
+            try:
+                # Remove docker-compose.yml if it exists
+                compose_file = VDE_ROOT / "configs" / "docker" / vm / "docker-compose.yml"
+                if compose_file.exists():
+                    compose_file.unlink()
+                # Remove config directory if empty
+                config_dir = compose_file.parent
+                if config_dir.exists() and not list(config_dir.iterdir()):
+                    config_dir.rmdir()
+            except Exception:
+                pass
 
-    # Clean up temporary files
+    # Clean up temporary files (always)
     for f in getattr(context, "temp_files", []):
         try:
             if os.path.isfile(f):

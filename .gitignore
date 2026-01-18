@@ -44,3 +44,8 @@ __pycache__
 # Test output files
 tests/behave-results.json
 tests/pretty.output
+
+# Local-only documentation (session notes, not to be committed)
+SESSION_STATE.md
+WHY_ARE_WE_DOING_THIS.md
+TODO.md

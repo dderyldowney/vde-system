@@ -9,6 +9,7 @@ services:
         USERNAME: devuser
         UID: 1000
         GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-zig:latest
     container_name: zig-dev
     hostname: zig-dev
@@ -20,8 +21,13 @@ services:
 
     volumes:
       - ../../../projects/zig:/home/devuser/workspace
+      - ../../../logs/zig:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
       - ../../../env-files/zig.env

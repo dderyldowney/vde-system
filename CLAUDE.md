@@ -15,6 +15,30 @@ When running commands, always assume you are in this directory. Use relative pat
 
 **Do NOT access other directories outside `/Users/dderyldowney/dev` without explicit user request.**
 
+## Session Startup Context
+
+**CRITICAL: Always read session state files first, then explore codebase**
+
+When starting a new session in this project:
+
+1. **Read session state files:**
+   - **`SESSION_STATE.md`** - Session progress, test status, work completed
+   - **`TODO.md`** - Current tasks, priorities, and pending work
+
+2. **Perform comprehensive codebase examination:**
+   - Explore the full codebase structure to understand current implementation
+   - Use the Explore agent to get familiar with architecture and patterns
+   - Examine key files: scripts/lib/, tests/, configs/
+   - Understand the VDE system before making changes
+
+These files track the VDE Test Coverage Improvement project and contain critical context about:
+- Current test status (docker-free: 94/94 passing, docker-required: 47/397 passing)
+- User Guide integrity requirements
+- Tagging system for scenarios
+- Next steps and priorities
+
+**Read these files AND explore the codebase BEFORE making any changes to understand what work is in progress.**
+
 ## Overview
 
 This is a **Virtual Development Environment (VDE)** - a sophisticated Docker-based container orchestration system providing isolated development environments for multiple programming languages (Python, Rust, JavaScript, C#, Ruby) with shared infrastructure services (PostgreSQL, Redis, MongoDB, Nginx).
@@ -245,7 +269,11 @@ $HOME/dev/
 │   └── vde-chat               # Interactive AI chat
 └── tests/                     # Comprehensive test suite
     ├── features/              # Behave BDD feature specs
-    └── unit/                  # Unit tests for libraries
+    │   ├── docker-free/       # Fast tests (no Docker required)
+    │   └── docker-required/   # Slow tests (Docker VM operations)
+    ├── scripts/               # Test utilities
+    │   └── generate_user_guide.py  # Auto-generate docs from scenarios
+    └── steps/                 # Behave step definitions
 ```
 
 ## Data-Driven Configuration
@@ -442,22 +470,133 @@ If you regenerate your SSH keys, you must:
 2. Run any VDE script (they call `sync_ssh_keys_to_vde()`)
 3. Rebuild affected VMs with `--rebuild`
 
+### User Guide Preservation
+
+**CRITICAL: DO NOT break User Guide generation when modifying tests**
+
+The `docs/USER_GUIDE.md` is automatically generated from **passing** BDD scenarios.
+
+**RULES:**
+1. **NEVER delete or rename feature files** - Breaks User Guide sections
+2. **Preserve scenario titles and structure** - Used as section headers
+3. **Maintain scenario context** - Given/When/Then becomes documentation
+4. **Keep scenario descriptions intact** - Narrative becomes user-facing docs
+5. **Test against User Guide generation** - Verify after modifications
+
+**IMPORTANT: User Guide only includes PASSING scenarios**
+- Scenarios without step definitions → NOT in User Guide
+- Scenarios that fail → NOT in User Guide
+- **Implementing steps EXPANDS User Guide coverage**
+- Currently: 47 passing → 47 scenarios documented
+- Target: 251 passing → 251 scenarios documented (+204 scenarios to add!)
+
+**Some "duplicates" may be intentional for different user contexts - consider documentation purpose before removing.**
+
+**Before committing test changes:**
+```bash
+# Verify User Guide still generates correctly
+behave --format json --o tests/behave-results.json
+python3 tests/scripts/generate_user_guide.py
+```
+
 ## Testing
 
-The system includes comprehensive tests:
+The system includes comprehensive BDD tests organized by Docker requirements:
+
+### Test Organization
+
+**Docker-Free Tests (Fast):**
+- Location: `tests/features/docker-free/`
+- Runner: `./tests/run-bdd-fast.sh`
+- Duration: ~1 second
+- Status: **94/94 PASSING (100%)**
+- Features (5): cache-system, documented-development-workflows, vm-information-and-discovery, natural-language-parser, shell-compatibility
+
+**Docker-Required Tests (Slow):**
+- Location: `tests/features/docker-required/`
+- Runner: `./tests/run-bdd-tests.sh`
+- Duration: Several minutes
+- Status: **47/397 passing** (step definitions being implemented)
+- Features (26): All VM lifecycle, SSH, configuration, and workflow features
+
+### Running Tests
 
 ```bash
-# Run BDD feature tests
-cd tests && behave
+# Run fast tests (docker-free only)
+./tests/run-bdd-fast.sh
 
-# Run unit tests (if available)
-cd tests && ./run-unit-tests
+# Run specific docker-free feature
+./tests/run-bdd-fast.sh cache-system
+
+# Run all tests (docker-required)
+./tests/run-bdd-tests.sh
+
+# Run docker-required tests with @requires-docker-host scenarios (local only)
+./tests/run-bdd-tests.sh --include-docker
+
+# Generate User Guide from PASSING scenarios
+behave --format json --o tests/behave-results.json
+python3 tests/scripts/generate_user_guide.py
 ```
 
 **Test Levels:**
-- Feature Tests: BDD-style Gherkin specifications
-- Unit Tests: Individual library function tests
+- Feature Tests: BDD-style Gherkin specifications (Behave)
+- Unit Tests: Individual library function tests (if available)
 - Integration Tests: End-to-end workflow validation
+
+### @user-guide-* Tagging System
+
+All feature files use explicit tags to control User Guide generation:
+
+```
+@user-guide-installation       -> Section 1: Installation
+@user-guide-ssh-keys           -> Section 2: SSH Keys
+@user-guide-first-vm           -> Section 3: Your First VM
+@user-guide-understanding      -> Section 4: Understanding
+@user-guide-starting-stopping  -> Section 5: Starting and Stopping
+@user-guide-cluster            -> Section 6: Your First Cluster
+@user-guide-connecting         -> Section 7: Connecting
+@user-guide-databases          -> Section 8: Working with Databases
+@user-guide-daily-workflow     -> Section 9: Daily Workflow
+@user-guide-more-languages     -> Section 10: Adding More Languages
+@user-guide-troubleshooting    -> Section 11: Troubleshooting
+@user-guide-internal           -> Excluded from User Guide
+```
+
+**Tag Usage Rules:**
+- Each feature should have exactly one @user-guide-* tag
+- Internal features use @user-guide-internal
+- Tags override keyword-based matching in User Guide generator
+- When adding features, tag them appropriately for documentation
+
+### User Guide Generation
+
+**CRITICAL:** The User Guide (`docs/USER_GUIDE.md`) is auto-generated from **PASSING** scenarios only.
+
+**How it works:**
+1. Run tests with JSON output: `behave --format json --o tests/behave-results.json`
+2. Generate guide: `python3 tests/scripts/generate_user_guide.py`
+3. Only PASSING scenarios appear in the guide
+4. Scenarios without step definitions → NOT in guide
+5. Scenarios that fail → NOT in guide
+
+**Implication:** Implementing step definitions EXPANDS User Guide coverage. Currently 47 passing scenarios produce 47 documented scenarios.
+
+### Docker-in-Docker Limitations
+
+**IMPORTANT:** Some scenarios are tagged with `@requires-docker-host` because they cannot run in Docker-in-Docker environments.
+
+**Why:** These scenarios test actual Docker container creation/management. When run inside a test container, inner containers try to mount paths like `/vde/projects/python`, but Docker on the host only knows about host paths like `/Users/dderyldowney/dev/projects/python`.
+
+**Result:** `@requires-docker-host` scenarios:
+- **CAN** be run locally with `--include-docker` flag (Docker is available on host)
+- **CANNOT** be run in GitHub CI (no Docker-in-Docker support for these operations)
+- Must use shell-based integration tests (`tests/integration/*.test.sh`) instead
+
+**Test Architecture:**
+- Fast tests (`run-bdd-fast.sh`) run on GitHub CI (docker-free)
+- Full tests (`run-bdd-tests.sh` without `--include-docker`) run on GitHub CI (docker-required without host operations)
+- Host tests (`run-bdd-tests.sh --include-docker`) run locally only
 
 ## Cross-Shell Compatibility
 
