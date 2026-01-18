@@ -1358,7 +1358,13 @@ def load_passing_scenarios_from_json():
 
 
 def extract_scenarios_from_feature(content):
-    """Extract scenarios from a feature file content."""
+    """
+    Extract scenarios from a feature file content.
+
+    Returns:
+        tuple: (feature_name, scenarios) where scenarios is a list of
+               (scenario_name, scenario_body, tags)
+    """
     feature_match = re.search(
         r'Feature:\s*(.+?)\n(?:\s*As\s+(.+?)\n\s*I want\s+(.+?)\n\s*So\s+(.+?))?',
         content,
@@ -1366,12 +1372,29 @@ def extract_scenarios_from_feature(content):
     )
     feature_name = feature_match.group(1).strip() if feature_match else "Unknown Feature"
 
-    scenario_pattern = r'Scenario:\s*(.+?)\n((?:\s*(?:Given|When|Then|And)\s+.+(?:\n|$))+)'
+    # Extract feature-level tags (if any)
+    feature_tags = []
+    feature_tag_match = re.search(r'Feature:(.+?)\n((?:\s*@\w+(?:\s+@\w+)*\n)*)', content, re.DOTALL)
+    if feature_tag_match:
+        tag_text = feature_tag_match.group(2) or ""
+        feature_tags = [tag.strip() for tag in re.findall(r'@(\w+(?:-\w+)*)', tag_text)]
+
+    # Pattern to match scenarios with optional tags before them
+    # Captures: tags (if any), scenario name, and scenario body
+    scenario_pattern = r'(?:((?:\s*@\w+(?:-\w+)*\n)+)*)\s*Scenario:\s*(.+?)\n((?:\s*(?:Given|When|Then|And)\s+.+(?:\n|$))+)'
     scenarios = []
     for match in re.finditer(scenario_pattern, content, re.MULTILINE):
-        scenario_name = match.group(1).strip()
-        scenario_body = match.group(2).strip()
-        scenarios.append((scenario_name, scenario_body))
+        tag_block = match.group(1) or ""
+        scenario_name = match.group(2).strip()
+        scenario_body = match.group(3).strip()
+
+        # Extract tags from this scenario
+        scenario_tags = [tag.strip() for tag in re.findall(r'@(\w+(?:-\w+)*)', tag_block)]
+
+        # Combine feature and scenario tags (scenario tags take precedence)
+        all_tags = scenario_tags if scenario_tags else feature_tags
+
+        scenarios.append((scenario_name, scenario_body, all_tags))
 
     return feature_name, scenarios
 
@@ -1414,7 +1437,7 @@ def generate_user_guide(passing_scenarios=None):
 
             feature_name, scenarios = extract_scenarios_from_feature(content)
 
-            for scenario_name, scenario_body in scenarios:
+            for scenario_name, scenario_body, tags in scenarios:
                 # Check if scenario passed (if we have test results)
                 if passing_scenarios is not None:
                     key = f"{feature_name}:{scenario_name}"
@@ -1422,8 +1445,8 @@ def generate_user_guide(passing_scenarios=None):
                         # Skip failed scenarios
                         continue
 
-                # Determine section based on scenario name
-                section = determine_section(scenario_name)
+                # Determine section based on tags (primary) or scenario name (fallback)
+                section = determine_section(scenario_name, tags)
                 if section:
                     if section not in all_scenarios:
                         all_scenarios[section] = []
@@ -1519,8 +1542,57 @@ def generate_user_guide(passing_scenarios=None):
         print(f"  WARNING: Scenarios in this guide have NOT been verified!")
 
 
-def determine_section(scenario_name):
-    """Determine which section a scenario belongs to."""
+def determine_section(scenario_name, tags=None):
+    """
+    Determine which section a scenario belongs to.
+
+    PRIORITY ORDER:
+    1. Explicit @user-guide-section tag (recommended)
+    2. Keyword-based matching (fallback)
+
+    TAGGING CONVENTION:
+    Add one of these tags to your scenario/feature:
+      @user-guide-installation       -> Section 1
+      @user-guide-ssh-keys           -> Section 2
+      @user-guide-first-vm           -> Section 3
+      @user-guide-understanding      -> Section 4
+      @user-guide-starting-stopping  -> Section 5
+      @user-guide-cluster            -> Section 6
+      @user-guide-connecting         -> Section 7
+      @user-guide-databases          -> Section 8
+      @user-guide-daily-workflow     -> Section 9
+      @user-guide-more-languages     -> Section 10
+      @user-guide-troubleshooting    -> Section 11
+      @user-guide-internal           -> Not included (internal features)
+
+    Example:
+      @user-guide-first-vm
+      Scenario: Creating a Python development environment
+        Given I've just installed VDE
+        When I run "create-virtual-for python"
+        Then a Python VM should be created
+    """
+    # First, check for explicit tags
+    if tags:
+        tag_map = {
+            "user-guide-installation": "1. Installation",
+            "user-guide-ssh-keys": "2. SSH Keys",
+            "user-guide-first-vm": "3. Your First VM",
+            "user-guide-understanding": "4. Understanding",
+            "user-guide-starting-stopping": "5. Starting and Stopping",
+            "user-guide-cluster": "6. Your First Cluster",
+            "user-guide-connecting": "7. Connecting",
+            "user-guide-databases": "8. Working with Databases",
+            "user-guide-daily-workflow": "9. Daily Workflow",
+            "user-guide-more-languages": "10. Adding More Languages",
+            "user-guide-troubleshooting": "11. Troubleshooting",
+            "user-guide-internal": None,  # Explicitly exclude from user guide
+        }
+        for tag in tags:
+            if tag in tag_map:
+                return tag_map[tag]
+
+    # Fallback: keyword-based matching
     name_lower = scenario_name.lower()
 
     if "installation" in name_lower or "prerequisite" in name_lower or "setup" in name_lower:

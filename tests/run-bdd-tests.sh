@@ -77,8 +77,17 @@ ${BOLD}Examples:${RESET}
 
 ${BOLD}Available Features:${RESET}
 EOF
-    # List all feature files
-    for feature in "$SCRIPT_DIR/features"/*.feature(N); do
+    # List feature files from docker-required (primary)
+    echo "Docker-required features:"
+    for feature in "$SCRIPT_DIR/features/docker-required"/*.feature(N); do
+        if [[ -f "$feature" ]]; then
+            local name="${feature:t:r}"
+            echo "  $name"
+        fi
+    done
+    echo ""
+    echo "Docker-free features (use run-bdd-fast.sh instead):"
+    for feature in "$SCRIPT_DIR/features/docker-free"/*.feature(N); do
         if [[ -f "$feature" ]]; then
             local name="${feature:t:r}"
             echo "  $name"
@@ -192,10 +201,22 @@ run_tests() {
     local behave_args=""
     if [[ -n "$SPECIFIC_FEATURE" ]]; then
         echo -e "${BLUE}Running specific feature: ${SPECIFIC_FEATURE}${RESET}"
-        behave_args="tests/features/${SPECIFIC_FEATURE}.feature"
+        # Check docker-required first, then docker-free
+        if [[ -f "tests/features/docker-required/${SPECIFIC_FEATURE}.feature" ]]; then
+            behave_args="tests/features/docker-required/${SPECIFIC_FEATURE}.feature"
+        elif [[ -f "tests/features/docker-free/${SPECIFIC_FEATURE}.feature" ]]; then
+            behave_args="tests/features/docker-free/${SPECIFIC_FEATURE}.feature"
+        else
+            echo -e "${RED}Error: Feature '${SPECIFIC_FEATURE}' not found${RESET}"
+            echo "Available features in docker-required/:"
+            ls tests/features/docker-required/*.feature 2>/dev/null | xargs -I {} basename {} .feature | sed 's/^/  - /' || echo "  (none)"
+            echo "Available features in docker-free/:"
+            ls tests/features/docker-free/*.feature 2>/dev/null | xargs -I {} basename {} .feature | sed 's/^/  - /' || echo "  (none)"
+            exit 1
+        fi
     else
-        echo -e "${BLUE}Running all features${RESET}"
-        behave_args="tests/features/"
+        echo -e "${BLUE}Running all Docker-required features${RESET}"
+        behave_args="tests/features/docker-required/"
     fi
 
     # Run behave in container

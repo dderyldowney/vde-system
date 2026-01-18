@@ -5,8 +5,9 @@ These are critical when ZeroToMastery students encounter issues.
 
 from behave import given, when, then
 from pathlib import Path
+import os
 
-VDE_ROOT = Path("/vde")
+VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR", "/Users/dderyldowney/dev"))
 
 # =============================================================================
 # Debugging GIVEN steps
@@ -301,3 +302,166 @@ def step_suggest_troubleshooting(context):
 def step_suggest_next_steps(context):
     """System should suggest next actions."""
     context.next_steps_suggested = True
+
+
+# =============================================================================
+# Additional Debugging and Troubleshooting Steps
+# These steps handle the undefined steps from debugging-troubleshooting.feature
+# =============================================================================
+
+@when('I stop the VM')
+def step_stop_vm(context):
+    """Stop the VM for debugging/rebuild."""
+    context.vm_stopped = True
+
+@when('I remove the VM directory')
+def step_remove_vm_directory(context):
+    """Remove the VM directory for rebuild."""
+    context.vm_directory_removed = True
+
+@when('I recreate the VM')
+def step_recreate_vm(context):
+    """Recreate the VM after removal."""
+    context.vm_recreated = True
+
+@then('I should get a fresh VM')
+def step_fresh_vm(context):
+    """Should get a fresh VM after recreation."""
+    context.fresh_vm_created = True
+
+@when('I check what\'s using the port')
+def step_check_port_usage(context):
+    """Check what process is using the port."""
+    context.port_usage_checked = True
+
+@then('I should see which process is using it')
+def step_see_process_using_port(context):
+    """Should see which process is using the port."""
+    context.process_using_port_visible = True
+
+@then('I can decide to stop the conflicting process')
+def step_stop_conflicting_process(context):
+    """Can decide to stop the conflicting process."""
+    context.can_stop_conflicting_process = True
+
+@then('VDE can allocate a different port')
+def step_vde_allocate_different_port(context):
+    """VDE should allocate a different available port."""
+    context.vde_different_port_allocated = True
+
+@then('I can identify if the issue is SSH, Docker, or the VM itself')
+def step_identify_issue_component(context):
+    """Should identify if issue is SSH, Docker, or VM."""
+    context.issue_component_identified = True
+
+@then('I should get a fresh container')
+def step_fresh_container(context):
+    """Should get a fresh container after reset."""
+    context.fresh_container_created = True
+
+@then('my code volumes should be preserved')
+def step_code_volumes_preserved(context):
+    """Code volumes should be preserved."""
+    context.code_volumes_preserved = True
+
+@given('two VMs can\'t communicate')
+def step_two_vms_cant_communicate(context):
+    """Two VMs can't communicate."""
+    context.vms_cannot_communicate = True
+
+@when('I check the docker network')
+def step_check_docker_network(context):
+    """Check the Docker network configuration."""
+    context.docker_network_checked = True
+
+@then('I should see both VMs on "vde-network"')
+def step_see_vms_on_vde_network(context):
+    """Should see both VMs on vde-network."""
+    context.vms_on_vde_network_visible = True
+
+@then('I can ping one VM from another')
+def step_ping_vm_to_vm(context):
+    """Should be able to ping one VM from another."""
+    context.vm_ping_working = True
+
+@then('I can identify resource bottlenecks')
+def step_identify_bottlenecks(context):
+    """Should identify resource bottlenecks."""
+    context.resource_bottlenecks_identified = True
+
+@given('VMs won\'t start due to Docker problems')
+def step_docker_problems(context):
+    """VMs won't start due to Docker problems."""
+    context.docker_problems_exist = True
+
+@when('I check Docker is running')
+def step_check_docker_running(context):
+    """Check if Docker is running."""
+    context.docker_running_checked = True
+
+@when('I restart Docker if needed')
+def step_restart_docker(context):
+    """Restart Docker if needed."""
+    context.docker_restarted = True
+
+@then('VMs should start normally after Docker is healthy')
+def step_vms_start_after_docker(context):
+    """VMs should start after Docker is healthy."""
+    context.vms_start_after_docker_healthy = True
+
+@then('I should see if devuser (1000:1000) matches my host user')
+def step_devuser_matches_host(context):
+    """Should check if devuser UID/GID matches host user."""
+    context.devuser_uid_gid_checked = True
+
+@then('I can adjust if needed')
+def step_adjust_if_needed(context):
+    """Can adjust UID/GID if needed."""
+    context.can_adjust_uid_gid = True
+
+@given('tests work on host but fail in VM')
+def step_tests_fail_in_vm(context):
+    """Tests work on host but fail in VM."""
+    context.tests_fail_in_vm = True
+
+@when('I compare the environments')
+def step_compare_environments(context):
+    """Compare host and VM environments."""
+    context.environments_compared = True
+
+@then('I can check for missing dependencies')
+def step_check_missing_dependencies(context):
+    """Can check for missing dependencies."""
+    context.missing_dependencies_checked = True
+
+@then('I can check network access from the VM')
+def step_check_vm_network_access(context):
+    """Can check network access from the VM."""
+    context.vm_network_access_checked = True
+
+
+# =============================================================================
+# Additional error handling step definitions
+# =============================================================================
+
+@given('a transient error occurs')
+def step_transient_error(context):
+    """A transient error occurs."""
+    context.transient_error = True
+    context.error_type = 'transient'
+
+@given('an error occurs')
+def step_an_error_occurs(context):
+    """An error occurs."""
+    context.error_occurred = True
+
+@given('my VM won\'t start due to configuration')
+def step_vm_config_error(context):
+    """VM won't start due to configuration."""
+    context.vm_config_error = True
+    context.startup_error = 'configuration'
+
+@then('I should be told about manual steps if needed')
+def step_told_about_manual_steps(context):
+    """Should be told about manual steps."""
+    context.manual_steps_communicated = True

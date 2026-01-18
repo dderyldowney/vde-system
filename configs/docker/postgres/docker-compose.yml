@@ -1,27 +1,38 @@
+# Template for service VMs
+# Variables: postgres, 2401, 5432, apt-get update -y && apt-get install -y postgresql-client
+# SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
 services:
   postgres:
     build:
       context: ../../..
-      dockerfile: configs/docker/postgres/Dockerfile
+      dockerfile: configs/docker/base-dev.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
         GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-postgres:latest
     container_name: postgres
     hostname: postgres
     restart: unless-stopped
+    command: sh -c "apt-get update -y && apt-get install -y postgresql-client && /usr/sbin/sshd -D"
 
     ports:
-      - "2400:22"
-      - "5432:5432"
+      - "2401:22"
+      ##SERVICE_PORTS##
+
+    volumes:
+      - ../../../data/postgres:/data
+      - ../../../logs/postgres:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for service VM communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
       - ../../../env-files/postgres.env
-
-    volumes:
-      - ../../../data/postgres:/var/lib/postgresql/data
-      - ../../../configs/postgres/init:/docker-entrypoint-initdb.d
 
     networks:
       - dev-net

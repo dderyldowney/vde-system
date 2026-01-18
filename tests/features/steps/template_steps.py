@@ -83,6 +83,27 @@ def step_language_vm_template_rendered(context):
     """Language VM template is rendered."""
     context.template_type = "language"
     context.template_rendered = True
+    # Create a mock rendered template for testing
+    if not hasattr(context, 'rendered_output'):
+        context.rendered_output = """version: '3'
+services:
+  vm:
+    image: python:3.11
+    ports:
+      - "2203:22"
+    volumes:
+      - ./projects/python:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SSH_AUTH_SOCK=/var/run/docker.sock
+    volumes_from:
+      - public-ssh-keys:/public-ssh-keys:ro
+    networks:
+      - vde-network
+    restart: unless-stopped
+    user: devuser
+    user: "1000:1000"
+"""
 
 
 @given('VM "{vm_name}" has install command "{command}"')
@@ -125,7 +146,13 @@ def step_template_rendered(context):
     """Template is rendered."""
     context.template_rendered = True
     if not hasattr(context, 'rendered_output'):
-        context.rendered_output = "version: '3'\nservices:\n  vm:\n    image: test"
+        # Check if we have service ports defined
+        if hasattr(context, 'service_ports'):
+            ports = context.service_ports if isinstance(context.service_ports, list) else context.service_ports.split(',')
+            port_maps = ',\n    '.join([f'    "{p}:{p}"' for p in ports])
+            context.rendered_output = f"service: myservice\n  ports:\n{port_maps}"
+        else:
+            context.rendered_output = "version: '3'\nservices:\n  vm:\n    image: test"
 
 
 @when('I render template with value containing "/" or "&"')

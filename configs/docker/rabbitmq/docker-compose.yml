@@ -1,3 +1,6 @@
+# Template for service VMs
+# Variables: rabbitmq, 2400, 5672,15672, apt-get update -y && apt-get install -y erlang-nox && apt-get install -y rabbitmq-server
+# SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
 services:
   rabbitmq:
     build:
@@ -15,9 +18,8 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y erlang-nox && apt-get install -y rabbitmq-server && /usr/sbin/sshd -D"
 
     ports:
-      - "2406:22"
-      - "5672:5672"
-      - "15672:15672"
+      - "2400:22"
+      ##SERVICE_PORTS##
 
     volumes:
       - ../../../data/rabbitmq:/data
