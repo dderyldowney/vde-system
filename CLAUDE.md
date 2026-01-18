@@ -2,6 +2,80 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+---
+
+## ⚠️ MANDATORY SESSION STARTUP ⚠️
+
+**YOU MUST FOLLOW THESE STEPS IN ORDER - NO EXCEPTIONS**
+
+### Step 1: Read Session State Files (MANDATORY)
+
+The session-start.sh hook automatically outputs SESSION_STATE.md and TODO.md at startup.
+**You will see these files in your startup context. READ THEM BEFORE DOING ANYTHING ELSE.**
+
+1. **SESSION_STATE.md** - Session progress, test status, work completed
+2. **TODO.md** - Current tasks, priorities, and pending work
+
+These files are auto-loaded by the startup hook. If you don't see them in your startup context,
+the hook failed and you must read them manually:
+
+```bash
+cat SESSION_STATE.md
+cat TODO.md
+```
+
+**DO NOT proceed until you understand:**
+- What session we're in (Session 3, 4, 5, etc.)
+- What work was completed in previous sessions
+- What the current priorities are
+- What the test status is
+
+### Step 2: Use Explore Agent (MANDATORY)
+
+**BEFORE doing ANY work, you MUST use the Task tool with subagent_type=Explore**
+
+The Explore agent is faster and more efficient at:
+- Finding files by patterns (e.g., `src/components/**/*.tsx`)
+- Searching code for keywords (e.g., "API endpoints")
+- Answering questions about the codebase (e.g., "how do VMs work?")
+
+**When to use Explore:**
+- When you need to find files matching a pattern
+- When searching for keywords across the codebase
+- When answering open-ended questions about how things work
+- When you need to understand architecture before making changes
+
+**When NOT to use Explore:**
+- When you already know the exact file path (use Read/Glob directly)
+- When searching for a specific class/function name (use Glob)
+
+### Step 3: Use Sub-Agents Liberally (MANDATORY)
+
+**You MUST use the Task tool to launch specialized sub-agents whenever appropriate**
+
+**Available sub-agent types:**
+| Agent | Use For |
+|-------|---------|
+| `Explore` | Fast codebase exploration, searching, understanding architecture |
+| `Plan` | Designing implementation strategies for complex tasks |
+| `Bash` | Command execution, git operations, terminal tasks |
+| `general-purpose` | Complex multi-step research and code tasks |
+| `claude-code-guide` | Questions about Claude Code features |
+
+**When to use sub-agents:**
+- Multi-step tasks (Plan agent)
+- Finding files/searching code (Explore agent)
+- Running commands (Bash agent)
+- Research before implementation (general-purpose)
+
+**Launch sub-agents in parallel when possible** - send a single message with multiple Task tool calls.
+
+### Step 4: Only Then Make Changes
+
+**After completing Steps 1-3, you may proceed with the task.**
+
+---
+
 ## Working Directory Constraints
 
 **IMPORTANT:** The working directory for this project is `/Users/dderyldowney/dev`.
@@ -63,30 +137,23 @@ When committing changes to this repository:
 
 ## Session Startup Context
 
-**CRITICAL: Always read session state files first, then explore codebase**
+> **See MANDATORY SESSION STARTUP at the top of this file**
 
-When starting a new session in this project:
+**Session state files are auto-loaded by the startup hook.**
+You should have already seen SESSION_STATE.md and TODO.md in your startup context.
 
-1. **Read session state files:**
-   - **`SESSION_STATE.md`** - Session progress, test status, work completed
-   - **`TODO.md`** - Current tasks, priorities, and pending work
+**After reading session state files:**
 
-2. **Use available installed plugins**
+1. **Use available plugins**
    - Use available plugins such as claude-mem:go and lyra:lyra
 
-3. **Perform comprehensive codebase examination:**
+2. **Perform comprehensive codebase examination (if needed):**
    - Explore the full codebase structure to understand current implementation
    - Use the Explore agent to get familiar with architecture and patterns
    - Examine key files: scripts/lib/, tests/, configs/
    - Understand the VDE system before making changes
 
-These files track the VDE Test Coverage Improvement project and contain critical context about:
-- Current test status (docker-free: 94/94 passing, docker-required: 47/397 passing)
-- User Guide integrity requirements
-- Tagging system for scenarios
-- Next steps and priorities
-
-**Read these files AND explore the codebase BEFORE making any changes to understand what work is in progress.**
+**Read session state files AND explore the codebase BEFORE making any changes.**
 
 ## Overview
 
