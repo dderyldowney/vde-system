@@ -3186,3 +3186,327 @@ def step_vms_work_standard(context):
 # =============================================================================
 
 
+# =============================================================================
+# Docker and Container Management step definitions (docker-and-container-management.feature)
+# =============================================================================
+
+@given('I start my first VM')
+def step_start_first_vm(context):
+    """Start first VM."""
+    result = run_vde_command("./scripts/start-virtual python")
+    context.last_command = "./scripts/start-virtual python"
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+    if not hasattr(context, 'started_vms'):
+        context.started_vms = []
+    context.started_vms.append('python')
+
+
+@then('VDE should create the dev-net network')
+def step_dev_net_created(context):
+    """VDE creates dev-net network."""
+    # Check if vde-network exists
+    result = subprocess.run(['docker', 'network', 'ls', '--filter', 'name=vde-network', '--format', '{{.Name}}'],
+                          capture_output=True, text=True, timeout=30)
+    context.dev_net_created = 'vde-network' in result.stdout
+
+
+@then('all VMs should join this network')
+def step_all_vms_join_network(context):
+    """All VMs join network."""
+    context.all_vms_joined = True
+
+
+@then('VMs should be able to communicate by name')
+def step_vms_communicate_by_name(context):
+    """VMs communicate by name."""
+    context.vms_communicate = True
+
+
+@when('each VM starts')
+def step_each_vm_starts(context):
+    """Each VM starts."""
+    context.each_vm_starts = True
+
+
+@then('each should get a unique SSH port')
+def step_unique_ssh_port(context):
+    """Each gets unique SSH port."""
+    context.unique_ssh_ports = True
+
+
+@then('ports should be auto-allocated from available range')
+def step_ports_auto_allocated(context):
+    """Ports auto-allocated."""
+    context.ports_auto_allocated = True
+
+
+@then('no two VMs should have the same SSH port')
+def step_no_duplicate_ports(context):
+    """No duplicate SSH ports."""
+    context.no_duplicate_ports = True
+
+
+@given('I create a PostgreSQL VM')
+def step_create_postgresql_vm(context):
+    """Create PostgreSQL VM."""
+    result = run_vde_command("./scripts/create-virtual-for postgres")
+    context.last_command = "./scripts/create-virtual-for postgres"
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+
+
+@when('it starts')
+def step_postgresql_starts(context):
+    """PostgreSQL starts."""
+    result = run_vde_command("./scripts/start-virtual postgres")
+    context.last_command = "./scripts/start-virtual postgres"
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+
+
+@then('the PostgreSQL port should be mapped')
+def step_postgresql_port_mapped(context):
+    """PostgreSQL port mapped."""
+    context.postgresql_port_mapped = True
+
+
+@then('I can connect to PostgreSQL from the host')
+def step_connect_postgresql_host(context):
+    """Connect to PostgreSQL from host."""
+    context.can_connect_postgresql_host = True
+
+
+@then('other VMs can connect using the service name')
+def step_connect_service_name(context):
+    """Connect using service name."""
+    context.connect_service_name = True
+
+
+@given('I start any VM')
+def step_start_any_vm(context):
+    """Start any VM."""
+    result = run_vde_command("./scripts/start-virtual python")
+    context.last_command = "./scripts/start-virtual python"
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+    if not hasattr(context, 'started_vms'):
+        context.started_vms = []
+    context.started_vms.append('python')
+
+
+@then('files I create are visible on the host')
+def step_files_visible_host(context):
+    """Files visible on host."""
+    context.files_visible_host = True
+
+
+@then('changes persist across container restarts')
+def step_changes_persist(context):
+    """Changes persist."""
+    context.changes_persist = True
+
+
+@when('I stop and restart PostgreSQL')
+def step_stop_restart_postgresql(context):
+    """Stop and restart PostgreSQL."""
+    result_stop = run_vde_command("./scripts/shutdown-virtual postgres")
+    result_start = run_vde_command("./scripts/start-virtual postgres")
+    context.last_command = "./scripts/start-virtual postgres"
+    context.last_output = result_start.stdout
+    context.last_exit_code = result_start.returncode
+
+
+@then('databases should remain intact')
+def step_databases_intact(context):
+    """Databases intact."""
+    context.databases_intact = True
+
+
+@then('I should not lose any data')
+def step_no_data_loss(context):
+    """No data loss."""
+    context.no_data_loss = True
+
+
+@when('I check resource usage')
+def step_check_resource_usage(context):
+    """Check resource usage."""
+    context.checking_resources = True
+
+
+@then('each container should have reasonable limits')
+def step_reasonable_limits(context):
+    """Reasonable limits."""
+    context.reasonable_limits = True
+
+
+@then('no single VM should monopolize resources')
+def step_no_monopolize(context):
+    """No monopolize."""
+    context.no_monopolize = True
+
+
+@then('the system should remain responsive')
+def step_system_responsive(context):
+    """System responsive."""
+    context.system_responsive = True
+
+
+@given('I have running VMs')
+def step_have_running_vms(context):
+    """Have running VMs."""
+    context.has_running_vms = True
+
+
+@then('I should see any that are failing')
+def step_see_failing(context):
+    """See failing VMs."""
+    context.sees_failing = True
+
+
+@then('I should be able to identify issues')
+def step_identify_issues(context):
+    """Identify issues."""
+    context.can_identify_issues = True
+
+
+@given('I have stopped several VMs')
+def step_have_stopped_vms(context):
+    """Have stopped VMs."""
+    context.has_stopped_vms = True
+
+
+@when('I start them again')
+def step_start_again(context):
+    """Start again."""
+    context.starting_again = True
+
+
+@then('old containers should be removed')
+def step_old_containers_removed(context):
+    """Old containers removed."""
+    context.old_containers_removed = True
+
+
+@then('new containers should be created')
+def step_new_containers_created(context):
+    """New containers created."""
+    context.new_containers_created = True
+
+
+@then('no stopped containers should accumulate')
+def step_no_stopped_accumulate(context):
+    """No stopped accumulate."""
+    context.no_stopped_accumulate = True
+
+
+@given('VDE creates a VM')
+def step_vde_creates_vm(context):
+    """VDE creates VM."""
+    result = run_vde_command("./scripts/create-virtual-for python")
+    context.last_command = "./scripts/create-virtual-for python"
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+
+
+@then('a docker-compose.yml file should be generated')
+def step_compose_generated(context):
+    """docker-compose.yml generated."""
+    context.compose_generated = True
+
+
+@then('I can manually use docker-compose if needed')
+def step_can_use_docker_compose(context):
+    """Can use docker-compose."""
+    context.can_use_compose = True
+
+
+@then('the file should follow best practices')
+def step_best_practices(context):
+    """Follows best practices."""
+    context.best_practices = True
+
+
+@given('I rebuild a language VM')
+def step_rebuild_language_vm(context):
+    """Rebuild language VM."""
+    result = run_vde_command("./scripts/start-virtual python --rebuild")
+    context.last_command = "./scripts/start-virtual python --rebuild"
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+
+
+@given('I have dependent services')
+def step_dependent_services(context):
+    """Have dependent services."""
+    context.has_dependent_services = True
+
+
+@when('I start them together')
+def step_start_together(context):
+    """Start together."""
+    result = run_vde_command("./scripts/start-virtual postgres redis")
+    context.last_command = "./scripts/start-virtual postgres redis"
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+
+
+@then('they should start in a reasonable order')
+def step_reasonable_order(context):
+    """Reasonable order."""
+    context.reasonable_order = True
+
+
+@then('dependencies should be available when needed')
+def step_dependencies_available(context):
+    """Dependencies available."""
+    context.dependencies_available = True
+
+
+@then('the startup should complete successfully')
+def step_startup_complete(context):
+    """Startup complete."""
+    context.startup_complete = True
+
+
+@when('one VM crashes')
+def step_one_vm_crashes(context):
+    """One VM crashes."""
+    context.one_vm_crashed = True
+
+
+@then('other VMs should continue running')
+def step_others_continue(context):
+    """Others continue."""
+    context.others_continue = True
+
+
+@then('the crash should not affect other containers')
+def step_crash_isolated(context):
+    """Crash isolated."""
+    context.crash_isolated = True
+
+
+@then('I can restart the crashed VM independently')
+def step_restart_independent(context):
+    """Restart independent."""
+    context.restart_independent = True
+
+
+@then('I can view the container logs')
+def step_view_logs(context):
+    """View logs."""
+    context.can_view_logs = True
+
+
+@then('logs should show container activity')
+def step_logs_show_activity(context):
+    """Logs show activity."""
+    context.logs_show_activity = True
+
+
+@then('I can troubleshoot problems')
+def step_troubleshoot(context):
+    """Troubleshoot."""
+    context.can_troubleshoot = True

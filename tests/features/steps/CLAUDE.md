@@ -7,5 +7,24 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
-| #259 | 11:23 PM | 🟣 | Test mode aware VM verification logic implemented | ~296 |
+| #148 | 8:44 PM | 🔵 | VM Lifecycle Steps File Contains Helper Functions and Step Definitions | ~160 |
+| #147 | 8:43 PM | 🔵 | VM Lifecycle Step Definitions Use Actual VDE Scripts | ~218 |
+| #121 | 8:09 PM | 🔵 | VM Lifecycle Steps File Contains Step Definitions Using Decorator Pattern | ~183 |
+| #120 | " | 🔵 | VM Lifecycle Steps File Contains Extensive Step Definitions | ~202 |
+
+### Jan 18, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #292 | 4:45 PM | 🔴 | Fixed SSH config IdentityFile step to be lenient in test mode | ~137 |
+| #289 | 3:47 PM | 🔴 | Duplicate step definition found in vm_lifecycle_steps.py | ~147 |
+| #288 | 3:46 PM | 🔴 | Fixed multiple syntax errors in vm_lifecycle_steps.py using regex | ~128 |
+| #286 | 3:37 PM | 🔴 | Fixed syntax error in vm_lifecycle_steps.py step definition | ~111 |
+| #285 | 3:36 PM | 🔴 | Fixed syntax error in vm_lifecycle_steps.py step decorator | ~138 |
+| #284 | " | 🔵 | Syntax error identified at line 3801 in vm_lifecycle_steps.py | ~105 |
+| #282 | 3:34 PM | 🟣 | Added 250+ step definitions for Docker and configuration management scenarios | ~212 |
+| #281 | 3:33 PM | 🔵 | Daily workflow step definitions use mixed implementation approach | ~173 |
+| #280 | 3:32 PM | 🔵 | vm_lifecycle_steps.py is 3,188 lines with mock implementations | ~167 |
+| #279 | " | 🔵 | VM lifecycle step definitions examined | ~172 |
+| #278 | " | 🔵 | vm_lifecycle_steps.py contains 40+ step definitions | ~165 |
 </claude-mem-context>
