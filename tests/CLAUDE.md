@@ -14,4 +14,10 @@
 | #88 | 8:04 PM | 🔵 | Docker-Required Test Analysis: 47 Passing Scenarios Across 9 Features | ~155 |
 | #79 | 8:02 PM | 🔵 | Docker-Required Test JSON Output Saved | ~114 |
 | #75 | 8:00 PM | 🔵 | BDD Test Runner Uses Docker Container with JSON Format Option | ~182 |
+
+### Jan 18, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #274 | 3:32 PM | 🟣 | User Guide regenerated with 196 verified passing scenarios | ~120 |
 </claude-mem-context>

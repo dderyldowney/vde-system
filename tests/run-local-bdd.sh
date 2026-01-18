@@ -4,9 +4,11 @@
 # Preserves your VM configurations while testing functionality
 #
 # Usage:
-#   ./tests/run-local-bdd.sh              # Run all tests
-#   ./tests/run-local-bdd.sh vm-lifecycle # Run specific feature
-#   ./tests/run-local-bdd.sh --status     # Check test setup
+#   ./tests/run-local-bdd.sh                    # Run all tests
+#   ./tests/run-local-bdd.sh vm-lifecycle         # Run specific feature
+#   ./tests/run-local-bdd.sh --status            # Check test setup
+#   ./tests/run-local-bdd.sh --json              # Run with JSON output
+#   ./tests/run-local-bdd.sh --json -o FILE      # JSON output to file
 #
 # IMPORTANT: This script tests on your LOCAL Docker Desktop
 # Your VM configurations will NOT be deleted or modified.
@@ -129,6 +131,8 @@ ${BOLD}Arguments:${RESET}
 ${BOLD}Options:${RESET}
   --check         Check test setup without running tests
   --no-build      Skip rebuilding test container (not used for local tests)
+  --json          Output test results in JSON format
+  -o FILE         Write JSON output to FILE (requires --json)
   -v, --verbose   Enable verbose output
   -h, --help      Show this help message
 
@@ -137,6 +141,8 @@ ${BOLD}Examples:${RESET}
   $0 vm-lifecycle            # Run only VM lifecycle tests
   $0 ssh-configuration       # Run only SSH tests
   $0 --check                 # Check if environment is ready
+  $0 --json                  # Run tests with JSON output
+  $0 --json -o results.json  # Run tests, save JSON to file
 
 ${BOLD}What gets tested:${RESET}
   - Configuration parsing and generation
@@ -183,6 +189,19 @@ while [[ $# -gt 0 ]]; do
         -v|--verbose)
             VERBOSE_OUTPUT=true
             shift
+            ;;
+        --json)
+            JSON_OUTPUT=true
+            shift
+            ;;
+        -o)
+            if [[ -n "$2" && ! "$2" =~ ^- ]]; then
+                JSON_OUTPUT_FILE="$2"
+                shift 2
+            else
+                echo -e "${RED}Error: -o requires a filename argument${RESET}" >&2
+                exit 1
+            fi
             ;;
         -h|--help)
             show_usage
@@ -249,9 +268,26 @@ fi
 echo -e "${BLUE}Running: ${feature_name}${RESET}"
 echo ""
 
+# Save the feature path for later use
+local feature_path="$behave_args"
+
 # Add verbose flag if requested
 if [[ "$VERBOSE_OUTPUT" == "true" ]]; then
-    behave_args="$behave_args --verbose"
+    VERBOSE_FLAG="--verbose"
+else
+    VERBOSE_FLAG=""
+fi
+
+# Configure output format
+local output_format="pretty"
+if [[ "$JSON_OUTPUT" == "true" ]]; then
+    output_format="json"
+    # Set default JSON output file if not specified
+    if [[ -z "$JSON_OUTPUT_FILE" ]]; then
+        JSON_OUTPUT_FILE="$PROJECT_ROOT/tests/behave-results.json"
+    fi
+    echo -e "${BLUE}JSON output will be written to:${RESET} $JSON_OUTPUT_FILE"
+    echo ""
 fi
 
 # Run behave directly on host
@@ -261,7 +297,23 @@ echo ""
 
 local start_time=$(date +%s)
 # Use python3 -m behave to avoid PATH issues in subprocess
-python3 -m behave --format pretty "$behave_args"
+# Build command carefully to handle arguments correctly
+if [[ "$JSON_OUTPUT" == "true" ]]; then
+    # JSON mode: JSON to file, progress to console
+    # Use correct behave syntax: --format json -o output_file
+    if [[ -n "$VERBOSE_FLAG" ]]; then
+        python3 -m behave --format json -o "$JSON_OUTPUT_FILE" --format progress $VERBOSE_FLAG "$feature_path"
+    else
+        python3 -m behave --format json -o "$JSON_OUTPUT_FILE" --format progress "$feature_path"
+    fi
+else
+    # Normal mode: pretty output to console
+    if [[ -n "$VERBOSE_FLAG" ]]; then
+        python3 -m behave --format "$output_format" $VERBOSE_FLAG "$feature_path"
+    else
+        python3 -m behave --format "$output_format" "$feature_path"
+    fi
+fi
 local exit_code=$?
 local end_time=$(date +%s)
 local duration=$((end_time - start_time))
@@ -277,6 +329,18 @@ else
     echo -e "${RED}${BOLD}✗ Some BDD tests failed${RESET}"
     echo ""
     echo -e "${YELLOW}Tip: Run with -v for more details: $0 -v${RESET}"
+fi
+
+# If JSON output was requested, show the results
+if [[ "$JSON_OUTPUT" == "true" && -f "$JSON_OUTPUT_FILE" ]]; then
+    echo ""
+    echo -e "${BLUE}JSON results written to:${RESET} $JSON_OUTPUT_FILE"
+    # Show quick summary from JSON if python3 is available
+    if command -v python3 >/dev/null 2>&1; then
+        local passed=$(python3 -c "import json; data = json.load(open('$JSON_OUTPUT_FILE')); print(sum(1 for s in data.get('elements', []) if s.get('status') != 'failed' and s.get('status') != 'skipped'))" 2>/dev/null || echo "N/A")
+        local failed=$(python3 -c "import json; data = json.load(open('$JSON_OUTPUT_FILE')); print(sum(1 for s in data.get('elements', []) if s.get('status') == 'failed'))" 2>/dev/null || echo "N/A")
+        echo -e "${BLUE}Summary: ${passed} passed, ${failed} failed${RESET}"
+    fi
 fi
 
 exit $exit_code
