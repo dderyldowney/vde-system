@@ -315,19 +315,38 @@ test_start_multiple_vms() {
         return
     fi
 
-    # Wait for containers to start
-    sleep 5
-
-    # Verify all containers are running
+    # Wait for containers to start with different timeouts per VM type
+    # Rust needs much longer due to Cargo compilation
+    local wait_time
     for vm in "${vms[@]}"; do
-        local container_name="$vm"
+        container_name="$vm"
         # Language VMs get -dev suffix
         if [[ "$vm" == "$TEST_LANG_VM" ]] || [[ "$vm" == "$TEST_LANG_VM2" ]]; then
             container_name="${vm}-dev"
         fi
 
-        if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
-            test_fail "Start multiple VMs" "$container_name not running"
+        # Rust needs 4 minutes for compilation, others need 10 seconds
+        if [[ "$vm" == "rust" ]]; then
+            wait_time=240
+        elif [[ "$vm" == "go" ]]; then
+            wait_time=60  # Go also needs time for package installation
+        else
+            wait_time=10   # Python, JS, C# start quickly
+        fi
+
+        echo "Waiting for $container_name (max ${wait_time}s)..."
+        local waited=0
+        while [ $waited -lt $wait_time ]; do
+            if docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
+                echo "✓ $container_name is running"
+                break
+            fi
+            sleep 5
+            waited=$((waited + 5))
+        done
+
+        if [ $waited -ge $wait_time ]; then
+            test_fail "Start multiple VMs" "$container_name not running after ${wait_time}s"
             docker ps --format "table {{.Names}}\t{{.Status}}"
             return
         fi
