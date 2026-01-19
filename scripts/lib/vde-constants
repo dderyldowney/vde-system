@@ -131,7 +131,8 @@ readonly VDE_RETRY_MAX_DELAY=30
 
 # Stale lock threshold (seconds)
 # Locks older than this are considered stale and can be cleaned up
-readonly VDE_STALE_LOCK_AGE=300
+# Reduced from 300s to 30s because we also check PID liveness
+readonly VDE_STALE_LOCK_AGE=30
 
 # Lock check interval base (seconds)
 # Base interval for checking lock availability
