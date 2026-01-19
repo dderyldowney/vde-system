@@ -1,3 +1,4 @@
+---
 name: VDE CI Pipeline
 
 on:
@@ -50,9 +51,10 @@ jobs:
           echo "Checking zsh script syntax..."
           for file in $(find scripts tests -name "*.sh" -type f); do
             if head -1 "$file" | grep -q "zsh"; then
-              # Skip test_integration_comprehensive.sh - uses valid multi-line arrays that zsh -n doesn't handle
-              # Skip test-e2e-user-journey.sh - contains emoji characters that zsh -n doesn't parse correctly
-              if [[ "$file" != *"test_integration_comprehensive.sh" ]] && [[ "$file" != *"test-e2e-user-journey.sh" ]]; then
+              # Skip test_integration_comprehensive.sh - uses valid multi-line arrays
+              # Skip test-e2e-user-journey.sh - contains emoji characters that zsh -n doesn't parse
+              if [[ "$file" != *"test_integration_comprehensive.sh" ]] \
+                 && [[ "$file" != *"test-e2e-user-journey.sh" ]]; then
                 zsh -n "$file" || { echo "Syntax error in: $file"; exit 1; }
               fi
             fi
@@ -380,7 +382,8 @@ jobs:
           sudo apt-get install -y zsh
 
           # Install docker-compose (standalone binary)
-          sudo curl -SL https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+          sudo curl -SL https://github.com/docker/compose/releases/download/v2.24.5/ \
+               docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose version
 
@@ -430,13 +433,13 @@ jobs:
       - name: Build and Start Docker Container
         shell: zsh {0}
         env:
-          VDE_TEST_MODE: 1  # Skip SSH agent setup in CI
+          VDE_TEST_MODE: '1'  # Skip SSH agent setup in CI
         run: ./scripts/start-virtual ${{ matrix.vm }}
 
       - name: Wait for Container to Be Ready
         run: |
           MAX_WAIT=${{ matrix.timeout }}m
-          MAX_WAIT_SECONDS=$((${{ matrix.timeout }} * 60))
+          MAX_WAIT_SECONDS=$((${{ matrix.timeout }}*60))
           ELAPSED=0
           CONTAINER_NAME="${{ matrix.vm }}"
           [[ "${{ matrix.category }}" == "lang" ]] && CONTAINER_NAME="${{ matrix.vm }}-dev"
@@ -476,11 +479,14 @@ jobs:
 
           echo ""
           echo "=== SSH Key Check ==="
-          docker exec "$CONTAINER_NAME" ls -la /home/devuser/.ssh/authorized_keys 2>/dev/null || echo "authorized_keys not found"
+          docker exec "$CONTAINER_NAME" ls -la /home/devuser/.ssh/authorized_keys \
+            2>/dev/null || echo "authorized_keys not found"
 
           echo ""
           echo "=== Port Listening Check ==="
-          docker exec "$CONTAINER_NAME" netstat -tlnp 2>/dev/null || docker exec "$CONTAINER_NAME" ss -tlnp 2>/dev/null || echo "Could not check ports"
+          docker exec "$CONTAINER_NAME" netstat -tlnp 2>/dev/null \
+            || docker exec "$CONTAINER_NAME" ss -tlnp 2>/dev/null \
+            || echo "Could not check ports"
 
           echo ""
           echo "=== Container Logs (last 50 lines) ==="
@@ -499,11 +505,15 @@ jobs:
 
           while [ $ELAPSED -lt $MAX_WAIT ]; do
             # First check if port is open
-            if timeout 1 bash -c "cat < /dev/null > /dev/tcp/localhost/$SSH_PORT" 2>/dev/null; then
+            if timeout 1 bash -c "cat < /dev/null > /dev/tcp/localhost/$SSH_PORT" \
+               2>/dev/null; then
               echo "✓ Port $SSH_PORT is open"
 
               # Try SSH connection
-              if ssh -i "$VDE_SSH_KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=3 -p "$SSH_PORT" devuser@localhost "echo 'SSH ready'" 2>/dev/null; then
+              if ssh -i "$VDE_SSH_KEY" -o StrictHostKeyChecking=no \
+                   -o UserKnownHostsFile=/dev/null -o ConnectTimeout=3 \
+                   -p "$SSH_PORT" devuser@localhost "echo 'SSH ready'" \
+                   2>/dev/null; then
                 echo "✓ SSH is ready and accepting connections"
                 exit 0
               fi
@@ -534,13 +544,14 @@ jobs:
           CONTAINER_NAME="${{ matrix.vm }}-dev"
 
           echo "Testing SSH connection..."
-          if ssh -i "$VDE_SSH_KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p "$SSH_PORT" devuser@localhost "
-            echo '✓ SSH connection successful'
-            echo 'User:' \$(whoami)
-            echo 'Shell:' \$SHELL
-            echo 'Home:' \$HOME
-            which rust python go node java 2>/dev/null || echo 'Language tools check'
-          "; then
+          if ssh -i "$VDE_SSH_KEY" -o StrictHostKeyChecking=no \
+                   -o UserKnownHostsFile=/dev/null -p "$SSH_PORT" \
+                   devuser@localhost \
+             "echo '✓ SSH connection successful'; \
+              echo 'User:' \$(whoami); \
+              echo 'Shell:' \$SHELL; \
+              echo 'Home:' \$HOME; \
+              which rust python go node java 2>/dev/null || echo 'Language tools check'"; then
             echo "✓ SSH connection test passed"
             exit 0
           else
@@ -555,7 +566,7 @@ jobs:
       - name: Run Docker VM Lifecycle integration tests
         shell: zsh {0}
         env:
-          VDE_TEST_MODE: 1  # Skip SSH agent setup in CI
+          VDE_TEST_MODE: '1'  # Skip SSH agent setup in CI
         run: |
           echo "Running Docker VM Lifecycle integration tests..."
           chmod +x tests/integration/docker-vm-lifecycle.test.sh
@@ -632,7 +643,8 @@ jobs:
         if: steps.check-creds.outputs.has_credentials != 'true'
         run: |
           echo "::notice::Skipping real AI API tests - no credentials configured"
-          echo "To enable these tests, configure ANTHROPIC_AUTH_TOKEN, ANTHROPIC_API_KEY, or CLAUDE_API_KEY as repository secrets"
+          echo "To enable these tests, configure ANTHROPIC_AUTH_TOKEN, ANTHROPIC_API_KEY,"
+          echo "or CLAUDE_API_KEY as repository secrets"
 
   # =============================================================================
   # Job 8: BDD Feature Tests
@@ -677,7 +689,8 @@ jobs:
             echo "::error::Docker-free BDD tests failed"
             exit 1
           }
-          echo "✓ All docker-free BDD tests passed (94/94 scenarios) - See GITHUB_CI_RESTRICTIONS.md for why other tests are skipped"
+          echo "✓ All docker-free BDD tests passed (94/94 scenarios)"
+          echo "See GITHUB_CI_RESTRICTIONS.md for why other tests are skipped"
 
       - name: Cleanup test containers
         if: always()
