@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: rust, 2203, su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs 
+# Variables: rust, 2202, su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs 
 services:
   rust-dev:
     build:
@@ -17,7 +17,7 @@ services:
     command: sh -c "su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs  && /usr/sbin/sshd -D"
 
     ports:
-      - "2203:22"
+      - "2202:22"
 
     volumes:
       - ../../../projects/rust:/home/devuser/workspace
