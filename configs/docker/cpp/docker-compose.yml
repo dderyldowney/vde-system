@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: cpp, 2201, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y g++ make cmake gdb
+# Variables: cpp, 2201, apt-get update -y && apt-get install -y g++ make cmake gdb
 services:
   cpp-dev:
     build:
@@ -14,7 +14,7 @@ services:
     container_name: cpp-dev
     hostname: cpp-dev
     restart: unless-stopped
-    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y g++ make cmake gdb && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y g++ make cmake gdb && /usr/sbin/sshd -D"
 
     ports:
       - "2201:22"

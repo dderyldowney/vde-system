@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: asm, 2202, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y nasm yasm gdb
+# Variables: asm, 2202, apt-get update -y && apt-get install -y nasm yasm gdb
 services:
   asm-dev:
     build:
@@ -14,7 +14,7 @@ services:
     container_name: asm-dev
     hostname: asm-dev
     restart: unless-stopped
-    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y nasm yasm gdb && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y nasm yasm gdb && /usr/sbin/sshd -D"
 
     ports:
       - "2202:22"
