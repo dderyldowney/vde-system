@@ -196,6 +196,12 @@ trap cleanup EXIT INT TERM
 # =============================================================================
 
 test_create_language_vm() {
+    # Skip if no language VM configured (single service VM mode)
+    if [[ -z "$TEST_LANG_VM" ]]; then
+        info "Skipping language VM creation test (no language VM configured)"
+        return 0
+    fi
+
     test_start "Create a new language VM ($TEST_LANG_VM)"
 
     # Remove VM if it exists from previous test run
@@ -241,6 +247,12 @@ test_create_language_vm() {
 # =============================================================================
 
 test_create_service_vm() {
+    # Skip if no service VM configured (single language VM mode)
+    if [[ -z "$TEST_SVC_VM" ]]; then
+        info "Skipping service VM creation test (no service VM configured)"
+        return 0
+    fi
+
     test_start "Create a new service VM ($TEST_SVC_VM)"
 
     # Remove VM if it exists from previous test run
@@ -282,14 +294,28 @@ test_create_service_vm() {
 test_start_vm() {
     test_start "Start a created VM"
 
+    # Use language VM if available, otherwise use service VM
+    local vm_name="$TEST_LANG_VM"
+    local is_lang_vm=true
+    if [[ -z "$vm_name" ]]; then
+        vm_name="$TEST_SVC_VM"
+        is_lang_vm=false
+    fi
+
+    # Skip if no VM configured
+    if [[ -z "$vm_name" ]]; then
+        info "Skipping start VM test (no VM configured)"
+        return 0
+    fi
+
     # Ensure VM exists
-    if ! ensure_vm "$TEST_LANG_VM"; then
+    if ! ensure_vm "$vm_name"; then
         test_fail "Start VM" "could not ensure VM exists"
         return
     fi
 
     # Start the VM
-    if ! ./scripts/start-virtual "$TEST_LANG_VM" >/dev/null 2>&1; then
+    if ! ./scripts/start-virtual "$vm_name" >/dev/null 2>&1; then
         test_fail "Start VM" "start-virtual script failed"
         return
     fi
@@ -298,7 +324,11 @@ test_start_vm() {
     sleep 3
 
     # Verify container is running (language VMs have -dev suffix)
-    local container_name="${TEST_LANG_VM}-dev"
+    local container_name="$vm_name"
+    if [[ "$is_lang_vm" == "true" ]]; then
+        container_name="${vm_name}-dev"
+    fi
+
     if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         test_fail "Start VM" "container not running"
         info "Running containers:"
@@ -385,17 +415,35 @@ test_start_multiple_vms() {
 test_stop_vm() {
     test_start "Stop a running VM"
 
+    # Use language VM if available, otherwise use service VM
+    local vm_name="$TEST_LANG_VM"
+    local is_lang_vm=true
+    if [[ -z "$vm_name" ]]; then
+        vm_name="$TEST_SVC_VM"
+        is_lang_vm=false
+    fi
+
+    # Skip if no VM configured
+    if [[ -z "$vm_name" ]]; then
+        info "Skipping stop VM test (no VM configured)"
+        return 0
+    fi
+
     # Make sure it's running first
-    local container_name="${TEST_LANG_VM}-dev"
+    local container_name="$vm_name"
+    if [[ "$is_lang_vm" == "true" ]]; then
+        container_name="${vm_name}-dev"
+    fi
+
     if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
-        if vm_exists "$TEST_LANG_VM"; then
-            ./scripts/start-virtual "$TEST_LANG_VM" >/dev/null 2>&1
+        if vm_exists "$vm_name"; then
+            ./scripts/start-virtual "$vm_name" >/dev/null 2>&1
             sleep 3
         fi
     fi
 
     # Stop the VM
-    if ! ./scripts/shutdown-virtual "$TEST_LANG_VM" >/dev/null 2>&1; then
+    if ! ./scripts/shutdown-virtual "$vm_name" >/dev/null 2>&1; then
         test_fail "Stop VM" "shutdown-virtual script failed"
         return
     fi
@@ -458,29 +506,47 @@ test_stop_all_vms() {
 test_restart_container() {
     test_start "Restart a container"
 
+    # Use service VM if available, otherwise use language VM
     local vm_name="$TEST_SVC_VM"
+    local is_lang_vm=false
+    if [[ -z "$vm_name" ]]; then
+        vm_name="$TEST_LANG_VM"
+        is_lang_vm=true
+    fi
+
+    # Skip if no VM configured
+    if [[ -z "$vm_name" ]]; then
+        info "Skipping restart test (no VM configured)"
+        return 0
+    fi
+
+    # Get the correct container name
+    local container_name="$vm_name"
+    if [[ "$is_lang_vm" == "true" ]]; then
+        container_name="${vm_name}-dev"
+    fi
 
     # Ensure VM exists and is running
     ensure_vm "$vm_name"
     ./scripts/start-virtual "$vm_name" >/dev/null 2>&1
-    sleep 2
+    sleep 5
 
     # Get the container's initial state
-    if ! docker ps --format "{{.Names}}" | grep -q "^${vm_name}$"; then
+    if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         test_fail "Restart container" "container not running"
         return
     fi
 
     # Restart the container directly via docker
-    if ! docker restart "$vm_name" >/dev/null 2>&1; then
+    if ! docker restart "$container_name" >/dev/null 2>&1; then
         test_fail "Restart container" "docker restart failed"
         return
     fi
 
-    sleep 2
+    sleep 5
 
     # Verify container is still running
-    if ! docker ps --format "{{.Names}}" | grep -q "^${vm_name}$"; then
+    if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         test_fail "Restart container" "container not running after restart"
         return
     fi
@@ -495,19 +561,39 @@ test_restart_container() {
 test_rebuild_vm() {
     test_start "Rebuild VM from scratch"
 
+    # Use service VM if available, otherwise use language VM
+    local vm_name="$TEST_SVC_VM"
+    local is_lang_vm=false
+    if [[ -z "$vm_name" ]]; then
+        vm_name="$TEST_LANG_VM"
+        is_lang_vm=true
+    fi
+
+    # Skip if no VM configured
+    if [[ -z "$vm_name" ]]; then
+        info "Skipping rebuild test (no VM configured)"
+        return 0
+    fi
+
+    # Get the correct container name
+    local container_name="$vm_name"
+    if [[ "$is_lang_vm" == "true" ]]; then
+        container_name="${vm_name}-dev"
+    fi
+
     # Ensure VM exists
-    ensure_vm "$TEST_SVC_VM"
+    ensure_vm "$vm_name"
 
     # Start with rebuild
-    if ! ./scripts/start-virtual "$TEST_SVC_VM" --rebuild >/dev/null 2>&1; then
+    if ! ./scripts/start-virtual "$vm_name" --rebuild >/dev/null 2>&1; then
         test_fail "Rebuild VM" "start-virtual --rebuild failed"
         return
     fi
 
-    sleep 2
+    sleep 5
 
     # Verify container is running
-    if ! docker ps --format "{{.Names}}" | grep -q "^${TEST_SVC_VM}$"; then
+    if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         test_fail "Rebuild VM" "container not running after rebuild"
         return
     fi
@@ -522,15 +608,30 @@ test_rebuild_vm() {
 test_list_vms() {
     test_start "List VMs shows created VMs"
 
+    # In single VM mode, check for that VM instead of TEST_LANG_VM2
+    local check_vm="$TEST_LANG_VM2"
+    if [[ -z "$check_vm" ]]; then
+        check_vm="$TEST_LANG_VM"
+    fi
+    if [[ -z "$check_vm" ]]; then
+        check_vm="$TEST_SVC_VM"
+    fi
+
+    # Skip if no VM configured
+    if [[ -z "$check_vm" ]]; then
+        info "Skipping list VMs test (no VM configured)"
+        return 0
+    fi
+
     # Create a test VM if it doesn't exist
-    ensure_vm "$TEST_LANG_VM2"
+    ensure_vm "$check_vm"
 
     # List VMs
     local output
     output=$(./scripts/list-vms 2>/dev/null)
 
     # Check that our test VM is listed
-    if [[ "$output" != *"$TEST_LANG_VM2"* ]]; then
+    if [[ "$output" != *"$check_vm"* ]]; then
         test_fail "List VMs" "test VM not found in list"
         info "List output: $output"
         return
@@ -546,11 +647,29 @@ test_list_vms() {
 test_port_allocation() {
     test_start "Ports are allocated correctly"
 
-    # Ensure VM exists
-    ensure_vm "$TEST_LANG_VM"
+    # Use language VM if available, otherwise use service VM
+    local vm_name="$TEST_LANG_VM"
+    local is_lang_vm=true
+    if [[ -z "$vm_name" ]]; then
+        vm_name="$TEST_SVC_VM"
+        is_lang_vm=false
+    fi
+
+    # Skip if no VM configured
+    if [[ -z "$vm_name" ]]; then
+        info "Skipping port allocation test (no VM configured)"
+        return 0
+    fi
+
+    # Service VMs don't have SSH ports
+    if [[ "$is_lang_vm" == "false" ]]; then
+        info "Skipping SSH port check for service VM $vm_name"
+        test_pass "Port allocation (service VM - no SSH port)"
+        return 0
+    fi
 
     # Check the docker-compose.yml for port mapping
-    local compose_file="configs/docker/$TEST_LANG_VM/docker-compose.yml"
+    local compose_file="configs/docker/$vm_name/docker-compose.yml"
     if [[ ! -f "$compose_file" ]]; then
         test_fail "Port allocation" "docker-compose.yml not found"
         return
