@@ -534,11 +534,16 @@ jobs:
   # =============================================================================
   # Job 7: Real AI API Tests
   # =============================================================================
+  # NOTE: Skipped in CI because Z.AI endpoint (ANTHROPIC_BASE_URL) is not
+  # accessible from GitHub runners. Run locally with:
+  #   chmod +x tests/integration/test_real_ai_api.sh
+  #   ANTHROPIC_AUTH_TOKEN="your-key" ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic" \
+  #     tests/integration/test_real_ai_api.sh
   real-ai-api:
     name: Real AI API Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    if: false  # Disabled: Z.AI endpoint blocked in GitHub CI
 
     steps:
       - name: Checkout repository
