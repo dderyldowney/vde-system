@@ -171,7 +171,12 @@ cleanup() {
     for vm in "$TEST_SVC_VM"; do
         if [[ -d "data/$vm" ]]; then
             info "Removing data/$vm"
-            rm -rf "data/$vm"
+            # Some services (mongodb) create files owned by container users
+            # Try multiple cleanup methods
+            rm -rf "data/$vm" 2>/dev/null || \
+                sudo rm -rf "data/$vm" 2>/dev/null || \
+                find "data/$vm" -mindepth 1 -delete 2>/dev/null || \
+                warn "Could not fully clean data/$vm (permission denied)"
         fi
     done
 
