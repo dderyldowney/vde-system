@@ -13,6 +13,11 @@ on:
         required: false
         type: string
 
+# Enforce zsh as the default shell for all jobs and steps
+defaults:
+  run:
+    shell: zsh {0}
+
 env:
   VDE_ROOT_DIR: ${{ github.workspace }}
 
@@ -607,6 +612,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+          # Workaround: Remove Microsoft apt repos that return 403 in CI
+          sudo rm -f /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list \
+                     /etc/apt/sources.list.d/packages-microsoft-com-prod.list \
+                     /etc/apt/sources.list.d/microsoft-ubuntu-*.list 2>/dev/null || true
           sudo apt-get update
           sudo apt-get install -y zsh
           pip3 install --user behave
