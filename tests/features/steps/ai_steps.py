@@ -144,7 +144,7 @@ def step_ask(context, question):
     if "show status of" in question:
         # Extract VM names from the question
         vms_part = question.replace("show status of", "").strip().strip('"')
-        context.status_vms_requested = vms.split(" and ")
+        context.status_vms_requested = vms_part.split(" and ")
         # Simulate running list-vms command
         context.last_output = f"Status for: {vms_part}"
 
