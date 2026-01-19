@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: kotlin, 2210, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y kotlin {{INSTALL_CMD}}{{INSTALL_CMD}} curl -s "https://get.sdkman.io" 
+# Variables: kotlin, 2210, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y kotlin {{INSTALL_CMD}}{{INSTALL_CMD}} curl -s "https://get.sdkman.io"'
 services:
   kotlin-dev:
     build:
