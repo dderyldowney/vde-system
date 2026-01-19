@@ -35,6 +35,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install linting tools
+        shell: bash {0}
         run: |
           sudo apt-get update
           sudo apt-get install -y zsh
@@ -77,6 +78,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
+        shell: bash {0}
         run: sudo apt-get update && sudo apt-get install -y zsh
 
       - name: Test vm-common library
@@ -149,6 +151,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
+        shell: bash {0}
         run: sudo apt-get update && sudo apt-get install -y zsh
 
       - name: Test pattern-based parsing
@@ -218,6 +221,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
+        shell: bash {0}
         run: sudo apt-get update && sudo apt-get install -y zsh
 
       - name: Run comprehensive vde-parser tests
@@ -254,11 +258,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
+        shell: bash {0}
         run: |
           sudo apt-get update
           sudo apt-get install -y zsh cmake libcurl4-openssl-dev libelf-dev libdw-dev binutils-dev
 
       - name: Install kcov
+        shell: bash {0}
         run: |
           git clone https://github.com/SimonKagstrom/kcov.git
           cd kcov
@@ -269,6 +275,7 @@ jobs:
           rm -rf kcov
 
       - name: Verify kcov installation
+        shell: bash {0}
         run: kcov --version
 
       - name: Run tests with coverage
@@ -332,6 +339,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Install dependencies
+        shell: bash {0}
         run: |
           sudo apt-get update
           sudo apt-get install -y zsh
@@ -343,6 +351,7 @@ jobs:
 
       - name: Select Random VM for Testing
         id: select-vm
+        shell: bash {0}
         run: |
           # Only VMs that have docker-compose.yml files created
           ALL_VMS=(
@@ -365,6 +374,7 @@ jobs:
           echo "VM_SELECTION=$TEST_VM ($VM_TYPE)" >> $GITHUB_ENV
 
       - name: Generate Test SSH Key
+        shell: bash {0}
         run: |
           # Create SSH directory
           mkdir -p "$HOME/.ssh"
@@ -395,6 +405,7 @@ jobs:
           echo "✓ VM configuration exists: $VM_CONFIG"
 
       - name: Create Docker network
+        shell: bash {0}
         run: docker network create dev-net 2>/dev/null || echo "Network already exists"
 
       - name: Build and Start Docker Container
@@ -555,6 +566,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
+        shell: bash {0}
         run: |
           sudo apt-get update
           sudo apt-get install -y zsh jq curl
@@ -611,6 +623,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
+        shell: bash {0}
         run: |
           # Workaround: Remove Microsoft apt repos that return 403 in CI
           sudo rm -f /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list \
