@@ -687,28 +687,35 @@ jobs:
 
     steps:
       - name: Display CI Summary
+        env:
+          LINT_RESULT: ${{ needs.lint.result }}
+          UNIT_RESULT: ${{ needs.unit-tests.result }}
+          INTEGRATION_RESULT: ${{ needs.integration-tests.result }}
+          COMPREHENSIVE_RESULT: ${{ needs.comprehensive-tests.result }}
+          COVERAGE_RESULT: ${{ needs.coverage.result }}
+          BDD_RESULT: ${{ needs.bdd-tests.result }}
         run: |
           echo "╔════════════════════════════════════════════════════════════╗"
           echo "║          VDE CI Pipeline - Execution Summary                ║"
           echo "╚════════════════════════════════════════════════════════════╝"
           echo ""
           echo "Job Results:"
-          echo "  ┌─ Linting: ${{ needs.lint.result }}"
-          echo "  ├─ Unit Tests: ${{ needs.unit-tests.result }}"
-          echo "  ├─ Integration Tests: ${{ needs.integration-tests.result }}"
-          echo "  ├─ Comprehensive Tests: ${{ needs.comprehensive-tests.result }}"
-          echo "  ├─ Code Coverage: ${{ needs.coverage.result }}"
-          echo "  └─ BDD Tests: ${{ needs.bdd-tests.result }}"
+          echo "  ┌─ Linting: $LINT_RESULT"
+          echo "  ├─ Unit Tests: $UNIT_RESULT"
+          echo "  ├─ Integration Tests: $INTEGRATION_RESULT"
+          echo "  ├─ Comprehensive Tests: $COMPREHENSIVE_RESULT"
+          echo "  ├─ Code Coverage: $COVERAGE_RESULT"
+          echo "  └─ BDD Tests: $BDD_RESULT"
           echo ""
           echo "  Note: Docker Build tests run only for PRs (requires Docker access)"
           echo "  Run docker-required tests locally: ./tests/run-local-bdd.sh"
 
-          if [[ "${{ needs.lint.result }}" == "failure" ]] || \
-             [[ "${{ needs.unit-tests.result }}" == "failure" ]] || \
-             [[ "${{ needs.integration-tests.result }}" == "failure" ]] || \
-             [[ "${{ needs.comprehensive-tests.result }}" == "failure" ]] || \
-             [[ "${{ needs.coverage.result }}" == "failure" ]] || \
-             [[ "${{ needs.bdd-tests.result }}" == "failure" ]]; then
+          if [[ "$LINT_RESULT" == "failure" ]] || \
+             [[ "$UNIT_RESULT" == "failure" ]] || \
+             [[ "$INTEGRATION_RESULT" == "failure" ]] || \
+             [[ "$COMPREHENSIVE_RESULT" == "failure" ]] || \
+             [[ "$COVERAGE_RESULT" == "failure" ]] || \
+             [[ "$BDD_RESULT" == "failure" ]]; then
             echo "::error::CI Pipeline Failed"
             exit 1
           else
