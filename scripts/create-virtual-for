@@ -227,6 +227,9 @@ env_file="$VDE_ROOT_DIR/env-files/$VM_NAME.env"
 cat > "$env_file" <<EOF
 # Environment variables for $VM_DISPLAY development container
 SSH_PORT=$SSH_PORT
+DATABASE_URL=postgresql://devuser:SuperSecretPassword123!@postgres:5432/${VM_NAME}_dev_db
+REDIS_HOST=redis
+REDIS_PORT=6379
 EOF
 
 if [[ -n "$VM_SVC_PORT" ]]; then

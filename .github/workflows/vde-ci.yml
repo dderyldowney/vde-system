@@ -706,7 +706,7 @@ jobs:
           if [[ "${{ needs.lint.result }}" == "failure" ]] || \
              [[ "${{ needs.unit-tests.result }}" == "failure" ]] || \
              [[ "${{ needs.integration-tests.result }}" == "failure" ]] || \
-             [[ "${{ needs.comprehensive_tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.comprehensive-tests.result }}" == "failure" ]] || \
              [[ "${{ needs.coverage.result }}" == "failure" ]] || \
              [[ "${{ needs.bdd-tests.result }}" == "failure" ]]; then
             echo "::error::CI Pipeline Failed"
