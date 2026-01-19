@@ -337,36 +337,36 @@ jobs:
       matrix:
         include:
           # Language VMs - Fast (30-60s)
-          - { vm: c, category: lang, timeout: 10 }
-          - { vm: cpp, category: lang, timeout: 10 }
-          - { vm: asm, category: lang, timeout: 10 }
-          - { vm: python, category: lang, timeout: 10 }
-          - { vm: ruby, category: lang, timeout: 10 }
-          - { vm: go, category: lang, timeout: 10 }
-          - { vm: js, category: lang, timeout: 15 }
-          - { vm: php, category: lang, timeout: 10 }
-          - { vm: r, category: lang, timeout: 15 }
-          - { vm: lua, category: lang, timeout: 10 }
-          - { vm: zig, category: lang, timeout: 10 }
-          - { vm: elixir, category: lang, timeout: 10 }
+          - {vm: c, category: lang, timeout: 10}
+          - {vm: cpp, category: lang, timeout: 10}
+          - {vm: asm, category: lang, timeout: 10}
+          - {vm: python, category: lang, timeout: 10}
+          - {vm: ruby, category: lang, timeout: 10}
+          - {vm: go, category: lang, timeout: 10}
+          - {vm: js, category: lang, timeout: 15}
+          - {vm: php, category: lang, timeout: 10}
+          - {vm: r, category: lang, timeout: 15}
+          - {vm: lua, category: lang, timeout: 10}
+          - {vm: zig, category: lang, timeout: 10}
+          - {vm: elixir, category: lang, timeout: 10}
           # Language VMs - Medium (1-3 min)
-          - { vm: java, category: lang, timeout: 20 }
-          - { vm: kotlin, category: lang, timeout: 20 }
-          - { vm: scala, category: lang, timeout: 20 }
-          - { vm: haskell, category: lang, timeout: 30 }
+          - {vm: java, category: lang, timeout: 20}
+          - {vm: kotlin, category: lang, timeout: 20}
+          - {vm: scala, category: lang, timeout: 20}
+          - {vm: haskell, category: lang, timeout: 30}
           # Language VMs - Slow (3-5 min)
-          - { vm: csharp, category: lang, timeout: 30 }
-          - { vm: rust, category: lang, timeout: 40 }
-          - { vm: swift, category: lang, timeout: 30 }
-          - { vm: flutter, category: lang, timeout: 45 }
+          - {vm: csharp, category: lang, timeout: 30}
+          - {vm: rust, category: lang, timeout: 40}
+          - {vm: swift, category: lang, timeout: 30}
+          - {vm: flutter, category: lang, timeout: 45}
           # Service VMs
-          - { vm: postgres, category: service, timeout: 10 }
-          - { vm: redis, category: service, timeout: 10 }
-          - { vm: mongodb, category: service, timeout: 10 }
-          - { vm: nginx, category: service, timeout: 10 }
-          - { vm: couchdb, category: service, timeout: 15 }
-          - { vm: mysql, category: service, timeout: 15 }
-          - { vm: rabbitmq, category: service, timeout: 15 }
+          - {vm: postgres, category: service, timeout: 10}
+          - {vm: redis, category: service, timeout: 10}
+          - {vm: mongodb, category: service, timeout: 10}
+          - {vm: nginx, category: service, timeout: 10}
+          - {vm: couchdb, category: service, timeout: 15}
+          - {vm: mysql, category: service, timeout: 15}
+          - {vm: rabbitmq, category: service, timeout: 15}
 
     steps:
       - name: Checkout repository
