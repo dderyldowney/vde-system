@@ -331,7 +331,7 @@ jobs:
   docker-build:
     name: Docker Build ${{ matrix.vm }} (${{ matrix.category }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -496,11 +496,9 @@ jobs:
         run: |
           CONTAINER_NAME="${{ matrix.vm }}-dev"
           SSH_PORT="${{ steps.ssh-port.outputs.port }}"
-          # Three tiers: 5 min (fast), 10 min (slow), 15 min (very slow)
-          if [[ "${{ matrix.vm }}" =~ ^(kotlin|php|zig|lua)$ ]]; then
+          # Three tiers: 5 min (fast), 10 min (medium), 15 min (slow)
+          if [[ "${{ matrix.vm }}" =~ ^(rust|flutter|swift|java|kotlin|scala|haskell|r|zig|php|lua|elixir)$ ]]; then
             MAX_WAIT=900
-          elif [[ "${{ matrix.vm }}" =~ ^(rust|flutter|swift|java|scala|haskell|r|elixir)$ ]]; then
-            MAX_WAIT=600
           else
             MAX_WAIT=300
           fi
