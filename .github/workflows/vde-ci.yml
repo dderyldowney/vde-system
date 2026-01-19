@@ -496,8 +496,10 @@ jobs:
         run: |
           CONTAINER_NAME="${{ matrix.vm }}-dev"
           SSH_PORT="${{ steps.ssh-port.outputs.port }}"
-          # Use 5 minutes for most VMs, 10 minutes for slower ones (rust, flutter, swift, etc.)
-          if [[ "${{ matrix.vm }}" =~ ^(rust|flutter|swift|java|kotlin|scala|haskell|r|zig|php|elixir)$ ]]; then
+          # Three tiers: 5 min (fast), 10 min (slow), 15 min (very slow)
+          if [[ "${{ matrix.vm }}" =~ ^(kotlin|php|zig|lua)$ ]]; then
+            MAX_WAIT=900
+          elif [[ "${{ matrix.vm }}" =~ ^(rust|flutter|swift|java|scala|haskell|r|elixir)$ ]]; then
             MAX_WAIT=600
           else
             MAX_WAIT=300
