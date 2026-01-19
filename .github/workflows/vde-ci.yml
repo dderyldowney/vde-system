@@ -341,7 +341,7 @@ jobs:
         run: |
           # Only VMs that have docker-compose.yml files created
           ALL_VMS=(
-            "python" "rust" "js" "csharp" "ruby" "go"
+            "python" "rust" "js" "csharp" "go"
             "postgres" "redis" "mongodb" "nginx" "rabbitmq"
           )
 
@@ -601,7 +601,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y zsh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zsh
+          pip3 install --user behave
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
