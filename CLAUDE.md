@@ -280,6 +280,81 @@ You should have already seen SESSION_STATE.md and TODO.md in your startup contex
 
 **Read session state files AND explore the codebase BEFORE making any changes.**
 
+---
+
+## ⚠️ CONTEXT WINDOW MANAGEMENT ⚠️
+
+**CRITICAL: Monitor context window usage and preserve session state**
+
+### Context Window Thresholds
+
+**AT 85% context window usage:**
+1. **STOP all new work**
+2. **Save session state** to SESSION_STATE.md:
+   - Document what was completed
+   - Note any decisions made
+   - Record test results
+   - Update session number
+3. **Update TODO.md** with current progress
+4. **Prepare for session restart**:
+   - Commit any pending changes
+   - Create checkpoint summary
+   - Note next steps to resume
+
+### How to Monitor Context Usage
+
+The context window is NOT directly visible. Use these indicators:
+
+**Signs context is approaching 85%:**
+- System reminders about context size appear
+- Responses become more concise
+- Tool calls return truncated results
+- Session startup context is large (>100K tokens)
+
+**Preventive Actions:**
+- Use Explore agent instead of direct file reads
+- Leverage memory search (claude-mem) before re-reading
+- Use MCP tools for structured data access
+- Commit frequently to reduce pending work
+
+### Session State Preservation
+
+**Before reaching context limits:**
+1. Update SESSION_STATE.md with:
+   - Session number and date
+   - Work completed summary
+   - Current test status
+   - Pending decisions
+   - Next session priorities
+
+2. Update TODO.md with:
+   - Completed tasks marked ✅
+   - In-progress tasks noted
+   - Blocked tasks with reasons
+
+3. Commit changes:
+   ```bash
+   git add SESSION_STATE.md TODO.md
+   git commit -m "docs: Session X checkpoint"
+   ```
+
+**After session restart:**
+- Read SESSION_STATE.md and TODO.md first
+- Resume from documented next steps
+- Use memory search to access past observations
+
+### Rationale
+
+Context window limits cause:
+- Loss of conversation history
+- Inability to reference earlier work
+- Repeated reading of same files (waste)
+- Potential work duplication
+
+Proactive session management preserves continuity across restarts.
+
+---
+
 ## Overview
 
 This is a **Virtual Development Environment (VDE)** - a sophisticated Docker-based container orchestration system providing isolated development environments for multiple programming languages (Python, Rust, JavaScript, C#, Ruby) with shared infrastructure services (PostgreSQL, Redis, MongoDB, Nginx).
