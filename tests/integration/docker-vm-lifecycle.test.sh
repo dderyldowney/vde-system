@@ -206,6 +206,9 @@ test_create_language_vm() {
 
     # Remove VM if it exists from previous test run
     if vm_exists "$TEST_LANG_VM"; then
+        # Stop container first to release file locks
+        docker stop "${TEST_LANG_VM}-dev" >/dev/null 2>&1 || true
+        docker rm "${TEST_LANG_VM}-dev" >/dev/null 2>&1 || true
         rm -rf "configs/docker/$TEST_LANG_VM"
         rm -rf "projects/$TEST_LANG_VM"
         rm -f "env-files/$TEST_LANG_VM.env"
@@ -257,6 +260,9 @@ test_create_service_vm() {
 
     # Remove VM if it exists from previous test run
     if vm_exists "$TEST_SVC_VM"; then
+        # Stop container first to release file locks
+        docker stop "$TEST_SVC_VM" >/dev/null 2>&1 || true
+        docker rm "$TEST_SVC_VM" >/dev/null 2>&1 || true
         rm -rf "configs/docker/$TEST_SVC_VM"
         rm -rf "data/$TEST_SVC_VM"
         rm -f "env-files/$TEST_SVC_VM.env"
