@@ -1,0 +1,40 @@
+# Template for language VMs
+# Variables: python, 2200, apt-get update -y && apt-get install -y python3 python3-pip
+services:
+  python-dev:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: dev-python:latest
+    container_name: python-dev
+    hostname: python-dev
+    restart: unless-stopped
+    command: sh -c "apt-get update -y && apt-get install -y python3 python3-pip && /usr/sbin/sshd -D"
+
+    ports:
+      - "2200:22"
+
+    volumes:
+      - ../../../projects/python:/home/devuser/workspace
+      - ../../../logs/python:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../env-files/python.env
+
+    networks:
+      - dev-net
+
+networks:
+  dev-net:
+    external: true
