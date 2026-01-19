@@ -15,7 +15,7 @@ cd "$PROJECT_ROOT"
 
 # Test configuration - use commonly used VMs for CI
 # These are the most commonly used languages and services in educational environments:
-# Languages: python, rust, js, go, csharp (5 language VMs)
+# Languages: python, rust, js, go, csharp, flutter (6 language VMs)
 # Services: postgres, redis, mongodb, mysql, nginx, rabbitmq (6 service VMs)
 # VDE supports additional VMs beyond these, but we test the most commonly used ones.
 TEST_LANG_VM="python"     # Language VM for testing (not created yet)
