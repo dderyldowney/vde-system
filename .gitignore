@@ -32,8 +32,8 @@ coverage/*
 
 # Claude Code CLI - local only (machine-specific)
 .claude/settings.local.json
-.claude/*/CLAUDE.md
-.claude/CLAUDE.md
+**/.claude/CLAUDE.md
+**/*.claude/CLAUDE.md
 
 # OS files
 .DS_Store
@@ -55,5 +55,15 @@ SESSION_STATE.md
 WHY_ARE_WE_DOING_THIS.md
 TODO.md
 docs/CLAUDE.md
+
+# All nested CLAUDE.md files are auto-generated (by claude/mem plugin)
+**/.claude/CLAUDE.md
+configs/docker/CLAUDE.md
+configs/docker/*/CLAUDE.md
+env-files/CLAUDE.md
+scripts/*/CLAUDE.md
 tests/CLAUDE.md
+tests/features/*/CLAUDE.md
+tests/features/steps/CLAUDE.md
 tests/scripts/CLAUDE.md
+.github/workflows/CLAUDE.md
