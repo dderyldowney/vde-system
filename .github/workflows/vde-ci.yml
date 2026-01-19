@@ -410,6 +410,8 @@ jobs:
 
       - name: Build and Start Docker Container
         shell: zsh {0}
+        env:
+          VDE_TEST_MODE: 1  # Skip SSH agent setup in CI
         run: ./scripts/start-virtual ${{ steps.select-vm.outputs.vm }}
 
       - name: Wait for Container to Be Ready
