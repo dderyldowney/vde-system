@@ -13,10 +13,14 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
-# Test configuration - use VMs not already created for testing
-TEST_LANG_VM="elixir"     # Language VM for testing (not created yet)
-TEST_SVC_VM="couchdb"     # Service VM for testing (not created yet)
-TEST_LANG_VM2="swift"     # Second language VM for multi-VM tests
+# Test configuration - use commonly used VMs for CI
+# These are the most commonly used languages and services in educational environments:
+# Languages: python, rust, js, go, csharp (5 language VMs)
+# Services: postgres, redis, mongodb, mysql, nginx, rabbitmq (6 service VMs)
+# VDE supports additional VMs beyond these, but we test the most commonly used ones.
+TEST_LANG_VM="python"     # Language VM for testing (not created yet)
+TEST_SVC_VM="postgres"   # Service VM for testing (not created yet)
+TEST_LANG_VM2="rust"       # Second language VM for multi-VM tests
 
 VERBOSE=${VERBOSE:-false}
 TESTS_PASSED=0
