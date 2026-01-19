@@ -324,12 +324,47 @@ jobs:
           echo ""
 
   # =============================================================================
-  # Job 6: Docker Build Tests
+  # Job 6: Docker Build Tests - Matrix Strategy for All VMs
   # =============================================================================
   docker-build:
-    name: Docker Build & SSH Test
+    name: Docker Build ${{ matrix.vm }} (${{ matrix.category }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Language VMs - Fast (30-60s)
+          - { vm: c, category: lang, timeout: 10 }
+          - { vm: cpp, category: lang, timeout: 10 }
+          - { vm: asm, category: lang, timeout: 10 }
+          - { vm: python, category: lang, timeout: 10 }
+          - { vm: ruby, category: lang, timeout: 10 }
+          - { vm: go, category: lang, timeout: 10 }
+          - { vm: js, category: lang, timeout: 15 }
+          - { vm: php, category: lang, timeout: 10 }
+          - { vm: r, category: lang, timeout: 15 }
+          - { vm: lua, category: lang, timeout: 10 }
+          - { vm: zig, category: lang, timeout: 10 }
+          - { vm: elixir, category: lang, timeout: 10 }
+          # Language VMs - Medium (1-3 min)
+          - { vm: java, category: lang, timeout: 20 }
+          - { vm: kotlin, category: lang, timeout: 20 }
+          - { vm: scala, category: lang, timeout: 20 }
+          - { vm: haskell, category: lang, timeout: 30 }
+          # Language VMs - Slow (3-5 min)
+          - { vm: csharp, category: lang, timeout: 30 }
+          - { vm: rust, category: lang, timeout: 40 }
+          - { vm: swift, category: lang, timeout: 30 }
+          - { vm: flutter, category: lang, timeout: 45 }
+          # Service VMs
+          - { vm: postgres, category: service, timeout: 10 }
+          - { vm: redis, category: service, timeout: 10 }
+          - { vm: mongodb, category: service, timeout: 10 }
+          - { vm: nginx, category: service, timeout: 10 }
+          - { vm: couchdb, category: service, timeout: 15 }
+          - { vm: mysql, category: service, timeout: 15 }
+          - { vm: rabbitmq, category: service, timeout: 15 }
 
     steps:
       - name: Checkout repository
@@ -349,29 +384,13 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose version
 
-      - name: Select Random VM for Testing
-        id: select-vm
-        shell: bash {0}
+      - name: Display VM info
         run: |
-          # Only VMs that have docker-compose.yml files created
-          ALL_VMS=(
-            "python" "rust" "js" "csharp" "go"
-            "postgres" "redis" "mongodb" "nginx" "rabbitmq"
-          )
-
-          if [ -n "${{ inputs.specific_vm }}" ]; then
-            TEST_VM="${{ inputs.specific_vm }}"
-          else
-            INDEX=$(( $RANDOM % ${#ALL_VMS[@]} ))
-            TEST_VM="${ALL_VMS[$INDEX]}"
-          fi
-
-          VM_TYPE=$(grep "^.*|$TEST_VM|" scripts/data/vm-types.conf | cut -d'|' -f1)
-
-          echo "vm=$TEST_VM" >> $GITHUB_OUTPUT
-          echo "type=$VM_TYPE" >> $GITHUB_OUTPUT
-          echo "Selected $VM_TYPE VM: $TEST_VM for testing (1 of ${#ALL_VMS[@]} total VMs)"
-          echo "VM_SELECTION=$TEST_VM ($VM_TYPE)" >> $GITHUB_ENV
+          echo "=================================================="
+          echo "Testing VM: ${{ matrix.vm }}"
+          echo "Category: ${{ matrix.category }}"
+          echo "Timeout: ${{ matrix.timeout }} minutes"
+          echo "=================================================="
 
       - name: Generate Test SSH Key
         shell: bash {0}
@@ -396,10 +415,10 @@ jobs:
         shell: zsh {0}
         run: |
           # Verify the selected VM has a configuration in the repo
-          VM_CONFIG="configs/docker/${{ steps.select-vm.outputs.vm }}/docker-compose.yml"
+          VM_CONFIG="configs/docker/${{ matrix.vm }}/docker-compose.yml"
           if [[ ! -f "$VM_CONFIG" ]]; then
             echo "ERROR: VM configuration not found: $VM_CONFIG"
-            echo "The VM '${{ steps.select-vm.outputs.vm }}' should have a config in the repo."
+            echo "The VM '${{ matrix.vm }}' should have a config in the repo."
             exit 1
           fi
           echo "✓ VM configuration exists: $VM_CONFIG"
@@ -412,14 +431,14 @@ jobs:
         shell: zsh {0}
         env:
           VDE_TEST_MODE: 1  # Skip SSH agent setup in CI
-        run: ./scripts/start-virtual ${{ steps.select-vm.outputs.vm }}
+        run: ./scripts/start-virtual ${{ matrix.vm }}
 
       - name: Wait for Container to Be Ready
         run: |
-          MAX_WAIT=300  # Increased from 120 for Rust/Go compilation
+          MAX_WAIT=${{ matrix.timeout }}m
           ELAPSED=0
-          CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}"
-          [[ "${{ steps.select-vm.outputs.type }}" == "lang" ]] && CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}-dev"
+          CONTAINER_NAME="${{ matrix.vm }}"
+          [[ "${{ matrix.category }}" == "lang" ]] && CONTAINER_NAME="${{ matrix.vm }}-dev"
 
           while [ $ELAPSED -lt $MAX_WAIT ]; do
             if docker ps --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
@@ -434,17 +453,17 @@ jobs:
 
       - name: Get SSH port
         id: ssh-port
-        if: steps.select-vm.outputs.type == 'lang'
+        if: matrix.category == 'lang'
         run: |
-          COMPOSE_FILE="configs/docker/${{ steps.select-vm.outputs.vm }}/docker-compose.yml"
+          COMPOSE_FILE="configs/docker/${{ matrix.vm }}/docker-compose.yml"
           SSH_PORT=$(grep ':22' "$COMPOSE_FILE" | grep -oE '[0-9]+' | head -1)
           echo "port=$SSH_PORT" >> $GITHUB_OUTPUT
           echo "SSH Port: $SSH_PORT"
 
       - name: Diagnose Container State
-        if: steps.select-vm.outputs.type == 'lang'
+        if: matrix.category == 'lang'
         run: |
-          CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}-dev"
+          CONTAINER_NAME="${{ matrix.vm }}-dev"
           SSH_PORT="${{ steps.ssh-port.outputs.port }}"
 
           echo "=== Container Status ==="
@@ -467,9 +486,9 @@ jobs:
           docker logs --tail 50 "$CONTAINER_NAME" 2>&1 || true
 
       - name: Wait for SSH to be Ready
-        if: steps.select-vm.outputs.type == 'lang'
+        if: matrix.category == 'lang'
         run: |
-          CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}-dev"
+          CONTAINER_NAME="${{ matrix.vm }}-dev"
           SSH_PORT="${{ steps.ssh-port.outputs.port }}"
           MAX_WAIT=180
           ELAPSED=0
@@ -508,10 +527,10 @@ jobs:
           exit 1
 
       - name: Test SSH Connection
-        if: steps.select-vm.outputs.type == 'lang'
+        if: matrix.category == 'lang'
         run: |
           SSH_PORT="${{ steps.ssh-port.outputs.port }}"
-          CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}-dev"
+          CONTAINER_NAME="${{ matrix.vm }}-dev"
 
           echo "Testing SSH connection..."
           if ssh -i "$VDE_SSH_KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p "$SSH_PORT" devuser@localhost "
@@ -529,7 +548,7 @@ jobs:
           fi
 
       - name: Service VMs don't have SSH
-        if: steps.select-vm.outputs.type == 'svc'
+        if: matrix.category == 'service'
         run: echo "::notice::Service VMs don't have SSH access - skipping SSH test"
 
       - name: Run Docker VM Lifecycle integration tests
@@ -543,13 +562,13 @@ jobs:
 
       - name: Display Container Info
         run: |
-          echo "::notice::Successfully built and tested ${{ env.VM_SELECTION }}"
-          docker ps --filter "name=${{ steps.select-vm.outputs.vm }}" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          echo "::notice::Successfully built and tested ${{ matrix.vm }} (${{ matrix.category }})"
+          docker ps --filter "name=${{ matrix.vm }}" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
       - name: Cleanup Test Container
         if: always()
         shell: zsh {0}
-        run: ./scripts/shutdown-virtual ${{ steps.select-vm.outputs.vm }} || true
+        run: ./scripts/shutdown-virtual ${{ matrix.vm }} || true
 
   # =============================================================================
   # Job 7: Real AI API Tests
