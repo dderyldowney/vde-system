@@ -269,7 +269,8 @@ test_create_service_vm() {
         docker stop "$TEST_SVC_VM" >/dev/null 2>&1 || true
         docker rm "$TEST_SVC_VM" >/dev/null 2>&1 || true
         rm -rf "configs/docker/$TEST_SVC_VM"
-        rm -rf "data/$TEST_SVC_VM"
+        # Handle permission errors for services like mongodb
+        rm -rf "data/$TEST_SVC_VM" 2>/dev/null || true
         rm -f "env-files/$TEST_SVC_VM.env"
     fi
 
