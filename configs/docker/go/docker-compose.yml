@@ -21,8 +21,6 @@ services:
     volumes:
       - ../../../projects/go:/home/devuser/workspace
 
-    environment:
-
     env_file:
       - ../../../env-files/go.env
 
