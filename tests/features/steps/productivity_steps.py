@@ -2,10 +2,18 @@
 BDD Step Definitions for team collaboration and productivity features.
 """
 
+import sys
+import os
+
+# Import shared configuration
+# Add steps directory to path for config import
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
+from config import VDE_ROOT
+
 from behave import given, when, then
 from pathlib import Path
-
-VDE_ROOT = Path("/vde")
 
 # =============================================================================
 # Team collaboration GIVEN steps
@@ -223,11 +231,13 @@ def step_cache_valid(context):
 
 @when('invalidate_vm_types_cache is called')
 def step_invalidate_cache(context):
-    context.cache_invalidated = True
-
-@then('cache file should be removed')
-def step_cache_removed(context):
-    context.cache_file_removed = True
+    """Actually invalidate the VM types cache by deleting the cache file."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    if cache_path.exists():
+        cache_path.unlink()
+        context.cache_invalidated = True
+    else:
+        context.cache_invalidated = False  # Cache didn't exist to delete
 
 # =============================================================================
 # Library and loading steps

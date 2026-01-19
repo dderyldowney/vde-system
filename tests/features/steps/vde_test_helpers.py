@@ -4,6 +4,16 @@ VDE Test Helpers - Shared utilities for BDD tests.
 This module provides helper functions to call actual VDE scripts
 and verify real system state, replacing mock implementations.
 """
+import sys
+import os
+
+# Import shared configuration
+# Add steps directory to path for config import
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
+from config import VDE_ROOT
+
 
 from pathlib import Path
 import subprocess
@@ -21,7 +31,7 @@ _vde_root_detected = _tests_dir.parent  # Go up one more level to reach /Users/d
 
 # Support both container and local environments
 # VDE_ROOT_DIR env var can override auto-detection
-VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR", str(_vde_root_detected)))
+# VDE_ROOT imported from config)
 
 
 def run_vde_command(command, timeout=120, check=False):
@@ -242,3 +252,10 @@ def cleanup_test_containers():
         time.sleep(2)
     except Exception:
         pass
+
+"""
+VDE Test Helpers - Shared utilities for BDD tests.
+
+This module provides helper functions to call actual VDE scripts
+and verify real system state, replacing mock implementations.
+"""

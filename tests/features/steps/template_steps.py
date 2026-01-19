@@ -3,6 +3,16 @@ BDD Step Definitions for Template System features.
 
 These steps test the template rendering system for VM configurations.
 """
+import sys
+import os
+
+# Import shared configuration
+# Add steps directory to path for config import
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
+from config import VDE_ROOT
+
 
 from behave import given, when, then
 from pathlib import Path
@@ -10,13 +20,14 @@ import subprocess
 import os
 import re
 
+
 try:
     import yaml
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
 
-VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR", "/Users/dderyldowney/dev"))
+# VDE_ROOT imported from config
 
 
 def mark_step_implemented(context, step_name=""):

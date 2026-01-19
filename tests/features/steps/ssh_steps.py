@@ -4,12 +4,24 @@ BDD Step definitions for SSH Configuration and Agent scenarios.
 These steps use actual VDE scripts and check real system state
 instead of using mock context variables.
 """
+import sys
+import os
+
+# Import shared configuration
+# Add steps directory to path for config import
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
+from config import VDE_ROOT
+
 
 from behave import given, when, then
 from pathlib import Path
 import os
 import subprocess
 import sys
+import os
+
 
 # Add parent directory to path for vde_test_helpers
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -27,7 +39,7 @@ except ImportError:
     # VDE root is at /Users/dderyldowney/dev
     current_file = Path(__file__)
     vde_root = current_file.parent.parent.parent.parent
-    VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR", str(vde_root)))
+    # VDE_ROOT imported from config)
 
     def run_vde_command(command, timeout=120):
         env = os.environ.copy()

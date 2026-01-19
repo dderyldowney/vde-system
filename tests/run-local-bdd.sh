@@ -42,6 +42,28 @@ else
 fi
 
 # =============================================================================
+# PYTHON CACHE CLEARING
+# =============================================================================
+
+# Clear Python bytecode cache after tests complete
+# This prevents stale code from persisting between test runs
+# while allowing cache usage during test execution for speed
+clear_python_cache() {
+    local cache_cleared=0
+    for pycache in $(find tests/features -name "__pycache__" -type d 2>/dev/null); do
+        rm -rf "$pycache" 2>/dev/null && cache_cleared=$((cache_cleared + 1))
+    done
+    for pyc in $(find tests/features -name "*.pyc" 2>/dev/null); do
+        rm -f "$pyc" 2>/dev/null && cache_cleared=$((cache_cleared + 1))
+    done
+    [[ $cache_cleared -gt 0 ]] && echo -e "${YELLOW}Cleared $cache_cleared Python cache entries${RESET}"
+    return 0
+}
+
+# Ensure cache is cleared on exit (success or failure)
+trap 'clear_python_cache' EXIT
+
+# =============================================================================
 # CHECKS
 # =============================================================================
 
