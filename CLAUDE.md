@@ -82,26 +82,26 @@ The Explore agent is faster and more efficient at:
 
 ### Step 5: Use Plan Mode for All Work (MANDATORY)
 
-**BEFORE doing ANY implementation work, you MUST use plan mode**
+**DEFAULT TO PLAN MODE FOR ALL WORK - This is the primary operating mode**
 
 **How to enter plan mode:**
 - Use the `/plan` command OR
 - Use the `EnterPlanMode` tool when facing implementation decisions
 - Use `claude-mem:plan` skill for structured planning with memory integration
 
-**What requires plan mode:**
-- Any feature implementation
-- Code modifications affecting existing behavior
+**Plan mode is the DEFAULT for:**
+- All implementation work (features, bug fixes, refactoring)
+- Evaluating and implementing tasks from TODO.md
 - Multi-file changes (more than 2-3 files)
 - Architectural decisions
-- Refactoring work
 - Any task where multiple approaches are possible
+- Any non-trivial code modifications
 
-**What does NOT require plan mode:**
-- Single-line or few-line fixes (typos, obvious bugs)
-- Adding a single function with clear requirements
-- Pure research/exploration tasks
-- Simple, obvious implementations
+**ONLY skip plan mode for:**
+- Single-line typo fixes or obvious bugs
+- Pure research/exploration tasks (read-only)
+- Simple, obvious implementations with clear requirements
+- Direct user questions that don't involve code changes
 
 **Plan mode outputs:**
 1. Thorough exploration of the codebase

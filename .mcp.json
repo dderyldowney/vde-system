@@ -2,21 +2,28 @@
   "$schema": "https://modelcontextprotocol.io/specification/2025-06-18/schema",
   "mcpServers": {
     "github": {
-      "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "headers": {
-        "Authorization": "Bearer ${GITHUB_TOKEN:-}"
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PAT:-${GITHUB_PERSONAL_ACCESS_TOKEN:-}}"
       }
     },
     "sequential-thinking": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@smithery-ai/server-sequential-thinking"]
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
     },
     "fetch": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@smithery-ai/fetch"]
+      "args": ["-y", "mcp-fetch-server"]
     }
   }
 }
