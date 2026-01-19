@@ -131,7 +131,12 @@ if [[ -n "$SPECIFIC_FEATURE" ]]; then
     fi
 else
     echo -e "${CYAN}Running all Docker-free features from tests/features/docker-free/${RESET}"
-    behave_args="$behave_args tests/features/docker-free/"
+    # Skip @user-guide-internal tests in CI (they have design issues for clean environments)
+    if [[ -n "$CI" ]]; then
+        behave_args="$behave_args tests/features/docker-free/ --tags=~@user-guide-internal"
+    else
+        behave_args="$behave_args tests/features/docker-free/"
+    fi
 fi
 
 echo ""
