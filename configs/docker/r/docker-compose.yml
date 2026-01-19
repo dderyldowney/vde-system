@@ -14,7 +14,7 @@ services:
     container_name: r-dev
     hostname: r-dev
     restart: unless-stopped
-    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y r-base r-cran-littler && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y r-base r-cran-littler && /usr/sbin/sshd -D"
 
     ports:
       - "2214:22"

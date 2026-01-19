@@ -14,7 +14,7 @@ services:
     container_name: kotlin-dev
     hostname: kotlin-dev
     restart: unless-stopped
-    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y kotlin {{INSTALL_CMD}}{{INSTALL_CMD}} curl -s "https://get.sdkman.io"  && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y kotlin curl -s https://get.sdkman.io | bash && /usr/sbin/sshd -D"
 
     ports:
       - "2210:22"

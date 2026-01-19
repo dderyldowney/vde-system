@@ -14,7 +14,7 @@ services:
     container_name: java-dev
     hostname: java-dev
     restart: unless-stopped
-    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y default-jdk maven gradle && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y default-jdk maven gradle && /usr/sbin/sshd -D"
 
     ports:
       - "2209:22"

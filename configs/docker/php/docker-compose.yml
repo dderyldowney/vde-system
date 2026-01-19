@@ -14,7 +14,7 @@ services:
     container_name: php-dev
     hostname: php-dev
     restart: unless-stopped
-    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y php php-cli php-xml php-mbstring php-curl composer && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y php php-cli php-xml php-mbstring php-curl composer && /usr/sbin/sshd -D"
 
     ports:
       - "2212:22"
