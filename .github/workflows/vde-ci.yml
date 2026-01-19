@@ -686,6 +686,10 @@ jobs:
     if: always()
 
     steps:
+      - name: Install zsh
+        shell: bash {0}
+        run: sudo apt-get update && sudo apt-get install -y zsh
+
       - name: Display CI Summary
         env:
           LINT_RESULT: ${{ needs.lint.result }}
