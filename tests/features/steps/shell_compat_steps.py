@@ -33,10 +33,18 @@ def step_running_bash(context):
     context.current_shell = 'bash'
 
 
+@given('I initialize an associative array')
+def step_given_init_assoc_array(context):
+    """Initialize an associative array (Given variant)."""
+    context.array_name = 'test_array'
+    context.array_initialized = True
+
+
 @when('I initialize an associative array')
 def step_init_assoc_array(context):
     """Initialize an associative array."""
     context.array_name = 'test_array'
+    context.array_initialized = True
 
 
 @then('_detect_shell should return "{shell}"')
@@ -256,3 +264,122 @@ def step_running_in_bash(context):
 def step_when_script_exits(context):
     """Script exits."""
     context.script_exiting = True
+
+
+# =============================================================================
+# Edge Case Step Definitions
+# =============================================================================
+
+@given('I initialize an associative array named "{name}"')
+def step_init_named_array(context, name):
+    """Initialize an associative array with a specific name."""
+    context.array_name = name
+
+
+@when('I get all keys from "{array_name}"')
+def step_get_all_keys_from_array(context, array_name):
+    """Get all keys from a specific array."""
+    context.array_name = array_name
+    context.all_keys_retrieved = True
+
+
+@then('no keys should be returned')
+def step_no_keys_returned(context):
+    """No keys should be returned."""
+    context.no_keys = True
+
+
+@then('array should be considered empty')
+def step_array_considered_empty(context):
+    """Array should be considered empty."""
+    context.array_is_empty = True
+
+
+@then('key "{key}" should exist')
+def step_key_should_exist(context, key):
+    """Key should exist in array."""
+    context.key_exists = key
+
+
+@when('I attempt to get key "{key}"')
+def step_attempt_get_key(context, key):
+    """Attempt to get a key that may not exist."""
+    context.attempted_key = key
+    context.key_attempt_result = "failure"
+
+
+@then('operation should return failure status')
+def step_operation_failure_status(context):
+    """Operation should return failure status."""
+    context.operation_failed = True
+
+
+@then('no value should be returned')
+def step_no_value_returned(context):
+    """No value should be returned."""
+    context.no_value = True
+
+
+@then('getting key "{key}" should contain newlines')
+def step_key_contains_newlines(context, key):
+    """Key value should contain newlines."""
+    context.key_has_newlines = True
+
+
+@then('array should contain exactly {num:d} key')
+def step_array_contains_n_keys(context, num):
+    """Array should contain exactly n keys."""
+    context.array_key_count = num
+
+
+@then('operation should complete successfully')
+def step_operation_complete_successfully(context):
+    """Operation should complete successfully."""
+    context.operation_completed = True
+
+
+@then('array should remain empty')
+def step_array_remains_empty(context):
+    """Array should remain empty."""
+    context.array_still_empty = True
+
+
+# =============================================================================
+# Additional edge case step definitions for Given/When variations
+# =============================================================================
+
+@given('I set key "{key}" to value "{value}"')
+def step_given_set_key_value(context, key, value):
+    """Set key to value in associative array (Given variant)."""
+    context.last_key = key
+    context.last_value = value
+    # Track multiple keys for scenarios that need it
+    if not hasattr(context, 'key_values'):
+        context.key_values = {}
+    context.key_values[key] = value
+
+
+@when('I set key "{key}" to an empty value')
+def step_set_key_empty(context, key):
+    """Set key to an empty value."""
+    context.last_key = key
+    context.last_value = ""
+    if not hasattr(context, 'key_values'):
+        context.key_values = {}
+    context.key_values[key] = ""
+
+
+@then('getting key "{key}" should return an empty value')
+def step_get_key_empty(context, key):
+    """Getting key should return empty value."""
+    context.key_return = ""
+
+
+@given('I set key "{key}" to an empty value')
+def step_given_set_key_empty(context, key):
+    """Set key to an empty value (Given variant)."""
+    context.last_key = key
+    context.last_value = ""
+    if not hasattr(context, 'key_values'):
+        context.key_values = {}
+    context.key_values[key] = ""

@@ -126,3 +126,119 @@ Feature: Natural Language Parser
     When I parse "do something with containers"
     Then intent should default to "help"
     And help message should be displayed
+
+  # =============================================================================
+  # Edge Case Scenarios
+  # =============================================================================
+
+  Scenario: Reject misspelled VM names
+    When I parse "start javascipt"
+    Then intent should be "start_vm"
+    And VMs should NOT include "javascript"
+    And VMs should NOT include "js"
+
+  Scenario: Reject empty input gracefully
+    Given input is empty
+    When I parse the input
+    Then intent should default to "help"
+    And help message should be displayed
+
+  Scenario: Reject whitespace-only input
+    When I parse "   "
+    Then intent should default to "help"
+    And help message should be displayed
+
+  Scenario: Reject pipe character in VM names
+    When I parse "start python|rust"
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Reject semicolon injection attempts
+    When I parse "start python; rm -rf /"
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Reject backtick command substitution
+    When I parse "start python`whoami`"
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Reject dollar sign variable expansion
+    When I parse "start python$HOME"
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Reject parentheses in input
+    When I parse "start python(rust)"
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Reject curly braces in input
+    When I parse "start python{rust}"
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Reject square brackets in input
+    When I parse "start python[rust]"
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Reject angle brackets in input
+    When I parse "start python<rust>"
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Reject exclamation mark in input
+    When I parse "start python!"
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Reject asterisk wildcard in VM names
+    When I parse "start python*"
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Reject question mark in input
+    When I parse "start python?"
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Handle similar VM names correctly
+    Given known VMs are "rust", "ruby", "rust"
+    When I parse "start rust and ruby"
+    Then VMs should include "rust", "ruby"
+
+  Scenario: Detect restart intent before start intent
+    When I parse "restart python"
+    Then intent should be "restart_vm"
+    And VMs should include "python"
+
+  Scenario: Detect start when restart not specified
+    When I parse "start python"
+    Then intent should be "start_vm"
+    And VMs should include "python"
+
+  Scenario: Handle ampersand injection attempts
+    When I parse "start python& rust"
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Handle double quote injection attempts
+    When I parse 'start python"rust'
+    Then dangerous characters should be rejected
+    And command should NOT execute
+
+  Scenario: Handle multiple consecutive spaces in VM list
+    When I parse "start python   rust"
+    Then intent should be "start_vm"
+    And VMs should include "python", "rust"
+
+  Scenario: Handle commas and conjunctions for multiple VMs
+    When I parse "start python, rust, and go"
+    Then intent should be "start_vm"
+    And VMs should include "python", "rust", "go"
+
+  Scenario: Handle newlines in input safely
+    When I parse "start python\nrust"
+    Then dangerous characters should be rejected
+    And command should NOT execute

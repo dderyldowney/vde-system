@@ -4,13 +4,24 @@ Comprehensive catch-all step definitions for VDE BDD tests.
 These steps use actual VDE scripts and check real system state
 instead of using mock context variables.
 """
+import sys
+import os
+
+# Import shared configuration
+# Add steps directory to path for config import
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
+from config import VDE_ROOT
+
 
 from behave import given, when, then
 from pathlib import Path
 import subprocess
 import os
 
-VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR", "/vde"))
+
+# VDE_ROOT imported from config
 
 
 def run_vde_command(command, timeout=120):

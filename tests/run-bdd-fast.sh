@@ -24,6 +24,28 @@ export VDE_ROOT_DIR
 echo "VDE Root Directory: $VDE_ROOT_DIR"
 cd "$VDE_ROOT_DIR"
 
+# Prevent Python from writing bytecode cache during test runs
+# This ensures tests always use the latest code without caching issues
+export PYTHONDONTWRITEBYTECODE=1
+
+# Clear Python bytecode cache after tests complete
+# This prevents stale code from persisting between test runs
+# while allowing cache usage during test execution for speed
+clear_python_cache() {
+    local cache_cleared=0
+    for pycache in $(find tests/features -name "__pycache__" -type d 2>/dev/null); do
+        rm -rf "$pycache" 2>/dev/null && cache_cleared=$((cache_cleared + 1))
+    done
+    for pyc in $(find tests/features -name "*.pyc" 2>/dev/null); do
+        rm -f "$pyc" 2>/dev/null && cache_cleared=$((cache_cleared + 1))
+    done
+    [[ $cache_cleared -gt 0 ]] && echo "Cleared $cache_cleared Python cache entries"
+    return 0
+}
+
+# Ensure cache is cleared on exit (success or failure)
+trap 'clear_python_cache' EXIT
+
 # Colors
 if [[ -t 1 ]]; then
     GREEN='\033[0;32m'

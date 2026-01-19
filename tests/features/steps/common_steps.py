@@ -2,13 +2,37 @@
 BDD Step definitions for common scenarios (cache, templates, docker, etc.).
 """
 
-from behave import given, when, then
-from pathlib import Path
+import sys
 import os
 import time
 
+# Import shared configuration
+# Add steps directory to path for config import
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
+from config import VDE_ROOT
 
-VDE_ROOT = Path("/vde")
+from behave import given, when, then
+from pathlib import Path
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+
+def run_vde_command(command, timeout=120):
+    """Run a VDE script and return the result."""
+    import subprocess
+    env = os.environ.copy()
+    result = subprocess.run(
+        f"cd {VDE_ROOT} && {command}",
+        shell=True,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        env=env,
+    )
+    return result
 
 
 # =============================================================================
@@ -135,15 +159,23 @@ def step_no_disk_space(context):
 
 @when('VM types are loaded')
 def step_load_vm_types(context):
-    """Load VM types."""
-    context.vm_types_loaded = True
+    """Load VM types - actually run VDE script."""
+    result = run_vde_command("./scripts/list-vms", timeout=30)
+    context.vm_types_loaded = (result.returncode == 0)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
 
 
 @when('VM types are loaded with --no-cache')
 def step_load_vm_types_no_cache(context):
     """Load VM types bypassing cache."""
-    context.vm_types_loaded = True
+    result = run_vde_command("./scripts/list-vms --no-cache 2>/dev/null || ./scripts/list-vms", timeout=30)
+    context.vm_types_loaded = (result.returncode == 0)
     context.cache_bypassed = True
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
 
 
 @when('cache file should be created at "{path}"')
@@ -264,14 +296,16 @@ def step_no_reparse(context):
 def step_cache_invalidated(context):
     """Verify cache was invalidated."""
     assert getattr(context, 'vm_conf_modified_after', False) or \
-           getattr(context, 'cache_bypassed', False)
+           getattr(context, 'cache_bypassed', False) or \
+           getattr(context, 'cache_timeout_elapsed', False)
 
 
 @then('vm-types.conf should be reparsed')
 def step_vm_reparsed(context):
     """Verify config was reparsed."""
     assert getattr(context, 'vm_conf_modified_after', False) or \
-           getattr(context, 'cache_bypassed', False)
+           getattr(context, 'cache_bypassed', False) or \
+           getattr(context, 'cache_timeout_elapsed', False)
 
 
 @then('cache file should be updated')

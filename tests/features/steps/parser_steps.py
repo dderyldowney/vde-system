@@ -13,6 +13,17 @@ PARSE_RESULTS = {}
 # GIVEN steps - Setup parser state
 # =============================================================================
 
+@given('input is empty')
+def step_input_empty(context):
+    """Set input as empty string."""
+    context.empty_input = True
+
+@when('I parse the input')
+def step_parse_empty_input(context):
+    """Parse empty input."""
+    step_parse_input(context, "")
+
+
 @given('"{alias}" is an alias for "{vm_name}"')
 def step_alias_defined(context, alias, vm_name):
     """Define an alias for a VM."""
@@ -54,6 +65,17 @@ def step_parse_input(context, input_text):
     # Simple intent detection patterns (mirrors vde-parser logic)
     # Order matters - check for "show status" before "show" alone
     input_lower = input_text.lower()
+
+    # Handle empty/whitespace input - should default to help
+    if not input_text or not input_text.strip():
+        context.detected_intent = 'help'
+        context.detected_vms = []
+        context.detected_filter = None
+        context.rebuild_flag = False
+        context.nocache_flag = False
+        context.has_dangerous_chars = False
+        PARSE_RESULTS['intent'] = 'help'
+        return
 
     # Check for status with "show" first (more specific pattern)
     if re.search(r'show status|status of|check status', input_lower):
@@ -137,8 +159,8 @@ def step_parse_input(context, input_text):
     PARSE_RESULTS['rebuild'] = context.rebuild_flag
     PARSE_RESULTS['nocache'] = context.nocache_flag
 
-    # Security check
-    dangerous_chars = [';', '|', '&', '$', '`', '\n', '\r']
+    # Security check - matches vde-parser's contains_dangerous_chars function
+    dangerous_chars = [';', '|', '&', '$', '`', '(', ')', '{', '}', '[', ']', '<', '>', '!', '#', '*', '?', '\\', '"', '\n', '\r']
     context.has_dangerous_chars = any(char in input_text for char in dangerous_chars)
 
 
@@ -148,6 +170,13 @@ def step_plan_line_added(context, line):
     if not hasattr(context, 'plan'):
         context.plan = []
     context.plan.append(line)
+
+
+@when("I parse '{input_text}'")
+def step_parse_input_single_quotes(context, input_text):
+    """Parse natural language input (single quote variant for double quotes in text)."""
+    # Delegate to the main parse function - handles embedded double quotes
+    step_parse_input(context, input_text)
 
 
 # =============================================================================

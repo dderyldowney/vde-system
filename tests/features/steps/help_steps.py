@@ -3,11 +3,22 @@ BDD Step Definitions for Help and Guidance features.
 These are critical for ZeroToMastery students who need guidance.
 Note: Many steps are shared with ai_steps.py - those are defined there.
 """
+import sys
+import os
+
+# Import shared configuration
+# Add steps directory to path for config import
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
+from config import VDE_ROOT
+
 
 from behave import given, when, then
 from pathlib import Path
 
-VDE_ROOT = Path("/vde")
+
+# VDE_ROOT imported from config
 
 # =============================================================================
 # Help/Guidance GIVEN steps

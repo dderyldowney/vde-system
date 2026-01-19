@@ -3,24 +3,25 @@ BDD Step definitions for VM Lifecycle scenarios.
 These steps call actual VDE scripts instead of using mocks.
 """
 
-from behave import given, when, then
-from pathlib import Path
+import sys
 import os
 import re
 import subprocess
 import time
 import json
+from pathlib import Path
+
+# Import shared configuration
+# Add steps directory to path for config import
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
+from config import VDE_ROOT as _VDE_ROOT
 
 # VDE root directory - support both container and local environments
-# Use VDE_PROJECT_ROOT if set, otherwise detect from environment
+# Use VDE_PROJECT_ROOT if set, otherwise use shared config
 project_root = os.environ.get("VDE_PROJECT_ROOT")
-if not project_root or not Path(project_root).exists():
-    # Try VDE_ROOT_DIR (used by test runner), then auto-detect
-    project_root = os.environ.get("VDE_ROOT_DIR")
-    if not project_root or not Path(project_root).exists():
-        # Fall back to parent of tests directory
-        project_root = str(Path(__file__).parent.parent.parent)
-VDE_ROOT = Path(project_root)
+VDE_ROOT = Path(project_root) if project_root and Path(project_root).exists() else _VDE_ROOT
 SCRIPTS_DIR = VDE_ROOT / "scripts"
 
 # Detect if running in container vs locally on host
@@ -31,6 +32,8 @@ IN_CONTAINER = os.environ.get("VDE_ROOT_DIR") == "/vde"
 IN_TEST_MODE = os.environ.get("VDE_TEST_MODE") == "1"
 # Allow cleanup if running in container OR in test mode
 ALLOW_CLEANUP = IN_CONTAINER or IN_TEST_MODE
+
+from behave import given, when, then
 
 
 def run_vde_command(command, timeout=120):
@@ -768,8 +771,12 @@ def step_fresh_container(context):
 
 @when('VM types are loaded for the first time')
 def step_vm_types_first_load(context):
-    """VM types loaded for first time."""
-    context.vm_types_first_load = True
+    """VM types loaded for first time - actually run VDE script to create cache."""
+    result = run_vde_command("./scripts/list-vms", timeout=30)
+    context.vm_types_first_load = (result.returncode == 0)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
 
 
 @then('VM_ALIASES array should be populated')

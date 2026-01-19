@@ -94,3 +94,54 @@ Feature: Cache System
     When VM types are first accessed
     Then VM types should be loaded at that time
     And not during initial library sourcing
+
+  # Cache Invalidation Scenarios
+  # ========================================
+
+  Scenario: Cache expiry after timeout
+    Given VM types cache exists
+    And cache timeout period has elapsed
+    When VM types are loaded
+    Then cache should be considered stale
+    And vm-types.conf should be reparsed
+    And cache file should be updated with fresh data
+
+  Scenario: Manual cache invalidation with clear command
+    Given VM types cache exists
+    When cache is manually cleared
+    Then cache file should be removed
+    And next load should rebuild cache from source
+
+  Scenario: Cache consistency across multiple operations
+    Given VM types cache exists
+    When VM types are loaded multiple times
+    Then cache should return consistent data
+    And cache file modification time should remain unchanged
+
+  Scenario: Port registry cache invalidates on VM removal
+    Given port registry cache exists for multiple VMs
+    And a VM configuration is removed
+    When port registry is reloaded
+    Then removed VM port should be freed from registry
+    And cache file should reflect updated allocations
+
+  Scenario: Port registry cache persists and survives restart
+    Given ports have been allocated for VMs
+    And port registry cache exists
+    When system is restarted
+    And port registry is loaded
+    Then previously allocated ports should be restored
+    And no port conflicts should occur
+
+  Scenario: Cache handles concurrent read operations
+    Given VM types cache exists
+    When cache is read by multiple processes simultaneously
+    Then all reads should return valid data
+    And cache file should not become corrupted
+
+  Scenario: Invalid cache file triggers regeneration
+    Given cache file exists with invalid format
+    When VM types are loaded
+    Then invalid cache should be detected
+    And cache should be regenerated from source
+    And valid cache file should be created
