@@ -416,7 +416,7 @@ jobs:
 
       - name: Wait for Container to Be Ready
         run: |
-          MAX_WAIT=120
+          MAX_WAIT=300  # Increased from 120 for Rust/Go compilation
           ELAPSED=0
           CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}"
           [[ "${{ steps.select-vm.outputs.type }}" == "lang" ]] && CONTAINER_NAME="${{ steps.select-vm.outputs.vm }}-dev"
