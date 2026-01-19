@@ -436,11 +436,12 @@ jobs:
       - name: Wait for Container to Be Ready
         run: |
           MAX_WAIT=${{ matrix.timeout }}m
+          MAX_WAIT_SECONDS=$((${{ matrix.timeout }} * 60))
           ELAPSED=0
           CONTAINER_NAME="${{ matrix.vm }}"
           [[ "${{ matrix.category }}" == "lang" ]] && CONTAINER_NAME="${{ matrix.vm }}-dev"
 
-          while [ $ELAPSED -lt $MAX_WAIT ]; do
+          while [ $ELAPSED -lt $MAX_WAIT_SECONDS ]; do
             if docker ps --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
               echo "✓ Container is running"
               break
@@ -449,7 +450,7 @@ jobs:
             ELAPSED=$((ELAPSED + 3))
           done
 
-          [[ $ELAPSED -lt $MAX_WAIT ]] || { echo "Container did not start"; exit 1; }
+          [[ $ELAPSED -lt $MAX_WAIT_SECONDS ]] || { echo "Container did not start"; exit 1; }
 
       - name: Get SSH port
         id: ssh-port
