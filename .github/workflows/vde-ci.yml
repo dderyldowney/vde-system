@@ -534,6 +534,8 @@ jobs:
 
       - name: Run Docker VM Lifecycle integration tests
         shell: zsh {0}
+        env:
+          VDE_TEST_MODE: 1  # Skip SSH agent setup in CI
         run: |
           echo "Running Docker VM Lifecycle integration tests..."
           chmod +x tests/integration/docker-vm-lifecycle.test.sh
