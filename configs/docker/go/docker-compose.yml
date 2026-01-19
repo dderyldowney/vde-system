@@ -21,6 +21,9 @@ services:
     volumes:
       - ../../../projects/go:/home/devuser/workspace
 
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
     env_file:
       - ../../../env-files/go.env
 
