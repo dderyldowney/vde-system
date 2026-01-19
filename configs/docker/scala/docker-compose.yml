@@ -14,7 +14,7 @@ services:
     container_name: scala-dev
     hostname: scala-dev
     restart: unless-stopped
-    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y scala-defaults sbt && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y scala-defaults sbt && /usr/sbin/sshd -D"
 
     ports:
       - "2213:22"

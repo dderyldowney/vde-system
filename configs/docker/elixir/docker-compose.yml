@@ -14,7 +14,7 @@ services:
     container_name: elixir-dev
     hostname: elixir-dev
     restart: unless-stopped
-    command: sh -c "apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y elixir erlang && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y elixir erlang && /usr/sbin/sshd -D"
 
     ports:
       - "2217:22"
