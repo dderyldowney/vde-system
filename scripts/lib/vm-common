@@ -912,8 +912,16 @@ get_allocated_ports() {
 PORT_LOCKS_DIR="$VDE_ROOT_DIR/.locks/ports"
 readonly PORT_LOCKS_DIR
 
-# acquire_lock - Acquire a lock file atomically using mkdir
-# SECURITY: Uses mkdir for atomic lock creation (POSIX atomic operation)
+# Global to track if flock is available
+_VDE_HAS_FLOCK=false
+
+# Check for flock availability once
+if command -v flock >/dev/null 2>&1; then
+    _VDE_HAS_FLOCK=true
+fi
+
+# acquire_lock - Acquire a lock file using flock (preferred) or mkdir (fallback)
+# flock automatically releases locks when process exits, preventing stale locks
 # Args:
 #   lock_file - Path to the lock file (without .lock extension)
 #   timeout_seconds - Optional timeout in seconds (default: VDE_LOCK_TIMEOUT)
@@ -930,7 +938,30 @@ acquire_lock() {
     # Ensure lock directory exists
     mkdir -p "$lock_dir" 2>/dev/null
 
-    # Try to acquire lock with timeout
+    # PREFER: Use flock if available (Linux, or macOS with brew install flock)
+    # flock is superior because locks auto-release on process exit
+    if [ "$_VDE_HAS_FLOCK" = "true" ]; then
+        local actual_lock_file="${lock_file}.lck"
+        # flock -w timeout: wait up to timeout seconds for lock
+        # Open file descriptor 9 for the lock, acquire exclusive lock
+        eval "exec 9>\"$actual_lock_file\"" 2>/dev/null || {
+            log_error "Failed to open lock file: $actual_lock_file"
+            return $VDE_ERR_LOCK
+        }
+        if flock -w "$timeout" -x 9; then
+            # Lock acquired successfully
+            # Store PID for debugging
+            echo "$$" > "$actual_lock_file.pid" 2>/dev/null
+            return $VDE_SUCCESS
+        else
+            log_error "SECURITY: Failed to acquire lock after ${timeout}s: $lock_file"
+            exec 9>&-  # Close file descriptor
+            return $VDE_ERR_LOCK
+        fi
+    fi
+
+    # FALLBACK: macOS-compatible mkdir-based locking with PID liveness checking
+    # This is less ideal than flock because stale locks can persist if process crashes
     local attempts=0
     local max_attempts=$((timeout * 10))  # 100ms intervals
 
@@ -949,7 +980,21 @@ acquire_lock() {
             return $VDE_SUCCESS
         fi
 
-        # Check if existing lock is stale (older than VDE_STALE_LOCK_AGE)
+        # Check if existing lock is stale by checking PID liveness FIRST
+        # This is faster than waiting for timestamp-based stale age
+        if [ -f "${lock_file}.lock/pid" ]; then
+            local lock_pid
+            lock_pid=$(cat "${lock_file}.lock/pid" 2>/dev/null)
+            # Check if process is still alive (kill -0 returns 0 if alive)
+            if [ -n "$lock_pid" ] && [ "$lock_pid" != "$$" ] && ! kill -0 "$lock_pid" 2>/dev/null; then
+                # Process is dead - immediately clean up the stale lock
+                log_info "Cleaning up dead process lock: $lock_file (pid: $lock_pid not running)"
+                rm -rf "${lock_file}.lock" 2>/dev/null
+                continue
+            fi
+        fi
+
+        # Also check timestamp-based stale age as fallback
         if [ -f "${lock_file}.lock/timestamp" ]; then
             lock_time=$(cat "${lock_file}.lock/timestamp" 2>/dev/null || echo "0")
             current_time=$(date +%s)
@@ -980,14 +1025,24 @@ acquire_lock() {
 }
 
 # release_lock - Release a previously acquired lock
-# SECURITY: Only releases if current process owns the lock
+# For flock: closes the file descriptor (auto-releases on exit anyway)
+# For mkdir: removes the lock directory
 # Args: <lock_file> - Path to the lock file (without .lock extension)
 # Returns: VDE_SUCCESS (0) - Always succeeds (idempotent)
 # Example: release_lock "/tmp/mylock"
 release_lock() {
     local lock_file="$1"
-    
-    # Only release if we own the lock
+
+    # If using flock, close file descriptor 9
+    if [ "$_VDE_HAS_FLOCK" = "true" ]; then
+        local actual_lock_file="${lock_file}.lck"
+        rm -f "$actual_lock_file.pid" 2>/dev/null
+        # Close the file descriptor (flock releases automatically)
+        exec 9>&- 2>/dev/null
+        return $VDE_SUCCESS
+    fi
+
+    # Fallback: mkdir-based lock release
     if [ -f "${lock_file}.lock/pid" ]; then
         local lock_pid
         lock_pid=$(cat "${lock_file}.lock/pid" 2>/dev/null)
@@ -996,7 +1051,7 @@ release_lock() {
             return $VDE_SUCCESS
         fi
     fi
-    
+
     # Force release (for cleanup scripts)
     rm -rf "${lock_file}.lock" 2>/dev/null
     return $VDE_SUCCESS
@@ -1925,7 +1980,7 @@ ssh_config_has_entry() {
         return 1
     fi
 
-    grep -q "^Host $host_alias$" "$ssh_config"
+    grep -q "Host $host_alias\\b" "$ssh_config"
 }
 
 generate_ssh_config_entry() {
