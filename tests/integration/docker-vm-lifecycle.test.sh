@@ -172,11 +172,11 @@ cleanup() {
         if [[ -d "data/$vm" ]]; then
             info "Removing data/$vm"
             # Some services (mongodb) create files owned by container users
-            # Try multiple cleanup methods
+            # Try multiple cleanup methods, suppress permission errors
             rm -rf "data/$vm" 2>/dev/null || \
-                sudo rm -rf "data/$vm" 2>/dev/null || \
-                find "data/$vm" -mindepth 1 -delete 2>/dev/null || \
-                warn "Could not fully clean data/$vm (permission denied)"
+            sudo rm -rf "data/$vm" 2>/dev/null || \
+            find "data/$vm" -mindepth 1 -delete 2>/dev/null || \
+            true
         fi
     done
 
