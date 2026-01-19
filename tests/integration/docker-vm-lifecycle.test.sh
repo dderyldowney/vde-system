@@ -18,9 +18,26 @@ cd "$PROJECT_ROOT"
 # Languages: python, rust, js, go, csharp, flutter (6 language VMs)
 # Services: postgres, redis, mongodb, mysql, nginx, rabbitmq (6 service VMs)
 # VDE supports additional VMs beyond these, but we test the most commonly used ones.
-TEST_LANG_VM="python"     # Language VM for testing (not created yet)
-TEST_SVC_VM="postgres"   # Service VM for testing (not created yet)
-TEST_LANG_VM2="rust"       # Second language VM for multi-VM tests
+
+# Support single VM testing for CI matrix jobs
+# When TEST_VM is set, only test that VM instead of the default set
+if [[ -n "$TEST_VM" ]]; then
+  # Single VM mode (for CI matrix)
+  TEST_LANG_VM="$TEST_VM"
+  TEST_SVC_VM=""
+  TEST_LANG_VM2=""
+  # Detect category from VM type
+  if [[ "$TEST_VM" =~ ^(postgres|redis|mongodb|nginx|mysql|rabbitmq|couchdb)$ ]]; then
+    # Service VM
+    TEST_SVC_VM="$TEST_VM"
+    TEST_LANG_VM=""
+  fi
+else
+  # Default multi-VM mode (for local testing)
+  TEST_LANG_VM="python"     # Language VM for testing (not created yet)
+  TEST_SVC_VM="postgres"   # Service VM for testing (not created yet)
+  TEST_LANG_VM2="rust"       # Second language VM for multi-VM tests
+fi
 
 VERBOSE=${VERBOSE:-false}
 TESTS_PASSED=0
@@ -297,6 +314,12 @@ test_start_vm() {
 # =============================================================================
 
 test_start_multiple_vms() {
+    # Skip this test in single VM mode
+    if [[ -n "$TEST_VM" ]]; then
+        info "Skipping multi-VM test in single VM mode"
+        return 0
+    fi
+
     test_start "Start multiple VMs"
 
     local vms=("$TEST_LANG_VM" "$TEST_LANG_VM2" "$TEST_SVC_VM")
@@ -391,6 +414,12 @@ test_stop_vm() {
 # =============================================================================
 
 test_stop_all_vms() {
+    # Skip this test in single VM mode
+    if [[ -n "$TEST_VM" ]]; then
+        info "Skipping stop-all VMs test in single VM mode"
+        return 0
+    fi
+
     test_start "Stop all running VMs"
 
     # First make sure some VMs are running

@@ -562,12 +562,13 @@ jobs:
         if: matrix.category == 'service'
         run: echo "::notice::Service VMs don't have SSH access - skipping SSH test"
 
-      - name: Run Docker VM Lifecycle integration tests
+      - name: Docker VM Lifecycle Integration Tests
         shell: zsh {0}
         env:
-          VDE_TEST_MODE: '1'  # Skip SSH agent setup in CI
+          VDE_TEST_MODE: '1'
+          TEST_VM: ${{ matrix.vm }}
         run: |
-          echo "Running Docker VM Lifecycle integration tests..."
+          echo "Running Docker VM Lifecycle integration tests for ${{ matrix.vm }}..."
           chmod +x tests/integration/docker-vm-lifecycle.test.sh
           ./tests/integration/docker-vm-lifecycle.test.sh
 
