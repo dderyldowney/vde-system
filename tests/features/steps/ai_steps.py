@@ -141,6 +141,15 @@ def step_ask(context, question):
     context.last_question = question
     context.user_asked = True
 
+@when('I ask "show status of {vms}"')
+def step_ask_status(context, vms):
+    """Ask to show status of specific VMs."""
+    context.last_question = f"show status of {vms}"
+    context.status_vms_requested = vms.split(' and ')
+    context.user_asked = True
+    # Simulate running list-vms command
+    context.last_output = f"Status for: {vms}"
+
 @when('I ask for advice')
 def step_ask_advice(context):
     context.user_asked_advice = True
