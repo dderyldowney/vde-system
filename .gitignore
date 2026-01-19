@@ -25,10 +25,14 @@ coverage/*
 # IDE and editor files
 .idea/
 .vscode/
-.claude/
 *.swp
 *.swo
 *~
+
+# Claude Code CLI - local only (machine-specific)
+.claude/settings.local.json
+.claude/*/CLAUDE.md
+.claude/CLAUDE.md
 
 # OS files
 .DS_Store

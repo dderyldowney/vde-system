@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "opus-4.5",
+  "observers": [
+    "claude-mem@thedotmack"
+  ],
+  "observationTypes": [
+    "bugfix",
+    "feature",
+    "refactor",
+    "discovery",
+    "decision",
+    "change",
+    "shell-pattern",
+    "docker-pattern",
+    "vm-lifecycle",
+    "ssh-pattern",
+    "template-pattern"
+  ],
+  "observationConcepts": [
+    "how-it-works",
+    "why-it-exists",
+    "what-changed",
+    "problem-solution",
+    "gotcha",
+    "pattern",
+    "trade-off",
+    "shell-compat",
+    "dependency-chain",
+    "template-variable"
+  ],
+  "memory": {
+    "claude-mem": {
+      "contextObservationTypes": "bugfix,feature,refactor,discovery,decision,change,shell-pattern,docker-pattern,vm-lifecycle,ssh-pattern,template-pattern",
+      "contextObservationConcepts": "how-it-works,why-it-exists,what-changed,problem-solution,gotcha,pattern,trade-off,shell-compat,dependency-chain,template-variable",
+      "contextFullCount": "10",
+      "contextFullField": "narrative",
+      "contextSessionCount": "15",
+      "contextShowLastSummary": true,
+      "contextShowLastMessage": false
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-start.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
