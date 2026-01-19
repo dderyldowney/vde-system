@@ -66,6 +66,45 @@ declare -A SERVICE_PORTS=(
 # Functions
 #===============================================================================
 
+# Generate environment file
+generate_env_file() {
+  local name="$1"
+  local ssh_port="$2"
+  local is_service="$3"  # "true" for service VMs, "false" for language VMs
+
+  local env_file="$VDE_ROOT_DIR/env-files/${name}.env"
+
+  cat > "$env_file" <<EOF
+# Environment variables for ${name} development container
+SSH_PORT=$ssh_port
+DATABASE_URL=postgresql://devuser:SuperSecretPassword123!@postgres:5432/${name}_dev_db
+REDIS_HOST=redis
+REDIS_PORT=6379
+EOF
+
+  # For service VMs, add the service-specific port variable
+  if [[ "$is_service" == "true" ]]; then
+    local service_port="${SERVICE_PORTS[$name]}"
+    if [[ -n "$service_port" ]]; then
+      upper_name=$(echo "$name" | tr '[:lower:]' '[:upper:]')
+      # Handle multi-port services (comma-separated) - zsh compatible
+      local -a ports
+      IFS=',' ports=("${(@s[,])service_port}")
+      for port in "${ports[@]}"; do
+        port=$(echo "$port" | tr -d ' ')
+        # For RabbitMQ which has management port on 15672
+        if [[ "$name" == "rabbitmq" ]]; then
+          echo "RABBITMQ_PORT=$port" >> "$env_file"
+        else
+          echo "${upper_name}_PORT=$port" >> "$env_file"
+        fi
+      done
+    fi
+  fi
+
+  echo "Generated: $env_file"
+}
+
 # Generate language docker-compose.yml
 generate_language_config() {
   local name="$1"
@@ -119,6 +158,9 @@ networks:
 EOF
 
   echo "Generated: $compose_file"
+
+  # Also generate env file
+  generate_env_file "$name" "$ssh_port" "false"
 }
 
 # Generate service docker-compose.yml
@@ -187,18 +229,44 @@ networks:
 EOF
 
   echo "Generated: $compose_file"
+
+  # Also generate env file
+  generate_env_file "$name" "$ssh_port" "true"
 }
 
 #===============================================================================
 # Main
 #===============================================================================
 
+FORCE_REGENERATE=false
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --force|-f)
+      FORCE_REGENERATE=true
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      echo "Usage: $0 [--force]"
+      exit 1
+      ;;
+  esac
+done
+
 main() {
-  echo "Generating missing docker-compose.yml files..."
+  if [[ "$FORCE_REGENERATE" == "true" ]]; then
+    echo "Regenerating ALL configs and env files..."
+  else
+    echo "Generating missing docker-compose.yml and env files..."
+  fi
   echo ""
 
   local generated_count=0
   local skipped_count=0
+  local env_generated_count=0
+  local env_skipped_count=0
 
   # Get all VM types from cache
   if [[ -f "$VDE_CACHE_DIR/vm-types.cache" ]]; then
@@ -211,10 +279,25 @@ main() {
         continue
       fi
 
-      # Skip if already has config
+      # Skip if already has config (unless --force)
       local config_file="$VDE_ROOT_DIR/configs/docker/${vm_type}/docker-compose.yml"
-      if [[ -f "$config_file" ]]; then
+      if [[ -f "$config_file" ]] && [[ "$FORCE_REGENERATE" != "true" ]]; then
         ((skipped_count++))
+        # Still check if env file exists
+        local env_file="$VDE_ROOT_DIR/env-files/${vm_type}.env"
+        if [[ ! -f "$env_file" ]]; then
+          # Generate missing env file
+          local category="$(get_vm_info type "$vm_type" 2>/dev/null || echo "")"
+          local ssh_port="${SSH_PORTS[$vm_type]}"
+          if [[ "$category" == "service" ]]; then
+            generate_env_file "$vm_type" "$ssh_port" "true"
+          else
+            generate_env_file "$vm_type" "$ssh_port" "false"
+          fi
+          ((env_generated_count++))
+        else
+          ((env_skipped_count++))
+        fi
         continue
       fi
 
@@ -229,14 +312,15 @@ main() {
         generate_service_config "$vm_type" "$install_cmd"
         ((generated_count++))
       fi
+      ((env_generated_count++))
 
     done < "$VDE_CACHE_DIR/vm-types.cache"
   fi
 
   echo ""
   echo "============================================================================="
-  echo "Generated $generated_count config(s)"
-  echo "Skipped $skipped_count existing config(s)"
+  echo "Docker configs: Generated $generated_count, Skipped $skipped_count"
+  echo "Env files:       Generated $env_generated_count, Skipped $env_skipped_count"
   echo "============================================================================="
 }
 
