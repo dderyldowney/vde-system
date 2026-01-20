@@ -3,7 +3,12 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
-  workflow_dispatch:  # Enable manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review (required for manual trigger)'
+        required: true
+        type: number
 
 jobs:
   claude-review:
@@ -37,7 +42,7 @@ jobs:
             - Best practices violations
             - Documentation completeness
 
-            PR: ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+            PR: ${{ github.repository }}/pull/${{ github.event.pull_request.number || inputs.pr_number }}
 
           # Include "Fix this" links for actionable feedback
           include_fix_links: true
