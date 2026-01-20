@@ -588,71 +588,7 @@ jobs:
         run: ./scripts/shutdown-virtual ${{ matrix.vm }} || true
 
   # =============================================================================
-  # Job 7: Real AI API Tests
-  # =============================================================================
-  # NOTE: Skipped in CI because Z.AI endpoint (ANTHROPIC_BASE_URL) is not
-  # accessible from GitHub runners. Run locally with:
-  #   chmod +x tests/integration/test_real_ai_api.sh
-  #   ANTHROPIC_AUTH_TOKEN="your-key" ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic" \
-  #     tests/integration/test_real_ai_api.sh
-  real-ai-api:
-    name: Real AI API Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    if: false  # Disabled: Z.AI endpoint blocked in GitHub CI
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        shell: bash {0}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y zsh jq curl
-
-      - name: Check for API credentials
-        id: check-creds
-        run: |
-          if [[ -n "${{ secrets.ANTHROPIC_AUTH_TOKEN }}" ]] || \
-             [[ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]] || \
-             [[ -n "${{ secrets.CLAUDE_API_KEY }}" ]]; then
-            echo "has_credentials=true" >> $GITHUB_OUTPUT
-            echo "::notice::API credentials found - will run real AI API tests"
-          else
-            echo "has_credentials=false" >> $GITHUB_OUTPUT
-            echo "::warning::No API credentials found - skipping real AI API tests"
-          fi
-
-      - name: Run real AI API tests
-        if: steps.check-creds.outputs.has_credentials == 'true'
-        shell: zsh {0}
-        env:
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.ANTHROPIC_AUTH_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
-          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
-          ANTHROPIC_MODEL: ${{ secrets.ANTHROPIC_MODEL }}
-          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ secrets.ANTHROPIC_DEFAULT_SONNET_MODEL }}
-        run: |
-          echo "Running real AI API integration tests..."
-          echo "Making actual API calls to test the AI integration"
-          echo ""
-
-          chmod +x tests/integration/test_real_ai_api.sh
-          zsh tests/integration/test_real_ai_api.sh
-          echo ""
-          echo "✓ Real AI API tests passed"
-
-      - name: Skip test notice
-        if: steps.check-creds.outputs.has_credentials != 'true'
-        run: |
-          echo "::notice::Skipping real AI API tests - no credentials configured"
-          echo "To enable these tests, configure ANTHROPIC_AUTH_TOKEN, ANTHROPIC_API_KEY,"
-          echo "or CLAUDE_API_KEY as repository secrets"
-
-  # =============================================================================
-  # Job 8: BDD Feature Tests
+  # Job 7: BDD Feature Tests
   # =============================================================================
   bdd-tests:
     name: BDD Feature Tests
@@ -715,7 +651,7 @@ jobs:
           retention-days: 7
 
   # =============================================================================
-  # Job 11: Summary
+  # Job 8: Summary
   # =============================================================================
   summary:
     name: CI Summary

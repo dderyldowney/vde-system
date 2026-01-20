@@ -37,29 +37,29 @@ _VDE_COMMANDS_LOADED=1
 # -----------------------
 # Configuration
 # -----------------------
-VDE_AI_LOG="${VDE_ROOT_DIR}/logs/vde-ai.log"
+VDE_COMMANDS_LOG="${VDE_ROOT_DIR}/logs/vde-commands.log"
 VDE_SCRIPTS_DIR="${VDE_ROOT_DIR}/scripts"
 
-# ensure_ai_log_dir - Ensure the AI log directory exists
+# ensure_commands_log_dir - Ensure the commands log directory exists
 # Args: none
 # Returns: VDE_SUCCESS (0)
-# Example: ensure_ai_log_dir
-ensure_ai_log_dir() {
-    mkdir -p "$(dirname "$VDE_AI_LOG")"
+# Example: ensure_commands_log_dir
+ensure_commands_log_dir() {
+    mkdir -p "$(dirname "$VDE_COMMANDS_LOG")"
     return $VDE_SUCCESS
 }
 
-# log_ai_action - Log an AI assistant action to the log file
+# log_command_action - Log a VDE command action to the log file
 # Args:
 #   action - The action being performed (e.g., "start_vm", "create_vm")
 #   details - Additional details about the action
 # Returns: VDE_SUCCESS (0)
-# Example: log_ai_action "start_vm" "python (rebuild=true)"
-log_ai_action() {
+# Example: log_command_action "start_vm" "python (rebuild=true)"
+log_command_action() {
     local action="$1"
     local details="$2"
-    ensure_ai_log_dir
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $action: $details" >> "$VDE_AI_LOG"
+    ensure_commands_log_dir
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $action: $details" >> "$VDE_COMMANDS_LOG"
     return $VDE_SUCCESS
 }
 
@@ -230,7 +230,7 @@ vde_create_vm() {
     local vm_name="$1"
     local force="${2:-}"
 
-    log_ai_action "create_vm" "$vm_name"
+    log_command_action "create_vm" "$vm_name"
 
     if [ -n "$force" ]; then
         "$VDE_SCRIPTS_DIR/create-virtual-for" "$vm_name" --force
@@ -252,7 +252,7 @@ vde_start_vm() {
     local rebuild="${2:-false}"
     local nocache="${3:-false}"
 
-    log_ai_action "start_vm" "$vm_name (rebuild=$rebuild, nocache=$nocache)"
+    log_command_action "start_vm" "$vm_name (rebuild=$rebuild, nocache=$nocache)"
 
     set -- "$vm_name"
     [ "$rebuild" = "true" ] && set -- "$@" --rebuild
@@ -270,7 +270,7 @@ vde_start_vm() {
 vde_stop_vm() {
     local vm_name="$1"
 
-    log_ai_action "stop_vm" "$vm_name"
+    log_command_action "stop_vm" "$vm_name"
 
     "$VDE_SCRIPTS_DIR/shutdown-virtual" "$vm_name"
 }
@@ -288,7 +288,7 @@ vde_restart_vm() {
     local rebuild="${2:-false}"
     local nocache="${3:-false}"
 
-    log_ai_action "restart_vm" "$vm_name (rebuild=$rebuild, nocache=$nocache)"
+    log_command_action "restart_vm" "$vm_name (rebuild=$rebuild, nocache=$nocache)"
 
     # Stop first
     vde_stop_vm "$vm_name"
@@ -308,7 +308,7 @@ vde_start_all() {
     local rebuild="${1:-false}"
     local nocache="${2:-false}"
 
-    log_ai_action "start_all" "rebuild=$rebuild, nocache=$nocache"
+    log_command_action "start_all" "rebuild=$rebuild, nocache=$nocache"
 
     set -- all
     [ "$rebuild" = "true" ] && set -- "$@" --rebuild
@@ -323,7 +323,7 @@ vde_start_all() {
 #   VDE_SUCCESS (0) on success, VDE_ERR_DOCKER (8) on failure
 # Example: vde_stop_all
 vde_stop_all() {
-    log_ai_action "stop_all" ""
+    log_command_action "stop_all" ""
 
     "$VDE_SCRIPTS_DIR/shutdown-virtual" all
 }
@@ -370,7 +370,7 @@ vde_add_vm_type() {
         esac
     done
 
-    log_ai_action "add_vm_type" "$name"
+    log_command_action "add_vm_type" "$name"
 
     # Build command args using positional parameters
     set --

@@ -809,13 +809,13 @@ execute_plan() {
             ;;
 
         "$INTENT_HELP")
-            show_ai_help
+            show_parser_help
             return $VDE_SUCCESS
             ;;
 
         *)
             log_error "Unknown intent: $intent"
-            show_ai_help
+            show_parser_help
             return $VDE_ERR_INVALID_INPUT
             ;;
     esac
@@ -825,16 +825,16 @@ execute_plan() {
 # Help Display
 # -----------------------
 
-# show_ai_help - Display help information for the AI assistant
+# show_parser_help - Display help information for the VDE Natural Language Parser
 # Shows supported intents, example commands, and usage options
 # Args: none
 # Returns: VDE_SUCCESS (0)
-# Example: show_ai_help
-show_ai_help() {
-    echo "VDE AI Assistant - Natural Language Control"
+# Example: show_parser_help
+show_parser_help() {
+    echo "VDE Natural Language Parser - Pattern-Based Command Understanding"
     echo ""
-    echo "The VDE AI Assistant helps you control your Virtual Development Environment"
-    echo "using natural language commands."
+    echo "The VDE Natural Language Parser helps you control your Virtual Development Environment"
+    echo "using natural language commands through pattern matching (no external dependencies)."
     echo ""
     echo "SUPPORTED INTENTS:"
     echo "  List VMs"
@@ -874,16 +874,12 @@ show_ai_help() {
     echo ""
     echo "OPTIONS:"
     echo "  --dry-run    Show what would happen without executing"
-    echo "  --ai         Use LLM-based parsing (if API key available)"
-    echo ""
-    echo "ENVIRONMENT VARIABLES:"
-    echo "  VDE_USE_AI   Set to 1 or true to enable LLM parsing"
     echo ""
     echo "EXAMPLES:"
-    echo "  vde-ai create a Go VM and start it"
-    echo "  vde-ai what is currently running?"
-    echo "  vde-ai start Python and PostgreSQL"
-    echo "  vde-ai stop everything"
-    
+    echo "  vde-nlp create a Go VM and start it"
+    echo "  vde-nlp what is currently running?"
+    echo "  vde-nlp start Python and PostgreSQL"
+    echo "  vde-nlp stop everything"
+
     return $VDE_SUCCESS
 }

@@ -28,7 +28,7 @@ make lint
 - **zsh** (>=5.0): Shell interpreter (all scripts use zsh)
 - **kcov** (>=40): Code coverage for shell scripts
 - **docker** (>=20.10.0): For integration tests
-- **jq** (>=1.5): JSON processing for AI API tests
+- **jq** (>=1.5): JSON processing for configuration files
 
 ### Optional Tools
 - **yamllint** (>=1.27.0): YAML linting
@@ -97,7 +97,6 @@ tests/
 │   └── test_vde_commands.sh
 ├── integration/       # Integration tests
 │   ├── test_pattern_based_parsing.sh
-│   ├── test_mocked_ai_parsing.sh
 │   └── test_daily_usage_patterns.sh
 ├── fixtures/          # Test data
 │   └── vm_types_minimal.conf
@@ -116,12 +115,11 @@ tests/
 ### Jobs
 1. **Linting** (~2 min): zsh syntax checking, yamllint
 2. **Unit Tests** (~3 min): Three-tier library tests
-3. **Integration Tests** (~5 min): AI parsing, usage patterns
+3. **Integration Tests** (~5 min): Pattern parsing, usage patterns
 4. **Comprehensive Tests** (~20 min): Extended parser, commands, and integration tests
 5. **Coverage** (~10 min): Code coverage with kcov
 6. **Docker Build** (~15 min): Random VM build + SSH connectivity test
-7. **Real AI API** (~2 min): Actual API calls to Anthropic-compatible endpoints (requires credentials)
-8. **Summary**: Aggregate results
+7. **Summary**: Aggregate results
 
 ### Random VM Selection
 Each CI run selects ONE random VM from ALL 25 VMs using a rounded number generator:
@@ -282,13 +280,6 @@ The GitHub Actions workflow (`.github/workflows/vde-ci.yml`) includes:
 - Tests SSH connectivity with retries (language VMs only)
 - Verifies container functionality (user, shell, workspace, sudo)
 - Displays container info and cleanup
-
-### 7. Real AI API Job
-- Checks for API credentials (ANTHROPIC_AUTH_TOKEN, ANTHROPIC_API_KEY, or CLAUDE_API_KEY)
-- If credentials found, runs actual API calls to test AI integration
-- Tests: simple commands, create VM, multiple VMs, complex natural language
-- Skips gracefully if no credentials configured
-- Supports third-party providers (e.g., Zhipu AI with custom BASE_URL and MODEL)
 
 ## Manual CI Testing
 
