@@ -175,9 +175,17 @@ detect_intent() {
             ;;
     esac
 
-    # Check for list/show intents (check before other patterns)
+    # Check for status BEFORE list/show (specific patterns)
     case "$input_lower" in
-        *list*|*show*|*"what available"*)
+        *"show status of"*|*"status of"*)
+            echo "$INTENT_STATUS"
+            return $VDE_SUCCESS
+            ;;
+    esac
+
+    # Check for list/show intents (general patterns)
+    case "$input_lower" in
+        *list*|*show*|*"what available"*|*what*available*)
             echo "$INTENT_LIST_VMS"
             return $VDE_SUCCESS
             ;;

@@ -207,7 +207,7 @@ Feature: SSH Configuration
     Given ~/.ssh/config contains "Host python-dev"
     And ~/.ssh/config contains "Host rust-dev"
     And ~/.ssh/config contains user's "Host github.com" entry
-    When I remove VM "python"
+    When I remove VM for SSH cleanup "python"
     Then ~/.ssh/config should NOT contain "Host python-dev"
     And ~/.ssh/config should still contain "Host rust-dev"
     And ~/.ssh/config should still contain "Host github.com"
@@ -221,7 +221,7 @@ Feature: SSH Configuration
   Scenario: Remove known_hosts entry when VM is removed
     Given VM "python" is created with SSH port "2200"
     And ~/.ssh/known_hosts contains entry for "[localhost]:2200"
-    When I remove VM "python"
+    When I remove VM for SSH cleanup "python"
     Then ~/.ssh/known_hosts should NOT contain entry for "[localhost]:2200"
     And ~/.ssh/known_hosts should NOT contain entry for "[::1]:2200"
 
@@ -231,7 +231,7 @@ Feature: SSH Configuration
     And ~/.ssh/known_hosts contains "[localhost]:2400"
     And ~/.ssh/known_hosts contains "[::1]:2400"
     And ~/.ssh/known_hosts contains "postgres" hostname entry
-    When I remove VM "postgres"
+    When I remove VM for SSH cleanup "postgres"
     Then ~/.ssh/known_hosts should NOT contain "[localhost]:2400"
     And ~/.ssh/known_hosts should NOT contain "[::1]:2400"
     And ~/.ssh/known_hosts should NOT contain "postgres" entry
@@ -240,15 +240,15 @@ Feature: SSH Configuration
   Scenario: Create backup of known_hosts before cleanup
     Given ~/.ssh/known_hosts exists with content
     And VM "redis" is created with SSH port "2401"
-    When I remove VM "redis"
-    Then backup file should exist at "~/.ssh/known_hosts.vde-backup"
+    When I remove VM for SSH cleanup "redis"
+    Then known_hosts backup file should exist at "~/.ssh/known_hosts.vde-backup"
     And backup should contain original content
 
   @requires-docker-ssh
   Scenario: Known_hosts cleanup handles missing file gracefully
     Given ~/.ssh/known_hosts does not exist
     And VM "python" is created with SSH port "2200"
-    When I remove VM "python"
+    When I remove VM for SSH cleanup "python"
     Then command should succeed without error
     And no known_hosts file should be created
 
@@ -265,7 +265,7 @@ Feature: SSH Configuration
   Scenario: Recreating VM after removal succeeds without host key warning
     Given VM "python" was previously created with SSH port "2200"
     And ~/.ssh/known_hosts had old entry for "[localhost]:2200"
-    When I remove VM "python"
+    When I remove VM for SSH cleanup "python"
     And I create VM "python" with SSH port "2200"
     Then SSH connection should succeed without host key warning
     And ~/.ssh/known_hosts should contain new entry for "[localhost]:2200"

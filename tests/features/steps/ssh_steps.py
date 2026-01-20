@@ -3874,8 +3874,8 @@ def step_known_hosts_old_entry(context, pattern):
     context.old_known_hosts_entry = pattern
 
 
-@when('I remove VM "{vm}"')
-def step_remove_vm(context, vm):
+@when('I remove VM for SSH cleanup "{vm}"')
+def step_remove_vm_ssh_cleanup(context, vm):
     """Remove a VM using remove-virtual script."""
     result = run_vde_command(f"./scripts/remove-virtual {vm}", timeout=60)
     context.vm_removed = result.returncode == 0
@@ -3926,7 +3926,7 @@ def step_known_hosts_still_contains(context, pattern):
     assert pattern in content, f"Expected pattern '{pattern}' not found in known_hosts"
 
 
-@then('backup file should exist at "{backup_path}"')
+@then('known_hosts backup file should exist at "{backup_path}"')
 def step_known_hosts_backup_exists(context, backup_path):
     """Verify backup file was created."""
     backup_path = backup_path.replace("~", str(Path.home()))
