@@ -1,3 +1,9 @@
+# Global settings
+Host *
+    AddKeysToAgent yes
+    ForwardAgent yes
+    StrictHostKeyChecking no
+
 # Python Dev VM
 Host python-dev
     HostName localhost
