@@ -47,6 +47,9 @@ jobs:
           # Include "Fix this" links for actionable feedback
           include_fix_links: true
 
+          # Show full output for debugging
+          show_full_output: true
+
           # Optional: Add claude_args to customize behavior
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # claude_args: |
