@@ -1,6 +1,6 @@
 # VDE Parser Technical Deep Dive
 
-A comprehensive technical analysis of the VDE (Virtual Development Environment) Natural Language Parser—a pattern-based NLP system implemented entirely in shell script.
+A comprehensive technical analysis of the VDE (Virtual Development Environment) Natural Language Parser—a pattern-based command understanding system implemented entirely in shell script.
 
 [← Back to README](../README.md)
 
@@ -23,7 +23,7 @@ A comprehensive technical analysis of the VDE (Virtual Development Environment) 
 
 ## Introduction
 
-The VDE Parser (`scripts/lib/vde-parser`) is a sophisticated natural language understanding system that converts free-form user input into structured execution commands. Despite being written entirely in Zsh, it achieves capabilities typically associated with more complex NLP frameworks.
+The VDE Parser (`scripts/lib/vde-parser`) is a sophisticated pattern-based command understanding system that converts free-form user input into structured execution commands. Implemented entirely in Zsh, it demonstrates natural language processing capabilities through shell native pattern matching.
 
 **Location:** `/Users/dderyldowney/dev/scripts/lib/vde-parser`
 
@@ -48,7 +48,7 @@ The VDE Parser (`scripts/lib/vde-parser`) is a sophisticated natural language un
 
 ### Why Shell Script?
 
-The choice of Zsh for an NLP parser may seem unusual, but offers significant advantages:
+The choice of Zsh for a natural language parser may seem unusual, but offers significant advantages:
 
 | Advantage | Benefit |
 |-----------|---------|
@@ -750,7 +750,7 @@ Each intent has a dedicated handler:
 
 ```zsh
 "$INTENT_HELP")
-    show_ai_help
+    show_parser_help
     return 0
     ;;
 ```
@@ -760,7 +760,7 @@ Each intent has a dedicated handler:
 ```zsh
 *)
     log_error "Unknown intent: $intent"
-    show_ai_help
+    show_parser_help
     return 1
     ;;
 ```
@@ -871,7 +871,7 @@ source "$SCRIPT_DIR/lib/vde-parser"     # Load THIRD
 | `vde_stop_multiple_vms()` | Stop multiple VMs | 345 |
 | `vde_restart_vm()` | Restart VM | 356 |
 | `vde_get_ssh_info()` | Get SSH connection info | 369 |
-| `show_ai_help()` | Display help text | 386 |
+| `show_parser_help()` | Display help text | 386 |
 
 ---
 
@@ -966,7 +966,7 @@ Measured on typical development hardware (M-series CPU, SSD):
 |-----------|------|-------|
 | Intent detection | <1ms | Fixed patterns |
 | VM name extraction | 2-5ms | Depends on VM count |
-| Full parse (no AI) | 3-8ms | Total end-to-end |
+| Full parse (pattern-based) | 3-8ms | Total end-to-end |
 | Plan execution | Variable | Depends on operation |
 
 ---
@@ -1035,7 +1035,7 @@ Measured on typical development hardware (M-series CPU, SSD):
    ```
    INTENT:help
    ```
-4. `execute_plan` → Calls `show_ai_help()`
+4. `execute_plan` → Calls `show_parser_help()`
 
 ---
 
