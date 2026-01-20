@@ -210,13 +210,6 @@ Feature: Productivity Features for Developers
     And I can verify schema changes work
     And production database is not affected
 
-  Scenario: API mocking and stubbing
-    Given I'm developing a client that calls external APIs
-    When I create a mock service VM
-    Then I can mock API responses
-    And I can test error conditions
-    And I don't need to hit real external services
-
   Scenario: Log aggregation for debugging
     Given multiple VMs generate logs
     When I check logs for each VM

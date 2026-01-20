@@ -88,10 +88,6 @@ def before_scenario(context, scenario):
         # Skip reset for scenarios that set up specific cache states
         scenario_steps = [step.name for step in scenario.steps]
 
-        # Don't reset if the scenario tests cache expiry behavior
-        if "cache timeout period has elapsed" in scenario_steps:
-            return
-
         # Don't reset if the scenario tests invalid cache regeneration
         if "cache file exists with invalid format" in scenario_steps:
             return

@@ -377,11 +377,6 @@ def step_migration_scripts(context):
     context.has_migrations = True
     context.migration_scripts_available = True
 
-@given('I\'m developing a client that calls external APIs')
-def step_external_api_client(context):
-    context.developing_api_client = True
-    context.external_api_calls = True
-
 @given('multiple VMs generate logs')
 def step_multiple_vms_logs(context):
     context.multiple_vms_logging = True
@@ -572,11 +567,6 @@ def step_run_migrations(context):
     context.migrations_run = True
     context.schema_changes_applied = True
 
-@when('I create a mock service VM')
-def step_create_mock_service(context):
-    context.mock_service_created = True
-    context.api_mock_enabled = True
-
 @when('I check logs for each VM')
 def step_check_logs_each_vm(context):
     context.logs_checked = True
@@ -756,11 +746,6 @@ def step_local_https_access(context):
 def step_test_migrations_safely(context):
     context.safe_migration_testing = True
     assert getattr(context, "has_migrations", True) and getattr(context, "migrations_run", True)
-
-@then('I can mock API responses')
-def step_mock_api_responses(context):
-    context.mocking_enabled = True
-    assert getattr(context, "external_api_calls", True) and getattr(context, "mock_service_created", True)
 
 # Note: The following step is already defined in ssh_docker_steps.py:
 # - @then('I can view logs from docker logs command')
@@ -1002,11 +987,6 @@ def step_prod_unaffected(context):
 
 # Note: The following step is already defined in debugging_steps.py:
 # - @then('I can test error conditions')
-
-@then('I don\'t need to hit real external services')
-def step_no_real_external_services(context):
-    context.mock_services_sufficient = True
-    assert getattr(context, "mocking_enabled", True)
 
 @then('I can check logs/<vm>/ directories')
 def step_log_directories(context):

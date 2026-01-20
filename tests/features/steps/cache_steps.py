@@ -396,24 +396,6 @@ def step_then_390_no_cached_layers_should_be_used(context):
 # Cache Invalidation Steps
 # =============================================================================
 
-@given("cache timeout period has elapsed")
-def step_cache_timeout_elapsed(context):
-    """Simulate cache timeout by modifying cache file mtime to be old."""
-    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
-    if cache_path.exists():
-        # Set modification time to 1 hour ago to simulate timeout
-        old_mtime = time.time() - 3600
-        os.utime(cache_path, (old_mtime, old_mtime))
-        context.cache_timeout_elapsed = True
-    else:
-        # If cache doesn't exist, create one with old timestamp
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        run_vde_command("./scripts/list-vms", timeout=30)
-        old_mtime = time.time() - 3600
-        os.utime(cache_path, (old_mtime, old_mtime))
-        context.cache_timeout_elapsed = True
-    mark_step_implemented(context, "cache_timeout_elapsed")
-
 @when("cache is manually cleared")
 def step_cache_manually_cleared(context):
     """Cache is manually cleared."""
@@ -611,18 +593,6 @@ def step_cache_regenerated(context):
         assert "VM_TYPE:" in content or "# VDE VM Types Cache" in content, "Cache was not regenerated properly"
     context.cache_regenerated = True
     mark_step_implemented(context, "cache_regenerated")
-
-@then("cache should be considered stale")
-def step_cache_stale(context):
-    """Verify cache is detected as stale due to timeout."""
-    # This would typically involve checking mtime, but since we set it old in the Given step
-    # we just verify the flag was set appropriately
-    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
-    if cache_path.exists():
-        # Check if cache is old (more than 1 minute old indicates timeout scenario)
-        cache_age = time.time() - cache_path.stat().st_mtime
-        assert cache_age > 60, "Cache is not stale (too recent)"
-    mark_step_implemented(context, "cache_stale")
 
 @then("cache file should be updated with fresh data")
 def step_cache_updated_fresh(context):

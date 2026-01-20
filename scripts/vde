@@ -55,7 +55,6 @@ _VDE_COMMANDS=(
     "list:List all VMs:list-vms"
     "status:Show VM status:list-vms"
     "health:Run system health check:vde-health"
-    "chat:Start AI assistant chat:vde-chat"
     "create-and-start:Create and start VMs:create-and-start"
     "nuke:Remove all of VDE:nuke-vde"
     "help:Show this help message:"
@@ -83,7 +82,6 @@ EOF
     printf "  %-12s %s\n" "list" "List all VMs"
     printf "  %-12s %s\n" "status" "Show VM status"
     printf "  %-12s %s\n" "health" "Run system health check"
-    printf "  %-12s %s\n" "chat" "Start AI assistant chat"
     printf "  %-12s %s\n" "create-and-start" "Create and start VMs"
     printf "  %-12s %s\n" "nuke" "Remove all of VDE"
     printf "  %-12s %s\n" "help" "Show this help message"
@@ -103,7 +101,6 @@ Examples:
   vde remove rust               # Remove Rust VM instance
   vde uninstall elixir          # Completely uninstall Elixir from VDE
   vde health                    # Run health check
-  vde chat                      # Start AI assistant
   vde nuke                      # Remove all of VDE (prompts for backup)
 
 For more information, see: https://github.com/dderyldowney/dev/blob/main/docs/command-reference.md
@@ -146,12 +143,6 @@ vde_find_command_script() {
             ;;
         health|vde-health)
             script="$VDE_ROOT_DIR/scripts/vde-health"
-            ;;
-        chat|vde-chat)
-            script="$VDE_ROOT_DIR/scripts/vde-chat"
-            ;;
-        ai|vde-ai)
-            script="$VDE_ROOT_DIR/scripts/vde-ai"
             ;;
         remove|remove-virtual)
             script="$VDE_ROOT_DIR/scripts/remove-virtual"

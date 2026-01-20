@@ -5,7 +5,7 @@
 ![CI Status](https://github.com/dderyldowney/vde-system/actions/workflows/vde-ci.yml/badge.svg)
 
 
-A modular, template-based Docker development environment supporting 19+ programming languages and 7+ services, all accessible via SSH with consistent user configuration. Designed for daily development work with VSCode Remote-SSH and AI CLI tools.
+A modular, template-based Docker development environment supporting 19+ programming languages and 7+ services, all accessible via SSH with consistent user configuration. Designed for daily development work with VSCode Remote-SSH.
 
 **Shell Support:** zsh 5.0+, bash 4.0+, bash 3.x (with fallbacks) — [See Requirements](docs/requirements.md)
 
@@ -221,19 +221,6 @@ ssh redis-dev redis-cli           # Connect to cache
 
 ---
 
-## AI CLI Tools (Works With Your AI Pair Programmers!) 🤖
-
-VDE is compatible with modern AI CLI tools:
-
-| Tool | Integration | Best For |
-|------|-------------|----------|
-| **Claude Code** | Excellent | Complex tasks, architecture |
-| **Cursor** | Excellent | Refactoring, exploration |
-| **Aider** | Good | Git workflows, pair programming |
-| **Copilot** | Good | Boilerplate, completion |
-
----
-
 ## Project Structure
 
 ```
@@ -290,11 +277,7 @@ For comprehensive technical documentation, see these in-depth guides:
 
 1. **[Technical Deep Dive](docs/Technical-Deep-Dive.md)** - Complete technical deep-dive of the VDE system architecture and components. [← Back to README](../README.md)
 
-2. **[VDE AI Technical Deep Dive](docs/VDE-AI-Technical-Deep-Dive.md)** - Technical analysis of the VDE AI system, covering both the natural language parser and AI agent interfaces. [← Back to README](../README.md)
-
-3. **[VDE PARSER Technical Deep Dive](docs/VDE-PARSER-Technical-Deep-Dive.md)** - Focused technical analysis of the VDE natural language parser. [← Back to README](../README.md)
-
-4. **[VDE AI HOWTO](docs/VDE-AI-HOWTO.md)** - Comprehensive user guide for the VDE AI Assistant, covering API keys, commands, parameters, and daily usage. [← Back to README](../README.md)
+2. **[VDE PARSER Technical Deep Dive](docs/VDE-PARSER-Technical-Deep-Dive.md)** - Focused technical analysis of the VDE natural language parser. [← Back to README](../README.md)
 
 ---
 
