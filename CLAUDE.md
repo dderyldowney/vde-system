@@ -112,9 +112,41 @@ git commit -m "<type>: <description>
 - Detail 1
 - Detail 2
 
+Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 Types: feat:, fix:, docs:, test:, refactor:
+
+---
+
+## 📤 RESPONSE FORMAT FOR TASK COMPLETION
+
+When completing a task, use this summary format:
+
+```
+## [Task Name] Complete
+
+**Summary of Changes:**
+- Change 1
+- Change 2
+- Change 3
+
+**Test Results:**
+- Before: X failures
+- After: Y failures/passing
+
+**Files Modified:**
+- file1.ext - description
+
+**Next Options:**
+- Option A
+- Option B
+- Option C
+
+Which would you like next?
+```
+
+**Workflow:** Complete one task → Display results → Ask what's next. Do not batch multiple task completions without user confirmation.
 
 ---
 
