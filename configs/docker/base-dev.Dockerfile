@@ -57,6 +57,7 @@ RUN sed -i \
 RUN mkdir -p /home/${USERNAME}/.ssh && \
     echo "Host *" > /home/${USERNAME}/.ssh/config && \
     echo "    ForwardAgent yes" >> /home/${USERNAME}/.ssh/config && \
+    echo "    AddKeysToAgent yes" >> /home/${USERNAME}/.ssh/config && \
     echo "    StrictHostKeyChecking no" >> /home/${USERNAME}/.ssh/config && \
     echo "    UserKnownHostsFile /dev/null" >> /home/${USERNAME}/.ssh/config && \
     chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh/config && \
