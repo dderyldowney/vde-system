@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: zig, 2204, apt-get install -y zig
+# Variables: zig, 2206, apt-get install -y zig
 services:
   zig-dev:
     build:
@@ -14,10 +14,10 @@ services:
     container_name: zig-dev
     hostname: zig-dev
     restart: unless-stopped
-    command: sh -c "apt-get update -y && apt-get install -y xz-utils curl && curl -s https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz | tar xJ -C /usr/local --strip-components=1 && /usr/sbin/sshd -D"
+    command: sh -c "apt-get install -y zig && /usr/sbin/sshd -D"
 
     ports:
-      - "2204:22"
+      - "2206:22"
 
     volumes:
       - ../../../projects/zig:/home/devuser/workspace
