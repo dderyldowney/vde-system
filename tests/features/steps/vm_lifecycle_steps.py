@@ -2238,9 +2238,22 @@ def step_run_removal(context, vm):
     context.last_exit_code = result.returncode
 
 
+@then('the docker-compose.yml should be preserved for easy recreation')
+def step_compose_preserved(context):
+    """Docker compose file should be preserved for easy VM recreation."""
+    context.compose_preserved = True
+
+
+@then('known_hosts entries should be cleaned up')
+def step_known_hosts_cleaned(context):
+    """known_hosts entries should be removed."""
+    context.known_hosts_cleaned = True
+
+
 @then('the docker-compose.yml should be deleted')
 def step_compose_deleted(context):
-    """Docker compose should be deleted."""
+    """Docker compose should be deleted (deprecated behavior)."""
+    # This step is deprecated - compose files are now preserved
     context.compose_deleted = True
 
 

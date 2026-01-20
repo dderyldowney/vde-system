@@ -89,10 +89,11 @@ Feature: Daily Development Workflow
   Scenario: Remove VM I no longer need
     Given I have an old "ruby" VM I don't use anymore
     When I run the removal process for "ruby"
-    Then the docker-compose.yml should be deleted
+    Then the docker-compose.yml should be preserved for easy recreation
     And SSH config entry should be removed
-    But the projects/ruby directory should be preserved
-    And I can recreate it later if needed
+    And known_hosts entries should be cleaned up
+    And the projects/ruby directory should be preserved
+    And I can recreate it later with "start-virtual ruby"
 
   # Add a new language to VDE
   Scenario: Add support for a new language
