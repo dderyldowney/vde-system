@@ -299,24 +299,6 @@ def step_working_directory(context):
     context.has_working_dir = context.working_directory.exists()
 
 
-@given('I want to start my development day')
-def step_start_dev_day(context):
-    """Starting development day."""
-    context.starting_dev_day = True
-
-
-@given('I\'m starting my development day')
-def step_starting_day_daily(context):
-    """Starting day."""
-    context.starting_day = True
-
-
-@given('I want to end my development day')
-def step_end_dev_day(context):
-    """Ending development day."""
-    context.ending_dev_day = True
-
-
 # =============================================================================
 # Daily Workflow WHEN steps
 # =============================================================================

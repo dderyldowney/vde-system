@@ -4,9 +4,109 @@ BDD Step definitions for Natural Language Parser scenarios.
 
 from behave import given, when, then
 import re
+import os
+import sys
+
+# Add steps directory to path for config import
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
 
 # Parse intent results storage
 PARSE_RESULTS = {}
+
+# =============================================================================
+# VM Configuration Loader
+# =============================================================================
+# VM configuration is loaded once at module import time.
+# This provides thread-safe read-only access for test execution.
+# (Behave runs single-threaded, so module import is inherently safe)
+_VM_ALIAS_MAP, _VM_KEYWORDS = None, None
+
+
+def _build_vm_config():
+    """
+    Build VM configuration from vm-types.conf.
+    Called once at module import time.
+    
+    Returns:
+        tuple: (alias_map, vm_keywords)
+    """
+    alias_map = {}
+    vm_keywords = []
+
+    # Determine VDE_ROOT - try multiple sources for robustness
+    # Priority: 1) VDE_ROOT_DIR env, 2) config.py, 3) relative path fallback
+    vde_root = os.environ.get('VDE_ROOT_DIR')
+    if not vde_root:
+        try:
+            from config import VDE_ROOT as config_root
+            vde_root = str(config_root)
+        except ImportError:
+            # Fallback: this file is at tests/features/steps/parser_steps.py
+            # Project root is 4 levels up
+            vde_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    vm_types_file = os.path.join(vde_root, 'scripts/data/vm-types.conf')
+
+    if os.path.exists(vm_types_file):
+        with open(vm_types_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                # Skip comments and empty lines
+                if not line or line.startswith('#'):
+                    continue
+
+                # Parse: type|name|aliases|display_name|install_command|service_port
+                parts = line.split('|')
+                if len(parts) >= 5:
+                    vm_type = parts[0].strip()
+                    vm_name = parts[1].strip()
+                    aliases_str = parts[2].strip()
+
+                    # Add canonical name to alias map (maps to itself)
+                    alias_map[vm_name] = vm_name
+
+                    # Parse comma-separated aliases
+                    if aliases_str:
+                        for alias in aliases_str.split(','):
+                            alias = alias.strip()
+                            if alias:
+                                alias_map[alias] = vm_name
+
+                    # Add display name first word as additional keyword (for "Zig Language" -> "zig")
+                    # This handles edge cases where display_name provides alternative naming
+                    # Note: Skip if conflicts (e.g., "C++" -> "c" conflicts with lang "c")
+                    display_name = parts[3].strip()
+                    if display_name and display_name != vm_name:
+                        first_word = display_name.split()[0].lower()
+                        if first_word and first_word != vm_name and first_word not in alias_map:
+                            alias_map[first_word] = vm_name
+                    # Lines with fewer than 5 parts are silently skipped
+                    # (legacy/compatibility entries, comments, or malformed data)
+    else:
+        # Config file missing is acceptable for docker-free tests
+        # Tests will fail appropriately if VM config is needed
+        pass
+
+    # Build vm_keywords for input matching (all possible names and aliases)
+    vm_keywords = list(alias_map.keys())
+
+    return alias_map, vm_keywords
+
+
+# Load configuration at module import time (immutable after import)
+_VM_ALIAS_MAP, _VM_KEYWORDS = _build_vm_config()
+
+
+def _load_vm_config():
+    """
+    Return cached VM configuration.
+    Cache is built once at module import and never modified.
+    
+    Returns:
+        tuple: (alias_map, vm_keywords)
+    """
+    return _VM_ALIAS_MAP, _VM_KEYWORDS
 
 
 # =============================================================================
@@ -111,24 +211,23 @@ def step_parse_input(context, input_text):
     context.detected_intent = detected_intent
     PARSE_RESULTS['intent'] = context.detected_intent
 
-    # Extract VM names - expand to handle common aliases
-    alias_map = {
-        'py': 'python', 'python3': 'python', 'js': 'javascript',
-        'node': 'javascript', 'nodejs': 'javascript',
-        'pg': 'postgres', 'postgresql': 'postgres',
-        'rb': 'ruby', 'c++': 'cpp', 'golang': 'go',
-    }
-    # Merge with context aliases if defined
+    # Load actual VM configuration from vm-types.conf
+    alias_map, vm_keywords = _load_vm_config()
+
+    # Merge with context aliases if defined (for test-specific overrides)
     if hasattr(context, 'aliases') and context.aliases:
         alias_map.update(context.aliases)
-
-    vm_keywords = ['python', 'rust', 'go', 'js', 'java', 'ruby', 'php', 'scala', 'csharp',
-                   'postgres', 'redis', 'mongo', 'mongodb', 'nginx', 'mysql', 'node', 'nodejs',
-                   'javascript', 'cpp', 'elixir', 'haskell', 'swift', 'dart', 'flutter', 'py']
+        # Rebuild vm_keywords to include context aliases
+        vm_keywords = list(alias_map.keys())
 
     found_vms = []
+    # Match VM names/aliases using word boundaries to avoid partial matches
+    # e.g., "r" shouldn't match in "start", "js" shouldn't match in "projects"
     for vm in vm_keywords:
-        if vm in input_lower:
+        # Use word boundary regex to match whole words only
+        # Escape special regex characters in VM name
+        vm_escaped = re.escape(vm)
+        if re.search(r'\b' + vm_escaped + r'\b', input_lower):
             # Check if this is an alias that maps to something else
             canonical = alias_map.get(vm, vm)
             if canonical not in found_vms:
@@ -159,8 +258,11 @@ def step_parse_input(context, input_text):
     PARSE_RESULTS['rebuild'] = context.rebuild_flag
     PARSE_RESULTS['nocache'] = context.nocache_flag
 
-    # Security check - matches vde-parser's contains_dangerous_chars function
-    dangerous_chars = [';', '|', '&', '$', '`', '(', ')', '{', '}', '[', ']', '<', '>', '!', '#', '*', '?', '\\', '"', '\n', '\r']
+    # Security check - matches and extends vde-parser's contains_dangerous_chars function
+    # Shell parser checks: ; | | & ' ` ( ) { } [ ] < > ! # * ? \
+    # Python adds: $ " for additional security against variable expansion and injection
+    # (See vde-parser contains_dangerous_chars function)
+    dangerous_chars = [';', '|', '&', "'", '`', '(', ')', '{', '}', '[', ']', '<', '>', '!', '#', '*', '?', '\\', '$', '"']
     context.has_dangerous_chars = any(char in input_text for char in dangerous_chars)
 
 
