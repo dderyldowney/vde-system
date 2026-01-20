@@ -275,7 +275,7 @@ The VDE command parser consists of four main components:
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Parser Layer                                │
-│  vde-parser - Pattern-based natural language processing        │
+│  vde-parser - Pattern-based command understanding              │
 │  • Intent detection (9 intents)                                │
 │  • Entity extraction (VMs, flags, filters)                     │
 │  • Plan generation                                              │
