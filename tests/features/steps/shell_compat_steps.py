@@ -12,9 +12,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import VDE_ROOT
 
 def run_shell_command(command, shell='zsh'):
-    """Run a command in the specified shell."""
+    """Run a command in the specified shell with UTF-8 encoding."""
     cmd = f"{shell} -c 'source {VDE_ROOT}/scripts/lib/vde-shell-compat && {command}'"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=VDE_ROOT)
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=VDE_ROOT, encoding='utf-8')
     return result
 
 
@@ -68,14 +68,26 @@ def step_running_bash(context):
 def step_given_init_assoc_array(context):
     """Initialize an associative array (Given variant)."""
     context.array_name = 'test_array'
+    shell = getattr(context, 'current_shell', 'zsh')
+    result = run_shell_command(f"_assoc_init '{context.array_name}'", shell)
+    assert result.returncode == 0, f"Failed to initialize array: {result.stderr}"
     context.array_initialized = True
+    # Initialize tracking for state restoration
+    if not hasattr(context, 'set_keys'):
+        context.set_keys = {}
 
 
 @when('I initialize an associative array')
 def step_init_assoc_array(context):
     """Initialize an associative array."""
     context.array_name = 'test_array'
+    shell = getattr(context, 'current_shell', 'zsh')
+    result = run_shell_command(f"_assoc_init '{context.array_name}'", shell)
+    assert result.returncode == 0, f"Failed to initialize array: {result.stderr}"
     context.array_initialized = True
+    # Initialize tracking for state restoration
+    if not hasattr(context, 'set_keys'):
+        context.set_keys = {}
 
 
 @then('_detect_shell should return "{shell}"')

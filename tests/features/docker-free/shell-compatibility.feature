@@ -205,8 +205,8 @@ Feature: Shell Compatibility Layer
   Scenario: Handle unicode characters in values
     Given running in zsh
     And I initialize an associative array
-    When I set key "emoji" to value "Hello World "
-    Then getting key "emoji" should return "Hello World "
+    When I set key "emoji" to value "Hello World 🌍"
+    Then getting key "emoji" should return "Hello World 🌍"
 
   Scenario: Handle unicode characters in values (bash 4+)
     Given running in bash "4.0"

@@ -234,9 +234,11 @@ _assoc_get() {
             esac
         else
             # bash 4+
-            eval "value=\"\${${array_name}[\$key]:-}\""
-            if [ -n "$value" ]; then
-                echo "$value"
+            # Check if key exists using indirect reference with -v test
+            if eval "[[ -v ${array_name}[${key}] ]]"; then
+                # Key exists, get the value (even if empty)
+                eval "value=\"\${${array_name}[\$key]}\""
+                printf '%s' "$value"
                 return 0
             fi
             return 1

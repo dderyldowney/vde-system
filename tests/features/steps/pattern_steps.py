@@ -24,6 +24,30 @@ import os
 # VDE_ROOT imported from config
 
 
+# =============================================================================
+# Shell Compatibility Helper Functions
+# =============================================================================
+
+def run_shell_command(command, shell='zsh'):
+    """Run a command in the specified shell with vde-shell-compat loaded (UTF-8 encoding)."""
+    cmd = f"{shell} -c 'source {VDE_ROOT}/scripts/lib/vde-shell-compat && {command}'"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=VDE_ROOT, encoding='utf-8')
+    return result
+
+
+def run_shell_command_with_state(context, command, shell='zsh'):
+    """Run a command with array state restored from context."""
+    array_name = getattr(context, 'array_name', 'test_array')
+    prefix = f"_assoc_init '{array_name}'; "
+    if hasattr(context, 'set_keys'):
+        for key, value in context.set_keys.items():
+            escaped_key = key.replace("'", "'\\''")
+            escaped_value = value.replace('"', '\\"')
+            prefix += f'_assoc_set "{array_name}" "{escaped_key}" "{escaped_value}"; '
+    full_command = prefix + command
+    return run_shell_command(full_command, shell)
+
+
 def run_vde_command(command, timeout=120):
     """Run a VDE script and return the result."""
     env = os.environ.copy()
@@ -273,39 +297,85 @@ def step_template_rendered(context):
 
 @given('associative array with key "{key}"')
 def step_assoc_key(context, key):
-    """Associative array with specific key."""
+    """Initialize associative array and set a specific key (real implementation)."""
+    context.array_name = 'test_array'
+    context.current_shell = getattr(context, 'current_shell', 'zsh')
+    # Initialize array and set key with a test value
+    result = run_shell_command(f"_assoc_init '{context.array_name}'; _assoc_set '{context.array_name}' '{key}' 'test_value'", context.current_shell)
+    assert result.returncode == 0, f"Failed to initialize array with key '{key}': {result.stderr}"
     context.assoc_key = key
+    # Track the key for state restoration
+    if not hasattr(context, 'set_keys'):
+        context.set_keys = {}
+    context.set_keys[key] = 'test_value'
 
 
 @given('associative array with keys "{keys}"')
 def step_assoc_keys(context, keys):
-    """Associative array with multiple keys."""
-    context.assoc_keys = keys.split(', ')
+    """Initialize associative array with multiple keys (real implementation)."""
+    context.array_name = 'test_array'
+    context.current_shell = getattr(context, 'current_shell', 'zsh')
+    # Handle comma-separated list with optional quotes: "foo", "bar", "baz"
+    key_list = [k.strip().strip('"') for k in keys.split(',') if k.strip()]
+    # Initialize and set all keys
+    cmd = f"_assoc_init '{context.array_name}'"
+    for i, key in enumerate(key_list):
+        cmd += f"; _assoc_set '{context.array_name}' '{key}' 'value_{i}'"
+    result = run_shell_command(cmd, context.current_shell)
+    assert result.returncode == 0, f"Failed to initialize array with keys: {result.stderr}"
+    context.assoc_keys = key_list
+    context.expected_keys = key_list  # For verification in "all keys should be returned" step
+    # Track keys for state restoration
+    if not hasattr(context, 'set_keys'):
+        context.set_keys = {}
+    for i, key in enumerate(key_list):
+        context.set_keys[key] = f'value_{i}'
 
 
 @given('associative array with multiple entries')
 def step_assoc_multiple(context):
-    """Associative array with multiple entries."""
+    """Initialize associative array with multiple test entries (real implementation)."""
+    context.array_name = 'test_array'
+    context.current_shell = getattr(context, 'current_shell', 'zsh')
+    # Create array with several entries
+    cmd = f"_assoc_init '{context.array_name}'; "
+    cmd += f"_assoc_set '{context.array_name}' 'foo' 'bar'; "
+    cmd += f"_assoc_set '{context.array_name}' 'baz' 'qux'; "
+    cmd += f"_assoc_set '{context.array_name}' 'test' 'value'"
+    result = run_shell_command(cmd, context.current_shell)
+    assert result.returncode == 0, f"Failed to initialize array with multiple entries: {result.stderr}"
     context.assoc_multiple = True
+    # Track keys for state restoration
+    context.set_keys = {'foo': 'bar', 'baz': 'qux', 'test': 'value'}
 
 
 @given('file-based associative arrays are in use')
 def step_file_assoc(context):
-    """File-based associative arrays in use."""
-    # VDE uses file-based VM type configuration
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    context.file_based_assoc = vm_types_file.exists()
+    """Check if file-based associative arrays are in use (real implementation)."""
+    # Check if shell supports native associative arrays
+    context.current_shell = getattr(context, 'current_shell', 'zsh')
+    result = run_shell_command('_shell_supports_native_assoc', context.current_shell)
+    # If native support returns non-zero, file-based is used
+    context.file_based_assoc = (result.returncode != 0)
 
 
 @given('both "{key1}" and "{key2}" keys exist')
 def step_both_keys(context, key1, key2):
-    """Both keys exist in configuration."""
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    if vm_types_file.exists():
-        content = vm_types_file.read_text()
-        context.keys_exist = [key1, key2]
-        context.key1_exists = key1 in content
-        context.key2_exists = key2 in content
+    """Initialize array with two specific keys (real implementation)."""
+    context.array_name = 'test_array'
+    context.current_shell = getattr(context, 'current_shell', 'zsh')
+    cmd = f"_assoc_init '{context.array_name}'; "
+    cmd += f"_assoc_set '{context.array_name}' '{key1}' 'value1'; "
+    cmd += f"_assoc_set '{context.array_name}' '{key2}' 'value2'"
+    result = run_shell_command(cmd, context.current_shell)
+    assert result.returncode == 0, f"Failed to set both keys: {result.stderr}"
+    context.key1 = key1
+    context.key2 = key2
+    # Track keys for state restoration
+    if not hasattr(context, 'set_keys'):
+        context.set_keys = {}
+    context.set_keys[key1] = 'value1'
+    context.set_keys[key2] = 'value2'
 
 
 # =============================================================================
