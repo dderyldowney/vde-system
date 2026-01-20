@@ -126,9 +126,21 @@ def step_template_rendered(context):
 
 @when('I render template with value containing "/" or "&"')
 def step_render_template_special_chars(context):
-    """Render template with special characters."""
-    context.template_rendered = True
-    context.rendered_output = "value: /path/test&more"
+    """Render template with special characters using real template."""
+    template_path = VDE_ROOT / "scripts/templates/compose-language.yml"
+    if template_path.exists():
+        # Test with special characters in install command
+        # The render_template function should escape these properly
+        result = subprocess.run(
+            f"source {VDE_ROOT}/scripts/lib/vm-common && "
+            f"render_template '{template_path}' NAME 'testvm' SSH_PORT '2200' "
+            f"INSTALL_CMD 'apt-get install -y curl && curl -s https://example.com/install.sh | bash'",
+            shell=True, capture_output=True, text=True, cwd=VDE_ROOT
+        )
+        context.rendered_output = result.stdout
+        context.template_rendered = result.returncode == 0
+    else:
+        raise AssertionError(f"Template file not found: {template_path}")
 
 
 @when('I try to render the template')
