@@ -129,7 +129,7 @@ A microservices architecture using different languages for each service.
 
 ```bash
 # Check what's running
-./scripts/vde-ai "what's running?"
+docker ps
 
 # Connect to your primary VM
 ssh python-dev

@@ -59,10 +59,7 @@ $HOME/dev/
 │   ├── start-virtual
 │   ├── shutdown-virtual
 │   ├── build-and-start
-│   ├── add-vm-type
-│   ├── vde-ai
-│   └── vde-chat
-├── VDE-AI-Technical-Deep-Dive.md
+│   └── add-vm-type
 ├── CLAUDE.md
 └── README.md
 ```

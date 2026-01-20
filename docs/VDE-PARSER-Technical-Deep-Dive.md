@@ -840,7 +840,7 @@ The parser has explicit dependencies that must be loaded in order.
 ### Loading Order
 
 ```zsh
-# In vde-ai or vde-chat:
+# Load in this order:
 source "$SCRIPT_DIR/lib/vm-common"     # Load FIRST
 source "$SCRIPT_DIR/lib/vde-commands"   # Load SECOND
 source "$SCRIPT_DIR/lib/vde-parser"     # Load THIRD
@@ -1062,8 +1062,3 @@ The parser is a testament to the power of Unix philosophy: small, focused tools 
 
 **Configuration:**
 - `/Users/dderyldowney/dev/scripts/data/vm-types.conf` (18 languages, 7 services)
-
-**Consumed by:**
-- `/Users/dderyldowney/dev/scripts/vde` (via `vde ai` command)
-- `/Users/dderyldowney/dev/scripts/vde-ai` (Natural language CLI)
-- `/Users/dderyldowney/dev/scripts/vde-chat` (Interactive AI assistant)

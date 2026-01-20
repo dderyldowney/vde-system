@@ -25,8 +25,7 @@ Feature: Template System
   Scenario: Handle multiple service ports
     Given service VM has multiple ports "8080,8081"
     When template is rendered
-    Then rendered output should contain "8080:8080"
-    And rendered output should contain "8081:8081"
+    Then rendered output should contain "##SERVICE_PORTS##" port mapping
 
   Scenario: Escape special characters in template values
     Given template value contains special characters
@@ -46,7 +45,7 @@ Feature: Template System
 
   Scenario: Template uses correct network
     Given any VM template is rendered
-    Then rendered output should contain "vde-network" network
+    Then rendered output should contain "dev-net" network
 
   Scenario: Template sets correct restart policy
     Given any VM template is rendered

@@ -78,7 +78,6 @@ vde <command> [options] [args]
 | `list` | List all VMs | list-vms |
 | `status` | Show VM status | list-vms |
 | `health` | Run system health check | vde-health |
-| `chat` | Start AI assistant chat | vde-chat |
 | `help` | Show help message | - |
 
 **Options:**
@@ -225,98 +224,6 @@ list-vms --name-only        # Show only names/hostnames
 list-vms python             # Search for 'python'
 list-vms --lang script      # Search for script in languages
 list-vms -a                 # Show status of all VMs
-```
-
----
-
-### `vde-ai` - Natural Language Command Interface
-
-Control the VDE system using natural language commands.
-
-**Usage:**
-```bash
-vde-ai [OPTIONS] "your natural language command"
-```
-
-**Options:**
-- `--ai` - Enable LLM-based parsing (requires API key)
-- `--dry-run` - Show what would happen without executing
-- `--help, -h` - Show help message
-
-**Environment Variables:**
-- `VDE_USE_AI` - Set to "1", "true", or "yes" to enable LLM parsing by default
-- `ANTHROPIC_AUTH_TOKEN` - Your Anthropic authentication token (highest priority)
-- `ANTHROPIC_API_KEY` - Your Anthropic API key (sk-ant-...)
-- `CLAUDE_API_KEY` - Your Claude API key (legacy)
-- `ANTHROPIC_BASE_URL` - Optional: Custom base URL (e.g., https://api.z.ai/api/anthropic)
-- `ANTHROPIC_MODEL` - Optional: Custom model to use (e.g., glm-4.7)
-
-**Supported Intents:**
-
-| Intent | Examples |
-|--------|----------|
-| List VMs | "list all languages", "show services" |
-| Create VMs | "create a Go VM", "make Python and PostgreSQL" |
-| Start VMs | "start Go", "start everything", "launch Python" |
-| Stop VMs | "stop Go", "shutdown everything" |
-| Restart VMs | "restart Python", "rebuild and start Go" |
-| Status | "what's running?", "show status" |
-| Connection Info | "how do I connect to Python?", "SSH into Go" |
-| Help | "help", "what can I do?" |
-
-**Examples:**
-```bash
-vde-ai "what VMs can I create?"
-vde-ai "create a Go VM and start it"
-vde-ai "start Python and PostgreSQL"
-vde-ai "what's currently running?"
-vde-ai "stop everything"
-```
-
----
-
-### `vde-chat` - Interactive AI Chat
-
-Interactive chat interface for controlling the VDE system.
-
-**Usage:**
-```bash
-vde-chat [OPTIONS]
-```
-
-**Options:**
-- `--ai, -a` - Enable LLM-based parsing
-- `--persistent, -p` - Enable persistent session (saves command history)
-- `--help, -h` - Show help message
-- `--verbose, -v` - Enable verbose output
-
-**Keyboard Shortcuts:**
-- `Enter` - Submit command
-- `Ctrl+D` - Submit multi-line input
-- `Ctrl+R` - Search command history
-- `Ctrl+L` - Clear screen
-- `Ctrl+C` - Cancel current input / Exit
-
-**Chat Commands:**
-
-| Command | Aliases | Description |
-|---------|---------|-------------|
-| create-virtual-for | create, mk | Create a new VM |
-| start-virtual | start | Start a VM |
-| shutdown-virtual | stop, shutdown | Stop a VM |
-| list-vms | ls, list, ps, status | List VMs |
-| ssh | ssh, connect | SSH into a VM |
-| delete | rm, del, remove | Delete a VM |
-| help | ? | Show help |
-| history | h, hist | Show command history |
-| clear | cls, clear | Clear screen |
-| quit | exit, bye | Exit chat mode |
-
-**Examples:**
-```bash
-vde-chat                    # Start interactive chat
-vde-chat --ai               # Start with LLM parsing
-vde-chat --persistent       # Start with persistent history
 ```
 
 ---
@@ -843,12 +750,6 @@ generate_plan <input>        # Generate execution plan from input
 execute_plan                 # Execute a generated plan (reads from stdin)
 ```
 
-**Help Display:**
-
-```bash
-show_ai_help                 # Display AI assistant help
-```
-
 **Alias Mapping:**
 
 ```bash
@@ -1117,10 +1018,6 @@ vde stop all
 
 # Add custom VM type
 ./scripts/add-vm-type <name> "<install_cmd>"
-
-# AI assistant
-vde-ai "start python and postgres"
-vde-chat
 ```
 
 ### SSH Connections

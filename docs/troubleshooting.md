@@ -186,7 +186,7 @@ ssh go-dev
 ./scripts/start-virtual python
 
 # Or check if it's running
-./scripts/vde-ai "what's running?"
+docker ps
 ```
 
 ---
@@ -244,15 +244,13 @@ If you're stuck:
 
 ```bash
 # Get general help
-./scripts/vde-ai "help"
+./scripts/vde help
 
-# Use chat mode for interactive help
-./scripts/vde-chat
-[VDE] → help
-[VDE] → what can I do?
+# List available VMs
+./scripts/vde list
 
-# Check the logs
-tail -f ~/dev/logs/vde-ai.log
+# Check container logs
+docker logs <container-name>
 ```
 
 ---
@@ -263,13 +261,13 @@ If something is seriously wrong and you want to start fresh:
 
 ```bash
 # Stop everything
-./scripts/vde-ai "stop everything"
+./scripts/shutdown-virtual all
 
 # Remove all containers (careful!)
 docker ps -a | grep -E "dev$|[a-z]+$" | awk '{print $1}' | xargs docker rm -f
 
 # You can now recreate VMs from scratch
-./scripts/vde-ai "create python"
+./scripts/create-virtual-for python
 ```
 
 ---

@@ -83,13 +83,6 @@ That's it. One command to remember. No memorizing a dozen different scripts. Jus
 
 This shows you all available actions: creating VMs, starting/stopping, listing, checking status, and more.
 
-**Prefer natural language?** Try the AI assistant!
-```bash
-./scripts/vde-ai "start python and postgres"
-```
-
-VDE figures out what you mean and does it. No need to memorize commands. Just say what you want!
-
 ---
 
 ## Getting Started: It's This Easy 🚀
@@ -277,32 +270,6 @@ When you `ssh python-dev`:
 4. Everything you need is ready
 
 **And all of that happens in seconds.** Pretty amazing, right? 🤩
-
----
-
-## For the AI Enthusiast: Natural Language Control! 🤖
-
-VDE includes an AI assistant that understands natural language — how cool is that?
-
-```bash
-./scripts/vde-ai "start python and postgres"
-```
-
-That's it. VDE figures out what you mean and does it. Like having a very helpful robot friend! 🤖✨
-
-You can also use interactive chat mode:
-
-```bash
-./scripts/vde-chat
-```
-
-Then just type what you want:
-- "create a rust vm"
-- "stop all running vms"
-- "show me the status"
-- "connect to the python vm"
-
-No need to remember commands. Just say what you want. VDE understands you!
 
 ---
 

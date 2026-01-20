@@ -41,15 +41,6 @@ When and how to rebuild your VDE containers.
 ./scripts/start-virtual all --rebuild
 ```
 
-### Using VDE AI
-
-```bash
-# Natural language rebuild
-./scripts/vde-ai "rebuild python"
-./scripts/vde-ai "rebuild everything with no cache"
-./scripts/vde-ai "restart Go with rebuild"
-```
-
 ---
 
 ## What Rebuild Affects

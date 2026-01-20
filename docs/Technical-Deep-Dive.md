@@ -179,8 +179,9 @@ VDE uses a **modular library architecture** that separates concerns and enables 
                 │                      └──────┬──────┘
                 ▼                             │
          ┌─────────────┐                      │
-         │ vde-ai-api  │                      │
-         │(AI client)  │                      │
+         │  vde-parser │                      │
+         │(Pattern     │                      │
+         │ matching)   │                      │
          └─────────────┘                      │
                                             │
                 ┌─────────────────────────────┘
@@ -209,9 +210,8 @@ VDE uses a **modular library architecture** that separates concerns and enables 
 | `vde-errors` | 306 | Contextual error messages with remediation steps, color support |
 | `vde-log` | 469 | Structured logging (text/JSON/syslog), rotation, query functions |
 | `vde-core` | 297 | Essential VM operations, type loading with caching, lazy module loading |
-| `vde-ai-api` | 281 | Anthropic API client, natural language command parsing |
-| `vde-parser` | 890 | Natural language parser, intent detection, entity extraction |
-| `vde-commands` | 545 | High-level command wrappers for AI assistant, batch operations |
+| `vde-parser` | 890 | Pattern-based natural language parser, intent detection, entity extraction |
+| `vde-commands` | 545 | High-level command wrappers for batch operations |
 | `vm-common` | 2158 | Full VDE API including SSH, Docker, templates (legacy) |
 
 ### Core Library: vde-shell-compat
@@ -311,16 +311,9 @@ vde_log_error "Failed to start" "postgres"
 
 **Caching:** Uses `.cache/vm-types.cache` with mtime validation for fast VM type lookups.
 
-### AI & NLP Libraries: vde-ai-api, vde-parser
+### NLP Library: vde-parser
 
-**Purpose:** Enable natural language interaction with VDE through AI-powered command parsing.
-
-**vde-ai-api Functions:**
-- `call_ai_api()` - Make API call to Anthropic or compatible endpoint
-- `extract_ai_content()` - Extract text content from API response
-- `parse_command_with_ai()` - Parse natural language using AI
-- `ai_api_available()` - Check if API key is configured
-- `show_ai_config()` - Display API configuration
+**Purpose:** Pattern-based natural language parsing for VDE commands.
 
 **vde-parser Functions:**
 - `detect_intent()` - Detect user intent (list_vms, create_vm, start_vm, stop_vm, restart_vm, status, connect, help)
@@ -341,7 +334,7 @@ vde_log_error "Failed to start" "postgres"
 
 ### Command Library: vde-commands
 
-**Purpose:** High-level command wrappers designed for AI assistant invocation.
+**Purpose:** High-level command wrappers for VDE operations.
 
 **Query Functions:**
 - `vde_list_vms()` - List VMs with optional filtering
@@ -564,7 +557,6 @@ vde <command> [options] [args]
 | `list` | List all VMs | `vde list` |
 | `status` | Show VM status | `vde status` |
 | `health` | Run system health check | `vde health` |
-| `chat` | Start AI assistant chat | `vde chat` |
 | `help` | Show help message | `vde help` |
 
 ### Options
@@ -629,9 +621,6 @@ vde stop all
 
 # Check system health
 vde health
-
-# Start AI assistant chat
-vde chat
 ```
 
 ---
@@ -1465,7 +1454,6 @@ Connect:
 9. **Networked**: All containers on vde-network for inter-communication
 10. **Extensible**: Add new languages/services by editing one file
 11. **Idempotent**: Safe to run create-virtual-for multiple times (fails if exists)
-12. **AI-Ready**: Natural language parsing and AI assistant integration
 
 ---
 
@@ -1480,9 +1468,8 @@ Connect:
 | `scripts/lib/vde-errors` | 306 | Contextual error messages with remediation steps |
 | `scripts/lib/vde-log` | 469 | Structured logging (text/JSON/syslog), rotation, query functions |
 | `scripts/lib/vde-core` | 297 | Essential VM operations, type loading with caching |
-| `scripts/lib/vde-ai-api` | 281 | Anthropic API client, natural language command parsing |
-| `scripts/lib/vde-parser` | 890 | Natural language parser, intent detection, entity extraction |
-| `scripts/lib/vde-commands` | 545 | High-level command wrappers for AI assistant |
+| `scripts/lib/vde-parser` | 890 | Pattern-based natural language parser, intent detection, entity extraction |
+| `scripts/lib/vde-commands` | 545 | High-level command wrappers for VDE operations |
 | `scripts/lib/vm-common` | 2158 | Full VDE API including SSH, Docker, templates |
 
 ### Core Scripts

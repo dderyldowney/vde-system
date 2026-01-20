@@ -96,9 +96,8 @@ See [SSH Configuration](./ssh-configuration.md) for complete details.
 - **Create more VMs**: `./scripts/create-virtual-for python`
 - **Start multiple VMs**: `./scripts/start-virtual go python`
 - **Use VSCode**: Connect via Remote-SSH for full IDE support
-- **Try AI Assistant**: `./scripts/vde-ai "start python"`
 
-For more details, see [Command Reference](./command-reference.md) or [VDE AI Assistant](./vde-ai-assistant.md).
+For more details, see [Command Reference](./command-reference.md).
 
 ---
 

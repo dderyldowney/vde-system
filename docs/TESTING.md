@@ -254,7 +254,6 @@ The GitHub Actions workflow (`.github/workflows/vde-ci.yml`) includes:
 - Tests vm-common library (VM discovery, port allocation, name resolution)
 - Tests vde-parser library (intent detection, entity extraction, plan generation)
 - Tests vde-commands library (VM listing, validation, alias resolution)
-- Tests vde-ai-api library (27 assertions covering env vars, API integration)
 
 ### 3. Integration Tests Job
 - Tests pattern-based parsing (all 8 supported intents)

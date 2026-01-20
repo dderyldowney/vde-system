@@ -20,9 +20,8 @@ VDE is built on a modular library architecture that separates concerns and enabl
 | **vde-log** | Structured logging with rotation (JSON/text/syslog) | vde-constants, vde-shell-compat |
 | **vde-core** | Essential VDE functions (VM types, queries, caching) | vde-constants, vde-shell-compat |
 | **vm-common** | Full VDE functionality (VM types, ports, Docker, SSH, templates) | vde-constants, vde-shell-compat |
-| **vde-commands** | Safe wrapper functions for AI/CLI operations | vm-common |
-| **vde-parser** | Natural language parser (intent detection, entity extraction) | vm-common, vde-commands |
-| **vde-ai-api** | Optional LLM-based parsing (Anthropic Claude API) | None |
+| **vde-commands** | Safe wrapper functions for VDE operations | vm-common |
+| **vde-parser** | Pattern-based natural language parser (intent detection, entity extraction) | vm-common, vde-commands |
 
 ### Additional Libraries
 
@@ -175,16 +174,7 @@ The `vde` command provides a unified interface to all VDE operations:
 | `vde list` | list-vms | List all VMs |
 | `vde status` | list-vms | Show VM status |
 | `vde health` | vde-health | Run system health check |
-| `vde chat` | vde-chat | Start AI assistant chat |
 | `vde help` | (built-in) | Show help message |
-
-### AI Commands
-
-| Command | Purpose |
-|---------|---------|
-| `vde-ai "command"` | Execute natural language command (one-shot) |
-| `vde-chat` | Interactive AI assistant session |
-| `vde ai "command"` | Same as vde-ai (via vde CLI) |
 
 ### Utility Scripts
 
@@ -272,21 +262,20 @@ All VMs are connected to a shared Docker network named `vde-network`, enabling i
 
 ---
 
-## AI System Architecture
+## Command Parser Architecture
 
-The VDE AI Assistant consists of four main components:
+The VDE command parser consists of four main components:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                     User Input Layer                            │
-│  vde-ai (CLI)           vde-chat (Interactive)                  │
-│  vde ai (unified)                                                   │
+│  vde CLI commands                                               │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Parser Layer                                │
-│  vde-parser - Natural language processing                      │
+│  vde-parser - Pattern-based natural language processing        │
 │  • Intent detection (9 intents)                                │
 │  • Entity extraction (VMs, flags, filters)                     │
 │  • Plan generation                                              │

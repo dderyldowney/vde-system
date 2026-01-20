@@ -256,22 +256,19 @@ def step_any_error(context):
 
 @given('any VM template is rendered')
 def step_template_rendered(context):
-    """VM template is rendered."""
-    # Provide a default rendered template for testing
-    context.template_rendered = True
-    context.rendered_output = """version: '3'
-services:
-  vm:
-    image: test:latest
-    ports:
-      - "2200:22"
-    volumes:
-      - ./workspace:/workspace
-    networks:
-      - vde-network
-    restart: unless-stopped
-    user: devuser
-"""
+    """VM template is rendered using real template."""
+    template_path = VDE_ROOT / "scripts/templates/compose-language.yml"
+    if template_path.exists():
+        # Use real render_template function
+        result = subprocess.run(
+            f"source {VDE_ROOT}/scripts/lib/vm-common && "
+            f"render_template '{template_path}' NAME 'testvm' SSH_PORT '2200'",
+            shell=True, capture_output=True, text=True, cwd=VDE_ROOT
+        )
+        context.rendered_output = result.stdout
+        context.template_rendered = result.returncode == 0
+    else:
+        raise AssertionError(f"Template file not found: {template_path}")
 
 
 @given('associative array with key "{key}"')

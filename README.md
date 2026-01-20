@@ -29,8 +29,7 @@ Welcome to VDE — your new best friend for development environments. Whether yo
 | **SSH & Agent Forwarding** | [SSH Configuration](docs/ssh-configuration.md) • [VM Communication](docs/advanced-usage.md#inter-container-communication) • [SSH Troubleshooting](docs/troubleshooting.md#ssh-agent-issues) |
 | **Core Features** | [Available Scripts](docs/available-scripts.md) • [Predefined VM Types](docs/predefined-vm-types.md) • [Command Reference](docs/command-reference.md) |
 | **Configuration** | [Extending VDE](docs/extending-vde.md) • [Directory Structure](docs/directory-structure.md) |
-| **Development** | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) • [AI CLI Integration](docs/ai-cli-integration.md) • [Development Workflows](docs/development-workflows.md) |
-| **AI Assistant** | [VDE AI Assistant](docs/vde-ai-assistant.md) • [VDE AI HOWTO](docs/VDE-AI-HOWTO.md) |
+| **Development** | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) • [Development Workflows](docs/development-workflows.md) |
 | **Contributing** | [Contributing Guide](CONTRIBUTING.md) • [Style Guide](STYLE_GUIDE.md) • [Testing Guide](docs/TESTING.md) |
 | **Reference** | [API Reference](docs/API.md) • [User Model](docs/user-model.md) • [Architecture](docs/ARCHITECTURE.md) • [Best Practices](docs/best-practices.md) |
 | **Support** | [Troubleshooting](docs/troubleshooting.md) • [Rebuild Guidelines](docs/rebuild-guidelines.md) |
@@ -45,7 +44,6 @@ VDE provides isolated development environments for multiple programming language
 - **SSH key-based access** on auto-allocated ports
 - **Persistent workspace** mounted from your host
 - **Shared network** for inter-container communication
-- **AI assistant** for natural language control
 
 ### Key Features (Why You'll Love It)
 
@@ -53,8 +51,7 @@ VDE provides isolated development environments for multiple programming language
 - **7+ Service VMs**: PostgreSQL, Redis, MongoDB, Nginx, MySQL, RabbitMQ, CouchDB — ready when you are
 - **Template-based**: Add new languages/services without code changes — it just works!
 - **VSCode Ready**: Full IDE support via Remote-SSH — code in comfort
-- **AI Integration**: Works seamlessly with Claude Code, Cursor, Copilot — your AI pair programmer
-- **Natural Language Control**: Manage VDE using plain English commands — no memorizing required!
+- **AI-Friendly**: Works with Claude Code, Cursor, Copilot — your AI pair programmers
 - **SSH Agent Forwarding**: VM-to-VM and VM-to-Host communication using your host's SSH keys — like magic!
 - **Automatic SSH Setup**: VDE handles SSH agent, keys, and configuration automatically — zero manual setup
 
@@ -88,7 +85,6 @@ cd ~/workspace
 - 📘 **Read the [USER_GUIDE.md](USER_GUIDE.md)** for a complete step-by-step walkthrough (it's really friendly!)
 - Read the [Quick Start guide](docs/quick-start.md) for detailed setup
 - See [Command Reference](docs/command-reference.md) for all available commands
-- Try the [VDE AI Assistant](docs/vde-ai-assistant.md) for natural language control
 
 ---
 
@@ -170,9 +166,7 @@ See [SSH Configuration](docs/ssh-configuration.md) for complete details.
 | Document | Description |
 |----------|-------------|
 | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) | Using VSCode with VDE — code in comfort! |
-| [AI CLI Integration](docs/ai-cli-integration.md) | Using Claude Code, Cursor, Copilot — your AI pair programmers! |
 | [Development Workflows](docs/development-workflows.md) | Example development scenarios |
-| [VDE AI Assistant](docs/vde-ai-assistant.md) | Natural language control overview — just say what you want! |
 
 ### Reference (The Nitty Gritty) 📖
 
@@ -190,7 +184,6 @@ See [SSH Configuration](docs/ssh-configuration.md) for complete details.
 | Document | Description |
 |----------|-------------|
 | [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
-| [VDE AI HOWTO](docs/VDE-AI-HOWTO.md) | User-friendly guide for the AI assistant |
 
 ---
 
@@ -205,22 +198,6 @@ See [SSH Configuration](docs/ssh-configuration.md) for complete details.
 ssh python-dev
 cd ~/workspace
 pip install fastapi uvicorn psycopg2-binary
-```
-
-### Using the AI Assistant (Your Personal Robot Helper!) 🤖
-
-```bash
-# One-shot commands
-./scripts/vde-ai "create a Go VM and start it"
-./scripts/vde-ai "what's running?"
-./scripts/vde-ai "stop everything"
-
-# Interactive chat
-./scripts/vde-chat
-[VDE] → create Python and PostgreSQL
-[AI] → Creating Python VM...
-       Creating PostgreSQL VM...
-       Done!
 ```
 
 ### Microservices Architecture (Your Distributed System!) 🌐
@@ -244,9 +221,9 @@ ssh redis-dev redis-cli           # Connect to cache
 
 ---
 
-## AI CLI Integration (Works With Your AI Pair Programmers!) 🤖
+## AI CLI Tools (Works With Your AI Pair Programmers!) 🤖
 
-VDE works seamlessly with modern AI CLI tools:
+VDE is compatible with modern AI CLI tools:
 
 | Tool | Integration | Best For |
 |------|-------------|----------|
@@ -254,8 +231,6 @@ VDE works seamlessly with modern AI CLI tools:
 | **Cursor** | Excellent | Refactoring, exploration |
 | **Aider** | Good | Git workflows, pair programming |
 | **Copilot** | Good | Boilerplate, completion |
-
-See [AI CLI Integration](docs/ai-cli-integration.md) for detailed guides.
 
 ---
 
@@ -272,9 +247,7 @@ $HOME/dev/
 ├── public-ssh-keys/       # SSH keys for containers
 ├── scripts/               # Management scripts
 │   ├── lib/               # Shared libraries
-│   ├── templates/         # Docker Compose templates
-│   ├── vde-ai             # AI assistant (CLI)
-│   └── vde-chat           # AI assistant (interactive)
+│   └── templates/         # Docker Compose templates
 └── README.md
 ```
 

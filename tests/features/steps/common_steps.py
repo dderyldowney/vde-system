@@ -411,27 +411,47 @@ def step_container_built(context):
 
 @then('container should be started')
 def step_container_started(context):
-    """Verify container started (lenient in test mode)."""
-    is_up = getattr(context, 'docker_command', '') == 'up'
-    is_running = getattr(context, 'docker_vm_running', False)
-    # In test environment, be lenient
-    assert is_up or is_running or True
+    """Verify container started."""
+    # Check actual Docker container status
+    vm_name = getattr(context, 'vm_name', None)
+    if vm_name:
+        result = subprocess.run(
+            ["docker", "ps", "--format", "{{.Names}}", "--filter", f"name={vm_name}"],
+            capture_output=True, text=True, timeout=10
+        )
+        is_running = vm_name in result.stdout
+        assert is_running, f"Container '{vm_name}' should be running"
+    else:
+        # Fallback to context check if no vm_name set
+        is_up = getattr(context, 'docker_command', '') == 'up'
+        is_running = getattr(context, 'docker_vm_running', False)
+        assert is_up or is_running, "Container should be started"
 
 
 @then('container should be stopped')
 def step_container_stopped(context):
-    """Verify container stopped (lenient in test mode)."""
-    is_stop = getattr(context, 'docker_command', '') == 'stop'
-    # In test environment, be lenient
-    assert is_stop or True
+    """Verify container stopped."""
+    # Check actual Docker container status
+    vm_name = getattr(context, 'vm_name', None)
+    if vm_name:
+        result = subprocess.run(
+            ["docker", "ps", "--format", "{{.Names}}", "--filter", f"name={vm_name}"],
+            capture_output=True, text=True, timeout=10
+        )
+        is_running = vm_name in result.stdout
+        assert not is_running, f"Container '{vm_name}' should be stopped"
+    else:
+        # Fallback to context check if no vm_name set
+        is_stop = getattr(context, 'docker_command', '') == 'stop'
+        assert is_stop, "Container should be stopped"
 
 
 @then('build should use cache')
 def step_uses_cache(context):
-    """Verify build cache used (lenient in test mode)."""
+    """Verify build cache used."""
+    # Check that --no-cache was NOT used
     no_cache = getattr(context, 'docker_no_cache', False)
-    # In test environment, be lenient
-    assert not no_cache or True
+    assert not no_cache, "Build should use cache (--no-cache should not be set)"
 
 
 @then('build should NOT use cache')
@@ -466,8 +486,14 @@ def step_retry_success(context):
 @then('the operation should succeed')
 def step_operation_succeed(context):
     """Verify operation succeeded."""
-    # Generic success check
-    assert True
+    # Check for stored result from previous operation
+    if hasattr(context, 'last_result'):
+        assert context.last_result == 0, f"Operation failed with return code {context.last_result}"
+    elif hasattr(context, 'operation_success'):
+        assert context.operation_success, "Operation should have succeeded"
+    else:
+        # No explicit result tracked - check that no error was set
+        assert not getattr(context, 'error_occurred', False), "An error occurred during operation"
 
 
 @then('the operation should fail')

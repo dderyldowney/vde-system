@@ -112,17 +112,14 @@ psql -h postgres -U devuser
 # Stop VMs to free resources
 ./scripts/shutdown-virtual python postgres
 
-# Or use VDE AI
-./scripts/vde-ai "stop everything"
+# Or stop all
+./scripts/shutdown-virtual all
 ```
 
 ### Check Status Regularly
 
 ```bash
 # See what's running
-./scripts/vde-ai "what's running?"
-
-# Or check Docker directly
 docker ps
 ```
 
@@ -163,13 +160,6 @@ DEBUG=true
 ---
 
 ## Performance
-
-### Use Dry Run for Testing
-
-```bash
-# Preview actions without executing
-./scripts/vde-ai --dry-run "start python and postgres"
-```
 
 ### Rebuild Only When Needed
 
@@ -242,9 +232,6 @@ sudo apt-get update  # Needed for system packages
 ```bash
 # Container logs
 docker logs <container-name>
-
-# VDE AI logs
-tail -f ~/dev/logs/vde-ai.log
 ```
 
 ### Verify Networking
@@ -275,15 +262,6 @@ Each project should have its own README:
 ```bash
 # projects/python/my-api/README.md
 # Document how to run, test, and deploy
-```
-
-### Use VDE AI Help
-
-```bash
-# Get help anytime
-./scripts/vde-ai "help"
-./scripts/vde-chat
-[VDE] → help
 ```
 
 ---

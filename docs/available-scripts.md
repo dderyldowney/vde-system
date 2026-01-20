@@ -19,17 +19,6 @@ Overview of all scripts included with VDE.
 
 ---
 
-## AI Assistant Scripts
-
-| Script | Purpose | Usage |
-|--------|---------|-------|
-| `vde-ai` | One-shot natural language commands | `./scripts/vde-ai "your command"` |
-| `vde-chat` | Interactive chat interface | `./scripts/vde-chat` |
-
-See [VDE AI Assistant](./vde-ai-assistant.md) for details.
-
----
-
 ## Script Locations
 
 ```
@@ -46,9 +35,7 @@ See [VDE AI Assistant](./vde-ai-assistant.md) for details.
 ├── start-virtual
 ├── shutdown-virtual
 ├── build-and-start
-├── add-vm-type
-├── vde-ai
-└── vde-chat
+└── add-vm-type
 ```
 
 ---
