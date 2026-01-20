@@ -188,7 +188,8 @@ VDE uses a **modular library architecture** that separates concerns and enables 
                 ▼
          ┌─────────────┐              ┌─────────────┐
          │  vde-parser │              │vde-commands │
-         │(NLP parsing)│──────────────▶│(API wrapper)│
+         │(Pattern     │──────────────▶│(API wrapper)│
+         │matching)   │              │             │
          └─────────────┘              └──────┬──────┘
                                              │
                 ┌─────────────────────────────┘
@@ -311,7 +312,7 @@ vde_log_error "Failed to start" "postgres"
 
 **Caching:** Uses `.cache/vm-types.cache` with mtime validation for fast VM type lookups.
 
-### NLP Library: vde-parser
+### Pattern Parser Library: vde-parser
 
 **Purpose:** Pattern-based natural language parsing for VDE commands.
 
@@ -1511,7 +1512,7 @@ The system has evolved from a simple template-based approach to a sophisticated 
 - **Shell portability** across zsh, bash 4.0+, and bash 3.x
 - **Modular libraries** that can be sourced independently
 - **Unified CLI** through the `vde` command
-- **AI-powered natural language** interaction
+- **Pattern-based natural language** parsing (no external dependencies)
 - **Structured logging** with rotation and query capabilities
 - **Contextual error messages** with remediation steps
 - **19 language VMs** and **7 service VMs** supported out of the box
