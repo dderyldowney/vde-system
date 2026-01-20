@@ -212,3 +212,60 @@ Feature: SSH Configuration
     And ~/.ssh/config should still contain "Host rust-dev"
     And ~/.ssh/config should still contain "Host github.com"
     And user's entries should be preserved
+
+  # =============================================================================
+  # SSH known_hosts Cleanup Tests - Prevents "host key changed" warnings
+  # =============================================================================
+
+  @requires-docker-ssh
+  Scenario: Remove known_hosts entry when VM is removed
+    Given VM "python" is created with SSH port "2200"
+    And ~/.ssh/known_hosts contains entry for "[localhost]:2200"
+    When I remove VM "python"
+    Then ~/.ssh/known_hosts should NOT contain entry for "[localhost]:2200"
+    And ~/.ssh/known_hosts should NOT contain entry for "[::1]:2200"
+
+  @requires-docker-ssh
+  Scenario: Remove multiple hostname patterns from known_hosts
+    Given VM "postgres" is created with SSH port "2400"
+    And ~/.ssh/known_hosts contains "[localhost]:2400"
+    And ~/.ssh/known_hosts contains "[::1]:2400"
+    And ~/.ssh/known_hosts contains "postgres" hostname entry
+    When I remove VM "postgres"
+    Then ~/.ssh/known_hosts should NOT contain "[localhost]:2400"
+    And ~/.ssh/known_hosts should NOT contain "[::1]:2400"
+    And ~/.ssh/known_hosts should NOT contain "postgres" entry
+
+  @requires-docker-ssh
+  Scenario: Create backup of known_hosts before cleanup
+    Given ~/.ssh/known_hosts exists with content
+    And VM "redis" is created with SSH port "2401"
+    When I remove VM "redis"
+    Then backup file should exist at "~/.ssh/known_hosts.vde-backup"
+    And backup should contain original content
+
+  @requires-docker-ssh
+  Scenario: Known_hosts cleanup handles missing file gracefully
+    Given ~/.ssh/known_hosts does not exist
+    And VM "python" is created with SSH port "2200"
+    When I remove VM "python"
+    Then command should succeed without error
+    And no known_hosts file should be created
+
+  @requires-docker-ssh
+  Scenario: Known_hosts cleanup removes entries by port number
+    Given ~/.ssh/known_hosts contains multiple port entries
+    And ~/.ssh/known_hosts contains "[localhost]:2200"
+    And ~/.ssh/known_hosts contains "[localhost]:2400"
+    When VM with port "2200" is removed
+    Then ~/.ssh/known_hosts should NOT contain "[localhost]:2200"
+    And ~/.ssh/known_hosts should still contain "[localhost]:2400"
+
+  @requires-docker-ssh
+  Scenario: Recreating VM after removal succeeds without host key warning
+    Given VM "python" was previously created with SSH port "2200"
+    And ~/.ssh/known_hosts had old entry for "[localhost]:2200"
+    When I remove VM "python"
+    And I create VM "python" with SSH port "2200"
+    Then SSH connection should succeed without host key warning
+    And ~/.ssh/known_hosts should contain new entry for "[localhost]:2200"

@@ -2148,6 +2148,86 @@ remove_ssh_config_entry() {
     return $result
 }
 
+# remove_known_hosts_entry - Remove SSH known_hosts entries for a VM
+# This prevents scary "REMOTE HOST IDENTIFICATION HAS CHANGED" warnings
+# when containers are rebuilt. Removes entries for localhost:port, ::1:port,
+# and the VM hostname.
+# Args: <vm_name> [<ssh_port>]
+# If ssh_port not provided, will attempt to read from docker-compose.yml
+# Returns: VDE_SUCCESS (0) or VDE_ERR_NOT_FOUND (3)
+remove_known_hosts_entry() {
+    local vm_name=$1
+    local ssh_port=$2
+    local known_hosts="$HOME/.ssh/known_hosts"
+    local removed=false
+
+    # Get port from docker-compose.yml if not provided
+    if [ -z "$ssh_port" ]; then
+        ssh_port=$(get_vm_ssh_port "$vm_name" 2>/dev/null) || true
+    fi
+
+    if [ -z "$ssh_port" ]; then
+        # No port found, nothing to clean up
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Only proceed if known_hosts file exists
+    if [ ! -f "$known_hosts" ]; then
+        return $VDE_SUCCESS
+    fi
+
+    # Determine hostname patterns to remove
+    # Try localhost:port, [localhost]:port, ::1:port, [::1]:port
+    local patterns=(
+        "[localhost]:$ssh_port"
+        "[::1]:$ssh_port"
+        "localhost:$ssh_port"
+    )
+
+    # Also remove by VM hostname if it's not localhost-based
+    # (e.g., "python-dev", "postgres", etc.)
+    if [ -n "$vm_name" ]; then
+        patterns+=("$vm_name")
+    fi
+
+    # Create backup
+    local backup_file="${known_hosts}.vde-backup"
+    if [ -f "$known_hosts" ]; then
+        cp "$known_hosts" "$backup_file" 2>/dev/null || true
+    fi
+
+    # Remove each pattern using ssh-keygen
+    for pattern in "${patterns[@]}"; do
+        if ssh-keygen -R "$pattern" 2>/dev/null; then
+            removed=true
+        fi
+    done
+
+    # Also handle hashed hostnames (ssh-keygen -H creates these)
+    # We need to manually remove lines that match the port pattern
+    if [ -f "$known_hosts" ]; then
+        local temp_file
+        temp_file=$(mktemp "${known_hosts}.tmp.XXXXXX")
+
+        # Remove lines containing :port (for hashed entries with ports)
+        grep -v ":$ssh_port" "$known_hosts" > "$temp_file" 2>/dev/null || true
+
+        if [ -s "$temp_file" ]; then
+            mv "$temp_file" "$known_hosts"
+            chmod 600 "$known_hosts"
+        else
+            # File would be empty, keep original
+            rm -f "$temp_file"
+        fi
+    fi
+
+    if $removed; then
+        log_success "Cleared SSH known_hosts entries for $vm_name (port $ssh_port)"
+    fi
+
+    return $VDE_SUCCESS
+}
+
 # -----------------------
 # Validation Functions
 # -----------------------

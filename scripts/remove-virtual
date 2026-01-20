@@ -96,6 +96,12 @@ if vm_is_running "$VM_NAME" 2>/dev/null; then
     stop_vm "$VM_NAME"
 fi
 
+# Remove SSH known_hosts entries (before removing config, so we can still get port)
+if [[ -z "$VDE_TEST_MODE" ]]; then
+    log_info "Cleaning up SSH known_hosts..."
+    remove_known_hosts_entry "$VM_NAME" 2>/dev/null || true
+fi
+
 # Remove docker-compose.yml
 log_info "Deleting configuration files..."
 rm -f "$COMPOSE_FILE"
