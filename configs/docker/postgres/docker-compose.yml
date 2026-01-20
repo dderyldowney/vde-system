@@ -5,7 +5,7 @@ services:
   postgres:
     build:
       context: ../../..
-      dockerfile: configs/docker/base-dev.Dockerfile
+      dockerfile: configs/docker/postgres/Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
@@ -15,27 +15,31 @@ services:
     container_name: postgres
     hostname: postgres
     restart: unless-stopped
-    command: sh -c "apt-get update -y && apt-get install -y postgresql-client && /usr/sbin/sshd -D"
 
     ports:
       - "2400:22"
-      ##SERVICE_PORTS##
+      - "5432:5432"
 
     volumes:
-      - ../../../data/postgres:/data
-      - ../../../logs/postgres:/logs
+      - postgres_data:/var/lib/postgresql
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for service VM communication
       - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
+      - POSTGRES_DB=postgres_dev_db
+      - POSTGRES_USER=devuser
+      - POSTGRES_PASSWORD=SuperSecretPassword123!
 
     env_file:
       - ../../../env-files/postgres.env
 
     networks:
       - dev-net
+
+volumes:
+  postgres_data:
 
 networks:
   dev-net:
