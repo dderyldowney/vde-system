@@ -35,7 +35,7 @@ RUN groupadd -g ${GID} ${USERNAME} && \
 # Copy public SSH keys into authorized_keys with proper ownership
 # Copy from build context (works during build) - keys are baked into image
 # Only copies *.pub files, skipping .keep and other non-key files
-COPY public-ssh-keys/*.pub /tmp/ssh-keys/
+COPY --chown=${USERNAME}:${USERNAME} public-ssh-keys/*.pub /tmp/ssh-keys/
 RUN cat /tmp/ssh-keys/*.pub > /home/${USERNAME}/.ssh/authorized_keys 2>/dev/null || true && \
     if [ -s /home/${USERNAME}/.ssh/authorized_keys ]; then \
         chmod 600 /home/${USERNAME}/.ssh/authorized_keys && \

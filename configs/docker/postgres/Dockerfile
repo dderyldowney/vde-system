@@ -27,7 +27,7 @@ RUN groupadd -g ${GID} ${USERNAME} && \
     chmod 600 /home/${USERNAME}/.ssh/known_hosts
 
 # Copy public SSH keys into authorized_keys (matching base-dev exactly)
-COPY public-ssh-keys/*.pub /tmp/ssh-keys/
+COPY --chown=${USERNAME}:${USERNAME} public-ssh-keys/*.pub /tmp/ssh-keys/
 RUN cat /tmp/ssh-keys/*.pub > /home/${USERNAME}/.ssh/authorized_keys 2>/dev/null || true && \
     if [ -s /home/${USERNAME}/.ssh/authorized_keys ]; then \
         chmod 600 /home/${USERNAME}/.ssh/authorized_keys && \
