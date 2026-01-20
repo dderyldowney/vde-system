@@ -12,6 +12,8 @@ on:
 
 jobs:
   claude-review:
+    # DISABLED: Requires Anthropic API credits
+    if: false
     runs-on: ubuntu-latest
     permissions:
       contents: read
