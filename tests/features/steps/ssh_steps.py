@@ -73,6 +73,118 @@ except ImportError:
 
 
 # =============================================================================
+# SSH Helper Functions for Real Verification
+# =============================================================================
+
+def ssh_agent_is_running():
+    """Check if SSH agent is running."""
+    try:
+        result = subprocess.run(
+            ["ssh-add", "-l"],
+            capture_output=True, text=True, timeout=5
+        )
+        return result.returncode == 0 or "no identities" in result.stderr.lower()
+    except Exception:
+        return False
+
+
+def ssh_agent_has_keys():
+    """Check if SSH agent has any keys loaded."""
+    try:
+        result = subprocess.run(
+            ["ssh-add", "-l"],
+            capture_output=True, text=True, timeout=5
+        )
+        return result.returncode == 0 and result.stdout.strip()
+    except Exception:
+        return False
+
+
+def get_ssh_keys():
+    """Get list of SSH keys in ~/.ssh/."""
+    ssh_dir = Path.home() / ".ssh"
+    keys = []
+    for key_type in ["id_ed25519", "id_rsa", "id_ecdsa", "id_dsa"]:
+        if (ssh_dir / key_type).exists():
+            keys.append(key_type)
+        if (ssh_dir / f"{key_type}.pub").exists():
+            keys.append(f"{key_type}.pub")
+    return keys
+
+
+def ssh_config_contains(pattern):
+    """Check if SSH config contains a pattern."""
+    ssh_config = Path.home() / ".ssh" / "config"
+    if ssh_config.exists():
+        try:
+            content = ssh_config.read_text()
+            return pattern in content
+        except Exception:
+            return False
+    return False
+
+
+def ssh_config_get_host_entry(host):
+    """Get host entry from SSH config."""
+    ssh_config = Path.home() / ".ssh" / "config"
+    if ssh_config.exists():
+        try:
+            content = ssh_config.read_text()
+            lines = content.split('\n')
+            for i, line in enumerate(lines):
+                if line.strip() == f"Host {host}":
+                    # Return the host entry
+                    entry = [line]
+                    for j in range(i+1, len(lines)):
+                        if lines[j].strip() and not lines[j].startswith((' ', '\t')):
+                            break
+                        entry.append(lines[j])
+                    return '\n'.join(entry)
+        except Exception:
+            pass
+    return None
+
+
+def public_ssh_keys_count():
+    """Count .pub files in public-ssh-keys/."""
+    public_dir = VDE_ROOT / "public-ssh-keys"
+    if public_dir.exists():
+        try:
+            return len(list(public_dir.glob("*.pub")))
+        except Exception:
+            return 0
+    return 0
+
+
+def known_hosts_contains(pattern):
+    """Check if known_hosts contains a pattern."""
+    known_hosts = Path.home() / ".ssh" / "known_hosts"
+    if known_hosts.exists():
+        try:
+            content = known_hosts.read_text()
+            return pattern in content
+        except Exception:
+            return False
+    return False
+
+
+def has_ssh_keys():
+    """Check if user has any SSH keys."""
+    ssh_dir = Path.home() / ".ssh"
+    return (
+        (ssh_dir / "id_ed25519").exists() or
+        (ssh_dir / "id_rsa").exists() or
+        (ssh_dir / "id_ecdsa").exists() or
+        (ssh_dir / "id_dsa").exists()
+    )
+
+
+# Test mode detection - ALLOW_CLEANUP indicates we can modify state
+# When VDE_TEST_CLEANUP is not 'false', we allow cleanup operations
+ALLOW_CLEANUP = os.environ.get('VDE_TEST_CLEANUP', 'true') != 'false'
+
+
+# =============================================================================
 # GIVEN steps - Setup with REAL operations
 # =============================================================================
 
@@ -182,7 +294,24 @@ def step_vm_created_started(context, vm_name):
 @when('I start SSH agent')
 def step_start_ssh_agent(context):
     """Start SSH agent (VDE handles this automatically)."""
-    context.ssh_agent_started = True
+    # Try to start SSH agent using the VDE ssh-agent-setup script
+    try:
+        result = subprocess.run(
+            ["./scripts/ssh-agent-setup", "--start"],
+            capture_output=True, text=True, timeout=30,
+            cwd=VDE_ROOT
+        )
+        context.ssh_agent_started = result.returncode == 0
+    except Exception:
+        # Fallback: try starting ssh-agent directly
+        try:
+            result = subprocess.run(
+                ["ssh-agent", "-s"],
+                capture_output=True, text=True, timeout=10
+            )
+            context.ssh_agent_started = result.returncode == 0
+        except Exception:
+            context.ssh_agent_started = False
 
 
 @when('SSH keys are generated')
@@ -195,7 +324,16 @@ def step_generate_keys(context):
 @when('public keys are copied to VM')
 def step_copy_public_keys(context):
     """Copy public keys to VM (VDE handles this automatically on VM start)."""
-    context.public_keys_copied = True
+    # Execute the sync-ssh-keys-to-vde script to copy keys
+    try:
+        result = subprocess.run(
+            ["./scripts/sync-ssh-keys-to-vde"],
+            capture_output=True, text=True, timeout=30,
+            cwd=VDE_ROOT
+        )
+        context.public_keys_copied = result.returncode == 0
+    except Exception:
+        context.public_keys_copied = False
 
 
 @when('SSH config is updated')
@@ -208,19 +346,54 @@ def step_update_ssh_config(context):
 @when('I SSH from one VM to another')
 def step_ssh_vm_to_vm(context):
     """SSH from VM to another."""
-    context.vm_to_vm_ssh = True
+    # Try to execute a real SSH command between VMs if they're running
+    source_vm = getattr(context, 'source_vm', 'python')
+    target_vm = getattr(context, 'target_vm', 'postgres')
+
+    try:
+        # Check if containers are running and try SSH
+        result = subprocess.run(
+            ["docker", "exec", f"{source_vm}-dev", "ssh", "-o", "StrictHostKeyChecking=no",
+             f"{target_vm}-dev", "echo", "vm-to-vm-ssh-success"],
+            capture_output=True, text=True, timeout=30
+        )
+        context.vm_to_vm_ssh = result.returncode == 0 or "vm-to-vm-ssh-success" in result.stdout
+    except Exception:
+        context.vm_to_vm_ssh = False
 
 
 @when('I execute command on host from VM')
 def step_execute_on_host(context):
     """Execute command on host from VM."""
-    context.host_command_executed = True
+    # Try to execute a real to-host command
+    vm_name = getattr(context, 'current_vm', 'python')
+
+    try:
+        # Use the to-host command if available
+        result = subprocess.run(
+            ["docker", "exec", f"{vm_name}-dev", "to-host", "echo", "host-exec-success"],
+            capture_output=True, text=True, timeout=30
+        )
+        context.host_command_executed = result.returncode == 0 or "host-exec-success" in result.stdout
+    except Exception:
+        context.host_command_executed = False
 
 
 @when('I perform Git operation from VM')
 def step_git_from_vm(context):
     """Perform Git operation from VM."""
-    context.git_operation_from_vm = True
+    # Try to execute a real git command from within a VM
+    vm_name = getattr(context, 'current_vm', 'python')
+
+    try:
+        # Execute a simple git command inside the VM
+        result = subprocess.run(
+            ["docker", "exec", f"{vm_name}-dev", "git", "--version"],
+            capture_output=True, text=True, timeout=30
+        )
+        context.git_operation_from_vm = result.returncode == 0
+    except Exception:
+        context.git_operation_from_vm = False
 
 
 @when('I reload the VM types cache')
@@ -366,13 +539,27 @@ def step_ssh_entries_exist(context):
 @then('I should be able to use short hostnames')
 def step_short_hostnames(context):
     """Should be able to use short hostnames."""
-    assert getattr(context, 'short_hostnames', True)
+    # Check if SSH config has short hostname entries
+    ssh_config = Path.home() / ".ssh" / "config"
+    if ssh_config.exists():
+        content = ssh_config.read_text()
+        # Check for Host entries with short names (e.g., "python-dev" not "localhost")
+        assert "Host " in content, "SSH config should have short hostname entries"
+    else:
+        assert False, "SSH config should exist for short hostname usage"
 
 
 @then('I should not need to remember port numbers')
 def step_no_remember_ports(context):
     """Should not need to remember port numbers."""
-    assert getattr(context, 'no_remember_ports', True)
+    # Check if SSH config has Port entries configured
+    ssh_config = Path.home() / ".ssh" / "config"
+    if ssh_config.exists():
+        content = ssh_config.read_text()
+        # If SSH config exists, it should have Port entries so users don't need to remember ports
+        assert "Port " in content or "Host " in content, "SSH config should have Port configuration"
+    else:
+        assert False, "SSH config should exist for port configuration"
 
 
 @given('I have a running VM with SSH configured')
@@ -398,13 +585,24 @@ def step_ssh_still_works(context):
 @then('I should not need to reconfigure SSH')
 def step_no_reconfigure_ssh(context):
     """Should not need to reconfigure SSH."""
-    assert getattr(context, 'no_reconfigure_ssh', True)
+    # Verify SSH config is still valid after VM rebuild
+    ssh_config = Path.home() / ".ssh" / "config"
+    if ssh_config.exists():
+        # Try to parse with ssh -F
+        result = subprocess.run(["ssh", "-F", str(ssh_config), "-G", "test"], capture_output=True, text=True)
+        assert "Bad configuration option" not in result.stderr, "SSH config should be valid"
+    else:
+        # If config doesn't exist, it's not configured - this is a failure
+        assert False, "SSH should still be configured"
 
 
 @then('my keys should still work')
 def step_keys_still_work(context):
     """Keys should still work."""
-    assert getattr(context, 'keys_still_work', True)
+    # Verify SSH keys still exist
+    ssh_dir = Path.home() / ".ssh"
+    has_keys = has_ssh_keys()
+    assert has_keys, "SSH keys should still exist after VM rebuild"
 
 
 @when('I create a VM')
@@ -425,13 +623,37 @@ def step_ed25519_generated(context):
 @then('ed25519 should be the preferred key type')
 def step_ed25519_preferred(context):
     """ed25519 should be the preferred key type."""
-    assert getattr(context, 'ed25519_preferred', True)
+    # Check if id_ed25519 exists
+    ssh_dir = Path.home() / ".ssh"
+    has_ed25519 = (ssh_dir / "id_ed25519").exists()
+    # If ed25519 exists, that's good - it's the preferred key type
+    # If not, check if other keys exist (ed25519 is just preferred, not required)
+    if not has_ed25519:
+        has_other_keys = (
+            (ssh_dir / "id_rsa").exists() or
+            (ssh_dir / "id_ecdsa").exists()
+        )
+        assert has_other_keys, "At least one SSH key type should exist"
 
 
 @then('the key should be generated with a comment')
 def step_key_with_comment(context):
     """Key should be generated with a comment."""
-    assert getattr(context, 'key_has_comment', True)
+    # Check if SSH keys have comments (the email/user at end of public key)
+    ssh_dir = Path.home() / ".ssh"
+    comment_found = False
+    for key_file in ssh_dir.glob("*.pub"):
+        try:
+            content = key_file.read_text()
+            # SSH public key format: key-type key-data comment
+            parts = content.strip().split()
+            if len(parts) >= 3:
+                comment_found = True
+                break
+        except Exception:
+            pass
+    # If we have keys, at least one should have a comment (but comments are optional in generated keys)
+    # This is informational only - SSH keys work fine without comments
 
 
 # =============================================================================
@@ -450,31 +672,21 @@ def step_just_cloned_vde(context):
 def step_key_generated_auto(context):
     """SSH key should be auto-generated."""
     # VDE generates ed25519 keys automatically via start-virtual script
-    # Check if keys were generated or already exist
-    ssh_dir = Path.home() / ".ssh"
-    has_keys = (
-        (ssh_dir / "id_ed25519").exists() or
-        (ssh_dir / "id_rsa").exists() or
-        (ssh_dir / "id_ecdsa").exists()
-    )
-    # In real VDE, keys are generated automatically on first VM creation
-    assert has_keys or getattr(context, 'ssh_keys_generated', True)
+    # Check if keys exist
+    assert has_ssh_keys(), "SSH keys should exist (generated or pre-existing)"
 
 
 @then('the key should be loaded into the agent')
 def step_key_loaded_into_agent(context):
     """Key should be loaded into SSH agent."""
     # Check if SSH agent is running and has keys loaded
-    result = subprocess.run(
-        ["ssh-add", "-l"],
-        capture_output=True, text=True, timeout=5
-    )
-    # Agent should be running and have at least one key
-    agent_has_keys = result.returncode == 0 and result.stdout.strip()
+    agent_has_keys = ssh_agent_has_keys()
     context.keys_loaded_in_agent = agent_has_keys
-    # In test environment where agent may not be running, check context flag
+    # In test environment, we check if agent has keys or agent is running
     if not agent_has_keys:
-        assert getattr(context, 'ssh_keys_generated', True), "SSH agent should have keys loaded"
+        # Agent may not have keys but at least should be running
+        assert ssh_agent_is_running() or getattr(context, 'ssh_keys_generated', False), \
+            "SSH agent should be running or keys should have been generated"
 
 
 @then('I should be informed of what happened')
@@ -506,7 +718,8 @@ def step_existing_ssh_keys(context):
 @then('my existing SSH keys should be detected automatically')
 def step_keys_detected_auto(context):
     """Existing keys should be detected."""
-    assert getattr(context, 'existing_ssh_keys', True) or getattr(context, 'ssh_keys_exist', True)
+    # Check for SSH keys in ~/.ssh/
+    assert has_ssh_keys(), "Existing SSH keys should be detected"
 
 
 @then('my keys should be loaded into the agent')
@@ -539,7 +752,10 @@ def step_multiple_keys(context):
 @then('all my SSH keys should be detected')
 def step_all_keys_detected(context):
     """All SSH key types should be detected."""
-    assert getattr(context, 'all_key_types', True)
+    # Get list of all SSH keys
+    keys = get_ssh_keys()
+    # At least one key should exist if this step is used
+    assert len(keys) > 0 or has_ssh_keys(), "At least one SSH key should be detected"
 
 
 @then('all keys should be loaded into the agent')
@@ -626,7 +842,7 @@ def step_vm_starts_normally(context):
         # Either succeeded or failed due to Docker (acceptable in test env)
     else:
         # No command was run - verify this is a test scenario
-        assert getattr(context, 'vm_start_expected', True), "VM should have been started"
+        assert False, "VM should have been started (no command was run)"
 
 
 @given('I have VDE configured')
@@ -751,7 +967,19 @@ def step_read_documentation(context):
 @then('I should see that SSH is automatic')
 def step_see_ssh_automatic(context):
     """Documentation should show SSH is automatic."""
-    assert getattr(context, 'doc_mentions_ssh_auto', True)
+    # Check if documentation step found automatic SSH mentioned
+    doc_auto = getattr(context, 'doc_mentions_ssh_auto', False)
+    # If doc wasn't checked, verify actual behavior
+    if not doc_auto:
+        # Check documentation exists
+        user_guide = VDE_ROOT / "USER_GUIDE.md"
+        if user_guide.exists():
+            content = user_guide.read_text().lower()
+            assert "automatic" in content or "ssh" in content, \
+                "Documentation should mention automatic SSH setup"
+        else:
+            # No guide exists - this is a failure
+            assert False, "USER_GUIDE.md should exist and mention SSH"
 
 
 @then('I should not see manual setup instructions')
@@ -762,8 +990,11 @@ def step_no_manual_setup_instructions(context):
     doc_has_manual = getattr(context, 'doc_mentions_manual_setup', False)
     # We want to ensure manual setup isn't prominently featured
     # The documentation should mention automatic setup instead
-    assert not doc_has_manual or getattr(context, 'doc_mentions_ssh_auto', True), \
-        "Documentation should emphasize automatic SSH setup over manual setup"
+    doc_auto = getattr(context, 'doc_mentions_ssh_auto', False)
+    if doc_has_manual:
+        # If manual is mentioned, automatic should be emphasized more
+        assert doc_auto, \
+            "Documentation should emphasize automatic SSH setup over manual setup"
 
 
 @then('I should be able to start using VMs immediately')
@@ -901,15 +1132,20 @@ def step_ed25519_key_generated(context):
     """ed25519 SSH key should be generated."""
     ssh_dir = Path.home() / ".ssh"
     has_ed25519 = (ssh_dir / "id_ed25519").exists()
-    assert has_ed25519 or getattr(context, 'ssh_keys_generated', True)
+    # Check for ed25519 or other key types (VDE may have generated a different type)
+    has_any_key = has_ssh_keys()
+    assert has_ed25519 or has_any_key, "SSH keys should exist (ed25519 or other type)"
 
 
 @then('the public key should be synced to public-ssh-keys directory')
 def step_public_key_synced(context):
     """Public key should be synced to public-ssh-keys directory."""
     public_ssh_dir = VDE_ROOT / "public-ssh-keys"
-    assert public_ssh_dir.exists() or getattr(context, 'public_keys_synced', True)
-    context.public_keys_synced = True
+    # Check if public-ssh-keys directory exists and has .pub files
+    has_pub_files = public_ssh_keys_count() > 0 if public_ssh_dir.exists() else False
+    assert has_pub_files or public_ssh_dir.exists(), \
+        "public-ssh-keys directory should exist and contain public keys"
+    context.public_keys_synced = has_pub_files
 
 
 # -----------------------------------------------------------------------------
@@ -922,10 +1158,10 @@ def step_public_keys_copied_to_dir(context, directory):
     """Public keys should be copied to directory."""
     target_dir = VDE_ROOT / directory
     # Check directory exists and has .pub files
-    assert target_dir.exists() or getattr(context, 'keys_copied', True)
+    assert target_dir.exists(), f"Target directory {directory} should exist"
     if target_dir.exists():
         pub_files = list(target_dir.glob("*.pub"))
-        assert len(pub_files) > 0 or getattr(context, 'keys_copied', True)
+        assert len(pub_files) > 0, f"Directory {directory} should contain .pub files"
 
 
 @then('only .pub files should be copied')
@@ -956,7 +1192,7 @@ def step_only_pub_files_copied(context):
 def step_keep_file_exists(context):
     """.keep file should exist in public-ssh-keys directory."""
     keep_file = VDE_ROOT / "public-ssh-keys" / ".keep"
-    assert keep_file.exists() or getattr(context, 'keep_file_created', True)
+    assert keep_file.exists(), ".keep file should exist in public-ssh-keys directory"
 
 
 # -----------------------------------------------------------------------------
@@ -1038,8 +1274,8 @@ def step_ssh_config_contains(context, content):
         # Config doesn't exist - check if test flags indicate it should have been created
         if getattr(context, 'config_entry_created', False) or getattr(context, 'vm_creation_triggered', False):
             raise AssertionError(f"SSH config should exist and contain '{content}', but config file doesn't exist")
-        # Fallback to context flag for test scenarios where config isn't actually created
-        assert getattr(context, 'ssh_config_generated', True), "SSH config should have been generated"
+        # No config and no creation triggered - this is a failure
+        raise AssertionError(f"SSH config should exist and contain '{content}'")
 
 
 @then(r'SSH config should contain "(?P<field>[^"]+)" pointing to "(?P<keyfile>[^"]+)"')
@@ -1058,8 +1294,8 @@ def step_ssh_config_contains_identity(context, field, keyfile):
         # Config doesn't exist - check if test flags indicate it should have been created
         if getattr(context, 'config_entry_created', False) or getattr(context, 'vm_creation_triggered', False):
             raise AssertionError(f"SSH config should exist with '{field} {keyfile}', but config file doesn't exist")
-        # Fallback to context flag for test scenarios where config isn't actually created
-        assert getattr(context, 'ssh_config_generated', True), "SSH config should have been generated"
+        # No config and no creation triggered - this is a failure
+        raise AssertionError(f"SSH config should exist with '{field} {keyfile}'")
 
 
 # -----------------------------------------------------------------------------
@@ -1104,8 +1340,8 @@ def step_ssh_config_contains_entry(context, host):
         # Config doesn't exist - check if test flags indicate it should have been created
         if getattr(context, 'vm_to_vm_config_generated', False) or getattr(context, 'config_entry_created', False):
             raise AssertionError(f"SSH config should exist with Host {host}, but config file doesn't exist")
-        # Fallback to context flag for test scenarios
-        assert getattr(context, 'vm_to_vm_config_generated', True), "SSH config should have been generated"
+        # No config and no creation triggered - this is a failure
+        raise AssertionError(f"SSH config should exist with Host {host}")
 
 
 @then('each entry should use "{hostname}" as hostname')
@@ -1114,9 +1350,9 @@ def step_ssh_config_uses_hostname(context, hostname):
     ssh_config = Path.home() / ".ssh" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
-        assert f"HostName {hostname}" in config_content
+        assert f"HostName {hostname}" in config_content, f"HostName {hostname} not found in SSH config"
     else:
-        assert getattr(context, 'vm_to_vm_config_generated', True)
+        raise AssertionError(f"SSH config should exist and contain HostName {hostname}")
 
 
 # -----------------------------------------------------------------------------
@@ -1214,15 +1450,22 @@ def step_backup_created_in_dir(context, backup_dir):
 @then('backup filename should contain timestamp')
 def step_backup_has_timestamp(context):
     """Backup filename should contain timestamp."""
+    import re
     backup_file = getattr(context, 'backup_file', None)
     if backup_file:
-        import re
         # Check for timestamp pattern (YYYYMMDD or ISO format)
         has_timestamp = re.search(r'\d{8}|\d{4}-\d{2}-\d{2}|\d{10}', backup_file)
         assert has_timestamp, f"Backup filename '{backup_file}' should contain timestamp"
     else:
-        # No backup file set, check if backup was supposed to be created
-        assert getattr(context, 'backup_created', True), "Backup should have been created with timestamp"
+        # No backup file set - check for backup files in ~/.ssh/
+        ssh_dir = Path.home() / ".ssh"
+        backup_files = list(ssh_dir.glob("config.bak*")) + list(ssh_dir.glob("config.*.bak"))
+        if backup_files:
+            # At least one backup exists with timestamp in name
+            assert True, "Backup files exist with timestamp"
+        else:
+            # No backup file - this is acceptable if no modification was made
+            assert False, "No backup file found and no backup_file context set"
 
 
 # -----------------------------------------------------------------------------
@@ -1251,30 +1494,25 @@ def step_ssh_vm_to_vm(context, vm1, vm2):
 @then('the connection should use host\'s SSH keys')
 def step_connection_uses_host_keys(context):
     """Connection should use host's SSH keys via agent forwarding."""
-    assert getattr(context, 'ssh_agent_running', True) or getattr(context, 'vm_to_vm_ssh_attempted', True)
+    # Verify SSH agent is running (required for host key usage via forwarding)
+    assert ssh_agent_is_running() or getattr(context, 'vm_to_vm_ssh_attempted', False), \
+        "SSH agent should be running for host key usage via agent forwarding"
 
 
 @then('no keys should be stored on containers')
 def step_no_keys_on_containers(context):
     """No keys should be stored on containers."""
     # Agent forwarding means private keys stay on host, not in containers
-    # We can verify this by checking containers don't have SSH keys mounted
-    # For test environment, verify SSH agent forwarding is configured
+    # Verify SSH agent forwarding is configured
     ssh_config = Path.home() / ".ssh" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         # Check for agent forwarding configuration
         has_forwarding = "ForwardAgent" in config_content or "StreamLocalBindUnlink" in config_content
         # If forwarding is configured, keys aren't stored on containers
-        if has_forwarding or getattr(context, 'vm_to_vm_ssh_attempted', False):
-            assert has_forwarding or getattr(context, 'vm_to_vm_ssh_attempted', False), \
-                "SSH agent forwarding should be configured to prevent key storage on containers"
-        else:
-            # No explicit forwarding config, but this may be test environment
-            assert getattr(context, 'ssh_agent_running', True), "SSH agent should be configured for forwarding"
-    else:
-        # Config doesn't exist, verify test environment
-        assert not ssh_config.exists(), "SSH config should exist when not in test environment"
+        if not has_forwarding and not getattr(context, 'vm_to_vm_ssh_attempted', False):
+            raise AssertionError("SSH agent forwarding should be configured to prevent key storage on containers")
+    # If config doesn't exist, we can't verify - assume forwarding is used
 
 
 # -----------------------------------------------------------------------------
@@ -1293,8 +1531,13 @@ def step_keytype_detected(context, keytype):
     """Specific key type should be detected."""
     ssh_dir = Path.home() / ".ssh"
     key_file = ssh_dir / keytype
-    assert key_file.exists() or getattr(context, f'{keytype}_detected', True)
-    setattr(context, f'{keytype}_detected', True)
+    # Check if the specific key file exists
+    if key_file.exists():
+        setattr(context, f'{keytype}_detected', True)
+        assert True, f"{keytype} key exists"
+    else:
+        # Key doesn't exist - check if any keys exist at all
+        assert has_ssh_keys(), f"No {keytype} key found and no other SSH keys exist"
 
 
 # -----------------------------------------------------------------------------
@@ -1331,25 +1574,13 @@ def step_config_still_contains(context, entry):
     ssh_config = Path.home() / ".ssh" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
-        if entry in config_content:
-            assert entry in config_content, f"Entry '{entry}' should exist in SSH config"
-        else:
-            # Entry not found - check if test flags indicate it was expected
-            if getattr(context, 'vm_creation_triggered', False):
-                # VM creation was triggered but entry not found - this is a real failure
-                raise AssertionError(f"Entry '{entry}' should exist in SSH config after VM creation")
-            # Check if entry was set in context during test setup
-            has_context_entry = (
-                getattr(context, 'ssh_config_has_field', None) == entry or
-                getattr(context, 'user_entry_in_config', None) == entry
-            )
-            assert has_context_entry, f"Entry '{entry}' not found in SSH config and not set in context"
+        assert entry in config_content, f"Entry '{entry}' should exist in SSH config"
     else:
         # Config doesn't exist - check if it should have been created
         if getattr(context, 'vm_creation_triggered', False):
             raise AssertionError("SSH config should exist after VM creation")
-        # Test environment without actual config creation
-        assert getattr(context, 'ssh_config_generated', True), "SSH config should have been generated"
+        # No config and no VM creation triggered - this is a failure
+        raise AssertionError(f"SSH config should exist and contain '{entry}'")
 
 
 @then('~/.ssh/config should contain new "{entry}" entry')
@@ -1407,11 +1638,11 @@ def step_config_contains_field_under_vm(context, field, vm):
             # Host entry not found
             if getattr(context, 'vm_creation_triggered', False):
                 raise AssertionError(f"Host {vm} entry should exist in SSH config")
-            # Test environment without actual VM creation
-            assert getattr(context, 'ssh_config_generated', True), "SSH config should have been generated"
+            # No VM creation triggered and entry not found - failure
+            raise AssertionError(f"Host {vm} entry should exist in SSH config")
     else:
-        # Config doesn't exist in test environment
-        assert getattr(context, 'ssh_config_generated', True), "SSH config should have been generated"
+        # Config doesn't exist
+        raise AssertionError(f"SSH config should exist and contain Host {vm}")
 
 
 @then('new "{vm_entry}" entry should be appended to end')
@@ -1432,8 +1663,8 @@ def step_new_entry_appended(context, vm_entry):
         found_at_end = any(f"Host {vm_entry}" in line for line in last_lines)
         assert found_at_end, f"New entry '{vm_entry}' should be at the end of SSH config"
     else:
-        # Config doesn't exist in test environment
-        assert getattr(context, 'new_entry_added', True), "New entry should have been added"
+        # Config doesn't exist - failure
+        raise AssertionError(f"SSH config should exist and contain '{vm_entry}'")
 
 
 @when('I attempt to create VM "{vm}" again')
@@ -1470,8 +1701,8 @@ def step_config_atomic_state(context):
         # Check for unclosed quotes or malformed entries
         assert content.count('"') % 2 == 0, "Config has unbalanced quotes (possible partial write)"
     else:
-        # Config doesn't exist - verify this is expected
-        assert getattr(context, 'merge_interrupted', False) or getattr(context, 'ssh_config_existed', False) is False, "Config should exist unless merge was interrupted"
+        # Config doesn't exist - verify this is expected (merge was interrupted)
+        assert getattr(context, 'merge_interrupted', False), "Config should exist unless merge was interrupted"
 
 
 @then('~/.ssh/config should NOT be partially written')
@@ -1511,8 +1742,10 @@ def step_original_in_backup(context):
         latest_backup = max(backups, key=lambda p: p.stat().st_mtime)
         assert latest_backup.stat().st_size > 0, f"Backup {latest_backup} is empty"
     else:
-        # Test environment without actual backup
-        assert getattr(context, 'backup_created', True), "Backup should have been created"
+        # No backup directory - check ~/.ssh for backups
+        ssh_dir = Path.home() / ".ssh"
+        backups = list(ssh_dir.glob("config.bak*")) + list(ssh_dir.glob("config.*.bak"))
+        assert len(backups) > 0, "No backup files found in ~/.ssh or backup/ssh/"
 
 
 # -----------------------------------------------------------------------------
@@ -1549,6 +1782,7 @@ def step_content_to_temp_file(context):
         # Verify config has valid structure (contains Host entries)
         assert 'Host' in content or len(content.strip()) == 0, "Config should have valid entries"
     else:
+        # Config doesn't exist - check if merge was interrupted
         assert getattr(context, 'merge_interrupted', False), "Config should exist after merge"
 
 
@@ -1583,7 +1817,7 @@ def step_temp_file_removed(context):
 def step_ssh_config_created(context):
     """SSH config file should be created."""
     ssh_config = Path.home() / ".ssh" / "config"
-    assert ssh_config.exists() or getattr(context, 'ssh_config_created', True)
+    assert ssh_config.exists(), "SSH config file should be created"
 
 
 @then('~/.ssh/config should have permissions "{perms}"')
@@ -1600,7 +1834,7 @@ def step_ssh_config_permissions(context, perms):
 def step_ssh_dir_created(context):
     """.ssh directory should be created."""
     ssh_dir = Path.home() / ".ssh"
-    assert ssh_dir.exists() or getattr(context, 'ssh_dir_created', True)
+    assert ssh_dir.exists(), ".ssh directory should be created"
 
 
 @then('directory should have correct permissions')
@@ -1629,7 +1863,8 @@ def step_blank_lines_preserved(context):
             blank_count = sum(1 for line in lines if line.strip() == '')
             assert blank_count >= 0, "Config structure verification failed"
     else:
-        assert getattr(context, 'blank_lines_preserved', True), "Blank lines preservation check failed"
+        # Config doesn't exist - can't verify blank lines
+        assert False, "SSH config should exist to verify blank line preservation"
 
 
 @then('~/.ssh/config comments should be preserved')
@@ -1645,7 +1880,8 @@ def step_comments_preserved(context):
         content = ssh_config.read_text()
         assert len(content) >= 0, "Config content check failed"
     else:
-        assert getattr(context, 'comments_preserved', True), "Comments preservation check failed"
+        # Config doesn't exist and no baseline - can't verify
+        assert False, "SSH config should exist to verify comment preservation"
 
 
 @then('new entry should be added with proper formatting')
@@ -1691,7 +1927,8 @@ def step_all_vm_entries_present(context):
             expected_host = f"Host {vm}-dev"
             assert expected_host in content, f"VM entry '{expected_host}' not found in config"
     else:
-        assert getattr(context, 'all_entries_present', True), "VM entries presence check failed"
+        # Config doesn't exist or no VMs created - can't verify
+        assert False, "SSH config should exist and VMs should have been created"
 
 
 @then('no entries should be lost')
@@ -1720,7 +1957,12 @@ def step_backup_exists_at(context, backup_path):
     backup_dir = Path.home() / "backup" / "ssh"
     if backup_dir.exists():
         backups = list(backup_dir.glob("config.backup.*"))
-        assert len(backups) > 0 or getattr(context, 'backup_created', True)
+        assert len(backups) > 0, f"No backup files found in {backup_dir}"
+    else:
+        # Check ~/.ssh for backups
+        ssh_dir = Path.home() / ".ssh"
+        backups = list(ssh_dir.glob("config.bak*")) + list(ssh_dir.glob("config.*.bak"))
+        assert len(backups) > 0, "No backup files found"
 
 
 @then('backup should contain original config content')
@@ -1736,9 +1978,18 @@ def step_backup_has_original_content(context):
             # Store for timestamp check
             context.latest_backup_mtime = latest_backup.stat().st_mtime
         else:
-            assert getattr(context, 'backup_created', True), "No backup found"
+            # No backup in backup/ssh - check ~/.ssh
+            ssh_dir = Path.home() / ".ssh"
+            backups = list(ssh_dir.glob("config.bak*")) + list(ssh_dir.glob("config.*.bak"))
+            assert len(backups) > 0, "No backup files found"
+            if backups:
+                latest_backup = max(backups, key=lambda p: p.stat().st_mtime)
+                context.latest_backup_mtime = latest_backup.stat().st_mtime
     else:
-        assert getattr(context, 'backup_created', True), "Backup directory doesn't exist"
+        # No backup directory - check ~/.ssh
+        ssh_dir = Path.home() / ".ssh"
+        backups = list(ssh_dir.glob("config.bak*")) + list(ssh_dir.glob("config.*.bak"))
+        assert len(backups) > 0, "No backup files found"
 
 
 @then('backup timestamp should be before modification')
@@ -1749,7 +2000,8 @@ def step_backup_timestamp_before(context):
         config_mtime = ssh_config.stat().st_mtime
         assert context.latest_backup_mtime <= config_mtime, f"Backup mtime ({context.latest_backup_mtime}) should be <= config mtime ({config_mtime})"
     else:
-        assert getattr(context, 'backup_timestamp_ok', True), "Cannot verify backup timestamp"
+        # Can't verify without both files existing
+        assert False, "Cannot verify backup timestamp without both config and backup"
 
 
 # -----------------------------------------------------------------------------
@@ -1848,7 +2100,7 @@ def step_new_entry_added(context, entry):
         config_content = ssh_config.read_text()
         assert entry in config_content, f"'{entry}' was not added to SSH config"
     else:
-        assert getattr(context, 'new_entry_added', True)
+        raise AssertionError(f"SSH config should exist and contain '{entry}'")
 
 
 @then('~/.ssh/config should contain "Host python-dev"')
@@ -1862,8 +2114,8 @@ def step_config_contains_python_dev(context):
         # Config doesn't exist - check if VM creation was triggered
         if getattr(context, 'vm_creation_triggered', False):
             raise AssertionError("SSH config should exist with Host python-dev after VM creation")
-        # Test environment without actual VM creation
-        assert getattr(context, 'python_dev_entry_added', True), "Python-dev entry should have been added"
+        # No config and no VM creation - failure
+        raise AssertionError("SSH config should exist with Host python-dev")
 
 
 @given('multiple processes try to add SSH entries simultaneously')
@@ -1880,6 +2132,9 @@ def step_config_file_valid(context):
         result = subprocess.run(["ssh", "-F", str(ssh_config), "-G", "test"], capture_output=True, text=True)
         assert "Bad configuration option" not in result.stderr
         assert result.returncode == 0 or "test" in result.stdout
+    else:
+        # Config doesn't exist - can't verify validity
+        assert False, "SSH config should exist to verify validity"
 
 
 @then('~/.ssh/config should NOT contain "{entry}"')
@@ -1897,8 +2152,8 @@ def step_config_not_contain(context, entry):
 @when('keys are loaded into agent')
 def step_when_keys_loaded(context):
     """Keys are loaded into agent."""
-    context.keys_loaded = True
-    context.ssh_agent_has_keys = True
+    context.keys_loaded = ssh_agent_has_keys()
+    context.ssh_agent_has_keys = context.keys_loaded
 
 
 @then('SSH config should contain "Host python-dev"')
@@ -1907,9 +2162,9 @@ def step_ssh_config_contains_python_dev_alt(context):
     ssh_config = Path.home() / ".ssh" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
-        assert "Host python-dev" in config_content
+        assert "Host python-dev" in config_content, "Host python-dev entry not found in SSH config"
     else:
-        assert getattr(context, 'python_dev_entry_added', True)
+        raise AssertionError("SSH config should exist with Host python-dev")
 
 
 @then('SSH config should contain "Port 2200"')
@@ -1920,11 +2175,9 @@ def step_ssh_config_contains_port_2200(context):
         config_content = ssh_config.read_text()
         # Check for Port 2200 somewhere in the config
         has_port = "Port 2200" in config_content or "Port\t2200" in config_content
-        assert has_port or getattr(context, 'vm_port_configured', True), \
-            "Port 2200 not found in SSH config"
+        assert has_port, "Port 2200 not found in SSH config"
     else:
-        # Config doesn't exist, this is OK for test environment
-        assert getattr(context, 'ssh_config_generated', True)
+        raise AssertionError("SSH config should exist with Port configuration")
 
 
 @then('SSH config should contain "ForwardAgent yes"')
@@ -1934,12 +2187,10 @@ def step_ssh_config_contains_forward_agent(context):
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         # Check for ForwardAgent yes
-        has_forward_agent = "ForwardAgent yes" in config_content or "ForwardAgent\tyes" in config_content
-        assert has_forward_agent or getattr(context, 'forward_agent_configured', True), \
-            "ForwardAgent yes not found in SSH config"
+        has_forward_agent = "ForwardAgent" in config_content or "StreamLocalBindUnlink" in config_content
+        assert has_forward_agent, "ForwardAgent not found in SSH config"
     else:
-        # Config doesn't exist, this is OK for test environment
-        assert getattr(context, 'ssh_config_generated', True)
+        raise AssertionError("SSH config should exist with ForwardAgent configuration")
 
 
 @then('SSH config should contain "IdentityFile" pointing to "~/.ssh/id_ed25519"')
@@ -1949,12 +2200,10 @@ def step_ssh_config_contains_identity_file(context):
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         # Check for IdentityFile and id_ed25519
-        has_identity = "IdentityFile" in config_content and "~/.ssh/id_ed25519" in config_content
-        assert has_identity or getattr(context, 'identity_file_configured', True), \
-            "IdentityFile ~/.ssh/id_ed25519 not found in SSH config"
+        has_identity = "IdentityFile" in config_content and "id_ed25519" in config_content
+        assert has_identity, "IdentityFile ~/.ssh/id_ed25519 not found in SSH config"
     else:
-        # Config doesn't exist, this is OK for test environment
-        assert getattr(context, 'ssh_config_generated', True)
+        raise AssertionError("SSH config should exist with IdentityFile configuration")
 
 
 @then('SSH config should NOT contain "Host python-dev"')
@@ -2206,7 +2455,8 @@ def step_should_connect_to_python_vm(context):
 def step_authenticated_using_host_keys(context):
     """Should be authenticated using host's SSH keys."""
     context.auth_method = "host-keys"
-    assert getattr(context, 'host_has_ssh_keys', True)
+    # Verify SSH keys exist on the host
+    assert has_ssh_keys(), "Host should have SSH keys for authentication"
 
 
 @then('I should not need to enter a password')
@@ -2226,7 +2476,9 @@ def step_no_keys_copied_to_vm(context):
 @then('I should connect to the PostgreSQL VM')
 def step_should_connect_to_postgres_vm(context):
     """Should connect to the PostgreSQL VM."""
-    assert getattr(context, 'vm_to_vm_executed', True) or getattr(context, 'connection_established', True)
+    vm_to_vm = getattr(context, 'vm_to_vm_executed', False)
+    connection_established = getattr(context, 'connection_established', False)
+    assert vm_to_vm or connection_established, "VM-to-VM connection should be established"
 
 
 @then('I should be able to run psql commands')
@@ -2244,7 +2496,7 @@ def step_able_to_run_psql(context):
 def step_auth_uses_host_keys(context):
     """Authentication should use host's SSH keys."""
     context.auth_method = "host-keys"
-    assert getattr(context, 'host_has_ssh_keys', True)
+    assert has_ssh_keys(), "Host should have SSH keys for authentication"
 
 
 @then('the file should be copied using my host\'s SSH keys')
@@ -2252,7 +2504,7 @@ def step_file_copied_with_host_keys(context):
     """File should be copied using host's SSH keys."""
     context.file_copied = True
     context.auth_method = "host-keys"
-    assert getattr(context, 'scp_executed', True)
+    assert getattr(context, 'scp_executed', False), "SCP command should have been executed"
 
 
 @then('no password should be required')
@@ -2265,8 +2517,8 @@ def step_no_password_required_scp(context):
 @then('the command should execute on the Rust VM')
 def step_command_executes_on_rust(context):
     """Command should execute on the Rust VM."""
-    context.command_executed_on_remote = True
-    assert context.target_vm == "rust" or getattr(context, 'command_executed_on_remote', True)
+    assert context.target_vm == "rust" or getattr(context, 'command_executed_on_remote', False), \
+        "Command should be executed on Rust VM"
 
 
 @then('the output should be displayed')
@@ -2298,21 +2550,22 @@ def step_see_pong(context):
 def step_all_connections_use_host_keys(context):
     """All connections should use host's SSH keys."""
     context.all_connections_use_host_keys = True
-    assert getattr(context, 'host_has_ssh_keys', True)
+    assert has_ssh_keys(), "Host should have SSH keys for all connections"
 
 
 @then('both services should respond')
 def step_both_services_respond(context):
     """Both services should respond."""
     context.services_responded = ["python", "rust"]
-    assert len(getattr(context, 'services_responded', [])) == 2 or True  # Lenient for test
+    services = getattr(context, 'services_responded', [])
+    assert len(services) == 2, f"Both services should respond, got: {services}"
 
 
 @then('all authentications should use my host\'s SSH keys')
 def step_all_auth_use_host_keys(context):
     """All authentications should use host's SSH keys."""
     context.all_auth_use_host_keys = True
-    assert getattr(context, 'host_has_ssh_keys', True)
+    assert has_ssh_keys(), "Host should have SSH keys for authentication"
 
 
 @then('the tests should run on the backend VM')
@@ -2327,7 +2580,9 @@ def step_see_results_in_frontend(context):
     """Should see test results in frontend VM."""
     context.results_visible_in = "frontend"
     # In test environment, verify VM-to-VM connection was established
-    assert getattr(context, 'vm_to_vm_executed', True) or getattr(context, 'connection_established', True), \
+    vm_to_vm = getattr(context, 'vm_to_vm_executed', False)
+    connection_established = getattr(context, 'connection_established', False)
+    assert vm_to_vm or connection_established, \
         "VM-to-VM connection should be established to see results"
 
 
@@ -2336,35 +2591,29 @@ def step_authentication_automatic(context):
     """Authentication should be automatic."""
     context.auth_automatic = True
     # Verify SSH agent is running for automatic authentication
-    result = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True, timeout=5)
-    agent_running = result.returncode == 0
-    if agent_running:
-        # Agent is running - verify it has at least one key loaded
-        key_count = result.stdout.strip().count('\n') + 1 if result.stdout.strip() else 0
-        assert key_count > 0 or getattr(context, 'ssh_agent_has_keys', True), \
-            "SSH agent should have at least one key loaded for authentication"
+    agent_has_keys = ssh_agent_has_keys()
+    if agent_has_keys:
+        # Agent has keys - authentication will be automatic
+        assert True, "SSH agent has keys for automatic authentication"
     else:
-        # Agent not running - check if test scenario expects this
-        assert getattr(context, 'ssh_agent_running', True), "SSH agent should be running for automatic authentication"
+        # Agent not running or no keys - check if this is expected
+        assert ssh_agent_is_running(), "SSH agent should be running for automatic authentication"
 
 
 @then('the private keys should remain on the host')
 def step_private_keys_remain_on_host(context):
     """Private keys should remain on the host."""
     context.private_keys_on_host_only = True
-    # Verify private keys aren't being forwarded to containers
-    # Check SSH config for agent forwarding (not key forwarding)
+    # Verify private keys exist on host
+    assert has_ssh_keys(), "Private keys should exist on the host"
+    # Verify SSH config for agent forwarding (not key forwarding)
     ssh_config = Path.home() / ".ssh" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         # Agent forwarding is configured, keys stay on host
-        has_agent_forwarding = "ForwardAgent yes" in config_content
-        assert has_agent_forwarding or getattr(context, 'agent_forwarding_enabled', True), \
-            "SSH agent forwarding should be enabled to keep keys on host"
-    else:
-        # Config doesn't exist - verify context indicates agent forwarding is expected
-        assert getattr(context, 'agent_forwarding_enabled', True), \
-            "SSH agent forwarding should be enabled to keep private keys on host"
+        has_agent_forwarding = "ForwardAgent" in config_content or "StreamLocalBindUnlink" in config_content
+        # If forwarding is configured, keys stay on host
+        context.agent_forwarding_enabled = has_agent_forwarding
 
 
 @then('only the SSH agent socket should be forwarded')
@@ -2376,11 +2625,15 @@ def step_only_agent_socket_forwarded(context):
     ssh_auth_sock = os.environ.get("SSH_AUTH_SOCK")
     if ssh_auth_sock:
         # Agent socket is being forwarded - verify the socket path exists
-        assert Path(ssh_auth_sock).exists() or getattr(context, 'test_mock_socket', True), \
+        assert Path(ssh_auth_sock).exists(), \
             f"SSH agent socket should exist at {ssh_auth_sock}"
     else:
-        # Not set - check if test scenario expects agent forwarding
-        assert getattr(context, 'agent_forwarding_enabled', True), "SSH agent socket should be forwarded"
+        # Not set - verify SSH config has agent forwarding
+        ssh_config = Path.home() / ".ssh" / "config"
+        if ssh_config.exists():
+            config_content = ssh_config.read_text()
+            has_forwarding = "ForwardAgent" in config_content
+            assert has_forwarding, "SSH agent forwarding should be configured"
 
 
 @then('the VMs should not have copies of my private keys')
@@ -2393,15 +2646,18 @@ def step_vms_no_private_keys(context):
 @then('all connections should succeed')
 def step_all_connections_succeed(context):
     """All VM-to-VM connections should succeed."""
-    context.all_connections_successful = True
-    assert getattr(context, 'all_connections_successful', True) or len(getattr(context, 'ssh_chain', [])) >= 1
+    ssh_chain = getattr(context, 'ssh_chain', [])
+    all_successful = getattr(context, 'all_connections_successful', False)
+    assert all_successful or len(ssh_chain) >= 1, \
+        "VM-to-VM connections should be established"
+    context.all_connections_successful = all_successful or len(ssh_chain) >= 1
 
 
 @then('all should use my host\'s SSH keys')
 def step_all_use_host_keys(context):
     """All connections should use host's SSH keys."""
     context.all_use_host_keys = True
-    assert getattr(context, 'host_has_ssh_keys', True)
+    assert has_ssh_keys(), "Host should have SSH keys"
 
 
 @then('no keys should be copied to any VM')
@@ -2418,38 +2674,22 @@ def step_no_keys_copied_any_vm(context):
 @given('the SSH agent is running')
 def step_the_ssh_agent_is_running(context):
     """The SSH agent is running."""
-    try:
-        result = subprocess.run(
-            ["ssh-add", "-l"],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
-        context.ssh_agent_running = result.returncode == 0 or "no identities" in result.stderr.lower()
-    except Exception:
-        context.ssh_agent_running = getattr(context, 'ssh_agent_running', True)
+    context.ssh_agent_running = ssh_agent_is_running()
 
 
 @given('my keys are loaded in the agent')
 def step_my_keys_loaded_in_agent(context):
     """My keys are loaded in the agent."""
-    try:
-        result = subprocess.run(
-            ["ssh-add", "-l"],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
-        context.keys_loaded = result.returncode == 0
-    except Exception:
-        context.keys_loaded = getattr(context, 'keys_loaded', True)
+    context.keys_loaded = ssh_agent_has_keys()
 
 
 @then('an SSH agent should be started automatically')
 def step_an_ssh_agent_should_be_started_automatically(context):
     """An SSH agent should be started automatically."""
-    context.ssh_agent_auto_started = True
-    assert getattr(context, 'ssh_agent_running', True) or getattr(context, 'ssh_agent_auto_started', True)
+    # Check if SSH agent is running
+    is_running = ssh_agent_is_running()
+    context.ssh_agent_auto_started = is_running
+    assert is_running, "SSH agent should be started automatically"
 
 
 @given('I have a Go VM running')
@@ -2511,18 +2751,8 @@ def step_have_github_account_with_keys(context):
 @given('the SSH agent is running with my keys loaded')
 def step_ssh_agent_with_keys_loaded(context):
     """SSH agent is running with keys loaded."""
-    try:
-        result = subprocess.run(
-            ["ssh-add", "-l"],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
-        context.ssh_agent_running = result.returncode == 0 or "no identities" in result.stderr.lower()
-        context.keys_loaded = context.ssh_agent_running
-    except Exception:
-        context.ssh_agent_running = getattr(context, 'ssh_agent_running', True)
-        context.keys_loaded = True
+    context.ssh_agent_running = ssh_agent_is_running()
+    context.keys_loaded = ssh_agent_has_keys()
 
 
 @given('I have a private repository on GitHub')
@@ -2804,78 +3034,85 @@ def step_create_and_start_vm(context):
 @then('the repository should be cloned')
 def step_repo_should_be_cloned(context):
     """Repository should be cloned successfully."""
-    assert getattr(context, 'git_clone_executed', True)
+    assert getattr(context, 'git_clone_executed', False), "Git clone should have been executed"
 
 
 @then('I should not be prompted for a password')
 def step_no_password_prompt(context):
     """Should not be prompted for password."""
     context.password_not_required = True
-    assert not getattr(context, 'password_required', False)
+    assert not getattr(context, 'password_required', False), "Password should not be required"
 
 
 @then('my host\'s SSH keys should be used for authentication')
 def step_host_keys_used_for_auth(context):
     """Host's SSH keys should be used for authentication."""
     context.host_keys_used_for_git = True
-    assert getattr(context, 'host_has_ssh_keys', True)
+    assert has_ssh_keys(), "Host should have SSH keys for authentication"
 
 
 @then('the changes should be pushed to GitHub')
 def step_changes_pushed_to_github(context):
     """Changes should be pushed to GitHub."""
-    assert getattr(context, 'git_push_executed', True)
+    assert getattr(context, 'git_push_executed', False), "Git push should have been executed"
 
 
 @then('my host\'s SSH keys should be used')
 def step_host_keys_used(context):
     """Host's SSH keys should be used."""
     context.host_keys_used = True
-    assert getattr(context, 'host_has_ssh_keys', True)
+    assert has_ssh_keys(), "Host should have SSH keys"
 
 
 @then('both repositories should update')
 def step_both_repos_update(context):
     """Both repositories should update."""
-    assert getattr(context, 'git_pull_github', True) and getattr(context, 'git_pull_gitlab', True)
+    github = getattr(context, 'git_pull_github', False)
+    gitlab = getattr(context, 'git_pull_gitlab', False)
+    assert github and gitlab, "Both GitHub and GitLab repositories should update"
 
 
 @then('each should use the appropriate SSH key from my host')
 def step_each_uses_appropriate_key(context):
     """Each repo should use appropriate SSH key."""
     context.appropriate_keys_used = True
-    assert getattr(context, 'github_keys_configured', True) and getattr(context, 'gitlab_keys_configured', True)
+    # Verify SSH agent is running for automatic key selection
+    assert ssh_agent_is_running(), "SSH agent should be running for automatic key selection"
 
 
 @then('the submodules should be cloned')
 def step_submodules_cloned(context):
     """Git submodules should be cloned."""
-    assert getattr(context, 'submodule_update_executed', True)
+    assert getattr(context, 'submodule_update_executed', False), "Submodule update should have been executed"
 
 
 @then('all repositories should update')
 def step_all_repos_update(context):
     """All repositories should update."""
-    assert getattr(context, 'git_pull_all_services', True)
+    assert getattr(context, 'git_pull_all_services', False), "Git pull for all services should have been executed"
 
 
 @then('the application should be deployed')
 def step_app_should_be_deployed(context):
     """Application should be deployed."""
-    assert getattr(context, 'deploy_script_executed', True)
+    assert getattr(context, 'deploy_script_executed', False), "Deploy script should have been executed"
 
 
 @then('my host\'s SSH keys should be used for both operations')
 def step_host_keys_used_for_both(context):
     """Host's SSH keys should be used for both scp and ssh."""
     context.host_keys_for_both = True
-    assert getattr(context, 'scp_to_deploy_executed', True) and getattr(context, 'deploy_script_executed', True)
+    scp = getattr(context, 'scp_to_deploy_executed', False)
+    deploy = getattr(context, 'deploy_script_executed', False)
+    assert scp and deploy, "Both SCP and deploy script should have been executed"
 
 
 @then('both repositories should be cloned')
 def step_both_repos_cloned(context):
     """Both repositories should be cloned."""
-    assert getattr(context, 'clone_from_account1', True) and getattr(context, 'clone_from_account2', True)
+    account1 = getattr(context, 'clone_from_account1', False)
+    account2 = getattr(context, 'clone_from_account2', False)
+    assert account1 and account2, "Both repositories should be cloned"
 
 
 @then('each should use the correct SSH key')
@@ -2883,10 +3120,8 @@ def step_each_uses_correct_key(context):
     """Each repo should use correct SSH key."""
     context.correct_keys_used = True
     # Verify SSH agent is running (agent handles key selection automatically)
-    result = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True, timeout=5)
-    agent_has_keys = result.returncode == 0 and result.stdout.strip()
-    assert agent_has_keys or getattr(context, 'ssh_agent_running', True), \
-        "SSH agent should be running and have keys for automatic key selection"
+    agent_has_keys = ssh_agent_has_keys()
+    assert agent_has_keys, "SSH agent should have keys for automatic key selection"
 
 
 @then('the agent should automatically select the right key')
@@ -2894,30 +3129,28 @@ def step_agent_selects_right_key(context):
     """SSH agent should automatically select the right key."""
     context.agent_auto_key_selection = True
     # Verify SSH agent functionality
-    result = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True, timeout=5)
-    agent_running = result.returncode == 0
-    assert agent_running or getattr(context, 'ssh_agent_running', True), \
-        "SSH agent should be running for automatic key selection"
+    agent_running = ssh_agent_is_running()
+    assert agent_running, "SSH agent should be running for automatic key selection"
 
 
 @then('the deployment should succeed')
 def step_deployment_succeeds(context):
     """Deployment should succeed."""
-    assert getattr(context, 'npm_deploy_executed', True)
+    assert getattr(context, 'npm_deploy_executed', False), "NPM deploy should have been executed"
 
 
 @then('the Git commands should use my host\'s SSH keys')
 def step_git_uses_host_keys(context):
     """Git commands should use host's SSH keys."""
     context.git_uses_host_keys = True
-    assert getattr(context, 'host_has_ssh_keys', True)
+    assert has_ssh_keys(), "Host should have SSH keys for Git operations"
 
 
 @then('all Git operations should succeed')
 def step_all_git_ops_succeed(context):
     """All Git operations should succeed."""
     context.all_git_ops_success = True
-    assert getattr(context, 'cicd_script_executed', True)
+    assert getattr(context, 'cicd_script_executed', False), "CI/CD script should have been executed"
 
 
 @then('no manual intervention should be required')
@@ -2925,16 +3158,14 @@ def step_no_manual_intervention(context):
     """No manual intervention should be required."""
     context.no_manual_intervention = True
     # Verify automation setup (SSH agent + keys)
-    result = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True, timeout=5)
-    agent_has_keys = result.returncode == 0 and result.stdout.strip()
-    assert agent_has_keys or getattr(context, 'automation_configured', True), \
-        "SSH agent should be configured for automation"
+    agent_has_keys = ssh_agent_has_keys()
+    assert agent_has_keys, "SSH agent should be configured for automation"
 
 
 @then('the clone should succeed')
 def step_clone_succeeds(context):
     """Clone should succeed."""
-    assert getattr(context, 'git_clone_executed', True)
+    assert getattr(context, 'git_clone_executed', False), "Git clone should have been executed"
 
 
 @then('I should not have copied any keys to the VM')
@@ -3239,140 +3470,140 @@ def step_run_to_host_cleanup(context):
 def step_output_shows_host_containers(context):
     """Output should show host's containers."""
     context.host_containers_shown = True
-    assert getattr(context, 'to_host_command_executed', True)
+    assert getattr(context, 'to_host_command_executed', False), "to-host command should have been executed"
 
 
 @then('I should see the host\'s log output')
 def step_see_host_log_output(context):
     """Should see the host's log output."""
     context.host_log_output_seen = True
-    assert getattr(context, 'following_logs', True)
+    assert getattr(context, 'following_logs', False), "Logs should be followed"
 
 
 @then('the output should update in real-time')
 def step_output_updates_realtime(context):
     """Output should update in real-time."""
     context.realtime_log_updates = True
-    assert getattr(context, 'following_logs', True)
+    assert getattr(context, 'following_logs', False), "Logs should be followed for real-time updates"
 
 
 @then('I should see a list of my host\'s directories')
 def step_see_host_directories(context):
     """Should see a list of host's directories."""
     context.host_directories_seen = True
-    assert getattr(context, 'to_host_command_executed', True)
+    assert getattr(context, 'to_host_command_executed', False), "to-host command should have been executed"
 
 
 @then('I should be able to navigate the host filesystem')
 def step_navigate_host_filesystem(context):
     """Should be able to navigate the host filesystem."""
     context.host_filesystem_navigable = True
-    assert getattr(context, 'to_host_command_executed', True)
+    assert getattr(context, 'to_host_command_executed', False), "to-host command should have been executed"
 
 
 @then('I should see CPU, memory, and I/O statistics')
 def step_see_cpu_memory_io_stats(context):
     """Should see CPU, memory, and I/O statistics."""
     context.cpu_memory_io_stats_seen = True
-    assert getattr(context, 'checking_resource_usage', True)
+    assert getattr(context, 'checking_resource_usage', False), "Resource usage should be checked"
 
 
 @then('the PostgreSQL container should restart')
 def step_postgres_restarts(context):
     """PostgreSQL container should restart."""
     context.postgres_restarted = True
-    assert getattr(context, 'postgres_restart_triggered', True)
+    assert getattr(context, 'postgres_restart_triggered', False), "PostgreSQL restart should be triggered"
 
 
 @then('I should be able to verify the restart')
 def step_can_verify_restart(context):
     """Should be able to verify the restart."""
     context.restart_verified = True
-    assert getattr(context, 'postgres_restarted', True)
+    assert getattr(context, 'postgres_restarted', False), "PostgreSQL should have been restarted"
 
 
 @then('I should see the contents of the host file')
 def step_see_host_file_contents(context):
     """Should see the contents of the host file."""
     context.host_file_contents_seen = True
-    assert getattr(context, 'config_file_read', True)
+    assert getattr(context, 'config_file_read', False), "Config file should be read"
 
 
 @then('I should be able to use the content in the VM')
 def step_can_use_content_in_vm(context):
     """Should be able to use the content in the VM."""
     context.content_usable_in_vm = True
-    assert getattr(context, 'config_file_read', True)
+    assert getattr(context, 'config_file_read', False), "Config file should be read for use in VM"
 
 
 @then('I should see the build output')
 def step_see_build_output(context):
     """Should see the build output."""
     context.build_output_seen = True
-    assert getattr(context, 'build_triggered', True)
+    assert getattr(context, 'build_triggered', False), "Build should be triggered"
 
 
 @then('I should see the status of the Python VM')
 def step_see_python_vm_status(context):
     """Should see the status of the Python VM."""
     context.python_vm_status_seen = True
-    assert getattr(context, 'to_host_command_executed', True)
+    assert getattr(context, 'to_host_command_executed', False), "to-host command should have been executed"
 
 
 @then('I can make decisions based on the status')
 def step_can_make_decisions(context):
     """Can make decisions based on the status."""
     context.decisions_based_on_status = True
-    assert getattr(context, 'checking_vm_status', True)
+    assert getattr(context, 'checking_vm_status', False), "VM status should be checked"
 
 
 @then('the backup should execute on my host')
 def step_backup_executes_on_host(context):
     """The backup should execute on the host."""
     context.backup_executed_on_host = True
-    assert getattr(context, 'backup_triggered', True)
+    assert getattr(context, 'backup_triggered', False), "Backup should be triggered"
 
 
 @then('my data should be backed up')
 def step_data_backed_up(context):
     """Data should be backed up."""
     context.data_backed_up = True
-    assert getattr(context, 'backup_triggered', True)
+    assert getattr(context, 'backup_triggered', False), "Backup should be triggered"
 
 
 @then('I can diagnose the issue')
 def step_can_diagnose_issue(context):
     """Can diagnose the issue."""
     context.issue_diagnosed = True
-    assert getattr(context, 'diagnosing_host_issue', True)
+    assert getattr(context, 'diagnosing_host_issue', False), "Host issue should be diagnosed"
 
 
 @then('I should see network connectivity results')
 def step_see_network_results(context):
     """Should see network connectivity results."""
     context.network_results_seen = True
-    assert getattr(context, 'to_host_command_executed', True)
+    assert getattr(context, 'to_host_command_executed', False), "to-host command should have been executed"
 
 
 @then('I can diagnose network issues')
 def step_can_diagnose_network(context):
     """Can diagnose network issues."""
     context.network_issues_diagnosed = True
-    assert getattr(context, 'checking_network_connectivity', True)
+    assert getattr(context, 'checking_network_connectivity', False), "Network connectivity should be checked"
 
 
 @then('the script should execute on my host')
 def step_script_executes_on_host(context):
     """The script should execute on the host."""
     context.script_executed_on_host = True
-    assert getattr(context, 'cleanup_triggered', True)
+    assert getattr(context, 'cleanup_triggered', False), "Cleanup should be triggered"
 
 
 @then('the cleanup should be performed')
 def step_cleanup_performed(context):
     """The cleanup should be performed."""
     context.cleanup_performed = True
-    assert getattr(context, 'cleanup_triggered', True)
+    assert getattr(context, 'cleanup_triggered', False), "Cleanup should be triggered"
 
 
 
@@ -3390,7 +3621,12 @@ def step_receive_ssh_port(context):
     """Should receive the SSH port for the VM."""
     context.ssh_port_received = True
     context.ssh_port = "2203"  # Python VM default port
-    assert getattr(context, 'ssh_port_received', True)
+    # Verify SSH config contains the port for the VM
+    ssh_config = Path.home() / ".ssh" / "config"
+    if ssh_config.exists():
+        # Check if any port is configured (not just 2203)
+        assert "Port " in ssh_config.read_text(), "SSH config should have Port configured"
+    # Port was set by the step, so this is verified by context
 
 
 @then('I should receive the username (devuser)')
@@ -3472,7 +3708,7 @@ def step_add_ssh_config_python_dev(context):
 def step_can_connect_remote_ssh(context):
     """Can connect using Remote-SSH."""
     context.remote_ssh_connected = True
-    assert getattr(context, 'ssh_config_added', True)
+    assert getattr(context, 'ssh_config_added', False), "SSH config should be added"
 
 
 @then('my workspace should be mounted')
@@ -3480,13 +3716,16 @@ def step_workspace_mounted(context):
     """Workspace should be mounted."""
     context.workspace_mounted = True
     context.workspace_path = "/home/devuser/workspace"
+    # Verify SSH config exists for the connection
+    ssh_config = Path.home() / ".ssh" / "config"
+    assert ssh_config.exists(), "SSH config should exist for workspace mounting"
 
 
 @then('I can edit files in the projects directory')
 def step_can_edit_files_projects(context):
     """Can edit files in the projects directory."""
     context.can_edit_files = True
-    assert getattr(context, 'workspace_mounted', True)
+    assert getattr(context, 'workspace_mounted', False), "Workspace should be mounted"
 
 
 # -----------------------------------------------------------------------------
@@ -3554,7 +3793,7 @@ def step_connect_to_vm(context):
 def step_key_based_auth_used(context):
     """Key-based authentication should be used."""
     context.key_based_auth = True
-    assert getattr(context, 'key_based_auth_used', True)
+    assert getattr(context, 'key_based_auth_used', False), "Key-based auth should be used"
 
 
 # -----------------------------------------------------------------------------
@@ -3572,14 +3811,14 @@ def step_navigate_to_workspace(context):
 def step_see_project_files(context):
     """Should see project files."""
     context.project_files_visible = True
-    assert getattr(context, 'workspace_navigated', True)
+    assert getattr(context, 'workspace_navigated', False), "Workspace should be navigated"
 
 
 @then('changes should be reflected on the host')
 def step_changes_reflected_on_host(context):
     """Changes should be reflected on the host."""
     context.changes_synced_to_host = True
-    assert getattr(context, 'project_files_visible', True)
+    assert getattr(context, 'project_files_visible', False), "Project files should be visible"
 
 
 # -----------------------------------------------------------------------------
@@ -3610,7 +3849,7 @@ def step_execute_without_password(context):
 def step_have_necessary_permissions(context):
     """Should have necessary permissions."""
     context.sudo_permissions_granted = True
-    assert getattr(context, 'sudo_commands_executed', True)
+    assert getattr(context, 'sudo_commands_executed', False), "Sudo commands should be executed"
 
 
 # -----------------------------------------------------------------------------
@@ -3635,14 +3874,14 @@ def step_start_shell(context):
 def step_using_zsh(context):
     """Should be using zsh."""
     context.using_zsh = True
-    assert context.active_shell == "zsh"
+    assert context.active_shell == "zsh", "Active shell should be zsh"
 
 
 @then('oh-my-zsh should be configured')
 def step_oh_my_zsh_configured(context):
     """oh-my-zsh should be configured."""
     context.oh_my_zsh_configured = True
-    assert getattr(context, 'shell_started', True)
+    assert getattr(context, 'shell_started', False), "Shell should be started"
 
 
 @then('my preferred theme should be active')
@@ -3667,7 +3906,7 @@ def step_run_nvim(context):
 def step_lazyvim_available(context):
     """LazyVim should be available."""
     context.lazyvim_available = True
-    assert getattr(context, 'nvim_started', True)
+    assert getattr(context, 'nvim_started', False), "nvim should be started"
 
 
 # -----------------------------------------------------------------------------
@@ -3685,14 +3924,14 @@ def step_use_scp_copy_files(context):
 def step_files_transfer_workspace(context):
     """Files should transfer to/from workspace."""
     context.files_transferred = True
-    assert getattr(context, 'scp_used', True)
+    assert getattr(context, 'scp_used', False), "SCP should be used"
 
 
 @then('permissions should be preserved')
 def step_permissions_preserved(context):
     """Permissions should be preserved."""
     context.permissions_preserved = True
-    assert getattr(context, 'files_transferred', True)
+    assert getattr(context, 'files_transferred', False), "Files should be transferred"
 
 
 # -----------------------------------------------------------------------------
@@ -3718,14 +3957,14 @@ def step_access_localhost_vm_port(context):
 def step_reach_service(context):
     """Should reach the service."""
     context.service_reached = True
-    assert getattr(context, 'localhost_accessed', True)
+    assert getattr(context, 'localhost_accessed', False), "Localhost should be accessed"
 
 
 @then('the service should be accessible from the host')
 def step_service_accessible_from_host(context):
     """Service should be accessible from the host."""
     context.service_accessible_from_host = True
-    assert getattr(context, 'service_reached', True)
+    assert getattr(context, 'service_reached', False), "Service should be reached"
 
 
 # -----------------------------------------------------------------------------
@@ -3750,14 +3989,14 @@ def step_ssh_connection_drops(context):
 def step_task_continues_running(context):
     """Task should continue running."""
     context.task_continues_running = True
-    assert getattr(context, 'session_persisted', True)
+    assert getattr(context, 'session_persisted', False), "Session should persist"
 
 
 @then('I can reconnect to the same session')
 def step_reconnect_same_session(context):
     """Can reconnect to the same session."""
     context.session_reconnected = True
-    assert getattr(context, 'task_continues_running', True)
+    assert getattr(context, 'task_continues_running', False), "Task should continue running"
 
 
 # -----------------------------------------------------------------------------
@@ -3945,13 +4184,26 @@ def step_known_hosts_backup_exists(context, backup_path):
 @then('backup should contain original content')
 def step_backup_contains_original(context):
     """Verify backup contains the original content."""
-    assert getattr(context, 'backup_exists', True)
+    # Check if backup was marked as existing during this scenario
+    assert getattr(context, 'backup_exists', False), "Backup file should exist"
 
 
 @then('command should succeed without error')
 def step_command_succeeds_no_error(context):
     """Verify command completed successfully."""
-    assert getattr(context, 'vm_removed', True), "VM removal should succeed"
+    # Check if VM was actually removed via container verification or context flag
+    vm_removed = getattr(context, 'vm_removed', False)
+    if hasattr(context, 'vm_name') and context.vm_name:
+        # Try real verification first
+        try:
+            result = subprocess.run(
+                ["docker", "ps", "--filter", f"name={context.vm_name}", "--format", "{{.Names}}"],
+                capture_output=True, text=True, timeout=10
+            )
+            vm_removed = context.vm_name not in result.stdout
+        except Exception:
+            pass
+    assert vm_removed, "VM removal should succeed"
 
 
 @then('no known_hosts file should be created')
@@ -3966,7 +4218,9 @@ def step_no_known_hosts_created(context):
 @then('SSH connection should succeed without host key warning')
 def step_ssh_succeeds_no_warning(context):
     """Verify SSH connection works without host key warning."""
-    assert getattr(context, 'vm_removed', True), "VM should be removed first"
+    # This step verifies SSH works after VM recreation - check that we can access SSH
+    # The "vm_removed" context flag indicates previous VM was removed before recreation
+    assert getattr(context, 'vm_removed', False), "VM should be removed first"
 
 
 @then('~/.ssh/known_hosts should contain new entry for "{pattern}"')
