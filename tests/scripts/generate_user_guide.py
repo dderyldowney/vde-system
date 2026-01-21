@@ -234,14 +234,110 @@ def extract_scenarios_from_feature(content):
 # SCENARIO FORMATTING
 # =============================================================================
 
+# Mapping of scenario patterns to their actual vde commands
+# This maps common scenario descriptions to the commands users would run
+SCENARIO_COMMAND_MAP = {
+    # Listing/Discovery scenarios
+    "what VMs can I create": "vde list",
+    "what VMs are available": "vde list",
+    "list all available vms": "vde list",
+    "show all services": "vde list --services",
+
+    # Creation scenarios
+    "create a Python VM": "vde create python",
+    "create a go vm": "vde create go",
+    "create a rust VM": "vde create rust",
+    "create python and postgresql": "vde create python && vde create postgres",
+    "plan to create": "vde create <vm-type>",
+
+    # Start scenarios
+    "start my development day": "vde start <vms>",
+    "plan to start": "vde start <vms>",
+
+    # Verification scenarios
+    "verify installation commands": "vde list",
+    "check service port configuration": "vde list",
+    "count all configured vms": "vde list",
+    "check vm status": "vde list",
+}
+
+
+def extract_command_from_scenario(scenario_name, scenario_body):
+    """
+    Extract or infer the actual vde command from a scenario.
+
+    First tries to find explicit commands in the scenario body,
+    then falls back to pattern matching from scenario names.
+
+    Returns:
+        str: The command or None if not found
+    """
+    # First, try to find explicit "When I run" commands
+    for line in scenario_body.split('\n'):
+        line = line.strip()
+        if line.startswith('When I run'):
+            # Extract command from quotes
+            match = re.search(r'When I run ["\']([^"\']+)["\']', line)
+            if match:
+                return match.group(1)
+
+    # Second, try to find "When I parse" patterns (parser testing)
+    for line in scenario_body.split('\n'):
+        line = line.strip()
+        if line.startswith('When I parse'):
+            # Extract the quoted text as a parser example
+            match = re.search(r'When I parse ["\']([^"\']+)["\']', line)
+            if match:
+                return f"vde {match.group(1)}"
+
+    # Third, try pattern matching from scenario name and body
+    lower_name = scenario_name.lower()
+    lower_body = scenario_body.lower()
+
+    # Check for list/create/start patterns
+    if "what vms can i create" in lower_body or "what VMs are available" in lower_body:
+        return "vde list"
+    elif "create" in lower_name or "create" in lower_body:
+        # Extract VM type from scenario
+        if "python" in lower_name or "python" in lower_body:
+            return "vde create python"
+        elif "go" in lower_name:
+            return "vde create go"
+        elif "rust" in lower_name:
+            return "vde create rust"
+        elif "postgres" in lower_name:
+            return "vde create postgres"
+    elif "start" in lower_name or "start" in lower_body:
+        return "vde start <vms>"
+
+    # Try the explicit mapping
+    for pattern, command in SCENARIO_COMMAND_MAP.items():
+        if pattern in lower_name or pattern in lower_body:
+            return command
+
+    return None
+
+
 def format_scenario_for_user_guide(scenario_name, scenario_body):
-    """Format a scenario for the user guide with explanations."""
+    """
+    Format a scenario for the user guide with explanations and commands.
+
+    Shows the scenario with:
+    1. Title with inline command hint
+    2. The Gherkin scenario steps
+    """
     lines = []
 
     # Clean up scenario name for display
     display_name = scenario_name.replace("-", " ").capitalize()
 
-    lines.append(f"**Scenario: {display_name}**\n")
+    # Extract and display the actual command inline
+    command = extract_command_from_scenario(scenario_name, scenario_body)
+    if command:
+        lines.append(f"**Scenario: {display_name}** — 💡 **Run this:** `{command}` and it will accomplish this\n\n")
+    else:
+        lines.append(f"**Scenario: {display_name}**\n\n")
+
     lines.append("```")
     for line in scenario_body.split('\n'):
         line = line.strip()
@@ -584,6 +680,12 @@ def generate_user_guide(passing_scenarios=None):
             # This was the critical bug - scenarios were extracted but never written
             if section in all_scenarios and all_scenarios[section]:
                 f.write("### Verified Scenarios\n\n")
+                # Preface: explain vde commands vs scripts
+                f.write("> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. ")
+                f.write("Each scenario includes the actual **`vde` command** you would run to accomplish the task. ")
+                f.write("We show the unified `vde` command because it's simpler and more consistent than ")
+                f.write("remembering individual script names like `create-virtual-for` or `start-virtual`. ")
+                f.write("The `vde` command handles all the heavy lifting for you!\n\n")
                 for scenario_name, scenario_body in all_scenarios[section]:
                     f.write(format_scenario_for_user_guide(scenario_name, scenario_body))
                     f.write("\n\n")
