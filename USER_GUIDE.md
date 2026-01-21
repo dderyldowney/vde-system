@@ -33,7 +33,7 @@
 
 ---
 
-<details open>
+<details id="1.-installation" data-section="1. Installation">
 
 <summary><h2>1. Installation</h2></summary>
 
@@ -1645,7 +1645,7 @@ vde create python
 
 </details>
 
-<details open>
+<details id="2.-ssh-keys" data-section="2. SSH Keys">
 
 <summary><h2>2. SSH Keys</h2></summary>
 
@@ -1733,7 +1733,7 @@ And I can connect using simple names like "python-dev"
 
 </details>
 
-<details open>
+<details id="3.-your-first-vm" data-section="3. Your First VM">
 
 <summary><h2>3. Your First VM</h2></summary>
 
@@ -1926,7 +1926,7 @@ vde create a go vm
 
 </details>
 
-<details open>
+<details id="4.-understanding" data-section="4. Understanding">
 
 <summary><h2>4. Understanding</h2></summary>
 
@@ -2265,7 +2265,7 @@ vde start python   rust
 
 </details>
 
-<details open>
+<details id="5.-starting-and-stopping" data-section="5. Starting and Stopping">
 
 <summary><h2>5. Starting and Stopping</h2></summary>
 
@@ -2647,7 +2647,7 @@ vde start python
 
 </details>
 
-<details open>
+<details id="6.-your-first-cluster" data-section="6. Your First Cluster">
 
 <summary><h2>6. Your First Cluster</h2></summary>
 
@@ -2850,7 +2850,7 @@ vde start python, rust, and go
 
 </details>
 
-<details open>
+<details id="7.-connecting" data-section="7. Connecting">
 
 <summary><h2>7. Connecting</h2></summary>
 
@@ -3011,7 +3011,7 @@ vde how do I connect to python
 
 </details>
 
-<details open>
+<details id="8.-working-with-databases" data-section="8. Working with Databases">
 
 <summary><h2>8. Working with Databases</h2></summary>
 
@@ -3159,7 +3159,7 @@ vde create python
 
 </details>
 
-<details open>
+<details id="9.-daily-workflow" data-section="9. Daily Workflow">
 
 <summary><h2>9. Daily Workflow</h2></summary>
 
@@ -3287,7 +3287,7 @@ And the plan should apply to all running VMs
 
 </details>
 
-<details open>
+<details id="10.-adding-more-languages" data-section="10. Adding More Languages">
 
 <summary><h2>10. Adding More Languages</h2></summary>
 
@@ -3487,7 +3487,7 @@ vde rebuild with no cache
 
 </details>
 
-<details open>
+<details id="11.-troubleshooting" data-section="11. Troubleshooting">
 
 <summary><h2>11. Troubleshooting</h2></summary>
 
@@ -3770,3 +3770,38 @@ Look at you go! You now have:
 *This guide is generated from BDD test scenarios that have been verified to PASS. Every workflow shown here has been tested and verified to work. If you follow these steps, they will work for you.*
 
 **Now go build something awesome!** 💪✨
+
+<script>
+// Collapsible sections with TOC navigation
+(function() {
+    // Intercept all TOC links
+    document.addEventListener('DOMContentLoaded', function() {
+        const tocLinks = document.querySelectorAll('a[href^="#"]');
+
+        tocLinks.forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                const targetId = link.getAttribute('href').substring(1);
+                const targetSection = document.querySelector(`details[id="${targetId}"], details[data-section="${targetId}"]`);
+
+                if (targetSection) {
+                    e.preventDefault();
+
+                    // Expand the target section
+                    targetSection.setAttribute('open', '');
+
+                    // Collapse all other sections
+                    const allSections = document.querySelectorAll('details');
+                    allSections.forEach(function(section) {
+                        if (section !== targetSection) {
+                            section.removeAttribute('open');
+                        }
+                    });
+
+                    // Smooth scroll to target
+                    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    });
+})();
+</script>

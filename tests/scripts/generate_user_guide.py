@@ -695,8 +695,8 @@ def generate_user_guide(passing_scenarios=None):
 
         # Write each section with collapsible wrapping
         for i, (section, _) in enumerate(sections, 1):
-            # Start collapsible section (default open)
-            f.write(f'<details open>\n\n')
+            # Start collapsible section (default collapsed)
+            f.write(f'<details id="{section.lower().replace(" ", "-").replace(":", "")}" data-section="{section}">\n\n')
             f.write(f'<summary><h2>{section}</h2></summary>\n\n')
 
             # Add section introduction from YAML (Phase 2)
@@ -731,6 +731,44 @@ def generate_user_guide(passing_scenarios=None):
 
         # Quick reference card (now dynamically generated - Phase 4)
         f.write(generate_quick_reference())
+
+        # JavaScript for collapsible sections with TOC navigation
+        f.write("""
+<script>
+// Collapsible sections with TOC navigation
+(function() {
+    // Intercept all TOC links
+    document.addEventListener('DOMContentLoaded', function() {
+        const tocLinks = document.querySelectorAll('a[href^="#"]');
+
+        tocLinks.forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                const targetId = link.getAttribute('href').substring(1);
+                const targetSection = document.querySelector(`details[id="${targetId}"], details[data-section="${targetId}"]`);
+
+                if (targetSection) {
+                    e.preventDefault();
+
+                    // Expand the target section
+                    targetSection.setAttribute('open', '');
+
+                    // Collapse all other sections
+                    const allSections = document.querySelectorAll('details');
+                    allSections.forEach(function(section) {
+                        if (section !== targetSection) {
+                            section.removeAttribute('open');
+                        }
+                    });
+
+                    // Smooth scroll to target
+                    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    });
+})();
+</script>
+""")
 
     print(f"✓ Generated {OUTPUT_FILE}")
     if passing_scenarios is not None:
