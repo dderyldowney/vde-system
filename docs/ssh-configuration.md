@@ -85,8 +85,8 @@ When you run `create-virtual-for` or `start-virtual`, VDE automatically:
 
 ```bash
 # Just create and start VMs - SSH is handled automatically
-./scripts/create-virtual-for python
-./scripts/start-virtual python
+vde create python
+vde start python
 ssh python-dev  # Works immediately, no setup needed
 ```
 
@@ -125,8 +125,8 @@ scp python-dev:/data/file .   # Copy file from Python VM
 
 ```bash
 # Create and start VMs
-./scripts/create-virtual-for python postgres redis
-./scripts/start-virtual python postgres redis
+vde create python postgres redis
+vde start python postgres redis
 
 # From Python VM, connect to services
 ssh python-dev
@@ -138,8 +138,8 @@ ssh redis-dev redis-cli             # Connect to Redis
 
 ```bash
 # Create microservices architecture
-./scripts/create-virtual-for go python rust postgres
-./scripts/start-virtual go python rust postgres
+vde create go python rust postgres
+vde start go python rust postgres
 
 # From Go VM (API gateway)
 ssh go-dev
@@ -225,8 +225,6 @@ scp user@external-server.com:/path/file .
 
 ```bash
 # Interactive status display
-./scripts/ssh-agent-setup
-# OR using vde CLI
 vde health  # Includes SSH status check
 ```
 
@@ -324,7 +322,7 @@ docker ps | grep -E "python|go"
 Regenerate VM SSH config:
 
 ```bash
-./scripts/ssh-agent-setup
+vde health
 ```
 
 ### Permission Denied (Publickey)
@@ -351,8 +349,8 @@ cat ~/.ssh/config
 
 4. Rebuild VM with updated keys:
 ```bash
-./scripts/shutdown-virtual python
-./scripts/start-virtual python --rebuild
+vde stop python
+vde start python --rebuild
 ```
 
 ### Connection Refused
@@ -373,8 +371,8 @@ docker logs python-dev
 
 3. Restart container:
 ```bash
-./scripts/shutdown-virtual python
-./scripts/start-virtual python
+vde stop python
+vde start python
 ```
 
 ### Verbose Debugging
@@ -419,8 +417,8 @@ EOF
 
 ```bash
 # Just create VM - everything else is automatic
-./scripts/create-virtual-for python
-./scripts/start-virtual python
+vde create python
+vde start python
 ```
 
 All manual steps are now handled by VDE automatically.
@@ -432,7 +430,7 @@ All manual steps are now handled by VDE automatically.
 1. **Let VDE handle SSH setup**: Don't manually configure SSH agent or keys
 2. **Use VM aliases**: Use `python-dev` instead of `localhost -p 2200`
 3. **Use the vde CLI**: Prefer `vde create/start/stop` over direct script calls
-4. **Check status with vde health**: Run `vde health` for comprehensive system status
+4. **Check status with vde health**: Run `vde health` for comprehensive system status including SSH agent status
 5. **Multiple keys are supported**: All your keys are automatically detected and loaded
 6. **Security keys work too**: YubiKey and other security keys are automatically detected
 7. **Keys never leave the host**: Agent forwarding is secure by design

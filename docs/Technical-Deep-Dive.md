@@ -814,16 +814,10 @@ find_next_available_port lang
 Let's trace exactly what happens when you run:
 
 ```bash
-./scripts/create-virtual-for go
-```
-
-### Step 1: Using the Unified CLI
-
-```bash
 vde create go
 ```
 
-This invokes the `vde` script which sources all libraries and then calls `create-virtual-for go`.
+This invokes the `vde` script which sources all libraries and then calls the VM creation logic.
 
 ### Step 2: Script Entry (create-virtual-for)
 
@@ -985,12 +979,6 @@ Now you run:
 
 ```bash
 vde start go
-```
-
-Or equivalently:
-
-```bash
-./scripts/start-virtual go
 ```
 
 ### Script Flow (start-virtual)
@@ -1246,24 +1234,13 @@ ssh go-dev
 The scripts support managing multiple VMs at once:
 
 ```bash
-# Using the unified CLI
 vde start python go rust postgres redis
-
-# Or using direct scripts
-./scripts/start-virtual python go rust postgres redis
-
-# This internally does:
-for vm in "python" "go" "rust" "postgres" "redis"; do
-    start_vm "$vm" "$rebuild" "$nocache"
-done
 ```
 
 **Special case: `all` keyword**
 
 ```bash
 vde start all
-# or
-./scripts/start-virtual all
 ```
 
 This expands to all VMs that have been created (have docker-compose.yml files):
@@ -1287,8 +1264,6 @@ done
 
 ```bash
 vde stop go
-# or
-./scripts/shutdown-virtual go
 ```
 
 **Internally:**
@@ -1311,14 +1286,7 @@ stop_vm() {
 
 ## Part 14: Adding New VM Types
 
-The `add-vm-type` script appends new entries to `vm-types.conf`:
-
-```bash
-./scripts/add-vm-type zig \
-    "apt-get update -y && apt-get install -y zig"
-```
-
-Or using the unified CLI:
+New VM types can be added by editing `vm-types.conf` directly or using the vde command:
 
 ```bash
 vde add-vm-type zig "apt-get update -y && apt-get install -y zig"
@@ -1338,8 +1306,6 @@ vde add-vm-type zig "apt-get update -y && apt-get install -y zig"
 Now you can:
 ```bash
 vde create zig
-# or
-./scripts/create-virtual-for zig
 ```
 
 ---
@@ -1348,12 +1314,12 @@ vde create zig
 
 ```
 User Action:
-  ./scripts/create-virtual-for go
+  vde create go
 
 ↓
 
 Script Entry:
-  create-virtual-for sources lib/vm-common
+  vde create sources lib/vm-common
   ↓
   load_vm_types parses vm-types.conf
   ↓
@@ -1416,7 +1382,7 @@ Output:
 ↓
 
 Start VM:
-  ./scripts/start-virtual go
+  vde start go
   ↓
   docker-compose -f configs/docker/go/docker-compose.yml up -d
   ↓
@@ -1479,11 +1445,6 @@ Connect:
 |------|-------|---------|
 | `scripts/vde` | 237 | Unified CLI command for all VDE operations |
 | `scripts/data/vm-types.conf` | 34 | VM type definitions (19 languages + 7 services) |
-| `scripts/create-virtual-for` | 199+ | Create new VM from predefined type |
-| `scripts/start-virtual` | 85+ | Start one or more VMs |
-| `scripts/shutdown-virtual` | 65+ | Stop one or more VMs |
-| `scripts/add-vm-type` | 252+ | Add new VM type to vm-types.conf |
-| `scripts/list-vms` | - | List all VMs and their status |
 
 ### Templates
 

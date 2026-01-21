@@ -189,10 +189,10 @@ vde_error_container_exists() {
     vde_error_show \
         "VM '$name' already exists" \
         "A VM with this name has already been created" \
-        "1. List existing VMs: vde list-vms
-2. Start the existing VM: vde start-virtual $name
-3. Or delete the existing VM: vde delete-virtual $name" \
-        "command-reference.md#list-vms"
+        "1. List existing VMs: vde list
+2. Start the existing VM: vde start $name
+3. Or delete the existing VM: vde remove $name" \
+        "command-reference.md#list"
 }
 
 vde_error_permission_denied() {
@@ -211,10 +211,10 @@ vde_error_vm_not_found() {
     vde_error_show \
         "VM '$name' not found" \
         "No VM with this name exists in your configuration" \
-        "1. List available VMs: vde list-vms
-2. See available types: vde show-vm-types
-3. Create a new VM: vde create-virtual-for <type>" \
-        "command-reference.md#create-virtual-for"
+        "1. List available VMs: vde list
+2. See available types: vde list --types
+3. Create a new VM: vde create <type>" \
+        "command-reference.md#create"
 }
 
 vde_error_vm_not_running() {
@@ -222,9 +222,20 @@ vde_error_vm_not_running() {
     vde_error_show \
         "VM '$name' is not running" \
         "The VM exists but is currently stopped" \
-        "1. Start the VM: vde start-virtual $name
+        "1. Start the VM: vde start $name
 2. Check VM status: vde status" \
-        "command-reference.md#start-virtual"
+        "command-reference.md#start"
+}
+
+vde_error_vm_not_created() {
+    local name="$1"
+    vde_error_show \
+        "VM '$name' has not been created" \
+        "The VM configuration does not exist yet" \
+        "1. Create the VM: vde create $name
+2. List available VM types: vde list
+3. Or create a VM with custom configuration: vde create <type>" \
+        "command-reference.md#create"
 }
 
 vde_error_docker_build_failed() {
@@ -232,9 +243,9 @@ vde_error_docker_build_failed() {
     vde_error_show \
         "Docker build failed for '$vm'" \
         "The container image could not be built" \
-        "1. Check Docker logs: vde logs $vm
+        "1. Check Docker logs: docker logs <container>
 2. Verify Docker is running: docker ps
-3. Try rebuilding with cache: vde start-virtual $vm" \
+3. Try rebuilding with: vde start $vm --rebuild" \
         "troubleshooting.md#docker-build-issues"
 }
 

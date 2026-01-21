@@ -52,10 +52,10 @@ Your computer has a username (like `alex`, `sam`, `jordan`). VDE containers use 
 lsof -i :2205
 
 # Stop conflicting VM
-./scripts/shutdown-virtual go
+vde stop go
 
 # Restart VM
-./scripts/start-virtual go
+vde start go
 ```
 
 ---
@@ -79,7 +79,8 @@ eval "$(ssh-agent -s)"
 ssh-add
 
 # Check SSH status
-./scripts/ssh-agent-setup
+# Note: VDE handles SSH agent setup automatically. If you need to manually regenerate SSH config:
+# VDE will regenerate it automatically on next VM start
 ```
 
 **Problem:** VM-to-VM SSH not working.
@@ -88,8 +89,9 @@ ssh-add
 # Check both VMs are running
 docker ps | grep -E "python|go"
 
-# Regenerate VM SSH config
-./scripts/ssh-agent-setup
+# Restart VMs to regenerate SSH config
+vde restart python
+vde restart go
 
 # Test SSH connection
 ssh -v python-dev
@@ -152,7 +154,7 @@ chmod 644 ~/.ssh/id_ed25519.pub
 docker logs <container-name>
 
 # Rebuild with no cache
-./scripts/start-virtual <vm-name> --rebuild --no-cache
+vde start <vm-name> --rebuild --no-cache
 
 # Check docker-compose.yml syntax
 docker-compose -f configs/docker/<vm-name>/docker-compose.yml config
@@ -183,9 +185,11 @@ ssh go-dev
 
 ```bash
 # Just start it instead
-./scripts/start-virtual python
+vde start python
 
 # Or check if it's running
+vde status
+# or
 docker ps
 ```
 
@@ -197,10 +201,10 @@ docker ps
 
 ```bash
 # Check available VMs
-./scripts/list-vms
+vde list
 
 # Use exact name from list
-./scripts/create-virtual-for python  # not "pyton"
+vde create python  # not "pyton"
 ```
 
 ---
@@ -233,7 +237,7 @@ docker network ls | grep dev-net
 docker network create dev-net
 
 # Restart containers
-./scripts/start-virtual all
+vde restart all
 ```
 
 ---
@@ -244,10 +248,10 @@ If you're stuck:
 
 ```bash
 # Get general help
-./scripts/vde help
+vde help
 
 # List available VMs
-./scripts/vde list
+vde list
 
 # Check container logs
 docker logs <container-name>
@@ -261,13 +265,13 @@ If something is seriously wrong and you want to start fresh:
 
 ```bash
 # Stop everything
-./scripts/shutdown-virtual all
+vde stop all
 
 # Remove all containers (careful!)
 docker ps -a | grep -E "dev$|[a-z]+$" | awk '{print $1}' | xargs docker rm -f
 
 # You can now recreate VMs from scratch
-./scripts/create-virtual-for python
+vde create python
 ```
 
 ---

@@ -13,8 +13,8 @@ Before extending VDE, it helps to understand how it works:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         User Request                            │
-│                    vde create zig                              │
-│                    ./create-virtual-for zig                     │
+│                    vde create zig                               │
+│                    vde start zig                                │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
@@ -81,23 +81,20 @@ Adding a new programming language to VDE is a two-step process:
 
 You can do this manually or with the `add-vm-type` script.
 
-**Option A: Using add-vm-type (Recommended)**
+**Option A: Using vde create (Recommended)**
 
 ```bash
 # Basic language addition
-./scripts/add-vm-type zig \
-    "apt-get update -y && apt-get install -y zig"
+vde create zig "apt-get update -y && apt-get install -y zig"
 
 # With aliases
-./scripts/add-vm-type zig \
-    "apt-get update -y && apt-get install -y zig" \
-    "ziglang,z"
+vde create zig "apt-get update -y && apt-get install -y zig" "ziglang,z"
 
 # With custom display name
-./scripts/add-vm-type --display "Zig Language" zig \
+vde create --display "Zig Language" zig \
     "apt-get update -y && apt-get install -y zig"
 
-# Using the vde CLI
+# Create with auto-prompt (if type not known)
 vde create zig  # Will prompt if zig is not a known VM type
 ```
 
@@ -117,18 +114,12 @@ lang|zig|ziglang,z|Zig|apt-get update -y && apt-get install -y zig|
 ```bash
 # Create the Zig VM
 vde create zig
-# OR
-./scripts/create-virtual-for zig
 
 # Verify it was created
 vde list zig
-# OR
-./scripts/list-vms zig
 
 # Start the VM
 vde start zig
-# OR
-./scripts/start-virtual zig
 
 # Connect
 ssh zig-dev
@@ -160,20 +151,19 @@ logs/zig/                   # Empty log directory
 
 **Simple apt packages:**
 ```bash
-./scripts/add-vm-type zig \
-    "apt-get update -y && apt-get install -y zig"
+vde create zig "apt-get update -y && apt-get install -y zig"
 ```
 
 **Language version managers:**
 ```bash
 # Using SDKMAN (for Java/Kotlin/scala variants)
-./scripts/add-vm-type gradle \
+vde create gradle \
     "apt-get update -y && apt-get install -y curl && \
      su devuser -c 'curl -s \"https://get.sdkman.io\" | bash' && \
      su devuser -c 'source ~/.sdkman/bin/sdkman-init.sh && sdk install gradle'"
 
 # Using asdf (multi-language version manager)
-./scripts/add-vm-type terraform \
+vde create terraform \
     "apt-get update -y && apt-get install -y curl git && \
      su devuser -c 'git clone https://github.com/asdf-vm/asdf.git ~/.asdf --depth 1' && \
      su devuser -c '~/.asdf/bin/asdf plugin-add terraform && \
@@ -183,7 +173,7 @@ logs/zig/                   # Empty log directory
 **Download and install from URL:**
 ```bash
 # Download binary, extract, symlink
-./scripts/add-vm-type zig \
+vde create zig \
     "apt-get update -y && apt-get install -y xz-utils wget && \
      wget https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz -O /tmp/zig.tar.xz && \
      tar -xf /tmp/zig.tar.xz -C /tmp && \
@@ -195,11 +185,11 @@ logs/zig/                   # Empty log directory
 **Install as devuser (for user-scoped tools):**
 ```bash
 # Rust-style installers
-./scripts/add-vm-type rust \
+vde create rust \
     "su devuser -c 'curl --proto =https --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'"
 
 # Node.js via nvm
-./scripts/add-vm-type node \
+vde create node \
     "apt-get update -y && apt-get install -y curl && \
      su devuser -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash' && \
      su devuser -c 'export NVM_DIR=\"\$HOME/.nvm\" && \
@@ -215,24 +205,24 @@ Adding a service (database, cache, message queue, etc.) is similar to adding a l
 
 ### Step 1: Add to vm-types.conf
 
-**Option A: Using add-vm-type (Recommended)**
+**Option A: Using vde create (Recommended)**
 
 ```bash
 # Basic service (single port)
-./scripts/add-vm-type --type service --svc-port 5672 rabbitmq \
+vde create --type service --svc-port 5672 rabbitmq \
     "apt-get update -y && apt-get install -y rabbitmq-server"
 
 # With aliases
-./scripts/add-vm-type --type service --svc-port 5672 rabbitmq \
+vde create --type service --svc-port 5672 rabbitmq \
     "apt-get update -y && apt-get install -y rabbitmq-server" \
     "rabbit,rabbitmq-server"
 
 # Multiple ports (comma-separated)
-./scripts/add-vm-type --type service --svc-port 5672,15672 rabbitmq \
+vde create --type service --svc-port 5672,15672 rabbitmq \
     "apt-get update -y && apt-get install -y rabbitmq-server" \
     "rabbit"
 
-# Using the vde CLI (note: services require explicit --type and --svc-port)
+# Note: services require explicit --type and --svc-port
 ```
 
 **Option B: Manual Entry**
@@ -250,19 +240,13 @@ service|rabbitmq|rabbit,rabbitmq-server|RabbitMQ|apt-get update -y && apt-get in
 
 ```bash
 # Create the RabbitMQ VM
-vde create rabbitmq
-# OR
-./scripts/create-virtual-for rabbitmq
+vde create --type service --svc-port 5672 rabbitmq
 
 # Verify it was created
-vde list --svc rabbitmq
-# OR
-./scripts/list-vms --svc rabbitmq
+vde list --svc
 
 # Start the VM
 vde start rabbitmq
-# OR
-./scripts/start-virtual rabbitmq
 
 # Connect
 ssh rabbitmq
@@ -306,19 +290,19 @@ logs/rabbitmq/              # Empty log directory
 **Database with client tools only:**
 ```bash
 # PostgreSQL client (connects to external Postgres)
-./scripts/add-vm-type --type service --svc-port 5432 postgres-client \
+vde create --type service --svc-port 5432 postgres-client \
     "apt-get update -y && apt-get install -y postgresql-client"
 ```
 
 **Full database server:**
 ```bash
 # MySQL server
-./scripts/add-vm-type --type service --svc-port 3306 mysql \
+vde create --type service --svc-port 3306 mysql \
     "apt-get update -y && apt-get install -y default-mysql-server && \
      service mysql start"
 
 # MongoDB
-./scripts/add-vm-type --type service --svc-port 27017 mongodb \
+vde create --type service --svc-port 27017 mongodb \
     "apt-get update -y && apt-get install -y mongodb-org && \
      service mongod start"
 ```
@@ -326,7 +310,7 @@ logs/rabbitmq/              # Empty log directory
 **Message queue:**
 ```bash
 # RabbitMQ
-./scripts/add-vm-type --type service --svc-port 5672,15672 rabbitmq \
+vde create --type service --svc-port 5672,15672 rabbitmq \
     "apt-get update -y && apt-get install -y erlang-nox && \
      wget https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.12/rabbitmq-server_3.12-1_all.deb && \
      dpkg -i rabbitmq-server_3.12-1_all.deb && \
@@ -336,7 +320,7 @@ logs/rabbitmq/              # Empty log directory
 **Web server:**
 ```bash
 # Nginx with HTTP and HTTPS
-./scripts/add-vm-type --type service --svc-port 80,443 nginx \
+vde create --type service --svc-port 80,443 nginx \
     "apt-get update -y && apt-get install -y nginx-extras && \
      service nginx start"
 ```
@@ -344,7 +328,7 @@ logs/rabbitmq/              # Empty log directory
 **Cache server:**
 ```bash
 # Memcached
-./scripts/add-vm-type --type service --svc-port 11211 memcached \
+vde create --type service --svc-port 11211 memcached \
     "apt-get update -y && apt-get install -y memcached && \
      service memcached start"
 ```
@@ -379,8 +363,8 @@ For languages that work together (e.g., TypeScript + JavaScript), you can create
 lang|js|node,nodejs,typescript|JavaScript|apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs && npm install -g typescript|
 
 # Now both create the same VM:
-./scripts/create-virtual-for js
-./scripts/create-virtual-for typescript  # Creates the same VM
+vde create js
+vde create typescript  # Creates the same VM
 ```
 
 ### Custom Base Images
@@ -404,7 +388,7 @@ services:
 Install different tools based on environment variables:
 
 ```bash
-./scripts/add-vm-type python \
+vde create python \
     "apt-get update -y && apt-get install -y python3 python3-pip && \
      if [ \"\${VDE_PYTHON_VERSION:-latest}\" = \"3.11\" ]; then \
        apt-get install -y python3.11 python3.11-venv; \
@@ -423,7 +407,7 @@ VDE_PYTHON_VERSION=3.11
 For complex setups, you can add a post-install script:
 
 ```bash
-./scripts/add-vm-type dotnet \
+vde create dotnet \
     "apt-get update -y && apt-get install -y wget apt-transport-https && \
      wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && \
      dpkg -i /tmp/packages-microsoft-prod.deb && rm /tmp/packages-microsoft-prod.deb && \
@@ -439,13 +423,9 @@ After adding a new language or service, validate it:
 ```bash
 # 1. Verify it appears in the list
 vde list <name>
-# OR
-./scripts/list-vms <name>
 
 # 2. Create the VM
 vde create <name>
-# OR
-./scripts/create-virtual-for <name>
 
 # 3. Check the generated files
 cat configs/docker/<name>/docker-compose.yml
@@ -454,8 +434,6 @@ cat ~/.ssh/config | grep -A 5 "<name>"
 
 # 4. Start the VM
 vde start <name>
-# OR
-./scripts/start-virtual <name>
 
 # 5. Verify container is running
 docker ps | grep <name>
@@ -469,8 +447,6 @@ docker port <name>
 
 # 8. Run health check
 vde health
-# OR
-./scripts/vde-health
 ```
 
 ---

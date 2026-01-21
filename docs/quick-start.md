@@ -13,13 +13,13 @@ Get up and running with VDE in minutes.
 cd ~/dev  # or wherever you cloned this repo
 
 # 2. List all predefined VM types
-./scripts/list-vms
+vde list
 
 # 3. Create a new language VM (auto-allocates SSH port)
-./scripts/create-virtual-for go
+vde create go
 
 # 4. Start the VM
-./scripts/start-virtual go
+vde start go
 
 # 5. Connect via SSH
 ssh go-dev
@@ -46,7 +46,7 @@ cd ~/workspace  # Your project directory
 
 ## What Just Happened?
 
-When you ran `create-virtual-for go`:
+When you ran `vde create go`:
 
 1. **Port Allocation**: SSH port 2200 was automatically assigned
 2. **Config Created**: `configs/docker/go/docker-compose.yml`
@@ -56,7 +56,7 @@ When you ran `create-virtual-for go`:
 6. **SSH Agent**: Started automatically, keys loaded automatically
 7. **SSH Keys**: Detected or generated automatically
 
-When you ran `start-virtual go`:
+When you ran `vde start go`:
 
 1. **SSH Environment**: Agent verified, keys ready (automatic)
 2. **Image Built**: Docker image built from base-dev template
@@ -74,8 +74,8 @@ With SSH agent forwarding, you can communicate between VMs:
 
 ```bash
 # Create and start multiple VMs
-./scripts/create-virtual-for python postgres
-./scripts/start-virtual python postgres
+vde create python postgres
+vde start python postgres
 
 # From Python VM, connect to PostgreSQL
 ssh python-dev
@@ -93,8 +93,10 @@ See [SSH Configuration](./ssh-configuration.md) for complete details.
 
 ## Next Steps
 
-- **Create more VMs**: `./scripts/create-virtual-for python`
-- **Start multiple VMs**: `./scripts/start-virtual go python`
+- **Create more VMs**: `vde create python`
+- **Start multiple VMs**: `vde start go python`
+- **Stop a VM**: `vde stop go`
+- **List VMs**: `vde list`
 - **Use VSCode**: Connect via Remote-SSH for full IDE support
 
 For more details, see [Command Reference](./command-reference.md).

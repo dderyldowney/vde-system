@@ -44,7 +44,7 @@ cd ~/dev/projects/python/my-api
 git commit -am "Work in progress"
 
 # Container can be rebuilt anytime
-./scripts/start-virtual python --rebuild
+vde start python --rebuild
 # Your code is still there
 ```
 
@@ -54,8 +54,8 @@ Databases and caches run in separate containers.
 
 ```bash
 # Good: Use separate service containers
-./scripts/create-virtual-for postgres
-./scripts/create-virtual-for redis
+vde create postgres
+vde create redis
 
 # Connect from language container
 ssh python-dev
@@ -89,20 +89,20 @@ psql -h postgres -U devuser
 
 ```bash
 # Good: Start only what you're using
-./scripts/start-virtual python postgres
+vde start python postgres
 
 # Avoid: Starting everything unless needed
-./scripts/start-virtual all  # Uses more resources
+vde start all  # Uses more resources
 ```
 
 ### Stop When Done
 
 ```bash
 # Stop VMs to free resources
-./scripts/shutdown-virtual python postgres
+vde stop python postgres
 
 # Or stop all
-./scripts/shutdown-virtual all
+vde stop all
 ```
 
 ### Check Status Regularly
@@ -190,8 +190,8 @@ Password authentication is disabled. VDE automatically generates SSH keys if you
 
 ```bash
 # VDE handles this automatically - no manual steps needed
-./scripts/create-virtual-for python
-./scripts/start-virtual python
+vde create python
+vde start python
 # SSH keys are detected, generated if needed, and loaded automatically
 ```
 
@@ -199,7 +199,7 @@ Password authentication is disabled. VDE automatically generates SSH keys if you
 
 ```bash
 # Rebuild with latest base image
-./scripts/build-and-start --rebuild --no-cache
+vde start python --rebuild --no-cache
 ```
 
 ### Use Sudo Judiciously

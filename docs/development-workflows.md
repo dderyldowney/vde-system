@@ -12,13 +12,13 @@ A full-stack Python API with PostgreSQL database.
 
 ```bash
 # 1. Create Python VM
-./scripts/create-virtual-for python
+vde create python
 
 # 2. Create PostgreSQL VM
-./scripts/create-virtual-for postgres
+vde create postgres
 
 # 3. Start both VMs
-./scripts/start-virtual python postgres
+vde start python postgres
 
 # 4. Connect to Python VM
 ssh python-dev
@@ -48,11 +48,11 @@ Node.js/Express application with Redis caching.
 
 ```bash
 # 1. Create VMs
-./scripts/create-virtual-for js
-./scripts/create-virtual-for redis
+vde create js
+vde create redis
 
 # 2. Start VMs
-./scripts/start-virtual js redis
+vde start js redis
 
 # 3. Connect to JS VM
 ssh js-dev
@@ -94,14 +94,14 @@ A microservices architecture using different languages for each service.
 
 ```bash
 # 1. Create VMs for each service
-./scripts/create-virtual-for python   # API Gateway
-./scripts/create-virtual-for go       # Payment Service
-./scripts/create-virtual-for rust     # Analytics Service
-./scripts/create-virtual-for postgres # Database
-./scripts/create-virtual-for redis    # Cache
+vde create python   # API Gateway
+vde create go       # Payment Service
+vde create rust     # Analytics Service
+vde create postgres # Database
+vde create redis    # Cache
 
 # 2. Start all VMs
-./scripts/start-virtual python go rust postgres redis
+vde start python go rust postgres redis
 
 # 3. Each service runs in its own VM
 # Python: ssh python-dev
@@ -122,7 +122,7 @@ A microservices architecture using different languages for each service.
 
 ```bash
 # Start your development environments
-./scripts/start-virtual python postgres redis
+vde start python postgres redis
 ```
 
 ### During Development
@@ -143,7 +143,7 @@ cd ~/workspace
 
 ```bash
 # Stop everything to save resources
-./scripts/shutdown-virtual all
+vde stop all
 ```
 
 ---
@@ -154,13 +154,13 @@ When something isn't working:
 
 ```bash
 # 1. Check container status
-docker ps
+vde status
 
 # 2. Check container logs
 docker logs python-dev
 
 # 3. Restart with rebuild
-./scripts/start-virtual python --rebuild
+vde start python --rebuild
 
 # 4. Connect and debug
 ssh python-dev

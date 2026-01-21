@@ -10,17 +10,17 @@ Complete reference for all VDE commands.
 
 ```bash
 # List all VMs
-./scripts/list-vms
+vde list
 
 # List only language VMs
-./scripts/list-vms --lang
+vde list --lang
 
 # List only service VMs
-./scripts/list-vms --svc
+vde list --svc
 
 # Search for specific VMs
-./scripts/list-vms python
-./scripts/list-vms --lang script
+vde list python
+vde list --lang script
 ```
 
 ---
@@ -29,20 +29,20 @@ Complete reference for all VDE commands.
 
 ```bash
 # Create a language VM
-./scripts/create-virtual-for go
+vde create go
 
 # Create a service VM
-./scripts/create-virtual-for postgres
+vde create postgres
 
 # Create using alias
-./scripts/create-virtual-for nodejs      # Same as 'js'
-./scripts/create-virtual-for postgresql  # Same as 'postgres'
+vde create nodejs      # Same as 'js'
+vde create postgresql  # Same as 'postgres'
 
 # Show help
-./scripts/create-virtual-for --help
+vde create --help
 ```
 
-### What `create-virtual-for` does:
+### What `vde create` does:
 
 1. Validates the VM name exists in predefined list
 2. Auto-allocates SSH port (2200-2299 for languages, 2400-2499 for services)
@@ -57,22 +57,22 @@ Complete reference for all VDE commands.
 
 ```bash
 # Start single VM
-./scripts/start-virtual python
+vde start python
 
 # Start multiple VMs
-./scripts/start-virtual python go rust
+vde start python go rust
 
 # Start all VMs
-./scripts/start-virtual all
+vde start all
 
 # Start with rebuild (when Dockerfiles change)
-./scripts/start-virtual python --rebuild
+vde start python --rebuild
 
 # Start with full clean rebuild
-./scripts/start-virtual all --rebuild --no-cache
+vde start all --rebuild --no-cache
 
 # Mix languages and services
-./scripts/start-virtual python postgres redis
+vde start python postgres redis
 ```
 
 ---
@@ -81,13 +81,13 @@ Complete reference for all VDE commands.
 
 ```bash
 # Stop single VM
-./scripts/shutdown-virtual python
+vde stop python
 
 # Stop multiple VMs
-./scripts/shutdown-virtual python go rust
+vde stop python go rust
 
 # Stop all VMs
-./scripts/shutdown-virtual all
+vde stop all
 ```
 
 ---
@@ -96,13 +96,13 @@ Complete reference for all VDE commands.
 
 ```bash
 # Shutdown all, then start all
-./scripts/build-and-start
+vde create-and-start all
 
 # With rebuild
-./scripts/build-and-start --rebuild
+vde create-and-start all --rebuild
 
 # With full clean rebuild
-./scripts/build-and-start --rebuild --no-cache
+vde create-and-start all --rebuild --no-cache
 ```
 
 ---
@@ -111,21 +111,21 @@ Complete reference for all VDE commands.
 
 ```bash
 # Add a language (auto-detects type)
-./scripts/add-vm-type zig "apt-get update -y && apt-get install -y zig"
+vde create zig "apt-get update -y && apt-get install -y zig"
 
 # Add with aliases
-./scripts/add-vm-type dart "apt-get update -y && apt-get install -y dart" "dartlang,flutter"
+vde create dart "apt-get update -y && apt-get install -y dart" "dartlang,flutter"
 
 # Add a service (requires --type and --svc-port)
-./scripts/add-vm-type --type service --svc-port 5672 rabbitmq \
+vde create --type service --svc-port 5672 rabbitmq \
     "apt-get install -y rabbitmq-server" "rabbit"
 
 # Add with custom display name
-./scripts/add-vm-type --display "Zig Language" zig \
+vde create --display "Zig Language" zig \
     "apt-get update -y && apt-get install -y zig"
 
 # Show help
-./scripts/add-vm-type --help
+vde create --help
 ```
 
 ---

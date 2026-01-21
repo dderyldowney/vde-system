@@ -11,11 +11,11 @@ When and how to rebuild your VDE containers.
 | Scenario | Command | Why |
 |----------|---------|-----|
 | Daily development | No rebuild needed | Containers are stateless |
-| Dockerfiles change | `--rebuild` | Rebuild images with new Dockerfile |
-| SSH keys change | `--rebuild` | New keys need to be baked in |
-| Environment variables change | `--rebuild` | env-files are read at build time |
-| Base images update | `--rebuild --no-cache` | Ensure fresh base image |
-| Installing system packages | `--rebuild` | Packages install during build |
+| Dockerfiles change | `vde start <vm> --rebuild` | Rebuild images with new Dockerfile |
+| SSH keys change | `vde start <vm> --rebuild` | New keys need to be baked in |
+| Environment variables change | `vde start <vm> --rebuild` | env-files are read at build time |
+| Base images update | `vde start <vm> --rebuild --no-cache` | Ensure fresh base image |
+| Installing system packages | `vde start <vm> --rebuild` | Packages install during build |
 
 ---
 
@@ -25,20 +25,20 @@ When and how to rebuild your VDE containers.
 
 ```bash
 # Rebuild single VM
-./scripts/start-virtual python --rebuild
+vde start python --rebuild
 
 # Full clean rebuild
-./scripts/start-virtual python --rebuild --no-cache
+vde start python --rebuild --no-cache
 ```
 
 ### Multiple VMs
 
 ```bash
 # Rebuild multiple VMs
-./scripts/start-virtual python go rust --rebuild
+vde start python go rust --rebuild
 
 # Rebuild all VMs
-./scripts/start-virtual all --rebuild
+vde start all --rebuild
 ```
 
 ---
@@ -67,28 +67,28 @@ When and how to rebuild your VDE containers.
 
 ```bash
 # Rebuild all VMs that use the base image
-./scripts/build-and-start --rebuild
+vde start all --rebuild
 ```
 
 ### After Adding System Packages
 
 ```bash
 # Rebuild specific VM
-./scripts/start-virtual python --rebuild
+vde start python --rebuild
 ```
 
 ### After Updating SSH Keys
 
 ```bash
 # Rebuild to bake in new keys
-./scripts/start-virtual all --rebuild
+vde start all --rebuild
 ```
 
 ### After Base Image Update
 
 ```bash
 # Full clean rebuild
-./scripts/build-and-start --rebuild --no-cache
+vde start all --rebuild --no-cache
 ```
 
 ---
@@ -99,14 +99,14 @@ When and how to rebuild your VDE containers.
 
 ```bash
 # Use cached layers (faster, but may not pick up all changes)
-./scripts/start-virtual python --rebuild
+vde start python --rebuild
 ```
 
 ### Rebuild Doesn't Pick Up Changes
 
 ```bash
 # Force rebuild without cache
-./scripts/start-virtual python --rebuild --no-cache
+vde start python --rebuild --no-cache
 ```
 
 ### Container Won't Start After Rebuild
@@ -119,7 +119,7 @@ docker logs <container-name>
 docker-compose -f configs/docker/<name>/docker-compose.yml config
 
 # Try no-cache rebuild
-./scripts/start-virtual <name> --rebuild --no-cache
+vde start <name> --rebuild --no-cache
 ```
 
 ---

@@ -63,13 +63,13 @@ VDE provides isolated development environments for multiple programming language
 cd ~/dev
 
 # 2. List all predefined VM types
-./scripts/vde list
+vde list
 
 # 3. Create a new language VM
-./scripts/vde create go
+vde create go
 
 # 4. Start the VM
-./scripts/vde start go
+vde start go
 
 # 5. Connect via SSH
 ssh go-dev
@@ -191,9 +191,9 @@ See [SSH Configuration](docs/ssh-configuration.md) for complete details.
 ### Python API with PostgreSQL
 
 ```bash
-./scripts/vde create python
-./scripts/vde create postgres
-./scripts/vde start python postgres
+vde create python
+vde create postgres
+vde start python postgres
 ssh python-dev
 cd ~/workspace
 pip install fastapi uvicorn psycopg2-binary
@@ -203,14 +203,14 @@ pip install fastapi uvicorn psycopg2-binary
 
 ```bash
 # Create VMs for each service
-./scripts/create-virtual-for python   # API Gateway
-./scripts/create-virtual-for go       # Payment Service
-./scripts/create-virtual-for rust     # Analytics
-./scripts/create-virtual-for postgres # Database
-./scripts/create-virtual-for redis    # Cache
+vde create python   # API Gateway
+vde create go       # Payment Service
+vde create rust     # Analytics
+vde create postgres # Database
+vde create redis    # Cache
 
 # Start all services
-./scripts/vde start python go rust postgres redis
+vde start python go rust postgres redis
 
 # Services can communicate via SSH (VM-to-VM)
 # From python VM:
@@ -247,10 +247,10 @@ See [Directory Structure](docs/directory-structure.md) for complete details.
 
 ```bash
 # Built-in help
-./scripts/vde help
+vde help
 
 # List available VMs
-./scripts/vde list
+vde list
 ```
 
 ### Common Issues

@@ -46,7 +46,7 @@ for arg in "$@"; do
             if [[ -n "$resolved" ]]; then
                 VMS+=("$resolved")
             else
-                log_error "Unknown VM: $arg"
+                vde_error_vm_not_found "$arg"
                 exit 1
             fi
             ;;
@@ -75,7 +75,7 @@ local failed_count=0
 log_info "Starting ${#VMS[@]} VM(s)..."
 for vm in "${VMS[@]}"; do
     if ! is_known_vm "$vm"; then
-        log_error "Unknown VM: $vm"
+        vde_error_vm_not_found "$vm"
         BATCH_RESULTS[$vm]="failed:unknown"
         failed_count=$((failed_count + 1))
         continue
@@ -83,7 +83,7 @@ for vm in "${VMS[@]}"; do
 
     # Check if VM has been created (has docker-compose.yml)
     if ! vm_exists "$vm"; then
-        log_error "VM '$vm' is not created yet. Run: ./scripts/create-virtual-for $vm"
+        vde_error_vm_not_created "$vm"
         BATCH_RESULTS[$vm]="failed:not_created"
         failed_count=$((failed_count + 1))
         continue

@@ -12,7 +12,7 @@ Advanced techniques and patterns for power users.
 
 ```bash
 # Download and install from URL
-./scripts/add-vm-type zig \
+vde create zig \
     "apt-get update && apt-get install -y wget && \
      wget https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz && \
      tar -xf zig-linux-x86_64-0.11.0.tar.xz && \
@@ -24,7 +24,7 @@ Advanced techniques and patterns for power users.
 
 ```bash
 # Rust-style installers
-./scripts/add-vm-type rust \
+vde create rust \
     "su devuser -c 'curl --proto =https --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'"
 ```
 
@@ -34,7 +34,7 @@ Advanced techniques and patterns for power users.
 
 ```bash
 # For services with multiple ports
-./scripts/add-vm-type --type service --svc-port 80,443 nginx \
+vde create --type service --svc-port 80,443 nginx \
     "apt-get update -y && apt-get install -y nginx-extras"
 ```
 
@@ -44,7 +44,7 @@ Advanced techniques and patterns for power users.
 
 ```bash
 # Override the auto-generated display name
-./scripts/add-vm-type --display "Rust Programming Language" rust \
+vde create --display "Rust Programming Language" rust \
     "apt-get update -y && apt-get install -y rustc"
 ```
 
@@ -53,7 +53,7 @@ Advanced techniques and patterns for power users.
 ## Environment-Specific Installations
 
 ```bash
-./scripts/add-vm-type python \
+vde create python \
     "apt-get update -y && apt-get install -y python3 python3-pip && \
      if [ \"\${VDE_PYTHON_VERSION:-latest}\" = \"3.11\" ]; then \
        apt-get install -y python3.11 python3.11-venv; \
@@ -90,7 +90,7 @@ services:
 ## Post-Installation Scripts
 
 ```bash
-./scripts/add-vm-type dotnet \
+vde create dotnet \
     "apt-get update -y && apt-get install -y wget apt-transport-https && \
      wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && \
      dpkg -i /tmp/packages-microsoft-prod.deb && rm /tmp/packages-microsoft-prod.deb && \
@@ -109,8 +109,8 @@ Create composite VMs by adding aliases:
 lang|js|node,nodejs,typescript|JavaScript|apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs && npm install -g typescript|
 
 # Now both create the same VM:
-./scripts/create-virtual-for js
-./scripts/create-virtual-for typescript
+vde create js
+vde create typescript
 ```
 
 ---
@@ -152,8 +152,8 @@ scp python-dev:/data/file .   # Copy file from Python VM
 
 ```bash
 # Create a full stack: API, database, cache
-./scripts/create-virtual-for python postgres redis
-./scripts/start-virtual python postgres redis
+vde create python postgres redis
+vde start python postgres redis
 
 # From Python VM (API layer)
 ssh python-dev
@@ -165,8 +165,8 @@ ssh redis-dev redis-cli INCR counter
 
 ```bash
 # Create microservices
-./scripts/create-virtual-for go python rust postgres
-./scripts/start-virtual go python rust postgres
+vde create go python rust postgres
+vde start go python rust postgres
 
 # From Go VM (API gateway)
 ssh go-dev
@@ -180,8 +180,8 @@ ssh postgres-dev "psql -c 'SELECT COUNT(*) FROM orders'"
 
 ```bash
 # Create service mesh
-./scripts/create-virtual-for nginx go python postgres redis
-./scripts/start-virtual nginx go python postgres redis
+vde create nginx go python postgres redis
+vde start nginx go python postgres redis
 
 # From Nginx VM (edge router)
 ssh nginx-dev

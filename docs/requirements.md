@@ -139,11 +139,9 @@ If you see this error, you're running an older shell version. Options:
 This indicates you're running in bash but the script expects zsh. VDE scripts now support both shells, but if you encounter this:
 
 1. Ensure you're using the latest VDE version
-2. Run the script explicitly with your preferred shell:
+2. Use the unified `vde` command which handles shell compatibility:
    ```bash
-   bash ./scripts/start-virtual python
-   # or
-   zsh ./scripts/start-virtual python
+   ./scripts/vde start python
    ```
 
 ### Performance Issues on bash 3.x

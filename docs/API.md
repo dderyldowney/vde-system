@@ -69,16 +69,16 @@ vde <command> [options] [args]
 
 **Commands:**
 
-| Command | Description | Script |
-|---------|-------------|--------|
-| `create <vm>` | Create a new VM | create-virtual-for |
-| `start <vm>` | Start a VM | start-virtual |
-| `stop <vm>` | Stop a VM | shutdown-virtual |
-| `restart <vm>` | Restart a VM | start-virtual + shutdown-virtual |
-| `list` | List all VMs | list-vms |
-| `status` | Show VM status | list-vms |
-| `health` | Run system health check | vde-health |
-| `help` | Show help message | - |
+| Command | Description |
+|---------|-------------|
+| `create <vm>` | Create a new VM |
+| `start <vm>` | Start a VM |
+| `stop <vm>` | Stop a VM |
+| `restart <vm>` | Restart a VM |
+| `list` | List all VMs |
+| `status` | Show VM status |
+| `health` | Run system health check |
+| `help` | Show help message |
 
 **Options:**
 - `-h, --help` - Show help message
@@ -102,168 +102,15 @@ vde health                        # Run health check
 
 ---
 
-### `create-virtual-for` - Create New VMs
+### Legacy Scripts
 
-Creates a new VM with predefined configuration from `vm-types.conf`.
+The following scripts are still available but are now primarily accessed through the unified `vde` command:
 
-**Usage:**
-```bash
-create-virtual-for [OPTIONS] <vm_name>
-```
-
-**Arguments:**
-- `vm_name` - Name of the VM (must be predefined in vm-types.conf)
-
-**Options:**
-- `-h, --help` - Show help message
-- `-q, --quiet` - Suppress progress indicators
-- `-v, --verbose` - Show detailed output
-
-**What the script does:**
-1. Validates the VM name (follows naming convention)
-2. Auto-allocates SSH port (2200-2299 for languages, 2400-2499 for services)
-3. Creates docker-compose.yml from template
-4. Creates required directories (projects/ or data/, logs/)
-5. Creates environment file (env-files/)
-6. Adds SSH config entry to ~/.ssh/config
-
-**Examples:**
-```bash
-create-virtual-for python    # Create Python language VM
-create-virtual-for postgres  # Create PostgreSQL service VM
-create-virtual-for --quiet rust
-```
-
-**Created Files:**
-- `configs/docker/<vm_name>/docker-compose.yml`
-- `env-files/<vm_name>.env`
-- `projects/<vm_name>/` (for language VMs) or `data/<vm_name>/` (for service VMs)
-- `logs/<vm_name>/`
-
----
-
-### `start-virtual` - Start VMs
-
-Starts one or more VMs.
-
-**Usage:**
-```bash
-start-virtual <vm_name1> [vm_name2] ... [--rebuild] [--no-cache]
-```
-
-**Arguments:**
-- `vm_name` - Name of the VM to start
-- `all` - Start all created VMs
-
-**Options:**
-- `--rebuild` - Rebuild the container before starting
-- `--no-cache` - Build with no cache (implies rebuild)
-
-**Examples:**
-```bash
-start-virtual python                    # Start single VM
-start-virtual python ruby js            # Start multiple VMs
-start-virtual all                       # Start all VMs
-start-virtual python --rebuild          # Rebuild and start
-start-virtual all --no-cache            # Full rebuild all VMs
-```
-
-**Exit Codes:**
-- `0` - All VMs started successfully
-- `1` - One or more VMs failed to start
-
----
-
-### `shutdown-virtual` - Stop VMs
-
-Stops running VMs.
-
-**Usage:**
-```bash
-shutdown-virtual <vm_name1> [vm_name2] ... [all]
-```
-
-**Arguments:**
-- `vm_name` - Name of the VM to stop
-- `all` - Stop all VMs with docker-compose.yml files
-
-**Examples:**
-```bash
-shutdown-virtual python                    # Stop single VM
-shutdown-virtual python ruby js            # Stop multiple VMs
-shutdown-virtual all                       # Stop all VMs
-```
-
----
-
-### `list-vms` - List VM Types
-
-Lists all predefined VM types (languages and services).
-
-**Usage:**
-```bash
-list-vms [OPTIONS] [filter]
-```
-
-**Options:**
-- `--lang, --languages` - List only language VMs
-- `--svc, --services` - List only service VMs
-- `--name-only` - Show only VM names (hostnames)
-- `-a, --all` - Show all VMs including created status
-- `--help, -h` - Show help message
-
-**Arguments:**
-- `filter` - Optional text filter (searches name, aliases, display)
-
-**Examples:**
-```bash
-list-vms                    # List all VMs
-list-vms --lang             # List only language VMs
-list-vms --svc              # List only service VMs
-list-vms --name-only        # Show only names/hostnames
-list-vms python             # Search for 'python'
-list-vms --lang script      # Search for script in languages
-list-vms -a                 # Show status of all VMs
-```
-
----
-
-### `add-vm-type` - Add New VM Types
-
-Adds a new language or service to the predefined VM types list.
-
-**Usage:**
-```bash
-add-vm-type [OPTIONS] <name> "<install_cmd>" [aliases]
-```
-
-**Arguments:**
-- `name` - Name of the VM (e.g., zig, dart, couchdb)
-- `install_cmd` - Installation command (must be quoted)
-- `aliases` - Optional comma-separated aliases (e.g., "js,node,nodejs")
-
-**Options:**
-- `--type TYPE` - Type of VM: lang or service (default: auto-detect)
-- `--svc-port PORT` - Service port (required for services, e.g., 5432)
-- `--display NAME` - Display name (default: auto-generated from name)
-- `--help, -h` - Show help message
-
-**Examples:**
-```bash
-# Add a language (auto-detects type as 'lang')
-add-vm-type zig "apt-get update -y && apt-get install -y zig"
-
-# Add a language with aliases
-add-vm-type dart "apt-get update -y && apt-get install -y dart" "dartlang,flutter"
-
-# Add a service (requires --type and --svc-port)
-add-vm-type --type service --svc-port 5672 rabbitmq \
-    "apt-get update -y && apt-get install -y rabbitmq-server" "rabbit"
-
-# Add with custom display name
-add-vm-type --display "Zig Language" zig \
-    "apt-get update -y && apt-get install -y zig"
-```
+- `create-virtual-for` - Use `vde create` instead
+- `start-virtual` - Use `vde start` instead
+- `shutdown-virtual` - Use `vde stop` instead
+- `list-vms` - Use `vde list` instead
+- `add-vm-type` - Use `vde add-vm-type` instead
 
 ---
 
@@ -983,29 +830,24 @@ Examples:
 ```bash
 # List available VMs
 vde list
-./scripts/list-vms
 
 # Create a new VM
 vde create <name>
-./scripts/create-virtual-for <name>
 
 # Start VMs
-vde start <name>
-./scripts/start-virtual <name>
+vde start <name> [--rebuild] [--no-cache]
 
 # Stop VMs
 vde stop <name>
-./scripts/shutdown-virtual <name>
 
 # Stop everything
 vde stop all
-./scripts/shutdown-virtual all
 
-# Rebuild a VM
-./scripts/start-virtual <name> --rebuild
+# Restart a VM
+vde restart <name> [--rebuild]
 
 # Add custom VM type
-./scripts/add-vm-type <name> "<install_cmd>"
+vde add-vm-type <name> "<install_cmd>"
 ```
 
 ### SSH Connections
