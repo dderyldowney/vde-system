@@ -1955,7 +1955,8 @@ def step_start_vm(context):
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
-    context.vm_started = True
+    # Verify actual container state, don't just assume
+    context.vm_started = container_exists(context.test_vm_to_start)
 
 
 @when('it takes time to be ready')
@@ -2260,7 +2261,9 @@ def step_vm_rebuilt(context):
 @then('the VM should be running after rebuild')
 def step_vm_running_after_rebuild(context):
     """VM should be running after rebuild."""
-    context.vm_running_after_rebuild = True
+    # Verify actual container state
+    vm_name = getattr(context, 'test_vm_to_start', 'python')
+    context.vm_running_after_rebuild = container_exists(vm_name)
 
 
 @then('the new package should be available in the VM')
@@ -2698,7 +2701,9 @@ def step_vm_stopped_first(context):
 @then('the VM should be started again')
 def step_vm_started_again(context):
     """VM should be started again."""
-    context.vm_started_again = True
+    # Verify actual container state
+    vm_name = getattr(context, 'test_running_vm', 'python')
+    context.vm_started_again = container_exists(vm_name)
 
 
 @then('the restart should attempt to recover the state')
@@ -3258,7 +3263,13 @@ def step_vm_ready_start(context):
 @given('VM "{vm}" is started')
 def step_vm_is_started(context, vm):
     """VM is started."""
-    context.vm_started = True
+    # Verify actual container state, don't just assume
+    context.vm_started = container_exists(vm)
+    if not context.vm_started:
+        # Try to start it for real and wait for startup
+        result = run_vde_command(f"./scripts/start-virtual {vm}", timeout=120)
+        # Wait for container to actually be running (avoid race condition)
+        context.vm_started = wait_for_container(vm, timeout=30)
     if not hasattr(context, 'started_vms'):
         context.started_vms = []
     context.started_vms.append(vm)
