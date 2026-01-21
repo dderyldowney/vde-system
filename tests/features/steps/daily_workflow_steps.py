@@ -18,7 +18,7 @@ from config import VDE_ROOT
 from behave import given, when, then
 from pathlib import Path
 import subprocess
-import os
+import time
 
 
 # =============================================================================
@@ -82,57 +82,211 @@ def compose_file_exists(vm_name):
 
 
 # =============================================================================
+# TEST MODE DETECTION (from vm_lifecycle_steps.py pattern)
+# =============================================================================
+# In container: VDE_ROOT_DIR is set to /vde
+# Locally: VDE_ROOT_DIR is not set or points to a different path
+# Test mode: VDE_TEST_MODE is set to 1 (allows cleanup during local testing)
+IN_CONTAINER = os.environ.get("VDE_ROOT_DIR") == "/vde"
+IN_TEST_MODE = os.environ.get("VDE_TEST_MODE") == "1"
+# Allow cleanup if running in container OR in test mode
+ALLOW_CLEANUP = IN_CONTAINER or IN_TEST_MODE
+
+
+# =============================================================================
+# VM STATE MANAGEMENT HELPERS
+# =============================================================================
+
+def wait_for_container(vm_name, timeout=60, interval=2):
+    """Wait for a container to be running."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if container_exists(vm_name):
+            return True
+        time.sleep(interval)
+    return False
+
+
+def wait_for_container_stopped(vm_name, timeout=30, interval=1):
+    """Wait for container to stop."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if not container_exists(vm_name):
+            return True
+        time.sleep(interval)
+    return False
+
+
+def ensure_vm_created(context, vm_name, timeout=120):
+    """Ensure VM compose file exists, create if not.
+
+    In test mode (ALLOW_CLEANUP=True), actually creates the VM.
+    In local mode, only checks if VM exists and sets context flags.
+    """
+    if not compose_file_exists(vm_name):
+        if ALLOW_CLEANUP:
+            result = run_vde_command(f"./scripts/create-virtual-for {vm_name}", timeout=timeout)
+            if not hasattr(context, 'created_vms'):
+                context.created_vms = set()
+            context.created_vms.add(vm_name)
+            context.last_exit_code = result.returncode
+            context.last_output = result.stdout
+            context.last_error = result.stderr
+            return result.returncode == 0
+        else:
+            # Local mode: just note that VM doesn't exist
+            return False
+    return True
+
+
+def ensure_vm_running(context, vm_name, create_timeout=120, start_timeout=180):
+    """Ensure VM is created and running.
+
+    In test mode (ALLOW_CLEANUP=True), actually creates/starts the VM.
+    In local mode, only checks existing state and sets context flags.
+    """
+    # Initialize context tracking sets
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
+
+    if ALLOW_CLEANUP:
+        # Test mode: create if needed
+        if not compose_file_exists(vm_name):
+            if not ensure_vm_created(context, vm_name, timeout=create_timeout):
+                return False
+
+        # Check if already running
+        if container_exists(vm_name):
+            context.running_vms.add(vm_name)
+            context.created_vms.add(vm_name)
+            return True
+
+        # Start the VM
+        result = run_vde_command(f"./scripts/start-virtual {vm_name}", timeout=start_timeout)
+
+        # Wait for container
+        if result.returncode == 0:
+            wait_for_container(vm_name, timeout=60)
+
+        # Track state
+        if container_exists(vm_name):
+            context.running_vms.add(vm_name)
+            context.created_vms.add(vm_name)
+
+        context.last_exit_code = result.returncode
+        context.last_output = result.stdout
+        context.last_error = result.stderr
+        return result.returncode == 0
+    else:
+        # Local mode: detect existing state
+        is_running = container_exists(vm_name)
+        is_created = compose_file_exists(vm_name)
+        if is_running:
+            context.running_vms.add(vm_name)
+        if is_created:
+            context.created_vms.add(vm_name)
+        return is_running
+
+
+def ensure_vm_stopped(context, vm_name, timeout=60):
+    """Ensure VM is stopped.
+
+    In test mode (ALLOW_CLEANUP=True), actually stops the VM.
+    In local mode, only checks existing state.
+    """
+    if ALLOW_CLEANUP:
+        if not container_exists(vm_name):
+            return True
+
+        result = run_vde_command(f"./scripts/shutdown-virtual {vm_name}", timeout=timeout)
+
+        if result.returncode == 0:
+            wait_for_container_stopped(vm_name, timeout=30)
+
+        if hasattr(context, 'running_vms'):
+            context.running_vms.discard(vm_name)
+
+        context.last_exit_code = result.returncode
+        context.last_output = result.stdout
+        context.last_error = result.stderr
+        return not container_exists(vm_name)
+    else:
+        # Local mode: just check if stopped
+        is_stopped = not container_exists(vm_name)
+        if is_stopped and hasattr(context, 'running_vms'):
+            context.running_vms.discard(vm_name)
+        return is_stopped
+
+
+# =============================================================================
 # Daily Workflow GIVEN steps
 # =============================================================================
 
 @given('I previously created VMs for "python", "rust", and "postgres"')
 def step_previously_created_vms_daily(context):
-    """VMs were previously created."""
-    context.created_vms = set()
+    """VMs were previously created.
+
+    In test mode: actually creates the VMs.
+    In local mode: checks if VMs exist.
+    """
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
     for vm in ['python', 'rust', 'postgres']:
-        if compose_file_exists(vm):
-            context.created_vms.add(vm)
+        if ALLOW_CLEANUP:
+            # Test mode: actually create the VM
+            ensure_vm_created(context, vm)
+        else:
+            # Local mode: check if exists
+            if compose_file_exists(vm):
+                context.created_vms.add(vm)
 
 
 @given('I have a Python VM running')
 def step_python_vm_running(context):
-    """Python VM is running."""
+    """Python VM is running.
+
+    In test mode: actually creates and starts the VM.
+    In local mode: checks if VM is running.
+    """
+    ensure_vm_running(context, 'python')
+    # For backwards compatibility with existing THEN steps
     context.python_running = container_exists('python')
-    if not hasattr(context, 'running_vms'):
-        context.running_vms = set()
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
-    if context.python_running:
-        context.running_vms.add('python')
-        context.created_vms.add('python')
 
 
 @given('I have "python" VM running')
 def step_python_vm_running_daily(context):
-    """Python VM is running."""
+    """Python VM is running.
+
+    In test mode: actually creates and starts the VM.
+    In local mode: checks if VM is running.
+    """
+    ensure_vm_running(context, 'python')
+    # For backwards compatibility with existing THEN steps
     context.python_running = container_exists('python')
-    if not hasattr(context, 'running_vms'):
-        context.running_vms = set()
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
-    if context.python_running:
-        context.running_vms.add('python')
-        context.created_vms.add('python')
 
 
 @given('I have "rust" VM created but not running')
 def step_rust_created_not_running(context):
-    """Rust VM created but not running."""
+    """Rust VM created but not running.
+
+    In test mode: creates VM and ensures it's stopped.
+    In local mode: checks if VM exists and is stopped.
+    """
+    if ALLOW_CLEANUP:
+        # Test mode: create and ensure stopped
+        ensure_vm_created(context, 'rust')
+        ensure_vm_stopped(context, 'rust')
+    else:
+        # Local mode: check existing state
+        if compose_file_exists('rust'):
+            if not hasattr(context, 'created_vms'):
+                context.created_vms = set()
+            context.created_vms.add('rust')
+    # For backwards compatibility
     context.rust_created = compose_file_exists('rust')
     context.rust_running = container_exists('rust')
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
-    if context.rust_created:
-        context.created_vms.add('rust')
-    if not hasattr(context, 'running_vms'):
-        context.running_vms = set()
-    if context.rust_running:
-        context.running_vms.discard('rust')
 
 
 @given('I have a project using Python, JavaScript, and Redis')
@@ -144,65 +298,90 @@ def step_project_using_langs(context):
 
 @given('I have a stopped Rust VM')
 def step_stopped_rust_vm(context):
-    """Rust VM is stopped."""
+    """Rust VM is stopped.
+
+    In test mode: creates VM and ensures it's stopped.
+    In local mode: checks if VM exists and is stopped.
+    """
+    if ALLOW_CLEANUP:
+        # Test mode: create and ensure stopped
+        ensure_vm_created(context, 'rust')
+        ensure_vm_stopped(context, 'rust')
+    else:
+        # Local mode: check existing state
+        if compose_file_exists('rust'):
+            if not hasattr(context, 'created_vms'):
+                context.created_vms = set()
+            context.created_vms.add('rust')
+    # For backwards compatibility
     context.rust_vm_stopped = compose_file_exists('rust') and not container_exists('rust')
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
-    if compose_file_exists('rust'):
-        context.created_vms.add('rust')
 
 
 @given('I have some running and some stopped VMs')
 def step_mixed_vm_states(context):
-    """Mixed VM states exist."""
-    running = docker_ps()
+    """Mixed VM states exist.
+
+    In test mode: creates python (running) and rust (stopped).
+    In local mode: checks existing VM states.
+    """
     if not hasattr(context, 'running_vms'):
         context.running_vms = set()
     if not hasattr(context, 'created_vms'):
         context.created_vms = set()
-    for c in running:
-        if "-dev" in c:
-            vm = c.replace("-dev", "")
-            context.running_vms.add(vm)
-            context.created_vms.add(vm)
-    # Check created but not running
-    configs_dir = VDE_ROOT / "configs" / "docker"
-    if configs_dir.exists():
-        for vm_dir in configs_dir.iterdir():
-            if vm_dir.is_dir():
-                vm = vm_dir.name
-                if vm not in context.running_vms:
-                    context.created_vms.add(vm)
+
+    if ALLOW_CLEANUP:
+        # Test mode: set up specific states
+        ensure_vm_running(context, 'python')
+        ensure_vm_created(context, 'rust')
+        ensure_vm_stopped(context, 'rust')
+    else:
+        # Local mode: detect existing states
+        running = docker_ps()
+        for c in running:
+            if "-dev" in c:
+                vm = c.replace("-dev", "")
+                context.running_vms.add(vm)
+                context.created_vms.add(vm)
+        # Check created but not running
+        configs_dir = VDE_ROOT / "configs" / "docker"
+        if configs_dir.exists():
+            for vm_dir in configs_dir.iterdir():
+                if vm_dir.is_dir():
+                    vm = vm_dir.name
+                    if vm not in context.running_vms:
+                        context.created_vms.add(vm)
     context.mixed_states = len(context.running_vms) < len(context.created_vms)
 
 
 @given('I have Python and PostgreSQL running')
 def step_python_postgres_running(context):
-    """Python and PostgreSQL running."""
-    if not hasattr(context, 'running_vms'):
-        context.running_vms = set()
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
-    if container_exists('python'):
-        context.running_vms.add('python')
-        context.created_vms.add('python')
-    if container_exists('postgres'):
-        context.running_vms.add('postgres')
-        context.created_vms.add('postgres')
+    """Python and PostgreSQL running.
+
+    In test mode: creates and starts both VMs.
+    In local mode: checks if both are running.
+    """
+    ensure_vm_running(context, 'python')
+    ensure_vm_running(context, 'postgres')
 
 
 @given('I have Python running and PostgreSQL stopped')
 def step_python_running_postgres_stopped(context):
-    """Python running, PostgreSQL stopped."""
-    if not hasattr(context, 'running_vms'):
-        context.running_vms = set()
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
-    if container_exists('python'):
-        context.running_vms.add('python')
-        context.created_vms.add('python')
-    if compose_file_exists('postgres'):
-        context.created_vms.add('postgres')
+    """Python running, PostgreSQL stopped.
+
+    In test mode: creates/starts python and creates/stops postgres.
+    In local mode: checks existing states.
+    """
+    ensure_vm_running(context, 'python')
+    if ALLOW_CLEANUP:
+        # Test mode: ensure postgres is created but stopped
+        ensure_vm_created(context, 'postgres')
+        ensure_vm_stopped(context, 'postgres')
+    else:
+        # Local mode: track existing state
+        if compose_file_exists('postgres'):
+            if not hasattr(context, 'created_vms'):
+                context.created_vms = set()
+            context.created_vms.add('postgres')
     context.postgres_stopped = not container_exists('postgres')
 
 
@@ -226,59 +405,86 @@ def step_want_new_language(context):
 
 @given('I have "postgres" VM is running')
 def step_postgres_running(context):
-    """PostgreSQL running."""
+    """PostgreSQL running.
+
+    In test mode: creates and starts postgres.
+    In local mode: checks if postgres is running.
+    """
+    ensure_vm_running(context, 'postgres')
+    # For backwards compatibility
     context.postgres_running = container_exists('postgres')
-    if not hasattr(context, 'running_vms'):
-        context.running_vms = set()
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
-    if context.postgres_running:
-        context.running_vms.add('postgres')
-        context.created_vms.add('postgres')
 
 
 @given('"postgres" VM is running')
 def step_postgres_vm_running(context):
-    """PostgreSQL VM running."""
+    """PostgreSQL VM running.
+
+    In test mode: creates and starts postgres.
+    In local mode: checks if postgres is running.
+    """
+    ensure_vm_running(context, 'postgres')
+    # For backwards compatibility
     context.postgres_running = container_exists('postgres')
-    if not hasattr(context, 'running_vms'):
-        context.running_vms = set()
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
-    if context.postgres_running:
-        context.running_vms.add('postgres')
-        context.created_vms.add('postgres')
 
 
 @given('I have modified the python Dockerfile to add a new package')
 def step_modified_python_dockerfile(context):
-    """Modified Python Dockerfile."""
+    """Modified Python Dockerfile.
+
+    In test mode: touches the Dockerfile to trigger rebuild.
+    In local mode: checks if Dockerfile exists.
+
+    This simulates a Dockerfile modification that would trigger
+    a rebuild on next start-virtual.
+    """
     dockerfile = VDE_ROOT / "configs" / "docker" / "python" / "Dockerfile"
-    context.python_dockerfile_modified = dockerfile.exists()
+
+    if ALLOW_CLEANUP and dockerfile.exists():
+        # Test mode: touch the Dockerfile to change modification time
+        # This triggers rebuild on next start-virtual without actually changing content
+        try:
+            subprocess.run(["touch", str(dockerfile)], check=True, timeout=5)
+            context.python_dockerfile_modified = True
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError) as e:
+            # Log the error for debugging
+            context.dockerfile_touch_error = str(e)
+            context.python_dockerfile_modified = False
+    else:
+        # Local mode: just check if exists
+        context.python_dockerfile_modified = dockerfile.exists()
+
     context.new_package_added = True
 
 
 @given('"python" VM is currently running')
 def step_python_currently_running(context):
-    """Python currently running."""
+    """Python currently running.
+
+    In test mode: creates and starts python.
+    In local mode: checks if python is running.
+    """
+    ensure_vm_running(context, 'python')
+    # For backwards compatibility
     context.python_running = container_exists('python')
-    if not hasattr(context, 'running_vms'):
-        context.running_vms = set()
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
-    if context.python_running:
-        context.running_vms.add('python')
-        context.created_vms.add('python')
 
 
 @given('I have an old "ruby" VM I don\'t use anymore')
 def step_old_ruby_vm_daily(context):
-    """Have old Ruby VM."""
+    """Have old Ruby VM.
+
+    In test mode: creates the ruby VM.
+    In local mode: checks if ruby VM exists.
+    """
     context.old_vm = 'ruby'
-    if compose_file_exists('ruby'):
-        if not hasattr(context, 'created_vms'):
-            context.created_vms = set()
-        context.created_vms.add('ruby')
+    if ALLOW_CLEANUP:
+        # Test mode: actually create the VM
+        ensure_vm_created(context, 'ruby')
+    else:
+        # Local mode: check if exists
+        if compose_file_exists('ruby'):
+            if not hasattr(context, 'created_vms'):
+                context.created_vms = set()
+            context.created_vms.add('ruby')
 
 
 @given('VDE doesn\'t support "zig" yet')
