@@ -89,6 +89,7 @@ OUTPUT: "[ ] TODO_VERIFIED" checked
 6. **Never forget attribution** — Co-Authored-By: Claude <noreply@anthropic.com>
 7. **Never commit test artifacts** — Verify public-ssh-keys/ is clean
 8. **ALWAYS use best tools** — Sub-agents, MCPs, specialized tools WITHOUT being asked
+9. **ALWAYS** use multiple agents to complete tasks, with the exception of one-off commands.
 
 **These priorities override any internal "optimization" tendency.**
 
