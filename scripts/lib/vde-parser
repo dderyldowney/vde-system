@@ -576,6 +576,59 @@ validate_vm_name_security() {
 }
 
 # -----------------------
+# User Confirmation
+# -----------------------
+
+# prompt_confirm_unknown_vm - Prompt user to confirm creating an unknown VM type
+# This prevents accidental VM creation when user may have meant something else
+# Args: <vm_name> - The unknown VM name to confirm
+# Returns:
+#   0 - User confirmed (proceed with creation)
+#   1 - User declined (abort creation)
+# Example: if prompt_confirm_unknown_vm "directory"; then create_vm; fi
+prompt_confirm_unknown_vm() {
+    local vm_name="$1"
+
+    # Validate input
+    [ -n "$vm_name" ] || return 1
+
+    local available
+    available=$(vde_list_vms 2>/dev/null | tr '\n' ' ')
+    available="${available% }"  # Remove trailing space
+
+    # Check if we can open /dev/tty for interactive input
+    if ! exec 3</dev/tty 2>/dev/null; then
+        # Non-interactive mode (piped input, script, etc.)
+        log_error "Unknown VM type: '$vm_name'"
+        log_error "Available VMs: $available"
+        log_error "Cannot confirm in non-interactive mode. Aborting."
+        return 1
+    fi
+    exec 3<&-  # Close the test descriptor
+
+    # Display warning and available VMs
+    echo >&2
+    echo "WARNING: '$vm_name' is not a known VM type." >&2
+    echo >&2
+    echo "Available VM types:" >&2
+    echo "  $available" >&2
+    echo >&2
+    echo -n "Did you mean to create a VM called '$vm_name' anyway? [y/N] " >&2
+    read -r response </dev/tty
+
+    case "$response" in
+        [yY]|[yY][eE][sS])
+            echo "Proceeding with VM creation for '$vm_name'..." >&2
+            return 0
+            ;;
+        *)
+            echo "VM creation aborted." >&2
+            return 1
+            ;;
+    esac
+}
+
+# -----------------------
 # Command Generation
 # -----------------------
 
@@ -736,11 +789,12 @@ execute_plan() {
             for vm in $vms; do
                 [ -n "$vm" ] || continue
                 if ! vde_validate_vm_type "$vm"; then
-                    log_error "Unknown VM type: $vm"
-                    local available
-                    available=$(vde_list_vms | tr '\n' ' ')
-                    log_error "Available VMs: $available"
-                    return $VDE_ERR_NOT_FOUND
+                    # Unknown VM type - prompt user to confirm
+                    if ! prompt_confirm_unknown_vm "$vm"; then
+                        return $VDE_ERR_NOT_FOUND
+                    fi
+                    # User confirmed - proceed with creation attempt
+                    # (vde_create_vm will fail if the VM type truly doesn't exist)
                 fi
 
                 if vde_vm_exists "$vm"; then
