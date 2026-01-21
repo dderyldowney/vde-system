@@ -62,18 +62,7 @@ ssh python-dev
 psql -h postgres -U devuser  # Works!
 ```
 
-### 5. Leverage AI Tools
-
-Claude Code, Cursor, Copilot all work with VDE.
-
-```bash
-# Use Claude Code with VDE
-cd ~/dev/projects/python/my-api
-claude
-# Claude can edit files and run commands via SSH
-```
-
-### 6. SSH Between Containers
+### 5. SSH Between Containers
 
 All VMs share the `dev-net` network and have SSH agent forwarding enabled.
 

@@ -1,10 +1,9 @@
 #!/usr/bin/env sh
 # VDE Commands Library
-# Wrapper functions for all VDE operations that the AI assistant can call
+# Wrapper functions for all VDE operations
 # Source this library with: source ./scripts/lib/vde-commands
 #
-# This library provides high-level command wrappers for VDE operations,
-# designed to be called by the AI assistant and natural language parser.
+# This library provides high-level command wrappers for VDE operations.
 # All functions log their actions and provide consistent error handling.
 #
 # Shell Compatibility (Stage 4):

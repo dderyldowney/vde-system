@@ -960,18 +960,6 @@ Examples:
 | `VDE_DEBUG_TIMING` | Enable performance timing | 0 |
 | `VDE_SKIP_COMPAT_CHECK` | Skip shell compatibility check | 0 |
 
-### AI/LLM Configuration
-
-| Variable | Description | Priority |
-|----------|-------------|----------|
-| `VDE_USE_AI` | Enable LLM parsing (1/true/yes) | - |
-| `ANTHROPIC_AUTH_TOKEN` | Anthropic auth token | Highest |
-| `ANTHROPIC_API_KEY` | Anthropic API key | High |
-| `CLAUDE_API_KEY` | Claude API key (legacy) | Medium |
-| `ANTHROPIC_BASE_URL` | Custom API base URL | - |
-| `ANTHROPIC_MODEL` | Custom model to use | - |
-| `ANTHROPIC_DEFAULT_SONNET_MODEL` | Default Sonnet model | - |
-
 ### Docker Configuration
 
 | Variable | Description | Default |

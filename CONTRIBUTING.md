@@ -295,7 +295,7 @@ Examples, use cases, or supporting information
 - **README.md**: Project overview and quick start
 - **docs/**: Detailed guides (TESTING.md, COVERAGE.md, etc.)
 - **Code comments**: Inline documentation for complex logic
-- **Man pages**: Command help (`vde-chat --help`)
+- **Man pages**: Command help (`vde --help`)
 
 ### Improving Documentation
 1. **Be clear**: Write for your audience

@@ -205,7 +205,7 @@ for word in input_words:
 
 **Step 6: Update the correction assertion step**
 
-Modify `/Users/dderyldowney/dev/tests/features/steps/ai_steps.py` around line 350:
+The correction assertion step should be updated in parser_steps.py:
 
 ```python
 @then('the system should provide helpful correction suggestions')

@@ -25,7 +25,7 @@ Overview of all scripts included with VDE.
 ~/dev/scripts/
 ├── lib/                    # Shared libraries
 │   ├── vm-common          # Core functions
-│   ├── vde-commands       # AI-safe wrappers
+│   ├── vde-commands       # Command wrappers
 │   └── vde-parser         # Natural language parser
 ├── templates/             # Docker Compose templates
 ├── data/

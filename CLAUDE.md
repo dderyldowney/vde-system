@@ -104,6 +104,36 @@ MCP tools reduce context usage. Use them.
 
 ---
 
+## 🔍 CODE REVIEW BEFORE COMMIT
+
+**MANDATORY:** All commits must be reviewed by the code-reviewer agent before being finalized.
+
+### Pre-Commit Review Workflow
+
+1. **Stage all changes:**
+   ```bash
+   git add -A
+   ```
+
+2. **Run code-reviewer agent:**
+   ```
+   Use Task tool with subagent_type=code-reviewer
+   Prompt: "Review the staged git changes using `git diff --cached`"
+   ```
+
+3. **Present review to user for approval:**
+   - Summarize the review findings
+   - Highlight any issues found
+   - **WAIT for user approval before committing**
+
+4. **Only after user approval:**
+   - Make any requested changes
+   - Commit with proper format including attribution
+
+**NEVER commit without user approval after code review.**
+
+---
+
 ## 📝 COMMIT FORMAT
 
 ```

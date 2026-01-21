@@ -46,7 +46,7 @@ $HOME/dev/
 ├── scripts/
 │   ├── lib/
 │   │   ├── vm-common           # Shared library
-│   │   ├── vde-commands        # AI-safe wrappers
+│   │   ├── vde-commands        # Command wrappers
 │   │   └── vde-parser          # Natural language parser
 │   ├── templates/              # Docker compose templates
 │   │   ├── compose-language.yml
@@ -123,7 +123,7 @@ All management scripts and libraries.
 | Component | Purpose |
 |-----------|---------|
 | `lib/vm-common` | Core VM management functions |
-| `lib/vde-commands` | AI-safe wrapper functions |
+| `lib/vde-commands` | Command wrapper functions |
 | `lib/vde-parser` | Natural language parser |
 | `templates/` | Docker Compose templates |
 | `data/vm-types.conf` | VM type definitions |

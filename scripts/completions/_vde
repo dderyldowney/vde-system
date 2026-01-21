@@ -18,8 +18,6 @@ VDE_COMMANDS=(
     'list:List all VMs'
     'status:Show VM status'
     'health:Check VDE health and dependencies'
-    'chat:Interactive AI assistant chat mode'
-    'ai:AI assistant for natural language commands'
     'help:Show help message'
 )
 
@@ -94,21 +92,6 @@ _vde_status() {
         '1:VM name:_vde_complete_vm_names'
 }
 
-_vde_chat() {
-    _arguments \
-        '(-h --help)'{-h,--help}'[Show help message]' \
-        '(--ai)--ai[Enable LLM-based parsing]' \
-        '(--persistent)--persistent[Enable persistent session]' \
-        '(-v --verbose)'{-v,--verbose}'[Verbose output]'
-}
-
-_vde_ai() {
-    _arguments \
-        '(-h --help)'{-h,--help}'[Show help message]' \
-        '(-v --verbose)'{-v,--verbose}'[Verbose output]' \
-        '*::prompt:'
-}
-
 _vde_health() {
     _arguments \
         '(-h --help)'{-h,--help}'[Show help message]' \
@@ -143,8 +126,6 @@ _vde() {
                 restart) _vde_restart "$@" ;;
                 list) _vde_list "$@" ;;
                 status) _vde_status "$@" ;;
-                chat) _vde_chat "$@" ;;
-                ai) _vde_ai "$@" ;;
                 health) _vde_health "$@" ;;
                 help) _vde_health "$@" ;;
                 *) _default ;;

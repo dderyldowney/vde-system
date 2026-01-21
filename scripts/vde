@@ -15,7 +15,6 @@
 #   list            List all VMs
 #   status          Show VM status
 #   health          Run system health check
-#   chat            Start AI assistant chat
 #   nuke            Remove all of VDE
 #   help            Show this help message
 #

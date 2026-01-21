@@ -51,7 +51,6 @@ VDE provides isolated development environments for multiple programming language
 - **7+ Service VMs**: PostgreSQL, Redis, MongoDB, Nginx, MySQL, RabbitMQ, CouchDB — ready when you are
 - **Template-based**: Add new languages/services without code changes — it just works!
 - **VSCode Ready**: Full IDE support via Remote-SSH — code in comfort
-- **AI-Friendly**: Works with Claude Code, Cursor, Copilot — your AI pair programmers
 - **SSH Agent Forwarding**: VM-to-VM and VM-to-Host communication using your host's SSH keys — like magic!
 - **Automatic SSH Setup**: VDE handles SSH agent, keys, and configuration automatically — zero manual setup
 

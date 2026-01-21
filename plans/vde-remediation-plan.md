@@ -376,14 +376,8 @@ Improve user experience with better feedback, error messages, and discoverabilit
   - Update all templates and documentation
 
 #### 6.5 Add Interactive Mode Improvements
-- **File:** `scripts/vde-chat`
-- **Issue:** Limited interactive features
-- **Solution:** Enhance chat mode
-- **Implementation:**
-  - Add command history persistence
-  - Add tab completion in chat
-  - Add multi-line input support
-  - Add command aliases
+- **Note:** The vde-chat interactive AI mode was removed from VDE
+- **Status:** Feature removed for beginner-friendliness (see docs/AI-INTEGRATION-REMOVED.md)
 
 ### Success Criteria
 - [ ] Progress indicators for all long operations
