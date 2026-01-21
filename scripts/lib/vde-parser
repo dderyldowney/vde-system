@@ -167,25 +167,27 @@ detect_intent() {
     local input_lower
     input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
 
-    # Check for help intent first
+    # Check for help intent first (includes common typos: hel, hepl)
     case "$input_lower" in
-        *help*|*"what can i do"*|*"how do i use"*)
+        *help*|*hel*|*hepl*|*"what can i do"*|*"how do i use"*)
             echo "$INTENT_HELP"
             return $VDE_SUCCESS
             ;;
     esac
 
     # Check for status BEFORE list/show (specific patterns)
+    # Includes typo patterns: staus, satus (vowel swap), runing, runnig (omission)
     case "$input_lower" in
-        *"show status of"*|*"status of"*)
+        *"show status of"*|*"status of"*|*staus*|*satus*)
             echo "$INTENT_STATUS"
             return $VDE_SUCCESS
             ;;
     esac
 
     # Check for list/show intents (general patterns)
+    # Includes typo patterns: lis, lst (prefix omission), shw (omission)
     case "$input_lower" in
-        *list*|*show*|*"what available"*|*what*available*)
+        *list*|*lis*|*lst*|*show*|*shw*|*"what available"*|*what*available*)
             echo "$INTENT_LIST_VMS"
             return $VDE_SUCCESS
             ;;
@@ -199,49 +201,55 @@ detect_intent() {
             ;;
     esac
 
-    # Check for status
+    # Check for status (includes common typos: runing, runnig)
     case "$input_lower" in
-        *running*|*status*|*"current state"*)
+        *running*|*runing*|*runnig*|*status*|*staus*|*satus*|*"current state"*)
             echo "$INTENT_STATUS"
             return $VDE_SUCCESS
             ;;
     esac
 
-    # Check for connect intent
+    # Check for connect intent (includes typo: conect)
     case "$input_lower" in
-        *"how do i connect"*|*"ssh into"*|*"connect to"*|*"connect "*)
+        *"how do i connect"*|*"ssh into"*|*"connect to"*|*"connect "*|*conect*)
             echo "$INTENT_CONNECT"
             return $VDE_SUCCESS
             ;;
     esac
 
     # Check for create intent (be specific to avoid false matches)
+    # Includes typo patterns: cret, crat (prefix omission), craet (transposition)
+    # Note: 'creat' removed to avoid false positives with "create directory" etc.
     case "$input_lower" in
-        *"create a"*|*"create new"*|*"create "*|*"make a"*|*"make new"*|*"set up"*)
+        *"create a"*|*"create new"*|*"create "*|*cret*|*crat*|*craet*|*"make a"*|*"make new"*|*"set up"*)
             echo "$INTENT_CREATE_VM"
             return $VDE_SUCCESS
             ;;
     esac
 
     # Check for restart intent (must be checked before start/stop)
+    # Includes typo patterns: restrat, resart (transposition)
     case "$input_lower" in
-        *restart*|*reboot*|*rebuild*)
+        *restart*|*restrat*|*resart*|*reatart*|*reboot*|*rebot*|*rebuild*)
             echo "$INTENT_RESTART_VM"
             return $VDE_SUCCESS
             ;;
     esac
 
     # Check for start intent
+    # Includes typo patterns: strt, strat, satrt (transposition), launc (omission)
+    # Note: 'stat' removed to avoid collision with status intent
     case "$input_lower" in
-        *start*|*launch*|*boot*)
+        *start*|*strt*|*strat*|*satrt*|*launch*|*launc*|*boot*)
             echo "$INTENT_START_VM"
             return $VDE_SUCCESS
             ;;
     esac
 
     # Check for stop intent
+    # Includes typo patterns: stp, sto (prefix omission), stpo, sotp (transposition)
     case "$input_lower" in
-        *stop*|*shutdown*|*kill*)
+        *stop*|*stp*|*sto*|*stpo*|*sotp*|*shutdown*|*shutdon*|*kill*|*kil*)
             echo "$INTENT_STOP_VM"
             return $VDE_SUCCESS
             ;;
