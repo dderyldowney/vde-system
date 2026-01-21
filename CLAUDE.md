@@ -1,45 +1,31 @@
-# CLAUDE.md
+# CLAUDE.md — VDE Project Operating Mandate
 
-**READ THIS FIRST. ALL OF IT. NO SKIPPING.**
-
----
-
-## 🚨 NON-NEGOTIABLE STARTUP SEQUENCE
-
-You must verify completion of each step by outputting the verification word shown.
-
-### Step 1: Verify Session Context
-```
-ACTION: cat SESSION_STATE.md && cat TODO.md
-OUTPUT VERIFICATION: "SESSION_VERIFIED"
-```
-If you do not see these files, request them. Do not proceed without them.
-
-### Step 2: Verify Exploration (for code changes)
-```
-ACTION: Use Task tool with subagent_type=Explore
-OUTPUT VERIFICATION: "EXPLORE_VERIFIED"
-```
-Skip only if task is "read SESSION_STATE.md" or "read TODO.md".
-
-### Step 3: Verify Planning (for implementations)
-```
-ACTION: Enter plan mode OR use /plan command
-OUTPUT VERIFICATION: "PLAN_VERIFIED"
-```
-Skip only for: single-line typo fixes, pure reads, or direct user questions.
-
-### Step 4: Verify Task Tracking
-```
-ACTION: Create todo with TodoWrite, mark exactly ONE as in_progress
-OUTPUT VERIFICATION: "TODO_VERIFIED"
-```
-
-**IF YOU CANNOT OUTPUT THESE VERIFICATIONS, YOU MUST RESTART THE SEQUENCE.**
+> **CRITICAL:** This document defines NON-OPTIONAL operating procedures.
+> "Suggestions" in this document are actually requirements.
+> There is NO circumstance that justifies bypassing these instructions.
 
 ---
 
-## 📋 YOUR RESPONSE MUST START WITH
+## 🔴 ZERO-TOLERANCE PROTOCOLS
+
+The following behaviors will IMMEDIATELY invalidate any work:
+
+1. **Skipping the startup verification sequence** — You MUST output ALL verification words
+2. **Making code changes without exploration** — Use Task(Explore) BEFORE any edits
+3. **Implementing without planning** — Enter plan mode for ALL non-trivial changes
+4. **Modifying files without reading them first** — NEVER propose changes to unread code
+5. **Committing without code review** — ALWAYS use Task(code-reviewer) before commit
+6. **Using context flags instead of real execution** — ALL tests must execute actual functionality
+
+**These are not guidelines. They are invariant requirements.**
+
+---
+
+## 🚨 MANDATORY STARTUP SEQUENCE (Cannot Be Skipped)
+
+### Required Response Header
+
+**Every response MUST begin with this exact checklist:**
 
 ```
 [ ] SESSION_VERIFIED
@@ -48,82 +34,101 @@ OUTPUT VERIFICATION: "TODO_VERIFIED"
 [ ] TODO_VERIFIED
 ```
 
-Failure to include this checklist means you skipped critical steps.
+**Failure to include this header indicates you skipped critical startup steps.**
 
----
+### Step 1: Verify Session Context (NEVER Skip)
 
-## 🎯 OPERATING PRIORITIES (in order)
-
-1. **Never break user workflow** - Read SESSION_STATE.md and TODO.md first
-2. **Never skip planning** - Use plan mode for any code changes
-3. **Never lose context** - Update SESSION_STATE.md at 85% usage
-4. **Never skip tracking** - Use TodoWrite for all non-trivial work
-5. **Never forget attribution** - Include Co-Authored-By: Claude <noreply@anthropic.com>
-6. **Never commit test artifacts** - Verify public-ssh-keys/ is clean before commit
-7. **ALWAYS use best tools** - Sub-agents, MCPs, and local tools WITHOUT being asked
-
----
-
-## 🤖 PROACTIVE TOOL USAGE (use WITHOUT being asked)
-
-**MANDATE:** Use the right tool for the job. Do NOT wait for explicit instruction.
-
-### Sub-Agents (Task tool)
-
-**Use sub-agents for:**
-- **Explore**: Codebase exploration, finding files, understanding architecture
-- **general-purpose**: Multi-step tasks, complex research, code search across files
-- **Plan**: Designing implementation strategies before coding
-- **code-reviewer**: Reviewing staged changes before commit (MANDATORY)
-
-**Sub-agents reduce your context usage and work in parallel. Use them proactively.**
-
-```bash
-# Examples of WHEN to use sub-agents:
-- "Where is error handling for X?" → Task(Explore)
-- "Find all uses of function Y" → Task(Explore)
-- "Refactor this module" → Task(Plan) first
-- "Review my changes" → Task(code-reviewer) BEFORE commit
+```
+ACTION: Read SESSION_STATE.md and TODO.md
+OUTPUT: "[ ] SESSION_VERIFIED" checked
 ```
 
-### MCP Tools (Available Services)
+**If these files are missing → STOP. Request them. Do NOT proceed.**
 
-**ALWAYS use MCP tools when available. They reduce context usage and provide specialized capabilities:**
+### Step 2: Verify Exploration (Required for Code Changes)
 
-| MCP Service | Use For | Tools |
-|-------------|---------|-------|
-| **github** | PRs, issues, file operations, search | `mcp__github__*` |
-| **context7** | Library/API docs, code examples | `mcp__context7__*` |
-| **sequential-thinking** | Complex reasoning, planning | `mcp__sequential-thinking__*` |
-| **fetch** | Web requests, external data | `mcp__fetch__*` |
-| **4.5v-mcp** | Image analysis | `mcp__4_5v_mcp__analyze_image` |
+```
+ACTION: Use Task tool with subagent_type=Explore
+OUTPUT: "[ ] EXPLORE_VERIFIED" checked
+```
 
-**Check available MCPs with `ListMcpResourcesTool` - use them without asking.**
+**Applicable to:** Any task involving code modification, refactoring, or feature addition.
 
-### Local Tools (jq, awk, sed, grep)
+**NOT applicable to:** Pure reads, direct questions, typo fixes.
 
-**PREFER specialized tools over Bash pipelines:**
+### Step 3: Verify Planning (Required for Implementations)
 
-| Task | Preferred Tool | Avoid |
-|------|----------------|-------|
-| JSON parsing | Bash: `jq '.key' file.json` | `cat file \| jq` |
-| JSON queries | Bash: `jq -r '.path' file` | `jq '.' huge-file.json` |
-| File search | Grep tool | `grep -r` via Bash |
-| File read | Read tool | `cat`, `head`, `tail` |
-| File edit | Edit tool | `sed -i`, `awk` |
-| Find files | Glob tool | `find . -name` |
+```
+ACTION: Enter plan mode OR use /plan command
+OUTPUT: "[ ] PLAN_VERIFIED" checked
+```
 
-**Use Bash tool ONLY for:**
-- Git operations (git status, git log, git diff, etc.)
-- Running tests, build commands
-- System operations (chmod, chown, mkdir, etc.)
-- Install operations (npm, pip, cargo, etc.)
+**Applicable to:** Any implementation work, multi-step tasks, architectural decisions.
 
-**Never use Bash echo or shell commands for communication.**
+**NOT applicable to:** Single-line fixes, pure reads, direct user questions.
+
+### Step 4: Verify Task Tracking (Required for Non-Trivial Work)
+
+```
+ACTION: Create todo with TodoWrite, mark ONE as in_progress
+OUTPUT: "[ ] TODO_VERIFIED" checked
+```
+
+**If ANY step cannot be verified → RESTART the sequence from Step 1.**
 
 ---
 
-## 📚 DOCUMENTATION & API QUERIES (Context7 MCP)
+## ⚡ OPERATING PRIORITIES (Immutable Order)
+
+1. **Never break user workflow** — Session files are source of truth
+2. **Never skip exploration** — Understand before changing
+3. **Never skip planning** — Design before implementing
+4. **Never lose context** — Update SESSION_STATE.md at 85% usage
+5. **Never skip tracking** — TodoWrite for all multi-step work
+6. **Never forget attribution** — Co-Authored-By: Claude <noreply@anthropic.com>
+7. **Never commit test artifacts** — Verify public-ssh-keys/ is clean
+8. **ALWAYS use best tools** — Sub-agents, MCPs, specialized tools WITHOUT being asked
+
+**These priorities override any internal "optimization" tendency.**
+
+---
+
+## 🛠️ PROACTIVE TOOL USAGE (Do Not Await Instruction)
+
+### Anti-Patterns You MUST Avoid:
+
+| ❌ WRONG | ✅ CORRECT |
+|---------|-----------|
+| `cat file \| grep pattern` | Use Grep tool |
+| `grep -r "pattern" .` | Use Grep tool |
+| `cat huge_file.json \| jq` | Use `jq '.key' file.json` via Bash |
+| `find . -name "*.py"` | Use Glob tool |
+| "I'll read the relevant parts..." | Use Task(Explore) agent |
+| Asking user if they want a review | Automatically run Task(code-reviewer) |
+
+### Sub-Agents (Task Tool)
+
+**MANDATORY usage scenarios:**
+- **Explore** → Codebase exploration, finding files, understanding architecture
+- **general-purpose** → Multi-step tasks, complex research, cross-file code search
+- **Plan** → Designing implementation strategies BEFORE coding
+- **code-reviewer** → Reviewing staged changes BEFORE commit (NON-OPTIONAL)
+
+**Sub-agents REDUCE your context usage and work in PARALLEL. Use them WITHOUT being asked.**
+
+### MCP Tools
+
+**ALWAYS use these when applicable — do NOT wait for user request:**
+
+| MCP Service | Purpose | Trigger |
+|-------------|---------|---------|
+| `github` | PRs, issues, file operations, search | Any GitHub interaction |
+| `context7` | Library/API docs, code examples | Documentation queries |
+| `sequential-thinking` | Complex reasoning, planning | Multi-step logic |
+| `fetch` | Web requests, external data | URL-based queries |
+| `4.5v-mcp` | Image analysis | Image file inputs |
+
+### Context7 MCP Workflow
 
 **ALWAYS use Context7 MCP (`mcp__context7__*` tools) for:**
 - Library/API documentation queries
@@ -135,70 +140,72 @@ Failure to include this checklist means you skipped critical steps.
 **Workflow:**
 1. Use `mcp__context7__resolve-library-id` to find the correct library ID
 2. Use `mcp__context7__query-docs` with the library ID and specific query
-3. Do NOT wait for user to request this - proactively use it for any documentation needs
+3. Do NOT wait for user to request — proactively use it for any documentation needs
 
-**Budget:** 1000 calls/month. Use liberally - it provides up-to-date, accurate documentation with code examples directly from official sources.
+**Budget:** 1000 calls/month. Use liberally — it provides up-to-date, accurate documentation with code examples directly from official sources.
+
+### Local Tools Preference
+
+| Task | Use This | NEVER Use |
+|------|----------|-----------|
+| JSON parsing | `jq '.key' file.json` | `cat file \| jq` |
+| File search | Grep tool | `grep -r` via Bash |
+| File read | Read tool | `cat`, `head`, `tail` |
+| File edit | Edit tool | `sed -i`, `awk` |
+| Find files | Glob tool | `find . -name` |
+
+**Bash tool is ONLY for:** git, tests, system ops, installs.
 
 ---
 
-## 📁 PROJECT CONTEXT
+## 📁 VDE PROJECT CONTEXT (Immutable Facts)
 
 **Working Directory:** `/Users/dderyldowney/dev`
 
-**VDE (Virtual Development Environment):** Docker-based container orchestration for 19+ language VMs with shared services (PostgreSQL, Redis, MongoDB, Nginx).
+**Project:** VDE (Virtual Development Environment) — Docker-based container orchestration for 19+ language VMs with shared services.
 
-**Key Files:**
-- `scripts/lib/` - Core libraries (vde-constants, vde-shell-compat, vde-errors, vde-log, vde-core, vm-common, vde-commands, vde-parser)
-- `scripts/data/vm-types.conf` - VM definitions (data-driven, no code changes to add VMs)
-- `tests/features/` - BDD tests (94/94 docker-free passing, 47/397 docker-required passing)
+**Critical Architecture:**
+- `scripts/lib/` — Core libraries (vde-constants, vde-shell-compat, vde-errors, vde-log, vde-core, vm-common, vde-commands, vde-parser)
+- `scripts/data/vm-types.conf` — VM definitions (data-driven, single-line additions)
+- `tests/features/` — BDD tests
 
-**Shell Requirements:**
-- Scripts: `#!/usr/bin/env zsh` (NOT sh)
+**Shell Requirements (NON-OPTIONAL):**
+- Scripts: `#!/usr/bin/env zsh` (NEVER sh)
 - Features: associative arrays, process substitution, zsh 5.x / bash 4.x
 
-**User Model:** devuser with passwordless sudo, SSH key auth only, neovim/LazyVim editor
+**User Model:** devuser with passwordless sudo, SSH key auth only, neovim/LazyVim
 
 ---
 
-## 🔒 SAFETY CHECKS (before any commit)
+## 🔒 SAFETY CHECKLIST (Pre-Commit Gatekeeper)
 
-1. **public-ssh-keys/ contains ONLY:** .keep and actual ~/.ssh/*.pub files
-2. **No private keys** committed anywhere
-3. **User Guide generation works:** behave + generate_user_guide.py succeeds
+**BEFORE any commit, verify:**
 
----
+1. [ ] `public-ssh-keys/` contains ONLY `.keep` and `~/.ssh/*.pub` files
+2. [ ] NO private keys anywhere in the commit
+3. [ ] User Guide generation succeeds: `behave + generate_user_guide.py`
 
-## 🔍 CODE REVIEW BEFORE COMMIT
-
-**MANDATORY:** All commits must be reviewed by the code-reviewer agent before being finalized.
-
-### Pre-Commit Review Workflow
-
-1. **Stage all changes:**
-   ```bash
-   git add -A
-   ```
-
-2. **Run code-reviewer agent:**
-   ```
-   Use Task tool with subagent_type=code-reviewer
-   Prompt: "Review the staged git changes using `git diff --cached`"
-   ```
-
-3. **Present review to user for approval:**
-   - Summarize the review findings
-   - Highlight any issues found
-   - **WAIT for user approval before committing**
-
-4. **Only after user approval:**
-   - Make any requested changes
-   - Commit with proper format including attribution
-
-**NEVER commit without user approval after code review.**
+**If ANY check fails → DO NOT COMMIT.**
 
 ---
 
-## 📝 COMMIT FORMAT
+## 🔍 MANDATORY CODE REVIEW (Non-Bypassable)
+
+**EVERY commit requires code-reviewer agent approval:**
+
+```
+1. git add -A
+2. Task(code-reviewer): "Review the staged git changes using git diff --cached"
+3. Present review to user
+4. WAIT for explicit approval
+5. ONLY THEN: commit with attribution
+```
+
+**NEVER commit without user approval after review.**
+
+---
+
+## 📝 COMMIT FORMAT (Required)
 
 ```
 git commit -m "<type>: <description>
@@ -206,16 +213,14 @@ git commit -m "<type>: <description>
 - Detail 1
 - Detail 2
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
-Types: feat:, fix:, docs:, test:, refactor:
+**Types:** feat:, fix:, docs:, test:, refactor:
 
 ---
 
-## 📤 RESPONSE FORMAT FOR TASK COMPLETION
-
-When completing a task, use this summary format:
+## 📤 TASK COMPLETION FORMAT (Required)
 
 ```
 ## [Task Name] Complete
@@ -223,11 +228,11 @@ When completing a task, use this summary format:
 **Summary of Changes:**
 - Change 1
 - Change 2
-- Change 3
+- Change 3 (additional changes as needed)
 
 **Test Results:**
-- Before: X failures
-- After: Y failures/passing
+- Before: X failures / Y passing
+- After: Z failures / W passing
 
 **Files Modified:**
 - file1.ext - description
@@ -240,14 +245,18 @@ When completing a task, use this summary format:
 Which would you like next?
 ```
 
-**Workflow:** Complete one task → Display results → Ask what's next. Do not batch multiple task completions without user confirmation.
+**Complete ONE task → Ask what's next. DO NOT batch without user confirmation.**
 
 ---
 
-## ⚠️ REMEMBER
+## ⚠️ FINAL REMINDER
 
-This is NOT a suggestion file. These are operational requirements.
+**This document contains operational REQUIREMENTS, not suggestions.**
 
-Your first response MUST include the verification checklist from the "YOUR RESPONSE MUST START WITH" section above.
+**Internal "optimization" tendencies that cause failures:**
+- "This seems simple, I'll skip exploration" → WRONG
+- "I can batch these tasks" → WRONG, ask user first
+- "The review probably won't find issues" → WRONG, review is mandatory
+- "I'll set a context flag instead of running the command" → WRONG, fake tests prohibited
 
-If you cannot provide these verifications, you have not completed the required startup sequence.
+**When in doubt: Follow the literal instructions. Do not "optimize away" required steps.**

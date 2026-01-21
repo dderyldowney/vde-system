@@ -110,6 +110,57 @@ def _get_vm_category(vm_name):
         return None
 
 
+def _load_all_vms():
+    """Load all VMs from vm-types.conf and return structured data."""
+    vms = {'language': [], 'service': [], 'all': []}
+    try:
+        with open(VM_TYPES_CONF, 'r') as f:
+            for line in f:
+                if line.strip() and not line.startswith('#'):
+                    parts = line.strip().split('|')
+                    if len(parts) >= 4:
+                        category = parts[0]  # 'lang' or 'service'
+                        vm_type = parts[1]   # canonical name
+                        display_name = parts[3]  # display name
+                        aliases = parts[2].split(',') if len(parts) > 2 else []
+
+                        vm_info = {
+                            'type': vm_type,
+                            'display': display_name,
+                            'aliases': [a.strip() for a in aliases],
+                            'category': 'language' if category == 'lang' else 'service'
+                        }
+
+                        vms['all'].append(vm_info)
+                        if category == 'lang':
+                            vms['language'].append(vm_info)
+                        elif category == 'service':
+                            vms['service'].append(vm_info)
+    except Exception as e:
+        print(f"Error loading VMs: {e}")
+        pass
+    return vms
+
+
+def _vm_list_has_display_names(vm_list):
+    """Check that all VMs in list have display names."""
+    return all(vm.get('display') for vm in vm_list)
+
+
+def _vm_list_has_types(vm_list):
+    """Check that all VMs in list have type information."""
+    return all(vm.get('category') for vm in vm_list)
+
+
+def _filter_vms_by_category(vms, category):
+    """Filter VMs by category (language or service)."""
+    if category == 'language':
+        return vms['language']
+    elif category == 'service':
+        return vms['service']
+    return vms['all']
+
+
 # =============================================================================
 # GIVEN steps - Setup workflow context (not in other step files)
 # =============================================================================
@@ -424,6 +475,47 @@ def step_ask_available_vms(context):
     context.current_plan = {'intent': context.detected_intent}
 
 
+@when('I ask "what VMs can I create?"')
+def step_ask_available_vms_quoted(context):
+    """Parse list VMs request and load actual VM data from vm-types.conf."""
+    # Parse the natural language request using real parser
+    context.detected_intent = _get_real_intent('what VMs can I create')
+    context.detected_filter = _get_real_filter('what VMs can I create')
+
+    # Load actual VM data from vm-types.conf
+    all_vms = _load_all_vms()
+    context.all_vms = all_vms['all']
+    context.language_vms = all_vms['language']
+    context.service_vms = all_vms['service']
+
+    # Verify VM data has required attributes
+    context.vm_list_has_display_names = _vm_list_has_display_names(context.all_vms)
+    context.vm_list_has_types = _vm_list_has_types(context.all_vms)
+
+    context.current_plan = {'intent': context.detected_intent, 'filter': context.detected_filter}
+
+
+@when('I ask "show all services"')
+def step_ask_show_all_services(context):
+    """Parse show all services request and load service VM data from vm-types.conf."""
+    # Parse the natural language request using real parser
+    context.detected_intent = _get_real_intent('show all services')
+    context.detected_filter = _get_real_filter('show all services')
+
+    # Load actual VM data from vm-types.conf
+    all_vms = _load_all_vms()
+    service_vms = _filter_vms_by_category(all_vms, 'service')
+    context.service_vms = service_vms
+    context.all_vms = all_vms['all']  # Keep full list for comparison
+
+    # Verify common services are present
+    service_names = [vm['type'] for vm in service_vms]
+    context.has_postgresql = 'postgres' in service_names
+    context.has_redis = 'redis' in service_names
+
+    context.current_plan = {'intent': context.detected_intent, 'filter': context.detected_filter}
+
+
 @when('I plan to create Python and PostgreSQL')
 def step_plan_create_python_postgres(context):
     """Parse create python and postgres using real parser."""
@@ -477,9 +569,23 @@ def step_plan_start_go_mongodb(context):
 
 @when('I ask to list all languages')
 def step_ask_list_languages(context):
-    """Parse list languages request using real parser."""
+    """Parse list languages request and load language VM data from vm-types.conf."""
+    # Parse the natural language request using real parser
     context.detected_intent = _get_real_intent('list languages')
     context.detected_filter = _get_real_filter('list languages')
+
+    # Load actual VM data from vm-types.conf
+    all_vms = _load_all_vms()
+    language_vms = _filter_vms_by_category(all_vms, 'language')
+    context.language_vms = language_vms
+    context.all_vms = all_vms['all']  # Keep full list for comparison
+
+    # Verify common languages are present
+    lang_names = [vm['type'] for vm in language_vms]
+    context.has_python = 'python' in lang_names
+    context.has_go = 'go' in lang_names
+    context.has_rust = 'rust' in lang_names
+
     context.current_plan = {'intent': context.detected_intent, 'filter': context.detected_filter}
 
 

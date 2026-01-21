@@ -1183,27 +1183,41 @@ def step_vde_installed(context):
 
 @then('I should see all available language VMs')
 def step_see_language_vms(context):
-    """Should see all available language VMs."""
+    """Should see all available language VMs - loaded from vm-types.conf."""
+    # This step expects real VM data to be loaded by the WHEN step
+    assert hasattr(context, 'language_vms'), "Language VMs not loaded by WHEN step"
+    assert len(context.language_vms) > 0, "No language VMs found"
     context.language_vms_shown = True
     context.has_vm_list = True
 
 
 @then('I should see all available service VMs')
 def step_see_service_vms(context):
-    """Should see all available service VMs."""
+    """Should see all available service VMs - loaded from vm-types.conf."""
+    # This step expects real VM data to be loaded by the WHEN step
+    assert hasattr(context, 'service_vms'), "Service VMs not loaded by WHEN step"
+    assert len(context.service_vms) > 0, "No service VMs found"
     context.service_vms_shown = True
     context.has_vm_list = True
 
 
 @then('each VM should have a display name')
 def step_vm_display_name(context):
-    """Each VM should have a display name."""
+    """Each VM should have a display name - verify real data."""
+    assert hasattr(context, 'all_vms'), "VM list not loaded by WHEN step"
+    # Verify all VMs have display names
+    for vm in context.all_vms:
+        assert vm.get('display'), f"VM {vm.get('type', 'unknown')} missing display name"
     context.vm_has_display_name = True
 
 
 @then('each VM should show its type (language or service)')
 def step_vm_type_shown(context):
-    """Each VM should show its type."""
+    """Each VM should show its type - verify real data."""
+    assert hasattr(context, 'all_vms'), "VM list not loaded by WHEN step"
+    # Verify all VMs have category information
+    for vm in context.all_vms:
+        assert vm.get('category'), f"VM {vm.get('type', 'unknown')} missing category"
     context.vm_type_shown = True
 
 
@@ -1215,13 +1229,22 @@ def step_want_languages_only(context):
 
 @then('I should not see service VMs')
 def step_not_see_services(context):
-    """Should not see service VMs."""
+    """Should not see service VMs - verify real data."""
+    assert hasattr(context, 'language_vms'), "Language VMs not loaded by WHEN step"
+    # Verify language_vms list doesn't contain services
+    for vm in context.language_vms:
+        assert vm['category'] == 'language', f"Found service VM in language list: {vm['type']}"
     context.services_hidden = True
 
 
 @then('common languages like Python, Go, and Rust should be listed')
 def step_common_languages_listed(context):
-    """Common languages should be listed."""
+    """Common languages should be listed - verify real data."""
+    assert hasattr(context, 'language_vms'), "Language VMs not loaded by WHEN step"
+    lang_names = [vm['type'] for vm in context.language_vms]
+    assert 'python' in lang_names, "Python not in language VMs"
+    assert 'go' in lang_names, "Go not in language VMs"
+    assert 'rust' in lang_names, "Rust not in language VMs"
     context.common_languages_listed = True
 
 
@@ -1233,13 +1256,31 @@ def step_want_services_only(context):
 
 @then('I should see only service VMs')
 def step_see_only_services(context):
-    """Should see only service VMs."""
+    """Should see only service VMs - verify real data."""
+    assert hasattr(context, 'service_vms'), "Service VMs not loaded by WHEN step"
+    # Verify service_vms list contains only services
+    for vm in context.service_vms:
+        assert vm['category'] == 'service', f"Found language VM in service list: {vm['type']}"
     context.only_services_shown = True
+
+
+@then('I should not see language VMs')
+def step_not_see_languages(context):
+    """Should not see language VMs - verify real data."""
+    assert hasattr(context, 'service_vms'), "Service VMs not loaded by WHEN step"
+    # Verify service_vms list doesn't contain languages
+    for vm in context.service_vms:
+        assert vm['category'] != 'language', f"Found language VM in service list: {vm['type']}"
+    context.languages_hidden = True
 
 
 @then('services like PostgreSQL and Redis should be listed')
 def step_common_services_listed(context):
-    """Common services should be listed."""
+    """Common services should be listed - verify real data."""
+    assert hasattr(context, 'service_vms'), "Service VMs not loaded by WHEN step"
+    service_names = [vm['type'] for vm in context.service_vms]
+    assert 'postgres' in service_names, "PostgreSQL not in service VMs"
+    assert 'redis' in service_names, "Redis not in service VMs"
     context.common_services_listed = True
 
 
