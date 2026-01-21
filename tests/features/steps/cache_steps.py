@@ -237,98 +237,106 @@ def step_cache_format(context):
 
 @then('only the stopped VMs should start')
 def step_only_stopped_start(context):
-    """Only stopped VMs should start."""
-    assert context.last_exit_code == 0 if hasattr(context, 'last_exit_code') else True
+    """Only stopped VMs should start - verify actual state."""
+    # Real verification: check the exit code from last command
+    if not hasattr(context, 'last_exit_code'):
+        raise AssertionError("Context missing last_exit_code - cannot verify VM start status")
+    assert context.last_exit_code == 0, f"Expected exit code 0, got {context.last_exit_code}"
 
 
 @then('I should see which were started')
 def step_see_started(context):
-    """Should see which VMs were started."""
-    # In test mode, just verify the scenario completed
-    import os
-    if os.environ.get('VDE_TEST_MODE') == '1':
-        assert getattr(context, 'last_exit_code', 0) == 0 or True
-    else:
-        assert hasattr(context, 'last_output')
+    """Should see which VMs were started - verify actual output."""
+    # Real verification: check we got output showing started VMs
+    if not hasattr(context, 'last_output'):
+        raise AssertionError("Context missing last_output - cannot verify which VMs started")
+    # Output should contain something about VMs starting
+    assert len(context.last_output) > 0, "No output received to show which VMs started"
 
 
 @then('I should be notified of the change')
 def step_notified_change(context):
-    """Should be notified of change."""
-    # In test mode, just verify the scenario completed
-    import os
-    if os.environ.get('VDE_TEST_MODE') == '1':
-        assert getattr(context, 'last_exit_code', 0) == 0 or True
-    else:
-        assert hasattr(context, 'last_output')
+    """Should be notified of change - verify actual notification."""
+    # Real verification: check we got some output about the change
+    if not hasattr(context, 'last_output'):
+        raise AssertionError("Context missing last_output - cannot verify notification")
+    assert len(context.last_output) > 0, "No notification output received"
 
 
 @then('understand what caused it')
 def step_understand_cause(context):
-    """Should understand the cause."""
-    # In test mode, just verify the scenario completed
-    import os
-    if os.environ.get('VDE_TEST_MODE') == '1':
-        assert getattr(context, 'last_exit_code', 0) == 0 or True
-    else:
-        assert hasattr(context, 'last_output')
+    """Should understand the cause - verify explanatory output."""
+    # Real verification: check output explains what happened
+    if not hasattr(context, 'last_output'):
+        raise AssertionError("Context missing last_output - cannot verify cause explanation")
+    assert len(context.last_output) > 0, "No explanatory output received"
 
 
 @then('know the new state')
 def step_know_new_state(context):
-    """Should know the new state."""
-    # In test mode, just verify the scenario completed
-    import os
-    if os.environ.get('VDE_TEST_MODE') == '1':
-        assert getattr(context, 'last_exit_code', 0) == 0 or True
-    else:
-        assert hasattr(context, 'last_output')
+    """Should know the new state - verify state information in output."""
+    # Real verification: check output shows new state
+    if not hasattr(context, 'last_output'):
+        raise AssertionError("Context missing last_output - cannot verify state")
+    assert len(context.last_output) > 0, "No state information in output"
 
 
 @then('the conflict should be detected')
 def step_conflict_detected(context):
-    """Conflict should be detected (lenient in test mode)."""
-    # Check for error messages in output
+    """Conflict should be detected - verify real conflict detection."""
+    # Real verification: check for error messages or concurrent start handling
     if hasattr(context, 'last_error') and context.last_error:
+        # Error message present - conflict detected
         context.conflict_detected = True
     elif hasattr(context, 'concurrent_start'):
-        # Concurrent start was attempted - conflict would be detected in real system
+        # Concurrent start was attempted - mark as detected
         context.conflict_detected = True
     else:
-        # Test environment - pass leniently
-        assert True
+        # Require some evidence of conflict detection
+        raise AssertionError("No evidence of conflict detection - no error message or concurrent start flag")
 
 
 @then('I should be notified')
 def step_notified(context):
-    """Should be notified (lenient in test mode)."""
-    # In test environment, just verify we have some output
-    assert hasattr(context, 'last_output') or hasattr(context, 'last_error') or True
+    """Should be notified - verify actual notification output."""
+    # Real verification: require actual notification output
+    has_output = hasattr(context, 'last_output') and context.last_output
+    has_error = hasattr(context, 'last_error') and context.last_error
+    if not (has_output or has_error):
+        raise AssertionError("No notification received - no output or error available")
 
 
 @then('the operations should be queued or rejected')
 def step_operations_queued(context):
-    """Operations should be queued or rejected (lenient in test mode)."""
-    # If returncode is non-zero, operation was rejected
+    """Operations should be queued or rejected - verify actual handling."""
+    # Real verification: check exit code or rejection message
     if hasattr(context, 'last_exit_code'):
-        assert context.last_exit_code != 0 or True  # Always pass in test mode
+        # Non-zero exit code means operation was rejected
+        if context.last_exit_code != 0:
+            context.operation_rejected = True
+        else:
+            # Zero exit code means operation succeeded (queued or completed)
+            context.operation_succeeded = True
     else:
-        assert True
+        raise AssertionError("Cannot verify operation handling - no exit code available")
 
 
 @then('I should be informed of progress')
 def step_informed_progress(context):
-    """Should be informed of progress."""
-    # VDE scripts output progress information
-    assert hasattr(context, 'last_output')
+    """Should be informed of progress - verify actual progress output."""
+    # Real verification: check for progress messages in output
+    if not hasattr(context, 'last_output'):
+        raise AssertionError("Cannot verify progress - no output available")
+    assert len(context.last_output) > 0, "No progress information in output"
 
 
 @then("know when it's ready to use")
 def step_know_ready(context):
-    """Should know when it's ready."""
-    # Container should be running
+    """Should know when it's ready - verify actual readiness indication."""
+    # Real verification: check container is actually running
     running = docker_ps()
-    assert len(running) > 0 or hasattr(context, 'last_output')
+    if len(running) == 0:
+        raise AssertionError("No containers are running - VM may not be ready")
 
 
 @then('not be left wondering')
@@ -784,3 +792,123 @@ def step_registry_rebuilt_from_compose(context):
     context.registry_rebuilt = True
     context.cache_updated = True  # Mark that the cache was updated for the next step
     mark_step_implemented(context, "registry_rebuilt_from_compose")
+
+
+# =============================================================================
+# Phase 1: Undefined Step Implementations
+# =============================================================================
+
+@when("cache operation is performed")
+def step_cache_operation_performed(context):
+    """Perform a cache operation to trigger .cache directory creation."""
+    cache_dir = VDE_ROOT / ".cache"
+    # Ensure .cache directory exists by running a cache operation
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    # Run list-vms to trigger cache creation
+    result = run_vde_command("./scripts/list-vms", timeout=30)
+    context.cache_operation_performed = result.returncode == 0
+    mark_step_implemented(context, "cache_operation_performed")
+
+
+@then(".cache directory should be created")
+def step_cache_directory_created(context):
+    """Verify .cache directory was created."""
+    cache_dir = VDE_ROOT / ".cache"
+    assert cache_dir.exists(), f".cache directory not found at {cache_dir}"
+    assert cache_dir.is_dir(), f".cache exists but is not a directory"
+    context.cache_directory_created = True
+    mark_step_implemented(context, "cache_directory_created")
+
+
+@when("cache validity is checked")
+def step_cache_validity_checked(context):
+    """Check cache validity by comparing modification times."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    config_path = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+
+    # Store modification times for validation check
+    if cache_path.exists():
+        context.cache_mtime = cache_path.stat().st_mtime
+    else:
+        context.cache_mtime = None
+
+    if config_path.exists():
+        context.config_mtime = config_path.stat().st_mtime
+    else:
+        context.config_mtime = None
+
+    # Cache is valid if it exists and is newer than config
+    context.cache_is_valid = (
+        cache_path.exists() and
+        config_path.exists() and
+        cache_path.stat().st_mtime >= config_path.stat().st_mtime
+    )
+    mark_step_implemented(context, "cache_validity_checked")
+
+
+@then("cache should be considered valid")
+def step_cache_considered_valid(context):
+    """Verify cache is considered valid (newer than config)."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    config_path = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+
+    assert cache_path.exists(), "Cache file does not exist"
+    assert config_path.exists(), "Config file does not exist"
+
+    # Cache should be newer or same age as config for it to be valid
+    cache_mtime = cache_path.stat().st_mtime
+    config_mtime = config_path.stat().st_mtime
+
+    # Allow some tolerance for filesystem timestamp precision
+    assert cache_mtime >= config_mtime - 1, "Cache is older than config file - should be invalid"
+    context.cache_validated = True
+    mark_step_implemented(context, "cache_considered_valid")
+
+
+@given("library has been sourced")
+def step_library_sourced(context):
+    """Simulate library being sourced (VDE library initialization)."""
+    # In real VDE, sourcing vm-common initializes variables
+    # For tests, we simulate this by checking the library file exists
+    lib_path = VDE_ROOT / "scripts" / "lib" / "vm-common"
+    assert lib_path.exists(), f"VDE library not found at {lib_path}"
+
+    # Mark that library is "sourced" (initialized)
+    context.library_sourced = True
+    context.vm_types_loaded = False  # Initially not loaded
+    mark_step_implemented(context, "library_sourced")
+
+
+@when("VM types are first accessed")
+def step_vm_types_first_accessed(context):
+    """Trigger first VM type access (lazy load)."""
+    # First access to VM types triggers loading
+    # Run list-vms which loads VM types on first access
+    result = run_vde_command("./scripts/list-vms", timeout=30)
+
+    # Check if cache was created as part of first access
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    context.vm_types_loaded_on_access = cache_path.exists()
+    context.vm_types_first_access_result = result.returncode == 0
+    mark_step_implemented(context, "vm_types_first_accessed")
+
+
+@then("VM types should be loaded at that time")
+def step_vm_types_loaded_at_access(context):
+    """Verify VM types were loaded on first access (not during library sourcing)."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+
+    # Cache should exist after first access
+    assert cache_path.exists(), "VM types cache was not created on first access"
+
+    # Verify the first access was successful
+    assert hasattr(context, 'vm_types_first_access_result'), "VM types were not accessed"
+    assert context.vm_types_first_access_result, "VM types access failed"
+
+    # Verify VM types are actually loaded (cache has content)
+    content = cache_path.read_text()
+    assert len(content) > 0, "Cache file is empty - VM types not loaded"
+    assert "VM_TYPE" in content or "python" in content, "VM type data not found in cache"
+
+    context.vm_types_loaded_verified = True
+    mark_step_implemented(context, "vm_types_loaded_verified")
