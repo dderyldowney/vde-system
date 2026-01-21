@@ -7,6 +7,7 @@ from behave import given, when, then
 import subprocess
 import os
 import sys
+import shlex
 
 # Add steps directory to path for config import
 steps_dir = os.path.dirname(os.path.abspath(__file__))
@@ -29,15 +30,21 @@ VDE_SHELL_COMPAT = os.path.join(VDE_ROOT, 'scripts/lib/vde-shell-compat')
 
 def _call_vde_parser_function(function_name, input_string):
     """Call a vde-parser function and return stdout."""
-    cmd = f'zsh -c "source {VDE_SHELL_COMPAT} && source {VDE_VM_COMMON} && source {VDE_PARSER} && {function_name} \\"{input_string}\\""'
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8')
+    # Pass input via environment variable to avoid shell escaping issues
+    env = os.environ.copy()
+    env['VDE_TEST_INPUT'] = input_string
+    cmd = f"zsh -c 'source {VDE_SHELL_COMPAT} && source {VDE_VM_COMMON} && source {VDE_PARSER} && {function_name} \"$VDE_TEST_INPUT\"'"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8', env=env)
     return result.stdout.strip(), result.returncode
 
 
 def _call_vde_parser_check(function_name, input_string):
     """Call a vde-parser check function that returns exit code."""
-    cmd = f'zsh -c "source {VDE_SHELL_COMPAT} && source {VDE_VM_COMMON} && source {VDE_PARSER} && {function_name} \\"{input_string}\\""'
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8')
+    # Pass input via environment variable to avoid shell escaping issues
+    env = os.environ.copy()
+    env['VDE_TEST_INPUT'] = input_string
+    cmd = f"zsh -c 'source {VDE_SHELL_COMPAT} && source {VDE_VM_COMMON} && source {VDE_PARSER} && {function_name} \"$VDE_TEST_INPUT\"'"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8', env=env)
     return result.returncode
 
 
@@ -133,9 +140,33 @@ def step_plan_contains(context, line):
     context.plan.append(line)
 
 
+@when('plan contains "{line}"')
+def step_when_plan_contains(context, line):
+    """Add a line to the plan and re-validate (for testing rejection)."""
+    if not hasattr(context, 'plan'):
+        context.plan = []
+    context.plan.append(line)
+    # Re-validate the plan with the new line
+    context.plan_validated = True
+    for plan_line in context.plan:
+        if not _validate_plan_line(plan_line):
+            context.plan_validated = False
+            break
+
+
 @when('I validate the plan')
 def step_plan_validated(context):
     """Validate the plan using real validation logic."""
+    context.plan_validated = True
+    for line in getattr(context, 'plan', []):
+        if not _validate_plan_line(line):
+            context.plan_validated = False
+            break
+
+
+@when('plan is validated')
+def step_plan_is_validated(context):
+    """Validate the plan using real validation logic (alias for I validate the plan)."""
     context.plan_validated = True
     for line in getattr(context, 'plan', []):
         if not _validate_plan_line(line):
@@ -156,10 +187,10 @@ def step_parse_input(context, input_text):
         for alias, canonical in context.aliases.items():
             # Replace alias occurrences with canonical name
             parse_input = parse_input.replace(alias, canonical)
-    
+
     # Call real vde-parser functions
     context.detected_intent = _get_real_intent(parse_input)
-    
+
     # Get VM names from real parser
     vm_names = _get_real_vm_names(parse_input)
     if 'all' in parse_input.lower() or 'everything' in parse_input.lower():
@@ -175,19 +206,26 @@ def step_parse_input(context, input_text):
         context.detected_vms = vm_names
     else:
         context.detected_vms = []
-    
+
     # Get filter from real parser
     context.detected_filter = _get_real_filter(parse_input)
     if context.detected_filter == 'all':
         context.detected_filter = None
-    
+
     # Get flags from real parser
     flags = _get_real_flags(parse_input)
     context.rebuild_flag = flags.get('rebuild', False)
     context.nocache_flag = flags.get('nocache', False)
-    
+
     # Security check using real parser
     context.has_dangerous_chars = _has_dangerous_chars(parse_input)
+
+
+@when('I parse \'{input_text}\'')
+def step_parse_input_single_quoted(context, input_text):
+    """Parse natural language input with single quotes (handles double quotes inside)."""
+    # Delegate to the main parse function - the input_text parameter already has the value
+    step_parse_input(context, input_text)
 
 
 @when('I parse the input with single quotes')
@@ -451,3 +489,67 @@ def step_check_empty_help(context):
     """Verify empty input returns help intent."""
     assert hasattr(context, 'detected_intent'), "No intent was detected"
     assert context.detected_intent == 'help', f"Empty input should return help, got '{context.detected_intent}'"
+
+
+# =============================================================================
+# Additional THEN steps for security test scenarios
+# =============================================================================
+
+@then('dangerous characters should be rejected')
+def step_dangerous_chars_rejected(context):
+    """Verify dangerous characters were detected and rejected."""
+    assert hasattr(context, 'has_dangerous_chars'), "Dangerous char check was not performed"
+    assert context.has_dangerous_chars is True, "Expected dangerous characters to be detected and rejected"
+
+
+@then('command should NOT execute')
+def step_command_not_execute(context):
+    """Verify command would not execute due to dangerous characters."""
+    assert hasattr(context, 'has_dangerous_chars'), "Dangerous char check was not performed"
+    assert context.has_dangerous_chars is True, "Command should NOT execute when dangerous chars present"
+
+
+@then('all plan lines should be valid')
+def step_all_plan_lines_valid(context):
+    """Verify all plan lines are valid."""
+    assert hasattr(context, 'plan_validated'), "Plan was not validated"
+    assert context.plan_validated is True, "Expected all plan lines to be valid"
+
+
+@then('intent should default to "help"')
+def step_intent_defaults_to_help(context):
+    """Verify intent defaults to help for ambiguous input."""
+    assert hasattr(context, 'detected_intent'), "No intent was detected"
+    assert context.detected_intent == 'help', f"Expected intent to default to 'help', got '{context.detected_intent}'"
+
+
+@then('help message should be displayed')
+def step_help_message_displayed(context):
+    """Verify help would be displayed (real implementation checks help intent)."""
+    assert hasattr(context, 'detected_intent'), "No intent was detected"
+    assert context.detected_intent == 'help', "Help message should be displayed when intent is 'help'"
+    # Verify vde script has help functionality
+    vde_script = os.path.join(VDE_ROOT, 'scripts/vde')
+    assert os.path.exists(vde_script), f"VDE script should exist at {vde_script}"
+
+
+@then('VMs should NOT include "{vm_name}"')
+def step_vm_not_included(context, vm_name):
+    """Verify a VM was NOT detected in the list."""
+    assert hasattr(context, 'detected_vms'), "No VMs were detected"
+    detected = context.detected_vms
+
+    # Handle case where multiple VMs are passed: "javascript", "js"
+    if '", "' in vm_name:
+        vms = [v.strip('"\'') for v in vm_name.split('", "')]
+        for vm in vms:
+            if isinstance(detected, list):
+                assert vm not in detected, f"VM '{vm}' should NOT be in {detected}"
+            elif isinstance(detected, str):
+                assert detected != vm, f"VM '{vm}' should NOT be detected"
+    else:
+        vm_name = vm_name.strip('"\'')
+        if isinstance(detected, list):
+            assert vm_name not in detected, f"VM '{vm_name}' should NOT be in {detected}"
+        elif isinstance(detected, str):
+            assert detected != vm_name, f"VM '{vm_name}' should NOT be detected"

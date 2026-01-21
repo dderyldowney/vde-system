@@ -209,7 +209,7 @@ detect_intent() {
 
     # Check for connect intent
     case "$input_lower" in
-        *"how do i connect"*|*"ssh into"*|*"connect to"*)
+        *"how do i connect"*|*"ssh into"*|*"connect to"*|*"connect "*)
             echo "$INTENT_CONNECT"
             return $VDE_SUCCESS
             ;;
@@ -425,7 +425,7 @@ contains_dangerous_chars() {
     local str="$1"
     # Check for each dangerous character explicitly
     case "$str" in
-        *";"*|*"|"*|*"&"*|*'$'*|*'`'*|*"("*|*")"*|*"{"*|*"}"*|*"["*|*"]"*|*"<"*|*">"*|*"!"*|*"#"*|*"*"*|*"?"*|*"\\"*)
+        *";"*|*"|"*|*"&"*|*'$'*|*'`'*|*"("*|*")"*|*"{"*|*"}"*|*"["*|*"]"*|*"<"*|*">"*|*"!"*|*"#"*|*"*"*|*"?"*|*"\\"*|*'"'*)
             return $VDE_SUCCESS
             ;;
     esac

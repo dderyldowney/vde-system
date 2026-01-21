@@ -14,7 +14,7 @@ Feature: VM Information and Discovery
 
   Scenario: Listing only language VMs
     Given I want to see only programming language environments
-    When I ask "show all languages"
+    When I ask to list all languages
     Then I should see only language VMs
     And I should not see service VMs
     And common languages like Python, Go, and Rust should be listed
