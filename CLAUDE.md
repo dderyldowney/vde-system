@@ -16,6 +16,7 @@ The following behaviors will IMMEDIATELY invalidate any work:
 4. **Modifying files without reading them first** — NEVER propose changes to unread code
 5. **Committing without code review** — ALWAYS use Task(code-reviewer) before commit
 6. **Using context flags instead of real execution** — ALL tests must execute actual functionality
+7. **Thinking without sequential-thinking MCP** — You MUST use `mcp__sequential-thinking__sequentialthinking` for ALL reasoning, debugging, and multi-step logic
 
 **These are not guidelines. They are invariant requirements.**
 
@@ -122,11 +123,22 @@ OUTPUT: "[ ] TODO_VERIFIED" checked
 
 | MCP Service | Purpose | Trigger |
 |-------------|---------|---------|
+| `sequential-thinking` | Complex reasoning, debugging, planning | **ALL multi-step thinking, debugging, analysis** |
 | `github` | PRs, issues, file operations, search | Any GitHub interaction |
 | `context7` | Library/API docs, code examples | Documentation queries |
-| `sequential-thinking` | Complex reasoning, planning | Multi-step logic |
 | `fetch` | Web requests, external data | URL-based queries |
 | `4.5v-mcp` | Image analysis | Image file inputs |
+
+### Sequential-Thinking MCP (NON-OPTIONAL)
+
+**ALWAYS use `mcp__sequential-thinking__sequentialthinking` for:**
+- Debugging issues or unexpected behavior
+- Tracing through complex code logic
+- Analyzing test failures
+- Understanding shell function interactions
+- Any multi-step reasoning or planning
+
+**This is NOT optional.** Do NOT "think in your head" — use the tool.
 
 ### Context7 MCP Workflow
 
