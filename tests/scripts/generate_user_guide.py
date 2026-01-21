@@ -693,9 +693,11 @@ def generate_user_guide(passing_scenarios=None):
                         f.write(f'     - [{sub_subsection}](#{sub_subsection_id})\n')
         f.write("\n---\n\n")
 
-        # Write each section with intros from YAML (Phase 2) and scenarios (Phase 3 Bug Fix)
+        # Write each section with collapsible wrapping
         for i, (section, _) in enumerate(sections, 1):
-            f.write(f"## {section}\n\n")
+            # Start collapsible section (default open)
+            f.write(f'<details open>\n\n')
+            f.write(f'<summary><h2>{section}</h2></summary>\n\n')
 
             # Add section introduction from YAML (Phase 2)
             intro_key = section
@@ -724,7 +726,8 @@ def generate_user_guide(passing_scenarios=None):
                     f.write(format_scenario_for_user_guide(scenario_name, scenario_body))
                     f.write("\n\n")
 
-            f.write("---\n\n")
+            # End collapsible section
+            f.write("</details>\n\n")
 
         # Quick reference card (now dynamically generated - Phase 4)
         f.write(generate_quick_reference())

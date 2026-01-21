@@ -33,7 +33,9 @@
 
 ---
 
-## 1. Installation
+<details open>
+
+<summary><h2>1. Installation</h2></summary>
 
 Hey there! 👋 Ready to set up your awesome new development playground?
 
@@ -1641,9 +1643,11 @@ And they should be able to communicate
 vde create python
 ```
 
----
+</details>
 
-## 2. SSH Keys
+<details open>
+
+<summary><h2>2. SSH Keys</h2></summary>
 
 ### SSH Keys? Automatic! 🔑
 
@@ -1727,9 +1731,11 @@ And I can connect using simple names like "python-dev"
 
 **VDE does all of this for you.** Sit back and relax! ☕
 
----
+</details>
 
-## 3. Your First VM
+<details open>
+
+<summary><h2>3. Your First VM</h2></summary>
 
 ## Let's Create Your First VM! 🎉
 
@@ -1918,9 +1924,11 @@ And VMs should include "go"
 vde create a go vm
 ```
 
----
+</details>
 
-## 4. Understanding
+<details open>
+
+<summary><h2>4. Understanding</h2></summary>
 
 ### Let's See What You Built! 🔍
 
@@ -2255,9 +2263,11 @@ And VMs should include "python", "rust"
 vde start python   rust
 ```
 
----
+</details>
 
-## 5. Starting and Stopping
+<details open>
+
+<summary><h2>5. Starting and Stopping</h2></summary>
 
 ### Daily Rhythm: Start, Code, Stop, Repeat 🔄
 
@@ -2635,9 +2645,11 @@ And VMs should include "python"
 vde start python
 ```
 
----
+</details>
 
-## 6. Your First Cluster
+<details open>
+
+<summary><h2>6. Your First Cluster</h2></summary>
 
 ### Time to Build Something Real! 🏗️
 
@@ -2836,9 +2848,11 @@ And VMs should include "python", "rust", "go"
 vde start python, rust, and go
 ```
 
----
+</details>
 
-## 7. Connecting
+<details open>
+
+<summary><h2>7. Connecting</h2></summary>
 
 ### Step Inside Your VM! 🚪
 
@@ -2995,9 +3009,11 @@ And VMs should include "python"
 vde how do I connect to python
 ```
 
----
+</details>
 
-## 8. Working with Databases
+<details open>
+
+<summary><h2>8. Working with Databases</h2></summary>
 
 ### Databases? No Problem! 🗄️
 
@@ -3141,9 +3157,11 @@ And the Redis VM should be included
 vde create python
 ```
 
----
+</details>
 
-## 9. Daily Workflow
+<details open>
+
+<summary><h2>9. Daily Workflow</h2></summary>
 
 ### Your Daily Rhythm: Start, Code, Stop 🔄
 
@@ -3267,9 +3285,11 @@ And the plan should apply to all running VMs
 
 
 
----
+</details>
 
-## 10. Adding More Languages
+<details open>
+
+<summary><h2>10. Adding More Languages</h2></summary>
 
 ### Want to Learn More Languages? 🌍
 
@@ -3465,9 +3485,11 @@ And nocache flag should be true
 vde rebuild with no cache
 ```
 
----
+</details>
 
-## 11. Troubleshooting
+<details open>
+
+<summary><h2>11. Troubleshooting</h2></summary>
 
 ### Hiccups Happen — We've Got Your Back! 🛠️
 
@@ -3634,7 +3656,7 @@ And array should remain empty
 
 
 
----
+</details>
 
 ## Quick Reference Card 📇
 
