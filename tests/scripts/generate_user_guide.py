@@ -320,30 +320,64 @@ def extract_command_from_scenario(scenario_name, scenario_body):
 
 def format_scenario_for_user_guide(scenario_name, scenario_body):
     """
-    Format a scenario for the user guide with explanations and commands.
+    Format a scenario for the user guide with structured sections.
 
-    Shows the scenario with:
-    1. Title with inline command hint
-    2. The Gherkin scenario steps
+    Format:
+    1. **Scenario:** [name] (bold heading)
+    2. Code block with Gherkin steps
+    3. **Run the command:** heading + code block with actual command
+    4. **What this does:** heading + explanation (if we have it)
     """
     lines = []
 
     # Clean up scenario name for display
     display_name = scenario_name.replace("-", " ").capitalize()
 
-    # Extract and display the actual command inline
-    command = extract_command_from_scenario(scenario_name, scenario_body)
-    if command:
-        lines.append(f"**Scenario: {display_name}** — 💡 **Run this:** `{command}` and it will accomplish this\n\n")
-    else:
-        lines.append(f"**Scenario: {display_name}**\n\n")
+    # 1. Scenario title
+    lines.append(f"**Scenario: {display_name}**\n")
+    lines.append("")
 
+    # 2. Gherkin steps in code block
     lines.append("```")
     for line in scenario_body.split('\n'):
         line = line.strip()
         if line:
             lines.append(line)
+    lines.append("```\n")
+    lines.append("")
+
+    # 3. Extract command and add "Run the command:" section
+    command = extract_command_from_scenario(scenario_name, scenario_body)
+    if command:
+        # Map common patterns to more descriptive action labels
+        action_label = "Run the command"
+        lower_cmd = command.lower()
+
+        if "list" in lower_cmd or "show" in lower_cmd or "what" in lower_cmd:
+            action_label = "List available VMs"
+        elif "create" in lower_cmd:
+            action_label = "Create the VM"
+        elif "start" in lower_cmd:
+            action_label = "Start the VMs"
+        elif "stop" in lower_cmd:
+            action_label = "Stop the VMs"
+        elif "build" in lower_cmd or "setup" in lower_cmd:
+            action_label = "Run the setup"
+        elif "remove" in lower_cmd or "delete" in lower_cmd:
+            action_label = "Remove the VM"
+
+        lines.append(f"**{action_label}:**\n")
+    else:
+        # No command found, skip this section
+        return "\n".join(lines)
+
+    lines.append("")
+    lines.append("```bash")
+    lines.append(command)
     lines.append("```")
+
+    # Note: "What this does" section would require additional metadata
+    # For now, we skip it since we don't have that information
 
     # No trailing newline - caller controls spacing
     return "\n".join(lines)

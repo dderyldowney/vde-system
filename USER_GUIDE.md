@@ -1515,7 +1515,7 @@ And postgres, redis, mongodb, nginx should be listed
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
-**Scenario: All vms have valid installation commands** — 💡 **Run this:** `vde list` and it will accomplish this
+**Scenario: All vms have valid installation commands**
 
 
 ```
@@ -1525,7 +1525,15 @@ Then each VM should have a non-empty install command
 And the install command should be valid shell syntax
 ```
 
-**Scenario: Example 1   python api with postgresql setup** — 💡 **Run this:** `vde create python` and it will accomplish this
+
+**List available VMs:**
+
+
+```bash
+vde list
+```
+
+**Scenario: Example 1   python api with postgresql setup**
 
 
 ```
@@ -1535,7 +1543,15 @@ Then the plan should include the create_vm intent
 And the plan should include the Python VM
 ```
 
-**Scenario: Example 3   microservices architecture setup** — 💡 **Run this:** `vde create python` and it will accomplish this
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Example 3   microservices architecture setup**
 
 
 ```
@@ -1545,7 +1561,15 @@ Then the plan should include all five VMs
 And each VM should be included in the VM list
 ```
 
-**Scenario: Daily workflow   morning setup** — 💡 **Run this:** `vde start <vms>` and it will accomplish this
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Daily workflow   morning setup**
 
 
 ```
@@ -1555,7 +1579,15 @@ Then the plan should include all three VMs
 And the plan should use the start_vm intent
 ```
 
-**Scenario: New project setup   discover available vms** — 💡 **Run this:** `vde list` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: New project setup   discover available vms**
 
 
 ```
@@ -1565,7 +1597,15 @@ Then the plan should include the list_vms intent
 And I should see all available VM types
 ```
 
-**Scenario: New project setup   choose full stack** — 💡 **Run this:** `vde create python` and it will accomplish this
+
+**List available VMs:**
+
+
+```bash
+vde list
+```
+
+**Scenario: New project setup   choose full stack**
 
 
 ```
@@ -1575,7 +1615,15 @@ Then both VMs should be included in the plan
 And the plan should use the create_vm intent
 ```
 
-**Scenario: New project setup   start development stack** — 💡 **Run this:** `vde create python` and it will accomplish this
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: New project setup   start development stack**
 
 
 ```
@@ -1583,6 +1631,14 @@ Given I have created my VMs
 When I plan to start Python and PostgreSQL
 Then both VMs should start
 And they should be able to communicate
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
 ```
 
 ---
@@ -1845,13 +1901,21 @@ And I should be able to SSH to "python-dev"
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
-**Scenario: Detect create vm intent** — 💡 **Run this:** `vde create a go vm` and it will accomplish this
+**Scenario: Detect create vm intent**
 
 
 ```
 When I parse "create a go vm"
 Then intent should be "create_vm"
 And VMs should include "go"
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create a go vm
 ```
 
 ---
@@ -1961,7 +2025,9 @@ Then removed VM should be removed from registry
 And cache file should be updated
 ```
 
-**Scenario: Example 1   verify postgresql accessibility** — 💡 **Run this:** `vde start <vms>` and it will accomplish this
+
+
+**Scenario: Example 1   verify postgresql accessibility**
 
 
 ```
@@ -1971,7 +2037,15 @@ Then the VM should be recognized as a valid VM type
 And it should be marked as a service VM
 ```
 
-**Scenario: Example 3   verify all microservice vms exist** — 💡 **Run this:** `vde create python` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Example 3   verify all microservice vms exist**
 
 
 ```
@@ -1984,6 +2058,14 @@ And PostgreSQL should exist as a service VM
 And Redis should exist as a service VM
 ```
 
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
 **Scenario: Daily workflow   check status during development**
 
 
@@ -1994,6 +2076,8 @@ Then the plan should include the status intent
 And I should be able to see running VMs
 ```
 
+
+
 **Scenario: Troubleshooting   step 1 check status**
 
 
@@ -2003,6 +2087,8 @@ When I check the status
 Then I should receive status information
 And I should see which VMs are running
 ```
+
+
 
 **Scenario: Documentation accuracy   verify examples work**
 
@@ -2015,7 +2101,9 @@ And JavaScript should be a valid VM type
 And all microservice VMs should be valid
 ```
 
-**Scenario: Listing all available vms** — 💡 **Run this:** `vde list` and it will accomplish this
+
+
+**Scenario: Listing all available vms**
 
 
 ```
@@ -2025,6 +2113,14 @@ Then I should see all available language VMs
 And I should see all available service VMs
 And each VM should have a display name
 And each VM should show its type (language or service)
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list
 ```
 
 **Scenario: Listing only language vms**
@@ -2038,7 +2134,9 @@ And I should not see service VMs
 And common languages like Python, Go, and Rust should be listed
 ```
 
-**Scenario: Listing only service vms** — 💡 **Run this:** `vde list --services` and it will accomplish this
+
+
+**Scenario: Listing only service vms**
 
 
 ```
@@ -2047,6 +2145,14 @@ When I ask "show all services"
 Then I should see only service VMs
 And I should not see language VMs
 And services like PostgreSQL and Redis should be listed
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list --services
 ```
 
 **Scenario: Understanding vm categories**
@@ -2060,7 +2166,9 @@ And language VMs should have SSH access
 And service VMs should provide infrastructure services
 ```
 
-**Scenario: Detect list vms intent** — 💡 **Run this:** `vde list all vms` and it will accomplish this
+
+
+**Scenario: Detect list vms intent**
 
 
 ```
@@ -2068,7 +2176,15 @@ When I parse "list all vms"
 Then intent should be "list_vms"
 ```
 
-**Scenario: Detect list languages intent** — 💡 **Run this:** `vde show all language vms` and it will accomplish this
+
+**List available VMs:**
+
+
+```bash
+vde list all vms
+```
+
+**Scenario: Detect list languages intent**
 
 
 ```
@@ -2077,7 +2193,15 @@ Then intent should be "list_vms"
 And filter should be "lang"
 ```
 
-**Scenario: Detect list services intent** — 💡 **Run this:** `vde what services are available` and it will accomplish this
+
+**List available VMs:**
+
+
+```bash
+vde show all language vms
+```
+
+**Scenario: Detect list services intent**
 
 
 ```
@@ -2086,7 +2210,15 @@ Then intent should be "list_vms"
 And filter should be "svc"
 ```
 
-**Scenario: Validate plan lines against whitelist** — 💡 **Run this:** `vde start <vms>` and it will accomplish this
+
+**List available VMs:**
+
+
+```bash
+vde what services are available
+```
+
+**Scenario: Validate plan lines against whitelist**
 
 
 ```
@@ -2098,13 +2230,29 @@ When plan contains "MALICIOUS:command"
 Then plan should be rejected
 ```
 
-**Scenario: Handle multiple consecutive spaces in vm list** — 💡 **Run this:** `vde start python   rust` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Handle multiple consecutive spaces in vm list**
 
 
 ```
 When I parse "start python   rust"
 Then intent should be "start_vm"
 And VMs should include "python", "rust"
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start python   rust
 ```
 
 ---
@@ -2191,7 +2339,7 @@ And the configuration should remain for next time
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
-**Scenario: Port registry cache persists and survives restart** — 💡 **Run this:** `vde start <vms>` and it will accomplish this
+**Scenario: Port registry cache persists and survives restart**
 
 
 ```
@@ -2203,7 +2351,15 @@ Then previously allocated ports should be restored
 And no port conflicts should occur
 ```
 
-**Scenario: Example 1   start both python and postgresql** — 💡 **Run this:** `vde create python` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Example 1   start both python and postgresql**
 
 
 ```
@@ -2213,7 +2369,15 @@ Then the plan should include the start_vm intent
 And the plan should include both Python and PostgreSQL VMs
 ```
 
-**Scenario: Example 3   start all microservice vms** — 💡 **Run this:** `vde start <vms>` and it will accomplish this
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Example 3   start all microservice vms**
 
 
 ```
@@ -2223,7 +2387,15 @@ Then the plan should include the start_vm intent
 And all microservice VMs should be included
 ```
 
-**Scenario: Troubleshooting   step 3 restart with rebuild** — 💡 **Run this:** `vde start <vms>` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Troubleshooting   step 3 restart with rebuild**
 
 
 ```
@@ -2233,7 +2405,15 @@ Then the plan should include the restart_vm intent
 And the plan should set rebuild=true flag
 ```
 
-**Scenario: Adding cache layer   start redis** — 💡 **Run this:** `vde start <vms>` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Adding cache layer   start redis**
 
 
 ```
@@ -2243,7 +2423,15 @@ Then the plan should include the start_vm intent
 And Redis should start without affecting other VMs
 ```
 
-**Scenario: Switching projects   stop current project** — 💡 **Run this:** `vde start <vms>` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Switching projects   stop current project**
 
 
 ```
@@ -2253,7 +2441,15 @@ Then all running VMs should be stopped
 And I should be ready to start a new project
 ```
 
-**Scenario: Switching projects   start new project** — 💡 **Run this:** `vde start <vms>` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Switching projects   start new project**
 
 
 ```
@@ -2263,7 +2459,15 @@ Then the new project VMs should start
 And only the new project VMs should be running
 ```
 
-**Scenario: Starting already running vm** — 💡 **Run this:** `vde start <vms>` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Starting already running vm**
 
 
 ```
@@ -2272,6 +2476,14 @@ When I plan to start Python
 Then the plan should be generated
 And execution would detect the VM is already running
 And I would be notified that it's already running
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
 ```
 
 **Scenario: Stopping already stopped vm**
@@ -2285,7 +2497,9 @@ And execution would detect the VM is not running
 And I would be notified that it's already stopped
 ```
 
-**Scenario: Detect start vm intent** — 💡 **Run this:** `vde start the python vm` and it will accomplish this
+
+
+**Scenario: Detect start vm intent**
 
 
 ```
@@ -2294,7 +2508,15 @@ Then intent should be "start_vm"
 And VMs should include "python"
 ```
 
-**Scenario: Detect start multiple vms intent** — 💡 **Run this:** `vde start python, rust, and go` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde start the python vm
+```
+
+**Scenario: Detect start multiple vms intent**
 
 
 ```
@@ -2303,7 +2525,15 @@ Then intent should be "start_vm"
 And VMs should include "python", "rust", "go"
 ```
 
-**Scenario: Detect start all vms intent** — 💡 **Run this:** `vde start everything` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde start python, rust, and go
+```
+
+**Scenario: Detect start all vms intent**
 
 
 ```
@@ -2312,7 +2542,15 @@ Then intent should be "start_vm"
 And VMs should include all known VMs
 ```
 
-**Scenario: Detect stop vm intent** — 💡 **Run this:** `vde stop the postgres container` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde start everything
+```
+
+**Scenario: Detect stop vm intent**
 
 
 ```
@@ -2321,7 +2559,15 @@ Then intent should be "stop_vm"
 And VMs should include "postgres"
 ```
 
-**Scenario: Detect stop all vms intent** — 💡 **Run this:** `vde shutdown all vms` and it will accomplish this
+
+**Stop the VMs:**
+
+
+```bash
+vde stop the postgres container
+```
+
+**Scenario: Detect stop all vms intent**
 
 
 ```
@@ -2330,7 +2576,15 @@ Then intent should be "stop_vm"
 And VMs should include all known VMs
 ```
 
-**Scenario: Detect restart vm intent** — 💡 **Run this:** `vde restart python` and it will accomplish this
+
+**Run the command:**
+
+
+```bash
+vde shutdown all vms
+```
+
+**Scenario: Detect restart vm intent**
 
 
 ```
@@ -2339,7 +2593,15 @@ Then intent should be "restart_vm"
 And VMs should include "python"
 ```
 
-**Scenario: Detect restart intent before start intent** — 💡 **Run this:** `vde restart python` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde restart python
+```
+
+**Scenario: Detect restart intent before start intent**
 
 
 ```
@@ -2348,13 +2610,29 @@ Then intent should be "restart_vm"
 And VMs should include "python"
 ```
 
-**Scenario: Detect start when restart not specified** — 💡 **Run this:** `vde start python` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde restart python
+```
+
+**Scenario: Detect start when restart not specified**
 
 
 ```
 When I parse "start python"
 Then intent should be "start_vm"
 And VMs should include "python"
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start python
 ```
 
 ---
@@ -2521,7 +2799,9 @@ Then cache should return consistent data
 And cache file modification time should remain unchanged
 ```
 
-**Scenario: Detect create multiple vms intent** — 💡 **Run this:** `vde create python and rust` and it will accomplish this
+
+
+**Scenario: Detect create multiple vms intent**
 
 
 ```
@@ -2531,13 +2811,29 @@ And VMs should include "python"
 And VMs should include "rust"
 ```
 
-**Scenario: Handle commas and conjunctions for multiple vms** — 💡 **Run this:** `vde start python, rust, and go` and it will accomplish this
+
+**Create the VM:**
+
+
+```bash
+vde create python and rust
+```
+
+**Scenario: Handle commas and conjunctions for multiple vms**
 
 
 ```
 When I parse "start python, rust, and go"
 Then intent should be "start_vm"
 And VMs should include "python", "rust", "go"
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start python, rust, and go
 ```
 
 ---
@@ -2644,6 +2940,8 @@ Then the plan should include the connect intent
 And the plan should include the Python VM
 ```
 
+
+
 **Scenario: Daily workflow   connect to primary vm**
 
 
@@ -2653,6 +2951,8 @@ When I ask how to connect to Python
 Then the plan should provide connection details
 And the plan should include the Python VM
 ```
+
+
 
 **Scenario: Troubleshooting   step 4 get connection info**
 
@@ -2664,6 +2964,8 @@ Then the plan should include the connect intent
 And I should receive SSH connection information
 ```
 
+
+
 **Scenario: Team onboarding   get connection help**
 
 
@@ -2674,13 +2976,23 @@ Then I should receive clear connection instructions
 And I should understand how to access the VM
 ```
 
-**Scenario: Detect connect intent** — 💡 **Run this:** `vde how do I connect to python` and it will accomplish this
+
+
+**Scenario: Detect connect intent**
 
 
 ```
 When I parse "how do I connect to python"
 Then intent should be "connect"
 And VMs should include "python"
+```
+
+
+**Run the command:**
+
+
+```bash
+vde how do I connect to python
 ```
 
 ---
@@ -2775,7 +3087,7 @@ Then my tables should still exist
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
-**Scenario: Example 1   create postgresql for python api** — 💡 **Run this:** `vde create python` and it will accomplish this
+**Scenario: Example 1   create postgresql for python api**
 
 
 ```
@@ -2785,7 +3097,15 @@ Then the plan should include the create_vm intent
 And the plan should include the PostgreSQL VM
 ```
 
-**Scenario: Example 2   full stack javascript with redis** — 💡 **Run this:** `vde create <vm-type>` and it will accomplish this
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Example 2   full stack javascript with redis**
 
 
 ```
@@ -2795,7 +3115,15 @@ Then the plan should include both VMs
 And the JavaScript VM should use the js canonical name
 ```
 
-**Scenario: Adding cache layer   create redis** — 💡 **Run this:** `vde create python` and it will accomplish this
+
+**Create the VM:**
+
+
+```bash
+vde create <vm-type>
+```
+
+**Scenario: Adding cache layer   create redis**
 
 
 ```
@@ -2803,6 +3131,14 @@ Given I have an existing Python and PostgreSQL stack
 When I plan to add Redis
 Then the plan should include the create_vm intent
 And the Redis VM should be included
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
 ```
 
 ---
@@ -2929,6 +3265,8 @@ Then the plan should include the stop_vm intent
 And the plan should apply to all running VMs
 ```
 
+
+
 ---
 
 ## 10. Adding More Languages
@@ -3024,6 +3362,8 @@ And the display name should be descriptive
 And common languages like Python, Go, and Rust should have recognizable names
 ```
 
+
+
 **Scenario: Language vm ports are in correct range**
 
 
@@ -3033,6 +3373,8 @@ When I check the SSH port allocation for language VMs
 Then all language VM ports should be between 2200 and 2299
 And no language VM should use a service port range
 ```
+
+
 
 **Scenario: Vm types are correctly categorized as language**
 
@@ -3044,6 +3386,8 @@ Then programming language VMs should be categorized as "lang"
 And Python, Go, Rust, and JavaScript should be language VMs
 And language VMs should have SSH access configured
 ```
+
+
 
 **Scenario: Common programming language aliases resolve correctly**
 
@@ -3058,6 +3402,8 @@ And the metadata alias "c++" should map to "cpp"
 And the metadata alias "rlang" should map to "r"
 ```
 
+
+
 **Scenario: Language vm container names follow naming convention**
 
 
@@ -3069,7 +3415,9 @@ And Python container should be named "python-dev"
 And Go container should be named "go-dev"
 ```
 
-**Scenario: Language vms do not have service ports configured** — 💡 **Run this:** `vde list` and it will accomplish this
+
+
+**Scenario: Language vms do not have service ports configured**
 
 
 ```
@@ -3078,6 +3426,14 @@ When I check service port configuration for language VMs
 Then language VMs should not have service_port values
 And Python should not have a service_port
 And Go should not have a service_port
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list
 ```
 
 **Scenario: Team onboarding   explore languages**
@@ -3090,13 +3446,23 @@ Then I should see only language VMs
 And service VMs should not be included
 ```
 
-**Scenario: Parse flags from natural language** — 💡 **Run this:** `vde rebuild with no cache` and it will accomplish this
+
+
+**Scenario: Parse flags from natural language**
 
 
 ```
 When I parse "rebuild with no cache"
 Then rebuild flag should be true
 And nocache flag should be true
+```
+
+
+**Run the setup:**
+
+
+```bash
+vde rebuild with no cache
 ```
 
 ---
@@ -3205,7 +3571,9 @@ Then registry should be rebuilt by scanning docker-compose files
 And all allocated ports should be discovered
 ```
 
-**Scenario: Detect rebuild vm intent** — 💡 **Run this:** `vde rebuild and start rust` and it will accomplish this
+
+
+**Scenario: Detect rebuild vm intent**
 
 
 ```
@@ -3214,7 +3582,15 @@ Then intent should be "restart_vm"
 And rebuild flag should be true
 ```
 
-**Scenario: Detect rebuild without cache intent** — 💡 **Run this:** `vde rebuild python with no cache` and it will accomplish this
+
+**Start the VMs:**
+
+
+```bash
+vde rebuild and start rust
+```
+
+**Scenario: Detect rebuild without cache intent**
 
 
 ```
@@ -3222,6 +3598,14 @@ When I parse "rebuild python with no cache"
 Then intent should be "restart_vm"
 And rebuild flag should be true
 And nocache flag should be true
+```
+
+
+**Run the setup:**
+
+
+```bash
+vde rebuild python with no cache
 ```
 
 **Scenario: Unset non existent key should not error**
@@ -3235,6 +3619,8 @@ Then operation should complete successfully
 And array should remain empty
 ```
 
+
+
 **Scenario: Unset non existent key should not error (bash 3.x)**
 
 
@@ -3245,6 +3631,8 @@ When I unset key "imaginary_key"
 Then operation should complete successfully
 And array should remain empty
 ```
+
+
 
 ---
 
