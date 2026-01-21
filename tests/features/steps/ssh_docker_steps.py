@@ -14,11 +14,12 @@ if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 from config import VDE_ROOT
 
+# Import shared SSH helpers (run_vde_command, container_exists)
+from ssh_helpers import run_vde_command, container_exists
 
 from behave import given, when, then
 from pathlib import Path
 import subprocess
-import os
 
 
 # =============================================================================
@@ -35,24 +36,10 @@ def mark_step_implemented(context, step_name=""):
 
 
 
-
 # VDE_ROOT imported from config
+# run_vde_command and container_exists imported from ssh_helpers
 
-
-def run_vde_command(command, timeout=120):
-    """Run a VDE script and return the result."""
-    env = os.environ.copy()
-    result = subprocess.run(
-        f"cd {VDE_ROOT} && {command}",
-        shell=True,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        env=env,
-    )
-    return result
-
-
+# Local helper for Docker operations (not in ssh_helpers)
 def docker_ps():
     """Get list of running Docker containers."""
     try:
@@ -67,12 +54,6 @@ def docker_ps():
     except Exception:
         pass
     return set()
-
-
-def container_exists(vm_name):
-    """Check if a container is running for the VM."""
-    containers = docker_ps()
-    return f"{vm_name}-dev" in containers or vm_name in containers
 
 
 # =============================================================================
@@ -103,16 +84,8 @@ def step_ssh_custom(context):
         context.ssh_has_custom_settings = len(content) > 0
 
 
-@given('~/.ssh/config contains "Host python-dev"')
-def step_ssh_has_python(context):
-    """SSH config has python-dev entry."""
-    ssh_config = Path.home() / ".ssh" / "config"
-    if ssh_config.exists():
-        content = ssh_config.read_text()
-        context.has_python_entry = "python-dev" in content or "Host.*python" in content
-    else:
-        context.has_python_entry = False
-
+# Note: Step @given('~/.ssh/config contains "Host python-dev"') is handled by
+# the generic step_ssh_config_contains() in ssh_config_steps.py
 
 @given('~/.ssh/config contains python-dev configuration')
 def step_python_config(context):
@@ -158,15 +131,8 @@ def step_keys_loaded(context):
     context.all_keys_loaded = result.returncode == 0
 
 
-@given("~/.ssh/config contains user's \"Host github.com\" entry")
-def step_github_entry(context):
-    """SSH config has github entry."""
-    ssh_config = Path.home() / ".ssh" / "config"
-    if ssh_config.exists():
-        content = ssh_config.read_text()
-        context.has_github_entry = "github.com" in content
-    else:
-        context.has_github_entry = False
+# Note: Step @given('~/.ssh/config contains user\'s "Host github.com" entry') is handled by
+# the generic step_ssh_config_contains_user_entry() in ssh_config_steps.py
 
 
 # =============================================================================
