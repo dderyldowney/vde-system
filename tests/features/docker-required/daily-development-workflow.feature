@@ -54,6 +54,7 @@ Feature: Daily Development Workflow
     And they should be able to communicate
 
   @requires-docker-host
+  @user-guide-first-vm
   Scenario: Creating a new VM for the first time
     Given I want to try a new language
     When I request to "create a Go VM"

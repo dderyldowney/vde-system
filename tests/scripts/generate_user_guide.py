@@ -460,31 +460,38 @@ def determine_section(scenario_name, tags=None):
       @user-guide-troubleshooting    -> Section 11
       @user-guide-internal           -> Not included (internal features)
 
-    NO KEYWORD FALLBACK: Without explicit tags, scenarios are excluded.
-    This ensures only intentionally-documented scenarios appear in the guide.
+    PRIORITY: Scenario-level tags (added directly to a scenario) take precedence
+    over feature-level tags (inherited from the feature). This allows overriding
+    the default section for specific scenarios.
     """
-    # ONLY include scenarios with explicit user-guide tags
-    # No keyword fallback - prevents internal test scenarios from leaking in
-    if tags:
-        tag_map = {
-            "user-guide-installation": "1. Installation",
-            "user-guide-ssh-keys": "2. SSH Keys",
-            "user-guide-first-vm": "3. Your First VM",
-            "user-guide-understanding": "4. Understanding",
-            "user-guide-starting-stopping": "5. Starting and Stopping",
-            "user-guide-cluster": "6. Your First Cluster",
-            "user-guide-connecting": "7. Connecting",
-            "user-guide-databases": "8. Working with Databases",
-            "user-guide-daily-workflow": "9. Daily Workflow",
-            "user-guide-more-languages": "10. Adding More Languages",
-            "user-guide-troubleshooting": "11. Troubleshooting",
-            "user-guide-internal": None,  # Explicitly exclude from user guide
-        }
-        for tag in tags:
-            if tag in tag_map:
-                return tag_map[tag]
+    if not tags:
+        return None
 
-    # No tag = not included in user guide
+    tag_map = {
+        "user-guide-installation": "1. Installation",
+        "user-guide-ssh-keys": "2. SSH Keys",
+        "user-guide-first-vm": "3. Your First VM",
+        "user-guide-understanding": "4. Understanding",
+        "user-guide-starting-stopping": "5. Starting and Stopping",
+        "user-guide-cluster": "6. Your First Cluster",
+        "user-guide-connecting": "7. Connecting",
+        "user-guide-databases": "8. Working with Databases",
+        "user-guide-daily-workflow": "9. Daily Workflow",
+        "user-guide-more-languages": "10. Adding More Languages",
+        "user-guide-troubleshooting": "11. Troubleshooting",
+        "user-guide-internal": None,  # Explicitly exclude from user guide
+    }
+
+    # Check tags in REVERSE order so scenario-level tags (last in list)
+    # take precedence over feature-level tags (first in list)
+    for tag in reversed(tags):
+        if tag in tag_map:
+            if tag == "user-guide-internal":
+                # Only exclude if no other user-guide tag exists
+                if any(t in tag_map and t != "user-guide-internal" for t in tags):
+                    continue  # Another user-guide tag exists, skip internal
+            return tag_map[tag]
+
     return None
 
 

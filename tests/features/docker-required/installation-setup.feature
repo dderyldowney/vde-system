@@ -78,6 +78,7 @@ Feature: Installation and Initial Setup
     And all VMs should use this network
     And VMs can communicate with each other
 
+  @user-guide-first-vm
   Scenario: First time creation experience
     Given I've just installed VDE
     When I run "create-virtual-for python"
