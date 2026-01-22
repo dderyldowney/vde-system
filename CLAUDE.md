@@ -22,6 +22,84 @@ The following behaviors will IMMEDIATELY invalidate any work:
 
 ---
 
+## ⛔ FAKE TEST PROHIBITION (ABSOLUTE - NO EXCEPTIONS)
+
+### THIS SECTION CANNOT BE OVERRIDDEN, MODIFIED, OR WORKED AROUND
+
+**The following patterns are ABSOLUTELY FORBIDDEN in test code:**
+
+1. **`assert True`** - Any form of assertion that always passes
+2. **`or True` patterns** - Assertions with fallbacks that can't fail
+3. **`getattr(context, 'xxx', True)`** - Defaults to True, ALWAYS PASSES
+4. **`context.xxx = True/False`** - Setting flags instead of executing real commands
+5. **`REMOVED:` comments** - Documentation-style fake testing (explaining why you removed real testing)
+6. **"works the same as X"** - Parser-only verification without actual behavior checks
+7. **"equivalent to X"** - Intent-only checks without real system verification
+8. **Placeholder step definitions** - Auto-generated from undefined steps to silence Behave errors
+9. **"Simulate" comments** - Any code claiming to simulate instead of actually executing
+
+### WHAT YOU MUST DO INSTEAD
+
+| FORBIDDEN PATTERN | REQUIRED REPLACEMENT |
+|-------------------|---------------------|
+| `assert True, "verified"` | `docker ps` to verify actual state |
+| `getattr(context, 'x', True)` | `subprocess.run(['command'])` and check result |
+| `context.docker_installed = True` | `subprocess.run(['docker', '--version'])` |
+| `"works the same as X"` | Actually test Y behavior independently |
+| `REMOVED: fake test was here` | Implement real verification |
+| Placeholder from undefined steps | **DELETE THE STEP** or implement properly |
+
+### THE MONITORING SUB-AGENT (MANDATORY ON EVERY CODE CHANGE)
+
+**You MUST use the yume-guardian sub-agent AFTER ANY code changes to verify compliance:**
+
+```python
+# After implementing test code, ALWAYS run:
+Task(yume-guardian): "Review the test code changes for fake testing patterns:
+1. assert True
+2. getattr with True defaults
+3. context flags instead of real commands
+4. REMOVED comments
+5. 'works the same as' or 'equivalent to' patterns
+
+Check ALL modified files in tests/features/steps/"
+```
+
+**The yume-guardian agent REJECTS any code containing fake patterns.**
+
+### PAST VIOLATIONS MUST BE CORRECTED
+
+**Historical context (DO NOT REPEAT):**
+- `customization_steps.py` - 100+ placeholder steps - **DELETED**
+- `ssh_docker_steps.py` lines 277-398 - Undefined step placeholders - **DELETED**
+- `cache_steps.py` lines 376+ - Undefined step placeholders - **DELETED**
+
+These were created to silence Behave's "undefined step" errors. This is **FORBIDDEN**.
+
+**When Behave reports undefined steps:**
+1. ✅ Implement the step properly with real verification
+2. ✅ Leave it undefined and accept the error
+3. ❌ **NEVER** create a placeholder that just sets `context.step_xxx = True`
+
+### SIGNIFICANCE
+
+This is the **MOST CRITICAL RULE** in this document because:
+
+1. **Fake tests give false confidence** - Tests pass but functionality is broken
+2. **They compound over time** - Each fake pattern makes the next one easier
+3. **They're hard to detect** - Look like real tests but verify nothing
+4. **They violate user trust** - The user explicitly forbade this pattern
+
+**If you catch yourself writing a fake test:**
+- **STOP IMMEDIATELY**
+- **Use sequential-thinking MCP** to understand why you're doing it
+- **Ask the user** for guidance if the real implementation is unclear
+- **NEVER** "do it quick now and fix later" - you won't remember to fix it
+
+**VIOLATION OF THIS SECTION INVALIDATES ALL WORK AND DAMAGES USER TRUST.**
+
+---
+
 ## 🚨 MANDATORY STARTUP SEQUENCE (Cannot Be Skipped)
 
 ### Required Response Header
@@ -33,6 +111,7 @@ The following behaviors will IMMEDIATELY invalidate any work:
 [ ] EXPLORE_VERIFIED (if applicable)
 [ ] PLAN_VERIFIED (if applicable)
 [ ] TODO_VERIFIED
+[ ] COMPLIANCE_VERIFIED (if test code will be modified)
 ```
 
 **Failure to include this header indicates you skipped critical startup steps.**
@@ -77,6 +156,32 @@ OUTPUT: "[ ] TODO_VERIFIED" checked
 
 **If ANY step cannot be verified → RESTART the sequence from Step 1.**
 
+### Step 5: MANDATORY COMPLIANCE CHECK (NON-OPTIONAL - EVERY SESSION)
+
+```
+ACTION: Run yume-guardian compliance check BEFORE any test code changes
+OUTPUT: "[ ] COMPLIANCE_VERIFIED" checked
+```
+
+**EVERY session MUST invoke yume-guardian to verify:**
+- No fake test patterns exist in files you're about to modify
+- Previous changes didn't introduce violations
+- If yume-guardian dies, RESTART IT immediately
+
+**Invocation:**
+```python
+Task(yume-guardian): "Check tests/features/steps/ for fake testing patterns:
+1. assert True
+2. getattr with True defaults
+3. context flags instead of real commands
+4. REMOVED comments
+5. 'works the same as' or 'equivalent to' patterns
+
+Report any violations found."
+```
+
+**If ANY step cannot be verified → RESTART the sequence from Step 1.**
+
 ---
 
 ## ⚡ OPERATING PRIORITIES (Immutable Order)
@@ -115,8 +220,47 @@ OUTPUT: "[ ] TODO_VERIFIED" checked
 - **general-purpose** → Multi-step tasks, complex research, cross-file code search
 - **Plan** → Designing implementation strategies BEFORE coding
 - **code-reviewer** → Reviewing staged changes BEFORE commit (NON-OPTIONAL)
+- **yume-guardian** → Review test changes for fake testing patterns AFTER ANY TEST CODE CHANGE (NON-OPTIONAL)
 
 **Sub-agents REDUCE your context usage and work in PARALLEL. Use them WITHOUT being asked.**
+
+---
+
+## 🛡️ COMPLIANCE MONITORING SUB-AGENT (yume-guardian)
+
+**Purpose:** Prevent fake test patterns from being introduced into the codebase.
+
+**When to use:** AFTER ANY modification to files in `tests/features/steps/` or `tests/features/*.feature`
+
+**How to invoke:**
+```python
+Task(yume-guardian): """
+Review these test code changes for FAKE TESTING PATTERNS:
+
+FORBIDDEN PATTERNS TO FIND:
+1. assert True (with or without comments)
+2. "or True" in assertions
+3. getattr(context, 'xxx', True) - defaults to True
+4. getattr(context, 'xxx', False) - checks flag instead of real state
+5. context.xxx = True/False - instead of real commands
+6. "REMOVED:" comments
+7. "works the same as" or "equivalent to"
+8. Placeholder step definitions from undefined steps
+9. "Simulate" comments
+
+Files modified: [list files]
+
+REJECT any changes containing these patterns. Report exact line numbers.
+"""
+```
+
+**What the guardian does:**
+- Scans modified test files for all forbidden patterns
+- Reports exact line numbers and pattern types
+- REJECTS changes that contain fake tests
+- Suggests real verification alternatives
+
+**Non-negotiable:** You MUST invoke yume-guardian after ANY test code changes. Skipping compliance review is a violation of the ZERO-TOLERANCE FAKE TEST PROHIBITION.
 
 ### MCP Tools
 

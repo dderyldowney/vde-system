@@ -92,7 +92,8 @@ def step_setup_script_runs(context):
 @when('SSH keys are checked')
 def step_ssh_keys_checked(context):
     context.ssh_keys_checked = True
-    context.ssh_keys_found = getattr(context, 'ssh_keys_exist', True)
+    # Check if ssh_keys_exist was explicitly set, default to False
+    context.ssh_keys_found = getattr(context, 'ssh_keys_exist', False)
 
 @when('setup completes')
 def step_setup_completes(context):
@@ -169,7 +170,9 @@ def step_see_success_message(context):
 @then('it should verify Docker is installed')
 def step_verify_docker_installed(context):
     context.docker_verified = True
-    assert getattr(context, 'docker_installed', True)
+    # Actually check if Docker was verified in a previous step
+    assert hasattr(context, 'docker_installed'), "docker_installed was not set"
+    assert context.docker_installed is True, "Docker is not installed"
 
 @then('it should verify docker-compose is available')
 def step_verify_docker_compose(context):
@@ -218,11 +221,13 @@ def step_cache_dir_exists(context):
 
 @then('if keys exist, they should be detected')
 def step_keys_detected_if_exist(context):
-    context.existing_keys_detected = getattr(context, 'ssh_keys_exist', True)
+    # Check if ssh_keys_exist was explicitly set, default to False
+    context.existing_keys_detected = getattr(context, 'ssh_keys_exist', False)
 
 @then('if no keys exist, ed25519 keys should be generated')
 def step_keys_generated(context):
-    if not getattr(context, 'ssh_keys_exist', True):
+    # Only generate keys if ssh_keys_exist is False (not True, and not set)
+    if not getattr(context, 'ssh_keys_exist', False):
         context.ssh_keys_generated = True
         context.key_type = "ed25519"
 

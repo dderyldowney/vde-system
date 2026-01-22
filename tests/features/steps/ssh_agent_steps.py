@@ -277,32 +277,33 @@ def step_reload_cache(context):
 @then('SSH agent should be started automatically')
 def step_agent_auto_started(context):
     """Verify SSH agent auto-started."""
-    # Check if ssh-agent is running
+    # Check if ssh-agent is running (REAL verification only)
     result = subprocess.run(["pgrep", "-a", "ssh-agent"], capture_output=True, text=True)
-    assert result.returncode == 0 or getattr(context, 'ssh_agent_started', False)
+    is_running = result.returncode == 0
+    assert is_running, f"SSH agent should be running. pgrep output: {result.stdout if result.returncode == 0 else result.stderr}"
 
 
 @then('SSH keys should be auto-generated if none exist')
 def step_keys_auto_generated(context):
     """Verify keys were generated."""
+    # Real verification: check for SSH keys in ~/.ssh
     ssh_dir = Path.home() / ".ssh"
     has_keys = (
         (ssh_dir / "id_ed25519").exists() or
         (ssh_dir / "id_rsa").exists() or
         (ssh_dir / "id_ecdsa").exists()
     )
-    assert has_keys or getattr(context, 'ssh_keys_generated', False)
+    assert has_keys, "SSH keys should exist (either pre-existing or auto-generated)"
 
 
 @then('SSH config entry for "{host}" should be created')
 def step_entry_created(context, host):
     """Verify SSH config entry created."""
+    # Real verification: check actual SSH config file for host entry
     ssh_config = Path.home() / ".ssh" / "config"
-    if ssh_config.exists():
-        content = ssh_config.read_text()
-        assert host in content or getattr(context, 'ssh_config_updated', False)
-    else:
-        assert getattr(context, 'ssh_config_updated', False)
+    assert ssh_config.exists(), f"SSH config should exist at {ssh_config}"
+    content = ssh_config.read_text()
+    assert host in content, f"Host '{host}' should be in SSH config. Config content:\n{content}"
 
 
 @then('SSH config should preserve existing entries')
@@ -329,41 +330,72 @@ def step_config_not_corrupted(context):
 @then('SSH connection should succeed')
 def step_ssh_success(context):
     """Verify SSH connection succeeded."""
-    # Check if any VDE containers are running
-    running = docker_ps()
-    vde_running = any("-dev" in c for c in running)
-    assert vde_running or getattr(context, 'vm_to_vm_ssh', False)
+    # Real verification: check actual VM-to-VM SSH connection result
+    vm_to_vm_success = getattr(context, 'vm_to_vm_ssh', None)
+    if vm_to_vm_success is not None:
+        # A real SSH attempt was made - check its result
+        assert vm_to_vm_success, "VM-to-VM SSH connection should succeed"
+    else:
+        # Fallback: check if any VDE containers are running (indicates SSH setup likely worked)
+        running = docker_ps()
+        vde_running = any("-dev" in c for c in running)
+        assert vde_running, f"At least one VDE container should be running for SSH test. Running containers: {running}"
 
 
 @then('host SSH keys should be available in VM')
 def step_keys_in_vm(context):
     """Verify host keys accessible from VM."""
-    # In VDE, SSH agent forwarding makes host keys available
-    assert getattr(context, 'ssh_forwarding_enabled', False) or \
-           getattr(context, 'public_keys_copied', False)
+    # Real verification: check if public keys were actually copied
+    public_ssh_dir = VDE_ROOT / "public-ssh-keys"
+    keys_copied = public_ssh_dir.exists() and any(
+        f.suffix == '.pub' for f in public_ssh_dir.iterdir() if f.is_file()
+    )
+    assert keys_copied, f"Public SSH keys should be copied to {public_ssh_dir}"
 
 
 @then('Git operation should use host SSH keys')
 def step_git_uses_host_keys(context):
     """Verify Git uses host keys."""
-    assert getattr(context, 'git_operation_from_vm', False) or \
-           getattr(context, 'ssh_forwarding_enabled', False)
+    # Real verification: check if git command actually worked from VM
+    git_success = getattr(context, 'git_operation_from_vm', None)
+    if git_success is not None:
+        assert git_success, "Git operation from VM should succeed using host SSH keys"
+    else:
+        # No git operation was attempted - verify SSH agent has keys instead
+        agent_has_keys = ssh_agent_has_keys()
+        assert agent_has_keys, "SSH agent should have keys loaded for Git operations"
 
 
 @then('config file should be created if it doesn\'t exist')
 def step_config_created(context):
     """Verify SSH config created."""
+    # Real verification: check actual file existence
     ssh_config = Path.home() / ".ssh" / "config"
-    assert ssh_config.exists() or getattr(context, 'ssh_config_updated', False)
+    assert ssh_config.exists(), f"SSH config should exist at {ssh_config}"
 
 
 @then('backup should be created before modification')
 def step_backup_created(context):
     """Verify backup created."""
-    # Check for backup file
-    ssh_config = Path.home() / ".ssh" / "config"
-    backup = Path.home() / ".ssh" / "config.bak"
-    assert backup.exists() or getattr(context, 'ssh_config_updated', False)
+    # Real verification: check for actual backup file with various possible extensions
+    ssh_config = Path.home() / ".ssh"
+    backup_found = False
+    backup_paths = [
+        ssh_config / "config.bak",
+        ssh_config / "config.backup",
+        ssh_config / "config.old",
+    ]
+    # Also check for timestamped backups like config.bak.20250122
+    for f in ssh_config.glob("config.bak*"):
+        backup_paths.append(f)
+
+    for backup in backup_paths:
+        if backup.exists():
+            backup_found = True
+            context.actual_backup_path = str(backup)
+            break
+
+    assert backup_found, f"SSH config backup should exist. Checked: {backup_paths}"
 
 
 @then('the list-vms command should show available VMs')
@@ -399,8 +431,12 @@ def step_ssh_any_vm(context):
 @then('the SSH config entries should exist')
 def step_ssh_entries_exist(context):
     """SSH config entries should exist."""
+    # Real verification: check for actual SSH config file with entries
     ssh_config = Path.home() / ".ssh" / "config"
-    assert ssh_config.exists() or getattr(context, 'ssh_entries_exist', False)
+    assert ssh_config.exists(), f"SSH config should exist at {ssh_config}"
+    content = ssh_config.read_text()
+    # Check that it has actual Host entries (not empty or just comments)
+    assert "Host " in content, "SSH config should contain Host entries"
 
 
 @then('I should be able to use short hostnames')
@@ -445,8 +481,14 @@ def step_shutdown_rebuild_vm(context):
 @then('my SSH configuration should still work')
 def step_ssh_still_works(context):
     """SSH configuration should still work."""
+    # Real verification: check SSH config exists and is valid
     ssh_config = Path.home() / ".ssh" / "config"
-    assert ssh_config.exists() or getattr(context, 'ssh_still_works', False)
+    assert ssh_config.exists(), f"SSH config should exist at {ssh_config}"
+    # Verify it's valid by trying to parse it with ssh -G
+    result = subprocess.run(["ssh", "-G", "test", "-F", str(ssh_config)],
+                          capture_output=True, text=True, timeout=10)
+    assert "Bad configuration option" not in result.stderr, \
+        f"SSH config should be valid. Parse error: {result.stderr}"
 
 
 @then('I should not need to reconfigure SSH')
@@ -480,9 +522,10 @@ def step_create_vm_given(context):
 @then('an ed25519 key should be generated')
 def step_ed25519_generated(context):
     """ed25519 key should be generated."""
+    # Real verification: check for actual ed25519 key file
     ssh_dir = Path.home() / ".ssh"
     has_ed25519 = (ssh_dir / "id_ed25519").exists()
-    assert has_ed25519 or getattr(context, 'ed25519_generated', False)
+    assert has_ed25519, f"ed25519 key should exist at {ssh_dir / 'id_ed25519'}"
 
 
 @then('ed25519 should be the preferred key type')
@@ -544,14 +587,14 @@ def step_key_generated_auto(context):
 @then('the key should be loaded into the agent')
 def step_key_loaded_into_agent(context):
     """Key should be loaded into SSH agent."""
-    # Check if SSH agent is running and has keys loaded
+    # Real verification: check if SSH agent is running AND has keys loaded
+    agent_is_running = ssh_agent_is_running()
+    assert agent_is_running, "SSH agent should be running for key loading"
+
     agent_has_keys = ssh_agent_has_keys()
     context.keys_loaded_in_agent = agent_has_keys
-    # In test environment, we check if agent has keys or agent is running
-    if not agent_has_keys:
-        # Agent may not have keys but at least should be running
-        assert ssh_agent_is_running() or getattr(context, 'ssh_keys_generated', False), \
-            "SSH agent should be running or keys should have been generated"
+    # For SSH keys to be useful, they must be loaded into the agent
+    assert agent_has_keys, "SSH agent should have keys loaded (use ssh-add -l to verify)"
 
 
 @then('I should be informed of what happened')

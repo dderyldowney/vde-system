@@ -283,29 +283,31 @@ def step_verify_cache_path(context, path):
 @then('data should be loaded from cache')
 def step_data_from_cache_verify(context):
     """Verify data came from cache."""
-    assert getattr(context, 'vm_types_loaded', True)
+    assert hasattr(context, 'vm_types_loaded'), "vm_types_loaded was not set"
+    assert context.vm_types_loaded is True, "VM types were not loaded from cache"
 
 
 @then('vm-types.conf should not be reparsed')
 def step_no_reparse(context):
     """Verify config was not reparsed."""
-    assert not getattr(context, 'vm_conf_modified', False)
+    assert hasattr(context, 'vm_conf_modified'), "vm_conf_modified was not set"
+    assert not context.vm_conf_modified, "Config was modified (should not be reparsed)"
 
 
 @then('cache should be invalidated')
 def step_cache_invalidated(context):
     """Verify cache was invalidated."""
-    assert getattr(context, 'vm_conf_modified_after', False) or \
-           getattr(context, 'cache_bypassed', False) or \
-           getattr(context, 'cache_timeout_elapsed', False)
+    assert (getattr(context, 'vm_conf_modified_after', False) or
+           getattr(context, 'cache_bypassed', False) or
+           getattr(context, 'cache_timeout_elapsed', False)), "Cache was not invalidated"
 
 
 @then('vm-types.conf should be reparsed')
 def step_vm_reparsed(context):
     """Verify config was reparsed."""
-    assert getattr(context, 'vm_conf_modified_after', False) or \
-           getattr(context, 'cache_bypassed', False) or \
-           getattr(context, 'cache_timeout_elapsed', False)
+    assert (getattr(context, 'vm_conf_modified_after', False) or
+           getattr(context, 'cache_bypassed', False) or
+           getattr(context, 'cache_timeout_elapsed', False)), "Config was not reparsed"
 
 
 @then('cache file should be updated')
@@ -377,26 +379,30 @@ def step_special_escaped_verify(context):
 @then('operation should work in zsh')
 def step_works_zsh(context):
     """Verify works in zsh."""
-    assert getattr(context, 'assoc_operation_performed', True)
+    assert hasattr(context, 'assoc_operation_performed'), "assoc_operation_performed was not set"
+    assert context.assoc_operation_performed is True, "Associative array operation was not performed"
 
 
 @then('operation should work in bash')
 def step_works_bash(context):
     """Verify works in bash."""
-    assert getattr(context, 'assoc_operation_performed', True)
+    assert hasattr(context, 'assoc_operation_performed'), "assoc_operation_performed was not set"
+    assert context.assoc_operation_performed is True, "Associative array operation was not performed"
 
 
 @then('special characters should not cause collision')
 def step_no_collision(context):
     """Verify no key collision."""
-    assert getattr(context, 'special_key_used', False) or \
-           getattr(context, 'special_escaped', False)
+    assert (getattr(context, 'special_key_used', False) or
+           getattr(context, 'special_escaped', False)), "Special key was not used or escaped"
 
 
 @then('operation should use file-based storage')
 def step_file_storage(context):
     """Verify file-based storage used."""
-    assert not getattr(context, 'native_assoc_arrays', True)
+    # Require that native_assoc_arrays was explicitly set by a previous step
+    assert hasattr(context, 'native_assoc_arrays'), "native_assoc_arrays flag was not set by previous step"
+    assert not context.native_assoc_arrays, "Native assoc arrays should not be used, file-based storage required"
 
 
 # =============================================================================

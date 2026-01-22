@@ -511,8 +511,14 @@ def step_array_contains_n_keys(context, num):
 @then('operation should complete successfully')
 def step_operation_complete_successfully(context):
     """Operation should complete successfully."""
-    # This is verified by the actual command results in other steps
-    assert True, "Operation completed"
+    # Verify the last operation returned exit code 0
+    if hasattr(context, 'last_result'):
+        assert context.last_result == 0, f"Operation failed with return code {context.last_result}"
+    elif hasattr(context, 'last_exit_code'):
+        assert context.last_exit_code == 0, f"Operation failed with exit code {context.last_exit_code}"
+    else:
+        # If no operation result was tracked, verify no error occurred
+        assert not getattr(context, 'error_occurred', False), "An error occurred during operation"
 
 
 @then('array should remain empty')

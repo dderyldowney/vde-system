@@ -913,13 +913,27 @@ def step_check_redis_included(context):
 @then('Redis should start without affecting other VMs')
 def step_check_redis_isolated(context):
     """Verify Redis starts independently."""
-    assert True, "Individual VM start doesn't affect other VMs"
+    # Check if Redis container is running
+    import subprocess
+    result = subprocess.run(
+        ["docker", "ps", "--format", "{{.Names}}", "--filter", "name=redis"],
+        capture_output=True, text=True, timeout=10
+    )
+    redis_running = "redis" in result.stdout.lower()
+    assert redis_running, "Redis container should be running"
 
 
 @then('I should be ready to start a new project')
 def step_check_ready_new_project(context):
     """Verify ready for new project."""
-    assert True, "After stopping all VMs, ready for new project"
+    # Check that no VDE containers are running
+    import subprocess
+    result = subprocess.run(
+        ["docker", "ps", "--format", "{{.Names}}", "--filter", "name=-dev"],
+        capture_output=True, text=True, timeout=10
+    )
+    running_containers = [c for c in result.stdout.strip().split('\n') if c]
+    assert len(running_containers) == 0, f"Containers still running: {running_containers}"
 
 
 @then('the new project VMs should start')
@@ -962,49 +976,61 @@ def step_check_clear_instructions(context):
 @then('I should understand how to access the VM')
 def step_check_understand_access(context):
     """Verify instructions explain how to access VM."""
-    assert True, "Connection instructions include SSH command"
+    assert hasattr(context, 'current_plan'), "No plan was generated"
+    assert context.current_plan.get('intent') == 'connect', "Should provide connection info"
+    # Verify connection instructions include SSH command format
+    connection_info = context.current_plan.get('connection', {})
+    assert 'ssh' in str(connection_info).lower() or 'command' in str(connection_info).lower(), \
+        "Connection instructions should include SSH command"
 
 
 @then('the plan should be generated')
 def step_check_plan_generated(context):
     """Verify plan is generated."""
     assert hasattr(context, 'current_plan'), "Plan should be generated"
+    assert context.current_plan.get('vms') is not None, "Plan should include VMs"
 
 
 @then('execution would detect the VM is already running')
 def step_check_detect_running(context):
     """Verify execution would detect already-running VM."""
     assert hasattr(context, 'current_plan'), "Plan should exist for execution check"
+    assert context.current_plan.get('vm_running') is not None, "Plan should indicate VM status"
 
 
 @then('I would be notified that it\'s already running')
 def step_check_notify_running(context):
     """Verify user would be notified about already-running VM."""
-    assert True, "Execution would notify about already-running state"
+    assert hasattr(context, 'current_plan'), "Plan should exist for notification check"
+    assert context.current_plan.get('vm_running') is True, "VM should be detected as running"
 
 
 @then('execution would detect the VM is not running')
 def step_check_detect_not_running(context):
     """Verify execution would detect VM not running."""
     assert hasattr(context, 'current_plan'), "Plan should exist for execution check"
+    assert context.current_plan.get('vm_running') is not None, "Plan should indicate VM status"
 
 
 @then('I would be notified that it\'s already stopped')
 def step_check_notify_stopped(context):
     """Verify user would be notified about already-stopped VM."""
-    assert True, "Execution would notify about already-stopped state"
+    assert hasattr(context, 'current_plan'), "Plan should exist for notification check"
+    assert context.current_plan.get('vm_running') is False, "VM should be detected as not running"
 
 
 @then('execution would detect the VM already exists')
 def step_check_detect_exists(context):
     """Verify execution would detect existing VM."""
     assert hasattr(context, 'current_plan'), "Plan should exist for execution check"
+    assert context.current_plan.get('vm_exists') is not None, "Plan should indicate VM existence"
 
 
 @then('I would be notified of the existing VM')
 def step_check_notify_exists(context):
     """Verify user would be notified about existing VM."""
-    assert True, "Execution would notify about existing VM"
+    assert hasattr(context, 'current_plan'), "Plan should exist for notification check"
+    assert context.current_plan.get('vm_exists') is True, "Plan should indicate VM already exists"
 
 
 @then('Python should be a valid VM type')

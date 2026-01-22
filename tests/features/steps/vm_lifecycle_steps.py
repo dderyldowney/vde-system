@@ -771,17 +771,50 @@ def step_no_duplicate_ports(context):
 @then('the allocated port should be between "{start}" and "{end}"')
 def step_port_in_range(context, start, end):
     """Verify port is in range."""
-    # In test mode, just verify the context flag is set
-    assert getattr(context, 'last_exit_code', 0) == 0 or hasattr(context, 'port_allocated'), \
-        f"Port allocation failed: {getattr(context, 'last_error', 'unknown error')}"
+    # Real verification: check actual port allocation from output
+    start_port = int(start)
+    end_port = int(end)
+
+    # If we have last_output with port information, parse it
+    if hasattr(context, 'last_output') and context.last_output:
+        import re
+        # Look for port-specific patterns (not just any 4-5 digit number)
+        # Patterns like: "port: 2200", "allocated port 2200", "2200/tcp", "port 2200"
+        port_patterns = [
+            r'port\s*:?\s*(\d{4,5})',      # "port: 2200" or "port 2200"
+            r'allocated\s+port\s+(\d{4,5})', # "allocated port 2200"
+            r'(\d{4,5})/tcp',              # "2200/tcp"
+            r'ssh\s+port\s+(\d{4,5})',      # "ssh port 2200"
+        ]
+        for pattern in port_patterns:
+            port_match = re.search(pattern, context.last_output, re.IGNORECASE)
+            if port_match:
+                allocated_port = int(port_match.group(1))
+                assert start_port <= allocated_port <= end_port, \
+                    f"Allocated port {allocated_port} not in range [{start_port}, {end_port}]"
+                context.port_allocated = allocated_port
+                return
+
+    # Fallback: check that the command succeeded
+    assert getattr(context, 'last_exit_code', -1) == 0, \
+        f"Port allocation should succeed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('the stale lock should be removed')
 def step_stale_lock_removed(context):
     """Verify stale lock was removed."""
-    # In test mode, just verify the lock was removed
-    assert getattr(context, 'last_exit_code', 0) == 0 or hasattr(context, 'lock_removed'), \
-        f"Lock removal failed: {getattr(context, 'last_error', 'unknown error')}"
+    # Real verification: check for lock file removal
+    from pathlib import Path
+    lock_file = VDE_ROOT / "cache" / "port-registry.lock"
+
+    # If lock file exists, the removal failed
+    if lock_file.exists():
+        raise AssertionError(f"Stale lock file should be removed but still exists: {lock_file}")
+
+    # Also verify command succeeded
+    assert getattr(context, 'last_exit_code', -1) == 0, \
+        f"Lock removal should succeed: {getattr(context, 'last_error', 'unknown error')}"
+    context.lock_removed = True
 
 
 @then('the port should be available for allocation')
@@ -817,10 +850,10 @@ def step_all_created_running(context):
             if not container_exists(vm_name):
                 failed_vms.append(vm_name)
 
-        # In test mode (local testing), be more forgiving about pre-existing host VM issues
+        # For local testing (IN_TEST_MODE), be more forgiving about pre-existing host VM issues
         # Only fail if the scenario actually created fresh configs that didn't start
         if failed_vms:
-            # In test mode, check if compose files were created in this scenario
+            # During local testing, check if compose files were created in this scenario
             # (vs pre-existing host configs that might have issues)
             if IN_TEST_MODE:
                 # For local testing, only fail if all created VMs failed
@@ -1283,19 +1316,17 @@ def step_understand_what_changed(context):
 @then('be able to verify the result')
 def step_verify_result(context):
     """Verify the output allows verification of the operation result."""
-    # In test mode, just verify the scenario completed
-    import os
-    if os.environ.get('VDE_TEST_MODE') == '1':
-        assert getattr(context, 'last_exit_code', 0) == 0 , "Operation should succeed"
-    else:
-        assert context.last_output, "No output to verify"
-        assert context.last_exit_code == 0, f"Operation should succeed: {context.last_error}"
-        # Output should contain actionable information
-        output_lower = context.last_output.lower()
-        # For list-vms specifically, check for VM names
-        if getattr(context, 'operation_performed', '') == 'list-vms':
-            has_vm_info = any(vm in output_lower for vm in ['python', 'rust', 'go', 'postgres', 'redis', 'vm'])
-            assert has_vm_info or len(context.last_output) > 0, "Output should contain verifiable information"
+    # Real verification: check actual command output and exit code
+    assert hasattr(context, 'last_output'), "No output to verify - command should produce output"
+    assert context.last_output, "No output to verify"
+    assert context.last_exit_code == 0, f"Operation should succeed: {getattr(context, 'last_error', 'unknown error')}"
+
+    # Output should contain actionable information
+    output_lower = context.last_output.lower()
+    # For list-vms specifically, check for VM names
+    if getattr(context, 'operation_performed', '') == 'list-vms':
+        has_vm_info = any(vm in output_lower for vm in ['python', 'rust', 'go', 'postgres', 'redis', 'vm'])
+        assert has_vm_info or len(context.last_output) > 0, "Output should contain verifiable information"
 
 
 @then("I should be told which were skipped")
@@ -2317,17 +2348,18 @@ def step_switch_project(context, lang):
 @then('both "{vm1}" and "{vm2}" VMs should be running')
 def step_both_vms_running(context, vm1, vm2):
     """Both VMs should be running."""
-    # In test mode, check if context flags are set
-    # In real mode, check for actual containers
-    import os
-    if os.environ.get('VDE_TEST_MODE') == '1':
-        # In test mode, just verify the steps executed without errors
-        assert getattr(context, 'last_exit_code', 0) == 0 , "VMs should be running"
-    else:
-        # Check if both VMs exist in the running VMs set or containers exist
-        running = getattr(context, 'running_vms', set())
-        assert vm1 in running or container_exists(vm1), f"{vm1} should be running"
-        assert vm2 in running or container_exists(vm2), f"{vm2} should be running"
+    # Real verification: check actual containers exist and are running
+    vm1_running = container_exists(vm1)
+    vm2_running = container_exists(vm2)
+
+    assert vm1_running, f"{vm1} should be running (container not found)"
+    assert vm2_running, f"{vm2} should be running (container not found)"
+
+    # Track running VMs in context
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
+    context.running_vms.add(vm1)
+    context.running_vms.add(vm2)
 
 
 @then('I can SSH to both VMs from my terminal')
@@ -2582,21 +2614,23 @@ def step_create_new_lang_vm(context):
 @then('all three VMs should be running')
 def step_all_three_running(context):
     """All three VMs should be running."""
-    # Check running containers
+    # Real verification: check actual running containers
     running = docker_ps()
-    # Check for at least 3 running containers
-    assert len(running) >= 3 or getattr(context, 'started_three_vms', False), "Should have 3 running VMs"
+    # Filter to only -dev containers (VDE VMs)
+    dev_containers = [c for c in running if '-dev' in c]
+    assert len(dev_containers) >= 3, f"Should have at least 3 running VDE containers. Found: {dev_containers}"
 
 
 @then('I should be able to SSH to "{host}" on allocated port')
 def step_ssh_to_host_on_port(context, host):
     """Should be able to SSH to host on allocated port."""
-    # Check that SSH config entry exists
+    # Real verification: check actual SSH config file for host entry
     ssh_config = Path.home() / ".ssh" / "config"
-    if ssh_config.exists():
-        content = ssh_config.read_text()
-        context.ssh_host_exists = f"Host {host}" in content
-    assert getattr(context, 'ssh_host_exists', False) , "SSH host should exist"
+    assert ssh_config.exists(), f"SSH config should exist at {ssh_config}"
+
+    content = ssh_config.read_text()
+    host_entry = f"Host {host}"
+    assert host_entry in content, f"SSH config should contain entry for '{host}'. Config content:\n{content}"
 
 
 @then('I should be able to SSH to "{host}"')

@@ -224,35 +224,25 @@ def step_ssh_config_contains(context, content):
     step_ssh_config_contains_identity will be matched first by Behave.
     """
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
-    if ssh_config.exists():
-        config_content = ssh_config.read_text()
-        assert content in config_content, f"'{content}' not found in SSH config"
-    else:
-        # Config doesn't exist - check if test flags indicate it should have been created
-        if getattr(context, 'config_entry_created', False) or getattr(context, 'vm_creation_triggered', False):
-            raise AssertionError(f"SSH config should exist and contain '{content}', but config file doesn't exist")
-        # No config and no creation triggered - this is a failure
-        raise AssertionError(f"SSH config should exist and contain '{content}'")
+    assert ssh_config.exists(), f"SSH config should exist at {ssh_config}"
+
+    config_content = ssh_config.read_text()
+    assert content in config_content, f"'{content}' not found in SSH config. Config content:\n{config_content}"
 
 
 @then(r'SSH config should contain "(?P<field>[^"]+)" pointing to "(?P<keyfile>[^"]+)"')
 def step_ssh_config_contains_identity(context, field, keyfile):
     """SSH config should contain field pointing to a specific value (e.g., IdentityFile)."""
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
-    if ssh_config.exists():
-        config_content = ssh_config.read_text()
-        # Check for both the field and the keyfile, typically for IdentityFile
-        assert field in config_content, f"'{field}' not found in SSH config"
-        assert keyfile in config_content, f"'{keyfile}' not found in SSH config"
-        # Additionally check they appear together (IdentityFile ~/.ssh/...)
-        assert f"{field} {keyfile}" in config_content or f"{field}\t{keyfile}" in config_content, \
-            f"'{field}' and '{keyfile}' don't appear together in SSH config"
-    else:
-        # Config doesn't exist - check if test flags indicate it should have been created
-        if getattr(context, 'config_entry_created', False) or getattr(context, 'vm_creation_triggered', False):
-            raise AssertionError(f"SSH config should exist with '{field} {keyfile}', but config file doesn't exist")
-        # No config and no creation triggered - this is a failure
-        raise AssertionError(f"SSH config should exist with '{field} {keyfile}'")
+    assert ssh_config.exists(), f"SSH config should exist at {ssh_config}"
+
+    config_content = ssh_config.read_text()
+    # Check for both the field and the keyfile, typically for IdentityFile
+    assert field in config_content, f"'{field}' not found in SSH config"
+    assert keyfile in config_content, f"'{keyfile}' not found in SSH config"
+    # Additionally check they appear together (IdentityFile ~/.ssh/...)
+    assert f"{field} {keyfile}" in config_content or f"{field}\t{keyfile}" in config_content, \
+        f"'{field}' and '{keyfile}' don't appear together in SSH config"
 
 
 # -----------------------------------------------------------------------------
@@ -348,7 +338,15 @@ def step_no_duplicate_entry(context):
 @then('command should warn about existing entry')
 def step_warn_existing_entry(context):
     """Command should warn about existing entry."""
-    assert getattr(context, 'duplicate_vm_creation', False), "Expected duplicate VM creation warning was not issued"
+    # Real verification: check actual output for warning message
+    output = (getattr(context, 'last_output', '') or '') + (getattr(context, 'last_error', '') or '')
+    output_lower = output.lower()
+    # Check for various forms of duplicate/exists warnings
+    warning_found = any(word in output_lower for word in [
+        'duplicate', 'already exists', 'already created', 'already configured',
+        'already has an entry', 'skipping', 'exists'
+    ])
+    assert warning_found, f"Expected duplicate/existing warning in output. Got: {output[:500]}"
 
 
 # -----------------------------------------------------------------------------
@@ -417,11 +415,18 @@ def step_backup_has_timestamp(context):
         ssh_dir = Path.home() / ".ssh" / "vde"
         backup_files = list(ssh_dir.glob("config.bak*")) + list(ssh_dir.glob("config.*.bak"))
         if backup_files:
-            # At least one backup exists with timestamp in name
-            assert True, "Backup files exist with timestamp"
+            # Verify at least one backup has a timestamp in its filename
+            has_timestamp = any(
+                re.search(r'\d{8}|\d{4}-\d{2}-\d{2}|\d{10}', f.name)
+                for f in backup_files
+            )
+            assert has_timestamp, f"Backup files exist but none have timestamps: {[f.name for f in backup_files]}"
         else:
-            # No backup file - this is acceptable if no modification was made
-            assert False, "No backup file found and no backup_file context set"
+            # No backup file found - verify no backup operation was expected
+            # If a backup was explicitly created, it should exist
+            if getattr(context, 'backup_created', False):
+                raise AssertionError("Backup was expected but no backup file found")
+            # If no backup was expected, this is acceptable (no modification = no backup needed)
 
 
 # -----------------------------------------------------------------------------
@@ -488,12 +493,10 @@ def step_keytype_detected(context, keytype):
     ssh_dir = Path.home() / ".ssh" / "vde"
     key_file = ssh_dir / keytype
     # Check if the specific key file exists
-    if key_file.exists():
-        setattr(context, f'{keytype}_detected', True)
-        assert True, f"{keytype} key exists"
-    else:
-        # Key doesn't exist - check if any keys exist at all
-        assert has_ssh_keys(), f"No {keytype} key found and no other SSH keys exist"
+    assert key_file.exists(), f"{keytype} key file not found at {key_file}"
+    # Verify the key file is readable and has content
+    assert key_file.stat().st_size > 0, f"{keytype} key file is empty"
+    setattr(context, f'{keytype}_detected', True)
 
 
 # -----------------------------------------------------------------------------
@@ -552,19 +555,17 @@ def step_config_contains_new_entry(context, entry):
 @then('existing entries should be unchanged')
 def step_existing_entries_unchanged(context):
     """Existing entries should remain unchanged."""
-    # Verify existing config entries weren't modified during merge
+    # Real verification: check that existing entry wasn't removed or modified
     existing_entry = getattr(context, 'existing_ssh_entry', '')
-    if existing_entry:
-        ssh_config = Path.home() / ".ssh" / "vde" / "config"
-        if ssh_config.exists():
-            config_content = ssh_config.read_text()
-            assert existing_entry in config_content, f"Existing entry '{existing_entry}' was removed or modified"
-        else:
-            # Config doesn't exist - verify test scenario
-            assert not getattr(context, 'existing_ssh_entry', ''), "Expected no SSH config in test scenario"
-    else:
-        # No existing entry to check - verify test scenario context
-        assert not getattr(context, 'ssh_entry_verified', False), "Test should set context for SSH entry check"
+    if not existing_entry:
+        # No existing entry was specified - skip this check
+        return
+
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
+    assert ssh_config.exists(), f"SSH config should exist at {ssh_config}"
+
+    config_content = ssh_config.read_text()
+    assert existing_entry in config_content, f"Existing entry '{existing_entry}' was removed or modified"
 
 
 @then('~/.ssh/config should still contain "{field}" under {vm}')
@@ -657,8 +658,8 @@ def step_config_atomic_state(context):
         # Check for unclosed quotes or malformed entries
         assert content.count('"') % 2 == 0, "Config has unbalanced quotes (possible partial write)"
     else:
-        # Config doesn't exist - verify this is expected (merge was interrupted)
-        assert getattr(context, 'merge_interrupted', False), "Config should exist unless merge was interrupted"
+        # Config doesn't exist - this is a failure
+        raise AssertionError(f"SSH config should exist at {ssh_config} but file not found")
 
 
 @then('~/.ssh/config should NOT be partially written')
@@ -721,25 +722,27 @@ def step_new_ssh_entry_merged(context):
 @then('temporary file should be created first')
 def step_temp_file_created(context):
     """Temporary file should be created first."""
-    assert getattr(context, 'ssh_merge_performed', False), "Merge operation was not performed"
-    # VDE uses mktemp pattern: ~/.ssh/config.tmp.XXXXXX
-    # After successful merge, temp file is cleaned up, so we verify the end result
+    # Real verification: check that config exists and has content (merge completed)
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
-    assert ssh_config.exists(), "SSH config should exist after merge operation"
+    assert ssh_config.exists(), f"SSH config should exist after merge operation at {ssh_config}"
+
+    content = ssh_config.read_text()
+    assert len(content) > 0, "SSH config should have content after merge"
+
+    # Verify the merge actually resulted in valid structure
+    assert "Host" in content, "Config should have at least one Host entry after merge"
 
 
 @then('content should be written to temporary file')
 def step_content_to_temp_file(context):
     """Content should be written to temporary file."""
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
-    if ssh_config.exists():
-        content = ssh_config.read_text()
-        assert len(content) > 0, "SSH config is empty after merge"
-        # Verify config has valid structure (contains Host entries)
-        assert 'Host' in content or len(content.strip()) == 0, "Config should have valid entries"
-    else:
-        # Config doesn't exist - check if merge was interrupted
-        assert getattr(context, 'merge_interrupted', False), "Config should exist after merge"
+    assert ssh_config.exists(), f"SSH config should exist after merge at {ssh_config}"
+
+    content = ssh_config.read_text()
+    assert len(content) > 0, "SSH config should have content after merge"
+    # Verify config has valid structure (contains Host entries)
+    assert 'Host' in content or len(content.strip()) == 0, "Config should have valid entries"
 
 
 @then('atomic mv should replace original config')

@@ -649,15 +649,18 @@ def step_vm_type_added(context):
 @then('the VM should be removed')
 def step_vm_removed_check(context):
     """VM should be removed."""
-    # In test mode, pass leniently if last_exit_code wasn't set
-    exit_code = getattr(context, 'last_exit_code', 0)
-    if exit_code == 0 or not hasattr(context, 'last_exit_code'):
-        assert True
-    else:
+    # Get the VM name from context (set by the WHEN step that removed it)
+    removed_vm = getattr(context, 'removed_vm_name', 'ruby')
+    # Verify the removal command succeeded
+    exit_code = getattr(context, 'last_exit_code', None)
+    if exit_code is not None:
         assert exit_code == 0, f"Failed to remove VM: {getattr(context, 'last_error', 'unknown error')}"
-    # Skip compose file check in test mode
-    if not os.environ.get("VDE_TEST_MODE"):
-        assert not compose_file_exists('ruby'), "Ruby VM config still exists"
+    # Verify compose file was actually removed
+    assert not compose_file_exists(removed_vm), f"{removed_vm} VM config still exists"
+    # Verify container was removed
+    running = docker_ps()
+    vm_containers = [c for c in running if removed_vm in c.lower()]
+    assert len(vm_containers) == 0, f"{removed_vm} containers still running: {vm_containers}"
 
 
 @then('I can reconnect to my running VMs')

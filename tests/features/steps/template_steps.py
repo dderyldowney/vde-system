@@ -147,8 +147,13 @@ def step_render_template_special_chars(context):
 def step_try_render_template(context):
     """Try to render template."""
     context.template_attempted = True
-    if not getattr(context, 'template_exists', True):
-        context.template_error = "Template not found"
+    # Only check template_exists if it was explicitly set
+    if hasattr(context, 'template_exists'):
+        if not context.template_exists:
+            raise AssertionError(f"Template not found at {context.template_path}")
+    else:
+        # template_exists was never set - this is an error
+        raise AssertionError("Template not found (template_exists was not set by previous step)")
 
 
 @when('I render template with NAME="{name}" and SSH_PORT="{port}"')

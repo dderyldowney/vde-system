@@ -383,14 +383,10 @@ def step_see_results_in_frontend(context):
 def step_authentication_automatic(context):
     """Authentication should be automatic."""
     context.auth_automatic = True
-    # Verify SSH agent is running for automatic authentication
+    # Verify SSH agent is running and has keys for automatic authentication
+    assert ssh_agent_is_running(), "SSH agent must be running for automatic authentication"
     agent_has_keys = ssh_agent_has_keys()
-    if agent_has_keys:
-        # Agent has keys - authentication will be automatic
-        assert True, "SSH agent has keys for automatic authentication"
-    else:
-        # Agent not running or no keys - check if this is expected
-        assert ssh_agent_is_running(), "SSH agent should be running for automatic authentication"
+    assert agent_has_keys, "SSH agent must have keys loaded for automatic authentication"
 
 
 @then('the private keys should remain on the host')
