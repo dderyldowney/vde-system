@@ -546,20 +546,22 @@ vde start <vm> --rebuild
 ### SSH Connections
 
 ```bash
-# Language VMs
-ssh python-dev     # Python development
-ssh rust-dev       # Rust development
-ssh js-dev         # JavaScript/Node.js
-ssh csharp-dev     # C# development
-ssh ruby-dev       # Ruby development
-ssh go-dev         # Go development
+# VDE SSH - Simple connections to your VMs
+vde ssh python     # Python development
+vde ssh rust       # Rust development
+vde ssh js         # JavaScript/Node.js
+vde ssh csharp     # C# development
+vde ssh ruby       # Ruby development
+vde ssh go         # Go development
 
 # Service VMs
-ssh postgres       # PostgreSQL database
-ssh redis          # Redis cache
-ssh mongodb        # MongoDB
-ssh nginx          # Nginx web server
+vde ssh postgres   # PostgreSQL database
+vde ssh redis      # Redis cache
+vde ssh mongodb    # MongoDB
+vde ssh nginx      # Nginx web server
 ```
+
+**Note:** The `vde ssh` command automatically uses VDE's isolated SSH configuration at `~/.ssh/vde/config`. You can also use VM aliases (e.g., `vde ssh py` for Python, `vde ssh rs` for Rust).
 
 ### Default Ports
 

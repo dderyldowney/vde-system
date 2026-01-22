@@ -1,0 +1,141 @@
+#!/usr/bin/env zsh
+#===============================================================================
+# ssh-vm - SSH into a VDE VM using the isolated VDE SSH configuration
+#
+# Usage: ssh-vm <vm_name> [--show-command]
+#
+# This script provides a user-friendly wrapper for SSH connections to VDE VMs.
+# It uses the VDE-isolated SSH configuration at ~/.ssh/vde/config.
+#
+# Options:
+#   --show-command    Show the full SSH command instead of executing it
+#
+# Exit codes:
+#   0 - Success
+#   1 - General error
+#   2 - Invalid input
+#   3 - VM not found
+#===============================================================================
+
+# Determine VDE root directory
+VDE_ROOT_DIR="${0:a:h}"
+export VDE_ROOT_DIR
+
+# Source core libraries
+source "$VDE_ROOT_DIR/lib/vde-shell-compat" &>/dev/null
+source "$VDE_ROOT_DIR/lib/vde-constants" &>/dev/null
+source "$VDE_ROOT_DIR/lib/vde-errors" &>/dev/null
+source "$VDE_ROOT_DIR/lib/vde-log" &>/dev/null
+source "$VDE_ROOT_DIR/lib/vde-core" &>/dev/null
+source "$VDE_ROOT_DIR/lib/vm-common" &>/dev/null
+
+# Initialize logging
+vde_log_init 2>/dev/null || true
+
+#===============================================================================
+# Usage
+#===============================================================================
+
+show_usage() {
+    cat <<EOF
+Usage: vde ssh <vm_name> [--show-command]
+
+SSH into a VDE VM using the isolated VDE SSH configuration.
+
+Arguments:
+  vm_name          Name or alias of the VM to connect to
+
+Options:
+  --show-command   Show the full SSH command instead of executing it
+  -h, --help       Show this help message
+
+Examples:
+  vde ssh python                # SSH into the Python VM
+  vde ssh py                    # SSH into Python VM using alias
+  vde ssh rust --show-command   # Show the SSH command for Rust VM
+
+For more information, see: https://github.com/dderyldowney/dev/blob/main/docs/command-reference.md
+EOF
+}
+
+#===============================================================================
+# Main
+#===============================================================================
+
+# Parse arguments
+SHOW_COMMAND=false
+VM_NAME=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            show_usage
+            exit 0
+            ;;
+        --show-command|--show-cmd)
+            SHOW_COMMAND=true
+            shift
+            ;;
+        -*)
+            vde_error_simple "Unknown option: $1"
+            echo ""
+            show_usage
+            exit $VDE_ERR_INVALID_INPUT
+            ;;
+        *)
+            if [ -z "$VM_NAME" ]; then
+                VM_NAME="$1"
+            else
+                vde_error_simple "Too many arguments. Only one VM name expected."
+                echo ""
+                show_usage
+                exit $VDE_ERR_INVALID_INPUT
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Validate VM name was provided
+if [ -z "$VM_NAME" ]; then
+    vde_error_simple "Missing VM name argument."
+    echo ""
+    show_usage
+    exit $VDE_ERR_INVALID_INPUT
+fi
+
+# Ensure VDE SSH environment is initialized
+ensure_ssh_environment
+if [ $? -ne 0 ]; then
+    vde_error_simple "Failed to initialize VDE SSH environment."
+    exit $VDE_ERR_GENERAL
+fi
+
+# Resolve VM name (handle aliases)
+RESOLVED_NAME=$(resolve_vm_name "$VM_NAME")
+if [ $? -ne 0 ] || [ -z "$RESOLVED_NAME" ]; then
+    vde_error_simple "Unknown VM or alias: $VM_NAME"
+    echo ""
+    echo "Run 'vde list' to see available VMs."
+    exit $VDE_ERR_NOT_FOUND
+fi
+
+# Check if VM is running
+if ! is_vm_running "$RESOLVED_NAME"; then
+    vde_error_simple "VM '$RESOLVED_NAME' is not running."
+    echo ""
+    echo "Start the VM with: vde start $VM_NAME"
+    exit $VDE_ERR_GENERAL
+fi
+
+# Build SSH command
+SSH_CMD="ssh -F $VDE_SSH_CONFIG -o UserKnownHostsFile=$VDE_SSH_KNOWN_HOSTS $RESOLVED_NAME"
+
+# Either show or execute the command
+if [ "$SHOW_COMMAND" = true ]; then
+    echo "$SSH_CMD"
+    exit 0
+else
+    vde_log_info "Connecting to $RESOLVED_NAME..." "ssh-vm"
+    exec $SSH_CMD
+fi

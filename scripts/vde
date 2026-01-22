@@ -10,6 +10,7 @@
 #   start <vm>      Start a VM
 #   stop <vm>       Stop a VM
 #   restart <vm>    Restart a VM
+#   ssh <vm>        SSH into a VM
 #   remove <vm>     Remove a VM instance
 #   uninstall <type> Uninstall a language/service completely
 #   list            List all VMs
@@ -49,6 +50,7 @@ _VDE_COMMANDS=(
     "create:Create a new VM:create-virtual-for"
     "start:Start a VM:start-virtual"
     "stop:Stop a VM:shutdown-virtual"
+    "ssh:SSH into a VM:ssh-vm"
     "remove:Remove a VM:remove-virtual"
     "uninstall:Uninstall a language/service:uninstall-vm-type"
     "list:List all VMs:list-vms"
@@ -76,6 +78,7 @@ EOF
     printf "  %-12s %s\n" "start <vm>" "Start a VM"
     printf "  %-12s %s\n" "stop <vm>" "Stop a VM"
     printf "  %-12s %s\n" "restart <vm>" "Restart a VM"
+    printf "  %-12s %s\n" "ssh <vm>" "SSH into a VM"
     printf "  %-12s %s\n" "remove <vm>" "Remove a VM instance"
     printf "  %-12s %s\n" "uninstall <type>" "Uninstall a language/service completely"
     printf "  %-12s %s\n" "list" "List all VMs"
@@ -96,6 +99,7 @@ Examples:
   vde list                      # List all VMs
   vde create python             # Create Python VM
   vde start python-dev          # Start Python development VM
+  vde ssh python                # SSH into the Python VM
   vde stop postgres             # Stop PostgreSQL service
   vde remove rust               # Remove Rust VM instance
   vde uninstall elixir          # Completely uninstall Elixir from VDE
@@ -133,6 +137,9 @@ vde_find_command_script() {
             ;;
         stop|shutdown-virtual)
             script="$VDE_ROOT_DIR/scripts/shutdown-virtual"
+            ;;
+        ssh|ssh-vm)
+            script="$VDE_ROOT_DIR/scripts/ssh-vm"
             ;;
         list|list-vms)
             script="$VDE_ROOT_DIR/scripts/list-vms"
