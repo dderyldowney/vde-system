@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: flutter, 2216, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y curl git unzip xz-utils zip libglu1-mesa {{INSTALL_CMD}}{{INSTALL_CMD}} su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter {{INSTALL_CMD}}{{INSTALL_CMD}} export PATH="$PATH:/home/devuser/flutter/bin" {{INSTALL_CMD}}{{INSTALL_CMD}} flutter precache'
+# Variables: flutter, 2217, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y curl git unzip xz-utils zip libglu1-mesa {{INSTALL_CMD}}{{INSTALL_CMD}} su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter {{INSTALL_CMD}}{{INSTALL_CMD}} export PATH="$PATH:/home/devuser/flutter/bin" {{INSTALL_CMD}}{{INSTALL_CMD}} flutter precache'
 services:
   flutter-dev:
     build:
@@ -17,7 +17,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH=\"\$PATH:/home/devuser/flutter/bin\" && flutter precache' && /usr/sbin/sshd -D"
 
     ports:
-      - "2216:22"
+      - "2217:22"
 
     volumes:
       - ../../../projects/flutter:/home/devuser/workspace
