@@ -242,6 +242,68 @@ def extract_scenarios_from_feature(content):
 
 
 # =============================================================================
+# COMMAND NORMALIZATION (Phase 5: Old Script Names to Unified vde Commands)
+# =============================================================================
+
+def normalize_vde_command(command):
+    """
+    Normalize old VDE script names to unified vde command.
+
+    Maps:
+    - create-virtual-for <vm> → vde create <vm>
+    - start-virtual <vm> → vde start <vm>
+    - shutdown-virtual <vm> → vde stop <vm>
+    - remove-virtual <vm> → vde remove <vm>
+    - list-vms → vde list
+    - list-vms --lang → vde list --languages
+    - list-vms --svc → vde list --services
+
+    Args:
+        command: Raw command string (may be old script name or vde command)
+
+    Returns:
+        str: Normalized unified vde command
+    """
+    if not command:
+        return command
+
+    # Extract command and arguments
+    parts = command.split()
+    if not parts:
+        return command
+
+    cmd = parts[0]
+    args = parts[1:] if len(parts) > 1 else []
+
+    # Map old commands to new vde commands
+    command_map = {
+        "create-virtual-for": "create",
+        "start-virtual": "start",
+        "shutdown-virtual": "stop",
+        "remove-virtual": "remove",
+        "list-vms": "list",
+    }
+
+    if cmd in command_map:
+        new_cmd = command_map[cmd]
+        # Handle special cases for list-vms flags
+        if cmd == "list-vms":
+            if "--lang" in args:
+                return "vde list --languages"
+            elif "--svc" in args:
+                return "vde list --services"
+            elif args:
+                return f"vde list {args[0]}"
+            return "vde list"
+        # Standard command mapping
+        if args:
+            return f"vde {new_cmd} {' '.join(args)}"
+        return f"vde {new_cmd}"
+
+    return command
+
+
+# =============================================================================
 # SCENARIO FORMATTING
 # =============================================================================
 
@@ -253,6 +315,11 @@ SCENARIO_COMMAND_MAP = {
     "what VMs are available": "vde list",
     "list all available vms": "vde list",
     "show all services": "vde list --services",
+    "ask to list all languages": "vde list --languages",
+    "request information about": "vde info <vm>",
+    "check if": "vde check <vm>",
+    "use the alias": "vde resolve <alias>",
+    "explore available": "vde list",
 
     # Creation scenarios
     "create a Python VM": "vde create python",
@@ -293,7 +360,77 @@ def extract_command_from_scenario(scenario_name, scenario_body):
             # Extract command from quotes
             match = re.search(r'When I run ["\']([^"\']+)["\']', line)
             if match:
-                return match.group(1)
+                return normalize_vde_command(match.group(1))
+
+    # Handle "When I request to" and "When I request" patterns
+    for line in scenario_body.split('\n'):
+        line = line.strip()
+        if line.startswith('When I request to') or line.startswith('When I request'):
+            # Extract the quoted request
+            match = re.search(r'request (?:to )?["\']([^"\']+)["\']', line, re.IGNORECASE)
+            if match:
+                request = match.group(1).lower()
+                # Map requests to vde commands
+                if "create" in request and ("vm" in request or any(v in request for v in ["javascript", "nginx", "go", "rust", "python", "postgres", "redis", "haskell", "flutter"])):
+                    # Extract VM names if present
+                    vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                    if vms:
+                        # Normalize VM names
+                        vm_names = []
+                        for vm in vms:
+                            vm_lower = vm.lower()
+                            if vm_lower in ["golang"]:
+                                vm_names.append("go")
+                            elif vm_lower in ["js"]:
+                                vm_names.append("js")
+                            else:
+                                vm_names.append(vm_lower)
+                        return f"vde create {' '.join(vm_names)}"
+                    return "vde create <vm>"
+                elif "start" in request:
+                    if "all services" in request or "all" in request:
+                        return "vde start all"
+                    vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                    if vms:
+                        vm_names = []
+                        for vm in vms:
+                            vm_lower = vm.lower()
+                            if vm_lower in ["golang"]:
+                                vm_names.append("go")
+                            else:
+                                vm_names.append(vm_lower)
+                        return f"vde start {' '.join(vm_names)}"
+                    return "vde start <vms>"
+                elif "stop" in request:
+                    if "everything" in request or "all" in request:
+                        return "vde stop all"
+                    vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                    if vms:
+                        return f"vde stop {' '.join(vms)}"
+                    return "vde stop <vms>"
+                elif "restart" in request:
+                    if "rebuild" in request or "no cache" in request:
+                        vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                        vm = vms[0].lower() if vms else "<vm>"
+                        return f"vde restart {vm} --rebuild"
+                    vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                    if vms:
+                        return f"vde restart {vms[0].lower()}"
+                    return "vde restart <vm>"
+                elif "rebuild" in request:
+                    vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                    vm = vms[0].lower() if vms else "<vm>"
+                    return f"vde start {vm} --rebuild"
+                elif "status" in request or "show status" in request:
+                    return "vde list"
+                elif request == "status":
+                    return "vde list"
+                # Handle "When I request to start my Python development environment"
+                if "development environment" in request:
+                    vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                    if vms:
+                        return f"vde start {vms[0].lower()}"
+                    return "vde start <vm>"
 
     # Check for "When I ask" patterns - natural language queries
     for line in scenario_body.split('\n'):
@@ -353,6 +490,32 @@ def extract_command_from_scenario(scenario_name, scenario_body):
     for pattern, command in SCENARIO_COMMAND_MAP.items():
         if pattern in lower_name or pattern in lower_body:
             return command
+
+    # Fallback: infer from scenario name if no command found in body
+    # This handles SSH/cluster workflow scenarios that describe behavior without commands
+    if not command:
+        if "ssh" in lower_name or ("ssh" in lower_body and "connection" in lower_body):
+            return "vde ssh <vm>"
+        elif "cluster" in lower_name or "stack" in lower_name:
+            return "vde start <vms>"
+        elif "communicating" in lower_name or "connection" in lower_name:
+            return "vde ssh <vm>"
+        elif "agent forwarding" in lower_name:
+            return "vde ssh <vm>"
+        elif "vm to vm" in lower_name or "vm-to-vm" in lower_name:
+            return "vde ssh <vm>"
+        elif "multiple" in lower_name and ("vm" in lower_name or "vms" in lower_name):
+            return "vde start <vms>"
+        elif "create" in lower_name and "vm" in lower_name:
+            return "vde create <vm>"
+        elif "start" in lower_name and ("vm" in lower_name or "environment" in lower_name):
+            return "vde start <vms>"
+        elif "stop" in lower_name or "shutdown" in lower_name:
+            return "vde stop <vms>"
+        elif "restart" in lower_name:
+            return "vde restart <vm>"
+        elif "status" in lower_name or "list" in lower_name:
+            return "vde list"
 
     return None
 

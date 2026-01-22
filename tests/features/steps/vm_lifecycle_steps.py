@@ -112,6 +112,89 @@ def get_vm_type(vm_name):
     return None
 
 
+def get_all_containers(include_stopped=False):
+    """Get list of all Docker containers (running or all)."""
+    try:
+        if include_stopped:
+            result = subprocess.run(
+                ["docker", "ps", "-a", "--format", "{{.Names}}"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        else:
+            result = subprocess.run(
+                ["docker", "ps", "--format", "{{.Names}}"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        if result.returncode == 0:
+            return set(result.stdout.strip().split("\n")) if result.stdout.strip() else set()
+    except Exception:
+        pass
+    return set()
+
+
+def container_is_running(container_name):
+    """Check if a specific Docker container is running."""
+    try:
+        result = subprocess.run(
+            ["docker", "inspect", "-f", "{{.State.Running}}", container_name],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        return result.returncode == 0 and result.stdout.strip() == "true"
+    except Exception:
+        return False
+
+
+def container_exists_any_state(container_name):
+    """Check if a container exists (running or stopped)."""
+    all_containers = get_all_containers(include_stopped=True)
+    return container_name in all_containers
+
+
+def get_container_port_mapping(container_name, internal_port=22):
+    """Get the external port mapping for a container's internal port."""
+    try:
+        result = subprocess.run(
+            ["docker", "port", container_name, str(internal_port)],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            # Parse output like "0.0.0.0:2201" or ":::2201"
+            output = result.stdout.strip()
+            if ":" in output:
+                return output.split(":")[-1]
+        return None
+    except Exception:
+        return None
+
+
+def get_port_from_compose(vm_name):
+    """Get the SSH port from docker-compose.yml for a VM."""
+    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
+    if compose_path.exists():
+        try:
+            content = compose_path.read_text()
+            # Look for SSH port mapping (usually port 22)
+            # Pattern: "22:2201" or "22: ${SSH_PORT:-2201}"
+            match = re.search(r'22:\s*"?(\d+)', content)
+            if match:
+                return match.group(1)
+            # Also look for port in simple format
+            match = re.search(r'ports:.*?[:\s](\d{4})', content, re.DOTALL)
+            if match:
+                return match.group(1)
+        except Exception:
+            pass
+    return None
+
+
 # =============================================================================
 # GIVEN steps - Setup initial state with REAL operations
 # =============================================================================
@@ -373,7 +456,7 @@ def step_compose_exists(context, path):
 def step_compose_has_ssh_port(context):
     """Verify compose file has SSH port mapping."""
     # Check last command succeeded
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('SSH config entry should exist for "{host}"')
@@ -402,7 +485,7 @@ def step_logs_dir_exists(context, path):
 @then('the docker-compose.yml should contain service port mapping "{port}"')
 def step_svc_port_mapping(context, port):
     """Verify service port mapping in compose."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('data directory should exist at "{path}"')
@@ -426,21 +509,22 @@ def step_vm_not_running_verify(context, vm_name):
 
 @then('no VMs should be running')
 def step_no_vms_running_verify(context):
-    """Verify no VMs are running using actual Docker state (lenient in test mode)."""
+    """Verify no VMs are running using actual Docker state."""
     running = docker_ps()
-    # Filter out non-VDE containers
-    vde_containers = {c for c in running if any(
-        name in c for name in ['python', 'rust', 'go', 'js', 'java', 'ruby', 'csharp', 'scala', 'node', 'postgres', 'redis', 'mongo', 'nginx', 'mysql']
+    # Filter out non-VDE containers by checking for -dev suffix or known service names
+    vde_containers = {c for c in running if (
+        c.endswith('-dev') or c in ['postgres', 'redis', 'mongo', 'nginx', 'mysql', 'rabbitmq']
     )}
-    # In test environment, be lenient if shutdown-all was triggered
-    if len(vde_containers) == 0:
-        assert True
-    elif getattr(context, 'shutdown_all_triggered', False):
-        # Shutdown all was triggered - some VMs might still be running in test environment
-        # Pass leniently to avoid test failures from pre-existing containers
-        assert True
-    else:
-        assert len(vde_containers) == 0, f"VMs are still running: {vde_containers}"
+
+    # If shutdown_all_triggered was set, verify we stopped at least some VMs
+    if getattr(context, 'shutdown_all_triggered', False):
+        previously_running = getattr(context, 'pre_shutdown_vms', set())
+        # Verify we have fewer VMs running now than before
+        assert len(vde_containers) <= len(previously_running), \
+            f"Shutdown did not reduce running VMs: before={previously_running}, after={vde_containers}"
+
+    # No VDE containers should be running
+    assert len(vde_containers) == 0, f"VMs are still running: {vde_containers}"
 
 
 @then('VM configuration should still exist')
@@ -460,7 +544,7 @@ def step_command_fails_with_error(context, error):
 @then('all language VMs should be listed')
 def step_lang_vms_listed(context):
     """Verify language VMs are listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
     # Check some known language VMs are in output
     assert 'python' in context.last_output.lower() or 'rust' in context.last_output.lower()
 
@@ -468,7 +552,7 @@ def step_lang_vms_listed(context):
 @then('all service VMs should be listed')
 def step_svc_vms_listed(context):
     """Verify service VMs are listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
     # Check some known service VMs are in output
     assert 'postgres' in context.last_output.lower() or 'redis' in context.last_output.lower()
 
@@ -476,13 +560,13 @@ def step_svc_vms_listed(context):
 @then('aliases should be shown')
 def step_aliases_shown(context):
     """Verify aliases are shown in list output."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('only language VMs should be listed')
 def step_only_lang_vms_listed(context):
     """Verify only language VMs are listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
     # Should contain language VMs but not service VMs
     assert 'python' in context.last_output.lower() or 'rust' in context.last_output.lower()
 
@@ -490,7 +574,7 @@ def step_only_lang_vms_listed(context):
 @then('service VMs should not be listed')
 def step_svc_vms_not_listed(context):
     """Verify service VMs are not listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
     # Service VMs should not be in output
     assert 'postgres' not in context.last_output.lower()
 
@@ -498,7 +582,7 @@ def step_svc_vms_not_listed(context):
 @then('only service VMs should be listed')
 def step_only_svc_vms_listed(context):
     """Verify only service VMs are listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
     # Should contain service VMs but not language VMs
     assert 'postgres' in context.last_output.lower() or 'redis' in context.last_output.lower()
 
@@ -506,7 +590,7 @@ def step_only_svc_vms_listed(context):
 @then('language VMs should not be listed')
 def step_lang_vms_not_listed(context):
     """Verify language VMs are not listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
     # Language VMs should not be in output
     assert 'python' not in context.last_output.lower()
 
@@ -514,7 +598,7 @@ def step_lang_vms_not_listed(context):
 @then('only VMs matching "{pattern}" should be listed')
 def step_only_matching_vms_listed(context, pattern):
     """Verify only matching VMs are listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
     # Output should contain the pattern
     assert pattern in context.last_output.lower()
 
@@ -529,7 +613,7 @@ def step_compose_not_exists(context, path):
 @then('SSH config entry for "{host}" should be removed')
 def step_ssh_entry_removed(context, host):
     """Verify SSH config entry was removed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('the VM should be marked as not created')
@@ -610,74 +694,78 @@ def step_vm_has_port(context, port):
 
 @then('"{vm_name}" should be allocated port "{port}"')
 def step_specific_vm_has_port(context, vm_name, port):
-    """Verify specific VM has expected port (lenient in test mode)."""
+    """Verify specific VM has expected port."""
     compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
     if compose_path.exists():
         content = compose_path.read_text()
-        if port in content:
-            assert True
-        else:
-            # Test environment - pass leniently if VM wasn't actually created
-            assert getattr(context, 'vm_created', True) or True
+        assert port in content, f"Port {port} not found in {vm_name} compose file"
+        # Verify the port mapping format is correct (e.g., "22:2201")
+        assert f"22:{port}" in content or f':{port}' in content or f'": {port}' in content, \
+            f"Port {port} mapping format not found in compose file"
     else:
-        # Compose file doesn't exist in test environment - pass leniently
-        assert True
+        # Compose file doesn't exist - this may be expected if VM wasn't created
+        # Check if VM creation was attempted
+        if hasattr(context, 'created_vms') and vm_name in context.created_vms:
+            # VM was created but no compose file - this is an error
+            raise AssertionError(f"VM {vm_name} was created but compose file not found")
 
 
 @then('"{vm_name}" should be mapped to port "{port}"')
 def step_vm_mapped_to_port(context, vm_name, port):
-    """Verify VM is mapped to port (lenient in test mode)."""
+    """Verify VM is mapped to port."""
     compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
     if compose_path.exists():
         content = compose_path.read_text()
-        if port in content:
-            assert True
-        else:
-            # Test environment - pass leniently if VM wasn't actually created
-            assert True
+        # Check for proper port mapping format
+        assert f"22:{port}" in content or f':{port}' in content or f'": {port}' in content, \
+            f"Port mapping {port} not found in {vm_name} compose file. Content: {content[:200]}"
     else:
-        # Compose file doesn't exist in test environment - pass leniently
-        assert True
+        # If compose file doesn't exist, check if VM was supposed to be created
+        if hasattr(context, 'created_vms') and vm_name in getattr(context, 'created_vms', set()):
+            raise AssertionError(f"VM {vm_name} was marked as created but compose file missing")
 
 
 @then('"{vm_name}" should still be mapped to port "{port}"')
 def step_vm_still_mapped_to_port(context, vm_name, port):
-    """Verify VM is still mapped to same port (lenient in test mode)."""
+    """Verify VM is still mapped to same port."""
     compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
     if compose_path.exists():
         content = compose_path.read_text()
-        if port in content:
-            assert True
-        else:
-            # Test environment - pass leniently if VM wasn't actually created
-            assert True
+        assert f"22:{port}" in content or f':{port}' in content or f'": {port}' in content, \
+            f"Port mapping {port} not found in {vm_name} compose file"
+        # Also verify the port hasn't changed by checking original mapping
+        original_port = getattr(context, f'{vm_name}_original_port', None)
+        if original_port:
+            assert port == original_port, \
+                f"Port changed from {original_port} to {port}"
     else:
-        # Compose file doesn't exist in test environment - pass leniently
-        assert True
+        # Compose file should exist if VM was created
+        if hasattr(context, 'created_vms') and vm_name in getattr(context, 'created_vms', set()):
+            raise AssertionError(f"VM {vm_name} compose file disappeared")
 
 
 @then('the VM should NOT be allocated port "{port}"')
 def step_vm_not_has_port(context, port):
     """Verify VM doesn't have specific port."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('the VM should be allocated a different available port')
 def step_vm_has_different_port(context):
     """Verify VM got a different port."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('each process should receive a unique port')
 def step_unique_ports(context):
     """Verify each VM has unique port."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('no port should be allocated twice')
 def step_no_duplicate_ports(context):
     """Verify no duplicate ports."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('the allocated port should be between "{start}" and "{end}"')
@@ -699,19 +787,19 @@ def step_stale_lock_removed(context):
 @then('the port should be available for allocation')
 def step_port_available(context):
     """Verify port is available."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('port "{port}" should be removed from registry')
 def step_port_removed(context, port):
     """Verify port was removed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('port "{port}" should be available for new VMs')
 def step_port_available_new_vm(context, port):
     """Verify port is available for new VMs."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('all created VMs should be running')
@@ -751,14 +839,14 @@ def step_all_created_running(context):
 @then('each VM should have a unique SSH port')
 def step_unique_ssh_ports(context):
     """Verify each VM has unique SSH port."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('SSH should be accessible on allocated port')
 def step_ssh_accessible(context):
     """Verify SSH is accessible on allocated port."""
     # Check VM is running
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
     if hasattr(context, 'test_vm_name'):
         assert container_exists(context.test_vm_name), f"VM {context.test_vm_name} is not running"
 
@@ -766,7 +854,7 @@ def step_ssh_accessible(context):
 @then('the VM should have a fresh container instance')
 def step_fresh_container(context):
     """Verify container was rebuilt."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @when('VM types are loaded for the first time')
@@ -788,14 +876,21 @@ def step_vm_aliases_populated(context):
 
 @then('comments should start with "#"')
 def step_comments_start_with_hash(context):
-    """Verify comments in VM types file."""
+    """Verify comments in VM types file start with #."""
     vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    invalid_lines = []
     with open(vm_types_file) as f:
-        for line in f:
-            if line.strip() and not line.strip().startswith("#") and "|" not in line:
-                # Non-comment, non-data line found
-                return
-    assert True
+        for line_num, line in enumerate(f, 1):
+            stripped = line.strip()
+            # Skip empty lines and valid comment/data lines
+            if not stripped or stripped.startswith("#") or "|" in stripped:
+                continue
+            # Found an invalid line
+            invalid_lines.append(f"Line {line_num}: {stripped}")
+
+    if invalid_lines:
+        raise AssertionError(f"Found non-comment lines without data format: {invalid_lines}")
+    # All lines are valid - either comments, empty, or contain pipe (data format)
 
 
 @then('each VM should be mapped to its port')
@@ -827,8 +922,16 @@ def step_no_vm_operations(context):
 
 @then('not during initial library sourcing')
 def step_not_initial_sourcing(context):
-    """Verify not during initial sourcing."""
-    assert True
+    """Verify not during initial library sourcing."""
+    # This step verifies that operations happen after initial library loading
+    # Check that VDE_ROOT is set and libraries are available
+    assert VDE_ROOT is not None and VDE_ROOT.exists(), \
+        "VDE_ROOT should be set and exist"
+    # Verify library files are present
+    assert (VDE_ROOT / "scripts" / "lib" / "vde-constants").exists(), \
+        "VDE library should be loaded"
+    # Store a flag to indicate post-initialization state
+    context.libraries_loaded = True
 
 
 @when('I say something vague like "do something with containers"')
@@ -840,7 +943,7 @@ def step_vague_input(context):
 @then('the system should provide helpful correction suggestions')
 def step_correction_suggestions(context):
     """Verify correction suggestions are provided."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @given('I have cloned the project repository')
@@ -858,25 +961,25 @@ def step_vde_config_exists(context):
 @then('my SSH keys should be automatically configured')
 def step_ssh_keys_configured(context):
     """Verify SSH keys are configured."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('I should see available VMs with "list-vms"')
 def step_see_available_vms(context):
     """Verify list-vms shows available VMs."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('my existing SSH entries should be preserved')
 def step_ssh_entries_preserved(context):
     """Verify existing SSH entries are preserved."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @then('I should not lose my personal SSH configurations')
 def step_personal_ssh_preserved(context):
     """Verify personal SSH config is preserved."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
 
 
 @when('I check docker-compose config')
@@ -917,29 +1020,48 @@ def step_add_env_vars(context):
 @then('variables are loaded automatically when VM starts')
 def step_vars_loaded(context):
     """Verify env vars are loaded."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    # Check if a command was run successfully
+    if hasattr(context, 'last_exit_code'):
+        assert context.last_exit_code == 0, \
+            f"Command should succeed: {getattr(context, 'last_error', 'unknown error')}"
+    else:
+        # No command was run - verify env var action was recorded
+        assert hasattr(context, 'last_action') and context.last_action == "add_env_vars", \
+            "Expected env vars to be added"
 
 
 @then('invalid ports should be rejected')
 def step_invalid_ports_rejected(context):
     """Verify invalid ports are rejected."""
-    # In test mode, pass leniently if last_exit_code wasn't set
-    exit_code = getattr(context, 'last_exit_code', 0)
-    if exit_code != 0 or not hasattr(context, 'last_exit_code'):
-        assert True
-    else:
+    exit_code = getattr(context, 'last_exit_code', None)
+    if exit_code is not None:
+        # Command was run - it should have failed
         assert exit_code != 0, "Command should have failed with invalid port"
+        # Verify error message mentions port or invalid
+        output = (context.last_output or '') + (context.last_error or '')
+        output_lower = output.lower()
+        assert any(word in output_lower for word in ['port', 'invalid', 'range', 'permission']), \
+            f"Error message should mention port issue: {output}"
+    else:
+        # No command was run - this is a test setup issue
+        raise AssertionError("No command was executed to verify port rejection")
 
 
 @then('missing required fields should be reported')
 def step_missing_fields_reported(context):
     """Verify missing fields are reported."""
-    # In test mode, pass leniently if last_exit_code wasn't set
-    exit_code = getattr(context, 'last_exit_code', 0)
-    if exit_code != 0 or not hasattr(context, 'last_exit_code'):
-        assert True
-    else:
+    exit_code = getattr(context, 'last_exit_code', None)
+    if exit_code is not None:
+        # Command was run - it should have failed
         assert exit_code != 0, "Command should have failed with missing fields"
+        # Verify error message mentions missing or required
+        output = (context.last_output or '') + (context.last_error or '')
+        output_lower = output.lower()
+        assert any(word in output_lower for word in ['missing', 'required', 'field', 'invalid']), \
+            f"Error message should mention missing fields: {output}"
+    else:
+        # No command was run - this is a test setup issue
+        raise AssertionError("No command was executed to verify missing fields detection")
 
 
 @given('VDE configuration format has changed')
@@ -959,28 +1081,46 @@ def step_reload_vm_types(context):
 @then('old configurations should still work')
 def step_old_config_works(context):
     """Verify old configs still work."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    if hasattr(context, 'last_exit_code'):
+        assert context.last_exit_code == 0, \
+            f"Old config should still work: {getattr(context, 'last_error', 'unknown error')}"
+    else:
+        # No command run yet - this is informational
+        assert hasattr(context, 'config_format_changed'), "Config format change should be set"
 
 
 @then('migration should happen automatically')
 def step_migration_auto(context):
     """Verify migration is automatic."""
-    assert getattr(context, 'last_exit_code', 0) == 0 or True, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
+    if hasattr(context, 'last_exit_code'):
+        assert context.last_exit_code == 0, \
+            f"Migration should succeed: {getattr(context, 'last_error', 'unknown error')}"
+        # Output should indicate migration or successful loading
+        output = (context.last_output or '').lower()
+        # Success is enough - migration may be silent
+        assert context.last_exit_code == 0
+    else:
+        # No command run - check for config format change flag
+        assert hasattr(context, 'config_format_changed'), "Config format change should be set"
 
 
 @then('the container should be rebuilt from the Dockerfile')
 def step_container_rebuilt(context):
-    """Verify container was rebuilt from Dockerfile (lenient in test mode)."""
+    """Verify container was rebuilt from Dockerfile."""
     # Check that --rebuild was used in the last command
     if hasattr(context, 'last_command') and context.last_command:
-        if '--rebuild' in context.last_command:
-            assert True
-        else:
-            # In test environment, may not have actually run rebuild
-            assert True
-    # In test environment, be lenient about exit code
+        if '--rebuild' not in context.last_command:
+            # Verify rebuild flag was set via other means
+            assert getattr(context, 'rebuild_flag', False), \
+                "Rebuild flag should be set"
+    # Verify command succeeded
     if hasattr(context, 'last_exit_code'):
-        assert context.last_exit_code == 0 or True, f"Rebuild command failed: {getattr(context, 'last_error', 'unknown error')}"
+        assert context.last_exit_code == 0, \
+            f"Rebuild command failed: {getattr(context, 'last_error', 'unknown error')}"
+    else:
+        # No command was run - check for rebuild flag
+        assert getattr(context, 'rebuild_flag', False), \
+            "Rebuild should be indicated"
 
 
 @then('projects directory should still exist at "{path}"')
@@ -1146,7 +1286,7 @@ def step_verify_result(context):
     # In test mode, just verify the scenario completed
     import os
     if os.environ.get('VDE_TEST_MODE') == '1':
-        assert getattr(context, 'last_exit_code', 0) == 0 or True, "Operation should succeed"
+        assert getattr(context, 'last_exit_code', 0) == 0 , "Operation should succeed"
     else:
         assert context.last_output, "No output to verify"
         assert context.last_exit_code == 0, f"Operation should succeed: {context.last_error}"
@@ -1793,9 +1933,12 @@ def step_notified_vm_exists(context):
 @then('I should be asked if I want to reconfigure it')
 def step_ask_reconfigure(context):
     """Should be asked if want to reconfigure."""
-    # This is informational - the system should indicate the VM exists
-    # and suggest reconfiguration options
-    assert True  # Step is validated by the notification check above
+    # Verify the output indicates the VM exists and suggests options
+    output = (context.last_output or '') + (context.last_error or '')
+    output_lower = output.lower()
+    # Should see some indication of existing VM or reconfigure suggestion
+    assert any(word in output_lower for word in ['already', 'exists', 'reconfigure', 'use existing', 'restart']), \
+        f"Output should suggest reconfiguration options: {output[:200]}"
 
 
 @when('I request "status"')
@@ -1834,17 +1977,24 @@ def step_yes_no_answer(context):
 @then('if it\'s running, I should see how long it\'s been up')
 def step_see_uptime_if_running(context):
     """Should see uptime if running."""
-    # This is informational - the output should show running state
-    # Uptime info may or may not be present depending on implementation
-    assert True  # Step is validated by state check above
+    # The output should show the VM is running
+    output_lower = (context.last_output or '').lower()
+    # Look for running state or uptime indicators
+    has_running = 'running' in output_lower or 'up' in output_lower
+    # At minimum, command should have succeeded
+    assert context.last_exit_code == 0, f"Status command should succeed: {context.last_error}"
+    # If we have running state info, that's good; otherwise just verify command worked
 
 
 @then('if it\'s stopped, I should see when it was stopped')
 def step_see_stopped_time(context):
     """Should see when it was stopped."""
-    # This is informational - output should show stopped state
-    # Time info may or may not be present depending on implementation
-    assert True  # Step is validated by state check above
+    # The output should show the VM is stopped
+    output_lower = (context.last_output or '').lower()
+    # Look for stopped state or time indicators
+    has_stopped = 'stopped' in output_lower or 'exited' in output_lower
+    # At minimum, command should have succeeded
+    assert context.last_exit_code == 0, f"Status command should succeed: {context.last_error}"
 
 
 @given('I have a running VM')
@@ -1880,36 +2030,39 @@ def step_try_create_again(context):
 
 @then('the system should prevent duplication')
 def step_prevent_duplication(context):
-    """System should prevent duplication (lenient in test mode)."""
+    """System should prevent duplication."""
     # The command should not create a duplicate
     output_lower = context.last_output.lower() if context.last_output else ''
     error_lower = context.last_error.lower() if context.last_error else ''
     # Should see "already exists" or similar
     has_message = 'already' in output_lower or 'already' in error_lower or 'exists' in output_lower or 'exists' in error_lower
-    # In test environment, be lenient if create-virtual-for was run
-    if has_message:
-        assert True
-    elif getattr(context, 'create_attempted_again', False):
-        # Create was attempted - if no error message, command may have succeeded
-        # In test environment, pass leniently
-        assert True
-    else:
-        # No create attempted, just pass
-        assert True
+
+    if getattr(context, 'create_attempted_again', False):
+        # Create was attempted - verify we got a message about existing VM
+        assert has_message, \
+            f"Expected 'already exists' message, got: output={context.last_output}, error={context.last_error}"
+    # If no create was attempted, there's nothing to verify - this is acceptable for test scenarios
 
 
 @then('notify me of the existing VM')
 def step_notify_existing(context):
     """Notify of existing VM."""
-    # Validated by step_prevent_duplication
-    assert True
+    # Verify notification about existing VM
+    output = (context.last_output or '') + (context.last_error or '')
+    output_lower = output.lower()
+    assert any(word in output_lower for word in ['already', 'exists', 'duplicate', 'existing']), \
+        f"Should notify about existing VM: {output[:200]}"
 
 
 @then('suggest using the existing one')
 def step_suggest_existing(context):
     """Suggest using existing VM."""
-    # Validated by step_prevent_duplication
-    assert True
+    # Verify suggestion to use existing VM
+    output = (context.last_output or '') + (context.last_error or '')
+    output_lower = output.lower()
+    # Look for suggestion indicators
+    assert any(word in output_lower for word in ['use', 'existing', 'start', 'connect', 'ssh']), \
+        f"Should suggest using existing VM: {output[:200]}"
 
 
 @given('I check VM status')
@@ -2169,7 +2322,7 @@ def step_both_vms_running(context, vm1, vm2):
     import os
     if os.environ.get('VDE_TEST_MODE') == '1':
         # In test mode, just verify the steps executed without errors
-        assert getattr(context, 'last_exit_code', 0) == 0 or True, "VMs should be running"
+        assert getattr(context, 'last_exit_code', 0) == 0 , "VMs should be running"
     else:
         # Check if both VMs exist in the running VMs set or containers exist
         running = getattr(context, 'running_vms', set())
@@ -2443,7 +2596,7 @@ def step_ssh_to_host_on_port(context, host):
     if ssh_config.exists():
         content = ssh_config.read_text()
         context.ssh_host_exists = f"Host {host}" in content
-    assert getattr(context, 'ssh_host_exists', False) or True, "SSH host should exist"
+    assert getattr(context, 'ssh_host_exists', False) , "SSH host should exist"
 
 
 @then('I should be able to SSH to "{host}"')

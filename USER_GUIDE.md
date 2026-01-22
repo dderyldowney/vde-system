@@ -1001,17 +1001,27 @@ Once Docker, Git, and a modern shell are installed and working, you're ready for
 
 ### SSH Keys? Automatic! 🔑
 
-Here's some good news: VDE handles SSH keys for you automatically. We wanted to mention this so you know what's happening, but you don't need to do anything. It's like magic! ✨
+Here's some good news: VDE handles SSH keys for you automatically with complete isolation. We wanted to mention this so you know what's happening, but you don't need to do anything. It's like magic! ✨
 
 **What happens:**
 
-1. VDE checks if you have SSH keys (~/.ssh/id_ed25519)
+1. VDE creates an isolated SSH directory at `~/.ssh/vde/`
 
-2. If not, it creates them for you automatically
+2. VDE generates its own SSH key (`~/.ssh/vde/id_ed25519`) automatically
 
-3. Public keys are copied to the `public-ssh-keys/` directory
+3. The public key is copied to `public-ssh-keys/vde_id_ed25519.pub` for Docker builds
 
-4. VMs are configured to use these keys for access
+4. VMs are configured to use this isolated VDE key
+
+**What this means for you:**
+
+- ✅ Your personal SSH config (`~/.ssh/config`) is never touched
+
+- ✅ Your personal SSH keys remain private
+
+- ✅ VDE has its own complete SSH setup
+
+- ✅ Easy cleanup: just `rm -rf ~/.ssh/vde`
 
 **You don't need to:**
 
@@ -1062,6 +1072,8 @@ vde list            # List all VMs
 | `vde start <name>` | Start a VM |
 
 | `vde stop <name>` | Stop a VM |
+
+| `vde ssh <name>` | SSH into a VM |
 
 | `vde list` | List all VMs |
 
@@ -1180,6 +1192,12 @@ And I should see installation details
 ```
 
 
+**Run the command:**
+
+
+```bash
+vde info <vm>
+```
 
 **Scenario: Checking if a vm exists**
 
@@ -1192,6 +1210,12 @@ And the VM should be marked as valid
 ```
 
 
+**Run the command:**
+
+
+```bash
+vde check <vm>
+```
 
 **Scenario: Discovering vms by alias**
 
@@ -1204,6 +1228,12 @@ And I should be able to use either name in commands
 ```
 
 
+**Run the command:**
+
+
+```bash
+vde resolve <alias>
+```
 
 **Scenario: Understanding vm categories**
 
@@ -1217,6 +1247,12 @@ And service VMs should provide infrastructure services
 ```
 
 
+**List available VMs:**
+
+
+```bash
+vde list
+```
 
 </details>
 
@@ -1272,25 +1308,35 @@ Ready to step into your development environment? Let's SSH in and see what's wai
 
 |---------|-------------|---------------|
 
-| python-dev | `ssh python-dev` | Python development |
+| python-dev | `vde ssh python` | Python development |
 
-| rust-dev | `ssh rust-dev` | Rust development |
+| rust-dev | `vde ssh rust` | Rust development |
 
-| js-dev | `ssh js-dev` | JavaScript/Node.js |
+| js-dev | `vde ssh js` | JavaScript/Node.js |
 
-| csharp-dev | `ssh csharp-dev` | C# development |
+| csharp-dev | `vde ssh csharp` | C# development |
 
-| ruby-dev | `ssh ruby-dev` | Ruby development |
+| ruby-dev | `vde ssh ruby` | Ruby development |
 
-| go-dev | `ssh go-dev` | Go development |
+| go-dev | `vde ssh go` | Go development |
 
-| postgres | `ssh postgres` | Direct database access |
+| postgres | `vde ssh postgres` | Direct database access |
 
-| redis | `ssh redis` | Direct Redis access |
+| redis | `vde ssh redis` | Direct Redis access |
 
-| mongodb | `ssh mongodb` | MongoDB |
+| mongodb | `vde ssh mongodb` | MongoDB |
 
-| nginx | `ssh nginx` | Nginx web server |
+| nginx | `vde ssh nginx` | Nginx web server |
+
+**Note:** The `vde ssh` command automatically uses VDE's isolated SSH configuration. You can also use VM aliases:
+
+```bash
+
+vde ssh py    # Short for python
+
+vde ssh rs    # Short for rust
+
+``` |
 
 </details>
 
@@ -1365,20 +1411,22 @@ vde start <vm> --rebuild
 ### SSH Connections
 
 ```bash
-# Language VMs
-ssh python-dev     # Python development
-ssh rust-dev       # Rust development
-ssh js-dev         # JavaScript/Node.js
-ssh csharp-dev     # C# development
-ssh ruby-dev       # Ruby development
-ssh go-dev         # Go development
+# VDE SSH - Simple connections to your VMs
+vde ssh python     # Python development
+vde ssh rust       # Rust development
+vde ssh js         # JavaScript/Node.js
+vde ssh csharp     # C# development
+vde ssh ruby       # Ruby development
+vde ssh go         # Go development
 
 # Service VMs
-ssh postgres       # PostgreSQL database
-ssh redis          # Redis cache
-ssh mongodb        # MongoDB
-ssh nginx          # Nginx web server
+vde ssh postgres   # PostgreSQL database
+vde ssh redis      # Redis cache
+vde ssh mongodb    # MongoDB
+vde ssh nginx      # Nginx web server
 ```
+
+**Note:** The `vde ssh` command automatically uses VDE's isolated SSH configuration at `~/.ssh/vde/config`. You can also use VM aliases (e.g., `vde ssh py` for Python, `vde ssh rs` for Rust).
 
 ### Default Ports
 

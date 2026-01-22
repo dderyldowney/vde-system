@@ -401,7 +401,7 @@ extract_flags() {
     esac
 
     case "$input_lower" in
-        *"no-cache"*|*"no cache"*)
+        *"no-cache"*|*"no cache"*|*"from scratch"*)
             nocache="true"
             ;;
     esac

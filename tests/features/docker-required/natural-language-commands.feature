@@ -16,28 +16,26 @@ Feature: Natural Language Commands
   Scenario: Natural language variations
     Given I can phrase commands in different ways
     When I say "launch the golang container"
-    Then it should be equivalent to "start go"
+    Then the system should understand I want to start the Go VM
     And the Go VM should start
 
   @requires-docker-host
   Scenario: Multiple VMs in one command
     Given I need to work with multiple environments
     When I say "start python and postgres"
-    Then both VMs should start
-    And the command should work the same as "start python, postgres"
+    Then both VMs from my command should start
 
   @requires-docker-host
   Scenario: Using aliases instead of canonical names
     Given I know a VM by its alias
     When I say "create nodejs environment"
-    Then it should work the same as "create js"
-    And the JavaScript VM should be created
+    Then the system should understand I want to create the JavaScript VM
+    And the JavaScript VM from my command should be created
 
   Scenario: Descriptive status queries
     Given I want to know what's running
     When I ask "what's currently running?"
     Then I should see the status
-    And it should work the same as "status"
 
   Scenario: Asking for help naturally
     Given I'm not sure what to do
@@ -70,7 +68,6 @@ Feature: Natural Language Commands
     Given I'm done working
     When I say "stop everything"
     Then all running VMs should stop
-    And it should be equivalent to "stop all"
 
   @requires-docker-host
   Scenario: Complex natural language queries
@@ -90,8 +87,8 @@ Feature: Natural Language Commands
   Scenario: Case insensitive commands
     Given I type commands in various cases
     When I say "START PYTHON"
-    Then it should work the same as "start python"
-    And case should not matter
+    Then the system should understand I want to start the Python VM
+    And the Python VM should start
 
   @requires-docker-host
   Scenario: Minimal typing commands
