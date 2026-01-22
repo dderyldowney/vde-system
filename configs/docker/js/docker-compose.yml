@@ -18,7 +18,7 @@ services:
       apt-get install -y nodejs && /usr/sbin/sshd -D"
 
     ports:
-      - "2202:22"
+      - "2204:22"
 
     volumes:
       - ../../../projects/js:/home/devuser/workspace

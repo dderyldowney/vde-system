@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: lua, 2215, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y lua5.4 luarocks
+# Variables: lua, 2218, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y lua5.4 luarocks
 services:
   lua-dev:
     build:
@@ -17,7 +17,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y lua5.4 luarocks && /usr/sbin/sshd -D"
 
     ports:
-      - "2215:22"
+      - "2218:22"
 
     volumes:
       - ../../../projects/lua:/home/devuser/workspace

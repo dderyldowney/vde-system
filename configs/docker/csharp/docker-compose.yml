@@ -25,7 +25,7 @@ services:
       /usr/sbin/sshd -D"
 
     ports:
-      - "2203:22"
+      - "2205:22"
 
     volumes:
       - ../../../projects/csharp:/home/devuser/workspace

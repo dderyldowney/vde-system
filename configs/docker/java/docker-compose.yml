@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: java, 2209, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y default-jdk maven gradle
+# Variables: java, 2210, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y default-jdk maven gradle
 services:
   java-dev:
     build:
@@ -17,7 +17,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y default-jdk maven gradle && /usr/sbin/sshd -D"
 
     ports:
-      - "2209:22"
+      - "2210:22"
 
     volumes:
       - ../../../projects/java:/home/devuser/workspace

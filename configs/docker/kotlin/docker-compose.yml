@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: kotlin, 2210, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y kotlin {{INSTALL_CMD}}{{INSTALL_CMD}} curl -s "https://get.sdkman.io"'
+# Variables: kotlin, 2211, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y kotlin {{INSTALL_CMD}}{{INSTALL_CMD}} curl -s "https://get.sdkman.io"'
 services:
   kotlin-dev:
     build:
@@ -17,7 +17,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y curl unzip zip && su - devuser -c 'curl -s https://get.sdkman.io | bash && source ~/.sdkman/bin/sdkman-init.sh && sdk install kotlin' && /usr/sbin/sshd -D"
 
     ports:
-      - "2210:22"
+      - "2211:22"
 
     volumes:
       - ../../../projects/kotlin:/home/devuser/workspace

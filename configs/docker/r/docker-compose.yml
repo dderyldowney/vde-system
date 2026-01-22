@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: r, 2214, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y r-base r-cran-littler
+# Variables: r, 2219, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y r-base r-cran-littler
 services:
   r-dev:
     build:
@@ -17,7 +17,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y r-base r-cran-littler && /usr/sbin/sshd -D"
 
     ports:
-      - "2214:22"
+      - "2219:22"
 
     volumes:
       - ../../../projects/r:/home/devuser/workspace

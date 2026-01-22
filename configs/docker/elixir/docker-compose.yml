@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: elixir, 2217, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y elixir erlang
+# Variables: elixir, 2215, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y elixir erlang
 services:
   elixir-dev:
     build:
@@ -17,7 +17,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y elixir erlang && /usr/sbin/sshd -D"
 
     ports:
-      - "2217:22"
+      - "2215:22"
 
     volumes:
       - ../../../projects/elixir:/home/devuser/workspace
