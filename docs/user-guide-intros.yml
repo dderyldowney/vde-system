@@ -739,7 +739,7 @@ sections:
       
       **Verify everything is ready:**
       ```bash
-      ./scripts/vde list
+      vde list
       ```
       
       **Expected output:** You should see a list of available language and service VMs.
@@ -817,7 +817,7 @@ sections:
       
       **Run this command:**
       ```bash
-      ./scripts/vde create python
+      vde create python
       ```
       
       **What you'll see:**
@@ -832,10 +832,10 @@ sections:
       The `vde` command is your single, unified interface for all VDE operations:
       
       ```bash
-      ./scripts/vde create python    # Create a new VM
-      ./scripts/vde start rust      # Start a VM
-      ./scripts/vde stop all         # Stop VMs
-      ./scripts/vde list             # List all VMs
+      vde create python    # Create a new VM
+      vde start rust      # Start a VM
+      vde stop all         # Stop VMs
+      vde list             # List all VMs
       ```
       
       **Available vde Commands:**
@@ -869,7 +869,7 @@ sections:
       
       **Run this command:**
       ```bash
-      ./scripts/vde start python
+      vde start python
       ```
       
       **What happens:**
@@ -901,7 +901,7 @@ sections:
       
       **Check status:**
       ```bash
-      ./scripts/vde list
+      vde list
       ```
       
       **You should see:**
@@ -951,7 +951,7 @@ sections:
       
       **Command:**
       ```bash
-      ./scripts/vde start python
+      vde start python
       ```
       
       ### Stopping Your VM
@@ -967,7 +967,7 @@ sections:
       
       **Command:**
       ```bash
-      ./scripts/vde stop python
+      vde stop python
       ```
       
       **Important:** Stopping doesn't delete your VM — it just pauses it. Your code and configurations are safe and sound! 💾
@@ -1004,8 +1004,8 @@ sections:
       
       **Create both services:**
       ```bash
-      ./scripts/vde create postgres
-      ./scripts/vde create redis
+      vde create postgres
+      vde create redis
       ```
       
       ### Starting Your Full Stack
@@ -1022,7 +1022,7 @@ sections:
       
       **Start your full stack:**
       ```bash
-      ./scripts/vde start python postgres redis
+      vde start python postgres redis
       ```
       
       ### Verifying Your Cluster is Running
@@ -1038,7 +1038,7 @@ sections:
       
       **Check status:**
       ```bash
-      ./scripts/vde list
+      vde list
       ```
       
       **Expected output:**
@@ -1166,7 +1166,7 @@ sections:
       
       **One command to start your day:**
       ```bash
-      ./scripts/vde start python postgres redis
+      vde start python postgres redis
       ```
       
       ### During the Day: Check In on Your VMs
@@ -1182,7 +1182,7 @@ sections:
       
       **Check status:**
       ```bash
-      ./scripts/vde list
+      vde list
       ```
       
       ### End of Day: Shut It Down
@@ -1198,7 +1198,7 @@ sections:
       
       **Stop everything:**
       ```bash
-      ./scripts/vde stop all
+      vde stop all
       ```
       
       **Good night, VDE!** See you tomorrow! 🌙
@@ -1224,8 +1224,8 @@ sections:
       
       **Add Rust:**
       ```bash
-      ./scripts/vde create rust
-      ./scripts/vde start rust
+      vde create rust
+      vde start rust
       ```
       
       ### Starting Multiple Language VMs
@@ -1241,7 +1241,7 @@ sections:
       
       **Start multiple at once:**
       ```bash
-      ./scripts/vde start python rust js
+      vde start python rust js
       ```
       
       **Polyglot programmer?** Why not! 😎
@@ -1270,7 +1270,7 @@ sections:
       
       **What to check:**
       1. Is Docker running? `docker ps`
-      2. Is the port already in use? `./scripts/vde list`
+      2. Is the port already in use? `vde list`
       3. Check the logs: `docker logs <vm-name>`
       
       ### Problem: Changes Aren't Reflected
@@ -1287,12 +1287,12 @@ sections:
       
       **Rebuild with --rebuild:**
       ```bash
-      ./scripts/vde start python --rebuild
+      vde start python --rebuild
       ```
       
       **For complete rebuild (no cache):**
       ```bash
-      ./scripts/vde start python --rebuild --no-cache
+      vde start python --rebuild --no-cache
       ```
       
 

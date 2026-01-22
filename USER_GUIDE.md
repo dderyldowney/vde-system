@@ -6,6 +6,8 @@
 
 ## Table of Contents
 
+*💡 **Tip:** Click the ▶ triangle next to any section title below to expand or collapse that section.*
+
 1. [1. Installation](#1.-installation)
    - [Installing Docker Desktop](#installing-docker-desktop)
      - [For Windows Users](#for-windows-users)
@@ -1501,7 +1503,7 @@ And postgres, redis, mongodb, nginx should be listed
 
 ```bash
 
-./scripts/vde list
+vde list
 
 ```
 
@@ -1517,68 +1519,75 @@ And postgres, redis, mongodb, nginx should be listed
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
-**Scenario: All vms have valid installation commands**
+**Scenario: Fresh installation on new system**
 
 
 ```
-Given I have VDE installed
-When I verify installation commands for all VMs
-Then each VM should have a non-empty install command
-And the install command should be valid shell syntax
+Given I have a new computer with Docker installed
+And I have cloned the VDE repository to ~/dev
+When I run the initial setup script
+Then VDE should be properly installed
+And required directories should be created
+And I should see success message
 ```
 
 
-**List available VMs:**
+**This is handled by the setup script:**
 
 
 ```bash
-vde list
+./scripts/build-and-start
 ```
 
-**Scenario: Example 1   python api with postgresql setup**
+**Scenario: Prerequisites are checked**
 
 
 ```
-Given I am following the documented Python API workflow
-When I plan to create a Python VM
-Then the plan should include the create_vm intent
-And the plan should include the Python VM
+Given I want to install VDE
+When the setup script runs
+Then it should verify Docker is installed
+And it should verify docker-compose is available
+And it should verify zsh is available
+And it should report missing dependencies clearly
 ```
 
 
-**Create the VM:**
+**This is handled by the setup script:**
 
 
 ```bash
-vde create python
+./scripts/build-and-start
 ```
 
-**Scenario: Example 3   microservices architecture setup**
+**Scenario: Generate or detect ssh keys**
 
 
 ```
-Given I am creating a microservices architecture
-When I plan to create Python, Go, Rust, PostgreSQL, and Redis
-Then the plan should include all five VMs
-And each VM should be included in the VM list
+Given I'm setting up VDE for the first time
+When SSH keys are checked
+Then if keys exist, they should be detected
+And if no keys exist, ed25519 keys should be generated
+And public keys should be copied to public-ssh-keys/
+And .keep file should exist in public-ssh-keys/
 ```
 
 
-**Create the VM:**
+**This is handled by the setup script:**
 
 
 ```bash
-vde create python
+./scripts/build-and-start
 ```
 
-**Scenario: Daily workflow   morning setup**
+**Scenario: Set up shell environment**
 
 
 ```
-Given I am starting my development day
-When I plan to start Python, PostgreSQL, and Redis
-Then the plan should include all three VMs
-And the plan should use the start_vm intent
+Given I want VDE commands available everywhere
+When I add VDE scripts to my PATH
+Then I can run vde commands from any directory
+And I can run start-virtual, shutdown-virtual, etc.
+And tab completion should work
 ```
 
 
@@ -1589,32 +1598,134 @@ And the plan should use the start_vm intent
 vde start <vms>
 ```
 
-**Scenario: New project setup   discover available vms**
+**Scenario: Verify docker permissions**
 
 
 ```
-Given I am setting up a new project
-When I ask what VMs can I create
-Then the plan should include the list_vms intent
-And I should see all available VM types
+Given VDE is being installed
+When setup checks Docker
+Then I should be warned if I can't run Docker without sudo
+And instructions should be provided for fixing permissions
+And setup should continue with a warning
 ```
 
 
-**List available VMs:**
+
+**Scenario: Create docker network**
+
+
+```
+Given VDE is being installed
+When the first VM is created
+Then vde-network should be created automatically
+And all VMs should use this network
+And VMs can communicate with each other
+```
+
+
+
+**Scenario: First time creation experience**
+
+
+```
+Given I've just installed VDE
+When I run "create-virtual-for python"
+Then I should see helpful progress messages
+And configs/docker/python/ should be created
+And docker-compose.yml should be generated
+And SSH config should be updated
+And I should be told what to do next
+```
+
+
+**Create the VM:**
 
 
 ```bash
-vde list
+create-virtual-for python
 ```
 
-**Scenario: New project setup   choose full stack**
+**Scenario: Upgrade existing installation**
 
 
 ```
-Given I want a Python API with PostgreSQL
-When I plan to create Python and PostgreSQL
-Then both VMs should be included in the plan
-And the plan should use the create_vm intent
+Given I have an older version of VDE
+When I pull the latest changes
+Then my existing VMs should continue working
+And new VM types should be available
+And my configurations should be preserved
+And I should be told about any manual migration needed
+```
+
+
+**This is handled by the setup script:**
+
+
+```bash
+./scripts/build-and-start
+```
+
+**Scenario: Uninstall or cleanup**
+
+
+```
+Given I no longer want VDE on my system
+When I want to remove it
+Then I can stop all VMs
+And I can remove VDE directories
+And my SSH config should be cleaned up
+And my project data should be preserved if I want
+```
+
+
+**Stop the VMs:**
+
+
+```bash
+vde stop <vms>
+```
+
+**Scenario: Installation on different platforms**
+
+
+```
+Given I'm installing VDE
+When the setup detects my OS (Linux/Mac)
+Then appropriate paths should be used
+And platform-specific adjustments should be made
+And the installation should succeed
+```
+
+
+**This is handled by the setup script:**
+
+
+```bash
+./scripts/build-and-start
+```
+
+**Scenario: Docker image availability**
+
+
+```
+Given I'm setting up VDE for the first time
+When I create my first VM
+Then required Docker images should be pulled
+And base images should be built if needed
+And I should see download/build progress
+```
+
+
+
+**Scenario: Quick start after installation**
+
+
+```
+Given VDE is freshly installed
+When I want to start quickly
+Then I can run "create-virtual-for python && start-virtual python"
+And I should have a working Python environment
+And I can start coding immediately
 ```
 
 
@@ -1625,22 +1736,24 @@ And the plan should use the create_vm intent
 vde create python
 ```
 
-**Scenario: New project setup   start development stack**
+**Scenario: Validate installation**
 
 
 ```
-Given I have created my VMs
-When I plan to start Python and PostgreSQL
-Then both VMs should start
-And they should be able to communicate
+Given VDE has been installed
+When I run validation checks
+Then all scripts should be executable
+And all templates should be present
+And vm-types.conf should be valid
+And all directories should have correct permissions
 ```
 
 
-**Create the VM:**
+**This is handled by the setup script:**
 
 
 ```bash
-vde create python
+./scripts/build-and-start
 ```
 
 </details>
@@ -1731,6 +1844,367 @@ And I can connect using simple names like "python-dev"
 
 **VDE does all of this for you.** Sit back and relax! ☕
 
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Automatically start ssh agent if not running**
+
+
+```
+Given SSH agent is not running
+And SSH keys exist in ~/.ssh/
+When I run any VDE command that requires SSH
+Then SSH agent should be started
+And available SSH keys should be loaded into agent
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Generate ssh key if none exists**
+
+
+```
+Given no SSH keys exist in ~/.ssh/
+When I run any VDE command that requires SSH
+Then an ed25519 SSH key should be generated
+And the public key should be synced to public-ssh-keys directory
+```
+
+
+**This is handled by the setup script:**
+
+
+```bash
+./scripts/build-and-start
+```
+
+**Scenario: Sync public keys to vde directory**
+
+
+```
+Given SSH keys exist in ~/.ssh/
+When I run "sync_ssh_keys_to_vde"
+Then public keys should be copied to "public-ssh-keys" directory
+And only .pub files should be copied
+And .keep file should exist in public-ssh-keys directory
+```
+
+
+**Run the command:**
+
+
+```bash
+sync_ssh_keys_to_vde
+```
+
+**Scenario: Prevent duplicate ssh config entries**
+
+
+```
+Given SSH config already contains "Host python-dev"
+When I create VM "python" again
+Then duplicate SSH config entry should NOT be created
+And command should warn about existing entry
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Atomic ssh config update prevents corruption**
+
+
+```
+Given SSH config file exists
+When multiple processes try to update SSH config simultaneously
+Then SSH config should remain valid
+And no partial updates should occur
+```
+
+
+**This is handled by the setup script:**
+
+
+```bash
+./scripts/build-and-start
+```
+
+**Scenario: Remove ssh config entry when vm is removed**
+
+
+```
+Given SSH config contains "Host python-dev"
+When VM "python" is removed
+Then SSH config should NOT contain "Host python-dev"
+```
+
+
+**This is handled by the setup script:**
+
+
+```bash
+./scripts/build-and-start
+```
+
+**Scenario: Vm to vm communication uses agent forwarding**
+
+
+```
+Given SSH agent is running
+And keys are loaded into agent
+When I SSH from "python-dev" to "rust-dev"
+Then the connection should use host's SSH keys
+And no keys should be stored on containers
+```
+
+
+
+**Scenario: Detect all common ssh key types**
+
+
+```
+Given ~/.ssh/ contains SSH keys
+When detect_ssh_keys runs
+Then "id_ed25519" keys should be detected
+And "id_rsa" keys should be detected
+And "id_ecdsa" keys should be detected
+And "id_dsa" keys should be detected
+```
+
+
+**This is handled by the setup script:**
+
+
+```bash
+./scripts/build-and-start
+```
+
+**Scenario: Prefer ed25519 keys when multiple exist**
+
+
+```
+Given both "id_ed25519" and "id_rsa" keys exist
+When primary SSH key is requested
+Then "id_ed25519" should be returned as primary key
+```
+
+
+
+**Scenario: Merge does not duplicate existing vde entries**
+
+
+```
+Given ~/.ssh/config contains "Host python-dev"
+And ~/.ssh/config contains python-dev configuration
+When I attempt to create VM "python" again
+Then ~/.ssh/config should contain only one "Host python-dev" entry
+And error should indicate entry already exists
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Merge uses temporary file then atomic rename**
+
+
+```
+Given ~/.ssh/config exists
+When new SSH entry is merged
+Then temporary file should be created first
+Then content should be written to temporary file
+Then atomic mv should replace original config
+Then temporary file should be removed
+```
+
+
+
+**Scenario: Merge creates ssh config if it doesn't exist**
+
+
+```
+Given ~/.ssh/config does not exist
+And ~/.ssh directory exists or can be created
+When I create VM "python" with SSH port "2200"
+Then ~/.ssh/config should be created
+And ~/.ssh/config should have permissions "600"
+And ~/.ssh/config should contain "Host python-dev"
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Merge creates .ssh directory if needed**
+
+
+```
+Given ~/.ssh directory does not exist
+When I create VM "python" with SSH port "2200"
+Then ~/.ssh directory should be created
+And ~/.ssh/config should be created
+And directory should have correct permissions
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Merge preserves blank lines and formatting**
+
+
+```
+Given ~/.ssh/config exists with blank lines
+And ~/.ssh/config has comments and custom formatting
+When I create VM "go" with SSH port "2202"
+Then ~/.ssh/config blank lines should be preserved
+And ~/.ssh/config comments should be preserved
+And new entry should be added with proper formatting
+```
+
+
+
+**Scenario: Create backup of known_hosts before cleanup**
+
+
+```
+Given ~/.ssh/known_hosts exists with content
+And VM "redis" is created with SSH port "2401"
+When I remove VM for SSH cleanup "redis"
+Then known_hosts backup file should exist at "~/.ssh/known_hosts.vde-backup"
+And backup should contain original content
+```
+
+
+
+**Scenario: Ssh agent setup is silent during normal operations**
+
+
+```
+Given I have created VMs before
+And I have SSH configured
+When I create a new VM
+Then no SSH configuration messages should be displayed
+And the setup should happen automatically
+And I should only see VM creation messages
+```
+
+
+**This is handled by the setup script:**
+
+
+```bash
+./scripts/build-and-start
+```
+
+**Scenario: Viewing ssh status**
+
+
+```
+Given I have VDE configured
+When I run "./scripts/ssh-agent-setup"
+Then I should see the SSH agent status
+And I should see my available SSH keys
+And I should see keys loaded in the agent
+And the list-vms command should show available VMs
+And I should see usage examples
+```
+
+
+**Run the setup:**
+
+
+```bash
+./scripts/ssh-agent-setup
+```
+
+**Scenario: Ssh config auto generation for all vms**
+
+
+```
+Given I have created multiple VMs
+When I use SSH to connect to any VM
+Then the SSH config entries should exist
+And I should be able to use short hostnames
+And I should not need to remember port numbers
+```
+
+
+**This is handled by the setup script:**
+
+
+```bash
+./scripts/build-and-start
+```
+
+**Scenario: Rebuilding vms preserves ssh configuration**
+
+
+```
+Given I have a running VM with SSH configured
+When I shutdown and rebuild the VM
+Then my SSH configuration should still work
+And I should not need to reconfigure SSH
+And my keys should still work
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vm> --rebuild
+```
+
+**Scenario: Automatic key generation preference**
+
+
+```
+Given I do not have any SSH keys
+When I create a VM
+Then an ed25519 key should be generated
+And ed25519 should be the preferred key type
+And the key should be generated with a comment
+```
+
+
+
+**Scenario: Public keys automatically synced to vde**
+
+
+```
+Given I have SSH keys on my host
+When I create a VM
+Then my public keys should be copied to public-ssh-keys/
+And all my public keys should be in the VM's authorized_keys
+And I should not need to manually copy keys
+```
+
+
+
 </details>
 
 <details id="3.-your-first-vm" data-section="3. Your First VM">
@@ -1779,7 +2253,7 @@ And projects/python directory should be created
 
 ```bash
 
-./scripts/vde create python
+vde create python
 
 ```
 
@@ -1809,13 +2283,13 @@ The `vde` command is your single, unified interface for all VDE operations:
 
 ```bash
 
-./scripts/vde create python    # Create a new VM
+vde create python    # Create a new VM
 
-./scripts/vde start rust      # Start a VM
+vde start rust      # Start a VM
 
-./scripts/vde stop all         # Stop VMs
+vde stop all         # Stop VMs
 
-./scripts/vde list             # List all VMs
+vde list             # List all VMs
 
 ```
 
@@ -1883,7 +2357,7 @@ And I should be able to SSH to "python-dev"
 
 ```bash
 
-./scripts/vde start python
+vde start python
 
 ```
 
@@ -1907,13 +2381,16 @@ And I should be able to SSH to "python-dev"
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
-**Scenario: Detect create vm intent**
+**Scenario: Create a new service vm with custom port**
 
 
 ```
-When I parse "create a go vm"
-Then intent should be "create_vm"
-And VMs should include "go"
+Given the VM "rabbitmq" is defined as a service VM with port "5672"
+And no VM configuration exists for "rabbitmq"
+When I run "create-virtual-for rabbitmq"
+Then a docker-compose.yml file should be created at "configs/docker/rabbitmq/docker-compose.yml"
+And the docker-compose.yml should contain service port mapping "5672"
+And data directory should exist at "data/rabbitmq"
 ```
 
 
@@ -1921,7 +2398,98 @@ And VMs should include "go"
 
 
 ```bash
-vde create a go vm
+create-virtual-for rabbitmq
+```
+
+**Scenario: Stop a running vm**
+
+
+```
+Given VM "python" is running
+When I run "shutdown-virtual python"
+Then VM "python" should not be running
+```
+
+
+**Run the command:**
+
+
+```bash
+shutdown-virtual python
+```
+
+**Scenario: Stop all running vms**
+
+
+```
+Given VM "python" is running
+And VM "rust" is running
+When I run "shutdown-virtual all"
+Then no VMs should be running
+```
+
+
+**Run the command:**
+
+
+```bash
+shutdown-virtual all
+```
+
+**Scenario: List all predefined vm types**
+
+
+```
+Given VM types are loaded
+When I run "list-vms"
+Then all language VMs should be listed
+And all service VMs should be listed
+And aliases should be shown
+```
+
+
+**List available VMs:**
+
+
+```bash
+list-vms
+```
+
+**Scenario: Add a new vm type**
+
+
+```
+When I run "add-vm-type --type lang --display 'Zig Language' zig 'apt-get install -y zig'"
+Then "zig" should be in known VM types
+And VM type "zig" should have type "lang"
+And VM type "zig" should have display name "Zig Language"
+```
+
+
+**Run the command:**
+
+
+```bash
+add-vm-type --type lang --display 
+```
+
+**Scenario: Add vm type with aliases**
+
+
+```
+When I run "add-vm-type --type lang --display 'JavaScript' js 'apt-get install -y nodejs' 'node,nodejs'"
+Then "js" should be in known VM types
+And "js" should have aliases "node,nodejs"
+And "node" should resolve to "js"
+And "nodejs" should resolve to "js"
+```
+
+
+**Run the command:**
+
+
+```bash
+add-vm-type --type lang --display 
 ```
 
 </details>
@@ -1964,7 +2532,7 @@ And Python should show as "running"
 
 ```bash
 
-./scripts/vde list
+vde list
 
 ```
 
@@ -2022,95 +2590,6 @@ And the directory should be mounted in the VM
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
-**Scenario: Verify port registry consistency**
-
-
-```
-Given port registry cache exists
-And a VM has been removed
-When port registry is verified
-Then removed VM should be removed from registry
-And cache file should be updated
-```
-
-
-
-**Scenario: Example 1   verify postgresql accessibility**
-
-
-```
-Given I have started the PostgreSQL VM
-When I check if postgres exists
-Then the VM should be recognized as a valid VM type
-And it should be marked as a service VM
-```
-
-
-**Start the VMs:**
-
-
-```bash
-vde start <vms>
-```
-
-**Scenario: Example 3   verify all microservice vms exist**
-
-
-```
-Given I have created microservices
-When I check for each service VM
-Then Python should exist as a language VM
-And Go should exist as a language VM
-And Rust should exist as a language VM
-And PostgreSQL should exist as a service VM
-And Redis should exist as a service VM
-```
-
-
-**Create the VM:**
-
-
-```bash
-vde create python
-```
-
-**Scenario: Daily workflow   check status during development**
-
-
-```
-Given I am actively developing
-When I ask what's running
-Then the plan should include the status intent
-And I should be able to see running VMs
-```
-
-
-
-**Scenario: Troubleshooting   step 1 check status**
-
-
-```
-Given something isn't working correctly
-When I check the status
-Then I should receive status information
-And I should see which VMs are running
-```
-
-
-
-**Scenario: Documentation accuracy   verify examples work**
-
-
-```
-Given the documentation shows specific VM examples
-When I verify the documented VMs
-Then Python should be a valid VM type
-And JavaScript should be a valid VM type
-And all microservice VMs should be valid
-```
-
-
-
 **Scenario: Listing all available vms**
 
 
@@ -2143,6 +2622,12 @@ And common languages like Python, Go, and Rust should be listed
 ```
 
 
+**List available VMs:**
+
+
+```bash
+vde list --languages
+```
 
 **Scenario: Listing only service vms**
 
@@ -2163,6 +2648,44 @@ And services like PostgreSQL and Redis should be listed
 vde list --services
 ```
 
+**Scenario: Getting detailed information about a specific vm**
+
+
+```
+Given I want to know about the Python VM
+When I request information about "python"
+Then I should see its display name
+And I should see its type (language)
+And I should see any aliases (like py, python3)
+And I should see installation details
+```
+
+
+
+**Scenario: Checking if a vm exists**
+
+
+```
+Given I want to verify a VM type before using it
+When I check if "golang" exists
+Then it should resolve to "go"
+And the VM should be marked as valid
+```
+
+
+
+**Scenario: Discovering vms by alias**
+
+
+```
+Given I know a VM by an alias but not its canonical name
+When I use the alias "nodejs"
+Then it should resolve to the canonical name "js"
+And I should be able to use either name in commands
+```
+
+
+
 **Scenario: Understanding vm categories**
 
 
@@ -2175,93 +2698,6 @@ And service VMs should provide infrastructure services
 ```
 
 
-
-**Scenario: Detect list vms intent**
-
-
-```
-When I parse "list all vms"
-Then intent should be "list_vms"
-```
-
-
-**List available VMs:**
-
-
-```bash
-vde list all vms
-```
-
-**Scenario: Detect list languages intent**
-
-
-```
-When I parse "show all language vms"
-Then intent should be "list_vms"
-And filter should be "lang"
-```
-
-
-**List available VMs:**
-
-
-```bash
-vde show all language vms
-```
-
-**Scenario: Detect list services intent**
-
-
-```
-When I parse "what services are available"
-Then intent should be "list_vms"
-And filter should be "svc"
-```
-
-
-**List available VMs:**
-
-
-```bash
-vde what services are available
-```
-
-**Scenario: Validate plan lines against whitelist**
-
-
-```
-Given plan contains "INTENT:start_vm"
-And plan contains "VM:python"
-When plan is validated
-Then all plan lines should be valid
-When plan contains "MALICIOUS:command"
-Then plan should be rejected
-```
-
-
-**Start the VMs:**
-
-
-```bash
-vde start <vms>
-```
-
-**Scenario: Handle multiple consecutive spaces in vm list**
-
-
-```
-When I parse "start python   rust"
-Then intent should be "start_vm"
-And VMs should include "python", "rust"
-```
-
-
-**Start the VMs:**
-
-
-```bash
-vde start python   rust
-```
 
 </details>
 
@@ -2305,7 +2741,7 @@ And I can connect to it
 
 ```bash
 
-./scripts/vde start python
+vde start python
 
 ```
 
@@ -2337,7 +2773,7 @@ And the configuration should remain for next time
 
 ```bash
 
-./scripts/vde stop python
+vde stop python
 
 ```
 
@@ -2349,34 +2785,29 @@ And the configuration should remain for next time
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
-**Scenario: Port registry cache persists and survives restart**
+**Scenario: Creating a new vm**
 
 
 ```
-Given ports have been allocated for VMs
-And port registry cache exists
-When system is restarted
-And port registry is loaded
-Then previously allocated ports should be restored
-And no port conflicts should occur
+Given I want to work with a new language
+When I request to "create a Rust VM"
+Then the VM configuration should be generated
+And the Docker image should be built
+And SSH keys should be configured
+And the VM should be ready to use
 ```
 
 
-**Start the VMs:**
 
-
-```bash
-vde start <vms>
-```
-
-**Scenario: Example 1   start both python and postgresql**
+**Scenario: Creating multiple vms at once**
 
 
 ```
-Given I have created Python and PostgreSQL VMs
-When I plan to start both VMs
-Then the plan should include the start_vm intent
-And the plan should include both Python and PostgreSQL VMs
+Given I need a full stack environment
+When I request to "create Python, PostgreSQL, and Redis"
+Then all three VMs should be created
+And each should have its own configuration
+And all should be on the same Docker network
 ```
 
 
@@ -2387,32 +2818,15 @@ And the plan should include both Python and PostgreSQL VMs
 vde create python
 ```
 
-**Scenario: Example 3   start all microservice vms**
+**Scenario: Stopping a running vm**
 
 
 ```
-Given I have created the microservice VMs
-When I plan to start them all
-Then the plan should include the start_vm intent
-And all microservice VMs should be included
-```
-
-
-**Start the VMs:**
-
-
-```bash
-vde start <vms>
-```
-
-**Scenario: Troubleshooting   step 3 restart with rebuild**
-
-
-```
-Given I need to rebuild a VM to fix an issue
-When I plan to rebuild Python
-Then the plan should include the restart_vm intent
-And the plan should set rebuild=true flag
+Given I have a running Python VM
+When I request to "stop python"
+Then the Python container should stop
+And the VM configuration should remain
+And I can start it again later
 ```
 
 
@@ -2423,150 +2837,14 @@ And the plan should set rebuild=true flag
 vde start <vms>
 ```
 
-**Scenario: Adding cache layer   start redis**
+**Scenario: Stopping multiple vms**
 
 
 ```
-Given I have created the Redis VM
-When I plan to start Redis
-Then the plan should include the start_vm intent
-And Redis should start without affecting other VMs
-```
-
-
-**Start the VMs:**
-
-
-```bash
-vde start <vms>
-```
-
-**Scenario: Switching projects   stop current project**
-
-
-```
-Given I am working on one project
-When I plan to stop all VMs
-Then all running VMs should be stopped
-And I should be ready to start a new project
-```
-
-
-**Start the VMs:**
-
-
-```bash
-vde start <vms>
-```
-
-**Scenario: Switching projects   start new project**
-
-
-```
-Given I have stopped my current project
-When I plan to start Go and MongoDB
-Then the new project VMs should start
-And only the new project VMs should be running
-```
-
-
-**Start the VMs:**
-
-
-```bash
-vde start <vms>
-```
-
-**Scenario: Starting already running vm**
-
-
-```
-Given I have a Python VM that is already running
-When I plan to start Python
-Then the plan should be generated
-And execution would detect the VM is already running
-And I would be notified that it's already running
-```
-
-
-**Start the VMs:**
-
-
-```bash
-vde start <vms>
-```
-
-**Scenario: Stopping already stopped vm**
-
-
-```
-Given I have a stopped PostgreSQL VM
-When I plan to stop PostgreSQL
-Then the plan should be generated
-And execution would detect the VM is not running
-And I would be notified that it's already stopped
-```
-
-
-
-**Scenario: Detect start vm intent**
-
-
-```
-When I parse "start the python vm"
-Then intent should be "start_vm"
-And VMs should include "python"
-```
-
-
-**Start the VMs:**
-
-
-```bash
-vde start the python vm
-```
-
-**Scenario: Detect start multiple vms intent**
-
-
-```
-When I parse "start python, rust, and go"
-Then intent should be "start_vm"
-And VMs should include "python", "rust", "go"
-```
-
-
-**Start the VMs:**
-
-
-```bash
-vde start python, rust, and go
-```
-
-**Scenario: Detect start all vms intent**
-
-
-```
-When I parse "start everything"
-Then intent should be "start_vm"
-And VMs should include all known VMs
-```
-
-
-**Start the VMs:**
-
-
-```bash
-vde start everything
-```
-
-**Scenario: Detect stop vm intent**
-
-
-```
-When I parse "stop the postgres container"
-Then intent should be "stop_vm"
-And VMs should include "postgres"
+Given I have multiple running VMs
+When I request to "stop python and postgres"
+Then both VMs should stop
+And other VMs should remain running
 ```
 
 
@@ -2574,33 +2852,18 @@ And VMs should include "postgres"
 
 
 ```bash
-vde stop the postgres container
+vde stop <vms>
 ```
 
-**Scenario: Detect stop all vms intent**
-
-
-```
-When I parse "shutdown all vms"
-Then intent should be "stop_vm"
-And VMs should include all known VMs
-```
-
-
-**Run the command:**
-
-
-```bash
-vde shutdown all vms
-```
-
-**Scenario: Detect restart vm intent**
+**Scenario: Restarting a vm**
 
 
 ```
-When I parse "restart python"
-Then intent should be "restart_vm"
-And VMs should include "python"
+Given I have a running VM
+When I request to "restart rust"
+Then the Rust VM should stop
+And the Rust VM should start again
+And my workspace should still be accessible
 ```
 
 
@@ -2608,33 +2871,18 @@ And VMs should include "python"
 
 
 ```bash
-vde restart python
+vde start <vms>
 ```
 
-**Scenario: Detect restart intent before start intent**
-
-
-```
-When I parse "restart python"
-Then intent should be "restart_vm"
-And VMs should include "python"
-```
-
-
-**Start the VMs:**
-
-
-```bash
-vde restart python
-```
-
-**Scenario: Detect start when restart not specified**
+**Scenario: Restarting with rebuild**
 
 
 ```
-When I parse "start python"
-Then intent should be "start_vm"
-And VMs should include "python"
+Given I need to refresh a VM
+When I request to "restart python with rebuild"
+Then the Python VM should be rebuilt
+And the VM should start with the new image
+And my workspace should be preserved
 ```
 
 
@@ -2642,7 +2890,64 @@ And VMs should include "python"
 
 
 ```bash
-vde start python
+vde start <vms>
+```
+
+**Scenario: Rebuilding after code changes**
+
+
+```
+Given I have modified the Dockerfile
+When I request to "rebuild go with no cache"
+Then the Go VM should be rebuilt from scratch
+And no cached layers should be used
+And the new image should reflect my changes
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vm> --rebuild
+```
+
+**Scenario: Upgrading a vm**
+
+
+```
+Given I want to update the base image
+When I rebuild the VM
+Then the latest base image should be used
+And my configuration should be preserved
+And my workspace should remain intact
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vm> --rebuild
+```
+
+**Scenario: Migrating to a new vde version**
+
+
+```
+Given I have updated VDE scripts
+When I rebuild my VMs
+Then they should use the new VDE configuration
+And my data should be preserved
+And my SSH access should continue to work
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vm> --rebuild
 ```
 
 </details>
@@ -2707,9 +3012,9 @@ And Redis VM configuration should be created
 
 ```bash
 
-./scripts/vde create postgres
+vde create postgres
 
-./scripts/vde create redis
+vde create redis
 
 ```
 
@@ -2743,7 +3048,7 @@ And Python VM can connect to Redis
 
 ```bash
 
-./scripts/vde start python postgres redis
+vde start python postgres redis
 
 ```
 
@@ -2775,7 +3080,7 @@ And they should be on the same Docker network
 
 ```bash
 
-./scripts/vde list
+vde list
 
 ```
 
@@ -2801,26 +3106,17 @@ redis       service     running   2401
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
-**Scenario: Cache consistency across multiple operations**
+**Scenario: Automatically setting up ssh environment when creating a vm**
 
 
 ```
-Given VM types cache exists
-When VM types are loaded multiple times
-Then cache should return consistent data
-And cache file modification time should remain unchanged
-```
-
-
-
-**Scenario: Detect create multiple vms intent**
-
-
-```
-When I parse "create python and rust"
-Then intent should be "create_vm"
-And VMs should include "python"
-And VMs should include "rust"
+Given I do not have an SSH agent running
+And I do not have any SSH keys
+When I create a Python VM
+Then an SSH agent should be started automatically
+And an SSH key should be generated automatically
+And the key should be loaded into the agent
+And no manual configuration should be required
 ```
 
 
@@ -2828,16 +3124,22 @@ And VMs should include "rust"
 
 
 ```bash
-vde create python and rust
+vde create python
 ```
 
-**Scenario: Handle commas and conjunctions for multiple vms**
+**Scenario: Communicating between language vms**
 
 
 ```
-When I parse "start python, rust, and go"
-Then intent should be "start_vm"
-And VMs should include "python", "rust", "go"
+Given I have a Go VM running
+And I have a Python VM running
+And I have started the SSH agent
+When I SSH into the Go VM
+And I run "ssh python-dev" from within the Go VM
+Then I should connect to the Python VM
+And I should be authenticated using my host's SSH keys
+And I should not need to enter a password
+And I should not need to copy keys to the Go VM
 ```
 
 
@@ -2845,8 +3147,96 @@ And VMs should include "python", "rust", "go"
 
 
 ```bash
-vde start python, rust, and go
+vde start <vms>
 ```
+
+**Scenario: Communicating between language and service vms**
+
+
+```
+Given I have a Python VM running
+And I have a PostgreSQL VM running
+When I SSH into the Python VM
+And I run "ssh postgres-dev" from within the Python VM
+Then I should connect to the PostgreSQL VM
+And I should be able to run psql commands
+And authentication should use my host's SSH keys
+```
+
+
+
+**Scenario: Copying files between vms using scp**
+
+
+```
+Given I have a Python VM running
+And I have a Go VM running
+When I create a file in the Python VM
+And I run "scp go-dev:/tmp/file ." from the Python VM
+Then the file should be copied using my host's SSH keys
+And no password should be required
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Microservices architecture communication**
+
+
+```
+Given I have a Go VM running as an API gateway
+And I have a Python VM running as a payment service
+And I have a Rust VM running as an analytics service
+When I SSH into the Go VM
+And I run "ssh python-dev curl localhost:8000/health"
+And I run "ssh rust-dev curl localhost:8080/metrics"
+Then both services should respond
+And all authentications should use my host's SSH keys
+```
+
+
+
+**Scenario: Ssh keys never leave the host**
+
+
+```
+Given I have SSH keys on my host
+And I have multiple VMs running
+When I SSH from one VM to another
+Then the private keys should remain on the host
+And only the SSH agent socket should be forwarded
+And the VMs should not have copies of my private keys
+```
+
+
+**This is handled by the setup script:**
+
+
+```bash
+./scripts/build-and-start
+```
+
+**Scenario: Multiple vms can use the same agent**
+
+
+```
+Given I have 5 VMs running
+And I have 2 SSH keys loaded in the agent
+When I SSH from VM1 to VM2
+And I SSH from VM2 to VM3
+And I SSH from VM3 to VM4
+And I SSH from VM4 to VM5
+Then all connections should succeed
+And all should use my host's SSH keys
+And no keys should be copied to any VM
+```
+
+
 
 </details>
 
@@ -2944,61 +3334,33 @@ ssh python-dev
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
-**Scenario: Example 1   get connection info for python**
+**Scenario: Cloning a private repository from within a vm**
 
 
 ```
-Given I need to connect to the Python VM
-When I ask for connection information
-Then the plan should include the connect intent
-And the plan should include the Python VM
-```
-
-
-
-**Scenario: Daily workflow   connect to primary vm**
-
-
-```
-Given I need to work in my primary development environment
-When I ask how to connect to Python
-Then the plan should provide connection details
-And the plan should include the Python VM
+Given I have a Python VM running
+And I have a private repository on GitHub
+When I SSH into the Python VM
+And I run "git clone git@github.com:myuser/private-repo.git"
+Then the repository should be cloned
+And I should not be prompted for a password
+And my host's SSH keys should be used for authentication
 ```
 
 
 
-**Scenario: Troubleshooting   step 4 get connection info**
+**Scenario: Pushing code to github from a vm**
 
 
 ```
-Given I need to debug inside a container
-When I ask to connect to Python
-Then the plan should include the connect intent
-And I should receive SSH connection information
-```
-
-
-
-**Scenario: Team onboarding   get connection help**
-
-
-```
-Given I am new to the team
-When I ask how to connect to Python
-Then I should receive clear connection instructions
-And I should understand how to access the VM
-```
-
-
-
-**Scenario: Detect connect intent**
-
-
-```
-When I parse "how do I connect to python"
-Then intent should be "connect"
-And VMs should include "python"
+Given I have a Go VM running
+And I have cloned a repository in the Go VM
+And I have made changes to the code
+When I run "git commit -am 'Add new feature'"
+And I run "git push origin main"
+Then the changes should be pushed to GitHub
+And my host's SSH keys should be used
+And no password should be required
 ```
 
 
@@ -3006,8 +3368,122 @@ And VMs should include "python"
 
 
 ```bash
-vde how do I connect to python
+git commit -am 
 ```
+
+**Scenario: Pulling from multiple git hosts**
+
+
+```
+Given I have a Python VM running
+And I have repositories on both GitHub and GitLab
+And I have SSH keys configured for both hosts
+When I SSH into the Python VM
+And I run "git pull" in the GitHub repository
+And I run "git pull" in the GitLab repository
+Then both repositories should update
+And each should use the appropriate SSH key from my host
+```
+
+
+
+**Scenario: Using git submodules**
+
+
+```
+Given I have a Rust VM running
+And I have a repository with Git submodules
+And the submodules are from GitHub
+When I SSH into the Rust VM
+And I run "git submodule update --init"
+Then the submodules should be cloned
+And authentication should use my host's SSH keys
+```
+
+
+
+**Scenario: Git operations in microservices architecture**
+
+
+```
+Given I have multiple VMs for different services
+And each service has its own repository
+And all repositories use SSH authentication
+When I SSH to each VM
+And I run "git pull" in each service directory
+Then all repositories should update
+And all should use my host's SSH keys
+And no configuration should be needed in any VM
+```
+
+
+
+**Scenario: Deploying code from vm to external server**
+
+
+```
+Given I have a deployment server
+And I have SSH keys configured for the deployment server
+And I have a Python VM where I build my application
+When I SSH into the Python VM
+And I run "scp app.tar.gz deploy-server:/tmp/"
+And I run "ssh deploy-server '/tmp/deploy.sh'"
+Then the application should be deployed
+And my host's SSH keys should be used for both operations
+```
+
+
+
+**Scenario: Multiple github accounts**
+
+
+```
+Given I have multiple GitHub accounts
+And I have different SSH keys for each account
+And all keys are loaded in my SSH agent
+When I SSH into a VM
+And I clone a repository from account1
+And I clone a repository from account2
+Then both repositories should be cloned
+And each should use the correct SSH key
+And the agent should automatically select the right key
+```
+
+
+
+**Scenario: Ssh key passed through to child processes**
+
+
+```
+Given I have a Node.js VM running
+And I have an npm script that runs Git commands
+When I SSH into the Node.js VM
+And I run "npm run deploy" which uses Git internally
+Then the deployment should succeed
+And the Git commands should use my host's SSH keys
+```
+
+
+**This is handled by the setup script:**
+
+
+```bash
+./scripts/build-and-start
+```
+
+**Scenario: Git operations in automated workflows**
+
+
+```
+Given I have a CI/CD script in a VM
+And the script performs Git operations
+When I run the CI/CD script
+Then all Git operations should succeed
+And my host's SSH keys should be used
+And no manual intervention should be required
+```
+
+
 
 </details>
 
@@ -3099,64 +3575,6 @@ Then my tables should still exist
 
 **Important:** Database data in `~/dev/data/postgres/` persists even when you rebuild VMs. Your precious data is safe and sound! 💾
 
-### Verified Scenarios
-
-> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
-
-**Scenario: Example 1   create postgresql for python api**
-
-
-```
-Given I have planned to create Python
-When I plan to create PostgreSQL
-Then the plan should include the create_vm intent
-And the plan should include the PostgreSQL VM
-```
-
-
-**Create the VM:**
-
-
-```bash
-vde create python
-```
-
-**Scenario: Example 2   full stack javascript with redis**
-
-
-```
-Given I am following the documented JavaScript workflow
-When I plan to create JavaScript and Redis VMs
-Then the plan should include both VMs
-And the JavaScript VM should use the js canonical name
-```
-
-
-**Create the VM:**
-
-
-```bash
-vde create <vm-type>
-```
-
-**Scenario: Adding cache layer   create redis**
-
-
-```
-Given I have an existing Python and PostgreSQL stack
-When I plan to add Redis
-Then the plan should include the create_vm intent
-And the Redis VM should be included
-```
-
-
-**Create the VM:**
-
-
-```bash
-vde create python
-```
-
 </details>
 
 <details id="9.-daily-workflow" data-section="9. Daily Workflow">
@@ -3197,7 +3615,7 @@ And I can start working immediately
 
 ```bash
 
-./scripts/vde start python postgres redis
+vde start python postgres redis
 
 ```
 
@@ -3229,7 +3647,7 @@ And their status should be clear
 
 ```bash
 
-./scripts/vde list
+vde list
 
 ```
 
@@ -3261,7 +3679,7 @@ And my work is saved
 
 ```bash
 
-./scripts/vde stop all
+vde stop all
 
 ```
 
@@ -3273,17 +3691,224 @@ And my work is saved
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
-**Scenario: Daily workflow   evening cleanup**
+**Scenario: Create a new language vm for a project**
 
 
 ```
-Given I am done with development for the day
-When I plan to stop everything
-Then the plan should include the stop_vm intent
-And the plan should apply to all running VMs
+Given I need to start a "golang" project
 ```
 
 
+**Create the VM:**
+
+
+```bash
+vde create go
+```
+
+**Scenario: Connect to postgresql from python vm**
+
+
+```
+Given "postgres" VM is running
+And "python" VM is running
+When I SSH into "python-dev"
+And I run "psql -h postgres -U devuser"
+Then I should be connected to PostgreSQL
+And I can query the database
+And the connection uses the container network
+```
+
+
+
+**Scenario: Rebuild a vm after modifying its dockerfile**
+
+
+```
+Given I have modified the python Dockerfile to add a new package
+And "python" VM is currently running
+When I run "start-virtual python --rebuild"
+Then the VM should be rebuilt with the new Dockerfile
+And the VM should be running after rebuild
+And the new package should be available in the VM
+```
+
+
+**Start the VMs:**
+
+
+```bash
+start-virtual python --rebuild
+```
+
+**Scenario: Add support for a new language**
+
+
+```
+Given VDE doesn't support "zig" yet
+When I run "add-vm-type --type lang --display 'Zig' zig 'apt-get install -y zig'"
+Then "zig" should be available as a VM type
+And I can create a zig VM with "create-virtual-for zig"
+And zig should appear in "list-vms" output
+```
+
+
+**Run the command:**
+
+
+```bash
+add-vm-type --type lang --display 
+```
+
+**Scenario: Check what vms i can create**
+
+
+```
+Given I want to see what development environments are available
+When I run "list-vms"
+Then all language VMs should be listed with aliases
+And all service VMs should be listed with ports
+And I can see which VMs are created vs just available
+```
+
+
+**List available VMs:**
+
+
+```bash
+list-vms
+```
+
+**Scenario: Create test environment with database**
+
+
+```
+Given I need to test my application with a real database
+When I create "postgres" and "redis" service VMs
+And I create my language VM (e.g., "python")
+And I start all three VMs
+Then my application can connect to test database
+And test data is isolated from development data
+And I can stop test VMs independently
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Vde handles port conflicts gracefully**
+
+
+```
+Given a system service is using port 2200
+When I create a new language VM
+Then VDE should allocate the next available port (2201)
+And the VM should work correctly on the new port
+And SSH config should reflect the correct port
+```
+
+
+
+**Scenario: Starting my development environment**
+
+
+```
+Given I have VDE installed
+When I request to start my Python development environment
+Then the Python VM should be started
+And SSH access should be available on the configured port
+And my workspace directory should be mounted
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Stopping work for the day**
+
+
+```
+Given I have multiple VMs running
+When I request to "stop everything"
+Then all running VMs should be stopped
+And no containers should be left running
+And the operation should complete without errors
+```
+
+
+**Stop the VMs:**
+
+
+```bash
+vde stop <vms>
+```
+
+**Scenario: Restarting a vm with rebuild**
+
+
+```
+Given I have a Python VM running
+When I request to "restart python with rebuild"
+Then the Python VM should be stopped
+And the container should be rebuilt from the Dockerfile
+And the Python VM should be started again
+And my workspace should still be mounted
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Starting multiple vms at once**
+
+
+```
+Given I need a full stack environment
+When I request to "start python and postgres"
+Then both Python and PostgreSQL VMs should start
+And they should be on the same Docker network
+And they should be able to communicate
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Creating a new vm for the first time**
+
+
+```
+Given I want to try a new language
+When I request to "create a Go VM"
+Then the Go VM configuration should be created
+And the Docker image should be built
+And SSH keys should be configured
+And the VM should be ready to start
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create go
+```
 
 </details>
 
@@ -3325,9 +3950,9 @@ And I can use both Python and Rust
 
 ```bash
 
-./scripts/vde create rust
+vde create rust
 
-./scripts/vde start rust
+vde start rust
 
 ```
 
@@ -3359,131 +3984,13 @@ And I can switch between them
 
 ```bash
 
-./scripts/vde start python rust js
+vde start python rust js
 
 ```
 
 
 
 **Polyglot programmer?** Why not! 😎
-
-### Verified Scenarios
-
-> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
-
-**Scenario: Language vm display names are user friendly**
-
-
-```
-Given I have VDE installed
-When I query the display name for language VMs
-Then each language VM should have a display name
-And the display name should be descriptive
-And common languages like Python, Go, and Rust should have recognizable names
-```
-
-
-
-**Scenario: Language vm ports are in correct range**
-
-
-```
-Given I have VDE installed
-When I check the SSH port allocation for language VMs
-Then all language VM ports should be between 2200 and 2299
-And no language VM should use a service port range
-```
-
-
-
-**Scenario: Vm types are correctly categorized as language**
-
-
-```
-Given I have VDE installed
-When I query VM types
-Then programming language VMs should be categorized as "lang"
-And Python, Go, Rust, and JavaScript should be language VMs
-And language VMs should have SSH access configured
-```
-
-
-
-**Scenario: Common programming language aliases resolve correctly**
-
-
-```
-Given I have VDE installed
-When I query alias mappings for programming languages
-Then the metadata alias "python3" should map to "python"
-And the metadata alias "nodejs" should map to "js"
-And the metadata alias "golang" should map to "go"
-And the metadata alias "c++" should map to "cpp"
-And the metadata alias "rlang" should map to "r"
-```
-
-
-
-**Scenario: Language vm container names follow naming convention**
-
-
-```
-Given I have VDE installed
-When I check container naming for language VMs
-Then language VM containers should use the "{name}-dev" pattern
-And Python container should be named "python-dev"
-And Go container should be named "go-dev"
-```
-
-
-
-**Scenario: Language vms do not have service ports configured**
-
-
-```
-Given I have VDE installed
-When I check service port configuration for language VMs
-Then language VMs should not have service_port values
-And Python should not have a service_port
-And Go should not have a service_port
-```
-
-
-**List available VMs:**
-
-
-```bash
-vde list
-```
-
-**Scenario: Team onboarding   explore languages**
-
-
-```
-Given I am a new team member
-When I ask to list all languages
-Then I should see only language VMs
-And service VMs should not be included
-```
-
-
-
-**Scenario: Parse flags from natural language**
-
-
-```
-When I parse "rebuild with no cache"
-Then rebuild flag should be true
-And nocache flag should be true
-```
-
-
-**Run the setup:**
-
-
-```bash
-vde rebuild with no cache
-```
 
 </details>
 
@@ -3531,7 +4038,7 @@ And I should know if it's:
 
 1. Is Docker running? `docker ps`
 
-2. Is the port already in use? `./scripts/vde list`
+2. Is the port already in use? `vde list`
 
 3. Check the logs: `docker logs <vm-name>`
 
@@ -3565,7 +4072,7 @@ And the new package should be available
 
 ```bash
 
-./scripts/vde start python --rebuild
+vde start python --rebuild
 
 ```
 
@@ -3575,7 +4082,7 @@ And the new package should be available
 
 ```bash
 
-./scripts/vde start python --rebuild --no-cache
+vde start python --rebuild --no-cache
 
 ```
 
@@ -3583,25 +4090,14 @@ And the new package should be available
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
-**Scenario: Rebuild port registry from compose files**
+**Scenario: Diagnose why vm won't start**
 
 
 ```
-Given port registry cache is missing or invalid
-When port registry is verified
-Then registry should be rebuilt by scanning docker-compose files
-And all allocated ports should be discovered
-```
-
-
-
-**Scenario: Detect rebuild vm intent**
-
-
-```
-When I parse "rebuild and start rust"
-Then intent should be "restart_vm"
-And rebuild flag should be true
+Given I tried to start a VM but it failed
+When I check the VM status
+Then I should see a clear error message
+And I should know if it's a port conflict, Docker issue, or configuration problem
 ```
 
 
@@ -3609,49 +4105,370 @@ And rebuild flag should be true
 
 
 ```bash
-vde rebuild and start rust
+vde start <vms>
 ```
 
-**Scenario: Detect rebuild without cache intent**
+**Scenario: View vm logs for debugging**
 
 
 ```
-When I parse "rebuild python with no cache"
-Then intent should be "restart_vm"
-And rebuild flag should be true
-And nocache flag should be true
+Given a VM is running but misbehaving
+When I run "docker logs <vm-name>"
+Then I should see the container logs
+And I can identify the source of the problem
 ```
 
 
-**Run the setup:**
+**Run the command:**
 
 
 ```bash
-vde rebuild python with no cache
+docker logs <vm-name>
 ```
 
-**Scenario: Unset non existent key should not error**
-
-
-```
-Given running in zsh
-And I initialize an associative array
-When I unset key "never_existed"
-Then operation should complete successfully
-And array should remain empty
-```
-
-
-
-**Scenario: Unset non existent key should not error (bash 3.x)**
+**Scenario: Access vm shell for debugging**
 
 
 ```
-Given running in bash "3.2"
-And I initialize an associative array
-When I unset key "imaginary_key"
-Then operation should complete successfully
-And array should remain empty
+Given a VM is running
+When I run "docker exec -it <vm-name> /bin/zsh"
+Then I should have shell access inside the container
+And I can investigate issues directly
+```
+
+
+**Run the command:**
+
+
+```bash
+docker exec -it <vm-name> /bin/zsh
+```
+
+**Scenario: Rebuild vm from scratch after corruption**
+
+
+```
+Given a VM seems corrupted or misconfigured
+When I stop the VM
+And I remove the VM directory
+And I recreate the VM
+Then I should get a fresh VM
+And old configuration issues should be resolved
+```
+
+
+
+**Scenario: Check if port is already in use**
+
+
+```
+Given I get a "port already allocated" error
+When I check what's using the port
+Then I should see which process is using it
+And I can decide to stop the conflicting process
+And VDE can allocate a different port
+```
+
+
+**Stop the VMs:**
+
+
+```bash
+vde stop <vms>
+```
+
+**Scenario: Verify ssh connection is working**
+
+
+```
+Given I cannot SSH into a VM
+When I check the SSH config
+And I verify the VM is running
+And I verify the port is correct
+Then I can identify if the issue is SSH, Docker, or the VM itself
+```
+
+
+
+**Scenario: Test database connectivity from vm**
+
+
+```
+Given my application can't connect to the database
+When I SSH into the application VM
+And I try to connect to the database VM directly
+Then I can see if the issue is network, credentials, or database state
+```
+
+
+
+**Scenario: Inspect docker compose configuration**
+
+
+```
+Given I need to verify VM configuration
+When I look at the docker-compose.yml
+Then I should see all volume mounts
+And I should see all port mappings
+And I should see environment variables
+And I can verify the configuration is correct
+```
+
+
+
+**Scenario: Verify volumes are mounted correctly**
+
+
+```
+Given my code changes aren't reflected in the VM
+When I check the mounts in the container
+Then I can see if the volume is properly mounted
+And I can verify the host path is correct
+```
+
+
+
+**Scenario: Clear docker cache to fix build issues**
+
+
+```
+Given a VM build keeps failing
+When I rebuild with --no-cache
+Then Docker should pull fresh images
+And build should not use cached layers
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vm> --rebuild
+```
+
+**Scenario: Reset a vm to initial state**
+
+
+```
+Given I've made changes I want to discard
+When I stop the VM
+And I remove the container but keep the config
+And I start it again
+Then I should get a fresh container
+And my code volumes should be preserved
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Verify network connectivity between vms**
+
+
+```
+Given two VMs can't communicate
+When I check the docker network
+Then I should see both VMs on "vde-network"
+And I can ping one VM from another
+```
+
+
+
+**Scenario: Check vm resource usage**
+
+
+```
+Given a VM seems slow
+When I run "docker stats <vm-name>"
+Then I can see CPU and memory usage
+And I can identify resource bottlenecks
+```
+
+
+**Run the command:**
+
+
+```bash
+docker stats <vm-name>
+```
+
+**Scenario: Validate vm configuration before starting**
+
+
+```
+Given I think my docker-compose.yml might have errors
+When I run "docker-compose config"
+Then I should see any syntax errors
+And the configuration should be validated
+```
+
+
+**Run the command:**
+
+
+```bash
+docker-compose config
+```
+
+**Scenario: Recover from docker daemon issues**
+
+
+```
+Given VMs won't start due to Docker problems
+When I check Docker is running
+And I restart Docker if needed
+Then VMs should start normally after Docker is healthy
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Fix permission issues on shared volumes**
+
+
+```
+Given I get permission denied errors in VM
+When I check the UID/GID configuration
+Then I should see if devuser (1000:1000) matches my host user
+And I can adjust if needed
+```
+
+
+
+**Scenario: Diagnose why tests fail in vm but pass locally**
+
+
+```
+Given tests work on host but fail in VM
+When I compare the environments
+Then I can check for missing dependencies
+And I can verify environment variables match
+And I can check network access from the VM
+```
+
+
+
+**Scenario: Invalid vm name handling**
+
+
+```
+Given I try to use a VM that doesn't exist
+When I request to "start nonexistent-vm"
+Then I should receive a clear error message
+And the error should explain what went wrong
+And suggest valid VM names
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Network creation failure**
+
+
+```
+Given the Docker network can't be created
+When I start a VM
+Then VDE should report the specific error
+And suggest troubleshooting steps
+And offer to retry
+```
+
+
+
+**Scenario: Configuration file errors**
+
+
+```
+Given a docker-compose.yml is malformed
+When I try to use the VM
+Then VDE should detect the error
+And show the specific problem
+And suggest how to fix the configuration
+```
+
+
+
+**Scenario: Graceful degradation**
+
+
+```
+Given one VM fails to start
+When I start multiple VMs
+Then other VMs should continue
+And I should be notified of the failure
+And successful VMs should be listed
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Automatic retry logic**
+
+
+```
+Given a transient error occurs
+When VDE detects it's retryable
+Then it should automatically retry
+And limit the number of retries
+And report if all retries fail
+```
+
+
+
+**Scenario: Partial state recovery**
+
+
+```
+Given an operation is interrupted
+When I try again
+Then VDE should detect partial state
+And complete the operation
+And not duplicate work
+```
+
+
+
+**Scenario: Error logging**
+
+
+```
+Given an error occurs
+When VDE handles it
+Then the error should be logged
+And the error should have sufficient detail for debugging
+And I can find it in the logs directory
+```
+
+
+
+**Scenario: Rollback on failure**
+
+
+```
+Given an operation fails partway through
+When the failure is detected
+Then VDE should clean up partial state
+And return to a consistent state
+And allow me to retry cleanly
 ```
 
 
@@ -3664,22 +4481,22 @@ And array should remain empty
 
 ```bash
 # See what VMs are available
-./scripts/vde list
+vde list
 
 # Create a new VM
-./scripts/vde create <name>
+vde create <name>
 
 # Start VMs
-./scripts/vde start <vm1> <vm2> ...
+vde start <vm1> <vm2> ...
 
 # Stop VMs
-./scripts/vde stop <vm1> <vm2> ...
+vde stop <vm1> <vm2> ...
 
 # Stop everything
-./scripts/vde stop all
+vde stop all
 
 # Rebuild a VM (when you make config changes)
-./scripts/vde start <vm> --rebuild
+vde start <vm> --rebuild
 ```
 
 ### SSH Connections
@@ -3776,29 +4593,69 @@ Look at you go! You now have:
 (function() {
     // Intercept all TOC links
     document.addEventListener('DOMContentLoaded', function() {
+        // Storage key for remembering last open section
+        const STORAGE_KEY = 'vde-user-guide-last-section';
+
+        // Function to expand a specific section and collapse others
+        function expandSection(sectionId) {
+            const targetSection = document.querySelector(`details[id="${sectionId}"]`);
+            if (targetSection) {
+                targetSection.setAttribute('open', '');
+                // Remember this section
+                localStorage.setItem(STORAGE_KEY, sectionId);
+                // Update URL hash without jumping
+                history.replaceState(null, null, '#' + sectionId);
+                // Collapse all other sections
+                const allSections = document.querySelectorAll('details');
+                allSections.forEach(function(section) {
+                    if (section !== targetSection) {
+                        section.removeAttribute('open');
+                    }
+                });
+                // Scroll to the section
+                targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // On page load, check for URL hash first, then localStorage
+        // This preserves the section view on browser refresh
+        let targetSectionId = window.location.hash.substring(1);
+        if (!targetSectionId) {
+            // No hash? Check if we remember the last section
+            targetSectionId = localStorage.getItem(STORAGE_KEY) || '';
+        }
+        if (targetSectionId) {
+            // Small delay to ensure DOM is ready
+            setTimeout(function() {
+                expandSection(targetSectionId);
+            }, 100);
+        }
+
+        // TOC link click handlers
         const tocLinks = document.querySelectorAll('a[href^="#"]');
 
         tocLinks.forEach(function(link) {
             link.addEventListener('click', function(e) {
                 const targetId = link.getAttribute('href').substring(1);
-                const targetSection = document.querySelector(`details[id="${targetId}"], details[data-section="${targetId}"]`);
+                const targetSection = document.querySelector(`details[id="${targetId}"]`);
 
                 if (targetSection) {
                     e.preventDefault();
+                    expandSection(targetId);
+                }
+            });
+        });
 
-                    // Expand the target section
-                    targetSection.setAttribute('open', '');
-
-                    // Collapse all other sections
-                    const allSections = document.querySelectorAll('details');
-                    allSections.forEach(function(section) {
-                        if (section !== targetSection) {
-                            section.removeAttribute('open');
-                        }
-                    });
-
-                    // Smooth scroll to target
-                    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Also save section when user manually expands/collapses
+        const allSections = document.querySelectorAll('details');
+        allSections.forEach(function(section) {
+            section.addEventListener('toggle', function() {
+                if (this.open) {
+                    const sectionId = this.getAttribute('id');
+                    if (sectionId) {
+                        localStorage.setItem(STORAGE_KEY, sectionId);
+                        history.replaceState(null, null, '#' + sectionId);
+                    }
                 }
             });
         });

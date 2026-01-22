@@ -1,5 +1,5 @@
 # language: en
-@user-guide-understanding
+@user-guide-internal
 Feature: VM State Awareness
   As a developer using VDE
   I want the system to be aware of VM states

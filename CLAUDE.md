@@ -262,6 +262,62 @@ Which would you like next?
 
 ---
 
+## 📘 USER GUIDE GENERATION (Non-Optional)
+
+### The User Guide Must Be Complete
+
+The `USER_GUIDE.md` documents the COMPLETE user experience. Users will use Docker, so scenarios requiring Docker MUST be included.
+
+### Generation Workflow
+
+**1. Run FULL test suite locally (Docker required)**
+```bash
+./tests/run-local-bdd.sh
+```
+
+This runs:
+- `docker-free/` features (~158 scenarios) - fast, no Docker needed
+- `docker-required/` features (~280 scenarios) - requires Docker, full user experience
+
+**2. Generate Behave JSON results**
+```bash
+behave --format json -o tests/behave-results.json tests/features/
+```
+
+**3. Generate the User Guide**
+```bash
+python3 tests/scripts/generate_user_guide.py
+```
+
+### Why FULL Tests Are Required
+
+| Reason | Explanation |
+|--------|-------------|
+| Complete documentation | Users will use Docker - exclude Docker scenarios = incomplete guide |
+| Local execution | We have Docker locally; CI/CD cannot effectively run Docker-in-Docker |
+| Verified scenarios only | Generator filters to only include PASSING scenarios |
+| Test-driven docs | Every workflow in the guide has been verified to work |
+
+### What Gets Committed
+
+| File | Tracked? | Reason |
+|------|----------|--------|
+| `USER_GUIDE.md` | ✅ YES | The documentation users see |
+| `tests/scripts/generate_user_guide.py` | ✅ YES | The generator script |
+| `tests/behave-results.json` | ❌ NO | Build artifact, in `.gitignore` |
+
+### Rationale
+
+The user guide is generated **locally**, not in CI/CD, because:
+- Docker-in-Docker is complex and unreliable in CI
+- We have full Docker access locally
+- Generation is part of the development workflow, not the deployment workflow
+- Only the final output (`USER_GUIDE.md`) needs to be in the repository
+
+**REMEMBER:** When regenerating the user guide, ALWAYS run the full test suite first. A guide with only docker-free scenarios is incomplete.
+
+---
+
 ## ⚠️ FINAL REMINDER
 
 **This document contains operational REQUIREMENTS, not suggestions.**

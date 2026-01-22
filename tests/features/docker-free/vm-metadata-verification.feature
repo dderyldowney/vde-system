@@ -1,4 +1,4 @@
-@user-guide-understanding
+@user-guide-internal
 Feature: VM Metadata Verification
   As a developer using VDE
   I want to verify that VM metadata is correctly configured

@@ -91,14 +91,14 @@ def get_fallback_intros():
     return {
         "1. Installation": "Install VDE by cloning the repository and running setup.",
         "2. SSH Keys": "SSH keys are managed automatically by VDE.",
-        "3. Your First VM": "Create your first VM with `./scripts/vde create python`.",
-        "4. Understanding": "Check VM status with `./scripts/vde list`.",
-        "5. Starting and Stopping": "Start VMs with `./scripts/vde start <name>` and stop with `./scripts/vde stop <name>`.",
+        "3. Your First VM": "Create your first VM with `vde create python`.",
+        "4. Understanding": "Check VM status with `vde list`.",
+        "5. Starting and Stopping": "Start VMs with `vde start <name>` and stop with `vde stop <name>`.",
         "6. Your First Cluster": "Create multiple VMs that work together.",
         "7. Connecting": "SSH into VMs using simple names like `ssh python-dev`.",
         "8. Working with Databases": "Service VMs like PostgreSQL are accessible from language VMs.",
-        "9. Daily Workflow": "Start your day with `./scripts/vde start python postgres redis`.",
-        "10. Adding More Languages": "Add more languages anytime with `./scripts/vde create <name>`.",
+        "9. Daily Workflow": "Start your day with `vde start python postgres redis`.",
+        "10. Adding More Languages": "Add more languages anytime with `vde create <name>`.",
         "11. Troubleshooting": "Check logs and use `--rebuild` if changes aren't reflected.",
     }
 
@@ -204,12 +204,19 @@ def extract_scenarios_from_feature(content):
     )
     feature_name = feature_match.group(1).strip() if feature_match else "Unknown Feature"
 
-    # Extract feature-level tags (if any)
+    # Extract feature-level tags (if any) - tags can appear BEFORE or AFTER Feature:
     feature_tags = []
-    feature_tag_match = re.search(r'Feature:(.+?)\n((?:\s*@\w+(?:\s+@\w+)*\n)*)', content, re.DOTALL)
-    if feature_tag_match:
-        tag_text = feature_tag_match.group(2) or ""
+    # First try to find tags before Feature: (common Gherkin convention)
+    before_feature_match = re.search(r'((?:\s*@\w+(?:-\w+)*\n)+)\s*Feature:', content)
+    if before_feature_match:
+        tag_text = before_feature_match.group(1) or ""
         feature_tags = [tag.strip() for tag in re.findall(r'@(\w+(?:-\w+)*)', tag_text)]
+    else:
+        # Fallback: tags after Feature: (less common but valid)
+        after_feature_match = re.search(r'Feature:(.+?)\n((?:\s*@\w+(?:\s+@\w+)*\n)*)', content, re.DOTALL)
+        if after_feature_match:
+            tag_text = after_feature_match.group(2) or ""
+            feature_tags = [tag.strip() for tag in re.findall(r'@(\w+(?:-\w+)*)', tag_text)]
 
     # Pattern to match scenarios with optional tags before them
     scenario_pattern = r'(?:((?:\s*@\w+(?:-\w+)*\n)+)*)\s*Scenario:\s*(.+?)\n((?:\s*(?:Given|When|Then|And)\s+.+(?:\n|$))+)'
@@ -222,8 +229,12 @@ def extract_scenarios_from_feature(content):
         # Extract tags from this scenario
         scenario_tags = [tag.strip() for tag in re.findall(r'@(\w+(?:-\w+)*)', tag_block)]
 
-        # Combine feature and scenario tags (scenario tags take precedence)
-        all_tags = scenario_tags if scenario_tags else feature_tags
+        # Combine feature and scenario tags (feature tags are inherited, scenario tags override)
+        # This ensures @user-guide-internal at feature level applies to all scenarios
+        all_tags = list(feature_tags)  # Start with feature tags
+        for tag in scenario_tags:
+            if tag not in all_tags:  # Avoid duplicates
+                all_tags.append(tag)
 
         scenarios.append((scenario_name, scenario_body, all_tags))
 
@@ -272,6 +283,9 @@ def extract_command_from_scenario(scenario_name, scenario_body):
     Returns:
         str: The command or None if not found
     """
+    lower_body = scenario_body.lower()
+    lower_name = scenario_name.lower()
+
     # First, try to find explicit "When I run" commands
     for line in scenario_body.split('\n'):
         line = line.strip()
@@ -280,6 +294,30 @@ def extract_command_from_scenario(scenario_name, scenario_body):
             match = re.search(r'When I run ["\']([^"\']+)["\']', line)
             if match:
                 return match.group(1)
+
+    # Check for "When I ask" patterns - natural language queries
+    for line in scenario_body.split('\n'):
+        line_lower = line.strip().lower()
+        if line_lower.startswith('when i ask'):
+            # Extract the quoted text
+            match = re.search(r'when i ask ["\']([^"\']+)["\']', line, re.IGNORECASE)
+            if match:
+                query = match.group(1).lower()
+                # Map natural language queries to commands
+                if "list all languages" in query or "list languages" in query:
+                    return "vde list --languages"
+                elif "list all services" in query or "list services" in query or "show all services" in query:
+                    return "vde list --services"
+                elif "what vms can i create" in query or "what vms are available" in query:
+                    return "vde list"
+                elif "information about" in query:
+                    return "vde list <vm-type>"
+
+    # Check for "I ask to list" patterns
+    if "ask to list all languages" in lower_body or "list all languages" in lower_body:
+        return "vde list --languages"
+    elif "show all services" in lower_body:
+        return "vde list --services"
 
     # Second, try to find "When I parse" patterns (parser testing)
     for line in scenario_body.split('\n'):
@@ -291,17 +329,14 @@ def extract_command_from_scenario(scenario_name, scenario_body):
                 return f"vde {match.group(1)}"
 
     # Third, try pattern matching from scenario name and body
-    lower_name = scenario_name.lower()
-    lower_body = scenario_body.lower()
-
     # Check for list/create/start patterns
-    if "what vms can i create" in lower_body or "what VMs are available" in lower_body:
+    if "what vms can i create" in lower_body or "what vms are available" in lower_body:
         return "vde list"
     elif "create" in lower_name or "create" in lower_body:
         # Extract VM type from scenario
         if "python" in lower_name or "python" in lower_body:
             return "vde create python"
-        elif "go" in lower_name:
+        elif "go" in lower_name or "golang" in lower_body:
             return "vde create go"
         elif "rust" in lower_name:
             return "vde create rust"
@@ -309,6 +344,10 @@ def extract_command_from_scenario(scenario_name, scenario_body):
             return "vde create postgres"
     elif "start" in lower_name or "start" in lower_body:
         return "vde start <vms>"
+    elif "stop" in lower_name or "stop" in lower_body:
+        return "vde stop <vms>"
+    elif "rebuild" in lower_name or "rebuild" in lower_body:
+        return "vde start <vm> --rebuild"
 
     # Try the explicit mapping
     for pattern, command in SCENARIO_COMMAND_MAP.items():
@@ -367,14 +406,25 @@ def format_scenario_for_user_guide(scenario_name, scenario_body):
             action_label = "Remove the VM"
 
         lines.append(f"**{action_label}:**\n")
+        lines.append("")
+        lines.append("```bash")
+        lines.append(command)
+        lines.append("```")
     else:
-        # No command found, skip this section
-        return "\n".join(lines)
+        # No command found - check if this is an installation/setup scenario
+        lower_name = scenario_name.lower()
+        lower_body = scenario_body.lower()
 
-    lines.append("")
-    lines.append("```bash")
-    lines.append(command)
-    lines.append("```")
+        # Installation/setup scenarios get the setup script
+        if ("installation" in lower_name or "setup" in lower_name or "prerequisite" in lower_name or
+            "initial" in lower_name or "fresh" in lower_name or "ssh key" in lower_name or
+            "ssh config" in lower_name or "ssh agent" in lower_name):
+            lines.append("**This is handled by the setup script:**\n")
+            lines.append("")
+            lines.append("```bash")
+            lines.append("./scripts/build-and-start")
+            lines.append("```")
+        # Other scenarios without commands just don't get a command block
 
     # Note: "What this does" section would require additional metadata
     # For now, we skip it since we don't have that information
@@ -391,9 +441,9 @@ def determine_section(scenario_name, tags=None):
     """
     Determine which section a scenario belongs to.
 
-    PRIORITY ORDER:
-    1. Explicit @user-guide-section tag (recommended)
-    2. Keyword-based matching (fallback)
+    IMPORTANT: This is OPT-IN ONLY. Scenarios without explicit @user-guide-*
+    tags are EXCLUDED from the user guide. This prevents internal test scenarios
+    (parser tests, port registry tests, etc.) from appearing in user documentation.
 
     TAGGING CONVENTION:
     Add one of these tags to your scenario/feature:
@@ -409,8 +459,12 @@ def determine_section(scenario_name, tags=None):
       @user-guide-more-languages     -> Section 10
       @user-guide-troubleshooting    -> Section 11
       @user-guide-internal           -> Not included (internal features)
+
+    NO KEYWORD FALLBACK: Without explicit tags, scenarios are excluded.
+    This ensures only intentionally-documented scenarios appear in the guide.
     """
-    # First, check for explicit tags
+    # ONLY include scenarios with explicit user-guide tags
+    # No keyword fallback - prevents internal test scenarios from leaking in
     if tags:
         tag_map = {
             "user-guide-installation": "1. Installation",
@@ -430,32 +484,7 @@ def determine_section(scenario_name, tags=None):
             if tag in tag_map:
                 return tag_map[tag]
 
-    # Fallback: keyword-based matching
-    name_lower = scenario_name.lower()
-
-    if "installation" in name_lower or "prerequisite" in name_lower or "setup" in name_lower:
-        return "1. Installation"
-    elif "ssh" in name_lower and ("key" in name_lower or "agent" in name_lower or "config" in name_lower):
-        return "2. SSH Keys"
-    elif "first vm" in name_lower or "create vm" in name_lower or "hello world" in name_lower:
-        return "3. Your First VM"
-    elif "verify" in name_lower or "check status" in name_lower or "list" in name_lower or "understanding" in name_lower:
-        return "4. Understanding"
-    elif "start" in name_lower or "stop" in name_lower or "shutdown" in name_lower:
-        return "5. Starting and Stopping"
-    elif "cluster" in name_lower or "multi" in name_lower or "python postgres" in name_lower:
-        return "6. Your First Cluster"
-    elif "connect" in name_lower or "ssh into" in name_lower:
-        return "7. Connecting"
-    elif "database" in name_lower or "postgres" in name_lower or "redis" in name_lower:
-        return "8. Working with Databases"
-    elif "daily" in name_lower or "workflow" in name_lower or "morning" in name_lower:
-        return "9. Daily Workflow"
-    elif "language" in name_lower or "rust" in name_lower or "adding" in name_lower:
-        return "10. Adding More Languages"
-    elif "troubleshoot" in name_lower or "debug" in name_lower or "error" in name_lower or "rebuild" in name_lower:
-        return "11. Troubleshooting"
-
+    # No tag = not included in user guide
     return None
 
 
@@ -489,22 +518,22 @@ def generate_quick_reference():
 
 ```bash
 # See what VMs are available
-./scripts/vde list
+vde list
 
 # Create a new VM
-./scripts/vde create <name>
+vde create <name>
 
 # Start VMs
-./scripts/vde start <vm1> <vm2> ...
+vde start <vm1> <vm2> ...
 
 # Stop VMs
-./scripts/vde stop <vm1> <vm2> ...
+vde stop <vm1> <vm2> ...
 
 # Stop everything
-./scripts/vde stop all
+vde stop all
 
 # Rebuild a VM (when you make config changes)
-./scripts/vde start <vm> --rebuild
+vde start <vm> --rebuild
 ```
 
 ### SSH Connections
@@ -652,6 +681,7 @@ def generate_user_guide(passing_scenarios=None):
 
         # Table of contents
         f.write("## Table of Contents\n\n")
+        f.write("*💡 **Tip:** Click the ▶ triangle next to any section title below to expand or collapse that section.*\n\n")
         sections = [
             ("1. Installation", [
                 ("Installing Docker Desktop", [
@@ -739,29 +769,69 @@ def generate_user_guide(passing_scenarios=None):
 (function() {
     // Intercept all TOC links
     document.addEventListener('DOMContentLoaded', function() {
+        // Storage key for remembering last open section
+        const STORAGE_KEY = 'vde-user-guide-last-section';
+
+        // Function to expand a specific section and collapse others
+        function expandSection(sectionId) {
+            const targetSection = document.querySelector(`details[id="${sectionId}"]`);
+            if (targetSection) {
+                targetSection.setAttribute('open', '');
+                // Remember this section
+                localStorage.setItem(STORAGE_KEY, sectionId);
+                // Update URL hash without jumping
+                history.replaceState(null, null, '#' + sectionId);
+                // Collapse all other sections
+                const allSections = document.querySelectorAll('details');
+                allSections.forEach(function(section) {
+                    if (section !== targetSection) {
+                        section.removeAttribute('open');
+                    }
+                });
+                // Scroll to the section
+                targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // On page load, check for URL hash first, then localStorage
+        // This preserves the section view on browser refresh
+        let targetSectionId = window.location.hash.substring(1);
+        if (!targetSectionId) {
+            // No hash? Check if we remember the last section
+            targetSectionId = localStorage.getItem(STORAGE_KEY) || '';
+        }
+        if (targetSectionId) {
+            // Small delay to ensure DOM is ready
+            setTimeout(function() {
+                expandSection(targetSectionId);
+            }, 100);
+        }
+
+        // TOC link click handlers
         const tocLinks = document.querySelectorAll('a[href^="#"]');
 
         tocLinks.forEach(function(link) {
             link.addEventListener('click', function(e) {
                 const targetId = link.getAttribute('href').substring(1);
-                const targetSection = document.querySelector(`details[id="${targetId}"], details[data-section="${targetId}"]`);
+                const targetSection = document.querySelector(`details[id="${targetId}"]`);
 
                 if (targetSection) {
                     e.preventDefault();
+                    expandSection(targetId);
+                }
+            });
+        });
 
-                    // Expand the target section
-                    targetSection.setAttribute('open', '');
-
-                    // Collapse all other sections
-                    const allSections = document.querySelectorAll('details');
-                    allSections.forEach(function(section) {
-                        if (section !== targetSection) {
-                            section.removeAttribute('open');
-                        }
-                    });
-
-                    // Smooth scroll to target
-                    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Also save section when user manually expands/collapses
+        const allSections = document.querySelectorAll('details');
+        allSections.forEach(function(section) {
+            section.addEventListener('toggle', function() {
+                if (this.open) {
+                    const sectionId = this.getAttribute('id');
+                    if (sectionId) {
+                        localStorage.setItem(STORAGE_KEY, sectionId);
+                        history.replaceState(null, null, '#' + sectionId);
+                    }
                 }
             });
         });
