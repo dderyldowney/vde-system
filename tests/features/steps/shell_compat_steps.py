@@ -344,8 +344,15 @@ def step_call_get_script_path(context):
 
 @then('absolute script path should be returned')
 def step_script_path_returned(context):
-    """Script path should be returned."""
-    context.has_script_path = True
+    """Script path should be returned and absolute."""
+    assert hasattr(context, 'script_path'), "Script path was not set"
+    script_path = context.script_path
+    assert script_path, "Script path should not be empty"
+    # Verify it's an absolute path (starts with / on Unix)
+    assert os.path.isabs(script_path), f"Script path should be absolute, got: {script_path}"
+    # Verify the path points to VDE_ROOT/scripts
+    expected_dir = os.path.join(VDE_ROOT, 'scripts')
+    assert script_path.startswith(expected_dir), f"Script path should be in {expected_dir}, got: {script_path}"
 
 
 def step_script_exits(context):
@@ -361,8 +368,24 @@ def step_temp_dir_removed(context):
 
 @then('keys should not collide')
 def step_keys_not_collide(context):
-    """Keys should not collide."""
-    context.keys_no_collide = True
+    """Keys should not collide - verify different keys return different values."""
+    # Verify we have tracked keys and their values
+    assert hasattr(context, 'set_keys'), "No keys were set"
+    assert len(context.set_keys) >= 2, "Need at least 2 keys to check for collision"
+
+    # Verify each key can be retrieved and returns its expected value
+    array_name = getattr(context, 'array_name', 'test_array')
+    shell = getattr(context, 'current_shell', 'zsh')
+
+    for key, expected_value in context.set_keys.items():
+        result = run_shell_command_with_state(context, f"_assoc_get '{array_name}' '{key}'", shell)
+        assert result.returncode == 0, f"Failed to retrieve key '{key}': {result.stderr}"
+        actual_value = result.stdout.strip()
+        assert actual_value == expected_value, f"Key '{key}' should return '{expected_value}', got '{actual_value}'"
+
+    # Additionally verify that all values are distinct (no accidental collision)
+    values = list(context.set_keys.values())
+    assert len(values) == len(set(values)), "All key values should be distinct - collision detected!"
 
 
 # =============================================================================

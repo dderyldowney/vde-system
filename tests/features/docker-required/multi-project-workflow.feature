@@ -23,6 +23,13 @@ Feature: Multi-Project Workflow
     And only the backend stack should be running
 
   @requires-docker-host
+  Scenario: New Project Setup - Start Development Stack
+    Given I have created my VMs
+    When I request to "start python and postgres"
+    Then both VMs should start
+    And they should be able to communicate
+
+  @requires-docker-host
   Scenario: Setting up a microservices architecture
     Given I am building a microservices application
     When I request to "create Go, Rust, and nginx"

@@ -255,13 +255,23 @@ def step_authenticated_using_host_keys(context):
 @then('I should not need to enter a password')
 def step_no_password_required(context):
     """Should not need to enter a password."""
+    # Verify SSH agent is running with keys for passwordless authentication
+    assert ssh_agent_is_running(), "SSH agent must be running for passwordless authentication"
+    agent_has_keys = ssh_agent_has_keys()
+    assert agent_has_keys, "SSH agent must have keys loaded for passwordless authentication"
     context.password_required = False
-    assert not getattr(context, 'password_required', False)
 
 
 @then('I should not need to copy keys to the Go VM')
 def step_no_keys_copied_to_vm(context):
     """Keys should not be copied to the VM."""
+    # Verify SSH agent forwarding is configured instead of copying keys
+    ssh_config = Path.home() / ".ssh" / "config"
+    if ssh_config.exists():
+        config_content = ssh_config.read_text()
+        # Agent forwarding means keys stay on host, not copied to VM
+        has_agent_forwarding = "ForwardAgent yes" in config_content or "ForwardAgent" in config_content
+        assert has_agent_forwarding, "SSH config should have agent forwarding configured"
     context.keys_copied_to_vm = False
     assert not getattr(context, 'keys_copied_to_vm', False)
 
@@ -277,12 +287,10 @@ def step_should_connect_to_postgres_vm(context):
 @then('I should be able to run psql commands')
 def step_able_to_run_psql(context):
     """Should be able to run psql commands."""
-    # Check if PostgreSQL VM is accessible
-    # In test environment, verify connection was established or VM was created
-    connection_established = getattr(context, 'connection_established', False)
-    vm_to_vm_executed = getattr(context, 'vm_to_vm_executed', False)
-    context.psql_accessible = connection_established or vm_to_vm_executed
-    assert context.psql_accessible, "PostgreSQL should be accessible via VM-to-VM SSH"
+    # Verify PostgreSQL VM is actually running for real accessibility
+    postgres_running = container_exists("postgres")
+    assert postgres_running, "PostgreSQL VM must be running to execute psql commands"
+    context.psql_accessible = postgres_running
 
 
 @then('authentication should use my host\'s SSH keys')
@@ -295,6 +303,11 @@ def step_auth_uses_host_keys(context):
 @then('the file should be copied using my host\'s SSH keys')
 def step_file_copied_with_host_keys(context):
     """File should be copied using host's SSH keys."""
+    # Verify SSH keys are available on host for SCP authentication
+    assert has_ssh_keys(), "Host must have SSH keys for SCP authentication"
+    # Verify SSH agent is available for passwordless operation
+    agent_running = ssh_agent_is_running()
+    assert agent_running, "SSH agent should be running for seamless SCP operation"
     context.file_copied = True
     context.auth_method = "host-keys"
     assert getattr(context, 'scp_executed', False), "SCP command should have been executed"
@@ -303,8 +316,11 @@ def step_file_copied_with_host_keys(context):
 @then('no password should be required')
 def step_no_password_required_scp(context):
     """No password should be required for SCP."""
+    # Verify SSH agent with keys for passwordless SCP operation
+    assert ssh_agent_is_running(), "SSH agent must be running for passwordless SCP"
+    agent_has_keys = ssh_agent_has_keys()
+    assert agent_has_keys, "SSH agent must have keys loaded for passwordless SCP"
     context.password_required = False
-    assert not getattr(context, 'password_required', False)
 
 
 @then('the command should execute on the Rust VM')
@@ -342,16 +358,27 @@ def step_see_pong(context):
 @then('all connections should use my host\'s SSH keys')
 def step_all_connections_use_host_keys(context):
     """All connections should use host's SSH keys."""
-    context.all_connections_use_host_keys = True
+    # Verify host has SSH keys
     assert has_ssh_keys(), "Host should have SSH keys for all connections"
+    # Verify SSH agent forwarding is configured for all VM connections
+    ssh_config = Path.home() / ".ssh" / "config"
+    if ssh_config.exists():
+        config_content = ssh_config.read_text()
+        # Check for agent forwarding configuration
+        has_agent_forwarding = "ForwardAgent" in config_content
+        assert has_agent_forwarding, "SSH config should have agent forwarding for all VM connections"
+    context.all_connections_use_host_keys = True
 
 
 @then('both services should respond')
 def step_both_services_respond(context):
     """Both services should respond."""
+    # Verify both Python and Rust VMs are actually running
+    python_running = container_exists("python")
+    rust_running = container_exists("rust")
+    assert python_running, "Python VM must be running to respond"
+    assert rust_running, "Rust VM must be running to respond"
     context.services_responded = ["python", "rust"]
-    services = getattr(context, 'services_responded', [])
-    assert len(services) == 2, f"Both services should respond, got: {services}"
 
 
 @then('all authentications should use my host\'s SSH keys')

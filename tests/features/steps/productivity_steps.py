@@ -265,8 +265,6 @@ def step_data_persists(context):
         if expected_value not in result.stdout:
             raise AssertionError(f"Expected value '{expected_value}' not found in query result. Got: {result.stdout}")
 
-    context.data_persists = True
-
 # Note: Project switching steps are defined in daily_workflow_steps.py
 # Note: SSH steps are defined in ssh_steps.py and vm_lifecycle_steps.py
 
@@ -307,7 +305,6 @@ def step_services_background(context):
     """Verify services are running in background."""
     for service in getattr(context, 'started_services', []):
         assert container_exists(service), f"Service {service} is not running"
-    context.services_running_background = True
 
 # =============================================================================
 # Productivity Features - Fresh Database Testing
@@ -378,8 +375,6 @@ def step_fresh_database(context):
     assert result.returncode != 0, "Old data still exists - database is not fresh"
     assert "does not exist" in result.stderr, "Expected table does not exist error"
 
-    context.fresh_database_obtained = True
-
 # =============================================================================
 # Productivity Features - Database Backups
 # =============================================================================
@@ -445,8 +440,6 @@ def step_restore_backup(context):
     content = backup_file.read_text()
     assert "PostgreSQL database dump" in content or "CREATE TABLE" in content, "Backup file appears invalid"
 
-    context.backup_restorable = True
-
 # =============================================================================
 # Productivity Features - Version Consistency
 # =============================================================================
@@ -468,12 +461,12 @@ def step_same_node_version(context):
     """Verify consistent Node version across team."""
     # Check if js VM configuration exists
     js_compose = VDE_ROOT / "configs" / "docker" / "js" / "docker-compose.yml"
-    if js_compose.exists():
-        content = js_compose.read_text()
-        # Check for version specification
-        context.node_version_consistent = True
-    else:
-        context.node_version_consistent = False
+    assert js_compose.exists(), "JS VM docker-compose configuration not found"
+
+    content = js_compose.read_text()
+    # Verify Node version is specified in configuration
+    assert "node" in content.lower() or "nodejs" in content.lower() or "18" in content, \
+        "Node version not properly specified in JS VM configuration"
 
 # =============================================================================
 # Productivity Features - Clean Workspace

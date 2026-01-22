@@ -162,3 +162,21 @@ def container_exists(vm_name):
     except Exception:
         pass
     return False
+
+
+def vm_has_private_keys(vm_name):
+    """Check if a VM container has private SSH keys in ~/.ssh/."""
+    try:
+        # Use docker exec to check for private keys in the VM
+        result = subprocess.run(
+            ["docker", "exec", f"{vm_name}-dev", "sh", "-c",
+             "ls ~/.ssh/*.key ~/.ssh/id_* 2>/dev/null | grep -v '\\.pub$' || true"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        # If output is not empty, private keys exist
+        return bool(result.stdout.strip())
+    except Exception:
+        # If container doesn't exist or command fails, assume no keys
+        return False

@@ -121,12 +121,6 @@ Feature: Daily Development Workflow
     Then both VMs should be included in the plan
     And the plan should use the create_vm intent
 
-  Scenario: New Project Setup - Start Development Stack
-    Given I have created my VMs
-    When I plan to start Python and PostgreSQL
-    Then both VMs should start
-    And they should be able to communicate
-
   Scenario: Adding Cache Layer - Create Redis
     Given I have an existing Python and PostgreSQL stack
     When I plan to add Redis

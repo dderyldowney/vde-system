@@ -268,7 +268,15 @@ def step_rendered_port_mapping(context, mapping):
 def step_special_chars_escaped(context):
     """Special characters should be properly escaped."""
     assert hasattr(context, 'rendered_output'), "No rendered output"
-    # Verify the output doesn't have unescaped special characters that would break YAML
+    # Verify special characters from the test input are preserved in output
+    # The test uses: "apt-get install -y curl && curl -s https://example.com/install.sh | bash"
+    # Check that key special characters are present (not stripped)
+    special_chars_present = (
+        '&&' in context.rendered_output and
+        'https://' in context.rendered_output and
+        '| bash' in context.rendered_output
+    )
+    assert special_chars_present, "Special characters not found in rendered output"
     context.special_chars_escaped = True
 
 
@@ -342,7 +350,7 @@ def step_uid_gid(context, uid):
     assert hasattr(context, 'rendered_output'), "No rendered output"
     # The template uses UID: and GID: in build args, not user: directive
     has_uid_g = f"UID: {uid}" in context.rendered_output or f"GID: {uid}" in context.rendered_output
-    if has_uid_gid:
+    if has_uid_g:
         context.has_uid_gid = True
     else:
         # Check for USERNAME with devuser value
@@ -371,4 +379,8 @@ def step_map_ssh_port(context):
 def step_include_install_command(context):
     """Rendered output should include install command."""
     assert hasattr(context, 'rendered_output'), "No rendered output"
+    assert hasattr(context, 'install_cmd'), "No install command in context"
+    # Verify the install command appears in the rendered output
+    assert context.install_cmd in context.rendered_output, \
+        f"Install command '{context.install_cmd}' not found in rendered output"
     context.install_command_included = True
