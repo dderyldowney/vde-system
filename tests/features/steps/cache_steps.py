@@ -909,3 +909,28 @@ def step_vm_types_loaded_at_access(context):
 
     context.vm_types_loaded_verified = True
     mark_step_implemented(context, "vm_types_loaded_verified")
+
+
+# =============================================================================
+# Cache Directory Creation Steps
+# =============================================================================
+
+@given(".cache directory does not exist")
+def step_cache_dir_does_not_exist(context):
+    """Ensure .cache directory does not exist before test."""
+    cache_dir = VDE_ROOT / ".cache"
+    # Save original state for restoration
+    context.cache_dir_existed_before = cache_dir.exists()
+
+    # Remove directory if it exists (for testing creation)
+    if cache_dir.exists():
+        import shutil
+        # Backup path must be outside the cache_dir to avoid "move into itself" error
+        context.cache_dir_backup = VDE_ROOT / ".cache.test-backup"
+        # Remove backup if it already exists from a previous test run
+        if context.cache_dir_backup.exists():
+            shutil.rmtree(str(context.cache_dir_backup))
+        # Move to backup instead of deleting to preserve data
+        shutil.move(str(cache_dir), str(context.cache_dir_backup))
+
+    assert not cache_dir.exists(), ".cache directory should not exist for this test"
