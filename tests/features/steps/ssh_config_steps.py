@@ -43,13 +43,9 @@ def step_ssh_agent_not_running(context):
 
 @given('SSH keys exist in ~/.ssh/')
 def step_ssh_keys_exist_ssh_dir(context):
-    """SSH keys exist in user's .ssh directory."""
-    ssh_dir = Path.home() / ".ssh"
-    context.ssh_keys_exist = (
-        (ssh_dir / "id_ed25519").exists() or
-        (ssh_dir / "id_rsa").exists() or
-        (ssh_dir / "id_ecdsa").exists()
-    )
+    """VDE SSH key exists in ~/.ssh/vde/ directory."""
+    ssh_dir = Path.home() / ".ssh" / "vde"
+    context.ssh_keys_exist = (ssh_dir / "id_ed25519").exists()
 
 
 @when('I run any VDE command that requires SSH')
@@ -78,7 +74,7 @@ def step_keys_loaded_into_agent_available(context):
 @given('no SSH keys exist in ~/.ssh/')
 def step_no_ssh_keys_exist(context):
     """No SSH keys exist."""
-    ssh_dir = Path.home() / ".ssh"
+    ssh_dir = Path.home() / ".ssh" / "vde"
     context.no_ssh_keys = not any(
         (ssh_dir / f"id_{key}").exists()
         for key in ["ed25519", "rsa", "ecdsa", "dsa"]
@@ -88,7 +84,7 @@ def step_no_ssh_keys_exist(context):
 @then('an ed25519 SSH key should be generated')
 def step_ed25519_key_generated(context):
     """ed25519 SSH key should be generated."""
-    ssh_dir = Path.home() / ".ssh"
+    ssh_dir = Path.home() / ".ssh" / "vde"
     has_ed25519 = (ssh_dir / "id_ed25519").exists()
     # Check for ed25519 or other key types (VDE may have generated a different type)
     has_any_key = has_ssh_keys()
@@ -227,7 +223,7 @@ def step_ssh_config_contains(context, content):
     Note: For "pointing to" patterns (e.g., IdentityFile), the more specific
     step_ssh_config_contains_identity will be matched first by Behave.
     """
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         assert content in config_content, f"'{content}' not found in SSH config"
@@ -242,7 +238,7 @@ def step_ssh_config_contains(context, content):
 @then(r'SSH config should contain "(?P<field>[^"]+)" pointing to "(?P<keyfile>[^"]+)"')
 def step_ssh_config_contains_identity(context, field, keyfile):
     """SSH config should contain field pointing to a specific value (e.g., IdentityFile)."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         # Check for both the field and the keyfile, typically for IdentityFile
@@ -293,7 +289,7 @@ def step_vm_to_vm_config_generated(context):
 @then('SSH config should contain entry for "{host}"')
 def step_ssh_config_contains_entry(context, host):
     """SSH config should contain entry for specific host."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         assert f"Host {host}" in config_content, f"Host entry '{host}' not found in SSH config"
@@ -308,7 +304,7 @@ def step_ssh_config_contains_entry(context, host):
 @then('each entry should use "{hostname}" as hostname')
 def step_ssh_config_uses_hostname(context, hostname):
     """Each SSH config entry should use specified hostname."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         assert f"HostName {hostname}" in config_content, f"HostName {hostname} not found in SSH config"
@@ -337,7 +333,7 @@ def step_create_vm_again(context, vm):
 @then('duplicate SSH config entry should NOT be created')
 def step_no_duplicate_entry(context):
     """Duplicate SSH config entry should NOT be created."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         # Check for duplicate host entries by counting occurrences of "Host xyz-dev"
@@ -368,7 +364,7 @@ def step_concurrent_config_update(context):
 @then('SSH config should remain valid')
 def step_ssh_config_remains_valid(context):
     """SSH config should remain valid after concurrent updates."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         result = subprocess.run(["ssh", "-F", str(ssh_config), "-G", "test"], capture_output=True, text=True)
         assert "Bad configuration option" not in result.stderr
@@ -378,7 +374,7 @@ def step_ssh_config_remains_valid(context):
 def step_no_partial_updates(context):
     """No partial updates should occur."""
     # Verify SSH config is either fully present or fully absent, not partially written
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         # Check config doesn't end mid-entry (no truncated Host blocks)
@@ -418,7 +414,7 @@ def step_backup_has_timestamp(context):
         assert has_timestamp, f"Backup filename '{backup_file}' should contain timestamp"
     else:
         # No backup file set - check for backup files in ~/.ssh/
-        ssh_dir = Path.home() / ".ssh"
+        ssh_dir = Path.home() / ".ssh" / "vde"
         backup_files = list(ssh_dir.glob("config.bak*")) + list(ssh_dir.glob("config.*.bak"))
         if backup_files:
             # At least one backup exists with timestamp in name
@@ -464,7 +460,7 @@ def step_no_keys_on_containers(context):
     """No keys should be stored on containers."""
     # Agent forwarding means private keys stay on host, not in containers
     # Verify SSH agent forwarding is configured
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         # Check for agent forwarding configuration
@@ -489,7 +485,7 @@ def step_detect_ssh_keys_runs(context):
 @then('"{keytype}" keys should be detected')
 def step_keytype_detected(context, keytype):
     """Specific key type should be detected."""
-    ssh_dir = Path.home() / ".ssh"
+    ssh_dir = Path.home() / ".ssh" / "vde"
     key_file = ssh_dir / keytype
     # Check if the specific key file exists
     if key_file.exists():
@@ -531,7 +527,7 @@ def step_create_vm_with_port(context, vm, port):
 @then('~/.ssh/config should still contain "{entry}"')
 def step_config_still_contains(context, entry):
     """Config should still contain existing entry."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         assert entry in config_content, f"Entry '{entry}' should exist in SSH config"
@@ -546,7 +542,7 @@ def step_config_still_contains(context, entry):
 @then('~/.ssh/config should contain new "{entry}" entry')
 def step_config_contains_new_entry(context, entry):
     """Config should contain new entry."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         # Check for the entry - it may be newly added
@@ -559,7 +555,7 @@ def step_existing_entries_unchanged(context):
     # Verify existing config entries weren't modified during merge
     existing_entry = getattr(context, 'existing_ssh_entry', '')
     if existing_entry:
-        ssh_config = Path.home() / ".ssh" / "config"
+        ssh_config = Path.home() / ".ssh" / "vde" / "config"
         if ssh_config.exists():
             config_content = ssh_config.read_text()
             assert existing_entry in config_content, f"Existing entry '{existing_entry}' was removed or modified"
@@ -574,7 +570,7 @@ def step_existing_entries_unchanged(context):
 @then('~/.ssh/config should still contain "{field}" under {vm}')
 def step_config_contains_field_under_vm(context, field, vm):
     """Config should contain specific field under VM entry."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         # Look for the VM host entry and verify the field exists under it
@@ -608,7 +604,7 @@ def step_config_contains_field_under_vm(context, field, vm):
 @then('new "{vm_entry}" entry should be appended to end')
 def step_new_entry_appended(context, vm_entry):
     """New entry should be appended to end of config."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         lines = config_content.strip().split('\n')
@@ -637,7 +633,7 @@ def step_attempt_create_vm_again(context, vm):
 @then('~/.ssh/config should contain only one "{entry}" entry')
 def step_config_only_one_entry(context, entry):
     """Config should contain only one instance of entry."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         count = config_content.count(f"Host {entry}")
@@ -653,7 +649,7 @@ def step_merge_interrupted(context):
 @then('~/.ssh/config should either be original or fully updated')
 def step_config_atomic_state(context):
     """Config should be either original or fully updated (not partial)."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         # Verify config is not truncated (ends cleanly)
@@ -668,7 +664,7 @@ def step_config_atomic_state(context):
 @then('~/.ssh/config should NOT be partially written')
 def step_config_not_partial(context):
     """Config should NOT be partially written."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         lines = content.split('\n')
@@ -703,7 +699,7 @@ def step_original_in_backup(context):
         assert latest_backup.stat().st_size > 0, f"Backup {latest_backup} is empty"
     else:
         # No backup directory - check ~/.ssh for backups
-        ssh_dir = Path.home() / ".ssh"
+        ssh_dir = Path.home() / ".ssh" / "vde"
         backups = list(ssh_dir.glob("config.bak*")) + list(ssh_dir.glob("config.*.bak"))
         assert len(backups) > 0, "No backup files found in ~/.ssh or backup/ssh/"
 
@@ -716,7 +712,7 @@ def step_original_in_backup(context):
 def step_new_ssh_entry_merged(context):
     """New SSH entry is merged into config."""
     # Track the merge operation
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     context.config_before_merge = ssh_config.read_text() if ssh_config.exists() else ""
     context.merge_start_time = time.time()
     context.ssh_merge_performed = True
@@ -728,14 +724,14 @@ def step_temp_file_created(context):
     assert getattr(context, 'ssh_merge_performed', False), "Merge operation was not performed"
     # VDE uses mktemp pattern: ~/.ssh/config.tmp.XXXXXX
     # After successful merge, temp file is cleaned up, so we verify the end result
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     assert ssh_config.exists(), "SSH config should exist after merge operation"
 
 
 @then('content should be written to temporary file')
 def step_content_to_temp_file(context):
     """Content should be written to temporary file."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         assert len(content) > 0, "SSH config is empty after merge"
@@ -749,7 +745,7 @@ def step_content_to_temp_file(context):
 @then('atomic mv should replace original config')
 def step_atomic_mv_replaces(context):
     """Atomic mv should replace original config."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         # Verify no temp files remain (atomic cleanup succeeded)
         ssh_dir = ssh_config.parent
@@ -763,7 +759,7 @@ def step_atomic_mv_replaces(context):
 @then('temporary file should be removed')
 def step_temp_file_removed(context):
     """Temporary file should be removed after atomic rename."""
-    ssh_dir = Path.home() / ".ssh"
+    ssh_dir = Path.home() / ".ssh" / "vde"
     if ssh_dir.exists():
         temp_files = list(ssh_dir.glob("config.tmp.*"))
         assert len(temp_files) == 0, f"Orphaned temp files found: {temp_files}"
@@ -776,14 +772,14 @@ def step_temp_file_removed(context):
 @then('~/.ssh/config should be created')
 def step_ssh_config_created(context):
     """SSH config file should be created."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     assert ssh_config.exists(), "SSH config file should be created"
 
 
 @then('~/.ssh/config should have permissions "{perms}"')
 def step_ssh_config_permissions(context, perms):
     """SSH config should have specific permissions."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         # Check permissions (600 for SSH config)
         octal_perms = oct(ssh_config.stat().st_mode & 0o777)
@@ -793,14 +789,14 @@ def step_ssh_config_permissions(context, perms):
 @then('~/.ssh directory should be created')
 def step_ssh_dir_created(context):
     """.ssh directory should be created."""
-    ssh_dir = Path.home() / ".ssh"
+    ssh_dir = Path.home() / ".ssh" / "vde"
     assert ssh_dir.exists(), ".ssh directory should be created"
 
 
 @then('directory should have correct permissions')
 def step_ssh_dir_permissions(context):
     """.ssh directory should have correct permissions (700)."""
-    ssh_dir = Path.home() / ".ssh"
+    ssh_dir = Path.home() / ".ssh" / "vde"
     if ssh_dir.exists():
         octal_perms = oct(ssh_dir.stat().st_mode & 0o777)
         assert octal_perms == oct(0o700), f"Directory has permissions {octal_perms}, expected 0o700"
@@ -813,7 +809,7 @@ def step_ssh_dir_permissions(context):
 @then('~/.ssh/config blank lines should be preserved')
 def step_blank_lines_preserved(context):
     """Blank lines should be preserved in SSH config."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         # Verify blank line preservation by checking config structure
@@ -830,7 +826,7 @@ def step_blank_lines_preserved(context):
 @then('~/.ssh/config comments should be preserved')
 def step_comments_preserved(context):
     """Comments should be preserved in SSH config."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists() and hasattr(context, 'original_comment_count'):
         content = ssh_config.read_text()
         current_count = content.count('#')
@@ -847,7 +843,7 @@ def step_comments_preserved(context):
 @then('new entry should be added with proper formatting')
 def step_new_entry_proper_formatting(context):
     """New entry should have proper formatting."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         lines = content.split('\n')
@@ -870,7 +866,7 @@ def step_merge_operations_complete(context):
     """Merge operations complete."""
     context.merge_completed = True
     # Verify config is in valid state after concurrent merges
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         # Config should not be corrupted
@@ -880,7 +876,7 @@ def step_merge_operations_complete(context):
 @then('all VM entries should be present')
 def step_all_vm_entries_present(context):
     """All VM entries should be present in config."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists() and hasattr(context, 'created_vms'):
         content = ssh_config.read_text()
         for vm in context.created_vms:
@@ -894,7 +890,7 @@ def step_all_vm_entries_present(context):
 @then('no entries should be lost')
 def step_no_entries_lost(context):
     """No entries should be lost during merge."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         host_count = content.count('Host ')
@@ -920,7 +916,7 @@ def step_backup_exists_at(context, backup_path):
         assert len(backups) > 0, f"No backup files found in {backup_dir}"
     else:
         # Check ~/.ssh for backups
-        ssh_dir = Path.home() / ".ssh"
+        ssh_dir = Path.home() / ".ssh" / "vde"
         backups = list(ssh_dir.glob("config.bak*")) + list(ssh_dir.glob("config.*.bak"))
         assert len(backups) > 0, "No backup files found"
 
@@ -939,7 +935,7 @@ def step_backup_has_original_content(context):
             context.latest_backup_mtime = latest_backup.stat().st_mtime
         else:
             # No backup in backup/ssh - check ~/.ssh
-            ssh_dir = Path.home() / ".ssh"
+            ssh_dir = Path.home() / ".ssh" / "vde"
             backups = list(ssh_dir.glob("config.bak*")) + list(ssh_dir.glob("config.*.bak"))
             assert len(backups) > 0, "No backup files found"
             if backups:
@@ -947,7 +943,7 @@ def step_backup_has_original_content(context):
                 context.latest_backup_mtime = latest_backup.stat().st_mtime
     else:
         # No backup directory - check ~/.ssh
-        ssh_dir = Path.home() / ".ssh"
+        ssh_dir = Path.home() / ".ssh" / "vde"
         backups = list(ssh_dir.glob("config.bak*")) + list(ssh_dir.glob("config.*.bak"))
         assert len(backups) > 0, "No backup files found"
 
@@ -955,7 +951,7 @@ def step_backup_has_original_content(context):
 @then('backup timestamp should be before modification')
 def step_backup_timestamp_before(context):
     """Backup timestamp should be before modification time."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists() and hasattr(context, 'latest_backup_mtime'):
         config_mtime = ssh_config.stat().st_mtime
         assert context.latest_backup_mtime <= config_mtime, f"Backup mtime ({context.latest_backup_mtime}) should be <= config mtime ({config_mtime})"
@@ -971,7 +967,7 @@ def step_backup_timestamp_before(context):
 @then('merged entry should contain "{field}"')
 def step_merged_entry_contains(context, field):
     """Merged entry should contain specific field."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         # Check if the field exists in the config
@@ -984,7 +980,7 @@ def step_merged_entry_contains(context, field):
 @then('merged entry should contain "IdentityFile" pointing to detected key')
 def step_merged_entry_has_identity(context):
     """Merged entry should contain IdentityFile pointing to detected key."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         # Check for IdentityFile in any VM entry
@@ -1012,7 +1008,7 @@ def step_user_entries_preserved(context):
     # Verify user-defined entries aren't removed when VM entries are cleaned up
     user_entry = getattr(context, 'user_entry_in_config', '')
     if user_entry:
-        ssh_config = Path.home() / ".ssh" / "config"
+        ssh_config = Path.home() / ".ssh" / "vde" / "config"
         if ssh_config.exists():
             config_content = ssh_config.read_text()
             assert user_entry in config_content, f"User entry '{user_entry}' was removed during VM cleanup"
@@ -1054,7 +1050,7 @@ def step_keys_loaded_into_agent_given(context):
 @then('new "{entry}" entry should be added')
 def step_new_entry_added(context, entry):
     """New entry should be added to config."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         assert entry in config_content, f"'{entry}' was not added to SSH config"
@@ -1065,7 +1061,7 @@ def step_new_entry_added(context, entry):
 @then('~/.ssh/config should contain "Host python-dev"')
 def step_config_contains_python_dev(context):
     """Config should contain python-dev entry."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         assert "Host python-dev" in config_content, "Host python-dev entry not found in SSH config"
@@ -1086,7 +1082,7 @@ def step_multiple_processes_add_entries(context):
 @then('config file should be valid')
 def step_config_file_valid(context):
     """Config file should be valid."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         result = subprocess.run(["ssh", "-F", str(ssh_config), "-G", "test"], capture_output=True, text=True)
         assert "Bad configuration option" not in result.stderr
@@ -1099,7 +1095,7 @@ def step_config_file_valid(context):
 @then('~/.ssh/config should NOT contain "{entry}"')
 def step_config_not_contain(context, entry):
     """Config should NOT contain specific entry."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         assert entry not in config_content, f"'{entry}' should not be in SSH config but was found"

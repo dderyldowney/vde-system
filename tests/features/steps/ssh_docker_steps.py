@@ -62,22 +62,22 @@ def docker_ps():
 
 @given('~/.ssh/config does not exist')
 def step_no_ssh_config(context):
-    """SSH config doesn't exist."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    """VDE SSH config doesn't exist."""
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     context.ssh_config_exists = ssh_config.exists()
 
 
 @given('~/.ssh/config exists')
 def step_ssh_config_exists_step(context):
-    """SSH config exists."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    """VDE SSH config exists."""
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     context.ssh_config_exists = ssh_config.exists()
 
 
 @given('~/.ssh/config exists with custom settings')
 def step_ssh_custom(context):
-    """SSH config with custom settings."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    """VDE SSH config with custom settings."""
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     context.ssh_config_exists = ssh_config.exists()
     if ssh_config.exists():
         content = ssh_config.read_text()
@@ -89,8 +89,8 @@ def step_ssh_custom(context):
 
 @given('~/.ssh/config contains python-dev configuration')
 def step_python_config(context):
-    """SSH config has python configuration."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    """VDE SSH config has python configuration."""
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         context.has_python_config = "python" in content.lower()
@@ -100,21 +100,17 @@ def step_python_config(context):
 
 @given('~/.ssh/ contains SSH keys')
 def step_ssh_keys(context):
-    """SSH keys exist."""
-    ssh_dir = Path.home() / ".ssh"
-    has_keys = (
-        (ssh_dir / "id_ed25519").exists() or
-        (ssh_dir / "id_rsa").exists() or
-        (ssh_dir / "id_ecdsa").exists()
-    )
+    """VDE SSH directory contains SSH keys."""
+    vde_ssh_dir = Path.home() / ".ssh" / "vde"
+    has_keys = (vde_ssh_dir / "id_ed25519").exists()
     context.ssh_keys_exist = has_keys
 
 
 @given('~/.ssh directory does not exist')
 def step_no_ssh_dir(context):
-    """SSH directory doesn't exist."""
-    ssh_dir = Path.home() / ".ssh"
-    context.ssh_dir_exists = ssh_dir.exists()
+    """VDE SSH directory doesn't exist."""
+    vde_ssh_dir = Path.home() / ".ssh" / "vde"
+    context.ssh_dir_exists = vde_ssh_dir.exists()
 
 
 @given('~/.ssh directory exists or can be created')

@@ -1676,122 +1676,28 @@ check_for_private_keys_in_public_dir() {
 # Detect all available SSH private keys in ~/.ssh/
 # Returns a newline-separated list of key filepaths
 detect_ssh_keys() {
-    local ssh_dir="$HOME/.ssh"
-    local found_keys=""
-
-    # Common SSH key patterns (private keys only)
-    local key_patterns="id_ed25519 id_rsa id_ecdsa id_ecdsa_sk id_ed25519_sk id_dsa"
-
-    # Check for each key pattern
-    local key_name
-    for key_name in $key_patterns; do
-        local key_path="$ssh_dir/$key_name"
-        if [ -f "$key_path" ] && [ -r "$key_path" ]; then
-            # Verify it's actually a private key (not a .pub file)
-            case "$key_path" in
-                *.pub) continue ;;
-            esac
-            # Check if corresponding .pub file exists (valid keypair)
-            if [ -f "${key_path}.pub" ]; then
-                if [ -n "$found_keys" ]; then
-                    found_keys="$found_keys
-$key_path"
-                else
-                    found_keys="$key_path"
-                fi
-            fi
-        fi
-    done
-
-    # Also check for any custom key names (ssh-keygen -t rsa -f mykey)
-    # Look for files that don't match standard patterns but have .pub files
-    _enable_nullglob
-    local key_file
-    for key_file in "$ssh_dir"/*; do
-        [ -f "$key_file" ] || continue
-        local basename
-        basename=$(basename "$key_file")
-        # Skip if it's a pubkey, config, or known_hosts file
-        case "$basename" in
-            *.pub|config|known_hosts|authorized_keys|*.backup.*) continue ;;
-        esac
-
-        # Check if this is a private key with a corresponding pubkey
-        if [ -f "${key_file}.pub" ]; then
-            # Check if already in our list
-            local already_found=false
-            local found
-            for found in $found_keys; do
-                if [ "$found" = "$key_file" ]; then
-                    already_found=true
-                    break
-                fi
-            done
-            if [ "$already_found" = "false" ]; then
-                if [ -n "$found_keys" ]; then
-                    found_keys="$found_keys
-$key_file"
-                else
-                    found_keys="$key_file"
-                fi
-            fi
-        fi
-    done
-    _disable_nullglob
-
-    # Output all found keys
-    echo "$found_keys"
-}
-
-# Get the primary/default SSH key to use for VDE
-# Returns the filepath of the best key to use
-get_primary_ssh_key() {
-    local keys
-    keys=$(detect_ssh_keys)
-    
-    # Count keys
-    local key_count=0
-    local first_key=""
-    local key
-    for key in $keys; do
-        [ -n "$key" ] || continue
-        key_count=$((key_count + 1))
-        if [ -z "$first_key" ]; then
-            first_key="$key"
-        fi
-    done
-
-    if [ $key_count -eq 0 ]; then
-        return 1
-    fi
-
-    # If only one key, use it
-    if [ $key_count -eq 1 ]; then
-        echo "$first_key"
+    # VDE SSH isolation: Only return the VDE-specific key
+    # This prevents VDE from using or discovering user's personal SSH keys
+    if [ -f "$VDE_SSH_IDENTITY" ] && [ -f "$VDE_SSH_IDENTITY_PUB" ]; then
+        echo "$VDE_SSH_IDENTITY"
         return 0
     fi
 
-    # Multiple keys: try to determine the best one
-    # Priority: ed25519 > ecdsa > rsa > dsa
-    local preferred_keys="id_ed25519 id_ecdsa id_rsa id_dsa"
+    # No keys found
+    return 1
+}
 
-    # Check for preferred keys in priority order
-    local preferred
-    for preferred in $preferred_keys; do
-        for key in $keys; do
-            [ -n "$key" ] || continue
-            local basename
-            basename=$(basename "$key")
-            if [ "$basename" = "$preferred" ]; then
-                echo "$key"
-                return 0
-            fi
-        done
-    done
+# Get the primary/default SSH key to use for VDE
+# Returns the filepath of the VDE SSH key
+get_primary_ssh_key() {
+    # VDE SSH isolation: Always use the VDE-specific key
+    if [ -f "$VDE_SSH_IDENTITY" ]; then
+        echo "$VDE_SSH_IDENTITY"
+        return 0
+    fi
 
-    # If no preferred key found, use the first one
-    echo "$first_key"
-    return 0
+    # Fallback: return error if VDE key doesn't exist
+    return 1
 }
 
 # Get the corresponding public key file for a private key
@@ -1810,58 +1716,36 @@ get_ssh_pubkey() {
 # This ensures all user's public keys are available for container auth
 # SECURITY: Only copies .pub files, validates file type, warns on private key detection
 sync_ssh_keys_to_vde() {
+    # VDE SSH isolation: Only sync the VDE public key to the build context
+    # This is used by Docker build to bake the key into container images
+
     local public_keys_dir="$VDE_ROOT_DIR/public-ssh-keys"
-    local keys_copied=0
-    local keys
 
     # Ensure directory exists
     mkdir -p "$public_keys_dir"
 
-    # Get all private keys and copy their public keys
-    keys=$(detect_ssh_keys)
-    
-    # Count keys
-    local key_count=0
-    local key
-    for key in $keys; do
-        [ -n "$key" ] || continue
-        key_count=$((key_count + 1))
-    done
-
-    if [ $key_count -eq 0 ]; then
-        log_error "No SSH keys found. Please generate an SSH key first."
-        log_error "Recommended: ssh-keygen -t ed25519"
+    # Ensure VDE SSH environment exists
+    if [ ! -f "$VDE_SSH_IDENTITY_PUB" ]; then
+        log_error "VDE SSH public key not found at: $VDE_SSH_IDENTITY_PUB"
+        log_error "Run: ./scripts/ssh-agent-setup --init"
         return 1
     fi
 
-    log_info "Syncing $key_count SSH key(s) to VDE..."
+    log_info "Syncing VDE SSH public key to build context..."
 
-    # Copy each public key
-    local private_key
-    for private_key in $keys; do
-        [ -n "$private_key" ] || continue
-        local pubkey
-        pubkey=$(get_ssh_pubkey "$private_key")
+    # Copy VDE public key to build context with a consistent name
+    local dest_path="$public_keys_dir/vde_id_ed25519.pub"
 
-        if [ -n "$pubkey" ] && [ -f "$pubkey" ]; then
-            local key_name
-            key_name=$(basename "$pubkey")
-            local dest_path="$public_keys_dir/$key_name"
+    # SECURITY: Validate this is actually a public key file
+    if ! validate_public_key_file "$VDE_SSH_IDENTITY_PUB"; then
+        log_error "SECURITY: Invalid VDE public key file"
+        return 1
+    fi
 
-            # SECURITY: Validate this is actually a public key file
-            if ! validate_public_key_file "$pubkey"; then
-                log_error "SECURITY: Skipping invalid public key: $key_name"
-                continue
-            fi
-
-            # Copy the public key
-            cp "$pubkey" "$dest_path"
-            # SECURITY: Public keys should be readable (644) - this is correct
-            chmod 644 "$dest_path"
-            keys_copied=$((keys_copied + 1))
-            log_info "  ✓ Copied: $key_name"
-        fi
-    done
+    # Copy the public key
+    cp "$VDE_SSH_IDENTITY_PUB" "$dest_path"
+    chmod 644 "$dest_path"
+    log_info "  ✓ Copied VDE public key to: $dest_path"
 
     # SECURITY: Check for any private keys accidentally placed in public directory
     check_for_private_keys_in_public_dir "$public_keys_dir"
@@ -1871,7 +1755,7 @@ sync_ssh_keys_to_vde() {
         touch "$public_keys_dir/.keep"
     fi
 
-    log_info "Synced $keys_copied public key(s) to: $public_keys_dir"
+    log_info "VDE SSH public key synced to build context"
     return 0
 }
 
@@ -1941,16 +1825,14 @@ validate_or_create_ssh_key() {
 # Get the identity file path to use for SSH connections
 # This detects the user's primary key automatically
 get_ssh_identity_file() {
-    local primary_key
-    primary_key=$(get_primary_ssh_key)
-
-    if [ -n "$primary_key" ] && [ -f "$primary_key" ]; then
-        echo "$primary_key"
+    # VDE SSH isolation: Always use the VDE-specific key
+    if [ -f "$VDE_SSH_IDENTITY" ]; then
+        echo "$VDE_SSH_IDENTITY"
         return 0
     fi
 
-    # Fallback to default (for backward compatibility)
-    echo "$HOME/.ssh/id_ed25519"
+    # Fallback to VDE key path (will be created by ensure_vde_ssh_environment)
+    echo "$VDE_SSH_IDENTITY"
     return 0
 }
 
@@ -1958,23 +1840,25 @@ get_ssh_identity_file() {
 # SSH Config Functions
 # -----------------------
 get_user_ssh_config() {
-    echo "$HOME/.ssh/config"
+    # VDE SSH isolation: Return VDE's SSH config path
+    echo "$VDE_SSH_CONFIG"
 }
 
 backup_ssh_config() {
-    local ssh_config="$HOME/.ssh/config"
-    local backup_path="$BACKUP_DIR/ssh/config.backup.$(date +%Y%m%d_%H%M%S)"
+    # VDE SSH isolation: Backup VDE's SSH config
+    local ssh_config="$VDE_SSH_CONFIG"
+    local backup_path="$VDE_SSH_DIR/backup/config.backup.$(date +%Y%m%d_%H%M%S)"
 
     if [ -f "$ssh_config" ]; then
-        mkdir -p "$BACKUP_DIR/ssh"
+        mkdir -p "$VDE_SSH_DIR/backup"
         cp "$ssh_config" "$backup_path"
-        log_info "Backed up SSH config to: $backup_path"
+        log_info "Backed up VDE SSH config to: $backup_path"
     fi
 }
 
 ssh_config_has_entry() {
     local host_alias=$1
-    local ssh_config="$HOME/.ssh/config"
+    local ssh_config="$VDE_SSH_CONFIG"
 
     if [ ! -f "$ssh_config" ]; then
         return 1
@@ -1994,7 +1878,7 @@ generate_ssh_config_entry() {
 }
 
 # SECURITY: Lock directory for SSH config operations
-SSH_CONFIG_LOCK="$VDE_ROOT_DIR/.locks/ssh_config"
+SSH_CONFIG_LOCK="$VDE_ROOT_DIR/.locks/vde_ssh_config"
 readonly SSH_CONFIG_LOCK
 
 # SECURITY: Atomic SSH config modification with file locking
@@ -2005,11 +1889,11 @@ merge_ssh_config_entry() {
     local port=$2
     local display_name=$3
     local identity_file="${4:-$(get_ssh_identity_file)}"
-    local ssh_config="$HOME/.ssh/config"
+    local ssh_config="$VDE_SSH_CONFIG"
 
-    # Ensure .ssh directory exists
+    # Ensure VDE SSH directory exists
     mkdir -p "$(dirname "$ssh_config")"
-    
+
     # SECURITY: Ensure locks directory exists
     mkdir -p "$(dirname "$SSH_CONFIG_LOCK")" 2>/dev/null
 
@@ -2018,10 +1902,10 @@ merge_ssh_config_entry() {
         log_error "SECURITY: Could not acquire SSH config lock"
         return 1
     fi
-    
+
     # All operations below are protected by the lock
     local result=0
-    
+
     # Create file if it doesn't exist
     if [ ! -f "$ssh_config" ]; then
         touch "$ssh_config"
@@ -2045,25 +1929,25 @@ merge_ssh_config_entry() {
     # SECURITY: Write to temporary file first, then atomic move
     local temp_file
     temp_file=$(mktemp "${ssh_config}.tmp.XXXXXX")
-    
+
     if [ -z "$temp_file" ]; then
         log_error "SECURITY: Failed to create temporary file"
         release_lock "$SSH_CONFIG_LOCK"
         return 1
     fi
-    
+
     # Copy existing content to temp file
     if [ -f "$ssh_config" ]; then
         cp "$ssh_config" "$temp_file"
     fi
-    
+
     # Append new entry to temp file
     echo "" >> "$temp_file"
     echo "$entry" >> "$temp_file"
-    
+
     # Set correct permissions on temp file
     chmod 600 "$temp_file"
-    
+
     # SECURITY: Atomic replacement using mv
     if mv "$temp_file" "$ssh_config"; then
         log_success "Added SSH config entry for '$host_alias'"
@@ -2074,7 +1958,7 @@ merge_ssh_config_entry() {
         rm -f "$temp_file" 2>/dev/null
         result=1
     fi
-    
+
     # Release lock
     release_lock "$SSH_CONFIG_LOCK"
     return $result
@@ -2084,39 +1968,39 @@ merge_ssh_config_entry() {
 # Args: <host_alias>
 remove_ssh_config_entry() {
     local host_alias=$1
-    local ssh_config="$HOME/.ssh/config"
-    
+    local ssh_config="$VDE_SSH_CONFIG"
+
     if [ ! -f "$ssh_config" ]; then
-        log_error "SSH config file does not exist"
+        log_error "VDE SSH config file does not exist"
         return 1
     fi
-    
+
     # SECURITY: Acquire lock
     if ! acquire_lock "$SSH_CONFIG_LOCK" 30; then
         log_error "SECURITY: Could not acquire SSH config lock"
         return 1
     fi
-    
+
     # Check if entry exists
     if ! ssh_config_has_entry "$host_alias"; then
-        log_error "SSH config entry for '$host_alias' does not exist"
+        log_error "VDE SSH config entry for '$host_alias' does not exist"
         release_lock "$SSH_CONFIG_LOCK"
         return 1
     fi
-    
+
     # Backup before modification
     backup_ssh_config
-    
+
     # SECURITY: Create temp file for atomic operation
     local temp_file
     temp_file=$(mktemp "${ssh_config}.tmp.XXXXXX")
-    
+
     if [ -z "$temp_file" ]; then
         log_error "SECURITY: Failed to create temporary file"
         release_lock "$SSH_CONFIG_LOCK"
         return 1
     fi
-    
+
     # Remove the entry (everything from "Host $host_alias" to next "Host " or EOF)
     awk -v host="$host_alias" '
         /^Host / {
@@ -2129,21 +2013,21 @@ remove_ssh_config_entry() {
         }
         !skip { print }
     ' "$ssh_config" > "$temp_file"
-    
+
     # Set permissions
     chmod 600 "$temp_file"
-    
+
     # SECURITY: Atomic replacement
     local result=0
     if mv "$temp_file" "$ssh_config"; then
-        log_success "Removed SSH config entry for '$host_alias'"
+        log_success "Removed VDE SSH config entry for '$host_alias'"
         result=0
     else
-        log_error "SECURITY: Failed to update SSH config atomically"
+        log_error "SECURITY: Failed to update VDE SSH config atomically"
         rm -f "$temp_file" 2>/dev/null
         result=1
     fi
-    
+
     release_lock "$SSH_CONFIG_LOCK"
     return $result
 }
@@ -2158,7 +2042,7 @@ remove_ssh_config_entry() {
 remove_known_hosts_entry() {
     local vm_name=$1
     local ssh_port=$2
-    local known_hosts="$HOME/.ssh/known_hosts"
+    local known_hosts="$VDE_SSH_KNOWN_HOSTS"
     local removed=false
 
     # Get port from docker-compose.yml if not provided
@@ -2198,7 +2082,7 @@ remove_known_hosts_entry() {
 
     # Remove each pattern using ssh-keygen
     for pattern in "${patterns[@]}"; do
-        if ssh-keygen -R "$pattern" 2>/dev/null; then
+        if ssh-keygen -f "$known_hosts" -R "$pattern" 2>/dev/null; then
             removed=true
         fi
     done
@@ -2222,7 +2106,7 @@ remove_known_hosts_entry() {
     fi
 
     if $removed; then
-        log_success "Cleared SSH known_hosts entries for $vm_name (port $ssh_port)"
+        log_success "Cleared VDE SSH known_hosts entries for $vm_name (port $ssh_port)"
     fi
 
     return $VDE_SUCCESS
@@ -2338,18 +2222,90 @@ setup_ssh_agent_interactive() {
 }
 
 # Ensure SSH agent and VM config are set up (called by VM operations)
+# Ensure VDE SSH environment is properly set up
+# This creates the isolated ~/.ssh/vde/ directory and generates a VDE-specific SSH key
+# Returns: 0 on success, 1 on failure
+ensure_vde_ssh_environment() {
+    # Skip SSH operations in test mode
+    if [ -n "$VDE_TEST_MODE" ]; then
+        return 0
+    fi
+
+    # Validate HOME environment variable
+    if [ -z "$HOME" ]; then
+        log_error "HOME environment variable not set"
+        return 1
+    fi
+
+    # Create VDE SSH directory if it doesn't exist
+    if [ ! -d "$VDE_SSH_DIR" ]; then
+        mkdir -p "$VDE_SSH_DIR"
+        chmod 700 "$VDE_SSH_DIR"
+        log_info "Created VDE SSH directory: $VDE_SSH_DIR"
+    fi
+
+    # Generate VDE SSH key if it doesn't exist
+    if [ ! -f "$VDE_SSH_IDENTITY" ]; then
+        log_info "Generating VDE SSH key..."
+        ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -C "vde@$(hostname)" 2>/dev/null
+        chmod 600 "$VDE_SSH_IDENTITY"
+        chmod 644 "$VDE_SSH_IDENTITY_PUB"
+        log_info "Generated VDE SSH key: $VDE_SSH_IDENTITY"
+    else
+        # Ensure permissions are correct
+        chmod 700 "$VDE_SSH_DIR"
+        chmod 600 "$VDE_SSH_IDENTITY"
+        chmod 644 "$VDE_SSH_IDENTITY_PUB"
+    fi
+
+    # Create VDE SSH config file if it doesn't exist
+    if [ ! -f "$VDE_SSH_CONFIG" ]; then
+        touch "$VDE_SSH_CONFIG"
+        chmod 600 "$VDE_SSH_CONFIG"
+    fi
+
+    # Create VDE known_hosts file if it doesn't exist
+    if [ ! -f "$VDE_SSH_KNOWN_HOSTS" ]; then
+        touch "$VDE_SSH_KNOWN_HOSTS"
+        chmod 600 "$VDE_SSH_KNOWN_HOSTS"
+    fi
+
+    return 0
+}
+
+# Wrapper for SSH commands that uses VDE-specific config and known_hosts
+# Usage: vde_ssh [ssh args...]
+# This ensures SSH never touches the user's personal SSH configuration
+vde_ssh() {
+    ssh -F "$VDE_SSH_CONFIG" \
+        -o "UserKnownHostsFile=$VDE_SSH_KNOWN_HOSTS" \
+        -o "StrictHostKeyChecking=no" \
+        "$@"
+}
+
 ensure_ssh_environment() {
     # Skip SSH operations in test mode (prevents timeouts in Docker)
     if [ -n "$VDE_TEST_MODE" ]; then
         return 0
     fi
 
+    # Ensure VDE SSH environment is set up first
+    ensure_vde_ssh_environment
+
     # Ensure SSH agent is running
     ensure_ssh_agent
 
-    # Ensure VM-to-VM SSH config exists
-    if [ ! -f "$HOME/.ssh/config" ] || ! grep -q "python-dev" "$HOME/.ssh/config" 2>/dev/null; then
+    # Ensure VDE SSH config has VM entries
+    if [ ! -f "$VDE_SSH_CONFIG" ] || ! grep -q "python-dev" "$VDE_SSH_CONFIG" 2>/dev/null; then
         generate_vm_ssh_config >/dev/null 2>&1
+    fi
+
+    # Load VDE key into SSH agent
+    if [ -f "$VDE_SSH_IDENTITY" ]; then
+        # Check if key is already loaded
+        if ! ssh-add -l 2>/dev/null | grep -q "$(ssh-keygen -lf "$VDE_SSH_IDENTITY" 2>/dev/null | awk '{print $2}')"; then
+            ssh-add "$VDE_SSH_IDENTITY" 2>/dev/null || true
+        fi
     fi
 
     return 0
@@ -2357,10 +2313,10 @@ ensure_ssh_environment() {
 
 # Generate SSH config entries for VM-to-VM communication
 generate_vm_ssh_config() {
-    local ssh_config="$HOME/.ssh/config"
+    local ssh_config="$VDE_SSH_CONFIG"
     local need_update=false
 
-    # Ensure .ssh directory and config exist
+    # Ensure VDE SSH directory and config exist
     mkdir -p "$(dirname "$ssh_config")"
     if [ ! -f "$ssh_config" ]; then
         touch "$ssh_config"

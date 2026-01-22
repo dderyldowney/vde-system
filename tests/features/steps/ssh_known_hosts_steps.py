@@ -30,7 +30,7 @@ from ssh_helpers import run_vde_command
 @given('~/.ssh/known_hosts contains entry for "{pattern}"')
 def step_known_hosts_contains_entry(context, pattern):
     """Setup: Add a known_hosts entry for testing."""
-    known_hosts = Path.home() / ".ssh" / "known_hosts"
+    known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
     known_hosts.parent.mkdir(parents=True, exist_ok=True)
 
     # Create a dummy host key entry for testing
@@ -51,7 +51,7 @@ def step_known_hosts_contains_entry(context, pattern):
 @given('~/.ssh/known_hosts contains "{hostname}" hostname entry')
 def step_known_hosts_contains_hostname(context, hostname):
     """Setup: Add a hostname entry to known_hosts."""
-    known_hosts = Path.home() / ".ssh" / "known_hosts"
+    known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
     known_hosts.parent.mkdir(parents=True, exist_ok=True)
 
     if not known_hosts.exists():
@@ -66,7 +66,7 @@ def step_known_hosts_contains_hostname(context, hostname):
 @given('~/.ssh/known_hosts contains multiple port entries')
 def step_known_hosts_multiple_entries(context):
     """Setup: Add multiple port entries to known_hosts."""
-    known_hosts = Path.home() / ".ssh" / "known_hosts"
+    known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
     known_hosts.parent.mkdir(parents=True, exist_ok=True)
 
     content = ""
@@ -89,7 +89,7 @@ def step_known_hosts_multiple_entries(context):
 @given('~/.ssh/known_hosts exists with content')
 def step_known_hosts_exists(context):
     """Setup: Create known_hosts with test content."""
-    known_hosts = Path.home() / ".ssh" / "known_hosts"
+    known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
     known_hosts.parent.mkdir(parents=True, exist_ok=True)
     known_hosts.write_text("localhost ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA test-content\n")
 
@@ -97,7 +97,7 @@ def step_known_hosts_exists(context):
 @given('~/.ssh/known_hosts does not exist')
 def step_known_hosts_not_exists(context):
     """Setup: Ensure known_hosts doesn't exist."""
-    known_hosts = Path.home() / ".ssh" / "known_hosts"
+    known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
     # Backup if exists, then remove
     if known_hosts.exists():
         context.known_hosts_backup = known_hosts.read_text()
@@ -116,7 +116,7 @@ def step_vm_previously_created(context, vm, port):
 @given('~/.ssh/known_hosts had old entry for "{pattern}"')
 def step_known_hosts_old_entry(context, pattern):
     """Setup: Create old known_hosts entry simulating previous VM."""
-    known_hosts = Path.home() / ".ssh" / "known_hosts"
+    known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
     known_hosts.parent.mkdir(parents=True, exist_ok=True)
 
     # Create an entry that would cause the "host key changed" warning
@@ -150,7 +150,7 @@ def step_remove_vm_by_port(context, port):
 @then('~/.ssh/known_hosts should NOT contain entry for "{pattern}"')
 def step_known_hosts_not_contain(context, pattern):
     """Verify known_hosts doesn't contain the specified entry."""
-    known_hosts = Path.home() / ".ssh" / "known_hosts"
+    known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
 
     if not known_hosts.exists():
         return
@@ -162,7 +162,7 @@ def step_known_hosts_not_contain(context, pattern):
 @then('~/.ssh/known_hosts should NOT contain "{pattern}"')
 def step_known_hosts_not_contain_simple(context, pattern):
     """Verify known_hosts doesn't contain the pattern."""
-    known_hosts = Path.home() / ".ssh" / "known_hosts"
+    known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
 
     if not known_hosts.exists():
         return
@@ -174,7 +174,7 @@ def step_known_hosts_not_contain_simple(context, pattern):
 @then('~/.ssh/known_hosts should still contain "{pattern}"')
 def step_known_hosts_still_contains(context, pattern):
     """Verify other entries are preserved in known_hosts."""
-    known_hosts = Path.home() / ".ssh" / "known_hosts"
+    known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
 
     if not known_hosts.exists():
         raise AssertionError(f"known_hosts file doesn't exist, can't check for '{pattern}'")
@@ -227,7 +227,7 @@ def step_command_succeeds_no_error(context):
 @then('no known_hosts file should be created')
 def step_no_known_hosts_created(context):
     """Verify known_hosts file was not created."""
-    known_hosts = Path.home() / ".ssh" / "known_hosts"
+    known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
     if hasattr(context, 'known_hosts_backup') and context.known_hosts_backup is not None:
         known_hosts.write_text(context.known_hosts_backup)
     assert not known_hosts.exists(), "known_hosts file should not be created"
@@ -244,7 +244,7 @@ def step_ssh_succeeds_no_warning(context):
 @then('~/.ssh/known_hosts should contain new entry for "{pattern}"')
 def step_known_hosts_new_entry(context, pattern):
     """Verify new entry exists in known_hosts (after VM recreation)."""
-    known_hosts = Path.home() / ".ssh" / "known_hosts"
+    known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
     if hasattr(context, 'old_known_hosts_entry'):
         if known_hosts.exists():
             content = known_hosts.read_text()

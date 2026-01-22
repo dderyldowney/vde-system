@@ -91,7 +91,7 @@ def container_exists(vm_name):
 @given('~/.ssh/config exists with blank lines')
 def step_ssh_blank_lines(context):
     """Check if SSH config has blank lines."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         context.ssh_has_blank_lines = "\n\n" in content
@@ -100,14 +100,14 @@ def step_ssh_blank_lines(context):
 @given('~/.ssh/config exists with content')
 def step_ssh_has_content(context):
     """Check if SSH config has content."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     context.ssh_has_content = ssh_config.exists() and ssh_config.read_text().strip()
 
 
 @given('~/.ssh/config exists with existing host entries')
 def step_ssh_existing_entries(context):
     """Check if SSH config has existing entries."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         context.ssh_existing_entries = "Host " in content
@@ -116,7 +116,7 @@ def step_ssh_existing_entries(context):
 @given('~/.ssh/config has comments and custom formatting')
 def step_ssh_formatting(context):
     """Check if SSH config has comments."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         context.ssh_custom_formatting = "#" in content

@@ -6,4 +6,4 @@ Host {{HOST}}
     IdentityFile {{IDENTITY_FILE}}
     IdentitiesOnly yes
     StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
+    UserKnownHostsFile ~/.ssh/vde/known_hosts

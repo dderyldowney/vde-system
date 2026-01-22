@@ -180,6 +180,27 @@ VDE_SSH_KEY_PREFERENCE="id_ed25519 id_ecdsa id_rsa id_dsa"
 readonly VDE_SSH_KEY_PREFERENCE
 
 # =============================================================================
+# VDE SSH ISOLATION
+# =============================================================================
+# VDE uses an isolated SSH directory to prevent interference with user's
+# personal SSH configuration. All VDE SSH files are stored under ~/.ssh/vde/
+
+# VDE SSH directory (isolated from user's SSH)
+readonly VDE_SSH_DIR="$HOME/.ssh/vde"
+
+# VDE SSH config file (contains only VDE VM entries)
+readonly VDE_SSH_CONFIG="$VDE_SSH_DIR/config"
+
+# VDE SSH known_hosts file (contains only VDE VM host keys)
+readonly VDE_SSH_KNOWN_HOSTS="$VDE_SSH_DIR/known_hosts"
+
+# VDE SSH identity key (auto-generated, VDE-specific)
+readonly VDE_SSH_IDENTITY="$VDE_SSH_DIR/id_ed25519"
+
+# VDE SSH public key
+readonly VDE_SSH_IDENTITY_PUB="$VDE_SSH_DIR/id_ed25519.pub"
+
+# =============================================================================
 # FILE PATTERNS
 # =============================================================================
 # Regular expressions and glob patterns used throughout VDE

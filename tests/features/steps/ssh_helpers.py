@@ -3,6 +3,8 @@ SSH Helper Functions for VDE Test Steps.
 
 This module provides shared utility functions for SSH verification
 used across all SSH-related BDD step definitions.
+
+All SSH operations now use VDE-specific isolated paths at ~/.ssh/vde/
 """
 import subprocess
 from pathlib import Path
@@ -15,6 +17,13 @@ steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 from config import VDE_ROOT
+
+
+# VDE SSH Isolation - All SSH operations use these paths
+VDE_SSH_DIR = Path.home() / ".ssh" / "vde"
+VDE_SSH_CONFIG = VDE_SSH_DIR / "config"
+VDE_SSH_KNOWN_HOSTS = VDE_SSH_DIR / "known_hosts"
+VDE_SSH_IDENTITY = VDE_SSH_DIR / "id_ed25519"
 
 
 # =============================================================================
@@ -46,23 +55,22 @@ def ssh_agent_has_keys():
 
 
 def get_ssh_keys():
-    """Get list of SSH keys in ~/.ssh/."""
-    ssh_dir = Path.home() / ".ssh"
+    """Get list of SSH keys in ~/.ssh/vde/ (VDE isolated)."""
     keys = []
-    for key_type in ["id_ed25519", "id_rsa", "id_ecdsa", "id_dsa"]:
-        if (ssh_dir / key_type).exists():
-            keys.append(key_type)
-        if (ssh_dir / f"{key_type}.pub").exists():
-            keys.append(f"{key_type}.pub")
+    if VDE_SSH_DIR.exists():
+        for key_type in ["id_ed25519", "id_rsa", "id_ecdsa", "id_dsa"]:
+            if (VDE_SSH_DIR / key_type).exists():
+                keys.append(str(VDE_SSH_DIR / key_type))
+            if (VDE_SSH_DIR / f"{key_type}.pub").exists():
+                keys.append(str(VDE_SSH_DIR / f"{key_type}.pub"))
     return keys
 
 
 def ssh_config_contains(pattern):
-    """Check if SSH config contains a pattern."""
-    ssh_config = Path.home() / ".ssh" / "config"
-    if ssh_config.exists():
+    """Check if VDE SSH config contains a pattern."""
+    if VDE_SSH_CONFIG.exists():
         try:
-            content = ssh_config.read_text()
+            content = VDE_SSH_CONFIG.read_text()
             return pattern in content
         except Exception:
             return False
@@ -70,11 +78,10 @@ def ssh_config_contains(pattern):
 
 
 def ssh_config_get_host_entry(host):
-    """Get host entry from SSH config."""
-    ssh_config = Path.home() / ".ssh" / "config"
-    if ssh_config.exists():
+    """Get host entry from VDE SSH config."""
+    if VDE_SSH_CONFIG.exists():
         try:
-            content = ssh_config.read_text()
+            content = VDE_SSH_CONFIG.read_text()
             lines = content.split('\n')
             for i, line in enumerate(lines):
                 if line.strip() == f"Host {host}":
@@ -102,11 +109,10 @@ def public_ssh_keys_count():
 
 
 def known_hosts_contains(pattern):
-    """Check if known_hosts contains a pattern."""
-    known_hosts = Path.home() / ".ssh" / "known_hosts"
-    if known_hosts.exists():
+    """Check if VDE known_hosts contains a pattern."""
+    if VDE_SSH_KNOWN_HOSTS.exists():
         try:
-            content = known_hosts.read_text()
+            content = VDE_SSH_KNOWN_HOSTS.read_text()
             return pattern in content
         except Exception:
             return False
@@ -114,14 +120,8 @@ def known_hosts_contains(pattern):
 
 
 def has_ssh_keys():
-    """Check if user has any SSH keys."""
-    ssh_dir = Path.home() / ".ssh"
-    return (
-        (ssh_dir / "id_ed25519").exists() or
-        (ssh_dir / "id_rsa").exists() or
-        (ssh_dir / "id_ecdsa").exists() or
-        (ssh_dir / "id_dsa").exists()
-    )
+    """Check if VDE has any SSH keys."""
+    return VDE_SSH_IDENTITY.exists()
 
 
 # Test mode detection - ALLOW_CLEANUP indicates we can modify state

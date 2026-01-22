@@ -1,0 +1,219 @@
+#!/usr/bin/env zsh
+# VDE SSH Migration Script
+# Migrates existing VDE SSH setup to isolated ~/.ssh/vde/ directory
+#
+# This script helps existing users transition from the old SSH configuration
+# (mixed with user's personal SSH) to the new isolated VDE SSH setup.
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+
+echo ""
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║          VDE SSH Migration                                  ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+
+# Step 1: Backup user's SSH config
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 1: Backing up ~/.ssh/config"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Capture timestamp once for all backup operations
+timestamp=$(date +%Y%m%d_%H%M%S)
+
+backup_path="$HOME/.ssh/config.backup.$timestamp"
+known_hosts_backup_path="$HOME/.ssh/known_hosts.backup.$timestamp"
+if [ -f "$HOME/.ssh/config" ]; then
+    cp "$HOME/.ssh/config" "$backup_path"
+    log_success "✓ Backed up to: $backup_path"
+else
+    log_info "No ~/.ssh/config file found (nothing to backup)"
+    backup_path=""
+fi
+
+echo ""
+
+# Step 2: Create VDE SSH directory
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 2: Creating ~/.ssh/vde/ directory"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+mkdir -p "$VDE_SSH_DIR"
+chmod 700 "$VDE_SSH_DIR"
+log_success "✓ Created: $VDE_SSH_DIR"
+
+echo ""
+
+# Step 3: Extract VDE entries from user's config
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 3: Migrating VDE SSH entries"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+entries_migrated=false
+if [ -f "$HOME/.ssh/config" ]; then
+    # Extract entries that match VDE pattern (VM names ending in -dev)
+    awk '
+        /^Host / {
+            if ($2 ~ /-dev$/) {
+                in_vde_entry = 1
+                print
+                next
+            } else {
+                in_vde_entry = 0
+            }
+        }
+        in_vde_entry { print }
+    ' "$HOME/.ssh/config" > "$VDE_SSH_DIR/config"
+
+    # Check if we got any entries
+    if grep -q "^Host " "$VDE_SSH_DIR/config" 2>/dev/null; then
+        log_success "✓ Migrated VM entries to VDE config"
+        entries_migrated=true
+    else
+        # Empty config, remove it
+        rm -f "$VDE_SSH_DIR/config"
+        log_info "No VDE entries found in user config"
+    fi
+else
+    log_info "No ~/.ssh/config found"
+fi
+
+# Create empty config if it doesn't exist
+if [ ! -f "$VDE_SSH_CONFIG" ]; then
+    touch "$VDE_SSH_CONFIG"
+    chmod 600 "$VDE_SSH_CONFIG"
+fi
+
+echo ""
+
+# Step 4: Generate VDE key if needed
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 4: Setting up VDE SSH key"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+if [ ! -f "$VDE_SSH_IDENTITY" ]; then
+    log_info "Generating VDE-specific SSH key..."
+    ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -C "vde@$(hostname)" 2>/dev/null
+    chmod 600 "$VDE_SSH_IDENTITY"
+    chmod 644 "$VDE_SSH_IDENTITY_PUB"
+    log_success "✓ Generated: $VDE_SSH_IDENTITY"
+else
+    log_success "✓ VDE key already exists"
+    # Ensure permissions are correct
+    chmod 600 "$VDE_SSH_IDENTITY"
+    chmod 644 "$VDE_SSH_IDENTITY_PUB"
+fi
+
+echo ""
+
+# Step 5: Load VDE key into agent
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 5: Loading VDE key into SSH agent"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+ensure_ssh_agent
+if ssh-add "$VDE_SSH_IDENTITY" 2>/dev/null; then
+    log_success "✓ VDE key loaded into agent"
+else
+    log_warning "⚠ Could not load key (may need manual: ssh-add $VDE_SSH_IDENTITY)"
+fi
+
+echo ""
+
+# Step 6: Remove VDE entries from user's config
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 6: Cleaning up user's SSH config"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+if [ "$entries_migrated" = true ] && [ -f "$HOME/.ssh/config" ]; then
+    awk '
+        /^Host / {
+            if ($2 ~ /-dev$/) {
+                skip = 1
+                next
+            } else {
+                skip = 0
+            }
+        }
+        !skip { print }
+    ' "$HOME/.ssh/config" > "$HOME/.ssh/config.tmp"
+    mv "$HOME/.ssh/config.tmp" "$HOME/.ssh/config"
+    log_success "✓ Removed VDE entries from ~/.ssh/config"
+else
+    log_info "No cleanup needed"
+fi
+
+echo ""
+
+# Step 7: Migrate known_hosts
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Step 7: Migrating known_hosts entries"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+if [ -f "$HOME/.ssh/known_hosts" ]; then
+    # Backup user known_hosts
+    cp "$HOME/.ssh/known_hosts" "$known_hosts_backup_path" 2>/dev/null || true
+
+    # Extract localhost entries with VDE ports (2200-2299, 2400-2499)
+    awk '
+        /^\[localhost\]:22[0-9][0-9]/ ||
+        /^\[::1\]:22[0-9][0-9]/ ||
+        /^localhost:22[0-9][0-9]/ {
+            print
+        }
+    ' "$HOME/.ssh/known_hosts" > "$VDE_SSH_DIR/known_hosts" 2>/dev/null || true
+
+    # Remove from user's known_hosts
+    grep -v -E '^\[localhost\]:22[0-9]{2}|^\[::1\]:22[0-9]{2}|^localhost:22[0-9]{2}' "$HOME/.ssh/known_hosts" > "$HOME/.ssh/known_hosts.tmp" 2>/dev/null || true
+    if [ -s "$HOME/.ssh/known_hosts.tmp" ]; then
+        mv "$HOME/.ssh/known_hosts.tmp" "$HOME/.ssh/known_hosts"
+        log_success "✓ Migrated VM known_hosts entries"
+    else
+        # Would be empty, keep original
+        rm -f "$HOME/.ssh/known_hosts.tmp"
+        log_info "No known_hosts entries to migrate"
+    fi
+else
+    log_info "No ~/.ssh/known_hosts found"
+fi
+
+# Ensure VDE known_hosts exists with correct permissions
+touch "$VDE_SSH_KNOWN_HOSTS"
+chmod 600 "$VDE_SSH_KNOWN_HOSTS"
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Migration Complete!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "VDE SSH is now isolated at: ~/.ssh/vde/"
+echo ""
+echo "What changed:"
+echo "  • VDE SSH config: ~/.ssh/vde/config"
+echo "  • VDE SSH key: ~/.ssh/vde/id_ed25519"
+echo "  • VDE known_hosts: ~/.ssh/vde/known_hosts"
+echo ""
+echo "Your personal SSH configuration is untouched."
+echo "Backups created:"
+if [ -n "$backup_path" ] && [ -f "$backup_path" ]; then
+    echo "  • $backup_path"
+fi
+if [ -f "$known_hosts_backup_path" ]; then
+    echo "  • $known_hosts_backup_path"
+fi
+echo ""
+echo "Next steps:"
+echo "  • Rebuild VM images with new VDE key:"
+echo "    ./scripts/create-virtual-for <vm-name>"
+echo "  • Test connection: vde_ssh <vm>-dev"
+echo ""

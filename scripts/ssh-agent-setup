@@ -66,6 +66,24 @@ if [[ "$ACTION" == "status" ]]; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
+    # VDE SSH Isolation info
+    echo "VDE SSH Isolation:"
+    echo "  Directory: $VDE_SSH_DIR"
+    if [[ -f "$VDE_SSH_IDENTITY" ]]; then
+        echo "  ✓ VDE SSH key exists"
+    else
+        echo "  ⚠ VDE SSH key not found (run --init)"
+    fi
+    if [[ -f "$VDE_SSH_CONFIG" ]]; then
+        local vm_count
+        vm_count=$(grep -c "^Host " "$VDE_SSH_CONFIG" 2>/dev/null || echo "0")
+        echo "  ✓ VDE SSH config exists ($vm_count VM entries)"
+    else
+        echo "  ⚠ VDE SSH config not found"
+    fi
+
+    echo ""
+
     # SSH Agent Status
     if ssh_agent_is_running; then
         log_success "SSH agent is running"
@@ -74,24 +92,6 @@ if [[ "$ACTION" == "status" ]]; then
     else
         log_warning "SSH agent is NOT running"
         echo "  Run: $0 --init  to set up SSH environment"
-    fi
-
-    echo ""
-
-    # Available SSH Keys
-    echo "Available SSH keys:"
-    local -a keys
-    keys=("${(@f)$(detect_ssh_keys)}")
-
-    if [[ ${#keys[@]} -eq 0 ]]; then
-        echo "  (none found)"
-        echo "  Run: $0 --init  to generate keys and set up SSH"
-    elif [[ ${#keys[@]} -eq 1 ]]; then
-        echo "  ✓ ${keys[1]:t}"
-    else
-        for key in "${keys[@]}"; do
-            echo "  ✓ ${key:t}"
-        done
     fi
 
     echo ""
@@ -105,7 +105,7 @@ if [[ "$ACTION" == "status" ]]; then
             ssh-add -l 2>/dev/null
         else
             echo "  (none loaded)"
-            echo "  Run: $0 --start  to load keys into agent"
+            echo "  Run: $0 --start  to load VDE key into agent"
         fi
     else
         echo "Keys in agent: (agent not running)"
@@ -113,21 +113,12 @@ if [[ "$ACTION" == "status" ]]; then
 
     echo ""
 
-    # Public keys in VDE directory
-    echo "Public keys in VDE:"
-    if [[ -d "$VDE_ROOT_DIR/public-ssh-keys" ]]; then
-        local pubkey_count
-        pubkey_count=$(ls -1 "$VDE_ROOT_DIR/public-ssh-keys"/*.pub 2>/dev/null | wc -l | tr -d ' ')
-        if [[ $pubkey_count -gt 0 ]]; then
-            ls -1 "$VDE_ROOT_DIR/public-ssh-keys"/*.pub 2>/dev/null | while read -r key; do
-                echo "  ✓ ${key:t}"
-            done
-        else
-            echo "  (none)"
-            echo "  Run: $0 --init  to sync keys to VDE"
-        fi
+    # Public keys in build context
+    echo "Public key in build context:"
+    if [[ -f "$VDE_ROOT_DIR/public-ssh-keys/vde_id_ed25519.pub" ]]; then
+        echo "  ✓ vde_id_ed25519.pub"
     else
-        echo "  (public-ssh-keys directory not found)"
+        echo "  (none - run --init to sync)"
     fi
 
     echo ""
@@ -144,26 +135,18 @@ if [[ "$ACTION" == "init" ]]; then
     echo "╚════════════════════════════════════════════════════════════╝"
     echo ""
 
-    # Step 1: Check for existing keys
+    # Step 1: Ensure VDE SSH environment
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "Step 1: Checking SSH keys"
+    echo "Step 1: Setting up VDE SSH environment"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
-    local -a keys
-    keys=("${(@f)$(detect_ssh_keys)}")
-
-    if [[ ${#keys[@]} -eq 0 ]]; then
-        log_warning "No SSH keys found"
-        echo "  Generating new ed25519 key..."
-        ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -C "$(whoami)@$(hostname)-vde"
-        log_success "✓ SSH key generated: ~/.ssh/id_ed25519"
-        keys=("$HOME/.ssh/id_ed25519")
+    if ensure_vde_ssh_environment; then
+        log_success "✓ VDE SSH directory: $VDE_SSH_DIR"
+        log_success "✓ VDE SSH key: $VDE_SSH_IDENTITY"
     else
-        log_success "✓ Found ${#keys[@]} SSH key(s)"
-        for key in "${keys[@]}"; do
-            echo "  • ${key:t}"
-        done
+        log_error "✗ Failed to set up VDE SSH environment"
+        exit 1
     fi
 
     echo ""
@@ -186,41 +169,39 @@ if [[ "$ACTION" == "init" ]]; then
 
     echo ""
 
-    # Step 3: Load keys into agent
+    # Step 3: Load VDE key into agent
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "Step 3: Loading keys into SSH agent"
+    echo "Step 3: Loading VDE key into SSH agent"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
     local keys_loaded=0
-    for key in "${keys[@]}"; do
-        if ssh-add "$key" 2>/dev/null; then
-            log_success "✓ Loaded: ${key:t}"
-            keys_loaded=$((keys_loaded + 1))
-        else
-            log_warning "⚠ Could not load: ${key:t} (may require passphrase)"
-        fi
-    done
+    if ssh-add "$VDE_SSH_IDENTITY" 2>/dev/null; then
+        log_success "✓ Loaded: VDE SSH key"
+        keys_loaded=1
+    else
+        log_warning "⚠ Could not load VDE key (may require passphrase)"
+        echo "  Load manually with: ssh-add $VDE_SSH_IDENTITY"
+    fi
 
     if [[ $keys_loaded -gt 0 ]]; then
-        log_success "✓ $keys_loaded key(s) loaded into agent"
+        log_success "✓ VDE key loaded into agent"
     else
-        log_warning "⚠ No keys were loaded (keys may have passphrases)"
-        echo "  Load manually with: ssh-add ~/.ssh/id_ed25519"
+        log_warning "⚠ No keys were loaded"
     fi
 
     echo ""
 
-    # Step 4: Sync public keys to VDE
+    # Step 4: Sync VDE public key to build context
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "Step 4: Syncing public keys to VDE"
+    echo "Step 4: Syncing VDE public key to build context"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
     if sync_ssh_keys_to_vde; then
-        log_success "✓ Public keys synced to public-ssh-keys/"
+        log_success "✓ VDE public key synced to public-ssh-keys/"
     else
-        log_error "✗ Failed to sync keys"
+        log_error "✗ Failed to sync key"
         exit 1
     fi
 
@@ -228,14 +209,14 @@ if [[ "$ACTION" == "init" ]]; then
 
     # Step 5: Generate SSH config
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "Step 5: Generating SSH config"
+    echo "Step 5: Generating VDE SSH config"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
     if generate_vm_ssh_config; then
-        log_success "✓ SSH config updated"
+        log_success "✓ VDE SSH config updated"
     else
-        log_warning "⚠ SSH config generation had issues"
+        log_warning "⚠ VDE SSH config generation had issues"
     fi
 
     echo ""
@@ -243,23 +224,24 @@ if [[ "$ACTION" == "init" ]]; then
     echo "Setup Complete!"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
-    echo "Your SSH environment is ready for VDE!"
+    echo "VDE SSH is now isolated at: ~/.ssh/vde/"
     echo ""
     echo "Next steps:"
     echo "  • Create a VM: ./scripts/create-virtual-for python"
     echo "  • Start a VM:  ./scripts/start-virtual python"
-    echo "  • Connect:      ssh python-dev"
+    echo "  • Connect:      ssh -F ~/.ssh/vde/config python-dev"
+    echo "                  Or use: vde_ssh python-dev"
     echo ""
 
     exit 0
 fi
 
 # ==============================================================================
-# Start Mode -- Just start agent and load keys
+# Start Mode -- Just start agent and load VDE key
 # ==============================================================================
 if [[ "$ACTION" == "start" ]]; then
     echo ""
-    echo "Starting SSH agent and loading keys..."
+    echo "Starting SSH agent and loading VDE key..."
     echo ""
 
     # Start agent if not running
@@ -272,22 +254,18 @@ if [[ "$ACTION" == "start" ]]; then
         echo "✓ SSH agent started"
     fi
 
-    # Load keys
-    local -a keys
-    keys=("${(@f)$(detect_ssh_keys)}")
-
-    if [[ ${#keys[@]} -eq 0 ]]; then
-        echo "⚠ No SSH keys found. Run: $0 --init"
+    # Ensure VDE SSH environment exists
+    if [[ ! -f "$VDE_SSH_IDENTITY" ]]; then
+        echo "⚠ VDE SSH key not found. Run: $0 --init"
         exit 1
     fi
 
+    # Load VDE key
     local keys_loaded=0
-    for key in "${keys[@]}"; do
-        if ssh-add "$key" 2>/dev/null; then
-            echo "✓ Loaded: ${key:t}"
-            keys_loaded=$((keys_loaded + 1))
-        fi
-    done
+    if ssh-add "$VDE_SSH_IDENTITY" 2>/dev/null; then
+        echo "✓ Loaded: VDE SSH key"
+        keys_loaded=1
+    fi
 
     echo ""
     echo "$keys_loaded key(s) loaded into SSH agent"
