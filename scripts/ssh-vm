@@ -18,16 +18,20 @@
 #===============================================================================
 
 # Determine VDE root directory
-VDE_ROOT_DIR="${0:a:h}"
+# If VDE_ROOT_DIR is already set (by the vde command), use it
+# Otherwise, derive it from the script location
+if [ -z "$VDE_ROOT_DIR" ]; then
+    VDE_ROOT_DIR="${0:a:h:h}"
+fi
 export VDE_ROOT_DIR
 
 # Source core libraries
-source "$VDE_ROOT_DIR/lib/vde-shell-compat" &>/dev/null
-source "$VDE_ROOT_DIR/lib/vde-constants" &>/dev/null
-source "$VDE_ROOT_DIR/lib/vde-errors" &>/dev/null
-source "$VDE_ROOT_DIR/lib/vde-log" &>/dev/null
-source "$VDE_ROOT_DIR/lib/vde-core" &>/dev/null
-source "$VDE_ROOT_DIR/lib/vm-common" &>/dev/null
+source "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" &>/dev/null
+source "$VDE_ROOT_DIR/scripts/lib/vde-constants" &>/dev/null
+source "$VDE_ROOT_DIR/scripts/lib/vde-errors" &>/dev/null
+source "$VDE_ROOT_DIR/scripts/lib/vde-log" &>/dev/null
+source "$VDE_ROOT_DIR/scripts/lib/vde-core" &>/dev/null
+source "$VDE_ROOT_DIR/scripts/lib/vm-common" &>/dev/null
 
 # Initialize logging
 vde_log_init 2>/dev/null || true
@@ -110,6 +114,9 @@ if [ $? -ne 0 ]; then
     vde_error_simple "Failed to initialize VDE SSH environment."
     exit $VDE_ERR_GENERAL
 fi
+
+# Load VM types (required for name resolution and running state check)
+load_vm_types
 
 # Resolve VM name (handle aliases)
 RESOLVED_NAME=$(resolve_vm_name "$VM_NAME")
