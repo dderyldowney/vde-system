@@ -1,11 +1,12 @@
 # language: en
-@user-guide-first-vm
+@user-guide-internal
 Feature: VM Lifecycle Management
   As a developer
   I want to create, start, stop, and manage development VMs
   So that I can work in isolated development environments
 
   @requires-docker-host
+  @user-guide-first-vm
   Scenario: Create a new language VM
     Given the VM "zig" is defined as a language VM with install command "apt-get install -y zig"
     And no VM configuration exists for "zig"
@@ -17,6 +18,7 @@ Feature: VM Lifecycle Management
     And logs directory should exist at "logs/zig"
 
   @requires-docker-host
+  @user-guide-cluster
   Scenario: Create a new service VM with custom port
     Given the VM "rabbitmq" is defined as a service VM with port "5672"
     And no VM configuration exists for "rabbitmq"
@@ -26,6 +28,7 @@ Feature: VM Lifecycle Management
     And data directory should exist at "data/rabbitmq"
 
   @requires-docker-host
+  @user-guide-first-vm
   Scenario: Start a created VM
     Given VM "python" has been created
     And VM "python" is not running
@@ -34,6 +37,7 @@ Feature: VM Lifecycle Management
     And SSH should be accessible on allocated port
 
   @requires-docker-host
+  @user-guide-cluster
   Scenario: Start multiple VMs
     Given VM "python" has been created
     And VM "rust" has been created
@@ -44,6 +48,7 @@ Feature: VM Lifecycle Management
     And each VM should have a unique SSH port
 
   @requires-docker-host
+  @user-guide-daily-workflow
   Scenario: Start all VMs
     Given VM "python" has been created
     And VM "rust" has been created
@@ -53,6 +58,7 @@ Feature: VM Lifecycle Management
     Then all created VMs should be running
 
   @requires-docker-host
+  @user-guide-starting-stopping
   Scenario: Stop a running VM
     Given VM "python" is running
     When I run "shutdown-virtual python"
@@ -60,6 +66,7 @@ Feature: VM Lifecycle Management
     But VM configuration should still exist
 
   @requires-docker-host
+  @user-guide-starting-stopping
   Scenario: Stop all running VMs
     Given VM "python" is running
     And VM "rust" is running
@@ -67,6 +74,7 @@ Feature: VM Lifecycle Management
     Then no VMs should be running
 
   @requires-docker-host
+  @user-guide-starting-stopping
   Scenario: Restart a VM
     Given VM "python" is running
     When I run "shutdown-virtual python && start-virtual python"
@@ -74,6 +82,7 @@ Feature: VM Lifecycle Management
     And the VM should have a fresh container instance
 
   @requires-docker-host
+  @user-guide-troubleshooting
   Scenario: Rebuild a VM with --rebuild flag
     Given VM "python" is running
     When I run "start-virtual python --rebuild"
@@ -92,6 +101,7 @@ Feature: VM Lifecycle Management
     When I run "create-virtual-for python"
     Then the command should fail with error "already exists"
 
+  @user-guide-understanding
   Scenario: List all predefined VM types
     Given VM types are loaded
     When I run "list-vms"
@@ -99,18 +109,21 @@ Feature: VM Lifecycle Management
     And all service VMs should be listed
     And aliases should be shown
 
+  @user-guide-understanding
   Scenario: List only language VMs
     Given VM types are loaded
     When I run "list-vms --lang"
     Then only language VMs should be listed
     And service VMs should not be listed
 
+  @user-guide-understanding
   Scenario: List only service VMs
     Given VM types are loaded
     When I run "list-vms --svc"
     Then only service VMs should be listed
     And language VMs should not be listed
 
+  @user-guide-understanding
   Scenario: Filter VMs by name
     Given VM types are loaded
     When I run "list-vms python"
