@@ -4,6 +4,7 @@ BDD Step definitions for common scenarios (cache, templates, docker, etc.).
 
 import sys
 import os
+import subprocess
 import time
 
 # Import shared configuration
@@ -22,7 +23,6 @@ from pathlib import Path
 
 def run_vde_command(command, timeout=120):
     """Run a VDE script and return the result."""
-    import subprocess
     env = os.environ.copy()
     result = subprocess.run(
         f"cd {VDE_ROOT} && {command}",
@@ -47,8 +47,18 @@ def step_vm_conf_modified(context):
 
 @given('VM types cache exists')
 def step_cache_exists(context):
-    """Cache file exists."""
-    context.cache_exists = True
+    """Cache file exists - create actual cache file for testing."""
+    # VDE uses .cache directory (not .vde/cache)
+    cache_dir = VDE_ROOT / ".cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_path = cache_dir / "vm-types.cache"
+
+    # If cache doesn't exist, run VDE command to create it
+    if not cache_path.exists():
+        result = run_vde_command("./scripts/list-vms", timeout=30)
+        context.cache_exists = (result.returncode == 0) and cache_path.exists()
+    else:
+        context.cache_exists = True
 
 
 @given('vm-types.conf has not been modified since cache')
@@ -59,8 +69,22 @@ def step_vm_conf_unchanged(context):
 
 @given('vm-types.conf has been modified after cache')
 def step_vm_conf_modified_after(context):
-    """VM config modified after cache was created."""
-    context.vm_conf_modified_after = True
+    """VM config modified after cache was created - actually modify the file."""
+    import time
+    conf_path = VDE_ROOT / "scripts/data/vm-types.conf"
+    # Actually touch the config file to make it newer than cache
+    if conf_path.exists():
+        # Get old mtime
+        old_mtime = conf_path.stat().st_mtime
+        # Set modification time to now (making it newer than cache)
+        conf_path.touch()
+        # Ensure mtime is different (handle filesystem mtime granularity)
+        time.sleep(1.1)
+        new_mtime = conf_path.stat().st_mtime
+        assert new_mtime != old_mtime, "Config file mtime should have changed after touch"
+        context.vm_conf_modified_after = True
+    else:
+        raise AssertionError(f"Config file not found at {conf_path}")
 
 
 @given('VM types are loaded for the first time')
@@ -290,42 +314,110 @@ def step_data_from_cache_verify(context):
 @then('vm-types.conf should not be reparsed')
 def step_no_reparse(context):
     """Verify config was not reparsed."""
-    # Pass if vm_conf_modified is False or was never set (not modified)
-    # Fail only if vm_conf_modified is explicitly True
-    assert not getattr(context, 'vm_conf_modified', False), \
-        "Config was modified (should not be reparsed)"
+    # Verify cache is newer than config (not reparsed)
+    conf_path = Path(VDE_ROOT) / "scripts/data/vm-types.conf"
+    cache_path = Path(VDE_ROOT) / ".cache/vm-types.cache"
+
+    if not cache_path.exists():
+        # No cache means first load, config was loaded (not reparsed)
+        assert conf_path.exists(), "vm-types.conf should exist"
+        return
+
+    # Check modification times - cache should be newer or same age as config
+    conf_mtime = conf_path.stat().st_mtime
+    cache_mtime = cache_path.stat().st_mtime
+    assert cache_mtime >= conf_mtime, \
+        f"Cache is older than config (cache: {cache_mtime}, conf: {conf_mtime}) - may have been reparsed"
 
 
 @then('cache should be invalidated')
 def step_cache_invalidated(context):
-    """Verify cache was invalidated."""
-    assert (getattr(context, 'vm_conf_modified_after', False) or
-           getattr(context, 'cache_bypassed', False) or
-           getattr(context, 'cache_timeout_elapsed', False)), "Cache was not invalidated"
+    """Verify cache was invalidated and regenerated."""
+    conf_path = Path(VDE_ROOT) / "scripts/data/vm-types.conf"
+    cache_path = Path(VDE_ROOT) / ".cache/vm-types.cache"
+
+    # The test scenario is:
+    # 1. Cache exists (created in given step)
+    # 2. Config was modified (touched to be newer)
+    # 3. VM types are loaded (should regenerate cache)
+    #
+    # So we verify: cache should now be newer than config (was regenerated)
+    # If cache doesn't exist, that's also okay (first load scenario)
+    if not cache_path.exists():
+        return  # Cache invalidated (doesn't exist)
+
+    if conf_path.exists() and hasattr(context, 'vm_conf_modified_after') and context.vm_conf_modified_after:
+        # Config was modified after cache was created
+        # Check if cache was regenerated (is now newer than config)
+        conf_mtime = conf_path.stat().st_mtime
+        cache_mtime = cache_path.stat().st_mtime
+        # Cache should be newer (regenerated after config modification)
+        assert cache_mtime >= conf_mtime, \
+            f"Cache should be regenerated after config modification (cache: {cache_mtime}, conf: {conf_mtime})"
+        return  # Cache was invalidated and regenerated
+
+    # Check if --no-cache was used
+    if hasattr(context, 'cache_bypassed') and context.cache_bypassed:
+        return  # Cache bypassed via --no-cache
+
+    raise AssertionError("Cache was not invalidated (exists and is newer than config)")
 
 
 @then('vm-types.conf should be reparsed')
 def step_vm_reparsed(context):
     """Verify config was reparsed."""
-    assert (getattr(context, 'vm_conf_modified_after', False) or
-           getattr(context, 'cache_bypassed', False) or
-           getattr(context, 'cache_timeout_elapsed', False)), "Config was not reparsed"
+    conf_path = Path(VDE_ROOT) / "scripts/data/vm-types.conf"
+    cache_path = Path(VDE_ROOT) / ".cache/vm-types.cache"
+
+    # Config was reparsed if:
+    # 1. --no-cache was used (highest priority check), OR
+    # 2. Cache exists and is newer than config, OR
+    # 3. Output shows reload occurred
+
+    # Check if --no-cache was explicitly used FIRST
+    if hasattr(context, 'cache_bypassed') and context.cache_bypassed:
+        return  # Config was reparsed (cache bypassed)
+
+    # Then check cache modification time
+    if cache_path.exists() and conf_path.exists():
+        cache_mtime = cache_path.stat().st_mtime
+        conf_mtime = conf_path.stat().st_mtime
+        if cache_mtime >= conf_mtime:
+            return  # Config was reparsed (cache updated)
+
+    # Check output for reload indicators
+    if hasattr(context, 'last_output') and context.last_output:
+        output_lower = context.last_output.lower()
+        if 'loading' in output_lower or 'reload' in output_lower:
+            return  # Config was reparsed (output indicates reload)
+
+    raise AssertionError("Config was not reparsed (cache not updated, no bypass, no reload indicator)")
 
 
 @then('cache file should be updated')
 def step_cache_updated(context):
     """Verify cache was updated."""
-    # Check for any cache update flag (vm_types_loaded, cache_updated, port_registry_verified, etc.)
-    assert (getattr(context, 'vm_types_loaded', False) or
-            getattr(context, 'cache_updated', False) or
-            getattr(context, 'port_registry_verified', False) or
-            getattr(context, 'registry_rebuilt', False))
+    # VDE uses .cache directory (not .vde/cache)
+    cache_path = Path(VDE_ROOT) / ".cache/vm-types.cache"
+
+    # Check if VM types were successfully loaded (which would create/update cache)
+    if hasattr(context, 'vm_types_loaded') and context.vm_types_loaded:
+        # VDE command succeeded - cache should exist
+        assert cache_path.exists(), f"Cache file should exist at {cache_path} after successful VM types load"
+        # Verify cache is not empty
+        cache_content = cache_path.read_text()
+        assert len(cache_content.strip()) > 0, "Cache file should not be empty"
+    else:
+        # VM types not loaded or load failed - this is a test scenario issue
+        # For Docker-free tests, verify the VDE command was at least attempted
+        assert hasattr(context, 'last_exit_code'), "VM types load should have been attempted"
 
 
 @then('cache should be bypassed')
 def step_cache_bypassed_verify(context):
     """Verify cache was bypassed."""
-    assert getattr(context, 'cache_bypassed', False)
+    assert hasattr(context, 'cache_bypassed'), "cache_bypassed flag was not set by previous step"
+    assert context.cache_bypassed is True, "Cache should have been bypassed"
 
 
 # =============================================================================
@@ -335,43 +427,96 @@ def step_cache_bypassed_verify(context):
 @then('rendered docker-compose.yml should contain SSH port mapping')
 def step_template_ssh_port(context):
     """Verify SSH port in rendered template."""
-    assert getattr(context, 'template_rendered', False)
+    compose_path = Path(VDE_ROOT) / "docker-compose.yml"
+    assert compose_path.exists(), f"docker-compose.yml should exist at {compose_path}"
+
+    content = compose_path.read_text()
+    # Look for SSH port mapping (typically 22:XXXX or similar)
+    has_ssh_port = False
+    for line in content.split('\n'):
+        if '- 22:' in line or '"22":' in line or "'22':" in line:
+            has_ssh_port = True
+            break
+    assert has_ssh_port, "docker-compose.yml should contain SSH port mapping (e.g., '22:2201')"
 
 
 @then('rendered docker-compose.yml should contain service port mapping "{port}"')
 def step_template_svc_port(context, port):
     """Verify service port in rendered template."""
-    assert getattr(context, 'template_rendered', False)
+    compose_path = Path(VDE_ROOT) / "docker-compose.yml"
+    assert compose_path.exists(), f"docker-compose.yml should exist at {compose_path}"
+
+    content = compose_path.read_text()
+    # Look for the specified service port mapping
+    has_port = False
+    for line in content.split('\n'):
+        if f'- {port}:' in line or f'"{port}":' in line or f"'{port}':" in line:
+            has_port = True
+            break
+    assert has_port, f"docker-compose.yml should contain service port mapping for {port}"
 
 
 @then('SSH agent forwarding should be configured')
 def step_template_agent_forwarding(context):
     """Verify SSH agent forwarding in template."""
-    assert getattr(context, 'template_rendered', False)
+    compose_path = Path(VDE_ROOT) / "docker-compose.yml"
+    assert compose_path.exists(), f"docker-compose.yml should exist at {compose_path}"
+
+    content = compose_path.read_text()
+    # Look for SSH agent socket volume mount
+    has_agent_forwarding = False
+    for line in content.split('\n'):
+        if '/run/host-services/ssh-auth.sock' in line or 'ssh-auth.sock' in line:
+            has_agent_forwarding = True
+            break
+    assert has_agent_forwarding, "docker-compose.yml should contain SSH agent forwarding configuration"
 
 
 @then('network should be configured to join dev-net')
 def step_template_network(context):
     """Verify network configuration."""
-    assert getattr(context, 'template_rendered', False)
+    compose_path = Path(VDE_ROOT) / "docker-compose.yml"
+    assert compose_path.exists(), f"docker-compose.yml should exist at {compose_path}"
+
+    content = compose_path.read_text()
+    # Look for dev-net network configuration
+    has_devnet = 'dev-net' in content or 'networks:' in content
+    assert has_devnet, "docker-compose.yml should contain network configuration for dev-net"
 
 
 @then('volume mounts should be configured')
 def step_template_volumes(context):
     """Verify volume mounts in template."""
-    assert getattr(context, 'template_rendered', False)
+    compose_path = Path(VDE_ROOT) / "docker-compose.yml"
+    assert compose_path.exists(), f"docker-compose.yml should exist at {compose_path}"
+
+    content = compose_path.read_text()
+    # Look for volumes section
+    has_volumes = 'volumes:' in content
+    assert has_volumes, "docker-compose.yml should contain volume mounts configuration"
 
 
 @then('variables should be substituted correctly')
 def step_vars_substituted_verify(context):
     """Verify variable substitution."""
-    assert getattr(context, 'vars_substituted', False)
+    assert hasattr(context, 'vars_substituted'), "vars_substituted flag was not set by previous step"
+    assert context.vars_substituted is True, "Variables should have been substituted"
+
+    # If template_vars were set, verify they appear in output
+    if hasattr(context, 'template_vars') and context.template_vars:
+        if hasattr(context, 'last_output') and context.last_output:
+            # Check if some template values appear in output
+            for key, value in context.template_vars.items():
+                if str(value) in context.last_output:
+                    return  # Found variable substitution in output
+    # If no output check available, just verify the flag was set
 
 
 @then('special characters should be escaped')
 def step_special_escaped_verify(context):
     """Verify special chars escaped."""
-    assert getattr(context, 'special_escaped', False)
+    assert hasattr(context, 'special_escaped'), "special_escaped flag was not set by previous step"
+    assert context.special_escaped is True, "Special characters should have been escaped"
 
 
 # =============================================================================
@@ -395,8 +540,12 @@ def step_works_bash(context):
 @then('special characters should not cause collision')
 def step_no_collision(context):
     """Verify no key collision."""
-    assert (getattr(context, 'special_key_used', False) or
-           getattr(context, 'special_escaped', False)), "Special key was not used or escaped"
+    # Require that either special_key_used or special_escaped was explicitly set
+    has_special_key = hasattr(context, 'special_key_used') and context.special_key_used
+    has_escaped = hasattr(context, 'special_escaped') and context.special_escaped
+
+    assert has_special_key or has_escaped, \
+        "Special key should have been used or escaped (flags not set by previous steps)"
 
 
 @then('operation should use file-based storage')
@@ -414,7 +563,9 @@ def step_file_storage(context):
 @then('container should be built successfully')
 def step_container_built(context):
     """Verify container built."""
-    assert getattr(context, 'docker_command', '') in ['build', 'up']
+    assert hasattr(context, 'docker_command'), "docker_command flag was not set by previous step"
+    assert context.docker_command in ['build', 'up'], \
+        f"Expected 'build' or 'up' command, got '{context.docker_command}'"
 
 
 @then('container should be started')
@@ -430,10 +581,9 @@ def step_container_started(context):
         is_running = vm_name in result.stdout
         assert is_running, f"Container '{vm_name}' should be running"
     else:
-        # Fallback to context check if no vm_name set
-        is_up = getattr(context, 'docker_command', '') == 'up'
-        is_running = getattr(context, 'docker_vm_running', False)
-        assert is_up or is_running, "Container should be started"
+        # No vm_name set - require explicit docker_command flag
+        assert hasattr(context, 'docker_command'), "docker_command flag was not set by previous step"
+        assert context.docker_command == 'up', f"Expected 'up' command, got '{context.docker_command}'"
 
 
 @then('container should be stopped')
@@ -449,42 +599,55 @@ def step_container_stopped(context):
         is_running = vm_name in result.stdout
         assert not is_running, f"Container '{vm_name}' should be stopped"
     else:
-        # Fallback to context check if no vm_name set
-        is_stop = getattr(context, 'docker_command', '') == 'stop'
-        assert is_stop, "Container should be stopped"
+        # No vm_name set - require explicit docker_command flag
+        assert hasattr(context, 'docker_command'), "docker_command flag was not set by previous step"
+        assert context.docker_command == 'stop', f"Expected 'stop' command, got '{context.docker_command}'"
 
 
 @then('build should use cache')
 def step_uses_cache(context):
     """Verify build cache used."""
-    # Check that --no-cache was NOT used
-    no_cache = getattr(context, 'docker_no_cache', False)
-    assert not no_cache, "Build should use cache (--no-cache should not be set)"
+    # Check that --no-cache was NOT used (or docker_no_cache is explicitly False)
+    if hasattr(context, 'docker_no_cache'):
+        assert not context.docker_no_cache, "Build should use cache (--no-cache should not be set)"
+    # If docker_no_cache is not set, we assume cache is used (default behavior)
 
 
 @then('build should NOT use cache')
 def step_no_cache_verify(context):
     """Verify cache not used."""
-    assert getattr(context, 'docker_no_cache', False)
+    assert hasattr(context, 'docker_no_cache'), "docker_no_cache flag was not set by previous step"
+    assert context.docker_no_cache is True, "Build should NOT use cache (--no-cache should be set)"
 
 
 @then('error should be reported')
 def step_error_reported(context):
     """Verify error reported."""
-    assert getattr(context, 'port_conflict', False) or \
-           getattr(context, 'network_error', False)
+    # Check for actual error in output or explicit error flags
+    has_port_conflict = hasattr(context, 'port_conflict') and context.port_conflict
+    has_network_error = hasattr(context, 'network_error') and context.network_error
+    has_error_output = hasattr(context, 'last_error') and context.last_error
+
+    assert has_port_conflict or has_network_error or has_error_output, \
+        "No error was reported (no error flags set, no error output found)"
 
 
 @then('operation should be retried')
 def step_operation_retried(context):
     """Verify operation retried."""
-    assert getattr(context, 'build_retried', False)
+    assert hasattr(context, 'build_retried'), "build_retried flag was not set by previous step"
+    assert context.build_retried is True, "Operation should have been retried"
 
 
 @then('operation should succeed on retry')
 def step_retry_success(context):
     """Verify retry succeeded."""
-    assert getattr(context, 'build_retried', False)
+    assert hasattr(context, 'build_retried'), "build_retried flag was not set by previous step"
+    assert context.build_retried is True, "Operation should have been retried and succeeded"
+
+    # Also check that no error occurred
+    if hasattr(context, 'last_exit_code'):
+        assert context.last_exit_code == 0, f"Retry failed with exit code {context.last_exit_code}"
 
 
 # =============================================================================
@@ -499,21 +662,39 @@ def step_operation_succeed(context):
         assert context.last_result == 0, f"Operation failed with return code {context.last_result}"
     elif hasattr(context, 'operation_success'):
         assert context.operation_success, "Operation should have succeeded"
-    else:
-        # No explicit result tracked - check that no error was set
-        assert not getattr(context, 'error_occurred', False), "An error occurred during operation"
+    elif hasattr(context, 'error_occurred'):
+        assert not context.error_occurred, "An error occurred during operation"
+    # If no success indicators are set, the test passes (operation succeeded by default)
 
 
 @then('the operation should fail')
 def step_operation_fail(context):
     """Verify operation failed."""
-    # In test context, this is verified by specific error conditions
-    assert getattr(context, 'port_conflict', False) or \
-           getattr(context, 'network_error', False)
+    # Check for actual error conditions
+    has_port_conflict = hasattr(context, 'port_conflict') and context.port_conflict
+    has_network_error = hasattr(context, 'network_error') and context.network_error
+    has_nonzero_exit = hasattr(context, 'last_exit_code') and context.last_exit_code != 0
+    has_error_output = hasattr(context, 'last_error') and context.last_error
+
+    assert has_port_conflict or has_network_error or has_nonzero_exit or has_error_output, \
+        "Operation should have failed (no error flags, non-zero exit code, or error output found)"
 
 
 @then('appropriate error message should be shown')
 def step_error_message(context):
     """Verify error message displayed."""
-    assert getattr(context, 'port_conflict', False) or \
-           getattr(context, 'network_error', False)
+    # Check for actual error message in output
+    has_error_msg = False
+    if hasattr(context, 'last_error') and context.last_error:
+        has_error_msg = len(context.last_error.strip()) > 0
+    elif hasattr(context, 'last_output') and context.last_output:
+        # Check for error indicators in output
+        output_lower = context.last_output.lower()
+        has_error_msg = any(err in output_lower for err in ['error', 'failed', 'conflict', 'unavailable'])
+
+    # Also check explicit error flags
+    has_port_conflict = hasattr(context, 'port_conflict') and context.port_conflict
+    has_network_error = hasattr(context, 'network_error') and context.network_error
+
+    assert has_error_msg or has_port_conflict or has_network_error, \
+        "No error message was shown (no error output, no error flags set)"

@@ -734,7 +734,7 @@ def step_check_js_canonical(context):
     """Verify JavaScript is mapped to js canonical name."""
     assert hasattr(context, 'detected_vms'), "No VMs were detected"
     vms = context.detected_vms if isinstance(context.detected_vms, list) else [context.detected_vms]
-    assert 'js' in vms or 'javascript' in vms, f"Expected js or javascript in {vms}"
+    assert 'js' in vms, f"Expected canonical name 'js' in VM list {vms}, not 'javascript'"
 
 
 @then('it should resolve to js')
@@ -776,7 +776,17 @@ def step_check_all_microservices(context):
     assert hasattr(context, 'current_plan'), "No plan was generated"
     filter_val = context.current_plan.get('filter')
     vms = context.current_plan.get('vms', [])
-    assert filter_val == 'all' or len(vms) > 0, "Plan should include VMs or 'all' filter"
+    # The plan should indicate 'all' scope for including all microservices
+    if filter_val == 'all':
+        return  # Filter is set to 'all' - plan includes all VMs
+    # If filter is not 'all', check vms field
+    if isinstance(vms, str) and vms == 'all':
+        return  # vms field is set to 'all' - plan includes all VMs
+    # If vms is a list, it should be non-empty
+    if isinstance(vms, list):
+        assert len(vms) > 0, f"Expected non-empty VM list for all microservices, got vms={vms}"
+    # If we get here, neither filter nor vms indicates 'all'
+    raise AssertionError(f"Expected filter='all' or vms='all', got filter='{filter_val}', vms={vms}")
 
 
 @then('the plan should include all three VMs')
@@ -832,8 +842,12 @@ def step_check_applies_all(context):
     """Verify plan applies to all VMs."""
     assert hasattr(context, 'current_plan'), "No plan was generated"
     filter_val = context.current_plan.get('filter', '')
-    assert filter_val == 'all' or context.current_plan.get('vms') == 'all', \
-        "Plan should apply to all VMs"
+    vms = context.current_plan.get('vms', '')
+    # The plan must indicate 'all' scope in either filter or vms field
+    if filter_val != 'all':
+        assert vms == 'all', \
+            f"Expected filter='all' or vms='all', got filter='{filter_val}', vms='{vms}'"
+    # If filter is 'all', the test passes (filter takes precedence)
 
 
 @then('I should receive status information')
@@ -1056,9 +1070,10 @@ def step_check_python_valid(context):
 def step_check_javascript_valid(context):
     """Verify JavaScript is a valid VM type."""
     assert hasattr(context, 'doc_vm_validity'), "VM validity not checked"
-    assert context.doc_vm_validity.get('javascript') is True or \
-           context.doc_vm_validity.get('js') is True, \
-           "JavaScript/js should be valid"
+    js_valid = context.doc_vm_validity.get('js', False)
+    javascript_valid = context.doc_vm_validity.get('javascript', False)
+    assert js_valid is True, f"js canonical name should be valid, got {js_valid}"
+    assert javascript_valid is True, f"javascript alias should be valid, got {javascript_valid}"
 
 
 @then('all microservice VMs should be valid')

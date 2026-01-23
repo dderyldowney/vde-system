@@ -60,15 +60,17 @@ def step_run_vde_ssh_command(context):
 
 @then('SSH agent should be started')
 def step_ssh_agent_started(context):
-    """SSH agent should be started."""
-    # In VDE, SSH agent is started by start-virtual script
-    context.ssh_agent_started = True
+    """SSH agent should be started - verify with real process check."""
+    result = subprocess.run(['pgrep', '-x', 'ssh-agent'], capture_output=True)
+    assert result.returncode == 0, "SSH agent should be running (pgrep ssh-agent failed)"
 
 
 @then('available SSH keys should be loaded into agent')
 def step_keys_loaded_into_agent_available(context):
-    """Available SSH keys should be loaded into agent."""
-    context.available_keys_loaded = True
+    """Available SSH keys should be loaded into agent - verify with real check."""
+    result = subprocess.run(['ssh-add', '-l'], capture_output=True)
+    # ssh-add -l returns 0 if keys are loaded, 1 if agent has no keys, 2 if no agent
+    assert result.returncode == 0, f"SSH keys should be loaded in agent (ssh-add -l failed: {result.stderr.decode().strip()})"
 
 
 @given('no SSH keys exist in ~/.ssh/')
@@ -93,13 +95,12 @@ def step_ed25519_key_generated(context):
 
 @then('the public key should be synced to public-ssh-keys directory')
 def step_public_key_synced(context):
-    """Public key should be synced to public-ssh-keys directory."""
+    """Public key should be synced to public-ssh-keys directory - verify real state."""
     public_ssh_dir = VDE_ROOT / "public-ssh-keys"
-    # Check if public-ssh-keys directory exists and has .pub files
-    has_pub_files = public_ssh_keys_count() > 0 if public_ssh_dir.exists() else False
-    assert has_pub_files or public_ssh_dir.exists(), \
-        "public-ssh-keys directory should exist and contain public keys"
-    context.public_keys_synced = has_pub_files
+    assert public_ssh_dir.exists(), f"public-ssh-keys directory should exist at {public_ssh_dir}"
+    # Verify at least one .pub file exists (excluding .keep)
+    pub_files = list(public_ssh_dir.glob("*.pub"))
+    assert len(pub_files) > 0, f"public-ssh-keys directory should contain .pub files, found: {list(public_ssh_dir.iterdir())}"
 
 
 # -----------------------------------------------------------------------------
@@ -171,13 +172,11 @@ def step_non_pub_files_rejected(context):
     """Non-.pub files should be rejected."""
     # Check that all files in public-ssh-keys directory are .pub files
     public_ssh_dir = VDE_ROOT / "public-ssh-keys"
-    if public_ssh_dir.exists():
-        for file in public_ssh_dir.glob("*"):
-            if file.is_file() and file.name != ".keep":
-                assert file.name.endswith(".pub"), f"Non-.pub file found: {file.name}"
-    else:
-        # Directory doesn't exist - verify this is expected or acceptable
-        assert getattr(context, 'public_keys_dir_expected', False) is False, "Public SSH keys directory should exist"
+    # Directory must exist to validate file types
+    assert public_ssh_dir.exists(), f"Public SSH keys directory should exist at {public_ssh_dir} to validate file types"
+    for file in public_ssh_dir.glob("*"):
+        if file.is_file() and file.name != ".keep":
+            assert file.name.endswith(".pub"), f"Non-.pub file found: {file.name}"
 
 
 @then('files containing "PRIVATE KEY" should be rejected')
@@ -185,14 +184,12 @@ def step_private_key_files_rejected(context):
     """Files containing PRIVATE KEY should be rejected."""
     # Check that no files in public-ssh-keys contain "PRIVATE KEY"
     public_ssh_dir = VDE_ROOT / "public-ssh-keys"
-    if public_ssh_dir.exists():
-        for file in public_ssh_dir.glob("*"):
-            if file.is_file():
-                content = file.read_text()
-                assert "PRIVATE KEY" not in content, f"File contains PRIVATE KEY: {file.name}"
-    else:
-        # Directory doesn't exist - no private keys can be present
-        assert not getattr(context, 'public_keys_dir_expected', False), "Public SSH keys directory should exist for validation"
+    # Directory must exist to validate private key rejection
+    assert public_ssh_dir.exists(), f"Public SSH keys directory should exist at {public_ssh_dir} to validate private key rejection"
+    for file in public_ssh_dir.glob("*"):
+        if file.is_file():
+            content = file.read_text()
+            assert "PRIVATE KEY" not in content, f"File contains PRIVATE KEY: {file.name}"
 
 
 # -----------------------------------------------------------------------------
@@ -280,15 +277,9 @@ def step_vm_to_vm_config_generated(context):
 def step_ssh_config_contains_entry(context, host):
     """SSH config should contain entry for specific host."""
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
-    if ssh_config.exists():
-        config_content = ssh_config.read_text()
-        assert f"Host {host}" in config_content, f"Host entry '{host}' not found in SSH config"
-    else:
-        # Config doesn't exist - check if test flags indicate it should have been created
-        if getattr(context, 'vm_to_vm_config_generated', False) or getattr(context, 'config_entry_created', False):
-            raise AssertionError(f"SSH config should exist with Host {host}, but config file doesn't exist")
-        # No config and no creation triggered - this is a failure
-        raise AssertionError(f"SSH config should exist with Host {host}")
+    assert ssh_config.exists(), f"SSH config should exist at {ssh_config} to verify Host {host} entry"
+    config_content = ssh_config.read_text()
+    assert f"Host {host}" in config_content, f"Host entry '{host}' not found in SSH config"
 
 
 @then('each entry should use "{hostname}" as hostname')
@@ -355,7 +346,7 @@ def step_warn_existing_entry(context):
 
 @when('multiple processes try to update SSH config simultaneously')
 def step_concurrent_config_update(context):
-    """Simulate concurrent SSH config updates."""
+    """Set up concurrent update scenario for testing atomic operations."""
     context.concurrent_update_attempted = True
 
 
@@ -397,9 +388,7 @@ def step_no_partial_updates(context):
 def step_backup_created_in_dir(context, backup_dir):
     """Backup file should be created in specific directory."""
     backup_dir_path = Path.home() / backup_dir
-    # In test environment, backup may not be created
-    assert backup_dir_path.exists() or getattr(context, 'backup_created', False), \
-        f"Backup directory '{backup_dir}' should exist or backup should have been created"
+    assert backup_dir_path.exists(), f"Backup directory '{backup_dir}' should exist at {backup_dir_path}"
 
 
 @then('backup filename should contain timestamp')
@@ -454,10 +443,9 @@ def step_ssh_vm_to_vm(context, vm1, vm2):
 
 @then('the connection should use host\'s SSH keys')
 def step_connection_uses_host_keys(context):
-    """Connection should use host's SSH keys via agent forwarding."""
+    """Connection should use host's SSH keys via agent forwarding - verify real SSH agent."""
     # Verify SSH agent is running (required for host key usage via forwarding)
-    assert ssh_agent_is_running() or getattr(context, 'vm_to_vm_ssh_attempted', False), \
-        "SSH agent should be running for host key usage via agent forwarding"
+    assert ssh_agent_is_running(), "SSH agent should be running for host key usage via agent forwarding"
 
 
 @then('no keys should be stored on containers')
@@ -489,14 +477,14 @@ def step_detect_ssh_keys_runs(context):
 
 @then('"{keytype}" keys should be detected')
 def step_keytype_detected(context, keytype):
-    """Specific key type should be detected."""
+    """Specific key type should be detected - verify with real file check."""
     ssh_dir = Path.home() / ".ssh" / "vde"
     key_file = ssh_dir / keytype
     # Check if the specific key file exists
     assert key_file.exists(), f"{keytype} key file not found at {key_file}"
     # Verify the key file is readable and has content
     assert key_file.stat().st_size > 0, f"{keytype} key file is empty"
-    setattr(context, f'{keytype}_detected', True)
+    # Real verification: key file exists and has content - no flag needed
 
 
 # -----------------------------------------------------------------------------
@@ -511,8 +499,13 @@ def step_primary_key_requested(context):
 
 @then('"{keytype}" should be returned as primary key')
 def step_primary_key_is(context, keytype):
-    """ed25519 should be returned as primary key."""
-    assert keytype == "id_ed25519" or getattr(context, 'primary_key', 'id_ed25519') == keytype
+    """ed25519 should be returned as primary key - strict verification."""
+    # Verify the expected keytype matches what was requested
+    if hasattr(context, 'primary_key'):
+        assert keytype == context.primary_key, f"Expected keytype '{keytype}' to match primary_key '{context.primary_key}'"
+    else:
+        # If no primary_key was set, verify keytype is the default ed25519
+        assert keytype == "id_ed25519", f"Expected keytype 'id_ed25519', got '{keytype}'"
 
 
 # -----------------------------------------------------------------------------
@@ -544,12 +537,11 @@ def step_config_still_contains(context, entry):
 
 @then('~/.ssh/config should contain new "{entry}" entry')
 def step_config_contains_new_entry(context, entry):
-    """Config should contain new entry."""
+    """Config should contain new entry - verify real state."""
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
-    if ssh_config.exists():
-        config_content = ssh_config.read_text()
-        # Check for the entry - it may be newly added
-        context.new_entry_added = entry in config_content
+    assert ssh_config.exists(), f"SSH config should exist to verify new entry '{entry}'"
+    config_content = ssh_config.read_text()
+    assert entry in config_content, f"New entry '{entry}' not found in SSH config"
 
 
 @then('existing entries should be unchanged')
@@ -1007,19 +999,16 @@ def step_merged_entry_has_identity(context):
 
 @then('user\'s entries should be preserved')
 def step_user_entries_preserved(context):
-    """User's entries should be preserved."""
+    """User's entries should be preserved - verify real SSH config state."""
     # Verify user-defined entries aren't removed when VM entries are cleaned up
     user_entry = getattr(context, 'user_entry_in_config', '')
     if user_entry:
         ssh_config = Path.home() / ".ssh" / "vde" / "config"
-        if ssh_config.exists():
-            config_content = ssh_config.read_text()
-            assert user_entry in config_content, f"User entry '{user_entry}' was removed during VM cleanup"
-        else:
-            # Config doesn't exist - skip verification in test environment
-            pass  # Cannot verify user entry without SSH config
+        assert ssh_config.exists(), f"SSH config should exist to verify user entry '{user_entry}' preservation"
+        config_content = ssh_config.read_text()
+        assert user_entry in config_content, f"User entry '{user_entry}' was removed during VM cleanup"
     else:
-        # No user entry to verify - test scenario
+        # No user entry to verify - this is acceptable if no user entry was set
         assert not user_entry, "Expected no user entry to verify, but user_entry was set"
 
 
@@ -1102,6 +1091,4 @@ def step_config_not_contain(context, entry):
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         assert entry not in config_content, f"'{entry}' should not be in SSH config but was found"
-    else:
-        # Config doesn't exist, so entry is not present - this is OK
-        pass  # Entry absence is guaranteed when config doesn't exist
+    # If config doesn't exist, entry cannot be present - condition satisfied

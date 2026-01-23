@@ -38,23 +38,19 @@ def step_try_nonexistent_vm(context):
 
 @given('my disk is nearly full')
 def step_disk_nearly_full(context):
-    """Simulate nearly full disk scenario.
+    """Set up disk space scenario for error handling testing.
 
-    Note: We can't actually fill the disk in tests. Instead, we verify
-    the error handling logic by checking that VDE detects disk space
-    issues when they occur.
+    VDE should detect disk space issues and report them appropriately.
+    This scenario tests error message handling for low disk space.
     """
     context.disk_space_scenario = True
-    # In real scenario, this would trigger disk space check
-    # For testing, we verify the error message handling
 
 
 @given('the Docker network can\'t be created')
 def step_network_creation_fails(context):
-    """Simulate network creation failure.
+    """Set up network failure scenario for error handling testing.
 
-    Note: This is a difficult scenario to test without actually breaking
-    Docker. We verify error handling by checking error patterns.
+    This scenario tests error message handling for network-related failures.
     """
     context.network_failure_scenario = True
 
@@ -206,19 +202,28 @@ def step_detect_conflict(context):
 
 @then('allocate an available port')
 def step_allocate_available_port(context):
-    """Verify VDE allocated an alternative port."""
-    # Port allocation should happen automatically
-    # If operation succeeded, port was allocated
+    """Verify VDE allocated an alternative port - verify real port allocation."""
+    # Port allocation should be verified by checking actual state
     if hasattr(context, 'last_exit_code') and context.last_exit_code == 0:
-        # Success implies port was allocated - no assertion needed
-        pass
+        # Success case - verify a VM name was set and we can check its port
+        if hasattr(context, 'test_vm_name'):
+            # Check docker-compose.yml for port configuration
+            compose_file = VDE_ROOT / "configs" / "docker" / context.test_vm_name / "docker-compose.yml"
+            if compose_file.exists():
+                content = compose_file.read_text()
+                # Verify ports section exists (port was allocated)
+                assert 'ports:' in content or 'Ports:' in content, \
+                    f"Port allocation should be configured for {context.test_vm_name}"
+        else:
+            # No VM context - verify operation completed successfully
+            assert context.last_exit_code == 0, "Port allocation operation should succeed"
     else:
         # Check if error mentions port conflict being resolved
         combined = (context.last_error or '') + (context.last_output or '')
         combined_lower = combined.lower()
-        # Port conflict resolution may be implicit
-        assert 'port' in combined_lower or 'allocate' in combined_lower or context.last_exit_code != 0, \
-            "Port allocation should be mentioned or operation should fail gracefully"
+        # Strict verification: port allocation should be mentioned in error messages
+        assert 'port' in combined_lower or 'allocate' in combined_lower, \
+            "Port allocation should be mentioned in error output"
 
 
 @then('continue with the operation')
@@ -270,9 +275,13 @@ def step_offer_retry(context):
     combined_lower = combined.lower()
     # Retry may be implicit - check for retry-related keywords
     has_retry = any(word in combined_lower for word in ['retry', 'again', 'fix', 'try again', 'resolve'])
-    # If no retry mentioned, that's OK - operation might have succeeded
-    assert has_retry or context.last_exit_code == 0 or not combined, \
-        "Should offer retry or operation should succeed"
+    # Strict verification: if there's output, it should mention retry
+    # If operation succeeded, retry is implicit (acceptable)
+    if combined:
+        assert has_retry, "Output should mention retry or fix options"
+    else:
+        # No output - operation should have succeeded
+        assert context.last_exit_code == 0, "Operation should succeed or provide retry guidance"
 
 
 @then('I should see what went wrong')
@@ -352,8 +361,8 @@ def step_offer_check_status(context):
     if combined:
         # If we have output, check for status references
         has_status = any(word in combined_lower for word in ['status', 'check', 'running', 'state'])
-        # Status reference is optional if operation succeeded
-        assert has_status or context.last_exit_code == 0, "Should reference status or succeed"
+        # Strict verification: output should mention status
+        assert has_status, "Output should reference status checking"
 
 
 @then('VDE should diagnose the problem')
@@ -442,8 +451,8 @@ def step_offer_permission_retry(context):
     combined_lower = combined.lower()
     # Should mention sudo, permissions, or access
     has_permission = any(word in combined_lower for word in ['sudo', 'permission', 'access', 'denied'])
-    assert has_permission or context.last_exit_code == 0, \
-        "Should suggest permission retry or operation should succeed"
+    # Strict verification: permission retry should be mentioned
+    assert has_permission, "Output should suggest permission retry or proper access"
 
 
 @then('show the specific problem')
@@ -491,8 +500,8 @@ def step_notified_of_failure(context):
         # Scenario was set but no results - check error output
         assert context.last_exit_code != 0, "Operation should have failed"
     else:
-        # No partial failure scenario - this is OK for other scenarios
-        pass  # No failure notification check needed for this scenario
+        # No partial failure scenario - step requires scenario context
+        assert False, "Partial failure scenario not configured - this step requires multi_vm_results or partial_failure_scenario"
 
 
 @then('successful VMs should be listed')
@@ -510,8 +519,8 @@ def step_successful_vms_listed(context):
         # Should have some output
         assert len(combined) > 0, "Should have output listing VMs"
     else:
-        # No multi-VM scenario - skip this check
-        pass  # No multi-VM results to verify
+        # No multi-VM scenario - step requires scenario context
+        assert False, "Multi-VM scenario not configured - this step requires multi_vm_results or partial_failure_scenario"
 
 
 @then('it should automatically retry')
@@ -558,8 +567,8 @@ def step_report_retry_failure(context):
         has_retry_failure = any(word in combined_lower for word in [
             'retry', 'exhausted', 'max.*attempt', 'giving up', 'failed.*attempt'
         ])
-        assert has_retry_failure or context.last_exit_code == 0, \
-            "Should report retry failure or operation should succeed"
+        # Strict verification: retry failure should be reported
+        assert has_retry_failure, "Output should report retry failure or exhaustion"
     else:
         # No output - check if command failed
         assert context.last_exit_code != 0, "Operation should have failed"
@@ -767,11 +776,9 @@ def step_show_logs_on_error(context):
 
     # Should reference logs or how to view them
     has_logs = "logs" in combined or "docker logs" in combined
-    # Logs may not always be shown inline, but docker logs command should be available
-    if has_logs:
-        pass  # Container logs are referenced
-    else:
-        # Verify docker logs command is available
+    # Verify logs are referenced or docker is available for log access
+    if not has_logs:
+        # Logs not shown inline - verify docker logs command is available
         result = subprocess.run(['which', 'docker'], capture_output=True, timeout=5)
         assert result.returncode == 0, "Docker should be available for log access"
 
@@ -787,8 +794,8 @@ def step_detect_retryable(context):
     # Look for transient error indicators
     transient_keywords = ['timeout', 'connection', 'temporary', 'transient', 'again', 'retry']
     is_transient = any(keyword in combined_lower for keyword in transient_keywords)
-    assert is_transient or context.last_exit_code == 0, \
-        "Should detect transient error or operation should succeed"
+    # Strict verification: transient error should be detected
+    assert is_transient, "Error output should indicate transient/retryable issue"
 
 
 @when('I try again')
