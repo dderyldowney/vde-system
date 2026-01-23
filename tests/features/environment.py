@@ -93,3 +93,20 @@ def before_scenario(context, scenario):
 
         # Reset for all other scenarios to prevent pollution
         reset_cache_to_valid_state()
+
+
+def after_scenario(context, scenario):
+    """
+    Hook that runs after each scenario.
+
+    This hook cleans up any temporary files created during testing,
+    such as invalid compose files used for error handling tests.
+    """
+    # Clean up invalid compose test directory if it was created
+    import shutil
+    invalid_compose_dir = VDE_ROOT / "configs" / "docker" / "invalid-test"
+    if invalid_compose_dir.exists():
+        try:
+            shutil.rmtree(invalid_compose_dir)
+        except Exception:
+            pass  # Best effort cleanup

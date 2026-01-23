@@ -1,258 +1,38 @@
 """
-BDD Step definitions for VM Lifecycle scenarios.
-These steps call actual VDE scripts instead of using mocks.
+BDD Step definitions for VM Lifecycle scenarios (core operations).
+This file handles VM starting, stopping, restarting, and state management.
+All steps use real system verification instead of context flags.
 """
 
-import json
-import os
-import re
 import subprocess
-import sys
 import time
 from pathlib import Path
 
-# Import shared configuration
-# Add steps directory to path for config import
-steps_dir = os.path.dirname(os.path.abspath(__file__))
-if steps_dir not in sys.path:
-    sys.path.insert(0, steps_dir)
-from config import VDE_ROOT as _VDE_ROOT
-
-# VDE root directory - support both container and local environments
-# Use VDE_PROJECT_ROOT if set, otherwise use shared config
-project_root = os.environ.get("VDE_PROJECT_ROOT")
-VDE_ROOT = Path(project_root) if project_root and Path(project_root).exists() else _VDE_ROOT
-SCRIPTS_DIR = VDE_ROOT / "scripts"
-
-# Detect if running in container vs locally on host
-# In container: VDE_ROOT_DIR is set to /vde
-# Locally: VDE_ROOT_DIR is not set or points to a different path
-# Test mode: VDE_TEST_MODE is set to 1 (allows cleanup during local testing)
-IN_CONTAINER = os.environ.get("VDE_ROOT_DIR") == "/vde"
-IN_TEST_MODE = os.environ.get("VDE_TEST_MODE") == "1"
-# Allow cleanup if running in container OR in test mode
-ALLOW_CLEANUP = IN_CONTAINER or IN_TEST_MODE
-
 from behave import given, then, when
 
-
-def run_vde_command(command, timeout=120):
-    """Run a VDE script and return the result."""
-    full_command = f"cd {VDE_ROOT} && {command}"
-    # Pass environment variables including VDE_TEST_MODE
-    env = os.environ.copy()
-    result = subprocess.run(
-        full_command,
-        shell=True,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        env=env,
-    )
-    return result
-
-
-def docker_ps():
-    """Get list of running Docker containers."""
-    try:
-        result = subprocess.run(
-            ["docker", "ps", "--format", "{{.Names}}"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        if result.returncode == 0:
-            return set(result.stdout.strip().split("\n")) if result.stdout.strip() else set()
-    except Exception:
-        pass
-    return set()
-
-
-def container_exists(vm_name):
-    """Check if a container is running for the VM."""
-    containers = docker_ps()
-    # Language VMs use -dev suffix
-    if f"{vm_name}-dev" in containers:
-        return True
-    # Service VMs use plain name
-    return vm_name in containers
-
-
-def wait_for_container(vm_name, timeout=60, interval=2):
-    """Wait for a container to be running."""
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if container_exists(vm_name):
-            return True
-        time.sleep(interval)
-    return False
-
-
-def compose_file_exists(vm_name):
-    """Check if docker-compose.yml exists for VM."""
-    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    return compose_path.exists()
-
-
-def get_vm_type(vm_name):
-    """Get the type of a VM (lang or service)."""
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    if not vm_types_file.exists():
-        return None
-
-    with open(vm_types_file) as f:
-        for line in f:
-            if line.strip().startswith("#") or not line.strip():
-                continue
-            parts = line.strip().split("|")
-            if len(parts) >= 3 and parts[1].strip() == vm_name:
-                return parts[0].strip()
-    return None
-
-
-def get_all_containers(include_stopped=False):
-    """Get list of all Docker containers (running or all)."""
-    try:
-        if include_stopped:
-            result = subprocess.run(
-                ["docker", "ps", "-a", "--format", "{{.Names}}"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-        else:
-            result = subprocess.run(
-                ["docker", "ps", "--format", "{{.Names}}"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-        if result.returncode == 0:
-            return set(result.stdout.strip().split("\n")) if result.stdout.strip() else set()
-    except Exception:
-        pass
-    return set()
-
-
-def container_is_running(container_name):
-    """Check if a specific Docker container is running."""
-    try:
-        result = subprocess.run(
-            ["docker", "inspect", "-f", "{{.State.Running}}", container_name],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        return result.returncode == 0 and result.stdout.strip() == "true"
-    except Exception:
-        return False
-
-
-def container_exists_any_state(container_name):
-    """Check if a container exists (running or stopped)."""
-    all_containers = get_all_containers(include_stopped=True)
-    return container_name in all_containers
-
-
-def get_container_port_mapping(container_name, internal_port=22):
-    """Get the external port mapping for a container's internal port."""
-    try:
-        result = subprocess.run(
-            ["docker", "port", container_name, str(internal_port)],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            # Parse output like "0.0.0.0:2201" or ":::2201"
-            output = result.stdout.strip()
-            if ":" in output:
-                return output.split(":")[-1]
-        return None
-    except Exception:
-        return None
-
-
-def get_port_from_compose(vm_name):
-    """Get the SSH port from docker-compose.yml for a VM."""
-    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    if compose_path.exists():
-        try:
-            content = compose_path.read_text()
-            # Look for SSH port mapping (usually port 22)
-            # Pattern: "22:2201" or "22: ${SSH_PORT:-2201}"
-            match = re.search(r'22:\s*"?(\d+)', content)
-            if match:
-                return match.group(1)
-            # Also look for port in simple format
-            match = re.search(r'ports:.*?[:\s](\d{4})', content, re.DOTALL)
-            if match:
-                return match.group(1)
-        except Exception:
-            pass
-    return None
+# Import shared helpers and configuration
+from vm_common import (
+    VDE_ROOT,
+    compose_file_exists,
+    container_exists,
+    docker_ps,
+    get_vm_type,
+    wait_for_container,
+    run_vde_command,
+)
 
 
 # =============================================================================
-# GIVEN steps - Setup initial state with REAL operations
+# GIVEN steps - Setup initial VM states
 # =============================================================================
-
-@given('the VM "{vm_name}" is defined as a language VM with install command "{cmd}"')
-def step_vm_defined_lang(context, vm_name, cmd):
-    """Define a VM type as a language VM."""
-    context.test_vm_name = vm_name
-    context.test_vm_type = "lang"
-    context.test_vm_install = cmd
-
-
-@given('the VM "{vm_name}" is defined as a service VM with port "{port}"')
-def step_vm_defined_svc(context, vm_name, port):
-    """Define a VM type as a service VM."""
-    context.test_vm_name = vm_name
-    context.test_vm_type = "service"
-    context.test_vm_port = port
-
-
-@given('no VM configuration exists for "{vm_name}"')
-def step_no_vm_config(context, vm_name):
-    """Ensure VM configuration doesn't exist."""
-    # When running locally without test mode, preserve user's VM configurations
-    # Only delete configs when running in the test container OR in test mode
-    if ALLOW_CLEANUP:
-        compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-        if compose_path.exists():
-            compose_path.unlink()
-            # Try to remove parent dir if empty
-            parent = compose_path.parent
-            if parent.exists() and not list(parent.iterdir()):
-                parent.rmdir()
-
-
-@given('VM "{vm_name}" has been created')
-def step_vm_created(context, vm_name):
-    """Create a VM using the actual VDE script."""
-    # Remove existing config if present to ensure clean state
-    step_no_vm_config(context, vm_name)
-
-    # Run the create-virtual-for script
-    result = run_vde_command(f"./scripts/create-virtual-for {vm_name}", timeout=120)
-
-    # Store creation info for cleanup
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
-    context.created_vms.add(vm_name)
-
-    # Store last result for assertions
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
 
 @given('VM "{vm_name}" is running')
 def step_vm_running(context, vm_name):
     """Start a VM using the actual VDE script."""
     # First ensure it's created
     if not compose_file_exists(vm_name):
+        # Import here to avoid circular dependency
+        from vm_creation_steps import step_vm_created
         step_vm_created(context, vm_name)
     else:
         # VM already exists, but ensure it's tracked in created_vms
@@ -294,6 +74,11 @@ def step_vm_not_running(context, vm_name):
     context.running_vms.discard(vm_name)
 
 
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
 @given('neither VM is running')
 def step_neither_vm_running(context):
     """Stop both VMs using actual VDE script."""
@@ -306,192 +91,239 @@ def step_neither_vm_running(context):
 @given('none of the VMs are running')
 def step_no_vms_running(context):
     """Stop all VMs using actual VDE script."""
+    # Record current running VMs before shutdown
+    running = docker_ps()
+    context.pre_shutdown_vms = running
+    context.shutdown_all_triggered = True
+
     run_vde_command("./scripts/shutdown-virtual all", timeout=60)
     time.sleep(2)
     if hasattr(context, 'running_vms'):
         context.running_vms.clear()
 
 
-@given('VM "{vm_name}" is not created')
-def step_vm_not_created(context, vm_name):
-    """Remove VM configuration if it exists."""
-    step_no_vm_config(context, vm_name)
-    # Also try to remove container if running
-    run_vde_command(f"./scripts/shutdown-virtual {vm_name}", timeout=30)
-    if hasattr(context, 'created_vms'):
-        context.created_vms.discard(vm_name)
+@given('I have a running Python VM')
+def step_have_running_python(context):
+    """Have a running Python VM."""
+    # Start python if not already running
+    if not container_exists("python"):
+        result = run_vde_command("./scripts/start-virtual python", timeout=120)
+        context.last_exit_code = result.returncode
+        context.last_output = result.stdout
+        context.last_error = result.stderr
+        time.sleep(2)
+    context.test_running_vm = "python"
 
 
-@given('VM types are loaded')
-def step_vm_types_loaded(context):
-    """VM types have been loaded from config."""
+@given('I have several VMs')
+def step_have_several_vms(context):
+    """Have several VMs - verify VMs exist."""
     vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    context.vm_types_exist = vm_types_file.exists()
+    context.several_vms = vm_types_file.exists()
 
 
-@given('no language VMs are created')
-def step_no_lang_vms(context):
-    """No language VMs exist."""
-    # This is informational - actual state depends on test setup
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
+@given('I have multiple running VMs')
+def step_have_multiple_running(context):
+    """Have multiple running VMs - verify actual running containers."""
+    running = docker_ps()
+    context.multiple_running = len(running) > 0
 
 
-@given('language VM "{vm_name}" is allocated port "{port}"')
-def step_vm_allocated_port(context, vm_name, port):
-    """VM is created (port allocation happens automatically)."""
-    # Port allocation is automatic when VM is created
-    step_vm_created(context, vm_name)
-    context.test_port = port
+@given('I have a stopped VM')
+def step_have_stopped_vm(context):
+    """Have a stopped VM."""
+    # Use postgres as a default stopped VM
+    context.test_stopped_vm = "postgres"
+    # Stop it to ensure it's not running
+    run_vde_command(f"./scripts/shutdown-virtual {context.test_stopped_vm}", timeout=60)
+    time.sleep(1)
 
 
-@given('ports "{ports}" are allocated')
-def step_ports_allocated(context, ports):
-    """Multiple ports are allocated (create multiple VMs)."""
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
-    port_list = [p.strip() for p in ports.split(",")]
-    for i, _port in enumerate(port_list):
-        vm_name = f"testvm{i}"
-        # We can't actually allocate specific ports, but we can create VMs
-        # Port allocation is automatic in the real system
-        context.created_vms.add(vm_name)
+@given('I have created several VMs')
+def step_have_created_vms(context):
+    """Several VMs have been created - verify compose files exist."""
+    # Check for common VMs
+    common_vms = ["python", "go", "postgres"]
+    created = []
+    for vm in common_vms:
+        if compose_file_exists(vm):
+            created.append(vm)
+    context.created_vms = created
 
 
-@given('no service VMs are created')
-def step_no_svc_vms(context):
-    """No service VMs exist."""
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
+@given('I have a running VM')
+def step_state_running_vm(context):
+    """Have a running VM."""
+    # Ensure we have a running VM for testing
+    if not hasattr(context, 'test_running_vm'):
+        context.test_running_vm = "python"
+        # Start python if not already running
+        if not container_exists("python"):
+            result = run_vde_command("./scripts/start-virtual python", timeout=120)
+            context.last_exit_code = result.returncode
+            context.last_output = result.stdout
+            context.last_error = result.stderr
+            time.sleep(2)
+    # Verify actual container state
+    context.vm_running = container_exists("python")
 
 
-@given('a non-VDE process is listening on port "{port}"')
-def step_host_port_in_use(context, port):
-    """Simulate host port collision (informational for BDD)."""
-    context.host_port_in_use = port
-
-
-@given('a Docker container is bound to host port "{port}"')
-def step_docker_port_in_use(context, port):
-    """Simulate Docker port collision (informational for BDD)."""
-    context.docker_port_in_use = port
-
-
-@given('all ports from "{start}" to "{end}" are allocated')
-def step_all_ports_allocated(context, start, end):
-    """All ports in range are allocated (informational for BDD)."""
-    context.all_ports_allocated = True
-
-
-@given('a port lock is older than "{seconds}" seconds')
-def step_stale_lock(context, seconds):
-    """Stale port lock exists (informational for BDD)."""
-    context.stale_lock_age = int(seconds)
+@given('I have created a Go VM')
+def step_have_created_go_vm(context):
+    """Go VM has been created - verify compose file exists."""
+    compose_path = VDE_ROOT / "configs" / "docker" / "go" / "docker-compose.yml"
+    context.go_vm_created = compose_path.exists()
 
 
 # =============================================================================
-# WHEN steps - Perform actions with REAL commands
+# WHEN steps - Perform lifecycle actions
 # =============================================================================
 
-@when('I run "{command}"')
-def step_run_command(context, command):
-    """Execute a VDE command."""
-    result = run_vde_command(command, timeout=120)
-    context.last_command = command
+@when('I request to "start python"')
+def step_request_start_python(context):
+    """Request to start python VM."""
+    context.start_requested = "python"
+    result = run_vde_command("./scripts/start-virtual python", timeout=120)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
 
 
-@when('I create language VM "{vm_name}"')
-def step_create_specific_lang_vm(context, vm_name):
-    """Create a specific language VM."""
-    step_vm_created(context, vm_name)
-
-
-@when('I create a service VM')
-def step_create_svc_vm(context):
-    """Create a new service VM."""
-    context.last_action = "create_svc_vm"
-
-
-@when('I query the port registry')
-def step_query_port_registry(context):
-    """Query the port registry."""
-    context.port_registry_queried = True
-    # In real system, ports are managed via docker-compose files
-
-
-@when('I run port cleanup')
-def step_run_port_cleanup(context):
-    """Run port lock cleanup."""
-    context.port_cleanup_run = True
-
-
-@when('I remove VM "{vm_name}"')
-def step_remove_vm(context, vm_name):
-    """Remove a VM."""
-    result = run_vde_command(f"./scripts/remove-virtual {vm_name}", timeout=60)
-    if hasattr(context, 'created_vms'):
-        context.created_vms.discard(vm_name)
+@when('I request to "start python and postgres"')
+def step_request_start_python_postgres(context):
+    """Request to start python and postgres VMs."""
+    context.start_requested = "python postgres"
+    result = run_vde_command("./scripts/start-virtual python postgres", timeout=180)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
 
 
+@when('I request to "start python, go, and postgres"')
+def step_request_start_multiple(context):
+    """Request to start multiple VMs."""
+    context.multiple_vms_start = ["python", "go", "postgres"]
+    result = run_vde_command("./scripts/start-virtual python go postgres", timeout=180)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
+@when('I request to "stop python"')
+def step_request_stop_python(context):
+    """Request to stop python VM."""
+    context.vm_stop_requested = "python"
+    result = run_vde_command("./scripts/shutdown-virtual python", timeout=60)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
+@when('I request to "stop python and postgres"')
+def step_request_stop_multiple(context):
+    """Request to stop multiple VMs."""
+    context.stop_multiple_requested = ["python", "postgres"]
+    result = run_vde_command("./scripts/shutdown-virtual python postgres", timeout=60)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
+@when('I request to "stop postgres"')
+def step_request_stop_postgres(context):
+    """Request to stop postgres VM."""
+    context.stop_requested = "postgres"
+    result = run_vde_command("./scripts/shutdown-virtual postgres", timeout=60)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
+@when('I request to "restart rust"')
+def step_request_restart_rust(context):
+    """Request to restart rust VM."""
+    context.restart_requested = "rust"
+    # Run shutdown then start
+    run_vde_command(f"./scripts/shutdown-virtual rust", timeout=60)
+    time.sleep(2)
+    result = run_vde_command(f"./scripts/start-virtual rust", timeout=120)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
+@when('I request to "restart the VM"')
+def step_request_restart(context):
+    """Request to restart VM."""
+    vm_name = getattr(context, 'test_running_vm', 'python')
+    context.restart_requested = vm_name
+    # Run shutdown then start
+    run_vde_command(f"./scripts/shutdown-virtual {vm_name}", timeout=60)
+    time.sleep(2)
+    result = run_vde_command(f"./scripts/start-virtual {vm_name}", timeout=120)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
+@when('I request to "restart python with rebuild"')
+def step_request_restart_rebuild(context):
+    """Request to restart with rebuild."""
+    context.restart_rebuild_requested = "python"
+    # Run shutdown then start with rebuild
+    run_vde_command(f"./scripts/shutdown-virtual python", timeout=60)
+    time.sleep(2)
+    result = run_vde_command(f"./scripts/start-virtual python --rebuild", timeout=180)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
+@when('I request to "start go"')
+def step_request_start_go(context):
+    """Request to start go VM."""
+    context.vm_start_requested = "go"
+    result = run_vde_command("./scripts/start-virtual go", timeout=120)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
+@when('I try to create it again')
+def step_try_create_again(context):
+    """Try to create VM again."""
+    vm_name = getattr(context, 'test_running_vm', 'python')
+    result = run_vde_command(f"./scripts/create-virtual-for {vm_name}", timeout=120)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+    context.create_attempted_again = True
+
+
+@when('I start a specific VM')
+def step_start_vm_specific(context):
+    """Start a specific VM with configured name."""
+    if not hasattr(context, 'test_vm_to_start'):
+        context.test_vm_to_start = "rust"
+    result = run_vde_command(f"./scripts/start-virtual {context.test_vm_to_start}", timeout=120)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+    # Verify actual container state
+    context.vm_started = container_exists(context.test_vm_to_start)
+
+
+@when('it takes time to be ready')
+def step_takes_time_to_ready(context):
+    """VM takes time to be ready - wait for container."""
+    vm_name = getattr(context, 'test_vm_to_start', 'rust')
+    if context.last_exit_code == 0:
+        wait_for_container(vm_name, timeout=30)
+
+
 # =============================================================================
-# THEN steps - Verify REAL outcomes
+# THEN steps - Verify lifecycle outcomes
 # =============================================================================
-
-@then('a docker-compose.yml file should be created at "{path}"')
-def step_compose_exists(context, path):
-    """Verify docker-compose.yml was created."""
-    full_path = VDE_ROOT / path.lstrip("/")
-    assert full_path.exists(), f"docker-compose.yml not found at {full_path}"
-
-
-@then('the docker-compose.yml should contain SSH port mapping')
-def step_compose_has_ssh_port(context):
-    """Verify compose file has SSH port mapping."""
-    # Check last command succeeded
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('SSH config entry should exist for "{host}"')
-def step_ssh_entry_exists(context, host):
-    """Verify SSH config entry exists."""
-    # Check that the VM was created (SSH config is generated by start-virtual)
-    assert context.last_exit_code == 0, f"VM creation failed: {context.last_error}"
-
-
-@then('projects directory should exist at "{path}"')
-def step_projects_dir_exists(context, path):
-    """Verify projects directory exists."""
-    full_path = VDE_ROOT / path.lstrip("/")
-    assert full_path.exists(), f"Projects directory not found at {full_path}"
-
-
-@then('logs directory should exist at "{path}"')
-def step_logs_dir_exists(context, path):
-    """Verify logs directory exists."""
-    full_path = VDE_ROOT / path.lstrip("/")
-    # Logs directory is created on VM start
-    # For create operations, we just check the command succeeded
-    assert context.last_exit_code == 0 or full_path.exists()
-
-
-@then('the docker-compose.yml should contain service port mapping "{port}"')
-def step_svc_port_mapping(context, port):
-    """Verify service port mapping in compose."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('data directory should exist at "{path}"')
-def step_data_dir_exists(context, path):
-    """Verify data directory exists."""
-    full_path = VDE_ROOT / path.lstrip("/")
-    assert full_path.exists(), f"Data directory not found at {full_path}"
-
 
 @then('VM "{vm_name}" should be running')
 def step_vm_should_be_running(context, vm_name):
@@ -527,1272 +359,49 @@ def step_no_vms_running_verify(context):
 
 @then('VM configuration should still exist')
 def step_vm_config_exists(context):
-    """VM configuration still exists after stop."""
-    assert hasattr(context, 'created_vms') and len(context.created_vms) > 0, "No VMs were created in this scenario"
+    """VM configuration still exists after stop - verify compose file exists."""
+    assert hasattr(context, 'created_vms') and len(context.created_vms) > 0, \
+        "No VMs were created in this scenario"
 
+    for vm_name in context.created_vms:
+        assert compose_file_exists(vm_name), f"VM {vm_name} config should still exist"
 
-@then('the command should fail with error "{error}"')
-def step_command_fails_with_error(context, error):
-    """Verify command failed with specific error."""
-    last_output = getattr(context, 'last_output', '') + getattr(context, 'last_error', '')
-    assert getattr(context, 'last_exit_code', 0) != 0, "Command should have failed"
-    assert error.lower() in last_output.lower(), f"Expected error '{error}' not found in: {last_output}"
 
-
-@then('all language VMs should be listed')
-def step_lang_vms_listed(context):
-    """Verify language VMs are listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-    # Check some known language VMs are in output
-    assert 'python' in context.last_output.lower() or 'rust' in context.last_output.lower()
-
-
-@then('all service VMs should be listed')
-def step_svc_vms_listed(context):
-    """Verify service VMs are listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-    # Check some known service VMs are in output
-    assert 'postgres' in context.last_output.lower() or 'redis' in context.last_output.lower()
-
-
-@then('aliases should be shown')
-def step_aliases_shown(context):
-    """Verify aliases are shown in list output."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('only language VMs should be listed')
-def step_only_lang_vms_listed(context):
-    """Verify only language VMs are listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-    # Should contain language VMs but not service VMs
-    assert 'python' in context.last_output.lower() or 'rust' in context.last_output.lower()
-
-
-@then('service VMs should not be listed')
-def step_svc_vms_not_listed(context):
-    """Verify service VMs are not listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-    # Service VMs should not be in output
-    assert 'postgres' not in context.last_output.lower()
-
-
-@then('only service VMs should be listed')
-def step_only_svc_vms_listed(context):
-    """Verify only service VMs are listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-    # Should contain service VMs but not language VMs
-    assert 'postgres' in context.last_output.lower() or 'redis' in context.last_output.lower()
-
-
-@then('language VMs should not be listed')
-def step_lang_vms_not_listed(context):
-    """Verify language VMs are not listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-    # Language VMs should not be in output
-    assert 'python' not in context.last_output.lower()
-
-
-@then('only VMs matching "{pattern}" should be listed')
-def step_only_matching_vms_listed(context, pattern):
-    """Verify only matching VMs are listed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-    # Output should contain the pattern
-    assert pattern in context.last_output.lower()
-
-
-@then('docker-compose.yml should not exist at "{path}"')
-def step_compose_not_exists(context, path):
-    """Verify docker-compose.yml was removed."""
-    full_path = VDE_ROOT / path.lstrip("/")
-    assert not full_path.exists(), f"docker-compose.yml still exists at {full_path}"
-
-
-@then('SSH config entry for "{host}" should be removed')
-def step_ssh_entry_removed(context, host):
-    """Verify SSH config entry was removed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('the VM should be marked as not created')
-def step_vm_not_created_verify(context):
-    """Verify VM is marked as not created."""
-    # Check compose file doesn't exist
-    if hasattr(context, 'test_vm_name'):
-        assert not compose_file_exists(context.test_vm_name)
-
-
-@then('"{vm_name}" should be in known VM types')
-def step_vm_in_known_types(context, vm_name):
-    """Verify VM is in known types."""
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    assert vm_types_file.exists(), "VM types file doesn't exist"
-    with open(vm_types_file) as f:
-        content = f.read()
-        assert vm_name in content, f"{vm_name} not found in VM types"
-
-
-# =============================================================================
-# Additional VM lifecycle steps
-# =============================================================================
-
-@then('VM type "{vm_name}" should have type "{vm_type}"')
-def step_vm_has_type(context, vm_name, vm_type):
-    """Verify VM has correct type."""
-    actual_type = get_vm_type(vm_name)
-    assert actual_type == vm_type, f"VM {vm_name} has type {actual_type}, expected {vm_type}"
-
-
-@then('VM type "{vm_name}" should have display name "{display}"')
-def step_vm_has_display(context, vm_name, display):
-    """Verify VM has correct display name."""
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    with open(vm_types_file) as f:
-        for line in f:
-            if f"|{vm_name}|" in line:
-                assert display in line, f"Display name {display} not found for {vm_name}"
-                return
-    raise AssertionError(f"VM {vm_name} not found in types file")
-
-
-@then('"{vm_name}" should have aliases "{aliases}"')
-def step_vm_has_aliases(context, vm_name, aliases):
-    """Verify VM has correct aliases."""
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    with open(vm_types_file) as f:
-        for line in f:
-            if f"|{vm_name}|" in line:
-                assert aliases in line, f"Aliases {aliases} not found for {vm_name}"
-                return
-    raise AssertionError(f"VM {vm_name} not found in types file")
-
-
-@then('"{alias}" should resolve to "{vm_name}"')
-def step_alias_resolves(context, alias, vm_name):
-    """Verify alias resolves to correct VM."""
-    # In real system, this is handled by vm-common library
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    with open(vm_types_file) as f:
-        for line in f:
-            if alias in line and f"|{vm_name}|" in line:
-                return
-    raise AssertionError(f"Alias {alias} doesn't resolve to {vm_name}")
-
-
-@then('the VM should be allocated port "{port}"')
-def step_vm_has_port(context, port):
-    """Verify VM has expected port."""
-    # In real system, ports are in docker-compose.yml
-    if hasattr(context, 'test_vm_name'):
-        compose_path = VDE_ROOT / "configs" / "docker" / context.test_vm_name / "docker-compose.yml"
-        if compose_path.exists():
-            content = compose_path.read_text()
-            assert port in content, f"Port {port} not found in compose file"
-
-
-@then('"{vm_name}" should be allocated port "{port}"')
-def step_specific_vm_has_port(context, vm_name, port):
-    """Verify specific VM has expected port."""
-    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    if compose_path.exists():
-        content = compose_path.read_text()
-        assert port in content, f"Port {port} not found in {vm_name} compose file"
-        # Verify the port mapping format is correct (e.g., "22:2201")
-        assert f"22:{port}" in content or f':{port}' in content or f'": {port}' in content, \
-            f"Port {port} mapping format not found in compose file"
-    else:
-        # Compose file doesn't exist - this may be expected if VM wasn't created
-        # Check if VM creation was attempted
-        if hasattr(context, 'created_vms') and vm_name in context.created_vms:
-            # VM was created but no compose file - this is an error
-            raise AssertionError(f"VM {vm_name} was created but compose file not found")
-
-
-@then('"{vm_name}" should be mapped to port "{port}"')
-def step_vm_mapped_to_port(context, vm_name, port):
-    """Verify VM is mapped to port."""
-    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    if compose_path.exists():
-        content = compose_path.read_text()
-        # Check for proper port mapping format
-        assert f"22:{port}" in content or f':{port}' in content or f'": {port}' in content, \
-            f"Port mapping {port} not found in {vm_name} compose file. Content: {content[:200]}"
-    else:
-        # If compose file doesn't exist, check if VM was supposed to be created
-        if hasattr(context, 'created_vms') and vm_name in getattr(context, 'created_vms', set()):
-            raise AssertionError(f"VM {vm_name} was marked as created but compose file missing")
-
-
-@then('"{vm_name}" should still be mapped to port "{port}"')
-def step_vm_still_mapped_to_port(context, vm_name, port):
-    """Verify VM is still mapped to same port."""
-    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    if compose_path.exists():
-        content = compose_path.read_text()
-        assert f"22:{port}" in content or f':{port}' in content or f'": {port}' in content, \
-            f"Port mapping {port} not found in {vm_name} compose file"
-        # Also verify the port hasn't changed by checking original mapping
-        original_port = getattr(context, f'{vm_name}_original_port', None)
-        if original_port:
-            assert port == original_port, \
-                f"Port changed from {original_port} to {port}"
-    else:
-        # Compose file should exist if VM was created
-        if hasattr(context, 'created_vms') and vm_name in getattr(context, 'created_vms', set()):
-            raise AssertionError(f"VM {vm_name} compose file disappeared")
-
-
-@then('the VM should NOT be allocated port "{port}"')
-def step_vm_not_has_port(context, port):
-    """Verify VM doesn't have specific port."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('the VM should be allocated a different available port')
-def step_vm_has_different_port(context):
-    """Verify VM got a different port."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('each process should receive a unique port')
-def step_unique_ports(context):
-    """Verify each VM has unique port."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('no port should be allocated twice')
-def step_no_duplicate_ports(context):
-    """Verify no duplicate ports."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('the allocated port should be between "{start}" and "{end}"')
-def step_port_in_range(context, start, end):
-    """Verify port is in range."""
-    # Real verification: check actual port allocation from output
-    start_port = int(start)
-    end_port = int(end)
-
-    # If we have last_output with port information, parse it
-    if hasattr(context, 'last_output') and context.last_output:
-        import re
-        # Look for port-specific patterns (not just any 4-5 digit number)
-        # Patterns like: "port: 2200", "allocated port 2200", "2200/tcp", "port 2200"
-        port_patterns = [
-            r'port\s*:?\s*(\d{4,5})',      # "port: 2200" or "port 2200"
-            r'allocated\s+port\s+(\d{4,5})', # "allocated port 2200"
-            r'(\d{4,5})/tcp',              # "2200/tcp"
-            r'ssh\s+port\s+(\d{4,5})',      # "ssh port 2200"
-        ]
-        for pattern in port_patterns:
-            port_match = re.search(pattern, context.last_output, re.IGNORECASE)
-            if port_match:
-                allocated_port = int(port_match.group(1))
-                assert start_port <= allocated_port <= end_port, \
-                    f"Allocated port {allocated_port} not in range [{start_port}, {end_port}]"
-                context.port_allocated = allocated_port
-                return
-
-    # Fallback: check that the command succeeded
-    assert getattr(context, 'last_exit_code', -1) == 0, \
-        f"Port allocation should succeed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('the stale lock should be removed')
-def step_stale_lock_removed(context):
-    """Verify stale lock was removed."""
-    # Real verification: check for lock file removal
-    from pathlib import Path
-    lock_file = VDE_ROOT / "cache" / "port-registry.lock"
-
-    # If lock file exists, the removal failed
-    if lock_file.exists():
-        raise AssertionError(f"Stale lock file should be removed but still exists: {lock_file}")
-
-    # Also verify command succeeded
-    assert getattr(context, 'last_exit_code', -1) == 0, \
-        f"Lock removal should succeed: {getattr(context, 'last_error', 'unknown error')}"
-    context.lock_removed = True
-
-
-@then('the port should be available for allocation')
-def step_port_available(context):
-    """Verify port is available."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('port "{port}" should be removed from registry')
-def step_port_removed(context, port):
-    """Verify port was removed."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('port "{port}" should be available for new VMs')
-def step_port_available_new_vm(context, port):
-    """Verify port is available for new VMs."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('all created VMs should be running')
-def step_all_created_running(context):
-    """Verify all created VMs are running."""
-    if hasattr(context, 'created_vms') and context.created_vms:
-        # Wait a bit for all containers to be fully started
-        time.sleep(5)
-        # Check each created VM
-        failed_vms = []
-        for vm_name in context.created_vms:
-            # Wait up to 30 seconds for each VM to be running
-            if not container_exists(vm_name):
-                wait_for_container(vm_name, timeout=30)
-            if not container_exists(vm_name):
-                failed_vms.append(vm_name)
-
-        # For local testing (IN_TEST_MODE), be more forgiving about pre-existing host VM issues
-        # Only fail if the scenario actually created fresh configs that didn't start
-        if failed_vms:
-            # During local testing, check if compose files were created in this scenario
-            # (vs pre-existing host configs that might have issues)
-            if IN_TEST_MODE:
-                # For local testing, only fail if all created VMs failed
-                # (indicating the test setup itself failed, not pre-existing issues)
-                if len(failed_vms) == len(context.created_vms):
-                    raise AssertionError(f"All VMs failed to start: {failed_vms} (all containers: {docker_ps()})")
-                # Otherwise, some VMs started - the test scenario is working
-                # Pre-existing host VM issues don't invalidate the test
-                else:
-                    print(f"  WARNING: Some VMs failed to start (likely pre-existing host issues): {failed_vms}")
-            else:
-                # In container testing, fail on any VM not running
-                raise AssertionError(f"VMs {failed_vms} are not running (all containers: {docker_ps()})")
-
-
-@then('each VM should have a unique SSH port')
-def step_unique_ssh_ports(context):
-    """Verify each VM has unique SSH port."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('SSH should be accessible on allocated port')
-def step_ssh_accessible(context):
-    """Verify SSH is accessible on allocated port."""
-    # Check VM is running
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-    if hasattr(context, 'test_vm_name'):
-        assert container_exists(context.test_vm_name), f"VM {context.test_vm_name} is not running"
-
-
-@then('the VM should have a fresh container instance')
-def step_fresh_container(context):
-    """Verify container was rebuilt."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@when('VM types are loaded for the first time')
-def step_vm_types_first_load(context):
-    """VM types loaded for first time - actually run VDE script to create cache."""
-    result = run_vde_command("./scripts/list-vms", timeout=30)
-    context.vm_types_first_load = (result.returncode == 0)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
-@then('VM_ALIASES array should be populated')
-def step_vm_aliases_populated(context):
-    """Verify VM_ALIASES is populated."""
-    # If no command was run, just verify the context flag was set
-    assert getattr(context, 'last_exit_code', 0) == 0, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('comments should start with "#"')
-def step_comments_start_with_hash(context):
-    """Verify comments in VM types file start with #."""
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    invalid_lines = []
-    with open(vm_types_file) as f:
-        for line_num, line in enumerate(f, 1):
-            stripped = line.strip()
-            # Skip empty lines and valid comment/data lines
-            if not stripped or stripped.startswith("#") or "|" in stripped:
-                continue
-            # Found an invalid line
-            invalid_lines.append(f"Line {line_num}: {stripped}")
-
-    if invalid_lines:
-        raise AssertionError(f"Found non-comment lines without data format: {invalid_lines}")
-    # All lines are valid - either comments, empty, or contain pipe (data format)
-
-
-@then('each VM should be mapped to its port')
-def step_each_vm_mapped(context):
-    """Verify each VM has port mapping."""
-    # If no command was run, just verify the context flag was set
-    assert getattr(context, 'last_exit_code', 0) == 0, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('all allocated ports should be discovered')
-def step_ports_discovered(context):
-    """Verify all ports are discovered."""
-    # If no command was run, just verify the context flag was set
-    assert getattr(context, 'last_exit_code', 0) == 0, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('_VM_TYPES_LOADED flag should be reset')
-def step_flag_reset(context):
-    """Verify flag is reset."""
-    # If no command was run, just verify the context flag was set
-    assert getattr(context, 'last_exit_code', 0) == 0, f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@given('no VM operations have been performed')
-def step_no_vm_operations(context):
-    """No VM operations performed yet."""
-    context.vm_operations = []
-
-
-@then('not during initial library sourcing')
-def step_not_initial_sourcing(context):
-    """Verify not during initial library sourcing."""
-    # This step verifies that operations happen after initial library loading
-    # Check that VDE_ROOT is set and libraries are available
-    assert VDE_ROOT is not None and VDE_ROOT.exists(), \
-        "VDE_ROOT should be set and exist"
-    # Verify library files are present
-    assert (VDE_ROOT / "scripts" / "lib" / "vde-constants").exists(), \
-        "VDE library should be loaded"
-    # Store a flag to indicate post-initialization state
-    context.libraries_loaded = True
-
-
-@when('I say something vague like "do something with containers"')
-def step_vague_input(context):
-    """Provide vague input to parser."""
-    context.last_input = "do something with containers"
-
-
-@then('the system should provide helpful correction suggestions')
-def step_correction_suggestions(context):
-    """Verify correction suggestions are provided."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@given('I have cloned the project repository')
-def step_cloned_repo(context):
-    """Simulate having cloned the repo."""
-    context.repo_cloned = True
-
-
-@given('the project contains VDE configuration in configs/')
-def step_vde_config_exists(context):
-    """VDE config directory exists."""
-    assert (VDE_ROOT / "configs").exists()
-
-
-@then('my SSH keys should be automatically configured')
-def step_ssh_keys_configured(context):
-    """Verify SSH keys are configured."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('I should see available VMs with "list-vms"')
-def step_see_available_vms(context):
-    """Verify list-vms shows available VMs."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('my existing SSH entries should be preserved')
-def step_ssh_entries_preserved(context):
-    """Verify existing SSH entries are preserved."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('I should not lose my personal SSH configurations')
-def step_personal_ssh_preserved(context):
-    """Verify personal SSH config is preserved."""
-    assert getattr(context, 'last_exit_code', 0) == 0 , f"Command failed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@when('I check docker-compose config')
-def step_check_compose_config(context):
-    """Check docker-compose configuration."""
-    result = run_vde_command("docker-compose config", timeout=30)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
-@then('I should see the effective configuration')
-def step_effective_config(context):
-    """Verify effective config is shown."""
-    assert context.last_exit_code == 0 or "error" not in context.last_error.lower()
-
-
-@then('errors should be clearly indicated')
-def step_errors_clear(context):
-    """Verify errors are clear."""
-    # If there was an error, it should be in stderr
-    if context.last_exit_code != 0:
-        assert context.last_error, "Error message should be present"
-
-
-@then('I can identify the problematic setting')
-def step_identify_problem(context):
-    """Verify problematic setting is identified."""
-    assert context.last_exit_code != 0 or context.last_output
-
-
-@when('I add variables like NODE_ENV=development')
-def step_add_env_vars(context):
-    """Add environment variables."""
-    context.last_action = "add_env_vars"
-
-
-@then('variables are loaded automatically when VM starts')
-def step_vars_loaded(context):
-    """Verify env vars are loaded."""
-    # Check if a command was run successfully
-    if hasattr(context, 'last_exit_code'):
-        assert context.last_exit_code == 0, \
-            f"Command should succeed: {getattr(context, 'last_error', 'unknown error')}"
-    else:
-        # No command was run - verify env var action was recorded
-        assert hasattr(context, 'last_action') and context.last_action == "add_env_vars", \
-            "Expected env vars to be added"
-
-
-@then('invalid ports should be rejected')
-def step_invalid_ports_rejected(context):
-    """Verify invalid ports are rejected."""
-    exit_code = getattr(context, 'last_exit_code', None)
-    if exit_code is not None:
-        # Command was run - it should have failed
-        assert exit_code != 0, "Command should have failed with invalid port"
-        # Verify error message mentions port or invalid
-        output = (context.last_output or '') + (context.last_error or '')
-        output_lower = output.lower()
-        assert any(word in output_lower for word in ['port', 'invalid', 'range', 'permission']), \
-            f"Error message should mention port issue: {output}"
-    else:
-        # No command was run - this is a test setup issue
-        raise AssertionError("No command was executed to verify port rejection")
-
-
-@then('missing required fields should be reported')
-def step_missing_fields_reported(context):
-    """Verify missing fields are reported."""
-    exit_code = getattr(context, 'last_exit_code', None)
-    if exit_code is not None:
-        # Command was run - it should have failed
-        assert exit_code != 0, "Command should have failed with missing fields"
-        # Verify error message mentions missing or required
-        output = (context.last_output or '') + (context.last_error or '')
-        output_lower = output.lower()
-        assert any(word in output_lower for word in ['missing', 'required', 'field', 'invalid']), \
-            f"Error message should mention missing fields: {output}"
-    else:
-        # No command was run - this is a test setup issue
-        raise AssertionError("No command was executed to verify missing fields detection")
-
-
-@given('VDE configuration format has changed')
-def step_config_format_changed(context):
-    """Simulate config format change."""
-    context.config_format_changed = True
-
-
-@when('I reload VM types')
-def step_reload_vm_types(context):
-    """Reload VM types."""
-    result = run_vde_command("./scripts/list-vms", timeout=30)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-
-
-@then('old configurations should still work')
-def step_old_config_works(context):
-    """Verify old configs still work."""
-    if hasattr(context, 'last_exit_code'):
-        assert context.last_exit_code == 0, \
-            f"Old config should still work: {getattr(context, 'last_error', 'unknown error')}"
-    else:
-        # No command run yet - this is informational
-        assert hasattr(context, 'config_format_changed'), "Config format change should be set"
-
-
-@then('migration should happen automatically')
-def step_migration_auto(context):
-    """Verify migration is automatic."""
-    if hasattr(context, 'last_exit_code'):
-        assert context.last_exit_code == 0, \
-            f"Migration should succeed: {getattr(context, 'last_error', 'unknown error')}"
-        # Output should indicate migration or successful loading
-        output = (context.last_output or '').lower()
-        # Success is enough - migration may be silent
-        assert context.last_exit_code == 0
-    else:
-        # No command run - check for config format change flag
-        assert hasattr(context, 'config_format_changed'), "Config format change should be set"
-
-
-@then('the container should be rebuilt from the Dockerfile')
-def step_container_rebuilt(context):
-    """Verify container was rebuilt from Dockerfile."""
-    vm_name = getattr(context, 'vm_create_requested', 'test-vm')
-    # Add -dev suffix if not already present (container names use -dev suffix)
-    container_name = f"{vm_name}-dev" if '-dev' not in vm_name else vm_name
-    # Verify container is running after rebuild
-    result = subprocess.run(
-        ["docker", "inspect", "-f", "{{.State.Running}}", container_name],
-        capture_output=True, text=True, timeout=10
-    )
-    # Container should be running after rebuild
-    if result.returncode != 0 or result.stdout.strip() != "true":
-        # Container not running - provide helpful error message
-        check_result = subprocess.run(
-            ["docker", "ps", "-a", "--filter", f"name={container_name}", "--format", "{{.Names}} {{.State}}"],
-            capture_output=True, text=True, timeout=10
-        )
-        if container_name in check_result.stdout:
-            raise AssertionError(f"Container {container_name} exists but is not running after rebuild")
-        else:
-            raise AssertionError(f"Container {container_name} does not exist after rebuild")
-
-
-@then('projects directory should still exist at "{path}"')
-def step_projects_dir_exists(context, path):
-    """Verify projects directory still exists (not deleted when VM removed)."""
-    full_path = VDE_ROOT / path.lstrip("/")
-    assert full_path.exists(), f"Projects directory not found at {full_path}"
-    assert full_path.is_dir(), f"Path exists but is not a directory: {full_path}"
-
-
-# =============================================================================
-# Idempotent Operations Steps
-# =============================================================================
-
-@given('I repeat the same command')
-def step_repeat_same_command(context):
-    """Repeat the previously executed command to test idempotency."""
-    if not hasattr(context, 'last_command') or not context.last_command:
-        # No previous command, set up a default one and run it twice
-        context.last_command = "./scripts/list-vms"
-
-        # First run
-        result = run_vde_command(context.last_command, timeout=30)
-        context.first_run_output = result.stdout
-        context.first_run_exit_code = result.returncode
-        context.first_run_error = result.stderr
-
-        # Second run (repeat the command)
-        result2 = run_vde_command(context.last_command, timeout=30)
-        context.second_run_output = result2.stdout
-        context.second_run_exit_code = result2.returncode
-        context.second_run_error = result2.stderr
-
-        # Set context to latest values
-        context.last_exit_code = result2.returncode
-        context.last_output = result2.stdout
-        context.last_error = result2.stderr
-        return
-
-    # Store first run results if not already stored
-    if not hasattr(context, 'first_run_output'):
-        context.first_run_output = context.last_output
-        context.first_run_exit_code = context.last_exit_code
-        context.first_run_error = context.last_error
-
-    # Repeat the command
-    result = run_vde_command(context.last_command, timeout=120)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.second_run_output = result.stdout
-    context.second_run_exit_code = result.returncode
-    context.second_run_error = result.stderr
-
-
-@when('the operation is already complete')
-def step_operation_already_complete(context):
-    """Verify the operation was already in its completed state."""
-    # Check that we have stored results indicating completion
-    assert hasattr(context, 'first_run_exit_code'), "No previous operation recorded"
-    # A completed operation typically succeeds (exit code 0) or indicates it's already done
-    context.operation_was_complete = context.first_run_exit_code == 0
-
-
-@then('the result should be the same')
-def step_result_should_be_same(context):
-    """Verify repeating the command gives the same effective result."""
-    assert hasattr(context, 'second_run_exit_code'), "No second run recorded"
-    # Both runs should succeed
-    assert context.first_run_exit_code == 0, f"First run failed: {context.last_error}"
-    assert context.second_run_exit_code == 0, f"Second run failed: {context.last_error}"
-
-
-@then('no errors should occur')
-def step_no_errors_should_occur(context):
-    """Verify no errors occur during the operation."""
-    exit_code = getattr(context, 'last_exit_code', getattr(context, 'second_run_exit_code', -1))
-    assert exit_code == 0, f"Operation failed with exit code {exit_code}: {context.last_error}"
-    # Check no error indicators in output
-    output = getattr(context, 'last_output', '')
-    assert 'error' not in output.lower() or 'warning' not in output.lower() or exit_code == 0
-
-
-@then('no error should occur')
-def step_no_error_should_occur(context):
-    """Verify no error occurs during the operation (singular variant)."""
-    exit_code = getattr(context, 'last_exit_code', getattr(context, 'second_run_exit_code', -1))
-    assert exit_code == 0, f"Operation failed with exit code {exit_code}: {context.last_error}"
-    # Check no error indicators in output
-    output = getattr(context, 'last_output', '')
-    assert 'error' not in output.lower() or 'warning' not in output.lower() or exit_code == 0
-
-
-@then('I should be informed it was already done')
-def step_informed_already_done(context):
-    """Verify the system informs the user the operation was already complete."""
-    output = getattr(context, 'second_run_output', context.last_output)
-    # Look for common phrases indicating idempotency
-    idempotent_phrases = [
-        'already',
-        'nothing to do',
-        'no change',
-        'up to date',
-        'exists',
-        'running'
-    ]
-    output_lower = output.lower()
-    # At least one idempotent indicator should be present, or operation succeeded
-    assert context.last_exit_code == 0, "Operation should succeed"
-    # Don't strictly require the phrase - successful exit may be enough for some operations
-
-
-# =============================================================================
-# Clear State Communication Steps
-# =============================================================================
-
-@given('any VM operation occurs')
-def step_any_vm_operation(context):
-    """Perform a VM operation to observe state communication."""
-    # Run list-vms as a safe, informative operation
-    result = run_vde_command("./scripts/list-vms", timeout=30)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.operation_performed = "list-vms"
-
-
-@when('the operation completes')
-def step_operation_completes(context):
-    """Verify the operation completes successfully."""
-    assert context.last_exit_code == 0, f"Operation did not complete: {context.last_error}"
-    context.operation_completed = True
-
-
-@then('I should see the new state')
-def step_see_new_state(context):
-    """Verify the output shows the resulting state."""
-    assert context.last_output, "No output received from operation"
-    # Output should contain some indication of state
-    # For list-vms, this would be VM names and their states
+@then('I should be notified that Python is already running')
+def step_notified_already_running(context):
+    """Should be notified that Python is already running."""
     output_lower = context.last_output.lower()
-    # Check for state indicators (running, stopped, etc.)
-    has_state_info = any(word in output_lower for word in ['running', 'stopped', 'created', 'not created', 'available'])
-    # Even if no explicit state, having output is sufficient for this step
-    assert len(context.last_output.strip()) > 0, "Output should show state information"
-
-
-@then('understand what changed')
-def step_understand_what_changed(context):
-    """Verify the output clearly indicates what changed."""
-    assert context.last_output, "No output to interpret"
-    # Output should be human-readable and informative
-    # For idempotent operations, it should indicate "already" or "no change"
-    # For state changes, it should show before/after or just the new state
-    output_lines = context.last_output.strip().split('\n')
-    # At least some meaningful output should exist
-    assert len(output_lines) > 0, "Output should explain what happened"
-
-
-@then('be able to verify the result')
-def step_verify_result(context):
-    """Verify the output allows verification of the operation result."""
-    # Real verification: check actual command output and exit code
-    assert hasattr(context, 'last_output'), "No output to verify - command should produce output"
-    assert context.last_output, "No output to verify"
-    assert context.last_exit_code == 0, f"Operation should succeed: {getattr(context, 'last_error', 'unknown error')}"
-
-    # Output should contain actionable information
-    output_lower = context.last_output.lower()
-    # For list-vms specifically, check for VM names
-    if getattr(context, 'operation_performed', '') == 'list-vms':
-        has_vm_info = any(vm in output_lower for vm in ['python', 'rust', 'go', 'postgres', 'redis', 'vm'])
-        assert has_vm_info or len(context.last_output) > 0, "Output should contain verifiable information"
-
-
-@then("I should be told which were skipped")
-def step_told_which_skipped(context):
-    """Verify user is told which VMs were skipped."""
-    # Check if last_output exists
-    if not hasattr(context, 'last_output'):
-        # No output to check - this is OK for some scenarios
-        return
-    output_lower = context.last_output.lower()
-    # Check for indication of skipping or already running
-    exit_code = getattr(context, 'last_exit_code', 0)
-    assert 'already' in output_lower or 'skip' in output_lower or exit_code == 0
-
-
-# =============================================================================
-# VM Information and Discovery Steps
-# =============================================================================
-
-@given('I have VDE installed')
-def step_vde_installed(context):
-    """VDE is installed."""
-    context.vde_installed = True
-
-
-@then('I should see all available language VMs')
-def step_see_language_vms(context):
-    """Should see all available language VMs - loaded from vm-types.conf."""
-    # This step expects real VM data to be loaded by the WHEN step
-    assert hasattr(context, 'language_vms'), "Language VMs not loaded by WHEN step"
-    assert len(context.language_vms) > 0, "No language VMs found"
-    context.language_vms_shown = True
-    context.has_vm_list = True
-
-
-@then('I should see all available service VMs')
-def step_see_service_vms(context):
-    """Should see all available service VMs - loaded from vm-types.conf."""
-    # This step expects real VM data to be loaded by the WHEN step
-    assert hasattr(context, 'service_vms'), "Service VMs not loaded by WHEN step"
-    assert len(context.service_vms) > 0, "No service VMs found"
-    context.service_vms_shown = True
-    context.has_vm_list = True
-
-
-@then('I should see any aliases (like py, python3)')
-def step_see_aliases(context):
-    """Should see VM aliases in the output."""
-    # Check that the output contains alias information
-    output = getattr(context, 'last_output', '')
-    # Look for common alias patterns in the output
-    output_lower = output.lower()
-    # Aliases like py, js, go, rust, etc. should be mentioned
-    # Or output should show "alias:" or similar alias notation
-    alias_found = (
-        'alias' in output_lower or
-        'py' in output_lower or
-        'python3' in output_lower or
-        'node' in output_lower or
-        any(alias in output_lower for alias in ['js', 'ts', 'go', 'rs', 'rb'])
-    )
-    assert alias_found, f"Output should show aliases. Got: {output[:500]}"
-
-
-@then('each VM should have a display name')
-def step_vm_display_name(context):
-    """Each VM should have a display name - verify real data."""
-    assert hasattr(context, 'all_vms'), "VM list not loaded by WHEN step"
-    # Verify all VMs have display names
-    for vm in context.all_vms:
-        assert vm.get('display'), f"VM {vm.get('type', 'unknown')} missing display name"
-    context.vm_has_display_name = True
-
-
-@then('each VM should show its type (language or service)')
-def step_vm_type_shown(context):
-    """Each VM should show its type - verify real data."""
-    assert hasattr(context, 'all_vms'), "VM list not loaded by WHEN step"
-    # Verify all VMs have category information
-    for vm in context.all_vms:
-        assert vm.get('category'), f"VM {vm.get('type', 'unknown')} missing category"
-    context.vm_type_shown = True
-
-
-@given('I want to see only programming language environments')
-def step_want_languages_only(context):
-    """Want to see only language VMs."""
-    context.languages_only = True
-
-
-@then('I should not see service VMs')
-def step_not_see_services(context):
-    """Should not see service VMs - verify real data."""
-    assert hasattr(context, 'language_vms'), "Language VMs not loaded by WHEN step"
-    # Verify language_vms list doesn't contain services
-    for vm in context.language_vms:
-        assert vm['category'] == 'language', f"Found service VM in language list: {vm['type']}"
-    context.services_hidden = True
-
-
-@then('common languages like Python, Go, and Rust should be listed')
-def step_common_languages_listed(context):
-    """Common languages should be listed - verify real data."""
-    assert hasattr(context, 'language_vms'), "Language VMs not loaded by WHEN step"
-    lang_names = [vm['type'] for vm in context.language_vms]
-    assert 'python' in lang_names, "Python not in language VMs"
-    assert 'go' in lang_names, "Go not in language VMs"
-    assert 'rust' in lang_names, "Rust not in language VMs"
-    context.common_languages_listed = True
-
-
-@given('I want to see only infrastructure services')
-def step_want_services_only(context):
-    """Want to see only service VMs."""
-    context.services_only = True
-
-
-@then('I should see only service VMs')
-def step_see_only_services(context):
-    """Should see only service VMs - verify real data."""
-    assert hasattr(context, 'service_vms'), "Service VMs not loaded by WHEN step"
-    # Verify service_vms list contains only services
-    for vm in context.service_vms:
-        assert vm['category'] == 'service', f"Found language VM in service list: {vm['type']}"
-    context.only_services_shown = True
-
-
-@then('I should not see language VMs')
-def step_not_see_languages(context):
-    """Should not see language VMs - verify real data."""
-    assert hasattr(context, 'service_vms'), "Service VMs not loaded by WHEN step"
-    # Verify service_vms list doesn't contain languages
-    for vm in context.service_vms:
-        assert vm['category'] != 'language', f"Found language VM in service list: {vm['type']}"
-    context.languages_hidden = True
-
-
-@then('services like PostgreSQL and Redis should be listed')
-def step_common_services_listed(context):
-    """Common services should be listed - verify real data."""
-    assert hasattr(context, 'service_vms'), "Service VMs not loaded by WHEN step"
-    service_names = [vm['type'] for vm in context.service_vms]
-    assert 'postgres' in service_names, "PostgreSQL not in service VMs"
-    assert 'redis' in service_names, "Redis not in service VMs"
-    context.common_services_listed = True
-
-
-@given('I want to know about the Python VM')
-def step_want_python_info(context):
-    """Want to know about Python VM."""
-    context.vm_inquiry = "python"
-
-
-@when('I request information about "{vm_name}"')
-def step_request_vm_info(context, vm_name):
-    """Request information about specific VM - load from vm-types.conf."""
-    import subprocess
-    # Call list-vms to get real VM information
-    result = subprocess.run(
-        [f"{VDE_ROOT}/scripts/list-vms"],
-        capture_output=True, text=True, timeout=30, cwd=VDE_ROOT
-    )
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.vm_info_requested = vm_name
-    context.vm_info_exit_code = result.returncode
-
-
-@then('I should see its display name')
-def step_see_display_name(context):
-    """Should see display name in output."""
-    assert hasattr(context, 'last_output'), "No output from VM info request"
-    # list-vms should show display names
-    output = context.last_output.lower()
-    # Check for common display name indicators or VM names
-    assert 'python' in output or len(output) > 0, "Output should show VM display names"
-
-
-@then('I should see its type (language)')
-def step_see_type_language(context):
-    """Should see type as language in output."""
-    assert hasattr(context, 'last_output'), "No output from VM info request"
-    # For Docker-free tests, just verify output was received
-    assert len(context.last_output) > 0, "Output should contain VM type information"
-    context.vm_type_seen = "language"
-
-
-@then('I should see installation details')
-def step_see_installation_details(context):
-    """Should see installation details in output."""
-    assert hasattr(context, 'last_output'), "No output from VM info request"
-    # For Docker-free tests, just verify command succeeded
-    assert context.vm_info_exit_code == 0, "VM info command should succeed"
-    context.installation_details_shown = True
-
-
-@given('I want to verify a VM type before using it')
-def step_want_verify_vm(context):
-    """Want to verify VM type."""
-    context.want_verify_vm = True
-
-
-@when('I check if "{vm_name}" exists')
-def step_check_vm_exists(context, vm_name):
-    """Check if VM exists."""
-    context.vm_checked = vm_name
-
-
-@then('it should resolve to "{canonical_name}"')
-def step_resolve_to_canonical(context, canonical_name):
-    """Should resolve to canonical name."""
-    context.resolved_to = canonical_name
-
-
-@then('the VM should be marked as valid')
-def step_vm_marked_valid(context):
-    """VM should be marked as valid - verify VM exists in vm-types.conf."""
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    assert vm_types_file.exists(), "VM types file should exist"
-    content = vm_types_file.read_text()
-    assert '|' in content, "VM types file should have valid VM entries"
-
-
-@given('I know a VM by an alias but not its canonical name')
-def step_known_by_alias(context):
-    """Know VM by alias."""
-    context.known_by_alias = True
-
-
-@when('I use the alias "{alias}"')
-def step_use_alias(context, alias):
-    """Use the alias."""
-    context.alias_used = alias
-
-
-@then('it should resolve to the canonical name "{canonical}"')
-def step_resolve_canonical(context, canonical):
-    """Should resolve to canonical name."""
-    context.canonical_resolved = canonical
-
-
-@then('I should be able to use either name in commands')
-def step_either_name_works(context):
-    """Either name should work in commands - verify alias resolution works."""
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    assert vm_types_file.exists(), "VM types file should exist"
-    content = vm_types_file.read_text()
-    assert '|' in content, "VM types should have pipe-separated entries for aliases"
-
-
-@when('I explore available VMs')
-def step_explore_vms(context):
-    """Explore available VMs."""
-    context.exploring_vms = True
-
-
-@then('I should understand the difference between language and service VMs')
-def step_understand_vm_types(context):
-    """Should understand difference between VM types."""
-    context.vm_types_understood = True
-
-
-@then('language VMs should have SSH access')
-def step_language_vms_ssh(context):
-    """Language VMs should have SSH access."""
-    context.language_vms_have_ssh = True
-
-
-@then('service VMs should provide infrastructure services')
-def step_service_vms_infrastructure(context):
-    """Service VMs should provide infrastructure services - verify service VMs exist."""
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    assert vm_types_file.exists(), "VM types file should exist"
-    content = vm_types_file.read_text()
-    assert 'service' in content.lower(), "Should have service VM entries like postgres, redis"
-
-
-# =============================================================================
-# VM Lifecycle Management Steps
-# =============================================================================
-
-@given('I want to work with a new language')
-def step_want_new_language(context):
-    """Want to work with a new language."""
-    context.new_language = True
-
-
-@when('I request to "create a Rust VM"')
-def step_request_create_rust_vm(context):
-    """Request to create a Rust VM."""
-    context.vm_create_requested = "rust"
-    context.vm_create_type = "language"
-
-
-@then('the VM configuration should be generated')
-def step_vm_config_generated(context):
-    """VM configuration should be generated - verify docker-compose file exists."""
-    vm_name = getattr(context, 'vm_create_requested', 'rust')
-    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    assert compose_path.exists(), f"VM config should exist at {compose_path}"
-
-
-@then('SSH keys should be configured')
-def step_ssh_keys_configured(context):
-    """SSH keys should be configured - verify SSH key exists."""
-    ssh_key = Path.home() / ".ssh" / "id_ed25519"
-    ssh_key_rsa = Path.home() / ".ssh" / "id_rsa"
-    assert ssh_key.exists() or ssh_key_rsa.exists(), "SSH key should exist"
-
-
-@then('the VM should be ready to use')
-def step_vm_ready(context):
-    """VM should be ready to use - verify docker-compose file exists."""
-    vm_name = getattr(context, 'vm_create_requested', 'rust')
-    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    assert compose_path.exists(), f"VM config should exist at {compose_path}"
-
-
-@when('I request to "create Python, PostgreSQL, and Redis"')
-def step_request_create_multiple_vms(context):
-    """Request to create multiple VMs."""
-    context.multiple_vms_requested = ["python", "postgres", "redis"]
-
-
-@then('all three VMs should be created')
-def step_all_created(context):
-    """All three VMs should be created - verify compose files exist."""
-    requested = getattr(context, 'multiple_vms_requested', ['python', 'postgres', 'redis'])
-    for vm_name in requested:
-        compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-        assert compose_path.exists(), f"VM {vm_name} config should exist at {compose_path}"
-
-
-@then('all should be on the same Docker network')
-def step_same_network(context):
-    """All VMs should be on same Docker network - verify vde-network exists."""
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
-        capture_output=True, text=True, timeout=10
-    )
-    assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "vde" in result.stdout.lower(), "VDE network should exist"
-
-
-@given('I have created a Go VM')
-def step_have_created_go_vm(context):
-    """Go VM has been created."""
-    context.go_vm_created = True
-
-
-@when('I request to "start go"')
-def step_request_start_go(context):
-    """Request to start go VM."""
-    context.vm_start_requested = "go"
-
-
-@then('the Go container should start')
-def step_go_starts(context):
-    """Go container should start - verify container is running."""
-    vm_name = "go"
-    assert container_exists(vm_name), f"VM {vm_name} should be running"
-
-
-@then('it should be accessible via SSH')
-def step_accessible_ssh(context):
-    """Should be accessible via SSH - verify SSH port is allocated."""
-    vm_name = getattr(context, 'vm_start_requested', 'go')
-    port = get_port_from_compose(vm_name)
-    assert port is not None, f"VM {vm_name} should have SSH port allocated"
-    assert container_exists(vm_name), f"VM {vm_name} should be running"
-
-
-@given('I have created several VMs')
-def step_have_created_vms(context):
-    """Several VMs have been created."""
-    context.created_vms = ["python", "go", "postgres"]
-
-
-@when('I request to "start python, go, and postgres"')
-def step_request_start_multiple(context):
-    """Request to start multiple VMs."""
-    context.multiple_vms_start = ["python", "go", "postgres"]
-
-
-@then('all three VMs should start')
-def step_all_start(context):
-    """All three VMs should start."""
-    context.all_started = True
-
-
-@then('they should be able to communicate')
-def step_can_communicate(context):
-    """VMs should be able to communicate - verify on same network."""
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
-        capture_output=True, text=True, timeout=10
-    )
-    assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "vde" in result.stdout.lower(), "VMs should be on vde network"
-
-
-@given('I have several VMs')
-def step_have_several_vms(context):
-    """Have several VMs."""
-    context.several_vms = True
-
-
-@when('I request "status of all VMs"')
-def step_request_status_all(context):
-    """Request status of all VMs."""
-    context.status_all_requested = True
-
-
-
-
-@given('I have a running Python VM')
-def step_have_running_python(context):
-    """Have a running Python VM."""
-    context.python_running = True
-
-
-@when('I request to "stop python"')
-def step_request_stop_python(context):
-    """Request to stop python VM."""
-    context.vm_stop_requested = "python"
+    error_lower = context.last_error.lower()
+    # Check for "already running" or similar messages
+    has_message = 'already' in output_lower or 'already' in error_lower or 'running' in output_lower
+    assert has_message, f"Expected notification about already running, got: {context.last_output}"
+
+
+@then('the system should not start a duplicate container')
+def step_no_duplicate(context):
+    """System should not start a duplicate container - verify success without duplication."""
+    exit_code = getattr(context, 'last_exit_code', 1)
+    assert exit_code == 0, f"Command should succeed: {getattr(context, 'last_error', 'unknown error')}"
+
+
+@then('the existing container should remain unaffected')
+def step_existing_unaffected(context):
+    """Existing container should remain unaffected - verify container still running."""
+    assert container_exists("python"), \
+        "Python container should still be running after attempting to start again"
 
 
 @then('the Python container should stop')
 def step_python_stops(context):
-    """Python container should stop."""
-    context.python_stopped = True
+    """Python container should stop - verify container not running."""
+    assert not container_exists("python"), "Python container should not be running"
 
 
 @then('the VM configuration should remain')
 def step_config_remains(context):
-    """VM configuration should remain."""
-    context.config_remains = True
-
-
-@then('I can start it again later')
-def step_can_restart(context):
-    """Can start again later - verify VM config persists after stop."""
+    """VM configuration should remain - verify compose file still exists."""
     vm_name = getattr(context, 'vm_stop_requested', 'python')
-    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    assert compose_path.exists(), f"VM config should persist at {compose_path}"
-
-
-@given('I have multiple running VMs')
-def step_have_multiple_running(context):
-    """Have multiple running VMs."""
-    context.multiple_running = True
-
-
-@when('I request to "stop python and postgres"')
-def step_request_stop_multiple(context):
-    """Request to stop multiple VMs."""
-    context.stop_multiple_requested = ["python", "postgres"]
-
-
-@then('both VMs should stop')
-def step_both_stop(context):
-    """Both VMs should stop."""
-    context.both_stopped = True
+    assert compose_file_exists(vm_name), f"VM {vm_name} config should remain"
 
 
 @then('other VMs should remain running')
@@ -1802,378 +411,129 @@ def step_others_remain(context):
     assert len(running) > 0, "At least one VM should still be running"
 
 
-@when('I request to "restart rust"')
-def step_request_restart_rust(context):
-    """Request to restart rust VM."""
-    context.restart_requested = "rust"
+@then('both VMs should stop')
+def step_both_stop(context):
+    """Both VMs should stop - verify containers not running."""
+    stopped = getattr(context, 'stop_multiple_requested', ['python', 'postgres'])
+    for vm_name in stopped:
+        assert not container_exists(vm_name), f"VM {vm_name} should not be running"
 
 
 @then('the Rust VM should stop')
 def step_rust_stops(context):
-    """Rust VM should stop."""
-    context.rust_stopped = True
+    """Rust VM should stop - verify container not running."""
+    assert not container_exists("rust"), "Rust VM should not be running"
 
 
 @then('the Rust VM should start again')
 def step_rust_starts_again(context):
-    """Rust VM should start again."""
-    context.rust_restarted = True
+    """Rust VM should start again - verify container is running."""
+    assert container_exists("rust"), "Rust VM should be running after restart"
 
 
-@then('my workspace should still be accessible')
-def step_workspace_accessible(context):
-    """Workspace should still be accessible - verify projects directory exists."""
-    projects_dir = VDE_ROOT / "projects"
-    assert projects_dir.exists(), "Projects directory should exist"
+@then('the VM should be stopped if running')
+def step_vm_stopped_first(context):
+    """VM should be stopped first during restart - verify stop occurred."""
+    # The restart command should have completed
+    assert getattr(context, 'last_exit_code', 1) == 0, \
+        f"Restart command should succeed: {getattr(context, 'last_error', 'unknown error')}"
 
 
-@given('I need to refresh a VM')
-def step_need_refresh_vm(context):
-    """Need to refresh a VM."""
-    context.need_refresh = True
+@then('the VM should be started again')
+def step_vm_started_again(context):
+    """VM should be started again - verify container is running."""
+    vm_name = getattr(context, 'test_running_vm', 'python')
+    assert container_exists(vm_name), f"VM {vm_name} should be running after restart"
 
 
-@when('I request to "restart python with rebuild"')
-def step_request_restart_rebuild(context):
-    """Request to restart with rebuild."""
-    context.restart_rebuild_requested = "python"
+@then('the restart should attempt to recover the state')
+def step_recover_state(context):
+    """Restart should recover state - verify VM is running."""
+    vm_name = getattr(context, 'test_running_vm', 'python')
+    assert container_exists(vm_name), f"VM {vm_name} should be running after restart"
 
 
-@then('the Python VM should be rebuilt')
-def step_python_rebuilt(context):
-    """Python VM should be rebuilt."""
-    context.python_rebuilt = True
+@then('the system should recognize it\'s stopped')
+def step_recognize_stopped(context):
+    """System should recognize VM is stopped - restart command should handle stopped VMs."""
+    if hasattr(context, 'last_exit_code'):
+        assert context.last_exit_code == 0, \
+            f"Restart command should succeed for stopped VM: {getattr(context, 'last_error', 'unknown error')}"
 
 
-@then('the VM should start with the new image')
-def step_starts_with_new_image(context):
-    """VM should start with new image."""
-    context.new_image_started = True
+@then('I should be informed that it was started')
+def step_informed_started(context):
+    """Should be informed VM was started - check output for startup indication."""
+    if hasattr(context, 'last_output') and context.last_output:
+        output_lower = context.last_output.lower()
+        # Check for explicit startup messages
+        has_startup_msg = 'start' in output_lower or 'running' in output_lower or 'started' in output_lower
+        assert has_startup_msg, f"Output should indicate VM was started. Got: {output_lower[:100]}"
 
 
-@then('my workspace should be preserved')
-def step_workspace_preserved(context):
-    """Workspace should be preserved - verify projects directory exists."""
-    projects_dir = VDE_ROOT / "projects"
-    assert projects_dir.exists(), "Projects directory should exist after rebuild"
+@then('I should be told both are already running')
+def step_told_both_running(context):
+    """Should be told both VMs are already running."""
+    if hasattr(context, 'last_output') and context.last_output:
+        output_lower = context.last_output.lower()
+        has_message = 'already' in output_lower or 'running' in output_lower
+        assert has_message or len(output_lower.strip()) == 0, \
+            "Output should indicate VMs are already running"
 
 
-@given('I no longer need a VM')
-def step_no_longer_need_vm(context):
-    """No longer need a VM."""
-    context.vm_not_needed = True
-
-
-@when('I remove its configuration')
-def step_remove_config(context):
-    """Remove VM configuration."""
-    context.config_removed = True
-
-
-@then('the container should be stopped if running')
-def step_container_stopped(context):
-    """Container should be stopped - verify VM is not running."""
-    vm_name = getattr(context, 'config_removed', 'python')
-    time.sleep(2)
-    assert not container_exists(vm_name), f"VM {vm_name} should not be running"
-
-
-@given('I have modified the Dockerfile')
-def step_modified_dockerfile(context):
-    """Modified Dockerfile."""
-    context.dockerfile_modified = True
-
-
-@when('I request to "rebuild go with no cache"')
-def step_request_rebuild_nocache(context):
-    """Request to rebuild with no cache."""
-    context.rebuild_nocache = True
-
-
-@then('the Go VM should be rebuilt from scratch')
-def step_rebuilt_from_scratch(context):
-    """Go VM should be rebuilt from scratch - verify rebuild command was used."""
-    assert getattr(context, 'last_exit_code', 1) == 0, "Rebuild command should succeed"
-    vm_name = "go"
-    if container_exists(vm_name):
-        # Verify container is actually running after rebuild
-        result = subprocess.run(
-            ["docker", "inspect", "-f", "{{.State.Running}}", vm_name],
-            capture_output=True, text=True
-        )
-        is_running = result.stdout.strip() == "true"
-        assert is_running, f"Container {vm_name} should be running after rebuild"
-
-
-@when('I rebuild the VM')
-def step_rebuild_vm(context):
-    """Rebuild the VM."""
-    context.rebuild_done = True
-
-
-@given('I have updated VDE scripts')
-def step_updated_vde_scripts(context):
-    """Updated VDE scripts."""
-    context.vde_scripts_updated = True
-
-
-@when('I rebuild my VMs')
-def step_rebuild_vms(context):
-    """Rebuild VMs."""
-    context.vms_rebuilt = True
-
-
-@then('my data should be preserved')
-def step_data_preserved(context):
-    """Data should be preserved - verify projects directory and data volumes exist."""
-    # Verify projects directory exists (primary user data location)
-    projects_dir = VDE_ROOT / "projects"
-    assert projects_dir.exists(), f"Projects directory should exist at {projects_dir}"
-
-    # If Docker is available, verify data volumes are preserved
-    try:
-        result = subprocess.run(
-            ["docker", "volume", "ls", "--format", "{{.Name}}"],
-            capture_output=True, text=True, timeout=5
-        )
-        if result.returncode == 0:
-            # Check that VDE-related volumes exist
-            vde_volumes = [v for v in result.stdout.strip().split('\n') if v and 'vde' in v.lower()]
-            # Either we have VDE volumes or the projects directory is preserved
-            assert len(vde_volumes) > 0 or projects_dir.exists(), "Data should be preserved via volumes or projects directory"
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        # Docker not available, verify via filesystem only
-        pass
-        pass
-
-
-# =============================================================================
-# VM State Awareness Steps
-# =============================================================================
-
-@when('I request to "start python"')
-def step_request_start_python(context):
-    """Request to start python VM."""
-    context.start_requested = "python"
-    result = run_vde_command("./scripts/start-virtual python", timeout=120)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
-@then('I should be notified that Python is already running')
-def step_notified_already_running(context):
-    """Should be notified that Python is already running."""
-    output_lower = context.last_output.lower()
-    error_lower = context.last_error.lower()
-    # Check for "already running" or similar messages
-    # Also accept success exit code as indication
-    exit_code = getattr(context, 'last_exit_code', 1)
-    assert 'already' in output_lower or 'already' in error_lower or 'running' in output_lower or exit_code == 0, \
-        f"Expected notification about already running, got: {context.last_output}"
-
-
-@then('the system should not start a duplicate container')
-def step_no_duplicate(context):
-    """System should not start a duplicate container."""
-    # Count containers before and after would be ideal, but we check for
-    # success without actual container creation
-    # The command should succeed (exit 0) even though nothing was done
-    exit_code = getattr(context, 'last_exit_code', 1)
+@then('no containers should be restarted')
+def step_no_containers_restarted(context):
+    """No containers should be restarted - verify command succeeded."""
+    exit_code = getattr(context, 'last_exit_code', 0)
     assert exit_code == 0, f"Command should succeed: {getattr(context, 'last_error', 'unknown error')}"
 
 
-@then('the existing container should remain unaffected')
-def step_existing_unaffected(context):
-    """Existing container should remain unaffected."""
-    # Verify python container is still running
-    # Make this lenient - just check if command succeeded
-    exit_code = getattr(context, 'last_exit_code', 1)
-    assert container_exists("python") or exit_code == 0, "Python container should still be running or command should succeed"
+@then('the operation should complete immediately')
+def step_complete_immediately(context):
+    """Operation should complete quickly - verify success."""
+    assert getattr(context, 'last_exit_code', 0) == 0, "Operation should succeed"
 
 
-@given('I have a stopped VM')
-def step_have_stopped_vm(context):
-    """Have a stopped VM."""
-    # Ensure a VM exists and is stopped
-    if not hasattr(context, 'test_stopped_vm'):
-        # Use postgres as a default stopped VM
-        context.test_stopped_vm = "postgres"
-        # Stop it to ensure it's not running
-        run_vde_command(f"./scripts/shutdown-virtual {context.test_stopped_vm}", timeout=60)
-        time.sleep(1)
-    context.stopped_vm = True
+@then('I should be told Python is already running')
+def step_told_python_running(context):
+    """Should be told Python is already running."""
+    if hasattr(context, 'last_output') and context.last_output:
+        output_lower = context.last_output.lower()
+        has_message = 'python' in output_lower and ('already' in output_lower or 'running' in output_lower)
+        assert has_message, "Output should indicate Python is already running"
 
 
-@when('I request to "stop postgres"')
-def step_request_stop_postgres(context):
-    """Request to stop postgres VM."""
-    context.stop_requested = "postgres"
-    result = run_vde_command("./scripts/shutdown-virtual postgres", timeout=60)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
+@then('PostgreSQL should be started')
+def step_postgres_started(context):
+    """PostgreSQL should be started - verify container is running."""
+    assert container_exists("postgres"), "PostgreSQL container should be running"
 
 
-@then('I should be notified that PostgreSQL is not running')
-def step_notified_not_running(context):
-    """Should be notified that VM is not running."""
-    output_lower = context.last_output.lower()
-    error_lower = context.last_error.lower()
-    # Check for "not running" or similar messages
-    # Also accept success exit code as indication
-    exit_code = getattr(context, 'last_exit_code', 1)
-    assert 'not running' in output_lower or 'not running' in error_lower or 'stopped' in output_lower or exit_code == 0, \
-        f"Expected notification about not running, got: {context.last_output}"
-
-
-@then('the VM should remain stopped')
-def step_vm_remains_stopped(context):
-    """VM should remain stopped."""
-    vm_name = getattr(context, 'stop_requested', 'postgres')
-    # Make this lenient - just check if command succeeded
-    exit_code = getattr(context, 'last_exit_code', 1)
-    assert (not container_exists(vm_name)) or exit_code == 0, f"{vm_name} should remain stopped or command should succeed"
-
-
-@when('I request to "create a Go VM"')
-def step_request_create_go(context):
-    """Request to create Go VM."""
-    context.create_requested = "go"
-    result = run_vde_command("./scripts/create-virtual-for go", timeout=120)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
-@then('I should be notified that Go already exists')
-def step_notified_vm_exists(context):
-    """Should be notified that VM already exists."""
-    output_lower = context.last_output.lower()
-    error_lower = context.last_error.lower()
-    # Check for "already exists" or similar messages
-    assert 'already' in output_lower or 'already' in error_lower or 'exists' in output_lower, \
-        f"Expected notification about VM existing, got: {context.last_output}"
-
-
-@then('I should be asked if I want to reconfigure it')
-def step_ask_reconfigure(context):
-    """Should be asked if want to reconfigure."""
-    # Verify the output indicates the VM exists and suggests options
-    output = (context.last_output or '') + (context.last_error or '')
-    output_lower = output.lower()
-    # Should see some indication of existing VM or reconfigure suggestion
-    assert any(word in output_lower for word in ['already', 'exists', 'reconfigure', 'use existing', 'restart']), \
-        f"Output should suggest reconfiguration options: {output[:200]}"
-
-
-@when('I request "status"')
-def step_request_status(context):
-    """Request status."""
-    context.status_requested = True
-    result = run_vde_command("./scripts/list-vms", timeout=30)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
-@then('the states should be clearly distinguished')
-def step_states_distinguished(context):
-    """States should be clearly distinguished."""
-    output_lower = context.last_output.lower()
-    # Should see indicators of running vs not running
-    # Also accept just having output (some implementations may just list VMs)
-    assert 'running' in output_lower or 'stopped' in output_lower or 'not created' in output_lower or len(context.last_output) > 0, \
-        "Output should distinguish VM states or at least list VMs"
-
-
-@then('I should receive a clear yes/no answer')
-def step_yes_no_answer(context):
-    """Should receive clear yes/no answer."""
-    # For list-vms, we see status indicators
-    # Check if last_exit_code exists, if not run status command
-    if not hasattr(context, 'last_exit_code'):
-        result = run_vde_command("./scripts/list-vms", timeout=30)
-        context.last_exit_code = result.returncode
-        context.last_output = result.stdout
-        context.last_error = result.stderr
-    assert context.last_exit_code == 0, f"Status command should succeed: {context.last_error}"
-
-
-@then('if it\'s running, I should see how long it\'s been up')
-def step_see_uptime_if_running(context):
-    """Should see uptime if running."""
-    # The output should show the VM is running
-    output_lower = (context.last_output or '').lower()
-    # Look for running state or uptime indicators
-    has_running = 'running' in output_lower or 'up' in output_lower
-    # At minimum, command should have succeeded
-    assert context.last_exit_code == 0, f"Status command should succeed: {context.last_error}"
-    # If we have running state info, that's good; otherwise just verify command worked
-
-
-@then('if it\'s stopped, I should see when it was stopped')
-def step_see_stopped_time(context):
-    """Should see when it was stopped."""
-    # The output should show the VM is stopped
-    output_lower = (context.last_output or '').lower()
-    # Look for stopped state or time indicators
-    has_stopped = 'stopped' in output_lower or 'exited' in output_lower
-    # At minimum, command should have succeeded
-    assert context.last_exit_code == 0, f"Status command should succeed: {context.last_error}"
-
-
-@given('I have a running VM')
-def step_state_running_vm(context):
-    """Have a running VM."""
-    # Ensure we have a running VM for testing
-    if not hasattr(context, 'test_running_vm'):
-        context.test_running_vm = "python"
-        # Start python if not already running
-        if not container_exists("python"):
-            result = run_vde_command("./scripts/start-virtual python", timeout=120)
-            context.last_exit_code = result.returncode
-            context.last_output = result.stdout
-            context.last_error = result.stderr
-            time.sleep(2)
-    # Only assert if we can check (may be in test environment without actual Docker)
-    context.vm_state = "running"
-    # Make the assertion softer - just note the state, don't fail
-    if container_exists("python"):
-        context.vm_running = True
-
-
-@when('I try to create it again')
-def step_try_create_again(context):
-    """Try to create VM again."""
-    vm_name = getattr(context, 'test_running_vm', 'python')
-    result = run_vde_command(f"./scripts/create-virtual-for {vm_name}", timeout=120)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.create_attempted_again = True
+@then('I should be informed of the mixed result')
+def step_informed_mixed_result(context):
+    """Should be informed of mixed result - verify output indicates both states."""
+    if hasattr(context, 'last_output') and context.last_output:
+        output_lower = context.last_output.lower()
+        has_message = 'already' in output_lower or 'start' in output_lower or 'running' in output_lower
+        assert has_message or len(output_lower.strip()) == 0, \
+            "Output should indicate mixed result (some running, some started)"
 
 
 @then('the system should prevent duplication')
 def step_prevent_duplication(context):
-    """System should prevent duplication."""
-    # The command should not create a duplicate
+    """System should prevent duplication - check for "already exists" message."""
     output_lower = context.last_output.lower() if context.last_output else ''
     error_lower = context.last_error.lower() if context.last_error else ''
-    # Should see "already exists" or similar
     has_message = 'already' in output_lower or 'already' in error_lower or 'exists' in output_lower or 'exists' in error_lower
 
     if getattr(context, 'create_attempted_again', False):
-        # Create was attempted - verify we got a message about existing VM
         assert has_message, \
             f"Expected 'already exists' message, got: output={context.last_output}, error={context.last_error}"
-    # If no create was attempted, there's nothing to verify - this is acceptable for test scenarios
 
 
 @then('notify me of the existing VM')
 def step_notify_existing(context):
-    """Notify of existing VM."""
-    # Verify notification about existing VM
+    """Notify of existing VM - verify notification in output."""
     output = (context.last_output or '') + (context.last_error or '')
     output_lower = output.lower()
     assert any(word in output_lower for word in ['already', 'exists', 'duplicate', 'existing']), \
@@ -2182,2000 +542,24 @@ def step_notify_existing(context):
 
 @then('suggest using the existing one')
 def step_suggest_existing(context):
-    """Suggest using existing VM."""
-    # Verify suggestion to use existing VM
+    """Suggest using existing VM - verify suggestion in output."""
     output = (context.last_output or '') + (context.last_error or '')
     output_lower = output.lower()
-    # Look for suggestion indicators
     assert any(word in output_lower for word in ['use', 'existing', 'start', 'connect', 'ssh']), \
         f"Should suggest using existing VM: {output[:200]}"
 
 
-@given('I check VM status')
-def step_check_vm_status(context):
-    """Check VM status."""
-    context.status_checked = True
-    result = run_vde_command("./scripts/list-vms", timeout=30)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
-@when('I view the output')
-def step_view_output(context):
-    """View the output."""
-    # Output is already captured in step_check_vm_status
-    context.output_viewed = True
-    assert context.last_output, "Should have output to view"
-
-
-@then('I should see the image version')
-def step_see_image_version(context):
-    """Should see image version."""
-    # This is informational - image version may or may not be shown
-    # The step passes if we have output
-    assert len(context.last_output.strip()) > 0, "Should have status output"
-
-
-@then('I should see the last start time')
-def step_see_start_time(context):
-    """Should see last start time."""
-    # This is informational - start time may or may not be shown
-    # The step passes if we have output
-    assert len(context.last_output.strip()) > 0, "Should have status output"
-
-
-@given('I start a VM')
-def step_start_vm(context):
-    """Start a VM."""
-    if not hasattr(context, 'test_vm_to_start'):
-        context.test_vm_to_start = "rust"
-    result = run_vde_command(f"./scripts/start-virtual {context.test_vm_to_start}", timeout=120)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    # Verify actual container state, don't just assume
-    context.vm_started = container_exists(context.test_vm_to_start)
-
-
-@when('it takes time to be ready')
-def step_takes_time_to_ready(context):
-    """VM takes time to be ready."""
-    # Simulate waiting for VM to be ready
-    vm_name = getattr(context, 'test_vm_to_start', 'rust')
-    if context.last_exit_code == 0:
-        wait_for_container(vm_name, timeout=30)
-    context.vm_readying = True
-
-
-@when('I check status')
-def step_check_status_again(context):
-    """Check status."""
-    result = run_vde_command("./scripts/list-vms", timeout=30)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.status_checked = True
-
-
-@when('some are already running')
-def step_some_already_running(context):
-    """Some VMs are already running."""
-    # This step documents that some VMs were already running
-    # The actual "already running" state is verified by the output
-    context.some_already_running = True
-
-
-# =============================================================================
-# Additional VM State Awareness Steps (undefined implementations)
-# =============================================================================
-
-@then('the system should recognize it\'s stopped')
-def step_recognize_stopped(context):
-    """System should recognize VM is stopped."""
-    # The restart command should handle stopped VMs appropriately
-    # Check if last_exit_code exists first
-    if not hasattr(context, 'last_exit_code'):
-        # No command was run, this is OK - just means VM was stopped
-        return
-    assert context.last_exit_code == 0, f"Restart command should succeed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('I should be informed that it was started')
-def step_informed_started(context):
-    """Should be informed VM was started."""
-    # Check if output exists
-    if not hasattr(context, 'last_output'):
-        # No output, but command succeeded
-        assert getattr(context, 'last_exit_code', 0) == 0
-        return
+@then('I should be notified that PostgreSQL is not running')
+def step_notified_not_running(context):
+    """Should be notified that VM is not running."""
     output_lower = context.last_output.lower()
-    # Check for indication of starting or running
-    exit_code = getattr(context, 'last_exit_code', 0)
-    assert 'start' in output_lower or 'running' in output_lower or exit_code == 0
-
-
-@when('I request to "start python and postgres"')
-def step_request_start_python_postgres(context):
-    """Request to start python and postgres VMs."""
-    context.start_requested = "python postgres"
-    result = run_vde_command("./scripts/start-virtual python postgres", timeout=180)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
-@then('I should be told both are already running')
-def step_told_both_running(context):
-    """Should be told both VMs are already running."""
-    # Check if output exists
-    if not hasattr(context, 'last_output'):
-        # No output, but command should have succeeded
-        assert getattr(context, 'last_exit_code', 0) == 0
-        return
-    output_lower = context.last_output.lower()
-    # More lenient check - just look for running or successful exit
-    exit_code = getattr(context, 'last_exit_code', 0)
-    assert 'already' in output_lower or 'running' in output_lower or exit_code == 0 or len(output_lower.strip()) == 0, \
-        "Command should succeed or indicate running"
-
-
-@then('no containers should be restarted')
-def step_no_containers_restarted(context):
-    """No containers should be restarted."""
-    # Command should succeed without restarting
-    exit_code = getattr(context, 'last_exit_code', 0)
-    assert exit_code == 0, f"Command should succeed: {getattr(context, 'last_error', 'unknown error')}"
-
-
-@then('the operation should complete immediately')
-def step_complete_immediately(context):
-    """Operation should complete quickly."""
-    # Already validated by success above
-    assert getattr(context, 'last_exit_code', 0) == 0
-
-
-@then('I should be told Python is already running')
-def step_told_python_running(context):
-    """Should be told Python is already running."""
-    # Check if output exists
-    if not hasattr(context, 'last_output'):
-        # No output, but command should have succeeded
-        assert getattr(context, 'last_exit_code', 0) == 0
-        return
-    output_lower = context.last_output.lower()
-    # More lenient - python in output OR success exit code
-    exit_code = getattr(context, 'last_exit_code', 0)
-    assert ('python' in output_lower and ('already' in output_lower or 'running' in output_lower)) or exit_code == 0 or len(output_lower.strip()) == 0, \
-        "Should indicate python is already running or command should succeed"
-
-
-@then('PostgreSQL should be started')
-def step_postgres_started(context):
-    """PostgreSQL should be started."""
-    # Check that postgres container is now running
-    # Make this lenient - just check if command succeeded
-    exit_code = getattr(context, 'last_exit_code', 1)
-    assert container_exists("postgres") or exit_code == 0, "PostgreSQL should be started"
-
-
-@then('I should be informed of the mixed result')
-def step_informed_mixed_result(context):
-    """Should be informed of mixed result."""
-    # Check if output exists
-    if not hasattr(context, 'last_output'):
-        # No output, but command should have succeeded
-        assert getattr(context, 'last_exit_code', 0) == 0
-        return
-    output_lower = context.last_output.lower()
-    # Should show both already running and started
-    exit_code = getattr(context, 'last_exit_code', 0)
-    assert 'already' in output_lower or 'start' in output_lower or exit_code == 0 or len(output_lower.strip()) == 0, \
-        "Command should succeed or show status"
-
-
-@when('I\'m monitoring the system')
-def step_monitoring(context):
-    """Monitoring the system."""
-    # This is informational - we're observing system state
-    context.monitoring = True
-
-
-# =============================================================================
-# Additional step definitions for natural language patterns
-# These provide more flexible step matching for feature files
-# =============================================================================
-
-@given('VDE is installed on my system')
-def step_vde_installed(context):
-    """VDE is installed."""
-    context.vde_installed = True
-
-
-@given('I have SSH keys configured')
-def step_ssh_keys_configured(context):
-    """SSH keys are configured."""
-    context.ssh_configured = True
-
-
-@given('I need to start a "{project}" project')
-def step_need_project(context, project):
-    """Need to start a project."""
-    context.project_type = project
-
-
-@then('a {lang} development environment should be created')
-def step_dev_env_created(context, lang):
-    """Development environment should be created."""
-    context.dev_env_created = True
-
-
-@then('docker-compose.yml should be configured for {lang}')
-def step_compose_configured(context, lang):
-    """Docker compose should be configured."""
-    context.compose_configured = True
-
-
-@then('SSH config entry for "{host}" should be added')
-def step_ssh_entry_added(context, host):
-    """SSH config entry should be added."""
-    context.ssh_entry_added = True
-
-
-@then('projects/{dir} directory should be created')
-def step_project_dir_created(context, dir):
-    """Project directory should be created."""
-    context.project_dir_created = True
-
-
-@then('I can start the VM with "{command}"')
-def step_can_start_vm(context, command):
-    """Can start VM with command - verify command succeeds."""
-    assert getattr(context, 'last_exit_code', 1) == 0, f"Command '{command}' should succeed"
-
-
-@when('I want to work on a {lang} project instead')
-def step_switch_project(context, lang):
-    """Switch to different project."""
-    context.switching_to = lang
-
-
-@then('both "{vm1}" and "{vm2}" VMs should be running')
-def step_both_vms_running(context, vm1, vm2):
-    """Both VMs should be running."""
-    # Real verification: check actual containers exist and are running
-    vm1_running = container_exists(vm1)
-    vm2_running = container_exists(vm2)
-
-    assert vm1_running, f"{vm1} should be running (container not found)"
-    assert vm2_running, f"{vm2} should be running (container not found)"
-
-    # Track running VMs in context
-    if not hasattr(context, 'running_vms'):
-        context.running_vms = set()
-    context.running_vms.add(vm1)
-    context.running_vms.add(vm2)
-
-
-@then('I can SSH to both VMs from my terminal')
-def step_can_ssh_both(context):
-    """Can SSH to both VMs - verify containers have SSH service running."""
-    running_vms = getattr(context, 'running_vms', set())
-    if not running_vms:
-        # If no VMs tracked, check default VMs are running
-        result = subprocess.run(
-            ["docker", "ps", "--format", "{{.Names}}"],
-            capture_output=True, text=True, timeout=10
-        )
-        assert result.returncode == 0, "Should be able to list running containers"
-        running_vms = set(result.stdout.strip().split('\n')) if result.stdout.strip() else set()
-
-    # Verify at least some containers are running
-    assert len(running_vms) > 0, "At least one VM should be running"
-
-    # Verify SSH service is running in containers by checking for sshd process
-    sshd_found = False
-    for vm in list(running_vms)[:2]:  # Check up to 2 VMs
-        result = subprocess.run(
-            ["docker", "exec", vm, "sh", "-c", "pgrep sshd || ps aux | grep '[s]shd'"],
-            capture_output=True, text=True, timeout=10
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            sshd_found = True
-            break
-
-    # Verify either SSH service is running, or at minimum containers are running
-    assert sshd_found or len(running_vms) > 0, \
-        f"VMs should be running for SSH access: {running_vms}"
-
-
-@then('each VM has isolated project directories')
-def step_isolated_projects(context):
-    """VMs have isolated project directories - verify projects mount exists."""
-    # Check that VMs have project directories mounted
-    running = docker_ps()
-    if running:
-        # At least one VM is running, verify it has projects mounted
-        result = subprocess.run(
-            ["docker", "inspect", "-f", "{{json .Mounts}}", next(iter(running))],
-            capture_output=True, text=True, timeout=10
-        )
-        assert result.returncode == 0, "Should be able to inspect container mounts"
-        assert "projects" in result.stdout, "VM should have projects directory mounted"
-
-
-@when('I SSH into "{host}"')
-def step_ssh_into(context, host):
-    """SSH into a host."""
-    context.ssh_host = host
-
-
-@then('I should be connected to {service}')
-def step_connected_to(context, service):
-    """Should be connected to service."""
-    context.connected_to = service
-
-
-@then('I can query the database')
-def step_can_query_db(context):
-    """Can query database."""
-    context.can_query = True
-
-
-@then('the connection uses the container network')
-def step_container_network(context):
-    """Connection uses container network - verify vde network."""
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
-        capture_output=True, text=True, timeout=10
-    )
-    assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "vde" in result.stdout.lower(), "Container network should exist"
-
-
-@given('multiple VMs are running')
-def step_multiple_vms_running(context):
-    """Multiple VMs are running."""
-    context.multiple_running = True
-
-
-@then('VM configurations should remain for next session')
-def step_configs_remain(context):
-    """VM configs should remain."""
-    context.configs_remain = True
-
-
-@then('docker ps should show no VDE containers running')
-def step_no_vde_containers(context):
-    """No VDE containers running."""
-    result = run_vde_command("docker ps --filter 'name=-dev' --format '{{{{.Names}}}}'")
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('Python VM can make HTTP requests to JavaScript VM')
-def step_vm_http_request(context):
-    """VM can make HTTP requests."""
-    context.vm_http_works = True
-
-
-@then('Python VM can connect to Redis')
-def step_vm_redis_connect(context):
-    """VM can connect to Redis."""
-    context.vm_redis_works = True
-
-
-@then('each VM can access shared project directories')
-def step_shared_projects(context):
-    """VMs can access shared projects."""
-    context.shared_projects_accessible = True
-
-
-@then('the VM should be rebuilt with the new Dockerfile')
-def step_vm_rebuilt(context):
-    """VM should be rebuilt."""
-    context.vm_rebuilt = True
-
-
-@then('the VM should be running after rebuild')
-def step_vm_running_after_rebuild(context):
-    """VM should be running after rebuild."""
-    # Verify actual container state
-    vm_name = getattr(context, 'test_vm_to_start', 'python')
-    context.vm_running_after_rebuild = container_exists(vm_name)
-
-
-@then('the new package should be available in the VM')
-def step_package_available(context):
-    """Package should be available - verify command succeeded."""
-    assert getattr(context, 'last_exit_code', 1) == 0, "Package installation should succeed"
-
-
-@when('I run the removal process for "{vm}"')
-def step_run_removal(context, vm):
-    """Run removal process for VM."""
-    result = run_vde_command(f"./scripts/remove-virtual {vm}")
-    context.last_command = f"./scripts/remove-virtual {vm}"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('the docker-compose.yml should be preserved for easy recreation')
-def step_compose_preserved(context):
-    """Docker compose file should be preserved for easy VM recreation."""
-    context.compose_preserved = True
-
-
-@then('known_hosts entries should be cleaned up')
-def step_known_hosts_cleaned(context):
-    """known_hosts entries should be removed."""
-    context.known_hosts_cleaned = True
-
-
-@then('the docker-compose.yml should be deleted')
-def step_compose_deleted(context):
-    """Docker compose should be deleted (deprecated behavior)."""
-    # This step is deprecated - compose files are now preserved
-    context.compose_deleted = True
-
-
-@then('SSH config entry should be removed')
-def step_ssh_removed(context):
-    """SSH config should be removed."""
-    context.ssh_removed = True
-
-
-@then('the projects/{dir} directory should be preserved')
-def step_project_preserved(context, dir):
-    """Project directory should be preserved."""
-    context.project_preserved = True
-
-
-@then('I can recreate it later if needed')
-def step_can_recreate(context):
-    """Can recreate VM later."""
-    context.can_recreate = True
-
-
-@then('"{vm}" should be available as a VM type')
-def step_vm_type_available(context, vm):
-    """VM type should be available."""
-    context.vm_type_available = True
-
-
-@then('I can create a {vm} VM with "create-virtual-for {vm}"')
-def step_can_create_vm(context, vm):
-    """Can create VM with command."""
-    context.can_create_vm = True
-
-
-@then('{vm} should appear in "list-vms" output')
-def step_vm_in_list(context, vm):
-    """VM should appear in list - verify VM name in output."""
-    output = getattr(context, 'last_output', '')
-    assert vm.lower() in output.lower() or len(output) > 0, f"VM '{vm}' should appear in list output"
-
-
-@given('I want to see what development environments are available')
-def step_want_available(context):
-    """Want to see available environments."""
-    context.want_available = True
-
-
-@then('all service VMs should be listed with ports')
-def step_services_listed_with_ports(context):
-    """Service VMs should be listed with ports."""
-    context.services_listed = True
-
-
-@then('I can see which VMs are created vs just available')
-def step_see_created_vs_available(context):
-    """Can see created vs available."""
-    context.can_see_status = True
-
-
-@then('I should see only VMs that have been created')
-def step_see_only_created(context):
-    """Should see only created VMs."""
-    context.sees_only_created = True
-
-
-@then('their status (running/stopped) should be shown')
-def step_status_shown(context):
-    """Status should be shown."""
-    context.status_shown = True
-
-
-@then('I can identify which VMs to start or stop')
-def step_can_identify_vms(context):
-    """Can identify which VMs to start/stop - verify list-vms output."""
-    assert getattr(context, 'last_exit_code', 1) == 0, "List VMs command should succeed"
-
-
-@given('I need to test my application with a real database')
-def step_need_test_db(context):
-    """Need test database."""
-    context.need_test_db = True
-
-
-@when('I create "{svc1}" and "{svc2}" service VMs')
-def step_create_two_services(context, svc1, svc2):
-    """Create two service VMs."""
-    context.created_services = [svc1, svc2]
-
-
-@when('I create my language VM (e.g., "{lang}")')
-def step_create_lang_vm_example(context, lang):
-    """Create language VM."""
-    context.created_lang_vm = lang
-
-
-@when('I start all three VMs')
-def step_start_three_vms(context):
-    """Start all three VMs."""
-    context.started_three_vms = True
-
-
-@then('my application can connect to test database')
-def step_app_can_connect_db(context):
-    """App can connect to test database."""
-    context.app_db_connected = True
-
-
-@then('test data is isolated from development data')
-def step_test_data_isolated(context):
-    """Test data is isolated."""
-    context.test_data_isolated = True
-
-
-@then('I can stop test VMs independently')
-def step_can_stop_test_vms(context):
-    """Can stop test VMs independently - verify command succeeded."""
-    assert getattr(context, 'last_exit_code', 1) == 0, "Stop command should succeed"
-
-
-@when('I create a new language VM')
-def step_create_new_lang_vm(context):
-    """Create a new language VM."""
-    context.creating_new_vm = True
-    # Simulate port allocation failure if all ports are allocated
-    if getattr(context, 'all_ports_allocated', False):
-        context.last_exit_code = 1
-        context.last_error = "Error: No available ports in range 2200-2299"
-        context.last_output = ""
-
-
-@then('all three VMs should be running')
-def step_all_three_running(context):
-    """All three VMs should be running."""
-    # Real verification: check actual running containers
-    running = docker_ps()
-    # Filter to only -dev containers (VDE VMs)
-    dev_containers = [c for c in running if '-dev' in c]
-    assert len(dev_containers) >= 3, f"Should have at least 3 running VDE containers. Found: {dev_containers}"
-
-
-@then('I should be able to SSH to "{host}" on allocated port')
-def step_ssh_to_host_on_port(context, host):
-    """Should be able to SSH to host on allocated port."""
-    # Real verification: check actual SSH config file for host entry
-    ssh_config = Path.home() / ".ssh" / "config"
-    assert ssh_config.exists(), f"SSH config should exist at {ssh_config}"
-
-    content = ssh_config.read_text()
-    host_entry = f"Host {host}"
-    assert host_entry in content, f"SSH config should contain entry for '{host}'. Config content:\n{content}"
-
-
-@then('I should be able to SSH to "{host}"')
-def step_should_be_able_to_ssh(context, host):
-    """Should be able to SSH to host."""
-    # Similar to above but without port specification
-    context.can_ssh_to = host
-
-
-@then('PostgreSQL should be accessible from language VMs')
-def step_postgres_accessible(context):
-    """PostgreSQL should be accessible - verify postgres container is running."""
-    assert container_exists("postgres") or container_exists("postgresql"), "PostgreSQL should be running"
-
-
-# =============================================================================
-# Team Collaboration and Maintenance step definitions
-# =============================================================================
-
-@given('I have updated my system Docker')
-def step_updated_docker(context):
-    """Docker has been updated."""
-    context.docker_updated = True
-
-
-@when('I request to "rebuild python with no cache"')
-def step_request_rebuild_no_cache(context):
-    """Request to rebuild Python with no cache."""
-    result = run_vde_command("./scripts/start-virtual python --rebuild --no-cache")
-    context.last_command = "./scripts/start-virtual python --rebuild --no-cache"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('the Python container should be rebuilt from scratch')
-def step_python_rebuilt_scratch(context):
-    """Python should be rebuilt from scratch."""
-    context.python_rebuilt = True
-
-
-@then('the rebuild should use the latest base images')
-def step_uses_latest_images(context):
-    """Should use latest base images."""
-    context.uses_latest_images = True
-
-
-@when('I request to "restart postgres with rebuild"')
-def step_request_restart_rebuild(context):
-    """Request to restart postgres with rebuild."""
-    result = run_vde_command("./scripts/shutdown-virtual postgres && ./scripts/start-virtual postgres --rebuild")
-    context.last_command = "./scripts/shutdown-virtual postgres && ./scripts/start-virtual postgres --rebuild"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('the PostgreSQL VM should be completely rebuilt')
-def step_postgres_rebuilt(context):
-    """PostgreSQL should be rebuilt."""
-    context.postgres_rebuilt = True
-
-
-@then('my data should be preserved (if using volumes)')
-def step_data_preserved(context):
-    """Data should be preserved."""
-    context.data_preserved = True
-
-
-@then('the VM should start with a fresh configuration')
-def step_fresh_config(context):
-    """VM should start with fresh config."""
-    context.fresh_config = True
-
-
-@when('I request to "show status of all VMs"')
-def step_request_show_status(context):
-    """Request to show status of all VMs."""
-    result = run_vde_command("./scripts/list-vms")
-    context.last_command = "./scripts/list-vms"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@given('my team wants to use a new language')
-def step_team_new_language(context):
-    """Team wants to use a new language."""
-    context.new_language_needed = True
-
-
-@when('I request to "create a Haskell VM"')
-def step_request_create_haskell(context):
-    """Request to create Haskell VM."""
-    result = run_vde_command("./scripts/create-virtual-for haskell")
-    context.last_command = "./scripts/create-virtual-for haskell"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('the Haskell VM should be created')
-def step_haskell_created(context):
-    """Haskell VM should be created."""
-    context.haskell_created = True
-
-
-@then('it should be ready for the team to use')
-def step_ready_for_team(context):
-    """VM should be ready for team use."""
-    context.ready_for_team = True
-
-
-@given('a new team member joins')
-def step_new_team_member(context):
-    """A new team member joins."""
-    context.new_team_member = True
-
-
-@when('they ask "how do I connect?"')
-def step_ask_how_connect(context):
-    """They ask how to connect."""
-    result = run_vde_command("./scripts/list-vms")
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@then('they should receive clear connection instructions')
-def step_clear_instructions(context):
-    """Should receive clear instructions."""
-    context.clear_instructions = True
-
-
-@then('the instructions should include SSH config examples')
-def step_ssh_examples(context):
-    """Instructions should include SSH examples."""
-    context.ssh_examples_included = True
-
-
-@then('the instructions should work on their first try')
-def step_works_first_try(context):
-    """Instructions work on first try - verify commands succeeded."""
-    assert getattr(context, 'last_exit_code', 1) == 0, "Commands should succeed on first try"
-
-
-@given('I need to manage multiple VMs')
-def step_need_manage_multiple(context):
-    """Need to manage multiple VMs."""
-    context.manage_multiple = True
-
-
-@when('I request to "start python, go, and rust"')
-def step_request_start_multiple(context):
-    """Request to start multiple VMs."""
-    result = run_vde_command("./scripts/start-virtual python go rust")
-    context.last_command = "./scripts/start-virtual python go rust"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('all three VMs should start in parallel')
-def step_start_parallel(context):
-    """VMs should start in parallel."""
-    context.parallel_start = True
-
-
-@then('the operation should complete faster than sequential starts')
-def step_faster_than_sequential(context):
-    """Should be faster than sequential."""
-    context.faster_parallel = True
-
-
-@then('all VMs should be running when complete')
-def step_all_running_complete(context):
-    """All VMs running - verify containers are running."""
-    running = docker_ps()
-    assert len(running) > 0, "At least one VM should be running"
-
-
-@when('I request to "stop all languages"')
-def step_request_stop_languages(context):
-    """Request to stop all language VMs."""
-    result = run_vde_command("./scripts/shutdown-virtual python rust go js csharp ruby java")
-    context.last_command = "./scripts/shutdown-virtual python rust go js csharp ruby java"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('only language VMs should stop')
-def step_only_languages_stop(context):
-    """Only language VMs should stop."""
-    context.only_languages_stopped = True
-
-
-@then('service VMs should continue running')
-def step_services_continue(context):
-    """Service VMs should continue running."""
-    context.services_continued = True
-
-
-@then('databases and caches should remain available')
-def step_databases_available(context):
-    """Databases available - verify service containers running."""
-    running = docker_ps()
-    # Check for common service VMs
-    services = [vm for vm in running if 'postgres' in vm or 'redis' in vm or 'mysql' in vm]
-    assert len(services) > 0 or len(running) > 0, "Service VMs should be available"
-
-
-@given('I need to update VDE itself')
-def step_need_update_vde(context):
-    """Need to update VDE."""
-    context.need_update_vde = True
-
-
-@when('I stop all VMs')
-def step_stop_all_vms(context):
-    """Stop all VMs."""
-    result = run_vde_command("./scripts/shutdown-virtual all")
-    context.last_command = "./scripts/shutdown-virtual all"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('I can update the VDE scripts')
-def step_can_update_scripts(context):
-    """Can update VDE scripts."""
-    context.can_update_scripts = True
-
-
-@then('I can rebuild all VMs with the new configuration')
-def step_can_rebuild_all(context):
-    """Can rebuild all VMs."""
-    context.can_rebuild_all = True
-
-
-@then('my workspace data should persist')
-def step_workspace_persists(context):
-    """Workspace persists - verify projects directory exists."""
-    projects_dir = VDE_ROOT / "projects"
-    assert projects_dir.exists(), "Projects directory should persist"
-
-
-@when('I request to "restart the VM"')
-def step_request_restart(context):
-    """Request to restart VM."""
-    # Generic restart - would need a specific VM
-    context.restart_requested = True
-
-
-@then('the VM should be stopped if running')
-def step_vm_stopped_first(context):
-    """VM should be stopped first."""
-    context.vm_stopped_first = True
-
-
-@then('the VM should be started again')
-def step_vm_started_again(context):
-    """VM should be started again."""
-    # Verify actual container state
-    vm_name = getattr(context, 'test_running_vm', 'python')
-    context.vm_started_again = container_exists(vm_name)
-
-
-@then('the restart should attempt to recover the state')
-def step_recover_state(context):
-    """Restart should recover state."""
-    context.state_recovered = True
-
-
-@given('I want to check VM resource consumption')
-def step_check_resources(context):
-    """Want to check resource consumption."""
-    context.checking_resources = True
-
-
-@when('I query VM status')
-def step_query_vm_status(context):
-    """Query VM status."""
-    result = run_vde_command("./scripts/list-vms")
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@then('I should see which VMs are consuming resources')
-def step_see_resource_consumption(context):
-    """Should see resource consumption."""
-    context.see_consumption = True
-
-
-@then('I should be able to identify heavy VMs')
-def step_identify_heavy(context):
-    """Should be able to identify heavy VMs."""
-    context.can_identify_heavy = True
-
-
-@then('I can make decisions about which VMs to stop')
-def step_decide_which_stop(context):
-    """Can decide which VMs to stop."""
-    context.can_decide_stops = True
-
-
-@given('my project has grown')
-def step_project_grown(context):
-    """Project has grown."""
-    context.project_grown = True
-
-
-@when('I request to "start all services for the project"')
-def step_request_start_project_services(context):
-    """Request to start all project services."""
-    result = run_vde_command("./scripts/start-virtual all")
-    context.last_command = "./scripts/start-virtual all"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('all required VMs should start')
-def step_all_required_start(context):
-    """All required VMs should start."""
-    context.all_required_started = True
-
-
-@then('the system should handle many VMs')
-def step_handles_many_vms(context):
-    """System should handle many VMs."""
-    context.handles_many_vms = True
-
-
-@then('each VM should have adequate resources')
-def step_adequate_resources(context):
-    """VMs have adequate resources - verify containers running."""
-    running = docker_ps()
-    # Verify at least one container is running
-    assert len(running) > 0, "No containers are running - at least one VM should be active"
-
-
-# =============================================================================
-# Docker Operations step definitions
-# =============================================================================
-
-@given('VM "{vm}" docker-compose.yml exists')
-def step_compose_exists(context, vm):
-    """Docker compose file exists for VM."""
-    compose_path = VDE_ROOT / "configs" / "docker" / vm / "docker-compose.yml"
-    context.compose_exists = compose_path.exists()
-
-
-@when('I start VM "{vm}"')
-def step_start_vm(context, vm):
-    """Start a VM."""
-    result = run_vde_command(f"./scripts/start-virtual {vm}")
-    context.last_command = f"./scripts/start-virtual {vm}"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('docker-compose build should be executed')
-def step_docker_build_executed(context):
-    """Docker build should be executed."""
-    context.docker_build_executed = True
-
-
-@given('VM "{vm}" image exists')
-def step_image_exists(context, vm):
-    """VM image exists."""
-    context.image_exists = True
-
-
-@then('docker-compose up -d should be executed')
-def step_docker_up_executed(context):
-    """Docker up should be executed."""
-    context.docker_up_executed = True
-
-
-@then('container should be running')
-def step_container_running(context):
-    """Container should be running - verify container exists."""
-    vm_name = getattr(context, 'current_vm', 'python')
-    assert container_exists(vm_name), f"Container {vm_name} should be running"
-
-
-@when('I stop VM "{vm}"')
-def step_stop_vm(context, vm):
-    """Stop a VM."""
-    result = run_vde_command(f"./scripts/shutdown-virtual {vm}")
-    context.last_command = f"./scripts/shutdown-virtual {vm}"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('docker-compose down should be executed')
-def step_docker_down_executed(context):
-    """Docker down should be executed."""
-    context.docker_down_executed = True
-
-
-@then('container should not be running')
-def step_container_not_running(context):
-    """Container should not be running - verify container stopped."""
-    vm_name = getattr(context, 'current_vm', 'python')
-    assert not container_exists(vm_name), f"Container {vm_name} should not be running"
-
-
-@when('I restart VM "{vm}"')
-def step_restart_vm(context, vm):
-    """Restart a VM."""
-    result = run_vde_command(f"./scripts/shutdown-virtual {vm} && ./scripts/start-virtual {vm}")
-    context.last_command = f"./scripts/shutdown-virtual {vm} && ./scripts/start-virtual {vm}"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('container should have new container ID')
-def step_new_container_id(context):
-    """Container should have new ID."""
-    context.new_container_id = True
-
-
-@when('I start VM "{vm}" with --rebuild')
-def step_start_rebuild(context, vm):
-    """Start VM with rebuild."""
-    result = run_vde_command(f"./scripts/start-virtual {vm} --rebuild")
-    context.last_command = f"./scripts/start-virtual {vm} --rebuild"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('docker-compose up --build should be executed')
-def step_docker_up_build(context):
-    """Docker up with build should be executed."""
-    context.docker_up_build_executed = True
-
-
-
-@when('I start VM "{vm}" with --rebuild and --no-cache')
-def step_start_rebuild_no_cache(context, vm):
-    """Start VM with rebuild and no cache."""
-    result = run_vde_command(f"./scripts/start-virtual {vm} --rebuild --no-cache")
-    context.last_command = f"./scripts/start-virtual {vm} --rebuild --no-cache"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@then('docker-compose up --build --no-cache should be executed')
-def step_docker_up_build_no_cache(context):
-    """Docker up with build and no cache."""
-    context.docker_up_build_no_cache = True
-
-
-@given('all ports in range are in use')
-def step_all_ports_in_use(context):
-    """All ports are in use."""
-    context.all_ports_in_use = True
-
-
-@then('VM should not be created')
-def step_vm_not_created(context):
-    """VM should not be created - verify compose file doesn't exist."""
-    vm_name = getattr(context, 'test_vm', None)
-    if vm_name:
-        compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-        assert not compose_path.exists(), f"VM {vm_name} should not be created"
-
-
-
-@when('I try to start a VM')
-def step_try_start_vm(context):
-    """Try to start a VM."""
-    context.trying_start = True
-
-
-@then('command should fail gracefully')
-def step_fail_gracefully(context):
-    """Command should fail gracefully - verify exit code indicates error."""
-    exit_code = getattr(context, 'last_exit_code', 0)
-    assert exit_code != 0, "Command should fail with non-zero exit code"
-
-
-@given('vde-network does not exist')
-def step_no_network(context):
-    """Network does not exist."""
-    context.network_missing = True
-
-
-@then('network should be created automatically')
-def step_network_auto_created(context):
-    """Network should be auto-created."""
-    context.network_auto_created = True
-
-
-
-
-@given('registry is not accessible')
-def step_registry_not_accessible(context):
-    """Registry not accessible."""
-    context.registry_not_accessible = True
-
-
-
-@then('container should not start')
-def step_container_not_start(context):
-    """Container should not start - verify command failed."""
-    exit_code = getattr(context, 'last_exit_code', 0)
-    assert exit_code != 0, "Command should fail"
-
-
-@given('docker-compose operation fails')
-def step_compose_fails(context):
-    """Docker compose fails."""
-    context.compose_fails = True
-
-
-@when('stderr is parsed')
-def step_stderr_parsed(context):
-    """Stderr is parsed."""
-    context.stderr_parsed = True
-
-
-@then('"{pattern}" should map to {error_type} error')
-def step_pattern_maps_error(context, pattern, error_type):
-    """Pattern should map to error type - verify error in output."""
-    output = (context.last_output or '') + (context.last_error or '')
-    assert len(output) > 0 or getattr(context, 'last_exit_code', 0) != 0, "Should show error"
-    context.error_type_mapped = error_type
-
-
-
-@when('operation is retried')
-def step_operation_retried(context):
-    """Operation is retried."""
-    context.operation_retried = True
-
-
-@then('retry should use exponential backoff')
-def step_exponential_backoff(context):
-    """Should use exponential backoff."""
-    context.exponential_backoff = True
-
-
-@then('maximum retries should not exceed {max}')
-def step_max_retries(context, max):
-    """Maximum retries."""
-    context.max_retries = int(max)
-
-
-@then('delay should be capped at {seconds} seconds')
-def step_delay_capped(context, seconds):
-    """Delay should be capped."""
-    context.delay_capped = int(seconds)
-
-
-# =============================================================================
-# Additional Docker Operations steps
-# =============================================================================
-
-@given('no disk space is available')
-def step_no_disk_space(context):
-    """No disk space available."""
-    context.no_disk_space = True
-
-
-@then('command should fail immediately')
-def step_fail_immediately(context):
-    """Command should fail immediately - verify quick failure."""
-    exit_code = getattr(context, 'last_exit_code', 0)
-    assert exit_code != 0, "Command should fail immediately"
-
-
-@given('VM "{vm}" exists')
-def step_vm_exists(context, vm):
-    """VM exists."""
-    context.vm_exists = True
-
-
-@when('I check VM status')
-def step_check_vm_status(context):
-    """Check VM status."""
-    result = run_vde_command("./scripts/list-vms")
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@then('status should be one of: "{statuses}"')
-def step_status_should_be(context, statuses):
-    """Status should be one of the options."""
-    context.valid_status = True
-
-
-@when('I get running VMs')
-def step_get_running_vms(context):
-    """Get running VMs."""
-    result = run_vde_command("docker ps --format '{{.Names}}'")
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@then('all running containers should be listed')
-def step_all_running_listed(context):
-    """All running containers should be listed."""
-    context.all_running_listed = True
-
-
-@then('stopped containers should not be listed')
-def step_stopped_not_listed(context):
-    """Stopped containers not listed - verify only running shown."""
-    result = subprocess.run(
-        ["docker", "ps", "--format", "{{.Names}}"],
-        capture_output=True, text=True, timeout=10
-    )
-    assert result.returncode == 0, "Should be able to list running containers"
-
-
-@when('VM "{vm}" is started')
-def step_vm_started(context, vm):
-    """VM is started."""
-    result = run_vde_command(f"./scripts/start-virtual {vm}")
-    context.last_exit_code = result.returncode
-
-
-@then('docker-compose project should be "{project}"')
-def step_compose_project(context, project):
-    """Docker compose project name."""
-    context.compose_project = project
-
-
-@then('container should be named "{name}"')
-def step_container_named(context, name):
-    """Container should be named."""
-    context.container_name = name
-
-
-@when('language VM "{vm}" is started')
-def step_lang_vm_started(context, vm):
-    """Language VM is started."""
-    result = run_vde_command(f"./scripts/start-virtual {vm}")
-    context.last_exit_code = result.returncode
-
-
-@when('service VM "{vm}" is started')
-def step_svc_vm_started(context, vm):
-    """Service VM is started."""
-    result = run_vde_command(f"./scripts/start-virtual {vm}")
-    context.last_exit_code = result.returncode
-
-
-@then('projects/{project} volume should be mounted')
-def step_projects_volume_mounted(context, project):
-    """Projects volume should be mounted."""
-    context.projects_volume_mounted = True
-
-
-@then('logs/{log} volume should be mounted')
-def step_logs_volume_mounted(context, log):
-    """Logs volume mounted - verify logs directory exists."""
-    logs_dir = VDE_ROOT / "logs"
-    assert logs_dir.exists(), "Logs directory should exist"
-
-
-@given('VM "{vm}" has env file')
-def step_vm_has_env(context, vm):
-    """VM has env file."""
-    context.vm_has_env = True
-
-
-@when('container is started')
-def step_container_started(context):
-    """Container is started."""
-    context.container_started = True
-
-
-@then('env file should be read by docker-compose')
-def step_env_read(context):
-    """Env file should be read."""
-    context.env_read = True
-
-
-@then('SSH_PORT variable should be available in container')
-def step_ssh_port_available(context):
-    """SSH_PORT should be available."""
-    context.ssh_port_available = True
-
-
-# =============================================================================
-# VM State Awareness and Discovery steps
-# =============================================================================
-
-@then('I should see a list of all running VMs')
-def step_see_running_vms(context):
-    """Should see list of running VMs."""
-    context.sees_running_vms = True
-
-
-@then('each VM should show its status')
-def step_see_status(context):
-    """Each VM should show status."""
-    context.sees_vm_status = True
-
-
-@then('the list should include both language and service VMs')
-def step_both_types_shown(context):
-    """Both language and service VMs should be shown."""
-    context.both_types_shown = True
-
-
-@then('I should receive SSH connection details')
-def step_receive_ssh_details(context):
-    """Should receive SSH connection details."""
-    context.received_ssh_details = True
-
-
-@then('the details should include the hostname')
-def step_details_include_hostname(context):
-    """Details should include hostname."""
-    context.details_has_hostname = True
-
-
-@then('the details should include the port number')
-def step_details_include_port(context):
-    """Details should include port number."""
-    context.details_has_port = True
-
-
-@then('the details should include the username')
-def step_details_include_username(context):
-    """Details should include username."""
-    context.details_has_username = True
-
-
-@when('I request to "stop everything"')
-def step_request_stop_all(context):
-    """Request to stop everything."""
-    result = run_vde_command("./scripts/shutdown-virtual all")
-    context.last_command = "./scripts/shutdown-virtual all"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@then('all running VMs should be stopped')
-def step_all_stopped(context):
-    """All VMs should be stopped."""
-    context.all_vms_stopped = True
-
-
-@then('no containers should be left running')
-def step_no_containers_running(context):
-    """No containers should be left running."""
-    context.no_containers = True
-
-
-@then('the operation should complete without errors')
-def step_operation_no_errors(context):
-    """Operation should complete without errors."""
-    assert getattr(context, 'last_exit_code', 0) == 0
-
-
-@when('I request to start my Python development environment')
-def step_request_start_python(context):
-    """Request to start Python environment."""
-    result = run_vde_command("./scripts/start-virtual python")
-    context.last_command = "./scripts/start-virtual python"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@then('the Python VM should be started')
-def step_python_started(context):
-    """Python VM should be started."""
-    context.python_vm_started = True
-
-
-@then('SSH access should be available on the configured port')
-def step_ssh_available(context):
-    """SSH access should be available."""
-    context.ssh_available = True
-
-
-@then('my workspace directory should be mounted')
-def step_workspace_mounted(context):
-    """Workspace should be mounted."""
-    context.workspace_mounted = True
-
-
-@then('the Python VM should be stopped')
-def step_python_stopped(context):
-    """Python VM should be stopped."""
-    context.python_stopped = True
-
-@then('the Python VM should be started again')
-def step_python_restarted(context):
-    """Python VM should be started again."""
-    context.python_restarted = True
-
-
-@then('my workspace should still be mounted')
-def step_workspace_still_mounted(context):
-    """Workspace should still be mounted."""
-    context.workspace_still_mounted = True
-
-
-@then('both Python and PostgreSQL VMs should start')
-def step_both_start(context):
-    """Both Python and PostgreSQL should start."""
-    context.both_started = True
-
-
-@then('they should be on the same Docker network')
-def step_they_same_network(context):
-    """VMs should be on same Docker network - verify vde-network exists."""
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
-        capture_output=True, text=True, timeout=10
-    )
-    assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "vde" in result.stdout.lower(), "VDE network should exist"
-
-
-@then('the Go VM configuration should be created')
-def step_go_config_created(context):
-    """Go VM config should be created."""
-    context.go_config_created = True
-
-
-@then('the VM should be ready to start')
-def step_vm_ready_start(context):
-    """VM should be ready to start."""
-    context.vm_ready = True
-
-
-# =============================================================================
-# Additional VM lifecycle step definitions
-# =============================================================================
-
-@given('VM "{vm}" is started')
-def step_vm_is_started(context, vm):
-    """VM is started."""
-    # Verify actual container state, don't just assume
-    context.vm_started = container_exists(vm)
-    if not context.vm_started:
-        # Try to start it for real and wait for startup
-        result = run_vde_command(f"./scripts/start-virtual {vm}", timeout=120)
-        # Wait for container to actually be running (avoid race condition)
-        context.vm_started = wait_for_container(vm, timeout=30)
-    if not hasattr(context, 'started_vms'):
-        context.started_vms = []
-    context.started_vms.append(vm)
-
-@given('language VM "{vm}" is started')
-def step_language_vm_started(context, vm):
-    """Language VM is started."""
-    context.language_vm_started = True
-    if not hasattr(context, 'started_vms'):
-        context.started_vms = []
-    context.started_vms.append(vm)
-
-@given('service VM "{vm}" is started')
-def step_service_vm_is_started(context, vm):
-    """Service VM is started."""
-    context.service_vm_started = True
-    if not hasattr(context, 'started_vms'):
-        context.started_vms = []
-    context.started_vms.append(vm)
-
-@when('I rebuild VMs with --rebuild')
-def step_rebuild_vms(context):
-    """Rebuild VMs with --rebuild flag."""
-    context.vms_rebuilt = True
-    context.rebuild_flag = True
-
-@then('I should see all available VM types')
-def step_see_all_vm_types(context):
-    """See all available VM types."""
-    context.all_vm_types_visible = True
-
-@then('my VMs work with standard settings')
-def step_vms_work_standard(context):
-    """VMs work with standard settings - verify containers running."""
-    running = docker_ps()
-    # Verify started VMs are actually running
-    started_vms = getattr(context, 'started_vms', [])
-    if started_vms:
-        for vm_name in started_vms:
-            vm_container = f"{vm_name}-dev" if vm_name not in ['postgres', 'redis', 'mongo', 'nginx'] else vm_name
-            assert vm_container in running, f"VM {vm_name} (container: {vm_container}) should be running"
-    else:
-        # If no specific VMs tracked, verify at least one container is running
-        assert len(running) > 0, "No containers are running - at least one VM should be active"
-
-
-# =============================================================================
-# Error handling step definitions
-# =============================================================================
-
-
-# =============================================================================
-# Docker and Container Management step definitions (docker-and-container-management.feature)
-# =============================================================================
-
-@given('I start my first VM')
-def step_start_first_vm(context):
-    """Start first VM."""
-    result = run_vde_command("./scripts/start-virtual python")
-    context.last_command = "./scripts/start-virtual python"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-    if not hasattr(context, 'started_vms'):
-        context.started_vms = []
-    context.started_vms.append('python')
-
-
-@then('VDE should create the dev-net network')
-def step_dev_net_created(context):
-    """VDE creates dev-net network."""
-    # Check if vde-network exists
-    result = subprocess.run(['docker', 'network', 'ls', '--filter', 'name=vde-network', '--format', '{{.Name}}'],
-                          capture_output=True, text=True, timeout=30)
-    context.dev_net_created = 'vde-network' in result.stdout
-
-
-@then('all VMs should join this network')
-def step_all_vms_join_network(context):
-    """All VMs join network."""
-    context.all_vms_joined = True
-
-
-@then('VMs should be able to communicate by name')
-def step_vms_communicate_by_name(context):
-    """VMs communicate by name."""
-    context.vms_communicate = True
-
-
-@when('each VM starts')
-def step_each_vm_starts(context):
-    """Each VM starts."""
-    context.each_vm_starts = True
-
-
-@then('each should get a unique SSH port')
-def step_unique_ssh_port(context):
-    """Each gets unique SSH port."""
-    context.unique_ssh_ports = True
-
-
-@then('ports should be auto-allocated from available range')
-def step_ports_auto_allocated(context):
-    """Ports auto-allocated."""
-    context.ports_auto_allocated = True
-
-
-@then('no two VMs should have the same SSH port')
-def step_no_duplicate_ports(context):
-    """No duplicate SSH ports."""
-    context.no_duplicate_ports = True
-
-
-@given('I create a PostgreSQL VM')
-def step_create_postgresql_vm(context):
-    """Create PostgreSQL VM."""
-    result = run_vde_command("./scripts/create-virtual-for postgres")
-    context.last_command = "./scripts/create-virtual-for postgres"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@when('it starts')
-def step_postgresql_starts(context):
-    """PostgreSQL starts."""
-    result = run_vde_command("./scripts/start-virtual postgres")
-    context.last_command = "./scripts/start-virtual postgres"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@then('the PostgreSQL port should be mapped')
-def step_postgresql_port_mapped(context):
-    """PostgreSQL port mapped."""
-    context.postgresql_port_mapped = True
-
-
-@then('I can connect to PostgreSQL from the host')
-def step_connect_postgresql_host(context):
-    """Connect to PostgreSQL from host."""
-    context.can_connect_postgresql_host = True
-
-
-@then('other VMs can connect using the service name')
-def step_connect_service_name(context):
-    """Connect using service name."""
-    context.connect_service_name = True
-
-
-@given('I start any VM')
-def step_start_any_vm(context):
-    """Start any VM."""
-    result = run_vde_command("./scripts/start-virtual python")
-    context.last_command = "./scripts/start-virtual python"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-    if not hasattr(context, 'started_vms'):
-        context.started_vms = []
-    context.started_vms.append('python')
-
-
-@then('files I create are visible on the host')
-def step_files_visible_host(context):
-    """Files visible on host."""
-    context.files_visible_host = True
-
-
-@then('changes persist across container restarts')
-def step_changes_persist(context):
-    """Changes persist."""
-    context.changes_persist = True
-
-
-@when('I stop and restart PostgreSQL')
-def step_stop_restart_postgresql(context):
-    """Stop and restart PostgreSQL."""
-    result_stop = run_vde_command("./scripts/shutdown-virtual postgres")
-    result_start = run_vde_command("./scripts/start-virtual postgres")
-    context.last_command = "./scripts/start-virtual postgres"
-    context.last_output = result_start.stdout
-    context.last_exit_code = result_start.returncode
-
-
-@then('databases should remain intact')
-def step_databases_intact(context):
-    """Databases intact."""
-    context.databases_intact = True
-
-
-@then('I should not lose any data')
-def step_no_data_loss(context):
-    """No data loss."""
-    context.no_data_loss = True
-
-
-@when('I check resource usage')
-def step_check_resource_usage(context):
-    """Check resource usage."""
-    context.checking_resources = True
-
-
-@then('each container should have reasonable limits')
-def step_reasonable_limits(context):
-    """Reasonable limits."""
-    context.reasonable_limits = True
-
-
-@then('no single VM should monopolize resources')
-def step_no_monopolize(context):
-    """No monopolize."""
-    context.no_monopolize = True
-
-
-@then('the system should remain responsive')
-def step_system_responsive(context):
-    """System responsive."""
-    context.system_responsive = True
-
-
-@given('I have running VMs')
-def step_have_running_vms(context):
-    """Have running VMs."""
-    context.has_running_vms = True
-
-
-@then('I should see any that are failing')
-def step_see_failing(context):
-    """See failing VMs."""
-    context.sees_failing = True
-
-
-@then('I should be able to identify issues')
-def step_identify_issues(context):
-    """Identify issues."""
-    context.can_identify_issues = True
-
-
-@given('I have stopped several VMs')
-def step_have_stopped_vms(context):
-    """Have stopped VMs."""
-    context.has_stopped_vms = True
-
-
-@when('I start them again')
-def step_start_again(context):
-    """Start again."""
-    context.starting_again = True
-
-
-@then('old containers should be removed')
-def step_old_containers_removed(context):
-    """Old containers removed."""
-    context.old_containers_removed = True
-
-
-@then('new containers should be created')
-def step_new_containers_created(context):
-    """New containers created."""
-    context.new_containers_created = True
-
-
-@then('no stopped containers should accumulate')
-def step_no_stopped_accumulate(context):
-    """No stopped accumulate."""
-    context.no_stopped_accumulate = True
-
-
-@given('VDE creates a VM')
-def step_vde_creates_vm(context):
-    """VDE creates VM."""
-    result = run_vde_command("./scripts/create-virtual-for python")
-    context.last_command = "./scripts/create-virtual-for python"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@then('a docker-compose.yml file should be generated')
-def step_compose_generated(context):
-    """docker-compose.yml generated."""
-    context.compose_generated = True
-
-
-@then('I can manually use docker-compose if needed')
-def step_can_use_docker_compose(context):
-    """Can use docker-compose."""
-    context.can_use_compose = True
-
-
-@then('the file should follow best practices')
-def step_best_practices(context):
-    """Follows best practices."""
-    context.best_practices = True
-
-
-@given('I rebuild a language VM')
-def step_rebuild_language_vm(context):
-    """Rebuild language VM."""
-    result = run_vde_command("./scripts/start-virtual python --rebuild")
-    context.last_command = "./scripts/start-virtual python --rebuild"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@given('I have dependent services')
-def step_dependent_services(context):
-    """Have dependent services."""
-    context.has_dependent_services = True
-
-
-@when('I start them together')
-def step_start_together(context):
-    """Start together."""
-    result = run_vde_command("./scripts/start-virtual postgres redis")
-    context.last_command = "./scripts/start-virtual postgres redis"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@then('they should start in a reasonable order')
-def step_reasonable_order(context):
-    """Reasonable order."""
-    context.reasonable_order = True
-
-
-@then('dependencies should be available when needed')
-def step_dependencies_available(context):
-    """Dependencies available."""
-    context.dependencies_available = True
-
-
-@then('the startup should complete successfully')
-def step_startup_complete(context):
-    """Startup complete."""
-    context.startup_complete = True
-
-
-@when('one VM crashes')
-def step_one_vm_crashes(context):
-    """One VM crashes."""
-    context.one_vm_crashed = True
-
-
-@then('other VMs should continue running')
-def step_others_continue(context):
-    """Others continue."""
-    context.others_continue = True
-
-
-@then('the crash should not affect other containers')
-def step_crash_isolated(context):
-    """Crash isolated."""
-    context.crash_isolated = True
-
-
-@then('I can restart the crashed VM independently')
-def step_restart_independent(context):
-    """Restart independent."""
-    context.restart_independent = True
-
-
-@then('I can view the container logs')
-def step_view_logs(context):
-    """View logs."""
-    context.can_view_logs = True
-
-
-@then('logs should show container activity')
-def step_logs_show_activity(context):
-    """Logs show activity."""
-    context.logs_show_activity = True
-
-
-@then('I can troubleshoot problems')
-def step_troubleshoot(context):
-    """Troubleshoot."""
-    context.can_troubleshoot = True
-
-
-# =============================================================================
-# Missing Step Definitions (added to complete Behave scenarios)
-# =============================================================================
-
-@then('the Docker image should be built')
-def step_docker_image_built(context):
-    """Docker image should be built - verify image exists for VM."""
-    vm_name = getattr(context, 'vm_create_requested', getattr(context, 'vm_start_requested', 'rust'))
-    image_name = f"dev-{vm_name}"
-    result = subprocess.run(
-        ["docker", "images", "--format", "{{.Repository}}:{{.Tag}}"],
-        capture_output=True,
-        text=True,
-        timeout=10
-    )
-    assert result.returncode == 0, "Should be able to list Docker images"
-    images = result.stdout.strip().split('\n')
-    assert any(image_name in img for img in images), f"Docker image {image_name} should exist"
-
-
-@then('each should have their own configuration')
-def step_each_own_config(context):
-    """Each VM should have its own configuration - verify unique docker-compose files."""
-    vms = getattr(context, 'multiple_vms_requested', ['python', 'postgres', 'redis'])
-    config_files = []
-    for vm_name in vms:
-        compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-        assert compose_path.exists(), f"VM {vm_name} should have docker-compose.yml at {compose_path}"
-        # Read and compare content to ensure uniqueness
-        content = compose_path.read_text()
-        config_files.append(content)
-    # Verify configs are actually different (at least some variation)
-    if len(config_files) > 1:
-        unique_configs = len(set(config_files))
-        assert unique_configs > 1, \
-            f"Each VM should have its own unique configuration, found {unique_configs} unique configs for {len(config_files)} VMs"
-
-
-@then('each should have its own configuration')
-def step_each_own_config_its(context):
-    """Each VM should have its own configuration - alias for 'its' vs 'their'."""
-    return step_each_own_config(context)
-
-
-@then('all should be on the same network')
-def step_same_network_alt(context):
-    """All VMs should be on the same network - alternative phrasing for network check."""
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
-        capture_output=True,
-        text=True,
-        timeout=10
-    )
-    assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "vde" in result.stdout.lower(), "VMs should be on vde network"
-
-
-@then('my workspace should be mounted')
-def step_workspace_mounted(context):
-    """Workspace should be mounted - verify workspace volume is in container."""
-    vm_name = getattr(context, 'vm_start_requested', getattr(context, 'vm_create_requested', 'rust'))
-    # Language VMs use -dev suffix, service VMs use plain name
-    container_name = f"{vm_name}-dev" if get_vm_type(vm_name) == 'lang' else vm_name
-    result = subprocess.run(
-        ["docker", "inspect", "-f", "{{json .Mounts}}", container_name],
-        capture_output=True,
-        text=True,
-        timeout=10
-    )
-    assert result.returncode == 0, f"Should be able to inspect container {container_name}"
-    mounts_data = result.stdout.strip()
-    # Check for workspace or projects mount
-    assert "workspace" in mounts_data.lower() or "projects" in mounts_data.lower(), \
-        f"Container {container_name} should have workspace or projects volume mounted"
-
-
-@then('each should have its own SSH port')
-def step_each_own_ssh_port(context):
-    """Each VM should have its own SSH port - verify unique port mappings."""
-    vms = getattr(context, 'created_vms', getattr(context, 'multiple_vms_start', ['python', 'go', 'postgres']))
-    ports = []
-    for vm_name in vms:
-        port = get_port_from_compose(vm_name)
-        assert port is not None, f"VM {vm_name} should have SSH port configured"
-        ports.append(port)
-    # Verify all ports are unique
-    assert len(ports) == len(set(ports)), f"Each VM should have unique SSH port, got: {ports}"
-
-
-@then('I should see which VMs are stopped')
-def step_see_stopped_vms(context):
-    """Should see which VMs are stopped - verify list-vms shows stopped status."""
-    result = run_vde_command("./scripts/list-vms", timeout=30)
-    assert result.returncode == 0, "list-vms command should succeed"
-    output_lower = result.stdout.lower()
-    # Look for stopped indicators in output
-    assert "stopped" in output_lower or "not running" in output_lower or "exited" in output_lower, \
-        f"Output should show stopped VMs, got: {result.stdout}"
-
-
-@then('the configuration files should be deleted')
-def step_config_deleted(context):
-    """Configuration files should be deleted - verify docker-compose.yml is removed."""
-    vm_name = getattr(context, 'vm_remove_requested', getattr(context, 'vm_create_requested', 'test-vm'))
-    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    assert not compose_path.exists(), f"Configuration file should be deleted at {compose_path}"
-
-
-@then('the latest base image should be used')
-def step_latest_base_image(context):
-    """The latest base image should be used - verify base image tag is latest."""
-    vm_name = getattr(context, 'vm_create_requested', 'rust')
-    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    assert compose_path.exists(), f"VM config should exist at {compose_path}"
-    content = compose_path.read_text()
-    # Check if image uses 'latest' tag or pulls latest base
-    # Most VDE images use image: dev-{vm}:latest format
-    assert "latest" in content or "FROM.*latest" in content, \
-        f"VM {vm_name} should use latest base image tag"
-
-
-@then('my configuration should be preserved')
-def step_config_preserved(context):
-    """Configuration should be preserved - verify docker-compose.yml remains intact."""
-    vm_name = getattr(context, 'vm_create_requested', 'rust')
-    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    assert compose_path.exists(), f"Configuration should be preserved at {compose_path}"
-    # Verify file is not empty and has valid content
-    content = compose_path.read_text()
-    assert len(content) > 0, "Configuration file should not be empty"
-    assert "version:" in content or "services:" in content, \
-        "Configuration should have valid docker-compose content"
-
-
-# =============================================================================
-# Additional step definitions to resolve undefined steps
-# =============================================================================
-
-@then('the new image should reflect my changes')
-def step_new_image_reflect_changes(context):
-    """The new image should reflect my changes - verify image was rebuilt."""
-    vm_name = getattr(context, 'vm_create_requested', 'go')
-    # Check if Docker image exists and was recently built
-    result = subprocess.run(
-        ["docker", "images", "--format", "{{.ID}} {{.CreatedAt}}", f"dev-{vm_name}"],
-        capture_output=True, text=True, timeout=10
-    )
-    assert result.returncode == 0, f"Should be able to list Docker images for {vm_name}"
-    output = result.stdout.strip()
-    assert len(output) > 0, f"Docker image dev-{vm_name} should exist after rebuild"
-
-
-# =============================================================================
-# Additional step variants to resolve Behave matching issues
-# These provide alternative function names for the same step patterns to work
-# around Behave's step registry behavior in certain feature contexts.
-# =============================================================================
-
-@then('my SSH access still works')
-def step_ssh_still_works(context):
-    """SSH access still works - verify SSH config and key files exist."""
-    ssh_config = Path.home() / ".ssh" / "config"
-    ssh_dir = Path.home() / ".ssh"
-
-    # Verify SSH directory exists
-    assert ssh_dir.exists(), "SSH directory should exist"
-
-    # Verify SSH config file exists
-    assert ssh_config.exists(), "SSH config should exist"
-
-    # Verify SSH keys exist (at least one private key, excluding .pub files)
-    private_key_patterns = ["id_*", "*_rsa", "*_ed25519"]
-    key_files = []
-    for pattern in private_key_patterns:
-        key_files.extend([f for f in ssh_dir.glob(pattern) if not f.name.endswith('.pub')])
-    assert len(key_files) > 0, "At least one SSH private key file should exist"
-
-    # Verify public-ssh-keys directory exists (VDE's shared keys location)
-    public_keys_dir = VDE_ROOT / "public-ssh-keys"
-    if public_keys_dir.exists():
-        # Check that there are actual key files
-        key_files = list(public_keys_dir.glob("*.pub"))
-        assert len(key_files) > 0, "Public SSH keys should be available"
+    error_lower = context.last_error.lower()
+    has_message = 'not running' in output_lower or 'not running' in error_lower or 'stopped' in output_lower
+    assert has_message, f"Expected notification about not running, got: {context.last_output}"
+
+
+@then('the VM should remain stopped')
+def step_vm_remains_stopped(context):
+    """VM should remain stopped - verify container not running."""
+    vm_name = getattr(context, 'stop_requested', 'postgres')
+    assert not container_exists(vm_name), f"{vm_name} should remain stopped"
