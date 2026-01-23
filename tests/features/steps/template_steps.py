@@ -29,15 +29,6 @@ except ImportError:
 # VDE_ROOT imported from config
 
 
-def mark_step_implemented(context, step_name=""):
-    """Mark a step as implemented in context."""
-    context.step_implemented = True
-    if step_name:
-        if not hasattr(context, 'implemented_steps'):
-            context.implemented_steps = []
-        context.implemented_steps.append(step_name)
-
-
 # =============================================================================
 # Template System GIVEN Steps
 # =============================================================================

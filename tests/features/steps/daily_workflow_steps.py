@@ -24,16 +24,6 @@ from config import VDE_ROOT
 # HELPER FUNCTIONS
 # =============================================================================
 
-def mark_step_implemented(context, step_name=""):
-    """Mark a step as implemented in context."""
-    context.step_implemented = True
-    if step_name:
-        if not hasattr(context, 'implemented_steps'):
-            context.implemented_steps = []
-        context.implemented_steps.append(step_name)
-
-
-
 
 # VDE_ROOT imported from config
 
@@ -386,20 +376,54 @@ def step_python_running_postgres_stopped(context):
 
 @given('I want to know about a specific VM')
 def step_want_know_specific_vm(context):
-    """Want specific VM info."""
-    context.want_specific_vm_info = True
+    """Want specific VM info - verify list-vms is available."""
+    list_vms_script = VDE_ROOT / "scripts" / "list-vms"
+    context.want_specific_vm_info = list_vms_script.exists()
+    # Also check if we have any VMs to list
+    if context.want_specific_vm_info:
+        result = run_vde_command("./scripts/list-vms", timeout=30)
+        context.available_vms = result.stdout.strip().split("\n") if result.returncode == 0 else []
 
 
 @given('I need a full stack environment')
 def step_need_full_stack(context):
-    """Need full stack environment."""
-    context.need_full_stack = True
+    """Need full stack environment - check available VM types."""
+    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    if vm_types_file.exists():
+        content = vm_types_file.read_text()
+        vm_count = len([line for line in content.split("\n") if line.strip() and not line.startswith("#")])
+        # Full stack means we have web, db, and language VMs available
+        context.need_full_stack = vm_count >= 3
+        context.available_vm_count = vm_count
+    else:
+        context.need_full_stack = False
 
 
 @given('I want to try a new language')
 def step_want_new_language(context):
-    """Want to try new language."""
-    context.want_new_language = True
+    """Want to try new language - check for uncreated VM types."""
+    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    configs_dir = VDE_ROOT / "configs" / "docker"
+
+    available_vms = set()
+    if vm_types_file.exists():
+        content = vm_types_file.read_text()
+        for line in content.split("\n"):
+            if line.strip() and not line.startswith("#"):
+                parts = line.split("|")
+                if parts:
+                    available_vms.add(parts[0].strip())
+
+    created_vms = set()
+    if configs_dir.exists():
+        for vm_dir in configs_dir.iterdir():
+            if vm_dir.is_dir():
+                created_vms.add(vm_dir.name)
+
+    # New language available if some VM types aren't created yet
+    uncreated = available_vms - created_vms
+    context.want_new_language = len(uncreated) > 0
+    context.available_new_languages = list(uncreated)
 
 
 @given('I have "postgres" VM is running')
