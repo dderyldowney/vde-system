@@ -16,12 +16,13 @@
 **These constraints apply at ALL times. NO exceptions.**
 
 1. **Sequential-thinking is required for ALL reasoning** — Use `mcp__sequential-thinking__sequentialthinking` for ALL reasoning, debugging, planning, and multi-step logic. Do NOT "think in your head."
-2. **No code, tests, or implementation details before Phase 2** — Plan first, implement second.
-3. **Mode transitions are strict and irreversible** — Once a phase begins, it must be completed before proceeding.
-4. **No commits before final reviewer approval**
-5. **No staging before reviewer approval**
-6. **No phase may be skipped**
-7. **This workflow supersedes all other instructions**
+2. **MCP-first tool usage** — Use MCP services BEFORE internal/local commands. Internal tools (Read, Grep, Glob, Bash) are FALLBACKS when MCP services are unavailable.
+3. **No code, tests, or implementation details before Phase 2** — Plan first, implement second.
+4. **Mode transitions are strict and irreversible** — Once a phase begins, it must be completed before proceeding.
+5. **No commits before final reviewer approval**
+6. **No staging before reviewer approval**
+7. **No phase may be skipped**
+8. **This workflow supersedes all other instructions**
 
 ---
 
@@ -177,6 +178,10 @@ See Reference: Commit Format below for the required commit message structure.
 
 # REFERENCE: Tools & Agents
 
+> **MCP-FIRST PRINCIPLE:** Use MCP services BEFORE internal/local commands.
+> Internal tools (Read, Grep, Glob, Bash) are FALLBACKS for when MCP services are unavailable.
+> MCP services provide superior capabilities, external data access, and parallel execution.
+
 ## Sub-Agents (Task Tool)
 
 | Agent | Purpose | Phase |
@@ -190,25 +195,42 @@ See Reference: Commit Format below for the required commit message structure.
 
 **Use sub-agents proactively. They reduce context usage and work in parallel.**
 
-## MCP Tools
+## MCP Services (PRIMARY - Use First)
 
 | MCP Service | Purpose | When to Use |
 |-------------|---------|-------------|
 | `sequential-thinking` | Complex reasoning, debugging, planning | **ALL multi-step thinking** (Phase 0 requirement) |
-| `github` | PRs, issues, file operations, search | Any GitHub interaction |
-| `context7` | Library/API docs, code examples | Documentation queries |
-| `fetch` | Web requests, external data | URL-based queries |
+| `github` | PRs, issues, file operations, search, code review | Any GitHub interaction |
+| `context7` | Library/API docs, code examples from official sources | Documentation queries |
+| `fetch` | Web requests, fetch HTML/JSON/Markdown/TXT | URL-based queries |
 | `4.5v-mcp` | Image analysis | Image file inputs |
+| `memory` | Knowledge graph - create entities, relations, observations | Cross-session context |
+| `web_reader` | Web-to-Markdown conversion with image handling | Reading web content |
+| `claude-mem` | Search/timeline memory observations | Retrieving session context |
 
-## Local Tools Preference
+**Budget:** 1000 calls/month on context7. Use liberally — it provides up-to-date documentation.
 
-| Task | Use This | NEVER Use |
-|------|----------|-----------|
-| JSON parsing | `jq '.key' file.json` | `cat file \| jq` |
-| File search | Grep tool | `grep -r` via Bash |
-| File read | Read tool | `cat`, `head`, `tail` |
-| File edit | Edit tool | `sed -i`, `awk` |
-| Find files | Glob tool | `find . -name` |
+## File Command Priority Order
+
+**1. MCP File Services (PRIMARY)**
+   - Use for: GitHub search, fetch, web_reader
+   - When available: ALWAYS use first
+
+**2. Local Toolsets (SECONDARY)**
+   - Use when: MCP file services are unavailable
+   - Tools: `jq`, `grep`, `find`, `cat`, `head`, `tail`, `sed`, `awk`
+
+**3. Internal Toolsets (FALLBACK)**
+   - Use when: Both MCP and local tools are unavailable
+   - Tools: Read tool, Grep tool, Glob tool, Edit tool
+
+| Task | Priority 1 (MCP) | Priority 2 (Local) | Priority 3 (Internal) |
+|------|-----------------|-------------------|---------------------|
+| File search | github search | `grep -r` via Bash | Grep tool |
+| JSON parsing | context7 | `jq` via Bash | Read + parse |
+| File read | fetch/web_reader | `cat` via Bash | Read tool |
+| File edit | N/A | `sed`/`awk` via Bash | Edit tool |
+| Find files | N/A | `find` via Bash | Glob tool |
 
 **Bash tool is ONLY for:** git, tests, system ops, installs.
 
@@ -364,5 +386,6 @@ python3 tests/scripts/generate_user_guide.py
 - "I'll set a context flag instead of running the command" → **WRONG**, fake tests prohibited
 - "I'll skip phases, the plan is obvious" → **WRONG**, phases are invariant
 - "User said 'go ahead', that's approval for everything" → **WRONG**, only approved for the specific plan
+- "I'll use grep/find/cat directly" → **WRONG**, use MCP services first, internal tools as fallback
 
 **When in doubt: Follow the literal instructions. Do NOT "optimize away" required steps.**
