@@ -98,7 +98,7 @@ Feature: VM Lifecycle Management
     When I rebuild the VM
     Then the latest base image should be used
     And my configuration should be preserved
-    And my workspace should remain intact
+    And my workspace should still be accessible
 
   @requires-docker-host
   Scenario: Migrating to a new VDE version
@@ -106,4 +106,4 @@ Feature: VM Lifecycle Management
     When I rebuild my VMs
     Then they should use the new VDE configuration
     And my data should be preserved
-    And my SSH access should continue to work
+    And my SSH access still works
