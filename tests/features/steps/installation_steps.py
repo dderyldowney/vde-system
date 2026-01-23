@@ -205,6 +205,18 @@ def step_want_remove_vde(context):
 def step_installing_vde(context):
     context.installing_vde = True
 
+@given('VDE is being set up')
+def step_vde_being_setup(context):
+    context.vde_being_setup = True
+
+@given('VDE is installed')
+def step_vde_installed(context):
+    context.vde_installed = True
+
+@given("I've installed VDE")
+def step_ive_installed_vde(context):
+    context.vde_installed = True
+
 # =============================================================================
 # Installation WHEN steps
 # =============================================================================
@@ -228,6 +240,10 @@ def step_ssh_keys_checked(context):
 def step_setup_completes(context):
     context.setup_completed = True
 
+@when('the setup completes')
+def step_the_setup_completes(context):
+    context.setup_completed = True
+
 @when('I add VDE scripts to my PATH')
 def step_add_to_path(context):
     context.vde_added_to_path = True
@@ -245,6 +261,30 @@ def step_first_vm_created(context):
 def step_run_vde_health(context):
     context.vde_health_run = True
     context.vde_status_checked = True
+
+@when('I run list-vms')
+def step_run_list_vms(context):
+    """Execute the list-vms command and capture output."""
+    scripts_dir = Path(VDE_ROOT) / "scripts"
+    list_vms_script = scripts_dir / "list-vms"
+
+    if list_vms_script.exists() and os.access(list_vms_script, os.X_OK):
+        try:
+            result = subprocess.run(
+                [str(list_vms_script)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=VDE_ROOT
+            )
+            context.list_vms_output = result.stdout
+            context.list_vms_returncode = result.returncode
+            context.list_vms_run = True
+        except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
+            context.list_vms_error = str(e)
+            context.list_vms_run = False
+    else:
+        context.list_vms_run = False
 
 @when('I pull the latest changes')
 def step_pull_latest_changes(context):
