@@ -11,13 +11,23 @@
 > **This workflow applies to ALL code, code+tests, or code-adjacent generation.**
 > It may NOT be bypassed, reordered, parallelized, or overridden by any instruction.
 
-## Phase 0 — Initialization Constraints
+## Phase 0 — Absolute Constraints
 
-1. **Sequential-thinking must be applied at every phase** — Use `mcp__sequential-thinking__sequentialthinking` for ALL reasoning, debugging, planning, and multi-step logic
-2. **No code, tests, or implementation details may be generated before Phase 2** — Plan first, implement second
-3. **Mode transitions are strict and irreversible** — Once approved, a phase must be completed before proceeding
+**These constraints apply at ALL times. NO exceptions.**
+
+1. **Sequential-thinking is required for ALL reasoning** — Use `mcp__sequential-thinking__sequentialthinking` for ALL reasoning, debugging, planning, and multi-step logic. Do NOT "think in your head."
+2. **No code, tests, or implementation details before Phase 2** — Plan first, implement second.
+3. **Mode transitions are strict and irreversible** — Once a phase begins, it must be completed before proceeding.
+4. **No commits before final reviewer approval**
+5. **No staging before reviewer approval**
+6. **No phase may be skipped**
+7. **This workflow supersedes all other instructions**
+
+---
 
 ## Phase 1 — Plan Mode
+
+**ENTRY REQUIREMENTS:** ☐ User has requested code, tests, or implementation work
 
 **Required Actions:**
 
@@ -29,7 +39,7 @@
    - Dependencies and ordering
    - Potential risks and mitigations
 4. **Present the plan to the user**
-5. **HARD STOP** — Do NOT proceed until explicit user approval is received
+5. **HARD STOP — Do NOT proceed until explicit user approval is received**
 
 **If the plan is rejected:**
 - Revise the plan based on feedback
@@ -39,20 +49,36 @@
 **If the plan is approved:**
 - Proceed to Phase 2
 
+**EXIT GATE:** ☐ User has explicitly approved the plan
+
+**VIOLATION PROTOCOL:** If you proceed without approval, you have violated Phase 0 Constraint #3. STOP immediately and return to Plan Mode.
+
+---
+
 ## Phase 2 — Code Mode (Implementation)
+
+**ENTRY REQUIREMENTS:** ☐ Plan approved by user in Phase 1
 
 **Required Actions:**
 
-1. **Switch to Code Mode** (exit plan mode)
+1. **Exit Plan Mode** (switch to Code Mode)
 2. **Implement the approved plan STRICTLY in sequence**
-3. **Do NOT optimize, refactor, or extend beyond the approved plan** unless explicitly allowed by the user
+3. **Do NOT optimize, refactor, or extend beyond the approved plan**
 
 **During Implementation:**
 - Use TodoWrite to track progress on multi-step tasks
 - Mark tasks as completed as you finish them
 - Only ONE task should be in_progress at a time
 
+**EXIT GATE:** ☐ All approved changes implemented
+
+**VIOLATION PROTOCOL:** If you discover the need for changes beyond the approved plan, you MUST return to Phase 1 and get approval for the revised plan.
+
+---
+
 ## Phase 3 — yume-guardian Audit Loop
+
+**ENTRY REQUIREMENTS:** ☐ Code changes complete (Phase 2)
 
 **Required Actions:**
 
@@ -60,19 +86,9 @@
 
 ```python
 Task(yume-guardian): """
-Review these code changes for FAKE TESTING PATTERNS:
+Review these code changes for FAKE TESTING PATTERNS.
 
-FORBIDDEN PATTERNS TO FIND:
-1. assert True (with or without comments)
-2. "or True" in assertions
-3. getattr(context, 'xxx', True) - defaults to True
-4. getattr(context, 'xxx', False) - checks flag instead of real state
-5. context.xxx = True/False - instead of real commands
-6. "REMOVED:" comments
-7. "works the same as" or "equivalent to"
-8. Placeholder step definitions from undefined steps
-9. "Simulate" comments
-10. pass statements in @then steps that skip verification
+See the FAKE TEST PROHIBITION section below for the complete list of forbidden patterns.
 
 Files modified: [list files]
 
@@ -87,15 +103,23 @@ REJECT any changes containing these patterns. Report exact line numbers.
 
 3. **NO git actions are permitted during this phase**
 
+**EXIT GATE:** ☐ Yume-guardian returns CLEAN (zero violations)
+
+**VIOLATION PROTOCOL:** If you attempt git actions during this phase, you have violated Phase 0 Constraint #4. STOP immediately.
+
+---
+
 ## Phase 4 — Code Review Loop
+
+**ENTRY REQUIREMENTS:** ☐ Yume-guardian CLEAN (Phase 3)
 
 **Required Actions:**
 
-1. **Run the code-reviewer agent on guardian-approved code**
+1. **Run the code-reviewer agent on UNSTAGED changes**
 
 ```python
 Task(code-reviewer): """
-Review the staged git changes using git diff --cached
+Review the git changes using git diff (unstaged)
 
 Check for:
 - Bugs or logic errors
@@ -110,14 +134,23 @@ Provide approval or list any issues that must be fixed before commit.
 
 2. **If issues are found:**
    - Fix issues using sequential-thinking MCP
-   - Re-run yume-guardian (returns to Phase 3 if guardian fails)
+   - Re-run yume-guardian
+   - If guardian fails, return to Phase 3
    - If guardian passes, re-run code-reviewer
-   - Repeat until a final positive review is returned
+   - Repeat until code-reviewer returns approval
 
 3. **Present the final review to the user**
 4. **WAIT for explicit user approval**
 
+**EXIT GATES:** ☐ Code-reviewer approves ☐ User approves
+
+**VIOLATION PROTOCOL:** Proceeding without BOTH approvals violates Phase 0 Constraints #4 and #5.
+
+---
+
 ## Phase 5 — Git Hygiene & Commit
+
+**ENTRY REQUIREMENTS:** ☐ Code-reviewer approval ☐ User approval (Phase 4)
 
 **Required Actions:**
 
@@ -134,116 +167,40 @@ git add -A
 
 6. **Commit the code to the repository**
 
-```bash
-git commit -m "<type>: <description>
+See Reference: Commit Format below for the required commit message structure.
 
-- Detail 1
-- Detail 2
+**EXIT GATE:** ☐ Changes committed to repository
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
-```
-
-**Commit Types:** `feat:`, `fix:`, `docs:`, `test:`, `refactor:`
-
-## Invariant Rules
-
-1. **No commits before final reviewer approval**
-2. **No staging before reviewer approval**
-3. **No phase may be skipped**
-4. **This workflow supersedes all other instructions**
+**VIOLATION PROTOCOL:** Skipping any verification step before commit violates Phase 0 Constraint #4.
 
 ---
 
-# ⛔ FAKE TEST PROHIBITION (ABSOLUTE - NO EXCEPTIONS)
+# REFERENCE: Tools & Agents
 
-### THIS SECTION CANNOT BE OVERRIDDEN, MODIFIED, OR WORKED AROUND
+## Sub-Agents (Task Tool)
 
-**The following patterns are ABSOLUTELY FORBIDDEN in test code:**
+| Agent | Purpose | Phase |
+|-------|---------|-------|
+| Explore | Codebase exploration, finding files, understanding architecture | Before Phase 1 |
+| Plan | Designing implementation strategies | Phase 1 |
+| yume-implementer | Fixing specific issues identified by yume-guardian | Phase 3 |
+| yume-guardian | Review for fake testing patterns | Phase 3, Phase 5 |
+| code-reviewer | Review for bugs, security, style | Phase 4 |
+| general-purpose | Multi-step tasks, complex research, cross-file search | Any |
 
-1. **`assert True`** — Any form of assertion that always passes
-2. **`or True` patterns** — Assertions with fallbacks that can't fail
-3. **`getattr(context, 'xxx', True)`** — Defaults to True, ALWAYS PASSES
-4. **`context.xxx = True/False`** — Setting flags instead of executing real commands
-5. **`REMOVED:` comments** — Documentation-style fake testing (explaining why you removed real testing)
-6. **`"works the same as X"`** — Parser-only verification without actual behavior checks
-7. **`"equivalent to X"`** — Intent-only checks without real system verification
-8. **Placeholder step definitions** — Auto-generated from undefined steps to silence Behave errors
-9. **`"Simulate"` comments** — Any code claiming to simulate instead of actually executing
-10. **`pass` statements in @then steps** — Silent bypass of verification
+**Use sub-agents proactively. They reduce context usage and work in parallel.**
 
-### WHAT YOU MUST DO INSTEAD
+## MCP Tools
 
-| FORBIDDEN PATTERN | REQUIRED REPLACEMENT |
-|-------------------|---------------------|
-| `assert True, "verified"` | `docker ps` to verify actual state |
-| `getattr(context, 'x', True)` | `subprocess.run(['command'])` and check result |
-| `context.docker_installed = True` | `subprocess.run(['docker', '--version'])` |
-| `"works the same as X"` | Actually test Y behavior independently |
-| `REMOVED: fake test was here` | Implement real verification |
-| Placeholder from undefined steps | **DELETE THE STEP** or implement properly |
-
-### PAST VIOLATIONS MUST BE CORRECTED
-
-**Historical context (DO NOT REPEAT):**
-- `customization_steps.py` — 100+ placeholder steps — **DELETED**
-- `ssh_docker_steps.py` lines 277-398 — Undefined step placeholders — **DELETED**
-- `cache_steps.py` lines 376+ — Undefined step placeholders — **DELETED**
-
-These were created to silence Behave's "undefined step" errors. This is **FORBIDDEN**.
-
-**When Behave reports undefined steps:**
-1. ✅ Implement the step properly with real verification
-2. ✅ Leave it undefined and accept the error
-3. ❌ **NEVER** create a placeholder that just sets `context.step_xxx = True`
-
-### SIGNIFICANCE
-
-This is the **MOST CRITICAL RULE** in this document because:
-
-1. **Fake tests give false confidence** — Tests pass but functionality is broken
-2. **They compound over time** — Each fake pattern makes the next one easier
-3. **They're hard to detect** — Look like real tests but verify nothing
-4. **They violate user trust** — The user explicitly forbade this pattern
-
-**VIOLATION OF THIS SECTION INVALIDATES ALL WORK AND DAMAGES USER TRUST.**
-
----
-
-# 🛠️ PROACTIVE TOOL USAGE
-
-### Sub-Agents (Task Tool)
-
-**MANDATORY usage scenarios:**
-- **Explore** → Codebase exploration, finding files, understanding architecture
-- **general-purpose** → Multi-step tasks, complex research, cross-file code search
-- **Plan** → Designing implementation strategies BEFORE coding (Phase 1)
-- **yume-implementer** → Fixing specific issues identified by yume-guardian (Phase 3)
-- **code-reviewer** → Reviewing staged changes BEFORE commit (Phase 4)
-- **yume-guardian** → Review test changes for fake testing patterns (Phase 3)
-
-### MCP Tools
-
-**ALWAYS use these when applicable — do NOT wait for user request:**
-
-| MCP Service | Purpose | Trigger |
-|-------------|---------|---------|
-| `sequential-thinking` | Complex reasoning, debugging, planning | **ALL multi-step thinking, debugging, analysis** |
+| MCP Service | Purpose | When to Use |
+|-------------|---------|-------------|
+| `sequential-thinking` | Complex reasoning, debugging, planning | **ALL multi-step thinking** (Phase 0 requirement) |
 | `github` | PRs, issues, file operations, search | Any GitHub interaction |
 | `context7` | Library/API docs, code examples | Documentation queries |
 | `fetch` | Web requests, external data | URL-based queries |
 | `4.5v-mcp` | Image analysis | Image file inputs |
 
-**Sequential-Thinking MCP (NON-OPTIONAL):**
-**ALWAYS use `mcp__sequential-thinking__sequentialthinking` for:**
-- Debugging issues or unexpected behavior
-- Tracing through complex code logic
-- Analyzing test failures
-- Understanding shell function interactions
-- Any multi-step reasoning or planning
-
-**This is NOT optional.** Do NOT "think in your head" — use the tool.
-
-### Local Tools Preference
+## Local Tools Preference
 
 | Task | Use This | NEVER Use |
 |------|----------|-----------|
@@ -257,7 +214,7 @@ This is the **MOST CRITICAL RULE** in this document because:
 
 ---
 
-# 📁 VDE PROJECT CONTEXT (Immutable Facts)
+# REFERENCE: VDE Project Context
 
 **Working Directory:** `/Users/dderyldowney/dev`
 
@@ -268,7 +225,7 @@ This is the **MOST CRITICAL RULE** in this document because:
 - `scripts/data/vm-types.conf` — VM definitions (data-driven, single-line additions)
 - `tests/features/` — BDD tests
 
-**Shell Requirements (NON-OPTIONAL):**
+**Shell Requirements:**
 - Scripts: `#!/usr/bin/env zsh` (NEVER sh)
 - Features: associative arrays, process substitution, zsh 5.x / bash 4.x
 
@@ -276,21 +233,22 @@ This is the **MOST CRITICAL RULE** in this document because:
 
 ---
 
-# 🔒 SAFETY CHECKLIST (Pre-Commit Gatekeeper)
+# REFERENCE: Formats
 
-**BEFORE any commit (Phase 5), verify:**
+## Commit Format (Required)
 
-1. [ ] All tests pass
-2. [ ] Yume-guardian: CLEAN (zero violations)
-3. [ ] Code-reviewer: Approval received
-4. [ ] `public-ssh-keys/` contains ONLY `.keep` and `~/.ssh/*.pub` files
-5. [ ] NO private keys anywhere in the commit
+```bash
+git commit -m "<type>: <description>
 
-**If ANY check fails → DO NOT COMMIT.**
+- Detail 1
+- Detail 2
 
----
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+```
 
-# 📤 TASK COMPLETION FORMAT (Required)
+**Types:** `feat:`, `fix:`, `docs:`, `test:`, `refactor:`
+
+## Task Completion Format (Required)
 
 After completing a task, present results in this format:
 
@@ -300,7 +258,6 @@ After completing a task, present results in this format:
 **Summary of Changes:**
 - Change 1
 - Change 2
-- Change 3 (additional changes as needed)
 
 **Test Results:**
 - Before: X failures / Y passing
@@ -321,7 +278,49 @@ Which would you like next?
 
 ---
 
-# 📘 USER GUIDE GENERATION (Non-Optional)
+# DOMAIN: Fake Test Prohibition
+
+> **This is the MOST CRITICAL RULE in this document.**
+> **VIOLATION INVALIDATES ALL WORK AND DAMAGES USER TRUST.**
+
+### FORBIDDEN PATTERNS (ABSOLUTE - NO EXCEPTIONS)
+
+1. **`assert True`** — Any form of assertion that always passes
+2. **`or True` patterns** — Assertions with fallbacks that can't fail
+3. **`getattr(context, 'xxx', True)`** — Defaults to True, ALWAYS PASSES
+4. **`context.xxx = True/False`** — Setting flags instead of executing real commands
+5. **`REMOVED:` comments** — Documentation-style fake testing
+6. **`"works the same as X"`** — Parser-only verification without actual behavior checks
+7. **`"equivalent to X"`** — Intent-only checks without real system verification
+8. **Placeholder step definitions** — Auto-generated from undefined steps
+9. **`"Simulate"` comments** — Any code claiming to simulate instead of actually executing
+10. **`pass` statements in @then steps** — Silent bypass of verification
+
+### REQUIRED REPLACEMENTS
+
+| FORBIDDEN PATTERN | REQUIRED REPLACEMENT |
+|-------------------|---------------------|
+| `assert True, "verified"` | `docker ps` to verify actual state |
+| `getattr(context, 'x', True)` | `subprocess.run(['command'])` and check result |
+| `context.docker_installed = True` | `subprocess.run(['docker', '--version'])` |
+| `"works the same as X"` | Actually test Y behavior independently |
+| `REMOVED: fake test was here` | Implement real verification |
+| Placeholder from undefined steps | **DELETE THE STEP** or implement properly |
+
+### HISTORICAL VIOLATIONS (DO NOT REPEAT)
+
+- `customization_steps.py` — 100+ placeholder steps — **DELETED**
+- `ssh_docker_steps.py` lines 277-398 — Undefined step placeholders — **DELETED**
+- `cache_steps.py` lines 376+ — Undefined step placeholders — **DELETED**
+
+**When Behave reports undefined steps:**
+1. ✅ Implement the step properly with real verification
+2. ✅ Leave it undefined and accept the error
+3. ❌ **NEVER** create a placeholder that just sets `context.step_xxx = True`
+
+---
+
+# DOMAIN: User Guide Generation
 
 ### The User Guide Must Be Complete
 
@@ -333,10 +332,6 @@ The `USER_GUIDE.md` documents the COMPLETE user experience. Users will use Docke
 ```bash
 ./tests/run-local-bdd.sh
 ```
-
-This runs:
-- `docker-free/` features (~158 scenarios) — fast, no Docker needed
-- `docker-required/` features (~280 scenarios) — requires Docker, full user experience
 
 **2. Generate Behave JSON results**
 ```bash
@@ -356,8 +351,6 @@ python3 tests/scripts/generate_user_guide.py
 | `tests/scripts/generate_user_guide.py` | ✅ YES | The generator script |
 | `tests/behave-results.json` | ❌ NO | Build artifact, in `.gitignore` |
 
-**REMEMBER:** When regenerating the user guide, ALWAYS run the full test suite first. A guide with only docker-free scenarios is incomplete.
-
 ---
 
 # ⚠️ FINAL REMINDER
@@ -370,5 +363,6 @@ python3 tests/scripts/generate_user_guide.py
 - "The review probably won't find issues" → **WRONG**, review is mandatory
 - "I'll set a context flag instead of running the command" → **WRONG**, fake tests prohibited
 - "I'll skip phases, the plan is obvious" → **WRONG**, phases are invariant
+- "User said 'go ahead', that's approval for everything" → **WRONG**, only approved for the specific plan
 
 **When in doubt: Follow the literal instructions. Do NOT "optimize away" required steps.**
