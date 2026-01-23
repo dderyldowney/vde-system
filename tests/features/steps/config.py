@@ -5,9 +5,9 @@ This module provides a single source of truth for test configuration.
 Import from here rather than duplicating path calculations.
 """
 
-from pathlib import Path
 import os
 import sys
+from pathlib import Path
 
 # Add the tests directory to path so we can import from steps
 # This is needed because behave's exec_file doesn't set up proper module paths

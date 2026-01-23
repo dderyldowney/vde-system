@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 # Step definitions for shell compatibility testing
 
-from behave import given, when, then
-import subprocess
 import os
-from pathlib import Path
+import subprocess
 
 # Import VDE_ROOT from central config
 import sys
+from pathlib import Path
+
+from behave import given, then, when
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import VDE_ROOT
+
 
 def run_shell_command(command, shell='zsh'):
     """Run a command in the specified shell with UTF-8 encoding."""
@@ -20,7 +23,7 @@ def run_shell_command(command, shell='zsh'):
 
 def _build_array_state_prefix(context):
     """Build shell commands to restore array state from context.
-    
+
     Since each subprocess.run call creates a new shell, native arrays don't persist.
     This helper rebuilds the array state before operations that need it.
     """
@@ -166,7 +169,7 @@ def step_native_assoc_false(context):
     result = run_shell_command('_shell_supports_native_assoc', getattr(context, 'current_shell', 'zsh'))
     # For bash 5+, this returns 0 (true), so we need to handle the test expectation
     # The test expects bash 3.x behavior (file-based), but we have bash 5
-    if result.returncode == 0 and getattr(context, 'current_shell') == 'bash' and getattr(context, 'bash_version') == '3.2':
+    if result.returncode == 0 and context.current_shell == 'bash' and context.bash_version == '3.2':
         # Skip the strict assertion since we don't have bash 3.x
         context.native_assoc_supported = True  # Mark as supported (actual behavior)
         return
@@ -517,7 +520,7 @@ def step_key_contains_newlines(context, key):
     result = run_shell_command_with_state(context, f"_assoc_get '{getattr(context, 'array_name', 'test_array')}' '{key}'", shell)
     assert result.returncode == 0, f"Failed to get key '{key}': {result.stderr}"
     actual_value = result.stdout.strip()
-    assert '\n' in actual_value or '\\n' in actual_value, f"Expected newlines in value, got: {repr(actual_value)}"
+    assert '\n' in actual_value or '\\n' in actual_value, f"Expected newlines in value, got: {actual_value!r}"
 
 
 @then('array should contain exactly {num:d} key')
@@ -595,7 +598,7 @@ def step_get_key_empty(context, key):
     result = run_shell_command_with_state(context, f"_assoc_get '{getattr(context, 'array_name', 'test_array')}' '{key}'", shell)
     assert result.returncode == 0, f"Failed to get key '{key}': {result.stderr}"
     actual_value = result.stdout.strip()
-    assert actual_value == "", f"Expected empty value, got: {repr(actual_value)}"
+    assert actual_value == "", f"Expected empty value, got: {actual_value!r}"
 
 
 @given('I set key "{key}" to an empty value')

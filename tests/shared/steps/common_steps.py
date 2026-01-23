@@ -5,9 +5,10 @@ These are generic utility steps that don't belong to any specific
 feature category but are used throughout multiple test scenarios.
 """
 
-from behave import given, when, then
-from pathlib import Path
 import os
+from pathlib import Path
+
+from behave import given, then, when
 
 VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR", "/vde"))
 

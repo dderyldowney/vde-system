@@ -14,8 +14,6 @@ Run: python3 tests/scripts/generate_user_guide.py
 
 import json
 import re
-import os
-import sys
 from pathlib import Path
 
 # Paths
@@ -421,9 +419,7 @@ def extract_command_from_scenario(scenario_name, scenario_body):
                     vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
                     vm = vms[0].lower() if vms else "<vm>"
                     return f"vde start {vm} --rebuild"
-                elif "status" in request or "show status" in request:
-                    return "vde list"
-                elif request == "status":
+                elif "status" in request or "show status" in request or request == "status":
                     return "vde list"
                 # Handle "When I request to start my Python development environment"
                 if "development environment" in request:
@@ -498,11 +494,7 @@ def extract_command_from_scenario(scenario_name, scenario_body):
             return "vde ssh <vm>"
         elif "cluster" in lower_name or "stack" in lower_name:
             return "vde start <vms>"
-        elif "communicating" in lower_name or "connection" in lower_name:
-            return "vde ssh <vm>"
-        elif "agent forwarding" in lower_name:
-            return "vde ssh <vm>"
-        elif "vm to vm" in lower_name or "vm-to-vm" in lower_name:
+        elif "communicating" in lower_name or "connection" in lower_name or "agent forwarding" in lower_name or "vm to vm" in lower_name or "vm-to-vm" in lower_name:
             return "vde ssh <vm>"
         elif "multiple" in lower_name and ("vm" in lower_name or "vms" in lower_name):
             return "vde start <vms>"
@@ -916,7 +908,7 @@ def generate_user_guide(passing_scenarios=None):
 
             # *** PHASE 3 BUG FIX: Write scenarios after each section intro ***
             # This was the critical bug - scenarios were extracted but never written
-            if section in all_scenarios and all_scenarios[section]:
+            if all_scenarios.get(section):
                 f.write("### Verified Scenarios\n\n")
                 # Preface: explain vde commands vs scripts
                 f.write("> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. ")
@@ -1014,9 +1006,9 @@ def generate_user_guide(passing_scenarios=None):
 
     print(f"✓ Generated {OUTPUT_FILE}")
     if passing_scenarios is not None:
-        print(f"  All scenarios in this guide have been verified to PASS")
+        print("  All scenarios in this guide have been verified to PASS")
     else:
-        print(f"  WARNING: Scenarios in this guide have NOT been verified!")
+        print("  WARNING: Scenarios in this guide have NOT been verified!")
 
 
 if __name__ == "__main__":

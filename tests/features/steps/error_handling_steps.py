@@ -19,10 +19,10 @@
 import re
 import subprocess
 from pathlib import Path
-from behave import given, when, then
+
+from behave import given, then, when
 
 from tests.features.steps.common_steps import VDE_ROOT, run_vde_command
-
 
 # =============================================================================
 # GIVEN Steps - Error Setup
@@ -501,7 +501,7 @@ def step_notified_of_failure(context):
         assert context.last_exit_code != 0, "Operation should have failed"
     else:
         # No partial failure scenario - step requires scenario context
-        assert False, "Partial failure scenario not configured - this step requires multi_vm_results or partial_failure_scenario"
+        raise AssertionError("Partial failure scenario not configured - this step requires multi_vm_results or partial_failure_scenario")
 
 
 @then('successful VMs should be listed')
@@ -520,7 +520,7 @@ def step_successful_vms_listed(context):
         assert len(combined) > 0, "Should have output listing VMs"
     else:
         # No multi-VM scenario - step requires scenario context
-        assert False, "Multi-VM scenario not configured - this step requires multi_vm_results or partial_failure_scenario"
+        raise AssertionError("Multi-VM scenario not configured - this step requires multi_vm_results or partial_failure_scenario")
 
 
 @then('it should automatically retry')

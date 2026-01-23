@@ -3,23 +3,22 @@ BDD Step Definitions for Template System features.
 
 These steps test the template rendering system for VM configurations.
 """
-import sys
 import os
+import sys
 
 # Import shared configuration
 # Add steps directory to path for config import
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
-
-
-from behave import given, when, then
-from pathlib import Path
-import subprocess
 import os
 import re
+import subprocess
+from pathlib import Path
 
+from behave import given, then, when
+
+from config import VDE_ROOT
 
 try:
     import yaml
@@ -94,7 +93,7 @@ def step_template_special_chars(context):
 def step_template_rendered(context):
     """Template is rendered using real template."""
     template_type = getattr(context, 'template_type', 'language')
-    
+
     if template_type == 'service':
         template_path = VDE_ROOT / "scripts/templates/compose-service.yml"
         if template_path.exists():

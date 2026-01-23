@@ -3,11 +3,12 @@ BDD Step definitions for Natural Language Commands scenarios.
 Uses real vde-parser library functions and ACTUAL Docker verification.
 """
 
-from behave import given, when, then
-import subprocess
 import os
+import subprocess
 import sys
 import time
+
+from behave import given, then, when
 
 # Add steps directory to path for config import
 steps_dir = os.path.dirname(os.path.abspath(__file__))
@@ -66,7 +67,7 @@ def _get_real_flags(input_string):
 
 def run_vde_command(command_args):
     """Run a VDE command and return result."""
-    cmd = [VDE_SCRIPT] + command_args
+    cmd = [VDE_SCRIPT, *command_args]
     result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
     return result
 
@@ -363,7 +364,7 @@ def step_all_lang_start(context):
     """Verify all language VMs started using REAL Docker."""
     vm_types_file = os.path.join(VDE_ROOT, 'scripts/data/vm-types.conf')
     lang_vms = []
-    with open(vm_types_file, 'r') as f:
+    with open(vm_types_file) as f:
         for line in f:
             if line.strip() and not line.strip().startswith('#'):
                 parts = line.split('|')
@@ -385,7 +386,7 @@ def step_services_unaffected(context):
     """Verify service VMs weren't started."""
     vm_types_file = os.path.join(VDE_ROOT, 'scripts/data/vm-types.conf')
     svc_vms = []
-    with open(vm_types_file, 'r') as f:
+    with open(vm_types_file) as f:
         for line in f:
             if line.strip() and not line.strip().startswith('#'):
                 parts = line.split('|')

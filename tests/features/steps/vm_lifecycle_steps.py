@@ -3,12 +3,12 @@ BDD Step definitions for VM Lifecycle scenarios.
 These steps call actual VDE scripts instead of using mocks.
 """
 
-import sys
+import json
 import os
 import re
 import subprocess
+import sys
 import time
-import json
 from pathlib import Path
 
 # Import shared configuration
@@ -33,7 +33,7 @@ IN_TEST_MODE = os.environ.get("VDE_TEST_MODE") == "1"
 # Allow cleanup if running in container OR in test mode
 ALLOW_CLEANUP = IN_CONTAINER or IN_TEST_MODE
 
-from behave import given, when, then
+from behave import given, then, when
 
 
 def run_vde_command(command, timeout=120):
@@ -75,9 +75,7 @@ def container_exists(vm_name):
     if f"{vm_name}-dev" in containers:
         return True
     # Service VMs use plain name
-    if vm_name in containers:
-        return True
-    return False
+    return vm_name in containers
 
 
 def wait_for_container(vm_name, timeout=60, interval=2):
@@ -353,7 +351,7 @@ def step_ports_allocated(context, ports):
     if not hasattr(context, 'created_vms'):
         context.created_vms = set()
     port_list = [p.strip() for p in ports.split(",")]
-    for i, port in enumerate(port_list):
+    for i, _port in enumerate(port_list):
         vm_name = f"testvm{i}"
         # We can't actually allocate specific ports, but we can create VMs
         # Port allocation is automatic in the real system
@@ -654,7 +652,7 @@ def step_vm_has_display(context, vm_name, display):
             if f"|{vm_name}|" in line:
                 assert display in line, f"Display name {display} not found for {vm_name}"
                 return
-    assert False, f"VM {vm_name} not found in types file"
+    raise AssertionError(f"VM {vm_name} not found in types file")
 
 
 @then('"{vm_name}" should have aliases "{aliases}"')
@@ -666,7 +664,7 @@ def step_vm_has_aliases(context, vm_name, aliases):
             if f"|{vm_name}|" in line:
                 assert aliases in line, f"Aliases {aliases} not found for {vm_name}"
                 return
-    assert False, f"VM {vm_name} not found in types file"
+    raise AssertionError(f"VM {vm_name} not found in types file")
 
 
 @then('"{alias}" should resolve to "{vm_name}"')
@@ -678,7 +676,7 @@ def step_alias_resolves(context, alias, vm_name):
         for line in f:
             if alias in line and f"|{vm_name}|" in line:
                 return
-    assert False, f"Alias {alias} doesn't resolve to {vm_name}"
+    raise AssertionError(f"Alias {alias} doesn't resolve to {vm_name}")
 
 
 @then('the VM should be allocated port "{port}"')
@@ -859,14 +857,14 @@ def step_all_created_running(context):
                 # For local testing, only fail if all created VMs failed
                 # (indicating the test setup itself failed, not pre-existing issues)
                 if len(failed_vms) == len(context.created_vms):
-                    assert False, f"All VMs failed to start: {failed_vms} (all containers: {docker_ps()})"
+                    raise AssertionError(f"All VMs failed to start: {failed_vms} (all containers: {docker_ps()})")
                 # Otherwise, some VMs started - the test scenario is working
                 # Pre-existing host VM issues don't invalidate the test
                 else:
                     print(f"  WARNING: Some VMs failed to start (likely pre-existing host issues): {failed_vms}")
             else:
                 # In container testing, fail on any VM not running
-                assert False, f"VMs {failed_vms} are not running (all containers: {docker_ps()})"
+                raise AssertionError(f"VMs {failed_vms} are not running (all containers: {docker_ps()})")
 
 
 @then('each VM should have a unique SSH port')
@@ -2499,7 +2497,7 @@ def step_isolated_projects(context):
     if running:
         # At least one VM is running, verify it has projects mounted
         result = subprocess.run(
-            ["docker", "inspect", "-f", "{{json .Mounts}}", list(running)[0]],
+            ["docker", "inspect", "-f", "{{json .Mounts}}", next(iter(running))],
             capture_output=True, text=True, timeout=10
         )
         assert result.returncode == 0, "Should be able to inspect container mounts"

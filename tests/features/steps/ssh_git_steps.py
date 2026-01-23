@@ -6,23 +6,26 @@ clone, push, pull, submodule management, and CI/CD workflows.
 All steps use real system verification.
 """
 import os
-from pathlib import Path
 
 # Import shared configuration
 import sys
+from pathlib import Path
+
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
-
-from behave import given, when, then
+from behave import given, then, when
 
 # Import SSH helpers
 from ssh_helpers import (
-    ssh_agent_is_running, ssh_agent_has_keys, has_ssh_keys, container_exists,
-    vm_has_private_keys
+    container_exists,
+    has_ssh_keys,
+    ssh_agent_has_keys,
+    ssh_agent_is_running,
+    vm_has_private_keys,
 )
 
+from config import VDE_ROOT
 
 # =============================================================================
 # SSH Agent External Git Operations Steps

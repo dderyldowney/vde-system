@@ -4,21 +4,20 @@ VDE Test Helpers - Shared utilities for BDD tests.
 This module provides helper functions to call actual VDE scripts
 and verify real system state, replacing mock implementations.
 """
-import sys
 import os
+import sys
 
 # Import shared configuration
 # Add steps directory to path for config import
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
-
-
-from pathlib import Path
+import os
 import subprocess
 import time
-import os
+from pathlib import Path
+
+from config import VDE_ROOT
 
 # VDE root directory - auto-detect from this file's location
 # This file is at tests/features/steps/vde_test_helpers.py
@@ -97,9 +96,7 @@ def container_exists(vm_name):
     if f"{vm_name}-dev" in containers:
         return True
     # Service VMs use plain name
-    if vm_name in containers:
-        return True
-    return False
+    return vm_name in containers
 
 
 def wait_for_container(vm_name, timeout=60, interval=2):

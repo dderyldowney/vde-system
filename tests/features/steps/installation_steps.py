@@ -2,22 +2,21 @@
 BDD Step Definitions for Installation and Initial Setup.
 These are critical for ZeroToMastery students getting started with VDE.
 """
-import sys
 import os
-import subprocess
 import shutil
+import subprocess
+import sys
 
 # Import shared configuration
 # Add steps directory to path for config import
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
-
-
-from behave import given, when, then
 from pathlib import Path
 
+from behave import given, then, when
+
+from config import VDE_ROOT
 
 # VDE_ROOT imported from config
 
@@ -114,7 +113,7 @@ def get_vm_types():
                     vm_type = vm_type.strip()
                     if vm_type and vm_type not in ['lang', 'service', 'display']:
                         vm_types.add(vm_type)
-    return sorted(list(vm_types))  # Return sorted list for consistency
+    return sorted(vm_types)  # Return sorted list for consistency
 
 
 def check_docker_network_exists(network_name):
@@ -143,10 +142,7 @@ def check_scripts_executable():
     scripts_dir = Path(VDE_ROOT) / "scripts"
     if not scripts_dir.exists():
         return False
-    for script_file in scripts_dir.rglob("*.sh"):
-        if not os.access(script_file, os.X_OK):
-            return False
-    return True
+    return all(os.access(script_file, os.X_OK) for script_file in scripts_dir.rglob("*.sh"))
 
 # =============================================================================
 # Installation GIVEN steps
@@ -508,7 +504,7 @@ def step_backup_ssh_config_exists(context):
 def step_ssh_template_format(context):
     """Verify SSH config template has proper format."""
     backup_ssh_config = Path(VDE_ROOT) / "backup" / "ssh" / "config"
-    assert backup_ssh_config.exists(), f"SSH config template does not exist"
+    assert backup_ssh_config.exists(), "SSH config template does not exist"
 
     content = backup_ssh_config.read_text()
     # Check for SSH config format indicators
@@ -823,7 +819,7 @@ def step_vde_health_status(context):
 
     health_script = scripts_dir / "vde-health"
     if health_script.exists():
-        assert os.access(health_script, os.X_OK), f"vde-health script exists but is not executable"
+        assert os.access(health_script, os.X_OK), "vde-health script exists but is not executable"
     # If health script doesn't exist, it may be integrated differently
 
 @then('any issues should be clearly listed')
@@ -902,7 +898,7 @@ def step_existing_vms_work(context):
                     )
                     assert has_valid_structure, f"VM config {config_file} appears invalid"
                 except Exception:
-                    assert False, f"Could not read VM config {config_file}"
+                    raise AssertionError(f"Could not read VM config {config_file}")
     # If no VMs exist yet, this is expected
 
 @then('new VM types should be available')
@@ -986,7 +982,7 @@ def step_project_data_preserved(context):
     # Check that projects directory exists (can be preserved)
     projects_dir = Path(VDE_ROOT) / "projects"
     if projects_dir.exists():
-        assert projects_dir.is_dir(), f"projects directory exists but is not a directory"
+        assert projects_dir.is_dir(), "projects directory exists but is not a directory"
     # If projects directory doesn't exist, preservation is not applicable
 
 @then('appropriate paths should be used')
@@ -1116,10 +1112,10 @@ def step_quick_start_command(context):
     start_script = scripts_dir / "start-virtual"
 
     assert create_script.exists(), f"create-virtual-for script does not exist at {create_script}"
-    assert os.access(create_script, os.X_OK), f"create-virtual-for is not executable"
+    assert os.access(create_script, os.X_OK), "create-virtual-for is not executable"
 
     assert start_script.exists(), f"start-virtual script does not exist at {start_script}"
-    assert os.access(start_script, os.X_OK), f"start-virtual is not executable"
+    assert os.access(start_script, os.X_OK), "start-virtual is not executable"
 
 @then('I should have a working Python environment')
 def step_python_env_working(context):
@@ -1138,7 +1134,7 @@ def step_python_env_working(context):
             python_templates = list(templates_dir.rglob("*python*"))
             assert len(python_templates) > 0, "No Python VM configuration found"
     else:
-        assert python_config.is_dir(), f"Python config path exists but is not a directory"
+        assert python_config.is_dir(), "Python config path exists but is not a directory"
 
 @then('I can start coding immediately')
 def step_can_start_coding(context):
@@ -1146,7 +1142,7 @@ def step_can_start_coding(context):
     # Check that projects directory exists and is writable
     projects_dir = Path(VDE_ROOT) / "projects"
     if projects_dir.exists():
-        assert projects_dir.is_dir(), f"projects directory exists but is not a directory"
+        assert projects_dir.is_dir(), "projects directory exists but is not a directory"
         # Verify it's writable (can create project files)
         assert os.access(projects_dir, os.W_OK), f"projects directory is not writable: {projects_dir}"
     # If projects directory doesn't exist, it may not have been created yet
@@ -1267,7 +1263,7 @@ def step_vm_types_conf_valid(context):
             if parts and parts[0].strip():
                 valid_count += 1
 
-    assert valid_count > 0, f"vm-types.conf exists but contains no valid VM type definitions"
+    assert valid_count > 0, "vm-types.conf exists but contains no valid VM type definitions"
 
 @then('all directories should have correct permissions')
 def step_dir_permissions_correct(context):

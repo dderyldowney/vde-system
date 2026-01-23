@@ -3,9 +3,10 @@ Behave environment setup and teardown hooks for VDE BDD tests.
 Runs inside the BDD test container OR locally on the host.
 """
 
+import contextlib
 import os
-import subprocess
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -39,18 +40,14 @@ def _cleanup_lock_files():
 
     # Remove all lock files
     for lock_file in locks_dir.rglob("*.lock"):
-        try:
+        with contextlib.suppress(Exception):
             lock_file.unlink()
-        except Exception:
-            pass
 
     # Also clean SSH config lock if it exists
     ssh_lock = Path.home() / ".ssh" / "config.lock"
     if ssh_lock.exists():
-        try:
+        with contextlib.suppress(Exception):
             ssh_lock.unlink()
-        except Exception:
-            pass
 
 
 def before_all(context):

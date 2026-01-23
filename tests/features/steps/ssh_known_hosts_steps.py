@@ -5,22 +5,22 @@ These steps test automatic cleanup of known_hosts entries when VMs are
 removed or recreated, preventing "host key changed" warnings.
 All steps use real system verification.
 """
-import subprocess
-from pathlib import Path
 import os
+import subprocess
 
 # Import shared configuration
 import sys
+from pathlib import Path
+
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
-
-from behave import given, when, then
+from behave import given, then, when
 
 # Import SSH helpers
 from ssh_helpers import run_vde_command
 
+from config import VDE_ROOT
 
 # =============================================================================
 # SSH known_hosts Cleanup Steps - Prevents "host key changed" warnings
@@ -122,10 +122,7 @@ def step_known_hosts_old_entry(context, pattern):
     # Create an entry that would cause the "host key changed" warning
     old_entry = f"{pattern} ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAOLD-KEY-FROM-PREVIOUS-VM\n"
 
-    if known_hosts.exists():
-        content = known_hosts.read_text()
-    else:
-        content = ""
+    content = known_hosts.read_text() if known_hosts.exists() else ""
 
     known_hosts.write_text(content + old_entry)
     context.old_known_hosts_entry = pattern
@@ -142,7 +139,7 @@ def step_remove_vm_ssh_cleanup(context, vm):
 @when('VM with port "{port}" is removed')
 def step_remove_vm_by_port(context, port):
     """Remove VM that has the specified port."""
-    result = run_vde_command(f"./scripts/remove-virtual python", timeout=60)
+    result = run_vde_command("./scripts/remove-virtual python", timeout=60)
     context.vm_removed_by_port = result.returncode == 0
     context.removed_port = port
 
@@ -245,7 +242,6 @@ def step_ssh_succeeds_no_warning(context):
 def step_known_hosts_new_entry(context, pattern):
     """Verify new entry exists in known_hosts (after VM recreation)."""
     known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
-    if hasattr(context, 'old_known_hosts_entry'):
-        if known_hosts.exists():
-            content = known_hosts.read_text()
-            assert "OLD-KEY-FROM-PREVIOUS-VM" not in content, "Old key entry should be removed"
+    if hasattr(context, 'old_known_hosts_entry') and known_hosts.exists():
+        content = known_hosts.read_text()
+        assert "OLD-KEY-FROM-PREVIOUS-VM" not in content, "Old key entry should be removed"

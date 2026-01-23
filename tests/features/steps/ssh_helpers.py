@@ -6,18 +6,17 @@ used across all SSH-related BDD step definitions.
 
 All SSH operations now use VDE-specific isolated paths at ~/.ssh/vde/
 """
-import subprocess
-from pathlib import Path
 import os
-
+import subprocess
 
 # Add steps directory to path for config import
 import sys
+from pathlib import Path
+
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 from config import VDE_ROOT
-
 
 # VDE SSH Isolation - All SSH operations use these paths
 VDE_SSH_DIR = Path.home() / ".ssh" / "vde"

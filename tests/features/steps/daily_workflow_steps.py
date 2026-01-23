@@ -4,22 +4,21 @@ BDD Step Definitions for Daily Development Workflow.
 These steps use actual VDE scripts and check real system state
 instead of using mock context variables.
 """
-import sys
 import os
+import sys
 
 # Import shared configuration
 # Add steps directory to path for config import
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
-
-
-from behave import given, when, then
-from pathlib import Path
 import subprocess
 import time
+from pathlib import Path
 
+from behave import given, then, when
+
+from config import VDE_ROOT
 
 # =============================================================================
 # HELPER FUNCTIONS

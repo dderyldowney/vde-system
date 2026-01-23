@@ -5,9 +5,8 @@ Hooks are special functions that run at specific points during test execution.
 This file is automatically discovered by behave.
 """
 
-from pathlib import Path
-import subprocess
 import os
+import subprocess
 import sys
 
 # Import shared configuration

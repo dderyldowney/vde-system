@@ -1,0 +1,135 @@
+[tool.ruff]
+# Target Python 3.9+ (matches CI environment)
+target-version = "py39"
+
+# Line length to match editorconfig and project conventions
+line-length = 100
+
+# Scan all Python files
+include = ["*.py"]
+extend-include = ["*.pyi"]
+
+# Directories to exclude from linting
+extend-exclude = [
+    ".git",
+    ".cache",
+    "__pycache__",
+    "*.egg-info",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+]
+
+# =============================================================================
+# Ruff Configuration - VDE Project
+# =============================================================================
+# This configuration sets up ruff as the default Python linter for the VDE
+# (Virtual Development Environment) project.
+#
+# Usage:
+#   ruff check .                    # Check all files
+#   ruff check --fix .              # Auto-fix issues where possible
+#   ruff check tests/               # Check specific directory
+#   ruff format --check .           # Check formatting
+#   ruff format .                   # Format files
+#
+# For pre-commit hooks:
+#   ruff check --fix .
+#   ruff format .
+# =============================================================================
+
+[tool.ruff.lint]
+# Enable rules by category
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort (import sorting)
+    "N",     # pep8-naming
+    "UP",    # pyupgrade (modernize Python syntax)
+    "B",     # flake8-bugbear (common bugs)
+    "C4",    # flake8-comprehensions (optimize comprehensions)
+    "SIM",   # flake8-simplify (simplify code)
+    "TCH",   # flake8-type-checking (optimize type checking imports)
+    "PTH",   # flake8-use-pathlib (prefer pathlib over os.path)
+    "PERF",  # perflint (performance optimizations)
+    "RUF",   # ruff-specific rules
+]
+
+# Ignore specific rules that conflict with project conventions
+ignore = [
+    # Docstring conventions (relaxed for this project)
+    "D",      # All docstring rules
+
+    # Import patterns used in BDD test setup
+    "E402",   # module-import-not-at-top-of-file
+
+    # Test-specific patterns
+    "S101",   # assert-used (allowed in tests)
+
+    # Code style preferences
+    "W505",   # doc-line-too-long
+    "E501",   # line-too-long (allow longer lines for readability)
+    "E722",   # bare-except (acceptable in some test contexts)
+
+    # Type checking
+    "F821",   # undefined-name (behave context vars are runtime-defined)
+    "F403",   # undefined-local-with-import-star
+    "F405",   # undefined-local-with-import-star-usage
+]
+
+# Per-file overrides
+[tool.ruff.lint.per-file-ignores]
+# Test files have more relaxed rules
+"tests/**/*.py" = [
+    "S101",    # Allow assert statements
+    "F821",    # Allow undefined names (behave context variables)
+    "F841",    # Allow unused variables (test setup/teardown)
+    "ARG001",  # Allow unused arguments (behave step definitions)
+    "PLR2004", # Allow magic values in tests
+]
+
+# BDD step definitions use context liberally
+"tests/features/steps/*.py" = [
+    "S101",    # Allow assert statements
+    "F821",    # context is defined at runtime by behave
+    "ARG001",  # Step definition params may be unused
+    "F401",    # Unused imports from behave import *
+    "F403",    # from behave import *
+    "F405",    # Star import usage
+]
+
+# Scripts may have different conventions
+"scripts/**/*.py" = [
+    "S101",    # Allow assert statements for validation
+]
+
+[tool.ruff.lint.isort]
+# Import sorting configuration
+known-first-party = ["vde", "tests"]
+case-sensitive = true
+
+[tool.ruff.format]
+# Use double quotes by default (matches Python conventions)
+quote-style = "double"
+
+# Indent with spaces (matches PEP 8)
+indent-style = "space"
+
+# Preserve trailing commas (helps with git diffs)
+skip-magic-trailing-comma = false
+
+# Line ending style (auto-detect, prefer LF on Unix)
+line-ending = "auto"
+
+[tool.ruff.lint.pycodestyle]
+# Allow slightly longer docstrings
+max-doc-length = 100
+
+[tool.ruff.lint.pylint]
+# Enable some pylint rules via ruff
+max-args = 10
+max-returns = 6
+max-branches = 15

@@ -4,25 +4,28 @@ BDD Step definitions for VM-to-VM SSH Communication scenarios.
 These steps test SSH connections between VMs, agent forwarding,
 and multi-hop SSH patterns using real system verification.
 """
-import subprocess
 import os
-from pathlib import Path
+import subprocess
 
 # Import shared configuration
 import sys
+from pathlib import Path
+
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
-
-from behave import given, when, then
+from behave import given, then, when
 
 # Import SSH helpers
 from ssh_helpers import (
-    ssh_agent_is_running, ssh_agent_has_keys, has_ssh_keys,
-    ssh_config_contains, container_exists
+    container_exists,
+    has_ssh_keys,
+    ssh_agent_has_keys,
+    ssh_agent_is_running,
+    ssh_config_contains,
 )
 
+from config import VDE_ROOT
 
 # =============================================================================
 # SSH Agent Forwarding (VM-to-VM) Steps
@@ -392,7 +395,7 @@ def step_all_auth_use_host_keys(context):
 def step_tests_run_on_backend(context):
     """Tests should run on the backend VM."""
     context.tests_executed_on = "backend"
-    assert context.command_executed_on == "backend" or getattr(context, 'tests_executed_on') == "backend"
+    assert context.command_executed_on == "backend" or context.tests_executed_on == "backend"
 
 
 @then('I should see the results in the frontend VM')

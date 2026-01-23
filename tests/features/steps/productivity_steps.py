@@ -5,19 +5,19 @@ These steps test actual VDE functionality using real Docker operations,
 PostgreSQL data persistence, VM lifecycle, and file system state.
 """
 
-import sys
 import os
-import time
 import subprocess
+import sys
+import time
 from pathlib import Path
 
 # Add steps directory to path for config import
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
+from behave import given, then, when
 
-from behave import given, when, then
+from config import VDE_ROOT
 
 # =============================================================================
 # Helper Functions
@@ -59,9 +59,7 @@ def container_exists(vm_name):
     if f"{vm_name}-dev" in containers:
         return True
     # Service VMs use plain name
-    if vm_name in containers:
-        return True
-    return False
+    return vm_name in containers
 
 def wait_for_container(vm_name, timeout=60, interval=2):
     """Wait for a container to be running."""
@@ -229,7 +227,7 @@ def step_stop_restart_postgres(context):
 
     # Wait for postgres to be ready to accept connections
     max_attempts = 30
-    for i in range(max_attempts):
+    for _i in range(max_attempts):
         ready_result = subprocess.run(
             ["docker", "exec", "postgres", "pg_isready"],
             capture_output=True,
@@ -351,7 +349,7 @@ def step_recreate_start_postgres(context):
 
     # Wait for postgres to be ready
     max_attempts = 30
-    for i in range(max_attempts):
+    for _i in range(max_attempts):
         ready_result = subprocess.run(
             ["docker", "exec", "postgres", "pg_isready"],
             capture_output=True,

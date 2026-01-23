@@ -5,10 +5,10 @@ These steps verify the correctness of VM type definitions in vm-types.conf,
 including display names, port allocations, categories, aliases, and naming patterns.
 """
 
-from behave import given, when, then
 import re
 from pathlib import Path
 
+from behave import given, then, when
 
 # =============================================================================
 # VM Types Configuration Parsing
@@ -38,7 +38,7 @@ def parse_vm_types():
     if not VM_TYPES_CONF.exists():
         return vms
 
-    with open(VM_TYPES_CONF, 'r') as f:
+    with open(VM_TYPES_CONF) as f:
         for line in f:
             line = line.rstrip('\n\r')
             # Skip comments and empty lines
@@ -49,7 +49,7 @@ def parse_vm_types():
             # because the install command (field 5) may contain pipes
             parts = []
             remaining = line
-            for i in range(4):
+            for _i in range(4):
                 pipe_idx = remaining.find('|')
                 if pipe_idx == -1:
                     break
@@ -440,7 +440,7 @@ def step_lang_vms_have_ssh(context):
                     if match:
                         port = int(match.group(1))
                         context.lang_ports.append((vm_name, port))
-    
+
     for vm_name, port in context.lang_ports:
         assert port, f"Language VM '{vm_name}' has no SSH port configured"
 
@@ -475,8 +475,8 @@ def step_service_vms_provide_services(context):
             for name, data in context.vms.items()
             if data['type'] == 'service'
         }
-    
-    for name, svc_port in context.service_ports_config.items():
+
+    for name in context.service_ports_config:
         # Service VMs should have service ports configured
         # (This is metadata verification, not runtime check)
         assert name in context.vms, f"Service '{name}' not in VM types"

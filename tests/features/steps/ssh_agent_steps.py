@@ -4,35 +4,46 @@ BDD Step definitions for SSH Agent and Key Management scenarios.
 These steps test SSH agent lifecycle, key generation, and automatic setup.
 All steps use real system verification instead of mock context variables.
 """
-import subprocess
-import time
-from pathlib import Path
 import os
+import subprocess
 
 # Import shared configuration
 import sys
+import time
+from pathlib import Path
+
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
-
-from behave import given, when, then
+from behave import given, then, when
 
 # Import SSH helpers
 from ssh_helpers import (
-    ssh_agent_is_running, ssh_agent_has_keys, get_ssh_keys,
-    has_ssh_keys, ALLOW_CLEANUP, run_vde_command, container_exists
+    ALLOW_CLEANUP,
+    container_exists,
+    get_ssh_keys,
+    has_ssh_keys,
+    run_vde_command,
+    ssh_agent_has_keys,
+    ssh_agent_is_running,
 )
+
+from config import VDE_ROOT
 
 # Add parent directory to path for vde_test_helpers
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Import VDE test helpers (run_vde_command and container_exists now from ssh_helpers)
 try:
+    from vde_test_helpers import VDE_ROOT as TestVDE_ROOT
     from vde_test_helpers import (
-        docker_ps, wait_for_container,
-        create_vm, start_vm, stop_vm, compose_file_exists, file_exists,
-        VDE_ROOT as TestVDE_ROOT
+        compose_file_exists,
+        create_vm,
+        docker_ps,
+        file_exists,
+        start_vm,
+        stop_vm,
+        wait_for_container,
     )
 except ImportError:
     # Fallback implementations for functions not in ssh_helpers
@@ -449,7 +460,7 @@ def step_short_hostnames(context):
         # Check for Host entries with short names (e.g., "python-dev" not "localhost")
         assert "Host " in content, "SSH config should have short hostname entries"
     else:
-        assert False, "SSH config should exist for short hostname usage"
+        raise AssertionError("SSH config should exist for short hostname usage")
 
 
 @then('I should not need to remember port numbers')
@@ -462,7 +473,7 @@ def step_no_remember_ports(context):
         # If SSH config exists, it should have Port entries so users don't need to remember ports
         assert "Port " in content or "Host " in content, "SSH config should have Port configuration"
     else:
-        assert False, "SSH config should exist for port configuration"
+        raise AssertionError("SSH config should exist for port configuration")
 
 
 @given('I have a running VM with SSH configured')
@@ -502,7 +513,7 @@ def step_no_reconfigure_ssh(context):
         assert "Bad configuration option" not in result.stderr, "SSH config should be valid"
     else:
         # If config doesn't exist, it's not configured - this is a failure
-        assert False, "SSH should still be configured"
+        raise AssertionError("SSH should still be configured")
 
 
 @then('my keys should still work')
@@ -823,7 +834,7 @@ def step_vm_starts_normally(context):
         # Either succeeded or failed due to Docker (acceptable in test env)
     else:
         # No command was run - verify this is a test scenario
-        assert False, "VM should have been started (no command was run)"
+        raise AssertionError("VM should have been started (no command was run)")
 
 
 @given('I have VDE configured')

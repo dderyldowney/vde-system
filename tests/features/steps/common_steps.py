@@ -2,9 +2,9 @@
 BDD Step definitions for common scenarios (cache, templates, docker, etc.).
 """
 
-import sys
 import os
 import subprocess
+import sys
 import time
 
 # Import shared configuration
@@ -12,10 +12,11 @@ import time
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
-
-from behave import given, when, then
 from pathlib import Path
+
+from behave import given, then, when
+
+from config import VDE_ROOT
 
 # =============================================================================
 # HELPER FUNCTIONS
@@ -70,7 +71,6 @@ def step_vm_conf_unchanged(context):
 @given('vm-types.conf has been modified after cache')
 def step_vm_conf_modified_after(context):
     """VM config modified after cache was created - actually modify the file."""
-    import time
     conf_path = VDE_ROOT / "scripts/data/vm-types.conf"
     # Actually touch the config file to make it newer than cache
     if conf_path.exists():
@@ -506,7 +506,7 @@ def step_vars_substituted_verify(context):
     if hasattr(context, 'template_vars') and context.template_vars:
         if hasattr(context, 'last_output') and context.last_output:
             # Check if some template values appear in output
-            for key, value in context.template_vars.items():
+            for value in context.template_vars.values():
                 if str(value) in context.last_output:
                     return  # Found variable substitution in output
     # If no output check available, just verify the flag was set

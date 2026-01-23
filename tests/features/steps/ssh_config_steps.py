@@ -4,26 +4,24 @@ BDD Step definitions for SSH Configuration File Management scenarios.
 These steps test SSH config file creation, merging, validation, backup,
 and atomic update operations. All steps use real system verification.
 """
-import subprocess
-import time
-import re
-from pathlib import Path
 import os
+import re
+import subprocess
 
 # Import shared configuration
 import sys
+import time
+from pathlib import Path
+
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
-
-from behave import given, when, then
+from behave import given, then, when
 
 # Import SSH helpers
-from ssh_helpers import (
-    ssh_agent_is_running, has_ssh_keys, public_ssh_keys_count, run_vde_command
-)
+from ssh_helpers import has_ssh_keys, public_ssh_keys_count, run_vde_command, ssh_agent_is_running
 
+from config import VDE_ROOT
 
 # =============================================================================
 # SSH Configuration BDD Step Definitions
@@ -815,7 +813,7 @@ def step_blank_lines_preserved(context):
             assert blank_count >= 0, "Config structure verification failed"
     else:
         # Config doesn't exist - can't verify blank lines
-        assert False, "SSH config should exist to verify blank line preservation"
+        raise AssertionError("SSH config should exist to verify blank line preservation")
 
 
 @then('~/.ssh/config comments should be preserved')
@@ -832,7 +830,7 @@ def step_comments_preserved(context):
         assert len(content) >= 0, "Config content check failed"
     else:
         # Config doesn't exist and no baseline - can't verify
-        assert False, "SSH config should exist to verify comment preservation"
+        raise AssertionError("SSH config should exist to verify comment preservation")
 
 
 @then('new entry should be added with proper formatting')
@@ -879,7 +877,7 @@ def step_all_vm_entries_present(context):
             assert expected_host in content, f"VM entry '{expected_host}' not found in config"
     else:
         # Config doesn't exist or no VMs created - can't verify
-        assert False, "SSH config should exist and VMs should have been created"
+        raise AssertionError("SSH config should exist and VMs should have been created")
 
 
 @then('no entries should be lost')
@@ -952,7 +950,7 @@ def step_backup_timestamp_before(context):
         assert context.latest_backup_mtime <= config_mtime, f"Backup mtime ({context.latest_backup_mtime}) should be <= config mtime ({config_mtime})"
     else:
         # Can't verify without both files existing
-        assert False, "Cannot verify backup timestamp without both config and backup"
+        raise AssertionError("Cannot verify backup timestamp without both config and backup")
 
 
 # -----------------------------------------------------------------------------
@@ -1081,7 +1079,7 @@ def step_config_file_valid(context):
         assert result.returncode == 0 or "test" in result.stdout
     else:
         # Config doesn't exist - can't verify validity
-        assert False, "SSH config should exist to verify validity"
+        raise AssertionError("SSH config should exist to verify validity")
 
 
 @then('~/.ssh/config should NOT contain "{entry}"')

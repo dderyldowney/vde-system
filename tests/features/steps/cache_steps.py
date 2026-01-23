@@ -5,12 +5,13 @@ These steps use actual VDE scripts and check real file system state
 instead of using mock context variables.
 """
 
-from behave import given, when, then
-from pathlib import Path
-import subprocess
 import os
-import time
+import subprocess
 import sys
+import time
+from pathlib import Path
+
+from behave import given, then, when
 
 # Import shared configuration
 # Add steps directory to path for config import
@@ -525,7 +526,7 @@ def step_cache_concurrent_read(context):
     """Perform multiple cache reads to verify consistency."""
     cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
     results = []
-    for i in range(3):
+    for _i in range(3):
         if cache_path.exists():
             results.append(cache_path.read_text())
     # Verify all reads produced the same result
@@ -807,7 +808,7 @@ def step_cache_directory_created(context):
     """Verify .cache directory was created."""
     cache_dir = VDE_ROOT / ".cache"
     assert cache_dir.exists(), f".cache directory not found at {cache_dir}"
-    assert cache_dir.is_dir(), f".cache exists but is not a directory"
+    assert cache_dir.is_dir(), ".cache exists but is not a directory"
     context.cache_directory_created = True
     mark_step_implemented(context, "cache_directory_created")
 

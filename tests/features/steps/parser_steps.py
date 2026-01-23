@@ -3,11 +3,12 @@ BDD Step definitions for Natural Language Parser scenarios.
 Uses real vde-parser library functions for testing.
 """
 
-from behave import given, when, then
-import subprocess
 import os
-import sys
 import shlex
+import subprocess
+import sys
+
+from behave import given, then, when
 
 # Add steps directory to path for config import
 steps_dir = os.path.dirname(os.path.abspath(__file__))
@@ -321,7 +322,7 @@ def step_check_vm_included(context, vm_name):
         else:
             assert vm_name in detected, f"VM '{vm_name}' not found in {detected}"
     else:
-        assert False, f"Expected VM list, got '{detected}'"
+        raise AssertionError(f"Expected VM list, got '{detected}'")
 
 
 @then('VMs should include all known VMs')
@@ -340,12 +341,9 @@ def step_check_vms_included(context, vm_list):
     # vm_list from behave: for "VMs should include "python", "rust", "go""
     # we get: python", "rust", "go
     # Split on ", " pattern which is how Gherkin separates multiple quoted strings
-    if '", "' in vm_list:
-        vms = vm_list.split('", "')
-    else:
-        vms = vm_list.split(',')
+    vms = vm_list.split('", "') if '", "' in vm_list else vm_list.split(',')
     vms = [v.strip('"\'') for v in vms if v.strip()]
-    
+
     detected = context.detected_vms
     if isinstance(detected, list):
         for vm in vms:
@@ -353,7 +351,7 @@ def step_check_vms_included(context, vm_list):
     elif isinstance(detected, str):
         assert detected in ['all', 'all_languages', 'all_services']
     else:
-        assert False, f"Expected VM list, got '{detected}'"
+        raise AssertionError(f"Expected VM list, got '{detected}'")
 
 
 @then('VMs should be empty')

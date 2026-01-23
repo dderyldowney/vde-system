@@ -4,21 +4,21 @@ These are critical when ZeroToMastery students encounter issues.
 
 All steps use REAL verification - no fake context flags.
 """
-import sys
-import os
-import subprocess
 import json
+import os
 import re
+import subprocess
+import sys
 
 # Import shared configuration
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
-
-from behave import given, when, then
 from pathlib import Path
 
+from behave import given, then, when
+
+from config import VDE_ROOT
 
 # =============================================================================
 # Helper Functions for Real Verification
@@ -56,7 +56,7 @@ def get_vm_port(vm_name):
         return None
     # Get port from host config
     ports = info.get('NetworkSettings', {}).get('Ports', {})
-    if '22/tcp' in ports and ports['22/tcp']:
+    if ports.get('22/tcp'):
         return ports['22/tcp'][0]['HostPort']
     return None
 
@@ -284,7 +284,7 @@ def step_know_error_type(context):
     }
 
     identified = False
-    for error_type, patterns in error_types.items():
+    for patterns in error_types.values():
         if any(pattern in error for pattern in patterns):
             identified = True
             break
@@ -359,7 +359,7 @@ def step_vm_works_new_port(context):
 
     info = get_container_info(context.vm_name)
     assert info is not None, "Container not found"
-    assert info['State']['Running'] == True, "VM is not running"
+    assert info['State']['Running'], "VM is not running"
 
     # Verify SSH connectivity on new port
     port = get_vm_port(context.vm_name)
@@ -459,7 +459,7 @@ def step_see_volume_mounted(context):
 
     # Check mount status
     for mount in mounts:
-        assert mount.get('RW', False) == True, f"Mount {mount.get('Destination')} is not RW"
+        assert mount.get('RW', False), f"Mount {mount.get('Destination')} is not RW"
 
     context.volume_mount_status_visible = True
 
@@ -945,7 +945,7 @@ def step_vms_start_after_docker(context):
 
     info = get_container_info(context.vm_name)
     assert info is not None, "VM not found"
-    assert info['State']['Running'] == True, "VM not running"
+    assert info['State']['Running'], "VM not running"
     context.vms_start_after_docker_healthy = True
 
 @then('I should see if devuser (1000:1000) matches my host user')

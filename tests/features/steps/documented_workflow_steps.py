@@ -6,11 +6,12 @@ and plan generation capabilities.
 This file contains ONLY steps not already defined in other step files.
 """
 
-from behave import given, when, then
-import subprocess
 import os
+import subprocess
 import sys
 import time
+
+from behave import given, then, when
 
 # Add steps directory to path for config import
 steps_dir = os.path.dirname(os.path.abspath(__file__))
@@ -78,7 +79,7 @@ def _get_real_flags(input_string):
 def _is_valid_vm_type(vm_name):
     """Check if a VM type is valid by checking vm-types.conf."""
     try:
-        with open(VM_TYPES_CONF, 'r') as f:
+        with open(VM_TYPES_CONF) as f:
             for line in f:
                 if line.strip() and not line.startswith('#'):
                     parts = line.strip().split('|')
@@ -96,7 +97,7 @@ def _is_valid_vm_type(vm_name):
 def _get_vm_category(vm_name):
     """Get the category of a VM (language or service)."""
     try:
-        with open(VM_TYPES_CONF, 'r') as f:
+        with open(VM_TYPES_CONF) as f:
             for line in f:
                 if line.strip() and not line.startswith('#'):
                     parts = line.strip().split('|')
@@ -114,7 +115,7 @@ def _load_all_vms():
     """Load all VMs from vm-types.conf and return structured data."""
     vms = {'language': [], 'service': [], 'all': []}
     try:
-        with open(VM_TYPES_CONF, 'r') as f:
+        with open(VM_TYPES_CONF) as f:
             for line in f:
                 if line.strip() and not line.startswith('#'):
                     parts = line.strip().split('|')

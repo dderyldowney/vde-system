@@ -43,7 +43,7 @@ jobs:
           wget -qO- "https://github.com/mvdan/sh/releases/download/v3.7.0/shfmt_v3.7.0_linux_amd64" > shfmt
           chmod +x shfmt
           sudo mv shfmt /usr/bin/
-          pip install yamllint
+          pip install ruff yamllint
 
       - name: Run zsh syntax check
         shell: zsh {0}
@@ -66,6 +66,13 @@ jobs:
 
       - name: Run yamllint
         run: yamllint .github/workflows/ configs/docker/*/docker-compose.yml || true
+
+      - name: Run ruff Python linter
+        shell: bash {0}
+        run: |
+          echo "Running ruff on Python files..."
+          ruff check tests/ --output-format=github
+          echo "✓ Ruff check passed"
 
   # =============================================================================
   # Job 2: Unit Tests
