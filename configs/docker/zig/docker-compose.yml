@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: zig, 2208, apt-get install -y zig
+# Variables: zig, 2200, apt-get install -y zig
 services:
   zig-dev:
     build:
@@ -17,7 +17,7 @@ services:
     command: sh -c "apt-get install -y zig && /usr/sbin/sshd -D"
 
     ports:
-      - "2208:22"
+      - "2200:22"
 
     volumes:
       - ../../../projects/zig:/home/devuser/workspace

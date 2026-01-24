@@ -1,7 +1,7 @@
 # Template for language VMs
-# Variables: rust, 2200, su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs 
+# Variables: python, 2201, apt-get update -y && apt-get install -y python3 python3-pip
 services:
-  rust-dev:
+  python-dev:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -10,18 +10,18 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-rust:latest
-    container_name: rust-dev
-    hostname: rust-dev
+    image: dev-python:latest
+    container_name: python-dev
+    hostname: python-dev
     restart: unless-stopped
-    command: sh -c "su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs  && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y python3 python3-pip && /usr/sbin/sshd -D"
 
     ports:
-      - "2200:22"
+      - "2201:22"
 
     volumes:
-      - ../../../projects/rust:/home/devuser/workspace
-      - ../../../logs/rust:/logs
+      - ../../../projects/python:/home/devuser/workspace
+      - ../../../logs/python:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
       - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
@@ -30,7 +30,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/rust.env
+      - ../../../env-files/python.env
 
     networks:
       - dev-net
