@@ -17,6 +17,7 @@ data/redis/*
 data/mongodb/*
 public-ssh-keys/*
 coverage/*
+.cache.test-backup/
 
 # Backup files
 *.bak
