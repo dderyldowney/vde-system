@@ -479,6 +479,17 @@ def step_ask_available_vms(context):
 @when('I ask "what VMs can I create?"')
 def step_ask_available_vms_quoted(context):
     """Parse list VMs request and load actual VM data from vm-types.conf."""
+    # Execute the actual list-vms command to get real output
+    result = subprocess.run(
+        ['./scripts/list-vms'],
+        cwd=VDE_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+
     # Parse the natural language request using real parser
     context.detected_intent = _get_real_intent('what VMs can I create')
     context.detected_filter = _get_real_filter('what VMs can I create')
@@ -499,6 +510,17 @@ def step_ask_available_vms_quoted(context):
 @when('I ask "show all services"')
 def step_ask_show_all_services(context):
     """Parse show all services request and load service VM data from vm-types.conf."""
+    # Execute the actual list-vms command to get real output
+    result = subprocess.run(
+        ['./scripts/list-vms'],
+        cwd=VDE_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+
     # Parse the natural language request using real parser
     context.detected_intent = _get_real_intent('show all services')
     context.detected_filter = _get_real_filter('show all services')
@@ -571,6 +593,17 @@ def step_plan_start_go_mongodb(context):
 @when('I ask to list all languages')
 def step_ask_list_languages(context):
     """Parse list languages request and load language VM data from vm-types.conf."""
+    # Execute the actual list-vms command to get real output
+    result = subprocess.run(
+        ['./scripts/list-vms'],
+        cwd=VDE_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+
     # Parse the natural language request using real parser
     context.detected_intent = _get_real_intent('list languages')
     context.detected_filter = _get_real_filter('list languages')

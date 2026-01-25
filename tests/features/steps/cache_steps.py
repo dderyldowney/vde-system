@@ -1028,8 +1028,8 @@ def step_know_alias_not_canonical(context):
 @then('I should be able to use either name in commands')
 def step_use_either_name(context):
     """Verify can use either alias or canonical name."""
-    result = run_vde_command(['./scripts/list-vms'])
-    assert result.returncode == 0, "Should be able to list VMs"
+    result = run_vde_command('./scripts/list-vms')
+    assert result.returncode == 0, f"Should be able to list VMs. Got exit code {result.returncode}, stdout: {result.stdout[:200]}, stderr: {result.stderr[:200]}"
 
 
 @then('I should understand the difference between language and service VMs')
