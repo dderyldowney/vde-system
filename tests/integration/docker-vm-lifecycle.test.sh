@@ -34,9 +34,11 @@ if [[ -n "$TEST_VM" ]]; then
   fi
 else
   # Default multi-VM mode (for local testing)
-  TEST_LANG_VM="python"     # Language VM for testing (not created yet)
-  TEST_SVC_VM="postgres"   # Service VM for testing (not created yet)
-  TEST_LANG_VM2="rust"       # Second language VM for multi-VM tests
+  # IMPORTANT: Use TEST-ONLY VM names to avoid deleting production configs!
+  # These names should never match real VM types in vm-types.conf
+  TEST_LANG_VM="vde-test-lang"     # Test-only language VM (not in production)
+  TEST_SVC_VM="vde-test-svc"       # Test-only service VM (not in production)
+  TEST_LANG_VM2="vde-test-lang2"   # Second test-only language VM
 fi
 
 VERBOSE=${VERBOSE:-false}
