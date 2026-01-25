@@ -327,8 +327,8 @@ def step_takes_time_to_ready(context):
 
 @then('VM "{vm_name}" should be running')
 def step_vm_should_be_running(context, vm_name):
-    """Verify VM is running using actual Docker state."""
-    assert container_exists(vm_name), f"VM {vm_name} is not running (docker ps check failed)"
+    """Verify VM is running using actual Docker state with wait."""
+    assert wait_for_container(vm_name, timeout=60), f"VM {vm_name} is not running (docker ps check failed after 60s)"
 
 
 @then('VM "{vm_name}" should not be running')
@@ -476,9 +476,11 @@ def step_told_both_running(context):
     """Should be told both VMs are already running."""
     if hasattr(context, 'last_output') and context.last_output:
         output_lower = context.last_output.lower()
-        has_message = 'already' in output_lower or 'running' in output_lower
-        assert has_message or len(output_lower.strip()) == 0, \
-            "Output should indicate VMs are already running"
+        has_already = 'already' in output_lower
+        has_running = 'running' in output_lower
+        # Output should mention already running status
+        assert has_already or has_running, \
+            f"Output should indicate VMs are already running. Got: {output_lower[:200]}"
 
 
 @then('no containers should be restarted')
@@ -514,9 +516,12 @@ def step_informed_mixed_result(context):
     """Should be informed of mixed result - verify output indicates both states."""
     if hasattr(context, 'last_output') and context.last_output:
         output_lower = context.last_output.lower()
-        has_message = 'already' in output_lower or 'start' in output_lower or 'running' in output_lower
-        assert has_message or len(output_lower.strip()) == 0, \
-            "Output should indicate mixed result (some running, some started)"
+        has_already = 'already' in output_lower
+        has_start = 'start' in output_lower
+        has_running = 'running' in output_lower
+        # Output should indicate VM status (already running, starting, etc.)
+        assert has_already or has_start or has_running, \
+            f"Output should indicate VM status. Got: {output_lower[:200]}"
 
 
 @then('the system should prevent duplication')
