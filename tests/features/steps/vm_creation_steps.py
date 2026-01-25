@@ -438,15 +438,6 @@ def step_go_starts(context):
     assert container_exists(vm_name), f"VM {vm_name} should be running"
 
 
-@then('it should be accessible via SSH')
-def step_accessible_ssh(context):
-    """Should be accessible via SSH - verify SSH port is allocated."""
-    vm_name = getattr(context, 'vm_start_requested', 'go')
-    port = get_port_from_compose(vm_name)
-    assert port is not None, f"VM {vm_name} should have SSH port allocated"
-    assert container_exists(vm_name), f"VM {vm_name} should be running"
-
-
 @then('all three VMs should start')
 def step_all_start(context):
     """All three VMs should start - verify containers are running."""

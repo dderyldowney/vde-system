@@ -3,6 +3,7 @@
 > **CRITICAL:** This document defines NON-OPTIONAL operating procedures.
 > "Suggestions" in this document are actually requirements.
 > There is NO circumstance that justifies bypassing these instructions.
+> DO NOT lazy load this document, IMMEDIATELY apply its requirements.
 
 ---
 

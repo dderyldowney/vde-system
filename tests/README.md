@@ -530,6 +530,64 @@ jobs:
 | Docker Operations | ✓ | - | ✓ |
 | Bug Fixes | ✓ | - | - |
 
+## CRITICAL POLICIES
+
+### ⚠️ Production Config Protection Policy
+
+**NEVER delete or modify production VM configurations in tests.**
+
+#### Protected Files (NEVER delete):
+
+1. **`configs/docker/<language>/docker-compose.yml`** - VM configuration files
+   - Examples: `configs/docker/python/docker-compose.yml`, `configs/docker/rust/docker-compose.yml`
+   - These are developer infrastructure that must persist
+
+2. **`env-files/<service>.env`** - Service environment files
+   - Examples: `env-files/postgres.env`, `env-files/redis.env`
+   - These define service configuration and must not be removed
+
+#### Test VM Naming Rules
+
+Integration tests MUST use **test-only VM names** that will never match production VM types:
+
+```bash
+# ✅ CORRECT - Test-only names
+TEST_LANG_VM="vde-test-lang"    # Not in vm-types.conf
+TEST_SVC_VM="vde-test-svc"      # Not in vm-types.conf
+TEST_LANG_VM2="vde-test-lang2"  # Not in vm-types.conf
+
+# ❌ WRONG - Production VM names (DELETES PRODUCTION CONFIGS!)
+TEST_LANG_VM="python"    # Matches real VM type
+TEST_SVC_VM="postgres"  # Matches real service
+```
+
+#### Safe Naming Conventions
+
+| Convention | Example | Safe? |
+|------------|---------|-------|
+| `vde-test-*` | `vde-test-lang`, `vde-test-svc` | ✅ Yes |
+| `e2e-test-*` | `e2e-test-go`, `e2e-test-minio` | ✅ Yes |
+| `test-*` | `test-python`, `test-postgres` | ⚠️ Borderline |
+| Production names | `python`, `postgres`, `rust` | ❌ NO |
+
+#### Historical Context
+
+This policy was established after a critical bug where integration tests used production VM names (`python`, `postgres`), causing test cleanup to delete actual developer configurations. See commit `dfd2303` for the fix.
+
+### Fake Test Prohibition Policy
+
+**NEVER use fake test patterns in BDD step implementations.**
+
+Forbidden patterns (see `/CLAUDE.md`):
+1. `assert True` - Always-passing assertions
+2. `context.xxx = True` - Setting flags without real verification
+3. `pass` statements in `@then` steps - Silent bypass of verification
+
+All tests must use **real verification**:
+- `subprocess.run()` for actual command execution
+- `Path.exists()` for real file checks
+- `docker ps`, `docker inspect` for container state
+
 ## Known Limitations
 
 1. **Docker-dependent tests**: Integration tests may require Docker to be running
