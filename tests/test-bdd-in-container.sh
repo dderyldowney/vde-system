@@ -1,12 +1,12 @@
 #!/usr/bin/env zsh
-# VDE BDD Test Runner
-# Runs BDD feature tests inside the dedicated test container
+# VDE BDD Test Runner - IN CONTAINER
+# Runs BDD feature tests inside the dedicated test container (Docker-in-Docker)
 #
 # Usage:
-#   ./tests/run-bdd-tests.sh              # Run all BDD tests
-#   ./tests/run-bdd-tests.sh vm-lifecycle # Run specific feature
-#   ./tests/run-bdd-tests.sh --no-build   # Skip container rebuild
-#   ./tests/run-bdd-tests.sh --shell      # Drop into container shell
+#   ./tests/test-bdd-in-container.sh              # Run all BDD tests
+#   ./tests/test-bdd-in-container.sh vm-lifecycle # Run specific feature
+#   ./tests/test-bdd-in-container.sh --no-build   # Skip container rebuild
+#   ./tests/test-bdd-in-container.sh --shell      # Drop into container shell
 
 set -e
 

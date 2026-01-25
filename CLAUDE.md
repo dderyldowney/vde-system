@@ -341,6 +341,28 @@ Which would you like next?
 2. ✅ Leave it undefined and accept the error
 3. ❌ **NEVER** create a placeholder that just sets `context.step_xxx = True`
 
+### STANDING RULE: ALL FAKE TEST VIOLATIONS MUST BE FIXED
+
+> **EFFECTIVE DATE: January 25, 2026 (Session 33)**
+
+**For ALL sessions, this ONE rule applies:**
+
+**IF a Fake Test Prohibition violation is found during yume-guardian review, whether introduced by the current session or pre-existing in the codebase, IT MUST BE FIXED before proceeding.**
+
+This includes but is not limited to:
+- `assert True` patterns
+- `or True` fallbacks
+- Context flag assignments without verification
+- Early returns in @then steps before assertions
+- Placeholder step definitions
+
+**NO EXCEPTIONS.**
+- Pre-existing violations are NOT "grandfathered"
+- Session time constraints do NOT apply to fixing violations
+- The only acceptable exit from Phase 3 (yume-guardian) is CLEAN (zero violations)
+
+**Rationale:** Fake tests invalidate the entire testing approach. Leaving them in place because "they were there before" or "we don't have time" undermines confidence in ALL test results.
+
 ---
 
 # DOMAIN: User Guide Generation
@@ -353,7 +375,7 @@ The `USER_GUIDE.md` documents the COMPLETE user experience. Users will use Docke
 
 **1. Run FULL test suite locally (Docker required)**
 ```bash
-./tests/run-local-bdd.sh
+./tests/run-docker-required-tests.sh
 ```
 
 **2. Generate Behave JSON results**

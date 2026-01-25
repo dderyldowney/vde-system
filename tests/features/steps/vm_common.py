@@ -246,3 +246,51 @@ def get_vm_ssh_port(vm_name):
 def compose_project_path(vm_name):
     """Get the path to VM's docker-compose project directory."""
     return VDE_ROOT / "configs" / "docker" / vm_name
+
+
+def get_test_containers():
+    """Get only test-created containers, not user's actual VMs.
+
+    Test containers are labeled with 'vde.test=true'. This allows tests to
+    verify only their own containers without being affected by the user's
+    actual development VMs.
+
+    Returns:
+        set: Set of test container names
+    """
+    import subprocess
+    result = subprocess.run(
+        ["docker", "ps", "--filter", "label=vde.test=true", "--format", "{{.Names}}"],
+        capture_output=True,
+        text=True,
+        timeout=10
+    )
+    if result.returncode != 0:
+        return set()
+
+    containers = {c for c in result.stdout.strip().split('\n') if c}
+    return containers
+
+
+def is_test_container(container_name):
+    """Check if a container is a test container by checking for the vde.test label.
+
+    Args:
+        container_name: Name of the container to check
+
+    Returns:
+        bool: True if the container has the vde.test label
+    """
+    import subprocess
+    result = subprocess.run(
+        ["docker", "inspect", "-f", "{{index .Config.Labels}}", container_name],
+        capture_output=True,
+        text=True,
+        timeout=5
+    )
+    if result.returncode != 0:
+        return False
+
+    # Labels are returned as a list-like string
+    labels_str = result.stdout.strip()
+    return "vde.test=true" in labels_str or "vde.test" in labels_str

@@ -100,7 +100,8 @@ def after_scenario(context, scenario):
     Hook that runs after each scenario.
 
     This hook cleans up any temporary files created during testing,
-    such as invalid compose files used for error handling tests.
+    such as invalid compose files used for error handling tests,
+    and removes any test-created containers (labeled with vde.test=true).
     """
     # Clean up invalid compose test directory if it was created
     import shutil
@@ -110,3 +111,24 @@ def after_scenario(context, scenario):
             shutil.rmtree(invalid_compose_dir)
         except Exception:
             pass  # Best effort cleanup
+
+    # Clean up test-created containers (labeled with vde.test=true)
+    # This ensures tests don't leave orphaned containers and don't affect user's VMs
+    try:
+        result = subprocess.run(
+            ["docker", "ps", "--filter", "label=vde.test=true", "--format", "{{.Names}}"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        if result.returncode == 0:
+            test_containers = [c for c in result.stdout.strip().split('\n') if c]
+            for container in test_containers:
+                # Force remove the test container
+                subprocess.run(
+                    ["docker", "rm", "-f", container],
+                    capture_output=True,
+                    timeout=10
+                )
+    except Exception:
+        pass  # Docker may not be available, that's OK

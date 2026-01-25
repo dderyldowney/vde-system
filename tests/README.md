@@ -14,7 +14,12 @@ The VDE test suite provides comprehensive coverage across three testing levels:
 
 ```
 tests/
-├── run-all-tests.sh                    # Main test runner
+├── run-all-known-tests.sh              # Run ALL tests (unit + integration)
+├── run-docker-free-tests.sh            # Docker-free tests only (fast, parser logic)
+├── run-docker-required-tests.sh        # Docker-required tests (containers, SSH)
+├── test-bdd-in-container.sh            # BDD tests in container (Docker-in-Docker, CI)
+├── test-e2e-user-journey.sh            # End-to-end user journey test
+├── generate-user-guide.sh              # Generate user guide from BDD results
 ├── bug-fix-validation.test.sh          # Bug fix validation tests
 ├── features/                            # BDD feature specifications
 │   ├── vm-lifecycle.feature            # VM creation/start/stop workflows
@@ -38,23 +43,23 @@ tests/
 ### Run All Tests
 
 ```bash
-./tests/run-all-tests.sh
+./tests/run-all-known-tests.sh
 ```
 
 ### Run Specific Test Categories
 
 ```bash
 # Bug fix validation only
-./tests/run-all-tests.sh bug-fix
+./tests/run-all-known-tests.sh bug-fix
 
 # Unit tests only
-./tests/run-all-tests.sh unit
+./tests/run-all-known-tests.sh unit
 
 # Integration tests only
-./tests/run-all-tests.sh integration
+./tests/run-all-known-tests.sh integration
 
 # Specific test file
-./tests/run-all-tests.sh unit/vm-common
+./tests/run-all-known-tests.sh unit/vm-common
 ```
 
 ### Run Individual Test Files
@@ -76,14 +81,14 @@ tests/
 
 ```bash
 # Verbose output
-./tests/run-all-tests.sh -v
-./tests/run-all-tests.sh --verbose
+./tests/run-all-known-tests.sh -v
+./tests/run-all-known-tests.sh --verbose
 
 # List available tests
-./tests/run-all-tests.sh --list
+./tests/run-all-known-tests.sh --list
 
 # Show help
-./tests/run-all-tests.sh --help
+./tests/run-all-known-tests.sh --help
 ```
 
 ## Test Coverage
@@ -504,7 +509,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run Tests
-        run: ./tests/run-all-tests.sh
+        run: ./tests/run-all-known-tests.sh
 ```
 
 ### Pre-commit Hook
@@ -513,7 +518,7 @@ jobs:
 #!/bin/bash
 # .git/hooks/pre-commit
 
-./tests/run-all-tests.sh unit || exit 1
+./tests/run-all-known-tests.sh unit || exit 1
 ```
 
 ## Test Coverage Matrix

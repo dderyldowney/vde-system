@@ -710,18 +710,26 @@ def step_ssh_port_available(context):
 
 @then('all running VMs should be stopped')
 def step_all_stopped(context):
-    """All VMs should be stopped - verify no containers running."""
-    running = docker_ps()
-    vde_containers = {c for c in running if c.endswith('-dev') or c in ['postgres', 'redis', 'mongo']}
-    assert len(vde_containers) == 0, f"All VMs should be stopped, but found: {vde_containers}"
+    """All test VMs should be stopped - verify only test containers, not user's actual VMs."""
+    # Only check test-created containers (labeled with vde.test=true)
+    # This allows tests to run independently of user's development environment
+    from vm_common import get_test_containers
+
+    test_containers = get_test_containers()
+    vde_containers = {c for c in test_containers if c.endswith('-dev') or c in ['postgres', 'redis', 'mongo']}
+    assert len(vde_containers) == 0, f"All test VMs should be stopped, but found: {vde_containers}"
 
 
 @then('no containers should be left running')
 def step_no_containers_running(context):
-    """No containers should be left running."""
-    running = docker_ps()
-    vde_containers = {c for c in running if c.endswith('-dev') or c in ['postgres', 'redis', 'mongo']}
-    assert len(vde_containers) == 0, "No VDE containers should be running"
+    """No test containers should be left running - verify only test containers."""
+    # Only check test-created containers (labeled with vde.test=true)
+    # This allows tests to run independently of user's development environment
+    from vm_common import get_test_containers
+
+    test_containers = get_test_containers()
+    vde_containers = {c for c in test_containers if c.endswith('-dev') or c in ['postgres', 'redis', 'mongo']}
+    assert len(vde_containers) == 0, f"No test VDE containers should be running, found: {vde_containers}"
 
 
 @then('the operation should complete without errors')

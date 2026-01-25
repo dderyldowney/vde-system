@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Run BDD tests without Docker (fast, local execution)
+# Run Docker-free tests (fast, local execution)
 #
 # This runs tests from tests/features/docker-free/ directory
 # These tests DON'T require Docker:
@@ -12,7 +12,7 @@
 # - Information discovery tests
 # - Documentation workflows
 #
-# Usage: ./tests/run-bdd-fast.sh [feature-name]
+# Usage: ./tests/run-docker-free-tests.sh [feature-name]
 #   Without arguments: runs all Docker-free features
 #   With feature-name: runs specific feature (e.g., "cache-system")
 

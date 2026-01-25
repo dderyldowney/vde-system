@@ -1,14 +1,14 @@
 #!/usr/bin/env zsh
-# VDE BDD Test Runner - LOCAL EXECUTION
-# Runs ALL BDD tests locally on your host machine
+# VDE Docker-Required Tests Runner
+# Runs Docker-required BDD tests (container lifecycle, SSH, etc.) locally on your host
 # Preserves your VM configurations while testing functionality
 #
 # Usage:
-#   ./tests/run-local-bdd.sh                    # Run all tests
-#   ./tests/run-local-bdd.sh vm-lifecycle         # Run specific feature
-#   ./tests/run-local-bdd.sh --status            # Check test setup
-#   ./tests/run-local-bdd.sh --json              # Run with JSON output
-#   ./tests/run-local-bdd.sh --json -o FILE      # JSON output to file
+#   ./tests/run-docker-required-tests.sh        # Run all Docker-required tests
+#   ./tests/run-docker-required-tests.sh vm-lifecycle  # Run specific feature
+#   ./tests/run-docker-required-tests.sh --status       # Check test setup
+#   ./tests/run-docker-required-tests.sh --json         # Run with JSON output
+#   ./tests/run-docker-required-tests.sh --json -o FILE # JSON output to file
 #
 # IMPORTANT: This script tests on your LOCAL Docker Desktop
 # Your VM configurations will NOT be deleted or modified.

@@ -219,20 +219,33 @@ test-docker:
 # BDD Testing (feature files in container)
 # =============================================================================
 
+# Run docker-free tests (fast, parser logic only)
+test-docker-free:
+	@echo "Running Docker-free tests..."
+	@chmod +x tests/run-docker-free-tests.sh
+	@./tests/run-docker-free-tests.sh
+
+# Run docker-required tests (containers, SSH, etc.)
+test-docker-required:
+	@echo "Running Docker-required tests..."
+	@chmod +x tests/run-docker-required-tests.sh
+	@./tests/run-docker-required-tests.sh
+
+# Run all BDD tests (docker-free + docker-required)
 test-bdd:
 	@echo "Running BDD tests in dedicated container..."
-	@chmod +x tests/run-bdd-tests.sh
-	@./tests/run-bdd-tests.sh
+	@chmod +x tests/test-bdd-in-container.sh
+	@./tests/test-bdd-in-container.sh
 
 test-bdd-no-build:
 	@echo "Running BDD tests (no container rebuild)..."
-	@chmod +x tests/run-bdd-tests.sh
-	@./tests/run-bdd-tests.sh --no-build
+	@chmod +x tests/test-bdd-in-container.sh
+	@./tests/test-bdd-in-container.sh --no-build
 
 bdd-shell:
 	@echo "Dropping into BDD test container shell..."
-	@chmod +x tests/run-bdd-tests.sh
-	@./tests/run-bdd-tests.sh --shell
+	@chmod +x tests/test-bdd-in-container.sh
+	@./tests/test-bdd-in-container.sh --shell
 
 # =============================================================================
 # Development Setup

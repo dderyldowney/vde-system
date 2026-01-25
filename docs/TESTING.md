@@ -307,3 +307,46 @@ When adding new features:
 2. **Add integration tests** for new user-facing features
 3. **Update this document** if test structure changes
 4. **Run `make test`** before committing to ensure all tests pass
+
+---
+
+## BDD Tests (Behavior Driven Development)
+
+VDE also uses BDD tests for end-to-end scenario testing. These tests are located in `tests/features/`.
+
+### Test Containers and Labels
+
+BDD tests that create Docker containers use **test-specific labels** for isolation:
+
+| Label | Purpose | Usage |
+|-------|---------|-------|
+| `vde.test=true` | Marks test-created containers | Distinguishes test containers from user's development VMs |
+
+**Why Test Labels Matter:**
+- Tests can run without affecting user's actual development VMs
+- Tests can verify only test-created containers are cleaned up
+- User can have `python-dev`, `postgres-dev` etc. running and tests will still pass
+- Tests are deterministic and don't fail due to unrelated running containers
+
+**Label Implementation:**
+```bash
+# Test containers are labeled when created:
+docker run --label vde.test=true ...
+
+# To find only test containers:
+docker ps --filter "label=vde.test=true"
+
+# To clean up only test containers:
+docker ps --filter "label=vde.test=true" -q | xargs docker rm -f
+```
+
+**Test Cleanup:**
+- After each BDD scenario, the `after_scenario` hook removes all test-labeled containers
+- See `tests/features/environment.py:after_scenario()` for cleanup implementation
+- Helper function `vm_common.get_test_containers()` retrieves only test containers
+
+**For Developers Adding New Tests:**
+When writing BDD scenarios that create containers:
+1. Ensure containers are created with the `vde.test=true` label
+2. Use `vm_common.get_test_containers()` to verify only test containers
+3. Never assert on `docker ps` directly - it will include user's VMs
