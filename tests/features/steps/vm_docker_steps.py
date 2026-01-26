@@ -1,7 +1,11 @@
 """
 BDD Step definitions for Docker Operations scenarios.
-These steps handle docker-compose operations, container management, and Docker networking.
+These steps handle docker-compose operations, container management, and resource monitoring.
 All steps use real system verification instead of context flags.
+
+Note: Build-related steps moved to vm_docker_build_steps.py
+Note: Networking-related steps moved to vm_docker_network_steps.py
+Note: Service VM-related steps moved to vm_docker_service_steps.py
 """
 
 import subprocess
@@ -80,18 +84,6 @@ def step_all_ports_in_use(context):
         context.all_ports_in_use = False
 
 
-@given('vde-network does not exist')
-def step_no_network(context):
-    """Network does not exist - verify network missing."""
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
-        capture_output=True,
-        text=True,
-        timeout=10,
-    )
-    context.network_missing = "vde" not in result.stdout.lower()
-
-
 @given('registry is not accessible')
 def step_registry_not_accessible(context):
     """Registry not accessible - verify Docker registry connectivity."""
@@ -157,15 +149,6 @@ def step_start_first_vm(context):
     context.started_vms.append('python')
 
 
-@given('I create a PostgreSQL VM')
-def step_create_postgresql_vm(context):
-    """Create PostgreSQL VM using vde command."""
-    result = run_vde_command("create postgres", timeout=120)
-    context.last_command = "vde create postgres"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
 @given('I start any VM')
 def step_start_any_vm(context):
     """Start any VM using vde command."""
@@ -185,23 +168,6 @@ def step_vde_creates_vm(context):
     context.last_command = "vde create python"
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
-
-
-@given('I rebuild a language VM')
-def step_rebuild_language_vm(context):
-    """Rebuild language VM using vde command."""
-    result = run_vde_command("start python --rebuild", timeout=180)
-    context.last_command = "vde start python --rebuild"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@given('I have dependent services')
-def step_dependent_services(context):
-    """Have dependent services - check if postgres and redis exist."""
-    postgres_exists = compose_file_exists("postgres")
-    redis_exists = compose_file_exists("redis")
-    context.has_dependent_services = postgres_exists or redis_exists
 
 
 # =============================================================================
@@ -234,26 +200,6 @@ def step_restart_vm(context, vm):
     """Restart a VM using vde restart command."""
     result = run_vde_command(f"vde restart {vm}", timeout=180)
     context.last_command = f"vde restart {vm}"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@when('I start VM "{vm}" with --rebuild')
-def step_start_rebuild(context, vm):
-    """Start VM with rebuild using vde start --rebuild command."""
-    result = run_vde_command(f"vde start {vm} --rebuild", timeout=180)
-    context.last_command = f"vde start {vm} --rebuild"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-
-
-@when('I start VM "{vm}" with --rebuild and --no-cache')
-def step_start_rebuild_no_cache(context, vm):
-    """Start VM with rebuild and no cache using vde start command."""
-    result = run_vde_command(f"vde start {vm} --rebuild --no-cache", timeout=180)
-    context.last_command = f"vde start {vm} --rebuild --no-cache"
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
@@ -373,38 +319,10 @@ def step_request_start_python_dev(context):
     context.last_exit_code = result.returncode
 
 
-@when('it starts')
-def step_postgresql_starts(context):
-    """PostgreSQL starts using vde start command."""
-    result = run_vde_command("start postgres", timeout=120)
-    context.last_command = "vde start postgres"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@when('I stop and restart PostgreSQL')
-def step_stop_restart_postgresql(context):
-    """Stop and restart PostgreSQL using vde commands."""
-    result_stop = run_vde_command("stop postgres", timeout=60)
-    result_start = run_vde_command("start postgres", timeout=120)
-    context.last_command = "vde start postgres"
-    context.last_output = result_start.stdout
-    context.last_exit_code = result_start.returncode
-
-
 @when('I check resource usage')
 def step_check_resource_usage(context):
     """Check resource usage."""
     result = run_vde_command("docker stats --no-stream", timeout=30)
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
-@when('I start them together')
-def step_start_together(context):
-    """Start dependent services together using vde start command."""
-    result = run_vde_command("start postgres redis", timeout=180)
-    context.last_command = "vde start postgres redis"
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
 
@@ -417,39 +335,188 @@ def step_one_vm_crashes(context):
     context.one_vm_crashed = result.returncode == 0
 
 
-@when('I rebuild VMs with --rebuild')
-def step_rebuild_vms(context):
-    """Rebuild VMs with --rebuild flag using vde start command."""
-    result = run_vde_command("start python --rebuild", timeout=180)
-    context.last_command = "vde start python --rebuild"
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
-
-
 @when('each VM starts')
 def step_each_vm_starts(context):
     """Each VM starts - verify multiple containers starting."""
     context.each_vm_starts = True
 
 
+@when('I check if "golang" exists')
+def step_check_golang_exists(context):
+    """Check if golang VM type exists."""
+    vm_types = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    if vm_types.exists():
+        content = vm_types.read_text()
+        context.golang_exists = 'go' in content.lower() or 'golang' in content.lower()
+
+
+@when('I check the UID/GID configuration')
+def step_check_uid_gid(context):
+    """Check UID/GID configuration."""
+    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    if compose_path.exists():
+        content = compose_path.read_text()
+        context.uid_configured = 'uid' in content.lower() or 'user' in content.lower()
+
+
+@when('I create .env.local or docker-compose.override.yml')
+def step_create_env_override(context):
+    """Context: Create local override files."""
+    # Verify override files can be created (check directory exists)
+    configs = VDE_ROOT / "configs" / "docker"
+    context.override_created = configs.exists()
+
+
+@when('I create env-files/myapp.env')
+def step_create_env_file(context):
+    """Context: Create environment file."""
+    # Verify env-files directory exists for creating env files
+    env_dir = VDE_ROOT / "env-files"
+    context.env_file_created = env_dir.exists() or env_dir.parent.exists()
+
+
+@when('I modify base-dev.Dockerfile')
+def step_modify_base_dockerfile(context):
+    """Context: Modify base Dockerfile."""
+    # Verify base Dockerfile exists for modification
+    base_dockerfile = VDE_ROOT / "docker" / "base-dev.Dockerfile"
+    context.base_dockerfile_modified = base_dockerfile.exists()
+
+
+@when('I modify DNS settings in docker-compose.yml')
+def step_modify_dns(context):
+    """Context: Modify DNS settings."""
+    # Verify docker-compose file exists for DNS modification
+    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    context.dns_modified = compose_path.exists()
+
+
+@when('I modify logging configuration in docker-compose.yml')
+def step_modify_logging(context):
+    """Context: Modify logging configuration."""
+    # Verify docker-compose file exists for logging modification
+    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    context.logging_modified = compose_path.exists()
+
+
+@when('I modify the UID and GID in docker-compose.yml')
+def step_modify_uid_gid(context):
+    """Context: Modify UID/GID settings."""
+    # Verify docker-compose file exists for UID/GID modification
+    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    context.uid_gid_modified = compose_path.exists()
+
+
+@when('I modify the volumes section in docker-compose.yml')
+def step_modify_volumes(context):
+    """Context: Modify volumes section."""
+    # Verify docker-compose file exists for volumes modification
+    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    context.volumes_modified = compose_path.exists()
+
+
+@when('I modify VDE_LANG_PORT_START and VDE_LANG_PORT_END')
+def step_modify_port_range(context):
+    """Context: Modify port range settings."""
+    # Verify env configuration exists for port range modification
+    env_file = VDE_ROOT / ".env" or VDE_ROOT / "scripts" / "data" / "vde-env.conf"
+    context.port_range_modified = env_file.exists() if isinstance(env_file, Path) else VDE_ROOT.exists()
+
+
+@when('I add VM type with --display "Go Language"')
+def step_add_vm_display(context):
+    """Add VM type with display name."""
+    result = run_vde_command(['add-vm-type', 'go', '--display', 'Go Language'])
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
+@when('I add VM type with aliases "js,node,nodejs"')
+def step_add_vm_aliases(context):
+    """Add VM type with aliases."""
+    result = run_vde_command(['add-vm-type', 'js', '--aliases', 'js,node,nodejs'])
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
+@when('I add a VM type with custom install command')
+def step_add_vm_custom_install(context):
+    """Add VM type with custom install command."""
+    result = run_vde_command(['add-vm-type', 'custom', '--install', 'apt-get install -y custom-tool'])
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
+@when('I add healthcheck to docker-compose.yml')
+def step_add_healthcheck(context):
+    """Context: Add healthcheck to docker-compose.yml."""
+    # Verify docker-compose file exists for healthcheck modification
+    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    context.healthcheck_added = compose_path.exists()
+
+
+@when('I add mem_limit to docker-compose.yml')
+def step_add_mem_limit(context):
+    """Context: Add memory limit to docker-compose.yml."""
+    # Verify docker-compose file exists for mem_limit modification
+    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    context.mem_limit_added = compose_path.exists()
+
+
+@when('I add the SSH config for python-dev')
+def step_add_ssh_config(context):
+    """Context: Add SSH config for python-dev."""
+    # Verify SSH config directory exists
+    ssh_vde_dir = Path.home() / ".ssh" / "vde"
+    context.ssh_config_added = ssh_vde_dir.exists()
+
+
+@when('I commit docker-compose.yml and env-files to git')
+def step_commit_to_git(context):
+    """Context: Commit files to git."""
+    # Verify git is available for committing
+    result = subprocess.run(['git', '--version'], capture_output=True, text=True)
+    context.committed_to_git = result.returncode == 0
+
+
+@when('I create custom networks in docker-compose.yml')
+def step_create_custom_networks(context):
+    """Context: Create custom networks."""
+    # Verify Docker networks can be created
+    result = subprocess.run(['docker', 'network', 'ls'], capture_output=True, text=True)
+    context.custom_networks_created = result.returncode == 0
+
+
+@when('I set restart: always in docker-compose.yml')
+def step_set_restart_always(context):
+    """Context: Set restart policy to always."""
+    # Verify docker-compose file exists for restart policy modification
+    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    context.restart_always_set = compose_path.exists()
+
+
+@when('I add it to .gitignore')
+def step_add_gitignore(context):
+    """Context: Add file to .gitignore."""
+    # Verify .gitignore exists in VDE_ROOT
+    gitignore = VDE_ROOT / ".gitignore"
+    context.added_to_gitignore = gitignore.exists()
+
+
+@when('I remove my custom configurations')
+def step_remove_custom_configs(context):
+    """Context: Remove custom configurations."""
+    # Verify configs directory exists for removing configurations
+    configs = VDE_ROOT / "configs" / "docker"
+    context.custom_configs_removed = configs.exists()
+
+
 # =============================================================================
 # THEN steps - Verify Docker operation outcomes
 # =============================================================================
-
-@then('docker-compose build should be executed')
-def step_docker_build_executed(context):
-    """Docker build should be executed - verify build output."""
-    # Verify by checking for the image
-    vm_name = getattr(context, 'current_vm', 'python')
-    image_name = f"dev-{vm_name}"
-    result = subprocess.run(
-        ["docker", "images", "--format", "{{.Repository}}:{{.Tag}}", image_name],
-        capture_output=True,
-        text=True,
-        timeout=10
-    )
-    assert image_name in result.stdout, f"Docker image {image_name} should exist after build"
-
 
 @then('docker-compose up -d should be executed')
 def step_docker_up_executed(context):
@@ -488,27 +555,6 @@ def step_new_container_id(context):
     assert container_exists(vm_name), f"Container {vm_name} should be running with new ID"
 
 
-@then('docker-compose up --build should be executed')
-def step_docker_up_build(context):
-    """Docker up with build should be executed - verify rebuild happened."""
-    # Verify by checking the last command or output for rebuild indicators
-    last_command = getattr(context, 'last_command', '')
-    last_output = getattr(context, 'last_output', '').lower()
-    has_rebuild = '--rebuild' in last_command or '--build' in last_command
-    has_build_output = 'building' in last_output or 'rebuilt' in last_output or 'build' in last_output
-    assert has_rebuild or has_build_output, "Rebuild command should be executed or build should appear in output"
-
-
-@then('docker-compose up --build --no-cache should be executed')
-def step_docker_up_build_no_cache(context):
-    """Docker up with build and no cache."""
-    last_command = getattr(context, 'last_command', '')
-    last_output = getattr(context, 'last_output', '').lower()
-    has_no_cache = '--no-cache' in last_command
-    has_no_cache_output = 'no-cache' in last_output or 'without cache' in last_output
-    assert has_no_cache or has_no_cache_output, "No-cache flag should be used in command or indicated in output"
-
-
 @then('VM should not be created')
 def step_vm_not_created(context):
     """VM should not be created - verify compose file doesn't exist."""
@@ -524,19 +570,6 @@ def step_fail_gracefully(context):
     """Command should fail gracefully - verify exit code indicates error."""
     exit_code = getattr(context, 'last_exit_code', 0)
     assert exit_code != 0, "Command should fail with non-zero exit code"
-
-
-@then('network should be created automatically')
-def step_network_auto_created(context):
-    """Network should be auto-created - verify vde-network exists."""
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
-        capture_output=True,
-        text=True,
-        timeout=10,
-    )
-    assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "vde" in result.stdout.lower(), "VDE network should be auto-created"
 
 
 @then('container should not start')
@@ -789,26 +822,6 @@ def step_workspace_still_mounted(context):
     assert projects_dir.exists(), "Projects directory should persist"
 
 
-@then('both Python and PostgreSQL VMs should start')
-def step_both_start(context):
-    """Both Python and PostgreSQL should start."""
-    assert container_exists('python'), "Python VM should be running"
-    assert container_exists('postgres'), "PostgreSQL VM should be running"
-
-
-@then('they should be on the same Docker network')
-def step_they_same_network(context):
-    """VMs should be on same Docker network - verify vde-network exists."""
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
-        capture_output=True,
-        text=True,
-        timeout=10,
-    )
-    assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "vde" in result.stdout.lower(), "VDE network should exist"
-
-
 @then('the Go VM configuration should be created')
 def step_go_config_created(context):
     """Go VM config should be created."""
@@ -821,152 +834,6 @@ def step_vm_ready_start(context):
     """VM should be ready to start - verify compose file exists."""
     vm_name = getattr(context, 'current_vm', 'python')
     assert compose_file_exists(vm_name), f"VM {vm_name} should be ready to start"
-
-
-@then('VDE should create the dev-net network')
-def step_dev_net_created(context):
-    """VDE creates dev-net network."""
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde-network", "--format", "{{.Name}}"],
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    context.dev_net_created = 'vde-network' in result.stdout
-
-
-@then('all VMs should join this network')
-def step_all_vms_join_network(context):
-    """All VMs join network - verify VMs are on vde-network."""
-    result = subprocess.run(
-        ["docker", "network", "inspect", "vde-network", "--format", "{{.Containers}}"],
-        capture_output=True,
-        text=True,
-        timeout=10,
-    )
-    # Verify vde-network exists and has containers or is properly configured
-    assert result.returncode == 0, "vde-network should exist"
-    # Even if empty, the network should be accessible
-    assert result.stdout is not None, "vde-network should be inspectable"
-
-
-@then('VMs should be able to communicate by name')
-def step_vms_communicate_by_name(context):
-    """VMs communicate by name - verify DNS resolution works."""
-    # This would require actual network testing
-    # For now, verify network exists
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde"],
-        capture_output=True,
-        text=True,
-        timeout=10,
-    )
-    assert result.returncode == 0, "VDE network should exist for VM communication"
-
-
-@then('each should get a unique SSH port')
-def step_unique_ssh_port(context):
-    """Each gets unique SSH port - verify ports are unique."""
-    # Check ports for running containers
-    running = docker_ps()
-    ports = []
-    for container in running:
-        result = subprocess.run(
-            ["docker", "port", container, "22"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            # Parse port from "0.0.0.0:2201" format
-            if ':' in result.stdout:
-                port = result.stdout.split(':')[-1]
-                if port.isdigit():
-                    ports.append(port)
-    # Verify all unique
-    assert len(ports) == len(set(ports)), f"Each VM should have unique SSH port, got: {ports}"
-
-
-@then('ports should be auto-allocated from available range')
-def step_ports_auto_allocated(context):
-    """Ports auto-allocated - verify ports are in valid range."""
-    # Check that ports are in expected range (2200-2299 for VDE)
-    running = docker_ps()
-    for container in running:
-        result = subprocess.run(
-            ["docker", "port", container, "22"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            if ':' in result.stdout:
-                port = result.stdout.split(':')[-1]
-                if port.isdigit():
-                    port_num = int(port)
-                    assert 2200 <= port_num <= 2299, \
-                        f"Port {port_num} should be in VDE range 2200-2299"
-
-
-@then('no two VMs should have the same SSH port')
-def step_no_duplicate_ports(context):
-    """No duplicate SSH ports."""
-    running = docker_ps()
-    ports = []
-    for container in running:
-        result = subprocess.run(
-            ["docker", "port", container, "22"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            if ':' in result.stdout:
-                port = result.stdout.split(':')[-1]
-                ports.append(port)
-    # Verify unique
-    assert len(ports) == len(set(ports)), f"Ports should be unique, got: {ports}"
-
-
-@then('the PostgreSQL port should be mapped')
-def step_postgresql_port_mapped(context):
-    """PostgreSQL port mapped."""
-    port = get_port_from_compose('postgres')
-    assert port is not None, "PostgreSQL should have port configured"
-
-
-@then('I can connect to PostgreSQL from the host')
-def step_connect_postgresql_host(context):
-    """Connect to PostgreSQL from host - verify port is accessible."""
-    port = get_port_from_compose('postgres')
-    assert port is not None, "PostgreSQL port should be mapped"
-    # Try to connect to the port
-    try:
-        import socket
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(2)
-        result = sock.connect_ex(('127.0.0.1', int(port)))
-        sock.close()
-        # Connection succeeds or is in progress (0 or 113)
-        assert result in [0, 113, 111], f"Should be able to connect to PostgreSQL on port {port}"
-    except (OSError, ValueError):
-        # If socket module fails, just verify port exists
-        assert port is not None
-
-
-@then('other VMs can connect using the service name')
-def step_connect_service_name(context):
-    """Connect using service name - verify Docker DNS works."""
-    # Docker DNS allows containers to resolve each other by name
-    # This requires actual network testing, so we verify the network exists
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde"],
-        capture_output=True,
-        text=True,
-        timeout=10,
-    )
-    assert result.returncode == 0 and 'vde' in result.stdout.lower(), \
-        "VDE network should exist for service name resolution"
 
 
 @then('files I create are visible on the host')
@@ -1228,31 +1095,6 @@ def step_each_own_config(context):
             f"Each VM should have unique config, found {unique_configs} unique for {len(config_files)} VMs"
 
 
-@then('all should be on the same network')
-def step_same_network_alt(context):
-    """All VMs should be on same network."""
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
-        capture_output=True,
-        text=True,
-        timeout=10,
-    )
-    assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "vde" in result.stdout.lower(), "VMs should be on vde network"
-
-
-@then('each should have its own SSH port')
-def step_each_own_ssh_port(context):
-    """Each VM should have its own SSH port - verify unique ports."""
-    vms = getattr(context, 'created_vms', getattr(context, 'multiple_vms_start', ['python', 'go', 'postgres']))
-    ports = []
-    for vm_name in vms:
-        port = get_port_from_compose(vm_name)
-        assert port is not None, f"VM {vm_name} should have SSH port"
-        ports.append(port)
-    assert len(ports) == len(set(ports)), f"Each VM should have unique SSH port, got: {ports}"
-
-
 @then('the new image should reflect my changes')
 def step_new_image_reflect_changes(context):
     """The new image should reflect my changes - verify image was rebuilt."""
@@ -1283,7 +1125,7 @@ def step_ssh_still_works(context):
 
 
 # =============================================================================
-# Additional Docker and verification undefined step implementations
+# Additional VM-specific verification steps
 # =============================================================================
 
 @then('the Flutter VM should start for mobile development')
@@ -1324,20 +1166,6 @@ def step_nginx_gateway(context):
         context.nginx_is_gateway = 'gateway' in content.lower() or 'nginx' in content.lower()
 
 
-@then('all service VMs should start')
-def step_all_service_start(context):
-    """Verify all service VMs start."""
-    result = run_vde_command(['start-virtual', 'postgres', 'redis'])
-    assert result.returncode == 0, "Service VMs should start"
-
-
-@then('the operation should complete faster than sequential starts')
-def step_faster_than_sequential(context):
-    """Verify parallel start completes - verify operation succeeded."""
-    # Parallel operations should complete without timing out
-    assert context.last_exit_code == 0, "Parallel operations should complete successfully"
-
-
 @then('I can connect using Remote-SSH')
 def step_connect_remote_ssh(context):
     """Verify can connect using Remote-SSH."""
@@ -1363,22 +1191,6 @@ def step_ssh_rust_dev_port(context):
                f"SSH port should be allocated. Got: {result.stdout}"
 
 
-@then('the build should use multi-stage Dockerfile')
-def step_multistage_dockerfile(context):
-    """Verify build uses multi-stage Dockerfile."""
-    compose_path = VDE_ROOT / "configs" / "docker" / "go" / "docker-compose.yml"
-    if compose_path.exists():
-        content = compose_path.read_text()
-        context.uses_multistage = 'stage' in content.lower() or 'build' in content.lower()
-
-
-@then('final images should be smaller')
-def step_final_images_smaller(context):
-    """Verify final images are smaller (multi-stage benefit)."""
-    result = subprocess.run(['docker', 'images'], capture_output=True, text=True)
-    assert result.returncode == 0, "Should be able to list images"
-
-
 @then('the output should show my host\'s containers')
 def step_output_show_host_containers(context):
     """Verify output shows host containers."""
@@ -1396,53 +1208,11 @@ def step_output_realtime(context):
     assert context.last_exit_code == 0, "Command should complete to show progress"
 
 
-@then('the PostgreSQL VM should be completely rebuilt')
-def step_postgres_completely_rebuilt(context):
-    """Verify PostgreSQL VM is completely rebuilt."""
-    assert container_exists("postgres") or compose_file_exists("postgres"), \
-           "PostgreSQL VM should exist after rebuild"
-
-
 @then('the projects/ruby directory should be preserved')
 def step_ruby_directory_preserved(context):
     """Verify projects directory is preserved."""
     projects_dir = VDE_ROOT / "projects"
     context.projects_preserved = projects_dir.exists()
-
-
-@then('the Python container should be rebuilt from scratch')
-def step_python_rebuilt_scratch(context):
-    """Verify Python container is rebuilt from scratch."""
-    assert container_exists("python"), "Python container should exist after rebuild"
-
-
-@then('the rebuild should use the latest base images')
-def step_rebuild_uses_latest(context):
-    """Verify rebuild uses latest base images - check command included --rebuild."""
-    # Rebuild should pull latest images
-    last_command = getattr(context, 'last_command', '')
-    last_output = getattr(context, 'last_output', '').lower()
-    has_rebuild = '--rebuild' in last_command or '--no-cache' in last_command
-    has_rebuild_output = 'building' in last_output or 'rebuilt' in last_output or 'pull' in last_output
-    assert has_rebuild or has_rebuild_output, "Rebuild should use latest images"
-
-
-@when('I check if "golang" exists')
-def step_check_golang_exists(context):
-    """Check if golang VM type exists."""
-    vm_types = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    if vm_types.exists():
-        content = vm_types.read_text()
-        context.golang_exists = 'go' in content.lower() or 'golang' in content.lower()
-
-
-@when('I check the UID/GID configuration')
-def step_check_uid_gid(context):
-    """Check UID/GID configuration."""
-    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
-    if compose_path.exists():
-        content = compose_path.read_text()
-        context.uid_configured = 'uid' in content.lower() or 'user' in content.lower()
 
 
 @then('"apt-get install -y python3 python3-pip my-package" should run')
@@ -1473,22 +1243,6 @@ def step_works_on_my_machine_reduced(context):
     # Verify docker-compose config is valid - ensures consistency
     assert getattr(context, 'compose_valid', False), \
         "Docker-compose should be valid for consistent environments"
-
-
-@then('build cache should be used when possible')
-def step_build_cache_used(context):
-    """Verify build cache is used when possible."""
-    # Docker build cache is available when docker daemon is running
-    result = subprocess.run(['docker', 'info'], capture_output=True, text=True)
-    assert result.returncode == 0, "Docker daemon must be running for build cache"
-
-
-@then('I should see the build output')
-def step_see_build_output(context):
-    """Verify build output is visible."""
-    if hasattr(context, 'last_output'):
-        assert len(context.last_output) > 0 or context.last_exit_code == 0, \
-               "Should see build output"
 
 
 @then('the VM should be allocated a different available port')
@@ -1558,20 +1312,6 @@ def step_all_lang_vms_listed_aliases(context):
     assert result.returncode == 0, "Should be able to list VMs with aliases"
 
 
-@then('all service VMs should be listed')
-def step_all_service_vms_listed(context):
-    """Verify all service VMs are listed."""
-    result = run_vde_command(['list-vms'])
-    assert result.returncode == 0, "Should be able to list service VMs"
-
-
-@then('all service VMs should be listed with ports')
-def step_all_service_vms_listed_ports(context):
-    """Verify all service VMs listed with ports."""
-    result = run_vde_command(['list-vms'])
-    assert result.returncode == 0, "Should be able to list service VMs with ports"
-
-
 @then('all ports should be mapped in docker-compose.yml')
 def step_all_ports_mapped(context):
     """Verify all ports are mapped in docker-compose.yml."""
@@ -1580,70 +1320,6 @@ def step_all_ports_mapped(context):
     if compose_path.exists():
         content = compose_path.read_text()
         context.ports_mapped = 'ports:' in content or '22:' in content
-
-
-@then('service VMs should continue running')
-def step_services_continue_running(context):
-    """Verify service VMs continue running."""
-    running = docker_ps()
-    context.services_running = len(running) > 0
-
-
-@then('service VMs should not be listed')
-def step_services_not_listed(context):
-    """Verify service VMs are not listed in some operations."""
-    # Verify the list-vms output
-    if hasattr(context, 'last_output'):
-        output = context.last_output.lower()
-        # Check that output doesn't include service VMs in language-only mode
-        # This depends on the command used - we verify command ran successfully
-        assert context.last_exit_code == 0, "List command should succeed"
-
-
-@then('service VMs should provide infrastructure services')
-def step_services_provide_infrastructure(context):
-    """Verify service VMs provide infrastructure."""
-    configs_dir = VDE_ROOT / "configs" / "docker"
-    if configs_dir.exists():
-        services = ['postgres', 'redis', 'nginx', 'mysql']
-        context.has_services = any((configs_dir / svc).exists() for svc in services)
-
-
-@then('specific VMs can communicate')
-def step_specific_vms_communicate(context):
-    """Verify specific VMs can communicate."""
-    result = subprocess.run(['docker', 'network', 'ls'], capture_output=True, text=True)
-    assert result.returncode == 0, "Docker network should exist for VM communication"
-
-
-@then('each port should be accessible from host')
-def step_port_accessible_host(context):
-    """Verify each port is accessible from host."""
-    running = docker_ps()
-    if running:
-        vm = list(running)[0]
-        result = subprocess.run(['docker', 'port', vm], capture_output=True, text=True)
-        if result.returncode == 0:
-            assert '22' in result.stdout or '220' in result.stdout, \
-                   f"Port should be accessible from host. Got: {result.stdout}"
-
-
-@then('each port should be accessible from other VMs')
-def step_port_accessible_vms(context):
-    """Verify each port is accessible from other VMs."""
-    result = subprocess.run(['docker', 'network', 'ls', '--filter', 'name=vde'],
-                          capture_output=True, text=True)
-    assert result.returncode == 0, "Docker network should enable inter-VM access"
-
-
-@then('each VM should be mapped to its port')
-def step_each_vm_mapped_port(context):
-    """Verify each VM is mapped to its port."""
-    running = docker_ps()
-    if running:
-        for vm in list(running)[:3]:  # Check first 3 VMs
-            result = subprocess.run(['docker', 'port', vm], capture_output=True, text=True)
-            # Command succeeds if port mapping exists
 
 
 @then('each VM can access shared project directories')
@@ -1732,181 +1408,3 @@ def step_container_user_match(context):
         # Verify the inspect command succeeded
         assert result.returncode == 0, f"Should be able to inspect user for {vm}"
         context.user_matched = True
-
-
-@then('databases and caches should remain available')
-def step_databases_caches_available(context):
-    """Verify databases and caches remain available."""
-    running = docker_ps()
-    available = [vm for vm in running if any(db in vm for db in ['postgres', 'redis', 'mongo', 'mysql'])]
-    context.databases_available = len(available) > 0
-
-
-@then('I can connect to MySQL from other VMs')
-def step_can_connect_mysql(context):
-    """Verify can connect to MySQL from other VMs."""
-    result = subprocess.run(['docker', 'network', 'ls'], capture_output=True, text=True)
-    assert result.returncode == 0, "Network should exist for MySQL access"
-
-
-@then('port 3306 should be mapped to host')
-def step_port_3306_mapped(context):
-    """Verify MySQL port 3306 is mapped to host."""
-    result = subprocess.run(['docker', 'port', 'mysql-dev'], capture_output=True, text=True)
-    if result.returncode == 0:
-        assert '3306' in result.stdout, "MySQL port 3306 should be mapped"
-
-
-@when('I create .env.local or docker-compose.override.yml')
-def step_create_env_override(context):
-    """Context: Create local override files."""
-    # Verify override files can be created (check directory exists)
-    configs = VDE_ROOT / "configs" / "docker"
-    context.override_created = configs.exists()
-
-
-@when('I create env-files/myapp.env')
-def step_create_env_file(context):
-    """Context: Create environment file."""
-    # Verify env-files directory exists for creating env files
-    env_dir = VDE_ROOT / "env-files"
-    context.env_file_created = env_dir.exists() or env_dir.parent.exists()
-
-
-@when('I modify base-dev.Dockerfile')
-def step_modify_base_dockerfile(context):
-    """Context: Modify base Dockerfile."""
-    # Verify base Dockerfile exists for modification
-    base_dockerfile = VDE_ROOT / "docker" / "base-dev.Dockerfile"
-    context.base_dockerfile_modified = base_dockerfile.exists()
-
-
-@when('I modify DNS settings in docker-compose.yml')
-def step_modify_dns(context):
-    """Context: Modify DNS settings."""
-    # Verify docker-compose file exists for DNS modification
-    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
-    context.dns_modified = compose_path.exists()
-
-
-@when('I modify logging configuration in docker-compose.yml')
-def step_modify_logging(context):
-    """Context: Modify logging configuration."""
-    # Verify docker-compose file exists for logging modification
-    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
-    context.logging_modified = compose_path.exists()
-
-
-@when('I modify the UID and GID in docker-compose.yml')
-def step_modify_uid_gid(context):
-    """Context: Modify UID/GID settings."""
-    # Verify docker-compose file exists for UID/GID modification
-    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
-    context.uid_gid_modified = compose_path.exists()
-
-
-@when('I modify the volumes section in docker-compose.yml')
-def step_modify_volumes(context):
-    """Context: Modify volumes section."""
-    # Verify docker-compose file exists for volumes modification
-    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
-    context.volumes_modified = compose_path.exists()
-
-
-@when('I modify VDE_LANG_PORT_START and VDE_LANG_PORT_END')
-def step_modify_port_range(context):
-    """Context: Modify port range settings."""
-    # Verify env configuration exists for port range modification
-    env_file = VDE_ROOT / ".env" or VDE_ROOT / "scripts" / "data" / "vde-env.conf"
-    context.port_range_modified = env_file.exists() if isinstance(env_file, Path) else VDE_ROOT.exists()
-
-
-@when('I add VM type with --display "Go Language"')
-def step_add_vm_display(context):
-    """Add VM type with display name."""
-    result = run_vde_command(['add-vm-type', 'go', '--display', 'Go Language'])
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
-@when('I add VM type with aliases "js,node,nodejs"')
-def step_add_vm_aliases(context):
-    """Add VM type with aliases."""
-    result = run_vde_command(['add-vm-type', 'js', '--aliases', 'js,node,nodejs'])
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
-@when('I add a VM type with custom install command')
-def step_add_vm_custom_install(context):
-    """Add VM type with custom install command."""
-    result = run_vde_command(['add-vm-type', 'custom', '--install', 'apt-get install -y custom-tool'])
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
-@when('I add healthcheck to docker-compose.yml')
-def step_add_healthcheck(context):
-    """Context: Add healthcheck to docker-compose.yml."""
-    # Verify docker-compose file exists for healthcheck modification
-    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
-    context.healthcheck_added = compose_path.exists()
-
-
-@when('I add mem_limit to docker-compose.yml')
-def step_add_mem_limit(context):
-    """Context: Add memory limit to docker-compose.yml."""
-    # Verify docker-compose file exists for mem_limit modification
-    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
-    context.mem_limit_added = compose_path.exists()
-
-
-@when('I add the SSH config for python-dev')
-def step_add_ssh_config(context):
-    """Context: Add SSH config for python-dev."""
-    # Verify SSH config directory exists
-    ssh_vde_dir = Path.home() / ".ssh" / "vde"
-    context.ssh_config_added = ssh_vde_dir.exists()
-
-
-@when('I commit docker-compose.yml and env-files to git')
-def step_commit_to_git(context):
-    """Context: Commit files to git."""
-    # Verify git is available for committing
-    result = subprocess.run(['git', '--version'], capture_output=True, text=True)
-    context.committed_to_git = result.returncode == 0
-
-
-@when('I create custom networks in docker-compose.yml')
-def step_create_custom_networks(context):
-    """Context: Create custom networks."""
-    # Verify Docker networks can be created
-    result = subprocess.run(['docker', 'network', 'ls'], capture_output=True, text=True)
-    context.custom_networks_created = result.returncode == 0
-
-
-@when('I set restart: always in docker-compose.yml')
-def step_set_restart_always(context):
-    """Context: Set restart policy to always."""
-    # Verify docker-compose file exists for restart policy modification
-    compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
-    context.restart_always_set = compose_path.exists()
-
-
-@when('I add it to .gitignore')
-def step_add_gitignore(context):
-    """Context: Add file to .gitignore."""
-    # Verify .gitignore exists in VDE_ROOT
-    gitignore = VDE_ROOT / ".gitignore"
-    context.added_to_gitignore = gitignore.exists()
-
-
-@when('I remove my custom configurations')
-def step_remove_custom_configs(context):
-    """Context: Remove custom configurations."""
-    # Verify configs directory exists for removing configurations
-    configs = VDE_ROOT / "configs" / "docker"
-    context.custom_configs_removed = configs.exists()
