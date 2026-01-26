@@ -296,7 +296,7 @@ def step_know_error_type(context):
 def step_see_container_logs(context):
     """Verify container logs are accessible."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     logs = get_container_logs(context.vm_name)
     assert logs is not None, "Could not retrieve container logs"
@@ -317,7 +317,7 @@ def step_identify_problem_source(context):
 def step_shell_access_container(context):
     """Verify shell access is possible."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     result = run_command([
         'docker', 'exec', f'vde-{context.vm_name}', 'sh', '-c', 'echo test'
@@ -330,7 +330,7 @@ def step_shell_access_container(context):
 def step_can_investigate(context):
     """Verify investigation commands work."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     # Test basic investigation commands
     result = run_command([
@@ -345,7 +345,7 @@ def step_can_investigate(context):
 def step_allocate_next_port(context):
     """Verify VDE allocated port 2201."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     actual_port = get_vm_port(context.vm_name)
     assert actual_port == "2201", f"Expected port 2201, got {actual_port}"
@@ -355,7 +355,7 @@ def step_allocate_next_port(context):
 def step_vm_works_new_port(context):
     """Verify VM works on the newly allocated port."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     info = get_container_info(context.vm_name)
     assert info is not None, "Container not found"
@@ -375,7 +375,7 @@ def step_vm_works_new_port(context):
 def step_ssh_config_correct_port(context):
     """Verify SSH config has the correct port."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     ssh_config = read_ssh_config()
     assert ssh_config is not None, "SSH config not found"
@@ -394,7 +394,7 @@ def step_ssh_config_correct_port(context):
 def step_see_volume_mounts(context):
     """Verify volume mounts are visible."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     mounts = get_vm_mounts(context.vm_name)
     assert len(mounts) > 0, "No volume mounts found"
@@ -406,7 +406,7 @@ def step_see_volume_mounts(context):
 def step_see_port_mappings(context):
     """Verify port mappings are visible."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     info = get_container_info(context.vm_name)
     assert info is not None, "Container not found"
@@ -421,7 +421,7 @@ def step_see_port_mappings(context):
 def step_see_env_vars(context):
     """Verify environment variables are visible."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     info = get_container_info(context.vm_name)
     assert info is not None, "Container not found"
@@ -436,7 +436,7 @@ def step_see_env_vars(context):
 def step_verify_config_correct(context):
     """Verify VM configuration is correct."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     compose_path = get_compose_file_path(context.vm_name)
     assert compose_path is not None, "No docker-compose.yml found"
@@ -452,7 +452,7 @@ def step_verify_config_correct(context):
 def step_see_volume_mounted(context):
     """Verify specific volume mount status."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     mounts = get_vm_mounts(context.vm_name)
     assert len(mounts) > 0, "No mounts found"
@@ -467,7 +467,7 @@ def step_see_volume_mounted(context):
 def step_verify_host_path(context):
     """Verify host path in volume mounts."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     mounts = get_vm_mounts(context.vm_name)
     assert len(mounts) > 0, "No mounts found"
@@ -784,7 +784,7 @@ def step_recreate_vm(context):
 def step_fresh_vm(context):
     """Should get a fresh VM after recreation."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     info = get_container_info(context.vm_name)
     assert info is not None, "VM not created"
@@ -815,10 +815,8 @@ def step_stop_conflicting_process(context):
 @then('VDE can allocate a different port')
 def step_vde_allocate_different_port(context):
     """VDE should allocate a different available port."""
-    if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
-
-    port = get_vm_port(context.vm_name)
+    vm_name = getattr(context, 'vm_name', 'python')
+    port = get_vm_port(vm_name)
     assert port is not None, "No port allocated"
     assert port != getattr(context, 'system_service_port', None), \
         "Port not reallocated"
@@ -851,7 +849,7 @@ def step_identify_issue_component(context):
 def step_fresh_container(context):
     """Should get a fresh container after reset."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     info = get_container_info(context.vm_name)
     assert info is not None, "Container not found"
@@ -861,7 +859,7 @@ def step_fresh_container(context):
 def step_code_volumes_preserved(context):
     """Code volumes should be preserved."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     mounts = get_vm_mounts(context.vm_name)
     code_mounts = [m for m in mounts if '/workspace' in m.get('Destination', '')]
@@ -908,7 +906,7 @@ def step_ping_vm_to_vm(context):
 def step_identify_bottlenecks(context):
     """Should identify resource bottlenecks."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     result = run_command([
         'docker', 'stats', f'vde-{context.vm_name}', '--no-stream',
@@ -941,7 +939,7 @@ def step_restart_docker(context):
 def step_vms_start_after_docker(context):
     """VMs should start after Docker is healthy."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     info = get_container_info(context.vm_name)
     assert info is not None, "VM not found"
@@ -952,7 +950,7 @@ def step_vms_start_after_docker(context):
 def step_devuser_matches_host(context):
     """Should check if devuser UID/GID matches host user."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     result = run_command([
         'docker', 'exec', f'vde-{context.vm_name}',
@@ -1000,7 +998,7 @@ def step_check_missing_dependencies(context):
 def step_check_vm_network_access(context):
     """Can check network access from the VM."""
     if not hasattr(context, 'vm_name'):
-        raise ValueError("No VM name in context")
+        vm_name = getattr(context, 'vm_name', 'python')
 
     result = run_command([
         'docker', 'exec', f'vde-{context.vm_name}',

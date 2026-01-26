@@ -82,12 +82,16 @@ RUN echo '#!/bin/zsh' > /usr/local/bin/ssh-agent-forward && \
 # For host access, use proper Docker bind mounts or SSH from host to container instead.
 
 # Install oh-my-zsh, configure zsh, and setup LazyVim
-RUN su ${USERNAME} -c 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended' && \
+# Download installer first to avoid argument parsing issues with nested sh -c
+RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o /tmp/install-oh-my-zsh.sh && \
+    chmod +x /tmp/install-oh-my-zsh.sh && \
+    su ${USERNAME} -c "sh /tmp/install-oh-my-zsh.sh --unattended" && \
+    rm -f /tmp/install-oh-my-zsh.sh && \
     echo 'export PATH=$HOME/.local/bin:$PATH' > /home/${USERNAME}/.zprofile && \
     echo 'export ZSH_THEME="agnoster"' >> /home/${USERNAME}/.zshrc && \
     echo 'source /usr/local/bin/ssh-agent-forward' >> /home/${USERNAME}/.zshrc && \
     chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.zprofile /home/${USERNAME}/.zshrc && \
-    su ${USERNAME} -c 'git clone https://github.com/LazyVim/starter ~/.config/nvim && nvim --headless +qall'
+    su ${USERNAME} -c "git clone https://github.com/LazyVim/starter ~/.config/nvim && nvim --headless +qall"
 
 # Expose SSH port
 EXPOSE 22

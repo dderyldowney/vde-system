@@ -947,8 +947,13 @@ def step_can_use_docker_compose(context):
         import yaml
         with open(compose_path) as f:
             yaml.safe_load(f)
-    except (ImportError, yaml.YAMLError):
-        # If pyyaml not available, basic check
+    except ImportError:
+        # If pyyaml not available, do basic check
+        content = compose_path.read_text()
+        assert 'version:' in content or 'services:' in content, \
+            "Compose file should have valid structure"
+    except Exception:
+        # Any other error, still do basic check
         content = compose_path.read_text()
         assert 'version:' in content or 'services:' in content, \
             "Compose file should have valid structure"

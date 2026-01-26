@@ -70,9 +70,11 @@ def step_one_vm_fails(context):
 @when('I try to create a VM')
 def step_try_create_vm(context):
     """Attempt to create a VM with invalid configuration."""
+    # Use invalid_vm_name from context, or provide default
+    invalid_vm = getattr(context, 'invalid_vm_name', 'invalid-vm-name')
     # Try to create a VM with invalid name
     result = run_vde_command(
-        f"create {context.invalid_vm_name}",
+        f"create {invalid_vm}",
         timeout=30
     )
     context.last_exit_code = result.returncode
