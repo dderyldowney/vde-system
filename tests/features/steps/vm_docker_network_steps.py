@@ -26,7 +26,7 @@ from vm_common import (
 def step_no_network(context):
     """Network does not exist - verify network missing."""
     result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
+        ["docker", "network", "ls", "--filter", "name=dev", "--format", "{{.Name}}"],
         capture_output=True,
         text=True,
         timeout=10,
@@ -42,26 +42,26 @@ def step_no_network(context):
 def step_network_auto_created(context):
     """Network should be auto-created - verify dev-net exists."""
     result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
+        ["docker", "network", "ls", "--filter", "name=dev", "--format", "{{.Name}}"],
         capture_output=True,
         text=True,
         timeout=10,
     )
     assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "vde" in result.stdout.lower(), "VDE network should be auto-created"
+    assert "dev" in result.stdout.lower(), "VDE network should be auto-created"
 
 
 @then('they should be on the same Docker network')
 def step_they_same_network(context):
     """VMs should be on same Docker network - verify dev-net exists."""
     result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
+        ["docker", "network", "ls", "--filter", "name=dev", "--format", "{{.Name}}"],
         capture_output=True,
         text=True,
         timeout=10,
     )
     assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "vde" in result.stdout.lower(), "VDE network should exist"
+    assert "dev" in result.stdout.lower(), "VDE network should exist"
 
 
 @then('VDE should create the dev-net network')
@@ -214,13 +214,13 @@ def step_connect_service_name(context):
 def step_same_network_alt(context):
     """All VMs should be on same network."""
     result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
+        ["docker", "network", "ls", "--filter", "name=dev", "--format", "{{.Name}}"],
         capture_output=True,
         text=True,
         timeout=10,
     )
     assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "vde" in result.stdout.lower(), "VMs should be on vde network"
+    assert "dev" in result.stdout.lower(), "VMs should be on vde network"
 
 
 @then('each should have its own SSH port')

@@ -55,7 +55,7 @@ Feature: Docker Operations
     And command should fail gracefully
 
   Scenario: Handle network errors
-    Given vde-network does not exist
+    Given dev-network does not exist
     When I start a VM
     Then network should be created automatically
     And error should indicate network issue
