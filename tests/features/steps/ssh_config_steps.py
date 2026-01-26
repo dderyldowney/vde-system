@@ -32,11 +32,6 @@ from config import VDE_ROOT
 # SSH Agent and Key Management
 # -----------------------------------------------------------------------------
 
-@given('SSH agent is not running')
-def step_ssh_agent_not_running(context):
-    """SSH agent is not running."""
-    context.ssh_agent_running = False
-    context.ssh_agent_was_running = False
 
 
 @given('SSH keys exist in ~/.ssh/')
@@ -159,10 +154,6 @@ def step_public_ssh_keys_has_files(context):
     context.public_ssh_files = list(public_ssh_dir.glob("*")) if public_ssh_dir.exists() else []
 
 
-@when('private key detection runs')
-def step_private_key_detection_runs(context):
-    """Private key detection runs."""
-    context.validation_run = True
 
 
 @then('non-.pub files should be rejected')
@@ -199,14 +190,12 @@ def step_vm_created_with_port(context, vm, port):
     """VM is created with specific SSH port."""
     context.test_vm_name = vm
     context.test_vm_port = port
-    context.vm_created = True
-    context.vm_creation_triggered = True  # Also set for lenient assertions
 
 
 @when('SSH config is generated')
 def step_ssh_config_generated(context):
     """SSH config is generated."""
-    result = run_vde_command("./scripts/ssh-agent-setup", timeout=60)
+    result = run_vde_command("ssh-setup generate", timeout=60)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
 
@@ -244,18 +233,12 @@ def step_ssh_config_contains_identity(context, field, keyfile):
 # SSH Config Identity File Selection
 # -----------------------------------------------------------------------------
 
-@given('primary SSH key is "{key}"')
-def step_primary_ssh_key(context, key):
-    """Primary SSH key is set."""
-    context.primary_ssh_key = key
-    context.primary_key = key
 
 
 @when('SSH config entry is created for VM "{vm}"')
 def step_ssh_config_entry_created_for_vm(context, vm):
     """SSH config entry is created for VM."""
     context.config_vm_name = vm
-    context.config_entry_created = True
 
 
 # -----------------------------------------------------------------------------
@@ -265,10 +248,9 @@ def step_ssh_config_entry_created_for_vm(context, vm):
 @when('VM-to-VM SSH config is generated')
 def step_vm_to_vm_config_generated(context):
     """VM-to-VM SSH config is generated."""
-    result = run_vde_command("./scripts/ssh-agent-setup", timeout=60)
+    result = run_vde_command("ssh-setup generate", timeout=60)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
-    context.vm_to_vm_config_generated = True
 
 
 @then('SSH config should contain entry for "{host}"')
@@ -299,14 +281,12 @@ def step_ssh_config_uses_hostname(context, hostname):
 def step_ssh_config_contains_entry(context, entry):
     """SSH config already contains specific entry."""
     context.existing_ssh_entry = entry
-    context.ssh_config_has_entry = True
 
 
 @when('I create VM "{vm}" again')
 def step_create_vm_again(context, vm):
     """Attempt to create VM that already exists."""
     context.vm_creation_attempted = vm
-    context.duplicate_vm_creation = True
 
 
 @then('duplicate SSH config entry should NOT be created')
@@ -342,10 +322,6 @@ def step_warn_existing_entry(context):
 # Atomic SSH Config Update
 # -----------------------------------------------------------------------------
 
-@when('multiple processes try to update SSH config simultaneously')
-def step_concurrent_config_update(context):
-    """Set up concurrent update scenario for testing atomic operations."""
-    context.concurrent_update_attempted = True
 
 
 @then('SSH config should remain valid')
@@ -420,11 +396,6 @@ def step_backup_has_timestamp(context):
 # SSH Config Entry Removal
 # -----------------------------------------------------------------------------
 
-@when('VM "{vm}" is removed')
-def step_vm_removed(context, vm):
-    """VM is removed."""
-    context.removed_vm = vm
-    context.vm_removed = True
 
 
 # -----------------------------------------------------------------------------
@@ -436,7 +407,6 @@ def step_ssh_vm_to_vm(context, vm1, vm2):
     """SSH from one VM to another."""
     context.ssh_from_vm = vm1
     context.ssh_to_vm = vm2
-    context.vm_to_vm_ssh_attempted = True
 
 
 @then('the connection should use host\'s SSH keys')
@@ -470,7 +440,7 @@ def step_no_keys_on_containers(context):
 def step_detect_ssh_keys_runs(context):
     """Run detect_ssh_keys function."""
     # VDE's detect_ssh_keys function runs in ssh-agent-setup
-    context.key_detection_run = True
+    pass
 
 
 @then('"{keytype}" keys should be detected')
@@ -492,7 +462,7 @@ def step_keytype_detected(context, keytype):
 @when('primary SSH key is requested')
 def step_primary_key_requested(context):
     """Primary SSH key is requested."""
-    context.primary_key_requested = True
+    pass
 
 
 @then('"{keytype}" should be returned as primary key')
@@ -515,7 +485,6 @@ def step_create_vm_with_port(context, vm, port):
     """Create VM with specific SSH port."""
     context.created_vm = vm
     context.created_vm_port = port
-    context.vm_creation_triggered = True
 
 
 @then('~/.ssh/config should still contain "{entry}"')
@@ -618,7 +587,6 @@ def step_new_entry_appended(context, vm_entry):
 def step_attempt_create_vm_again(context, vm):
     """Attempt to create VM again."""
     context.vm_creation_attempted = vm
-    context.duplicate_attempt = True
 
 
 @then('~/.ssh/config should contain only one "{entry}" entry')
@@ -634,7 +602,7 @@ def step_config_only_one_entry(context, entry):
 @when('merge_ssh_config_entry starts but is interrupted')
 def step_merge_interrupted(context):
     """Merge operation is interrupted."""
-    context.merge_interrupted = True
+    pass
 
 
 @then('~/.ssh/config should either be original or fully updated')
@@ -706,7 +674,6 @@ def step_new_ssh_entry_merged(context):
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
     context.config_before_merge = ssh_config.read_text() if ssh_config.exists() else ""
     context.merge_start_time = time.time()
-    context.ssh_merge_performed = True
 
 
 @then('temporary file should be created first')
@@ -809,8 +776,9 @@ def step_blank_lines_preserved(context):
         # Entries should be separated by at least one blank line or end of file
         if content.strip():
             lines = content.split('\n')
-            blank_count = sum(1 for line in lines if line.strip() == '')
-            assert blank_count >= 0, "Config structure verification failed"
+            # Real verification: check that config has non-empty lines (actual entries)
+            non_empty_count = sum(1 for line in lines if line.strip())
+            assert non_empty_count > 0, "Config should contain actual entries"
     else:
         # Config doesn't exist - can't verify blank lines
         raise AssertionError("SSH config should exist to verify blank line preservation")
@@ -827,7 +795,8 @@ def step_comments_preserved(context):
     elif ssh_config.exists():
         # Just verify config is valid if no baseline tracked
         content = ssh_config.read_text()
-        assert len(content) >= 0, "Config content check failed"
+        # Real verification: config should have some content
+        assert len(content.strip()) > 0, "Config should contain actual content"
     else:
         # Config doesn't exist and no baseline - can't verify
         raise AssertionError("SSH config should exist to verify comment preservation")
@@ -857,13 +826,13 @@ def step_new_entry_proper_formatting(context):
 @when('merge operations complete')
 def step_merge_operations_complete(context):
     """Merge operations complete."""
-    context.merge_completed = True
     # Verify config is in valid state after concurrent merges
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
-        # Config should not be corrupted
-        assert content.count('Host') >= 0 or len(content.strip()) == 0, "Config may be corrupted after concurrent merge"
+        # Real verification: config should either have Host entries or be empty (valid states)
+        host_count = content.count('Host')
+        assert host_count > 0 or len(content.strip()) == 0, "Config appears corrupted (has content but no Host entries)"
 
 
 @then('all VM entries should be present')
@@ -1017,7 +986,7 @@ def step_user_entries_preserved(context):
 @given('~/.ssh/config contains "{field}"')
 def step_ssh_config_contains_field_given(context, field):
     """SSH config contains specific field."""
-    context.ssh_config_has_field = field
+    context.ssh_config_has_field = field  # Used in later verification
 
 
 @given('~/.ssh/config contains user\'s "{entry}" entry')
@@ -1033,8 +1002,7 @@ def step_config_has_user_entry(context, entry):
 @given('keys are loaded into agent')
 def step_keys_loaded_into_agent_given(context):
     """Keys are loaded into SSH agent."""
-    context.keys_loaded_in_agent = True
-    context.ssh_agent_has_keys = True
+    pass
 
 
 @then('new "{entry}" entry should be added')
@@ -1066,7 +1034,7 @@ def step_config_contains_python_dev(context):
 @given('multiple processes try to add SSH entries simultaneously')
 def step_multiple_processes_add_entries(context):
     """Multiple processes try to add SSH entries simultaneously."""
-    context.concurrent_add_attempts = True
+    pass
 
 
 @then('config file should be valid')

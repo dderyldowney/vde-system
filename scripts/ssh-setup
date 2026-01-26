@@ -1,0 +1,292 @@
+#!/usr/bin/env zsh
+# VDE SSH Setup Command
+# Manages VDE SSH environment through the vde unified interface
+#
+# Usage: vde ssh-setup <action>
+#
+# Actions:
+#   status   Show SSH environment status (default)
+#   init     Initialize SSH environment (keys, agent, config)
+#   start    Start SSH agent and load VDE key
+#   generate Regenerate VM SSH config only
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+
+# Parse command line arguments
+ACTION="${1:-status}"
+
+# Show help
+if [[ "$ACTION" == "--help" ]] || [[ "$ACTION" == "-h" ]]; then
+    cat <<EOF
+VDE SSH Setup - Manage VDE SSH Environment
+
+Usage: vde ssh-setup <action>
+
+Actions:
+  status    Show SSH environment status (default)
+  init      Initialize SSH environment (keys, agent, config)
+  start     Start SSH agent and load VDE key
+  generate  Regenerate VM SSH config only
+
+Examples:
+  vde ssh-setup              # Show status
+  vde ssh-setup status       # Show status (explicit)
+  vde ssh-setup init         # Full setup: keys + agent + config
+  vde ssh-setup start        # Start agent and load keys
+  vde ssh-setup generate     # Regenerate SSH config for VMs
+
+See also:
+  vde ssh-sync               Sync SSH keys to build context
+EOF
+    exit 0
+fi
+
+# ==============================================================================
+# Status Display Mode (default)
+# ==============================================================================
+if [[ "$ACTION" == "status" ]]; then
+    echo ""
+    echo "╔════════════════════════════════════════════════════════════╗"
+    echo "║          VDE SSH Environment Status                       ║"
+    echo "╚════════════════════════════════════════════════════════════╝"
+    echo ""
+
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "VDE SSH Isolation"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "  Directory: $VDE_SSH_DIR"
+
+    if [[ -f "$VDE_SSH_IDENTITY" ]]; then
+        echo "  ✓ VDE SSH key exists"
+    else
+        echo "  ⚠ VDE SSH key not found (run 'vde ssh-setup init')"
+    fi
+
+    if [[ -f "$VDE_SSH_CONFIG" ]]; then
+        local vm_count
+        vm_count=$(grep -c "^Host " "$VDE_SSH_CONFIG" 2>/dev/null || echo "0")
+        echo "  ✓ VDE SSH config exists ($vm_count VM entries)"
+    else
+        echo "  ⚠ VDE SSH config not found (run 'vde ssh-setup init')"
+    fi
+
+    echo ""
+
+    # SSH Agent Status
+    if ssh_agent_is_running; then
+        log_success "SSH agent is running"
+        echo "  Socket: ${SSH_AUTH_SOCK:-unknown}"
+        echo "  PID: ${SSH_AGENT_PID:-unknown}"
+    else
+        log_warning "SSH agent is NOT running"
+        echo "  Run 'vde ssh-setup start' to start the agent"
+    fi
+
+    echo ""
+
+    # Keys loaded in agent
+    if ssh_agent_is_running; then
+        echo "Keys loaded in agent:"
+        local key_count
+        key_count=$(ssh-add -l 2>/dev/null | wc -l | tr -d ' ')
+        if [[ $key_count -gt 0 ]]; then
+            ssh-add -l 2>/dev/null
+        else
+            echo "  (none loaded)"
+            echo "  Run 'vde ssh-setup start' to load VDE key into agent"
+        fi
+    else
+        echo "Keys in agent: (agent not running)"
+    fi
+
+    echo ""
+
+    # Public keys in build context
+    echo "Public key in build context:"
+    if [[ -f "$VDE_ROOT_DIR/public-ssh-keys/vde_id_ed25519.pub" ]]; then
+        echo "  ✓ vde_id_ed25519.pub"
+    else
+        echo "  (none - run 'vde ssh-sync' to sync)"
+    fi
+
+    echo ""
+    exit 0
+fi
+
+# ==============================================================================
+# Initialize Mode -- Full SSH setup
+# ==============================================================================
+if [[ "$ACTION" == "init" ]]; then
+    echo ""
+    echo "╔════════════════════════════════════════════════════════════╗"
+    echo "║          VDE SSH Environment Initialization                ║"
+    echo "╚════════════════════════════════════════════════════════════╝"
+    echo ""
+
+    # Step 1: Ensure VDE SSH environment
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Step 1: Setting up VDE SSH environment"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    if ensure_vde_ssh_environment; then
+        log_success "✓ VDE SSH directory: $VDE_SSH_DIR"
+        log_success "✓ VDE SSH key: $VDE_SSH_IDENTITY"
+    else
+        log_error "✗ Failed to set up VDE SSH environment"
+        exit 1
+    fi
+
+    echo ""
+
+    # Step 2: Start SSH agent
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Step 2: Starting SSH agent"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    if ssh_agent_is_running; then
+        log_info "SSH agent already running"
+    else
+        log_info "Starting SSH agent..."
+        eval "$(ssh-agent -s)" >/dev/null 2>&1
+        export SSH_AUTH_SOCK
+        export SSH_AGENT_PID
+        log_success "✓ SSH agent started (PID: $SSH_AGENT_PID)"
+    fi
+
+    echo ""
+
+    # Step 3: Load VDE key into agent
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Step 3: Loading VDE key into SSH agent"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    local keys_loaded=0
+    if ssh-add "$VDE_SSH_IDENTITY" 2>/dev/null; then
+        log_success "✓ Loaded: VDE SSH key"
+        keys_loaded=1
+    else
+        log_warning "⚠ Could not load VDE key (may require passphrase)"
+        echo "  Load manually with: ssh-add $VDE_SSH_IDENTITY"
+    fi
+
+    if [[ $keys_loaded -gt 0 ]]; then
+        log_success "✓ VDE key loaded into agent"
+    else
+        log_warning "⚠ No keys were loaded"
+    fi
+
+    echo ""
+
+    # Step 4: Sync VDE public key to build context
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Step 4: Syncing VDE public key to build context"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    if sync_ssh_keys_to_vde; then
+        log_success "✓ VDE public key synced to public-ssh-keys/"
+    else
+        log_error "✗ Failed to sync key"
+        exit 1
+    fi
+
+    echo ""
+
+    # Step 5: Generate SSH config
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Step 5: Generating VDE SSH config"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    if generate_vm_ssh_config; then
+        log_success "✓ VDE SSH config updated"
+    else
+        log_warning "⚠ VDE SSH config generation had issues"
+    fi
+
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Setup Complete!"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "VDE SSH is now isolated at: ~/.ssh/vde/"
+    echo ""
+    echo "Next steps:"
+    echo "  • Create a VM: vde create <vm>"
+    echo "  • Start a VM:  vde start <vm>"
+    echo "  • Connect:     ssh -F ~/.ssh/vde/config <vm>"
+    echo ""
+
+    exit 0
+fi
+
+# ==============================================================================
+# Start Mode -- Just start agent and load VDE key
+# ==============================================================================
+if [[ "$ACTION" == "start" ]]; then
+    echo ""
+    echo "Starting SSH agent and loading VDE key..."
+    echo ""
+
+    # Start agent if not running
+    if ssh_agent_is_running; then
+        echo "SSH agent already running"
+    else
+        eval "$(ssh-agent -s)" >/dev/null 2>&1
+        export SSH_AUTH_SOCK
+        export SSH_AGENT_PID
+        echo "✓ SSH agent started"
+    fi
+
+    # Ensure VDE SSH environment exists
+    if [[ ! -f "$VDE_SSH_IDENTITY" ]]; then
+        log_error "VDE SSH key not found. Run 'vde ssh-setup init'"
+        exit 1
+    fi
+
+    # Load VDE key
+    local keys_loaded=0
+    if ssh-add "$VDE_SSH_IDENTITY" 2>/dev/null; then
+        echo "✓ Loaded: VDE SSH key"
+        keys_loaded=1
+    fi
+
+    echo ""
+    echo "$keys_loaded key(s) loaded into SSH agent"
+    exit 0
+fi
+
+# ==============================================================================
+# Generate Mode -- Regenerate SSH config only
+# ==============================================================================
+if [[ "$ACTION" == "generate" ]]; then
+    echo ""
+    echo "Regenerating VDE SSH config..."
+    echo ""
+
+    if generate_vm_ssh_config; then
+        log_success "✓ VDE SSH config updated"
+        echo ""
+        echo "Config location: $VDE_SSH_CONFIG"
+        exit 0
+    else
+        log_error "✗ Failed to generate SSH config"
+        exit 1
+    fi
+fi
+
+# ==============================================================================
+# Unknown Action
+# ==============================================================================
+echo "Unknown action: $ACTION"
+echo ""
+echo "Valid actions: status, init, start, generate"
+echo "Run 'vde ssh-setup --help' for usage information"
+exit 1

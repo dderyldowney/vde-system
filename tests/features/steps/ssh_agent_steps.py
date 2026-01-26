@@ -49,11 +49,6 @@ from vde_test_helpers import (
 # GIVEN steps - Setup with REAL operations
 # =============================================================================
 
-@given('SSH agent is running')
-def step_ssh_agent_running(context):
-    """SSH agent is running (VDE handles this automatically)."""
-    # In VDE, SSH agent is started automatically by the start-virtual script
-    context.ssh_agent_running = True
 
 
 @given('SSH keys are available')
@@ -67,10 +62,6 @@ def step_ssh_keys_available(context):
     )
 
 
-@given('no SSH keys exist')
-def step_no_ssh_keys(context):
-    """No SSH keys available (test scenario)."""
-    context.ssh_keys_exist = False
 
 
 @given('SSH config file exists')
@@ -98,28 +89,6 @@ def step_ssh_has_entry(context, host):
         context.ssh_entry_exists = False
 
 
-@given('SSH config contains custom settings')
-def step_ssh_custom_settings(context):
-    """SSH config has user's custom settings."""
-    context.ssh_has_custom_settings = True
-
-
-@given('SSH agent forwarding is enabled')
-def step_ssh_forwarding_enabled(context):
-    """SSH agent forwarding is enabled."""
-    context.ssh_forwarding_enabled = True
-
-
-@given('I am connected from host to VM')
-def step_connected_host_to_vm(context):
-    """Connected from host to VM."""
-    context.host_connection = True
-
-
-@given('Git repository requires authentication')
-def step_git_requires_auth(context):
-    """Git operation needs SSH auth."""
-    context.git_auth_required = True
 
 
 @given('VM "{vm_name}" has been created and started')
@@ -157,7 +126,7 @@ def step_start_ssh_agent(context):
     # Try to start SSH agent using the VDE ssh-agent-setup script
     try:
         result = subprocess.run(
-            ["./scripts/ssh-agent-setup", "--start"],
+            ["./scripts/vde", "ssh-setup", "start"],
             capture_output=True, text=True, timeout=30,
             cwd=VDE_ROOT
         )
@@ -187,7 +156,7 @@ def step_copy_public_keys(context):
     # Execute the sync-ssh-keys-to-vde script to copy keys
     try:
         result = subprocess.run(
-            ["./scripts/sync-ssh-keys-to-vde"],
+            ["./scripts/vde", "ssh-sync"],
             capture_output=True, text=True, timeout=30,
             cwd=VDE_ROOT
         )
@@ -199,7 +168,7 @@ def step_copy_public_keys(context):
 @when('SSH config is updated')
 def step_update_ssh_config(context):
     """Update SSH config."""
-    result = run_vde_command("./scripts/start-virtual python --update-ssh", timeout=60)
+    result = run_vde_command("start python --update-ssh", timeout=60)
     context.ssh_config_updated = result.returncode == 0
 
 
@@ -412,13 +381,13 @@ def step_see_usage_examples(context):
 @given('I have created multiple VMs')
 def step_created_multiple_vms(context):
     """Have created multiple VMs."""
-    context.multiple_vms_created = True
+    pass
 
 
 @when('I use SSH to connect to any VM')
 def step_ssh_any_vm(context):
     """Use SSH to connect to any VM."""
-    context.ssh_any_vm = True
+    pass
 
 
 @then('the SSH config entries should exist')
@@ -461,7 +430,7 @@ def step_no_remember_ports(context):
 @given('I have a running VM with SSH configured')
 def step_running_vm_ssh_configured(context):
     """Have running VM with SSH configured."""
-    context.running_vm_ssh_configured = True
+    pass
 
 
 @when('I shutdown and rebuild the VM')
@@ -537,24 +506,6 @@ def step_ed25519_preferred(context):
         assert has_other_keys, "At least one SSH key type should exist"
 
 
-@then('the key should be generated with a comment')
-def step_key_with_comment(context):
-    """Key should be generated with a comment."""
-    # Check if SSH keys have comments (the email/user at end of public key)
-    ssh_dir = Path.home() / ".ssh"
-    comment_found = False
-    for key_file in ssh_dir.glob("*.pub"):
-        try:
-            content = key_file.read_text()
-            # SSH public key format: key-type key-data comment
-            parts = content.strip().split()
-            if len(parts) >= 3:
-                comment_found = True
-                break
-        except Exception:
-            pass
-    # If we have keys, at least one should have a comment (but comments are optional in generated keys)
-    # This is informational only - SSH keys work fine without comments
 
 
 # =============================================================================
@@ -565,7 +516,6 @@ def step_key_with_comment(context):
 @given('I have just cloned VDE')
 def step_just_cloned_vde(context):
     """User has just cloned VDE."""
-    context.vde_just_cloned = True
     context.vde_root = VDE_ROOT
 
 
@@ -629,7 +579,6 @@ def step_existing_ssh_keys(context):
         (ssh_dir / "id_rsa").exists() or
         (ssh_dir / "id_ecdsa").exists()
     )
-    context.ssh_keys_exist = True
 
 
 @then('my existing SSH keys should be detected automatically')
@@ -665,16 +614,13 @@ def step_no_manual_config(context):
 @given('I have SSH keys of different types')
 def step_different_key_types(context):
     """User has multiple SSH key types."""
-    context.multiple_key_types = True
+    pass
 
 
 @given('I have id_ed25519, id_rsa, and id_ecdsa keys')
 def step_multiple_keys(context):
     """User has specific key types."""
-    context.has_ed25519 = True
-    context.has_rsa = True
-    context.has_ecdsa = True
-    context.all_key_types = True
+    pass
 
 
 @then('all my SSH keys should be detected')
@@ -726,13 +672,13 @@ def step_any_key_works(context):
 @given('I have created VMs before')
 def step_created_vms_before(context):
     """User has created VMs previously."""
-    context.created_vms_before = True
+    pass
 
 
 @given('I have SSH configured')
 def step_ssh_configured(context):
     """SSH is already configured."""
-    context.ssh_already_configured = True
+    pass
 
 
 @then('no SSH configuration messages should be displayed')
@@ -781,7 +727,7 @@ def step_only_vm_messages(context):
 @given('I have VMs configured')
 def step_vms_configured(context):
     """VMs are configured."""
-    context.vms_configured = True
+    pass
 
 
 @when('I start a VM')
@@ -822,13 +768,13 @@ def step_vm_starts_normally(context):
 @given('I have VDE configured')
 def step_vde_configured(context):
     """VDE is configured."""
-    context.vde_configured = True
+    pass
 
 
-@when('I run "./scripts/ssh-agent-setup"')
+@when('I check the SSH agent status')
 def step_run_ssh_agent_setup(context):
-    """Run ssh-agent-setup script."""
-    result = run_vde_command("./scripts/ssh-agent-setup 2>&1 || true", timeout=30)
+    """Check SSH agent status via vde ssh-setup."""
+    result = run_vde_command("ssh-setup status 2>&1 || true", timeout=30)
     context.ssh_setup_output = result.stdout + result.stderr
     context.last_exit_code = result.returncode
 
@@ -881,10 +827,14 @@ def step_keys_copied_to_public(context):
     """Public keys should be copied to public-ssh-keys directory."""
     from ssh_helpers import public_ssh_keys_count
     public_ssh_dir = VDE_ROOT / "public-ssh-keys"
-    if public_ssh_dir.exists():
-        context.keys_copied_to_public = public_ssh_keys_count() > 0
-    else:
-        context.keys_copied_to_public = True  # Will be created during VM start
+
+    # Real verification: check if directory exists and contains public keys
+    assert public_ssh_dir.exists(), \
+        f"public-ssh-keys directory should exist at {public_ssh_dir}"
+
+    key_count = public_ssh_keys_count()
+    assert key_count > 0, \
+        f"public-ssh-keys directory should contain .pub files, found {key_count}"
 
 
 @then('all my public keys should be in the VM\'s authorized_keys')
@@ -924,22 +874,22 @@ def step_no_manual_copy_keys(context):
 @given('I have configured SSH through VDE')
 def step_ssh_via_vde(context):
     """SSH configured through VDE."""
-    context.ssh_via_vde = True
+    pass
 
 
 @when('I use the system ssh command')
 def step_system_ssh_command(context):
     """Use system ssh command."""
-    context.system_ssh_used = True
+    pass
 
 
 @when('I use OpenSSH clients')
 def step_openssh_clients(context):
     """Use OpenSSH clients."""
-    context.openssh_used = True
+    pass
 
 
 @when('I use VSCode Remote-SSH')
 def step_vscode_remote_ssh(context):
     """Use VSCode Remote-SSH."""
-    context.vscode_ssh_used = True
+    pass

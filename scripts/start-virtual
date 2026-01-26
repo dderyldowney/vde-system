@@ -7,7 +7,7 @@ source "$SCRIPT_DIR/lib/vm-common"
 
 # Parse arguments
 if [[ $# -eq 0 ]]; then
-    echo "Usage: start-virtual <vm_name1> [vm_name2] ... [--rebuild] [--no-cache]"
+    echo "Usage: start-virtual <vm_name1> [vm_name2] ... [--rebuild] [--no-cache] [--update-ssh]"
     echo ""
     echo "Examples:"
     echo "  start-virtual python                    # Start single VM"
@@ -15,6 +15,7 @@ if [[ $# -eq 0 ]]; then
     echo "  start-virtual all                       # Start all VMs"
     echo "  start-virtual python --rebuild          # Rebuild and start"
     echo "  start-virtual all --no-cache            # Full rebuild all VMs"
+    echo "  start-virtual python --update-ssh       # Start and regenerate SSH config"
     echo ""
     show_known_vms
     exit 1
@@ -24,6 +25,7 @@ fi
 VMS=()
 REBUILD=false
 NOCACHE=false
+UPDATE_SSH=false
 
 for arg in "$@"; do
     case $arg in
@@ -32,6 +34,9 @@ for arg in "$@"; do
             ;;
         --no-cache)
             NOCACHE=true
+            ;;
+        --update-ssh|--update-ssh-keys)
+            UPDATE_SSH=true
             ;;
         all)
             # Expand "all" to all known VMs
@@ -55,7 +60,7 @@ done
 
 # If no VMs specified (e.g., only flags), show usage
 if [[ ${#VMS[@]} -eq 0 ]]; then
-    echo "Usage: start-virtual <vm_name1> [vm_name2] ... [--rebuild] [--no-cache]"
+    echo "Usage: start-virtual <vm_name1> [vm_name2] ... [--rebuild] [--no-cache] [--update-ssh]"
     echo ""
     show_known_vms
     exit 1
@@ -157,3 +162,14 @@ if [ $failed_count -gt 0 ]; then
 fi
 
 log_success "VM startup complete!"
+
+# Update SSH config if requested
+if [[ "$UPDATE_SSH" == "true" ]]; then
+    echo ""
+    log_info "Regenerating VDE SSH config..."
+    if generate_vm_ssh_config; then
+        log_success "✓ VDE SSH config updated"
+    else
+        log_warning "⚠ VDE SSH config generation had issues"
+    fi
+fi

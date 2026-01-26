@@ -58,6 +58,8 @@ _VDE_COMMANDS=(
     "health:Run system health check:vde-health"
     "create-and-start:Create and start VMs:create-and-start"
     "nuke:Remove all of VDE:nuke-vde"
+    "ssh-setup:Manage VDE SSH environment:ssh-setup"
+    "ssh-sync:Sync SSH keys to build context:ssh-sync"
     "help:Show this help message:"
 )
 
@@ -86,6 +88,8 @@ EOF
     printf "  %-12s %s\n" "health" "Run system health check"
     printf "  %-12s %s\n" "create-and-start" "Create and start VMs"
     printf "  %-12s %s\n" "nuke" "Remove all of VDE"
+    printf "  %-12s %s\n" "ssh-setup" "Manage VDE SSH environment"
+    printf "  %-12s %s\n" "ssh-sync" "Sync SSH keys to build context"
     printf "  %-12s %s\n" "help" "Show this help message"
 
     cat <<EOF
@@ -158,6 +162,12 @@ vde_find_command_script() {
             ;;
         nuke|nuke-vde)
             script="$VDE_ROOT_DIR/scripts/nuke-vde"
+            ;;
+        ssh-setup)
+            script="$VDE_ROOT_DIR/scripts/ssh-setup"
+            ;;
+        ssh-sync)
+            script="$VDE_ROOT_DIR/scripts/ssh-sync"
             ;;
         *)
             echo ""

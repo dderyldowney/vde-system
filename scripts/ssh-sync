@@ -1,0 +1,58 @@
+#!/usr/bin/env zsh
+# VDE SSH Sync Command
+# Syncs VDE SSH public keys to the build context
+#
+# Usage: vde ssh-sync
+#
+# This command copies the VDE public key to the public-ssh-keys directory
+# which is used during Docker builds to bake the key into container images.
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+
+# Parse command line arguments
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+    cat <<EOF
+VDE SSH Sync - Sync SSH keys to VDE build context
+
+Usage: vde ssh-sync
+
+Description:
+  Copies the VDE SSH public key to the public-ssh-keys directory in the
+  VDE build context. This key is used during Docker builds to enable
+  SSH authentication into containers.
+
+  The command validates that the source is a public key file and ensures
+  no private keys are accidentally copied to the public directory.
+
+See also:
+  vde ssh-setup           Manage VDE SSH environment
+  vde ssh-setup init      Initialize SSH keys and sync
+EOF
+    exit 0
+fi
+
+# ==============================================================================
+# Sync SSH Keys to Build Context
+# ==============================================================================
+
+echo ""
+echo "Syncing VDE SSH public key to build context..."
+echo ""
+
+if sync_ssh_keys_to_vde; then
+    log_success "✓ VDE SSH public key synced"
+    echo ""
+    echo "Build context location: $VDE_ROOT_DIR/public-ssh-keys/"
+    echo ""
+    exit 0
+else
+    log_error "✗ Failed to sync SSH key"
+    echo ""
+    echo "Ensure VDE SSH environment is initialized:"
+    echo "  vde ssh-setup init"
+    echo ""
+    exit 1
+fi
