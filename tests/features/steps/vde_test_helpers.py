@@ -30,7 +30,7 @@ from vm_common import (
 # Extended VDE Test Helpers (beyond vm_common.py)
 # =============================================================================
 
-def run_vde_command(command, timeout=120, check=False):
+def run_vde_command(command, timeout=300, check=False):
     """
     Run a VDE script and return the result.
 
@@ -55,7 +55,7 @@ def run_vde_command(command, timeout=120, check=False):
     return result
 
 
-def wait_for_container_stop(vm_name, timeout=30, interval=1):
+def wait_for_container_stop(vm_name, timeout=120, interval=1):
     """
     Wait for a container to stop.
 

@@ -90,11 +90,11 @@ readonly VDE_CONTAINER_SSH_PORT=22
 
 # Docker operation timeout (seconds)
 # Maximum time to wait for docker-compose up/down operations
-readonly VDE_DOCKER_TIMEOUT=300
+readonly VDE_DOCKER_TIMEOUT=600
 
 # SSH connection timeout (seconds)
 # Maximum time to wait for SSH connection to container
-readonly VDE_SSH_TIMEOUT=30
+readonly VDE_SSH_TIMEOUT=60
 
 # Lock acquisition timeout (seconds)
 # Maximum time to wait when acquiring file locks
@@ -102,11 +102,11 @@ readonly VDE_LOCK_TIMEOUT=30
 
 # Health check timeout (seconds)
 # Maximum time to wait for container health check
-readonly VDE_HEALTH_TIMEOUT=60
+readonly VDE_HEALTH_TIMEOUT=180
 
 # Container startup wait (seconds)
 # Time to wait after container starts before checking health
-readonly VDE_STARTUP_WAIT=5
+readonly VDE_STARTUP_WAIT=15
 
 # =============================================================================
 # RETRY CONFIGURATION

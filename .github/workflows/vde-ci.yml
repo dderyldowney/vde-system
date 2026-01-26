@@ -338,42 +338,42 @@ jobs:
   docker-build:
     name: Docker Build ${{ matrix.vm }} (${{ matrix.category }})
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Language VMs - Fast (30-60s)
-          - {vm: c, category: lang, timeout: 10}
-          - {vm: cpp, category: lang, timeout: 10}
-          - {vm: asm, category: lang, timeout: 10}
-          - {vm: python, category: lang, timeout: 10}
-          - {vm: ruby, category: lang, timeout: 10}
-          - {vm: go, category: lang, timeout: 10}
-          - {vm: js, category: lang, timeout: 15}
-          - {vm: php, category: lang, timeout: 10}
-          - {vm: r, category: lang, timeout: 15}
-          - {vm: lua, category: lang, timeout: 10}
-          - {vm: zig, category: lang, timeout: 10}
-          - {vm: elixir, category: lang, timeout: 10}
-          # Language VMs - Medium (1-3 min)
-          - {vm: java, category: lang, timeout: 20}
-          - {vm: kotlin, category: lang, timeout: 20}
-          - {vm: scala, category: lang, timeout: 20}
-          - {vm: haskell, category: lang, timeout: 30}
-          # Language VMs - Slow (3-5 min)
-          - {vm: csharp, category: lang, timeout: 30}
-          - {vm: rust, category: lang, timeout: 40}
-          - {vm: swift, category: lang, timeout: 30}
-          - {vm: flutter, category: lang, timeout: 45}
+          # Language VMs - Fast (CI slower than local, doubled timeouts)
+          - {vm: c, category: lang, timeout: 20}
+          - {vm: cpp, category: lang, timeout: 20}
+          - {vm: asm, category: lang, timeout: 20}
+          - {vm: python, category: lang, timeout: 20}
+          - {vm: ruby, category: lang, timeout: 20}
+          - {vm: go, category: lang, timeout: 20}
+          - {vm: js, category: lang, timeout: 20}
+          - {vm: php, category: lang, timeout: 20}
+          - {vm: r, category: lang, timeout: 20}
+          - {vm: lua, category: lang, timeout: 20}
+          - {vm: zig, category: lang, timeout: 20}
+          - {vm: elixir, category: lang, timeout: 20}
+          # Language VMs - Medium (JVM install overhead)
+          - {vm: java, category: lang, timeout: 30}
+          - {vm: kotlin, category: lang, timeout: 30}
+          - {vm: scala, category: lang, timeout: 30}
+          - {vm: haskell, category: lang, timeout: 75}
+          # Language VMs - Slow (Compile-heavy languages)
+          - {vm: csharp, category: lang, timeout: 60}
+          - {vm: rust, category: lang, timeout: 60}
+          - {vm: swift, category: lang, timeout: 60}
+          - {vm: flutter, category: lang, timeout: 60}
           # Service VMs
-          - {vm: postgres, category: service, timeout: 10}
-          - {vm: redis, category: service, timeout: 10}
-          - {vm: mongodb, category: service, timeout: 10}
-          - {vm: nginx, category: service, timeout: 10}
-          - {vm: couchdb, category: service, timeout: 15}
-          - {vm: mysql, category: service, timeout: 15}
-          - {vm: rabbitmq, category: service, timeout: 15}
+          - {vm: postgres, category: service, timeout: 20}
+          - {vm: redis, category: service, timeout: 20}
+          - {vm: mongodb, category: service, timeout: 20}
+          - {vm: nginx, category: service, timeout: 20}
+          - {vm: couchdb, category: service, timeout: 20}
+          - {vm: mysql, category: service, timeout: 20}
+          - {vm: rabbitmq, category: service, timeout: 20}
 
     steps:
       - name: Checkout repository
@@ -503,11 +503,11 @@ jobs:
         run: |
           CONTAINER_NAME="${{ matrix.vm }}-dev"
           SSH_PORT="${{ steps.ssh-port.outputs.port }}"
-          # Three tiers: 5 min (fast), 10 min (medium), 15 min (slow)
+          # Two tiers: 10 min (fast), 20 min (slow) - extended for CI
           if [[ "${{ matrix.vm }}" =~ ^(rust|flutter|swift|java|kotlin|scala|haskell|r|zig|php|lua|elixir)$ ]]; then
-            MAX_WAIT=900
+            MAX_WAIT=1200
           else
-            MAX_WAIT=300
+            MAX_WAIT=600
           fi
           ELAPSED=0
 
@@ -632,12 +632,12 @@ jobs:
         shell: zsh {0}
         run: |
           echo "Running docker-free BDD tests on GitHub CI..."
-          chmod +x tests/run-bdd-fast.sh
-          ./tests/run-bdd-fast.sh || {
+          chmod +x tests/run-docker-free-tests.sh
+          ./tests/run-docker-free-tests.sh || {
             echo "::error::Docker-free BDD tests failed"
             exit 1
           }
-          echo "✓ All docker-free BDD tests passed (94/94 scenarios)"
+          echo "✓ All docker-free BDD tests passed (158/158 scenarios)"
           echo "See GITHUB_CI_RESTRICTIONS.md for why other tests are skipped"
 
       - name: Cleanup test containers

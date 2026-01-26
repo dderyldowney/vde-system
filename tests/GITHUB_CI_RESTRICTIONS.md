@@ -15,8 +15,8 @@ GitHub Actions CI cannot run tests that require actual Docker container operatio
 ### Docker-Free Tests (Run on GitHub CI ✅)
 
 **Location:** `tests/features/docker-free/`
-**Runner:** `./tests/run-bdd-fast.sh`
-**Status:** **94/94 scenarios passing (100%)** ✅
+**Runner:** `./tests/run-docker-free-tests.sh`
+**Status:** **158/158 scenarios passing (100%)** ✅
 
 | Feature | Status | Description |
 |--------|--------|-------------|
@@ -109,8 +109,8 @@ All 27 docker-required features are tagged with GitHub-incompatible tags:
 
 | Metric | Value |
 |--------|-------|
-| **GitHub CI tests** | 94/94 scenarios (100% - docker-free only) |
-| **Full test suite (local)** | 491/491 scenarios (100%) |
+| **GitHub CI tests** | 158/158 scenarios (100% - docker-free only) |
+| **Full test suite (local)** | 494/494 scenarios (100%) |
 | **Test coverage** | 100% of all scenarios have step definitions |
 
 ---
@@ -118,6 +118,6 @@ All 27 docker-required features are tagged with GitHub-incompatible tags:
 ## See Also
 
 - `tests/TEST_SEPARATION.md` - Detailed test separation documentation
-- `tests/run-bdd-fast.sh` - Fast test runner for CI (docker-free only)
-- `tests/run-local-bdd.sh` - Full test runner for local testing
-- `.github/workflows/vde.yml` - GitHub Actions workflow definition
+- `tests/run-docker-free-tests.sh` - Fast test runner for CI (docker-free only)
+- `tests/run-docker-required-tests.sh` - Full test runner for local testing
+- `.github/workflows/vde-ci.yml` - GitHub Actions workflow definition

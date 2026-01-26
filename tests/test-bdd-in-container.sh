@@ -86,7 +86,7 @@ EOF
         fi
     done
     echo ""
-    echo "Docker-free features (use run-bdd-fast.sh instead):"
+    echo "Docker-free features (use run-docker-free-tests.sh instead):"
     for feature in "$SCRIPT_DIR/features/docker-free"/*.feature(N); do
         if [[ -f "$feature" ]]; then
             local name="${feature:t:r}"

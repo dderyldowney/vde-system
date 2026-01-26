@@ -160,7 +160,7 @@ def load_passing_scenarios_from_json():
     """Load the set of passing scenarios from Behave JSON output."""
     if not BEHAVE_JSON_FILE.exists():
         print(f"Warning: {BEHAVE_JSON_FILE} not found.")
-        print("Run BDD tests first: ./tests/run-bdd-fast.sh")
+        print("Run BDD tests first: ./tests/run-docker-free-tests.sh")
         print("Generating user guide from ALL scenarios (unverified mode)")
         return None
 

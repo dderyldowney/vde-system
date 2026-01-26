@@ -1,0 +1,392 @@
+#!/usr/bin/env zsh
+# VDE Health Check Library
+# Comprehensive health checks for VDE containers
+# Source this library with: source ./scripts/lib/vde-health
+#
+# This library provides functions to check:
+# - Docker container running state
+# - SSH port accessibility
+# - SSH login successful
+# - Language tool availability
+#
+# Shell Compatibility: Uses zsh-specific features
+
+# =============================================================================
+# SOURCE GUARD
+# =============================================================================
+# Prevent multiple sourcing which causes readonly variable errors
+
+if [ "${_VDE_HEALTH_LOADED:-}" = "1" ]; then
+    return 0 2>/dev/null || exit 0
+fi
+_VDE_HEALTH_LOADED=1
+
+# =============================================================================
+# DEPENDENCIES
+# =============================================================================
+# Source vm-common for timeout values, constants, and get_vm_info function
+
+SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
+source "$SCRIPT_DIR/vm-common" 2>/dev/null || {
+    echo "Error: Failed to source vm-common" >&2
+    return 1
+}
+
+# =============================================================================
+# HEALTH CHECK FUNCTIONS
+# =============================================================================
+
+# vde_check_container_running - Check if container is running
+# Args:
+#   vm_name - Name of the VM (without -dev suffix for language VMs)
+# Returns:
+#   0 (VDE_SUCCESS) if container is running
+#   VDE_ERR_NOT_FOUND if container not found
+#   VDE_ERR_GENERAL if docker command fails
+vde_check_container_running() {
+    local vm_name="$1"
+    local container_name="$vm_name"
+
+    # Language VMs use -dev suffix
+    local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
+    if [ "$vm_type" = "lang" ]; then
+        container_name="${vm_name}-dev"
+    fi
+
+    # Check if container is running
+    local running_containers
+    running_containers=$(docker ps --format "{{.Names}}" 2>/dev/null)
+
+    if [ $? -ne 0 ]; then
+        return $VDE_ERR_GENERAL
+    fi
+
+    if echo "$running_containers" | grep -q "^${container_name}$"; then
+        return $VDE_SUCCESS
+    fi
+
+    return $VDE_ERR_NOT_FOUND
+}
+
+# vde_check_ssh_port - Check if SSH port is accessible
+# Args:
+#   vm_name - Name of the VM
+#   timeout - Timeout in seconds (default: VDE_SSH_TIMEOUT)
+# Returns:
+#   0 (VDE_SUCCESS) if port is accessible
+#   VDE_ERR_TIMEOUT if port not accessible within timeout
+#   VDE_ERR_GENERAL if check fails
+vde_check_ssh_port() {
+    local vm_name="$1"
+    local timeout="${2:-$VDE_SSH_TIMEOUT}"
+    local container_name="$vm_name"
+
+    # Language VMs use -dev suffix
+    local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
+    if [ "$vm_type" = "lang" ]; then
+        container_name="${vm_name}-dev"
+    fi
+
+    # Get SSH port mapping
+    local ssh_port
+    ssh_port=$(docker port "$container_name" 22 2>/dev/null | grep -oE '0.0.0.0:[0-9]+' | cut -d: -f2)
+
+    if [ -z "$ssh_port" ]; then
+        return $VDE_ERR_GENERAL
+    fi
+
+    # Check if port is accessible using netcat or bash
+    local elapsed=0
+    while [ $elapsed -lt $timeout ]; do
+        # Try bash built-in TCP check first (faster)
+        if timeout 1 bash -c "cat < /dev/null > /dev/tcp/localhost/$ssh_port" 2>/dev/null; then
+            return $VDE_SUCCESS
+        fi
+
+        # Fallback to nc if available
+        if command -v nc >/dev/null 2>&1; then
+            if nc -z localhost "$ssh_port" 2>/dev/null; then
+                return $VDE_SUCCESS
+            fi
+        fi
+
+        # Only sleep if we haven't exceeded timeout
+        local next_elapsed=$((elapsed + 2))
+        if [ $next_elapsed -le $timeout ]; then
+            sleep 2
+            elapsed=$next_elapsed
+        else
+            # Don't sleep beyond timeout
+            elapsed=$timeout
+        fi
+    done
+
+    return $VDE_ERR_TIMEOUT
+}
+
+# vde_check_ssh_login - Check if SSH login works
+# Args:
+#   vm_name - Name of the VM
+#   timeout - Timeout in seconds (default: VDE_SSH_TIMEOUT)
+# Returns:
+#   0 (VDE_SUCCESS) if SSH login works
+#   VDE_ERR_TIMEOUT if SSH login times out
+#   VDE_ERR_GENERAL if SSH login fails
+vde_check_ssh_login() {
+    local vm_name="$1"
+    local timeout="${2:-$VDE_SSH_TIMEOUT}"
+    local container_name="$vm_name"
+
+    # Language VMs use -dev suffix
+    local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
+    if [ "$vm_type" = "lang" ]; then
+        container_name="${vm_name}-dev"
+    fi
+
+    # Get SSH port
+    local ssh_port
+    ssh_port=$(docker port "$container_name" 22 2>/dev/null | grep -oE '0.0.0.0:[0-9]+' | cut -d: -f2)
+
+    if [ -z "$ssh_port" ]; then
+        return $VDE_ERR_GENERAL
+    fi
+
+    # Check SSH login
+    local elapsed=0
+    while [ $elapsed -lt $timeout ]; do
+        # Try SSH connection with a simple echo command
+        if ssh -o ConnectTimeout=3 \
+               -o StrictHostKeyChecking=no \
+               -o UserKnownHostsFile=/dev/null \
+               -p "$ssh_port" \
+               "${VDE_SSH_USER}@localhost" \
+               "echo 'ssh_ok'" 2>/dev/null | grep -q "ssh_ok"; then
+            return $VDE_SUCCESS
+        fi
+
+        # Only sleep if we haven't exceeded timeout
+        local next_elapsed=$((elapsed + 2))
+        if [ $next_elapsed -le $timeout ]; then
+            sleep 2
+            elapsed=$next_elapsed
+        else
+            # Don't sleep beyond timeout
+            elapsed=$timeout
+        fi
+    done
+
+    return $VDE_ERR_TIMEOUT
+}
+
+# vde_check_language_tool - Check if language tool is available
+# Args:
+#   vm_name - Name of the VM
+#   timeout - Timeout in seconds (default: VDE_SSH_TIMEOUT)
+# Returns:
+#   0 (VDE_SUCCESS) if language tool is available
+#   VDE_ERR_TIMEOUT if check times out
+#   VDE_ERR_GENERAL if tool not available
+vde_check_language_tool() {
+    local vm_name="$1"
+    local timeout="${2:-$VDE_SSH_TIMEOUT}"
+    local container_name="$vm_name"
+
+    # Language VMs use -dev suffix
+    local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
+    if [ "$vm_type" = "lang" ]; then
+        container_name="${vm_name}-dev"
+    fi
+
+    # Get SSH port
+    local ssh_port
+    ssh_port=$(docker port "$container_name" 22 2>/dev/null | grep -oE '0.0.0.0:[0-9]+' | cut -d: -f2)
+
+    if [ -z "$ssh_port" ]; then
+        return $VDE_ERR_GENERAL
+    fi
+
+    # Map VM names to their language tools
+    local -A tool_map
+    tool_map=(
+        "python" "python3 --version"
+        "ruby" "ruby --version"
+        "go" "go version"
+        "rust" "rustc --version"
+        "js" "node --version"
+        "java" "java -version"
+        "kotlin" "kotlin -version"
+        "scala" "scala -version"
+        "csharp" "dotnet --version"
+        "php" "php --version"
+        "cpp" "g++ --version"
+        "c" "gcc --version"
+        "lua" "lua -v"
+        "r" "R --version"
+        "zig" "zig version"
+        "elixir" "elixir --version"
+        "swift" "swift --version"
+        "flutter" "flutter --version"
+        "haskell" "ghc --version"
+        "asm" "nasm -v"
+    )
+
+    # Get the command for this VM
+    local check_cmd="${tool_map[$vm_name]}"
+
+    # If no specific command, just check that SSH works
+    if [ -z "$check_cmd" ]; then
+        return $VDE_SUCCESS
+    fi
+
+    # Check if tool is available via SSH
+    local elapsed=0
+    while [ $elapsed -lt $timeout ]; do
+        if ssh -o ConnectTimeout=3 \
+               -o StrictHostKeyChecking=no \
+               -o UserKnownHostsFile=/dev/null \
+               -p "$ssh_port" \
+               "${VDE_SSH_USER}@localhost" \
+               "$check_cmd" >/dev/null 2>&1; then
+            return $VDE_SUCCESS
+        fi
+
+        # Only sleep if we haven't exceeded timeout
+        local next_elapsed=$((elapsed + 2))
+        if [ $next_elapsed -le $timeout ]; then
+            sleep 2
+            elapsed=$next_elapsed
+        else
+            # Don't sleep beyond timeout
+            elapsed=$timeout
+        fi
+    done
+
+    return $VDE_ERR_TIMEOUT
+}
+
+# vde_wait_for_container_healthy - Wait for container to be healthy with exponential backoff
+# Args:
+#   vm_name - Name of the VM
+#   max_wait - Maximum wait time in seconds (default: VDE_DOCKER_TIMEOUT)
+# Returns:
+#   0 (VDE_SUCCESS) if container becomes healthy
+#   VDE_ERR_TIMEOUT if container doesn't become healthy
+vde_wait_for_container_healthy() {
+    local vm_name="$1"
+    local max_wait="${2:-$VDE_DOCKER_TIMEOUT}"
+    local container_name="$vm_name"
+
+    # Language VMs use -dev suffix
+    local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
+    if [ "$vm_type" = "lang" ]; then
+        container_name="${vm_name}-dev"
+    fi
+
+    local elapsed=0
+    local check_interval=1
+    local max_interval=5
+
+    echo "Waiting for $container_name to be healthy (max ${max_wait}s)..."
+
+    while [ $elapsed -lt $max_wait ]; do
+        # Check container running
+        if vde_check_container_running "$vm_name"; then
+            # For language VMs, also check SSH
+            if [ "$vm_type" = "lang" ]; then
+                if vde_check_ssh_login "$vm_name" 5; then
+                    echo "✓ $container_name is healthy"
+                    return $VDE_SUCCESS
+                fi
+            else
+                echo "✓ $container_name is healthy"
+                return $VDE_SUCCESS
+            fi
+        fi
+
+        # Exponential backoff with max cap
+        sleep $check_interval
+        elapsed=$((elapsed + check_interval))
+        check_interval=$((check_interval * 2))
+        [ $check_interval -gt $max_interval ] && check_interval=$max_interval
+
+        # Progress update every 30 seconds
+        if [ $((elapsed % 30)) -eq 0 ] && [ $elapsed -gt 0 ]; then
+            echo "  [$elapsed/${max_wait}s] Still waiting for $container_name..."
+        fi
+    done
+
+    echo "✗ $container_name did not become healthy within ${max_wait}s" >&2
+    return $VDE_ERR_TIMEOUT
+}
+
+# vde_health_check - Comprehensive health check
+# Args:
+#   vm_name - Name of the VM
+#   verbose - Set to 1 for verbose output
+# Returns:
+#   0 (VDE_SUCCESS) if all checks pass
+#   Non-zero if any check fails
+vde_health_check() {
+    local vm_name="$1"
+    local verbose="${2:-0}"
+    local container_name="$vm_name"
+    local all_passed=true
+
+    # Language VMs use -dev suffix
+    local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
+    if [ "$vm_type" = "lang" ]; then
+        container_name="${vm_name}-dev"
+    fi
+
+    [ "$verbose" -eq 1 ] && echo "Health check for $container_name:"
+
+    # Check 1: Container running
+    if vde_check_container_running "$vm_name"; then
+        [ "$verbose" -eq 1 ] && echo "  ✓ Container is running"
+    else
+        [ "$verbose" -eq 1 ] && echo "  ✗ Container is not running"
+        all_passed=false
+    fi
+
+    # Check 2: SSH port (language VMs only)
+    if [ "$vm_type" = "lang" ]; then
+        if vde_check_ssh_port "$vm_name" 10; then
+            [ "$verbose" -eq 1 ] && echo "  ✓ SSH port is accessible"
+        else
+            [ "$verbose" -eq 1 ] && echo "  ✗ SSH port is not accessible"
+            all_passed=false
+        fi
+
+        # Check 3: SSH login
+        if vde_check_ssh_login "$vm_name" 10; then
+            [ "$verbose" -eq 1 ] && echo "  ✓ SSH login works"
+        else
+            [ "$verbose" -eq 1 ] && echo "  ✗ SSH login failed"
+            all_passed=false
+        fi
+
+        # Check 4: Language tool
+        if vde_check_language_tool "$vm_name" 10; then
+            [ "$verbose" -eq 1 ] && echo "  ✓ Language tool is available"
+        else
+            [ "$verbose" -eq 1 ] && echo "  ✗ Language tool check failed"
+            all_passed=false
+        fi
+    fi
+
+    if [ "$all_passed" = "true" ]; then
+        [ "$verbose" -eq 1 ] && echo "✓ $container_name health check: PASSED"
+        return $VDE_SUCCESS
+    else
+        [ "$verbose" -eq 1 ] && echo "✗ $container_name health check: FAILED"
+        return 1
+    fi
+}
+
+# Export functions for use in other scripts
+export -f vde_check_container_running 2>/dev/null || true
+export -f vde_check_ssh_port 2>/dev/null || true
+export -f vde_check_ssh_login 2>/dev/null || true
+export -f vde_check_language_tool 2>/dev/null || true
+export -f vde_wait_for_container_healthy 2>/dev/null || true
+export -f vde_health_check 2>/dev/null || true
