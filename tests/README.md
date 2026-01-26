@@ -15,6 +15,49 @@ The VDE test suite provides comprehensive coverage across three testing levels:
 ```
 tests/
 ├── run-all-known-tests.sh              # Run ALL tests (unit + integration)
+├── README.md                            # This file - test suite documentation
+├── run-docker-free-tests.sh            # Docker-free tests only (fast, parser logic)
+├── run-docker-required-tests.sh        # Docker-required tests (containers, SSH)
+├── test-bdd-in-container.sh            # BDD tests in container (Docker-in-Docker, CI)
+├── test-e2e-user-journey.sh            # End-to-end user journey test
+├── generate-user-guide.sh              # Generate user guide from BDD results
+├── bug-fix-validation.test.sh          # Bug fix validation tests
+├── features/                            # BDD feature specifications
+│   ├── README.md                        # Feature files overview
+│   ├── steps/                           # BDD step definitions (Python)
+│   │   ├── README.md                    # Step definitions directory guide
+│   │   ├── config.py                    # Test configuration
+│   │   ├── vm_common.py                 # Shared helper functions
+│   │   ├── ssh_helpers.py               # SSH-specific helpers
+│   │   ├── vm_creation_steps.py         # VM creation steps
+│   │   ├── vm_status_steps.py           # VM status checks
+│   │   ├── vm_operations_steps.py       # Basic VM operations
+│   │   ├── vm_docker_build_steps.py     # Docker build operations
+│   │   ├── vm_docker_network_steps.py   # Docker networking
+│   │   ├── vm_docker_service_steps.py   # Docker service VMs
+│   │   ├── installation_steps.py        # Installation setup
+│   │   ├── post_install_verification_steps.py  # Post-install checks
+│   │   ├── uninstallation_steps.py      # Uninstallation cleanup
+│   │   ├── ssh_config_verification_steps.py    # SSH config checks
+│   │   ├── vm_state_verification_steps.py      # VM state verification
+│   │   ├── ssh_connection_steps.py      # SSH connection testing
+│   │   ├── user_workflow_steps.py       # User environment workflows
+│   │   ├── team_collaboration_steps.py  # Team onboarding
+│   │   ├── port_management_steps.py     # Port allocation
+│   │   ├── cache_steps.py               # Cache system
+│   │   ├── parser_steps.py              # Command parser
+│   │   ├── template_steps.py            # Template rendering
+│   │   ├── config_steps.py              # VM configuration
+│   │   ├── ssh_agent_steps.py           # SSH agent management
+│   │   └── daily_workflow_steps.py      # Daily workflows
+│   ├── vm-lifecycle.feature            # VM creation/start/stop workflows
+│   ├── port-management.feature         # Port allocation and collision detection
+│   ├── ssh-configuration.feature       # SSH agent and config management
+│   ├── natural-language-parser.feature # AI command parser
+│   ├── template-system.feature         # Template rendering engine
+│   ├── shell-compatibility.feature     # Cross-shell compatibility
+│   ├── cache-system.feature            # Cache invalidation and persistence
+│   └── docker-operations.feature       # Docker Compose operations
 ├── run-docker-free-tests.sh            # Docker-free tests only (fast, parser logic)
 ├── run-docker-required-tests.sh        # Docker-required tests (containers, SSH)
 ├── test-bdd-in-container.sh            # BDD tests in container (Docker-in-Docker, CI)

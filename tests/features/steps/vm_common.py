@@ -386,3 +386,341 @@ def is_test_container(container_name):
     # Labels are returned as a list-like string
     labels_str = result.stdout.strip()
     return "vde.test=true" in labels_str or "vde.test" in labels_str
+
+
+# =============================================================================
+# Installation and Setup Helper Functions
+# =============================================================================
+
+
+def check_docker_available():
+    """Check if Docker is installed and accessible.
+
+    Returns:
+        bool: True if Docker is available
+    """
+    try:
+        result = subprocess.run(
+            ["docker", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+def check_docker_compose_available():
+    """Check if docker-compose is installed and accessible.
+
+    Returns:
+        bool: True if docker-compose (standalone or plugin) is available
+    """
+    try:
+        # Try docker-compose (standalone) first
+        result = subprocess.run(
+            ["docker-compose", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        if result.returncode == 0:
+            return True
+        # Try docker compose (plugin) next
+        result = subprocess.run(
+            ["docker", "compose", "version"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+def check_zsh_available():
+    """Check if zsh is installed and accessible.
+
+    Returns:
+        bool: True if zsh is available
+    """
+    try:
+        result = subprocess.run(
+            ["zsh", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+def check_vde_script_exists(script_name):
+    """Check if a VDE script exists and is executable.
+
+    Args:
+        script_name: Name of the script (e.g., 'start-virtual')
+
+    Returns:
+        bool: True if script exists and is executable
+    """
+    script_path = VDE_ROOT / "scripts" / script_name
+    return script_path.exists() and os.access(script_path, os.X_OK)
+
+
+def check_directory_exists(dir_name):
+    """Check if a directory exists in VDE_ROOT.
+
+    Args:
+        dir_name: Directory name relative to VDE_ROOT
+
+    Returns:
+        bool: True if directory exists and is a directory
+    """
+    dir_path = VDE_ROOT / dir_name
+    return dir_path.exists() and dir_path.is_dir()
+
+
+def check_file_in_vde(file_path):
+    """Check if a file exists relative to VDE_ROOT.
+
+    Args:
+        file_path: Path relative to VDE_ROOT
+
+    Returns:
+        bool: True if file exists and is a file
+    """
+    full_path = VDE_ROOT / file_path
+    return full_path.exists() and full_path.is_file()
+
+
+def get_vm_types():
+    """Read and parse vm-types.conf to get available VM types.
+
+    Returns:
+        list: Sorted list of VM type names
+    """
+    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    if not vm_types_file.exists():
+        return []
+    content = vm_types_file.read_text()
+    # Extract VM type names (first word of each line, skipping comments)
+    vm_types = set()  # Use set to avoid duplicates
+    for line in content.split('\n'):
+        line = line.strip()
+        if line and not line.startswith('#'):
+            parts = line.split('|')
+            if parts:
+                # Get all aliases for this VM type
+                for vm_type in parts:
+                    vm_type = vm_type.strip()
+                    if vm_type and vm_type not in ['lang', 'service', 'display']:
+                        vm_types.add(vm_type)
+    return sorted(vm_types)  # Return sorted list for consistency
+
+
+def check_docker_network_exists(network_name):
+    """Check if a Docker network exists.
+
+    Args:
+        network_name: Name of the Docker network
+
+    Returns:
+        bool: True if network exists
+    """
+    try:
+        result = subprocess.run(
+            ["docker", "network", "ls", "--filter", f"name={network_name}"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        return network_name in result.stdout
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+def check_ssh_keys_exist():
+    """Check if SSH keys exist in standard location.
+
+    Returns:
+        bool: True if id_ed25519 key exists
+    """
+    ssh_dir = Path.home() / ".ssh"
+    key_file = ssh_dir / "id_ed25519"
+    return key_file.exists()
+
+
+def check_scripts_executable():
+    """Check that all shell scripts in scripts/ are executable.
+
+    Returns:
+        bool: True if all .sh files are executable
+    """
+    scripts_dir = VDE_ROOT / "scripts"
+    if not scripts_dir.exists():
+        return False
+    return all(os.access(script_file, os.X_OK) for script_file in scripts_dir.rglob("*.sh"))
+
+
+# =============================================================================
+# VM State Management Helpers
+# =============================================================================
+
+
+def wait_for_container_stopped(vm_name, timeout=30, interval=1):
+    """Wait for container to stop.
+
+    Args:
+        vm_name: Name of the VM/container
+        timeout: Maximum time to wait in seconds
+        interval: Check interval in seconds
+
+    Returns:
+        bool: True if container stopped within timeout
+    """
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if not container_exists(vm_name):
+            return True
+        time.sleep(interval)
+    return False
+
+
+def ensure_vm_created(context, vm_name, timeout=120):
+    """Ensure VM compose file exists, create if not.
+
+    In test mode (ALLOW_CLEANUP=True), actually creates the VM.
+    In local mode, only checks if VM exists and sets context flags.
+
+    Args:
+        context: Behave context object
+        vm_name: Name of the VM
+        timeout: Command timeout in seconds
+
+    Returns:
+        bool: True if VM exists or was created successfully
+    """
+    # Detect test mode
+    ALLOW_CLEANUP = os.environ.get("VDE_TEST_MODE") == "1"
+
+    if not compose_file_exists(vm_name):
+        if ALLOW_CLEANUP:
+            result = run_vde_command(f"create {vm_name}", timeout=timeout)
+            if not hasattr(context, 'created_vms'):
+                context.created_vms = set()
+            context.created_vms.add(vm_name)
+            context.last_exit_code = result.returncode
+            context.last_output = result.stdout
+            context.last_error = result.stderr
+            return result.returncode == 0
+        else:
+            # Local mode: just note that VM doesn't exist
+            return False
+    return True
+
+
+def ensure_vm_running(context, vm_name, create_timeout=120, start_timeout=180):
+    """Ensure VM is created and running.
+
+    In test mode (ALLOW_CLEANUP=True), actually creates/starts the VM.
+    In local mode, only checks existing state and sets context flags.
+
+    Args:
+        context: Behave context object
+        vm_name: Name of the VM
+        create_timeout: Timeout for VM creation
+        start_timeout: Timeout for VM start
+
+    Returns:
+        bool: True if VM is running
+    """
+    # Detect test mode
+    ALLOW_CLEANUP = os.environ.get("VDE_TEST_MODE") == "1"
+
+    # Initialize context tracking sets
+    if not hasattr(context, 'running_vms'):
+        context.running_vms = set()
+    if not hasattr(context, 'created_vms'):
+        context.created_vms = set()
+
+    if ALLOW_CLEANUP:
+        # Test mode: create if needed
+        if not compose_file_exists(vm_name):
+            if not ensure_vm_created(context, vm_name, timeout=create_timeout):
+                return False
+
+        # Check if already running
+        if container_exists(vm_name):
+            context.running_vms.add(vm_name)
+            context.created_vms.add(vm_name)
+            return True
+
+        # Start the VM
+        result = run_vde_command(f"start {vm_name}", timeout=start_timeout)
+
+        # Wait for container
+        if result.returncode == 0:
+            wait_for_container(vm_name, timeout=60)
+
+        # Track state
+        if container_exists(vm_name):
+            context.running_vms.add(vm_name)
+            context.created_vms.add(vm_name)
+
+        context.last_exit_code = result.returncode
+        context.last_output = result.stdout
+        context.last_error = result.stderr
+        return result.returncode == 0
+    else:
+        # Local mode: detect existing state
+        is_running = container_exists(vm_name)
+        is_created = compose_file_exists(vm_name)
+        if is_running:
+            context.running_vms.add(vm_name)
+        if is_created:
+            context.created_vms.add(vm_name)
+        return is_running
+
+
+def ensure_vm_stopped(context, vm_name, timeout=60):
+    """Ensure VM is stopped.
+
+    In test mode (ALLOW_CLEANUP=True), actually stops the VM.
+    In local mode, only checks existing state.
+
+    Args:
+        context: Behave context object
+        vm_name: Name of the VM
+        timeout: Command timeout in seconds
+
+    Returns:
+        bool: True if VM is stopped
+    """
+    # Detect test mode
+    ALLOW_CLEANUP = os.environ.get("VDE_TEST_MODE") == "1"
+
+    if ALLOW_CLEANUP:
+        if not container_exists(vm_name):
+            return True
+
+        result = run_vde_command(f"stop {vm_name}", timeout=timeout)
+
+        if result.returncode == 0:
+            wait_for_container_stopped(vm_name, timeout=30)
+
+        if hasattr(context, 'running_vms'):
+            context.running_vms.discard(vm_name)
+
+        context.last_exit_code = result.returncode
+        context.last_output = result.stdout
+        context.last_error = result.stderr
+        return not container_exists(vm_name)
+    else:
+        # Local mode: just check if stopped
+        is_stopped = not container_exists(vm_name)
+        if is_stopped and hasattr(context, 'running_vms'):
+            context.running_vms.discard(vm_name)
+        return is_stopped
