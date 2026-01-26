@@ -550,10 +550,14 @@ def step_file_storage(context):
 
 @then('container should be built successfully')
 def step_container_built(context):
-    """Verify container built."""
-    assert hasattr(context, 'docker_command'), "docker_command flag was not set by previous step"
-    assert context.docker_command in ['build', 'up'], \
-        f"Expected 'build' or 'up' command, got '{context.docker_command}'"
+    """Verify container built - check actual Docker image exists."""
+    vm_name = getattr(context, 'vm_name', getattr(context, 'current_vm', 'python'))
+    image_name = f"dev-{vm_name}"
+    result = subprocess.run(
+        ["docker", "images", "--format", "{{.Repository}}", image_name],
+        capture_output=True, text=True, timeout=10
+    )
+    assert image_name in result.stdout, f"Docker image '{image_name}' should exist after build"
 
 
 @then('container should be started')
@@ -569,9 +573,14 @@ def step_container_started(context):
         is_running = vm_name in result.stdout
         assert is_running, f"Container '{vm_name}' should be running"
     else:
-        # No vm_name set - require explicit docker_command flag
-        assert hasattr(context, 'docker_command'), "docker_command flag was not set by previous step"
-        assert context.docker_command == 'up', f"Expected 'up' command, got '{context.docker_command}'"
+        # No vm_name set - use default VM name 'python'
+        default_vm = getattr(context, 'current_vm', 'python')
+        result = subprocess.run(
+            ["docker", "ps", "--format", "{{.Names}}", "--filter", f"name={default_vm}"],
+            capture_output=True, text=True, timeout=10
+        )
+        is_running = default_vm in result.stdout
+        assert is_running, f"Container '{default_vm}' should be running"
 
 
 @then('container should be stopped')
@@ -587,9 +596,14 @@ def step_container_stopped(context):
         is_running = vm_name in result.stdout
         assert not is_running, f"Container '{vm_name}' should be stopped"
     else:
-        # No vm_name set - require explicit docker_command flag
-        assert hasattr(context, 'docker_command'), "docker_command flag was not set by previous step"
-        assert context.docker_command == 'stop', f"Expected 'stop' command, got '{context.docker_command}'"
+        # No vm_name set - use default VM name 'python'
+        default_vm = getattr(context, 'current_vm', 'python')
+        result = subprocess.run(
+            ["docker", "ps", "--format", "{{.Names}}", "--filter", f"name={default_vm}"],
+            capture_output=True, text=True, timeout=10
+        )
+        is_running = default_vm in result.stdout
+        assert not is_running, f"Container '{default_vm}' should be stopped"
 
 
 @then('build should use cache')
