@@ -48,9 +48,9 @@ def step_ssh_keys_exist_ssh_dir(context):
 
 @when('I run any VDE command that requires SSH')
 def step_run_vde_ssh_command(context):
-    """Run a VDE command that requires SSH."""
-    # Run list-vms as it requires SSH setup
-    result = run_vde_command("./scripts/list-vms", timeout=30)
+    """Run a VDE command that requires SSH using vde list."""
+    # Run list as it requires SSH setup
+    result = run_vde_command("list", timeout=30)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr

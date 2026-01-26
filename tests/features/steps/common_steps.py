@@ -17,23 +17,11 @@ from pathlib import Path
 from behave import given, then, when
 
 from config import VDE_ROOT
+from vm_common import run_vde_command
 
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
-
-def run_vde_command(command, timeout=120):
-    """Run a VDE script and return the result."""
-    env = os.environ.copy()
-    result = subprocess.run(
-        f"cd {VDE_ROOT} && {command}",
-        shell=True,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        env=env,
-    )
-    return result
 
 
 # =============================================================================
@@ -56,7 +44,7 @@ def step_cache_exists(context):
 
     # If cache doesn't exist, run VDE command to create it
     if not cache_path.exists():
-        result = run_vde_command("./scripts/list-vms", timeout=30)
+        result = run_vde_command("list", timeout=30)
         context.cache_exists = (result.returncode == 0) and cache_path.exists()
     else:
         context.cache_exists = True
@@ -184,7 +172,7 @@ def step_no_disk_space(context):
 @when('VM types are loaded')
 def step_load_vm_types(context):
     """Load VM types - actually run VDE script."""
-    result = run_vde_command("./scripts/list-vms", timeout=30)
+    result = run_vde_command("list", timeout=30)
     context.vm_types_loaded = (result.returncode == 0)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
@@ -193,8 +181,8 @@ def step_load_vm_types(context):
 
 @when('VM types are loaded with --no-cache')
 def step_load_vm_types_no_cache(context):
-    """Load VM types bypassing cache."""
-    result = run_vde_command("./scripts/list-vms --no-cache 2>/dev/null || ./scripts/list-vms", timeout=30)
+    """Load VM types bypassing cache using vde list --reload."""
+    result = run_vde_command("list --reload", timeout=30)
     context.vm_types_loaded = (result.returncode == 0)
     context.cache_bypassed = True
     context.last_exit_code = result.returncode

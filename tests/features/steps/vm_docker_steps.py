@@ -147,9 +147,9 @@ def step_vm_has_env(context, vm):
 
 @given('I start my first VM')
 def step_start_first_vm(context):
-    """Start first VM."""
-    result = run_vde_command("./scripts/start-virtual python", timeout=120)
-    context.last_command = "./scripts/start-virtual python"
+    """Start first VM using vde command."""
+    result = run_vde_command("start python", timeout=120)
+    context.last_command = "vde start python"
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
     if not hasattr(context, 'started_vms'):
@@ -159,18 +159,18 @@ def step_start_first_vm(context):
 
 @given('I create a PostgreSQL VM')
 def step_create_postgresql_vm(context):
-    """Create PostgreSQL VM."""
-    result = run_vde_command("./scripts/create-virtual-for postgres", timeout=120)
-    context.last_command = "./scripts/create-virtual-for postgres"
+    """Create PostgreSQL VM using vde command."""
+    result = run_vde_command("create postgres", timeout=120)
+    context.last_command = "vde create postgres"
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
 
 
 @given('I start any VM')
 def step_start_any_vm(context):
-    """Start any VM."""
-    result = run_vde_command("./scripts/start-virtual python", timeout=120)
-    context.last_command = "./scripts/start-virtual python"
+    """Start any VM using vde command."""
+    result = run_vde_command("start python", timeout=120)
+    context.last_command = "vde start python"
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
     if not hasattr(context, 'started_vms'):
@@ -180,18 +180,18 @@ def step_start_any_vm(context):
 
 @given('VDE creates a VM')
 def step_vde_creates_vm(context):
-    """VDE creates VM."""
-    result = run_vde_command("./scripts/create-virtual-for python", timeout=120)
-    context.last_command = "./scripts/create-virtual-for python"
+    """VDE creates VM using vde command."""
+    result = run_vde_command("create python", timeout=120)
+    context.last_command = "vde create python"
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
 
 
 @given('I rebuild a language VM')
 def step_rebuild_language_vm(context):
-    """Rebuild language VM."""
-    result = run_vde_command("./scripts/start-virtual python --rebuild", timeout=180)
-    context.last_command = "./scripts/start-virtual python --rebuild"
+    """Rebuild language VM using vde command."""
+    result = run_vde_command("start python --rebuild", timeout=180)
+    context.last_command = "vde start python --rebuild"
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
 
@@ -210,9 +210,9 @@ def step_dependent_services(context):
 
 @when('I start VM "{vm}"')
 def step_start_vm(context, vm):
-    """Start a VM using start-virtual script."""
-    result = run_vde_command(f"./scripts/start-virtual {vm}", timeout=120)
-    context.last_command = f"./scripts/start-virtual {vm}"
+    """Start a VM using vde start command."""
+    result = run_vde_command(f"vde start {vm}", timeout=120)
+    context.last_command = f"vde start {vm}"
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
@@ -221,9 +221,9 @@ def step_start_vm(context, vm):
 
 @when('I stop VM "{vm}"')
 def step_stop_vm(context, vm):
-    """Stop a VM using shutdown-virtual script."""
-    result = run_vde_command(f"./scripts/shutdown-virtual {vm}", timeout=60)
-    context.last_command = f"./scripts/shutdown-virtual {vm}"
+    """Stop a VM using vde stop command."""
+    result = run_vde_command(f"vde stop {vm}", timeout=60)
+    context.last_command = f"vde stop {vm}"
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
@@ -231,9 +231,9 @@ def step_stop_vm(context, vm):
 
 @when('I restart VM "{vm}"')
 def step_restart_vm(context, vm):
-    """Restart a VM."""
-    result = run_vde_command(f"./scripts/shutdown-virtual {vm} && ./scripts/start-virtual {vm}", timeout=180)
-    context.last_command = f"./scripts/shutdown-virtual {vm} && ./scripts/start-virtual {vm}"
+    """Restart a VM using vde restart command."""
+    result = run_vde_command(f"vde restart {vm}", timeout=180)
+    context.last_command = f"vde restart {vm}"
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
@@ -241,9 +241,9 @@ def step_restart_vm(context, vm):
 
 @when('I start VM "{vm}" with --rebuild')
 def step_start_rebuild(context, vm):
-    """Start VM with rebuild."""
-    result = run_vde_command(f"./scripts/start-virtual {vm} --rebuild", timeout=180)
-    context.last_command = f"./scripts/start-virtual {vm} --rebuild"
+    """Start VM with rebuild using vde start --rebuild command."""
+    result = run_vde_command(f"vde start {vm} --rebuild", timeout=180)
+    context.last_command = f"vde start {vm} --rebuild"
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
@@ -251,9 +251,9 @@ def step_start_rebuild(context, vm):
 
 @when('I start VM "{vm}" with --rebuild and --no-cache')
 def step_start_rebuild_no_cache(context, vm):
-    """Start VM with rebuild and no cache."""
-    result = run_vde_command(f"./scripts/start-virtual {vm} --rebuild --no-cache", timeout=180)
-    context.last_command = f"./scripts/start-virtual {vm} --rebuild --no-cache"
+    """Start VM with rebuild and no cache using vde start command."""
+    result = run_vde_command(f"vde start {vm} --rebuild --no-cache", timeout=180)
+    context.last_command = f"vde start {vm} --rebuild --no-cache"
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
@@ -261,9 +261,9 @@ def step_start_rebuild_no_cache(context, vm):
 
 @when('I try to start a VM')
 def step_try_start_vm(context):
-    """Try to start a VM - execute actual start command."""
-    result = run_vde_command("./scripts/start-virtual python", timeout=120)
-    context.last_command = "./scripts/start-virtual python"
+    """Try to start a VM - execute actual vde start command."""
+    result = run_vde_command("start python", timeout=120)
+    context.last_command = "vde start python"
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
@@ -309,8 +309,8 @@ def step_operation_retried(context):
 
 @when('I check VM status')
 def step_check_vm_status(context):
-    """Check VM status."""
-    result = run_vde_command("./scripts/list-vms", timeout=30)
+    """Check VM status using vde list command."""
+    result = run_vde_command("list", timeout=30)
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
 
@@ -325,30 +325,30 @@ def step_get_running_vms(context):
 
 @when('VM "{vm}" is started')
 def step_vm_started(context, vm):
-    """VM is started."""
-    result = run_vde_command(f"./scripts/start-virtual {vm}", timeout=120)
+    """VM is started using vde start command."""
+    result = run_vde_command(f"vde start {vm}", timeout=120)
     context.last_exit_code = result.returncode
 
 
 @when('language VM "{vm}" is started')
 def step_lang_vm_started(context, vm):
-    """Language VM is started."""
-    result = run_vde_command(f"./scripts/start-virtual {vm}", timeout=120)
+    """Language VM is started using vde start command."""
+    result = run_vde_command(f"vde start {vm}", timeout=120)
     context.last_exit_code = result.returncode
 
 
 @when('service VM "{vm}" is started')
 def step_svc_vm_started(context, vm):
-    """Service VM is started."""
-    result = run_vde_command(f"./scripts/start-virtual {vm}", timeout=120)
+    """Service VM is started using vde start command."""
+    result = run_vde_command(f"vde start {vm}", timeout=120)
     context.last_exit_code = result.returncode
 
 
 @when('container is started')
 def step_container_started(context):
-    """Container is started - execute actual container start command."""
-    result = run_vde_command("./scripts/start-virtual python", timeout=120)
-    context.last_command = "./scripts/start-virtual python"
+    """Container is started - execute actual vde start command."""
+    result = run_vde_command("start python", timeout=120)
+    context.last_command = "vde start python"
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
@@ -358,36 +358,36 @@ def step_container_started(context):
 @when('I request to "stop everything"')
 def step_request_stop_all(context):
     """Request to stop everything."""
-    result = run_vde_command("./scripts/shutdown-virtual all", timeout=60)
-    context.last_command = "./scripts/shutdown-virtual all"
+    result = run_vde_command("stop --all", timeout=60)
+    context.last_command = "vde stop --all"
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
 
 
 @when('I request to start my Python development environment')
 def step_request_start_python_dev(context):
-    """Request to start Python environment."""
-    result = run_vde_command("./scripts/start-virtual python", timeout=120)
-    context.last_command = "./scripts/start-virtual python"
+    """Request to start Python environment using vde start command."""
+    result = run_vde_command("start python", timeout=120)
+    context.last_command = "vde start python"
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
 
 
 @when('it starts')
 def step_postgresql_starts(context):
-    """PostgreSQL starts."""
-    result = run_vde_command("./scripts/start-virtual postgres", timeout=120)
-    context.last_command = "./scripts/start-virtual postgres"
+    """PostgreSQL starts using vde start command."""
+    result = run_vde_command("start postgres", timeout=120)
+    context.last_command = "vde start postgres"
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
 
 
 @when('I stop and restart PostgreSQL')
 def step_stop_restart_postgresql(context):
-    """Stop and restart PostgreSQL."""
-    result_stop = run_vde_command("./scripts/shutdown-virtual postgres", timeout=60)
-    result_start = run_vde_command("./scripts/start-virtual postgres", timeout=120)
-    context.last_command = "./scripts/start-virtual postgres"
+    """Stop and restart PostgreSQL using vde commands."""
+    result_stop = run_vde_command("stop postgres", timeout=60)
+    result_start = run_vde_command("start postgres", timeout=120)
+    context.last_command = "vde start postgres"
     context.last_output = result_start.stdout
     context.last_exit_code = result_start.returncode
 
@@ -402,9 +402,9 @@ def step_check_resource_usage(context):
 
 @when('I start them together')
 def step_start_together(context):
-    """Start dependent services together."""
-    result = run_vde_command("./scripts/start-virtual postgres redis", timeout=180)
-    context.last_command = "./scripts/start-virtual postgres redis"
+    """Start dependent services together using vde start command."""
+    result = run_vde_command("start postgres redis", timeout=180)
+    context.last_command = "vde start postgres redis"
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
 
@@ -419,9 +419,9 @@ def step_one_vm_crashes(context):
 
 @when('I rebuild VMs with --rebuild')
 def step_rebuild_vms(context):
-    """Rebuild VMs with --rebuild flag."""
-    result = run_vde_command("./scripts/start-virtual python --rebuild", timeout=180)
-    context.last_command = "./scripts/start-virtual python --rebuild"
+    """Rebuild VMs with --rebuild flag using vde start command."""
+    result = run_vde_command("start python --rebuild", timeout=180)
+    context.last_command = "vde start python --rebuild"
     context.last_output = result.stdout
     context.last_exit_code = result.returncode
 
@@ -1148,9 +1148,9 @@ def step_crash_isolated(context):
 
 @then('I can restart the crashed VM independently')
 def step_restart_independent(context):
-    """Restart independent - verify VM can be restarted."""
+    """Restart independent - verify VM can be restarted using vde start command."""
     # Try to start python (the crashed VM)
-    result = run_vde_command("./scripts/start-virtual python", timeout=120)
+    result = run_vde_command("start python", timeout=120)
     assert result.returncode == 0, "Crashed VM should be able to restart independently"
 
 

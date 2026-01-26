@@ -131,7 +131,7 @@ def step_known_hosts_old_entry(context, pattern):
 @when('I remove VM for SSH cleanup "{vm}"')
 def step_remove_vm_ssh_cleanup(context, vm):
     """Remove a VM using remove-virtual script."""
-    result = run_vde_command(f"./scripts/remove-virtual {vm}", timeout=60)
+    result = run_vde_command(f"remove {vm}", timeout=60)
     context.vm_removed = result.returncode == 0
     context.removed_vm_name = vm
 

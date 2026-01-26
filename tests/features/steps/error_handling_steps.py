@@ -72,7 +72,7 @@ def step_try_create_vm(context):
     """Attempt to create a VM with invalid configuration."""
     # Try to create a VM with invalid name
     result = run_vde_command(
-        f"./scripts/create-virtual-for {context.invalid_vm_name}",
+        f"create {context.invalid_vm_name}",
         timeout=30
     )
     context.last_exit_code = result.returncode
@@ -107,7 +107,7 @@ def step_start_multiple_vms(context):
         results = {}
         for vm in context.working_vms:
             result = run_vde_command(
-                f"./scripts/start-virtual {vm}",
+                f"start {vm}",
                 timeout=30
             )
             results[vm] = {
@@ -117,7 +117,7 @@ def step_start_multiple_vms(context):
             }
         # Try the invalid one
         result = run_vde_command(
-            f"./scripts/start-virtual {context.failing_vm}",
+            f"start {context.failing_vm}",
             timeout=30
         )
         results[context.failing_vm] = {
@@ -132,7 +132,7 @@ def step_start_multiple_vms(context):
         results = {}
         for vm in vms:
             result = run_vde_command(
-                f"./scripts/start-virtual {vm}",
+                f"start {vm}",
                 timeout=30
             )
             results[vm] = {
@@ -732,7 +732,7 @@ def step_request_start_invalid(context):
     vm_lifecycle_steps.py's generic 'start {vm}' patterns.
     """
     vm_name = "nonexistent-vm"
-    result = run_vde_command(f"./scripts/start-virtual {vm_name}", timeout=30)
+    result = run_vde_command(f"start {vm_name}", timeout=30)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr

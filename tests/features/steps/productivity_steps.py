@@ -23,73 +23,7 @@ from config import VDE_ROOT
 # Helper Functions
 # =============================================================================
 
-def run_vde_command(command, timeout=120):
-    """Run a VDE script and return the result."""
-    full_command = f"cd {VDE_ROOT} && {command}"
-    env = os.environ.copy()
-    result = subprocess.run(
-        full_command,
-        shell=True,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        env=env,
-    )
-    return result
-
-def docker_ps():
-    """Get list of running Docker containers."""
-    try:
-        result = subprocess.run(
-            ["docker", "ps", "--format", "{{.Names}}"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        if result.returncode == 0:
-            return set(result.stdout.strip().split("\n")) if result.stdout.strip() else set()
-    except Exception:
-        pass
-    return set()
-
-def container_exists(vm_name):
-    """Check if a container is running for the VM."""
-    containers = docker_ps()
-    # Language VMs use -dev suffix
-    if f"{vm_name}-dev" in containers:
-        return True
-    # Service VMs use plain name
-    return vm_name in containers
-
-def wait_for_container(vm_name, timeout=60, interval=2):
-    """Wait for a container to be running."""
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if container_exists(vm_name):
-            return True
-        time.sleep(interval)
-    return False
-
-def wait_for_container_stop(vm_name, timeout=60, interval=2):
-    """Wait for a container to stop."""
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if not container_exists(vm_name):
-            return True
-        time.sleep(interval)
-    return False
-
-def run_psql_command(sql_command, database="postgres_dev_db"):
-    """Run a PostgreSQL command inside the postgres container."""
-    cmd = f"docker exec postgres psql -U devuser -d {database} -c \"{sql_command}\""
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
-    return result
-
-def psql_execute_file(sql_file, database="postgres_dev_db"):
-    """Execute a SQL file inside the postgres container."""
-    cmd = f"docker exec -i postgres psql -U devuser -d {database} < {sql_file}"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
-    return result
+from vm_common import run_vde_command, docker_ps, container_exists, wait_for_container
 
 # =============================================================================
 # Port Registry and Cache Steps (Real implementations)

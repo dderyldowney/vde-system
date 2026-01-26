@@ -19,12 +19,14 @@ from pathlib import Path
 from behave import given, then, when
 
 from config import VDE_ROOT
+from vm_common import run_vde_command, docker_ps, container_exists
 
 # VDE_ROOT imported from config
+# run_vde_command, docker_ps, container_exists imported from vm_common
 
 
 # =============================================================================
-# Shell Compatibility Helper Functions
+# Shell Compatibility Helper Functions (specific to pattern_steps.py)
 # =============================================================================
 
 def run_shell_command(command, shell='zsh'):
@@ -45,42 +47,6 @@ def run_shell_command_with_state(context, command, shell='zsh'):
             prefix += f'_assoc_set "{array_name}" "{escaped_key}" "{escaped_value}"; '
     full_command = prefix + command
     return run_shell_command(full_command, shell)
-
-
-def run_vde_command(command, timeout=120):
-    """Run a VDE script and return the result."""
-    env = os.environ.copy()
-    result = subprocess.run(
-        f"cd {VDE_ROOT} && {command}",
-        shell=True,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        env=env,
-    )
-    return result
-
-
-def docker_ps():
-    """Get list of running Docker containers."""
-    try:
-        result = subprocess.run(
-            ["docker", "ps", "--format", "{{.Names}}"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        if result.returncode == 0:
-            return set(result.stdout.strip().split("\n")) if result.stdout.strip() else set()
-    except Exception:
-        pass
-    return set()
-
-
-def container_exists(vm_name):
-    """Check if a container is running for the VM."""
-    containers = docker_ps()
-    return f"{vm_name}-dev" in containers or vm_name in containers
 
 
 # =============================================================================
@@ -193,14 +159,14 @@ def step_dont_have_vm(context, vm):
 @given('I create multiple VMs')
 def step_create_multiple(context):
     """Create multiple VMs."""
-    result = run_vde_command("./scripts/start-virtual python rust", timeout=180)
+    result = run_vde_command("start python rust", timeout=180)
     context.creating_multiple = result.returncode == 0
 
 
 @when('I create a new VM')
 def step_create_new(context):
     """Create a new VM."""
-    result = run_vde_command("./scripts/create-virtual-for test-vm", timeout=120)
+    result = run_vde_command("create test-vm", timeout=120)
     if not hasattr(context, 'created_vms'):
         context.created_vms = set()
     if result.returncode == 0:

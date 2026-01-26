@@ -34,33 +34,15 @@ from config import VDE_ROOT
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Import VDE test helpers (run_vde_command and container_exists now from ssh_helpers)
-try:
-    from vde_test_helpers import VDE_ROOT as TestVDE_ROOT
-    from vde_test_helpers import (
-        compose_file_exists,
-        create_vm,
-        docker_ps,
-        file_exists,
-        start_vm,
-        stop_vm,
-        wait_for_container,
-    )
-except ImportError:
-    # Fallback implementations for functions not in ssh_helpers
-    def docker_ps():
-        try:
-            result = subprocess.run(
-                ["docker", "ps", "--format", "{{.Names}}"],
-                capture_output=True, text=True, timeout=10
-            )
-            if result.returncode == 0:
-                return set(result.stdout.strip().split("\n")) if result.stdout.strip() else set()
-        except Exception:
-            pass
-        return set()
-
-    def compose_file_exists(vm_name):
-        return (VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml").exists()
+from vde_test_helpers import (
+    compose_file_exists,
+    create_vm,
+    docker_ps,
+    file_exists,
+    start_vm,
+    stop_vm,
+    wait_for_container,
+)
 
 
 # =============================================================================
@@ -142,16 +124,16 @@ def step_git_requires_auth(context):
 
 @given('VM "{vm_name}" has been created and started')
 def step_vm_created_started(context, vm_name):
-    """Create and start a VM for SSH testing."""
+    """Create and start a VM for SSH testing using vde commands."""
     # Create VM if needed
     if not compose_file_exists(vm_name):
-        result = run_vde_command(f"./scripts/create-virtual-for {vm_name}", timeout=120)
+        result = run_vde_command(f"vde create {vm_name}", timeout=120)
         context.last_exit_code = result.returncode
         context.last_output = result.stdout
         context.last_error = result.stderr
 
     # Start VM
-    result = run_vde_command(f"./scripts/start-virtual {vm_name}", timeout=180)
+    result = run_vde_command(f"vde start {vm_name}", timeout=180)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
@@ -276,8 +258,8 @@ def step_git_from_vm(context):
 
 @when('I reload the VM types cache')
 def step_reload_cache(context):
-    """Reload cache."""
-    result = run_vde_command("./scripts/list-vms --reload", timeout=30)
+    """Reload cache using vde list --reload command."""
+    result = run_vde_command("list --reload", timeout=30)
     context.cache_reloaded = result.returncode == 0
 
 
@@ -411,19 +393,19 @@ def step_backup_created(context):
 
 @then('the list-vms command should show available VMs')
 def step_list_vms_works(context):
-    """Verify list-vms command works and shows available VMs."""
-    result = run_vde_command("./scripts/list-vms", timeout=30)
+    """Verify vde list command works and shows available VMs."""
+    result = run_vde_command("list", timeout=30)
     # The command should run successfully (exit code 0)
     # In test environment, we just verify it doesn't crash
-    assert result.returncode == 0, f"list-vms failed with: {result.stderr}"
+    assert result.returncode == 0, f"vde list failed with: {result.stderr}"
 
 
 @then('I should see usage examples')
 def step_see_usage_examples(context):
     """Should see usage examples."""
-    result = run_vde_command("./scripts/list-vms --help", timeout=30)
+    result = run_vde_command("list --help", timeout=30)
     # Check that the help output contains expected usage information
-    assert result.returncode == 0, f"list-vms --help failed: {result.stderr}"
+    assert result.returncode == 0, f"vde list --help failed: {result.stderr}"
     assert "Usage:" in result.stdout or "usage:" in result.stdout, "No usage information in help output"
 
 
@@ -484,8 +466,8 @@ def step_running_vm_ssh_configured(context):
 
 @when('I shutdown and rebuild the VM')
 def step_shutdown_rebuild_vm(context):
-    """Shutdown and rebuild VM."""
-    result = run_vde_command("./scripts/start-virtual python --rebuild", timeout=180)
+    """Shutdown and rebuild VM using vde start --rebuild command."""
+    result = run_vde_command("start python --rebuild", timeout=180)
     context.vm_rebuilt = result.returncode == 0
 
 
@@ -525,8 +507,8 @@ def step_keys_still_work(context):
 
 @when('I create a VM')
 def step_create_vm_given(context):
-    """Create a VM."""
-    result = run_vde_command("./scripts/create-virtual-for python", timeout=120)
+    """Create a VM using vde create command."""
+    result = run_vde_command("create python", timeout=120)
     context.vm_created = result.returncode == 0
 
 
@@ -804,8 +786,8 @@ def step_vms_configured(context):
 
 @when('I start a VM')
 def step_start_a_vm(context):
-    """Start a VM."""
-    result = run_vde_command("./scripts/start-virtual python", timeout=120)
+    """Start a VM using vde start command."""
+    result = run_vde_command("start python", timeout=120)
     context.vm_started = result.returncode == 0
     context.last_exit_code = result.returncode
     context.last_output = result.stdout

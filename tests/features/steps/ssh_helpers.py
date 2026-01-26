@@ -29,6 +29,8 @@ VDE_SSH_IDENTITY = VDE_SSH_DIR / "id_ed25519"
 # SSH Helper Functions for Real Verification
 # =============================================================================
 
+from vm_common import run_vde_command, docker_ps, container_exists
+
 def ssh_agent_is_running():
     """Check if SSH agent is running."""
     try:
@@ -123,6 +125,77 @@ def has_ssh_keys():
     return VDE_SSH_IDENTITY.exists()
 
 
+def vm_has_private_keys(vm_name):
+    """Check if a VM container has private SSH keys.
+
+    This is a security verification - VDE design keeps SSH keys on the host
+    and forwards them via SSH agent, not copied into containers.
+
+    Args:
+        vm_name: Name of the VM to check
+
+    Returns:
+        True if private keys are found in the VM, False otherwise
+    """
+    # Determine container name (language VMs use -dev suffix)
+    container_name = f"{vm_name}-dev"
+
+    # If container doesn't exist with -dev suffix, try plain name
+    if not container_exists(container_name):
+        container_name = vm_name
+        if not container_exists(container_name):
+            # Container not running, can't check
+            return False
+
+    try:
+        # Check for private keys in common ~/.ssh locations
+        private_key_patterns = [
+            "id_rsa", "id_ed25519", "id_ecdsa", "id_dsa",
+            "id_ed25519_sk", "id_ecdsa_sk"
+        ]
+
+        for key_name in private_key_patterns:
+            # Use docker exec to check if the private key file exists
+            result = subprocess.run(
+                ["docker", "exec", container_name,
+                 "sh", "-c", f"test -f ~/.ssh/{key_name} && echo FOUND"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+
+            if result.returncode == 0 and "FOUND" in result.stdout:
+                return True  # Private key found
+
+        # Also check /home/devuser/.ssh/ if devuser is the user
+        result = subprocess.run(
+            ["docker", "exec", container_name,
+             "sh", "-c", "test -d /home/devuser/.ssh && echo EXISTS"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+
+        if result.returncode == 0 and "EXISTS" in result.stdout:
+            for key_name in private_key_patterns:
+                result = subprocess.run(
+                    ["docker", "exec", container_name,
+                     "sh", "-c", f"test -f /home/devuser/.ssh/{key_name} && echo FOUND"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+
+                if result.returncode == 0 and "FOUND" in result.stdout:
+                    return True
+
+    except Exception:
+        # If check fails, assume no keys (fail safe)
+        pass
+
+    return False
+
+
 # Test mode detection - ALLOW_CLEANUP indicates we can modify state
 # When VDE_TEST_CLEANUP is not 'false', we allow cleanup operations
 ALLOW_CLEANUP = os.environ.get('VDE_TEST_CLEANUP', 'true') != 'false'
@@ -131,51 +204,3 @@ ALLOW_CLEANUP = os.environ.get('VDE_TEST_CLEANUP', 'true') != 'false'
 # =============================================================================
 # VDE and Docker Helper Functions
 # =============================================================================
-
-def run_vde_command(command, timeout=120):
-    """Run a VDE script and return the result."""
-    env = os.environ.copy()
-    result = subprocess.run(
-        f"cd {VDE_ROOT} && {command}",
-        shell=True,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        env=env,
-    )
-    return result
-
-
-def container_exists(vm_name):
-    """Check if a container is running for the VM."""
-    try:
-        result = subprocess.run(
-            ["docker", "ps", "--format", "{{.Names}}"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        if result.returncode == 0:
-            containers = set(result.stdout.strip().split("\n")) if result.stdout.strip() else set()
-            return f"{vm_name}-dev" in containers or vm_name in containers
-    except Exception:
-        pass
-    return False
-
-
-def vm_has_private_keys(vm_name):
-    """Check if a VM container has private SSH keys in ~/.ssh/."""
-    try:
-        # Use docker exec to check for private keys in the VM
-        result = subprocess.run(
-            ["docker", "exec", f"{vm_name}-dev", "sh", "-c",
-             "ls ~/.ssh/*.key ~/.ssh/id_* 2>/dev/null | grep -v '\\.pub$' || true"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        # If output is not empty, private keys exist
-        return bool(result.stdout.strip())
-    except Exception:
-        # If container doesn't exist or command fails, assume no keys
-        return False

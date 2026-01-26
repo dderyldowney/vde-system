@@ -34,8 +34,57 @@ ALLOW_CLEANUP = IN_CONTAINER or IN_TEST_MODE
 
 
 def run_vde_command(command, timeout=120):
-    """Run a VDE script and return the result."""
-    full_command = f"cd {VDE_ROOT} && {command}"
+    """Run a VDE script and return the result.
+
+    Args:
+        command: Command as string or list (will be converted to string)
+        timeout: Command timeout in seconds
+
+    Returns:
+        subprocess.CompletedResult: The result of running the command
+
+    The command can be:
+    - A direct script: 'start-virtual python' or ['start-virtual', 'python']
+    - A VDE parser command: 'create go' or ['create', 'go']
+    - Already formatted: './scripts/start-virtual python'
+    """
+    # Direct VDE scripts (called directly)
+    _DIRECT_SCRIPTS = {
+        'start-virtual', 'stop-virtual', 'shutdown-virtual', 'remove-virtual',
+        'create-virtual-for', 'add-vm-type', 'list-vms',
+    }
+
+    # VDE parser subcommands (go through ./scripts/vde)
+    _VDE_SUBCOMMANDS = {
+        'create', 'start', 'stop', 'restart', 'ssh', 'remove', 'uninstall',
+        'list', 'status', 'health', 'nuke', 'help',
+    }
+
+    # Handle both string and list command formats
+    if isinstance(command, list):
+        command_str = ' '.join(str(c) for c in command)
+    else:
+        command_str = str(command)
+
+    # Parse the first word to determine command type
+    parts = command_str.split()
+    if not parts:
+        raise ValueError("Empty command")
+
+    first_word = parts[0]
+
+    # Don't modify if already has a path prefix
+    if '/' in first_word:
+        # Already has a path, use as-is
+        pass
+    elif first_word in _DIRECT_SCRIPTS:
+        # Direct script - add ./scripts/ prefix
+        command_str = f'./scripts/{command_str}'
+    elif first_word in _VDE_SUBCOMMANDS:
+        # VDE parser command - use ./scripts/vde
+        command_str = f'./scripts/vde {command_str}'
+
+    full_command = f"cd {VDE_ROOT} && {command_str}"
     # Pass environment variables including VDE_TEST_MODE
     env = os.environ.copy()
     result = subprocess.run(
@@ -49,15 +98,21 @@ def run_vde_command(command, timeout=120):
     return result
 
 
-def docker_ps():
-    """Get list of running Docker containers."""
+def docker_ps(filter=None):
+    """Get list of running Docker containers.
+
+    Args:
+        filter: Optional Docker filter string (e.g., "name=python-dev")
+
+    Returns:
+        set of container names
+    """
+    cmd = ["docker", "ps", "--format", "{{.Names}}"]
+    if filter:
+        cmd.extend(["--filter", filter])
+
     try:
-        result = subprocess.run(
-            ["docker", "ps", "--format", "{{.Names}}"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         if result.returncode == 0:
             return set(result.stdout.strip().split("\n")) if result.stdout.strip() else set()
     except Exception:
@@ -92,11 +147,33 @@ def compose_file_exists(vm_name):
 
 
 def get_vm_type(vm_name):
-    """Get the type of a VM (lang or service)."""
+    """Get the type of a VM (lang or service) using vde status command.
+
+    This function calls the actual vde command that users would use,
+    not internal shell libraries.
+    """
+    # Use vde status command - same as a user would type
+    result = run_vde_command(f'status {vm_name}', timeout=30)
+
+    if result.returncode == 0:
+        output = result.stdout
+        # Parse vde status output to determine type
+        # Language VMs appear under "Language VMs:" section
+        # Service VMs appear under "Service VMs:" section
+        if 'Language VMs:' in output:
+            lang_section = output.split('Language VMs:')[1]
+            lang_section = lang_section.split('Service VMs:')[0] if 'Service VMs:' in lang_section else lang_section
+            if vm_name in lang_section:
+                return 'lang'
+        if 'Service VMs:' in output:
+            svc_section = output.split('Service VMs:')[1]
+            if vm_name in svc_section:
+                return 'service'
+
+    # Fallback: read vm-types.conf directly
     vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
     if not vm_types_file.exists():
         return None
-
     with open(vm_types_file) as f:
         for line in f:
             if line.strip().startswith("#") or not line.strip():
@@ -171,7 +248,11 @@ def get_container_port_mapping(container_name, internal_port=22):
 
 
 def get_port_from_compose(vm_name):
-    """Get the SSH port from docker-compose.yml for a VM."""
+    """Get the SSH port from docker-compose.yml by reading the file directly.
+
+    This is a fallback for when the container isn't running.
+    Reads the actual docker-compose.yml file that VDE creates.
+    """
     compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
     if compose_path.exists():
         try:
@@ -232,15 +313,26 @@ def get_container_exit_code(container_name):
 
 
 def get_vm_ssh_port(vm_name):
-    """Get the SSH port for a VM by checking docker-compose or container."""
-    # First try to get from docker-compose file
-    port = get_port_from_compose(vm_name)
+    """Get the SSH port for a VM using docker port command.
+
+    This uses the same command a user would run to check port mappings.
+    For running containers, docker port is the authoritative source.
+    For stopped containers, falls back to reading docker-compose.yml.
+    """
+    # First try docker port command (authoritative for running containers)
+    # Language VMs use -dev suffix
+    container_name = f"{vm_name}-dev"
+    port = get_container_port_mapping(container_name, 22)
     if port:
         return port
 
-    # Then try to get from running container
-    container = f"{vm_name}-dev" if get_vm_type(vm_name) == 'lang' else vm_name
-    return get_container_port_mapping(container, 22)
+    # Try plain name for service VMs
+    port = get_container_port_mapping(vm_name, 22)
+    if port:
+        return port
+
+    # Fallback to reading docker-compose.yml (for stopped containers)
+    return get_port_from_compose(vm_name)
 
 
 def compose_project_path(vm_name):

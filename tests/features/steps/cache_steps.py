@@ -19,44 +19,11 @@ steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 from config import VDE_ROOT
+from vm_common import run_vde_command, docker_ps, container_exists, compose_file_exists, wait_for_container
 
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
-
-def run_vde_command(command, timeout=120):
-    """Run a VDE script and return the result."""
-    env = os.environ.copy()
-    result = subprocess.run(
-        f"cd {VDE_ROOT} && {command}",
-        shell=True,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        env=env,
-    )
-    return result
-
-
-def cache_file_exists():
-    """Check if cache file exists."""
-    return (VDE_ROOT / ".cache" / "vm-types.cache").exists()
-
-
-def docker_ps():
-    """Get list of running Docker containers."""
-    try:
-        result = subprocess.run(
-            ["docker", "ps", "--format", "{{.Names}}"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        if result.returncode == 0:
-            return set(result.stdout.strip().split("\n")) if result.stdout.strip() else set()
-    except Exception:
-        pass
-    return set()
 
 
 # =============================================================================
@@ -69,7 +36,7 @@ def step_cache_valid(context):
     cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
     if not cache_path.exists():
         # Create cache by running list-vms
-        result = run_vde_command("./scripts/list-vms", timeout=30)
+        result = run_vde_command("list", timeout=30)
         assert result.returncode == 0, f"Failed to create cache: {result.stderr}"
     # Verify cache has valid content
     assert cache_path.exists(), f"Cache file should exist at {cache_path}"
@@ -80,7 +47,7 @@ def step_cache_valid(context):
 @given('VM types are cached')
 def step_cached(context):
     """VM types are cached - verify cache was created."""
-    result = run_vde_command("./scripts/list-vms", timeout=30)
+    result = run_vde_command("list", timeout=30)
     assert result.returncode == 0, f"list-vms should succeed to create cache: {result.stderr}"
     cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
     assert cache_path.exists(), "Cache file should exist after list-vms"
@@ -92,7 +59,7 @@ def step_ports_allocated(context):
     port_registry = VDE_ROOT / ".cache" / "port-registry"
     if not port_registry.exists():
         # Create port registry by running a VM operation
-        result = run_vde_command("./scripts/list-vms", timeout=30)
+        result = run_vde_command("list", timeout=30)
         assert result.returncode == 0, f"list-vms should succeed: {result.stderr}"
     # Verify port registry or docker-compose files have port configurations
     configs_dir = VDE_ROOT / "configs" / "docker"
@@ -158,7 +125,7 @@ def step_rebuilding_vm(context):
 @when('cache is read')
 def step_cache_read(context):
     """Cache is read - verify cache read succeeds."""
-    result = run_vde_command("./scripts/list-vms", timeout=30)
+    result = run_vde_command("list", timeout=30)
     assert result.returncode == 0, f"Cache read should succeed: {result.stderr}"
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
@@ -416,8 +383,8 @@ def step_cache_file_removed(context):
 @when("VM types are loaded multiple times")
 def step_vm_types_loaded_multiple_times(context):
     """VM types are loaded multiple times."""
-    result1 = run_vde_command("./scripts/list-vms", timeout=30)
-    result2 = run_vde_command("./scripts/list-vms", timeout=30)
+    result1 = run_vde_command("list", timeout=30)
+    result2 = run_vde_command("list", timeout=30)
     context.multiple_loads = (result1.returncode == 0 and result2.returncode == 0)
 
 @then("cache should return consistent data")
@@ -593,7 +560,7 @@ def step_invalid_cache_detected(context):
 def step_cache_regenerated(context):
     """Cache should be regenerated from source."""
     # Actually regenerate the cache by running list-vms
-    result = run_vde_command("./scripts/list-vms", timeout=30)
+    result = run_vde_command("list", timeout=30)
     assert result.returncode == 0, f"Cache regeneration failed: {result.stderr}"
     # Verify cache file now has valid content
     cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
@@ -645,7 +612,7 @@ def step_next_load_rebuilds(context):
     if cache_path.exists():
         # Delete and rebuild
         cache_path.unlink()
-        result = run_vde_command("./scripts/list-vms", timeout=30)
+        result = run_vde_command("list", timeout=30)
         assert result.returncode == 0, "Cache rebuild failed"
         assert cache_path.exists(), "Cache was not recreated"
 
@@ -797,7 +764,7 @@ def step_cache_operation_performed(context):
     # Ensure .cache directory exists by running a cache operation
     cache_dir.mkdir(parents=True, exist_ok=True)
     # Run list-vms to trigger cache creation
-    result = run_vde_command("./scripts/list-vms", timeout=30)
+    result = run_vde_command("list", timeout=30)
     context.cache_operation_performed = result.returncode == 0
 
 
@@ -872,7 +839,7 @@ def step_vm_types_first_accessed(context):
     """Trigger first VM type access (lazy load)."""
     # First access to VM types triggers loading
     # Run list-vms which loads VM types on first access
-    result = run_vde_command("./scripts/list-vms", timeout=30)
+    result = run_vde_command("list", timeout=30)
 
     # Check if cache was created as part of first access
     cache_path = VDE_ROOT / ".cache" / "vm-types.cache"

@@ -33,25 +33,7 @@ VDE_SHELL_COMPAT = os.path.join(VDE_ROOT, 'scripts/lib/vde-shell-compat')
 VM_TYPES_CONF = os.path.join(VDE_ROOT, 'scripts/data/vm-types.conf')
 
 # Import vm_common helpers for real Docker verification
-try:
-    from vm_common import container_exists, compose_file_exists, run_vde_command
-except ImportError:
-    # Fallback if vm_common not available
-    def container_exists(vm_name):
-        import subprocess
-        result = subprocess.run(
-            ["docker", "ps", "--filter", f"name={vm_name}-dev", "--format", "{{.Names}}"],
-            capture_output=True, text=True, timeout=10
-        )
-        return bool(result.stdout.strip())
-
-    def compose_file_exists(vm_name):
-        from pathlib import Path
-        return (Path(VDE_ROOT) / "configs" / "docker" / vm_name / "docker-compose.yml").exists()
-
-    def run_vde_command(command, timeout=120):
-        import subprocess
-        return subprocess.run(command.split(), cwd=VDE_ROOT, capture_output=True, text=True, timeout=timeout)
+from vm_common import container_exists, compose_file_exists, run_vde_command
 
 
 # =============================================================================
@@ -312,7 +294,7 @@ def step_stopped_project(context):
     if not test_mode:
         # Not in test mode - actually stop all VMs for real
         try:
-            stop_result = run_vde_command("./scripts/shutdown-virtual all", timeout=60)
+            stop_result = run_vde_command("stop --all", timeout=60)
             time.sleep(2)
         except Exception:
             # Docker not available
@@ -343,7 +325,7 @@ def step_python_already_running(context):
 
                 if not python_running and compose_file_exists('python'):
                     # Try to start it
-                    start_result = run_vde_command("./scripts/start-virtual python", timeout=120)
+                    start_result = run_vde_command("start python", timeout=120)
                     time.sleep(2)
         except Exception:
             # Docker not available
@@ -367,7 +349,7 @@ def step_stopped_postgres(context):
         try:
             if container_exists('postgres'):
                 # Stop postgres
-                stop_result = run_vde_command("./scripts/shutdown-virtual postgres", timeout=60)
+                stop_result = run_vde_command("stop postgres", timeout=60)
                 time.sleep(1)
         except Exception:
             # Docker not available

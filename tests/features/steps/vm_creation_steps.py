@@ -45,17 +45,15 @@ def step_vm_defined_svc(context, vm_name, port):
 
 @given('no VM configuration exists for "{vm_name}"')
 def step_no_vm_config(context, vm_name):
-    """Ensure VM configuration doesn't exist by removing docker-compose.yml."""
+    """Ensure VM configuration doesn't exist by using remove-virtual command."""
     # When running locally without test mode, preserve user's VM configurations
-    # Only delete configs when running in the test container OR in test mode
+    # Only remove VMs when running in the test container OR in test mode
     if ALLOW_CLEANUP:
-        compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-        if compose_path.exists():
-            compose_path.unlink()
-            # Try to remove parent dir if empty
-            parent = compose_path.parent
-            if parent.exists() and not list(parent.iterdir()):
-                parent.rmdir()
+        # Use the VDE remove-virtual command instead of directly deleting files
+        # This ensures proper cleanup through the VDE workflow
+        result = run_vde_command(f"remove {vm_name}", timeout=60)
+        # Store result for debugging (don't assert - VM might not exist)
+        context.remove_result = result
 
 
 @given('VM "{vm_name}" has been created')
@@ -65,7 +63,7 @@ def step_vm_created(context, vm_name):
     step_no_vm_config(context, vm_name)
 
     # Run the create-virtual-for script
-    result = run_vde_command(f"./scripts/create-virtual-for {vm_name}", timeout=120)
+    result = run_vde_command(f"create {vm_name}", timeout=120)
 
     # Store creation info for cleanup
     if not hasattr(context, 'created_vms'):
@@ -83,7 +81,7 @@ def step_vm_not_created(context, vm_name):
     """Remove VM configuration if it exists."""
     step_no_vm_config(context, vm_name)
     # Also try to remove container if running
-    run_vde_command(f"./scripts/shutdown-virtual {vm_name}", timeout=30)
+    run_vde_command(f"stop {vm_name}", timeout=30)
     if hasattr(context, 'created_vms'):
         context.created_vms.discard(vm_name)
 
@@ -300,7 +298,7 @@ def step_run_port_cleanup(context):
 @when('I remove VM "{vm_name}"')
 def step_remove_vm(context, vm_name):
     """Remove a VM using the VDE script."""
-    result = run_vde_command(f"./scripts/remove-virtual {vm_name}", timeout=60)
+    result = run_vde_command(f"remove {vm_name}", timeout=60)
     if hasattr(context, 'created_vms'):
         context.created_vms.discard(vm_name)
     context.last_exit_code = result.returncode
@@ -314,7 +312,7 @@ def step_request_create_rust_vm(context):
     context.vm_create_requested = "rust"
     context.vm_create_type = "language"
     # Actually run the create command
-    result = run_vde_command("./scripts/create-virtual-for rust", timeout=120)
+    result = run_vde_command("create rust", timeout=120)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
@@ -326,7 +324,7 @@ def step_request_create_multiple_vms(context):
     context.multiple_vms_requested = ["python", "postgres", "redis"]
     # Actually create the VMs
     for vm_name in context.multiple_vms_requested:
-        result = run_vde_command(f"./scripts/create-virtual-for {vm_name}", timeout=120)
+        result = run_vde_command(f"create {vm_name}", timeout=120)
 
 
 @given('I have cloned the project repository')
