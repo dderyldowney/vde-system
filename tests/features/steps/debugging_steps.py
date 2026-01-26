@@ -171,6 +171,7 @@ def step_rebuild_no_cache(context):
             check=False
         )
         context.rebuild_output = result.stdout + result.stderr
+        context.last_output = context.rebuild_output  # Also set last_output for THEN step compatibility
         context.rebuild_no_cache = True
     else:
         context.rebuild_no_cache = False
@@ -483,8 +484,8 @@ def step_verify_host_path(context):
 @then('Docker should pull fresh images')
 def step_docker_pull_fresh(context):
     """Verify Docker pulled fresh images."""
-    assert hasattr(context, 'rebuild_output'), "No rebuild output available"
-    output = context.rebuild_output.lower()
+    assert hasattr(context, 'last_output'), "No rebuild output available"
+    output = context.last_output.lower()
 
     # Check for pull indicators
     assert 'pull' in output or 'download' in output or 'building' in output, \
@@ -495,8 +496,8 @@ def step_docker_pull_fresh(context):
 @then('build should not use cached layers')
 def step_no_cached_layers(context):
     """Verify build didn't use cache."""
-    assert hasattr(context, 'rebuild_output'), "No rebuild output available"
-    output = context.rebuild_output.lower()
+    assert hasattr(context, 'last_output'), "No rebuild output available"
+    output = context.last_output.lower()
 
     # Check for --no-cache usage or "Pulling from" messages
     assert 'using cache' not in output or '--no-cache' in output, \

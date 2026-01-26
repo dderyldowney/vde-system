@@ -183,6 +183,7 @@ def step_start_vm(context, vm):
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
     context.current_vm = vm
+    context.docker_command = "up"
 
 
 @when('I stop VM "{vm}"')
@@ -193,6 +194,7 @@ def step_stop_vm(context, vm):
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
+    context.docker_command = "stop"
 
 
 @when('I restart VM "{vm}"')
@@ -203,6 +205,7 @@ def step_restart_vm(context, vm):
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
+    context.docker_command = "up"
 
 
 @when('I try to start a VM')

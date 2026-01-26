@@ -43,6 +43,7 @@ def step_start_rebuild(context, vm):
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
+    context.docker_command = "build"
 
 
 @when('I start VM "{vm}" with --rebuild and --no-cache')
@@ -53,6 +54,7 @@ def step_start_rebuild_no_cache(context, vm):
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
+    context.docker_command = "build"
 
 
 @when('I rebuild VMs with --rebuild')
@@ -61,7 +63,9 @@ def step_rebuild_vms(context):
     result = run_vde_command("start python --rebuild", timeout=180)
     context.last_command = "vde start python --rebuild"
     context.last_output = result.stdout
+    context.last_error = result.stderr
     context.last_exit_code = result.returncode
+    context.docker_command = "build"
 
 
 # =============================================================================
