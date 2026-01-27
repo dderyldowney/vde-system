@@ -10,11 +10,11 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-        INSTALL_COMMAND: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | su devuser -c 'sh -s -- -y' && su devuser -c 'echo source \\$HOME/.cargo/env >> ~/.zshrc && echo source \\$HOME/.cargo/env >> ~/.bashrc'"
     image: dev-rust:latest
     container_name: rust-dev
     hostname: rust-dev
     restart: unless-stopped
+    command: sh -c "su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs  && /usr/sbin/sshd -D"
 
     ports:
       - "2200:22"

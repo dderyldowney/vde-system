@@ -560,9 +560,18 @@ is_vm_type() {
 vm_exists() {
     local vm=$1
     local compose_file="$CONFIGS_DIR/$vm/docker-compose.yml"
-    if [ -f "$compose_file" ]; then
+    
+    # Check if compose file exists
+    if [ ! -f "$compose_file" ]; then
+        return $VDE_ERR_NOT_FOUND
+    fi
+    
+    # Check if Docker container actually exists
+    if docker ps -a --filter "name=${vm}-dev" --format "{{.Names}}" 2>/dev/null | grep -q "^${vm}-dev$"; then
         return $VDE_SUCCESS
     fi
+    
+    # Compose file exists but no container - VM not created yet
     return $VDE_ERR_NOT_FOUND
 }
 
