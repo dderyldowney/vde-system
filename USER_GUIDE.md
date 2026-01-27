@@ -1035,6 +1035,33 @@ Here's some good news: VDE handles SSH keys for you automatically with complete 
 
 **VDE does all of this for you.** Sit back and relax! ☕
 
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Initialize ssh environment**
+
+
+```
+Given VDE SSH environment is not initialized
+When I run "vde ssh-setup init"
+Then the command should succeed
+And VDE SSH directory should exist
+And VDE SSH key should exist
+And SSH key should have correct permissions
+And SSH config should be generated
+And public key should be synced to build context
+And init command should show completion message
+```
+
+
+**Run the setup:**
+
+
+```bash
+vde ssh-setup init
+```
+
 </details>
 
 <details id="3.-your-first-vm" data-section="3. Your First VM">
@@ -1085,6 +1112,46 @@ vde list            # List all VMs
 
 That's it! One simple, consistent command interface.
 
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: New project setup   discover available vms**
+
+
+```
+Given I am setting up a new project
+When I ask what VMs can I create
+Then the plan should include the list_vms intent
+And I should see all available VM types
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list
+```
+
+**Scenario: New project setup   choose full stack**
+
+
+```
+Given I want a Python API with PostgreSQL
+When I plan to create Python and PostgreSQL
+Then both VMs should be included in the plan
+And the plan should use the create_vm intent
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
 </details>
 
 <details id="4.-understanding" data-section="4. Understanding">
@@ -1120,6 +1187,100 @@ You just created your first VM! That's honestly kind of a big deal. Give yoursel
 ### Verified Scenarios
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Common programming language aliases resolve correctly**
+
+
+```
+Given I have VDE installed
+When I query alias mappings for programming languages
+Then the metadata alias "python3" should map to "python"
+And the metadata alias "nodejs" should map to "js"
+And the metadata alias "golang" should map to "go"
+And the metadata alias "c++" should map to "cpp"
+And the metadata alias "rlang" should map to "r"
+```
+
+
+
+**Scenario: Common service aliases resolve correctly**
+
+
+```
+Given I have VDE installed
+When I query alias mappings for services
+Then the metadata alias "postgresql" should map to "postgres"
+And the metadata alias "mongo" should map to "mongodb"
+```
+
+
+
+**Scenario: Example 2   resolve node.js alias**
+
+
+```
+Given I want to use the Node.js name
+When I resolve the nodejs alias
+Then it should resolve to js
+And I can use either name in commands
+```
+
+
+
+**Scenario: Team onboarding   explore languages**
+
+
+```
+Given I am a new team member
+When I ask to list all languages
+Then I should see only language VMs
+And service VMs should not be included
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list --languages
+```
+
+**Scenario: Team onboarding   get connection help**
+
+
+```
+Given I am new to the team
+When I ask how to connect to Python
+Then I should receive clear connection instructions
+And I should understand how to access the VM
+```
+
+
+
+**Scenario: Team onboarding   understand system**
+
+
+```
+Given I am learning the VDE system
+When I ask for help
+Then I should see available commands
+And I should understand what I can do
+```
+
+
+
+**Scenario: Documentation accuracy   verify examples work**
+
+
+```
+Given the documentation shows specific VM examples
+When I verify the documented VMs
+Then Python should be a valid VM type
+And JavaScript should be a valid VM type
+And all microservice VMs should be valid
+```
+
+
 
 **Scenario: Listing all available vms**
 
@@ -1254,6 +1415,23 @@ And service VMs should provide infrastructure services
 vde list
 ```
 
+**Scenario: Resolve vm aliases**
+
+
+```
+Given "py" is an alias for "python"
+When I parse "start py"
+Then VMs should include "python"
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start py
+```
+
 </details>
 
 <details id="5.-starting-and-stopping" data-section="5. Starting and Stopping">
@@ -1287,6 +1465,156 @@ You'll have a complete tech stack:
 - **Redis VM** — Your cache (port 2401)
 
 All three can talk to each other automatically. No networking headaches required!
+
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Example 1   python api with postgresql setup**
+
+
+```
+Given I am following the documented Python API workflow
+When I plan to create a Python VM
+Then the plan should include the create_vm intent
+And the plan should include the Python VM
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Example 1   create postgresql for python api**
+
+
+```
+Given I have planned to create Python
+When I plan to create PostgreSQL
+Then the plan should include the create_vm intent
+And the plan should include the PostgreSQL VM
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Example 1   start both python and postgresql**
+
+
+```
+Given I have created Python and PostgreSQL VMs
+When I plan to start both VMs
+Then the plan should include the start_vm intent
+And the plan should include both Python and PostgreSQL VMs
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Example 2   full stack javascript with redis**
+
+
+```
+Given I am following the documented JavaScript workflow
+When I plan to create JavaScript and Redis VMs
+Then the plan should include both VMs
+And the JavaScript VM should use the js canonical name
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create <vm-type>
+```
+
+**Scenario: Example 3   microservices architecture setup**
+
+
+```
+Given I am creating a microservices architecture
+When I plan to create Python, Go, Rust, PostgreSQL, and Redis
+Then the plan should include all five VMs
+And each VM should be included in the VM list
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Example 3   start all microservice vms**
+
+
+```
+Given I have created the microservice VMs
+When I plan to start them all
+Then the plan should include the start_vm intent
+And all microservice VMs should be included
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Example 3   verify all microservice vms exist**
+
+
+```
+Given I have created microservices
+When I check for each service VM
+Then Python should exist as a language VM
+And Go should exist as a language VM
+And Rust should exist as a language VM
+And PostgreSQL should exist as a service VM
+And Redis should exist as a service VM
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Detect start all vms intent**
+
+
+```
+When I parse "start everything"
+Then intent should be "start_vm"
+And VMs should include all known VMs
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start everything
+```
 
 </details>
 
@@ -1338,6 +1666,22 @@ vde ssh rs    # Short for rust
 
 ``` |
 
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Example 1   get connection info for python**
+
+
+```
+Given I need to connect to the Python VM
+When I ask for connection information
+Then the plan should include the connect intent
+And the plan should include the Python VM
+```
+
+
+
 </details>
 
 <details id="8.-working-with-databases" data-section="8. Working with Databases">
@@ -1350,6 +1694,28 @@ VDE makes working with databases delightfully simple. Your Python VM can talk to
 
 **Important:** Database data in `~/dev/data/postgres/` persists even when you rebuild VMs. Your precious data is safe and sound! 💾
 
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Example 1   verify postgresql accessibility**
+
+
+```
+Given I have started the PostgreSQL VM
+When I check if postgres exists
+Then the VM should be recognized as a valid VM type
+And it should be marked as a service VM
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
 </details>
 
 <details id="9.-daily-workflow" data-section="9. Daily Workflow">
@@ -1359,6 +1725,118 @@ VDE makes working with databases delightfully simple. Your Python VM can talk to
 ### Your Daily Rhythm: Start, Code, Stop 🔄
 
 Here's how your day with VDE will flow. Nice and simple!
+
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Daily workflow   morning setup**
+
+
+```
+Given I am starting my development day
+When I plan to start Python, PostgreSQL, and Redis
+Then the plan should include all three VMs
+And the plan should use the start_vm intent
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Daily workflow   check status during development**
+
+
+```
+Given I am actively developing
+When I ask what's running
+Then the plan should include the status intent
+And I should be able to see running VMs
+```
+
+
+
+**Scenario: Daily workflow   connect to primary vm**
+
+
+```
+Given I need to work in my primary development environment
+When I ask how to connect to Python
+Then the plan should provide connection details
+And the plan should include the Python VM
+```
+
+
+
+**Scenario: Daily workflow   evening cleanup**
+
+
+```
+Given I am done with development for the day
+When I plan to stop everything
+Then the plan should include the stop_vm intent
+And the plan should apply to all running VMs
+```
+
+
+**Stop the VMs:**
+
+
+```bash
+vde stop <vms>
+```
+
+**Scenario: Switching projects   stop current project**
+
+
+```
+Given I am working on one project
+When I plan to stop all VMs
+Then all running VMs should be stopped
+And I should be ready to start a new project
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Switching projects   start new project**
+
+
+```
+Given I have stopped my current project
+When I plan to start Go and MongoDB
+Then the new project VMs should start
+And only the new project VMs should be running
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Performance   quick plan generation**
+
+
+```
+Given I need to plan my daily workflow
+When I generate plans for morning setup, checks, and cleanup
+Then all plans should be generated quickly
+And the total time should be under 500ms
+```
+
+
 
 </details>
 
@@ -1372,6 +1850,46 @@ One of the beautiful things about VDE is how easy it is to try new languages! No
 
 **Polyglot programmer?** Why not! 😎
 
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Adding cache layer   create redis**
+
+
+```
+Given I have an existing Python and PostgreSQL stack
+When I plan to add Redis
+Then the plan should include the create_vm intent
+And the Redis VM should be included
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create python
+```
+
+**Scenario: Adding cache layer   start redis**
+
+
+```
+Given I have created the Redis VM
+When I plan to start Redis
+Then the plan should include the start_vm intent
+And Redis should start without affecting other VMs
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
 </details>
 
 <details id="11.-troubleshooting" data-section="11. Troubleshooting">
@@ -1381,6 +1899,126 @@ One of the beautiful things about VDE is how easy it is to try new languages! No
 ### Hiccups Happen — We've Got Your Back! 🛠️
 
 Sometimes things don't work perfectly the first time. That's okay! Here's how to handle common issues.
+
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Troubleshooting   step 1 check status**
+
+
+```
+Given something isn't working correctly
+When I check the status
+Then I should receive status information
+And I should see which VMs are running
+```
+
+
+
+**Scenario: Troubleshooting   step 3 restart with rebuild**
+
+
+```
+Given I need to rebuild a VM to fix an issue
+When I plan to rebuild Python
+Then the plan should include the restart_vm intent
+And the plan should set rebuild=true flag
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Troubleshooting   step 4 get connection info**
+
+
+```
+Given I need to debug inside a container
+When I ask to connect to Python
+Then the plan should include the connect intent
+And I should receive SSH connection information
+```
+
+
+
+**Scenario: Starting already running vm**
+
+
+```
+Given I have a Python VM that is already running
+When I plan to start Python
+Then the plan should be generated
+And execution would detect the VM is already running
+And I would be notified that it's already running
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vms>
+```
+
+**Scenario: Stopping already stopped vm**
+
+
+```
+Given I have a stopped PostgreSQL VM
+When I plan to stop PostgreSQL
+Then the plan should be generated
+And execution would detect the VM is not running
+And I would be notified that it's already stopped
+```
+
+
+**Stop the VMs:**
+
+
+```bash
+vde stop <vms>
+```
+
+**Scenario: Creating existing vm**
+
+
+```
+Given I already have a Go VM configured
+When I plan to create Go again
+Then the plan should be generated
+And execution would detect the VM already exists
+And I would be notified of the existing VM
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create <vm-type>
+```
+
+**Scenario: Check ssh environment status**
+
+
+```
+When I run "vde ssh-setup status"
+Then the command should succeed
+And status command should show SSH environment state
+```
+
+
+**Run the setup:**
+
+
+```bash
+vde ssh-setup status
+```
 
 </details>
 
@@ -1453,7 +2091,7 @@ vde ssh nginx      # Nginx web server
 | C | `vde create c` | c |
 | C++ | `vde create cpp` | c++,gcc |
 | Assembler | `vde create asm` | assembler,nasm |
-| Python | `vde create python` | python3 |
+| Python | `vde create python` | python3,py |
 | Rust | `vde create rust` | rust |
 | JavaScript | `vde create js` | node,nodejs,javascript |
 | C# | `vde create csharp` | dotnet |

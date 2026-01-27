@@ -1,5 +1,5 @@
 # language: en
-@user-guide-internal
+@user-guide-starting-stopping
 Feature: VM Lifecycle Management
   As a developer
   I want to create, start, stop, and manage development VMs
