@@ -3,6 +3,7 @@ FROM debian:bookworm-slim
 ARG USERNAME=devuser
 ARG UID=1000
 ARG GID=1000
+ARG INSTALL_COMMAND=""
 
 # Install essential packages + SSH + sudo
 RUN apt-get update -y && \
@@ -92,6 +93,12 @@ RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/in
     echo 'source /usr/local/bin/ssh-agent-forward' >> /home/${USERNAME}/.zshrc && \
     chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.zprofile /home/${USERNAME}/.zshrc && \
     su ${USERNAME} -c "git clone https://github.com/LazyVim/starter ~/.config/nvim && nvim --headless +qall"
+
+# Run language-specific installation command if provided
+RUN if [ -n "$INSTALL_COMMAND" ]; then \
+        echo "Installing language tools: $INSTALL_COMMAND"; \
+        eval "$INSTALL_COMMAND"; \
+    fi
 
 # Expose SSH port
 EXPOSE 22
