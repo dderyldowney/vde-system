@@ -1,0 +1,1678 @@
+================================================================================
+FAKE TEST PATTERN SCAN REPORT
+================================================================================
+
+Total Files with Violations: 28
+Total Violations Found: 525
+
+================================================================================
+
+File: tests/features/steps/cache_steps.py
+--------------------------------------------------------------------------------
+  Line 286: [context_flag_true]
+    context.conflict_detected = True
+
+  Line 289: [context_flag_true]
+    context.conflict_detected = True
+
+  Line 312: [context_flag_true]
+    context.operation_rejected = True
+
+  Line 315: [context_flag_true]
+    context.operation_succeeded = True
+
+  Line 381: [context_flag_true]
+    context.cache_cleared = True
+
+  Line 428: [context_flag_true]
+    context.vm_config_removed = True
+
+  Line 431: [context_flag_false]
+    context.vm_config_removed = False
+
+  Line 445: [context_flag_true]
+    context.vm_config_restored = True
+
+  Line 448: [context_flag_true]
+    context.vm_config_restored = True
+
+  Line 482: [context_flag_true]
+    context.system_restarted = True
+
+  Line 521: [context_flag_true]
+    context.concurrent_read = True
+
+  Line 550: [context_flag_true]
+    context.invalid_cache_exists = True
+
+  Line 577: [context_flag_true]
+    context.cache_regenerated = True
+
+  Line 589: [context_flag_true]
+    context.cache_updated_fresh = True
+
+  Line 601: [context_flag_true]
+    context.port_registry_reloaded = True
+
+  Line 633: [context_flag_true]
+    context.valid_cache_created = True
+
+  Line 654: [context_flag_true]
+    context.port_registry_invalid = True
+
+  Line 783: [context_flag_true]
+    context.cache_directory_created = True
+
+  Line 826: [context_flag_true]
+    context.cache_validated = True
+
+  Line 839: [context_flag_true]
+    context.library_sourced = True
+
+  Line 840: [context_flag_false]
+    context.vm_types_loaded = False  # Initially not loaded
+
+  Line 873: [context_flag_true]
+    context.vm_types_loaded_verified = True
+
+  Line 935: [context_flag_true]
+    context.has_data_entries = True
+
+  Line 1066: [context_flag_true]
+    context.env_files_supported = True
+
+  Line 1069: [context_flag_true]
+    context.env_files_supported = True
+
+
+File: tests/features/steps/common_steps.py
+--------------------------------------------------------------------------------
+  Line 34: [context_flag_true]
+    context.vm_conf_modified = True
+
+  Line 50: [context_flag_true]
+    context.cache_exists = True
+
+  Line 56: [context_flag_true]
+    context.vm_conf_unchanged = True
+
+  Line 73: [context_flag_true]
+    context.vm_conf_modified_after = True
+
+  Line 81: [context_flag_true]
+    context.first_load = True
+
+  Line 92: [context_flag_true]
+    context.template_exists = True
+
+  Line 99: [context_flag_true]
+    context.template_exists = True
+
+  Line 125: [context_flag_false]
+    context.native_assoc_arrays = False
+
+  Line 141: [context_flag_true]
+    context.docker_available = True
+
+  Line 147: [context_flag_true]
+    context.docker_vm_running = True
+
+  Line 153: [context_flag_true]
+    context.docker_cache_exists = True
+
+  Line 159: [context_flag_false]
+    context.network_available = False
+
+  Line 187: [context_flag_true]
+    context.cache_bypassed = True
+
+  Line 207: [context_flag_true]
+    context.template_rendered = True
+
+  Line 213: [context_flag_true]
+    context.vars_substituted = True
+
+  Line 219: [context_flag_true]
+    context.special_escaped = True
+
+  Line 229: [context_flag_true]
+    context.assoc_operation_performed = True
+
+  Line 235: [context_flag_true]
+    context.special_key_used = True
+
+  Line 258: [context_flag_true]
+    context.docker_no_cache = True
+
+  Line 270: [context_flag_true]
+    context.port_conflict = True
+
+  Line 276: [context_flag_true]
+    context.network_error = True
+
+  Line 282: [context_flag_true]
+    context.build_retried = True
+
+
+File: tests/features/steps/config_steps.py
+--------------------------------------------------------------------------------
+  Line 28: [context_flag_true]
+    context.needs_custom_packages = True
+
+  Line 35: [context_flag_true]
+    context.mysql_service_needed = True
+
+  Line 42: [context_flag_true]
+    context.needs_multiple_ports = True
+
+  Line 54: [context_flag_false]
+    context.multiport_supported = False
+
+  Line 60: [context_flag_true]
+    context.wants_friendly_names = True
+
+  Line 66: [context_flag_true]
+    context.wants_short_names = True
+
+  Line 72: [context_flag_true]
+    context.needs_custom_port_range = True
+
+  Line 78: [context_flag_true]
+    context.needs_custom_base_os = True
+
+  Line 84: [context_flag_true]
+    context.needs_env_vars = True
+
+  Line 99: [context_flag_true]
+    context.needs_custom_mounts = True
+
+  Line 105: [context_flag_true]
+    context.wants_memory_limit = True
+
+  Line 111: [context_flag_true]
+    context.needs_custom_dns = True
+
+  Line 117: [context_flag_true]
+    context.needs_isolated_networks = True
+
+  Line 123: [context_flag_true]
+    context.wants_logging_control = True
+
+  Line 129: [context_flag_true]
+    context.wants_auto_restart = True
+
+  Line 135: [context_flag_true]
+    context.wants_health_check = True
+
+  Line 141: [context_flag_true]
+    context.wants_team_config = True
+
+  Line 147: [context_flag_true]
+    context.needs_local_overrides = True
+
+  Line 153: [context_flag_true]
+    context.needs_two_python = True
+
+  Line 160: [context_flag_true]
+    context.vm_config_modified = True
+
+  Line 166: [context_flag_true]
+    context.vde_format_changed = True
+
+  Line 172: [context_flag_true]
+    context.wants_undo_config = True
+
+  Line 196: [context_flag_true]
+    context.needs_test_database = True
+
+  Line 209: [context_flag_true]
+    context.bug_not_reproducible = True
+
+  Line 223: [context_flag_true]
+    context.wants_see_available = True
+
+  Line 361: [context_flag_false]
+    context.custom_range_supported = False
+
+  Line 373: [context_flag_true]
+    context.ports_preserved = True  # No registry means ports are in compose files
+
+  Line 385: [context_flag_false]
+    context.custom_image_supported = False
+
+  Line 437: [context_flag_false]
+    context.user_config_supported = False
+
+  Line 470: [context_flag_false]
+    context.custom_mounts_supported = False
+
+  Line 482: [context_flag_false]
+    context.memory_limit_supported = False
+
+  Line 493: [context_flag_false]
+    context.dns_config_supported = False
+
+  Line 510: [context_flag_true]
+    context.dns_working = True  # Assume working if can't test
+
+  Line 512: [context_flag_true]
+    context.dns_working = True
+
+  Line 523: [context_flag_false]
+    context.network_isolation_supported = False
+
+  Line 543: [context_flag_false]
+    context.logging_configurable = False
+
+  Line 555: [context_flag_false]
+    context.log_rotation_supported = False
+
+  Line 567: [context_flag_false]
+    context.verbosity_controllable = False
+
+  Line 578: [context_flag_false]
+    context.restart_configured = False
+
+  Line 591: [context_flag_false]
+    context.auto_start_configured = False
+
+  Line 606: [context_flag_false]
+    context.auto_recovery_configured = False
+
+  Line 617: [context_flag_false]
+    context.healthcheck_enabled = False
+
+  Line 632: [context_flag_true]
+    context.health_status_visible = True  # Feature exists even if no VMs running
+
+  Line 646: [context_flag_false]
+    context.auto_restart_on_unhealthy = False
+
+  Line 779: [context_flag_true]
+    context.validation_works = True
+
+  Line 781: [context_flag_false]
+    context.validation_works = False
+
+  Line 783: [context_flag_true]
+    context.validation_works = True
+
+  Line 811: [context_flag_false]
+    context.config_persists = False
+
+  Line 837: [context_flag_true]
+    context.only_created_shown = True
+
+  Line 862: [context_flag_true]
+    context.test_db_accessible = True
+
+  Line 927: [context_flag_false]
+    context.env_vars_verified = False
+
+
+File: tests/features/steps/daily_workflow_steps.py
+--------------------------------------------------------------------------------
+  Line 103: [context_flag_true]
+    context.project_needs_full_stack = True
+
+  Line 207: [context_flag_false]
+    context.need_full_stack = False
+
+  Line 270: [context_flag_true]
+    context.python_dockerfile_modified = True
+
+  Line 273: [context_flag_false]
+    context.python_dockerfile_modified = False
+
+  Line 277: [context_flag_true]
+    context.new_package_added = True
+
+  Line 316: [context_flag_true]
+    context.zig_not_supported = True
+
+  Line 335: [context_flag_true]
+    context.web_project = True
+
+  Line 366: [context_flag_true]
+    context.microservices = True
+
+  Line 380: [context_flag_true]
+    context.data_analysis = True
+
+  Line 387: [context_flag_true]
+    context.web_stack_needed = True
+
+  Line 393: [context_flag_true]
+    context.mobile_app = True
+
+  Line 394: [context_flag_true]
+    context.backend_needed = True
+
+  Line 440: [context_flag_false]
+    context.connected_to_postgres = False
+
+  Line 454: [context_flag_false]
+    context.can_query = False
+
+  Line 467: [context_flag_true]
+    context.managing_multiple = True
+
+  Line 482: [context_flag_true]
+    context.updating_vde = True
+
+  Line 495: [context_flag_true]
+    context.checking_resources = True
+
+  Line 517: [context_flag_true]
+    context.project_grown = True
+
+  Line 535: [context_flag_false]
+    context.ssh_volume_in_output = False
+
+  Line 541: [context_flag_true]
+    context.vde_scripts_updated = True
+
+  Line 601: [context_flag_true]
+    context.only_lang_listed = True
+
+  Line 613: [context_flag_true]
+    context.only_service_listed = True
+
+  Line 619: [context_flag_true]
+    context.lang_vms_excluded = True
+
+  Line 646: [context_flag_true]
+    context.config_preserved = True
+
+
+File: tests/features/steps/debugging_steps.py
+--------------------------------------------------------------------------------
+  Line 101: [simulate_comment]
+    """Simulate a failed VM start by storing error state."""
+
+  Line 102: [context_flag_true]
+    context.vm_start_failed = True
+
+  Line 103: [context_flag_true]
+    context.last_operation_failed = True
+
+  Line 109: [context_flag_true]
+    context.port_conflict = True
+
+  Line 114: [context_flag_true]
+    context.app_db_connection_failed = True
+
+  Line 119: [context_flag_true]
+    context.need_config_verification = True
+
+  Line 124: [context_flag_true]
+    context.code_changes_not_visible = True
+
+  Line 129: [context_flag_true]
+    context.want_discard = True
+
+  Line 141: [context_flag_true]
+    context.vm_status_checked_debug = True
+
+  Line 150: [context_flag_true]
+    context.compose_examined = True
+
+  Line 152: [context_flag_false]
+    context.compose_examined = False
+
+  Line 161: [context_flag_true]
+    context.mounts_checked = True
+
+  Line 163: [context_flag_false]
+    context.mounts_checked = False
+
+  Line 175: [context_flag_true]
+    context.rebuild_no_cache = True
+
+  Line 177: [context_flag_false]
+    context.rebuild_no_cache = False
+
+  Line 185: [context_flag_true]
+    context.container_removed = True
+
+  Line 186: [context_flag_true]
+    context.config_preserved = True
+
+  Line 188: [context_flag_false]
+    context.container_removed = False
+
+  Line 196: [context_flag_true]
+    context.restarted = True
+
+  Line 198: [context_flag_false]
+    context.restarted = False
+
+  Line 206: [context_flag_true]
+    context.ssh_config_checked = True
+
+  Line 208: [context_flag_false]
+    context.ssh_config_checked = False
+
+  Line 218: [context_flag_true]
+    context.vm_running_verified = True
+
+  Line 220: [context_flag_false]
+    context.vm_running = False
+
+  Line 221: [context_flag_false]
+    context.vm_running_verified = False
+
+  Line 232: [context_flag_false]
+    context.port_verified = False
+
+  Line 245: [context_flag_false]
+    context.ssh_into_app_vm = False
+
+  Line 256: [context_flag_true]
+    context.db_connection_attempted = True
+
+  Line 258: [context_flag_false]
+    context.db_connection_attempted = False
+
+  Line 272: [context_flag_true]
+    context.clear_error_message = True
+
+  Line 305: [context_flag_true]
+    context.container_logs_visible = True
+
+  Line 315: [context_flag_true]
+    context.problem_source_identified = True
+
+  Line 328: [context_flag_true]
+    context.shell_access_available = True
+
+  Line 343: [context_flag_true]
+    context.investigation_possible = True
+
+  Line 373: [context_flag_true]
+    context.vm_works_on_new_port = True
+
+  Line 392: [context_flag_true]
+    context.ssh_port_correct = True
+
+  Line 404: [context_flag_true]
+    context.volume_mounts_visible = True
+
+  Line 419: [context_flag_true]
+    context.port_mappings_visible = True
+
+  Line 434: [context_flag_true]
+    context.env_vars_visible = True
+
+  Line 450: [context_flag_true]
+    context.config_verified_correct = True
+
+  Line 465: [context_flag_true]
+    context.volume_mount_status_visible = True
+
+  Line 482: [context_flag_true]
+    context.host_path_verified = True
+
+  Line 494: [context_flag_true]
+    context.fresh_images_pulled = True
+
+  Line 506: [context_flag_true]
+    context.no_cache_used = True
+
+  Line 542: [context_flag_true]
+    context.compose_might_have_errors = True
+
+  Line 552: [context_flag_true]
+    context.syntax_errors_visible = True
+
+  Line 572: [context_flag_true]
+    context.clear_error_received = True
+
+  Line 584: [context_flag_true]
+    context.error_explanation_provided = True
+
+  Line 591: [context_flag_true]
+    context.helpful_error_received = True
+
+  Line 599: [context_flag_true]
+    context.docker_required_explained = True
+
+  Line 606: [context_flag_true]
+    context.vde_error_reported = True
+
+  Line 613: [context_flag_true]
+    context.error_examined = True
+
+  Line 618: [context_flag_true]
+    context.vde_error_encountered = True
+
+  Line 625: [context_flag_true]
+    context.vde_error_detected = True
+
+  Line 631: [context_flag_true]
+    context.error_displayed = True
+
+  Line 641: [context_flag_true]
+    context.error_logged = True
+
+  Line 648: [context_flag_true]
+    context.error_has_detail = True
+
+  Line 663: [context_flag_true]
+    context.error_testable = True
+
+  Line 672: [context_flag_true]
+    context.entry_exists_error = True
+
+  Line 679: [context_flag_true]
+    context.error_conditions_visible = True
+
+  Line 686: [context_flag_true]
+    context.error_states_visible = True
+
+  Line 695: [context_flag_true]
+    context.port_conflict_mapped = True
+
+  Line 703: [context_flag_true]
+    context.network_error_mapped = True
+
+  Line 712: [context_flag_true]
+    context.permission_error_mapped = True
+
+  Line 721: [context_flag_true]
+    context.network_error_indicated = True
+
+  Line 730: [context_flag_true]
+    context.image_pull_error_indicated = True
+
+  Line 737: [context_flag_true]
+    context.troubleshooting_suggested = True
+
+  Line 743: [context_flag_true]
+    context.next_steps_suggested = True
+
+  Line 756: [context_flag_true]
+    context.vm_stopped = True
+
+  Line 758: [context_flag_false]
+    context.vm_stopped = False
+
+  Line 768: [context_flag_true]
+    context.vm_directory_removed = True
+
+  Line 770: [context_flag_false]
+    context.vm_directory_removed = False
+
+  Line 772: [context_flag_false]
+    context.vm_directory_removed = False
+
+  Line 780: [context_flag_true]
+    context.vm_recreated = True
+
+  Line 782: [context_flag_false]
+    context.vm_recreated = False
+
+  Line 792: [context_flag_true]
+    context.fresh_vm_created = True
+
+  Line 800: [context_flag_true]
+    context.port_usage_checked = True
+
+  Line 807: [context_flag_true]
+    context.process_using_port_visible = True
+
+  Line 814: [context_flag_true]
+    context.can_stop_conflicting_process = True
+
+  Line 824: [context_flag_true]
+    context.vde_different_port_allocated = True
+
+  Line 857: [context_flag_true]
+    context.fresh_container_created = True
+
+  Line 868: [context_flag_true]
+    context.code_volumes_preserved = True
+
+  Line 873: [context_flag_true]
+    context.vms_cannot_communicate = True
+
+  Line 890: [context_flag_true]
+    context.vms_on_vde_network_visible = True
+
+  Line 904: [context_flag_true]
+    context.vm_ping_working = True
+
+  Line 919: [context_flag_true]
+    context.resource_bottlenecks_identified = True
+
+  Line 924: [context_flag_true]
+    context.docker_problems_exist = True
+
+  Line 931: [context_flag_true]
+    context.docker_running_checked = True
+
+  Line 937: [context_flag_true]
+    context.docker_restarted = True
+
+  Line 948: [context_flag_true]
+    context.vms_start_after_docker_healthy = True
+
+  Line 964: [context_flag_true]
+    context.devuser_uid_gid_checked = True
+
+  Line 970: [context_flag_true]
+    context.can_adjust_uid_gid = True
+
+  Line 975: [context_flag_true]
+    context.tests_fail_in_vm = True
+
+  Line 987: [context_flag_true]
+    context.environments_compared = True
+
+  Line 989: [context_flag_false]
+    context.environments_compared = False
+
+  Line 996: [context_flag_true]
+    context.missing_dependencies_checked = True
+
+  Line 1010: [context_flag_true]
+    context.vm_network_access_checked = True
+
+  Line 1020: [context_flag_true]
+    context.transient_error = True
+
+  Line 1026: [context_flag_true]
+    context.error_occurred = True
+
+  Line 1031: [context_flag_true]
+    context.vm_config_error = True
+
+  Line 1040: [context_flag_true]
+    context.manual_steps_communicated = True
+
+
+File: tests/features/steps/docker_operations_steps.py
+--------------------------------------------------------------------------------
+  Line 37: [context_flag_false]
+    context.image_existed_before = False
+
+  Line 61: [context_flag_false]
+    context.ssh_agent_was_running = False
+
+  Line 85: [context_flag_true]
+    context.checking_host = True
+
+  Line 98: [context_flag_true]
+    context.checking_resources = True
+
+  Line 116: [context_flag_false]
+    context.build_triggerred = False
+
+  Line 122: [context_flag_true]
+    context.checking_other_vms = True
+
+  Line 128: [context_flag_false]
+    context.backup_triggered = False
+
+  Line 134: [context_flag_true]
+    context.diagnosing_host = True
+
+  Line 140: [context_flag_true]
+    context.checking_network = True
+
+  Line 164: [context_flag_true]
+    context.using_openssh = True
+
+  Line 170: [context_flag_true]
+    context.using_vscode = True
+
+  Line 239: [context_flag_true]
+    context.host_logs_visible = True  # No logs to show
+
+  Line 257: [context_flag_true]
+    context.filesystem_navigable = True
+
+  Line 290: [context_flag_false]
+    context.restart_verified = False
+
+  Line 301: [context_flag_true]
+    context.host_file_contents_visible = True  # File doesn't exist
+
+  Line 314: [context_flag_false]
+    context.content_usable = False
+
+  Line 330: [context_flag_true]
+    context.python_vm_status_visible = True  # Can check status via docker ps
+
+  Line 337: [context_flag_true]
+    context.backup_executed = True  # Host execution is default
+
+  Line 385: [context_flag_true]
+    context.network_results_visible = True  # Ping might not work, but network check exists
+
+  Line 392: [context_flag_true]
+    context.network_diagnosis_possible = True
+
+  Line 423: [context_flag_true]
+    context.ssh_config_external = True
+
+  Line 430: [context_flag_true]
+    context.auto_config = True
+
+
+File: tests/features/steps/error_handling_steps.py
+--------------------------------------------------------------------------------
+  Line 46: [context_flag_true]
+    context.disk_space_scenario = True
+
+  Line 55: [context_flag_true]
+    context.network_failure_scenario = True
+
+  Line 63: [context_flag_true]
+    context.partial_failure_scenario = True
+
+  Line 652: [context_flag_true]
+    context.error_was_handled = True
+
+  Line 673: [context_flag_true]
+    context.failure_detected = True
+
+  Line 765: [context_flag_true]
+    context.timeout_detected = True
+
+  Line 791: [context_flag_true]
+    context.retryable_error = True
+
+  Line 811: [context_flag_true]
+    context.retry_possible = True
+
+
+File: tests/features/steps/installation_steps.py
+--------------------------------------------------------------------------------
+  Line 39: [context_flag_true]
+    context.new_computer = True  # This is scenario context, not system state
+
+  Line 51: [context_flag_true]
+    context.wants_to_install = True
+
+  Line 56: [context_flag_true]
+    context.first_time_setup = True
+
+  Line 64: [context_flag_true]
+    context.want_vde_in_path = True
+
+  Line 68: [context_flag_true]
+    context.vde_installing = True
+
+  Line 108: [context_flag_true]
+    context.installing_vde = True
+
+  Line 112: [context_flag_true]
+    context.vde_being_setup = True
+
+  Line 145: [context_flag_true]
+    context.initial_setup_run = True
+
+  Line 151: [context_flag_true]
+    context.initial_setup_run = True
+
+  Line 169: [context_flag_false]
+    context.setup_ran = False
+
+  Line 174: [context_flag_false]
+    context.setup_ran = False
+
+  Line 179: [context_flag_true]
+    context.setup_ran = True
+
+  Line 186: [context_flag_true]
+    context.ssh_keys_checked = True
+
+  Line 244: [context_flag_true]
+    context.docker_checked = True
+
+  Line 250: [context_flag_true]
+    context.first_vm_created = True
+
+  Line 251: [context_flag_true]
+    context.vde_network_created = True
+
+  Line 277: [context_flag_true]
+    context.list_vms_run = True
+
+  Line 312: [context_flag_true]
+    context.os_detected = True
+
+  Line 332: [context_flag_true]
+    context.quick_start = True
+
+  Line 336: [context_flag_true]
+    context.help_needed = True
+
+  Line 341: [context_flag_true]
+    context.validation_run = True
+
+
+File: tests/features/steps/parser_steps.py
+--------------------------------------------------------------------------------
+  Line 111: [context_flag_true]
+    context.empty_input = True
+
+  Line 151: [context_flag_true]
+    context.plan_validated = True
+
+  Line 154: [context_flag_false]
+    context.plan_validated = False
+
+  Line 161: [context_flag_true]
+    context.plan_validated = True
+
+  Line 164: [context_flag_false]
+    context.plan_validated = False
+
+  Line 171: [context_flag_true]
+    context.plan_validated = True
+
+  Line 174: [context_flag_false]
+    context.plan_validated = False
+
+
+File: tests/features/steps/pattern_steps.py
+--------------------------------------------------------------------------------
+  Line 192: [context_flag_false]
+    context.connected_ssh = False
+
+  Line 214: [context_flag_false]
+    context.cache_newer = False
+
+  Line 225: [context_flag_false]
+    context.cache_older = False
+
+  Line 231: [context_flag_true]
+    context.op_failed_partway = True
+
+  Line 237: [context_flag_true]
+    context.op_interrupted = True
+
+  Line 243: [context_flag_true]
+    context.any_error = True
+
+  Line 312: [context_flag_true]
+    context.assoc_multiple = True
+
+  Line 353: [context_flag_true]
+    context.is_new_user = True
+
+  Line 359: [context_flag_true]
+    context.is_new_team_member = True
+
+  Line 365: [context_flag_true]
+    context.is_new_to_team = True
+
+  Line 371: [context_flag_true]
+    context.is_new_to_vde = True
+
+  Line 377: [context_flag_true]
+    context.developing = True
+
+  Line 383: [context_flag_true]
+    context.learning_vde = True
+
+  Line 396: [context_flag_true]
+    context.ssh_connected = True
+
+  Line 402: [context_flag_true]
+    context.starting_day = True
+
+  Line 408: [context_flag_true]
+    context.done_for_day = True
+
+  Line 414: [context_flag_true]
+    context.having_issues = True
+
+  Line 429: [context_flag_false]
+    context.ssh_agent_running = False
+
+  Line 447: [context_flag_true]
+    context.cannot_ssh = True
+
+  Line 453: [context_flag_true]
+    context.no_permission = True
+
+  Line 465: [context_flag_true]
+    context.permission_denied = True
+
+  Line 475: [context_flag_true]
+    context.single_project = True
+
+  Line 481: [context_flag_true]
+    context.setting_up_project = True
+
+  Line 494: [context_flag_true]
+    context.separate_repos = True
+
+  Line 507: [context_flag_true]
+    context.transient_compose_error = True
+
+
+File: tests/features/steps/port_management_steps.py
+--------------------------------------------------------------------------------
+  Line 35: [context_flag_false]
+    context.port_allocated = False
+
+  Line 48: [context_flag_false]
+    context.port2_allocated = False
+
+  Line 54: [context_flag_true]
+    context.simultaneous_allocation = True
+
+  Line 81: [context_flag_true]
+    context.port_registry_exists = True
+
+  Line 83: [context_flag_false]
+    context.port_registry_exists = False
+
+  Line 84: [context_flag_true]
+    context.ports_requested = True
+
+  Line 105: [context_flag_false]
+    context.registry_tracks = False
+
+  Line 117: [context_flag_true]
+    context.registry_persists = True
+
+  Line 222: [context_flag_true]
+    context.registry_updates = True
+
+
+File: tests/features/steps/productivity_steps.py
+--------------------------------------------------------------------------------
+  Line 37: [context_flag_true]
+    context.port_registry_saved = True
+
+  Line 40: [context_flag_false]
+    context.port_registry_saved = False
+
+  Line 53: [context_flag_true]
+    context.port_registry_cache_exists = True
+
+  Line 62: [context_flag_true]
+    context.port_registry_loaded = True
+
+  Line 64: [context_flag_false]
+    context.port_registry_loaded = False
+
+  Line 77: [context_flag_true]
+    context.cache_invalidated = True
+
+  Line 79: [context_flag_false]
+    context.cache_invalidated = False
+
+  Line 211: [context_flag_true]
+    context.service_vms_needed = True
+
+  Line 248: [context_flag_true]
+    context.needs_fresh_database = True
+
+  Line 263: [context_flag_true]
+    context.postgres_stopped = True
+
+  Line 264: [context_flag_true]
+    context.postgres_removed = True
+
+  Line 356: [context_flag_true]
+    context.postgres_backup_created = True
+
+  Line 382: [context_flag_true]
+    context.requires_specific_node_version = True
+
+  Line 387: [simulate_comment]
+    """Simulate defining JS VM with specific version."""
+
+  Line 388: [context_flag_true]
+    context.js_vm_version_defined = True
+
+  Line 410: [context_flag_true]
+    context.multiple_projects = True
+
+  Line 416: [context_flag_true]
+    context.project_isolation = True
+
+
+File: tests/features/steps/shell_compat_steps.py
+--------------------------------------------------------------------------------
+  Line 77: [context_flag_true]
+    context.array_initialized = True
+
+  Line 90: [context_flag_true]
+    context.array_initialized = True
+
+  Line 110: [context_flag_true]
+    context.is_zsh = True
+
+  Line 118: [context_flag_false]
+    context.is_zsh = False
+
+  Line 126: [context_flag_true]
+    context.is_bash = True
+
+  Line 134: [context_flag_false]
+    context.is_bash = False
+
+  Line 163: [context_flag_true]
+    context.native_assoc_supported = True
+
+  Line 174: [context_flag_true]
+    context.native_assoc_supported = True  # Mark as supported (actual behavior)
+
+  Line 177: [context_flag_false]
+    context.native_assoc_supported = False
+
+  Line 185: [context_flag_true]
+    context.uses_zsh_typeset = True
+
+  Line 193: [context_flag_true]
+    context.uses_bash_declare = True
+
+  Line 204: [context_flag_true]
+    context.array_ops_work = True
+
+  Line 213: [context_flag_true]
+    context.uses_file_storage = True
+
+  Line 216: [context_flag_false]
+    context.uses_file_storage = False
+
+  Line 227: [context_flag_true]
+    context.file_io_works = True
+
+  Line 266: [context_flag_true]
+    context.all_keys_retrieved = True
+
+  Line 275: [context_flag_true]
+    context.keys_returned = True
+
+  Line 282: [context_flag_true]
+    context.key_format_preserved = True
+
+  Line 326: [context_flag_true]
+    context.key_removed = True
+
+  Line 338: [context_flag_true]
+    context.array_empty = True
+
+  Line 363: [context_flag_true]
+    context.script_exited = True
+
+  Line 369: [context_flag_true]
+    context.temp_dir_removed = True
+
+  Line 411: [context_flag_true]
+    context.associative_array = True
+
+  Line 434: [context_flag_true]
+    context.array_cleared = True
+
+  Line 444: [context_flag_true]
+    context.script_exiting = True
+
+
+File: tests/features/steps/ssh_agent_steps.py
+--------------------------------------------------------------------------------
+  Line 89: [context_flag_false]
+    context.ssh_entry_exists = False
+
+  Line 165: [context_flag_false]
+    context.public_keys_copied = False
+
+  Line 191: [context_flag_false]
+    context.vm_to_vm_ssh = False
+
+  Line 208: [context_flag_false]
+    context.host_command_executed = False
+
+  Line 225: [context_flag_false]
+    context.git_operation_from_vm = False
+
+  Line 404: [context_flag_true]
+    context.ssh_connection_attempted = True
+
+  Line 407: [context_flag_false]
+    context.ssh_connection_attempted = False
+
+
+File: tests/features/steps/ssh_config_steps.py
+--------------------------------------------------------------------------------
+  Line 621: [context_flag_true]
+    context.interrupt_simulated = True
+
+  Line 1057: [context_flag_true]
+    context.concurrent_test_active = True
+
+
+File: tests/features/steps/ssh_config_verification_steps.py
+--------------------------------------------------------------------------------
+  Line 57: [context_flag_false]
+    context.has_python_config = False
+
+  Line 80: [context_flag_true]
+    context.ssh_dir_can_be_created = True
+
+
+File: tests/features/steps/ssh_connection_steps.py
+--------------------------------------------------------------------------------
+  Line 51: [context_flag_true]
+    context.localhost_access = True
+
+  Line 57: [context_flag_true]
+    context.vm_connected = True
+
+
+File: tests/features/steps/ssh_git_steps.py
+--------------------------------------------------------------------------------
+  Line 42: [context_flag_true]
+    context.github_account_configured = True
+
+  Line 43: [context_flag_true]
+    context.github_ssh_keys = True
+
+  Line 57: [context_flag_true]
+    context.repo_exists = True
+
+  Line 63: [context_flag_true]
+    context.repo_cloned = True
+
+  Line 70: [context_flag_true]
+    context.code_changes_made = True
+
+  Line 78: [context_flag_true]
+    context.multiple_git_hosts = True
+
+  Line 84: [context_flag_true]
+    context.github_keys_configured = True
+
+  Line 85: [context_flag_true]
+    context.gitlab_keys_configured = True
+
+  Line 91: [context_flag_true]
+    context.repo_has_submodules = True
+
+  Line 92: [context_flag_true]
+    context.submodules_from_github = True
+
+  Line 98: [context_flag_true]
+    context.submodules_from_github = True
+
+  Line 105: [context_flag_true]
+    context.multiple_service_vms = True
+
+  Line 111: [context_flag_true]
+    context.all_repos_ssh_auth = True
+
+  Line 118: [context_flag_true]
+    context.deployment_server_exists = True
+
+  Line 124: [context_flag_true]
+    context.deployment_server_keys_configured = True
+
+  Line 131: [context_flag_true]
+    context.app_built = True
+
+  Line 138: [context_flag_true]
+    context.multiple_github_accounts = True
+
+  Line 148: [context_flag_true]
+    context.multiple_keys_loaded = True
+
+  Line 160: [context_flag_true]
+    context.npm_script_exists = True
+
+  Line 161: [context_flag_true]
+    context.npm_script_uses_git = True
+
+  Line 167: [context_flag_true]
+    context.cicd_script_exists = True
+
+  Line 174: [context_flag_true]
+    context.script_git_operations = True
+
+  Line 180: [context_flag_true]
+    context.new_vm_needs_git = True
+
+  Line 181: [context_flag_false]
+    context.new_vm_created = False
+
+  Line 226: [context_flag_true]
+    context.git_pull_github = True
+
+  Line 234: [context_flag_true]
+    context.git_pull_gitlab = True
+
+  Line 242: [context_flag_true]
+    context.submodule_update_executed = True
+
+  Line 248: [context_flag_true]
+    context.ssh_to_all_vms = True
+
+  Line 257: [context_flag_true]
+    context.git_pull_all_services = True
+
+  Line 265: [context_flag_true]
+    context.scp_to_deploy_executed = True
+
+  Line 272: [context_flag_true]
+    context.deploy_script_executed = True
+
+  Line 279: [context_flag_true]
+    context.ssh_connection_established = True
+
+  Line 286: [context_flag_true]
+    context.clone_from_account1 = True
+
+  Line 293: [context_flag_true]
+    context.clone_from_account2 = True
+
+  Line 300: [context_flag_true]
+    context.npm_deploy_executed = True
+
+  Line 301: [context_flag_true]
+    context.npm_uses_git = True
+
+  Line 307: [context_flag_true]
+    context.cicd_script_executed = True
+
+  Line 314: [context_flag_true]
+    context.ssh_connection_established = True
+
+  Line 321: [context_flag_true]
+    context.ssh_connection_established = True
+
+  Line 328: [context_flag_true]
+    context.ssh_connection_established = True
+
+  Line 334: [context_flag_true]
+    context.new_vm_created = True
+
+  Line 335: [context_flag_true]
+    context.new_vm_started = True
+
+  Line 357: [context_flag_true]
+    context.host_keys_used_for_git = True
+
+  Line 372: [context_flag_true]
+    context.host_keys_used = True
+
+  Line 387: [context_flag_true]
+    context.appropriate_keys_used = True
+
+  Line 429: [context_flag_true]
+    context.correct_keys_used = True
+
+  Line 438: [context_flag_true]
+    context.agent_auto_key_selection = True
+
+  Line 453: [context_flag_true]
+    context.git_uses_host_keys = True
+
+  Line 468: [context_flag_true]
+    context.no_manual_intervention = True
+
+
+File: tests/features/steps/ssh_known_hosts_steps.py
+--------------------------------------------------------------------------------
+  Line 111: [simulate_comment]
+    """Setup: Simulate VM was previously created."""
+
+
+File: tests/features/steps/ssh_vm_steps.py
+--------------------------------------------------------------------------------
+  Line 57: [context_flag_true]
+    context.python_vm_created = True
+
+  Line 64: [context_flag_true]
+    context.postgres_vm_created = True
+
+  Line 71: [context_flag_true]
+    context.redis_vm_created = True
+
+  Line 91: [context_flag_true]
+    context.all_vms_started = True
+
+  Line 167: [context_flag_true]
+    context.test_file_created = True
+
+  Line 318: [context_flag_false]
+    context.password_required = False
+
+  Line 331: [context_flag_false]
+    context.keys_copied_to_vm = False
+
+  Line 367: [context_flag_true]
+    context.file_copied = True
+
+  Line 379: [context_flag_false]
+    context.password_required = False
+
+  Line 403: [context_flag_true]
+    context.postgres_db_list_seen = True
+
+  Line 411: [context_flag_true]
+    context.redis_pong_seen = True
+
+  Line 426: [context_flag_true]
+    context.all_connections_use_host_keys = True
+
+  Line 443: [context_flag_true]
+    context.all_auth_use_host_keys = True
+
+  Line 468: [context_flag_true]
+    context.auth_automatic = True
+
+  Line 478: [context_flag_true]
+    context.private_keys_on_host_only = True
+
+  Line 494: [context_flag_true]
+    context.agent_socket_forwarded = True
+
+  Line 495: [context_flag_true]
+    context.no_keys_forwarded = True
+
+  Line 514: [context_flag_true]
+    context.no_keys_on_vms = True
+
+  Line 531: [context_flag_true]
+    context.all_use_host_keys = True
+
+  Line 538: [context_flag_true]
+    context.no_keys_on_any_vm = True
+
+  Line 619: [context_flag_true]
+    context.ssh_config_has_python_dev = True
+
+  Line 620: [context_flag_true]
+    context.existing_python_dev_entry = True
+
+  Line 651: [context_flag_true]
+    context.ssh_config_entry_absent = True
+
+
+File: tests/features/steps/template_steps.py
+--------------------------------------------------------------------------------
+  Line 47: [context_flag_true]
+    context.has_name_placeholder = True
+
+  Line 53: [context_flag_true]
+    context.has_ssh_port_placeholder = True
+
+  Line 67: [context_flag_true]
+    context.has_service_port_placeholder = True
+
+  Line 80: [context_flag_true]
+    context.has_special_chars = True
+
+  Line 139: [context_flag_true]
+    context.template_attempted = True
+
+  Line 215: [context_flag_false]
+    context.template_exists = False
+
+  Line 231: [context_flag_true]
+    context.output_contains = True
+
+  Line 234: [context_flag_true]
+    context.output_contains = True
+
+  Line 242: [context_flag_true]
+    context.output_not_contains = True
+
+  Line 252: [context_flag_true]
+    context.port_mapping_found = True
+
+  Line 270: [context_flag_true]
+    context.special_chars_escaped = True
+
+  Line 279: [context_flag_true]
+    context.valid_yaml = True
+
+  Line 284: [context_flag_true]
+    context.valid_yaml = True
+
+  Line 314: [context_flag_true]
+    context.has_public_keys = True
+
+  Line 332: [context_flag_true]
+    context.has_network = True
+
+  Line 344: [context_flag_true]
+    context.has_uid_gid = True
+
+  Line 349: [context_flag_true]
+    context.has_uid_gid = True
+
+  Line 376: [context_flag_true]
+    context.install_command_included = True
+
+
+File: tests/features/steps/uninstallation_steps.py
+--------------------------------------------------------------------------------
+  Line 28: [context_flag_true]
+    context.want_uninstall = True
+
+  Line 33: [context_flag_true]
+    context.removal_requested = True
+
+
+File: tests/features/steps/user_workflow_steps.py
+--------------------------------------------------------------------------------
+  Line 26: [context_flag_true]
+    context.ssh_details_available = True
+
+  Line 79: [context_flag_true]
+    context.has_zsh = True
+
+  Line 98: [context_flag_false]
+    context.can_edit_projects = False
+
+  Line 146: [context_flag_true]
+    context.needs_admin = True
+
+  Line 167: [context_flag_true]
+    context.passwordless_sudo = True
+
+  Line 190: [context_flag_true]
+    context.has_permissions = True
+
+  Line 202: [context_flag_true]
+    context.ssh_connection = True
+
+  Line 223: [context_flag_true]
+    context.using_zsh = True
+
+  Line 246: [context_flag_true]
+    context.oh_my_zsh_installed = True
+
+  Line 269: [context_flag_true]
+    context.theme_configured = True
+
+  Line 343: [context_flag_false]
+    context.workspace_mounted = False
+
+  Line 411: [context_flag_false]
+    context.service_reachable = False
+
+  Line 471: [context_flag_true]
+    context.has_ssh_instructions = True
+
+
+File: tests/features/steps/vm_creation_steps.py
+--------------------------------------------------------------------------------
+  Line 133: [simulate_comment]
+    """Simulate host port collision - verify port is actually in use."""
+
+  Line 148: [context_flag_false]
+    context.host_port_actually_in_use = False
+
+  Line 153: [simulate_comment]
+    """Simulate Docker port collision - verify Docker container is using the port."""
+
+  Line 170: [context_flag_false]
+    context.docker_port_actually_in_use = False
+
+  Line 223: [context_flag_true]
+    context.stale_lock_exists = True
+
+  Line 227: [context_flag_false]
+    context.stale_lock_exists = False
+
+  Line 259: [context_flag_true]
+    context.port_registry_queried = True
+
+  Line 262: [context_flag_false]
+    context.port_registry_queried = False
+
+  Line 265: [context_flag_true]
+    context.port_registry_queried = True
+
+  Line 266: [context_flag_false]
+    context.port_registry_exists = False
+
+
+File: tests/features/steps/vm_docker_steps.py
+--------------------------------------------------------------------------------
+  Line 113: [context_flag_true]
+    context.compose_fails = True
+
+  Line 130: [context_flag_false]
+    context.no_disk_space = False
+
+  Line 219: [context_flag_true]
+    context.trying_start = True
+
+  Line 344: [context_flag_true]
+    context.each_vm_starts = True
+
+  Line 1418: [context_flag_true]
+    context.user_matched = True
+
+
+File: tests/features/steps/vm_lifecycle_steps.py
+--------------------------------------------------------------------------------
+  Line 98: [context_flag_true]
+    context.shutdown_all_triggered = True
+
+  Line 292: [context_flag_true]
+    context.create_attempted_again = True
+
+  Line 575: [context_flag_true]
+    context.new_language_context = True
+
+  Line 585: [context_flag_true]
+    context.refresh_needed = True
+
+  Line 620: [context_flag_true]
+    context.nocache_requested = True
+
+  Line 1197: [context_flag_false]
+    context.package_available = False
+
+
+File: tests/features/steps/vm_state_verification_steps.py
+--------------------------------------------------------------------------------
+  Line 69: [context_flag_true]
+    context.vm_removed = True
+
+  Line 72: [context_flag_false]
+    context.vm_removed = False
+
+  Line 92: [context_flag_false]
+    context.vm_not_working = False
+
+  Line 97: [context_flag_true]
+    context.vm_not_working = True
+
+  Line 99: [context_flag_false]
+    context.vm_not_working = False
+
+  Line 109: [context_flag_true]
+    context.vm_misbehaving = True
+
+  Line 111: [context_flag_false]
+    context.vm_misbehaving = False
+
+  Line 129: [context_flag_false]
+    context.vm_corrupted = False
+
+  Line 172: [context_flag_true]
+    context.build_failed = True
+
+  Line 195: [context_flag_true]
+    context.build_fails_repeatedly = True
+
+  Line 211: [context_flag_false]
+    context.container_running = False
+
+  Line 212: [context_flag_false]
+    context.ssh_fails = False
+
+  Line 215: [context_flag_true]
+    context.container_running = True
+
+  Line 270: [context_flag_true]
+    context.compose_malformed = True
+
+  Line 273: [context_flag_false]
+    context.compose_malformed = False
+
+
+File: tests/features/steps/vm_status_steps.py
+--------------------------------------------------------------------------------
+  Line 34: [context_flag_true]
+    context.vde_installed = True
+
+  Line 46: [context_flag_true]
+    context.ssh_configured = True
+
+  Line 58: [context_flag_true]
+    context.languages_only = True
+
+  Line 64: [context_flag_true]
+    context.services_only = True
+
+  Line 90: [context_flag_true]
+    context.status_checked = True
+
+  Line 104: [context_flag_true]
+    context.status_requested = True
+
+  Line 115: [context_flag_true]
+    context.output_viewed = True
+
+  Line 125: [context_flag_true]
+    context.status_checked = True
+
+  Line 193: [context_flag_true]
+    context.monitoring = True
+
+  Line 209: [context_flag_true]
+    context.exploring_vms = True
+
+  Line 794: [context_flag_true]
+    context.operation_completed = True
+
+  Line 864: [context_flag_true]
+    context.health_info_available = True
+
+  Line 869: [context_flag_true]
+    context.health_info_available = True  # Feature exists
+
+
+================================================================================
+PATTERN DEFINITIONS:
+================================================================================
+- assert_true: assert True (always passes)
+- getattr_true_default: getattr(context, 'x', True) (defaults to True)
+- or_true: expression or True (can't fail)
+- context_flag_true/false: context.x = True/False (flag without verification)
+- pass_statement: pass in @then steps (no verification)
+- removed_comment: # REMOVED: comments (documentation of removed fake tests)
+- simulate_comment: 'Simulate' in docstrings (indicates fake behavior)

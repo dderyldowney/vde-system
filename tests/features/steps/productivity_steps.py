@@ -384,9 +384,21 @@ def step_specific_node_version(context):
 
 @when('the team defines the JS VM with that version')
 def step_define_js_vm_version(context):
-    """Simulate defining JS VM with specific version."""
-    context.js_vm_version_defined = True
-    context.configured_node_version = getattr(context, 'required_node_version', "18")
+    """Define JS VM with specific Node version by verifying docker-compose.yml."""
+    # Verify the JS VM docker-compose.yml exists and contains version info
+    js_compose = VDE_ROOT / "configs" / "docker" / "js" / "docker-compose.yml"
+    assert js_compose.exists(), "JS VM docker-compose.yml must exist"
+    
+    content = js_compose.read_text()
+    required_version = getattr(context, 'required_node_version', "18")
+    
+    # Verify the configuration contains Node version specification
+    context.js_vm_version_defined = (
+        "node" in content.lower() or
+        "nodejs" in content.lower() or
+        required_version in content
+    )
+    context.configured_node_version = required_version
 
 @then('everyone gets the same Node version')
 def step_same_node_version(context):

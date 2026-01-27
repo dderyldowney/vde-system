@@ -108,9 +108,20 @@ def step_known_hosts_not_exists(context):
 
 @given('VM "{vm}" was previously created with SSH port "{port}"')
 def step_vm_previously_created(context, vm, port):
-    """Setup: Simulate VM was previously created."""
+    """Setup: Verify VM exists by checking Docker container or compose file."""
     context.test_vm_name = vm
     context.test_vm_port = port
+    
+    # Verify VM actually exists by checking Docker container
+    result = subprocess.run(
+        ["docker", "ps", "-a", "--filter", f"name={vm}", "--format", "{{.Names}}"],
+        capture_output=True,
+        text=True,
+        timeout=10
+    )
+    
+    # Store whether VM container actually exists
+    context.vm_container_exists = (result.returncode == 0 and vm in result.stdout)
 
 
 @given('~/.ssh/known_hosts had old entry for "{pattern}"')

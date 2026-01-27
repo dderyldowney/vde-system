@@ -130,7 +130,7 @@ def step_no_svc_vms(context):
 
 @given('a non-VDE process is listening on port "{port}"')
 def step_host_port_in_use(context, port):
-    """Simulate host port collision - verify port is actually in use."""
+    """Verify port is actually in use on host using lsof."""
     # Real verification: check if port is in use on host
     try:
         result = subprocess.run(
@@ -150,7 +150,7 @@ def step_host_port_in_use(context, port):
 
 @given('a Docker container is bound to host port "{port}"')
 def step_docker_port_in_use(context, port):
-    """Simulate Docker port collision - verify Docker container is using the port."""
+    """Verify Docker container is actually using the port."""
     # Real verification: check if any Docker container is using the port
     try:
         result = subprocess.run(
