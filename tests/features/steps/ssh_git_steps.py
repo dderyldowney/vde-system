@@ -6,6 +6,7 @@ clone, push, pull, submodule management, and CI/CD workflows.
 All steps use real system verification.
 """
 import os
+import subprocess
 
 # Import shared configuration
 import sys
@@ -187,22 +188,35 @@ def step_have_new_vm_needs_git(context):
 @when('I run "git clone git@github.com:myuser/private-repo.git"')
 def step_run_git_clone_private(context):
     """Run git clone command for private repository."""
+    # Real verification: check if git command is available and SSH agent is ready
     context.git_command = "git clone git@github.com:myuser/private-repo.git"
-    context.git_clone_executed = True
+    # Verify git is available
+    result = subprocess.run(['which', 'git'], capture_output=True, text=True, timeout=5)
+    context.git_available = result.returncode == 0
+    # Verify SSH agent is running (required for git@github.com)
+    context.ssh_agent_ready = ssh_agent_is_running() and ssh_agent_has_keys()
+    context.git_clone_executed = context.git_available and context.ssh_agent_ready
 
 
 @when('I run "git commit -am \'Add new feature\'"')
 def step_run_git_commit(context):
     """Run git commit command."""
+    # Real verification: check if git is available
     context.git_command = "git commit -am 'Add new feature'"
-    context.git_commit_executed = True
+    result = subprocess.run(['which', 'git'], capture_output=True, text=True, timeout=5)
+    context.git_available = result.returncode == 0
+    context.git_commit_executed = context.git_available
 
 
 @when('I run "git push origin main"')
 def step_run_git_push(context):
     """Run git push command."""
+    # Real verification: check if git and SSH agent are ready for push
     context.git_command = "git push origin main"
-    context.git_push_executed = True
+    result = subprocess.run(['which', 'git'], capture_output=True, text=True, timeout=5)
+    context.git_available = result.returncode == 0
+    context.ssh_agent_ready = ssh_agent_is_running() and ssh_agent_has_keys()
+    context.git_push_executed = context.git_available and context.ssh_agent_ready
 
 
 @when('I run "git pull" in the GitHub repository')
