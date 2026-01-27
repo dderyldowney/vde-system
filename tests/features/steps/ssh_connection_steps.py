@@ -48,13 +48,11 @@ def step_ssh_into_python_dev(context):
 @when('I access localhost on the VM\'s port')
 def step_access_localhost_port(context):
     """Context: Access localhost on VM's port."""
-    context.localhost_access = True
 
 
 @when('I connect to a VM')
 def step_connect_vm(context):
     """Context: Connect to a VM."""
-    context.vm_connected = True
 
 
 @then('I should receive the hostname (localhost)')

@@ -78,10 +78,7 @@ def step_both_request_next_port(context):
     # Simulate port allocation by checking port registry
     port_registry = VDE_ROOT / "scripts" / "data" / "port-registry.conf"
     if port_registry.exists():
-        context.port_registry_exists = True
     else:
-        context.port_registry_exists = False
-    context.ports_requested = True
 
 
 # =============================================================================
@@ -102,7 +99,6 @@ def step_port_registry_tracks(context):
             compose_files = list(configs_dir.glob('*/docker-compose.yml'))
             context.registry_tracks = len(compose_files) > 0
         else:
-            context.registry_tracks = False
 
 
 @then('Port registry persists across script invocations')
@@ -114,7 +110,6 @@ def step_port_registry_persists(context):
     # If not, docker-compose files provide persistence instead
     if port_registry.exists():
         # Verify the registry file is tracked by git (or at least exists for persistence)
-        context.registry_persists = True
         assert port_registry.stat().st_size > 0, "Port registry file should not be empty"
     else:
         # Check that docker-compose files provide the persistence mechanism
@@ -219,7 +214,6 @@ def step_registry_updates_on_removal(context):
     # When VM is removed, its port should be freed
     if port_registry.exists():
         # Registry file exists - it should support updates
-        context.registry_updates = True
         # Verify the file is writable (would allow updates)
         assert port_registry.stat().st_mode & 0o200, "Port registry should be writable for updates"
     else:

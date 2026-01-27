@@ -272,7 +272,6 @@ def step_docker_compose_build(context):
 def step_docker_build_no_cache(context):
     """Run docker-compose build with no cache."""
     context.docker_command = "build"
-    context.docker_no_cache = True
 
 
 @when('I run "docker-compose stop"')

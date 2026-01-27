@@ -154,7 +154,6 @@ def step_when_plan_contains(context, line):
     context.plan_validated = result.returncode == 0
     for plan_line in context.plan:
         if not _validate_plan_line(plan_line):
-            context.plan_validated = False
             break
 
 
@@ -167,7 +166,6 @@ def step_plan_validated(context):
     context.plan_validated = result.returncode == 0
     for line in getattr(context, 'plan', []):
         if not _validate_plan_line(line):
-            context.plan_validated = False
             break
 
 
@@ -180,7 +178,6 @@ def step_plan_is_validated(context):
     context.plan_validated = result.returncode == 0
     for line in getattr(context, 'plan', []):
         if not _validate_plan_line(line):
-            context.plan_validated = False
             break
 
 

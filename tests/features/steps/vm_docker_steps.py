@@ -216,7 +216,6 @@ def step_try_start_vm(context):
     context.last_output = result.stdout
     context.last_error = result.stderr
     context.last_exit_code = result.returncode
-    context.trying_start = True
 
 
 @when('stderr is parsed')
@@ -251,7 +250,6 @@ def step_operation_retried(context):
         # All retries exhausted
         pass
 
-    context.operation_retried = True
     context.retry_count = retry_count
     context.actual_delay = actual_delay
 
@@ -341,7 +339,6 @@ def step_one_vm_crashes(context):
 @when('each VM starts')
 def step_each_vm_starts(context):
     """Each VM starts - verify multiple containers starting."""
-    context.each_vm_starts = True
 
 
 @when('I check if "golang" exists')
@@ -1415,4 +1412,3 @@ def step_container_user_match(context):
         # User configuration happens in docker-compose.yml
         # Verify the inspect command succeeded
         assert result.returncode == 0, f"Should be able to inspect user for {vm}"
-        context.user_matched = True

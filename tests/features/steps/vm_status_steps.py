@@ -101,7 +101,6 @@ def step_check_vm_status(context):
 @when('I request "status"')
 def step_request_status(context):
     """Request status."""
-    context.status_requested = True
     result = run_vde_command("list", timeout=30)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
@@ -112,7 +111,6 @@ def step_request_status(context):
 def step_view_output(context):
     """View the output."""
     assert context.last_output, "Should have output to view"
-    context.output_viewed = True
 
 
 @when('I check status')
@@ -122,7 +120,6 @@ def step_check_status_again(context):
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
-    context.status_checked = True
 
 
 @when('I request information about "{vm_name}"')
@@ -190,7 +187,6 @@ def step_some_already_running(context):
 @when('I\'m monitoring the system')
 def step_monitoring(context):
     """Monitoring the system."""
-    context.monitoring = True
 
 
 @when('I say something vague like "do something with containers"')
@@ -206,7 +202,6 @@ def step_explore_vms(context):
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
-    context.exploring_vms = True
 
 
 @when('I request to "create a Go VM"')
@@ -791,7 +786,6 @@ def step_any_vm_operation(context):
 def step_operation_completes(context):
     """Verify the operation completes successfully."""
     assert context.last_exit_code == 0, f"Operation did not complete: {context.last_error}"
-    context.operation_completed = True
 
 
 @then('I should see the new state')
@@ -861,7 +855,6 @@ def step_see_healthy_containers(context):
         try:
             health = get_container_health(vm)
             if health:
-                context.health_info_available = True
                 break
         except Exception:
             continue

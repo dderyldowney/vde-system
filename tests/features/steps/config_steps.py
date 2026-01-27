@@ -51,7 +51,6 @@ def step_config_includes_multiple_ports(context):
         content = vm_types_file.read_text()
         context.multiport_supported = 'port' in content.lower()
     else:
-        context.multiport_supported = False
 
 
 @given('I want friendly names in listings')
@@ -358,7 +357,6 @@ def step_custom_port_range_used(context):
         content = vm_types.read_text()
         context.custom_range_supported = 'port' in content.lower() or 'range' in content.lower()
     else:
-        context.custom_range_supported = False
 
 
 @then('existing VMs keep their allocated ports')
@@ -382,7 +380,6 @@ def step_custom_base_image_used(context):
         content = vm_types.read_text()
         context.custom_image_supported = 'image' in content.lower()
     else:
-        context.custom_image_supported = False
 
 
 @then('my OS-specific requirements should be met')
@@ -434,7 +431,6 @@ def step_file_permissions_correct(context):
         content = compose.read_text()
         context.user_config_supported = 'user' in content.lower() or 'uid' in content.lower()
     else:
-        context.user_config_supported = False
 
 
 @then('I won\'t have permission issues on shared volumes')
@@ -467,7 +463,6 @@ def step_custom_dirs_mounted(context):
         content = compose.read_text()
         context.custom_mounts_supported = 'volumes' in content.lower()
     else:
-        context.custom_mounts_supported = False
 
 
 @then('my system stays responsive')
@@ -479,7 +474,6 @@ def step_system_responsive(context):
         content = compose.read_text()
         context.memory_limit_supported = 'mem_limit' in content.lower() or 'memory' in content.lower()
     else:
-        context.memory_limit_supported = False
 
 
 @then('VMs should use my DNS servers')
@@ -490,7 +484,6 @@ def step_custom_dns_used(context):
         content = compose.read_text()
         context.dns_config_supported = 'dns' in content.lower()
     else:
-        context.dns_config_supported = False
 
 
 @then('name resolution should work as configured')
@@ -509,7 +502,6 @@ def step_name_resolution_works(context):
         except Exception:
             context.dns_working = True  # Assume working if can't test
     else:
-        context.dns_working = True
 
 
 @then('VMs can be isolated as needed')
@@ -520,7 +512,6 @@ def step_vms_isolated(context):
         content = compose.read_text()
         context.network_isolation_supported = 'network' in content.lower() or 'networks' in content.lower()
     else:
-        context.network_isolation_supported = False
 
 
 @then('other VMs cannot reach isolated VMs')
@@ -540,7 +531,6 @@ def step_logs_can_go_anywhere(context):
         content = compose.read_text()
         context.logging_configurable = 'log' in content.lower()
     else:
-        context.logging_configurable = False
 
 
 @then('log rotation can be configured')
@@ -552,7 +542,6 @@ def step_log_rotation_configurable(context):
         content = compose.read_text()
         context.log_rotation_supported = 'log' in content.lower() or 'max_size' in content.lower()
     else:
-        context.log_rotation_supported = False
 
 
 @then('I can control log verbosity')
@@ -564,7 +553,6 @@ def step_log_verbosity_controllable(context):
         content = compose.read_text()
         context.verbosity_controllable = 'log_level' in content or 'verbose' in content.lower()
     else:
-        context.verbosity_controllable = False
 
 
 @then('VM restarts if it crashes')
@@ -575,7 +563,6 @@ def step_vm_auto_restarts(context):
         content = compose.read_text()
         context.restart_configured = 'restart' in content.lower()
     else:
-        context.restart_configured = False
 
 
 @then('VM starts on system boot (if Docker does)')
@@ -588,7 +575,6 @@ def step_vm_starts_on_boot(context):
         has_restart = 'restart:' in content
         context.auto_start_configured = has_restart
     else:
-        context.auto_start_configured = False
 
 
 @then('my environment recovers automatically')
@@ -603,7 +589,6 @@ def step_environment_auto_recovers(context):
         )
         context.auto_recovery_configured = has_auto_recovery
     else:
-        context.auto_recovery_configured = False
 
 
 @then('Docker monitors VM health')
@@ -614,7 +599,6 @@ def step_docker_monitors_health(context):
         content = compose.read_text()
         context.healthcheck_enabled = 'healthcheck' in content.lower()
     else:
-        context.healthcheck_enabled = False
 
 
 @then('I can see health status in docker ps')
@@ -643,7 +627,6 @@ def step_unhealthy_vm_auto_restart(context):
             'healthcheck' in content.lower() and 'restart' in content.lower()
         )
     else:
-        context.auto_restart_on_unhealthy = False
 
 
 @then('team members get identical configuration')
@@ -743,7 +726,6 @@ def step_can_customize(context):
         else:
             raise AssertionError("No .gitignore found - local customizations cannot be safely created")
     else:
-        context.customization_possible = True
 
 
 @then('the bug becomes reproducible')
@@ -776,11 +758,8 @@ def step_syntax_errors_caught(context):
         if vm_types.exists():
             try:
                 vm_types.read_text()  # Try to read
-                context.validation_works = True
             except Exception:
-                context.validation_works = False
         else:
-            context.validation_works = True
 
 
 @then('default configurations should be used')
@@ -808,7 +787,6 @@ def step_vm_config_persists(context):
         compose_files = list(configs_dir.glob('*/docker-compose.yml'))
         context.config_persists = len(compose_files) > 0
     else:
-        context.config_persists = False
 
 
 @then('I can see which VMs are created vs just available')
@@ -834,7 +812,6 @@ def step_see_only_created(context):
         created_vms = [d.name for d in configs_dir.iterdir() if d.is_dir()]
         context.only_created_shown = len(created_vms) >= 0
     else:
-        context.only_created_shown = True
 
 
 @then('their status (running/stopped) should be shown')
@@ -859,7 +836,6 @@ def step_app_connects_test_db(context):
     test_db = getattr(context, 'test_db_vm', 'postgres')
     if container_exists(test_db):
         # Database container is running
-        context.test_db_accessible = True
     else:
         # Test database compose file should exist
         test_db_compose = VDE_ROOT / "configs" / "docker" / test_db / "docker-compose.yml"
@@ -924,7 +900,6 @@ def step_verify_env_vars_match(context):
         has_env_config = 'environment' in content.lower()
         context.env_vars_verified = has_env_config
     else:
-        context.env_vars_verified = False
 
 
 # Removed duplicate: "the configuration should be validated"

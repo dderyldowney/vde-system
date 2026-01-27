@@ -87,7 +87,6 @@ def step_init_assoc_array(context):
     shell = getattr(context, 'current_shell', 'zsh')
     result = run_shell_command(f"_assoc_init '{context.array_name}'", shell)
     assert result.returncode == 0, f"Failed to initialize array: {result.stderr}"
-    context.array_initialized = True
     # Initialize tracking for state restoration
     if not hasattr(context, 'set_keys'):
         context.set_keys = {}
@@ -107,7 +106,6 @@ def step_is_zsh_true(context):
     """_is_zsh should return true (exit code 0)."""
     result = run_shell_command('_is_zsh', getattr(context, 'current_shell', 'zsh'))
     assert result.returncode == 0, f"_is_zsh should return 0 (true) in {context.current_shell}, got {result.returncode}"
-    context.is_zsh = True
 
 
 @then('_is_zsh should return false')
@@ -115,7 +113,6 @@ def step_is_zsh_false(context):
     """_is_zsh should return false (exit code 1)."""
     result = run_shell_command('_is_zsh', getattr(context, 'current_shell', 'zsh'))
     assert result.returncode != 0, f"_is_zsh should return non-zero (false) in {context.current_shell}, got {result.returncode}"
-    context.is_zsh = False
 
 
 @then('_is_bash should return true')
@@ -123,7 +120,6 @@ def step_is_bash_true(context):
     """_is_bash should return true (exit code 0)."""
     result = run_shell_command('_is_bash', getattr(context, 'current_shell', 'zsh'))
     assert result.returncode == 0, f"_is_bash should return 0 (true) in {context.current_shell}, got {result.returncode}"
-    context.is_bash = True
 
 
 @then('_is_bash should return false')
@@ -131,7 +127,6 @@ def step_is_bash_false(context):
     """_is_bash should return false (exit code 1)."""
     result = run_shell_command('_is_bash', getattr(context, 'current_shell', 'zsh'))
     assert result.returncode != 0, f"_is_bash should return non-zero (false) in {context.current_shell}, got {result.returncode}"
-    context.is_bash = False
 
 
 @then('_bash_version_major should return "{version}"')
@@ -160,7 +155,6 @@ def step_native_assoc_true(context):
     """_shell_supports_native_assoc should return true (exit code 0)."""
     result = run_shell_command('_shell_supports_native_assoc', getattr(context, 'current_shell', 'zsh'))
     assert result.returncode == 0, f"_shell_supports_native_assoc should return 0 (true) in {context.current_shell}, got {result.returncode}"
-    context.native_assoc_supported = True
 
 
 @then('_shell_supports_native_assoc should return false')
@@ -174,7 +168,6 @@ def step_native_assoc_false(context):
         context.native_assoc_supported = True  # Mark as supported (actual behavior)
         return
     assert result.returncode != 0, f"_shell_supports_native_assoc should return non-zero (false) in {context.current_shell}, got {result.returncode}"
-    context.native_assoc_supported = False
 
 
 @then('native zsh typeset should be used')
@@ -182,7 +175,6 @@ def step_zsh_typeset_used(context):
     """Native zsh typeset should be used."""
     result = run_shell_command('_is_zsh && _shell_supports_native_assoc', getattr(context, 'current_shell', 'zsh'))
     assert result.returncode == 0, "Expected zsh with native associative array support"
-    context.uses_zsh_typeset = True
 
 
 @then('native bash declare should be used')
@@ -190,7 +182,6 @@ def step_bash_declare_used(context):
     """Native bash declare should be used."""
     result = run_shell_command('_is_bash && _shell_supports_native_assoc', getattr(context, 'current_shell', 'zsh'))
     assert result.returncode == 0, "Expected bash 4+ with native associative array support"
-    context.uses_bash_declare = True
 
 
 @then('array operations should work correctly')
@@ -201,7 +192,6 @@ def step_array_ops_work(context):
     result = run_shell_command(f"_assoc_init '{array_name}' && _assoc_set '{array_name}' 'test_key' 'test_value' && _assoc_get '{array_name}' 'test_key'", getattr(context, 'current_shell', 'zsh'))
     assert result.returncode == 0, f"Array operations failed: {result.stderr}"
     assert result.stdout.strip() == 'test_value', f"Expected 'test_value', got '{result.stdout.strip()}'"
-    context.array_ops_work = True
 
 
 @then('file-based storage should be used')
@@ -210,10 +200,8 @@ def step_file_storage_used(context):
     result = run_shell_command('! _shell_supports_native_assoc', getattr(context, 'current_shell', 'zsh'))
     # If we're in a shell without native support, file-based is used
     if result.returncode == 0:
-        context.uses_file_storage = True
     else:
         # Native support available - this test scenario shouldn't run
-        context.uses_file_storage = False
 
 
 @then('operations should work via file I/O')
@@ -224,7 +212,6 @@ def step_file_io_works(context):
     result = run_shell_command(f"_assoc_init '{array_name}' && _assoc_set '{array_name}' 'file_test_key' 'file_test_value' && _assoc_get '{array_name}' 'file_test_key'", getattr(context, 'current_shell', 'zsh'))
     assert result.returncode == 0, f"File-based I/O operations failed: {result.stderr}"
     assert result.stdout.strip() == 'file_test_value', f"Expected 'file_test_value', got '{result.stdout.strip()}'"
-    context.file_io_works = True
 
 
 @when('I set key "{key}" to value "{value}"')
@@ -263,7 +250,6 @@ def step_get_all_keys(context):
     keys_output = result.stdout.strip()
     # Store keys as a list (space-separated output from _assoc_keys)
     context.all_keys = keys_output.split() if keys_output else []
-    context.all_keys_retrieved = True
 
 
 @then('all keys should be returned')
@@ -272,14 +258,12 @@ def step_all_keys_returned(context):
     expected_keys = getattr(context, 'expected_keys', [])
     actual_keys = getattr(context, 'all_keys', [])
     assert set(actual_keys) == set(expected_keys), f"Expected keys {expected_keys}, got {actual_keys}"
-    context.keys_returned = True
 
 
 @then('original key format should be preserved')
 def step_key_format_preserved(context):
     """Key format should be preserved."""
     # This is tested by setting and getting keys with special characters
-    context.key_format_preserved = True
 
 
 @when('I check if key "{key}" exists')
@@ -323,7 +307,6 @@ def step_key_no_exist(context, key):
     shell = getattr(context, 'current_shell', 'zsh')
     result = run_shell_command_with_state(context, f"_assoc_has_key '{getattr(context, 'array_name', 'test_array')}' '{key}'", shell)
     assert result.returncode != 0, f"Key '{key}' should no longer exist"
-    context.key_removed = True
 
 
 @then('array should be empty')
@@ -335,7 +318,6 @@ def step_array_empty(context):
     assert result.returncode == 0, "Failed to check array keys"
     keys = result.stdout.strip()
     assert not keys, f"Array should be empty but contains keys: {keys}"
-    context.array_empty = True
 
 
 @when('I call _get_script_path')
@@ -360,13 +342,11 @@ def step_script_path_returned(context):
 
 def step_script_exits(context):
     """Script exits."""
-    context.script_exited = True
 
 
 @then('temporary storage directory should be removed')
 def step_temp_dir_removed(context):
     """Temporary directory should be removed."""
-    context.temp_dir_removed = True
 
 
 @then('keys should not collide')
@@ -431,7 +411,6 @@ def step_clear_array(context):
     shell = getattr(context, 'current_shell', 'zsh')
     result = run_shell_command(f"_assoc_clear '{array_name}'", shell)
     assert result.returncode == 0, f"Failed to clear array: {result.stderr}"
-    context.array_cleared = True
     # Clear tracked keys
     if hasattr(context, 'set_keys'):
         context.set_keys = {}
@@ -441,7 +420,6 @@ def step_when_script_exits(context):
     """Script exits."""
     # Call cleanup to simulate exit behavior
     result = run_shell_command('_assoc_cleanup', getattr(context, 'current_shell', 'zsh'))
-    context.script_exiting = True
 
 
 # =============================================================================

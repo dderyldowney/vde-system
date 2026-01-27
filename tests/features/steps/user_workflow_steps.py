@@ -53,7 +53,6 @@ def step_logged_in_devuser(context):
                 if compose_file.exists():
                     content = compose_file.read_text()
                     if 'USER' in content or 'user:' in content.lower() or 'devuser' in content.lower():
-                        context.user_is_devuser = True
                         return
         context.user_is_devuser = False  # No verification possible
 
@@ -76,7 +75,6 @@ def step_have_zsh_shell(context):
         for dockerfile in dockerfiles:
             content = dockerfile.read_text()
             if 'zsh' in content.lower():
-                context.has_zsh = True
                 return
         context.has_zsh = False  # No verification possible
 
@@ -95,7 +93,6 @@ def step_can_edit_projects(context):
             mounts = result.stdout.lower()
             context.can_edit_projects = 'workspace' in mounts or 'project' in mounts
         else:
-            context.can_edit_projects = False
     else:
         # Check docker-compose files for workspace/project volume mounts
         configs_dir = VDE_ROOT / "configs" / "docker"
@@ -105,7 +102,6 @@ def step_can_edit_projects(context):
                 if compose_file.exists():
                     content = compose_file.read_text().lower()
                     if 'workspace' in content or 'project' in content:
-                        context.can_edit_projects = True
                         return
         context.can_edit_projects = False  # No verification possible
 
@@ -164,7 +160,6 @@ def step_execute_no_password(context):
         if setup_script.exists():
             content = setup_script.read_text()
             if 'sudo' in content.lower() and ('nopasswd' in content.lower() or 'passwordless' in content.lower()):
-                context.passwordless_sudo = True
                 return
         context.passwordless_sudo = False  # No verification possible
 
@@ -187,7 +182,6 @@ def step_have_permissions(context):
         for dockerfile in dockerfiles:
             content = dockerfile.read_text()
             if 'group' in content.lower() or 'user' in content.lower():
-                context.has_permissions = True
                 return
         context.has_permissions = False  # No verification possible
 
@@ -220,7 +214,6 @@ def step_using_zsh(context):
         for dockerfile in dockerfiles:
             content = dockerfile.read_text()
             if 'SHELL' in content and '/zsh' in content:
-                context.using_zsh = True
                 return
         context.using_zsh = False  # No verification possible
 
@@ -243,7 +236,6 @@ def step_oh_my_zsh_configured(context):
         if setup_script.exists():
             content = setup_script.read_text()
             if 'oh-my-zsh' in content.lower():
-                context.oh_my_zsh_installed = True
                 return
         context.oh_my_zsh_installed = False  # No verification possible
 
@@ -266,7 +258,6 @@ def step_theme_active(context):
         for zshrc_file in zshrc_files:
             content = zshrc_file.read_text()
             if 'ZSH_THEME' in content:
-                context.theme_configured = True
                 return
         context.theme_configured = False  # No verification possible
 
@@ -340,7 +331,6 @@ def step_files_transfer_workspace(context):
             mounts = result.stdout.lower()
             context.workspace_mounted = 'workspace' in mounts
         else:
-            context.workspace_mounted = False
     else:
         # Check docker-compose files for workspace volume mounts
         configs_dir = VDE_ROOT / "configs" / "docker"
@@ -350,9 +340,7 @@ def step_files_transfer_workspace(context):
                 if compose_file.exists():
                     content = compose_file.read_text().lower()
                     if 'workspace' in content:
-                        context.workspace_mounted = True
                         return
-        context.workspace_mounted = False
 
 
 @then('permissions should be preserved')
@@ -375,9 +363,7 @@ def step_permissions_preserved(context):
                 if compose_file.exists():
                     content = compose_file.read_text()
                     if 'user:' in content or 'USER' in content:
-                        context.permissions_preserved = True
                         return
-        context.permissions_preserved = False
 
 
 # =============================================================================
@@ -408,7 +394,6 @@ def step_reach_service(context):
             content = compose_file.read_text()
             context.service_reachable = 'ports:' in content
         else:
-            context.service_reachable = False
 
 
 @then('the service should be accessible from the host')
@@ -468,7 +453,6 @@ def step_ssh_config_instructions(context):
         content = readme.read_text()
         context.has_ssh_instructions = 'ssh' in content.lower()
     else:
-        context.has_ssh_instructions = True
 
 
 @then('the instructions should work on their first try')

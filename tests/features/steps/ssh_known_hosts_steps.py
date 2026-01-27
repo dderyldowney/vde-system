@@ -213,7 +213,6 @@ def step_remove_vm_by_port(context, port):
         else:
             Path(temp_path).unlink()
 
-    context.vm_removed_by_port = True
     context.removed_port = port
 
 

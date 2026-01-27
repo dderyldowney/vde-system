@@ -437,7 +437,6 @@ def step_connected_postgresql(context):
         )
         context.connected_to_postgres = result.returncode == 0 or 'accepting' in result.stdout
     else:
-        context.connected_to_postgres = False
 
 
 @then('I can query the database')
@@ -451,7 +450,6 @@ def step_can_query_database(context):
         )
         context.can_query = result.returncode == 0
     else:
-        context.can_query = False
 
 
 @then('the connection uses the container network')
@@ -532,7 +530,6 @@ def step_rendered_ssh_volume(context):
         content = compose.read_text()
         context.ssh_volume_in_output = '.ssh' in content or 'ssh' in content.lower()
     else:
-        context.ssh_volume_in_output = False
 
 
 @given('I have updated VDE scripts')
@@ -598,7 +595,6 @@ def step_only_lang_vms_listed(context):
         lang_vms = [line for line in content.split('\n') if 'lang|' in line]
         context.only_lang_listed = len(lang_vms) > 0
     else:
-        context.only_lang_listed = True
 
 
 @then('only service VMs should be listed')
@@ -610,13 +606,11 @@ def step_only_service_vms_listed(context):
         service_vms = [line for line in content.split('\n') if 'service|' in line]
         context.only_service_listed = len(service_vms) > 0
     else:
-        context.only_service_listed = True
 
 
 @then('language VMs should not be listed')
 def step_lang_vms_not_listed(context):
     """Verify language VMs are not listed."""
-    context.lang_vms_excluded = True
 
 
 @then('only VMs matching "python" should be listed')
@@ -643,7 +637,6 @@ def step_nodejs_resolves_js(context):
 @then('the system should not overwrite the existing configuration')
 def step_no_overwrite_config(context):
     """Verify system doesn't overwrite existing configuration."""
-    context.config_preserved = True
 
 
 @then('start the Rust VM')

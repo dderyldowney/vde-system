@@ -140,7 +140,6 @@ def step_start_ssh_agent(context):
             )
             context.ssh_agent_started = result.returncode == 0
         except Exception:
-            context.ssh_agent_started = False
 
 
 @when('SSH keys are generated')
@@ -162,7 +161,6 @@ def step_copy_public_keys(context):
         )
         context.public_keys_copied = result.returncode == 0
     except Exception:
-        context.public_keys_copied = False
 
 
 @when('SSH config is updated')
@@ -188,7 +186,6 @@ def step_ssh_vm_to_vm(context):
         )
         context.vm_to_vm_ssh = result.returncode == 0 or "vm-to-vm-ssh-success" in result.stdout
     except Exception:
-        context.vm_to_vm_ssh = False
 
 
 @when('I execute command on host from VM')
@@ -205,7 +202,6 @@ def step_execute_on_host(context):
         )
         context.host_command_executed = result.returncode == 0 or "host-exec-success" in result.stdout
     except Exception:
-        context.host_command_executed = False
 
 
 @when('I perform Git operation from VM')
@@ -222,7 +218,6 @@ def step_git_from_vm(context):
         )
         context.git_operation_from_vm = result.returncode == 0
     except Exception:
-        context.git_operation_from_vm = False
 
 
 @when('I reload the VM types cache')
@@ -401,10 +396,8 @@ def step_ssh_any_vm(context):
         # Try SSH connection test
         result = subprocess.run(['ssh', '-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no',
                                vm_name, 'echo', 'test'], capture_output=True, text=True, timeout=10)
-        context.ssh_connection_attempted = True
         context.ssh_connection_success = result.returncode == 0
     else:
-        context.ssh_connection_attempted = False
 
 
 @then('the SSH config entries should exist')

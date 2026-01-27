@@ -2,86 +2,77 @@
 FAKE TEST PATTERN SCAN REPORT
 ================================================================================
 
-Total Files with Violations: 28
-Total Violations Found: 525
+Total Files with Violations: 27
+Total Violations Found: 482
 
 ================================================================================
 
 File: tests/features/steps/cache_steps.py
 --------------------------------------------------------------------------------
-  Line 286: [context_flag_true]
-    context.conflict_detected = True
-
-  Line 289: [context_flag_true]
-    context.conflict_detected = True
-
-  Line 312: [context_flag_true]
-    context.operation_rejected = True
-
-  Line 315: [context_flag_true]
+  Line 324: [context_flag_true]
     context.operation_succeeded = True
 
-  Line 381: [context_flag_true]
+  Line 390: [context_flag_true]
     context.cache_cleared = True
 
-  Line 428: [context_flag_true]
+  Line 437: [context_flag_true]
     context.vm_config_removed = True
 
-  Line 431: [context_flag_false]
+  Line 440: [context_flag_false]
     context.vm_config_removed = False
 
-  Line 445: [context_flag_true]
+  Line 454: [context_flag_true]
     context.vm_config_restored = True
 
-  Line 448: [context_flag_true]
+  Line 457: [context_flag_true]
     context.vm_config_restored = True
 
-  Line 482: [context_flag_true]
+  Line 491: [context_flag_true]
     context.system_restarted = True
 
-  Line 521: [context_flag_true]
+  Line 530: [context_flag_true]
     context.concurrent_read = True
 
-  Line 550: [context_flag_true]
+  Line 559: [context_flag_true]
     context.invalid_cache_exists = True
 
-  Line 577: [context_flag_true]
+  Line 586: [context_flag_true]
     context.cache_regenerated = True
 
-  Line 589: [context_flag_true]
+  Line 598: [context_flag_true]
     context.cache_updated_fresh = True
 
-  Line 601: [context_flag_true]
+  Line 610: [context_flag_true]
     context.port_registry_reloaded = True
 
-  Line 633: [context_flag_true]
+  Line 642: [context_flag_true]
     context.valid_cache_created = True
 
-  Line 654: [context_flag_true]
+  Line 663: [context_flag_true]
     context.port_registry_invalid = True
 
-  Line 783: [context_flag_true]
+  Line 792: [context_flag_true]
     context.cache_directory_created = True
 
-  Line 826: [context_flag_true]
+  Line 835: [context_flag_true]
     context.cache_validated = True
 
-  Line 839: [context_flag_true]
+  Line 848: [context_flag_true]
     context.library_sourced = True
 
-  Line 840: [context_flag_false]
+  Line 849: [context_flag_false]
     context.vm_types_loaded = False  # Initially not loaded
 
-  Line 873: [context_flag_true]
+  Line 882: [context_flag_true]
     context.vm_types_loaded_verified = True
 
-  Line 935: [context_flag_true]
+  Line 944: [context_flag_true]
     context.has_data_entries = True
 
-  Line 1066: [context_flag_true]
+  Line 1075: [context_flag_true]
     context.env_files_supported = True
 
-  Line 1069: [context_flag_true]
+  Line 1078: [context_flag_true]
     context.env_files_supported = True
 
 
@@ -123,35 +114,8 @@ File: tests/features/steps/common_steps.py
   Line 159: [context_flag_false]
     context.network_available = False
 
-  Line 187: [context_flag_true]
-    context.cache_bypassed = True
-
-  Line 207: [context_flag_true]
-    context.template_rendered = True
-
-  Line 213: [context_flag_true]
-    context.vars_substituted = True
-
-  Line 219: [context_flag_true]
-    context.special_escaped = True
-
-  Line 229: [context_flag_true]
-    context.assoc_operation_performed = True
-
-  Line 235: [context_flag_true]
-    context.special_key_used = True
-
-  Line 258: [context_flag_true]
+  Line 275: [context_flag_true]
     context.docker_no_cache = True
-
-  Line 270: [context_flag_true]
-    context.port_conflict = True
-
-  Line 276: [context_flag_true]
-    context.network_error = True
-
-  Line 282: [context_flag_true]
-    context.build_retried = True
 
 
 File: tests/features/steps/config_steps.py
@@ -720,44 +684,26 @@ File: tests/features/steps/docker_operations_steps.py
   Line 140: [context_flag_true]
     context.checking_network = True
 
-  Line 164: [context_flag_true]
-    context.using_openssh = True
-
-  Line 170: [context_flag_true]
-    context.using_vscode = True
-
-  Line 239: [context_flag_true]
+  Line 245: [context_flag_true]
     context.host_logs_visible = True  # No logs to show
 
-  Line 257: [context_flag_true]
+  Line 263: [context_flag_true]
     context.filesystem_navigable = True
 
-  Line 290: [context_flag_false]
+  Line 296: [context_flag_false]
     context.restart_verified = False
 
-  Line 301: [context_flag_true]
+  Line 307: [context_flag_true]
     context.host_file_contents_visible = True  # File doesn't exist
 
-  Line 314: [context_flag_false]
+  Line 320: [context_flag_false]
     context.content_usable = False
 
-  Line 330: [context_flag_true]
+  Line 336: [context_flag_true]
     context.python_vm_status_visible = True  # Can check status via docker ps
 
-  Line 337: [context_flag_true]
-    context.backup_executed = True  # Host execution is default
-
-  Line 385: [context_flag_true]
+  Line 394: [context_flag_true]
     context.network_results_visible = True  # Ping might not work, but network check exists
-
-  Line 392: [context_flag_true]
-    context.network_diagnosis_possible = True
-
-  Line 423: [context_flag_true]
-    context.ssh_config_external = True
-
-  Line 430: [context_flag_true]
-    context.auto_config = True
 
 
 File: tests/features/steps/error_handling_steps.py
@@ -858,22 +804,13 @@ File: tests/features/steps/parser_steps.py
   Line 111: [context_flag_true]
     context.empty_input = True
 
-  Line 151: [context_flag_true]
-    context.plan_validated = True
-
-  Line 154: [context_flag_false]
+  Line 157: [context_flag_false]
     context.plan_validated = False
 
-  Line 161: [context_flag_true]
-    context.plan_validated = True
-
-  Line 164: [context_flag_false]
+  Line 170: [context_flag_false]
     context.plan_validated = False
 
-  Line 171: [context_flag_true]
-    context.plan_validated = True
-
-  Line 174: [context_flag_false]
+  Line 183: [context_flag_false]
     context.plan_validated = False
 
 
@@ -1026,16 +963,10 @@ File: tests/features/steps/productivity_steps.py
   Line 382: [context_flag_true]
     context.requires_specific_node_version = True
 
-  Line 387: [simulate_comment]
-    """Simulate defining JS VM with specific version."""
-
-  Line 388: [context_flag_true]
-    context.js_vm_version_defined = True
-
-  Line 410: [context_flag_true]
+  Line 422: [context_flag_true]
     context.multiple_projects = True
 
-  Line 416: [context_flag_true]
+  Line 428: [context_flag_true]
     context.project_isolation = True
 
 
@@ -1242,86 +1173,29 @@ File: tests/features/steps/ssh_git_steps.py
   Line 181: [context_flag_false]
     context.new_vm_created = False
 
-  Line 226: [context_flag_true]
-    context.git_pull_github = True
-
-  Line 234: [context_flag_true]
-    context.git_pull_gitlab = True
-
-  Line 242: [context_flag_true]
-    context.submodule_update_executed = True
-
-  Line 248: [context_flag_true]
-    context.ssh_to_all_vms = True
-
-  Line 257: [context_flag_true]
-    context.git_pull_all_services = True
-
-  Line 265: [context_flag_true]
-    context.scp_to_deploy_executed = True
-
-  Line 272: [context_flag_true]
+  Line 309: [context_flag_true]
     context.deploy_script_executed = True
 
-  Line 279: [context_flag_true]
-    context.ssh_connection_established = True
-
-  Line 286: [context_flag_true]
-    context.clone_from_account1 = True
-
-  Line 293: [context_flag_true]
-    context.clone_from_account2 = True
-
-  Line 300: [context_flag_true]
-    context.npm_deploy_executed = True
-
-  Line 301: [context_flag_true]
-    context.npm_uses_git = True
-
-  Line 307: [context_flag_true]
-    context.cicd_script_executed = True
-
-  Line 314: [context_flag_true]
-    context.ssh_connection_established = True
-
-  Line 321: [context_flag_true]
-    context.ssh_connection_established = True
-
-  Line 328: [context_flag_true]
-    context.ssh_connection_established = True
-
-  Line 334: [context_flag_true]
-    context.new_vm_created = True
-
-  Line 335: [context_flag_true]
-    context.new_vm_started = True
-
-  Line 357: [context_flag_true]
+  Line 455: [context_flag_true]
     context.host_keys_used_for_git = True
 
-  Line 372: [context_flag_true]
+  Line 470: [context_flag_true]
     context.host_keys_used = True
 
-  Line 387: [context_flag_true]
+  Line 485: [context_flag_true]
     context.appropriate_keys_used = True
 
-  Line 429: [context_flag_true]
+  Line 527: [context_flag_true]
     context.correct_keys_used = True
 
-  Line 438: [context_flag_true]
+  Line 536: [context_flag_true]
     context.agent_auto_key_selection = True
 
-  Line 453: [context_flag_true]
+  Line 551: [context_flag_true]
     context.git_uses_host_keys = True
 
-  Line 468: [context_flag_true]
+  Line 566: [context_flag_true]
     context.no_manual_intervention = True
-
-
-File: tests/features/steps/ssh_known_hosts_steps.py
---------------------------------------------------------------------------------
-  Line 111: [simulate_comment]
-    """Setup: Simulate VM was previously created."""
 
 
 File: tests/features/steps/ssh_vm_steps.py
@@ -1506,14 +1380,8 @@ File: tests/features/steps/user_workflow_steps.py
 
 File: tests/features/steps/vm_creation_steps.py
 --------------------------------------------------------------------------------
-  Line 133: [simulate_comment]
-    """Simulate host port collision - verify port is actually in use."""
-
   Line 148: [context_flag_false]
     context.host_port_actually_in_use = False
-
-  Line 153: [simulate_comment]
-    """Simulate Docker port collision - verify Docker container is using the port."""
 
   Line 170: [context_flag_false]
     context.docker_port_actually_in_use = False

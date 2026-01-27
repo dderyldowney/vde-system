@@ -649,7 +649,6 @@ def step_vde_handles_error(context):
     """VDE handles the error."""
     # Error is handled by capturing the result
     # This step marks the point where VDE processes an error
-    context.error_was_handled = True
 
 
 @then('I can find it in the logs directory')
@@ -670,7 +669,6 @@ def step_find_in_logs(context):
 @when('the failure is detected')
 def step_failure_detected(context):
     """Failure is detected during operation."""
-    context.failure_detected = True
     # Check if a previous command failed
     if hasattr(context, 'last_exit_code'):
         assert context.last_exit_code != 0, "Operation should have failed"
@@ -762,7 +760,6 @@ def step_suggest_cleanup(context):
 def step_detect_timeout(context):
     """VDE detects a timeout during operation."""
     # Timeout detection is implicit in the error
-    context.timeout_detected = True
     # Error output should contain timeout information
     assert context.last_error or context.last_output, "Should have timeout error"
 
@@ -788,7 +785,6 @@ def step_show_logs_on_error(context):
 @when('VDE detects it\'s retryable')
 def step_detect_retryable(context):
     """VDE detects the error is retryable."""
-    context.retryable_error = True
     # Transient errors are detected by the error parsing logic
     # Check if error message indicates transient issue
     combined = (context.last_error or '') + (context.last_output or '')
@@ -808,4 +804,3 @@ def step_retry_operation(context):
     assert hasattr(context, 'last_command') or hasattr(context, 'last_exit_code'), \
         "Should have a previous command to retry"
     # Mark that retry is possible
-    context.retry_possible = True

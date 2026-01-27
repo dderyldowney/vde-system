@@ -321,7 +321,6 @@ def step_operations_queued(context):
             context.operation_rejected = result.returncode == 0
         else:
             # Zero exit code means operation succeeded (queued or completed)
-            context.operation_succeeded = True
     else:
         raise AssertionError("Cannot verify operation handling - no exit code available")
 
@@ -387,7 +386,6 @@ def step_cache_manually_cleared(context):
     cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
     if cache_path.exists():
         cache_path.unlink()
-    context.cache_cleared = True
 
 @then("cache file should be removed")
 def step_cache_file_removed(context):
@@ -488,7 +486,6 @@ def step_system_restart(context):
         # Verify the registry file is readable and has content
         assert len(context.port_registry_before_restart) > 0, "Port registry is empty"
     # Mark that restart verification was performed
-    context.system_restarted = True
 
 @then("previously allocated ports should be restored")
 def step_ports_restored(context):
@@ -527,7 +524,6 @@ def step_cache_concurrent_read(context):
             results.append(cache_path.read_text())
     # Verify all reads produced the same result
     assert len(set(results)) <= 1, "Concurrent reads produced different results"
-    context.concurrent_read = True
 
 @then("all reads should return valid data")
 def step_all_reads_valid(context):
@@ -583,7 +579,6 @@ def step_cache_regenerated(context):
         content = cache_path.read_text()
         assert "INVALID" not in content, "Cache still contains invalid data"
         assert "VM_TYPE:" in content or "# VDE VM Types Cache" in content, "Cache was not regenerated properly"
-    context.cache_regenerated = True
 
 @then("cache file should be updated with fresh data")
 def step_cache_updated_fresh(context):
@@ -595,7 +590,6 @@ def step_cache_updated_fresh(context):
     assert cache_age < 5, "Cache file was not updated (old mtime)"
     content = cache_path.read_text()
     assert "VM_TYPE:" in content, "Cache file doesn't contain expected data"
-    context.cache_updated_fresh = True
 
 # =============================================================================
 # Additional missing steps for cache invalidation scenarios
@@ -607,7 +601,6 @@ def step_port_registry_reloaded(context):
     port_registry_path = VDE_ROOT / ".cache" / "port-registry"
     if port_registry_path.exists():
         context.port_registry_content = port_registry_path.read_text()
-    context.port_registry_reloaded = True
 
 @then("cache file should reflect updated allocations")
 def step_cache_reflects_allocations(context):
@@ -639,7 +632,6 @@ def step_valid_cache_created(context):
     content = cache_path.read_text()
     assert "INVALID" not in content, "Cache contains invalid data"
     assert "VM_TYPE:" in content or "# VDE VM Types Cache" in content, "Cache format is invalid"
-    context.valid_cache_created = True
 
 
 # =============================================================================
@@ -688,14 +680,12 @@ def step_port_registry_verified(context):
     context.port_registry_after = port_registry_path.read_text() if port_registry_path.exists() else ""
 
     # Mark that verification was performed (the step itself indicates verification happened)
-    context.port_registry_verified = True
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
 
     # Set cache_updated flag if the registry content changed
     if context.port_registry_before != context.port_registry_after:
-        context.cache_updated = True
 
 
 
@@ -764,7 +754,6 @@ def step_registry_rebuilt_from_compose(context):
     # At least one VM in the registry should have a corresponding config directory
     assert found_vm, "No VMs in registry have corresponding docker-compose configs - registry may not have been rebuilt correctly"
 
-    context.registry_rebuilt = True
     context.cache_updated = True  # Mark that the cache was updated for the next step
 
 
@@ -789,7 +778,6 @@ def step_cache_directory_created(context):
     cache_dir = VDE_ROOT / ".cache"
     assert cache_dir.exists(), f".cache directory not found at {cache_dir}"
     assert cache_dir.is_dir(), ".cache exists but is not a directory"
-    context.cache_directory_created = True
 
 
 @when("cache validity is checked")
@@ -832,7 +820,6 @@ def step_cache_considered_valid(context):
 
     # Allow some tolerance for filesystem timestamp precision
     assert cache_mtime >= config_mtime - 1, "Cache is older than config file - should be invalid"
-    context.cache_validated = True
 
 
 @given("library has been sourced")
@@ -879,7 +866,6 @@ def step_vm_types_loaded_at_access(context):
     assert len(content) > 0, "Cache file is empty - VM types not loaded"
     assert "VM_TYPE" in content or "python" in content, "VM type data not found in cache"
 
-    context.vm_types_loaded_verified = True
 
 
 # =============================================================================
@@ -941,7 +927,6 @@ def step_comments_start_with_hash(context):
                 line = line.strip()
                 if line and not line.startswith('#'):
                     # Found a non-comment line
-                    context.has_data_entries = True
                     break
 
 

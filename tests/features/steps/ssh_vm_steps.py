@@ -164,7 +164,6 @@ def step_run_ssh_python_from_go(context):
 @when('I create a file in the Python VM')
 def step_create_file_in_python_vm(context):
     """Create a test file in the Python VM."""
-    context.test_file_created = True
     context.test_file_path = "/tmp/test_file.txt"
 
 
@@ -315,7 +314,6 @@ def step_no_password_required(context):
     assert ssh_agent_is_running(), "SSH agent must be running for passwordless authentication"
     agent_has_keys = ssh_agent_has_keys()
     assert agent_has_keys, "SSH agent must have keys loaded for passwordless authentication"
-    context.password_required = False
 
 
 @then('I should not need to copy keys to the Go VM')
@@ -328,7 +326,6 @@ def step_no_keys_copied_to_vm(context):
         # Agent forwarding means keys stay on host, not copied to VM
         has_agent_forwarding = "ForwardAgent yes" in config_content or "ForwardAgent" in config_content
         assert has_agent_forwarding, "SSH config should have agent forwarding configured"
-    context.keys_copied_to_vm = False
     assert not getattr(context, 'keys_copied_to_vm', False)
 
 
@@ -364,7 +361,6 @@ def step_file_copied_with_host_keys(context):
     # Verify SSH agent is available for passwordless operation
     agent_running = ssh_agent_is_running()
     assert agent_running, "SSH agent should be running for seamless SCP operation"
-    context.file_copied = True
     context.auth_method = "host-keys"
     assert getattr(context, 'scp_executed', False), "SCP command should have been executed"
 
@@ -376,7 +372,6 @@ def step_no_password_required_scp(context):
     assert ssh_agent_is_running(), "SSH agent must be running for passwordless SCP"
     agent_has_keys = ssh_agent_has_keys()
     assert agent_has_keys, "SSH agent must have keys loaded for passwordless SCP"
-    context.password_required = False
 
 
 @then('the command should execute on the Rust VM')
@@ -400,7 +395,6 @@ def step_see_postgres_db_list(context):
     assert output is not None, "Command output should exist"
     assert 'postgres' in output or 'template' in output or 'List of databases' in output.lower() or 'datname' in output.lower(), \
         f"Output should contain PostgreSQL database list, got: {output[:200] if output else 'empty'}"
-    context.postgres_db_list_seen = True
 
 
 @then('I should see "PONG"')
@@ -408,7 +402,6 @@ def step_see_pong(context):
     """Should see PONG response from Redis."""
     output = getattr(context, 'command_output', '')
     assert 'PONG' in output, f"Output should contain PONG, got: {output[:200] if output else 'empty'}"
-    context.redis_pong_seen = True
 
 
 @then('all connections should use my host\'s SSH keys')
@@ -423,7 +416,6 @@ def step_all_connections_use_host_keys(context):
         # Check for agent forwarding configuration
         has_agent_forwarding = "ForwardAgent" in config_content
         assert has_agent_forwarding, "SSH config should have agent forwarding for all VM connections"
-    context.all_connections_use_host_keys = True
 
 
 @then('both services should respond')
@@ -440,7 +432,6 @@ def step_both_services_respond(context):
 @then('all authentications should use my host\'s SSH keys')
 def step_all_auth_use_host_keys(context):
     """All authentications should use host's SSH keys."""
-    context.all_auth_use_host_keys = True
     assert has_ssh_keys(), "Host should have SSH keys for authentication"
 
 
@@ -465,7 +456,6 @@ def step_see_results_in_frontend(context):
 @then('authentication should be automatic')
 def step_authentication_automatic(context):
     """Authentication should be automatic."""
-    context.auth_automatic = True
     # Verify SSH agent is running and has keys for automatic authentication
     assert ssh_agent_is_running(), "SSH agent must be running for automatic authentication"
     agent_has_keys = ssh_agent_has_keys()
@@ -475,7 +465,6 @@ def step_authentication_automatic(context):
 @then('the private keys should remain on the host')
 def step_private_keys_remain_on_host(context):
     """Private keys should remain on the host."""
-    context.private_keys_on_host_only = True
     # Verify private keys exist on host
     assert has_ssh_keys(), "Private keys should exist on the host"
     # Verify SSH config for agent forwarding (not key forwarding)
@@ -491,8 +480,6 @@ def step_private_keys_remain_on_host(context):
 @then('only the SSH agent socket should be forwarded')
 def step_only_agent_socket_forwarded(context):
     """Only SSH agent socket should be forwarded."""
-    context.agent_socket_forwarded = True
-    context.no_keys_forwarded = True
     # Verify SSH_AUTH_SOCK is set (agent socket forwarding)
     ssh_auth_sock = os.environ.get("SSH_AUTH_SOCK")
     if ssh_auth_sock:
@@ -511,7 +498,6 @@ def step_only_agent_socket_forwarded(context):
 @then('the VMs should not have copies of my private keys')
 def step_vms_no_private_keys(context):
     """VMs should not have copies of private keys."""
-    context.no_keys_on_vms = True
     assert not getattr(context, 'keys_copied_to_vm', False)
 
 
@@ -528,14 +514,12 @@ def step_all_connections_succeed(context):
 @then('all should use my host\'s SSH keys')
 def step_all_use_host_keys(context):
     """All connections should use host's SSH keys."""
-    context.all_use_host_keys = True
     assert has_ssh_keys(), "Host should have SSH keys"
 
 
 @then('no keys should be copied to any VM')
 def step_no_keys_copied_any_vm(context):
     """No keys should be copied to any VM."""
-    context.no_keys_on_any_vm = True
     assert not getattr(context, 'keys_copied_to_vm', False)
 
 
@@ -648,4 +632,3 @@ def step_ssh_config_not_contain_python_dev(context):
         context.ssh_config_entry_absent = "Host python-dev" not in config_content
     else:
         # Config doesn't exist, so entry is not present - this is OK
-        context.ssh_config_entry_absent = True

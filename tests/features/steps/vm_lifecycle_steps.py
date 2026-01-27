@@ -289,7 +289,6 @@ def step_try_create_again(context):
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
-    context.create_attempted_again = True
 
 
 @when('I start a specific VM')
@@ -617,7 +616,6 @@ def step_modified_dockerfile(context):
 def step_request_rebuild_go_nocache(context):
     """Request to rebuild go VM with no cache using vde command."""
     context.rebuild_requested = "go"
-    context.nocache_requested = True
     result = run_vde_command("start go --rebuild --no-cache", timeout=300)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
@@ -1194,7 +1192,6 @@ def step_new_package_available(context):
         )
         context.package_available = result.returncode == 0
     else:
-        context.package_available = False
 
 
 # The docker-compose.yml should be preserved for easy recreation

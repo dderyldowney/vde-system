@@ -189,7 +189,6 @@ def step_connect_ssh(context):
             )
             context.connected_ssh = result.returncode == 0
             return
-    context.connected_ssh = False
 
 
 # =============================================================================

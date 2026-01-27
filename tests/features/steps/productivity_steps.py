@@ -34,10 +34,8 @@ def step_port_registry_saved(context):
     """Actually check that port registry cache is saved."""
     cache_path = VDE_ROOT / ".cache" / "port-registry"
     if cache_path.exists():
-        context.port_registry_saved = True
         context.port_registry_cache = str(cache_path)
     else:
-        context.port_registry_saved = False
 
 @then('cache file should exist at ".cache/port-registry"')
 def step_port_registry_cache_exists(context):
@@ -59,9 +57,7 @@ def step_port_registry_loaded(context):
     if cache_path.exists():
         content = cache_path.read_text()
         context.port_registry_content = content
-        context.port_registry_loaded = True
     else:
-        context.port_registry_loaded = False
 
 @then('allocated ports should be available without scanning compose files')
 def step_ports_from_cache(context):
@@ -74,9 +70,7 @@ def step_invalidate_cache(context):
     cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
     if cache_path.exists():
         cache_path.unlink()
-        context.cache_invalidated = True
     else:
-        context.cache_invalidated = False
 
 # =============================================================================
 # VM Configuration Steps
@@ -172,7 +166,6 @@ def step_stop_restart_postgres(context):
             break
         time.sleep(1)
 
-    context.postgres_restarted = True
 
 @then('my data should still be there')
 def step_data_persists(context):
@@ -260,8 +253,6 @@ def step_stop_remove_postgres(context):
     # Remove volume to get fresh database
     subprocess.run(["docker", "volume", "rm", "postgres_postgres_data"], capture_output=True, timeout=30)
 
-    context.postgres_stopped = True
-    context.postgres_removed = True
 
 @when('I recreate and start it')
 def step_recreate_start_postgres(context):
@@ -294,8 +285,6 @@ def step_recreate_start_postgres(context):
             break
         time.sleep(1)
 
-    context.postgres_recreated = True
-    context.postgres_started = True
 
 @then('I get a fresh database instantly')
 def step_fresh_database(context):
@@ -353,7 +342,6 @@ def step_create_postgres_backup(context):
     )
 
     if result.returncode == 0 and backup_file.exists():
-        context.postgres_backup_created = True
         context.backup_file_path = str(backup_file)
     else:
         raise AssertionError(f"Failed to create backup: {result.stderr}")
@@ -425,7 +413,6 @@ def step_multiple_projects(context):
 @when('each project has its own VM')
 def step_each_project_own_vm(context):
     """Set VM per project."""
-    context.project_isolation = True
     context.vms_per_project = {}
 
 # =============================================================================

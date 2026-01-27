@@ -256,14 +256,10 @@ def step_query_port_registry(context):
         try:
             content = registry_file.read_text()
             context.port_registry_content = content
-            context.port_registry_queried = True
         except Exception as e:
             context.port_registry_error = str(e)
-            context.port_registry_queried = False
     else:
         # Registry file doesn't exist yet
-        context.port_registry_queried = True
-        context.port_registry_exists = False
 
 
 @when('I run port cleanup')

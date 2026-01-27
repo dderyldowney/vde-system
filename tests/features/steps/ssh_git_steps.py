@@ -306,7 +306,6 @@ def step_run_scp_to_deploy_server(context):
 def step_run_ssh_deploy_script(context):
     """Run deploy script on deployment server."""
     context.remote_command = "/tmp/deploy.sh"
-    context.deploy_script_executed = True
 
 
 @when('I SSH into a VM')
@@ -452,7 +451,6 @@ def step_no_password_prompt(context):
 @then('my host\'s SSH keys should be used for authentication')
 def step_host_keys_used_for_auth(context):
     """Host's SSH keys should be used for authentication."""
-    context.host_keys_used_for_git = True
     assert has_ssh_keys(), "Host should have SSH keys for authentication"
 
 
@@ -467,7 +465,6 @@ def step_changes_pushed_to_github(context):
 @then('my host\'s SSH keys should be used')
 def step_host_keys_used(context):
     """Host's SSH keys should be used."""
-    context.host_keys_used = True
     assert has_ssh_keys(), "Host should have SSH keys"
 
 
@@ -482,7 +479,6 @@ def step_both_repos_update(context):
 @then('each should use the appropriate SSH key from my host')
 def step_each_uses_appropriate_key(context):
     """Each repo should use appropriate SSH key."""
-    context.appropriate_keys_used = True
     # Verify SSH agent is running for automatic key selection
     assert ssh_agent_is_running(), "SSH agent should be running for automatic key selection"
 
@@ -524,7 +520,6 @@ def step_both_repos_cloned(context):
 @then('each should use the correct SSH key')
 def step_each_uses_correct_key(context):
     """Each repo should use correct SSH key."""
-    context.correct_keys_used = True
     # Verify SSH agent is running (agent handles key selection automatically)
     agent_has_keys = ssh_agent_has_keys()
     assert agent_has_keys, "SSH agent should have keys for automatic key selection"
@@ -533,7 +528,6 @@ def step_each_uses_correct_key(context):
 @then('the agent should automatically select the right key')
 def step_agent_selects_right_key(context):
     """SSH agent should automatically select the right key."""
-    context.agent_auto_key_selection = True
     # Verify SSH agent functionality
     agent_running = ssh_agent_is_running()
     assert agent_running, "SSH agent should be running for automatic key selection"
@@ -548,7 +542,6 @@ def step_deployment_succeeds(context):
 @then('the Git commands should use my host\'s SSH keys')
 def step_git_uses_host_keys(context):
     """Git commands should use host's SSH keys."""
-    context.git_uses_host_keys = True
     assert has_ssh_keys(), "Host should have SSH keys for Git operations"
 
 
@@ -563,7 +556,6 @@ def step_all_git_ops_succeed(context):
 @then('no manual intervention should be required')
 def step_no_manual_intervention(context):
     """No manual intervention should be required."""
-    context.no_manual_intervention = True
     # Verify automation setup (SSH agent + keys)
     agent_has_keys = ssh_agent_has_keys()
     assert agent_has_keys, "SSH agent should be configured for automation"

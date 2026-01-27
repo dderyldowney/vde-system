@@ -138,7 +138,6 @@ def step_check_vm_status_debug(context):
     """Check VM status using docker ps."""
     result = run_command(['docker', 'ps', '--filter', 'name=vde-'], check=False)
     context.docker_ps_output = result.stdout
-    context.vm_status_checked_debug = True
 
 @when('I look at the docker-compose.yml')
 def step_look_compose(context):
@@ -147,9 +146,7 @@ def step_look_compose(context):
         compose_path = get_compose_file_path(context.vm_name)
         if compose_path:
             context.compose_content = compose_path.read_text()
-            context.compose_examined = True
             return
-    context.compose_examined = False
     context.compose_error = f"No docker-compose.yml found for VM: {getattr(context, 'vm_name', 'unknown')}"
 
 @when('I check the mounts in the container')
@@ -158,9 +155,7 @@ def step_check_mounts(context):
     if hasattr(context, 'vm_name'):
         mounts = get_vm_mounts(context.vm_name)
         context.vm_mounts = mounts
-        context.mounts_checked = True
     else:
-        context.mounts_checked = False
 
 @when('I rebuild with --no-cache')
 def step_rebuild_no_cache(context):
@@ -172,9 +167,7 @@ def step_rebuild_no_cache(context):
         )
         context.rebuild_output = result.stdout + result.stderr
         context.last_output = context.rebuild_output  # Also set last_output for THEN step compatibility
-        context.rebuild_no_cache = True
     else:
-        context.rebuild_no_cache = False
 
 @when('I remove the container but keep the config')
 def step_remove_container_keep_config(context):
@@ -182,10 +175,7 @@ def step_remove_container_keep_config(context):
     if hasattr(context, 'vm_name'):
         result = run_command(['docker-compose', 'down'], check=False)
         context.remove_output = result.stdout + result.stderr
-        context.container_removed = True
-        context.config_preserved = True
     else:
-        context.container_removed = False
 
 @when('I start it again')
 def step_start_again(context):
@@ -193,9 +183,7 @@ def step_start_again(context):
     if hasattr(context, 'vm_name'):
         result = run_command(['docker-compose', 'up', '-d'], check=False)
         context.start_output = result.stdout + result.stderr
-        context.restarted = True
     else:
-        context.restarted = False
 
 @when('I check the SSH config')
 def step_check_ssh_config(context):
@@ -203,9 +191,7 @@ def step_check_ssh_config(context):
     ssh_config = read_ssh_config()
     if ssh_config:
         context.ssh_config_content = ssh_config
-        context.ssh_config_checked = True
     else:
-        context.ssh_config_checked = False
 
 @when('I verify the VM is running')
 def step_verify_vm_running(context):
@@ -215,10 +201,7 @@ def step_verify_vm_running(context):
             'docker', 'ps', '--filter', f'name=vde-{context.vm_name}'
         ], check=False)
         context.vm_running = result.returncode == 0 and f'vde-{context.vm_name}' in result.stdout
-        context.vm_running_verified = True
     else:
-        context.vm_running = False
-        context.vm_running_verified = False
 
 @when('I verify the port is correct')
 def step_verify_port_correct(context):
@@ -229,7 +212,6 @@ def step_verify_port_correct(context):
         context.port_verified = port is not None
     else:
         context.actual_port = None
-        context.port_verified = False
 
 @when('I SSH into the application VM')
 def step_ssh_app_vm(context):
@@ -242,7 +224,6 @@ def step_ssh_app_vm(context):
         context.ssh_result = result
         context.ssh_into_app_vm = result.returncode == 0
     else:
-        context.ssh_into_app_vm = False
 
 @when('I try to connect to the database VM directly')
 def step_try_connect_db(context):
@@ -253,9 +234,7 @@ def step_try_connect_db(context):
             'pg_isready', '-U', 'postgres'
         ], check=False)
         context.db_connection_result = result
-        context.db_connection_attempted = True
     else:
-        context.db_connection_attempted = False
 
 
 # =============================================================================
@@ -269,7 +248,6 @@ def step_clear_error_message(context):
         "No error message was captured"
     error = getattr(context, 'last_error', None) or getattr(context, 'error_output', '')
     assert len(error) > 0, "Error message is empty"
-    context.clear_error_message = True
 
 @then('I should know if it\'s a port conflict, Docker issue, or configuration problem')
 def step_know_error_type(context):
@@ -291,7 +269,6 @@ def step_know_error_type(context):
             break
 
     assert identified, "Could not identify error type from message"
-    context.error_type_identified = True
 
 @then('I should see the container logs')
 def step_see_container_logs(context):
@@ -302,7 +279,6 @@ def step_see_container_logs(context):
     logs = get_container_logs(context.vm_name)
     assert logs is not None, "Could not retrieve container logs"
     context.container_logs = logs
-    context.container_logs_visible = True
 
 @then('I can identify the source of the problem')
 def step_identify_problem_source(context):
@@ -312,7 +288,6 @@ def step_identify_problem_source(context):
 
     source_data = getattr(context, 'last_error', '') or getattr(context, 'container_logs', '')
     assert len(source_data) > 0, "No data to analyze"
-    context.problem_source_identified = True
 
 @then('I should have shell access inside the container')
 def step_shell_access_container(context):
@@ -325,7 +300,6 @@ def step_shell_access_container(context):
     ], check=False)
 
     assert result.returncode == 0, f"Shell access failed: {result.stderr}"
-    context.shell_access_available = True
 
 @then('I can investigate issues directly')
 def step_can_investigate(context):
@@ -340,7 +314,6 @@ def step_can_investigate(context):
     ], check=False)
 
     assert result.returncode == 0, "Cannot run investigation commands"
-    context.investigation_possible = True
 
 @then('VDE should allocate the next available port (2201)')
 def step_allocate_next_port(context):
@@ -370,7 +343,6 @@ def step_vm_works_new_port(context):
     ], check=False)
 
     assert result.returncode == 0, "VM not accessible on new port"
-    context.vm_works_on_new_port = True
 
 @then('SSH config should reflect the correct port')
 def step_ssh_config_correct_port(context):
@@ -389,7 +361,6 @@ def step_ssh_config_correct_port(context):
     assert re.search(pattern, ssh_config, re.DOTALL), \
         f"Port {expected_port} not found in SSH config for {context.vm_name}"
 
-    context.ssh_port_correct = True
 
 @then('I should see all volume mounts')
 def step_see_volume_mounts(context):
@@ -401,7 +372,6 @@ def step_see_volume_mounts(context):
     assert len(mounts) > 0, "No volume mounts found"
 
     context.vm_mounts = mounts
-    context.volume_mounts_visible = True
 
 @then('I should see all port mappings')
 def step_see_port_mappings(context):
@@ -416,7 +386,6 @@ def step_see_port_mappings(context):
     assert len(ports) > 0, "No port mappings found"
 
     context.port_mappings = ports
-    context.port_mappings_visible = True
 
 @then('I should see environment variables')
 def step_see_env_vars(context):
@@ -431,7 +400,6 @@ def step_see_env_vars(context):
     assert len(env_vars) > 0, "No environment variables found"
 
     context.env_vars = env_vars
-    context.env_vars_visible = True
 
 @then('I can verify the configuration is correct')
 def step_verify_config_correct(context):
@@ -447,7 +415,6 @@ def step_verify_config_correct(context):
     assert 'version:' in content or 'services:' in content, \
         "docker-compose.yml appears invalid"
 
-    context.config_verified_correct = True
 
 @then('I can see if the volume is properly mounted')
 def step_see_volume_mounted(context):
@@ -462,7 +429,6 @@ def step_see_volume_mounted(context):
     for mount in mounts:
         assert mount.get('RW', False), f"Mount {mount.get('Destination')} is not RW"
 
-    context.volume_mount_status_visible = True
 
 @then('I can verify the host path is correct')
 def step_verify_host_path(context):
@@ -479,7 +445,6 @@ def step_verify_host_path(context):
         if host_path:
             assert Path(host_path).exists(), f"Host path does not exist: {host_path}"
 
-    context.host_path_verified = True
 
 @then('Docker should pull fresh images')
 def step_docker_pull_fresh(context):
@@ -491,7 +456,6 @@ def step_docker_pull_fresh(context):
     assert 'pull' in output or 'download' in output or 'building' in output, \
         "No image pull activity detected"
 
-    context.fresh_images_pulled = True
 
 @then('build should not use cached layers')
 def step_no_cached_layers(context):
@@ -503,7 +467,6 @@ def step_no_cached_layers(context):
     assert 'using cache' not in output or '--no-cache' in output, \
         "Build may have used cached layers"
 
-    context.no_cache_used = True
 
 @then('I can see if the issue is network, credentials, or database state')
 def step_issue_identified(context):
@@ -529,7 +492,6 @@ def step_issue_identified(context):
     )
 
     assert identified, "Could not identify issue type"
-    context.specific_issue_identified = True
 
 
 # =============================================================================
@@ -549,7 +511,6 @@ def step_see_syntax_errors(context):
 
     error = getattr(context, 'compose_error', None) or getattr(context, 'last_error', '')
     assert len(error) > 0, "No syntax error shown"
-    context.syntax_errors_visible = True
 
 @then('error should indicate "{error_text}"')
 def step_error_indicates(context, error_text):
@@ -569,7 +530,6 @@ def step_clear_error_msg(context):
     assert hasattr(context, 'last_error'), "No error message available"
     assert len(context.last_error) > 0, "Error message is empty"
     assert len(context.last_error) > 20, "Error message too short to be helpful"
-    context.clear_error_received = True
 
 @then('the error should explain what went wrong')
 def step_error_explains(context):
@@ -581,14 +541,12 @@ def step_error_explains(context):
     explanatory = ['failed', 'error', 'cannot', 'unable', 'not found', 'invalid']
     assert any(phrase in error for phrase in explanatory), \
         "Error message lacks explanation"
-    context.error_explanation_provided = True
 
 @then('I should receive a helpful error')
 def step_helpful_error(context):
     """Error should be helpful for resolution."""
     assert hasattr(context, 'last_error'), "No error message available"
     assert len(context.last_error) > 30, "Error too short to be helpful"
-    context.helpful_error_received = True
 
 @then('the error should explain Docker is required')
 def step_error_explains_docker(context):
@@ -596,39 +554,33 @@ def step_error_explains_docker(context):
     assert hasattr(context, 'last_error'), "No error message available"
     error_lower = context.last_error.lower()
     assert 'docker' in error_lower, "Error doesn't mention Docker"
-    context.docker_required_explained = True
 
 @then('VDE should report the specific error')
 def step_vde_reports_error(context):
     """VDE should report specific error details."""
     assert hasattr(context, 'last_error'), "No error reported"
     assert len(context.last_error) > 0, "Error message is empty"
-    context.vde_error_reported = True
 
 @when('I examine the error')
 def step_examine_error(context):
     """Examine the error details."""
     assert hasattr(context, 'last_error'), "No error to examine"
     # Error examination is implicit - the error is already captured
-    context.error_examined = True
 
 @when('VDE encounters the error')
 def step_vde_encounters_error(context):
     """VDE encounters an error condition."""
-    context.vde_error_encountered = True
 
 @then('VDE should detect the error')
 def step_vde_detects_error(context):
     """VDE should detect and report the error."""
     assert hasattr(context, 'last_error'), "Error not detected"
     assert context.last_error is not None, "Error is None"
-    context.vde_error_detected = True
 
 @when('the error is displayed')
 def step_error_displayed(context):
     """Error is displayed to the user."""
     assert hasattr(context, 'last_error'), "No error to display"
-    context.error_displayed = True
 
 @then('the error should be logged')
 def step_error_logged(context):
@@ -638,14 +590,12 @@ def step_error_logged(context):
     if not hasattr(context, 'error_logs'):
         context.error_logs = []
     context.error_logs.append(context.last_error)
-    context.error_logged = True
 
 @then('the error should have sufficient detail for debugging')
 def step_error_has_detail(context):
     """Error should have debugging details."""
     assert hasattr(context, 'last_error'), "No error available"
     assert len(context.last_error) > 50, "Error lacks sufficient detail"
-    context.error_has_detail = True
 
 @then('I can test error conditions')
 def step_can_test_errors(context):
@@ -660,7 +610,6 @@ def step_can_test_errors(context):
     )
     assert has_error_infrastructure, \
         "Error testing infrastructure not available - no error context attributes found"
-    context.error_testable = True
 
 @then('error should indicate entry already exists')
 def step_error_entry_exists(context):
@@ -669,21 +618,18 @@ def step_error_entry_exists(context):
     error_lower = context.last_error.lower()
     assert any(phrase in error_lower for phrase in ['exists', 'already', 'duplicate']), \
         "Error doesn't indicate entry exists"
-    context.entry_exists_error = True
 
 @then('I should see any error conditions')
 def step_see_error_conditions(context):
     """All error conditions should be visible."""
     assert hasattr(context, 'last_error') or hasattr(context, 'error_logs'), \
         "No error conditions available"
-    context.error_conditions_visible = True
 
 @then('I should see any error states')
 def step_see_error_states(context):
     """Error states should be visible."""
     assert hasattr(context, 'vde_error_detected') or hasattr(context, 'last_error'), \
         "No error states available"
-    context.error_states_visible = True
 
 @then('"port is already allocated" should map to port conflict error')
 def step_port_conflict_mapping(context):
@@ -692,7 +638,6 @@ def step_port_conflict_mapping(context):
     error_lower = context.last_error.lower()
     assert 'port' in error_lower and ('allocated' in error_lower or 'bind' in error_lower), \
         "Port conflict error not properly mapped"
-    context.port_conflict_mapped = True
 
 @then('"network.*not found" should map to network error')
 def step_network_error_mapping(context):
@@ -700,7 +645,6 @@ def step_network_error_mapping(context):
     assert hasattr(context, 'last_error'), "No error message"
     error_lower = context.last_error.lower()
     assert 'network' in error_lower, "Network error not properly mapped"
-    context.network_error_mapped = True
 
 @then('"permission denied" should map to permission error')
 def step_permission_error_mapping(context):
@@ -709,7 +653,6 @@ def step_permission_error_mapping(context):
     error_lower = context.last_error.lower()
     assert 'permission' in error_lower or 'denied' in error_lower, \
         "Permission error not properly mapped"
-    context.permission_error_mapped = True
 
 @then('error should indicate network issue')
 def step_error_network_issue(context):
@@ -718,7 +661,6 @@ def step_error_network_issue(context):
     error_lower = context.last_error.lower()
     assert any(term in error_lower for term in ['network', 'connection', 'unreachable']), \
         "Network issue not indicated"
-    context.network_error_indicated = True
 
 @then('error should indicate image pull failure')
 def step_error_image_pull(context):
@@ -727,20 +669,17 @@ def step_error_image_pull(context):
     error_lower = context.last_error.lower()
     assert 'pull' in error_lower or 'image' in error_lower, \
         "Image pull failure not indicated"
-    context.image_pull_error_indicated = True
 
 @then('suggest troubleshooting steps')
 def step_suggest_troubleshooting(context):
     """System should suggest troubleshooting steps."""
     # In real implementation, this would check for suggestions in output
     assert hasattr(context, 'last_error'), "No error to base suggestions on"
-    context.troubleshooting_suggested = True
 
 @then('suggest next steps')
 def step_suggest_next_steps(context):
     """System should suggest next actions."""
     # In real implementation, this would check for next steps in output
-    context.next_steps_suggested = True
 
 
 # =============================================================================
@@ -753,9 +692,7 @@ def step_stop_vm(context):
     if hasattr(context, 'vm_name'):
         result = run_command(['docker-compose', 'stop'], check=False)
         context.stop_output = result.stdout + result.stderr
-        context.vm_stopped = True
     else:
-        context.vm_stopped = False
 
 @when('I remove the VM directory')
 def step_remove_vm_directory(context):
@@ -765,11 +702,8 @@ def step_remove_vm_directory(context):
         if vm_dir.exists():
             import shutil
             shutil.rmtree(vm_dir)
-            context.vm_directory_removed = True
         else:
-            context.vm_directory_removed = False
     else:
-        context.vm_directory_removed = False
 
 @when('I recreate the VM')
 def step_recreate_vm(context):
@@ -777,9 +711,7 @@ def step_recreate_vm(context):
     if hasattr(context, 'vm_name'):
         result = run_command(['vde', 'create', context.vm_name], check=False)
         context.recreate_output = result.stdout + result.stderr
-        context.vm_recreated = True
     else:
-        context.vm_recreated = False
 
 @then('I should get a fresh VM')
 def step_fresh_vm(context):
@@ -789,7 +721,6 @@ def step_fresh_vm(context):
 
     info = get_container_info(context.vm_name)
     assert info is not None, "VM not created"
-    context.fresh_vm_created = True
 
 @when('I check what\'s using the port')
 def step_check_port_usage(context):
@@ -797,21 +728,18 @@ def step_check_port_usage(context):
     port = getattr(context, 'system_service_port', '2200')
     result = run_command(['lsof', '-i', f':{port}'], check=False)
     context.port_check_output = result.stdout + result.stderr
-    context.port_usage_checked = True
 
 @then('I should see which process is using it')
 def step_see_process_using_port(context):
     """Should see which process is using the port."""
     assert hasattr(context, 'port_check_output'), "Port check not performed"
     assert len(context.port_check_output) > 0, "No process information found"
-    context.process_using_port_visible = True
 
 @then('I can decide to stop the conflicting process')
 def step_stop_conflicting_process(context):
     """Can decide to stop the conflicting process."""
     # This is about user capability - verified by seeing the process
     assert hasattr(context, 'port_check_output'), "No process information available"
-    context.can_stop_conflicting_process = True
 
 @then('VDE can allocate a different port')
 def step_vde_allocate_different_port(context):
@@ -821,7 +749,6 @@ def step_vde_allocate_different_port(context):
     assert port is not None, "No port allocated"
     assert port != getattr(context, 'system_service_port', None), \
         "Port not reallocated"
-    context.vde_different_port_allocated = True
 
 @then('I can identify if the issue is SSH, Docker, or the VM itself')
 def step_identify_issue_component(context):
@@ -844,7 +771,6 @@ def step_identify_issue_component(context):
     else:
         context.issue_component = 'SSH'
 
-    context.issue_component_identified = True
 
 @then('I should get a fresh container')
 def step_fresh_container(context):
@@ -854,7 +780,6 @@ def step_fresh_container(context):
 
     info = get_container_info(context.vm_name)
     assert info is not None, "Container not found"
-    context.fresh_container_created = True
 
 @then('my code volumes should be preserved')
 def step_code_volumes_preserved(context):
@@ -865,7 +790,6 @@ def step_code_volumes_preserved(context):
     mounts = get_vm_mounts(context.vm_name)
     code_mounts = [m for m in mounts if '/workspace' in m.get('Destination', '')]
     assert len(code_mounts) > 0, "No code volumes found"
-    context.code_volumes_preserved = True
 
 @given('two VMs can\'t communicate')
 def step_two_vms_cant_communicate(context):
@@ -887,7 +811,6 @@ def step_see_vms_on_vde_network(context):
 
     containers = network_info.get('Containers', {})
     assert len(containers) >= 2, "Not enough VMs on network"
-    context.vms_on_vde_network_visible = True
 
 @then('I can ping one VM from another')
 def step_ping_vm_to_vm(context):
@@ -901,7 +824,6 @@ def step_ping_vm_to_vm(context):
     ], check=False)
 
     assert result.returncode == 0, f"Ping failed: {result.stderr}"
-    context.vm_ping_working = True
 
 @then('I can identify resource bottlenecks')
 def step_identify_bottlenecks(context):
@@ -916,7 +838,6 @@ def step_identify_bottlenecks(context):
 
     assert result.returncode == 0, "Cannot get resource stats"
     context.resource_stats = result.stdout
-    context.resource_bottlenecks_identified = True
 
 @given('VMs won\'t start due to Docker problems')
 def step_docker_problems(context):
@@ -928,13 +849,11 @@ def step_check_docker_running(context):
     """Check if Docker is running."""
     result = run_command(['docker', 'info'], check=False)
     context.docker_running = result.returncode == 0
-    context.docker_running_checked = True
 
 @when('I restart Docker if needed')
 def step_restart_docker(context):
     """Restart Docker if needed."""
     # This is a simulation - actual restart would require sudo
-    context.docker_restarted = True
 
 @then('VMs should start normally after Docker is healthy')
 def step_vms_start_after_docker(context):
@@ -945,7 +864,6 @@ def step_vms_start_after_docker(context):
     info = get_container_info(context.vm_name)
     assert info is not None, "VM not found"
     assert info['State']['Running'], "VM not running"
-    context.vms_start_after_docker_healthy = True
 
 @then('I should see if devuser (1000:1000) matches my host user')
 def step_devuser_matches_host(context):
@@ -961,13 +879,11 @@ def step_devuser_matches_host(context):
     assert result.returncode == 0, "Cannot get devuser info"
     assert 'uid=1000' in result.stdout, "UID not 1000"
     assert 'gid=1000' in result.stdout, "GID not 1000"
-    context.devuser_uid_gid_checked = True
 
 @then('I can adjust if needed')
 def step_adjust_if_needed(context):
     """Can adjust UID/GID if needed."""
     # Capability check - adjustment is possible
-    context.can_adjust_uid_gid = True
 
 @given('tests work on host but fail in VM')
 def step_tests_fail_in_vm(context):
@@ -984,16 +900,13 @@ def step_compare_environments(context):
         ], check=False)
 
         context.vm_environment = result.stdout
-        context.environments_compared = True
     else:
-        context.environments_compared = False
 
 @then('I can check for missing dependencies')
 def step_check_missing_dependencies(context):
     """Can check for missing dependencies."""
     assert hasattr(context, 'vm_environment'), "Environment not compared"
     # Dependency checking would be context-specific
-    context.missing_dependencies_checked = True
 
 @then('I can check network access from the VM')
 def step_check_vm_network_access(context):
@@ -1007,7 +920,6 @@ def step_check_vm_network_access(context):
     ], check=False)
 
     context.vm_network_accessible = result.returncode == 0
-    context.vm_network_access_checked = True
 
 
 # =============================================================================
@@ -1037,4 +949,3 @@ def step_told_about_manual_steps(context):
     # In real implementation, check output for manual steps
     assert hasattr(context, 'last_error') or hasattr(context, 'recreate_output'), \
         "No output to check for manual steps"
-    context.manual_steps_communicated = True

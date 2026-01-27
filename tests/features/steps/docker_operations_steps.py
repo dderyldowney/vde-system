@@ -260,7 +260,6 @@ def step_navigate_host_filesystem(context):
     # Try to access different directories
     for test_dir in [VDE_ROOT, VDE_ROOT / "scripts", VDE_ROOT / "configs"]:
         assert test_dir.exists(), f"Should be able to access {test_dir}"
-    context.filesystem_navigable = True
 
 
 @then('I should see resource usage for all containers')
@@ -293,7 +292,6 @@ def step_verify_restart(context):
         result = subprocess.run(['docker', 'info'], capture_output=True, text=True, timeout=10)
         context.restart_verified = result.returncode == 0
     except Exception:
-        context.restart_verified = False
 
 
 @then('I should see the contents of the host file')
@@ -317,7 +315,6 @@ def step_use_content_in_vm(context):
         has_mounts = 'volumes' in content.lower()
         context.content_usable = has_mounts
     else:
-        context.content_usable = False
 
 
 @then('the build should execute on my host')

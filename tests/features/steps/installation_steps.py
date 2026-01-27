@@ -142,23 +142,16 @@ def step_run_initial_setup(context):
                 timeout=120,
                 cwd=VDE_ROOT
             )
-            context.initial_setup_run = True
             context.setup_exit_code = result.returncode
             context.setup_output = result.stdout
             context.setup_error = result.stderr
             context.setup_completed = result.returncode == 0
         except subprocess.TimeoutExpired:
-            context.initial_setup_run = True
-            context.setup_completed = False
             context.setup_error = "Setup script timed out"
         except Exception as e:
-            context.initial_setup_run = True
-            context.setup_completed = False
             context.setup_error = str(e)
     else:
         # Setup script doesn't exist - verify install capability exists
-        context.initial_setup_run = False
-        context.setup_completed = False
         context.setup_error = f"Setup script not found at {setup_script}"
 
 @when('the setup script runs')
@@ -166,24 +159,20 @@ def step_setup_script_runs(context):
     """Verify the setup script runs and captures output."""
     setup_script = Path(VDE_ROOT) / "scripts" / "install-vde.sh"
     if not setup_script.exists():
-        context.setup_ran = False
         context.setup_error = f"Setup script not found at {setup_script}"
         return
 
     if not os.access(setup_script, os.X_OK):
-        context.setup_ran = False
         context.setup_error = f"Setup script is not executable: {setup_script}"
         return
 
     # Script exists and is executable
-    context.setup_ran = True
     # Store script path for potential execution
     context.setup_script_path = str(setup_script)
 
 @when('SSH keys are checked')
 def step_ssh_keys_checked(context):
     """Check if SSH keys exist using real filesystem check."""
-    context.ssh_keys_checked = True
     # Use the helper function to do real verification
     context.ssh_keys_found = check_ssh_keys_exist()
 
@@ -241,14 +230,11 @@ def step_add_to_path(context):
 @when('setup checks Docker')
 def step_setup_checks_docker(context):
     """Actually check if Docker is available."""
-    context.docker_checked = True
     context.docker_available = check_docker_available()
     context.docker_compose_available = check_docker_compose_available()
 
 @when('the first VM is created')
 def step_first_vm_created(context):
-    context.first_vm_created = True
-    context.vde_network_created = True
 
 @when('I run "vde-health" or check status')
 def step_run_vde_health(context):
@@ -274,12 +260,9 @@ def step_run_list_vms(context):
             )
             context.list_vms_output = result.stdout
             context.list_vms_returncode = result.returncode
-            context.list_vms_run = True
         except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
             context.list_vms_error = str(e)
-            context.list_vms_run = False
     else:
-        context.list_vms_run = False
 
 @when('I pull the latest changes')
 def step_pull_latest_changes(context):
@@ -301,15 +284,12 @@ def step_pull_latest_changes(context):
             has_remote = result.returncode == 0 and len(result.stdout.strip()) > 0
             context.latest_changes_pulled = has_remote
         except Exception:
-            context.latest_changes_pulled = False
     else:
-        context.latest_changes_pulled = False
 
 @when('the setup detects my OS (Linux/Mac)')
 def step_detect_os(context):
     """Detect the actual operating system."""
     import platform
-    context.os_detected = True
     system = platform.system()
     if system == "Darwin":
         context.os_type = "darwin"
@@ -329,16 +309,13 @@ def step_create_first_vm(context):
 
 @when('I want to start quickly')
 def step_want_start_quickly(context):
-    context.quick_start = True
 
 @when('I need help')
 def step_need_help(context):
-    context.help_needed = True
 
 @when('I run validation checks')
 def step_run_validation(context):
     """Run actual validation checks against VDE installation."""
-    context.validation_run = True
     # Check key validation items
     checks = [
         (Path(VDE_ROOT) / "scripts").exists(),

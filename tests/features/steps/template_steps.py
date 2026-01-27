@@ -136,7 +136,6 @@ def step_render_template_special_chars(context):
 @when('I try to render the template')
 def step_try_render_template(context):
     """Try to render template."""
-    context.template_attempted = True
     # Only check template_exists if it was explicitly set
     if hasattr(context, 'template_exists'):
         if not context.template_exists:
@@ -228,10 +227,8 @@ def step_rendered_contains(context, text):
     if text == 'user: devuser':
         # The template uses USERNAME: devuser in build args
         if 'USERNAME: devuser' in context.rendered_output or 'user: devuser' in context.rendered_output:
-            context.output_contains = True
             return
     assert text in context.rendered_output, f"'{text}' not found in output"
-    context.output_contains = True
 
 
 @then('rendered output should NOT contain "{text}"')
@@ -239,7 +236,6 @@ def step_rendered_not_contains(context, text):
     """Rendered output should NOT contain text."""
     assert hasattr(context, 'rendered_output'), "No rendered output"
     assert text not in context.rendered_output, f"'{text}' should not be in output"
-    context.output_not_contains = True
 
 
 @then('rendered output should contain "{mapping}" port mapping')
@@ -249,7 +245,6 @@ def step_rendered_port_mapping(context, mapping):
     # The template uses ##SERVICE_PORTS## placeholder, not direct {{SERVICE_PORT}} replacement
     # So we check for the placeholder or the expected mapping
     if '##SERVICE_PORTS##' in context.rendered_output or mapping in context.rendered_output:
-        context.port_mapping_found = True
     else:
         raise AssertionError(f"Port mapping or placeholder '{mapping}' not found in output")
 
@@ -267,7 +262,6 @@ def step_special_chars_escaped(context):
         '| bash' in context.rendered_output
     )
     assert special_chars_present, "Special characters not found in rendered output"
-    context.special_chars_escaped = True
 
 
 @then('rendered template should be valid YAML')
@@ -276,12 +270,10 @@ def step_valid_yaml(context):
     if HAS_YAML:
         try:
             yaml.safe_load(context.rendered_output)
-            context.valid_yaml = True
         except yaml.YAMLError:
             raise AssertionError("Rendered output is not valid YAML")
     else:
         # Basic YAML validation if yaml module not available
-        context.valid_yaml = True
         # Check for basic YAML syntax issues
         lines = context.rendered_output.split('\n')
         for line in lines:
@@ -311,7 +303,6 @@ def step_public_ssh_keys_volume(context):
     """Rendered output should contain public-ssh-keys volume."""
     assert hasattr(context, 'rendered_output'), "No rendered output"
     assert "public-ssh-keys" in context.rendered_output, "public-ssh-keys volume not found"
-    context.has_public_keys = True
 
 
 @then('volume should be mounted at {mount_path}')
@@ -329,7 +320,6 @@ def step_network_in_output(context, network):
     """Rendered output should contain network."""
     assert hasattr(context, 'rendered_output'), "No rendered output"
     if network in context.rendered_output:
-        context.has_network = True
     else:
         raise AssertionError(f"Network '{network}' not found in output")
 
@@ -341,12 +331,10 @@ def step_uid_gid(context, uid):
     # The template uses UID: and GID: in build args, not user: directive
     has_uid_g = f"UID: {uid}" in context.rendered_output or f"GID: {uid}" in context.rendered_output
     if has_uid_g:
-        context.has_uid_gid = True
     else:
         # Check for USERNAME with devuser value
         if 'USERNAME: devuser' in context.rendered_output and uid == '1000':
             # Has the UID/GID build args
-            context.has_uid_gid = True
         else:
             raise AssertionError(f"UID/GID '{uid}' not found in output")
 
@@ -373,4 +361,3 @@ def step_include_install_command(context):
     # Verify the install command appears in the rendered output
     assert context.install_cmd in context.rendered_output, \
         f"Install command '{context.install_cmd}' not found in rendered output"
-    context.install_command_included = True

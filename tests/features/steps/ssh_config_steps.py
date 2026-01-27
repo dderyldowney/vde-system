@@ -618,7 +618,6 @@ def step_merge_interrupted(context):
     # Real verification: track config state before potential interruption
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
     context.config_before_interrupt = ssh_config.read_text() if ssh_config.exists() else ""
-    context.interrupt_simulated = True
 
 
 @then('~/.ssh/config should either be original or fully updated')
