@@ -10,7 +10,7 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-        INSTALL_COMMAND: "apt-get update && apt-get install -y zig"
+        INSTALL_COMMAND: "curl -L https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz -o /tmp/zig.tar.xz && tar -xf /tmp/zig.tar.xz -C /usr/local && ln -s /usr/local/zig-linux-x86_64-0.13.0/zig /usr/local/bin/zig && rm /tmp/zig.tar.xz && zig version"
     image: dev-zig:latest
     container_name: zig-dev
     hostname: zig-dev
