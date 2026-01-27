@@ -75,6 +75,12 @@ fi
 . "$VDE_ROOT_DIR/scripts/lib/vde-constants"
 
 # -----------------------
+# Source Error Handling Library
+# -----------------------
+# shellcheck source=vde-errors
+. "$VDE_ROOT_DIR/scripts/lib/vde-errors"
+
+# -----------------------
 # Directory Constants
 # -----------------------
 CONFIGS_DIR="$VDE_ROOT_DIR/configs/docker"
