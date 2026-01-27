@@ -637,15 +637,69 @@ def determine_section(scenario_name, tags=None):
         "user-guide-internal": None,  # Explicitly exclude from user guide
     }
 
-    # Check tags in REVERSE order so scenario-level tags (last in list)
-    # take precedence over feature-level tags (first in list)
+    # FIXED: Check scenario-level tags FIRST (they're at the end of the list)
+    # Scenario tags override feature-level tags
     for tag in reversed(tags):
-        if tag in tag_map:
-            if tag == "user-guide-internal":
-                # Only exclude if no other user-guide tag exists
-                if any(t in tag_map and t != "user-guide-internal" for t in tags):
-                    continue  # Another user-guide tag exists, skip internal
-            return tag_map[tag]
+        if tag in tag_map and tag != "user-guide-internal":
+            return tag_map[tag]  # Return first non-internal tag found
+
+    # If we only found user-guide-internal, try auto-detection before excluding
+    # This handles scenarios that should be in guide but lack explicit tags
+    if "user-guide-internal" in tags:
+        auto_section = auto_detect_section(scenario_name)
+        if auto_section:
+            return auto_section  # Auto-detected section overrides internal tag
+        return None  # No match, exclude from guide
+
+    return None
+
+
+def auto_detect_section(scenario_name):
+    """
+    Auto-detect user guide section from scenario name patterns.
+
+    Handles scenarios in @user-guide-internal features that are actually
+    user-facing workflows (Example 1, Daily Workflow, etc.).
+
+    Returns section name or None.
+    """
+    name_lower = scenario_name.lower()
+
+    # Daily workflow patterns
+    if any(p in name_lower for p in ["daily workflow", "morning setup", "evening cleanup", "switching projects"]):
+        return "9. Daily Workflow"
+
+    # Cluster/multi-VM patterns
+    if any(p in name_lower for p in ["example 1", "example 2", "example 3", "microservices", "full-stack", "start both", "start all"]):
+        return "6. Your First Cluster"
+
+    # First VM patterns
+    if any(p in name_lower for p in ["new project setup", "discover available"]):
+        return "3. Your First VM"
+
+    # Understanding VDE patterns
+    if any(p in name_lower for p in ["team onboarding", "explore languages", "understand system", "resolve", "alias", "documentation accuracy"]):
+        return "4. Understanding"
+
+    # Troubleshooting patterns
+    if any(p in name_lower for p in ["troubleshooting", "already running", "already stopped", "existing vm", "restart with rebuild"]):
+        return "11. Troubleshooting"
+
+    # Connecting patterns
+    if any(p in name_lower for p in ["connection info", "connect to", "get connection", "connection help"]):
+        return "7. Connecting"
+
+    # Database patterns
+    if any(p in name_lower for p in ["postgresql accessibility", "database", "postgres", "mongodb"]):
+        return "8. Working with Databases"
+
+    # Adding more languages patterns
+    if any(p in name_lower for p in ["adding cache", "add redis", "add more"]):
+        return "10. Adding More Languages"
+
+    # Exclude internal testing patterns
+    if any(p in name_lower for p in ["cache", "metadata", "parser", "shell compatibility", "performance", "quick plan"]):
+        return None
 
     return None
 

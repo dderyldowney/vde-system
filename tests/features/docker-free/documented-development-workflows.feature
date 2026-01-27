@@ -1,63 +1,73 @@
-@user-guide-internal
+@user-guide-daily-workflow
 Feature: Daily Development Workflow
   As documented in the VDE development workflows
   I want to follow the same patterns that are documented
   So that the tests match the documentation exactly
 
+  @user-guide-cluster
   Scenario: Example 1 - Python API with PostgreSQL Setup
     Given I am following the documented Python API workflow
     When I plan to create a Python VM
     Then the plan should include the create_vm intent
     And the plan should include the Python VM
 
+  @user-guide-cluster
   Scenario: Example 1 - Create PostgreSQL for Python API
     Given I have planned to create Python
     When I plan to create PostgreSQL
     Then the plan should include the create_vm intent
     And the plan should include the PostgreSQL VM
 
+  @user-guide-cluster
   Scenario: Example 1 - Start Both Python and PostgreSQL
     Given I have created Python and PostgreSQL VMs
     When I plan to start both VMs
     Then the plan should include the start_vm intent
     And the plan should include both Python and PostgreSQL VMs
 
+  @user-guide-connecting
   Scenario: Example 1 - Get Connection Info for Python
     Given I need to connect to the Python VM
     When I ask for connection information
     Then the plan should include the connect intent
     And the plan should include the Python VM
 
+  @user-guide-databases
   Scenario: Example 1 - Verify PostgreSQL Accessibility
     Given I have started the PostgreSQL VM
     When I check if postgres exists
     Then the VM should be recognized as a valid VM type
     And it should be marked as a service VM
 
+  @user-guide-cluster
   Scenario: Example 2 - Full-Stack JavaScript with Redis
     Given I am following the documented JavaScript workflow
     When I plan to create JavaScript and Redis VMs
     Then the plan should include both VMs
     And the JavaScript VM should use the js canonical name
 
+  @user-guide-understanding
   Scenario: Example 2 - Resolve Node.js Alias
     Given I want to use the Node.js name
     When I resolve the nodejs alias
     Then it should resolve to js
     And I can use either name in commands
 
+  @user-guide-cluster
   Scenario: Example 3 - Microservices Architecture Setup
     Given I am creating a microservices architecture
     When I plan to create Python, Go, Rust, PostgreSQL, and Redis
     Then the plan should include all five VMs
     And each VM should be included in the VM list
 
+  @user-guide-cluster
   Scenario: Example 3 - Start All Microservice VMs
     Given I have created the microservice VMs
     When I plan to start them all
     Then the plan should include the start_vm intent
     And all microservice VMs should be included
 
+  @user-guide-cluster
   Scenario: Example 3 - Verify All Microservice VMs Exist
     Given I have created microservices
     When I check for each service VM
@@ -67,102 +77,119 @@ Feature: Daily Development Workflow
     And PostgreSQL should exist as a service VM
     And Redis should exist as a service VM
 
+  @user-guide-daily-workflow
   Scenario: Daily Workflow - Morning Setup
     Given I am starting my development day
     When I plan to start Python, PostgreSQL, and Redis
     Then the plan should include all three VMs
     And the plan should use the start_vm intent
 
+  @user-guide-daily-workflow
   Scenario: Daily Workflow - Check Status During Development
     Given I am actively developing
     When I ask what's running
     Then the plan should include the status intent
     And I should be able to see running VMs
 
+  @user-guide-daily-workflow
   Scenario: Daily Workflow - Connect to Primary VM
     Given I need to work in my primary development environment
     When I ask how to connect to Python
     Then the plan should provide connection details
     And the plan should include the Python VM
 
+  @user-guide-daily-workflow
   Scenario: Daily Workflow - Evening Cleanup
     Given I am done with development for the day
     When I plan to stop everything
     Then the plan should include the stop_vm intent
     And the plan should apply to all running VMs
 
+  @user-guide-troubleshooting
   Scenario: Troubleshooting - Step 1 Check Status
     Given something isn't working correctly
     When I check the status
     Then I should receive status information
     And I should see which VMs are running
 
+  @user-guide-troubleshooting
   Scenario: Troubleshooting - Step 3 Restart with Rebuild
     Given I need to rebuild a VM to fix an issue
     When I plan to rebuild Python
     Then the plan should include the restart_vm intent
     And the plan should set rebuild=true flag
 
+  @user-guide-troubleshooting
   Scenario: Troubleshooting - Step 4 Get Connection Info
     Given I need to debug inside a container
     When I ask to connect to Python
     Then the plan should include the connect intent
     And I should receive SSH connection information
 
+  @user-guide-first-vm
   Scenario: New Project Setup - Discover Available VMs
     Given I am setting up a new project
     When I ask what VMs can I create
     Then the plan should include the list_vms intent
     And I should see all available VM types
 
+  @user-guide-first-vm
   Scenario: New Project Setup - Choose Full Stack
     Given I want a Python API with PostgreSQL
     When I plan to create Python and PostgreSQL
     Then both VMs should be included in the plan
     And the plan should use the create_vm intent
 
+  @user-guide-more-languages
   Scenario: Adding Cache Layer - Create Redis
     Given I have an existing Python and PostgreSQL stack
     When I plan to add Redis
     Then the plan should include the create_vm intent
     And the Redis VM should be included
 
+  @user-guide-more-languages
   Scenario: Adding Cache Layer - Start Redis
     Given I have created the Redis VM
     When I plan to start Redis
     Then the plan should include the start_vm intent
     And Redis should start without affecting other VMs
 
+  @user-guide-daily-workflow
   Scenario: Switching Projects - Stop Current Project
     Given I am working on one project
     When I plan to stop all VMs
     Then all running VMs should be stopped
     And I should be ready to start a new project
 
+  @user-guide-daily-workflow
   Scenario: Switching Projects - Start New Project
     Given I have stopped my current project
     When I plan to start Go and MongoDB
     Then the new project VMs should start
     And only the new project VMs should be running
 
+  @user-guide-understanding
   Scenario: Team Onboarding - Explore Languages
     Given I am a new team member
     When I ask to list all languages
     Then I should see only language VMs
     And service VMs should not be included
 
+  @user-guide-understanding
   Scenario: Team Onboarding - Get Connection Help
     Given I am new to the team
     When I ask how to connect to Python
     Then I should receive clear connection instructions
     And I should understand how to access the VM
 
+  @user-guide-understanding
   Scenario: Team Onboarding - Understand System
     Given I am learning the VDE system
     When I ask for help
     Then I should see available commands
     And I should understand what I can do
 
+  @user-guide-troubleshooting
   Scenario: Starting Already Running VM
     Given I have a Python VM that is already running
     When I plan to start Python
@@ -170,6 +197,7 @@ Feature: Daily Development Workflow
     And execution would detect the VM is already running
     And I would be notified that it's already running
 
+  @user-guide-troubleshooting
   Scenario: Stopping Already Stopped VM
     Given I have a stopped PostgreSQL VM
     When I plan to stop PostgreSQL
@@ -177,6 +205,7 @@ Feature: Daily Development Workflow
     And execution would detect the VM is not running
     And I would be notified that it's already stopped
 
+  @user-guide-troubleshooting
   Scenario: Creating Existing VM
     Given I already have a Go VM configured
     When I plan to create Go again
@@ -184,6 +213,7 @@ Feature: Daily Development Workflow
     And execution would detect the VM already exists
     And I would be notified of the existing VM
 
+  @user-guide-understanding
   Scenario: Documentation Accuracy - Verify Examples Work
     Given the documentation shows specific VM examples
     When I verify the documented VMs

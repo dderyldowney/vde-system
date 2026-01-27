@@ -5,11 +5,13 @@ Feature: VDE SSH Commands
   I want to manage SSH through the vde command interface
   So that I have a consistent CLI for all VDE operations
 
+  @user-guide-troubleshooting
   Scenario: Check SSH environment status
     When I run "vde ssh-setup status"
     Then the command should succeed
     And status command should show SSH environment state
 
+  @user-guide-ssh-keys
   Scenario: Initialize SSH environment
     Given VDE SSH environment is not initialized
     When I run "vde ssh-setup init"
