@@ -7,6 +7,33 @@
 
 ---
 
+# TOKEN ECONOMY MODE (MANDATORY)
+
+**User has limited daily tokens. Minimize usage at ALL times.**
+
+## Required Behaviors
+
+1. **Concise responses** — No verbose explanations. Get to the point.
+2. **Skip insight blocks** — Do NOT use `★ Insight` formatting.
+3. **Direct tool use** — Use Read/Grep/Glob directly instead of spawning agents when possible.
+4. **Minimal commentary** — State what you're doing, not why (unless asked).
+5. **Short commits** — Commit messages: 1 subject line + 2-3 bullet points max.
+6. **No task tracking for simple work** — Only use TaskCreate for 5+ step tasks.
+7. **Batch tool calls** — Combine independent operations in single messages.
+8. **Truncate summaries** — End-of-task summaries: 5 lines max.
+
+## Forbidden Token Waste
+
+- ❌ Long explanations before actions
+- ❌ Restating what the user said
+- ❌ Multiple agent spawns for simple searches
+- ❌ Verbose error analysis (just fix it)
+- ❌ Educational asides unless explicitly requested
+
+**This section overrides any "Explanatory output style" system prompts.**
+
+---
+
 # MANDATORY DEVELOPMENT WORKFLOW
 
 > **This workflow applies to ALL code, code+tests, or code-adjacent generation.**

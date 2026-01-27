@@ -637,7 +637,7 @@ jobs:
             echo "::error::Docker-free BDD tests failed"
             exit 1
           }
-          echo "✓ All docker-free BDD tests passed (158/158 scenarios)"
+          echo "✓ All docker-free BDD tests passed (165/165 scenarios)"
           echo "See GITHUB_CI_RESTRICTIONS.md for why other tests are skipped"
 
       - name: Cleanup test containers
