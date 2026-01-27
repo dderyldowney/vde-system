@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 #===============================================================================
 # vde-health - Health Check Command for VDE
 # Checks Docker, containers, ports, and SSH connectivity
@@ -21,7 +21,7 @@ readonly VDE_HEALTH_MAJOR=2
 readonly VDE_HEALTH_CRITICAL=3
 
 # Health check results
-declare -A _VDE_HEALTH_CHECKS=()
+typeset -gA _VDE_HEALTH_CHECKS=()
 _VDE_HEALTH_OVERALL=0
 _VDE_HEALTH_MINOR_COUNT=0
 _VDE_HEALTH_MAJOR_COUNT=0

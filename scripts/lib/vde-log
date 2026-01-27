@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 #===============================================================================
 # vde-logging - Structured Logging Library for VDE
 # Provides JSON/text structured logging with rotation capabilities
@@ -23,7 +23,7 @@ VDE_LOG_MAX_DAYS="${VDE_LOG_MAX_DAYS:-7}"
 VDE_LOG_RETENTION_POLICY="${VDE_LOG_RETENTION_POLICY:-size}"
 
 # Log levels (numeric values for comparison)
-declare -A VDE_LOG_LEVELS=(
+typeset -gA VDE_LOG_LEVELS=(
     ["DEBUG"]=0
     ["INFO"]=1
     ["WARN"]=2

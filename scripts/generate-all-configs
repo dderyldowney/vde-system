@@ -22,7 +22,7 @@ source "$SCRIPT_DIR/lib/vm-common"
 load_vm_types 2>/dev/null || true
 
 # Port allocations (from vm-types.conf SSH port assignments)
-declare -A SSH_PORTS=(
+typeset -gA SSH_PORTS=(
   [c]=2200
   [cpp]=2201
   [asm]=2202
@@ -52,7 +52,7 @@ declare -A SSH_PORTS=(
 )
 
 # Service ports (external ports to expose)
-declare -A SERVICE_PORTS=(
+typeset -gA SERVICE_PORTS=(
   [postgres]="5432"
   [redis]="6379"
   [mongodb]="27017"

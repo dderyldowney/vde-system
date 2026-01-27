@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 #===============================================================================
 # vde-metrics - Metrics Collection Library for VDE
 # Tracks performance metrics, command latency, and error rates
@@ -25,8 +25,8 @@ VDE_METRICS_CACHE_HIT_RATE="cache.hit_rate"
 
 # Current runtime state
 _VDE_METRICS_INITIALIZED=0
-declare -A _VDE_METRICS_TIMERS=()
-declare -A _VDE_METRICS_COUNTERS=()
+typeset -gA _VDE_METRICS_TIMERS=()
+typeset -gA _VDE_METRICS_COUNTERS=()
 
 #===============================================================================
 # Initialization

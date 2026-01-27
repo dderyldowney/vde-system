@@ -130,13 +130,23 @@ def step_port_registry_persists(context):
 @then('Atomic port reservation prevents race conditions')
 def step_atomic_reservation(context):
     """Verify atomic port reservation prevents race conditions."""
-    # Port allocation should use file locking or atomic operations
+    # Verify that port allocation uses atomic operations by checking:
+    # 1. Port allocation script exists and uses locking mechanisms
+    # 2. OR docker-compose file creation is atomic (file system guarantees)
     allocate_script = VDE_ROOT / "scripts" / "allocate-port"
+    
     if allocate_script.exists():
-        context.atomic_allocation = True
+        # Check if script uses flock or similar locking
+        script_content = allocate_script.read_text()
+        has_locking = 'flock' in script_content or 'lock' in script_content.lower()
+        assert has_locking, "Port allocation script should use file locking for atomicity"
     else:
-        # Atomic allocation via compose file creation
-        context.atomic_allocation = True
+        # Verify atomic allocation via docker-compose file creation
+        # File system operations are atomic at the OS level
+        configs_dir = VDE_ROOT / "configs" / "docker"
+        assert configs_dir.exists(), "Docker configs directory must exist for atomic port allocation"
+        # Verify that compose files can be created atomically
+        assert configs_dir.stat().st_mode & 0o200, "Configs directory must be writable for atomic operations"
 
 
 @then('each process should receive a unique port')
@@ -191,9 +201,15 @@ def step_port_ranges_respected(context):
 @then('the command should fail with error "No available ports"')
 def step_no_available_ports_error(context):
     """Verify command fails when no ports available."""
-    # This would occur if all ports in range are allocated
-    # Simulate by checking if port registry is full
-    context.no_ports_error = True  # Would be tested by actual port exhaustion
+    # Verify the command actually failed with the expected error
+    result = getattr(context, 'result', None)
+    assert result is not None, "Command result must be stored in context.result"
+    assert result.returncode != 0, "Command should fail when no ports available"
+    
+    # Check for "No available ports" error message in output
+    output = result.stderr + result.stdout
+    assert "No available ports" in output or "no available port" in output.lower(), \
+        f"Expected 'No available ports' error, got: {output}"
 
 
 @then('Port registry updates when VM is removed')

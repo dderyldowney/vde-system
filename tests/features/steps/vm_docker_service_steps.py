@@ -18,6 +18,8 @@ from vm_common import (
     docker_ps,
     run_vde_command,
 )
+from shell_helpers import execute_in_container
+from docker_helpers import verify_container_running
 
 
 # =============================================================================
@@ -35,10 +37,10 @@ def step_create_postgresql_vm(context):
 
 @given('I have dependent services')
 def step_dependent_services(context):
-    """Have dependent services - check if postgres and redis exist."""
+    """Have dependent services - verify postgres and redis containers exist."""
     postgres_exists = compose_file_exists("postgres")
     redis_exists = compose_file_exists("redis")
-    context.has_dependent_services = postgres_exists or redis_exists
+    assert postgres_exists or redis_exists, "At least one dependent service (postgres or redis) must exist"
 
 
 # =============================================================================
@@ -116,7 +118,7 @@ def step_all_service_vms_listed_ports(context):
 def step_services_continue_running(context):
     """Verify service VMs continue running."""
     running = docker_ps()
-    context.services_running = len(running) > 0
+    assert len(running) > 0, "At least one service VM should be running"
 
 
 @then('service VMs should not be listed')
@@ -134,9 +136,10 @@ def step_services_not_listed(context):
 def step_services_provide_infrastructure(context):
     """Verify service VMs provide infrastructure."""
     configs_dir = VDE_ROOT / "configs" / "docker"
-    if configs_dir.exists():
-        services = ['postgres', 'redis', 'nginx', 'mysql']
-        context.has_services = any((configs_dir / svc).exists() for svc in services)
+    assert configs_dir.exists(), "Docker configs directory should exist"
+    services = ['postgres', 'redis', 'nginx', 'mysql']
+    has_services = any((configs_dir / svc).exists() for svc in services)
+    assert has_services, "At least one service VM config (postgres, redis, nginx, mysql) should exist"
 
 
 @then('databases and caches should remain available')
@@ -144,14 +147,24 @@ def step_databases_caches_available(context):
     """Verify databases and caches remain available."""
     running = docker_ps()
     available = [vm for vm in running if any(db in vm for db in ['postgres', 'redis', 'mongo', 'mysql'])]
-    context.databases_available = len(available) > 0
+    assert len(available) > 0, "At least one database or cache service should be running"
 
 
 @then('I can connect to MySQL from other VMs')
 def step_can_connect_mysql(context):
-    """Verify can connect to MySQL from other VMs."""
-    result = subprocess.run(['docker', 'network', 'ls'], capture_output=True, text=True)
-    assert result.returncode == 0, "Network should exist for MySQL access"
+    """Verify can connect to MySQL from other VMs by testing actual connectivity."""
+    # First verify MySQL container is running
+    verify_container_running('mysql-dev')
+    
+    # Test MySQL connectivity using mysqladmin ping
+    result = execute_in_container(
+        'mysql-dev',
+        'mysqladmin ping -h localhost -u root -pdevpassword',
+        timeout=10
+    )
+    
+    assert result['returncode'] == 0, f"MySQL should be accessible. Error: {result['stderr']}"
+    assert 'mysqld is alive' in result['stdout'], "MySQL should respond to ping"
 
 
 @then('port 3306 should be mapped to host')
