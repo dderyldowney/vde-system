@@ -2296,14 +2296,15 @@ ensure_ssh_environment() {
     ensure_ssh_agent
 
     # Ensure VDE SSH config has VM entries
-    if [ ! -f "$VDE_SSH_CONFIG" ] || ! grep -q "python-dev" "$VDE_SSH_CONFIG" 2>/dev/null; then
-        generate_vm_ssh_config >/dev/null 2>&1
+    if [ ! -f "$VDE_SSH_CONFIG" ] || [ ! -s "$VDE_SSH_CONFIG" ]; then
+        generate_vm_ssh_config >/dev/null 2>&1 || true
     fi
 
     # Load VDE key into SSH agent
     if [ -f "$VDE_SSH_IDENTITY" ]; then
-        # Check if key is already loaded
-        if ! ssh-add -l 2>/dev/null | grep -q "$(ssh-keygen -lf "$VDE_SSH_IDENTITY" 2>/dev/null | awk '{print $2}')"; then
+        local key_fingerprint
+        key_fingerprint=$(ssh-keygen -lf "$VDE_SSH_IDENTITY" 2>/dev/null | awk '{print $2}')
+        if [ -n "$key_fingerprint" ] && ! ssh-add -l 2>/dev/null | grep -q "$key_fingerprint"; then
             ssh-add "$VDE_SSH_IDENTITY" 2>/dev/null || true
         fi
     fi
