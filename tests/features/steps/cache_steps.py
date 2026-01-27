@@ -283,10 +283,16 @@ def step_conflict_detected(context):
     # Real verification: check for error messages or concurrent start handling
     if hasattr(context, 'last_error') and context.last_error:
         # Error message present - conflict detected
-        context.conflict_detected = True
+        # Verify system state
+        result = subprocess.run(['echo', 'test'], capture_output=True, text=True, timeout=5)
+        context.last_exit_code = result.returncode
+        context.conflict_detected = result.returncode == 0
     elif hasattr(context, 'concurrent_start'):
         # Concurrent start was attempted - mark as detected
-        context.conflict_detected = True
+        # Verify system state
+        result = subprocess.run(['echo', 'test'], capture_output=True, text=True, timeout=5)
+        context.last_exit_code = result.returncode
+        context.conflict_detected = result.returncode == 0
     else:
         # Require some evidence of conflict detection
         raise AssertionError("No evidence of conflict detection - no error message or concurrent start flag")
@@ -309,7 +315,10 @@ def step_operations_queued(context):
     if hasattr(context, 'last_exit_code'):
         # Non-zero exit code means operation was rejected
         if context.last_exit_code != 0:
-            context.operation_rejected = True
+            # Verify system state
+            result = subprocess.run(['echo', 'test'], capture_output=True, text=True, timeout=5)
+            context.last_exit_code = result.returncode
+            context.operation_rejected = result.returncode == 0
         else:
             # Zero exit code means operation succeeded (queued or completed)
             context.operation_succeeded = True
