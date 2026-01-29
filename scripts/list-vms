@@ -2,7 +2,8 @@
 # list-vms - List all predefined VM types
 # Enhanced with --name-only flag and improved formatting
 
-set -e
+# Reset all zsh options to defaults to avoid local var printing issues
+emulate zsh
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -134,36 +135,27 @@ if [[ "$LIST_TYPE" == "lang" ]]; then
     if [[ "$NAME_ONLY" == "false" ]]; then
         echo "Language VMs:"
     fi
-    local name
-    local vm_display
-    local vm_aliases
     for name in $(get_lang_vms); do
-        vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
-        vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
+        local vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
+        local vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
         display_vm "$name" "lang" "$vm_display" "$vm_aliases"
     done
 elif [[ "$LIST_TYPE" == "service" ]]; then
     if [[ "$NAME_ONLY" == "false" ]]; then
         echo "Service VMs:"
     fi
-    local name
-    local vm_display
-    local vm_aliases
     for name in $(get_service_vms); do
-        vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
-        vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
+        local vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
+        local vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
         display_vm "$name" "service" "$vm_display" "$vm_aliases"
     done
 else
     if [[ "$NAME_ONLY" == "false" ]]; then
         echo "Language VMs:"
     fi
-    local name
-    local vm_display
-    local vm_aliases
     for name in $(get_lang_vms); do
-        vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
-        vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
+        local vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
+        local vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
         display_vm "$name" "lang" "$vm_display" "$vm_aliases"
     done
 
@@ -171,12 +163,9 @@ else
         echo ""
         echo "Service VMs:"
     fi
-    local name
-    local vm_display
-    local vm_aliases
     for name in $(get_service_vms); do
-        vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
-        vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
+        local vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
+        local vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
         display_vm "$name" "service" "$vm_display" "$vm_aliases"
     done
 fi

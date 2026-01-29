@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env zsh
 # VDE Shell Compatibility Layer
 # Provides portable abstractions for shell-specific features
 # Source this library with: source ./scripts/lib/vde-shell-compat
@@ -262,41 +262,47 @@ _assoc_get() {
 
 # _assoc_keys - Get all keys from an associative array
 # Args: <array_name>
-# Returns: 0 on success (outputs keys to stdout, space-separated)
-# Example: keys=$(_assoc_keys "MY_ARRAY")
+# Returns: 0 on success (outputs keys to stdout, one per line)
+# Example: for k in $(_assoc_keys "MY_ARRAY"); do echo "$k"; done
 _assoc_keys() {
     local array_name="$1"
     
     if _shell_supports_native_assoc; then
-        # Native support
-        if _is_zsh; then
-            # zsh: ${(@k)array} - output space-separated
-            eval "echo \${(k)${array_name}}"
-        else
-            # bash 4+: ${!array[@]}
-            eval "echo \${!${array_name}[@]}"
-        fi
+        # zsh: For zsh, we need to handle dynamic variable names differently
+        # Get the array reference and output keys directly
+        case "$array_name" in
+            VM_TYPE)
+                for k in ${(k)VM_TYPE}; do echo "$k"; done
+                ;;
+            VM_ALIASES)
+                for k in ${(k)VM_ALIASES}; do echo "$k"; done
+                ;;
+            VM_DISPLAY)
+                for k in ${(k)VM_DISPLAY}; do echo "$k"; done
+                ;;
+            VM_INSTALL)
+                for k in ${(k)VM_INSTALL}; do echo "$k"; done
+                ;;
+            VM_SVC_PORT)
+                for k in ${(k)VM_SVC_PORT}; do echo "$k"; done
+                ;;
+            PORT_REGISTRY)
+                for k in ${(k)PORT_REGISTRY}; do echo "$k"; done
+                ;;
+            *)
+                # Generic fallback using eval with proper escaping
+                eval "for k in \${(k)\${array_name}[@]}; do echo \"\$k\"; done"
+                ;;
+        esac
     else
-        # File-based fallback
-        # Read the original keys from .key metadata files
+        # File-based fallback (should not be needed for zsh 5+)
         local dir="$_VDE_ASSOC_STORAGE_DIR/$array_name"
-        local keys=""
         if [ -d "$dir" ]; then
-            # List files, but skip the .key metadata files and read original keys from them
             for f in "$dir"/*.key; do
                 [ -f "$f" ] || continue
-                local k
-                k=$(cat "$f" 2>/dev/null)
-                if [ -n "$k" ]; then
-                    if [ -n "$keys" ]; then
-                        keys="$keys $k"
-                    else
-                        keys="$k"
-                    fi
-                fi
+                cat "$f" 2>/dev/null
             done
         fi
-        echo "$keys"
     fi
     return 0
 }

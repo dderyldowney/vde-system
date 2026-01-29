@@ -250,7 +250,6 @@ _cache_vm_types() {
         echo ""
         
         # Serialize VM_TYPE
-        local key
         for key in $(_assoc_keys "VM_TYPE"); do
             echo "VM_TYPE:$key=$(_assoc_get "VM_TYPE" "$key")"
         done
@@ -420,22 +419,10 @@ load_vm_types() {
         return $VDE_SUCCESS
     fi
     
-    # Try to use cache if not bypassed
-    if [ "$no_cache" = "false" ]; then
-        if _is_cache_valid; then
-            if _load_cached_vm_types; then
-                return $VDE_SUCCESS
-            fi
-        fi
-    fi
-    
-    # Load from config file
+    # Always load from config file (skip cache to avoid parsing issues)
     if ! _load_vm_types_from_config; then
         return $VDE_ERR_NOT_FOUND
     fi
-    
-    # Update cache for next time
-    _cache_vm_types
     
     return $VDE_SUCCESS
 }
@@ -499,9 +486,7 @@ get_all_vms() {
 # Returns: VDE_SUCCESS (0), outputs sorted language VM names to stdout
 # Example: get_lang_vms  # outputs: python, ruby, rust, etc.
 get_lang_vms() {
-    local name
     for name in $(_assoc_keys "VM_TYPE"); do
-        local vm_type
         vm_type=$(_assoc_get "VM_TYPE" "$name")
         if [ "$vm_type" = "lang" ]; then
             echo "$name"
@@ -515,9 +500,7 @@ get_lang_vms() {
 # Returns: VDE_SUCCESS (0), outputs sorted service VM names to stdout
 # Example: get_service_vms  # outputs: postgres, redis, mongodb, etc.
 get_service_vms() {
-    local name
     for name in $(_assoc_keys "VM_TYPE"); do
-        local vm_type
         vm_type=$(_assoc_get "VM_TYPE" "$name")
         if [ "$vm_type" = "service" ]; then
             echo "$name"

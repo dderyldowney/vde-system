@@ -20,7 +20,14 @@ services:
       - ../../../env-files/redis.env
 
     volumes:
-      - redis_data:/data
+      - ../../../data/redis:/data
+      - ../../../logs/redis:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for service VM communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
 
     networks:
       - dev-net
@@ -28,6 +35,3 @@ services:
 networks:
   dev-net:
     external: true
-
-volumes:
-  redis_data:
