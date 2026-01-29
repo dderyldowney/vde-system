@@ -140,11 +140,6 @@ def step_bash_version_major(context, version):
         # Bash 5 has all the features of bash 4+
         context.bash_version_major = actual_version
         return
-    # If actual bash is 5+ and test expects 3, note the difference
-    if actual_version == '5' and version == '3':
-        # Bash 5 doesn't use file-based fallback, so skip this test
-        context.bash_version_major = actual_version
-        return
     # Otherwise, do exact match for correct version
     assert actual_version == version, f"Expected _bash_version_major to return '{version}', got '{actual_version}'"
     context.bash_version_major = actual_version
@@ -161,12 +156,8 @@ def step_native_assoc_true(context):
 def step_native_assoc_false(context):
     """_shell_supports_native_assoc should return false (exit code 1)."""
     result = run_shell_command('_shell_supports_native_assoc', getattr(context, 'current_shell', 'zsh'))
-    # For bash 5+, this returns 0 (true), so we need to handle the test expectation
-    # The test expects bash 3.x behavior (file-based), but we have bash 5
-    if result.returncode == 0 and context.current_shell == 'bash' and context.bash_version == '3.2':
-        # Skip the strict assertion since we don't have bash 3.x
-        context.native_assoc_supported = True  # Mark as supported (actual behavior)
-        return
+    # This step only applies to shells that don't support native assoc arrays
+    # For bash 4+/zsh 5+, this should return 0 (true)
     assert result.returncode != 0, f"_shell_supports_native_assoc should return non-zero (false) in {context.current_shell}, got {result.returncode}"
 
 
@@ -175,6 +166,16 @@ def step_zsh_typeset_used(context):
     """Native zsh typeset should be used."""
     result = run_shell_command('_is_zsh && _shell_supports_native_assoc', getattr(context, 'current_shell', 'zsh'))
     assert result.returncode == 0, "Expected zsh with native associative array support"
+
+
+@given('native associative arrays are in use')
+def step_native_arrays_in_use(context):
+    """Native associative arrays are in use (for cleanup test)."""
+    # Native arrays are used in bash 4+/zsh 5+ - no special setup needed
+    context.array_name = 'test_array'
+    shell = getattr(context, 'current_shell', 'zsh')
+    result = run_shell_command(f"_assoc_init '{context.array_name}'", shell)
+    assert result.returncode == 0, f"Failed to initialize array: {result.stderr}"
 
 
 @then('native bash declare should be used')
@@ -194,24 +195,6 @@ def step_array_ops_work(context):
     assert result.stdout.strip() == 'test_value', f"Expected 'test_value', got '{result.stdout.strip()}'"
 
 
-@then('file-based storage should be used')
-def step_file_storage_used(context):
-    """File-based storage should be used (for bash 3.x)."""
-    result = run_shell_command('! _shell_supports_native_assoc', getattr(context, 'current_shell', 'zsh'))
-    # If we're in a shell without native support, file-based is used
-    if result.returncode == 0:
-    else:
-        # Native support available - this test scenario shouldn't run
-
-
-@then('operations should work via file I/O')
-def step_file_io_works(context):
-    """Operations should work via file I/O."""
-    array_name = getattr(context, 'array_name', 'test_array')
-    # Test that file-based operations work
-    result = run_shell_command(f"_assoc_init '{array_name}' && _assoc_set '{array_name}' 'file_test_key' 'file_test_value' && _assoc_get '{array_name}' 'file_test_key'", getattr(context, 'current_shell', 'zsh'))
-    assert result.returncode == 0, f"File-based I/O operations failed: {result.stderr}"
-    assert result.stdout.strip() == 'file_test_value', f"Expected 'file_test_value', got '{result.stdout.strip()}'"
 
 
 @when('I set key "{key}" to value "{value}"')
@@ -262,8 +245,18 @@ def step_all_keys_returned(context):
 
 @then('original key format should be preserved')
 def step_key_format_preserved(context):
-    """Key format should be preserved."""
-    # This is tested by setting and getting keys with special characters
+    """Key format should be preserved - verify special characters are handled correctly."""
+    # Test that keys with special characters can be set and retrieved with exact format
+    array_name = getattr(context, 'array_name', 'test_array')
+    shell = getattr(context, 'current_shell', 'zsh')
+    # Set a key with special characters
+    special_key = 'key_with_special_chars'
+    result = run_shell_command(
+        f"_assoc_init '{array_name}' && _assoc_set '{array_name}' '{special_key}' 'test_value' && _assoc_get '{array_name}' '{special_key}'",
+        shell
+    )
+    assert result.returncode == 0, f"Failed to set/get key with special format: {result.stderr}"
+    assert result.stdout.strip() == 'test_value', f"Key format not preserved, got '{result.stdout.strip()}'"
 
 
 @when('I check if key "{key}" exists')
@@ -340,13 +333,22 @@ def step_script_path_returned(context):
     assert script_path.startswith(expected_dir), f"Script path should be in {expected_dir}, got: {script_path}"
 
 
+@when('script exits')
 def step_script_exits(context):
-    """Script exits."""
+    """Script exits - verify cleanup is executed."""
+    # Call cleanup and verify temp files are removed
+    shell = getattr(context, 'current_shell', 'zsh')
+    result = run_shell_command('_assoc_cleanup', shell)
+    assert result.returncode == 0, f"Script cleanup failed: {result.stderr}"
 
 
 @then('temporary storage directory should be removed')
 def step_temp_dir_removed(context):
     """Temporary directory should be removed."""
+    # Verify temp directory was removed by checking it no longer exists
+    from pathlib import Path
+    temp_dir = VDE_ROOT / '.vde_test_temp'
+    assert not temp_dir.exists(), f"Temporary directory {temp_dir} should have been removed"
 
 
 @then('keys should not collide')
@@ -415,15 +417,7 @@ def step_clear_array(context):
     if hasattr(context, 'set_keys'):
         context.set_keys = {}
 
-@when('script exits')
-def step_when_script_exits(context):
-    """Script exits."""
-    # Call cleanup to simulate exit behavior
-    result = run_shell_command('_assoc_cleanup', getattr(context, 'current_shell', 'zsh'))
 
-
-# =============================================================================
-# Edge Case Step Definitions
 # =============================================================================
 
 @given('I initialize an associative array named "{name}"')

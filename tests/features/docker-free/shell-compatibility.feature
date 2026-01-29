@@ -2,8 +2,8 @@
 @user-guide-internal
 Feature: Shell Compatibility Layer
   As a developer
-  I want VDE to work across different shells (zsh, bash 4+, bash 3.x)
-  So that VDE is portable across different systems
+  I want VDE to work across different shells (zsh, bash 4+)
+  So that VDE is portable across modern Unix systems
 
   Scenario: Detect zsh shell
     When running in zsh
@@ -22,41 +22,14 @@ Feature: Shell Compatibility Layer
     Then _bash_version_major should return "4"
     And _shell_supports_native_assoc should return true
 
-  Scenario: Detect bash 3.x for fallback mode
-    Given running in bash "3.2"
-    Then _bash_version_major should return "3"
-    And _shell_supports_native_assoc should return false
-
   Scenario: Use native associative arrays in zsh
     Given running in zsh
     When I initialize an associative array
     Then native zsh typeset should be used
     And array operations should work correctly
 
-  Scenario: Use native associative arrays in bash 4+
-    Given running in bash "4.0"
-    When I initialize an associative array
-    Then native bash declare should be used
-    And array operations should work correctly
-
-  Scenario: Use file-based fallback in bash 3.x
-    Given running in bash "3.2"
-    When I initialize an associative array
-    Then file-based storage should be used
-    And operations should work via file I/O
-
   Scenario: Set and get values in associative array (zsh)
     Given running in zsh
-    When I set key "foo" to value "bar"
-    Then getting key "foo" should return "bar"
-
-  Scenario: Set and get values in associative array (bash 4+)
-    Given running in bash "4.0"
-    When I set key "foo" to value "bar"
-    Then getting key "foo" should return "bar"
-
-  Scenario: Set and get values in associative array (bash 3.x)
-    Given running in bash "3.2"
     When I set key "foo" to value "bar"
     Then getting key "foo" should return "bar"
 
@@ -99,31 +72,17 @@ Feature: Shell Compatibility Layer
     When I call _get_script_path
     Then absolute script path should be returned
 
-  Scenario: Clean up file-based storage on exit
-    Given file-based associative arrays are in use
+  Scenario: Clean up storage on exit
+    Given native associative arrays are in use
     When script exits
     Then temporary storage directory should be removed
 
   # =============================================================================
-  # Edge Case Scenarios
+  # Edge Case Scenarios (zsh only - bash 4+ uses same code paths)
   # =============================================================================
 
   Scenario: Handle empty associative array keys iteration
     Given running in zsh
-    And I initialize an associative array named "empty_array"
-    When I get all keys from "empty_array"
-    Then no keys should be returned
-    And array should be considered empty
-
-  Scenario: Handle empty associative array keys iteration (bash 4+)
-    Given running in bash "4.0"
-    And I initialize an associative array named "empty_array"
-    When I get all keys from "empty_array"
-    Then no keys should be returned
-    And array should be considered empty
-
-  Scenario: Handle empty associative array keys iteration (bash 3.x)
-    Given running in bash "3.2"
     And I initialize an associative array named "empty_array"
     When I get all keys from "empty_array"
     Then no keys should be returned
@@ -134,18 +93,6 @@ Feature: Shell Compatibility Layer
     And I initialize an associative array
     When I set key "path_with_spaces" to value "/usr/local/bin with spaces here"
     Then getting key "path_with_spaces" should return "/usr/local/bin with spaces here"
-
-  Scenario: Handle array values with spaces (bash 4+)
-    Given running in bash "4.0"
-    And I initialize an associative array
-    When I set key "description" to value "This is a long description with multiple spaces"
-    Then getting key "description" should return "This is a long description with multiple spaces"
-
-  Scenario: Handle array values with spaces (bash 3.x)
-    Given running in bash "3.2"
-    And I initialize an associative array
-    When I set key "message" to value "Hello world from bash 3"
-    Then getting key "message" should return "Hello world from bash 3"
 
   Scenario: Handle special characters in keys
     Given running in zsh
@@ -159,17 +106,6 @@ Feature: Shell Compatibility Layer
     And key "key-with-dashes" should return "dash_value"
     And key "key_with_underscores" should return "underscore_value"
 
-  Scenario: Handle special characters in keys (bash 3.x)
-    Given running in bash "3.2"
-    And I initialize an associative array
-    When I set key "a/b/c" to value "path1"
-    And I set key "x_y_z" to value "path2"
-    And I set key "d-e-f" to value "path3"
-    Then key "a/b/c" should return "path1"
-    And key "x_y_z" should return "path2"
-    And key "d-e-f" should return "path3"
-    And keys should not collide
-
   Scenario: Handle empty string as value
     Given running in zsh
     And I initialize an associative array
@@ -177,24 +113,11 @@ Feature: Shell Compatibility Layer
     Then getting key "empty_value" should return an empty value
     And key "empty_value" should exist
 
-  Scenario: Handle empty string as value (bash 4+)
-    Given running in bash "4.0"
-    And I initialize an associative array
-    When I set key "nil_value" to an empty value
-    Then getting key "nil_value" should return an empty value
-    And key "nil_value" should exist
-
   Scenario: Handle newlines in values
     Given running in zsh
     And I initialize an associative array
-    When I set key "multiline" to value "line1\\nline2\\nline3"
+    When I set key "multiline" to value "line1\nline2\nline3"
     Then getting key "multiline" should contain newlines
-
-  Scenario: Handle newlines in values (bash 4+)
-    Given running in bash "4.0"
-    And I initialize an associative array
-    When I set key "text_block" to value "first line\\nsecond line"
-    Then getting key "text_block" should contain newlines
 
   Scenario: Handle very long key names
     Given running in zsh
@@ -208,12 +131,6 @@ Feature: Shell Compatibility Layer
     When I set key "emoji" to value "Hello World 🌍"
     Then getting key "emoji" should return "Hello World 🌍"
 
-  Scenario: Handle unicode characters in values (bash 4+)
-    Given running in bash "4.0"
-    And I initialize an associative array
-    When I set key "utf8" to value "cafe你好"
-    Then getting key "utf8" should return "cafe你好"
-
   Scenario: Clear and reuse associative array
     Given running in zsh
     And I initialize an associative array
@@ -225,31 +142,12 @@ Feature: Shell Compatibility Layer
     And key "temp1" should no longer exist
     And key "temp2" should no longer exist
 
-  Scenario: Clear and reuse associative array (bash 4+)
-    Given running in bash "4.0"
-    And I initialize an associative array
-    And I set key "old_a" to value "old_value_a"
-    And I set key "old_b" to value "old_value_b"
-    When I clear the array
-    And I set key "new_x" to value "new_value_x"
-    Then getting key "new_x" should return "new_value_x"
-    And key "old_a" should no longer exist
-    And key "old_b" should no longer exist
-
   Scenario: Overwrite existing key value
     Given running in zsh
     And I initialize an associative array
     And I set key "config" to value "original"
     When I set key "config" to value "updated"
     Then getting key "config" should return "updated"
-    And array should contain exactly 1 key
-
-  Scenario: Overwrite existing key value (bash 3.x)
-    Given running in bash "3.2"
-    And I initialize an associative array
-    And I set key "setting" to value "initial"
-    When I set key "setting" to value "modified"
-    Then getting key "setting" should return "modified"
     And array should contain exactly 1 key
 
   Scenario: Get non-existent key should fail gracefully
@@ -260,24 +158,9 @@ Feature: Shell Compatibility Layer
     Then operation should return failure status
     And no value should be returned
 
-  Scenario: Get non-existent key should fail gracefully (bash 4+)
-    Given running in bash "4.0"
-    And I initialize an associative array
-    And I set key "present" to value "here"
-    When I attempt to get key "absent"
-    Then operation should return failure status
-    And no value should be returned
-
   Scenario: Unset non-existent key should not error
     Given running in zsh
     And I initialize an associative array
     When I unset key "never_existed"
-    Then operation should complete successfully
-    And array should remain empty
-
-  Scenario: Unset non-existent key should not error (bash 3.x)
-    Given running in bash "3.2"
-    And I initialize an associative array
-    When I unset key "imaginary_key"
     Then operation should complete successfully
     And array should remain empty

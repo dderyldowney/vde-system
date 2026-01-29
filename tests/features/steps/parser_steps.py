@@ -107,16 +107,18 @@ def _validate_plan_line(line):
 
 @given('input is empty')
 def step_input_empty(context):
-    """Set input as empty string."""
-    context.empty_input = True
+    """Set input as empty string for parsing."""
+    context.empty_input = ''  # Empty string for parsing
 
 
 @when('I parse the input')
 def step_parse_empty_input(context):
-    """Parse empty input - should return help intent."""
-    context.detected_intent = 'help'
-    context.detected_vms = []
-    context.detected_filter = None
+    """Parse empty input - should return help intent using real parser."""
+    empty_input = getattr(context, 'empty_input', '')
+    # Call real parser with empty input
+    context.detected_intent = _get_real_intent(empty_input)
+    context.detected_vms = _get_real_vm_names(empty_input)
+    context.detected_filter = _get_real_filter(empty_input)
 
 
 @given('"{alias}" is an alias for "{vm_name}"')
@@ -147,38 +149,37 @@ def step_when_plan_contains(context, line):
     if not hasattr(context, 'plan'):
         context.plan = []
     context.plan.append(line)
-    # Re-validate the plan with the new line
-    # Verify system state
-    result = subprocess.run(['echo', 'test'], capture_output=True, text=True, timeout=5)
-    context.last_exit_code = result.returncode
-    context.plan_validated = result.returncode == 0
+    # Validate the plan with the new line using real validation logic
+    all_valid = True
     for plan_line in context.plan:
         if not _validate_plan_line(plan_line):
+            all_valid = False
             break
+    context.plan_validated = all_valid
 
 
 @when('I validate the plan')
 def step_plan_validated(context):
     """Validate the plan using real validation logic."""
-    # Verify system state
-    result = subprocess.run(['echo', 'test'], capture_output=True, text=True, timeout=5)
-    context.last_exit_code = result.returncode
-    context.plan_validated = result.returncode == 0
+    # Validate each line and set plan_validated based on actual results
+    all_valid = True
     for line in getattr(context, 'plan', []):
         if not _validate_plan_line(line):
+            all_valid = False
             break
+    context.plan_validated = all_valid
 
 
 @when('plan is validated')
 def step_plan_is_validated(context):
     """Validate the plan using real validation logic (alias for I validate the plan)."""
-    # Verify system state
-    result = subprocess.run(['echo', 'test'], capture_output=True, text=True, timeout=5)
-    context.last_exit_code = result.returncode
-    context.plan_validated = result.returncode == 0
+    # Validate each line and set plan_validated based on actual results
+    all_valid = True
     for line in getattr(context, 'plan', []):
         if not _validate_plan_line(line):
+            all_valid = False
             break
+    context.plan_validated = all_valid
 
 
 # =============================================================================
