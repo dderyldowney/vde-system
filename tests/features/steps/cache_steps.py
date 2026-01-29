@@ -35,8 +35,14 @@ def step_cache_valid(context):
     """VM types cache exists and is valid - verify actual cache state."""
     cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
     if not cache_path.exists():
-        # Create cache by running list-vms
-        result = run_vde_command("list", timeout=30)
+        # Create cache by sourcing vde-core and loading types
+        vm_common = VDE_ROOT / "scripts" / "lib" / "vde-core"
+        result = subprocess.run(
+            ["zsh", "-c", f"source '{vm_common}' && vde_core_load_types && echo 'CACHE_CREATED'"],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
         assert result.returncode == 0, f"Failed to create cache: {result.stderr}"
     # Verify cache has valid content
     assert cache_path.exists(), f"Cache file should exist at {cache_path}"
@@ -47,10 +53,17 @@ def step_cache_valid(context):
 @given('VM types are cached')
 def step_cached(context):
     """VM types are cached - verify cache was created."""
-    result = run_vde_command("list", timeout=30)
-    assert result.returncode == 0, f"list-vms should succeed to create cache: {result.stderr}"
+    # Create cache by sourcing vde-core and loading types
+    vm_common = VDE_ROOT / "scripts" / "lib" / "vde-core"
+    result = subprocess.run(
+        ["zsh", "-c", f"source '{vm_common}' && vde_core_load_types && echo 'CACHE_CREATED'"],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    assert result.returncode == 0, f"Failed to create cache: {result.stderr}"
     cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
-    assert cache_path.exists(), "Cache file should exist after list-vms"
+    assert cache_path.exists(), "Cache file should exist after loading types"
 
 
 @given('ports have been allocated for VMs')
@@ -131,8 +144,14 @@ def step_rebuilding_vm(context):
 @when('cache is read')
 def step_cache_read(context):
     """Cache is read - verify cache read succeeds."""
-    result = run_vde_command("list", timeout=30)
-    assert result.returncode == 0, f"Cache read should succeed: {result.stderr}"
+    # Read cache by sourcing vde-core and loading from cache
+    vm_common = VDE_ROOT / "scripts" / "lib" / "vde-core"
+    result = subprocess.run(
+        ["zsh", "-c", f"source '{vm_common}' && _vde_core_load_cache && echo 'CACHE_READ_SUCCESS'"],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
@@ -283,16 +302,10 @@ def step_conflict_detected(context):
     # Real verification: check for error messages or concurrent start handling
     if hasattr(context, 'last_error') and context.last_error:
         # Error message present - conflict detected
-        # Verify system state
-        result = subprocess.run(['echo', 'test'], capture_output=True, text=True, timeout=5)
-        context.last_exit_code = result.returncode
-        context.conflict_detected = result.returncode == 0
+        context.conflict_detected = True
     elif hasattr(context, 'concurrent_start'):
         # Concurrent start was attempted - mark as detected
-        # Verify system state
-        result = subprocess.run(['echo', 'test'], capture_output=True, text=True, timeout=5)
-        context.last_exit_code = result.returncode
-        context.conflict_detected = result.returncode == 0
+        context.conflict_detected = True
     else:
         # Require some evidence of conflict detection
         raise AssertionError("No evidence of conflict detection - no error message or concurrent start flag")
@@ -315,12 +328,10 @@ def step_operations_queued(context):
     if hasattr(context, 'last_exit_code'):
         # Non-zero exit code means operation was rejected
         if context.last_exit_code != 0:
-            # Verify system state
-            result = subprocess.run(['echo', 'test'], capture_output=True, text=True, timeout=5)
-            context.last_exit_code = result.returncode
-            context.operation_rejected = result.returncode == 0
+            context.operation_rejected = True
         else:
             # Zero exit code means operation succeeded (queued or completed)
+            context.operation_rejected = False
     else:
         raise AssertionError("Cannot verify operation handling - no exit code available")
 
@@ -396,8 +407,15 @@ def step_cache_file_removed(context):
 @when("VM types are loaded multiple times")
 def step_vm_types_loaded_multiple_times(context):
     """VM types are loaded multiple times."""
-    result1 = run_vde_command("list", timeout=30)
-    result2 = run_vde_command("list", timeout=30)
+    vm_common = VDE_ROOT / "scripts" / "lib" / "vde-core"
+    result1 = subprocess.run(
+        ["zsh", "-c", f"source '{vm_common}' && vde_core_load_types && echo 'DONE'"],
+        capture_output=True, text=True, timeout=30
+    )
+    result2 = subprocess.run(
+        ["zsh", "-c", f"source '{vm_common}' && vde_core_load_types && echo 'DONE'"],
+        capture_output=True, text=True, timeout=30
+    )
     context.multiple_loads = (result1.returncode == 0 and result2.returncode == 0)
 
 @then("cache should return consistent data")
@@ -686,7 +704,7 @@ def step_port_registry_verified(context):
 
     # Set cache_updated flag if the registry content changed
     if context.port_registry_before != context.port_registry_after:
-
+        pass
 
 
 @then("removed VM should be removed from registry")
@@ -899,8 +917,14 @@ def step_cache_dir_does_not_exist(context):
 
 @when('VM types are loaded for the first time')
 def step_vm_types_first_load(context):
-    """Load VM types for the first time."""
-    result = run_vde_command('./scripts/list-vms', timeout=30)
+    """Load VM types for the first time by sourcing vde-core directly."""
+    vm_common = VDE_ROOT / "scripts" / "lib" / "vde-core"
+    result = subprocess.run(
+        ["zsh", "-c", f"source '{vm_common}' && vde_core_load_types && echo 'CACHE_CREATED'"],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr

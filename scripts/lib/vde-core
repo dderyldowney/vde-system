@@ -146,11 +146,108 @@ _vde_core_get_mtime() {
 }
 
 # -----------------------
-# Core VM Type Loading (Minimal)
+# Core VM Type Loading (Minimal with Caching)
 # -----------------------
+
+# vde_core_save_cache - Save loaded VM types to cache file
+# Args: none
+# Returns: VDE_SUCCESS (0) or VDE_ERR_GENERAL (1) on failure
+_vde_core_save_cache() {
+    _vde_core_ensure_cache_dir
+    
+    local cache_file="$VDE_CORE_VM_TYPES_CACHE"
+    local temp_file="${cache_file}.tmp.$$"
+    
+    # Write cache header
+    cat > "$temp_file" << 'HEREDOC_END'
+# VDE VM Types Cache
+# Generated:
+HEREDOC_END
+    date >> "$temp_file"
+    echo "# Format: ARRAY_NAME:key=value" >> "$temp_file"
+    echo "" >> "$temp_file"
+    
+    # Export VM_TYPE array
+    echo "# VM_TYPE definitions" >> "$temp_file"
+    _assoc_keys "VDE_CORE_VM_TYPE" | sort | while read -r vm_name; do
+        local vm_type
+        vm_type=$(_assoc_get "VDE_CORE_VM_TYPE" "$vm_name")
+        echo "VM_TYPE:${vm_name}=${vm_type}" >> "$temp_file"
+    done
+    
+    # Export VM_ALIASES array
+    echo "" >> "$temp_file"
+    echo "# VM aliases" >> "$temp_file"
+    _assoc_keys "VDE_CORE_VM_ALIASES" | sort | while read -r vm_name; do
+        local vm_aliases
+        vm_aliases=$(_assoc_get "VDE_CORE_VM_ALIASES" "$vm_name")
+        echo "VM_ALIASES:${vm_name}=${vm_aliases}" >> "$temp_file"
+    done
+    
+    # Export VM_DISPLAY array
+    echo "" >> "$temp_file"
+    echo "# VM display names" >> "$temp_file"
+    _assoc_keys "VDE_CORE_VM_DISPLAY" | sort | while read -r vm_name; do
+        local vm_display
+        vm_display=$(_assoc_get "VDE_CORE_VM_DISPLAY" "$vm_name")
+        echo "VM_DISPLAY:${vm_name}=${vm_display}" >> "$temp_file"
+    done
+    
+    # Atomic rename
+    if [ $? -eq 0 ] && [ -f "$temp_file" ]; then
+        mv "$temp_file" "$cache_file"
+        return $VDE_SUCCESS
+    else
+        rm -f "$temp_file" 2>/dev/null
+        return $VDE_ERR_GENERAL
+    fi
+}
+
+# vde_core_load_cache - Load VM types from cache file
+# Args: none
+# Returns: VDE_SUCCESS (0) if cache loaded, VDE_ERR_NOT_FOUND (3) if no cache
+_vde_core_load_cache() {
+    local cache_file="$VDE_CORE_VM_TYPES_CACHE"
+    
+    if [ ! -f "$cache_file" ]; then
+        return $VDE_ERR_NOT_FOUND
+    fi
+    
+    # Clear existing arrays
+    _assoc_clear "VDE_CORE_VM_TYPE"
+    _assoc_clear "VDE_CORE_VM_ALIASES"
+    _assoc_clear "VDE_CORE_VM_DISPLAY"
+    
+    # Parse cache file
+    while IFS=':' read -r array_name rest; do
+        case "$array_name" in
+            VM_TYPE)
+                local key value
+                key=$(echo "$rest" | cut -d'=' -f1)
+                value=$(echo "$rest" | cut -d'=' -f2-)
+                _assoc_set "VDE_CORE_VM_TYPE" "$key" "$value"
+                ;;
+            VM_ALIASES)
+                local key value
+                key=$(echo "$rest" | cut -d'=' -f1)
+                value=$(echo "$rest" | cut -d'=' -f2-)
+                _assoc_set "VDE_CORE_VM_ALIASES" "$key" "$value"
+                ;;
+            VM_DISPLAY)
+                local key value
+                key=$(echo "$rest" | cut -d'=' -f1)
+                value=$(echo "$rest" | cut -d'=' -f2-)
+                _assoc_set "VDE_CORE_VM_DISPLAY" "$key" "$value"
+                ;;
+        esac
+    done < "$cache_file"
+    
+    return $VDE_SUCCESS
+}
 
 # vde_core_load_types - Load minimal VM type data for core operations
 # Only loads type and aliases, not install commands or service ports
+# Supports cache loading/saving for performance
 # Args: none
 # Returns: VDE_SUCCESS (0) or VDE_ERR_NOT_FOUND (3)
 vde_core_load_types() {
@@ -160,9 +257,26 @@ vde_core_load_types() {
     fi
     
     local conf_file="$VDE_CORE_VM_TYPES_CONF"
+    local cache_file="$VDE_CORE_VM_TYPES_CACHE"
+    local conf_mtime=0
+    local cache_mtime=0
     
     if [ ! -f "$conf_file" ]; then
         return $VDE_ERR_NOT_FOUND
+    fi
+    
+    # Get modification times
+    conf_mtime=$(_vde_core_get_mtime "$conf_file")
+    if [ -f "$cache_file" ]; then
+        cache_mtime=$(_vde_core_get_mtime "$cache_file")
+    fi
+    
+    # Try to load from cache if it's newer than config
+    if [ "$cache_mtime" -ge "$conf_mtime" ]; then
+        if _vde_core_load_cache; then
+            _VDE_CORE_LOADED=1
+            return $VDE_SUCCESS
+        fi
     fi
     
     # Clear existing arrays
@@ -183,6 +297,9 @@ vde_core_load_types() {
         _assoc_set "VDE_CORE_VM_ALIASES" "$name" "$vm_aliases"
         _assoc_set "VDE_CORE_VM_DISPLAY" "$name" "$display"
     done < "$conf_file"
+    
+    # Save to cache for next time
+    _vde_core_save_cache
     
     _VDE_CORE_LOADED=1
     return $VDE_SUCCESS
