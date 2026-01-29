@@ -290,9 +290,8 @@ _assoc_keys() {
                 for k in ${(k)PORT_REGISTRY}; do echo "$k"; done
                 ;;
             *)
-                # Generic fallback using eval with proper escaping
-                eval "for k in \${(k)\${array_name}[@]}; do echo \"\$k\"; done"
-                ;;
+                # Generic fallback using (kP) flag for indirect array access
+                for k in ${(kP)array_name[@]}; do echo "$k"; done
         esac
     else
         # File-based fallback (should not be needed for zsh 5+)
