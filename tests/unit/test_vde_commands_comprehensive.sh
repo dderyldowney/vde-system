@@ -7,7 +7,14 @@ source "$TEST_DIR/tests/lib/test_common.sh"
 
 test_suite_start "vde-commands Comprehensive Tests"
 
+# Source vm-common with proper VDE_ROOT_DIR set (before setup_test_env)
+# This ensures SCRIPTS_DIR, DATA_DIR, and VM_TYPES_CONF are computed correctly
+. "$TEST_DIR/scripts/lib/vm-common"
+
 setup_test_env
+
+# Load VM types for query tests
+load_vm_types
 
 # =============================================================================
 # Section 1: Configuration & Logging Tests
@@ -30,13 +37,13 @@ echo -e "${GREEN}✓${NC} vde_set_dry_run disable works"
 test_section "Configuration - Logging"
 
 # Test logging directory creation
-LOG_DIR="$VDE_ROOT_DIR/logs/vde"
-ensure_ai_log_dir
+LOG_DIR="$VDE_ROOT_DIR/logs"
+ensure_commands_log_dir
 assert_dir_exists "$LOG_DIR" "should create log directory"
 
 # Test logging (we can't easily test log content without files, but we can test the function)
-log_ai_action "test" "Test action"
-echo -e "${GREEN}✓${NC} log_ai_action function available"
+log_command_action "test" "Test action"
+echo -e "${GREEN}✓${NC} log_command_action function available"
 ((TESTS_PASSED++))
 ((TESTS_RUN++))
 
@@ -81,7 +88,7 @@ fi
 test_section "Query Functions - VM Existence"
 
 # Test existing VM
-if vde_vm_exists "python"; then
+if vde_validate_vm_type "python"; then
     echo -e "${GREEN}✓${NC} python VM exists"
     ((TESTS_PASSED++))
 else
@@ -91,7 +98,7 @@ fi
 ((TESTS_RUN++))
 
 # Test non-existing VM
-if vde_vm_exists "nonexistent"; then
+if vde_validate_vm_type "nonexistent"; then
     echo -e "${RED}✗${NC} nonexistent VM should not exist"
     ((TESTS_FAILED++))
 else
@@ -103,18 +110,18 @@ fi
 test_section "Query Functions - VM Information"
 
 # Test getting VM type
-TYPE=$(vde_get_vm_info "type" "python")
+TYPE=$(vde_get_vm_info "python" "type")
 assert_equals "lang" "$TYPE" "python should be lang type"
 
-TYPE=$(vde_get_vm_info "type" "postgres")
+TYPE=$(vde_get_vm_info "postgres" "type")
 assert_equals "service" "$TYPE" "postgres should be service type"
 
 # Test getting VM display name
-DISPLAY=$(vde_get_vm_info "display" "python")
+DISPLAY=$(vde_get_vm_info "python" "display")
 assert_contains "$DISPLAY" "Python" "python should have display name with Python"
 
 # Test getting VM aliases
-ALIASES=$(vde_get_vm_info "aliases" "python")
+ALIASES=$(vde_get_vm_info "python" "aliases")
 assert_contains "$ALIASES" "python3" "python should have python3 alias"
 
 test_section "Query Functions - Alias Resolution"
