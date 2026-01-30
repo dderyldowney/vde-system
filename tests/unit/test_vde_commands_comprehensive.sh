@@ -420,14 +420,14 @@ done
 test_section "Real-World - Data Science Stack"
 
 # Test querying a data science stack
-DS_VMS=("python" "r" "julia")
+DS_VMS=("python" "r")
 for vm in "${DS_VMS[@]}"; do
-    if vde_vm_exists "$vm"; then
+    if vde_validate_vm_type "$vm"; then
         echo -e "${GREEN}✓${NC} $vm available for data science"
         ((TESTS_PASSED++))
     else
-        echo -e "${YELLOW}⚠${NC} $vm not available (optional for data science)"
-        ((TESTS_PASSED++))
+        echo -e "${RED}✗${NC} $vm not available"
+        ((TESTS_FAILED++))
     fi
     ((TESTS_RUN++))
 done
