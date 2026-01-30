@@ -329,9 +329,13 @@ def step_operations_queued(context):
         # Non-zero exit code means operation was rejected
         if context.last_exit_code != 0:
             context.operation_rejected = True
+            assert context.operation_rejected, "Operation should have been rejected with non-zero exit code"
         else:
             # Zero exit code means operation succeeded (queued or completed)
             context.operation_rejected = False
+            # Verify operation was actually queued or completed
+            assert hasattr(context, 'last_output'), "No output available to verify operation success"
+            assert len(context.last_output) > 0, "No output from operation"
     else:
         raise AssertionError("Cannot verify operation handling - no exit code available")
 
@@ -704,7 +708,9 @@ def step_port_registry_verified(context):
 
     # Set cache_updated flag if the registry content changed
     if context.port_registry_before != context.port_registry_after:
-        pass
+        context.cache_updated = True
+    else:
+        context.cache_updated = False
 
 
 @then("removed VM should be removed from registry")
