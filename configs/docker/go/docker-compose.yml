@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: go, 2206, apt-get update -y && apt-get install -y golang-go
+# Variables: go, 2200, apt-get update -y && apt-get install -y golang-go
 services:
   go-dev:
     build:
@@ -9,6 +9,7 @@ services:
         USERNAME: devuser
         UID: 1000
         GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-go:latest
     container_name: go-dev
     hostname: go-dev
@@ -16,7 +17,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y golang-go && /usr/sbin/sshd -D"
 
     ports:
-      - "2206:22"
+      - "2200:22"
 
     volumes:
       - ../../../projects/go:/home/devuser/workspace

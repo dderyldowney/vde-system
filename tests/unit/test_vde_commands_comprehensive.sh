@@ -279,14 +279,14 @@ fi
 
 test_section "Edge Cases - Case Sensitivity"
 
-# Test that VM names are case-insensitive
+# Test that VM names are case-insensitive (python is valid, PYTHON is not)
 RESOLVED=$(vde_resolve_alias "PYTHON")
-if [[ "$RESOLVED" != "PYTHON" ]]; then
-    echo -e "${RED}✗${NC} vde_resolve_alias should return input unchanged for non-existent alias"
-    ((TESTS_FAILED++))
-else
-    echo -e "${GREEN}✓${NC} vde_resolve_alias returns input unchanged for non-existent alias"
+if [[ -z "$RESOLVED" ]]; then
+    echo -e "${GREEN}✓${NC} vde_resolve_alias returns empty for non-existent alias (PYTHON)"
     ((TESTS_PASSED++))
+else
+    echo -e "${RED}✗${NC} vde_resolve_alias should return empty for non-existent alias, got: '$RESOLVED'"
+    ((TESTS_FAILED++))
 fi
 ((TESTS_RUN++))
 

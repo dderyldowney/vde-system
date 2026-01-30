@@ -104,8 +104,11 @@ test_cache_vm_types() {
     # Clear cache first
     invalidate_vm_types_cache
 
-    # Load VM types (should create cache)
+    # Load VM types
     load_vm_types
+
+    # Create cache explicitly (load_vm_types no longer creates cache automatically)
+    _cache_vm_types
 
     # Check cache exists
     if [[ -f "$VM_TYPES_CACHE" ]]; then

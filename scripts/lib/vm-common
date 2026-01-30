@@ -686,12 +686,38 @@ _load_port_registry() {
     # Clear existing registry
     _assoc_clear "PORT_REGISTRY"
     
-    # Read registry file (format: vm_name=port)
-    while IFS='=' read -r vm_name port; do
+    # Read registry file (format: vm_name=port or vm_name:port)
+    while IFS=$'\n' read -r line; do
         # Skip comments and empty lines
-        case "$vm_name" in
+        case "$line" in
             \#*|"") continue ;;
         esac
+        
+        # Try both = and : as separators
+        case "$line" in
+            *=*)
+                vm_name="${line%%=*}"
+                port="${line#*=}"
+                ;;
+            *:*)
+                vm_name="${line%%:*}"
+                port="${line#*:}"
+                ;;
+            *)
+                continue  # Invalid format, skip
+                ;;
+        esac
+        
+        # Skip if port is empty or non-numeric (bash 3 compatible)
+        if [[ -z "$port" ]]; then
+            continue
+        fi
+        case "$port" in
+            *[!0-9]*)
+                continue
+                ;;
+        esac
+        
         _assoc_set "PORT_REGISTRY" "$vm_name" "$port"
     done < "$PORT_REGISTRY_FILE"
     
@@ -842,6 +868,16 @@ _get_ports_from_registry() {
     for vm_name in $(_assoc_keys "PORT_REGISTRY"); do
         local port
         port=$(_assoc_get "PORT_REGISTRY" "$vm_name")
+        # Skip empty or non-numeric ports (bash 3 compatible)
+        if [[ -z "$port" ]]; then
+            continue
+        fi
+        # Check if port is numeric using case
+        case "$port" in
+            *[!0-9]*)
+                continue
+                ;;
+        esac
         if [ "$port" -ge "$range_start" ] && [ "$port" -le "$range_end" ]; then
             echo "$port"
         fi
@@ -860,7 +896,7 @@ _get_ports_from_registry() {
 get_allocated_ports() {
     local range_start=$1
     local range_end=$2
-
+    
     # Try fast path using registry
     if [ -f "$PORT_REGISTRY_FILE" ]; then
         _get_ports_from_registry "$range_start" "$range_end"
@@ -899,9 +935,6 @@ get_allocated_ports() {
 
     # Sort and deduplicate
     echo "$ports" | tr ' ' '\n' | grep -v '^$' | sort -n | uniq
-    
-    # Build registry for next time
-    _verify_port_registry 2>/dev/null
     
     return $VDE_SUCCESS
 }
