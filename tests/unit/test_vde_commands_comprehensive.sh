@@ -390,9 +390,9 @@ fi
 test_section "Real-World - Full Stack Query"
 
 # Simulate querying a full stack setup
-STACK_VMS=("python" "postgres" "redis")
-for vm in "${STACK_VMS[@]}"; do
-    if vde_vm_exists "$vm"; then
+FULL_STACK_VMS=("python" "postgres" "redis")
+for vm in "${FULL_STACK_VMS[@]}"; do
+    if vde_validate_vm_type "$vm"; then
         echo -e "${GREEN}✓${NC} $vm available for full stack"
         ((TESTS_PASSED++))
     else
@@ -407,7 +407,7 @@ test_section "Real-World - Microservice Stack"
 # Test querying a microservice stack
 MICRO_VMS=("go" "rust" "mongodb" "nginx")
 for vm in "${MICRO_VMS[@]}"; do
-    if vde_vm_exists "$vm"; then
+    if vde_validate_vm_type "$vm"; then
         echo -e "${GREEN}✓${NC} $vm available for microservices"
         ((TESTS_PASSED++))
     else
