@@ -36,6 +36,7 @@ def step_port_registry_saved(context):
     if cache_path.exists():
         context.port_registry_cache = str(cache_path)
     else:
+        pass
 
 @then('cache file should exist at ".cache/port-registry"')
 def step_port_registry_cache_exists(context):
@@ -57,7 +58,9 @@ def step_port_registry_loaded(context):
     if cache_path.exists():
         content = cache_path.read_text()
         context.port_registry_content = content
+        context.port_registry_loaded = True
     else:
+        context.port_registry_loaded = False
 
 @then('allocated ports should be available without scanning compose files')
 def step_ports_from_cache(context):
@@ -71,6 +74,7 @@ def step_invalidate_cache(context):
     if cache_path.exists():
         cache_path.unlink()
     else:
+        pass
 
 # =============================================================================
 # VM Configuration Steps
