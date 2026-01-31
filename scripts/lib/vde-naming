@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/zsh
 # VDE Naming Conventions Library
 # Enforces consistent naming for VMs and validates naming patterns
 # Source this library with: source ./scripts/lib/vde-naming

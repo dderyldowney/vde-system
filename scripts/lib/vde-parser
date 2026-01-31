@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/zsh
 # VDE Natural Language Parser
 # Parses natural language input into structured VDE commands
 # Source this library with: source ./scripts/lib/vde-parser

@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/zsh
 # VDE Commands Library
 # Wrapper functions for all VDE operations
 # Source this library with: source ./scripts/lib/vde-commands

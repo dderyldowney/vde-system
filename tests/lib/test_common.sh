@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/zsh
 # Common test utilities for VDE test suite
 # Shell Compatibility: Works with zsh 5.0+, bash 4.0+, bash 3.x
 

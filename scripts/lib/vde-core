@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/zsh
 # VDE Core Library - Essential Functions for VDE
 # Source this library with: source ./scripts/lib/vde-core
 # Requires: zsh 5.0+ or bash 4.0+ for associative arrays (bash 3.x uses fallback)

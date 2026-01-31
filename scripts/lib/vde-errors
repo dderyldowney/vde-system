@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/zsh
 # VDE Error Messages Library
 # Provides contextual error messages with remediation steps
 # Source this library with: source ./scripts/lib/vde-errors

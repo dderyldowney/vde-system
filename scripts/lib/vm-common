@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/zsh
 # VM Common Library for VDE Management Scripts
 # Source this library with: source ./scripts/lib/vm-common
 # Requires: zsh 5.0+ or bash 4.0+ for associative arrays (bash 3.x uses fallback)

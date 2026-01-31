@@ -460,7 +460,7 @@ VDE's modular library architecture allows for extension without modifying core c
 For scripts that don't need full VDE functionality, use `vde-core` instead of `vm-common`:
 
 ```zsh
-#!/usr/bin/env sh
+#!/bin/zsh
 # Lightweight script that only needs to query VM types
 
 source "$SCRIPTS_DIR/lib/vde-core"

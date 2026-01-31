@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/zsh
 # VDE Constants Library
 # Centralized constants for the Virtual Development Environment
 # Source this library with: source ./scripts/lib/vde-constants

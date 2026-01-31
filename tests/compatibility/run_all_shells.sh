@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/zsh
 # VDE Cross-Shell Test Runner
 # Executes the compatibility test suite across multiple shells
 #

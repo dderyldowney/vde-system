@@ -229,16 +229,18 @@ print -P "${RED}Error:${NC} Something failed"
 ```
 
 ### Shebang
-Always use:
-```zsh
-#!/usr/bin/env zsh
-```
+Always use explicit shell paths:
+- For zsh scripts: `#!/bin/zsh`
+- For bash scripts: `#!/usr/local/bin/bash`
 
 Not:
 ```zsh
-#!/bin/zsh  # Less portable
+#!/usr/bin/env zsh  # Avoid /usr/bin/env pattern
+#!/usr/bin/env bash  # Avoid /usr/bin/env pattern
 #!/bin/sh   # Wrong - we use zsh features
 ```
+
+Reference: See [`.kilocode/shell-config.md`](.kilocode/shell-config.md) for project shell paths.
 
 ### File Organization
 For larger scripts, organize with sections:

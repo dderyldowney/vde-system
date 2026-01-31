@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/zsh
 # VDE Shell Compatibility Test Suite
 # Tests the shell abstraction layer for cross-shell compatibility
 #
