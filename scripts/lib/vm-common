@@ -708,15 +708,10 @@ _load_port_registry() {
                 ;;
         esac
         
-        # Skip if port is empty or non-numeric (bash 3 compatible)
-        if [[ -z "$port" ]]; then
+        # Skip if port is empty or non-numeric (bash 4+ syntax)
+        if [[ -z "$port" ]] || ! [[ "$port" =~ ^[0-9]+$ ]]; then
             continue
         fi
-        case "$port" in
-            *[!0-9]*)
-                continue
-                ;;
-        esac
         
         _assoc_set "PORT_REGISTRY" "$vm_name" "$port"
     done < "$PORT_REGISTRY_FILE"
@@ -868,16 +863,10 @@ _get_ports_from_registry() {
     for vm_name in $(_assoc_keys "PORT_REGISTRY"); do
         local port
         port=$(_assoc_get "PORT_REGISTRY" "$vm_name")
-        # Skip empty or non-numeric ports (bash 3 compatible)
-        if [[ -z "$port" ]]; then
+        # Skip empty or non-numeric ports (bash 4+ syntax)
+        if [[ -z "$port" ]] || ! [[ "$port" =~ ^[0-9]+$ ]]; then
             continue
         fi
-        # Check if port is numeric using case
-        case "$port" in
-            *[!0-9]*)
-                continue
-                ;;
-        esac
         if [ "$port" -ge "$range_start" ] && [ "$port" -le "$range_end" ]; then
             echo "$port"
         fi

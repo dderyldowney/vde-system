@@ -6,8 +6,13 @@ This project uses the following shell interpreters:
 
 | Shell | Path | Version Notes |
 |-------|------|---------------|
-| bash | `/usr/local/bin/bash` | Use this path explicitly when running bash scripts |
+| bash | `/usr/local/bin/bash` | Bash 4.x or later required (bash 3.x is NOT supported) |
 | zsh | `/bin/zsh` | Use this path explicitly when running zsh scripts |
+
+## Shell Version Requirements
+
+- **bash**: Version 4.x or later is required. Bash 3.x is NOT supported.
+- **zsh**: Version 5.x recommended (zsh 4.x may work but not tested).
 
 ## Script Shebangs
 
