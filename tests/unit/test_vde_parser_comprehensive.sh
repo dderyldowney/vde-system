@@ -2,12 +2,27 @@
 # Comprehensive Unit Tests for vde-parser Library
 # Tests intent detection, entity extraction, and plan generation
 
-TEST_DIR="$(cd "$(dirname "${(%):-%x}")/../.." && pwd)"
-source "$TEST_DIR/tests/lib/test_common.sh"
+# Get project root directly from script location
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+if [ ! -d "$PROJECT_ROOT/scripts" ]; then
+    # If scripts directory not found, try current directory (common issue with relative paths)
+    PROJECT_ROOT="$(cd "$(pwd)" && pwd)"
+fi
+source "$PROJECT_ROOT/tests/lib/test_common.sh"
 
 test_suite_start "vde-parser Comprehensive Tests"
 
 setup_test_env
+
+# Debug: Check VM types loaded
+echo "DEBUG: PROJECT_ROOT = $PROJECT_ROOT"
+echo "DEBUG: VDE_ROOT_DIR = $VDE_ROOT_DIR"
+echo "DEBUG: ls -la \"$VDE_ROOT_DIR/scripts/data\": $(ls -la "$VDE_ROOT_DIR/scripts/data" 2>&1)"
+
+# Load VM types explicitly (needed for parser tests)
+echo "DEBUG: Calling load_vm_types..."
+load_vm_types --no-cache
+echo "DEBUG: get_all_vms returns: $(get_all_vms)"
 
 # =============================================================================
 # Section 1: Intent Detection Tests

@@ -147,11 +147,6 @@ setup_test_env() {
     TEST_TMP_DIR=$(mktemp -d)
     export TEST_TMP_DIR
 
-    # Copy vm-types.conf to test location
-    if [ -f "$VDE_ROOT_DIR/scripts/data/vm-types.conf" ]; then
-        cp "$VDE_ROOT_DIR/scripts/data/vm-types.conf" "$TEST_TMP_DIR/"
-    fi
-
     # Source the libraries if VDE_ROOT_DIR is set
     if [ -n "$VDE_ROOT_DIR" ]; then
         # shellcheck source=/dev/null
@@ -160,6 +155,11 @@ setup_test_env() {
         . "$VDE_ROOT_DIR/scripts/lib/vde-commands" 2>/dev/null || true
         # shellcheck source=/dev/null
         . "$VDE_ROOT_DIR/scripts/lib/vde-parser" 2>/dev/null || true
+    fi
+
+    # Fix VM_TYPES_CONF if it's pointing to /vm-types.conf
+    if [ "$VM_TYPES_CONF" = "/vm-types.conf" ]; then
+        export VM_TYPES_CONF="$VDE_ROOT_DIR/scripts/data/vm-types.conf"
     fi
 
     # Set trap to ensure cleanup happens even on error/exit

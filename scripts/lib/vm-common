@@ -94,7 +94,6 @@ readonly DATA_DIR
 BACKUP_DIR="$VDE_ROOT_DIR/backup"
 readonly BACKUP_DIR
 VM_TYPES_CONF="$DATA_DIR/vm-types.conf"
-readonly VM_TYPES_CONF
 VDE_CACHE_DIR="$VDE_ROOT_DIR/.cache"
 readonly VDE_CACHE_DIR
 VM_TYPES_CACHE="$VDE_CACHE_DIR/vm-types.cache"
@@ -342,9 +341,13 @@ _load_cached_vm_types() {
 #   VDE_ERR_NOT_FOUND (3) - Configuration file not found
 _load_vm_types_from_config() {
     local conf_file="$VM_TYPES_CONF"
+    echo "DEBUG: _load_vm_types_from_config called with VDE_ROOT_DIR = $VDE_ROOT_DIR"
+    echo "DEBUG: VM_TYPES_CONF = $VM_TYPES_CONF"
+    echo "DEBUG: conf_file = $conf_file"
 
     if [ ! -f "$conf_file" ]; then
         log_error "VM types config not found: $conf_file"
+        ls -la "$(dirname "$conf_file")" 2>&1
         return $VDE_ERR_NOT_FOUND
     fi
 

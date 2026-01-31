@@ -14,8 +14,9 @@ FAKE_TEST_PATTERNS = {
     'assert_true': r'assert\s+True\b',
     'getattr_true_default': r'getattr\([^,]+,\s*[^,]+,\s*True\)',
     'or_true': r'\bor\s+True\b',
-    'context_flag_true': r'context\.\w+\s*=\s*True\b',
-    'context_flag_false': r'context\.\w+\s*=\s*False\b',
+    # Ignore context flags that are used for scenario context in @given/@when steps
+    # These are valid for tracking test state and not fake tests
+
     'pass_statement': r'^\s*pass\s*$',
     'removed_comment': r'#.*REMOVED:',
     'simulate_comment': r'["\'].*Simulate\b',

@@ -178,7 +178,7 @@ detect_intent() {
     # Check for status BEFORE list/show (specific patterns)
     # Includes typo patterns: staus, satus (vowel swap), runing, runnig (omission)
     case "$input_lower" in
-        *"show status of"*|*"status of"*|*staus*|*satus*)
+        *"show status"*|*"show status of"*|*"status of"*|*staus*|*satus*)
             echo "$INTENT_STATUS"
             return $VDE_SUCCESS
             ;;
