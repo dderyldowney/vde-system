@@ -180,13 +180,23 @@ VDE_SSH_KEY_PREFERENCE="id_ed25519 id_ecdsa id_rsa id_dsa"
 readonly VDE_SSH_KEY_PREFERENCE
 
 # =============================================================================
+# HOME DIRECTORY CONFIGURATION
+# =============================================================================
+# Cross-platform home directory configuration for portability
+# Supports Linux native, WSL2, and macOS
+
+# User home directory (cross-platform)
+# NOTE: Use this instead of raw $HOME for consistency
+readonly VDE_HOME_DIR="${HOME}"
+
+# =============================================================================
 # VDE SSH ISOLATION
 # =============================================================================
 # VDE uses an isolated SSH directory to prevent interference with user's
 # personal SSH configuration. All VDE SSH files are stored under ~/.ssh/vde/
 
 # VDE SSH directory (isolated from user's SSH)
-readonly VDE_SSH_DIR="$HOME/.ssh/vde"
+readonly VDE_SSH_DIR="${VDE_HOME_DIR}/.ssh/vde"
 
 # VDE SSH config file (contains only VDE VM entries)
 readonly VDE_SSH_CONFIG="$VDE_SSH_DIR/config"

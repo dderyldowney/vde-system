@@ -27,6 +27,8 @@ services:
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
+      - VDE_HOME=${VDE_HOME:-}
+      - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
       - ../../../env-files/mysql.env

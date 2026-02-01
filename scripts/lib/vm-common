@@ -1452,6 +1452,10 @@ start_vm() {
     local stderr_file
     stderr_file=$(mktemp)
     
+    # Export VDE environment variables for docker-compose
+    export VDE_HOME="$HOME"
+    export VDE_PROJECT_NAME="${VDE_PROJECT_NAME:-${VDE_ROOT_DIR:t}}"
+
     while [ $attempt -lt $max_attempts ]; do
         # Execute docker-compose and capture stderr
         if docker-compose -f "$compose_file" up -d $build_opts 2>"$stderr_file"; then
@@ -1533,6 +1537,10 @@ stop_vm() {
     fi
 
     log_info "Shutting down $vm..."
+
+    # Export VDE environment variables for docker-compose
+    export VDE_HOME="$HOME"
+    export VDE_PROJECT_NAME="${VDE_PROJECT_NAME:-${VDE_ROOT_DIR:t}}"
 
     # Capture stderr for error handling
     local stderr_file
@@ -1809,7 +1817,7 @@ validate_or_create_ssh_key() {
         case "$response" in
             [Yy]*)
                 # Generate ed25519 key (recommended)
-                local key_path="$HOME/.ssh/id_ed25519"
+                local key_path="$VDE_SSH_IDENTITY"
 
                 log_info "Generating SSH key: $key_path"
                 ssh-keygen -t ed25519 -f "$key_path" -N "" -C "$(whoami)@$(hostname)-vde"
@@ -2214,7 +2222,7 @@ ensure_ssh_agent() {
     if [ $key_count -eq 0 ]; then
         # No keys found - generate one automatically
         log_info "Generating SSH key for VDE..."
-        ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -C "$(whoami)@$(hostname)-vde" >/dev/null 2>&1
+        ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -C "$(whoami)@$(hostname)-vde" >/dev/null 2>&1
         sync_ssh_keys_to_vde >/dev/null 2>&1
         keys=$(detect_ssh_keys)
     fi
