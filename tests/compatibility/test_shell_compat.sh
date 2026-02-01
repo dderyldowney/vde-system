@@ -1,6 +1,6 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 # VDE Shell Compatibility Test Suite
-# Tests the shell abstraction layer for cross-shell compatibility
+# Tests the shell abstraction layer for zsh
 #
 # Usage:
 #   ./test_shell_compat.sh           # Run all tests
@@ -40,14 +40,8 @@ while [ $# -gt 0 ]; do
 done
 
 # Get script directory
-if [ -n "${ZSH_VERSION:-}" ]; then
-    # shellcheck disable=SC2296
-    _TEST_SCRIPT_PATH="${(%):-%x}"
-elif [ -n "${BASH_VERSION:-}" ]; then
-    _TEST_SCRIPT_PATH="${BASH_SOURCE[0]:-$0}"
-else
-    _TEST_SCRIPT_PATH="$0"
-fi
+# shellcheck disable=SC2296
+_TEST_SCRIPT_PATH="${(%):-%x}"
 _TEST_DIR="$(cd "$(dirname "$_TEST_SCRIPT_PATH")" && pwd)"
 _VDE_ROOT="$(cd "$_TEST_DIR/../.." && pwd)"
 
@@ -158,13 +152,13 @@ test_shell_detection() {
     shell=$(_detect_shell)
     assert_not_empty "$shell" "_detect_shell returns a value"
     
-    # Should be one of: zsh, bash, unknown
+    # Should be one of: zsh, unknown
     case "$shell" in
-        zsh|bash|unknown)
+        zsh|unknown)
             _test_pass "_detect_shell returns valid shell type: $shell"
             ;;
         *)
-            _test_fail "_detect_shell returns valid shell type" "zsh|bash|unknown" "$shell"
+            _test_fail "_detect_shell returns valid shell type" "zsh|unknown" "$shell"
             ;;
     esac
     
@@ -173,34 +167,14 @@ test_shell_detection() {
     version=$(_shell_version)
     assert_not_empty "$version" "_shell_version returns a value"
     
-    # Test _is_zsh and _is_bash
+    # Test _is_zsh
     if [ "$shell" = "zsh" ]; then
         assert_true "_is_zsh" "_is_zsh returns true in zsh"
-        assert_false "_is_bash" "_is_bash returns false in zsh"
-    elif [ "$shell" = "bash" ]; then
-        assert_false "_is_zsh" "_is_zsh returns false in bash"
-        assert_true "_is_bash" "_is_bash returns true in bash"
-    fi
-    
-    # Test _bash_version_major
-    local major
-    major=$(_bash_version_major)
-    if [ "$shell" = "bash" ]; then
-        assert_true "[ \"$major\" -ge 3 ]" "_bash_version_major returns >= 3 for bash"
-    else
-        assert_equals "0" "$major" "_bash_version_major returns 0 for non-bash"
     fi
     
     # Test _shell_supports_native_assoc
     if [ "$shell" = "zsh" ]; then
         assert_true "_shell_supports_native_assoc" "zsh supports native associative arrays"
-    elif [ "$shell" = "bash" ]; then
-        major=$(_bash_version_major)
-        if [ "$major" -ge 4 ]; then
-            assert_true "_shell_supports_native_assoc" "bash 4+ supports native associative arrays"
-        else
-            assert_false "_shell_supports_native_assoc" "bash 3.x does not support native associative arrays"
-        fi
     fi
 }
 
@@ -272,27 +246,14 @@ test_associative_arrays() {
     assert_not_empty "$keys" "_assoc_keys returns keys"
     
     # Check that all keys are present
-    # Note: In zsh, we need ${=keys} to split on spaces, but in bash $keys works
     local has_key1=false has_key2=false has_key3=false
-    if _is_zsh; then
-        # zsh: Use ${=var} for word splitting
-        for k in ${=keys}; do
-            case "$k" in
-                key1) has_key1=true ;;
-                key2) has_key2=true ;;
-                key3) has_key3=true ;;
-            esac
-        done
-    else
-        # bash/sh: Normal word splitting
-        for k in $keys; do
-            case "$k" in
-                key1) has_key1=true ;;
-                key2) has_key2=true ;;
-                key3) has_key3=true ;;
-            esac
-        done
-    fi
+    for k in ${=keys}; do
+        case "$k" in
+            key1) has_key1=true ;;
+            key2) has_key2=true ;;
+            key3) has_key3=true ;;
+        esac
+    done
     assert_true "[ \"$has_key1\" = \"true\" ]" "_assoc_keys includes key1"
     assert_true "[ \"$has_key2\" = \"true\" ]" "_assoc_keys includes key2"
     assert_true "[ \"$has_key3\" = \"true\" ]" "_assoc_keys includes key3"

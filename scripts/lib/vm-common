@@ -1,7 +1,7 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 # VM Common Library for VDE Management Scripts
 # Source this library with: source ./scripts/lib/vm-common
-# Requires: zsh 5.0+ or bash 4.0+ for associative arrays (bash 3.x uses fallback)
+# Requires: zsh 5.0+
 #
 # This library provides core functionality for VDE VM management including:
 # - VM type configuration loading and querying (with caching)
@@ -16,8 +16,8 @@
 # - Lazy loading support for optional modules
 #
 # Shell Compatibility (Stage 4):
-# - Uses vde-shell-compat for portable operations
-# - Supports zsh 5.0+, bash 4.0+, bash 3.x (with fallbacks)
+# - Uses vde-shell-compat for zsh operations
+# - Requires zsh 5.0+
 #
 # For lightweight operations, consider using vde-core instead which
 # provides only essential functions without SSH/Docker dependencies.
@@ -46,15 +46,9 @@ _VM_COMMON_LOADED=1
 # -----------------------
 # Bootstrap: Determine VDE Root Directory
 # -----------------------
-# Portable script path detection
-if [ -n "${ZSH_VERSION:-}" ]; then
-    # shellcheck disable=SC2296
-    _VM_COMMON_SCRIPT_PATH="${(%):-%x}"
-elif [ -n "${BASH_VERSION:-}" ]; then
-    _VM_COMMON_SCRIPT_PATH="${BASH_SOURCE[0]:-$0}"
-else
-    _VM_COMMON_SCRIPT_PATH="$0"
-fi
+# Zsh-only script path detection
+# shellcheck disable=SC2296
+_VM_COMMON_SCRIPT_PATH="${(%):-%x}"
 
 if [ -z "${VDE_ROOT_DIR:-}" ]; then
     VDE_ROOT_DIR="$(cd "$(dirname "$_VM_COMMON_SCRIPT_PATH")/../.." && pwd)"

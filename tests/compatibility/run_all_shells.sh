@@ -1,42 +1,33 @@
-#!/bin/zsh
-# VDE Cross-Shell Test Runner
-# Executes the compatibility test suite across multiple shells
+#!/usr/bin/env zsh
+# VDE Shell Test Runner
+# Executes the compatibility test suite for zsh
 #
 # Usage:
-#   ./run_all_shells.sh              # Run tests on all available shells
+#   ./run_all_shells.sh              # Run tests
 #   ./run_all_shells.sh --verbose    # Verbose output
-#   ./run_all_shells.sh --shell zsh  # Test specific shell only
 #
 # Exit codes:
-#   0 - All tests passed on all shells
+#   0 - All tests passed
 #   1 - One or more tests failed
 
 # =============================================================================
 # Configuration
 # =============================================================================
 
-# Get script directory (portable across shells)
-if [ -n "${BASH_SOURCE[0]:-}" ]; then
-    _RUNNER_SCRIPT_PATH="${BASH_SOURCE[0]}"
-elif [ -n "${ZSH_VERSION:-}" ]; then
-    # shellcheck disable=SC2296
-    _RUNNER_SCRIPT_PATH="${(%):-%x}"
-else
-    _RUNNER_SCRIPT_PATH="$0"
-fi
+# Get script directory
+# shellcheck disable=SC2296
+_RUNNER_SCRIPT_PATH="${(%):-%x}"
 _RUNNER_DIR="$(cd "$(dirname "$_RUNNER_SCRIPT_PATH")" && pwd)"
 _TEST_SCRIPT="$_RUNNER_DIR/test_shell_compat.sh"
 
-# Shells to test (in order of preference)
-SHELLS_TO_TEST="zsh bash"
+# Shell to test
+SHELL_TO_TEST="zsh"
 
-# Minimum versions
+# Minimum version
 MIN_ZSH_VERSION="5.0"
-MIN_BASH_VERSION="3.2"  # Support bash 3.x with file-based fallback
 
 # Options
 VERBOSE=0
-SPECIFIC_SHELL=""
 
 # =============================================================================
 # Argument Parsing
@@ -48,21 +39,16 @@ while [ $# -gt 0 ]; do
             VERBOSE=1
             shift
             ;;
-        -s|--shell)
-            SPECIFIC_SHELL="$2"
-            shift 2
-            ;;
         -h|--help)
-            echo "VDE Cross-Shell Test Runner"
+            echo "VDE Shell Test Runner"
             echo ""
             echo "Usage: $0 [options]"
             echo ""
             echo "Options:"
             echo "  -v, --verbose       Verbose output"
-            echo "  -s, --shell SHELL   Test specific shell only"
             echo "  -h, --help          Show this help"
             echo ""
-            echo "Supported shells: $SHELLS_TO_TEST"
+            echo "Shell: $SHELL_TO_TEST"
             exit 0
             ;;
         *)
@@ -103,9 +89,6 @@ get_shell_version() {
     case "$shell" in
         zsh)
             "$shell" --version 2>/dev/null | head -1 | sed 's/zsh //' | cut -d' ' -f1
-            ;;
-        bash)
-            "$shell" --version 2>/dev/null | head -1 | sed 's/.*version //' | cut -d'(' -f1 | tr -d ' '
             ;;
         *)
             echo "unknown"
@@ -149,9 +132,6 @@ check_shell_version() {
     case "$shell" in
         zsh)
             version_ge "$version" "$MIN_ZSH_VERSION"
-            ;;
-        bash)
-            version_ge "$version" "$MIN_BASH_VERSION"
             ;;
         *)
             return 0
@@ -202,11 +182,11 @@ run_tests_in_shell() {
 # =============================================================================
 
 main() {
-    echo "VDE Cross-Shell Compatibility Test Runner"
+    echo "VDE Shell Test Runner"
     echo "=========================================="
     echo ""
     echo "Test script: $_TEST_SCRIPT"
-    echo "Minimum versions: zsh $MIN_ZSH_VERSION, bash $MIN_BASH_VERSION"
+    echo "Minimum version: zsh $MIN_ZSH_VERSION"
     
     # Check if test script exists
     if [ ! -f "$_TEST_SCRIPT" ]; then
@@ -222,38 +202,29 @@ main() {
     local shells_failed=0
     local shells_skipped=0
     
-    # Determine which shells to test
-    local shells
-    if [ -n "$SPECIFIC_SHELL" ]; then
-        shells="$SPECIFIC_SHELL"
-    else
-        shells="$SHELLS_TO_TEST"
-    fi
+    # Run tests for zsh
+    shell="zsh"
+    result=0
+    run_tests_in_shell "$shell" || result=$?
     
-    # Run tests for each shell
-    for shell in $shells; do
-        result=0
-        run_tests_in_shell "$shell" || result=$?
-        
-        case $result in
-            0)
-                shells_tested=$((shells_tested + 1))
-                shells_passed=$((shells_passed + 1))
-                ;;
-            1)
-                shells_tested=$((shells_tested + 1))
-                shells_failed=$((shells_failed + 1))
-                ;;
-            2)
-                shells_skipped=$((shells_skipped + 1))
-                ;;
-        esac
-    done
+    case $result in
+        0)
+            shells_tested=$((shells_tested + 1))
+            shells_passed=$((shells_passed + 1))
+            ;;
+        1)
+            shells_tested=$((shells_tested + 1))
+            shells_failed=$((shells_failed + 1))
+            ;;
+        2)
+            shells_skipped=$((shells_skipped + 1))
+            ;;
+    esac
     
     # Print summary
     echo ""
     echo "=============================================="
-    echo "Cross-Shell Test Summary"
+    echo "Shell Test Summary"
     echo "=============================================="
     echo "Shells tested:  $shells_tested"
     echo "Shells passed:  $shells_passed"
@@ -262,13 +233,13 @@ main() {
     echo ""
     
     if [ "$shells_failed" -eq 0 ] && [ "$shells_tested" -gt 0 ]; then
-        log_success "All tested shells passed!"
+        log_success "All tests passed!"
         return 0
     elif [ "$shells_tested" -eq 0 ]; then
         log_warning "No shells were tested"
         return 1
     else
-        log_error "Some shells failed tests"
+        log_error "Some tests failed"
         return 1
     fi
 }

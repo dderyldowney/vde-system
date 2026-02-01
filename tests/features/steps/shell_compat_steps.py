@@ -54,17 +54,6 @@ def step_running_zsh(context):
     context.current_shell = 'zsh'
 
 
-@given('running in bash "{version}"')
-def step_running_bash_version(context, version):
-    """Running in specific bash version."""
-    context.current_shell = 'bash'
-    context.bash_version = version
-
-
-@when('running in bash')
-def step_running_bash(context):
-    """Running in bash."""
-    context.current_shell = 'bash'
 
 
 @given('I initialize an associative array')
@@ -115,50 +104,6 @@ def step_is_zsh_false(context):
     assert result.returncode != 0, f"_is_zsh should return non-zero (false) in {context.current_shell}, got {result.returncode}"
 
 
-@then('_is_bash should return true')
-def step_is_bash_true(context):
-    """_is_bash should return true (exit code 0)."""
-    result = run_shell_command('_is_bash', getattr(context, 'current_shell', 'zsh'))
-    assert result.returncode == 0, f"_is_bash should return 0 (true) in {context.current_shell}, got {result.returncode}"
-
-
-@then('_is_bash should return false')
-def step_is_bash_false(context):
-    """_is_bash should return false (exit code 1)."""
-    result = run_shell_command('_is_bash', getattr(context, 'current_shell', 'zsh'))
-    assert result.returncode != 0, f"_is_bash should return non-zero (false) in {context.current_shell}, got {result.returncode}"
-
-
-@then('_bash_version_major should return "{version}"')
-def step_bash_version_major(context, version):
-    """_bash_version_major should return version (adaptive to actual bash version)."""
-    shell = getattr(context, 'current_shell', 'zsh')
-    result = run_shell_command('_bash_version_major', shell)
-    actual_version = result.stdout.strip()
-    # If actual bash is 5+ and test expects 4+, that's compatible
-    if actual_version == '5' and version == '4':
-        # Bash 5 has all the features of bash 4+
-        context.bash_version_major = actual_version
-        return
-    # Otherwise, do exact match for correct version
-    assert actual_version == version, f"Expected _bash_version_major to return '{version}', got '{actual_version}'"
-    context.bash_version_major = actual_version
-
-
-@then('_shell_supports_native_assoc should return true')
-def step_native_assoc_true(context):
-    """_shell_supports_native_assoc should return true (exit code 0)."""
-    result = run_shell_command('_shell_supports_native_assoc', getattr(context, 'current_shell', 'zsh'))
-    assert result.returncode == 0, f"_shell_supports_native_assoc should return 0 (true) in {context.current_shell}, got {result.returncode}"
-
-
-@then('_shell_supports_native_assoc should return false')
-def step_native_assoc_false(context):
-    """_shell_supports_native_assoc should return false (exit code 1)."""
-    result = run_shell_command('_shell_supports_native_assoc', getattr(context, 'current_shell', 'zsh'))
-    # This step only applies to shells that don't support native assoc arrays
-    # For bash 4+/zsh 5+, this should return 0 (true)
-    assert result.returncode != 0, f"_shell_supports_native_assoc should return non-zero (false) in {context.current_shell}, got {result.returncode}"
 
 
 @then('native zsh typeset should be used')
@@ -178,11 +123,6 @@ def step_native_arrays_in_use(context):
     assert result.returncode == 0, f"Failed to initialize array: {result.stderr}"
 
 
-@then('native bash declare should be used')
-def step_bash_declare_used(context):
-    """Native bash declare should be used."""
-    result = run_shell_command('_is_bash && _shell_supports_native_assoc', getattr(context, 'current_shell', 'zsh'))
-    assert result.returncode == 0, "Expected bash 4+ with native associative array support"
 
 
 @then('array operations should work correctly')
@@ -400,11 +340,6 @@ def step_key_returns_value(context, key, value):
     assert result.returncode == 0, f"Failed to get key '{key}': {result.stderr}"
     actual_value = result.stdout.strip()
     assert actual_value == value, f"Expected '{value}', got '{actual_value}'"
-
-@given('running in bash')
-def step_running_in_bash(context):
-    """Running in bash."""
-    context.current_shell = 'bash'
 
 @when('I clear the array')
 def step_clear_array(context):

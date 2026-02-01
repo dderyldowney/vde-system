@@ -73,35 +73,23 @@ test_detect_shell() {
     local shell
     shell=$(_detect_shell)
 
-    if [[ "$shell" == "zsh" ]] || [[ "$shell" == "bash" ]]; then
+    if [[ "$shell" == "zsh" ]]; then
         test_pass "_detect_shell"
         return
     fi
 
-    test_fail "_detect_shell" "unexpected shell: $shell"
+    test_fail "_detect_shell" "unexpected shell: $shell (VDE requires zsh)"
 }
 
-test_is_zsh_or_bash() {
-    test_start "_is_zsh/_is_bash"
+test_is_zsh() {
+    test_start "_is_zsh"
 
-    local result=false
-
-    if [[ -n "${ZSH_VERSION:-}" ]]; then
-        if _is_zsh; then
-            result=true
-        fi
-    elif [[ -n "${BASH_VERSION:-}" ]]; then
-        if _is_bash; then
-            result=true
-        fi
-    fi
-
-    if $result; then
-        test_pass "_is_zsh/_is_bash"
+    if _is_zsh; then
+        test_pass "_is_zsh"
         return
     fi
 
-    test_fail "_is_zsh/_is_bash" "shell detection failed"
+    test_fail "_is_zsh" "shell detection failed"
 }
 
 test_shell_version() {
@@ -414,26 +402,6 @@ test_get_script_dir() {
 }
 
 # =============================================================================
-# TESTS: Bash Version Detection
-# =============================================================================
-
-test_bash_version_major() {
-    test_start "_bash_version_major (if bash)"
-
-    if [[ -n "${BASH_VERSION:-}" ]]; then
-        local major
-        major=$(_bash_version_major)
-        if [[ "$major" =~ ^[0-9]+$ ]]; then
-            test_pass "_bash_version_major"
-            return
-        fi
-        test_fail "_bash_version_major" "invalid version: $major"
-    else
-        test_pass "_bash_version_major (not bash, skipped)"
-    fi
-}
-
-# =============================================================================
 # TESTS: Native Associative Array Support
 # =============================================================================
 
@@ -462,9 +430,8 @@ main() {
 
     # Shell Detection
     test_detect_shell
-    test_is_zsh_or_bash
+    test_is_zsh
     test_shell_version
-    test_bash_version_major
 
     # Associative Array Operations
     test_assoc_init

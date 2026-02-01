@@ -2,25 +2,13 @@
 @user-guide-internal
 Feature: Shell Compatibility Layer
   As a developer
-  I want VDE to work across different shells (zsh, bash 4+)
-  So that VDE is portable across modern Unix systems
+  I want VDE to work in zsh
+  So that VDE has consistent shell behavior
 
   Scenario: Detect zsh shell
     When running in zsh
     Then _detect_shell should return "zsh"
     And _is_zsh should return true
-    And _is_bash should return false
-
-  Scenario: Detect bash shell
-    When running in bash
-    Then _detect_shell should return "bash"
-    And _is_bash should return true
-    And _is_zsh should return false
-
-  Scenario: Detect bash version for compatibility
-    Given running in bash "4.0"
-    Then _bash_version_major should return "4"
-    And _shell_supports_native_assoc should return true
 
   Scenario: Use native associative arrays in zsh
     Given running in zsh
@@ -68,9 +56,6 @@ Feature: Shell Compatibility Layer
     Given running in zsh
     When I call _get_script_path
     Then absolute script path should be returned
-    Given running in bash
-    When I call _get_script_path
-    Then absolute script path should be returned
 
   Scenario: Clean up storage on exit
     Given native associative arrays are in use
@@ -78,7 +63,7 @@ Feature: Shell Compatibility Layer
     Then temporary storage directory should be removed
 
   # =============================================================================
-  # Edge Case Scenarios (zsh only - bash 4+ uses same code paths)
+  # Edge Case Scenarios (zsh only)
   # =============================================================================
 
   Scenario: Handle empty associative array keys iteration

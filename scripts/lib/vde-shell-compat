@@ -1,18 +1,16 @@
 #!/usr/bin/env zsh
 # VDE Shell Compatibility Layer
-# Provides portable abstractions for shell-specific features
+# Provides zsh-native abstractions for shell features
 # Source this library with: source ./scripts/lib/vde-shell-compat
 #
-# This library enables VDE to run on both zsh and bash by providing:
+# This library provides zsh-native implementations for:
 # - Shell detection functions
-# - Portable associative array operations (file-based for bash 3.x)
-# - Portable script path detection
-# - Portable array iteration
+# - Associative array operations
+# - Script path detection
+# - Array iteration
 #
 # Minimum Requirements:
-# - zsh 5.0+ (full native support)
-# - bash 4.0+ (native associative arrays)
-# - bash 3.x (file-based associative array fallback)
+# - zsh 5.0+
 #
 # Return Codes:
 #   0 - Success
@@ -25,26 +23,22 @@
 # =============================================================================
 
 # _detect_shell - Detect the current shell type
-# Returns: "zsh", "bash", or "unknown"
+# Returns: "zsh" or "unknown"
 # Example: shell=$(_detect_shell)
 _detect_shell() {
     if [ -n "${ZSH_VERSION:-}" ]; then
         echo "zsh"
-    elif [ -n "${BASH_VERSION:-}" ]; then
-        echo "bash"
     else
         echo "unknown"
     fi
 }
 
 # _shell_version - Get the current shell version
-# Returns: Version string (e.g., "5.8" for zsh, "5.1.16" for bash)
+# Returns: Version string (e.g., "5.8" for zsh)
 # Example: version=$(_shell_version)
 _shell_version() {
     if [ -n "${ZSH_VERSION:-}" ]; then
         echo "$ZSH_VERSION"
-    elif [ -n "${BASH_VERSION:-}" ]; then
-        echo "$BASH_VERSION"
     else
         echo "unknown"
     fi
@@ -57,28 +51,11 @@ _is_zsh() {
     [ -n "${ZSH_VERSION:-}" ]
 }
 
-# _is_bash - Check if running in bash
-# Returns: 0 if bash, 1 otherwise
-# Example: _is_bash && echo "Running in bash"
-_is_bash() {
-    [ -n "${BASH_VERSION:-}" ]
-}
-
-# _bash_version_major - Get bash major version number
-# Returns: Major version number (e.g., 4, 5) or 0 if not bash
-_bash_version_major() {
-    if [ -n "${BASH_VERSION:-}" ]; then
-        echo "${BASH_VERSION%%.*}"
-    else
-        echo "0"
-    fi
-}
-
 # _shell_supports_native_assoc - Check if shell supports native associative arrays
-# Returns: 0 if supported, 1 otherwise
+# Returns: 0 if supported (always true for zsh 5.0+)
 # Note: zsh 5.0+ supports native associative arrays
 _shell_supports_native_assoc() {
-    _is_zsh
+    return 0
 }
 
 # =============================================================================
@@ -120,35 +97,16 @@ _get_script_dir() {
 }
 
 # =============================================================================
-# FILE-BASED ASSOCIATIVE ARRAY STORAGE
+# ASSOCIATIVE ARRAY OPERATIONS
 # =============================================================================
-# For shells without native associative array support (bash 3.x),
-# we provide a file-based key-value store.
 
-# Default storage directory for file-based associative arrays
-_VDE_ASSOC_STORAGE_DIR="${TMPDIR:-/tmp}/vde-assoc-$$"
-
-# _assoc_init - Initialize an associative array (file-based storage)
+# _assoc_init - Initialize an associative array
 # Args: <array_name>
 # Returns: 0 on success
 # Example: _assoc_init "MY_ARRAY"
 _assoc_init() {
     local array_name="$1"
-    
-    if _shell_supports_native_assoc; then
-        # Native support - declare the array
-        if _is_zsh; then
-            # zsh: typeset -gA
-            eval "typeset -gA $array_name"
-        else
-            # bash 4+: declare -gA
-            eval "declare -gA $array_name"
-        fi
-    else
-        # File-based fallback
-        mkdir -p "$_VDE_ASSOC_STORAGE_DIR"
-        mkdir -p "$_VDE_ASSOC_STORAGE_DIR/$array_name"
-    fi
+    eval "typeset -gA $array_name"
     return 0
 }
 
@@ -160,31 +118,7 @@ _assoc_set() {
     local array_name="$1"
     local key="$2"
     local value="$3"
-    
-    if _shell_supports_native_assoc; then
-        # Native support
-        if _is_zsh; then
-            eval "${array_name}[\$key]=\$value"
-        else
-            # bash 4+
-            eval "${array_name}[\$key]=\$value"
-        fi
-    else
-        # File-based fallback
-        # CRITICAL FIX: Use hex encoding to prevent key collisions
-        # Previous simple tr '/' '_' would cause collisions: "a/b" and "a_b" both become "a_b"
-        # Now we encode special characters as %XX hex values
-        local safe_key
-        safe_key=$(printf '%s' "$key" | od -An -tx1 | tr -s ' ' '%' | tr -d '\n' | sed 's/^%//')
-        # Also handle empty keys and very long keys
-        if [ -z "$safe_key" ]; then
-            safe_key="_empty"
-        fi
-        mkdir -p "$_VDE_ASSOC_STORAGE_DIR/$array_name"
-        # Store the original key as metadata for validation
-        printf '%s' "$value" > "$_VDE_ASSOC_STORAGE_DIR/$array_name/$safe_key"
-        printf '%s' "$key" > "$_VDE_ASSOC_STORAGE_DIR/$array_name/$safe_key.key"
-    fi
+    eval "${array_name}[\$key]=\$value"
     return 0
 }
 
@@ -195,52 +129,20 @@ _assoc_set() {
 _assoc_get() {
     local array_name="$1"
     local key="$2"
-    
-    if _shell_supports_native_assoc; then
-        # Native support
-        local value
-        if _is_zsh; then
-            # zsh: Use (P) parameter expansion for indirect access
-            # First check if key exists using keys list
-            local keys
-            eval "keys=\" \${(k)${array_name}} \""
-            case "$keys" in
-                *" $key "*)
-                    # Key exists, get the value
-                    eval "value=\"\${${array_name}[\$key]}\""
-                    echo "$value"
-                    return 0
-                    ;;
-                *)
-                    return 1
-                    ;;
-            esac
-        else
-            # bash 4+
-            # Check if key exists using indirect reference with -v test
-            if eval "[[ -v ${array_name}[${key}] ]]"; then
-                # Key exists, get the value (even if empty)
-                eval "value=\"\${${array_name}[\$key]}\""
-                printf '%s' "$value"
-                return 0
-            fi
-            return 1
-        fi
-    else
-        # File-based fallback
-        # Use the same hex encoding as _assoc_set to prevent collisions
-        local safe_key
-        safe_key=$(printf '%s' "$key" | od -An -tx1 | tr -s ' ' '%' | tr -d '\n' | sed 's/^%//')
-        if [ -z "$safe_key" ]; then
-            safe_key="_empty"
-        fi
-        local file="$_VDE_ASSOC_STORAGE_DIR/$array_name/$safe_key"
-        if [ -f "$file" ]; then
-            cat "$file"
+    local value
+    local keys
+
+    eval "keys=\" \${(k)${array_name}} \""
+    case "$keys" in
+        *" $key "*)
+            eval "value=\"\${${array_name}[\$key]}\""
+            echo "$value"
             return 0
-        fi
-        return 1
-    fi
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 }
 
 # _assoc_keys - Get all keys from an associative array
@@ -249,42 +151,29 @@ _assoc_get() {
 # Example: for k in $(_assoc_keys "MY_ARRAY"); do echo "$k"; done
 _assoc_keys() {
     local array_name="$1"
-    
-    if _shell_supports_native_assoc; then
-        # zsh: Use ${(k)array} expansion for keys
-        case "$array_name" in
-            VM_TYPE)
-                for k in ${(k)VM_TYPE}; do echo "$k"; done
-                ;;
-            VM_ALIASES)
-                for k in ${(k)VM_ALIASES}; do echo "$k"; done
-                ;;
-            VM_DISPLAY)
-                for k in ${(k)VM_DISPLAY}; do echo "$k"; done
-                ;;
-            VM_INSTALL)
-                for k in ${(k)VM_INSTALL}; do echo "$k"; done
-                ;;
-            VM_SVC_PORT)
-                for k in ${(k)VM_SVC_PORT}; do echo "$k"; done
-                ;;
-            PORT_REGISTRY)
-                for k in ${(k)PORT_REGISTRY}; do echo "$k"; done
-                ;;
-            *)
-                # Generic fallback using (kP) flag for indirect array access
-                for k in ${(kP)array_name[@]}; do echo "$k"; done
-        esac
-    else
-        # File-based fallback (should not be needed for zsh 5+)
-        local dir="$_VDE_ASSOC_STORAGE_DIR/$array_name"
-        if [ -d "$dir" ]; then
-            for f in "$dir"/*.key; do
-                [ -f "$f" ] || continue
-                cat "$f" 2>/dev/null
-            done
-        fi
-    fi
+
+    case "$array_name" in
+        VM_TYPE)
+            for k in ${(k)VM_TYPE}; do echo "$k"; done
+            ;;
+        VM_ALIASES)
+            for k in ${(k)VM_ALIASES}; do echo "$k"; done
+            ;;
+        VM_DISPLAY)
+            for k in ${(k)VM_DISPLAY}; do echo "$k"; done
+            ;;
+        VM_INSTALL)
+            for k in ${(k)VM_INSTALL}; do echo "$k"; done
+            ;;
+        VM_SVC_PORT)
+            for k in ${(k)VM_SVC_PORT}; do echo "$k"; done
+            ;;
+        PORT_REGISTRY)
+            for k in ${(k)PORT_REGISTRY}; do echo "$k"; done
+            ;;
+        *)
+            for k in ${(kP)array_name[@]}; do echo "$k"; done
+    esac
     return 0
 }
 
@@ -295,33 +184,13 @@ _assoc_keys() {
 _assoc_has_key() {
     local array_name="$1"
     local key="$2"
-    
-    if _shell_supports_native_assoc; then
-        # Native support
-        if _is_zsh; then
-            # zsh: Check if key is in keys list using ${(k)array} expansion
-            local keys
-            eval "keys=\" \${(k)${array_name}} \""
-            case "$keys" in
-                *" $key "*) return 0 ;;
-                *) return 1 ;;
-            esac
-        else
-            # bash 4+: Use ${array[key]+isset} pattern
-            local value
-            eval "value=\"\${${array_name}[\$key]+isset}\""
-            [ "$value" = "isset" ]
-        fi
-    else
-        # File-based fallback
-        # Use the same hex encoding as _assoc_set
-        local safe_key
-        safe_key=$(printf '%s' "$key" | od -An -tx1 | tr -s ' ' '%' | tr -d '\n' | sed 's/^%//')
-        if [ -z "$safe_key" ]; then
-            safe_key="_empty"
-        fi
-        [ -f "$_VDE_ASSOC_STORAGE_DIR/$array_name/$safe_key" ]
-    fi
+    local keys
+
+    eval "keys=\" \${(k)${array_name}} \""
+    case "$keys" in
+        *" $key "*) return 0 ;;
+        *) return 1 ;;
+    esac
 }
 
 # _assoc_unset - Remove a key from an associative array
@@ -331,28 +200,7 @@ _assoc_has_key() {
 _assoc_unset() {
     local array_name="$1"
     local key="$2"
-    
-    if _shell_supports_native_assoc; then
-        # Native support
-        if _is_zsh; then
-            # zsh: Use unset with subscript syntax
-            eval "unset \"${array_name}[$key]\""
-        else
-            # bash 4+
-            eval "unset \"${array_name}[$key]\""
-        fi
-    else
-        # File-based fallback
-        # Use the same hex encoding as _assoc_set
-        local safe_key
-        safe_key=$(printf '%s' "$key" | od -An -tx1 | tr -s ' ' '%' | tr -d '\n' | sed 's/^%//')
-        if [ -z "$safe_key" ]; then
-            safe_key="_empty"
-        fi
-        # Also delete the .key metadata file
-        rm -f "$_VDE_ASSOC_STORAGE_DIR/$array_name/$safe_key"
-        rm -f "$_VDE_ASSOC_STORAGE_DIR/$array_name/$safe_key.key"
-    fi
+    eval "unset \"${array_name}[$key]\""
     return 0
 }
 
@@ -362,36 +210,20 @@ _assoc_unset() {
 # Example: _assoc_clear "MY_ARRAY"
 _assoc_clear() {
     local array_name="$1"
-    
-    if _shell_supports_native_assoc; then
-        # Native support - unset and redeclare
-        if _is_zsh; then
-            eval "unset $array_name; typeset -gA $array_name"
-        else
-            # bash 4+
-            eval "unset $array_name; declare -gA $array_name"
-        fi
-    else
-        # File-based fallback
-        rm -rf "$_VDE_ASSOC_STORAGE_DIR/$array_name"
-        mkdir -p "$_VDE_ASSOC_STORAGE_DIR/$array_name"
-    fi
+    eval "unset $array_name; typeset -gA $array_name"
     return 0
 }
 
-# _assoc_cleanup - Clean up file-based storage (call on exit)
+# _assoc_cleanup - Cleanup function (no-op for zsh native arrays)
 # Args: none
 # Returns: 0 on success
 # Example: trap '_assoc_cleanup' EXIT
 _assoc_cleanup() {
-    if [ -d "$_VDE_ASSOC_STORAGE_DIR" ]; then
-        rm -rf "$_VDE_ASSOC_STORAGE_DIR"
-    fi
     return 0
 }
 
 # =============================================================================
-# PORTABLE ARRAY OPERATIONS
+# ARRAY OPERATIONS
 # =============================================================================
 
 # _array_length - Get the length of an indexed array
@@ -400,13 +232,7 @@ _assoc_cleanup() {
 # Example: len=$(_array_length "MY_ARRAY")
 _array_length() {
     local array_name="$1"
-    
-    if _is_zsh; then
-        eval "echo \${#${array_name}[@]}"
-    else
-        # bash
-        eval "echo \${#${array_name}[@]}"
-    fi
+    eval "echo \${#${array_name}[@]}"
 }
 
 # _array_append - Append a value to an indexed array
@@ -416,13 +242,7 @@ _array_length() {
 _array_append() {
     local array_name="$1"
     local value="$2"
-    
-    if _is_zsh; then
-        eval "${array_name}+=(\"\$value\")"
-    else
-        # bash
-        eval "${array_name}+=(\"\$value\")"
-    fi
+    eval "${array_name}+=(\"\$value\")"
     return 0
 }
 
@@ -433,18 +253,12 @@ _array_append() {
 _array_contains() {
     local array_name="$1"
     local search_value="$2"
-    
-    if _is_zsh; then
-        eval "for v in \"\${${array_name}[@]}\"; do [ \"\$v\" = \"\$search_value\" ] && return 0; done"
-    else
-        # bash
-        eval "for v in \"\${${array_name}[@]}\"; do [ \"\$v\" = \"\$search_value\" ] && return 0; done"
-    fi
+    eval "for v in \"\${${array_name}[@]}\"; do [ \"\$v\" = \"\$search_value\" ] && return 0; done"
     return 1
 }
 
 # =============================================================================
-# PORTABLE STRING OPERATIONS
+# STRING OPERATIONS
 # =============================================================================
 
 # _string_split - Split a string by delimiter into an array
@@ -455,15 +269,7 @@ _string_split() {
     local string="$1"
     local delimiter="$2"
     local array_name="$3"
-    
-    if _is_zsh; then
-        # zsh: Use parameter expansion
-        eval "${array_name}=(\${(s:${delimiter}:)string})"
-    else
-        # bash: Use IFS
-        local IFS="$delimiter"
-        eval "read -ra ${array_name} <<< \"\$string\""
-    fi
+    eval "${array_name}=(\${(s:${delimiter}:)string})"
     return 0
 }
 
@@ -483,25 +289,20 @@ _string_trim() {
 }
 
 # =============================================================================
-# PORTABLE READ OPERATIONS
+# READ OPERATIONS
 # =============================================================================
 
-# _read_array - Read lines into an array (portable read -a/-A)
+# _read_array - Read lines into an array
 # Args: <array_name>
 # Reads from stdin, one element per line
 # Returns: 0 on success
 # Example: echo -e "a\nb\nc" | _read_array "MY_ARRAY"
 _read_array() {
     local array_name="$1"
-    
-    # Initialize empty array
     eval "${array_name}=()"
-    
-    # Read lines
     while IFS= read -r line; do
         _array_append "$array_name" "$line"
     done
-    
     return 0
 }
 
@@ -518,58 +319,50 @@ _check_shell_compatibility() {
     shell=$(_detect_shell)
     local version
     version=$(_shell_version)
-    
+
     case "$shell" in
         zsh)
-            # Check zsh version >= 5.0
             local major="${version%%.*}"
             if [ "$major" -lt 5 ]; then
-                echo "[WARNING] zsh version $version detected. VDE requires zsh 5.0+" >&2
+                echo "[ERROR] zsh version $version detected. VDE requires zsh 5.0+" >&2
                 return 1
-            fi
-            ;;
-        bash)
-            # Check bash version >= 4.0 for full support, 3.x for limited support
-            local major
-            major=$(_bash_version_major)
-            if [ "$major" -lt 3 ]; then
-                echo "[ERROR] bash version $version is not supported. VDE requires bash 3.0+" >&2
-                return 1
-            elif [ "$major" -lt 4 ]; then
-                echo "[WARNING] bash version $version detected. Some features may use slower fallbacks." >&2
-                echo "[WARNING] Consider upgrading to bash 4.0+ for better performance." >&2
             fi
             ;;
         *)
-            echo "[ERROR] Unknown shell detected. VDE requires zsh 5.0+ or bash 4.0+" >&2
+            echo "[ERROR] VDE requires zsh 5.0+. Current shell: $shell" >&2
             return 1
             ;;
     esac
-    
+
     return 0
 }
 
-# _require_shell - Require a specific shell or exit
-# Args: <shell_name> - "zsh" or "bash"
-# Returns: 0 if running in required shell, exits with error otherwise
+# _require_shell - Require zsh or exit
+# Args: <shell_name> - must be "zsh"
+# Returns: 0 if running in zsh, exits with error otherwise
 # Example: _require_shell "zsh"
 _require_shell() {
     local required="$1"
     local current
     current=$(_detect_shell)
-    
-    if [ "$current" != "$required" ]; then
-        echo "[ERROR] This script requires $required but is running in $current" >&2
+
+    if [ "$required" != "zsh" ]; then
+        echo "[ERROR] VDE only supports zsh. Requested: $required" >&2
+        exit 1
+    fi
+
+    if [ "$current" != "zsh" ]; then
+        echo "[ERROR] VDE requires zsh but is running in $current" >&2
         exit 1
     fi
     return 0
 }
 
 # =============================================================================
-# PORTABLE DECLARE/TYPESET WRAPPER
+# DECLARE/TYPESET WRAPPER
 # =============================================================================
 
-# _declare_global - Declare a global variable (portable typeset -g / declare -g)
+# _declare_global - Declare a global variable
 # Args: <var_name> [value]
 # Returns: 0 on success
 # Example: _declare_global "MY_VAR" "value"
@@ -600,7 +393,7 @@ _declare_global_assoc() {
 }
 
 # =============================================================================
-# PORTABLE SETOPT/SHOPT WRAPPER
+# SETOPT WRAPPER
 # =============================================================================
 
 # _enable_nullglob - Enable nullglob (empty result for non-matching globs)
