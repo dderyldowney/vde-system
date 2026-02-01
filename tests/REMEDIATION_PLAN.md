@@ -4,54 +4,15 @@ Generated from failures database
 
 ## Executive Summary
 
-- **Total Failures**: 4
-- **Pass Rate**: 99.3%
-- **By Severity**: {'MEDIUM': 3, 'LOW': 1}
-- **By Category**: {'DEBUG_OUTPUT': 3, 'SSH_AGENT': 1}
-
-
-## MEDIUM Fixes
-
-### Fix #1: Debug Output
-
-**Impact**: 3 failure(s) | **Severity**: MEDIUM
-
-**Affected Tests**:
-- docker-free/documented-development-workflows.feature:8 - Example 1 - Python API with PostgreSQL Setup
-- docker-free/documented-development-workflows.feature:15 - Example 1 - Create PostgreSQL for Python API
-- docker-free/documented-development-workflows.feature:144 - Adding Cache Layer - Create Redis
-
-**Error Examples**:
-```
-["ASSERT FAILED: Expected create_vm intent, got 'DEBUG: _load_vm_types_from_config called with VDE_ROOT_DIR = /Users/dderyldowney/dev", 'DEBUG: VM_TYPES_CONF = /Users/dderyldowney/dev/scripts/data/vm-types.conf', 'DEBUG: conf_file = /Users/dderyldowney/dev/scripts/data/vm-types.conf', "create_vm'"]
-```
-
-**Root Cause**:
-- VM types config loader outputs DEBUG to stdout instead of stderr
-
-**Impact**:
-- Parser receives contaminated output, intent detection fails
-
-**Fix Steps**:
-- Redirect DEBUG output in `_load_vm_types_from_config` to stderr
-- Update parser script that loads `scripts/data/vm-types.conf`
-- Ensure all DEBUG/logging goes to stderr, not stdout
-
-**Files to Modify**:
-- Parser scripts that load VM types config
-
-**Verification**:
-```bash
-./tests/run-docker-free-tests.sh
-# Expect: 0 failures in this category
-```
-
----
+- **Total Failures**: 1
+- **Pass Rate**: 99.8%
+- **By Severity**: {'LOW': 1}
+- **By Category**: {'SSH_AGENT': 1}
 
 
 ## LOW Fixes
 
-### Fix #2: Ssh Agent
+### Fix #1: Ssh Agent
 
 **Impact**: 1 failure(s) | **Severity**: LOW
 

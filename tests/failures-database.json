@@ -2,60 +2,6 @@
   "failures": [
     {
       "id": "do-000",
-      "phase": "docker-free",
-      "feature_file": "docker-free/documented-development-workflows.feature",
-      "scenario": "Example 1 - Python API with PostgreSQL Setup",
-      "scenario_line": "8",
-      "step": "the plan should include the create_vm intent",
-      "step_line": "11",
-      "error_type": "Unknown",
-      "error_message": [
-        "ASSERT FAILED: Expected create_vm intent, got 'DEBUG: _load_vm_types_from_config called with VDE_ROOT_DIR = /Users/dderyldowney/dev",
-        "DEBUG: VM_TYPES_CONF = /Users/dderyldowney/dev/scripts/data/vm-types.conf",
-        "DEBUG: conf_file = /Users/dderyldowney/dev/scripts/data/vm-types.conf",
-        "create_vm'"
-      ],
-      "category": "DEBUG_OUTPUT",
-      "severity": "MEDIUM"
-    },
-    {
-      "id": "do-001",
-      "phase": "docker-free",
-      "feature_file": "docker-free/documented-development-workflows.feature",
-      "scenario": "Example 1 - Create PostgreSQL for Python API",
-      "scenario_line": "15",
-      "step": "the plan should include the create_vm intent",
-      "step_line": "18",
-      "error_type": "Unknown",
-      "error_message": [
-        "ASSERT FAILED: Expected create_vm intent, got 'DEBUG: _load_vm_types_from_config called with VDE_ROOT_DIR = /Users/dderyldowney/dev",
-        "DEBUG: VM_TYPES_CONF = /Users/dderyldowney/dev/scripts/data/vm-types.conf",
-        "DEBUG: conf_file = /Users/dderyldowney/dev/scripts/data/vm-types.conf",
-        "create_vm'"
-      ],
-      "category": "DEBUG_OUTPUT",
-      "severity": "MEDIUM"
-    },
-    {
-      "id": "do-002",
-      "phase": "docker-free",
-      "feature_file": "docker-free/documented-development-workflows.feature",
-      "scenario": "Adding Cache Layer - Create Redis",
-      "scenario_line": "144",
-      "step": "the plan should include the create_vm intent",
-      "step_line": "147",
-      "error_type": "Unknown",
-      "error_message": [
-        "ASSERT FAILED: Expected create_vm intent, got 'DEBUG: _load_vm_types_from_config called with VDE_ROOT_DIR = /Users/dderyldowney/dev",
-        "DEBUG: VM_TYPES_CONF = /Users/dderyldowney/dev/scripts/data/vm-types.conf",
-        "DEBUG: conf_file = /Users/dderyldowney/dev/scripts/data/vm-types.conf",
-        "create_vm'"
-      ],
-      "category": "DEBUG_OUTPUT",
-      "severity": "MEDIUM"
-    },
-    {
-      "id": "do-003",
       "phase": "docker-required",
       "feature_file": "docker-required/ssh-agent-external-git-operations.feature",
       "scenario": "Git operations in automated workflows",
@@ -69,17 +15,14 @@
     }
   ],
   "summary": {
-    "total_failures": 4,
+    "total_failures": 1,
     "by_phase": {
-      "docker-free": 3,
       "docker-required": 1
     },
     "by_category": {
-      "DEBUG_OUTPUT": 3,
       "SSH_AGENT": 1
     },
     "by_severity": {
-      "MEDIUM": 3,
       "LOW": 1
     }
   }
