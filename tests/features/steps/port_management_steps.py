@@ -14,7 +14,7 @@ from behave import given, then, when
 
 # Import shared configuration and helpers
 from config import VDE_ROOT
-from vm_common import run_vde_command, get_container_port_mapping, docker_ps
+from vm_common import run_vde_command, docker_ps
 
 
 # =============================================================================

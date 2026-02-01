@@ -124,7 +124,7 @@ TEST_DIR="$(cd "$(dirname "${(%):-%x}")/../.." && pwd)"
 TEST_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ```
 
-**Expected Result:** All 21 failing tests should now pass as VM types will be properly loaded.
+**Status:** ✅ FIXED - Line 6 now uses `$0`
 
 ---
 
@@ -142,31 +142,65 @@ TEST_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 3. Other affected step files (20+ files) with the same pattern
 
-**Global Fix Command:**
-```bash
-# Remove all blank lines that appear before @ decorators in else blocks
-find tests/features/steps -name "*.py" -exec sed -i '' \
-  '/^    else:$/,/^[[:space:]]*@\(given\|when\|then\)/{ \
-    /^    else:$/d; /^[[:space:]]*@\(given\|when\|then\)/!d; }' {} \;
-```
+**Status:** ✅ FIXED - No blank lines found before decorators
 
-**Alternative: Individual File Fixes**
+---
 
-For `config_steps.py` specifically:
+### Priority 3: Add Missing `get_vm_types()` Function
+
+**File:** `tests/features/steps/vm_common.py`
+
+**Missing Function:** `get_vm_types()`
+
+**Used By:** `tests/features/steps/uninstallation_steps.py` line 70
+
+**Implementation:**
 ```python
-# Remove lines 53-54 and 357-358
-- Line 53-54: Remove blank line after else
-- Line 357-358: Remove blank lines before decorator
-
-# Or apply this pattern per problematic block:
-# Replace:
-    else:
+def get_vm_types():
+    """Get list of available VM types from vm-types.conf.
     
-@then('decorator')
-# With:
-    else:
-@then('decorator')
+    Returns:
+        list: List of VM type names (e.g., ['python', 'go', 'rust', 'postgres', 'redis'])
+    """
+    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    
+    if not vm_types_file.exists():
+        return []
+    
+    vm_types = []
+    with open(vm_types_file, 'r') as f:
+        for line in f:
+            line = line.strip()
+            # Skip empty lines and comments
+            if line and not line.startswith('#'):
+                # Parse VM type definition (format: name=description or just name)
+                if '=' in line:
+                    vm_types.append(line.split('=')[0].strip())
+                else:
+                    vm_types.append(line.strip())
+    
+    return vm_types
 ```
+
+**Expected Result:** `uninstallation_steps.py` test "new VM types should be available" will pass.
+
+**Status:** ⏳ PENDING
+
+---
+
+### Priority 4: Remove Unused Import
+
+**File:** `tests/features/steps/port_management_steps.py`
+
+**Change Required:**
+```diff
+-from vm_common import run_vde_command, get_container_port_mapping, docker_ps
++from vm_common import run_vde_command, docker_ps
+```
+
+**Rationale:** `get_container_port_mapping` is imported but never used in the file.
+
+**Status:** ⏳ PENDING
 
 ---
 
@@ -186,18 +220,26 @@ The `*status*` pattern at line 206 comes AFTER the generic `*list*` pattern at l
 
 ## Implementation Order
 
-1. **Fix `test_vde_parser_comprehensive.sh` path calculation** (Critical - blocks 21 tests)
-2. **Fix Python indentation errors in step files** (Critical - blocks all BDD tests)
-3. **Re-run all vde-parser tests to verify fixes**
-4. **Update this document with actual results**
+1. **Fix `test_vde_parser_comprehensive.sh` path calculation** - ✅ DONE
+2. **Fix Python indentation errors in step files** - ✅ DONE
+3. **Add missing `get_vm_types()` function** - ⏳ PENDING
+4. **Remove unused import from port_management_steps.py** - ⏳ PENDING
+5. **Re-run all vde-parser tests to verify fixes**
+6. **Update this document with actual results**
+
+---
 
 ## Files to Modify
 
-| File | Type | Change |
-|-------|--------|---------|
-| `tests/unit/test_vde_parser_comprehensive.sh` | Fix path calculation and add `load_vm_types` call (lines 5, 10) |
-| `tests/features/steps/config_steps.py` | Remove blank lines before decorators (lines ~56, ~359) |
-| `tests/features/steps/daily_workflow_steps.py` | Remove blank lines before decorators (line ~442) |
+| File | Type | Change | Status |
+|------|------|--------|--------|
+| `tests/unit/test_vde_parser_comprehensive.sh` | Fix path calculation | Changed `${(%):-%x}` to `$0` | ✅ FIXED |
+| `tests/features/steps/config_steps.py` | Fix Python indentation | Removed blank lines before decorators | ✅ FIXED |
+| `tests/features/steps/daily_workflow_steps.py` | Fix Python indentation | Removed blank lines before decorators | ✅ FIXED |
+| `tests/features/steps/vm_common.py` | Add function | Add `get_vm_types()` function | ⏳ PENDING |
+| `tests/features/steps/port_management_steps.py` | Cleanup | Remove unused `get_container_port_mapping` import | ⏳ PENDING |
+
+---
 
 ## Additional Issues Found
 
@@ -209,7 +251,7 @@ The `*status*` pattern at line 206 comes AFTER the generic `*list*` pattern at l
 ImportError: cannot import name 'docker_ps' from 'vm_common'
 ```
 
-**Status:** FIXED - Added stub `docker_ps()` function to [`vm_common.py`](tests/features/steps/vm_common.py) lines 35-45
+**Status:** ✅ FIXED - Added stub `docker_ps()` function to [`vm_common.py`](tests/features/steps/vm_common.py) lines 35-45
 
 ### Missing Functions in `vm_common.py` (Blocks BDD Tests)
 **Functions Added:**
@@ -217,18 +259,19 @@ ImportError: cannot import name 'docker_ps' from 'vm_common'
 2. `compose_file_exists(filename)` - Check if docker-compose file exists  
 3. `wait_for_container(container_name, timeout)` - Wait for container to become ready
 4. `ensure_vm_created(context, vm_name)` - Ensure VM has been created
+5. `ensure_vm_running(context, vm_name)` - Ensure VM is running (already existed)
 
-**Status:** These functions were successfully added to resolve ImportError issues.
+**Status:** ✅ These functions were successfully added to resolve ImportError issues.
 
 ### BDD Tests Status: STILL BLOCKED
 
-After adding missing functions, BDD tests still fail due to additional missing functions:
-- `ensure_vm_running` - Still imported but not defined
-- Other functions may also be missing
+After adding missing functions, BDD tests still fail due to:
+- `get_vm_types()` - Called by `uninstallation_steps.py` but not defined in vm_common.py
 
-**Note:** The BDD test infrastructure has multiple missing functions that require separate remediation. This is a broader test infrastructure issue, NOT a vde-parser library issue.
+**Note:** The BDD test infrastructure has one remaining missing function that requires remediation.
 
 ---
 
 **Created:** 2026-01-31
+**Updated:** 2026-01-31 (added missing function diagnosis)
 **VDE Parser Module:** `scripts/lib/vde-parser`

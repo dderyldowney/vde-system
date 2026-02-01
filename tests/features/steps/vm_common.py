@@ -240,6 +240,32 @@ def check_scripts_executable(context):
     return True
 
 
+def get_vm_types():
+    """Get list of available VM types from vm-types.conf.
+    
+    Returns:
+        list: List of VM type names (e.g., ['python', 'go', 'rust', 'postgres', 'redis'])
+    """
+    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    
+    if not vm_types_file.exists():
+        return []
+    
+    vm_types = []
+    with open(vm_types_file, 'r') as f:
+        for line in f:
+            line = line.strip()
+            # Skip empty lines and comments
+            if line and not line.startswith('#'):
+                # Parse VM type definition (format: name=description or just name)
+                if '=' in line:
+                    vm_types.append(line.split('=')[0].strip())
+                else:
+                    vm_types.append(line.strip())
+    
+    return vm_types
+
+
 def run_vde_command(command, timeout=120):
     """Run a VDE script and return the result.
 
