@@ -5,10 +5,11 @@
 # Usage: vde ssh-setup <action>
 #
 # Actions:
-#   status   Show SSH environment status (default)
-#   init     Initialize SSH environment (keys, agent, config)
-#   start    Start SSH agent and load VDE key
-#   generate Regenerate VM SSH config only
+#   status    Show SSH environment status (default)
+#   init      Initialize SSH environment (keys, agent, config)
+#   start     Start SSH agent and load VDE key
+#   autostart Configure shell to auto-start SSH agent on login
+#   generate  Regenerate VM SSH config only
 
 set -e
 
@@ -29,6 +30,7 @@ Actions:
   status    Show SSH environment status (default)
   init      Initialize SSH environment (keys, agent, config)
   start     Start SSH agent and load VDE key
+  autostart Configure shell to auto-start SSH agent on login
   generate  Regenerate VM SSH config only
 
 Examples:
@@ -36,6 +38,7 @@ Examples:
   vde ssh-setup status       # Show status (explicit)
   vde ssh-setup init         # Full setup: keys + agent + config
   vde ssh-setup start        # Start agent and load keys
+  vde ssh-setup autostart    # Auto-start agent on shell login
   vde ssh-setup generate     # Regenerate SSH config for VMs
 
 See also:
@@ -287,10 +290,54 @@ if [[ "$ACTION" == "generate" ]]; then
 fi
 
 # ==============================================================================
+# Autostart Mode -- Configure shell to auto-start SSH agent
+# ==============================================================================
+if [[ "$ACTION" == "autostart" ]]; then
+    echo ""
+    echo "Configuring shell to auto-start SSH agent..."
+    echo ""
+
+    # Detect shell config file
+    local shell_config=""
+    if [[ "$ZSH_VERSION" ]]; then
+        shell_config="$HOME/.zshrc"
+    elif [[ "$BASH_VERSION" ]]; then
+        shell_config="$HOME/.bashrc"
+    else
+        # Default to zshrc
+        shell_config="$HOME/.zshrc"
+    fi
+
+    # Marker for our addition
+    local marker="# VDE SSH Agent Auto-Start"
+    local entry="$marker
+if [ -f ~/.ssh/vde/id_ed25519 ]; then
+    eval \$(ssh-agent -s) 2>/dev/null
+    ssh-add ~/.ssh/vde/id_ed25519 2>/dev/null
+fi"
+
+    # Check if already configured
+    if grep -q "$marker" "$shell_config" 2>/dev/null; then
+        log_info "Shell autostart already configured in $shell_config"
+    else
+        # Add to shell config
+        echo "" >> "$shell_config"
+        echo "$entry" >> "$shell_config"
+        log_success "✓ Added autostart to $shell_config"
+    fi
+
+    echo ""
+    echo "VDE SSH agent will now auto-start on new shell sessions."
+    echo "To apply to current shell, run:"
+    echo "  source $shell_config"
+    exit 0
+fi
+
+# ==============================================================================
 # Unknown Action
 # ==============================================================================
 echo "Unknown action: $ACTION"
 echo ""
-echo "Valid actions: status, init, start, generate"
+echo "Valid actions: status, init, start, autostart, generate"
 echo "Run 'vde ssh-setup --help' for usage information"
 exit 1
