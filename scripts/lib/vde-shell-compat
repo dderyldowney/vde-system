@@ -76,17 +76,9 @@ _bash_version_major() {
 
 # _shell_supports_native_assoc - Check if shell supports native associative arrays
 # Returns: 0 if supported, 1 otherwise
-# Note: bash 4.0+ and zsh 5.0+ support native associative arrays
+# Note: zsh 5.0+ supports native associative arrays
 _shell_supports_native_assoc() {
-    if _is_zsh; then
-        return 0
-    elif _is_bash; then
-        local major
-        major=$(_bash_version_major)
-        [ "$major" -ge 4 ]
-    else
-        return 1
-    fi
+    _is_zsh
 }
 
 # =============================================================================
@@ -94,21 +86,12 @@ _shell_supports_native_assoc() {
 # =============================================================================
 
 # _get_script_path - Get the path of the currently executing script
-# This replaces zsh's ${(%):-%x} with a portable alternative
 # Returns: Absolute path to the current script
 # Example: script_path=$(_get_script_path)
 _get_script_path() {
-    if _is_zsh; then
-        # zsh: Use ${(%):-%x} expansion
-        # shellcheck disable=SC2296
-        echo "${(%):-%x}"
-    elif _is_bash; then
-        # bash: Use BASH_SOURCE array
-        echo "${BASH_SOURCE[0]:-$0}"
-    else
-        # Fallback: Use $0 (may not work in all cases)
-        echo "$0"
-    fi
+    # zsh: Use ${(%):-%x} expansion
+    # shellcheck disable=SC2296
+    echo "${(%):-%x}"
 }
 
 # _get_script_dir - Get the directory containing the current script
@@ -268,8 +251,7 @@ _assoc_keys() {
     local array_name="$1"
     
     if _shell_supports_native_assoc; then
-        # zsh: For zsh, we need to handle dynamic variable names differently
-        # Get the array reference and output keys directly
+        # zsh: Use ${(k)array} expansion for keys
         case "$array_name" in
             VM_TYPE)
                 for k in ${(k)VM_TYPE}; do echo "$k"; done
@@ -594,21 +576,7 @@ _require_shell() {
 _declare_global() {
     local var_name="$1"
     local value="${2:-}"
-    
-    if _is_zsh; then
-        eval "typeset -g $var_name=\"\$value\""
-    elif _is_bash; then
-        local major
-        major=$(_bash_version_major)
-        if [ "$major" -ge 4 ]; then
-            eval "declare -g $var_name=\"\$value\""
-        else
-            # bash 3.x: Just assign (will be global if not in function)
-            eval "$var_name=\"\$value\""
-        fi
-    else
-        eval "$var_name=\"\$value\""
-    fi
+    eval "typeset -g $var_name=\"\$value\""
     return 0
 }
 
@@ -618,21 +586,7 @@ _declare_global() {
 # Example: _declare_global_array "MY_ARRAY"
 _declare_global_array() {
     local array_name="$1"
-    
-    if _is_zsh; then
-        eval "typeset -ga $array_name"
-    elif _is_bash; then
-        local major
-        major=$(_bash_version_major)
-        if [ "$major" -ge 4 ]; then
-            eval "declare -ga $array_name"
-        else
-            # bash 3.x: Just initialize as array
-            eval "$array_name=()"
-        fi
-    else
-        eval "$array_name=()"
-    fi
+    eval "typeset -ga $array_name"
     return 0
 }
 
@@ -654,11 +608,7 @@ _declare_global_assoc() {
 # Returns: 0 on success
 # Example: _enable_nullglob
 _enable_nullglob() {
-    if _is_zsh; then
-        setopt NULL_GLOB
-    elif _is_bash; then
-        shopt -s nullglob
-    fi
+    setopt NULL_GLOB
     return 0
 }
 
@@ -667,11 +617,7 @@ _enable_nullglob() {
 # Returns: 0 on success
 # Example: _disable_nullglob
 _disable_nullglob() {
-    if _is_zsh; then
-        unsetopt NULL_GLOB
-    elif _is_bash; then
-        shopt -u nullglob
-    fi
+    unsetopt NULL_GLOB
     return 0
 }
 
@@ -683,32 +629,14 @@ _disable_nullglob() {
 # Returns: ISO 8601 formatted timestamp
 # Example: timestamp=$(_date_iso8601)
 _date_iso8601() {
-    if _is_zsh; then
-        # zsh: Use strftime
-        print -P "%D{%Y-%m-%dT%H:%M:%S%z}"
-    elif _is_bash; then
-        # bash: Use date command
-        date +%Y-%m-%dT%H:%M:%S%z
-    else
-        # Fallback
-        date +%Y-%m-%dT%H:%M:%S%z 2>/dev/null || echo "$(date +%Y-%m-%dT%H:%M:%S)Z"
-    fi
+    print -P "%D{%Y-%m-%dT%H:%M:%S%z}"
 }
 
 # _date_epoch - Get current epoch time in seconds
 # Returns: Unix timestamp
 # Example: epoch=$(_date_epoch)
 _date_epoch() {
-    if _is_zsh; then
-        # zsh: Use EPOCHSECONDS
-        print $EPOCHSECONDS
-    elif _is_bash; then
-        # bash: Use date +%s
-        date +%s
-    else
-        # Fallback
-        date +%s 2>/dev/null || echo "0"
-    fi
+    print $EPOCHSECONDS
 }
 
 # Export functions for VDE libraries
