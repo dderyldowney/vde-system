@@ -22,7 +22,7 @@ from pathlib import Path
 
 from behave import given, then, when
 
-from tests.features.steps.common_steps import VDE_ROOT, run_vde_command
+from common_steps import VDE_ROOT, run_vde_command
 
 # =============================================================================
 # GIVEN Steps - Error Setup
