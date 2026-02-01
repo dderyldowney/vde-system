@@ -231,15 +231,16 @@ fi
 # Start Mode -- Just start agent and load VDE key
 # ==============================================================================
 if [[ "$ACTION" == "start" ]]; then
-    echo ""
-    echo "Starting SSH agent and loading VDE key..."
-    echo ""
-
     # Start agent if not running
     if ssh_agent_is_running; then
         echo "SSH agent already running"
+        echo "export SSH_AUTH_SOCK='$SSH_AUTH_SOCK'"
+        echo "export SSH_AGENT_PID='$SSH_AGENT_PID'"
     else
-        eval "$(ssh-agent -s)" >/dev/null 2>&1
+        # Output eval-able commands for ssh-agent
+        echo "SSH_AUTH_SOCK=$(ssh-agent -s | grep -o 'SSH_AUTH_SOCK=[^;]*' | cut -d= -f2)"
+        echo "SSH_AGENT_PID=$(ssh-agent -s | grep -o 'SSH_AGENT_PID=[0-9]*' | cut -d= -f2)"
+        eval $(ssh-agent -s >/dev/null 2>&1)
         export SSH_AUTH_SOCK
         export SSH_AGENT_PID
         echo "✓ SSH agent started"
@@ -260,6 +261,9 @@ if [[ "$ACTION" == "start" ]]; then
 
     echo ""
     echo "$keys_loaded key(s) loaded into SSH agent"
+    echo ""
+    echo "To use in current shell, run:"
+    echo "  eval \$(vde ssh-setup start)"
     exit 0
 fi
 
