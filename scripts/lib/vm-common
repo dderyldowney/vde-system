@@ -2347,8 +2347,9 @@ generate_vm_ssh_config() {
     log_info "Generating VM-to-VM SSH config entries..."
 
     # Get all VMs
-    local vms
-    vms=$(get_all_vms)
+    # Use array assignment for proper zsh word splitting
+    local -a vms
+    vms=($(get_all_vms))
 
     local vm
     for vm in $vms; do

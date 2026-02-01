@@ -1,4 +1,5 @@
 # Shellcheck configuration for VDE scripts
+# This project uses zsh only - sh/bash scripts are forbidden
 
 # Source scripts - can't follow non-constant or dynamic sources
 exclude=SC1090
@@ -10,3 +11,7 @@ exclude=SC2034
 # Allow Zsh-specific features
 exclude=SC2039  # In POSIX sh
 exclude=SC3043  # In POSIX sh
+
+# Note: ShellCheck doesn't natively support zsh.
+# SC5001 (require zsh shebang) would be ideal but isn't available.
+# Project-wide enforcement is handled via STYLE_GUIDE.md and code review.

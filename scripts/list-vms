@@ -93,19 +93,18 @@ display_vm() {
         local status_color=""
 
         if vm_exists "$name"; then
-            marker=" [CREATED]"
-            if [[ "$SHOW_CREATED" == "true" ]]; then
-                # Get running status
-                local compose_file="$CONFIGS_DIR/$name/docker-compose.yml"
-                if [[ -f "$compose_file" ]]; then
-                    local running
-                    running=$(docker-compose -f "$compose_file" ps --services --filter "status=running" 2>/dev/null | wc -l)
-                    if [[ "$running" -gt 0 ]]; then
-                        marker=" [RUNNING: $running]"
-                    else
-                        marker=" [STOPPED]"
-                    fi
+            # Check running status by default
+            local compose_file="$CONFIGS_DIR/$name/docker-compose.yml"
+            if [[ -f "$compose_file" ]]; then
+                local running
+                running=$(docker-compose -f "$compose_file" ps --services --filter "status=running" 2>/dev/null | wc -l)
+                if [[ "$running" -gt 0 ]]; then
+                    marker=" [RUNNING]"
+                else
+                    marker=" [STOPPED]"
                 fi
+            else
+                marker=" [CREATED]"
             fi
         fi
 

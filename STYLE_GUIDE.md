@@ -7,7 +7,16 @@ Coding standards and style guidelines for the VDE (Virtual Development Environme
 ### Language
 - **All shell scripts must use zsh** (`#!/usr/bin/env zsh`)
 - Zsh version: 5.0 or later required
+- **FORBIDDEN**: `/bin/sh` and `/usr/bin/env sh` are not allowed in this project
+  - Using sh-compatible shebangs will result in immediate build failure
+  - This project is zsh-only; bash/sh scripts will not be accepted
 - Do not use bash/sh for new scripts
+
+### Project-Wide Shell Requirement
+**Zsh is the official and only shell of this project.**
+- All scripts must begin with `#!/usr/bin/env zsh` or `#!/bin/zsh`
+- ShellCheck configuration must target zsh (SC5001)
+- Any contribution using sh-compatible shebangs will be rejected
 
 ### File Structure
 ```zsh

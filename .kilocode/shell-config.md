@@ -2,33 +2,38 @@
 
 ## Shell Paths for VDE Project
 
-This project uses the following shell interpreters:
+This project uses **zsh exclusively**. `/bin/sh` and `/usr/bin/env sh` are forbidden.
 
 | Shell | Path | Version Notes |
 |-------|------|---------------|
-| bash | `/usr/local/bin/bash` | Bash 4.x or later required (bash 3.x is NOT supported) |
 | zsh | `/bin/zsh` | Use this path explicitly when running zsh scripts |
+| bash | `/usr/local/bin/bash` | NOT SUPPORTED - zsh only |
 
 ## Shell Version Requirements
 
-- **bash**: Version 4.x or later is required. Bash 3.x is NOT supported.
-- **zsh**: Version 5.x recommended (zsh 4.x may work but not tested).
+- **zsh**: Version 5.0 or later required (5.x recommended).
+- **bash**: NOT SUPPORTED - this is a zsh-only project.
 
 ## Script Shebangs
 
-All scripts should use the appropriate shebang:
+**All scripts MUST use zsh:**
 
-- For bash scripts: `#!/usr/local/bin/bash`
-- For zsh scripts: `#!/bin/zsh`
+- For zsh scripts: `#!/usr/bin/env zsh` or `#!/bin/zsh`
+- **FORBIDDEN**: `#!/bin/sh`, `#!/usr/bin/env sh`, `#!/bin/bash`
+
+## Project Standards
+
+See [STYLE_GUIDE.md](../../STYLE_GUIDE.md) for complete coding standards including:
+- Zsh-only requirement (Section: Shell Scripting Standards)
+- Shell prohibition policy
+- Code review requirements
 
 ## Running Tests
 
-When running tests, ensure the correct shell interpreter is used:
-
 ```bash
-# For bash unit tests
-/usr/local/bin/bash tests/unit/vm-common.test.sh
-
-# For zsh unit tests (if applicable)
+# For zsh unit tests
 /bin/zsh tests/unit/vde-shell-compat.test.sh
+
+# Verify zsh shebang compliance
+zsh ./scripts/check-zsh-shebang.zsh
 ```
