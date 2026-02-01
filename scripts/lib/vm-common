@@ -1891,6 +1891,10 @@ generate_ssh_config_entry() {
     local identity_file="${4:-$(get_ssh_identity_file)}"
 
     # Convert absolute path to tilde-relative path for portability using zsh
+    # Supports:
+    #   - Linux native: /home/<user>/<path>
+    #   - WSL2: /home/<user>/<path>
+    #   - macOS: /Users/<user>/<path>
     # Pattern: /home/<user>/<path> or /Users/<user>/<path> → ~/<path>
     local portable_identity="$identity_file"
     if [[ "$portable_identity" == /home/* ]] || [[ "$portable_identity" == /Users/* ]]; then
