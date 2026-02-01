@@ -13,6 +13,10 @@ BEHAVE_CMD="/Users/dderyldowney/Library/Python/3.9/bin/behave"
 mkdir -p "$LOG_DIR"
 declare -A phase_results
 
+# Setup SSH agent for tests (required for ssh-agent tests)
+echo "=== Setting up SSH Agent ==="
+source tests/setup-ssh-agent.sh
+
 # Phase 1: Docker-free tests
 echo "=== Phase 1: Docker-free BDD Tests ==="
 if (cd tests/features && $BEHAVE_CMD docker-free/ --format json -o ../behave-results-docker-free.json) \
@@ -84,3 +88,8 @@ for result in "${phase_results[@]}"; do
         exit 1
     fi
 done
+
+# Cleanup SSH agent
+echo ""
+echo "=== Cleaning up SSH Agent ==="
+source tests/setup-ssh-agent.sh --cleanup
