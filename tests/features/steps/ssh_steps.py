@@ -23,7 +23,6 @@ if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 from ssh_agent_steps import *  # @given, @when, @then for agent operations
 from ssh_config_steps import *  # @given, @when, @then for config operations
-from ssh_git_steps import *  # @given, @when, @then for Git operations
 
 # Import all step definitions from specialized modules
 from ssh_helpers import *  # SSH helper functions

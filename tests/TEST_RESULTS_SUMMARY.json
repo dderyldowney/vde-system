@@ -1,5 +1,5 @@
 {
-  "timestamp": "20260201-022638",
+  "timestamp": "20260201-182411",
   "phases": {
     "docker_free": "FAIL",
     "unit": "PASS",
@@ -7,9 +7,9 @@
     "docker_required": "FAIL"
   },
   "logs": {
-    "docker_free": "test-logs/docker-free-20260201-022638.log",
-    "unit": "test-logs/unit-20260201-022638.log",
-    "integration": "test-logs/integration-20260201-022638.log",
-    "docker_required": "test-logs/docker-required-20260201-022638.log"
+    "docker_free": "test-logs/docker-free-20260201-182411.log",
+    "unit": "test-logs/unit-20260201-182411.log",
+    "integration": "test-logs/integration-20260201-182411.log",
+    "docker_required": "test-logs/docker-required-20260201-182411.log"
   }
 }

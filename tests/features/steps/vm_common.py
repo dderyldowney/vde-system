@@ -39,7 +39,7 @@ def docker_ps():
         bool: True if docker command available, False otherwise
     """
     try:
-        subprocess.run(['docker', '--version'], check=True, capture_output=True, stderr=subprocess.PIPE)
+        subprocess.run(['docker', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return True
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
@@ -57,7 +57,7 @@ def container_exists(container_name):
         result = subprocess.run(
             ['docker', 'ps', '-q', '-f', f'name={container_name}'],
             check=True,
-            capture_output=True,
+            stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
         return result.returncode == 0

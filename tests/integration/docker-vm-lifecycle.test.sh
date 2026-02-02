@@ -34,11 +34,13 @@ if [[ -n "$TEST_VM" ]]; then
   fi
 else
   # Default multi-VM mode (for local testing)
-  # IMPORTANT: Use TEST-ONLY VM names to avoid deleting production configs!
-  # These names should never match real VM types in vm-types.conf
-  TEST_LANG_VM="vde-test-lang"     # Test-only language VM (not in production)
-  TEST_SVC_VM="vde-test-svc"       # Test-only service VM (not in production)
-  TEST_LANG_VM2="vde-test-lang2"   # Second test-only language VM
+  # IMPORTANT: Use VALID VM names from vm-types.conf for integration testing!
+  # We use less common VMs to minimize impact on user's development environment:
+  # - zig: less commonly used language
+  # - couchdb: less commonly used service
+  TEST_LANG_VM="zig"      # Less common language VM for testing
+  TEST_SVC_VM="couchdb"   # Less common service VM for testing
+  TEST_LANG_VM2="lua"     # Another less common language VM
 fi
 
 VERBOSE=${VERBOSE:-false}

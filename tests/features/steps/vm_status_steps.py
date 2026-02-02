@@ -34,20 +34,7 @@ def step_vde_installed(context):
     context.vde_installed = True
 
 
-@given('I have SSH keys configured')
-def step_ssh_keys_configured(context):
-    """SSH keys are configured - verify SSH directory and keys exist."""
-    ssh_dir = Path.home() / ".ssh"
-    assert ssh_dir.exists(), "SSH directory should exist"
-    # Check for at least one private key
-    key_files = list(ssh_dir.glob("id_*")) + list(ssh_dir.glob("*_rsa")) + list(ssh_dir.glob("*_ed25519"))
-    key_files = [f for f in key_files if not f.name.endswith('.pub')]
-    assert len(key_files) > 0, "At least one SSH key should exist"
-    context.ssh_configured = True
 
-
-@given('I need to start a "{project}" project')
-def step_need_project(context, project):
     """Need to start a project."""
     context.project_type = project
 

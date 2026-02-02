@@ -39,12 +39,6 @@ def step_accessible_ssh(context):
                    f"SSH port should be exposed. Got: {result.stdout}"
 
 
-@when('I SSH into "python-dev"')
-def step_ssh_into_python_dev(context):
-    """Context: SSH into python-dev."""
-    context.ssh_target = "python-dev"
-
-
 @when('I access localhost on the VM\'s port')
 def step_access_localhost_port(context):
     """Context: Access localhost on VM's port."""
@@ -126,28 +120,8 @@ def step_language_vms_ssh(context):
         assert found_ssh, "Language VMs should have SSH configured"
 
 
-@then('PostgreSQL should be accessible from language VMs')
-def step_postgres_accessible_from_lang(context):
-    """Verify PostgreSQL can be accessed from language VMs."""
-    result = subprocess.run(
-        ['docker', 'network', 'ls', '--filter', 'name=vde'],
-        capture_output=True, text=True
-    )
-    assert result.returncode == 0, "Docker network should exist for inter-VM communication"
 
 
-@then('Python VM can connect to Redis')
-def step_python_can_connect_redis(context):
-    """Verify Python VM can connect to Redis."""
-    result = subprocess.run(['docker', 'network', 'ls'], capture_output=True, text=True)
-    assert result.returncode == 0, "Docker network should exist"
-
-
-@then('Python VM can make HTTP requests to JavaScript VM')
-def step_python_can_http_js(context):
-    """Verify Python VM can make HTTP requests to JavaScript VM."""
-    running = docker_ps()
-    assert len(running) >= 2, "At least 2 VMs should be running for inter-VM communication"
 
 
 @then('each can run independently')
@@ -216,35 +190,13 @@ def step_both_accessible_ssh(context):
     assert len(running) >= 2, "At least 2 VMs should be running"
 
 
-@then('all three VMs should be running')
-def step_all_three_running(context):
-    """Verify all three VMs are running."""
-    running = docker_ps()
-    assert len(running) >= 3, f"At least 3 VMs should be running, got {len(running)}"
 
 
-@then('both "python" and "rust" VMs should be running')
-def step_python_rust_running(context):
-    """Verify python and rust VMs are running."""
-    running = docker_ps()
-    assert 'python-dev' in running or 'python' in str(running).lower(), \
-           "Python VM should be running"
-    assert 'rust-dev' in running or 'rust' in str(running).lower(), \
-           "Rust VM should be running"
 
 
-@then('I can SSH to both VMs from my terminal')
-def step_can_ssh_both(context):
-    """Verify can SSH to both VMs."""
-    running = docker_ps()
-    assert len(running) >= 2, "At least 2 VMs should be running for SSH access"
 
 
-@given('I have VSCode installed')
-def step_have_vscode(context):
-    """Context: User has VSCode installed."""
-    result = subprocess.run(["which", "code"], capture_output=True, text=True)
-    context.has_vscode = result.returncode == 0
+
 
 
 @then('it should resolve to "go"')

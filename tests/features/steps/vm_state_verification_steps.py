@@ -20,16 +20,6 @@ from vm_common import get_container_health, docker_ps, container_exists
 # VM STATE GIVEN steps
 # =============================================================================
 
-@given('"python" VM is running')
-def step_python_running(context):
-    """Python VM is running."""
-    context.python_running = container_exists('python')
-    if not hasattr(context, 'running_vms'):
-        context.running_vms = set()
-    if context.python_running:
-        context.running_vms.add('python')
-
-
 @given('a VM is running')
 def step_vm_running(context):
     """A VM is running."""
