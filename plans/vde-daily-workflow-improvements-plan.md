@@ -16,39 +16,19 @@ This plan addresses issues identified during VDE daily workflow testing. Four is
 
 ## Issues Identified
 
-### Priority 1: `vde status` doesn't show running VMs
+### Priority 1: `vde status` doesn't show running VMs - ✅ DONE
 
-**Severity:** HIGH  
-**User Impact:** Users cannot see which VMs are actually running
+**Status:** Already implemented in `scripts/list-vms` (lines 95-109)
 
-**Current Behavior:**
+**Verification:**
 ```
+$ ./scripts/list-vms
 Predefined VM Types:
-  python               Python [CREATED]
-  postgres             PostgreSQL [CREATED]
-```
-Shows "[CREATED]" but doesn't indicate if running.
 
-**Expected Behavior:**
-```
-Predefined VM Types:
-  python               Python [RUNNING]
-  postgres             PostgreSQL [RUNNING]
-```
-
-**Root Cause:** `scripts/list-vms` only checks for compose file existence, not Docker container status.
-
-**Files to Modify:**
-- `scripts/list-vms` - Add running status check
-
-**Implementation:**
-```zsh
-# Check if VM is running using is_vm_running() function
-if is_vm_running "$vm"; then
-    status="[RUNNING]"
-else
-    status="[CREATED]"
-fi
+Language VMs:
+  asm                  Assembler [RUNNING]
+  c                    C [RUNNING]
+  cpp                  C++ [RUNNING]
 ```
 
 ---
