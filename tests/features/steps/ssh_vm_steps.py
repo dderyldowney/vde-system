@@ -52,23 +52,53 @@ def step_ssh_keys_configured_on_host(context):
 
 @given('I create a Python VM for my API')
 def step_create_python_vm_for_api(context):
-    """Create a Python VM for API development."""
+    """Create a Python VM for API development - actually create or verify VM exists."""
+    from vm_common import run_vde_command, compose_file_exists
+    from config import VDE_ROOT
+    
     context.api_vm = "python"
-    context.python_vm_created = True
+    
+    # Actually create the VM if it doesn't exist
+    if not compose_file_exists("python"):
+        result = run_vde_command("add python --type lang --display-name Python --install 'pip install --upgrade pip'", timeout=30)
+    
+    # Verify VM config exists
+    vm_config = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    context.python_vm_created = vm_config.exists()
 
 
 @given('I create a PostgreSQL VM for my database')
 def step_create_postgres_vm_for_db(context):
-    """Create a PostgreSQL VM for database."""
+    """Create a PostgreSQL VM for database - actually create or verify VM exists."""
+    from vm_common import run_vde_command, compose_file_exists
+    from config import VDE_ROOT
+    
     context.db_vm = "postgres"
-    context.postgres_vm_created = True
+    
+    # Actually create the VM if it doesn't exist
+    if not compose_file_exists("postgres"):
+        result = run_vde_command("add postgres --type service --display-name PostgreSQL", timeout=30)
+    
+    # Verify VM config exists
+    vm_config = VDE_ROOT / "configs" / "docker" / "postgres" / "docker-compose.yml"
+    context.postgres_vm_created = vm_config.exists()
 
 
 @given('I create a Redis VM for caching')
 def step_create_redis_vm_for_cache(context):
-    """Create a Redis VM for caching."""
+    """Create a Redis VM for caching - actually create or verify VM exists."""
+    from vm_common import run_vde_command, compose_file_exists
+    from config import VDE_ROOT
+    
     context.cache_vm = "redis"
-    context.redis_vm_created = True
+    
+    # Actually create the VM if it doesn't exist
+    if not compose_file_exists("redis"):
+        result = run_vde_command("add redis --type service --display-name Redis", timeout=30)
+    
+    # Verify VM config exists
+    vm_config = VDE_ROOT / "configs" / "docker" / "redis" / "docker-compose.yml"
+    context.redis_vm_created = vm_config.exists()
 
 
 @given('I start all VMs')
@@ -159,10 +189,20 @@ def step_docker_installed(context):
 
 @given('I have a Go VM running')
 def step_go_vm_running(context):
-    """Go VM is running or command was attempted."""
+    """Go VM is running - verify with actual container check."""
+    from vm_common import run_vde_command, container_exists
+    from config import VDE_ROOT
+    
     context.current_vm = "go"
-    # Check if container exists, otherwise just set context for command execution
+    
+    # Check if container exists, try to start if needed
     go_exists = container_exists("go-dev")
+    
+    if not go_exists:
+        # Try to start the Go VM
+        result = run_vde_command("start go", timeout=60)
+        go_exists = result.returncode == 0 and container_exists("go-dev")
+    
     context.go_vm_running = go_exists
     
     # Set vm_name for downstream steps
@@ -172,10 +212,20 @@ def step_go_vm_running(context):
 
 @given('I have a Rust VM running')
 def step_rust_vm_running(context):
-    """Rust VM is running or command was attempted."""
+    """Rust VM is running - verify with actual container check."""
+    from vm_common import run_vde_command, container_exists
+    from config import VDE_ROOT
+    
     context.current_vm = "rust"
-    # Check if container exists, otherwise just set context for command execution
+    
+    # Check if container exists, try to start if needed
     rust_exists = container_exists("rust-dev")
+    
+    if not rust_exists:
+        # Try to start the Rust VM
+        result = run_vde_command("start rust", timeout=60)
+        rust_exists = result.returncode == 0 and container_exists("rust-dev")
+    
     context.rust_vm_running = rust_exists
     
     # Set vm_name for downstream steps
