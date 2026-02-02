@@ -27,9 +27,9 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 |----------|----------|-------|--------|------------|
 | P1 | **COMPLETED** | vde-remediation-plan.md (Stage 1) | ✅ Done | 5 security tasks |
 | P2 | **COMPLETED** | vde-remediation-plan.md (Stage 2) | ✅ Done | 5 code quality tasks |
-| P3 | User Bugs | vde-daily-workflow-improvements-plan.md | ⏳ Next | 2 high-priority fixes |
-| P4 | Test Remediation | docker-required-test-remediation-plan.md | Pending | 13 tasks, 300+ violations |
-| P5 | BDD Gaps | daily-workflow-test-remediation-plan.md | Pending | 1274 undefined steps |
+| P3 | User Bugs | vde-daily-workflow-improvements-plan.md | ✅ Done | 2 high-priority fixes |
+| P4 | Test Remediation | docker-required-test-remediation-plan.md | ✅ Done | 13 tasks, 300+ violations |
+| P5 | BDD Gaps | daily-workflow-test-remediation-plan.md | ⏳ In Progress | ~129 steps (deferred) |
 | P6 | Code Quality | vde-home-path-consistency-plan.md | Pending | Portability improvements |
 | P7 | Documentation | vde-codebase-compliance-analysis.md | Pending | Analysis only |
 | P8 | MCP Config | mcp-*.md (4 files) | Pending | Configuration docs |
@@ -67,7 +67,7 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 | 3.1 | Fix `vde status` RUNNING display | vde-daily-workflow-improvements-plan.md | ✅ Done |
 | 3.2 | Add service VM SSH config | vde-daily-workflow-improvements-plan.md | ✅ Done |
 
-### Phase 3: Test Remediation (P3) - IN PROGRESS
+### Phase 3: Test Remediation (P3) - COMPLETED
 **Duration:** 2-3 sessions  
 **Dependencies:** Phase 1 complete (for Docker verification helpers)
 
@@ -77,14 +77,15 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 | 3.2 | Core VM Operations | docker-required-test-remediation-plan.md | ✅ Done |
 | 3.3 | SSH & Networking | docker-required-test-remediation-plan.md | ✅ Done |
 
-### Phase 4: BDD Step Definitions (P4)
+### Phase 4: BDD Step Definitions (P4) - IN PROGRESS
 **Duration:** 2-3 sessions  
 **Dependencies:** Phase 3 partial
 
 | Order | Task | Plan Reference | Status |
 |-------|------|----------------|--------|
-| 4.1 | Docker-free undefined steps | daily-workflow-test-remediation-plan.md | ⏳ Next |
-| 4.2 | Docker-required undefined steps | daily-workflow-test-remediation-plan.md | Pending |
+| 4.1 | Docker-free undefined steps | docker-free-undefined-steps-remediation-plan.md | ✅ Done |
+| 4.2 | VDE-Parser BDD Tests | daily-workflow-test-remediation-plan.md | ✅ Done |
+| 4.3 | Docker-required undefined steps | daily-workflow-test-remediation-plan.md | ⏳ Deferred |
 
 ### Phase 5: Code Quality (P5)
 **Duration:** 1 session  
@@ -126,11 +127,12 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 
 ## Success Criteria
 
-- [ ] Zero security vulnerabilities (Stage 1 complete)
-- [ ] `vde status` shows RUNNING for active VMs
-- [ ] `vde ssh postgres` connects successfully
-- [ ] All fake test patterns eliminated
-- [ ] BDD undefined steps reduced to <10%
+- [x] Zero security vulnerabilities (Stage 1 complete)
+- [x] `vde status` shows RUNNING for active VMs
+- [x] `vde ssh postgres` connects successfully
+- [x] All fake test patterns eliminated (BDD steps)
+- [x] BDD undefined steps reduced to 0 (docker-free)
+- [ ] Docker-required BDD steps (~129 undefined) - Deferred
 - [ ] All tests passing (unit, integration, BDD)
 
 ---

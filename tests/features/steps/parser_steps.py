@@ -197,7 +197,9 @@ def step_parse_input(context, input_text):
             parse_input = parse_input.replace(alias, canonical)
 
     # Call real vde-parser functions
-    context.detected_intent = _get_real_intent(parse_input)
+    detected_intent = _get_real_intent(parse_input)
+    context.detected_intent = detected_intent
+    context.nl_intent = detected_intent  # For natural_language_steps assertions
 
     # Get VM names from real parser
     vm_names = _get_real_vm_names(parse_input)
@@ -206,9 +208,22 @@ def step_parse_input(context, input_text):
         filter_val = _get_real_filter(parse_input)
         if filter_val == 'lang':
             context.detected_vms = 'all_languages'
+            context.nl_vms = 'all_languages'
         elif filter_val == 'svc':
             context.detected_vms = 'all_services'
+            context.nl_vms = 'all_services'
         else:
             context.detected_vms = 'all'
+            context.nl_vms = 'all'
     elif vm_names:
         context.detected_vms = vm_names
+        context.nl_vms = vm_names  # For natural_language_steps assertions
+
+    # Get filter from real parser
+    context.detected_filter = _get_real_filter(parse_input)
+    context.nl_filter = context.detected_filter  # For natural_language_steps assertions
+
+    # Get flags from real parser
+    flags = _get_real_flags(parse_input)
+    context.detected_flags = flags
+    context.nl_flags = flags  # For natural_language_steps assertions
