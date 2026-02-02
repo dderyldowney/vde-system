@@ -67,15 +67,15 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 | 3.1 | Fix `vde status` RUNNING display | vde-daily-workflow-improvements-plan.md | ✅ Done |
 | 3.2 | Add service VM SSH config | vde-daily-workflow-improvements-plan.md | ✅ Done |
 
-### Phase 3: Test Remediation (P3)
+### Phase 3: Test Remediation (P3) - IN PROGRESS
 **Duration:** 2-3 sessions  
 **Dependencies:** Phase 1 complete (for Docker verification helpers)
 
-| Order | Task | Plan Reference | Dependencies |
-|-------|------|----------------|--------------|
-| 3.1 | Infrastructure & Framework | docker-required-test-remediation-plan.md | Phase 1 |
-| 3.2 | Core VM Operations | docker-required-test-remediation-plan.md | 3.1 |
-| 3.3 | SSH & Networking | docker-required-test-remediation-plan.md | 3.1 |
+| Order | Task | Plan Reference | Status |
+|-------|------|----------------|--------|
+| 3.1 | Infrastructure & Framework | docker-required-test-remediation-plan.md | ✅ Done |
+| 3.2 | Core VM Operations | docker-required-test-remediation-plan.md | ⏳ Next |
+| 3.3 | SSH & Networking | docker-required-test-remediation-plan.md | Pending |
 
 ### Phase 4: BDD Step Definitions (P4)
 **Duration:** 2-3 sessions  
