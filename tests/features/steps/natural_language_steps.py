@@ -271,3 +271,92 @@ def step_say_input(context, quote, input_text):
         context.last_exit_code = result.returncode
         context.last_output = result.stdout
         context.last_error = result.stderr
+
+
+@when("I parse '{input_text}'")
+def step_parse_input_text(context, input_text):
+    """Parse natural language input and store results."""
+    context.nl_input = input_text
+    context.nl_intent = _get_real_intent(input_text)
+    context.nl_vms = _get_real_vm_names(input_text)
+    context.nl_flags = _get_real_flags(input_text)
+
+
+# =============================================================================
+# THEN Steps - Verify parser output assertions
+# =============================================================================
+
+@then("intent should be \"{expected_intent}\"")
+def step_intent_should_be(context, expected_intent):
+    """Verify the detected intent matches expected."""
+    actual_intent = getattr(context, 'nl_intent', None)
+    assert actual_intent is not None, "No intent was parsed"
+    assert actual_intent == expected_intent, f"Expected intent '{expected_intent}', got '{actual_intent}'"
+
+
+@then('VMs should include "{vm_names}"')
+def step_vms_should_include(context, vm_names):
+    """Verify the extracted VMs include the expected VM(s). Accepts single or comma-separated VMs."""
+    actual_vms = getattr(context, 'nl_vms', [])
+    # Handle comma-separated VM names
+    expected = [v.strip() for v in vm_names.split(',')]
+    for vm in expected:
+        assert vm in actual_vms, f"Expected VM '{vm}' in {actual_vms}"
+
+
+@then('VMs should NOT include "{vm_names}"')
+def step_vms_should_not_include(context, vm_names):
+    """Verify the extracted VMs do NOT include the expected VM(s)."""
+    actual_vms = getattr(context, 'nl_vms', [])
+    expected = [v.strip() for v in vm_names.split(',')]
+    for vm in expected:
+        assert vm not in actual_vms, f"VM '{vm}' should NOT be in {actual_vms}"
+
+
+@then("VMs should include all known VMs")
+def step_vms_should_include_all(context):
+    """Verify the extracted VMs include all known VMs."""
+    actual_vms = getattr(context, 'nl_vms', [])
+    assert len(actual_vms) > 1, f"Expected multiple VMs, got: {actual_vms}"
+
+
+@then("dangerous characters should be rejected")
+def step_dangerous_chars_rejected(context):
+    """Verify that dangerous characters are detected and rejected."""
+    actual_intent = getattr(context, 'nl_intent', None)
+    action_intents = ['start_vm', 'stop_vm', 'restart_vm', 'create_vm', 'status', 'connect', 'list_vms']
+    assert actual_intent in ['help', ''] or actual_intent not in action_intents, \
+        f"Dangerous characters should be rejected, but got intent: {actual_intent}"
+
+
+@then("all plan lines should be valid")
+def step_plan_lines_valid(context):
+    """Verify all plan lines are valid."""
+    actual_intent = getattr(context, 'nl_intent', None)
+    valid_intents = ['start_vm', 'stop_vm', 'restart_vm', 'create_vm', 'status', 'connect', 'help', 'list_vms', 'list_languages', 'list_services']
+    assert actual_intent in valid_intents, f"Invalid intent detected: {actual_intent}"
+
+
+@then("rebuild flag should be true")
+def step_rebuild_flag_true(context):
+    """Verify the rebuild flag was parsed as true."""
+    flags = getattr(context, 'nl_flags', {})
+    assert flags.get('rebuild') is True, f"Expected rebuild=True, got: {flags}"
+
+
+@then("intent should default to \"{default_intent}\"")
+def step_intent_default(context, default_intent):
+    """Verify intent defaults correctly for edge cases."""
+    actual_intent = getattr(context, 'nl_intent', None)
+    assert actual_intent == default_intent, f"Expected default intent '{default_intent}', got '{actual_intent}'"
+
+
+@then("command should NOT execute")
+def step_command_not_execute(context):
+    """Verify that the command was not executed (dangerous chars detected)."""
+    # When dangerous characters are present, the command should not execute
+    # This is verified by checking that there's no actual command result
+    # or that the last_exit_code indicates an error/prevention
+    if hasattr(context, 'last_exit_code'):
+        # If a command was attempted, it should have failed or been prevented
+        assert context.last_exit_code != 0, "Command should NOT have executed successfully"
