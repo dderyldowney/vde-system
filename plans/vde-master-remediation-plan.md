@@ -30,9 +30,8 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 | P3 | User Bugs | vde-daily-workflow-improvements-plan.md | ✅ Done | 2 high-priority fixes |
 | P4 | Test Remediation | docker-required-test-remediation-plan.md | ✅ Done | 13 tasks, 300+ violations |
 | P5 | BDD Gaps | daily-workflow-test-remediation-plan.md | ⏳ In Progress | ~129 steps (deferred) |
-| P6 | Code Quality | vde-home-path-consistency-plan.md | Pending | Portability improvements |
-| P7 | Documentation | vde-codebase-compliance-analysis.md | Pending | Analysis only |
-| P8 | MCP Config | mcp-*.md (4 files) | Pending | Configuration docs |
+| P6 | Documentation | vde-codebase-compliance-analysis.md | ✅ Done | Analysis complete |
+| P7 | MCP Config | mcp-*.md (4 files) | Pending | Configuration docs |
 
 ---
 
@@ -95,13 +94,13 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 |-------|------|----------------|--------|
 | 5.1 | $HOME path consistency | vde-home-path-consistency-plan.md | ✅ Done |
 
-### Phase 6: Documentation (P6)
+### Phase 6: Documentation (P6) - ✅ COMPLETED
 **Duration:** Review only  
 **Dependencies:** None
 
-| Order | Task | Plan Reference | Dependencies |
-|-------|------|----------------|--------------|
-| 6.1 | Review compliance analysis | vde-codebase-compliance-analysis.md | None |
+| Order | Task | Plan Reference | Status |
+|-------|------|----------------|--------|
+| 6.1 | Review compliance analysis | vde-codebase-compliance-analysis.md | ✅ Done |
 
 ### Phase 7: MCP Configuration (P7)
 **Duration:** 1 session  
