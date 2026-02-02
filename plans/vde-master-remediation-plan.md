@@ -90,9 +90,9 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 **Duration:** 1 session  
 **Dependencies:** None
 
-| Order | Task | Plan Reference | Dependencies |
-|-------|------|----------------|--------------|
-| 5.1 | $HOME path consistency | vde-home-path-consistency-plan.md | None |
+| Order | Task | Plan Reference | Status |
+|-------|------|----------------|--------|
+| 5.1 | $HOME path consistency | vde-home-path-consistency-plan.md | ✅ Done |
 
 ### Phase 6: Documentation (P6)
 **Duration:** Review only  
