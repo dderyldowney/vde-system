@@ -194,10 +194,12 @@ def step_get_all_keys(context):
 
 @then('all keys should be returned')
 def step_all_keys_returned(context):
-    """All keys should be returned."""
-    expected_keys = getattr(context, 'expected_keys', [])
+    """All keys should be returned - verify keys are present regardless of order."""
     actual_keys = getattr(context, 'all_keys', [])
-    assert set(actual_keys) == set(expected_keys), f"Expected keys {expected_keys}, got {actual_keys}"
+    # The Given step "associative array with keys 'foo', 'bar', 'baz'" sets these keys
+    expected = {'foo', 'bar', 'baz'}
+    actual = set(actual_keys)
+    assert actual == expected, f"Expected keys {expected}, got {actual}"
 
 
 @then('original key format should be preserved')

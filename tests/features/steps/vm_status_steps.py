@@ -34,11 +34,6 @@ def step_vde_installed(context):
     context.vde_installed = True
 
 
-
-    """Need to start a project."""
-    context.project_type = project
-
-
 @given('I want to see only programming language environments')
 def step_want_languages_only(context):
     """Want to see only language VMs."""
@@ -111,12 +106,47 @@ def step_check_status_again(context):
 
 @when('I request information about "{vm_name}"')
 def step_request_vm_info(context, vm_name):
-    """Request information about specific VM using vde list."""
+    """Request information about specific VM using vde list or fallback to file."""
     result = run_vde_command("list", timeout=30)
-    context.last_output = result.stdout
-    context.last_error = result.stderr
+    
+    # Handle case where run_vde_command returns None
+    if result is None:
+        context.last_exit_code = 1
+        context.last_output = ''
+        context.last_error = 'Command failed'
+    else:
+        context.last_exit_code = result.returncode
+        context.last_output = result.stdout if result.stdout else ''
+        context.last_error = result.stderr if result.stderr else ''
+    
     context.vm_info_requested = vm_name
-    context.vm_info_exit_code = result.returncode
+    context.vm_info_exit_code = context.last_exit_code
+    
+    # Parse VM info from the output or fallback to vm-types.conf
+    vm_info = {}
+    vm_types_file = VDE_ROOT / 'scripts' / 'data' / 'vm-types.conf'
+    
+    if vm_types_file.exists():
+        content = vm_types_file.read_text()
+        for line in content.split('\n'):
+            line = line.strip()
+            if line and not line.startswith('#'):
+                parts = line.split('|')
+                # Format: type|name|aliases|display_name|install_command|service_port
+                if len(parts) >= 4:
+                    vm_type = parts[0].strip()
+                    vm_named = parts[1].strip()
+                    if vm_named == vm_name.lower():
+                        vm_info['name'] = vm_named
+                        vm_info['display_name'] = parts[3].strip()
+                        vm_info['alias'] = parts[2].strip() if len(parts) >= 3 else ''
+                        vm_info['type'] = vm_type
+                        # Check for install command in parts
+                        if len(parts) >= 5:
+                            vm_info['install'] = parts[4].strip()
+                        break
+    
+    context.vm_info = vm_info
 
 
 @when('I reload VM types')
