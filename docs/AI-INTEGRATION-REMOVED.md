@@ -22,9 +22,9 @@ The following components were removed from the VDE codebase:
 - `docs/VDE-AI-HOWTO.md` - AI how-to guide
 
 ### Tests Removed
-- `tests/unit/test_vde_ai_api.sh` - AI API unit tests
-- `tests/integration/test_ai_api_integration.sh` - AI integration tests
-- `tests/integration/test_real_ai_api.sh` - Real AI API tests
+- `tests/unit/test_vde_ai_api.zsh` - AI API unit tests
+- `tests/integration/test_ai_api_integration.zsh` - AI integration tests
+- `tests/integration/test_real_ai_api.zsh` - Real AI API tests
 
 ---
 

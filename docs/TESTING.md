@@ -59,9 +59,9 @@ shfmt --version     # optional
 
 ### Note on Shell Checking
 The VDE codebase uses **zsh-specific syntax** that is not compatible with traditional shellcheck/shfmt tools:
-- **ShellCheck** does NOT support zsh - use `zsh -n script.sh` for syntax checking instead
+- **ShellCheck** does NOT support zsh - use `zsh -n script.zsh` for syntax checking instead
 - **shfmt** has limited zsh support - can be run locally for basic formatting but may not handle all zsh features
-- CI uses native `zsh -n` for syntax validation (skips test_integration_comprehensive.sh which uses valid multi-line arrays that zsh -n doesn't parse well)
+- CI uses native `zsh -n` for syntax validation (skips test_integration_comprehensive.zsh which uses valid multi-line arrays that zsh -n doesn't parse well)
 
 ## Code Coverage
 
@@ -92,16 +92,16 @@ make coverage-view
 ```
 tests/
 ├── unit/              # Unit tests for libraries
-│   ├── test_vm_common.sh
-│   ├── test_vde_parser.sh
-│   └── test_vde_commands.sh
+│   ├── test_vm_common.zsh
+│   ├── test_vde_parser.zsh
+│   └── test_vde_commands.zsh
 ├── integration/       # Integration tests
-│   ├── test_pattern_based_parsing.sh
-│   └── test_daily_usage_patterns.sh
+│   ├── test_pattern_based_parsing.zsh
+│   └── test_daily_usage_patterns.zsh
 ├── fixtures/          # Test data
 │   └── vm_types_minimal.conf
 └── lib/               # Test utilities
-    └── test_common.sh
+    └── test_common.zsh
 ```
 
 ## CI/CD Pipeline
@@ -156,10 +156,10 @@ cd ~/dev
 source scripts/lib/vm-common
 
 # Check test file permissions
-chmod +x tests/**/*.sh
+chmod +x tests/**/*.zsh
 
 # Run with verbose output
-./tests/unit/test_vm_common.sh -v
+./tests/unit/test_vm_common.zsh -v
 ```
 
 ### Docker Build Tests Failing
@@ -196,13 +196,13 @@ zsh -n scripts/lib/vm-common
 yamllint .github/workflows/vde-ci.yml
 
 # Run shfmt locally (optional - for basic formatting)
-shfmt -w scripts/**/*.sh tests/**/*.sh
+shfmt -w scripts/**/*.zsh tests/**/*.zsh
 ```
 
 ### Coverage Issues
 ```bash
 # Run coverage manually to see detailed output
-./scripts/coverage.sh all
+./scripts/coverage.zsh all
 
 # Check coverage report
 cat coverage/merged/index.html | grep -o 'covered"[^>]*>\\K[0-9.]+'
@@ -213,7 +213,7 @@ make coverage-view
 
 ## Test Utilities
 
-The `tests/lib/test_common.sh` file provides:
+The `tests/lib/test_common.zsh` file provides:
 
 ### Assertion Functions
 - `assert_equals expected actual message`
@@ -244,7 +244,7 @@ The GitHub Actions workflow (`.github/workflows/vde-ci.yml`) includes:
 
 ### 1. Linting Job
 - Runs `zsh -n` on all zsh scripts for syntax validation
-- Skips test_integration_comprehensive.sh (valid zsh but zsh -n doesn't handle multi-line arrays well)
+- Skips test_integration_comprehensive.zsh (valid zsh but zsh -n doesn't handle multi-line arrays well)
 - Validates YAML files with yamllint
 - Note: shfmt is NOT run in CI due to zsh compatibility issues
 

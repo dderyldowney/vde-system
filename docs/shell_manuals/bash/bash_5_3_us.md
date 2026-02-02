@@ -6549,7 +6549,7 @@ instead of checking $VISUAL and $EDITOR.
 28. Prompt expansion enables the posix PS1 and PS2 expansions of ‘!’ to the history
 number and ‘!!’ to ‘!’, and Bash performs parameter expansion on the values of PS1
 and PS2 regardless of the setting of the promptvars option.
-29. The default history file is ~/.sh_history (this is the default value the shell assigns to
+29. The default history file is ~/.zsh_history (this is the default value the shell assigns to
 $HISTFILE).
 30. The ‘!’ character does not introduce history expansion within a double-quoted string,
 even if the histexpand option is enabled.
@@ -8741,7 +8741,7 @@ sponding to the name of the command, the following default completion function w
 load completions dynamically:
 _completion_loader()
 {
-. "/etc/bash_completion.d/$1.sh" >/dev/null 2>&1 && return 124
+. "/etc/bash_completion.d/$1.zsh" >/dev/null 2>&1 && return 124
 }
 complete -D -F _completion_loader -o bashdefault -o default
 8.7 Programmable Completion Builtins

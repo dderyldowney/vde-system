@@ -160,7 +160,7 @@ vde create zig "apt-get update -y && apt-get install -y zig"
 vde create gradle \
     "apt-get update -y && apt-get install -y curl && \
      su devuser -c 'curl -s \"https://get.sdkman.io\" | bash' && \
-     su devuser -c 'source ~/.sdkman/bin/sdkman-init.sh && sdk install gradle'"
+     su devuser -c 'source ~/.sdkman/bin/sdkman-init.zsh && sdk install gradle'"
 
 # Using asdf (multi-language version manager)
 vde create terraform \
@@ -191,9 +191,9 @@ vde create rust \
 # Node.js via nvm
 vde create node \
     "apt-get update -y && apt-get install -y curl && \
-     su devuser -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash' && \
+     su devuser -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.zsh | bash' && \
      su devuser -c 'export NVM_DIR=\"\$HOME/.nvm\" && \
-                      [ -s \"\$NVM_DIR/nvm.sh\" ] && \\. \"\$NVM_DIR/nvm.sh\" && \
+                      [ -s \"\$NVM_DIR/nvm.zsh\" ] && \\. \"\$NVM_DIR/nvm.zsh\" && \
                       nvm install --lts'"
 ```
 

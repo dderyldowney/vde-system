@@ -840,7 +840,7 @@ Chapter 3: Roadmap
 2.4 The Zsh FAQ
 Zsh has a list of Frequently Asked Questions (FAQ), maintained by Peter Stephenson
 <pws@zsh.org>.
-It is regularly posted to the newsgroup comp.unix.shell and the
+It is regularly posted to the newsgroup comp.unix.zshell and the
 zsh-announce mailing list. The latest version can be found at any of the Zsh FTP sites,
 or at https://www.zsh.org/FAQ/.
 The contact address for FAQ-related matters is
@@ -1903,7 +1903,7 @@ If the MULTIOS option is set, the word after a redirection operator is also subj
 : > *
 will truncate all ﬁles in the current directory, assuming there’s at least one. (Without the
 MULTIOS option, it would create an empty ﬁle called ‘*’.) Similarly, you can do
-echo exit 0 >> *.sh
+echo exit 0 >> *.zsh
 If the user tries to open a ﬁle descriptor for reading more than once, the shell opens the
 ﬁle descriptor as a pipe to a process that copies all the speciﬁed inputs to its output in
 the order speciﬁed, provided the MULTIOS option is set. It should be noted that each ﬁle is
@@ -5431,7 +5431,7 @@ print -rC1 b*.pro(#q:s/pro/shmo/)(#q.:s/builtin/shmiltin/)
 demonstrates how colon modiﬁers and other qualiﬁers may be chained together. The ordi-
 nary qualiﬁer ‘.’ is applied ﬁrst, then the colon modiﬁers in order from left to right. So if
 EXTENDED_GLOB is set and the base pattern matches the regular ﬁle builtin.pro, the shell
-will print ‘shmiltin.shmo’.
+will print ‘shmiltin.zshmo’.
 15 Parameters
 15.1 Description
 A parameter has a name, a value, and a number of attributes. A name may be any sequence

@@ -152,7 +152,7 @@ make test-coverage
 ### Permission denied on coverage script
 
 ```bash
-chmod +x scripts/coverage.sh
+chmod +x scripts/coverage.zsh
 ```
 
 ### High memory usage during coverage
@@ -169,16 +169,16 @@ make coverage-unit
 
 ```bash
 # All tests
-./scripts/coverage.sh all
+./scripts/coverage.zsh all
 
 # Unit tests only
-./scripts/coverage.sh unit
+./scripts/coverage.zsh unit
 
 # Integration tests only
-./scripts/coverage.sh integration
+./scripts/coverage.zsh integration
 
 # Comprehensive tests only
-./scripts/coverage.sh comprehensive
+./scripts/coverage.zsh comprehensive
 ```
 
 ### Extracting Coverage from CI Artifacts

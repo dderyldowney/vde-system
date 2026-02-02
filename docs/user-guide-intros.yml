@@ -325,7 +325,7 @@ sections:
          ```
       4. If you DON'T have Homebrew, you can install it first:
          ```
-         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.zsh)"
          ```
          Then install Git with: `brew install git`
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 echo "Running vde-parser unit tests..."
 cd /Users/dderyldowney/dev || exit
 echo "1. Running vde-parser.test.sh..."
