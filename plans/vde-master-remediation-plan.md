@@ -81,10 +81,10 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 **Duration:** 2-3 sessions  
 **Dependencies:** Phase 3 partial
 
-| Order | Task | Plan Reference | Dependencies |
-|-------|------|----------------|--------------|
-| 4.1 | Docker-free undefined steps | daily-workflow-test-remediation-plan.md | None |
-| 4.2 | Docker-required undefined steps | daily-workflow-test-remediation-plan.md | Phase 3 |
+| Order | Task | Plan Reference | Status |
+|-------|------|----------------|--------|
+| 4.1 | Docker-free undefined steps | daily-workflow-test-remediation-plan.md | ⏳ Next |
+| 4.2 | Docker-required undefined steps | daily-workflow-test-remediation-plan.md | Pending |
 
 ### Phase 5: Code Quality (P5)
 **Duration:** 1 session  
