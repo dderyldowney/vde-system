@@ -159,16 +159,28 @@ def step_docker_installed(context):
 
 @given('I have a Go VM running')
 def step_go_vm_running(context):
-    """Go VM is running."""
+    """Go VM is running or command was attempted."""
     context.current_vm = "go"
-    context.go_vm_running = container_exists("go-dev")
+    # Check if container exists, otherwise just set context for command execution
+    go_exists = container_exists("go-dev")
+    context.go_vm_running = go_exists
+    
+    # Set vm_name for downstream steps
+    if go_exists:
+        context.vm_name = "go-dev"
 
 
 @given('I have a Rust VM running')
 def step_rust_vm_running(context):
-    """Rust VM is running."""
+    """Rust VM is running or command was attempted."""
     context.current_vm = "rust"
-    context.rust_vm_running = container_exists("rust-dev")
+    # Check if container exists, otherwise just set context for command execution
+    rust_exists = container_exists("rust-dev")
+    context.rust_vm_running = rust_exists
+    
+    # Set vm_name for downstream steps
+    if rust_exists:
+        context.vm_name = "rust-dev"
 
 
 @given('I have projects on my host')

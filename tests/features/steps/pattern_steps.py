@@ -108,16 +108,41 @@ def step_i_have_vm_running(context, vm):
 @given('I have several VMs running')
 def step_have_several_vms_running(context):
     """Check how many VMs are running."""
-    running = docker_ps()
+    # Get list of running containers
+    try:
+        result = subprocess.run(
+            ['docker', 'ps', '-q', '--filter', 'label=com.docker.compose.project'],
+            capture_output=True, text=True, timeout=10
+        )
+        running = result.stdout.strip().split('\n') if result.returncode == 0 and result.stdout.strip() else []
+    except Exception:
+        running = []
+    
     vde_running = [c for c in running if "-dev" in c]
     context.num_vms_running = len(vde_running)
     context.running_vms = {c.replace("-dev", "") for c in vde_running}
 
 
+# Alias for "I have several VMs running"
+@given('I have multiple VMs running')
+def step_have_multiple_vms_running(context):
+    """Alias for checking how many VMs are running."""
+    step_have_several_vms_running(context)
+
+
 @given('I have {num} VMs running')
 def step_have_n_vms_running(context, num):
     """Check if N VMs are running."""
-    running = docker_ps()
+    # Get list of running containers
+    try:
+        result = subprocess.run(
+            ['docker', 'ps', '-q', '--filter', 'label=com.docker.compose.project'],
+            capture_output=True, text=True, timeout=10
+        )
+        running = result.stdout.strip().split('\n') if result.returncode == 0 and result.stdout.strip() else []
+    except Exception:
+        running = []
+    
     vde_running = [c for c in running if "-dev" in c]
     context.num_vms_running = len(vde_running)
 
