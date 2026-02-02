@@ -133,14 +133,15 @@ def ensure_vm_running(context, vm_name):
     Returns:
         None (raises exception on failure)
     """
-    if not hasattr(context, 'vm_name') or not context.vm_name:
-        raise Exception('VM name not set in context')
+    # Check if VM container exists and is running
+    container_name = f"{vm_name}-dev"
+    is_running = container_exists(container_name)
     
-    # Verify VM exists and is running
-    if not context.vm_name:
-        raise Exception(f'VM {vm_name} was not created')
+    if not is_running:
+        raise Exception(f'VM {container_name} is not running')
     
-    # This step is a no-op - the start happened earlier
+    # Set context variable for downstream steps
+    context.vm_name = container_name
     return None
 
 def ensure_vm_stopped(context, vm_name):

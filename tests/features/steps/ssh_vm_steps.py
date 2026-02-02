@@ -164,6 +164,13 @@ def step_go_vm_running(context):
     context.go_vm_running = container_exists("go-dev")
 
 
+@given('I have a Rust VM running')
+def step_rust_vm_running(context):
+    """Rust VM is running."""
+    context.current_vm = "rust"
+    context.rust_vm_running = container_exists("rust-dev")
+
+
 @given('I have projects on my host')
 def step_host_has_projects(context):
     """Host has projects."""
@@ -206,11 +213,11 @@ def step_ssh_any_vm(context):
         context.vm_ssh_target = "python-dev"
 
 
-@when('I SSH into the management VM')
-def step_ssh_management_vm(context):
-    """SSH into management VM - set context for VM operations."""
-    context.current_vm = "management"
-    context.vm_ssh_target = "management-dev"
+@when('I SSH into the Rust VM')
+def step_ssh_rust_vm(context):
+    """SSH into Rust VM - set context for VM operations."""
+    context.current_vm = "rust"
+    context.vm_ssh_target = "rust-dev"
 
 
 @when('I SSH into the build VM')
