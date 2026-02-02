@@ -8,7 +8,7 @@ if [ ! -d "$PROJECT_ROOT/scripts" ]; then
     # If scripts directory not found, try current directory (common issue with relative paths)
     PROJECT_ROOT="$(cd "$(pwd)" && pwd)"
 fi
-source "$PROJECT_ROOT/tests/lib/test_common.sh"
+source "$PROJECT_ROOT/tests/lib/test_common.zsh"
 
 test_suite_start "vde-parser Comprehensive Tests"
 

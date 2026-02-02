@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
 # Setup SSH agent for VDE tests
 # Usage:
-#   source tests/setup-ssh-agent.sh     # Setup and start agent
-#   source tests/setup-ssh-agent.sh --cleanup  # Cleanup (stop agent)
+#   source tests/setup-ssh-agent.zsh     # Setup and start agent
+#   source tests/setup-ssh-agent.zsh --cleanup  # Cleanup (stop agent)
 
 # VDE SSH directory
 VDE_SSH_DIR="$HOME/.ssh/vde"

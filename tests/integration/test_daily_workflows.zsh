@@ -3,7 +3,7 @@
 # Tests based on the documented workflows in docs/development-workflows.md
 
 TEST_DIR="$(cd "$(dirname "${(%):-%x}")/../.." && pwd)"
-source "$TEST_DIR/tests/lib/test_common.sh"
+source "$TEST_DIR/tests/lib/test_common.zsh"
 
 test_suite_start "Daily Workflow Tests (from documentation)"
 

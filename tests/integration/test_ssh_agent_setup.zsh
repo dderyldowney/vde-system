@@ -3,7 +3,7 @@
 # Creates and uses test-specific SSH keys for isolation
 
 TEST_DIR="$(cd "$(dirname "${(%):-%x}")/../.." && pwd)"
-source "$TEST_DIR/tests/lib/test_common.sh"
+source "$TEST_DIR/tests/lib/test_common.zsh"
 
 test_suite_start "SSH Agent Setup Integration Tests"
 

@@ -15,7 +15,7 @@ declare -A phase_results
 
 # Setup SSH agent for tests (required for ssh-agent tests)
 echo "=== Setting up SSH Agent ==="
-source tests/setup-ssh-agent.sh
+source tests/setup-ssh-agent.zsh
 
 # Phase 1: Docker-free tests
 echo "=== Phase 1: Docker-free BDD Tests ==="
@@ -92,4 +92,4 @@ done
 # Cleanup SSH agent
 echo ""
 echo "=== Cleaning up SSH Agent ==="
-source tests/setup-ssh-agent.sh --cleanup
+source tests/setup-ssh-agent.zsh --cleanup
