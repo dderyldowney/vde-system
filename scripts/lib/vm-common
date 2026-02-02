@@ -1906,7 +1906,7 @@ generate_ssh_config_entry() {
     fi
 
     local template_file="$TEMPLATES_DIR/ssh-entry.txt"
-    render_template "$template_file" HOST "$host" SSH_PORT "$port" COMMENT "$display_name Dev VM" IDENTITY_FILE "$portable_identity"
+    render_template "$template_file" HOST "$host" SSH_PORT "$port" COMMENT "$display_name" IDENTITY_FILE "$portable_identity"
 }
 
 # SECURITY: Lock directory for SSH config operations

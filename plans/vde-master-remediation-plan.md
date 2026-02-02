@@ -60,12 +60,12 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 | 2.4 | Docker error handling | vde-remediation-plan.md:2.4 | ✅ Done |
 | 2.5 | Test suite | vde-remediation-plan.md:2.5 | ✅ Done |
 
-### Phase 3: User-Facing Bugs (P3) - IN PROGRESS
+### Phase 3: User-Facing Bugs (P3) - COMPLETED
 
 | Order | Task | Plan Reference | Status |
 |-------|------|----------------|--------|
 | 3.1 | Fix `vde status` RUNNING display | vde-daily-workflow-improvements-plan.md | ✅ Done |
-| 3.2 | Add service VM SSH config | vde-daily-workflow-improvements-plan.md | ⏳ Next |
+| 3.2 | Add service VM SSH config | vde-daily-workflow-improvements-plan.md | ✅ Done |
 
 ### Phase 3: Test Remediation (P3)
 **Duration:** 2-3 sessions  

@@ -33,36 +33,13 @@ Language VMs:
 
 ---
 
-### Priority 2: Service VMs lack SSH config entries
+### Priority 2: Service VMs lack SSH config entries - ✅ DONE
 
-**Severity:** MEDIUM  
-**User Impact:** Cannot use `vde ssh postgres` or `vde ssh redis`
+**Status:** Fixed in `scripts/lib/vm-common` (line 1909)
 
-**Current Behavior:**
-```bash
-$ vde ssh postgres
-# Error: Could not resolve hostname postgres
-```
-
-**Root Cause:** SSH config (`~/.ssh/vde/config`) only contains entries for language VMs (python-dev, rust-dev, etc.) on port 2200. Service VMs (postgres, redis, etc.) on ports 2400+ are missing.
-
-**Files to Modify:**
-- `scripts/lib/vm-common` - `merge_ssh_config_entry()` function
-- `scripts/create-virtual-for` - Add SSH config generation for services
-
-**Implementation:**
-```zsh
-# In merge_ssh_config_entry(), add handling for service VMs
-if [[ "$vm_type" == "service" ]]; then
-    # Service VMs use name directly, not <name>-dev
-    ssh_host="$vm_name"
-    ssh_port=$VDE_SVC_PORT_START  # 2400+
-else
-    # Language VMs use <name>-dev
-    ssh_host="${vm_name}-dev"
-    ssh_port=$VDE_LANG_PORT_START  # 2200+
-fi
-```
+**Fix:** Removed hardcoded " Dev VM" suffix from SSH config comment generation
+- Service VMs now correctly show "# postgres Service" instead of "# postgres Service Dev VM"
+- Language VMs still correctly show "# python Dev VM"
 
 ---
 
