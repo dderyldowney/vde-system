@@ -265,8 +265,8 @@ def step_port_accessible_vms(context):
 @then('each VM should be mapped to its port')
 def step_each_vm_mapped_port(context):
     """Verify each VM is mapped to its port."""
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
-        for vm in list(running)[:3]:  # Check first 3 VMs
+        for vm in running[:3]:  # Check first 3 VMs
             result = subprocess.run(['docker', 'port', vm], capture_output=True, text=True)
             # Command succeeds if port mapping exists

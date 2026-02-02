@@ -50,8 +50,8 @@ def step_vm_crashed(context):
 @given('a VM has been removed')
 def step_vm_removed(context):
     """VM has been removed - check for VM where compose file is missing."""
-    running = docker_ps()
-    configs_dir = VDE_ROOT / "configs" / "docker"
+    running = docker_list_containers()
+    configs_dir = Path(VDE_ROOT) / "configs" / "docker"
     if configs_dir.exists():
         for vm_dir in configs_dir.iterdir():
             vm_name = vm_dir.name

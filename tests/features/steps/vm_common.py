@@ -44,6 +44,26 @@ def docker_ps():
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
 
+
+def docker_list_containers():
+    """List running Docker containers.
+    
+    Returns:
+        list: List of running container names, empty list if none or Docker unavailable
+    """
+    try:
+        result = subprocess.run(
+            ['docker', 'ps', '--format', '{{.Names}}'],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        containers = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
+        return containers
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return []
+
 def container_exists(container_name):
     """Check if a Docker container exists by name.
     

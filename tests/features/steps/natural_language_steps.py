@@ -17,13 +17,16 @@ if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 
 # Get VDE_ROOT from environment or calculate
-VDE_ROOT = os.environ.get('VDE_ROOT_DIR')
-if not VDE_ROOT:
+VDE_ROOT_STR = os.environ.get('VDE_ROOT_DIR')
+if not VDE_ROOT_STR:
     try:
         from config import VDE_ROOT as config_root
-        VDE_ROOT = str(config_root)
+        VDE_ROOT_STR = str(config_root)
     except ImportError:
-        VDE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        VDE_ROOT_STR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+# Use Path for operations, string for environment variables
+VDE_ROOT = Path(VDE_ROOT_STR)
 
 VDE_PARSER = os.path.join(VDE_ROOT, 'scripts/lib/vde-parser')
 VDE_VM_COMMON = os.path.join(VDE_ROOT, 'scripts/lib/vm-common')
