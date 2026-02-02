@@ -720,11 +720,6 @@ def step_isolated_postgres_instance(context):
     context.postgres_isolated = True
 
 
-@then('data persists in each developer\'s local data/postgres/')
-def step_data_persists_local(context):
-    """Verify data persists locally."""
-    context.data_persists = True
-
 
 @then('developers don\'t interfere with each other\'s databases')
 def step_no_db_interference(context):
@@ -816,38 +811,4 @@ def step_create_and_start_vm(context):
     context.vm_created_started = True
 
 
-@then('both developers have identical environments')
-def step_identical_envs(context):
-    """Verify identical environments."""
-    context.envs_identical = True
-
-
-@then('the bug becomes reproducible')
-def step_bug_reproducible(context):
-    """Verify bug is reproducible."""
-    context.bug_reproducible = True
-
-
-@then('debugging becomes more effective')
-def step_debugging_effective(context):
-    """Verify debugging is effective."""
-    context.debugging_effective = True
-
-
-@then('all developers can create dart VMs')
-def step_all_create_dart(context):
-    """Verify all can create dart VMs."""
-    context.dart_available = True
-
-
-@then('everyone has access to the same dart environment')
-def step_same_dart_env(context):
-    """Verify same dart environment."""
-    context.dart_same = True
-
-
-@then('the team\'s language support grows consistently')
-def step_language_grows(context):
-    """Verify language support grows."""
-    context.language_support = True
 

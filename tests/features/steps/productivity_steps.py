@@ -122,14 +122,6 @@ def step_data_persists_postgres(context):
     context.data_persistence_verified = data_path.exists()
 
 
-@then('developers don\'t interfere with each other\'s databases')
-def step_no_database_interference(context):
-    """Verify database isolation."""
-    # Each developer has their own data directory
-    data_path = VDE_ROOT / "data" / "postgres"
-    context.databases_isolated = data_path.exists()
-
-
 @then('version-specific bugs can be caught early')
 def step_version_specific_bugs_caught(context):
     """Context: Version-specific bugs can be caught early."""
@@ -245,77 +237,6 @@ def step_services_keep_running(context):
 def step_need_deployment_test(context):
     """Context: Need to test deployment configurations."""
     context.needs_deployment_test = True
-
-
-@then('VDE should detect my operating system')
-def step_detect_os(context):
-    """Verify OS detection."""
-    import platform
-    context.os_detected = platform.system() in ['Darwin', 'Linux', 'Windows']
-
-
-@then('appropriate base images should be built')
-def step_base_images_built(context):
-    """Verify base images are available."""
-    context.base_images_built = True
-
-
-@then('my SSH keys should be automatically configured')
-def step_ssh_keys_configured(context):
-    """Verify SSH keys are configured."""
-    ssh_dir = Path.home() / ".ssh"
-    context.ssh_configured = ssh_dir.exists() and any(ssh_dir.glob("id_*"))
-
-
-@then('I should see available VMs with "list-vms"')
-def step_list_vms_available(context):
-    """Verify list-vms command is available."""
-    context.list_vms_available = True
-
-
-@then('project directories should be properly mounted')
-def step_project_dirs_mounted(context):
-    """Verify project directories are mounted."""
-    context.dirs_mounted = True
-
-
-@then('my SSH config should be updated with new entries')
-def step_ssh_config_updated(context):
-    """Verify SSH config is updated."""
-    ssh_config = Path.home() / ".ssh" / "config"
-    context.ssh_config_updated = ssh_config.exists()
-
-
-@then('my existing SSH entries should be preserved')
-def step_ssh_entries_preserved(context):
-    """Verify existing SSH entries are preserved."""
-    context.ssh_entries_preserved = True
-
-
-@then('I should not lose my personal SSH configurations')
-def step_no_ssh_config_loss(context):
-    """Verify personal SSH configurations are not lost."""
-    context.ssh_config_safe = True
-
-
-@given('the project contains VDE configuration in configs/')
-def step_project_has_vde_config(context):
-    """Verify project has VDE configuration."""
-    configs_dir = VDE_ROOT / "configs"
-    context.has_vde_config = configs_dir.exists()
-
-
-@given('the docker-compose.yml is committed to the repo')
-def step_docker_comyml_committed(context):
-    """Verify docker-compose.yml is in repo."""
-    compose_file = VDE_ROOT / "docker-compose.yml"
-    context.compose_in_repo = compose_file.exists()
-
-
-@then('each developer gets their own isolated PostgreSQL instance')
-def step_isolated_postgres(context):
-    """Verify isolated PostgreSQL instances."""
-    context.isolated_postgres = True
 
 
 @given('I have PostgreSQL running')
