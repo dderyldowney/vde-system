@@ -82,7 +82,7 @@ readonly VDE_CORE_VM_TYPES_CACHE
 
 # log_info - Output an informational message
 log_info() {
-    echo "[INFO] $*"
+    echo "[INFO] $*" >&2
     return $VDE_SUCCESS
 }
 
@@ -94,13 +94,13 @@ log_error() {
 
 # log_success - Output a success message
 log_success() {
-    echo "[SUCCESS] $*"
+    echo "[SUCCESS] $*" >&2
     return $VDE_SUCCESS
 }
 
 # log_warning - Output a warning message
 log_warning() {
-    echo "[WARNING] $*"
+    echo "[WARNING] $*" >&2
     return $VDE_SUCCESS
 }
 

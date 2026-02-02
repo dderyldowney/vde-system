@@ -118,7 +118,7 @@ readonly SVC_PORT_END
 # Returns: VDE_SUCCESS (0)
 # Example: log_info "Starting VM python..."
 log_info() {
-    echo "[INFO] $*" >&2
+    echo "[INFO] $*">&2
     return $VDE_SUCCESS
 }
 
@@ -127,7 +127,7 @@ log_info() {
 # Returns: VDE_SUCCESS (0)
 # Example: log_error "Failed to start VM"
 log_error() {
-    echo "[ERROR] $*" >&2
+    echo "[ERROR] $*">&2
     return $VDE_SUCCESS
 }
 
@@ -136,7 +136,7 @@ log_error() {
 # Returns: VDE_SUCCESS (0)
 # Example: log_success "VM started successfully"
 log_success() {
-    echo "[SUCCESS] $*" >&2
+    echo "[SUCCESS] $*">&2
     return $VDE_SUCCESS
 }
 
@@ -145,7 +145,7 @@ log_success() {
 # Returns: VDE_SUCCESS (0)
 # Example: log_warning "SSH key not found, using default"
 log_warning() {
-    echo "[WARNING] $*" >&2
+    echo "[WARNING] $*">&2
     return $VDE_SUCCESS
 }
 
