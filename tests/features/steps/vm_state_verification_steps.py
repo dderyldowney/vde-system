@@ -14,7 +14,7 @@ from pathlib import Path
 from behave import given
 
 from config import VDE_ROOT
-from vm_common import get_container_health, docker_ps, container_exists
+from vm_common import get_container_health, docker_ps, docker_list_containers, container_exists
 
 # =============================================================================
 # VM STATE GIVEN steps

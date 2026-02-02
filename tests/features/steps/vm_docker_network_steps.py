@@ -14,6 +14,7 @@ from behave import given, then
 from vm_common import (
     VDE_ROOT,
     docker_ps,
+    docker_list_containers,
     get_port_from_compose,
 )
 
