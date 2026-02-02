@@ -100,3 +100,60 @@ def step_template_rendered(context):
             context.template_rendered = result.returncode == 0
         else:
             raise AssertionError(f"Template file not found: {template_path}")
+
+
+@when('template is rendered with NAME="{name}" and SSH_PORT="{port}"')
+def step_render_template_with_values(context, name, port):
+    """Render template with specific NAME and SSH_PORT values."""
+    template_path = VDE_ROOT / "scripts/templates/compose-language.yml"
+    if template_path.exists():
+        result = subprocess.run(
+            f"source {VDE_ROOT}/scripts/lib/vm-common && "
+            f"render_template '{template_path}' NAME '{name}' SSH_PORT '{port}'",
+            shell=True, capture_output=True, text=True, cwd=VDE_ROOT
+        )
+        context.rendered_output = result.stdout
+        context.template_rendered = result.returncode == 0
+    else:
+        context.template_rendered = False
+
+
+# =============================================================================
+# Template System THEN Steps (Missing - Added 2026-02-02)
+# =============================================================================
+
+@then('rendered output should contain "{value}"')
+def step_rendered_contains_value(context, value):
+    """Verify rendered output contains expected value."""
+    rendered = getattr(context, 'rendered_output', '')
+    assert value in rendered, f"Rendered output should contain '{value}'"
+
+
+@then('rendered output should NOT contain "{value}"')
+def step_rendered_not_contains_value(context, value):
+    """Verify rendered output does NOT contain expected value."""
+    rendered = getattr(context, 'rendered_output', '')
+    assert value not in rendered, f"Rendered output should NOT contain '{value}'"
+
+
+@then('rendered output should contain "{mapping}" port mapping')
+def step_rendered_contains_port_mapping(context, mapping):
+    """Verify rendered output contains expected port mapping."""
+    rendered = getattr(context, 'rendered_output', '')
+    assert mapping in rendered, f"Rendered output should contain port mapping '{mapping}'"
+
+
+@then('rendered output should contain SSH_AUTH_SOCK mapping')
+def step_rendered_contains_ssh_socket(context):
+    """Verify rendered output contains SSH_AUTH_SOCK volume mapping."""
+    rendered = getattr(context, 'rendered_output', '')
+    assert 'SSH_AUTH_SOCK' in rendered or 'ssh-auth-sock' in rendered, \
+        "Rendered output should contain SSH_AUTH_SOCK mapping"
+
+
+@then('rendered output should contain public-ssh-keys volume')
+def step_rendered_contains_ssh_keys_volume(context):
+    """Verify rendered output contains public-ssh-keys volume mount."""
+    rendered = getattr(context, 'rendered_output', '')
+    assert 'public-ssh-keys' in rendered, \
+        "Rendered output should contain public-ssh-keys volume"

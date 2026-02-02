@@ -210,3 +210,73 @@ def step_dependencies_installed(context):
         # Check container is running which implies dependencies were installed
         assert container_exists(vm.replace("-dev", "")), \
             f"VM {vm} should be running with dependencies installed"
+
+
+# =============================================================================
+# Additional Missing Steps (Added 2026-02-02)
+# =============================================================================
+
+@given('I have cloned the project repository')
+def step_cloned_project_repo(context):
+    """Verify project repository is cloned."""
+    # Check if we're in a git repository
+    result = subprocess.run(['git', 'rev-parse', '--git-dir'], 
+                          capture_output=True, cwd=VDE_ROOT)
+    context.repo_cloned = result.returncode == 0
+
+
+@given('my project has a "{vm_name}" VM configuration')
+def step_project_has_vm_config(context, vm_name):
+    """Check if project has VM configuration for the specified VM."""
+    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
+    context.vm_config_exists = compose_path.exists()
+
+
+@then('my local development should match production')
+def step_local_matches_production(context):
+    """Verify local development matches production configuration."""
+    # Check that configuration files exist for production services
+    configs = VDE_ROOT / "configs" / "docker"
+    required_services = ['postgres', 'redis']
+    for service in required_services:
+        compose_path = configs / service / "docker-compose.yml"
+        assert compose_path.exists(), f"{service} config should exist for production matching"
+
+
+@given('documentation explains how to create each VM')
+def step_documentation_exists(context):
+    """Check if documentation exists for VM creation."""
+    readme_path = VDE_ROOT / "docs" / "quick-start.md"
+    context.documentation_exists = readme_path.exists()
+
+
+@given('the team defines standard VM types in vm-types.conf')
+def step_standard_vm_types_exist(context):
+    """Verify vm-types.conf exists and contains standard VM types."""
+    vm_types_path = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    context.vm_types_exist = vm_types_path.exists()
+    if context.vm_types_exist:
+        # Read and parse the vm-types.conf to verify it has content
+        with open(vm_types_path, 'r') as f:
+            content = f.read()
+            context.vm_types_content = content
+
+
+@given('a project requires specific services ({services})')
+def step_project_requires_services(context, services):
+    """Check if project requires specific services."""
+    service_list = [s.strip() for s in services.split(',')]
+    context.required_services = service_list
+    configs = VDE_ROOT / "configs" / "docker"
+    context.services_available = all(
+        (configs / service).exists() for service in service_list
+    )
+
+
+@given('a project needs environment variables for configuration')
+def step_project_needs_env_vars(context):
+    """Check if environment variable files exist."""
+    env_dir = VDE_ROOT / "env-files"
+    context.env_files_exist = env_dir.exists()
+    if context.env_files_exist:
+        context.env_files = list(env_dir.glob("*.env"))
