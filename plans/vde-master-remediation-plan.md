@@ -23,39 +23,41 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 
 ## Master Priority Matrix
 
-| Priority | Category | Plans | Est. Scope |
-|----------|----------|-------|------------|
-| P1 | Security | vde-remediation-plan.md (Stage 1) | 47 tasks, 7 stages |
-| P2 | User Bugs | vde-daily-workflow-improvements-plan.md | 2 high-priority fixes |
-| P3 | Test Remediation | docker-required-test-remediation-plan.md | 13 tasks, 300+ violations |
-| P4 | BDD Gaps | daily-workflow-test-remediation-plan.md | 1274 undefined steps |
-| P5 | Code Quality | vde-home-path-consistency-plan.md | Portability improvements |
-| P6 | Documentation | vde-codebase-compliance-analysis.md | Analysis only |
-| P7 | MCP Config | mcp-*.md (4 files) | Configuration docs |
+| Priority | Category | Plans | Status | Est. Scope |
+|----------|----------|-------|--------|------------|
+| P1 | **COMPLETED** | vde-remediation-plan.md (Stage 1) | ✅ Done | 5 security tasks |
+| P2 | User Bugs | vde-daily-workflow-improvements-plan.md | Pending | 2 high-priority fixes |
+| P3 | Test Remediation | docker-required-test-remediation-plan.md | Pending | 13 tasks, 300+ violations |
+| P4 | BDD Gaps | daily-workflow-test-remediation-plan.md | Pending | 1274 undefined steps |
+| P5 | Code Quality | vde-remediation-plan.md (Stage 2) | ⏳ Next | 3 tasks |
+| P6 | Code Quality | vde-home-path-consistency-plan.md | Pending | Portability improvements |
+| P7 | Documentation | vde-codebase-compliance-analysis.md | Pending | Analysis only |
+| P8 | MCP Config | mcp-*.md (4 files) | Pending | Configuration docs |
 
 ---
 
 ## Execution Roadmap
 
-### Phase 1: Security Hardening (P1)
-**Duration:** 1-2 sessions  
-**Trigger:** Must complete before any other phases
+### Phase 1: Security Hardening (P1) - ✅ COMPLETED
+**Duration:** Already implemented
+
+| Order | Task | Plan Reference | Status |
+|-------|------|----------------|--------|
+| 1.1 | Fix eval injection vulnerability | vde-remediation-plan.md:1.1 | ✅ Done |
+| 1.2 | Fix SSH key permissions | vde-remediation-plan.md:1.2 | ✅ Done |
+| 1.3 | Add input sanitization | vde-remediation-plan.md:1.3 | ✅ Done |
+| 1.4 | Fix port race condition | vde-remediation-plan.md:1.4 | ✅ Done |
+| 1.5 | Fix SSH config race condition | vde-remediation-plan.md:1.5 | ✅ Done |
+
+### Phase 2: Code Quality (P5) - ⏳ NEXT
+**Duration:** 1-2 sessions
+**Trigger:** Stage 1 complete
 
 | Order | Task | Plan Reference | Dependencies |
 |-------|------|----------------|--------------|
-| 1.1 | Fix eval injection vulnerability | vde-remediation-plan.md:1.1 | None |
-| 1.2 | Fix SSH key permissions | vde-remediation-plan.md:1.2 | None |
-| 1.3 | Add input sanitization | vde-remediation-plan.md:1.3 | None |
-| 1.4 | Complete Stage 1 | vde-remediation-plan.md | 1.1-1.3 |
-
-### Phase 2: User-Facing Bug Fixes (P2)
-**Duration:** 1 session  
-**Dependencies:** Phase 1 optional
-
-| Order | Task | Plan Reference | Dependencies |
-|-------|------|----------------|--------------|
-| 2.1 | Fix `vde status` RUNNING display | vde-daily-workflow-improvements-plan.md | None |
-| 2.2 | Add service VM SSH config | vde-daily-workflow-improvements-plan.md | None |
+| 2.1 | Remove duplicate code | vde-remediation-plan.md:2.1 | Stage 1 |
+| 2.2 | Standardize return codes | vde-remediation-plan.md:2.2 | Stage 1 |
+| 2.3 | Replace magic numbers | vde-remediation-plan.md:2.3 | Stage 1 |
 
 ### Phase 3: Test Remediation (P3)
 **Duration:** 2-3 sessions  
