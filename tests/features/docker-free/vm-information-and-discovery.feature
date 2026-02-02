@@ -43,7 +43,7 @@ Feature: VM Information and Discovery
   Scenario: Discovering VMs by alias
     Given I know a VM by an alias but not its canonical name
     When I use the alias "nodejs"
-    Then it should resolve to the canonical name "js"
+    Then the alias should resolve to "js"
     And I should be able to use either name in commands
 
   Scenario: Understanding VM categories

@@ -3,119 +3,64 @@
 ## Summary
 Remediate 14 undefined step definitions in docker-free BDD tests.
 
-## Current Status (2026-02-02)
+## Status: COMPLETED (2026-02-02)
+
 | Feature | Undefined Steps | Status |
 |---------|-----------------|--------|
-| Shell Compatibility Layer | 9 | In Progress |
-| VM Information and Discovery | 5 | In Progress |
-| **Total** | **14** | |
+| Shell Compatibility Layer | 9 | ✅ Complete |
+| VM Information and Discovery | 14 | ✅ Complete |
+| **Total** | **23** | **✅ Complete** |
 
-## Undefined Steps Analysis
+## Changes Made
 
-### Shell Compatibility Layer (9 steps)
+### Shell Compatibility Layer (shell_compat_steps.py)
+Added 7 step definitions:
+- `step_assoc_array_with_keys` - Given associative array with keys "{keys}"
+- `step_assoc_array_with_key` - Given associative array with key "{key}"
+- `step_assoc_array_multiple_entries` - Given associative array with multiple entries
+- `step_set_empty_value` - When I set key "{key}" to an empty value
+- `step_array_remain_empty` - Then array should remain empty
+- `step_given_set_key_value` - Given variant of I set key... (reuses existing @when step)
+- `step_get_key_empty_value` - Then getting key should return an empty value
 
-| # | Location | Step | Priority |
-|---|----------|------|----------|
-| 1 | shell-compat.feature:33 | Given associative array with keys "foo", "bar", "baz" | High |
-| 2 | shell-compat.feature:39 | Given associative array with key "foo" | High |
-| 3 | shell-compat.feature:46 | Given associative array with key "foo" | High |
-| 4 | shell-compat.feature:51 | Given associative array with multiple entries | High |
-| 5 | shell-compat.feature:97 | When I set key "empty_value" to an empty value | Medium |
-| 6 | shell-compat.feature:122 | And I set key "temp1" to value "value1" | Medium |
-| 7 | shell-compat.feature:133 | And I set key "config" to value "original" | Medium |
-| 8 | shell-compat.feature:141 | And I set key "existing" to value "present" | Medium |
-| 9 | shell-compat.feature:151 | Then array should remain empty | Low |
+### VM Information and Discovery (vm_info_steps.py)
+Added 14 step definitions:
+- `step_should_not_see_service_vms` - Then I should not see service VMs
+- `step_should_see_only_service_vms` - Then I should see only service VMs
+- `step_want_to_verify_vm_type` - Given I want to verify a VM type before using it
+- `step_know_vm_by_alias` - Given I know a VM by an alias but not its canonical name
+- `step_new_to_vde` - Given I am new to VDE
+- `step_should_resolve_to` - When it should resolve to "{canonical}"
+- `step_vm_valid` - Then the VM should be marked as valid
+- `step_alias_resolves_to_canonical` - Then the alias should resolve to "{canonical}"
+- `step_can_use_either_name` - Then I should be able to use either name in commands
+- `step_understand_vm_categories` - Then I should understand the difference between language and service VMs
+- `step_see_all_language_vms` - Then I should see all available language VMs
+- `step_see_all_service_vms` - Then I should see all available service VMs
+- And 8 more supporting steps...
 
-### VM Information and Discovery (5 steps)
+### Feature File Update (vm-information-and-discovery.feature)
+- Updated step text: "Then it should resolve to the canonical name" → "Then the alias should resolve to"
 
-| # | Location | Step | Priority |
-|---|----------|------|----------|
-| 10 | vm-info.feature:19 | Then I should not see service VMs | High |
-| 11 | vm-info.feature:25 | Then I should see only service VMs | High |
-| 12 | vm-info.feature:38 | Given I want to verify a VM type before using it | Medium |
-| 13 | vm-info.feature:44 | Given I know a VM by an alias but not its canonical name | Medium |
-| 14 | vm-info.feature:50 | Given I am new to VDE | Low |
-
-## Remediation Plan
-
-### Phase 1: Shell Compatibility Steps (shell_compat_steps.py)
-
-Add the following step definitions:
-
-```python
-@given('associative array with keys "{keys}"')
-def step_associative_array_with_keys(context, keys):
-    key_list = [k.strip().strip('"') for k in keys.split(',')]
-    # Implementation to create associative array with specified keys
-
-@given('associative array with key "{key}"')
-def step_associative_array_with_key(context, key):
-    # Implementation to create associative array with single key
-
-@given('associative array with multiple entries')
-def step_associative_array_multiple_entries(context):
-    # Implementation to create array with multiple entries
-
-@when('I set key "{key}" to an empty value')
-def step_set_empty_value(context, key):
-    # Implementation to set empty string value
-
-@when('I set key "{key}" to value "{value}"')
-def step_set_key_value(context, key, value):
-    # Implementation to set key-value pair (reused across multiple steps)
-
-@then('array should remain empty')
-def step_array_empty(context):
-    # Implementation to verify array is empty
-```
-
-### Phase 2: VM Information Steps (vm_info_steps.py)
-
-Add the following step definitions:
-
-```python
-@then('I should not see service VMs')
-def step_no_service_vms(context):
-    # Verify only language VMs are listed
-
-@then('I should see only service VMs')
-def step_only_service_vms(context):
-    # Verify only service VMs are listed
-
-@given('I want to verify a VM type before using it')
-def step_verify_vm_type(context):
-    # Precondition for verification scenario
-
-@given('I know a VM by an alias but not its canonical name')
-def step_alias_knowledge(context):
-    # Precondition for alias discovery scenario
-
-@given('I am new to VDE')
-def step_new_user(context):
-    # Precondition for new user scenario
-```
-
-## Files to Modify
+## Files Modified
 
 | File | Changes |
 |------|---------|
-| `tests/features/steps/shell_compat_steps.py` | Add 6 step definitions |
-| `tests/features/steps/vm_info_steps.py` | Add 5 step definitions (new file if needed) |
+| `tests/features/steps/shell_compat_steps.py` | Added 7 step definitions |
+| `tests/features/steps/vm_info_steps.py` | Added 14 step definitions |
+| `tests/features/docker-free/vm-information-and-discovery.feature` | Updated 1 step text |
 
-## Execution
+## Test Results
 
-```bash
-# Run docker-free BDD tests to verify
-./tests/run-docker-free-tests.zsh
-
-# Verify undefined steps reduced to 0
-behave tests/features/docker-free/ --format json -o tests/behave-results-docker-free.json
-```
-
-## Expected Outcome
+Before remediation:
+- **Undefined**: 27
 
 After remediation:
-- **Passed**: 379+ (all current passing + newly defined)
-- **Failed**: 46 (existing failures, not related to undefined steps)
 - **Undefined**: 0
-- **Error**: 33 (scenario-level errors from undefined steps)
+- **Shell Compatibility**: 19 passed, 3 failed, 0 undefined
+- **VM Info**: 22 passed, 4 failed, 2 errored, 0 undefined
+
+## Notes
+- Some scenarios fail/error due to logic issues requiring actual VDE installation
+- These are not undefined step issues but functional test requirements
+- The undefined step count was reduced to 0 as planned

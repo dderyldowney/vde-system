@@ -153,6 +153,12 @@ def step_set_key_value(context, key, value):
     context.set_keys[key] = value
 
 
+@given('I set key "{key}" to value "{value}"')
+def step_given_set_key_value(context, key, value):
+    """Set key to value in associative array (Given variant)."""
+    step_set_key_value(context, key, value)
+
+
 @then('getting key "{key}" should return "{value}"')
 def step_get_key_returns(context, key, value):
     """Getting key should return value."""
@@ -161,6 +167,17 @@ def step_get_key_returns(context, key, value):
     assert result.returncode == 0, f"Failed to get key '{key}': {result.stderr}"
     actual_value = result.stdout.strip()
     assert actual_value == value, f"Expected '{value}', got '{actual_value}'"
+    context.key_return = actual_value
+
+
+@then('getting key "{key}" should return an empty value')
+def step_get_key_empty_value(context, key):
+    """Getting key should return empty string."""
+    shell = getattr(context, 'current_shell', 'zsh')
+    result = run_shell_command_with_state(context, f"_assoc_get '{getattr(context, 'array_name', 'test_array')}' '{key}'", shell)
+    assert result.returncode == 0, f"Failed to get key '{key}': {result.stderr}"
+    actual_value = result.stdout.strip()
+    assert actual_value == '', f"Expected empty value, got '{actual_value}'"
     context.key_return = actual_value
 
 
@@ -449,3 +466,93 @@ def step_operation_complete_successfully(context):
         assert context.last_result == 0, f"Operation failed with return code {context.last_result}"
     elif hasattr(context, 'last_exit_code'):
         assert context.last_exit_code == 0, f"Operation failed with exit code {context.last_exit_code}"
+
+
+# =============================================================================
+# Additional step definitions for undefined steps (docker-free-undefined-steps-remediation-plan)
+# =============================================================================
+
+@given('associative array with keys "{keys}"')
+def step_assoc_array_with_keys(context, keys):
+    """Initialize an associative array with multiple keys specified."""
+    context.array_name = 'test_array'
+    shell = getattr(context, 'current_shell', 'zsh')
+    result = run_shell_command(f"_assoc_init '{context.array_name}'", shell)
+    assert result.returncode == 0, f"Failed to initialize array: {result.stderr}"
+    # Set each key with a default value
+    key_list = [k.strip().strip('"') for k in keys.split(',')]
+    context.set_keys = {}
+    for key in key_list:
+        result = run_shell_command(
+            f"_assoc_init '{context.array_name}'; _assoc_set '{context.array_name}' '{key}' 'value_for_{key}'",
+            shell
+        )
+        assert result.returncode == 0, f"Failed to set key '{key}': {result.stderr}"
+        context.set_keys[key] = f'value_for_{key}'
+
+
+@given('associative array with key "{key}"')
+def step_assoc_array_with_key(context, key):
+    """Initialize an associative array with a single key."""
+    context.array_name = 'test_array'
+    shell = getattr(context, 'current_shell', 'zsh')
+    result = run_shell_command(f"_assoc_init '{context.array_name}'", shell)
+    assert result.returncode == 0, f"Failed to initialize array: {result.stderr}"
+    # Set the key with a default value
+    result = run_shell_command(
+        f"_assoc_init '{context.array_name}'; _assoc_set '{context.array_name}' '{key}' 'value_for_{key}'",
+        shell
+    )
+    assert result.returncode == 0, f"Failed to set key '{key}': {result.stderr}"
+    context.set_keys = {key: f'value_for_{key}'}
+
+
+@given('associative array with multiple entries')
+def step_assoc_array_multiple_entries(context):
+    """Initialize an associative array with multiple entries."""
+    context.array_name = 'test_array'
+    shell = getattr(context, 'current_shell', 'zsh')
+    result = run_shell_command(f"_assoc_init '{context.array_name}'", shell)
+    assert result.returncode == 0, f"Failed to initialize array: {result.stderr}"
+    # Set multiple entries
+    entries = {
+        'entry1': 'value1',
+        'entry2': 'value2',
+        'entry3': 'value3'
+    }
+    context.set_keys = {}
+    for key, value in entries.items():
+        result = run_shell_command(
+            f"_assoc_init '{context.array_name}'; _assoc_set '{context.array_name}' '{key}' '{value}'",
+            shell
+        )
+        assert result.returncode == 0, f"Failed to set key '{key}': {result.stderr}"
+        context.set_keys[key] = value
+
+
+@when('I set key "{key}" to an empty value')
+def step_set_empty_value(context, key):
+    """Set key to an empty string value."""
+    array_name = getattr(context, 'array_name', 'test_array')
+    shell = getattr(context, 'current_shell', 'zsh')
+    result = run_shell_command(f"_assoc_init '{array_name}'; _assoc_set '{array_name}' '{key}' ''", shell)
+    assert result.returncode == 0, f"Failed to set key '{key}' to empty value: {result.stderr}"
+    context.last_key = key
+    context.last_value = ''
+    if not hasattr(context, 'set_keys'):
+        context.set_keys = {}
+    context.set_keys[key] = ''
+
+
+@then('array should remain empty')
+def step_array_remain_empty(context):
+    """Verify array remains empty (no keys set)."""
+    array_name = getattr(context, 'array_name', 'test_array')
+    shell = getattr(context, 'current_shell', 'zsh')
+    result = run_shell_command(f"_assoc_init '{array_name}'; _assoc_keys '{array_name}'", shell)
+    assert result.returncode == 0, "Failed to check array keys"
+    keys = result.stdout.strip()
+    assert not keys, f"Array should remain empty but contains keys: {keys}"
+    # Also verify tracked keys is empty
+    if hasattr(context, 'set_keys'):
+        assert len(context.set_keys) == 0, f"Tracked keys should be empty, got: {context.set_keys}"
