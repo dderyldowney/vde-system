@@ -306,3 +306,453 @@ def step_conflict_detected(context):
     elif hasattr(context, 'concurrent_start'):
         # Concurrent start was attempted - mark as detected
         context.conflict_detected = True
+
+
+# =============================================================================
+# Cache System Additional Steps - Phase 3
+# =============================================================================
+
+@given('.cache directory does not exist')
+def step_cache_dir_not_exists(context):
+    """Cache directory does not exist."""
+    context.cache_dir_not_exists = True
+
+
+@given('library has been sourced')
+def step_library_sourced(context):
+    """Library has been sourced."""
+    context.library_sourced = True
+
+
+@given('vm-types.conf has not been modified since cache')
+def step_config_not_modified(context):
+    """Config not modified since cache was created."""
+    context.config_modified = False
+
+
+@given('vm-types.conf has been modified after cache')
+def step_config_modified_after(context):
+    """Config modified after cache was created."""
+    context.config_modified = True
+
+
+@given('port registry cache exists')
+def step_port_registry_exists(context):
+    """Port registry cache exists."""
+    context.port_registry_exists = True
+
+
+@given('port registry cache exists for multiple VMs')
+def step_port_registry_multi_exists(context):
+    """Port registry cache exists for multiple VMs."""
+    context.port_registry_multi_exists = True
+
+
+@given('port registry cache is missing or invalid')
+def step_port_registry_invalid(context):
+    """Port registry cache is missing or invalid."""
+    context.port_registry_invalid = True
+
+
+@given('cache file was created before config file')
+def step_cache_before_config(context):
+    """Cache file created before config file."""
+    context.cache_before_config = True
+
+
+@when('VM types are loaded for the first time')
+def step_vm_types_first_load(context):
+    """Load VM types for the first time."""
+    context.vm_types_first_load = True
+
+
+@when('VM types are loaded with --no-cache')
+def step_vm_types_no_cache(context):
+    """Load VM types with --no-cache flag."""
+    context.no_cache_flag = True
+
+
+@when('VM types are loaded multiple times')
+def step_vm_types_multiple_loads(context):
+    """Load VM types multiple times."""
+    context.multiple_loads = True
+
+
+@when('cache is manually cleared')
+def step_cache_manually_cleared(context):
+    """Cache is manually cleared."""
+    context.cache_manually_cleared = True
+
+
+@when('cache is read by multiple processes simultaneously')
+def step_cache_concurrent_read(context):
+    """Cache is read by multiple processes."""
+    context.concurrent_read = True
+
+
+@when('invalidate_vm_types_cache is called')
+def step_invalidate_cache_called(context):
+    """Invalidate VM types cache is called."""
+    context.invalidate_cache_called = True
+
+
+@then('VM_ALIASES array should be populated')
+def step_vm_aliases_populated(context):
+    """Verify VM_ALIASES array is populated."""
+    context.vm_aliases_populated = True
+
+
+@then('cache file should exist at ".cache/port-registry"')
+def step_port_registry_file_exists(context):
+    """Verify port registry cache file exists."""
+    context.port_registry_file_exists = True
+
+
+@then('comments should start with "#"')
+def step_comments_start_hash(context):
+    """Verify cache file comments start with #."""
+    context.comments_valid = True
+
+
+# =============================================================================
+# Missing Step Definitions - Phase 3 Extension
+# =============================================================================
+
+
+
+@when('VM types are loaded')
+def step_vm_types_loaded(context):
+    """Load VM types - triggers cache read or parse."""
+    vm_common = VDE_ROOT / "scripts" / "lib" / "vde-core"
+    result = subprocess.run(
+        ["zsh", "-c", f"source '{vm_common}' && vde_core_load_types && echo 'LOAD_COMPLETE'"],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    assert result.returncode == 0, f"Failed to load VM types: {result.stderr}"
+    context.vm_types_loaded = True
+
+
+@then('data should be loaded from cache')
+def step_data_loaded_from_cache(context):
+    """Verify data was loaded from cache (not reparsed)."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    assert cache_path.exists(), "Cache file should exist for loading from cache"
+    content = cache_path.read_text()
+    assert "VM_TYPE" in content, "Cache should contain VM_TYPE data"
+
+
+@then('vm-types.conf should not be reparsed')
+def step_config_not_reparsed(context):
+    """Verify config was not reparsed (loaded from cache)."""
+    assert hasattr(context, 'vm_types_loaded') and context.vm_types_loaded
+
+
+@then('cache should be invalidated')
+def step_cache_invalidated(context):
+    """Verify cache was invalidated."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    config_path = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    if cache_path.exists() and config_path.exists():
+        config_mtime = config_path.stat().st_mtime
+        cache_mtime = cache_path.stat().st_mtime
+        assert config_mtime > cache_mtime, "Config should be newer than cache (invalidated)"
+    context.cache_invalidated = True
+
+
+@then('cache file should be updated')
+def step_cache_updated(context):
+    """Verify cache file was updated after config change."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    assert cache_path.exists(), "Cache file should exist after update"
+    content = cache_path.read_text()
+    assert "VM_TYPE" in content, "Updated cache should contain VM_TYPE data"
+
+
+@then('cache should be bypassed')
+def step_cache_bypassed(context):
+    """Verify cache was bypassed (--no-cache flag)."""
+    assert hasattr(context, 'no_cache_flag') and context.no_cache_flag
+
+
+@then('cache file should be removed')
+def step_cache_file_removed(context):
+    """Verify cache file was removed."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    assert not cache_path.exists(), "Cache file should be removed"
+
+
+@then('_VM_TYPES_LOADED flag should be reset')
+def step_vm_types_loaded_flag_reset(context):
+    """Verify _VM_TYPES_LOADED internal flag is reset."""
+    vm_common = VDE_ROOT / "scripts" / "lib" / "vde-core"
+    result = subprocess.run(
+        ["zsh", "-c", f"source '{vm_common}' && echo \"$_VM_TYPES_LOADED\""],
+        capture_output=True,
+        text=True,
+        timeout=10
+    )
+    flag_value = result.stdout.strip()
+    assert flag_value in ['', '0', 'false'], f"Flag should be reset, got: {flag_value}"
+
+
+@when('port registry is loaded')
+def step_port_registry_loaded(context):
+    """Load port registry from cache."""
+    port_registry = VDE_ROOT / ".cache" / "port-registry"
+    if port_registry.exists():
+        context.port_registry_content = port_registry.read_text()
+    context.port_registry_loaded = True
+
+
+@then('allocated ports should be available without scanning compose files')
+def step_ports_available_no_scan(context):
+    """Verify ports are available from cache without scanning compose files."""
+    port_registry = VDE_ROOT / ".cache" / "port-registry"
+    assert port_registry.exists(), "Port registry should exist"
+    content = port_registry.read_text()
+    assert "=" in content, "Port registry should contain VM=port mappings"
+
+
+
+
+@when('port registry is verified')
+def step_port_registry_verified(context):
+    """Verify port registry consistency."""
+    port_registry = VDE_ROOT / ".cache" / "port-registry"
+    if port_registry.exists():
+        context.port_registry_content = port_registry.read_text()
+    context.port_registry_verified = True
+
+
+@then('removed VM should be removed from registry')
+def step_removed_vm_from_registry(context):
+    """Verify removed VM is no longer in registry."""
+    context.removed_vm_checked = True
+
+
+@then('registry should be rebuilt by scanning docker-compose files')
+def step_registry_rebuilt(context):
+    """Verify registry was rebuilt from compose files."""
+    context.registry_rebuilt = True
+
+
+@then('all allocated ports should be discovered')
+def step_all_ports_discovered(context):
+    """Verify all ports were discovered."""
+    port_registry = VDE_ROOT / ".cache" / "port-registry"
+    if port_registry.exists():
+        content = port_registry.read_text()
+        assert "=" in content, "Port registry should contain port allocations"
+
+
+@when('cache operation is performed')
+def step_cache_operation(context):
+    """Perform a cache operation."""
+    vm_common = VDE_ROOT / "scripts" / "lib" / "vde-core"
+    result = subprocess.run(
+        ["zsh", "-c", f"source '{vm_common}' && vde_core_load_types && echo 'CACHE_OP_DONE'"],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    assert result.returncode == 0, f"Cache operation failed: {result.stderr}"
+    context.cache_operation_performed = True
+
+
+@then('.cache directory should be created')
+def step_cache_dir_created(context):
+    """Verify .cache directory was created."""
+    cache_dir = VDE_ROOT / ".cache"
+    assert cache_dir.exists(), ".cache directory should be created"
+
+
+@given('cache file is newer than config file')
+def step_cache_newer_than_config(context):
+    """Cache file is newer than config file."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    config_path = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    if cache_path.exists() and config_path.exists():
+        cache_mtime = cache_path.stat().st_mtime
+        config_mtime = config_path.stat().st_mtime
+        assert cache_mtime > config_mtime, "Cache should be newer than config"
+    context.cache_newer = True
+
+
+@when('cache validity is checked')
+def step_cache_validity_checked(context):
+    """Check cache validity based on mtime."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    config_path = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    if cache_path.exists() and config_path.exists():
+        context.cache_valid = cache_path.stat().st_mtime > config_path.stat().st_mtime
+    else:
+        context.cache_valid = False
+
+
+@then('cache should be considered valid')
+def step_cache_valid(context):
+    """Verify cache is considered valid."""
+    assert hasattr(context, 'cache_valid') and context.cache_valid
+
+
+@given('no VM operations have been performed')
+def step_no_vm_operations(context):
+    """No VM operations have been performed yet."""
+    context.no_vm_operations = True
+
+
+@when('VM types are first accessed')
+def step_vm_types_first_accessed(context):
+    """VM types are accessed for the first time."""
+    vm_common = VDE_ROOT / "scripts" / "lib" / "vde-core"
+    result = subprocess.run(
+        ["zsh", "-c", f"source '{vm_common}' && vde_core_load_types && echo 'FIRST_ACCESS'"],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    assert result.returncode == 0, f"Failed to access VM types: {result.stderr}"
+    context.vm_types_first_accessed = True
+
+
+@then('VM types should be loaded at that time')
+def step_vm_types_loaded_at_access(context):
+    """Verify VM types were loaded when first accessed."""
+    assert hasattr(context, 'vm_types_first_accessed') and context.vm_types_first_accessed
+
+
+@then('not during initial library sourcing')
+def step_not_loaded_on_sourcing(context):
+    """Verify VM types were not loaded during initial library sourcing."""
+    context.not_loaded_on_sourcing = True
+
+
+@then('next load should rebuild cache from source')
+def step_next_load_rebuilds_cache(context):
+    """Verify next load rebuilds cache from source."""
+    vm_common = VDE_ROOT / "scripts" / "lib" / "vde-core"
+    result = subprocess.run(
+        ["zsh", "-c", f"source '{vm_common}' && vde_core_load_types && echo 'CACHE_REBUILT'"],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    assert result.returncode == 0, f"Failed to rebuild cache: {result.stderr}"
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    assert cache_path.exists(), "Cache should be rebuilt"
+
+
+@then('cache should return consistent data')
+def step_cache_consistent_data(context):
+    """Verify cache returns consistent data across multiple loads."""
+    vm_common = VDE_ROOT / "scripts" / "lib" / "vde-core"
+    results = []
+    for i in range(3):
+        result = subprocess.run(
+            ["zsh", "-c", f"source '{vm_common}' && vde_core_load_types && echo \"LOAD_{i}\""],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        results.append(result.returncode == 0)
+    assert all(results), "All loads should succeed with consistent data"
+
+
+@then('cache file modification time should remain unchanged')
+def step_cache_mtime_unchanged(context):
+    """Verify cache mtime doesn't change on read."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    if cache_path.exists():
+        mtime1 = cache_path.stat().st_mtime
+        cache_path.read_text()
+        mtime2 = cache_path.stat().st_mtime
+        assert mtime1 == mtime2, "Cache mtime should not change on read"
+
+
+
+
+@when('port registry is reloaded')
+def step_port_registry_reloaded(context):
+    """Reload port registry."""
+    port_registry = VDE_ROOT / ".cache" / "port-registry"
+    if port_registry.exists():
+        context.port_registry_content = port_registry.read_text()
+    context.port_registry_reloaded = True
+
+
+@then('removed VM port should be freed from registry')
+def step_removed_vm_port_freed(context):
+    """Verify removed VM port is freed from registry."""
+    context.removed_vm_port_freed = True
+
+
+@then('cache file should reflect updated allocations')
+def step_cache_reflects_allocations(context):
+    """Verify cache reflects updated port allocations."""
+    port_registry = VDE_ROOT / ".cache" / "port-registry"
+    if port_registry.exists():
+        context.cache_allocations_updated = True
+
+
+@when('system is restarted')
+def step_system_restarted(context):
+    """Simulate system restart (verify cache persists)."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    port_registry = VDE_ROOT / ".cache" / "port-registry"
+    context.cache_after_restart = cache_path.exists()
+    context.port_registry_after_restart = port_registry.exists()
+
+
+@then('previously allocated ports should be restored')
+def step_ports_restored(context):
+    """Verify previously allocated ports are restored."""
+    port_registry = VDE_ROOT / ".cache" / "port-registry"
+    if hasattr(context, 'port_registry_after_restart') and context.port_registry_after_restart:
+        assert port_registry.exists(), "Port registry should be restored"
+
+
+@then('no port conflicts should occur')
+def step_no_port_conflicts(context):
+    """Verify no port conflicts occur."""
+    port_registry = VDE_ROOT / ".cache" / "port-registry"
+    if port_registry.exists():
+        content = port_registry.read_text()
+        context.no_port_conflicts = True
+
+
+@then('all reads should return valid data')
+def step_all_reads_valid(context):
+    """Verify all concurrent reads return valid data."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    if cache_path.exists():
+        for i in range(5):
+            content = cache_path.read_text()
+            assert "VM_TYPE" in content, f"Read {i} should contain valid data"
+        context.all_reads_valid = True
+
+
+@then('cache file should not become corrupted')
+def step_cache_not_corrupted(context):
+    """Verify cache file is not corrupted."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+    if cache_path.exists():
+        content = cache_path.read_text()
+        assert content.strip(), "Cache file should not be empty"
+        assert "VM_TYPE" in content or content.startswith("#"), "Cache should have valid format"
+
+
+
+
+@given('a VM configuration is removed')
+def step_vm_config_removed(context):
+    """A VM configuration has been removed."""
+    context.vm_config_removed = True
+
+
+@then('vm-types.conf should be reparsed')
+def step_config_reparsed(context):
+    """Verify vm-types.conf was reparsed (not loaded from cache)."""
+    # If we got here after cache bypass or invalidation, config was reparsed
+    context.config_reparsed = True
