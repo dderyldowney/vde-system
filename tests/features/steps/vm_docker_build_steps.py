@@ -207,6 +207,9 @@ def step_build_cache_used(context):
 @then('I should see the build output')
 def step_see_build_output(context):
     """Verify build output is visible."""
-    if hasattr(context, 'last_output'):
-        assert len(context.last_output) > 0 or context.last_exit_code == 0, \
-               "Should see build output"
+    # Support both old context (last_output, last_exit_code) and new (last_command_output, last_command_rc)
+    output = getattr(context, 'last_output', None) or getattr(context, 'last_command_output', '')
+    exit_code = getattr(context, 'last_exit_code', None) or getattr(context, 'last_command_rc', 0)
+    
+    assert len(output) > 0 or exit_code == 0, \
+           "Should see build output"

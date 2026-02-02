@@ -87,3 +87,169 @@ def step_start_all_vms(context):
     if vms_to_check:
         all_running = all(container_exists(vm) for vm in vms_to_check)
         context.all_vms_started = all_running
+
+
+# =============================================================================
+# VM Type GIVEN steps - Setup for VM-to-Host tests
+# =============================================================================
+
+@given('I have a management VM running')
+def step_management_vm_running(context):
+    """Management VM is running."""
+    context.current_vm = "management"
+    context.management_vm_running = container_exists("management-dev")
+
+
+@given('I have a build VM running')
+def step_build_vm_running(context):
+    """Build VM is running."""
+    context.current_vm = "build"
+    context.build_vm_running = container_exists("build-dev")
+
+
+@given('I have a coordination VM running')
+def step_coordination_vm_running(context):
+    """Coordination VM is running."""
+    context.current_vm = "coordination"
+    context.coordination_vm_running = container_exists("coordination-dev")
+
+
+@given('I have a backup VM running')
+def step_backup_vm_running(context):
+    """Backup VM is running."""
+    context.current_vm = "backup"
+    context.backup_vm_running = container_exists("backup-dev")
+
+
+@given('I have a debugging VM running')
+def step_debugging_vm_running(context):
+    """Debugging VM is running."""
+    context.current_vm = "debugging"
+    context.debugging_vm_running = container_exists("debugging-dev")
+
+
+@given('I have a network VM running')
+def step_network_vm_running(context):
+    """Network VM is running."""
+    context.current_vm = "network"
+    context.network_vm_running = container_exists("network-dev")
+
+
+@given('I have a utility VM running')
+def step_utility_vm_running(context):
+    """Utility VM is running."""
+    context.current_vm = "utility"
+    context.utility_vm_running = container_exists("utility-dev")
+
+
+# Note: 'I have multiple VMs running' is defined in pattern_steps.py
+
+
+# =============================================================================
+# Additional GIVEN steps for feature scenarios (not in docker_operations_steps.py)
+# =============================================================================
+
+@given('I have Docker installed on my host')
+def step_docker_installed(context):
+    """Docker is installed on the host."""
+    result = subprocess.run(['docker', '--version'], capture_output=True, text=True, timeout=10)
+    context.docker_installed = result.returncode == 0
+    assert context.docker_installed, "Docker must be installed on host"
+
+
+@given('I have a Go VM running')
+def step_go_vm_running(context):
+    """Go VM is running."""
+    context.current_vm = "go"
+    context.go_vm_running = container_exists("go-dev")
+
+
+@given('I have projects on my host')
+def step_host_has_projects(context):
+    """Host has projects."""
+    context.host_has_projects = (Path.home() / "dev").exists()
+
+
+@given('I have custom scripts on my host')
+def step_host_has_scripts(context):
+    """Host has custom scripts."""
+    scripts_dir = Path.home() / "dev" / "scripts"
+    context.host_has_scripts = scripts_dir.exists() and any(scripts_dir.glob('*.sh'))
+
+
+# =============================================================================
+# SSH INTO VM WHEN steps - Set context for VM operations
+# =============================================================================
+
+@when('I SSH into the Python VM')
+def step_ssh_python_vm(context):
+    """SSH into Python VM - set context for VM operations."""
+    context.current_vm = "python"
+    context.vm_ssh_target = "python-dev"
+
+
+@when('I SSH into the Go VM')
+def step_ssh_go_vm(context):
+    """SSH into Go VM - set context for VM operations."""
+    context.current_vm = "go"
+    context.vm_ssh_target = "go-dev"
+
+
+@when('I SSH into a VM')
+def step_ssh_any_vm(context):
+    """SSH into any VM - set context for VM operations."""
+    # Use current_vm if set, otherwise default to python
+    if hasattr(context, 'current_vm'):
+        context.vm_ssh_target = f"{context.current_vm}-dev"
+    else:
+        context.current_vm = "python"
+        context.vm_ssh_target = "python-dev"
+
+
+@when('I SSH into the management VM')
+def step_ssh_management_vm(context):
+    """SSH into management VM - set context for VM operations."""
+    context.current_vm = "management"
+    context.vm_ssh_target = "management-dev"
+
+
+@when('I SSH into the build VM')
+def step_ssh_build_vm(context):
+    """SSH into build VM - set context for VM operations."""
+    context.current_vm = "build"
+    context.vm_ssh_target = "build-dev"
+
+
+@when('I SSH into the coordination VM')
+def step_ssh_coordination_vm(context):
+    """SSH into coordination VM - set context for VM operations."""
+    context.current_vm = "coordination"
+    context.vm_ssh_target = "coordination-dev"
+
+
+@when('I SSH into the backup VM')
+def step_ssh_backup_vm(context):
+    """SSH into backup VM - set context for VM operations."""
+    context.current_vm = "backup"
+    context.vm_ssh_target = "backup-dev"
+
+
+@when('I SSH into the debugging VM')
+def step_ssh_debugging_vm(context):
+    """SSH into debugging VM - set context for VM operations."""
+    context.current_vm = "debugging"
+    context.vm_ssh_target = "debugging-dev"
+
+
+@when('I SSH into the network VM')
+def step_ssh_network_vm(context):
+    """SSH into network VM - set context for VM operations."""
+    context.current_vm = "network"
+    context.vm_ssh_target = "network-dev"
+
+
+@when('I SSH into the utility VM')
+def step_ssh_utility_vm(context):
+    """SSH into utility VM - set context for VM operations."""
+    context.current_vm = "utility"
+    context.vm_ssh_target = "utility-dev"

@@ -129,12 +129,42 @@ def step_reload_vm_types(context):
 
 @when('I run "{command}"')
 def step_run_command(context, command):
-    """Execute a VDE command."""
-    result = run_vde_command(command, timeout=120)
-    context.last_command = command
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
+    """Execute a VDE command or to-host command."""
+    # Check if this is a to-host command
+    if command.startswith('to-host '):
+        # Extract the actual host command
+        host_command = command[8:]  # Remove 'to-host ' prefix
+        
+        # Execute the command on host
+        try:
+            result = subprocess.run(
+                host_command,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            context.last_command_output = result.stdout
+            context.last_command_stderr = result.stderr
+            context.last_command_rc = result.returncode
+            context.last_command = host_command
+        except subprocess.TimeoutExpired:
+            context.last_command_output = ""
+            context.last_command_stderr = f"Command timed out after 30s"
+            context.last_command_rc = -1
+            context.last_command = host_command
+        except Exception as e:
+            context.last_command_output = ""
+            context.last_command_stderr = str(e)
+            context.last_command_rc = -1
+            context.last_command = host_command
+    else:
+        # This is a VDE command
+        result = run_vde_command(command, timeout=120)
+        context.last_command = command
+        context.last_exit_code = result.returncode
+        context.last_output = result.stdout
+        context.last_error = result.stderr
 
 
 @when('I check docker-compose config')

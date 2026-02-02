@@ -64,16 +64,24 @@ def step_ssh_agent_not_running(context):
 @given('I have VMs running with Docker socket access')
 def step_vms_with_docker_socket(context):
     """VMs running with Docker socket access."""
-    # Check if any VM has Docker socket mounted
-    running = docker_ps()
+    # Get list of running containers
+    try:
+        result = subprocess.run(
+            ['docker', 'ps', '--format', '{{.Names}}'],
+            capture_output=True, text=True, timeout=10
+        )
+        running = [name for name in result.stdout.strip().split('\n') if name] if result.returncode == 0 else []
+    except Exception:
+        running = []
+    
     context.vms_with_docker = []
     for vm in running:
         try:
-            result = subprocess.run(
+            inspect_result = subprocess.run(
                 ['docker', 'inspect', '-f', '{{json .Mounts}}', vm],
                 capture_output=True, text=True, timeout=10
             )
-            if 'docker.sock' in result.stdout:
+            if 'docker.sock' in inspect_result.stdout:
                 context.vms_with_docker.append(vm)
         except Exception:
             continue
