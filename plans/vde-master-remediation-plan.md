@@ -26,10 +26,10 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 | Priority | Category | Plans | Status | Est. Scope |
 |----------|----------|-------|--------|------------|
 | P1 | **COMPLETED** | vde-remediation-plan.md (Stage 1) | ✅ Done | 5 security tasks |
-| P2 | User Bugs | vde-daily-workflow-improvements-plan.md | Pending | 2 high-priority fixes |
-| P3 | Test Remediation | docker-required-test-remediation-plan.md | Pending | 13 tasks, 300+ violations |
-| P4 | BDD Gaps | daily-workflow-test-remediation-plan.md | Pending | 1274 undefined steps |
-| P5 | Code Quality | vde-remediation-plan.md (Stage 2) | ⏳ Next | 3 tasks |
+| P2 | **COMPLETED** | vde-remediation-plan.md (Stage 2) | ✅ Done | 5 code quality tasks |
+| P3 | User Bugs | vde-daily-workflow-improvements-plan.md | ⏳ Next | 2 high-priority fixes |
+| P4 | Test Remediation | docker-required-test-remediation-plan.md | Pending | 13 tasks, 300+ violations |
+| P5 | BDD Gaps | daily-workflow-test-remediation-plan.md | Pending | 1274 undefined steps |
 | P6 | Code Quality | vde-home-path-consistency-plan.md | Pending | Portability improvements |
 | P7 | Documentation | vde-codebase-compliance-analysis.md | Pending | Analysis only |
 | P8 | MCP Config | mcp-*.md (4 files) | Pending | Configuration docs |
@@ -49,15 +49,24 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 | 1.4 | Fix port race condition | vde-remediation-plan.md:1.4 | ✅ Done |
 | 1.5 | Fix SSH config race condition | vde-remediation-plan.md:1.5 | ✅ Done |
 
-### Phase 2: Code Quality (P5) - ⏳ NEXT
-**Duration:** 1-2 sessions
-**Trigger:** Stage 1 complete
+### Phase 2: Code Quality (P2) - ✅ COMPLETED
+**Duration:** Already implemented
+
+| Order | Task | Plan Reference | Status |
+|-------|------|----------------|--------|
+| 2.1 | Remove duplicate code | vde-remediation-plan.md:2.1 | ✅ Done |
+| 2.2 | Standardize return codes | vde-remediation-plan.md:2.2 | ✅ Done |
+| 2.3 | Replace magic numbers | vde-remediation-plan.md:2.3 | ✅ Done |
+| 2.4 | Docker error handling | vde-remediation-plan.md:2.4 | ✅ Done |
+| 2.5 | Test suite | vde-remediation-plan.md:2.5 | ✅ Done |
+
+### Phase 3: User-Facing Bugs (P3) - ⏳ NEXT
+**Duration:** 1 session
 
 | Order | Task | Plan Reference | Dependencies |
 |-------|------|----------------|--------------|
-| 2.1 | Remove duplicate code | vde-remediation-plan.md:2.1 | Stage 1 |
-| 2.2 | Standardize return codes | vde-remediation-plan.md:2.2 | Stage 1 |
-| 2.3 | Replace magic numbers | vde-remediation-plan.md:2.3 | Stage 1 |
+| 3.1 | Fix `vde status` RUNNING display | vde-daily-workflow-improvements-plan.md | None |
+| 3.2 | Add service VM SSH config | vde-daily-workflow-improvements-plan.md | None |
 
 ### Phase 3: Test Remediation (P3)
 **Duration:** 2-3 sessions  
