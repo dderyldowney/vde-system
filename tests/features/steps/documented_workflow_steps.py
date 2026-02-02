@@ -743,18 +743,3 @@ def step_generate_perf_plans(context):
 # THEN steps - Verify plans and assertions
 # =============================================================================
 
-@then('the plan should include the create_vm intent')
-def step_check_create_vm_intent(context):
-    """Verify plan includes create_vm intent."""
-    assert hasattr(context, 'current_plan'), "No plan was generated"
-    intent = context.current_plan.get('intent', '')
-    assert intent == 'create_vm', f"Expected create_vm intent, got '{intent}'"
-
-
-@then('the plan should include the Python VM')
-def step_check_python_vm(context):
-    """Verify plan includes Python VM."""
-    assert hasattr(context, 'current_plan'), "No plan was generated"
-    vms = context.current_plan.get('vms', [])
-    if isinstance(vms, list):
-        assert 'python' in vms, f"Expected 'python' in plan, got {vms}"

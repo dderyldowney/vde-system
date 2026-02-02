@@ -87,17 +87,29 @@ The "FAIL" status in BDD test phases is NOT due to test failures but due to **un
 - All NLP parser assertions now have step definitions
 - Remaining 63 undefined steps are in other features (workflows, cache, SSH)
 
-### Phase 2: Workflow Validation Steps (1-2 hours)
+### Phase 2: Workflow Validation Steps (IN PROGRESS)
 **Goal**: Complete daily development workflow tests
 
-1. **documented_workflow_steps.py** - Add missing workflow steps
-   - Project setup scenarios
-   - Multi-VM coordination steps
-   - Port conflict detection steps
+### Completed Actions:
+1. Added 20+ step definitions to `daily_workflow_steps.py`
+   - Plan intent verification steps
+   - VM inclusion validation steps
+   - Workflow state tracking steps
+   - GIVEN steps for workflow scenarios
+2. Removed duplicate step definitions from:
+   - `documented_workflow_steps.py`
+   - `ssh_connection_steps.py`
 
-2. **daily_workflow_steps.py** - Complete workflow assertions
-   - State change verification
-   - Notification checking steps
+### Results:
+| Metric | Before | After |
+|--------|--------|-------|
+| Passed | 0 | 86 |
+| Failed | 0 | 7 |
+| Undefined | 30 | 36 |
+
+### Remaining Work:
+- 36 undefined steps in workflow scenarios require additional step definitions
+- 7 failing tests due to context not being set up correctly by WHEN steps
 
 ### Phase 3: Cache System Steps (1 hour)
 **Goal**: Complete cache validation tests

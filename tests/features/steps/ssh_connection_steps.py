@@ -198,25 +198,6 @@ def step_both_accessible_ssh(context):
 
 
 
-
-@then('it should resolve to "go"')
-def step_resolve_to_go(context):
-    """Verify alias resolves to go using vde list command."""
-    result = run_vde_command("list", timeout=10)
-    assert result.returncode == 0, "Should be able to list VMs"
-
-
-@then('it should resolve to the canonical name "js"')
-def step_resolve_to_js(context):
-    """Verify alias resolves to js using vde list command."""
-    result = run_vde_command("list", timeout=10)
-    assert result.returncode == 0, "Should be able to list VMs"
-
-
-@then('"node" should resolve to "js"')
-def step_node_resolves_js(context):
-    """Verify node alias resolves to js using vde list command."""
-    result = run_vde_command("list", timeout=10)
     assert result.returncode == 0, "Should be able to list VMs"
 
 
