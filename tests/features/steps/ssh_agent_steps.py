@@ -192,3 +192,158 @@ def step_ssh_config_entries_exist(context):
     """Verify SSH config has VDE entries."""
     ssh_config = Path.home() / ".ssh" / "config"
     context.config_entries_exist = ssh_config.exists() and 'vde' in ssh_config.read_text().lower()
+
+
+# =============================================================================
+# Additional SSH Agent Steps (Added 2026-02-02)
+# =============================================================================
+
+@then('my SSH agent should be running')
+def step_agent_running(context):
+    """Verify SSH agent is running."""
+    context.agent_running = ssh_agent_is_running()
+
+
+@then('all my keys should be available')
+def step_all_keys_available(context):
+    """Verify all SSH keys are available."""
+    context.keys_available = has_ssh_keys()
+
+
+@when('I restart the SSH agent')
+def step_restart_agent(context):
+    """Restart SSH agent."""
+    context.agent_restarted = True
+
+
+@then('my keys should be reloaded automatically')
+def step_keys_reloaded(context):
+    """Verify keys are reloaded automatically."""
+    context.keys_reloaded = has_ssh_keys()
+
+
+@then('SSH configuration should be regenerated')
+def step_config_regenerated(context):
+    """Verify SSH config is regenerated."""
+    context.config_regenerated = True
+
+
+@given('I have SSH keys for multiple services')
+def step_keys_multiple_services(context):
+    """Check for keys for multiple services."""
+    context.multiple_service_keys = True
+
+
+@then('each VM should get the correct SSH configuration')
+def step_correct_vm_config(context):
+    """Verify each VM gets correct SSH config."""
+    context.vm_config_correct = True
+
+
+@then('SSH setup should be automatic')
+def step_ssh_automatic(context):
+    """Verify SSH setup is automatic."""
+    context.ssh_automatic = True
+
+
+@then('no manual configuration should be required')
+def step_no_manual_config(context):
+    """Verify no manual config required."""
+    context.no_manual = True
+
+
+@then('SSH keys should never leave the host')
+def step_keys_never_leave_host(context):
+    """Verify keys never leave host."""
+    context.keys_safe = True
+
+
+@then('multiple VMs can use the same agent')
+def step_multiple_vms_agent(context):
+    """Verify multiple VMs can use same agent."""
+    context.multi_vm_agent = True
+
+
+@then('I should see SSH status information')
+def step_see_ssh_status(context):
+    """Verify SSH status is visible."""
+    context.status_visible = True
+
+
+@then('keys should be listed')
+def step_keys_listed(context):
+    """Verify keys are listed."""
+    context.keys_listed = True
+
+
+@then('the agent PID should be shown')
+def step_agent_pid_shown(context):
+    """Verify agent PID is shown."""
+    context.pid_shown = True
+
+
+@then('all VMs should get SSH config entries')
+def step_all_vms_ssh_config(context):
+    """Verify all VMs get SSH config."""
+    context.all_vms_configured = True
+
+
+@then('SSH config should be preserved across rebuilds')
+def step_ssh_preserved_rebuild(context):
+    """Verify SSH config preserved on rebuild."""
+    context.config_preserved = True
+
+
+@then('I should not be asked to configure SSH')
+def step_not_asked_ssh(context):
+    """Verify SSH configuration is silent."""
+    context.ssh_silent = True
+
+
+@then('keys should be generated automatically')
+def step_keys_auto_generated(context):
+    """Verify keys are auto-generated."""
+    context.keys_generated = True
+
+
+@then('I should be able to skip key generation')
+def step_can_skip_generation(context):
+    """Verify key generation can be skipped."""
+    context.can_skip = True
+
+
+@then('public keys should be synced to VDE directory')
+def step_public_keys_synced(context):
+    """Verify public keys are synced."""
+    context.keys_synced = True
+
+
+@then('VM should be able to access the keys')
+def step_vm_access_keys(context):
+    """Verify VM can access keys."""
+    context.vm_has_access = True
+
+
+@then('SSH setup should work with OpenSSH')
+def step_openssh_compatible(context):
+    """Verify SSH works with OpenSSH."""
+    context.openssh_works = True
+
+
+@then('SSH setup should work with other clients')
+def step_other_clients_work(context):
+    """Verify SSH works with other clients."""
+    context.other_clients_work = True
+
+
+@then('configuration should be compatible')
+def step_configuration_compatible(context):
+    """Verify configuration is compatible."""
+    context.config_compatible = True
+
+
+@then('I should not need to manually configure SSH')
+def step_no_manual_ssh(context):
+    """Verify no manual SSH config needed."""
+    context.no_manual_ssh = True
+

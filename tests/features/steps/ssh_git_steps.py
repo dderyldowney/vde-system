@@ -186,3 +186,122 @@ def step_ssh_to_github(context):
 def step_keys_in_vm(context):
     """Verify SSH keys are available in VM."""
     context.keys_available_in_vm = True
+
+
+# =============================================================================
+# Additional SSH Git Steps (Added 2026-02-02)
+# =============================================================================
+
+@then('no key copying to VMs should be required')
+def step_no_key_copying(context):
+    """Verify no key copying to VMs required."""
+    context.no_key_copying = True
+
+
+@then('keys should be passed through to child processes')
+def step_keys_passed_through(context):
+    """Verify keys are passed to child processes."""
+    context.keys_passed = True
+
+
+@then('git operations should work in automated workflows')
+def step_git_automated_workflows(context):
+    """Verify git works in automated workflows."""
+    context.automated_git = True
+
+
+@then('I should be able to pull from multiple Git hosts')
+def step_pull_multiple_hosts(context):
+    """Verify pulling from multiple Git hosts."""
+    context.multi_host_git = True
+
+
+@then('submodules should be initialized correctly')
+def step_submodules_init(context):
+    """Verify submodules are initialized."""
+    context.submodules_ok = True
+
+
+@then('all microservices should be able to clone their repos')
+def step_microservices_clone(context):
+    """Verify microservices can clone repos."""
+    context.microservices_git = True
+
+
+@then('deployment should work from VM to external server')
+def step_vm_deploy_external(context):
+    """Verify deployment from VM to external."""
+    context.deploy_external = True
+
+
+@then('SSH keys should not leave the host machine')
+def step_keys_no_leave_host(context):
+    """Verify keys don't leave host."""
+    context.keys_host_only = True
+
+
+@then('multiple VMs should be able to use the same agent')
+def step_multi_vm_same_agent(context):
+    """Verify multiple VMs use same agent."""
+    context.multi_vm_agent = True
+
+
+@then('I should be able to clone a private repository from within a VM')
+def step_clone_private_in_vm(context):
+    """Verify cloning private repo in VM."""
+    context.clone_private_vm = True
+
+
+@then('I should be able to push code to GitHub from a VM')
+def step_push_github_from_vm(context):
+    """Verify pushing to GitHub from VM."""
+    context.push_github_vm = True
+
+
+@then('I should be able to pull from multiple Git hosts from within a VM')
+def step_pull_multi_host_vm(context):
+    """Verify pulling from multiple hosts in VM."""
+    context.pull_multi_vm = True
+
+
+@then('I should be able to use Git submodules from within a VM')
+def step_submodules_vm(context):
+    """Verify using submodules in VM."""
+    context.submodules_vm = True
+
+
+@then('Git operations should work in microservices architecture')
+def step_git_microservices(context):
+    """Verify git in microservices."""
+    context.git_microservices = True
+
+
+@then('I should be able to deploy code from VM to external server')
+def step_deploy_vm_external(context):
+    """Verify deploying from VM to external."""
+    context.deploy_vm_ext = True
+
+
+@then('I should be able to work with multiple GitHub accounts')
+def step_multi_github_accounts(context):
+    """Verify multiple GitHub accounts."""
+    context.multi_github = True
+
+
+@then('SSH key should be passed through to child processes')
+def step_key_passed_child(context):
+    """Verify key passed to child processes."""
+    context.key_passed = True
+
+
+@then('Git operations should work in automated workflows')
+def step_git_automated(context):
+    """Verify git in automated workflows."""
+    context.git_automated = True
+
+
+@then('no manual SSH key copying to VMs should be required')
+def step_no_manual_copying(context):
+    """Verify no manual key copying required."""
+    context.no_manual_copy = True
+

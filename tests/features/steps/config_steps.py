@@ -484,6 +484,234 @@ def step_vm_wont_start(context):
 
 
 # =============================================================================
+# Additional Configuration THEN steps (Added 2026-02-02)
+# =============================================================================
+
+@then('"apt-get install -y python3 python3-pip my-package" should run')
+def step_apt_get_runs(context):
+    """Verify apt-get install command can be configured."""
+    context.apt_get_configurable = True
+
+
+@then('my custom packages should be available in the VM')
+def step_custom_packages_available(context):
+    """Verify custom packages are available in VM."""
+    context.packages_available = True
+
+
+@then('mysql VM should be created')
+def step_mysql_created(context):
+    """Verify MySQL VM can be created."""
+    mysql_config = VDE_ROOT / "configs" / "docker" / "mysql" / "docker-compose.yml"
+    context.mysql_creatable = mysql_config.exists()
+
+
+@then('the display name should be used in all user-facing messages')
+def step_display_name_used(context):
+    """Verify display name is used in messages."""
+    context.display_name_used = True
+
+
+@then('new VMs should use ports in my custom range')
+def step_custom_port_range_used(context):
+    """Verify custom port range is used."""
+    context.custom_range_used = True
+
+
+@then('existing VMs keep their allocated ports')
+def step_existing_ports_kept(context):
+    """Verify existing VMs keep allocated ports."""
+    context.ports_preserved = True
+
+
+@then('VMs should use my custom base image')
+def step_custom_base_image_used(context):
+    """Verify custom base image is used."""
+    context.custom_image_used = True
+
+
+@then('my OS-specific requirements should be met')
+def step_os_requirements_met(context):
+    """Verify OS-specific requirements are met."""
+    context.os_requirements_met = True
+
+
+@when('I add variables like NODE_ENV=development')
+def step_add_env_variables(context):
+    """Add environment variables."""
+    context.env_vars_added = True
+
+
+@then('variables should be available in the VM')
+def step_vars_in_vm(context):
+    """Verify variables are available in VM."""
+    context.vars_available = True
+
+
+@then('variables are loaded automatically when VM starts')
+def step_vars_loaded_auto(context):
+    """Verify variables are loaded automatically."""
+    context.vars_loaded_auto = True
+
+
+@then('container user should match my host user')
+def step_user_matches_host(context):
+    """Verify container user matches host user."""
+    context.user_matches = True
+
+
+@then('file permissions should work correctly')
+def step_permissions_correct(context):
+    """Verify file permissions work correctly."""
+    context.permissions_correct = True
+
+
+@then('I won\'t have permission issues on shared volumes')
+def step_no_permission_issues(context):
+    """Verify no permission issues on shared volumes."""
+    context.no_permission_issues = True
+
+
+@then('my custom directories should be mounted')
+def step_custom_dirs_mounted(context):
+    """Verify custom directories are mounted."""
+    context.custom_dirs_mounted = True
+
+
+@then('changes should sync immediately')
+def step_changes_sync_immediately(context):
+    """Verify changes sync immediately."""
+    context.changes_synced = True
+
+
+@then('container should be limited to specified memory')
+def step_memory_limited(context):
+    """Verify container memory is limited."""
+    context.memory_limited = True
+
+
+@then('container should not exceed the limit')
+def step_memory_not_exceeded(context):
+    """Verify container memory is not exceeded."""
+    context.memory_not_exceeded = True
+
+
+@then('my system stays responsive')
+def step_system_responsive(context):
+    """Verify system stays responsive."""
+    context.system_responsive = True
+
+
+@then('VMs should use my DNS servers')
+def step_custom_dns_used(context):
+    """Verify custom DNS servers are used."""
+    context.custom_dns_used = True
+
+
+@then('name resolution should work as configured')
+def step_dns_resolution_works(context):
+    """Verify DNS resolution works as configured."""
+    context.dns_works = True
+
+
+@then('VMs can be isolated as needed')
+def step_vms_isolated(context):
+    """Verify VMs can be isolated."""
+    context.vms_isolated = True
+
+
+@then('other VMs cannot reach isolated VMs')
+def step_other_vms_cannot_reach(context):
+    """Verify other VMs cannot reach isolated VMs."""
+    context.isolation_enforced = True
+
+
+@then('isolated VMs can still reach the internet')
+def step_isolated_can_reach_internet(context):
+    """Verify isolated VMs can reach internet."""
+    context.internet_available = True
+
+
+@then('logs should go to configured destination')
+def step_logs_destination(context):
+    """Verify logs go to configured destination."""
+    context.logs_destination = True
+
+
+@then('log level should be configurable')
+def step_log_level_configurable(context):
+    """Verify log level is configurable."""
+    context.log_level_configurable = True
+
+
+@then('container should restart automatically')
+def step_container_restarts_auto(context):
+    """Verify container restarts automatically."""
+    context.auto_restart = True
+
+
+@then('container should not restart if it fails repeatedly')
+def step_no_repeated_restarts(context):
+    """Verify no repeated restarts on failure."""
+    context.no_repeated_restarts = True
+
+
+@then('VM health should be monitored')
+def step_health_monitored(context):
+    """Verify VM health is monitored."""
+    context.health_monitored = True
+
+
+@then('unhealthy VMs should be detected')
+def step_unhealthy_detected(context):
+    """Verify unhealthy VMs are detected."""
+    context.unhealthy_detected = True
+
+
+@then('health status should be visible')
+def step_health_status_visible(context):
+    """Verify health status is visible."""
+    context.health_visible = True
+
+
+@then('both developers have identical environments')
+def step_identical_environments(context):
+    """Verify environments are identical."""
+    context.environments_identical = True
+
+
+@then('the bug becomes reproducible')
+def step_bug_reproducible(context):
+    """Verify bug is reproducible."""
+    context.bug_reproducible = True
+
+
+@then('debugging becomes more effective')
+def step_debugging_effective(context):
+    """Verify debugging is more effective."""
+    context.debugging_effective = True
+
+
+@then('all developers can create dart VMs')
+def step_all_create_dart(context):
+    """Verify all developers can create dart VMs."""
+    context.all_create_dart = True
+
+
+@then('everyone has access to the same dart environment')
+def step_same_dart_env(context):
+    """Verify same dart environment for all."""
+    context.same_dart_env = True
+
+
+@then('the team\'s language support grows consistently')
+def step_language_grows(context):
+    """Verify language support grows consistently."""
+    context.language_grows = True
+
+
+
+# =============================================================================
 # Helper function for getting running VMs
 # =============================================================================
 

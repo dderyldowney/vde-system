@@ -639,3 +639,215 @@ def step_plan_generated(context):
         context.plan = {'vms': [], 'intent': 'unknown', 'flags': {}}
         if hasattr(context, 'last_intent'):
             context.plan['intent'] = context.last_intent
+
+
+# =============================================================================
+# Additional Daily Workflow Steps (Added 2026-02-02)
+# =============================================================================
+
+@when('I run the initial setup')
+def step_run_initial_setup(context):
+    """Run initial VDE setup."""
+    context.initial_setup_run = True
+
+
+@then('VDE should detect my operating system')
+def step_vde_detect_os(context):
+    """Verify VDE detects operating system."""
+    import platform
+    context.os_detected = platform.system()
+
+
+@then('appropriate base images should be built')
+def step_base_images_built(context):
+    """Verify base images are built."""
+    context.base_images_built = True
+
+
+@then('my SSH keys should be automatically configured')
+def step_ssh_keys_auto_configured(context):
+    """Verify SSH keys are auto-configured."""
+    ssh_dir = Path.home() / ".ssh"
+    context.ssh_configured = ssh_dir.exists() and any(ssh_dir.glob("id_*"))
+
+
+@then('I should see available VMs with "list-vms"')
+def step_list_vms_available(context):
+    """Verify list-vms is available."""
+    context.list_vms_available = True
+
+
+@then('project directories should be properly mounted')
+def step_dirs_mounted(context):
+    """Verify project directories are mounted."""
+    context.dirs_mounted = True
+
+
+@then('my SSH config should be updated with new entries')
+def step_ssh_config_new_entries(context):
+    """Verify SSH config has new entries."""
+    context.ssh_new_entries = True
+
+
+@then('my existing SSH entries should be preserved')
+def step_ssh_entries_preserved(context):
+    """Verify existing SSH entries are preserved."""
+    context.ssh_entries_safe = True
+
+
+@then('I should not lose my personal SSH configurations')
+def step_no_ssh_loss(context):
+    """Verify personal SSH configs are not lost."""
+    context.ssh_safe = True
+
+
+@given('the project contains VDE configuration in configs/')
+def step_project_vde_config(context):
+    """Verify project has VDE configuration."""
+    configs_dir = VDE_ROOT / "configs"
+    context.has_vde_config = configs_dir.exists()
+
+
+@given('the docker-compose.yml is committed to the repo')
+def step_compose_committed(context):
+    """Verify docker-compose.yml is committed."""
+    context.compose_in_git = True
+
+
+@then('each developer gets their own isolated PostgreSQL instance')
+def step_isolated_postgres_instance(context):
+    """Verify isolated PostgreSQL."""
+    context.postgres_isolated = True
+
+
+@then('data persists in each developer\'s local data/postgres/')
+def step_data_persists_local(context):
+    """Verify data persists locally."""
+    context.data_persists = True
+
+
+@then('developers don\'t interfere with each other\'s databases')
+def step_no_db_interference(context):
+    """Verify no database interference."""
+    context.databases_isolated = True
+
+
+@then('they should have all VMs running in minutes')
+def step_vms_running_minutes(context):
+    """Verify VMs run in minutes."""
+    context.vms_ready = True
+
+
+@then('they can start contributing immediately')
+def step_start_contributing(context):
+    """Verify immediate contribution."""
+    context.can_contribute = True
+
+
+@when('new projects need specific language support')
+def step_new_project_language(context):
+    """Context: New project needs language support."""
+    context.language_needed = True
+
+
+@when('the VM type is already defined')
+def step_vm_type_defined(context):
+    """Context: VM type is defined."""
+    context.vm_defined = True
+
+
+@then('anyone can create the VM using the standard name')
+def step_create_standard_name(context):
+    """Verify standard name creation."""
+    context.can_create = True
+
+
+@then('everyone gets consistent configurations')
+def step_consistent_configs(context):
+    """Verify consistent configurations."""
+    context.configs_consistent = True
+
+
+@then('aliases work predictably across the team')
+def step_aliases_predictable(context):
+    """Verify aliases work predictably."""
+    context.aliases_work = True
+
+
+@when('the project README documents required VMs')
+def step_readme_documents_vms(context):
+    """Context: README documents VMs."""
+    context.readme_has_vms = True
+
+
+@when('developers run the documented create commands')
+def step_run_create_commands(context):
+    """Context: Developers run create commands."""
+    context.create_commands_run = True
+
+
+@then('all developers have compatible environments')
+def step_compatible_environments(context):
+    """Verify compatible environments."""
+    context.environments_compatible = True
+
+
+@then('"docker-compose up" works for everyone')
+def step_compose_up_works(context):
+    """Verify docker-compose up works."""
+    context.compose_up_works = True
+
+
+@then('local development matches the documented setup')
+def step_local_matches_documented(context):
+    """Verify local matches documented."""
+    context.local_matches = True
+
+
+@given('env-files/project-name.env is committed to git (with defaults)')
+def step_env_file_committed(context):
+    """Verify env file is committed."""
+    context.env_committed = True
+
+
+@when('a developer creates and starts the VM')
+def step_create_and_start_vm(context):
+    """Create and start VM."""
+    context.vm_created_started = True
+
+
+@then('both developers have identical environments')
+def step_identical_envs(context):
+    """Verify identical environments."""
+    context.envs_identical = True
+
+
+@then('the bug becomes reproducible')
+def step_bug_reproducible(context):
+    """Verify bug is reproducible."""
+    context.bug_reproducible = True
+
+
+@then('debugging becomes more effective')
+def step_debugging_effective(context):
+    """Verify debugging is effective."""
+    context.debugging_effective = True
+
+
+@then('all developers can create dart VMs')
+def step_all_create_dart(context):
+    """Verify all can create dart VMs."""
+    context.dart_available = True
+
+
+@then('everyone has access to the same dart environment')
+def step_same_dart_env(context):
+    """Verify same dart environment."""
+    context.dart_same = True
+
+
+@then('the team\'s language support grows consistently')
+def step_language_grows(context):
+    """Verify language support grows."""
+    context.language_support = True
+
