@@ -75,14 +75,14 @@ ${BOLD}EXAMPLES:${RESET}
 
 ${BOLD}TEST STRUCTURE:${RESET}
   tests/
-  ├── bug-fix-validation.test.sh   # Bug fix validation tests
+  ├── bug-fix-validation.test.zsh   # Bug fix validation tests
   ├── unit/                         # Unit tests for each library
-  │   ├── vm-common.test.sh
-  │   ├── vde-shell-compat.test.sh
-  │   ├── vde-parser.test.sh
+  │   ├── vm-common.test.zsh
+  │   ├── vde-shell-compat.test.zsh
+  │   ├── vde-parser.test.zsh
   │   └── ...
   ├── integration/                  # Integration tests
-  │   └── vm-lifecycle-integration.test.sh
+  │   └── vm-lifecycle-integration.test.zsh
   └── features/                     # BDD feature specifications
       ├── vm-lifecycle.feature
       ├── port-management.feature
@@ -123,7 +123,7 @@ discover_tests() {
             ;;
         *)
             # Check if it's a specific test file
-            if [[ -f "$SCRIPT_DIR/$selector.test.sh" ]]; then
+            if [[ -f "$SCRIPT_DIR/$selector.test.zsh" ]]; then
                 TEST_SUITES=("Custom:$selector")
             elif [[ -f "$SCRIPT_DIR/$selector" ]]; then
                 TEST_SUITES=("Custom:$selector")
@@ -142,14 +142,14 @@ list_tests() {
     echo ""
 
     # Bug fix validation
-    if [[ -f "$SCRIPT_DIR/bug-fix-validation.test.sh" ]]; then
+    if [[ -f "$SCRIPT_DIR/bug-fix-validation.test.zsh" ]]; then
         echo "  ${CYAN}bug-fix${RESET}         Bug fix validation tests"
     fi
 
     # Unit tests
     echo ""
     echo "  ${CYAN}unit${RESET}             Unit tests:"
-    for test in "$SCRIPT_DIR"/unit/*.test.sh(N); do
+    for test in "$SCRIPT_DIR"/unit/*.test.zsh(N); do
         if [[ -f "$test" ]]; then
             local name="${test:t:r}"
             echo "    ${name}"
@@ -159,7 +159,7 @@ list_tests() {
     # Integration tests
     echo ""
     echo "  ${CYAN}integration${RESET}      Integration tests:"
-    for test in "$SCRIPT_DIR"/integration/*.test.sh(N); do
+    for test in "$SCRIPT_DIR"/integration/*.test.zsh(N); do
         if [[ -f "$test" ]]; then
             local name="${test:t:r}"
             echo "    ${name}"
@@ -250,19 +250,19 @@ run_all_tests() {
         local test_file
         case "$suite_id" in
             bug-fix-validation)
-                test_file="bug-fix-validation.test.sh"
+                test_file="bug-fix-validation.test.zsh"
                 ;;
             vm-common)
-                test_file="unit/vm-common.test.sh"
+                test_file="unit/vm-common.test.zsh"
                 ;;
             vde-shell-compat)
-                test_file="unit/vde-shell-compat.test.sh"
+                test_file="unit/vde-shell-compat.test.zsh"
                 ;;
             vde-parser)
-                test_file="unit/vde-parser.test.sh"
+                test_file="unit/vde-parser.test.zsh"
                 ;;
             vm-lifecycle)
-                test_file="integration/vm-lifecycle-integration.test.sh"
+                test_file="integration/vm-lifecycle-integration.test.zsh"
                 ;;
             *)
                 test_file="$suite_id"
@@ -354,19 +354,19 @@ run_tests_parallel() {
         local test_file
         case "$suite_id" in
             bug-fix-validation)
-                test_file="bug-fix-validation.test.sh"
+                test_file="bug-fix-validation.test.zsh"
                 ;;
             vm-common)
-                test_file="unit/vm-common.test.sh"
+                test_file="unit/vm-common.test.zsh"
                 ;;
             vde-shell-compat)
-                test_file="unit/vde-shell-compat.test.sh"
+                test_file="unit/vde-shell-compat.test.zsh"
                 ;;
             vde-parser)
-                test_file="unit/vde-parser.test.sh"
+                test_file="unit/vde-parser.test.zsh"
                 ;;
             vm-lifecycle)
-                test_file="integration/vm-lifecycle-integration.test.sh"
+                test_file="integration/vm-lifecycle-integration.test.zsh"
                 ;;
             *)
                 test_file="$suite_id"

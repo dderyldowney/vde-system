@@ -12,7 +12,7 @@ services:
     container_name: zig-dev
     hostname: zig-dev
     restart: unless-stopped
-    command: sh -c "apt-get install -y zig && /usr/sbin/sshd -D"
+    command: sh -c "cd /tmp && curl -fsSL https://ziglang.org/download/0.14.0/zig-linux-x86_64-0.14.0.tar.xz -o zig.tar.xz && tar xf zig.tar.xz && mv zig-linux-x86_64-0.14.0 /opt/zig && ln -sf /opt/zig/zig /usr/local/bin/zig && rm -rf /tmp/zig.tar.xz && /usr/sbin/sshd -D"
 
     ports:
       - ":22"

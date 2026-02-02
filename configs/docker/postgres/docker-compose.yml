@@ -1,3 +1,6 @@
+# Template for service VMs
+# Variables: postgres, 2400, 5432, apt-get update -y && apt-get install -y postgresql-client
+# SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
 services:
   postgres:
     build:
@@ -16,7 +19,7 @@ services:
 
     ports:
       - "2400:22"
-      - "5432:5432"
+      ##SERVICE_PORTS##
 
     volumes:
       - ../../../data/postgres:/data
@@ -27,8 +30,6 @@ services:
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
-      - VDE_HOME=${VDE_HOME:-}
-      - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
       - ../../../env-files/postgres.env

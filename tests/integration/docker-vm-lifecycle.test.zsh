@@ -394,10 +394,11 @@ test_start_multiple_vms() {
         fi
 
         # js, postgres, and zig need appropriate timeout values
+        # zig needs longer due to downloading zig binary (~50MB) from official release
         if [[ "$vm" == "js" ]]; then
             wait_time=15
         elif [[ "$vm" == "zig" ]]; then
-            wait_time=20
+            wait_time=60
         elif [[ "$vm" == "postgres" ]]; then
             wait_time=15
         else
