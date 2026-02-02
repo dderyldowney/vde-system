@@ -1,13 +1,19 @@
 #!/usr/bin/env zsh
+# run-tests.zsh - Run VDE tests with automatic Docker detection
 
-# Run vde-parser tests
-cd /Users/dderyldowney/dev || exit
+# Check if Docker is available
+if docker info >/dev/null 2>&1; then
+    DOCKER_AVAILABLE=true
+else
+    DOCKER_AVAILABLE=false
+fi
 
-echo "Running vde-parser.test.sh..."
-echo "----------------------------"
-./tests/unit/vde-parser.test.sh
-echo "----------------------------"
+echo "Docker available: $DOCKER_AVAILABLE"
 
-echo -e "\nRunning test_vde_parser_comprehensive.sh..."
-echo "----------------------------------------"
-./tests/unit/test_vde_parser_comprehensive.sh
+if [ "$DOCKER_AVAILABLE" = "true" ]; then
+    echo "Running all tests..."
+    behave tests/features/
+else
+    echo "Docker not available - running docker-free tests only..."
+    behave tests/features/docker-free/
+fi

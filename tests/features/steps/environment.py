@@ -109,6 +109,20 @@ def after_all(context):
 
 def before_scenario(context, scenario):
     """Set up before each scenario."""
+    # Skip scenarios that require Docker if Docker is not available
+    if not HOST_HAS_DOCKER:
+        # Check if scenario has @requires-docker-host tag
+        if hasattr(scenario, 'tags') and scenario.tags:
+            if 'requires-docker-host' in scenario.tags:
+                scenario.skip(reason="Docker not available - skipping docker-required test")
+                return
+        # Also skip if in docker-required directory
+        if hasattr(scenario, 'feature') and scenario.feature:
+            feature_file = getattr(scenario.feature, 'filename', '') or ''
+            if 'docker-required' in feature_file:
+                scenario.skip(reason="Docker not available - skipping docker-required test")
+                return
+
     # Clean up stale lock files before each scenario to prevent timeouts
     _cleanup_lock_files()
 
