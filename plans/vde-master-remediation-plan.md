@@ -74,8 +74,8 @@ This is an umbrella plan that coordinates all pending remediation efforts for th
 | Order | Task | Plan Reference | Status |
 |-------|------|----------------|--------|
 | 3.1 | Infrastructure & Framework | docker-required-test-remediation-plan.md | ✅ Done |
-| 3.2 | Core VM Operations | docker-required-test-remediation-plan.md | ⏳ Next |
-| 3.3 | SSH & Networking | docker-required-test-remediation-plan.md | Pending |
+| 3.2 | Core VM Operations | docker-required-test-remediation-plan.md | ✅ Done |
+| 3.3 | SSH & Networking | docker-required-test-remediation-plan.md | ✅ Done |
 
 ### Phase 4: BDD Step Definitions (P4)
 **Duration:** 2-3 sessions  
