@@ -458,14 +458,17 @@ def step_run_validation(context):
     """Run validation or start VM."""
     # Verify validation command exists
     validate_script = VDE_ROOT / "scripts" / "validate-vde"
-    context.validation_run = validate_script.exists() or True  # May not exist, that's ok
+    context.validation_run = validate_script.exists()  # Track actual existence
 
 
 @when('I pull the latest VDE')
 def step_pull_latest_vde(context):
     """Pull latest VDE changes."""
     result = subprocess.run(['git', 'pull'], capture_output=True, text=True, cwd=VDE_ROOT)
-    context.latest_pulled = result.returncode == 0 or 'Already up to date' in result.stderr
+    # Check if pull succeeded or was already up to date
+    pull_succeeded = result.returncode == 0
+    already_up_to_date = 'Already up to date' in result.stderr or 'Already up to date' in result.stdout
+    context.latest_pulled = pull_succeeded or already_up_to_date
 
 
 @when('I remove my custom configurations')
