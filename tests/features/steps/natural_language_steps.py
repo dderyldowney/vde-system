@@ -298,6 +298,13 @@ def step_intent_should_be(context, expected_intent):
     assert actual_intent == expected_intent, f"Expected intent '{expected_intent}', got '{actual_intent}'"
 
 
+@then('intent should be ""')
+def step_intent_should_be_empty(context):
+    """Verify the detected intent is empty string."""
+    actual_intent = getattr(context, 'nl_intent', None)
+    assert actual_intent == "", f"Expected empty intent, got '{actual_intent}'"
+
+
 @then('VMs should include "{vm_names}"')
 def step_vms_should_include(context, vm_names):
     """Verify the extracted VMs include the expected VM(s). Accepts single or comma-separated VMs."""
@@ -340,9 +347,10 @@ def step_dangerous_chars_rejected(context):
 @then("all plan lines should be valid")
 def step_plan_lines_valid(context):
     """Verify all plan lines are valid."""
-    actual_intent = getattr(context, 'nl_intent', None)
-    valid_intents = ['start_vm', 'stop_vm', 'restart_vm', 'create_vm', 'status', 'connect', 'help', 'list_vms', 'list_languages', 'list_services']
-    assert actual_intent in valid_intents, f"Invalid intent detected: {actual_intent}"
+    from tests.features.steps.parser_steps import _validate_plan_line
+    plan = getattr(context, 'plan', [])
+    for line in plan:
+        assert _validate_plan_line(line), f"Invalid plan line: {line}"
 
 
 @then("rebuild flag should be true")

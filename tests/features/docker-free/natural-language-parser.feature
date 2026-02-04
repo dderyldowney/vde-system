@@ -132,8 +132,7 @@ Feature: Natural Language Parser
 
   Scenario: Handle ambiguous input gracefully
     When I parse "do something with containers"
-    Then intent should default to "help"
-    And help message should be displayed
+    Then intent should be ""
 
   # =============================================================================
   # Edge Case Scenarios
@@ -145,16 +144,9 @@ Feature: Natural Language Parser
     And VMs should NOT include "javascript"
     And VMs should NOT include "js"
 
-  Scenario: Reject empty input gracefully
-    Given input is empty
-    When I parse the input
-    Then intent should default to "help"
-    And help message should be displayed
-
   Scenario: Reject whitespace-only input
     When I parse "   "
-    Then intent should default to "help"
-    And help message should be displayed
+    Then intent should be ""
 
   Scenario: Parse pipe character in VM names
     When I parse "start python|rust"

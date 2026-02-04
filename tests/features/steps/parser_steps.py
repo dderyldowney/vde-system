@@ -113,10 +113,11 @@ def step_input_empty(context):
 
 @when('I parse the input')
 def step_parse_empty_input(context):
-    """Parse empty input - should return help intent using real parser."""
+    """Parse empty input - should return empty string using real parser."""
     empty_input = getattr(context, 'empty_input', '')
     # Call real parser with empty input
     context.detected_intent = _get_real_intent(empty_input)
+    context.nl_intent = context.detected_intent  # Set for assertion steps
     context.detected_vms = _get_real_vm_names(empty_input)
     context.detected_filter = _get_real_filter(empty_input)
 
