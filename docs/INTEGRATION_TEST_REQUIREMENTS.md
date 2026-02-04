@@ -1,69 +1,121 @@
-# Integration Test Requirements - Phase 1.3
+# Integration Test Requirements
+
+**Authoritative Document** - Keep this file current at all times
+
+**Last Updated**: 2026-02-04
+**Status**: Phase 1 Complete
+
+---
 
 ## Overview
-Integration tests require full Docker infrastructure to run. These tests verify actual VM lifecycle operations (create, start, stop, restart) with real containers.
+
+Integration tests require full Docker infrastructure to run. This document catalogs all integration test requirements, categorizes tests by infrastructure needs, and provides execution guidelines.
 
 ## Test Categories
 
-### 1. Docker-Required Tests (Can Run with Docker)
-These tests require Docker daemon but not full VDE VM infrastructure:
+### Category A: Docker-Free Tests (No Infrastructure)
+**Location**: `tests/features/docker-free/`
+**Requirements**: None - these tests verify configuration, parsing, and non-Docker behavior
+**Execution**: `./run-tests.zsh --docker-free` or `behave tests/features/docker-free/`
 
-| Feature | Scenarios | Requirements |
-|---------|-----------|--------------|
-| docker-operations | 14 | Docker daemon, compose files |
-| daily-workflow | TBD | Docker + running VMs |
-| ssh-agent-forwarding | TBD | Docker + SSH keys |
+| Feature | Scenarios | Status |
+|---------|-----------|--------|
+| Cache System | 13 | ✓ PASS |
+| Documented Development Workflows | 31 | ✓ PASS |
+| Multi-Project Workflow | 5 | ✓ PASS |
+| Shell Compatibility | 41 | ✓ PASS |
+| SSH Agent Configuration | 30 | ✓ PASS |
+| VM Information | 11 | ✓ PASS |
+| VDE Home Path | 15 | ✓ PASS |
+| **TOTAL** | **146** | **✓ PASS (100%)** |
 
-### 2. Full Integration Tests (Need Complete Infrastructure)
-These tests require full VDE setup with all services running:
+### Category B: Docker-Required Tests (Docker Daemon)
+**Location**: `tests/features/docker-required/`
+**Requirements**: Docker daemon running, Docker Compose v2+
+**Tag**: `@requires-docker-host`
+**Execution**: `behave tests/features/docker-required/ --tags=@requires-docker-host`
 
-| Feature | Scenarios | Requirements |
-|---------|-----------|--------------|
-| collaboration-workflow | TBD | Multiple VMs running |
-| multi-project-workflow | TBD | Multiple VMs, data persistence |
-| team-collaboration | TBD | User management, config sharing |
+| Feature | Scenarios | Status | Notes |
+|---------|-----------|--------|-------|
+| Docker Operations | 14 | ✓ PASS | Baseline verified |
+| Daily Workflow | TBD | - | Needs VM lifecycle steps |
+| SSH Agent Forwarding | TBD | - | Needs SSH setup |
+| Team Collaboration | TBD | - | Needs multi-VM setup |
+| Error Handling | TBD | - | Needs error injection |
+| **TOTAL (defined)** | **14+** | **✓ PASS** | |
+
+### Category C: Full Integration Tests (Complete Infrastructure)
+**Location**: `tests/features/docker-required/`
+**Requirements**: All 27 VM configurations, port ranges 2200-2299, 2400-2499
+**Tag**: `@integration`
+**Execution**: `behave tests/features/ --tags=@integration`
+
+These tests verify:
+- Multi-VM orchestration
+- Data persistence across restarts
+- Team configuration sharing
+- Cross-VM networking
 
 ## Infrastructure Requirements
 
-### Minimum (Docker-Required)
-- Docker daemon running
-- Docker Compose v2+
-- VDE scripts sourced
-
-### Full Integration
-- All above PLUS:
-- All 27 VM configurations (20 languages + 7 services)
-- Port ranges 2200-2299, 2400-2499 available
-- Data directories (postgres, redis, mongodb, etc.)
-
-## Tagged Tests
-
-### @requires-docker-host (147 scenarios)
-Tests marked with `@requires-docker-host` require:
-- Running Docker daemon
-- Network access to Docker
-- Sufficient permissions (socket access)
-
-### @integration (Pending Tagging)
-Tests requiring full VDE infrastructure to be tagged.
-
-## Test Execution
-
-### Docker-Required Only
+### Minimum (Category A + B)
 ```bash
-behave tests/features/docker-required/ --tags=@requires-docker-host
+# Verify Docker is available
+docker --version  # Must return version info
+
+# Verify compose files exist
+ls configs/docker/*/docker-compose.yml  # Must list 27+ files
 ```
 
-### All Integration Tests (when infrastructure ready)
+### Full Integration (Category C)
 ```bash
-behave tests/features/ --tags=@integration
+# All requirements above PLUS:
+# - Ports 2200-2299 available (language VMs)
+# - Ports 2400-2499 available (service VMs)
+# - Data directories initialized (data/postgres, data/redis, etc.)
+# - SSH keys configured (public-ssh-keys/)
 ```
 
-## Current Status
+## Test Execution Matrix
 
-| Category | Count | Notes |
-|----------|-------|-------|
-| docker-free (no infra) | 146 scenarios | ALL PASSING |
-| docker-required | 14 scenarios | ALL PASSING |
-| Undefined steps | 899 | Need step definitions |
-| Integration tests | TBD | Need infrastructure |
+| Scenario | Command | Expected Result |
+|----------|---------|-----------------|
+| Docker-free only | `./run-tests.zsh --docker-free` | 146 scenarios pass |
+| Docker-required | `behave tests/features/docker-required/` | 14+ scenarios pass |
+| Fake test scan | `./run-fake-test-scan.zsh` | 0 violations (CLEAN) |
+| Parser tests | `./run-vde-parser-tests.zsh` | All pass |
+| All tests | `./run-tests.zsh` | Combined result |
+
+## Undefined Steps Status
+
+| Metric | Count | Notes |
+|--------|-------|-------|
+| Undefined steps | 899 | Priority for Phase 2 |
+| Errored scenarios | 97 | Need step definitions |
+| Untested scenarios | 235 | Ready for execution |
+
+## Maintaining This Document
+
+### When Adding New Tests
+1. Add test to appropriate category
+2. Update requirements section
+3. Update execution matrix
+4. Commit with message: `docs: update integration test requirements`
+
+### After Infrastructure Changes
+1. Verify requirements still valid
+2. Update execution commands if needed
+3. Re-run baseline tests
+4. Document any new prerequisites
+
+### After Test Execution
+1. Update status column
+2. Note any failures
+3. Track remediation actions
+
+## Related Documents
+
+- `plans/21-daily-workflow-remediation-plan.md` - Implementation roadmap
+- `docs/TESTING.md` - General testing guidelines
+- `docs/DAILY_WORKFLOW_STATUS.md` - Current test status
+- `tests/features/steps/README.md` - Step definition patterns
