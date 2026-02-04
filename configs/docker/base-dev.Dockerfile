@@ -95,8 +95,8 @@ RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/in
     chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.zprofile /home/${USERNAME}/.zshrc && \
     su ${USERNAME} -c "git clone https://github.com/LazyVim/starter ~/.config/nvim && nvim --headless +qall"
 
-ARG VDE_HOME_DIR="${HOME}"
-ARG VDE_PROJECT_NAME="${VDE_PROJECT_NAME:-dev}"
+ARG VDE_HOME_DIR="/home/devuser"
+ARG VDE_PROJECT_NAME="dev"
 
 # VDE environment variables for cross-platform path handling
 ENV VDE_HOME_DIR="${VDE_HOME_DIR}"
