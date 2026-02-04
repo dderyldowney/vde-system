@@ -1,0 +1,5 @@
+# PHP Development Image
+# Extends vde-base-dev with PHP development tools
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y php php-cli php-xml php-mbstring php-curl composer

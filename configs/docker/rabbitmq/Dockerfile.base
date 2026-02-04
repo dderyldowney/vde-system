@@ -1,0 +1,5 @@
+# RabbitMQ Service Image
+# Extends vde-base-dev with RabbitMQ
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y erlang-nox && apt-get install -y rabbitmq-server

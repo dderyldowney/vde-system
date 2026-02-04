@@ -1,0 +1,5 @@
+# Haskell Development Image
+# Extends vde-base-dev with Haskell development tools
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y ghc cabal-install

@@ -2,12 +2,8 @@
 services:
   csharp-dev:
     build:
-      context: ../../..
-      dockerfile: configs/docker/base-dev.Dockerfile
-      args:
-        USERNAME: devuser
-        UID: 1000
-        GID: 1000
+      context: .
+      dockerfile: Dockerfile.base
     image: dev-csharp:latest
     container_name: csharp-dev
     hostname: csharp-dev

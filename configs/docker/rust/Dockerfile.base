@@ -1,0 +1,5 @@
+# Rust Development Image
+# Extends vde-base-dev with Rust development tools
+FROM vde-base-dev:latest
+
+RUN su devuser -c 'curl --proto '\''=https'\'' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'

@@ -1,0 +1,5 @@
+# MongoDB Service Image
+# Extends vde-base-dev with MongoDB client tools
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y mongodb-org-shell

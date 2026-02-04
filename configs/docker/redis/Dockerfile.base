@@ -1,0 +1,5 @@
+# Redis Service Image
+# Extends vde-base-dev with Redis client tools
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y redis-tools

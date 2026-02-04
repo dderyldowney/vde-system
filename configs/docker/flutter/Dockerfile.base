@@ -1,0 +1,8 @@
+# Flutter Development Image
+# Extends vde-base-dev with Flutter development tools
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y curl git unzip xz-utils zip libglu1-mesa && \
+    su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && \
+    export PATH="$PATH:/home/devuser/flutter/bin" && \
+    flutter precache'

@@ -1,0 +1,5 @@
+# MySQL Service Image
+# Extends vde-base-dev with MySQL
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y default-mysql-server

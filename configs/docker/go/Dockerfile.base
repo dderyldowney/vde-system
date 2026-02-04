@@ -1,0 +1,5 @@
+# Go Development Image
+# Extends vde-base-dev with Go development tools
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y golang-go

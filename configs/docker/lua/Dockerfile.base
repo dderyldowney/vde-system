@@ -1,0 +1,5 @@
+# Lua Development Image
+# Extends vde-base-dev with Lua development tools
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y lua5.4 luarocks

@@ -1,0 +1,5 @@
+# Nginx Service Image
+# Extends vde-base-dev with Nginx
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y nginx-extras

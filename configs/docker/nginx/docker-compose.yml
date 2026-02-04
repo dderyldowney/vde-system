@@ -1,12 +1,8 @@
 services:
   nginx:
     build:
-      context: ../../..
-      dockerfile: configs/docker/nginx/Dockerfile
-      args:
-        USERNAME: devuser
-        UID: 1000
-        GID: 1000
+      context: .
+      dockerfile: Dockerfile.base
     image: dev-nginx:latest
     container_name: nginx
     hostname: nginx

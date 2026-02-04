@@ -1,0 +1,5 @@
+# JavaScript Development Image
+# Extends vde-base-dev with Node.js development tools
+FROM vde-base-dev:latest
+
+RUN apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs

@@ -1,0 +1,10 @@
+# C# Development Image
+# Extends vde-base-dev with C# (.NET) development tools
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y wget apt-transport-https && \
+    wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && \
+    dpkg -i /tmp/packages-microsoft-prod.deb && \
+    rm /tmp/packages-microsoft-prod.deb && \
+    apt-get update -y && \
+    apt-get install -y dotnet-sdk-8.0 aspnetcore-runtime-8.0

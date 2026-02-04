@@ -1,0 +1,12 @@
+# Scala Service Image
+# Extends vde-base-dev with Scala and sbt
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y default-jdk curl && \
+    curl -fsSL https://github.com/sbt/sbt/releases/download/v1.10.0/sbt-1.10.0.tgz -o /tmp/sbt.tgz && \
+    tar -xzf /tmp/sbt.tgz -C /opt && \
+    mv /opt/sbt /opt/sbt-1.10.0 && \
+    ln -sf /opt/sbt-1.10.0 /opt/sbt && \
+    ln -sf /opt/sbt/bin/sbt /usr/local/bin/sbt && \
+    rm /tmp/sbt.tgz && \
+    su - devuser -c "echo 'export PATH=/opt/sbt/bin:\$PATH' >> ~/.zshrc"

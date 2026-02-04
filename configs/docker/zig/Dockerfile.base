@@ -1,0 +1,10 @@
+# Zig Development Image
+# Extends vde-base-dev with Zig development tools
+FROM vde-base-dev:latest
+
+RUN cd /tmp && \
+    curl -fsSL https://ziglang.org/download/0.14.0/zig-linux-x86_64-0.14.0.tar.xz -o zig.tar.xz && \
+    tar xf zig.tar.xz && \
+    mv zig-linux-x86_64-0.14.0 /opt/zig && \
+    ln -sf /opt/zig/zig /usr/local/bin/zig && \
+    rm -rf /tmp/zig.tar.xz

@@ -1,0 +1,11 @@
+# Kotlin Development Image
+# Extends vde-base-dev with Kotlin development tools
+FROM vde-base-dev:latest
+
+RUN apt-get update -y && apt-get install -y zip unzip curl openjdk-17-jdk && \
+    curl -sL https://github.com/JetBrains/kotlin/releases/download/v2.0.21/kotlin-compiler-2.0.21.zip -o /tmp/kotlin.zip && \
+    unzip -q /tmp/kotlin.zip -d /opt && \
+    rm /tmp/kotlin.zip && \
+    ln -sf /opt/kotlinc/bin/kotlinc /usr/local/bin/kotlinc && \
+    ln -sf /opt/kotlinc/bin/kotlin /usr/local/bin/kotlin && \
+    su - devuser -c "echo 'export PATH=/opt/kotlinc/bin:\$PATH' >> ~/.zshrc"

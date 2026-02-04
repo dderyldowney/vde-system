@@ -1,12 +1,8 @@
 services:
   redis:
     build:
-      context: ../../..
-      dockerfile: configs/docker/redis/Dockerfile
-      args:
-        USERNAME: devuser
-        UID: 1000
-        GID: 1000
+      context: .
+      dockerfile: Dockerfile.base
     image: dev-redis:latest
     container_name: redis
     hostname: redis

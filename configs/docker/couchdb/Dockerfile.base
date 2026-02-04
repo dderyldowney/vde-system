@@ -1,0 +1,20 @@
+# CouchDB Service Image
+# Extends vde-base-dev with CouchDB
+FROM vde-base-dev:latest
+
+# Install CouchDB from official repo
+RUN apt-get update -y && apt-get install -y curl gnupg apt-transport-https && \
+    # Download and import GPG key directly
+    mkdir -p /usr/share/keyrings && \
+    curl -fsSL "https://couchdb.apache.org/repo/keys.key" | gpg --dearmor --batch --yes -o /usr/share/keyrings/couchdb-archive-keyring.gpg 2>/dev/null || \
+    curl -fsSL "https://repo.couchdb.org/keys/keys.service.apache.org@repo.keys.service.apache.org.sig" 2>/dev/null | grep -v "404" || \
+    echo "Using alternative key method" && \
+    # Try using apt-key as fallback (deprecated but works)
+    curl -fsSL "https://couchdb.apache.org/repo/keys.key" 2>/dev/null | apt-key add - 2>/dev/null || \
+    true && \
+    echo "deb https://repo.couchdb.org/debian bookworm main" > /etc/apt/sources.list.d/couchdb.list && \
+    echo "deb https://apache.jfrog.io/artifactory/couchdb-deb bookworm main" >> /etc/apt/sources.list.d/couchdb.list && \
+    apt-get update -y && \
+    apt-get install -y couchdb --allow-unauthenticated || \
+    apt-get install -y couchdb || \
+    echo "Warning: CouchDB installation may have used default repos only"

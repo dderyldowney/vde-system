@@ -4,13 +4,8 @@
 services:
   rabbitmq:
     build:
-      context: ../../..
-      dockerfile: configs/docker/base-dev.Dockerfile
-      args:
-        USERNAME: devuser
-        UID: 1000
-        GID: 1000
-        PUBLIC_KEYS_DIR: /public-ssh-keys
+      context: .
+      dockerfile: Dockerfile.base
     image: dev-rabbitmq:latest
     container_name: rabbitmq
     hostname: rabbitmq

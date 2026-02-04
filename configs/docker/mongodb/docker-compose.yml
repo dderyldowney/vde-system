@@ -1,12 +1,8 @@
 services:
   mongodb:
     build:
-      context: ../../..
-      dockerfile: configs/docker/mongodb/Dockerfile
-      args:
-        USERNAME: devuser
-        UID: 1000
-        GID: 1000
+      context: .
+      dockerfile: Dockerfile.base
     image: dev-mongodb:latest
     container_name: mongodb
     hostname: mongodb
