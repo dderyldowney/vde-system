@@ -43,4 +43,14 @@ def step_logged_in_devuser(context):
             ['docker', 'exec', vm, 'whoami'],
             capture_output=True, text=True, timeout=10
         )
-        context.user_is_devuser = result.stdout.strip() == 'devuser'
+        assert result.returncode == 0, f"Should be able to execute whoami in {vm}"
+        assert result.stdout.strip() == 'devuser', f"Expected devuser but got: {result.stdout.strip()}"
+    else:
+        # Fallback: verify config uses devuser
+        compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+        if compose_path.exists():
+            content = compose_path.read_text()
+            assert 'devuser' in content.lower(), "VDE should use devuser as default user"
+        else:
+            assert False, "No VMs running and no config to verify"
+    context.user_is_devuser = True

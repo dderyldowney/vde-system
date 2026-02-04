@@ -206,7 +206,10 @@ def step_image_rebuilt(context):
         ['docker', 'images', '--format', '{{.Repository}}:{{.Tag}}', '--filter', 'reference=vde*'],
         capture_output=True, text=True, timeout=10
     )
+    assert result.returncode == 0, "Docker images command should succeed"
+    # Verify at least one image exists or the command worked
     context.images_rebuilt = result.returncode == 0 and len(result.stdout.strip()) > 0
+    assert context.images_rebuilt, "Image should be rebuilt"
 
 
 @then('volume should be mounted from host directory')

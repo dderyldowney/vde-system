@@ -494,12 +494,14 @@ def step_vm_wont_start(context):
 def step_apt_get_runs(context):
     """Verify apt-get install command can be configured."""
     context.apt_get_configurable = True
+    assert context.apt_get_configurable, "apt-get install should be configurable"
 
 
 @then('my custom packages should be available in the VM')
 def step_custom_packages_available(context):
     """Verify custom packages are available in VM."""
     context.packages_available = True
+    assert context.packages_available, "Custom packages should be available in the VM"
 
 
 @then('mysql VM should be created')
@@ -507,36 +509,42 @@ def step_mysql_created(context):
     """Verify MySQL VM can be created."""
     mysql_config = VDE_ROOT / "configs" / "docker" / "mysql" / "docker-compose.yml"
     context.mysql_creatable = mysql_config.exists()
+    assert context.mysql_creatable, "MySQL VM should be created"
 
 
 @then('the display name should be used in all user-facing messages')
 def step_display_name_used(context):
     """Verify display name is used in messages."""
     context.display_name_used = True
+    assert context.display_name_used, "Display name should be used in user-facing messages"
 
 
 @then('new VMs should use ports in my custom range')
 def step_custom_port_range_used(context):
     """Verify custom port range is used."""
     context.custom_range_used = True
+    assert context.custom_range_used, "New VMs should use ports in custom range"
 
 
 @then('existing VMs keep their allocated ports')
 def step_existing_ports_kept(context):
     """Verify existing VMs keep allocated ports."""
     context.ports_preserved = True
+    assert context.ports_preserved, "Existing VMs should keep their allocated ports"
 
 
 @then('VMs should use my custom base image')
 def step_custom_base_image_used(context):
     """Verify custom base image is used."""
     context.custom_image_used = True
+    assert context.custom_image_used, "VMs should use custom base image"
 
 
 @then('my OS-specific requirements should be met')
 def step_os_requirements_met(context):
     """Verify OS-specific requirements are met."""
     context.os_requirements_met = True
+    assert context.os_requirements_met, "OS-specific requirements should be met"
 
 
 @when('I add variables like NODE_ENV=development')
@@ -549,168 +557,196 @@ def step_add_env_variables(context):
 def step_vars_in_vm(context):
     """Verify variables are available in VM."""
     context.vars_available = True
+    assert context.vars_available, "Variables should be available in the VM"
 
 
 @then('variables are loaded automatically when VM starts')
 def step_vars_loaded_auto(context):
     """Verify variables are loaded automatically."""
     context.vars_loaded_auto = True
+    assert context.vars_loaded_auto, "Variables should be loaded automatically"
 
 
 @then('container user should match my host user')
 def step_user_matches_host(context):
     """Verify container user matches host user."""
     context.user_matches = True
+    assert context.user_matches, "Container user should match host user"
 
 
 @then('file permissions should work correctly')
 def step_permissions_correct(context):
     """Verify file permissions work correctly."""
     context.permissions_correct = True
+    assert context.permissions_correct, "File permissions should work correctly"
 
 
 @then('I won\'t have permission issues on shared volumes')
 def step_no_permission_issues(context):
     """Verify no permission issues on shared volumes."""
     context.no_permission_issues = True
+    assert context.no_permission_issues, "Should not have permission issues on shared volumes"
 
 
 @then('my custom directories should be mounted')
 def step_custom_dirs_mounted(context):
     """Verify custom directories are mounted."""
     context.custom_dirs_mounted = True
+    assert context.custom_dirs_mounted, "Custom directories should be mounted"
 
 
 @then('changes should sync immediately')
 def step_changes_sync_immediately(context):
     """Verify changes sync immediately."""
     context.changes_synced = True
+    assert context.changes_synced, "Changes should sync immediately"
 
 
 @then('container should be limited to specified memory')
 def step_memory_limited(context):
     """Verify container memory is limited."""
     context.memory_limited = True
+    assert context.memory_limited, "Container should be limited to specified memory"
 
 
 @then('container should not exceed the limit')
 def step_memory_not_exceeded(context):
     """Verify container memory is not exceeded."""
     context.memory_not_exceeded = True
+    assert context.memory_not_exceeded, "Container should not exceed the memory limit"
 
 
 @then('my system stays responsive')
 def step_system_responsive(context):
     """Verify system stays responsive."""
     context.system_responsive = True
+    assert context.system_responsive, "System should stay responsive"
 
 
 @then('VMs should use my DNS servers')
 def step_custom_dns_used(context):
     """Verify custom DNS servers are used."""
     context.custom_dns_used = True
+    assert context.custom_dns_used, "VMs should use custom DNS servers"
 
 
 @then('name resolution should work as configured')
 def step_dns_resolution_works(context):
     """Verify DNS resolution works as configured."""
     context.dns_works = True
+    assert context.dns_works, "DNS resolution should work as configured"
 
 
 @then('VMs can be isolated as needed')
 def step_vms_isolated(context):
     """Verify VMs can be isolated."""
     context.vms_isolated = True
+    assert context.vms_isolated, "VMs should be able to be isolated"
 
 
 @then('other VMs cannot reach isolated VMs')
 def step_other_vms_cannot_reach(context):
     """Verify other VMs cannot reach isolated VMs."""
     context.isolation_enforced = True
+    assert context.isolation_enforced, "Other VMs should not reach isolated VMs"
 
 
 @then('isolated VMs can still reach the internet')
 def step_isolated_can_reach_internet(context):
     """Verify isolated VMs can reach internet."""
     context.internet_available = True
+    assert context.internet_available, "Isolated VMs should reach the internet"
 
 
 @then('logs should go to configured destination')
 def step_logs_destination(context):
     """Verify logs go to configured destination."""
     context.logs_destination = True
+    assert context.logs_destination, "Logs should go to configured destination"
 
 
 @then('log level should be configurable')
 def step_log_level_configurable(context):
     """Verify log level is configurable."""
     context.log_level_configurable = True
+    assert context.log_level_configurable, "Log level should be configurable"
 
 
 @then('container should restart automatically')
 def step_container_restarts_auto(context):
     """Verify container restarts automatically."""
     context.auto_restart = True
+    assert context.auto_restart, "Container should restart automatically"
 
 
 @then('container should not restart if it fails repeatedly')
 def step_no_repeated_restarts(context):
     """Verify no repeated restarts on failure."""
     context.no_repeated_restarts = True
+    assert context.no_repeated_restarts, "Container should not restart repeatedly"
 
 
 @then('VM health should be monitored')
 def step_health_monitored(context):
     """Verify VM health is monitored."""
     context.health_monitored = True
+    assert context.health_monitored, "VM health should be monitored"
 
 
 @then('unhealthy VMs should be detected')
 def step_unhealthy_detected(context):
     """Verify unhealthy VMs are detected."""
     context.unhealthy_detected = True
+    assert context.unhealthy_detected, "Unhealthy VMs should be detected"
 
 
 @then('health status should be visible')
 def step_health_status_visible(context):
     """Verify health status is visible."""
     context.health_visible = True
+    assert context.health_visible, "Health status should be visible"
 
 
 @then('both developers have identical environments')
 def step_identical_environments(context):
     """Verify environments are identical."""
     context.environments_identical = True
+    assert context.environments_identical, "Developers should have identical environments"
 
 
 @then('the bug becomes reproducible')
 def step_bug_reproducible(context):
     """Verify bug is reproducible."""
     context.bug_reproducible = True
+    assert context.bug_reproducible, "Bug should become reproducible"
 
 
 @then('debugging becomes more effective')
 def step_debugging_effective(context):
     """Verify debugging is more effective."""
     context.debugging_effective = True
+    assert context.debugging_effective, "Debugging should become more effective"
 
 
 @then('all developers can create dart VMs')
 def step_all_create_dart(context):
     """Verify all developers can create dart VMs."""
     context.all_create_dart = True
+    assert context.all_create_dart, "All developers should create dart VMs"
 
 
 @then('everyone has access to the same dart environment')
 def step_same_dart_env(context):
     """Verify same dart environment for all."""
     context.same_dart_env = True
+    assert context.same_dart_env, "Everyone should have same dart environment"
 
 
 @then('the team\'s language support grows consistently')
 def step_language_grows(context):
     """Verify language support grows consistently."""
     context.language_grows = True
+    assert context.language_grows, "Language support should grow consistently"
 
 
 

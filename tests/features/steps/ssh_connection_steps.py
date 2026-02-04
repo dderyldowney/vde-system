@@ -80,7 +80,11 @@ def step_receive_username(context):
     if compose_path.exists():
         content = compose_path.read_text()
         # Check for user configuration
-        context.user_is_devuser = 'USER' in content or 'user:' in content.lower() or 'devuser' in content.lower()
+        has_devuser = 'USER' in content or 'user:' in content.lower() or 'devuser' in content.lower()
+        assert has_devuser, "VDE should use devuser as the default username"
+    else:
+        assert False, f"docker-compose.yml not found at {compose_path}"
+    context.user_is_devuser = True
 
 
 @given('~/.ssh/known_hosts contains "[localhost]:2200"')
@@ -204,8 +208,12 @@ def step_both_accessible_ssh(context):
 @then('"start-virtual js", "start-virtual node", "start-virtual nodejs" all work')
 def step_all_node_aliases_work(context):
     """Verify all node aliases work using vde create command."""
+    all_work = True
     for alias in ['js', 'node', 'nodejs']:
         result = run_vde_command(f"create {alias}", timeout=10)
+        # Command should at least be recognized (may fail if already exists)
+        all_work = all_work and (result.returncode in [0, 1])  # 0=success, 1=already exists
+    assert all_work, "All node aliases should work with vde create command"
 
 
 @then('"Go Language" should appear in list-vms output')

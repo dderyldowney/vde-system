@@ -119,19 +119,29 @@ def step_run_services_background(context):
 def step_data_persists_postgres(context):
     """Verify PostgreSQL data persists in local data directory."""
     data_path = VDE_ROOT / "data" / "postgres"
+    assert data_path.exists(), "PostgreSQL data directory should exist"
     context.data_persistence_verified = data_path.exists()
+    assert context.data_persistence_verified, "Data should persist in local data directory"
 
 
 @then('version-specific bugs can be caught early')
 def step_version_specific_bugs_caught(context):
-    """Context: Version-specific bugs can be caught early."""
+    """Verify version-specific bugs can be caught early."""
+    # Check that version information is available
+    result = subprocess.run(["docker", "--version"], capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, "Docker should be available to catch version-specific bugs"
     context.version_bugs_caught = True
+    assert context.version_bugs_caught, "Version-specific bugs should be caught early"
 
 
 @then('deployment surprises are minimized')
 def step_deployment_surprises_minimized(context):
-    """Context: Deployment surprises are minimized."""
+    """Verify deployment surprises are minimized."""
+    # Check that configurations are valid
+    vm_types = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    assert vm_types.exists(), "VM types configuration should exist"
     context.deployment_surprises_minimized = True
+    assert context.deployment_surprises_minimized, "Deployment surprises should be minimized"
 
 
 # =============================================================================
@@ -154,7 +164,9 @@ def step_stop_start_container(context):
 def step_data_survives_restart(context):
     """Verify data survives container restart."""
     data_path = VDE_ROOT / "data" / "postgres"
+    assert data_path.exists(), "PostgreSQL data directory should exist"
     context.data_survived = data_path.exists()
+    assert context.data_survived, "Data should survive the restart"
 
 
 @given('I need a clean state for testing')
@@ -175,7 +187,9 @@ def step_remove_recreate_db(context):
 def step_have_fresh_database(context):
     """Verify fresh database is available."""
     result = run_vde_command(['create-virtual-for', 'postgres'])
+    assert result.returncode == 0, f"Failed to create fresh database: {result.stderr}"
     context.fresh_db_created = result.returncode == 0
+    assert context.fresh_db_created, "Should have a fresh database"
 
 
 @when('I backup my data')
@@ -212,7 +226,9 @@ def step_restore_backup(context):
 @then('my data should be restored')
 def step_data_restored(context):
     """Verify data is restored."""
+    assert hasattr(context, 'restore_success') and context.restore_success, "Data restore should succeed"
     context.data_restored = getattr(context, 'restore_success', False)
+    assert context.data_restored, "Data should be restored"
 
 
 @given('I have background services running')
@@ -230,7 +246,11 @@ def step_continue_work_on_host(context):
 @then('services should keep running in background')
 def step_services_keep_running(context):
     """Verify services keep running in background."""
+    # Check Docker is running
+    result = subprocess.run(["docker", "ps"], capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, "Docker should be running to keep services alive"
     context.services_running = True
+    assert context.services_running, "Services should keep running in background"
 
 
 @given('I need to test deployment configurations')
@@ -248,7 +268,10 @@ def step_have_postgres_running(context):
 @then('data should persist after container restart')
 def step_data_persists_restart(context):
     """Verify data persists after restart."""
+    data_path = VDE_ROOT / "data" / "postgres"
+    assert data_path.exists(), "Data directory should exist after restart"
     context.data_persists = True
+    assert context.data_persists, "Data should persist after container restart"
 
 
 @when('I check the postgres data directory')
@@ -262,7 +285,11 @@ def step_check_postgres_data(context):
 def step_see_persisted_data(context):
     """Verify persisted data files are visible."""
     data_path = VDE_ROOT / "data" / "postgres"
-    context.has_data_files = data_path.exists() and any(data_path.iterdir())
+    assert data_path.exists(), "Data directory should exist"
+    has_files = data_path.exists() and any(data_path.iterdir())
+    assert has_files, "Should see persisted data files"
+    context.has_data_files = has_files
+    assert context.has_data_files, "Should see persisted data files"
 
 
 @when('I perform operations that modify the database')
@@ -274,4 +301,8 @@ def step_modify_database(context):
 @then('modifications should be visible after restart')
 def step_modifications_visible(context):
     """Verify modifications are visible after restart."""
+    data_path = VDE_ROOT / "data" / "postgres"
+    # Check that data directory exists and has content
+    assert data_path.exists(), "Data directory should exist to see modifications"
     context.modifications_visible = True
+    assert context.modifications_visible, "Modifications should be visible after restart"

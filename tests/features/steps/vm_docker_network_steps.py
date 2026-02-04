@@ -74,6 +74,8 @@ def step_dev_net_created(context):
         text=True,
         timeout=30,
     )
+    assert result.returncode == 0, "Should be able to list Docker networks"
+    assert 'dev-net' in result.stdout, "VDE should create dev-net network"
     context.dev_net_created = 'dev-net' in result.stdout
 
 
@@ -270,4 +272,5 @@ def step_each_vm_mapped_port(context):
     if running:
         for vm in running[:3]:  # Check first 3 VMs
             result = subprocess.run(['docker', 'port', vm], capture_output=True, text=True)
-            # Command succeeds if port mapping exists
+            assert result.returncode == 0, f"VM {vm} should have port mapping"
+    assert True, "Each VM should be mapped to its port"

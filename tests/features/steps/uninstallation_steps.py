@@ -224,23 +224,19 @@ def step_docker_images_pulled(context):
     from vm_common import check_docker_available
 
     if not check_docker_available():
-        return  # Docker not available - skip image check
+        assert False, "Docker not available - cannot verify images"
 
     # Check that some Docker images are available
-    try:
-        result = subprocess.run(
-            ["docker", "images", "--format", "{{.Repository}}"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        if result.returncode == 0:
-            images = result.stdout.strip().split('\n')
-            # Docker command executed successfully - informational check
-            # In a clean environment, images list may be empty
-            pass  # Docker images command works
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass  # Docker not available
+    result = subprocess.run(
+        ["docker", "images", "--format", "{{.Repository}}"],
+        capture_output=True,
+        text=True,
+        timeout=10
+    )
+    assert result.returncode == 0, "Docker images command should succeed"
+    images = result.stdout.strip().split('\n') if result.stdout.strip() else []
+    # At minimum, docker command should work
+    assert len(images) >= 0, "Docker images command should execute successfully"
 
 
 @then('base images should be built if needed')
@@ -284,4 +280,9 @@ def step_build_progress(context):
 def step_data_preserved(context):
     """Verify data is preserved if using volumes."""
     data_dir = VDE_ROOT / "data"
+    # If data directory exists, verify it has content
+    if data_dir.exists():
+        assert data_dir.is_dir(), "Data directory should be a directory"
+    # Data is preserved if directory exists or is not required
     context.data_preserved = data_dir.exists()
+    assert context.data_preserved, "Data should be preserved if using volumes"

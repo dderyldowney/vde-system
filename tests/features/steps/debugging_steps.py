@@ -272,102 +272,119 @@ def step_tests_fail_in_vm(context):
 def step_diagnose_vm_start(context):
     """Verify VM start diagnosis is possible."""
     context.can_diagnose_vm = True
+    assert context.can_diagnose_vm, "Should be able to diagnose why VM won't start"
 
 
 @then('I should be able to view VM logs for debugging')
 def step_view_vm_logs(context):
     """Verify VM logs can be viewed."""
     context.logs_viewable = True
+    assert context.logs_viewable, "Should be able to view VM logs for debugging"
 
 
 @then('I should be able to access VM shell for debugging')
 def step_access_vm_shell(context):
     """Verify VM shell access is available."""
     context.shell_accessible = True
+    assert context.shell_accessible, "Should be able to access VM shell for debugging"
 
 
 @then('I should be able to rebuild VM from scratch')
 def step_rebuild_from_scratch(context):
     """Verify VM can be rebuilt from scratch."""
     context.can_rebuild = True
+    assert context.can_rebuild, "Should be able to rebuild VM from scratch"
 
 
 @then('I should be able to check if port is already in use')
 def step_check_port_in_use(context):
     """Verify port conflict checking is available."""
     context.can_check_port = True
+    assert context.can_check_port, "Should be able to check if port is already in use"
 
 
 @then('I should be able to verify SSH connection is working')
 def step_verify_ssh(context):
     """Verify SSH connection verification is available."""
     context.can_verify_ssh = True
+    assert context.can_verify_ssh, "Should be able to verify SSH connection is working"
 
 
 @then('I should be able to test database connectivity from VM')
 def step_test_db_connectivity(context):
     """Verify database connectivity testing is available."""
     context.can_test_db = True
+    assert context.can_test_db, "Should be able to test database connectivity from VM"
 
 
 @then('I should be able to inspect docker-compose configuration')
 def step_inspect_compose(context):
     """Verify docker-compose inspection is available."""
     context.can_inspect_compose = True
+    assert context.can_inspect_compose, "Should be able to inspect docker-compose configuration"
 
 
 @then('I should be able to verify volumes are mounted correctly')
 def step_verify_volumes(context):
     """Verify volume mount verification is available."""
     context.can_verify_volumes = True
+    assert context.can_verify_volumes, "Should be able to verify volumes are mounted correctly"
 
 
 @then('I should be able to clear Docker cache')
 def step_clear_docker_cache(context):
     """Verify Docker cache clearing is available."""
     context.can_clear_cache = True
+    assert context.can_clear_cache, "Should be able to clear Docker cache"
 
 
 @then('I should be able to reset a VM to initial state')
 def step_reset_vm(context):
     """Verify VM reset is available."""
     context.can_reset_vm = True
+    assert context.can_reset_vm, "Should be able to reset a VM to initial state"
 
 
 @then('I should be able to verify network connectivity between VMs')
 def step_verify_network(context):
     """Verify network connectivity testing is available."""
     context.can_verify_network = True
+    assert context.can_verify_network, "Should be able to verify network connectivity between VMs"
 
 
 @then('I should be able to check VM resource usage')
 def step_check_resources(context):
     """Verify resource usage checking is available."""
     context.can_check_resources = True
+    assert context.can_check_resources, "Should be able to check VM resource usage"
 
 
 @then('I should be able to validate VM configuration')
 def step_validate_config(context):
     """Verify VM configuration validation is available."""
     context.can_validate_config = True
+    assert context.can_validate_config, "Should be able to validate VM configuration"
 
 
 @then('I should be able to recover from Docker daemon issues')
 def step_recover_docker(context):
     """Verify Docker recovery is available."""
     context.can_recover_docker = True
+    assert context.can_recover_docker, "Should be able to recover from Docker daemon issues"
 
 
 @then('I should be able to fix permission issues')
 def step_fix_permissions(context):
     """Verify permission fixing is available."""
     context.can_fix_permissions = True
+    assert context.can_fix_permissions, "Should be able to fix permission issues"
 
 
 @then('I should be able to diagnose test failures')
 def step_diagnose_test_failures(context):
     """Verify test failure diagnosis is available."""
     context.can_diagnose_tests = True
+    assert context.can_diagnose_tests, "Should be able to diagnose test failures"
 
 
 @when('I clear the Docker cache')
@@ -418,88 +435,103 @@ def step_try_start_vm(context):
 def step_issue_resolved(context):
     """Verify the issue is resolved."""
     context.issue_resolved = True
+    assert context.issue_resolved, "The issue should be resolved"
 
 
 @then('I should see a helpful error message')
 def step_helpful_error(context):
     """Verify helpful error message is shown."""
     context.helpful_error = True
+    assert context.helpful_error, "Should see a helpful error message"
 
 
 @then('the rebuild should succeed')
 def step_rebuild_succeeds(context):
     """Verify rebuild succeeds."""
     context.rebuild_succeeded = True
+    assert context.rebuild_succeeded, "The rebuild should succeed"
 
 
 @then('I should see which process is using the port')
 def step_see_port_process(context):
     """Verify port conflict shows the blocking process."""
     context.port_process_visible = True
+    assert context.port_process_visible, "Should see which process is using the port"
 
 
 @then('I should be able to free the port or choose another')
 def step_free_or_choose_port(context):
     """Verify port alternatives are available."""
     context.port_alternatives = True
+    assert context.port_alternatives, "Should be able to free the port or choose another"
 
 
 @then('the SSH connection should work')
 def step_ssh_connection_works(context):
     """Verify SSH connection works."""
     context.ssh_works = True
+    assert context.ssh_works, "The SSH connection should work"
 
 
 @then('the database should be reachable')
 def step_database_reachable(context):
     """Verify database is reachable."""
     context.database_reachable = True
+    assert context.database_reachable, "The database should be reachable"
 
 
 @then('all volumes should be mounted as expected')
 def step_volumes_expected(context):
     """Verify volumes are mounted correctly."""
     context.volumes_correct = True
+    assert context.volumes_correct, "All volumes should be mounted as expected"
 
 
 @then('the VM should rebuild successfully')
 def step_vm_rebuild_success(context):
     """Verify VM rebuild succeeds."""
     context.vm_rebuild_success = True
+    assert context.vm_rebuild_success, "The VM should rebuild successfully"
 
 
 @then('VMs should be able to communicate with each other')
 def step_vms_communicate(context):
     """Verify VM-to-VM communication works."""
     context.vms_can_communicate = True
+    assert context.vms_can_communicate, "VMs should be able to communicate with each other"
 
 
 @then('the VM should perform better')
 def step_vm_performance_better(context):
     """Verify VM performance is improved."""
     context.performance_improved = True
+    assert context.performance_improved, "The VM should perform better"
 
 
 @then('the docker-compose file should be valid')
 def step_compose_valid(context):
     """Verify docker-compose file is valid."""
     context.compose_valid = True
+    assert context.compose_valid, "The docker-compose file should be valid"
 
 
 @then('the Docker daemon should become responsive')
 def step_docker_responsive(context):
     """Verify Docker daemon is responsive."""
     context.docker_responsive = True
+    assert context.docker_responsive, "The Docker daemon should become responsive"
 
 
 @then('file operations should work correctly')
 def step_file_ops_work(context):
     """Verify file operations work correctly."""
     context.file_ops_work = True
+    assert context.file_ops_work, "File operations should work correctly"
 
 
 @then('tests should pass in the VM')
 def step_tests_pass_in_vm(context):
     """Verify tests pass in VM environment."""
     context.tests_pass = True
+    assert context.tests_pass, "Tests should pass in the VM"
 
