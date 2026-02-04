@@ -11,8 +11,28 @@
 - 0 errors
 - 0 undefined steps
 
-### Remaining StepNotImplementedError: 0
-- Import still present but unused (no actual uses)
+### Fake Test Scanner Results
+```
+=== Fake Test Pattern Scan (All Step Files) ===
+
+--- Phase 1: Placeholder Definitions ---
+--- Phase 2 & 3: Checking WHEN/THEN Steps ---
+WHEN violations: 0
+THEN violations: 0
+
+--- Phase 4: Obvious Fake Patterns ---
+Found 3 'Simulate' comments:
+  tests/features/steps/cache_steps.py:335:    """Simulate config modification by touching the file."""
+  tests/features/steps/cache_steps.py:744:    """Simulate system restart (verify cache persists)."""
+  tests/features/steps/ssh_git_steps.py:792:    """Simulate SSH into a running VM."""
+
+========================================
+SCAN SUMMARY
+========================================
+Total violations: 0
+
+✓ CLEAN - No fake test patterns detected
+```
 
 ### Conversion Results
 | Metric | Before | After |
@@ -48,220 +68,74 @@
 - Conditional context assignments
 
 #### documented_workflow_steps.py: 46 fake tests
-- Workflow state setters
-- VM tracking variables
-- Plan generation helpers
-- Context-only implementations
 
-## Complete Test Quality Analysis
+### Root Cause Analysis
 
-### Original Analysis
-- **Total step definitions**: 127 (81 daily + 46 documented)
-- **Fake tests identified**: 108 (85%)
-- **Real tests**: 19 (15%)
+The 118 fake tests masked 6 hidden assertion bugs:
+1. **PostgreSQL validation** - Checking wrong variable (`detected_vms` vs `postgres_valid`)
+2. **JavaScript canonical name** - Wrong comparison (`parts[1]` vs `parts[1]=='js'` with `parts[2]`)
+3. **Microservices VM list** - Non-existent variable (`vm_checks` vs `detected_vms`)
+4. **Evening Cleanup** - Parser not expanding "all" to full VM list (27 VMs)
+5. **Documentation Accuracy** - Wrong variable (`detected_vms` vs `doc_vm_validity`)
+6. **Performance test** - Missing context variable (`detected_intent` not set in WHEN)
 
-### Final Conversion
-- **Converted to NotImplementedError**: 118
-- **Remaining real**: ~9
-- **Fake test rate**: 93%
+### Fixed Assertion Patterns
 
-## Why ALL Scenarios Now Error
+| Scenario | Bug | Fix |
+|----------|-----|-----|
+| PostgreSQL Validation | Check `detected_vms` | Check `postgres_valid` boolean |
+| JavaScript Canonical | Check `parts[1]=='js'` | Check `parts[1]=='js'` AND `parts[2]` contains 'javascript' |
+| Microservices List | Check `vm_checks` | Check `detected_vms` |
+| Evening Cleanup | Parser returns "all" literal | Parser expands to 27 VM names |
+| Doc Accuracy | Check `detected_vms` | Check `doc_vm_validity` boolean |
+| Performance Test | Missing context | Set `detected_intent` in WHEN step |
 
-Every scenario depends on at least one fake test:
+---
 
-1. **Setup Dependencies** - GIVEN steps set fake context
-2. **Action Dependencies** - WHEN steps use fake helpers
-3. **Verification Dependencies** - THEN steps check fake context
+## Files Modified
 
-### Example Chain of Failure
+### Step Implementation Files
+- `tests/features/steps/daily_workflow_steps.py` (351 lines, +255/-96)
+  - 39 THEN steps converted from context-only to real assertions
+  - 12 GIVEN steps remain as context setters (allowed)
+  - Helper functions for VM detection, parser integration, validation
 
-```gherkin
-Scenario: Daily Workflow - Morning Setup
-  Given I am starting my development day          # FAKE → NotImplementedError
-  When I plan to start Python, PostgreSQL, Redis # Depends on context from GIVEN
-  Then the plan should include all three VMs      # Never reached
+- `tests/features/steps/documented_workflow_steps.py` (237 lines, +176/-61)
+  - 46 GIVEN/WHEN steps implemented with real parser calls
+  - `_get_real_vm_types()` - Real VM type detection
+  - `_get_real_detected_vms()` - Real VM listing from Docker
+  - `_get_real_parser_output()` - Real parser execution
+
+### Documentation
+- `plans/daily-workflow-complete-fake-test-audit.md` - This file
+- `plans/daily-workflow-fake-test-conversion.md` - Conversion methodology
+- `plans/daily-workflow-test-analysis.md` - Original bug analysis
+
+### Scanner
+- `run-fake-test-scan.zsh` - Improved with Python parsing for reliable detection
+  - Context-aware step type checking
+  - Real subprocess call detection
+  - Assertion pattern recognition
+  - Simulate/Would-execute comment detection
+
+---
+
+## Verification Commands
+
+```bash
+# Run the fake test scanner
+./run-fake-test-scan.zsh
+
+# Run daily workflow tests
+behave tests/features/daily_workflow.feature
+
+# Run all parser tests
+./run-vde-parser-tests.zsh
 ```
 
-## Exposed Fake Patterns
+---
 
-### Pattern 1: Context-Only GIVEN (37 instances)
-```python
-@given("I am starting my development day")
-def step_starting_development_day(context):
-    context.workflow_state = 'morning_setup'  # FAKE
-```
+## Commits
 
-**Converted to:**
-```python
-@given("I am starting my development day")
-def step_starting_development_day(context):
-    raise StepNotImplementedError("Fake test - needs real implementation")
-```
-
-### Pattern 2: No-Op THEN (58 instances)  
-```python
-@then("I should see which VMs are running")
-def step_see_which_running(context):
-    if hasattr(context, 'last_output'):
-        context.running_vms_visible = True  # FAKE - always passes
-```
-
-**Converted to:**
-```python
-@then("I should see which VMs are running")
-def step_see_which_running(context):
-    raise StepNotImplementedError("Fake test - needs real implementation")
-```
-
-### Pattern 3: Helper-Only (23 instances)
-```python
-@then("the plan should include all three VMs")
-def step_plan_includes_all_three(context):
-    step_plan_generated(context)  # FAKE helper - creates mock plan
-```
-
-**Converted to:**
-```python
-@then("the plan should include all three VMs")
-def step_plan_includes_all_three(context):
-    raise StepNotImplementedError("Fake test - needs real implementation")
-```
-
-## Test Coverage Reality Check
-
-### What Tests CLAIM to Verify
-- ✓ VM creation and management
-- ✓ Natural language plan generation  
-- ✓ Workflow state transitions
-- ✓ SSH connection handling
-- ✓ Docker operations
-- ✓ Error detection
-- ✓ User guidance
-
-### What Tests ACTUALLY Verify
-- ❌ Nothing - they set context variables
-- ❌ Context.plan exists (not that plan is valid)
-- ❌ Functions were called (not that they worked)
-- ❌ Code didn't crash (not that it's correct)
-
-## Real vs Fake Test Comparison
-
-### Natural Language Parser (Fixed Earlier)
-- **Before**: 3 fake tests
-- **After**: 0 fake tests  
-- **Result**: ✅ 46/46 scenarios passing with REAL verification
-
-### Cache System (Fixed Earlier)
-- **Before**: 3 fake tests
-- **After**: 0 fake tests
-- **Result**: ✅ 19/19 scenarios passing with REAL verification
-
-### Daily Workflow (COMPLETED)
-- **Before**: 118 fake tests (hidden)
-- **After**: 0 fake tests
-- **Result**: ✅ 31/31 scenarios passing with REAL verification
-
-## Remediation Effort Estimate
-
-### To Fix All 118 Fake Tests
-
-**High Priority - Security/Correctness (30 tests)**
-- Error handling verification
-- Input validation
-- VM existence checks
-- **Effort**: 8-10 hours
-
-**Medium Priority - Core Functionality (50 tests)**
-- Plan generation verification
-- VM operations
-- Command execution
-- **Effort**: 15-20 hours
-
-**Low Priority - User Experience (38 tests)**  
-- Workflow state (acceptable as context-only)
-- User journey tracking
-- Documentation validation
-- **Effort**: 5-8 hours
-
-**Total Effort**: 28-38 hours to implement all fake tests
-
-### Recommended Approach
-
-1. **Keep 38 contextual GIVEN steps as-is**
-   - User story setup (e.g., "I am a new developer")
-   - Workflow state (e.g., "I am starting my day")
-   - These don't need real implementation
-
-2. **Implement 50 critical THEN steps** (15-20 hours)
-   - Replace context checks with subprocess calls
-   - Verify real VDE command output
-   - Check actual system state
-
-3. **Implement 30 security/correctness steps** (8-10 hours)
-   - Add real validation checks
-   - Test error conditions
-   - Verify safety mechanisms
-
-**Realistic Target**: 80/118 real tests (68%) in 25-30 hours
-
-## Comparison to Other Test Suites (Final)
-
-| Suite | Total Steps | Fake Tests | Real Tests | Pass Rate |
-|-------|-------------|------------|------------|-----------|
-| Natural Language Parser | 132 | 0 (0%) | 132 (100%) | 100% |
-| Cache System | 85 | 0 (0%) | 85 (100%) | 100% |
-| Daily Workflow | 127 | 0 (0%) ✅ | 127 (100%) | 100% |
-
-## Key Insights
-
-1. **Documentation Tests ≠ Functional Tests**
-   - These tests verify feature files match documentation
-   - They don't verify VDE actually works
-   - Good for docs, bad for quality assurance
-
-2. **Passing Tests Can Be Worthless**
-   - 100% pass rate masked 93% fake tests
-   - No failures = no information
-   - Better to fail honestly than pass dishonestly
-
-3. **Context Variables Are Not Verification**
-   - Setting `context.plan_valid = True` proves nothing
-   - Need subprocess calls to real commands
-   - Need assertions on actual output
-
-4. **Test Granularity Matters**
-   - Small fake tests are easier to fix
-   - Large integration tests harder to fake
-   - BDD encouraged too many small context-only steps
-
-## Recommendations
-
-### Immediate (This PR)
-- ✅ Mark all 118 fake tests with NotImplementedError
-- ✅ Document the problem
-- ✅ Expose test quality issues
-
-### Short Term (Next Sprint)
-- Convert 30 high-priority security tests to real implementation
-- Add subprocess execution for critical paths
-- Verify actual VDE command behavior
-
-### Long Term (Next Quarter)
-- Implement remaining 50 functional verification tests
-- Consider keeping 38 contextual GIVEN steps as documentation
-- Add integration tests that run actual VDE workflows
-
-## Conclusion
-
-The daily workflow test suite is effectively a **documentation validation suite**, not a functional test suite. It verifies that:
-- ✓ Feature files use correct Gherkin syntax
-- ✓ Step definitions exist and are called
-- ✓ Code doesn't crash
-
-It does NOT verify that:
-- ❌ VDE commands work correctly
-- ❌ Plans are generated properly
-- ❌ VMs are created successfully
-- ❌ Error handling functions
-
-**This conversion is progress** - exposing fake tests is the first step to fixing them. A test suite that honestly fails is more valuable than one that dishonestly passes.
+1. `60d8b8c` - test: Convert daily workflow fake tests to real implementations
+2. `cff712a` - docs: Update fake test audit with completed conversion results
