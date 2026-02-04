@@ -180,118 +180,87 @@ def _filter_vms_by_category(vms, category):
 @given('I am following the documented Python API workflow')
 def step_python_api_workflow(context):
     """Set up context for Python API workflow."""
-    context.workflow = 'python_api'
-
+    raise StepNotImplementedError("Fake test - step_python_api_workflow needs real implementation")
 
 @given('I am following the documented JavaScript workflow')
 def step_js_workflow(context):
     """Set up context for JavaScript workflow."""
-    context.workflow = 'javascript'
-
+    raise StepNotImplementedError("Fake test - step_js_workflow needs real implementation")
 
 @given('I am creating a microservices architecture')
 def step_microservices_arch(context):
     """Set up context for microservices architecture."""
-    context.workflow = 'microservices'
-
+    raise StepNotImplementedError("Fake test - step_microservices_arch needs real implementation")
 
 @given('I have planned to create Python')
 def step_planned_python(context):
     """Set up context showing Python was planned."""
-    if not hasattr(context, 'planned_vms'):
-        context.planned_vms = []
-    context.planned_vms.append('python')
-
+    raise StepNotImplementedError("Fake test - step_planned_python needs real implementation")
 
 @given('I have created Python and PostgreSQL VMs')
 def step_created_python_postgres(context):
     """Set up context with Python and PostgreSQL created."""
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = []
-    context.created_vms.extend(['python', 'postgres'])
-
+    raise StepNotImplementedError("Fake test - step_created_python_postgres needs real implementation")
 
 @given('I need to connect to the Python VM')
 def step_need_connect_python(context):
     """Set up context for connecting to Python."""
-    context.target_vm = 'python'
-
+    raise StepNotImplementedError("Fake test - step_need_connect_python needs real implementation")
 
 @given('I have started the PostgreSQL VM')
 def step_started_postgres(context):
     """Set up context with PostgreSQL started."""
-    if not hasattr(context, 'running_vms'):
-        context.running_vms = []
-    context.running_vms.append('postgres')
-
+    raise StepNotImplementedError("Fake test - step_started_postgres needs real implementation")
 
 @given('I want to use the Node.js name')
 def step_want_nodejs_name(context):
     """Set up context for testing nodejs alias."""
-    context.test_alias = 'nodejs'
-
+    raise StepNotImplementedError("Fake test - step_want_nodejs_name needs real implementation")
 
 @given('I have created the microservice VMs')
 def step_created_microservices(context):
     """Set up context with microservice VMs created."""
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = []
-    context.created_vms.extend(['python', 'go', 'rust', 'postgres', 'redis'])
-
+    raise StepNotImplementedError("Fake test - step_created_microservices needs real implementation")
 
 @given('I have created microservices')
 def step_created_microservices_alt(context):
     """Alternative step for microservices created."""
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = []
-    context.created_vms.extend(['python', 'go', 'rust', 'postgres', 'redis'])
-
+    raise StepNotImplementedError("Fake test - step_created_microservices_alt needs real implementation")
 
 @given('I need to rebuild a VM to fix an issue')
 def step_need_rebuild(context):
     """Set up context for VM rebuild."""
-    context.workflow = 'troubleshooting_rebuild'
-
+    raise StepNotImplementedError("Fake test - step_need_rebuild needs real implementation")
 
 @given('I need to debug inside a container')
 def step_need_debug(context):
     """Set up context for container debugging."""
-    context.workflow = 'troubleshooting_debug'
-
+    raise StepNotImplementedError("Fake test - step_need_debug needs real implementation")
 
 @given('I need to work in my primary development environment')
 def step_primary_env(context):
     """Set up context for primary development environment."""
-    context.target_vm = 'python'
-
+    raise StepNotImplementedError("Fake test - step_primary_env needs real implementation")
 
 @given('I want a Python API with PostgreSQL')
 def step_python_api_postgres(context):
     """Set up context for Python API with PostgreSQL."""
-    context.stack = ['python', 'postgres']
-
+    raise StepNotImplementedError("Fake test - step_python_api_postgres needs real implementation")
 
 @given('I have created my VMs')
 def step_created_vms(context):
     """Set up context with VMs created."""
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = ['python', 'postgres']
-
+    raise StepNotImplementedError("Fake test - step_created_vms needs real implementation")
 
 @given('I have an existing Python and PostgreSQL stack')
 def step_existing_stack(context):
     """Set up context with existing stack."""
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = ['python', 'postgres']
-
+    raise StepNotImplementedError("Fake test - step_existing_stack needs real implementation")
 
 @given('I have created the Redis VM')
 def step_created_redis(context):
     """Set up context with Redis created."""
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = []
-    context.created_vms.append('redis')
-
+    raise StepNotImplementedError("Fake test - step_created_redis needs real implementation")
 
 @given('I have stopped my current project')
 def step_stopped_project(context):
@@ -373,102 +342,62 @@ def step_stopped_postgres(context):
 @given('the documentation shows specific VM examples')
 def step_doc_examples(context):
     """Set up context for documentation verification."""
-    context.doc_vms = ['python', 'javascript', 'go', 'rust', 'postgres', 'redis']
-
+    raise StepNotImplementedError("Fake test - step_doc_examples needs real implementation")
 
 @given('I need to plan my daily workflow')
 def step_plan_daily(context):
     """Set up context for daily workflow planning."""
-    context.workflow = 'performance'
-
+    raise StepNotImplementedError("Fake test - step_plan_daily needs real implementation")
 
 @given('something isn\'t working correctly')
 def step_something_wrong(context):
     """Set up context for troubleshooting."""
-    context.workflow = 'troubleshooting'
-
-
-# =============================================================================
-# WHEN steps - Parse natural language and generate plans
-# =============================================================================
+    raise StepNotImplementedError("Fake test - step_something_wrong needs real implementation")
 
 @when('I plan to create a Python VM')
 def step_plan_create_python(context):
     """Parse 'create python' using real parser."""
-    context.detected_intent = _get_real_intent('create python')
-    context.detected_vms = _get_real_vm_names('create python')
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_create_python needs real implementation")
 
 @when('I plan to create PostgreSQL')
 def step_plan_create_postgres(context):
     """Parse 'create postgres' using real parser."""
-    context.detected_intent = _get_real_intent('create postgres')
-    context.detected_vms = _get_real_vm_names('create postgres')
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_create_postgres needs real implementation")
 
 @when('I plan to start both VMs')
 def step_plan_start_both(context):
     """Parse 'start python postgres' using real parser."""
-    context.detected_intent = _get_real_intent('start python postgres')
-    context.detected_vms = _get_real_vm_names('start python postgres')
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_start_both needs real implementation")
 
 @when('I ask for connection information')
 def step_ask_connection_info(context):
     """Parse connection request using real parser."""
-    context.detected_intent = _get_real_intent('connect python')
-    context.detected_vms = _get_real_vm_names('connect python')
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_ask_connection_info needs real implementation")
 
 @when('I check if postgres exists')
 def step_check_postgres_exists(context):
     """Check if postgres is a valid VM type."""
-    context.vm_checked = 'postgres'
-    context.vm_valid = _is_valid_vm_type('postgres')
-    context.vm_category = _get_vm_category('postgres')
-    # Also set detected_vms for THEN steps that expect it
-    if hasattr(context, 'vm_checked'):
-        context.detected_vms = [context.vm_checked]
-
+    raise StepNotImplementedError("Fake test - step_check_postgres_exists needs real implementation")
 
 @when('I plan to create JavaScript and Redis VMs')
 def step_plan_create_js_redis(context):
     """Parse 'create javascript redis' using real parser."""
-    context.detected_intent = _get_real_intent('create javascript redis')
-    context.detected_vms = _get_real_vm_names('create javascript redis')
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_create_js_redis needs real implementation")
 
 @when('I resolve the nodejs alias')
 def step_resolve_nodejs(context):
     """Resolve nodejs alias using real parser."""
-    context.detected_vms = _get_real_vm_names('create nodejs')
-    resolved = _get_real_vm_names('nodejs')
-    context.alias_resolved = 'js' in resolved if isinstance(resolved, list) else resolved == 'js'
-
+    raise StepNotImplementedError("Fake test - step_resolve_nodejs needs real implementation")
 
 @when('I plan to create Python, Go, Rust, PostgreSQL, and Redis')
 def step_plan_microservices(context):
     """Parse microservices creation using real parser."""
-    input_str = 'create python go rust postgres redis'
-    context.detected_intent = _get_real_intent(input_str)
-    context.detected_vms = _get_real_vm_names(input_str)
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_microservices needs real implementation")
 
 @when('I plan to start them all')
 def step_plan_start_all(context):
     """Parse 'start all' using real parser."""
-    context.detected_intent = _get_real_intent('start all')
-    context.detected_filter = _get_real_filter('start all')
-    context.detected_vms = 'all'
-    # For 'all' filter, we'll verify all microservice VMs are expected
-    context.current_plan = {'intent': context.detected_intent, 'filter': context.detected_filter, 'vms': ['python', 'go', 'rust', 'postgres', 'redis']}
-
+    raise StepNotImplementedError("Fake test - step_plan_start_all needs real implementation")
 
 @when('I check for each service VM')
 def step_check_each_vm(context):
@@ -485,41 +414,27 @@ def step_check_each_vm(context):
 @when('I plan to start Python, PostgreSQL, and Redis')
 def step_plan_start_three(context):
     """Parse starting three VMs using real parser."""
-    input_str = 'start python postgres redis'
-    context.detected_intent = _get_real_intent(input_str)
-    context.detected_vms = _get_real_vm_names(input_str)
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_start_three needs real implementation")
 
 @when('I ask what\'s running')
 def step_ask_whats_running(context):
     """Parse status request using real parser."""
-    context.detected_intent = _get_real_intent('status')
-    context.current_plan = {'intent': context.detected_intent}
-
+    raise StepNotImplementedError("Fake test - step_ask_whats_running needs real implementation")
 
 @when('I ask how to connect to Python')
 def step_ask_connect_python(context):
     """Parse connect request using real parser."""
-    context.detected_intent = _get_real_intent('connect python')
-    context.detected_vms = _get_real_vm_names('connect python')
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_ask_connect_python needs real implementation")
 
 @when('I plan to stop everything')
 def step_plan_stop_all(context):
     """Parse 'stop all' using real parser."""
-    context.detected_intent = _get_real_intent('stop all')
-    context.detected_filter = _get_real_filter('stop all')
-    context.current_plan = {'intent': context.detected_intent, 'filter': context.detected_filter}
-
+    raise StepNotImplementedError("Fake test - step_plan_stop_all needs real implementation")
 
 @when('I check the status')
 def step_check_status(context):
     """Parse status check using real parser."""
-    context.detected_intent = _get_real_intent('status')
-    context.current_plan = {'intent': context.detected_intent}
-
+    raise StepNotImplementedError("Fake test - step_check_status needs real implementation")
 
 @when('I plan to rebuild Python')
 def step_plan_rebuild_python(context):
@@ -535,17 +450,12 @@ def step_plan_rebuild_python(context):
 @when('I ask to connect to Python')
 def step_ask_to_connect(context):
     """Parse connection request using real parser."""
-    context.detected_intent = _get_real_intent('connect python')
-    context.detected_vms = _get_real_vm_names('connect python')
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_ask_to_connect needs real implementation")
 
 @when('I ask what VMs can I create')
 def step_ask_available_vms(context):
     """Parse list VMs request using real parser."""
-    context.detected_intent = _get_real_intent('list available')
-    context.current_plan = {'intent': context.detected_intent}
-
+    raise StepNotImplementedError("Fake test - step_ask_available_vms needs real implementation")
 
 @when('I ask "what VMs can I create?"')
 def step_ask_available_vms_quoted(context):
@@ -613,53 +523,32 @@ def step_ask_show_all_services(context):
 @when('I plan to create Python and PostgreSQL')
 def step_plan_create_python_postgres(context):
     """Parse create python and postgres using real parser."""
-    input_str = 'create python postgres'
-    context.detected_intent = _get_real_intent(input_str)
-    context.detected_vms = _get_real_vm_names(input_str)
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_create_python_postgres needs real implementation")
 
 @when('I plan to start Python and PostgreSQL')
 def step_plan_start_python_postgres(context):
     """Parse start python and postgres using real parser."""
-    input_str = 'start python postgres'
-    context.detected_intent = _get_real_intent(input_str)
-    context.detected_vms = _get_real_vm_names(input_str)
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_start_python_postgres needs real implementation")
 
 @when('I plan to add Redis')
 def step_plan_add_redis(context):
     """Parse adding redis using real parser."""
-    context.detected_intent = _get_real_intent('create redis')
-    context.detected_vms = _get_real_vm_names('create redis')
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_add_redis needs real implementation")
 
 @when('I plan to start Redis')
 def step_plan_start_redis(context):
     """Parse start redis using real parser."""
-    context.detected_intent = _get_real_intent('start redis')
-    context.detected_vms = _get_real_vm_names('start redis')
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_start_redis needs real implementation")
 
 @when('I plan to stop all VMs')
 def step_plan_stop_all_vms(context):
     """Parse stop all using real parser."""
-    context.detected_intent = _get_real_intent('stop all')
-    context.detected_filter = _get_real_filter('stop all')
-    context.current_plan = {'intent': context.detected_intent, 'filter': context.detected_filter}
-
+    raise StepNotImplementedError("Fake test - step_plan_stop_all_vms needs real implementation")
 
 @when('I plan to start Go and MongoDB')
 def step_plan_start_go_mongodb(context):
     """Parse start go and mongodb using real parser."""
-    input_str = 'start go mongodb'
-    context.detected_intent = _get_real_intent(input_str)
-    context.detected_vms = _get_real_vm_names(input_str)
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_start_go_mongodb needs real implementation")
 
 @when('I ask to list all languages')
 def step_ask_list_languages(context):
@@ -697,33 +586,22 @@ def step_ask_list_languages(context):
 @when('I ask for help')
 def step_ask_help(context):
     """Parse help request using real parser."""
-    context.detected_intent = _get_real_intent('help')
-    context.current_plan = {'intent': context.detected_intent}
-
+    raise StepNotImplementedError("Fake test - step_ask_help needs real implementation")
 
 @when('I plan to start Python')
 def step_plan_start_python(context):
     """Parse start python using real parser."""
-    context.detected_intent = _get_real_intent('start python')
-    context.detected_vms = _get_real_vm_names('start python')
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_start_python needs real implementation")
 
 @when('I plan to stop PostgreSQL')
 def step_plan_stop_postgres(context):
     """Parse stop postgres using real parser."""
-    context.detected_intent = _get_real_intent('stop postgres')
-    context.detected_vms = _get_real_vm_names('stop postgres')
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_stop_postgres needs real implementation")
 
 @when('I plan to create Go again')
 def step_plan_create_go_again(context):
     """Parse create go using real parser."""
-    context.detected_intent = _get_real_intent('create go')
-    context.detected_vms = _get_real_vm_names('create go')
-    context.current_plan = {'intent': context.detected_intent, 'vms': context.detected_vms}
-
+    raise StepNotImplementedError("Fake test - step_plan_create_go_again needs real implementation")
 
 @when('I verify the documented VMs')
 def step_verify_doc_vms(context):

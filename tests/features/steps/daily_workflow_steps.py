@@ -63,9 +63,7 @@ def step_python_vm_running(context):
     In test mode: actually creates and starts the VM.
     In local mode: checks if VM is running.
     """
-    ensure_vm_running(context, 'python')
-    context.python_running = container_exists('python')
-
+    raise StepNotImplementedError("Fake test - step_python_vm_running needs real implementation")
 
 @given('I have "python" VM running')
 def step_python_vm_running_daily(context):
@@ -160,15 +158,7 @@ def step_restart_python_rebuild(context):
 @given('I need a full stack environment')
 def step_need_full_stack(context):
     """Context: User needs full stack environment."""
-    # Verify required VMs are available
-    required_vms = ['python', 'postgres', 'redis']
-    available_vms = []
-    for vm in required_vms:
-        if compose_file_exists(vm):
-            available_vms.append(vm)
-    context.full_stack_needed = len(available_vms) >= 2
-    context.required_vms = required_vms
-
+    raise StepNotImplementedError("Fake test - step_need_full_stack needs real implementation")
 
 @when('I want to try a new language')
 def step_want_new_language(context):
@@ -274,10 +264,7 @@ def step_receive_status_info(context):
 @then("the plan should be generated")
 def step_plan_generated(context):
     """Verify the plan was successfully generated."""
-    # Just verify that we have some context from the plan generation
-    has_content = hasattr(context, 'detected_intent') or hasattr(context, 'nl_intent') or hasattr(context, 'detected_vms')
-    assert has_content, "Plan was not generated - no context data available"
-
+    raise StepNotImplementedError("Fake test - step_plan_generated needs real implementation")
 
 @then("all plans should be generated quickly")
 def step_plans_generated_quickly(context):
@@ -389,58 +376,32 @@ def step_go_vm_configured(context):
 @then("it should be marked as a service VM")
 def step_marked_as_service_vm(context):
     """Verify VM is marked as a service VM."""
-    service_vms = ['postgres', 'redis', 'mongodb', 'mysql', 'nginx', 'rabbitmq', 'couchdb']
-    if hasattr(context, 'last_vm'):
-        assert context.last_vm.lower() in service_vms, f"{context.last_vm} should be a service VM"
-
+    raise StepNotImplementedError("Fake test - step_marked_as_service_vm needs real implementation")
 
 @then("the JavaScript VM should use the js canonical name")
 def step_js_canonical_name(context):
     """Verify JavaScript VM uses js canonical name."""
-    if hasattr(context, 'plan') and context.plan:
-        vms = context.plan.get('vms', [])
-        assert 'js' in vms, "js should be in plan (canonical name)"
-
+    raise StepNotImplementedError("Fake test - step_js_canonical_name needs real implementation")
 
 @then("I can use either name in commands")
 def step_use_either_name(context):
     """Verify either canonical or alias name can be used."""
-    # Both js and javascript should work
-    if hasattr(context, 'plan') and context.plan:
-        vms = context.plan.get('vms', [])
-        # At least one form should be present
-        assert 'js' in vms or 'javascript' in vms, "JS VM should be in plan"
-
+    raise StepNotImplementedError("Fake test - step_use_either_name needs real implementation")
 
 @then("the plan should include all five VMs")
 def step_plan_includes_all_five(context):
     """Verify plan includes all five microservices VMs."""
-    step_plan_generated(context)
-    expected = ['python', 'go', 'rust', 'postgres', 'redis']
-    if hasattr(context, 'plan') and context.plan:
-        vms = context.plan.get('vms', [])
-        for vm in expected:
-            assert vm in vms, f"{vm} should be in plan"
-
+    raise StepNotImplementedError("Fake test - step_plan_includes_all_five needs real implementation")
 
 @then("each VM should be included in the VM list")
 def step_each_vm_in_list(context):
     """Verify each VM is in the VM list."""
-    if hasattr(context, 'plan') and context.plan:
-        vms = context.plan.get('vms', [])
-        assert len(vms) > 0, "VMs should be in plan"
-
+    raise StepNotImplementedError("Fake test - step_each_vm_in_list needs real implementation")
 
 @then("all microservice VMs should be included")
 def step_all_microservice_included(context):
     """Verify all microservice VMs are included."""
-    step_plan_generated(context)
-    if hasattr(context, 'plan') and context.plan:
-        vms = context.plan.get('vms', [])
-        microservice_vms = ['python', 'go', 'rust', 'postgres', 'redis']
-        for vm in microservice_vms:
-            assert vm in vms, f"{vm} should be included"
-
+    raise StepNotImplementedError("Fake test - step_all_microservice_included needs real implementation")
 
 @then("PostgreSQL should exist as a service VM")
 def step_postgres_service_vm(context):
@@ -459,20 +420,12 @@ def step_redis_service_vm(context):
 @then("the plan should include all three VMs")
 def step_plan_includes_all_three(context):
     """Verify plan includes all three VMs."""
-    step_plan_generated(context)
-    if hasattr(context, 'plan') and context.plan:
-        vms = context.plan.get('vms', [])
-        for vm in ['python', 'postgres', 'redis']:
-            assert vm in vms, f"{vm} should be in plan"
-
+    raise StepNotImplementedError("Fake test - step_plan_includes_all_three needs real implementation")
 
 @then("the plan should use the start_vm intent")
 def step_plan_uses_start_intent(context):
     """Verify plan uses start_vm intent."""
-    step_plan_generated(context)
-    if hasattr(context, 'last_intent'):
-        assert context.last_intent == 'start_vm', f"Expected start_vm, got {context.last_intent}"
-
+    raise StepNotImplementedError("Fake test - step_plan_uses_start_intent needs real implementation")
 
 @then("I should be able to see running VMs")
 def step_see_running_vms(context):
@@ -484,60 +437,37 @@ def step_see_running_vms(context):
 @then("the plan should apply to all running VMs")
 def step_plan_all_running(context):
     """Verify plan applies to all running VMs."""
-    step_plan_generated(context)
-    if hasattr(context, 'running_vms'):
-        context.plan_applies_to_all = True
-
+    raise StepNotImplementedError("Fake test - step_plan_all_running needs real implementation")
 
 @then("I should see which VMs are running")
 def step_see_which_running(context):
     """Verify user can see which VMs are running."""
-    if hasattr(context, 'last_output'):
-        context.running_vms_visible = True
-
+    raise StepNotImplementedError("Fake test - step_see_which_running needs real implementation")
 
 @then("the plan should set rebuild=true flag")
 def step_rebuild_flag_true(context):
     """Verify plan sets rebuild=true flag."""
-    step_plan_generated(context)
-    if hasattr(context, 'plan') and context.plan:
-        flags = context.plan.get('flags', {})
-        assert flags.get('rebuild') == True, "rebuild flag should be true"
-
+    raise StepNotImplementedError("Fake test - step_rebuild_flag_true needs real implementation")
 
 @then("I should receive SSH connection information")
 def step_ssh_connection_info(context):
     """Verify user receives SSH connection information."""
-    step_plan_generated(context)
-    if hasattr(context, 'plan') and context.plan:
-        # Plan should contain connection info
-        context.ssh_info_received = True
-
+    raise StepNotImplementedError("Fake test - step_ssh_connection_info needs real implementation")
 
 @then("I should see all available VM types")
 def step_all_vm_types(context):
     """Verify user sees all available VM types."""
-    if hasattr(context, 'last_output'):
-        context.all_types_visible = True
-
+    raise StepNotImplementedError("Fake test - step_all_vm_types needs real implementation")
 
 @then("the plan should use the create_vm intent")
 def step_plan_uses_create_intent(context):
     """Verify plan uses create_vm intent."""
-    step_plan_generated(context)
-    if hasattr(context, 'last_intent'):
-        assert context.last_intent == 'create_vm', f"Expected create_vm, got {context.last_intent}"
-
+    raise StepNotImplementedError("Fake test - step_plan_uses_create_intent needs real implementation")
 
 @then("Redis should start without affecting other VMs")
 def step_redis_no_affect_others(context):
     """Verify Redis starts without affecting other VMs."""
-    if hasattr(context, 'plan') and context.plan:
-        vms = context.plan.get('vms', [])
-        assert 'redis' in vms, "Redis should be in plan"
-        # Other VMs should not be affected
-        context.redis_isolated = True
-
+    raise StepNotImplementedError("Fake test - step_redis_no_affect_others needs real implementation")
 
 @then("all running VMs should be stopped")
 def step_all_running_stopped(context):
@@ -554,17 +484,12 @@ def step_ready_new_project(context):
 @then("only the new project VMs should be running")
 def step_only_new_running(context):
     """Verify only new project VMs are running."""
-    if hasattr(context, 'running_vms') and hasattr(context, 'new_project_vms'):
-        for vm in context.running_vms:
-            assert vm in context.new_project_vms, f"{vm} should not be running"
-
+    raise StepNotImplementedError("Fake test - step_only_new_running needs real implementation")
 
 @then("I should see only language VMs")
 def step_only_language_vms(context):
     """Verify only language VMs are shown."""
-    if hasattr(context, 'last_output'):
-        context.languages_only = True
-
+    raise StepNotImplementedError("Fake test - step_only_language_vms needs real implementation")
 
 @then("service VMs should not be included")
 def step_no_service_vms(context):
@@ -575,9 +500,7 @@ def step_no_service_vms(context):
 @then("I should receive clear connection instructions")
 def step_clear_connection_instructions(context):
     """Verify user receives clear connection instructions."""
-    step_plan_generated(context)
-    context.connection_instructions = True
-
+    raise StepNotImplementedError("Fake test - step_clear_connection_instructions needs real implementation")
 
 @then("I should understand how to access the VM")
 def step_understand_access(context):
@@ -588,9 +511,7 @@ def step_understand_access(context):
 @then("I should see available commands")
 def step_available_commands(context):
     """Verify user sees available commands."""
-    if hasattr(context, 'last_output'):
-        context.commands_visible = True
-
+    raise StepNotImplementedError("Fake test - step_available_commands needs real implementation")
 
 @then("I should understand what I can do")
 def step_understand_capabilities(context):
@@ -649,19 +570,7 @@ def step_total_time_under(context):
 # Helper function
 def step_plan_generated(context):
     """Verify plan was generated."""
-    # Prefer current_plan from documented_workflow_steps if available
-    if hasattr(context, 'current_plan') and context.current_plan:
-        context.plan = context.current_plan
-    elif not hasattr(context, 'plan') or context.plan is None:
-        # Create a mock plan for verification purposes
-        context.plan = {'vms': [], 'intent': 'unknown', 'flags': {}}
-        if hasattr(context, 'last_intent'):
-            context.plan['intent'] = context.last_intent
-
-
-# =============================================================================
-# Additional Daily Workflow Steps (Added 2026-02-02)
-# =============================================================================
+    raise StepNotImplementedError("Fake test - step_plan_generated needs real implementation")
 
 @when('I run the initial setup')
 def step_run_initial_setup(context):
@@ -672,9 +581,7 @@ def step_run_initial_setup(context):
 @then('VDE should detect my operating system')
 def step_vde_detect_os(context):
     """Verify VDE detects operating system."""
-    import platform
-    context.os_detected = platform.system()
-
+    raise StepNotImplementedError("Fake test - step_vde_detect_os needs real implementation")
 
 @then('appropriate base images should be built')
 def step_base_images_built(context):
@@ -685,9 +592,7 @@ def step_base_images_built(context):
 @then('my SSH keys should be automatically configured')
 def step_ssh_keys_auto_configured(context):
     """Verify SSH keys are auto-configured."""
-    ssh_dir = Path.home() / ".ssh"
-    context.ssh_configured = ssh_dir.exists() and any(ssh_dir.glob("id_*"))
-
+    raise StepNotImplementedError("Fake test - step_ssh_keys_auto_configured needs real implementation")
 
 @then('I should see available VMs with "list-vms"')
 def step_list_vms_available(context):
@@ -722,9 +627,7 @@ def step_no_ssh_loss(context):
 @given('the project contains VDE configuration in configs/')
 def step_project_vde_config(context):
     """Verify project has VDE configuration."""
-    configs_dir = VDE_ROOT / "configs"
-    context.has_vde_config = configs_dir.exists()
-
+    raise StepNotImplementedError("Fake test - step_project_vde_config needs real implementation")
 
 @given('the docker-compose.yml is committed to the repo')
 def step_compose_committed(context):
