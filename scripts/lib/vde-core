@@ -239,6 +239,23 @@ _vde_core_load_cache() {
     return $VDE_SUCCESS
 }
 
+# invalidate_vm_types_cache - Invalidate and remove VM types cache
+# Args: none
+# Returns: VDE_SUCCESS (0)
+invalidate_vm_types_cache() {
+    local cache_file="$VDE_CORE_VM_TYPES_CACHE"
+
+    # Remove cache file if it exists
+    if [ -f "$cache_file" ]; then
+        rm -f "$cache_file"
+    fi
+
+    # Reset loaded flag (if using shell compatibility layer)
+    unset _VDE_CORE_VM_TYPES_LOADED 2>/dev/null
+
+    return $VDE_SUCCESS
+}
+
 # vde_core_load_types - Load minimal VM type data for core operations
 # Only loads type and aliases, not install commands or service ports
 # Supports cache loading/saving for performance

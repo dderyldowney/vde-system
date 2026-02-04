@@ -332,7 +332,24 @@ def step_config_not_modified(context):
 
 @given('vm-types.conf has been modified after cache')
 def step_config_modified_after(context):
-    """Config modified after cache was created."""
+    """Simulate config modification by touching the file."""
+    import time
+    config_path = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+
+    # Ensure cache exists first
+    if not cache_path.exists():
+        subprocess.run(
+            ['zsh', '-c', f'source {VDE_ROOT}/scripts/lib/vde-core && vde_core_load_types'],
+            capture_output=True, cwd=VDE_ROOT, timeout=10
+        )
+
+    # Store original cache mtime before touching config
+    context.cache_mtime_before = cache_path.stat().st_mtime if cache_path.exists() else 0
+
+    # Touch config to make it newer than cache
+    time.sleep(0.1)
+    config_path.touch()
     context.config_modified = True
 
 
@@ -380,7 +397,13 @@ def step_vm_types_multiple_loads(context):
 
 @when('cache is manually cleared')
 def step_cache_manually_cleared(context):
-    """Cache is manually cleared."""
+    """Execute manual cache clear by removing cache file."""
+    cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
+
+    # Direct file removal (simulating manual clear)
+    if cache_path.exists():
+        cache_path.unlink()
+
     context.cache_manually_cleared = True
 
 
@@ -392,8 +415,20 @@ def step_cache_concurrent_read(context):
 
 @when('invalidate_vm_types_cache is called')
 def step_invalidate_cache_called(context):
-    """Invalidate VM types cache is called."""
+    """Call the real invalidate_vm_types_cache function."""
+    vde_core = VDE_ROOT / "scripts" / "lib" / "vde-core"
+
+    # Call real cache invalidation function
+    result = subprocess.run(
+        ['bash', '-c', f'source {vde_core} && invalidate_vm_types_cache'],
+        capture_output=True,
+        text=True,
+        cwd=VDE_ROOT,
+        timeout=10
+    )
+
     context.invalidate_cache_called = True
+    context.invalidate_result = result.returncode
 
 
 @then('VM_ALIASES array should be populated')
@@ -424,8 +459,9 @@ def step_comments_start_hash(context):
 def step_vm_types_loaded(context):
     """Load VM types - triggers cache read or parse."""
     vm_common = VDE_ROOT / "scripts" / "lib" / "vde-core"
+    # Force a fresh load by unsetting the loaded flag
     result = subprocess.run(
-        ["zsh", "-c", f"source '{vm_common}' && vde_core_load_types && echo 'LOAD_COMPLETE'"],
+        ["zsh", "-c", f"source '{vm_common}' && unset _VDE_CORE_LOADED && vde_core_load_types && echo 'LOAD_COMPLETE'"],
         capture_output=True,
         text=True,
         timeout=30
@@ -451,13 +487,20 @@ def step_config_not_reparsed(context):
 
 @then('cache should be invalidated')
 def step_cache_invalidated(context):
-    """Verify cache was invalidated."""
+    """Verify cache was invalidated and regenerated after config modification."""
     cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
-    config_path = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    if cache_path.exists() and config_path.exists():
-        config_mtime = config_path.stat().st_mtime
-        cache_mtime = cache_path.stat().st_mtime
-        assert config_mtime > cache_mtime, "Config should be newer than cache (invalidated)"
+
+    # After loading with modified config, cache should be regenerated
+    # Check that cache was updated (has newer mtime than before)
+    assert cache_path.exists(), "Cache should exist after reload"
+
+    cache_mtime_after = cache_path.stat().st_mtime
+    cache_mtime_before = getattr(context, 'cache_mtime_before', 0)
+
+    # Cache should have been regenerated (newer timestamp)
+    assert cache_mtime_after > cache_mtime_before, \
+        f"Cache should be regenerated after config modification (before: {cache_mtime_before}, after: {cache_mtime_after})"
+
     context.cache_invalidated = True
 
 
