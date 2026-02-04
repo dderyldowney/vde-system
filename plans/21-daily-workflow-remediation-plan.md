@@ -1,9 +1,10 @@
-# Plan 21: Daily Workflow Remediation Plan
+# Plan 21: Daily Workflow Remediation Plan (REVISED)
 
 **Created**: 2026-02-04
 **Previous Commit**: 590be53 - test: fix docker-operations BDD tests
 **Status**: docker-operations complete (14/14 scenarios passing)
-**Last Updated**: 2026-02-04 (integrated findings from Plans 08, 11, 16, 18, 20)
+**Last Updated**: 2026-02-04 (REVISED - removed non-existent yume-guardian)
+**Note**: yume-guardian subagent was never implemented. Using `run-fake-test-scan.zsh` for fake test detection.
 
 ---
 
@@ -34,7 +35,6 @@ Three main workstreams to complete the VDE test infrastructure:
   2. Verify docker-operations.feature still passes (baseline: 14/14)
   3. Identify other passing docker-required features
   4. Run fake test scanner: `./run-fake-test-scan.zsh`
-- **Reference**: Plan 18 yume-guardian status: CLEAN (0 violations)
 - **Exit Criteria**: docker-operations baseline maintained, fake test scan complete
 
 ### Phase 1.3: Integration Test Preparation
@@ -69,8 +69,8 @@ Three main workstreams to complete the VDE test infrastructure:
   2. Create step definitions in appropriate step files
   3. Test each new definition
   4. **Critical**: Use VM naming convention from Plan 20:
-   - Service VMs (no suffix): postgres, redis, nginx, mongodb, mysql, rabbitmq, couchdb
-   - Language VMs (append -dev): python → python-dev, rust → rust-dev, go → go-dev
+     - Service VMs (no suffix): postgres, redis, nginx, mongodb, mysql, rabbitmq, couchdb
+     - Language VMs (append -dev): python → python-dev, rust → rust-dev, go → go-dev
   5. Leverage helper: `tests/features/steps/vm_naming_helpers.py`
 - **Exit Criteria**: Top 20 undefined steps implemented
 
@@ -98,7 +98,9 @@ Three main workstreams to complete the VDE test infrastructure:
 - **Objective**: Identify all fake test patterns in codebase
 - **Steps**:
   1. Execute `./run-fake-test-scan.zsh`
-  2. Categorize violations by type
+  2. Categorize violations by type:
+     - WHEN steps: pass-only without real subprocess calls
+     - THEN steps: missing assertions
   3. Prioritize by severity
 - **Exit Criteria**: Fake test inventory complete
 
@@ -126,13 +128,25 @@ Three main workstreams to complete the VDE test infrastructure:
   3. Update feature files accordingly
 - **Exit Criteria**: Zero placeholder steps
 
-### Phase 3.5: Final Guardian Verification
-- **Objective**: Run yume-guardian to verify clean audit
+### Phase 3.5: Final Verification
+- **Objective**: Run fake test scanner to verify clean audit
 - **Steps**:
-  1. Execute yume-guardian on all test files
+  1. Execute `./run-fake-test-scan.zsh` on all test files
   2. Fix any remaining violations
-  3. Re-run until CLEAN status achieved
-- **Exit Criteria**: yume-guardian returns CLEAN
+  3. Re-run until exit code 0 (CLEAN) is achieved
+- **Exit Criteria**: Fake test scanner returns CLEAN (exit 0)
+
+---
+
+## Removed: yume-guardian Subagent
+
+**NOTE**: The `yume-guardian` subagent referenced in previous versions was never implemented.
+
+**Replacement**: Use the existing `run-fake-test-scan.zsh` script which:
+- Detects WHEN steps with pass-only (no real subprocess calls)
+- Detects THEN steps without assertions
+- Provides clear violation reports
+- Returns exit code 0 for CLEAN, exit code 1 for violations
 
 ---
 
@@ -144,7 +158,7 @@ Three main workstreams to complete the VDE test infrastructure:
 | Full test suite | All passing | TBD |
 | Undefined steps | 0 | TBD |
 | Fake test violations | 0 | TBD |
-| yume-guardian status | CLEAN | TBD |
+| Fake test scan status | CLEAN (exit 0) | TBD |
 
 ---
 
@@ -153,7 +167,7 @@ Three main workstreams to complete the VDE test infrastructure:
 - Docker daemon running (for docker-required tests)
 - All VDE scripts executable
 - Python 3.8+ with behave installed
-- **Pre-flight check**: Run `./run-fake-test-scan.zsh` before Phase 3.1
+- **Fake test scanner**: `./run-fake-test-scan.zsh`
 - **VM naming helpers**: `tests/features/steps/vm_naming_helpers.py` (from Plan 20)
 
 ## Risks & Mitigations
