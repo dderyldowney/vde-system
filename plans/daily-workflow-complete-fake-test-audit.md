@@ -6,10 +6,12 @@
 **BEFORE (Fake)**: All 31 scenarios passing (100% fake)
 **AFTER (Real)**: All 31 scenarios passing (100% real)
 
-- 31 scenarios passed ✅
-- 131 steps passed ✅
-- 0 errors
-- 0 undefined steps
+```
+1 feature passed, 0 failed, 0 skipped
+31 scenarios passed, 0 failed, 0 skipped
+131 steps passed, 0 failed, 0 skipped
+Took 0min 15.312s
+```
 
 ---
 
@@ -146,8 +148,8 @@ All step files in `tests/features/steps/`:
 # Run the fake test scanner
 ./run-fake-test-scan.zsh
 
-# Run daily workflow tests
-behave tests/features/daily_workflow.feature
+# Run daily workflow tests (docker-free)
+behave tests/features/docker-free/documented-development-workflows.feature
 
 # Run all parser tests
 ./run-vde-parser-tests.zsh
@@ -160,3 +162,4 @@ behave tests/features/daily_workflow.feature
 1. `60d8b8c` - test: Convert daily workflow fake tests to real implementations
 2. `cff712a` - docs: Update fake test audit with completed conversion results
 3. `63ff10d` - feat: Improve fake test scanner with Python parsing
+4. `1a3bf6e` - docs: Document full codebase fake test scan results
