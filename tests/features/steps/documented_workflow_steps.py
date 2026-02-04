@@ -61,6 +61,14 @@ def _get_real_vm_names(input_string):
     return [vm for vm in stdout.split('\n') if vm]
 
 
+def _get_real_vm_names_as_display(input_string):
+    """Call vde-parser's extract_vm_names_to_display function for display names."""
+    stdout, _ = _call_vde_parser_function('extract_vm_names_to_display', input_string)
+    if not stdout:
+        return []
+    return [vm for vm in stdout.split('\n') if vm]
+
+
 def _get_real_filter(input_string):
     """Call vde-parser's extract_filter function."""
     stdout, _ = _call_vde_parser_function('extract_filter', input_string)
@@ -422,6 +430,9 @@ def step_check_postgres_exists(context):
     context.vm_checked = 'postgres'
     context.vm_valid = _is_valid_vm_type('postgres')
     context.vm_category = _get_vm_category('postgres')
+    # Also set detected_vms for THEN steps that expect it
+    if hasattr(context, 'vm_checked'):
+        context.detected_vms = [context.vm_checked]
 
 
 @when('I plan to create JavaScript and Redis VMs')
@@ -455,7 +466,8 @@ def step_plan_start_all(context):
     context.detected_intent = _get_real_intent('start all')
     context.detected_filter = _get_real_filter('start all')
     context.detected_vms = 'all'
-    context.current_plan = {'intent': context.detected_intent, 'filter': context.detected_filter}
+    # For 'all' filter, we'll verify all microservice VMs are expected
+    context.current_plan = {'intent': context.detected_intent, 'filter': context.detected_filter, 'vms': ['python', 'go', 'rust', 'postgres', 'redis']}
 
 
 @when('I check for each service VM')

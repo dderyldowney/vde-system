@@ -448,3 +448,76 @@ def run_vde_command(command, timeout=120):
     # Handle both string and list command formats
     if isinstance(command, list):
         command_str = ' '.join(str(c) for c in command)
+    else:
+        command_str = str(command)
+
+    # Determine the command to run
+    first_word = command_str.split()[0] if command_str.strip() else ''
+
+    # Determine the script path and arguments
+    if first_word in _DIRECT_SCRIPTS:
+        # Direct script execution
+        script_path = SCRIPTS_DIR / first_word
+        args = command_str.split()[1:]
+        cmd = [str(script_path)] + args
+    elif first_word in _VDE_SUBCOMMANDS:
+        # Use the vde parser
+        script_path = SCRIPTS_DIR / 'vde'
+        args = command_str.split()
+        cmd = [str(script_path)] + args
+    else:
+        # Assume it's already a full command or needs ./scripts/ prefix
+        if command_str.startswith('./'):
+            cmd = command_str.split()
+        elif command_str.startswith('.'):
+            # Relative path from VDE_ROOT
+            full_path = VDE_ROOT / command_str
+            cmd = [str(full_path)]
+        else:
+            # Try as-is or prepend scripts directory
+            script_path = SCRIPTS_DIR / first_word
+            if script_path.exists():
+                args = command_str.split()[1:]
+                cmd = [str(script_path)] + args
+            else:
+                # Execute as shell command
+                cmd = command_str
+
+    # Execute the command
+    try:
+        if isinstance(cmd, str):
+            # Shell command
+            result = subprocess.run(
+                cmd,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                cwd=str(VDE_ROOT)
+            )
+        else:
+            # List command
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                cwd=str(VDE_ROOT)
+            )
+        return result
+    except subprocess.TimeoutExpired:
+        # Return a result with timeout info
+        return subprocess.CompletedProcess(
+            args=cmd,
+            returncode=-9,  # SIGKILL equivalent for timeout
+            stdout='',
+            stderr=f'Command timed out after {timeout} seconds'
+        )
+    except Exception as e:
+        # Return a result with error info
+        return subprocess.CompletedProcess(
+            args=cmd,
+            returncode=-1,
+            stdout='',
+            stderr=str(e)
+        )

@@ -128,6 +128,46 @@ invalidate_alias_map() {
     return $VDE_SUCCESS
 }
 
+# canonical_to_display - Convert canonical VM name to display name
+# Args:
+#   canonical_name - The canonical VM name (e.g., 'postgres')
+# Returns:
+#   VDE_SUCCESS (0) - Outputs display name to stdout
+#   VDE_ERR_NOT_FOUND (3) - VM not found
+# Example: display=$(canonical_to_display "postgres")  # outputs "PostgreSQL"
+canonical_to_display() {
+    local canonical="$1"
+    local display
+    display=$(get_vm_info display "$canonical" 2>/dev/null)
+    if [ -n "$display" ]; then
+        echo "$display"
+        return $VDE_SUCCESS
+    fi
+    # Fallback to canonical name if no display name found
+    echo "$canonical"
+    return $VDE_SUCCESS
+}
+
+# extract_vm_names_to_display - Extract VM names and convert to display names
+# Args:
+#   input_string - The user's natural language input
+# Returns:
+#   VDE_SUCCESS (0) - Outputs display names to stdout (one per line)
+# Example: displays=$(extract_vm_names_to_display "start PostgreSQL and Python")  # outputs "PostgreSQL\nPython"
+extract_vm_names_to_display() {
+    local input="$1"
+    local canonical_vms
+    canonical_vms=$(extract_vm_names "$input")
+    if [ -z "$canonical_vms" ]; then
+        return $VDE_SUCCESS
+    fi
+    local vm
+    echo "$canonical_vms" | while IFS= read -r vm; do
+        [ -n "$vm" ] && canonical_to_display "$vm"
+    done
+    return $VDE_SUCCESS
+}
+
 # -----------------------
 # Intent Constants
 # -----------------------
@@ -255,8 +295,8 @@ detect_intent() {
             ;;
     esac
 
-    # Default: return help intent
-    echo "$INTENT_HELP"
+    # Default: return empty string for unmatched/empty input
+    echo ""
     return $VDE_SUCCESS
 }
 
