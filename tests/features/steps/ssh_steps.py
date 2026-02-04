@@ -1,347 +1,219 @@
 """
-BDD Step definitions for SSH Configuration and Agent scenarios.
+BDD Step definitions for SSH Key Management.
 
-This module imports and re-exports step definitions from specialized modules.
-For implementation details, see:
-- ssh_helpers.py: Shared SSH utility functions
-- ssh_agent_steps.py: Agent and key management
-- ssh_config_steps.py: SSH configuration file operations
-- ssh_vm_steps.py: VM-to-VM SSH communication
-- ssh_git_steps.py: Git operations via SSH
-- ssh_known_hosts_steps.py: known_hosts file management
-
-The original file (4,233 lines) has been refactored into focused modules
-for better maintainability. This file serves as the entry point for Behave to
-discover all SSH-related step definitions.
+These steps handle SSH key verification, agent management, and SSH operations.
 """
+
 import os
-import sys
+import subprocess
+from pathlib import Path
 
-# Import shared configuration
-steps_dir = os.path.dirname(os.path.abspath(__file__))
-if steps_dir not in sys.path:
-    sys.path.insert(0, steps_dir)
-from ssh_agent_steps import *  # @given, @when, @then for agent operations
-from ssh_config_steps import *  # @given, @when, @then for config operations
+from behave import given, then, when
 
-# Import all step definitions from specialized modules
-from ssh_helpers import *  # SSH helper functions
-from ssh_known_hosts_steps import *  # @given, @when, @then for known_hosts
-from ssh_vm_steps import *  # @given, @when, @then for VM communication
 
-from config import VDE_ROOT
+# =============================================================================
+# GIVEN steps - Setup SSH states
+# =============================================================================
 
-# Ensure behave discovers all steps - list all exported step function names
-# This is for documentation purposes; Behave auto-discovers via @given/@when/@then decorators
-__all__ = [
-    'step_able_to_run_psql',
-    'step_agent_auto_started',
-    'step_agent_selects_right_key',
-    'step_all_auth_use_host_keys',
-    'step_all_connections_succeed',
-    'step_all_connections_use_host_keys',
-    'step_all_git_ops_succeed',
-    'step_all_keys_detected',
-    'step_all_keys_loaded',
-    'step_all_repos_update',
-    'step_all_repos_use_ssh_auth',
-    'step_all_use_host_keys',
-    'step_all_vm_entries_present',
-    'step_an_ssh_agent_should_be_started_automatically',
-    'step_any_key_works',
-    'step_app_should_be_deployed',
-    'step_atomic_mv_replaces',
-    'step_attempt_create_vm_again',
-    'step_auth_uses_host_keys',
-    'step_authenticated_using_host_keys',
-    'step_authentication_automatic',
-    'step_backup_contains_original',
-    'step_backup_created',
-    'step_backup_created_in_dir',
-    'step_backup_exists_at',
-    'step_backup_has_original_content',
-    'step_backup_has_timestamp',
-    'step_backup_timestamp_before',
-    'step_best_key_selected',
-    'step_blank_lines_preserved',
-    'step_both_repos_cloned',
-    'step_both_repos_update',
-    'step_both_services_respond',
-    'step_changes_pushed_to_github',
-    'step_clone_from_account1',
-    'step_clone_from_account2',
-    'step_clone_succeeds',
-    'step_command_executes_on_rust',
-    'step_command_succeeds_no_error',
-    'step_comments_preserved',
-    'step_concurrent_config_update',
-    'step_config_atomic_state',
-    'step_config_contains_field_under_vm',
-    'step_config_contains_new_entry',
-    'step_config_contains_python_dev',
-    'step_config_created',
-    'step_config_file_valid',
-    'step_config_has_user_entry',
-    'step_config_not_contain',
-    'step_config_not_corrupted',
-    'step_config_not_partial',
-    'step_config_only_one_entry',
-    'step_config_still_contains',
-    'step_connected_host_to_vm',
-    'step_connection_uses_host_keys',
-    'step_content_to_temp_file',
-    'step_copy_public_keys',
-    'step_create_and_start_vm',
-    'step_create_file_in_python_vm',
-    'step_create_postgres_vm_for_db',
-    'step_create_python_vm',
-    'step_create_python_vm_for_api',
-    'step_create_redis_vm_for_cache',
-    'step_create_vm_again',
-    'step_create_vm_given',
-    'step_create_vm_with_port',
-    'step_created_multiple_vms',
-    'step_created_vms_before',
-    'step_deployment_succeeds',
-    'step_detect_ssh_keys_runs',
-    'step_developing_fullstack_app',
-    'step_different_key_types',
-    'step_each_uses_appropriate_key',
-    'step_each_uses_correct_key',
-    'step_ed25519_generated',
-    'step_ed25519_key_generated',
-    'step_ed25519_preferred',
-    'step_entry_created',
-    'step_execute_on_host',
-    'step_existing_entries_unchanged',
-    'step_existing_ssh_keys',
-    'step_file_copied_with_host_keys',
-    'step_generate_keys',
-    'step_git_from_vm',
-    'step_git_requires_auth',
-    'step_git_uses_host_keys',
-    'step_git_uses_host_keys',
-    'step_go_vm_api_gateway',
-    'step_have_cicd_script_in_vm',
-    'step_have_cloned_repo_in_go_vm',
-    'step_have_deployment_server',
-    'step_have_different_keys_for_accounts',
-    'step_have_frontend_backend_db_vms',
-    # Git Steps (from ssh_git_steps.py)
-    'step_have_github_account_with_keys',
-    'step_have_keys_for_deployment_server',
-    'step_have_made_code_changes',
-    'step_have_multiple_github_accounts',
-    'step_have_multiple_vms_for_services',
-    'step_have_new_vm_needs_git',
-    'step_have_nodejs_vm_running',
-    'step_have_npm_script_with_git',
-    'step_have_private_repo_on_github',
-    'step_have_python_vm_for_build',
-    'step_have_repo_with_submodules',
-    'step_have_repos_on_github_and_gitlab',
-    'step_have_ssh_keys_for_both_hosts',
-    'step_host_keys_used',
-    'step_host_keys_used_for_auth',
-    'step_host_keys_used_for_both',
-    'step_i_have_a_go_vm_running',
-    'step_i_have_a_postgres_vm_running',
-    'step_i_have_a_rust_vm_running',
-    'step_i_have_started_the_ssh_agent',
-    'step_i_ssh_into_python_vm',
-    'step_informed_of_happened',
-    'step_just_cloned_vde',
-    'step_keep_file_exists',
-    'step_key_generated_auto',
-    'step_key_loaded_into_agent',
-    'step_key_with_comment',
-    'step_keys_auto_generated',
-    'step_keys_copied_to_public',
-    'step_keys_detected_auto',
-    'step_keys_in_authorized_keys',
-    'step_keys_in_vm',
-    'step_keys_loaded_auto',
-    'step_keys_loaded_into_agent_available',
-    'step_keys_loaded_into_agent_given',
-    'step_keys_still_work',
-    'step_keytype_detected',
-    'step_known_hosts_backup_exists',
-    # Known Hosts Steps (from ssh_known_hosts_steps.py)
-    'step_known_hosts_contains_entry',
-    'step_known_hosts_contains_hostname',
-    'step_known_hosts_exists',
-    'step_known_hosts_multiple_entries',
-    'step_known_hosts_new_entry',
-    'step_known_hosts_not_contain',
-    'step_known_hosts_not_contain_simple',
-    'step_known_hosts_not_exists',
-    'step_known_hosts_old_entry',
-    'step_known_hosts_still_contains',
-    'step_list_vms_works',
-    'step_merge_interrupted',
-    'step_merge_operations_complete',
-    'step_merged_entry_contains',
-    'step_merged_entry_has_identity',
-    'step_multiple_keys',
-    'step_multiple_processes_add_entries',
-    'step_my_keys_loaded',
-    'step_my_keys_loaded_in_agent',
-    'step_new_entry_added',
-    'step_new_entry_appended',
-    'step_new_entry_proper_formatting',
-    'step_new_ssh_entry_merged',
-    'step_no_duplicate_entry',
-    'step_no_entries_lost',
-    'step_no_keys_copied_any_vm',
-    'step_no_keys_copied_to_vm',
-    'step_no_keys_copied_to_vm_git',
-    'step_no_keys_on_containers',
-    'step_no_known_hosts_created',
-    'step_no_manual_config',
-    'step_no_manual_copy_keys',
-    'step_no_manual_intervention',
-    'step_no_partial_updates',
-    'step_no_password_prompt_git',
-    'step_no_password_required',
-    'step_no_password_required_scp',
-    'step_no_reconfigure_ssh',
-    'step_no_remember_ports',
-    'step_no_ssh_config',
-    'step_no_ssh_keys',
-    'step_no_ssh_keys_exist',
-    'step_no_ssh_messages',
-    'step_non_pub_files_rejected',
-    'step_only_agent_socket_forwarded',
-    'step_only_pub_files_copied',
-    'step_only_vm_messages',
-    'step_openssh_clients',
-    'step_original_in_backup',
-    'step_output_should_be_displayed',
-    'step_preserve_entries',
-    'step_primary_key_is',
-    'step_primary_key_requested',
-    'step_primary_ssh_key',
-    'step_private_key_detection_runs',
-    'step_private_key_files_rejected',
-    'step_private_keys_remain_on_host',
-    'step_public_key_synced',
-    'step_public_keys_copied_to_dir',
-    'step_public_ssh_keys_has_files',
-    'step_python_vm_payment_service',
-    'step_reload_cache',
-    'step_remove_vm_by_port',
-    'step_remove_vm_ssh_cleanup',
-    'step_repo_should_be_cloned',
-    'step_run_cicd_script',
-    'step_run_curl_python_health',
-    'step_run_curl_rust_metrics',
-    'step_run_git_clone_private',
-    'step_run_git_commit',
-    'step_run_git_pull_each_service',
-    'step_run_git_pull_github',
-    'step_run_git_pull_gitlab',
-    'step_run_git_push',
-    'step_run_git_submodule_update',
-    'step_run_npm_deploy',
-    'step_run_postgres_list_dbs',
-    'step_run_pytest_on_backend',
-    'step_run_redis_ping',
-    'step_run_scp_from_python_to_go',
-    'step_run_scp_to_deploy_server',
-    'step_run_ssh_agent_setup',
-    'step_run_ssh_deploy_script',
-    'step_run_ssh_postgres_from_python',
-    'step_run_ssh_python_from_go',
-    'step_run_ssh_rust_pwd_from_python',
-    'step_run_vde_ssh_command',
-    'step_running_vm_ssh_configured',
-    'step_rust_vm_analytics_service',
-    'step_script_performs_git_ops',
-    'step_see_agent_status',
-    'step_see_available_keys',
-    'step_see_loaded_keys',
-    'step_see_pong',
-    'step_see_postgres_db_list',
-    'step_see_results_in_frontend',
-    'step_see_usage_examples',
-    'step_setup_automatic',
-    'step_short_hostnames',
-    'step_should_connect_to_postgres_vm',
-    'step_should_connect_to_python_vm',
-    'step_shutdown_rebuild_vm',
-    # Config Steps (from ssh_config_steps.py)
-    'step_ssh_agent_not_running',
-    # Agent Steps (from ssh_agent_steps.py)
-    'step_ssh_agent_running',
-    'step_ssh_agent_started',
-    'step_ssh_agent_with_keys_loaded',
-    'step_ssh_any_vm',
-    'step_ssh_config_contains',
-    'step_ssh_config_contains_entry',
-    'step_ssh_config_contains_entry_duplicate',
-    'step_ssh_config_contains_field_given',
-    'step_ssh_config_contains_identity',
-    'step_ssh_config_contains_identity_ed25519',
-    'step_ssh_config_created',
-    'step_ssh_config_entry_created_for_vm',
-    'step_ssh_config_exists',
-    'step_ssh_config_generated',
-    'step_ssh_config_given_contains_python_dev',
-    'step_ssh_config_not_contain_python_dev',
-    'step_ssh_config_permissions',
-    'step_ssh_config_remains_valid',
-    'step_ssh_config_uses_hostname',
-    'step_ssh_configured',
-    'step_ssh_custom_settings',
-    'step_ssh_dir_created',
-    'step_ssh_dir_permissions',
-    'step_ssh_entries_exist',
-    'step_ssh_forwarding_enabled',
-    'step_ssh_has_entry',
-    'step_ssh_immediately',
-    'step_ssh_into_a_vm',
-    'step_ssh_into_go_vm',
-    'step_ssh_into_nodejs_vm',
-    'step_ssh_into_rust_vm',
-    'step_ssh_into_the_vm',
-    'step_ssh_keys_available',
-    # VM Steps (from ssh_vm_steps.py)
-    'step_ssh_keys_configured_on_host',
-    'step_ssh_keys_exist_ssh_dir',
-    'step_ssh_keys_on_host',
-    'step_ssh_still_works',
-    'step_ssh_succeeds_no_warning',
-    'step_ssh_success',
-    'step_ssh_to_each_vm',
-    'step_ssh_via_vde',
-    'step_ssh_vm1_to_vm2',
-    'step_ssh_vm2_to_vm3',
-    'step_ssh_vm3_to_vm4',
-    'step_ssh_vm4_to_vm5',
-    'step_ssh_vm_to_vm',
-    'step_ssh_vm_to_vm_config',
-    'step_start_a_vm',
-    'step_start_all_vms',
-    'step_start_ssh_agent',
-    'step_submodules_cloned',
-    'step_submodules_from_github',
-    'step_system_ssh_command',
-    'step_temp_file_created',
-    'step_temp_file_removed',
-    'step_test_backend_from_frontend',
-    'step_tests_run_on_backend',
-    'step_the_ssh_agent_is_running',
-    'step_update_ssh_config',
-    'step_user_entries_preserved',
-    'step_vde_configured',
-    'step_vm_created_started',
-    'step_vm_created_with_port',
-    'step_vm_previously_created',
-    'step_vm_removed',
-    'step_vm_starts_normally',
-    'step_vm_to_vm_config_generated',
-    'step_vms_configured',
-    'step_vms_no_private_keys',
-    'step_vscode_remote_ssh',
-    'step_warn_existing_entry',
-]
+@given('SSH agent is running')
+def step_ssh_agent_running(context):
+    """Verify SSH agent is available and running."""
+    result = subprocess.run(
+        ['ssh-add', '-l'],
+        capture_output=True,
+        text=True
+    )
+
+    # ssh-add returns 0 if keys are loaded, 1 if no keys, 2 if agent not running
+    context.ssh_agent_running = result.returncode in [0, 1]
+
+    if result.returncode == 2:
+        # Try to start SSH agent
+        raise AssertionError("SSH agent is not running")
+
+
+@given('SSH agent is not running')
+def step_ssh_agent_not_running(context):
+    """Ensure SSH agent is not running."""
+    result = subprocess.run(
+        ['ssh-add', '-l'],
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode == 0:
+        # Agent has keys, kill it
+        subprocess.run(['ssh-agent', '-k'], capture_output=True)
+
+
+@given('available SSH keys should be loaded into agent')
+def step_ssh_keys_loaded(context):
+    """Verify SSH keys are loaded into the agent."""
+    result = subprocess.run(
+        ['ssh-add', '-l'],
+        capture_output=True,
+        text=True
+    )
+
+    has_keys = result.returncode == 0
+    assert has_keys, f"No SSH keys loaded in agent: {result.stderr}"
+
+
+@when('I load SSH key "{key_name}"')
+def step_load_ssh_key(context, key_name):
+    """Load an SSH key into the agent."""
+    key_path = os.path.expanduser(f'~/.ssh/{key_name}')
+
+    assert os.path.exists(key_path), f"SSH key '{key_name}' not found"
+
+    result = subprocess.run(
+        ['ssh-add', key_path],
+        capture_output=True,
+        text=True
+    )
+
+    context.ssh_key_loaded = result.returncode == 0
+    context.loaded_key = key_name
+
+    if result.returncode != 0:
+        context.last_error = result.stderr
+
+
+# =============================================================================
+# THEN steps - SSH verification
+# =============================================================================
+
+@then('public key "{key_name}" should be available')
+def step_public_key_available(context, key_name):
+    """Verify public key file exists."""
+    key_path = os.path.expanduser(f'~/.ssh/{key_name}')
+    assert os.path.exists(key_path), f"Public key {key_name} not found at {key_path}"
+
+
+@then('public key "{key_name}" should not be available')
+def step_public_key_not_available(context, key_name):
+    """Verify public key file doesn't exist."""
+    key_path = os.path.expanduser(f'~/.ssh/{key_name}')
+    assert not os.path.exists(key_path), f"Public key {key_name} should not exist"
+
+
+@then('SSH key "{key_name}" should be loaded')
+def step_ssh_key_should_be_loaded(context, key_name):
+    """Verify specific SSH key is loaded in agent."""
+    result = subprocess.run(
+        ['ssh-add', '-l'],
+        capture_output=True,
+        text=True
+    )
+
+    # Check if key fingerprint is in output
+    key_loaded = key_name in result.stdout or key_name.replace('.pub', '') in result.stdout
+    assert key_loaded, f"SSH key '{key_name}' is not loaded in agent"
+
+
+@then('SSH agent should have {count} key')
+def step_ssh_agent_key_count(context, count):
+    """Verify SSH agent has expected number of keys loaded."""
+    result = subprocess.run(
+        ['ssh-add', '-l'],
+        capture_output=True,
+        text=True
+    )
+
+    # Count lines in output (each line is a key)
+    key_count = len([l for l in result.stdout.strip().split('\n') if l])
+    expected = int(count)
+
+    assert key_count == expected, \
+        f"SSH agent should have {expected} keys, has {key_count}"
+
+
+@then('I should be able to SSH to VM "{vm_name}"')
+def step_ssh_to_vm(context, vm_name):
+    """Verify SSH connection to VM works."""
+    from docker_helpers import get_container_port
+
+    try:
+        port = get_container_port(f'{vm_name}-dev', 22)
+        context.vm_ssh_port = port
+
+        # Quick connection test (don't actually connect, just verify port is open)
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        try:
+            result = sock.connect_ex(('localhost', port))
+            assert result == 0, f"Cannot connect to SSH port {port}"
+        finally:
+            sock.close()
+
+    except Exception as e:
+        raise AssertionError(f"Cannot SSH to VM '{vm_name}': {e}")
+
+
+@then('SSH config should contain host "{host}"')
+def step_ssh_config_contains_host(context, host):
+    """Verify SSH config contains specified host."""
+    ssh_config = os.path.expanduser('~/.ssh/config')
+
+    if not os.path.exists(ssh_config):
+        raise AssertionError(f"SSH config not found at {ssh_config}")
+
+    with open(ssh_config, 'r') as f:
+        config_content = f.read()
+
+    assert host in config_content, f"SSH config should contain host '{host}'"
+
+
+@then('SSH connection to "{host}" should use key "{key_name}"')
+def step_ssh_connection_uses_key(context, host, key_name):
+    """Verify SSH config uses specific key for host."""
+    ssh_config = os.path.expanduser('~/.ssh/config')
+
+    if not os.path.exists(ssh_config):
+        raise AssertionError(f"SSH config not found at {ssh_config}")
+
+    with open(ssh_config, 'r') as f:
+        config_content = f.read()
+
+    # Check for host block containing both host and identity file
+    import re
+    host_pattern = rf'Host {host}.?.*?IdentityFile.*?{key_name}'
+    match = re.search(host_pattern, config_content, re.DOTALL | re.IGNORECASE)
+
+    assert match, f"SSH config should use key '{key_name}' for host '{host}'"
+
+
+# =============================================================================
+# WHEN steps - SSH operations
+# =============================================================================
+
+@when('I list loaded SSH keys')
+def step_list_loaded_ssh_keys(context):
+    """List all SSH keys currently loaded in the agent."""
+    result = subprocess.run(
+        ['ssh-add', '-l'],
+        capture_output=True,
+        text=True
+    )
+
+    context.loaded_ssh_keys = result.stdout
+
+
+@when('I remove all SSH keys from agent')
+def step_remove_all_ssh_keys(context):
+    """Remove all keys from SSH agent."""
+    subprocess.run(
+        ['ssh-add', '-D'],
+        capture_output=True,
+        text=True
+    )
+
+    # Verify keys are removed
+    result = subprocess.run(
+        ['ssh-add', '-l'],
+        capture_output=True,
+        text=True
+    )
+
+    context.ssh_keys_removed = 'no identities' in result.stderr or result.returncode == 1

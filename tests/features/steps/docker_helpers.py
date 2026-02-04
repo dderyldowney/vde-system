@@ -256,3 +256,57 @@ def wait_for_container_healthy(container_name: str, timeout: int = 30) -> Dict[s
         f"Container '{container_name}' did not become healthy within {timeout}s "
         f"(last status: {last_status}, elapsed: {elapsed:.1f}s)"
     )
+
+
+def verify_container_stopped(container_name: str) -> bool:
+    """
+    Verify container is not running (stopped or removed).
+
+    Args:
+        container_name: Name or ID of the container to check
+
+    Returns:
+        True if container is not running, False if it is running
+
+    Raises:
+        DockerVerificationError: If docker command fails
+    """
+    try:
+        result = subprocess.run(
+            ['docker', 'ps', '--filter', f'name={container_name}', '--format', '{{json .}}'],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=10
+        )
+
+        # If output is empty, container is not running (stopped or removed)
+        return not result.stdout.strip()
+
+    except subprocess.TimeoutExpired as e:
+        raise DockerVerificationError(f"Docker ps command timed out: {e}")
+    except subprocess.CalledProcessError as e:
+        raise DockerVerificationError(f"Docker ps command failed: {e.stderr}")
+
+
+def cleanup_test_container(container_name: str) -> bool:
+    """
+    Safely remove a test container.
+
+    Args:
+        container_name: Name or ID of the container to remove
+
+    Returns:
+        True if container was removed or didn't exist, False on error
+    """
+    try:
+        subprocess.run(
+            ['docker', 'rm', '-f', container_name],
+            capture_output=True,
+            timeout=10
+        )
+        return True
+    except subprocess.CalledProcessError:
+        return False
+    except subprocess.TimeoutExpired:
+        return False

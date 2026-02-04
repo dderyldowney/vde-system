@@ -157,3 +157,49 @@ def step_rendered_contains_ssh_keys_volume(context):
     rendered = getattr(context, 'rendered_output', '')
     assert 'public-ssh-keys' in rendered, \
         "Rendered output should contain public-ssh-keys volume"
+
+
+@then('rendered template should be valid YAML')
+def step_valid_yaml(context):
+    """Verify rendered output is valid YAML."""
+    rendered = getattr(context, 'rendered_output', '')
+    if HAS_YAML:
+        try:
+            yaml.safe_load(rendered)
+        except yaml.YAMLError as e:
+            raise AssertionError(f"Rendered output is not valid YAML: {e}")
+    else:
+        # Basic syntax check without PyYAML
+        assert ': ' in rendered, "Expected YAML key-value format"
+
+
+@then('container restart policy should be "{policy}"')
+def step_restart_policy(context, policy):
+    """Verify container restart policy in rendered output."""
+    rendered = getattr(context, 'rendered_output', '')
+    assert f'restart: {policy}' in rendered, \
+        f"Expected restart policy '{policy}'"
+
+
+@then('container should expose port {port}')
+def step_expose_port(context, port):
+    """Verify port exposure in rendered output."""
+    rendered = getattr(context, 'rendered_output', '')
+    assert f'"{port}":' in rendered or f'{port}:' in rendered, \
+        f"Expected port {port} to be exposed"
+
+
+@then('template user should be "{user}"')
+def step_template_user(context, user):
+    """Verify user in rendered template."""
+    rendered = getattr(context, 'rendered_output', '')
+    assert f'user: {user}' in rendered, \
+        f"Expected user '{user}' in template"
+
+
+@then('template should include install command')
+def step_install_command(context):
+    """Verify install command is present in rendered template."""
+    rendered = getattr(context, 'rendered_output', '')
+    assert 'install' in rendered.lower(), \
+        "Expected install command in template"
