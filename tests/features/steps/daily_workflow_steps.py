@@ -18,6 +18,7 @@ import time
 from pathlib import Path
 
 from behave import given, then, when
+from behave.api.pending_step import StepNotImplementedError
 
 from config import VDE_ROOT
 from vm_common import (
@@ -334,71 +335,55 @@ def step_new_project_vms_start(context):
 @given("I am starting my development day")
 def step_starting_development_day(context):
     """User is starting their development day."""
-    # Just mark the context - actual setup happens in WHEN steps
-    context.workflow_state = 'morning_setup'
+    raise StepNotImplementedError("Fake test - needs real implementation")
 
 
 @given("I am actively developing")
 def step_actively_developing(context):
     """User is actively developing."""
-    context.workflow_state = 'active_development'
+    raise StepNotImplementedError("Fake test - needs real implementation")
 
 
 @given("I am done with development for the day")
 def step_done_development(context):
     """User is done with development for the day."""
-    context.workflow_state = 'evening_cleanup'
+    raise StepNotImplementedError("Fake test - needs real implementation")
 
 
 @given("I am setting up a new project")
 def step_setting_up_project(context):
     """User is setting up a new project."""
-    context.workflow_state = 'new_project_setup'
+    raise StepNotImplementedError("Fake test - needs real implementation")
 
 
 @given("I am working on one project")
 def step_working_on_project(context):
     """User is working on one project."""
-    context.workflow_state = 'project_active'
+    raise StepNotImplementedError("Fake test - needs real implementation")
 
 
 @given("I am a new team member")
 def step_new_team_member(context):
     """User is a new team member."""
-    context.workflow_state = 'team_onboarding'
+    raise StepNotImplementedError("Fake test - needs real implementation")
 
 
 @given("I am new to the team")
 def step_new_to_team(context):
     """User is new to the team."""
-    context.workflow_state = 'team_onboarding'
+    raise StepNotImplementedError("Fake test - needs real implementation")
 
 
 @given("I am learning the VDE system")
 def step_learning_vde(context):
     """User is learning the VDE system."""
-    context.workflow_state = 'learning_system'
+    raise StepNotImplementedError("Fake test - needs real implementation")
 
 
 @given("I already have a Go VM configured")
 def step_go_vm_configured(context):
     """User already has a Go VM configured."""
-    # Just mark the context - actual configuration verified elsewhere
-    context.vm_configured = 'go'
-
-
-# =============================================================================
-# Daily Workflow THEN steps - All 36 undefined steps
-# =============================================================================
-
-@then("the plan should include both Python and PostgreSQL VMs")
-def step_plan_includes_both_pythons(context):
-    """Verify plan includes both Python and PostgreSQL VMs."""
-    step_plan_generated(context)
-    if hasattr(context, 'plan') and context.plan:
-        vms = context.plan.get('vms', [])
-        assert 'python' in vms or 'Python' in vms, "Python should be in plan"
-        assert 'postgres' in vms or 'PostgreSQL' in vms, "PostgreSQL should be in plan"
+    raise StepNotImplementedError("Fake test - needs real implementation")
 
 
 @then("it should be marked as a service VM")
@@ -557,14 +542,13 @@ def step_redis_no_affect_others(context):
 @then("all running VMs should be stopped")
 def step_all_running_stopped(context):
     """Verify all running VMs are stopped."""
-    context.all_stopped = True
+    raise StepNotImplementedError(f"Fake test - was setting context.all_stopped")
 
 
 @then("I should be ready to start a new project")
 def step_ready_new_project(context):
     """Verify user is ready to start a new project."""
-    # After stopping all VMs, system is ready
-    context.ready_for_new_project = True
+    raise StepNotImplementedError(f"Fake test - was setting context.ready_for_new_project")
 
 
 @then("only the new project VMs should be running")
@@ -585,8 +569,7 @@ def step_only_language_vms(context):
 @then("service VMs should not be included")
 def step_no_service_vms(context):
     """Verify service VMs are not included."""
-    if hasattr(context, 'last_output'):
-        context.no_service_vms = True
+    raise StepNotImplementedError("Fake test - needs real implementation")
 
 
 @then("I should receive clear connection instructions")
@@ -599,7 +582,7 @@ def step_clear_connection_instructions(context):
 @then("I should understand how to access the VM")
 def step_understand_access(context):
     """Verify user understands how to access the VM."""
-    context.understands_access = True
+    raise StepNotImplementedError(f"Fake test - was setting context.understands_access")
 
 
 @then("I should see available commands")
@@ -612,60 +595,55 @@ def step_available_commands(context):
 @then("I should understand what I can do")
 def step_understand_capabilities(context):
     """Verify user understands VDE capabilities."""
-    context.understands_capabilities = True
+    raise StepNotImplementedError(f"Fake test - was setting context.understands_capabilities")
 
 
 @then("execution would detect the VM is already running")
 def step_detect_already_running(context):
     """Verify execution detects VM already running."""
-    context.vm_state = 'already_running'
+    raise StepNotImplementedError(f"Fake test - was setting context.vm_state")
 
 
 @then("I would be notified that it's already running")
 def step_notified_running(context):
     """Verify user is notified VM is already running."""
-    context.already_running_notice = True
+    raise StepNotImplementedError(f"Fake test - was setting context.already_running_notice")
 
 
 @then("execution would detect the VM is not running")
 def step_detect_not_running(context):
     """Verify execution detects VM is not running."""
-    context.vm_state = 'not_running'
+    raise StepNotImplementedError(f"Fake test - was setting context.vm_state")
 
 
 @then("I would be notified that it's already stopped")
 def step_notified_stopped(context):
     """Verify user is notified VM is already stopped."""
-    context.already_stopped_notice = True
+    raise StepNotImplementedError(f"Fake test - was setting context.already_stopped_notice")
 
 
 @then("execution would detect the VM already exists")
 def step_detect_exists(context):
     """Verify execution detects VM already exists."""
-    context.vm_state = 'already_exists'
+    raise StepNotImplementedError(f"Fake test - was setting context.vm_state")
 
 
 @then("I would be notified of the existing VM")
 def step_notified_exists(context):
     """Verify user is notified of existing VM."""
-    context.exists_notice = True
+    raise StepNotImplementedError(f"Fake test - was setting context.exists_notice")
 
 
 @then("all microservice VMs should be valid")
 def step_all_microservice_valid(context):
     """Verify all microservice VMs are valid."""
-    microservice_vms = ['python', 'go', 'rust', 'postgres', 'redis']
-    for vm in microservice_vms:
-        # Just mark all as valid
-        pass
-    context.all_microservice_valid = True
+    raise StepNotImplementedError("Fake test - needs real implementation")
 
 
 @then("the total time should be under 500ms")
 def step_total_time_under(context):
     """Verify total time is under 500ms."""
-    # Performance check - would measure actual time
-    context.performance_ok = True
+    raise StepNotImplementedError(f"Fake test - was setting context.performance_ok")
 
 
 # Helper function
@@ -688,7 +666,7 @@ def step_plan_generated(context):
 @when('I run the initial setup')
 def step_run_initial_setup(context):
     """Run initial VDE setup."""
-    context.initial_setup_run = True
+    raise StepNotImplementedError(f"Fake test - was setting context.initial_setup_run")
 
 
 @then('VDE should detect my operating system')
@@ -701,7 +679,7 @@ def step_vde_detect_os(context):
 @then('appropriate base images should be built')
 def step_base_images_built(context):
     """Verify base images are built."""
-    context.base_images_built = True
+    raise StepNotImplementedError(f"Fake test - was setting context.base_images_built")
 
 
 @then('my SSH keys should be automatically configured')
@@ -714,31 +692,31 @@ def step_ssh_keys_auto_configured(context):
 @then('I should see available VMs with "list-vms"')
 def step_list_vms_available(context):
     """Verify list-vms is available."""
-    context.list_vms_available = True
+    raise StepNotImplementedError(f"Fake test - was setting context.list_vms_available")
 
 
 @then('project directories should be properly mounted')
 def step_dirs_mounted(context):
     """Verify project directories are mounted."""
-    context.dirs_mounted = True
+    raise StepNotImplementedError(f"Fake test - was setting context.dirs_mounted")
 
 
 @then('my SSH config should be updated with new entries')
 def step_ssh_config_new_entries(context):
     """Verify SSH config has new entries."""
-    context.ssh_new_entries = True
+    raise StepNotImplementedError(f"Fake test - was setting context.ssh_new_entries")
 
 
 @then('my existing SSH entries should be preserved')
 def step_ssh_entries_preserved(context):
     """Verify existing SSH entries are preserved."""
-    context.ssh_entries_safe = True
+    raise StepNotImplementedError(f"Fake test - was setting context.ssh_entries_safe")
 
 
 @then('I should not lose my personal SSH configurations')
 def step_no_ssh_loss(context):
     """Verify personal SSH configs are not lost."""
-    context.ssh_safe = True
+    raise StepNotImplementedError(f"Fake test - was setting context.ssh_safe")
 
 
 @given('the project contains VDE configuration in configs/')
@@ -751,92 +729,91 @@ def step_project_vde_config(context):
 @given('the docker-compose.yml is committed to the repo')
 def step_compose_committed(context):
     """Verify docker-compose.yml is committed."""
-    context.compose_in_git = True
+    raise StepNotImplementedError(f"Fake test - was setting context.compose_in_git")
 
 
 @then('each developer gets their own isolated PostgreSQL instance')
 def step_isolated_postgres_instance(context):
     """Verify isolated PostgreSQL."""
-    context.postgres_isolated = True
-
+    raise StepNotImplementedError(f"Fake test - was setting context.postgres_isolated")
 
 
 @then('developers don\'t interfere with each other\'s databases')
 def step_no_db_interference(context):
     """Verify no database interference."""
-    context.databases_isolated = True
+    raise StepNotImplementedError(f"Fake test - was setting context.databases_isolated")
 
 
 @then('they should have all VMs running in minutes')
 def step_vms_running_minutes(context):
     """Verify VMs run in minutes."""
-    context.vms_ready = True
+    raise StepNotImplementedError(f"Fake test - was setting context.vms_ready")
 
 
 @then('they can start contributing immediately')
 def step_start_contributing(context):
     """Verify immediate contribution."""
-    context.can_contribute = True
+    raise StepNotImplementedError(f"Fake test - was setting context.can_contribute")
 
 
 @when('new projects need specific language support')
 def step_new_project_language(context):
     """Context: New project needs language support."""
-    context.language_needed = True
+    raise StepNotImplementedError(f"Fake test - was setting context.language_needed")
 
 
 @when('the VM type is already defined')
 def step_vm_type_defined(context):
     """Context: VM type is defined."""
-    context.vm_defined = True
+    raise StepNotImplementedError(f"Fake test - was setting context.vm_defined")
 
 
 @then('anyone can create the VM using the standard name')
 def step_create_standard_name(context):
     """Verify standard name creation."""
-    context.can_create = True
+    raise StepNotImplementedError(f"Fake test - was setting context.can_create")
 
 
 @then('everyone gets consistent configurations')
 def step_consistent_configs(context):
     """Verify consistent configurations."""
-    context.configs_consistent = True
+    raise StepNotImplementedError(f"Fake test - was setting context.configs_consistent")
 
 
 @then('aliases work predictably across the team')
 def step_aliases_predictable(context):
     """Verify aliases work predictably."""
-    context.aliases_work = True
+    raise StepNotImplementedError(f"Fake test - was setting context.aliases_work")
 
 
 @when('the project README documents required VMs')
 def step_readme_documents_vms(context):
     """Context: README documents VMs."""
-    context.readme_has_vms = True
+    raise StepNotImplementedError(f"Fake test - was setting context.readme_has_vms")
 
 
 @when('developers run the documented create commands')
 def step_run_create_commands(context):
     """Context: Developers run create commands."""
-    context.create_commands_run = True
+    raise StepNotImplementedError(f"Fake test - was setting context.create_commands_run")
 
 
 @then('all developers have compatible environments')
 def step_compatible_environments(context):
     """Verify compatible environments."""
-    context.environments_compatible = True
+    raise StepNotImplementedError(f"Fake test - was setting context.environments_compatible")
 
 
 @then('"docker-compose up" works for everyone')
 def step_compose_up_works(context):
     """Verify docker-compose up works."""
-    context.compose_up_works = True
+    raise StepNotImplementedError(f"Fake test - was setting context.compose_up_works")
 
 
 @then('local development matches the documented setup')
 def step_local_matches_documented(context):
     """Verify local matches documented."""
-    context.local_matches = True
+    raise StepNotImplementedError(f"Fake test - was setting context.local_matches")
 
 
 @given('env-files/project-name.env is committed to git (with defaults)')
@@ -848,7 +825,6 @@ def step_env_file_committed(context):
 @when('a developer creates and starts the VM')
 def step_create_and_start_vm(context):
     """Create and start VM."""
-    context.vm_created_started = True
-
+    raise StepNotImplementedError(f"Fake test - was setting context.vm_created_started")
 
 
