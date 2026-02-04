@@ -90,6 +90,7 @@ RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/in
     rm -f /tmp/install-oh-my-zsh.sh && \
     echo 'export PATH=$HOME/.local/bin:$PATH' > /home/${USERNAME}/.zprofile && \
     echo 'export ZSH_THEME="agnoster"' >> /home/${USERNAME}/.zshrc && \
+    echo 'eval $(ssh-agent -s) && ssh-add' >> /home/${USERNAME}/.zshrc && \
     echo 'source /usr/local/bin/ssh-agent-forward' >> /home/${USERNAME}/.zshrc && \
     chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.zprofile /home/${USERNAME}/.zshrc && \
     su ${USERNAME} -c "git clone https://github.com/LazyVim/starter ~/.config/nvim && nvim --headless +qall"
