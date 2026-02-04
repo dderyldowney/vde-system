@@ -16,15 +16,15 @@ def step_plan_includes_intent(context, intent):
     """Verify plan includes the expected intent."""
     # Get input from context (set by WHEN step)
     input_text = getattr(context, 'input_text', '')
-    
+
     # Call real parser
     result = subprocess.run(
-        ['bash', '-c', f'source {VDE_ROOT}/scripts/lib/vde-parser && detect_intent "{input_text}"'],
+        ['zsh', '-c', f'source {VDE_ROOT}/scripts/lib/vde-parser && detect_intent "{input_text}"'],
         capture_output=True,
         text=True,
         timeout=5
     )
-    
+
     detected_intent = result.stdout.strip()
     assert detected_intent == intent, f"Expected intent '{intent}', got '{detected_intent}'"
 ```
@@ -35,19 +35,19 @@ def step_plan_includes_intent(context, intent):
 **Target**: Call real parser to extract VM names
 
 ```python
-@then('the plan should include the {vm_name} VM')  
+@then('the plan should include the {vm_name} VM')
 def step_plan_includes_vm(context, vm_name):
     """Verify plan includes the expected VM."""
     input_text = getattr(context, 'input_text', '')
-    
+
     # Call real parser
     result = subprocess.run(
-        ['bash', '-c', f'source {VDE_ROOT}/scripts/lib/vde-parser && extract_vm_names "{input_text}"'],
+        ['zsh', '-c', f'source {VDE_ROOT}/scripts/lib/vde-parser && extract_vm_names "{input_text}"'],
         capture_output=True,
         text=True,
         timeout=5
     )
-    
+
     vms = result.stdout.strip().split('\n')
     assert vm_name.lower() in [v.lower() for v in vms], \
         f"Expected VM '{vm_name}' in parsed VMs: {vms}"
@@ -115,7 +115,7 @@ Create shared parser call function:
 def call_vde_parser(function_name, input_text):
     """Call VDE parser function with input."""
     result = subprocess.run(
-        ['bash', '-c', f'source {VDE_ROOT}/scripts/lib/vde-parser && {function_name} "{input_text}"'],
+        ['zsh', '-c', f'source {VDE_ROOT}/scripts/lib/vde-parser && {function_name} "{input_text}"'],
         capture_output=True,
         text=True,
         cwd=VDE_ROOT,
