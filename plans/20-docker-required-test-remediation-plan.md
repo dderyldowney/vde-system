@@ -3,6 +3,22 @@
 **Date:** 2026-02-04
 **Project:** VDE (Virtual Development Environment)
 **Scope:** All docker-required BDD features with non-passing or missing scenarios/steps
+**Status**: INTEGRATED INTO Plan 21 (2026-02-04)
+**Superseded By**: `plans/21-daily-workflow-remediation-plan.md`
+
+---
+
+## ⚠️ SUPERSEDED
+
+This plan has been **integrated** into `plans/21-daily-workflow-remediation-plan.md` as of 2026-02-04.
+
+### Key Findings Preserved:
+- **VM Naming Convention**: Language VMs use `{name}-dev` format (service VMs no suffix)
+- **Helper File**: `tests/features/steps/vm_naming_helpers.py`
+- **Phase 1 Progress**: VM Naming, Docker Verification, Template Steps, Port Management, SSH Key Management
+- **9 critical features** documented with missing step patterns
+
+See Plan 21 for current remediation status and next steps.
 
 ---
 

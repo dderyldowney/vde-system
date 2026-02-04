@@ -2,6 +2,22 @@
 
 ## ✅ CONVERSION COMPLETE - February 4, 2026
 
+## ⚠️ SUPERSEDED
+
+This plan has been **integrated** into `plans/21-daily-workflow-remediation-plan.md` as of 2026-02-04.
+
+### Key Findings Preserved:
+- **Status**: 146 scenarios, 594 steps - ALL PASSING (100% real)
+- **yume-guardian**: CLEAN (0 violations)
+- **Scanner**: `./run-fake-test-scan.zsh`
+- **3 acceptable** "Simulate" comments in GIVEN steps
+
+See Plan 21 for current remediation status and next steps.
+
+---
+
+## Original Document (Preserved for Reference)
+
 ### Final Test Execution Status
 **BEFORE (Fake)**: All 31 scenarios passing (100% fake)
 **AFTER (Real)**: All 31 scenarios passing (100% real)

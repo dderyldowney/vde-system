@@ -1,6 +1,20 @@
 # Daily Workflow Fake Test Conversion Summary
 
-## Conversion Complete
+## ⚠️ SUPERSEDED
+
+This plan has been **integrated** into `plans/21-daily-workflow-remediation-plan.md` as of 2026-02-04.
+
+### Key Findings Preserved:
+- Before: 81 steps, 62 fake tests (76.5%)
+- After: 45 fake tests converted to StepNotImplementedError
+- Scanner: `./run-fake-test-scan.zsh`
+- Verification patterns documented
+
+See Plan 21 for current remediation status and next steps.
+
+---
+
+## Original Document (Preserved for Reference)
 
 ### Before
 - 81 total step definitions
