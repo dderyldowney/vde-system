@@ -261,7 +261,7 @@ detect_intent() {
     # Includes typo patterns: cret, crat (prefix omission), craet (transposition)
     # Note: 'creat' removed to avoid false positives with "create directory" etc.
     case "$input_lower" in
-        *"create a"*|*"create new"*|*"create "*|*cret*|*crat*|*craet*|*"make a"*|*"make new"*|*"set up"*)
+        *"create a"*|*"create new"*|*"create "*|*cret*|*crat*|*craet*|*"make a"*|*"make new"*|*"set up"*|*"add "*)*
             echo "$INTENT_CREATE_VM"
             return $VDE_SUCCESS
             ;;
