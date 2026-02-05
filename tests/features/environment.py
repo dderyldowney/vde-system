@@ -125,7 +125,7 @@ def get_current_docker_state():
 def ensure_vm_exists(vm_name):
     """
     Ensure a VM/container exists (created or running).
-    Creates it if necessary using ./scripts/vde create.
+    Creates it if necessary using ./scripts/vde create with test label.
     """
     state = get_current_docker_state()
     container_name = _get_container_name(vm_name)
@@ -141,8 +141,8 @@ def ensure_vm_exists(vm_name):
         warnings.warn(f"Env file missing: {env_file} - cannot create {vm_name} VM")
         return False
 
-    # Use VDE create command
-    result = run_vde_command(f"./scripts/vde create {vm_name}")
+    # Use VDE create command with test label
+    result = run_vde_command(f"./scripts/vde create {vm_name} --label vde.test=true")
     if result.returncode == 0:
         # Track this VM for cleanup
         _TEST_VMS_CREATED.add(vm_name)
@@ -344,8 +344,8 @@ def after_scenario(context, scenario):
 
     This hook:
     1. Cleans up any temporary files created during testing
-    2. Removes any test-created containers (labeled with vde.test=true)
-    3. Tracks containers for cleanup in after_all
+    2. Removes test-created containers (labeled with vde.test=true)
+    3. Stops test VMs to prepare for next scenario
     """
     # Clean up invalid compose test directory if it was created
     import shutil
@@ -356,7 +356,7 @@ def after_scenario(context, scenario):
         except Exception:
             pass  # Best effort cleanup
 
-    # Collect test-created containers for cleanup tracking
+    # Remove test-created containers immediately
     try:
         result = subprocess.run(
             ["docker", "ps", "--filter", "label=vde.test=true", "--format", "{{.Names}}"],
@@ -365,7 +365,19 @@ def after_scenario(context, scenario):
         if result.returncode == 0:
             test_containers = [c for c in result.stdout.strip().split('\n') if c]
             for container in test_containers:
-                _TEST_CONTAINERS_CREATED.add(container)
+                try:
+                    # Stop and remove container
+                    subprocess.run(
+                        ["docker", "stop", container],
+                        capture_output=True, timeout=10
+                    )
+                    subprocess.run(
+                        ["docker", "rm", "-v", container],
+                        capture_output=True, timeout=10
+                    )
+                    print(f"[CLEANUP] Removed test container: {container}")
+                except Exception as e:
+                    print(f"[CLEANUP] Error removing {container}: {e}")
     except Exception:
         pass  # Docker may not be available, that's OK
 
@@ -388,8 +400,9 @@ def before_all(context):
     This hook:
     1. Verifies Docker is available and running
     2. Verifies VDE root directory exists
-    3. Ensures cache directories are valid
-    4. Reports initial Docker state
+    3. Deletes all existing VDE VMs to establish known state
+    4. Rebuilds all VMs from scratch
+    5. Reports initial Docker state
     """
     import pathlib
 
@@ -439,9 +452,107 @@ def before_all(context):
     reset_cache_to_valid_state()
     print("[SETUP] Cache reset to valid state")
 
+    # DELETE ALL EXISTING VDE VMs TO ESTABLISH KNOWN STATE
+    print("\n[SETUP] Deleting all existing VDE VMs...")
+    _delete_all_vde_vms()
+
+    # REBUILD ALL VMs FROM SCRATCH
+    print("\n[SETUP] Rebuilding all VDE VMs from scratch...")
+    _rebuild_all_vms()
+
     # Get initial Docker state
     initial_state = get_current_docker_state()
-    print(f"[SETUP] Initial Docker state: {len(initial_state['running'])} running, {len(initial_state['created'])} created")
+    print(f"\n[SETUP] Initial Docker state: {len(initial_state['running'])} running, {len(initial_state['created'])} created")
+
+
+def _delete_all_vde_vms():
+    """
+    Delete all existing VDE language and service VMs.
+
+    This removes all containers with vde.test=true label to establish
+    a known clean state for testing.
+    """
+    # Stop and remove all VDE containers
+    try:
+        # Get all VDE-related containers (language VMs have -dev suffix)
+        result = subprocess.run(
+            ["docker", "ps", "-a", "--format", "{{.Names}}"],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode == 0:
+            for container in result.stdout.strip().split('\n'):
+                if container and (container.endswith('-dev') or container in [
+                    'redis', 'postgres', 'mongodb', 'mysql', 'nginx',
+                    'rabbitmq', 'couchdb'
+                ]):
+                    # Stop container
+                    subprocess.run(
+                        ["docker", "stop", container],
+                        capture_output=True, timeout=30
+                    )
+                    # Remove container
+                    subprocess.run(
+                        ["docker", "rm", "-v", container],
+                        capture_output=True, timeout=30
+                    )
+                    print(f"[SETUP] Deleted VM: {container}")
+    except Exception as e:
+        print(f"[SETUP] Warning: Error deleting VMs: {e}")
+
+    # Remove any leftover volumes
+    try:
+        result = subprocess.run(
+            ["docker", "volume", "ls", "--format", "{{.Name}}"],
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode == 0:
+            for volume in result.stdout.strip().split('\n'):
+                if volume and volume.startswith('vde-'):
+                    subprocess.run(
+                        ["docker", "volume", "rm", volume],
+                        capture_output=True, timeout=30
+                    )
+                    print(f"[SETUP] Removed volume: {volume}")
+    except Exception as e:
+        print(f"[SETUP] Warning: Error removing volumes: {e}")
+
+
+def _rebuild_all_vms():
+    """
+    Rebuild all VDE VMs from scratch.
+
+    This creates all language and service VMs to establish a known
+    working state for testing.
+    """
+    # Get list of available VM types from env-files
+    env_files_dir = VDE_ROOT / "env-files"
+    vm_types = []
+    if env_files_dir.exists():
+        for f in env_files_dir.glob("*.env"):
+            vm_name = f.stem
+            # Skip certain service VMs that may not be needed for all tests
+            if vm_name not in ['nginx', 'mongodb', 'mysql', 'couchdb']:
+                vm_types.append(vm_name)
+
+    # Create and start each VM
+    for vm_name in sorted(vm_types):
+        try:
+            # Create VM
+            create_result = run_vde_command(f"./scripts/vde create {vm_name}")
+            if create_result.returncode == 0:
+                print(f"[SETUP] Created VM: {vm_name}")
+                # Start VM
+                start_result = run_vde_command(f"./scripts/vde start {vm_name}")
+                if start_result.returncode == 0:
+                    print(f"[SETUP] Started VM: {vm_name}")
+                    # Track for cleanup
+                    _TEST_VMS_CREATED.add(vm_name)
+                else:
+                    print(f"[SETUP] Failed to start {vm_name}: {start_result.stderr}")
+            else:
+                print(f"[SETUP] Failed to create {vm_name}: {create_result.stderr}")
+        except Exception as e:
+            print(f"[SETUP] Error building {vm_name}: {e}")
 
 
 def after_all(context):
@@ -449,23 +560,26 @@ def after_all(context):
     Hook that runs once after all tests complete.
 
     This hook performs full cleanup:
-    1. Stops all VMs created during testing
+    1. Removes all test-created VMs (delete, not just stop)
     2. Removes all test-labeled containers
     3. Cleans up any test artifacts
     4. Reports final Docker state
     """
     print("\n[CLEANUP] Starting full test cleanup...")
 
-    # Stop all VMs created during testing
+    # Remove all test-created VMs (stop and delete)
     for vm in _TEST_VMS_CREATED:
         try:
-            result = run_vde_command(f"./scripts/vde stop {vm}")
+            # Stop VM first
+            run_vde_command(f"./scripts/vde stop {vm}")
+            # Remove VM (delete)
+            result = run_vde_command(f"./scripts/vde remove {vm}")
             if result.returncode == 0:
-                print(f"[CLEANUP] Stopped VM: {vm}")
+                print(f"[CLEANUP] Removed VM: {vm}")
             else:
-                print(f"[CLEANUP] Failed to stop {vm}: {result.stderr}")
+                print(f"[CLEANUP] Failed to remove {vm}: {result.stderr}")
         except Exception as e:
-            print(f"[CLEANUP] Error stopping {vm}: {e}")
+            print(f"[CLEANUP] Error removing {vm}: {e}")
 
     # Remove all test-labeled containers
     try:
@@ -477,8 +591,13 @@ def after_all(context):
             test_containers = [c for c in result.stdout.strip().split('\n') if c]
             for container in test_containers:
                 try:
+                    # Stop and remove container
                     subprocess.run(
-                        ["docker", "rm", "-f", container],
+                        ["docker", "stop", container],
+                        capture_output=True, timeout=10
+                    )
+                    subprocess.run(
+                        ["docker", "rm", "-v", container],
                         capture_output=True, timeout=10
                     )
                     print(f"[CLEANUP] Removed container: {container}")
@@ -518,6 +637,10 @@ def after_all(context):
                 print(f"[CLEANUP] Removed test directory: {test_path}")
             except Exception as e:
                 print(f"[CLEANUP] Error removing {test_path}: {e}")
+
+    # Clear tracking sets
+    _TEST_VMS_CREATED.clear()
+    _TEST_CONTAINERS_CREATED.clear()
 
     # Get final Docker state
     final_state = get_current_docker_state()
