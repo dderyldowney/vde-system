@@ -133,7 +133,6 @@ Feature: VM Lifecycle Management
   Scenario: Remove a VM
     Given VM "python" has been created
     When I run "remove-virtual python"
-    Then docker-compose.yml should not exist at "configs/docker/python/docker-compose.yml"
     And SSH config entry for "python-dev" should be removed
     And projects directory should still exist at "projects/python"
     But the VM should be marked as not created

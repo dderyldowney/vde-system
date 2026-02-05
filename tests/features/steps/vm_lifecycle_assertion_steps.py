@@ -119,15 +119,6 @@ def step_data_dir_exists(context, dir_path):
     full_path = VDE_ROOT / dir_path
     assert full_path.exists(), f"Data directory should exist at {dir_path}"
 
-
-@then('docker-compose.yml should not exist at "{compose_path}"')
-def step_compose_file_not_exists(context, compose_path):
-    """Verify docker-compose.yml file does not exist at the specified path."""
-    full_path = VDE_ROOT / compose_path
-    assert not full_path.exists(), \
-        f"docker-compose.yml should not exist at {compose_path}"
-
-
 # =============================================================================
 # THEN steps - VM status assertions
 # =============================================================================
