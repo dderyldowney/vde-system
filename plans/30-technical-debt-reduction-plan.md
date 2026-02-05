@@ -34,41 +34,67 @@ Added 13 new step definitions to complete docker-free test coverage:
 - `the plan should include the list_vms intent`
 - `the plan should use the create_vm intent`
 
+### Added: Docker-Free Test Mode
+- Added `VDE_DOCKER_FREE_TEST=1` environment variable
+- When set, skips VM delete/rebuild in before_all
+- Enables running docker-free tests without Docker infrastructure
+
 ## Files Modified
 
 | File | Change |
 |------|--------|
 | `tests/features/steps/documented_workflow_steps.py` | Removed duplicates + added 13 missing steps |
+| `tests/features/environment.py` | Added VDE_DOCKER_FREE_TEST mode |
 
-## Verification
+## Docker-Free Test Catalog
+
+### Feature Files (7 total)
+
+| Feature File | Scenarios | Status |
+|--------------|-----------|--------|
+| `cache-system.feature` | 19 | Needs step verification |
+| `documented-development-workflows.feature` | 31 | ✅ Steps defined |
+| `natural-language-parser.feature` | 46 | Needs step verification |
+| `shell-compatibility.feature` | 21 | Needs step verification |
+| `vde-ssh-commands.feature` | 8 | Needs step verification |
+| `vm-information-and-discovery.feature` | 7 | Needs step verification |
+| `vm-metadata-verification.feature` | 14 | Needs step verification |
+
+**Total: 146 scenarios across 7 docker-free feature files**
+
+### Run Docker-Free Tests
 
 ```bash
 cd /Users/dderyldowney/dev
-python3 -c "import tests.features.steps.documented_workflow_steps; print('OK')"
-# Output: OK
+VDE_DOCKER_FREE_TEST=1 python3 -m behave tests/features/docker-free/ --format=plain
 ```
 
 ## Remaining Technical Debt
 
-### Docker-Required Features
-| Feature | Scenarios | Status |
-|---------|-----------|--------|
-| `daily-workflow.feature` | 13 | Needs Docker |
-| `ssh-agent-*.feature` (5) | ~50 | Needs Docker+SSH |
-| `vm-lifecycle*.feature` (3) | ~20 | Needs Docker |
-| Others | ~40 | Needs Docker |
+### Docker-Required Features (18+ files)
+| Category | Features | Scenarios |
+|----------|----------|-----------|
+| Daily Workflow | daily-workflow, daily-development-workflow | ~21 |
+| SSH/Agent | ssh-agent-* (5), ssh-and-remote-access, ssh-configuration | ~72 |
+| VM Lifecycle | vm-lifecycle, vm-lifecycle-management, vm-state-awareness | ~30 |
+| Other | collaboration, configuration, debugging, installation, port-management, template, team-collaboration | ~48 |
+
+**Total Docker-Required: ~170+ scenarios**
 
 ### Innovation @wip (Do Not Touch)
 - 39 @wip scenarios represent innovation scope
 
-## Next Steps
+## Verification Commands
 
-1. **Run docker-free tests** to verify baseline:
-   ```bash
-   cd /Users/dderyldowney/dev
-   python3 -m behave tests/features/docker-free/ --format=plain
-   ```
+```bash
+# Verify step definitions load
+python3 -c "import tests.features.steps.documented_workflow_steps; print('OK')"
 
-2. **Address docker-required features** when Docker infrastructure available
+# Run docker-free tests
+VDE_DOCKER_FREE_TEST=1 python3 -m behave tests/features/docker-free/ --format=plain
+```
 
-3. **Preserve @wip innovation scenarios** for future development
+## Git History
+
+- `36e97c2` - fix: resolve duplicate step definitions and add missing steps
+- `b3b7684` - feat: add VDE_DOCKER_FREE_TEST mode to skip Docker setup
