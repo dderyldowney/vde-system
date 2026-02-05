@@ -3,6 +3,13 @@ BDD Hooks for VDE test scenarios.
 
 Hooks are special functions that run at specific points during test execution.
 This file is automatically discovered by behave.
+
+Lifecycle:
+1. before_all: Docker availability check, VDE root verification, initial cache reset
+2. before_scenario: Set up environment for each scenario
+3. after_scenario: Clean up test-created containers (labeled with vde.test=true)
+4. after_feature: Stop VMs started for feature testing
+5. after_all: Full cleanup - stop all test VMs, clean test artifacts
 """
 
 import os
@@ -16,6 +23,10 @@ steps_dir = os.path.join(features_dir, "steps")
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 from config import VDE_ROOT
+
+# Track test VMs created during test run for cleanup
+_TEST_VMS_CREATED = set()
+_TEST_CONTAINERS_CREATED = set()
 
 # =============================================================================
 # HELPER FUNCTIONS
@@ -132,6 +143,10 @@ def ensure_vm_exists(vm_name):
 
     # Use VDE create command
     result = run_vde_command(f"./scripts/vde create {vm_name}")
+    if result.returncode == 0:
+        # Track this VM for cleanup
+        _TEST_VMS_CREATED.add(vm_name)
+        print(f"[SETUP] Created test VM: {vm_name}")
     return result.returncode == 0
 
 
@@ -151,6 +166,11 @@ def ensure_vm_running(vm_name):
 
     # Use VDE start command
     result = run_vde_command(f"./scripts/vde start {vm_name}")
+    if result.returncode == 0:
+        # Track this VM as started during testing
+        if vm_name not in _TEST_VMS_CREATED:
+            _TEST_VMS_CREATED.add(vm_name)
+        print(f"[SETUP] Started test VM: {vm_name}")
     return result.returncode == 0
 
 
@@ -322,9 +342,10 @@ def after_scenario(context, scenario):
     """
     Hook that runs after each scenario.
 
-    This hook cleans up any temporary files created during testing,
-    such as invalid compose files used for error handling tests,
-    and removes any test-created containers (labeled with vde.test=true).
+    This hook:
+    1. Cleans up any temporary files created during testing
+    2. Removes any test-created containers (labeled with vde.test=true)
+    3. Tracks containers for cleanup in after_all
     """
     # Clean up invalid compose test directory if it was created
     import shutil
@@ -335,8 +356,7 @@ def after_scenario(context, scenario):
         except Exception:
             pass  # Best effort cleanup
 
-    # Clean up test-created containers (labeled with vde.test=true)
-    # This ensures tests don't leave orphaned containers and don't affect user's VMs
+    # Collect test-created containers for cleanup tracking
     try:
         result = subprocess.run(
             ["docker", "ps", "--filter", "label=vde.test=true", "--format", "{{.Names}}"],
@@ -345,11 +365,7 @@ def after_scenario(context, scenario):
         if result.returncode == 0:
             test_containers = [c for c in result.stdout.strip().split('\n') if c]
             for container in test_containers:
-                # Force remove the test container
-                subprocess.run(
-                    ["docker", "rm", "-f", container],
-                    capture_output=True, timeout=10
-                )
+                _TEST_CONTAINERS_CREATED.add(container)
     except Exception:
         pass  # Docker may not be available, that's OK
 
@@ -358,11 +374,158 @@ def after_feature(context, feature):
     """
     Hook that runs after each feature.
 
-    For docker-operations feature, stop the python and postgres VMs that were
-    started in the Background section to clean up after tests.
+    Stops VMs that were started specifically for this feature's tests.
     """
-    if feature.name == "Docker Operations":
-        # Stop python VM using VDE
-        run_vde_command("./scripts/vde stop python")
-        # Stop postgres VM using VDE
-        run_vde_command("./scripts/vde stop postgres")
+    # Stop VMs started for this feature
+    for vm in _TEST_VMS_CREATED:
+        run_vde_command(f"./scripts/vde stop {vm}")
+
+
+def before_all(context):
+    """
+    Hook that runs once before any tests execute.
+
+    This hook:
+    1. Verifies Docker is available and running
+    2. Verifies VDE root directory exists
+    3. Ensures cache directories are valid
+    4. Reports initial Docker state
+    """
+    import pathlib
+
+    # Verify Docker is available
+    try:
+        docker_result = subprocess.run(
+            ["docker", "--version"],
+            capture_output=True, text=True, timeout=10
+        )
+        if docker_result.returncode != 0:
+            raise RuntimeError("Docker is not available or not installed")
+        print(f"[SETUP] Docker available: {docker_result.stdout.strip()}")
+    except FileNotFoundError:
+        raise RuntimeError("Docker command not found - install Docker to run tests")
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("Docker check timed out")
+
+    # Verify Docker daemon is running
+    try:
+        docker_ps = subprocess.run(
+            ["docker", "info"],
+            capture_output=True, text=True, timeout=30
+        )
+        if docker_ps.returncode != 0:
+            raise RuntimeError("Docker daemon is not running")
+        print("[SETUP] Docker daemon is running")
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("Docker info check timed out - daemon may be unresponsive")
+
+    # Verify VDE root directory
+    if not VDE_ROOT.exists():
+        raise RuntimeError(f"VDE root directory not found: {VDE_ROOT}")
+    print(f"[SETUP] VDE root: {VDE_ROOT}")
+
+    # Verify scripts directory
+    scripts_dir = VDE_ROOT / "scripts"
+    if not scripts_dir.exists():
+        raise RuntimeError(f"Scripts directory not found: {scripts_dir}")
+    print(f"[SETUP] Scripts directory: {scripts_dir}")
+
+    # Ensure cache directory exists
+    cache_dir = VDE_ROOT / ".cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    print(f"[SETUP] Cache directory: {cache_dir}")
+
+    # Reset cache to valid state at start
+    reset_cache_to_valid_state()
+    print("[SETUP] Cache reset to valid state")
+
+    # Get initial Docker state
+    initial_state = get_current_docker_state()
+    print(f"[SETUP] Initial Docker state: {len(initial_state['running'])} running, {len(initial_state['created'])} created")
+
+
+def after_all(context):
+    """
+    Hook that runs once after all tests complete.
+
+    This hook performs full cleanup:
+    1. Stops all VMs created during testing
+    2. Removes all test-labeled containers
+    3. Cleans up any test artifacts
+    4. Reports final Docker state
+    """
+    print("\n[CLEANUP] Starting full test cleanup...")
+
+    # Stop all VMs created during testing
+    for vm in _TEST_VMS_CREATED:
+        try:
+            result = run_vde_command(f"./scripts/vde stop {vm}")
+            if result.returncode == 0:
+                print(f"[CLEANUP] Stopped VM: {vm}")
+            else:
+                print(f"[CLEANUP] Failed to stop {vm}: {result.stderr}")
+        except Exception as e:
+            print(f"[CLEANUP] Error stopping {vm}: {e}")
+
+    # Remove all test-labeled containers
+    try:
+        result = subprocess.run(
+            ["docker", "ps", "--filter", "label=vde.test=true", "--format", "{{.Names}}"],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode == 0:
+            test_containers = [c for c in result.stdout.strip().split('\n') if c]
+            for container in test_containers:
+                try:
+                    subprocess.run(
+                        ["docker", "rm", "-f", container],
+                        capture_output=True, timeout=10
+                    )
+                    print(f"[CLEANUP] Removed container: {container}")
+                except Exception as e:
+                    print(f"[CLEANUP] Error removing {container}: {e}")
+    except Exception as e:
+        print(f"[CLEANUP] Error querying test containers: {e}")
+
+    # Clean up any test networks
+    try:
+        result = subprocess.run(
+            ["docker", "network", "ls", "--filter", "label=vde.test=true", "--format", "{{.Name}}"],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode == 0:
+            test_networks = [n for n in result.stdout.strip().split('\n') if n]
+            for network in test_networks:
+                try:
+                    subprocess.run(
+                        ["docker", "network", "rm", network],
+                        capture_output=True, timeout=10
+                    )
+                    print(f"[CLEANUP] Removed network: {network}")
+                except Exception as e:
+                    print(f"[CLEANUP] Error removing network {network}: {e}")
+    except Exception as e:
+        print(f"[CLEANUP] Error querying test networks: {e}")
+
+    # Clean up test directories
+    test_dirs = ["invalid-test"]
+    for test_dir in test_dirs:
+        test_path = VDE_ROOT / "configs" / "docker" / test_dir
+        if test_path.exists():
+            try:
+                import shutil
+                shutil.rmtree(test_path)
+                print(f"[CLEANUP] Removed test directory: {test_path}")
+            except Exception as e:
+                print(f"[CLEANUP] Error removing {test_path}: {e}")
+
+    # Get final Docker state
+    final_state = get_current_docker_state()
+    print(f"[CLEANUP] Final Docker state: {len(final_state['running'])} running, {len(final_state['created'])} created")
+    print("[CLEANUP] Test cleanup complete")
+
+
+# Helper function to track test VMs (call this from scenario setup)
+def _track_test_vm(vm_name):
+    """Track a VM as created during testing for later cleanup."""
+    _TEST_VMS_CREATED.add(vm_name)
