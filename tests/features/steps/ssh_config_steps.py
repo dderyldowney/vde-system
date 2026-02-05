@@ -530,7 +530,6 @@ def step_no_password(context):
 def step_no_key_copy(context, vm_name):
     """Verify no need to copy keys to VM."""
     # SSH agent forwarding means keys don't need to be copied
-    pass
 
 
 @then('the file should be copied using my host\'s SSH keys')

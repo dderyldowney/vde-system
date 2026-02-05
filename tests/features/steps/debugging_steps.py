@@ -158,9 +158,11 @@ def step_recreate_vm(context):
 
 @when('I check what\'s using the port')
 def step_check_port_usage(context):
-    """Check what's using the port."""
-    # Would check port usage
+    """Check what's using the port - lsof or netstat would show process."""
     context.port_check = True
+    assert subprocess.run(['which', 'lsof'], capture_output=True).returncode == 0 or \
+          subprocess.run(['which', 'netstat'], capture_output=True).returncode == 0, \
+          "Port check tools should be available"
 
 
 @when('I check the SSH config')
@@ -287,9 +289,9 @@ def step_shell_access(context):
 
 @then('I can investigate issues directly')
 def step_investigate_directly(context):
-    """Verify ability to investigate issues."""
-    # Shell access provides investigation capability
-    pass
+    """Verify ability to investigate issues - shell access available."""
+    vm_name = getattr(context, 'vm_name', 'python')
+    assert container_is_running(vm_name), f"VM {vm_name} should be running for investigation"
 
 
 @then('I should get a fresh VM')
@@ -301,9 +303,9 @@ def step_fresh_vm(context):
 
 @then('old configuration issues should be resolved')
 def step_config_issues_resolved(context):
-    """Verify configuration issues are resolved."""
-    # Fresh VM should not have old config issues
-    pass
+    """Verify configuration issues are resolved - fresh VM has clean config."""
+    vm_name = getattr(context, 'vm_name', 'python')
+    assert container_exists(vm_name), f"VM {vm_name} should exist with fresh configuration"
 
 
 @then('I should see which process is using it')
@@ -322,9 +324,9 @@ def step_decide_to_stop_process(context):
 
 @then('VDE can allocate a different port')
 def step_vde_allocate_different_port(context):
-    """Verify VDE can allocate different port."""
-    # Would allocate different port
-    pass
+    """Verify VDE can allocate different port - create new VM."""
+    result = run_vde_command("create c", timeout=120)
+    assert result.returncode == 0, "VDE should allocate a different port for new VM"
 
 
 @then('I can identify if the issue is SSH, Docker, or the VM itself')
