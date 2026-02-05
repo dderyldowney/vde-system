@@ -732,6 +732,38 @@ def step_given_service_vm_started(context, vm):
         context.service_vm_already_running = True
 
 
+@given('python VM is started')
+def step_python_vm_started(context):
+    """Ensure python VM is started for docker-operations tests."""
+    step_given_vm_running(context, "python")
+
+
+@given('postgres VM is started')
+def step_postgres_vm_started(context):
+    """Ensure postgres VM is started for docker-operations tests."""
+    # Check if already running
+    result = subprocess.run(
+        ["docker", "ps", "--format", "{{.Names}}"],
+        capture_output=True, text=True, timeout=10
+    )
+    running = result.stdout.strip().split('\n') if result.stdout.strip() else []
+
+    if "postgres" not in running:
+        # Start the VM using vde script
+        start_result = run_vde_command("vde start postgres", timeout=120)
+        context.last_command = "vde start postgres"
+        context.last_output = start_result.stdout
+        context.last_error = start_result.stderr
+        context.last_exit_code = start_result.returncode
+
+    # Verify postgres is running
+    result = subprocess.run(
+        ["docker", "ps", "--format", "{{.Names}}"],
+        capture_output=True, text=True, timeout=10
+    )
+    assert "postgres" in result.stdout, "postgres container should be running"
+
+
 # =============================================================================
 # Regex-based error mapping steps
 # =============================================================================

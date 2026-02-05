@@ -1,10 +1,39 @@
-# Plan 21: Daily Workflow Remediation Plan (REVISED v2)
+# Plan 21: Daily Workflow Remediation Plan (COMPLETED)
 
 **Created**: 2026-02-04
-**Previous Commit**: 590be53 - test: fix docker-operations BDD tests
-**Status**: docker-operations complete (14/14 scenarios passing)
-**Last Updated**: 2026-02-04 (REVISED v2 - added baseline snapshot, refinements)
-**Note**: yume-guardian subagent was never implemented. Using `run-fake-test-scan.zsh` for fake test detection.
+**Completed**: 2026-02-05
+**Status**: COMPLETED - All milestones verified
+**Final Commit**: 60d6b8e - test: fix docker-operations BDD tests
+
+---
+
+## Summary
+
+This plan established self-initializing test infrastructure for the VDE BDD test suite. All milestones completed successfully.
+
+## Key Accomplishments
+
+1. **Test Harness Fix**: `step_given_vm_exists()` now auto-creates VMs
+2. **Background Section**: Added infrastructure setup to `docker-operations.feature`
+3. **Cleanup Hook**: `after_feature()` cleans up containers after tests
+4. **Environment Files**: Created `python.env` and `postgres.env`
+
+## Final Status
+
+| Metric | Value |
+|--------|-------|
+| docker-free scenarios | 146/146 ✓ |
+| docker-operations scenarios | 14/14 ✓ |
+| Fake test violations | 0 (CLEAN) ✓ |
+| Containers after tests | 0 (cleaned up) ✓ |
+
+## Files Created/Modified
+
+- `env-files/python.env` (created)
+- `env-files/postgres.env` (created)
+- `tests/features/docker-operations.feature` (Background added)
+- `tests/features/steps/vm_docker_steps.py` (step definitions added)
+- `tests/features/environment.py` (cleanup hook added)
 
 ---
 
@@ -194,13 +223,13 @@ Three main workstreams to complete the VDE test infrastructure:
 
 ---
 
-## Execution Results (2026-02-04)
+## Execution Results (2026-02-04, Updated 2026-02-05)
 
-| Test Category | Before Fix | After Fix |
-|---------------|------------|----------|
-| Docker-free | 146/146 ✓ | 146/146 ✓ |
-| Docker-operations | 10/14 | **14/14 ✓** |
-| Fake test violations | 0 | 0 |
+| Test Category | Before Fix | After Fix | Current |
+|---------------|------------|-----------|---------|
+| Docker-free | 146/146 ✓ | 146/146 ✓ | 146/146 ✓ |
+| Docker-operations | 10/14 | 14/14 ✓ | 14/14 ✓ |
+| Fake test violations | 0 | 0 | 0 |
 
 ### Key Fix Applied
 
@@ -209,6 +238,33 @@ Three main workstreams to complete the VDE test infrastructure:
 **Change**: `step_given_vm_exists()` now creates VM via `create-virtual-for` if compose file doesn't exist.
 
 **Impact**: Tests self-initialize environment - no manual VM setup required.
+
+### Infrastructure Setup Required
+
+For docker-operations tests, a Background section ensures these VMs are started:
+- `python` - Language VM (env-files/python.env)
+- `postgres` - Service VM (env-files/postgres.env)
+
+**Background steps added** to `docker-operations.feature`:
+```gherkin
+Background:
+  Given python VM is started
+  And postgres VM is started
+```
+
+**Step definitions added** to `vm_docker_steps.py`:
+- `step_python_vm_started()` - Ensures python VM is running
+- `step_postgres_vm_started()` - Ensures postgres VM is running
+
+**Cleanup hook added** to `environment.py`:
+```python
+def after_feature(context, feature):
+    if feature.name == "Docker Operations":
+        # Stop python VM
+        subprocess.run(["docker", "rm", "-f", "python-dev"], ...)
+        # Stop postgres VM
+        subprocess.run(["docker", "rm", "-f", "postgres"], ...)
+```
 
 ---
 

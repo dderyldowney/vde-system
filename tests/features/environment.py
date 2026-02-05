@@ -132,3 +132,32 @@ def after_scenario(context, scenario):
                 )
     except Exception:
         pass  # Docker may not be available, that's OK
+
+
+def after_feature(context, feature):
+    """
+    Hook that runs after each feature.
+
+    For docker-operations feature, stop the python and postgres VMs that were
+    started in the Background section to clean up after tests.
+    """
+    if feature.name == "Docker Operations":
+        # Stop python VM
+        try:
+            subprocess.run(
+                ["docker", "rm", "-f", "python-dev"],
+                capture_output=True,
+                timeout=10
+            )
+        except Exception:
+            pass
+
+        # Stop postgres VM
+        try:
+            subprocess.run(
+                ["docker", "rm", "-f", "postgres"],
+                capture_output=True,
+                timeout=10
+            )
+        except Exception:
+            pass

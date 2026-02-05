@@ -6,6 +6,10 @@ Feature: Docker Operations
   I want reliable Docker Compose operations with error handling
   So that VM containers start and stop correctly
 
+  Background:
+    Given python VM is started
+    And postgres VM is started
+
   Scenario: Build Docker image for VM
     Given VM "python" docker-compose.yml exists
     When I start VM "python"
