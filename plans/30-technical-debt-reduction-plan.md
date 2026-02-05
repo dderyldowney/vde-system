@@ -6,20 +6,108 @@
 
 **Review Date:** February 5, 2026
 
-**Key Principle:** The 39 failures marked as @wip are the innovation point and should NOT be touched.
+## Test Results Summary
 
-## Changes Made
+### Unit Tests
+- **vde-parser.test.zsh:** 27 passed, 0 failed
 
-### Fixed: Duplicate Step Definitions
-- Removed duplicate section in `documented_workflow_steps.py` (lines 1051-1102)
-- Previously caused `AmbiguousStep` errors during test execution
+### Docker-Free Tests
+- **Features:** 4 passed, 2 failed, 1 error
+- **Scenarios:** 133 passed, 12 failed
+- **Steps:** 558 passed, 12 failed, 23 skipped
 
-### Added: Missing Step Definitions
-Added 13 new step definitions to complete documented-development-workflows.feature coverage.
+---
 
-### Added: Docker-Free Test Mode
-- Added `VDE_DOCKER_FREE_TEST=1` environment variable
-- Skips VM delete/rebuild in before_all when set
+## Debug Analysis: State-Related Scenario Failures
+
+### Root Cause Identified
+
+**Issue:** Step definition performs exact string matching but tests use alias names while parser returns canonical names.
+
+**Example:**
+- Feature: "the plan should include the PostgreSQL VM"
+- Parser returns: `['postgres']` (canonical name)
+- Test expects: `postgresql` (alias)
+- Result: **FAIL**
+
+### VM Alias Mapping (from vm-types.conf)
+
+| Alias | Canonical | Display Name |
+|-------|----------|--------------|
+| postgresql | postgres | PostgreSQL |
+| javascript | js | JavaScript |
+| nodejs | js | JavaScript |
+
+### Affected Scenarios (12 total)
+
+**Documented Workflows (4 failing):**
+1. `Example 1 - Create PostgreSQL for Python API` - expects "postgresql" gets "postgres"
+2. `Example 2 - Full-Stack JavaScript with Redis` - expects "JavaScript" gets "js"
+3. `Example 3 - Verify All Microservice VMs Exist` - alias mismatch
+4. `Troubleshooting - Step 3 Restart with Rebuild` - alias mismatch
+
+**SSH Commands (8 failing):** - Require actual SSH infrastructure
+
+**VM Info Discovery (1 errored):** - Requires actual Docker containers
+
+---
+
+## Remediation Plan
+
+### Option A: Modify Step to Handle Aliases (Recommended)
+
+Modify `step_plan_should_include_vm` in `documented_workflow_steps.py`:
+
+```python
+@then('the plan should include the {vm_name} VM')
+def step_plan_should_include_vm(context, vm_name):
+    """Verify the plan includes the specified VM (handles aliases)."""
+    vms = getattr(context, 'detected_vms', [])
+    vm_clean = vm_name.strip('"').lower()
+    
+    # Load all VMs to get alias mappings
+    all_vms = _load_all_vms()
+    
+    # Find canonical name for expected VM
+    expected_canonical = None
+    for vm in all_vms['all']:
+        if vm['type'].lower() == vm_clean:
+            expected_canonical = vm['type']
+            break
+        if vm_clean in [a.lower() for a in vm.get('aliases', [])]:
+            expected_canonical = vm['type']
+            break
+    
+    # Check if any detected VM matches expected (canonical or alias)
+    for detected in vms:
+        detected_lower = detected.lower()
+        if detected_lower == vm_clean:
+            return  # Exact match
+        if expected_canonical and detected_lower == expected_canonical.lower():
+            return  # Canonical match
+        # Check if detected VM has the expected as alias
+        for vm in all_vms['all']:
+            if vm['type'].lower() == detected_lower:
+                if vm_clean in [a.lower() for a in vm.get('aliases', [])]:
+                    return
+    
+    assert False, f"Expected VM '{vm_clean}' in plan, got: {vms}"
+```
+
+### Option B: Fix Feature Files (Alternative)
+
+Change all feature files to use canonical names:
+- "postgresql" → "postgres"
+- "JavaScript" → "js"
+
+### Recommended Approach
+
+**Option A** is recommended because:
+1. Maintains feature file readability
+2. Makes step definitions more robust
+3. Future-proofs against alias changes
+
+---
 
 ## Files Modified
 
@@ -28,63 +116,18 @@ Added 13 new step definitions to complete documented-development-workflows.featu
 | `tests/features/steps/documented_workflow_steps.py` | Removed duplicates + added 13 missing steps |
 | `tests/features/environment.py` | Added VDE_DOCKER_FREE_TEST mode |
 
-## Docker-Free Test Catalog
-
-### Step Files Available
-
-| Feature | Step File | Status |
-|---------|-----------|--------|
-| Cache System | `cache_steps.py` | ✅ Exists |
-| Shell Compatibility | `shell_compat_steps.py` | ✅ Exists |
-| VM Information | `vm_info_steps.py` | ✅ Exists |
-| SSH Commands | `vde_ssh_command_steps.py` | ✅ Exists |
-| Documented Workflows | `documented_workflow_steps.py` | ✅ Updated |
-
-### Feature Files Analysis
-
-| Feature File | Scenarios | Step Patterns | Status |
-|--------------|-----------|---------------|--------|
-| `cache-system.feature` | 19 | 72 unique | ✅ Step file exists |
-| `natural-language-parser.feature` | 46 | 75 unique | ✅ Step file exists |
-| `shell-compatibility.feature` | 21 | 75 unique | ✅ Step file exists |
-| `vde-ssh-commands.feature` | 8 | 21 unique | ✅ Step file exists |
-| `vm-information-and-discovery.feature` | 7 | 35 unique | ✅ Step file exists |
-| `vm-metadata-verification.feature` | 14 | 55 unique | ✅ Step file exists |
-| `documented-development-workflows.feature` | 31 | ~50 unique | ✅ Updated |
-
-**Total: 146 scenarios across 7 docker-free feature files**
-
-### Verification Status
-
-All docker-free features have corresponding step files. The "Needs verification" status means:
-- Step definitions exist but may have undefined steps
-- Tests need to be run to confirm complete coverage
-- Some scenarios may require parser/Docker infrastructure
-
-## Run Docker-Free Tests
+## Run Tests
 
 ```bash
-cd /Users/dderyldowney/dev
+# Unit tests
+./tests/unit/vde-parser.test.zsh
+
+# Docker-free tests
 VDE_DOCKER_FREE_TEST=1 python3 -m behave tests/features/docker-free/ --format=plain
 ```
 
-## Remaining Technical Debt
-
-### Docker-Required Features (18+ files)
-| Category | Features | Scenarios |
-|----------|----------|-----------|
-| Daily Workflow | daily-workflow, daily-development-workflow | ~21 |
-| SSH/Agent | ssh-agent-* (5), ssh-and-remote-access, ssh-configuration | ~72 |
-| VM Lifecycle | vm-lifecycle, vm-lifecycle-management, vm-state-awareness | ~30 |
-| Other | collaboration, configuration, debugging, installation, port-management, template, team-collaboration | ~48 |
-
-**Total Docker-Required: ~170+ scenarios**
-
-### Innovation @wip (Do Not Touch)
-- 39 @wip scenarios represent innovation scope
-
 ## Git History
 
-- `36e97c2` - fix: resolve duplicate step definitions and add missing steps
-- `b3b7684` - feat: add VDE_DOCKER_FREE_TEST mode to skip Docker setup
-- `abf3dfc` - docs: update plan 30 with remaining work catalog
+- `36e97c2` - fix: resolve duplicate step definitions
+- `b3b7684` - feat: add VDE_DOCKER_FREE_TEST mode
+- `35d4237` - docs: verify step files exist
