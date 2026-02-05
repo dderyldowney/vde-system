@@ -8,6 +8,9 @@ emulate zsh
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib/vm-common"
+if [[ -f "$SCRIPT_DIR/lib/vde-docker-state" ]]; then
+    source "$SCRIPT_DIR/lib/vde-docker-state"
+fi
 
 # Source UX libraries
 if [[ -f "$SCRIPT_DIR/lib/vde-naming" ]]; then

@@ -38,6 +38,7 @@ export VDE_ROOT_DIR
 [[ -f "$VDE_ROOT_DIR/scripts/lib/vde-log" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-log" &>/dev/null
 [[ -f "$VDE_ROOT_DIR/scripts/lib/vde-core" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-core" &>/dev/null
 [[ -f "$VDE_ROOT_DIR/scripts/lib/vm-common" ]] && source "$VDE_ROOT_DIR/scripts/lib/vm-common" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-docker-state" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-docker-state" &>/dev/null
 
 # Initialize logging
 vde_log_init 2>/dev/null || true
@@ -143,6 +144,7 @@ vde_show_version() {
     echo "  - vde-log: OK"
     echo "  - vde-core: OK"
     echo "  - vm-common: OK"
+    echo "  - vde-docker-state: OK"
 }
 
 # vde_find_command_script - Find the script for a command

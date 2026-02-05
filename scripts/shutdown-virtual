@@ -4,6 +4,7 @@ set -e
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib/vm-common"
+source "$SCRIPT_DIR/lib/vde-docker-state"
 
 # Parse arguments
 if [[ $# -eq 0 ]]; then
@@ -77,8 +78,8 @@ local failed_count=0
 # Stop VMs
 log_info "Shutting down ${#VMS[@]} VM(s)..."
 for vm in "${VMS[@]}"; do
-    # Check if VM exists (has docker-compose.yml)
-    if ! vm_exists "$vm"; then
+    # Check if VM container exists (real-time Docker data)
+    if ! vm_container_exists "$vm"; then
         log_warning "$vm does not exist - skipped"
         BATCH_RESULTS[$vm]="skipped:not_created"
         skipped_count=$((skipped_count + 1))
@@ -86,7 +87,7 @@ for vm in "${VMS[@]}"; do
     fi
 
     # Check if VM is already stopped (batch state awareness)
-    if ! is_vm_running "$vm"; then
+    if ! vm_is_container_running "$vm"; then
         log_info "$vm is already stopped - skipped"
         BATCH_RESULTS[$vm]="skipped:already_stopped"
         skipped_count=$((skipped_count + 1))

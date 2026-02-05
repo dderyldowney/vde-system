@@ -1,0 +1,142 @@
+#!/usr/bin/env zsh
+# Real-Time Docker State Functions for VDE
+# These functions query Docker directly for container state,
+# providing accurate real-time status instead of relying on config files.
+#
+# This file should be sourced after vm-common:
+#   source ./scripts/lib/vm-common
+#   source ./scripts/lib/vde-docker-state
+
+# -----------------------
+# Container Name Helpers
+# -----------------------
+
+# _get_container_name - Get the Docker container name for a VM
+# Args: <vm_name>
+# Returns: VDE_SUCCESS (0), outputs container name to stdout
+_get_container_name() {
+    local vm="$1"
+    
+    # Ensure VM types are loaded
+    load_vm_types
+    
+    # Determine container name based on VM type
+    local vm_type
+    vm_type=$(_assoc_get "VM_TYPE" "$vm" 2>/dev/null)
+    
+    if [ "$vm_type" = "lang" ]; then
+        echo "${vm}-dev"
+    else
+        echo "$vm"
+    fi
+    
+    return $VDE_SUCCESS
+}
+
+# -----------------------
+# Real-Time Docker State Functions
+# -----------------------
+
+# vm_container_exists - Check if a VM container exists in Docker (any state)
+# Uses real-time Docker data via 'docker ps -a' instead of config file checks.
+# Args: <vm_name>
+# Returns:
+#   VDE_SUCCESS (0) - Container exists (created, running, stopped, etc.)
+#   VDE_ERR_NOT_FOUND (3) - No container found for this VM
+# Example: vm_container_exists python && echo "Container exists"
+vm_container_exists() {
+    local vm="$1"
+    local container_name
+    
+    container_name=$(_get_container_name "$vm")
+    
+    # Query Docker for container existence (all states)
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$container_name"; then
+        return $VDE_SUCCESS
+    fi
+    
+    return $VDE_ERR_NOT_FOUND
+}
+
+# vm_container_status - Get the current status of a VM container
+# Uses real-time Docker data.
+# Args: <vm_name>
+# Returns: VDE_SUCCESS (0), outputs status to stdout (running, stopped, created, paused, restarting)
+# Example: status=$(vm_container_status python)
+vm_container_status() {
+    local vm="$1"
+    local container_name
+    
+    container_name=$(_get_container_name "$vm")
+    
+    # Get container status from Docker
+    docker ps -a --format '{{.Names}}\t{{.Status}}' 2>/dev/null | \
+        awk -v name="$container_name" '$1 == name {print $2}' | \
+        head -n1
+    
+    return $VDE_SUCCESS
+}
+
+# vm_is_container_running - Check if VM container is actually running
+# This is similar to is_vm_running but uses consistent container lookup.
+# Args: <vm_name>
+# Returns:
+#   VDE_SUCCESS (0) - Container is running
+#   VDE_ERR_NOT_FOUND (3) - Container is not running (stopped, created, etc.)
+vm_is_container_running() {
+    local vm="$1"
+    local container_name
+    
+    container_name=$(_get_container_name "$vm")
+    
+    # Query only running containers
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$container_name"; then
+        return $VDE_SUCCESS
+    fi
+    
+    return $VDE_ERR_NOT_FOUND
+}
+
+# vm_is_container_stopped - Check if VM container exists but is stopped
+# Args: <vm_name>
+# Returns:
+#   VDE_SUCCESS (0) - Container exists and is stopped
+#   VDE_ERR_NOT_FOUND (3) - Container doesn't exist OR is running
+vm_is_container_stopped() {
+    local vm="$1"
+    local container_name
+    
+    container_name=$(_get_container_name "$vm")
+    
+    # Container must exist but not be running
+    local exists=false
+    local running=false
+    
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$container_name"; then
+        exists=true
+    fi
+    
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$container_name"; then
+        running=true
+    fi
+    
+    if [ "$exists" = "true" ] && [ "$running" = "false" ]; then
+        return $VDE_SUCCESS
+    fi
+    
+    return $VDE_ERR_NOT_FOUND
+}
+
+# list_running_containers - List all running VDE container names
+# Returns: VDE_SUCCESS (0), outputs container names (one per line)
+list_running_containers() {
+    docker ps --format '{{.Names}}' 2>/dev/null | grep -E '(-dev)$|^[a-z]+$' || true
+    return $VDE_SUCCESS
+}
+
+# list_all_containers - List all VDE containers (running and stopped)
+# Returns: VDE_SUCCESS (0), outputs container names with status (one per line)
+list_all_containers() {
+    docker ps -a --format '{{.Names}}\t{{.Status}}' 2>/dev/null | grep -E '(-dev)\t|^[a-z]+\t' || true
+    return $VDE_SUCCESS
+}
