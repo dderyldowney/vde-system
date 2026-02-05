@@ -15,29 +15,11 @@
 - Previously caused `AmbiguousStep` errors during test execution
 
 ### Added: Missing Step Definitions
-Added 13 new step definitions to complete docker-free test coverage:
-
-**GIVEN steps (9):**
-- `I am starting my development day`
-- `I am actively developing`
-- `I am done with development for the day`
-- `I am setting up a new project`
-- `I am working on one project`
-- `I am a new team member`
-- `I am new to the team`
-- `I am learning the VDE system`
-- `I already have a Go VM configured`
-
-**THEN steps (4):**
-- `the plan should include the stop_vm intent`
-- `the plan should include the restart_vm intent`
-- `the plan should include the list_vms intent`
-- `the plan should use the create_vm intent`
+Added 13 new step definitions to complete documented-development-workflows.feature coverage.
 
 ### Added: Docker-Free Test Mode
 - Added `VDE_DOCKER_FREE_TEST=1` environment variable
-- When set, skips VM delete/rebuild in before_all
-- Enables running docker-free tests without Docker infrastructure
+- Skips VM delete/rebuild in before_all when set
 
 ## Files Modified
 
@@ -48,21 +30,38 @@ Added 13 new step definitions to complete docker-free test coverage:
 
 ## Docker-Free Test Catalog
 
-### Feature Files (7 total)
+### Step Files Available
 
-| Feature File | Scenarios | Status |
-|--------------|-----------|--------|
-| `cache-system.feature` | 19 | Needs step verification |
-| `documented-development-workflows.feature` | 31 | ✅ Steps defined |
-| `natural-language-parser.feature` | 46 | Needs step verification |
-| `shell-compatibility.feature` | 21 | Needs step verification |
-| `vde-ssh-commands.feature` | 8 | Needs step verification |
-| `vm-information-and-discovery.feature` | 7 | Needs step verification |
-| `vm-metadata-verification.feature` | 14 | Needs step verification |
+| Feature | Step File | Status |
+|---------|-----------|--------|
+| Cache System | `cache_steps.py` | ✅ Exists |
+| Shell Compatibility | `shell_compat_steps.py` | ✅ Exists |
+| VM Information | `vm_info_steps.py` | ✅ Exists |
+| SSH Commands | `vde_ssh_command_steps.py` | ✅ Exists |
+| Documented Workflows | `documented_workflow_steps.py` | ✅ Updated |
+
+### Feature Files Analysis
+
+| Feature File | Scenarios | Step Patterns | Status |
+|--------------|-----------|---------------|--------|
+| `cache-system.feature` | 19 | 72 unique | ✅ Step file exists |
+| `natural-language-parser.feature` | 46 | 75 unique | ✅ Step file exists |
+| `shell-compatibility.feature` | 21 | 75 unique | ✅ Step file exists |
+| `vde-ssh-commands.feature` | 8 | 21 unique | ✅ Step file exists |
+| `vm-information-and-discovery.feature` | 7 | 35 unique | ✅ Step file exists |
+| `vm-metadata-verification.feature` | 14 | 55 unique | ✅ Step file exists |
+| `documented-development-workflows.feature` | 31 | ~50 unique | ✅ Updated |
 
 **Total: 146 scenarios across 7 docker-free feature files**
 
-### Run Docker-Free Tests
+### Verification Status
+
+All docker-free features have corresponding step files. The "Needs verification" status means:
+- Step definitions exist but may have undefined steps
+- Tests need to be run to confirm complete coverage
+- Some scenarios may require parser/Docker infrastructure
+
+## Run Docker-Free Tests
 
 ```bash
 cd /Users/dderyldowney/dev
@@ -84,17 +83,8 @@ VDE_DOCKER_FREE_TEST=1 python3 -m behave tests/features/docker-free/ --format=pl
 ### Innovation @wip (Do Not Touch)
 - 39 @wip scenarios represent innovation scope
 
-## Verification Commands
-
-```bash
-# Verify step definitions load
-python3 -c "import tests.features.steps.documented_workflow_steps; print('OK')"
-
-# Run docker-free tests
-VDE_DOCKER_FREE_TEST=1 python3 -m behave tests/features/docker-free/ --format=plain
-```
-
 ## Git History
 
 - `36e97c2` - fix: resolve duplicate step definitions and add missing steps
 - `b3b7684` - feat: add VDE_DOCKER_FREE_TEST mode to skip Docker setup
+- `abf3dfc` - docs: update plan 30 with remaining work catalog
