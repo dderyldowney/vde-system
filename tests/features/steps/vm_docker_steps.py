@@ -600,9 +600,21 @@ def step_given_vm_started(context, vm):
 
 @given('VM "{vm}" exists')
 def step_given_vm_exists(context, vm):
-    """VM configuration exists (compose file exists)."""
+    """VM configuration exists - create VM if needed."""
     compose_path = VDE_ROOT / "configs" / "docker" / vm / "docker-compose.yml"
     context.vm_exists = compose_path.exists()
+    
+    if not context.vm_exists:
+        # Create the VM using VDE
+        create_result = run_vde_command(f"create-virtual-for {vm}", timeout=180)
+        context.last_command = f"create-virtual-for {vm}"
+        context.last_output = create_result.stdout
+        context.last_error = create_result.stderr
+        context.last_exit_code = create_result.returncode
+        
+        # Verify creation succeeded
+        context.vm_exists = compose_path.exists()
+    
     assert context.vm_exists, f"VM {vm} should exist (compose file at {compose_path})"
 
 
