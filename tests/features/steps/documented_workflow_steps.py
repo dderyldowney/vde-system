@@ -1048,58 +1048,6 @@ def _is_service_vm(vm_name):
         pass
     return False
 
-
-# =============================================================================
-# Additional When steps for documented workflows
-# =============================================================================
-
-@when('I ask for help')
-def step_ask_help(context):
-    """Parse help command."""
-    context.detected_intent = _get_real_intent('help')
-
-
-@when('I ask how to connect to Python')
-def step_ask_connect_python(context):
-    """Parse connect to Python command."""
-    context.detected_intent = _get_real_intent('connect to python')
-    context.detected_vms = _get_real_vm_names('connect to python')
-
-
-@when('I ask to list all languages')
-def step_ask_list_languages(context):
-    """Parse list all languages command."""
-    context.detected_intent = _get_real_intent('list all languages')
-    context.detected_filter = _get_real_filter('list all languages')
-
-
-@when('I ask what VMs can I create')
-def step_ask_what_create(context):
-    """Parse what VMs can I create command."""
-    context.detected_intent = _get_real_intent('what VMs can I create')
-    context.detected_vms = _get_real_vm_names('what VMs can I create')
-
-
-@when('I plan to create Go again')
-def step_plan_create_go_again(context):
-    """Parse create Go again command."""
-    context.detected_intent = _get_real_intent('create Go')
-    context.detected_vms = _get_real_vm_names('create Go')
-
-
-@when('I plan to stop all VMs')
-def step_plan_stop_all(context):
-    """Parse stop all VMs command."""
-    context.detected_intent = _get_real_intent('stop all VMs')
-
-
-@when('I plan to stop everything')
-def step_plan_stop_everything(context):
-    """Parse stop everything command."""
-    context.detected_intent = _get_real_intent('stop everything')
-
-
-# =============================================================================
 # Additional Then steps for documented workflows
 # =============================================================================
 
@@ -1330,3 +1278,90 @@ def step_notify_already_running(context):
 def step_notify_already_stopped(context):
     """Verify notification about already stopped VM."""
     context.notification_sent = True
+
+
+# =============================================================================
+# Missing Steps for documented-development-workflows.feature
+# Added to complete docker-free test coverage
+# =============================================================================
+
+@given('I am starting my development day')
+def step_starting_development_day(context):
+    """Set up context for starting development day - parser test."""
+    pass
+
+
+@given('I am actively developing')
+def step_actively_developing(context):
+    """Set up context for active development - parser test."""
+    pass
+
+
+@given('I am done with development for the day')
+def step_done_development(context):
+    """Set up context for end of development day - parser test."""
+    pass
+
+
+@given('I am setting up a new project')
+def step_setting_up_new_project(context):
+    """Set up context for new project setup - parser test."""
+    pass
+
+
+@given('I am working on one project')
+def step_working_on_one_project(context):
+    """Set up context for working on a project - parser test."""
+    pass
+
+
+@given('I am a new team member')
+def step_new_team_member(context):
+    """Set up context for new team member - parser test."""
+    pass
+
+
+@given('I am new to the team')
+def step_new_to_team(context):
+    """Set up context for new team member - parser test."""
+    pass
+
+
+@given('I am learning the VDE system')
+def step_learning_vde(context):
+    """Set up context for learning VDE - parser test."""
+    pass
+
+
+@given('I already have a Go VM configured')
+def step_go_vm_configured(context):
+    """Set up context for existing Go VM - parser test."""
+    pass
+
+
+@then('the plan should include the stop_vm intent')
+def step_include_stop_vm_intent(context):
+    """Verify the plan includes stop_vm intent."""
+    intent = getattr(context, 'detected_intent', None)
+    assert intent == 'stop_vm', f"Expected stop_vm intent, got: {intent}"
+
+
+@then('the plan should include the restart_vm intent')
+def step_include_restart_vm_intent(context):
+    """Verify the plan includes restart_vm intent."""
+    intent = getattr(context, 'detected_intent', None)
+    assert intent == 'restart_vm', f"Expected restart_vm intent, got: {intent}"
+
+
+@then('the plan should include the list_vms intent')
+def step_include_list_vms_intent(context):
+    """Verify the plan includes list_vms intent."""
+    intent = getattr(context, 'detected_intent', None)
+    assert intent == 'list_vms', f"Expected list_vms intent, got: {intent}"
+
+
+@then('the plan should use the create_vm intent')
+def step_use_create_vm_intent(context):
+    """Verify the plan uses create_vm intent."""
+    intent = getattr(context, 'detected_intent', None)
+    assert intent == 'create_vm', f"Expected create_vm intent, got: {intent}"
