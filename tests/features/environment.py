@@ -523,8 +523,8 @@ def _rebuild_all_vms():
     """
     Rebuild all VDE VMs from scratch.
 
-    This creates all language and service VMs to establish a known
-    working state for testing.
+    This stops any existing containers, removes them, then creates
+    and starts fresh containers for testing.
     """
     # Get list of available VM types from env-files
     env_files_dir = VDE_ROOT / "env-files"
@@ -536,10 +536,23 @@ def _rebuild_all_vms():
             if vm_name not in ['nginx', 'mongodb', 'mysql', 'couchdb']:
                 vm_types.append(vm_name)
 
-    # Create and start each VM
     for vm_name in sorted(vm_types):
         try:
-            # Create VM
+            container_name = _get_container_name(vm_name)
+
+            # Check if container exists and stop/remove it
+            state = get_current_docker_state()
+            if container_name in state['running']:
+                # Stop running container
+                run_vde_command(f"./scripts/vde stop {vm_name}")
+            if container_name in state['all']:
+                # Remove existing container (force remove)
+                subprocess.run(
+                    ["docker", "rm", "-f", container_name],
+                    capture_output=True, timeout=30
+                )
+
+            # Create fresh container
             create_result = run_vde_command(f"./scripts/vde create {vm_name}")
             if create_result.returncode == 0:
                 print(f"[SETUP] Created VM: {vm_name}")
