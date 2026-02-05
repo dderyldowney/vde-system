@@ -5,11 +5,11 @@ Hooks are special functions that run at specific points during test execution.
 This file is automatically discovered by behave.
 
 Lifecycle:
-1. before_all: Docker availability check, VDE root verification, initial cache reset
+1. before_all: Delete all existing VMs, build all test VMs from scratch
 2. before_scenario: Set up environment for each scenario
-3. after_scenario: Clean up test-created containers (labeled with vde.test=true)
-4. after_feature: Stop VMs started for feature testing
-5. after_all: Full cleanup - stop all test VMs, clean test artifacts
+3. after_scenario: Clean up temporary files (containers persist for feature)
+4. after_feature: Remove test containers and stop VMs for this feature
+5. after_all: Remove all test VMs and clean remaining artifacts
 """
 
 import os
@@ -344,8 +344,8 @@ def after_scenario(context, scenario):
 
     This hook:
     1. Cleans up any temporary files created during testing
-    2. Removes test-created containers (labeled with vde.test=true)
-    3. Stops test VMs to prepare for next scenario
+    2. Containers persist for duration of feature testing
+       (cleanup happens in after_feature)
     """
     # Clean up invalid compose test directory if it was created
     import shutil
@@ -356,7 +356,16 @@ def after_scenario(context, scenario):
         except Exception:
             pass  # Best effort cleanup
 
-    # Remove test-created containers immediately
+
+def after_feature(context, feature):
+    """
+    Hook that runs after each feature.
+
+    This hook:
+    1. Removes test-labeled containers (labeled with vde.test=true)
+    2. Stops VMs that were started for this feature's tests
+    """
+    # Remove test-created containers for this feature
     try:
         result = subprocess.run(
             ["docker", "ps", "--filter", "label=vde.test=true", "--format", "{{.Names}}"],
@@ -381,13 +390,6 @@ def after_scenario(context, scenario):
     except Exception:
         pass  # Docker may not be available, that's OK
 
-
-def after_feature(context, feature):
-    """
-    Hook that runs after each feature.
-
-    Stops VMs that were started specifically for this feature's tests.
-    """
     # Stop VMs started for this feature
     for vm in _TEST_VMS_CREATED:
         run_vde_command(f"./scripts/vde stop {vm}")
