@@ -3,22 +3,27 @@
 **Date:** 2026-02-04
 **Project:** VDE (Virtual Development Environment)
 **Scope:** All docker-required BDD features with non-passing or missing scenarios/steps
-**Status**: INTEGRATED INTO Plan 21 (2026-02-04)
-**Superseded By**: `plans/21-daily-workflow-remediation-plan.md`
+**Status**: SUPERSEDED - Key deliverables implemented
+**Superseded By**: New plan for remaining 899 undefined steps
+**Completed**: 2026-02-05
 
 ---
 
 ## ⚠️ SUPERSEDED
 
-This plan has been **integrated** into `plans/21-daily-workflow-remediation-plan.md` as of 2026-02-04.
+This plan has been **superseded** as of 2026-02-05.
 
-### Key Findings Preserved:
+### Key Accomplishments (COMPLETED):
 - **VM Naming Convention**: Language VMs use `{name}-dev` format (service VMs no suffix)
-- **Helper File**: `tests/features/steps/vm_naming_helpers.py`
-- **Phase 1 Progress**: VM Naming, Docker Verification, Template Steps, Port Management, SSH Key Management
-- **9 critical features** documented with missing step patterns
+- **Helper File**: `tests/features/steps/vm_naming_helpers.py` ✓
+- **Docker Operations**: 14/14 scenarios passing ✓
+- **Test Harness**: `step_given_vm_exists()` auto-creates VMs ✓
+- **Environment Files**: `python.env`, `postgres.env` created ✓
+- **Cleanup Hook**: `after_feature()` implemented ✓
 
-See Plan 21 for current remediation status and next steps.
+### Remaining Work (Deferred):
+- **899 undefined steps** across docker-required features (infrastructure-dependent)
+- See `plans/completed/28-docker-required-test-remediation-tracking.md` for tracking
 
 ---
 
@@ -514,14 +519,33 @@ Each new step definition should have:
 
 ---
 
+## Final Status
+
+### Completed (from Plan 20 scope):
+- VM Naming Convention Helpers ✓
+- Docker Verification Helpers ✓
+- Template Steps ✓
+- Port Management Steps ✓
+- SSH Key Management Steps ✓
+- Docker Operations Tests: 14/14 passing ✓
+
+### Deferred to New Plan:
+- Remaining 899 undefined steps across all docker-required features
+- Full implementation of VM Lifecycle Management
+- Full implementation of VM State Awareness
+- Full implementation of Error Handling
+
+---
+
 ## Next Steps
 
-1. **Immediate:** Begin implementation of Template System steps
-2. **Short-term:** Complete VM Lifecycle Management steps
-3. **Medium-term:** Address all P0/P1 features
-4. **Long-term:** Full remediation of all features
+1. **Immediate:** Create new plan for remaining 899 undefined steps
+2. **Short-term:** Target high-frequency undefined steps (>3 scenarios)
+3. **Medium-term:** Complete all docker-required feature implementations
+4. **Long-term:** Zero undefined steps across docker-required features
 
 ---
 
 *Plan generated: 2026-02-04*
-*Last updated: 2026-02-04*
+*Last updated: 2026-02-05*
+*Moved to plans/completed: 2026-02-05*
