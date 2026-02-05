@@ -777,7 +777,9 @@ def step_need_start_project(context, vm):
 def step_no_vm_yet(context, vm):
     """Set up that the VM doesn't exist yet."""
     context.missing_vm = vm.strip('"')
-    container_name = f'vde_{vm.strip("\"")}_1'
+    vm_clean = vm.strip('"')
+
+    container_name = f'vde_{vm_clean}_1'
     context.vm_not_exists = not container_exists(container_name)
 
 
@@ -793,7 +795,9 @@ def step_vm_created_not_running(context, vm):
 def step_vm_running(context, vm):
     """Set up that a VM is running."""
     context.running_vm = vm.strip('"')
-    container_name = f'vde_{vm.strip("\"")}_1'
+    vm_clean = vm.strip('"')
+
+    container_name = f'vde_{vm_clean}_1'
     context.vm_is_running = container_exists(container_name)
 
 
@@ -801,7 +805,9 @@ def step_vm_running(context, vm):
 def step_vm_currently_running(context, vm):
     """Set up that a VM is currently running."""
     context.currently_running_vm = vm.strip('"')
-    container_name = f'vde_{vm.strip("\"")}_1'
+    vm_clean = vm.strip('"')
+
+    container_name = f'vde_{vm_clean}_1'
     context.vm_currently_running = container_exists(container_name)
 
 
