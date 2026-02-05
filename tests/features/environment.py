@@ -454,6 +454,12 @@ def before_all(context):
     reset_cache_to_valid_state()
     print("[SETUP] Cache reset to valid state")
 
+    # Check if running docker-free tests (these don't need Docker setup)
+    docker_free_mode = os.environ.get("VDE_DOCKER_FREE_TEST", "0") == "1"
+    if docker_free_mode:
+        print("[SETUP] Docker-free mode: Skipping VM delete/rebuild")
+        return
+
     # DELETE ALL EXISTING VDE VMs TO ESTABLISH KNOWN STATE
     print("\n[SETUP] Deleting all existing VDE VMs...")
     _delete_all_vde_vms()
