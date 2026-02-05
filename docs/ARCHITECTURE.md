@@ -449,4 +449,58 @@ Return to User
 
 ---
 
+## Testing Architecture
+
+VDE uses Behave for behavior-driven testing (BDD) of all operations.
+
+### Test Categories
+
+| Path | Purpose |
+|------|---------|
+| [`tests/features/`](../tests/features/) | Behave BDD tests |
+| [`tests/features/docker-required/`](../tests/features/docker-required/) | Tests requiring Docker |
+| [`tests/features/docker-free/`](../tests/features/docker-free/) | Tests without Docker dependencies |
+
+### Step Definitions
+
+All step definitions use the `run_vde_command()` helper from `vm_common.py` for real VDE execution:
+
+| File | Purpose |
+|------|---------|
+| `tests/features/steps/vde_command_steps.py` | Natural language command patterns |
+| `tests/features/steps/config_and_verification_steps.py` | Configuration patterns |
+| `tests/features/steps/vm_project_steps.py` | VM Project patterns |
+| `tests/features/steps/debugging_and_port_steps.py` | Debug patterns |
+| `tests/features/steps/network_and_resource_steps.py` | Network patterns |
+| `tests/features/steps/crash_recovery_steps.py` | Crash recovery patterns |
+| `tests/features/steps/file_verification_steps.py` | File verification patterns |
+| `tests/features/steps/vm_common.py` | `run_vde_command()` helper function |
+
+---
+
+## Plans
+
+| Plan | Purpose |
+|------|---------|
+| [`plans/completed/20-docker-required-test-remediation-plan.md`](../plans/completed/20-docker-required-test-remediation-plan.md) | Original 899-step remediation plan (archived) |
+| [`plans/29-docker-required-remaining-steps-plan.md`](../plans/29-docker-required-remaining-steps-plan.md) | Current progress and remaining work |
+
+---
+
+## Shell Requirements
+
+- **ZSH ONLY:** `#!/usr/bin/env zsh` or `#!/bin/zsh`
+- **Forbidden:** `/bin/sh` and `/usr/bin/env sh`
+- **Features:** Associative arrays, process substitution, zsh 5.x
+
+---
+
+## User Model
+
+- User: `devuser` with passwordless sudo
+- Authentication: SSH key only
+- Editor: neovim/LazyVim
+
+---
+
 [← Back to README](../README.md)
