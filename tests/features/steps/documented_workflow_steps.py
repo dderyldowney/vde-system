@@ -831,11 +831,37 @@ def step_plan_should_include_create_vm(context):
 
 @then('the plan should include the {vm_name} VM')
 def step_plan_should_include_vm(context, vm_name):
-    """Verify the plan includes the specified VM."""
+    """Verify the plan includes the specified VM (handles aliases)."""
     vms = getattr(context, 'detected_vms', [])
     vm_clean = vm_name.strip('"').lower()
-    assert vm_clean in [v.lower() for v in vms], \
-        f"Expected VM '{vm_clean}' in plan, got: {vms}"
+    
+    # Load all VMs to get alias mappings
+    all_vms = _load_all_vms()
+    
+    # Find canonical name for expected VM
+    expected_canonical = None
+    for vm in all_vms['all']:
+        if vm['type'].lower() == vm_clean:
+            expected_canonical = vm['type']
+            break
+        if vm_clean in [a.lower() for a in vm.get('aliases', [])]:
+            expected_canonical = vm['type']
+            break
+    
+    # Check if any detected VM matches expected (canonical or alias)
+    for detected in vms:
+        detected_lower = detected.lower()
+        if detected_lower == vm_clean:
+            return  # Exact match
+        if expected_canonical and detected_lower == expected_canonical.lower():
+            return  # Canonical match
+        # Check if detected VM has the expected as alias
+        for vm in all_vms['all']:
+            if vm['type'].lower() == detected_lower:
+                if vm_clean in [a.lower() for a in vm.get('aliases', [])]:
+                    return
+    
+    assert False, f"Expected VM '{vm_clean}' in plan, got: {vms}"
 
 
 @then('the plan should include the start_vm intent')
