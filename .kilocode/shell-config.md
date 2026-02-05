@@ -1,5 +1,18 @@
 # Shell Configuration
 
+## Required Knowledge for All AI Agents & CLIs
+
+**Upon session start, ALL agents and CLIs MUST read:**
+
+| Document | Purpose |
+|----------|---------|
+| [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) | Canonical VDE architecture breakdown - Control Center, Configuration Center, VM Architecture, Execution Flow |
+| `.kilocode/rules/vde_context.md` | VDE project context and working directory |
+
+These documents define the authoritative architecture and are required reading before any task execution.
+
+---
+
 ## Shell Paths for VDE Project
 
 This project uses **zsh exclusively**. `/bin/sh` and `/usr/bin/env sh` are forbidden.
