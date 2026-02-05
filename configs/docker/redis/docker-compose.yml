@@ -1,19 +1,25 @@
+# Template for service VMs
+# Variables: redis, 2400, 6379, apt-get update -y && apt-get install -y redis-tools
+# SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
 services:
   redis:
     build:
-      context: .
-      dockerfile: Dockerfile.base
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-redis:latest
     container_name: redis
     hostname: redis
     restart: unless-stopped
+    command: sh -c "apt-get update -y && apt-get install -y redis-tools && /usr/sbin/sshd -D"
 
     ports:
-      - "2401:22"
-      - "6379:6379"
-
-    env_file:
-      - ../../../env-files/redis.env
+      - "2400:22"
+      ##SERVICE_PORTS##
 
     volumes:
       - ../../../data/redis:/data
@@ -24,8 +30,9 @@ services:
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
-      - VDE_HOME=${VDE_HOME:-}
-      - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
+
+    env_file:
+      - ../../../env-files/redis.env
 
     networks:
       - dev-net

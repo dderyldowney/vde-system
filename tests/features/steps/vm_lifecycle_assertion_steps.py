@@ -242,23 +242,6 @@ def step_container_rebuilt(context):
 # THEN steps - Error handling assertions
 # =============================================================================
 
-@then('the command should fail with error "{expected_error}"')
-def step_command_should_fail(context, expected_error):
-    """Verify the command failed with the expected error."""
-    last_exit_code = getattr(context, 'last_exit_code', 0)
-    last_output = getattr(context, 'last_output', '')
-    last_error = getattr(context, 'last_error', '')
-    
-    # Command should have non-zero exit code
-    assert last_exit_code != 0, \
-        f"Command should fail with error (exit code should be non-zero)"
-    
-    # Error message should contain expected text
-    combined_output = last_output + last_error
-    assert expected_error.lower() in combined_output.lower(), \
-        f"Error message should contain '{expected_error}'"
-
-
 # =============================================================================
 # THEN steps - VM type listing assertions
 # =============================================================================

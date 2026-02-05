@@ -1,0 +1,33 @@
+#!/usr/bin/env zsh
+#===============================================================================
+# vde-exec - Execute a command in a VDE container
+# Usage: vde-exec <vm_name> <command> [args...]
+#===============================================================================
+
+# Determine VDE root directory
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
+
+# Source core libraries
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-constants" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-errors" &>/dev/null
+
+# Check arguments
+if [ -z "$1" ]; then
+    vde_error_simple "VM name is required"
+    echo "Usage: vde-exec <vm_name> <command> [args...]"
+    exit $VDE_ERR_INVALID_INPUT
+fi
+
+if [ -z "$2" ]; then
+    vde_error_simple "Command is required"
+    echo "Usage: vde-exec <vm_name> <command> [args...]"
+    exit $VDE_ERR_INVALID_INPUT
+fi
+
+VM_NAME="$1"
+shift
+
+docker exec "$VM_NAME" "$@"
+exit $?

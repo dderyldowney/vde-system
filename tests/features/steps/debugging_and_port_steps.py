@@ -173,8 +173,7 @@ def step_check_ssh_config(context):
 @when(u'I verify the VM is running')
 def step_verify_vm_running(context):
     """Verify VM is running."""
-    result = subprocess.run(['docker', 'ps', '--format', '{{.Names}}'],
-                          capture_output=True, text=True)
+    result = subprocess.run(['./scripts/vde', 'ps'], capture_output=True, text=True)
     context.docker_ps_output = result.stdout
 
 

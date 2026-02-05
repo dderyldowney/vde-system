@@ -89,16 +89,6 @@ def step_primary_ssh_key(context, key_name):
     context.primary_ssh_key = key_name
 
 
-@given('VM "{vm_name}" is allocated port "{port}"')
-def step_vm_allocated_port(context, vm_name, port):
-    """Ensure VM has specific port allocated."""
-    config_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    if not config_path.exists():
-        result = run_vde_command(f"create {vm_name}", timeout=120)
-        assert result.returncode == 0, f"Failed to create VM {vm_name}: {result.stderr}"
-    context.vm_name = vm_name
-    context.vm_ssh_port = port
-
 
 @given('SSH config already contains "Host {host_name}"')
 def step_ssh_config_has_host(context, host_name):
@@ -113,23 +103,6 @@ def step_ssh_config_has_host(context, host_name):
         ssh_config.write_text(content + f"\nHost {host_name}\n    HostName localhost\n    Port 2200\n")
 
 
-@given('SSH config file exists')
-def step_ssh_config_exists(context):
-    """Ensure SSH config file exists."""
-    ssh_config = Path.home() / ".ssh" / "config"
-    if not ssh_config.exists():
-        ssh_config.parent.mkdir(parents=True, exist_ok=True)
-        ssh_config.write_text("")
-    context.ssh_config_exists = True
-
-
-@given('SSH config file does not exist')
-def step_ssh_config_not_exists(context):
-    """Ensure SSH config file does not exist."""
-    ssh_config = Path.home() / ".ssh" / "config"
-    if ssh_config.exists():
-        ssh_config.unlink()
-    context.ssh_config_existed = False
 
 
 @given('SSH config contains "Host {host_name}"')

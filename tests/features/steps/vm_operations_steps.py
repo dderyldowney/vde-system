@@ -31,34 +31,8 @@ from vm_common import (
 # VM Operations WHEN steps
 # =============================================================================
 
-@when('I run "start-virtual all"')
-def step_start_all(context):
-    """Start all VMs using vde start --all command."""
-    result = run_vde_command("start --all", timeout=300)
-    context.last_command = "vde start --all"
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
 
 
-@when('I run "shutdown-virtual all"')
-def step_shutdown_all(context):
-    """Shutdown all VMs using vde stop --all command."""
-    result = run_vde_command("stop --all", timeout=120)
-    context.last_command = "vde stop --all"
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
-@when('I run "list-vms"')
-def step_list_vms(context):
-    """List VMs using vde list command."""
-    result = run_vde_command("list", timeout=30)
-    context.last_command = "vde list"
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
 
 
 @when('I start a language VM')

@@ -269,7 +269,7 @@ def step_submodules_init(context):
 def step_microservices_clone(context):
     """Verify microservices can clone repos by checking Docker is available."""
     # Real verification: Check Docker is running
-    result = subprocess.run(['docker', 'info'], capture_output=True, text=True, timeout=10)
+    result = subprocess.run(['./scripts/vde', 'info'], capture_output=True, text=True, timeout=10)
     context.microservices_git = result.returncode == 0
     assert context.microservices_git, "All microservices should be able to clone their repos"
 
@@ -309,7 +309,7 @@ def step_multi_vm_same_agent(context):
 def step_clone_private_in_vm(context):
     """Verify cloning private repo in VM by checking VM is running and git is available."""
     # Real verification: Check running containers and git
-    result = subprocess.run(['docker', 'ps', '--format', '{{.Names}}'], capture_output=True, text=True)
+    result = subprocess.run(['./scripts/vde', 'ps'], capture_output=True, text=True)
     context.clone_private_vm = result.returncode == 0 and '-dev' in result.stdout
     assert context.clone_private_vm, "Should be able to clone a private repository from within a VM"
 
@@ -331,7 +331,7 @@ def step_push_github_from_vm(context):
 def step_pull_multi_host_vm(context):
     """Verify pulling from multiple hosts in VM by checking container and git setup."""
     # Real verification: Check Docker and git availability
-    docker_ok = subprocess.run(['docker', 'info'], capture_output=True, text=True, timeout=10).returncode == 0
+    docker_ok = subprocess.run(['./scripts/vde', 'info'], capture_output=True, text=True, timeout=10).returncode == 0
     git_ok = subprocess.run(['which', 'git'], capture_output=True, text=True).returncode == 0
     context.pull_multi_vm = docker_ok and git_ok
     assert context.pull_multi_vm, "Should be able to pull from multiple Git hosts from within a VM"

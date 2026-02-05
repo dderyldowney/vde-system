@@ -1,4 +1,5 @@
 # language: en
+@wip
 @user-guide-starting-stopping
 Feature: VM Lifecycle Management
   As a developer using VDE

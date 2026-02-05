@@ -344,7 +344,7 @@ def wait_for_condition(
     
     Example:
         def container_running():
-            result = subprocess.run(["docker", "ps", "--filter", "name=test"], 
+            result = subprocess.run(["./scripts/vde", "ps", "--filter", "name=test"], 
                                    capture_output=True, text=True)
             return "test" in result.stdout
         

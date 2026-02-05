@@ -10,10 +10,10 @@ from behave import given, then, when
 # Network Patterns
 # =============================================================================
 
-@when(u'I check the docker network')
+@when(u'I check the ./scripts/vde networks')
 def step_check_docker_network(context):
     """Check Docker network status."""
-    result = subprocess.run(['docker', 'network', 'ls'],
+    result = subprocess.run(['./scripts/vde', 'networks'],
                           capture_output=True, text=True)
     context.docker_network_output = result.stdout
 
@@ -86,7 +86,7 @@ def step_config_validated(context):
 @when(u'I check Docker is running')
 def step_check_docker(context):
     """Check if Docker is running."""
-    result = subprocess.run(['docker', 'info'],
+    result = subprocess.run(['./scripts/vde', 'info'],
                           capture_output=True, text=True)
     context.docker_info = result.stdout
 
@@ -238,7 +238,7 @@ def step_multiple_running_vms(context):
 @when(u'I check resource usage')
 def step_check_resource_usage(context):
     """Check resource usage."""
-    result = subprocess.run(['docker', 'stats', '--no-stream'],
+    result = subprocess.run(['./scripts/vde', 'stats', '--no-stream'],
                           capture_output=True, text=True)
     context.resource_usage = result.stdout
 

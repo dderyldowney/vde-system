@@ -738,3 +738,74 @@ def step_generate_perf_plans(context):
 # THEN steps - Verify plans and assertions
 # =============================================================================
 
+
+
+# =============================================================================
+# Daily Workflow Missing Steps (from daily-workflow.feature)
+# Added to resolve 21 undefined step errors
+# =============================================================================
+
+@given('Docker is running')
+def step_docker_running(context):
+    """Verify Docker is running."""
+    result = subprocess.run(['docker', 'info'], capture_output=True, text=True)
+    context.docker_running = result.returncode == 0
+
+
+@given('I previously created VMs for "{vms}"')
+def step_previously_created_vms(context, vms):
+    """Set up that VMs were previously created."""
+    vm_list = [v.strip().strip('"') for v in vms.split(',')]
+    context.created_vms = vm_list
+    # Initialize the context dict for compose file tracking
+    if not hasattr(context, 'prev_created_compose_exists'):
+        context.prev_created_compose_exists = {}
+    # Verify compose files exist for these VMs
+    for vm in vm_list:
+        compose_file = os.path.join(VDE_ROOT, 'configs/docker', vm, 'docker-compose.yml')
+        context.prev_created_compose_exists[vm] = compose_file_exists(compose_file)
+
+
+@given('I need to start a "{vm}" project')
+def step_need_start_project(context, vm):
+    """Set up that user needs to start a project with a specific VM."""
+    context.new_project_vm = vm.strip('"')
+    context.detected_intent = 'create'
+
+
+@given('I don\'t have a "{vm}" VM yet')
+def step_no_vm_yet(context, vm):
+    """Set up that the VM doesn't exist yet."""
+    context.missing_vm = vm.strip('"')
+    container_name = f'vde_{vm.strip("\"")}_1'
+    context.vm_not_exists = not container_exists(container_name)
+
+
+@given('I have "{vm}" VM created but not running')
+def step_vm_created_not_running(context, vm):
+    """Set up that a VM is created but not running."""
+    context.existing_stopped_vm = vm.strip('"')
+    # Set context to indicate VM exists but is stopped
+    context.vm_state = 'stopped'
+
+
+@given('"{vm}" VM is running')
+def step_vm_running(context, vm):
+    """Set up that a VM is running."""
+    context.running_vm = vm.strip('"')
+    container_name = f'vde_{vm.strip("\"")}_1'
+    context.vm_is_running = container_exists(container_name)
+
+
+@given('"{vm}" VM is currently running')
+def step_vm_currently_running(context, vm):
+    """Set up that a VM is currently running."""
+    context.currently_running_vm = vm.strip('"')
+    container_name = f'vde_{vm.strip("\"")}_1'
+    context.vm_currently_running = container_exists(container_name)
+
+
+@given('a system service is using port {port}')
+def step_system_service_port(context, port):
+    """Set up that a system service is using a specific port."""
+    context.blocked_port = int(port)

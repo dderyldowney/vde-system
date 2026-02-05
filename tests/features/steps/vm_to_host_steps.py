@@ -187,7 +187,7 @@ def step_can_navigate_host_fs(context):
 
 @then('I should see resource usage for all containers')
 def step_should_see_resource_usage(context):
-    """Verify docker stats output shows resource usage."""
+    """Verify ./scripts/vde stats output shows resource usage."""
     output = context.last_command_output
     
     # Check for permission errors - if none, the command was attempted
@@ -200,7 +200,7 @@ def step_should_see_resource_usage(context):
     has_container_data = len(output) > 10  # Substantial output
     
     # Accept if command was attempted (no permission error) OR has expected output
-    # When no containers running, docker stats returns empty output - that's acceptable
+    # When no containers running, ./scripts/vde stats returns empty output - that's acceptable
     assert not has_permission_error or has_percentage or has_stats_header or has_container_data, \
         f"Expected to see resource usage. Output: {output[:200]}"
 

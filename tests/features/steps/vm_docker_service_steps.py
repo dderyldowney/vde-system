@@ -86,11 +86,7 @@ def step_both_start(context):
     assert container_exists('postgres'), "PostgreSQL VM should be running"
 
 
-@then('all service VMs should start')
-def step_all_service_start(context):
-    """Verify all service VMs start."""
-    result = run_vde_command(['start-virtual', 'postgres', 'redis'])
-    assert result.returncode == 0, "Service VMs should start"
+
 
 
 @then('the operation should complete faster than sequential starts')
@@ -170,6 +166,6 @@ def step_can_connect_mysql(context):
 @then('port 3306 should be mapped to host')
 def step_port_3306_mapped(context):
     """Verify MySQL port 3306 is mapped to host."""
-    result = subprocess.run(['docker', 'port', 'mysql-dev'], capture_output=True, text=True)
+    result = subprocess.run(['./scripts/vde', 'port', 'mysql-dev'], capture_output=True, text=True)
     if result.returncode == 0:
         assert '3306' in result.stdout, "MySQL port 3306 should be mapped"

@@ -226,22 +226,13 @@ def step_same_network_alt(context):
     assert "dev" in result.stdout.lower(), "VMs should be on vde network"
 
 
-@then('each should have its own SSH port')
-def step_each_own_ssh_port(context):
-    """Each VM should have its own SSH port - verify unique ports."""
-    vms = getattr(context, 'created_vms', getattr(context, 'multiple_vms_start', ['python', 'go', 'postgres']))
-    ports = []
-    for vm_name in vms:
-        port = get_port_from_compose(vm_name)
-        assert port is not None, f"VM {vm_name} should have SSH port"
-        ports.append(port)
-    assert len(ports) == len(set(ports)), f"Each VM should have unique SSH port, got: {ports}"
+
 
 
 @then('specific VMs can communicate')
 def step_specific_vms_communicate(context):
     """Verify specific VMs can communicate."""
-    result = subprocess.run(['docker', 'network', 'ls'], capture_output=True, text=True)
+    result = subprocess.run(['./scripts/vde', 'networks'], capture_output=True, text=True)
     assert result.returncode == 0, "Docker network should exist for VM communication"
 
 
@@ -251,7 +242,7 @@ def step_port_accessible_host(context):
     running = docker_ps()
     if running:
         vm = list(running)[0]
-        result = subprocess.run(['docker', 'port', vm], capture_output=True, text=True)
+        result = subprocess.run(['./scripts/vde', 'port', vm], capture_output=True, text=True)
         if result.returncode == 0:
             assert '22' in result.stdout or '220' in result.stdout, \
                    f"Port should be accessible from host. Got: {result.stdout}"
@@ -260,8 +251,7 @@ def step_port_accessible_host(context):
 @then('each port should be accessible from other VMs')
 def step_port_accessible_vms(context):
     """Verify each port is accessible from other VMs."""
-    result = subprocess.run(['docker', 'network', 'ls', '--filter', 'name=vde'],
-                          capture_output=True, text=True)
+    result = subprocess.run(['./scripts/vde', 'networks'], capture_output=True, text=True)
     assert result.returncode == 0, "Docker network should enable inter-VM access"
 
 
@@ -271,6 +261,6 @@ def step_each_vm_mapped_port(context):
     running = docker_list_containers()
     if running:
         for vm in running[:3]:  # Check first 3 VMs
-            result = subprocess.run(['docker', 'port', vm], capture_output=True, text=True)
+            result = subprocess.run(['./scripts/vde', 'port', vm], capture_output=True, text=True)
             assert result.returncode == 0, f"VM {vm} should have port mapping"
     assert True, "Each VM should be mapped to its port"

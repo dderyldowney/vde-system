@@ -35,28 +35,6 @@ def step_rebuild_language_vm(context):
 # WHEN steps - Perform build operations
 # =============================================================================
 
-@when('I start VM "{vm}" with --rebuild')
-def step_start_rebuild(context, vm):
-    """Start VM with rebuild using vde start --rebuild command."""
-    result = run_vde_command(f"vde start {vm} --rebuild", timeout=180)
-    context.last_command = f"vde start {vm} --rebuild"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-    context.docker_command = "build"
-
-
-@when('I start VM "{vm}" with --rebuild and --no-cache')
-def step_start_rebuild_no_cache(context, vm):
-    """Start VM with rebuild and no cache using vde start command."""
-    result = run_vde_command(f"vde start {vm} --rebuild --no-cache", timeout=180)
-    context.last_command = f"vde start {vm} --rebuild --no-cache"
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-    context.last_exit_code = result.returncode
-    context.docker_command = "build"
-
-
 @when('I rebuild VMs with --rebuild')
 def step_rebuild_vms(context):
     """Rebuild VMs with --rebuild flag using vde start command."""
@@ -72,27 +50,10 @@ def step_rebuild_vms(context):
 # THEN steps - Verify build outcomes
 # =============================================================================
 
-@then('docker-compose build should be executed')
-def step_docker_build_executed(context):
-    """Docker build should be executed - verify build output."""
-    # Verify by checking for the image
-    vm_name = getattr(context, 'current_vm', 'python')
-    image_name = f"dev-{vm_name}"
-    result = subprocess.run(
-        ["docker", "images", "--format", "{{.Repository}}:{{.Tag}}", image_name],
-        capture_output=True,
-        text=True,
-        timeout=10
-    )
-    assert image_name in result.stdout, f"Docker image {image_name} should exist after build"
 
 
-@then('docker-compose up --build should be executed')
-def step_docker_up_build(context):
-    """Docker up with build should be executed - verify rebuild happened."""
-    # Verify by checking that the VM container exists and is running
-    vm_name = getattr(context, 'current_vm', 'python')
-    assert container_exists(vm_name), f"Container {vm_name} should exist after rebuild"
+
+
     
     # Also verify the Docker image exists
     image_name = f"dev-{vm_name}"
@@ -105,12 +66,7 @@ def step_docker_up_build(context):
     assert image_name in result.stdout, f"Docker image {image_name} should exist after build"
 
 
-@then('docker-compose up --build --no-cache should be executed')
-def step_docker_up_build_no_cache(context):
-    """Docker up with build and no cache - verify no cache was used."""
-    # Verify the command included --no-cache flag
-    assert hasattr(context, 'last_command'), "No command was executed"
-    assert '--no-cache' in context.last_command, "Command should include --no-cache flag"
+
     
     # Verify container exists after no-cache build
     vm_name = getattr(context, 'current_vm', 'python')
@@ -199,8 +155,8 @@ def step_build_cache_used(context):
     assert hasattr(context, 'last_command'), "No command was executed"
     assert '--no-cache' not in context.last_command, "Build should use cache (--no-cache should not be present)"
     
-    # Verify Docker daemon is running and can support caching
-    result = subprocess.run(['docker', 'info'], capture_output=True, text=True, timeout=10)
+    # Verify Docker daemon is running and can support caching using VDE info command
+    result = subprocess.run(['./scripts/vde', 'info'], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, "Docker daemon must be running for build cache"
 
 

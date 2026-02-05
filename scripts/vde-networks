@@ -1,0 +1,43 @@
+#!/usr/bin/env zsh
+#===============================================================================
+# vde-networks - List VDE Docker networks
+# Usage: vde-networks [options]
+#
+# Options:
+#   -q, --quiet   Only show network names
+#===============================================================================
+
+# Determine VDE root directory
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
+
+# Source core libraries
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-constants" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-errors" &>/dev/null
+
+# Parse options
+QUIET=0
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -q|--quiet)
+            QUIET=1
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+# Get VDE network prefix
+VDE_PREFIX="${VDE_NETWORK_PREFIX:-vde}"
+
+if [ $QUIET -eq 1 ]; then
+    docker network ls --format '{{.Name}}' | grep "^${VDE_PREFIX}" || true
+else
+    docker network ls --format 'table {{.Name}}\t{{.Driver}}\t{{.Scope}}' | grep "^${VDE_PREFIX}" || true
+fi
+
+exit 0

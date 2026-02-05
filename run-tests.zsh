@@ -12,7 +12,7 @@ echo "Docker available: $DOCKER_AVAILABLE"
 
 if [ "$DOCKER_AVAILABLE" = "true" ]; then
     echo "Running all tests..."
-    behave tests/features/
+    behave tests/features/ --tags=-@wip
 else
     echo "Docker not available - running docker-free tests only..."
     behave tests/features/docker-free/

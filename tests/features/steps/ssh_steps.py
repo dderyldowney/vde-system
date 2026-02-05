@@ -15,37 +15,6 @@ from behave import given, then, when
 # GIVEN steps - Setup SSH states
 # =============================================================================
 
-@given('SSH agent is running')
-def step_ssh_agent_running(context):
-    """Verify SSH agent is available and running."""
-    result = subprocess.run(
-        ['ssh-add', '-l'],
-        capture_output=True,
-        text=True
-    )
-
-    # ssh-add returns 0 if keys are loaded, 1 if no keys, 2 if agent not running
-    context.ssh_agent_running = result.returncode in [0, 1]
-
-    if result.returncode == 2:
-        # Try to start SSH agent
-        raise AssertionError("SSH agent is not running")
-
-
-@given('SSH agent is not running')
-def step_ssh_agent_not_running(context):
-    """Ensure SSH agent is not running."""
-    result = subprocess.run(
-        ['ssh-add', '-l'],
-        capture_output=True,
-        text=True
-    )
-
-    if result.returncode == 0:
-        # Agent has keys, kill it
-        subprocess.run(['ssh-agent', '-k'], capture_output=True)
-
-
 @given('available SSH keys should be loaded into agent')
 def step_ssh_keys_loaded(context):
     """Verify SSH keys are loaded into the agent."""

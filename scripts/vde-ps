@@ -1,0 +1,65 @@
+#!/usr/bin/env zsh
+#===============================================================================
+# vde-ps - List running VDE containers
+# Usage: vde-ps [options]
+#
+# Options:
+#   -a, --all     Show all containers (default is running only)
+#   -q, --quiet   Only display container names
+#   --format      Output format (table, json)
+#===============================================================================
+
+# Determine VDE root directory
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
+
+# Source core libraries
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-constants" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-errors" &>/dev/null
+
+# Parse options
+SHOW_ALL=0
+QUIET=0
+FORMAT="table"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -a|--all)
+            SHOW_ALL=1
+            shift
+            ;;
+        -q|--quiet)
+            QUIET=1
+            shift
+            ;;
+        --format)
+            FORMAT="$2"
+            shift 2
+            ;;
+        *)
+            vde_error_simple "Unknown option: $1"
+            exit $VDE_ERR_INVALID_INPUT
+            ;;
+    esac
+done
+
+# Get VDE container prefix
+VDE_PREFIX="${VDE_CONTAINER_PREFIX:-vde-}"
+
+# Build docker ps command
+if [ $QUIET -eq 1 ]; then
+    if [ $SHOW_ALL -eq 1 ]; then
+        docker ps -a --format '{{.Names}}' | grep "^${VDE_PREFIX}" || true
+    else
+        docker ps --format '{{.Names}}' | grep "^${VDE_PREFIX}" || true
+    fi
+else
+    if [ $SHOW_ALL -eq 1 ]; then
+        docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep "^${VDE_PREFIX}" || true
+    else
+        docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep "^${VDE_PREFIX}" || true
+    fi
+fi
+
+exit 0

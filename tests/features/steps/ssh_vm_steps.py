@@ -182,7 +182,7 @@ def step_utility_vm_running(context):
 @given('I have Docker installed on my host')
 def step_docker_installed(context):
     """Docker is installed on the host."""
-    result = subprocess.run(['docker', '--version'], capture_output=True, text=True, timeout=10)
+    result = subprocess.run(['./scripts/vde', '--version'], capture_output=True, text=True, timeout=10)
     context.docker_installed = result.returncode == 0
     assert context.docker_installed, "Docker must be installed on host"
 

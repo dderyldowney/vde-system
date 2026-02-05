@@ -151,8 +151,7 @@ def step_alias_support(context):
 @given('I want to know what\'s running')
 def step_status_query(context):
     """Want to know what's running - verify status command exists."""
-    result = subprocess.run(["docker", "ps", "--format", "{{.Names}}"],
-                          capture_output=True, text=True, timeout=10)
+    result = subprocess.run(["./scripts/vde", "ps"], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, "Should be able to query running containers"
 
 
@@ -206,7 +205,7 @@ def step_conversational_language(context):
 @given('something isn\'t working')
 def step_troubleshooting(context):
     """Something isn't working - verify docker logs command works."""
-    result = subprocess.run(["docker", "ps"], capture_output=True, text=True, timeout=10)
+    result = subprocess.run(["./scripts/vde", "ps"], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, "Docker should be accessible for troubleshooting"
 
 

@@ -1,0 +1,67 @@
+#!/usr/bin/env zsh
+#===============================================================================
+# vde-inspect - Inspect a VDE container
+# Usage: vde-inspect <vm_name> [options]
+#
+# Options:
+#   --format FORMAT   Output format (go-template, json)
+#   --mounts          Show mounts only
+#   --network         Show network info only
+#===============================================================================
+
+# Determine VDE root directory
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
+
+# Source core libraries
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-constants" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-errors" &>/dev/null
+
+# Check arguments
+if [ -z "$1" ]; then
+    vde_error_simple "VM name is required"
+    echo "Usage: vde-inspect <vm_name> [options]"
+    exit $VDE_ERR_INVALID_INPUT
+fi
+
+VM_NAME="$1"
+shift
+
+# Parse options
+FORMAT=""
+MOUNTS=0
+NETWORK=0
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --format)
+            FORMAT="$2"
+            shift 2
+            ;;
+        --mounts)
+            MOUNTS=1
+            shift
+            ;;
+        --network)
+            NETWORK=1
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+# Build inspect command
+if [ $MOUNTS -eq 1 ]; then
+    docker inspect --format '{{json .Mounts}}' "$VM_NAME"
+elif [ $NETWORK -eq 1 ]; then
+    docker inspect --format '{{json .NetworkSettings}}' "$VM_NAME"
+elif [ -n "$FORMAT" ]; then
+    docker inspect --format "$FORMAT" "$VM_NAME"
+else
+    docker inspect "$VM_NAME"
+fi
+
+exit 0

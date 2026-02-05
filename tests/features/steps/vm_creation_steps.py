@@ -93,122 +93,13 @@ def step_vm_types_loaded(context):
     context.vm_types_exist = vm_types_file.exists()
 
 
-@given('no language VMs are created')
-def step_no_lang_vms(context):
-    """No language VMs exist - informational for test scenario."""
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
 
 
-@given('language VM "{vm_name}" is allocated port "{port}"')
-def step_vm_allocated_port(context, vm_name, port):
-    """VM is created (port allocation happens automatically in docker-compose)."""
-    # Port allocation is automatic when VM is created
-    step_vm_created(context, vm_name)
-    context.test_port = port
 
 
-@given('ports "{ports}" are allocated')
-def step_ports_allocated(context, ports):
-    """Multiple ports are allocated (create multiple VMs)."""
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
-    port_list = [p.strip() for p in ports.split(",")]
-    for i, _port in enumerate(port_list):
-        vm_name = f"testvm{i}"
-        # We can't actually allocate specific ports, but we can create VMs
-        # Port allocation is automatic in the real system via docker-compose
-        context.created_vms.add(vm_name)
 
 
-@given('no service VMs are created')
-def step_no_svc_vms(context):
-    """No service VMs exist - informational for test scenario."""
-    if not hasattr(context, 'created_vms'):
-        context.created_vms = set()
 
-
-@given('a non-VDE process is listening on port "{port}"')
-def step_host_port_in_use(context, port):
-    """Verify port is actually in use on host using lsof."""
-    # Real verification: check if port is in use on host
-    try:
-        result = subprocess.run(
-            ["lsof", "-i", f":{port}", "-sTCP:LISTEN", "-t"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        # Store whether port is actually in use
-        context.host_port_in_use = port
-        context.host_port_actually_in_use = (result.returncode == 0)
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        # lsof not available or timeout - assume port not in use
-        context.host_port_in_use = port
-        context.host_port_actually_in_use = False
-
-
-@given('a Docker container is bound to host port "{port}"')
-def step_docker_port_in_use(context, port):
-    """Verify Docker container is actually using the port."""
-    # Real verification: check if any Docker container is using the port
-    try:
-        result = subprocess.run(
-            ["docker", "ps", "--filter", f"publish={port}", "--format", "{{.Names}}"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        # Store whether port is actually in use by Docker
-        context.docker_port_in_use = port
-        context.docker_port_actually_in_use = (
-            result.returncode == 0 and len(result.stdout.strip()) > 0
-        )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        # Docker not available or timeout - assume port not in use
-        context.docker_port_in_use = port
-        context.docker_port_actually_in_use = False
-
-
-@given('all ports from "{start}" to "{end}" are allocated')
-def step_all_ports_allocated(context, start, end):
-    """All ports in range are allocated - verify actual port usage."""
-    # Real verification: check Docker port bindings in the range
-    start_port = int(start)
-    end_port = int(end)
-
-    try:
-        # Get all Docker port bindings
-        result = subprocess.run(
-            ["docker", "ps", "--format", "{{.Ports}}"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-
-        ports_in_use = set()
-        if result.returncode == 0:
-            # Parse port bindings like "0.0.0.0:2201->22/tcp"
-            for line in result.stdout.strip().split('\n'):
-                if '->' in line:
-                    for binding in line.split(','):
-                        if '->' in binding:
-                            host_port = binding.split(':')[0].split('->')[-1]
-                            try:
-                                port_num = int(host_port)
-                                if start_port <= port_num <= end_port:
-                                    ports_in_use.add(port_num)
-                            except ValueError:
-                                pass
-
-        context.all_ports_allocated = len(ports_in_use) > 0
-        context.ports_in_range = ports_in_use
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        # Docker not available - informational only
-        context.all_ports_allocated = False
-
-
-@given('a port lock is older than "{seconds}" seconds')
 def step_stale_lock(context, seconds):
     """Stale port lock exists - verify lock file age."""
     lock_file = VDE_ROOT / "cache" / "port-registry.lock"

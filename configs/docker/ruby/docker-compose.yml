@@ -1,8 +1,15 @@
+# Template for language VMs
+# Variables: ruby, 2201, apt-get update -y && apt-get install -y ruby-full
 services:
   ruby-dev:
     build:
-      context: .
-      dockerfile: Dockerfile.base
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-ruby:latest
     container_name: ruby-dev
     hostname: ruby-dev
@@ -10,7 +17,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y ruby-full && /usr/sbin/sshd -D"
 
     ports:
-      - "2207:22"
+      - "2201:22"
 
     volumes:
       - ../../../projects/ruby:/home/devuser/workspace
@@ -21,8 +28,6 @@ services:
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
-      - VDE_HOME=${VDE_HOME:-}
-      - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
       - ../../../env-files/ruby.env

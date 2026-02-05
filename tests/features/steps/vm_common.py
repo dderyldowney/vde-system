@@ -39,7 +39,7 @@ def docker_ps():
         bool: True if docker command available, False otherwise
     """
     try:
-        subprocess.run(['docker', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(['./scripts/vde', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return True
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
@@ -83,6 +83,47 @@ def container_exists(container_name):
         return result.returncode == 0
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
+
+
+
+def container_is_running(container_name):
+    """Check if a Docker container is currently running.
+    
+    This is an alias for container_exists() which uses docker ps internally.
+    
+    Args:
+        container_name: Name of the container to check
+        
+    Returns:
+        bool: True if container is running, False otherwise
+    """
+    return container_exists(container_name)
+
+
+def get_container_id(container_name):
+    """Get the container ID for a given container name.
+    
+    Args:
+        container_name: Name of the container to look up
+        
+    Returns:
+        str: Container ID if found, empty string if not found
+    """
+    try:
+        result = subprocess.run(
+            ['./scripts/vde', 'ps'],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode == 0:
+            for line in result.stdout.strip().split('\n'):
+                if container_name in line:
+                    # Extract container ID from ps output
+                    parts = line.split()
+                    if parts:
+                        return parts[0]
+    except Exception:
+        pass
+    return ""
 
 def compose_file_exists(filename):
     """Check if a docker-compose file exists.

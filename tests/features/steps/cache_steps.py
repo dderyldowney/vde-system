@@ -107,14 +107,14 @@ def step_some_running(context):
     # Store running VMs for later steps
     context.running_vms = {c.replace("-dev", "") for c in running if "-dev" in c}
     # At minimum, verify docker is working
-    result = subprocess.run(["docker", "--version"], capture_output=True, text=True, timeout=10)
+    result = subprocess.run(["./scripts/vde", "--version"], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, "Docker should be available"
 
 
 @given("I'm monitoring the system")
 def step_monitoring(context):
     """Monitoring the system - verify system is accessible."""
-    result = subprocess.run(["docker", "ps", "--format", "{{.Names}}"],
+    result = subprocess.run(["./scripts/vde", "ps"],
                           capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, "Should be able to monitor Docker containers"
 

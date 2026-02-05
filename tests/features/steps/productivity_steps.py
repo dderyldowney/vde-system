@@ -128,7 +128,7 @@ def step_data_persists_postgres(context):
 def step_version_specific_bugs_caught(context):
     """Verify version-specific bugs can be caught early."""
     # Check that version information is available
-    result = subprocess.run(["docker", "--version"], capture_output=True, text=True, timeout=10)
+    result = subprocess.run(["./scripts/vde", "--version"], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, "Docker should be available to catch version-specific bugs"
     context.version_bugs_caught = True
     assert context.version_bugs_caught, "Version-specific bugs should be caught early"
@@ -247,7 +247,7 @@ def step_continue_work_on_host(context):
 def step_services_keep_running(context):
     """Verify services keep running in background."""
     # Check Docker is running
-    result = subprocess.run(["docker", "ps"], capture_output=True, text=True, timeout=10)
+    result = subprocess.run(["./scripts/vde", "ps"], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, "Docker should be running to keep services alive"
     context.services_running = True
     assert context.services_running, "Services should keep running in background"

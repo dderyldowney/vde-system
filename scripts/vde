@@ -60,6 +60,15 @@ _VDE_COMMANDS=(
     "nuke:Remove all of VDE:nuke-vde"
     "ssh-setup:Manage VDE SSH environment:ssh-setup"
     "ssh-sync:Sync SSH keys to build context:ssh-sync"
+    "ps:List running containers:vde-ps"
+    "logs:Show container logs:vde-logs"
+    "inspect:Inspect container:vde-inspect"
+    "port:Show port mappings:vde-port"
+    "exec:Execute command in container:vde-exec"
+    "images:List VDE images:vde-images"
+    "networks:List VDE networks:vde-networks"
+    "stats:Show resource usage:vde-stats"
+    "info:Show Docker info:vde-info"
     "help:Show this help message:"
 )
 
@@ -90,6 +99,15 @@ EOF
     printf "  %-12s %s\n" "nuke" "Remove all of VDE"
     printf "  %-12s %s\n" "ssh-setup" "Manage VDE SSH environment"
     printf "  %-12s %s\n" "ssh-sync" "Sync SSH keys to build context"
+    printf "  %-12s %s\n" "ps" "List running containers"
+    printf "  %-12s %s\n" "logs <vm>" "Show container logs"
+    printf "  %-12s %s\n" "inspect <vm>" "Inspect container"
+    printf "  %-12s %s\n" "port <vm>" "Show port mappings"
+    printf "  %-12s %s\n" "exec <vm> <cmd>" "Execute command in container"
+    printf "  %-12s %s\n" "images" "List VDE images"
+    printf "  %-12s %s\n" "networks" "List VDE networks"
+    printf "  %-12s %s\n" "stats" "Show resource usage"
+    printf "  %-12s %s\n" "info" "Show Docker info"
     printf "  %-12s %s\n" "help" "Show this help message"
 
     cat <<EOF
@@ -168,6 +186,33 @@ vde_find_command_script() {
             ;;
         ssh-sync)
             script="$VDE_ROOT_DIR/scripts/ssh-sync"
+            ;;
+        ps)
+            script="$VDE_ROOT_DIR/scripts/vde-ps"
+            ;;
+        logs)
+            script="$VDE_ROOT_DIR/scripts/vde-logs"
+            ;;
+        inspect)
+            script="$VDE_ROOT_DIR/scripts/vde-inspect"
+            ;;
+        port)
+            script="$VDE_ROOT_DIR/scripts/vde-port"
+            ;;
+        exec)
+            script="$VDE_ROOT_DIR/scripts/vde-exec"
+            ;;
+        images)
+            script="$VDE_ROOT_DIR/scripts/vde-images"
+            ;;
+        networks)
+            script="$VDE_ROOT_DIR/scripts/vde-networks"
+            ;;
+        stats)
+            script="$VDE_ROOT_DIR/scripts/vde-stats"
+            ;;
+        info)
+            script="$VDE_ROOT_DIR/scripts/vde-info"
             ;;
         *)
             echo ""

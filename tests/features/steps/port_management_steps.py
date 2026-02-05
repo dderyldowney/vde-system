@@ -21,7 +21,6 @@ from vm_common import (
     docker_ps,
     container_exists,
     container_is_running,
-    get_next_port,
 )
 
 
@@ -62,6 +61,7 @@ def step_ports_allocated(context, ports):
         int_port = int(port)
         if int_port < 2400:
             # This is a language port, might need cleanup
+            pass
 
 
 @given('no service VMs are created')
@@ -151,32 +151,11 @@ def step_create_lang_vm(context, vm_name):
     context.vm_name = vm_name
 
 
-@when('I create a new language VM')
-def step_create_new_lang_vm(context):
-    """Create a new language VM."""
-    # Use a fresh VM name
-    result = run_vde_command("create c", timeout=120)
-    context.last_command = "create c"
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
 @when('I create a service VM')
 def step_create_service_vm(context):
     """Create a service VM."""
     result = run_vde_command("create redis", timeout=120)
     context.last_command = "create redis"
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
-@when('I create a new language VM')
-def step_create_new_lang_vm_for_gap(context):
-    """Create a new language VM to test gap handling."""
-    result = run_vde_command("create c", timeout=120)
-    context.last_command = "create c"
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr

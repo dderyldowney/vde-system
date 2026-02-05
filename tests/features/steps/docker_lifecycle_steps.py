@@ -121,19 +121,6 @@ def step_vm_has_env_file(context, vm_name):
     context.vm_env_file = env_file
 
 
-@given('multiple VMs are running')
-def step_docker_multiple_running(context):
-    """Ensure multiple VMs are running."""
-    for vm_name in ['python', 'rust']:
-        if not container_is_running(vm_name):
-            config_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-            if not config_path.exists():
-                result = run_vde_command(f"create {vm_name}", timeout=120)
-                assert result.returncode == 0, f"Failed to create VM {vm_name}: {result.stderr}"
-            result = run_vde_command(f"start {vm_name}", timeout=180)
-            assert result.returncode == 0, f"Failed to start VM {vm_name}: {result.stderr}"
-
-
 # =============================================================================
 # WHEN steps - Actions for Docker Operations tests
 # =============================================================================
@@ -356,7 +343,7 @@ def step_running_containers_listed(context):
     """Verify all running containers are listed."""
     running = getattr(context, 'running_vms', [])
     vde_running = [c for c in running if '-dev' in c or c in ['postgres', 'redis', 'nginx', 'mongodb', 'mysql', 'rabbitmq', 'couchdb']]
-    assert len(vde_running) > 0, f"Should list running containers: {running"
+    assert len(vde_running) > 0, f"Should list running containers: {running}"
 
 
 @then('stopped containers should not be listed')

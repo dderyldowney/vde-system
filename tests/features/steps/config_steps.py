@@ -224,7 +224,7 @@ def step_port_already_in_use(context):
     """Context: A port is already in use."""
     # Find a port that might be in use
     try:
-        result = subprocess.run(['docker', 'ps', '--format', '{{.Ports}}'],
+        result = subprocess.run(['./scripts/vde', 'ps', '--format', '{{.Ports}}'],
                               capture_output=True, text=True, timeout=10)
         # Parse to find an in-use port
         context.port_in_use = '2200' if '2200' in result.stdout else None
@@ -757,7 +757,7 @@ def step_language_grows(context):
 def _get_running_vms():
     """Get list of running VDE VMs."""
     try:
-        result = subprocess.run(['docker', 'ps', '--format', '{{.Names}}'],
+        result = subprocess.run(['./scripts/vde', 'ps'],
                               capture_output=True, text=True, timeout=10)
         if result.returncode == 0:
             return [name for name in result.stdout.strip().split('\n') if name.startswith('vde-')]
