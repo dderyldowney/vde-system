@@ -307,9 +307,7 @@ def step_port_removed_from_registry(context, port):
     port_registry = VDE_ROOT / ".cache" / "port-registry"
     if port_registry.exists():
         content = port_registry.read_text()
-        # Port should not appear in registry
-        # This is a simplified check
-        pass  # Registry was updated
+        assert f"{port}" not in content or not content, "Port should be removed from registry"
 
 
 # =============================================================================

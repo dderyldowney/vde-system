@@ -132,8 +132,16 @@ def step_error_diagnosis(context):
 @when(u'I check what\'s using the port')
 def step_check_port_usage(context):
     """Check what's using the port."""
-    # This would check port usage
-    pass
+    result = subprocess.run(['lsof', '-i', ':2200'], capture_output=True, text=True)
+    context.port_usage_output = result.stdout
+    context.vde_command_exit_code = result.returncode
+
+
+@then(u'I should see which process is using it')
+def step_see_process(context):
+    """Verify process using port is visible."""
+    output = getattr(context, 'port_usage_output', '')
+    assert output, "Expected port usage information"
 
 
 @then(u'I should see which process is using it')
@@ -196,8 +204,17 @@ def step_identify_issue_type(context):
 @when(u'I try to connect to the database VM directly')
 def step_connect_database_directly(context):
     """Connect to database VM directly."""
-    # This would attempt direct connection
-    pass
+    result = subprocess.run(['docker', 'exec', '-it', 'vde_postgres', 'psql', '-U', 'postgres', '-c', 'SELECT 1'],
+                          capture_output=True, text=True)
+    context.db_connection_output = result.stdout
+    context.vde_command_exit_code = result.returncode
+
+
+@then(u'I can see if the issue is network, credentials, or database state')
+def step_identify_db_issue(context):
+    """Verify ability to identify database issue."""
+    output = getattr(context, 'db_connection_output', '')
+    assert output, "Expected database connection output"
 
 
 @then(u'I can see if the issue is network, credentials, or database state')
@@ -239,8 +256,15 @@ def step_no_cached_layers(context):
 @when(u'I remove the container but keep the config')
 def step_remove_container_keep_config(context):
     """Remove container but keep configuration."""
-    # This would remove container only
-    pass
+    result = subprocess.run(['docker', 'rm', '-f', 'vde_python'], capture_output=True, text=True)
+    context.container_removed = result.returncode == 0 or 'no such container' in result.stderr.lower()
+
+
+@then(u'I should get a fresh container')
+def step_fresh_container(context):
+    """Verify fresh container is created."""
+    result = subprocess.run(['docker', 'ps', '-a'], capture_output=True, text=True)
+    assert 'vde_python' in result.stdout, "Expected vde_python container to exist"
 
 
 @when(u'I start it again')
@@ -261,8 +285,16 @@ def step_fresh_container(context):
 @when(u'I remove the VM directory')
 def step_remove_vm_dir(context):
     """Remove VM directory."""
-    # This would remove VM directory
-    pass
+    vm_dir = Path.home() / '.vde' / 'vms' / 'python'
+    if vm_dir.exists():
+        result = subprocess.run(['rm', '-rf', str(vm_dir)], capture_output=True, text=True)
+        context.vm_dir_removed = result.returncode == 0
+    else:
+        context.vm_dir_removed = True
+
+
+@when(u'I recreate the VM')
+def step_recreate_vm(context):
 
 
 @when(u'I recreate the VM')

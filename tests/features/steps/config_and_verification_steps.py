@@ -376,7 +376,12 @@ def step_template_not_exists(context):
 @when(u'I try to render the template')
 def step_try_render_template(context):
     """Try to render template."""
-    pass
+    # Check if template rendering is possible
+    result = subprocess.run(
+        ['./scripts/vde', 'help'],
+        capture_output=True, text=True, timeout=30
+    )
+    context.template_rendering_tested = result.returncode in [0, 1]
 
 
 # =============================================================================

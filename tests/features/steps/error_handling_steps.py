@@ -411,31 +411,25 @@ def step_diagnose_problem(context):
 @then('check if SSH is running')
 def step_check_ssh_running(context):
     """Verify SSH check."""
-    # Check SSH status
-    try:
-        result = subprocess.run(
-            ['docker', 'ps', '--format', '{{.Names}}'],
-            capture_output=True, text=True, timeout=5
-        )
-        context.ssh_check_done = True
-        context.ssh_container_running = 'python' in result.stdout.lower()
-    except Exception:
-        context.ssh_check_done = True
+    result = subprocess.run(
+        ['docker', 'ps', '--format', '{{.Names}}'],
+        capture_output=True, text=True, timeout=5
+    )
+    assert result.returncode == 0, "Docker ps command should succeed"
+    context.ssh_container_running = 'python' in result.stdout.lower()
 
 
 @then('verify the SSH port is correct')
 def step_verify_ssh_port(context):
     """Verify SSH port is correct."""
     vm_name = getattr(context, 'vm_name', 'python')
-    # Check port mapping
-    try:
-        result = subprocess.run(
-            ['docker', 'port', vm_name, '22'],
-            capture_output=True, text=True, timeout=5
-        )
-        context.ssh_port = result.stdout.strip() if result.returncode == 0 else None
-    except Exception:
-        context.ssh_port = None
+    result = subprocess.run(
+        ['docker', 'port', vm_name, '22'],
+        capture_output=True, text=True, timeout=5
+    )
+    assert result.returncode == 0, f"SSH port should be accessible for {vm_name}"
+    assert '22' in result.stdout or '220' in result.stdout, \
+        f"Expected SSH port mapping, got: {result.stdout}"
 
 
 @then('it should explain the permission issue')
@@ -612,13 +606,12 @@ def step_suggest_next_steps(context):
 def step_error_logged(context):
     """Verify error is logged."""
     log_dir = VDE_ROOT / ".logs"
-    has_log = log_dir.exists()
-    # Check if any log file contains the error
-    if has_log:
+    if log_dir.exists():
         log_files = list(log_dir.glob("*.log"))
-        context.error_logged = len(log_files) > 0
+        assert len(log_files) > 0, "Log files should exist"
     else:
-        context.error_logged = False
+        # Log dir may not exist, that's acceptable for this test
+        pass
 
 
 @then('the error should have sufficient detail for debugging')
