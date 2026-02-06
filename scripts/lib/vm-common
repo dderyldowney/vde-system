@@ -585,6 +585,34 @@ is_vm_running() {
     return $VDE_ERR_NOT_FOUND
 }
 
+# container_exists - Check if a VM container exists (running or stopped)
+# Args: <vm_name>
+# Returns:
+#   VDE_SUCCESS (0) - Container exists
+#   VDE_ERR_NOT_FOUND (3) - Container does not exist
+# Example: container_exists python && echo "Container exists"
+container_exists() {
+    local vm=$1
+    local container_name
+
+    # Determine container name based on VM type
+    local vm_type
+    vm_type=$(_assoc_get "VM_TYPE" "$vm" 2>/dev/null)
+
+    if [ "$vm_type" = "lang" ]; then
+        container_name="${vm}-dev"
+    else
+        container_name="$vm"
+    fi
+
+    # Check if container exists (running or stopped) using docker ps -a
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$container_name"; then
+        return $VDE_SUCCESS
+    fi
+
+    return $VDE_ERR_NOT_FOUND
+}
+
 # resolve_vm_name - Resolve an alias or name to canonical VM name
 # Args: <input> - VM name or alias
 # Returns:
@@ -2169,8 +2197,9 @@ validate_vm_name() {
 validate_vm_doesnt_exist() {
     local vm=$1
 
-    if vm_exists "$vm"; then
-        log_error "VM '$vm' already exists (config found at: $CONFIGS_DIR/$vm/)"
+    # Check if container exists (running or stopped) - not just config
+    if container_exists "$vm"; then
+        log_error "VM '$vm' already exists (container found)"
         return 1
     fi
     return 0

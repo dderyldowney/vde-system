@@ -531,6 +531,9 @@ def _rebuild_all_vms():
 
     This stops any existing containers, removes them, then creates
     and starts fresh containers for testing.
+
+    Note: If VM configs already exist, we use them rather than recreating.
+    Full rebuild requires manual cleanup of configs/docker/<vm>/ directories.
     """
     # Get list of available VM types from env-files
     env_files_dir = VDE_ROOT / "env-files"
@@ -549,29 +552,57 @@ def _rebuild_all_vms():
             # Check if container exists and stop/remove it
             state = get_current_docker_state()
             if container_name in state['running']:
-                # Stop running container
+                # Stop running container using vde stop
                 run_vde_command(f"./scripts/vde stop {vm_name}")
             if container_name in state['all']:
-                # Remove existing container (force remove)
-                subprocess.run(
-                    ["docker", "rm", "-f", container_name],
-                    capture_output=True, timeout=30
-                )
+                # Remove existing container using vde remove
+                remove_result = run_vde_command(f"./scripts/vde remove {vm_name}")
+                if remove_result.returncode != 0:
+                    print(f"[SETUP] Error: vde remove failed for {vm_name}")
+                    raise Exception(f"Failed to remove VM {vm_name}")
 
-            # Create fresh container
-            create_result = run_vde_command(f"./scripts/vde create {vm_name}")
-            if create_result.returncode == 0:
-                print(f"[SETUP] Created VM: {vm_name}")
-                # Start VM
-                start_result = run_vde_command(f"./scripts/vde start {vm_name}")
-                if start_result.returncode == 0:
-                    print(f"[SETUP] Started VM: {vm_name}")
-                    # Track for cleanup
-                    _TEST_VMS_CREATED.add(vm_name)
-                else:
-                    print(f"[SETUP] Failed to start {vm_name}: {start_result.stderr}")
+            # Check if VM config already exists - if so, use existing config
+            config_dir = VDE_ROOT / "configs" / "docker" / vm_name
+            if config_dir.exists():
+                print(f"[SETUP] VM {vm_name} config exists - recreating container with existing config")
+                # Create using existing config (this will succeed now)
+                create_result = run_vde_command(f"./scripts/vde create {vm_name}")
+                if create_result.returncode != 0:
+                    # Try with --force if available, otherwise skip
+                    print(f"[SETUP] Warning: Could not create {vm_name}, trying with docker-compose directly")
+                    # Fallback: use docker-compose directly
+                    compose_dir = VDE_ROOT / "configs" / "docker" / vm_name
+                    if compose_dir.exists():
+                        result = subprocess.run(
+                            ["docker-compose", "-f", f"{compose_dir}/docker-compose.yml", "up", "-d", "--no-color"],
+                            capture_output=True, timeout=120, cwd=str(compose_dir)
+                        )
+                        if result.returncode == 0:
+                            print(f"[SETUP] Created {vm_name} via docker-compose")
+                            _TEST_VMS_CREATED.add(vm_name)
+                            continue
+
+                # If create succeeded
+                if create_result.returncode == 0:
+                    print(f"[SETUP] Created VM: {vm_name}")
+                    # Start VM
+                    start_result = run_vde_command(f"./scripts/vde start {vm_name}")
+                    if start_result.returncode == 0:
+                        print(f"[SETUP] Started VM: {vm_name}")
+                        # Track for cleanup
+                        _TEST_VMS_CREATED.add(vm_name)
+                    else:
+                        print(f"[SETUP] Failed to start {vm_name}: {start_result.stderr}")
             else:
-                print(f"[SETUP] Failed to create {vm_name}: {create_result.stderr}")
+                # No config exists - this is a first-time setup
+                print(f"[SETUP] Creating new VM: {vm_name}")
+                create_result = run_vde_command(f"./scripts/vde create {vm_name}")
+                if create_result.returncode == 0:
+                    print(f"[SETUP] Created VM: {vm_name}")
+                    start_result = run_vde_command(f"./scripts/vde start {vm_name}")
+                    if start_result.returncode == 0:
+                        print(f"[SETUP] Started VM: {vm_name}")
+                        _TEST_VMS_CREATED.add(vm_name)
         except Exception as e:
             print(f"[SETUP] Error building {vm_name}: {e}")
 

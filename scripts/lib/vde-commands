@@ -88,14 +88,14 @@ vde_list_vms() {
     return $VDE_SUCCESS
 }
 
-# vde_vm_exists - Check if VM exists (has docker-compose.yml)
+# vde_vm_exists - Check if VM container exists (running or stopped)
 # Args:
 #   vm_name - Name of the VM to check
-# Returns: VDE_SUCCESS (0) if exists, VDE_ERR_NOT_FOUND (3) if not
-# Example: vde_vm_exists python && echo "Python VM exists"
+# Returns: VDE_SUCCESS (0) if container exists, VDE_ERR_NOT_FOUND (3) if not
+# Example: vde_vm_exists python && echo "Python container exists"
 vde_vm_exists() {
     local vm_name="$1"
-    vm_exists "$vm_name"
+    container_exists "$vm_name"
 }
 
 # vde_get_vm_info - Get VM information from configuration

@@ -2,9 +2,28 @@
 
 ## Executive Summary
 
-**Status:** COMPLETE - Docker-free step definitions implemented, display name support added
+**Status:** COMPLETE
 
 **Review Date:** February 6, 2026
+
+**Note:** Plan 29 (SSH Configuration) is blocked with 108 undefined steps in `ssh-configuration.feature`. SSH tests require infrastructure dependencies.
+
+## Current Status (February 6, 2026)
+
+### Infrastructure Fix Verified
+
+**FIXED:** `container_exists()` function added to `scripts/lib/vm-common` and used by `vde-commands`.
+- `vde create` now correctly checks container existence instead of config existence
+- Tests can delete containers and recreate them without errors
+
+### Docker-Free Tests
+- **Features:** 6 passed, 0 failed
+- **Scenarios:** 135 passed, 0 failed
+- **Steps:** 560 passed, 0 failed
+
+### Related Plans
+- **Plan 31:** IN PROGRESS - Error handling feature (72 undefined steps)
+- **Plan 32:** PENDING - SSH configuration (108 undefined steps) - LARGEST SINGLE WIN
 
 ## Test Results Summary
 
@@ -75,6 +94,17 @@ fi
 | `tests/features/steps/documented_workflow_steps.py` | Fixed alias matching, added 13 missing steps |
 | `tests/features/environment.py` | Added VDE_DOCKER_FREE_TEST mode |
 | `scripts/lib/vde-parser` | Added display name support to `_build_alias_map` |
+
+## Related Work
+
+### Plan 31: Error Handling (In Progress)
+- Core VDE fix: `vde create` now checks container existence, not config existence
+- Added `container_exists()` function to vm-common
+- Fixed `validate_vm_doesnt_exist()` and `vde_vm_exists()`
+
+### Plan 32: SSH Configuration (Next)
+- **Largest single win:** 108 undefined steps in `ssh-configuration.feature`
+- Requires Docker infrastructure (now fixed by Plan 31)
 
 ## Run Tests
 

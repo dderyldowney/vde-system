@@ -81,7 +81,7 @@ def cleanup_test_vms(prefix: str = "vde-test-") -> None:
         for container_name in container_names:
             logger.info(f"Cleaning up test VM: {container_name}")
             
-            # Try VDE remove command first
+            # Use VDE remove command
             vde_result = subprocess.run(
                 ["./scripts/vde", "remove", container_name],
                 capture_output=True,
@@ -91,14 +91,8 @@ def cleanup_test_vms(prefix: str = "vde-test-") -> None:
             )
             
             if vde_result.returncode != 0:
-                # Fall back to direct Docker removal
-                logger.warning(f"VDE remove failed for {container_name}, using docker rm")
-                subprocess.run(
-                    ["docker", "rm", "-f", container_name],
-                    capture_output=True,
-                    text=True,
-                    check=False
-                )
+                logger.error(f"VDE remove failed for {container_name}: {vde_result.stderr}")
+                raise Exception(f"Failed to remove VM {container_name}")
             
             # Verify container is removed
             verify_result = subprocess.run(
