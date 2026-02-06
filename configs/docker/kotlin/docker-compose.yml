@@ -1,8 +1,15 @@
+# Template for language VMs
+# Variables: kotlin, 2200, apt-get update -y && apt-get install -y kotlin && curl -s "https://get.sdkman.io" 
 services:
   kotlin-dev:
     build:
-      context: .
-      dockerfile: Dockerfile.base
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-kotlin:latest
     container_name: kotlin-dev
     hostname: kotlin-dev
@@ -10,7 +17,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y kotlin && curl -s "https://get.sdkman.io"  && /usr/sbin/sshd -D"
 
     ports:
-      - "2210:22"
+      - "2200:22"
 
     volumes:
       - ../../../projects/kotlin:/home/devuser/workspace
@@ -21,8 +28,6 @@ services:
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
-      - VDE_HOME=${VDE_HOME:-}
-      - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
       - ../../../env-files/kotlin.env

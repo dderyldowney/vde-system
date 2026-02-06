@@ -21,6 +21,7 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/* /tmp/mongodb-server-7.0.asc
 
 # Create devuser with sudo privileges and SSH setup
+# VDE uses ~/.ssh/vde for project SSH keys, ~/.ssh for system/authorized_keys
 RUN groupadd -g ${GID} ${USERNAME} && \
     useradd -m -u ${UID} -g ${GID} -s /bin/zsh ${USERNAME} && \
     usermod -aG sudo ${USERNAME} && \
@@ -28,10 +29,14 @@ RUN groupadd -g ${GID} ${USERNAME} && \
     chmod 440 /etc/sudoers.d/${USERNAME} && \
     mkdir -p /var/run/sshd && \
     mkdir -p /home/${USERNAME}/.ssh && \
+    mkdir -p /home/${USERNAME}/.ssh/vde && \
     touch /home/${USERNAME}/.ssh/known_hosts && \
+    touch /home/${USERNAME}/.ssh/vde/known_hosts && \
     chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh && \
     chmod 700 /home/${USERNAME}/.ssh && \
-    chmod 600 /home/${USERNAME}/.ssh/known_hosts
+    chmod 700 /home/${USERNAME}/.ssh/vde && \
+    chmod 600 /home/${USERNAME}/.ssh/known_hosts && \
+    chmod 600 /home/${USERNAME}/.ssh/vde/known_hosts
 
 # Copy public SSH keys into authorized_keys with proper ownership
 # Copy from build context (works during build) - keys are baked into image
@@ -54,15 +59,16 @@ RUN sed -i \
     -e 's/^#AllowAgentForwarding yes/AllowAgentForwarding yes/' \
     /etc/ssh/sshd_config || true
 
-# Configure SSH client for agent forwarding
-RUN mkdir -p /home/${USERNAME}/.ssh && \
-    echo "Host *" > /home/${USERNAME}/.ssh/config && \
-    echo "    ForwardAgent yes" >> /home/${USERNAME}/.ssh/config && \
-    echo "    AddKeysToAgent yes" >> /home/${USERNAME}/.ssh/config && \
-    echo "    StrictHostKeyChecking no" >> /home/${USERNAME}/.ssh/config && \
-    echo "    UserKnownHostsFile /dev/null" >> /home/${USERNAME}/.ssh/config && \
-    chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh/config && \
-    chmod 600 /home/${USERNAME}/.ssh/config
+# Configure SSH client for agent forwarding in ~/.ssh/vde/config
+RUN mkdir -p /home/${USERNAME}/.ssh/vde && \
+    echo "# VDE SSH Configuration" > /home/${USERNAME}/.ssh/vde/config && \
+    echo "Host *" >> /home/${USERNAME}/.ssh/vde/config && \
+    echo "    ForwardAgent yes" >> /home/${USERNAME}/.ssh/vde/config && \
+    echo "    AddKeysToAgent yes" >> /home/${USERNAME}/.ssh/vde/config && \
+    echo "    StrictHostKeyChecking no" >> /home/${USERNAME}/.ssh/vde/config && \
+    echo "    UserKnownHostsFile ~/.ssh/vde/known_hosts" >> /home/${USERNAME}/.ssh/vde/config && \
+    chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh/vde/config && \
+    chmod 600 /home/${USERNAME}/.ssh/vde/config
 
 # Add SSH agent forwarding helper script
 # Only prints messages in interactive shells to avoid breaking SSH authentication

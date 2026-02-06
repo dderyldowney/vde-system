@@ -1,10 +1,15 @@
 # Template for language VMs
-# Variables: js, 2201, apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x 
+# Variables: js, 2200, apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x 
 services:
   js-dev:
     build:
-      context: .
-      dockerfile: Dockerfile.base
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-js:latest
     container_name: js-dev
     hostname: js-dev
@@ -12,7 +17,7 @@ services:
     command: sh -c "apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x  && /usr/sbin/sshd -D"
 
     ports:
-      - "2201:22"
+      - "2200:22"
 
     volumes:
       - ../../../projects/js:/home/devuser/workspace

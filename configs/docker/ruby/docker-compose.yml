@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: ruby, 2201, apt-get update -y && apt-get install -y ruby-full
+# Variables: ruby, 2200, apt-get update -y && apt-get install -y ruby-full
 services:
   ruby-dev:
     build:
@@ -17,7 +17,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y ruby-full && /usr/sbin/sshd -D"
 
     ports:
-      - "2201:22"
+      - "2200:22"
 
     volumes:
       - ../../../projects/ruby:/home/devuser/workspace

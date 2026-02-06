@@ -26,7 +26,6 @@ def step_vm_ready_ssh(context):
     running = docker_ps()
     assert len(running) > 0, "At least one VM should be running"
 
-
 @then('it should be accessible via SSH')
 def step_accessible_ssh(context):
     """Verify VM is accessible via SSH."""
@@ -38,16 +37,13 @@ def step_accessible_ssh(context):
             assert '22' in result.stdout or '220' in result.stdout, \
                    f"SSH port should be exposed. Got: {result.stdout}"
 
-
 @when('I access localhost on the VM\'s port')
 def step_access_localhost_port(context):
     """Context: Access localhost on VM's port."""
 
-
 @when('I connect to a VM')
 def step_connect_vm(context):
     """Context: Connect to a VM."""
-
 
 @then('I should receive the hostname (localhost)')
 def step_receive_hostname(context):
@@ -57,7 +53,6 @@ def step_receive_hostname(context):
         content = ssh_config.read_text()
         assert 'localhost' in content.lower() or '127.0.0.1' in content, \
                "SSH config should reference localhost for connections"
-
 
 @then('I should receive the SSH port')
 def step_receive_ssh_port(context):
@@ -69,7 +64,6 @@ def step_receive_ssh_port(context):
         if result.returncode == 0:
             assert '22' in result.stdout or '220' in result.stdout, \
                    f"SSH port should be available. Got: {result.stdout}"
-
 
 @then('I should receive the username (devuser)')
 def step_receive_username(context):
@@ -86,28 +80,6 @@ def step_receive_username(context):
         assert False, f"docker-compose.yml not found at {compose_path}"
     context.user_is_devuser = True
 
-
-@given('~/.ssh/known_hosts contains "[localhost]:2200"')
-def step_known_hosts_localhost_2200(context):
-    """Context: known_hosts contains localhost:2200 entry."""
-    known_hosts = Path.home() / '.ssh' / 'known_hosts'
-    context.known_hosts_has_localhost = known_hosts.exists()
-
-
-@given('~/.ssh/known_hosts contains "[::1]:2400"')
-def step_known_hosts_ipv6_2400(context):
-    """Context: known_hosts contains IPv6:2400 entry."""
-    known_hosts = Path.home() / '.ssh' / 'known_hosts'
-    context.known_hosts_has_ipv6 = known_hosts.exists()
-
-
-@given('~/.ssh/known_hosts contains "[localhost]:2400"')
-def step_known_hosts_localhost_2400(context):
-    """Context: known_hosts contains localhost:2400 entry."""
-    known_hosts = Path.home() / '.ssh' / 'known_hosts'
-    context.known_hosts_has_2400 = known_hosts.exists()
-
-
 @then('language VMs should have SSH access')
 def step_language_vms_ssh(context):
     """Verify language VMs have SSH access configured."""
@@ -123,17 +95,11 @@ def step_language_vms_ssh(context):
                     break
         assert found_ssh, "Language VMs should have SSH configured"
 
-
-
-
-
-
 @then('each can run independently')
 def step_each_independent(context):
     """Verify VMs can run independently."""
     running = docker_ps()
     assert len(running) > 0, "VMs should be able to run independently"
-
 
 @then('each should have separate data directory')
 def step_each_separate_data(context):
@@ -148,7 +114,6 @@ def step_each_separate_data(context):
                 if './data/' in content or 'volumes:' in content:
                     data_dirs.append(vm_dir.name)
         assert len(data_dirs) > 0, "VMs should have data volumes configured"
-
 
 @then('files should be shared between host and VM')
 def step_files_shared_host_vm(context):
@@ -165,13 +130,11 @@ def step_files_shared_host_vm(context):
             assert 'workspace' in mounts.lower() or 'project' in mounts.lower() or 'volume' in mounts.lower(), \
                    f"Files should be shared"
 
-
 @then('all should use my SSH keys')
 def step_all_use_ssh_keys(context):
     """Verify all VMs use configured SSH keys."""
     ssh_dir = Path.home() / '.ssh'
     assert ssh_dir.exists(), "SSH keys should be configured for VMs to use"
-
 
 @then('all should work with the same configuration')
 def step_all_same_config(context):
@@ -179,13 +142,11 @@ def step_all_same_config(context):
     configs_dir = VDE_ROOT / "configs" / "docker"
     assert configs_dir.exists(), "VM configurations should exist"
 
-
 @then('both connections should work')
 def step_both_connections_work(context):
     """Verify both SSH connections work."""
     running = docker_ps()
     assert len(running) >= 2, "At least 2 VMs should be running for both connections"
-
 
 @then('both should be accessible via SSH')
 def step_both_accessible_ssh(context):
@@ -193,17 +154,7 @@ def step_both_accessible_ssh(context):
     running = docker_ps()
     assert len(running) >= 2, "At least 2 VMs should be running"
 
-
-
-
-
-
-
-
-
-
     assert result.returncode == 0, "Should be able to list VMs"
-
 
 @then('"start-virtual js", "start-virtual node", "start-virtual nodejs" all work')
 def step_all_node_aliases_work(context):
@@ -215,7 +166,6 @@ def step_all_node_aliases_work(context):
         all_work = all_work and (result.returncode in [0, 1])  # 0=success, 1=already exists
     assert all_work, "All node aliases should work with vde create command"
 
-
 @then('"Go Language" should appear in list-vms output')
 def step_go_language_in_list(context):
     """Verify Go Language appears in vde list output."""
@@ -224,7 +174,6 @@ def step_go_language_in_list(context):
     assert 'go' in output or 'golang' in output, \
            f"Go should appear in list"
 
-
 @then('aliases should show in list-vms output')
 def step_aliases_show_in_list(context):
     """Verify aliases show in vde list output."""
@@ -232,7 +181,6 @@ def step_aliases_show_in_list(context):
     output = result.stdout.lower()
     assert 'vm' in output or 'type' in output, \
            f"List output should show VM info"
-
 
 @then('I can use any alias to reference the VM')
 def step_can_use_any_alias(context):
