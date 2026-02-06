@@ -64,11 +64,10 @@ This document provides a summary of all remaining sub-plans. Each can be expande
 
 ## Tier 2: Core User Features
 
-### Plan 33d: Natural Language Commands
+### Plan 33d: Natural Language Commands ✓ COMPLETED
 **Feature**: `tests/features/docker-required/natural-language-commands.feature`  
-**Priority**: HIGH  
-**Undefined Steps**: ~35  
-**Scenarios**: 15
+**Status**: ✓ COMPLETED (2026-02-06)
+**Steps**: 53 implemented, 0 undefined
 
 **Key Areas**:
 - Intent detection (list, create, start, stop, restart, status, connect, help)
