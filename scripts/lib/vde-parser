@@ -78,6 +78,15 @@ _build_alias_map() {
                 fi
             done
         fi
+
+        # Also add display name (in lowercase) to support natural language like "JavaScript"
+        local display_name
+        display_name=$(get_vm_info display "$vm" 2>/dev/null)
+        if [ -n "$display_name" ]; then
+            local display_lower
+            display_lower=$(echo "$display_name" | tr '[:upper:]' '[:lower:]')
+            _assoc_set "VM_ALIAS_MAP" "$display_lower" "$vm"
+        fi
     done
 
     _VM_ALIAS_MAP_BUILT=1
