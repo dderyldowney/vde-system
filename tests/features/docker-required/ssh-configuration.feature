@@ -1,11 +1,13 @@
 # language: en
 @wip
 @user-guide-ssh-keys
+@requires-docker-ssh
 Feature: SSH Configuration
   As a developer
   I want automatic SSH agent forwarding and key management
   So that I can seamlessly access VMs and external services
 
+  @requires-ssh-agent
   Scenario: Automatically start SSH agent if not running
     Given SSH agent is not running
     And SSH keys exist in ~/.ssh/
@@ -13,12 +15,14 @@ Feature: SSH Configuration
     Then SSH agent should be started
     And available SSH keys should be loaded into agent
 
+  @requires-ssh-agent
   Scenario: Generate SSH key if none exists
     Given no SSH keys exist in ~/.ssh/
     When I run any VDE command that requires SSH
     Then an ed25519 SSH key should be generated
     And the public key should be synced to public-ssh-keys directory
 
+  @requires-ssh-agent
   Scenario: Sync public keys to VDE directory
     Given SSH keys exist in ~/.ssh/
     When I run "sync_ssh_keys_to_vde"
@@ -26,12 +30,14 @@ Feature: SSH Configuration
     And only .pub files should be copied
     And .keep file should exist in public-ssh-keys directory
 
+  @requires-ssh-agent
   Scenario: Validate public key files only
     Given public-ssh-keys directory contains files
     When private key detection runs
     Then non-.pub files should be rejected
     And files containing "PRIVATE KEY" should be rejected
 
+  @requires-docker-ssh
   Scenario: Create SSH config entry for new VM
     Given VM "python" is created with SSH port "2200"
     When SSH config is generated
@@ -39,11 +45,13 @@ Feature: SSH Configuration
     And SSH config should contain "Port 2200"
     And SSH config should contain "ForwardAgent yes"
 
+  @requires-docker-ssh
   Scenario: SSH config uses correct identity file
     Given primary SSH key is "id_ed25519"
     When SSH config entry is created for VM "python"
     Then SSH config should contain "IdentityFile" pointing to "~/.ssh/id_ed25519"
 
+  @requires-docker-ssh
   Scenario: Generate VM-to-VM SSH config entries
     Given VM "python" is allocated port "2200"
     And VM "rust" is allocated port "2201"
@@ -52,29 +60,34 @@ Feature: SSH Configuration
     And SSH config should contain entry for "rust-dev"
     And each entry should use "localhost" as hostname
 
+  @requires-docker-ssh
   Scenario: Prevent duplicate SSH config entries
     Given SSH config already contains "Host python-dev"
     When I create VM "python" again
     Then duplicate SSH config entry should NOT be created
     And command should warn about existing entry
 
+  @requires-docker-ssh
   Scenario: Atomic SSH config update prevents corruption
     Given SSH config file exists
     When multiple processes try to update SSH config simultaneously
     Then SSH config should remain valid
     And no partial updates should occur
 
+  @requires-docker-ssh
   Scenario: Backup SSH config before modification
     Given SSH config file exists
     When SSH config is updated
     Then backup file should be created in "backup/ssh/" directory
     And backup filename should contain timestamp
 
+  @requires-docker-ssh
   Scenario: Remove SSH config entry when VM is removed
     Given SSH config contains "Host python-dev"
     When VM "python" is removed
     Then SSH config should NOT contain "Host python-dev"
 
+  @requires-docker-ssh
   Scenario: VM-to-VM communication uses agent forwarding
     Given SSH agent is running
     And keys are loaded into agent
@@ -82,6 +95,7 @@ Feature: SSH Configuration
     Then the connection should use host's SSH keys
     And no keys should be stored on containers
 
+  @requires-ssh-agent
   Scenario: Detect all common SSH key types
     Given ~/.ssh/ contains SSH keys
     When detect_ssh_keys runs
@@ -90,6 +104,7 @@ Feature: SSH Configuration
     And "id_ecdsa" keys should be detected
     And "id_dsa" keys should be detected
 
+  @requires-ssh-agent
   Scenario: Prefer ed25519 keys when multiple exist
     Given both "id_ed25519" and "id_rsa" keys exist
     When primary SSH key is requested
@@ -131,6 +146,7 @@ Feature: SSH Configuration
     And ~/.ssh/config should still contain "    Port 2200" under python-dev
     And new "Host rust-dev" entry should be added
 
+  @requires-docker-ssh
   Scenario: Merge does not duplicate existing VDE entries
     Given ~/.ssh/config contains "Host python-dev"
     And ~/.ssh/config contains python-dev configuration
@@ -138,6 +154,7 @@ Feature: SSH Configuration
     Then ~/.ssh/config should contain only one "Host python-dev" entry
     And error should indicate entry already exists
 
+  @requires-docker-ssh
   Scenario: Atomic merge prevents corruption if interrupted
     Given ~/.ssh/config exists with content
     When merge_ssh_config_entry starts but is interrupted
@@ -145,6 +162,7 @@ Feature: SSH Configuration
     And ~/.ssh/config should NOT be partially written
     And original config should be preserved in backup
 
+  @requires-docker-ssh
   Scenario: Merge uses temporary file then atomic rename
     Given ~/.ssh/config exists
     When new SSH entry is merged
@@ -153,6 +171,7 @@ Feature: SSH Configuration
     Then atomic mv should replace original config
     Then temporary file should be removed
 
+  @requires-docker-ssh
   Scenario: Merge creates SSH config if it doesn't exist
     Given ~/.ssh/config does not exist
     And ~/.ssh directory exists or can be created
@@ -161,6 +180,7 @@ Feature: SSH Configuration
     And ~/.ssh/config should have permissions "600"
     And ~/.ssh/config should contain "Host python-dev"
 
+  @requires-docker-ssh
   Scenario: Merge creates .ssh directory if needed
     Given ~/.ssh directory does not exist
     When I create VM "python" with SSH port "2200"
@@ -168,6 +188,7 @@ Feature: SSH Configuration
     And ~/.ssh/config should be created
     And directory should have correct permissions
 
+  @requires-docker-ssh
   Scenario: Merge preserves blank lines and formatting
     Given ~/.ssh/config exists with blank lines
     And ~/.ssh/config has comments and custom formatting
@@ -176,6 +197,7 @@ Feature: SSH Configuration
     And ~/.ssh/config comments should be preserved
     And new entry should be added with proper formatting
 
+  @requires-docker-ssh
   Scenario: Merge respects file locking for concurrent updates
     Given ~/.ssh/config exists
     And multiple processes try to add SSH entries simultaneously
@@ -184,6 +206,7 @@ Feature: SSH Configuration
     And no entries should be lost
     And config file should be valid
 
+  @requires-docker-ssh
   Scenario: Merge creates backup before any modification
     Given ~/.ssh/config exists
     When I create VM "python" with SSH port "2200"
