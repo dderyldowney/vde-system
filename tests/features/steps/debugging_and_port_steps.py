@@ -144,14 +144,6 @@ def step_see_process(context):
     assert output, "Expected port usage information"
 
 
-@then(u'I should see which process is using it')
-def step_see_process(context):
-    """Verify process using port is visible."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['process', 'port', 'using', 'pid']), \
-        f"Expected process information: {output}"
-
-
 @then(u'I can decide to stop the conflicting process')
 def step_decide_to_stop(context):
     """Verify ability to stop conflicting process."""
@@ -217,14 +209,6 @@ def step_identify_db_issue(context):
     assert output, "Expected database connection output"
 
 
-@then(u'I can see if the issue is network, credentials, or database state')
-def step_identify_db_issue(context):
-    """Verify ability to identify database issue."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['network', 'credential', 'database', 'state']), \
-        f"Expected database issue identification: {output}"
-
-
 # =============================================================================
 # Rebuild and Fresh Start Patterns
 # =============================================================================
@@ -275,13 +259,6 @@ def step_start_again(context):
     context.vde_command_result = result
 
 
-@then(u'I should get a fresh container')
-def step_fresh_container(context):
-    """Verify fresh container is created."""
-    # This would verify new container
-    assert True  # Best effort
-
-
 @when(u'I remove the VM directory')
 def step_remove_vm_dir(context):
     """Remove VM directory."""
@@ -291,10 +268,6 @@ def step_remove_vm_dir(context):
         context.vm_dir_removed = result.returncode == 0
     else:
         context.vm_dir_removed = True
-
-
-@when(u'I recreate the VM')
-def step_recreate_vm(context):
 
 
 @when(u'I recreate the VM')
