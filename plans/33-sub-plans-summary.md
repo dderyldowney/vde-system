@@ -9,11 +9,15 @@ This document provides a summary of all remaining sub-plans. Each can be expande
 
 ## Tier 1: Critical Infrastructure
 
-### Plan 33b: Error Handling and Recovery
+### Plan 33a: Docker Operations ✓ COMPLETED
+**Feature**: `tests/features/docker-required/docker-operations.feature`  
+**Status**: ✓ COMPLETED (2026-02-06)
+**Steps**: 81 implemented, 0 undefined
+
+### Plan 33b: Error Handling and Recovery ✓ COMPLETED
 **Feature**: `tests/features/docker-required/error-handling-and-recovery.feature`  
-**Priority**: CRITICAL  
-**Undefined Steps**: ~45  
-**Scenarios**: 15
+**Status**: ✓ COMPLETED (2026-02-06)
+**Steps**: 80 implemented, 0 undefined
 
 **Key Areas**:
 - Invalid VM name handling
