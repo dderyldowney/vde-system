@@ -17,6 +17,46 @@ from ssh_helpers import run_vde_command
 from vm_common import docker_ps
 
 # =============================================================================
+# SSH CONNECTION GIVEN steps
+# =============================================================================
+
+@given('I have set up SSH keys')
+def step_have_ssh_keys(context):
+    """Context: SSH keys have been set up for authentication."""
+    ssh_dir = Path.home() / '.ssh' / 'vde'
+    ssh_dir.mkdir(parents=True, exist_ok=True)
+    
+    private_key = ssh_dir / 'id_rsa'
+    public_key = ssh_dir / 'id_rsa.pub'
+    
+    # Create keys if they don't exist
+    if not private_key.exists():
+        subprocess.run(
+            ['ssh-keygen', '-t', 'rsa', '-b', '4096', '-N', '', '-f', str(private_key)],
+            capture_output=True
+        )
+    
+    context.ssh_keys_setup = private_key.exists() and public_key.exists()
+
+
+@given('I have a web service running in a VM')
+def step_web_service_in_vm(context):
+    """Context: A web service is running inside a VM container."""
+    running = docker_ps()
+    if running:
+        vm = list(running)[0]
+        # Check if any port is exposed
+        result = subprocess.run(
+            ['docker', 'port', vm],
+            capture_output=True, text=True, timeout=10
+        )
+        context.web_service_running = result.returncode == 0
+        context.web_service_vm = vm
+    else:
+        context.web_service_running = False
+
+
+# =============================================================================
 # SSH CONNECTION THEN steps
 # =============================================================================
 
