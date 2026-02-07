@@ -269,6 +269,45 @@ _SCENARIO_REQUIREMENTS = {
         'create': ['python'],  # Create but don't start (tests port allocation)
         'start': [],
     },
+    # ============================================================================
+    # Multi-Project Workflow Scenarios
+    # ============================================================================
+    "Setting up a web development project": {
+        'create': [],  # Tests creating - don't pre-create
+        'start': [],
+    },
+    "Switching from web to backend project": {
+        'create': ['js', 'nginx', 'python', 'postgres'],
+        'start': ['js', 'nginx'],  # Web containers should be running
+    },
+    "New Project Setup - Start Development Stack": {
+        'create': ['python', 'postgres'],
+        'start': [],  # Scenario tests starting
+    },
+    "Setting up a microservices architecture": {
+        'create': [],  # Tests creating - don't pre-create
+        'start': [],
+    },
+    "Starting all microservices at once": {
+        'create': ['go', 'rust', 'nginx'],
+        'start': [],  # Scenario tests starting all services
+    },
+    "Data science project setup": {
+        'create': ['python', 'r'],
+        'start': [],  # Scenario tests starting
+    },
+    "Full stack web application": {
+        'create': [],  # Tests creating - don't pre-create
+        'start': [],
+    },
+    "Mobile development with backend": {
+        'create': ['flutter', 'postgres'],
+        'start': [],  # Scenario tests starting
+    },
+    "Cleaning up between projects": {
+        'create': ['python', 'postgres', 'js', 'nginx'],
+        'start': ['python', 'postgres', 'js', 'nginx'],  # All should be running to test cleanup
+    },
 }
 
 
@@ -319,10 +358,15 @@ def before_scenario(context, scenario):
     This hook:
     1. Evaluates the current Docker state
     2. Sets up the environment for daily-workflow scenarios
-    3. Resets cache for cache-system scenarios
+    3. Sets up the environment for multi-project-workflow scenarios
+    4. Resets cache for cache-system scenarios
     """
     # Set up daily-workflow environment
     if scenario.feature.name == "Daily Development Workflow":
+        _setup_scenario_environment(scenario.name)
+
+    # Set up multi-project-workflow environment
+    if scenario.feature.name == "Multi-Project Workflow":
         _setup_scenario_environment(scenario.name)
 
     # Only reset cache for cache-system feature scenarios

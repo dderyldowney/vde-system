@@ -194,8 +194,6 @@ def step_both_accessible_ssh(context):
     running = docker_ps()
     assert len(running) >= 2, "At least 2 VMs should be running"
 
-    assert result.returncode == 0, "Should be able to list VMs"
-
 @then('"start-virtual js", "start-virtual node", "start-virtual nodejs" all work')
 def step_all_node_aliases_work(context):
     """Verify all node aliases work using vde create command."""

@@ -24,7 +24,7 @@ from tests.features.steps.docker_lifecycle_steps import (
 
 def run_vde_command(args, timeout=30):
     """Execute a VDE command and return results."""
-    vde_script = VDE_ROOT / "vde"
+    vde_script = VDE_ROOT / "scripts" / "vde"
     result = subprocess.run(
         ["zsh", str(vde_script)] + args,
         capture_output=True,
