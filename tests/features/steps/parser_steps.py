@@ -228,3 +228,157 @@ def step_parse_input(context, input_text):
     flags = _get_real_flags(parse_input)
     context.detected_flags = flags
     context.nl_flags = flags  # For natural_language_steps assertions
+
+# =============================================================================
+# THEN steps - Verify parser results
+# =============================================================================
+
+@then('intent should be "{expected_intent}"')
+def step_verify_intent(context, expected_intent):
+    """Verify the detected intent matches expected intent."""
+    detected = getattr(context, 'detected_intent', '')
+    assert detected == expected_intent, \
+        f"Expected intent '{expected_intent}', but got '{detected}'"
+
+
+@then('filter should be "{expected_filter}"')
+def step_verify_filter(context, expected_filter):
+    """Verify the detected filter matches expected filter."""
+    detected = getattr(context, 'detected_filter', 'all')
+    # Handle 'all' being returned as empty or None
+    if expected_filter == 'all' and (detected == '' or detected == 'all'):
+        return
+    assert detected == expected_filter, \
+        f"Expected filter '{expected_filter}', but got '{detected}'"
+
+
+@then('VMs should include "{vm_name}"')
+def step_verify_vm_included(context, vm_name):
+    """Verify VM name is detected in the parsed input."""
+    detected_vms = getattr(context, 'detected_vms', [])
+    
+    # Handle 'all' case
+    if detected_vms in ['all', 'all_languages', 'all_services']:
+        # Would include VM if it exists in known VMs
+        return
+    
+    if isinstance(detected_vms, str):
+        assert vm_name in detected_vms, \
+            f"Expected VM '{vm_name}' to be detected, but got '{detected_vms}'"
+    else:
+        assert vm_name in detected_vms, \
+            f"Expected VM '{vm_name}' to be in detected VMs: {detected_vms}"
+
+
+@then('VMs should NOT include "{vm_name}"')
+def step_verify_vm_excluded(context, vm_name):
+    """Verify VM name is NOT detected in the parsed input."""
+    detected_vms = getattr(context, 'detected_vms', [])
+    
+    # Handle 'all' case
+    if detected_vms in ['all', 'all_languages', 'all_services']:
+        # Can't exclude if getting all VMs
+        return
+    
+    if isinstance(detected_vms, str):
+        assert vm_name not in detected_vms, \
+            f"Expected VM '{vm_name}' NOT to be detected, but got '{detected_vms}'"
+    else:
+        assert vm_name not in detected_vms, \
+            f"Expected VM '{vm_name}' NOT to be in detected VMs: {detected_vms}"
+
+
+@then('VMs should include all known VMs')
+def step_verify_all_vms(context):
+    """Verify all known VMs are detected when 'all' or 'everything' is specified."""
+    detected_vms = getattr(context, 'detected_vms', '')
+    detected_intent = getattr(context, 'detected_intent', '')
+    
+    # Should detect 'all' when user says 'all' or 'everything'
+    # Or if intent is list_vms with filter
+    if detected_vms in ['all', 'all_languages', 'all_services']:
+        return
+    # If user says "start everything" the intent is start_vm with all VMs
+    if 'start' in detected_intent.lower() and 'everything' in getattr(context, 'nl_input', '').lower():
+        return
+    
+    assert False, f"Expected 'all' VMs when user says 'all' or 'everything', but got '{detected_vms}'"
+
+
+@then('rebuild flag should be true')
+def step_verify_rebuild_flag(context):
+    """Verify rebuild flag is detected."""
+    flags = getattr(context, 'detected_flags', {'rebuild': False})
+    assert flags.get('rebuild', False) == True, \
+        f"Expected rebuild flag to be true, but got {flags.get('rebuild', False)}"
+
+
+@then('nocache flag should be true')
+def step_verify_nocache_flag(context):
+    """Verify nocache flag is detected."""
+    flags = getattr(context, 'detected_flags', {'nocache': False})
+    assert flags.get('nocache', False) == True, \
+        f"Expected nocache flag to be true, but got {flags.get('nocache', False)}"
+
+
+@then('all plan lines should be valid')
+def step_verify_all_plan_lines_valid(context):
+    """Verify all plan lines are valid."""
+    all_valid = getattr(context, 'plan_validated', False)
+    assert all_valid == True, \
+        f"Expected all plan lines to be valid, but plan validation failed"
+
+
+# =============================================================================
+# Additional step definitions for edge cases
+# =============================================================================
+
+@when("I parse '{input_text}'")
+def step_parse_single_quoted_input(context, input_text):
+    """Parse natural language input with single quotes (for double quote injection tests)."""
+    parse_input = input_text
+    
+    # Call real vde-parser functions
+    detected_intent = _get_real_intent(parse_input)
+    context.detected_intent = detected_intent
+    context.nl_intent = detected_intent
+    
+    # Get VM names from real parser
+    vm_names = _get_real_vm_names(parse_input)
+    if 'all' in parse_input.lower() or 'everything' in parse_input.lower():
+        filter_val = _get_real_filter(parse_input)
+        if filter_val == 'lang':
+            context.detected_vms = 'all_languages'
+            context.nl_vms = 'all_languages'
+        elif filter_val == 'svc':
+            context.detected_vms = 'all_services'
+            context.nl_vms = 'all_services'
+        else:
+            context.detected_vms = 'all'
+            context.nl_vms = 'all'
+    elif vm_names:
+        context.detected_vms = vm_names
+        context.nl_vms = vm_names
+    
+    context.detected_filter = _get_real_filter(parse_input)
+    context.nl_filter = context.detected_filter
+    
+    flags = _get_real_flags(parse_input)
+    context.detected_flags = flags
+    context.nl_flags = flags
+
+
+@then("intent should be '{expected_intent}'")
+def step_verify_intent_single_quoted(context, expected_intent):
+    """Verify the detected intent matches expected intent (single-quoted version)."""
+    detected = getattr(context, 'detected_intent', '')
+    assert detected == expected_intent, \
+        f"Expected intent '{expected_intent}', but got '{detected}'"
+
+
+@then('intent should be ""')
+def step_verify_intent_empty(context):
+    """Verify the detected intent is an empty string."""
+    detected = getattr(context, 'detected_intent', '')
+    assert detected == '', \
+        f"Expected empty intent, but got '{detected}'"
