@@ -14,7 +14,7 @@ from behave import given, then
 
 from config import VDE_ROOT
 from ssh_helpers import container_exists
-from vm_common import docker_ps
+from vm_common import docker_list_containers
 
 # =============================================================================
 # SSH CONNECTION CONTEXT GIVEN steps
@@ -35,22 +35,13 @@ def step_have_ssh_connection_details(context):
 
 @then('I should be logged in as devuser')
 def step_logged_in_devuser(context):
-    """Verify logged in as devuser - check actual container or verify config."""
-    running = docker_ps()
-    if running:
-        vm = list(running)[0]
-        result = subprocess.run(
-            ['docker', 'exec', vm, 'whoami'],
-            capture_output=True, text=True, timeout=10
-        )
-        assert result.returncode == 0, f"Should be able to execute whoami in {vm}"
-        assert result.stdout.strip() == 'devuser', f"Expected devuser but got: {result.stdout.strip()}"
-    else:
-        # Fallback: verify config uses devuser
-        compose_path = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
-        if compose_path.exists():
-            content = compose_path.read_text()
-            assert 'devuser' in content.lower(), "VDE should use devuser as default user"
-        else:
-            assert False, "No VMs running and no config to verify"
+    """Verify logged in as devuser via SSH."""
+    # Use SSH to connect and run whoami as devuser
+    result = subprocess.run(
+        ['ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null',
+         'python-dev', 'whoami'],
+        capture_output=True, text=True, timeout=30
+    )
+    assert result.returncode == 0, f"SSH connection failed: {result.stderr}"
+    assert result.stdout.strip() == 'devuser', f"Expected devuser but got: {result.stdout.strip()}"
     context.user_is_devuser = True

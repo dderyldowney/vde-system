@@ -24,6 +24,7 @@ fi
 # -----------------------
 QUIET=false
 VERBOSE=false
+START_VM=true  # Default: start VM after creation
 
 # -----------------------
 # Usage
@@ -41,10 +42,12 @@ Options:
   -h, --help     Show this help message
   -q, --quiet    Suppress progress indicators
   -v, --verbose  Show detailed output
+  --no-start     Don't start the VM after creation
 
 Examples:
-  create-virtual-for python    # Create Python language VM
-  create-virtual-for postgres  # Create PostgreSQL service VM
+  create-virtual-for python    # Create and start Python language VM
+  create-virtual-for postgres  # Create and start PostgreSQL service VM
+  create-virtual-for python --no-start  # Create only, don't start
 
 The script will:
   1. Validate the VM name (follows naming convention)
@@ -53,13 +56,7 @@ The script will:
   4. Create required directories (projects/ or data/, logs/)
   5. Create environment file (env-files/)
   6. Add SSH config entry to ~/.ssh/config
-
-Known VMs:
-$(show_known_vms)
-
-Naming Convention:
-  Language VMs: <name>-dev (e.g., python-dev, rust-dev)
-  Service VMs: <name> (e.g., postgres, redis)
+  7. Start the VM (unless --no-start is specified)
 
 EOF
 }
@@ -81,6 +78,10 @@ while [[ $# -gt 0 ]]; do
         -v|--verbose)
             VERBOSE=true
             export VDE_ERRORS_VERBOSE=1
+            shift
+            ;;
+        --no-start)
+            START_VM=false
             shift
             ;;
         -*)
@@ -269,6 +270,21 @@ else
 fi
 
 # -----------------------
+# Start the VM (unless disabled)
+# -----------------------
+if [[ "$START_VM" == "true" ]]; then
+    vde_progress_info "Starting VM..."
+    
+    # Use docker-compose directly to start the VM
+    compose_file="$CONFIGS_DIR/$VM_NAME/docker-compose.yml"
+    if docker-compose -f "$compose_file" up -d 2>/dev/null; then
+        vde_progress_done "Started VM: $VM_NAME"
+    else
+        vde_progress_warning "Failed to start VM: $VM_NAME"
+    fi
+fi
+
+# -----------------------
 # Summary
 # -----------------------
 echo ""
@@ -288,9 +304,4 @@ echo "SSH Configuration:"
 echo "  - Host alias: $ssh_host"
 echo "  - SSH port: $SSH_PORT"
 echo "  - Connect with: ssh $ssh_host"
-echo ""
-echo "Next steps:"
-echo "  1. Review and customize env-files/$VM_NAME.env if needed"
-echo "  2. Start the VM: ./scripts/start-virtual $VM_NAME"
-echo "  3. Connect: ssh $ssh_host"
 echo ""

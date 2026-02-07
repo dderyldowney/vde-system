@@ -51,6 +51,7 @@ _VDE_COMMANDS=(
     "create:Create a new VM:create-virtual-for"
     "start:Start a VM:start-virtual"
     "stop:Stop a VM:shutdown-virtual"
+    "restart:Restart a VM:restart-virtual"
     "ssh:SSH into a VM:ssh-vm"
     "remove:Remove a VM:remove-virtual"
     "uninstall:Uninstall a language/service:uninstall-vm-type"
@@ -161,6 +162,9 @@ vde_find_command_script() {
             ;;
         stop|shutdown-virtual)
             script="$VDE_ROOT_DIR/scripts/shutdown-virtual"
+            ;;
+        restart|restart-virtual)
+            script="$VDE_ROOT_DIR/scripts/restart-virtual"
             ;;
         ssh|ssh-vm)
             script="$VDE_ROOT_DIR/scripts/ssh-vm"

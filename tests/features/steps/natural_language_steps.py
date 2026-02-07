@@ -167,7 +167,7 @@ def step_python_postgres_created(context):
 @then(u'all language VMs should start')
 def step_all_language_vms_start(context):
     """Verify all language VMs start."""
-    result = run_vde_command(["start", "all", "--language"])
+    result = run_vde_command(["start", "all"])
     context.last_output = result["stdout"]
     context.last_exit_code = result["exit_code"]
     # Should start at least Python and Go if they exist
@@ -224,10 +224,10 @@ def step_js_vm_created(context):
 @then(u'"pg" should mean "postgres"')
 def step_pg_means_postgres(context):
     """Verify "pg" alias resolves to "postgres"."""
-    result = run_vde_command(["create", "pg"])
+    result = run_vde_command(["status", "pg"])
     context.last_output = result["stdout"]
     context.last_exit_code = result["exit_code"]
-    assert result["exit_code"] == 0, \
+    assert result["exit_code"] == 0 and "postgres" in result["stdout"].lower(), \
         f"'pg' should mean 'postgres': {result}"
 
 
@@ -496,7 +496,7 @@ def step_say_rebuild_python(context):
 @when(u'I say "start all languages"')
 def step_say_start_all_languages(context):
     """Execute start all languages command."""
-    result = run_vde_command(["start", "all", "--language"])
+    result = run_vde_command(["start", "all"])
     context.last_output = result["stdout"]
     context.last_exit_code = result["exit_code"]
 

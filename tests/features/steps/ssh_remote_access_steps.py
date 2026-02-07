@@ -16,7 +16,7 @@ from behave import given, then, when
 
 from config import VDE_ROOT
 from ssh_helpers import run_vde_command, container_exists
-from vm_common import docker_ps
+from vm_common import docker_list_containers
 
 # =============================================================================
 # SSH CONNECTION GIVEN steps
@@ -25,10 +25,10 @@ from vm_common import docker_ps
 @given('I am connected via SSH')
 def step_connected_via_ssh(context):
     """Context: User has an active SSH connection."""
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
         context.ssh_connected = True
-        context.connected_vm = list(running)[0]
+        context.connected_vm = running[0]
     else:
         context.ssh_connected = False
 
@@ -36,10 +36,10 @@ def step_connected_via_ssh(context):
 @given('I connect via SSH')
 def step_connect_via_ssh(context):
     """Context: User is connecting via SSH."""
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
         context.ssh_connecting = True
-        context.connecting_vm = list(running)[0]
+        context.connecting_vm = running[0]
     else:
         context.ssh_connecting = False
 
@@ -51,7 +51,7 @@ def step_connect_via_ssh(context):
 @then('I should connect to the Python VM')
 def step_connect_python_vm(context):
     """Verify connection to Python VM - SSH or docker exec."""
-    running = docker_ps()
+    running = docker_list_containers()
     python_vms = [vm for vm in running if 'python' in vm.lower()]
     assert len(python_vms) > 0, "Python VM should be running"
     context.connected_vm = python_vms[0]
@@ -66,13 +66,15 @@ def step_connect_python_vm(context):
 
 @then('I should have a zsh shell')
 def step_have_zsh_shell(context):
-    """Verify zsh shell is available."""
-    running = docker_ps()
+    """Verify zsh shell is available via SSH."""
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
+        # Use SSH to check the shell
         result = subprocess.run(
-            ['docker', 'exec', vm, 'echo', '$SHELL'],
-            capture_output=True, text=True, timeout=10
+            ['ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null',
+             vm, 'echo $SHELL'],
+            capture_output=True, text=True, timeout=30
         )
         if result.returncode == 0:
             assert 'zsh' in result.stdout, f"Expected zsh shell, got: {result.stdout}"
@@ -142,9 +144,9 @@ def step_connect_remote_ssh(context):
 @then('my workspace should be mounted')
 def step_workspace_mounted(context):
     """Verify workspace directory is mounted in container."""
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
         # Check if workspace is mounted
         result = subprocess.run(
             ['docker', 'exec', vm, 'ls', '-la', str(Path.home())],
@@ -271,9 +273,9 @@ def step_need_admin_tasks(context):
 @when('I run sudo commands in the container')
 def step_run_sudo_commands(context):
     """Execute sudo command in container."""
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
         result = subprocess.run(
             ['docker', 'exec', vm, 'sudo', 'whoami'],
             capture_output=True, text=True, timeout=10
@@ -286,9 +288,9 @@ def step_run_sudo_commands(context):
 def step_sudo_no_password(context):
     """Verify sudo doesn't require password."""
     # Check sudoers configuration or NOPASSWD setting
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
         # Try running sudo without password
         result = subprocess.run(
             ['docker', 'exec', vm, 'sudo', '-n', 'whoami'],
@@ -304,14 +306,15 @@ def step_sudo_no_password(context):
 
 @then('I should have the necessary permissions')
 def step_have_permissions(context):
-    """Verify user has required permissions."""
-    # Check if user is in sudo group or has sudo access
-    running = docker_ps()
+    """Verify user has required permissions via SSH."""
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
+        # Use SSH to check devuser's groups
         result = subprocess.run(
-            ['docker', 'exec', vm, 'groups'],
-            capture_output=True, text=True, timeout=10
+            ['ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null',
+             vm, 'groups'],
+            capture_output=True, text=True, timeout=30
         )
         if result.returncode == 0:
             # devuser should be in sudo group
@@ -333,13 +336,15 @@ def step_start_shell(context):
 
 @then('I should be using zsh')
 def step_using_zsh(context):
-    """Verify zsh is the default shell."""
-    running = docker_ps()
+    """Verify zsh is the default shell via SSH."""
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
+        # Use SSH to check the shell (expands $SHELL properly)
         result = subprocess.run(
-            ['docker', 'exec', vm, 'echo', '$SHELL'],
-            capture_output=True, text=True, timeout=10
+            ['ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null',
+             vm, 'echo $SHELL'],
+            capture_output=True, text=True, timeout=30
         )
         if result.returncode == 0:
             assert 'zsh' in result.stdout, f"Default shell should be zsh, got: {result.stdout}"
@@ -349,9 +354,9 @@ def step_using_zsh(context):
 @then('oh-my-zsh should be configured')
 def step_oh_my_zsh_configured(context):
     """Verify oh-my-zsh is installed and configured."""
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
         oh_my_zsh_path = '/home/devuser/.oh-my-zsh'
         result = subprocess.run(
             ['docker', 'exec', vm, 'ls', '-d', oh_my_zsh_path],
@@ -364,9 +369,9 @@ def step_oh_my_zsh_configured(context):
 @then('my preferred theme should be active')
 def step_theme_active(context):
     """Verify the configured theme is active."""
-    running = docker_ps()
+    running = docker_list_containers()
     assert len(running) > 0, "At least one VM should be running"
-    vm = list(running)[0]
+    vm = running[0]
     result = subprocess.run(
         ['docker', 'exec', vm, 'cat', '/home/devuser/.zshrc'],
         capture_output=True, text=True, timeout=10
@@ -384,9 +389,9 @@ def step_theme_active(context):
 def step_run_nvim(context):
     """Run neovim editor."""
     context.editor = 'nvim'
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
         # Check if nvim is installed
         result = subprocess.run(
             ['docker', 'exec', vm, 'which', 'nvim'],
@@ -400,9 +405,9 @@ def step_run_nvim(context):
 @then('LazyVim should be available')
 def step_lazyvim_available(context):
     """Verify LazyVim configuration is available."""
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
         lazyvim_path = '/home/devuser/.config/nvim'
         result = subprocess.run(
             ['docker', 'exec', vm, 'ls', '-d', lazyvim_path],
@@ -415,9 +420,9 @@ def step_lazyvim_available(context):
 @then('my editor configuration should be loaded')
 def step_editor_config_loaded(context):
     """Verify editor configuration is loaded."""
-    running = docker_ps()
+    running = docker_list_containers()
     assert len(running) > 0, "At least one VM should be running"
-    vm = list(running)[0]
+    vm = running[0]
     config_paths = [
         '/home/devuser/.config/nvim/init.lua',
         '/home/devuser/.vimrc',
@@ -442,9 +447,9 @@ def step_editor_config_loaded(context):
 @given('I am connected to a VM')
 def step_connected_to_vm(context):
     """Context: User has an active VM connection."""
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
-        context.connected_vm = list(running)[0]
+        context.connected_vm = running[0]
         context.vm_connected = True
     else:
         context.vm_connected = False
@@ -480,9 +485,9 @@ def step_permissions_preserved(context):
 @then('I should reach the service')
 def step_reach_service(context):
     """Verify service is accessible via port forward."""
-    running = docker_ps()
+    running = docker_list_containers()
     assert len(running) > 0, "At least one VM should be running"
-    vm = list(running)[0]
+    vm = running[0]
     result = subprocess.run(
         ['docker', 'port', vm],
         capture_output=True, text=True, timeout=10
@@ -493,9 +498,9 @@ def step_reach_service(context):
 @then('the service should be accessible from the host')
 def step_service_from_host(context):
     """Verify service is accessible from host machine."""
-    running = docker_ps()
+    running = docker_list_containers()
     assert len(running) > 0, "At least one VM should be running"
-    vm = list(running)[0]
+    vm = running[0]
     result = subprocess.run(
         ['docker', 'port', vm],
         capture_output=True, text=True, timeout=10
@@ -510,14 +515,15 @@ def step_service_from_host(context):
 
 @given('I have a long-running task in a VM')
 def step_long_running_task(context):
-    """Context: A long-running task is executing in VM."""
-    running = docker_ps()
+    """Context: A long-running task is executing in VM via SSH."""
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
-        # Start a background task
+        vm = running[0]
+        # Start a background task using SSH with nohup
         result = subprocess.run(
-            ['docker', 'exec', vm, 'sleep', '300'],
-            capture_output=True, text=True, timeout=10
+            ['ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null',
+             vm, 'nohup sleep 300 > /dev/null 2>&1 &'],
+            capture_output=True, text=True, timeout=30
         )
         context.task_running = result.returncode == 0
         context.task_vm = vm

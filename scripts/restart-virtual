@@ -1,0 +1,68 @@
+#!/usr/bin/env zsh
+set -e
+
+# Source shared library
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+source "$SCRIPT_DIR/lib/vde-docker-state"
+
+# Parse arguments
+if [[ $# -eq 0 ]]; then
+    echo "Usage: $0 <vm_name1> [vm_name2] ..."
+    echo ""
+    echo "Examples:"
+    echo "  $0 python                    # Restart single VM"
+    echo "  $0 python ruby js           # Restart multiple VMs"
+    echo ""
+    show_known_vms
+    exit 1
+fi
+
+# Parse VMs
+VMS=()
+
+for arg in "$@"; do
+    # Check if it's a known VM or VM type
+    local resolved
+    resolved=$(resolve_vm_name "$arg" 2>/dev/null) || true
+    if [[ -n "$resolved" ]]; then
+        # Only add if it has a compose file
+        local compose_file
+        compose_file=$(get_compose_file "$resolved" 2>/dev/null) || true
+        if [[ -n "$compose_file" && -f "$compose_file" ]]; then
+            VMS+=("$resolved")
+        else
+            log_warning "VM '$arg' not created (no compose file)"
+        fi
+    else
+        log_error "Unknown VM: $arg"
+        exit 1
+    fi
+done
+
+if [[ ${#VMS[@]} -eq 0 ]]; then
+    log_error "No valid VMs to restart"
+    exit 1
+fi
+
+# Restart each VM
+for vm in "${VMS[@]}"; do
+    local compose_file
+    compose_file=$(get_compose_file "$vm")
+    local vm_dir
+    vm_dir=$(dirname "$compose_file")
+
+    echo "Restarting $vm..."
+
+    # Stop the VM
+    cd "$vm_dir"
+    docker-compose down --remove-orphans 2>/dev/null || true
+
+    # Start the VM
+    docker-compose up -d
+
+    echo "Restarted $vm"
+done
+
+echo ""
+echo "Restarted ${#VMS[@]} VM(s)"

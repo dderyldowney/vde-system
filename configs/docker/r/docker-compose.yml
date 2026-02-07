@@ -1,10 +1,15 @@
 # Template for language VMs
-# Variables: r, 2219, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y r-base r-cran-littler
+# Variables: r, 2201, apt-get update -y && apt-get install -y r-base r-cran-littler
 services:
   r-dev:
     build:
-      context: .
-      dockerfile: Dockerfile.base
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-r:latest
     container_name: r-dev
     hostname: r-dev
@@ -12,7 +17,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y r-base r-cran-littler && /usr/sbin/sshd -D"
 
     ports:
-      - "2219:22"
+      - "2201:22"
 
     volumes:
       - ../../../projects/r:/home/devuser/workspace
@@ -23,8 +28,6 @@ services:
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
-      - VDE_HOME=${VDE_HOME:-}
-      - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
       - ../../../env-files/r.env

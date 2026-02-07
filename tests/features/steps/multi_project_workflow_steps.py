@@ -16,6 +16,23 @@ from vm_common import (
     docker_list_containers,
 )
 
+
+# =============================================================================
+# Container Naming Helpers
+# =============================================================================
+
+_SERVICE_VMS = {
+    'redis', 'postgres', 'mongodb', 'mysql', 'nginx',
+    'rabbitmq', 'couchdb'
+}
+
+
+def _get_container_name(vm_name):
+    """Get the container name for a VM."""
+    if vm_name in _SERVICE_VMS:
+        return vm_name
+    return f"{vm_name}-dev"
+
 # =============================================================================
 # PROJECT CONTEXT GIVEN steps (Unique to multi-project workflow)
 # =============================================================================
@@ -34,7 +51,7 @@ def step_web_containers_running(context):
     running = docker_list_containers()
     context.web_containers = []
     for vm in ['js', 'nginx']:
-        container_name = f"vde_{vm}"
+        container_name = _get_container_name(vm)
         if container_name in running:
             context.web_containers.append(container_name)
     context.web_containers_running = len(context.web_containers) > 0
@@ -55,7 +72,7 @@ def step_microservice_vms_created(context):
     context.microservice_vms = ['go', 'rust', 'nginx']
     # Verify all exist using existing verification step pattern
     for vm_name in context.microservice_vms:
-        vm_dir = Path(VDE_ROOT) / vm_name
+        vm_dir = Path(VDE_ROOT) / 'configs' / 'docker' / vm_name
         assert vm_dir.exists(), f"Microservice VM {vm_name} should exist"
 
 
@@ -103,8 +120,8 @@ def step_only_backend_running(context):
     """Verify only backend stack containers are running."""
     running = docker_list_containers()
     backend_vms = ['python', 'postgres']
-    context.backend_running = all(f"vde_{vm}" in running for vm in backend_vms)
-    context.web_stopped = 'vde_js' not in running and 'vde_nginx' not in running
+    context.backend_running = all(_get_container_name(vm) in running for vm in backend_vms)
+    context.web_stopped = _get_container_name('js') not in running and _get_container_name('nginx') not in running
     assert context.backend_running, "Backend VMs should be running"
     assert context.web_stopped, "Web VMs should be stopped"
 
@@ -121,7 +138,7 @@ def step_web_containers_stopped(context):
     """Verify web containers are stopped."""
     running = docker_list_containers()
     context.web_stopped = not any(
-        f'vde_{vm}' in running
+        _get_container_name(vm) in running
         for vm in ['js', 'nginx']
     )
     assert context.web_stopped, "Web containers should be stopped"
@@ -139,7 +156,7 @@ def step_communicate_on_network(context):
     """Verify microservices can communicate on Docker network."""
     running = docker_list_containers()
     for vm_name in context.microservice_vms:
-        assert f"vde_{vm_name}" in running, f"{vm_name} should be running"
+        assert _get_container_name(vm_name) in running, f"{vm_name} should be running"
 
 
 @then('the R VM should start')
@@ -186,10 +203,10 @@ def step_each_ssh_port(context):
     expected_vms = ['go', 'rust', 'nginx']
     ssh_ports = {}
     for vm in expected_vms:
-        if f"vde_{vm}" in running:
+        if _get_container_name(vm) in running:
             # Check that container has SSH exposed
             result = subprocess.run(
-                ["docker", "inspect", f"vde_{vm}", "--format", "{{.Config.ExposedPorts}}"],
+                ["docker", "inspect", _get_container_name(vm), "--format", "{{.Config.ExposedPorts}}"],
                 capture_output=True, text=True
             )
             assert '22' in result.stdout or result.returncode == 0, f"{vm} should have SSH port"
@@ -236,7 +253,8 @@ def step_all_containers_stop(context):
     """Verify all containers are stopped."""
     running = docker_list_containers()
     # Check that no VDE containers are running
-    vde_containers = [c for c in running if 'vde_' in c]
+    all_vms = ['js', 'nginx', 'python', 'postgres', 'redis', 'go', 'rust', 'r', 'flutter', 'mongodb', 'mysql', 'rabbitmq', 'couchdb']
+    vde_containers = [c for c in running if c in [_get_container_name(vm) for vm in all_vms]]
     context.all_stopped = len(vde_containers) == 0
     assert context.all_stopped, "All containers should be stopped"
 
@@ -253,7 +271,8 @@ def step_fresh_environment(context):
 def step_no_leftover_processes(context):
     """Verify no leftover Docker processes remain."""
     running = docker_list_containers()
-    vde_containers = [c for c in running if 'vde_' in c]
+    all_vms = ['js', 'nginx', 'python', 'postgres', 'redis', 'go', 'rust', 'r', 'flutter', 'mongodb', 'mysql', 'rabbitmq', 'couchdb']
+    vde_containers = [c for c in running if c in [_get_container_name(vm) for vm in all_vms]]
     assert len(vde_containers) == 0, "No leftover VDE container processes should exist"
 
 
@@ -266,19 +285,19 @@ def step_javascript_vm_created(context):
 
 @then('both VMs should start')
 def step_both_vms_start(context):
-    """Verify both VMs (JS and nginx) have started."""
+    """Verify both VMs (python and postgres) have started."""
     running = docker_list_containers()
-    for vm_name in ['js', 'nginx']:
-        assert f"vde_{vm_name}" in running, f"{vm_name} VM should be running"
+    for vm_name in ['python', 'postgres']:
+        assert _get_container_name(vm_name) in running, f"{vm_name} VM should be running"
 
 
 @then('all service VMs should start')
 def step_all_service_vms_start(context):
-    """Verify all service VMs (postgres, redis) have started."""
+    """Verify all service VMs (go, rust, nginx) have started."""
     running = docker_list_containers()
-    service_vms = ['postgres', 'redis']
+    service_vms = ['go', 'rust', 'nginx']
     for vm_name in service_vms:
-        assert f"vde_{vm_name}" in running, f"{vm_name} VM should be running"
+        assert _get_container_name(vm_name) in running, f"{vm_name} VM should be running"
 
 
 @then('the Flutter VM should start for mobile development')
@@ -295,13 +314,18 @@ def step_flutter_vm_starts(context):
 def run_vde_command(cmd, timeout=30):
     """Run a VDE command and return result."""
     try:
+        # Handle both string and list inputs
+        if isinstance(cmd, list):
+            cmd_str = ' '.join(cmd)
+        else:
+            cmd_str = cmd
         result = subprocess.run(
-            cmd,
+            f"./scripts/vde {cmd_str}",
             shell=True,
             capture_output=True,
             text=True,
             timeout=timeout,
-            cwd=VDE_ROOT
+            cwd=str(VDE_ROOT)
         )
         return result
     except subprocess.TimeoutExpired:

@@ -14,7 +14,7 @@ from behave import given, then, when
 
 from config import VDE_ROOT
 from ssh_helpers import run_vde_command
-from vm_common import docker_ps
+from vm_common import docker_list_containers
 
 # =============================================================================
 # SSH CONNECTION GIVEN steps
@@ -42,9 +42,9 @@ def step_have_ssh_keys(context):
 @given('I have a web service running in a VM')
 def step_web_service_in_vm(context):
     """Context: A web service is running inside a VM container."""
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
         # Check if any port is exposed
         result = subprocess.run(
             ['docker', 'port', vm],
@@ -63,15 +63,15 @@ def step_web_service_in_vm(context):
 @then('the VM should be ready to use')
 def step_vm_ready_ssh(context):
     """Verify VM is ready - container running."""
-    running = docker_ps()
+    running = docker_list_containers()
     assert len(running) > 0, "At least one VM should be running"
 
 @then('it should be accessible via SSH')
 def step_accessible_ssh(context):
     """Verify VM is accessible via SSH."""
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
         result = subprocess.run(['./scripts/vde', 'port', vm], capture_output=True, text=True)
         if result.returncode == 0:
             assert '22' in result.stdout or '220' in result.stdout, \
@@ -97,9 +97,9 @@ def step_receive_hostname(context):
 @then('I should receive the SSH port')
 def step_receive_ssh_port(context):
     """Verify SSH port is received."""
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
         result = subprocess.run(['./scripts/vde', 'port', vm], capture_output=True, text=True)
         if result.returncode == 0:
             assert '22' in result.stdout or '220' in result.stdout, \
@@ -145,22 +145,22 @@ def step_each_independent(context):
 def step_each_separate_data(context):
     """Verify each VM has separate data directory."""
     configs_dir = VDE_ROOT / "configs" / "docker"
-    if configs_dir.exists():
-        data_dirs = []
-        for vm_dir in configs_dir.iterdir():
-            compose_file = vm_dir / "docker-compose.yml"
-            if compose_file.exists():
-                content = compose_file.read_text()
-                if './data/' in content or 'volumes:' in content:
-                    data_dirs.append(vm_dir.name)
-        assert len(data_dirs) > 0, "VMs should have data volumes configured"
+    assert configs_dir.exists(), f"Configs directory should exist: {configs_dir}"
+    data_dirs = []
+    for vm_dir in configs_dir.iterdir():
+        compose_file = vm_dir / "docker-compose.yml"
+        if compose_file.exists():
+            content = compose_file.read_text()
+            if './data/' in content or 'volumes:' in content:
+                data_dirs.append(vm_dir.name)
+    assert len(data_dirs) > 0, "VMs should have separate data directories configured"
 
 @then('files should be shared between host and VM')
 def step_files_shared_host_vm(context):
     """Verify files are shared between host and VM."""
-    running = docker_ps()
+    running = docker_list_containers()
     if running:
-        vm = list(running)[0]
+        vm = running[0]
         result = subprocess.run(
             ['docker', 'inspect', '-f', '{{json .Mounts}}', vm],
             capture_output=True, text=True
@@ -185,13 +185,13 @@ def step_all_same_config(context):
 @then('both connections should work')
 def step_both_connections_work(context):
     """Verify both SSH connections work."""
-    running = docker_ps()
+    running = docker_list_containers()
     assert len(running) >= 2, "At least 2 VMs should be running for both connections"
 
 @then('both should be accessible via SSH')
 def step_both_accessible_ssh(context):
     """Verify both VMs are accessible via SSH."""
-    running = docker_ps()
+    running = docker_list_containers()
     assert len(running) >= 2, "At least 2 VMs should be running"
 
 @then('"start-virtual js", "start-virtual node", "start-virtual nodejs" all work')

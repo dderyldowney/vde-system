@@ -1,18 +1,23 @@
 # Template for language VMs
-# Variables: flutter, 2217, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y curl git unzip xz-utils zip libglu1-mesa {{INSTALL_CMD}}{{INSTALL_CMD}} su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter {{INSTALL_CMD}}{{INSTALL_CMD}} export PATH="$PATH:/home/devuser/flutter/bin" {{INSTALL_CMD}}{{INSTALL_CMD}} flutter precache'
+# Variables: flutter, 2200, apt-get update -y && apt-get install -y curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH="$PATH:/home/devuser/flutter/bin" && flutter precache'
 services:
   flutter-dev:
     build:
-      context: .
-      dockerfile: Dockerfile.base
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-flutter:latest
     container_name: flutter-dev
     hostname: flutter-dev
     restart: unless-stopped
-    command: sh -c "apt-get update -y && apt-get install -y curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH=\"\$PATH:/home/devuser/flutter/bin\" && flutter precache' && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH="$PATH:/home/devuser/flutter/bin" && flutter precache' && /usr/sbin/sshd -D"
 
     ports:
-      - "2217:22"
+      - "2200:22"
 
     volumes:
       - ../../../projects/flutter:/home/devuser/workspace
@@ -23,8 +28,6 @@ services:
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
-      - VDE_HOME=${VDE_HOME:-}
-      - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
       - ../../../env-files/flutter.env
