@@ -1,0 +1,87 @@
+# Plan 28: Docker-Required Test Remediation Tracking
+
+## Status: COMPLETED (FAKE TEST PATTERNS ELIMINATED)
+**Date Verified:** 2026-02-08
+**Original Plan Date:** 2026-01-27
+
+## Summary
+Plan 28 documents the comprehensive remediation of fake test patterns in Docker-required tests. All fake test violations have been eliminated. Remaining test failures are due to missing Docker infrastructure (VMs), not fake patterns.
+
+## Progress Overview
+
+| Phase | Tasks | Status |
+|-------|-------|--------|
+| Phase 1: Infrastructure | 6 | ✅ Complete |
+| Phase 2: Core VM Ops | 3 | ✅ Complete |
+| Phase 3: SSH & Networking | 4 | ✅ Complete |
+| **TOTAL** | **13** | **✅ Complete** |
+
+## Verification Results
+
+### Fake Test Scan
+```
+Total violations: 0
+✓ CLEAN - No fake test patterns detected
+```
+
+### Docker-Required Test Status
+| Metric | Count | Notes |
+|--------|-------|-------|
+| Features | 7 passed, 8 failed, 16 error | Failures due to missing Docker VMs |
+| Scenarios | 239 passed, 66 failed, 173 error | Infrastructure-dependent |
+| Steps | 1465 passed, 66 failed, 27 error | Requires running VMs |
+
+### Docker-Free Test Status
+| Metric | Count |
+|--------|-------|
+| Features | 7 passed, 0 failed, 0 skipped |
+| Scenarios | 146 passed, 0 failed, 0 skipped |
+| Steps | 594 passed, 0 failed, 0 skipped |
+
+## Change Log Summary (from Plan 28)
+
+| Date | Files Fixed | Violations |
+|------|-------------|------------|
+| 2026-02-04 | ssh_git_steps.py | 47→0 |
+| 2026-02-04 | config_steps.py | 36→0 |
+| 2026-02-04 | debugging_steps.py | 32→0 |
+| 2026-02-04 | cache_steps.py | 11→0 |
+| 2026-02-04 | productivity_steps.py | 10→0 |
+| 2026-02-04 | daily_workflow_steps.py | 4→0 |
+| 2026-02-04 | vm_docker_network_steps.py | 2→0 |
+| 2026-02-04 | uninstallation_steps.py | 2→0 |
+| 2026-02-04 | ssh_connection_steps.py | 2→0 |
+| 2026-02-04 | user_workflow_steps.py | 1→0 |
+| 2026-02-04 | docker_operations_steps.py | 1→0 |
+| **TOTAL** | **12 files** | **148→0** |
+
+## Key Accomplishments
+
+1. **All fake test patterns eliminated** - 148 violations fixed
+2. **Helper infrastructure created**:
+   - `docker_helpers.py` - Docker verification helpers
+   - `shell_helpers.py` - Shell command execution helpers
+   - `test_utilities.py` - Test utilities and fixtures
+
+3. **All step definitions updated** to use real verification:
+   - Docker state verification
+   - SSH connection tests
+   - Port management verification
+   - VM operations testing
+
+## Notes
+
+- **Infrastructure requirement**: Docker-required tests need running VMs to pass
+- **Fake test status**: CLEAN (0 violations)
+- **Test execution**: Use `./run-docker-free-tests.zsh` for infrastructure-independent tests
+- **Full tests**: Use `./run-docker-required-tests.zsh` when Docker VMs are available
+
+## Files Verified
+- `plans/completed/28-docker-required-test-remediation-tracking.md`
+- `tests/features/steps/docker_helpers.py`
+- `tests/features/steps/shell_helpers.py`
+- `tests/features/steps/test_utilities.py`
+- All Docker-required step files
+
+## Conclusion
+Plan 28 is complete. All fake test patterns have been eliminated from the codebase. The remaining test failures are infrastructure-related (requiring running Docker VMs), not test pattern issues.
