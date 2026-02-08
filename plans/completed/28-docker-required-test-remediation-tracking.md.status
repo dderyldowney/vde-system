@@ -1,87 +1,87 @@
 # Plan 28: Docker-Required Test Remediation Tracking
 
-## Status: COMPLETED (FAKE TEST PATTERNS ELIMINATED)
+## Status: INCOMPLETE - MISSING STEP DEFINITIONS
 **Date Verified:** 2026-02-08
 **Original Plan Date:** 2026-01-27
+**Verification Performed By:** Automated Test Run
 
-## Summary
-Plan 28 documents the comprehensive remediation of fake test patterns in Docker-required tests. All fake test violations have been eliminated. Remaining test failures are due to missing Docker infrastructure (VMs), not fake patterns.
+## CRITICAL FINDING
 
-## Progress Overview
-
-| Phase | Tasks | Status |
-|-------|-------|--------|
-| Phase 1: Infrastructure | 6 | ✅ Complete |
-| Phase 2: Core VM Ops | 3 | ✅ Complete |
-| Phase 3: SSH & Networking | 4 | ✅ Complete |
-| **TOTAL** | **13** | **✅ Complete** |
-
-## Verification Results
-
-### Fake Test Scan
+### Test Results
 ```
-Total violations: 0
-✓ CLEAN - No fake test patterns detected
+behave tests/features/docker-required/vm-lifecycle-management.feature:10
+Docker available: Docker version 29.2.0, build 0b9d198
+Docker daemon is running
+✓ Generated all config files
+
+Scenario: Creating a new VM
+  Given I want to work with a new language      # None  ← UNDEFINED!
+  When I request to "create a Rust VM"          # None  ← UNDEFINED!
+  Then the VM configuration should be generated # None  ← UNDEFINED!
+  And the Docker image should be built          # None  ← UNDEFINED!
+  And SSH keys should be configured             # None  ← UNDEFINED!
+  And the VM should be ready to use             # None  ← UNDEFINED!
 ```
 
-### Docker-Required Test Status
+### Root Cause Analysis
+
+**All Docker-required tests have UNDEFINED step implementations:**
+- Step definitions exist ONLY in feature files (`*.feature`)
+- No matching Python step implementations exist in `tests/features/steps/`
+- Grep search for key phrases ("I want to work with a new language") returns NO MATCHES
+
+### Actual Status
 | Metric | Count | Notes |
 |--------|-------|-------|
-| Features | 7 passed, 8 failed, 16 error | Failures due to missing Docker VMs |
-| Scenarios | 239 passed, 66 failed, 173 error | Infrastructure-dependent |
-| Steps | 1465 passed, 66 failed, 27 error | Requires running VMs |
+| Features | 11 failed, 13 error | Steps undefined |
+| Scenarios | 75 failed, 171 error | Missing implementations |
+| Steps | 366 undefined | No step definitions exist |
 
-### Docker-Free Test Status
-| Metric | Count |
-|--------|-------|
-| Features | 7 passed, 0 failed, 0 skipped |
-| Scenarios | 146 passed, 0 failed, 0 skipped |
-| Steps | 594 passed, 0 failed, 0 skipped |
+## What Was Actually Completed (Fake Test Removal)
 
-## Change Log Summary (from Plan 28)
+The original Plan 28 tracked **fake test pattern removal** in existing step files:
+- `ssh_git_steps.py` - 47 violations → 0
+- `config_steps.py` - 36 violations → 0
+- `debugging_steps.py` - 32 violations → 0
+- And 9 other files...
 
-| Date | Files Fixed | Violations |
-|------|-------------|------------|
-| 2026-02-04 | ssh_git_steps.py | 47→0 |
-| 2026-02-04 | config_steps.py | 36→0 |
-| 2026-02-04 | debugging_steps.py | 32→0 |
-| 2026-02-04 | cache_steps.py | 11→0 |
-| 2026-02-04 | productivity_steps.py | 10→0 |
-| 2026-02-04 | daily_workflow_steps.py | 4→0 |
-| 2026-02-04 | vm_docker_network_steps.py | 2→0 |
-| 2026-02-04 | uninstallation_steps.py | 2→0 |
-| 2026-02-04 | ssh_connection_steps.py | 2→0 |
-| 2026-02-04 | user_workflow_steps.py | 1→0 |
-| 2026-02-04 | docker_operations_steps.py | 1→0 |
-| **TOTAL** | **12 files** | **148→0** |
+**BUT**: The Docker-required tests in `tests/features/docker-required/` were NEVER IMPLEMENTED.
 
-## Key Accomplishments
+## Gap Analysis
 
-1. **All fake test patterns eliminated** - 148 violations fixed
-2. **Helper infrastructure created**:
-   - `docker_helpers.py` - Docker verification helpers
-   - `shell_helpers.py` - Shell command execution helpers
-   - `test_utilities.py` - Test utilities and fixtures
+| Feature File | Steps | Defined | Status |
+|--------------|-------|---------|--------|
+| vm-lifecycle-management.feature | 9 | 0 | ❌ UNDEFINED |
+| vm-lifecycle.feature | 12+ | 0 | ❌ UNDEFINED |
+| template-system.feature | 8+ | 0 | ❌ UNDEFINED |
+| team-collaboration.feature | 6+ | 0 | ❌ UNDEFINED |
+| ssh-agent-external-git-operations.feature | 8+ | 0 | ❌ UNDEFINED |
+| And 7 more feature files... | | | |
 
-3. **All step definitions updated** to use real verification:
-   - Docker state verification
-   - SSH connection tests
-   - Port management verification
-   - VM operations testing
+## Required Remediation
 
-## Notes
+### Phase 1: Document Missing Steps
+- [ ] Generate list of all undefined steps from feature files
+- [ ] Create step implementation plan
 
-- **Infrastructure requirement**: Docker-required tests need running VMs to pass
-- **Fake test status**: CLEAN (0 violations)
-- **Test execution**: Use `./run-docker-free-tests.zsh` for infrastructure-independent tests
-- **Full tests**: Use `./run-docker-required-tests.zsh` when Docker VMs are available
+### Phase 2: Implement Step Definitions
+- [ ] Create `vm_lifecycle_steps.py` for VM lifecycle tests
+- [ ] Create `template_system_steps.py` for template tests
+- [ ] Create `team_collaboration_steps.py` for team tests
+- [ ] Create `ssh_git_operations_steps.py` for SSH+Git tests
 
-## Files Verified
-- `plans/completed/28-docker-required-test-remediation-tracking.md`
-- `tests/features/steps/docker_helpers.py`
-- `tests/features/steps/shell_helpers.py`
-- `tests/features/steps/test_utilities.py`
-- All Docker-required step files
+### Phase 3: Integration Testing
+- [ ] Run Docker-required tests with real VMs
+- [ ] Verify all scenarios pass
+
+## Files That Need Work
+- `tests/features/docker-required/*.feature` - Scenarios documented but unimplemented
+- No corresponding `tests/features/steps/vm_lifecycle_steps.py` exists
+- No corresponding `tests/features/steps/template_system_steps.py` exists
+- No corresponding `tests/features/steps/team_collaboration_steps.py` exists
 
 ## Conclusion
-Plan 28 is complete. All fake test patterns have been eliminated from the codebase. The remaining test failures are infrastructure-related (requiring running Docker VMs), not test pattern issues.
+
+**Plan 28 was incomplete** - it only removed fake patterns from already-implemented tests but did NOT implement the Docker-required tests. A new remediation plan is needed to actually implement the missing step definitions.
+
+The fake test scan shows 0 violations (CLEAN) because there are NO TESTS to scan - the steps don't exist.
