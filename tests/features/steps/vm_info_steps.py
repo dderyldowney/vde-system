@@ -140,6 +140,24 @@ def step_alias_resolves_to_canonical(context, canonical):
     context.alias_resolved = True
 
 
+@then('it should resolve to "{vm}"')
+def step_vm_resolves_to(context, vm):
+    """Then the VM should resolve to the expected canonical name."""
+    if hasattr(context, 'vm_resolution_result'):
+        # Handle case-insensitive comparison
+        assert context.vm_resolution_result.lower() == vm.lower(), \
+            f"VM should resolve to '{vm}', got '{context.vm_resolution_result}'"
+    else:
+        # Fallback: the VM name should exist in vm-types.conf
+        from pathlib import Path
+        vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
+        if vm_types_file.exists():
+            content = vm_types_file.read_text()
+            assert vm.lower() in content.lower(), \
+                f"VM '{vm}' not found in vm-types.conf"
+    context.vm_resolved = True
+
+
 @then('I should be able to use either name in commands')
 def step_can_use_either_name(context):
     """Verify that both alias and canonical name can be used."""
@@ -311,6 +329,7 @@ def step_check_vm_exists(context, vm):
     from pathlib import Path
     vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
     detected = []
+    canonical_name = None
     if vm_types_file.exists():
         content = vm_types_file.read_text()
         # Parse VM names from the file
@@ -322,14 +341,19 @@ def step_check_vm_exists(context, vm):
                 if len(parts) >= 2:
                     vm_name = parts[1].strip()
                     detected.append(vm_name)
+                    # Check if this is the VM we're looking for (canonical or alias)
+                    if vm.lower() == vm_name.lower():
+                        canonical_name = vm_name
+                    elif len(parts) >= 3:
+                        # Check aliases (position 3 onwards)
+                        aliases = [a.strip().lower() for a in parts[2:]]
+                        if vm.lower() in aliases:
+                            canonical_name = vm_name
         context.detected_vms = detected
-        # Store resolution result for later verification
-        context.vm_resolution_result = vm
-        # Simple check - if VM name is in the file, it exists
-        if vm.lower() in content.lower():
-            context.vm_exists = True
-        else:
-            context.vm_exists = False
+        # Store resolution result (canonical name) for later verification
+        context.vm_resolution_result = canonical_name if canonical_name else vm
+        # Simple check - if VM name or alias is in the file, it exists
+        context.vm_exists = canonical_name is not None
     else:
         context.detected_vms = []
         context.vm_exists = False

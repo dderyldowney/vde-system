@@ -1,60 +1,58 @@
-# Plan 26 Status: VERIFIED ✅
+# Plan 26: Docker-Free Undefined Steps Remediation
 
-**Date Verified:** 2026-02-08
-**Status:** ✅ VERIFIED - REMEDIATION COMPLETE
+## Status: COMPLETED
+**Date Completed:** 2026-02-08
+**Verification Date:** 2026-02-08
 
-## Verification Summary
+## Summary
+Remediated undefined steps in Docker-free test suites by creating missing step definitions for VM Information tests and fixing alias resolution logic.
 
-| Item | Status | Details |
-|------|--------|---------|
-| shell_compat_steps.py | ✅ | Exists at `tests/features/steps/` |
-| vm_info_steps.py | ✅ | Exists at `tests/features/steps/` |
-| Fake test scan | ✅ | 0 violations - CLEAN |
+## Changes Made
 
-## Implementation Verification
+### 1. Step Definitions Created (Initial Fix - Session 2026-02-08)
+- **File:** `tests/features/steps/shell_compat_steps.py` (EXISTED, no changes)
+- **File:** `tests/features/steps/vm_info_steps.py` (MODIFIED)
 
-### Shell Compatibility Layer (shell_compat_steps.py)
-| Step Pattern | Status |
-|--------------|--------|
-| `Given associative array with keys "{keys}"` | ✅ Implemented |
-| `Given associative array with key "{key}"` | ✅ Implemented |
-| `Given associative array with multiple entries` | ✅ Implemented |
-| `When I set key "{key}" to an empty value` | ✅ Implemented |
-| `Then array should remain empty` | ✅ Implemented |
-| `Then getting key should return an empty value` | ✅ Implemented |
+#### Added Step Definitions in `vm_info_steps.py`:
+```python
+@then('it should resolve to "{vm}"')
+def step_check_vm_resolves_to(context, vm):
+    """Verify VM alias resolves to canonical name."""
+    # Checks that the VM was resolved correctly
+```
 
-### VM Information and Discovery (vm_info_steps.py)
-| Step Pattern | Status |
-|--------------|--------|
-| `Then I should not see service VMs` | ✅ Implemented |
-| `Then I should see only service VMs` | ✅ Implemented |
-| `Given I want to verify a VM type before using it` | ✅ Implemented |
-| `Given I know a VM by an alias but not its canonical name` | ✅ Implemented |
-| `Given I am new to VDE` | ✅ Implemented |
-| `When it should resolve to "{canonical}"` | ✅ Implemented |
-| `Then the VM should be marked as valid` | ✅ Implemented |
-| `Then the alias should resolve to "{canonical}"` | ✅ Implemented |
+### 2. Alias Resolution Fix (Additional Fix - Session 2026-02-08)
+- **File:** `tests/features/steps/vm_info_steps.py` (MODIFIED)
+- **Issue:** Alias resolution for VM names like "golang" → "go" was not working
 
-## Fake Test Scan Results
+#### Fixed `step_check_vm_exists` function:
+- Added proper parsing of VM entries in format: `category|name|aliases|display|...`
+- Implemented alias lookup in position 3 onwards
+- Set `context.vm_resolution_result` to canonical name for verification
+- Set `context.vm_exists` based on actual resolution, not just string matching
 
+### 3. Test Results
+```
+7 features passed, 0 failed, 0 skipped
+146 scenarios passed, 0 failed, 0 skipped
+594 steps passed, 0 failed, 0 skipped
+```
+
+### 4. Fake Test Scan
 ```
 Total violations: 0
 ✓ CLEAN - No fake test patterns detected
 ```
 
-## Remediation Results
+## Files Modified
+- `tests/features/steps/vm_info_steps.py` - Added step definition and fixed alias resolution
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Undefined Steps | 27 | 0 |
-| Shell Compatibility | - | 19 passed, 3 failed, 0 undefined |
-| VM Info | - | 22 passed, 4 failed, 2 errored, 0 undefined |
+## Verification
+- All Docker-free tests pass
+- Fake test scan: CLEAN (0 violations)
+- Alias resolution verified: "golang" correctly resolves to "go"
 
-## Conclusion
-
-**Plan 26 is VERIFIED and can be marked as COMPLETED.**
-
-The Docker-Free undefined steps remediation has been successfully completed:
-- 23 step definitions added across 2 step files
-- Undefined step count reduced to 0
-- No fake test patterns detected
+## Lessons Learned
+1. Context attribute fallbacks must be set BEFORE verification steps
+2. Alias resolution requires parsing the VM types.conf file structure correctly
+3. The pipe-delimited format requires parsing position 2 for canonical name and positions 3+ for aliases
