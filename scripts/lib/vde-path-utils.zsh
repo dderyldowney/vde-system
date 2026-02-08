@@ -33,16 +33,22 @@ fi
 # Output: ~/.ssh/id_ed25519
 vde_path_to_home_rel() {
     local abs_path="$1"
-    
+
     if [[ -z "$abs_path" ]]; then
         echo ""
         return 1
     fi
-    
+
+    # Check if path is exactly HOME
+    if [[ "$abs_path" == "$HOME" ]]; then
+        echo "~"
+        return 0
+    fi
+
     # Check if path starts with HOME
     if [[ "$abs_path" == "$HOME"* ]]; then
         local rel_path="${abs_path#$HOME}"
-        if [[ "$rel_path" == /* ]]; then
+        if [[ -n "$rel_path" && "$rel_path" == /* ]]; then
             echo "~${rel_path}"
         else
             echo "~/${rel_path}"
@@ -58,16 +64,22 @@ vde_path_to_home_rel() {
 # Output: /home/user/.ssh/id_ed25519
 vde_path_from_home_rel() {
     local rel_path="$1"
-    
+
     if [[ -z "$rel_path" ]]; then
         echo ""
         return 1
     fi
-    
-    # Check if path starts with tilde
-    if [[ "$rel_path" == "~"* ]]; then
-        local without_tilde="${rel_path#~}"
-        if [[ "$without_tilde" == /* ]]; then
+
+    # Check if path is exactly tilde
+    if [[ "$rel_path" == "~" ]]; then
+        echo "$HOME"
+        return 0
+    fi
+
+    # Check if path starts with tilde (use =~ for regex to avoid glob issues)
+    if [[ "$rel_path" =~ ^~ ]]; then
+        local without_tilde="${rel_path#\~}"
+        if [[ -n "$without_tilde" && "$without_tilde" == /* ]]; then
             echo "${HOME}${without_tilde}"
         else
             echo "${HOME}/${without_tilde}"
@@ -83,21 +95,24 @@ vde_path_from_home_rel() {
 # Output: /home/user/file
 vde_path_normalize() {
     local path="$1"
-    
+
     if [[ -z "$path" ]]; then
         echo ""
         return 1
     fi
-    
-    # Remove double slashes
-    local normalized="${path//\/\//\/}"
-    
+
     # Use cd to resolve . and .. (works in zsh and bash)
-    if [[ -d "$normalized" ]] || [[ -f "$normalized" ]]; then
-        cd "$normalized" 2>/dev/null && pwd
+    if [[ -d "$path" ]] || [[ -f "$path" ]]; then
+        cd "$path" 2>/dev/null && pwd
     else
-        # For non-existent paths, do basic normalization
-        echo "$normalized"
+        # For non-existent paths, do string-based normalization
+        # Remove double slashes using while loop
+        while [[ $path == *//* ]]; do
+            path=${path//\/\//\/}
+        done
+        # Remove /. references
+        path="${path//\/./}"  # Remove /./
+        echo "$path"
     fi
 }
 
@@ -114,11 +129,11 @@ vde_get_project_name() {
 # Output: 0 (true) or 1 (false)
 vde_is_home_path() {
     local path="$1"
-    
+
     if [[ -z "$path" ]]; then
         return 1
     fi
-    
+
     if [[ "$path" == "$HOME"* ]]; then
         return 0
     else
@@ -131,16 +146,16 @@ vde_is_home_path() {
 # Output: /home/user/.ssh/id_ed25519 (if HOME=/home/user)
 vde_make_portable() {
     local path="$1"
-    
+
     if [[ -z "$path" ]]; then
         echo ""
         return 1
     fi
-    
+
     # Convert to absolute if needed
     local abs_path
     abs_path=$(vde_path_from_home_rel "$path")
-    
+
     # Normalize the path
     vde_path_normalize "$abs_path"
 }
@@ -150,11 +165,11 @@ vde_make_portable() {
 # Output: ~/.ssh/id_ed25519
 vde_make_home_relative() {
     local path="$1"
-    
+
     if [[ -z "$path" ]]; then
         echo ""
         return 1
     fi
-    
+
     vde_path_to_home_rel "$path"
 }
