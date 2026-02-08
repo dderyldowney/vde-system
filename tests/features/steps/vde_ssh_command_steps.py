@@ -58,6 +58,12 @@ def step_command_should_succeed(context):
     elif hasattr(context, 'last_command_exit_code'):
         exit_code = context.last_command_exit_code
         stderr = getattr(context, 'last_command_stderr', '')
+    elif hasattr(context, 'last_exit_code'):
+        exit_code = context.last_exit_code
+        stderr = getattr(context, 'last_error', '')
+    elif hasattr(context, 'last_command_rc'):
+        exit_code = context.last_command_rc
+        stderr = getattr(context, 'last_command_stderr', '')
 
     assert exit_code is not None, \
         "No command result found in context - did you run a command step first?"

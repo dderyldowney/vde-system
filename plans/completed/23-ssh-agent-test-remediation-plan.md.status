@@ -1,68 +1,44 @@
-# Plan Verification Status
+# Plan 23 Status: SSH Agent Test Remediation
 
-## Plan: 23-ssh-agent-test-remediation-plan.md
+**Date:** 2026-02-08
+**Status:** PARTIALLY RESOLVED
+**Original Claim:** 8/8 tests passing
+**Actual State:** 3/8 tests passing
 
-**Verification Date:** 2026-02-08
-**Status:** ⚠️ NEEDS REVIEW - Tests currently failing
+## Changes Made
 
----
+1. **Fixed `vde_ssh_command_steps.py`** (`tests/features/steps/vde_ssh_command_steps.py`):
+   - Added fallback to `context.last_exit_code` and `context.last_command_rc` for exit code checks
 
-## Verification Summary
+2. **Fixed `vde_ssh_verification_steps.py`** (`tests/features/steps/vde_ssh_verification_steps.py`):
+   - Added fallback to `context.last_exit_code` and `context.last_command_rc` in `step_command_should_fail()`
+   - Added fallback to `context.last_exit_code` and `context.last_command_rc` in `step_command_succeeds_or_vm_not_created()`
 
-### Plan Status Check
+## Remaining Issues
 
-| Item | Status | Notes |
-|------|--------|-------|
-| Plan file location | ✅ In completed | Already in `plans/completed/` |
-| Status indicator | ❌ OUTDATED | Claims COMPLETED but tests are failing |
+1. **Output capture not captured** - Some verification steps need output stored:
+   - `step_status_shows_state()` - needs `context.ssh_status_output`
+   - `step_init_shows_completion()` - needs `context.ssh_init_output`
+   - `step_sync_shows_success()` - needs `context.ssh_sync_output`
 
-### Current Test Results
+2. **SSH agent not running** - Tests correctly fail when SSH agent isn't running (return code 2 from `ssh-add -l`)
 
-| Test Suite | Plan Claim | Actual | Status |
-|------------|------------|--------|--------|
-| vde-ssh-commands.feature | 8/8 PASSING | 0/8 PASSING | ❌ FAILING |
-| Fake test violations | 0 | 0 | ✅ CLEAN |
+## Test Results
 
-### Failure Analysis
-
-**Error Pattern:**
 ```
-ASSERT FAILED: No command result found in context - did you run a command step first?
+Feature: VDE SSH Commands
+  3 scenarios passed, 5 failed, 0 skipped
+  36 steps passed, 5 failed, 2 skipped
 ```
 
-**Root Cause:** Test context setup issues - command steps not setting context properly for verification steps.
+## Not Fake Tests
 
-**Affected Steps:**
-- `status command should show SSH environment state`
-- `VDE SSH directory should exist`
-- `SSH agent should be running`
-- `SSH agent should have VDE key loaded`
-- `SSH config should be regenerated`
+- No fake test patterns detected
+- All tests use real system verification
+- Failures are due to:
+  - Missing output capture (implementation gap)
+  - Real SSH agent state (agent not running)
 
-### Key Accomplishments (From Plan)
+## Recommendation
 
-| Accomplishment | Status |
-|----------------|--------|
-| ssh-setup script fixed (single `ssh-agent -s` call) | ✅ Verified in scripts/ssh-setup |
-| Test verification updated | ✅ Verified in vde_ssh_verification_steps.py |
-| 8 scenarios defined | ✅ 8 scenarios exist |
-
-### Files Verified
-
-| File | Status |
-|------|--------|
-| `scripts/ssh-setup` | ✅ EXISTS (lines 243-280 show fix) |
-| `tests/features/steps/vde_ssh_verification_steps.py` | ✅ EXISTS (lines 117-195) |
-| `tests/features/docker-free/vde-ssh-commands.feature` | ✅ EXISTS (8 scenarios) |
-
----
-
-## Conclusion
-
-**Plan 23 requires review.** The plan claimed 8/8 passing tests, but current execution shows 0/8 passing due to context setup issues. The SSH verification tests have proper assertions (not fake), but they're failing because command steps aren't populating the context properly.
-
-This is not a fake test issue (0 violations) but a test infrastructure/context issue that needs remediation.
-
----
-
-*This file was created during plan verification*
+These are legitimate test failures requiring implementation of output capture in the WHEN steps. The tests themselves are valid - they just need the WHEN steps to store output in context attributes.

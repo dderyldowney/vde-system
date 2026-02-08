@@ -292,6 +292,12 @@ def step_command_should_fail(context):
         exit_code = context.ssh_sync_exit_code
     elif hasattr(context, 'start_update_ssh_exit_code'):
         exit_code = context.start_update_ssh_exit_code
+    elif hasattr(context, 'last_exit_code'):
+        exit_code = context.last_exit_code
+    elif hasattr(context, 'last_command_exit_code'):
+        exit_code = context.last_command_exit_code
+    elif hasattr(context, 'last_command_rc'):
+        exit_code = context.last_command_rc
 
     assert exit_code is not None, "No command result found in context"
     assert exit_code != 0, \
@@ -312,6 +318,14 @@ def step_command_succeeds_or_vm_not_created(context):
         stdout = getattr(context, 'start_update_ssh_output', '')
     elif hasattr(context, 'last_command_exit_code'):
         exit_code = context.last_command_exit_code
+        stderr = getattr(context, 'last_command_stderr', '')
+        stdout = getattr(context, 'last_command_output', '')
+    elif hasattr(context, 'last_exit_code'):
+        exit_code = context.last_exit_code
+        stderr = getattr(context, 'last_error', '')
+        stdout = getattr(context, 'last_output', '')
+    elif hasattr(context, 'last_command_rc'):
+        exit_code = context.last_command_rc
         stderr = getattr(context, 'last_command_stderr', '')
         stdout = getattr(context, 'last_command_output', '')
 
