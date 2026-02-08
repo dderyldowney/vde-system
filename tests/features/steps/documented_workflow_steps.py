@@ -180,104 +180,103 @@ def _filter_vms_by_category(vms, category):
 @given('I am following the documented Python API workflow')
 def step_python_api_workflow(context):
     """Set up context for Python API workflow - parser test, no VM setup needed."""
-    # Parser test - context not needed, WHEN step handles parsing
-    pass
+    context.workflow = 'python-api'
 
 
 @given('I am following the documented JavaScript workflow')
 def step_js_workflow(context):
     """Set up context for JavaScript workflow - parser test, no VM setup needed."""
-    pass
+    context.workflow = 'javascript'
 
 
 @given('I am creating a microservices architecture')
 def step_microservices_arch(context):
     """Set up context for microservices architecture - parser test."""
-    pass
+    context.scenario = 'microservices'
 
 
 @given('I have planned to create Python')
 def step_planned_python(context):
     """Set up context showing Python was planned - parser test."""
-    pass
+    context.planned_vms = ['python']
 
 
 @given('I have created Python and PostgreSQL VMs')
 def step_created_python_postgres(context):
     """Set up context with Python and PostgreSQL created - parser test."""
-    pass
+    context.created_vms = ['python', 'postgres']
 
 
 @given('I need to connect to the Python VM')
 def step_need_connect_python(context):
     """Set up context for connecting to Python - parser test."""
-    pass
+    context.target_vm = 'python'
 
 
 @given('I have started the PostgreSQL VM')
 def step_started_postgres(context):
     """Set up context with PostgreSQL started - parser test."""
-    pass
+    context.running_vms = ['postgres']
 
 
 @given('I want to use the Node.js name')
 def step_want_nodejs_name(context):
     """Set up context for testing nodejs alias - parser test."""
-    pass
+    context.preferred_name = 'nodejs'
 
 
 @given('I have created the microservice VMs')
 def step_created_microservices(context):
     """Set up context with microservice VMs created - parser test."""
-    pass
+    context.created_vms = ['python', 'go', 'rust', 'postgres', 'redis']
 
 
 @given('I have created microservices')
 def step_created_microservices_alt(context):
     """Alternative step for microservices created - parser test."""
-    pass
+    context.created_vms = ['python', 'go', 'rust', 'postgres', 'redis']
 
 
 @given('I need to rebuild a VM to fix an issue')
 def step_need_rebuild(context):
     """Set up context for VM rebuild - parser test."""
-    pass
+    context.rebuild_needed = True
 
 
 @given('I need to debug inside a container')
 def step_need_debug(context):
     """Set up context for container debugging - parser test."""
-    pass
+    context.debug_mode = True
 
 
 @given('I need to work in my primary development environment')
 def step_primary_env(context):
     """Set up context for primary development environment - parser test."""
-    pass
+    context.environment = 'primary'
 
 
 @given('I want a Python API with PostgreSQL')
 def step_python_api_postgres(context):
     """Set up context for Python API with PostgreSQL - parser test."""
-    pass
+    context.stack = ['python', 'postgres']
 
 
 @given('I have created my VMs')
 def step_created_vms(context):
     """Set up context with VMs created - parser test."""
-    pass
+    context.created_vms = []
 
 
 @given('I have an existing Python and PostgreSQL stack')
 def step_existing_stack(context):
     """Set up context with existing stack - parser test."""
-    pass
+    context.existing_stack = ['python', 'postgres']
 
 
 @given('I have created the Redis VM')
 def step_created_redis(context):
     """Set up context with Redis created - parser test."""
-    pass
+    context.created_vms = ['redis']
 
 @given('I have stopped my current project')
 def step_stopped_project(context):
@@ -359,12 +358,12 @@ def step_stopped_postgres(context):
 @given('the documentation shows specific VM examples')
 def step_doc_examples(context):
     """Set up context for documentation verification - parser test."""
-    pass
+    context.doc_mode = True
 
 @given('I need to plan my daily workflow')
 def step_plan_daily(context):
     """Set up context for daily workflow planning - parser test."""
-    pass
+    context.workflow = 'daily'
 
 @given('something isn\'t working correctly')
 def step_something_wrong(context):
@@ -1351,55 +1350,55 @@ def step_notify_already_stopped(context):
 @given('I am starting my development day')
 def step_starting_development_day(context):
     """Set up context for starting development day - parser test."""
-    pass
+    context.workflow = 'morning'
 
 
 @given('I am actively developing')
 def step_actively_developing(context):
     """Set up context for active development - parser test."""
-    pass
+    context.workflow = 'active'
 
 
 @given('I am done with development for the day')
 def step_done_development(context):
     """Set up context for end of development day - parser test."""
-    pass
+    context.workflow = 'cleanup'
 
 
 @given('I am setting up a new project')
 def step_setting_up_new_project(context):
     """Set up context for new project setup - parser test."""
-    pass
+    context.project = 'new'
 
 
 @given('I am working on one project')
 def step_working_on_one_project(context):
     """Set up context for working on a project - parser test."""
-    pass
+    context.project_count = 1
 
 
 @given('I am a new team member')
 def step_new_team_member(context):
     """Set up context for new team member - parser test."""
-    pass
+    context.user_type = 'new'
 
 
 @given('I am new to the team')
 def step_new_to_team(context):
     """Set up context for new team member - parser test."""
-    pass
+    context.user_type = 'new'
 
 
 @given('I am learning the VDE system')
 def step_learning_vde(context):
     """Set up context for learning VDE - parser test."""
-    pass
+    context.learning_mode = True
 
 
 @given('I already have a Go VM configured')
 def step_go_vm_configured(context):
     """Set up context for existing Go VM - parser test."""
-    pass
+    context.created_vms = ['go']
 
 
 @then('the plan should include the stop_vm intent')

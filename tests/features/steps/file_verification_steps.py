@@ -22,7 +22,8 @@ def step_impl(context):
     """Verify docker-compose.yml was generated."""
     compose_path = Path.cwd() / 'docker-compose.yml'
     if compose_path.exists():
-        assert True
+        assert compose_path.stat().st_size > 0, \
+            f"docker-compose.yml exists but is empty at {compose_path}"
     else:
         # Check if docker-compose exists in configs
         configs_compose = Path.cwd() / 'configs' / 'docker' / 'docker-compose.yml'
