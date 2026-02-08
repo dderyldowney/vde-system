@@ -1,0 +1,70 @@
+# Plan Status: 15-daily-workflow-test-analysis.md
+**Verified:** 2026-02-08
+**Status:** ✅ ANALYZED - Documentation Quality Analysis Complete
+
+## Plan Type
+This is an **ANALYSIS DOCUMENT**, not an implementation plan. It documents test quality issues and makes recommendations.
+
+## Verification Results
+
+| Metric | Plan Claims | Actual Results |
+|--------|--------------|----------------|
+| Features | ✅ ALL PASSING | ❌ 1 FAILED |
+| Scenarios | ✅ 31 PASSED | ⚠️ 29 PASSED, 2 FAILED |
+| Steps | ✅ 131 PASSED | ⚠️ 128 PASSED, 2 FAILED |
+
+## Actual Test Results
+
+```
+0 features passed, 1 failed, 0 skipped
+29 scenarios passed, 2 failed, 0 skipped
+128 steps passed, 2 failed, 1 skipped
+Took 0min 29.410s
+```
+
+## Failing Scenarios
+
+| # | Scenario | Line | Status |
+|---|----------|------|--------|
+| 1 | Example 3 - Verify All Microservice VMs Exist | 71 | ❌ FAILED |
+| 2 | Troubleshooting - Step 3 Restart with Rebuild | 116 | ❌ FAILED |
+
+## Analysis Summary (from plan)
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Total step definitions | 81 | Verified exists |
+| Fake/Pink tests | 62 (76.5%) | Documented |
+| Real tests | 19 (23.5%) | Documented |
+| Missing steps | 0 | ✅ Correct |
+
+## Key Findings (from plan)
+
+### Test Quality Issues
+1. **76.5% Fake Test Rate** - Most THEN steps don't verify actual behavior
+2. **Context Variable Testing** - Most assertions check `context.variable` instead of system state
+3. **Helper Function Dependency** - Many steps call helpers without real verification
+
+### Recommendations (from plan)
+1. Convert high-priority verification steps to real tests
+2. Add subprocess calls for actual VDE function execution
+3. Keep contextual GIVEN steps as fake (acceptable)
+4. Add markers to distinguish test types (@smoke, @unit, @story)
+
+## Discrepancy Notes
+
+| Item | Plan Claims | Actual |
+|------|-------------|--------|
+| All tests passing | ✅ Yes | ❌ No - 2 failing |
+| 31 scenarios | ✅ 31 | ⚠️ 31 total, 29 pass |
+| 131 steps | ✅ 131 | ⚠️ 131 total, 128 pass |
+
+## Action Taken
+- Plan moved to `plans/completed/15-daily-workflow-test-analysis.md`
+- Status file created for documentation
+- **Note:** This is an analysis document, not an implementation plan
+
+## Future Work Needed
+1. Fix 2 failing scenarios in documented-development-workflows.feature
+2. Consider implementing recommendations for 76.5% fake test reduction
+3. Add real subprocess calls for critical verification steps
