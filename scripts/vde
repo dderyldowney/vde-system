@@ -117,6 +117,7 @@ EOF
 Options:
   -h, --help     Show this help message
   -v, --verbose  Enable verbose output
+  -q, --quiet   Suppress debug output (quiet mode)
   --version      Show version information
 
 Examples:
@@ -146,6 +147,22 @@ vde_show_version() {
     echo "  - vde-core: OK"
     echo "  - vm-common: OK"
     echo "  - vde-docker-state: OK"
+}
+
+# vde_timeout - Cross-platform timeout wrapper
+# Uses zsh's built-in TIMEOUT feature when available
+vde_timeout() {
+    local timeout_sec="$1"
+    shift
+    local command="$@"
+    
+    # zsh has built-in TIMEOUT support
+    if [[ -n "$ZSH_VERSION" ]]; then
+        TIMEOUT="$timeout_sec" "$command"
+    else
+        # Fallback to external timeout command
+        command timeout "$timeout_sec" "$command"
+    fi
 }
 
 # vde_find_command_script - Find the script for a command
@@ -269,6 +286,7 @@ vde_run_command() {
 
 # Parse global options first
 VERBOSE=0
+QUIET=0
 CMD=""
 
 while [[ $# -gt 0 ]]; do
@@ -280,6 +298,12 @@ while [[ $# -gt 0 ]]; do
         -v|--verbose)
             VERBOSE=1
             export VDE_ERRORS_VERBOSE=1
+            export VDE_LOG_LEVEL="DEBUG"
+            shift
+            ;;
+        -q|--quiet)
+            QUIET=1
+            export VDE_LOG_LEVEL="WARN"
             shift
             ;;
         --version)
