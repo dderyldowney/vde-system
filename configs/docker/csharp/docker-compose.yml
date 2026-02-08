@@ -1,27 +1,21 @@
----
 services:
   csharp-dev:
     build:
-      context: .
-      dockerfile: Dockerfile.base
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-csharp:latest
     container_name: csharp-dev
     hostname: csharp-dev
     restart: unless-stopped
-    command: >
-      sh -c "apt-get update -y &&
-      apt-get install -y wget apt-transport-https &&
-      wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb
-      -O /tmp/packages-microsoft-prod.deb &&
-      dpkg -i /tmp/packages-microsoft-prod.deb &&
-      rm /tmp/packages-microsoft-prod.deb &&
-      apt-get update -y &&
-      apt-get install -y dotnet-sdk-8.0 aspnetcore-runtime-8.0 &&
-      apt-get install -y --no-install-recommends ca-certificates gnupg lsb-release &&
-      /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y wget apt-transport-https && wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && dpkg -i /tmp/packages-microsoft-prod.deb && rm /tmp/packages-microsoft-prod.deb && apt-get update -y && apt-get install -y dotnet-sdk-8.0 aspnetcore-runtime-8.0 && /usr/sbin/sshd -D"
 
     ports:
-      - "2205:22"
+      - "2206:22"
 
     volumes:
       - ../../../projects/csharp:/home/devuser/workspace
@@ -32,8 +26,6 @@ services:
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
-      - VDE_HOME=${VDE_HOME:-}
-      - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
       - ../../../env-files/csharp.env

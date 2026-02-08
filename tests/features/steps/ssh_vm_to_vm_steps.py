@@ -635,3 +635,4 @@ def step_no_keys_copied(context):
         vm_name = container.replace('-dev', '')
         assert not vm_has_private_keys(vm_name), \
             f"No keys should be copied to {vm_name} VM"
+

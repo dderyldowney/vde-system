@@ -100,16 +100,28 @@ def ensure_vm_exists(vm_name):
     if container_name in state['running']:
         return True  # Already running
 
-    # Create config files if container doesn't exist at all
-    if container_name not in state['all']:
-        result = run_vde_command(f"./scripts/vde create {vm_name} --label vde.test=true")
+    # If container exists but is stopped, just start it
+    if container_name in state['created']:
+        result = subprocess.run(
+            ["docker", "start", container_name],
+            capture_output=True, text=True, timeout=30
+        )
         if result.returncode != 0:
-            print(f"[ERROR] Failed to create {vm_name}: {result.stderr}")
+            print(f"[ERROR] Failed to start {container_name}: {result.stderr}")
             return False
-        _TEST_VMS_CREATED.add(vm_name)
-        print(f"[SETUP] Created VM: {vm_name}")
+        time.sleep(2)
+        print(f"[SETUP] Started existing VM: {vm_name}")
+        return True
 
-    # Start the VM (this handles both newly created and previously stopped containers)
+    # Create config files if container doesn't exist at all
+    result = run_vde_command(f"./scripts/vde create {vm_name} --label vde.test=true")
+    if result.returncode != 0:
+        print(f"[ERROR] Failed to create {vm_name}: {result.stderr}")
+        return False
+    _TEST_VMS_CREATED.add(vm_name)
+    print(f"[SETUP] Created VM: {vm_name}")
+
+    # Start the newly created VM
     result = run_vde_command(f"./scripts/vde start {vm_name}")
     if result.returncode != 0:
         print(f"[ERROR] Failed to start {vm_name}: {result.stderr}")
@@ -131,6 +143,66 @@ def ensure_vm_running(vm_name):
         return True
 
     return ensure_vm_exists(vm_name)
+
+
+# =============================================================================
+# FEATURE-SPECIFIC VM REQUIREMENTS
+# =============================================================================
+
+# VMs needed for each docker-required feature
+# These VMs will be started before scenarios in these features run
+_FEATURE_VM_REQUIREMENTS = {
+    # VM lifecycle tests - need python, rust, postgres for various scenarios
+    "vm-lifecycle": ['python', 'rust', 'postgres'],
+    
+    # Docker operations tests - need running containers to test operations
+    "docker-operations": ['python', 'postgres'],
+    
+    # SSH agent forwarding VM-to-VM tests - need language + service VMs
+    "ssh-agent-forwarding-vm-to-vm": ['python', 'go', 'postgres', 'redis'],
+    
+    # SSH agent automatic setup tests
+    "ssh-agent-automatic-setup": ['python'],
+    
+    # SSH external git operations
+    "ssh-agent-external-git-operations": ['python', 'go'],
+    
+    # SSH and remote access tests
+    "ssh-and-remote-access": ['python', 'go'],
+    
+    # VM-to-host communication tests
+    "ssh-agent-vm-to-host-communication": ['python', 'go'],
+    
+    # Error handling tests - need various VMs
+    "error-handling-and-recovery": ['python', 'postgres', 'redis'],
+    
+    # Daily development workflow tests
+    "daily-development-workflow": ['python', 'postgres'],
+}
+
+
+def _setup_feature_vms(feature_name, scenario_name):
+    """Set up VMs for a given feature and scenario."""
+    # Check if this feature has VM requirements
+    feature_key = None
+    for key in _FEATURE_VM_REQUIREMENTS:
+        if key in feature_name.lower():
+            feature_key = key
+            break
+    
+    if not feature_key:
+        return
+    
+    required_vms = _FEATURE_VM_REQUIREMENTS.get(feature_key, [])
+    if not required_vms:
+        return
+    
+    print(f"[SETUP] Setting up VMs for feature: {feature_name}")
+    print(f"[SETUP] VMs: {required_vms}")
+    
+    # Ensure all required VMs exist and are running
+    for vm in required_vms:
+        ensure_vm_running(vm)
 
 
 # =============================================================================
@@ -211,9 +283,20 @@ def _setup_multi_project_scenario(scenario_name):
 
 def before_scenario(context, scenario):
     """Hook that runs before each scenario."""
+    # Skip @wip scenarios (work in progress)
+    if 'wip' in scenario.tags:
+        print(f"[SKIP] Skipping @wip scenario: {scenario.name}")
+        scenario.skip("Marked as @wip")
+        return
+    
     # Handle multi-project-workflow feature
     if "multi-project-workflow" in scenario.feature.filename:
         _setup_multi_project_scenario(scenario.name)
+        return
+    
+    # Handle other docker-required features - auto-start VMs
+    if "docker-required" in scenario.feature.filename:
+        _setup_feature_vms(scenario.feature.name, scenario.name)
         return
 
 
@@ -275,6 +358,23 @@ def before_all(context):
     except subprocess.TimeoutExpired:
         raise RuntimeError("Docker check timed out")
 
+    # CLEANUP: Remove any existing containers before starting tests
+    print("[SETUP] Cleaning up any existing containers...")
+    result = subprocess.run(
+        ["docker", "ps", "-a", "--format", "{{.Names}}"],
+        capture_output=True, text=True, timeout=30
+    )
+    if result.returncode == 0:
+        containers = [c.strip() for c in result.stdout.strip().split('\n') if c.strip()]
+        if containers:
+            print(f"[SETUP] Found {len(containers)} existing containers to remove")
+            for container in containers:
+                subprocess.run(["docker", "stop", container], capture_output=True, timeout=30)
+                subprocess.run(["docker", "rm", "-f", container], capture_output=True, timeout=30)
+                print(f"[SETUP] Removed existing container: {container}")
+        else:
+            print("[SETUP] No existing containers to clean up")
+
     # Verify VDE root directory
     if not VDE_ROOT.exists():
         raise RuntimeError(f"VDE root directory not found: {VDE_ROOT}")
@@ -286,6 +386,98 @@ def before_all(context):
         raise RuntimeError(f"Scripts directory not found: {scripts_dir}")
     print(f"[SETUP] Scripts directory: {scripts_dir}")
 
+    # Restore critical config files if missing
+    _restore_config_files()
+
     # Report initial Docker state
     state = get_current_docker_state()
     print(f"[SETUP] Initial Docker state: {len(state['running'])} running, {len(state['created'])} created")
+
+
+def _restore_config_files():
+    """Generate all config files using the generate-all-configs script."""
+    import shutil
+
+    generate_script = VDE_ROOT / "scripts" / "generate-all-configs"
+
+    if not generate_script.exists():
+        print("[SETUP] ERROR: generate-all-configs script not found")
+        return
+
+    print("[SETUP] Running generate-all-configs to create env-files and configs...")
+
+    result = subprocess.run(
+        ["zsh", str(generate_script)],
+        cwd=VDE_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+
+    if result.returncode == 0:
+        print("[SETUP] ✓ Generated all config files")
+    else:
+        print(f"[SETUP] ✗ Failed to generate configs: {result.stderr}")
+        if result.stdout:
+            print(f"[SETUP] STDOUT: {result.stdout}")
+
+
+# =============================================================================
+# TEARDOWN HOOKS
+# =============================================================================
+
+def after_all(context):
+    """Final cleanup: remove all VDE test containers."""
+    print("[TEARDOWN] Cleaning up all VDE test containers...")
+
+    # Get all VDE containers (both running and stopped)
+    try:
+        result = subprocess.run(
+            ["docker", "ps", "-a", "--format", "{{.Names}}"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode == 0:
+            containers = [c.strip() for c in result.stdout.strip().split('\n') if c.strip()]
+            if containers:
+                print(f"[TEARDOWN] Found {len(containers)} containers to remove")
+                # Stop and remove all containers
+                for container in containers:
+                    # Stop if running
+                    subprocess.run(
+                        ["docker", "stop", container],
+                        capture_output=True,
+                        timeout=30,
+                    )
+                    # Remove the container
+                    subprocess.run(
+                        ["docker", "rm", "-f", container],
+                        capture_output=True,
+                        timeout=30,
+                    )
+                    print(f"[TEARDOWN] Removed container: {container}")
+            else:
+                print("[TEARDOWN] No containers to clean up")
+        else:
+            print(f"[TEARDOWN] Error listing containers: {result.stderr}")
+    except Exception as e:
+        print(f"[TEARDOWN] Error during cleanup: {e}")
+
+    # Verify no containers remain
+    try:
+        result = subprocess.run(
+            ["docker", "ps", "-a", "--format", "{{.Names}}"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        remaining = [c.strip() for c in result.stdout.strip().split('\n') if c.strip()]
+        if remaining:
+            print(f"[TEARDOWN] WARNING: {len(remaining)} containers still remain")
+        else:
+            print("[TEARDOWN] ✓ All containers removed successfully")
+    except Exception:
+        pass
+
+    print("[TEARDOWN] Test suite cleanup complete")

@@ -135,14 +135,21 @@ if ! is_vm_running "$RESOLVED_NAME"; then
     exit $VDE_ERR_GENERAL
 fi
 
+# Determine SSH host alias based on VM type
+# Language VMs use <name>-dev format, service VMs use <name>
+SSH_HOST_ALIAS="$RESOLVED_NAME"
+if is_vm_type "$RESOLVED_NAME" "lang"; then
+    SSH_HOST_ALIAS="${RESOLVED_NAME}-dev"
+fi
+
 # Build SSH command
-SSH_CMD="ssh -F $VDE_SSH_CONFIG -o UserKnownHostsFile=$VDE_SSH_KNOWN_HOSTS $RESOLVED_NAME"
+SSH_CMD="ssh -F $VDE_SSH_CONFIG -o UserKnownHostsFile=$VDE_SSH_KNOWN_HOSTS $SSH_HOST_ALIAS"
 
 # Either show or execute the command
 if [ "$SHOW_COMMAND" = true ]; then
     echo "$SSH_CMD"
     exit 0
 else
-    vde_log_info "Connecting to $RESOLVED_NAME..." "ssh-vm"
+    vde_log_info "Connecting to $SSH_HOST_ALIAS..." "ssh-vm"
     exec $SSH_CMD
 fi

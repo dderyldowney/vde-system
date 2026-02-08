@@ -1,10 +1,13 @@
-# Template for language VMs
-# Variables: java, 2210, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y default-jdk maven gradle
 services:
   java-dev:
     build:
-      context: .
-      dockerfile: Dockerfile.base
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-java:latest
     container_name: java-dev
     hostname: java-dev
@@ -12,7 +15,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y default-jdk maven gradle && /usr/sbin/sshd -D"
 
     ports:
-      - "2210:22"
+      - "2209:22"
 
     volumes:
       - ../../../projects/java:/home/devuser/workspace
@@ -23,8 +26,6 @@ services:
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
-      - VDE_HOME=${VDE_HOME:-}
-      - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
       - ../../../env-files/java.env

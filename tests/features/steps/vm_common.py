@@ -45,8 +45,32 @@ def docker_ps():
         return False
 
 
+def docker_ps_list():
+    """List running Docker containers with details.
+    
+    Returns:
+        list: List of dicts with container info (Names, etc.), empty list if none or Docker unavailable
+    """
+    try:
+        result = subprocess.run(
+            ['docker', 'ps', '--format', '{{json .}}'],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        containers = []
+        for line in result.stdout.strip().split('\n'):
+            if line.strip():
+                import json
+                containers.append(json.loads(line))
+        return containers
+    except (FileNotFoundError, subprocess.CalledProcessError, json.JSONDecodeError):
+        return []
+
+
 def docker_list_containers():
-    """List running Docker containers.
+    """List running Docker container names.
     
     Returns:
         list: List of running container names, empty list if none or Docker unavailable
@@ -153,8 +177,7 @@ def wait_for_container(container_name, timeout=30):
             result = subprocess.run(
                 ['docker', 'ps', '-q', '-f', f'name={container_name}'],
                 check=True,
-                capture_output=True,
-                stderr=subprocess.PIPE
+                capture_output=True
             )
             if result.returncode == 0:
                 return True

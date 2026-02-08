@@ -11,7 +11,7 @@ from behave import given, then, when
 
 from vm_common import (
     VDE_ROOT,
-    docker_ps,
+    docker_ps_list,
     get_container_health,
     run_vde_command,
 )
@@ -126,7 +126,7 @@ def step_data_dir_exists(context, dir_path):
 @then('VM "{vm_name}" should be running')
 def step_vm_should_be_running(context, vm_name):
     """Verify the specified VM is running."""
-    running = docker_ps()
+    running = docker_ps_list()
     vm_containers = [c for c in running if vm_name in c.get('names', '')]
     assert len(vm_containers) > 0, f"VM {vm_name} should be running"
 
@@ -134,7 +134,7 @@ def step_vm_should_be_running(context, vm_name):
 @then('VM "{vm_name}" should not be running')
 def step_vm_not_running(context, vm_name):
     """Verify the specified VM is not running."""
-    running = docker_ps()
+    running = docker_ps_list()
     vm_containers = [c for c in running if vm_name in c.get('names', '')]
     assert len(vm_containers) == 0, f"VM {vm_name} should not be running"
 
@@ -148,7 +148,7 @@ def step_all_vms_running(context):
         vm_name = compose_file.parent.name
         expected_vms.append(vm_name)
     
-    running = docker_ps()
+    running = docker_ps_list()
     running_vms = set()
     for container in running:
         names = container.get('names', '')
@@ -164,7 +164,7 @@ def step_all_vms_running(context):
 @then('no VMs should be running')
 def step_no_vms_running(context):
     """Verify no VMs are running."""
-    running = docker_ps()
+    running = docker_ps_list()
     # Filter out non-VM containers (like docker-internal services)
     vm_containers = [c for c in running if any(
         c.get('names', '').startswith(vm) 
@@ -176,7 +176,7 @@ def step_no_vms_running(context):
 @then('each VM should have a unique SSH port')
 def step_unique_ssh_ports(context):
     """Verify each running VM has a unique SSH port."""
-    running = docker_ps()
+    running = docker_ps_list()
     ports = []
     for container in running:
         names = container.get('names', '')
@@ -194,7 +194,7 @@ def step_unique_ssh_ports(context):
 @then('SSH should be accessible on allocated port')
 def step_ssh_accessible(context):
     """Verify SSH is accessible on the allocated port."""
-    running = docker_ps()
+    running = docker_ps_list()
     if running:
         for container in running:
             names = container.get('names', '')
@@ -211,7 +211,7 @@ def step_ssh_accessible(context):
 def step_fresh_container(context):
     """Verify the VM has a fresh container instance."""
     # Check container restart count or start time
-    running = docker_ps()
+    running = docker_ps_list()
     for container in running:
         names = container.get('names', '')
         if 'python' in names:
@@ -228,7 +228,7 @@ def step_container_rebuilt(context):
     """Verify the container was rebuilt from Dockerfile."""
     # This is a best-effort check - in real scenarios we would check
     # build cache or image creation time
-    running = docker_ps()
+    running = docker_ps_list()
     for container in running:
         names = container.get('names', '')
         if 'python' in names:

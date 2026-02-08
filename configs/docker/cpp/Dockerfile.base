@@ -1,5 +1,0 @@
-# C++ Development Image
-# Extends vde-base-dev with C++ development tools
-FROM vde-base-dev:latest
-
-RUN apt-get update -y && apt-get install -y g++ make cmake gdb
