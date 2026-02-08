@@ -378,10 +378,10 @@ test_start_virtual_checks_vm_exists() {
 
     local start_script="$PROJECT_ROOT/scripts/start-virtual"
 
-    # Check that vm_exists is called before starting
-    if grep -q "vm_exists" "$start_script" 2>/dev/null; then
-        # Verify it calls the error handler for uncreated VMs
-        if grep -q "vde_error_vm_not_created" "$start_script" 2>/dev/null; then
+    # Check that vm_container_exists is called before starting
+    if grep -q "vm_container_exists" "$start_script" 2>/dev/null; then
+        # Verify error handler is called for uncreated VMs
+        if grep -q "vde_error_vm_not_created\|vm_not_created" "$start_script" 2>/dev/null; then
             test_pass "start-virtual VM Existence" "Checks if VM is created before starting"
             return
         fi
