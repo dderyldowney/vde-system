@@ -25,7 +25,7 @@ from vm_common import docker_list_containers, run_vde_command
 # VM TO HOST GIVEN steps
 # =============================================================================
 
-@given('I have Docker installed on my host')
+@given('I have Docker installed on my host for VM-to-Host')
 def step_docker_installed_on_host(context):
     """Verify Docker is installed on host."""
     result = subprocess.run(
@@ -44,7 +44,7 @@ def step_vms_with_docker_socket(context):
     context.vms_with_docker_access = len(containers) > 0
 
 
-@given('I have a Python VM running')
+@given('I have a Python VM running for VM-to-Host')
 def step_python_vm_running(context):
     """Context: Python VM is running."""
     result = run_vde_command(['get', 'python'])
@@ -60,7 +60,7 @@ def step_need_check_host(context):
     context.needs_host_check = True
 
 
-@given('I have a Go VM running')
+@given('I have a Go VM running for VM-to-Host')
 def step_go_vm_running(context):
     """Context: Go VM is running."""
     result = run_vde_command(['get', 'go'])
@@ -76,13 +76,13 @@ def step_host_has_logs(context):
     context.host_has_logs = True
 
 
-@given('I have projects on my host')
+@given('I have projects on my host for VM-to-Host')
 def step_host_has_projects(context):
     """Context: Host has projects."""
     context.host_has_projects = True
 
 
-@given('I have multiple VMs running')
+@given('I have multiple VMs running in VM-to-Host')
 def step_multiple_vms_running(context):
     """Context: Multiple VMs are running."""
     result = run_vde_command(['create', 'python'])
@@ -110,7 +110,7 @@ def step_need_read_config(context):
     context.needs_host_config = True
 
 
-@given('I have a Rust VM running')
+@given('I have a Rust VM running for VM-to-Host')
 def step_rust_vm_running(context):
     """Context: Rust VM is running."""
     result = run_vde_command(['get', 'rust'])
@@ -150,7 +150,7 @@ def step_need_network_check(context):
     context.needs_network_check = True
 
 
-@given('I have custom scripts on my host')
+@given('I have custom scripts on my host for VM-to-Host')
 def step_host_has_scripts(context):
     """Context: Host has custom scripts."""
     context.host_has_scripts = True
@@ -160,19 +160,19 @@ def step_host_has_scripts(context):
 # VM TO HOST WHEN steps
 # =============================================================================
 
-@when('I SSH into the Python VM')
+@when('I SSH into the Python VM for VM-to-Host')
 def step_ssh_into_python_vm(context):
     """SSH into Python VM."""
     context.current_vm = 'python'
 
 
-@when('I SSH into the Go VM')
+@when('I SSH into the Go VM for VM-to-Host')
 def step_ssh_into_go_vm(context):
     """SSH into Go VM."""
     context.current_vm = 'go'
 
 
-@when('I SSH into a VM')
+@when('I SSH into a VM for VM-to-Host')
 def step_ssh_into_vm(context):
     """SSH into any VM."""
     containers = docker_list_containers()
@@ -180,13 +180,13 @@ def step_ssh_into_vm(context):
         context.current_vm = containers[0]
 
 
-@when('I SSH into the Rust VM')
+@when('I SSH into the Rust VM for VM-to-Host')
 def step_ssh_into_rust_vm(context):
     """SSH into Rust VM."""
     context.current_vm = 'rust'
 
 
-@when('I run "to-host docker ps"')
+@when('I run \"to-host docker ps\" for VM-to-Host')
 def step_run_tohost_docker_ps(context):
     """Run docker ps on host from VM."""
     containers = docker_list_containers()
@@ -209,7 +209,7 @@ def step_run_tohost_docker_ps(context):
         context.tohost_output = "No VM running"
 
 
-@when('I run "to-host tail -f /var/log/app.log"')
+@when('I run \"to-host tail -f /var/log/app.log\" for VM-to-Host')
 def step_run_tohost_tail_logs(context):
     """Run tail on host logs from VM."""
     containers = docker_list_containers()
@@ -229,7 +229,7 @@ def step_run_tohost_tail_logs(context):
         context.tohost_logs_result = False
 
 
-@when('I run "to-host ls ~"')
+@when('I run \"to-host ls ~\" for VM-to-Host')
 def step_run_tohost_ls(context):
     """Run ls on host from VM."""
     containers = docker_list_containers()
@@ -248,7 +248,7 @@ def step_run_tohost_ls(context):
         context.tohost_ls_result = False
 
 
-@when('I run "to-host docker stats"')
+@when('I run \"to-host docker stats\" for VM-to-Host')
 def step_run_tohost_docker_stats(context):
     """Run docker stats on host from VM."""
     containers = docker_list_containers()
@@ -267,7 +267,7 @@ def step_run_tohost_docker_stats(context):
         context.tohost_stats_result = False
 
 
-@when('I run "to-host docker restart postgres"')
+@when('I run \"to-host docker restart postgres\" for VM-to-Host')
 def step_run_tohost_docker_restart(context):
     """Run docker restart on host from VM."""
     containers = docker_list_containers()
@@ -287,7 +287,7 @@ def step_run_tohost_docker_restart(context):
         context.tohost_restart_result = False
 
 
-@when('I run "to-host cat ~/dev/config.yaml"')
+@when('I run \"to-host cat ~/dev/config.yaml\" for VM-to-Host')
 def step_run_tohost_cat_config(context):
     """Run cat on host config from VM."""
     containers = docker_list_containers()
@@ -307,7 +307,7 @@ def step_run_tohost_cat_config(context):
         context.tohost_cat_result = False
 
 
-@when('I run "to-host cd ~/dev/project && make build"')
+@when('I run \"to-host cd ~/dev/project && make build\" for VM-to-Host')
 def step_run_tohost_make_build(context):
     """Run make build on host from VM."""
     containers = docker_list_containers()
@@ -327,7 +327,7 @@ def step_run_tohost_make_build(context):
         context.tohost_build_result = False
 
 
-@when('I run "to-host docker ps --filter \'name=python-dev\'"')
+@when('I run \"to-host docker ps --filter \'name=python-dev\'\" for VM-to-Host')
 def step_run_tohost_docker_ps_filter(context):
     """Run docker ps with filter on host from VM."""
     containers = docker_list_containers()
@@ -347,7 +347,7 @@ def step_run_tohost_docker_ps_filter(context):
         context.tohost_filter_result = False
 
 
-@when('I run "to-host ~/dev/scripts/backup.sh"')
+@when('I run \"to-host ~/dev/scripts/backup.sh\" for VM-to-Host')
 def step_run_tohost_backup(context):
     """Run backup script on host from VM."""
     containers = docker_list_containers()
@@ -367,7 +367,7 @@ def step_run_tohost_backup(context):
         context.tohost_backup_result = False
 
 
-@when('I run "to-host systemctl status docker"')
+@when('I run \"to-host systemctl status docker\" for VM-to-Host')
 def step_run_tohost_systemctl(context):
     """Run systemctl on host from VM."""
     containers = docker_list_containers()
@@ -387,7 +387,7 @@ def step_run_tohost_systemctl(context):
         context.tohost_systemctl_result = False
 
 
-@when('I run "to-host ping -c 3 github.com"')
+@when('I run \"to-host ping -c 3 github.com\" for VM-to-Host')
 def step_run_tohost_ping(context):
     """Run ping on host from VM."""
     containers = docker_list_containers()
@@ -407,7 +407,7 @@ def step_run_tohost_ping(context):
         context.tohost_ping_result = False
 
 
-@when('I run "to-host ~/dev/scripts/cleanup.sh"')
+@when('I run \"to-host ~/dev/scripts/cleanup.sh\" for VM-to-Host')
 def step_run_tohost_cleanup(context):
     """Run cleanup script on host from VM."""
     containers = docker_list_containers()
@@ -535,7 +535,7 @@ def step_build_executes(context):
         "Build should execute on host"
 
 
-@then('I should see the build output')
+@then('I should see the build output for VM-to-Host')
 def step_see_build_output(context):
     """Verify build output is shown."""
     output = getattr(context, 'tohost_build_output', '')

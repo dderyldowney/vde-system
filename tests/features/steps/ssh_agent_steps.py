@@ -184,7 +184,7 @@ def step_start_vm(context):
     context.vm_start_result = result.returncode == 0
 
 
-@when('I start a VM')
+@when('I start a VM for SSH-Agent-Steps')
 def step_start_any_vm(context):
     """Start any VM."""
     result = run_vde_command(['start', 'python'])

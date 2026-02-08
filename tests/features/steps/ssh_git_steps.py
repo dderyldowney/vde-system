@@ -597,7 +597,7 @@ def step_all_repos_update(context):
     assert getattr(context, 'all_services_pulled', False), "All repositories should update"
 
 
-@then('all should use my host\'s SSH keys')
+@then('all should use my host\'s SSH keys for SSH-Git')
 def step_all_use_host_keys_git(context):
     """Verify all use host SSH keys."""
     assert ssh_agent_has_keys(), "All services should use host SSH keys"
@@ -688,7 +688,7 @@ def step_no_keys_copied_to_vm(context):
             f"No keys should be copied to {vm_name} VM"
 
 
-@then('only the SSH agent socket should be forwarded')
+@then('only the SSH agent socket should be forwarded for SSH-Git')
 def step_only_socket_forwarded_git(context):
     """Verify only SSH socket is forwarded."""
     # Verified by vm_has_private_keys returning False

@@ -42,14 +42,14 @@ def step_start_lang_vm(context):
     context.last_exit_code = result.returncode
 
 
-@when('I stop a VM')
+@when('I stop a VM for Error-Handling')
 def step_stop_vm(context):
     """Stop a VM using vde stop command."""
     result = run_vde_command("stop python", timeout=60)
     context.last_exit_code = result.returncode
 
 
-@when('I restart a VM')
+@when('I restart a VM for Error-Handling')
 def step_restart_vm(context):
     """Restart a VM using vde restart command."""
     result = run_vde_command("restart python", timeout=180)

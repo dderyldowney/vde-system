@@ -86,7 +86,7 @@ def step_have_several_vms_running(context):
 
 
 # Alias for "I have several VMs running"
-@given('I have multiple VMs running')
+@given('I have multiple VMs running for VM-to-Host')
 def step_have_multiple_vms_running(context):
     """Alias for checking how many VMs are running."""
     step_have_several_vms_running(context)

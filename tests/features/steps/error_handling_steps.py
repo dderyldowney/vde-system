@@ -174,7 +174,7 @@ def step_try_create_vm(context):
     context.last_error = result.stderr
 
 
-@when('I start a VM')
+@when('I start a VM for Error-Handling')
 def step_start_vm(context):
     """Start a VM."""
     vm_name = getattr(context, 'vm_name', 'python')

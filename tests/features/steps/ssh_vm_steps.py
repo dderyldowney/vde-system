@@ -179,7 +179,7 @@ def step_utility_vm_running(context):
 # Additional GIVEN steps for feature scenarios (not in docker_operations_steps.py)
 # =============================================================================
 
-@given('I have Docker installed on my host')
+@given('I have Docker installed on my host for SSH-VM-Steps')
 def step_docker_installed(context):
     """Docker is installed on the host."""
     result = subprocess.run(['./scripts/vde', '--version'], capture_output=True, text=True, timeout=10)

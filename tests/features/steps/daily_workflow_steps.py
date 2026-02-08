@@ -31,7 +31,7 @@ from vm_common import (
 # GIVEN steps - Setup scenarios
 # =============================================================================
 
-@given('I have a Python VM running')
+@given('I have a Python VM running for Daily-Workflow')
 def step_python_vm_running(context):
     """Ensure Python VM is running."""
     if not container_is_running('python'):

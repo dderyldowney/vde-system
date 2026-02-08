@@ -170,13 +170,13 @@ def step_files_shared_host_vm(context):
             assert 'workspace' in mounts.lower() or 'project' in mounts.lower() or 'volume' in mounts.lower(), \
                    f"Files should be shared"
 
-@then('all should use my SSH keys')
+@then('all should use my SSH keys for SSH-Connection')
 def step_all_use_ssh_keys(context):
     """Verify all VMs use configured SSH keys."""
     ssh_dir = Path.home() / '.ssh'
     assert ssh_dir.exists(), "SSH keys should be configured for VMs to use"
 
-@then('all should work with the same configuration')
+@then('all should work with the same configuration for SSH-Connection')
 def step_all_same_config(context):
     """Verify all VMs work with same configuration."""
     configs_dir = VDE_ROOT / "configs" / "docker"

@@ -34,7 +34,7 @@ from vm_common import (
 # SSH AGENT SETUP GIVEN steps
 # =============================================================================
 
-@given('I have SSH keys configured on my host')
+@given('I have SSH keys configured on my host for VM-to-VM')
 def step_have_ssh_keys_configured(context):
     """Verify SSH keys are configured on the host."""
     ssh_dir = Path.home() / '.ssh'
@@ -49,26 +49,26 @@ def step_have_ssh_keys_configured(context):
     context.host_has_ssh_keys = has_keys
 
 
-@given('the SSH agent is running')
+@given('the SSH agent is running for VM-to-VM')
 def step_ssh_agent_running(context):
     """Verify SSH agent is running."""
     context.ssh_agent_running = ssh_agent_is_running()
 
 
-@given('my keys are loaded in the agent')
+@given('my keys are loaded in the agent for VM-to-VM')
 def step_keys_loaded_in_agent(context):
     """Verify keys are loaded in SSH agent."""
     context.keys_in_agent = ssh_agent_has_keys()
 
 
-@given('I do not have an SSH agent running')
+@given('I do not have an SSH agent running for VM-to-VM')
 def step_no_ssh_agent_running(context):
     """Context: No SSH agent running."""
     context.ssh_agent_was_running = ssh_agent_is_running()
     # Note: We don't stop the agent, just note the current state
 
 
-@given('I do not have any SSH keys')
+@given('I do not have any SSH keys for VM-to-VM')
 def step_no_ssh_keys(context):
     """Context: No SSH keys exist."""
     context.host_had_keys = False
@@ -81,7 +81,7 @@ def step_no_ssh_keys(context):
             break
 
 
-@given('I have a {vm_type} VM running')
+@given('I have a {vm_type} VM running for VM-to-VM')
 def step_have_vm_running(context, vm_type):
     """Ensure a VM of the specified type is running."""
     # Get or create the VM
@@ -105,7 +105,7 @@ def step_have_vm_running(context, vm_type):
     context.running_vms[vm_type] = True
 
 
-@given('I have started the SSH agent')
+@given('I have started the SSH agent for VM-to-VM')
 def step_started_ssh_agent(context):
     """Start SSH agent if not running."""
     if not ssh_agent_is_running():
@@ -128,14 +128,14 @@ def step_started_ssh_agent(context):
 # WHEN steps - VM-to-VM operations
 # =============================================================================
 
-@when('I SSH into the {vm_type} VM')
+@when('I SSH into the {vm_type} VM for VM-to-VM')
 def step_ssh_into_vm(context, vm_type):
     """SSH into a VM - context for subsequent steps."""
     # Store the current VM context
     context.current_vm = vm_type
 
 
-@when('I run "ssh {target_vm}" from within the {source_vm} VM')
+@when('I run "ssh {target_vm}" from within the {source_vm} VM for VM-to-VM')
 def step_run_ssh_from_vm(context, target_vm, source_vm):
     """Run SSH command from one VM to another.
     
@@ -172,7 +172,7 @@ def step_run_ssh_from_vm(context, target_vm, source_vm):
     context.ssh_error = result.stderr if result.stderr else None
 
 
-@when('I run "scp {source}:{src_path} {dest}:{dst_path}" from the {vm_type} VM')
+@when('I run "scp {source}:{src_path} {dest}:{dst_path}" from the {vm_type} VM for VM-to-VM')
 def step_run_scp_from_vm(context, source, src_path, dest, dst_path, vm_type):
     """Run SCP command from a VM to copy files."""
     containers = docker_list_containers()
@@ -202,7 +202,7 @@ def step_run_scp_from_vm(context, source, src_path, dest, dst_path, vm_type):
     context.scp_error = result.stderr
 
 
-@when('I run "ssh {target_vm} {command}" from the {source_vm} VM')
+@when('I run "ssh {target_vm} {command}" from the {source_vm} VM for VM-to-VM')
 def step_run_remote_command(context, target_vm, command, source_vm):
     """Execute a command on a remote VM via SSH."""
     containers = docker_list_containers()
@@ -232,7 +232,7 @@ def step_run_remote_command(context, target_vm, command, source_vm):
     context.remote_exec_error = result.stderr
 
 
-@when('I run "ssh {target_vm} psql {args}"')
+@when('I run "ssh {target_vm} psql {args}" for VM-to-VM')
 def step_run_remote_psql(context, target_vm, args):
     """Run psql command on a remote PostgreSQL VM."""
     containers = docker_list_containers()
@@ -262,7 +262,7 @@ def step_run_remote_psql(context, target_vm, args):
     context.psql_error = result.stderr
 
 
-@when('I run "ssh {target_vm} redis-cli ping"')
+@when('I run "ssh {target_vm} redis-cli ping" for VM-to-VM')
 def step_run_remote_redis_ping(context, target_vm):
     """Run redis-cli ping on a remote Redis VM."""
     containers = docker_list_containers()
@@ -292,7 +292,7 @@ def step_run_remote_redis_ping(context, target_vm):
     context.redis_ping_error = result.stderr
 
 
-@when('I run "ssh {target_vm} curl localhost:{port}/{path}"')
+@when('I run "ssh {target_vm} curl localhost:{port}/{path}" for VM-to-VM')
 def step_run_remote_curl(context, target_vm, port, path):
     """Run curl command on a remote VM."""
     containers = docker_list_containers()
@@ -321,7 +321,7 @@ def step_run_remote_curl(context, target_vm, port, path):
     context.curl_error = result.stderr
 
 
-@when('I create a file in the {vm_type} VM')
+@when('I create a file in the {vm_type} VM for VM-to-VM')
 def step_create_file_in_vm(context, vm_type):
     """Create a test file in the specified VM."""
     containers = docker_list_containers()
@@ -348,7 +348,7 @@ def step_create_file_in_vm(context, vm_type):
     context.file_created = result.returncode == 0
 
 
-@when('SSH from one VM to another')
+@when('SSH from one VM to another for VM-to-VM')
 def step_ssh_vm_to_vm_generic(context):
     """Generic VM-to-VM SSH test."""
     if not hasattr(context, 'running_vms') or len(context.running_vms) < 2:
@@ -385,7 +385,7 @@ def step_ssh_vm_to_vm_generic(context):
     context.ssh_vm_to_vm_success = result.returncode == 0 and 'SUCCESS' in result.stdout
 
 
-@when('I need to test the backend from the frontend VM')
+@when('I need to test the backend from the frontend VM for VM-to-VM')
 def step_test_backend_from_frontend(context):
     """Context: Testing backend from frontend."""
     # Verify frontend and backend VMs are available
@@ -395,7 +395,7 @@ def step_test_backend_from_frontend(context):
     context.vms_available = frontend_exists and backend_exists
 
 
-@when('I run "ssh backend-dev pytest tests/"')
+@when('I run "ssh backend-dev pytest tests/" for VM-to-VM')
 def step_run_pytest_on_backend(context):
     """Run pytest on backend VM from frontend."""
     # This would normally run actual pytest, but for test purposes
@@ -407,7 +407,7 @@ def step_run_pytest_on_backend(context):
 # THEN steps - Verification
 # =============================================================================
 
-@then('an SSH agent should be started automatically')
+@then('an SSH agent should be started automatically for VM-to-VM')
 def step_agent_started_automatically(context):
     """Verify SSH agent was started."""
     # If no agent was running before, check if one is running now
@@ -415,7 +415,7 @@ def step_agent_started_automatically(context):
         assert ssh_agent_is_running(), "SSH agent should be running"
 
 
-@then('an SSH key should be generated automatically')
+@then('an SSH key should be generated automatically for VM-to-VM')
 def step_key_generated_automatically(context):
     """Verify SSH key was generated."""
     # Check that a key exists in ~/.ssh/vde/
@@ -424,13 +424,13 @@ def step_key_generated_automatically(context):
     assert key_exists, "SSH key should be generated"
 
 
-@then('the key should be loaded into the agent')
+@then('the key should be loaded into the agent for VM-to-VM')
 def step_key_loaded_in_agent(context):
     """Verify key is loaded in SSH agent."""
     assert ssh_agent_has_keys(), "SSH key should be loaded in agent"
 
 
-@then('no manual configuration should be required')
+@then('no manual configuration should be required for VM-to-VM')
 def step_no_manual_config(context):
     """Verify no manual configuration was needed."""
     # Verify SSH agent is running and keys exist (automatic setup worked)
@@ -438,14 +438,14 @@ def step_no_manual_config(context):
     assert VDE_SSH_DIR.exists(), "VDE SSH directory should be created automatically"
 
 
-@then('I should connect to the {vm_type} VM')
+@then('I should connect to the {vm_type} VM for VM-to-VM')
 def step_connect_to_vm(context, vm_type):
     """Verify connection to target VM succeeded."""
     success = getattr(context, 'ssh_connection_success', False)
     assert success, f"Should connect to {vm_type} VM. Error: {getattr(context, 'ssh_error', None)}"
 
 
-@then('I should be authenticated using my host\'s SSH keys')
+@then('I should be authenticated using my host\'s SSH keys for VM-to-VM')
 def step_authenticated_with_host_keys(context):
     """Verify SSH authentication uses host keys via agent forwarding."""
     # Verify connection succeeded (implies auth worked via agent)
@@ -453,7 +453,7 @@ def step_authenticated_with_host_keys(context):
         "SSH connection should succeed via agent forwarding"
 
 
-@then('I should not need to enter a password')
+@then('I should not need to enter a password for VM-to-VM')
 def step_no_password_required(context):
     """Verify no password was required."""
     # Connection success without password prompt indicates agent auth worked
@@ -461,7 +461,7 @@ def step_no_password_required(context):
         "Connection should succeed without password"
 
 
-@then('I should not need to copy keys to the {vm_type} VM')
+@then('I should not need to copy keys to the {vm_type} VM for VM-to-VM')
 def step_no_keys_copied_to_vm(context, vm_type):
     """Verify private keys were not copied to the VM."""
     # This is the key security property
@@ -469,27 +469,27 @@ def step_no_keys_copied_to_vm(context, vm_type):
         f"Private keys should NOT be in {vm_type} VM - security violation!"
 
 
-@then('I should be able to run psql commands')
+@then('I should be able to run psql commands for VM-to-VM')
 def step_can_run_psql(context):
     """Verify psql commands work."""
     success = getattr(context, 'psql_success', False)
     assert success, f"Should be able to run psql. Output: {getattr(context, 'psql_output', '')}"
 
 
-@then('authentication should use my host\'s SSH keys')
+@then('authentication should use my host\'s SSH keys for VM-to-VM')
 def step_auth_uses_host_keys(context):
     """Verify host SSH keys are used for authentication."""
     assert ssh_agent_has_keys(), "SSH agent should have keys loaded for authentication"
 
 
-@then('the file should be copied using my host\'s SSH keys')
+@then('the file should be copied using my host\'s SSH keys for VM-to-VM')
 def step_file_copied_with_host_keys(context):
     """Verify SCP uses host SSH keys."""
     success = getattr(context, 'scp_success', False)
     assert success, f"File should be copied. Error: {getattr(context, 'scp_error', '')}"
 
 
-@then('no password should be required')
+@then('no password should be required for VM-to-VM')
 def step_scp_no_password(context):
     """Verify no password required for SCP."""
     success = getattr(context, 'scp_success', False)
@@ -588,7 +588,7 @@ def step_private_keys_on_host(context):
             assert False, f"Private keys found in {container} - security violation!"
 
 
-@then('only the SSH agent socket should be forwarded')
+@then('only the SSH agent socket should be forwarded for VM-to-VM')
 def step_only_socket_forwarded(context):
     """Verify only SSH agent socket is forwarded."""
     # Verify no VMs have private keys
@@ -618,7 +618,7 @@ def step_all_connections_succeed(context):
     assert success, f"All connections should succeed. Error: {getattr(context, 'ssh_vm_to_vm_error', 'Unknown')}"
 
 
-@then('all should use my host\'s SSH keys')
+@then('all should use my host\'s SSH keys for VM-to-VM')
 def step_all_use_host_keys(context):
     """Verify all connections use host SSH keys."""
     assert ssh_agent_has_keys(), "Host SSH keys should be used for all connections"
