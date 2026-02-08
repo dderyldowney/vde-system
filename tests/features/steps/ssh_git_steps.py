@@ -204,9 +204,10 @@ def step_run_git_clone_private(context):
         return
     
     # Try to clone (will fail for non-existent repo, but verifies SSH works)
+    # Use aggressive StrictHostKeyChecking to avoid any prompts
     result = subprocess.run(
         ['docker', 'exec', python_vm,
-         'sh', '-c', 'GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@github.com:octocat/Hello-World.git /tmp/private-test 2>&1'],
+         'sh', '-c', 'GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git clone git@github.com:octocat/Hello-World.git /tmp/private-test 2>&1'],
         capture_output=True,
         text=True,
         timeout=60
@@ -263,9 +264,10 @@ def step_run_git_push(context):
         return
     
     # Try to push ( will fail without real remote, but verifies SSH auth works)
+    # Use aggressive StrictHostKeyChecking to avoid any prompts
     result = subprocess.run(
         ['docker', 'exec', go_vm,
-         'sh', '-c', 'cd {} && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git push origin main 2>&1'.format(context.test_repo_path)],
+         'sh', '-c', 'cd {} && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git push origin main 2>&1'.format(context.test_repo_path)],
         capture_output=True,
         text=True,
         timeout=60
@@ -294,7 +296,7 @@ def step_run_git_pull_github(context):
     
     result = subprocess.run(
         ['docker', 'exec', python_vm,
-         'sh', '-c', 'cd {} && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git pull 2>&1'.format(context.test_repo_path)],
+         'sh', '-c', 'cd {} && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git pull 2>&1'.format(context.test_repo_path)],
         capture_output=True,
         text=True,
         timeout=60
@@ -380,7 +382,7 @@ def step_run_scp_to_deploy_server(context):
     # Create test file and try SCP
     result = subprocess.run(
         ['docker', 'exec', python_vm,
-         'sh', '-c', 'echo "test" > /tmp/app.tar.gz && scp -o StrictHostKeyChecking=no /tmp/app.tar.gz deploy-server:/tmp/ 2>&1'],
+         'sh', '-c', 'echo "test" > /tmp/app.tar.gz && scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null /tmp/app.tar.gz deploy-server:/tmp/ 2>&1'],
         capture_output=True,
         text=True,
         timeout=60
@@ -408,7 +410,7 @@ def step_run_ssh_deploy_server(context):
     
     result = subprocess.run(
         ['docker', 'exec', python_vm,
-         'sh', '-c', 'ssh -o StrictHostKeyChecking=no deploy-server "echo deploy" 2>&1'],
+         'sh', '-c', 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null deploy-server "echo deploy" 2>&1'],
         capture_output=True,
         text=True,
         timeout=30
@@ -430,7 +432,7 @@ def step_clone_from_account1(context):
     
     result = subprocess.run(
         ['docker', 'exec', vm,
-         'sh', '-c', 'GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@github.com:account1/test.git /tmp/account1-test 2>&1'],
+         'sh', '-c', 'GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git clone git@github.com:account1/test.git /tmp/account1-test 2>&1'],
         capture_output=True,
         text=True,
         timeout=60
@@ -451,7 +453,7 @@ def step_clone_from_account2(context):
     
     result = subprocess.run(
         ['docker', 'exec', vm,
-         'sh', '-c', 'GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@github.com:account2/test.git /tmp/account2-test 2>&1'],
+         'sh', '-c', 'GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git clone git@github.com:account2/test.git /tmp/account2-test 2>&1'],
         capture_output=True,
         text=True,
         timeout=60

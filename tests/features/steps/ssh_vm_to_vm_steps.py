@@ -159,9 +159,10 @@ def step_run_ssh_from_vm(context, target_vm, source_vm):
     
     # Try to SSH from source to target
     # This uses the SSH config which should have agent forwarding enabled
+    # Use aggressive StrictHostKeyChecking to avoid any prompts
     result = subprocess.run(
         ['docker', 'exec', source_container, 
-         'sh', '-c', f'ssh -o StrictHostKeyChecking=no -A {target_vm}-dev "echo CONNECTION_SUCCESS"'],
+         'sh', '-c', f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -A {target_vm}-dev "echo CONNECTION_SUCCESS"'],
         capture_output=True,
         text=True,
         timeout=30
@@ -189,9 +190,10 @@ def step_run_scp_from_vm(context, source, src_path, dest, dst_path, vm_type):
         return
     
     # SCP from source VM to dest VM
+    # Use aggressive StrictHostKeyChecking to avoid any prompts
     result = subprocess.run(
         ['docker', 'exec', container,
-         'sh', '-c', f'scp -o StrictHostKeyChecking=no {source}-dev:{src_path} {dest}-dev:{dst_path}'],
+         'sh', '-c', f'scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {source}-dev:{src_path} {dest}-dev:{dst_path}'],
         capture_output=True,
         text=True,
         timeout=60
@@ -219,7 +221,8 @@ def step_run_remote_command(context, target_vm, command, source_vm):
         return
     
     # Execute remote command
-    full_command = f'ssh -o StrictHostKeyChecking=no -A {target_vm}-dev "{command}"'
+    # Use aggressive StrictHostKeyChecking to avoid any prompts
+    full_command = f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -A {target_vm}-dev "{command}"'
     result = subprocess.run(
         ['docker', 'exec', source_container, 'sh', '-c', full_command],
         capture_output=True,
@@ -249,9 +252,10 @@ def step_run_remote_psql(context, target_vm, args):
         return
     
     # Run psql via SSH
+    # Use aggressive StrictHostKeyChecking to avoid any prompts
     result = subprocess.run(
         ['docker', 'exec', postgres_container,
-         'sh', '-c', f'ssh -o StrictHostKeyChecking=no postgres-dev "psql {args}"'],
+         'sh', '-c', f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres-dev "psql {args}"'],
         capture_output=True,
         text=True,
         timeout=30
@@ -279,9 +283,10 @@ def step_run_remote_redis_ping(context, target_vm):
         return
     
     # Run redis-cli ping via SSH
+    # Use aggressive StrictHostKeyChecking to avoid any prompts
     result = subprocess.run(
         ['docker', 'exec', redis_container,
-         'sh', '-c', f'ssh -o StrictHostKeyChecking=no redis-dev "redis-cli ping"'],
+         'sh', '-c', f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null redis-dev "redis-cli ping"'],
         capture_output=True,
         text=True,
         timeout=30
@@ -310,7 +315,7 @@ def step_run_remote_curl(context, target_vm, port, path):
     
     result = subprocess.run(
         ['docker', 'exec', target_container,
-         'sh', '-c', f'ssh -o StrictHostKeyChecking=no {target_vm}-dev "curl localhost:{port}/{path}"'],
+         'sh', '-c', f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {target_vm}-dev "curl localhost:{port}/{path}"'],
         capture_output=True,
         text=True,
         timeout=30
@@ -376,7 +381,7 @@ def step_ssh_vm_to_vm_generic(context):
     
     result = subprocess.run(
         ['docker', 'exec', source_container,
-         'sh', '-c', f'ssh -o StrictHostKeyChecking=no -A {target_vm}-dev "echo SUCCESS"'],
+         'sh', '-c', f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -A {target_vm}-dev "echo SUCCESS"'],
         capture_output=True,
         text=True,
         timeout=30

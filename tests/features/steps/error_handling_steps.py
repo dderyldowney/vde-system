@@ -202,7 +202,7 @@ def step_try_connect(context):
     vm_name = getattr(context, 'vm_name', 'python')
     # Try to connect
     result = subprocess.run(
-        ['ssh', '-o', 'ConnectTimeout=5', f'devuser@localhost',
+        ['ssh', '-F', os.path.expanduser('~/.ssh/vde/config'), '-o', 'ConnectTimeout=5', f'devuser@localhost',
          '-p', str(getattr(context, 'ssh_port', 2200)), 'echo test'],
         capture_output=True, text=True, timeout=10
     )
