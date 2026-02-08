@@ -1,16 +1,23 @@
+# Template for language VMs
+# Variables: zig, 2201, apt-get install -y zig
 services:
   zig-dev:
     build:
-      context: .
-      dockerfile: Dockerfile.base
+      context: ../../..
+      dockerfile: configs/docker/base-dev.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-zig:latest
     container_name: zig-dev
     hostname: zig-dev
     restart: unless-stopped
-    command: sh -c "cd /tmp && curl -fsSL https://ziglang.org/download/0.14.0/zig-linux-x86_64-0.14.0.tar.xz -o zig.tar.xz && tar xf zig.tar.xz && mv zig-linux-x86_64-0.14.0 /opt/zig && ln -sf /opt/zig/zig /usr/local/bin/zig && rm -rf /tmp/zig.tar.xz && /usr/sbin/sshd -D"
+    command: sh -c "apt-get install -y zig && /usr/sbin/sshd -D"
 
     ports:
-      - ":22"
+      - "2201:22"
 
     volumes:
       - ../../../projects/zig:/home/devuser/workspace
@@ -21,8 +28,6 @@ services:
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
-      - VDE_HOME=${VDE_HOME:-}
-      - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
       - ../../../env-files/zig.env

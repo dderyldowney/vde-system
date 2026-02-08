@@ -1,5 +1,0 @@
-# Python Development Image
-# Extends vde-base-dev with Python development tools
-FROM vde-base-dev:latest
-
-RUN apt-get update -y && apt-get install -y python3 python3-pip
