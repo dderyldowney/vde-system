@@ -23,6 +23,9 @@ from config import VDE_ROOT
 # Track test VMs created during test run for cleanup
 _TEST_VMS_CREATED = set()
 
+# Track SSH agent PID started by tests
+_SSH_AGENT_PID = None
+
 
 # =============================================================================
 # HELPER FUNCTIONS
@@ -41,6 +44,81 @@ def run_vde_command(command, timeout=120):
         env=env,
     )
     return result
+
+
+def _start_ssh_agent():
+    """Start a local SSH agent and return the PID and socket."""
+    global _SSH_AGENT_PID
+    
+    # Check if SSH agent is already running
+    result = subprocess.run(
+        ["ssh-add", "-l"],
+        capture_output=True,
+        text=True,
+        timeout=10
+    )
+    if result.returncode in (0, 1):  # 0 = has keys, 1 = no keys but agent running
+        print("[SETUP] SSH agent already running")
+        return True
+    
+    # Start a new SSH agent
+    result = subprocess.run(
+        ["ssh-agent", "-s"],
+        capture_output=True,
+        text=True,
+        timeout=10
+    )
+    if result.returncode != 0:
+        print(f"[SETUP] Failed to start SSH agent: {result.stderr}")
+        return False
+    
+    # Parse the output to get PID and socket
+    for line in result.stdout.split('\n'):
+        if line.startswith('SSH_AUTH_SOCK='):
+            socket = line.split('=')[1].split(';')[0]
+            os.environ['SSH_AUTH_SOCK'] = socket
+        elif line.startswith('SSH_AGENT_PID='):
+            pid = line.split('=')[1].split(';')[0]
+            _SSH_AGENT_PID = int(pid)
+            os.environ['SSH_AGENT_PID'] = pid
+    
+    print(f"[SETUP] Started SSH agent (PID: {_SSH_AGENT_PID}, Socket: {os.environ.get('SSH_AUTH_SOCK', 'unknown')})")
+    return True
+
+
+def _stop_ssh_agent():
+    """Stop the SSH agent if it was started by tests."""
+    global _SSH_AGENT_PID
+    
+    if _SSH_AGENT_PID is not None:
+        try:
+            os.kill(_SSH_AGENT_PID, 0)  # Check if process exists
+            subprocess.run(
+                ["kill", str(_SSH_AGENT_PID)],
+                capture_output=True,
+                timeout=10
+            )
+            print(f"[TEARDOWN] Stopped SSH agent (PID: {_SSH_AGENT_PID})")
+            _SSH_AGENT_PID = None
+        except (OSError, subprocess.TimeoutExpired):
+            print(f"[TEARDOWN] SSH agent (PID: {_SSH_AGENT_PID}) already stopped")
+            _SSH_AGENT_PID = None
+    else:
+        # Check if there's an SSH agent from the environment
+        agent_pid = os.environ.get('SSH_AGENT_PID')
+        if agent_pid:
+            try:
+                pid_int = int(agent_pid)
+                os.kill(pid_int, 0)
+                # Process exists - kill it
+                subprocess.run(
+                    ["kill", agent_pid],
+                    capture_output=True,
+                    timeout=10
+                )
+                print(f"[TEARDOWN] Stopped SSH agent from environment (PID: {agent_pid})")
+            except (ValueError, OSError):
+                pass  # Process doesn't exist
 
 
 def get_current_docker_state():
@@ -298,6 +376,22 @@ def before_scenario(context, scenario):
     if "docker-required" in scenario.feature.filename:
         _setup_feature_vms(scenario.feature.name, scenario.name)
         return
+
+
+def before_feature(context, feature):
+    """Hook that runs before each feature."""
+    # Start SSH agent for SSH-related features
+    if "vde-ssh" in feature.filename or "ssh-agent" in feature.filename:
+        _start_ssh_agent()
+
+
+def after_feature(context, feature):
+    """Hook that runs after each feature."""
+    # Stop SSH agent for SSH-related features
+    if "vde-ssh" in feature.filename or "ssh-agent" in feature.filename:
+        _stop_ssh_agent()
+    
+    # Remove test-created containers
 
 
 def after_scenario(context, scenario):
