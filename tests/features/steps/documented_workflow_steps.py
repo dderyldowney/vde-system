@@ -1065,11 +1065,8 @@ def _is_service_vm(vm_name):
                 if line.strip() and not line.startswith('#'):
                     parts = line.strip().split('|')
                     if len(parts) >= 2 and parts[1].lower() == vm_name.lower():
-                        # Check if it's marked as service
-                        if len(parts) >= 4:
-                            vm_type = parts[3].lower()
-                            return 'service' in vm_type or 'database' in vm_type
-                        return False
+                        # Check if it's marked as service (parts[0] = "service")
+                        return parts[0].lower() == 'service'
     except FileNotFoundError:
         pass
     return False
@@ -1253,8 +1250,8 @@ def step_ssh_connection_info(context):
 @then('the plan should set rebuild=true flag')
 def step_rebuild_flag(context):
     """Verify rebuild flag is set."""
-    flags = getattr(context, 'detected_flags', {})
-    assert flags.get('rebuild', False), "Expected rebuild=true flag"
+    rebuild_flag = getattr(context, 'rebuild_flag', False)
+    assert rebuild_flag, "Expected rebuild=true flag"
 
 
 @then('the plan should apply to all running VMs')
