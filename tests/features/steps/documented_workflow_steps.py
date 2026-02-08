@@ -192,7 +192,7 @@ def step_js_workflow(context):
 @given('I am creating a microservices architecture')
 def step_microservices_arch(context):
     """Set up context for microservices architecture - parser test."""
-    context.scenario = 'microservices'
+    context.workflow_type = 'microservices'
 
 
 @given('I have planned to create Python')
