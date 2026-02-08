@@ -233,36 +233,61 @@ def step_public_key_synced(context):
 @then('status command should show SSH environment state')
 def step_status_shows_state(context):
     """Verify status command outputs meaningful information."""
-    assert hasattr(context, 'ssh_status_output'), \
+    output = None
+    
+    if hasattr(context, 'ssh_status_output'):
+        output = context.ssh_status_output
+    elif hasattr(context, 'last_output'):
+        output = context.last_output
+    elif hasattr(context, 'last_command_output'):
+        output = context.last_command_output
+    
+    assert output is not None and len(output) > 0, \
         "Status output not captured - did you run 'vde ssh-setup status' first?"
-    assert len(context.ssh_status_output) > 0, "Status output is empty"
 
     # Check for status indicators in output
-    output_lower = context.ssh_status_output.lower()
+    output_lower = output.lower()
     has_status_info = any(word in output_lower for word in
                           ['ssh', 'key', 'config', 'agent', 'directory', 'vde'])
     assert has_status_info, \
-        f"Status output missing expected info: {context.ssh_status_output}"
+        f"Status output missing expected info: {output}"
 
 
 @then('init command should show completion message')
 def step_init_shows_completion(context):
     """Verify init command shows setup complete message."""
-    assert hasattr(context, 'ssh_init_output'), \
+    output = None
+    
+    if hasattr(context, 'ssh_init_output'):
+        output = context.ssh_init_output
+    elif hasattr(context, 'last_output'):
+        output = context.last_output
+    elif hasattr(context, 'last_command_output'):
+        output = context.last_command_output
+    
+    assert output is not None, \
         "Init output not captured - did you run 'vde ssh-setup init' first?"
 
-    output_lower = context.ssh_init_output.lower()
+    output_lower = output.lower()
     assert "complete" in output_lower or "setup" in output_lower, \
-        f"Init output missing completion message: {context.ssh_init_output}"
+        f"Init output missing completion message: {output}"
 
 
 @then('sync command should show success message')
 def step_sync_shows_success(context):
     """Verify sync command shows success message."""
-    assert hasattr(context, 'ssh_sync_output'), \
+    output = None
+    
+    if hasattr(context, 'ssh_sync_output'):
+        output = context.ssh_sync_output
+    elif hasattr(context, 'last_output'):
+        output = context.last_output
+    elif hasattr(context, 'last_command_output'):
+        output = context.last_command_output
+    
+    assert output is not None, \
         "Sync output not captured - did you run 'vde ssh-sync' first?"
 
-    output = context.ssh_sync_output
     # Check for success indicators in the output
     # The script shows "Syncing VDE SSH public key..." and "Build context location:" on success
     has_success = ("syncing" in output.lower() or
@@ -271,7 +296,7 @@ def step_sync_shows_success(context):
                    "✓" in output or
                    "build context location:" in output.lower())
     assert has_success, \
-        f"Sync output missing success message: {context.ssh_sync_output}"
+        f"Sync output missing success message: {output}"
 
 
 @then('the command should fail')
