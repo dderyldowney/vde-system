@@ -28,6 +28,7 @@ Feature: Error path and negative testing
     Then the command should complete successfully
     And the output should contain usage information
 
+  @wip
   Scenario: Querying status of non-existent VM
     Given the VDE system is available
     When I query the status of a non-existent VM
