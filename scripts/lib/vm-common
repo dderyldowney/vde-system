@@ -2354,6 +2354,11 @@ ensure_ssh_environment() {
     ensure_vde_ssh_environment
 
     # Ensure SSH agent is running
+    # Ensure VDE SSH known_hosts file exists (prevents prompts)
+    mkdir -p "$(dirname "$VDE_SSH_KNOWN_HOSTS")"
+    touch "$VDE_SSH_KNOWN_HOSTS"
+    chmod 600 "$VDE_SSH_KNOWN_HOSTS"
+
     ensure_ssh_agent
 
     # Ensure VDE SSH config has VM entries
