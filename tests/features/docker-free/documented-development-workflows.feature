@@ -1,5 +1,4 @@
 @user-guide-daily-workflow
-@wip
 Feature: Daily Development Workflow
   As documented in the VDE development workflows
   I want to follow the same patterns that are documented
