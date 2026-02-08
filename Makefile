@@ -1,7 +1,7 @@
 # VDE Makefile
 # Targets for testing and development
 
-.PHONY: help test test-unit test-integration test-comprehensive test-coverage test-ai-api test-real-ai-api test-bdd lint check clean install-deps coverage-view coverage-clean bdd-shell
+.PHONY: help test test-unit test-integration test-comprehensive test-coverage test-ai-api test-real-ai-api test-bdd test-security test-benchmark lint check clean install-deps coverage-view coverage-clean bdd-shell
 
 # Default target
 help:
@@ -54,7 +54,7 @@ test: test-unit test-integration test-comprehensive
 
 test-unit:
 	@echo "Running unit tests..."
-	@for test in tests/unit/*.sh; do \
+	@for test in tests/unit/*.sh tests/unit/*.zsh; do \
 		if [ -f "$$test" ]; then \
 			echo "Running $$test..."; \
 			chmod +x "$$test"; \
@@ -62,6 +62,23 @@ test-unit:
 		fi \
 	done
 	@echo "✓ Unit tests passed"
+
+test-security:
+	@echo "Running security tests..."
+	@for test in tests/security/*.sh; do \
+		if [ -f "$$test" ]; then \
+			echo "Running $$test..."; \
+			chmod +x "$$test"; \
+			zsh "$$test" || exit 1; \
+		fi \
+	done
+	@echo "✓ Security tests passed"
+
+test-benchmark:
+	@echo "Running performance benchmarks..."
+	@chmod +x tests/performance/benchmark_suite.sh
+	@zsh tests/performance/benchmark_suite.sh
+	@echo "✓ Benchmarks complete"
 
 test-integration:
 	@echo "Running integration tests..."

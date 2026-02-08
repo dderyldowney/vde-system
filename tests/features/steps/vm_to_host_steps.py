@@ -460,8 +460,10 @@ def step_see_host_logs(context):
 @then('the output should update in real-time')
 def step_logs_realtime(context):
     """Verify logs update in real-time."""
-    # This is a design property - verified by the to-host mechanism
-    assert True
+    # Verify the to-host mechanism supports output streaming
+    output = getattr(context, 'tohost_logs_output', '')
+    result = getattr(context, 'tohost_logs_result', False)
+    assert result or len(output) > 0, "Real-time output mechanism should be available"
 
 
 @then('I should see a list of my host\'s directories')
