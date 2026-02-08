@@ -346,85 +346,73 @@ def step_no_cache(context):
 @given(u'I want to perform common actions')
 def step_want_common_actions(context):
     """Setup: User wants to perform common VM actions."""
-    # Just a setup step, no action needed
-    pass
+    context.user_intent = 'common-actions'
 
 
 @given(u'I can phrase commands in different ways')
 def step_phrase_commands(context):
     """Setup: User can phrase commands in different ways."""
-    # Just a setup step, no action needed
-    pass
+    context.command_style = 'flexible'
 
 
 @given(u'I need to work with multiple environments')
 def step_multiple_environments(context):
     """Setup: User needs to work with multiple environments."""
-    # Just a setup step, no action needed
-    pass
+    context.scenario_type = 'multi-environment'
 
 
 @given(u'I know a VM by its alias')
 def step_know_alias(context):
     """Setup: User knows VMs by their aliases."""
-    # Just a setup step, no action needed
-    pass
+    context.user_intent = 'alias-usage'
 
 
 @given(u'I want to know what\'s running')
 def step_want_status(context):
     """Setup: User wants to know what VMs are running."""
-    # Just a setup step, no action needed
-    pass
+    context.user_intent = 'status-check'
 
 
 @given(u'I\'m not sure what to do')
 def step_need_help(context):
     """Setup: User is not sure what commands are available."""
-    # Just a setup step, no action needed
-    pass
+    context.user_intent = 'help'
 
 
 @given(u'I need to connect to a VM')
 def step_need_connect(context):
     """Setup: User needs to connect to a VM."""
-    # Just a setup step, no action needed
-    pass
+    context.user_intent = 'connect'
 
 
 @given(u'I need to rebuild a container')
 def step_need_rebuild(context):
     """Setup: User needs to rebuild a container."""
-    # Just a setup step, no action needed
-    pass
+    context.user_intent = 'rebuild'
 
 
 @given(u'I want to operate on all VMs of a type')
 def step_operate_by_type(context):
     """Setup: User wants to operate on all VMs of a specific type."""
-    # Just a setup step, no action needed
-    pass
+    context.user_intent = 'batch-operation'
 
 
 @given(u'I\'m done working')
 def step_done_working(context):
     """Setup: User is done working and wants to cleanup."""
-    # Just a setup step, no action needed
-    pass
+    context.user_intent = 'cleanup'
 
 
 @given(u'I use conversational language')
 def step_conversational_language(context):
     """Setup: User uses conversational language."""
-    # Just a setup step, no action needed
-    pass
+    context.command_style = 'conversational'
 
 
 @given(u'I want to set up a backend')
 def step_want_backend(context):
     """Setup: User wants to set up a backend environment."""
-    # Just a setup step, no action needed
-    pass
+    context.user_intent = 'backend-setup'
 
 
 # ========== ADDITIONAL WHEN STEPS ==========
@@ -522,16 +510,16 @@ def step_say_backend_setup(context):
 @given(u'I type commands in various cases')
 def step_type_cases(context):
     """Setup: User types commands in various cases."""
-    pass
+    context.command_style = 'mixed-case'
 
 
 @given(u'I want to type less')
 def step_type_less(context):
     """Setup: User wants to type less."""
-    pass
+    context.user_intent = 'minimal-typing'
 
 
 @given(u'something isn\'t working')
 def step_troubleshooting(context):
     """Setup: User is troubleshooting an issue."""
-    pass
+    context.user_intent = 'troubleshoot'

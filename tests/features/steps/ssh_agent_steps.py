@@ -355,8 +355,9 @@ def step_can_use_any_key(context):
 @then('no SSH configuration messages should be displayed')
 def step_no_ssh_messages(context):
     """Verify no SSH messages during normal ops."""
-    # This is verified by checking that setup is silent
-    assert True  # Silent operation is a design goal
+    # Verify no SSH error messages in output
+    output = getattr(context, 'ssh_setup_output', '')
+    assert 'error' not in output.lower(), f"SSH errors found in output: {output}"
 
 
 @then('the setup should happen automatically')

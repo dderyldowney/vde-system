@@ -250,7 +250,7 @@ def step_see_project_files(context):
     workspace_dir = getattr(context, 'current_directory', Path.home() / 'workspace')
     assert workspace_dir.exists(), f"Workspace directory {workspace_dir} should exist"
     files = list(workspace_dir.iterdir())
-    assert True, f"Project files visible: {len(files)} items"
+    assert len(files) > 0, f"Expected project files to be visible, found {len(files)} items"
 
 
 @then('changes should be reflected on the host')

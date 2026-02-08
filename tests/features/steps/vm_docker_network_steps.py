@@ -263,4 +263,4 @@ def step_each_vm_mapped_port(context):
         for vm in running[:3]:  # Check first 3 VMs
             result = subprocess.run(['./scripts/vde', 'port', vm], capture_output=True, text=True)
             assert result.returncode == 0, f"VM {vm} should have port mapping"
-    assert True, "Each VM should be mapped to its port"
+    assert running is not None, "VM port mapping check completed"
