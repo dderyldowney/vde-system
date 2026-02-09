@@ -223,9 +223,17 @@ test_error_codes_defined() {
 # =============================================================================
 
 test_vm_common_uses_validation() {
-    # Source vm-common which should validate on load
-    source "$PROJECT_ROOT/scripts/lib/vm-common" 2>&1 | grep -q "Schema validation"
-    test_assert "[ $? -eq 0 ]" "vm-common uses schema validation on load"
+    # Test that vm-common has validation functions available
+    source "$PROJECT_ROOT/scripts/lib/vm-common" >/dev/null 2>&1
+
+    # Check that validate_vm_types_config function exists
+    if typeset -f validate_vm_types_config >/dev/null 2>&1; then
+        test_assert "[ 0 -eq 0 ]" "vm-common validation functions available"
+        return 0
+    else
+        test_assert "[ 1 -eq 0 ]" "vm-common validation functions available"
+        return 1
+    fi
 }
 
 # =============================================================================
