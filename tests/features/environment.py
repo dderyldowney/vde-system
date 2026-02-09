@@ -20,6 +20,34 @@ if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 from config import VDE_ROOT
 
+# Import schema-validated config loader
+tests_dir = os.path.dirname(features_dir)
+if tests_dir not in sys.path:
+    sys.path.insert(0, tests_dir)
+
+from test_config_loader import get_behave_config
+
+# Load schema-validated behave configuration
+_BEHAVE_CONFIG = None
+
+def get_config():
+    """Get behave configuration (lazy load)."""
+    global _BEHAVE_CONFIG
+    if _BEHAVE_CONFIG is None:
+        try:
+            config_loader = get_behave_config()
+            _BEHAVE_CONFIG = config_loader.load(validate=True)
+        except Exception as e:
+            print(f"[BEHAVE] Warning: Failed to load behave-config.json: {e}")
+            # Use default config
+            _BEHAVE_CONFIG = {
+                "version": "1.0",
+                "behave": {"format": "pretty", "color": True},
+                "logging": {"level": "INFO"},
+                "paths": {"features": "tests/features", "steps": "tests/features/steps"},
+            }
+    return _BEHAVE_CONFIG
+
 # Track test VMs created during test run for cleanup
 _TEST_VMS_CREATED = set()
 
@@ -428,6 +456,17 @@ def after_feature(context, feature):
 
 def before_all(context):
     """Hook that runs once before any tests execute."""
+    # Load and validate schema-validated config
+    config = get_config()
+    behave_settings = config.get("behave", {})
+    logging_settings = config.get("logging", {})
+
+    print(f"[SETUP] Loaded behave-config.json v{config.get('version')}")
+    print(f"[SETUP] Format: {behave_settings.get('format')}, Logging: {logging_settings.get('level')}")
+
+    # Store config in context for access in steps
+    context.behave_config = config
+
     # Verify Docker is available
     try:
         docker_result = subprocess.run(

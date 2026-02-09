@@ -2,7 +2,7 @@
 # Run all unit tests for VDE libraries
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$SCRIPT_DIR"
 
 echo "=============================================="
 echo "VDE Unit Test Suite"
@@ -27,6 +27,7 @@ UNIT_TESTS=(
     "tests/unit/vde-progress.test.zsh"
     "tests/unit/vde-audit.test.zsh"
     "tests/unit/vde-health.test.zsh"
+    "tests/unit/test-framework-config.test.zsh"
 )
 
 # Docker-dependent tests (optional)
