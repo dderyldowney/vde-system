@@ -6,21 +6,14 @@
 # This library provides core functionality for VDE VM management including:
 # - VM type configuration loading and querying (with caching)
 # - Port management with atomic reservation (with registry)
-# - Docker compose operations with error handling
-# - SSH key management and configuration
-# - Template rendering for VM creation
 #
-# Performance Optimizations (Stage 3):
-# - VM type caching with mtime validation
-# - Port allocation registry for fast lookups
-# - Lazy loading support for optional modules
+# MODULAR ARCHITECTURE (Stage 5):
+# This library now sources specialized libraries for:
+#   - vde-ssh: SSH key management and configuration
+#   - vde-docker: Docker container management
+#   - vde-templates: Template rendering for VM creation
 #
-# Shell Compatibility (Stage 4):
-# - Uses vde-shell-compat for zsh operations
-# - Requires zsh 5.0+
-#
-# For lightweight operations, consider using vde-core instead which
-# provides only essential functions without SSH/Docker dependencies.
+# For lightweight operations without Docker/SSH dependencies, use vde-core instead.
 #
 # Return Codes: All functions use standardized return codes from vde-constants:
 #   VDE_SUCCESS (0)        - Operation completed successfully
@@ -31,52 +24,93 @@
 #   VDE_ERR_TIMEOUT (5)    - Operation exceeded time limit
 #   VDE_ERR_EXISTS (6)     - Resource already exists
 #   VDE_ERR_DEPENDENCY (7) - Required dependency missing
-#   VDE_ERR_DOCKER (8)     - Docker operation failure
-#   VDE_ERR_LOCK (9)       - Failed to acquire lock
 
-# -----------------------
-# Source Guard
-# -----------------------
-# Prevent multiple sourcing which causes readonly variable errors
+# =============================================================================
+# SOURCE GUARD
+# =============================================================================
+
 if [ "${_VM_COMMON_LOADED:-}" = "1" ]; then
     return 0 2>/dev/null || exit 0
 fi
 _VM_COMMON_LOADED=1
 
-# -----------------------
-# Bootstrap: Determine VDE Root Directory
-# -----------------------
-# Zsh-only script path detection
-# shellcheck disable=SC2296
-_VM_COMMON_SCRIPT_PATH="${(%):-%x}"
+# =============================================================================
+# BOOTSTRAP: DETERMINE VDE ROOT DIRECTORY
+# =============================================================================
 
 if [ -z "${VDE_ROOT_DIR:-}" ]; then
+    _VM_COMMON_SCRIPT_PATH="${(%):-%x}"
     VDE_ROOT_DIR="$(cd "$(dirname "$_VM_COMMON_SCRIPT_PATH")/../.." && pwd)"
     readonly VDE_ROOT_DIR
 fi
 
-# -----------------------
-# Source Shell Compatibility Layer
-# -----------------------
-# shellcheck source=vde-shell-compat
+# =============================================================================
+# DEPENDENCIES (CORE)
+# =============================================================================
+
 . "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat"
-
-# -----------------------
-# Source Constants Library
-# -----------------------
-# Load centralized constants (return codes, port ranges, timeouts, etc.)
-# shellcheck source=vde-constants
 . "$VDE_ROOT_DIR/scripts/lib/vde-constants"
-
-# -----------------------
-# Source Error Handling Library
-# -----------------------
-# shellcheck source=vde-errors
 . "$VDE_ROOT_DIR/scripts/lib/vde-errors"
+. "$VDE_ROOT_DIR/scripts/lib/vde-naming"
+. "$VDE_ROOT_DIR/scripts/lib/vde-path-utils"
 
-# -----------------------
-# Directory Constants
-# -----------------------
+# =============================================================================
+# LOGGING ALIASES (map _info/_error to inline functions)
+# =============================================================================
+# These are used by load_vm_types and other functions
+
+if ! command -v _info >/dev/null 2>&1; then
+    _info() {
+        echo "[INFO] $*" >&2
+    }
+fi
+
+if ! command -v _error >/dev/null 2>&1; then
+    _error() {
+        echo "[ERROR] $*" >&2
+    }
+fi
+
+# =============================================================================
+# OPTIONAL MODULAR LIBRARIES
+# =============================================================================
+
+# Source specialized libraries (fail gracefully if not needed)
+_vde_ssh_source() {
+    if [ -f "$VDE_ROOT_DIR/scripts/lib/vde-ssh" ]; then
+        . "$VDE_ROOT_DIR/scripts/lib/vde-ssh"
+        return $VDE_SUCCESS
+    fi
+    return $VDE_ERR_DEPENDENCY
+}
+
+_vde_docker_source() {
+    if [ -f "$VDE_ROOT_DIR/scripts/lib/vde-docker" ]; then
+        . "$VDE_ROOT_DIR/scripts/lib/vde-docker"
+        return $VDE_SUCCESS
+    fi
+    return $VDE_ERR_DEPENDENCY
+}
+
+_vde_templates_source() {
+    if [ -f "$VDE_ROOT_DIR/scripts/lib/vde-templates" ]; then
+        . "$VDE_ROOT_DIR/scripts/lib/vde-templates"
+        return $VDE_SUCCESS
+    fi
+    return $VDE_ERR_DEPENDENCY
+}
+
+# Load modular libraries (lazy loading)
+_vm_common_load_modular_libs() {
+    _vde_ssh_source
+    _vde_docker_source
+    _vde_templates_source
+}
+
+# =============================================================================
+# DIRECTORY CONSTANTS (TRULY COMMON)
+# =============================================================================
+
 CONFIGS_DIR="$VDE_ROOT_DIR/configs/docker"
 readonly CONFIGS_DIR
 SCRIPTS_DIR="$VDE_ROOT_DIR/scripts"
@@ -88,6 +122,7 @@ readonly DATA_DIR
 BACKUP_DIR="$VDE_ROOT_DIR/backup"
 readonly BACKUP_DIR
 VM_TYPES_CONF="$DATA_DIR/vm-types.conf"
+VM_TYPES_JSON="$DATA_DIR/vm-types.json"
 VDE_CACHE_DIR="$VDE_ROOT_DIR/.cache"
 readonly VDE_CACHE_DIR
 VM_TYPES_CACHE="$VDE_CACHE_DIR/vm-types.cache"
@@ -95,2366 +130,587 @@ readonly VM_TYPES_CACHE
 PORT_REGISTRY_FILE="$VDE_CACHE_DIR/port-registry"
 readonly PORT_REGISTRY_FILE
 
-# -----------------------
-# Port Range Aliases (for backward compatibility)
-# -----------------------
-# These reference the constants from vde-constants for backward compatibility
-# with any scripts that may use the old variable names
-LANG_PORT_START=$VDE_LANG_PORT_START
-readonly LANG_PORT_START
-LANG_PORT_END=$VDE_LANG_PORT_END
-readonly LANG_PORT_END
-SVC_PORT_START=$VDE_SVC_PORT_START
-readonly SVC_PORT_START
-SVC_PORT_END=$VDE_SVC_PORT_END
-readonly SVC_PORT_END
+# =============================================================================
+# PORT RANGE ALIASES (for backward compatibility)
+# =============================================================================
 
-# -----------------------
-# Logging Functions
-# -----------------------
 
-# log_info - Output an informational message
-# Args: <message...>
-# Returns: VDE_SUCCESS (0)
-# Example: log_info "Starting VM python..."
-log_info() {
-    echo "[INFO] $*">&2
-    return $VDE_SUCCESS
-}
+# =============================================================================
+# VM TYPE DEFINITIONS (ASSOCIATIVE ARRAYS)
+# =============================================================================
 
-# log_error - Output an error message to stderr
-# Args: <message...>
-# Returns: VDE_SUCCESS (0)
-# Example: log_error "Failed to start VM"
-log_error() {
-    echo "[ERROR] $*">&2
-    return $VDE_SUCCESS
-}
+declare -A VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT
 
-# log_success - Output a success message
-# Args: <message...>
-# Returns: VDE_SUCCESS (0)
-# Example: log_success "VM started successfully"
-log_success() {
-    echo "[SUCCESS] $*">&2
-    return $VDE_SUCCESS
-}
+# =============================================================================
+# CACHE VALIDATION
+# =============================================================================
 
-# log_warning - Output a warning message
-# Args: <message...>
-# Returns: VDE_SUCCESS (0)
-# Example: log_warning "SSH key not found, using default"
-log_warning() {
-    echo "[WARNING] $*">&2
-    return $VDE_SUCCESS
-}
-
-# -----------------------
-# Config Loading Functions
-# -----------------------
-# Initialize associative arrays for VM type data using shell-compat layer
-_assoc_init "VM_TYPE"
-_assoc_init "VM_ALIASES"
-_assoc_init "VM_DISPLAY"
-_assoc_init "VM_INSTALL"
-_assoc_init "VM_SVC_PORT"
-
-# Global flag to track if VM types are loaded
-_VM_TYPES_LOADED=0
-
-# -----------------------
-# VM Type Caching Functions (Performance Optimization)
-# -----------------------
-# These functions implement persistent caching for VM type configuration
-# to avoid re-parsing vm-types.conf on every script invocation.
-
-# _ensure_cache_dir - Create cache directory if it doesn't exist
-# Args: none
-# Returns: VDE_SUCCESS (0)
-_ensure_cache_dir() {
-    if [ ! -d "$VDE_CACHE_DIR" ]; then
-        mkdir -p "$VDE_CACHE_DIR" 2>/dev/null
-    fi
-    return $VDE_SUCCESS
-}
-
-# _get_file_mtime - Get file modification time as Unix timestamp
-# Args: <filepath>
-# Returns: VDE_SUCCESS (0), outputs mtime to stdout
-_get_file_mtime() {
-    local filepath="$1"
-    if [ -f "$filepath" ]; then
-        # macOS uses stat -f %m, Linux uses stat -c %Y
-        if [ "$(uname)" = "Darwin" ]; then
-            stat -f %m "$filepath" 2>/dev/null || echo "0"
-        else
-            stat -c %Y "$filepath" 2>/dev/null || echo "0"
-        fi
-    else
-        echo "0"
-    fi
-    return $VDE_SUCCESS
-}
-
-# _is_cache_valid - Check if VM types cache is newer than config file
-# Args: none
-# Returns:
-#   VDE_SUCCESS (0) - Cache is valid and can be used
-#   VDE_ERR_NOT_FOUND (3) - Cache is invalid, stale, or doesn't exist
-# Example: _is_cache_valid && echo "Using cached VM types"
+# Check if cache is valid based on source file modification time
+# Args: <cache_file> <source_file>
+# Returns: 0 if cache is valid, 1 if stale
+# Usage: _is_cache_valid cache_file source_file1 [source_file2 ...]
 _is_cache_valid() {
-    # Check if cache file exists
-    if [ ! -f "$VM_TYPES_CACHE" ]; then
-        return $VDE_ERR_NOT_FOUND
+    local cache_file="$1"
+    shift
+    local source_files=("$@")
+
+    if [[ ! -f "$cache_file" ]]; then
+        return 1
     fi
-    
-    # Check if config file exists
-    if [ ! -f "$VM_TYPES_CONF" ]; then
-        return $VDE_ERR_NOT_FOUND
-    fi
-    
-    # Compare modification times
-    local cache_mtime config_mtime
-    cache_mtime=$(_get_file_mtime "$VM_TYPES_CACHE")
-    config_mtime=$(_get_file_mtime "$VM_TYPES_CONF")
-    
-    # Cache is valid if it's newer than config
-    if [ "$cache_mtime" -gt "$config_mtime" ]; then
-        return $VDE_SUCCESS
-    fi
-    
-    return $VDE_ERR_NOT_FOUND
+
+    # Check if any source file is newer than cache
+    local cache_mtime source_mtime
+    cache_mtime=$(stat -f "%m" "$cache_file" 2>/dev/null || stat -c "%Y" "$cache_file" 2>/dev/null)
+
+    for source_file in "${source_files[@]}"; do
+        if [[ -f "$source_file" ]]; then
+            source_mtime=$(stat -f "%m" "$source_file" 2>/dev/null || stat -c "%Y" "$source_file" 2>/dev/null)
+            if [[ "$source_mtime" -gt "$cache_mtime" ]]; then
+                return 1
+            fi
+        fi
+    done
+
+    return 0
 }
 
-# _cache_vm_types - Serialize and write VM type data to cache file
-# Args: none
-# Returns: VDE_SUCCESS (0)
-# Side Effects: Creates/updates $VM_TYPES_CACHE file
-# Example: _cache_vm_types  # Called after loading from config
-_cache_vm_types() {
-    _ensure_cache_dir
-    
-    # Write cache file with serialized associative arrays
-    # Format: ARRAY_NAME:key=value (one per line)
+# =============================================================================
+# VM TYPE LOADING
+# =============================================================================
+
+# Load VM types from configuration file
+# Uses cache if available and valid
+# Format: shortname|type|display_name|install_command|port_base
+load_vm_types() {
+    # Prefer JSON config if available
+    if [[ -f "$VM_TYPES_JSON" ]]; then
+        _info "Using JSON VM types config: $VM_TYPES_JSON"
+
+        # Validate against schema using centralized vde-core function
+        local schema_file
+        schema_file=$(vde_get_schema_for_json "$VM_TYPES_JSON" 2>/dev/null)
+        if [[ -n "$schema_file" && -f "$schema_file" ]]; then
+            _info "Validating config against schema: $schema_file"
+            if ! vde_validate_json_schema "$VM_TYPES_JSON" "$schema_file"; then
+                _error "VM types JSON schema validation failed"
+                _error "Config file may be corrupt or missing required fields"
+                return $VDE_ERR_INVALID_DATA
+            fi
+        else
+            _warn "No schema file found for $VM_TYPES_JSON, skipping validation"
+        fi
+    elif [[ -f "$VM_TYPES_CONF" ]]; then
+        _info "Using legacy CONF VM types config: $VM_TYPES_CONF"
+    else
+        _error "VM types configuration file not found (JSON or CONF)"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Try cache first - validate it's not corrupt
+    local use_cache=0
+    if _is_cache_valid "$VM_TYPES_CACHE" "$VM_TYPES_JSON" "$VM_TYPES_CONF"; then
+        # Verify cache file is valid zsh before sourcing
+        if zsh -n "$VM_TYPES_CACHE" 2>/dev/null; then
+            _info "Loading VM types from cache..."
+            if . "$VM_TYPES_CACHE" 2>/dev/null; then
+                use_cache=1
+                # VM_INSTALL is not cached - will load from config below
+                _info "Cache loaded successfully"
+            else
+                _warn "Cache file corrupt, will regenerate: $VM_TYPES_CACHE"
+                rm -f "$VM_TYPES_CACHE"
+            fi
+        else
+            _warn "Cache file has syntax errors, will regenerate: $VM_TYPES_CACHE"
+            rm -f "$VM_TYPES_CACHE"
+        fi
+    fi
+
+    _info "Loading VM types from JSON config..."
+
+    # Clear existing arrays
+    VM_TYPE=()
+    VM_ALIASES=()
+    VM_DISPLAY=()
+    VM_INSTALL=()
+    VM_SVC_PORT=()
+
+    # Read and parse configuration from JSON
+    # Format: .vms.language[] and .vms.service[] with fields: name, aliases, display, install, port
+    if [[ -f "$VM_TYPES_JSON" ]]; then
+        _info "Parsing VM types from JSON: $VM_TYPES_JSON"
+
+        # Parse language VMs
+        local lang_vms
+        lang_vms=$(jq -c ".vms.language[]" "$VM_TYPES_JSON" 2>/dev/null)
+        if [[ -n "$lang_vms" ]]; then
+            while IFS= read -r vm_entry; do
+                [[ -z "$vm_entry" ]] && continue
+
+                local name alias_value display install port vm_type
+                vm_type="lang"
+                name=$(echo "$vm_entry" | jq -r ".name")
+                alias_value=$(echo "$vm_entry" | jq -r ".aliases | join(",")")
+                display=$(echo "$vm_entry" | jq -r ".display")
+                install=$(echo "$vm_entry" | jq -r ".install // "-"")
+                port=$(echo "$vm_entry" | jq -r ".port // empty")
+
+                [[ -z "$name" ]] && continue
+
+                VM_TYPE[$name]="$vm_type"
+                VM_ALIASES[$name]="$alias_value"
+                VM_DISPLAY[$name]="${display:-$name}"
+                VM_INSTALL[$name]="${install:--}"
+                VM_SVC_PORT[$name]="${port:-}"
+
+                # Build index by type
+                if [[ -z "${lang_vms_array[*]}" ]]; then
+                    lang_vms_array=("$name")
+                else
+                    lang_vms_array+=("$name")
+                fi
+            done <<< "$lang_vms"
+        fi
+
+        # Parse service VMs
+        local svc_vms
+        svc_vms=$(jq -c ".vms.service[]" "$VM_TYPES_JSON" 2>/dev/null)
+        if [[ -n "$svc_vms" ]]; then
+            while IFS= read -r vm_entry; do
+                [[ -z "$vm_entry" ]] && continue
+
+                local name alias_value display install port vm_type
+                vm_type="service"
+                name=$(echo "$vm_entry" | jq -r ".name")
+                alias_value=$(echo "$vm_entry" | jq -r ".aliases | join(",")")
+                display=$(echo "$vm_entry" | jq -r ".display")
+                install=$(echo "$vm_entry" | jq -r ".install // "-"")
+                port=$(echo "$vm_entry" | jq -r ".port // empty")
+
+                [[ -z "$name" ]] && continue
+
+                VM_TYPE[$name]="$vm_type"
+                VM_ALIASES[$name]="$alias_value"
+                VM_DISPLAY[$name]="${display:-$name}"
+                VM_INSTALL[$name]="${install:--}"
+                VM_SVC_PORT[$name]="${port:-}"
+
+                # Build index by type
+                if [[ -z "${service_vms_array[*]}" ]]; then
+                    service_vms_array=("$name")
+                else
+                    service_vms_array+=("$name")
+                fi
+            done <<< "$svc_vms"
+        fi
+
+        # Export type indexes
+        lang_vms=("${lang_vms_array[@]}")
+        service_vms=("${service_vms_array[@]}")
+    else
+        _error "JSON config not found: $VM_TYPES_JSON"
+        return 1
+    fi
+
+    # Create cache directory
+    mkdir -p "$VDE_CACHE_DIR"
+
+    # Generate cache file with proper zsh associative array syntax
+    # Note: VM_INSTALL is not cached due to complex shell syntax in install commands
     {
-        echo "# VDE VM Types Cache"
-        echo "# Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-        echo "# Source: $VM_TYPES_CONF"
+        echo "# VM Types Cache - Auto-generated by load_vm_types()"
+        echo "# DO NOT EDIT MANUALLY"
+        echo "# VM_INSTALL array is NOT cached due to shell command complexity"
         echo ""
-        
-        # Serialize VM_TYPE
-        for key in $(_assoc_keys "VM_TYPE"); do
-            echo "VM_TYPE:$key=$(_assoc_get "VM_TYPE" "$key")"
+        echo "typeset -A VM_TYPE"
+        for key in "${(@k)VM_TYPE}"; do
+            value="${VM_TYPE[$key]//'/'\\''}"
+            print -r -- "VM_TYPE[${key}]='${value}'"
         done
-        
-        # Serialize VM_ALIASES
-        for key in $(_assoc_keys "VM_ALIASES"); do
-            echo "VM_ALIASES:$key=$(_assoc_get "VM_ALIASES" "$key")"
+        echo ""
+        echo "typeset -A VM_ALIASES"
+        for key in "${(@k)VM_ALIASES}"; do
+            value="${VM_ALIASES[$key]//'/'\\''}"
+            print -r -- "VM_ALIASES[${key}]='${value}'"
         done
-        
-        # Serialize VM_DISPLAY
-        for key in $(_assoc_keys "VM_DISPLAY"); do
-            echo "VM_DISPLAY:$key=$(_assoc_get "VM_DISPLAY" "$key")"
+        echo ""
+        echo "typeset -A VM_DISPLAY"
+        for key in "${(@k)VM_DISPLAY}"; do
+            value="${VM_DISPLAY[$key]//'/'\\''}"
+            print -r -- "VM_DISPLAY[${key}]='${value}'"
         done
-        
-        # Serialize VM_INSTALL
-        for key in $(_assoc_keys "VM_INSTALL"); do
-            echo "VM_INSTALL:$key=$(_assoc_get "VM_INSTALL" "$key")"
-        done
-        
-        # Serialize VM_SVC_PORT
-        for key in $(_assoc_keys "VM_SVC_PORT"); do
-            echo "VM_SVC_PORT:$key=$(_assoc_get "VM_SVC_PORT" "$key")"
+        echo ""
+        echo "typeset -A VM_SVC_PORT"
+        for key in "${(@k)VM_SVC_PORT}"; do
+            value="${VM_SVC_PORT[$key]//'/'\\''}"
+            print -r -- "VM_SVC_PORT[${key}]='${value}'"
         done
     } > "$VM_TYPES_CACHE"
-    
-    return $VDE_SUCCESS
+
+    _info "VM types cached for faster loading"
 }
 
-# _load_cached_vm_types - Read and deserialize VM types from cache file
-# Args: none
-# Returns:
-#   VDE_SUCCESS (0) - Cache loaded successfully
-#   VDE_ERR_NOT_FOUND (3) - Cache file not found
-# Side Effects: Populates VM_TYPE, VM_ALIASES, VM_DISPLAY, VM_INSTALL, VM_SVC_PORT arrays
-# Example: _load_cached_vm_types && echo "Loaded from cache"
-_load_cached_vm_types() {
-    if [ ! -f "$VM_TYPES_CACHE" ]; then
-        return $VDE_ERR_NOT_FOUND
-    fi
-    
-    # Clear existing arrays
-    _assoc_clear "VM_TYPE"
-    _assoc_clear "VM_ALIASES"
-    _assoc_clear "VM_DISPLAY"
-    _assoc_clear "VM_INSTALL"
-    _assoc_clear "VM_SVC_PORT"
-    
-    # Read and deserialize cache
-    while IFS= read -r line; do
-        # Skip comments and empty lines
-        case "$line" in
-            \#*|"") continue ;;
-        esac
-        
-        # Parse ARRAY_NAME:key=value
-        local array_name="${line%%:*}"
-        local rest="${line#*:}"
-        local key="${rest%%=*}"
-        local value="${rest#*=}"
-        
-        # Populate appropriate array
-        case "$array_name" in
-            VM_TYPE)
-                _assoc_set "VM_TYPE" "$key" "$value"
-                ;;
-            VM_ALIASES)
-                _assoc_set "VM_ALIASES" "$key" "$value"
-                ;;
-            VM_DISPLAY)
-                _assoc_set "VM_DISPLAY" "$key" "$value"
-                ;;
-            VM_INSTALL)
-                _assoc_set "VM_INSTALL" "$key" "$value"
-                ;;
-            VM_SVC_PORT)
-                _assoc_set "VM_SVC_PORT" "$key" "$value"
-                ;;
-        esac
-    done < "$VM_TYPES_CACHE"
-    
-    _VM_TYPES_LOADED=1
-    return $VDE_SUCCESS
-}
+# regenerate_vm_types_cache - Force regeneration of VM types cache
+# This function validates the JSON config and rebuilds the cache from scratch
+# Returns: VDE_SUCCESS if regenerated, error code otherwise
+regenerate_vm_types_cache() {
+    _info "Forcing VM types cache regeneration..."
 
-# _load_vm_types_from_config - Load VM types directly from config file
-# Internal function that does the actual parsing
-# Args: none
-# Returns:
-#   VDE_SUCCESS (0) - Configuration loaded successfully
-#   VDE_ERR_NOT_FOUND (3) - Configuration file not found
-_load_vm_types_from_config() {
-    local conf_file="$VM_TYPES_CONF"
+    # Get schema file
+    local schema_file
+    schema_file=$(vde_get_schema_for_json "$VM_TYPES_JSON" 2>/dev/null)
 
-    if [ ! -f "$conf_file" ]; then
-        log_error "VM types config not found: $conf_file"
-        ls -la "$(dirname "$conf_file")" 2>&1
-        return $VDE_ERR_NOT_FOUND
-    fi
-
-    # Clear existing associative arrays
-    _assoc_clear "VM_TYPE"
-    _assoc_clear "VM_ALIASES"
-    _assoc_clear "VM_DISPLAY"
-    _assoc_clear "VM_INSTALL"
-    _assoc_clear "VM_SVC_PORT"
-
-    # Skip comments and empty lines
-    while IFS='|' read -r type name vm_aliases display install svc_port; do
-        # Skip comments and empty lines
-        case "$type" in
-            \#*|"") continue ;;
-        esac
-
-        _assoc_set "VM_TYPE" "$name" "$type"
-        _assoc_set "VM_ALIASES" "$name" "$vm_aliases"
-        _assoc_set "VM_DISPLAY" "$name" "$display"
-        _assoc_set "VM_INSTALL" "$name" "$install"
-        _assoc_set "VM_SVC_PORT" "$name" "$svc_port"
-    done < "$conf_file"
-
-    _VM_TYPES_LOADED=1
-    return $VDE_SUCCESS
-}
-
-# invalidate_vm_types_cache - Force cache invalidation
-# Call this when vm-types.conf is modified programmatically
-# Args: none
-# Returns: VDE_SUCCESS (0)
-# Example: invalidate_vm_types_cache
-invalidate_vm_types_cache() {
-    if [ -f "$VM_TYPES_CACHE" ]; then
-        rm -f "$VM_TYPES_CACHE" 2>/dev/null
-    fi
-    _VM_TYPES_LOADED=0
-    return $VDE_SUCCESS
-}
-
-# load_vm_types - Load VM type definitions with caching support
-# This is the main entry point for loading VM types. It automatically
-# uses cached data when available and valid, falling back to parsing
-# the config file when necessary.
-# Args:
-#   --no-cache (optional) - Force reload from config file, bypassing cache
-# Returns:
-#   VDE_SUCCESS (0) - Configuration loaded successfully
-#   VDE_ERR_NOT_FOUND (3) - Configuration file not found
-# Side Effects: Populates VM_TYPE, VM_ALIASES, VM_DISPLAY, VM_INSTALL, VM_SVC_PORT arrays
-# Example: load_vm_types && echo "Loaded VM types"
-# Example: load_vm_types --no-cache  # Force reload
-load_vm_types() {
-    local no_cache=false
-    
-    # Parse arguments
-    while [ $# -gt 0 ]; do
-        case "$1" in
-            --no-cache)
-                no_cache=true
-                shift
-                ;;
-            *)
-                shift
-                ;;
-        esac
-    done
-    
-    # If already loaded and not forcing reload, return early
-    if [ $_VM_TYPES_LOADED -eq 1 ] && [ "$no_cache" = "false" ]; then
-        return $VDE_SUCCESS
-    fi
-    
-    # Always load from config file (skip cache to avoid parsing issues)
-    if ! _load_vm_types_from_config; then
-        return $VDE_ERR_NOT_FOUND
-    fi
-    
-    return $VDE_SUCCESS
-}
-
-# -----------------------
-# VM Info Query Function
-# -----------------------
-
-# get_vm_info - Retrieve a specific field for a VM type
-# Args:
-#   field - One of: type, aliases, display, install, svc_port
-#   name - The VM name to query
-# Returns:
-#   VDE_SUCCESS (0) - Field retrieved (outputs value to stdout)
-#   VDE_ERR_INVALID_INPUT (2) - Unknown field requested
-# Example: get_vm_info type python  # outputs "lang"
-get_vm_info() {
-    local field=$1
-    local name=$2
-
-    case "$field" in
-        type)
-            _assoc_get "VM_TYPE" "$name" || echo ""
-            ;;
-        aliases)
-            _assoc_get "VM_ALIASES" "$name" || echo ""
-            ;;
-        display)
-            _assoc_get "VM_DISPLAY" "$name" || echo ""
-            ;;
-        install)
-            _assoc_get "VM_INSTALL" "$name" || echo ""
-            ;;
-        svc_port)
-            _assoc_get "VM_SVC_PORT" "$name" || echo ""
-            ;;
-        *)
-            log_error "Unknown field: $field"
-            return $VDE_ERR_INVALID_INPUT
-            ;;
-    esac
-    return $VDE_SUCCESS
-}
-
-# -----------------------
-# VM Discovery Functions
-# -----------------------
-
-# get_all_vms - List all known VM names
-# Args: none
-# Returns: VDE_SUCCESS (0), outputs sorted VM names to stdout (one per line)
-# Example: for vm in $(get_all_vms); do echo "Found: $vm"; done
-get_all_vms() {
-    # Convert space-separated keys to newline-separated for proper line counting
-    _assoc_keys "VM_TYPE" | tr ' ' '\n' | grep -v '^$' | sort
-    return $VDE_SUCCESS
-}
-
-# get_lang_vms - List all language VM names
-# Args: none
-# Returns: VDE_SUCCESS (0), outputs sorted language VM names to stdout
-# Example: get_lang_vms  # outputs: python, ruby, rust, etc.
-get_lang_vms() {
-    for name in $(_assoc_keys "VM_TYPE"); do
-        vm_type=$(_assoc_get "VM_TYPE" "$name")
-        if [ "$vm_type" = "lang" ]; then
-            echo "$name"
+    # Validate JSON config first
+    if [[ -n "$schema_file" && -f "$schema_file" ]]; then
+        if ! vde_validate_json_schema "$VM_TYPES_JSON" "$schema_file"; then
+            _error "Cannot regenerate cache: JSON config validation failed"
+            return $VDE_ERR_INVALID_DATA
         fi
-    done | sort
-    return $VDE_SUCCESS
-}
-
-# get_service_vms - List all service VM names
-# Args: none
-# Returns: VDE_SUCCESS (0), outputs sorted service VM names to stdout
-# Example: get_service_vms  # outputs: postgres, redis, mongodb, etc.
-get_service_vms() {
-    for name in $(_assoc_keys "VM_TYPE"); do
-        vm_type=$(_assoc_get "VM_TYPE" "$name")
-        if [ "$vm_type" = "service" ]; then
-            echo "$name"
-        fi
-    done | sort
-    return $VDE_SUCCESS
-}
-
-# is_known_vm - Check if a VM name is in the configuration
-# Args: <vm_name>
-# Returns:
-#   VDE_SUCCESS (0) - VM is known
-#   VDE_ERR_NOT_FOUND (3) - VM is not known
-# Example: is_known_vm python && echo "Python VM is configured"
-is_known_vm() {
-    local vm=$1
-    if _assoc_has_key "VM_TYPE" "$vm"; then
-        return $VDE_SUCCESS
     fi
-    return $VDE_ERR_NOT_FOUND
-}
 
-# is_vm_type - Check if a VM is of a specific type
-# Args: <vm_name> <expected_type>
-# Returns:
-#   VDE_SUCCESS (0) - VM is of expected type
-#   VDE_ERR_NOT_FOUND (3) - VM is not of expected type
-# Example: is_vm_type python lang && echo "Python is a language VM"
-is_vm_type() {
-    local vm=$1
-    local expected_type=$2
-    local actual_type
-    actual_type=$(_assoc_get "VM_TYPE" "$vm" 2>/dev/null)
-    if [ "$actual_type" = "$expected_type" ]; then
-        return $VDE_SUCCESS
+    # Remove existing cache
+    if [[ -f "$VM_TYPES_CACHE" ]]; then
+        _info "Removing old cache: $VM_TYPES_CACHE"
+        rm -f "$VM_TYPES_CACHE"
     fi
-    return $VDE_ERR_NOT_FOUND
-}
 
-# vm_exists - Check if a VM has been created (has docker-compose.yml)
-# A VM is "created" when its configuration file exists, regardless of whether
-# the container has been started.
-# Args: <vm_name>
-# Returns:
-#   VDE_SUCCESS (0) - VM has been created (compose file exists)
-#   VDE_ERR_NOT_FOUND (3) - VM has not been created
-# Example: vm_exists python && echo "Python VM is created"
-vm_exists() {
-    local vm=$1
-    local compose_file="$CONFIGS_DIR/$vm/docker-compose.yml"
-    
-    # Check if compose file exists - this is the definition of a "created" VM
-    if [ ! -f "$compose_file" ]; then
-        return $VDE_ERR_NOT_FOUND
-    fi
-    
-    return $VDE_SUCCESS
-}
-
-# is_vm_running - Check if a VM container is currently running
-# Args: <vm_name>
-# Returns:
-#   VDE_SUCCESS (0) - VM is running
-#   VDE_ERR_NOT_FOUND (3) - VM is not running
-# Example: is_vm_running python && echo "Python is running"
-is_vm_running() {
-    local vm=$1
-    local container_name
-
-    # Ensure VM types are loaded
+    # Reload VM types (will regenerate cache)
     load_vm_types
+}
 
-    # Determine container name based on VM type
-    local vm_type
-    vm_type=$(_assoc_get "VM_TYPE" "$vm" 2>/dev/null)
+# validate_vm_types_config - Validate VM types configuration without loading
+# Returns: VDE_SUCCESS if valid, error code otherwise
+validate_vm_types_config() {
+    local schema_file
+    schema_file=$(vde_get_schema_for_json "$VM_TYPES_JSON" 2>/dev/null)
 
-    if [ "$vm_type" = "lang" ]; then
-        container_name="${vm}-dev"
+    if [[ -z "$schema_file" || ! -f "$schema_file" ]]; then
+        _error "Schema file not found for $VM_TYPES_JSON"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    _info "Validating VM types config: $VM_TYPES_JSON"
+    if vde_validate_json_schema "$VM_TYPES_JSON" "$schema_file"; then
+        _success "VM types config validation passed"
+        return $VDE_SUCCESS
     else
-        container_name="$vm"
+        _error "VM types config validation failed"
+        return $VDE_ERR_INVALID_DATA
     fi
-
-    # Check if container is running
-    if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$container_name"; then
-        return $VDE_SUCCESS
-    fi
-
-    return $VDE_ERR_NOT_FOUND
 }
 
-# container_exists - Check if a VM container exists (running or stopped)
-# Args: <vm_name>
-# Returns:
-#   VDE_SUCCESS (0) - Container exists
-#   VDE_ERR_NOT_FOUND (3) - Container does not exist
-# Example: container_exists python && echo "Container exists"
-container_exists() {
-    local vm=$1
-    local container_name
+# =============================================================================
+# VM TYPE QUERY FUNCTIONS
+# =============================================================================
 
-    # Determine container name based on VM type
-    local vm_type
-    vm_type=$(_assoc_get "VM_TYPE" "$vm" 2>/dev/null)
-
-    if [ "$vm_type" = "lang" ]; then
-        container_name="${vm}-dev"
-    else
-        container_name="$vm"
-    fi
-
-    # Check if container exists (running or stopped) using docker ps -a
-    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$container_name"; then
-        return $VDE_SUCCESS
-    fi
-
-    return $VDE_ERR_NOT_FOUND
-}
-
-# resolve_vm_name - Resolve an alias or name to canonical VM name
-# Args: <input> - VM name or alias
-# Returns:
-#   VDE_SUCCESS (0) - Resolved successfully (outputs canonical name)
-#   VDE_ERR_NOT_FOUND (3) - No matching VM found
-# Example: resolve_vm_name py  # outputs "python"
-resolve_vm_name() {
-    local input=$1
-    local name
-    local vm_aliases
-
-    # Direct match
-    if is_known_vm "$input"; then
-        echo "$input"
-        return $VDE_SUCCESS
-    fi
-
-    # Check vm_aliases
-    for name in $(_assoc_keys "VM_TYPE"); do
-        vm_aliases=$(_assoc_get "VM_ALIASES" "$name")
-        # Check if input is in the comma-separated aliases
-        case ",$vm_aliases," in
-            *",$input,"*)
-                echo "$name"
-                return $VDE_SUCCESS
-                ;;
-        esac
-    done
-
-    return $VDE_ERR_NOT_FOUND
-}
-
-# -----------------------
-# Port Management Functions
-# -----------------------
-
-# get_vm_ssh_port - Get the SSH port for a VM from its docker-compose.yml
-# This is the CANONICAL implementation - do not duplicate elsewhere
-# Args: <vm_name>
-# Returns:
-#   VDE_SUCCESS (0) - Port found (outputs port number to stdout)
-#   VDE_ERR_NOT_FOUND (3) - Compose file not found or no SSH port mapping
-# Example: port=$(get_vm_ssh_port python) && echo "SSH on port $port"
-get_vm_ssh_port() {
-    local vm=$1
-    local compose_file="$CONFIGS_DIR/$vm/docker-compose.yml"
-
-    if [ ! -f "$compose_file" ]; then
-        return $VDE_ERR_NOT_FOUND
-    fi
-
-    # Extract the SSH port mapping (format: "XXXX:22")
-    local port_line
-    port_line=$(grep -E '^\s+-\s+"[0-9]+:22"' "$compose_file" | head -1)
-
-    if [ -z "$port_line" ]; then
-        return $VDE_ERR_NOT_FOUND
-    fi
-
-    # Extract port number before ":22"
-    local port
-    port=$(echo "$port_line" | sed 's/.*"\([0-9]*\):22".*/\1/')
-    echo "$port"
-    return $VDE_SUCCESS
-}
-
-# -----------------------
-# Port Registry Functions (Performance Optimization)
-# -----------------------
-# These functions implement a port allocation registry to avoid
-# scanning all docker-compose files on every port allocation.
-
-# Initialize port registry associative array
-_assoc_init "PORT_REGISTRY"
-
-# _load_port_registry - Load port registry from cache file
-# Args: none
-# Returns:
-#   VDE_SUCCESS (0) - Registry loaded successfully
-#   VDE_ERR_NOT_FOUND (3) - Registry file not found
-# Side Effects: Populates PORT_REGISTRY associative array
-_load_port_registry() {
-    _ensure_cache_dir
-    
-    if [ ! -f "$PORT_REGISTRY_FILE" ]; then
-        return $VDE_ERR_NOT_FOUND
-    fi
-    
-    # Clear existing registry
-    _assoc_clear "PORT_REGISTRY"
-    
-    # Read registry file (format: vm_name=port or vm_name:port)
-    while IFS=$'\n' read -r line; do
-        # Skip comments and empty lines
-        case "$line" in
-            \#*|"") continue ;;
-        esac
-        
-        # Try both = and : as separators
-        case "$line" in
-            *=*)
-                vm_name="${line%%=*}"
-                port="${line#*=}"
-                ;;
-            *:*)
-                vm_name="${line%%:*}"
-                port="${line#*:}"
-                ;;
-            *)
-                continue  # Invalid format, skip
-                ;;
-        esac
-        
-        # Skip if port is empty or non-numeric (bash 4+ syntax)
-        if [[ -z "$port" ]] || ! [[ "$port" =~ ^[0-9]+$ ]]; then
-            continue
-        fi
-        
-        _assoc_set "PORT_REGISTRY" "$vm_name" "$port"
-    done < "$PORT_REGISTRY_FILE"
-    
-    return $VDE_SUCCESS
-}
-
-# _save_port_registry - Save port registry to cache file
-# Args: none
-# Returns: VDE_SUCCESS (0)
-_save_port_registry() {
-    _ensure_cache_dir
-    
-    {
-        echo "# VDE Port Registry"
-        echo "# Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-        echo "# Format: vm_name=port"
-        echo ""
-        local vm_name
-        for vm_name in $(_assoc_keys "PORT_REGISTRY"); do
-            echo "$vm_name=$(_assoc_get "PORT_REGISTRY" "$vm_name")"
-        done
-    } > "$PORT_REGISTRY_FILE"
-    
-    return $VDE_SUCCESS
-}
-
-# _update_port_registry - Add or remove a port from the registry
-# Args:
-#   action - "add" or "remove"
-#   vm_name - Name of the VM
-#   port - Port number (required for "add", optional for "remove")
-# Returns: VDE_SUCCESS (0)
-# Example: _update_port_registry add python 2201
-# Example: _update_port_registry remove python
-_update_port_registry() {
-    local action="$1"
+# Get VM info field
+# Args: <field> <vm_name>
+# Returns: Outputs field value, or error
+get_vm_info() {
+    local field="$1"
     local vm_name="$2"
-    local port="${3:-}"
-    
-    # Load existing registry
-    _load_port_registry 2>/dev/null || true
-    
-    case "$action" in
-        add)
-            if [ -n "$port" ]; then
-                _assoc_set "PORT_REGISTRY" "$vm_name" "$port"
-            fi
-            ;;
-        remove)
-            _assoc_unset "PORT_REGISTRY" "$vm_name"
-            ;;
-    esac
-    
-    # Save updated registry
-    _save_port_registry
-    return $VDE_SUCCESS
-}
 
-# _verify_port_registry - Verify registry consistency with actual files
-# Scans docker-compose files and updates registry if inconsistent
-# Args: none
-# Returns: VDE_SUCCESS (0)
-# Side Effects: Updates PORT_REGISTRY and saves to file if changes detected
-_verify_port_registry() {
-    local changes_detected=false
-    
-    # Load existing registry
-    _load_port_registry 2>/dev/null || true
-    
-    # Build a map of actual ports from docker-compose files
-    _assoc_init "actual_ports"
-    
-    # Enable nullglob for safe glob expansion
-    _enable_nullglob
-    
-    local compose_dir
-    for compose_dir in "$CONFIGS_DIR"/*/; do
-        [ -d "$compose_dir" ] || continue
-        local vm_name
-        vm_name=$(basename "$compose_dir")
-        local compose_file="$compose_dir/docker-compose.yml"
-        
-        if [ -f "$compose_file" ]; then
-            while IFS= read -r line; do
-                case "$line" in
-                    *[0-9]*:22*)
-                        # Extract port number
-                        local port
-                        port=$(echo "$line" | sed 's/.*"\([0-9]*\):22".*/\1/')
-                        if [ -n "$port" ] && [ "$port" != "$line" ]; then
-                            _assoc_set "actual_ports" "$vm_name" "$port"
-                            break
-                        fi
-                        ;;
-                esac
-            done < "$compose_file"
-        fi
-    done
-    
-    _disable_nullglob
-    
-    # Check for VMs in registry but not in actual files (removed VMs)
-    local vm_name
-    for vm_name in $(_assoc_keys "PORT_REGISTRY"); do
-        if ! _assoc_has_key "actual_ports" "$vm_name"; then
-            _assoc_unset "PORT_REGISTRY" "$vm_name"
-            changes_detected=true
-        fi
-    done
-    
-    # Check for VMs in actual files but not in registry (new VMs)
-    for vm_name in $(_assoc_keys "actual_ports"); do
-        local actual_port registry_port
-        actual_port=$(_assoc_get "actual_ports" "$vm_name")
-        registry_port=$(_assoc_get "PORT_REGISTRY" "$vm_name" 2>/dev/null || echo "")
-        if [ -z "$registry_port" ] || [ "$registry_port" != "$actual_port" ]; then
-            _assoc_set "PORT_REGISTRY" "$vm_name" "$actual_port"
-            changes_detected=true
-        fi
-    done
-    
-    # Save if changes were detected
-    if [ "$changes_detected" = "true" ]; then
-        _save_port_registry
-    fi
-    
-    # Clean up temporary array
-    _assoc_clear "actual_ports"
-    
-    return $VDE_SUCCESS
-}
+    local var_name="VM_${field^^}[$vm_name]"
+    local value="${(P)var_name}"
 
-# _get_ports_from_registry - Get allocated ports from registry (fast path)
-# Args:
-#   range_start - Start of port range
-#   range_end - End of port range
-# Returns: VDE_SUCCESS (0), outputs port numbers to stdout
-_get_ports_from_registry() {
-    local range_start=$1
-    local range_end=$2
-    
-    # Load registry
-    _load_port_registry 2>/dev/null || return $VDE_ERR_NOT_FOUND
-    
-    # Output ports in range
-    local vm_name
-    for vm_name in $(_assoc_keys "PORT_REGISTRY"); do
-        local port
-        port=$(_assoc_get "PORT_REGISTRY" "$vm_name")
-        # Skip empty or non-numeric ports (bash 4+ syntax)
-        if [[ -z "$port" ]] || ! [[ "$port" =~ ^[0-9]+$ ]]; then
-            continue
-        fi
-        if [ "$port" -ge "$range_start" ] && [ "$port" -le "$range_end" ]; then
-            echo "$port"
-        fi
-    done | sort -n | uniq
-    
-    return $VDE_SUCCESS
-}
-
-# get_allocated_ports - Get all ports currently allocated in a range
-# Uses port registry for fast lookup, falls back to file scanning if needed
-# Args:
-#   range_start - Start of port range to check
-#   range_end - End of port range to check
-# Returns: VDE_SUCCESS (0), outputs allocated port numbers to stdout (one per line)
-# Example: allocated=$(get_allocated_ports 2200 2299)
-get_allocated_ports() {
-    local range_start=$1
-    local range_end=$2
-    
-    # Try fast path using registry
-    if [ -f "$PORT_REGISTRY_FILE" ]; then
-        _get_ports_from_registry "$range_start" "$range_end"
-        return $VDE_SUCCESS
-    fi
-    
-    # Slow path: scan docker-compose files
-    local ports=""
-    local compose_file
-    
-    _enable_nullglob
-
-    local compose_dir
-    for compose_dir in "$CONFIGS_DIR"/*/; do
-        [ -d "$compose_dir" ] || continue
-        compose_file="$compose_dir/docker-compose.yml"
-        if [ -f "$compose_file" ]; then
-            while IFS= read -r line; do
-                case "$line" in
-                    *[0-9]*:22*)
-                        local port
-                        port=$(echo "$line" | sed 's/.*"\([0-9]*\):22".*/\1/')
-                        if [ -n "$port" ] && [ "$port" != "$line" ]; then
-                            if [ "$port" -ge "$range_start" ] && [ "$port" -le "$range_end" ]; then
-                                ports="$ports $port"
-                            fi
-                        fi
-                        ;;
-                esac
-            done < "$compose_file"
-        fi
-    done
-    
-    _disable_nullglob
-
-    # Sort and deduplicate
-    echo "$ports" | tr ' ' '\n' | grep -v '^$' | sort -n | uniq
-    
-    return $VDE_SUCCESS
-}
-
-# SECURITY: Lock directory for atomic port reservation
-PORT_LOCKS_DIR="$VDE_ROOT_DIR/.locks/ports"
-readonly PORT_LOCKS_DIR
-
-# Global to track if flock is available
-_VDE_HAS_FLOCK=false
-
-# Check for flock availability once
-if command -v flock >/dev/null 2>&1; then
-    _VDE_HAS_FLOCK=true
-fi
-
-# acquire_lock - Acquire a lock file using flock (preferred) or mkdir (fallback)
-# flock automatically releases locks when process exits, preventing stale locks
-# Args:
-#   lock_file - Path to the lock file (without .lock extension)
-#   timeout_seconds - Optional timeout in seconds (default: VDE_LOCK_TIMEOUT)
-# Returns:
-#   VDE_SUCCESS (0) - Lock acquired successfully
-#   VDE_ERR_LOCK (9) - Failed to acquire lock within timeout
-# Example: acquire_lock "/tmp/mylock" 30 && echo "Got lock"
-acquire_lock() {
-    local lock_file="$1"
-    local timeout="${2:-$VDE_LOCK_TIMEOUT}"
-    local lock_dir
-    lock_dir=$(dirname "$lock_file")
-
-    # Ensure lock directory exists
-    mkdir -p "$lock_dir" 2>/dev/null
-
-    # PREFER: Use flock if available (Linux, or macOS with brew install flock)
-    # flock is superior because locks auto-release on process exit
-    if [ "$_VDE_HAS_FLOCK" = "true" ]; then
-        local actual_lock_file="${lock_file}.lck"
-        # flock -w timeout: wait up to timeout seconds for lock
-        # Open file descriptor 9 for the lock, acquire exclusive lock
-        eval "exec 9>\"$actual_lock_file\"" 2>/dev/null || {
-            log_error "Failed to open lock file: $actual_lock_file"
-            return $VDE_ERR_LOCK
-        }
-        if flock -w "$timeout" -x 9; then
-            # Lock acquired successfully
-            # Store PID for debugging
-            echo "$$" > "$actual_lock_file.pid" 2>/dev/null
-            return $VDE_SUCCESS
-        else
-            log_error "SECURITY: Failed to acquire lock after ${timeout}s: $lock_file"
-            exec 9>&-  # Close file descriptor
-            return $VDE_ERR_LOCK
-        fi
-    fi
-
-    # FALLBACK: macOS-compatible mkdir-based locking with PID liveness checking
-    # This is less ideal than flock because stale locks can persist if process crashes
-    local attempts=0
-    local max_attempts=$((timeout * 10))  # 100ms intervals
-
-    # Declare variables outside loop to avoid zsh subshell scoping issues
-    local lock_time
-    local current_time
-    local age
-    local sleep_time
-
-    while [ $attempts -lt $max_attempts ]; do
-        # SECURITY: Use mkdir for atomic lock creation (POSIX atomic)
-        if mkdir "${lock_file}.lock" 2>/dev/null; then
-            # Write PID to lock file for debugging/cleanup
-            echo "$$" > "${lock_file}.lock/pid"
-            date +%s > "${lock_file}.lock/timestamp"
-            return $VDE_SUCCESS
-        fi
-
-        # Check if existing lock is stale by checking PID liveness FIRST
-        # This is faster than waiting for timestamp-based stale age
-        if [ -f "${lock_file}.lock/pid" ]; then
-            local lock_pid
-            lock_pid=$(cat "${lock_file}.lock/pid" 2>/dev/null)
-            # Check if process is still alive (kill -0 returns 0 if alive)
-            if [ -n "$lock_pid" ] && [ "$lock_pid" != "$$" ] && ! kill -0 "$lock_pid" 2>/dev/null; then
-                # Process is dead - immediately clean up the stale lock
-                log_info "Cleaning up dead process lock: $lock_file (pid: $lock_pid not running)"
-                rm -rf "${lock_file}.lock" 2>/dev/null
-                continue
-            fi
-        fi
-
-        # Also check timestamp-based stale age as fallback
-        if [ -f "${lock_file}.lock/timestamp" ]; then
-            lock_time=$(cat "${lock_file}.lock/timestamp" 2>/dev/null || echo "0")
-            current_time=$(date +%s)
-            age=$((current_time - lock_time))
-
-            if [ $age -gt $VDE_STALE_LOCK_AGE ]; then
-                # SECURITY: Stale lock detected, clean it up
-                log_info "Cleaning up stale lock: $lock_file (age: ${age}s)"
-                rm -rf "${lock_file}.lock" 2>/dev/null
-                continue
-            fi
-        fi
-
-        # Wait with exponential backoff (100ms base, max 1s)
-        if [ $attempts -lt 10 ]; then
-            sleep_time="0.1"
-        elif [ $attempts -lt 50 ]; then
-            sleep_time="0.5"
-        else
-            sleep_time="1"
-        fi
-        sleep "$sleep_time" 2>/dev/null || sleep 1
-        attempts=$((attempts + 1))
-    done
-
-    log_error "SECURITY: Failed to acquire lock after ${timeout}s: $lock_file"
-    return $VDE_ERR_LOCK
-}
-
-# release_lock - Release a previously acquired lock
-# For flock: closes the file descriptor (auto-releases on exit anyway)
-# For mkdir: removes the lock directory
-# Args: <lock_file> - Path to the lock file (without .lock extension)
-# Returns: VDE_SUCCESS (0) - Always succeeds (idempotent)
-# Example: release_lock "/tmp/mylock"
-release_lock() {
-    local lock_file="$1"
-
-    # If using flock, close file descriptor 9
-    if [ "$_VDE_HAS_FLOCK" = "true" ]; then
-        local actual_lock_file="${lock_file}.lck"
-        rm -f "$actual_lock_file.pid" 2>/dev/null
-        # Close the file descriptor (flock releases automatically)
-        exec 9>&- 2>/dev/null
+    if [ -n "$value" ]; then
+        echo "$value"
         return $VDE_SUCCESS
     fi
 
-    # Fallback: mkdir-based lock release
-    if [ -f "${lock_file}.lock/pid" ]; then
-        local lock_pid
-        lock_pid=$(cat "${lock_file}.lock/pid" 2>/dev/null)
-        if [ "$lock_pid" = "$$" ]; then
-            rm -rf "${lock_file}.lock" 2>/dev/null
-            return $VDE_SUCCESS
-        fi
-    fi
-
-    # Force release (for cleanup scripts)
-    rm -rf "${lock_file}.lock" 2>/dev/null
-    return $VDE_SUCCESS
+    return $VDE_ERR_NOT_FOUND
 }
 
-# cleanup_stale_locks - Clean up all stale port locks
-# SECURITY: Removes locks older than VDE_STALE_LOCK_AGE seconds
-# Args: none
-# Returns: VDE_SUCCESS (0)
-# Example: cleanup_stale_locks
-cleanup_stale_locks() {
-    local locks_dir="$PORT_LOCKS_DIR"
-
-    if [ ! -d "$locks_dir" ]; then
-        return $VDE_SUCCESS
-    fi
-
-    local current_time
-    current_time=$(date +%s)
-
-    # Declare variables outside loop to avoid zsh subshell scoping issues
-    local lock_time
-    local age
-
-    # Use nullglob to handle case where no locks exist
-    _enable_nullglob
-    local lock_dir
-    for lock_dir in "$locks_dir"/*.lock; do
-        [ -d "$lock_dir" ] || continue
-
-        if [ -f "$lock_dir/timestamp" ]; then
-            lock_time=$(cat "$lock_dir/timestamp" 2>/dev/null || echo "0")
-            age=$((current_time - lock_time))
-
-            if [ $age -gt $VDE_STALE_LOCK_AGE ]; then
-                log_info "Cleaning stale lock: $lock_dir"
-                rm -rf "$lock_dir" 2>/dev/null
-            fi
-        else
-            # No timestamp = invalid lock, remove it
-            rm -rf "$lock_dir" 2>/dev/null
-        fi
-    done
-    _disable_nullglob
-    return $VDE_SUCCESS
-}
-
-# =============================================================================
-# VM Operation Lock Functions - Conflict Detection
-# =============================================================================
-
-# VM operation locks directory for detecting concurrent operations
-VM_OPS_LOCK_DIR="$VDE_ROOT_DIR/.locks/vms"
-readonly VM_OPS_LOCK_DIR
-
-# acquire_vm_op_lock - Acquire a lock for VM operation to prevent conflicts
-# Args:
-#   vm - VM name to lock
-#   operation - Type of operation (start|stop|restart|rebuild|create)
-# Returns:
-#   VDE_SUCCESS (0) - Lock acquired
-#   VDE_ERR_LOCK (9) - Lock already held (conflict detected)
-# Example: acquire_vm_op_lock python start
-acquire_vm_op_lock() {
-    local vm=$1
-    local operation=${2:-"start"}
-
-    # Create VM operations lock directory if it doesn't exist
-    mkdir -p "$VM_OPS_LOCK_DIR" 2>/dev/null
-
-    local lock_file="$VM_OPS_LOCK_DIR/${vm}.op"
-    local lock_info="$VM_OPS_LOCK_DIR/${vm}.op.info"
-
-    # Check if there's already an active operation on this VM
-    if [ -f "$lock_file.lock/pid" ]; then
-        local lock_pid
-        lock_pid=$(cat "$lock_file.lock/pid" 2>/dev/null)
-
-        # Check if lock is stale (process no longer exists)
-        if [ -n "$lock_pid" ] && [ "$lock_pid" != "$$" ]; then
-            # Check if process is still running
-            if kill -0 "$lock_pid" 2>/dev/null; then
-                # Process is still running - CONFLICT DETECTED
-                # Read operation info for error message
-                local op_type
-                op_type=$(cat "$lock_info" 2>/dev/null || echo "unknown")
-                log_error "CONFLICT: $vm is already being $op_type by process $lock_pid"
-                return $VDE_ERR_LOCK
-            else
-                # Process is dead - clean up stale lock
-                rm -rf "$lock_file.lock" 2>/dev/null
-            fi
-        fi
-    fi
-
-    # Acquire the lock
-    if ! acquire_lock "$lock_file" "$VDE_LOCK_TIMEOUT"; then
-        log_error "Failed to acquire lock for $vm $operation operation"
-        return $VDE_ERR_LOCK
-    fi
-
-    # Write operation info for debugging and conflict reporting
-    echo "$operation" > "$lock_info"
-
-    return $VDE_SUCCESS
-}
-
-# release_vm_op_lock - Release VM operation lock
-# Args: <vm_name> - VM name
-# Returns: VDE_SUCCESS (0)
-release_vm_op_lock() {
-    local vm=$1
-    local lock_file="$VM_OPS_LOCK_DIR/${vm}.op"
-
-    # Only release if we own the lock
-    release_lock "$lock_file"
-
-    return $VDE_SUCCESS
-}
-
-# get_vm_operation_info - Get info about current VM operation if any
-# Args: <vm_name>
-# Outputs: Current operation type or empty if no operation in progress
-get_vm_operation_info() {
-    local vm=$1
-    local lock_info="$VM_OPS_LOCK_DIR/${vm}.op.info"
-
-    if [ -f "$lock_info" ]; then
-        cat "$lock_info" 2>/dev/null
-    fi
-}
-
-# find_next_available_port - Find and atomically reserve the next available port
-# SECURITY: Uses locking to prevent TOCTOU race conditions
-# Args: <vm_type> - Either "lang" or "service"
-# Returns:
-#   VDE_SUCCESS (0) - Port found and reserved (outputs port number)
-#   VDE_ERR_INVALID_INPUT (2) - Unknown VM type
-#   VDE_ERR_LOCK (9) - Could not acquire lock
-#   VDE_ERR_NOT_FOUND (3) - No available ports in range
-# Example: port=$(find_next_available_port lang) && echo "Reserved port $port"
-find_next_available_port() {
-    local vm_type=$1
-    local range_start range_end
+# Get all VMs of a specific type
+# Args: <type> (lang|service)
+# Returns: Outputs VM names
+get_vms_by_type() {
+    local vm_type="$1"
 
     case "$vm_type" in
         lang)
-            range_start=$LANG_PORT_START
-            range_end=$LANG_PORT_END
+            echo "${lang_vms[@]}"
             ;;
         service)
-            range_start=$SVC_PORT_START
-            range_end=$SVC_PORT_END
+            echo "${service_vms[@]}"
             ;;
         *)
-            log_error "Unknown VM type: $vm_type"
-            return $VDE_ERR_INVALID_INPUT
+            echo ""
             ;;
     esac
+}
 
-    # SECURITY: Ensure locks directory exists
-    mkdir -p "$PORT_LOCKS_DIR" 2>/dev/null
-    
-    # SECURITY: Clean up any stale locks first
-    cleanup_stale_locks
-    
-    # SECURITY: Acquire global port allocation lock to prevent race conditions
-    local global_lock="$PORT_LOCKS_DIR/allocation"
-    if ! acquire_lock "$global_lock" "$VDE_LOCK_TIMEOUT"; then
-        log_error "SECURITY: Could not acquire port allocation lock"
-        return $VDE_ERR_LOCK
-    fi
-    
-    # Now safely check allocated ports (we hold the lock)
-    local allocated_ports
-    allocated_ports=$(get_allocated_ports "$range_start" "$range_end")
-    
-    local found_port=""
-    local port=$range_start
-    while [ $port -le $range_end ]; do
-        # Check if port is in allocated list
-        local is_allocated=false
-        for ap in $allocated_ports; do
-            if [ "$ap" = "$port" ]; then
-                is_allocated=true
-                break
-            fi
-        done
+# Get all language VMs
+get_lang_vms() {
+    echo "${lang_vms[@]}"
+}
 
-        # CRITICAL FIX: Also check if port is actually in use by another process on host
-        # This prevents collision with non-VDE services (system services, other Docker containers, etc.)
-        local is_in_use=false
-        if [ "$is_allocated" = "false" ]; then
-            # Use lsof to check if anything is listening on this port
-            # Try both lsof and netstat for compatibility across platforms
-            if command -v lsof >/dev/null 2>&1; then
-                if lsof -i ":$port" -sTCP:LISTEN -n >/dev/null 2>&1; then
-                    is_in_use=true
-                fi
-            elif command -v netstat >/dev/null 2>&1; then
-                if netstat -an 2>/dev/null | grep -q "\.$port.*LISTEN"; then
-                    is_in_use=true
-                fi
-            fi
-            # Also check Docker port bindings as a fallback
-            if docker ps 2>/dev/null | grep -q "0.0.0.0:$port->"; then
-                is_in_use=true
-            fi
-        fi
+# Get all service VMs
+get_service_vms() {
+    echo "${service_vms[@]}"
+}
 
-        if [ "$is_allocated" = "false" ] && [ "$is_in_use" = "false" ]; then
-            # SECURITY: Reserve this port atomically
-            local port_lock="$PORT_LOCKS_DIR/port_$port"
-            if acquire_lock "$port_lock" 5; then
-                found_port="$port"
-                break
-            fi
-            # If we couldn't lock this port, try the next one
-        fi
-        port=$((port + 1))
-    done
-    
-    # Release global lock
-    release_lock "$global_lock"
-    
-    if [ -n "$found_port" ]; then
-        echo "$found_port"
+# Get all known VMs
+get_all_vms() {
+    echo "${lang_vms[@]}" "${service_vms[@]}"
+}
+
+# =============================================================================
+# VM QUERY FUNCTIONS
+# =============================================================================
+
+# Check if VM is known
+# Args: <vm_name>
+# Returns: VDE_SUCCESS (0) if known
+is_known_vm() {
+    local vm_name="$1"
+
+    if [ -n "${VM_TYPE[$vm_name]}" ]; then
         return $VDE_SUCCESS
     fi
-
-    log_error "No available ports in range $range_start-$range_end"
     return $VDE_ERR_NOT_FOUND
 }
 
-# release_port_reservation - Release a reserved port after VM creation
-# SECURITY: Call this after VM creation completes to free the port lock
-# Args: <port> - The port number to release
-# Returns: VDE_SUCCESS (0)
-# Example: release_port_reservation 2201
-release_port_reservation() {
-    local port="$1"
-    local port_lock="$PORT_LOCKS_DIR/port_$port"
-    release_lock "$port_lock"
-    return $VDE_SUCCESS
+# Get VM type
+get_vm_type() {
+    local vm_name="$1"
+    echo "${VM_TYPE[$vm_name]:-unknown}"
 }
 
-# -----------------------
-# Docker Compose Functions
-# -----------------------
+# Get VM display name
+get_vm_display_name() {
+    local vm_name="$1"
+    echo "${VM_DISPLAY[$vm_name]:-$vm_name}"
+}
 
-# get_compose_file - Get the path to a VM's docker-compose.yml file
+# Get VM install command
+get_vm_install() {
+    local vm_name="$1"
+    echo "${VM_INSTALL[$vm_name]:--}"
+}
+
+# =============================================================================
+# PORT REGISTRY OPERATIONS
+# =============================================================================
+
+# Get port from registry
 # Args: <vm_name>
-# Returns: VDE_SUCCESS (0), outputs file path to stdout
-# Example: compose_file=$(get_compose_file python)
-get_compose_file() {
-    local vm=$1
-    echo "$CONFIGS_DIR/$vm/docker-compose.yml"
-    return $VDE_SUCCESS
-}
+# Returns: Outputs port number
+get_port_from_registry() {
+    local vm_name="$1"
+    local port_file="$VDE_CACHE_DIR/port-registry/${vm_name}.port"
 
-# build_docker_opts - Build docker-compose command options string
-# Args:
-#   rebuild - "true" to add --build flag
-#   nocache - "true" to add --no-cache flag (only if rebuild is true)
-# Returns: VDE_SUCCESS (0), outputs options string to stdout
-# Example: opts=$(build_docker_opts true false)  # outputs "--build"
-build_docker_opts() {
-    local rebuild=$1
-    local nocache=$2
-
-    local opts=""
-    if [ "$rebuild" = "true" ]; then
-        opts="--build"
-        if [ "$nocache" = "true" ]; then
-            opts="$opts --no-cache"
-        fi
-    fi
-    echo "$opts"
-    return $VDE_SUCCESS
-}
-
-# _parse_docker_error - Parse docker-compose stderr for common error patterns
-# Internal helper function for error handling
-# Args: <stderr_content>
-# Returns: Human-readable error message
-_parse_docker_error() {
-    local stderr="$1"
-    
-    # Check for common error patterns
-    case "$stderr" in
-        *"port is already allocated"*)
-            echo "Port conflict: Another container or service is using the required port"
-            ;;
-        *"network"*"not found"*)
-            echo "Network error: Docker network not found or not accessible"
-            ;;
-        *"image"*"not found"*|*"pull access denied"*)
-            echo "Image error: Docker image not found or access denied"
-            ;;
-        *"no space left on device"*)
-            echo "Disk space error: No space left on device"
-            ;;
-        *"permission denied"*)
-            echo "Permission error: Docker permission denied"
-            ;;
-        *"Cannot connect to the Docker daemon"*)
-            echo "Docker daemon error: Cannot connect to Docker daemon. Is Docker running?"
-            ;;
-        *"timeout"*)
-            echo "Timeout error: Docker operation timed out"
-            ;;
-        *)
-            echo "Docker error: $stderr"
-            ;;
-    esac
-}
-
-# _calculate_backoff_delay - Calculate exponential backoff delay
-# Internal helper function for retry logic
-# Args: <attempt_number> (0-based)
-# Returns: Delay in seconds (capped at VDE_RETRY_MAX_DELAY)
-_calculate_backoff_delay() {
-    local attempt=$1
-    local delay=$((VDE_RETRY_BASE_DELAY * (2 ** attempt)))
-    
-    # Cap at maximum delay
-    if [ $delay -gt $VDE_RETRY_MAX_DELAY ]; then
-        delay=$VDE_RETRY_MAX_DELAY
-    fi
-    
-    echo "$delay"
-}
-
-# start_vm - Start a VM using docker-compose with comprehensive error handling
-# Implements retry logic with exponential backoff for transient failures
-# Args:
-#   vm - VM name to start
-#   rebuild - "true" to rebuild the container
-#   nocache - "true" to build without cache
-# Returns:
-#   VDE_SUCCESS (0) - VM started successfully
-#   VDE_ERR_NOT_FOUND (3) - Compose file not found
-#   VDE_ERR_DOCKER (8) - Docker operation failed after retries
-# Example: start_vm python true false
-start_vm() {
-    local vm=$1
-    local rebuild=${2:-false}
-    local nocache=${3:-false}
-
-    local compose_file
-    compose_file=$(get_compose_file "$vm")
-
-    if [ ! -f "$compose_file" ]; then
-        log_error "Docker compose file not found: $compose_file"
-        return $VDE_ERR_NOT_FOUND
-    fi
-
-    # Check if VM is already running (state awareness)
-    if is_vm_running "$vm"; then
-        log_info "$vm is already running"
+    if [ -f "$port_file" ]; then
+        cat "$port_file"
         return $VDE_SUCCESS
     fi
+    return $VDE_ERR_NOT_FOUND
+}
 
-    # Acquire operation lock for conflict detection
-    if ! acquire_vm_op_lock "$vm" "start"; then
-        local current_op
-        current_op=$(get_vm_operation_info "$vm")
-        log_error "Cannot start $vm: already being $current_op"
-        return $VDE_ERR_LOCK
-    fi
+# Save port to registry
+# Args: <vm_name> <port>
+save_port_to_registry() {
+    local vm_name="$1"
+    local port="$2"
+    local port_dir="$VDE_CACHE_DIR/port-registry"
 
-    log_info "Starting $vm..."
+    mkdir -p "$port_dir"
+    echo "$port" > "$port_dir/${vm_name}.port"
+}
 
-    local build_opts
-    build_opts=$(build_docker_opts "$rebuild" "$nocache")
+# Remove port from registry
+# Args: <vm_name>
+remove_port_from_registry() {
+    local vm_name="$1"
+    local port_file="$VDE_CACHE_DIR/port-registry/${vm_name}.port"
 
-    # Retry logic with exponential backoff
-    local attempt=0
-    local max_attempts=$VDE_MAX_RETRIES
-    local exit_code
-    local stderr_file
-    stderr_file=$(mktemp)
-    
-    # Export VDE environment variables for docker-compose
-    export VDE_HOME="$HOME"
-    export VDE_PROJECT_NAME="${VDE_PROJECT_NAME:-${VDE_ROOT_DIR:t}}"
+    rm -f "$port_file"
+}
 
-    while [ $attempt -lt $max_attempts ]; do
-        # Execute docker-compose and capture stderr
-        if docker-compose -f "$compose_file" up -d $build_opts 2>"$stderr_file"; then
-            # Success - clean up and return
-            rm -f "$stderr_file" 2>/dev/null
-            log_success "Started $vm successfully"
-            release_vm_op_lock "$vm"
+# Clear port registry
+clear_port_registry() {
+    rm -rf "$VDE_CACHE_DIR/port-registry"
+    mkdir -p "$VDE_CACHE_DIR/port-registry"
+}
+
+# =============================================================================
+# PORT ALLOCATION
+# =============================================================================
+
+# Find available port in range
+# Args: [min_port] [max_port]
+# Returns: Outputs port number
+find_available_port() {
+    local min_port="${1:-2200}"
+    local max_port="${2:-2299}"
+    local port=$min_port
+
+    while [ $port -le $max_port ]; do
+        if ! _is_port_in_use "$port"; then
+            echo "$port"
             return $VDE_SUCCESS
         fi
-        
-        exit_code=$?
-        local stderr_content
-        stderr_content=$(cat "$stderr_file" 2>/dev/null)
-        
-        # Parse error to determine if it's retryable
-        local is_retryable=false
-        case "$stderr_content" in
-            *"timeout"*|*"connection refused"*|*"temporary failure"*|*"resource temporarily unavailable"*)
-                is_retryable=true
-                ;;
-        esac
-        
-        attempt=$((attempt + 1))
-        
-        if [ "$is_retryable" = "true" ] && [ $attempt -lt $max_attempts ]; then
-            local delay
-            delay=$(_calculate_backoff_delay $((attempt - 1)))
-            log_warning "Docker operation failed (attempt $attempt/$max_attempts). Retrying in ${delay}s..."
-            log_warning "Error: $(_parse_docker_error "$stderr_content")"
-            sleep "$delay"
-        else
-            # Non-retryable error or max attempts reached
-            break
-        fi
+        port=$((port + 1))
     done
-    
-    # All retries exhausted or non-retryable error
-    local error_msg
-    error_msg=$(_parse_docker_error "$(cat "$stderr_file" 2>/dev/null)")
-    rm -f "$stderr_file" 2>/dev/null
 
-    log_error "Failed to start $vm after $attempt attempt(s)"
-    log_error "$error_msg"
-
-    release_vm_op_lock "$vm"
-    return $VDE_ERR_DOCKER
+    _error "No available port in range $min_port-$max_port"
+    return $VDE_ERR_NO_PORT
 }
 
-# stop_vm - Stop a VM using docker-compose with error handling
+# Allocate port for VM
+# Args: <vm_name> [min_port] [max_port]
+# Returns: Outputs port number
+allocate_port_for_vm() {
+    local vm_name="$1"
+    local min_port="${2:-2200}"
+    local max_port="${3:-2299}"
+
+    local existing_port
+    existing_port=$(get_port_from_registry "$vm_name")
+
+    if [ -n "$existing_port" ]; then
+        echo "$existing_port"
+        return $VDE_SUCCESS
+    fi
+
+    local new_port
+    new_port=$(find_available_port "$min_port" "$max_port")
+
+    if [ -z "$new_port" ]; then
+        return $VDE_ERR_NO_PORT
+    fi
+
+    save_port_to_registry "$vm_name" "$new_port"
+    echo "$new_port"
+}
+
+# Get or allocate port for VM
 # Args: <vm_name>
-# Returns:
-#   VDE_SUCCESS (0) - VM stopped successfully
-#   VDE_ERR_NOT_FOUND (3) - Compose file not found
-#   VDE_ERR_DOCKER (8) - Docker operation failed
-# Example: stop_vm python
-stop_vm() {
-    local vm=$1
+# Returns: Outputs port number
+get_or_allocate_port() {
+    local vm_name="$1"
+    local vm_type
+    vm_type=$(get_vm_type "$vm_name")
 
-    local compose_file
-    compose_file=$(get_compose_file "$vm")
+    local min_port max_port
+    case "$vm_type" in
+        lang)
+            min_port=$VDE_LANG_PORT_START
+            max_port=$VDE_LANG_PORT_END
+            ;;
+        service)
+            min_port=$VDE_SVC_PORT_START
+            max_port=$VDE_SVC_PORT_END
+            ;;
+        *)
+            min_port=$VDE_LANG_PORT_START
+            max_port=$VDE_SVC_PORT_END
+            ;;
+    esac
 
-    if [ ! -f "$compose_file" ]; then
-        log_error "Docker compose file not found: $compose_file"
+    allocate_port_for_vm "$vm_name" "$min_port" "$max_port"
+}
+
+# =============================================================================
+# BACKUP AND RESTORE
+# =============================================================================
+
+# Create timestamped backup
+# Args: <source_path>
+# Returns: Outputs backup path
+create_backup() {
+    local source_path="$1"
+
+    if [ ! -e "$source_path" ]; then
         return $VDE_ERR_NOT_FOUND
     fi
 
-    # Check if VM is already stopped (state awareness)
-    if ! is_vm_running "$vm"; then
-        log_info "$vm is not running"
+    local backup_dir="$BACKUP_DIR/$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$backup_dir"
+
+    local basename
+    basename=$(basename "$source_path")
+    local backup_path="$backup_dir/$basename"
+
+    cp -a "$source_path" "$backup_path"
+    echo "$backup_path"
+}
+
+# =============================================================================
+# DOCKER STATE MANAGEMENT
+# =============================================================================
+
+# Get Docker state directory
+get_docker_state_dir() {
+    echo "$VDE_ROOT_DIR/.docker-state"
+}
+
+# Save Docker state
+# Args: <vm_name> <state_json>
+save_docker_state() {
+    local vm_name="$1"
+    local state="$2"
+    local state_dir
+    state_dir=$(get_docker_state_dir)
+
+    mkdir -p "$state_dir"
+    echo "$state" > "$state_dir/${vm_name}.json"
+}
+
+# Load Docker state
+# Args: <vm_name>
+# Returns: Outputs state JSON
+load_docker_state() {
+    local vm_name="$1"
+    local state_dir
+    state_dir=$(get_docker_state_dir)
+    local state_file="$state_dir/${vm_name}.json"
+
+    if [ -f "$state_file" ]; then
+        cat "$state_file"
         return $VDE_SUCCESS
     fi
-
-    # Acquire operation lock for conflict detection
-    if ! acquire_vm_op_lock "$vm" "stop"; then
-        local current_op
-        current_op=$(get_vm_operation_info "$vm")
-        log_error "Cannot stop $vm: already being $current_op"
-        return $VDE_ERR_LOCK
-    fi
-
-    log_info "Shutting down $vm..."
-
-    # Export VDE environment variables for docker-compose
-    export VDE_HOME="$HOME"
-    export VDE_PROJECT_NAME="${VDE_PROJECT_NAME:-${VDE_ROOT_DIR:t}}"
-
-    # Capture stderr for error handling
-    local stderr_file
-    stderr_file=$(mktemp)
-
-    if docker-compose -f "$compose_file" down 2>"$stderr_file"; then
-        rm -f "$stderr_file" 2>/dev/null
-        log_success "Stopped $vm successfully"
-        release_vm_op_lock "$vm"
-        return $VDE_SUCCESS
-    fi
-
-    local stderr_content
-    stderr_content=$(cat "$stderr_file" 2>/dev/null)
-    rm -f "$stderr_file" 2>/dev/null
-
-    log_error "Failed to stop $vm"
-    log_error "$(_parse_docker_error "$stderr_content")"
-
-    release_vm_op_lock "$vm"
-    return $VDE_ERR_DOCKER
+    return $VDE_ERR_NOT_FOUND
 }
 
-# -----------------------
-# Template Processing Functions
-# -----------------------
-# render_template takes a template file and variable name-value pairs
-# Usage: render_template template_file NAME "value" OTHER "value"
-render_template() {
-    local template_file=$1
-    shift
+# Clear Docker state
+# Args: [<vm_name>]
+clear_docker_state() {
+    local vm_name="${1:-}"
+    local state_dir
+    state_dir=$(get_docker_state_dir)
 
-    if [ ! -f "$template_file" ]; then
-        log_error "Template not found: $template_file"
-        return 1
-    fi
-
-    local content
-    content=$(cat "$template_file")
-
-    # Parse variable name-value pairs
-    while [ $# -ge 2 ]; do
-        local var_name="$1"
-        local var_value="$2"
-        shift 2
-
-        # Escape special characters for sed replacement
-        var_value=$(printf '%s\n' "$var_value" | sed 's/[&/\]/\\&/g')
-        content=$(echo "$content" | sed "s/{{$var_name}}/$var_value/g")
-    done
-
-    echo "$content"
-}
-
-# -----------------------
-# SSH Key Security Functions
-# -----------------------
-
-# SECURITY: Validate that a file is actually a public key (not a private key)
-# Args: <filepath>
-# Returns: 0 if valid public key, 1 otherwise
-validate_public_key_file() {
-    local filepath="$1"
-    
-    # Must end with .pub
-    case "$filepath" in
-        *.pub) ;;
-        *)
-            log_error "SECURITY: File does not have .pub extension: $filepath"
-            return 1
-            ;;
-    esac
-    
-    # Must exist and be readable
-    if [ ! -f "$filepath" ] || [ ! -r "$filepath" ]; then
-        log_error "SECURITY: File not readable: $filepath"
-        return 1
-    fi
-    
-    # SECURITY: Check file content - public keys start with key type
-    local first_line
-    first_line=$(head -1 "$filepath" 2>/dev/null)
-    
-    # Valid public key formats start with: ssh-rsa, ssh-ed25519, ssh-ecdsa, ecdsa-sha2-*, sk-ssh-ed25519, sk-ecdsa-sha2-*
-    case "$first_line" in
-        ssh-rsa*|ssh-ed25519*|ssh-ecdsa*|ecdsa-sha2-*|sk-ssh-ed25519*|sk-ecdsa-sha2-*)
-            ;;
-        *)
-            log_error "SECURITY: File does not appear to be a valid public key: $filepath"
-            return 1
-            ;;
-    esac
-    
-    # SECURITY: Ensure it's NOT a private key (check for private key markers)
-    if grep -q "PRIVATE KEY" "$filepath" 2>/dev/null; then
-        log_error "SECURITY: CRITICAL - File contains private key data: $filepath"
-        return 1
-    fi
-    
-    return 0
-}
-
-# SECURITY: Check for private keys accidentally placed in public directory
-# Args: <directory>
-check_for_private_keys_in_public_dir() {
-    local dir="$1"
-    local found_private=false
-    
-    if [ ! -d "$dir" ]; then
-        return 0
-    fi
-    
-    # Check all files in directory
-    _enable_nullglob
-    local file
-    for file in "$dir"/*; do
-        [ -f "$file" ] || continue
-        
-        local basename
-        basename=$(basename "$file")
-        
-        # Skip .keep and other non-key files
-        case "$basename" in
-            .keep|.gitignore) continue ;;
-        esac
-        
-        # SECURITY: Check if file is a private key
-        case "$basename" in
-            *.pub) ;;
-            *)
-                # File without .pub extension in public keys dir is suspicious
-                log_error "SECURITY WARNING: Non-.pub file in public keys directory: $basename"
-                found_private=true
-                ;;
-        esac
-        
-        # SECURITY: Check file content for private key markers
-        if grep -q "PRIVATE KEY" "$file" 2>/dev/null; then
-            log_error "SECURITY CRITICAL: Private key detected in public directory: $basename"
-            log_error "SECURITY CRITICAL: Remove this file immediately: $file"
-            found_private=true
-        fi
-    done
-    _disable_nullglob
-    
-    if [ "$found_private" = "true" ]; then
-        log_error "SECURITY: Private keys should NEVER be in the public-ssh-keys directory!"
-        return 1
-    fi
-    
-    return 0
-}
-
-# -----------------------
-# SSH Key Management Functions
-# -----------------------
-
-# Detect all available SSH private keys in ~/.ssh/
-# Returns a newline-separated list of key filepaths
-detect_ssh_keys() {
-    # VDE SSH isolation: Only return the VDE-specific key
-    # This prevents VDE from using or discovering user's personal SSH keys
-    if [ -f "$VDE_SSH_IDENTITY" ] && [ -f "$VDE_SSH_IDENTITY_PUB" ]; then
-        echo "$VDE_SSH_IDENTITY"
-        return 0
-    fi
-
-    # No keys found
-    return 1
-}
-
-# Get the primary/default SSH key to use for VDE
-# Returns the filepath of the VDE SSH key
-get_primary_ssh_key() {
-    # VDE SSH isolation: Always use the VDE-specific key
-    if [ -f "$VDE_SSH_IDENTITY" ]; then
-        echo "$VDE_SSH_IDENTITY"
-        return 0
-    fi
-
-    # Fallback: return error if VDE key doesn't exist
-    return 1
-}
-
-# Get the corresponding public key file for a private key
-get_ssh_pubkey() {
-    local private_key="$1"
-
-    if [ -f "${private_key}.pub" ]; then
-        echo "${private_key}.pub"
-        return 0
-    fi
-
-    return 1
-}
-
-# Sync SSH public keys to VDE's public-ssh-keys directory
-# This ensures all user's public keys are available for container auth
-# SECURITY: Only copies .pub files, validates file type, warns on private key detection
-sync_ssh_keys_to_vde() {
-    # VDE SSH isolation: Only sync the VDE public key to the build context
-    # This is used by Docker build to bake the key into container images
-
-    local public_keys_dir="$VDE_ROOT_DIR/public-ssh-keys"
-
-    # Ensure directory exists
-    mkdir -p "$public_keys_dir"
-
-    # Ensure VDE SSH environment exists
-    if [ ! -f "$VDE_SSH_IDENTITY_PUB" ]; then
-        log_error "VDE SSH public key not found at: $VDE_SSH_IDENTITY_PUB"
-        log_error "Run: ./scripts/ssh-agent-setup --init"
-        return 1
-    fi
-
-    log_info "Syncing VDE SSH public key to build context..."
-
-    # Copy VDE public key to build context with a consistent name
-    local dest_path="$public_keys_dir/vde_id_ed25519.pub"
-
-    # SECURITY: Validate this is actually a public key file
-    if ! validate_public_key_file "$VDE_SSH_IDENTITY_PUB"; then
-        log_error "SECURITY: Invalid VDE public key file"
-        return 1
-    fi
-
-    # Copy the public key
-    cp "$VDE_SSH_IDENTITY_PUB" "$dest_path"
-    chmod 644 "$dest_path"
-    log_info "  ✓ Copied VDE public key to: $dest_path"
-
-    # SECURITY: Check for any private keys accidentally placed in public directory
-    check_for_private_keys_in_public_dir "$public_keys_dir"
-
-    # Create .keep file if it doesn't exist (for git tracking)
-    if [ ! -f "$public_keys_dir/.keep" ]; then
-        touch "$public_keys_dir/.keep"
-    fi
-
-    log_info "VDE SSH public key synced to build context"
-    return 0
-}
-
-# Validate that at least one SSH key exists
-# If no keys exist, offer to generate one
-validate_or_create_ssh_key() {
-    local keys
-    keys=$(detect_ssh_keys)
-    
-    # Count keys
-    local key_count=0
-    local key
-    for key in $keys; do
-        [ -n "$key" ] || continue
-        key_count=$((key_count + 1))
-    done
-
-    if [ $key_count -gt 0 ]; then
-        log_info "Found $key_count SSH key(s)"
-        return 0
-    fi
-
-    # No keys found - offer to generate one
-    log_warning "No SSH keys found in ~/.ssh/"
-    log_warning "VDE requires SSH keys for container authentication."
-
-    # Check if we're in an interactive terminal
-    if [ -t 0 ]; then
-        echo ""
-        echo "Would you like to generate an SSH key now? [Y/n]"
-        read -r response
-        response=${response:-Y}
-
-        case "$response" in
-            [Yy]*)
-                # Generate ed25519 key (recommended)
-                local key_path="$VDE_SSH_IDENTITY"
-
-                log_info "Generating SSH key: $key_path"
-                ssh-keygen -t ed25519 -f "$key_path" -N "" -C "$(whoami)@$(hostname)-vde"
-
-                if [ $? -eq 0 ]; then
-                    log_info "SSH key generated successfully!"
-                    log_info "Private key: $key_path"
-                    log_info "Public key: ${key_path}.pub"
-
-                    # Copy to VDE
-                    sync_ssh_keys_to_vde
-                    return 0
-                else
-                    log_error "Failed to generate SSH key"
-                    return 1
-                fi
-                ;;
-            *)
-                log_error "SSH key required for VDE to function"
-                return 1
-                ;;
-        esac
-    else
-        # Non-interactive mode
-        log_error "No SSH keys found. Run: ssh-keygen -t ed25519"
-        return 1
-    fi
-}
-
-# Get the identity file path to use for SSH connections
-# This detects the user's primary key automatically
-get_ssh_identity_file() {
-    # VDE SSH isolation: Always use the VDE-specific key
-    if [ -f "$VDE_SSH_IDENTITY" ]; then
-        echo "$VDE_SSH_IDENTITY"
-        return 0
-    fi
-
-    # Fallback to VDE key path (will be created by ensure_vde_ssh_environment)
-    echo "$VDE_SSH_IDENTITY"
-    return 0
-}
-
-# -----------------------
-# SSH Config Functions
-# -----------------------
-get_user_ssh_config() {
-    # VDE SSH isolation: Return VDE's SSH config path
-    echo "$VDE_SSH_CONFIG"
-}
-
-backup_ssh_config() {
-    # VDE SSH isolation: Backup VDE's SSH config
-    local ssh_config="$VDE_SSH_CONFIG"
-    local backup_path="$VDE_SSH_DIR/backup/config.backup.$(date +%Y%m%d_%H%M%S)"
-
-    if [ -f "$ssh_config" ]; then
-        mkdir -p "$VDE_SSH_DIR/backup"
-        cp "$ssh_config" "$backup_path"
-        log_info "Backed up VDE SSH config to: $backup_path"
-    fi
-}
-
-ssh_config_has_entry() {
-    local host_alias=$1
-    local ssh_config="$VDE_SSH_CONFIG"
-
-    if [ ! -f "$ssh_config" ]; then
-        return 1
-    fi
-
-    grep -q "Host $host_alias\\b" "$ssh_config"
-}
-
-generate_ssh_config_entry() {
-    local host=$1
-    local port=$2
-    local display_name=$3
-    local identity_file="${4:-$(get_ssh_identity_file)}"
-
-    # Convert absolute path to tilde-relative path for portability using zsh
-    # Supports:
-    #   - Linux native: /home/<user>/<path>
-    #   - WSL2: /home/<user>/<path>
-    #   - macOS: /Users/<user>/<path>
-    # Pattern: /home/<user>/<path> or /Users/<user>/<path> → ~/<path>
-    local portable_identity="$identity_file"
-    if [[ "$portable_identity" == /home/* ]] || [[ "$portable_identity" == /Users/* ]]; then
-        # Match everything after /home/<user>/ or /Users/<user>/
-        if [[ "$portable_identity" =~ ^/home/[^/]+/(.+) ]]; then
-            portable_identity="~/${match[1]}"
-        elif [[ "$portable_identity" =~ ^/Users/[^/]+/(.+) ]]; then
-            portable_identity="~/${match[1]}"
-        fi
-    fi
-
-    local template_file="$TEMPLATES_DIR/ssh-entry.txt"
-    render_template "$template_file" HOST "$host" SSH_PORT "$port" COMMENT "$display_name" IDENTITY_FILE "$portable_identity"
-}
-
-# SECURITY: Lock directory for SSH config operations
-SSH_CONFIG_LOCK="$VDE_ROOT_DIR/.locks/vde_ssh_config"
-readonly SSH_CONFIG_LOCK
-
-# SECURITY: Atomic SSH config modification with file locking
-# Prevents race conditions in check-then-write pattern
-# Args: <host_alias> <port> <display_name> [identity_file]
-merge_ssh_config_entry() {
-    local host_alias=$1
-    local port=$2
-    local display_name=$3
-    local identity_file="${4:-$(get_ssh_identity_file)}"
-    local ssh_config="$VDE_SSH_CONFIG"
-
-    # Ensure VDE SSH directory exists
-    mkdir -p "$(dirname "$ssh_config")"
-
-    # SECURITY: Ensure locks directory exists
-    mkdir -p "$(dirname "$SSH_CONFIG_LOCK")" 2>/dev/null
-
-    # SECURITY: Acquire lock for atomic SSH config modification
-    if ! acquire_lock "$SSH_CONFIG_LOCK" 30; then
-        log_error "SECURITY: Could not acquire SSH config lock"
-        return 1
-    fi
-
-    # All operations below are protected by the lock
-    local result=0
-
-    # Create file if it doesn't exist
-    if [ ! -f "$ssh_config" ]; then
-        touch "$ssh_config"
-        chmod 600 "$ssh_config"
-    fi
-
-    # Check if entry already exists (now safe from race condition)
-    if ssh_config_has_entry "$host_alias"; then
-        # Entry already exists, skip silently
-        release_lock "$SSH_CONFIG_LOCK"
-        return 0
-    fi
-
-    # Backup existing config
-    backup_ssh_config
-
-    # Generate new entry
-    local entry
-    entry=$(generate_ssh_config_entry "$host_alias" "$port" "$display_name" "$identity_file")
-
-    # SECURITY: Write to temporary file first, then atomic move
-    local temp_file
-    temp_file=$(mktemp "${ssh_config}.tmp.XXXXXX")
-
-    if [ -z "$temp_file" ]; then
-        log_error "SECURITY: Failed to create temporary file"
-        release_lock "$SSH_CONFIG_LOCK"
-        return 1
-    fi
-
-    # Copy existing content to temp file
-    if [ -f "$ssh_config" ]; then
-        cp "$ssh_config" "$temp_file"
-    fi
-
-    # Append new entry to temp file
-    echo "" >> "$temp_file"
-    echo "$entry" >> "$temp_file"
-
-    # Set correct permissions on temp file
-    chmod 600 "$temp_file"
-
-    # SECURITY: Atomic replacement using mv
-    if mv "$temp_file" "$ssh_config"; then
-        log_success "Added SSH config entry for '$host_alias'"
-        result=0
-    else
-        log_error "SECURITY: Failed to update SSH config atomically"
-        # Cleanup temp file on failure
-        rm -f "$temp_file" 2>/dev/null
-        result=1
-    fi
-
-    # Release lock
-    release_lock "$SSH_CONFIG_LOCK"
-    return $result
-}
-
-# SECURITY: Atomic SSH config entry removal with rollback capability
-# Args: <host_alias>
-remove_ssh_config_entry() {
-    local host_alias=$1
-    local ssh_config="$VDE_SSH_CONFIG"
-
-    if [ ! -f "$ssh_config" ]; then
-        log_error "VDE SSH config file does not exist"
-        return 1
-    fi
-
-    # SECURITY: Acquire lock
-    if ! acquire_lock "$SSH_CONFIG_LOCK" 30; then
-        log_error "SECURITY: Could not acquire SSH config lock"
-        return 1
-    fi
-
-    # Check if entry exists
-    if ! ssh_config_has_entry "$host_alias"; then
-        log_error "VDE SSH config entry for '$host_alias' does not exist"
-        release_lock "$SSH_CONFIG_LOCK"
-        return 1
-    fi
-
-    # Backup before modification
-    backup_ssh_config
-
-    # SECURITY: Create temp file for atomic operation
-    local temp_file
-    temp_file=$(mktemp "${ssh_config}.tmp.XXXXXX")
-
-    if [ -z "$temp_file" ]; then
-        log_error "SECURITY: Failed to create temporary file"
-        release_lock "$SSH_CONFIG_LOCK"
-        return 1
-    fi
-
-    # Remove the entry (everything from "Host $host_alias" to next "Host " or EOF)
-    awk -v host="$host_alias" '
-        /^Host / {
-            if ($2 == host) {
-                skip = 1;
-                next
-            } else {
-                skip = 0
-            }
-        }
-        !skip { print }
-    ' "$ssh_config" > "$temp_file"
-
-    # Set permissions
-    chmod 600 "$temp_file"
-
-    # SECURITY: Atomic replacement
-    local result=0
-    if mv "$temp_file" "$ssh_config"; then
-        log_success "Removed VDE SSH config entry for '$host_alias'"
-        result=0
-    else
-        log_error "SECURITY: Failed to update VDE SSH config atomically"
-        rm -f "$temp_file" 2>/dev/null
-        result=1
-    fi
-
-    release_lock "$SSH_CONFIG_LOCK"
-    return $result
-}
-
-# remove_known_hosts_entry - Remove SSH known_hosts entries for a VM
-# This prevents scary "REMOTE HOST IDENTIFICATION HAS CHANGED" warnings
-# when containers are rebuilt. Removes entries for localhost:port, ::1:port,
-# and the VM hostname.
-# Args: <vm_name> [<ssh_port>]
-# If ssh_port not provided, will attempt to read from docker-compose.yml
-# Returns: VDE_SUCCESS (0) or VDE_ERR_NOT_FOUND (3)
-remove_known_hosts_entry() {
-    local vm_name=$1
-    local ssh_port=$2
-    local known_hosts="$VDE_SSH_KNOWN_HOSTS"
-    local removed=false
-
-    # Get port from docker-compose.yml if not provided
-    if [ -z "$ssh_port" ]; then
-        ssh_port=$(get_vm_ssh_port "$vm_name" 2>/dev/null) || true
-    fi
-
-    if [ -z "$ssh_port" ]; then
-        # No port found, nothing to clean up
-        return $VDE_ERR_NOT_FOUND
-    fi
-
-    # Only proceed if known_hosts file exists
-    if [ ! -f "$known_hosts" ]; then
-        return $VDE_SUCCESS
-    fi
-
-    # Determine hostname patterns to remove
-    # Try localhost:port, [localhost]:port, ::1:port, [::1]:port
-    local patterns=(
-        "[localhost]:$ssh_port"
-        "[::1]:$ssh_port"
-        "localhost:$ssh_port"
-    )
-
-    # Also remove by VM hostname if it's not localhost-based
-    # (e.g., "python-dev", "postgres", etc.)
     if [ -n "$vm_name" ]; then
-        patterns+=("$vm_name")
-    fi
-
-    # Create backup
-    local backup_file="${known_hosts}.vde-backup"
-    if [ -f "$known_hosts" ]; then
-        cp "$known_hosts" "$backup_file" 2>/dev/null || true
-    fi
-
-    # Remove each pattern using ssh-keygen
-    for pattern in "${patterns[@]}"; do
-        if ssh-keygen -f "$known_hosts" -R "$pattern" 2>/dev/null; then
-            removed=true
-        fi
-    done
-
-    # Also handle hashed hostnames (ssh-keygen -H creates these)
-    # We need to manually remove lines that match the port pattern
-    if [ -f "$known_hosts" ]; then
-        local temp_file
-        temp_file=$(mktemp "${known_hosts}.tmp.XXXXXX")
-
-        # Remove lines containing :port (for hashed entries with ports)
-        grep -v ":$ssh_port" "$known_hosts" > "$temp_file" 2>/dev/null || true
-
-        if [ -s "$temp_file" ]; then
-            mv "$temp_file" "$known_hosts"
-            chmod 600 "$known_hosts"
-        else
-            # File would be empty, keep original
-            rm -f "$temp_file"
-        fi
-    fi
-
-    if $removed; then
-        log_success "Cleared VDE SSH known_hosts entries for $vm_name (port $ssh_port)"
-    fi
-
-    return $VDE_SUCCESS
-}
-
-# -----------------------
-# Validation Functions
-# -----------------------
-validate_vm_name() {
-    local name=$1
-
-    if [ -z "$name" ]; then
-        log_error "VM name cannot be empty"
-        return 1
-    fi
-
-    # Check for valid characters (lowercase alphanumeric only)
-    case "$name" in
-        *[!a-z0-9]*)
-            log_error "VM name must be lowercase alphanumeric (no spaces, hyphens, or special chars)"
-            return 1
-            ;;
-    esac
-
-    return 0
-}
-
-validate_vm_doesnt_exist() {
-    local vm=$1
-
-    # Check if container exists (running or stopped) - not just config
-    if container_exists "$vm"; then
-        log_error "VM '$vm' already exists (container found)"
-        return 1
-    fi
-    return 0
-}
-
-validate_ssh_key_exists() {
-    # Use the new comprehensive validation function
-    validate_or_create_ssh_key
-}
-
-# Check if SSH agent is running
-ssh_agent_is_running() {
-    [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ]
-}
-
-# Start SSH agent silently if not running
-# This is the seamless, automatic function used by VDE scripts
-ensure_ssh_agent() {
-    # If already running, nothing to do
-    if ssh_agent_is_running; then
-        return 0
-    fi
-
-    # Start SSH agent silently
-    eval "$(ssh-agent -s)" >/dev/null 2>&1
-    export SSH_AUTH_SOCK
-
-    # Add all available keys to the agent
-    local keys
-    keys=$(detect_ssh_keys)
-    
-    # Count keys
-    local key_count=0
-    local key
-    for key in $keys; do
-        [ -n "$key" ] || continue
-        key_count=$((key_count + 1))
-    done
-
-    if [ $key_count -eq 0 ]; then
-        # No keys found - generate one automatically
-        log_info "Generating SSH key for VDE..."
-        ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -C "$(whoami)@$(hostname)-vde" >/dev/null 2>&1
-        sync_ssh_keys_to_vde >/dev/null 2>&1
-        keys=$(detect_ssh_keys)
-    fi
-
-    # Try to add keys silently (will prompt for passphrase if needed)
-    local keys_added=0
-    for key in $keys; do
-        [ -n "$key" ] || continue
-        if ssh-add "$key" >/dev/null 2>&1; then
-            keys_added=$((keys_added + 1))
-        fi
-    done
-
-    return 0
-}
-
-# Verbose version of ensure_ssh_agent for user-facing scripts
-# Shows what's happening and offers to set up auto-start
-setup_ssh_agent_interactive() {
-    if ssh_agent_is_running; then
-        log_success "SSH agent running"
-        return 0
-    fi
-
-    log_info "Starting SSH agent..."
-    ensure_ssh_agent
-
-    # Show what was set up
-    local keys
-    keys=$(detect_ssh_keys)
-    local key_count=0
-    local key
-    for key in $keys; do
-        [ -n "$key" ] || continue
-        key_count=$((key_count + 1))
-    done
-    log_success "SSH agent ready with $key_count key(s)"
-}
-
-# Ensure SSH agent and VM config are set up (called by VM operations)
-# Ensure VDE SSH environment is properly set up
-# This creates the isolated ~/.ssh/vde/ directory and generates a VDE-specific SSH key
-# Returns: 0 on success, 1 on failure
-ensure_vde_ssh_environment() {
-    # Skip SSH operations in test mode
-    if [ -n "$VDE_TEST_MODE" ]; then
-        return 0
-    fi
-
-    # Validate HOME environment variable
-    if [ -z "$HOME" ]; then
-        log_error "HOME environment variable not set"
-        return 1
-    fi
-
-    # Create VDE SSH directory if it doesn't exist
-    if [ ! -d "$VDE_SSH_DIR" ]; then
-        mkdir -p "$VDE_SSH_DIR"
-        chmod 700 "$VDE_SSH_DIR"
-        log_info "Created VDE SSH directory: $VDE_SSH_DIR"
-    fi
-
-    # Generate VDE SSH key if it doesn't exist
-    if [ ! -f "$VDE_SSH_IDENTITY" ]; then
-        log_info "Generating VDE SSH key..."
-        ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -C "vde@$(hostname)" 2>/dev/null
-        chmod 600 "$VDE_SSH_IDENTITY"
-        chmod 644 "$VDE_SSH_IDENTITY_PUB"
-        log_info "Generated VDE SSH key: $VDE_SSH_IDENTITY"
+        rm -f "$state_dir/${vm_name}.json"
     else
-        # Ensure permissions are correct
-        chmod 700 "$VDE_SSH_DIR"
-        chmod 600 "$VDE_SSH_IDENTITY"
-        chmod 644 "$VDE_SSH_IDENTITY_PUB"
+        rm -rf "$state_dir"
+        mkdir -p "$state_dir"
     fi
-
-    # Create VDE SSH config file if it doesn't exist
-    if [ ! -f "$VDE_SSH_CONFIG" ]; then
-        touch "$VDE_SSH_CONFIG"
-        chmod 600 "$VDE_SSH_CONFIG"
-    fi
-
-    # Create VDE known_hosts file if it doesn't exist
-    if [ ! -f "$VDE_SSH_KNOWN_HOSTS" ]; then
-        touch "$VDE_SSH_KNOWN_HOSTS"
-        chmod 600 "$VDE_SSH_KNOWN_HOSTS"
-    fi
-
-    return 0
 }
 
-# Wrapper for SSH commands that uses VDE-specific config and known_hosts
-# Usage: vde_ssh [ssh args...]
-# This ensures SSH never touches the user's personal SSH configuration
-vde_ssh() {
-    ssh -F "$VDE_SSH_CONFIG" \
-        -o "UserKnownHostsFile=$VDE_SSH_KNOWN_HOSTS" \
-        -o "StrictHostKeyChecking=no" \
-        "$@"
+# =============================================================================
+# VM SSH PORT (compat function)
+# =============================================================================
+
+# Get SSH port for VM (uses cache/registry)
+# Args: <vm_name>
+# Returns: Outputs SSH port
+get_vm_ssh_port() {
+    local vm_name="$1"
+    get_or_allocate_port "$vm_name"
 }
 
-ensure_ssh_environment() {
-    # Skip SSH operations in test mode (prevents timeouts in Docker)
-    if [ -n "$VDE_TEST_MODE" ]; then
-        return 0
-    fi
+# =============================================================================
+# DIRECTORY CREATION
+# =============================================================================
 
-    # Ensure VDE SSH environment is set up first
-    ensure_vde_ssh_environment
-
-    # Ensure SSH agent is running
-    # Ensure VDE SSH known_hosts file exists (prevents prompts)
-    mkdir -p "$(dirname "$VDE_SSH_KNOWN_HOSTS")"
-    touch "$VDE_SSH_KNOWN_HOSTS"
-    chmod 600 "$VDE_SSH_KNOWN_HOSTS"
-
-    ensure_ssh_agent
-
-    # Ensure VDE SSH config has VM entries
-    if [ ! -f "$VDE_SSH_CONFIG" ] || [ ! -s "$VDE_SSH_CONFIG" ]; then
-        generate_vm_ssh_config >/dev/null 2>&1 || true
-    fi
-
-    # Load VDE key into SSH agent
-    if [ -f "$VDE_SSH_IDENTITY" ]; then
-        local key_fingerprint
-        key_fingerprint=$(ssh-keygen -lf "$VDE_SSH_IDENTITY" 2>/dev/null | awk '{print $2}')
-        if [ -n "$key_fingerprint" ] && ! ssh-add -l 2>/dev/null | grep -q "$key_fingerprint"; then
-            ssh-add "$VDE_SSH_IDENTITY" 2>/dev/null || true
-        fi
-    fi
-
-    return 0
-}
-
-# Generate SSH config entries for VM-to-VM communication
-generate_vm_ssh_config() {
-    local ssh_config="$VDE_SSH_CONFIG"
-    local need_update=false
-
-    # Ensure VDE SSH directory and config exist
-    mkdir -p "$(dirname "$ssh_config")"
-    if [ ! -f "$ssh_config" ]; then
-        touch "$ssh_config"
-        chmod 600 "$ssh_config"
-    fi
-
-    # Backup existing config
-    backup_ssh_config
-
-    log_info "Generating VM-to-VM SSH config entries..."
-
-    # Get all VMs
-    # Use array assignment for proper zsh word splitting
-    local -a vms
-    vms=($(get_all_vms))
-
-    local vm
-    for vm in $vms; do
-        [ -n "$vm" ] || continue
-        local vm_type
-        vm_type=$(get_vm_info type "$vm")
-        local ssh_port
-        ssh_port=$(get_vm_ssh_port "$vm")
-
-        if [ -z "$ssh_port" ]; then
-            continue
-        fi
-
-        # Determine host alias and display name based on VM type
-        local vm_alias
-        local display_name
-
-        if [ "$vm_type" = "lang" ]; then
-            # Language VMs get -dev suffix
-            vm_alias="${vm}-dev"
-            display_name="$vm Dev VM"
-        elif [ "$vm_type" = "service" ]; then
-            # Service VMs do NOT get -dev suffix - use service name directly
-            vm_alias="$vm"
-            display_name="$vm Service"
-        else
-            # Unknown type, skip
-            continue
-        fi
-
-        # Check if entry already exists
-        if ! ssh_config_has_entry "$vm_alias"; then
-            merge_ssh_config_entry "$vm_alias" "$ssh_port" "$display_name" "$(get_ssh_identity_file)"
-            need_update=true
-        fi
-    done
-
-    if [ "$need_update" = "false" ]; then
-        log_info "All VM SSH config entries already up to date"
-    fi
-
-    return 0
-}
-
-# NOTE: get_vm_ssh_port is defined earlier in this file (around line 302)
-# This duplicate definition has been removed as part of code quality improvements.
-# The canonical implementation uses a more robust regex pattern to extract SSH ports.
-
-# -----------------------
-# Directory Creation Functions
-# -----------------------
+# Ensure VM directories exist
+# Args: <vm_name> <vm_type>
 ensure_vm_directories() {
-    local vm=$1
-    local vm_type=$2
+    local vm="$1"
+    local vm_type="$2"
 
-    local -a dirs  # Use array for zsh compatibility
+    local -a dirs
 
     if [ "$vm_type" = "lang" ]; then
         dirs=("$CONFIGS_DIR/$vm" "$VDE_ROOT_DIR/projects/$vm" "$VDE_ROOT_DIR/logs/$vm")
@@ -2466,14 +722,16 @@ ensure_vm_directories() {
     for dir in "${dirs[@]}"; do
         if [ ! -d "$dir" ]; then
             mkdir -p "$dir"
-            log_info "Created directory: $dir"
+            _info "Created directory: $dir"
         fi
     done
 }
 
-# -----------------------
-# Usage Functions
-# -----------------------
+# =============================================================================
+# USAGE DISPLAY
+# =============================================================================
+
+# Show known VMs
 show_known_vms() {
     echo "Known language VMs:"
     get_lang_vms | sed 's/^/  /'
@@ -2482,5 +740,12 @@ show_known_vms() {
     get_service_vms | sed 's/^/  /'
 }
 
-# Auto-load VM types when library is sourced
+# =============================================================================
+# AUTO-INITIALIZATION
+# =============================================================================
+
+# Load VM types on library source
 load_vm_types
+
+# Load modular libraries
+_vm_common_load_modular_libs
