@@ -554,6 +554,187 @@ vde_get_schema_for_json() {
 }
 
 # -----------------------
+# Schema Update Mechanisms
+# -----------------------
+# Functions for detecting schema changes and updating configurations
+
+# vde_get_config_version - Get version from JSON config file
+# Args: <json_file>
+# Returns: Outputs version string, returns VDE_SUCCESS if found
+vde_get_config_version() {
+    local json_file="$1"
+
+    if [ ! -f "$json_file" ]; then
+        log_error "Config file not found: $json_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    local version
+    version=$(python3 -c "import json; print(json.load(open('$json_file')).get('version', ''))" 2>/dev/null)
+
+    if [ -n "$version" ]; then
+        echo "$version"
+        return $VDE_SUCCESS
+    else
+        log_error "No version field in config: $json_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+}
+
+# vde_get_schema_version - Get version requirement from schema file
+# Args: <schema_file>
+# Returns: Outputs schema version pattern, returns VDE_SUCCESS if found
+vde_get_schema_version() {
+    local schema_file="$1"
+
+    if [ ! -f "$schema_file" ]; then
+        log_error "Schema file not found: $schema_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    local version
+    version=$(python3 -c "
+import json
+schema = json.load(open('$schema_file'))
+# Get version from properties.version.pattern or properties.version.const
+version_prop = schema.get('properties', {}).get('version', {})
+print(version_prop.get('pattern', version_prop.get('const', '')))
+" 2>/dev/null)
+
+    if [ -n "$version" ]; then
+        echo "$version"
+        return $VDE_SUCCESS
+    else
+        log_error "No version in schema: $schema_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+}
+
+# vde_check_schema_compatibility - Check if config version matches schema
+# Args: <json_file> <schema_file>
+# Returns: VDE_SUCCESS if compatible, VDE_ERR_INVALID_DATA if incompatible
+vde_check_schema_compatibility() {
+    local json_file="$1"
+    local schema_file="$2"
+
+    local config_version schema_version
+    config_version=$(vde_get_config_version "$json_file" 2>/dev/null)
+    schema_version=$(vde_get_schema_version "$schema_file" 2>/dev/null)
+
+    if [ -z "$config_version" ]; then
+        log_error "Cannot determine config version: $json_file"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    if [ -z "$schema_version" ]; then
+        log_error "Cannot determine schema version: $schema_file"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    # Check if config version matches schema pattern
+    if python3 -c "
+import re, sys
+pattern = r'$schema_version'
+version = '$config_version'
+if re.match(pattern, version):
+    sys.exit(0)
+else:
+    sys.exit(1)
+" 2>/dev/null; then
+        log_info "Config version $config_version compatible with schema"
+        return $VDE_SUCCESS
+    else
+        log_error "Config version $config_version incompatible with schema $schema_version"
+        return $VDE_ERR_INVALID_DATA
+    fi
+}
+
+# vde_detect_schema_changes - Detect if schema has been updated
+# Args: <json_file>
+# Returns: VDE_SUCCESS if schema unchanged, VDE_ERR_CACHE_INVALID if schema changed
+vde_detect_schema_changes() {
+    local json_file="$1"
+    local schema_file
+    schema_file=$(vde_get_schema_for_json "$json_file" 2>/dev/null)
+
+    if [ ! -f "$schema_file" ]; then
+        log_error "Schema file not found for: $json_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Check if schema file is newer than config
+    if [ "$schema_file" -nt "$json_file" ]; then
+        log_info "Schema has been updated, config may need regeneration"
+        return $VDE_ERR_CACHE_INVALID
+    fi
+
+    return $VDE_SUCCESS
+}
+
+# vde_backup_config - Create backup of config file before update
+# Args: <json_file>
+# Returns: VDE_SUCCESS if backup created, error code otherwise
+vde_backup_config() {
+    local json_file="$1"
+    local backup_dir="${VDE_ROOT_DIR}/.cache/config-backups"
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
+    local backup_file="${backup_dir}/$(basename "$json_file").${timestamp}.bak"
+
+    if [ ! -f "$json_file" ]; then
+        log_error "Config file not found: $json_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Create backup directory
+    mkdir -p "$backup_dir" 2>/dev/null
+
+    # Copy config to backup
+    if cp "$json_file" "$backup_file" 2>/dev/null; then
+        log_info "Config backed up to: $backup_file"
+        echo "$backup_file"
+        return $VDE_SUCCESS
+    else
+        log_error "Failed to create backup: $backup_file"
+        return $VDE_ERR_GENERAL
+    fi
+}
+
+# vde_validate_and_update - Validate config and update cache if needed
+# Args: <json_file> <schema_file> <cache_file>
+# Returns: VDE_SUCCESS if validated/updated, error code otherwise
+vde_validate_and_update() {
+    local json_file="$1"
+    local schema_file="$2"
+    local cache_file="$3"
+
+    log_info "Validating and updating: $json_file"
+
+    # Check compatibility
+    if ! vde_check_schema_compatibility "$json_file" "$schema_file"; then
+        log_error "Schema compatibility check failed"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    # Validate against schema
+    if ! vde_validate_json_schema "$json_file" "$schema_file"; then
+        log_error "Schema validation failed"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    # Check if cache needs update
+    if [ -n "$cache_file" ]; then
+        if [ ! -f "$cache_file" ] || [ "$json_file" -nt "$cache_file" ] || [ "$schema_file" -nt "$cache_file" ]; then
+            log_info "Cache needs regeneration"
+            return $VDE_ERR_CACHE_INVALID
+        fi
+    fi
+
+    log_info "Validation and update check complete"
+    return $VDE_SUCCESS
+}
+
+# -----------------------
 # Performance Timing (Debug)
 # -----------------------
 # Set VDE_DEBUG_TIMING=1 to enable timing output
