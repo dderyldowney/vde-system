@@ -127,6 +127,10 @@ VDE_CACHE_DIR="$VDE_ROOT_DIR/.cache"
 readonly VDE_CACHE_DIR
 VM_TYPES_CACHE="$VDE_CACHE_DIR/vm-types.cache"
 readonly VM_TYPES_CACHE
+VM_DOCKER_CONFIG="$DATA_DIR/vm-docker-config.json"
+readonly VM_DOCKER_CONFIG
+VM_DOCKER_CACHE="$VDE_CACHE_DIR/vm-docker-config.cache"
+readonly VM_DOCKER_CACHE
 PORT_REGISTRY_FILE="$VDE_CACHE_DIR/port-registry"
 readonly PORT_REGISTRY_FILE
 
@@ -140,6 +144,12 @@ readonly PORT_REGISTRY_FILE
 # =============================================================================
 
 declare -A VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT
+
+# =============================================================================
+# VM DOCKER CONFIG (ASSOCIATIVE ARRAYS)
+# =============================================================================
+
+declare -A VM_COMPOSE_FILE VM_ENV_FILE VM_IMAGE VM_CONTAINER_NAME VM_WORKSPACE_MOUNT VM_DATA_MOUNT VM_LOGS_MOUNT
 
 # =============================================================================
 # CACHE VALIDATION
@@ -348,6 +358,127 @@ load_vm_types() {
     } > "$VM_TYPES_CACHE"
 
     _info "VM types cached for faster loading"
+}
+
+# =============================================================================
+# VM DOCKER CONFIG LOADING
+# =============================================================================
+
+# load_docker_config - Load VM Docker configuration from JSON
+# This function loads docker-compose file locations, env files, and mount paths
+# Returns: VDE_SUCCESS if loaded, error code otherwise
+load_docker_config() {
+    _info "Loading VM Docker configuration..."
+
+    # Validate against schema using centralized vde-core function
+    local schema_file
+    schema_file=$(vde_get_schema_for_json "$VM_DOCKER_CONFIG" 2>/dev/null)
+    if [[ -n "$schema_file" && -f "$schema_file" ]]; then
+        _info "Validating docker config against schema: $schema_file"
+        if ! vde_validate_json_schema "$VM_DOCKER_CONFIG" "$schema_file"; then
+            _error "VM Docker config validation failed"
+            _error "Config file may be corrupt or missing required fields"
+            return $VDE_ERR_INVALID_DATA
+        fi
+    else
+        _warn "No schema file found for $VM_DOCKER_CONFIG, skipping validation"
+    fi
+
+    # Clear existing arrays
+    VM_COMPOSE_FILE=()
+    VM_ENV_FILE=()
+    VM_IMAGE=()
+    VM_CONTAINER_NAME=()
+    VM_WORKSPACE_MOUNT=()
+    VM_DATA_MOUNT=()
+    VM_LOGS_MOUNT=()
+
+    if [[ ! -f "$VM_DOCKER_CONFIG" ]]; then
+        _error "Docker config not found: $VM_DOCKER_CONFIG"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    _info "Parsing Docker config from JSON: $VM_DOCKER_CONFIG"
+
+    # Parse language VMs
+    local lang_configs
+    lang_configs=$(jq -c '.languages | to_entries[]' "$VM_DOCKER_CONFIG" 2>/dev/null)
+    if [[ -n "$lang_configs" ]]; then
+        while IFS= read -r entry; do
+            [[ -z "$entry" ]] && continue
+
+            local name compose_file env_file image container_name workspace_mount logs_mount
+            name=$(echo "$entry" | jq -r '.key')
+            compose_file=$(echo "$entry" | jq -r '.value.compose_file')
+            env_file=$(echo "$entry" | jq -r '.value.env_file')
+            image=$(echo "$entry" | jq -r '.value.image')
+            container_name=$(echo "$entry" | jq -r '.value.container_name')
+            workspace_mount=$(echo "$entry" | jq -r '.value.workspace_mount')
+            logs_mount=$(echo "$entry" | jq -r '.value.logs_mount')
+
+            [[ -z "$name" ]] && continue
+
+            VM_COMPOSE_FILE[$name]="$compose_file"
+            VM_ENV_FILE[$name]="$env_file"
+            VM_IMAGE[$name]="$image"
+            VM_CONTAINER_NAME[$name]="$container_name"
+            VM_WORKSPACE_MOUNT[$name]="$workspace_mount"
+            VM_LOGS_MOUNT[$name]="$logs_mount"
+        done <<< "$lang_configs"
+    fi
+
+    # Parse service VMs
+    local svc_configs
+    svc_configs=$(jq -c '.services | to_entries[]' "$VM_DOCKER_CONFIG" 2>/dev/null)
+    if [[ -n "$svc_configs" ]]; then
+        while IFS= read -r entry; do
+            [[ -z "$entry" ]] && continue
+
+            local name compose_file env_file image container_name data_mount logs_mount
+            name=$(echo "$entry" | jq -r '.key')
+            compose_file=$(echo "$entry" | jq -r '.value.compose_file')
+            env_file=$(echo "$entry" | jq -r '.value.env_file')
+            image=$(echo "$entry" | jq -r '.value.image')
+            container_name=$(echo "$entry" | jq -r '.value.container_name')
+            data_mount=$(echo "$entry" | jq -r '.value.data_mount')
+            logs_mount=$(echo "$entry" | jq -r '.value.logs_mount')
+
+            [[ -z "$name" ]] && continue
+
+            VM_COMPOSE_FILE[$name]="$compose_file"
+            VM_ENV_FILE[$name]="$env_file"
+            VM_IMAGE[$name]="$image"
+            VM_CONTAINER_NAME[$name]="$container_name"
+            VM_DATA_MOUNT[$name]="$data_mount"
+            VM_LOGS_MOUNT[$name]="$logs_mount"
+        done <<< "$svc_configs"
+    fi
+
+    _info "Docker config loaded successfully"
+    _info "  Language configs: $(echo "$lang_configs" | wc -l | tr -d ' ')"
+    _info "  Service configs: $(echo "$svc_configs" | wc -l | tr -d ' ')"
+
+    return $VDE_SUCCESS
+}
+
+# get_docker_config - Get Docker config value for a VM
+# Args: <field> <vm_name>
+# Returns: Outputs field value, or error
+get_docker_config() {
+    local field="$1"
+    local vm_name="$2"
+
+    # Convert field to uppercase (zsh syntax)
+    local field_upper="${(U)field}"
+    local var_name="VM_${field_upper}[$vm_name]"
+    local value="${(P)var_name}"
+
+    if [ -n "$value" ]; then
+        echo "$value"
+        return $VDE_SUCCESS
+    else
+        return $VDE_ERR_NOT_FOUND
+    fi
 }
 
 # regenerate_vm_types_cache - Force regeneration of VM types cache
