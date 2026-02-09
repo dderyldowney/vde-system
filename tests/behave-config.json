@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "description": "Behave BDD test configuration for VDE",
+  "behave": {
+    "format": "pretty",
+    "color": true,
+    "order": "normal",
+    "show_skipped": true,
+    "show_traceback": true,
+    "stop_on_first_failure": false,
+    "dry_run": false,
+    "tags": {
+      "include": [],
+      "exclude": ["@wip", "@skip"]
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "capture": true,
+    "capture_stderr": true
+  },
+  "paths": {
+    "features": "tests/features",
+    "steps": "tests/features/steps",
+    "test_data": "tests/fixtures",
+    "output": "tests/results"
+  },
+  "test_categories": {
+    "docker_required": {
+      "tags": ["@docker"],
+      "description": "Tests requiring Docker environment"
+    },
+    "docker_free": {
+      "tags": ["@no-docker"],
+      "description": "Tests that run without Docker"
+    },
+    "ssh": {
+      "tags": ["@ssh"],
+      "description": "SSH-related tests"
+    },
+    "workflow": {
+      "tags": ["@workflow"],
+      "description": "Complete workflow tests"
+    }
+  },
+  "environment": {
+    "vde_root": "${VDE_ROOT_DIR}",
+    "test_timeout": 300,
+    "cleanup_after_test": true
+  }
+}
