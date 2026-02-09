@@ -1,0 +1,492 @@
+#!/usr/bin/env zsh
+# VDE Docker Library
+# Docker container management for VDE VMs
+# Source this library with: source ./scripts/lib/vde-docker
+#
+# This library provides:
+# - VM existence checking
+# - Container lifecycle management (start/stop)
+# - SSH port allocation and management
+# - Docker Compose integration
+#
+# Dependencies:
+#   - vde-constants (return codes)
+#   - vde-errors (error handling)
+#   - vde-shell-compat (portable shell operations)
+#   - vde-naming (VM naming conventions)
+
+# =============================================================================
+# SOURCE GUARD
+# =============================================================================
+
+if [ "${_VDE_DOCKER_LOADED:-}" = "1" ]; then
+    return 0 2>/dev/null || exit 0
+fi
+_VDE_DOCKER_LOADED=1
+
+# =============================================================================
+# DEPENDENCIES
+# =============================================================================
+
+if [ -z "${VDE_ROOT_DIR:-}" ]; then
+    _VDE_DOCKER_SCRIPT_PATH="${(%):-%x}"
+    VDE_ROOT_DIR="$(cd "$(dirname "$_VDE_DOCKER_SCRIPT_PATH")/../.." && pwd)"
+    readonly VDE_ROOT_DIR
+fi
+
+. "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat"
+. "$VDE_ROOT_DIR/scripts/lib/vde-constants"
+. "$VDE_ROOT_DIR/scripts/lib/vde-errors"
+. "$VDE_ROOT_DIR/scripts/lib/vde-naming"
+. "$VDE_ROOT_DIR/scripts/lib/vde-path-utils"
+
+# =============================================================================
+# DOCKER PORT REGISTRY
+# =============================================================================
+
+VDE_PORT_REGISTRY="$VDE_CACHE_DIR/port-registry"
+readonly VDE_PORT_REGISTRY
+
+# =============================================================================
+# VM EXISTENCE FUNCTIONS
+# =============================================================================
+
+# Get compose file for VM
+# Args: <vm_name>
+# Returns: Outputs compose filepath to stdout
+get_compose_file() {
+    local vm_name="$1"
+    local vm_type
+    vm_type=$(get_vm_info type "$vm_name")
+
+    local compose_file="$VDE_CONFIG_DIR/docker/${vm_type}/${docker-compose.yml"
+
+    if [ -f "$compose_file" ]; then
+        echo "$compose_file"
+        return $VDE_SUCCESS
+    fi
+
+    _error "Compose file not found for VM: $vm_name"
+    return $VDE_ERR_NOT_FOUND
+}
+
+# Get project name for Docker
+# Args: <vm_name>
+# Returns: Outputs project name to stdout
+get_docker_project_name() {
+    local vm_name="$1"
+    echo "vde-${vm_name}"
+}
+
+# Check if VM exists (compose file or container)
+# Args: <vm_name>
+# Returns: VDE_SUCCESS (0) if exists
+vm_exists() {
+    local vm_name="$1"
+
+    local compose_file
+    compose_file=$(get_compose_file "$vm_name")
+
+    if [ -f "$compose_file" ]; then
+        return $VDE_SUCCESS
+    fi
+
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^vde-${vm_name}$"; then
+        return $VDE_SUCCESS
+    fi
+
+    return $VDE_ERR_NOT_FOUND
+}
+
+# Check if container exists
+# Args: <container_name>
+# Returns: VDE_SUCCESS (0) if exists
+container_exists() {
+    local container_name="$1"
+
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^${container_name}$"; then
+        return $VDE_SUCCESS
+    fi
+
+    return $VDE_ERR_NOT_FOUND
+}
+
+# Check if VM is running
+# Args: <vm_name>
+# Returns: VDE_SUCCESS (0) if running
+is_vm_running() {
+    local vm_name="$1"
+
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^vde-${vm_name}$"; then
+        return $VDE_SUCCESS
+    fi
+
+    return $VDE_ERR_NOT_FOUND
+}
+
+# =============================================================================
+# SSH PORT MANAGEMENT
+# =============================================================================
+
+# Get SSH port for a VM
+# Args: <vm_name>
+# Returns: Outputs SSH port to stdout, or error
+get_vm_ssh_port() {
+    local vm_name="$1"
+
+    local registry_file="$VDE_PORT_REGISTRY/${vm_name}.port"
+
+    if [ -f "$registry_file" ]; then
+        cat "$registry_file"
+        return $VDE_SUCCESS
+    fi
+
+    return $VDE_ERR_NOT_FOUND
+}
+
+# Allocate SSH port for VM
+# Args: <vm_name> <ssh_port>
+# Returns: VDE_SUCCESS (0) on success
+allocate_ssh_port() {
+    local vm_name="$1"
+    local ssh_port="$2"
+
+    mkdir -p "$VDE_PORT_REGISTRY"
+    echo "$ssh_port" > "$VDE_PORT_REGISTRY/${vm_name}.port"
+
+    return $VDE_SUCCESS
+}
+
+# Find available SSH port in range
+# Args: [min_port] [max_port]
+# Returns: Outputs port number to stdout
+find_available_ssh_port() {
+    local min_port="${1:-2200}"
+    local max_port="${2:-2299}"
+
+    local port=$min_port
+    while [ $port -le $max_port ]; do
+        if ! _is_port_in_use "$port"; then
+            echo "$port"
+            return $VDE_SUCCESS
+        fi
+        port=$((port + 1))
+    done
+
+    _error "No available SSH port in range $min_port-$max_port"
+    return $VDE_ERR_NO_PORT
+}
+
+# Check if port is in use
+_is_port_in_use() {
+    local port="$1"
+    local sockstat_out
+
+    sockstat_out=$(sockstat -l 2>/dev/null | awk '{print $3}' | grep -E "^[0-9]+$" || true)
+
+    for p in $sockstat_out; do
+        if [ "$p" = "$port" ]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# =============================================================================
+# DOCKER BUILD OPTIONS
+# =============================================================================
+
+# Build Docker options from compose file
+# Args: <vm_name>
+# Returns: Outputs Docker options string
+build_docker_opts() {
+    local vm_name="$1"
+    local vm_type
+    vm_type=$(get_vm_info type "$vm_name")
+
+    local docker_opts=""
+
+    if [ "$VDE_DOCKER_NVIDIA" = "true" ]; then
+        docker_opts="--gpus all"
+    fi
+
+    if [ -n "$VDE_DOCKER_NETWORK" ]; then
+        docker_opts="$docker_opts --network $VDE_DOCKER_NETWORK"
+    fi
+
+    echo "$docker_opts"
+}
+
+# =============================================================================
+# VM LIFECYCLE FUNCTIONS
+# =============================================================================
+
+# Start VM
+# Args: <vm_name>
+# Returns: VDE_SUCCESS (0) on success
+start_vm() {
+    local vm_name="$1"
+    local max_attempts="${2:-3}"
+    local attempt=1
+
+    if is_vm_running "$vm_name"; then
+        _info "VM '$vm_name' is already running"
+        return $VDE_SUCCESS
+    fi
+
+    if ! vm_exists "$vm_name"; then
+        _error "VM '$vm_name' does not exist"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    local compose_file
+    compose_file=$(get_compose_file "$vm_name")
+    local compose_dir
+    compose_dir=$(dirname "$compose_file")
+    local project_name
+    project_name=$(get_docker_project_name "$vm_name")
+
+    _info "Starting VM '$vm_name'..."
+
+    while [ $attempt -le $max_attempts ]; do
+        _info "Attempt $attempt of $max_attempts..."
+
+        if docker compose -f "$compose_file" -p "$project_name" up -d --build 2>&1; then
+            _info "VM '$vm_name' started successfully"
+            return $VDE_SUCCESS
+        fi
+
+        _warn "Failed to start VM '$vm_name' (attempt $attempt)"
+        attempt=$((attempt + 1))
+    done
+
+    _error "Failed to start VM '$vm_name' after $max_attempts attempts"
+    return $VDE_ERR_GENERAL
+}
+
+# Stop VM
+# Args: <vm_name>
+# Returns: VDE_SUCCESS (0) on success
+stop_vm() {
+    local vm_name="$1"
+    local timeout="${2:-30}"
+    local max_attempts="${3:-3}"
+    local attempt=1
+
+    if ! vm_exists "$vm_name"; then
+        _warn "VM '$vm_name' does not exist, nothing to stop"
+        return $VDE_SUCCESS
+    fi
+
+    if ! is_vm_running "$vm_name"; then
+        _info "VM '$vm_name' is not running"
+        return $VDE_SUCCESS
+    fi
+
+    local compose_file
+    compose_file=$(get_compose_file "$vm_name")
+    local project_name
+    project_name=$(get_docker_project_name "$vm_name")
+
+    _info "Stopping VM '$vm_name'..."
+
+    while [ $attempt -le $max_attempts ]; do
+        if docker compose -f "$compose_file" -p "$project_name" down -v 2>&1; then
+            _info "VM '$vm_name' stopped successfully"
+            return $VDE_SUCCESS
+        fi
+
+        _warn "Failed to stop VM '$vm_name' (attempt $attempt)"
+        attempt=$((attempt + 1))
+    done
+
+    _error "Failed to stop VM '$vm_name' after $max_attempts attempts"
+    return $VDE_ERR_GENERAL
+}
+
+# Restart VM
+# Args: <vm_name>
+# Returns: VDE_SUCCESS (0) on success
+restart_vm() {
+    local vm_name="$1"
+
+    if ! stop_vm "$vm_name"; then
+        return $VDE_ERR_GENERAL
+    fi
+
+    sleep 2
+
+    if ! start_vm "$vm_name"; then
+        return $VDE_ERR_GENERAL
+    fi
+
+    return $VDE_SUCCESS
+}
+
+# Get VM status
+# Args: <vm_name>
+# Returns: Outputs status string (running, stopped, not found)
+get_vm_status() {
+    local vm_name="$1"
+
+    if ! vm_exists "$vm_name"; then
+        echo "not found"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    if is_vm_running "$vm_name"; then
+        echo "running"
+        return $VDE_SUCCESS
+    fi
+
+    echo "stopped"
+    return $VDE_SUCCESS
+}
+
+# =============================================================================
+# VM SSH PORT ALLOCATION
+# =============================================================================
+
+# Get or allocate SSH port for VM
+# Args: <vm_name>
+# Returns: Outputs SSH port to stdout
+get_or_allocate_ssh_port() {
+    local vm_name="$1"
+
+    local existing_port
+    existing_port=$(get_vm_ssh_port "$vm_name")
+
+    if [ -n "$existing_port" ]; then
+        echo "$existing_port"
+        return $VDE_SUCCESS
+    fi
+
+    local new_port
+    new_port=$(find_available_ssh_port)
+
+    if [ -z "$new_port" ]; then
+        _error "Failed to allocate SSH port for VM: $vm_name"
+        return $VDE_ERR_NO_PORT
+    fi
+
+    allocate_ssh_port "$vm_name" "$new_port"
+    echo "$new_port"
+
+    return $VDE_SUCCESS
+}
+
+# =============================================================================
+# DOCKER UTILITY FUNCTIONS
+# =============================================================================
+
+# Get container ID for VM
+# Args: <vm_name>
+# Returns: Outputs container ID to stdout
+get_container_id() {
+    local vm_name="$1"
+
+    docker ps -q --filter "name=vde-${vm_name}$" 2>/dev/null
+}
+
+# Get container IP address
+# Args: <vm_name>
+# Returns: Outputs IP address to stdout
+get_container_ip() {
+    local vm_name="$1"
+
+    local container_id
+    container_id=$(get_container_id "$vm_name")
+
+    if [ -z "$container_id" ]; then
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container_id" 2>/dev/null
+}
+
+# Execute command in container
+# Args: <vm_name> <command> [<args...>]
+# Returns: Exit code of command
+exec_in_container() {
+    local vm_name="$1"
+    shift
+    local container_id
+    container_id=$(get_container_id "$vm_name")
+
+    if [ -z "$container_id" ]; then
+        _error "Container not found for VM: $vm_name"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    docker exec -it "$container_id" "$@"
+}
+
+# Get logs from container
+# Args: <vm_name> [--tail <lines>]
+# Returns: Container logs
+get_container_logs() {
+    local vm_name="$1"
+    shift
+    local container_id
+    container_id=$(get_container_id "$vm_name")
+
+    if [ -z "$container_id" ]; then
+        _error "Container not found for VM: $vm_name"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    docker logs "$@" "$container_id"
+}
+
+# =============================================================================
+# DOCKER HEALTH CHECKS
+# =============================================================================
+
+# Check if Docker is available
+# Returns: VDE_SUCCESS (0) if Docker is available
+check_docker_available() {
+    if ! command -v docker >/dev/null 2>&1; then
+        _error "Docker is not installed"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    if ! docker info >/dev/null 2>&1; then
+        _error "Docker daemon is not running"
+        return $VDE_ERR_SERVICE_UNAVAILABLE
+    fi
+
+    return $VDE_SUCCESS
+}
+
+# Wait for container to be healthy
+# Args: <vm_name> <timeout_seconds>
+# Returns: VDE_SUCCESS (0) if healthy
+wait_for_container_healthy() {
+    local vm_name="$1"
+    local timeout="${2:-60}"
+    local elapsed=0
+
+    while [ $elapsed -lt $timeout ]; do
+        local container_id
+        container_id=$(get_container_id "$vm_name")
+
+        if [ -z "$container_id" ]; then
+            _error "Container not found: $vm_name"
+            return $VDE_ERR_NOT_FOUND
+        fi
+
+        local status
+        status=$(docker inspect -f '{{.State.Health.Status}}' "$container_id" 2>/dev/null)
+
+        if [ "$status" = "healthy" ]; then
+            return $VDE_SUCCESS
+        fi
+
+        sleep 5
+        elapsed=$((elapsed + 5))
+    done
+
+    _error "Container '$vm_name' did not become healthy within ${timeout}s"
+    return $VDE_ERR_TIMEOUT
+}

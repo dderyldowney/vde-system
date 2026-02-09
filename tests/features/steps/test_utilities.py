@@ -373,18 +373,21 @@ def before_scenario(context, scenario):
     context.test_containers = []
     
     # Check for @requires_docker tag
-    if "requires_docker" in scenario.effective_tags:
-        try:
-            subprocess.run(
-                ["docker", "info"],
-                capture_output=True,
-                check=True,
-                timeout=5
-            )
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
-            scenario.skip("Docker is not available")
-            return
+    # Guard against string being passed instead of scenario object
+    if hasattr(scenario, 'effective_tags') and isinstance(scenario.effective_tags, (list, set)):
+        if "requires_docker" in scenario.effective_tags:
+            try:
+                subprocess.run(
+                    ["docker", "info"],
+                    capture_output=True,
+                    check=True,
+                    timeout=5
+                )
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+                scenario.skip("Docker is not available")
+                return
     
     # Mark for cleanup if tagged
-    if "cleanup_containers" in scenario.effective_tags:
-        context.cleanup_containers = True
+    if hasattr(scenario, 'effective_tags') and isinstance(scenario.effective_tags, (list, set)):
+        if "cleanup_containers" in scenario.effective_tags:
+            context.cleanup_containers = True

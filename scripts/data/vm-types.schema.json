@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://vde.local/schemas/vm-types.schema.json",
+  "title": "VDE VM Type Configuration",
+  "description": "Schema for VDE VM type static configuration. Defines minimal required fields for VM provisioning, startup, and SSH access. Runtime state (SSH ports, container status) is managed separately.",
+  "type": "object",
+  "required": ["version", "vms"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Configuration schema version",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description of this configuration file"
+    },
+    "vms": {
+      "type": "object",
+      "description": "VM type definitions organized by category",
+      "required": ["language", "service"],
+      "properties": {
+        "language": {
+          "type": "array",
+          "description": "Development language VMs (no service ports)",
+          "items": {
+            "$ref": "#/definitions/languageVM"
+          }
+        },
+        "service": {
+          "type": "array",
+          "description": "Infrastructure service VMs (with service ports)",
+          "items": {
+            "$ref": "#/definitions/serviceVM"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "languageVM": {
+      "type": "object",
+      "description": "Development language VM configuration. Container name: {name}-dev, SSH port: dynamically allocated.",
+      "required": ["name", "display", "install"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "VM identifier (lowercase alphanumeric). Used for container naming, SSH config, directories.",
+          "pattern": "^[a-z0-9]+$"
+        },
+        "aliases": {
+          "type": "array",
+          "description": "Alternative names for user convenience",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "display": {
+          "type": "string",
+          "description": "Human-readable name for UI/logging",
+          "minLength": 1
+        },
+        "install": {
+          "type": "string",
+          "description": "Shell command for container provisioning (runs as root)",
+          "minLength": 1
+        },
+        "port": {
+          "type": "null",
+          "description": "Must be null for language VMs (no service ports)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "serviceVM": {
+      "type": "object",
+      "description": "Infrastructure service VM configuration. Container name: {name}, SSH port: dynamically allocated, service ports: defined here.",
+      "required": ["name", "display", "install", "port"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "VM identifier (lowercase alphanumeric). Used for container naming, SSH config, directories.",
+          "pattern": "^[a-z0-9]+$"
+        },
+        "aliases": {
+          "type": "array",
+          "description": "Alternative names for user convenience",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "display": {
+          "type": "string",
+          "description": "Human-readable name for UI/logging",
+          "minLength": 1
+        },
+        "install": {
+          "type": "string",
+          "description": "Shell command for container provisioning (runs as root)",
+          "minLength": 1
+        },
+        "port": {
+          "type": "string",
+          "description": "Service port(s) to expose (comma-separated integers: '80' or '80,443')",
+          "pattern": "^[0-9]+(,[0-9]+)*$"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

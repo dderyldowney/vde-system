@@ -59,6 +59,12 @@ readonly VDE_ERR_DOCKER=8
 # Lock error - Failed to acquire lock for atomic operation
 readonly VDE_ERR_LOCK=9
 
+# Invalid data - Data validation failed (corrupt file, schema mismatch)
+readonly VDE_ERR_INVALID_DATA=10
+
+# Cache invalid - Cache is stale, corrupt, or missing (needs regeneration)
+readonly VDE_ERR_CACHE_INVALID=11
+
 # =============================================================================
 # PORT CONFIGURATION
 # =============================================================================

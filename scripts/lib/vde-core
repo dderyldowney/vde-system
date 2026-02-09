@@ -157,7 +157,8 @@ _vde_core_save_cache() {
 # VDE VM Types Cache
 # Generated:
 HEREDOC_END
-    date >> "$temp_file"
+    # Use ISO 8601 format for machine-readable timestamp
+    date -u +'%Y-%m-%dT%H:%M:%SZ' >> "$temp_file"
     echo "# Format: ARRAY_NAME:key=value" >> "$temp_file"
     echo "" >> "$temp_file"
     
@@ -251,7 +252,7 @@ invalidate_vm_types_cache() {
     fi
 
     # Reset loaded flag (if using shell compatibility layer)
-    unset _VDE_CORE_VM_TYPES_LOADED 2>/dev/null
+    unset _VDE_CORE_LOADED 2>/dev/null
 
     return $VDE_SUCCESS
 }
@@ -387,6 +388,169 @@ vde_require_template() {
         _VDE_TEMPLATE_LOADED=1
     fi
     return $VDE_SUCCESS
+}
+
+# -----------------------
+# JSON Schema Validation
+# -----------------------
+# Centralized schema validation and cache regeneration for all VDE libraries
+
+# vde_check_schema_integrity - Verify schema file is valid JSON with required structure
+# Args: <schema_file>
+# Returns: VDE_SUCCESS if valid, VDE_ERR_INVALID_DATA if invalid
+vde_check_schema_integrity() {
+    local schema_file="$1"
+
+    if [ ! -f "$schema_file" ]; then
+        log_error "Schema file not found: $schema_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Check if valid JSON
+    if ! python3 -c "import json; json.load(open('$schema_file'))" 2>/dev/null; then
+        log_error "Schema file is not valid JSON: $schema_file"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    # Check for required schema fields
+    if ! python3 -c "
+import json
+with open('$schema_file') as f:
+    schema = json.load(f)
+assert '\$schema' in schema or 'type' in schema, 'Missing required schema fields'
+" 2>/dev/null; then
+        log_error "Schema file missing required fields: $schema_file"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    return $VDE_SUCCESS
+}
+
+# vde_validate_json_schema - Validate JSON file against its schema
+# Args: <json_file> <schema_file>
+# Returns: VDE_SUCCESS if valid, VDE_ERR_INVALID_DATA if invalid, VDE_ERR_NOT_FOUND if file missing
+vde_validate_json_schema() {
+    local json_file="$1"
+    local schema_file="$2"
+
+    # Check files exist
+    if [ ! -f "$json_file" ]; then
+        log_error "JSON file not found: $json_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    if [ ! -f "$schema_file" ]; then
+        log_error "Schema file not found: $schema_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Verify schema integrity first
+    if ! vde_check_schema_integrity "$schema_file"; then
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    # Validate JSON against schema
+    if ! python3 -c "
+import json, sys
+
+with open('$schema_file') as f:
+    schema = json.load(f)
+with open('$json_file') as f:
+    data = json.load(f)
+
+# Basic structural validation based on schema type
+if schema.get('type') == 'object':
+    required = schema.get('required', [])
+    for field in required:
+        if field not in data:
+            print(f'Missing required field: {field}', file=sys.stderr)
+            sys.exit(1)
+
+# Additional validation for vm-types schema
+if 'vms' in schema.get('properties', {}):
+    # VM types specific validation
+    if 'vms' not in data:
+        print('Missing vms field', file=sys.stderr)
+        sys.exit(1)
+    if 'language' not in data['vms'] or 'service' not in data['vms']:
+        print('Missing language or service arrays', file=sys.stderr)
+        sys.exit(1)
+
+    # Validate language VMs
+    for idx, vm in enumerate(data['vms']['language']):
+        if not all(k in vm for k in ['name', 'display', 'install']):
+            print(f'Language VM [{idx}] missing required fields', file=sys.stderr)
+            sys.exit(1)
+        if vm.get('port') is not None:
+            print(f'Language VM {vm[\"name\"]} must have null port', file=sys.stderr)
+            sys.exit(1)
+
+    # Validate service VMs
+    for idx, vm in enumerate(data['vms']['service']):
+        if not all(k in vm for k in ['name', 'display', 'install', 'port']):
+            print(f'Service VM [{idx}] missing required fields', file=sys.stderr)
+            sys.exit(1)
+        if not isinstance(vm.get('port'), str):
+            print(f'Service VM {vm[\"name\"]} port must be string', file=sys.stderr)
+            sys.exit(1)
+" 2>/dev/null; then
+        log_error "JSON validation failed: $json_file"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    log_info "Schema validation passed: $json_file"
+    return $VDE_SUCCESS
+}
+
+# vde_validate_or_regenerate - Validate JSON, regenerate cache if needed
+# Args: <json_file> <schema_file> <cache_file>
+# Returns: VDE_SUCCESS if valid/regenerated, error code otherwise
+vde_validate_or_regenerate() {
+    local json_file="$1"
+    local schema_file="$2"
+    local cache_file="$3"
+
+    # Validate JSON against schema
+    if ! vde_validate_json_schema "$json_file" "$schema_file"; then
+        log_error "JSON validation failed, cannot regenerate cache"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    # Check if cache needs regeneration
+    local needs_regen=0
+
+    if [ ! -f "$cache_file" ]; then
+        log_info "Cache file missing, will regenerate: $cache_file"
+        needs_regen=1
+    elif [ "$json_file" -nt "$cache_file" ]; then
+        log_info "JSON file newer than cache, will regenerate: $cache_file"
+        needs_regen=1
+    fi
+
+    if [ $needs_regen -eq 1 ]; then
+        log_info "Regenerating cache from validated JSON: $cache_file"
+        # Cache regeneration happens in load_vm_types in vm-common
+        # This function just validates and signals need for regeneration
+        return $VDE_ERR_CACHE_INVALID
+    fi
+
+    return $VDE_SUCCESS
+}
+
+# vde_get_schema_for_json - Get schema file path for a JSON config file
+# Args: <json_file>
+# Returns: Outputs schema file path, returns VDE_SUCCESS if found
+vde_get_schema_for_json() {
+    local json_file="$1"
+    local schema_file="${json_file%.json}.schema.json"
+
+    if [ -f "$schema_file" ]; then
+        echo "$schema_file"
+        return $VDE_SUCCESS
+    fi
+
+    log_error "No schema found for: $json_file"
+    return $VDE_ERR_NOT_FOUND
 }
 
 # -----------------------

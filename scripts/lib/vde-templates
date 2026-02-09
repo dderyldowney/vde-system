@@ -1,0 +1,190 @@
+#!/usr/bin/env zsh
+# VDE Templates Library
+# Template rendering and VM creation from templates
+# Source this library with: source ./scripts/lib/vde-templates
+#
+# This library provides:
+# - Template file rendering with variable substitution
+# - VM creation from templates
+#
+# Dependencies:
+#   - vde-constants (return codes)
+#   - vde-errors (error handling)
+
+# =============================================================================
+# SOURCE GUARD
+# =============================================================================
+
+if [ "${_VDE_TEMPLATES_LOADED:-}" = "1" ]; then
+    return 0 2>/dev/null || exit 0
+fi
+_VDE_TEMPLATES_LOADED=1
+
+# =============================================================================
+# DEPENDENCIES
+# =============================================================================
+
+if [ -z "${VDE_ROOT_DIR:-}" ]; then
+    _VDE_TEMPLATES_SCRIPT_PATH="${(%):-%x}"
+    VDE_ROOT_DIR="$(cd "$(dirname "$_VDE_TEMPLATES_SCRIPT_PATH")/../.." && pwd)"
+fi
+readonly VDE_ROOT_DIR
+
+. "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat"
+. "$VDE_ROOT_DIR/scripts/lib/vde-constants"
+. "$VDE_ROOT_DIR/scripts/lib/vde-errors"
+
+# =============================================================================
+# TEMPLATE DIRECTORIES
+# =============================================================================
+
+VDE_TEMPLATES_DIR="${VDE_ROOT_DIR}/templates"
+readonly VDE_TEMPLATES_DIR
+
+# =============================================================================
+# TEMPLATE RENDERING
+# =============================================================================
+
+# Render template file with variable substitutions
+# Args: <template_file> <var1> <val1> [<var2> <val2> ...]
+# Returns: Outputs rendered content to stdout
+render_template() {
+    local template_file="$1"
+    shift
+
+    if [ ! -f "$template_file" ]; then
+        _error "Template file not found: $template_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    local content
+    content=$(cat "$template_file")
+
+    while [ $# -ge 2 ]; do
+        local var_name="$1"
+        local var_value="$2"
+        shift 2
+
+        var_value=$(printf '%s' "$var_value" | sed 's/[&/\]/\\&/g')
+        content=$(echo "$content" | sed "s/{{$var_name}}/$var_value/g")
+    done
+
+    echo "$content"
+}
+
+# Render template from string
+# Args: <template_string> <var1> <val1> [<var2> <val2> ...]
+# Returns: Outputs rendered content to stdout
+render_template_string() {
+    local template_string="$1"
+    shift
+
+    local content="$template_string"
+
+    while [ $# -ge 2 ]; do
+        local var_name="$1"
+        local var_value="$2"
+        shift 2
+
+        var_value=$(printf '%s' "$var_value" | sed 's/[&/\]/\\&/g')
+        content=$(echo "$content" | sed "s/{{$var_name}}/$var_value/g")
+    done
+
+    echo "$content"
+}
+
+# =============================================================================
+# VM CREATION FROM TEMPLATES
+# =============================================================================
+
+# Create VM from template
+# Args: <template_name> <vm_name> [<var1> <val1> ...]
+# Returns: VDE_SUCCESS (0) on success
+create_vm_from_template() {
+    local template_name="$1"
+    local vm_name="$2"
+    shift 2
+
+    local template_file="$VDE_TEMPLATES_DIR/${template_name}.tmpl"
+
+    if [ ! -f "$template_file" ]; then
+        _error "Template not found: $template_name"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Add default variables
+    set -- "VM_NAME" "$vm_name" "$@"
+
+    local output_dir="$VDE_CONFIG_DIR/docker/${vm_type:-custom}"
+
+    if [ -d "$output_dir" ]; then
+        _warn "VM directory already exists: $output_dir"
+        return $VDE_ERR_EXISTS
+    fi
+
+    mkdir -p "$output_dir"
+
+    local rendered
+    rendered=$(render_template "$template_file" "$@")
+
+    echo "$rendered" > "$output_dir/docker-compose.yml"
+
+    _info "Created VM '$vm_name' from template '$template_name'"
+    return $VDE_SUCCESS
+}
+
+# =============================================================================
+# TEMPLATE UTILITIES
+# =============================================================================
+
+# List available templates
+# Returns: Outputs template names to stdout
+list_templates() {
+    if [ ! -d "$VDE_TEMPLATES_DIR" ]; then
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    find "$VDE_TEMPLATES_DIR" -maxdepth 1 -name "*.tmpl" -exec basename {} .tmpl \;
+}
+
+# Check if template exists
+# Args: <template_name>
+# Returns: VDE_SUCCESS (0) if exists
+template_exists() {
+    local template_name="$1"
+    local template_file="$VDE_TEMPLATES_DIR/${template_name}.tmpl"
+
+    [ -f "$template_file" ]
+}
+
+# Get template file path
+# Args: <template_name>
+# Returns: Outputs template filepath to stdout
+get_template_file() {
+    local template_name="$1"
+    local template_file="$VDE_TEMPLATES_DIR/${template_name}.tmpl"
+
+    if [ -f "$template_file" ]; then
+        echo "$template_file"
+        return $VDE_SUCCESS
+    fi
+
+    return $VDE_ERR_NOT_FOUND
+}
+
+# =============================================================================
+# VARIABLE EXTRACTION
+# =============================================================================
+
+# Extract variable names from template
+# Args: <template_file>
+# Returns: Outputs variable names to stdout (one per line)
+extract_template_vars() {
+    local template_file="$1"
+
+    if [ ! -f "$template_file" ]; then
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    grep -oE '\{\{[A-Za-z_][A-Za-z0-9_]*\}\}' "$template_file" | sed 's/{{//;s/}}//' | sort -u
+}

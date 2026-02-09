@@ -32,6 +32,9 @@ UNIT_TESTS=(
 # Docker-dependent tests (optional)
 DOCKER_TESTS=(
     "tests/unit/vde-docker-state.test.zsh"
+    "tests/unit/vde-ssh.test.zsh"
+    "tests/unit/vde-docker.test.zsh"
+    "tests/unit/vde-templates.test.zsh"
 )
 
 # Run standard unit tests
