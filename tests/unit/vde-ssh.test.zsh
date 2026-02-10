@@ -81,6 +81,8 @@ test_validate_public_key_file() {
     # Unset readonly SSH variables so they can be re-set
     unset -v VDE_SSH_IDENTITY VDE_SSH_IDENTITY_PUB VDE_SSH_CONFIG VDE_SSH_KNOWN_HOSTS VDE_SSH_DIR VDE_SSH_KEYS_DIR 2>/dev/null
 
+    source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
+    source "$PROJECT_ROOT/scripts/lib/vde-constants"
     source "$PROJECT_ROOT/scripts/lib/vde-core"
     source "$PROJECT_ROOT/scripts/lib/vde-ssh"
 
@@ -114,6 +116,8 @@ test_check_for_private_keys_in_public_dir() {
     # Unset readonly SSH variables so they can be re-set
     unset -v VDE_SSH_IDENTITY VDE_SSH_IDENTITY_PUB VDE_SSH_CONFIG VDE_SSH_KNOWN_HOSTS VDE_SSH_DIR VDE_SSH_KEYS_DIR 2>/dev/null
 
+    source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
+    source "$PROJECT_ROOT/scripts/lib/vde-constants"
     source "$PROJECT_ROOT/scripts/lib/vde-core"
     source "$PROJECT_ROOT/scripts/lib/vde-ssh"
 
@@ -145,6 +149,8 @@ test_detect_ssh_keys() {
     # Unset readonly SSH variables so they can be re-set
     unset -v VDE_SSH_IDENTITY VDE_SSH_IDENTITY_PUB VDE_SSH_CONFIG VDE_SSH_KNOWN_HOSTS VDE_SSH_DIR VDE_SSH_KEYS_DIR 2>/dev/null
 
+    source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
+    source "$PROJECT_ROOT/scripts/lib/vde-constants"
     source "$PROJECT_ROOT/scripts/lib/vde-core"
     source "$PROJECT_ROOT/scripts/lib/vde-ssh"
 
@@ -176,6 +182,8 @@ test_get_ssh_pubkey() {
     # Unset readonly SSH variables so they can be re-set
     unset -v VDE_SSH_IDENTITY VDE_SSH_IDENTITY_PUB VDE_SSH_CONFIG VDE_SSH_KNOWN_HOSTS VDE_SSH_DIR VDE_SSH_KEYS_DIR 2>/dev/null
 
+    source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
+    source "$PROJECT_ROOT/scripts/lib/vde-constants"
     source "$PROJECT_ROOT/scripts/lib/vde-core"
     source "$PROJECT_ROOT/scripts/lib/vde-ssh"
 
@@ -211,6 +219,8 @@ test_ssh_config_has_entry() {
     # Unset readonly SSH variables so they can be re-set
     unset -v VDE_SSH_IDENTITY VDE_SSH_IDENTITY_PUB VDE_SSH_CONFIG VDE_SSH_KNOWN_HOSTS VDE_SSH_DIR VDE_SSH_KEYS_DIR 2>/dev/null
 
+    source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
+    source "$PROJECT_ROOT/scripts/lib/vde-constants"
     source "$PROJECT_ROOT/scripts/lib/vde-core"
     source "$PROJECT_ROOT/scripts/lib/vde-ssh"
 
@@ -244,6 +254,8 @@ test_remove_ssh_config_entry() {
     # Unset readonly SSH variables so they can be re-set
     unset -v VDE_SSH_IDENTITY VDE_SSH_IDENTITY_PUB VDE_SSH_CONFIG VDE_SSH_KNOWN_HOSTS VDE_SSH_DIR VDE_SSH_KEYS_DIR 2>/dev/null
 
+    source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
+    source "$PROJECT_ROOT/scripts/lib/vde-constants"
     source "$PROJECT_ROOT/scripts/lib/vde-core"
     source "$PROJECT_ROOT/scripts/lib/vde-ssh"
 
@@ -285,6 +297,8 @@ test_remove_known_hosts_entry() {
     # Unset readonly SSH variables so they can be re-set
     unset -v VDE_SSH_IDENTITY VDE_SSH_IDENTITY_PUB VDE_SSH_CONFIG VDE_SSH_KNOWN_HOSTS VDE_SSH_DIR VDE_SSH_KEYS_DIR 2>/dev/null
 
+    source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
+    source "$PROJECT_ROOT/scripts/lib/vde-constants"
     source "$PROJECT_ROOT/scripts/lib/vde-core"
     source "$PROJECT_ROOT/scripts/lib/vde-ssh"
 
@@ -317,6 +331,8 @@ test_ensure_vde_ssh_environment() {
     # Unset readonly SSH variables so they can be re-set
     unset -v VDE_SSH_IDENTITY VDE_SSH_IDENTITY_PUB VDE_SSH_CONFIG VDE_SSH_KNOWN_HOSTS VDE_SSH_DIR VDE_SSH_KEYS_DIR 2>/dev/null
 
+    source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
+    source "$PROJECT_ROOT/scripts/lib/vde-constants"
     source "$PROJECT_ROOT/scripts/lib/vde-core"
     source "$PROJECT_ROOT/scripts/lib/vde-ssh"
 
