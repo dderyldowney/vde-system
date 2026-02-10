@@ -202,12 +202,12 @@ test_load_vm_types() {
     vde_core_load_types
 
     # Check that some VMs are loaded
-    if [[ -n "$_VDE_CORE_LOADED" ]]; then
+    if [[ -n "$_VDE_CORE_LOADED" ]] && [[ "${#VDE_CORE_VM_TYPE}" -gt 0 ]]; then
         test_pass "load vm types"
         return
     fi
 
-    test_fail "load vm types" "VM types not loaded"
+    test_fail "load vm types" "VM types not loaded or array is empty"
 }
 
 test_get_all_vms() {

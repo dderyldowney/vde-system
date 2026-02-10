@@ -264,37 +264,46 @@ load_vm_types() {
     # as it is not cached due to complex shell syntax
     if [[ "$use_cache" -eq 1 ]]; then
         if [[ -f "$VM_TYPES_JSON" ]]; then
-            # Parse language VM installs
-            local lang_installs
-            lang_configs=$(jq -c ".vms.language[]" "$VM_TYPES_JSON" 2>/dev/null)
-            if [[ -n "$lang_configs" ]]; then
-                while IFS= read -r vm_entry; do
-                    [[ -z "$vm_entry" ]] && continue
-                    local name install
-                    name=$(echo "$vm_entry" | jq -r ".name")
-                    install=$(echo "$vm_entry" | jq -r '.install // "-"')
-                    [[ -z "$name" ]] && continue
-                    VM_INSTALL[$name]="$install"
-                done <<< "$lang_configs"
-            fi
-            # Parse service VM installs
-            local svc_configs
-            svc_configs=$(jq -c ".vms.service[]" "$VM_TYPES_JSON" 2>/dev/null)
-            if [[ -n "$svc_configs" ]]; then
-                while IFS= read -r vm_entry; do
-                    [[ -z "$vm_entry" ]] && continue
-                    local name install
-                    name=$(echo "$vm_entry" | jq -r ".name")
-                    install=$(echo "$vm_entry" | jq -r '.install // "-"')
-                    [[ -z "$name" ]] && continue
-                    VM_INSTALL[$name]="$install"
-                done <<< "$svc_configs"
-            fi
+            # Parse language VM installs - suppress all output to avoid pollution
+            {
+                lang_configs=$(jq -c ".vms.language[]" "$VM_TYPES_JSON" 2>/dev/null)
+                if [[ -n "$lang_configs" ]]; then
+                    local temp_file
+                    temp_file=$(mktemp)
+                    print -r "$lang_configs" > "$temp_file"
+                    while IFS= read -r vm_entry; do
+                        [[ -z "$vm_entry" ]] && continue
+                        local name install
+                        name=$(echo "$vm_entry" | jq -r ".name")
+                        install=$(echo "$vm_entry" | jq -r '.install // "-"')
+                        [[ -z "$name" ]] && continue
+                        VM_INSTALL[$name]="$install"
+                    done < "$temp_file"
+                    rm -f "$temp_file"
+                fi
+                # Parse service VM installs
+                local svc_configs
+                svc_configs=$(jq -c ".vms.service[]" "$VM_TYPES_JSON" 2>/dev/null)
+                if [[ -n "$svc_configs" ]]; then
+                    local temp_file
+                    temp_file=$(mktemp)
+                    print -r "$svc_configs" > "$temp_file"
+                    while IFS= read -r vm_entry; do
+                        [[ -z "$vm_entry" ]] && continue
+                        local name install
+                        name=$(echo "$vm_entry" | jq -r ".name")
+                        install=$(echo "$vm_entry" | jq -r '.install // "-"')
+                        [[ -z "$name" ]] && continue
+                        VM_INSTALL[$name]="$install"
+                    done < "$temp_file"
+                    rm -f "$temp_file"
+                fi
+            } >/dev/null 2>&1
         elif [[ -f "$VM_TYPES_CONF" ]]; then
             while IFS='|' read -r type name vm_aliases display install _rest; do
                 [[ -z "$name" || "$type" == "#"* ]] && continue
                 VM_INSTALL[$name]="$install"
-            done < "$VM_TYPES_CONF"
+            done < "$VM_TYPES_CONF" 2>/dev/null
         fi
     fi
 
