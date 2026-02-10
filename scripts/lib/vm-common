@@ -242,88 +242,93 @@ load_vm_types() {
         fi
     fi
 
-    _info "Loading VM types from JSON config..."
+    # If cache was successfully loaded, skip JSON parsing by using else block
+    if [[ "$use_cache" -ne 1 ]]; then
+        _info "Loading VM types from JSON config..."
 
-    # Clear existing arrays
-    VM_TYPE=()
-    VM_ALIASES=()
-    VM_DISPLAY=()
-    VM_INSTALL=()
-    VM_SVC_PORT=()
+        # Clear existing arrays
+        VM_TYPE=()
+        VM_ALIASES=()
+        VM_DISPLAY=()
+        VM_INSTALL=()
+        VM_SVC_PORT=()
 
-    # Read and parse configuration from JSON
-    # Format: .vms.language[] and .vms.service[] with fields: name, aliases, display, install, port
-    if [[ -f "$VM_TYPES_JSON" ]]; then
-        _info "Parsing VM types from JSON: $VM_TYPES_JSON"
+        # Read and parse configuration from JSON
+        # Format: .vms.language[] and .vms.service[] with fields: name, aliases, display, install, port
+        if [[ -f "$VM_TYPES_JSON" ]]; then
+            _info "Parsing VM types from JSON: $VM_TYPES_JSON"
 
-        # Parse language VMs
-        local lang_vms
-        lang_vms=$(jq -c ".vms.language[]" "$VM_TYPES_JSON" 2>/dev/null)
-        if [[ -n "$lang_vms" ]]; then
-            while IFS= read -r vm_entry; do
-                [[ -z "$vm_entry" ]] && continue
+            # Parse language VMs
+            local lang_vms
+            lang_vms=$(jq -c ".vms.language[]" "$VM_TYPES_JSON" 2>/dev/null)
+            if [[ -n "$lang_vms" ]]; then
+                while IFS= read -r vm_entry; do
+                    [[ -z "$vm_entry" ]] && continue
 
-                vm_type="lang"
-                name=$(echo "$vm_entry" | jq -r ".name")
-                alias_value=$(echo "$vm_entry" | jq -r '.aliases | join(",")' )
-                display=$(echo "$vm_entry" | jq -r ".display")
-                install=$(echo "$vm_entry" | jq -r '.install // "-"')
-                port=$(echo "$vm_entry" | jq -r '.port // empty')
+                    vm_type="lang"
+                    name=$(echo "$vm_entry" | jq -r ".name")
+                    alias_value=$(echo "$vm_entry" | jq -r '.aliases | join(",")' )
+                    display=$(echo "$vm_entry" | jq -r ".display")
+                    install=$(echo "$vm_entry" | jq -r '.install // "-"')
+                    port=$(echo "$vm_entry" | jq -r '.port // empty')
 
-                [[ -z "$name" ]] && continue
+                    [[ -z "$name" ]] && continue
 
-                VM_TYPE[$name]="$vm_type"
-                VM_ALIASES[$name]="$alias_value"
-                VM_DISPLAY[$name]="${display:-$name}"
-                VM_INSTALL[$name]="${install:--}"
-                VM_SVC_PORT[$name]="${port:-}"
+                    VM_TYPE[$name]="$vm_type"
+                    VM_ALIASES[$name]="$alias_value"
+                    VM_DISPLAY[$name]="${display:-$name}"
+                    VM_INSTALL[$name]="${install:--}"
+                    VM_SVC_PORT[$name]="${port:-}"
 
-                # Build index by type
-                if [[ -z "${lang_vms_array[*]}" ]]; then
-                    lang_vms_array=("$name")
-                else
-                    lang_vms_array+=("$name")
-                fi
-            done <<< "$lang_vms"
+                    # Build index by type
+                    if [[ -z "${lang_vms_array[*]}" ]]; then
+                        lang_vms_array=("$name")
+                    else
+                        lang_vms_array+=("$name")
+                    fi
+                done <<< "$lang_vms"
+            fi
+
+            # Parse service VMs
+            local svc_vms
+            svc_vms=$(jq -c ".vms.service[]" "$VM_TYPES_JSON" 2>/dev/null)
+            if [[ -n "$svc_vms" ]]; then
+                while IFS= read -r vm_entry; do
+                    [[ -z "$vm_entry" ]] && continue
+
+                    vm_type="service"
+                    name=$(echo "$vm_entry" | jq -r ".name")
+                    alias_value=$(echo "$vm_entry" | jq -r '.aliases | join(",")' )
+                    display=$(echo "$vm_entry" | jq -r ".display")
+                    install=$(echo "$vm_entry" | jq -r '.install // "-"')
+                    port=$(echo "$vm_entry" | jq -r '.port // empty')
+
+                    [[ -z "$name" ]] && continue
+
+                    VM_TYPE[$name]="$vm_type"
+                    VM_ALIASES[$name]="$alias_value"
+                    VM_DISPLAY[$name]="${display:-$name}"
+                    VM_INSTALL[$name]="${install:--}"
+                    VM_SVC_PORT[$name]="${port:-}"
+
+                    # Build index by type
+                    if [[ -z "${service_vms_array[*]}" ]]; then
+                        service_vms_array=("$name")
+                    else
+                        service_vms_array+=("$name")
+                    fi
+                done <<< "$svc_vms"
+            fi
+
+            # Export type indexes
+            lang_vms=("${lang_vms_array[@]}")
+            service_vms=("${service_vms_array[@]}")
+        else
+            _error "JSON config not found: $VM_TYPES_JSON"
+            return 1
         fi
-
-        # Parse service VMs
-        local svc_vms
-        svc_vms=$(jq -c ".vms.service[]" "$VM_TYPES_JSON" 2>/dev/null)
-        if [[ -n "$svc_vms" ]]; then
-            while IFS= read -r vm_entry; do
-                [[ -z "$vm_entry" ]] && continue
-
-                vm_type="service"
-                name=$(echo "$vm_entry" | jq -r ".name")
-                alias_value=$(echo "$vm_entry" | jq -r '.aliases | join(",")' )
-                display=$(echo "$vm_entry" | jq -r ".display")
-                install=$(echo "$vm_entry" | jq -r '.install // "-"')
-                port=$(echo "$vm_entry" | jq -r '.port // empty')
-
-                [[ -z "$name" ]] && continue
-
-                VM_TYPE[$name]="$vm_type"
-                VM_ALIASES[$name]="$alias_value"
-                VM_DISPLAY[$name]="${display:-$name}"
-                VM_INSTALL[$name]="${install:--}"
-                VM_SVC_PORT[$name]="${port:-}"
-
-                # Build index by type
-                if [[ -z "${service_vms_array[*]}" ]]; then
-                    service_vms_array=("$name")
-                else
-                    service_vms_array+=("$name")
-                fi
-            done <<< "$svc_vms"
-        fi
-
-        # Export type indexes
-        lang_vms=("${lang_vms_array[@]}")
-        service_vms=("${service_vms_array[@]}")
     else
-        _error "JSON config not found: $VM_TYPES_JSON"
-        return 1
+        _info "VM types loaded from cache"
     fi
 
     # Create cache directory

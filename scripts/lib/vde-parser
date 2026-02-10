@@ -225,9 +225,9 @@ detect_intent() {
     esac
 
     # Check for status BEFORE list/show (specific patterns)
-    # Includes typo patterns: staus, satus (vowel swap), runing, runnig (omission)
+    # CRITICAL: Must check before list to avoid *list* matching "currently"
     case "$input_lower" in
-        *"show status"*|*"show status of"*|*"status of"*|*staus*|*satus*)
+        *"what's currently running"*|*"show status"*|*"show status of"*|*"status of"*|*staus*|*satus*)
             echo "$INTENT_STATUS"
             return $VDE_SUCCESS
             ;;
@@ -236,7 +236,7 @@ detect_intent() {
     # Check for list/show intents (general patterns)
     # Includes typo patterns: lis, lst (prefix omission), shw (omission)
     case "$input_lower" in
-        *list*|*lis*|*lst*|*show*|*shw*|*"what available"*|*what*available*)
+        *" list"*|*"list "*|*"/list"*|*lis*|*lst*|*shw*|*"what available"*|*what*available*)
             echo "$INTENT_LIST_VMS"
             return $VDE_SUCCESS
             ;;
