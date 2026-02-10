@@ -134,7 +134,7 @@ def step_ruby_not_needed(context):
 @given(u'I want to see what VM types are available')
 def step_check_available_vms(context):
     """Setup: User wants to check available VM types."""
-    pass
+    context.wants_vm_list = True
 
 
 @given(u'I want a clean test environment')

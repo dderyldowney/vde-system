@@ -236,7 +236,7 @@ detect_intent() {
     # Check for list/show intents (general patterns)
     # Includes typo patterns: lis, lst (prefix omission), shw (omission)
     case "$input_lower" in
-        *" list"*|*"list "*|*"/list"*|*lis*|*lst*|*shw*|*"what available"*|*what*available*)
+        *" list"*|*"list "*|*"/list"*|*lis*|*lst*|*sho*|*"what available"*|*what*available*)
             echo "$INTENT_LIST_VMS"
             return $VDE_SUCCESS
             ;;
@@ -270,7 +270,7 @@ detect_intent() {
     # Includes typo patterns: cret, crat (prefix omission), craet (transposition)
     # Note: 'creat' removed to avoid false positives with "create directory" etc.
     case "$input_lower" in
-        *"create a"*|*"create new"*|*"create "*|*cret*|*crat*|*craet*|*"make a"*|*"make new"*|*"set up"*|*"add "*)*
+        *"create a"*|*"create new"*|*"create "*|*cret*|*crat*|*craet*|*"make a"*|*"make new"*|*"set up"*|*"add "*)
             echo "$INTENT_CREATE_VM"
             return $VDE_SUCCESS
             ;;

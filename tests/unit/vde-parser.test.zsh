@@ -48,7 +48,12 @@ test_fail() {
 }
 
 # Initialize VM types for parser tests
+unset _VDE_CORE_LOADED
+unset _VM_TYPES_LOADED
+VDE_CORE_VM_TYPE=()
 load_vm_types --no-cache >/dev/null 2>&1
+invalidate_alias_map >/dev/null 2>&1
+_build_alias_map >/dev/null 2>&1
 
 # =============================================================================
 # TESTS: Intent Detection
@@ -338,14 +343,17 @@ test_generate_plan_create() {
     local plan
     plan=$(generate_plan "create a go vm")
 
-    if echo "$plan" | grep -q "INTENT:create_vm"; then
-        if echo "$plan" | grep -q "VM:go"; then
+    # Clean up plan for matching (remove potentially captured debug output)
+    local clean_plan=$(echo "$plan" | grep -E "INTENT:|VM:|FLAGS:|FILTER:")
+
+    if echo "$clean_plan" | grep -q "INTENT:create_vm"; then
+        if echo "$clean_plan" | grep -q "VM:go"; then
             test_pass "generate plan (create)"
             return
         fi
     fi
 
-    test_fail "generate plan" "intent or VM not found in plan"
+    test_fail "generate plan" "intent or VM not found in clean plan. Output was: $plan"
 }
 
 test_generate_plan_with_flags() {

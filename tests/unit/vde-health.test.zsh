@@ -16,54 +16,114 @@ source "$(dirname "$0")/../../scripts/lib/vde-shell-compat"
 source "$(dirname "$0")/../../scripts/lib/vm-common"
 source "$(dirname "$0")/../../scripts/lib/vde-health"
 
-# Set test environment
-export VDE_LOG_FILE="/tmp/vde-test-log-$$"
+# Mock dependencies
+get_vm_info() {
+    local prop="$1"
+    local vm_name="$2"
+    if [[ "$vm_name" == "python" || "$vm_name" == "go" ]]; then
+        echo "lang"
+    elif [[ "$vm_name" == "postgres" ]]; then
+        echo "service"
+    else
+        echo "unknown"
+    fi
+}
 
-# Test 1: check_container_nonexistent
-test_start "vde_check_container_running fails on non-existent container"
-vde_check_container_running "nonexistent-container-xyz-$$" 2>/dev/null
-if [[ $? -ne 0 ]]; then
-    test_pass "non-existent container check returned failure"
+docker() {
+    local cmd="$1"
+    shift
+    if [[ "$cmd" == "ps" ]]; then
+        if [[ "$MOCK_DOCKER_RUNNING" == "1" ]]; then
+            echo "python-dev"
+            echo "postgres"
+        else
+            echo ""
+        fi
+        return 0
+    elif [[ "$cmd" == "port" ]]; then
+        if [[ "$MOCK_PORT_MAPPING" == "1" ]]; then
+            echo "0.0.0.0:32768"
+        else
+            echo ""
+        fi
+        return 0
+    fi
+    return 1
+}
+
+nc() { [[ "$MOCK_PORT_OPEN" == "1" ]]; }
+ssh() { 
+    if [[ "$MOCK_SSH_SUCCESS" == "1" ]]; then
+        local last_arg="${@: -1}"
+        if [[ "$last_arg" == "echo 'ssh_ok'" ]]; then echo "ssh_ok"; fi
+        return 0
+    fi
+    return 1
+}
+timeout() { shift; "$@"; }
+
+# Test 1: vde_check_container_running
+test_start "vde_check_container_running"
+MOCK_DOCKER_RUNNING=1
+if vde_check_container_running "python"; then
+    test_pass "detects running language container"
 else
-    test_fail "non-existent container check" "expected non-zero return code"
+    test_fail "detects running language container" "failed to detect python-dev"
 fi
 
-# Test 2: health_check_nonexistent
-test_start "vde_health_check fails on non-existent VM"
-vde_health_check "nonexistent-vm-xyz-$$" 2>/dev/null
-if [[ $? -ne 0 ]]; then
-    test_pass "health check on non-existent VM returned failure"
+MOCK_DOCKER_RUNNING=0
+if vde_check_container_running "python"; then
+    test_fail "detects stopped container" "expected failure for stopped container"
 else
-    test_fail "health check on non-existent VM" "expected non-zero return code"
+    test_pass "detects stopped language container"
 fi
 
-# Test 3: check_ssh_port_unavailable
-test_start "vde_check_ssh_port fails on unavailable host"
-vde_check_ssh_port "192.0.2.255" 22 1 2>/dev/null
-if [[ $? -ne 0 ]]; then
-    test_pass "SSH port check on unavailable host returned failure"
+# Test 2: vde_check_ssh_port
+test_start "vde_check_ssh_port"
+MOCK_PORT_MAPPING=1
+MOCK_PORT_OPEN=1
+if vde_check_ssh_port "python" 5; then
+    test_pass "detects open SSH port"
 else
-    test_fail "SSH port check on unavailable host" "expected timeout/failure"
+    test_fail "detects open SSH port" "failed to detect open port"
 fi
 
-# Test 4: health_functions_exist
-test_start "vde_health_check function exists"
-if type -f vde_health_check &>/dev/null; then
-    test_pass "vde_health_check function defined"
+MOCK_PORT_OPEN=0
+vde_check_ssh_port "python" 1
+if [[ $? -eq $VDE_ERR_TIMEOUT ]]; then
+    test_pass "detects closed SSH port (timeout)"
 else
-    test_fail "vde_health_check function not found" "expected function to exist"
+    test_fail "detects closed SSH port" "expected VDE_ERR_TIMEOUT"
 fi
 
-# Test 5: check_container_running_function
-test_start "vde_check_container_running function exists"
-if type -f vde_check_container_running &>/dev/null; then
-    test_pass "vde_check_container_running function defined"
+# Test 3: vde_check_ssh_login
+test_start "vde_check_ssh_login"
+MOCK_PORT_MAPPING=1
+MOCK_SSH_SUCCESS=1
+if vde_check_ssh_login "python" 5; then
+    test_pass "detects successful SSH login"
 else
-    test_fail "vde_check_container_running function not found" "expected function to exist"
+    test_fail "detects successful SSH login" "failed to detect successful login"
 fi
 
-# Cleanup
-rm -f "/tmp/vde-test-log-$$"
+# Test 4: vde_health_check (aggregate)
+test_start "vde_health_check"
+MOCK_DOCKER_RUNNING=1
+MOCK_PORT_MAPPING=1
+MOCK_PORT_OPEN=1
+MOCK_SSH_SUCCESS=1
+if vde_health_check "python" 0; then
+    test_pass "aggregate health check passes when all ok"
+else
+    test_fail "aggregate health check" "expected pass"
+fi
+
+MOCK_SSH_SUCCESS=0
+if ! vde_health_check "python" 0; then
+    test_pass "aggregate health check fails when SSH fails"
+else
+    test_fail "aggregate health check" "expected failure when SSH fails"
+fi
 
 # Summary
 echo

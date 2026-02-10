@@ -54,14 +54,19 @@ def step_lang_vm_allocated_port(context, vm_name, port):
 @given('ports "{ports}" are allocated')
 def step_ports_allocated(context, ports):
     """Ensure specific ports are allocated."""
-    port_list = [p.strip() for p in ports.split(',')]
+    port_list = [p.strip().strip('"').strip("'") for p in ports.split(',')]
     context.allocated_ports = port_list
     # Clean up any existing configs for ports we're testing
     for port in port_list:
         int_port = int(port)
         if int_port < 2400:
             # This is a language port, might need cleanup
-            pass
+            # Find which VM uses this port and remove its config
+            for vm_dir in (VDE_ROOT / "configs" / "docker").glob("*"):
+                if vm_dir.is_dir():
+                    compose = vm_dir / "docker-compose.yml"
+                    if compose.exists() and f"{int_port}:" in compose.read_text():
+                        subprocess.run(['rm', '-rf', str(vm_dir)], check=True)
 
 
 @given('no service VMs are created')

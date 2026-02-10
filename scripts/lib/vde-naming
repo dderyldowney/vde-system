@@ -15,7 +15,7 @@ fi
 _VDE_NAMING_LOADED=1
 
 # Patterns
-VDE_NAME_PATTERN='^[a-z0-9]+$'
+VDE_NAME_PATTERN='^[a-z0-9-]+$'
 VDE_LANG_PATTERN='^[a-z0-9]+-dev$'
 
 # vde_validate_name - Validate a VM name against naming conventions
