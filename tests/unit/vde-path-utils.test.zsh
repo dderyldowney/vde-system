@@ -15,7 +15,7 @@ export HOME="${HOME:-$(eval echo ~$(whoami))}"
 unset _VDE_PATH_UTILS_LOADED 2>/dev/null
 
 # Source dependencies
-source "$PROJECT_ROOT/scripts/lib/vde-path-utils.zsh"
+source "$PROJECT_ROOT/scripts/lib/vde-path-utils"
 
 # Test configuration
 VERBOSE=${VERBOSE:-false}

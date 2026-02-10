@@ -1,7 +1,7 @@
 #!/bin/zsh
 # VDE Path Utilities
 # Path conversion functions for HOME-relative and absolute path handling
-# Source this library with: source ./scripts/lib/vde-path-utils.zsh
+# Source this library with: source ./scripts/lib/vde-path-utils
 #
 # These utilities help with cross-platform path handling, making VDE scripts
 # portable across Linux native, WSL2, and macOS.
@@ -14,6 +14,16 @@ if [ "${_VDE_PATH_UTILS_LOADED:-}" = "1" ]; then
     return 0 2>/dev/null || exit 0
 fi
 _VDE_PATH_UTILS_LOADED=1
+
+# =============================================================================
+# ZSH-ONLY PATH DETECTION
+# =============================================================================
+# shellcheck disable=SC2296
+_VDE_PATH_UTILS_SCRIPT_PATH="${(%):-%x}"
+
+if [ -z "${VDE_ROOT_DIR:-}" ]; then
+    VDE_ROOT_DIR="$(cd "$(dirname "$_VDE_PATH_UTILS_SCRIPT_PATH")/../.." && pwd)"
+fi
 
 # =============================================================================
 # DEPENDENCIES
@@ -120,8 +130,7 @@ vde_path_normalize() {
 # Usage: vde_get_project_name
 # Output: vde (extracted from /path/to/vde)
 vde_get_project_name() {
-    local abs_project_root="${VDE_ROOT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
-    echo "${abs_project_root:t}"
+    echo "${VDE_ROOT_DIR:t}"
 }
 
 # Check if a path is under HOME directory

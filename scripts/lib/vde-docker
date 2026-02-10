@@ -45,7 +45,6 @@ fi
 # =============================================================================
 
 VDE_PORT_REGISTRY="$VDE_CACHE_DIR/port-registry"
-readonly VDE_PORT_REGISTRY
 
 # =============================================================================
 # VM EXISTENCE FUNCTIONS
@@ -59,7 +58,7 @@ get_compose_file() {
     local vm_type
     vm_type=$(get_vm_info type "$vm_name")
 
-    local compose_file="$VDE_CONFIG_DIR/docker/${vm_type}/${docker-compose.yml"
+    local compose_file="$VDE_CONFIG_DIR/docker/${vm_type}/docker-compose.yml"
 
     if [ -f "$compose_file" ]; then
         echo "$compose_file"

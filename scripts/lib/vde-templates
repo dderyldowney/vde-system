@@ -28,7 +28,6 @@ if [ -z "${VDE_ROOT_DIR:-}" ]; then
     _VDE_TEMPLATES_SCRIPT_PATH="${(%):-%x}"
     VDE_ROOT_DIR="$(cd "$(dirname "$_VDE_TEMPLATES_SCRIPT_PATH")/../.." && pwd)"
 fi
-readonly VDE_ROOT_DIR
 
 . "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat"
 . "$VDE_ROOT_DIR/scripts/lib/vde-constants"
@@ -39,7 +38,6 @@ readonly VDE_ROOT_DIR
 # =============================================================================
 
 VDE_TEMPLATES_DIR="${VDE_ROOT_DIR}/templates"
-readonly VDE_TEMPLATES_DIR
 
 # =============================================================================
 # TEMPLATE RENDERING

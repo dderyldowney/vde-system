@@ -71,6 +71,12 @@ if ! command -v _error >/dev/null 2>&1; then
     }
 fi
 
+if ! command -v _warn >/dev/null 2>&1; then
+    _warn() {
+        echo "[WARN] $*" >&2
+    }
+fi
+
 # =============================================================================
 # OPTIONAL MODULAR LIBRARIES
 # =============================================================================
@@ -257,13 +263,12 @@ load_vm_types() {
             while IFS= read -r vm_entry; do
                 [[ -z "$vm_entry" ]] && continue
 
-                local name alias_value display install port vm_type
                 vm_type="lang"
                 name=$(echo "$vm_entry" | jq -r ".name")
-                alias_value=$(echo "$vm_entry" | jq -r ".aliases | join(",")")
+                alias_value=$(echo "$vm_entry" | jq -r '.aliases | join(",")' )
                 display=$(echo "$vm_entry" | jq -r ".display")
-                install=$(echo "$vm_entry" | jq -r ".install // "-"")
-                port=$(echo "$vm_entry" | jq -r ".port // empty")
+                install=$(echo "$vm_entry" | jq -r '.install // "-"')
+                port=$(echo "$vm_entry" | jq -r '.port // empty')
 
                 [[ -z "$name" ]] && continue
 
@@ -289,13 +294,12 @@ load_vm_types() {
             while IFS= read -r vm_entry; do
                 [[ -z "$vm_entry" ]] && continue
 
-                local name alias_value display install port vm_type
                 vm_type="service"
                 name=$(echo "$vm_entry" | jq -r ".name")
-                alias_value=$(echo "$vm_entry" | jq -r ".aliases | join(",")")
+                alias_value=$(echo "$vm_entry" | jq -r '.aliases | join(",")' )
                 display=$(echo "$vm_entry" | jq -r ".display")
-                install=$(echo "$vm_entry" | jq -r ".install // "-"")
-                port=$(echo "$vm_entry" | jq -r ".port // empty")
+                install=$(echo "$vm_entry" | jq -r '.install // "-"')
+                port=$(echo "$vm_entry" | jq -r '.port // empty')
 
                 [[ -z "$name" ]] && continue
 
