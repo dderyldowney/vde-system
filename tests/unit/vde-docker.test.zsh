@@ -54,17 +54,19 @@ test_fail() {
 TEST_TMPDIR=""
 
 setup_test_env() {
-    TEST_TMPDIR="/tmp/vde-docker-test-$$"
+    TEST_TMPDIR="/tmp/vde-docker-test-$"
     mkdir -p "$TEST_TMPDIR"
     export HOME="$TEST_TMPDIR/home"
     mkdir -p "$HOME/.ssh/vde"
     mkdir -p "$TEST_TMPDIR/configs/docker/lang/python"
     mkdir -p "$TEST_TMPDIR/configs/docker/service/postgres"
     mkdir -p "$TEST_TMPDIR/cache"
+    mkdir -p "$TEST_TMPDIR/port-registry"
 
     # Override paths for testing
     export VDE_CONFIG_DIR="$TEST_TMPDIR/configs/docker"
     export VDE_CACHE_DIR="$TEST_TMPDIR/cache"
+    export VDE_PORT_REGISTRY="$TEST_TMPDIR/port-registry"
 }
 
 teardown_test_env() {
@@ -138,7 +140,6 @@ test_get_vm_ssh_port() {
     test_start "get_vm_ssh_port - port in registry"
 
     setup_test_env
-    export VDE_PORT_REGISTRY="$TEST_TMPDIR/port-registry"
     mkdir -p "$VDE_PORT_REGISTRY"
     echo "2200" > "$VDE_PORT_REGISTRY/python.port"
 
@@ -157,7 +158,6 @@ test_allocate_ssh_port() {
     test_start "allocate_ssh_port - save port to registry"
 
     setup_test_env
-    export VDE_PORT_REGISTRY="$TEST_TMPDIR/port-registry"
     mkdir -p "$VDE_PORT_REGISTRY"
 
     if allocate_ssh_port "python" "2200" 2>/dev/null; then
@@ -196,7 +196,6 @@ test_get_or_allocate_ssh_port() {
     test_start "get_or_allocate_ssh_port - returns existing port"
 
     setup_test_env
-    export VDE_PORT_REGISTRY="$TEST_TMPDIR/port-registry"
     mkdir -p "$VDE_PORT_REGISTRY"
     echo "2205" > "$VDE_PORT_REGISTRY/python.port"
 
