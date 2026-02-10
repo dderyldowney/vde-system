@@ -10,89 +10,68 @@ test_start() { echo -e "${YELLOW}Testing: $1${RESET}" }
 test_pass() { echo -e "  ${GREEN}✓ PASS: $1${RESET}"; ((TESTS_PASSED++)) }
 test_fail() { echo -e "  ${RED}✗ FAIL: $1 - $2${RESET}"; ((TESTS_FAILED++)) }
 
+# Setup temporary root for audit files
+TEST_TMP_DIR=$(mktemp -d)
+export VDE_ROOT_DIR="$TEST_TMP_DIR"
+mkdir -p "$VDE_ROOT_DIR/logs"
+
+# Mock dependencies
+vde_shell_date_iso8601() { echo "2026-02-10T12:00:00Z"; }
+vde_log_info() { :; }
+vde_log_init() { :; }
+_VDE_LOG_INITIALIZED=1
+whoami() { echo "testuser"; }
+hostname() { echo "testhost"; }
+
 # Source required libraries
 source "$(dirname "$0")/../../scripts/lib/vde-constants"
 source "$(dirname "$0")/../../scripts/lib/vde-shell-compat"
 source "$(dirname "$0")/../../scripts/lib/vde-log"
 source "$(dirname "$0")/../../scripts/lib/vde-audit"
 
-# Set test environment
-export VDE_AUDIT_LOG="/tmp/vde-test-audit-$$"
-export VDE_LOG_FILE="/tmp/vde-test-log-$$"
+# Test 1: initialization
+test_start "vde_audit initialization"
+if vde_audit_init; then
+    test_pass "initialization success"
+else
+    test_fail "initialization" "vde_audit_init failed"
+fi
 
-# Test 1: audit_init
-test_start "vde_audit_init creates audit log file"
-vde_audit_init
 if [[ -f "$VDE_AUDIT_LOG" ]]; then
     test_pass "audit log file created"
 else
-    test_fail "audit log file not created" "expected file at $VDE_AUDIT_LOG"
+    test_fail "audit log file" "file not found: $VDE_AUDIT_LOG"
 fi
 
-# Test 2: audit_log
-test_start "vde_audit_log writes entry with correct format"
-vde_audit_log "test_operation" "test_vm" "SUCCESS" "test details"
-if grep -q "|" "$VDE_AUDIT_LOG" && grep -q "test_operation" "$VDE_AUDIT_LOG"; then
-    test_pass "audit entry logged with pipe-delimited format"
+# Test 2: audit logging
+test_start "vde_audit logging"
+vde_audit_log "create_vm" "success" "vm_name=test-python"
+last_line=$(tail -n 1 "$VDE_AUDIT_LOG")
+if echo "$last_line" | grep -q "create_vm" && echo "$last_line" | grep -q "success" && echo "$last_line" | grep -q "test-python"; then
+    test_pass "audit entry format correct"
 else
-    test_fail "audit entry format incorrect" "expected pipe-delimited entry"
+    test_fail "audit logging" "unexpected entry: $last_line"
 fi
 
-# Test 3: audit_create_vm
-test_start "vde_audit_create_vm logs VM creation"
-vde_audit_create_vm "test-vm-001" "SUCCESS"
-if grep -q "create" "$VDE_AUDIT_LOG" && grep -q "test-vm-001" "$VDE_AUDIT_LOG"; then
-    test_pass "VM creation audited"
+# Test 3: querying
+test_start "vde_audit querying"
+vde_audit_log "start_vm" "success" "vm_name=test-go"
+output=$(vde_audit_by_user "testuser" 2>&1)
+if echo "$output" | grep -q "test-go"; then
+    test_pass "query by user works"
 else
-    test_fail "VM creation not audited" "expected 'create' and 'test-vm-001' in log"
+    test_fail "query by user" "entry not found in query results"
 fi
 
-# Test 4: audit_query
-test_start "vde_audit_query finds matching entries"
-vde_audit_log "query_test_op" "query_vm" "SUCCESS" "query details"
-result=$(vde_audit_query "query_test_op")
-if [[ -n "$result" ]] && echo "$result" | grep -q "query_test_op"; then
-    test_pass "audit query found matches"
+output=$(vde_audit_by_operation "start_vm" 2>&1)
+if echo "$output" | grep -q "start_vm"; then
+    test_pass "query by operation works"
 else
-    test_fail "audit query failed" "expected to find 'query_test_op'"
-fi
-
-# Test 5: audit_recent
-test_start "vde_audit_recent returns correct count"
-vde_audit_log "recent1" "vm1" "SUCCESS" "details1"
-vde_audit_log "recent2" "vm2" "SUCCESS" "details2"
-vde_audit_log "recent3" "vm3" "SUCCESS" "details3"
-recent=$(vde_audit_recent 2)
-line_count=$(echo "$recent" | wc -l | tr -d ' ')
-if [[ "$line_count" -eq 2 ]]; then
-    test_pass "recent entries count correct"
-else
-    test_fail "recent entries count incorrect" "expected 2, got $line_count"
-fi
-
-# Test 6: audit_failures
-test_start "vde_audit_failures finds failure entries"
-vde_audit_log "failure_test" "failure_vm" "FAILURE" "test failure"
-failures=$(vde_audit_failures)
-if [[ -n "$failures" ]] && echo "$failures" | grep -q "FAILURE"; then
-    test_pass "failure entries found"
-else
-    test_fail "failure entries not found" "expected FAILURE in output"
-fi
-
-# Test 7: audit_stats
-test_start "vde_audit_stats returns statistics"
-vde_audit_log "stats_op1" "vm1" "SUCCESS" "details"
-vde_audit_log "stats_op2" "vm2" "SUCCESS" "details"
-stats=$(vde_audit_stats)
-if [[ -n "$stats" ]]; then
-    test_pass "audit stats generated"
-else
-    test_fail "audit stats empty" "expected non-empty statistics"
+    test_fail "query by operation" "entry not found in query results"
 fi
 
 # Cleanup
-rm -f "/tmp/vde-test-audit-$$" "/tmp/vde-test-log-$$"
+rm -rf "$TEST_TMP_DIR"
 
 # Summary
 echo

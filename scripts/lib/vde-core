@@ -143,6 +143,17 @@ _vde_core_get_mtime() {
 # Core VM Type Loading (Minimal with Caching)
 # -----------------------
 
+_assoc_keys() {
+    local array_name="$1"
+    eval "for k in \"\${(@k)$array_name}\"; do echo \"\$k\"; done"
+}
+
+_assoc_get() {
+    local array_name="$1"
+    local key="$2"
+    eval "echo \"\${$array_name[\$key]}\""
+}
+
 # vde_core_save_cache - Save loaded VM types to cache file
 # Args: none
 # Returns: VDE_SUCCESS (0) or VDE_ERR_GENERAL (1) on failure
@@ -153,40 +164,42 @@ _vde_core_save_cache() {
     local temp_file="${cache_file}.tmp.$$"
     
     # Write cache header
-    cat > "$temp_file" << 'HEREDOC_END'
+    {
+        cat << 'HEREDOC_END'
 # VDE VM Types Cache
 # Generated:
 HEREDOC_END
-    # Use ISO 8601 format for machine-readable timestamp
-    date -u +'%Y-%m-%dT%H:%M:%SZ' >> "$temp_file"
-    echo "# Format: ARRAY_NAME:key=value" >> "$temp_file"
-    echo "" >> "$temp_file"
-    
-    # Export VM_TYPE array
-    echo "# VM_TYPE definitions" >> "$temp_file"
-    _assoc_keys "VDE_CORE_VM_TYPE" | sort | while read -r vm_name; do
-        local vm_type
-        vm_type=$(_assoc_get "VDE_CORE_VM_TYPE" "$vm_name")
-        echo "VM_TYPE:${vm_name}=${vm_type}" >> "$temp_file"
-    done
-    
-    # Export VM_ALIASES array
-    echo "" >> "$temp_file"
-    echo "# VM aliases" >> "$temp_file"
-    _assoc_keys "VDE_CORE_VM_ALIASES" | sort | while read -r vm_name; do
-        local vm_aliases
-        vm_aliases=$(_assoc_get "VDE_CORE_VM_ALIASES" "$vm_name")
-        echo "VM_ALIASES:${vm_name}=${vm_aliases}" >> "$temp_file"
-    done
-    
-    # Export VM_DISPLAY array
-    echo "" >> "$temp_file"
-    echo "# VM display names" >> "$temp_file"
-    _assoc_keys "VDE_CORE_VM_DISPLAY" | sort | while read -r vm_name; do
-        local vm_display
-        vm_display=$(_assoc_get "VDE_CORE_VM_DISPLAY" "$vm_name")
-        echo "VM_DISPLAY:${vm_name}=${vm_display}" >> "$temp_file"
-    done
+        # Use ISO 8601 format for machine-readable timestamp
+        date -u +'%Y-%m-%dT%H:%M:%SZ'
+        echo "# Format: ARRAY_NAME:key=value"
+        echo ""
+        
+        # Export VM_TYPE array
+        echo "# VM_TYPE definitions"
+        _assoc_keys "VDE_CORE_VM_TYPE" | sort | while read -r vm_name; do
+            local vm_type
+            vm_type=$(_assoc_get "VDE_CORE_VM_TYPE" "$vm_name")
+            echo "VM_TYPE:${vm_name}=${vm_type}"
+        done
+        
+        # Export VM_ALIASES array
+        echo ""
+        echo "# VM aliases"
+        _assoc_keys "VDE_CORE_VM_ALIASES" | sort | while read -r vm_name; do
+            local vm_aliases
+            vm_aliases=$(_assoc_get "VDE_CORE_VM_ALIASES" "$vm_name")
+            echo "VM_ALIASES:${vm_name}=${vm_aliases}"
+        done
+        
+        # Export VM_DISPLAY array
+        echo ""
+        echo "# VM display names"
+        _assoc_keys "VDE_CORE_VM_DISPLAY" | sort | while read -r vm_name; do
+            local vm_display
+            vm_display=$(_assoc_get "VDE_CORE_VM_DISPLAY" "$vm_name")
+            echo "VM_DISPLAY:${vm_name}=${vm_display}"
+        done
+    } > "$temp_file"
     
     # Atomic rename
     if [ $? -eq 0 ] && [ -f "$temp_file" ]; then
@@ -263,8 +276,9 @@ invalidate_vm_types_cache() {
 # Args: none
 # Returns: VDE_SUCCESS (0) or VDE_ERR_NOT_FOUND (3)
 vde_core_load_types() {
-    # Return early if already loaded
-    if [ "$_VDE_CORE_LOADED" -eq 1 ]; then
+    # Return early if already loaded and arrays are populated
+    # (Checking array length handles subshells where _VDE_CORE_LOADED is inherited but arrays are not)
+    if [ "$_VDE_CORE_LOADED" -eq 1 ] && [ "${#VDE_CORE_VM_TYPE}" -gt 0 ]; then
         return $VDE_SUCCESS
     fi
     

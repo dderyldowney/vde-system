@@ -101,7 +101,7 @@ vde_error_is_verbose() {
 _vde_error_format_block() {
     local text="$1"
     local indent="${2:-4}"
-    printf '%s' "$text" | while IFS= read -r line; do
+    echo "$text" | while IFS= read -r line; do
         printf "%${indent}s%s\n" "" "$line"
     done
 }

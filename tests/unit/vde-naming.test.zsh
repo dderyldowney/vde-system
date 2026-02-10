@@ -307,7 +307,7 @@ test_validate_or_fail_valid() {
     test_start "validate_or_fail (valid name)"
 
     # This should not exit
-    vde_validate_name_or_fail "python" >/dev/null 2>&1
+    (vde_validate_name_or_fail "python") >/dev/null 2>&1
     if [[ $? -eq 0 ]]; then
         test_pass "validate_or_fail (valid name)"
         return
@@ -320,7 +320,7 @@ test_validate_or_fail_invalid() {
     test_start "validate_or_fail (invalid name)"
 
     # This should exit with error code
-    vde_validate_name_or_fail "" >/dev/null 2>&1
+    (vde_validate_name_or_fail "") >/dev/null 2>&1
     local exit_code=$?
 
     if [[ $exit_code -eq $VDE_ERR_INVALID_INPUT ]]; then

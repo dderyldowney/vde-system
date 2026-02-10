@@ -3,8 +3,16 @@ BDD Step definitions for Debugging, Port Management, and Troubleshooting pattern
 """
 
 import subprocess
+import os
+import sys
 from behave import given, then, when
 
+# Add steps directory to path for imports
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
+
+from vm_common import run_vde_command
 
 # =============================================================================
 # Debugging and Container Access Patterns
@@ -183,7 +191,7 @@ def step_check_ssh_config(context):
 @when(u'I verify the VM is running')
 def step_verify_vm_running(context):
     """Verify VM is running."""
-    result = subprocess.run(['./scripts/vde', 'ps'], capture_output=True, text=True)
+    result = run_vde_command('ps')
     context.docker_ps_output = result.stdout
 
 
@@ -226,8 +234,7 @@ def step_identify_db_issue(context):
 @when(u'I rebuild with --no-cache')
 def step_rebuild_no_cache(context):
     """Rebuild with no cache."""
-    result = subprocess.run(['./scripts/vde', 'rebuild', '--no-cache'],
-                          capture_output=True, text=True)
+    result = run_vde_command(['rebuild', '--no-cache'])
     context.vde_command_result = result
 
 
@@ -264,8 +271,7 @@ def step_fresh_container(context):
 @when(u'I start it again')
 def step_start_again(context):
     """Start VM again."""
-    result = subprocess.run(['./scripts/vde', 'start'],
-                          capture_output=True, text=True)
+    result = run_vde_command('start')
     context.vde_command_result = result
 
 
@@ -283,8 +289,7 @@ def step_remove_vm_dir(context):
 @when(u'I recreate the VM')
 def step_recreate_vm(context):
     """Recreate VM."""
-    result = subprocess.run(['./scripts/vde', 'create'],
-                          capture_output=True, text=True)
+    result = run_vde_command('create')
     context.vde_command_result = result
 
 
@@ -310,8 +315,7 @@ def step_old_issues_resolved(context):
 @when(u'I create a new language VM')
 def step_create_new_lang_vm(context):
     """Create a new language VM."""
-    result = subprocess.run(['./scripts/vde', 'create'],
-                          capture_output=True, text=True)
+    result = run_vde_command('create')
     context.vde_command_result = result
 
 
@@ -331,6 +335,3 @@ def step_stop_test_vms(context):
     # Verify VDE stop command exists and is executable
     vde_script = Path(__file__).parent.parent.parent.parent / 'scripts' / 'vde'
     assert vde_script.exists(), "VDE script should exist for independent VM control"
-
-
-

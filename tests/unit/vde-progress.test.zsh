@@ -15,72 +15,91 @@ source "$(dirname "$0")/../../scripts/lib/vde-constants"
 source "$(dirname "$0")/../../scripts/lib/vde-shell-compat"
 source "$(dirname "$0")/../../scripts/lib/vde-progress"
 
-# Test 1: format_time_seconds
-test_start "_vde_progress_format_time formats seconds"
-output=$(_vde_progress_format_time 45)
-if echo "$output" | grep -q "45s"; then
+# Test 1: format_time
+test_start "_vde_progress_format_time formats durations"
+output=$(_vde_progress_format_time 30)
+if [[ "$output" == "30s" ]]; then
     test_pass "seconds formatted correctly"
 else
-    test_fail "seconds format incorrect" "expected '45s' in output, got: $output"
+    test_fail "seconds format incorrect" "expected '30s', got: $output"
 fi
 
-# Test 2: format_time_minutes
-test_start "_vde_progress_format_time formats minutes"
-output=$(_vde_progress_format_time 150)
-if echo "$output" | grep -q "2m"; then
+output=$(_vde_progress_format_time 65)
+if [[ "$output" == "1m 5s" ]]; then
     test_pass "minutes formatted correctly"
 else
-    test_fail "minutes format incorrect" "expected '2m' in output, got: $output"
+    test_fail "minutes format incorrect" "expected '1m 5s', got: $output"
 fi
 
-# Test 3: progress_info
-test_start "vde_progress_info displays message"
-output=$(vde_progress_info "test msg" 2>&1)
-if echo "$output" | grep -q "test msg"; then
-    test_pass "info message displayed"
+# Test 2: progress_bar
+test_start "vde_progress_bar operations"
+output=$(vde_progress_bar_start "Test Bar" 100 2>&1)
+if echo "$output" | grep -q "Test Bar"; then
+    test_pass "progress bar start contains message"
 else
-    test_fail "info message not displayed" "expected 'test msg' in output"
+    test_fail "progress bar start" "message not found in output"
 fi
 
-# Test 4: progress_warn
-test_start "vde_progress_warn displays warning"
-output=$(vde_progress_warn "warning" 2>&1)
-if echo "$output" | grep -q "warning"; then
-    test_pass "warning message displayed"
+# Manually set state for update test since subshell lost it
+_VDE_PROGRESS_BAR_TOTAL=100
+_VDE_PROGRESS_BAR_MSG="Test Bar"
+output=$(vde_progress_bar_update 50 2>&1)
+if echo "$output" | grep -q "50%"; then
+    test_pass "progress bar update shows percentage"
 else
-    test_fail "warning message not displayed" "expected 'warning' in output"
+    test_fail "progress bar update" "50% not found in output"
 fi
 
-# Test 5: progress_error
-test_start "vde_progress_error displays error"
-output=$(vde_progress_error "err msg" 2>&1)
-if echo "$output" | grep -q "err msg"; then
-    test_pass "error message displayed"
+_VDE_PROGRESS_BAR_TOTAL=100
+_VDE_PROGRESS_BAR_START=$(date +%s)
+output=$(vde_progress_bar_stop "Done" 2>&1)
+if echo "$output" | grep -q "Done"; then
+    test_pass "progress bar stop shows message"
 else
-    test_fail "error message not displayed" "expected 'err msg' in output"
+    test_fail "progress bar stop" "Done not found in output"
 fi
 
-# Test 6: progress_done
-test_start "vde_progress_done displays completion"
-output=$(vde_progress_done "complete" 2>&1)
-if echo "$output" | grep -q "complete"; then
-    test_pass "completion message displayed"
+# Test 3: spinner
+test_start "vde_progress_spinner operations"
+output=$(vde_progress_spinner_start "Spinning" 2>&1)
+if echo "$output" | grep -q "Spinning"; then
+    test_pass "spinner start contains message"
 else
-    test_fail "completion message not displayed" "expected 'complete' in output"
+    test_fail "spinner start" "Spinning not found in output"
 fi
 
-# Test 7: quiet_mode
-test_start "is_quiet mode detection"
-export QUIET_MODE=1
-is_quiet
-quiet_enabled=$?
-unset QUIET_MODE
-is_quiet
-quiet_disabled=$?
-if [[ $quiet_enabled -eq 0 ]] && [[ $quiet_disabled -ne 0 ]]; then
-    test_pass "quiet mode detection works"
+_VDE_PROGRESS_SPINNER_MSG="Spinning"
+output=$(vde_progress_spinner_update 2>&1)
+if [[ -n "$output" ]]; then
+    test_pass "spinner update produces output"
 else
-    test_fail "quiet mode detection failed" "expected 0 when set, non-zero when unset"
+    test_fail "spinner update" "no output produced"
+fi
+
+_VDE_PROGRESS_SPINNER_START=$(date +%s)
+output=$(vde_progress_spinner_stop "Finished" 2>&1)
+if echo "$output" | grep -q "Finished"; then
+    test_pass "spinner stop shows message"
+else
+    test_fail "spinner stop" "Finished not found in output"
+fi
+
+# Test 4: quiet_mode
+test_start "vde_progress quiet mode"
+vde_progress_set_quiet 1
+output=$(vde_progress_info "Hidden" 2>&1)
+if [[ -z "$output" ]]; then
+    test_pass "quiet mode suppresses output"
+else
+    test_fail "quiet mode" "output was not suppressed: $output"
+fi
+
+vde_progress_set_quiet 0
+output=$(vde_progress_info "Visible" 2>&1)
+if echo "$output" | grep -q "Visible"; then
+    test_pass "quiet mode disabled shows output"
+else
+    test_fail "quiet mode disabled" "Visible not found in output"
 fi
 
 # Summary

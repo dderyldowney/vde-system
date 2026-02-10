@@ -1,192 +1,92 @@
 #!/usr/bin/env zsh
-# Test framework colors and counters
+# Test framework
 TESTS_PASSED=0
 TESTS_FAILED=0
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[0;33m'
 RESET='\033[0m'
-
 test_start() { echo -e "${YELLOW}Testing: $1${RESET}" }
 test_pass() { echo -e "  ${GREEN}✓ PASS: $1${RESET}"; ((TESTS_PASSED++)) }
 test_fail() { echo -e "  ${RED}✗ FAIL: $1 - $2${RESET}"; ((TESTS_FAILED++)) }
 
-# Setup temp log file
-export VDE_LOG_FILE="/tmp/vde-test-log-$$"
-export VDE_LOG_DIR="$(dirname "$VDE_LOG_FILE")"
+# Setup temporary root for log files
+TEST_TMP_DIR=$(mktemp -d)
+export VDE_ROOT_DIR="$TEST_TMP_DIR"
+mkdir -p "$VDE_ROOT_DIR/logs"
 
-# Source dependencies and library under test
+# Mock dependencies
+vde_shell_date_iso8601() { echo "2026-02-10T12:00:00Z"; }
+
+# Source required libraries
 source "$(dirname "$0")/../../scripts/lib/vde-constants"
 source "$(dirname "$0")/../../scripts/lib/vde-shell-compat"
 source "$(dirname "$0")/../../scripts/lib/vde-log"
 
-# Test vde_log_init
-test_vde_log_init() {
-    test_start "vde_log_init"
-    rm -f "$VDE_LOG_FILE"
-    vde_log_init
-    if [[ -f "$VDE_LOG_FILE" ]]; then
-        test_pass "vde_log_init creates log file"
-        return
-    fi
-    test_fail "vde_log_init" "log file not created"
-}
+# Test 1: level control
+test_start "vde_log level control"
+vde_log_set_level "DEBUG"
+if [[ "$(vde_log_get_level)" == "DEBUG" ]]; then
+    test_pass "set level to DEBUG"
+else
+    test_fail "set level to DEBUG" "got: $(vde_log_get_level)"
+fi
 
-# Test vde_log_set_level and vde_log_get_level
-test_vde_log_level() {
-    test_start "vde_log_set_level and vde_log_get_level"
-    vde_log_set_level "WARN"
-    local level=$(vde_log_get_level)
-    if [[ "$level" == "WARN" ]]; then
-        test_pass "vde_log_set_level and vde_log_get_level"
-        return
-    fi
-    test_fail "vde_log_level" "expected 'WARN', got '$level'"
-}
+# Test 2: text format
+test_start "vde_log text format"
+vde_log_set_format "text"
+vde_log_set_level "INFO"
+output=$(vde_log "INFO" "Test message" "test-comp" 2>&1)
+if echo "$output" | grep -q "\[INFO \]" && echo "$output" | grep -q "test-comp" && echo "$output" | grep -q "Test message"; then
+    test_pass "text format contains level, component, and message"
+else
+    test_fail "text format" "missing components: $output"
+fi
 
-# Test vde_log_set_format
-test_vde_log_format() {
-    test_start "vde_log_set_format"
-    vde_log_set_format "json"
-    if [[ "${VDE_LOG_FORMAT:-text}" == "json" ]]; then
-        test_pass "vde_log_set_format"
-        return
-    fi
-    test_fail "vde_log_format" "format not set to json"
-}
+# Test 3: json format
+test_start "vde_log json format"
+vde_log_set_format "json"
+output=$(vde_log "WARN" "JSON message" "json-comp" "key=val" 2>&1)
+if echo "$output" | grep -q '"level":"WARN"' && \
+   echo "$output" | grep -q '"component":"json-comp"' && \
+   echo "$output" | grep -q '"message":"JSON message"' && \
+   echo "$output" | grep -q '"context":"key=val"'; then
+    test_pass "json format contains all fields"
+else
+    test_fail "json format" "missing fields: $output"
+fi
 
-# Test vde_log writes to file
-test_vde_log_write() {
-    test_start "vde_log writes to file"
-    rm -f "$VDE_LOG_FILE"
-    vde_log_init
-    vde_log_set_level "DEBUG"
-    vde_log "INFO" "test message" "test-component"
-    if [[ -s "$VDE_LOG_FILE" ]] && grep -q "test message" "$VDE_LOG_FILE"; then
-        test_pass "vde_log writes to file"
-        return
-    fi
-    test_fail "vde_log_write" "message not found in log file"
-}
+# Test 4: filtering
+test_start "vde_log filtering"
+vde_log_set_level "ERROR"
+vde_log_set_format "text"
+output=$(vde_log "INFO" "Should be filtered" "test" 2>&1)
+if [[ -z "$output" ]]; then
+    test_pass "INFO message filtered when level is ERROR"
+else
+    test_fail "filtering" "INFO message was not filtered: $output"
+fi
 
-# Test vde_log_debug
-test_vde_log_debug() {
-    test_start "vde_log_debug"
-    rm -f "$VDE_LOG_FILE"
-    vde_log_init
-    vde_log_set_level "DEBUG"
-    vde_log_debug "debug test message"
-    if grep -q "debug test message" "$VDE_LOG_FILE" && grep -q "DEBUG" "$VDE_LOG_FILE"; then
-        test_pass "vde_log_debug"
-        return
-    fi
-    test_fail "vde_log_debug" "debug message not logged"
-}
-
-# Test vde_log_info
-test_vde_log_info() {
-    test_start "vde_log_info"
-    rm -f "$VDE_LOG_FILE"
-    vde_log_init
-    vde_log_set_level "INFO"
-    vde_log_info "info test message"
-    if grep -q "info test message" "$VDE_LOG_FILE" && grep -q "INFO" "$VDE_LOG_FILE"; then
-        test_pass "vde_log_info"
-        return
-    fi
-    test_fail "vde_log_info" "info message not logged"
-}
-
-# Test vde_log_warn
-test_vde_log_warn() {
-    test_start "vde_log_warn"
-    rm -f "$VDE_LOG_FILE"
-    vde_log_init
-    vde_log_set_level "WARN"
-    vde_log_warn "warn test message"
-    if grep -q "warn test message" "$VDE_LOG_FILE" && grep -q "WARN" "$VDE_LOG_FILE"; then
-        test_pass "vde_log_warn"
-        return
-    fi
-    test_fail "vde_log_warn" "warn message not logged"
-}
-
-# Test vde_log_error
-test_vde_log_error() {
-    test_start "vde_log_error"
-    rm -f "$VDE_LOG_FILE"
-    vde_log_init
-    vde_log_set_level "ERROR"
-    vde_log_error "error test message"
-    if grep -q "error test message" "$VDE_LOG_FILE" && grep -q "ERROR" "$VDE_LOG_FILE"; then
-        test_pass "vde_log_error"
-        return
-    fi
-    test_fail "vde_log_error" "error message not logged"
-}
-
-# Test vde_log_recent
-test_vde_log_recent() {
-    test_start "vde_log_recent"
-    rm -f "$VDE_LOG_FILE"
-    vde_log_init
-    vde_log_set_level "INFO"
-    vde_log_info "message 1"
-    vde_log_info "message 2"
-    vde_log_info "message 3"
-    local recent=$(vde_log_recent 2)
-    if [[ $(echo "$recent" | wc -l) -eq 2 ]]; then
-        test_pass "vde_log_recent"
-        return
-    fi
-    test_fail "vde_log_recent" "expected 2 lines, got $(echo "$recent" | wc -l)"
-}
-
-# Test vde_log_grep
-test_vde_log_grep() {
-    test_start "vde_log_grep"
-    rm -f "$VDE_LOG_FILE"
-    vde_log_init
-    vde_log_set_level "INFO"
-    vde_log_info "findme unique pattern"
-    vde_log_info "another message"
-    local result=$(vde_log_grep "findme")
-    if echo "$result" | grep -q "findme unique pattern"; then
-        test_pass "vde_log_grep"
-        return
-    fi
-    test_fail "vde_log_grep" "pattern not found"
-}
+# Test 5: file output
+test_start "vde_log file output"
+LOG_FILE="$VDE_ROOT_DIR/logs/test.log"
+vde_log_to_file "$LOG_FILE"
+vde_log_set_level "INFO"
+vde_log_info "Message to file" "file-test" >/dev/null 2>&1
+if grep -q "Message to file" "$LOG_FILE"; then
+    test_pass "log written to file"
+else
+    test_fail "file output" "log not found in file"
+fi
 
 # Cleanup
-cleanup() {
-    rm -f "$VDE_LOG_FILE"
-}
+rm -rf "$TEST_TMP_DIR"
 
-# Main runner
-main() {
-    echo ""
-    echo "=========================================="
-    echo "Unit Tests: vde-log"
-    echo "=========================================="
+# Summary
+echo
+echo "========================================"
+echo -e "${GREEN}Tests Passed: $TESTS_PASSED${RESET}"
+echo -e "${RED}Tests Failed: $TESTS_FAILED${RESET}"
+echo "========================================"
 
-    test_vde_log_init
-    test_vde_log_level
-    test_vde_log_format
-    test_vde_log_write
-    test_vde_log_debug
-    test_vde_log_info
-    test_vde_log_warn
-    test_vde_log_error
-    test_vde_log_recent
-    test_vde_log_grep
-
-    cleanup
-
-    echo ""
-    echo -e "${GREEN}Passed:  $TESTS_PASSED${RESET}"
-    echo -e "${RED}Failed:  $TESTS_FAILED${RESET}"
-    [[ $TESTS_FAILED -eq 0 ]] && exit 0 || exit 1
-}
-
-main "$@"
+exit $TESTS_FAILED

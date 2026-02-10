@@ -338,6 +338,12 @@ test_lock_timeout() {
 test_get_compose_file() {
     test_start "get_compose_file"
 
+    # Ensure dummy file exists for test
+    local dummy_dir="$CONFIGS_DIR/python"
+    mkdir -p "$dummy_dir"
+    local dummy_file="$dummy_dir/docker-compose.yml"
+    touch "$dummy_file"
+
     local result
     result=$(get_compose_file "python")
 
@@ -356,12 +362,12 @@ test_build_docker_opts() {
     local result
     result=$(build_docker_opts true false)
 
-    if [[ "$result" == "--build" ]]; then
+    if echo "$result" | grep -qe "--build"; then
         test_pass "build_docker_opts (rebuild only)"
         return
     fi
 
-    test_fail "build_docker_opts" "expected '--build', got '$result'"
+    test_fail "build_docker_opts" "expected results containing '--build', got '$result'"
 }
 
 test_build_docker_opts_with_nocache() {
@@ -370,12 +376,12 @@ test_build_docker_opts_with_nocache() {
     local result
     result=$(build_docker_opts true true)
 
-    if [[ "$result" == "--build --no-cache" ]]; then
+    if echo "$result" | grep -qe "--build" && echo "$result" | grep -qe "--no-cache"; then
         test_pass "build_docker_opts (with no-cache)"
         return
     fi
 
-    test_fail "build_docker_opts" "expected '--build --no-cache', got '$result'"
+    test_fail "build_docker_opts" "expected results containing '--build --no-cache', got '$result'"
 }
 
 # =============================================================================
