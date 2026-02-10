@@ -37,16 +37,11 @@ _VDE_CORE_GUARD_LOADED=1
 # shellcheck disable=SC2296
 _VDE_CORE_SCRIPT_PATH="${(%):-%x}"
 
-if [ -z "${VDE_CORE_ROOT_DIR:-}" ]; then
-    VDE_CORE_ROOT_DIR="$(cd "$(dirname "$_VDE_CORE_SCRIPT_PATH")/../.." && pwd)"
-    readonly VDE_CORE_ROOT_DIR
-fi
-
-# Only set VDE_ROOT_DIR if not already set (allows vm-common to set it first)
+# If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
 if [ -z "${VDE_ROOT_DIR:-}" ]; then
-    VDE_ROOT_DIR="$VDE_CORE_ROOT_DIR"
-    readonly VDE_ROOT_DIR
+    VDE_ROOT_DIR="$(cd "$(dirname "$_VDE_CORE_SCRIPT_PATH")/../.." && pwd)"
 fi
+export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 
 # -----------------------
 # Source Shell Compatibility Layer
@@ -63,18 +58,18 @@ fi
 # -----------------------
 # Directory Constants
 # -----------------------
-VDE_CORE_CONFIGS_DIR="$VDE_ROOT_DIR/configs/docker"
-readonly VDE_CORE_CONFIGS_DIR
-VDE_CORE_SCRIPTS_DIR="$VDE_ROOT_DIR/scripts"
-readonly VDE_CORE_SCRIPTS_DIR
-VDE_CORE_DATA_DIR="$VDE_CORE_SCRIPTS_DIR/data"
-readonly VDE_CORE_DATA_DIR
-VDE_CORE_CACHE_DIR="$VDE_ROOT_DIR/.cache"
-readonly VDE_CORE_CACHE_DIR
-VDE_CORE_VM_TYPES_CONF="$VDE_CORE_DATA_DIR/vm-types.conf"
-readonly VDE_CORE_VM_TYPES_CONF
-VDE_CORE_VM_TYPES_CACHE="$VDE_CORE_CACHE_DIR/vm-types.cache"
-readonly VDE_CORE_VM_TYPES_CACHE
+VDE_CORE_CONFIGS_DIR="${VDE_CORE_CONFIGS_DIR:-$VDE_ROOT_DIR/configs/docker}"
+export VDE_CORE_CONFIGS_DIR
+VDE_CORE_SCRIPTS_DIR="${VDE_CORE_SCRIPTS_DIR:-$VDE_ROOT_DIR/scripts}"
+export VDE_CORE_SCRIPTS_DIR
+VDE_CORE_DATA_DIR="${VDE_CORE_DATA_DIR:-$VDE_CORE_SCRIPTS_DIR/data}"
+export VDE_CORE_DATA_DIR
+VDE_CORE_CACHE_DIR="${VDE_CORE_CACHE_DIR:-$VDE_ROOT_DIR/.cache}"
+export VDE_CORE_CACHE_DIR
+VDE_CORE_VM_TYPES_CONF="${VDE_CORE_VM_TYPES_CONF:-$VDE_CORE_DATA_DIR/vm-types.conf}"
+export VDE_CORE_VM_TYPES_CONF
+VDE_CORE_VM_TYPES_CACHE="${VDE_CORE_VM_TYPES_CACHE:-$VDE_CORE_CACHE_DIR/vm-types.cache}"
+export VDE_CORE_VM_TYPES_CACHE
 
 # -----------------------
 # Logging Functions
@@ -151,9 +146,13 @@ _assoc_keys() {
 _assoc_get() {
     local array_name="$1"
     local key="$2"
-    local value
-    eval "value=\"\${${array_name}[\"$key\"]}\""
-    echo "$value"
+    local value_ref="${array_name}[$key]" # Construct reference string
+    # Check if key exists in the array_name array
+    if [[ -n "${(P)array_name}[$key]+_}" ]]; then
+        echo "${(P)value_ref}" # Use indirect parameter expansion
+        return 0
+    fi
+    return 1
 }
 
 # vde_core_save_cache - Save loaded VM types to cache file

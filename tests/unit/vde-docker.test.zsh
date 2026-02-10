@@ -8,12 +8,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source dependencies
-source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
-source "$PROJECT_ROOT/scripts/lib/vde-constants"
-source "$PROJECT_ROOT/scripts/lib/vde-errors"
-source "$PROJECT_ROOT/scripts/lib/vde-naming"
-source "$PROJECT_ROOT/scripts/lib/vde-path-utils"
-source "$PROJECT_ROOT/scripts/lib/vde-docker"
 
 # Test configuration
 VERBOSE=${VERBOSE:-false}
@@ -54,6 +48,8 @@ test_fail() {
 TEST_TMPDIR=""
 
 setup_test_env() {
+    export VDE_TEST_MODE=1 # Disable readonly for constants in tests
+
     TEST_TMPDIR="/tmp/vde-docker-test-$"
     mkdir -p "$TEST_TMPDIR"
     export HOME="$TEST_TMPDIR/home"
@@ -63,10 +59,29 @@ setup_test_env() {
     mkdir -p "$TEST_TMPDIR/cache"
     mkdir -p "$TEST_TMPDIR/port-registry"
 
-    # Override paths for testing
+    # Export VDE_ROOT_DIR to ensure libraries resolve their internal paths correctly
+    export VDE_ROOT_DIR="$PROJECT_ROOT"
+
+    # Export specific VDE path variables so libraries pick them up from the environment
     export VDE_CONFIG_DIR="$TEST_TMPDIR/configs/docker"
     export VDE_CACHE_DIR="$TEST_TMPDIR/cache"
     export VDE_PORT_REGISTRY="$TEST_TMPDIR/port-registry"
+    export VDE_HOME_DIR="$HOME"
+
+    # Unset guards to ensure libraries are re-sourced in this isolated environment
+    unset _VDE_SHELL_COMPAT_LOADED _VDE_CONSTANTS_LOADED _VDE_ERRORS_LOADED \
+          _VDE_NAMING_LOADED _VDE_PATH_UTILS_LOADED _VDE_CORE_GUARD_LOADED \
+          _VM_COMMON_LOADED _VDE_DOCKER_LOADED 2>/dev/null
+
+    # Source all necessary VDE libraries. They will pick up the exported VDE_* variables.
+    source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
+    source "$PROJECT_ROOT/scripts/lib/vde-constants"
+    source "$PROJECT_ROOT/scripts/lib/vde-errors"
+    source "$PROJECT_ROOT/scripts/lib/vde-naming"
+    source "$PROJECT_ROOT/scripts/lib/vde-path-utils"
+    source "$PROJECT_ROOT/scripts/lib/vde-core"
+    source "$PROJECT_ROOT/scripts/lib/vm-common"
+    source "$PROJECT_ROOT/scripts/lib/vde-docker"
 }
 
 teardown_test_env() {
