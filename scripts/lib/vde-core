@@ -151,7 +151,9 @@ _assoc_keys() {
 _assoc_get() {
     local array_name="$1"
     local key="$2"
-    eval "echo \"\${$array_name[\$key]}\""
+    local value
+    eval "value=\"\${${array_name}[\"$key\"]}\""
+    echo "$value"
 }
 
 # vde_core_save_cache - Save loaded VM types to cache file
@@ -345,7 +347,7 @@ vde_core_get_all_vms() {
 vde_core_get_vm_type() {
     local vm="$1"
     vde_core_load_types
-    _assoc_get "VDE_CORE_VM_TYPE" "$vm" 2>/dev/null || echo ""
+    echo "$(_assoc_get "VDE_CORE_VM_TYPE" "$vm" 2>/dev/null)"
 }
 
 # vde_core_is_known_vm - Check if a VM name is known
