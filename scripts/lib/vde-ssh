@@ -301,6 +301,14 @@ merge_ssh_config_entry() {
     local identity_file="$4"
 
     local ssh_config="$VDE_SSH_CONFIG"
+    local temp_file
+    temp_file=$(mktemp "${ssh_config}.tmp.XXXXXX")
+
+    if [ -z "$temp_file" ]; then
+        _error "Failed to create temporary file"
+        return $VDE_ERR_GENERAL
+    fi
+
     local entry="
 Host $host_alias
     HostName localhost

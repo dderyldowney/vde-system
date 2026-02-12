@@ -115,7 +115,13 @@ _lookup_vm_by_alias() {
     # Ensure map is built
     _ensure_alias_map
     
-    # Direct O(1) lookup
+    # Check if input is already a canonical name (higher priority)
+    if [[ -n "${VM_TYPE[$input]:-}" ]]; then
+        echo "$input"
+        return $VDE_SUCCESS
+    fi
+
+    # Direct O(1) lookup in alias map
     local canonical
     canonical=$(_assoc_get "VM_ALIAS_MAP" "$input" 2>/dev/null)
     
@@ -224,27 +230,17 @@ detect_intent() {
             ;;
     esac
 
-    # Check for status (includes common typos: runing, runnig)
-    # Checked early to avoid *list* matching "currently" or *sho* matching "show"
+    # Check for status (be specific to avoid false positives)
     case "$input_lower" in
-        *running*|*runing*|*runnig*|*status*|*staus*|*satus*|*"current state"*|*"what's currently running"*)
+        *running*|*"status"*|*"staus"*|*"satus"*|*"current state"*)
             echo "$INTENT_STATUS"
             return $VDE_SUCCESS
             ;;
     esac
 
     # Check for list/show intents (general patterns)
-    # Includes typo patterns: lis, lst (prefix omission), shw (omission)
     case "$input_lower" in
-        *" list"*|*"list "*|*"/list"*|*lis*|*lst*|*sho*|*"what available"*|*what*available*)
-            echo "$INTENT_LIST_VMS"
-            return $VDE_SUCCESS
-            ;;
-    esac
-
-    # Check for "what can I create" or similar patterns
-    case "$input_lower" in
-        *"what can i"*|*"what vms"*|*"which vms"*)
+        *" list"*|*"list "*|*"/list"*|*"show "*|*available*|*what*can*i*create*|*which*vms*)
             echo "$INTENT_LIST_VMS"
             return $VDE_SUCCESS
             ;;
@@ -258,18 +254,7 @@ detect_intent() {
             ;;
     esac
 
-    # Check for create intent (be specific to avoid false matches)
-    # Includes typo patterns: cret, crat (prefix omission), craet (transposition)
-    # Note: 'creat' removed to avoid false positives with "create directory" etc.
-    case "$input_lower" in
-        *"create a"*|*"create new"*|*"create "*|*cret*|*crat*|*craet*|*"make a"*|*"make new"*|*"set up"*|*"add "*)
-            echo "$INTENT_CREATE_VM"
-            return $VDE_SUCCESS
-            ;;
-    esac
-
     # Check for restart intent (must be checked before start/stop)
-    # Includes typo patterns: restrat, resart (transposition)
     case "$input_lower" in
         *restart*|*restrat*|*resart*|*reatart*|*reboot*|*rebot*|*rebuild*)
             echo "$INTENT_RESTART_VM"
@@ -277,9 +262,15 @@ detect_intent() {
             ;;
     esac
 
+    # Check for create intent (be specific)
+    case "$input_lower" in
+        *"create"*|*"make a"*|*"make new"*|*"set up"*|*"add "*)
+            echo "$INTENT_CREATE_VM"
+            return $VDE_SUCCESS
+            ;;
+    esac
+
     # Check for start intent
-    # Includes typo patterns: strt, strat, satrt (transposition), launc (omission)
-    # Note: 'stat' removed to avoid collision with status intent
     case "$input_lower" in
         *start*|*strt*|*strat*|*satrt*|*launch*|*launc*|*boot*)
             echo "$INTENT_START_VM"
@@ -362,7 +353,8 @@ extract_vm_names() {
     # Use explicit splitting for zsh/bash compatibility
     echo "$input_lower" | tr ' ' '\n' | while IFS= read -r word; do
         # Clean the word (remove punctuation, keep only alphanumeric and plus)
-        # Note: '#' is removed as it starts comments in shell and is not valid in VM names
+        # Handle cases where word might be followed by punctuation (e.g. "python.")
+        word=$(echo "$word" | sed 's/[^a-z0-9+].*$//')
         word=$(echo "$word" | tr -cd 'a-z0-9+')
         [ -z "$word" ] && continue
 
@@ -407,10 +399,10 @@ extract_filter() {
     input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
 
     case "$input_lower" in
-        *language*|*lang*)
+        *languages*|*language*|*lang*)
             echo "lang"
             ;;
-        *service*|*svc*)
+        *services*|*service*|*svc*)
             echo "svc"
             ;;
         *)
@@ -829,19 +821,24 @@ execute_plan() {
 
             for vm in $vms; do
                 [ -n "$vm" ] || continue
-                if ! vde_validate_vm_type "$vm"; then
+                if ! is_known_vm "$vm" >/dev/null 2>&1; then
                     # Unknown VM type - prompt user to confirm
                     if ! prompt_confirm_unknown_vm "$vm"; then
                         return $VDE_ERR_NOT_FOUND
                     fi
                     # User confirmed - proceed with creation attempt
-                    # (vde_create_vm will fail if the VM type truly doesn't exist)
                 fi
 
-                if vde_vm_exists "$vm"; then
+                if vm_exists "$vm" >/dev/null 2>&1; then
                     log_info "VM $vm already exists. Skipping creation."
                 else
-                    vde_create_vm "$vm" || return $?
+                    # create-virtual-for handles the actual creation
+                    ./scripts/create-virtual-for "$vm"
+                    local create_rc=$?
+                    # 0=created, 6=exists
+                    if [ $create_rc -ne 0 ] && [ $create_rc -ne 6 ]; then
+                        return $create_rc
+                    fi
                 fi
             done
             return $VDE_SUCCESS
@@ -855,19 +852,14 @@ execute_plan() {
 
             for vm in $vms; do
                 [ -n "$vm" ] || continue
-                if ! vde_vm_exists "$vm"; then
+                if ! vm_exists "$vm" >/dev/null 2>&1; then
                     log_error "VM $vm does not exist. Create it first."
                     return $VDE_ERR_NOT_FOUND
                 fi
             done
 
-            # Build args string with flags and VMs
-            local start_args=""
-            [ "$rebuild" = "true" ] && start_args="--rebuild"
-            [ "$nocache" = "true" ] && start_args="$start_args --no-cache"
-            start_args="$start_args $vms"
-
-            vde_start_multiple_vms $start_args
+            # start-virtual handles starting one or more VMs
+            ./scripts/start-virtual $vms
             return $?
             ;;
 
@@ -877,7 +869,8 @@ execute_plan() {
                 return $VDE_ERR_INVALID_INPUT
             fi
 
-            vde_stop_multiple_vms $vms
+            # shutdown-virtual handles stopping one or more VMs
+            ./scripts/shutdown-virtual $vms
             return $?
             ;;
 
@@ -889,7 +882,8 @@ execute_plan() {
 
             for vm in $vms; do
                 [ -n "$vm" ] || continue
-                vde_restart_vm "$vm" "$rebuild" "$nocache"
+                # restart-virtual handles restarting a VM
+                ./scripts/restart-virtual "$vm"
             done
             return $VDE_SUCCESS
             ;;
@@ -902,19 +896,8 @@ execute_plan() {
 
             for vm in $vms; do
                 [ -n "$vm" ] || continue
-                local ssh_info
-                ssh_info=$(vde_get_ssh_info "$vm")
-
-                if [ -z "$ssh_info" ]; then
-                    log_error "Could not get SSH info for $vm"
-                else
-                    local ssh_host="${ssh_info%%|*}"
-                    local ssh_port="${ssh_info##*|}"
-                    echo "To connect to $vm:"
-                    echo "  SSH command: ssh $ssh_host"
-                    echo "  Port: $ssh_port"
-                    echo "  Or use VSCode Remote-SSH with host: $ssh_host"
-                fi
+                # ssh-vm handles getting connection info
+                ./scripts/ssh-vm "$vm" --info
             done
             return $VDE_SUCCESS
             ;;

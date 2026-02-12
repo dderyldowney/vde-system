@@ -16,7 +16,9 @@ _VDE_NAMING_LOADED=1
 
 # Patterns
 VDE_NAME_PATTERN='^[a-z0-9-]+$'
-VDE_LANG_PATTERN='^[a-z0-9]+-dev$'
+# Language VMs config names should be simple alphanumeric (e.g. python, c, rust)
+# The -dev suffix is applied to the container name, not the config name.
+VDE_LANG_PATTERN='^[a-z0-9]+$'
 
 # vde_validate_name - Validate a VM name against naming conventions
 vde_validate_name() {
@@ -35,13 +37,18 @@ vde_validate_name() {
     
     case "$vm_type" in
         lang|language)
+            # Language config names should NOT have -dev suffix
+            if echo "$name" | grep -q -- "-dev$"; then
+                echo "Language VM config name should NOT end with '-dev'. (Container will have -dev suffix automatically)"
+                return 1
+            fi
             if ! echo "$name" | grep -qE "$VDE_LANG_PATTERN"; then
-                echo "Language VMs must end with '-dev' (e.g., python-dev, rust-dev)"
+                echo "Language VM name must be alphanumeric (e.g., python, rust)"
                 return 1
             fi
             ;;
         service)
-            if echo "$name" | grep -qE "$VDE_LANG_PATTERN"; then
+            if echo "$name" | grep -qE -- "-dev$"; then
                 echo "Service VMs should NOT end with '-dev' (e.g., postgres, redis)"
                 return 1
             fi
@@ -98,6 +105,18 @@ vde_get_hostname() {
 # vde_detect_vm_type_from_name - Detect VM type from name
 vde_detect_vm_type_from_name() {
     local name="$1"
+    
+    # Try looking it up in known VM types first (if VM_TYPE is available)
+    if [[ -n "${VM_TYPE[$name]:-}" ]]; then
+        echo "${VM_TYPE[$name]}"
+        return 0
+    fi
+
+    # Check without -dev suffix for language VMs
+    if [[ -n "${VM_TYPE[${name%-dev}]:-}" ]]; then
+        echo "${VM_TYPE[${name%-dev}]}"
+        return 0
+    fi
     
     if echo "$name" | grep -qE "$VDE_LANG_PATTERN"; then
         echo "lang"
