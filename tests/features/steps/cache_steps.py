@@ -421,7 +421,7 @@ def step_invalidate_cache_called(context):
 
     # Call real cache invalidation function
     result = subprocess.run(
-        ['bash', '-c', f'source {vde_core} && invalidate_vm_types_cache'],
+        ['zsh', '-c', f'source {vde_core} && invalidate_vm_types_cache'],
         capture_output=True,
         text=True,
         cwd=VDE_ROOT,

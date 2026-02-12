@@ -267,6 +267,7 @@ invalidate_vm_types_cache() {
 
     # Reset loaded flag (if using shell compatibility layer)
     unset _VDE_CORE_LOADED 2>/dev/null
+    unset _VM_TYPES_LOADED 2>/dev/null
 
     return $VDE_SUCCESS
 }

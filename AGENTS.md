@@ -1,84 +1,207 @@
-# VDE (Virtual Development Environment)
+# VDE Agent Directory
 
-VDE is a Docker-based container orchestration system for managing 20+ language VMs and 7+ service VMs. It provides a unified interface for creating, starting, stopping, and managing development environments with features like SSH agent forwarding, natural language command parsing, and template-based configuration generation.
+This file documents the specialized AI agents available within the Gemini-Kit team for developing and maintaining the Virtual Development Environment (VDE).
 
-## Code Style
+## Core Mandates
+- **MCP Server Utilization**: All agents must utilize connected MCP servers.
+- **Active Endpoints**: Ensure all tool invocations reference active MCP endpoints.
+- **Connectivity Validation**: Validate server connectivity prior to execution.
+- **Interaction Logging**: Log all MCP interactions for audit and troubleshooting.
 
-- **All shell scripts must use zsh** (`#!/usr/bin/env zsh` or `#!/bin/zsh`)
-  - Zsh version: 5.0 or later required
-  - `/bin/sh` and `/usr/bin/env sh` are strictly forbidden
-- **Indentation**: 2 spaces (no tabs)
-- **Line length**: Maximum 120 characters (soft limit)
-- **Trailing whitespace**: Never include trailing whitespace
-- **Final newline**: Every file must end in a newline
+---
 
-### Naming Conventions
-- **Constants**: `UPPER_CASE_WITH_UNDERSCORES`
-- **Local variables**: `lower_case_with_underscores`
-- **Environment variables**: `UPPER_CASE_WITH_UNDERSCORES`
-- **Private variables/functions**: Prefix with `_` (e.g., `_private_var`, `_helper_function`)
-- **Public functions**: `lower_case_with_underscores`
+## Planner
+- **Description**: Creates detailed implementation plans and strategies for complex features.
+- **File Path**: `agents/planner.md`
+- **Role**: Architect & Strategist
+- **Core Capabilities**: Task decomposition, architectural planning, dependency mapping.
+- **Dependencies**: Scout, Codebase Investigator.
+- **Interaction Protocol**: Invoke via `/plan` or direct request for a roadmap.
+- **Example Usage**: "Planner, create a strategy to migrate the remaining bash scripts to zsh."
 
-### Key Patterns
-- **Always quote variables**: `"$VAR"` not `$VAR`
-- **Use `[[`** for string comparisons (not `[` or `((`)
-- **Always use `local`** for function-scoped variables
-- **Return exit codes**: 0 for success, non-zero for failure
-- **Print to stdout for data, stderr for errors
+---
 
-## Architecture
+## Scout
+- **Description**: Explores the codebase to understand structure, patterns, and conventions.
+- **File Path**: `agents/scout.md`
+- **Role**: Information Gatherer
+- **Core Capabilities**: Codebase traversal, pattern identification, convention discovery.
+- **Dependencies**: None.
+- **Interaction Protocol**: Invoke via `/explore` or when starting a new task.
+- **Example Usage**: "Scout, find all files that source 'vde-parser' and document their usage."
 
-VDE uses a modular library architecture that separates concerns and enables code reuse:
+---
 
-### Libraries (scripts/lib/)
+## Coder
+- **Description**: Writes clean, efficient, and idiomatic code adhering to project standards.
+- **File Path**: `agents/coder.md`
+- **Role**: Software Engineer
+- **Core Capabilities**: Scripting (Zsh), Python development, Docker configuration.
+- **Dependencies**: Planner, Scout.
+- **Interaction Protocol**: Triggered during the implementation phase of a task.
+- **Example Usage**: "Coder, implement the new intent detection logic in 'vde-parser'."
 
-| Library | Purpose |
-|---------|---------|
-| **vde-constants** | Centralized constants (return codes, port ranges, timeouts) |
-| **vde-shell-compat** | Portable shell operations (zsh/bash compatibility) |
-| **vde-errors** | Error messages with remediation steps |
-| **vde-log** | Structured logging with rotation (JSON/text/syslog) |
-| **vde-core** | Essential VDE functions (VM types, queries, caching) |
-| **vm-common** | Full VDE functionality (VM types, ports, Docker, SSH, templates) |
-| **vde-commands** | Safe wrapper functions for VDE operations |
-| **vde-parser** | Pattern-based natural language parser (intent detection, entity extraction) |
-| **vde-naming** | VM naming conventions and validation |
-| **vde-progress** | Progress bars and status indicators |
-| **vde-audit** | VM audit trails and change tracking |
-| **vde-metrics** | Performance metrics and monitoring |
-| **vde-health** | Health checks and system status |
-| **vde-path-utils** | Path manipulation utilities |
+---
 
-### VM Architecture
-- **Language VMs (20 total)**: Ports 2200-2299 (c, cpp, asm, python, rust, js, csharp, ruby, go, java, kotlin, swift, php, scala, r, lua, flutter, elixir, haskell, zig)
-- **Service VMs (7 total)**: Ports 2400-2499 (postgres, redis, mongodb, nginx, mysql, rabbitmq, couchdb)
-- **Port Registry**: `.cache/port-registry` for fast port lookups
+## Tester
+- **Description**: Writes and executes tests to ensure software quality and reliability.
+- **File Path**: `agents/tester.md`
+- **Role**: QA Engineer
+- **Core Capabilities**: Behave BDD tests, Pytest, shell script verification.
+- **Dependencies**: Coder.
+- **Interaction Protocol**: Invoke via `/test` or after code changes.
+- **Example Usage**: "Tester, create a new feature file for the 'ssh-vm' command."
 
-### Command Parser Architecture
-- **9 supported intents**: list_vms, create_vm, start_vm, stop_vm, restart_vm, status, connect, add_vm_type, help
-- **Data-driven VM types**: `scripts/data/vm-types.conf` (pipe-delimited format)
+---
 
-## Testing
+## Reviewer
+- **Description**: Performs systematic code reviews to ensure quality and consistency.
+- **File Path**: `agents/reviewer.md`
+- **Role**: Quality Auditor
+- **Core Capabilities**: Static analysis, best practice verification, security checks.
+- **Dependencies**: Coder.
+- **Interaction Protocol**: Invoke via `/review` before committing changes.
+- **Example Usage**: "Reviewer, check these Zsh library changes for shell compatibility."
 
-- **BDD Framework**: Behave (Python) for behavior-driven testing
-- **Test Location**: `tests/features/`
-- **Test Categories**:
-  - Docker-free tests (no container dependencies) — `tests/features/docker-free/`
-  - Docker-required tests (full integration tests) — `tests/features/docker-required/`
-- **Test Execution**: `./run-tests.zsh` for all tests, `./run-vde-parser-tests.zsh` for parser tests
+---
 
-### Test Commands
-```bash
-./run-tests.zsh              # Run all tests
-./run-vde-parser-tests.zsh   # Run parser-specific tests
-behave tests/features/       # Run BDD tests directly
-```
+## Debugger
+- **Description**: Analyzes errors and bugs to identify root causes and suggest fixes.
+- **File Path**: `agents/debugger.md`
+- **Role**: Troubleshooting Expert
+- **Core Capabilities**: Log analysis, trace investigation, root cause analysis.
+- **Dependencies**: Scout, Tester.
+- **Interaction Protocol**: Invoke via `/debug` when tests fail or errors occur.
+- **Example Usage**: "Debugger, analyze why the 'vde-health' check is failing in the CI environment."
 
-## Security
+---
 
-- **SSH Agent Forwarding**: Private keys NEVER leave the host; only authentication socket is forwarded (read-only mount)
-- **SSH Key Management**: All keys detected and loaded automatically; public keys synced to `public-ssh-keys/`
-- **Validation**: All user inputs validated before execution; VM names validated for format
-- **No secrets in code**: API keys, credentials, and secrets must never be committed
-- **Parameter expansion**: Use parameterized queries for any external system interactions
-- **Error handling**: Provide meaningful error messages with remediation steps via `vde-errors` library
+## Git Manager
+- **Description**: Manages version control operations and commit history.
+- **File Path**: `agents/git-manager.md`
+- **Role**: SCM Administrator
+- **Core Capabilities**: Commit preparation, branch management, PR drafting.
+- **Dependencies**: Reviewer.
+- **Interaction Protocol**: Invoke when preparing to save or push work.
+- **Example Usage**: "Git Manager, prepare a commit for the parser enhancements."
+
+---
+
+## Security Auditor
+- **Description**: Conducts security audits and vulnerability scans on the codebase.
+- **File Path**: `agents/security-auditor.md`
+- **Role**: Security Engineer
+- **Core Capabilities**: Vulnerability detection, secret scanning, permission auditing.
+- **Dependencies**: Codebase Investigator.
+- **Interaction Protocol**: Invoke via `/security:analyze` or manual review.
+- **Example Usage**: "Security Auditor, scan the SSH configuration for potential privilege escalation."
+
+---
+
+## Docs Manager
+- **Description**: Manages project documentation and ensures it stays in sync with code.
+- **File Path**: `agents/docs-manager.md`
+- **Role**: Technical Writer
+- **Core Capabilities**: Markdown generation, technical deep dives, README updates.
+- **Dependencies**: Coder.
+- **Interaction Protocol**: Triggered after feature implementation or architectural changes.
+- **Example Usage**: "Docs Manager, update the 'Technical-Deep-Dive.md' with the new SSH architecture."
+
+---
+
+## Project Manager
+- **Description**: Oversees project progress, manages todos, and coordinates team tasks.
+- **File Path**: `agents/project-manager.md`
+- **Role**: Team Lead
+- **Core Capabilities**: Task tracking, roadmap management, workflow optimization.
+- **Dependencies**: All Agents.
+- **Interaction Protocol**: Consulted for high-level status or priority decisions.
+- **Example Usage**: "Project Manager, what are the high-priority items remaining for the zsh migration?"
+
+---
+
+## Database Admin
+- **Description**: Manages database configurations, migrations, and performance for service VMs.
+- **File Path**: `agents/database-admin.md`
+- **Role**: Database Specialist
+- **Core Capabilities**: SQL/NoSQL configuration, data persistence, service optimization.
+- **Dependencies**: DevOps Engineer.
+- **Interaction Protocol**: Consulted for tasks involving service VM data layers.
+- **Example Usage**: "Database Admin, optimize the PostgreSQL template for heavy write workloads."
+
+---
+
+## Backend Specialist
+- **Description**: Expert in server-side logic, API design, and system integration.
+- **File Path**: `agents/backend-specialist.md`
+- **Role**: Backend Architect
+- **Core Capabilities**: Service orchestration, API design, performance tuning.
+- **Dependencies**: Coder.
+- **Interaction Protocol**: Engaged for core system logic and service-to-service communication.
+- **Example Usage**: "Backend Specialist, design the communication protocol between the language VMs and the shared redis service."
+
+---
+
+## Fullstack Developer
+- **Description**: Versatile engineer capable of working across all layers of the stack.
+- **File Path**: `agents/fullstack-developer.md`
+- **Role**: Generalist Engineer
+- **Core Capabilities**: End-to-end feature development, integration testing.
+- **Dependencies**: Frontend Specialist, Backend Specialist.
+- **Interaction Protocol**: Assigned to tasks requiring both infrastructure and application-level changes.
+- **Example Usage**: "Fullstack Developer, implement a new service VM and its corresponding management CLI commands."
+
+---
+
+## Researcher
+- **Description**: Researches external resources, libraries, and best practices.
+- **File Path**: `agents/researcher.md`
+- **Role**: Knowledge Specialist
+- **Core Capabilities**: External documentation analysis, library comparison, technical research.
+- **Dependencies**: None.
+- **Interaction Protocol**: Invoke when exploring new technologies or solving unique problems.
+- **Example Usage**: "Researcher, find the best practices for implementing SSH agent forwarding in isolated Docker networks."
+
+---
+
+## Brainstormer
+- **Description**: Generates creative ideas and alternative approaches to problems.
+- **File Path**: `agents/brainstormer.md`
+- **Role**: Creative Thinker
+- **Core Capabilities**: Idea generation, brainstorming, alternative path analysis.
+- **Dependencies**: None.
+- **Interaction Protocol**: Invoke during the initial phase of complex problem-solving.
+- **Example Usage**: "Brainstormer, suggest three different ways we could handle automatic port collision detection."
+
+---
+
+## UI Designer
+- **Description**: Focuses on the user interface and user experience of VDE components.
+- **File Path**: `agents/ui-designer.md`
+- **Role**: UX/UI Specialist
+- **Core Capabilities**: CLI output design, progress indicator styling, UX workflow mapping.
+- **Dependencies**: Docs Manager.
+- **Interaction Protocol**: Consulted for improving the visual feedback and usability of the CLI.
+- **Example Usage**: "UI Designer, propose a more intuitive layout for the 'vde status' command output."
+
+---
+
+## Frontend Specialist
+- **Description**: Expert in frontend frameworks and user interface development.
+- **File Path**: `agents/frontend-specialist.md`
+- **Role**: Frontend Engineer
+- **Core Capabilities**: Web UI (if applicable), CLI presentation layers.
+- **Dependencies**: UI Designer.
+- **Interaction Protocol**: Consulted for any future web-based management dashboards.
+- **Example Usage**: "Frontend Specialist, suggest a React-based structure for a VDE management dashboard."
+
+---
+
+## Copywriter
+- **Description**: Creates high-quality marketing, community, and technical content.
+- **File Path**: `agents/copywriter.md`
+- **Role**: Content Creator
+- **Core Capabilities**: Technical blogging, release notes, community engagement content.
+- **Dependencies**: Docs Manager.
+- **Interaction Protocol**: Invoke when preparing public-facing announcements or blog posts.
+- **Example Usage**: "Copywriter, draft a blog post announcing the release of VDE Stage 7."
