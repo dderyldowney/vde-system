@@ -40,8 +40,17 @@ _VM_COMMON_LOADED=1
 
 # If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
 if [ -z "${VDE_ROOT_DIR:-}" ]; then
-    _VM_COMMON_SCRIPT_PATH="${(%):-%x}"
-    VDE_ROOT_DIR="$(cd "$(dirname "$_VM_COMMON_SCRIPT_PATH")/../.." && pwd)"
+    # Derivation logic for VDE root directory
+    if [ -n "$ZSH_VERSION" ]; then
+        # zsh-specific way to get the path of the current file being sourced
+        _VM_COMMON_SOURCE="${(%):-%x}"
+    else
+        # fallback for other shells
+        _VM_COMMON_SOURCE="${BASH_SOURCE[0]:-$0}"
+    fi
+    
+    # Calculate absolute path to root (assuming lib/ is at scripts/lib/)
+    VDE_ROOT_DIR="$(cd "$(dirname "$_VM_COMMON_SOURCE")/../.." && pwd)"
 fi
 export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 
@@ -692,6 +701,29 @@ is_known_vm() {
     return $VDE_ERR_NOT_FOUND
 }
 
+# vm_exists - Check if a VM configuration exists
+# Args: <vm_name>
+# Returns: 0 if configuration exists, 1 otherwise
+vm_exists() {
+    local vm_name="$1"
+    if [[ -f "$CONFIGS_DIR/$vm_name/docker-compose.yml" ]]; then
+        return 0
+    fi
+    return 1
+}
+
+# validate_vm_doesnt_exist - Ensure a VM has not been created yet
+# Args: <vm_name>
+# Returns: VDE_SUCCESS (0) if not exists, VDE_ERR_EXISTS (6) if already exists
+validate_vm_doesnt_exist() {
+    local vm_name="$1"
+    if vm_exists "$vm_name"; then
+        vde_error_container_exists "$vm_name"
+        return $VDE_ERR_EXISTS
+    fi
+    return $VDE_SUCCESS
+}
+
 # Get VM type
 get_vm_type() {
     local vm_name="$1"
@@ -812,6 +844,31 @@ clear_port_registry() {
 # =============================================================================
 # PORT ALLOCATION
 # =============================================================================
+
+# find_next_available_port - Find next available port for VM type
+# Args: <vm_type>
+# Returns: VDE_SUCCESS (0) and outputs port to stdout
+find_next_available_port() {
+    local vm_type="$1"
+    local min_port max_port
+
+    if [ "$vm_type" = "lang" ]; then
+        min_port=$VDE_LANG_PORT_START
+        max_port=$VDE_LANG_PORT_END
+    else
+        min_port=$VDE_SVC_PORT_START
+        max_port=$VDE_SVC_PORT_END
+    fi
+
+    local port
+    port=$(find_available_port "$min_port" "$max_port")
+    
+    if [ $? -eq 0 ] && [ -n "$port" ]; then
+        echo "$port"
+        return $VDE_SUCCESS
+    fi
+    return $VDE_ERR_GENERAL
+}
 
 # Find available port in range
 # Args: [min_port] [max_port]

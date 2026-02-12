@@ -19,6 +19,7 @@ from config import VDE_ROOT
 from vm_common import (
     run_vde_command,
     docker_ps,
+    docker_list_containers,
     container_exists,
     container_is_running,
     get_container_id,
@@ -203,7 +204,7 @@ def step_check_vm_status(context):
 @when('I get running VMs')
 def step_get_running_vms(context):
     """Get list of running VMs."""
-    running = docker_ps()
+    running = docker_list_containers()
     context.running_vms = running
 
 
@@ -376,7 +377,7 @@ def step_project_name(context, project_name):
 @then('container should be named "{container_name}"')
 def step_container_named(context, container_name):
     """Verify container has correct name."""
-    running = docker_ps()
+    running = docker_list_containers()
     assert container_name in running, f"Container should be named {container_name}: {running}"
 
 

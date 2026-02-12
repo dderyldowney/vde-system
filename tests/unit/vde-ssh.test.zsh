@@ -2,10 +2,13 @@
 # Unit Tests for vde-ssh Library
 # Tests SSH key management and configuration functions
 
-# Don't use set -e as it interferes with test counting
+# Enable test mode to prevent readonly constants
+export VDE_TEST_MODE=1
 
-# Hardcode PROJECT_ROOT for testing
-PROJECT_ROOT="/Users/dderyldowney/dev"
+# Get project root dynamically
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export VDE_ROOT_DIR="$PROJECT_ROOT"
 
 # Test configuration
 VERBOSE=${VERBOSE:-false}

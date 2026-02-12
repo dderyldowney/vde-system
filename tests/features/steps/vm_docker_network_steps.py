@@ -6,6 +6,7 @@ All steps use real system verification instead of context flags.
 """
 
 import subprocess
+import yaml
 from pathlib import Path
 
 from behave import given, then

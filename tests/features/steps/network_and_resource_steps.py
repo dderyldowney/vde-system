@@ -3,6 +3,7 @@ BDD Step definitions for Network, Resource, and Data patterns.
 """
 
 import subprocess
+from pathlib import Path
 from behave import given, then, when
 
 

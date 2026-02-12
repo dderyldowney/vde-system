@@ -224,10 +224,10 @@ detect_intent() {
             ;;
     esac
 
-    # Check for status BEFORE list/show (specific patterns)
-    # CRITICAL: Must check before list to avoid *list* matching "currently"
+    # Check for status (includes common typos: runing, runnig)
+    # Checked early to avoid *list* matching "currently" or *sho* matching "show"
     case "$input_lower" in
-        *"what's currently running"*|*"show status"*|*"show status of"*|*"status of"*|*staus*|*satus*)
+        *running*|*runing*|*runnig*|*status*|*staus*|*satus*|*"current state"*|*"what's currently running"*)
             echo "$INTENT_STATUS"
             return $VDE_SUCCESS
             ;;
@@ -246,14 +246,6 @@ detect_intent() {
     case "$input_lower" in
         *"what can i"*|*"what vms"*|*"which vms"*)
             echo "$INTENT_LIST_VMS"
-            return $VDE_SUCCESS
-            ;;
-    esac
-
-    # Check for status (includes common typos: runing, runnig)
-    case "$input_lower" in
-        *running*|*runing*|*runnig*|*status*|*staus*|*satus*|*"current state"*)
-            echo "$INTENT_STATUS"
             return $VDE_SUCCESS
             ;;
     esac

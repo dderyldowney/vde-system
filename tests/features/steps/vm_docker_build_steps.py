@@ -50,12 +50,10 @@ def step_rebuild_vms(context):
 # THEN steps - Verify build outcomes
 # =============================================================================
 
-
-
-
-
-    
-    # Also verify the Docker image exists
+@then('image should be built')
+def step_image_built_v2(context):
+    """Verify the Docker image exists."""
+    vm_name = getattr(context, 'vm_name', 'python')
     image_name = f"dev-{vm_name}"
     result = subprocess.run(
         ["docker", "images", "--format", "{{.Repository}}", image_name],
@@ -66,9 +64,9 @@ def step_rebuild_vms(context):
     assert image_name in result.stdout, f"Docker image {image_name} should exist after build"
 
 
-
-    
-    # Verify container exists after no-cache build
+@then('container exists after no-cache build')
+def step_container_after_nocache(context):
+    """Verify container exists after no-cache build."""
     vm_name = getattr(context, 'current_vm', 'python')
     assert container_exists(vm_name), f"Container {vm_name} should exist after no-cache build"
 

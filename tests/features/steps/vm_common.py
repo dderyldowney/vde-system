@@ -32,17 +32,26 @@ IN_TEST_MODE = os.environ.get("VDE_TEST_MODE") == "1"
 # Allow cleanup if running in container OR in test mode
 ALLOW_CLEANUP = IN_CONTAINER or IN_TEST_MODE
 
-def docker_ps():
-    """Check if Docker is available.
+def is_vde_available():
+    """Check if VDE command is available.
     
     Returns:
-        bool: True if docker command available, False otherwise
+        bool: True if vde command available, False otherwise
     """
     try:
         subprocess.run(['./scripts/vde', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return True
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
+
+
+def docker_ps():
+    """Get list of running Docker container names.
+    
+    Returns:
+        list: List of running container names, empty list if none or Docker unavailable
+    """
+    return docker_list_containers()
 
 
 def docker_ps_list():
@@ -404,9 +413,18 @@ def get_port_from_compose(vm_name):
     Returns:
         int: Host port number, or None if not found
     """
-    import yaml
+    import sys
+    # print(f"DEBUG: Python version: {sys.version}", file=sys.stderr)
+    # print(f"DEBUG: Python path: {sys.path}", file=sys.stderr)
+    try:
+        import yaml
+    except ImportError as e:
+        print(f"ERROR: Failed to import yaml: {e}", file=sys.stderr)
+        print(f"DEBUG: sys.path: {sys.path}", file=sys.stderr)
+        raise
 
-    compose_file = VDE_ROOT / "projects" / vm_name / "docker-compose.yml"
+    # Conventional path for VDE configs
+    compose_file = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
 
     if not compose_file.exists():
         return None

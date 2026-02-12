@@ -4,6 +4,9 @@
 
 # Get project root directly from script location
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+VDE_ROOT_DIR="$PROJECT_ROOT"
+export VDE_ROOT_DIR
+
 if [ ! -d "$PROJECT_ROOT/scripts" ]; then
     # If scripts directory not found, try current directory (common issue with relative paths)
     PROJECT_ROOT="$(cd "$(pwd)" && pwd)"
