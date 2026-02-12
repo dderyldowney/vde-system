@@ -190,11 +190,7 @@ def step_run_command(context, command):
             context.last_command = host_command
     else:
         # This is a VDE command
-        result = run_vde_command(command, timeout=120)
-        context.last_command = command
-        context.last_exit_code = result.returncode
-        context.last_output = result.stdout
-        context.last_error = result.stderr
+        run_vde_command(command, timeout=120, context=context)
 
 
 @when('I check docker-compose config')
@@ -211,3 +207,8 @@ def step_check_compose_config(context):
             timeout=30,
             cwd=compose_dir,
         )
+        context.vde_command_output = result.stdout + result.stderr
+        context.vde_command_exit_code = result.returncode
+    else:
+        context.vde_command_output = "Config directory not found"
+        context.vde_command_exit_code = 1

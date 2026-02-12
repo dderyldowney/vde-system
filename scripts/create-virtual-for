@@ -106,8 +106,6 @@ VM_NAME="$1"
 # -----------------------
 vde_progress_info "Validating configuration for '$VM_NAME'..."
 
-validate_vm_name "$VM_NAME" || exit 1
-
 # Resolve VM name (handles aliases)
 RESOLVED_NAME=$(resolve_vm_name "$VM_NAME" || true)
 if [[ -z "$RESOLVED_NAME" ]]; then
@@ -120,45 +118,32 @@ fi
 # Use resolved name
 VM_NAME="$RESOLVED_NAME"
 
-validate_vm_doesnt_exist "$VM_NAME" || {
-    vde_error_container_exists "$VM_NAME"
-    exit 1
-}
-
-# -----------------------
-# SSH Environment
-# -----------------------
-ensure_ssh_environment
-
-# -----------------------
 # Get VM Configuration
-# -----------------------
-VM_TYPE=$(get_vm_info type "$VM_NAME")
-VM_DISPLAY=$(get_vm_info display "$VM_NAME")
-VM_INSTALL=$(get_vm_info install "$VM_NAME")
-VM_SVC_PORT=$(get_vm_info svc_port "$VM_NAME")
+_vm_type=$(get_vm_info type "$VM_NAME")
+_vm_display=$(get_vm_info display "$VM_NAME")
+_vm_install=$(get_vm_info install "$VM_NAME")
+_vm_svc_port=$(get_vm_info svc_port "$VM_NAME")
 
-if [[ -z "$VM_TYPE" ]]; then
+if [[ -z "$_vm_type" ]]; then
     vde_error_vm_not_found "$VM_NAME"
     exit 1
 fi
 
-# Detect VM type if not explicitly set
-if [[ -z "$VM_TYPE" ]] || [[ "$VM_TYPE" == "lang" ]]; then
-    DETECTED_TYPE=$(vde_detect_vm_type_from_name "$VM_NAME")
-    if [[ "$DETECTED_TYPE" == "lang" ]]; then
-        vde_validate_name_or_fail "$VM_NAME" "lang"
-    fi
+validate_vm_name "$VM_NAME" "$_vm_type" || exit 1
+
+if vm_exists "$VM_NAME"; then
+    vde_error_container_exists "$VM_NAME"
+    exit $VDE_ERR_EXISTS
 fi
 
-vde_progress_info "VM Type: $VM_TYPE"
-vde_progress_info "Display Name: $VM_DISPLAY"
+vde_progress_info "VM Type: $_vm_type"
+vde_progress_info "Display Name: $_vm_display"
 
 # -----------------------
 # Allocate Port
 # -----------------------
 vde_progress_info "Allocating SSH port..."
-SSH_PORT=$(find_next_available_port "$VM_TYPE")
+SSH_PORT=$(find_next_available_port "$_vm_type")
 if [[ $? -ne 0 ]]; then
     vde_error_port_in_use "all available ports"
     exit 1
@@ -169,7 +154,7 @@ vde_progress_info "Allocated SSH port: $SSH_PORT"
 # Create Directories
 # -----------------------
 vde_progress_info "Creating directory structure..."
-ensure_vm_directories "$VM_NAME" "$VM_TYPE"
+ensure_vm_directories "$VM_NAME" "$_vm_type"
 
 # -----------------------
 # Create Docker Compose File
@@ -178,7 +163,7 @@ vde_progress_info "Creating docker-compose.yml..."
 
 compose_file="$CONFIGS_DIR/$VM_NAME/docker-compose.yml"
 
-if [[ "$VM_TYPE" == "lang" ]]; then
+if [[ "$_vm_type" == "lang" ]]; then
     template_file="$TEMPLATES_DIR/compose-language.yml"
 else
     template_file="$TEMPLATES_DIR/compose-service.yml"
@@ -193,18 +178,19 @@ fi
 render_template "$template_file" \
     NAME "$VM_NAME" \
     SSH_PORT "$SSH_PORT" \
-    INSTALL_CMD "$VM_INSTALL" \
-    SERVICE_PORT "$VM_SVC_PORT" \
+    INSTALL_CMD "$_vm_install" \
+    SERVICE_PORT "$_vm_svc_port" \
     > "$compose_file"
 
 # Handle multiple service ports
-if [[ "$VM_TYPE" == "service" ]] && [[ -n "$VM_SVC_PORT" ]]; then
+if [[ "$_vm_type" == "service" ]] && [[ -n "$_vm_svc_port" ]]; then
     while IFS= read -r line; do
-        if [[ "$line" == "  ##SERVICE_PORTS##" ]]; then
-            IFS=',' read -A PORTS <<< "$VM_SVC_PORT"
-            for port in "${PORTS[@]}"; do
-                port=$(echo "$port" | tr -d ' ')
-                echo "  - \"$port:$port\""
+        if [[ "$line" == *"##SERVICE_PORTS##" ]]; then
+            # Split ports portably
+            local p
+            echo "$_vm_svc_port" | tr ',' '\n' | while read -r p; do
+                p=$(echo "$p" | tr -d ' ')
+                echo "      - \"$p:$p\""
             done
         else
             echo "$line"
@@ -218,6 +204,11 @@ fi
 
 vde_progress_done "Created: $compose_file"
 
+# Output rendered file for BDD verification
+if [[ -n "$VDE_TEST_MODE" ]]; then
+    cat "$compose_file"
+fi
+
 # -----------------------
 # Create Environment File
 # -----------------------
@@ -226,19 +217,21 @@ vde_progress_info "Creating environment file..."
 env_file="$VDE_ROOT_DIR/env-files/$VM_NAME.env"
 
 cat > "$env_file" <<EOF
-# Environment variables for $VM_DISPLAY development container
+# Environment variables for $_vm_display development container
 SSH_PORT=$SSH_PORT
 DATABASE_URL=postgresql://devuser:SuperSecretPassword123!@postgres:5432/${VM_NAME}_dev_db
 REDIS_HOST=redis
 REDIS_PORT=6379
 EOF
 
-if [[ -n "$VM_SVC_PORT" ]]; then
-    IFS=',' read -A PORTS <<< "$VM_SVC_PORT"
-    for port in "${PORTS[@]}"; do
-        port=$(echo "$port" | tr -d ' ')
-        upper_name=$(echo "$VM_NAME" | tr '[:lower:]' '[:upper:]')
-        echo "${upper_name}_PORT=$port" >> "$env_file"
+if [[ -n "$_vm_svc_port" ]]; then
+    local p
+    echo "$_vm_svc_port" | tr ',' '\n' | while read -r p; do
+        p=$(echo "$p" | tr -d ' ')
+        [ -n "$p" ] && {
+            upper_name=$(echo "$VM_NAME" | tr '[:lower:]' '[:upper:]')
+            echo "${upper_name}_PORT=$p" >> "$env_file"
+        }
     done
 fi
 
@@ -251,19 +244,19 @@ vde_progress_done "Created: $env_file"
 if [[ -n "$VDE_TEST_MODE" ]]; then
     vde_progress_info "Skipping SSH config update (test mode)"
     ssh_host="${VM_NAME}-dev"
-    if [[ "$VM_TYPE" == "service" ]]; then
+    if [[ "$_vm_type" == "service" ]]; then
         ssh_host="$VM_NAME"
     fi
 else
     vde_progress_info "Updating SSH configuration..."
 
-    if [[ "$VM_TYPE" == "lang" ]]; then
+    if [[ "$_vm_type" == "lang" ]]; then
         ssh_host="${VM_NAME}-dev"
     else
         ssh_host="$VM_NAME"
     fi
 
-    if ! merge_ssh_config_entry "$ssh_host" "$SSH_PORT" "$VM_DISPLAY"; then
+    if ! merge_ssh_config_entry "$ssh_host" "$SSH_PORT" "$_vm_display"; then
         vde_error_permission_denied "~/.ssh/config"
         exit 1
     fi
@@ -293,7 +286,7 @@ echo ""
 echo "Created files:"
 echo "  - $compose_file"
 echo "  - $env_file"
-if [[ "$VM_TYPE" == "lang" ]]; then
+if [[ "$SELECTED_VM_TYPE" == "lang" ]]; then
     echo "  - $VDE_ROOT_DIR/projects/$VM_NAME/"
 else
     echo "  - $VDE_ROOT_DIR/data/$VM_NAME/"

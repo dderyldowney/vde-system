@@ -500,21 +500,26 @@ def wait_for_container_stopped(container_name, timeout=30):
     return False
 
 
-def run_vde_command(command, timeout=120):
+class CommandResult:
+    def __init__(self, stdout, stderr, returncode, args=None):
+        self.stdout = stdout or ""
+        self.stderr = stderr or ""
+        self.returncode = returncode
+        self.args = args or []
+
+def run_vde_command(command, timeout=120, context=None):
     """Run a VDE script and return the result.
 
     Args:
-        command: Command as string or list (will be converted to string)
+        command: Command as string or list
         timeout: Command timeout in seconds
+        context: Optional behave context to update with results
 
     Returns:
-        subprocess.CompletedResult: The result of running the command
-
-    The command can be:
-    - A direct script: 'start-virtual python' or ['start-virtual', 'python']
-    - A VDE parser command: 'create go' or ['create', 'go']
-    - Already formatted: './scripts/start-virtual python'
+        CommandResult: Object with stdout, stderr, and returncode
     """
+    import shlex
+    
     # Direct VDE scripts (called directly)
     _DIRECT_SCRIPTS = {
         'start-virtual', 'stop-virtual', 'shutdown-virtual', 'remove-virtual',
@@ -527,79 +532,67 @@ def run_vde_command(command, timeout=120):
         'list', 'status', 'health', 'nuke', 'help',
     }
 
-    # Handle both string and list command formats
-    if isinstance(command, list):
-        command_str = ' '.join(str(c) for c in command)
+    # Standardize to list of args
+    if isinstance(command, str):
+        args = shlex.split(command)
     else:
-        command_str = str(command)
+        args = [str(c) for c in command]
 
-    # Determine the command to run
-    first_word = command_str.split()[0] if command_str.strip() else ''
+    if not args:
+        return CommandResult("", "Empty command", 1)
 
-    # Determine the script path and arguments
+    first_word = args[0]
+    
+    # Determine the actual command list
     if first_word in _DIRECT_SCRIPTS:
-        # Direct script execution
-        script_path = SCRIPTS_DIR / first_word
-        args = command_str.split()[1:]
-        cmd = [str(script_path)] + args
+        cmd = ["zsh", str(SCRIPTS_DIR / first_word)] + args[1:]
     elif first_word in _VDE_SUBCOMMANDS:
-        # Use the vde parser
-        script_path = SCRIPTS_DIR / 'vde'
-        args = command_str.split()
-        cmd = [str(script_path)] + args
+        cmd = ["zsh", str(SCRIPTS_DIR / 'vde')] + args
+    elif first_word == 'vde' or first_word == './scripts/vde':
+        cmd = ["zsh", str(SCRIPTS_DIR / 'vde')] + args[1:]
     else:
-        # Assume it's already a full command or needs ./scripts/ prefix
-        if command_str.startswith('./'):
-            cmd = command_str.split()
-        elif command_str.startswith('.'):
-            # Relative path from VDE_ROOT
-            full_path = VDE_ROOT / command_str
-            cmd = [str(full_path)]
+        # Prepend zsh if it's a known script in scripts directory
+        potential_script = SCRIPTS_DIR / first_word
+        if potential_script.exists():
+            cmd = ["zsh", str(potential_script)] + args[1:]
         else:
-            # Try as-is or prepend scripts directory
-            script_path = SCRIPTS_DIR / first_word
-            if script_path.exists():
-                args = command_str.split()[1:]
-                cmd = [str(script_path)] + args
-            else:
-                # Execute as shell command
-                cmd = command_str
+            # Fallback to direct execution with zsh
+            cmd = ["zsh", "-c", " ".join(args)]
 
     # Execute the command
     try:
-        if isinstance(cmd, str):
-            # Shell command
-            result = subprocess.run(
-                cmd,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                cwd=str(VDE_ROOT)
-            )
-        else:
-            # List command
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                cwd=str(VDE_ROOT)
-            )
-        return result
-    except subprocess.TimeoutExpired:
-        # Return a result with timeout info
-        return subprocess.CompletedProcess(
-            args=cmd,
-            returncode=-9,  # SIGKILL equivalent for timeout
-            stdout='',
-            stderr=f'Command timed out after {timeout} seconds'
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=str(VDE_ROOT)
+        )
+        cmd_res = CommandResult(result.stdout, result.stderr, result.returncode, args=cmd)
+    except subprocess.TimeoutExpired as e:
+        cmd_res = CommandResult(
+            getattr(e, 'stdout', '') or '',
+            (getattr(e, 'stderr', '') or '') + f"\n[TIMEOUT] Command timed out after {timeout}s",
+            124,
+            args=cmd
         )
     except Exception as e:
-        # Return a result with error info
-        return subprocess.CompletedProcess(
-            args=cmd,
-            returncode=-1,
-            stdout='',
-            stderr=str(e)
-        )
+        cmd_res = CommandResult("", str(e), 1, args=cmd)
+
+    # Update context if provided
+    if context:
+        # Store full result
+        context.vde_command_result = cmd_res
+        
+        # Standardized attributes used by many step files
+        # IMPORTANT: Always populate even if command failed
+        context.vde_command_output = (cmd_res.stdout or "") + (cmd_res.stderr or "")
+        context.vde_command_exit_code = cmd_res.returncode
+        
+        # Legacy attributes used by some older step files
+        context.last_output = cmd_res.stdout or ""
+        context.last_error = cmd_res.stderr or ""
+        context.last_exit_code = cmd_res.returncode
+        context.last_command = " ".join(args)
+
+    return cmd_res

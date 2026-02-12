@@ -534,15 +534,7 @@ def step_ask_available_vms(context):
 def step_ask_available_vms_quoted(context):
     """Parse list VMs request and load actual VM data from vm-types.conf."""
     # Execute the actual list-vms command to get real output
-    result = subprocess.run(
-        ['./scripts/list-vms'],
-        cwd=VDE_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=30
-    )
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
+    run_vde_command(['list-vms'], context=context, timeout=30)
 
     # Parse the natural language request using real parser
     context.detected_intent = _get_real_intent('what VMs can I create')
@@ -565,15 +557,7 @@ def step_ask_available_vms_quoted(context):
 def step_ask_show_all_services(context):
     """Parse show all services request and load service VM data from vm-types.conf."""
     # Execute the actual list-vms command to get real output
-    result = subprocess.run(
-        ['./scripts/list-vms'],
-        cwd=VDE_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=30
-    )
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
+    run_vde_command(['list-vms'], context=context, timeout=30)
 
     # Parse the natural language request using real parser
     context.detected_intent = _get_real_intent('show all services')
@@ -645,15 +629,7 @@ def step_plan_start_go_mongodb(context):
 def step_ask_list_languages(context):
     """Parse list languages request and load language VM data from vm-types.conf."""
     # Execute the actual list-vms command to get real output
-    result = subprocess.run(
-        ['./scripts/list-vms'],
-        cwd=VDE_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=30
-    )
-    context.last_output = result.stdout
-    context.last_exit_code = result.returncode
+    run_vde_command(['list-vms'], context=context, timeout=30)
 
     # Parse the natural language request using real parser
     context.detected_intent = _get_real_intent('list languages')
@@ -1196,13 +1172,10 @@ def step_both_in_plan(context):
 def step_services_not_included(context):
     """Verify service VMs are not in language list."""
     # Check that service VMs are filtered when showing language-only VMs
-    running = subprocess.run(
-        ['./scripts/vde', 'list', '--type', 'language'],
-        capture_output=True, text=True, timeout=30
-    )
-    if running.returncode == 0:
+    run_vde_command(['list', '--type', 'language'], context=context, timeout=30)
+    if context.vde_command_exit_code == 0:
         # Services like postgres, redis should not appear in language list
-        output = running.stdout.lower()
+        output = context.vde_command_output.lower()
         assert 'postgres' not in output or 'python' in output, \
             "Service VMs should be filtered from language-only list"
 
@@ -1273,69 +1246,51 @@ def step_microservices_valid(context):
 def step_detect_vm_exists(context):
     """Verify VM existence detection."""
     # Check that VM existence can be verified
-    result = subprocess.run(
-        ['./scripts/vde', 'status', 'python'],
-        capture_output=True, text=True, timeout=30
-    )
-    # Either VM exists (returncode 0) or doesn't exist (returncode non-zero)
-    assert result.returncode in [0, 1], "VM existence check should return valid status"
+    run_vde_command(['status', 'python'], context=context, timeout=30)
+    # Either VM exists or doesn't exist - both are valid for a status check
+    assert context.vde_command_exit_code in [0, 3, 6], "VM existence check should return valid status"
 
 
 @then('execution would detect the VM is already running')
 def step_detect_vm_running(context):
     """Verify VM running detection."""
-    result = subprocess.run(
-        ['./scripts/vde', 'status', 'python'],
-        capture_output=True, text=True, timeout=30
-    )
+    run_vde_command(['status', 'python'], context=context, timeout=30)
     # Status command should work
-    assert result.returncode in [0, 1], "VM status check should work"
+    assert context.vde_command_exit_code in [0, 3, 6], "VM status check should work"
 
 
 @then('execution would detect the VM is not running')
 def step_detect_vm_not_running(context):
     """Verify VM not running detection."""
-    result = subprocess.run(
-        ['./scripts/vde', 'status', 'python'],
-        capture_output=True, text=True, timeout=30
-    )
-    # Should return non-zero if VM is not running
-    assert result.returncode in [0, 1], "VM status should be verifiable"
+    run_vde_command(['status', 'python'], context=context, timeout=30)
+    # Should return valid code
+    assert context.vde_command_exit_code in [0, 3, 6], "VM status should be verifiable"
 
 
 @then('I would be notified of the existing VM')
 def step_notify_existing_vm(context):
     """Verify notification about existing VM."""
     # Verify that VDE can produce notifications
-    result = subprocess.run(
-        ['./scripts/vde', 'status', 'python'],
-        capture_output=True, text=True, timeout=30
-    )
+    run_vde_command(['status', 'python'], context=context, timeout=30)
     # VDE should produce some output (notification or status)
-    assert result.returncode in [0, 1], "VDE should respond with status"
+    assert context.vde_command_exit_code in [0, 3, 6], "VDE should respond with status"
 
 
 @then('I would be notified that it\'s already running')
 def step_notify_already_running(context):
     """Verify notification about already running VM."""
     # Check VDE help or status provides info about running state
-    result = subprocess.run(
-        ['./scripts/vde', 'status', 'python'],
-        capture_output=True, text=True, timeout=30
-    )
+    run_vde_command(['status', 'python'], context=context, timeout=30)
     # Should produce some output
-    assert result.returncode in [0, 1], "Status command should work"
+    assert context.vde_command_exit_code in [0, 3, 6], "Status command should work"
 
 
 @then('I would be notified that it\'s already stopped')
 def step_notify_already_stopped(context):
     """Verify notification about already stopped VM."""
-    result = subprocess.run(
-        ['./scripts/vde', 'status', 'python'],
-        capture_output=True, text=True, timeout=30
-    )
+    run_vde_command(['status', 'python'], context=context, timeout=30)
     # Should produce some output indicating state
-    assert len(result.stdout) >= 0 or len(result.stderr) >= 0, \
+    assert len(context.vde_command_output) >= 0, \
         "VDE should produce some notification"
 
 

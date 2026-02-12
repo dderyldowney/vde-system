@@ -640,15 +640,20 @@ get_vm_info() {
     local field="$1"
     local vm_name="$2"
 
+    # DEBUG
+    # echo "DEBUG: get_vm_info field=$field vm=$vm_name type=${VM_TYPE[$vm_name]}" >&2
+
+    # Check if VM is known
+    if [[ -z "${VM_TYPE[$vm_name]:-}" ]]; then
+        return $VDE_ERR_NOT_FOUND
+    fi
+
     local var_name="VM_${(U)field}[$vm_name]"
     local value="${(P)var_name}"
 
-    if [ -n "$value" ]; then
-        echo "$value"
-        return $VDE_SUCCESS
-    fi
-
-    return $VDE_ERR_NOT_FOUND
+    # Output value (even if empty) and return success
+    echo "$value"
+    return $VDE_SUCCESS
 }
 
 # Get all VMs of a specific type

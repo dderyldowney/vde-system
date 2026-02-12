@@ -43,8 +43,8 @@ def step_lang_vm_allocated_port(context, vm_name, port):
     config_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
     if not config_path.exists():
         # Create VM
-        result = run_vde_command(f"create {vm_name}", timeout=120)
-        assert result.returncode == 0, f"Failed to create VM {vm_name}: {result.stderr}"
+        run_vde_command(f"create {vm_name}", timeout=120, context=context)
+        assert context.vde_command_exit_code == 0, f"Failed to create VM {vm_name}: {context.vde_command_output}"
     
     # Update config to have specific port if needed
     context.vm_name = vm_name
@@ -83,8 +83,8 @@ def step_vm_allocated_port(context, vm_name, port):
     """Ensure VM has specific port allocated."""
     config_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
     if not config_path.exists():
-        result = run_vde_command(f"create {vm_name}", timeout=120)
-        assert result.returncode == 0, f"Failed to create VM {vm_name}: {result.stderr}"
+        run_vde_command(f"create {vm_name}", timeout=120, context=context)
+        assert context.vde_command_exit_code == 0, f"Failed to create VM {vm_name}: {context.vde_command_output}"
     
     context.vm_name = vm_name
     context.allocated_port = port
@@ -94,8 +94,8 @@ def step_vm_allocated_port(context, vm_name, port):
 def step_reload_vm_cache(context):
     """Reload VM types cache."""
     # Run a command that triggers cache reload
-    result = run_vde_command("list", timeout=30)
-    assert result.returncode == 0, f"Failed to list VMs: {result.stderr}"
+    run_vde_command("list", timeout=30, context=context)
+    assert context.vde_command_exit_code == 0, f"Failed to list VMs: {context.vde_command_output}"
 
 
 @given('a non-VDE process is listening on port "{port}"')
@@ -138,32 +138,20 @@ def step_old_port_lock(context, seconds):
 def step_create_language_vm(context):
     """Create a language VM."""
     # Use a VM that hasn't been created yet
-    result = run_vde_command("create c", timeout=120)
-    context.last_command = "create c"
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
+    run_vde_command("create c", timeout=120, context=context)
 
 
 @when('I create language VM "{vm_name}"')
 def step_create_lang_vm(context, vm_name):
     """Create a specific language VM."""
-    result = run_vde_command(f"create {vm_name}", timeout=120)
-    context.last_command = f"create {vm_name}"
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
+    run_vde_command(f"create {vm_name}", timeout=120, context=context)
     context.vm_name = vm_name
 
 
 @when('I create a service VM')
 def step_create_service_vm(context):
     """Create a service VM."""
-    result = run_vde_command("create redis", timeout=120)
-    context.last_command = "create redis"
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
+    run_vde_command("create redis", timeout=120, context=context)
 
 
 @when('I query the port registry')
@@ -180,21 +168,13 @@ def step_query_port_registry(context):
 def step_run_port_cleanup(context):
     """Run port cleanup."""
     # This would be a VDE command to clean up stale locks
-    result = run_vde_command("cleanup-ports", timeout=30)
-    context.last_command = "cleanup-ports"
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
+    run_vde_command("cleanup-ports", timeout=30, context=context)
 
 
 @when('I remove VM "{vm_name}"')
 def step_remove_vm(context, vm_name):
     """Remove a VM."""
-    result = run_vde_command(f"remove {vm_name}", timeout=120)
-    context.last_command = f"remove {vm_name}"
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
+    run_vde_command(f"remove {vm_name}", timeout=120, context=context)
 
 
 # =============================================================================
