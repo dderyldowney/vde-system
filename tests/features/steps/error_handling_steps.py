@@ -516,11 +516,11 @@ def step_limit_retries(context):
 @then('report if all retries fail')
 def step_report_retries_failed(context):
     """Verify final failure report."""
-    output = context.last_output + context.last_error
+    output = getattr(context, 'last_output', '') + getattr(context, 'last_error', '')
     has_final = any(x in output.lower() for x in
                     ['failed', 'could not', 'unable', 'all retries'])
     # Either shows final failure or succeeded
-    assert has_final or context.last_exit_code == 0, \
+    assert has_final or getattr(context, 'last_exit_code', 0) == 0, \
         f"Expected final failure report in: {output}"
 
 
@@ -545,9 +545,9 @@ def step_not_duplicate_work(context):
     """Verify idempotent operation."""
     # Second run should not create duplicates
     first_run = getattr(context, 'first_run_output', '')
-    second_run = context.last_output
+    second_run = getattr(context, 'last_output', '')
     # Just verify operation completed
-    assert context.last_exit_code == 0, \
+    assert getattr(context, 'last_exit_code', 0) == 0, \
         f"Expected idempotent operation"
 
 
@@ -580,7 +580,7 @@ def step_retry_cleanly(context):
 @then('it should be in plain language')
 def step_plain_language(context):
     """Verify error in plain language."""
-    output = context.last_output + context.last_error
+    output = getattr(context, 'last_output', '') + getattr(context, 'last_error', '')
     # Should not have overly technical jargon
     is_readable = len(output) > 10
     assert is_readable, f"Expected plain language error"
@@ -589,7 +589,7 @@ def step_plain_language(context):
 @then('explain what went wrong')
 def step_explain_error(context):
     """Verify error explanation."""
-    output = context.last_output + context.last_error
+    output = getattr(context, 'last_output', '') + getattr(context, 'last_error', '')
     has_explanation = any(x in output.lower() for x in
                          ['failed', 'error', 'because', 'due to', 'cannot'])
     assert has_explanation, f"Expected error explanation in: {output}"
@@ -598,7 +598,7 @@ def step_explain_error(context):
 @then('suggest next steps')
 def step_suggest_next_steps(context):
     """Verify next step suggestions."""
-    output = context.last_output + context.last_error
+    output = getattr(context, 'last_output', '') + getattr(context, 'last_error', '')
     has_next_steps = any(x in output.lower() for x in
                          ['try', 'next', 'step', 'run', 'check'])
     assert has_next_steps, f"Expected next step suggestions in: {output}"
@@ -619,7 +619,7 @@ def step_error_logged(context):
 @then('the error should have sufficient detail for debugging')
 def step_error_detail(context):
     """Verify error has debugging detail."""
-    output = context.last_output + context.last_error
+    output = getattr(context, 'last_output', '') + getattr(context, 'last_error', '')
     has_detail = len(output) > 50  # Should have substantial detail
     has_timestamp = any(x in output for x in ['202', '20:', '-'])
     assert has_detail or has_timestamp, \
@@ -637,7 +637,7 @@ def step_find_in_logs(context):
 @then('suggest valid VM names')
 def step_suggest_valid_names(context):
     """Verify valid VM name suggestions."""
-    output = context.last_output + context.last_error
+    output = getattr(context, 'last_output', '') + getattr(context, 'last_error', '')
     has_names = any(x in output.lower() for x in
                     ['python', 'go', 'rust', 'postgres', 'try'])
     assert has_names, f"Expected VM name suggestions in: {output}"

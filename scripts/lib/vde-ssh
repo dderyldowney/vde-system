@@ -617,6 +617,47 @@ ensure_vde_ssh_environment() {
     return $VDE_SUCCESS
 }
 
+# Alias for ensure_vde_ssh_environment (used by scripts)
+ensure_ssh_environment() {
+    ensure_vde_ssh_environment "$@"
+}
+
+# generate_vm_ssh_config - Regenerate SSH config entries for all known VMs
+# Returns: VDE_SUCCESS (0) on success
+generate_vm_ssh_config() {
+    _info "Generating VM-to-VM SSH config..."
+
+    # Ensure SSH directory exists
+    mkdir -p "$VDE_SSH_DIR"
+
+    # Get all known VMs
+    # Note: get_all_vms is expected to be provided by vm-common or vde-commands
+    if ! command -v get_all_vms >/dev/null 2>&1; then
+        _error "Dependency error: get_all_vms function not found"
+        return $VDE_ERR_DEPENDENCY
+    fi
+
+    local vms
+    vms=($(get_all_vms))
+
+    local count=0
+    for vm in "${vms[@]}"; do
+        local port
+        port=$(get_vm_ssh_port "$vm")
+        [[ -z "$port" ]] && continue
+
+        local display
+        display=$(get_vm_info display "$vm" 2>/dev/null || echo "$vm")
+
+        if add_ssh_config_entry "$vm" "$port" "$display" "$VDE_SSH_IDENTITY" >/dev/null 2>&1; then
+            count=$((count + 1))
+        fi
+    done
+
+    _success "Generated SSH config for $count VMs"
+    return $VDE_SUCCESS
+}
+
 # Get SSH directory
 get_ssh_dir() {
     echo "$VDE_SSH_DIR"

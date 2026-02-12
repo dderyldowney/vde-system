@@ -63,7 +63,7 @@ setup_test_env() {
     export VDE_ROOT_DIR="$PROJECT_ROOT"
 
     # Export specific VDE path variables so libraries pick them up from the environment
-    export VDE_CONFIG_DIR="$TEST_TMPDIR/configs/docker"
+    export VDE_CONFIGS_DIR="$TEST_TMPDIR/configs/docker"
     export VDE_CACHE_DIR="$TEST_TMPDIR/cache"
     export VDE_PORT_REGISTRY="$TEST_TMPDIR/port-registry"
     export VDE_HOME_DIR="$HOME"
@@ -96,8 +96,8 @@ test_get_compose_file() {
     test_start "get_compose_file - known VM"
 
     setup_test_env
-    mkdir -p "$VDE_CONFIG_DIR/lang/python"
-    cat > "$VDE_CONFIG_DIR/lang/python/docker-compose.yml" << 'EOF'
+    mkdir -p "$VDE_CONFIGS_DIR/python"
+    cat > "$VDE_CONFIGS_DIR/python/docker-compose.yml" << 'EOF'
 version: '3.8'
 services:
   python:
@@ -106,7 +106,7 @@ EOF
 
     local result
     result=$(get_compose_file "python" 2>/dev/null)
-    if [ "$result" = "$VDE_CONFIG_DIR/lang/python/docker-compose.yml" ]; then
+    if [ "$result" = "$VDE_CONFIGS_DIR/python/docker-compose.yml" ]; then
         test_pass "get_compose_file - known VM"
     else
         test_fail "get_compose_file - known VM" "Wrong path: $result"
@@ -135,8 +135,8 @@ test_vm_exists() {
     test_start "vm_exists - compose file exists"
 
     setup_test_env
-    mkdir -p "$VDE_CONFIG_DIR/lang/python"
-    touch "$VDE_CONFIG_DIR/lang/python/docker-compose.yml"
+    mkdir -p "$VDE_CONFIGS_DIR/python"
+    touch "$VDE_CONFIGS_DIR/python/docker-compose.yml"
 
     if vm_exists "python" 2>/dev/null; then
         test_pass "vm_exists - compose file exists"
@@ -233,16 +233,17 @@ test_get_or_allocate_ssh_port() {
 # =============================================================================
 
 test_build_docker_opts() {
-    test_start "build_docker_opts - empty by default"
+    test_start "build_docker_opts - default network"
 
     export VDE_DOCKER_NVIDIA="false"
+    export VDE_DOCKER_NETWORK="vde-network"
 
     local result
     result=$(build_docker_opts "python" 2>/dev/null)
-    if [ -z "$result" ]; then
-        test_pass "build_docker_opts - empty by default"
+    if [ "$result" = "--network vde-network" ]; then
+        test_pass "build_docker_opts - default network"
     else
-        test_fail "build_docker_opts - empty by default" "Got: $result"
+        test_fail "build_docker_opts - default network" "Got: $result"
     fi
 }
 

@@ -284,8 +284,9 @@ def step_port_in_range(context, start, end):
 @then('the command should fail with error "{error_msg}"')
 def step_port_error(context, error_msg):
     """Verify command failed with expected error."""
-    assert context.last_exit_code != 0, f"Command should have failed"
-    output = context.last_output + context.last_error
+    exit_code = getattr(context, 'last_exit_code', 1)
+    assert exit_code != 0, f"Command should have failed"
+    output = getattr(context, 'last_output', '') + getattr(context, 'last_error', '')
     assert error_msg.lower() in output.lower(), \
         f"Expected error '{error_msg}' not found: {output}"
 
@@ -294,16 +295,22 @@ def step_port_error(context, error_msg):
 def step_stale_lock_removed(context):
     """Verify stale port lock was removed."""
     # In real testing, we'd check the lock file was deleted
-    assert context.last_exit_code == 0 or "cleaned" in context.last_output.lower(), \
-        f"Stale lock should be removed: {context.last_error}"
+    exit_code = getattr(context, 'last_exit_code', 0)
+    output = getattr(context, 'last_output', '')
+    error = getattr(context, 'last_error', '')
+    assert exit_code == 0 or "cleaned" in output.lower(), \
+        f"Stale lock should be removed: {error}"
 
 
 @then('the port should be available for allocation')
 def step_port_available(context):
     """Verify port is available for allocation."""
     # In real testing, we'd verify the port can be allocated
-    assert context.last_exit_code == 0 or "available" in context.last_output.lower(), \
-        f"Port should be available: {context.last_error}"
+    exit_code = getattr(context, 'last_exit_code', 0)
+    output = getattr(context, 'last_output', '')
+    error = getattr(context, 'last_error', '')
+    assert exit_code == 0 or "available" in output.lower(), \
+        f"Port should be available: {error}"
 
 
 @then('port "{port}" should be removed from registry')

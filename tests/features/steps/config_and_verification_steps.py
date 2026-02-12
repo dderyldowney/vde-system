@@ -4,6 +4,7 @@ Only includes unique patterns not covered by vde_command_steps.py.
 """
 
 import subprocess
+from pathlib import Path
 from behave import given, then, when
 
 
