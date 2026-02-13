@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install linting tools
-        shell: bash {0}
+        shell: zsh {0}
         run: |
           sudo apt-get update
           sudo apt-get install -y zsh
@@ -49,12 +49,13 @@ jobs:
         shell: zsh {0}
         run: |
           echo "Checking zsh script syntax..."
-          for file in $(find scripts tests -name "*.sh" -type f); do
+          # Find all files that either have .zsh extension or no extension but have zsh in shebang
+          for file in $(find scripts tests -type f \( -name "*.zsh" -o ! -name "*.*" \)); do
             if head -1 "$file" | grep -q "zsh"; then
-              # Skip test_integration_comprehensive.sh - uses valid multi-line arrays
-              # Skip test-e2e-user-journey.sh - contains emoji characters that zsh -n doesn't parse
-              if [[ "$file" != *"test_integration_comprehensive.sh" ]] \
-                 && [[ "$file" != *"test-e2e-user-journey.sh" ]]; then
+              # Skip test_integration_comprehensive.zsh - uses valid multi-line arrays
+              # Skip test-e2e-user-journey.zsh - contains emoji characters that zsh -n doesn't parse
+              if [[ "$file" != *"test_integration_comprehensive.zsh" ]] \
+                 && [[ "$file" != *"test-e2e-user-journey.zsh" ]]; then
                 zsh -n "$file" || { echo "Syntax error in: $file"; exit 1; }
               fi
             fi
@@ -62,13 +63,13 @@ jobs:
           echo "✓ All zsh scripts passed syntax check"
 
       # Note: shfmt disabled - has issues with zsh-specific syntax
-      # Run locally with: shfmt -w scripts/**/*.sh tests/**/*.sh
+      # Run locally with: shfmt -w scripts/**/*.zsh tests/**/*.zsh
 
       - name: Run yamllint
         run: yamllint .github/workflows/ configs/docker/*/docker-compose.yml || true
 
       - name: Run ruff Python linter
-        shell: bash {0}
+        shell: zsh {0}
         run: |
           echo "Running ruff on Python files..."
           ruff check tests/ --output-format=github
@@ -87,7 +88,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        shell: bash {0}
+        shell: zsh {0}
         run: sudo apt-get update && sudo apt-get install -y zsh
 
       - name: Test vm-common library
@@ -160,7 +161,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        shell: bash {0}
+        shell: zsh {0}
         run: sudo apt-get update && sudo apt-get install -y zsh
 
       - name: Test pattern-based parsing
@@ -230,28 +231,28 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        shell: bash {0}
+        shell: zsh {0}
         run: sudo apt-get update && sudo apt-get install -y zsh
 
       - name: Run comprehensive vde-parser tests
         shell: zsh {0}
         run: |
           echo "Running comprehensive vde-parser tests..."
-          ./tests/unit/test_vde_parser_comprehensive.sh
+          ./tests/unit/test_vde_parser_comprehensive.zsh
           echo "✓ vde-parser comprehensive tests passed"
 
       - name: Run comprehensive vde-commands tests
         shell: zsh {0}
         run: |
           echo "Running comprehensive vde-commands tests..."
-          ./tests/unit/test_vde_commands_comprehensive.sh
+          ./tests/unit/test_vde_commands_comprehensive.zsh
           echo "✓ vde-commands comprehensive tests passed"
 
       - name: Run end-to-end integration tests
         shell: zsh {0}
         run: |
           echo "Running end-to-end integration tests..."
-          ./tests/integration/test_integration_comprehensive.sh
+          ./tests/integration/test_integration_comprehensive.zsh
           echo "✓ End-to-end integration tests passed"
 
   # =============================================================================
@@ -267,13 +268,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        shell: bash {0}
+        shell: zsh {0}
         run: |
           sudo apt-get update
           sudo apt-get install -y zsh cmake libcurl4-openssl-dev libelf-dev libdw-dev binutils-dev
 
       - name: Install kcov
-        shell: bash {0}
+        shell: zsh {0}
         run: |
           git clone https://github.com/SimonKagstrom/kcov.git
           cd kcov
@@ -284,17 +285,17 @@ jobs:
           rm -rf kcov
 
       - name: Verify kcov installation
-        shell: bash {0}
+        shell: zsh {0}
         run: kcov --version
 
       - name: Run tests with coverage
         shell: zsh {0}
         run: |
           # Make coverage script executable
-          chmod +x scripts/coverage.sh
+          chmod +x scripts/coverage.zsh
 
           # Run coverage for all tests
-          ./scripts/coverage.sh all
+          ./scripts/coverage.zsh all
 
       - name: Generate coverage summary
         run: |
@@ -383,7 +384,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Install dependencies
-        shell: bash {0}
+        shell: zsh {0}
         run: |
           sudo apt-get update
           sudo apt-get install -y zsh
@@ -402,7 +403,7 @@ jobs:
           echo "=================================================="
 
       - name: Generate Test SSH Key
-        shell: bash {0}
+        shell: zsh {0}
         run: |
           # Create SSH directory
           mkdir -p "$HOME/.ssh"
@@ -433,7 +434,7 @@ jobs:
           echo "✓ VM configuration exists: $VM_CONFIG"
 
       - name: Create Docker network
-        shell: bash {0}
+        shell: zsh {0}
         run: docker network create dev-net 2>/dev/null || echo "Network already exists"
 
       - name: Build and Start Docker Container
@@ -516,7 +517,7 @@ jobs:
 
           while [ $ELAPSED -lt $MAX_WAIT ]; do
             # First check if port is open
-            if timeout 1 bash -c "cat < /dev/null > /dev/tcp/localhost/$SSH_PORT" \
+            if timeout 1 /bin/zsh -c "cat < /dev/null > /dev/tcp/localhost/$SSH_PORT" \
                2>/dev/null; then
               echo "✓ Port $SSH_PORT is open"
 
@@ -581,8 +582,8 @@ jobs:
           TEST_VM: ${{ matrix.vm }}
         run: |
           echo "Running Docker VM Lifecycle integration tests for ${{ matrix.vm }}..."
-          chmod +x tests/integration/docker-vm-lifecycle.test.sh
-          ./tests/integration/docker-vm-lifecycle.test.sh
+          chmod +x tests/integration/docker-vm-lifecycle.test.zsh
+          ./tests/integration/docker-vm-lifecycle.test.zsh
 
       - name: Display Container Info
         run: |
@@ -607,7 +608,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        shell: bash {0}
+        shell: zsh {0}
         run: |
           # Workaround: Remove Microsoft apt repos that return 403 in CI
           sudo rm -f /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list \
@@ -632,8 +633,8 @@ jobs:
         shell: zsh {0}
         run: |
           echo "Running docker-free BDD tests on GitHub CI..."
-          chmod +x tests/run-docker-free-tests.sh
-          ./tests/run-docker-free-tests.sh || {
+          chmod +x tests/run-docker-free-tests.zsh
+          ./tests/run-docker-free-tests.zsh || {
             echo "::error::Docker-free BDD tests failed"
             exit 1
           }
@@ -668,7 +669,7 @@ jobs:
 
     steps:
       - name: Install zsh
-        shell: bash {0}
+        shell: zsh {0}
         run: sudo apt-get update && sudo apt-get install -y zsh
 
       - name: Display CI Summary
@@ -693,7 +694,7 @@ jobs:
           echo "  └─ BDD Tests: $BDD_RESULT"
           echo ""
           echo "  Note: Docker Build tests run only for PRs (requires Docker access)"
-          echo "  Run docker-required tests locally: ./tests/run-local-bdd.sh"
+          echo "  Run docker-required tests locally"
 
           if [[ "$LINT_RESULT" == "failure" ]] || \
              [[ "$UNIT_RESULT" == "failure" ]] || \

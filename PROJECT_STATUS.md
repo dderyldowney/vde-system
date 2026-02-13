@@ -92,3 +92,26 @@ VDE is currently in a **highly functional "Developer Preview" state**. The core 
 
 Overall, the project remains in a **strong** "Developer Preview" phase, with robust core logic but significant integration flakiness that needs systematic hardening.
 
+---
+
+## CURRENT WORK
+
+**Problem:** The CI/CD pipeline and local comprehensive parser tests are failing with an "Errored" status (or Exit Code 1 for local tests). This indicates a setup or environment issue rather than a logical test failure.
+
+**Suspected Problems:**
+1.  **Shell Compatibility Mismatches:** Although the project aims for `zsh`-only, some CI/CD configurations, Dockerfile comments, and old script references still pointed to `.sh` files or `bash` commands that no longer exist or are not intended for `zsh` execution.
+2.  **Verbose Debug Output (XTRACE):** `zsh`'s `XTRACE` option (similar to `set -x`) is polluting the output of `generate_plan` and `extract_vm_names` functions, causing `assert_contains` tests to fail due to unexpected strings in the plan output. This is likely being inherited or triggered unintentionally.
+3.  **Associative Array Initialization:** `VM_INSTALL` associative array assignments in `scripts/lib/vm-common` were causing an "assignment to invalid subscript range" error due to subtle `zsh` scope or initialization issues.
+4.  **Incompatible `zsh` Features:** The `${=content}` parameter expansion in `scripts/lib/vm-common` for word splitting, while `zsh`-specific, was behaving unexpectedly in certain shell contexts, leading to "bad substitution" errors.
+5.  **Partial VM Name Matching:** The `extract_vm_names` function was incorrectly matching partial VM names, leading to false positives in test cases.
+
+**Proposed Fix:**
+1.  **Revert Docker-related `sh -c` to `sh -c`:** Restore `sh -c` commands in `docker-compose.yml` files and templates, and in `scripts/generate-all-configs`, as these relate to container environments that are expected to be POSIX compliant (not `zsh`-specific).
+2.  **Strict `zsh` Enforcement for Project Scripts and CI:**
+    *   Ensure all project scripts (e.g., in `scripts/` and `tests/`) have `.zsh` extensions and correct `#!/usr/bin/env zsh` shebangs.
+    *   Update `.github/workflows/vde-ci.yml` to reflect `.zsh` extensions for all script calls and change `shell: bash {0}` to `shell: zsh {0}` for all workflow steps.
+3.  **Suppress XTRACE Verbosity:** Add `unsetopt XTRACE` at the beginning of `scripts/lib/vm-common`, `scripts/lib/vde-parser` (especially `_build_alias_map`, `extract_vm_names`, `generate_plan`), and `tests/unit/test_vde_parser_comprehensive.zsh` to prevent debug output from polluting test results.
+4.  **Fix Associative Array Declaration/Initialization:** Explicitly declare `VM_TYPE`, `VM_ALIASES`, `VM_DISPLAY`, `VM_INSTALL`, and `VM_SVC_PORT` as global associative arrays (`typeset -gA`) at the beginning of `load_vm_types` in `scripts/lib/vm-common` to ensure proper scope and prevent "invalid subscript range" errors.
+5.  **Refine Word Splitting and Matching:** Update `scripts/lib/vm-common` to use `$(echo $content)` for robust word splitting. In `extract_vm_names`, refine the matching logic to only accept whole-word matches for VM names, addressing the "Partial VM Names" test failure.
+6.  **Update Documentation:** Ensure documentation (`vde-parser-test-status.md`, `tests/README.md`) accurately reflects `zsh`-only context and command examples.
+

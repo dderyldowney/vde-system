@@ -99,7 +99,7 @@ vde_check_ssh_port() {
     local elapsed=0
     while [ $elapsed -lt $timeout ]; do
         # Try bash built-in TCP check first (faster)
-        if timeout 1 bash -c "cat < /dev/null > /dev/tcp/localhost/$ssh_port" 2>/dev/null; then
+        if timeout 1 zsh -c "cat < /dev/null > /dev/tcp/localhost/$ssh_port" 2>/dev/null; then
             return $VDE_SUCCESS
         fi
 

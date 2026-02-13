@@ -12,7 +12,7 @@
 #### 1. Path Calculation in `test_vde_parser_comprehensive.sh`:
 **Plan says:** Needs fixing from `${(%):-%x}` to `$0`
 **Actual state:** Line 6 already uses correct syntax:
-```bash
+```zsh
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 ```
 ✓ **Already fixed**
@@ -36,14 +36,14 @@ The actual test results are not yet available. To verify the current state, run:
 ## Test Execution Instructions
 
 ### 1. Run vde-parser.test.sh (Main Unit Tests):
-```bash
+```zsh
 cd /Users/dderyldowney/dev
 chmod +x run-vde-parser-tests.sh run-tests.sh tests/unit/vde-parser.test.sh tests/unit/test_vde_parser_comprehensive.sh
 ./run-vde-parser-tests.sh
 ```
 
 ### 2. Alternatively, Run Tests Individually:
-```bash
+```zsh
 cd /Users/dderyldowney/dev
 chmod +x tests/unit/vde-parser.test.sh tests/unit/test_vde_parser_comprehensive.sh
 ./tests/unit/vde-parser.test.sh
@@ -51,7 +51,7 @@ chmod +x tests/unit/vde-parser.test.sh tests/unit/test_vde_parser_comprehensive.
 ```
 
 ### 3. Run BDD Tests (natural-language-parser.feature):
-```bash
+```zsh
 cd /Users/dderyldowney/dev
 python3 -m pytest tests/features/docker-free/natural-language-parser.feature -v
 ```
@@ -67,8 +67,8 @@ Ensure that `load_vm_types` function correctly initializes VM type configuration
 ## Test Files:
 
 ### `run-vde-parser-tests.sh`:
-```bash
-#!/usr/bin/env bash
+```zsh
+#!/usr/bin/env zsh
 echo "Running vde-parser unit tests..."
 cd /Users/dderyldowney/dev || exit
 echo "1. Running vde-parser.test.sh..."
@@ -80,7 +80,7 @@ time python3 -m pytest tests/features/docker-free/natural-language-parser.featur
 ```
 
 ### `run-tests.sh`:
-```bash
+```zsh
 #!/usr/bin/env zsh
 
 # Run vde-parser tests

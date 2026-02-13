@@ -48,6 +48,9 @@ _VM_ALIAS_MAP_BUILT=0
 # Side Effects: Populates VM_ALIAS_MAP associative array
 # Example: _build_alias_map && echo "Map built"
 _build_alias_map() {
+    # Ensure XTRACE is off to prevent output pollution in plans
+    unsetopt XTRACE 2>/dev/null
+    
     # Clear existing map
     _assoc_clear "VM_ALIAS_MAP"
 
@@ -66,12 +69,14 @@ _build_alias_map() {
         _assoc_set "VM_ALIAS_MAP" "$vm" "$vm"
 
         # Get aliases for this VM
+        local alias_list
         alias_list=$(get_vm_info aliases "$vm" 2>/dev/null)
 
         if [ -n "$alias_list" ]; then
             # Split aliases by comma and add each to the map
             echo "$alias_list" | tr ',' '\n' | while IFS= read -r alias_item; do
                 # Trim whitespace
+                local alias_clean
                 alias_item=$(echo "$alias_item" | tr -d ' ')
                 if [ -n "$alias_item" ]; then
                     _assoc_set "VM_ALIAS_MAP" "$alias_item" "$vm"
@@ -80,12 +85,12 @@ _build_alias_map() {
         fi
 
         # Also add display name (in lowercase) to support natural language like "JavaScript"
-        local display_name
-        display_name=$(get_vm_info display "$vm" 2>/dev/null)
-        if [ -n "$display_name" ]; then
-            local display_lower
-            display_lower=$(echo "$display_name" | tr '[:upper:]' '[:lower:]')
-            _assoc_set "VM_ALIAS_MAP" "$display_lower" "$vm"
+        local d_name
+        d_name=$(get_vm_info display "$vm" 2>/dev/null)
+        if [ -n "$d_name" ]; then
+            local d_lower
+            d_lower=$(echo "$d_name" | tr '[:upper:]' '[:lower:]')
+            _assoc_set "VM_ALIAS_MAP" "$d_lower" "$vm"
         fi
     done
 
@@ -287,8 +292,8 @@ detect_intent() {
             ;;
     esac
 
-    # Default: return empty string for unmatched/empty input
-    echo ""
+    # Default: return help for unmatched/empty input
+    echo "$INTENT_HELP"
     return $VDE_SUCCESS
 }
 
@@ -305,6 +310,9 @@ detect_intent() {
 # Output: Newline-separated list of canonical VM names found in input
 # Example: vms=$(extract_vm_names "start python and rust")  # outputs "python\nrust"
 extract_vm_names() {
+    # Ensure XTRACE is off
+    unsetopt XTRACE 2>/dev/null
+    
     local input="$1"
     local input_lower
     input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
@@ -312,7 +320,7 @@ extract_vm_names() {
     # Handle "all", "everything" first (before word extraction)
     case "$input_lower" in
         *all*|*everything*)
-            get_all_vms
+            get_all_vms | tr ' ' '\n'
             return $VDE_SUCCESS
             ;;
     esac
@@ -320,7 +328,7 @@ extract_vm_names() {
     # Handle "all languages"
     case "$input_lower" in
         *"all languages"*|*"all lang"*)
-            get_lang_vms
+            get_lang_vms | tr ' ' '\n'
             return $VDE_SUCCESS
             ;;
     esac
@@ -328,7 +336,7 @@ extract_vm_names() {
     # Handle "all services"
     case "$input_lower" in
         *"all services"*|*"all svc"*)
-            get_service_vms
+            get_service_vms | tr ' ' '\n'
             return $VDE_SUCCESS
             ;;
     esac
@@ -354,15 +362,18 @@ extract_vm_names() {
     echo "$input_lower" | tr ' ' '\n' | while IFS= read -r word; do
         # Clean the word (remove punctuation, keep only alphanumeric and plus)
         # Handle cases where word might be followed by punctuation (e.g. "python.")
-        word=$(echo "$word" | sed 's/[^a-z0-9+].*$//')
-        word=$(echo "$word" | tr -cd 'a-z0-9+')
-        [ -z "$word" ] && continue
+        local w_clean
+        w_clean=$(echo "$word" | sed 's/[^a-z0-9+].*$//')
+        w_clean=$(echo "$w_clean" | tr -cd 'a-z0-9+')
+        [ -z "$w_clean" ] && continue
 
         # O(1) lookup in alias map
-        canonical=$(_assoc_get "VM_ALIAS_MAP" "$word" 2>/dev/null)
+        local canonical
+        canonical=$(_assoc_get "VM_ALIAS_MAP" "$w_clean" 2>/dev/null)
 
         if [ -n "$canonical" ]; then
-            # Check if we've already seen this VM
+            # Verify it's an exact match for the word
+            # Check if w_clean matches the alias/name exactly
             if ! _assoc_has_key "seen_vms" "$canonical"; then
                 _assoc_set "seen_vms" "$canonical" "1"
                 echo "$canonical" >> "$tmp_file"
@@ -677,6 +688,9 @@ prompt_confirm_unknown_vm() {
 #   FILTER:<all|lang|svc>
 # Example: generate_plan "start python and rust"
 generate_plan() {
+    # Ensure XTRACE is off
+    unsetopt XTRACE 2>/dev/null
+    
     local input="$1"
 
     # Detect intent

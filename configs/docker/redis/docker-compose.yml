@@ -19,7 +19,7 @@ services:
 
     ports:
       - "2401:22"
-      ##SERVICE_PORTS##
+      - "6379:6379"
 
     volumes:
       - ../../../data/redis:/data
