@@ -83,23 +83,24 @@ get_docker_project_name() {
     echo "vde-${vm_name}"
 }
 
-# Check if VM exists (compose file or container)
+# Check if VM has been created (exists in docker-state or has container)
 # Args: <vm_name>
-# Returns: VDE_SUCCESS (0) if exists
+# Returns: VDE_SUCCESS (0) if exists, VDE_ERR_NOT_FOUND if not
 vm_exists() {
     local vm_name="$1"
-
-    local compose_file
-    compose_file=$(get_compose_file "$vm_name" 2>/dev/null)
-
-    if [ -n "$compose_file" ] && [ -f "$compose_file" ]; then
+    local state_dir
+    state_dir=$(get_docker_state_dir)
+    
+    # Check if state file exists
+    if [[ -f "$state_dir/${vm_name}.json" ]]; then
         return $VDE_SUCCESS
     fi
-
+    
+    # Also check if Docker container exists
     if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^vde-${vm_name}$"; then
         return $VDE_SUCCESS
     fi
-
+    
     return $VDE_ERR_NOT_FOUND
 }
 

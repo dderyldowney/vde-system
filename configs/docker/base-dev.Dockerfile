@@ -10,14 +10,15 @@ RUN apt-get update -y && \
     apt-get upgrade -y && \
     apt-get install -y sudo openssh-client openssh-server ca-certificates build-essential zsh tree git curl wget vim neovim redis-tools postgresql-client gnupg socat && \
     # Modern GPG key handling for MongoDB (apt-key is deprecated)
-    install -m 0755 -d /etc/apt/keyrings && \
+    # Skip MongoDB if repo signing fails - it's an upstream issue
+    (install -m 0755 -d /etc/apt/keyrings && \
     curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc -o /tmp/mongodb-server-7.0.asc && \
     gpg --dearmor -o /etc/apt/keyrings/mongodb-server-7.0.gpg < /tmp/mongodb-server-7.0.asc && \
     chmod a+r /etc/apt/keyrings/mongodb-server-7.0.gpg && \
     # Detect architecture dynamically for MongoDB repository
     echo "deb [signed-by=/etc/apt/keyrings/mongodb-server-7.0.gpg] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" > /etc/apt/sources.list.d/mongodb-org-7.0.list && \
     apt-get update -y && \
-    apt-get install -y mongodb-mongosh && \
+    apt-get install -y mongodb-mongosh || true) && \
     rm -rf /var/lib/apt/lists/* /tmp/mongodb-server-7.0.asc
 
 # Create devuser with sudo privileges and SSH setup
