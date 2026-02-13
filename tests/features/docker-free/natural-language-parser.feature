@@ -123,7 +123,7 @@ Feature: Natural Language Parser
   Scenario: Handle empty input
     Given input is empty
     When I parse the input
-    Then intent should be ""
+    Then intent should be "help"
 
   Scenario: Parse flags from natural language
     When I parse "rebuild with no cache"
@@ -132,7 +132,7 @@ Feature: Natural Language Parser
 
   Scenario: Handle ambiguous input gracefully
     When I parse "do something with containers"
-    Then intent should be ""
+    Then intent should be "help"
 
   # =============================================================================
   # Edge Case Scenarios
@@ -146,7 +146,7 @@ Feature: Natural Language Parser
 
   Scenario: Reject whitespace-only input
     When I parse "   "
-    Then intent should be ""
+    Then intent should be "help"
 
   Scenario: Parse pipe character in VM names
     When I parse "start python|rust"
