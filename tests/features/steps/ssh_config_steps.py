@@ -1010,7 +1010,7 @@ def step_no_keys_on_containers(context):
     assert ssh_dir.exists(), "SSH directory should exist on host"
     # Private keys should be only on host
     private_keys = list(ssh_dir.glob('id_*'))
-    assert len(private_keys) > 0 or True, "Keys should only exist on host"
+    assert len(private_keys) > 0, "Keys should only exist on host"
 
 @then('"{key_name}" should be returned as primary key')
 def step_key_returned_as_primary(context, key_name):
