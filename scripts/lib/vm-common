@@ -34,6 +34,9 @@ if [ "${_VM_COMMON_LOADED:-}" = "1" ]; then
 fi
 _VM_COMMON_LOADED=1
 
+# Ensure XTRACE is off to prevent output pollution during sourcing/execution
+unsetopt XTRACE 2>/dev/null
+
 # =============================================================================
 # BOOTSTRAP: DETERMINE VDE ROOT DIRECTORY
 # =============================================================================
@@ -212,6 +215,9 @@ _is_cache_valid() {
 # Uses cache if available and valid
 # Format: shortname|type|display_name|install_command|port_base
 load_vm_types() {
+    # Ensure associative arrays are globally declared
+    typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT
+
     # Guard to prevent redundant loading
     if [[ "${_VM_TYPES_LOADED:-0}" == "1" ]] && [[ ${#VM_TYPE[@]} -gt 0 ]]; then
         return 0
@@ -259,12 +265,12 @@ load_vm_types() {
                     if [[ -n "$lang_line" ]]; then
                         local content=${lang_line#*=\(}
                         content=${content%\)}
-                        lang_vms=(${=content})
+                        lang_vms=($(echo $content))
                     fi
                     if [[ -n "$svc_line" ]]; then
                         local content=${svc_line#*=\(}
                         content=${content%\)}
-                        service_vms=(${=content})
+                        service_vms=($(echo $content))
                     fi
                 fi
                 # VM_INSTALL is not cached - will load from config below
@@ -637,6 +643,9 @@ validate_vm_types_config() {
 # Args: <field> <vm_name>
 # Returns: Outputs field value, or error
 get_vm_info() {
+    # Ensure XTRACE is off to prevent output pollution
+    unsetopt XTRACE 2>/dev/null
+    
     local field="$1"
     local vm_name="$2"
 
@@ -687,6 +696,9 @@ get_service_vms() {
 
 # Get all known VMs
 get_all_vms() {
+    # Ensure XTRACE is off
+    unsetopt XTRACE 2>/dev/null
+    
     echo "${lang_vms[@]}" "${service_vms[@]}"
 }
 

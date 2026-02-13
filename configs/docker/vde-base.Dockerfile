@@ -85,7 +85,7 @@ RUN echo '#!/bin/zsh' > /usr/local/bin/ssh-agent-forward && \
 # For host access, use proper Docker bind mounts or SSH from host to container instead.
 
 # Install oh-my-zsh, configure zsh, and setup LazyVim
-# Download installer first to avoid argument parsing issues with nested sh -c
+# Download installer first to avoid argument parsing issues with nested zsh -c
 RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o /tmp/install-oh-my-zsh.sh && \
     chmod +x /tmp/install-oh-my-zsh.sh && \
     su ${USERNAME} -c "sh /tmp/install-oh-my-zsh.sh --unattended" && \

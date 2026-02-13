@@ -558,7 +558,7 @@ jobs:
 ### Pre-commit Hook
 
 ```bash
-#!/bin/bash
+#!/usr/bin/env zsh
 # .git/hooks/pre-commit
 
 ./tests/run-all-known-tests.sh unit || exit 1

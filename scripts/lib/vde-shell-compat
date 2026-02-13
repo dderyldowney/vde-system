@@ -26,9 +26,15 @@
 # Returns: "zsh" or "unknown"
 # Example: shell=$(_detect_shell)
 _detect_shell() {
-    if [ -n "${ZSH_VERSION:-}" ]; then
+    if [ -n "$ZSH_VERSION" ]; then
+        echo "zsh"
+    elif [ -n "$BASH_VERSION" ]; then
+        echo "bash"
+    elif [[ "$SHELL" == *"zsh"* ]]; then
         echo "zsh"
     else
+        # Try a zsh-specific feature test
+        (emulate zsh && : ) 2>/dev/null && { echo "zsh"; return; }
         echo "unknown"
     fi
 }
@@ -37,8 +43,10 @@ _detect_shell() {
 # Returns: Version string (e.g., "5.8" for zsh)
 # Example: version=$(_shell_version)
 _shell_version() {
-    if [ -n "${ZSH_VERSION:-}" ]; then
+    if [ -n "$ZSH_VERSION" ]; then
         echo "$ZSH_VERSION"
+    elif [ -n "$BASH_VERSION" ]; then
+        echo "$BASH_VERSION"
     else
         echo "unknown"
     fi
@@ -48,7 +56,7 @@ _shell_version() {
 # Returns: 0 if zsh, 1 otherwise
 # Example: _is_zsh && echo "Running in zsh"
 _is_zsh() {
-    [ -n "${ZSH_VERSION:-}" ]
+    [ -n "$ZSH_VERSION" ] || [[ "$(_detect_shell)" == "zsh" ]]
 }
 
 # _shell_supports_native_assoc - Check if shell supports native associative arrays
