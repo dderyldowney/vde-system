@@ -474,7 +474,7 @@ def step_files_transfer_workspace(context):
 def step_permissions_preserved(context):
     """Verify file permissions are preserved during transfer."""
     # Verify permissions are tracked in context from actual transfer
-    permissions_ok = getattr(context, 'permissions_ok', True)
+    permissions_ok = getattr(context, 'permissions_ok', False)
     assert permissions_ok, "File permissions should be preserved during transfer"
 
 
@@ -556,5 +556,5 @@ def step_task_continues(context):
 def step_reconnect_session(context):
     """Verify ability to reconnect to existing session."""
     # Verify session state is preserved
-    can_reconnect = getattr(context, 'can_reconnect', True)
+    can_reconnect = getattr(context, 'can_reconnect', False)
     assert can_reconnect, "Should be able to reconnect to existing session"

@@ -139,7 +139,7 @@ def step_overrides_not_committed(context):
     """Verify local overrides are not committed."""
     # This is a best-effort check - git status would show this
     gitignore_path = Path.cwd() / '.gitignore'
-    assert gitignore_path.exists() or getattr(context, 'local_overrides_ignored', True) or getattr(context, 'local_override_created', False), \
+    assert gitignore_path.exists() or getattr(context, 'local_overrides_ignored', False) or getattr(context, 'local_override_created', False), \
         "Expected .gitignore to exist for local overrides"
 
 
@@ -159,7 +159,7 @@ def step_add_gitignore(context):
     """Add to .gitignore."""
     # This is a setup step - best effort
     gitignore_path = Path.cwd() / '.gitignore'
-    context.gitignore_exists = gitignore_path.exists() or True  # Mark as attempted
+    context.gitignore_exists = gitignore_path.exists() 
     assert context.gitignore_exists, "Expected .gitignore to exist or be creatable"
 
 
@@ -190,7 +190,7 @@ def step_health_in_docker_ps(context):
     # This would be verified with actual Docker command
     import shutil
     docker_available = shutil.which('docker') is not None
-    assert docker_available or getattr(context, 'docker_health_visible', True), \
+    assert docker_available or getattr(context, 'docker_health_visible', False), \
         "Expected docker ps to show health status (docker available or health visible in context)"
 
 
@@ -316,7 +316,7 @@ def step_ports_mapped(context):
     """Verify all ports are mapped in docker-compose.yml."""
     # This would require file verification
     compose_path = Path.cwd() / 'docker-compose.yml'
-    assert compose_path.exists() or getattr(context, 'ports_mapped', True), \
+    assert compose_path.exists() or getattr(context, 'ports_mapped', False), \
         f"Expected docker-compose.yml with port mappings at {compose_path}"
 
 
@@ -564,7 +564,7 @@ def step_ssh_still_works(context):
     # This would verify SSH configuration
     ssh_config = Path.home() / '.ssh' / 'config'
     ssh_keys_exist = any((Path.home() / '.ssh').glob('id_*'))
-    assert ssh_config.exists() or ssh_keys_exist or getattr(context, 'ssh_configured', True), \
+    assert ssh_config.exists() or ssh_keys_exist or getattr(context, 'ssh_configured', False), \
         "Expected SSH configuration to be present"
 
 

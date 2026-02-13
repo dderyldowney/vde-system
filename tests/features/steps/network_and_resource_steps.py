@@ -34,7 +34,7 @@ def step_ping_vm(context):
     network_configured = getattr(context, 'network_configured', False)
     import shutil
     docker_available = shutil.which('docker') is not None
-    assert network_configured or docker_available or getattr(context, 'vms_can_communicate', True), \
+    assert network_configured or docker_available or getattr(context, 'vms_can_communicate', False), \
         "Expected VMs to be on a shared network for ping"
 
 
@@ -172,7 +172,7 @@ def step_check_network_access(context):
     # This would test network connectivity
     import shutil
     docker_available = shutil.which('docker') is not None
-    assert docker_available or getattr(context, 'vm_network_accessible', True), \
+    assert docker_available or getattr(context, 'vm_network_accessible', False), \
         "Expected VM to have network access capability (docker available or context indicates access)"
 
 
@@ -199,7 +199,7 @@ def step_files_visible_host(context):
     """Verify files are visible on host."""
     # This would check file visibility
     compose_path = Path.cwd() / 'docker-compose.yml'
-    assert compose_path.exists() or getattr(context, 'volume_mounts_configured', True), \
+    assert compose_path.exists() or getattr(context, 'volume_mounts_configured', False), \
         "Expected volume mounts to be configured for host visibility"
 
 
@@ -208,7 +208,7 @@ def step_changes_persist(context):
     """Verify changes persist across restarts."""
     # This would verify persistence
     compose_path = Path.cwd() / 'docker-compose.yml'
-    assert compose_path.exists() or getattr(context, 'volumes_persistent', True), \
+    assert compose_path.exists() or getattr(context, 'volumes_persistent', False), \
         "Expected volume configuration for persistence"
 
 
@@ -217,7 +217,7 @@ def step_data_preserved(context):
     """Verify data is preserved."""
     # This would check data preservation
     compose_path = Path.cwd() / 'docker-compose.yml'
-    assert compose_path.exists() or getattr(context, 'data_preservation_configured', True), \
+    assert compose_path.exists() or getattr(context, 'data_preservation_configured', False), \
         "Expected data preservation mechanism to be configured"
 
 
@@ -226,7 +226,7 @@ def step_databases_intact(context):
     """Verify databases remain intact."""
     # This would check database integrity
     compose_path = Path.cwd() / 'docker-compose.yml'
-    assert compose_path.exists() or getattr(context, 'database_volumes_configured', True), \
+    assert compose_path.exists() or getattr(context, 'database_volumes_configured', False), \
         "Expected database volume configuration for integrity"
 
 
@@ -235,7 +235,7 @@ def step_no_data_loss(context):
     """Verify no data loss."""
     # This would check for data loss
     compose_path = Path.cwd() / 'docker-compose.yml'
-    assert compose_path.exists() or getattr(context, 'data_volumes_configured', True), \
+    assert compose_path.exists() or getattr(context, 'data_volumes_configured', False), \
         "Expected data volumes to be configured to prevent loss"
 
 
@@ -244,7 +244,7 @@ def step_code_volumes_preserved(context):
     """Verify code volumes are preserved."""
     # This would check volume preservation
     compose_path = Path.cwd() / 'docker-compose.yml'
-    assert compose_path.exists() or getattr(context, 'code_volumes_configured', True), \
+    assert compose_path.exists() or getattr(context, 'code_volumes_configured', False), \
         "Expected code volume mounts to be preserved"
 
 

@@ -553,5 +553,5 @@ def step_no_manual_setup_in_docs(context):
 @then('I should be able to start using VMs immediately')
 def step_start_using_vms(context):
     """Verify VMs can be used immediately."""
-    assert ssh_agent_is_running() or not getattr(context, 'host_has_ssh_keys', True), \
+    assert ssh_agent_is_running() or not getattr(context, 'host_has_ssh_keys', False), \
         "Should be able to start using VMs"

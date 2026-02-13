@@ -612,8 +612,10 @@ def step_error_logged(context):
         log_files = list(log_dir.glob("*.log"))
         assert len(log_files) > 0, "Log files should exist"
     else:
-        # Log dir may not exist, that's acceptable for this test
-        pass
+        # If log file not found, check output for log format
+        output = getattr(context, 'vde_command_output', '')
+        assert '[INFO]' in output or '[ERROR]' in output or '[WARN]' in output, \
+            "Expected log output if log file not found"
 
 
 @then('the error should have sufficient detail for debugging')
