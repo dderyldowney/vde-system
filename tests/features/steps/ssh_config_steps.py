@@ -427,7 +427,7 @@ def step_public_ssh_keys_contains_files(context):
 
 @given('VM "{vm_name}" is created with SSH port "{port}"')
 def step_vm_created_with_ssh_port(context, vm_name, port):
-    """Simulate VM creation with SSH port."""
+    """Context: VM exists with a specific SSH port."""
     if not hasattr(context, 'vms'):
         context.vms = {}
     context.vms[vm_name] = {'port': port, 'status': 'running'}
@@ -554,7 +554,7 @@ def step_ssh_dir_not_exist(context):
 
 @when('I run any VDE command that requires SSH')
 def step_run_vde_command_requires_ssh(context):
-    """Simulate running a VDE command that requires SSH."""
+    """Run a VDE command that requires SSH."""
     import subprocess
     # This would typically call a VDE script that checks SSH
     # For testing, we'll just verify SSH agent status
@@ -665,7 +665,7 @@ def step_create_vm_again(context, vm_name):
 
 @when('multiple processes try to update SSH config simultaneously')
 def step_multiple_processes_update_config(context):
-    """Simulate multiple processes updating SSH config."""
+    """Execute concurrent updates to the SSH config."""
     import threading
     import time
     
@@ -738,7 +738,7 @@ def step_vm_removed(context, vm_name):
 
 @when('I SSH from "{source_vm}" to "{dest_vm}"')
 def step_ssh_from_vm_to_vm(context, source_vm, dest_vm):
-    """Simulate SSH from one VM to another."""
+    """Execute SSH between VMs."""
     # This would test agent forwarding
     context.ssh_connection = {
         'source': source_vm,
@@ -784,7 +784,7 @@ def step_attempt_create_vm_again(context, vm_name):
 
 @when('merge_ssh_config_entry starts but is interrupted')
 def step_merge_interrupted(context):
-    """Simulate interrupted merge operation."""
+    """Mock an interrupted merge operation."""
     ssh_config = _get_ssh_config_path()
     
     # Create a temporary file
@@ -1391,7 +1391,7 @@ def step_ssh_dir_exists_or_created(context):
 
 @then('multiple processes try to add SSH entries simultaneously')
 def step_multiple_processes_add_entries(context):
-    """Simulate multiple processes adding entries."""
+    """Attempt concurrent addition of SSH entries."""
     step_multiple_processes_update_config(context)
     assert hasattr(context, 'concurrent_result'), "Concurrent update should have been executed"
 
@@ -1427,7 +1427,7 @@ Host github.com
 
 @given('multiple processes try to add SSH entries simultaneously')
 def step_multiple_processes_try_add_entries(context):
-    """Simulate multiple processes trying to add entries."""
+    """Setup: Multiple processes will attempt to add entries."""
     # Store flag for concurrent access simulation
     context.concurrent_access = True
 
@@ -1493,7 +1493,7 @@ def step_vm_with_port_removed(context, port):
 
 @given('VM "{vm_name}" was previously created with SSH port "{port}"')
 def step_vm_previously_created_with_port(context, vm_name, port):
-    """Simulate VM that was previously created with specific port."""
+    """Context: A VM was already created with a specific port."""
     # Store VM info for later use
     context.previous_vm_name = vm_name
     context.previous_vm_port = port
