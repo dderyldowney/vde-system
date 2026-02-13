@@ -718,10 +718,25 @@ is_known_vm() {
     return $VDE_ERR_NOT_FOUND
 }
 
-# vm_exists - Check if a VM configuration exists
+# vm_is_created - Check if a VM has been created (exists in docker-state or has container)
 # Args: <vm_name>
-# Returns: 0 if configuration exists, 1 otherwise
-vm_exists() {
+# Returns: 0 if VM has been created, 1 otherwise
+vm_is_created() {
+    local vm_name="$1"
+    local state_dir
+    state_dir=$(get_docker_state_dir)
+    
+    # Check if state file exists
+    if [[ -f "$state_dir/${vm_name}.json" ]]; then
+        return 0
+    fi
+    return 1
+}
+
+# vm_template_exists - Check if a VM template exists (for create validation)
+# Args: <vm_name>
+# Returns: 0 if template exists, 1 otherwise
+vm_template_exists() {
     local vm_name="$1"
     if [[ -f "$CONFIGS_DIR/$vm_name/docker-compose.yml" ]]; then
         return 0
@@ -729,14 +744,34 @@ vm_exists() {
     return 1
 }
 
+# vm_exists - Check if a VM has been created (not just template exists)
+# Args: <vm_name>
+# Returns: 0 if VM exists (has been created), 1 otherwise
+vm_exists() {
+    local vm_name="$1"
+    vm_is_created "$vm_name"
+}
+
 # validate_vm_doesnt_exist - Ensure a VM has not been created yet
 # Args: <vm_name>
 # Returns: VDE_SUCCESS (0) if not exists, VDE_ERR_EXISTS (6) if already exists
 validate_vm_doesnt_exist() {
     local vm_name="$1"
-    if vm_exists "$vm_name"; then
+    if vm_is_created "$vm_name"; then
         vde_error_container_exists "$vm_name"
         return $VDE_ERR_EXISTS
+    fi
+    return $VDE_SUCCESS
+}
+
+# validate_vm_type - Ensure a VM type/template exists
+# Args: <vm_name>
+# Returns: VDE_SUCCESS (0) if template exists, VDE_ERR_INVALID_DATA if not
+validate_vm_type() {
+    local vm_name="$1"
+    if ! vm_template_exists "$vm_name"; then
+        vde_error_invalid_vm_type "$vm_name"
+        return $VDE_ERR_INVALID_DATA
     fi
     return $VDE_SUCCESS
 }
