@@ -152,6 +152,9 @@ else
     log_info "Skipping SSH config removal (test mode)"
 fi
 
+# Clear Docker state from .docker-state/
+clear_docker_state "$VM_NAME"
+
 log_success "VM '$VM_NAME' removed successfully!"
 echo ""
 echo "Note: Your projects directory at $VDE_ROOT_DIR/projects/$VM_NAME was preserved."

@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 #===============================================================================
-# vde-ps - List running VDE containers
+# vde-ps - List VDE containers
 # Usage: vde-ps [options]
 #
 # Options:
@@ -17,6 +17,8 @@ export VDE_ROOT_DIR
 [[ -f "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" &>/dev/null
 [[ -f "$VDE_ROOT_DIR/scripts/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-constants" &>/dev/null
 [[ -f "$VDE_ROOT_DIR/scripts/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-errors" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vm-common" ]] && source "$VDE_ROOT_DIR/scripts/lib/vm-common" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-docker-state" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-docker-state" &>/dev/null
 
 # Parse options
 SHOW_ALL=0
@@ -44,21 +46,103 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Get VDE container prefix
-VDE_PREFIX="${VDE_CONTAINER_PREFIX:-vde-}"
+# Get VDE container prefix - supports vde- and -dev suffixes
+VDE_PREFIX="${VDE_CONTAINER_PREFIX:-dev}"
 
-# Build docker ps command
-if [ $QUIET -eq 1 ]; then
-    if [ $SHOW_ALL -eq 1 ]; then
-        docker ps -a --format '{{.Names}}' | grep "^${VDE_PREFIX}" || true
+# Helper function to get VM name from container name
+get_vm_name_from_container() {
+    local container="$1"
+    # Language VMs: python-dev -> python
+    if [[ "$container" =~ ^(.+)-dev$ ]]; then
+        echo "${match[1]}"
+    # Service VMs: vde-postgres -> postgres
+    elif [[ "$container" =~ ^vde-(.+)$ ]]; then
+        echo "${match[1]}"
     else
-        docker ps --format '{{.Names}}' | grep "^${VDE_PREFIX}" || true
+        echo "$container"
+    fi
+}
+
+# Helper function to get VM type from docker-state if available
+get_vm_info_from_state() {
+    local vm_name="$1"
+    local state_dir
+    state_dir=$(get_docker_state_dir)
+    local state_file="$state_dir/${vm_name}.json"
+    
+    if [[ -f "$state_file" ]]; then
+        cat "$state_file"
+        return 0
+    fi
+    return 1
+}
+
+# Build output based on format
+if [[ "$FORMAT" == "json" ]]; then
+    # JSON output
+    if [ $QUIET -eq 1 ]; then
+        if [ $SHOW_ALL -eq 1 ]; then
+            docker ps -a --format '{"name":"{{.Names}}"}' | grep -E '\-dev$|^[a-z]+$' | jq -s '.' || echo "[]"
+        else
+            docker ps --format '{"name":"{{.Names}}"}' | grep -E '\-dev$|^[a-z]+$' | jq -s '.' || echo "[]"
+        fi
+    else
+        if [ $SHOW_ALL -eq 1 ]; then
+            docker ps -a --format '{"name":"{{.Names}}","status":"{{.Status}}","ports":"{{.Ports}}"}' | grep -E '\-dev$|^[a-z]+$' | jq -s '.' || echo "[]"
+        else
+            docker ps --format '{"name":"{{.Names}}","status":"{{.Status}}","ports":"{{.Ports}}"}' | grep -E '\-dev$|^[a-z]+$' | jq -s '.' || echo "[]"
+        fi
     fi
 else
-    if [ $SHOW_ALL -eq 1 ]; then
-        docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep "^${VDE_PREFIX}" || true
+    # Table output (default)
+    if [ $QUIET -eq 1 ]; then
+        if [ $SHOW_ALL -eq 1 ]; then
+            docker ps -a --format '{{.Names}}' | grep -E '\-dev$|^[a-z]+$' || true
+        else
+            docker ps --format '{{.Names}}' | grep -E '\-dev$|^[a-z]+$' || true
+        fi
     else
-        docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep "^${VDE_PREFIX}" || true
+        if [ $SHOW_ALL -eq 1 ]; then
+            # Show all containers with enhanced info from docker-state if available
+            echo "CONTAINER ID       NAME                    STATUS                     PORTS"
+            echo "----------------- ---------------------- -------------------------- ----------------------"
+            for container in $(docker ps -a --format '{{.Names}}' | grep -E '\-dev$|^[a-z]+$' || true); do
+                local vm_name
+                vm_name=$(get_vm_name_from_container "$container")
+                
+                # Try to get enhanced info from docker-state
+                local state_json=""
+                state_json=$(get_vm_info_from_state "$vm_name" 2>/dev/null) || state_json=""
+                
+                if [[ -n "$state_json" ]]; then
+                    # Use docker ps for basic info, state file for additional details
+                    local status ports
+                    status=$(echo "$state_json" | jq -r '.status // "unknown"' 2>/dev/null)
+                    local display_name
+                    display_name=$(echo "$state_json" | jq -r '.display_name // ""' 2>/dev/null)
+                    
+                    # Get container status from Docker
+                    local docker_status
+                    docker_status=$(docker ps -a --filter "name=$container" --format "{{.Status}}" 2>/dev/null)
+                    local docker_ports
+                    docker_ports=$(docker ps -a --filter "name=$container" --format "{{.Ports}}" 2>/dev/null)
+                    
+                    if [[ -n "$display_name" ]]; then
+                        printf "%-18s %-22s %-26s %s\n" "" "$container ($display_name)" "$docker_status" "$docker_ports"
+                    else
+                        printf "%-18s %-22s %-26s %s\n" "" "$container" "$docker_status" "$docker_ports"
+                    fi
+                else
+                    # Fallback to docker ps output
+                    docker ps -a --filter "name=$container" --format '%-18s %-22s %-26s %-25s' '' '{{.Names}}' '{{.Status}}' '{{.Ports}}' 2>/dev/null || true
+                fi
+            done
+        else
+            # Show only running containers
+            echo "CONTAINER ID       NAME                    STATUS                     PORTS"
+            echo "----------------- ---------------------- -------------------------- ----------------------"
+            docker ps --format '%-18s %-22s %-26s %-25s' '' '{{.Names}}' '{{.Status}}' '{{.Ports}}' | grep -E '\-dev$|^[a-z]+$' || true
+        fi
     fi
 fi
 
