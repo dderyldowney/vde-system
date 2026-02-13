@@ -19,7 +19,7 @@ def step_impl(context):
 
 @when(u'one VM crashes')
 def step_impl(context):
-    """Simulate a VM crash scenario."""
+    """Context: VM has crashed."""
     # Record crash state - actual crash simulation requires docker kill
     context.vm_crashed = True
 

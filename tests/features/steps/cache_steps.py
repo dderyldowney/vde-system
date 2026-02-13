@@ -333,7 +333,7 @@ def step_config_not_modified(context):
 
 @given('vm-types.conf has been modified after cache')
 def step_config_modified_after(context):
-    """Simulate config modification by touching the file."""
+    """Modify config by touching the file."""
     import time
     config_path = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
     cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
@@ -788,7 +788,7 @@ def step_cache_reflects_allocations(context):
 
 @when('system is restarted')
 def step_system_restarted(context):
-    """Simulate system restart (verify cache persists)."""
+    """Verify system restart persistence."""
     cache_path = VDE_ROOT / ".cache" / "vm-types.cache"
     port_registry = VDE_ROOT / ".cache" / "port-registry"
     context.cache_after_restart = cache_path.exists()

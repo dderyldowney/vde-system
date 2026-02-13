@@ -533,9 +533,12 @@ def step_long_running_task(context):
 
 @when('my SSH connection drops')
 def step_connection_drops(context):
-    """Simulate SSH connection drop."""
+    """Trigger an SSH connection drop by disconnecting the network."""
+    vm = getattr(context, 'task_vm', None)
+    if vm:
+        # Disconnect from network to break connections
+        subprocess.run(['docker', 'network', 'disconnect', 'dev-net', vm], capture_output=True)
     context.connection_dropped = True
-    # In real test, would track session state
 
 
 @then('the task should continue running')

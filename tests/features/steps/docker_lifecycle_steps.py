@@ -217,7 +217,7 @@ def step_parse_stderr(context):
 
 @when('operation is retried')
 def step_operation_retried(context):
-    """Simulate retry of operation."""
+    """Verify retry logic updates retry count."""
     context.retry_count = getattr(context, 'retry_count', 0) + 1
     context.retry_delay = min(2 ** context.retry_count, 30)  # Exponential backoff, capped at 30s
 

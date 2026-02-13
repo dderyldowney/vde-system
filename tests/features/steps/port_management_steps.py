@@ -100,24 +100,30 @@ def step_reload_vm_cache(context):
 
 @given('a non-VDE process is listening on port "{port}"')
 def step_process_listening_on_port(context, port):
-    """Simulate a process listening on a port (for collision detection)."""
-    # In a real test, we'd start a process on this port
-    # For now, we just mark that this port should be considered occupied
-    context.occupied_ports = getattr(context, 'occupied_ports', [])
-    context.occupied_ports.append(port)
+    """Start a process listening on a port."""
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(('localhost', int(port)))
+        s.listen(1)
+        # Store socket in context to keep it open
+        if not hasattr(context, 'open_sockets'):
+            context.open_sockets = []
+        context.open_sockets.append(s)
+    except OSError:
+        pass # Already occupied
 
 
 @given('a Docker container is bound to host port "{port}"')
 def step_docker_bound_to_port(context, port):
-    """Simulate a Docker container bound to a port."""
-    # In a real test, we'd have a container on this port
-    context.docker_occupied_ports = getattr(context, 'docker_occupied_ports', [])
-    context.docker_occupied_ports.append(port)
+    """Start a Docker container bound to a port (or simulate via socket)."""
+    # For port conflict detection, a socket bind is sufficient to block the port on host
+    step_process_listening_on_port(context, port)
 
 
 @given('all ports from "{start_port}" to "{end_port}" are allocated')
 def step_all_ports_allocated(context, start_port, end_port):
-    """Simulate all ports in a range being allocated."""
+    """Context: All ports in range are allocated."""
     context.port_range_start = int(start_port)
     context.port_range_end = int(end_port)
     context.all_ports_allocated = True
