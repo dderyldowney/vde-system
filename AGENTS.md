@@ -29,6 +29,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 >
 > **Update Authorization**: Specification updates require explicit User authorization. Agents must not modify [`docs/VDE-SPEC.md`](docs/VDE-SPEC.md) without prior approval.
 >
+> **Revision Control**: The version number MUST be incremented for EVERY single change, whether to test requirements or specification blocks. The Last Updated timestamp MUST also be updated to full ISO 8601 format. Minor changes increment patch (1.0.1), significant changes increment minor (1.1.0), breaking changes increment major (2.0.0).
+>
 > Any implementation that does not conform to this specification is considered invalid.
 
 ---
