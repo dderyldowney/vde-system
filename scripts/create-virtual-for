@@ -272,6 +272,22 @@ if [[ "$START_VM" == "true" ]]; then
     compose_file="$CONFIGS_DIR/$VM_NAME/docker-compose.yml"
     if docker-compose -f "$compose_file" up -d 2>/dev/null; then
         vde_progress_done "Started VM: $VM_NAME"
+        
+        # Save Docker state to .docker-state/
+        local state_json
+        state_json=$(cat <<EOF
+{
+  "vm_name": "$VM_NAME",
+  "vm_type": "$_vm_type",
+  "display_name": "$_vm_display",
+  "ssh_port": $SSH_PORT,
+  "service_port": "$_vm_svc_port",
+  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "status": "running"
+}
+EOF
+)
+        save_docker_state "$VM_NAME" "$state_json"
     else
         vde_progress_warning "Failed to start VM: $VM_NAME"
     fi
