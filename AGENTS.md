@@ -2,11 +2,43 @@
 
 This file documents the specialized AI agents available within the Gemini-Kit team for developing and maintaining the Virtual Development Environment (VDE).
 
+## Authoritative Specification
+
+**Specification Document:** [`docs/VDE-SPEC.md`](docs/VDE-SPEC.md) (v1.0.0)
+
+> **MANDATE**: All development, bug fixes, and implementation work MUST conform to [`docs/VDE-SPEC.md`](docs/VDE-SPEC.md). This document is the single source of truth for:
+> - Function signatures and interfaces
+> - Data structures and file formats
+> - CLI command specifications
+> - Error codes and return values
+> - Implementation priorities
+>
+> **Specification Flow (Tests Prove Implementation)**:
+> ```
+> USER GUIDE (Documented Workflows)
+>         ↓
+> SPECIFICATION (Technical Requirements)
+>         ↓
+> CODE / IMPLEMENTATION
+>         ↓
+> TESTS (Prove implementation works as designed)
+>   Scenarios → Individual Steps
+> ```
+>
+> The User Guide documents the workflows. The Specification translates these into technical requirements. The Code implements the specification. The Tests prove the code does what it was designed to do, from Scenarios (feature-level) down to individual Steps (implementation-level).
+>
+> **Update Authorization**: Specification updates require explicit User authorization. Agents must not modify [`docs/VDE-SPEC.md`](docs/VDE-SPEC.md) without prior approval.
+>
+> Any implementation that does not conform to this specification is considered invalid.
+
+---
+
 ## Core Mandates
 - **MCP Server Utilization**: All agents must utilize connected MCP servers.
 - **Active Endpoints**: Ensure all tool invocations reference active MCP endpoints.
 - **Connectivity Validation**: Validate server connectivity prior to execution.
 - **Interaction Logging**: Log all MCP interactions for audit and troubleshooting.
+- **Specification Compliance**: All implementations must match [`docs/VDE-SPEC.md`](docs/VDE-SPEC.md).
 
 ---
 
