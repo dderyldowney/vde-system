@@ -75,7 +75,7 @@ Feature: Installation and Initial Setup
   Scenario: Create Docker network
     Given VDE is being installed
     When the first VM is created
-    Then vde-net should be created automatically
+    Then vde-testing should be created automatically
     And all VMs should use this network
     And VMs can communicate with each other
 
