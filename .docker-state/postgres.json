@@ -1,0 +1,9 @@
+{
+  "vm_name": "postgres",
+  "vm_type": "service",
+  "display_name": "PostgreSQL",
+  "ssh_port": 2400,
+  "service_port": "5432",
+  "created_at": "2026-02-15T21:22:24Z",
+  "status": "running"
+}

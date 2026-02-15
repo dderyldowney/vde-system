@@ -2,6 +2,7 @@
 @wip
 @user-guide-ssh-keys
 @requires-docker-ssh
+@core-infrastructure
 Feature: SSH Configuration
   As a developer
   I want automatic SSH agent forwarding and key management

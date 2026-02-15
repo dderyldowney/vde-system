@@ -1,23 +1,23 @@
 # Template for language VMs
-# Variables: js, 2201, apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x 
+# Variables: js, 2200, apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs
 services:
-  vde-js:
+  js-dev:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/base-dev.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-js:latest
-    container_name: vde-js
-    hostname: vde-js
+    container_name: js-dev
+    hostname: js-dev
     restart: unless-stopped
-    command: sh -c "apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x  && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs && /usr/sbin/sshd -D"
 
     ports:
-      - "2201:22"
+      - "2200:22"
 
     volumes:
       - ../../../projects/js:/home/devuser/workspace
@@ -30,7 +30,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/vde-js.env
+      - ../../../env-files/js.env
 
     networks:
       - vde-net

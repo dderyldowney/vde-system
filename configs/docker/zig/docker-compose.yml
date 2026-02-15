@@ -1,18 +1,18 @@
 # Template for language VMs
 # Variables: zig, 2200, apt-get install -y zig
 services:
-  vde-zig:
+  zig-dev:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/base-dev.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-zig:latest
-    container_name: vde-zig
-    hostname: vde-zig
+    container_name: zig-dev
+    hostname: zig-dev
     restart: unless-stopped
     command: sh -c "apt-get install -y zig && /usr/sbin/sshd -D"
 
@@ -30,7 +30,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/vde-zig.env
+      - ../../../env-files/zig.env
 
     networks:
       - vde-net
