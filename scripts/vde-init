@@ -226,8 +226,12 @@ vde_init_set_permissions() {
     local ssh_dir="$HOME/.ssh/vde"
     if [ -d "$ssh_dir" ]; then
         chmod 700 "$ssh_dir" 2>/dev/null || true
-        chmod 600 "$ssh_dir"/* 2>/dev/null || true
-        chmod 644 "$ssh_dir"/*.pub 2>/dev/null || true
+        # Set permissions on all subdirectories
+        find "$ssh_dir" -type d -exec chmod 700 {} \; 2>/dev/null || true
+        # Set permissions on private files (no extension)
+        find "$ssh_dir" -type f ! -name "*.pub" -exec chmod 600 {} \; 2>/dev/null || true
+        # Set permissions on public keys
+        find "$ssh_dir" -type f -name "*.pub" -exec chmod 644 {} \; 2>/dev/null || true
     fi
     
     if [ "$QUIET" = "0" ]; then
