@@ -175,9 +175,9 @@ echo "Step 5: Initializing Docker Network"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-if ! docker network inspect vde-network &>/dev/null; then
-    docker network create vde-network >/dev/null 2>&1 || \
-    docker network create dev-net >/dev/null 2>&1 || true
+if ! docker network inspect vde-net &>/dev/null; then
+    docker network create vde-net >/dev/null 2>&1 || \
+    docker network create vde-network >/dev/null 2>&1 || true
 fi
 
 log_success "✓ Docker network ready"

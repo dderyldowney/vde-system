@@ -40,6 +40,7 @@ vde_health_check() {
     
     # Run all health checks
     vde_health_docker
+    vde_health_network
     vde_health_containers
     vde_health_ports
     vde_health_ssh
@@ -72,6 +73,40 @@ vde_health_docker() {
         local docker_version
         docker_version=$(docker --version 2>/dev/null || echo "unknown")
         message="Docker version: $docker_version"
+    fi
+    
+    _VDE_HEALTH_CHECKS[$check_name]="$health_status|$message"
+}
+
+# Check VDE network exists
+vde_health_network() {
+    local check_name="network"
+    local health_status="OK"
+    local message="VDE networks are configured"
+    
+    # Source constants if not already loaded
+    if [[ -z "$VDE_DOCKER_NETWORK" ]]; then
+        source "$VDE_ROOT_DIR/scripts/lib/vde-constants" 2>/dev/null || true
+    fi
+    
+    local network_name="${VDE_DOCKER_NETWORK:-vde-net}"
+    
+    # Check if Docker is available
+    if ! command -v docker >/dev/null 2>&1; then
+        health_status="CRITICAL"
+        message="Docker not available for network check"
+        _VDE_HEALTH_CRITICAL_COUNT=$((_VDE_HEALTH_CRITICAL_COUNT + 1))
+        _VDE_HEALTH_CHECKS[$check_name]="$health_status|$message"
+        return
+    fi
+    
+    # Check if vde-net exists
+    if docker network inspect "$network_name" &>/dev/null; then
+        message="Network '$network_name' exists"
+    else
+        health_status="MAJOR"
+        message="Network '$network_name' missing - run 'vde init' to create"
+        _VDE_HEALTH_MAJOR_COUNT=$((_VDE_HEALTH_MAJOR_COUNT + 1))
     fi
     
     _VDE_HEALTH_CHECKS[$check_name]="$health_status|$message"
