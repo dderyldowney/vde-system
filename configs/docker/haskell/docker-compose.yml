@@ -1,13 +1,13 @@
 # Template for language VMs
 # Variables: haskell, 2216, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y ghc cabal-install
 services:
-  haskell-dev:
+  vde-haskell:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
     image: dev-haskell:latest
-    container_name: haskell-dev
-    hostname: haskell-dev
+    container_name: vde-haskell
+    hostname: vde-haskell
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y ghc cabal-install && /usr/sbin/sshd -D"
 
@@ -27,11 +27,11 @@ services:
       - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
-      - ../../../env-files/haskell.env
+      - ../../../env-files/vde-haskell.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

@@ -1,5 +1,5 @@
 services:
-  java-dev:
+  vde-java:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -9,8 +9,8 @@ services:
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-java:latest
-    container_name: java-dev
-    hostname: java-dev
+    container_name: vde-java
+    hostname: vde-java
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y default-jdk maven gradle && /usr/sbin/sshd -D"
 
@@ -28,11 +28,11 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/java.env
+      - ../../../env-files/vde-java.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

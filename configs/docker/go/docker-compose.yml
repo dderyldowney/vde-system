@@ -1,7 +1,7 @@
 # Template for language VMs
 # Variables: go, 2201, apt-get update -y && apt-get install -y golang-go
 services:
-  go-dev:
+  vde-go:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -11,8 +11,8 @@ services:
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-go:latest
-    container_name: go-dev
-    hostname: go-dev
+    container_name: vde-go
+    hostname: vde-go
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y golang-go && /usr/sbin/sshd -D"
 
@@ -30,11 +30,11 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/go.env
+      - ../../../env-files/vde-go.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

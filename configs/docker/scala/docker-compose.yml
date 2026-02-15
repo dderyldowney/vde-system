@@ -1,11 +1,11 @@
 services:
-  scala-dev:
+  vde-scala:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
     image: dev-scala:latest
-    container_name: scala-dev
-    hostname: scala-dev
+    container_name: vde-scala
+    hostname: vde-scala
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y scala-defaults sbt && /usr/sbin/sshd -D"
 
@@ -25,11 +25,11 @@ services:
       - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
-      - ../../../env-files/scala.env
+      - ../../../env-files/vde-scala.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

@@ -1,5 +1,5 @@
 services:
-  mysql:
+  vde-mysql:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -9,8 +9,8 @@ services:
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-mysql:latest
-    container_name: mysql
-    hostname: mysql
+    container_name: vde-mysql
+    hostname: vde-mysql
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y default-mysql-server && /usr/sbin/sshd -D"
 
@@ -29,11 +29,11 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/mysql.env
+      - ../../../env-files/vde-mysql.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

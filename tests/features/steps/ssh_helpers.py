@@ -137,8 +137,8 @@ def vm_has_private_keys(vm_name):
     Returns:
         True if private keys are found in the VM, False otherwise
     """
-    # Determine container name (language VMs use -dev suffix)
-    container_name = f"{vm_name}-dev"
+    # Determine container name (language VMs use vde- prefix)
+    container_name = f"vde-{vm_name}"
 
     # If container doesn't exist with -dev suffix, try plain name
     if not container_exists(container_name):

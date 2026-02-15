@@ -19,11 +19,11 @@ def step_check_docker_network(context):
     context.docker_network_output = result.stdout
 
 
-@then(u'I should see both VMs on "vde-network"')
+@then(u'I should see both VMs on "vde-testingwork"')
 def step_vms_on_network(context):
     """Verify VMs are on VDE network."""
     output = getattr(context, 'vde_command_output', '')
-    assert 'vde-network' in output.lower() or 'network' in output.lower(), \
+    assert 'vde-testingwork' in output.lower() or 'network' in output.lower(), \
         f"Expected VDE network: {output}"
 
 

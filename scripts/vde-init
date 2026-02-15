@@ -346,6 +346,8 @@ else
         else
             "$VDE_ROOT_DIR/scripts/build-and-start" >/dev/null 2>&1
         fi
+        # Apply enhanced permissions after build-and-start
+        vde_init_set_permissions
     else
         # Fallback: do setup manually if build-and-start doesn't exist
         if ! vde_init_check_prerequisites; then

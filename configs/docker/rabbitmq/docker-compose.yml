@@ -2,7 +2,7 @@
 # Variables: rabbitmq, 2400, 5672,15672, apt-get update -y && apt-get install -y erlang-nox && apt-get install -y rabbitmq-server
 # SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
 services:
-  rabbitmq:
+  vde-rabbitmq:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -12,8 +12,8 @@ services:
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-rabbitmq:latest
-    container_name: rabbitmq
-    hostname: rabbitmq
+    container_name: vde-rabbitmq
+    hostname: vde-rabbitmq
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y erlang-nox && apt-get install -y rabbitmq-server && /usr/sbin/sshd -D"
 
@@ -33,11 +33,11 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/rabbitmq.env
+      - ../../../env-files/vde-rabbitmq.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

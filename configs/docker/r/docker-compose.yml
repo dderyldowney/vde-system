@@ -1,7 +1,7 @@
 # Template for language VMs
 # Variables: r, 2201, apt-get update -y && apt-get install -y r-base r-cran-littler
 services:
-  r-dev:
+  vde-r:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -11,8 +11,8 @@ services:
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-r:latest
-    container_name: r-dev
-    hostname: r-dev
+    container_name: vde-r
+    hostname: vde-r
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y r-base r-cran-littler && /usr/sbin/sshd -D"
 
@@ -30,11 +30,11 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/r.env
+      - ../../../env-files/vde-r.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

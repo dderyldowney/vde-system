@@ -89,8 +89,8 @@ def get_ssh_port(vm_name):
         Port number as integer, or None if not found
     """
     # Try docker port command (authoritative source for running containers)
-    # Language VMs use -dev suffix
-    container_name = f"{vm_name}-dev"
+    # Language VMs use vde- prefix
+    container_name = f"vde-{vm_name}"
     try:
         result = __import__('subprocess').run(
             ["docker", "port", container_name, "22"],

@@ -5,8 +5,8 @@ These functions handle the conversion between VM names (used in tests)
 and container names (used by Docker).
 
 VM Naming Rules:
-- Language VMs: "python" → "python-dev", "rust" → "rust-dev", "go" → "go-dev"
-- Service VMs: "postgres" → "postgres", "redis" → "redis" (no suffix)
+- Language VMs: "python" → "vde-python", "rust" → "vde-rust", "go" → "vde-go"
+- Service VMs: "postgres" → "vde-postgres", "redis" → "vde-redis" (vde- prefix)
 """
 
 # Service VMs that don't get the "-dev" suffix
@@ -50,9 +50,7 @@ def _get_container_name(vm_name: str) -> str:
         >>> _get_container_name("rust")
         'rust-dev'
     """
-    if vm_name in SERVICE_VMS:
-        return vm_name
-    return f"{vm_name}-dev"
+    return f"vde-{vm_name}"
 
 
 def _get_vm_name(container_name: str) -> str:
@@ -60,22 +58,20 @@ def _get_vm_name(container_name: str) -> str:
     Convert container name back to VM name.
 
     Args:
-        container_name: Container name as used by Docker (e.g., "python-dev", "postgres")
+        container_name: Container name as used by Docker (e.g., "vde-python", "vde-postgres")
 
     Returns:
         VM name as used in test steps (e.g., "python", "postgres")
 
     Examples:
-        >>> _get_vm_name("python-dev")
+        >>> _get_vm_name("vde-python")
         'python'
-        >>> _get_vm_name("postgres")
+        >>> _get_vm_name("vde-postgres")
         'postgres'
     """
-    if container_name in SERVICE_VMS:
-        return container_name
-    # Remove "-dev" suffix to get VM name
-    if container_name.endswith('-dev'):
-        return container_name[:-4]
+    # Remove "vde-" prefix to get VM name
+    if container_name.startswith('vde-'):
+        return container_name[4:]
     return container_name
 
 

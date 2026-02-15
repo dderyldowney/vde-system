@@ -1,13 +1,13 @@
 # Template for language VMs
 # Variables: elixir, 2215, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y elixir erlang
 services:
-  elixir-dev:
+  vde-elixir:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
     image: dev-elixir:latest
-    container_name: elixir-dev
-    hostname: elixir-dev
+    container_name: vde-elixir
+    hostname: vde-elixir
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y elixir erlang && /usr/sbin/sshd -D"
 
@@ -27,11 +27,11 @@ services:
       - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
-      - ../../../env-files/elixir.env
+      - ../../../env-files/vde-elixir.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

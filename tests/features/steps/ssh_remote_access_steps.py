@@ -537,7 +537,7 @@ def step_connection_drops(context):
     vm = getattr(context, 'task_vm', None)
     if vm:
         # Disconnect from network to break connections
-        subprocess.run(['docker', 'network', 'disconnect', 'dev-net', vm], capture_output=True)
+        subprocess.run(['docker', 'network', 'disconnect', 'vde-testing', vm], capture_output=True)
     context.connection_dropped = True
 
 

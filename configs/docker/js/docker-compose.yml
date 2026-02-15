@@ -1,7 +1,7 @@
 # Template for language VMs
 # Variables: js, 2201, apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x 
 services:
-  js-dev:
+  vde-js:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -11,8 +11,8 @@ services:
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-js:latest
-    container_name: js-dev
-    hostname: js-dev
+    container_name: vde-js
+    hostname: vde-js
     restart: unless-stopped
     command: sh -c "apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x  && /usr/sbin/sshd -D"
 
@@ -30,11 +30,11 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/js.env
+      - ../../../env-files/vde-js.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

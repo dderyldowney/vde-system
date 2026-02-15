@@ -24,7 +24,7 @@ from vm_common import (
 # GIVEN steps - Setup network states
 # =============================================================================
 
-@given('dev-net does not exist')
+@given('vde-testing does not exist')
 def step_no_network(context):
     """Network does not exist - verify network missing."""
     result = subprocess.run(
@@ -42,7 +42,7 @@ def step_no_network(context):
 
 @then('network should be created automatically')
 def step_network_auto_created(context):
-    """Network should be auto-created - verify dev-net exists."""
+    """Network should be auto-created - verify vde-testing exists."""
     result = subprocess.run(
         ["docker", "network", "ls", "--filter", "name=dev", "--format", "{{.Name}}"],
         capture_output=True,
@@ -55,7 +55,7 @@ def step_network_auto_created(context):
 
 @then('they should be on the same Docker network')
 def step_they_same_network(context):
-    """VMs should be on same Docker network - verify dev-net exists."""
+    """VMs should be on same Docker network - verify vde-testing exists."""
     result = subprocess.run(
         ["docker", "network", "ls", "--filter", "name=dev", "--format", "{{.Name}}"],
         capture_output=True,
@@ -66,33 +66,33 @@ def step_they_same_network(context):
     assert "dev" in result.stdout.lower(), "VDE network should exist"
 
 
-@then('VDE should create the dev-net network')
+@then('VDE should create the vde-testing network')
 def step_dev_net_created(context):
-    """VDE creates dev-net network."""
+    """VDE creates vde-testing network."""
     result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=dev-net", "--format", "{{.Name}}"],
+        ["docker", "network", "ls", "--filter", "name=vde-testing", "--format", "{{.Name}}"],
         capture_output=True,
         text=True,
         timeout=30,
     )
     assert result.returncode == 0, "Should be able to list Docker networks"
-    assert 'dev-net' in result.stdout, "VDE should create dev-net network"
-    context.dev_net_created = 'dev-net' in result.stdout
+    assert 'vde-testing' in result.stdout, "VDE should create vde-testing network"
+    context.dev_net_created = 'vde-testing' in result.stdout
 
 
 @then('all VMs should join this network')
 def step_all_vms_join_network(context):
-    """All VMs join network - verify VMs are on dev-net."""
+    """All VMs join network - verify VMs are on vde-testing."""
     result = subprocess.run(
-        ["docker", "network", "inspect", "dev-net", "--format", "{{.Containers}}"],
+        ["docker", "network", "inspect", "vde-testing", "--format", "{{.Containers}}"],
         capture_output=True,
         text=True,
         timeout=10,
     )
-    # Verify dev-net exists and has containers or is properly configured
-    assert result.returncode == 0, "dev-net should exist"
+    # Verify vde-testing exists and has containers or is properly configured
+    assert result.returncode == 0, "vde-testing should exist"
     # Even if empty, the network should be accessible
-    assert result.stdout is not None, "dev-net should be inspectable"
+    assert result.stdout is not None, "vde-testing should be inspectable"
 
 
 @then('VMs should be able to communicate by name')
