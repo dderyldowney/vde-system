@@ -122,7 +122,7 @@ This section describes the complete orchestration flow from user command to runn
 │  │   HOST MACHINE                      DOCKER DAEMON                     EXTERNAL SERVICES       │   │
 │  │                                                                                              │   │
 │  │   ┌─────────────────────┐         ┌─────────────────────┐         ┌─────────────────────┐ │   │
-│  │   │ SSH Agent          │         │ vde-network         │         │ GitHub/GitLab       │ │   │
+│  │   │ SSH Agent          │         │ vde-net         │         │ GitHub/GitLab       │ │   │
 │  │   │                     │         │ (bridge network)    │         │                     │ │   │
 │  │   │ Keys:               │         │                     │         │ git@github.com      │ │   │
 │  │   │ - id_ed25519       │         │  ┌───────────────┐  │         │ git@gitlab.com      │ │   │
@@ -1040,11 +1040,11 @@ services:
       - SSH_PORT=${port}
       - VDE_HOME=/home/devuser/.vde
     networks:
-      - vde-network
+      - vde-net
     restart: unless-stopped
 
 networks:
-  vde-network:
+  vde-net:
     driver: bridge
 EOF
 }

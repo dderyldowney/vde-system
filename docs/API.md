@@ -173,7 +173,7 @@ Standardized constants for VDE operations.
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `VDE_DOCKER_NETWORK` | "vde-network" | Docker network name |
+| `VDE_DOCKER_NETWORK` | "vde-net" | Docker network name |
 | `LANG_CONTAINER_SUFFIX` | "-dev" | Suffix for language container names |
 | `SVC_CONTAINER_SUFFIX` | "" | Suffix for service container names |
 
@@ -811,7 +811,7 @@ Examples:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `VDE_DOCKER_NETWORK` | Docker network name | vde-network |
+| `VDE_DOCKER_NETWORK` | Docker network name | vde-net |
 | `DOCKER_TIMEOUT` | Docker operation timeout | 300 |
 
 ### SSH Configuration

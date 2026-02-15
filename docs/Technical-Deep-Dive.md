@@ -47,7 +47,7 @@ The VDE (Virtual Development Environment) system is a **template-based, data-dri
                 └───────────────┴───────────────┘
                                 │
                         ┌───────▼───────┐
-                        │  vde-network  │
+                        │  vde-net  │
                         │ (Docker Net)  │
                         └───────────────┘
 ```
@@ -1197,7 +1197,7 @@ services:
 
 ## Part 11: Inter-Container Communication
 
-All containers are on the `vde-network` Docker network, enabling communication:
+All containers are on the `vde-net` Docker network, enabling communication:
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -1208,7 +1208,7 @@ All containers are on the `vde-network` Docker network, enabling communication:
        └──────────────────┴──────────────────┘
                           │
                   ┌───────▼───────┐
-                  │  vde-network  │
+                  │  vde-net  │
                   │ (bridge net)  │
                   └───────────────┘
 ```
@@ -1418,7 +1418,7 @@ Connect:
 6. **Unified CLI**: Single `vde` command for all operations
 7. **Shell-Portable**: Works on zsh 5.0+, bash 4.0+, bash 3.x (with fallbacks)
 8. **Volume-Mounted**: Code persists on host, containers are ephemeral
-9. **Networked**: All containers on vde-network for inter-communication
+9. **Networked**: All containers on vde-net for inter-communication
 10. **Extensible**: Add new languages/services by editing one file
 11. **Idempotent**: Safe to run create-virtual-for multiple times (fails if exists)
 

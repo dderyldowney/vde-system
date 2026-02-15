@@ -534,7 +534,7 @@ services:
 
 networks:
   vde-net:
-    name: vde-network
+    name: vde-net
     external: true
 ```
 

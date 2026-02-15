@@ -30,7 +30,7 @@
 | `VM "{vm}" is started` | Alias for is running |
 | `VM "{vm}" exists` | Verify compose file exists |
 | `Docker daemon is not running` | Check daemon status |
-| `vde-network does not exist` | Check network |
+| `vde-net does not exist` | Check network |
 | `docker-compose operation fails with transient error` | Setup failure |
 | `Docker daemon is running` | Verify daemon |
 | `language VM "{vm}" is started` | Language VM setup |
