@@ -73,11 +73,11 @@ def step_compose_has_service_port(context, port):
 @then('SSH config entry should exist for "{hostname}"')
 def step_ssh_config_exists(context, hostname):
     """Verify SSH config entry exists for the specified hostname."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         # Look for Host directive matching the hostname
-        assert re.search(rf'^Host\s+{re.escape(hostname)}', content, re.MULTILINE), \
+        assert re.search(rf'^Host\\s+{re.escape(hostname)}\\s', content, re.MULTILINE), \
             f"SSH config should contain entry for {hostname}"
 
 
