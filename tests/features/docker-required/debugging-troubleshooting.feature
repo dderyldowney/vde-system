@@ -96,7 +96,7 @@ Feature: Debugging and Troubleshooting
   Scenario: Verify network connectivity between VMs
     Given two VMs can't communicate
     When I check the docker network
-    Then I should see both VMs on "vde-net"
+    Then I should see both VMs on "vde-testing"
     And I can ping one VM from another
 
   @requires-docker-host
