@@ -107,6 +107,7 @@ vde_get_hostname() {
 vde_get_ssh_host() {
     local vm_name="$1"
     echo "vde-${vm_name}"
+}
 
 # vde_detect_vm_type_from_name - Detect VM type from name
 vde_detect_vm_type_from_name() {

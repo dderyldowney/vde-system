@@ -289,7 +289,7 @@ EOF
 )
         save_docker_state "$VM_NAME" "$state_json"
     else
-        vde_progress_warning "Failed to start VM: $VM_NAME"
+        vde_progress_warn "Failed to start VM: $VM_NAME"
     fi
 fi
 
