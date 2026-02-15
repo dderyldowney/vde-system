@@ -14,7 +14,7 @@ $HOME/dev/
 │   └── ssh/                    # SSH config backups
 ├── configs/
 │   └── docker/
-│       ├── base-dev.Dockerfile # Base image for all VMs
+│       ├── vde-base.Dockerfile # Base image for all VMs
 │       ├── python/             # Per-VM configs (auto-created)
 │       │   └── docker-compose.yml
 │       ├── rust/
@@ -73,7 +73,7 @@ $HOME/dev/
 Contains Docker Compose configurations for each VM. Auto-generated when you create a VM.
 
 **Base Image:**
-- `base-dev.Dockerfile` - The base image all VMs build from
+- `vde-base.Dockerfile` - The base image all VMs build from
 
 **Per-VM Configs:**
 - `python/docker-compose.yml` - Python container config

@@ -64,7 +64,7 @@ psql -h postgres -U devuser  # Works!
 
 ### 5. SSH Between Containers
 
-All VMs share the `dev-net` network and have SSH agent forwarding enabled.
+All VMs share the `vde-net` network and have SSH agent forwarding enabled.
 
 ```bash
 # From python-dev, connect to postgres using host's SSH keys
@@ -227,7 +227,7 @@ docker logs <container-name>
 
 ```bash
 # Check Docker network
-docker network ls | grep dev-net
+docker network ls | grep vde-net
 
 # Test connectivity
 docker exec python-dev ping postgres

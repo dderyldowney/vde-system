@@ -512,7 +512,7 @@ services:
   {{NAME}}-dev:
     build:
       context: ../../
-      dockerfile: configs/docker/base-dev.Dockerfile
+      dockerfile: configs/docker/vde-base.Dockerfile
     container_name: {{NAME}}-dev
     ports:
       - "{{SSH_PORT}}:22"
@@ -525,7 +525,7 @@ services:
       - SSH_PORT={{SSH_PORT}}
       - SSH_AUTH_SOCK=/ssh-agent/sock
     networks:
-      - dev-net
+      - vde-net
     restart: unless-stopped
     user: devuser
     labels:
@@ -533,7 +533,7 @@ services:
       - "vde.name={{NAME}}"
 
 networks:
-  dev-net:
+  vde-net:
     name: vde-network
     external: true
 ```
@@ -556,7 +556,7 @@ services:
     environment:
       - SSH_PORT={{SSH_PORT}}
     networks:
-      - dev-net
+      - vde-net
     restart: unless-stopped
     labels:
       - "vde.type=service"
@@ -583,7 +583,7 @@ Host {{VM_NAME}}-dev
 
 ### 6.1 Base Dockerfile
 
-**File:** `configs/docker/base-dev.Dockerfile`
+**File:** `configs/docker/vde-base.Dockerfile`
 
 ```dockerfile
 FROM ubuntu:22.04
@@ -792,7 +792,7 @@ VDE_ROOT/
 │       └── vm-types.json             # JSON config
 ├── configs/
 │   └── docker/
-│       ├── base-dev.Dockerfile
+│       ├── vde-base.Dockerfile
 │       ├── vde-base.Dockerfile
 │       ├── c/, cpp/, python/, ...   # Per-VM configs
 │       └── postgres/, redis/, ...    # Service configs

@@ -38,7 +38,7 @@ Inside each VM:
 
 ## Modifying User Setup
 
-To modify user setup across all containers, edit: `configs/docker/base-dev.Dockerfile`
+To modify user setup across all containers, edit: `configs/docker/vde-base.Dockerfile`
 
 Then rebuild:
 ```bash

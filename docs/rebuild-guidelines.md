@@ -63,7 +63,7 @@ vde start all --rebuild
 
 ## Common Rebuild Scenarios
 
-### After Changing base-dev.Dockerfile
+### After Changing vde-base.Dockerfile
 
 ```bash
 # Rebuild all VMs that use the base image

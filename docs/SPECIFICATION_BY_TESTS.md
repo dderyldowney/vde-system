@@ -331,7 +331,7 @@ This creates a powerful feedback loop:
 - Service VM template rendering
 - Multiple service ports handling
 - SSH agent forwarding configuration
-- Network configuration (dev-net)
+- Network configuration (vde-net)
 - Restart policy (unless-stopped)
 - User configuration (devuser:1000)
 
