@@ -195,7 +195,6 @@ echo ""
 
 # Set proper permissions on VDE directories
 chmod 700 "$VDE_ROOT_DIR/public-ssh-keys" 2>/dev/null || true
-chmod 700 "$VDE_ROOT_DIR/.ssh" 2>/dev/null || true
 chmod 755 "$VDE_ROOT_DIR/.cache" 2>/dev/null || true
 chmod 755 "$VDE_ROOT_DIR/.locks" 2>/dev/null || true
 chmod 755 "$VDE_ROOT_DIR/.locks/ports" 2>/dev/null || true
