@@ -2,7 +2,7 @@ services:
   vde-scala:
     build:
       context: ../../..
-      dockerfile: configs/docker/base-dev.Dockerfile
+      dockerfile: configs/docker/vde-base.Dockerfile
     image: dev-scala:latest
     container_name: vde-scala
     hostname: vde-scala

@@ -4,7 +4,7 @@ services:
   vde-swift:
     build:
       context: ../../..
-      dockerfile: configs/docker/base-dev.Dockerfile
+      dockerfile: configs/docker/vde-base.Dockerfile
     image: dev-swift:latest
     container_name: vde-swift
     hostname: vde-swift
