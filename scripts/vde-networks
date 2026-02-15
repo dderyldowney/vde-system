@@ -37,9 +37,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Get VDE network name - use vde-net for production
-VDE_NETWORK="${VDE_DOCKER_NETWORK:-vde-net}"
-VDE_TEST_NETWORK="${VDE_TEST_NETWORK:-vde-testing}"
+# Variables are sourced from vde-constants
+# Use VDE_DOCKER_NETWORK from constants for production network
+VDE_NETWORK="${VDE_DOCKER_NETWORK}"
 
 # Create network if requested
 if [ $CREATE -eq 1 ]; then
