@@ -472,6 +472,7 @@ readonly INTENT_HELP="help"
 # Usage: vde <command> [options] [arguments]
 #
 # Commands:
+#   init                      Initialize VDE project (first-time setup)
 #   create <vm>              Create a new VM
 #   start <vm> [...]         Start one or more VMs
 #   stop <vm> [...]         Stop one or more VMs
@@ -480,6 +481,7 @@ readonly INTENT_HELP="help"
 #   list [filter]           List VMs (lang|svc|all)
 #   status                  Show VM status
 #   health                  Run health check
+#   networks                Manage Docker networks
 #   help                    Show help
 #
 # Options:
@@ -492,11 +494,13 @@ readonly INTENT_HELP="help"
 
 | Script | Location | Usage |
 |--------|----------|-------|
+| vde-init | `scripts/vde-init` | `./vde-init` (first-time setup) |
 | list-vms | `scripts/list-vms` | `./list-vms [--lang\|--svc] [search]` |
 | create-virtual-for | `scripts/create-virtual-for` | `./create-virtual-for <name>` |
 | start-virtual | `scripts/start-virtual` | `./start-virtual <name>... [--rebuild] [--no-cache]` |
 | shutdown-virtual | `scripts/shutdown-virtual` | `./shutdown-virtual <name>...` |
 | build-and-start | `scripts/build-and-start` | `./build-and-start [--rebuild] [--no-cache]` |
+| vde-networks | `scripts/vde-networks` | `./vde-networks [--create] [--quiet]` |
 | add-vm-type | `scripts/add-vm-type` | `./add-vm-type <name> "<install>" [aliases]` |
 
 ---
@@ -780,7 +784,9 @@ VDE_ROOT/
 │   │   ├── vde-ssh                  # SSH management
 │   │   ├── vde-docker               # Docker operations
 │   │   ├── vde-templates            # Template rendering
+│   │   ├── vde-init                 # Project initialization
 │   │   ├── vde-health               # Health checks
+│   │   ├── vde-networks             # Network management
 │   │   ├── vde-audit                # Audit logs
 │   │   └── vde-metrics              # Metrics
 │   ├── templates/

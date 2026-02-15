@@ -14,6 +14,7 @@ The `vde` command provides a single entry point for all VDE operations:
 
 | Command | Purpose | Usage |
 |---------|---------|-------|
+| `vde init` | Initialize VDE project (first-time setup) | `vde init` |
 | `vde create <vm>` | Create a new VM | `vde create python` |
 | `vde start <vm>` | Start a VM | `vde start python-dev` |
 | `vde stop <vm>` | Stop a VM | `vde stop postgres` |
@@ -23,6 +24,7 @@ The `vde` command provides a single entry point for all VDE operations:
 | `vde list` | List all VMs | `vde list` |
 | `vde status` | Show VM status | `vde status` |
 | `vde health` | Run system health check | `vde health` |
+| `vde networks` | Manage Docker networks | `vde networks` |
 | `vde nuke` | Remove all of VDE (prompts for backup) | `vde nuke` |
 | `vde help` | Show help message | `vde help` |
 
