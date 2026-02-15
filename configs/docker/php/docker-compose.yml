@@ -2,7 +2,7 @@ services:
   vde-php:
     build:
       context: ../../..
-      dockerfile: configs/docker/base-dev.Dockerfile
+      dockerfile: configs/docker/vde-base.Dockerfile
     image: dev-php:latest
     container_name: vde-php
     hostname: vde-php
