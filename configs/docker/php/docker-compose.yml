@@ -1,11 +1,11 @@
 services:
-  php-dev:
+  vde-php:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
     image: dev-php:latest
-    container_name: php-dev
-    hostname: php-dev
+    container_name: vde-php
+    hostname: vde-php
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y php php-cli php-xml php-mbstring php-curl composer && /usr/sbin/sshd -D"
 
@@ -25,11 +25,11 @@ services:
       - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
-      - ../../../env-files/php.env
+      - ../../../env-files/vde-php.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

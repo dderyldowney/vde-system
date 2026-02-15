@@ -2,7 +2,7 @@
 # Variables: nginx, 2400, 80,443, apt-get update -y && apt-get install -y nginx-extras
 # SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
 services:
-  nginx:
+  vde-nginx:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -12,8 +12,8 @@ services:
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-nginx:latest
-    container_name: nginx
-    hostname: nginx
+    container_name: vde-nginx
+    hostname: vde-nginx
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y nginx-extras && /usr/sbin/sshd -D"
 
@@ -32,11 +32,11 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/nginx.env
+      - ../../../env-files/vde-nginx.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

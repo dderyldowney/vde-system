@@ -1,7 +1,7 @@
 # Template for language VMs
 # Variables: c, 2203, apt-get update -y && apt-get install -y gcc make cmake gdb
 services:
-  c-dev:
+  vde-c:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -11,8 +11,8 @@ services:
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-c:latest
-    container_name: c-dev
-    hostname: c-dev
+    container_name: vde-c
+    hostname: vde-c
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y gcc make cmake gdb && /usr/sbin/sshd -D"
 
@@ -30,11 +30,11 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/c.env
+      - ../../../env-files/vde-c.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

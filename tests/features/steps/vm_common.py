@@ -227,7 +227,7 @@ def ensure_vm_running(context, vm_name):
         None (raises exception on failure)
     """
     # Check if VM container exists and is running
-    container_name = f"{vm_name}-dev"
+    container_name = f"vde-{vm_name}"
     is_running = container_exists(container_name)
     
     if not is_running:
@@ -570,9 +570,12 @@ def run_vde_command(command, timeout=120, context=None):
         )
         cmd_res = CommandResult(result.stdout, result.stderr, result.returncode, args=cmd)
     except subprocess.TimeoutExpired as e:
+        # TimeoutExpired has bytes attributes in Python 3.7+, decode them
+        stdout = e.stdout.decode('utf-8', errors='replace') if e.stdout else ''
+        stderr = e.stderr.decode('utf-8', errors='replace') if e.stderr else ''
         cmd_res = CommandResult(
-            getattr(e, 'stdout', '') or '',
-            (getattr(e, 'stderr', '') or '') + f"\n[TIMEOUT] Command timed out after {timeout}s",
+            stdout,
+            stderr + f"\n[TIMEOUT] Command timed out after {timeout}s",
             124,
             args=cmd
         )

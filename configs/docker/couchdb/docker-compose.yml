@@ -1,5 +1,5 @@
 services:
-  couchdb:
+  vde-couchdb:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -9,8 +9,8 @@ services:
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-couchdb:latest
-    container_name: couchdb
-    hostname: couchdb
+    container_name: vde-couchdb
+    hostname: vde-couchdb
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y couchdb && /usr/sbin/sshd -D"
 
@@ -29,11 +29,11 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/couchdb.env
+      - ../../../env-files/vde-couchdb.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

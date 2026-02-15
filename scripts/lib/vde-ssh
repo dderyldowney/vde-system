@@ -35,6 +35,7 @@ _VDE_SSH_LOADED=1
 . "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat"
 . "$VDE_ROOT_DIR/scripts/lib/vde-constants"
 . "$VDE_ROOT_DIR/scripts/lib/vde-errors"
+. "$VDE_ROOT_DIR/scripts/lib/vde-naming"
 
 # =============================================================================
 # SSH CONFIGURATION
@@ -548,9 +549,11 @@ setup_ssh_for_vm() {
         return $VDE_ERR_GENERAL
     fi
 
-    # Add SSH config entry
-    if ! add_ssh_config_entry "$vm_name" "$ssh_port" "$display_name" "$VDE_SSH_IDENTITY"; then
-        _error "Failed to add SSH config entry for '$vm_name'"
+    # Add SSH config entry - use vde- prefix for SSH host
+    local ssh_host
+    ssh_host=$(vde_get_ssh_host "$vm_name")
+    if ! add_ssh_config_entry "$ssh_host" "$ssh_port" "$display_name" "$VDE_SSH_IDENTITY"; then
+        _error "Failed to add SSH config entry for '$ssh_host'"
         return $VDE_ERR_GENERAL
     fi
 
@@ -657,7 +660,11 @@ generate_vm_ssh_config() {
         local display
         display=$(get_vm_info display "$vm" 2>/dev/null || echo "$vm")
 
-        if add_ssh_config_entry "$vm" "$port" "$display" "$VDE_SSH_IDENTITY" >/dev/null 2>&1; then
+        # Use vde- prefix for SSH host alias
+        local ssh_host
+        ssh_host=$(vde_get_ssh_host "$vm")
+
+        if add_ssh_config_entry "$ssh_host" "$port" "$display" "$VDE_SSH_IDENTITY" >/dev/null 2>&1; then
             count=$((count + 1))
         fi
     done

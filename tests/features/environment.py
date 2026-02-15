@@ -62,6 +62,8 @@ _SSH_AGENT_PID = None
 def run_vde_command(command, timeout=120):
     """Run a VDE script and return the result."""
     env = os.environ.copy()
+    # Disable BuildKit to prevent hangs in test environment
+    env['DOCKER_BUILDKIT'] = '0'
     full_cmd = f"cd {VDE_ROOT} && {command}"
     result = subprocess.run(
         full_cmd,
@@ -193,9 +195,7 @@ def _get_container_name(vm_name):
         'redis', 'postgres', 'mongodb', 'mysql', 'nginx',
         'rabbitmq', 'couchdb'
     }
-    if vm_name in _SERVICE_VMS:
-        return vm_name
-    return f"{vm_name}-dev"
+    return f"vde-{vm_name}"
 
 
 def ensure_vm_exists(vm_name):
@@ -456,6 +456,9 @@ def after_feature(context, feature):
 
 def before_all(context):
     """Hook that runs once before any tests execute."""
+    # Disable BuildKit to prevent hangs in test environment
+    os.environ['DOCKER_BUILDKIT'] = '0'
+    
     # Load and validate schema-validated config
     config = get_config()
     behave_settings = config.get("behave", {})
@@ -491,6 +494,22 @@ def before_all(context):
     except subprocess.TimeoutExpired:
         raise RuntimeError("Docker check timed out")
 
+    # TEARDOWN: Remove any existing vde-testing network before starting tests
+    print("[SETUP] Ensuring clean vde-testing network...")
+    subprocess.run(
+        ["docker", "network", "rm", "vde-testing"],
+        capture_output=True
+    )
+    # Create fresh vde-testing network
+    result = subprocess.run(
+        ["docker", "network", "create", "vde-testing"],
+        capture_output=True, text=True
+    )
+    if result.returncode == 0:
+        print("[SETUP] Created vde-testing network")
+    else:
+        print(f"[SETUP] Warning: Could not create vde-testing network: {result.stderr}")
+
     # CLEANUP: Remove any existing containers before starting tests
     print("[SETUP] Cleaning up any existing containers...")
     result = subprocess.run(
@@ -507,6 +526,25 @@ def before_all(context):
                 print(f"[SETUP] Removed existing container: {container}")
         else:
             print("[SETUP] No existing containers to clean up")
+
+    # CLEANUP: Remove stale .docker-state files (out of sync with Docker)
+    print("[SETUP] Cleaning up stale .docker-state files...")
+    state_dir = VDE_ROOT / ".docker-state"
+    if state_dir.exists():
+        for json_file in state_dir.glob("*.json"):
+            vm_name = json_file.stem
+            container_name = _get_container_name(vm_name)
+            # Check if container actually exists in Docker
+            check_result = subprocess.run(
+                ["docker", "ps", "-a", "-q", "-f", f"name={container_name}"],
+                capture_output=True, text=True, timeout=10
+            )
+            if not check_result.stdout.strip():
+                # Container doesn't exist, remove stale state file
+                json_file.unlink()
+                print(f"[SETUP] Removed stale state file: {json_file.name}")
+    else:
+        print("[SETUP] No .docker-state directory found")
 
     # Verify VDE root directory
     if not VDE_ROOT.exists():
@@ -560,8 +598,8 @@ def _restore_config_files():
 # =============================================================================
 
 def after_all(context):
-    """Final cleanup: remove all VDE test containers."""
-    print("[TEARDOWN] Cleaning up all VDE test containers...")
+    """Final cleanup: remove all VDE test containers and networks."""
+    print("[TEARDOWN] Cleaning up all VDE test resources...")
 
     # Get all VDE containers (both running and stopped)
     try:
@@ -613,4 +651,10 @@ def after_all(context):
     except Exception:
         pass
 
+    # Remove vde-testing network
+    print("[TEARDOWN] Removing vde-testing network...")
+    subprocess.run(
+        ["docker", "network", "rm", "vde-testing"],
+        capture_output=True
+    )
     print("[TEARDOWN] Test suite cleanup complete")

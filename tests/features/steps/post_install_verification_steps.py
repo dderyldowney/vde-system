@@ -431,16 +431,16 @@ def step_setup_continues_with_warning(context):
     assert has_warning_handling, "Setup script does not appear to have warning handling"
 
 
-@then('vde-network should be created automatically')
+@then('vde-testingwork should be created automatically')
 def step_vde_network_created(context):
-    """Verify vde-network Docker network exists."""
-    assert check_docker_network_exists("vde-network"), "vde-network Docker network does not exist"
+    """Verify vde-testingwork Docker network exists."""
+    assert check_docker_network_exists("vde-testingwork"), "vde-testingwork Docker network does not exist"
 
 
 @then('all VMs should use this network')
 def step_all_vms_use_network(context):
-    """Verify VMs are configured to use vde-network."""
-    # Check that VM templates/configs reference vde-network
+    """Verify VMs are configured to use vde-testingwork."""
+    # Check that VM templates/configs reference vde-testingwork
     configs_dir = Path(VDE_ROOT) / "configs"
     assert configs_dir.exists(), "configs directory does not exist - cannot verify network configuration"
 
@@ -448,22 +448,22 @@ def step_all_vms_use_network(context):
     network_found = False
     for config_file in configs_dir.rglob("*.yml"):
         content = config_file.read_text()
-        if "vde-network" in content or "network_mode: bridge" in content:
+        if "vde-testingwork" in content or "network_mode: bridge" in content:
             network_found = True
             break
-    assert network_found, "No VM configuration references vde-network"
+    assert network_found, "No VM configuration references vde-testingwork"
 
 
 @then('VMs can communicate with each other')
 def step_vms_can_communicate(context):
     """Verify VMs are configured for inter-VM communication."""
     # Check that VMs are on the same network
-    assert check_docker_network_exists("vde-network"), "vde-network must exist for VM communication"
+    assert check_docker_network_exists("vde-testingwork"), "vde-testingwork must exist for VM communication"
 
     # Verify network is bridge type (allows communication)
     try:
         result = subprocess.run(
-            ["docker", "network", "inspect", "vde-network"],
+            ["docker", "network", "inspect", "vde-testingwork"],
             capture_output=True,
             text=True,
             timeout=10
@@ -471,7 +471,7 @@ def step_vms_can_communicate(context):
         if result.returncode == 0:
             # Check if it's a bridge network
             assert "bridge" in result.stdout or "macvlan" in result.stdout, \
-                "vde-network is not configured for inter-VM communication"
+                "vde-testingwork is not configured for inter-VM communication"
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass  # Docker not available - skip bridge type verification
 

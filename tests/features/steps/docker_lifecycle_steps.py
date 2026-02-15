@@ -55,6 +55,38 @@ def step_image_exists(context, vm_name):
     context.vm_name = vm_name
 
 
+@given('the image for VM "{vm_name}" is removed')
+def step_image_removed(context, vm_name):
+    """Remove Docker image for VM to force rebuild."""
+    # Get the container name
+    if vm_name in ['postgres', 'redis', 'mongodb', 'mysql', 'nginx', 'rabbitmq', 'couchdb']:
+        container_name = vm_name
+    else:
+        container_name = f"vde-{vm_name}"
+    
+    # Stop and remove the container first
+    subprocess.run(["docker", "stop", container_name], capture_output=True, timeout=30)
+    subprocess.run(["docker", "rm", "-f", container_name], capture_output=True, timeout=30)
+    
+    # Get the image name and remove it
+    result = subprocess.run(
+        ["docker", "images", "--format", "{{.Repository}}:{{.Tag}}"],
+        capture_output=True, text=True, timeout=30
+    )
+    image_to_remove = f"dev-{vm_name}:latest"
+    for line in result.stdout.split('\n'):
+        if image_to_remove in line:
+            subprocess.run(["docker", "rmi", "-f", image_to_remove], capture_output=True, timeout=60)
+            break
+    
+    # Also remove the .docker-state file to force recreation
+    state_file = VDE_ROOT / ".docker-state" / f"{vm_name}.json"
+    if state_file.exists():
+        state_file.unlink()
+    
+    context.vm_name = vm_name
+
+
 @given('VM "{vm_name}" is running')
 def step_docker_vm_running(context, vm_name):
     """Ensure VM container is running."""
@@ -447,10 +479,18 @@ def step_ssh_port_in_container(context):
 def step_python_vm_started(context):
     """Ensure python VM is started."""
     vm_name = 'python'
+    # Check both docker-compose.yml AND .docker-state file exist
+    config_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
+    state_file = VDE_ROOT / ".docker-state" / f"{vm_name}.json"
+    if not state_file.exists():
+        # Need to create VM - use create-virtual-for for proper state
+        result = run_vde_command(f"create {vm_name}", timeout=600)
+        assert result.returncode == 0, f"Failed to create VM {vm_name}: {result.stderr}"
+    # Then start if not running
     if not container_is_running(vm_name):
-        result = run_vde_command(f"start {vm_name}", timeout=180)
+        result = run_vde_command(f"start {vm_name}", timeout=600)
         assert result.returncode == 0, f"Failed to start VM {vm_name}: {result.stderr}"
-        assert wait_for_container(vm_name, timeout=120), f"VM {vm_name} failed to start"
+        assert wait_for_container(vm_name, timeout=300), f"VM {vm_name} failed to start"
     context.vm_name = vm_name
 
 
@@ -458,20 +498,36 @@ def step_python_vm_started(context):
 def step_postgres_vm_started(context):
     """Ensure postgres VM is started."""
     vm_name = 'postgres'
+    # Check both docker-compose.yml AND .docker-state file exist
+    config_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
+    state_file = VDE_ROOT / ".docker-state" / f"{vm_name}.json"
+    if not state_file.exists():
+        # Need to create VM - use create-virtual-for for proper state
+        result = run_vde_command(f"create {vm_name}", timeout=600)
+        assert result.returncode == 0, f"Failed to create VM {vm_name}: {result.stderr}"
+    # Then start if not running
     if not container_is_running(vm_name):
-        result = run_vde_command(f"start {vm_name}", timeout=180)
+        result = run_vde_command(f"start {vm_name}", timeout=600)
         assert result.returncode == 0, f"Failed to start VM {vm_name}: {result.stderr}"
-        assert wait_for_container(vm_name, timeout=120), f"VM {vm_name} failed to start"
+        assert wait_for_container(vm_name, timeout=300), f"VM {vm_name} failed to start"
     context.vm_name = vm_name
 
 
 @given('VM "{vm_name}" is started')
 def step_vm_is_started(context, vm_name):
     """Ensure VM is started."""
+    # Check both docker-compose.yml AND .docker-state file exist
+    config_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
+    state_file = VDE_ROOT / ".docker-state" / f"{vm_name}.json"
+    if not state_file.exists():
+        # Need to create VM - use create-virtual-for for proper state
+        result = run_vde_command(f"create {vm_name}", timeout=600)
+        assert result.returncode == 0, f"Failed to create VM {vm_name}: {result.stderr}"
+    # Then start if not running
     if not container_is_running(vm_name):
-        result = run_vde_command(f"start {vm_name}", timeout=180)
+        result = run_vde_command(f"start {vm_name}", timeout=600)
         assert result.returncode == 0, f"Failed to start VM {vm_name}: {result.stderr}"
-        assert wait_for_container(vm_name, timeout=120), f"VM {vm_name} failed to start"
+        assert wait_for_container(vm_name, timeout=300), f"VM {vm_name} failed to start"
     context.vm_name = vm_name
 
 

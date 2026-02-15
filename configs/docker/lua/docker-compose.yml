@@ -1,13 +1,13 @@
 # Template for language VMs
 # Variables: lua, 2218, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y lua5.4 luarocks
 services:
-  lua-dev:
+  vde-lua:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
     image: dev-lua:latest
-    container_name: lua-dev
-    hostname: lua-dev
+    container_name: vde-lua
+    hostname: vde-lua
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y lua5.4 luarocks && /usr/sbin/sshd -D"
 
@@ -27,11 +27,11 @@ services:
       - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
-      - ../../../env-files/lua.env
+      - ../../../env-files/vde-lua.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

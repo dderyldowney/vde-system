@@ -1,5 +1,5 @@
 services:
-  mongodb:
+  vde-mongodb:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -9,8 +9,8 @@ services:
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-mongodb:latest
-    container_name: mongodb
-    hostname: mongodb
+    container_name: vde-mongodb
+    hostname: vde-mongodb
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y mongodb-org-shell && /usr/sbin/sshd -D"
 
@@ -29,11 +29,11 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/mongodb.env
+      - ../../../env-files/vde-mongodb.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

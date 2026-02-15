@@ -1,7 +1,7 @@
 # Template for language VMs
 # Variables: flutter, 2200, apt-get update -y && apt-get install -y curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH="$PATH:/home/devuser/flutter/bin" && flutter precache'
 services:
-  flutter-dev:
+  vde-flutter:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
@@ -11,8 +11,8 @@ services:
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-flutter:latest
-    container_name: flutter-dev
-    hostname: flutter-dev
+    container_name: vde-flutter
+    hostname: vde-flutter
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH="$PATH:/home/devuser/flutter/bin" && flutter precache' && /usr/sbin/sshd -D"
 
@@ -30,11 +30,11 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/flutter.env
+      - ../../../env-files/vde-flutter.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

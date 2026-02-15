@@ -12,6 +12,7 @@ Feature: Docker Operations
 
   Scenario: Build Docker image for VM
     Given VM "python" docker-compose.yml exists
+    And the image for VM "python" is removed
     When I start VM "python"
     Then docker-compose build should be executed
     And image should be built successfully

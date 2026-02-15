@@ -1,13 +1,13 @@
 # Template for language VMs
 # Variables: swift, 2214, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y binutils git libc6-dev curl
 services:
-  swift-dev:
+  vde-swift:
     build:
       context: ../../..
       dockerfile: configs/docker/base-dev.Dockerfile
     image: dev-swift:latest
-    container_name: swift-dev
-    hostname: swift-dev
+    container_name: vde-swift
+    hostname: vde-swift
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y binutils git libc6-dev curl && /usr/sbin/sshd -D"
 
@@ -27,11 +27,11 @@ services:
       - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
-      - ../../../env-files/swift.env
+      - ../../../env-files/vde-swift.env
 
     networks:
-      - dev-net
+      - vde-net
 
 networks:
-  dev-net:
+  vde-net:
     external: true

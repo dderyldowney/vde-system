@@ -102,6 +102,12 @@ vde_get_hostname() {
     fi
 }
 
+# vde_get_ssh_host - Get the SSH Host alias for a VM (used in SSH config)
+# This returns the name used to SSH into the VM (e.g., vde-python, vde-postgres)
+vde_get_ssh_host() {
+    local vm_name="$1"
+    echo "vde-${vm_name}"
+
 # vde_detect_vm_type_from_name - Detect VM type from name
 vde_detect_vm_type_from_name() {
     local name="$1"

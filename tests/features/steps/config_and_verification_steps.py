@@ -394,12 +394,12 @@ def step_any_template_rendered(context):
     context.any_template = True
 
 
-@then(u'rendered output should contain "dev-net" network')
+@then(u'rendered output should contain "vde-testing" network')
 def step_dev_net_network(context):
-    """Verify dev-net network in rendered output."""
+    """Verify vde-testing network in rendered output."""
     output = getattr(context, 'rendered_output', None) or getattr(context, 'vde_command_output', '')
-    assert 'dev-net' in output.lower() or 'network' in output.lower(), \
-        f"Expected dev-net network: {output}"
+    assert 'vde-testing' in output.lower() or 'network' in output.lower(), \
+        f"Expected vde-testing network: {output}"
 
 
 @then(u'rendered output should specify UID and GID as "{uid}"')
@@ -609,5 +609,5 @@ def step_own_config(context):
 def step_same_network(context):
     """Verify all VMs are on the same Docker network."""
     result = subprocess.run(['./scripts/vde', 'networks'], capture_output=True, text=True)
-    assert 'dev-net' in result.stdout or 'vde' in result.stdout.lower(), \
-        f"Expected dev-net network"
+    assert 'vde-testing' in result.stdout or 'vde' in result.stdout.lower(), \
+        f"Expected vde-testing network"
