@@ -253,7 +253,7 @@ configs/docker/
 
 ### Docker Network
 
-All VMs are connected to a shared Docker network named `vde-network`, enabling inter-container communication.
+All VMs are connected to a shared Docker network named `vde-net`, enabling inter-container communication.
 
 ### Container Naming Conventions
 
