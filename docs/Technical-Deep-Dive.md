@@ -112,7 +112,7 @@ ensure_ssh_environment  # Automatic SSH setup
 ensure_ssh_environment  # Automatic SSH setup
 ```
 
-**In base-dev.Dockerfile:**
+**In vde-base.Dockerfile:**
 - `AllowAgentForwarding yes` in sshd_config
 - `ForwardAgent yes` in SSH client config
 - SSH agent forwarding helper script
@@ -637,7 +637,7 @@ services:
   {{NAME}}-dev:                    # e.g., "go-dev"
     build:
       context: ../../..
-      dockerfile: configs/docker/base-dev.Dockerfile
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
@@ -661,7 +661,7 @@ services:
       - ../../../env-files/{{NAME}}.env
 
     networks:
-      - dev-net
+      - vde-net
 ```
 
 ### 5.2 Service Template (`templates/compose-service.yml`)
@@ -1030,7 +1030,7 @@ start_vm() {
 1. **Build image** (if needed):
    ```bash
    docker build \
-     -f configs/docker/base-dev.Dockerfile \
+     -f configs/docker/vde-base.Dockerfile \
      --build-arg USERNAME=devuser \
      --build-arg UID=1000 \
      --build-arg GID=1000 \
@@ -1050,7 +1050,7 @@ start_vm() {
      -v ~/dev/logs/go:/logs \
      -v ~/dev/public-ssh-keys:/public-ssh-keys:ro \
      --env-file ~/dev/env-files/go.env \
-     --network dev-net \
+     --network vde-net \
      dev-go:latest \
      sh -c "apt-get update -y && apt-get install -y golang-go && /usr/sbin/sshd -D"
    ```

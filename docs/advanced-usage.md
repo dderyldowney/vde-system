@@ -134,7 +134,7 @@ services:
 
 ## Inter-Container Communication
 
-All containers share the `dev-net` Docker network and have SSH agent forwarding enabled.
+All containers share the `vde-net` Docker network and have SSH agent forwarding enabled.
 
 ### VM-to-VM Communication via SSH
 

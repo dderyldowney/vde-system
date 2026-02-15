@@ -143,7 +143,7 @@ The `vm-common` library provides core functions used by all scripts:
 
 ## Base Image
 
-All VMs build from `configs/docker/base-dev.Dockerfile` which includes:
+All VMs build from `configs/docker/vde-base.Dockerfile` which includes:
 
 - System updates and security patches
 - SSH server configuration (with agent forwarding enabled)
@@ -408,7 +408,7 @@ VDE includes SSH agent forwarding for secure VM-to-VM, VM-to-Host, and VM-to-Ext
 
 - `create-virtual-for`: Calls `ensure_ssh_environment()` before creating VM
 - `start-virtual`: Calls `ensure_ssh_environment()` before starting VM
-- `base-dev.Dockerfile`: Installs openssh-client, configures agent forwarding
+- `vde-base.Dockerfile`: Installs openssh-client, configures agent forwarding
 - `ssh-agent-setup`: User-facing status and information script
 
 ---

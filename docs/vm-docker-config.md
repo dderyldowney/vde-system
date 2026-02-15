@@ -24,8 +24,8 @@ The VM Docker configuration system provides:
   "version": "1.0",
   "base_settings": {
     "context": "../../..",
-    "base_dockerfile": "configs/docker/base-dev.Dockerfile",
-    "network": "dev-net",
+    "base_dockerfile": "configs/docker/vde-base.Dockerfile",
+    "network": "vde-net",
     "username": "devuser",
     "uid": 1000,
     "gid": 1000

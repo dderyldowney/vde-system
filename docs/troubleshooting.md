@@ -230,11 +230,11 @@ docker inspect postgres | grep -A 10 Mounts
 **Problem:** Containers can't communicate.
 
 ```bash
-# Check dev-net network exists
-docker network ls | grep dev-net
+# Check vde-net network exists
+docker network ls | grep vde-net
 
 # Recreate network if needed
-docker network create dev-net
+docker network create vde-net
 
 # Restart containers
 vde restart all
