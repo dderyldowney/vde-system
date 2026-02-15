@@ -202,15 +202,33 @@ vde_init_set_permissions() {
         echo "Setting file permissions..."
     fi
     
-    # Set proper permissions on directories
+    # Set proper permissions on VDE directories
     chmod 700 "$VDE_ROOT_DIR/public-ssh-keys" 2>/dev/null || true
+    chmod 700 "$VDE_ROOT_DIR/.ssh" 2>/dev/null || true
     chmod 755 "$VDE_ROOT_DIR/.cache" 2>/dev/null || true
     chmod 755 "$VDE_ROOT_DIR/.locks" 2>/dev/null || true
     chmod 755 "$VDE_ROOT_DIR/.locks/ports" 2>/dev/null || true
+    chmod 755 "$VDE_ROOT_DIR/projects" 2>/dev/null || true
+    chmod 755 "$VDE_ROOT_DIR/data" 2>/dev/null || true
+    chmod 755 "$VDE_ROOT_DIR/logs" 2>/dev/null || true
+    chmod 755 "$VDE_ROOT_DIR/env-files" 2>/dev/null || true
+    chmod 755 "$VDE_ROOT_DIR/configs" 2>/dev/null || true
+    
+    # Set permissions on data subdirectories
+    for dir in couchdb mongodb mysql nginx postgres redis rabbitmq; do
+        chmod 755 "$VDE_ROOT_DIR/data/$dir" 2>/dev/null || true
+    done
     
     # Ensure scripts are executable
-    find "$VDE_ROOT_DIR/scripts" -type f -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
-    find "$VDE_ROOT_DIR/scripts" -type f -name "*.zsh" -exec chmod +x {} \; 2>/dev/null || true
+    find "$VDE_ROOT_DIR/scripts" -type f \( -name "*.sh" -o -name "*.zsh" \) -exec chmod +x {} \; 2>/dev/null || true
+    
+    # Set SSH directory permissions (recursive for keys)
+    local ssh_dir="$HOME/.ssh/vde"
+    if [ -d "$ssh_dir" ]; then
+        chmod 700 "$ssh_dir" 2>/dev/null || true
+        chmod 600 "$ssh_dir"/* 2>/dev/null || true
+        chmod 644 "$ssh_dir"/*.pub 2>/dev/null || true
+    fi
     
     if [ "$QUIET" = "0" ]; then
         echo "  ✓ Permissions set"
