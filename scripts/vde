@@ -63,6 +63,7 @@ _VDE_COMMANDS=(
     "ssh-setup:Manage VDE SSH environment:ssh-setup"
     "ssh-sync:Sync SSH keys to build context:ssh-sync"
     "cleanup-ports:Clean up stale port locks:cleanup-ports"
+    "init:Initialize VDE networks:vde-init"
     "ps:List running containers:vde-ps"
     "logs:Show container logs:vde-logs"
     "inspect:Inspect container:vde-inspect"
@@ -103,6 +104,7 @@ EOF
     printf "  %-12s %s\n" "ssh-setup" "Manage VDE SSH environment"
     printf "  %-12s %s\n" "ssh-sync" "Sync SSH keys to build context"
     printf "  %-12s %s\n" "cleanup-ports" "Clean up stale port locks"
+  printf "  %-12s %s\n" "init" "Initialize VDE networks"
     printf "  %-12s %s\n" "ps" "List running containers"
     printf "  %-12s %s\n" "logs <vm>" "Show container logs"
     printf "  %-12s %s\n" "inspect <vm>" "Inspect container"
@@ -211,6 +213,9 @@ vde_find_command_script() {
             ;;
         ssh-sync)
             script="$VDE_ROOT_DIR/scripts/ssh-sync"
+            ;;
+        init|vde-init)
+            script="$VDE_ROOT_DIR/scripts/vde-init"
             ;;
         ps)
             script="$VDE_ROOT_DIR/scripts/vde-ps"

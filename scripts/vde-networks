@@ -1,10 +1,11 @@
 #!/usr/bin/env zsh
 #===============================================================================
-# vde-networks - List VDE Docker networks
+# vde-networks - List/Create VDE Docker networks
 # Usage: vde-networks [options]
 #
 # Options:
-#   -q, --quiet   Only show network names
+#   -c, --create    Create vde-net network if it doesn't exist
+#   -q, --quiet     Only show network names
 #===============================================================================
 
 # Determine VDE root directory
@@ -18,9 +19,14 @@ export VDE_ROOT_DIR
 
 # Parse options
 QUIET=0
+CREATE=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        -c|--create)
+            CREATE=1
+            shift
+            ;;
         -q|--quiet)
             QUIET=1
             shift
@@ -31,13 +37,24 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Get VDE network prefix
-VDE_PREFIX="${VDE_NETWORK_PREFIX:-vde}"
+# Get VDE network name - use vde-net for production
+VDE_NETWORK="${VDE_DOCKER_NETWORK:-vde-net}"
+VDE_TEST_NETWORK="${VDE_TEST_NETWORK:-vde-testing}"
+
+# Create network if requested
+if [ $CREATE -eq 1 ]; then
+    if docker network inspect "$VDE_NETWORK" >/dev/null 2>&1; then
+        echo "Network '$VDE_NETWORK' already exists"
+    else
+        docker network create "$VDE_NETWORK"
+        echo "Created network '$VDE_NETWORK'"
+    fi
+fi
 
 if [ $QUIET -eq 1 ]; then
-    docker network ls --format '{{.Name}}' | grep "^${VDE_PREFIX}" || true
+    docker network ls --format '{{.Name}}' | grep "^${VDE_NETWORK}" || true
 else
-    docker network ls --format 'table {{.Name}}\t{{.Driver}}\t{{.Scope}}' | grep "^${VDE_PREFIX}" || true
+    docker network ls --format 'table {{.Name}}\t{{.Driver}}\t{{.Scope}}' | grep "^${VDE_NETWORK}" || true
 fi
 
 exit 0

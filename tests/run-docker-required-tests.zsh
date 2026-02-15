@@ -87,6 +87,19 @@ check_setup() {
         echo -e "${GREEN}✓ Docker is running${RESET}"
     fi
 
+    # Check/create vde-testing network for test isolation
+    echo -e "${BLUE}Checking test network...${RESET}"
+    if docker network inspect vde-testing &>/dev/null; then
+        echo -e "${GREEN}✓ vde-testing network exists${RESET}"
+    else
+        echo -e "${YELLOW}Creating vde-testing network for test isolation...${RESET}"
+        if docker network create vde-testing &>/dev/null; then
+            echo -e "${GREEN}✓ Created vde-testing network${RESET}"
+        else
+            echo -e "${YELLOW}⚠ Failed to create vde-testing network${RESET}"
+        fi
+    fi
+
     # Check if Python 3 is available
     if ! command -v python3 >/dev/null 2>&1; then
         echo -e "${RED}Error: Python 3 not found${RESET}"
