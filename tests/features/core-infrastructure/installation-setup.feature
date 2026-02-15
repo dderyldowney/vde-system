@@ -2,6 +2,7 @@
 @wip
 @user-guide-installation
 @requires-docker-host
+@core-infrastructure
 Feature: Installation and Initial Setup
   As a developer
   I want to install and configure VDE on my system

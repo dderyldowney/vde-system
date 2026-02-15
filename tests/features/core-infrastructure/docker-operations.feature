@@ -1,6 +1,7 @@
 # language: en
 @user-guide-internal
 @requires-docker-host
+@core-infrastructure
 Feature: Docker Operations
   As a developer
   I want reliable Docker Compose operations with error handling
