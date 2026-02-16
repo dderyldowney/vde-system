@@ -8,7 +8,7 @@ Feature: VM Full Lifecycle Critical Path
     Then a docker-compose.yml file should be created at "configs/docker/python/docker-compose.yml"
     And the docker-compose.yml should contain SSH port mapping
     When I run "vde start python --rebuild"
-    Then SSH config entry should exist for "python-dev"
+    Then SSH config entry should exist for "vde-python"
     Then VM "python" should be running
     And SSH should be accessible on allocated port
     And SSH keys should be generated if none exist

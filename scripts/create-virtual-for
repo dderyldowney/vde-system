@@ -243,18 +243,14 @@ vde_progress_done "Created: $env_file"
 # Skip SSH config modification in test mode (prevents timeouts in Docker)
 if [[ -n "$VDE_TEST_MODE" ]]; then
     vde_progress_info "Skipping SSH config update (test mode)"
-    ssh_host="${VM_NAME}-dev"
+    ssh_host="$(vde_get_ssh_host "$VM_NAME")"
     if [[ "$_vm_type" == "service" ]]; then
-        ssh_host="$VM_NAME"
+        ssh_host="$(vde_get_ssh_host "$VM_NAME")"
     fi
 else
     vde_progress_info "Updating SSH configuration..."
 
-    if [[ "$_vm_type" == "lang" ]]; then
-        ssh_host="${VM_NAME}-dev"
-    else
-        ssh_host="$VM_NAME"
-    fi
+    ssh_host="$(vde_get_ssh_host "$VM_NAME")"
 
     if ! merge_ssh_config_entry "$ssh_host" "$SSH_PORT" "$_vm_display"; then
         vde_error_permission_denied "~/.ssh/config"

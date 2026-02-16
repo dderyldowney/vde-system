@@ -88,18 +88,18 @@ get_docker_project_name() {
 # Returns: VDE_SUCCESS (0) if exists, VDE_ERR_NOT_FOUND if not
 vm_exists() {
     local vm_name="$1"
-    local state_dir
-    state_dir=$(get_docker_state_dir)
     
-    # Check if state file exists
-    if [[ -f "$state_dir/${vm_name}.json" ]]; then
+    # Check Docker container FIRST - this is the source of truth
+    # Container names are either <vm>-dev (for lang VMs) or <vm> (for service VMs)
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qE "^${vm_name}-dev$"; then
+        return $VDE_SUCCESS
+    fi
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qE "^${vm_name}$"; then
         return $VDE_SUCCESS
     fi
     
-    # Also check if Docker container exists
-    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^vde-${vm_name}$"; then
-        return $VDE_SUCCESS
-    fi
+    # State file is NOT reliable - don't use it for existence check
+    # It can be stale or misleading
     
     return $VDE_ERR_NOT_FOUND
 }
@@ -234,15 +234,13 @@ build_docker_opts() {
 # Returns: VDE_SUCCESS (0) on success
 start_vm() {
     local vm_name="$1"
-    local max_attempts="${2:-3}"
+    local rebuild="${2:-false}"
+    local nocache="${3:-false}"
+    local max_attempts="${4:-3}"
     local attempt=1
 
-    if is_vm_running "$vm_name"; then
-        _info "VM '$vm_name' is already running"
-        return $VDE_SUCCESS
-    fi
-
-    if ! vm_exists "$vm_name"; then
+    # Skip vm_exists check if rebuild is requested (we'll create the container anyway)
+    if [[ "$rebuild" != "true" ]] && ! vm_exists "$vm_name"; then
         _error "VM '$vm_name' does not exist"
         return $VDE_ERR_NOT_FOUND
     fi
