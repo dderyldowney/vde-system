@@ -35,6 +35,7 @@ _VDE_SSH_LOADED=1
 . "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat"
 . "$VDE_ROOT_DIR/scripts/lib/vde-constants"
 . "$VDE_ROOT_DIR/scripts/lib/vde-errors"
+. "$VDE_ROOT_DIR/scripts/lib/vde-log"
 . "$VDE_ROOT_DIR/scripts/lib/vde-naming"
 
 # =============================================================================
@@ -226,7 +227,7 @@ validate_or_create_ssh_key() {
     mkdir -p "$VDE_SSH_DIR"
     chmod 700 "$VDE_SSH_DIR"
 
-    _info "Generating new VDE SSH key..."
+    log_info "Generating new VDE SSH key..."
 
     if ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -C "vde@$(hostname)" 2>/dev/null; then
         chmod 600 "$VDE_SSH_IDENTITY"
@@ -235,7 +236,7 @@ validate_or_create_ssh_key() {
         return $VDE_SUCCESS
     fi
 
-    _error "Failed to generate SSH key"
+    log_error "Failed to generate SSH key"
     return $VDE_ERR_GENERAL
 }
 
@@ -284,7 +285,7 @@ acquire_lock() {
         elapsed=$((elapsed + 1))
     done
 
-    _error "Timeout acquiring lock: $lock_file"
+    log_error "Timeout acquiring lock: $lock_file"
     return $VDE_ERR_TIMEOUT
 }
 
@@ -506,7 +507,7 @@ ensure_ssh_agent() {
         keys_added=$((keys_added + 1))
     done
 
-    _info "SSH agent started with $keys_added key(s)"
+    log_info "SSH agent started with $keys_added key(s)"
     return $VDE_SUCCESS
 }
 
@@ -562,7 +563,7 @@ setup_ssh_for_vm() {
         _warn "Failed to sync SSH keys to VDE"
     fi
 
-    _success "SSH configured for VM: $vm_name (port: $ssh_port)"
+    log_success "SSH configured for VM: $vm_name (port: $ssh_port)"
     return $VDE_SUCCESS
 }
 
@@ -636,7 +637,7 @@ ensure_ssh_environment() {
 # generate_vm_ssh_config - Regenerate SSH config entries for all known VMs
 # Returns: VDE_SUCCESS (0) on success
 generate_vm_ssh_config() {
-    _info "Generating VM-to-VM SSH config..."
+    log_info "Generating VM-to-VM SSH config..."
 
     # Ensure SSH directory exists
     mkdir -p "$VDE_SSH_DIR"
@@ -669,7 +670,7 @@ generate_vm_ssh_config() {
         fi
     done
 
-    _success "Generated SSH config for $count VMs"
+    log_success "Generated SSH config for $count VMs"
     return $VDE_SUCCESS
 }
 

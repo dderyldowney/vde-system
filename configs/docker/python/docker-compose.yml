@@ -4,7 +4,7 @@ services:
   python-dev:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/base-dev.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

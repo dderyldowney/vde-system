@@ -61,6 +61,7 @@ export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 # DEPENDENCIES (CORE)
 # =============================================================================
 
+. "$VDE_ROOT_DIR/scripts/lib/vde-log"
 . "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat"
 . "$VDE_ROOT_DIR/scripts/lib/vde-constants"
 . "$VDE_ROOT_DIR/scripts/lib/vde-errors"
@@ -69,26 +70,55 @@ export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 . "$VDE_ROOT_DIR/scripts/lib/vde-core"
 
 # =============================================================================
-# LOGGING ALIASES (map _info/_error to inline functions)
+# LOGGING ALIASES (map log_*/vde_log_* to vde-log library functions)
 # =============================================================================
-# These are used by load_vm_types and other functions
+# These provide consistent logging API across all VDE scripts
 
+# Source vde-log if not already loaded
+if [[ "${_VDE_LOG_LOADED:-}" != "1" ]]; then
+    . "$VDE_ROOT_DIR/scripts/lib/vde-log"
+fi
+
+# Create aliases for scripts that expect log_* prefix
+if ! command -v log_info >/dev/null 2>&1; then
+    log_info() { vde_log_info "$@"; }
+fi
+
+if ! command -v log_error >/dev/null 2>&1; then
+    log_error() { vde_log_error "$@"; }
+fi
+
+if ! command -v log_warn >/dev/null 2>&1; then
+    log_warn() { vde_log_warn "$@"; }
+fi
+
+if ! command -v log_debug >/dev/null 2>&1; then
+    log_debug() { vde_log_debug "$@"; }
+fi
+
+if ! command -v log_success >/dev/null 2>&1; then
+    log_success() { vde_log_info "[SUCCESS] $@"; }
+fi
+
+# Also create aliases for underscore-prefixed versions (_info, _error, _success, _warn)
 if ! command -v _info >/dev/null 2>&1; then
-    _info() {
-        echo "[INFO] $*" >&2
-    }
+    _info() { vde_log_info "$@"; }
 fi
 
 if ! command -v _error >/dev/null 2>&1; then
-    _error() {
-        echo "[ERROR] $*" >&2
-    }
+    _error() { vde_log_error "$@"; }
 fi
 
 if ! command -v _warn >/dev/null 2>&1; then
-    _warn() {
-        echo "[WARN] $*" >&2
-    }
+    _warn() { vde_log_warn "$@"; }
+fi
+
+if ! command -v _debug >/dev/null 2>&1; then
+    _debug() { vde_log_debug "$@"; }
+fi
+
+if ! command -v _success >/dev/null 2>&1; then
+    _success() { vde_log_info "[SUCCESS] $@"; }
 fi
 
 # =============================================================================
