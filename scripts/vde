@@ -48,6 +48,7 @@ vde_log_init 2>/dev/null || true
 #===============================================================================
 
 _VDE_COMMANDS=(
+    "rebuild:Rebuild VDE images:vde-rebuild"
     "create:Create a new VM:create-virtual-for"
     "start:Start a VM:start-virtual"
     "stop:Stop a VM:shutdown-virtual"
@@ -89,6 +90,7 @@ Virtual Development Environment - Unified Command Interface
 
 Commands:
 EOF
+    printf "  %-12s %s\n" "rebuild" "Rebuild all VDE images"
     printf "  %-12s %s\n" "create <vm>" "Create a new VM"
     printf "  %-12s %s\n" "start <vm>" "Start a VM"
     printf "  %-12s %s\n" "stop <vm>" "Stop a VM"
@@ -125,6 +127,9 @@ Options:
   --version      Show version information
 
 Examples:
+  vde rebuild              # Rebuild all images
+  vde rebuild --no-cache  # Rebuild from scratch
+  vde rebuild --vm python # Rebuild only python VM
   vde list                      # List all VMs
   vde create python             # Create Python VM
   vde start python-dev          # Start Python development VM
@@ -175,6 +180,9 @@ vde_find_command_script() {
     local script=""
 
     case "$cmd" in
+        rebuild|vde-rebuild)
+            script="$VDE_ROOT_DIR/scripts/vde-rebuild"
+            ;;
         create|create-virtual-for)
             script="$VDE_ROOT_DIR/scripts/create-virtual-for"
             ;;
