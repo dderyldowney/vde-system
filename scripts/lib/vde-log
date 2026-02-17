@@ -152,8 +152,13 @@ vde_log() {
     local level="$1"
     local message="$2"
     local component="${3:-vde}"
-    shift 3
-    local context="$@"
+    local context=""
+    
+    # Only shift if we have at least 3 args
+    if [[ $# -ge 3 ]]; then
+        shift 3
+        context="$@"
+    fi
     
     # Validate level
     level=$(echo "$level" | tr '[:lower:]' '[:upper:]')
@@ -390,10 +395,14 @@ vde_log_recent() {
 }
 
 # Search logs
-# Args: pattern
+# Args: pattern [files...]
 vde_log_grep() {
     local pattern="$1"
-    shift
+    
+    # Only shift if we have more than 1 arg
+    if [[ $# -gt 1 ]]; then
+        shift
+    fi
     
     if [[ -f "$VDE_LOG_FILE" ]]; then
         command grep -E "$pattern" "$VDE_LOG_FILE" "$@"
