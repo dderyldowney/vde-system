@@ -1,0 +1,9 @@
+{
+  "vm_name": "python",
+  "vm_type": "lang",
+  "display_name": "Python",
+  "ssh_port": 2200,
+  "service_port": "",
+  "created_at": "2026-02-17T00:07:15Z",
+  "status": "running"
+}
