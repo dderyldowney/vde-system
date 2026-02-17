@@ -3,7 +3,7 @@ services:
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
-    image: dev-php:latest
+    image: vde-php:latest
     container_name: vde-php
     hostname: vde-php
     restart: unless-stopped

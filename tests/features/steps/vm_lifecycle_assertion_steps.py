@@ -159,7 +159,7 @@ def step_data_dir_exists(context, dir_path):
 def step_vm_should_be_running(context, vm_name):
     """Verify the specified VM is running."""
     running = docker_ps_list()
-    vm_containers = [c for c in running if vm_name in c.get('names', '')]
+    vm_containers = [c for c in running if vm_name in c.get('Names', '')]
     assert len(vm_containers) > 0, f"VM {vm_name} should be running"
 
 
@@ -167,7 +167,7 @@ def step_vm_should_be_running(context, vm_name):
 def step_vm_not_running(context, vm_name):
     """Verify the specified VM is not running."""
     running = docker_ps_list()
-    vm_containers = [c for c in running if vm_name in c.get('names', '')]
+    vm_containers = [c for c in running if vm_name in c.get('Names', '')]
     assert len(vm_containers) == 0, f"VM {vm_name} should not be running"
 
 
@@ -199,7 +199,7 @@ def step_no_vms_running(context):
     running = docker_ps_list()
     # Filter out non-VM containers (like docker-internal services)
     vm_containers = [c for c in running if any(
-        c.get('names', '').startswith(vm) 
+        c.get('Names', '').startswith(vm) 
         for vm in ['python', 'rust', 'postgres', 'zig', 'go', 'node', 'ruby']
     )]
     assert len(vm_containers) == 0, "No VMs should be running"
@@ -211,7 +211,7 @@ def step_unique_ssh_ports(context):
     running = docker_ps_list()
     ports = []
     for container in running:
-        names = container.get('names', '')
+        names = container.get('Names', '')
         # Check if it's a VM container
         if any(vm in names for vm in ['python', 'rust', 'postgres']):
             # Get port mappings from the container

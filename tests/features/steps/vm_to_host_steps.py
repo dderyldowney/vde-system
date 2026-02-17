@@ -327,7 +327,7 @@ def step_run_tohost_make_build(context):
         context.tohost_build_result = False
 
 
-@when('I run \"to-host docker ps --filter \'name=python-dev\'\" for VM-to-Host')
+@when('I run \"to-host docker ps --filter \'name=vde-python\'\" for VM-to-Host')
 def step_run_tohost_docker_ps_filter(context):
     """Run docker ps with filter on host from VM."""
     containers = docker_list_containers()
@@ -336,7 +336,7 @@ def step_run_tohost_docker_ps_filter(context):
     if vm_container:
         result = subprocess.run(
             ['docker', 'exec', vm_container, 'sh', '-c', 
-             'docker ps --filter "name=python-dev" 2>&1'],
+             'docker ps --filter "name=vde-python" 2>&1'],
             capture_output=True,
             text=True,
             timeout=10

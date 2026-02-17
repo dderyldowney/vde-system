@@ -160,7 +160,7 @@ VDE_TEST_NETWORK="${VDE_TEST_NETWORK:-vde-testing}"
 VDE_COMPOSE_PROJECT_PREFIX="${VDE_COMPOSE_PROJECT_PREFIX:-vde}"
 
 # Container naming patterns
-VDE_LANG_CONTAINER_SUFFIX="${VDE_LANG_CONTAINER_SUFFIX:--dev}"
+VDE_LANG_CONTAINER_SUFFIX="${VDE_LANG_CONTAINER_SUFFIX:--vde}"
 VDE_SVC_CONTAINER_SUFFIX="${VDE_SVC_CONTAINER_SUFFIX:-}"
 
 # =============================================================================

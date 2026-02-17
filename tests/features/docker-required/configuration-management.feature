@@ -50,7 +50,7 @@ Feature: Configuration Management
 
   Scenario: Configure custom Docker base image
     Given I need a different base OS or variant
-    When I modify base-dev.Dockerfile
+    When I modify vde-base.Dockerfile
     And I rebuild VMs with --rebuild
     Then VMs should use my custom base image
     And my OS-specific requirements should be met
@@ -134,7 +134,7 @@ Feature: Configuration Management
 
   Scenario: Configure multiple instances of same VM type
     Given I need two different Python environments
-    When I create "python-dev" and "python-test" VMs
+    When I create "vde-python" and "python-test" VMs
     Then both should use python base configuration
     But each should have separate data directory
     And each can run independently

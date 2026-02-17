@@ -1,0 +1,9 @@
+{
+  "vm_name": "r",
+  "vm_type": "lang",
+  "display_name": "R",
+  "ssh_port": 2200,
+  "service_port": "",
+  "created_at": "2026-02-17T00:29:45Z",
+  "status": "running"
+}

@@ -70,7 +70,7 @@ Feature: VM-to-Host Communication
     Given I have a Go VM running
     And I need to check the status of other VMs
     When I SSH into the Go VM
-    And I run "to-host docker ps --filter 'name=python-dev'"
+    And I run "to-host docker ps --filter 'name=vde-python'"
     Then I should see the status of the Python VM
     And I can make decisions based on the status
 

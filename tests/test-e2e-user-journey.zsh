@@ -270,7 +270,7 @@ test_ssh_key_generation() {
     fi
 
     # Check if SSH config template exists
-    if [[ -f "$PROJECT_ROOT/backup/ssh/config" ]]; then
+    if [[ -f "$PROJECT_ROOT/configs/ssh/config" ]]; then
         echo -e "${GREEN}✓ SSH config template exists${RESET}"
     fi
 

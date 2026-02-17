@@ -275,7 +275,7 @@ vde_error_invalid_vm_name() {
     vde_error_show \
         "Invalid VM name: '$name'" \
         "VM names must follow the naming convention" \
-        "1. Language VMs should use format: <name>-dev (e.g., python-dev, rust-dev)
+        "1. Language VMs should use format: vde-<name> (e.g., vde-python, rust-dev)
 2. Service VMs should use format: <name> (e.g., postgres, redis)
 3. Only lowercase alphanumeric characters are allowed" \
         "predefined-vm-types.md#naming-convention"

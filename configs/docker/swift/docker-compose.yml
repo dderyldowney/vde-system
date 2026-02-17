@@ -5,7 +5,7 @@ services:
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
-    image: dev-swift:latest
+    image: vde-swift:latest
     container_name: vde-swift
     hostname: vde-swift
     restart: unless-stopped

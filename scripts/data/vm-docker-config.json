@@ -3,8 +3,8 @@
   "description": "Docker configuration settings for VDE VMs",
   "base_settings": {
     "context": "../../..",
-    "base_dockerfile": "configs/docker/base-dev.Dockerfile",
-    "network": "dev-net",
+    "base_dockerfile": "configs/docker/vde-base.Dockerfile",
+    "network": "vde-net",
     "username": "devuser",
     "uid": 1000,
     "gid": 1000,
@@ -14,7 +14,7 @@
     "c": {
       "compose_file": "configs/docker/c/docker-compose.yml",
       "env_file": "env-files/vde-c.env",
-      "image": "dev-c:latest",
+      "image": "vde-c:latest",
       "container_name": "vde-c",
       "workspace_mount": "projects/c:/home/devuser/workspace",
       "logs_mount": "logs/c:/logs"
@@ -22,7 +22,7 @@
     "cpp": {
       "compose_file": "configs/docker/cpp/docker-compose.yml",
       "env_file": "env-files/vde-cpp.env",
-      "image": "dev-cpp:latest",
+      "image": "vde-cpp:latest",
       "container_name": "vde-cpp",
       "workspace_mount": "projects/cpp:/home/devuser/workspace",
       "logs_mount": "logs/cpp:/logs"
@@ -30,7 +30,7 @@
     "asm": {
       "compose_file": "configs/docker/asm/docker-compose.yml",
       "env_file": "env-files/vde-asm.env",
-      "image": "dev-asm:latest",
+      "image": "vde-asm:latest",
       "container_name": "vde-asm",
       "workspace_mount": "projects/asm:/home/devuser/workspace",
       "logs_mount": "logs/asm:/logs"
@@ -38,7 +38,7 @@
     "python": {
       "compose_file": "configs/docker/python/docker-compose.yml",
       "env_file": "env-files/vde-python.env",
-      "image": "dev-python:latest",
+      "image": "vde-python:latest",
       "container_name": "vde-python",
       "workspace_mount": "projects/python:/home/devuser/workspace",
       "logs_mount": "logs/python:/logs"
@@ -46,7 +46,7 @@
     "rust": {
       "compose_file": "configs/docker/rust/docker-compose.yml",
       "env_file": "env-files/vde-rust.env",
-      "image": "dev-rust:latest",
+      "image": "vde-rust:latest",
       "container_name": "vde-rust",
       "workspace_mount": "projects/rust:/home/devuser/workspace",
       "logs_mount": "logs/rust:/logs"
@@ -54,7 +54,7 @@
     "js": {
       "compose_file": "configs/docker/js/docker-compose.yml",
       "env_file": "env-files/vde-js.env",
-      "image": "dev-js:latest",
+      "image": "vde-js:latest",
       "container_name": "vde-js",
       "workspace_mount": "projects/js:/home/devuser/workspace",
       "logs_mount": "logs/js:/logs"
@@ -62,7 +62,7 @@
     "csharp": {
       "compose_file": "configs/docker/csharp/docker-compose.yml",
       "env_file": "env-files/vde-csharp.env",
-      "image": "dev-csharp:latest",
+      "image": "vde-csharp:latest",
       "container_name": "vde-csharp",
       "workspace_mount": "projects/csharp:/home/devuser/workspace",
       "logs_mount": "logs/csharp:/logs"
@@ -70,7 +70,7 @@
     "ruby": {
       "compose_file": "configs/docker/ruby/docker-compose.yml",
       "env_file": "env-files/vde-ruby.env",
-      "image": "dev-ruby:latest",
+      "image": "vde-ruby:latest",
       "container_name": "vde-ruby",
       "workspace_mount": "projects/ruby:/home/devuser/workspace",
       "logs_mount": "logs/ruby:/logs"
@@ -78,7 +78,7 @@
     "go": {
       "compose_file": "configs/docker/go/docker-compose.yml",
       "env_file": "env-files/vde-go.env",
-      "image": "dev-go:latest",
+      "image": "vde-go:latest",
       "container_name": "vde-go",
       "workspace_mount": "projects/go:/home/devuser/workspace",
       "logs_mount": "logs/go:/logs"
@@ -86,7 +86,7 @@
     "java": {
       "compose_file": "configs/docker/java/docker-compose.yml",
       "env_file": "env-files/vde-java.env",
-      "image": "dev-java:latest",
+      "image": "vde-java:latest",
       "container_name": "vde-java",
       "workspace_mount": "projects/java:/home/devuser/workspace",
       "logs_mount": "logs/java:/logs"
@@ -94,7 +94,7 @@
     "kotlin": {
       "compose_file": "configs/docker/kotlin/docker-compose.yml",
       "env_file": "env-files/vde-kotlin.env",
-      "image": "dev-kotlin:latest",
+      "image": "vde-kotlin:latest",
       "container_name": "vde-kotlin",
       "workspace_mount": "projects/kotlin:/home/devuser/workspace",
       "logs_mount": "logs/kotlin:/logs"
@@ -102,7 +102,7 @@
     "swift": {
       "compose_file": "configs/docker/swift/docker-compose.yml",
       "env_file": "env-files/vde-swift.env",
-      "image": "dev-swift:latest",
+      "image": "vde-swift:latest",
       "container_name": "vde-swift",
       "workspace_mount": "projects/swift:/home/devuser/workspace",
       "logs_mount": "logs/swift:/logs"
@@ -110,7 +110,7 @@
     "php": {
       "compose_file": "configs/docker/php/docker-compose.yml",
       "env_file": "env-files/vde-php.env",
-      "image": "dev-php:latest",
+      "image": "vde-php:latest",
       "container_name": "vde-php",
       "workspace_mount": "projects/php:/home/devuser/workspace",
       "logs_mount": "logs/php:/logs"
@@ -118,7 +118,7 @@
     "scala": {
       "compose_file": "configs/docker/scala/docker-compose.yml",
       "env_file": "env-files/vde-scala.env",
-      "image": "dev-scala:latest",
+      "image": "vde-scala:latest",
       "container_name": "vde-scala",
       "workspace_mount": "projects/scala:/home/devuser/workspace",
       "logs_mount": "logs/scala:/logs"
@@ -126,7 +126,7 @@
     "r": {
       "compose_file": "configs/docker/r/docker-compose.yml",
       "env_file": "env-files/vde-r.env",
-      "image": "dev-r:latest",
+      "image": "vde-r:latest",
       "container_name": "vde-r",
       "workspace_mount": "projects/r:/home/devuser/workspace",
       "logs_mount": "logs/r:/logs"
@@ -134,7 +134,7 @@
     "lua": {
       "compose_file": "configs/docker/lua/docker-compose.yml",
       "env_file": "env-files/vde-lua.env",
-      "image": "dev-lua:latest",
+      "image": "vde-lua:latest",
       "container_name": "vde-lua",
       "workspace_mount": "projects/lua:/home/devuser/workspace",
       "logs_mount": "logs/lua:/logs"
@@ -142,7 +142,7 @@
     "flutter": {
       "compose_file": "configs/docker/flutter/docker-compose.yml",
       "env_file": "env-files/vde-flutter.env",
-      "image": "dev-flutter:latest",
+      "image": "vde-flutter:latest",
       "container_name": "vde-flutter",
       "workspace_mount": "projects/flutter:/home/devuser/workspace",
       "logs_mount": "logs/flutter:/logs"
@@ -150,7 +150,7 @@
     "elixir": {
       "compose_file": "configs/docker/elixir/docker-compose.yml",
       "env_file": "env-files/vde-elixir.env",
-      "image": "dev-elixir:latest",
+      "image": "vde-elixir:latest",
       "container_name": "vde-elixir",
       "workspace_mount": "projects/elixir:/home/devuser/workspace",
       "logs_mount": "logs/elixir:/logs"
@@ -158,7 +158,7 @@
     "haskell": {
       "compose_file": "configs/docker/haskell/docker-compose.yml",
       "env_file": "env-files/vde-haskell.env",
-      "image": "dev-haskell:latest",
+      "image": "vde-haskell:latest",
       "container_name": "vde-haskell",
       "workspace_mount": "projects/haskell:/home/devuser/workspace",
       "logs_mount": "logs/haskell:/logs"
@@ -166,7 +166,7 @@
     "zig": {
       "compose_file": "configs/docker/zig/docker-compose.yml",
       "env_file": "env-files/vde-zig.env",
-      "image": "dev-zig:latest",
+      "image": "vde-zig:latest",
       "container_name": "vde-zig",
       "workspace_mount": "projects/zig:/home/devuser/workspace",
       "logs_mount": "logs/zig:/logs"
@@ -176,7 +176,7 @@
     "postgres": {
       "compose_file": "configs/docker/postgres/docker-compose.yml",
       "env_file": "env-files/vde-postgres.env",
-      "image": "dev-postgres:latest",
+      "image": "vde-postgres:latest",
       "container_name": "vde-postgres",
       "data_mount": "data/postgres:/data",
       "logs_mount": "logs/postgres:/logs"
@@ -184,7 +184,7 @@
     "redis": {
       "compose_file": "configs/docker/redis/docker-compose.yml",
       "env_file": "env-files/vde-redis.env",
-      "image": "dev-redis:latest",
+      "image": "vde-redis:latest",
       "container_name": "vde-redis",
       "data_mount": "data/redis:/data",
       "logs_mount": "logs/redis:/logs"
@@ -192,7 +192,7 @@
     "mongodb": {
       "compose_file": "configs/docker/mongodb/docker-compose.yml",
       "env_file": "env-files/vde-mongodb.env",
-      "image": "dev-mongodb:latest",
+      "image": "vde-mongodb:latest",
       "container_name": "vde-mongodb",
       "data_mount": "data/mongodb:/data",
       "logs_mount": "logs/mongodb:/logs"
@@ -200,7 +200,7 @@
     "nginx": {
       "compose_file": "configs/docker/nginx/docker-compose.yml",
       "env_file": "env-files/vde-nginx.env",
-      "image": "dev-nginx:latest",
+      "image": "vde-nginx:latest",
       "container_name": "vde-nginx",
       "data_mount": "data/nginx:/data",
       "logs_mount": "logs/nginx:/logs"
@@ -208,7 +208,7 @@
     "couchdb": {
       "compose_file": "configs/docker/couchdb/docker-compose.yml",
       "env_file": "env-files/vde-couchdb.env",
-      "image": "dev-couchdb:latest",
+      "image": "vde-couchdb:latest",
       "container_name": "vde-couchdb",
       "data_mount": "data/couchdb:/data",
       "logs_mount": "logs/couchdb:/logs"
@@ -216,7 +216,7 @@
     "mysql": {
       "compose_file": "configs/docker/mysql/docker-compose.yml",
       "env_file": "env-files/vde-mysql.env",
-      "image": "dev-mysql:latest",
+      "image": "vde-mysql:latest",
       "container_name": "vde-mysql",
       "data_mount": "data/mysql:/data",
       "logs_mount": "logs/mysql:/logs"
@@ -224,7 +224,7 @@
     "rabbitmq": {
       "compose_file": "configs/docker/rabbitmq/docker-compose.yml",
       "env_file": "env-files/vde-rabbitmq.env",
-      "image": "dev-rabbitmq:latest",
+      "image": "vde-rabbitmq:latest",
       "container_name": "vde-rabbitmq",
       "data_mount": "data/rabbitmq:/data",
       "logs_mount": "logs/rabbitmq:/logs"

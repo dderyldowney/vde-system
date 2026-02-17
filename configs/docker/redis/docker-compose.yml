@@ -11,8 +11,8 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-redis:latest
-    container_name: redis
+    image: vde-redis:latest
+    container_name: vde-redis
     hostname: redis
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y redis-tools && /usr/sbin/sshd -D"

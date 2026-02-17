@@ -62,9 +62,9 @@ Feature: VM Metadata Verification
   Scenario: Language VM container names follow naming convention
     Given I have VDE installed
     When I check container naming for language VMs
-    Then language VM containers should use the "{name}-dev" pattern
-    And Python container should be named "python-dev"
-    And Go container should be named "go-dev"
+    Then language VM containers should use the "{name}" pattern
+    And Python container should be named "vde-python"
+    And Go container should be named "vde-go"
 
   Scenario: Service VM container names follow naming convention
     Given I have VDE installed

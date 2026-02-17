@@ -15,7 +15,7 @@ Feature: SSH and Remote Access
   @requires-docker-host
   Scenario: Connecting with SSH client
     Given I have the SSH connection details
-    When I run "ssh python-dev"
+    When I run "ssh vde-python"
     Then I should connect to the Python VM
     And I should be logged in as devuser
     And I should have a zsh shell
@@ -23,7 +23,7 @@ Feature: SSH and Remote Access
   @requires-docker-host
   Scenario: Using VSCode Remote-SSH
     Given I have VSCode installed
-    When I add the SSH config for python-dev
+    When I add the SSH config for vde-python
     Then I can connect using Remote-SSH
     And my workspace should be mounted
     And I can edit files in the projects directory
@@ -31,8 +31,8 @@ Feature: SSH and Remote Access
   @requires-docker-host
   Scenario: Multiple SSH connections
     Given I have multiple VMs running
-    When I connect to python-dev
-    And then connect to postgres-dev
+    When I connect to vde-python
+    And then connect to vde-postgres
     Then both connections should work
     And each should use a different port
 

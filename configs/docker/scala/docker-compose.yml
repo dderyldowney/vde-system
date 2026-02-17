@@ -3,7 +3,7 @@ services:
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
-    image: dev-scala:latest
+    image: vde-scala:latest
     container_name: vde-scala
     hostname: vde-scala
     restart: unless-stopped

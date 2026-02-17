@@ -194,7 +194,7 @@ remove_vm() {
 # Remove Docker images for the VM type
 remove_docker_images() {
     local vm_type="$1"
-    local image_prefix="dev-${vm_type}"
+    local image_prefix="vde-${vm_type}"
 
     local images
     images=$(docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep "^${image_prefix}" || echo "")
