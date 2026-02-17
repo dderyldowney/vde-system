@@ -27,7 +27,7 @@ services:
       - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
-      - ../../../env-files/vde-lua.env
+      - ../../../env-files/vde-vde-lua.env
 
     networks:
       - vde-net

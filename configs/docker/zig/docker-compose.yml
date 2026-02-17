@@ -30,7 +30,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/zig.env
+      - ../../../env-files/vde-zig.env
 
     networks:
       - vde-net

@@ -1,6 +1,6 @@
 # VDE Base Development Image
 # This image is the foundation for all language and service VMs
-# Built once as vde-base-dev:latest, then extended by VM-specific Dockerfiles
+# Built once as vde-base:latest, then extended by VM-specific Dockerfiles
 FROM debian:bookworm-slim
 
 ARG USERNAME=devuser

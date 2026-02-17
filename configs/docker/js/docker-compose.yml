@@ -30,7 +30,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/js.env
+      - ../../../env-files/vde-js.env
 
     networks:
       - vde-net

@@ -33,7 +33,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/nginx.env
+      - ../../../env-files/vde-nginx.env
 
     networks:
       - vde-net
