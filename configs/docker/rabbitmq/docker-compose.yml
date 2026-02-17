@@ -33,7 +33,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/vde-rabbitmq.env
+      - ../../../env-files/vde-vde-rabbitmq.env
 
     networks:
       - vde-net

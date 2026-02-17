@@ -32,7 +32,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/postgres.env
+      - ../../../env-files/vde-postgres.env
 
     networks:
       - vde-net

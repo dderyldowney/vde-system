@@ -28,7 +28,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/vde-asm.env
+      - ../../../env-files/vde-vde-asm.env
 
     networks:
       - vde-net
