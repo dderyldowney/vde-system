@@ -1,7 +1,7 @@
 # Template for language VMs
 # Variables: r, 2200, apt-get update -y && apt-get install -y r-base r-cran-littler
 services:
-  r-dev:
+  vde-r:
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
@@ -10,9 +10,9 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-r:latest
-    container_name: r-dev
-    hostname: r-dev
+    image: vde-r:latest
+    container_name: vde-r
+    hostname: vde-r
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y r-base r-cran-littler && /usr/sbin/sshd -D"
 

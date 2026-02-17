@@ -42,7 +42,7 @@ Feature: SSH Configuration
   Scenario: Create SSH config entry for new VM
     Given VM "python" is created with SSH port "2200"
     When SSH config is generated
-    Then SSH config should contain "Host python-dev"
+    Then SSH config should contain "Host vde-python"
     And SSH config should contain "Port 2200"
     And SSH config should contain "ForwardAgent yes"
 
@@ -57,13 +57,13 @@ Feature: SSH Configuration
     Given VM "python" is allocated port "2200"
     And VM "rust" is allocated port "2201"
     When VM-to-VM SSH config is generated
-    Then SSH config should contain entry for "python-dev"
-    And SSH config should contain entry for "rust-dev"
+    Then SSH config should contain entry for "vde-python"
+    And SSH config should contain entry for "vde-rust"
     And each entry should use "localhost" as hostname
 
   @requires-docker-ssh
   Scenario: Prevent duplicate SSH config entries
-    Given SSH config already contains "Host python-dev"
+    Given SSH config already contains "Host vde-python"
     When I create VM "python" again
     Then duplicate SSH config entry should NOT be created
     And command should warn about existing entry
@@ -84,15 +84,15 @@ Feature: SSH Configuration
 
   @requires-docker-ssh
   Scenario: Remove SSH config entry when VM is removed
-    Given SSH config contains "Host python-dev"
+    Given SSH config contains "Host vde-python"
     When VM "python" is removed
-    Then SSH config should NOT contain "Host python-dev"
+    Then SSH config should NOT contain "Host vde-python"
 
   @requires-docker-ssh
   Scenario: VM-to-VM communication uses agent forwarding
     Given SSH agent is running
     And keys are loaded into agent
-    When I SSH from "python-dev" to "rust-dev"
+    When I SSH from "vde-python" to "vde-rust"
     Then the connection should use host's SSH keys
     And no keys should be stored on containers
 
@@ -123,7 +123,7 @@ Feature: SSH Configuration
     When I create VM "python" with SSH port "2200"
     Then ~/.ssh/vde/config should still contain "Host github.com"
     And ~/.ssh/vde/config should still contain "Host myserver"
-    And ~/.ssh/vde/config should contain new "Host python-dev" entry
+    And ~/.ssh/vde/config should contain new "Host vde-python" entry
     And existing entries should be unchanged
 
   @requires-docker-ssh
@@ -136,23 +136,23 @@ Feature: SSH Configuration
     Then ~/.ssh/vde/config should still contain "Host *"
     And ~/.ssh/vde/config should still contain "    User myuser"
     And ~/.ssh/vde/config should still contain "    IdentityFile ~/.ssh/vde/mykey"
-    And new "Host rust-dev" entry should be appended to end
+    And new "Host vde-rust" entry should be appended to end
 
   @requires-docker-ssh
   Scenario: Merge preserves existing VDE entries when adding new VM
-    Given ~/.ssh/vde/config contains "Host python-dev"
+    Given ~/.ssh/vde/config contains "Host vde-python"
     And ~/.ssh/vde/config contains "    Port 2200"
     When I create VM "rust" with SSH port "2201"
-    Then ~/.ssh/vde/config should still contain "Host python-dev"
-    And ~/.ssh/vde/config should still contain "    Port 2200" under python-dev
-    And new "Host rust-dev" entry should be added
+    Then ~/.ssh/vde/config should still contain "Host vde-python"
+    And ~/.ssh/vde/config should still contain "    Port 2200" under vde-python
+    And new "Host vde-rust" entry should be added
 
   @requires-docker-ssh
   Scenario: Merge does not duplicate existing VDE entries
-    Given ~/.ssh/vde/config contains "Host python-dev"
-    And ~/.ssh/vde/config contains python-dev configuration
+    Given ~/.ssh/vde/config contains "Host vde-python"
+    And ~/.ssh/vde/config contains vde-python configuration
     When I attempt to create VM "python" again
-    Then ~/.ssh/vde/config should contain only one "Host python-dev" entry
+    Then ~/.ssh/vde/config should contain only one "Host vde-python" entry
     And error should indicate entry already exists
 
   @requires-docker-ssh
@@ -179,7 +179,7 @@ Feature: SSH Configuration
     When I create VM "python" with SSH port "2200"
     Then ~/.ssh/vde/config should be created
     And ~/.ssh/vde/config should have permissions "600"
-    And ~/.ssh/vde/config should contain "Host python-dev"
+    And ~/.ssh/vde/config should contain "Host vde-python"
 
   @requires-docker-ssh
   Scenario: Merge creates .ssh directory if needed
@@ -219,7 +219,7 @@ Feature: SSH Configuration
   Scenario: Merge entry has all required SSH config fields
     Given ~/.ssh/vde/config exists
     When I create VM "python" with SSH port "2200"
-    Then merged entry should contain "Host python-dev"
+    Then merged entry should contain "Host vde-python"
     And merged entry should contain "HostName localhost"
     And merged entry should contain "Port 2200"
     And merged entry should contain "User devuser"
@@ -229,12 +229,12 @@ Feature: SSH Configuration
 
   @requires-docker-ssh
   Scenario: Merge removes VM entry when VM is removed
-    Given ~/.ssh/vde/config contains "Host python-dev"
-    And ~/.ssh/vde/config contains "Host rust-dev"
+    Given ~/.ssh/vde/config contains "Host vde-python"
+    And ~/.ssh/vde/config contains "Host vde-rust"
     And ~/.ssh/vde/config contains user's "Host github.com" entry
     When I remove VM for SSH cleanup "python"
-    Then ~/.ssh/vde/config should NOT contain "Host python-dev"
-    And ~/.ssh/vde/config should still contain "Host rust-dev"
+    Then ~/.ssh/vde/config should NOT contain "Host vde-python"
+    And ~/.ssh/vde/config should still contain "Host vde-rust"
     And ~/.ssh/vde/config should still contain "Host github.com"
     And user's entries should be preserved
 

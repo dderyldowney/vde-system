@@ -10,7 +10,7 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-c:latest
+    image: vde-c:latest
     container_name: vde-c
     hostname: vde-c
     restart: unless-stopped

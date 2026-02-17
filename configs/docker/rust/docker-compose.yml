@@ -1,7 +1,7 @@
 # Template for language VMs
 # Variables: rust, 2200, su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
 services:
-  rust-dev:
+  vde-rust:
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
@@ -10,9 +10,9 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-rust:latest
-    container_name: rust-dev
-    hostname: rust-dev
+    image: vde-rust:latest
+    container_name: vde-rust
+    hostname: vde-rust
     restart: unless-stopped
     command: sh -c "su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y' && /usr/sbin/sshd -D"
 

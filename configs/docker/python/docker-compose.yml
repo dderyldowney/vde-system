@@ -1,7 +1,7 @@
 # Template for language VMs
 # Variables: python, 2200, apt-get update -y && apt-get install -y python3 python3-pip
 services:
-  python-dev:
+  vde-python:
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
@@ -10,9 +10,9 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-python:latest
-    container_name: python-dev
-    hostname: python-dev
+    image: vde-python:latest
+    container_name: vde-python
+    hostname: vde-python
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y python3 python3-pip && /usr/sbin/sshd -D"
 

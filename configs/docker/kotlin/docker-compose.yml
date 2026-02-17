@@ -10,7 +10,7 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-kotlin:latest
+    image: vde-kotlin:latest
     container_name: vde-kotlin
     hostname: vde-kotlin
     restart: unless-stopped

@@ -25,7 +25,7 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     And I have a Python VM running
     And I have started the SSH agent
     When I SSH into the Go VM
-    And I run "ssh python-dev" from within the Go VM
+    And I run "ssh vde-python" from within the Go VM
     Then I should connect to the Python VM
     And I should be authenticated using my host's SSH keys
     And I should not need to enter a password
@@ -35,7 +35,7 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     Given I have a Python VM running
     And I have a PostgreSQL VM running
     When I SSH into the Python VM
-    And I run "ssh postgres-dev" from within the Python VM
+    And I run "ssh vde-postgres" from within the Python VM
     Then I should connect to the PostgreSQL VM
     And I should be able to run psql commands
     And authentication should use my host's SSH keys
@@ -44,14 +44,14 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     Given I have a Python VM running
     And I have a Go VM running
     When I create a file in the Python VM
-    And I run "scp go-dev:/tmp/file ." from the Python VM
+    And I run "scp vde-go:/tmp/file ." from the Python VM
     Then the file should be copied using my host's SSH keys
     And no password should be required
 
   Scenario: Running commands on remote VMs
     Given I have a Python VM running
     And I have a Rust VM running
-    When I run "ssh rust-dev pwd" from the Python VM
+    When I run "ssh vde-rust pwd" from the Python VM
     Then the command should execute on the Rust VM
     And the output should be displayed
     And authentication should use my host's SSH keys
@@ -62,9 +62,9 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     And I create a Redis VM for caching
     And I start all VMs
     When I SSH into the Python VM
-    And I run "ssh postgres-dev psql -U devuser -l"
+    And I run "ssh vde-postgres psql -U devuser -l"
     Then I should see the PostgreSQL list of databases
-    When I run "ssh redis-dev redis-cli ping"
+    When I run "ssh vde-redis redis-cli ping"
     Then I should see "PONG"
     And all connections should use my host's SSH keys
 
@@ -73,8 +73,8 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     And I have a Python VM running as a payment service
     And I have a Rust VM running as an analytics service
     When I SSH into the Go VM
-    And I run "ssh python-dev curl localhost:8000/health"
-    And I run "ssh rust-dev curl localhost:8080/metrics"
+    And I run "ssh vde-python curl localhost:8000/health"
+    And I run "ssh vde-rust curl localhost:8080/metrics"
     Then both services should respond
     And all authentications should use my host's SSH keys
 
@@ -82,7 +82,7 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     Given I am developing a full-stack application
     And I have frontend, backend, and database VMs
     When I need to test the backend from the frontend VM
-    And I run "ssh backend-dev pytest tests/"
+    And I run "ssh vde-backend pytest tests/"
     Then the tests should run on the backend VM
     And I should see the results in the frontend VM
     And authentication should be automatic

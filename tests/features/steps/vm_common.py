@@ -100,6 +100,9 @@ def docker_list_containers():
 def container_exists(container_name):
     """Check if a Docker container exists by name.
     
+    Uses partial name matching to find containers whose names contain
+    the specified string (e.g., 'python' matches 'python-dev').
+    
     Args:
         container_name: Name of the container to check
         
@@ -107,13 +110,14 @@ def container_exists(container_name):
         bool: True if container exists, False otherwise
     """
     try:
+        # Use regex matching to find containers containing the name
         result = subprocess.run(
-            ['docker', 'ps', '-q', '-f', f'name={container_name}'],
+            ['docker', 'ps', '-q', '-f', 'name=.*' + container_name],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        return result.returncode == 0
+        return result.returncode == 0 and len(result.stdout.strip()) > 0
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
 

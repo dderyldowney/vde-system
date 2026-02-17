@@ -38,7 +38,7 @@ source "$SCRIPT_DIR/vm-common" 2>/dev/null || {
 
 # vde_check_container_running - Check if container is running
 # Args:
-#   vm_name - Name of the VM (without -dev suffix for language VMs)
+#   vm_name - Name of the VM (without vde- prefix for language VMs)
 # Returns:
 #   0 (VDE_SUCCESS) if container is running
 #   VDE_ERR_NOT_FOUND if container not found
@@ -47,10 +47,10 @@ vde_check_container_running() {
     local vm_name="$1"
     local container_name="$vm_name"
 
-    # Language VMs use -dev suffix
+    # Language VMs use vde- prefix
     local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
     if [ "$vm_type" = "lang" ]; then
-        container_name="${vm_name}-dev"
+        container_name="$vde-{vm_name}"
     fi
 
     # Check if container is running
@@ -81,10 +81,10 @@ vde_check_ssh_port() {
     local timeout="${2:-$VDE_SSH_TIMEOUT}"
     local container_name="$vm_name"
 
-    # Language VMs use -dev suffix
+    # Language VMs use vde- prefix
     local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
     if [ "$vm_type" = "lang" ]; then
-        container_name="${vm_name}-dev"
+        container_name="$vde-{vm_name}"
     fi
 
     # Get SSH port mapping
@@ -137,10 +137,10 @@ vde_check_ssh_login() {
     local timeout="${2:-$VDE_SSH_TIMEOUT}"
     local container_name="$vm_name"
 
-    # Language VMs use -dev suffix
+    # Language VMs use vde- prefix
     local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
     if [ "$vm_type" = "lang" ]; then
-        container_name="${vm_name}-dev"
+        container_name="$vde-{vm_name}"
     fi
 
     # Get SSH port
@@ -191,10 +191,10 @@ vde_check_language_tool() {
     local timeout="${2:-$VDE_SSH_TIMEOUT}"
     local container_name="$vm_name"
 
-    # Language VMs use -dev suffix
+    # Language VMs use vde- prefix
     local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
     if [ "$vm_type" = "lang" ]; then
-        container_name="${vm_name}-dev"
+        container_name="$vde-{vm_name}"
     fi
 
     # Get SSH port
@@ -276,10 +276,10 @@ vde_wait_for_container_healthy() {
     local max_wait="${2:-$VDE_DOCKER_TIMEOUT}"
     local container_name="$vm_name"
 
-    # Language VMs use -dev suffix
+    # Language VMs use vde- prefix
     local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
     if [ "$vm_type" = "lang" ]; then
-        container_name="${vm_name}-dev"
+        container_name="$vde-{vm_name}"
     fi
 
     local elapsed=0
@@ -332,10 +332,10 @@ vde_health_check() {
     local container_name="$vm_name"
     local all_passed=true
 
-    # Language VMs use -dev suffix
+    # Language VMs use vde- prefix
     local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
     if [ "$vm_type" = "lang" ]; then
-        container_name="${vm_name}-dev"
+        container_name="$vde-{vm_name}"
     fi
 
     [ "$verbose" -eq 1 ] && echo "Health check for $container_name:"

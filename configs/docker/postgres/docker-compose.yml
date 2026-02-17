@@ -11,8 +11,8 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-postgres:latest
-    container_name: postgres
+    image: vde-postgres:latest
+    container_name: vde-postgres
     hostname: postgres
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y postgresql-client && /usr/sbin/sshd -D"

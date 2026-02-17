@@ -14,7 +14,7 @@ Feature: VM Lifecycle Management
     When I run "create-virtual-for zig"
     Then a docker-compose.yml file should be created at "configs/docker/zig/docker-compose.yml"
     And the docker-compose.yml should contain SSH port mapping
-    And SSH config entry should exist for "zig-dev"
+    And SSH config entry should exist for "vde-zig"
     And projects directory should exist at "projects/zig"
     And logs directory should exist at "logs/zig"
 
@@ -134,7 +134,7 @@ Feature: VM Lifecycle Management
   Scenario: Remove a VM
     Given VM "python" has been created
     When I run "remove-virtual python"
-    And SSH config entry for "python-dev" should be removed
+    And SSH config entry for "vde-python" should be removed
     And projects directory should still exist at "projects/python"
     But the VM should be marked as not created
 

@@ -8,7 +8,7 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-couchdb:latest
+    image: vde-couchdb:latest
     container_name: vde-couchdb
     hostname: vde-couchdb
     restart: unless-stopped

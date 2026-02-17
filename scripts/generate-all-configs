@@ -121,15 +121,15 @@ services:
   ${name}-dev:
     build:
       context: ../../..
-      dockerfile: configs/docker/base-dev.Dockerfile
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-${name}:latest
-    container_name: ${name}-dev
-    hostname: ${name}-dev
+    image: vde-${name}:latest
+    container_name: vde-${name}
+    hostname: vde-${name}
     restart: unless-stopped
     command: sh -c "${install_cmd} && /usr/sbin/sshd -D"
 
@@ -191,15 +191,15 @@ services:
   ${name}:
     build:
       context: ../../..
-      dockerfile: configs/docker/base-dev.Dockerfile
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-${name}:latest
-    container_name: ${name}
-    hostname: ${name}
+    image: vde-${name}:latest
+    container_name: vde-${name}
+    hostname: vde-${name}
     restart: unless-stopped
     command: sh -c "${install_cmd} && /usr/sbin/sshd -D"
 

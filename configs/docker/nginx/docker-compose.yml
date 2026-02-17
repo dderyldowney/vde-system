@@ -11,8 +11,8 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-nginx:latest
-    container_name: nginx
+    image: vde-nginx:latest
+    container_name: vde-nginx
     hostname: nginx
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y nginx-extras && /usr/sbin/sshd -D"

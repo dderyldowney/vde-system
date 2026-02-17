@@ -1,18 +1,18 @@
 # Template for language VMs
 # Variables: {{NAME}}, {{SSH_PORT}}, {{INSTALL_CMD}}
 services:
-  {{NAME}}-dev:
+  vde-{{NAME}}:
     build:
       context: ../../..
-      dockerfile: configs/docker/base-dev.Dockerfile
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-{{NAME}}:latest
-    container_name: {{NAME}}-dev
-    hostname: {{NAME}}-dev
+    image: vde-{{NAME}}:latest
+    container_name: vde-{{NAME}}
+    hostname: vde-{{NAME}}
     restart: unless-stopped
     command: sh -c "{{INSTALL_CMD}} && /usr/sbin/sshd -D"
 

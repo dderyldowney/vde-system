@@ -172,15 +172,8 @@ vde_get_ssh_info() {
     local ssh_host
     local ssh_port
 
-    # Determine SSH host based on VM type
-    local vm_type
-    vm_type=$(get_vm_info type "$vm_name" 2>/dev/null || echo "")
-
-    if [ "$vm_type" = "lang" ]; then
-        ssh_host="${vm_name}-dev"
-    else
-        ssh_host="$vm_name"
-    fi
+    # Use vde_get_ssh_host for consistent vde-* naming convention
+    ssh_host=$(vde_get_ssh_host "$vm_name")
 
     # Get SSH port from docker-compose.yml
     ssh_port=$(get_vm_ssh_port "$vm_name" 2>/dev/null || echo "")

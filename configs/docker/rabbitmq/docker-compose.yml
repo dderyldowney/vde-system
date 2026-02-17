@@ -11,7 +11,7 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: dev-rabbitmq:latest
+    image: vde-rabbitmq:latest
     container_name: vde-rabbitmq
     hostname: vde-rabbitmq
     restart: unless-stopped

@@ -5,7 +5,7 @@ services:
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
-    image: dev-lua:latest
+    image: vde-lua:latest
     container_name: vde-lua
     hostname: vde-lua
     restart: unless-stopped

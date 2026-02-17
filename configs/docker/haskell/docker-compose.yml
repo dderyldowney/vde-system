@@ -5,7 +5,7 @@ services:
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
-    image: dev-haskell:latest
+    image: vde-haskell:latest
     container_name: vde-haskell
     hostname: vde-haskell
     restart: unless-stopped

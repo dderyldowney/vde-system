@@ -85,7 +85,7 @@ Feature: Docker Operations
 
   Scenario: Container naming follows convention
     Given language VM "python" is started
-    Then container should be named "python-dev"
+    Then container should be named "vde-python"
     Given service VM "postgres" is started
     Then container should be named "postgres"
 

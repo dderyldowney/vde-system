@@ -17,8 +17,8 @@ Feature: Daily Development Workflow
     Given I previously created VMs for "python", "rust", and "postgres"
     When I run "start-virtual python rust postgres"
     Then all three VMs should be running
-    And I should be able to SSH to "python-dev" on allocated port
-    And I should be able to SSH to "rust-dev" on allocated port
+    And I should be able to SSH to "vde-python" on allocated port
+    And I should be able to SSH to "vde-rust" on allocated port
     And PostgreSQL should be accessible from language VMs
 
   # Create a new project workspace
@@ -29,7 +29,7 @@ Feature: Daily Development Workflow
     When I run "create-virtual-for go"
     Then a go development environment should be created
     And docker-compose.yml should be configured for go
-    And SSH config entry for "go-dev" should be added
+    And SSH config entry for "vde-go" should be added
     And projects/go directory should be created
     And I can start the VM with "start-virtual go"
 
@@ -49,7 +49,7 @@ Feature: Daily Development Workflow
   Scenario: Connect to PostgreSQL from Python VM
     Given "postgres" VM is running
     And "python" VM is running
-    When I SSH into "python-dev"
+    When I SSH into "vde-python"
     And I run "psql -h postgres -U devuser"
     Then I should be connected to PostgreSQL
     And I can query the database
