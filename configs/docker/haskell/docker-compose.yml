@@ -27,7 +27,7 @@ services:
       - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
-      - ../../../env-files/vde-vde-haskell.env
+      - ../../../env-files/vde-haskell.env
 
     networks:
       - vde-net
