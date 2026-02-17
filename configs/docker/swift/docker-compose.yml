@@ -27,7 +27,7 @@ services:
       - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
-      - ../../../env-files/vde-vde-swift.env
+      - ../../../env-files/vde-swift.env
 
     networks:
       - vde-net

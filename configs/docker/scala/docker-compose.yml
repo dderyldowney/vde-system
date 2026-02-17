@@ -25,7 +25,7 @@ services:
       - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
-      - ../../../env-files/vde-vde-scala.env
+      - ../../../env-files/vde-scala.env
 
     networks:
       - vde-net

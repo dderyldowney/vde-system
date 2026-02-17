@@ -29,7 +29,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/vde-vde-couchdb.env
+      - ../../../env-files/vde-couchdb.env
 
     networks:
       - vde-net

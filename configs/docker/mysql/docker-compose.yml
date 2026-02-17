@@ -29,7 +29,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/vde-vde-mysql.env
+      - ../../../env-files/vde-mysql.env
 
     networks:
       - vde-net
