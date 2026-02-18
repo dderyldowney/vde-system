@@ -62,16 +62,16 @@ Feature: VM Metadata Verification
   Scenario: Language VM container names follow naming convention
     Given I have VDE installed
     When I check container naming for language VMs
-    Then language VM containers should use the "{name}" pattern
+    Then language VM containers should use the "vde-{name}" pattern
     And Python container should be named "vde-python"
     And Go container should be named "vde-go"
 
   Scenario: Service VM container names follow naming convention
     Given I have VDE installed
     When I check container naming for service VMs
-    Then service VM containers should use the "{name}" pattern
-    And PostgreSQL container should be named "postgres"
-    And Redis container should be named "redis"
+    Then service VM containers should use the "vde-{name}" pattern
+    And PostgreSQL container should be named "vde-postgres"
+    And Redis container should be named "vde-redis"
 
   Scenario: All VMs have valid installation commands
     Given I have VDE installed

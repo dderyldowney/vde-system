@@ -1,6 +1,9 @@
 #!/usr/bin/env zsh
 # run-tests.zsh - Run VDE tests with automatic Docker detection
 
+# Set test network for VMs created during tests
+export VDE_NETWORK=vde-testing
+
 # Check if Docker is available
 if docker info >/dev/null 2>&1; then
     DOCKER_AVAILABLE=true

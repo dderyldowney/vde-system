@@ -1,6 +1,7 @@
 # Template for service VMs
 # Variables: {{NAME}}, {{SSH_PORT}}, {{SERVICE_PORT}}, {{INSTALL_CMD}}
 # SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
+name: vde-{{NAME}}
 services:
   vde-{{NAME}}:
     build:

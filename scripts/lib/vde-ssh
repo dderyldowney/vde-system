@@ -300,7 +300,7 @@ merge_ssh_config_entry() {
     local host_alias="$1"
     local ssh_port="$2"
     local display_name="$3"
-    local identity_file="$4"
+    local identity_file="${4:-$VDE_SSH_IDENTITY}"  # Default to VDE_SSH_IDENTITY if not provided
 
     local ssh_config="$VDE_SSH_CONFIG"
     local temp_file
@@ -311,11 +311,24 @@ merge_ssh_config_entry() {
         return $VDE_ERR_GENERAL
     fi
 
+    # Remove existing entry for this host first (to avoid duplicates)
+    if [ -f "$ssh_config" ]; then
+        grep -v "^Host $host_alias$" "$ssh_config" | \
+        awk '/^Host /{host=0} /^[ \t]*$/{next} host{print}' > "$temp_file" 2>/dev/null
+        # Actually, simpler approach - remove the whole block starting with Host
+        sed -i '' "/^Host $host_alias$/,/^Host /{ /^Host $host_alias$/d; /^Host /{1d} }" "$temp_file" 2>/dev/null || true
+    fi
+    
+    # Also remove the specific Host block - use awk instead
+    if [ -f "$ssh_config" ]; then
+        awk "! /^Host $host_alias$/ || ! found {found=/^Host $host_alias$/; print}" "$ssh_config" > "$temp_file" 2>/dev/null || cp "$ssh_config" "$temp_file"
+    fi
+
     local entry="
 Host $host_alias
     HostName localhost
     Port $ssh_port
-    User root
+    User devuser
     IdentityFile $identity_file
     StrictHostKeyChecking no
     UserKnownHostsFile $VDE_SSH_KNOWN_HOSTS
@@ -323,10 +336,6 @@ Host $host_alias
     LogLevel ERROR"
 
     mkdir -p "$(dirname "$ssh_config")"
-
-    if [ -f "$ssh_config" ]; then
-        cp "$ssh_config" "$temp_file"
-    fi
 
     echo "" >> "$temp_file"
     echo "$entry" >> "$temp_file"

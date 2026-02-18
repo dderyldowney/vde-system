@@ -87,7 +87,7 @@ Feature: Docker Operations
     Given language VM "python" is started
     Then container should be named "vde-python"
     Given service VM "postgres" is started
-    Then container should be named "postgres"
+    Then container should be named "vde-postgres"
 
   Scenario: Volume mounts are created correctly
     Given VM "python" is started

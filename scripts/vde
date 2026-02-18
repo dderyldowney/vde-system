@@ -91,7 +91,7 @@ Virtual Development Environment - Unified Command Interface
 Commands:
 EOF
     printf "  %-12s %s\n" "rebuild" "Rebuild all VDE images"
-    printf "  %-12s %s\n" "create <vm>" "Create a new VM"
+    printf "  %-12s %s\n" "create <vm>" "Create a new VM (use --rebuild or --nocache to rebuild)"
     printf "  %-12s %s\n" "start <vm>" "Start a VM"
     printf "  %-12s %s\n" "stop <vm>" "Stop a VM"
     printf "  %-12s %s\n" "restart <vm>" "Restart a VM"
@@ -132,6 +132,8 @@ Examples:
   vde rebuild --vm python # Rebuild only python VM
   vde list                      # List all VMs
   vde create python             # Create Python VM
+  vde create python --rebuild  # Create and rebuild Python VM
+  vde create python --nocache  # Create Python VM without cache
   vde start python-dev          # Start Python development VM
   vde ssh python                # SSH into the Python VM
   vde stop postgres             # Stop PostgreSQL service
@@ -349,6 +351,69 @@ fi
 if [ "$CMD" = "help" ]; then
     vde_show_help
     exit 0
+fi
+
+# Special handling for create command with --rebuild or --nocache flags
+# These flags require creating the VM then starting with rebuild
+if [ "$CMD" = "create" ]; then
+    local rebuild=false
+    local nocache=false
+    local create_args=()
+    local vm_name=""
+    
+    # Parse arguments for rebuild/nocache
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --rebuild)
+                rebuild=true
+                shift
+                ;;
+            --nocache)
+                nocache=true
+                shift
+                ;;
+            *)
+                create_args+=("$1")
+                if [ -z "$vm_name" ]; then
+                    vm_name="$1"
+                fi
+                shift
+                ;;
+        esac
+    done
+    
+    # If rebuild or nocache is specified, we need special handling
+    if [ "$rebuild" = "true" ] || [ "$nocache" = "true" ]; then
+        if [ -z "$vm_name" ]; then
+            vde_error_simple "VM name is required for create with --rebuild or --nocache"
+            exit $VDE_ERR_INVALID_INPUT
+        fi
+        
+        vde_log_info "Creating VM with rebuild=$rebuild, nocache=$nocache" "vde"
+        
+        # Source required libraries for the functions
+        source "$VDE_ROOT_DIR/scripts/lib/vde-commands" 2>/dev/null || true
+        
+        # First create the VM
+        "$VDE_ROOT_DIR/scripts/create-virtual-for" "$vm_name" --no-start
+        local create_result=$?
+        
+        if [ $create_result -ne 0 ]; then
+            vde_error_simple "Failed to create VM: $vm_name"
+            exit $create_result
+        fi
+        
+        # Then start with rebuild/nocache
+        local start_args=()
+        [ "$rebuild" = "true" ] && start_args+=(--rebuild)
+        [ "$nocache" = "true" ] && start_args+=(--no-cache)
+        
+        "$VDE_ROOT_DIR/scripts/start-virtual" "$vm_name" "${start_args[@]}"
+        exit $?
+    fi
+    
+    # Restore arguments for normal processing
+    set -- "${create_args[@]}"
 fi
 
 # Run the command with remaining arguments

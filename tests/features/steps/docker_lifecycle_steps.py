@@ -383,7 +383,8 @@ def step_status_is_one_of(context, expected_statuses):
 def step_running_containers_listed(context):
     """Verify all running containers are listed."""
     running = getattr(context, 'running_vms', [])
-    vde_running = [c for c in running if '-dev' in c or c in ['postgres', 'redis', 'nginx', 'mongodb', 'mysql', 'rabbitmq', 'couchdb']]
+    # All VMs now use vde- prefix (e.g., vde-python, vde-postgres, vde-redis)
+    vde_running = [c for c in running if 'vde-' in c or c in ['vde-postgres', 'vde-redis', 'vde-nginx', 'vde-mongodb', 'vde-mysql', 'vde-rabbitmq', 'vde-couchdb']]
     assert len(vde_running) > 0, f"Should list running containers: {running}"
 
 
@@ -463,12 +464,12 @@ def step_env_file_read(context):
 def step_ssh_port_in_container(context):
     """Verify SSH_PORT variable is available in container."""
     vm_name = getattr(context, 'vm_name', 'python')
-    # Check config has the variable
-    config_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    if config_path.exists():
-        content = config_path.read_text()
+    # Check env file has the variable
+    env_file_path = VDE_ROOT / "env-files" / f"vde-{vm_name}.env"
+    if env_file_path.exists():
+        content = env_file_path.read_text()
         assert 'SSH_PORT' in content or 'ssh_port' in content, \
-            f"SSH_PORT should be in config: {content}"
+            f"SSH_PORT should be in env file: {content}"
 
 
 # =============================================================================
