@@ -61,3 +61,7 @@ SESSION_STATE.md
 WHY_ARE_WE_DOING_THIS.md
 TODO.md
 .claude/agents/
+.docker-state/
+.docker-state-*.json
+configs/docker/*/docker-compose-*.yml
+env-files/*.env

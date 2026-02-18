@@ -42,9 +42,20 @@ from vm_common import container_exists, compose_file_exists, run_vde_command
 
 def _call_vde_parser_function(function_name, input_string):
     """Call a vde-parser function and return stdout."""
-    cmd = f'zsh -c "source {VDE_SHELL_COMPAT} && source {VDE_VM_COMMON} && source {VDE_PARSER} && {function_name} \\"{input_string}\\""'
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8')
-    return result.stdout.strip(), result.returncode
+    # Pass input via environment variable to avoid shell escaping issues
+    env = os.environ.copy()
+    env['VDE_TEST_INPUT'] = input_string
+    # Suppress INFO logs by setting log level to ERROR to avoid stdout pollution
+    env['VDE_LOG_LEVEL'] = 'ERROR'
+    cmd = f"zsh -c 'source {VDE_SHELL_COMPAT} && source {VDE_VM_COMMON} && source {VDE_PARSER} && {function_name} \"$VDE_TEST_INPUT\"'"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8', env=env)
+    # Extract last non-empty line that is NOT a log line
+    lines_out = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
+    # Filter out log lines (contain [INFO], [ERROR], [WARN], timestamps, etc.)
+    output_lines = [line for line in lines_out if not (line.startswith('[') or ' -0500' in line or line.startswith('20'))]
+    # Return all filtered lines joined by newline for multi-value functions
+    return '\n'.join(output_lines) if output_lines else '', result.returncode
+
 
 
 def _get_real_intent(input_string):

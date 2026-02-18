@@ -101,6 +101,13 @@ fi
 
 VM_NAME="$1"
 
+# Validate VM name is not empty
+if [[ -z "$VM_NAME" ]]; then
+    echo "Error: VM name cannot be empty" >&2
+    show_usage
+    exit 1
+fi
+
 # -----------------------
 # Validation
 # -----------------------
@@ -252,9 +259,16 @@ else
 
     ssh_host="$(vde_get_ssh_host "$VM_NAME")"
 
-    if ! merge_ssh_config_entry "$ssh_host" "$SSH_PORT" "$_vm_display"; then
+    if ! merge_ssh_config_entry "$ssh_host" "$SSH_PORT" "$_vm_display" "$VDE_SSH_IDENTITY"; then
         vde_error_permission_denied "~/.ssh/config"
         exit 1
+    fi
+    
+    # Also update the reference config in configs/ssh/config
+    local project_ssh_config="$VDE_ROOT_DIR/configs/ssh/config"
+    if [ -f "$project_ssh_config" ]; then
+        # Copy the updated SSH config to the project configs directory
+        cp "$VDE_SSH_CONFIG" "$project_ssh_config" 2>/dev/null || true
     fi
 fi
 
