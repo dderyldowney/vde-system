@@ -126,17 +126,8 @@ fi
 if [[ -z "$VDE_TEST_MODE" ]]; then
     log_info "Removing SSH config entry..."
 
-    # Determine SSH hostname based on VM type
-    local ssh_host
-    if [[ "$VM_TYPE" == "lang" ]]; then
-        ssh_host="${VM_NAME}-dev"
-    elif [[ "$VM_TYPE" == "service" ]]; then
-        ssh_host="$VM_NAME"
-        # Also remove common aliases for services
-        remove_ssh_config_entry "$ssh_host" 2>/dev/null || true
-    else
-        ssh_host="${VM_NAME}-dev"
-    fi
+    # All VMs now use vde- prefix
+    local ssh_host="vde-${VM_NAME}"
 
     # Remove from SSH config
     if [[ -f "$HOME/.ssh/config" ]]; then

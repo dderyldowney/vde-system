@@ -57,6 +57,8 @@ def before_all(context):
     os.environ["PATH"] = f"{VDE_ROOT}/scripts:{VDE_ROOT}/tests:{os.environ['PATH']}"
     # Enable test mode to skip SSH config operations that timeout in Docker
     os.environ["VDE_TEST_MODE"] = "1"
+    # Use test network for VMs created during tests
+    os.environ["VDE_NETWORK"] = "vde-testing"
 
     # Create necessary directories
     dirs = [

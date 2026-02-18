@@ -90,11 +90,11 @@ vm_exists() {
     local vm_name="$1"
     
     # Check Docker container FIRST - this is the source of truth
-    # Container names are either <vm>-dev (for lang VMs) or <vm> (for service VMs)
-    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qE "^${vm_name}-dev$"; then
+    # Container names are either vde-<vm> (for lang VMs) or vde-<vm> (for service VMs)
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qE "^vde-${vm_name}$"; then
         return $VDE_SUCCESS
     fi
-    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qE "^${vm_name}$"; then
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qE "^vde-${vm_name}$"; then
         return $VDE_SUCCESS
     fi
     

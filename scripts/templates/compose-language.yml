@@ -1,5 +1,6 @@
 # Template for language VMs
 # Variables: {{NAME}}, {{SSH_PORT}}, {{INSTALL_CMD}}
+name: vde-{{NAME}}
 services:
   vde-{{NAME}}:
     build:
