@@ -1,0 +1,35 @@
+{
+  "mcp": {
+    "allowed": [
+      "context7",
+      "gemini-docs-mcp",
+      "MCP_DOCKER",
+      "github",
+      "redis",
+      "firebase",
+      "google-workspace",
+      "skill-porter",
+      "gemini-cli-prompt-library",
+      "gemini-cli-security",
+      "sequential-thinking"
+    ]
+  },
+  "mcpServers": {
+    "context7": {
+      "timeout": 60000,
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ]
+    },
+    "MCP_DOCKER": {
+      "command": "docker",
+      "args": [
+        "mcp",
+        "gateway",
+        "run"
+      ]
+    }
+  }
+}
