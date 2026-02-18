@@ -36,7 +36,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Core Mandates
-- **MCP Server Utilization**: All agents must utilize connected MCP servers.
+- **MCP Server Utilization**: All agents MUST utilize connected MCP servers (e.g., `context7`, `github`, `redis`, `MCP_DOCKER`) as their primary interface for system interaction.
+- **Documentation Source-of-Truth**: All documentation updates, technical deep dives, and API/library queries MUST utilize the `context7` and `gemini-docs-mcp` MCP servers to ensure accuracy and version alignment.
 - **Active Endpoints**: Ensure all tool invocations reference active MCP endpoints.
 - **Connectivity Validation**: Validate server connectivity prior to execution.
 - **Interaction Logging**: Log all MCP interactions for audit and troubleshooting.
@@ -48,8 +49,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Creates detailed implementation plans and strategies for complex features.
 - **File Path**: `agents/planner.md`
 - **Role**: Architect & Strategist
-- **Core Capabilities**: Task decomposition, architectural planning, dependency mapping.
-- **Dependencies**: Scout, Codebase Investigator.
+- **Core Capabilities**: Task decomposition, architectural planning, dependency mapping, **MCP-driven roadmap generation**.
+- **Dependencies**: Scout, Codebase Investigator, Context7.
 - **Interaction Protocol**: Invoke via `/plan` or direct request for a roadmap.
 - **Example Usage**: "Planner, create a strategy to migrate the remaining bash scripts to zsh."
 
@@ -59,7 +60,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Explores the codebase to understand structure, patterns, and conventions.
 - **File Path**: `agents/scout.md`
 - **Role**: Information Gatherer
-- **Core Capabilities**: Codebase traversal, pattern identification, convention discovery.
+- **Core Capabilities**: Codebase traversal, pattern identification, convention discovery, **integrated MCP tool discovery**.
 - **Dependencies**: None.
 - **Interaction Protocol**: Invoke via `/explore` or when starting a new task.
 - **Example Usage**: "Scout, find all files that source 'vde-parser' and document their usage."
@@ -70,8 +71,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Writes clean, efficient, and idiomatic code adhering to project standards.
 - **File Path**: `agents/coder.md`
 - **Role**: Software Engineer
-- **Core Capabilities**: Scripting (Zsh), Python development, Docker configuration.
-- **Dependencies**: Planner, Scout.
+- **Core Capabilities**: Scripting (Zsh), Python development, Docker configuration, **MCP-integrated development workflows**.
+- **Dependencies**: Planner, Scout, MCP_DOCKER.
 - **Interaction Protocol**: Triggered during the implementation phase of a task.
 - **Example Usage**: "Coder, implement the new intent detection logic in 'vde-parser'."
 
@@ -81,8 +82,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Writes and executes tests to ensure software quality and reliability.
 - **File Path**: `agents/tester.md`
 - **Role**: QA Engineer
-- **Core Capabilities**: Behave BDD tests, Pytest, shell script verification.
-- **Dependencies**: Coder.
+- **Core Capabilities**: Behave BDD tests, Pytest, shell script verification, **MCP-driven automated testing**.
+- **Dependencies**: Coder, MCP_DOCKER.
 - **Interaction Protocol**: Invoke via `/test` or after code changes.
 - **Example Usage**: "Tester, create a new feature file for the 'ssh-vm' command."
 
@@ -92,8 +93,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Performs systematic code reviews to ensure quality and consistency.
 - **File Path**: `agents/reviewer.md`
 - **Role**: Quality Auditor
-- **Core Capabilities**: Static analysis, best practice verification, security checks.
-- **Dependencies**: Coder.
+- **Core Capabilities**: Static analysis, best practice verification, security checks, **MCP-assisted code auditing**.
+- **Dependencies**: Coder, Github.
 - **Interaction Protocol**: Invoke via `/review` before committing changes.
 - **Example Usage**: "Reviewer, check these Zsh library changes for shell compatibility."
 
@@ -103,8 +104,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Analyzes errors and bugs to identify root causes and suggest fixes.
 - **File Path**: `agents/debugger.md`
 - **Role**: Troubleshooting Expert
-- **Core Capabilities**: Log analysis, trace investigation, root cause analysis.
-- **Dependencies**: Scout, Tester.
+- **Core Capabilities**: Log analysis, trace investigation, root cause analysis, **contextual bug tracing via MCP**.
+- **Dependencies**: Scout, Tester, Memory.
 - **Interaction Protocol**: Invoke via `/debug` when tests fail or errors occur.
 - **Example Usage**: "Debugger, analyze why the 'vde-health' check is failing in the CI environment."
 
@@ -114,8 +115,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Manages version control operations and commit history.
 - **File Path**: `agents/git-manager.md`
 - **Role**: SCM Administrator
-- **Core Capabilities**: Commit preparation, branch management, PR drafting.
-- **Dependencies**: Reviewer.
+- **Core Capabilities**: Commit preparation, branch management, PR drafting, **Github MCP integration**.
+- **Dependencies**: Reviewer, Github.
 - **Interaction Protocol**: Invoke when preparing to save or push work.
 - **Example Usage**: "Git Manager, prepare a commit for the parser enhancements."
 
@@ -125,8 +126,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Conducts security audits and vulnerability scans on the codebase.
 - **File Path**: `agents/security-auditor.md`
 - **Role**: Security Engineer
-- **Core Capabilities**: Vulnerability detection, secret scanning, permission auditing.
-- **Dependencies**: Codebase Investigator.
+- **Core Capabilities**: Vulnerability detection, secret scanning, permission auditing, **automated security scanning via MCP**.
+- **Dependencies**: Codebase Investigator, Security.
 - **Interaction Protocol**: Invoke via `/security:analyze` or manual review.
 - **Example Usage**: "Security Auditor, scan the SSH configuration for potential privilege escalation."
 
@@ -136,8 +137,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Manages project documentation and ensures it stays in sync with code.
 - **File Path**: `agents/docs-manager.md`
 - **Role**: Technical Writer
-- **Core Capabilities**: Markdown generation, technical deep dives, README updates.
-- **Dependencies**: Coder.
+- **Core Capabilities**: Markdown generation, technical deep dives, README updates, **Documentation synchronization via Context7 and Gemini-Docs-MCP**.
+- **Dependencies**: Coder, Context7, Gemini-Docs-MCP.
 - **Interaction Protocol**: Triggered after feature implementation or architectural changes.
 - **Example Usage**: "Docs Manager, update the 'Technical-Deep-Dive.md' with the new SSH architecture."
 
@@ -148,7 +149,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **File Path**: `agents/project-manager.md`
 - **Role**: Team Lead
 - **Core Capabilities**: Task tracking, roadmap management, workflow optimization.
-- **Dependencies**: All Agents.
+- **Dependencies**: All Agents, Github, Memory.
 - **Interaction Protocol**: Consulted for high-level status or priority decisions.
 - **Example Usage**: "Project Manager, what are the high-priority items remaining for the zsh migration?"
 
@@ -159,7 +160,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **File Path**: `agents/database-admin.md`
 - **Role**: Database Specialist
 - **Core Capabilities**: SQL/NoSQL configuration, data persistence, service optimization.
-- **Dependencies**: DevOps Engineer.
+- **Dependencies**: DevOps Engineer, Redis.
 - **Interaction Protocol**: Consulted for tasks involving service VM data layers.
 - **Example Usage**: "Database Admin, optimize the PostgreSQL template for heavy write workloads."
 
@@ -170,7 +171,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **File Path**: `agents/backend-specialist.md`
 - **Role**: Backend Architect
 - **Core Capabilities**: Service orchestration, API design, performance tuning.
-- **Dependencies**: Coder.
+- **Dependencies**: Coder, Context7.
 - **Interaction Protocol**: Engaged for core system logic and service-to-service communication.
 - **Example Usage**: "Backend Specialist, design the communication protocol between the language VMs and the shared redis service."
 
@@ -181,7 +182,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **File Path**: `agents/fullstack-developer.md`
 - **Role**: Generalist Engineer
 - **Core Capabilities**: End-to-end feature development, integration testing.
-- **Dependencies**: Frontend Specialist, Backend Specialist.
+- **Dependencies**: Frontend Specialist, Backend Specialist, Firebase.
 - **Interaction Protocol**: Assigned to tasks requiring both infrastructure and application-level changes.
 - **Example Usage**: "Fullstack Developer, implement a new service VM and its corresponding management CLI commands."
 
@@ -191,8 +192,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Researches external resources, libraries, and best practices.
 - **File Path**: `agents/researcher.md`
 - **Role**: Knowledge Specialist
-- **Core Capabilities**: External documentation analysis, library comparison, technical research.
-- **Dependencies**: None.
+- **Core Capabilities**: External documentation analysis, library comparison, technical research, **context-aware library search via Context7**.
+- **Dependencies**: None, Context7, Gemini-Docs-MCP.
 - **Interaction Protocol**: Invoke when exploring new technologies or solving unique problems.
 - **Example Usage**: "Researcher, find the best practices for implementing SSH agent forwarding in isolated Docker networks."
 
@@ -202,8 +203,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Generates creative ideas and alternative approaches to problems.
 - **File Path**: `agents/brainstormer.md`
 - **Role**: Creative Thinker
-- **Core Capabilities**: Idea generation, brainstorming, alternative path analysis.
-- **Dependencies**: None.
+- **Core Capabilities**: Idea generation, brainstorming, alternative path analysis, **MCP-enhanced concept mapping**.
+- **Dependencies**: None, Context7.
 - **Interaction Protocol**: Invoke during the initial phase of complex problem-solving.
 - **Example Usage**: "Brainstormer, suggest three different ways we could handle automatic port collision detection."
 
@@ -213,8 +214,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Focuses on the user interface and user experience of VDE components.
 - **File Path**: `agents/ui-designer.md`
 - **Role**: UX/UI Specialist
-- **Core Capabilities**: CLI output design, progress indicator styling, UX workflow mapping.
-- **Dependencies**: Docs Manager.
+- **Core Capabilities**: CLI output design, progress indicator styling, UX workflow mapping, **design pattern research via Context7**.
+- **Dependencies**: Docs Manager, Context7.
 - **Interaction Protocol**: Consulted for improving the visual feedback and usability of the CLI.
 - **Example Usage**: "UI Designer, propose a more intuitive layout for the 'vde status' command output."
 
@@ -224,8 +225,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Expert in frontend frameworks and user interface development.
 - **File Path**: `agents/frontend-specialist.md`
 - **Role**: Frontend Engineer
-- **Core Capabilities**: Web UI (if applicable), CLI presentation layers.
-- **Dependencies**: UI Designer.
+- **Core Capabilities**: Web UI (if applicable), CLI presentation layers, **Modern frontend documentation via Context7**.
+- **Dependencies**: UI Designer, Context7.
 - **Interaction Protocol**: Consulted for any future web-based management dashboards.
 - **Example Usage**: "Frontend Specialist, suggest a React-based structure for a VDE management dashboard."
 
@@ -235,7 +236,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Description**: Creates high-quality marketing, community, and technical content.
 - **File Path**: `agents/copywriter.md`
 - **Role**: Content Creator
-- **Core Capabilities**: Technical blogging, release notes, community engagement content.
-- **Dependencies**: Docs Manager.
+- **Core Capabilities**: Technical blogging, release notes, community engagement content, **AI-assisted tone adjustment**.
+- **Dependencies**: Docs Manager, Context7.
 - **Interaction Protocol**: Invoke when preparing public-facing announcements or blog posts.
 - **Example Usage**: "Copywriter, draft a blog post announcing the release of VDE Stage 7."
