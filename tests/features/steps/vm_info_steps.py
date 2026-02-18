@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Step definitions for VM information and discovery testing
 
+import re
 import sys
 from pathlib import Path
 
@@ -58,9 +59,13 @@ def step_should_see_only_service_vms(context):
     service_vms = ['postgres', 'redis', 'mysql', 'mongodb', 'nginx', 'rabbitmq', 'couchdb']
     found_service_vms = [svm for svm in service_vms if svm.lower() in output.lower()]
     
-    # Language VMs should not be in the output
+    # Language VMs should not be in the output - use word boundary matching to avoid false positives
     language_vms = ['python', 'go', 'rust', 'javascript', 'java', 'ruby', 'php', 'c', 'cpp']
-    found_language_vms = [lvm for lvm in language_vms if lvm.lower() in output.lower()]
+    found_language_vms = []
+    for lvm in language_vms:
+        # Use word boundary regex to match whole words only, avoiding false positives like 'c' in 'create'
+        if re.search(r'\b' + re.escape(lvm) + r'\b', output, re.IGNORECASE):
+            found_language_vms.append(lvm)
     
     # Pass if we found service VMs (indicating the list command worked)
     if found_service_vms and not found_language_vms:
@@ -268,7 +273,11 @@ def step_should_not_see_language_vms(context):
         return
     
     language_vms = ['python', 'go', 'rust', 'javascript', 'java', 'ruby', 'php']
-    found = [vm for vm in language_vms if vm.lower() in output.lower()]
+    found = []
+    for vm in language_vms:
+        # Use word boundary matching to avoid false positives like 'c' in 'create'
+        if re.search(r'\b' + re.escape(vm) + r'\b', output, re.IGNORECASE):
+            found.append(vm)
     assert len(found) == 0, f"Should not see language VMs but found: {found}"
     context.language_vms_hidden = True
 
