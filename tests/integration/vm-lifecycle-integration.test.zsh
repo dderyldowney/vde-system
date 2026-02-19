@@ -181,7 +181,7 @@ test_template_render_language() {
         UID 1000 \
         GID 1000 \
         INSTALL_CMD "echo test" \
-        SSH_IDENTITY_FILE "~/.ssh/id_ed25519")
+        SSH_IDENTITY_FILE "~/.ssh/vde/id_ed25519")
 
     if [[ -n "$rendered" ]]; then
         # Check that placeholders were replaced
@@ -301,16 +301,17 @@ test_ssh_key_detection() {
     key=$(get_primary_ssh_key)
 
     if [[ -n "$key" ]]; then
-        if [[ -f "$HOME/.ssh/$key" ]] || [[ -f "$HOME/.ssh/${key}.pub" ]]; then
+        if [[ -f "$HOME/.ssh/vde/$key" ]] || [[ -f "$HOME/.ssh/vde/${key}.pub" ]]; then
             test_pass "SSH key detection (found $key)"
             return
         fi
     fi
 
     # If no SSH key exists, generate a test key for validation
-    info "No SSH key found, generating test key..."
+    info "No SSH key found, generating test key in VDE directory..."
     local test_key_name="id_ed25519_vde_test"
-    local test_key_path="$HOME/.ssh/$test_key_name"
+    local test_key_path="$HOME/.ssh/vde/$test_key_name"
+    mkdir -p "$HOME/.ssh/vde"
 
     # Generate a test key (no passphrase)
     ssh-keygen -t ed25519 -f "$test_key_path" -N "" -C "vde-test@localhost" >/dev/null 2>&1

@@ -11,10 +11,18 @@
       "skill-porter",
       "gemini-cli-prompt-library",
       "gemini-cli-security",
-      "sequential-thinking"
-    ]
+      "sequential-thinking",
+      "gemini-cloud-assist-mcp",
+      "securityServer",
+      "osvScanner"
+    ],
+    "excluded": []
   },
   "mcpServers": {
+    "dart": {
+      "command": "/bin/true",
+      "args": []
+    },
     "context7": {
       "timeout": 60000,
       "command": "npx",
@@ -30,6 +38,14 @@
         "gateway",
         "run"
       ]
+    },
+    "gemini-cloud-assist-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@google-cloud/gemini-cloud-assist-mcp@latest"
+      ],
+      "timeout": 600000
     }
   }
 }

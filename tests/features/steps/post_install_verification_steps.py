@@ -181,11 +181,11 @@ def step_cache_dir_exists(context):
 @then('if keys exist, they should be detected')
 def step_keys_detected_if_exist(context):
     """Verify existing SSH keys would be detected."""
-    # Check if SSH keys actually exist in standard location
+    # Check if SSH keys actually exist in VDE isolated location
     keys_exist = check_ssh_keys_exist()
     if keys_exist:
         # If keys exist, verify they can be detected
-        ssh_dir = Path.home() / ".ssh"
+        ssh_dir = Path.home() / ".ssh" / "vde"
         key_file = ssh_dir / "id_ed25519"
         assert key_file.exists(), "SSH keys should exist but were not found"
     # If keys don't exist, this step documents that they would be detected if present
@@ -198,7 +198,7 @@ def step_keys_generated(context):
     keys_exist = check_ssh_keys_exist()
     if keys_exist:
         # Verify key type is ed25519
-        ssh_dir = Path.home() / ".ssh"
+        ssh_dir = Path.home() / ".ssh" / "vde"
         key_file = ssh_dir / "id_ed25519"
         assert key_file.exists(), "ed25519 SSH key was not generated"
 
@@ -533,7 +533,7 @@ def step_compose_generated(context):
 def step_ssh_config_updated_install(context):
     """Verify SSH config is updated for VM access."""
     # Check if SSH config includes VDE VM entries
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
         # Look for VDE-specific SSH entries (vde- prefix or similar)

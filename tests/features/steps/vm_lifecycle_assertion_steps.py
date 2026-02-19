@@ -159,16 +159,18 @@ def step_data_dir_exists(context, dir_path):
 def step_vm_should_be_running(context, vm_name):
     """Verify the specified VM is running."""
     running = docker_ps_list()
-    vm_containers = [c for c in running if vm_name in c.get('Names', '')]
-    assert len(vm_containers) > 0, f"VM {vm_name} should be running"
+    expected_name = f"vde-{vm_name}"
+    vm_containers = [c for c in running if expected_name == c.get('Names', '')]
+    assert len(vm_containers) > 0, f"VM {vm_name} should be running (searched for {expected_name})"
 
 
 @then('VM "{vm_name}" should not be running')
 def step_vm_not_running(context, vm_name):
     """Verify the specified VM is not running."""
     running = docker_ps_list()
-    vm_containers = [c for c in running if vm_name in c.get('Names', '')]
-    assert len(vm_containers) == 0, f"VM {vm_name} should not be running"
+    expected_name = f"vde-{vm_name}"
+    vm_containers = [c for c in running if expected_name == c.get('Names', '')]
+    assert len(vm_containers) == 0, f"VM {vm_name} should not be running (found {expected_name})"
 
 
 @then('all created VMs should be running')
@@ -223,20 +225,60 @@ def step_unique_ssh_ports(context):
     assert len(ports) == len(set(ports)), "Each VM should have a unique SSH port"
 
 
+def _wait_for_ssh_ready(ssh_host, port, timeout=120):
+    """Helper to wait for SSH banner on a host:port."""
+    import time
+    import socket
+    
+    retry_interval = 2
+    max_retries = timeout // retry_interval
+    
+    print(f"DEBUG: Waiting for SSH banner on {ssh_host}:{port}...")
+    
+    for i in range(max_retries):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(2)
+                # We always connect to 127.0.0.1 because VDE maps ports to localhost
+                result = sock.connect_ex(('127.0.0.1', port))
+                if result == 0:
+                    # Port is open, now try to read banner
+                    banner = sock.recv(1024)
+                    if banner.startswith(b'SSH-'):
+                        print(f"DEBUG: SSH banner received after {i*retry_interval}s: {banner.decode().strip()}")
+                        return True
+                    else:
+                        print(f"DEBUG: Port {port} open but no banner yet (got: {banner!r})")
+        except socket.timeout:
+            pass
+        except Exception as e:
+            print(f"DEBUG: Error connecting to {port}: {e}")
+            
+        time.sleep(retry_interval)
+    
+    return False
+
+
 @then('SSH should be accessible on allocated port')
 def step_ssh_accessible(context):
-    """Verify SSH is accessible on the allocated port."""
-    running = docker_ps_list()
-    if running:
-        for container in running:
-            names = container.get('names', '')
-            if any(vm in names for vm in ['python', 'rust', 'postgres']):
-                # Check if container is running and healthy
-                health = get_container_health(container.get('id', ''))
-                assert health in ['running', 'healthy'], \
-                    "SSH should be accessible on allocated port"
-                return
-    assert False, "No running VM found to check SSH accessibility"
+    """Verify SSH is accessible on the allocated port with retries."""
+    # Get the SSH host from context or default
+    ssh_host = getattr(context, 'last_ssh_host', 'vde-python')
+    
+    # Get port from SSH config
+    ssh_config_path = Path.home() / ".ssh" / "vde" / "config"
+    port = 2200 # Default
+    
+    if ssh_config_path.exists():
+        content = ssh_config_path.read_text()
+        # Find port for this host
+        import re
+        match = re.search(fr"Host {ssh_host}.*?Port (\d+)", content, re.DOTALL)
+        if match:
+            port = int(match.group(1))
+
+    assert _wait_for_ssh_ready(ssh_host, port), \
+        f"SSH service on port {port} remained unready after timeout"
 
 
 @then('the VM should have a fresh container instance')
@@ -245,11 +287,11 @@ def step_fresh_container(context):
     # Check container restart count or start time
     running = docker_ps_list()
     for container in running:
-        names = container.get('names', '')
+        names = container.get('Names', '')
         if 'python' in names:
             # Container is fresh if recently started
             # This is a best-effort check
-            assert container.get('status', '').startswith('Up'), \
+            assert container.get('Status', '').startswith('Up'), \
                 "VM should have a fresh container instance"
             return
     assert False, "No running VM found to check freshness"
@@ -262,7 +304,7 @@ def step_container_rebuilt(context):
     # build cache or image creation time
     running = docker_ps_list()
     for container in running:
-        names = container.get('names', '')
+        names = container.get('Names', '')
         if 'python' in names:
             # If we get here with --rebuild flag, assume rebuild happened
             context.container_rebuilt = True
@@ -487,21 +529,43 @@ def step_container_rebuilt_no_cache(context):
 @then('SSH connection should still work')
 def step_ssh_still_works(context):
     """Verify SSH connection still works after rebuild."""
-    # This is implicitly verified if we can connect
-    # The previous SSH test step would have failed if SSH didn't work
-    vm_name = getattr(context, 'last_vm_name', 'python')
-    ssh_host = f"vde-{vm_name}"
+    # Use context.last_ssh_host if available, otherwise default to vde-python
+    ssh_host = getattr(context, 'last_ssh_host', 'vde-python')
+    
+    # Use the isolated VDE SSH config
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
+    port = 2200 # Default
+    
+    if ssh_config.exists():
+        content = ssh_config.read_text()
+        import re
+        match = re.search(fr"Host {ssh_host}.*?Port (\d+)", content, re.DOTALL)
+        if match:
+            port = int(match.group(1))
+
+    # Wait for SSH to be ready again after rebuild
+    assert _wait_for_ssh_ready(ssh_host, port), \
+        f"SSH service on port {port} remained unready after rebuild"
+    
+    cmd = ['ssh']
+    if ssh_config.exists():
+        cmd.extend(['-F', str(ssh_config)])
+        
+    cmd.extend([
+        '-o', 'BatchMode=yes', 
+        '-o', 'ConnectTimeout=5',
+        '-o', 'StrictHostKeyChecking=no', 
+        ssh_host, 'echo', 'ok'
+    ])
     
     # Try a quick SSH connection test
     result = subprocess.run(
-        ['ssh', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=5',
-         '-o', 'StrictHostKeyChecking=no', f"devuser@{ssh_host}",
-         'echo', 'ok'],
+        cmd,
         capture_output=True, text=True, timeout=10
     )
     
     assert result.returncode == 0 and 'ok' in result.stdout, \
-        "SSH connection should still work after rebuild"
+        f"SSH connection should still work after rebuild (failed for {ssh_host})"
 
 
 @then('VM "{vm_name}" configuration should be removed')
@@ -581,11 +645,23 @@ def step_i_ssh_to(context, ssh_host):
     # Store the SSH host for later verification
     context.last_ssh_host = ssh_host
     
+    # Use the isolated VDE SSH config
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
+    
+    cmd = ['ssh']
+    if ssh_config.exists():
+        cmd.extend(['-F', str(ssh_config)])
+        
+    cmd.extend([
+        '-o', 'BatchMode=yes', 
+        '-o', 'ConnectTimeout=10',
+        '-o', 'StrictHostKeyChecking=no', 
+        ssh_host, 'echo', 'connected'
+    ])
+    
     # Do a simple connection test
     result = subprocess.run(
-        ['ssh', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10',
-         '-o', 'StrictHostKeyChecking=no', f'devuser@{ssh_host}',
-         'echo', 'connected'],
+        cmd,
         capture_output=True, text=True, timeout=30
     )
     

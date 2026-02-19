@@ -36,12 +36,38 @@ def step_have_ssh_connection_details(context):
 @then('I should be logged in as devuser')
 def step_logged_in_devuser(context):
     """Verify logged in as devuser via SSH."""
+    # Use context.last_ssh_host if available, otherwise default to vde-python
+    ssh_host = getattr(context, 'last_ssh_host', 'vde-python')
+    
+    # Use the isolated VDE SSH config
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
+    
     # Use SSH to connect and run whoami as devuser
+    cmd = ['ssh']
+    if ssh_config.exists():
+        cmd.extend(['-F', str(ssh_config)])
+        
+    cmd.extend([
+        '-o', 'StrictHostKeyChecking=no', 
+        '-o', 'UserKnownHostsFile=/dev/null',
+        '-o', 'BatchMode=yes',
+        ssh_host, 'whoami'
+    ])
+    
+    print(f"DEBUG: Executing SSH command: {' '.join(cmd)}")
     result = subprocess.run(
-        ['ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null',
-         'python-dev', 'whoami'],
+        cmd,
         capture_output=True, text=True, timeout=30
     )
-    assert result.returncode == 0, f"SSH connection failed: {result.stderr}"
+    print(f"DEBUG: SSH result RC={result.returncode}")
+    if result.returncode != 0:
+        print(f"DEBUG: SSH error: {result.stderr}")
+        # Fallback to python-dev if vde-python failed and wasn't explicitly requested
+        if ssh_host == 'vde-python' and not hasattr(context, 'last_ssh_host'):
+             # Try python-dev as fallback
+             cmd[-2] = 'python-dev'
+             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+
+    assert result.returncode == 0, f"SSH connection failed to {ssh_host}: {result.stderr}"
     assert result.stdout.strip() == 'devuser', f"Expected devuser but got: {result.stdout.strip()}"
     context.user_is_devuser = True

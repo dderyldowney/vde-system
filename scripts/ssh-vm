@@ -136,11 +136,8 @@ if ! is_vm_running "$RESOLVED_NAME"; then
 fi
 
 # Determine SSH host alias based on VM type
-# Language VMs use <name>-dev format, service VMs use <name>
-SSH_HOST_ALIAS="$RESOLVED_NAME"
-if is_vm_type "$RESOLVED_NAME" "lang"; then
-    SSH_HOST_ALIAS="${RESOLVED_NAME}-dev"
-fi
+# Use vde_get_ssh_host for consistent vde-* naming convention
+SSH_HOST_ALIAS=$(vde_get_ssh_host "$RESOLVED_NAME")
 
 # Build SSH command
 SSH_CMD="ssh -F $VDE_SSH_CONFIG -o UserKnownHostsFile=$VDE_SSH_KNOWN_HOSTS $SSH_HOST_ALIAS"

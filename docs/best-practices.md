@@ -118,11 +118,11 @@ docker ps
 
 ### Keep SSH Config Updated
 
-VDE automatically manages `~/.ssh/config`, but verify it:
+VDE automatically manages `~/.ssh/vde/config`, but verify it:
 
 ```bash
 # Check SSH entries
-cat ~/.ssh/config | grep -A 5 "Host "
+cat ~/.ssh/vde/config | grep -A 5 "Host "
 ```
 
 ### Backup Important Data

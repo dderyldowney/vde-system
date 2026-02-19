@@ -137,8 +137,8 @@ def step_can_remove_vde_dirs(context):
 def step_ssh_config_cleanup(context):
     """Verify SSH config cleanup is possible."""
     # This step validates that cleanup capability exists
-    # Actual cleanup would be destructive in test
-    ssh_config = Path.home() / ".ssh" / "config"
+    # Authoritative SSH config is now at ~/.ssh/vde/config
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         # Verify file is writable (can be cleaned up)
         assert os.access(ssh_config, os.W_OK), f"SSH config is not writable: {ssh_config}"

@@ -27,7 +27,7 @@ if [[ $# -eq 0 ]]; then
     echo ""
     echo "This will:"
     echo "  - Stop the VM if running"
-    echo "  - Remove SSH config entry from ~/.ssh/config"
+    echo "  - Remove SSH config entry from ~/.ssh/vde/config"
     echo "  - Clean up known_hosts entries"
     echo "  - Keep docker-compose.yml (for easy VM recreation)"
     echo "  - Keep projects directory (your code is safe!)"
@@ -130,13 +130,9 @@ if [[ -z "$VDE_TEST_MODE" ]]; then
     local ssh_host="vde-${VM_NAME}"
 
     # Remove from SSH config
-    if [[ -f "$HOME/.ssh/config" ]]; then
-        # Create backup
-        cp "$HOME/.ssh/config" "$HOME/.ssh/config.backup"
-
+    if [[ -f "$VDE_SSH_CONFIG" ]]; then
         # Remove the entry
         remove_ssh_config_entry "$ssh_host" 2>/dev/null || true
-
         log_success "SSH config entry removed for $ssh_host"
     fi
 else

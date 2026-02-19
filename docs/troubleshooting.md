@@ -104,7 +104,7 @@ ssh -v python-dev
 ssh-add -l
 
 # Add keys if needed
-ssh-add ~/.ssh/id_ed25519
+ssh-add ~/.ssh/vde/id_ed25519
 
 # Test GitHub/GitLab SSH connection
 ssh -T git@github.com
@@ -138,9 +138,9 @@ docker exec go-dev /usr/sbin/sshd
 
 ```bash
 # Ensure correct permissions
-chmod 600 ~/.ssh/id_ed25519
-chmod 600 ~/.ssh/config
-chmod 644 ~/.ssh/id_ed25519.pub
+chmod 600 ~/.ssh/vde/id_ed25519
+chmod 600 ~/.ssh/vde/config
+chmod 644 ~/.ssh/vde/id_ed25519.pub
 ```
 
 ---
@@ -171,7 +171,7 @@ docker-compose -f configs/docker/<vm-name>/docker-compose.yml config
 ssh go-dev
 
 # Check VSCode Remote-SSH settings
-# ~/.ssh/config should be readable
+# ~/.ssh/vde/config should be readable
 
 # Try reloading VSCode window
 # Cmd+Shift+P > "Developer: Reload Window"

@@ -208,9 +208,9 @@ vde_health_ssh() {
         return
     fi
     
-    # Check SSH config
-    if [[ -f "$HOME/.ssh/config" ]]; then
-        message="SSH config exists"
+    # Check VDE SSH config (isolated)
+    if [[ -f "$VDE_SSH_CONFIG" ]]; then
+        message="VDE SSH config exists"
     fi
     
     # Check for SSH agent

@@ -41,7 +41,7 @@ Before extending VDE, it helps to understand how it works:
 │  • env-files/<name>.env                                         │
 │  • projects/<name>/ (or data/<name>/ for services)              │
 │  • logs/<name>/                                                 │
-│  • ~/.ssh/config (appends entry)                                │
+│  • ~/.ssh/vde/config (appends entry)                                │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -138,12 +138,12 @@ projects/zig/               # Empty workspace directory
 
 logs/zig/                   # Empty log directory
 
-~/.ssh/config               # New entry appended:
+~/.ssh/vde/config               # New entry appended:
                             # Host zig-dev
                             #     HostName localhost
                             #     Port 2205
                             #     User devuser
-                            #     IdentityFile ~/.ssh/id_ed25519
+                            #     IdentityFile ~/.ssh/vde/id_ed25519
                             #     IdentitiesOnly yes
 ```
 
@@ -265,12 +265,12 @@ env-files/
 data/rabbitmq/              # Persistent data directory (not projects/)
 logs/rabbitmq/              # Empty log directory
 
-~/.ssh/config               # New entry appended:
+~/.ssh/vde/config               # New entry appended:
                             # Host rabbitmq
                             #     HostName localhost
                             #     Port 2405
                             #     User devuser
-                            #     IdentityFile ~/.ssh/id_ed25519
+                            #     IdentityFile ~/.ssh/vde/id_ed25519
                             #     IdentitiesOnly yes
 ```
 
@@ -430,7 +430,7 @@ vde create <name>
 # 3. Check the generated files
 cat configs/docker/<name>/docker-compose.yml
 cat env-files/<name>.env
-cat ~/.ssh/config | grep -A 5 "<name>"
+cat ~/.ssh/vde/config | grep -A 5 "<name>"
 
 # 4. Start the VM
 vde start <name>

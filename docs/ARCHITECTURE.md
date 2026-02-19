@@ -87,7 +87,7 @@ The `vm-common` library provides core functions used by all scripts:
 | `stop_vm()` | Stop a VM via docker-compose |
 | `validate_vm_name()` | Validate VM name format |
 | `vm_exists()` | Check if VM config exists |
-| `detect_ssh_keys()` | Find all SSH keys in ~/.ssh/ |
+| `detect_ssh_keys()` | Find all SSH keys in ~/.ssh/vde/ |
 | `get_primary_ssh_key()` | Select best SSH key |
 | `ensure_ssh_agent()` | Start SSH agent, load keys |
 | `ensure_ssh_environment()` | One-call SSH setup |
@@ -337,7 +337,7 @@ VDE includes SSH agent forwarding for secure VM-to-VM, VM-to-Host, and VM-to-Ext
 │                                                                  │
 │  ┌──────────────┐         ┌──────────────────────────────────┐ │
 │  │ SSH Keys     │         │ SSH Agent                        │ │
-│  │ ~/.ssh/      │◄────────┤ • Holds private keys             │ │
+│  │ ~/.ssh/vde/      │◄────────┤ • Holds private keys             │ │
 │  │ id_ed25519  │         │ • Never exposes keys directly     │ │
 │  │ id_rsa      │         │ • Socket: $SSH_AUTH_SOCK         │ │
 │  │ ...         │         │ • Auto-started by VDE             │ │
@@ -390,7 +390,7 @@ VDE includes SSH agent forwarding for secure VM-to-VM, VM-to-Host, and VM-to-Ext
 
 | Function | Purpose |
 |----------|---------|
-| `detect_ssh_keys()` | Find all SSH keys in ~/.ssh/ |
+| `detect_ssh_keys()` | Find all SSH keys in ~/.ssh/vde/ |
 | `get_primary_ssh_key()` | Select best key (ed25519 > ecdsa > rsa > dsa) |
 | `ensure_ssh_agent()` | Start agent, load keys (automatic, silent) |
 | `ensure_ssh_environment()` | One-call setup for all SSH operations |

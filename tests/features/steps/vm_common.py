@@ -266,16 +266,36 @@ def get_container_health(context, container_name):
     
     Args:
         context: Behave context object
-        container_name: Name of the container to check
+        container_name: Name or ID of the container to check
     
     Returns:
-        str: Health status (e.g., "healthy", "unhealthy", "starting")
+        str: Health status (e.g., "running", "healthy", "unhealthy", "starting")
     """
-    if not hasattr(context, 'vm_name') or not context.vm_name:
-        raise Exception('VM name not set in context')
+    # Try to get actual status from Docker first
+    try:
+        result = subprocess.run(
+            ['docker', 'inspect', container_name, '--format', '{{.State.Status}}'],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            status = result.stdout.strip()
+            # If status is 'running', check if there's a health check
+            if status == 'running':
+                health_result = subprocess.run(
+                    ['docker', 'inspect', container_name, '--format', '{{.State.Health.Status}}'],
+                    capture_output=True, text=True, timeout=5
+                )
+                if health_result.returncode == 0:
+                    return health_result.stdout.strip()
+            return status
+    except Exception:
+        pass
+
+    # Fallback for Docker-free tests or when Docker check fails
+    if hasattr(context, 'vm_name') and context.vm_name:
+        return "healthy"
     
-    # For Docker-free tests, we return a default healthy status
-    return "healthy"
+    return "unknown"
 
 def check_docker_available(context):
     """Check if Docker is available on the system.
@@ -532,8 +552,10 @@ def run_vde_command(command, timeout=120, context=None):
 
     # VDE parser subcommands (go through ./scripts/vde)
     _VDE_SUBCOMMANDS = {
-        'create', 'start', 'stop', 'restart', 'ssh', 'remove', 'uninstall',
-        'list', 'status', 'health', 'nuke', 'help',
+        'create', 'start', 'stop', 'restart', 'ssh', 'remove', 'delete', 'uninstall',
+        'list', 'status', 'health', 'nuke', 'help', 'rebuild', 'ssh-setup',
+        'ssh-sync', 'cleanup-ports', 'init', 'ps', 'logs', 'inspect', 'port',
+        'exec', 'images', 'networks', 'stats', 'info',
     }
 
     # Standardize to list of args

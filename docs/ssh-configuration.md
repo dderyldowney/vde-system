@@ -12,7 +12,7 @@ VDE handles all SSH setup automatically through the `vm-common` library and rela
 
 - **Automatic SSH key detection**: Finds and uses all your SSH keys (ed25519, RSA, ECDSA, DSA, security keys)
 - **Automatic SSH agent management**: Starts agent, loads keys, no manual configuration
-- **Automatic SSH config generation**: Creates entries for all VMs in `~/.ssh/config`
+- **Automatic SSH config generation**: Creates entries for all VMs in `~/.ssh/vde/config`
 - **SSH agent forwarding**: VMs access your host's SSH keys securely (keys never leave the host)
 - **Port-based authentication**: Each VM gets a unique SSH port for isolation
 
@@ -42,12 +42,12 @@ Priority order: ed25519 > ecdsa-sk > ed25519-sk > ecdsa > rsa > dsa
 │                         Host Machine                            │
 │                                                                  │
 │  ┌──────────────┐         ┌──────────────────────────────────┐ │
-│  │ SSH Keys     │         │ SSH Agent                        │ │
-│  │ ~/.ssh/      │◄────────┤ • Holds private keys             │ │
+│  │ VDE SSH Keys │         │ SSH Agent                        │ │
+│  │ ~/.ssh/vde/vde/  │◄────────┤ • Holds private keys             │ │
 │  │ id_ed25519  │         │ • Never exposes keys directly     │ │
-│  │ id_rsa      │         │ • Socket: $SSH_AUTH_SOCK         │ │
-│  │ ...         │         └──────────────▲───────────────────┘ │
-│  └──────────────┘                        │                     │
+│  │ ...         │         │ • Socket: $SSH_AUTH_SOCK         │ │
+│  └──────────────┘         └──────────────▲───────────────────┘ │
+│                                          │                     │
 │                                          │ Socket Forwarding   │
 │                                          ▼                     │
 │  ┌──────────────────────────────────────────────────────────┐ │
@@ -55,7 +55,7 @@ Priority order: ed25519 > ecdsa-sk > ed25519-sk > ecdsa > rsa > dsa
 │  │                                                           │ │
 │  │  • SSH_AUTH_SOCK=/ssh-agent/sock                          │ │
 │  │  • Socket mounted read-only from host                     │ │
-│  │  • Can use host's SSH keys for authentication             │ │
+│  │  • Can use host's VDE SSH keys for authentication         │ │
 │  └──────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -76,7 +76,7 @@ Priority order: ed25519 > ecdsa-sk > ed25519-sk > ecdsa > rsa > dsa
 When you run `create-virtual-for` or `start-virtual`, VDE automatically:
 
 1. **Starts SSH agent** if not running
-2. **Detects all SSH keys** in `~/.ssh/`
+2. **Detects all SSH keys** in `~/.ssh/vde/`
 3. **Generates a key** if you don't have one (ed25519)
 4. **Loads all keys** into the agent
 5. **Generates SSH config** entries for VM-to-VM communication
@@ -150,7 +150,7 @@ ssh postgres-dev "psql -c 'SELECT * FROM users'"  # Query database
 
 ### SSH Config for VM-to-VM
 
-VDE automatically generates these entries in `~/.ssh/config`:
+VDE automatically generates these entries in `~/.ssh/vde/config`:
 
 ```ssh-config
 # Python Dev VM
@@ -158,7 +158,7 @@ Host python-dev
     HostName localhost
     Port 2200
     User devuser
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile ~/.ssh/vde/id_ed25519
     IdentitiesOnly yes
 
 # Go Dev VM
@@ -166,7 +166,7 @@ Host go-dev
     HostName localhost
     Port 2205
     User devuser
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile ~/.ssh/vde/id_ed25519
     IdentitiesOnly yes
 ```
 
@@ -245,7 +245,7 @@ ps aux | grep ssh-agent
 ssh-add -l
 
 # View SSH config
-cat ~/.ssh/config
+cat ~/.ssh/vde/config
 
 # Test SSH connection
 ssh -v python-dev
@@ -260,7 +260,7 @@ While VDE handles everything automatically, you can perform manual operations if
 ### Add a New Key to Agent
 
 ```bash
-ssh-add ~/.ssh/new_key
+ssh-add ~/.ssh/vde/new_key
 ```
 
 ### Start SSH Agent Manually
@@ -304,9 +304,9 @@ ssh-add
 **Solution**: Add your keys:
 
 ```bash
-ssh-add ~/.ssh/id_ed25519
+ssh-add ~/.ssh/vde/id_ed25519
 # Or add all keys
-for key in ~/.ssh/id_*; do [ -f "$key" ] && ssh-add "$key"; done
+for key in ~/.ssh/vde/id_*; do [ -f "$key" ] && ssh-add "$key"; done
 ```
 
 ### VM-to-VM SSH Not Working
@@ -333,8 +333,8 @@ vde health
 
 1. Check key permissions:
 ```bash
-chmod 600 ~/.ssh/id_ed25519
-chmod 644 ~/.ssh/id_ed25519.pub
+chmod 600 ~/.ssh/vde/id_ed25519
+chmod 644 ~/.ssh/vde/id_ed25519.pub
 ```
 
 2. Verify key is in agent:
@@ -344,7 +344,7 @@ ssh-add -l
 
 3. Check SSH config:
 ```bash
-cat ~/.ssh/config
+cat ~/.ssh/vde/config
 ```
 
 4. Rebuild VM with updated keys:
@@ -401,15 +401,15 @@ If you previously set up SSH manually:
 ssh-keygen -t ed25519
 
 # 2. Copy to VDE
-cp ~/.ssh/id_ed25519.pub ~/dev/public-ssh-keys/
+cp ~/.ssh/vde/id_ed25519.pub ~/dev/public-ssh-keys/
 
 # 3. Create SSH entry manually
-cat >> ~/.ssh/config << 'EOF'
+cat >> ~/.ssh/vde/config << 'EOF'
 Host python-dev
     HostName localhost
     Port 2200
     User devuser
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile ~/.ssh/vde/id_ed25519
 EOF
 ```
 
