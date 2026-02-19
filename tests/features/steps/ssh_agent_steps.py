@@ -44,14 +44,13 @@ def step_just_cloned_vde(context):
 
 @given('I do not have any SSH keys')
 def step_no_ssh_keys(context):
-    """Context: No SSH keys exist."""
-    # Check if keys exist in ~/.ssh/ or VDE SSH dir
-    home_ssh = Path.home() / '.ssh'
+    """Context: No SSH keys exist in VDE directory."""
+    # Only check VDE SSH dir - never touch ~/.ssh/ directly
     key_types = ['id_ed25519', 'id_rsa', 'id_ecdsa', 'id_dsa']
     
     has_keys = False
     for key_type in key_types:
-        if (home_ssh / key_type).exists() or (VDE_SSH_DIR / key_type).exists():
+        if (VDE_SSH_DIR / key_type).exists():
             has_keys = True
             break
     
@@ -64,43 +63,40 @@ def step_no_ssh_agent_running(context):
     context.agent_was_running = ssh_agent_is_running()
 
 
-@given('I have existing SSH keys in ~/.ssh/')
+@given('I have existing SSH keys in ~/.ssh/vde/')
 def step_have_existing_ssh_keys(context):
-    """Context: Existing SSH keys in ~/.ssh/."""
-    home_ssh = Path.home() / '.ssh'
+    """Context: Existing SSH keys in ~/.ssh/vde/."""
+    # Use VDE_SSH_DIR instead of ~/.ssh/
     key_types = ['id_ed25519', 'id_rsa', 'id_ecdsa', 'id_dsa']
     
     has_keys = False
     for key_type in key_types:
-        if (home_ssh / key_type).exists():
+        if (VDE_SSH_DIR / key_type).exists():
             has_keys = True
             break
     
     context.existing_ssh_keys = has_keys
 
 
-@given('I have SSH keys of different types')
+@given('I have SSH keys of different types in VDE')
 def step_multiple_key_types(context):
-    """Context: Multiple SSH key types exist."""
-    home_ssh = Path.home() / '.ssh'
+    """Context: Multiple SSH key types exist in VDE."""
     key_types = ['id_ed25519', 'id_rsa', 'id_ecdsa']
     
     found_types = []
     for key_type in key_types:
-        if (home_ssh / key_type).exists():
+        if (VDE_SSH_DIR / key_type).exists():
             found_types.append(key_type)
     
     context.key_types_found = found_types
 
 
-@given('I have id_ed25519, id_rsa, and id_ecdsa keys')
+@given('I have all key types in ~/.ssh/vde/')
 def step_have_all_key_types(context):
-    """Context: All standard key types exist."""
-    home_ssh = Path.home() / '.ssh'
-    
-    has_ed25519 = (home_ssh / 'id_ed25519').exists()
-    has_rsa = (home_ssh / 'id_rsa').exists()
-    has_ecdsa = (home_ssh / 'id_ecdsa').exists()
+    """Context: All standard key types exist in VDE."""
+    has_ed25519 = (VDE_SSH_DIR / 'id_ed25519').exists()
+    has_rsa = (VDE_SSH_DIR / 'id_rsa').exists()
+    has_ecdsa = (VDE_SSH_DIR / 'id_ecdsa').exists()
     
     context.has_all_key_types = has_ed25519 and has_rsa and has_ecdsa
 

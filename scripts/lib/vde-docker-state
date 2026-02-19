@@ -16,20 +16,7 @@
 # Returns: VDE_SUCCESS (0), outputs container name to stdout
 _get_container_name() {
     local vm="$1"
-    
-    # Ensure VM types are loaded
-    load_vm_types
-    
-    # Determine container name based on VM type
-    local vm_type
-    vm_type=$(_assoc_get "VM_TYPE" "$vm" 2>/dev/null)
-    
-    if [ "$vm_type" = "lang" ]; then
-        echo "${vm}-dev"
-    else
-        echo "$vm"
-    fi
-    
+    echo "vde-${vm}"
     return $VDE_SUCCESS
 }
 
@@ -70,7 +57,7 @@ vm_container_status() {
     container_name=$(_get_container_name "$vm")
     
     # Get container status from Docker
-    docker ps -a --format '{{.Names}}\t{{.Status}}' 2>/dev/null | \
+    docker ps -a --format '{{.Names}}\t{{.State}}' 2>/dev/null | \
         awk -v name="$container_name" '$1 == name {print $2}' | \
         head -n1
     
@@ -108,19 +95,11 @@ vm_is_container_stopped() {
     
     container_name=$(_get_container_name "$vm")
     
-    # Container must exist but not be running
-    local exists=false
-    local running=false
+    # Check status directly
+    local status
+    status=$(vm_container_status "$vm")
     
-    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$container_name"; then
-        exists=true
-    fi
-    
-    if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$container_name"; then
-        running=true
-    fi
-    
-    if [ "$exists" = "true" ] && [ "$running" = "false" ]; then
+    if [ "$status" = "exited" ] || [ "$status" = "stopped" ]; then
         return $VDE_SUCCESS
     fi
     
@@ -130,13 +109,13 @@ vm_is_container_stopped() {
 # list_running_containers - List all running VDE container names
 # Returns: VDE_SUCCESS (0), outputs container names (one per line)
 list_running_containers() {
-    docker ps --format '{{.Names}}' 2>/dev/null | grep -E '(-dev)$|^[a-z]+$' || true
+    docker ps --format '{{.Names}}' 2>/dev/null | grep -E '^vde-' || true
     return $VDE_SUCCESS
 }
 
 # list_all_containers - List all VDE containers (running and stopped)
 # Returns: VDE_SUCCESS (0), outputs container names with status (one per line)
 list_all_containers() {
-    docker ps -a --format '{{.Names}}\t{{.Status}}' 2>/dev/null | grep -E '(-dev)\t|^[a-z]+\t' || true
+    docker ps -a --format '{{.Names}}\t{{.Status}}' 2>/dev/null | grep -E '^vde-' || true
     return $VDE_SUCCESS
 }

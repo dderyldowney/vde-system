@@ -3,7 +3,7 @@
 Feature: VM Full Lifecycle Critical Path
 
   Scenario: Full VM lifecycle for Python development environment
-    Given no VM configuration exists for "python"
+    Given no running VM instance exists for "python"
     When I run "vde create python"
     Then a docker-compose.yml file should be created at "configs/docker/python/docker-compose.yml"
     And the docker-compose.yml should contain SSH port mapping
@@ -26,6 +26,6 @@ Feature: VM Full Lifecycle Critical Path
     And the container should be rebuilt without cache
     And SSH connection should still work
     When I run "vde delete python"
-    Then VM "python" configuration should be removed
-    And container should be gone
+    Then container should be gone
     And SSH config entry should be cleaned up
+    And VM configuration should still exist

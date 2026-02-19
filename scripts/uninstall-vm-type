@@ -7,7 +7,7 @@
 # - configs/docker/<type>/ directory
 # - VM if built
 # - All Docker images
-# - SSH config entries (~/.ssh/config and project SSH config)
+# - SSH config entries (~/.ssh/vde/config and project SSH config)
 # - Env files, logs
 #
 # Usage: uninstall-vm-type <vm_type> [--dry-run] [--skip-confirm]
@@ -245,8 +245,8 @@ remove_ssh_entries() {
         return 0
     fi
 
-    local ssh_config="${HOME}/.ssh/config"
-    if [[ -f "$ssh_config" ]]; then
+    # Authoritative SSH config is now at ~/.ssh/vde/config
+    if [[ -f "$VDE_SSH_CONFIG" ]]; then
         for host in "${ssh_hosts[@]}"; do
             print_info "Removing SSH config entry for: $host"
             remove_ssh_config_entry "$host" 2>/dev/null || true

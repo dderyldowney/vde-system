@@ -66,7 +66,7 @@ VDE includes a comprehensive SSH agent forwarding system that enables secure VM-
 │                                                                  │
 │  ┌──────────────┐         ┌──────────────────────────────────┐ │
 │  │ SSH Keys     │         │ SSH Agent                        │ │
-│  │ ~/.ssh/      │◄────────┤ • Holds private keys             │ │
+│  │ ~/.ssh/vde/      │◄────────┤ • Holds private keys             │ │
 │  │ id_ed25519  │         │ • Socket: $SSH_AUTH_SOCK         │ │
 │  │ id_rsa      │         │ • Auto-started by VDE             │ │
 │  │ ...         │         └──────────────▲───────────────────┘ │
@@ -85,7 +85,7 @@ VDE includes a comprehensive SSH agent forwarding system that enables secure VM-
 ### Key Functions in vm-common
 
 **SSH Key Management:**
-- `detect_ssh_keys()` - Find all SSH keys in ~/.ssh/
+- `detect_ssh_keys()` - Find all SSH keys in ~/.ssh/vde/
 - `get_primary_ssh_key()` - Select best key (priority: ed25519 > ecdsa > rsa > dsa)
 - `get_ssh_pubkey()` - Get public key for private key
 - `sync_ssh_keys_to_vde()` - Copy all public keys to public-ssh-keys/
@@ -97,7 +97,7 @@ VDE includes a comprehensive SSH agent forwarding system that enables secure VM-
 
 **SSH Configuration:**
 - `generate_vm_ssh_config()` - Create VM-to-VM SSH config entries
-- `merge_ssh_config_entry()` - Safely add SSH entries to ~/.ssh/config
+- `merge_ssh_config_entry()` - Safely add SSH entries to ~/.ssh/vde/config
 - `get_vm_ssh_port()` - Get SSH port for a VM
 
 ### Integration Points
@@ -853,7 +853,7 @@ validate_vm_doesnt_exist "$VM_NAME"
 # Checks: does configs/docker/go/docker-compose.yml exist? No.
 
 validate_ssh_key_exists
-# Checks: does ~/.ssh/id_ed25519 exist? Yes.
+# Checks: does ~/.ssh/vde/id_ed25519 exist? Yes.
 ```
 
 ### Step 4: Query VM Configuration
@@ -933,9 +933,9 @@ EOF
 ssh_host="${VM_NAME}-dev"  # "go-dev" (language VMs get -dev suffix)
 
 merge_ssh_config_entry "$ssh_host" "2200" "Go"
-# 1. Backs up ~/.ssh/config to ~/dev/backup/ssh/config.backup.TIMESTAMP
+# 1. Backs up ~/.ssh/vde/config to ~/dev/backup/ssh/config.backup.TIMESTAMP
 # 2. Generates SSH entry from template
-# 3. Appends to ~/.ssh/config
+# 3. Appends to ~/.ssh/vde/config
 ```
 
 **Generated SSH entry:**
@@ -945,7 +945,7 @@ Host go-dev
     HostName localhost
     Port 2200
     User devuser
-    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile ~/.ssh/vde/id_ed25519
     IdentitiesOnly yes
 ```
 
@@ -1092,12 +1092,12 @@ ssh go-dev
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ 1. SSH Client reads ~/.ssh/config                              │
+│ 1. SSH Client reads ~/.ssh/vde/config                              │
 │    Finds "Host go-dev" entry                                   │
 │    - HostName: localhost                                       │
 │    - Port: 2200                                                │
 │    - User: devuser                                             │
-│    - IdentityFile: ~/.ssh/id_ed25519                           │
+│    - IdentityFile: ~/.ssh/vde/id_ed25519                           │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
@@ -1370,7 +1370,7 @@ File Generation:
   3. Create env-files/go.env:
      SSH_PORT=2200
 
-  4. Update ~/.ssh/config:
+  4. Update ~/.ssh/vde/config:
      Append Host go-dev entry
 
 ↓
@@ -1463,7 +1463,7 @@ Connect:
 | `projects/<name>/` | Language VM workspace directory |
 | `data/<name>/` | Service VM data directory |
 | `logs/<name>/` | Log directory |
-| `~/.ssh/config` | SSH configuration (entry appended) |
+| `~/.ssh/vde/config` | SSH configuration (entry appended) |
 
 ---
 

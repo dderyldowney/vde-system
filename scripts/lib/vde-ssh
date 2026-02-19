@@ -354,7 +354,7 @@ add_ssh_config_entry() {
     local host_alias="$1"
     local ssh_port="$2"
     local display_name="$3"
-    local identity_file="$4"
+    local identity_file="${4:-$VDE_SSH_IDENTITY}"
 
     local ssh_config="$VDE_SSH_CONFIG"
     local temp_file
@@ -368,6 +368,17 @@ add_ssh_config_entry() {
     if [ -f "$ssh_config" ]; then
         cp "$ssh_config" "$temp_file"
     fi
+
+    local entry="
+Host $host_alias
+    HostName localhost
+    Port $ssh_port
+    User devuser
+    IdentityFile $identity_file
+    StrictHostKeyChecking no
+    UserKnownHostsFile $VDE_SSH_KNOWN_HOSTS
+    ForwardAgent yes
+    LogLevel ERROR"
 
     echo "" >> "$temp_file"
     echo "$entry" >> "$temp_file"
@@ -576,39 +587,6 @@ setup_ssh_for_vm() {
     return $VDE_SUCCESS
 }
 
-# Get SSH port for a VM
-# Args: <vm_name>
-# Returns: SSH port number or empty
-get_vm_ssh_port() {
-    local vm_name="$1"
-
-    # First check vde-core for cached types
-    vde_core_load_types
-
-    # Try to get port from VM types
-    local vm_type
-    vm_type=$(vde_core_get_vm_type "$vm_name")
-
-    if [ -n "$vm_type" ]; then
-        # Extract port from type (format: lang:<port> or service:<port>)
-        echo "$vm_type" | cut -d':' -f2
-        return
-    fi
-
-    # Fallback: try to extract from SSH config
-    if [ -f "$VDE_SSH_CONFIG" ]; then
-        local entry
-        entry=$(grep -A10 "^Host $vm_name$" "$VDE_SSH_CONFIG" 2>/dev/null | grep "Port" | head -1 | awk '{print $2}')
-        if [ -n "$entry" ]; then
-            echo "$entry"
-            return
-        fi
-    fi
-
-    # Default port for VDE VMs
-    echo "2200"
-}
-
 # Ensure VDE SSH environment is properly configured
 # Returns: VDE_SUCCESS (0) if configured
 ensure_vde_ssh_environment() {
@@ -648,11 +626,19 @@ ensure_ssh_environment() {
 generate_vm_ssh_config() {
     log_info "Generating VM-to-VM SSH config..."
 
+    # Ensure VM types are loaded
+    if command -v load_vm_types >/dev/null 2>&1; then
+        load_vm_types
+    fi
+
     # Ensure SSH directory exists
     mkdir -p "$VDE_SSH_DIR"
+    
+    # Clear existing config file
+    echo "# VDE (Virtual Development Environment) SSH Configuration" > "$VDE_SSH_CONFIG"
+    echo "# Generated on $(date)" >> "$VDE_SSH_CONFIG"
+    echo "" >> "$VDE_SSH_CONFIG"
 
-    # Get all known VMs
-    # Note: get_all_vms is expected to be provided by vm-common or vde-commands
     if ! command -v get_all_vms >/dev/null 2>&1; then
         _error "Dependency error: get_all_vms function not found"
         return $VDE_ERR_DEPENDENCY

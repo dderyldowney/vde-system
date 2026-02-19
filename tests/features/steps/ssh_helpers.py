@@ -148,17 +148,18 @@ def vm_has_private_keys(vm_name):
             return False
 
     try:
-        # Check for private keys in common ~/.ssh locations
+        # Check for private keys in container's /home/devuser/.ssh location
+        # (This is a security check to ensure no private keys were copied into the VM)
         private_key_patterns = [
             "id_rsa", "id_ed25519", "id_ecdsa", "id_dsa",
             "id_ed25519_sk", "id_ecdsa_sk"
         ]
 
         for key_name in private_key_patterns:
-            # Use docker exec to check if the private key file exists
+            # Use docker exec to check if the private key file exists in container
             result = subprocess.run(
                 ["docker", "exec", container_name,
-                 "sh", "-c", f"test -f ~/.ssh/{key_name} && echo FOUND"],
+                 "sh", "-c", f"test -f /home/devuser/.ssh/{key_name} && echo FOUND"],
                 capture_output=True,
                 text=True,
                 timeout=10

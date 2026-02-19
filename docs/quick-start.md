@@ -52,7 +52,7 @@ When you ran `vde create go`:
 2. **Config Created**: `configs/docker/go/docker-compose.yml`
 3. **Directories Created**: `projects/go/`, `logs/go/`
 4. **Environment File**: `env-files/go.env`
-5. **SSH Config**: Entry added to `~/.ssh/config`
+5. **SSH Config**: Entry added to `~/.ssh/vde/config`
 6. **SSH Agent**: Started automatically, keys loaded automatically
 7. **SSH Keys**: Detected or generated automatically
 

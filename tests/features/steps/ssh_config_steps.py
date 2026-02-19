@@ -539,15 +539,6 @@ def step_config_with_blank_lines(context):
 """)
     ssh_config.chmod(0o600)
 
-@given('~/.ssh directory does not exist')
-def step_ssh_dir_not_exist(context):
-    """Ensure ~/.ssh directory does not exist."""
-    import shutil
-    ssh_dir = Path.home() / ".ssh"
-    if ssh_dir.exists():
-        # Backup and remove for test
-        context.ssh_backup = ssh_dir.rename(ssh_dir.parent / ".ssh.backup")
-
 # =============================================================================
 # WHEN STEPS - Actions
 # =============================================================================
@@ -1018,12 +1009,6 @@ def step_key_returned_as_primary(context, key_name):
     assert hasattr(context, 'primary_key_result'), "Primary key should be determined"
     assert context.primary_key_result == key_name, f"{key_name} should be primary key"
 
-@then('~/.ssh directory should be created')
-def step_ssh_dir_created(context):
-    """Verify ~/.ssh directory was created."""
-    ssh_dir = Path.home() / ".ssh"
-    assert ssh_dir.exists(), "~/.ssh directory should be created"
-
 @then('~/.ssh/vde/config should be created')
 def step_vde_config_created(context):
     """Verify ~/.ssh/vde/config was created."""
@@ -1380,14 +1365,13 @@ def step_config_still_contains_port_under_host(context, port, hostname):
     
     assert False, f"Config should still contain 'Port {port}' under {hostname}"
 
-@then('~/.ssh directory exists or can be created')
-def step_ssh_dir_exists_or_created(context):
-    """Verify ~/.ssh directory exists or can be created."""
-    ssh_dir = Path.home() / ".ssh"
-    if not ssh_dir.exists():
-        ssh_dir.mkdir(parents=True, exist_ok=True)
-        ssh_dir.chmod(0o700)
-    assert ssh_dir.exists(), "~/.ssh directory should exist or be created"
+@then('~/.ssh/vde directory exists or can be created')
+def step_vde_ssh_dir_exists_or_created(context):
+    """Verify ~/.ssh/vde directory exists or can be created."""
+    if not VDE_SSH_DIR.exists():
+        VDE_SSH_DIR.mkdir(parents=True, exist_ok=True)
+        VDE_SSH_DIR.chmod(0o700)
+    assert VDE_SSH_DIR.exists(), "~/.ssh/vde directory should exist or be created"
 
 @then('multiple processes try to add SSH entries simultaneously')
 def step_multiple_processes_add_entries(context):
@@ -1418,7 +1402,7 @@ Host github.com
     HostName github.com
     User git
     # Custom identity file
-    IdentityFile ~/.ssh/id_rsa
+    IdentityFile ~/.ssh/vde/id_rsa
 
 # End of custom config
 """
@@ -1451,7 +1435,7 @@ def step_config_contains_user_github_entry(context):
     content = """Host github.com
     HostName github.com
     User git
-    IdentityFile ~/.ssh/id_rsa
+    IdentityFile ~/.ssh/vde/id_rsa
 """
     ssh_config.write_text(content)
     ssh_config.chmod(0o600)
@@ -1509,11 +1493,10 @@ def step_vm_previously_created_with_port(context, vm_name, port):
         known_hosts.write_text(entry)
     known_hosts.chmod(0o600)
 
-@given('~/.ssh directory exists or can be created')
-def step_ssh_directory_exists_or_can_be_created(context):
-    """Ensure ~/.ssh directory exists or can be created."""
-    ssh_dir = Path.home() / ".ssh"
-    if not ssh_dir.exists():
-        ssh_dir.mkdir(parents=True, exist_ok=True)
-        ssh_dir.chmod(0o700)
-    assert ssh_dir.exists(), "~/.ssh directory should exist or be created"
+@given('~/.ssh/vde directory exists or can be created')
+def step_vde_ssh_directory_exists_or_can_be_created(context):
+    """Ensure ~/.ssh/vde directory exists or can be created."""
+    if not VDE_SSH_DIR.exists():
+        VDE_SSH_DIR.mkdir(parents=True, exist_ok=True)
+        VDE_SSH_DIR.chmod(0o700)
+    assert VDE_SSH_DIR.exists(), "~/.ssh/vde directory should exist or be created"

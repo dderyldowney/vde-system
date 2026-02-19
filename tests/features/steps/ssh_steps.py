@@ -31,7 +31,7 @@ def step_ssh_keys_loaded(context):
 @when('I load SSH key "{key_name}"')
 def step_load_ssh_key(context, key_name):
     """Load an SSH key into the agent."""
-    key_path = os.path.expanduser(f'~/.ssh/{key_name}')
+    key_path = os.path.expanduser(f'~/.ssh/vde/{key_name}')
 
     assert os.path.exists(key_path), f"SSH key '{key_name}' not found"
 
@@ -55,14 +55,14 @@ def step_load_ssh_key(context, key_name):
 @then('public key "{key_name}" should be available')
 def step_public_key_available(context, key_name):
     """Verify public key file exists."""
-    key_path = os.path.expanduser(f'~/.ssh/{key_name}')
+    key_path = os.path.expanduser(f'~/.ssh/vde/{key_name}')
     assert os.path.exists(key_path), f"Public key {key_name} not found at {key_path}"
 
 
 @then('public key "{key_name}" should not be available')
 def step_public_key_not_available(context, key_name):
     """Verify public key file doesn't exist."""
-    key_path = os.path.expanduser(f'~/.ssh/{key_name}')
+    key_path = os.path.expanduser(f'~/.ssh/vde/{key_name}')
     assert not os.path.exists(key_path), f"Public key {key_name} should not exist"
 
 
@@ -123,7 +123,7 @@ def step_ssh_to_vm(context, vm_name):
 @then('SSH config should contain host "{host}"')
 def step_ssh_config_contains_host(context, host):
     """Verify SSH config contains specified host."""
-    ssh_config = os.path.expanduser('~/.ssh/config')
+    ssh_config = os.path.expanduser('~/.ssh/vde/config')
 
     if not os.path.exists(ssh_config):
         raise AssertionError(f"SSH config not found at {ssh_config}")
@@ -137,7 +137,7 @@ def step_ssh_config_contains_host(context, host):
 @then('SSH connection to "{host}" should use key "{key_name}"')
 def step_ssh_connection_uses_key(context, host, key_name):
     """Verify SSH config uses specific key for host."""
-    ssh_config = os.path.expanduser('~/.ssh/config')
+    ssh_config = os.path.expanduser('~/.ssh/vde/config')
 
     if not os.path.exists(ssh_config):
         raise AssertionError(f"SSH config not found at {ssh_config}")

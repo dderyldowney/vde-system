@@ -67,17 +67,42 @@ def step_connect_python_vm(context):
 @then('I should have a zsh shell')
 def step_have_zsh_shell(context):
     """Verify zsh shell is available via SSH."""
-    running = docker_list_containers()
-    if running:
-        vm = running[0]
+    # Use context.last_ssh_host if available, otherwise try to find a running VM
+    ssh_host = getattr(context, 'last_ssh_host', None)
+    
+    if not ssh_host:
+        running = docker_list_containers()
+        if running:
+            # Try to map container name to SSH host
+            container_name = running[0]
+            if container_name.startswith('vde-'):
+                ssh_host = container_name
+            else:
+                ssh_host = f"vde-{container_name}"
+    
+    if ssh_host:
+        # Use the isolated VDE SSH config
+        ssh_config = Path.home() / ".ssh" / "vde" / "config"
+        
+        cmd = ['ssh']
+        if ssh_config.exists():
+            cmd.extend(['-F', str(ssh_config)])
+            
+        cmd.extend([
+            '-o', 'StrictHostKeyChecking=no', 
+            '-o', 'UserKnownHostsFile=/dev/null',
+            '-o', 'BatchMode=yes',
+            ssh_host, 'echo $SHELL'
+        ])
+        
         # Use SSH to check the shell
         result = subprocess.run(
-            ['ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null',
-             vm, 'echo $SHELL'],
+            cmd,
             capture_output=True, text=True, timeout=30
         )
         if result.returncode == 0:
             assert 'zsh' in result.stdout, f"Expected zsh shell, got: {result.stdout}"
+    
     context.zsh_shell_available = True
 
 

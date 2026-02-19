@@ -19,7 +19,7 @@ Feature: Automatic SSH Setup and Key Management
 
   Scenario: First-time user with existing SSH keys
     Given I have just cloned VDE
-    And I have existing SSH keys in ~/.ssh/
+    And I have existing SSH keys in ~/.ssh/vde/
     And I do not have an SSH agent running
     When I create my first VM
     Then my existing SSH keys should be detected automatically
@@ -28,8 +28,8 @@ Feature: Automatic SSH Setup and Key Management
     And I should not need to configure anything manually
 
   Scenario: User with multiple SSH key types
-    Given I have SSH keys of different types
-    And I have id_ed25519, id_rsa, and id_ecdsa keys
+    Given I have SSH keys of different types in VDE
+    And I have all key types in ~/.ssh/vde/
     And I create a new VM
     When I start the VM
     Then all my SSH keys should be detected

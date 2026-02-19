@@ -1,20 +1,44 @@
-Host github.com
-    HostName github.com
-    User git
-    IdentityFile ~/.ssh/id_rsa
+# VDE (Virtual Development Environment) SSH Configuration
+# Generated on Thu Feb 19 02:40:04 EST 2026
 
-Host python-dev
+
+
+Host vde-c
     HostName localhost
-    Port 2200
+    Port 2203
     User devuser
-    ForwardAgent yes
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
 
 
-Host vde-mysql
+Host vde-cpp
     HostName localhost
-    Port 2401
+    Port 2201
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-asm
+    HostName localhost
+    Port 2202
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-rust
+    HostName localhost
+    Port 2201
     User devuser
     IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -24,6 +48,28 @@ Host vde-mysql
 
 
 Host vde-js
+    HostName localhost
+    Port 2200
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-csharp
+    HostName localhost
+    Port 2206
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-ruby
     HostName localhost
     Port 2201
     User devuser
@@ -36,7 +82,7 @@ Host vde-js
 
 Host vde-go
     HostName localhost
-    Port 2202
+    Port 2200
     User devuser
     IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -45,11 +91,9 @@ Host vde-go
     LogLevel ERROR
 
 
-
-
-Host vde-nginx
+Host vde-java
     HostName localhost
-    Port 2400
+    Port 2209
     User devuser
     IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -58,7 +102,7 @@ Host vde-nginx
     LogLevel ERROR
 
 
-Host vde-rust
+Host vde-kotlin
     HostName localhost
     Port 2200
     User devuser
@@ -69,9 +113,9 @@ Host vde-rust
     LogLevel ERROR
 
 
-Host vde-r
+Host vde-swift
     HostName localhost
-    Port 2201
+    Port 2214
     User devuser
     IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -80,9 +124,42 @@ Host vde-r
     LogLevel ERROR
 
 
-Host vde-redis
+Host vde-php
     HostName localhost
-    Port 2400
+    Port 2212
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-scala
+    HostName localhost
+    Port 2213
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-r
+    HostName localhost
+    Port 2200
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-lua
+    HostName localhost
+    Port 2218
     User devuser
     IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -102,9 +179,20 @@ Host vde-flutter
     LogLevel ERROR
 
 
-Host vde-c
+Host vde-elixir
     HostName localhost
-    Port 2200
+    Port 2215
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-haskell
+    HostName localhost
+    Port 2216
     User devuser
     IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -115,7 +203,73 @@ Host vde-c
 
 Host vde-zig
     HostName localhost
-    Port 2201
+    Port 2200
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-postgres
+    HostName localhost
+    Port 2401
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-redis
+    HostName localhost
+    Port 2400
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-mongodb
+    HostName localhost
+    Port 2402
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-nginx
+    HostName localhost
+    Port 2400
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-couchdb
+    HostName localhost
+    Port 2404
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-mysql
+    HostName localhost
+    Port 2405
     User devuser
     IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -126,7 +280,18 @@ Host vde-zig
 
 Host vde-rabbitmq
     HostName localhost
-    Port 2401
+    Port 2400
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-python
+    HostName localhost
+    Port 2200
     User devuser
     IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
     StrictHostKeyChecking no

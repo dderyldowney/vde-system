@@ -40,7 +40,7 @@ fi
 
 # Convert absolute path to HOME-relative path
 # Usage: vde_path_to_home_rel "/home/user/.ssh/id_ed25519"
-# Output: ~/.ssh/id_ed25519
+# Output: ~/.ssh/vde/id_ed25519
 vde_path_to_home_rel() {
     local abs_path="$1"
 
@@ -70,7 +70,7 @@ vde_path_to_home_rel() {
 }
 
 # Convert HOME-relative path to absolute path
-# Usage: vde_path_from_home_rel "~/.ssh/id_ed25519"
+# Usage: vde_path_from_home_rel "~/.ssh/vde/id_ed25519"
 # Output: /home/user/.ssh/id_ed25519
 vde_path_from_home_rel() {
     local rel_path="$1"
@@ -151,7 +151,7 @@ vde_is_home_path() {
 }
 
 # Make path portable by converting HOME-relative to absolute
-# Usage: vde_make_portable "~/.ssh/id_ed25519"
+# Usage: vde_make_portable "~/.ssh/vde/id_ed25519"
 # Output: /home/user/.ssh/id_ed25519 (if HOME=/home/user)
 vde_make_portable() {
     local path="$1"
@@ -171,7 +171,7 @@ vde_make_portable() {
 
 # Make path home-relative for display/storage
 # Usage: vde_make_home_relative "/home/user/.ssh/id_ed25519"
-# Output: ~/.ssh/id_ed25519
+# Output: ~/.ssh/vde/id_ed25519
 vde_make_home_relative() {
     local path="$1"
 

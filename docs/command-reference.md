@@ -49,7 +49,7 @@ vde create --help
 3. Creates `configs/docker/<name>/docker-compose.yml` from template
 4. Creates directories: `projects/<name>/` or `data/<name>/`, `logs/<name>/`
 5. Creates `env-files/<name>.env`
-6. Adds SSH config entry to `~/.ssh/config` (with backup)
+6. Adds SSH config entry to `~/.ssh/vde/config` (with backup)
 
 ---
 

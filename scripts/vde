@@ -55,6 +55,7 @@ _VDE_COMMANDS=(
     "restart:Restart a VM:restart-virtual"
     "ssh:SSH into a VM:ssh-vm"
     "remove:Remove a VM:remove-virtual"
+    "delete:Completely delete a VM:delete-virtual"
     "uninstall:Uninstall a language/service:uninstall-vm-type"
     "list:List all VMs:list-vms"
     "status:Show VM status:list-vms"
@@ -209,8 +210,14 @@ vde_find_command_script() {
         health|vde-health)
             script="$VDE_ROOT_DIR/scripts/vde-health"
             ;;
+        create-and-start)
+            script="$VDE_ROOT_DIR/scripts/create-and-start"
+            ;;
         remove|remove-virtual)
             script="$VDE_ROOT_DIR/scripts/remove-virtual"
+            ;;
+        delete|delete-virtual)
+            script="$VDE_ROOT_DIR/scripts/delete-virtual"
             ;;
         uninstall|uninstall-vm-type)
             script="$VDE_ROOT_DIR/scripts/uninstall-vm-type"
@@ -223,6 +230,9 @@ vde_find_command_script() {
             ;;
         ssh-sync)
             script="$VDE_ROOT_DIR/scripts/ssh-sync"
+            ;;
+        cleanup-ports)
+            script="$VDE_ROOT_DIR/scripts/cleanup-ports"
             ;;
         init|vde-init)
             script="$VDE_ROOT_DIR/scripts/vde-init"

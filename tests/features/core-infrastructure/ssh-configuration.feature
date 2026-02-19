@@ -175,17 +175,17 @@ Feature: SSH Configuration
   @requires-docker-ssh
   Scenario: Merge creates SSH config if it doesn't exist
     Given ~/.ssh/vde/config does not exist
-    And ~/.ssh directory exists or can be created
+    And ~/.ssh/vde directory exists or can be created
     When I create VM "python" with SSH port "2200"
     Then ~/.ssh/vde/config should be created
     And ~/.ssh/vde/config should have permissions "600"
     And ~/.ssh/vde/config should contain "Host vde-python"
 
   @requires-docker-ssh
-  Scenario: Merge creates .ssh directory if needed
-    Given ~/.ssh directory does not exist
+  Scenario: Merge creates ~/.ssh/vde directory if needed
+    Given ~/.ssh/vde directory does not exist
     When I create VM "python" with SSH port "2200"
-    Then ~/.ssh directory should be created
+    Then ~/.ssh/vde directory should be created
     And ~/.ssh/vde/config should be created
     And directory should have correct permissions
 

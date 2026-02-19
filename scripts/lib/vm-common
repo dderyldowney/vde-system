@@ -245,8 +245,9 @@ _is_cache_valid() {
 # Uses cache if available and valid
 # Format: shortname|type|display_name|install_command|port_base
 load_vm_types() {
-    # Ensure associative arrays are globally declared
+    # Ensure arrays are globally declared
     typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT
+    typeset -ga lang_vms service_vms
 
     # Guard to prevent redundant loading
     if [[ "${_VM_TYPES_LOADED:-0}" == "1" ]] && [[ ${#VM_TYPE[@]} -gt 0 ]]; then

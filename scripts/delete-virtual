@@ -1,0 +1,62 @@
+#!/usr/bin/env zsh
+# delete-virtual - Completely remove a VM instance but preserve definition
+# Stops the VM and removes SSH entries. Preserves the docker-compose.yml.
+
+set -e
+
+# Source shared library
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/vm-common"
+source "$SCRIPT_DIR/lib/vde-naming"
+source "$SCRIPT_DIR/lib/vde-ssh"
+source "$SCRIPT_DIR/lib/vde-docker"
+
+# Parse arguments
+if [[ $# -eq 0 ]]; then
+    echo "Usage: $0 <vm_name>"
+    echo ""
+    echo "Completely remove a VM instance."
+    echo ""
+    echo "This will:"
+    echo "  - Stop and remove the VM container"
+    echo "  - Remove SSH config entry from ~/.ssh/vde/config"
+    echo "  - Clean up known_hosts entries"
+    echo ""
+    echo "Note: Configuration files, projects and logs are preserved."
+    echo ""
+    exit 1
+fi
+
+VM_NAME="$1"
+
+# Resolve VM name
+RESOLVED_NAME=$(resolve_vm_name "$VM_NAME" || true)
+if [[ -z "$RESOLVED_NAME" ]]; then
+    log_error "Unknown VM: $VM_NAME"
+    exit 1
+fi
+
+# 1. Stop and remove VM if exists
+if vm_exists "$RESOLVED_NAME"; then
+    log_info "Stopping and removing container for $RESOLVED_NAME..."
+    stop_vm "$RESOLVED_NAME" >/dev/null 2>&1 || true
+fi
+
+# 2. Remove SSH config entry
+ssh_host=$(vde_get_ssh_host "$RESOLVED_NAME")
+if [[ -f "$VDE_SSH_CONFIG" ]]; then
+    log_info "Removing SSH config entry for $ssh_host..."
+    remove_ssh_config_entry "$ssh_host" >/dev/null 2>&1 || true
+fi
+
+# 3. Clean up known_hosts
+if [[ -f "$VDE_SSH_KNOWN_HOSTS" ]]; then
+    log_info "Cleaning up known_hosts for $RESOLVED_NAME..."
+    # Get port if possible
+    port=$(get_vm_ssh_port "$RESOLVED_NAME")
+    if [[ -n "$port" ]]; then
+        remove_known_hosts_entry "$RESOLVED_NAME" "$port" >/dev/null 2>&1 || true
+    fi
+fi
+
+log_success "VM instance '$RESOLVED_NAME' has been removed."

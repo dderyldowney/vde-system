@@ -57,13 +57,13 @@ test_path_to_home_rel_basic() {
     test_start "path to home rel (basic)"
 
     local result
-    result=$(vde_path_to_home_rel "$HOME/.ssh/id_ed25519" 2>/dev/null)
-    if [[ "$result" == "~/.ssh/id_ed25519" ]]; then
+    result=$(vde_path_to_home_rel "$HOME/.ssh/vde/id_ed25519" 2>/dev/null)
+    if [[ "$result" == "~/.ssh/vde/id_ed25519" ]]; then
         test_pass "path to home rel (basic)"
         return
     fi
 
-    test_fail "path to home rel basic" "expected '~/.ssh/id_ed25519', got '$result'"
+    test_fail "path to home rel basic" "expected '~/.ssh/vde/id_ed25519', got '$result'"
 }
 
 test_path_to_home_rel_root() {
@@ -126,13 +126,13 @@ test_path_from_home_rel_basic() {
     test_start "path from home rel (basic)"
 
     local result
-    result=$(vde_path_from_home_rel "~/.ssh/id_ed25519" 2>/dev/null)
-    if [[ "$result" == "$HOME/.ssh/id_ed25519" ]]; then
+    result=$(vde_path_from_home_rel "~/.ssh/vde/id_ed25519" 2>/dev/null)
+    if [[ "$result" == "$HOME/.ssh/vde/id_ed25519" ]]; then
         test_pass "path from home rel (basic)"
         return
     fi
 
-    test_fail "path from home rel basic" "expected '$HOME/.ssh/id_ed25519', got '$result'"
+    test_fail "path from home rel basic" "expected '$HOME/.ssh/vde/id_ed25519', got '$result'"
 }
 
 test_path_from_home_rel_root() {

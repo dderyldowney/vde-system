@@ -108,64 +108,24 @@ while [[ $# -gt 0 ]]; do
 done
 
 # =============================================================================
-# SSH BACKUP/RESTORE (with relative paths for safety)
+# SSH ISOLATION VERIFICATION
 # =============================================================================
 
-backup_ssh_setup() {
-    echo ""
-    echo "====================================="
-    echo "Moving your personal SSH setup out of way for testing..."
-    echo "==================================="
-    echo ""
-
-    # Use relative path for safety
-    local ssh_dir="$HOME/.ssh"
-    local temp_dir="$HOME/.ssh-vde-test-backup"
-
-    # Create temporary directory
-    mkdir -p "$temp_dir"
-
-    # Move all SSH files (both hidden and visible)
-    for file in "$ssh_dir"/.* "$ssh_dir"/*; do
-        [[ -f "$file" ]] || continue
-        mv "$file" "$temp_dir/" 2>/dev/null || true
-    done
-
-    echo "✓ Your SSH setup has been moved to: $temp_dir"
-    echo "Your keys are: $(ls "$temp_dir" | tr '\n' ', ')"
-    echo ""
-}
-
-restore_ssh_setup() {
-    echo ""
-    echo "====================================="
-    echo "Restoring your personal SSH setup..."
-    echo "==================================="
-    echo ""
-
-    local ssh_dir="$HOME/.ssh"
-    local temp_dir="$HOME/.ssh-vde-test-backup"
-
-    if [[ ! -d "$temp_dir" ]]; then
-        echo "⚠️  No backup found at: $temp_dir"
-        echo "You might need to run the backup first"
-        return 1
+verify_ssh_isolation() {
+    echo -e "${BLUE}Verifying SSH isolation...${RESET}"
+    
+    local vde_ssh_dir="$HOME/.ssh/vde"
+    if [[ -d "$vde_ssh_dir" ]]; then
+        echo -e "${GREEN}✓ VDE SSH directory exists: $vde_ssh_dir${RESET}"
+    else
+        echo -e "${YELLOW}⚠ VDE SSH directory not found - will be created by tests${RESET}"
     fi
-
-    # Move everything back
-    for file in "$temp_dir"/*; do
-        mv "$file" "$ssh_dir/" 2>/dev/null || true
-    done
-
-    # Remove temp dir
-    rmdir "$temp_dir" 2>/dev/null || true
-
-    echo "✓ Your SSH setup has been restored!"
+    
     echo ""
 }
 
-# Trap to restore SSH setup even if test is interrupted
-trap 'echo ""; echo ""; restore_ssh_setup; echo ""; exit 1' EXIT; exit 0
+# Trap to cleanup test artifacts if test is interrupted
+trap 'echo ""; echo ""; cleanup_test_vms; echo ""; exit 1' EXIT; exit 0
 
 # =============================================================================
 # TEST FUNCTIONS
@@ -249,17 +209,18 @@ test_or_install_vde() {
 test_ssh_key_generation() {
     echo -e "${BLUE}Testing SSH key generation...${RESET}"
 
-    # Check if SSH keys exist
+    # Check if VDE SSH keys exist
     local has_key=false
+    local vde_ssh_dir="$HOME/.ssh/vde"
     for key_type in id_ed25519 id_rsa id_ecdsa id_dsa; do
-        if [[ -f "$HOME/.ssh/$key_type" ]]; then
-            echo -e "${GREEN}✓ SSH key exists: $key_type${RESET}"
+        if [[ -f "$vde_ssh_dir/$key_type" ]]; then
+            echo -e "${GREEN}✓ VDE SSH key exists: $key_type${RESET}"
             has_key=true
         fi
     done
 
     if [[ "$has_key" == "false" ]]; then
-        echo -e "${YELLOW}No SSH keys found - would auto-generate${RESET}"
+        echo -e "${YELLOW}No VDE SSH keys found - would auto-generate${RESET}"
     fi
 
     # Check public-ssh-keys directory
@@ -350,11 +311,11 @@ test_vm_startup() {
 test_ssh_connection() {
     echo -e "${BLUE}Testing SSH connection...${RESET}"
 
-    # Check if SSH config entry was created
-    if grep -q "Host ${TEST_PREFIX}-${TEST_LANG_VM}" ~/.ssh/config 2>/dev/null; then
-        echo -e "${GREEN}✓ SSH config entry created${RESET}"
+    # Check if VDE SSH config entry was created
+    if grep -q "Host ${TEST_PREFIX}-${TEST_LANG_VM}" "$HOME/.ssh/vde/config" 2>/dev/null; then
+        echo -e "${GREEN}✓ VDE SSH config entry created${RESET}"
     else
-        echo -e "${YELLOW}⚠ SSH config entry not found (may be normal for non-standard VM)${RESET}"
+        echo -e "${YELLOW}⚠ VDE SSH config entry not found (may be normal for non-standard VM)${RESET}"
     fi
 
     # Check if SSH key is in public-ssh-keys
@@ -528,6 +489,7 @@ main() {
 
     # Run tests
     test_prerequisites
+    verify_ssh_isolation
     test_or_install_vde
     test_ssh_key_generation
     test_vm_creation

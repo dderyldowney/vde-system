@@ -55,7 +55,7 @@ The script will:
   3. Create docker-compose.yml from template
   4. Create required directories (projects/ or data/, logs/)
   5. Create environment file (env-files/)
-  6. Add SSH config entry to ~/.ssh/config
+  6. Add SSH config entry to ~/.ssh/vde/config
   7. Start the VM (unless --no-start is specified)
 
 EOF
@@ -248,19 +248,12 @@ vde_progress_done "Created: $env_file"
 # Update SSH Config
 # -----------------------
 # Skip SSH config modification in test mode (prevents timeouts in Docker)
-if [[ -n "$VDE_TEST_MODE" ]]; then
-    vde_progress_info "Skipping SSH config update (test mode)"
-    ssh_host="$(vde_get_ssh_host "$VM_NAME")"
-    if [[ "$_vm_type" == "service" ]]; then
-        ssh_host="$(vde_get_ssh_host "$VM_NAME")"
-    fi
-else
     vde_progress_info "Updating SSH configuration..."
 
     ssh_host="$(vde_get_ssh_host "$VM_NAME")"
 
     if ! merge_ssh_config_entry "$ssh_host" "$SSH_PORT" "$_vm_display" "$VDE_SSH_IDENTITY"; then
-        vde_error_permission_denied "~/.ssh/config"
+        vde_error_permission_denied "$VDE_SSH_CONFIG"
         exit 1
     fi
     
@@ -270,7 +263,6 @@ else
         # Copy the updated SSH config to the project configs directory
         cp "$VDE_SSH_CONFIG" "$project_ssh_config" 2>/dev/null || true
     fi
-fi
 
 # -----------------------
 # Start the VM (unless disabled)

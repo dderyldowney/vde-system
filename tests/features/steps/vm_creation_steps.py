@@ -43,17 +43,24 @@ def step_vm_defined_svc(context, vm_name, port):
     context.test_vm_port = port
 
 
+@given('no running VM instance exists for "{vm_name}"')
+def step_no_vm_instance(context, vm_name):
+    """Ensure no VM instance (container) exists by using remove-virtual command.
+    Note: This does NOT delete the config files, only the container and SSH entries.
+    """
+    if ALLOW_CLEANUP:
+        # Use the VDE remove-virtual command (or delete-virtual which now preserves configs)
+        # This ensures proper container removal and SSH cleanup
+        result = run_vde_command(f"delete {vm_name}", timeout=60)
+        context.remove_result = result
+
+
 @given('no VM configuration exists for "{vm_name}"')
 def step_no_vm_config(context, vm_name):
-    """Ensure VM configuration doesn't exist by using remove-virtual command."""
-    # When running locally without test mode, preserve user's VM configurations
-    # Only remove VMs when running in the test container OR in test mode
-    if ALLOW_CLEANUP:
-        # Use the VDE remove-virtual command instead of directly deleting files
-        # This ensures proper cleanup through the VDE workflow
-        result = run_vde_command(f"remove {vm_name}", timeout=60)
-        # Store result for debugging (don't assert - VM might not exist)
-        context.remove_result = result
+    """Alias for step_no_vm_instance to maintain compatibility with older feature files.
+    Note: We are NOT allowed to delete configuration files in configs/docker/**.
+    """
+    step_no_vm_instance(context, vm_name)
 
 
 @given('VM "{vm_name}" has been created')

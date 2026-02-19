@@ -40,8 +40,8 @@ from config import VDE_ROOT
 
 @given('I have SSH keys configured on my host')
 def step_ssh_keys_configured_on_host(context):
-    """SSH keys are configured on the host machine."""
-    ssh_dir = Path.home() / ".ssh"
+    """SSH keys are configured on the host machine in VDE directory."""
+    ssh_dir = Path.home() / ".ssh" / "vde"
     has_keys = (
         (ssh_dir / "id_ed25519").exists() or
         (ssh_dir / "id_rsa").exists() or

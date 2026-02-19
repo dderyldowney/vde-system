@@ -412,40 +412,18 @@ remove_docker_resources() {
 # Remove SSH config entries
 remove_ssh_config_entries() {
     echo ""
-    print_info "Step 5: Removing SSH config entries..."
+    print_info "Step 5: Removing VDE SSH configuration..."
 
-    local ssh_config="${HOME}/.ssh/config"
-    local temp_file="${ssh_config}.tmp"
-
-    if [[ ! -f "$ssh_config" ]]; then
-        print_info "No SSH config file found"
-        return 0
-    fi
-
-    # Check if there are VDE entries
-    if ! grep -q '# VDE' "$ssh_config" 2>/dev/null; then
-        print_info "No VDE SSH config entries found"
-        return 0
-    fi
-
-    if [[ "$DRY_RUN" = "true" ]]; then
-        print_info "[DRY RUN] Would remove VDE SSH config entries from: $ssh_config"
-        grep '# VDE' "$ssh_config" 2>/dev/null | head -5 | while read -r line; do
-            print_info "[DRY RUN]   Would remove: ${line:0:80}"
-        done
-        return 0
-    fi
-
-    # Create temporary file without VDE entries
-    grep -v '# VDE' "$ssh_config" > "$temp_file" 2>/dev/null || true
-
-    # Check if file is different
-    if ! cmp -s "$ssh_config" "$temp_file"; then
-        mv "$temp_file" "$ssh_config"
-        print_success "Removed VDE SSH config entries"
+    if [[ -d "$VDE_SSH_DIR" ]]; then
+        if [[ "$DRY_RUN" = "true" ]]; then
+            print_info "[DRY RUN] Would remove VDE SSH directory: $VDE_SSH_DIR"
+            return 0
+        fi
+        print_info "Removing VDE SSH directory: $VDE_SSH_DIR"
+        rm -rf "$VDE_SSH_DIR"
+        print_success "Removed VDE SSH configuration"
     else
-        rm -f "$temp_file"
-        print_info "No VDE SSH config entries found"
+        print_info "VDE SSH directory not found"
     fi
 }
 

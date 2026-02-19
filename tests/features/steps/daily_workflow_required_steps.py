@@ -63,7 +63,7 @@ def docker_ps_all():
 def step_have_ssh_keys(context):
     """Verify SSH keys are configured for the user."""
     # Check if SSH directory exists
-    ssh_dir = Path.home() / ".ssh"
+    ssh_dir = Path.home() / ".ssh" / "vde"
     if not ssh_dir.exists():
         # Create SSH directory if it doesn't exist
         ssh_dir.mkdir(parents=True, exist_ok=True)
@@ -339,7 +339,7 @@ def step_postgres_accessible(context):
 @then(u'SSH config entry for "go-dev" should be added')
 def step_ssh_config_go(context):
     """Verify SSH config entry for go-dev is added."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     
     if ssh_config.exists():
         config_content = ssh_config.read_text()
@@ -656,7 +656,7 @@ def step_docker_compose_preserved(context):
 @then(u'SSH config entry should be removed')
 def step_ssh_config_removed(context):
     """Verify SSH config entry is removed."""
-    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     if ssh_config.exists():
         config_content = ssh_config.read_text()
         # After removal, Ruby SSH config should be cleaned up

@@ -19,8 +19,8 @@ test_section "SSH Key Detection"
 
 # Mock detect_ssh_keys for testing
 test_detect_ssh_keys_mock() {
-    echo "/home/user/.ssh/id_ed25519"
-    echo "/home/user/.ssh/id_rsa"
+    echo "/home/user/.ssh/vde/id_ed25519"
+    echo "/home/user/.ssh/vde/id_rsa"
 }
 
 # Save original function
@@ -173,13 +173,13 @@ fi
 # Test: SSH config file
 test_section "SSH Config File"
 
-if [[ -f "$HOME/.ssh/config" ]]; then
-    echo -e "${GREEN}✓${NC} ~/.ssh/config exists"
+if [[ -f "$HOME/.ssh/vde/config" ]]; then
+    echo -e "${GREEN}✓${NC} ~/.ssh/vde/config exists"
     ((TESTS_PASSED++))
     ((TESTS_RUN++))
 
     # Check for VDE entries
-    if grep -q "python-dev" "$HOME/.ssh/config" 2>/dev/null; then
+    if grep -q "vde-python" "$HOME/.ssh/vde/config" 2>/dev/null; then
         echo -e "${GREEN}✓${NC} VDE SSH entries found in config"
         ((TESTS_PASSED++))
     else
@@ -188,7 +188,7 @@ if [[ -f "$HOME/.ssh/config" ]]; then
     fi
     ((TESTS_RUN++))
 else
-    echo -e "${YELLOW}○${NC} ~/.ssh/config does not exist"
+    echo -e "${YELLOW}○${NC} ~/.ssh/vde/config does not exist"
     ((TESTS_PASSED++))
     ((TESTS_RUN++))
 fi
