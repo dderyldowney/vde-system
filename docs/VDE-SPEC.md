@@ -1,10 +1,10 @@
 # VDE Technical Specification
 
-**Document Type:** Technical Implementation Specification  
-**Project:** Virtual Development Environment (VDE)  
-**Version:** 1.0.1  
-**Status:** AUTHORITATIVE SPECIFICATION  
-**Last Updated:** 2026-02-15T05:33:16Z
+**Document Type:** Technical Implementation Specification
+**Project:** Virtual Development Environment (VDE)
+**Version:** 1.1.0
+**Status:** AUTHORITATIVE SPECIFICATION
+**Last Updated:** 2026-02-20T06:00:00Z
 
 > **MANDATE**: This document is the authoritative specification for the VDE project. All development, bug fixes, and implementation work MUST conform to this specification.
 >
@@ -89,8 +89,12 @@ typeset -ga service_vms   # ordered list of service VM names
 # Format: one entry per line
 vm_name:port
 python:2200
-rust:2201
-postgres:2400
+cpp:2201
+asm:2202
+c:2203
+redis:2400
+postgres:2401
+mongodb:2402
 ```
 
 ### 2.4 Cache File Format
@@ -150,6 +154,16 @@ readonly VM_TYPES_CONF="${DATA_DIR}/vm-types.conf"
 readonly VM_TYPES_JSON="${DATA_DIR}/vm-types.json"
 readonly VM_TYPES_CACHE="${CACHE_DIR}/vm-types.cache"
 readonly PORT_REGISTRY="${CACHE_DIR}/port-registry"
+
+# Docker / Container Naming
+readonly VDE_CONTAINER_PREFIX="vde-"
+readonly VDE_DOCKER_NETWORK="${VDE_DOCKER_NETWORK:-vde-net}"
+
+# SSH Isolation — all VDE SSH assets live under ~/.ssh/vde/
+readonly VDE_SSH_DIR="${VDE_HOME_DIR}/.ssh/vde"
+readonly VDE_SSH_CONFIG="${VDE_SSH_DIR}/config"
+readonly VDE_SSH_KNOWN_HOSTS="${VDE_SSH_DIR}/known_hosts"
+readonly VDE_SSH_IDENTITY="${VDE_SSH_DIR}/id_ed25519"
 ```
 
 ### 3.2 vde-shell-compat
@@ -459,6 +473,93 @@ readonly INTENT_HELP="help"
 # Returns: VDE_SUCCESS
 ```
 
+### 3.9 vde-naming
+
+**File:** `scripts/lib/vde-naming`
+
+Enforces the canonical `vde-{name}` naming convention for all Docker containers,
+images, and SSH host aliases. Filesystem directories (e.g., `configs/docker/python/`)
+retain the raw name for clarity; the `vde-` prefix is applied only at the
+container/SSH layer.
+
+```zsh
+# vde_validate_name NAME
+# Validate a VM name (accepts names with or without vde- prefix)
+# Args: NAME (string)
+# Output: error message to stdout on failure
+# Returns: VDE_SUCCESS or 1
+
+# vde_normalize_name NAME
+# Strip vde- prefix and lowercase — returns raw canonical name for filesystem use
+# Args: NAME (string, e.g., "vde-python" or "Python")
+# Output: raw name (e.g., "python") to stdout
+# Returns: VDE_SUCCESS
+
+# vde_get_container_name VM_NAME
+# Get Docker container name (ensures vde- prefix)
+# Args: VM_NAME (string, raw or prefixed)
+# Output: "vde-{name}" to stdout
+# Returns: VDE_SUCCESS
+
+# vde_get_ssh_host VM_NAME
+# Get SSH Host alias (identical to container name)
+# Args: VM_NAME (string)
+# Output: "vde-{name}" to stdout
+# Returns: VDE_SUCCESS
+
+# vde_get_hostname VM_NAME
+# Get internal container hostname (identical to container name)
+# Args: VM_NAME (string)
+# Output: "vde-{name}" to stdout
+# Returns: VDE_SUCCESS
+
+# vde_detect_vm_type_from_name NAME
+# Detect VM type from name using VM_TYPE map or built-in fallback patterns
+# Args: NAME (string)
+# Output: "lang" | "service" to stdout
+# Returns: VDE_SUCCESS
+```
+
+### 3.10 vde-security
+
+**File:** `scripts/lib/vde-security`
+
+Centralizes security policy enforcement. Automatically called during startup
+by `vde-init`, `ensure_vde_ssh_environment`, and `build-and-start`.
+
+```zsh
+# vde_security_enforce_permissions
+# Enforce strict permissions on all sensitive VDE directories and files:
+#   0700: .cache/, .docker-state/, .locks/, data/, logs/, VDE_SSH_DIR, env-files/
+#   0600: VDE_SSH_IDENTITY, VDE_SSH_CONFIG, VDE_SSH_KNOWN_HOSTS, *.env files
+#   0755: scripts/ and all script files
+# Returns: VDE_SUCCESS
+
+# vde_security_ensure_network [NETWORK_NAME]
+# Ensure the isolated VDE Docker bridge network exists
+# Args: NETWORK_NAME (default: VDE_DOCKER_NETWORK = "vde-net")
+# Creates network with label "vde.managed=true" if absent
+# Returns: VDE_SUCCESS
+
+# vde_security_validate_naming
+# Audit running vde-* containers for naming convention compliance
+# Returns: VDE_SUCCESS
+
+# vde_security_enforce_network_isolation [NETWORK_NAME]
+# Ensure all running vde-* containers are connected to the VDE network
+# Automatically re-attaches any container that has drifted off the network
+# Args: NETWORK_NAME (default: VDE_DOCKER_NETWORK)
+# Returns: VDE_SUCCESS
+
+# vde_security_init
+# Initialize full security environment in one call:
+#   1. vde_security_ensure_network
+#   2. vde_security_enforce_permissions
+#   3. vde_security_enforce_network_isolation
+# Called by: vde-init, ensure_vde_ssh_environment, build-and-start
+# Returns: VDE_SUCCESS
+```
+
 ---
 
 ## 4. CLI Interface Specification
@@ -511,13 +612,17 @@ readonly INTENT_HELP="help"
 
 **File:** `scripts/templates/compose-language.yml`
 
+Container names MUST use the `vde-` prefix. The `{{NAME}}` placeholder receives
+the raw name (e.g., `python`); the template prepends `vde-` for the container
+and service keys.
+
 ```yaml
 services:
-  {{NAME}}-dev:
+  vde-{{NAME}}:
     build:
       context: ../../
       dockerfile: configs/docker/vde-base.Dockerfile
-    container_name: {{NAME}}-dev
+    container_name: vde-{{NAME}}
     ports:
       - "{{SSH_PORT}}:22"
     volumes:
@@ -534,7 +639,7 @@ services:
     user: devuser
     labels:
       - "vde.type=language"
-      - "vde.name={{NAME}}"
+      - "vde.name=vde-{{NAME}}"
 
 networks:
   vde-net:
@@ -571,13 +676,18 @@ services:
 
 **File:** `scripts/templates/ssh-entry.txt`
 
+SSH Host aliases MUST use the `vde-` prefix to match the container name.
+The `{{VM_NAME}}` placeholder receives the raw name (e.g., `python`);
+the template prepends `vde-` for the Host alias.
+
 ```
-Host {{VM_NAME}}-dev
+Host vde-{{VM_NAME}}
     HostName localhost
     Port {{SSH_PORT}}
     User devuser
     ForwardAgent yes
     StrictHostKeyChecking no
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
     IdentityFile ~/.ssh/vde/id_ed25519
 ```
 
@@ -771,11 +881,12 @@ VDE_ROOT/
 │   ├── add-vm-type                  # Add new VM type
 │   ├── build-and-start               # Build and start all
 │   ├── lib/
-│   │   ├── vde-constants            # Constants
+│   │   ├── vde-constants            # Constants (return codes, ports, paths, SSH dirs)
 │   │   ├── vde-shell-compat         # Shell compatibility
 │   │   ├── vde-errors               # Error handling
 │   │   ├── vde-log                  # Logging
-│   │   ├── vde-naming               # Naming validation
+│   │   ├── vde-naming               # Naming conventions (vde- prefix enforcement)
+│   │   ├── vde-security             # Security policy (permissions, network, SSH isolation)
 │   │   ├── vde-path-utils           # Path utilities
 │   │   ├── vde-core                 # Core functions
 │   │   ├── vm-common                # Common functions
@@ -943,6 +1054,88 @@ Each requirement maps to BDD scenarios in:
 | Port Mgmt | `tests/features/docker-required/port-management.feature` |
 | Errors | `tests/features/docker-required/error-handling-and-recovery.feature` |
 | Docker | `tests/features/docker-required/docker-operations.feature` |
+
+---
+
+## 14. Security Architecture
+
+### 14.1 Permission Policy
+
+VDE enforces strict filesystem permissions at startup via `vde_security_enforce_permissions()`:
+
+| Path | Permission | Rationale |
+|------|-----------|-----------|
+| `VDE_ROOT_DIR/` | `0755` | Readable by owner and group |
+| `.cache/` | `0700` | Internal state — owner only |
+| `.docker-state/` | `0700` | Internal state — owner only |
+| `.locks/` | `0700` | Lock files — owner only |
+| `data/` and subdirs | `0700` | Service data — owner only |
+| `logs/` and subdirs | `0700` | Log files — owner only |
+| `env-files/` | `0700` | May contain credentials |
+| `env-files/*.env` | `0600` | Credential files — owner read/write only |
+| `VDE_SSH_DIR` (`~/.ssh/vde/`) | `0700` | SSH directory — owner only |
+| `VDE_SSH_IDENTITY` | `0600` | Private key — owner read/write only |
+| `VDE_SSH_CONFIG` | `0600` | SSH config — owner read/write only |
+| `VDE_SSH_KNOWN_HOSTS` | `0600` | Known hosts — owner read/write only |
+| `scripts/` and script files | `0755` | Must be executable |
+
+### 14.2 Network Isolation
+
+All VDE containers run on a dedicated Docker bridge network named `vde-net`:
+
+```zsh
+# Network creation (vde_security_ensure_network)
+docker network create \
+    --driver bridge \
+    --label "vde.managed=true" \
+    vde-net
+```
+
+- Network is created automatically if absent
+- All containers that drift off `vde-net` are automatically re-attached by `vde_security_enforce_network_isolation()`
+- The network is labeled `vde.managed=true` for identification and auditing
+
+### 14.3 SSH Isolation
+
+All VDE SSH assets are isolated in `~/.ssh/vde/` (separate from the user's personal `~/.ssh/`):
+
+| Asset | Path | Purpose |
+|-------|------|---------|
+| Private key | `~/.ssh/vde/id_ed25519` | VDE container authentication |
+| Public key | `~/.ssh/vde/id_ed25519.pub` | Injected into containers |
+| SSH config | `~/.ssh/vde/config` | VDE-only SSH host entries |
+| Known hosts | `~/.ssh/vde/known_hosts` | VDE container host keys only |
+
+This isolation ensures:
+- VDE SSH operations never interfere with the user's personal SSH configuration
+- VDE container host keys are tracked separately
+- Revoking VDE access is a single directory deletion
+
+### 14.4 Naming Convention Enforcement
+
+The `vde-` prefix is **mandatory** for all Docker containers and SSH host aliases:
+
+| Layer | Convention | Example |
+|-------|-----------|---------|
+| Docker container name | `vde-{name}` | `vde-python`, `vde-postgres` |
+| Docker image name | `vde-{name}:latest` | `vde-python:latest` |
+| SSH Host alias | `vde-{name}` | `vde-python`, `vde-postgres` |
+| Filesystem config dir | `{name}` (raw) | `configs/docker/python/` |
+| Workspace dir | `{name}` (raw) | `projects/python/` |
+
+The `vde_normalize_name()` function strips the prefix for filesystem operations;
+`vde_get_container_name()` adds it for Docker/SSH operations.
+
+### 14.5 Startup Integration
+
+Security initialization is automatically triggered at three entry points:
+
+| Entry Point | Function Called | Trigger |
+|-------------|----------------|---------|
+| `scripts/vde-init` | `vde_security_init` | First-time setup |
+| `scripts/lib/vde-ssh` `ensure_vde_ssh_environment` | `vde_security_init` | SSH environment setup |
+| `scripts/build-and-start` | `vde_security_ensure_network` + `vde_security_enforce_permissions` | Build/start all VMs |
+| `scripts/vde-networks` | `vde_security_ensure_network` | Network management |
 
 ---
 

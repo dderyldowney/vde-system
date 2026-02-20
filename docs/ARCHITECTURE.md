@@ -14,12 +14,14 @@ VDE is built on a modular library architecture that separates concerns and enabl
 
 | Library | Purpose | Dependencies |
 |---------|---------|--------------|
-| **vde-constants** | Centralized constants (return codes, port ranges, timeouts) | None |
+| **vde-constants** | Centralized constants (return codes, port ranges, timeouts, SSH dirs) | None |
 | **vde-shell-compat** | Portable shell operations (zsh/bash compatibility) | None |
 | **vde-errors** | Error messages with remediation steps | vde-constants |
 | **vde-log** | Structured logging with rotation (JSON/text/syslog) | vde-constants, vde-shell-compat |
+| **vde-naming** | Naming conventions — enforces `vde-` prefix for containers/SSH | vde-constants |
+| **vde-security** | Security policy enforcement (permissions, network isolation, SSH isolation) | vde-constants, vde-log |
 | **vde-core** | Essential VDE functions (VM types, queries, caching) | vde-constants, vde-shell-compat |
-| **vm-common** | Full VDE functionality (VM types, ports, Docker, SSH, templates) | vde-constants, vde-shell-compat |
+| **vm-common** | Full VDE functionality (VM types, ports, Docker, SSH, templates) | vde-constants, vde-shell-compat, vde-naming, vde-security |
 | **vde-commands** | Safe wrapper functions for VDE operations | vm-common |
 | **vde-parser** | Pattern-based natural language parser (intent detection, entity extraction) | vm-common, vde-commands |
 
@@ -27,7 +29,6 @@ VDE is built on a modular library architecture that separates concerns and enabl
 
 | Library | Purpose |
 |---------|---------|
-| **vde-naming** | VM naming conventions and validation |
 | **vde-progress** | Progress bars and status indicators |
 | **vde-audit** | VM audit trails and change tracking |
 | **vde-metrics** | Performance metrics and monitoring |
@@ -41,10 +42,12 @@ source "$SCRIPTS_DIR/lib/vde-constants"      # 1. Base constants
 source "$SCRIPTS_DIR/lib/vde-shell-compat"   # 2. Shell compatibility
 source "$SCRIPTS_DIR/lib/vde-errors"         # 3. Error handling
 source "$SCRIPTS_DIR/lib/vde-log"            # 4. Logging
-source "$SCRIPTS_DIR/lib/vde-core"           # 5. Core VDE functions
-source "$SCRIPTS_DIR/lib/vm-common"          # 6. Full VDE functionality
-source "$SCRIPTS_DIR/lib/vde-commands"       # 7. Command wrappers
-source "$SCRIPTS_DIR/lib/vde-parser"         # 8. Natural language parser
+source "$SCRIPTS_DIR/lib/vde-naming"         # 5. Naming conventions (vde- prefix)
+source "$SCRIPTS_DIR/lib/vde-security"       # 6. Security enforcement
+source "$SCRIPTS_DIR/lib/vde-core"           # 7. Core VDE functions
+source "$SCRIPTS_DIR/lib/vm-common"          # 8. Full VDE functionality
+source "$SCRIPTS_DIR/lib/vde-commands"       # 9. Command wrappers
+source "$SCRIPTS_DIR/lib/vde-parser"         # 10. Natural language parser
 ```
 
 ---
@@ -103,41 +106,46 @@ The `vm-common` library provides core functions used by all scripts:
 
 ## Virtual Machines
 
-### Language VMs (18 total, ports 2200-2299)
+### Language VMs (20 total, ports 2200-2299)
+
+Container names use the mandatory `vde-` prefix. SSH access: `ssh vde-{name}` (using `~/.ssh/vde/config`).
 
 | Name | Aliases | Container Name | SSH Port |
 |------|---------|----------------|----------|
-| c | c | c-dev | 2200 |
-| cpp | c++, gcc | cpp-dev | 2201 |
-| asm | assembler, nasm | asm-dev | 2202 |
-| python | python3 | python-dev | 2203 |
-| rust | rust | rust-dev | 2204 |
-| js | node, nodejs | js-dev | 2205 |
-| csharp | dotnet | csharp-dev | 2206 |
-| ruby | ruby | ruby-dev | 2207 |
-| go | golang | go-dev | 2208 |
-| java | jdk | java-dev | 2209 |
-| kotlin | kotlin | kotlin-dev | 2210 |
-| swift | swift | swift-dev | 2211 |
-| php | php | php-dev | 2212 |
-| scala | scala | scala-dev | 2213 |
-| r | rlang, r | r-dev | 2214 |
-| lua | lua | lua-dev | 2215 |
-| flutter | dart, flutter | flutter-dev | 2216 |
-| elixir | elixir | elixir-dev | 2217 |
-| haskell | ghc, haskell | haskell-dev | 2218 |
+| js | node, nodejs | vde-js | 2200 |
+| cpp | c++, gcc | vde-cpp | 2201 |
+| asm | assembler, nasm | vde-asm | 2202 |
+| c | c | vde-c | 2203 |
+| rust | rust | vde-rust | 2201 |
+| csharp | dotnet | vde-csharp | 2206 |
+| go | golang | vde-go | 2200 |
+| java | jdk | vde-java | 2209 |
+| kotlin | kotlin | vde-kotlin | 2200 |
+| swift | swift | vde-swift | 2214 |
+| php | php | vde-php | 2212 |
+| scala | scala | vde-scala | 2213 |
+| r | rlang, r | vde-r | 2200 |
+| lua | lua | vde-lua | 2218 |
+| flutter | dart, flutter | vde-flutter | 2200 |
+| elixir | elixir | vde-elixir | 2215 |
+| haskell | ghc, haskell | vde-haskell | 2216 |
+| zig | zig | vde-zig | 2200 |
+| ruby | ruby | vde-ruby | 2201 |
+| python | python3 | vde-python | 2200 |
 
 ### Service VMs (7 total, ports 2400-2499)
 
+Container names use the mandatory `vde-` prefix. SSH access: `ssh vde-{name}` (using `~/.ssh/vde/config`).
+
 | Name | Aliases | Container Name | SSH Port | Service Port |
 |------|---------|----------------|----------|--------------|
-| postgres | postgresql | postgres | 2400 | 5432 |
-| redis | redis | redis | 2401 | 6379 |
-| mongodb | mongo | mongodb | 2402 | 27017 |
-| nginx | nginx | nginx | 2403 | 80, 443 |
-| couchdb | couchdb | couchdb | 2404 | 5984 |
-| mysql | mysql | mysql | 2405 | 3306 |
-| rabbitmq | rabbitmq | rabbitmq | 2406 | 5672, 15672 |
+| redis | redis | vde-redis | 2400 | 6379 |
+| postgres | postgresql | vde-postgres | 2401 | 5432 |
+| mongodb | mongo | vde-mongodb | 2402 | 27017 |
+| couchdb | couchdb | vde-couchdb | 2404 | 5984 |
+| mysql | mysql | vde-mysql | 2405 | 3306 |
+| nginx | nginx | vde-nginx | 2400 | 80, 443 |
+| rabbitmq | rabbitmq | vde-rabbitmq | 2400 | 5672, 15672 |
 
 ---
 
@@ -195,20 +203,23 @@ VDE uses a structured port allocation system to avoid conflicts:
 Language VMs are assigned SSH ports sequentially from the 2200 range:
 
 ```
-c-dev       2200    (first language VM)
-cpp-dev     2201    (second language VM)
-asm-dev     2202    (third language VM)
+vde-js      2200    (first allocated)
+vde-cpp     2201
+vde-asm     2202
+vde-c       2203
 ...
 ```
 
 ### Service VM SSH Ports (2400-2499)
 
-Service VMs are assigned SSH ports sequentially from the 2400 range:
+Service VMs are assigned SSH ports from the 2400 range:
 
 ```
-postgres    2400    (first service VM)
-redis       2401    (second service VM)
-mongodb     2402    (third service VM)
+vde-redis       2400    (first allocated)
+vde-postgres    2401
+vde-mongodb     2402
+vde-couchdb     2404
+vde-mysql       2405
 ...
 ```
 

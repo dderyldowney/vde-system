@@ -16,6 +16,7 @@ TESTS_FAILED=0
 UNIT_TESTS=(
     "tests/unit/vde-constants.test.zsh"
     "tests/unit/vde-naming.test.zsh"
+    "tests/unit/vde-security.test.zsh"
     "tests/unit/vde-path-utils.test.zsh"
     "tests/unit/vde-core.test.zsh"
     "tests/unit/vde-shell-compat.test.zsh"

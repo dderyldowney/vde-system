@@ -88,8 +88,47 @@ VDE includes several security features by design:
 - **Non-root user**: All containers run as `devuser` with passwordless sudo
 - **SSH key authentication**: Password authentication disabled
 - **Isolated environments**: Each VM runs in separate containers
-- **Shared network**: Controlled inter-container communication
+- **Isolated network**: All containers run on a dedicated `vde-net` Docker bridge network with automatic drift correction
 - **Persistent data**: Data volumes separated from containers
+- **Strict directory permissions**: Sensitive directories (`data/`, `logs/`, `.cache/`, `.locks/`, `.docker-state/`, `env-files/`) are set to `0700`; credential files (`*.env`, SSH keys, SSH config) are set to `0600`
+- **SSH isolation**: All VDE SSH assets (`~/.ssh/vde/`) are isolated from the user's personal SSH configuration
+- **Unified naming**: All containers and SSH aliases use the `vde-` prefix for clear identification
+
+### Automated Security Enforcement (`vde-security` library)
+
+VDE includes a dedicated security library ([`scripts/lib/vde-security`](scripts/lib/vde-security)) that
+automatically enforces security policies at startup. It is invoked by `vde-init`,
+`ensure_vde_ssh_environment`, and `build-and-start`.
+
+**Directory and File Permissions:**
+
+| Path | Mode | Rationale |
+|------|------|-----------|
+| `.cache/`, `.docker-state/`, `.locks/` | `0700` | Internal state — owner only |
+| `data/`, `logs/` | `0700` | Service data and logs — owner only |
+| `env-files/` | `0700` | May contain credentials |
+| `env-files/*.env` | `0600` | Credential files — owner read/write only |
+| `~/.ssh/vde/` | `0700` | SSH directory — owner only |
+| SSH identity, config, known_hosts | `0600` | SSH files — owner read/write only |
+| `scripts/` and script files | `0755` | Must be executable |
+
+**Network Isolation:**
+
+```zsh
+# vde_security_ensure_network creates the network if absent:
+docker network create --driver bridge --label "vde.managed=true" vde-net
+
+# vde_security_enforce_network_isolation re-attaches drifted containers:
+docker network connect vde-net <container>
+```
+
+**SSH Isolation (`~/.ssh/vde/`):**
+
+All VDE SSH assets are stored in `~/.ssh/vde/` — completely separate from the
+user's personal `~/.ssh/`. This means:
+- VDE SSH operations never modify the user's `~/.ssh/config` or `~/.ssh/known_hosts`
+- Revoking all VDE SSH access requires only deleting `~/.ssh/vde/`
+- VDE container host keys are tracked in `~/.ssh/vde/known_hosts` only
 
 ## Vulnerability Severity Classification
 
