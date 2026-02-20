@@ -133,8 +133,8 @@ Feature: Daily Development Workflow
   # Port conflicts are handled automatically
   @requires-docker-host
   Scenario: VDE handles port conflicts gracefully
-    Given a system service is using port 2200
+    Given a system service is using port 2213
     When I create a new language VM
-    Then VDE should allocate the next available port (2201)
+    Then VDE should allocate the next available port (2214)
     And the VM should work correctly on the new port
     And SSH config should reflect the correct port

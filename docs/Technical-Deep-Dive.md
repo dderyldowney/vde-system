@@ -18,7 +18,7 @@ The VDE (Virtual Development Environment) system is a **template-based, data-dri
 │  │  │   scripts/   │  │   configs/   │  │   projects/  │          │   │
 │  │  │              │  │   docker/    │  │              │          │   │
 │  │  │ • lib/       │  │              │  │ • c/         │◄─────┐   │   │
-│  │  │   • vde-*    │  │ • base-dev   │  │ • cpp/       │       │   │   │
+│  │  │   • vde-*    │  │ • vde-base   │  │ • cpp/       │       │   │   │
 │  │  │   • vm-common│  │ • c/         │  │ • python/    │       │   │   │
 │  │  │ • templates/ │  │ • cpp/       │  │ • rust/      │       │   │   │
 │  │  │ • data/      │  │ • python/    │  │ • go/        │       │   │   │
@@ -40,8 +40,8 @@ The VDE (Virtual Development Environment) system is a **template-based, data-dri
                 ┌───────────────┼───────────────┐
                 ▼               ▼               ▼
         ┌──────────────┐ ┌──────────┐ ┌──────────────┐
-        │  python-dev  │ │  go-dev  │ │  postgres    │
-        │  :2200       │ │  :2207   │ │  :2400       │
+        │  vde-python  │ │  vde-go  │ │  postgres    │
+        │  :2213       │ │  :2206   │ │  :2404       │
         └──────────────┘ └──────────┘ └──────────────┘
                 │               │               │
                 └───────────────┴───────────────┘
@@ -392,25 +392,25 @@ service|postgres|postgresql|PostgreSQL|apt-get update -y && apt-get install -y p
 **All 19 Language VMs:**
 | Name | Aliases | Display Name | SSH Port Range |
 |------|---------|--------------|---------------|
-| c | c | C | 2200-2217 |
-| cpp | c++,gcc | C++ | 2200-2217 |
-| asm | assembler,nasm | Assembler | 2200-2217 |
-| python | python3 | Python | 2200-2217 |
-| rust | rust | Rust | 2200-2217 |
-| js | node,nodejs | JavaScript | 2200-2217 |
-| csharp | dotnet | C# | 2200-2217 |
-| ruby | ruby | Ruby | 2200-2217 |
-| go | golang | Go | 2200-2217 |
-| java | jdk | Java | 2200-2217 |
-| kotlin | kotlin | Kotlin | 2200-2217 |
-| swift | swift | Swift | 2200-2217 |
-| php | php | PHP | 2200-2217 |
-| scala | scala | Scala | 2200-2217 |
-| r | rlang,r | R | 2200-2217 |
-| lua | lua | Lua | 2200-2217 |
-| flutter | dart,flutter | Flutter | 2200-2217 |
-| elixir | elixir | Elixir | 2200-2217 |
-| haskell | ghc,haskell | Haskell | 2200-2217 |
+| c | c | C | 2200-2219 |
+| cpp | c++,gcc | C++ | 2200-2219 |
+| asm | assembler,nasm | Assembler | 2200-2219 |
+| python | python3 | Python | 2200-2219 |
+| rust | rust | Rust | 2200-2219 |
+| js | node,nodejs | JavaScript | 2200-2219 |
+| csharp | dotnet | C# | 2200-2219 |
+| ruby | ruby | Ruby | 2200-2219 |
+| go | golang | Go | 2200-2219 |
+| java | jdk | Java | 2200-2219 |
+| kotlin | kotlin | Kotlin | 2200-2219 |
+| swift | swift | Swift | 2200-2219 |
+| php | php | PHP | 2200-2219 |
+| scala | scala | Scala | 2200-2219 |
+| r | rlang,r | R | 2200-2219 |
+| lua | lua | Lua | 2200-2219 |
+| flutter | dart,flutter | Flutter | 2200-2219 |
+| elixir | elixir | Elixir | 2200-2219 |
+| haskell | ghc,haskell | Haskell | 2200-2219 |
 
 **All 7 Service VMs:**
 | Name | Aliases | Display Name | SSH Port | Service Port(s) |
@@ -634,7 +634,7 @@ The VDE uses **template variable substitution** to generate docker-compose.yml f
 
 ```yaml
 services:
-  {{NAME}}-dev:                    # e.g., "go-dev"
+  {{NAME}}-dev:                    # e.g., "vde-go"
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
@@ -644,7 +644,7 @@ services:
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: dev-{{NAME}}:latest      # e.g., "dev-go:latest"
-    container_name: {{NAME}}-dev    # e.g., "go-dev"
+    container_name: {{NAME}}-dev    # e.g., "vde-go"
     hostname: {{NAME}}-dev
     restart: unless-stopped
     command: sh -c "{{INSTALL_CMD}} && /usr/sbin/sshd -D"
@@ -670,7 +670,7 @@ services:
 services:
   {{NAME}}:                        # No "-dev" suffix!
     # ... (same build config)
-    container_name: {{NAME}}        # e.g., "postgres" not "postgres-dev"
+    container_name: {{NAME}}        # e.g., "postgres" not "vde-postgres"
 
     ports:
       - "{{SSH_PORT}}:22"          # SSH access
@@ -796,8 +796,8 @@ find_next_available_port() {
 **Example flow:**
 ```
 Existing VMs:
-- python-dev: SSH_PORT=2222
-- js-dev: SSH_PORT=2224
+- vde-python: SSH_PORT=2222
+- vde-js: SSH_PORT=2224
 
 get_allocated_ports 2200 2299
 => Returns: 2222, 2224
@@ -870,7 +870,7 @@ VM_SVC_PORT=$(get_vm_info svc_port "$VM_NAME") # "" (empty for languages)
 ```bash
 SSH_PORT=$(find_next_available_port "$VM_TYPE")
 # Scans configs/docker/*/docker-compose.yml
-# Finds: python-dev (2222), js-dev (2224), rust-dev (2223)
+# Finds: vde-python (2222), vde-js (2224), vde-rust (2223)
 # Returns: 2200 (first available in 2200-2299)
 
 log_info "Allocated SSH port: 2200"
@@ -911,7 +911,7 @@ services:
 
 # After:
 services:
-  go-dev:
+  vde-go:
     ports:
       - "2200:22"
     command: sh -c "apt-get update -y && apt-get install -y golang-go && /usr/sbin/sshd -D"
@@ -930,7 +930,7 @@ EOF
 ### Step 9: Update SSH Config
 
 ```bash
-ssh_host="${VM_NAME}-dev"  # "go-dev" (language VMs get -dev suffix)
+ssh_host="${VM_NAME}-dev"  # "vde-go" (language VMs get -dev suffix)
 
 merge_ssh_config_entry "$ssh_host" "2200" "Go"
 # 1. Backs up ~/.ssh/vde/config to ~/dev/backup/ssh/config.backup.TIMESTAMP
@@ -941,9 +941,9 @@ merge_ssh_config_entry "$ssh_host" "2200" "Go"
 **Generated SSH entry:**
 ```ssh-config
 # Go Dev VM
-Host go-dev
+Host vde-go
     HostName localhost
-    Port 2200
+    Port 2213
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     IdentitiesOnly yes
@@ -961,14 +961,14 @@ Created files:
   - logs/go/
 
 SSH Configuration:
-  - Host alias: go-dev
+  - Host alias: vde-go
   - SSH port: 2200
-  - Connect with: ssh go-dev
+  - Connect with: ssh vde-go
 
 Next steps:
   1. Review and customize env-files/go.env if needed
   2. Start the VM: vde start go
-  3. Connect: ssh go-dev
+  3. Connect: ssh vde-go
 ```
 
 ---
@@ -1042,8 +1042,8 @@ start_vm() {
 2. **Create container**:
    ```bash
    docker create \
-     --name go-dev \
-     --hostname go-dev \
+     --name vde-go \
+     --hostname vde-go \
      --restart unless-stopped \
      -p 2200:22 \
      -v ~/dev/projects/go:/home/devuser/workspace \
@@ -1055,7 +1055,7 @@ start_vm() {
      sh -c "apt-get update -y && apt-get install -y golang-go && /usr/sbin/sshd -D"
    ```
 
-3. **Start container**: `docker start go-dev`
+3. **Start container**: `docker start vde-go`
 
 ### Container Boot Sequence
 
@@ -1074,7 +1074,7 @@ sh -c "apt-get update -y && apt-get install -y golang-go && /usr/sbin/sshd -D"
 ```
 
 Now the container is running with:
-- **SSH accessible** on localhost:2200
+- **SSH accessible** on localhost:2213
 - **Go installed** and available to devuser
 - **Workspace mounted** at `/home/devuser/workspace`
 
@@ -1085,7 +1085,7 @@ Now the container is running with:
 You can now connect:
 
 ```bash
-ssh go-dev
+ssh vde-go
 ```
 
 ### SSH Connection Flow
@@ -1093,7 +1093,7 @@ ssh go-dev
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │ 1. SSH Client reads ~/.ssh/vde/config                              │
-│    Finds "Host go-dev" entry                                   │
+│    Finds "Host vde-go" entry                                   │
 │    - HostName: localhost                                       │
 │    - Port: 2200                                                │
 │    - User: devuser                                             │
@@ -1102,8 +1102,8 @@ ssh go-dev
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ 2. SSH connects to localhost:2200                              │
-│    Port 2200 is mapped by Docker to go-dev:22                 │
+│ 2. SSH connects to localhost:2213                              │
+│    Port 2213 is mapped by Docker to vde-python:22                 │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
@@ -1116,7 +1116,7 @@ ssh go-dev
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ 4. User gets zsh prompt                                        │
-│    devuser@go-dev:~$                                           │
+│    devuser@vde-go:~$                                           │
 │                                                                 │
 │    Environment:                                                │
 │    - HOME: /home/devuser                                       │
@@ -1129,14 +1129,14 @@ ssh go-dev
 ### Inside the Container
 
 ```bash
-devuser@go-dev:~$ cd ~/workspace
-devuser@go-dev:~/workspace$ ls -la
+devuser@vde-go:~$ cd ~/workspace
+devuser@vde-go:~/workspace$ ls -la
 # Shows contents of ~/dev/projects/go on host
 
-devuser@go-dev:~/workspace$ go version
+devuser@vde-go:~/workspace$ go version
 # go version go1.21 debian
 
-devuser@go-dev:~/workspace$ cat > main.go << 'EOF'
+devuser@vde-go:~/workspace$ cat > main.go << 'EOF'
 package main
 import "fmt"
 func main() {
@@ -1144,7 +1144,7 @@ func main() {
 }
 EOF
 
-devuser@go-dev:~/workspace$ go run main.go
+devuser@vde-go:~/workspace$ go run main.go
 Hello from VDE!
 ```
 
@@ -1160,8 +1160,8 @@ Service VMs (like PostgreSQL) work differently:
 
 | Aspect | Language VM | Service VM |
 |--------|-------------|------------|
-| Container name | `go-dev` | `postgres` (no suffix) |
-| SSH host | `go-dev` | `postgres` |
+| Container name | `vde-go` | `postgres` (no suffix) |
+| SSH host | `vde-go` | `postgres` |
 | SSH port range | 2200-2218 (19 languages) | 2400-2406 (7 services) |
 | Volume mount | `projects/go/` | `data/postgres/` |
 | Purpose | Development workspace | Persistent data |
@@ -1201,8 +1201,8 @@ All containers are on the `vde-net` Docker network, enabling communication:
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│ python-dev  │     │  postgres   │     │    redis    │
-│   :2200     │     │   :2400     │     │   :2401     │
+│ vde-python  │     │  postgres   │     │    redis    │
+│   :2213     │     │   :2404     │     │   :2406     │
 └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
        │                  │                  │
        └──────────────────┴──────────────────┘
@@ -1213,7 +1213,7 @@ All containers are on the `vde-net` Docker network, enabling communication:
                   └───────────────┘
 ```
 
-**From python-dev container:**
+**From vde-python container:**
 ```bash
 # Connect to PostgreSQL
 psql -h postgres -U devuser -d mydb
@@ -1222,7 +1222,7 @@ psql -h postgres -U devuser -d mydb
 redis-cli -h redis
 
 # SSH to another container
-ssh go-dev
+ssh vde-go
 ```
 
 **Service discovery works via container names** because Docker's embedded DNS resolves container names to IPs.
@@ -1277,8 +1277,8 @@ stop_vm() {
 ```
 
 **What `docker-compose down` does:**
-1. Stops the container: `docker stop go-dev`
-2. Removes the container: `docker rm go-dev`
+1. Stops the container: `docker stop vde-go`
+2. Removes the container: `docker rm vde-go`
 3. **Does NOT remove** the image (dev-go:latest persists)
 4. **Does NOT remove** volumes (data persists on host)
 
@@ -1371,13 +1371,13 @@ File Generation:
      SSH_PORT=2200
 
   4. Update ~/.ssh/vde/config:
-     Append Host go-dev entry
+     Append Host vde-go entry
 
 ↓
 
 Output:
   [SUCCESS] VM configuration complete!
-  Connect with: ssh go-dev
+  Connect with: ssh vde-go
 
 ↓
 
@@ -1388,7 +1388,7 @@ Start VM:
   ↓
   Docker builds image (dev-go:latest)
   ↓
-  Docker creates container (go-dev)
+  Docker creates container (vde-go)
   ↓
   Docker starts container
   ↓
@@ -1397,9 +1397,9 @@ Start VM:
 ↓
 
 Connect:
-  ssh go-dev
+  ssh vde-go
   ↓
-  SSH connects to localhost:2200
+  SSH connects to localhost:2213
   ↓
   Container's sshd authenticates
   ↓

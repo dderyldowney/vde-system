@@ -10,25 +10,25 @@ All available programming languages and services that can be created with VDE.
 
 | Name | Aliases | Display Name | Container Name | SSH Host | Install Command |
 |------|---------|--------------|----------------|----------|-----------------|
-| c | c | C | c-dev | c-dev | gcc, make, cmake, gdb |
-| cpp | c++, gcc | C++ | cpp-dev | cpp-dev | g++, make, cmake, gdb |
-| asm | assembler, nasm | Assembler | asm-dev | asm-dev | nasm, yasm, gdb |
-| python | python3 | Python | python-dev | python-dev | python3, python3-pip |
-| rust | rust | Rust | rust-dev | rust-dev | rustup (via install script) |
-| js | node, nodejs | JavaScript | js-dev | js-dev | Node.js LTS |
-| csharp | dotnet | C# | csharp-dev | csharp-dev | dotnet-sdk-8.0 |
-| ruby | ruby | Ruby | ruby-dev | ruby-dev | ruby-full |
-| go | golang | Go | go-dev | go-dev | golang-go |
-| java | jdk | Java | java-dev | java-dev | default-jdk, maven, gradle |
-| kotlin | kotlin | Kotlin | kotlin-dev | kotlin-dev | kotlin, SDKMAN |
-| swift | swift | Swift | swift-dev | swift-dev | binutils, git, libc6-dev, curl |
-| php | php | PHP | php-dev | php-dev | php, php-cli, composer |
-| scala | scala | Scala | scala-dev | scala-dev | scala-defaults, sbt |
-| r | rlang, r | R | r-dev | r-dev | r-base, r-cran-littler |
-| lua | lua | Lua | lua-dev | lua-dev | lua5.4, luarocks |
-| flutter | dart, flutter | Flutter | flutter-dev | flutter-dev | flutter SDK |
-| elixir | elixir | Elixir | elixir-dev | elixir-dev | elixir, erlang |
-| haskell | ghc, haskell | Haskell | haskell-dev | haskell-dev | ghc, cabal-install |
+| c | c | C | vde-c | vde-c | gcc, make, cmake, gdb |
+| cpp | c++, gcc | C++ | vde-cpp | vde-cpp | g++, make, cmake, gdb |
+| asm | assembler, nasm | Assembler | vde-asm | vde-asm | nasm, yasm, gdb |
+| python | python3 | Python | vde-python | vde-python | python3, python3-pip |
+| rust | rust | Rust | vde-rust | vde-rust | rustup (via install script) |
+| js | node, nodejs | JavaScript | vde-js | vde-js | Node.js LTS |
+| csharp | dotnet | C# | vde-csharp | vde-csharp | dotnet-sdk-8.0 |
+| ruby | ruby | Ruby | vde-ruby | vde-ruby | ruby-full |
+| go | golang | Go | vde-go | vde-go | golang-go |
+| java | jdk | Java | vde-java | vde-java | default-jdk, maven, gradle |
+| kotlin | kotlin | Kotlin | vde-kotlin | vde-kotlin | kotlin, SDKMAN |
+| swift | swift | Swift | vde-swift | vde-swift | binutils, git, libc6-dev, curl |
+| php | php | PHP | vde-php | vde-php | php, php-cli, composer |
+| scala | scala | Scala | vde-scala | vde-scala | scala-defaults, sbt |
+| r | rlang, r | R | vde-r | vde-r | r-base, r-cran-littler |
+| lua | lua | Lua | vde-lua | vde-lua | lua5.4, luarocks |
+| flutter | dart, flutter | Flutter | vde-flutter | vde-flutter | flutter SDK |
+| elixir | elixir | Elixir | vde-elixir | vde-elixir | elixir, erlang |
+| haskell | ghc, haskell | Haskell | vde-haskell | vde-haskell | ghc, cabal-install |
 
 ---
 

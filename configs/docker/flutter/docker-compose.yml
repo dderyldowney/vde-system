@@ -1,3 +1,4 @@
+name: vde-flutter
 # Template for language VMs
 # Variables: flutter, 2200, apt-get update -y && apt-get install -y curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH="$PATH:/home/devuser/flutter/bin" && flutter precache'
 services:
@@ -17,14 +18,14 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH="$PATH:/home/devuser/flutter/bin" && flutter precache' && /usr/sbin/sshd -D"
 
     ports:
-      - "2200:22"
+      - "2205:22"
 
     volumes:
       - ../../../projects/flutter:/home/devuser/workspace
       - ../../../logs/flutter:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock

@@ -478,7 +478,7 @@ def step_postgres_running(context):
 def step_connection_info_displayed(context):
     """Verify connection information is displayed."""
     result = run_vde_command(["connect", "python", "--dry-run"])
-    has_info = any(x in result["stdout"].lower() for x in ['ssh', 'hostname', 'port', 'devuser', '2200'])
+    has_info = any(x in result["stdout"].lower() for x in ['ssh', 'hostname', 'port', 'devuser', '2213'])
     assert has_info or result["exit_code"] == 0, "Connection information should be displayed"
 
 

@@ -124,23 +124,23 @@ def step_vscode_installed(context):
     context.vscode_path = next((p for p in vscode_paths if (p.exists() if isinstance(p, Path) else Path(p).exists())), None)
 
 
-@when('I add the SSH config for python-dev')
+@when('I add the SSH config for vde-python')
 def step_add_ssh_config_python_dev(context):
-    """Add SSH config entry for python-dev VM."""
+    """Add SSH config entry for vde-python VM."""
     ssh_config_dir = Path.home() / '.ssh' / 'vde'
     ssh_config_dir.mkdir(parents=True, exist_ok=True)
     ssh_config = ssh_config_dir / 'config'
     
-    # Get port for python-dev VM
+    # Get port for vde-python VM
     result = subprocess.run(
-        ['./scripts/vde', 'port', 'python-dev'],
+        ['./scripts/vde', 'port', 'vde-python'],
         capture_output=True, text=True, timeout=30
     )
     
     config_entry = f"""
-Host python-dev
+Host vde-python
     HostName localhost
-    Port {result.stdout.strip() if result.returncode == 0 else '2200'}
+    Port {result.stdout.strip() if result.returncode == 0 else '2213'}
     User devuser
     IdentityFile ~/.ssh/vde/id_rsa
     StrictHostKeyChecking no
@@ -160,7 +160,7 @@ def step_connect_remote_ssh(context):
     ssh_config = Path.home() / '.ssh' / 'vde' / 'config'
     if ssh_config.exists():
         content = ssh_config.read_text()
-        assert 'python-dev' in content, "SSH config should have python-dev entry"
+        assert 'vde-python' in content, "SSH config should have vde-python entry"
         context.remote_ssh_possible = True
     else:
         context.remote_ssh_possible = False
@@ -201,35 +201,35 @@ def step_edit_projects(context):
 # MULTIPLE SSH CONNECTIONS WHEN/THEN steps
 # =============================================================================
 
-@when('I connect to python-dev')
+@when('I connect to vde-python')
 def step_connect_to_python_dev(context):
-    """Connect to python-dev VM via SSH."""
-    # Store connection info for python-dev
-    context.current_connection = 'python-dev'
+    """Connect to vde-python VM via SSH."""
+    # Store connection info for vde-python
+    context.current_connection = 'vde-python'
     result = subprocess.run(
-        ['./scripts/vde', 'port', 'python-dev'],
+        ['./scripts/vde', 'port', 'vde-python'],
         capture_output=True, text=True, timeout=30
     )
-    context.python_dev_port = result.stdout.strip() if result.returncode == 0 else '2200'
+    context.python_dev_port = result.stdout.strip() if result.returncode == 0 else '2213'
 
 
-@when('then connect to postgres-dev')
+@when('then connect to vde-postgres')
 def step_connect_to_postgres_dev(context):
-    """Connect to postgres-dev VM via SSH."""
-    # Store connection info for postgres-dev
-    context.second_connection = 'postgres-dev'
+    """Connect to vde-postgres VM via SSH."""
+    # Store connection info for vde-postgres
+    context.second_connection = 'vde-postgres'
     result = subprocess.run(
-        ['./scripts/vde', 'port', 'postgres-dev'],
+        ['./scripts/vde', 'port', 'vde-postgres'],
         capture_output=True, text=True, timeout=30
     )
-    context.postgres_dev_port = result.stdout.strip() if result.returncode == 0 else '2400'
+    context.postgres_dev_port = result.stdout.strip() if result.returncode == 0 else '2404'
 
 
 @then('each should use a different port')
 def step_different_ports(context):
     """Verify different VMs use different ports."""
-    python_port = getattr(context, 'python_dev_port', '2200')
-    postgres_port = getattr(context, 'postgres_dev_port', '2400')
+    python_port = getattr(context, 'python_dev_port', '2213')
+    postgres_port = getattr(context, 'postgres_dev_port', '2404')
     assert python_port != postgres_port, \
         f"VMs should use different ports: python={python_port}, postgres={postgres_port}"
 

@@ -93,7 +93,7 @@ def get_fallback_intros():
         "4. Understanding": "Check VM status with `vde list`.",
         "5. Starting and Stopping": "Start VMs with `vde start <name>` and stop with `vde stop <name>`.",
         "6. Your First Cluster": "Create multiple VMs that work together.",
-        "7. Connecting": "SSH into VMs using simple names like `ssh python-dev`.",
+        "7. Connecting": "SSH into VMs using simple names like `ssh vde-python`.",
         "8. Working with Databases": "Service VMs like PostgreSQL are accessible from language VMs.",
         "9. Daily Workflow": "Start your day with `vde start python postgres redis`.",
         "10. Adding More Languages": "Add more languages anytime with `vde create <name>`.",
@@ -776,13 +776,13 @@ vde ssh nginx      # Nginx web server
 
 | VM | Port |
 |----|------|
-| python-dev | 2200 |
-| rust-dev | 2201 |
-| js-dev | 2202 |
-| csharp-dev | 2203 |
-| ruby-dev | 2204 |
-| postgres | 2400 |
-| redis | 2401 |
+| vde-python | 2213 |
+| vde-rust | 2216 |
+| vde-js | 2202 |
+| vde-csharp | 2203 |
+| vde-ruby | 2204 |
+| postgres | 2404 |
+| redis | 2406 |
 | mongodb | 2402 |
 | nginx | 2403 |
 

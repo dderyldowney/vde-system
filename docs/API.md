@@ -89,7 +89,7 @@ vde <command> [options] [args]
 ```bash
 vde list                          # List all VMs
 vde create python                 # Create Python VM
-vde start python-dev              # Start Python VM
+vde start vde-python              # Start Python VM
 vde stop postgres                 # Stop PostgreSQL service
 vde health                        # Run health check
 ```
@@ -653,7 +653,7 @@ SSH_PORT=<allocated_ssh_port>           # SSH port for this VM
 
 **Example (postgres.env):**
 ```bash
-SSH_PORT=2400
+SSH_PORT=2404
 POSTGRES_PORT=5432
 ```
 
@@ -681,7 +681,7 @@ Templates are stored in `scripts/templates/` and use shell variable substitution
 
 **Rendering:**
 ```bash
-render_template <template_file> NAME "python" SSH_PORT 2200 INSTALL_CMD "..." SERVICE_PORT ""
+render_template <template_file> NAME "python" SSH_PORT 2213 INSTALL_CMD "..." SERVICE_PORT ""
 ```
 
 ---
@@ -692,11 +692,11 @@ render_template <template_file> NAME "python" SSH_PORT 2200 INSTALL_CMD "..." SE
 
 | Name | Aliases | Display Name | Default Port |
 |------|---------|--------------|--------------|
-| c | c | C | 2200 |
-| cpp | c++, gcc | C++ | 2201 |
+| c | c | C | 2201 |
+| cpp | c++, gcc | C++ | 2202 |
 | asm | assembler, nasm | Assembler | 2202 |
 | python | python3, py | Python | 2203 |
-| rust | rust-dev | Rust | 2204 |
+| rust | vde-rust | Rust | 2204 |
 | js | node, nodejs | JavaScript | 2205 |
 | csharp | dotnet | C# | 2206 |
 | ruby | rb, ruby | Ruby | 2207 |
@@ -713,7 +713,7 @@ render_template <template_file> NAME "python" SSH_PORT 2200 INSTALL_CMD "..." SE
 | haskell | ghc, haskell | Haskell | 2218 |
 | zig | | Zig Language | 2219 |
 
-**Container Naming:** `<name>-dev` (e.g., `python-dev`)
+**Container Naming:** `<name>-dev` (e.g., `vde-python`)
 
 **Port Range:** 2200-2299
 
@@ -721,8 +721,8 @@ render_template <template_file> NAME "python" SSH_PORT 2200 INSTALL_CMD "..." SE
 
 | Name | Aliases | Display Name | Service Port | Default Port |
 |------|---------|--------------|--------------|--------------|
-| postgres | postgresql | PostgreSQL | 5432 | 2400 |
-| redis | redis | Redis | 6379 | 2401 |
+| postgres | postgresql | PostgreSQL | 5432 | 2404 |
+| redis | redis | Redis | 6379 | 2406 |
 | mongodb | mongo | MongoDB | 27017 | 2402 |
 | nginx | nginx | Nginx | 80,443 | 2403 |
 | couchdb | couchdb | CouchDB | 5984 | 2404 |
@@ -789,8 +789,8 @@ For language VMs, the SSH host alias is `<name>-dev`.
 For service VMs, the SSH host alias is `<name>`.
 
 Examples:
-- `python-dev` → Port 2203
-- `postgres` → Port 2400
+- `vde-python` → Port 2213
+- `postgres` → Port 2404
 
 ---
 
@@ -854,26 +854,26 @@ vde add-vm-type <name> "<install_cmd>"
 
 ```bash
 # Language VMs
-ssh c-dev           # C development
-ssh cpp-dev         # C++ development
-ssh asm-dev         # Assembler development
-ssh python-dev      # Python development
-ssh rust-dev        # Rust development
-ssh js-dev          # JavaScript/Node.js
-ssh csharp-dev      # C# development
-ssh ruby-dev        # Ruby development
-ssh go-dev          # Go development
-ssh java-dev        # Java development
-ssh kotlin-dev      # Kotlin development
-ssh swift-dev       # Swift development
-ssh php-dev         # PHP development
-ssh scala-dev       # Scala development
-ssh r-dev           # R development
-ssh lua-dev         # Lua development
-ssh flutter-dev     # Flutter development
-ssh elixir-dev      # Elixir development
-ssh haskell-dev     # Haskell development
-ssh zig-dev         # Zig development
+ssh vde-c           # C development
+ssh vde-cpp         # C++ development
+ssh vde-asm         # Assembler development
+ssh vde-python      # Python development
+ssh vde-rust        # Rust development
+ssh vde-js          # JavaScript/Node.js
+ssh vde-csharp      # C# development
+ssh vde-ruby        # Ruby development
+ssh vde-go          # Go development
+ssh vde-java        # Java development
+ssh vde-kotlin      # Kotlin development
+ssh vde-swift       # Swift development
+ssh vde-php         # PHP development
+ssh vde-scala       # Scala development
+ssh vde-r           # R development
+ssh vde-lua         # Lua development
+ssh vde-flutter     # Flutter development
+ssh vde-elixir      # Elixir development
+ssh vde-haskell     # Haskell development
+ssh vde-zig         # Zig development
 
 # Service VMs
 ssh postgres        # PostgreSQL database

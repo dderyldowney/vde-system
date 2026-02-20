@@ -49,7 +49,7 @@ VDE is currently in a **highly functional "Developer Preview" state**. The core 
 
 **Top 5 Issue Examples:**
 1.  `Configure VM with multiple service ports`: Assertion failure on `docker-compose.yml` location/parsing.
-2.  `Service port configuration`: Failed connectivity to PostgreSQL on external port 2400.
+2.  `Service port configuration`: Failed connectivity to PostgreSQL on external port 2404.
 3.  `Data persistence for services`: Verification logic for volume persistence is inconsistent.
 4.  `Container health monitoring`: Timing issues in "healthy" status detection for database services.
 5.  `Cleaning up stopped containers`: Logic to prune old instances occasionally fails to trigger.
@@ -70,7 +70,7 @@ VDE is currently in a **highly functional "Developer Preview" state**. The core 
 *   **Port Collision**: Concurrency issues in high-frequency port allocation.
 
 **Top 5 Issue Examples:**
-1.  `VDE handles port conflicts gracefully`: Failed to re-allocate from 2200 to 2201 when host port occupied.
+1.  `VDE handles port conflicts gracefully`: Failed to re-allocate from 2213 to 2214 when host port occupied.
 2.  `Validate VM configuration before starting`: "No configuration file provided" error when config is present.
 3.  `Invalid VM name handling`: Error messages lack the documented "Solution" and "Suggestions" content.
 4.  `Insufficient disk space`: Warning mechanism for low host resources failed to trigger.

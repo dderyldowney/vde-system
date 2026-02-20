@@ -93,7 +93,7 @@ Ready to have your mind blown (in the best way)? Here's all it takes to get star
 # That's it. Seriously.
 ./scripts/vde create python
 ./scripts/vde start python
-ssh python-dev
+ssh vde-python
 ```
 
 **Three commands.** That's all.
@@ -114,7 +114,7 @@ ssh python-dev
 ```bash
 ./scripts/vde create rust
 ./scripts/vde start rust
-ssh rust-dev
+ssh vde-rust
 ```
 
 Boom! Now you have Python **and** Rust running side-by-side. No conflicts. No version wars. They don't even know each other exist (unless you want them to). You're basically a polyglot programmer now! 😎
@@ -154,7 +154,7 @@ Imagine you're working in your Python container and you need to test something a
 
 ```bash
 # From inside your Python VM
-ssh postgres-dev psql -U devuser
+ssh vde-postgres psql -U devuser
 ```
 
 That's it. You're now in PostgreSQL. Using **your** SSH keys. Without any setup. Magic!
@@ -183,7 +183,7 @@ Here's your workflow:
 ./scripts/vde start python js postgres redis
 
 # Connect to your Python backend
-ssh python-dev
+ssh vde-python
 cd ~/workspace/my-app
 pip install -r requirements.txt
 python app.py
@@ -193,7 +193,7 @@ In another terminal:
 
 ```bash
 # Connect to your JavaScript frontend
-ssh js-dev
+ssh vde-js
 cd ~/workspace/my-app
 npm install
 npm start
@@ -246,7 +246,7 @@ When you run `./scripts/vde create python`, VDE:
 1. Finds an available SSH port (automatically)
 2. Creates a Docker Compose configuration
 3. Sets up your project directory
-4. Adds an SSH config entry (`ssh python-dev` will work)
+4. Adds an SSH config entry (`ssh vde-python` will work)
 5. Starts the SSH agent (if not running)
 6. Loads your SSH keys (or generates a pair if you don't have one)
 7. Gets everything ready for `vde start`
@@ -262,7 +262,7 @@ When you run `./scripts/vde start python`, VDE:
 3. Connects the container to the VDE network (so VMs can talk to each other)
 4. Starts the SSH server
 
-When you `ssh python-dev`:
+When you `ssh vde-python`:
 
 1. Your SSH connection goes directly into the container
 2. You land in `/home/devuser/workspace`
@@ -387,7 +387,7 @@ Then delete VDE, and your projects live on. Safe and sound!
 cd ~/dev  # or wherever you cloned this repo
 ./scripts/vde create python  # or any language you want!
 ./scripts/vde start python
-ssh python-dev
+ssh vde-python
 ```
 
 **That's it!** Welcome to easier, more joyful development. You're going to love it here! 🏠

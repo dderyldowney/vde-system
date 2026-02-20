@@ -53,8 +53,8 @@ Then rebuild:
 
 | Aspect | Convention | Example |
 |--------|------------|---------|
-| **Container** | `<name>-dev` | `python-dev` |
-| **SSH Host** | `<name>-dev` | `python-dev` |
+| **Container** | `<name>-dev` | `vde-python` |
+| **SSH Host** | `<name>-dev` | `vde-python` |
 | **Port Range** | 2200-2299 | 2200, 2201, 2202... |
 | **Project Directory** | `projects/<name>/` | `projects/python/` |
 | **Volume Mount** | `/home/devuser/workspace` | (from `projects/python/`) |
@@ -75,11 +75,11 @@ Then rebuild:
 
 | Type | Name | Container | SSH Host | SSH Port | Service Port |
 |------|------|-----------|----------|----------|-------------|
-| Language | python | python-dev | python-dev | 2200 | - |
-| Language | rust | rust-dev | rust-dev | 2201 | - |
-| Language | go | go-dev | go-dev | 2202 | - |
-| Service | postgres | postgres | postgres | 2400 | 5432 |
-| Service | redis | redis | redis | 2401 | 6379 |
+| Language | python | vde-python | vde-python | 2213 | - |
+| Language | rust | vde-rust | vde-rust | 2216 | - |
+| Language | go | vde-go | vde-go | 2202 | - |
+| Service | postgres | postgres | postgres | 2404 | 5432 |
+| Service | redis | redis | redis | 2406 | 6379 |
 | Service | mongodb | mongodb | mongodb | 2402 | 27017 |
 
 ---

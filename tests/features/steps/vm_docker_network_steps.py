@@ -123,7 +123,7 @@ def step_unique_ssh_port(context):
             timeout=10,
         )
         if result.returncode == 0 and result.stdout.strip():
-            # Parse port from "0.0.0.0:2201" format
+            # Parse port from "0.0.0.0:2216" format
             if ':' in result.stdout:
                 port = result.stdout.split(':')[-1]
                 if port.isdigit():

@@ -40,10 +40,10 @@ Feature: SSH Configuration
 
   @requires-docker-ssh
   Scenario: Create SSH config entry for new VM
-    Given VM "python" is created with SSH port "2200"
+    Given VM "python" is created with SSH port "2213"
     When SSH config is generated
     Then SSH config should contain "Host vde-python"
-    And SSH config should contain "Port 2200"
+    And SSH config should contain "Port 2213"
     And SSH config should contain "ForwardAgent yes"
 
   @requires-docker-ssh
@@ -54,8 +54,8 @@ Feature: SSH Configuration
 
   @requires-docker-ssh
   Scenario: Generate VM-to-VM SSH config entries
-    Given VM "python" is allocated port "2200"
-    And VM "rust" is allocated port "2201"
+    Given VM "python" is allocated port "2213"
+    And VM "rust" is allocated port "2216"
     When VM-to-VM SSH config is generated
     Then SSH config should contain entry for "vde-python"
     And SSH config should contain entry for "vde-rust"
@@ -120,7 +120,7 @@ Feature: SSH Configuration
     Given ~/.ssh/vde/config exists with existing host entries
     And ~/.ssh/vde/config contains "Host github.com"
     And ~/.ssh/vde/config contains "Host myserver"
-    When I create VM "python" with SSH port "2200"
+    When I create VM "python" with SSH port "2213"
     Then ~/.ssh/vde/config should still contain "Host github.com"
     And ~/.ssh/vde/config should still contain "Host myserver"
     And ~/.ssh/vde/config should contain new "Host vde-python" entry
@@ -132,7 +132,7 @@ Feature: SSH Configuration
     And ~/.ssh/vde/config contains "Host *"
     And ~/.ssh/vde/config contains "    User myuser"
     And ~/.ssh/vde/config contains "    IdentityFile ~/.ssh/vde/mykey"
-    When I create VM "rust" with SSH port "2201"
+    When I create VM "rust" with SSH port "2216"
     Then ~/.ssh/vde/config should still contain "Host *"
     And ~/.ssh/vde/config should still contain "    User myuser"
     And ~/.ssh/vde/config should still contain "    IdentityFile ~/.ssh/vde/mykey"
@@ -141,10 +141,10 @@ Feature: SSH Configuration
   @requires-docker-ssh
   Scenario: Merge preserves existing VDE entries when adding new VM
     Given ~/.ssh/vde/config contains "Host vde-python"
-    And ~/.ssh/vde/config contains "    Port 2200"
-    When I create VM "rust" with SSH port "2201"
+    And ~/.ssh/vde/config contains "    Port 2213"
+    When I create VM "rust" with SSH port "2216"
     Then ~/.ssh/vde/config should still contain "Host vde-python"
-    And ~/.ssh/vde/config should still contain "    Port 2200" under vde-python
+    And ~/.ssh/vde/config should still contain "    Port 2213" under vde-python
     And new "Host vde-rust" entry should be added
 
   @requires-docker-ssh
@@ -176,7 +176,7 @@ Feature: SSH Configuration
   Scenario: Merge creates SSH config if it doesn't exist
     Given ~/.ssh/vde/config does not exist
     And ~/.ssh/vde directory exists or can be created
-    When I create VM "python" with SSH port "2200"
+    When I create VM "python" with SSH port "2213"
     Then ~/.ssh/vde/config should be created
     And ~/.ssh/vde/config should have permissions "600"
     And ~/.ssh/vde/config should contain "Host vde-python"
@@ -184,7 +184,7 @@ Feature: SSH Configuration
   @requires-docker-ssh
   Scenario: Merge creates ~/.ssh/vde directory if needed
     Given ~/.ssh/vde directory does not exist
-    When I create VM "python" with SSH port "2200"
+    When I create VM "python" with SSH port "2213"
     Then ~/.ssh/vde directory should be created
     And ~/.ssh/vde/config should be created
     And directory should have correct permissions
@@ -193,7 +193,7 @@ Feature: SSH Configuration
   Scenario: Merge preserves blank lines and formatting
     Given ~/.ssh/vde/config exists with blank lines
     And ~/.ssh/vde/config has comments and custom formatting
-    When I create VM "go" with SSH port "2202"
+    When I create VM "go" with SSH port "2206"
     Then ~/.ssh/vde/config blank lines should be preserved
     And ~/.ssh/vde/config comments should be preserved
     And new entry should be added with proper formatting
@@ -210,7 +210,7 @@ Feature: SSH Configuration
   @requires-docker-ssh
   Scenario: Merge creates backup before any modification
     Given ~/.ssh/vde/config exists
-    When I create VM "python" with SSH port "2200"
+    When I create VM "python" with SSH port "2213"
     Then backup file should exist at "backup/ssh/config.backup.YYYYMMDD_HHMMSS"
     And backup should contain original config content
     And backup timestamp should be before modification
@@ -218,10 +218,10 @@ Feature: SSH Configuration
   @requires-docker-ssh
   Scenario: Merge entry has all required SSH config fields
     Given ~/.ssh/vde/config exists
-    When I create VM "python" with SSH port "2200"
+    When I create VM "python" with SSH port "2213"
     Then merged entry should contain "Host vde-python"
     And merged entry should contain "HostName localhost"
-    And merged entry should contain "Port 2200"
+    And merged entry should contain "Port 2213"
     And merged entry should contain "User devuser"
     And merged entry should contain "ForwardAgent yes"
     And merged entry should contain "StrictHostKeyChecking no"
@@ -244,27 +244,27 @@ Feature: SSH Configuration
 
   @requires-docker-ssh
   Scenario: Remove known_hosts entry when VM is removed
-    Given VM "python" is created with SSH port "2200"
-    And ~/.ssh/vde/known_hosts contains entry for "[localhost]:2200"
+    Given VM "python" is created with SSH port "2213"
+    And ~/.ssh/vde/known_hosts contains entry for "[localhost]:2213"
     When I remove VM for SSH cleanup "python"
-    Then ~/.ssh/vde/known_hosts should NOT contain entry for "[localhost]:2200"
-    And ~/.ssh/vde/known_hosts should NOT contain entry for "[::1]:2200"
+    Then ~/.ssh/vde/known_hosts should NOT contain entry for "[localhost]:2213"
+    And ~/.ssh/vde/known_hosts should NOT contain entry for "[::1]:2213"
 
   @requires-docker-ssh
   Scenario: Remove multiple hostname patterns from known_hosts
-    Given VM "postgres" is created with SSH port "2400"
-    And ~/.ssh/vde/known_hosts contains "[localhost]:2400"
-    And ~/.ssh/vde/known_hosts contains "[::1]:2400"
+    Given VM "postgres" is created with SSH port "2404"
+    And ~/.ssh/vde/known_hosts contains "[localhost]:2404"
+    And ~/.ssh/vde/known_hosts contains "[::1]:2404"
     And ~/.ssh/vde/known_hosts contains "postgres" hostname entry
     When I remove VM for SSH cleanup "postgres"
-    Then ~/.ssh/vde/known_hosts should NOT contain "[localhost]:2400"
-    And ~/.ssh/vde/known_hosts should NOT contain "[::1]:2400"
+    Then ~/.ssh/vde/known_hosts should NOT contain "[localhost]:2404"
+    And ~/.ssh/vde/known_hosts should NOT contain "[::1]:2404"
     And ~/.ssh/vde/known_hosts should NOT contain "postgres" entry
 
   @requires-docker-ssh
   Scenario: Create backup of known_hosts before cleanup
     Given ~/.ssh/vde/known_hosts exists with content
-    And VM "redis" is created with SSH port "2401"
+    And VM "redis" is created with SSH port "2406"
     When I remove VM for SSH cleanup "redis"
     Then known_hosts backup file should exist at "~/.ssh/vde/known_hosts.vde-backup"
     And backup should contain original content
@@ -272,7 +272,7 @@ Feature: SSH Configuration
   @requires-docker-ssh
   Scenario: Known_hosts cleanup handles missing file gracefully
     Given ~/.ssh/vde/known_hosts does not exist
-    And VM "python" is created with SSH port "2200"
+    And VM "python" is created with SSH port "2213"
     When I remove VM for SSH cleanup "python"
     Then command should succeed without error
     And no known_hosts file should be created
@@ -280,17 +280,17 @@ Feature: SSH Configuration
   @requires-docker-ssh
   Scenario: Known_hosts cleanup removes entries by port number
     Given ~/.ssh/vde/known_hosts contains multiple port entries
-    And ~/.ssh/vde/known_hosts contains "[localhost]:2200"
-    And ~/.ssh/vde/known_hosts contains "[localhost]:2400"
-    When VM with port "2200" is removed
-    Then ~/.ssh/vde/known_hosts should NOT contain "[localhost]:2200"
-    And ~/.ssh/vde/known_hosts should still contain "[localhost]:2400"
+    And ~/.ssh/vde/known_hosts contains "[localhost]:2213"
+    And ~/.ssh/vde/known_hosts contains "[localhost]:2404"
+    When VM with port "2213" is removed
+    Then ~/.ssh/vde/known_hosts should NOT contain "[localhost]:2213"
+    And ~/.ssh/vde/known_hosts should still contain "[localhost]:2404"
 
   @requires-docker-ssh
   Scenario: Recreating VM after removal succeeds without host key warning
-    Given VM "python" was previously created with SSH port "2200"
-    And ~/.ssh/vde/known_hosts had old entry for "[localhost]:2200"
+    Given VM "python" was previously created with SSH port "2213"
+    And ~/.ssh/vde/known_hosts had old entry for "[localhost]:2213"
     When I remove VM for SSH cleanup "python"
-    And I create VM "python" with SSH port "2200"
+    And I create VM "python" with SSH port "2213"
     Then SSH connection should succeed without host key warning
-    And ~/.ssh/vde/known_hosts should contain new entry for "[localhost]:2200"
+    And ~/.ssh/vde/known_hosts should contain new entry for "[localhost]:2213"

@@ -127,12 +127,12 @@ SSH from one VM to another using your host's SSH keys:
 
 ```bash
 # From your host
-ssh go-dev                    # Connect to Go VM
+ssh vde-go                    # Connect to Go VM
 
 # From within Go VM
-ssh python-dev                # SSH to Python VM
-ssh rust-dev pwd              # Run command on Rust VM
-scp python-dev:/data/file .   # Copy file from Python VM
+ssh vde-python                # SSH to Python VM
+ssh vde-rust pwd              # Run command on Rust VM
+scp vde-python:/data/file .   # Copy file from Python VM
 ```
 
 ### Full Stack Example
@@ -143,9 +143,9 @@ vde create python postgres redis
 vde start python postgres redis
 
 # From Python VM, connect to services
-ssh python-dev
-ssh postgres-dev psql -U devuser    # Connect to PostgreSQL
-ssh redis-dev redis-cli             # Connect to Redis
+ssh vde-python
+ssh vde-postgres psql -U devuser    # Connect to PostgreSQL
+ssh vde-redis redis-cli             # Connect to Redis
 ```
 
 ### Microservices Example
@@ -156,10 +156,10 @@ vde create go python rust postgres
 vde start go python rust postgres
 
 # From Go VM (API gateway)
-ssh go-dev
-ssh python-dev svc_status           # Call Python service
-ssh rust-dev analytics              # Call Rust analytics
-ssh postgres-dev "psql -c 'SELECT * FROM users'"  # Query database
+ssh vde-go
+ssh vde-python svc_status           # Call Python service
+ssh vde-rust analytics              # Call Rust analytics
+ssh vde-postgres "psql -c 'SELECT * FROM users'"  # Query database
 ```
 
 ### SSH Config for VM-to-VM
@@ -168,17 +168,17 @@ VDE automatically generates these entries in `~/.ssh/vde/config`:
 
 ```ssh-config
 # Python Dev VM
-Host python-dev
+Host vde-python
     HostName localhost
-    Port 2200
+    Port 2213
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     IdentitiesOnly yes
 
 # Go Dev VM
-Host go-dev
+Host vde-go
     HostName localhost
-    Port 2205
+    Port 2206
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     IdentitiesOnly yes
@@ -205,8 +205,8 @@ to-host docker ps                   # Check host's containers
 
 ```bash
 # From within any VM
-docker exec python-dev ls           # Execute in Python VM
-docker exec postgres-dev psql       # Execute in PostgreSQL
+docker exec vde-python ls           # Execute in Python VM
+docker exec vde-postgres psql       # Execute in PostgreSQL
 ```
 
 ---
@@ -262,7 +262,7 @@ ssh-add -l
 cat ~/.ssh/vde/config
 
 # Test SSH connection
-ssh -v python-dev
+ssh -v vde-python
 ```
 
 ---
@@ -369,7 +369,7 @@ vde start python --rebuild
 
 ### Connection Refused
 
-**Symptom**: `ssh: connect to host localhost port 2200: Connection refused`
+**Symptom**: `ssh: connect to host localhost port 2213: Connection refused`
 
 **Solutions**:
 
@@ -380,7 +380,7 @@ docker ps | grep python
 
 2. Check container logs:
 ```bash
-docker logs python-dev
+docker logs vde-python
 ```
 
 3. Restart container:
@@ -393,13 +393,13 @@ vde start python
 
 ```bash
 # Enable verbose SSH output
-ssh -v python-dev
+ssh -v vde-python
 
 # More verbose
-ssh -vv python-dev
+ssh -vv vde-python
 
 # Maximum verbosity
-ssh -vvv python-dev
+ssh -vvv vde-python
 ```
 
 ---
@@ -419,9 +419,9 @@ cp ~/.ssh/vde/id_ed25519.pub ~/dev/public-ssh-keys/
 
 # 3. Create SSH entry manually
 cat >> ~/.ssh/vde/config << 'EOF'
-Host python-dev
+Host vde-python
     HostName localhost
-    Port 2200
+    Port 2213
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
 EOF
@@ -442,7 +442,7 @@ All manual steps are now handled by VDE automatically.
 ## Best Practices
 
 1. **Let VDE handle SSH setup**: Don't manually configure SSH agent or keys
-2. **Use VM aliases**: Use `python-dev` instead of `localhost -p 2200`
+2. **Use VM aliases**: Use `vde-python` instead of `localhost -p 2213`
 3. **Use the vde CLI**: Prefer `vde create/start/stop` over direct script calls
 4. **Check status with vde health**: Run `vde health` for comprehensive system status including SSH agent status
 5. **Multiple keys are supported**: All your keys are automatically detected and loaded

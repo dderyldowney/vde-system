@@ -1,3 +1,4 @@
+name: vde-lua
 # Template for language VMs
 # Variables: lua, 2218, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y lua5.4 luarocks
 services:
@@ -12,14 +13,14 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y lua5.4 luarocks && /usr/sbin/sshd -D"
 
     ports:
-      - "2218:22"
+      - "2211:22"
 
     volumes:
       - ../../../projects/lua:/home/devuser/workspace
       - ../../../logs/lua:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock

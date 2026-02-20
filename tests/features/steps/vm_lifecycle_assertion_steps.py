@@ -77,8 +77,8 @@ def step_ssh_config_exists(context, hostname):
     ssh_config_vde = Path.home() / ".ssh" / "vde" / "config"
     ssh_config_main = Path.home() / ".ssh" / "config"
     
-    # Accept both new naming (vde-python) and legacy naming (python-dev)
-    # vde-python -> python-dev, vde-postgres -> postgres-dev, etc.
+    # Accept both new naming (vde-python) and legacy naming (vde-python)
+    # vde-python -> vde-python, vde-postgres -> vde-postgres, etc.
     legacy_hostname = None
     if hostname.startswith('vde-'):
         base_name = hostname[4:]  # Remove 'vde-' prefix
@@ -267,7 +267,7 @@ def step_ssh_accessible(context):
     
     # Get port from SSH config
     ssh_config_path = Path.home() / ".ssh" / "vde" / "config"
-    port = 2200 # Default
+    port = 2213 # Default
     
     if ssh_config_path.exists():
         content = ssh_config_path.read_text()
@@ -534,7 +534,7 @@ def step_ssh_still_works(context):
     
     # Use the isolated VDE SSH config
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
-    port = 2200 # Default
+    port = 2213 # Default
     
     if ssh_config.exists():
         content = ssh_config.read_text()

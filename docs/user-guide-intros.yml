@@ -789,9 +789,9 @@ sections:
       ### What We're Building
 
       You'll have a complete tech stack:
-      - **Python VM** — Your application code (port 2200)
-      - **PostgreSQL VM** — Your database (port 2400)
-      - **Redis VM** — Your cache (port 2401)
+      - **Python VM** — Your application code (port 2213)
+      - **PostgreSQL VM** — Your database (port 2404)
+      - **Redis VM** — Your cache (port 2406)
 
       All three can talk to each other automatically. No networking headaches required!
 
@@ -811,12 +811,12 @@ sections:
 
       | VM Name | SSH Command | What It's For |
       |---------|-------------|---------------|
-      | python-dev | `vde ssh python` | Python development |
-      | rust-dev | `vde ssh rust` | Rust development |
-      | js-dev | `vde ssh js` | JavaScript/Node.js |
-      | csharp-dev | `vde ssh csharp` | C# development |
-      | ruby-dev | `vde ssh ruby` | Ruby development |
-      | go-dev | `vde ssh go` | Go development |
+      | vde-python | `vde ssh python` | Python development |
+      | vde-rust | `vde ssh rust` | Rust development |
+      | vde-js | `vde ssh js` | JavaScript/Node.js |
+      | vde-csharp | `vde ssh csharp` | C# development |
+      | vde-ruby | `vde ssh ruby` | Ruby development |
+      | vde-go | `vde ssh go` | Go development |
       | postgres | `vde ssh postgres` | Direct database access |
       | redis | `vde ssh redis` | Direct Redis access |
       | mongodb | `vde ssh mongodb` | MongoDB |

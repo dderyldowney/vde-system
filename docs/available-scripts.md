@@ -16,9 +16,9 @@ The `vde` command provides a single entry point for all VDE operations:
 |---------|---------|-------|
 | `vde init` | Initialize VDE project (first-time setup) | `vde init` |
 | `vde create <vm>` | Create a new VM | `vde create python` |
-| `vde start <vm>` | Start a VM | `vde start python-dev` |
+| `vde start <vm>` | Start a VM | `vde start vde-python` |
 | `vde stop <vm>` | Stop a VM | `vde stop postgres` |
-| `vde restart <vm>` | Restart a VM | `vde restart rust-dev` |
+| `vde restart <vm>` | Restart a VM | `vde restart vde-rust` |
 | `vde remove <vm>` | Remove a VM instance | `vde remove rust` |
 | `vde uninstall <type>` | Uninstall a language/service completely | `vde uninstall elixir` |
 | `vde list` | List all VMs | `vde list` |

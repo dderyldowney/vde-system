@@ -326,6 +326,16 @@ stop_vm() {
     while [ $attempt -le $max_attempts ]; do
         if docker compose -f "$compose_file" -p "$project_name" down -v 2>&1; then
             _info "VM '$vm_name' stopped successfully"
+            # Update state file to reflect stopped status
+            if command -v load_docker_state >/dev/null 2>&1; then
+                local existing_state
+                existing_state=$(load_docker_state "$vm_name" 2>/dev/null) || true
+                if [[ -n "$existing_state" ]]; then
+                    local updated_state
+                    updated_state=$(echo "$existing_state" | sed 's/"status": *"[^"]*"/"status": "stopped"/')
+                    save_docker_state "$vm_name" "$updated_state"
+                fi
+            fi
             return $VDE_SUCCESS
         fi
 

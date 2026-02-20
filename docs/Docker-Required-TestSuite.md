@@ -126,7 +126,7 @@ This section describes the complete orchestration flow from user command to runn
 │  │   │                     │         │ (bridge network)    │         │                     │ │   │
 │  │   │ Keys:               │         │                     │         │ git@github.com      │ │   │
 │  │   │ - id_ed25519       │         │  ┌───────────────┐  │         │ git@gitlab.com      │ │   │
-│  │   │ - id_rsa           │         │  │python-dev     │  │         │                     │ │   │
+│  │   │ - id_rsa           │         │  │vde-python     │  │         │                     │ │   │
 │  │   │                     │         │  │               │  │         └─────────────────────┘ │   │
 │  │   └─────────┬───────────┘         │  │ SSH:2222◄────┐│  │                                 │   │
 │  │             │                       │  │ Agent:/tmp/ ││  │                                 │   │
@@ -165,36 +165,36 @@ This section describes the complete orchestration flow from user command to runn
 │   ┌────────────────────────────────────────────────────────────────────────────────────────────┐     │
 │   │                              VM-TO-VM SSH COMMUNICATION                                      │     │
 │   │                                                                                             │     │
-│   │   python-dev (2200)                              rust-dev (2201)                            │     │
+│   │   vde-python (2200)                              vde-rust (2201)                            │     │
 │   │   ┌─────────────────┐                            ┌─────────────────┐                       │     │
 │   │   │                 │       SSH CONNECTION       │                 │                       │     │
 │   │   │ $ ssh -J        │ ──────────────────────────▶│                 │                       │     │
-│   │   │   python-dev    │                            │                 │                       │     │
-│   │   │   rust-dev      │                            │                 │                       │     │
+│   │   │   vde-python    │                            │                 │                       │     │
+│   │   │   vde-rust      │                            │                 │                       │     │
 │   │   │                 │                            │                 │                       │     │
 │   │   │ Forwarded:      │                            │ Received:       │                       │     │
 │   │   │ SSH_AUTH_SOCK   │                            │ SSH_AUTH_SOCK   │                       │     │
 │   │   └─────────────────┘                            └─────────────────┘                       │     │
 │   │                                                                                             │     │
 │   │   Connection Path:                                                                        │     │
-│   │   1. User runs: ssh rust-dev (via ~/.ssh/vde/config)                                      │     │
-│   │   2. SSH connects to localhost:2200 (python-dev)                                          │     │
-│   │   3. ProxyJump through python-dev to rust-dev:2201                                        │     │
+│   │   1. User runs: ssh vde-rust (via ~/.ssh/vde/config)                                      │     │
+│   │   2. SSH connects to localhost:2200 (vde-python)                                          │     │
+│   │   3. ProxyJump through vde-python to vde-rust:2201                                        │     │
 │   │   4. Agent forwarded through entire chain                                                  │     │
 │   │                                                                                             │     │
 │   └────────────────────────────────────────────────────────────────────────────────────────────┘     │
 │                                                                                                      │
 │   SSH Config for VM-to-VM:                                                                          │
 │   ```bash                                                                                           │
-│   Host python-dev                                                                                   │
+│   Host vde-python                                                                                   │
 │       HostName localhost                                                                            │
 │       Port 2200                                                                                     │
 │       ForwardAgent yes                                                                              │
 │                                                                                                     │
-│   Host rust-dev                                                                                     │
+│   Host vde-rust                                                                                     │
 │       HostName localhost                                                                            │
 │       Port 2201                                                                                     │
-│       ProxyJump python-dev                                                                          │
+│       ProxyJump vde-python                                                                          │
 │       ForwardAgent yes                                                                              │
 │   ```                                                                                               │
 └─────────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -293,7 +293,7 @@ _generate_docker_compose "python" "lang" "2200"
 # =============================================================================
 _generate_ssh_config "python" "2200" "lang" | merge_ssh_config_entry
 # → Appends to ~/.ssh/vde/config:
-#   Host python-dev
+#   Host vde-python
 #       HostName localhost
 #       Port 2200
 #       User devuser
@@ -304,7 +304,7 @@ _generate_ssh_config "python" "2200" "lang" | merge_ssh_config_entry
 # =============================================================================
 # STEP 8: SSH Known Hosts Update
 # =============================================================================
-_known_hosts_add "python-dev" "2200"
+_known_hosts_add "vde-python" "2200"
 # → Runs: ssh-keyscan -p 2200 localhost
 # → Appends to ~/.ssh/vde/known_hosts:
 #   [localhost]:2200 ssh-ed25519 AAAAC3NzaC1...
@@ -312,7 +312,7 @@ _known_hosts_add "python-dev" "2200"
 # =============================================================================
 # STEP 9: Public Key Sync
 # =============================================================================
-_sync_public_keys "python-dev"
+_sync_public_keys "vde-python"
 # → Ensures /home/devuser/.ssh/ exists in container
 # → Copies public-ssh-keys/*.pub to authorized_keys
 # → Sets correct permissions (700/.ssh, 600/authorized_keys)
@@ -328,7 +328,7 @@ docker-compose -f configs/docker/python/docker-compose.yml build
 # STEP 11: Container Start
 # =============================================================================
 docker-compose -f configs/docker/python/docker-compose.yml up -d
-# → Creates container: python-dev
+# → Creates container: vde-python
 # → Maps port: 2200:2222
 # → Mounts volumes
 # → Sets environment variables
@@ -336,8 +336,8 @@ docker-compose -f configs/docker/python/docker-compose.yml up -d
 # =============================================================================
 # STEP 12: Status Verification
 # =============================================================================
-_check_container_status "python-dev"
-# → Runs: docker ps --format '{{.Names}}' | grep python-dev
+_check_container_status "vde-python"
+# → Runs: docker ps --format '{{.Names}}' | grep vde-python
 # → Verifies container is running
 # → Returns: "running"
 
@@ -345,8 +345,8 @@ _check_container_status "python-dev"
 # RESULT
 # =============================================================================
 # ✓ Created VM: python (port 2200)
-# ✓ Started VM: python-dev
-# ✓ SSH accessible at: ssh python-dev (→ localhost:2200)
+# ✓ Started VM: vde-python
+# ✓ SSH accessible at: ssh vde-python (→ localhost:2200)
 # ✓ Agent forwarded: SSH_AUTH_SOCK=/tmp/ssh-agent.sock
 ```
 
@@ -359,13 +359,13 @@ _check_container_status "python-dev"
 # =============================================================================
 # STEP 1: SSH Command Execution
 # =============================================================================
-ssh python-dev
+ssh vde-python
 
 # =============================================================================
 # STEP 2: SSH Config Lookup
 # =============================================================================
 # SSH reads ~/.ssh/vde/config:
-#   Host python-dev
+#   Host vde-python
 #       HostName localhost
 #       Port 2200
 #       User devuser
@@ -376,7 +376,7 @@ ssh python-dev
 # STEP 3: Connection Establishment
 # =============================================================================
 # SSH connects to localhost:2200
-# → Docker maps 2200 → python-dev:2222
+# → Docker maps 2200 → vde-python:2222
 # → Container SSH daemon receives connection
 
 # =============================================================================
@@ -412,15 +412,15 @@ git clone git@github.com:myuser/private-repo.git
 # VERIFICATION
 # =============================================================================
 # Verify agent is forwarded:
-$ ssh python-dev "echo \$SSH_AUTH_SOCK"
+$ ssh vde-python "echo \$SSH_AUTH_SOCK"
 /tmp/ssh-agent.sock
 
 # Verify key is available:
-$ ssh python-dev "ssh-add -l"
+$ ssh vde-python "ssh-add -l"
 2048 SHA256:xxxxx id_ed25519 (RSA)
 
 # Verify Git works:
-$ ssh python-dev "git ls-remote git@github.com:myuser/repo.git"
+$ ssh vde-python "git ls-remote git@github.com:myuser/repo.git"
 1234567	refs/heads/main
 ```
 
@@ -433,7 +433,7 @@ $ ssh python-dev "git ls-remote git@github.com:myuser/repo.git"
 # =============================================================================
 # STEP 1: Clone Repository in Python VM
 # =============================================================================
-ssh python-dev "git clone git@github.com:myuser/myproject.git"
+ssh vde-python "git clone git@github.com:myuser/myproject.git"
 # → Uses forwarded agent
 # → No password prompted
 # → Repository cloned to ~/myproject
@@ -441,17 +441,17 @@ ssh python-dev "git clone git@github.com:myuser/myproject.git"
 # =============================================================================
 # STEP 2: Make Changes
 # =============================================================================
-ssh python-dev "cd myproject && echo 'feature' >> feature.txt"
+ssh vde-python "cd myproject && echo 'feature' >> feature.txt"
 
 # =============================================================================
 # STEP 3: Commit Changes
 # =============================================================================
-ssh python-dev "cd myproject && git add feature.txt && git commit -m 'Add feature'"
+ssh vde-python "cd myproject && git add feature.txt && git commit -m 'Add feature'"
 
 # =============================================================================
 # STEP 4: Push to GitHub (via forwarded agent)
 # =============================================================================
-ssh python-dev "cd myproject && git push origin main"
+ssh vde-python "cd myproject && git push origin main"
 
 # Agent forwarding chain:
 # Container SSH_AUTH_SOCK → Host SSH_AUTH_SOCK → GitHub
@@ -476,7 +476,7 @@ ssh python-dev "cd myproject && git push origin main"
 # =============================================================================
 create-virtual-for python
 # → Port 2200 allocated
-# → python-dev running on 2200
+# → vde-python running on 2200
 
 # =============================================================================
 # STEP 2: External process binds port 2200
@@ -532,14 +532,14 @@ docker ps
 # =============================================================================
 # STEP 3: Container state detection
 # =============================================================================
-_check_container_status "python-dev"
+_check_container_status "vde-python"
 # → docker ps returns empty
 # → Status: "not_running"
 
 # =============================================================================
 # STEP 4: Recovery action offered
 # =============================================================================
-# ? Container python-dev is not running
+# ? Container vde-python is not running
 # ? Do you want to restart it? [Y/n]
 
 # =============================================================================
@@ -595,7 +595,7 @@ VDE implements a **zero-trust SSH agent forwarding** architecture where private 
 │  │                    DOCKER DAEMON                             │   │
 │  │                                                              │   │
 │  │  ┌─────────────────────────────────────────────────────┐    │   │
-│  │  │           CONTAINER: python-dev                    │    │   │
+│  │  │           CONTAINER: vde-python                    │    │   │
 │  │  │                                                     │    │   │
 │  │  │  /tmp/ssh-agent.sock ────────▶ SSH_AUTH_SOCK      │    │   │
 │  │  │  (read-only bind mount)       (environment)        │    │   │
@@ -620,7 +620,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.base
-    container_name: python-dev
+    container_name: vde-python
     ports:
       - "2200:2222"
     volumes:
@@ -747,7 +747,7 @@ _get_preferred_key() {
 ```bash
 # Test: Clone private repository from within VM
 @test "Clone private repository from within VM" {
-  local container="python-dev"
+  local container="vde-python"
   local repo="git@github.com:myuser/private-repo.git"
   
   # SSH into container

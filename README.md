@@ -72,7 +72,7 @@ vde create go
 vde start go
 
 # 5. Connect via SSH
-ssh go-dev
+ssh vde-go
 
 # 6. Start working
 cd ~/workspace
@@ -102,12 +102,12 @@ VDE includes **automatic SSH agent forwarding**, enabling seamless communication
 
 ```bash
 # From your host
-ssh go-dev                    # Connect to Go VM
+ssh vde-go                    # Connect to Go VM
 
 # From within Go VM
-ssh python-dev                # SSH to Python VM (uses your host keys!)
-ssh rust-dev pwd              # Check directory on Rust VM
-scp python-dev:/data/file .   # Copy file from Python VM
+ssh vde-python                # SSH to Python VM (uses your host keys!)
+ssh vde-rust pwd              # Check directory on Rust VM
+scp vde-python:/data/file .   # Copy file from Python VM
 
 # Use Git with your credentials
 git clone github.com:user/repo  # Uses your GitHub SSH key
@@ -194,7 +194,7 @@ See [SSH Configuration](docs/ssh-configuration.md) for complete details.
 vde create python
 vde create postgres
 vde start python postgres
-ssh python-dev
+ssh vde-python
 cd ~/workspace
 pip install fastapi uvicorn psycopg2-binary
 ```
@@ -214,8 +214,8 @@ vde start python go rust postgres redis
 
 # Services can communicate via SSH (VM-to-VM)
 # From python VM:
-ssh postgres-dev psql -U devuser  # Connect to database
-ssh redis-dev redis-cli           # Connect to cache
+ssh vde-postgres psql -U devuser  # Connect to database
+ssh vde-redis redis-cli           # Connect to cache
 ```
 
 ---

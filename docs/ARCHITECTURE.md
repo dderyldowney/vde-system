@@ -112,26 +112,26 @@ Container names use the mandatory `vde-` prefix. SSH access: `ssh vde-{name}` (u
 
 | Name | Aliases | Container Name | SSH Port |
 |------|---------|----------------|----------|
-| js | node, nodejs | vde-js | 2200 |
-| cpp | c++, gcc | vde-cpp | 2201 |
+| js | node, nodejs | vde-js | 2209 |
+| cpp | c++, gcc | vde-cpp | 2202 |
 | asm | assembler, nasm | vde-asm | 2202 |
 | c | c | vde-c | 2203 |
-| rust | rust | vde-rust | 2201 |
+| rust | rust | vde-rust | 2216 |
 | csharp | dotnet | vde-csharp | 2206 |
-| go | golang | vde-go | 2200 |
+| go | golang | vde-go | 2206 |
 | java | jdk | vde-java | 2209 |
-| kotlin | kotlin | vde-kotlin | 2200 |
+| kotlin | kotlin | vde-kotlin | 2210 |
 | swift | swift | vde-swift | 2214 |
 | php | php | vde-php | 2212 |
 | scala | scala | vde-scala | 2213 |
-| r | rlang, r | vde-r | 2200 |
+| r | rlang, r | vde-r | 2214 |
 | lua | lua | vde-lua | 2218 |
-| flutter | dart, flutter | vde-flutter | 2200 |
+| flutter | dart, flutter | vde-flutter | 2205 |
 | elixir | elixir | vde-elixir | 2215 |
 | haskell | ghc, haskell | vde-haskell | 2216 |
-| zig | zig | vde-zig | 2200 |
-| ruby | ruby | vde-ruby | 2201 |
-| python | python3 | vde-python | 2200 |
+| zig | zig | vde-zig | 2219 |
+| ruby | ruby | vde-ruby | 2215 |
+| python | python3 | vde-python | 2213 |
 
 ### Service VMs (7 total, ports 2400-2499)
 
@@ -139,13 +139,13 @@ Container names use the mandatory `vde-` prefix. SSH access: `ssh vde-{name}` (u
 
 | Name | Aliases | Container Name | SSH Port | Service Port |
 |------|---------|----------------|----------|--------------|
-| redis | redis | vde-redis | 2400 | 6379 |
-| postgres | postgresql | vde-postgres | 2401 | 5432 |
+| redis | redis | vde-redis | 2406 | 6379 |
+| postgres | postgresql | vde-postgres | 2404 | 5432 |
 | mongodb | mongo | vde-mongodb | 2402 | 27017 |
 | couchdb | couchdb | vde-couchdb | 2404 | 5984 |
 | mysql | mysql | vde-mysql | 2405 | 3306 |
-| nginx | nginx | vde-nginx | 2400 | 80, 443 |
-| rabbitmq | rabbitmq | vde-rabbitmq | 2400 | 5672, 15672 |
+| nginx | nginx | vde-nginx | 2403 | 80, 443 |
+| rabbitmq | rabbitmq | vde-rabbitmq | 2405 | 5672, 15672 |
 
 ---
 
@@ -203,10 +203,10 @@ VDE uses a structured port allocation system to avoid conflicts:
 Language VMs are assigned SSH ports sequentially from the 2200 range:
 
 ```
-vde-js      2200    (first allocated)
-vde-cpp     2201
-vde-asm     2202
-vde-c       2203
+vde-asm     2200    (alphabetical order)
+vde-c       2201
+vde-cpp     2202
+vde-csharp  2203
 ...
 ```
 
@@ -215,8 +215,8 @@ vde-c       2203
 Service VMs are assigned SSH ports from the 2400 range:
 
 ```
-vde-redis       2400    (first allocated)
-vde-postgres    2401
+vde-couchdb     2400    (alphabetical order)
+vde-mongodb     2401
 vde-mongodb     2402
 vde-couchdb     2404
 vde-mysql       2405
@@ -252,13 +252,13 @@ Each VM has its own `docker-compose.yml` file:
 ```
 configs/docker/
 ├── c/
-│   └── docker-compose.yml    # c-dev container, SSH port 2200
+│   └── docker-compose.yml    # vde-c container, SSH port 2201
 ├── cpp/
-│   └── docker-compose.yml    # cpp-dev container, SSH port 2201
+│   └── docker-compose.yml    # vde-cpp container, SSH port 2202
 ├── python/
-│   └── docker-compose.yml    # python-dev container, SSH port 2203
+│   └── docker-compose.yml    # vde-python container, SSH port 2203
 ├── postgres/
-│   └── docker-compose.yml    # postgres container, SSH port 2400, service port 5432
+│   └── docker-compose.yml    # postgres container, SSH port 2404, service port 5432
 └── ...
 ```
 
@@ -268,7 +268,7 @@ All VMs are connected to a shared Docker network named `vde-net`, enabling inter
 
 ### Container Naming Conventions
 
-- **Language VMs:** `{name}-dev` (e.g., `python-dev`, `rust-dev`)
+- **Language VMs:** `{name}-dev` (e.g., `vde-python`, `vde-rust`)
 - **Service VMs:** `{name}` (e.g., `postgres`, `redis`)
 
 ---

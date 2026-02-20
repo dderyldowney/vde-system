@@ -1,3 +1,4 @@
+name: vde-zig
 # Template for language VMs
 # Variables: zig, 2200, apt-get install -y zig
 services:
@@ -17,14 +18,14 @@ services:
     command: sh -c "apt-get install -y zig && /usr/sbin/sshd -D"
 
     ports:
-      - "2200:22"
+      - "2219:22"
 
     volumes:
       - ../../../projects/zig:/home/devuser/workspace
       - ../../../logs/zig:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock

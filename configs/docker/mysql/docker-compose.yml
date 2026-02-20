@@ -1,3 +1,4 @@
+name: vde-mysql
 services:
   vde-mysql:
     build:
@@ -15,7 +16,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y default-mysql-server && /usr/sbin/sshd -D"
 
     ports:
-      - "2405:22"
+      - "2402:22"
       - "3306:3306"
 
     volumes:
@@ -23,7 +24,7 @@ services:
       - ../../../logs/mysql:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for service VM communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock

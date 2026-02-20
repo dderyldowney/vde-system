@@ -99,7 +99,7 @@ docker --version
 ./scripts/vde start python
 
 # Connect to the VM
-ssh python-dev
+ssh vde-python
 ```
 
 ## Coding Standards
@@ -186,7 +186,7 @@ Use clear, descriptive commit messages:
 ```
 feat: Add support for Rust development environment
 
-- Add rust-dev VM with cargo and rustup
+- Add vde-rust VM with cargo and rustup
 - Configure SSH access on port 2206
 - Add comprehensive tests
 

@@ -209,7 +209,7 @@ This creates a powerful feedback loop:
 
 **Issue Examples:**
 - Configure VM with multiple service ports: Assertion failure on docker-compose.yml location/parsing
-- Service port configuration: Failed connectivity to PostgreSQL on external port 2400
+- Service port configuration: Failed connectivity to PostgreSQL on external port 2404
 - Data persistence for services: Verification logic inconsistent
 
 ---
@@ -252,7 +252,7 @@ This creates a powerful feedback loop:
 **Status:** 🟡 MEDIUM RELIABILITY
 
 **Issue Examples:**
-- VDE handles port conflicts gracefully: Failed to re-allocate from 2200 to 2201 when host port occupied
+- VDE handles port conflicts gracefully: Failed to re-allocate from 2213 to 2214 when host port occupied
 
 ---
 

@@ -21,7 +21,7 @@ vde create postgres
 vde start python postgres
 
 # 4. Connect to Python VM
-ssh python-dev
+ssh vde-python
 
 # 5. Set up project
 cd ~/workspace
@@ -55,7 +55,7 @@ vde create redis
 vde start js redis
 
 # 3. Connect to JS VM
-ssh js-dev
+ssh vde-js
 
 # 4. Set up Express app
 cd ~/workspace
@@ -104,13 +104,13 @@ vde create redis    # Cache
 vde start python go rust postgres redis
 
 # 3. Each service runs in its own VM
-# Python: ssh python-dev
-# Go: ssh go-dev
-# Rust: ssh rust-dev
+# Python: ssh vde-python
+# Go: ssh vde-go
+# Rust: ssh vde-rust
 
 # 4. Services communicate via Docker network
-# python-dev can access: postgres, redis
-# go-dev can access: postgres, redis
+# vde-python can access: postgres, redis
+# vde-go can access: postgres, redis
 # etc.
 ```
 
@@ -132,7 +132,7 @@ vde start python postgres redis
 docker ps
 
 # Connect to your primary VM
-ssh python-dev
+ssh vde-python
 
 # Work in the container
 cd ~/workspace
@@ -157,13 +157,13 @@ When something isn't working:
 vde status
 
 # 2. Check container logs
-docker logs python-dev
+docker logs vde-python
 
 # 3. Restart with rebuild
 vde start python --rebuild
 
 # 4. Connect and debug
-ssh python-dev
+ssh vde-python
 # ... investigate inside container ...
 ```
 

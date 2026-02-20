@@ -166,7 +166,7 @@ def step_files_shared_host_vm(context):
     keywords = ['workspace', 'project', 'volume', 'data', 'logs']
     
     # Try to check python container specifically if possible
-    vm_name = 'python-dev'
+    vm_name = 'vde-python'
     import subprocess
     result = subprocess.run(
         ['docker', 'inspect', '-f', '{{json .Mounts}}', vm_name],

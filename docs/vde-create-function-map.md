@@ -257,7 +257,7 @@ vde create python
     ├── vde_progress_info("Allocating SSH port...")
     ├── find_next_available_port("lang")
     │   └── find_available_port(2200, 2299)
-    │       └── _is_port_in_use(2200..N)
+    │       └── _is_port_in_use(2213..N)
     │           [reads: .cache/port-registry/*.port, nc -z localhost PORT]
     │
     ├── vde_progress_info("Creating directory structure...")

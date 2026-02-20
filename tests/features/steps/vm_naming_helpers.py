@@ -40,15 +40,15 @@ def _get_container_name(vm_name: str) -> str:
         vm_name: VM name as used in test steps (e.g., "python", "postgres")
 
     Returns:
-        Container name as used by Docker (e.g., "python-dev", "postgres")
+        Container name as used by Docker (e.g., "vde-python", "postgres")
 
     Examples:
         >>> _get_container_name("python")
-        'python-dev'
+        'vde-python'
         >>> _get_container_name("postgres")
         'postgres'
         >>> _get_container_name("rust")
-        'rust-dev'
+        'vde-rust'
     """
     return f"vde-{vm_name}"
 
