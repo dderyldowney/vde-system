@@ -59,26 +59,15 @@ def step_image_exists(context, vm_name):
 @given('the image for VM "{vm_name}" is removed')
 def step_image_removed(context, vm_name):
     """Remove Docker image for VM to force rebuild."""
-    # Get the container name
-    if vm_name in ['postgres', 'redis', 'mongodb', 'mysql', 'nginx', 'rabbitmq', 'couchdb']:
-        container_name = vm_name
-    else:
-        container_name = f"vde-{vm_name}"
+    # All VDE containers use vde- prefix
+    container_name = f"vde-{vm_name}" if not vm_name.startswith("vde-") else vm_name
+    image_name = f"vde-{vm_name}:latest" if not vm_name.startswith("vde-") else f"{vm_name}:latest"
     
-    # Stop and remove the container first
-    subprocess.run(["docker", "stop", container_name], capture_output=True, timeout=30)
-    subprocess.run(["docker", "rm", "-f", container_name], capture_output=True, timeout=30)
+    # Stop and remove the container via vde stop, then remove image directly
+    run_vde_command(f"stop {vm_name}", timeout=30)
     
-    # Get the image name and remove it
-    result = subprocess.run(
-        ["docker", "images", "--format", "{{.Repository}}:{{.Tag}}"],
-        capture_output=True, text=True, timeout=30
-    )
-    image_to_remove = f"dev-{vm_name}:latest"
-    for line in result.stdout.split('\n'):
-        if image_to_remove in line:
-            subprocess.run(["docker", "rmi", "-f", image_to_remove], capture_output=True, timeout=60)
-            break
+    # Remove the image directly (no vde command for this)
+    subprocess.run(["docker", "rmi", "-f", image_name], capture_output=True, timeout=60)
     
     # Also remove the .docker-state file to force recreation
     state_file = VDE_ROOT / ".docker-state" / f"{vm_name}.json"

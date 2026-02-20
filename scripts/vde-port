@@ -22,5 +22,11 @@ fi
 
 VM_NAME="$1"
 
-docker port "$VM_NAME"
+# Ensure vde- prefix for container name
+CONTAINER_NAME="${VM_NAME}"
+if [[ "$VM_NAME" != vde-* ]]; then
+    CONTAINER_NAME="vde-${VM_NAME}"
+fi
+
+docker port "$CONTAINER_NAME"
 exit $?

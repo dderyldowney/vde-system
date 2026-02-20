@@ -55,88 +55,72 @@ def docker_ps():
 
 
 def docker_ps_list():
-    """List running Docker containers with details.
+    """List running VDE containers with details via vde-ps.
     
     Returns:
-        list: List of dicts with container info (Names, etc.), empty list if none or Docker unavailable
+        list: List of dicts with container info (Names, etc.), empty list if none or unavailable
     """
     try:
         result = subprocess.run(
-            ['docker', 'ps', '--format', '{{json .}}'],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            ['zsh', str(SCRIPTS_DIR / 'vde-ps'), '-q'],
+            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT)
         )
         containers = []
         for line in result.stdout.strip().split('\n'):
-            if line.strip():
-                import json
-                containers.append(json.loads(line))
+            name = line.strip()
+            if name:
+                containers.append({'Names': name})
         return containers
-    except (FileNotFoundError, subprocess.CalledProcessError, json.JSONDecodeError):
+    except Exception:
         return []
 
 
 def docker_list_containers():
-    """List running Docker container names.
+    """List running VDE container names via vde-ps.
     
     Returns:
-        list: List of running container names, empty list if none or Docker unavailable
+        list: List of running container names, empty list if none or unavailable
     """
     try:
         result = subprocess.run(
-            ['docker', 'ps', '--format', '{{.Names}}'],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            ['zsh', str(SCRIPTS_DIR / 'vde-ps'), '-q'],
+            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT)
         )
         containers = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
         return containers
-    except (FileNotFoundError, subprocess.CalledProcessError):
+    except Exception:
         return []
 
 def container_exists(container_name):
-    """Check if a Docker container exists by name."""
+    """Check if a VDE container exists (running or stopped) via vde-ps."""
     try:
-        # Resolve to full VDE container name
         full_name = f"vde-{container_name.replace('vde-', '')}"
-        
         result = subprocess.run(
-            ['docker', 'ps', '-a', '-q', '-f', f'name=^{full_name}$'],
-            check=True,
-            capture_output=True,
-            text=True
+            ['zsh', str(SCRIPTS_DIR / 'vde-ps'), '-a', '-q'],
+            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT)
         )
-        return len(result.stdout.strip()) > 0
-    except (FileNotFoundError, subprocess.CalledProcessError):
+        return full_name in result.stdout.split()
+    except Exception:
         return False
 
 
-
 def container_is_running(container_name):
-    """Check if a Docker container is currently running.
+    """Check if a VDE container is currently running via vde-ps.
     
     Args:
-        container_name: Name of the container to check
+        container_name: Name of the container to check (with or without vde- prefix)
         
     Returns:
         bool: True if container is running, False otherwise
     """
     try:
-        # Resolve to full VDE container name
         full_name = f"vde-{container_name.replace('vde-', '')}"
-        
-        # Use docker ps without -a to only see running containers
         result = subprocess.run(
-            ['docker', 'ps', '-q', '-f', f'name=^{full_name}$'],
-            check=True,
-            capture_output=True,
-            text=True
+            ['zsh', str(SCRIPTS_DIR / 'vde-ps'), '-q'],
+            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT)
         )
-        return len(result.stdout.strip()) > 0
-    except (FileNotFoundError, subprocess.CalledProcessError):
+        return full_name in result.stdout.split()
+    except Exception:
         return False
 
 
