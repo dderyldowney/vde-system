@@ -1,5 +1,5 @@
 # VDE (Virtual Development Environment) SSH Configuration
-# Generated on Thu Feb 19 02:40:04 EST 2026
+# Generated on Thu Feb 19 22:19:51 EST 2026
 
 
 
@@ -28,6 +28,17 @@ Host vde-cpp
 Host vde-asm
     HostName localhost
     Port 2202
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-python
+    HostName localhost
+    Port 2200
     User devuser
     IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
     StrictHostKeyChecking no

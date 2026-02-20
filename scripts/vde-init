@@ -152,7 +152,7 @@ vde_init_setup_ssh() {
     if [ "$QUIET" = "0" ]; then
         echo "Setting up SSH keys and agent..."
     fi
-    
+
     # Run the SSH setup script
     if "$VDE_ROOT_DIR/scripts/ssh-agent-setup" --init 2>/dev/null; then
         if [ "$QUIET" = "0" ]; then
