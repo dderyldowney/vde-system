@@ -88,12 +88,20 @@ When you run `create-virtual-for` or `start-virtual`, VDE automatically:
 vde create python
 vde start python
 
-# Connect using VDE's isolated SSH config
+# Connect using VDE commands (recommended)
+vde ssh python          # Handles SSH config automatically
+vde connect python      # Alias for 'vde ssh'
+
+# Can also use aliases
+vde ssh py             # Uses Python's alias
+vde connect py         # Same with connect
+
+# Or connect directly with SSH (requires -F flag)
 ssh -F ~/.ssh/vde/config vde-python
 
 # Or create a shell alias for convenience
 alias vssh='ssh -F ~/.ssh/vde/config'
-vssh vde-python  # Shorter command
+vssh vde-python
 ```
 
 ### SSH Key Types Supported

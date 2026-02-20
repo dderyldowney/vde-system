@@ -139,14 +139,14 @@ fi
 # Use vde_get_ssh_host for consistent vde-* naming convention
 SSH_HOST_ALIAS=$(vde_get_ssh_host "$RESOLVED_NAME")
 
-# Build SSH command
-SSH_CMD="ssh -F $VDE_SSH_CONFIG -o UserKnownHostsFile=$VDE_SSH_KNOWN_HOSTS $SSH_HOST_ALIAS"
+# Build SSH command as array for proper word splitting
+SSH_CMD=(ssh -F "$VDE_SSH_CONFIG" -o "UserKnownHostsFile=$VDE_SSH_KNOWN_HOSTS" "$SSH_HOST_ALIAS")
 
 # Either show or execute the command
 if [ "$SHOW_COMMAND" = true ]; then
-    echo "$SSH_CMD"
+    echo "${SSH_CMD[@]}"
     exit 0
 else
     vde_log_info "Connecting to $SSH_HOST_ALIAS..." "ssh-vm"
-    exec $SSH_CMD
+    exec "${SSH_CMD[@]}"
 fi

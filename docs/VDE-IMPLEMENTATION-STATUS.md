@@ -472,24 +472,31 @@ $ docker network ls | grep vde
 
 ---
 
-## 9. Optional Enhancements
+## 9. SSH Connection Commands ✅ IMPLEMENTED
 
-### 9.1 Convenience Features
+### 9.1 VDE SSH/Connect Commands
 
-1. **Shell Alias Helper**
-   - Add to vde-init or documentation: `alias vssh='ssh -F ~/.ssh/vde/config'`
-   - Users can add to their shell profile for convenience
-   - Maintains SSH isolation while providing shorter command
+**Commands Available**:
+- `vde ssh <vm>` - SSH into a VM with automatic config handling
+- `vde connect <vm>` - Alias for `vde ssh`
 
-2. **Connection Helper Command**
-   - Add `vde connect <vm>` or `vde ssh <vm>` command
-   - Automatically uses correct SSH config
-   - Example: `vde connect python` → `ssh -F ~/.ssh/vde/config vde-python`
+**Features**:
+- ✅ Automatic SSH config path (`-F ~/.ssh/vde/config`)
+- ✅ VM name resolution (accepts aliases like `py` → `vde-python`)
+- ✅ Running state check (warns if VM not running)
+- ✅ `--show-command` flag for debugging
 
-3. **SSH Config Documentation Enhancement**
-   - Add troubleshooting section for SSH connection issues
-   - Document the -F flag requirement clearly
-   - Explain SSH isolation architecture benefits
+**Examples**:
+```bash
+vde ssh python              # SSH into Python VM
+vde connect py              # Use alias
+vde ssh rust --show-command # Show SSH command without executing
+```
+
+**Implementation**:
+- Script: `scripts/ssh-vm`
+- Fixed: `is_vm_running()` double-prefix bug
+- Fixed: SSH command execution (array vs string)
 
 ---
 
