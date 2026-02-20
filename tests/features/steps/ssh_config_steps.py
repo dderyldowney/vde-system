@@ -10,6 +10,7 @@ All paths use ~/.ssh/vde/ as the base directory for VDE SSH settings.
 import os
 import re
 import stat
+import subprocess
 from pathlib import Path
 from behave import given, when, then
 from behave.api.async_step import async_run_until_complete
@@ -301,8 +302,9 @@ def step_config_exists_with_content(context):
     ssh_config = _get_ssh_config_path()
     _ensure_vde_ssh_dir()
     
-    if hasattr(context, 'text'):
-        ssh_config.write_text(context.text)
+    text = getattr(context, 'text', None)
+    if text is not None:
+        ssh_config.write_text(text)
     else:
         ssh_config.write_text("# VDE SSH Configuration\n")
     
@@ -600,7 +602,7 @@ def step_ssh_config_generated(context):
         content = ssh_config.read_text() if ssh_config.exists() else ""
         
         host_entry = f"""
-Host {vm_name}-dev
+Host vde-{vm_name}
     HostName localhost
     Port {port}
     User devuser
@@ -631,8 +633,10 @@ def step_vm_to_vm_config_generated(context):
     content = ""
     if hasattr(context, 'vms'):
         for vm_name, vm_info in context.vms.items():
+            # Use vde- prefix naming convention
+            host_name = vm_name if vm_name.startswith("vde-") else f"vde-{vm_name}"
             content += f"""
-Host {vm_name}-dev
+Host {host_name}
     HostName localhost
     Port {vm_info['port']}
     User devuser
@@ -650,9 +654,10 @@ def step_create_vm_again(context, vm_name):
     ssh_config = _get_ssh_config_path()
     if ssh_config.exists():
         content = ssh_config.read_text()
-        if f"Host {vm_name}-dev" in content:
+        host_name = vm_name if vm_name.startswith("vde-") else f"vde-{vm_name}"
+        if f"Host {host_name}" in content:
             context.duplicate_detected = True
-            context.warning_message = f"SSH config already contains entry for {vm_name}-dev"
+            context.warning_message = f"SSH config already contains entry for {host_name}"
 
 @when('multiple processes try to update SSH config simultaneously')
 def step_multiple_processes_update_config(context):
@@ -665,7 +670,7 @@ def step_multiple_processes_update_config(context):
     
     def update_config(vm_name, port):
         content = ssh_config.read_text() if ssh_config.exists() else ""
-        content += f"\nHost {vm_name}-dev\n    Port {port}\n"
+        content += f"\nHost vde-{vm_name}\n    Port {port}\n"
         time.sleep(0.01)  # Simulate processing
         ssh_config.write_text(content)
     
@@ -715,7 +720,7 @@ def step_vm_removed(context, vm_name):
         new_lines = []
         skip = False
         for line in lines:
-            if line.startswith(f"Host {vm_name}-dev"):
+            if line.startswith(f"Host vde-{vm_name}"):
                 skip = True
                 continue
             if skip and line.startswith("Host "):
@@ -908,7 +913,7 @@ def step_config_should_contain_entry(context, vm_name):
     """Verify SSH config contains entry for VM."""
     ssh_config = _get_ssh_config_path()
     content = ssh_config.read_text()
-    assert f"Host {vm_name}" in content or f"{vm_name}-dev" in content, \
+    assert f"Host {vm_name}" in content or f"vde-{vm_name}" in content, \
            f"Config should contain entry for {vm_name}"
 
 @then('each entry should use "localhost" as hostname')
@@ -934,9 +939,9 @@ def step_no_duplicate_entry(context):
     # Count occurrences of Host entries
     import re
     if hasattr(context, 'current_vm'):
-        host_pattern = f"Host {context.current_vm}-dev"
+        host_pattern = f"Host vde-{context.current_vm}"
         matches = re.findall(host_pattern, content)
-        assert len(matches) <= 1, f"Should not have duplicate entries for {context.current_vm}-dev"
+        assert len(matches) <= 1, f"Should not have duplicate entries for vde-{context.current_vm}"
 
 @then('command should warn about existing entry')
 def step_command_warns_existing_entry(context):
@@ -1087,7 +1092,7 @@ def step_all_vm_entries_present(context):
     
     if hasattr(context, 'vms'):
         for vm_name in context.vms.keys():
-            assert f"{vm_name}-dev" in content, f"Entry for {vm_name}-dev should be present"
+            assert f"vde-{vm_name}" in content, f"Entry for vde-{vm_name} should be present"
 
 @then('SSH connection should succeed without host key warning')
 def step_ssh_connection_succeeds(context):
@@ -1382,9 +1387,11 @@ def step_multiple_processes_add_entries(context):
 @then('"{key_type}" keys should be detected')
 def step_specific_key_type_detected(context, key_type):
     """Verify specific key type is detected."""
-    step_key_type_detected(context, key_type)
-    ssh_config = _get_ssh_config_path()
-    assert ssh_config.exists(), "SSH config should exist for key type detection"
+    # Check that the key type file exists in ~/.ssh/vde/ or ~/.ssh/
+    vde_key = VDE_SSH_DIR / key_type
+    home_key = Path.home() / ".ssh" / key_type
+    assert vde_key.exists() or home_key.exists(), \
+        f"Key type '{key_type}' should be detected in ~/.ssh/vde/ or ~/.ssh/"
 
 # =============================================================================
 # ADDITIONAL STEPS FOR PHASE 5

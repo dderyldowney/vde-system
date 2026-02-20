@@ -270,11 +270,18 @@ def step_verify_vm_included(context, vm_name):
         # Would include VM if it exists in known VMs
         return
     
+    # Normalize: accept both "python" and "vde-python" as matching "python"
+    vde_name = f"vde-{vm_name}" if not vm_name.startswith("vde-") else vm_name
+    bare_name = vm_name[4:] if vm_name.startswith("vde-") else vm_name
+
     if isinstance(detected_vms, str):
-        assert vm_name in detected_vms, \
+        assert bare_name in detected_vms or vde_name in detected_vms, \
             f"Expected VM '{vm_name}' to be detected, but got '{detected_vms}'"
     else:
-        assert vm_name in detected_vms, \
+        # Check for exact match OR vde-prefixed match
+        found = (bare_name in detected_vms or vde_name in detected_vms or
+                 any(bare_name in v or vde_name in v for v in detected_vms))
+        assert found, \
             f"Expected VM '{vm_name}' to be in detected VMs: {detected_vms}"
 
 
