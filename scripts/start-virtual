@@ -88,9 +88,9 @@ for vm in "${VMS[@]}"; do
         continue
     fi
 
-    # Check if VM container exists (real-time Docker data)
-    # Skip this check if --rebuild is used (it will create the container anyway)
-    if [[ "$REBUILD" != "true" ]] && ! vm_container_exists "$vm"; then
+    # Check if VM exists (has configuration or container)
+    # Skip this check if --rebuild is used (it will create/rebuild anyway)
+    if [[ "$REBUILD" != "true" ]] && ! vm_exists "$vm"; then
         vde_error_vm_not_created "$vm"
         BATCH_RESULTS[$vm]="failed:not_created"
         failed_count=$((failed_count + 1))

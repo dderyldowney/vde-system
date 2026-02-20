@@ -159,9 +159,8 @@ VDE_TEST_NETWORK="${VDE_TEST_NETWORK:-vde-testing}"
 # Docker compose project name prefix
 VDE_COMPOSE_PROJECT_PREFIX="${VDE_COMPOSE_PROJECT_PREFIX:-vde}"
 
-# Container naming patterns
-VDE_LANG_CONTAINER_SUFFIX="${VDE_LANG_CONTAINER_SUFFIX:--vde}"
-VDE_SVC_CONTAINER_SUFFIX="${VDE_SVC_CONTAINER_SUFFIX:-}"
+# Container naming patterns - All VMs now consistently use vde- prefix
+VDE_CONTAINER_PREFIX="${VDE_CONTAINER_PREFIX:-vde-}"
 
 # =============================================================================
 # SSH CONFIGURATION
@@ -241,6 +240,23 @@ VM_DOCKER_CONFIG="${VDE_VM_DOCKER_CONFIG:-$DATA_DIR/vm-docker-config.json}"
 VM_DOCKER_CACHE="${VDE_VM_DOCKER_CACHE:-$VDE_CACHE_DIR/vm-docker-config.cache}"
 PORT_REGISTRY="${VDE_PORT_REGISTRY:-$VDE_CACHE_DIR/port-registry}" # This is a directory for port files
 
+# =============================================================================
+# VALIDATION PATTERNS
+# =============================================================================
+VDE_VM_NAME_PATTERN='^[a-z0-9-]+$'
+VDE_SSH_PORT_PATTERN='^[0-9]+$'
+
+# =============================================================================
+# STANDARD MESSAGES
+# =============================================================================
+VDE_MSG_VM_NOT_FOUND="VM '%s' not found"
+VDE_MSG_VM_EXISTS="VM '%s' already exists"
+VDE_MSG_INVALID_NAME="Invalid VM name: '%s'"
+VDE_MSG_DOCKER_FAILED="Docker operation failed for VM '%s'"
+VDE_MSG_TIMEOUT="Operation timed out for VM '%s'"
+VDE_MSG_LOCK_FAILED="Failed to acquire lock for VM '%s'"
+VDE_MSG_NO_SSH_KEY="SSH key not found: '%s'"
+
 # Make all constants readonly if not in test mode
 if [ "${VDE_TEST_MODE:-0}" -ne 1 ]; then
     # List all variables to be made readonly
@@ -253,7 +269,7 @@ if [ "${VDE_TEST_MODE:-0}" -ne 1 ]; then
              VDE_HEALTH_TIMEOUT VDE_STARTUP_WAIT VDE_MAX_RETRIES VDE_RETRY_BASE_DELAY \
              VDE_RETRY_MAX_DELAY VDE_STALE_LOCK_AGE VDE_LOCK_CHECK_INTERVAL \
              VDE_LOG_RETENTION_DAYS VDE_MAX_LOG_SIZE VDE_DOCKER_NETWORK VDE_TEST_NETWORK \
-             VDE_COMPOSE_PROJECT_PREFIX VDE_LANG_CONTAINER_SUFFIX VDE_SVC_CONTAINER_SUFFIX \
+             VDE_COMPOSE_PROJECT_PREFIX VDE_CONTAINER_PREFIX \
              VDE_SSH_USER VDE_SSH_KEY_PREFERENCE VDE_HOME_DIR VDE_SSH_DIR \
              VDE_SSH_CONFIG VDE_SSH_KNOWN_HOSTS VDE_SSH_IDENTITY VDE_SSH_IDENTITY_PUB \
              VDE_VM_NAME_PATTERN VDE_SSH_PORT_PATTERN \

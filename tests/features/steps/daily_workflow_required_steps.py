@@ -97,14 +97,14 @@ def step_no_vms_running(context):
 def step_want_python_project(context):
     """Setup: User wants to work on a Python project."""
     context.project_type = "python"
-    context.project_name = "python-dev"
+    context.project_name = "vde-python"
 
 
 @given(u'I want to work on a Rust project instead')
 def step_want_rust_project(context):
     """Setup: User wants to switch to a Rust project."""
     context.project_type = "rust"
-    context.project_name = "rust-dev"
+    context.project_name = "vde-rust"
 
 
 @given(u'I need a PostgreSQL database')
@@ -128,7 +128,7 @@ def step_modified_dockerfile(context):
 @given(u'I no longer need the Ruby VM')
 def step_ruby_not_needed(context):
     """Setup: User no longer needs the Ruby VM."""
-    context.vm_to_remove = "ruby"
+    context.vm_to_remove = "vde-ruby"
 
 
 @given(u'I want to see what VM types are available')
@@ -282,10 +282,10 @@ def step_create_postgres(context):
     context.last_exit_code = result["exit_code"]
 
 
-@when(u'SSH into "python-dev"')
-def step_ssh_into_python(context):
-    """SSH into the Python VM."""
-    result = run_vde_command(["connect", "python", "--dry-run"])
+@when(u'SSH into "{hostname}"')
+def step_ssh_into_vm(context, hostname):
+    """SSH into the specified VM."""
+    result = run_vde_command(["connect", hostname, "--dry-run"])
     context.ssh_command = result["stdout"]
     context.last_exit_code = result["exit_code"]
 
@@ -300,25 +300,17 @@ def step_all_three_vms_running(context):
     
     # Check for Python, Go, and PostgreSQL containers
     expected = ['vde-python', 'vde-go', 'vde-postgres']
-    missing = [vm for vm in expected if f'vde-{vm}' not in vde_containers]
+    missing = [vm for vm in expected if vm not in vde_containers]
     
     assert len(missing) == 0, f"Expected VMs running: {expected}, found: {vde_containers}, missing: {missing}"
 
 
-@then(u'I should be able to SSH to "python-dev" on allocated port')
-def step_ssh_python_dev(context):
-    """Verify SSH connection to python-dev VM."""
-    result = run_vde_command(["connect", "python", "--dry-run"])
+@then(u'I should be able to SSH to "{hostname}" on allocated port')
+def step_ssh_to_vm_on_port(context, hostname):
+    """Verify SSH connection to specified VM."""
+    result = run_vde_command(["connect", hostname, "--dry-run"])
     has_ssh_info = any(x in result["stdout"].lower() for x in ['ssh', 'hostname', 'port', 'devuser'])
-    assert result["exit_code"] == 0 or has_ssh_info, f"Should be able to SSH to python-dev: {result}"
-
-
-@then(u'I should be able to SSH to "rust-dev" on allocated port')
-def step_ssh_rust_dev(context):
-    """Verify SSH connection to rust-dev VM."""
-    result = run_vde_command(["connect", "rust", "--dry-run"])
-    has_ssh_info = any(x in result["stdout"].lower() for x in ['ssh', 'hostname', 'port', 'devuser'])
-    assert result["exit_code"] == 0 or has_ssh_info, f"Should be able to SSH to rust-dev: {result}"
+    assert result["exit_code"] == 0 or has_ssh_info, f"Should be able to SSH to {hostname}: {result}"
 
 
 @then(u'PostgreSQL should be accessible from language VMs')
@@ -331,31 +323,31 @@ def step_postgres_accessible(context):
     assert postgres_running, "PostgreSQL should be running and accessible"
     
     # Verify connection info is available
-    result = run_vde_command(["connect", "postgres", "--dry-run"])
+    result = run_vde_command(["connect", "vde-postgres", "--dry-run"])
     has_connection = "postgres" in result["stdout"].lower() or result["exit_code"] == 0
     assert has_connection, "PostgreSQL connection info should be available"
 
 
-@then(u'SSH config entry for "go-dev" should be added')
-def step_ssh_config_go(context):
-    """Verify SSH config entry for go-dev is added."""
+@then(u'SSH config entry for "{hostname}" should be added')
+def step_ssh_config_entry_added(context, hostname):
+    """Verify SSH config entry for VM is added."""
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
     
     if ssh_config.exists():
         config_content = ssh_config.read_text()
-        assert "go-dev" in config_content or "vde-go" in config_content, \
-            "SSH config should have entry for go-dev"
+        assert hostname in config_content, \
+            f"SSH config should have entry for {hostname}"
     else:
         # SSH config may be generated on first use
-        result = run_vde_command(["connect", "go", "--dry-run"])
-        assert result["exit_code"] == 0, "SSH config should be generated for go-dev"
+        result = run_vde_command(["connect", hostname, "--dry-run"])
+        assert result["exit_code"] == 0, f"SSH config should be generated for {hostname}"
 
 
 @then(u'I can SSH to both VMs from my terminal')
 def step_ssh_both_vms(context):
     """Verify SSH to both VMs works."""
-    python_result = run_vde_command(["connect", "python", "--dry-run"])
-    go_result = run_vde_command(["connect", "go", "--dry-run"])
+    python_result = run_vde_command(["connect", "vde-python", "--dry-run"])
+    go_result = run_vde_command(["connect", "vde-go", "--dry-run"])
     
     python_ok = python_result["exit_code"] == 0 or "ssh" in python_result["stdout"].lower()
     go_ok = go_result["exit_code"] == 0 or "ssh" in go_result["stdout"].lower()
@@ -454,7 +446,7 @@ def step_python_redis(context):
 def step_python_created(context):
     """Verify Python VM is created."""
     result = run_vde_command(["status"])
-    python_exists = "python" in result["stdout"].lower() or "created" in result["stdout"].lower()
+    python_exists = "vde-python" in result["stdout"].lower() or "created" in result["stdout"].lower()
     assert context.last_exit_code == 0 or python_exists, "Python VM should be created"
 
 
@@ -462,7 +454,7 @@ def step_python_created(context):
 def step_python_status(context):
     """Verify Python VM status is displayed."""
     result = run_vde_command(["status", "python"])
-    assert "python" in result["stdout"].lower() or result["exit_code"] == 0, \
+    assert "vde-python" in result["stdout"].lower() or result["exit_code"] == 0, \
         "Should see Python VM status"
 
 
@@ -516,7 +508,7 @@ def step_ruby_removed(context):
 def step_available_vms_listed(context):
     """Verify list of available VM types is displayed."""
     result = run_vde_command(["list"])
-    has_vms = any(x in result["stdout"].lower() for x in ['python', 'available', 'language'])
+    has_vms = any(x in result["stdout"].lower() for x in ['vde-python', 'available', 'language'])
     assert has_vms or result["exit_code"] == 0, "Should see list of available VM types"
 
 
@@ -569,22 +561,6 @@ def step_rebuild_from_scratch(context):
 
 # ========== Additional Missing Steps ==========
 
-@when(u'I want to work on a Rust project instead')
-def step_want_rust_instead(context):
-    """Setup: User wants to work on a Rust project instead."""
-    # This is a setup step, the actual switching happens in another step
-    context.project_type = "rust"
-    context.vm_to_switch_to = "rust"
-
-
-@when(u'I SSH into "python-dev"')
-def step_ssh_into_python_dev(context):
-    """SSH into the python-dev VM."""
-    result = run_vde_command(["connect", "python", "--dry-run"])
-    context.ssh_command = result["stdout"]
-    context.last_exit_code = result["exit_code"]
-
-
 @then(u'each VM can access shared project directories')
 def step_shared_directories(context):
     """Verify each VM can access shared project directories."""
@@ -600,7 +576,7 @@ def step_modified_python_dockerfile(context):
     """Setup: User has modified the Python Dockerfile to add a new package."""
     # This is a setup step - the Dockerfile modification is assumed
     context.dockerfile_modified = True
-    context.vm_to_rebuild = "python"
+    context.vm_to_rebuild = "vde-python"
 
 
 @then(u'the VM should be rebuilt with the new Dockerfile')
@@ -631,7 +607,7 @@ def step_old_ruby_vm(context):
     """Setup: User has an old Ruby VM they don't use anymore."""
     # Ensure Ruby VM exists first
     run_vde_command(["create", "ruby"])
-    context.vm_to_remove = "ruby"
+    context.vm_to_remove = "vde-ruby"
 
 
 @when(u'I run the removal process for "ruby"')
@@ -647,7 +623,7 @@ def step_docker_compose_preserved(context):
     """Verify docker-compose.yml is preserved for easy recreation."""
     # The docker-compose.yml should remain even after VM removal
     # This allows users to recreate the VM easily
-    compose_file = VDE_ROOT / "configs" / "docker" / "ruby" / "docker-compose.yml"
+    compose_file = VDE_ROOT / "configs" / "docker" / "vde-ruby" / "docker-compose.yml"
     # The file should exist (not deleted on remove)
     assert compose_file.exists() or context.last_exit_code == 0, \
         "docker-compose.yml should be preserved for easy recreation"
@@ -663,4 +639,3 @@ def step_ssh_config_removed(context):
         # Note: This may depend on implementation
         assert "ruby" not in config_content.lower() or "vde-ruby" not in config_content.lower() or context.last_exit_code == 0, \
             "SSH config entry should be removed"
-

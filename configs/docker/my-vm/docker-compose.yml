@@ -1,0 +1,4 @@
+version: '3.8'
+services:
+  my-vm:
+    image: custom/image:latest

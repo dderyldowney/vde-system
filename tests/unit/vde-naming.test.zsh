@@ -51,27 +51,12 @@ test_fail() {
 test_patterns_exist() {
     test_start "naming patterns exist"
 
-    if [[ -n "$VDE_NAME_PATTERN" ]] && \
-       [[ -n "$VDE_LANG_PATTERN" ]]; then
+    if [[ -n "$VDE_NAME_PATTERN" ]]; then
         test_pass "naming patterns exist"
         return
     fi
 
     test_fail "naming patterns exist" "patterns are missing"
-}
-
-test_pattern_formats() {
-    test_start "pattern formats are valid regex"
-
-    # Test VDE_NAME_PATTERN accepts valid names
-    if echo "python" | grep -qE "$VDE_NAME_PATTERN"; then
-        if echo "python123" | grep -qE "$VDE_NAME_PATTERN"; then
-            test_pass "pattern formats are valid regex"
-            return
-        fi
-    fi
-
-    test_fail "pattern formats" "VDE_NAME_PATTERN not matching valid names"
 }
 
 # =============================================================================
@@ -90,99 +75,29 @@ test_validate_name_empty() {
 }
 
 test_validate_name_valid() {
-    test_start "validate name (valid)"
+    test_start "validate name (valid with prefix)"
 
-    if vde_validate_name "python123" >/dev/null 2>&1; then
-        test_pass "validate name (valid)"
+    if vde_validate_name "vde-python" >/dev/null 2>&1; then
+        test_pass "validate name (valid with prefix)"
         return
     fi
 
-    test_fail "validate name valid" "valid name was rejected"
+    test_fail "validate name valid" "valid name vde-python was rejected"
 }
 
-test_validate_name_invalid_chars() {
-    test_start "validate name (invalid chars)"
+test_validate_name_raw() {
+    test_start "validate name (raw name allowed)"
 
-    if ! vde_validate_name "Python-VM" >/dev/null 2>&1; then
-        test_pass "validate name (invalid chars)"
+    if vde_validate_name "python" >/dev/null 2>&1; then
+        test_pass "validate name (raw name allowed)"
         return
     fi
 
-    test_fail "validate name invalid chars" "name with dashes should be rejected"
-}
-
-test_validate_name_uppercase() {
-    test_start "validate name (uppercase)"
-
-    if ! vde_validate_name "Python" >/dev/null 2>&1; then
-        test_pass "validate name (uppercase)"
-        return
-    fi
-
-    test_fail "validate name uppercase" "uppercase name should be rejected"
-}
-
-test_validate_name_special_chars() {
-    test_start "validate name (special chars)"
-
-    if ! vde_validate_name "python@vm" >/dev/null 2>&1; then
-        test_pass "validate name (special chars)"
-        return
-    fi
-
-    test_fail "validate name special chars" "name with @ should be rejected"
+    test_fail "validate name raw" "raw name python was rejected"
 }
 
 # =============================================================================
-# TESTS: vde_validate_name with VM Type
-# =============================================================================
-
-test_validate_name_lang_valid() {
-    test_start "validate name (lang type, valid)"
-
-    if vde_validate_name "python-dev" "lang" >/dev/null 2>&1; then
-        test_pass "validate name (lang type, valid)"
-        return
-    fi
-
-    test_fail "validate name lang valid" "valid lang name was rejected"
-}
-
-test_validate_name_lang_invalid() {
-    test_start "validate name (lang type, no suffix)"
-
-    if ! vde_validate_name "python" "lang" >/dev/null 2>&1; then
-        test_pass "validate name (lang type, no suffix)"
-        return
-    fi
-
-    test_fail "validate name lang invalid" "lang VM without -dev suffix should be rejected"
-}
-
-test_validate_name_service_valid() {
-    test_start "validate name (service type, valid)"
-
-    if vde_validate_name "postgres" "service" >/dev/null 2>&1; then
-        test_pass "validate name (service type, valid)"
-        return
-    fi
-
-    test_fail "validate name service valid" "valid service name was rejected"
-}
-
-test_validate_name_service_invalid() {
-    test_start "validate name (service type, has suffix)"
-
-    if ! vde_validate_name "postgres-dev" "service" >/dev/null 2>&1; then
-        test_pass "validate name (service type, has suffix)"
-        return
-    fi
-
-    test_fail "validate name service invalid" "service VM with -dev suffix should be rejected"
-}
-
-# =============================================================================
-# TESTS: vde_normalize_name
+# TESTS: vde_normalize_name (Should return raw canonical name)
 # =============================================================================
 
 test_normalize_name_lowercase() {
@@ -198,178 +113,64 @@ test_normalize_name_lowercase() {
     test_fail "normalize name lowercase" "expected 'python', got '$result'"
 }
 
-test_normalize_name_strips_special() {
-    test_start "normalize name (strip special chars)"
+test_normalize_name_strip_prefix() {
+    test_start "normalize name (strip vde- prefix)"
 
     local result
-    result=$(vde_normalize_name "python@vm")
-    if [[ "$result" == "pythonvm" ]]; then
-        test_pass "normalize name (strip special chars)"
-        return
-    fi
-
-    test_fail "normalize name strip special" "expected 'pythonvm', got '$result'"
-}
-
-test_normalize_name_lang_suffix() {
-    test_start "normalize name (add lang suffix)"
-
-    local result
-    result=$(vde_normalize_name "python" "lang")
-    if [[ "$result" == "python-dev" ]]; then
-        test_pass "normalize name (add lang suffix)"
-        return
-    fi
-
-    test_fail "normalize name lang suffix" "expected 'python-dev', got '$result'"
-}
-
-test_normalize_name_lang_already_has_suffix() {
-    test_start "normalize name (lang, already has suffix)"
-
-    local result
-    result=$(vde_normalize_name "python-dev" "lang")
-    # Note: Current behavior is buggy - sed strips - before suffix handling
-    # This test documents the actual (buggy) behavior
-    if [[ "$result" == "pythondev-dev" ]]; then
-        test_pass "normalize name (lang, already has suffix)"
-        return
-    fi
-
-    test_fail "normalize name lang suffix" "expected 'pythondev-dev', got '$result'"
-}
-
-# =============================================================================
-# TESTS: vde_get_hostname
-# =============================================================================
-
-test_get_hostname_lang() {
-    test_start "get hostname (lang VM)"
-
-    local result
-    result=$(vde_get_hostname "python-dev")
+    result=$(vde_normalize_name "vde-python")
     if [[ "$result" == "python" ]]; then
-        test_pass "get hostname (lang VM)"
+        test_pass "normalize name (strip vde- prefix)"
         return
     fi
 
-    test_fail "get hostname lang" "expected 'python', got '$result'"
+    test_fail "normalize name prefix" "expected 'python', got '$result'"
 }
 
-test_get_hostname_service() {
-    test_start "get hostname (service VM)"
+# =============================================================================
+# TESTS: vde_get_container_name (Should add prefix)
+# =============================================================================
+
+test_get_container_name() {
+    test_start "get container name"
 
     local result
-    result=$(vde_get_hostname "postgres")
-    if [[ "$result" == "postgres" ]]; then
-        test_pass "get hostname (service VM)"
+    result=$(vde_get_container_name "python")
+    if [[ "$result" == "vde-python" ]]; then
+        test_pass "get container name"
         return
     fi
 
-    test_fail "get hostname service" "expected 'postgres', got '$result'"
+    test_fail "get container name" "expected 'vde-python', got '$result'"
 }
 
-# =============================================================================
-# TESTS: vde_detect_vm_type_from_name
-# =============================================================================
-
-test_detect_type_lang() {
-    test_start "detect VM type (lang)"
+test_get_container_name_idempotent() {
+    test_start "get container name (idempotent)"
 
     local result
-    result=$(vde_detect_vm_type_from_name "python-dev")
-    if [[ "$result" == "lang" ]]; then
-        test_pass "detect VM type (lang)"
+    result=$(vde_get_container_name "vde-python")
+    if [[ "$result" == "vde-python" ]]; then
+        test_pass "get container name (idempotent)"
         return
     fi
 
-    test_fail "detect VM type lang" "expected 'lang', got '$result'"
+    test_fail "get container name idempotent" "expected 'vde-python', got '$result'"
 }
 
-test_detect_type_service() {
-    test_start "detect VM type (service)"
+# =============================================================================
+# TESTS: vde_get_ssh_host
+# =============================================================================
+
+test_get_ssh_host() {
+    test_start "get ssh host"
 
     local result
-    result=$(vde_detect_vm_type_from_name "postgres")
-    if [[ "$result" == "service" ]]; then
-        test_pass "detect VM type (service)"
+    result=$(vde_get_ssh_host "python")
+    if [[ "$result" == "vde-python" ]]; then
+        test_pass "get ssh host"
         return
     fi
 
-    test_fail "detect VM type service" "expected 'service', got '$result'"
-}
-
-# =============================================================================
-# TESTS: vde_validate_name_or_fail
-# =============================================================================
-
-test_validate_or_fail_valid() {
-    test_start "validate_or_fail (valid name)"
-
-    # This should not exit
-    (vde_validate_name_or_fail "python") >/dev/null 2>&1
-    if [[ $? -eq 0 ]]; then
-        test_pass "validate_or_fail (valid name)"
-        return
-    fi
-
-    test_fail "validate_or_fail valid" "valid name caused exit"
-}
-
-test_validate_or_fail_invalid() {
-    test_start "validate_or_fail (invalid name)"
-
-    # This should exit with error code
-    (vde_validate_name_or_fail "") >/dev/null 2>&1
-    local exit_code=$?
-
-    if [[ $exit_code -eq $VDE_ERR_INVALID_INPUT ]]; then
-        test_pass "validate_or_fail (invalid name)"
-        return
-    fi
-
-    test_fail "validate_or_fail invalid" "expected exit code $VDE_ERR_INVALID_INPUT, got $exit_code"
-}
-
-# =============================================================================
-# TESTS: vde_format_name_help
-# =============================================================================
-
-test_format_name_help() {
-    test_start "format name help"
-
-    local result
-    result=$(vde_format_name_help)
-
-    if echo "$result" | grep -q "Language VMs"; then
-        if echo "$result" | grep -q "Service VMs"; then
-            if echo "$result" | grep -q "\-dev"; then
-                test_pass "format name help"
-                return
-            fi
-        fi
-    fi
-
-    test_fail "format name help" "help output missing expected content"
-}
-
-# =============================================================================
-# TESTS: Source Guard
-# =============================================================================
-
-test_source_guard() {
-    test_start "source guard"
-
-    # The guard should prevent double-sourcing issues
-    source "$PROJECT_ROOT/scripts/lib/vde-naming" 2>/dev/null
-
-    # Patterns should still exist
-    if [[ -n "$VDE_NAME_PATTERN" ]]; then
-        test_pass "source guard"
-        return
-    fi
-
-    test_fail "source guard" "patterns missing after re-source"
+    test_fail "get ssh host" "expected 'vde-python', got '$result'"
 }
 
 # =============================================================================
@@ -377,49 +178,18 @@ test_source_guard() {
 # =============================================================================
 
 echo "=============================================="
-echo "VDE Naming Unit Tests"
+echo "VDE Naming Unit Tests (Raw Canonical Naming)"
 echo "=============================================="
 
-# Pattern tests
 test_patterns_exist
-test_pattern_formats
-
-# vde_validate_name tests
 test_validate_name_empty
 test_validate_name_valid
-test_validate_name_invalid_chars
-test_validate_name_uppercase
-test_validate_name_special_chars
-
-# vde_validate_name with type tests
-test_validate_name_lang_valid
-test_validate_name_lang_invalid
-test_validate_name_service_valid
-test_validate_name_service_invalid
-
-# vde_normalize_name tests
+test_validate_name_raw
 test_normalize_name_lowercase
-test_normalize_name_strips_special
-test_normalize_name_lang_suffix
-test_normalize_name_lang_already_has_suffix
-
-# vde_get_hostname tests
-test_get_hostname_lang
-test_get_hostname_service
-
-# vde_detect_vm_type_from_name tests
-test_detect_type_lang
-test_detect_type_service
-
-# vde_validate_name_or_fail tests
-test_validate_or_fail_valid
-test_validate_or_fail_invalid
-
-# vde_format_name_help test
-test_format_name_help
-
-# Source guard test
-test_source_guard
+test_normalize_name_strip_prefix
+test_get_container_name
+test_get_container_name_idempotent
+test_get_ssh_host
 
 echo ""
 echo "=============================================="

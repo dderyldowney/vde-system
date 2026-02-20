@@ -19,14 +19,18 @@
 #===============================================================================
 
 # Determine VDE root directory
-VDE_ROOT_DIR="${0:a:h}"
+VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 # Source core libraries
-[[ -f "$VDE_ROOT_DIR/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/lib/vde-shell-compat" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/lib/vde-constants" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/lib/vde-errors" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-log" ]] && source "$VDE_ROOT_DIR/lib/vde-log" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-shell-compat" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-constants" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-errors" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-log" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-log" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/scripts/lib/vde-security" ]] && source "$VDE_ROOT_DIR/scripts/lib/vde-security" &>/dev/null
+
+# Initialize security environment (network, permissions)
+vde_security_init
 
 # Initialize logging
 vde_log_init 2>/dev/null || true

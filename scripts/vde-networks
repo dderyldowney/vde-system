@@ -43,12 +43,8 @@ VDE_NETWORK="${VDE_DOCKER_NETWORK}"
 
 # Create network if requested
 if [ $CREATE -eq 1 ]; then
-    if docker network inspect "$VDE_NETWORK" >/dev/null 2>&1; then
-        echo "Network '$VDE_NETWORK' already exists"
-    else
-        docker network create "$VDE_NETWORK"
-        echo "Created network '$VDE_NETWORK'"
-    fi
+    source "$VDE_ROOT_DIR/scripts/lib/vde-security"
+    vde_security_ensure_network "$VDE_NETWORK"
 fi
 
 if [ $QUIET -eq 1 ]; then

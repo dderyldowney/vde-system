@@ -14,15 +14,16 @@ test_fail() { echo -e "  ${RED}✗ FAIL: $1 - $2${RESET}"; ((TESTS_FAILED++)) }
 source "$(dirname "$0")/../../scripts/lib/vde-constants"
 source "$(dirname "$0")/../../scripts/lib/vde-shell-compat"
 source "$(dirname "$0")/../../scripts/lib/vm-common"
+source "$(dirname "$0")/../../scripts/lib/vde-docker-state"
 source "$(dirname "$0")/../../scripts/lib/vde-health"
 
 # Mock dependencies
 get_vm_info() {
     local prop="$1"
     local vm_name="$2"
-    if [[ "$vm_name" == "python" || "$vm_name" == "go" ]]; then
+    if [[ "$vm_name" == "vde-python" || "$vm_name" == "vde-go" ]]; then
         echo "lang"
-    elif [[ "$vm_name" == "postgres" ]]; then
+    elif [[ "$vm_name" == "vde-postgres" ]]; then
         echo "service"
     else
         echo "unknown"
@@ -34,8 +35,8 @@ docker() {
     shift
     if [[ "$cmd" == "ps" ]]; then
         if [[ "$MOCK_DOCKER_RUNNING" == "1" ]]; then
-            echo "python-dev"
-            echo "postgres"
+            echo "vde-python"
+            echo "vde-postgres"
         else
             echo ""
         fi
@@ -65,14 +66,14 @@ timeout() { shift; "$@"; }
 # Test 1: vde_check_container_running
 test_start "vde_check_container_running"
 MOCK_DOCKER_RUNNING=1
-if vde_check_container_running "python"; then
+if vde_check_container_running "vde-python"; then
     test_pass "detects running language container"
 else
-    test_fail "detects running language container" "failed to detect python-dev"
+    test_fail "detects running language container" "failed to detect vde-python"
 fi
 
 MOCK_DOCKER_RUNNING=0
-if vde_check_container_running "python"; then
+if vde_check_container_running "vde-python"; then
     test_fail "detects stopped container" "expected failure for stopped container"
 else
     test_pass "detects stopped language container"
@@ -82,14 +83,14 @@ fi
 test_start "vde_check_ssh_port"
 MOCK_PORT_MAPPING=1
 MOCK_PORT_OPEN=1
-if vde_check_ssh_port "python" 5; then
+if vde_check_ssh_port "vde-python" 5; then
     test_pass "detects open SSH port"
 else
     test_fail "detects open SSH port" "failed to detect open port"
 fi
 
 MOCK_PORT_OPEN=0
-vde_check_ssh_port "python" 1
+vde_check_ssh_port "vde-python" 1
 if [[ $? -eq $VDE_ERR_TIMEOUT ]]; then
     test_pass "detects closed SSH port (timeout)"
 else
@@ -100,7 +101,7 @@ fi
 test_start "vde_check_ssh_login"
 MOCK_PORT_MAPPING=1
 MOCK_SSH_SUCCESS=1
-if vde_check_ssh_login "python" 5; then
+if vde_check_ssh_login "vde-python" 5; then
     test_pass "detects successful SSH login"
 else
     test_fail "detects successful SSH login" "failed to detect successful login"
@@ -112,14 +113,14 @@ MOCK_DOCKER_RUNNING=1
 MOCK_PORT_MAPPING=1
 MOCK_PORT_OPEN=1
 MOCK_SSH_SUCCESS=1
-if vde_health_check "python" 0; then
+if vde_health_check "vde-python" 0; then
     test_pass "aggregate health check passes when all ok"
 else
     test_fail "aggregate health check" "expected pass"
 fi
 
 MOCK_SSH_SUCCESS=0
-if ! vde_health_check "python" 0; then
+if ! vde_health_check "vde-python" 0; then
     test_pass "aggregate health check fails when SSH fails"
 else
     test_fail "aggregate health check" "expected failure when SSH fails"

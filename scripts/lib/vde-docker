@@ -58,13 +58,17 @@ export VDE_PORT_REGISTRY
 get_compose_file() {
     local vm_name="$1"
     
+    # Always use the raw canonical name for directory lookup
+    local raw_name
+    raw_name=$(vde_normalize_name "$vm_name")
+    
     # Try to get from config first if loaded
     local compose_file
-    compose_file=$(get_docker_config compose_file "$vm_name" 2>/dev/null) || true
+    compose_file=$(get_docker_config compose_file "$raw_name" 2>/dev/null) || true
     
     if [ -z "$compose_file" ]; then
-        # Fallback to conventional path
-        compose_file="$CONFIGS_DIR/$vm_name/docker-compose.yml"
+        # Fallback to conventional path using raw name
+        compose_file="$CONFIGS_DIR/$raw_name/docker-compose.yml"
     fi
 
     if [ -f "$compose_file" ]; then
@@ -79,8 +83,7 @@ get_compose_file() {
 # Args: <vm_name>
 # Returns: Outputs project name to stdout
 get_docker_project_name() {
-    local vm_name="$1"
-    echo "vde-${vm_name}"
+    vde_get_container_name "$1"
 }
 
 # Check if VM has been created (exists in docker-state or has container)
@@ -89,18 +92,26 @@ get_docker_project_name() {
 vm_exists() {
     local vm_name="$1"
     
+    local container_name
+    container_name=$(get_docker_project_name "$vm_name")
+
     # Check Docker container FIRST - this is the source of truth
-    # Container names are either vde-<vm> (for lang VMs) or vde-<vm> (for service VMs)
-    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qE "^vde-${vm_name}$"; then
-        return $VDE_SUCCESS
-    fi
-    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qE "^vde-${vm_name}$"; then
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^${container_name}$"; then
         return $VDE_SUCCESS
     fi
     
-    # State file is NOT reliable - don't use it for existence check
-    # It can be stale or misleading
+    # Second check - does the config directory exist?
+    if [ -d "$CONFIGS_DIR/$vm_name" ]; then
+        return $VDE_SUCCESS
+    fi
     
+    # Third check - does the base name directory exist? (for backward compat)
+    if [[ "$vm_name" =~ ^vde- ]]; then
+        if [ -d "$CONFIGS_DIR/${vm_name#vde-}" ]; then
+            return $VDE_SUCCESS
+        fi
+    fi
+
     return $VDE_ERR_NOT_FOUND
 }
 

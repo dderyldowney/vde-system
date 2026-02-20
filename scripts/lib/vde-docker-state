@@ -15,8 +15,7 @@
 # Args: <vm_name>
 # Returns: VDE_SUCCESS (0), outputs container name to stdout
 _get_container_name() {
-    local vm="$1"
-    echo "vde-${vm}"
+    vde_get_container_name "$1"
     return $VDE_SUCCESS
 }
 

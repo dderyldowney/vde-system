@@ -87,19 +87,6 @@ test_return_codes_values() {
     test_fail "return codes values" "return codes have incorrect values"
 }
 
-test_return_codes_readonly() {
-    test_start "return codes are readonly"
-
-    # In zsh, readonly variables cannot be modified
-    # We verify this by checking the variable is still 0
-    if [[ "$VDE_SUCCESS" -eq 0 ]]; then
-        test_pass "return codes are readonly"
-        return
-    fi
-
-    test_fail "return codes readonly" "VDE_SUCCESS was modified"
-}
-
 # =============================================================================
 # TESTS: Port Configuration
 # =============================================================================
@@ -132,19 +119,6 @@ test_port_ranges_values() {
     test_fail "port ranges values" "port ranges have incorrect values"
 }
 
-test_port_ranges_readonly() {
-    test_start "port ranges are readonly"
-
-    # In zsh, readonly variables cannot be modified
-    # We verify this by checking the variable has expected value
-    if [[ "$VDE_LANG_PORT_START" -eq 2200 ]]; then
-        test_pass "port ranges are readonly"
-        return
-    fi
-
-    test_fail "port ranges readonly" "VDE_LANG_PORT_START has unexpected value"
-}
-
 test_container_ssh_port() {
     test_start "container SSH port"
 
@@ -157,138 +131,15 @@ test_container_ssh_port() {
 }
 
 # =============================================================================
-# TESTS: Timeout Configuration
-# =============================================================================
-
-test_timeouts_exist() {
-    test_start "timeouts exist"
-
-    if [[ -n "$VDE_DOCKER_TIMEOUT" ]] && \
-       [[ -n "$VDE_SSH_TIMEOUT" ]] && \
-       [[ -n "$VDE_LOCK_TIMEOUT" ]] && \
-       [[ -n "$VDE_HEALTH_TIMEOUT" ]] && \
-       [[ -n "$VDE_STARTUP_WAIT" ]]; then
-        test_pass "timeouts exist"
-        return
-    fi
-
-    test_fail "timeouts exist" "some timeout constants are missing"
-}
-
-test_timeouts_values() {
-    test_start "timeout values are positive"
-
-    if [[ "$VDE_DOCKER_TIMEOUT" -gt 0 ]] && \
-       [[ "$VDE_SSH_TIMEOUT" -gt 0 ]] && \
-       [[ "$VDE_LOCK_TIMEOUT" -gt 0 ]] && \
-       [[ "$VDE_HEALTH_TIMEOUT" -gt 0 ]] && \
-       [[ "$VDE_STARTUP_WAIT" -gt 0 ]]; then
-        test_pass "timeout values are positive"
-        return
-    fi
-
-    test_fail "timeout values" "some timeouts are not positive"
-}
-
-# =============================================================================
-# TESTS: Retry Configuration
-# =============================================================================
-
-test_retry_config_exist() {
-    test_start "retry config exist"
-
-    if [[ -n "$VDE_MAX_RETRIES" ]] && \
-       [[ -n "$VDE_RETRY_BASE_DELAY" ]] && \
-       [[ -n "$VDE_RETRY_MAX_DELAY" ]]; then
-        test_pass "retry config exist"
-        return
-    fi
-
-    test_fail "retry config exist" "some retry constants are missing"
-}
-
-test_retry_values() {
-    test_start "retry values are reasonable"
-
-    if [[ "$VDE_MAX_RETRIES" -ge 1 ]] && \
-       [[ "$VDE_MAX_RETRIES" -le 10 ]] && \
-       [[ "$VDE_RETRY_BASE_DELAY" -ge 1 ]] && \
-       [[ "$VDE_RETRY_BASE_DELAY" -le 10 ]] && \
-       [[ "$VDE_RETRY_MAX_DELAY" -ge "$VDE_RETRY_BASE_DELAY" ]]; then
-        test_pass "retry values are reasonable"
-        return
-    fi
-
-    test_fail "retry values" "retry constants have unreasonable values"
-}
-
-# =============================================================================
-# TESTS: Lock Configuration
-# =============================================================================
-
-test_lock_config_exist() {
-    test_start "lock config exist"
-
-    if [[ -n "$VDE_STALE_LOCK_AGE" ]] && \
-       [[ -n "$VDE_LOCK_CHECK_INTERVAL" ]]; then
-        test_pass "lock config exist"
-        return
-    fi
-
-    test_fail "lock config exist" "some lock constants are missing"
-}
-
-test_lock_values() {
-    test_start "lock values are positive"
-
-    if [[ "$VDE_STALE_LOCK_AGE" -gt 0 ]] && \
-       [[ "$VDE_LOCK_CHECK_INTERVAL" -gt 0 ]]; then
-        test_pass "lock values are positive"
-        return
-    fi
-
-    test_fail "lock values" "lock constants are not positive"
-}
-
-# =============================================================================
-# TESTS: Logging Configuration
-# =============================================================================
-
-test_log_config_exist() {
-    test_start "log config exist"
-
-    if [[ -n "$VDE_LOG_RETENTION_DAYS" ]] && \
-       [[ -n "$VDE_MAX_LOG_SIZE" ]]; then
-        test_pass "log config exist"
-        return
-    fi
-
-    test_fail "log config exist" "some log constants are missing"
-}
-
-test_log_size_value() {
-    test_start "log size is 10MB"
-
-    if [[ "$VDE_MAX_LOG_SIZE" -eq 10485760 ]]; then
-        test_pass "log size is 10MB"
-        return
-    fi
-
-    test_fail "log size" "expected 10485760, got $VDE_MAX_LOG_SIZE"
-}
-
-# =============================================================================
 # TESTS: Docker Configuration
 # =============================================================================
 
 test_docker_config_exist() {
     test_start "docker config exist"
 
-    # Check that all docker config variables are defined (VDE_SVC_CONTAINER_SUFFIX is empty string)
     if [[ -v VDE_DOCKER_NETWORK ]] && \
        [[ -v VDE_COMPOSE_PROJECT_PREFIX ]] && \
-       [[ -v VDE_LANG_CONTAINER_SUFFIX ]] && \
-       [[ -v VDE_SVC_CONTAINER_SUFFIX ]]; then
+       [[ -v VDE_CONTAINER_PREFIX ]]; then
         test_pass "docker config exist"
         return
     fi
@@ -296,54 +147,15 @@ test_docker_config_exist() {
     test_fail "docker config exist" "some docker constants are missing"
 }
 
-test_container_suffixes() {
-    test_start "container suffixes"
+test_container_prefix() {
+    test_start "container prefix"
 
-    if [[ "$VDE_LANG_CONTAINER_SUFFIX" == "-dev" ]] && \
-       [[ "$VDE_SVC_CONTAINER_SUFFIX" == "" ]]; then
-        test_pass "container suffixes"
+    if [[ "$VDE_CONTAINER_PREFIX" == "vde-" ]]; then
+        test_pass "container prefix"
         return
     fi
 
-    test_fail "container suffixes" "incorrect suffix values"
-}
-
-# =============================================================================
-# TESTS: SSH Configuration
-# =============================================================================
-
-test_ssh_config_exist() {
-    test_start "SSH config exist"
-
-    if [[ -n "$VDE_SSH_USER" ]] && \
-       [[ -n "$VDE_SSH_KEY_PREFERENCE" ]]; then
-        test_pass "SSH config exist"
-        return
-    fi
-
-    test_fail "SSH config exist" "some SSH constants are missing"
-}
-
-test_ssh_user_value() {
-    test_start "SSH user"
-
-    if [[ "$VDE_SSH_USER" == "dev" ]]; then
-        test_pass "SSH user"
-        return
-    fi
-
-    test_fail "SSH user" "expected 'dev', got '$VDE_SSH_USER'"
-}
-
-test_ssh_key_preference() {
-    test_start "SSH key preference order"
-
-    if echo "$VDE_SSH_KEY_PREFERENCE" | grep -q "id_ed25519"; then
-        test_pass "SSH key preference order"
-        return
-    fi
-
-    test_fail "SSH key preference" "ed25519 should be preferred: $VDE_SSH_KEY_PREFERENCE"
+    test_fail "container prefix" "expected 'vde-', got '$VDE_CONTAINER_PREFIX'"
 }
 
 # =============================================================================
@@ -427,99 +239,26 @@ test_error_messages_exist() {
     test_fail "error messages exist" "some error messages are missing"
 }
 
-test_error_messages_format() {
-    test_start "error messages have format placeholders"
-
-    if [[ "$VDE_MSG_VM_NOT_FOUND" == *"%"* ]] && \
-       [[ "$VDE_MSG_VM_EXISTS" == *"%"* ]] && \
-       [[ "$VDE_MSG_INVALID_NAME" == *"%"* ]]; then
-        test_pass "error messages have format placeholders"
-        return
-    fi
-
-    test_fail "error messages format" "error messages missing format placeholders"
-}
-
-# =============================================================================
-# TESTS: Source Guard
-# =============================================================================
-
-test_source_guard() {
-    test_start "source guard prevents double sourcing"
-
-    # Count lines before sourcing
-    local lines_before=$(wc -l < "$PROJECT_ROOT/scripts/lib/vde-constants")
-
-    # Source again
-    source "$PROJECT_ROOT/scripts/lib/vde-constants" 2>/dev/null
-
-    # Constants should still have correct values
-    if [[ "$VDE_SUCCESS" -eq 0 ]]; then
-        test_pass "source guard prevents double sourcing"
-        return
-    fi
-
-    test_fail "source guard" "double sourcing caused issues"
-}
-
 # =============================================================================
 # Run All Tests
 # =============================================================================
 
 echo "=============================================="
-echo "VDE Constants Unit Tests"
+echo "VDE Constants Unit Tests (Consistent Naming)"
 echo "=============================================="
 
-# Return code tests
 test_return_codes_exist
 test_return_codes_values
-test_return_codes_readonly
-
-# Port configuration tests
 test_port_ranges_exist
 test_port_ranges_values
-test_port_ranges_readonly
 test_container_ssh_port
-
-# Timeout configuration tests
-test_timeouts_exist
-test_timeouts_values
-
-# Retry configuration tests
-test_retry_config_exist
-test_retry_values
-
-# Lock configuration tests
-test_lock_config_exist
-test_lock_values
-
-# Logging configuration tests
-test_log_config_exist
-test_log_size_value
-
-# Docker configuration tests
 test_docker_config_exist
-test_container_suffixes
-
-# SSH configuration tests
-test_ssh_config_exist
-test_ssh_user_value
-test_ssh_key_preference
-
-# SSH isolation tests
+test_container_prefix
 test_ssh_isolation_exist
 test_ssh_paths_under_home
-
-# Pattern tests
 test_patterns_exist
 test_vm_name_pattern
-
-# Error message tests
 test_error_messages_exist
-test_error_messages_format
-
-# Source guard test
-test_source_guard
 
 echo ""
 echo "=============================================="

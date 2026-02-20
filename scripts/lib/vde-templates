@@ -37,7 +37,7 @@ fi
 # TEMPLATE DIRECTORIES
 # =============================================================================
 
-VDE_TEMPLATES_DIR="${VDE_ROOT_DIR}/templates"
+VDE_TEMPLATES_DIR="${VDE_TEMPLATES_DIR:-${VDE_ROOT_DIR}/templates}"
 
 # =============================================================================
 # TEMPLATE RENDERING
@@ -113,7 +113,7 @@ create_vm_from_template() {
     # Add default variables
     set -- "VM_NAME" "$vm_name" "$@"
 
-    local output_dir="$VDE_CONFIG_DIR/docker/${vm_type:-custom}"
+    local output_dir="$CONFIGS_DIR/$vm_name"
 
     if [ -d "$output_dir" ]; then
         _warn "VM directory already exists: $output_dir"
