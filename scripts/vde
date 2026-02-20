@@ -54,6 +54,7 @@ _VDE_COMMANDS=(
     "stop:Stop a VM:shutdown-virtual"
     "restart:Restart a VM:restart-virtual"
     "ssh:SSH into a VM:ssh-vm"
+    "connect:SSH into a VM (alias for ssh):ssh-vm"
     "remove:Remove a VM:remove-virtual"
     "delete:Completely delete a VM:delete-virtual"
     "uninstall:Uninstall a language/service:uninstall-vm-type"
@@ -97,6 +98,7 @@ EOF
     printf "  %-12s %s\n" "stop <vm>" "Stop a VM"
     printf "  %-12s %s\n" "restart <vm>" "Restart a VM"
     printf "  %-12s %s\n" "ssh <vm>" "SSH into a VM"
+    printf "  %-12s %s\n" "connect <vm>" "SSH into a VM (alias for ssh)"
     printf "  %-12s %s\n" "remove <vm>" "Remove a VM instance"
     printf "  %-12s %s\n" "uninstall <type>" "Uninstall a language/service completely"
     printf "  %-12s %s\n" "list" "List all VMs"
@@ -198,7 +200,7 @@ vde_find_command_script() {
         restart|restart-virtual)
             script="$VDE_ROOT_DIR/scripts/restart-virtual"
             ;;
-        ssh|ssh-vm)
+        ssh|connect|ssh-vm)
             script="$VDE_ROOT_DIR/scripts/ssh-vm"
             ;;
         list|list-vms)

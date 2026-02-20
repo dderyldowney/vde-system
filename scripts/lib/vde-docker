@@ -129,12 +129,16 @@ container_exists() {
 }
 
 # Check if VM is running
-# Args: <vm_name>
+# Args: <vm_name> (raw or with vde- prefix)
 # Returns: VDE_SUCCESS (0) if running
 is_vm_running() {
     local vm_name="$1"
+    local container_name
 
-    if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^vde-${vm_name}$"; then
+    # Use vde_get_container_name to ensure proper vde- prefix
+    container_name=$(vde_get_container_name "$vm_name")
+
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${container_name}$"; then
         return $VDE_SUCCESS
     fi
 
