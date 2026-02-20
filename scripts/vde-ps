@@ -141,7 +141,7 @@ else
             # Show only running containers
             echo "CONTAINER ID       NAME                    STATUS                     PORTS"
             echo "----------------- ---------------------- -------------------------- ----------------------"
-            docker ps --format '%-18s %-22s %-26s %-25s' '' '{{.Names}}' '{{.Status}}' '{{.Ports}}' | grep -E '^vde-' || true
+            docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' 2>/dev/null | grep -E '^vde-' || true
         fi
     fi
 fi
