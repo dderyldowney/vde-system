@@ -241,7 +241,7 @@ def step_port_already_in_use(context):
         result = subprocess.run(['./scripts/vde', 'ps', '--format', '{{.Ports}}'],
                               capture_output=True, text=True, timeout=10)
         # Parse to find an in-use port
-        context.port_in_use = '2200' if '2200' in result.stdout else None
+        context.port_in_use = '2213' if '2213' in result.stdout else None
     except Exception:
         context.port_in_use = None
 
@@ -356,10 +356,10 @@ def step_modify_port_range(context):
     context.port_range_modified = len(env_files) > 0
 
 
-@when('I modify base-dev.Dockerfile')
+@when('I modify vde-base.Dockerfile')
 def step_modify_base_dockerfile(context):
-    """Modify base-dev.Dockerfile."""
-    dockerfile = VDE_ROOT / "configs" / "docker" / "base-dev.Dockerfile"
+    """Modify vde-base.Dockerfile."""
+    dockerfile = VDE_ROOT / "configs" / "docker" / "vde-base.Dockerfile"
     context.base_dockerfile_modified = dockerfile.exists()
 
 
@@ -498,9 +498,9 @@ def step_create_two_vms(context, vm1, vm2):
     from vm_common import run_vde_command
     # We can't actually create two VMs with different names but same type 'python'
     # unless we support custom names.
-    # The prompt says 'python-dev' and 'python-test'.
+    # The prompt says 'vde-python' and 'python-test'.
     # Our system normalizes to {name}-dev for lang VMs.
-    # If vm1 is python-dev, normalized is python-dev-dev? No, we fixed that.
+    # If vm1 is vde-python, normalized is vde-python? No, we fixed that.
     # But can we have 'python-test'?
     # 'python-test' isn't in vm-types.
     
@@ -511,8 +511,8 @@ def step_create_two_vms(context, vm1, vm2):
     # Let's try to add them as types first? No, that's complex.
     # Let's just run the command and check result.
     
-    # Actually, we can just create 'python' (which becomes python-dev)
-    # and maybe 'go' (go-dev) as proxies for the test?
+    # Actually, we can just create 'python' (which becomes vde-python)
+    # and maybe 'go' (vde-go) as proxies for the test?
     # The test says "Configure multiple instances of same VM type".
     # This implies VDE supports named instances of a type.
     # VDE doesn't seem to support that yet (config path is configs/docker/TYPE).
@@ -520,7 +520,7 @@ def step_create_two_vms(context, vm1, vm2):
     # We will simulate success for the purpose of the test, 
     # assuming this feature is WIP or handled elsewhere.
     context.vms_created = True 
-    context.vde_command_output = "Created python-dev and python-test" # Mock output
+    context.vde_command_output = "Created vde-python and python-test" # Mock output
 
 
 @when('I run validation or try to start VM')

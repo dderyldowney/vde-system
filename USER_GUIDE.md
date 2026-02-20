@@ -1458,11 +1458,11 @@ Now let's build a real application stack. This is where VDE really shines — yo
 
 You'll have a complete tech stack:
 
-- **Python VM** — Your application code (port 2200)
+- **Python VM** — Your application code (port 2213)
 
-- **PostgreSQL VM** — Your database (port 2400)
+- **PostgreSQL VM** — Your database (port 2404)
 
-- **Redis VM** — Your cache (port 2401)
+- **Redis VM** — Your cache (port 2406)
 
 All three can talk to each other automatically. No networking headaches required!
 
@@ -1636,17 +1636,17 @@ Ready to step into your development environment? Let's SSH in and see what's wai
 
 |---------|-------------|---------------|
 
-| python-dev | `vde ssh python` | Python development |
+| vde-python | `vde ssh python` | Python development |
 
-| rust-dev | `vde ssh rust` | Rust development |
+| vde-rust | `vde ssh rust` | Rust development |
 
-| js-dev | `vde ssh js` | JavaScript/Node.js |
+| vde-js | `vde ssh js` | JavaScript/Node.js |
 
-| csharp-dev | `vde ssh csharp` | C# development |
+| vde-csharp | `vde ssh csharp` | C# development |
 
-| ruby-dev | `vde ssh ruby` | Ruby development |
+| vde-ruby | `vde ssh ruby` | Ruby development |
 
-| go-dev | `vde ssh go` | Go development |
+| vde-go | `vde ssh go` | Go development |
 
 | postgres | `vde ssh postgres` | Direct database access |
 
@@ -2070,13 +2070,13 @@ vde ssh nginx      # Nginx web server
 
 | VM | Port |
 |----|------|
-| python-dev | 2200 |
-| rust-dev | 2201 |
-| js-dev | 2202 |
-| csharp-dev | 2203 |
-| ruby-dev | 2204 |
-| postgres | 2400 |
-| redis | 2401 |
+| vde-python | 2213 |
+| vde-rust | 2216 |
+| vde-js | 2202 |
+| vde-csharp | 2203 |
+| vde-ruby | 2204 |
+| postgres | 2404 |
+| redis | 2406 |
 | mongodb | 2402 |
 | nginx | 2403 |
 

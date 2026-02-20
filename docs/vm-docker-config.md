@@ -35,7 +35,7 @@ The VM Docker configuration system provides:
       "compose_file": "configs/docker/python/docker-compose.yml",
       "env_file": "env-files/python.env",
       "image": "dev-python:latest",
-      "container_name": "python-dev",
+      "container_name": "vde-python",
       "workspace_mount": "projects/python:/home/devuser/workspace",
       "logs_mount": "logs/python:/logs"
     }
@@ -135,7 +135,7 @@ echo ${VM_ENV_FILE[python]}
 # Output: env-files/python.env
 
 echo ${VM_CONTAINER_NAME[python]}
-# Output: python-dev
+# Output: vde-python
 
 echo ${VM_WORKSPACE_MOUNT[python]}
 # Output: projects/python:/home/devuser/workspace
@@ -321,7 +321,7 @@ VDE Project Root
     "compose_file": "configs/docker/newlang/docker-compose.yml",
     "env_file": "env-files/newlang.env",
     "image": "dev-newlang:latest",
-    "container_name": "newlang-dev",
+    "container_name": "vde-newlang",
     "workspace_mount": "projects/newlang:/home/devuser/workspace",
     "logs_mount": "logs/newlang:/logs"
   }

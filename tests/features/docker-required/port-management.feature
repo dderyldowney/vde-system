@@ -10,45 +10,45 @@ Feature: Port Management
   Scenario: Allocate first available port for language VM
     Given no language VMs are created
     When I create a language VM
-    Then the VM should be allocated port "2200"
+    Then the VM should be allocated port "2213"
 
   Scenario: Allocate sequential ports for multiple language VMs
-    Given language VM "python" is allocated port "2200"
+    Given language VM "python" is allocated port "2213"
     When I create language VM "rust"
-    Then "rust" should be allocated port "2201"
+    Then "rust" should be allocated port "2216"
 
   Scenario: Allocate first available port for service VM
     Given no service VMs are created
     When I create a service VM
-    Then the VM should be allocated port "2400"
+    Then the VM should be allocated port "2404"
 
   Scenario: Skip allocated ports when finding next available
-    Given ports "2200", "2201", "2203" are allocated
+    Given ports "2213", "2216", "2203" are allocated
     When I create a new language VM
     Then the VM should be allocated port "2202"
 
   Scenario: Port registry tracks all allocated ports
-    Given VM "python" is allocated port "2200"
-    And VM "rust" is allocated port "2201"
+    Given VM "python" is allocated port "2213"
+    And VM "rust" is allocated port "2216"
     When I query the port registry
-    Then "python" should be mapped to port "2200"
-    And "rust" should be mapped to port "2201"
+    Then "python" should be mapped to port "2213"
+    And "rust" should be mapped to port "2216"
 
   Scenario: Port registry persists across script invocations
-    Given VM "python" is allocated port "2200"
+    Given VM "python" is allocated port "2213"
     When I reload the VM types cache
-    Then "python" should still be mapped to port "2200"
+    Then "python" should still be mapped to port "2213"
 
   Scenario: Detect host port collision during allocation
-    Given a non-VDE process is listening on port "2200"
+    Given a non-VDE process is listening on port "2213"
     When I create a new language VM
-    Then the VM should NOT be allocated port "2200"
+    Then the VM should NOT be allocated port "2213"
     And the VM should be allocated a different available port
 
   Scenario: Detect Docker port collision during allocation
-    Given a Docker container is bound to host port "2201"
+    Given a Docker container is bound to host port "2216"
     When I create a new language VM
-    Then the VM should NOT be allocated port "2201"
+    Then the VM should NOT be allocated port "2216"
 
   Scenario: Atomic port reservation prevents race conditions
     Given two processes try to allocate ports simultaneously
@@ -76,7 +76,7 @@ Feature: Port Management
     And the port should be available for allocation
 
   Scenario: Port registry updates when VM is removed
-    Given VM "python" is allocated port "2200"
+    Given VM "python" is allocated port "2213"
     When I remove VM "python"
-    Then port "2200" should be removed from registry
-    And port "2200" should be available for new VMs
+    Then port "2213" should be removed from registry
+    And port "2213" should be available for new VMs

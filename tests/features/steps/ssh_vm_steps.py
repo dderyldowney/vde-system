@@ -127,49 +127,49 @@ def step_start_all_vms(context):
 def step_management_vm_running(context):
     """Management VM is running."""
     context.current_vm = "management"
-    context.management_vm_running = container_exists("management-dev")
+    context.management_vm_running = container_exists("vde-management")
 
 
 @given('I have a build VM running')
 def step_build_vm_running(context):
     """Build VM is running."""
     context.current_vm = "build"
-    context.build_vm_running = container_exists("build-dev")
+    context.build_vm_running = container_exists("vde-build")
 
 
 @given('I have a coordination VM running')
 def step_coordination_vm_running(context):
     """Coordination VM is running."""
     context.current_vm = "coordination"
-    context.coordination_vm_running = container_exists("coordination-dev")
+    context.coordination_vm_running = container_exists("vde-coordination")
 
 
 @given('I have a backup VM running')
 def step_backup_vm_running(context):
     """Backup VM is running."""
     context.current_vm = "backup"
-    context.backup_vm_running = container_exists("backup-dev")
+    context.backup_vm_running = container_exists("vde-backup")
 
 
 @given('I have a debugging VM running')
 def step_debugging_vm_running(context):
     """Debugging VM is running."""
     context.current_vm = "debugging"
-    context.debugging_vm_running = container_exists("debugging-dev")
+    context.debugging_vm_running = container_exists("vde-debugging")
 
 
 @given('I have a network VM running')
 def step_network_vm_running(context):
     """Network VM is running."""
     context.current_vm = "network"
-    context.network_vm_running = container_exists("network-dev")
+    context.network_vm_running = container_exists("vde-network")
 
 
 @given('I have a utility VM running')
 def step_utility_vm_running(context):
     """Utility VM is running."""
     context.current_vm = "utility"
-    context.utility_vm_running = container_exists("utility-dev")
+    context.utility_vm_running = container_exists("vde-utility")
 
 
 # Note: 'I have multiple VMs running' is defined in pattern_steps.py
@@ -196,18 +196,18 @@ def step_go_vm_running(context):
     context.current_vm = "go"
     
     # Check if container exists, try to start if needed
-    go_exists = container_exists("go-dev")
+    go_exists = container_exists("vde-go")
     
     if not go_exists:
         # Try to start the Go VM
         result = run_vde_command("start go", timeout=60)
-        go_exists = result.returncode == 0 and container_exists("go-dev")
+        go_exists = result.returncode == 0 and container_exists("vde-go")
     
     context.go_vm_running = go_exists
     
     # Set vm_name for downstream steps
     if go_exists:
-        context.vm_name = "go-dev"
+        context.vm_name = "vde-go"
 
 
 @given('I have a Rust VM running')
@@ -219,18 +219,18 @@ def step_rust_vm_running(context):
     context.current_vm = "rust"
     
     # Check if container exists, try to start if needed
-    rust_exists = container_exists("rust-dev")
+    rust_exists = container_exists("vde-rust")
     
     if not rust_exists:
         # Try to start the Rust VM
         result = run_vde_command("start rust", timeout=60)
-        rust_exists = result.returncode == 0 and container_exists("rust-dev")
+        rust_exists = result.returncode == 0 and container_exists("vde-rust")
     
     context.rust_vm_running = rust_exists
     
     # Set vm_name for downstream steps
     if rust_exists:
-        context.vm_name = "rust-dev"
+        context.vm_name = "vde-rust"
 
 
 @given('I have projects on my host')
@@ -254,14 +254,14 @@ def step_host_has_scripts(context):
 def step_ssh_python_vm(context):
     """SSH into Python VM - set context for VM operations."""
     context.current_vm = "python"
-    context.vm_ssh_target = "python-dev"
+    context.vm_ssh_target = "vde-python"
 
 
 @when('I SSH into the Go VM')
 def step_ssh_go_vm(context):
     """SSH into Go VM - set context for VM operations."""
     context.current_vm = "go"
-    context.vm_ssh_target = "go-dev"
+    context.vm_ssh_target = "vde-go"
 
 
 @when('I SSH into a VM')
@@ -272,53 +272,53 @@ def step_ssh_any_vm(context):
         context.vm_ssh_target = f"{context.current_vm}-dev"
     else:
         context.current_vm = "python"
-        context.vm_ssh_target = "python-dev"
+        context.vm_ssh_target = "vde-python"
 
 
 @when('I SSH into the Rust VM')
 def step_ssh_rust_vm(context):
     """SSH into Rust VM - set context for VM operations."""
     context.current_vm = "rust"
-    context.vm_ssh_target = "rust-dev"
+    context.vm_ssh_target = "vde-rust"
 
 
 @when('I SSH into the build VM')
 def step_ssh_build_vm(context):
     """SSH into build VM - set context for VM operations."""
     context.current_vm = "build"
-    context.vm_ssh_target = "build-dev"
+    context.vm_ssh_target = "vde-build"
 
 
 @when('I SSH into the coordination VM')
 def step_ssh_coordination_vm(context):
     """SSH into coordination VM - set context for VM operations."""
     context.current_vm = "coordination"
-    context.vm_ssh_target = "coordination-dev"
+    context.vm_ssh_target = "vde-coordination"
 
 
 @when('I SSH into the backup VM')
 def step_ssh_backup_vm(context):
     """SSH into backup VM - set context for VM operations."""
     context.current_vm = "backup"
-    context.vm_ssh_target = "backup-dev"
+    context.vm_ssh_target = "vde-backup"
 
 
 @when('I SSH into the debugging VM')
 def step_ssh_debugging_vm(context):
     """SSH into debugging VM - set context for VM operations."""
     context.current_vm = "debugging"
-    context.vm_ssh_target = "debugging-dev"
+    context.vm_ssh_target = "vde-debugging"
 
 
 @when('I SSH into the network VM')
 def step_ssh_network_vm(context):
     """SSH into network VM - set context for VM operations."""
     context.current_vm = "network"
-    context.vm_ssh_target = "network-dev"
+    context.vm_ssh_target = "vde-network"
 
 
 @when('I SSH into the utility VM')
 def step_ssh_utility_vm(context):
     """SSH into utility VM - set context for VM operations."""
     context.current_vm = "utility"
-    context.vm_ssh_target = "utility-dev"
+    context.vm_ssh_target = "vde-utility"

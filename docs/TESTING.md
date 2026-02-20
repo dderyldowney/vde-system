@@ -181,10 +181,10 @@ docker system prune -f
 ssh-keygen -t ed25519 -f /tmp/test_key -N ""
 
 # Check container is running
-docker ps | grep python-dev
+docker ps | grep vde-python
 
 # Test SSH manually
-ssh -i /tmp/test_key -p 2200 devuser@localhost hostname
+ssh -i /tmp/test_key -p 2213 devuser@localhost hostname
 ```
 
 ### Linting Errors
@@ -325,7 +325,7 @@ BDD tests that create Docker containers use **test-specific labels** for isolati
 **Why Test Labels Matter:**
 - Tests can run without affecting user's actual development VMs
 - Tests can verify only test-created containers are cleaned up
-- User can have `python-dev`, `postgres-dev` etc. running and tests will still pass
+- User can have `vde-python`, `vde-postgres` etc. running and tests will still pass
 - Tests are deterministic and don't fail due to unrelated running containers
 
 **Label Implementation:**

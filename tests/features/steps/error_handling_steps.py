@@ -203,7 +203,7 @@ def step_try_connect(context):
     # Try to connect
     result = subprocess.run(
         ['ssh', '-F', os.path.expanduser('~/.ssh/vde/config'), '-o', 'ConnectTimeout=5', f'devuser@localhost',
-         '-p', str(getattr(context, 'ssh_port', 2200)), 'echo test'],
+         '-p', str(getattr(context, 'ssh_port', 2213)), 'echo test'],
         capture_output=True, text=True, timeout=10
     )
     context.ssh_success = result.returncode == 0

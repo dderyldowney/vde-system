@@ -18,7 +18,7 @@ cd ~/dev/projects/python/my-api
 # Edit files, they appear in container at ~/workspace
 
 # Access via SSH - files are mounted from host
-ssh python-dev
+ssh vde-python
 cd ~/workspace  # Mounted from ~/dev/projects/python/
 # Files persist here even after rebuild
 ```
@@ -58,7 +58,7 @@ vde create postgres
 vde create redis
 
 # Connect from language container
-ssh python-dev
+ssh vde-python
 psql -h postgres -U devuser  # Works!
 ```
 
@@ -67,8 +67,8 @@ psql -h postgres -U devuser  # Works!
 All VMs share the `vde-net` network and have SSH agent forwarding enabled.
 
 ```bash
-# From python-dev, connect to postgres using host's SSH keys
-ssh postgres-dev
+# From vde-python, connect to postgres using host's SSH keys
+ssh vde-postgres
 psql -h localhost -U devuser
 
 # Or use service names as hostnames
@@ -141,7 +141,7 @@ Store configuration in `env-files/<name>.env`:
 
 ```bash
 # env-files/python.env
-SSH_PORT=2200
+SSH_PORT=2213
 PYTHON_VERSION=3.11
 DEBUG=true
 ```
@@ -230,14 +230,14 @@ docker logs <container-name>
 docker network ls | grep vde-net
 
 # Test connectivity
-docker exec python-dev ping postgres
+docker exec vde-python ping postgres
 ```
 
 ### Use Verbose SSH
 
 ```bash
 # Debug SSH issues
-ssh -v go-dev
+ssh -v vde-go
 ```
 
 ---

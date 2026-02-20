@@ -207,9 +207,9 @@ This document provides a complete execution trace of the `vde create python` com
       │  │  ├─ Fallback: lsof -i ":$port"
       │  │  └─ Fallback: netstat -tan | grep ":$port "
       │  └─ If not in use: return port
-      └─ Return: 2200 (first available)
+      └─ Return: 2213 (first available)
 
-2. SSH_PORT=2200
+2. SSH_PORT=2213
 ```
 
 **Functions Called**:
@@ -218,7 +218,7 @@ This document provides a complete execution trace of the `vde create python` com
     - `_is_port_in_use()` (vde-docker)
 
 **External Commands**:
-- `sockstat -l | awk '{print $3}' | grep -q "^2200$"` [or lsof/netstat fallback]
+- `sockstat -l | awk '{print $3}' | grep -q "^2213$"` [or lsof/netstat fallback]
 
 ---
 
@@ -265,7 +265,7 @@ This document provides a complete execution trace of the `vde create python` com
    ├─ Read template file: templates/compose-language.yml
    ├─ Perform substitutions:
    │  ├─ {{NAME}} → "python"
-   │  ├─ {{SSH_PORT}} → "2200"
+   │  ├─ {{SSH_PORT}} → "2213"
    │  ├─ {{INSTALL_CMD}} → "apt-get install -y python3 python3-pip python3-venv..."
    │  └─ {{SERVICE_PORT}} → "" (empty for language VMs)
    ├─ Handle SERVICE_PORTS (lines 194-212):
@@ -300,7 +300,7 @@ This document provides a complete execution trace of the `vde create python` com
    mkdir -p env-files
 
 2. Generate environment variables:
-   ├─ SSH_PORT=2200
+   ├─ SSH_PORT=2213
    ├─ DATABASE_URL=postgresql://devuser:SuperSecretPassword123!@postgres:5432/python_dev_db
    ├─ REDIS_HOST=redis
    └─ REDIS_PORT=6379
@@ -331,7 +331,7 @@ This document provides a complete execution trace of the `vde create python` com
    ├─ Lazy-load vde-ssh library
    ├─ Parameters:
    │  ├─ host_alias="vde-python"
-   │  ├─ ssh_port=2200
+   │  ├─ ssh_port=2213
    │  ├─ display_name="Python Language Development"
    │  └─ identity_file="~/.ssh/vde/vde_rsa"
    ├─ Backup existing config:
@@ -340,7 +340,7 @@ This document provides a complete execution trace of the `vde create python` com
    ├─ Append new SSH host entry:
    │  Host vde-python
    │      HostName localhost
-   │      Port 2200
+   │      Port 2213
    │      User devuser
    │      IdentityFile ~/.ssh/vde/vde_rsa
    │      StrictHostKeyChecking no
@@ -396,7 +396,7 @@ This document provides a complete execution trace of the `vde create python` com
       │  │    "vm_name": "vde-python",
       │  │    "vm_type": "lang",
       │  │    "display_name": "Python Language Development",
-      │  │    "ssh_port": 2200,
+      │  │    "ssh_port": 2213,
       │  │    "service_port": "",
       │  │    "created_at": "2026-02-19T12:30:45Z",
       │  │    "status": "running"
@@ -444,7 +444,7 @@ This document provides a complete execution trace of the `vde create python` com
 
 3. Display SSH configuration:
    ├─ SSH host: vde-python
-   ├─ SSH port: 2200
+   ├─ SSH port: 2213
    └─ Connection command: ssh vde-python
 
 4. Exit with status 0 (VDE_SUCCESS)
@@ -576,7 +576,7 @@ create-virtual-for
 ## All External Commands Executed
 
 1. `docker ps -a --format '{{.Names}}'` (container existence check)
-2. `sockstat -l | awk '{print $3}' | grep -q "^2200$"` (port availability)
+2. `sockstat -l | awk '{print $3}' | grep -q "^2213$"` (port availability)
 3. `docker-compose -f configs/docker/python/docker-compose.yml up -d` (VM creation)
    - Internally triggers: `docker pull`, `docker build`, `docker run`
 

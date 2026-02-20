@@ -109,18 +109,18 @@ def step_config_with_custom_settings(context):
     ssh_config.chmod(0o600)
     context.config_with_custom = True
 
-@given('~/.ssh/vde/config contains python-dev configuration')
+@given('~/.ssh/vde/config contains vde-python configuration')
 def step_config_contains_python_dev(context):
-    """Ensure SSH config contains python-dev host entry."""
+    """Ensure SSH config contains vde-python host entry."""
     ssh_config = _get_ssh_config_path()
     _ensure_vde_ssh_dir()
     
     current_content = ssh_config.read_text() if ssh_config.exists() else ""
     
-    if "Host python-dev" not in current_content:
-        new_entry = """Host python-dev
+    if "Host vde-python" not in current_content:
+        new_entry = """Host vde-python
     HostName localhost
-    Port 2200
+    Port 2213
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     StrictHostKeyChecking accept-new
@@ -229,8 +229,8 @@ def step_known_hosts_exists_with_content(context):
     _ensure_vde_ssh_dir()
     
     if not known_hosts.exists():
-        known_hosts.write_text("""[localhost]:2200 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV python_vde
-[localhost]:2400 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV postgres_vde
+        known_hosts.write_text("""[localhost]:2213 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV python_vde
+[localhost]:2404 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV postgres_vde
 """)
         known_hosts.chmod(0o644)
     
@@ -252,11 +252,11 @@ def step_known_hosts_multiple_entries(context):
     known_hosts = _get_known_hosts_path()
     _ensure_vde_ssh_dir()
     
-    content = """[localhost]:2200 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV python_vde
-[localhost]:2400 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV postgres_vde
-[localhost]:2401 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV redis_vde
-[::1]:2200 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV python_vde
-[::1]:2400 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV postgres_vde
+    content = """[localhost]:2213 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV python_vde
+[localhost]:2404 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV postgres_vde
+[localhost]:2406 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV redis_vde
+[::1]:2213 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV python_vde
+[localhost]:2404 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV postgres_vde
 """
     known_hosts.write_text(content)
     known_hosts.chmod(0o644)
@@ -459,7 +459,7 @@ def step_ssh_config_already_contains_host(context, hostname):
     
     if not ssh_config.exists() or f"Host {hostname}" not in ssh_config.read_text():
         content = ssh_config.read_text() if ssh_config.exists() else ""
-        content += f"\nHost {hostname}\n    HostName localhost\n    Port 2200\n"
+        content += f"\nHost {hostname}\n    HostName localhost\n    Port 2213\n"
         ssh_config.write_text(content)
         ssh_config.chmod(0o600)
 
@@ -619,7 +619,7 @@ def step_ssh_config_entry_created(context, vm_name):
     """Create SSH config entry for VM."""
     context.current_vm = vm_name
     if not hasattr(context, 'current_port'):
-        context.current_port = "2200"
+        context.current_port = "2213"
     step_ssh_config_generated(context)
 
 @when('VM-to-VM SSH config is generated')
@@ -1339,12 +1339,12 @@ def step_error_indicates_duplicate(context):
     assert hasattr(context, 'warning_message') or hasattr(context, 'duplicate_detected'), \
            "Should detect duplicate entry"
 
-@then('~/.ssh/vde/config contains python-dev configuration')
+@then('~/.ssh/vde/config contains vde-python configuration')
 def step_config_contains_python_dev(context):
-    """Verify config contains python-dev configuration."""
+    """Verify config contains vde-python configuration."""
     ssh_config = _get_ssh_config_path()
     content = ssh_config.read_text()
-    assert "python-dev" in content, "Config should contain python-dev configuration"
+    assert "vde-python" in content, "Config should contain vde-python configuration"
 
 @then('~/.ssh/vde/config should still contain "    Port {port}" under {hostname}')
 def step_config_still_contains_port_under_host(context, port, hostname):
@@ -1440,23 +1440,23 @@ def step_config_contains_user_github_entry(context):
     ssh_config.write_text(content)
     ssh_config.chmod(0o600)
 
-@then('~/.ssh/vde/config should NOT contain "Host python-dev"')
+@then('~/.ssh/vde/config should NOT contain "Host vde-python"')
 def step_config_should_not_contain_host(context):
     """Verify SSH config does not contain specific host entry."""
     ssh_config = _get_ssh_config_path()
     if ssh_config.exists():
         content = ssh_config.read_text()
-        assert "Host python-dev" not in content, "Config should not contain 'Host python-dev'"
+        assert "Host vde-python" not in content, "Config should not contain 'Host vde-python'"
 
-@given('~/.ssh/vde/known_hosts contains entry for "[localhost]:2200"')
-def step_known_hosts_contains_localhost_2200(context):
-    """Add known_hosts entry for [localhost]:2200."""
+@given('~/.ssh/vde/known_hosts contains entry for "[localhost]:2213"')
+def step_known_hosts_contains_localhost_2213(context):
+    """Add known_hosts entry for [localhost]:2213."""
     known_hosts = _get_known_hosts_path()
     _ensure_vde_ssh_dir()
-    entry = "[localhost]:2200 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC...\n"
+    entry = "[localhost]:2213 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC...\n"
     if known_hosts.exists():
         content = known_hosts.read_text()
-        if "[localhost]:2200" not in content:
+        if "[localhost]:2213" not in content:
             known_hosts.write_text(content + entry)
     else:
         known_hosts.write_text(entry)

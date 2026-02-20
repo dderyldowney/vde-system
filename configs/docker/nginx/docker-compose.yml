@@ -1,3 +1,4 @@
+name: vde-nginx
 # Template for service VMs
 # Variables: nginx, 2400, 80,443, apt-get update -y && apt-get install -y nginx-extras
 # SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
@@ -18,7 +19,7 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y nginx-extras && /usr/sbin/sshd -D"
 
     ports:
-      - "2400:22"
+      - "2403:22"
       - "80:80"
       - "443:443"
 
@@ -27,7 +28,7 @@ services:
       - ../../../logs/nginx:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for service VM communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock

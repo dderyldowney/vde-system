@@ -16,7 +16,7 @@ Install the [Remote-SSH extension](https://marketplace.visualstudio.com/items?it
 
 1. Press `Cmd+Shift+P` (macOS) or `Ctrl+Shift+P` (Windows/Linux)
 2. Type "Remote-SSH: Connect to Host"
-3. Select your VM (e.g., `python-dev`, `rust-dev`, `postgres`)
+3. Select your VM (e.g., `vde-python`, `vde-rust`, `postgres`)
 
 ### 3. Open Your Project
 

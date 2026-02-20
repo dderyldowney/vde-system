@@ -1,3 +1,4 @@
+name: vde-haskell
 # Template for language VMs
 # Variables: haskell, 2216, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y ghc cabal-install
 services:
@@ -12,14 +13,14 @@ services:
     command: sh -c "apt-get update -y && apt-get install -y ghc cabal-install && /usr/sbin/sshd -D"
 
     ports:
-      - "2216:22"
+      - "2207:22"
 
     volumes:
       - ../../../projects/haskell:/home/devuser/workspace
       - ../../../logs/haskell:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock

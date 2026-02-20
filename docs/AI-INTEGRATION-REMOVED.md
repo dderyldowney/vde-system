@@ -145,7 +145,7 @@ cd ~/dev
 ./scripts/vde start go
 
 # 5. Connect via SSH
-ssh go-dev
+ssh vde-go
 
 # 6. Start working
 cd ~/workspace

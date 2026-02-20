@@ -325,7 +325,7 @@ def step_python_already_running(context):
             if result.returncode == 0:
                 # Docker is available - check if python is running
                 running = result.stdout.strip().split('\n')
-                python_running = any('python-dev' in c for c in running if c)
+                python_running = any('vde-python' in c for c in running if c)
 
                 if not python_running and compose_file_exists('python'):
                     # Try to start it

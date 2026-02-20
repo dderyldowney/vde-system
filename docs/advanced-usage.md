@@ -122,7 +122,7 @@ For custom container configurations, you can add overrides to the docker-compose
 ```yaml
 # configs/docker/python/docker-compose.yml (after creation)
 services:
-  python-dev:
+  vde-python:
     # ... existing config ...
     environment:
       - CUSTOM_VAR=value
@@ -142,10 +142,10 @@ With SSH agent forwarding, you can SSH between VMs using your host's SSH keys:
 
 ```bash
 # From Go VM, connect to Python VM
-ssh go-dev
-ssh python-dev                # Uses your host's SSH keys!
-ssh python-dev pwd            # Run command on Python VM
-scp python-dev:/data/file .   # Copy file from Python VM
+ssh vde-go
+ssh vde-python                # Uses your host's SSH keys!
+ssh vde-python pwd            # Run command on Python VM
+scp vde-python:/data/file .   # Copy file from Python VM
 ```
 
 ### Full Stack Development
@@ -156,9 +156,9 @@ vde create python postgres redis
 vde start python postgres redis
 
 # From Python VM (API layer)
-ssh python-dev
-ssh postgres-dev psql -U devuser -c "SELECT * FROM users"
-ssh redis-dev redis-cli INCR counter
+ssh vde-python
+ssh vde-postgres psql -U devuser -c "SELECT * FROM users"
+ssh vde-redis redis-cli INCR counter
 ```
 
 ### Microservices Architecture
@@ -169,11 +169,11 @@ vde create go python rust postgres
 vde start go python rust postgres
 
 # From Go VM (API gateway)
-ssh go-dev
+ssh vde-go
 # Call other services
-ssh python-dev svc_status
-ssh rust-dev analytics
-ssh postgres-dev "psql -c 'SELECT COUNT(*) FROM orders'"
+ssh vde-python svc_status
+ssh vde-rust analytics
+ssh vde-postgres "psql -c 'SELECT COUNT(*) FROM orders'"
 ```
 
 ### Service Mesh Pattern
@@ -184,10 +184,10 @@ vde create nginx go python postgres redis
 vde start nginx go python postgres redis
 
 # From Nginx VM (edge router)
-ssh nginx-dev
+ssh vde-nginx
 # Proxy requests to backend services
-curl http://go-dev:8080/health
-curl http://python-dev:8000/api/status
+curl http://vde-go:8080/health
+curl http://vde-python:8000/api/status
 ```
 
 ### Using Host Communication

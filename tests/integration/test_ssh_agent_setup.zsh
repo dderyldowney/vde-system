@@ -239,7 +239,7 @@ if declare -f generate_vm_ssh_config >/dev/null; then
 
     # Check if config was updated
     if [[ -f "$HOME/.ssh/config" ]]; then
-        if grep -q "python-dev\|go-dev\|rust-dev" "$HOME/.ssh/config" 2>/dev/null; then
+        if grep -q "vde-python\|vde-go\|vde-rust" "$HOME/.ssh/config" 2>/dev/null; then
             echo -e "${GREEN}✓${NC} VM SSH entries found in config"
             ((TESTS_PASSED++))
         else
@@ -319,29 +319,29 @@ fi
 # Test 10: Dockerfile SSH agent forwarding
 test_section "Dockerfile SSH Agent Forwarding"
 
-base_dockerfile="$CONFIGS_DIR/docker/base-dev.Dockerfile"
+base_dockerfile="$CONFIGS_DIR/docker/vde-base.Dockerfile"
 if [[ -f "$base_dockerfile" ]]; then
     # Check for AllowAgentForwarding
     if grep -q "AllowAgentForwarding yes" "$base_dockerfile" 2>/dev/null; then
-        echo -e "${GREEN}✓${NC} base-dev.Dockerfile has AllowAgentForwarding enabled"
+        echo -e "${GREEN}✓${NC} vde-base.Dockerfile has AllowAgentForwarding enabled"
         ((TESTS_PASSED++))
     else
-        echo -e "${RED}✗${NC} base-dev.Dockerfile missing AllowAgentForwarding"
+        echo -e "${RED}✗${NC} vde-base.Dockerfile missing AllowAgentForwarding"
         ((TESTS_FAILED++))
     fi
     ((TESTS_RUN++))
 
     # Check for ForwardAgent
     if grep -q "ForwardAgent yes" "$base_dockerfile" 2>/dev/null; then
-        echo -e "${GREEN}✓${NC} base-dev.Dockerfile has ForwardAgent enabled"
+        echo -e "${GREEN}✓${NC} vde-base.Dockerfile has ForwardAgent enabled"
         ((TESTS_PASSED++))
     else
-        echo -e "${RED}✗${NC} base-dev.Dockerfile missing ForwardAgent"
+        echo -e "${RED}✗${NC} vde-base.Dockerfile missing ForwardAgent"
         ((TESTS_FAILED++))
     fi
     ((TESTS_RUN++))
 else
-    echo -e "${YELLOW}○${NC} base-dev.Dockerfile not found"
+    echo -e "${YELLOW}○${NC} vde-base.Dockerfile not found"
     ((TESTS_PASSED++))
     ((TESTS_PASSED++))
     ((TESTS_RUN++))

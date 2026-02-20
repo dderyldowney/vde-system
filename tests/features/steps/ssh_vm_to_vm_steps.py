@@ -255,7 +255,7 @@ def step_run_remote_psql(context, target_vm, args):
     # Use aggressive StrictHostKeyChecking to avoid any prompts
     result = subprocess.run(
         ['docker', 'exec', postgres_container,
-         'sh', '-c', f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null postgres-dev "psql {args}"'],
+         'sh', '-c', f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null vde-postgres "psql {args}"'],
         capture_output=True,
         text=True,
         timeout=30
@@ -286,7 +286,7 @@ def step_run_remote_redis_ping(context, target_vm):
     # Use aggressive StrictHostKeyChecking to avoid any prompts
     result = subprocess.run(
         ['docker', 'exec', redis_container,
-         'sh', '-c', f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null redis-dev "redis-cli ping"'],
+         'sh', '-c', f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null vde-redis "redis-cli ping"'],
         capture_output=True,
         text=True,
         timeout=30
@@ -400,7 +400,7 @@ def step_test_backend_from_frontend(context):
     context.vms_available = frontend_exists and backend_exists
 
 
-@when('I run "ssh backend-dev pytest tests/" for VM-to-VM')
+@when('I run "ssh vde-backend pytest tests/" for VM-to-VM')
 def step_run_pytest_on_backend(context):
     """Run pytest on backend VM from frontend."""
     # This would normally run actual pytest, but for test purposes

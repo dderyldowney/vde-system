@@ -222,7 +222,7 @@ test_key_collision_prevention() {
 test_apt_key_deprecation_fix() {
     test_start "apt-key Deprecation Fix (modern GPG handling)"
 
-    local dockerfile="$PROJECT_ROOT/configs/docker/base-dev.Dockerfile"
+    local dockerfile="$PROJECT_ROOT/configs/docker/vde-base.Dockerfile"
 
     # Check that apt-key is NOT used
     if grep -q "apt-key add" "$dockerfile" 2>/dev/null; then
@@ -251,7 +251,7 @@ test_apt_key_deprecation_fix() {
 test_architecture_detection() {
     test_start "Architecture Detection (dynamic, not hardcoded)"
 
-    local dockerfile="$PROJECT_ROOT/configs/docker/base-dev.Dockerfile"
+    local dockerfile="$PROJECT_ROOT/configs/docker/vde-base.Dockerfile"
 
     # Check that hardcoded architecture is NOT used
     if grep -q "\[arch=amd64,arm64\]" "$dockerfile" 2>/dev/null; then
@@ -282,7 +282,7 @@ test_architecture_detection() {
 test_host_access_script_removed() {
     test_start "Host Access Script Removal (broken code removed)"
 
-    local dockerfile="$PROJECT_ROOT/configs/docker/base-dev.Dockerfile"
+    local dockerfile="$PROJECT_ROOT/configs/docker/vde-base.Dockerfile"
 
     # Check that broken host-sh script is NOT created
     if grep -q "host-sh" "$dockerfile" 2>/dev/null; then
@@ -315,7 +315,7 @@ test_host_access_script_removed() {
 test_dockerfile_ssh_keys_build() {
     test_start "Dockerfile SSH Keys Build (handles empty keys)"
 
-    local dockerfile="$PROJECT_ROOT/configs/docker/base-dev.Dockerfile"
+    local dockerfile="$PROJECT_ROOT/configs/docker/vde-base.Dockerfile"
 
     # Check for conditional SSH keys handling
     if grep -q "if \[ -d /public-ssh-keys \]" "$dockerfile" 2>/dev/null || \

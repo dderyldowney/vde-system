@@ -122,14 +122,14 @@ vde list zig
 vde start zig
 
 # Connect
-ssh zig-dev
+ssh vde-zig
 ```
 
 ### What Gets Created
 
 ```
 configs/docker/zig/
-└── docker-compose.yml     # Container: zig-dev, SSH: zig-dev
+└── docker-compose.yml     # Container: vde-zig, SSH: vde-zig
 
 env-files/
 └── zig.env                 # SSH_PORT=2205 (or next available)
@@ -139,9 +139,9 @@ projects/zig/               # Empty workspace directory
 logs/zig/                   # Empty log directory
 
 ~/.ssh/vde/config               # New entry appended:
-                            # Host zig-dev
+                            # Host vde-zig
                             #     HostName localhost
-                            #     Port 2205
+                            #     Port 2206
                             #     User devuser
                             #     IdentityFile ~/.ssh/vde/id_ed25519
                             #     IdentitiesOnly yes
@@ -268,7 +268,7 @@ logs/rabbitmq/              # Empty log directory
 ~/.ssh/vde/config               # New entry appended:
                             # Host rabbitmq
                             #     HostName localhost
-                            #     Port 2405
+                            #     Port 2404
                             #     User devuser
                             #     IdentityFile ~/.ssh/vde/id_ed25519
                             #     IdentitiesOnly yes
@@ -283,7 +283,7 @@ logs/rabbitmq/              # Empty log directory
 | Port range | 2200-2299 | 2400-2499 |
 | Volume mount | `projects/<name>/` | `data/<name>/` |
 | Purpose | Development workspace | Persistent data |
-| Example | `zig-dev`, port 2205 | `rabbitmq`, port 2405 |
+| Example | `vde-zig`, port 2205 | `rabbitmq`, port 2405 |
 
 ### Service Installation Examples
 
@@ -380,7 +380,7 @@ services:
   {{NAME}}-dev:
     build:
       context: ../../..
-      dockerfile: configs/docker/custom-base.Dockerfile  # Changed from base-dev
+      dockerfile: configs/docker/custom-base.Dockerfile  # Changed from vde-base
 ```
 
 ### Environment-Specific Installations

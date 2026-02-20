@@ -92,7 +92,11 @@ RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/in
     rm -f /tmp/install-oh-my-zsh.sh && \
     echo 'export PATH=$HOME/.local/bin:$PATH' > /home/${USERNAME}/.zprofile && \
     echo 'export ZSH_THEME="agnoster"' >> /home/${USERNAME}/.zshrc && \
-    echo 'eval $(ssh-agent -s) && ssh-add' >> /home/${USERNAME}/.zshrc && \
+    echo '# Only start a local SSH agent if no forwarded agent is already available.' >> /home/${USERNAME}/.zshrc && \
+    echo '# Starting a new agent unconditionally overwrites SSH_AUTH_SOCK and breaks VM-to-VM SSH.' >> /home/${USERNAME}/.zshrc && \
+    echo 'if [[ -z "$SSH_AUTH_SOCK" ]] || [[ ! -S "$SSH_AUTH_SOCK" ]]; then' >> /home/${USERNAME}/.zshrc && \
+    echo '    eval $(ssh-agent -s) && ssh-add 2>/dev/null || true' >> /home/${USERNAME}/.zshrc && \
+    echo 'fi' >> /home/${USERNAME}/.zshrc && \
     echo 'source /usr/local/bin/ssh-agent-forward' >> /home/${USERNAME}/.zshrc && \
     chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.zprofile /home/${USERNAME}/.zshrc && \
     su ${USERNAME} -c "git clone https://github.com/LazyVim/starter ~/.config/nvim && nvim --headless +qall"
@@ -105,5 +109,17 @@ ENV VDE_SSH_DIR=${VDE_HOME_DIR}/.ssh/vde
 # Expose SSH port
 EXPOSE 22
 
-# Default command to run SSH daemon
+# Create entrypoint script that fixes SSH agent socket permissions at startup.
+# The mounted /ssh-agent/sock is owned by root:root (660) - devuser cannot access it.
+# This script makes it world-readable so devuser can use the forwarded agent for VM-to-VM SSH.
+RUN echo '#!/bin/sh' > /usr/local/bin/vde-entrypoint && \
+    echo '# Fix SSH agent socket permissions so devuser can access it' >> /usr/local/bin/vde-entrypoint && \
+    echo 'if [ -S /ssh-agent/sock ]; then' >> /usr/local/bin/vde-entrypoint && \
+    echo '    chmod 666 /ssh-agent/sock 2>/dev/null || true' >> /usr/local/bin/vde-entrypoint && \
+    echo 'fi' >> /usr/local/bin/vde-entrypoint && \
+    echo 'exec "$@"' >> /usr/local/bin/vde-entrypoint && \
+    chmod +x /usr/local/bin/vde-entrypoint
+
+# Default command: run SSH daemon (passed as args to entrypoint)
+ENTRYPOINT ["/usr/local/bin/vde-entrypoint"]
 CMD ["/usr/sbin/sshd","-D"]

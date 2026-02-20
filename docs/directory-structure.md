@@ -84,8 +84,8 @@ Contains Docker Compose configurations for each VM. Auto-generated when you crea
 Source code for language VMs. Each language VM has its own subdirectory that's mounted into the container at `/home/devuser/workspace`.
 
 ```
-projects/python/my-api/    # Mounted to python-dev:/home/devuser/workspace
-projects/rust/web-service/ # Mounted to rust-dev:/home/devuser/workspace
+projects/python/my-api/    # Mounted to vde-python:/home/devuser/workspace
+projects/rust/web-service/ # Mounted to vde-rust:/home/devuser/workspace
 ```
 
 ### `data/`
@@ -103,7 +103,7 @@ Environment variables for each VM. These are sourced by Docker Compose when star
 
 ```bash
 # python.env example
-SSH_PORT=2200
+SSH_PORT=2213
 PYTHON_VERSION=3.11
 ```
 

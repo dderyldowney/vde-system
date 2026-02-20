@@ -62,10 +62,10 @@ def step_logged_in_devuser(context):
     print(f"DEBUG: SSH result RC={result.returncode}")
     if result.returncode != 0:
         print(f"DEBUG: SSH error: {result.stderr}")
-        # Fallback to python-dev if vde-python failed and wasn't explicitly requested
+        # Fallback to vde-python if vde-python failed and wasn't explicitly requested
         if ssh_host == 'vde-python' and not hasattr(context, 'last_ssh_host'):
-             # Try python-dev as fallback
-             cmd[-2] = 'python-dev'
+             # Try vde-python as fallback
+             cmd[-2] = 'vde-python'
              result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
 
     assert result.returncode == 0, f"SSH connection failed to {ssh_host}: {result.stderr}"

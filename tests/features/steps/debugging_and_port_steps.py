@@ -108,11 +108,11 @@ def step_verify_host_path(context):
 # Port Allocation Patterns
 # =============================================================================
 
-@then(u'VDE should allocate the next available port (2201)')
+@then(u'VDE should allocate the next available port (2214)')
 def step_allocate_port(context):
     """Verify port allocation."""
     output = getattr(context, 'vde_command_output', '')
-    assert any(x in output for x in ['2201', '2202', 'port']), \
+    assert any(x in output for x in ['2214', '2215', 'port']), \
         f"Expected port allocation: {output}"
 
 
@@ -150,7 +150,7 @@ def step_error_diagnosis(context):
 @when(u'I check what\'s using the port')
 def step_check_port_usage(context):
     """Check what's using the port."""
-    result = subprocess.run(['lsof', '-i', ':2200'], capture_output=True, text=True)
+    result = subprocess.run(['lsof', '-i', ':2213'], capture_output=True, text=True)
     context.port_usage_output = result.stdout
     context.vde_command_exit_code = result.returncode
 
