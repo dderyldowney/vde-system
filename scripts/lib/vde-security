@@ -114,17 +114,16 @@ vde_security_enforce_network_isolation() {
     
     log_info "Enforcing container network isolation..."
     
-    # Get all containers starting with vde-
-    local vde_containers
-    vde_containers=$(docker ps --format '{{.Names}}' | grep -E '^vde-' || true)
-    
-    for container in $vde_containers; do
+    # Get all containers starting with vde- (one per line)
+    # Use process substitution to iterate line-by-line safely
+    while IFS= read -r container; do
+        [[ -z "$container" ]] && continue
         # Check if container is on the network
-        if ! docker inspect "$container" -f '{{range $net, $conf := .NetworkSettings.Networks}}{{$net}}{{end}}' | grep -q "$network_name"; then
+        if ! docker inspect "$container" --format '{{range $net, $conf := .NetworkSettings.Networks}}{{$net}} {{end}}' 2>/dev/null | grep -q "$network_name"; then
             log_warning "Container $container is not on $network_name. Fixing..."
-            docker network connect "$network_name" "$container"
+            docker network connect "$network_name" "$container" 2>/dev/null || true
         fi
-    done
+    done < <(docker ps --format '{{.Names}}' 2>/dev/null | grep -E '^vde-' || true)
 }
 
 # vde_security_init - Initialize security environment
