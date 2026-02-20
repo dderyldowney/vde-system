@@ -216,19 +216,19 @@ test_get_all_vms() {
     local result
     result=$(vde_core_get_all_vms)
 
-    if echo "$result" | grep -q "python"; then
+    if echo "$result" | grep -q "vde-python"; then
         test_pass "get all vms"
         return
     fi
 
-    test_fail "get all vms" "python not in list of VMs"
+    test_fail "get all vms" "vde-python not in list of VMs"
 }
 
 test_get_vm_type() {
     test_start "get vm type"
 
     local result
-    result=$(vde_core_get_vm_type "python")
+    result=$(vde_core_get_vm_type "vde-python")
 
     if [[ "$result" == "lang" ]]; then
         test_pass "get vm type"
@@ -241,12 +241,12 @@ test_get_vm_type() {
 test_is_known_vm_true() {
     test_start "is known vm (true)"
 
-    if vde_core_is_known_vm "python"; then
+    if vde_core_is_known_vm "vde-python"; then
         test_pass "is known vm (true)"
         return
     fi
 
-    test_fail "is known vm true" "python should be known"
+    test_fail "is known vm true" "vde-python should be known"
 }
 
 test_is_known_vm_false() {
@@ -394,6 +394,9 @@ test_source_guard() {
 echo "=============================================="
 echo "VDE Core Unit Tests"
 echo "=============================================="
+
+# Invalidate cache to ensure fresh load
+invalidate_vm_types_cache
 
 # Directory constants tests
 test_directory_constants_exist

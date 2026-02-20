@@ -98,26 +98,18 @@ def docker_list_containers():
         return []
 
 def container_exists(container_name):
-    """Check if a Docker container exists by name.
-    
-    Uses partial name matching to find containers whose names contain
-    the specified string (e.g., 'python' matches 'python-dev').
-    
-    Args:
-        container_name: Name of the container to check
-        
-    Returns:
-        bool: True if container exists, False otherwise
-    """
+    """Check if a Docker container exists by name."""
     try:
-        # Use regex matching to find containers containing the name
+        # Resolve to full VDE container name
+        full_name = f"vde-{container_name.replace('vde-', '')}"
+        
         result = subprocess.run(
-            ['docker', 'ps', '-q', '-f', 'name=.*' + container_name],
+            ['docker', 'ps', '-a', '-q', '-f', f'name=^{full_name}$'],
             check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            capture_output=True,
+            text=True
         )
-        return result.returncode == 0 and len(result.stdout.strip()) > 0
+        return len(result.stdout.strip()) > 0
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
 
@@ -126,15 +118,26 @@ def container_exists(container_name):
 def container_is_running(container_name):
     """Check if a Docker container is currently running.
     
-    This is an alias for container_exists() which uses docker ps internally.
-    
     Args:
         container_name: Name of the container to check
         
     Returns:
         bool: True if container is running, False otherwise
     """
-    return container_exists(container_name)
+    try:
+        # Resolve to full VDE container name
+        full_name = f"vde-{container_name.replace('vde-', '')}"
+        
+        # Use docker ps without -a to only see running containers
+        result = subprocess.run(
+            ['docker', 'ps', '-q', '-f', f'name=^{full_name}$'],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        return len(result.stdout.strip()) > 0
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return False
 
 
 def get_container_id(container_name):
@@ -162,16 +165,29 @@ def get_container_id(container_name):
         pass
     return ""
 
-def compose_file_exists(filename):
+def get_compose_file(vm_name):
+    """Get the path to a VM's docker-compose.yml file.
+    
+    Args:
+        vm_name: Name of the VM (with or without vde- prefix)
+        
+    Returns:
+        Path: Path to the compose file
+    """
+    # Use raw name for directory
+    raw_name = vm_name.replace('vde-', '')
+    return VDE_ROOT / "configs" / "docker" / raw_name / "docker-compose.yml"
+
+def compose_file_exists(vm_name):
     """Check if a docker-compose file exists.
     
     Args:
-        filename: Name of the compose file (e.g., 'docker-compose.yml')
+        vm_name: Name of the VM
         
     Returns:
         bool: True if file exists, False otherwise
     """
-    return (VDE_ROOT / "configs" / "docker" / filename).exists()
+    return get_compose_file(vm_name).exists()
 
 def wait_for_container(container_name, timeout=30):
     """Wait for a Docker container to become ready.
@@ -407,7 +423,7 @@ def get_vm_type(vm_name):
     """Get the type of a VM (lang or service).
 
     Args:
-        vm_name: Name of the VM
+        vm_name: Name of the VM (canonical or alias)
 
     Returns:
         str: 'lang' or 'service', or None if not found
@@ -423,8 +439,13 @@ def get_vm_type(vm_name):
             if line and not line.startswith('#'):
                 # Parse format: type|name|aliases|display_name|install_command|service_port
                 parts = line.split('|')
-                if len(parts) >= 2 and parts[1].strip() == vm_name:
-                    return parts[0].strip()
+                if len(parts) >= 3:
+                    type_val = parts[0].strip()
+                    name_val = parts[1].strip()
+                    aliases = [a.strip() for a in parts[2].split(',') if a.strip()]
+                    
+                    if name_val == vm_name or vm_name in aliases:
+                        return type_val
 
     return None
 

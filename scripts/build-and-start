@@ -21,6 +21,7 @@ source "$SCRIPT_DIR/lib/vde-constants"
 source "$SCRIPT_DIR/lib/vde-errors"
 source "$SCRIPT_DIR/lib/vde-log"
 source "$SCRIPT_DIR/lib/vde-core"
+source "$SCRIPT_DIR/lib/vde-security"
 source "$SCRIPT_DIR/lib/vm-common"
 
 # Initialize logging
@@ -175,10 +176,7 @@ echo "Step 5: Initializing Docker Network"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-if ! docker network inspect vde-net &>/dev/null; then
-    docker network create vde-net >/dev/null 2>&1 || \
-    docker network create vde-network >/dev/null 2>&1 || true
-fi
+vde_security_ensure_network
 
 log_success "✓ Docker network ready"
 
@@ -193,36 +191,7 @@ echo "Step 6: Setting File Permissions"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-# Set proper permissions on VDE directories
-chmod 700 "$VDE_ROOT_DIR/public-ssh-keys" 2>/dev/null || true
-chmod 755 "$VDE_ROOT_DIR/.cache" 2>/dev/null || true
-chmod 755 "$VDE_ROOT_DIR/.locks" 2>/dev/null || true
-chmod 755 "$VDE_ROOT_DIR/.locks/ports" 2>/dev/null || true
-chmod 755 "$VDE_ROOT_DIR/projects" 2>/dev/null || true
-chmod 755 "$VDE_ROOT_DIR/data" 2>/dev/null || true
-chmod 755 "$VDE_ROOT_DIR/logs" 2>/dev/null || true
-chmod 755 "$VDE_ROOT_DIR/env-files" 2>/dev/null || true
-chmod 755 "$VDE_ROOT_DIR/configs" 2>/dev/null || true
-
-# Set permissions on data subdirectories
-for dir in couchdb mongodb mysql nginx postgres redis rabbitmq; do
-    chmod 755 "$VDE_ROOT_DIR/data/$dir" 2>/dev/null || true
-done
-
-# Ensure scripts are executable
-find "$SCRIPT_DIR" -type f \( -name "*.sh" -o -name "*.zsh" \) -exec chmod +x {} \; 2>/dev/null || true
-
-# Set SSH directory permissions (recursive for keys)
-ssh_dir="$HOME/.ssh/vde"
-if [ -d "$ssh_dir" ]; then
-    chmod 700 "$ssh_dir" 2>/dev/null || true
-    # Set permissions on all subdirectories
-    find "$ssh_dir" -type d -exec chmod 700 {} \; 2>/dev/null || true
-    # Set permissions on private files (no extension)
-    find "$ssh_dir" -type f ! -name "*.pub" -exec chmod 600 {} \; 2>/dev/null || true
-    # Set permissions on public keys
-    find "$ssh_dir" -type f -name "*.pub" -exec chmod 644 {} \; 2>/dev/null || true
-fi
+vde_security_enforce_permissions
 
 log_success "✓ File permissions set"
 

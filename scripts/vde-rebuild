@@ -17,10 +17,14 @@ set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VDE_ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+export VDE_ROOT_DIR
+
 source "$SCRIPT_DIR/lib/vde-shell-compat"
 source "$SCRIPT_DIR/lib/vde-constants"
 source "$SCRIPT_DIR/lib/vde-errors"
 source "$SCRIPT_DIR/lib/vde-log"
+source "$SCRIPT_DIR/lib/vde-naming"
 
 # Configuration
 NOCACHE=false
@@ -85,8 +89,10 @@ get_vm_list() {
     if [[ -f "$vm_types_file" ]]; then
         grep -v '^#' "$vm_types_file" | grep -v '^$' | cut -d'|' -f2
     else
-        # Fallback to directory listing
-        ls -1 "$CONFIGS_DIR" 2>/dev/null | grep -v '^$' || true
+        # Fallback to directory listing, but ensure we return prefixed names for consistency
+        ls -1 "$CONFIGS_DIR" 2>/dev/null | grep -v '^$' | grep -v "vde-base.Dockerfile" | while read -r raw; do
+            vde_get_container_name "$raw"
+        done || true
     fi
 }
 
@@ -117,10 +123,12 @@ build_base_image() {
 
 build_vm_image() {
     local vm_name="$1"
-    local compose_file="$CONFIGS_DIR/$vm_name/docker-compose.yml"
+    local raw_name
+    raw_name=$(vde_normalize_name "$vm_name")
+    local compose_file="$CONFIGS_DIR/$raw_name/docker-compose.yml"
     
     if [[ ! -f "$compose_file" ]]; then
-        echo "⚠ Skipping $vm_name: no docker-compose.yml found"
+        echo "⚠ Skipping $vm_name: no docker-compose.yml found at $compose_file"
         return 0
     fi
     
@@ -130,13 +138,13 @@ build_vm_image() {
         build_cmd="$build_cmd --no-cache"
     fi
     
-    echo "Building vde-$vm_name..."
+    echo "Building $vm_name..."
     
-    if (cd "$CONFIGS_DIR/$vm_name" && eval "$build_cmd" 2>&1); then
-        echo "✓ vde-$vm_name built successfully"
+    if (cd "$CONFIGS_DIR/$raw_name" && eval "$build_cmd" 2>&1); then
+        echo "✓ $vm_name built successfully"
         return 0
     else
-        echo "✗ Failed to build vde-$vm_name"
+        echo "✗ Failed to build $vm_name"
         return 1
     fi
 }

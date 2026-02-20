@@ -40,7 +40,8 @@ def step_compose_exists(context, vm_name):
     if not config_path.exists():
         # Create the VM first
         result = run_vde_command(f"create {vm_name}", timeout=120)
-        assert result.returncode == 0, f"Failed to create VM {vm_name}: {result.stderr}"
+        # Return code 6 means VM already exists, which is fine for setup
+        assert result.returncode in (0, 6), f"Failed to create VM {vm_name}: {result.stderr}"
     context.vm_name = vm_name
     context.vm_config_path = config_path
 
@@ -486,7 +487,7 @@ def step_python_vm_started(context):
     if not state_file.exists():
         # Need to create VM - use create-virtual-for for proper state
         result = run_vde_command(f"create {vm_name}", timeout=600)
-        assert result.returncode == 0, f"Failed to create VM {vm_name}: {result.stderr}"
+        assert result.returncode in (0, 6), f"Failed to create VM {vm_name}: {result.stderr}"
     # Then start if not running
     if not container_is_running(vm_name):
         result = run_vde_command(f"start {vm_name}", timeout=600)
@@ -505,7 +506,7 @@ def step_postgres_vm_started(context):
     if not state_file.exists():
         # Need to create VM - use create-virtual-for for proper state
         result = run_vde_command(f"create {vm_name}", timeout=600)
-        assert result.returncode == 0, f"Failed to create VM {vm_name}: {result.stderr}"
+        assert result.returncode in (0, 6), f"Failed to create VM {vm_name}: {result.stderr}"
     # Then start if not running
     if not container_is_running(vm_name):
         result = run_vde_command(f"start {vm_name}", timeout=600)
@@ -523,7 +524,7 @@ def step_vm_is_started(context, vm_name):
     if not state_file.exists():
         # Need to create VM - use create-virtual-for for proper state
         result = run_vde_command(f"create {vm_name}", timeout=600)
-        assert result.returncode == 0, f"Failed to create VM {vm_name}: {result.stderr}"
+        assert result.returncode in (0, 6), f"Failed to create VM {vm_name}: {result.stderr}"
     # Then start if not running
     if not container_is_running(vm_name):
         result = run_vde_command(f"start {vm_name}", timeout=600)

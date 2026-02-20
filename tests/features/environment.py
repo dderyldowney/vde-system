@@ -14,6 +14,18 @@ import sys
 import time
 from pathlib import Path
 
+# Add tests directory to path for config loader
+tests_dir_path = Path(__file__).parent.parent
+if str(tests_dir_path) not in sys.path:
+    sys.path.insert(0, str(tests_dir_path))
+
+try:
+    from test_config_loader import get_behave_config
+except ImportError:
+    # Fallback if not found
+    def get_behave_config():
+        return None
+
 # Import shared configuration
 features_dir = os.path.dirname(os.path.abspath(__file__))
 steps_dir = os.path.join(features_dir, "steps")
@@ -110,6 +122,28 @@ def _get_container_name(vm_name):
 
 def before_all(context):
     """Initial setup before any tests run."""
+    # Ensure VDE_ROOT is set
+    os.environ['VDE_ROOT_DIR'] = str(VDE_ROOT)
+    os.environ['DOCKER_BUILDKIT'] = '0'
+    
+    # Set VDE_TEST_MODE to 1 to enable test-specific behavior in scripts
+    os.environ['VDE_TEST_MODE'] = '1'
+    
+    # Invalidate cache to ensure fresh load of new naming scheme
+    cache_file = Path(VDE_ROOT) / ".cache" / "vm-types.cache"
+    if cache_file.exists():
+        cache_file.unlink()
+        print(f"[SETUP] Invalidated VM types cache at {cache_file}")
+
+    # Load and validate configuration
+    config = get_behave_config()
+    if config:
+        try:
+            context.config_data = config.load(validate=True)
+        except Exception as e:
+            print(f"[CONFIG] Warning: Failed to load/validate config: {e}")
+            context.config_data = {}
+    
     # Ensure VDE_ROOT is set
     os.environ['VDE_ROOT_DIR'] = str(VDE_ROOT)
     os.environ['DOCKER_BUILDKIT'] = '0'

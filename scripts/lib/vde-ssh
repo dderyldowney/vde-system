@@ -590,6 +590,9 @@ setup_ssh_for_vm() {
 # Ensure VDE SSH environment is properly configured
 # Returns: VDE_SUCCESS (0) if configured
 ensure_vde_ssh_environment() {
+    # Initialize security environment (network, permissions)
+    vde_security_init
+
     # Create SSH directory
     mkdir -p "$VDE_SSH_DIR"
     chmod 700 "$VDE_SSH_DIR"

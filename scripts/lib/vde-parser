@@ -67,6 +67,13 @@ _build_alias_map() {
         [ -n "$vm" ] || continue
         # Map the canonical name to itself
         _assoc_set "VM_ALIAS_MAP" "$vm" "$vm"
+        
+        # Map the prefixed name to itself (internal system names)
+        local prefixed
+        prefixed=$(vde_get_container_name "$vm")
+        if [[ "$prefixed" != "$vm" ]]; then
+            _assoc_set "VM_ALIAS_MAP" "$prefixed" "$vm"
+        fi
 
         # Get aliases for this VM
         local alias_list
@@ -360,11 +367,11 @@ extract_vm_names() {
     # Split input into words (alphanumeric sequences)
     # Use explicit splitting for zsh/bash compatibility
     echo "$input_lower" | tr ' ' '\n' | while IFS= read -r word; do
-        # Clean the word (remove punctuation, keep only alphanumeric and plus)
+        # Clean the word (remove punctuation, keep only alphanumeric, dashes and plus)
         # Handle cases where word might be followed by punctuation (e.g. "python.")
         local w_clean
-        w_clean=$(echo "$word" | sed 's/[^a-z0-9+].*$//')
-        w_clean=$(echo "$w_clean" | tr -cd 'a-z0-9+')
+        w_clean=$(echo "$word" | sed 's/[^a-z0-9+-].*$//')
+        w_clean=$(echo "$w_clean" | tr -cd 'a-z0-9+-')
         [ -z "$w_clean" ] && continue
 
         # O(1) lookup in alias map

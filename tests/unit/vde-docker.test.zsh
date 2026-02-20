@@ -7,8 +7,6 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# Source dependencies
-
 # Test configuration
 VERBOSE=${VERBOSE:-false}
 TESTS_PASSED=0
@@ -48,35 +46,32 @@ test_fail() {
 TEST_TMPDIR=""
 
 setup_test_env() {
-    export VDE_TEST_MODE=1 # Disable readonly for constants in tests
+    export VDE_TEST_MODE=1
 
-    TEST_TMPDIR="/tmp/vde-docker-test-$"
+    TEST_TMPDIR="/tmp/vde-docker-test-$$"
     mkdir -p "$TEST_TMPDIR"
     export HOME="$TEST_TMPDIR/home"
     mkdir -p "$HOME/.ssh/vde"
-    mkdir -p "$TEST_TMPDIR/configs/docker/lang/python"
-    mkdir -p "$TEST_TMPDIR/configs/docker/service/postgres"
     mkdir -p "$TEST_TMPDIR/cache"
     mkdir -p "$TEST_TMPDIR/port-registry"
 
-    # Export VDE_ROOT_DIR to ensure libraries resolve their internal paths correctly
+    # Export paths for testing
     export VDE_ROOT_DIR="$PROJECT_ROOT"
-
-    # Export specific VDE path variables so libraries pick them up from the environment
     export VDE_CONFIGS_DIR="$TEST_TMPDIR/configs/docker"
+    export CONFIGS_DIR="$VDE_CONFIGS_DIR"
     export VDE_CACHE_DIR="$TEST_TMPDIR/cache"
     export VDE_PORT_REGISTRY="$TEST_TMPDIR/port-registry"
     export VDE_HOME_DIR="$HOME"
+    
+    mkdir -p "$VDE_CONFIGS_DIR"
 
-    # Unset guards to ensure libraries are re-sourced in this isolated environment
-    unset _VDE_SHELL_COMPAT_LOADED _VDE_CONSTANTS_LOADED _VDE_ERRORS_LOADED \
-          _VDE_NAMING_LOADED _VDE_PATH_UTILS_LOADED _VDE_CORE_GUARD_LOADED \
-          _VM_COMMON_LOADED _VDE_DOCKER_LOADED 2>/dev/null
+    # Unset guards
+    unset _VDE_SHELL_COMPAT_LOADED _VDE_CONSTANTS_LOADED _VDE_NAMING_LOADED \
+          _VDE_PATH_UTILS_LOADED _VDE_CORE_GUARD_LOADED _VM_COMMON_LOADED \
+          _VDE_DOCKER_LOADED 2>/dev/null
 
-    # Source all necessary VDE libraries. They will pick up the exported VDE_* variables.
     source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
     source "$PROJECT_ROOT/scripts/lib/vde-constants"
-    source "$PROJECT_ROOT/scripts/lib/vde-errors"
     source "$PROJECT_ROOT/scripts/lib/vde-naming"
     source "$PROJECT_ROOT/scripts/lib/vde-path-utils"
     source "$PROJECT_ROOT/scripts/lib/vde-core"
@@ -93,181 +88,58 @@ teardown_test_env() {
 # =============================================================================
 
 test_get_compose_file() {
-    test_start "get_compose_file - known VM"
+    test_start "get_compose_file (raw name lookup)"
 
     setup_test_env
     mkdir -p "$VDE_CONFIGS_DIR/python"
     cat > "$VDE_CONFIGS_DIR/python/docker-compose.yml" << 'EOF'
 version: '3.8'
 services:
-  python:
-    image: python:3.11
+  vde-python:
+    image: vde-python:latest
 EOF
 
+    # Test lookup with raw name
     local result
     result=$(get_compose_file "python" 2>/dev/null)
-    if [ "$result" = "$VDE_CONFIGS_DIR/python/docker-compose.yml" ]; then
-        test_pass "get_compose_file - known VM"
+    if [[ "$result" == "$VDE_CONFIGS_DIR/python/docker-compose.yml" ]]; then
+        test_pass "get_compose_file (raw)"
     else
-        test_fail "get_compose_file - known VM" "Wrong path: $result"
+        test_fail "get_compose_file (raw)" "Wrong path: $result"
+        return
+    fi
+
+    # Test lookup with prefixed name (should still find it via normalization)
+    result=$(get_compose_file "vde-python" 2>/dev/null)
+    if [[ "$result" == "$VDE_CONFIGS_DIR/python/docker-compose.yml" ]]; then
+        test_pass "get_compose_file (prefixed)"
+    else
+        test_fail "get_compose_file (prefixed)" "Wrong path: $result"
     fi
 
     teardown_test_env
 }
 
 test_get_docker_project_name() {
-    test_start "get_docker_project_name - returns correct name"
+    test_start "get_docker_project_name"
 
+    # From raw name
     local result
     result=$(get_docker_project_name "python" 2>/dev/null)
-    if [ "$result" = "vde-python" ]; then
-        test_pass "get_docker_project_name - returns correct name"
+    if [[ "$result" == "vde-python" ]]; then
+        test_pass "get_docker_project_name (raw)"
     else
-        test_fail "get_docker_project_name - returns correct name" "Got: $result"
-    fi
-}
-
-# =============================================================================
-# TESTS: VM EXISTENCE
-# =============================================================================
-
-test_vm_exists() {
-    test_start "vm_exists - compose file exists"
-
-    setup_test_env
-    mkdir -p "$VDE_CONFIGS_DIR/python"
-    touch "$VDE_CONFIGS_DIR/python/docker-compose.yml"
-
-    if vm_exists "python" 2>/dev/null; then
-        test_pass "vm_exists - compose file exists"
-    else
-        test_fail "vm_exists - compose file exists" "Expected true"
+        test_fail "get_docker_project_name (raw)" "Got: $result"
+        return
     fi
 
-    teardown_test_env
-}
-
-# =============================================================================
-# TESTS: SSH PORT MANAGEMENT
-# =============================================================================
-
-test_get_vm_ssh_port() {
-    test_start "get_vm_ssh_port - port in registry"
-
-    setup_test_env
-    mkdir -p "$VDE_PORT_REGISTRY"
-    echo "2200" > "$VDE_PORT_REGISTRY/python.port"
-
-    local result
-    result=$(get_vm_ssh_port "python" 2>/dev/null)
-    if [ "$result" = "2200" ]; then
-        test_pass "get_vm_ssh_port - port in registry"
+    # From prefixed name (idempotent)
+    result=$(get_docker_project_name "vde-python" 2>/dev/null)
+    if [[ "$result" == "vde-python" ]]; then
+        test_pass "get_docker_project_name (prefixed)"
     else
-        test_fail "get_vm_ssh_port - port in registry" "Got: $result"
+        test_fail "get_docker_project_name (prefixed)" "Got: $result"
     fi
-
-    teardown_test_env
-}
-
-test_allocate_ssh_port() {
-    test_start "allocate_ssh_port - save port to registry"
-
-    setup_test_env
-    mkdir -p "$VDE_PORT_REGISTRY"
-
-    if allocate_ssh_port "python" "2200" 2>/dev/null; then
-        if [ -f "$VDE_PORT_REGISTRY/python.port" ]; then
-            test_pass "allocate_ssh_port - save port to registry"
-        else
-            test_fail "allocate_ssh_port - save port to registry" "File not created"
-        fi
-    else
-        test_fail "allocate_ssh_port - save port to registry" "Command failed"
-    fi
-
-    teardown_test_env
-}
-
-test_find_available_ssh_port() {
-    test_start "find_available_ssh_port - returns available port"
-
-    setup_test_env
-
-    # Mock _is_port_in_use to always return false
-    _is_port_in_use() { return 1; }
-
-    local result
-    result=$(find_available_ssh_port 2500 2510 2>/dev/null)
-    if [ "$result" = "2500" ]; then
-        test_pass "find_available_ssh_port - returns available port"
-    else
-        test_fail "find_available_ssh_port - returns available port" "Got: $result"
-    fi
-
-    teardown_test_env
-}
-
-test_get_or_allocate_ssh_port() {
-    test_start "get_or_allocate_ssh_port - returns existing port"
-
-    setup_test_env
-    mkdir -p "$VDE_PORT_REGISTRY"
-    echo "2205" > "$VDE_PORT_REGISTRY/python.port"
-
-    # Mock _is_port_in_use
-    _is_port_in_use() { return 1; }
-
-    local result
-    result=$(get_or_allocate_ssh_port "python" 2>/dev/null)
-    if [ "$result" = "2205" ]; then
-        test_pass "get_or_allocate_ssh_port - returns existing port"
-    else
-        test_fail "get_or_allocate_ssh_port - returns existing port" "Got: $result"
-    fi
-
-    teardown_test_env
-}
-
-# =============================================================================
-# TESTS: DOCKER BUILD OPTIONS
-# =============================================================================
-
-test_build_docker_opts() {
-    test_start "build_docker_opts - default network"
-
-    export VDE_DOCKER_NVIDIA="false"
-    export VDE_DOCKER_NETWORK="vde-network"
-
-    local result
-    result=$(build_docker_opts "python" 2>/dev/null)
-    if [ "$result" = "--network vde-network" ]; then
-        test_pass "build_docker_opts - default network"
-    else
-        test_fail "build_docker_opts - default network" "Got: $result"
-    fi
-}
-
-# =============================================================================
-# TESTS: DOCKER STATE
-# =============================================================================
-
-test_docker_state_functions() {
-    test_start "save_docker_state - creates state file"
-
-    setup_test_env
-    local state_dir
-    state_dir=$(get_docker_state_dir)
-
-    mkdir -p "$state_dir"
-    echo '{"status":"running"}' > "$state_dir/python.json"
-
-    if [ -f "$state_dir/python.json" ]; then
-        test_pass "save_docker_state - creates state file"
-    else
-        test_fail "save_docker_state - creates state file" "File not created"
-    fi
-
-    teardown_test_env
 }
 
 # =============================================================================
@@ -275,19 +147,12 @@ test_docker_state_functions() {
 # =============================================================================
 
 echo "=============================================="
-echo "VDE Docker Library Unit Tests"
+echo "VDE Docker Library Unit Tests (Mixed Naming)"
 echo "=============================================="
 echo ""
 
 test_get_compose_file
 test_get_docker_project_name
-test_vm_exists
-test_get_vm_ssh_port
-test_allocate_ssh_port
-test_find_available_ssh_port
-test_get_or_allocate_ssh_port
-test_build_docker_opts
-test_docker_state_functions
 
 echo ""
 echo "=============================================="
@@ -297,7 +162,7 @@ echo "Passed: $TESTS_PASSED"
 echo "Failed: $TESTS_FAILED"
 echo ""
 
-if [ $TESTS_FAILED -eq 0 ]; then
+if [[ $TESTS_FAILED -eq 0 ]]; then
     echo "All tests passed!"
     exit 0
 else

@@ -45,13 +45,8 @@ source "$SCRIPT_DIR/vm-common" 2>/dev/null || {
 #   VDE_ERR_GENERAL if docker command fails
 vde_check_container_running() {
     local vm_name="$1"
-    local container_name="$vm_name"
-
-    # Language VMs use vde- prefix
-    local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
-    if [ "$vm_type" = "lang" ]; then
-        container_name="$vde-{vm_name}"
-    fi
+    local container_name
+    container_name=$(_get_container_name "$vm_name")
 
     # Check if container is running
     local running_containers
@@ -79,13 +74,8 @@ vde_check_container_running() {
 vde_check_ssh_port() {
     local vm_name="$1"
     local timeout="${2:-$VDE_SSH_TIMEOUT}"
-    local container_name="$vm_name"
-
-    # Language VMs use vde- prefix
-    local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
-    if [ "$vm_type" = "lang" ]; then
-        container_name="$vde-{vm_name}"
-    fi
+    local container_name
+    container_name=$(_get_container_name "$vm_name")
 
     # Get SSH port mapping
     local ssh_port
@@ -135,13 +125,8 @@ vde_check_ssh_port() {
 vde_check_ssh_login() {
     local vm_name="$1"
     local timeout="${2:-$VDE_SSH_TIMEOUT}"
-    local container_name="$vm_name"
-
-    # Language VMs use vde- prefix
-    local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
-    if [ "$vm_type" = "lang" ]; then
-        container_name="$vde-{vm_name}"
-    fi
+    local container_name
+    container_name=$(_get_container_name "$vm_name")
 
     # Get SSH port
     local ssh_port
@@ -189,13 +174,8 @@ vde_check_ssh_login() {
 vde_check_language_tool() {
     local vm_name="$1"
     local timeout="${2:-$VDE_SSH_TIMEOUT}"
-    local container_name="$vm_name"
-
-    # Language VMs use vde- prefix
-    local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
-    if [ "$vm_type" = "lang" ]; then
-        container_name="$vde-{vm_name}"
-    fi
+    local container_name
+    container_name=$(_get_container_name "$vm_name")
 
     # Get SSH port
     local ssh_port
@@ -274,13 +254,10 @@ vde_check_language_tool() {
 vde_wait_for_container_healthy() {
     local vm_name="$1"
     local max_wait="${2:-$VDE_DOCKER_TIMEOUT}"
-    local container_name="$vm_name"
+    local container_name
+    container_name=$(_get_container_name "$vm_name")
 
-    # Language VMs use vde- prefix
     local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
-    if [ "$vm_type" = "lang" ]; then
-        container_name="$vde-{vm_name}"
-    fi
 
     local elapsed=0
     local check_interval=1
@@ -329,14 +306,11 @@ vde_wait_for_container_healthy() {
 vde_health_check() {
     local vm_name="$1"
     local verbose="${2:-0}"
-    local container_name="$vm_name"
+    local container_name
+    container_name=$(_get_container_name "$vm_name")
     local all_passed=true
 
-    # Language VMs use vde- prefix
     local vm_type=$(get_vm_info type "$vm_name" 2>/dev/null)
-    if [ "$vm_type" = "lang" ]; then
-        container_name="$vde-{vm_name}"
-    fi
 
     [ "$verbose" -eq 1 ] && echo "Health check for $container_name:"
 

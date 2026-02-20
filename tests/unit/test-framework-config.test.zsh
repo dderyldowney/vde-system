@@ -91,12 +91,12 @@ else
     ((TESTS_FAILED++))
 fi
 
-# Test 9: Behave environment.py uses get_config()
-if grep -q "get_config()" "$PROJECT_ROOT/tests/features/environment.py"; then
-    echo "✓ Behave environment.py uses get_config()"
+# Test 9: Behave environment.py uses get_behave_config()
+if grep -q "get_behave_config()" "$PROJECT_ROOT/tests/features/environment.py"; then
+    echo "✓ Behave environment.py uses get_behave_config()"
     ((TESTS_PASSED++))
 else
-    echo "✗ Behave environment.py doesn't call get_config()"
+    echo "✗ Behave environment.py doesn't call get_behave_config()"
     ((TESTS_FAILED++))
 fi
 
