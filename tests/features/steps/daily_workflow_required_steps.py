@@ -38,23 +38,21 @@ def run_vde_command(args, timeout=30):
 
 
 def docker_ps():
-    """Get list of running Docker containers."""
+    """Get list of running VDE containers via vde-ps."""
     result = subprocess.run(
-        ["docker", "ps", "--format", "{{.Names}}"],
-        capture_output=True,
-        text=True
+        ["zsh", str(VDE_ROOT / "scripts" / "vde-ps"), "-q"],
+        capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT)
     )
-    return result.stdout.strip().split('\n') if result.stdout.strip() else []
+    return [l.strip() for l in result.stdout.strip().split('\n') if l.strip()] if result.stdout.strip() else []
 
 
 def docker_ps_all():
-    """Get list of all Docker containers (running and stopped)."""
+    """Get list of all VDE containers (running and stopped) via vde-ps."""
     result = subprocess.run(
-        ["docker", "ps", "-a", "--format", "{{.Names}}"],
-        capture_output=True,
-        text=True
+        ["zsh", str(VDE_ROOT / "scripts" / "vde-ps"), "-a", "-q"],
+        capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT)
     )
-    return result.stdout.strip().split('\n') if result.stdout.strip() else []
+    return [l.strip() for l in result.stdout.strip().split('\n') if l.strip()] if result.stdout.strip() else []
 
 
 # ========== GIVEN STEPS ==========

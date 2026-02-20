@@ -28,6 +28,11 @@ fi
 VM_NAME="$1"
 shift
 
+# Ensure vde- prefix for container name
+if [[ "$VM_NAME" != vde-* ]]; then
+    VM_NAME="vde-${VM_NAME}"
+fi
+
 # Parse options
 FORMAT=""
 MOUNTS=0

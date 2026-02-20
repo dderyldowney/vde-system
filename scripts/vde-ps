@@ -82,31 +82,31 @@ if [[ "$FORMAT" == "json" ]]; then
     # JSON output
     if [ $QUIET -eq 1 ]; then
         if [ $SHOW_ALL -eq 1 ]; then
-            docker ps -a --format '{"name":"{{.Names}}"}' | grep -E '\-dev$|^[a-z]+$' | jq -s '.' || echo "[]"
+            docker ps -a --format '{"name":"{{.Names}}"}' | grep -E '^vde-' | jq -s '.' || echo "[]"
         else
-            docker ps --format '{"name":"{{.Names}}"}' | grep -E '\-dev$|^[a-z]+$' | jq -s '.' || echo "[]"
+            docker ps --format '{"name":"{{.Names}}"}' | grep -E '^vde-' | jq -s '.' || echo "[]"
         fi
     else
         if [ $SHOW_ALL -eq 1 ]; then
-            docker ps -a --format '{"name":"{{.Names}}","status":"{{.Status}}","ports":"{{.Ports}}"}' | grep -E '\-dev$|^[a-z]+$' | jq -s '.' || echo "[]"
+            docker ps -a --format '{"name":"{{.Names}}","status":"{{.Status}}","ports":"{{.Ports}}"}' | grep -E '^vde-' | jq -s '.' || echo "[]"
         else
-            docker ps --format '{"name":"{{.Names}}","status":"{{.Status}}","ports":"{{.Ports}}"}' | grep -E '\-dev$|^[a-z]+$' | jq -s '.' || echo "[]"
+            docker ps --format '{"name":"{{.Names}}","status":"{{.Status}}","ports":"{{.Ports}}"}' | grep -E '^vde-' | jq -s '.' || echo "[]"
         fi
     fi
 else
     # Table output (default)
     if [ $QUIET -eq 1 ]; then
         if [ $SHOW_ALL -eq 1 ]; then
-            docker ps -a --format '{{.Names}}' | grep -E '\-dev$|^[a-z]+$' || true
+            docker ps -a --format '{{.Names}}' | grep -E '^vde-' || true
         else
-            docker ps --format '{{.Names}}' | grep -E '\-dev$|^[a-z]+$' || true
+            docker ps --format '{{.Names}}' | grep -E '^vde-' || true
         fi
     else
         if [ $SHOW_ALL -eq 1 ]; then
             # Show all containers with enhanced info from docker-state if available
             echo "CONTAINER ID       NAME                    STATUS                     PORTS"
             echo "----------------- ---------------------- -------------------------- ----------------------"
-            for container in $(docker ps -a --format '{{.Names}}' | grep -E '\-dev$|^[a-z]+$' || true); do
+            for container in $(docker ps -a --format '{{.Names}}' | grep -E '^vde-' || true); do
                 local vm_name
                 vm_name=$(get_vm_name_from_container "$container")
                 
@@ -141,7 +141,7 @@ else
             # Show only running containers
             echo "CONTAINER ID       NAME                    STATUS                     PORTS"
             echo "----------------- ---------------------- -------------------------- ----------------------"
-            docker ps --format '%-18s %-22s %-26s %-25s' '' '{{.Names}}' '{{.Status}}' '{{.Ports}}' | grep -E '\-dev$|^[a-z]+$' || true
+            docker ps --format '%-18s %-22s %-26s %-25s' '' '{{.Names}}' '{{.Status}}' '{{.Ports}}' | grep -E '^vde-' || true
         fi
     fi
 fi

@@ -88,34 +88,36 @@ def get_ssh_port(vm_name):
     Returns:
         Port number as integer, or None if not found
     """
-    # Try docker port command (authoritative source for running containers)
-    # Language VMs use vde- prefix
-    container_name = f"vde-{vm_name}"
+    # Use vde port command (routes through VDE, uses vde- prefix)
+    import subprocess as _sp
+    bare_name = vm_name.replace('vde-', '')
     try:
-        result = __import__('subprocess').run(
-            ["docker", "port", container_name, "22"],
-            capture_output=True,
-            text=True,
-            timeout=10
+        result = _sp.run(
+            ["zsh", str(SCRIPTS_DIR / "vde-port"), bare_name],
+            capture_output=True, text=True, timeout=10, cwd=str(VDE_ROOT)
         )
         if result.returncode == 0 and result.stdout.strip():
-            port = result.stdout.strip().split(':')[-1]
-            return int(port)
-    except (Exception,):
+            # Output format: "0.0.0.0:2213" or "22/tcp -> 0.0.0.0:2213"
+            for line in result.stdout.strip().split('\n'):
+                if '22' in line:
+                    port = line.strip().split(':')[-1].strip()
+                    try:
+                        return int(port)
+                    except ValueError:
+                        pass
+    except Exception:
         pass
 
-    # Service VMs use plain name
+    # Fallback: read from docker-compose.yml
     try:
-        result = __import__('subprocess').run(
-            ["docker", "port", vm_name, "22"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            port = result.stdout.strip().split(':')[-1]
-            return int(port)
-    except (Exception,):
+        compose_file = VDE_ROOT / "configs" / "docker" / bare_name / "docker-compose.yml"
+        if compose_file.exists():
+            import re
+            content = compose_file.read_text()
+            m = re.search(r'"(\d+):22"', content)
+            if m:
+                return int(m.group(1))
+    except Exception:
         pass
 
     return None
