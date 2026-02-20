@@ -115,7 +115,15 @@ for vm in "${VMS[@]}"; do
         local vm_type vm_display ssh_port
         vm_type=$(get_vm_info type "$vm" 2>/dev/null) || vm_type="unknown"
         vm_display=$(get_vm_info display "$vm" 2>/dev/null) || vm_display="$vm"
-        ssh_port=$(get_vm_info port "$vm" 2>/dev/null) || ssh_port=""
+
+        # Extract SSH port from docker-compose.yml
+        local raw_name
+        raw_name=$(vde_normalize_name "$vm")
+        local compose_file="$CONFIGS_DIR/$raw_name/docker-compose.yml"
+        if [ -f "$compose_file" ]; then
+            ssh_port=$(grep -E '^\s*-\s*"[0-9]+:22"' "$compose_file" | sed -E 's/.*"([0-9]+):22".*/\1/' | head -n1)
+        fi
+        [ -z "$ssh_port" ] && ssh_port=""
         
         local state_json
         state_json=$(cat <<EOF

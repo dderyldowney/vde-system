@@ -87,7 +87,13 @@ When you run `create-virtual-for` or `start-virtual`, VDE automatically:
 # Just create and start VMs - SSH is handled automatically
 vde create python
 vde start python
-ssh python-dev  # Works immediately, no setup needed
+
+# Connect using VDE's isolated SSH config
+ssh -F ~/.ssh/vde/config vde-python
+
+# Or create a shell alias for convenience
+alias vssh='ssh -F ~/.ssh/vde/config'
+vssh vde-python  # Shorter command
 ```
 
 ### SSH Key Types Supported
