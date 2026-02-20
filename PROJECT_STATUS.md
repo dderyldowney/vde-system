@@ -1,11 +1,17 @@
 # Project Status: Virtual Development Environment (VDE)
 
-**Last Updated:** Thursday, February 12, 2026
+**Last Updated:** Thursday, February 20, 2026
 **Current Phase:** Late Development / Early Stabilization
 
 ## Executive Summary
 
 VDE is currently in a **highly functional "Developer Preview" state**. The core functional blocks (parsing, CLI, basic container lifecycle, and SSH management) are robust and verified. The system is usable for daily individual development work. However, significant gaps remain in multi-service integration, team synchronization workflows, and advanced error recovery mechanisms.
+
+### Recent Improvements (February 20, 2026)
+
+- **Security Architecture**: Added `scripts/lib/vde-security` — a dedicated library that automatically enforces strict directory permissions (`0700`/`0600`), creates and maintains the isolated `vde-net` Docker network, and re-attaches any containers that drift from it.
+- **Unified Naming Convention**: All Docker containers and SSH host aliases now strictly follow the `vde-{name}` convention (e.g., `vde-python`, `vde-postgres`). Filesystem directories retain raw names for clarity.
+- **SSH Isolation**: All VDE SSH assets are now strictly isolated in `~/.ssh/vde/`, preventing interference with the user's personal SSH configuration.
 
 ---
 
@@ -15,7 +21,7 @@ VDE is currently in a **highly functional "Developer Preview" state**. The core 
 |-----------|-------------|-----------|--------|
 | **Core CLI & Parsing** | 🟢 High | 95% | Foundational success; natural language intent detection is stable. |
 | **Language/Service Support** | 🟡 Medium | 80% | 19+ languages supported; service VMs (databases) require more depth. |
-| **SSH Configuration** | 🟡 Medium | 70% | Agent forwarding works; automated config merging is currently brittle. |
+| **SSH Configuration** | 🟡 Medium | 75% | Agent forwarding works; SSH now isolated in `~/.ssh/vde/`; automated config merging still needs hardening. |
 | **Project/Team Workflow** | 🔴 Low | 50% | Shared configs work architecturally but fail in edge-case syncing. |
 | **Error Recovery** | 🔴 Low | 40% | Deep recovery scenarios (disk space, network failures) need hardening. |
 
