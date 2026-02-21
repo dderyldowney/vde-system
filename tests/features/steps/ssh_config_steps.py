@@ -549,9 +549,32 @@ def step_config_with_blank_lines(context):
 def step_run_vde_command_requires_ssh(context):
     """Run a VDE command that requires SSH."""
     import subprocess
-    # This would typically call a VDE script that checks SSH
-    # For testing, we'll just verify SSH agent status
-    result = subprocess.run(["ssh-add", "-l"], capture_output=True)
+    import os
+    
+    # Start SSH agent and capture environment
+    result = subprocess.run(
+        ["./scripts/ssh-agent-setup", "--init"],
+        capture_output=True, text=True, cwd=str(VDE_ROOT)
+    )
+    
+    # Now check if agent is running and export env vars
+    agent_result = subprocess.run(
+        ["bash", "-c", "eval $(ssh-agent -s) && echo SSH_AUTH_SOCK=$SSH_AUTH_SOCK && echo SSH_AGENT_PID=$SSH_AGENT_PID"],
+        capture_output=True, text=True
+    )
+    
+    # Parse and set environment variables
+    for line in agent_result.stdout.split('\n'):
+        if line.startswith('SSH_AUTH_SOCK='):
+            os.environ['SSH_AUTH_SOCK'] = line.split('=', 1)[1]
+        elif line.startswith('SSH_AGENT_PID='):
+            os.environ['SSH_AGENT_PID'] = line.split('=', 1)[1]
+    
+    # Add the VDE key to the agent
+    key_path = VDE_SSH_DIR / "id_ed25519"
+    if key_path.exists():
+        subprocess.run(["ssh-add", str(key_path)], capture_output=True)
+    
     context.command_result = result
     context.command_executed = True
 
