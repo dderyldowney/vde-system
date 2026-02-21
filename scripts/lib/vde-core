@@ -494,20 +494,26 @@ if 'vms' in schema.get('properties', {}):
 
     # Validate language VMs
     for idx, vm in enumerate(data['vms']['language']):
-        if not all(k in vm for k in ['name', 'display', 'install']):
-            print(f'Language VM [{idx}] missing required fields', file=sys.stderr)
+        if not all(k in vm for k in ['name', 'display', 'install', 'ssh_port']):
+            print(f'Language VM [{idx}] missing required fields (name, display, install, ssh_port)', file=sys.stderr)
             sys.exit(1)
-        if vm.get('port') is not None:
-            print(f'Language VM {vm[\"name\"]} must have null port', file=sys.stderr)
+        if vm.get('service_port') is not None:
+            print(f'Language VM {vm[\"name\"]} must have null service_port', file=sys.stderr)
+            sys.exit(1)
+        if not isinstance(vm.get('ssh_port'), int):
+            print(f'Language VM {vm[\"name\"]} ssh_port must be integer', file=sys.stderr)
             sys.exit(1)
 
     # Validate service VMs
     for idx, vm in enumerate(data['vms']['service']):
-        if not all(k in vm for k in ['name', 'display', 'install', 'port']):
-            print(f'Service VM [{idx}] missing required fields', file=sys.stderr)
+        if not all(k in vm for k in ['name', 'display', 'install', 'service_port', 'ssh_port']):
+            print(f'Service VM [{idx}] missing required fields (name, display, install, service_port, ssh_port)', file=sys.stderr)
             sys.exit(1)
-        if not isinstance(vm.get('port'), str):
-            print(f'Service VM {vm[\"name\"]} port must be string', file=sys.stderr)
+        if not isinstance(vm.get('service_port'), str):
+            print(f'Service VM {vm[\"name\"]} service_port must be string', file=sys.stderr)
+            sys.exit(1)
+        if not isinstance(vm.get('ssh_port'), int):
+            print(f'Service VM {vm[\"name\"]} ssh_port must be integer', file=sys.stderr)
             sys.exit(1)
 " 2>/dev/null; then
         log_error "JSON validation failed: $json_file"

@@ -247,7 +247,7 @@ _is_cache_valid() {
 # Format: shortname|type|display_name|install_command|port_base
 load_vm_types() {
     # Ensure arrays are globally declared
-    typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT
+    typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT VM_SSH_PORT
     typeset -ga lang_vms service_vms
 
     # Guard to prevent redundant loading
@@ -373,6 +373,7 @@ load_vm_types() {
         VM_DISPLAY=()
         VM_INSTALL=()
         VM_SVC_PORT=()
+        VM_SSH_PORT=()
 
         # Read and parse configuration from JSON
         # Format: .vms.language[] and .vms.service[] with fields: name, aliases, display, install, port
@@ -391,7 +392,8 @@ load_vm_types() {
                     alias_value=$(echo "$vm_entry" | jq -r '.aliases | join(",")' )
                     display=$(echo "$vm_entry" | jq -r ".display")
                     install=$(echo "$vm_entry" | jq -r '.install // "-"')
-                    port=$(echo "$vm_entry" | jq -r '.port // empty')
+                    port=$(echo "$vm_entry" | jq -r '.service_port // empty')
+                    ssh_port=$(echo "$vm_entry" | jq -r '.ssh_port // empty')
 
                     [[ -z "$name" ]] && continue
 
@@ -400,6 +402,7 @@ load_vm_types() {
                     VM_DISPLAY[$name]="${display:-$name}"
                     VM_INSTALL[$name]="${install:--}"
                     VM_SVC_PORT[$name]="${port:-}"
+                    VM_SSH_PORT[$name]="${ssh_port:-}"
 
                     # Build index by type
                     if [[ -z "${lang_vms_array[*]}" ]]; then
@@ -422,7 +425,8 @@ load_vm_types() {
                     alias_value=$(echo "$vm_entry" | jq -r '.aliases | join(",")' )
                     display=$(echo "$vm_entry" | jq -r ".display")
                     install=$(echo "$vm_entry" | jq -r '.install // "-"')
-                    port=$(echo "$vm_entry" | jq -r '.port // empty')
+                    port=$(echo "$vm_entry" | jq -r '.service_port // empty')
+                    ssh_port=$(echo "$vm_entry" | jq -r '.ssh_port // empty')
 
                     [[ -z "$name" ]] && continue
 
@@ -431,6 +435,7 @@ load_vm_types() {
                     VM_DISPLAY[$name]="${display:-$name}"
                     VM_INSTALL[$name]="${install:--}"
                     VM_SVC_PORT[$name]="${port:-}"
+                    VM_SSH_PORT[$name]="${ssh_port:-}"
 
                     # Build index by type
                     if [[ -z "${service_vms_array[*]}" ]]; then
@@ -482,6 +487,12 @@ load_vm_types() {
             for key in "${(@k)VM_SVC_PORT}"; do
                 value="${VM_SVC_PORT[$key]//'/'\\''}"
                 print -r -- "VM_SVC_PORT[${key}]='${value}'"
+            done
+            echo ""
+            echo "typeset -gA VM_SSH_PORT"
+            for key in "${(@k)VM_SSH_PORT}"; do
+                value="${VM_SSH_PORT[$key]//'/'\\''}"
+                print -r -- "VM_SSH_PORT[${key}]='${value}'"
             done
             echo ""
             # Cache lang_vms and service_vms (use eval-safe quoting)
