@@ -129,12 +129,11 @@ if [[ -z "$VDE_TEST_MODE" ]]; then
     # All VMs now use vde- prefix
     local ssh_host="vde-${VM_NAME}"
 
-    # Remove from SSH config
-    if [[ -f "$VDE_SSH_CONFIG" ]]; then
-        # Remove the entry
-        remove_ssh_config_entry "$ssh_host" 2>/dev/null || true
-        log_success "SSH config entry removed for $ssh_host"
-    fi
+    # SSH config entries are static - they should NOT be removed when VM is removed
+    # because each VM type has a fixed port assignment (python=2213, rust=2216, etc.)
+    # The next time the same VM type is created, it will use the same port.
+    # Only clean up known_hosts entries (those can change when VM is recreated)
+    log_info "SSH config entry for $ssh_host preserved (static port assignment)"
 else
     log_info "Skipping SSH config removal (test mode)"
 fi

@@ -1,198 +1,225 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "description": "VDE VM Type Configuration",
   "vms": {
     "language": [
+      {
+        "name": "vde-asm",
+        "aliases": ["asm", "assembler", "nasm"],
+        "display": "Assembler",
+        "install": "apt-get update -y && apt-get install -y nasm yasm gdb",
+        "service_port": null,
+        "ssh_port": 2200
+      },
       {
         "name": "vde-c",
         "aliases": ["c"],
         "display": "C",
         "install": "apt-get update -y && apt-get install -y gcc make cmake gdb",
-        "port": null
+        "service_port": null,
+        "ssh_port": 2201
       },
       {
         "name": "vde-cpp",
         "aliases": ["cpp", "c++", "gcc"],
         "display": "C++",
         "install": "apt-get update -y && apt-get install -y g++ make cmake gdb",
-        "port": null
-      },
-      {
-        "name": "vde-asm",
-        "aliases": ["asm", "assembler", "nasm"],
-        "display": "Assembler",
-        "install": "apt-get update -y && apt-get install -y nasm yasm gdb",
-        "port": null
-      },
-      {
-        "name": "vde-python",
-        "aliases": ["python", "python3", "py"],
-        "display": "Python",
-        "install": "apt-get update -y && apt-get install -y python3 python3-pip",
-        "port": null
-      },
-      {
-        "name": "vde-rust",
-        "aliases": ["rust"],
-        "display": "Rust",
-        "install": "su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs | i sh -s -- -y'",
-        "port": null
-      },
-      {
-        "name": "vde-js",
-        "aliases": ["js", "node", "nodejs", "javascript"],
-        "display": "JavaScript",
-        "install": "apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs",
-        "port": null
+        "service_port": null,
+        "ssh_port": 2202
       },
       {
         "name": "vde-csharp",
         "aliases": ["csharp", "dotnet"],
         "display": "C#",
         "install": "apt-get update -y && apt-get install -y wget apt-transport-https && wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && dpkg -i /tmp/packages-microsoft-prod.deb && rm /tmp/packages-microsoft-prod.deb && apt-get update -y && apt-get install -y dotnet-sdk-8.0 aspnetcore-runtime-8.0",
-        "port": null
-      },
-      {
-        "name": "vde-ruby",
-        "aliases": ["ruby"],
-        "display": "Ruby",
-        "install": "apt-get update -y && apt-get install -y ruby-full",
-        "port": null
-      },
-      {
-        "name": "vde-go",
-        "aliases": ["go", "golang"],
-        "display": "Go",
-        "install": "apt-get update -y && apt-get install -y golang-go",
-        "port": null
-      },
-      {
-        "name": "vde-java",
-        "aliases": ["java", "jdk"],
-        "display": "Java",
-        "install": "apt-get update -y && apt-get install -y default-jdk maven gradle",
-        "port": null
-      },
-      {
-        "name": "vde-kotlin",
-        "aliases": ["kotlin"],
-        "display": "Kotlin",
-        "install": "apt-get update -y && apt-get install -y kotlin && curl -s \"https://get.sdkman.io\" | bash && su - devuser -c \"source ~/.sdkman/bin/sdkman-init.sh && sdk install kotlin\"",
-        "port": null
-      },
-      {
-        "name": "vde-swift",
-        "aliases": ["swift"],
-        "display": "Swift",
-        "install": "apt-get update -y && apt-get install -y binutils git libc6-dev curl",
-        "port": null
-      },
-      {
-        "name": "vde-php",
-        "aliases": ["php"],
-        "display": "PHP",
-        "install": "apt-get update -y && apt-get install -y php php-cli php-xml php-mbstring php-curl composer",
-        "port": null
-      },
-      {
-        "name": "vde-scala",
-        "aliases": ["scala"],
-        "display": "Scala",
-        "install": "apt-get update -y && apt-get install -y scala-defaults sbt",
-        "port": null
-      },
-      {
-        "name": "vde-r",
-        "aliases": ["r", "rlang"],
-        "display": "R",
-        "install": "apt-get update -y && apt-get install -y r-base r-cran-littler",
-        "port": null
-      },
-      {
-        "name": "vde-lua",
-        "aliases": ["lua"],
-        "display": "Lua",
-        "install": "apt-get update -y && apt-get install -y lua5.4 luarocks",
-        "port": null
-      },
-      {
-        "name": "vde-flutter",
-        "aliases": ["flutter", "dart"],
-        "display": "Flutter",
-        "install": "apt-get update -y && apt-get install -y curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH=\"$PATH:/home/devuser/flutter/bin\" && flutter precache'",
-        "port": null
+        "service_port": null,
+        "ssh_port": 2203
       },
       {
         "name": "vde-elixir",
         "aliases": ["elixir"],
         "display": "Elixir",
         "install": "apt-get update -y && apt-get install -y elixir erlang",
-        "port": null
+        "service_port": null,
+        "ssh_port": 2204
+      },
+      {
+        "name": "vde-flutter",
+        "aliases": ["flutter", "dart"],
+        "display": "Flutter",
+        "install": "apt-get update -y && apt-get install -y curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH=\"$PATH:/home/devuser/flutter/bin\" && flutter precache'",
+        "service_port": null,
+        "ssh_port": 2205
+      },
+      {
+        "name": "vde-go",
+        "aliases": ["go", "golang"],
+        "display": "Go",
+        "install": "apt-get update -y && apt-get install -y golang-go",
+        "service_port": null,
+        "ssh_port": 2206
       },
       {
         "name": "vde-haskell",
         "aliases": ["haskell", "ghc"],
         "display": "Haskell",
         "install": "apt-get update -y && apt-get install -y ghc cabal-install",
-        "port": null
+        "service_port": null,
+        "ssh_port": 2207
+      },
+      {
+        "name": "vde-java",
+        "aliases": ["java", "jdk"],
+        "display": "Java",
+        "install": "apt-get update -y && apt-get install -y default-jdk maven gradle",
+        "service_port": null,
+        "ssh_port": 2208
+      },
+      {
+        "name": "vde-js",
+        "aliases": ["js", "node", "nodejs", "javascript"],
+        "display": "JavaScript",
+        "install": "apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs",
+        "service_port": null,
+        "ssh_port": 2209
+      },
+      {
+        "name": "vde-kotlin",
+        "aliases": ["kotlin"],
+        "display": "Kotlin",
+        "install": "apt-get update -y && apt-get install -y kotlin && curl -s \"https://get.sdkman.io\" | bash && su - devuser -c \"source ~/.sdkman/bin/sdkman-init.sh && sdk install kotlin\"",
+        "service_port": null,
+        "ssh_port": 2210
+      },
+      {
+        "name": "vde-lua",
+        "aliases": ["lua"],
+        "display": "Lua",
+        "install": "apt-get update -y && apt-get install -y lua5.4 luarocks",
+        "service_port": null,
+        "ssh_port": 2211
+      },
+      {
+        "name": "vde-php",
+        "aliases": ["php"],
+        "display": "PHP",
+        "install": "apt-get update -y && apt-get install -y php php-cli php-xml php-mbstring php-curl composer",
+        "service_port": null,
+        "ssh_port": 2212
+      },
+      {
+        "name": "vde-python",
+        "aliases": ["python", "python3", "py"],
+        "display": "Python",
+        "install": "apt-get update -y && apt-get install -y python3 python3-pip",
+        "service_port": null,
+        "ssh_port": 2213
+      },
+      {
+        "name": "vde-r",
+        "aliases": ["r", "rlang"],
+        "display": "R",
+        "install": "apt-get update -y && apt-get install -y r-base r-cran-littler",
+        "service_port": null,
+        "ssh_port": 2214
+      },
+      {
+        "name": "vde-ruby",
+        "aliases": ["ruby"],
+        "display": "Ruby",
+        "install": "apt-get update -y && apt-get install -y ruby-full",
+        "service_port": null,
+        "ssh_port": 2215
+      },
+      {
+        "name": "vde-rust",
+        "aliases": ["rust"],
+        "display": "Rust",
+        "install": "su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'",
+        "service_port": null,
+        "ssh_port": 2216
+      },
+      {
+        "name": "vde-scala",
+        "aliases": ["scala"],
+        "display": "Scala",
+        "install": "apt-get update -y && apt-get install -y scala-defaults sbt",
+        "service_port": null,
+        "ssh_port": 2217
+      },
+      {
+        "name": "vde-swift",
+        "aliases": ["swift"],
+        "display": "Swift",
+        "install": "apt-get update -y && apt-get install -y binutils git libc6-dev curl",
+        "service_port": null,
+        "ssh_port": 2218
       },
       {
         "name": "vde-zig",
         "aliases": ["zig"],
         "display": "Zig Language",
         "install": "apt-get install -y zig",
-        "port": null
+        "service_port": null,
+        "ssh_port": 2219
       }
     ],
     "service": [
       {
-        "name": "vde-postgres",
-        "aliases": ["postgres", "postgresql", "pg", "database"],
-        "display": "PostgreSQL",
-        "install": "apt-get update -y && apt-get install -y postgresql-client",
-        "port": "5432"
-      },
-      {
-        "name": "vde-redis",
-        "aliases": ["redis"],
-        "display": "Redis",
-        "install": "apt-get update -y && apt-get install -y redis-tools",
-        "port": "6379"
+        "name": "vde-couchdb",
+        "aliases": ["couchdb"],
+        "display": "CouchDB",
+        "install": "apt-get update -y && apt-get install -y couchdb",
+        "service_port": "5984",
+        "ssh_port": 2400
       },
       {
         "name": "vde-mongodb",
         "aliases": ["mongodb", "mongo"],
         "display": "MongoDB",
         "install": "apt-get update -y && apt-get install -y mongodb-org-shell",
-        "port": "27017"
-      },
-      {
-        "name": "vde-nginx",
-        "aliases": ["nginx"],
-        "display": "Nginx",
-        "install": "apt-get update -y && apt-get install -y nginx-extras",
-        "port": "80,443"
-      },
-      {
-        "name": "vde-couchdb",
-        "aliases": ["couchdb"],
-        "display": "CouchDB",
-        "install": "apt-get update -y && apt-get install -y couchdb",
-        "port": "5984"
+        "service_port": "27017",
+        "ssh_port": 2401
       },
       {
         "name": "vde-mysql",
         "aliases": ["mysql"],
         "display": "MySQL",
         "install": "apt-get update -y && apt-get install -y default-mysql-server",
-        "port": "3306"
+        "service_port": "3306",
+        "ssh_port": 2402
+      },
+      {
+        "name": "vde-nginx",
+        "aliases": ["nginx"],
+        "display": "Nginx",
+        "install": "apt-get update -y && apt-get install -y nginx-extras",
+        "service_port": "80,443",
+        "ssh_port": 2403
+      },
+      {
+        "name": "vde-postgres",
+        "aliases": ["postgres", "postgresql", "pg", "database"],
+        "display": "PostgreSQL",
+        "install": "apt-get update -y && apt-get install -y postgresql-client",
+        "service_port": "5432",
+        "ssh_port": 2404
       },
       {
         "name": "vde-rabbitmq",
         "aliases": ["rabbitmq"],
         "display": "RabbitMQ",
         "install": "apt-get update -y && apt-get install -y erlang-nox && apt-get install -y rabbitmq-server",
-        "port": "5672,15672"
+        "service_port": "5672,15672",
+        "ssh_port": 2405
+      },
+      {
+        "name": "vde-redis",
+        "aliases": ["redis"],
+        "display": "Redis",
+        "install": "apt-get update -y && apt-get install -y redis-tools",
+        "service_port": "6379",
+        "ssh_port": 2406
       }
     ]
   }

@@ -88,6 +88,11 @@ def step_vm_allocated_port(context, vm_name, port):
     
     context.vm_name = vm_name
     context.allocated_port = port
+    
+    # Also track in context.vms for VM-to-VM config generation
+    if not hasattr(context, 'vms'):
+        context.vms = {}
+    context.vms[vm_name] = {'port': port}
 
 
 @given('I reload the VM types cache')
