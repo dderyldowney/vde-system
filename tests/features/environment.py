@@ -49,7 +49,8 @@ def run_vde_command(command, timeout=120):
     env = os.environ.copy()
     # Disable BuildKit as requested by user for this environment
     env['DOCKER_BUILDKIT'] = '0'
-    full_cmd = f"cd {VDE_ROOT} && {command}"
+    vde_script = os.path.join(VDE_ROOT, "scripts", "vde")
+    full_cmd = f"cd {VDE_ROOT} && {vde_script} {command}"
     result = subprocess.run(
         full_cmd,
         shell=True,
@@ -57,6 +58,22 @@ def run_vde_command(command, timeout=120):
         text=True,
         timeout=timeout,
         env=env,
+    )
+    return result
+
+
+def run_vde_ps(args=None, timeout=30):
+    """Run vde-ps and return the result."""
+    vde_ps = os.path.join(VDE_ROOT, "scripts", "vde-ps")
+    cmd = ["zsh", vde_ps]
+    if args:
+        cmd.extend(args)
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=VDE_ROOT
     )
     return result
 
@@ -154,15 +171,18 @@ def before_all(context):
     # Use test network
     os.environ['VDE_NETWORK'] = 'vde-testing'
 
-    # Cleanup any leftovers from previous aborted runs
+    # Cleanup any leftovers from previous aborted runs using vde commands
     print("[SETUP] Cleaning up any existing VDE test containers...")
-    subprocess.run(
-        "docker ps -a --filter label=vde.test=true -q | xargs -r docker rm -f",
-        shell=True, capture_output=True
-    )
+    # Use vde ps to list all containers, then remove them
+    result = run_vde_ps(["-a", "-q"])
+    if result.returncode == 0:
+        containers = [c.strip() for c in result.stdout.split('\n') if c.strip()]
+        for container in containers:
+            run_vde_command(f"remove {container}", timeout=30)
+            print(f"[SETUP] Removed container: {container}")
     
-    # Create test network
-    subprocess.run(["docker", "network", "create", "vde-testing"], capture_output=True)
+    # Create test network using vde init
+    run_vde_command("init", timeout=30)
 
 
 def before_feature(context, feature):
@@ -190,23 +210,19 @@ def after_all(context):
 
     print("[TEARDOWN] Final cleanup of VDE test resources...")
     
-    # Stop and remove all test containers created during this run
-    # We use the vde.test label to identify them
+    # Stop and remove all test containers created during this run using vde commands
     try:
-        result = subprocess.run(
-            ["docker", "ps", "-a", "--filter", "label=vde.test=true", "--format", "{{.Names}}"],
-            capture_output=True, text=True, timeout=10
-        )
+        result = run_vde_ps(["-a", "-q"])
         if result.returncode == 0:
             containers = [c.strip() for c in result.stdout.split('\n') if c.strip()]
             for container in containers:
-                subprocess.run(["docker", "stop", container], capture_output=True, timeout=10)
-                subprocess.run(["docker", "rm", "-f", container], capture_output=True, timeout=10)
+                run_vde_command(f"stop {container}", timeout=30)
+                run_vde_command(f"remove {container}", timeout=30)
                 print(f"[TEARDOWN] Removed container: {container}")
     except Exception as e:
         print(f"[TEARDOWN] Error during container cleanup: {e}")
 
-    # Remove test network
+    # Remove test network - use docker directly for this as vde doesn't have network remove
     subprocess.run(["docker", "network", "rm", "vde-testing"], capture_output=True)
     
     # Stop SSH agent if started

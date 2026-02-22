@@ -37,7 +37,7 @@ from vm_common import (
 def step_new_computer_docker(context):
     """Verify Docker is actually installed - real system check."""
     context.new_computer = True  # This is scenario context, not system state
-    context.docker_installed = check_docker_available()  # Real verification
+    context.docker_installed = check_docker_available(context)  # Real verification
 
 @given('I have cloned the VDE repository to ~/dev')
 def step_cloned_vde_repo(context):
@@ -150,3 +150,136 @@ def step_run_initial_setup(context):
             context.setup_error = "Setup script timed out"
         except Exception as e:
             context.setup_error = str(e)
+
+
+@when('the setup script runs')
+def step_setup_script_runs(context):
+    """Trigger the setup script execution."""
+    step_run_initial_setup(context)
+
+
+@when('the setup completes')
+def step_setup_completes(context):
+    """Wait for setup to complete."""
+    # Setup is assumed complete when directories exist
+    context.setup_completed = True
+
+
+@when('setup completes')
+def step_setup_completes_alt(context):
+    """Wait for setup to complete (alternate phrasing)."""
+    step_setup_completes(context)
+
+
+@when('SSH keys are checked')
+def step_ssh_keys_checked(context):
+    """Check for SSH keys."""
+    context.ssh_keys_exist = check_ssh_keys_exist(context)
+    context.ssh_keys_checked = True
+
+
+@when('I run list-vms')
+def step_run_list_vms(context):
+    """Run the list-vms command."""
+    list_vms_script = Path(VDE_ROOT) / "scripts" / "list-vms"
+    if list_vms_script.exists():
+        result = subprocess.run(
+            [str(list_vms_script)],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        context.list_vms_output = result.stdout
+        context.list_vms_exit_code = result.returncode
+    else:
+        context.list_vms_output = ""
+        context.list_vms_exit_code = 1
+
+
+@when('I add VDE scripts to my PATH')
+def step_add_vde_to_path(context):
+    """Add VDE scripts to PATH."""
+    scripts_dir = Path(VDE_ROOT) / "scripts"
+    context.vde_in_path = scripts_dir.exists()
+    if scripts_dir.exists():
+        os.environ['PATH'] = str(scripts_dir) + ':' + os.environ.get('PATH', '')
+
+
+@when('setup checks Docker')
+def step_setup_checks_docker(context):
+    """Setup checks Docker permissions."""
+    context.docker_checked = check_docker_available(context)
+
+
+@when('the first VM is created')
+def step_first_vm_created(context):
+    """Mark that the first VM is being created."""
+    context.first_vm_creating = True
+
+
+@when('I run "vde-health" or check status')
+def step_run_vde_health(context):
+    """Run health check."""
+    health_script = Path(VDE_ROOT) / "scripts" / "vde-health"
+    if health_script.exists():
+        result = subprocess.run(
+            [str(health_script)],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        context.health_output = result.stdout
+        context.health_exit_code = result.returncode
+    else:
+        context.health_output = "vde-health script not found"
+        context.health_exit_code = 1
+
+
+@when('I pull the latest changes')
+def step_pull_latest_changes(context):
+    """Pull latest changes from git."""
+    result = subprocess.run(
+        ['git', 'pull'],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=VDE_ROOT
+    )
+    context.git_pull_output = result.stdout
+    context.git_pull_exit_code = result.returncode
+
+
+@when('I want to remove it')
+def step_want_to_remove(context):
+    """Mark intent to remove VDE."""
+    context.wants_to_remove = True
+
+
+@when('the setup detects my OS (Linux/Mac)')
+def step_detect_os(context):
+    """Detect the operating system."""
+    import platform
+    context.detected_os = platform.system().lower()
+    context.os_detected = True
+
+
+@when('I want to start quickly')
+def step_want_start_quickly(context):
+    """Mark intent for quick start."""
+    context.quick_start = True
+
+
+@when('I need help')
+def step_need_help(context):
+    """Mark that user needs help."""
+    context.needs_help = True
+
+
+@when('I run validation checks')
+def step_run_validation_checks(context):
+    """Run validation checks on VDE installation."""
+    context.validation_results = {
+        'scripts_executable': check_scripts_executable(context),
+        'templates_present': (Path(VDE_ROOT) / 'templates').exists(),
+        'vm_types_valid': (Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf').exists(),
+    }

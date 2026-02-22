@@ -50,16 +50,13 @@ def step_connect_via_ssh(context):
 
 @then('I should connect to the Python VM')
 def step_connect_python_vm(context):
-    """Verify connection to Python VM - SSH or docker exec."""
+    """Verify connection to Python VM - SSH or vde exec."""
     running = docker_list_containers()
     python_vms = [vm for vm in running if 'python' in vm.lower()]
     assert len(python_vms) > 0, "Python VM should be running"
     context.connected_vm = python_vms[0]
-    # Verify container is running and accessible
-    result = subprocess.run(
-        ['docker', 'exec', python_vms[0], 'whoami'],
-        capture_output=True, text=True, timeout=10
-    )
+    # Verify container is running and accessible via vde exec
+    result = run_vde_command(f'exec {python_vms[0]} whoami')
     assert result.returncode == 0, f"Should be able to exec into {python_vms[0]}"
     context.ssh_connection_established = True
 
@@ -561,7 +558,7 @@ def step_connection_drops(context):
     """Trigger an SSH connection drop by disconnecting the network."""
     vm = getattr(context, 'task_vm', None)
     if vm:
-        # Disconnect from network to break connections
+        # Disconnect from network to break connections - use docker directly for network ops
         subprocess.run(['docker', 'network', 'disconnect', 'vde-testing', vm], capture_output=True)
     context.connection_dropped = True
 
@@ -571,12 +568,9 @@ def step_task_continues(context):
     """Verify task continues after connection drop."""
     if getattr(context, 'task_vm', None):
         vm = context.task_vm
-        # Check if container is still running
-        result = subprocess.run(
-            ['docker', 'ps', '--filter', f'name={vm}', '--format', '{{.Names}}'],
-            capture_output=True, text=True, timeout=10
-        )
-        context.task_still_running = vm in result.stdout
+        # Check if container is still running using vde ps
+        result = run_vde_command(f'ps --filter name={vm}')
+        context.task_still_running = vm in result.stdout or f'vde-{vm}' in result.stdout
         assert context.task_still_running, "Container should still be running"
 
 

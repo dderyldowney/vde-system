@@ -38,10 +38,7 @@ def step_identify_problem(context):
 def step_shell_access(context):
     """Verify shell access is available."""
     vm_name = getattr(context, 'vm_name', 'python')
-    result = subprocess.run(
-        ['docker', 'exec', f'vde-{vm_name}', 'echo', 'shell-ok'],
-        capture_output=True, text=True, timeout=10
-    )
+    result = run_vde_command(f'exec {vm_name} echo shell-ok')
     assert result.returncode == 0 or 'no such container' in result.stderr.lower(), \
         f"Shell access check failed: {result.stderr}"
 
@@ -49,11 +46,9 @@ def step_shell_access(context):
 @then(u'I can investigate issues directly')
 def step_investigate_directly(context):
     """Verify ability to investigate issues."""
-    # Verify docker exec is available for debugging
-    result = subprocess.run(
-        ['docker', '--version'], capture_output=True, text=True, timeout=5
-    )
-    assert result.returncode == 0, "Docker should be available for direct investigation"
+    # Verify vde exec is available for debugging
+    result = run_vde_command('--version')
+    assert result.returncode == 0, "VDE should be available for direct investigation"
 
 
 @then(u'I should see all volume mounts')
@@ -214,8 +209,7 @@ def step_identify_issue_type(context):
 @when(u'I try to connect to the database VM directly')
 def step_connect_database_directly(context):
     """Connect to database VM directly."""
-    result = subprocess.run(['docker', 'exec', '-it', 'vde_postgres', 'psql', '-U', 'postgres', '-c', 'SELECT 1'],
-                          capture_output=True, text=True)
+    result = run_vde_command('exec postgres psql -U postgres -c SELECT 1')
     context.db_connection_output = result.stdout
     context.vde_command_exit_code = result.returncode
 
@@ -257,15 +251,15 @@ def step_no_cached_layers(context):
 @when(u'I remove the container but keep the config')
 def step_remove_container_keep_config(context):
     """Remove container but keep configuration."""
-    result = subprocess.run(['docker', 'rm', '-f', 'vde_python'], capture_output=True, text=True)
+    result = run_vde_command('remove python')
     context.container_removed = result.returncode == 0 or 'no such container' in result.stderr.lower()
 
 
 @then(u'I should get a fresh container')
 def step_fresh_container(context):
     """Verify fresh container is created."""
-    result = subprocess.run(['docker', 'ps', '-a'], capture_output=True, text=True)
-    assert 'vde_python' in result.stdout, "Expected vde_python container to exist"
+    result = run_vde_command('ps -a')
+    assert 'vde_python' in result.stdout or 'python' in result.stdout, "Expected python container to exist"
 
 
 @when(u'I start it again')

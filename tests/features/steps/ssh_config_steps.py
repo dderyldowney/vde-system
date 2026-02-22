@@ -981,15 +981,16 @@ def step_non_pub_files_rejected(context):
 
 @then('files containing "PRIVATE KEY" should be rejected')
 def step_private_key_content_rejected(context):
-    """Verify files with PRIVATE KEY content are rejected."""
-    # Verify the sync script checks for private key content
+    """Verify files with PRIVATE KEY content are rejected from public-ssh-keys."""
+    # Check that private key content is NOT in the public-ssh-keys directory
+    # (private keys in ~/.ssh/vde/ are expected and valid)
     result = subprocess.run(
-        ['grep', '-r', 'PRIVATE KEY', str(VDE_SSH_DIR)],
+        ['grep', '-r', 'PRIVATE KEY', str(PUBLIC_SSH_KEYS_DIR)],
         capture_output=True, text=True, timeout=10
     )
-    # Private keys should not be in config files
-    assert 'PRIVATE KEY' not in result.stdout or '.pub' in result.stdout, \
-        "Private key content should not be in config files"
+    # Private keys should not be in public-ssh-keys directory
+    assert result.returncode != 0 or 'PRIVATE KEY' not in result.stdout, \
+        "Private key content should not be in public-ssh-keys directory"
 
 @then('SSH config should contain "Host {hostname}"')
 def step_config_should_contain_host(context, hostname):

@@ -223,7 +223,7 @@ def step_docker_images_pulled(context):
     """Verify required Docker images are available."""
     from vm_common import check_docker_available
 
-    if not check_docker_available():
+    if not check_docker_available(context):
         assert False, "Docker not available - cannot verify images"
 
     # Check that some Docker images are available

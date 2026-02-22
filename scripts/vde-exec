@@ -2,6 +2,11 @@
 #===============================================================================
 # vde-exec - Execute a command in a VDE container
 # Usage: vde-exec <vm_name> <command> [args...]
+#
+# Options:
+#   vm_name   Name of the VM (with or without vde- prefix)
+#   command   Command to execute
+#   args      Optional arguments to pass to the command
 #===============================================================================
 
 # Determine VDE root directory
@@ -29,5 +34,11 @@ fi
 VM_NAME="$1"
 shift
 
-docker exec "$VM_NAME" "$@"
+# Ensure vde- prefix for container name
+CONTAINER_NAME="$VM_NAME"
+if [[ "$VM_NAME" != vde-* ]] && [[ "$VM_NAME" != *-dev ]]; then
+    CONTAINER_NAME="vde-${VM_NAME}"
+fi
+
+docker exec "$CONTAINER_NAME" "$@"
 exit $?
