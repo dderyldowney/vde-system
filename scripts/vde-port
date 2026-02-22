@@ -1,7 +1,11 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-port - Show port mappings for a VDE container
-# Usage: vde-port <vm_name>
+# Usage: vde-port <vm_name> [port]
+#
+# Options:
+#   vm_name   Name of the VM (with or without vde- prefix)
+#   port      Optional: specific internal port to query
 #===============================================================================
 
 # Determine VDE root directory
@@ -16,17 +20,24 @@ export VDE_ROOT_DIR
 # Check arguments
 if [ -z "$1" ]; then
     vde_error_simple "VM name is required"
-    echo "Usage: vde-port <vm_name>"
+    echo "Usage: vde-port <vm_name> [port]"
     exit $VDE_ERR_INVALID_INPUT
 fi
 
 VM_NAME="$1"
+shift
 
 # Ensure vde- prefix for container name
-CONTAINER_NAME="${VM_NAME}"
-if [[ "$VM_NAME" != vde-* ]]; then
+CONTAINER_NAME="$VM_NAME"
+if [[ "$VM_NAME" != vde-* ]] && [[ "$VM_NAME" != *-dev ]]; then
     CONTAINER_NAME="vde-${VM_NAME}"
 fi
 
-docker port "$CONTAINER_NAME"
+# Check if a specific port was requested
+if [ -n "$1" ]; then
+    docker port "$CONTAINER_NAME" "$1"
+else
+    docker port "$CONTAINER_NAME"
+fi
+
 exit $?

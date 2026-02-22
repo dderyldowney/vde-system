@@ -7,38 +7,44 @@ tests/features/steps/crash_recovery_steps.py
 from behave import given, when, then
 import subprocess
 import time
+import os
+import sys
+
+# Add steps directory to path for imports
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
+
+from vm_common import run_vde_command, docker_list_containers
 
 
 @given(u'I have a running VM')
 def step_impl(context):
     """Ensure a VM is running for crash recovery tests."""
-    result = subprocess.run(['docker', 'ps', '--format', '{{.Names}}'],
-                          capture_output=True, text=True, timeout=10)
-    context.vm_running = result.returncode == 0 and len(result.stdout.strip()) > 0
+    containers = docker_list_containers()
+    context.vm_running = len(containers) > 0
 
 
 @when(u'one VM crashes')
 def step_impl(context):
     """Context: VM has crashed."""
-    # Record crash state - actual crash simulation requires docker kill
+    # Record crash state - actual crash simulation requires vde stop
     context.vm_crashed = True
 
 
 @then(u'other VMs should continue running')
 def step_impl(context):
     """Verify other VMs remain running after crash."""
-    result = subprocess.run(['docker', 'ps', '--format', '{{.Names}}'],
-                          capture_output=True, text=True, timeout=10)
-    assert result.returncode == 0, "Docker should be available to list containers"
+    containers = docker_list_containers()
+    assert containers is not None, "VDE should be available to list containers"
 
 
 @then(u'the crash should not affect other containers')
 def step_impl(context):
     """Verify isolation during crash."""
     # Verify at least one container is still running
-    result = subprocess.run(['docker', 'ps', '--format', '{{.Names}}'],
-                          capture_output=True, text=True, timeout=10)
-    assert result.returncode == 0, "Other containers should be listable"
+    containers = docker_list_containers()
+    assert containers is not None, "Other containers should be listable"
 
 
 @then(u'I can restart the crashed VM independently')

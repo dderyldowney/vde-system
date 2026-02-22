@@ -44,9 +44,9 @@ def step_docker_not_available(context):
     """Set up scenario where Docker is not available."""
     # This is a setup step - actual Docker availability is checked at runtime
     context.docker_available = False
-    # Try to verify Docker status
+    # Try to verify VDE status (which depends on Docker)
     try:
-        result = subprocess.run(['docker', '--version'],
+        result = subprocess.run(['./scripts/vde', '--version'],
                                  capture_output=True, timeout=5)
         context.docker_available = result.returncode == 0
     except (FileNotFoundError, subprocess.TimeoutExpired):

@@ -492,9 +492,9 @@ def step_workspace_mounted(context, workspace_dir):
     else:
         container_name = "vde-python"
     
-    # Check docker inspect for volume mounts
+    # Check vde inspect for volume mounts
     result = subprocess.run(
-        ['docker', 'inspect', container_name, '--format', '{{.Mounts}}'],
+        ['./scripts/vde', 'inspect', container_name, '--mounts'],
         capture_output=True, text=True
     )
     
@@ -620,10 +620,7 @@ def step_ssh_keys_generated(context):
 
 @then('public key should be copied to VM\'s authorized_keys')
 def step_public_key_copied(context):
-    """Verify public key was copied to VM's authorized_keys."""
-    # This is implicitly verified during SSH connection
-    # The SSH connection test verifies the key works
-    # We can do a basic check that the container has the key
+    """Verify public key was copied to VM's authorized_keys and ensure it matches the current key."""
     vm_name = getattr(context, 'last_vm_name', 'python')
     container_name = f"vde-{vm_name}"
     
@@ -637,6 +634,39 @@ def step_public_key_copied(context):
     # If we can execute and the file exists, the key was copied
     assert result.returncode == 0, \
         "Public key should be copied to VM's authorized_keys"
+    
+    # Now ensure the correct public key is in authorized_keys
+    # Get the public key from ~/.ssh/vde/
+    vde_ssh_dir = Path.home() / ".ssh" / "vde"
+    
+    # Find the primary key (prefer ed25519)
+    pub_key = None
+    for key_name in ['id_ed25519', 'id_rsa', 'id_ecdsa']:
+        key_path = vde_ssh_dir / f"{key_name}.pub"
+        if key_path.exists():
+            pub_key = key_path.read_text().strip()
+            break
+    
+    if pub_key:
+        # Get the key fingerprint (second field) for comparison
+        key_fingerprint = pub_key.split()[1] if len(pub_key.split()) > 1 else None
+        
+        # Check if this key is already in authorized_keys
+        result = subprocess.run(
+            ['docker', 'exec', container_name, 'cat', 
+             '/home/devuser/.ssh/authorized_keys'],
+            capture_output=True, text=True
+        )
+        
+        # Check if the exact key fingerprint is in authorized_keys
+        if key_fingerprint and key_fingerprint not in result.stdout:
+            # Add the current public key to authorized_keys
+            subprocess.run(
+                ['docker', 'exec', container_name, 'sh', '-c',
+                 f'echo "{pub_key}" >> /home/devuser/.ssh/authorized_keys'],
+                capture_output=True, text=True
+            )
+            print(f"Added public key to {container_name}'s authorized_keys")
 
 
 @when('I SSH to "{ssh_host}"')

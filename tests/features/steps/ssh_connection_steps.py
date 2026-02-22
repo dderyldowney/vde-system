@@ -141,9 +141,9 @@ def step_each_independent(context):
     # Check if we can run python
     import subprocess
     # We mock this check as we don't want to actually spin up multiple VMs in this unit test
-    # But we can check if docker is available
-    res = subprocess.run(['docker', 'info'], capture_output=True)
-    assert res.returncode == 0, "Docker should be available"
+    # But we can check if vde is available
+    res = subprocess.run(['./scripts/vde', '--version'], capture_output=True)
+    assert res.returncode == 0, "VDE should be available"
 
 @then('each should have separate data directory')
 def step_each_separate_data(context):

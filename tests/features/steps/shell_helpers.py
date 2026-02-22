@@ -1,13 +1,44 @@
 """
-Shell command execution helpers for Docker container testing.
+Shell command execution helpers for VDE container testing.
 
-This module provides utilities for executing shell commands within Docker containers
+This module provides utilities for executing shell commands within VDE containers
 and verifying their outputs. All functions perform REAL command execution using
-subprocess.run() with actual Docker commands.
+subprocess.run() with actual VDE commands via the vde CLI.
 """
 
+import os
 import subprocess
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+
+
+def _get_vde_root() -> str:
+    """Get the VDE root directory."""
+    return os.environ.get("VDE_ROOT_DIR", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
+
+def _run_vde_command(args: List[str], timeout: int = 30, check: bool = False) -> subprocess.CompletedProcess:
+    """Run a vde command and return the result.
+    
+    Args:
+        args: Arguments to pass to vde command
+        timeout: Command timeout in seconds
+        check: Whether to raise on non-zero exit
+        
+    Returns:
+        CompletedProcess result
+    """
+    vde_root = _get_vde_root()
+    vde_script = os.path.join(vde_root, "scripts", "vde")
+    
+    cmd = [vde_script] + args
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        check=check,
+        cwd=vde_root
+    )
 
 
 def execute_in_container(
@@ -16,10 +47,10 @@ def execute_in_container(
     timeout: int = 30
 ) -> Dict[str, Any]:
     """
-    Execute a shell command inside a Docker container.
+    Execute a shell command inside a VDE container using vde exec.
     
     Args:
-        container_name: Name of the Docker container
+        container_name: Name of the container (with or without vde- prefix)
         command: Shell command to execute
         timeout: Command timeout in seconds (default: 30)
     
@@ -31,24 +62,16 @@ def execute_in_container(
     
     Raises:
         subprocess.TimeoutExpired: If command exceeds timeout
-        RuntimeError: If docker exec command fails to start
+        RuntimeError: If vde exec command fails to start
     
     Example:
-        result = execute_in_container("vde-python", "python --version")
+        result = execute_in_container("python", "python --version")
         if result['returncode'] == 0:
             print(f"Python version: {result['stdout']}")
     """
-    docker_command = [
-        "docker", "exec",
-        container_name,
-        "sh", "-c", command
-    ]
-    
     try:
-        result = subprocess.run(
-            docker_command,
-            capture_output=True,
-            text=True,
+        result = _run_vde_command(
+            ["exec", container_name, "sh", "-c", command],
             timeout=timeout,
             check=False
         )
@@ -60,7 +83,7 @@ def execute_in_container(
         }
     except subprocess.TimeoutExpired as e:
         raise subprocess.TimeoutExpired(
-            cmd=docker_command,
+            cmd=["vde", "exec", container_name, "sh", "-c", command],
             timeout=timeout,
             output=e.output,
             stderr=e.stderr
@@ -81,7 +104,7 @@ def verify_command_output(
     Execute a command in a container and verify its output contains expected string.
     
     Args:
-        container_name: Name of the Docker container
+        container_name: Name of the container (with or without vde- prefix)
         command: Shell command to execute
         expected_output: String that should be present in stdout
         timeout: Command timeout in seconds (default: 30)
@@ -91,10 +114,10 @@ def verify_command_output(
     
     Raises:
         subprocess.TimeoutExpired: If command exceeds timeout
-        RuntimeError: If docker exec command fails to start
+        RuntimeError: If vde exec command fails to start
     
     Example:
-        if verify_command_output("vde-python", "python --version", "Python 3"):
+        if verify_command_output("python", "python --version", "Python 3"):
             print("Python 3 is installed")
     """
     result = execute_in_container(container_name, command, timeout)
@@ -110,20 +133,20 @@ def verify_file_exists_in_container(
     file_path: str
 ) -> bool:
     """
-    Verify that a file exists inside a Docker container.
+    Verify that a file exists inside a VDE container.
     
     Args:
-        container_name: Name of the Docker container
+        container_name: Name of the container (with or without vde- prefix)
         file_path: Absolute path to the file inside the container
     
     Returns:
         True if file exists, False otherwise
     
     Raises:
-        RuntimeError: If docker exec command fails to start
+        RuntimeError: If vde exec command fails to start
     
     Example:
-        if verify_file_exists_in_container("vde-python", "/usr/bin/python3"):
+        if verify_file_exists_in_container("python", "/usr/bin/python3"):
             print("Python3 binary exists")
     """
     # Use test -f to check if file exists (returns 0 if exists, 1 if not)
@@ -141,20 +164,20 @@ def get_container_env_var(
     var_name: str
 ) -> Optional[str]:
     """
-    Get the value of an environment variable from a Docker container.
+    Get the value of an environment variable from a VDE container.
     
     Args:
-        container_name: Name of the Docker container
+        container_name: Name of the container (with or without vde- prefix)
         var_name: Name of the environment variable
     
     Returns:
         Value of the environment variable, or None if not set
     
     Raises:
-        RuntimeError: If docker exec command fails to start
+        RuntimeError: If vde exec command fails to start
     
     Example:
-        path = get_container_env_var("vde-python", "PATH")
+        path = get_container_env_var("python", "PATH")
         if path:
             print(f"Container PATH: {path}")
     """

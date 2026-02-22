@@ -174,7 +174,7 @@ def compose_file_exists(vm_name):
     return get_compose_file(vm_name).exists()
 
 def wait_for_container(container_name, timeout=30):
-    """Wait for a Docker container to become ready.
+    """Wait for a VDE container to become ready using vde ps.
     
     Args:
         container_name: Name of the container to wait for
@@ -188,11 +188,10 @@ def wait_for_container(container_name, timeout=30):
     try:
         while time.time() - start_time < timeout:
             result = subprocess.run(
-                ['docker', 'ps', '-q', '-f', f'name={container_name}'],
-                check=True,
-                capture_output=True
+                ['zsh', str(SCRIPTS_DIR / 'vde-ps'), '-q', '--filter', f'name={container_name}'],
+                capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT)
             )
-            if result.returncode == 0:
+            if result.returncode == 0 and result.stdout.strip():
                 return True
             time.sleep(1)
         
@@ -262,7 +261,7 @@ def ensure_vm_stopped(context, vm_name):
     return None
 
 def get_container_health(context, container_name):
-    """Get the health status of a Docker container.
+    """Get the health status of a VDE container using vde inspect.
     
     Args:
         context: Behave context object
@@ -271,27 +270,30 @@ def get_container_health(context, container_name):
     Returns:
         str: Health status (e.g., "running", "healthy", "unhealthy", "starting")
     """
-    # Try to get actual status from Docker first
+    # Try to get actual status from vde inspect first
     try:
         result = subprocess.run(
-            ['docker', 'inspect', container_name, '--format', '{{.State.Status}}'],
-            capture_output=True, text=True, timeout=5
+            [str(SCRIPTS_DIR / 'vde'), 'inspect', container_name, '--state'],
+            capture_output=True, text=True, timeout=5, cwd=str(VDE_ROOT)
         )
         if result.returncode == 0:
-            status = result.stdout.strip()
+            import json
+            state = json.loads(result.stdout.strip())
+            status = state.get('Status', '').lower()
             # If status is 'running', check if there's a health check
             if status == 'running':
                 health_result = subprocess.run(
-                    ['docker', 'inspect', container_name, '--format', '{{.State.Health.Status}}'],
-                    capture_output=True, text=True, timeout=5
+                    [str(SCRIPTS_DIR / 'vde'), 'inspect', container_name, '--health'],
+                    capture_output=True, text=True, timeout=5, cwd=str(VDE_ROOT)
                 )
-                if health_result.returncode == 0:
-                    return health_result.stdout.strip()
+                if health_result.returncode == 0 and health_result.stdout.strip():
+                    health = json.loads(health_result.stdout.strip())
+                    return health.get('Status', status)
             return status
     except Exception:
         pass
 
-    # Fallback for Docker-free tests or when Docker check fails
+    # Fallback for tests or when vde check fails
     if hasattr(context, 'vm_name') and context.vm_name:
         return "healthy"
     
@@ -322,7 +324,7 @@ def check_docker_compose_available(context):
     return False
 
 def check_docker_network_exists(network_name):
-    """Check if a Docker network exists.
+    """Check if a VDE network exists using vde networks.
 
     Args:
         network_name: Name of the network to check
@@ -332,13 +334,10 @@ def check_docker_network_exists(network_name):
     """
     try:
         result = subprocess.run(
-            ['docker', 'network', 'ls', '--format', '{{.Name}}'],
-            check=True,
-            capture_output=True,
-            text=True,
-            stderr=subprocess.PIPE
+            [str(SCRIPTS_DIR / 'vde'), 'networks'],
+            capture_output=True, text=True, timeout=10, cwd=str(VDE_ROOT)
         )
-        return network_name in result.stdout.split('\n')
+        return network_name in result.stdout
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
 

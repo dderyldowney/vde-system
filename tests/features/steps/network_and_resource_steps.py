@@ -99,10 +99,10 @@ def step_check_docker(context):
 @when(u'I restart Docker if needed')
 def step_restart_docker(context):
     """Restart Docker if needed."""
-    # Check Docker status
-    result = subprocess.run(['docker', 'info'], capture_output=True, text=True, timeout=30)
+    # Check Docker status via vde info
+    result = subprocess.run(['./scripts/vde', 'info'], capture_output=True, text=True, timeout=30)
     context.docker_restarted = result.returncode == 0
-    assert context.docker_restarted, "Docker should be available to restart"
+    assert context.docker_restarted, "VDE/Docker should be available to restart"
 
 
 @then(u'VMs should start normally after Docker is healthy')

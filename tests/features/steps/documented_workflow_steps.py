@@ -733,8 +733,8 @@ def step_generate_perf_plans(context):
 
 @given('Docker is running')
 def step_docker_running(context):
-    """Verify Docker is running."""
-    result = subprocess.run(['docker', 'info'], capture_output=True, text=True)
+    """Verify Docker is running via VDE."""
+    result = subprocess.run(['./scripts/vde', 'info'], capture_output=True, text=True)
     context.docker_running = result.returncode == 0
 
 
