@@ -627,13 +627,27 @@ def step_docker_compose_preserved(context):
         "docker-compose.yml should be preserved for easy recreation"
 
 
-@then(u'SSH config entry should be removed')
-def step_ssh_config_removed(context):
-    """Verify SSH config entry is removed."""
-    ssh_config = Path.home() / ".ssh" / "vde" / "config"
-    if ssh_config.exists():
-        config_content = ssh_config.read_text()
-        # After removal, Ruby SSH config should be cleaned up
-        # Note: This may depend on implementation
-        assert "ruby" not in config_content.lower() or "vde-ruby" not in config_content.lower() or context.last_exit_code == 0, \
-            "SSH config entry should be removed"
+@then(u'SSH config entry should be preserved')
+def step_ssh_config_preserved(context):
+    """Verify SSH config entry is preserved (static port assignments).
+    
+    NOTE: SSH config entries are now static - they should NOT be removed when VM is removed
+    because each VM type has a fixed port assignment (python=2213, rust=2216, etc.)
+    The next time the same VM type is created, it will use the same port.
+    
+    VDE_SSH_DIR is ~/.ssh/vde - this is the user's SSH directory for VDE.
+    configs/ssh/config is the project's static SSH config with port assignments.
+    """
+    # Check VDE_SSH_DIR (~/.ssh/vde) exists
+    vde_ssh_dir = Path.home() / ".ssh" / "vde"
+    assert vde_ssh_dir.exists(), f"VDE SSH directory should exist at {vde_ssh_dir}"
+    
+    # Check the project's static SSH config has the vde-ruby entry
+    project_ssh_config = VDE_ROOT / "configs" / "ssh" / "config"
+    assert project_ssh_config.exists(), f"Project SSH config should exist at {project_ssh_config}"
+    
+    config_content = project_ssh_config.read_text()
+    # SSH config entries are static and preserved
+    # The vde-ruby entry should still exist after VM removal
+    assert "vde-ruby" in config_content.lower() or "Host vde-ruby" in config_content, \
+        "SSH config entry for vde-ruby should be preserved in project config (static port assignment)"

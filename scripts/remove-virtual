@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
-# remove-virtual - Stop a VM and clean up its SSH references
-# Stops the VM, removes SSH config entry, preserves docker-compose.yml for easy recreation
+# remove-virtual - Stop and remove a VM container
+# Stops the VM, preserves all configuration for easy recreation
 
 set -e
 
@@ -23,17 +23,19 @@ fi
 if [[ $# -eq 0 ]]; then
     echo "Usage: $0 <vm_name>"
     echo ""
-    echo "Stop a VM and clean up its SSH references."
+    echo "Stop and remove a VM container."
     echo ""
     echo "This will:"
     echo "  - Stop the VM if running"
-    echo "  - Remove SSH config entry from ~/.ssh/vde/config"
+    echo "  - Remove the container"
     echo "  - Clean up known_hosts entries"
     echo "  - Keep docker-compose.yml (for easy VM recreation)"
+    echo "  - Keep env-files/*.env (configuration preserved)"
+    echo "  - Keep SSH config entry (static port assignment)"
     echo "  - Keep projects directory (your code is safe!)"
     echo ""
     echo "To recreate the VM later:"
-    echo "  ./scripts/start-virtual <vm_name>"
+    echo "  vde start <vm_name>"
     echo ""
     show_known_vms
     exit 1
@@ -108,13 +110,9 @@ fi
 
 # NOTE: docker-compose.yml is PRESERVED - user can easily recreate VM
 # The compose file is generated once and stays unless manually deleted
+# NOTE: env-files/*.env are also PRESERVED - they contain configuration that should persist
 
-# Remove env file (can be regenerated, safe to delete)
-ENV_FILE="$VDE_ROOT_DIR/env-files/$VM_NAME.env"
-if [[ -f "$ENV_FILE" ]]; then
-    rm -f "$ENV_FILE"
-    log_success "Deleted: $ENV_FILE"
-fi
+# Remove logs directory if empty
 
 # Remove logs directory if empty
 LOGS_DIR="$VDE_ROOT_DIR/logs/$VM_NAME"

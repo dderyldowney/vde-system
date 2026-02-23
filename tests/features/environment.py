@@ -178,7 +178,10 @@ def before_all(context):
     if result.returncode == 0:
         containers = [c.strip() for c in result.stdout.split('\n') if c.strip()]
         for container in containers:
-            run_vde_command(f"remove {container}", timeout=30)
+            # Container names from vde-ps are like "vde-python", but vde commands
+            # expect VM names like "python". Strip the vde- prefix.
+            vm_name = container.replace('vde-', '') if container.startswith('vde-') else container
+            run_vde_command(f"remove {vm_name}", timeout=30)
             print(f"[SETUP] Removed container: {container}")
     
     # Create test network using vde init
@@ -216,9 +219,13 @@ def after_all(context):
         if result.returncode == 0:
             containers = [c.strip() for c in result.stdout.split('\n') if c.strip()]
             for container in containers:
-                run_vde_command(f"stop {container}", timeout=30)
-                run_vde_command(f"remove {container}", timeout=30)
-                print(f"[TEARDOWN] Removed container: {container}")
+                # Container names from vde-ps are like "vde-python", but vde commands
+                # expect VM names like "python". Strip the vde- prefix.
+                vm_name = container.replace('vde-', '') if container.startswith('vde-') else container
+                print(f"[TEARDOWN] Stopping VM: {vm_name}")
+                run_vde_command(f"stop {vm_name}", timeout=30)
+                print(f"[TEARDOWN] Removing VM: {vm_name}")
+                run_vde_command(f"remove {vm_name}", timeout=30)
     except Exception as e:
         print(f"[TEARDOWN] Error during container cleanup: {e}")
 
