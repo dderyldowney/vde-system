@@ -52,7 +52,17 @@ def _call_vde_parser_function(function_name, input_string):
     # Extract last non-empty line that is NOT a log line
     lines_out = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
     # Filter out log lines (contain [INFO], [ERROR], [WARN], timestamps, etc.)
-    output_lines = [line for line in lines_out if not (line.startswith('[') or ' -0500' in line or line.startswith('20'))]
+    # Also filter out debug output from _build_alias_map (lines containing = like "alias_list=''")
+    output_lines = []
+    for line in lines_out:
+        # Skip log lines
+        if line.startswith('[') or ' -0500' in line or line.startswith('20'):
+            continue
+        # Skip debug output (lines with = that aren't VM names like "rebuild=false")
+        # VM names don't contain =, debug lines do
+        if '=' in line:
+            continue
+        output_lines.append(line)
     # Return all filtered lines joined by newline for multi-value functions
     return '\n'.join(output_lines) if output_lines else '', result.returncode
 
@@ -861,9 +871,10 @@ def step_plan_should_include_start_vm(context):
 def step_plan_should_include_python_postgres(context):
     """Verify the plan includes both Python and PostgreSQL VMs."""
     vms = getattr(context, 'detected_vms', [])
-    vms_lower = [v.lower() for v in vms]
-    assert 'python' in vms_lower, f"Python not in VMs: {vms}"
-    assert 'postgres' in vms_lower, f"PostgreSQL not in VMs: {vms}"
+    # Strip vde- prefix for comparison (vde-python -> python)
+    vms_clean = [v.lower().replace('vde-', '') for v in vms]
+    assert 'python' in vms_clean, f"Python not in VMs: {vms}"
+    assert 'postgres' in vms_clean, f"PostgreSQL not in VMs: {vms}"
 
 
 @then('the plan should include the connect intent')
@@ -901,9 +912,10 @@ def step_marked_as_service_vm(context):
 def step_plan_should_include_both_vms(context):
     """Verify the plan includes both VMs."""
     vms = getattr(context, 'detected_vms', [])
-    vms_lower = [v.lower() for v in vms]
+    # Strip vde- prefix for comparison (vde-js -> js)
+    vms_clean = [v.lower().replace('vde-', '') for v in vms]
     # Check for JavaScript variations
-    has_js = 'js' in vms_lower or 'javascript' in vms_lower
+    has_js = 'js' in vms_clean or 'javascript' in vms_clean
     assert has_js, f"JavaScript not in VMs: {vms}"
 
 
@@ -911,7 +923,9 @@ def step_plan_should_include_both_vms(context):
 def step_js_canonical_name(context):
     """Verify JavaScript VM uses js canonical name."""
     vms = getattr(context, 'detected_vms', [])
-    assert 'js' in vms, f"Expected 'js' in VMs, got: {vms}"
+    # Strip vde- prefix for comparison
+    vms_clean = [v.lower().replace('vde-', '') for v in vms]
+    assert 'js' in vms_clean, f"Expected 'js' in VMs, got: {vms}"
 
 
 @then('it should resolve to js')
@@ -919,7 +933,9 @@ def step_resolve_to_js(context):
     """Verify alias resolves to js."""
     # The vde-parser should handle alias resolution
     vms = getattr(context, 'detected_vms', [])
-    assert 'js' in vms or 'javascript' in vms, f"Expected js resolution, got: {vms}"
+    # Strip vde- prefix for comparison
+    vms_clean = [v.lower().replace('vde-', '') for v in vms]
+    assert 'js' in vms_clean or 'javascript' in vms_clean, f"Expected js resolution, got: {vms}"
 
 
 @then('I can use either name in commands')
@@ -940,10 +956,11 @@ def step_can_use_either_name(context):
 def step_plan_should_include_all_five(context):
     """Verify the plan includes all five VMs."""
     vms = getattr(context, 'detected_vms', [])
-    vms_lower = [v.lower() for v in vms]
+    # Strip vde- prefix for comparison
+    vms_clean = [v.lower().replace('vde-', '') for v in vms]
     expected = ['python', 'go', 'rust', 'postgres', 'redis']
     for exp in expected:
-        assert exp in vms_lower, f"Expected '{exp}' in VMs, got: {vms}"
+        assert exp in vms_clean, f"Expected '{exp}' in VMs, got: {vms}"
 
 
 @then('each VM should be included in the VM list')
@@ -957,10 +974,11 @@ def step_each_vm_in_list(context):
 def step_all_microservice_vms(context):
     """Verify all microservice VMs are included."""
     vms = getattr(context, 'detected_vms', [])
-    vms_lower = [v.lower() for v in vms]
+    # Strip vde- prefix for comparison
+    vms_clean = [v.lower().replace('vde-', '') for v in vms]
     # PostgreSQL and Redis should be included
-    assert 'postgres' in vms_lower, f"PostgreSQL not in VMs: {vms}"
-    assert 'redis' in vms_lower, f"Redis not in VMs: {vms}"
+    assert 'postgres' in vms_clean, f"PostgreSQL not in VMs: {vms}"
+    assert 'redis' in vms_clean, f"Redis not in VMs: {vms}"
 
 
 @then('Python should exist as a language VM')
@@ -1002,10 +1020,11 @@ def step_redis_service_vm(context):
 def step_plan_should_include_three_vms(context):
     """Verify the plan includes all three VMs."""
     vms = getattr(context, 'detected_vms', [])
-    vms_lower = [v.lower() for v in vms]
+    # Strip vde- prefix for comparison
+    vms_clean = [v.lower().replace('vde-', '') for v in vms]
     expected = ['python', 'postgres', 'redis']
     for exp in expected:
-        assert exp in vms_lower, f"Expected '{exp}' in VMs, got: {vms}"
+        assert exp in vms_clean, f"Expected '{exp}' in VMs, got: {vms}"
 
 
 @then('the plan should use the start_vm intent')
@@ -1196,8 +1215,9 @@ def step_services_not_included(context):
 def step_redis_included(context):
     """Verify Redis VM is included."""
     vms = getattr(context, 'detected_vms', [])
-    vms_lower = [v.lower() for v in vms]
-    assert 'redis' in vms_lower, f"Redis should be in VMs: {vms}"
+    # Strip vde- prefix for comparison
+    vms_clean = [v.lower().replace('vde-', '') for v in vms]
+    assert 'redis' in vms_clean, f"Redis should be in VMs: {vms}"
 
 
 @then('Redis should start without affecting other VMs')

@@ -29,7 +29,8 @@ def parse_vm_types():
                 'aliases': 'comma,separated,aliases',
                 'display': 'Display Name',
                 'install': 'install command',
-                'svc_port': 'port or empty'
+                'svc_port': 'port or empty',
+                'ssh_port': 'ssh port'
             }
         }
     """
@@ -45,39 +46,39 @@ def parse_vm_types():
             if not line or line.startswith('#'):
                 continue
 
-            # Parse pipe-delimited fields - only split on the first 4 pipes
-            # because the install command (field 5) may contain pipes
-            parts = []
-            remaining = line
-            for _i in range(4):
-                pipe_idx = remaining.find('|')
-                if pipe_idx == -1:
-                    break
-                parts.append(remaining[:pipe_idx])
-                remaining = remaining[pipe_idx + 1:]
-            else:
-                # After extracting first 4 fields, check if there's a service_port
-                # The install command (field 5) may contain pipes
-                # But service VMs have a 6th field (service_port) after the last pipe
-                # We need to find the LAST pipe to separate install from service_port
-                last_pipe_idx = remaining.rfind('|')
-                if last_pipe_idx != -1:
-                    # There's at least one more pipe - could be service_port delimiter
-                    # For service VMs, the service_port is usually numeric
-                    # For language VMs, the field after the last pipe might be empty
-                    potential_svc_port = remaining[last_pipe_idx + 1:]
-                    install_cmd = remaining[:last_pipe_idx]
-                    parts.append(install_cmd)
-                    parts.append(potential_svc_port)
-                else:
-                    # No more pipes, remaining is the install command
-                    parts.append(remaining)
-
-            if len(parts) < 5:
+            # Parse pipe-delimited fields
+            # Format: type|name|aliases|display_name|install_command|service_port|ssh_port
+            # The install command may contain pipes, so we need to be careful
+            # Split from the right to get ssh_port and service_port first
+            
+            parts = line.split('|')
+            
+            if len(parts) < 6:
                 continue
 
-            vm_type, name, aliases, display, install = parts[:5]
-            svc_port = parts[5] if len(parts) > 5 else ''
+            vm_type = parts[0]
+            name = parts[1]
+            aliases = parts[2]
+            display = parts[3]
+            
+            # The install command is everything between index 4 and the last 2 fields
+            # For language VMs: install||ssh_port (service_port is empty)
+            # For service VMs: install|service_port|ssh_port
+            # So we need to handle variable number of pipes in install command
+            
+            # Get ssh_port (last field)
+            ssh_port = parts[-1] if len(parts) >= 7 else ''
+            
+            # Get service_port (second to last field, but only if there are 7+ parts)
+            svc_port = parts[-2] if len(parts) >= 7 else ''
+            
+            # Install command is everything between index 4 and the service_port
+            if len(parts) >= 7:
+                install = '|'.join(parts[4:-2])
+            else:
+                # Old format without ssh_port
+                install = '|'.join(parts[4:-1]) if len(parts) > 5 else parts[4] if len(parts) > 4 else ''
+                svc_port = parts[-1] if len(parts) > 5 else ''
 
             vms[name] = {
                 'type': vm_type,
@@ -85,7 +86,8 @@ def parse_vm_types():
                 'aliases': aliases,
                 'display': display,
                 'install': install,
-                'svc_port': svc_port
+                'svc_port': svc_port,
+                'ssh_port': ssh_port
             }
 
     return vms
@@ -100,15 +102,18 @@ def get_alias_map(vms):
 
     Returns:
         dict: {alias: canonical_name}
+              canonical_name has 'vde-' prefix stripped for user-facing names
     """
     alias_map = {}
     for vm_name, vm_data in vms.items():
         aliases = vm_data['aliases']
+        # Strip vde- prefix for user-facing canonical name
+        canonical = vm_name.replace('vde-', '') if vm_name.startswith('vde-') else vm_name
         if aliases:
             for alias in aliases.split(','):
                 alias = alias.strip()
                 if alias:
-                    alias_map[alias] = vm_name
+                    alias_map[alias] = canonical
     return alias_map
 
 
