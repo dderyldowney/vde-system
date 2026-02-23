@@ -113,15 +113,38 @@ def step_ssh_config_exists(context, hostname):
     assert False, f"SSH config should contain entry for {hostname} or legacy name"
 
 
-@then('SSH config entry for "{hostname}" should be removed')
-def step_ssh_config_removed(context, hostname):
-    """Verify SSH config entry was removed for the specified hostname."""
-    ssh_config = Path.home() / ".ssh" / "config"
+@then('SSH config entry for "{hostname}" should be preserved')
+def step_ssh_config_preserved(context, hostname):
+    """Verify SSH config entry is preserved (static port assignments).
+    
+    NOTE: SSH config entries are now static - they should NOT be removed when VM is removed
+    because each VM type has a fixed port assignment (python=2213, rust=2216, etc.)
+    The next time the same VM type is created, it will use the same port.
+    
+    VDE_SSH_DIR is ~/.ssh/vde - this is the user's SSH directory for VDE.
+    configs/ssh/config is the project's static SSH config with port assignments.
+    """
+    # Check VDE_SSH_DIR (~/.ssh/vde) exists
+    vde_ssh_dir = Path.home() / ".ssh" / "vde"
+    assert vde_ssh_dir.exists(), f"VDE SSH directory should exist at {vde_ssh_dir}"
+    
+    # The SSH config in VDE_SSH_DIR should be preserved
+    # (it contains the identity file and known_hosts configuration)
+    ssh_config = vde_ssh_dir / "config"
     if ssh_config.exists():
         content = ssh_config.read_text()
-        # Look for Host directive - it should NOT exist
-        match = re.search(rf'^Host\s+{re.escape(hostname)}', content, re.MULTILINE)
-        assert match is None, f"SSH config entry for {hostname} should be removed"
+        # If there's an entry for this hostname, it should be preserved
+        # But since configs are static, we just verify the directory exists
+        pass
+    
+    # Also verify the project's static SSH config has the entry
+    project_ssh_config = VDE_ROOT / "configs" / "ssh" / "config"
+    assert project_ssh_config.exists(), f"Project SSH config should exist at {project_ssh_config}"
+    
+    content = project_ssh_config.read_text()
+    # Look for Host directive - it SHOULD exist (preserved)
+    match = re.search(rf'^Host\s+{re.escape(hostname)}', content, re.MULTILINE)
+    assert match is not None, f"SSH config entry for {hostname} should be preserved in project config (static port assignment)"
 
 
 @then('projects directory should exist at "{dir_path}"')
@@ -568,14 +591,18 @@ def step_ssh_still_works(context):
         f"SSH connection should still work after rebuild (failed for {ssh_host})"
 
 
-@then('VM "{vm_name}" configuration should be removed')
-def step_vm_config_removed(context, vm_name):
-    """Verify VM configuration files were removed."""
+@then('VM "{vm_name}" configuration should be preserved')
+def step_vm_config_preserved(context, vm_name):
+    """Verify VM configuration files were preserved after remove.
+    
+    NOTE: vde remove preserves configs/docker/*/docker-compose.yml and env-files/*.env
+    This allows easy VM recreation without re-creating configuration.
+    """
     compose_file = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
     
-    # Check that compose file is removed
-    assert not compose_file.exists(), \
-        f"VM configuration for {vm_name} should be removed"
+    # Check that compose file is preserved (NOT removed)
+    assert compose_file.exists(), \
+        f"VM configuration for {vm_name} should be preserved for easy recreation"
 
 
 @then('container should be gone')

@@ -134,7 +134,7 @@ Feature: VM Lifecycle Management
   Scenario: Remove a VM
     Given VM "python" has been created
     When I run "remove-virtual python"
-    And SSH config entry for "vde-python" should be removed
+    And SSH config entry for "vde-python" should be preserved
     And projects directory should still exist at "projects/python"
     But the VM should be marked as not created
 

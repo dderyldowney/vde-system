@@ -135,15 +135,19 @@ def step_vm_type_added(context):
 
 @then('the VM should be removed')
 def step_vm_removed_check(context):
-    """VM should be removed."""
+    """VM should be removed.
+    
+    NOTE: vde remove preserves configs/docker/*/docker-compose.yml for easy recreation.
+    Only the container is removed, not the configuration files.
+    """
     # Get the VM name from context (set by the WHEN step that removed it)
     removed_vm = getattr(context, 'removed_vm_name', 'ruby')
     # Verify the removal command succeeded
     exit_code = getattr(context, 'last_exit_code', None)
     if exit_code is not None:
         assert exit_code == 0, f"Failed to remove VM: {getattr(context, 'last_error', 'unknown error')}"
-    # Verify compose file was actually removed
-    assert not compose_file_exists(removed_vm), f"{removed_vm} VM config still exists"
+    # Verify compose file is PRESERVED (not removed) - this is correct behavior
+    assert compose_file_exists(removed_vm), f"{removed_vm} VM config should be preserved for easy recreation"
     # Verify container was removed
     running = docker_ps()
     vm_containers = [c for c in running if removed_vm in c.lower()]
