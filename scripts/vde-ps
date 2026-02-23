@@ -123,19 +123,19 @@ build_docker_ps_cmd() {
 
 # Build output based on format
 if [[ "$FORMAT" == "json" ]]; then
-    # JSON output
+    # JSON output - filter for vde- containers using grep on the name field
     if [ $QUIET -eq 1 ]; then
         if [ $SHOW_ALL -eq 1 ]; then
             if [[ -n "$FILTER" ]]; then
                 eval "$(build_docker_ps_cmd 1 '{"name":"{{.Names}}"}' "$FILTER")" | jq -s '.' || echo "[]"
             else
-                docker ps -a --format '{"name":"{{.Names}}"}' | grep -E '^vde-' | jq -s '.' || echo "[]"
+                docker ps -a --format '{"name":"{{.Names}}"}' | grep '"vde-' | jq -s '.' || echo "[]"
             fi
         else
             if [[ -n "$FILTER" ]]; then
                 eval "$(build_docker_ps_cmd 0 '{"name":"{{.Names}}"}' "$FILTER")" | jq -s '.' || echo "[]"
             else
-                docker ps --format '{"name":"{{.Names}}"}' | grep -E '^vde-' | jq -s '.' || echo "[]"
+                docker ps --format '{"name":"{{.Names}}"}' | grep '"vde-' | jq -s '.' || echo "[]"
             fi
         fi
     else
@@ -143,13 +143,13 @@ if [[ "$FORMAT" == "json" ]]; then
             if [[ -n "$FILTER" ]]; then
                 eval "$(build_docker_ps_cmd 1 '{"id":"{{.ID}}","name":"{{.Names}}","image":"{{.Image}}","status":"{{.Status}}","ports":"{{.Ports}}"}' "$FILTER")" | jq -s '.' || echo "[]"
             else
-                docker ps -a --format '{"id":"{{.ID}}","name":"{{.Names}}","image":"{{.Image}}","status":"{{.Status}}","ports":"{{.Ports}}"}' | grep -E '^vde-' | jq -s '.' || echo "[]"
+                docker ps -a --format '{"id":"{{.ID}}","name":"{{.Names}}","image":"{{.Image}}","status":"{{.Status}}","ports":"{{.Ports}}"}' | grep '"vde-' | jq -s '.' || echo "[]"
             fi
         else
             if [[ -n "$FILTER" ]]; then
                 eval "$(build_docker_ps_cmd 0 '{"id":"{{.ID}}","name":"{{.Names}}","image":"{{.Image}}","status":"{{.Status}}","ports":"{{.Ports}}"}' "$FILTER")" | jq -s '.' || echo "[]"
             else
-                docker ps --format '{"id":"{{.ID}}","name":"{{.Names}}","image":"{{.Image}}","status":"{{.Status}}","ports":"{{.Ports}}"}' | grep -E '^vde-' | jq -s '.' || echo "[]"
+                docker ps --format '{"id":"{{.ID}}","name":"{{.Names}}","image":"{{.Image}}","status":"{{.Status}}","ports":"{{.Ports}}"}' | grep '"vde-' | jq -s '.' || echo "[]"
             fi
         fi
     fi
