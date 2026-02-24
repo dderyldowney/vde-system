@@ -33,6 +33,30 @@
 
 *Note: vde-constants defines constants, not functions.
 
+### 1.1 Library Responsibilities
+
+| Library | Purpose | Key Functions |
+|---------|---------|---------------|
+| **vde-audit** | Audit logging for security and compliance | `vde_audit_log()`, `vde_audit_create_vm()`, `vde_audit_query()` |
+| **vde-commands** | High-level command wrappers for all VDE operations | `vde_list_vms()`, `vde_create_vm()`, `vde_start_vm()`, `vde_stop_vm()` |
+| **vde-constants** | Centralized constants, magic numbers, configuration values | `VDE_SUCCESS`, `VDE_ERR_*`, port ranges, directory paths |
+| **vde-core** | Essential functions: logging, constants, VM type loading | `log_info()`, `log_error()`, `vde_core_load_types()`, `invalidate_vm_types_cache()` |
+| **vde-docker** | Docker container lifecycle management | `start_vm()`, `stop_vm()`, `get_vm_ssh_port()`, `allocate_ssh_port()` |
+| **vde-docker-state** | Real-time Docker container state queries | `vm_container_exists()`, `vm_is_container_running()`, `list_running_containers()` |
+| **vde-errors** | Contextual error messages with remediation steps | `vde_error_show()`, `vde_error_docker_not_running()`, `vde_error_port_in_use()` |
+| **vde-health** | Container health checks (SSH, ports, language tools) | `vde_check_container_running()`, `vde_check_ssh_port()`, `vde_health_check()` |
+| **vde-log** | Structured logging (JSON/text) with rotation | `vde_log()`, `vde_log_info()`, `vde_log_error()`, `vde_log_rotate()` |
+| **vde-metrics** | Performance metrics, latency tracking, error rates | `vde_metrics_record()`, `vde_metrics_timing_start()`, `vde_metrics_get_cache_hit_rate()` |
+| **vde-naming** | VM naming conventions and validation | `vde_validate_name()`, `vde_normalize_name()`, `vde_get_container_name()` |
+| **vde-parser** | Natural language parsing for VDE commands | `detect_intent()`, `extract_vm_names()`, `generate_plan()`, `execute_plan()` |
+| **vde-path-utils** | Path conversion for cross-platform portability | `vde_path_to_home_rel()`, `vde_path_normalize()`, `vde_make_portable()` |
+| **vde-progress** | Progress bars, spinners, timing feedback | `vde_progress_spinner_start()`, `vde_progress_bar_update()` |
+| **vde-security** | Isolation enforcement, permissions, network segmentation | `vde_security_enforce_permissions()`, `vde_security_ensure_network()` |
+| **vde-shell-compat** | Zsh-native abstractions for shell features | `_assoc_set()`, `_assoc_get()`, `_detect_shell()`, `_get_script_dir()` |
+| **vde-ssh** | SSH key management and configuration | `detect_ssh_keys()`, `setup_ssh_for_vm()`, `add_ssh_config_entry()`, `ensure_ssh_agent()` |
+| **vde-templates** | Template rendering and VM creation | `render_template()`, `create_vm_from_template()`, `list_templates()` |
+| **vm-common** | Core VM management: type loading, port management | `get_all_vms()`, `resolve_vm_name()`, `get_vm_info()`, `get_vm_type()` |
+
 ### Missing Test Files
 - **vde-commands** - 22 functions with NO unit test file
 
