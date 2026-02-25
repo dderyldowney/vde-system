@@ -199,12 +199,13 @@ vde_resolve_alias() {
 
 # vde_validate_vm_type - Validate if a name is a known VM type
 # Args:
-#   name - Name to validate
+#   name - Name to validate (can be alias or unprefixed name)
 # Returns: VDE_SUCCESS (0) if known, VDE_ERR_NOT_FOUND (3) if not
 # Example: vde_validate_vm_type python && echo "Valid VM type"
 vde_validate_vm_type() {
     local name="$1"
-    is_known_vm "$name"
+    local resolved
+    resolved=$(resolve_vm_name "$name" 2>/dev/null) && is_known_vm "$resolved"
 }
 
 # -----------------------
