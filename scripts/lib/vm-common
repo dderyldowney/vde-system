@@ -381,9 +381,9 @@ load_vm_types() {
             _info "Parsing VM types from JSON: $VM_TYPES_JSON"
 
             # Parse language VMs
-            local lang_vms
-            lang_vms=$(jq -c ".vms.language[]" "$VM_TYPES_JSON" 2>/dev/null)
-            if [[ -n "$lang_vms" ]]; then
+            local lang_vms_json
+            lang_vms_json=$(jq -c ".vms.language[]" "$VM_TYPES_JSON" 2>/dev/null)
+            if [[ -n "$lang_vms_json" ]]; then
                 while IFS= read -r vm_entry; do
                     [[ -z "$vm_entry" ]] && continue
 
@@ -410,13 +410,13 @@ load_vm_types() {
                     else
                         lang_vms_array+=("$name")
                     fi
-                done <<< "$lang_vms"
+                done <<< "$lang_vms_json"
             fi
 
             # Parse service VMs
-            local svc_vms
-            svc_vms=$(jq -c ".vms.service[]" "$VM_TYPES_JSON" 2>/dev/null)
-            if [[ -n "$svc_vms" ]]; then
+            local svc_vms_json
+            svc_vms_json=$(jq -c ".vms.service[]" "$VM_TYPES_JSON" 2>/dev/null)
+            if [[ -n "$svc_vms_json" ]]; then
                 while IFS= read -r vm_entry; do
                     [[ -z "$vm_entry" ]] && continue
 
@@ -443,7 +443,7 @@ load_vm_types() {
                     else
                         service_vms_array+=("$name")
                     fi
-                done <<< "$svc_vms"
+                done <<< "$svc_vms_json"
             fi
 
             # Export type indexes
