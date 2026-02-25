@@ -623,12 +623,17 @@ def step_container_gone(context):
 
 @then('SSH config entry should be cleaned up')
 def step_ssh_config_cleaned(context):
-    """Verify SSH config entry was cleaned up."""
+    """Verify SSH config entry is preserved (static port assignments).
+    
+    NOTE: SSH config entries are now static - they should NOT be removed when VM is removed
+    because each VM type has a fixed port assignment (python=2213, rust=2216, etc.)
+    The next time the same VM type is created, it will use the same port.
+    """
     vm_name = getattr(context, 'last_vm_name', 'python')
     ssh_host = f"vde-{vm_name}"
     
-    # Use the existing step definition
-    step_ssh_config_removed(context, ssh_host)
+    # SSH config entries are preserved - use the preserved step
+    step_ssh_config_preserved(context, ssh_host)
 
 
 @then('SSH keys should be generated if none exist')

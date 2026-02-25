@@ -41,15 +41,16 @@ def _call_vde_parser_function(function_name, input_string):
     # Extract last non-empty line that is NOT a log line
     lines = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
     # Filter out log lines (contain [INFO], [ERROR], [WARN], timestamps, etc.)
-    # Also filter out debug output from _build_alias_map (lines containing = like "alias_list=''")
     output_lines = []
     for line in lines:
         # Skip log lines
         if line.startswith('[') or ' -0500' in line or line.startswith('20'):
             continue
-        # Skip debug output (lines with = that aren't VM names)
-        if '=' in line:
-            continue
+        # Skip debug output (lines with single = that are assignments, but keep flag output like "rebuild=true")
+        # Flag output has format: key=value key=value (multiple space-separated pairs)
+        # Debug assignments have format: var='value' or var="value" or var=value (single assignment)
+        if '=' in line and "'" in line:
+            continue  # Skip debug assignments like alias_list=''
         output_lines.append(line)
     return '\n'.join(output_lines) if output_lines else '', result.returncode
 
