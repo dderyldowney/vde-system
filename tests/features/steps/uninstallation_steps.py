@@ -128,7 +128,9 @@ def step_can_remove_vde_dirs(context):
     scripts_dir = VDE_ROOT / "scripts"
     assert scripts_dir.exists(), "scripts directory does not exist - cannot verify uninstall capability"
 
-    uninstall_script = scripts_dir / "uninstall-vde.sh"
+    uninstall_script = scripts_dir / "uninstall-vm-type"
+    if not uninstall_script.exists():
+        uninstall_script = scripts_dir / "uninstall-vde.sh"
     assert uninstall_script.exists(), "uninstall script not found"
     assert os.access(uninstall_script, os.X_OK), "uninstall script is not executable"
 
