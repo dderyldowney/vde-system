@@ -33,6 +33,7 @@ Welcome to VDE — your new best friend for development environments. Whether yo
 | **Contributing** | [Contributing Guide](CONTRIBUTING.md) • [Style Guide](STYLE_GUIDE.md) • [Testing Guide](docs/TESTING.md) |
 | **Reference** | [API Reference](docs/API.md) • [User Model](docs/user-model.md) • [Architecture](docs/ARCHITECTURE.md) • [Best Practices](docs/best-practices.md) |
 | **Support** | [Troubleshooting](docs/troubleshooting.md) • [Rebuild Guidelines](docs/rebuild-guidelines.md) |
+| **Upgrading** | [Upgrade Guide](#upgrade-guide) - Keeping VDE up-to-date |
 
 ---
 
@@ -45,6 +46,35 @@ To run VDE, you need permission to access Docker. If you see permission errors:
 - **Linux:** Add your user to the docker group: `sudo usermod -aG docker $USER`, then log out and back in
 - **macOS:** Install Docker Desktop and ensure it's running
 - **Permission Issues:** If Docker requires sudo, fix with: `sudo usermod -aG docker $USER`
+
+---
+
+## Upgrade Guide
+
+VDE is designed to preserve your existing configurations and VMs when upgrading. Here's how to keep your setup up-to-date:
+
+### Upgrading VDE
+
+```bash
+# Navigate to your VDE installation
+cd ~/dev
+
+# Pull the latest changes
+git pull
+
+# Rebuild base images (optional but recommended)
+vde rebuild
+```
+
+### What Happens During Upgrade
+
+- **Your VMs continue working**: Existing VM configurations in `configs/docker/` are preserved
+- **New VM types become available**: New languages/services added to `vm-types.conf` 
+- **Your data is safe**: Data directories (`data/`, `projects/`) are untouched
+
+### Manual Migration
+
+If significant changes are introduced, migration instructions will be posted in the [release notes](https://github.com/dderyldowney/vde-system/releases). Most upgrades require no manual intervention.
 
 ---
 

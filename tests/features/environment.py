@@ -185,7 +185,7 @@ def before_all(context):
             print(f"[SETUP] Removed container: {container}")
     
     # Create test network using vde init
-    run_vde_command("init", timeout=30)
+    run_vde_command("init --networks-only --testing", timeout=30)
 
 
 def before_feature(context, feature):

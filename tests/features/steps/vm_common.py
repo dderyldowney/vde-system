@@ -340,7 +340,7 @@ def check_docker_compose_available(context):
         return False
 
 def check_docker_network_exists(network_name):
-    """Check if a VDE network exists using vde networks.
+    """Check if a VDE Docker network exists.
 
     Args:
         network_name: Name of the network to check
@@ -349,9 +349,10 @@ def check_docker_network_exists(network_name):
         bool: True if network exists, False otherwise
     """
     try:
+        # Use docker directly since vde-networks only shows vde-net
         result = subprocess.run(
-            [str(SCRIPTS_DIR / 'vde'), 'networks'],
-            capture_output=True, text=True, timeout=10, cwd=str(VDE_ROOT)
+            ["docker", "network", "ls", "--format", "{{.Name}}"],
+            capture_output=True, text=True, timeout=10
         )
         return network_name in result.stdout
     except (FileNotFoundError, subprocess.CalledProcessError):
