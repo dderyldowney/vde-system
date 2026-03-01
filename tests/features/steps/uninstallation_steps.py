@@ -187,8 +187,18 @@ def step_platform_adjustments(context):
     scripts_dir = VDE_ROOT / "scripts"
     assert scripts_dir.exists(), "scripts directory does not exist - cannot verify platform handling"
 
-    # Look for platform detection in key scripts
-    script_files = list(scripts_dir.glob("*.sh"))[:3]  # Check first few scripts
+    # Look for platform detection in key scripts (both .sh and executable scripts)
+    script_files = []
+    # Check .sh scripts
+    script_files.extend(list(scripts_dir.glob("*.sh"))[:2])
+    # Check main vde scripts (no extension)
+    for name in ['vde-health', 'vde-init', 'vde']:
+        script = scripts_dir / name
+        if script.exists():
+            script_files.append(script)
+            if len(script_files) >= 3:
+                break
+    
     platform_handling_found = False
     for script_file in script_files:
         content = script_file.read_text()
@@ -259,6 +269,11 @@ def step_build_progress(context):
     # Check that build scripts show progress
     vde_root = Path(VDE_ROOT)
     build_scripts = list(vde_root.rglob("*build*.sh"))
+    
+    # Also check for vde-rebuild script (main build script, no .sh extension)
+    vde_rebuild = vde_root / "scripts" / "vde-rebuild"
+    if vde_rebuild.exists():
+        build_scripts.append(vde_rebuild)
 
     progress_found = False
     if build_scripts:

@@ -451,39 +451,48 @@ def step_setup_continues_with_warning(context):
     assert has_warning_handling, "Setup script does not appear to have warning handling"
 
 
-@then('vde-testingwork should be created automatically')
+@then('vde-testing should be created automatically')
 def step_vde_network_created(context):
-    """Verify vde-testingwork Docker network exists."""
-    assert check_docker_network_exists("vde-testingwork"), "vde-testingwork Docker network does not exist"
+    """Verify vde-testing Docker network exists."""
+    assert check_docker_network_exists("vde-testing"), "vde-testing Docker network does not exist"
 
 
 @then('all VMs should use this network')
 def step_all_vms_use_network(context):
-    """Verify VMs are configured to use vde-testingwork."""
-    # Check that VM templates/configs reference vde-testingwork
+    """Verify VMs are configured to use vde-testing."""
+    # Check that VM templates/configs reference vde-testing
     configs_dir = Path(VDE_ROOT) / "configs"
     assert configs_dir.exists(), "configs directory does not exist - cannot verify network configuration"
 
-    # Look for network references in config files
+    # Look for network references in config files (.yml and .env)
     network_found = False
     for config_file in configs_dir.rglob("*.yml"):
         content = config_file.read_text()
-        if "vde-testingwork" in content or "network_mode: bridge" in content:
+        if "vde-testing" in content or "network_mode: bridge" in content:
             network_found = True
             break
-    assert network_found, "No VM configuration references vde-testingwork"
+    
+    # Also check .env files
+    if not network_found:
+        for config_file in configs_dir.rglob(".env"):
+            content = config_file.read_text()
+            if "vde-testing" in content:
+                network_found = True
+                break
+    
+    assert network_found, "No VM configuration references vde-testing"
 
 
 @then('VMs can communicate with each other')
 def step_vms_can_communicate(context):
     """Verify VMs are configured for inter-VM communication."""
     # Check that VMs are on the same network
-    assert check_docker_network_exists("vde-testingwork"), "vde-testingwork must exist for VM communication"
+    assert check_docker_network_exists("vde-testing"), "vde-testing must exist for VM communication"
 
     # Verify network is bridge type (allows communication)
     try:
         result = subprocess.run(
-            ["docker", "network", "inspect", "vde-testingwork"],
+            ["docker", "network", "inspect", "vde-testing"],
             capture_output=True,
             text=True,
             timeout=10
@@ -491,7 +500,7 @@ def step_vms_can_communicate(context):
         if result.returncode == 0:
             # Check if it's a bridge network
             assert "bridge" in result.stdout or "macvlan" in result.stdout, \
-                "vde-testingwork is not configured for inter-VM communication"
+                "vde-testing is not configured for inter-VM communication"
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass  # Docker not available - skip bridge type verification
 
@@ -691,21 +700,6 @@ def step_python_env_working(context):
         if templates_dir.exists():
             python_templates = list(templates_dir.rglob("*python*"))
             assert len(python_templates) > 0, "No Python VM configuration found"
-
-
-@then('vde-testing should be created automatically')
-def step_vde_testing_created_alt(context):
-    """Verify vde-testing network is created (via test setup)."""
-    # The network should be created in test setup (environment.py before_all)
-    # Check if vde-testing network exists - it should have been created in setup
-    result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=vde-testing", "--format", "{{.Name}}"],
-        capture_output=True,
-        text=True
-    )
-    # The network should exist from test setup
-    assert 'vde-testing' in result.stdout, \
-        "vde-testing Docker network should be created in test setup"
 
 
 @then('all scripts should be executable')

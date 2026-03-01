@@ -6,6 +6,7 @@
 # Options:
 #   -c, --create    Create vde-net network if it doesn't exist
 #   -q, --quiet     Only show network names
+#   -a, --all       Show all VDE networks (vde-*)
 #===============================================================================
 
 # Determine VDE root directory
@@ -20,6 +21,7 @@ export VDE_ROOT_DIR
 # Parse options
 QUIET=0
 CREATE=0
+SHOW_ALL=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -29,6 +31,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -q|--quiet)
             QUIET=1
+            shift
+            ;;
+        -a|--all)
+            SHOW_ALL=1
             shift
             ;;
         *)
@@ -47,10 +53,19 @@ if [ $CREATE -eq 1 ]; then
     vde_security_ensure_network "$VDE_NETWORK"
 fi
 
-if [ $QUIET -eq 1 ]; then
-    docker network ls --format '{{.Name}}' | grep "^${VDE_NETWORK}" || true
+# Show all VDE networks (vde-*) or just the main network
+if [ $SHOW_ALL -eq 1 ]; then
+    # Show all VDE networks (vde-*)
+    VDE_NETWORK_FILTER="vde-"
 else
-    docker network ls --format 'table {{.Name}}\t{{.Driver}}\t{{.Scope}}' | grep "^${VDE_NETWORK}" || true
+    # Show only the main VDE network
+    VDE_NETWORK_FILTER="${VDE_NETWORK}"
+fi
+
+if [ $QUIET -eq 1 ]; then
+    docker network ls --format '{{.Name}}' | grep "^${VDE_NETWORK_FILTER}" || true
+else
+    docker network ls --format 'table {{.Name}}\t{{.Driver}}\t{{.Scope}}' | grep "^${VDE_NETWORK_FILTER}" || true
 fi
 
 exit 0
