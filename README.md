@@ -36,6 +36,18 @@ Welcome to VDE — your new best friend for development environments. Whether yo
 
 ---
 
+## Prerequisites
+
+### Docker Permissions
+
+To run VDE, you need permission to access Docker. If you see permission errors:
+
+- **Linux:** Add your user to the docker group: `sudo usermod -aG docker $USER`, then log out and back in
+- **macOS:** Install Docker Desktop and ensure it's running
+- **Permission Issues:** If Docker requires sudo, fix with: `sudo usermod -aG docker $USER`
+
+---
+
 ## Overview (The Good Stuff!) ✨
 
 VDE provides isolated development environments for multiple programming languages and services, all accessible via SSH. Each environment has:
