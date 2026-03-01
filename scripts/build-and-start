@@ -14,6 +14,7 @@
 
 set -e
 
+# This script will continue even if some steps have warnings
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib/vde-shell-compat"
