@@ -132,7 +132,9 @@ def step_ive_installed_vde(context):
 @when('I run the initial setup script')
 def step_run_initial_setup(context):
     """Execute the actual setup script and capture results."""
-    setup_script = Path(VDE_ROOT) / "scripts" / "install-vde.sh"
+    setup_script = Path(VDE_ROOT) / "scripts" / "build-and-start"
+    if not setup_script.exists():
+        setup_script = Path(VDE_ROOT) / "scripts" / "install-vde.sh"
     if setup_script.exists() and os.access(setup_script, os.X_OK):
         try:
             result = subprocess.run(
@@ -280,6 +282,6 @@ def step_run_validation_checks(context):
     """Run validation checks on VDE installation."""
     context.validation_results = {
         'scripts_executable': check_scripts_executable(context),
-        'templates_present': (Path(VDE_ROOT) / 'templates').exists(),
+        'templates_present': (Path(VDE_ROOT) / 'scripts' / 'templates').exists() or (Path(VDE_ROOT) / 'templates').exists(),
         'vm_types_valid': (Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf').exists(),
     }

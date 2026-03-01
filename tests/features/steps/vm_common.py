@@ -308,8 +308,16 @@ def check_docker_available(context):
     Returns:
         bool: True if Docker is available, False otherwise
     """
-    # For Docker-free tests, we assume Docker is not available
-    return False
+    try:
+        result = subprocess.run(
+            ['docker', 'info'],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
+        return False
 
 def check_docker_compose_available(context):
     """Check if Docker Compose is available on the system.
@@ -320,8 +328,16 @@ def check_docker_compose_available(context):
     Returns:
         bool: True if Docker Compose is available, False otherwise
     """
-    # For Docker-free tests, we assume Docker Compose is not available
-    return False
+    try:
+        result = subprocess.run(
+            ['docker', 'compose', 'version'],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
+        return False
 
 def check_docker_network_exists(network_name):
     """Check if a VDE network exists using vde networks.
