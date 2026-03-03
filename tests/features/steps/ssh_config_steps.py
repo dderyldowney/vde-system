@@ -9,6 +9,7 @@ All paths use ~/.ssh/vde/ as the base directory for VDE SSH settings.
 
 import os
 import re
+import shutil
 import stat
 import subprocess
 from pathlib import Path
@@ -716,8 +717,15 @@ def step_ssh_config_generated(context):
         
         content = ssh_config.read_text() if ssh_config.exists() else ""
         
+        # Check if entry already exists to prevent duplicates
+        host_name = f"vde-{vm_name}"
+        if f"Host {host_name}" in content:
+            # Entry already exists, don't add duplicate
+            context.config_generated = True
+            return
+        
         host_entry = f"""
-Host vde-{vm_name}
+Host {host_name}
     HostName localhost
     Port {port}
     User devuser
@@ -745,11 +753,19 @@ def step_vm_to_vm_config_generated(context):
     ssh_config = _get_ssh_config_path()
     _ensure_vde_ssh_dir()
     
-    content = ""
+    # Read existing content to preserve and check for duplicates
+    existing_content = ssh_config.read_text() if ssh_config.exists() else ""
+    
+    content = existing_content
     if hasattr(context, 'vms'):
         for vm_name, vm_info in context.vms.items():
             # Use vde- prefix naming convention
             host_name = vm_name if vm_name.startswith("vde-") else f"vde-{vm_name}"
+            
+            # Check if entry already exists to prevent duplicates
+            if f"Host {host_name}" in existing_content:
+                continue
+            
             content += f"""
 Host {host_name}
     HostName localhost
@@ -829,20 +845,34 @@ def step_vm_removed(context, vm_name):
     # because each VM type has a fixed port assignment (python=2213, rust=2216, etc.)
     # The next time the same VM type is created, it will use the same port.
     
-    # Only clean up known_hosts entries (those can change when VM is recreated)
+    # Clean up known_hosts entries (those can change when VM is recreated)
     known_hosts = _get_known_hosts_path()
     if known_hosts.exists():
+        # Create backup before cleanup
+        backup_file = known_hosts.parent / f"known_hosts.vde-backup"
+        shutil.copy(known_hosts, backup_file)
+        context.backup_file = backup_file
+        
         content = known_hosts.read_text()
+        
         # Get the port for this VM type from context or default
         port = None
         if hasattr(context, 'vms') and vm_name in context.vms:
             port = context.vms[vm_name].get('port')
         
         if port:
-            # Remove entries for this port
+            # Remove entries for this port (both [localhost]:port and [::1]:port)
             lines = content.split('\n')
             new_lines = [l for l in lines if f":{port}" not in l]
-            known_hosts.write_text('\n'.join(new_lines))
+            content = '\n'.join(new_lines)
+        
+        # Also remove entries by hostname (vm_name)
+        if vm_name:
+            lines = content.split('\n')
+            new_lines = [l for l in lines if vm_name not in l]
+            content = '\n'.join(new_lines)
+        
+        known_hosts.write_text(content)
     
     context.vm_removed = vm_name
 
