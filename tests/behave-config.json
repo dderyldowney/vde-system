@@ -1,6 +1,13 @@
+# Behave Configuration for VDE Test Suite
+#
+# Industry-standard tiered testing:
+# - unit: Fast, no external dependencies (parser, library tests)
+# - integration: Moderate setup (vde CLI, ssh-setup)
+# - e2e: Full Docker/VM environment
+
 {
   "version": "1.0",
-  "description": "Behave BDD test configuration for VDE",
+  "description": "VDE BDD Test Configuration - Tiered Testing",
   "behave": {
     "format": "pretty",
     "color": true,
@@ -8,41 +15,39 @@
     "show_skipped": true,
     "show_traceback": true,
     "stop_on_first_failure": false,
-    "dry_run": false,
-    "tags": {
-      "include": [],
-      "exclude": ["@wip", "@skip"]
-    }
-  },
-  "logging": {
-    "level": "INFO",
-    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    "capture": true,
-    "capture_stderr": true
+    "dry_run": false
   },
   "paths": {
     "features": "tests/features",
     "steps": "tests/features/steps",
-    "test_data": "tests/fixtures",
-    "output": "tests/results"
+    "test_data": "tests/fixtures"
   },
-  "test_categories": {
-    "docker_required": {
-      "tags": ["@docker"],
-      "description": "Tests requiring Docker environment"
+  "tiers": {
+    "unit": {
+      "description": "Fast unit tests - parser, library functions",
+      "tags": ["@unit"],
+      "environment": "environment.unit",
+      "timeout": 30,
+      "setup": "minimal"
     },
-    "docker_free": {
-      "tags": ["@no-docker"],
-      "description": "Tests that run without Docker"
+    "integration": {
+      "description": "Integration tests - vde CLI, ssh-setup",
+      "tags": ["@integration"],
+      "environment": "environment.integration", 
+      "timeout": 120,
+      "setup": "vde_init"
     },
-    "ssh": {
-      "tags": ["@ssh"],
-      "description": "SSH-related tests"
-    },
-    "workflow": {
-      "tags": ["@workflow"],
-      "description": "Complete workflow tests"
+    "e2e": {
+      "description": "End-to-end tests - full Docker/VM workflows",
+      "tags": ["@docker", "@e2e"],
+      "environment": "environment.e2e",
+      "timeout": 300,
+      "setup": "full"
     }
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(levelname)s - %(message)s"
   },
   "environment": {
     "vde_root": "${VDE_ROOT_DIR}",

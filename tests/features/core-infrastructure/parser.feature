@@ -1,6 +1,7 @@
 # language: en
 @user-guide-internal
 @core-infrastructure
+@unit
 Feature: Natural Language Parser
   As a developer
   I want to control VDE using natural language commands

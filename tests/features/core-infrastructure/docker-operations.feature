@@ -2,6 +2,7 @@
 @user-guide-internal
 @requires-docker-host
 @core-infrastructure
+@docker
 Feature: Docker Operations
   As a developer
   I want reliable Docker Compose operations with error handling
