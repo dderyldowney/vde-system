@@ -1,13 +1,14 @@
 # Test Suite Status - March 3, 2026 (Updated)
 
 ## Summary
-- **Passed**: 126+ scenarios (depends on test run)
+- **Passed**: 134+ scenarios (depends on test run)
 - **Failed**: 5 scenarios (varies by run - test isolation issue)
 - **Error**: ~31 scenarios (undefined steps - need implementation)
 - **Parser Tests**: 46 scenarios ALL PASSING ✓
+- **VDE SSH Commands**: 8 scenarios ALL PASSING ✓
 
 ## Test Structure (After Consolidation)
-- Feature files: 10 (core-infrastructure: 4, docker-required: 6)
+- Feature files: 11 (core-infrastructure: 5, docker-required: 6)
 - Step definition files: 12
 
 ---
@@ -46,6 +47,7 @@ These scenarios error on the first undefined step. They require step implementat
 |---------|-------------------|--------|
 | Installation and Initial Setup | First time creation experience | Undefined: "I run vde-create" |
 | SSH Configuration | Generate VM-to-VM SSH config entries | Undefined: "I reload VM types" |
+| **VDE SSH Commands** | **0** | **✓ ALL PASSING** |
 
 ### Docker-Required Features (All scenarios error - require running VMs)
 | Feature | Count | Issue |
