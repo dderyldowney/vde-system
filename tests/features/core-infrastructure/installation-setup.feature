@@ -3,6 +3,7 @@
 @user-guide-installation
 @requires-docker-host
 @core-infrastructure
+@docker
 Feature: Installation and Initial Setup
   As a developer
   I want to install and configure VDE on my system
