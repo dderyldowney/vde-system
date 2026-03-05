@@ -1,5 +1,5 @@
 # language: en
-@cache-system @core-infrastructure @unit
+@cache-system @core-infrastructure @unit @core-suite
 Feature: Cache System
   As the VDE system
   I want VM type data cached at .cache/vm-types.cache as defined in VDE-SPEC.md section 2.4

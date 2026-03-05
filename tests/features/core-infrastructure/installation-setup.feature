@@ -3,6 +3,7 @@
 @user-guide-installation
 @requires-docker-host
 @core-infrastructure
+@core-suite
 @docker
 Feature: Installation and Initial Setup
   As a developer

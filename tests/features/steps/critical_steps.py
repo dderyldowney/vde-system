@@ -56,11 +56,11 @@ source "{LIB_DIR}/vm-common" 2>/dev/null
 
 
 def _vde_cli(command: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Run `vde <command>` with VDE_ROOT_DIR set."""
+    """Run `vde <command>` with VDE_ROOT_DIR set. Logs go to stderr, stdout is clean output."""
     return subprocess.run(
         [str(SCRIPTS_DIR / "vde")] + command.split(),
         capture_output=True, text=True, timeout=timeout,
-        env={**os.environ, "VDE_ROOT_DIR": str(VDE_ROOT)},
+        env={**os.environ, "VDE_ROOT_DIR": str(VDE_ROOT), "VDE_LOG_OUTPUT": "stderr"},
     )
 
 

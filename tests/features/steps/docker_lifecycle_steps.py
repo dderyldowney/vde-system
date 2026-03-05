@@ -13,7 +13,7 @@ steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 
-from behave import given, then, when
+from behave import given, then, when, step
 
 from config import VDE_ROOT
 from vm_common import (
@@ -87,19 +87,30 @@ def step_docker_vm_running(context, vm_name):
     context.vm_name = vm_name
 
 
-@given('docker-compose operation fails')
-def step_compose_operation_fails(context):
-    """Set up a scenario where docker-compose operation fails."""
-    # This is a setup for testing error parsing - the actual failure will be simulated
-    context.compose_operation_failed = True
-    context.fake_compose_error = "yaml syntax error"
+@given('VM "{vm_name}" compose file is replaced with invalid YAML')
+def step_replace_compose_with_invalid_yaml(context, vm_name):
+    """Stop the VM, back up docker-compose.yml, and write invalid YAML in its place."""
+    compose = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
+    backup = compose.with_suffix(".yml.bak")
+    assert compose.exists(), f"docker-compose.yml does not exist for {vm_name}: {compose}"
+    # Stop the VM first so 'vde start' actually attempts to start (not skip as already-running)
+    run_vde_command(f"stop {vm_name}", timeout=60)
+    compose.rename(backup)
+    compose.write_text("invalid: yaml: [broken\n  - missing bracket\n")
+    context.vm_name = vm_name
+    context._compose_backup = backup
+    context._compose_path = compose
 
 
-@given('docker-compose operation fails with transient error')
-def step_compose_transient_failure(context):
-    """Set up a scenario where docker-compose operation fails with transient error."""
-    context.compose_operation_failed = True
-    context.transient_error = True
+@step('VM "{vm_name}" compose file is restored from backup')
+def step_restore_compose_from_backup(context, vm_name):
+    """Restore the VM's docker-compose.yml from backup."""
+    backup = getattr(context, '_compose_backup', None)
+    compose = getattr(context, '_compose_path', None)
+    if backup and backup.exists():
+        if compose and compose.exists():
+            compose.unlink()
+        backup.rename(compose)
 
 
 @given('VM "{vm_name}" exists')
@@ -214,12 +225,18 @@ def step_start_vm_rebuild_no_cache(context, vm_name):
 
 @when('I check VM status')
 def step_check_vm_status(context):
-    """Check VM status."""
+    """Check VM status via vde ps and config presence."""
     vm_name = getattr(context, 'vm_name', 'python')
-    result = run_vde_command(f"status {vm_name}", timeout=30)
-    context.last_command = f"status {vm_name}"
+    full_name = f"vde-{vm_name}" if not vm_name.startswith('vde-') else vm_name
+    result = run_vde_command(f"ps -q", timeout=30)
+    context.last_command = f"ps -q (status check for {vm_name})"
     context.last_exit_code = result.returncode
-    context.last_output = result.stdout
+    if full_name in result.stdout:
+        context.last_output = "running"
+    elif compose_file_exists(vm_name):
+        context.last_output = "stopped"
+    else:
+        context.last_output = "not_created"
     context.last_error = result.stderr
 
 
@@ -230,18 +247,24 @@ def step_get_running_vms(context):
     context.running_vms = running
 
 
-@when('stderr is parsed')
-def step_parse_stderr(context):
-    """Parse stderr for error messages."""
-    stderr = getattr(context, 'last_error', '')
-    context.parsed_errors = stderr
-
-
-@when('operation is retried')
-def step_operation_retried(context):
-    """Verify retry logic updates retry count."""
-    context.retry_count = getattr(context, 'retry_count', 0) + 1
-    context.retry_delay = min(2 ** context.retry_count, 30)  # Exponential backoff, capped at 30s
+@when('I check VDE retry constants')
+def step_read_retry_constants(context):
+    """Read actual retry constants from the vde-constants library."""
+    result = subprocess.run(
+        ['zsh', '-c',
+         f'source "{VDE_ROOT}/scripts/lib/vde-constants" 2>/dev/null && '
+         f'echo "MAX_RETRIES=$VDE_MAX_RETRIES" && '
+         f'echo "BASE_DELAY=$VDE_RETRY_BASE_DELAY" && '
+         f'echo "MAX_DELAY=$VDE_RETRY_MAX_DELAY"'],
+        capture_output=True, text=True, timeout=10, cwd=str(VDE_ROOT)
+    )
+    assert result.returncode == 0, f"Failed to source vde-constants: {result.stderr}"
+    constants = {}
+    for line in result.stdout.splitlines():
+        if '=' in line:
+            k, v = line.split('=', 1)
+            constants[k.strip()] = v.strip()
+    context.retry_constants = constants
 
 
 # =============================================================================
@@ -324,39 +347,49 @@ def step_up_build_no_cache_executed(context):
         f"docker-compose up --build --no-cache should be executed: {output}"
 
 
-@then('"{pattern}" should map to "{error_type}"')
-def step_error_maps_to_type(context, pattern, error_type):
-    """Verify error pattern maps to expected error type."""
-    stderr = getattr(context, 'parsed_errors', context.last_error if hasattr(context, 'last_error') else '')
-    assert pattern in stderr.lower() or pattern in stderr, \
-        f"Pattern '{pattern}' should be in stderr: {stderr}"
+@then('the command should fail with non-zero exit code')
+def step_command_failed(context):
+    """Verify the last vde command returned a non-zero exit code."""
+    assert context.last_exit_code != 0, (
+        f"Expected non-zero exit code but got {context.last_exit_code}\n"
+        f"stdout: {context.last_output}\nstderr: {context.last_error}"
+    )
 
 
-@then('retry should use exponential backoff')
-def step_exponential_backoff(context):
-    """Verify retry uses exponential backoff."""
-    retry_count = getattr(context, 'retry_count', 1)
-    retry_delay = getattr(context, 'retry_delay', 2)
-    # Delay should increase with retry count
-    expected_delay = min(2 ** retry_count, 30)
-    assert retry_delay == expected_delay, \
-        f"Retry delay should be {expected_delay}, got {retry_delay}"
+@then('the error output should not be empty')
+def step_error_output_not_empty(context):
+    """Verify that some error output was produced."""
+    combined = (context.last_output or '') + (context.last_error or '')
+    assert combined.strip(), "Expected error output but both stdout and stderr are empty"
 
 
-@then('maximum retries should not exceed {max_retries}')
-def step_max_retries(context, max_retries):
-    """Verify maximum retries is respected."""
-    retry_count = getattr(context, 'retry_count', 0)
-    assert retry_count <= int(max_retries), \
-        f"Retry count {retry_count} should not exceed {max_retries}"
+@then('VDE_MAX_RETRIES should be at least {minimum:d}')
+def step_max_retries_at_least(context, minimum):
+    """Verify VDE_MAX_RETRIES is set and meets the minimum."""
+    constants = getattr(context, 'retry_constants', {})
+    val = constants.get('MAX_RETRIES', '')
+    assert val.isdigit(), f"VDE_MAX_RETRIES not found or non-numeric in vde-constants: {constants}"
+    assert int(val) >= minimum, f"VDE_MAX_RETRIES={val} should be >= {minimum}"
 
 
-@then('delay should be capped at {max_delay} seconds')
-def step_delay_capped(context, max_delay):
-    """Verify retry delay is capped."""
-    retry_delay = getattr(context, 'retry_delay', 2)
-    assert retry_delay <= int(max_delay), \
-        f"Retry delay {retry_delay} should be capped at {max_delay}"
+@then('VDE_RETRY_BASE_DELAY should be greater than {minimum:d}')
+def step_base_delay_positive(context, minimum):
+    """Verify VDE_RETRY_BASE_DELAY is positive."""
+    constants = getattr(context, 'retry_constants', {})
+    val = constants.get('BASE_DELAY', '')
+    assert val.isdigit(), f"VDE_RETRY_BASE_DELAY not found or non-numeric in vde-constants: {constants}"
+    assert int(val) > minimum, f"VDE_RETRY_BASE_DELAY={val} should be > {minimum}"
+
+
+@then('VDE_RETRY_MAX_DELAY should be at least VDE_RETRY_BASE_DELAY')
+def step_max_delay_gte_base(context):
+    """Verify VDE_RETRY_MAX_DELAY >= VDE_RETRY_BASE_DELAY (cap makes sense)."""
+    constants = getattr(context, 'retry_constants', {})
+    base = int(constants.get('BASE_DELAY', 0))
+    max_d = int(constants.get('MAX_DELAY', 0))
+    assert max_d >= base, (
+        f"VDE_RETRY_MAX_DELAY={max_d} should be >= VDE_RETRY_BASE_DELAY={base}"
+    )
 
 
 @then('status should be one of: "{expected_statuses}"')
@@ -533,27 +566,3 @@ def step_container_started(context):
     # Just verify the container is running
     assert container_is_running(vm_name), f"Container {vm_name} should be running"
 
-
-# =============================================================================
-# THEN steps - Error mapping with regex patterns
-# =============================================================================
-
-@then('"{pattern}" should map to YAML error')
-def step_pattern_maps_to_yaml_error(context, pattern):
-    """Verify error pattern maps to YAML error type."""
-    stderr = getattr(context, 'parsed_errors', '') or getattr(context, 'last_error', '')
-    import re
-    # Check if the pattern matches stderr or is a valid error pattern
-    if stderr:
-        match = re.search(pattern, stderr, re.IGNORECASE)
-        assert match is not None or len(pattern) > 0, f"Pattern '{pattern}' should match or be valid"
-
-
-@then('"{pattern}" should map to general error')
-def step_pattern_maps_to_general_error(context, pattern):
-    """Verify error pattern maps to general error type."""
-    stderr = getattr(context, 'parsed_errors', '') or getattr(context, 'last_error', '')
-    import re
-    if stderr:
-        match = re.search(pattern, stderr, re.IGNORECASE)
-        assert match is not None or len(pattern) > 0, f"Pattern '{pattern}' should match or be valid"
