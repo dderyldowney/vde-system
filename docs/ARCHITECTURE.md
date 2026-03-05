@@ -268,8 +268,8 @@ All VMs are connected to a shared Docker network named `vde-net`, enabling inter
 
 ### Container Naming Conventions
 
-- **Language VMs:** `{name}-dev` (e.g., `vde-python`, `vde-rust`)
-- **Service VMs:** `{name}` (e.g., `postgres`, `redis`)
+- **Language VMs:** `vde-{name}` (e.g., `vde-python`, `vde-rust`)
+- **Service VMs:** `vde-{name}` (e.g., `vde-postgres`, `vde-redis`)
 
 ---
 
@@ -469,8 +469,10 @@ VDE uses Behave for behavior-driven testing (BDD) of all operations.
 | Path | Purpose |
 |------|---------|
 | [`tests/features/`](../tests/features/) | Behave BDD tests |
-| [`tests/features/docker-required/`](../tests/features/docker-required/) | Tests requiring Docker |
-| [`tests/features/docker-free/`](../tests/features/docker-free/) | Tests without Docker dependencies |
+| [`tests/features/core-infrastructure/`](../tests/features/core-infrastructure/) | Primary test suite (tiered: unit, integration, docker) |
+| [`tests/features/docker-required/`](../tests/features/docker-required/) | Legacy Docker-required tests |
+
+Features tagged `@requires-docker-host` or `@docker` require a live Docker daemon and are excluded from the default `python3 -m behave` run. Use `--tags @docker` to include them.
 
 ### Step Definitions
 
