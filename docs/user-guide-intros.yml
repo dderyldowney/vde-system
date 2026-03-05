@@ -826,7 +826,7 @@ sections:
       ```bash
       vde ssh py    # Short for python
       vde ssh rs    # Short for rust
-      ``` |
+      ```
 
 
   - id: "8. Working with Databases"

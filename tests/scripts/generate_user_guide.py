@@ -778,12 +778,12 @@ vde ssh nginx      # Nginx web server
 |----|------|
 | vde-python | 2213 |
 | vde-rust | 2216 |
-| vde-js | 2202 |
+| vde-js | 2209 |
 | vde-csharp | 2203 |
-| vde-ruby | 2204 |
+| vde-ruby | 2215 |
 | postgres | 2404 |
 | redis | 2406 |
-| mongodb | 2402 |
+| mongodb | 2401 |
 | nginx | 2403 |
 
 ---
