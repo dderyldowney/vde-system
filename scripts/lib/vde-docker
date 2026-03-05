@@ -284,7 +284,22 @@ start_vm() {
     while [ $attempt -le $max_attempts ]; do
         _info "Attempt $attempt of $max_attempts..."
 
-        if docker compose -f "$compose_file" -p "$project_name" up -d --build 2>&1; then
+        # Build the compose up command based on flags
+        local up_result=0
+        if [[ "$nocache" = "true" ]]; then
+            # No-cache requires a separate build step first
+            docker compose -f "$compose_file" -p "$project_name" build --no-cache 2>&1 || true
+            docker compose -f "$compose_file" -p "$project_name" up -d 2>&1
+            up_result=$?
+        elif [[ "$rebuild" = "true" ]]; then
+            docker compose -f "$compose_file" -p "$project_name" up -d --build 2>&1
+            up_result=$?
+        else
+            docker compose -f "$compose_file" -p "$project_name" up -d 2>&1
+            up_result=$?
+        fi
+
+        if [[ $up_result -eq 0 ]]; then
             _info "VM '$vm_name' started successfully"
             return $VDE_SUCCESS
         fi

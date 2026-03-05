@@ -17,6 +17,12 @@ services:
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y python3 python3-pip && /usr/sbin/sshd -D"
 
+    logging:
+      driver: "json-file"
+
+    healthcheck:
+      test: ["CMD", "ls"]
+
     ports:
       - "2213:22"
 
@@ -39,9 +45,3 @@ services:
 networks:
   vde-net:
     external: true
-
-    logging:
-      driver: "json-file"
-
-    healthcheck:
-      test: ["CMD", "ls"]

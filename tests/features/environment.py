@@ -157,6 +157,10 @@ def before_feature(context, feature):
         return
 
     if "@docker" in tags:
+        # Skip Docker setup if Docker host is unavailable (all scenarios will be skipped too)
+        if "requires-docker-host" in tags and not _docker_host_available():
+            print("[SETUP] Docker host unavailable — skipping Docker feature setup")
+            return
         print("[SETUP] Docker test mode")
         os.environ["VDE_NETWORK"] = "vde-testing"
         result = run_vde_ps(["-a", "-q"])
