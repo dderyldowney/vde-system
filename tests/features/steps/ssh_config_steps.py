@@ -1004,7 +1004,6 @@ def step_ed25519_key_generated(context):
     """Verify ed25519 key was generated."""
     key_path = VDE_SSH_DIR / "id_ed25519"
     pub_path = VDE_SSH_DIR / "id_ed25519.pub"
-    
     assert key_path.exists(), "Private key should exist"
     assert pub_path.exists(), "Public key should exist"
     
