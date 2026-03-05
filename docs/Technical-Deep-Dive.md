@@ -204,16 +204,21 @@ VDE uses a **modular library architecture** that separates concerns and enables 
 
 ### Library Descriptions
 
-| Library | Lines | Purpose |
-|---------|-------|---------|
-| `vde-shell-compat` | 719 | Shell detection, portable associative arrays, date/time operations |
-| `vde-constants` | 204 | Standardized return codes, port ranges, timeouts, error messages |
-| `vde-errors` | 306 | Contextual error messages with remediation steps, color support |
-| `vde-log` | 469 | Structured logging (text/JSON/syslog), rotation, query functions |
-| `vde-core` | 297 | Essential VM operations, type loading with caching, lazy module loading |
-| `vde-parser` | 890 | Pattern-based natural language parser, intent detection, entity extraction |
-| `vde-commands` | 545 | High-level command wrappers for batch operations |
-| `vm-common` | 2158 | Full VDE API including SSH, Docker, templates (legacy) |
+| Library | Purpose |
+|---------|---------|
+| `vde-shell-compat` | Shell detection, portable associative arrays, date/time operations |
+| `vde-constants` | Standardized return codes (0-11), port ranges, timeouts, error messages |
+| `vde-errors` | Contextual error messages with remediation steps, color support |
+| `vde-log` | Structured logging (text/JSON/syslog), rotation, query functions |
+| `vde-naming` | VM name validation, generation, and normalization |
+| `vde-security` | Security checks: key validation, permission enforcement |
+| `vde-core` | Essential VM operations, type loading with caching, lazy module loading |
+| `vm-common` | Full VDE API including SSH, Docker, templates |
+| `vde-commands` | High-level command wrappers for batch operations (§3.5) |
+| `vde-parser` | Pattern-based natural language parser, intent detection, entity extraction (§3.6) |
+| `vde-docker` | Docker operations; includes §3.7 `docker_*` spec-required aliases |
+| `vde-templates` | Template rendering; includes §3.8 `render_*_template` spec-required wrappers |
+| `vde-ssh` | SSH key management, config generation, agent operations |
 
 ### Core Library: vde-shell-compat
 
@@ -358,6 +363,19 @@ vde_log_error "Failed to start" "postgres"
 - `vde_create_multiple_vms()` - Create multiple VMs
 - `vde_start_multiple_vms()` - Start multiple VMs
 - `vde_stop_multiple_vms()` - Stop multiple VMs
+
+### Docker Library: vde-docker (§3.7)
+
+VDE-SPEC.md §3.7 defines spec-required `docker_*` function names. These are implemented as thin aliases in `scripts/lib/vde-docker` over the underlying `start_vm`/`stop_vm`/`restart_vm`/`get_vm_status` functions:
+
+| Spec Function | Implementation | Description |
+|---------------|---------------|-------------|
+| `docker_build(vm)` | `start_vm "$1" true false` | Build and start a VM with rebuild |
+| `docker_start(vm)` | `start_vm "$1" false false` | Start a VM |
+| `docker_stop(vm)` | `stop_vm "$1"` | Stop a VM |
+| `docker_restart(vm)` | `restart_vm "$1"` | Restart a VM |
+| `docker_status(vm)` | `get_vm_status "$1"` | Get VM status |
+| `docker_get_running()` | `docker ps --filter "name=vde-"` | List running VDE containers |
 
 ---
 
@@ -551,13 +569,35 @@ vde <command> [options] [args]
 
 | Command | Description | Example |
 |---------|-------------|---------|
+| `rebuild [--vm <vm>] [--no-cache]` | Rebuild VDE images | `vde rebuild` |
 | `create <vm>` | Create a new VM | `vde create python` |
 | `start <vm>` | Start a VM | `vde start python` |
 | `stop <vm>` | Stop a VM | `vde stop postgres` |
 | `restart <vm>` | Restart a VM | `vde restart rust` |
+| `ssh <vm>` | SSH into a VM | `vde ssh python` |
+| `connect <vm>` | SSH into a VM (alias for ssh) | `vde connect python` |
+| `remove <vm>` | Remove a VM instance | `vde remove rust` |
+| `delete <vm>` | Completely delete a VM | `vde delete rust` |
+| `uninstall <type>` | Uninstall a language/service | `vde uninstall elixir` |
 | `list` | List all VMs | `vde list` |
 | `status` | Show VM status | `vde status` |
 | `health` | Run system health check | `vde health` |
+| `create-and-start` | Create and start VMs | `vde create-and-start python` |
+| `nuke` | Remove all of VDE | `vde nuke` |
+| `ssh-setup` | Manage VDE SSH environment | `vde ssh-setup init` |
+| `ssh-sync` | Sync SSH keys to build context | `vde ssh-sync` |
+| `cleanup-ports` | Clean up stale port locks | `vde cleanup-ports` |
+| `init` | Initialize VDE networks | `vde init` |
+| `ps` | List running containers | `vde ps` |
+| `logs <vm>` | Show container logs | `vde logs python` |
+| `inspect <vm>` | Inspect container | `vde inspect python` |
+| `port <vm>` | Show port mappings | `vde port python` |
+| `exec <vm> <cmd>` | Execute command in container | `vde exec python ls` |
+| `images` | List VDE images | `vde images` |
+| `networks` | List VDE networks | `vde networks` |
+| `stats` | Show resource usage | `vde stats` |
+| `info` | Show Docker info | `vde info` |
+| `ask <text>` | Natural language command interface | `vde ask "list all vms"` |
 | `help` | Show help message | `vde help` |
 
 ### Options
@@ -566,6 +606,7 @@ vde <command> [options] [args]
 |--------|-------------|
 | `-h, --help` | Show help message |
 | `-v, --verbose` | Enable verbose output |
+| `-q, --quiet` | Suppress debug output (quiet mode) |
 | `--version` | Show version information |
 
 ### Command Aliases
@@ -579,10 +620,25 @@ The `vde` command supports several aliases for convenience:
 | `vde stop` | `shutdown-virtual` |
 | `vde list` | `list-vms` |
 | `vde status` | `list-vms` |
+| `vde connect` | `ssh-vm` |
+| `vde ssh` | `ssh-vm` |
+
+### Natural Language Interface (vde ask)
+
+The `vde ask` command exposes the vde-parser's natural language capabilities:
+
+```bash
+vde ask "list all vms"
+vde ask "start the python vm"
+vde ask "create a rust development environment"
+vde ask "stop postgres"
+```
+
+Internally, `vde ask` calls `generate_plan "$input" | execute_plan`, routing through the parser's intent detection and structured plan execution. The parser supports intents: `list_vms`, `create_vm`, `start_vm`, `stop_vm`, `restart_vm`, `status`, `connect`, `help`.
 
 ### Source Chain
 
-When you run `vde`, it sources libraries in the following order:
+When you run `vde`, it sources libraries in the following order (per §4.1 of VDE-SPEC.md v1.4.0):
 
 ```bash
 # 1. vde-shell-compat - Shell portability
@@ -597,12 +653,26 @@ source "$VDE_ROOT_DIR/scripts/lib/vde-errors"
 # 4. vde-log - Logging system
 source "$VDE_ROOT_DIR/scripts/lib/vde-log"
 
-# 5. vde-core - Core VM operations
+# 5. vde-naming - Name validation and generation
+source "$VDE_ROOT_DIR/scripts/lib/vde-naming"
+
+# 6. vde-security - Security validation
+source "$VDE_ROOT_DIR/scripts/lib/vde-security"
+
+# 7. vde-core - Core VM operations
 source "$VDE_ROOT_DIR/scripts/lib/vde-core"
 
-# 6. vm-common - Full VDE API
+# 8. vm-common - Full VDE API (SSH/Docker/templates)
 source "$VDE_ROOT_DIR/scripts/lib/vm-common"
+
+# 9. vde-commands - High-level command wrappers
+source "$VDE_ROOT_DIR/scripts/lib/vde-commands"
+
+# 10. vde-parser - Natural language parser (available via 'vde ask')
+source "$VDE_ROOT_DIR/scripts/lib/vde-parser"
 ```
+
+**Dispatch model:** `vde` uses direct script dispatch for all standard commands. The parser is available as an additive interface via `vde ask <natural language input>`.
 
 ### Examples
 
@@ -668,9 +738,9 @@ services:
 
 ```yaml
 services:
-  {{NAME}}:                        # No "-dev" suffix!
+  {{NAME}}:
     # ... (same build config)
-    container_name: {{NAME}}        # e.g., "postgres" not "vde-postgres"
+    container_name: vde-{{NAME}}    # e.g., "vde-postgres" (§5.2: always vde- prefix)
 
     ports:
       - "{{SSH_PORT}}:22"          # SSH access
@@ -680,9 +750,33 @@ services:
       - ../../../data/{{NAME}}:/data   # Note: "data" not "projects"
       - ../../../logs/{{NAME}}:/logs
       # ...
+
+    networks:
+      - vde-net
+
+    labels:                        # §5.2: Required VDE metadata labels
+      - "vde.type=service"
+      - "vde.name={{NAME}}"
 ```
 
-### 5.3 Template Rendering
+### 5.3 Named Template Renderers (§3.8)
+
+VDE-SPEC.md §3.8 defines three named renderer functions implemented in `scripts/lib/vde-templates` as wrappers over the generic `render_template()`:
+
+```bash
+# Generate a language VM compose file
+render_language_template "go" "2205"
+
+# Generate a service VM compose file
+render_service_template "postgres" "2400" "5432"
+
+# Generate an SSH config entry block
+render_ssh_entry "python" "2213"
+```
+
+These named functions ensure spec-compliant output with correct template paths and argument conventions.
+
+### 5.4 Template Rendering
 
 ```bash
 render_template() {
@@ -1428,23 +1522,29 @@ Connect:
 
 ### Core Library Files
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `scripts/lib/vde-shell-compat` | 719 | Shell detection, portable associative arrays, date/time operations |
-| `scripts/lib/vde-constants` | 204 | Standardized return codes, port ranges, timeouts, configuration |
-| `scripts/lib/vde-errors` | 306 | Contextual error messages with remediation steps |
-| `scripts/lib/vde-log` | 469 | Structured logging (text/JSON/syslog), rotation, query functions |
-| `scripts/lib/vde-core` | 297 | Essential VM operations, type loading with caching |
-| `scripts/lib/vde-parser` | 890 | Pattern-based natural language parser, intent detection, entity extraction |
-| `scripts/lib/vde-commands` | 545 | High-level command wrappers for VDE operations |
-| `scripts/lib/vm-common` | 2158 | Full VDE API including SSH, Docker, templates |
+| File | Purpose |
+|------|---------|
+| `scripts/lib/vde-shell-compat` | Shell detection, portable associative arrays, date/time operations |
+| `scripts/lib/vde-constants` | Standardized return codes (VDE_SUCCESS=0 … VDE_ERR_LOCK=9), port ranges, timeouts |
+| `scripts/lib/vde-errors` | Contextual error messages with remediation steps |
+| `scripts/lib/vde-log` | Structured logging (text/JSON/syslog), rotation, query functions |
+| `scripts/lib/vde-naming` | Name validation and normalization (loaded 5th in vde) |
+| `scripts/lib/vde-security` | Security validation, key permissions (loaded 6th in vde) |
+| `scripts/lib/vde-core` | Essential VM operations, type loading with caching |
+| `scripts/lib/vm-common` | Full VDE API including SSH, Docker, templates |
+| `scripts/lib/vde-commands` | High-level command wrappers; §3.5 `vde_list_vms`, `vde_create_vm`, etc. |
+| `scripts/lib/vde-parser` | Pattern-based natural language parser; `generate_plan` / `execute_plan` |
+| `scripts/lib/vde-docker` | Docker operations; §3.7 `docker_*` aliases over internal functions |
+| `scripts/lib/vde-templates` | Template rendering; §3.8 `render_language_template`, `render_service_template`, `render_ssh_entry` |
+| `scripts/lib/vde-ssh` | SSH key management, `validate_or_create_ssh_key`, config generation |
 
 ### Core Scripts
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `scripts/vde` | 237 | Unified CLI command for all VDE operations |
-| `scripts/data/vm-types.conf` | 34 | VM type definitions (19 languages + 7 services) |
+| File | Purpose |
+|------|---------|
+| `scripts/vde` | Unified CLI command for all VDE operations |
+| `scripts/vde-ask` | Natural language interface — routes input through vde-parser |
+| `scripts/data/vm-types.conf` | VM type definitions (19 languages + 7 services) |
 
 ### Templates
 
@@ -1471,9 +1571,13 @@ This is the complete VDE system from configuration to container runtime. Every p
 
 The system has evolved from a simple template-based approach to a sophisticated modular architecture with:
 - **Shell portability** across zsh, bash 4.0+, and bash 3.x
-- **Modular libraries** that can be sourced independently
-- **Unified CLI** through the `vde` command
-- **Pattern-based natural language** parsing (no external dependencies)
+- **Modular libraries** that can be sourced independently (10-library load chain)
+- **Unified CLI** through the `vde` command with direct script dispatch
+- **Natural language interface** via `vde ask` (parser as additive capability)
+- **Spec-compliant function aliases** — §3.7 `docker_*`, §3.8 `render_*_template`
+- **Labelled service containers** — `vde.type=service` / `vde.name=` Docker labels (§5.2)
 - **Structured logging** with rotation and query capabilities
 - **Contextual error messages** with remediation steps
 - **19 language VMs** and **7 service VMs** supported out of the box
+
+> **Spec version:** This document reflects VDE-SPEC.md v1.4.0 and ARCHITECTURE.md current revision.

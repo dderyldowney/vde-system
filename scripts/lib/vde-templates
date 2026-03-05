@@ -186,3 +186,34 @@ extract_template_vars() {
 
     grep -oE '\{\{[A-Za-z_][A-Za-z0-9_]*\}\}' "$template_file" | sed 's/{{//;s/}}//' | sort -u
 }
+
+# =============================================================================
+# §3.8 Spec-Compliant Named Renderers
+# =============================================================================
+
+# render_language_template NAME SSH_PORT
+# Render docker-compose.yml for language VM
+render_language_template() {
+    local name="$1" ssh_port="$2"
+    render_template "$TEMPLATES_DIR/compose-language.yml" \
+        NAME "$name" SSH_PORT "$ssh_port" INSTALL_CMD "" SERVICE_PORT ""
+}
+
+# render_service_template NAME SSH_PORT SERVICE_PORT
+# Render docker-compose.yml for service VM
+render_service_template() {
+    local name="$1" ssh_port="$2" service_port="$3"
+    render_template "$TEMPLATES_DIR/compose-service.yml" \
+        NAME "$name" SSH_PORT "$ssh_port" SERVICE_PORT "$service_port" INSTALL_CMD ""
+}
+
+# render_ssh_entry VM_NAME PORT
+# Render SSH config entry for VM
+render_ssh_entry() {
+    local vm_name="$1" port="$2"
+    local host="vde-${vm_name#vde-}"
+    render_template "$TEMPLATES_DIR/ssh-entry.txt" \
+        HOST "$host" SSH_PORT "$port" \
+        IDENTITY_FILE "${VDE_SSH_IDENTITY:-$HOME/.ssh/vde/id_ed25519}" \
+        COMMENT "VDE VM: $vm_name"
+}

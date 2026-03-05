@@ -547,3 +547,33 @@ wait_for_container_healthy() {
     _error "Container '$vm_name' did not become healthy within ${timeout}s"
     return $VDE_ERR_TIMEOUT
 }
+
+# =============================================================================
+# §3.7 Spec-Compliant Function Aliases
+# =============================================================================
+
+# docker_build VM_NAME
+# Build Docker image for VM (rebuild=true, nocache=false)
+docker_build() { start_vm "$1" true false; }
+
+# docker_start VM_NAME
+# Start container for VM
+docker_start() { start_vm "$1" false false; }
+
+# docker_stop VM_NAME
+# Stop container for VM
+docker_stop() { stop_vm "$1"; }
+
+# docker_restart VM_NAME
+# Restart container for VM
+docker_restart() { restart_vm "$1"; }
+
+# docker_status VM_NAME
+# Get container status: "running" | "stopped" | "not_created" | "unknown"
+docker_status() { get_vm_status "$1"; }
+
+# docker_get_running
+# Output space-separated list of running vde-* container names
+docker_get_running() {
+    docker ps --filter "name=vde-" --format "{{.Names}}" 2>/dev/null | tr '\n' ' '
+}

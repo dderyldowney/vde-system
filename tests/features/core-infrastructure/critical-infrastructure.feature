@@ -88,6 +88,10 @@ Feature: Critical Infrastructure — Spec Invariants
     When I render the SSH entry template with VM_NAME="python" SSH_PORT="2213"
     Then the rendered output should contain "UserKnownHostsFile ~/.ssh/vde/known_hosts"
 
+  Scenario: SSH entry template includes ForwardAgent yes
+    When I render the SSH entry template with VM_NAME="python" SSH_PORT="2213"
+    Then the rendered output should contain "ForwardAgent yes"
+
   # ── SSH Isolation (spec section 14.3) ──
 
   Scenario: VDE SSH directory is isolated at ~/.ssh/vde/ not ~/.ssh/
@@ -159,6 +163,14 @@ Feature: Critical Infrastructure — Spec Invariants
     When I render the service template with NAME="testsvc" SSH_PORT="2450" SERVICE_PORT="5432"
     Then the rendered output should NOT contain "{{NAME}}"
     And the rendered output should NOT contain "{{SSH_PORT}}"
+
+  Scenario: Service template includes vde.type label
+    When I render the service template with NAME="testsvc" SSH_PORT="2450" SERVICE_PORT="5432"
+    Then the rendered output should contain "vde.type=service"
+
+  Scenario: Service template includes vde.name label
+    When I render the service template with NAME="testsvc" SSH_PORT="2450" SERVICE_PORT="5432"
+    Then the rendered output should contain "vde.name=testsvc"
 
   # ── Permission Policy (spec section 14.1) ──
 
