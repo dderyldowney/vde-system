@@ -99,134 +99,137 @@ if [[ $# -eq 0 ]]; then
     exit 1
 fi
 
-VM_NAME="$1"
-
-# Validate VM name is not empty
-if [[ -z "$VM_NAME" ]]; then
-    echo "Error: VM name cannot be empty" >&2
-    show_usage
-    exit 1
-fi
-
 # -----------------------
-# Validation
+# Single-VM creation function
 # -----------------------
-vde_progress_info "Validating configuration for '$VM_NAME'..."
+_create_one_vm() {
+    local VM_NAME="$1"
 
-# Resolve VM name (handles aliases)
-RESOLVED_NAME=$(resolve_vm_name "$VM_NAME" || true)
-if [[ -z "$RESOLVED_NAME" ]]; then
-    vde_error_alias_not_found "$VM_NAME"
-    echo ""
-    show_known_vms
-    exit 1
-fi
+    # Validate VM name is not empty
+    if [[ -z "$VM_NAME" ]]; then
+        echo "Error: VM name cannot be empty" >&2
+        return 1
+    fi
 
-# Use resolved name
-VM_NAME="$RESOLVED_NAME"
+    # -----------------------
+    # Validation
+    # -----------------------
+    vde_progress_info "Validating configuration for '$VM_NAME'..."
 
-# Get VM Configuration
-_vm_type=$(get_vm_info type "$VM_NAME")
-_vm_display=$(get_vm_info display "$VM_NAME")
-_vm_install=$(get_vm_info install "$VM_NAME")
-_vm_svc_port=$(get_vm_info svc_port "$VM_NAME")
+    # Resolve VM name (handles aliases)
+    local RESOLVED_NAME
+    RESOLVED_NAME=$(resolve_vm_name "$VM_NAME" || true)
+    if [[ -z "$RESOLVED_NAME" ]]; then
+        vde_error_alias_not_found "$VM_NAME"
+        echo ""
+        show_known_vms
+        return 1
+    fi
 
-if [[ -z "$_vm_type" ]]; then
-    vde_error_vm_not_found "$VM_NAME"
-    exit 1
-fi
+    # Use resolved name
+    VM_NAME="$RESOLVED_NAME"
 
-validate_vm_name "$VM_NAME" "$_vm_type" || exit 1
+    # Get VM Configuration
+    local _vm_type _vm_display _vm_install _vm_svc_port
+    _vm_type=$(get_vm_info type "$VM_NAME")
+    _vm_display=$(get_vm_info display "$VM_NAME")
+    _vm_install=$(get_vm_info install "$VM_NAME")
+    _vm_svc_port=$(get_vm_info svc_port "$VM_NAME")
 
-if vm_exists "$VM_NAME"; then
-    vde_error_container_exists "$VM_NAME"
-    exit $VDE_ERR_EXISTS
-fi
+    if [[ -z "$_vm_type" ]]; then
+        vde_error_vm_not_found "$VM_NAME"
+        return 1
+    fi
 
-vde_progress_info "VM Type: $_vm_type"
-vde_progress_info "Display Name: $_vm_display"
+    validate_vm_name "$VM_NAME" "$_vm_type" || return 1
 
-# -----------------------
-# Allocate Port
-# -----------------------
-vde_progress_info "Allocating SSH port..."
-SSH_PORT=$(find_next_available_port "$_vm_type")
-if [[ $? -ne 0 ]]; then
-    vde_error_port_in_use "all available ports"
-    exit 1
-fi
-vde_progress_info "Allocated SSH port: $SSH_PORT"
+    if vm_exists "$VM_NAME"; then
+        vde_error_container_exists "$VM_NAME"
+        return $VDE_ERR_EXISTS
+    fi
 
-# -----------------------
-# Create Directories
-# -----------------------
-vde_progress_info "Creating directory structure..."
-ensure_vm_directories "$VM_NAME" "$_vm_type"
+    vde_progress_info "VM Type: $_vm_type"
+    vde_progress_info "Display Name: $_vm_display"
 
-# -----------------------
-# Create Docker Compose File
-# -----------------------
-vde_progress_info "Creating docker-compose.yml..."
+    # -----------------------
+    # Allocate Port
+    # -----------------------
+    vde_progress_info "Allocating SSH port..."
+    local SSH_PORT
+    SSH_PORT=$(find_next_available_port "$_vm_type")
+    if [[ $? -ne 0 ]]; then
+        vde_error_port_in_use "all available ports"
+        return 1
+    fi
+    vde_progress_info "Allocated SSH port: $SSH_PORT"
 
-RAW_NAME=$(vde_normalize_name "$VM_NAME")
-compose_file="$CONFIGS_DIR/$RAW_NAME/docker-compose.yml"
+    # -----------------------
+    # Create Directories
+    # -----------------------
+    vde_progress_info "Creating directory structure..."
+    ensure_vm_directories "$VM_NAME" "$_vm_type"
 
-if [[ "$_vm_type" == "lang" ]]; then
-    template_file="$TEMPLATES_DIR/compose-language.yml"
-else
-    template_file="$TEMPLATES_DIR/compose-service.yml"
-fi
+    # -----------------------
+    # Create Docker Compose File
+    # -----------------------
+    vde_progress_info "Creating docker-compose.yml..."
 
-if [[ ! -f "$template_file" ]]; then
-    vde_error_template_not_found "$template_file"
-    exit 1
-fi
+    local RAW_NAME compose_file template_file
+    RAW_NAME=$(vde_normalize_name "$VM_NAME")
+    compose_file="$CONFIGS_DIR/$RAW_NAME/docker-compose.yml"
 
-# Render template with progress
-# Use RAW_NAME for NAME variable - templates will add vde- prefix where needed
-render_template "$template_file" \
-    NAME "$RAW_NAME" \
-    SSH_PORT "$SSH_PORT" \
-    INSTALL_CMD "$_vm_install" \
-    SERVICE_PORT "$_vm_svc_port" \
-    > "$compose_file"
+    if [[ "$_vm_type" == "lang" ]]; then
+        template_file="$TEMPLATES_DIR/compose-language.yml"
+    else
+        template_file="$TEMPLATES_DIR/compose-service.yml"
+    fi
 
-# Handle multiple service ports
-if [[ "$_vm_type" == "service" ]] && [[ -n "$_vm_svc_port" ]]; then
-    while IFS= read -r line; do
-        if [[ "$line" == *"##SERVICE_PORTS##" ]]; then
-            # Split ports portably
-            local p
-            echo "$_vm_svc_port" | tr ',' '\n' | while read -r p; do
-                p=$(echo "$p" | tr -d ' ')
-                echo "      - \"$p:$p\""
-            done
-        else
-            echo "$line"
-        fi
-    done < "$compose_file" > "${compose_file}.tmp"
-    mv "${compose_file}.tmp" "$compose_file"
-else
-    sed -i.bak "/##SERVICE_PORTS##/d" "$compose_file"
-    rm -f "${compose_file}.bak"
-fi
+    if [[ ! -f "$template_file" ]]; then
+        vde_error_template_not_found "$template_file"
+        return 1
+    fi
 
-vde_progress_done "Created: $compose_file"
+    render_template "$template_file" \
+        NAME "$RAW_NAME" \
+        SSH_PORT "$SSH_PORT" \
+        INSTALL_CMD "$_vm_install" \
+        SERVICE_PORT "$_vm_svc_port" \
+        > "$compose_file"
 
-# Output rendered file for BDD verification
-if [[ -n "$VDE_TEST_MODE" ]]; then
-    cat "$compose_file"
-fi
+    # Handle multiple service ports
+    if [[ "$_vm_type" == "service" ]] && [[ -n "$_vm_svc_port" ]]; then
+        while IFS= read -r line; do
+            if [[ "$line" == *"##SERVICE_PORTS##" ]]; then
+                local p
+                echo "$_vm_svc_port" | tr ',' '\n' | while read -r p; do
+                    p=$(echo "$p" | tr -d ' ')
+                    echo "      - \"$p:$p\""
+                done
+            else
+                echo "$line"
+            fi
+        done < "$compose_file" > "${compose_file}.tmp"
+        mv "${compose_file}.tmp" "$compose_file"
+    else
+        sed -i.bak "/##SERVICE_PORTS##/d" "$compose_file"
+        rm -f "${compose_file}.bak"
+    fi
 
-# -----------------------
-# Create Environment File
-# -----------------------
-vde_progress_info "Creating environment file..."
+    vde_progress_done "Created: $compose_file"
 
-# Use raw name for env filename to match projects/ logs/
-env_file="$VDE_ROOT_DIR/env-files/$RAW_NAME.env"
+    if [[ -n "$VDE_TEST_MODE" ]]; then
+        cat "$compose_file"
+    fi
 
-cat > "$env_file" <<EOF
+    # -----------------------
+    # Create Environment File
+    # -----------------------
+    vde_progress_info "Creating environment file..."
+
+    local env_file
+    env_file="$VDE_ROOT_DIR/env-files/$RAW_NAME.env"
+
+    cat > "$env_file" <<EOF
 # Environment variables for $_vm_display development container
 SSH_PORT=$SSH_PORT
 DATABASE_URL=postgresql://devuser:SuperSecretPassword123!@postgres:5432/${RAW_NAME}_dev_db
@@ -234,53 +237,48 @@ REDIS_HOST=redis
 REDIS_PORT=6379
 EOF
 
-if [[ -n "$_vm_svc_port" ]]; then
-    local p
-    echo "$_vm_svc_port" | tr ',' '\n' | while read -r p; do
-        p=$(echo "$p" | tr -d ' ')
-        [ -n "$p" ] && {
-            upper_name=$(echo "$RAW_NAME" | tr '[:lower:]' '[:upper:]')
-            echo "${upper_name}_PORT=$p" >> "$env_file"
-        }
-    done
-fi
+    if [[ -n "$_vm_svc_port" ]]; then
+        local p
+        echo "$_vm_svc_port" | tr ',' '\n' | while read -r p; do
+            p=$(echo "$p" | tr -d ' ')
+            [ -n "$p" ] && {
+                upper_name=$(echo "$RAW_NAME" | tr '[:lower:]' '[:upper:]')
+                echo "${upper_name}_PORT=$p" >> "$env_file"
+            }
+        done
+    fi
 
-vde_progress_done "Created: $env_file"
+    vde_progress_done "Created: $env_file"
 
-# -----------------------
-# Update SSH Config
-# -----------------------
-# Skip SSH config modification in test mode (prevents timeouts in Docker)
+    # -----------------------
+    # Update SSH Config
+    # -----------------------
     vde_progress_info "Updating SSH configuration..."
 
+    local ssh_host
     ssh_host="$(vde_get_ssh_host "$VM_NAME")"
 
     if ! merge_ssh_config_entry "$ssh_host" "$SSH_PORT" "$_vm_display" "$VDE_SSH_IDENTITY"; then
         vde_error_permission_denied "$VDE_SSH_CONFIG"
-        exit 1
+        return 1
     fi
-    
-    # Also update the reference config in configs/ssh/config
+
     local project_ssh_config="$VDE_ROOT_DIR/configs/ssh/config"
     if [ -f "$project_ssh_config" ]; then
-        # Copy the updated SSH config to the project configs directory
         cp "$VDE_SSH_CONFIG" "$project_ssh_config" 2>/dev/null || true
     fi
 
-# -----------------------
-# Start the VM (unless disabled)
-# -----------------------
-if [[ "$START_VM" == "true" ]]; then
-    vde_progress_info "Starting VM..."
-    
-    # Use docker-compose directly to start the VM
-    compose_file="$CONFIGS_DIR/$VM_NAME/docker-compose.yml"
-    if docker-compose -f "$compose_file" up -d 2>/dev/null; then
-        vde_progress_done "Started VM: $VM_NAME"
-        
-        # Save Docker state to .docker-state/
-        local state_json
-        state_json=$(cat <<EOF
+    # -----------------------
+    # Start the VM (unless disabled)
+    # -----------------------
+    if [[ "$START_VM" == "true" ]]; then
+        vde_progress_info "Starting VM..."
+
+        if "$VDE_ROOT_DIR/scripts/vde" start "$VM_NAME" 2>/dev/null; then
+            vde_progress_done "Started VM: $VM_NAME"
+
+            local state_json
+            state_json=$(cat <<EOF
 {
   "vm_name": "$VM_NAME",
   "vm_type": "$_vm_type",
@@ -292,30 +290,45 @@ if [[ "$START_VM" == "true" ]]; then
 }
 EOF
 )
-        save_docker_state "$VM_NAME" "$state_json"
-    else
-        vde_progress_warn "Failed to start VM: $VM_NAME"
+            save_docker_state "$VM_NAME" "$state_json"
+        else
+            vde_progress_warn "Failed to start VM: $VM_NAME"
+        fi
     fi
-fi
+
+    # -----------------------
+    # Summary
+    # -----------------------
+    echo ""
+    vde_success "VM '$VM_NAME' configuration complete!"
+    echo "  - $compose_file"
+    echo "  - $env_file"
+    echo "  SSH alias: $ssh_host  port: $SSH_PORT"
+    echo ""
+    return 0
+}
 
 # -----------------------
-# Summary
+# Main: loop over all VM names
 # -----------------------
+typeset -a _CREATED_VMS _FAILED_VMS
+_last_exit=0
+for _vm_arg in "$@"; do
+    _create_one_vm "$_vm_arg"
+    _rc=$?
+    if [[ $_rc -eq 0 ]]; then
+        _CREATED_VMS+=("$_vm_arg")
+    else
+        _FAILED_VMS+=("$_vm_arg")
+        _last_exit=$_rc
+    fi
+done
+
 echo ""
-vde_success "VM configuration complete!"
-echo ""
-echo "Created files:"
-echo "  - $compose_file"
-echo "  - $env_file"
-if [[ "$SELECTED_VM_TYPE" == "lang" ]]; then
-    echo "  - $VDE_ROOT_DIR/projects/$RAW_NAME/"
-else
-    echo "  - $VDE_ROOT_DIR/data/$RAW_NAME/"
+if [[ ${#_CREATED_VMS[@]} -gt 0 ]]; then
+    vde_success "Created ${#_CREATED_VMS[@]} VM(s): ${_CREATED_VMS[*]}"
 fi
-echo "  - $VDE_ROOT_DIR/logs/$RAW_NAME/"
-echo ""
-echo "SSH Configuration:"
-echo "  - Host alias: $ssh_host"
-echo "  - SSH port: $SSH_PORT"
-echo "  - Connect with: ssh $ssh_host"
-echo ""
+if [[ ${#_FAILED_VMS[@]} -gt 0 ]]; then
+    log_error "Failed ${#_FAILED_VMS[@]} VM(s): ${_FAILED_VMS[*]}"
+    exit $_last_exit
+fi

@@ -304,21 +304,15 @@ def step_exit_code(context, code):
 
 @then('container "{container_name}" should be running')
 def step_container_is_running(context, container_name):
-    r = subprocess.run(
-        ["docker", "ps", "--filter", f"name=^{container_name}$", "--format", "{{.Names}}"],
-        capture_output=True, text=True, timeout=10
-    )
+    r = _vde_cli(f"ps --filter name={container_name} -q", timeout=10)
     assert container_name in r.stdout, (
-        f"Container '{container_name}' is not running.\ndocker ps output: {r.stdout}"
+        f"Container '{container_name}' is not running.\nvde ps output: {r.stdout}"
     )
 
 
 @then('container "{container_name}" should not be running')
 def step_container_not_running(context, container_name):
-    r = subprocess.run(
-        ["docker", "ps", "--filter", f"name=^{container_name}$", "--format", "{{.Names}}"],
-        capture_output=True, text=True, timeout=10
-    )
+    r = _vde_cli(f"ps --filter name={container_name} -q", timeout=10)
     assert container_name not in r.stdout, (
         f"Container '{container_name}' is still running."
     )
@@ -326,10 +320,7 @@ def step_container_not_running(context, container_name):
 
 @then('container "{container_name}" should not exist')
 def step_container_not_exist(context, container_name):
-    r = subprocess.run(
-        ["docker", "ps", "-a", "--filter", f"name=^{container_name}$", "--format", "{{.Names}}"],
-        capture_output=True, text=True, timeout=10
-    )
+    r = _vde_cli(f"ps -a --filter name={container_name} -q", timeout=10)
     assert container_name not in r.stdout, (
         f"Container '{container_name}' still exists."
     )
