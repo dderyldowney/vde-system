@@ -1,5 +1,5 @@
 # language: en
-@shell-compatibility @core-infrastructure @unit
+@shell-compatibility @core-infrastructure @unit @core-suite
 Feature: Shell Compatibility Layer
   As the VDE system
   I want associative array operations defined in VDE-SPEC.md section 3.2 to work in zsh

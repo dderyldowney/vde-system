@@ -416,7 +416,7 @@ if [ "$CMD" = "create" ]; then
         source "$VDE_ROOT_DIR/scripts/lib/vde-commands" 2>/dev/null || true
         
         # First create the VM
-        "$VDE_ROOT_DIR/scripts/create-virtual-for" "$vm_name" --no-start
+        "$VDE_ROOT_DIR/scripts/create-virtual-for" "$vm_name" --no-start --force
         local create_result=$?
         
         if [ $create_result -ne 0 ]; then

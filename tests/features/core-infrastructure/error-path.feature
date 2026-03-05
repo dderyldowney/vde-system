@@ -1,5 +1,5 @@
 # language: en
-@error-path @core-infrastructure
+@error-path @core-infrastructure @core-suite
 Feature: Error Path and Input Validation
   As the VDE system
   I want to reject invalid input and unknown VMs with correct error codes

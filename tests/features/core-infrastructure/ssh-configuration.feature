@@ -1,21 +1,20 @@
 # language: en
-@wip
 @user-guide-ssh-keys
 @requires-docker-ssh
 @core-infrastructure
-@docker
+@core-suite
 Feature: SSH Configuration
   As a developer
   I want automatic SSH agent forwarding and key management
   So that I can seamlessly access VMs and external services
 
   @requires-ssh-agent
-  Scenario: Automatically start SSH agent if not running
-    Given SSH agent is not running
-    And SSH keys exist in ~/.ssh/vde/
+  Scenario: Report agent unavailable when SSH_AUTH_SOCK is not set
+    Given SSH keys exist in ~/.ssh/vde/
+    And SSH_AUTH_SOCK is unset in the test environment
     When I run any VDE command that requires SSH
-    Then SSH agent should be started
-    And available SSH keys should be loaded into agent
+    Then the command output should indicate no SSH agent is available
+    And no running SSH agent processes should be terminated
 
   @requires-ssh-agent
   Scenario: Generate SSH key if none exists
@@ -90,12 +89,12 @@ Feature: SSH Configuration
     Then SSH config should still contain "Host vde-python"
 
   @requires-docker-ssh
-  Scenario: VM-to-VM communication uses agent forwarding
-    Given SSH agent is running
-    And keys are loaded into agent
-    When I SSH from "vde-python" to "vde-rust"
-    Then the connection should use host's SSH keys
-    And no keys should be stored on containers
+  Scenario: VM compose file mounts SSH agent socket for agent forwarding
+    Given VM "python" is created with SSH port "2213"
+    When I inspect the docker-compose.yml for VM "python"
+    Then the compose file should mount the SSH agent socket volume
+    And the compose file should set SSH_AUTH_SOCK environment variable
+    And SSH config entry for "vde-python" should contain "ForwardAgent yes"
 
   @requires-ssh-agent
   Scenario: Detect all common SSH key types

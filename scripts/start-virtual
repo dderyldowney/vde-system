@@ -202,3 +202,8 @@ if generate_vm_ssh_config; then
 else
     log_warning "⚠ VDE SSH config generation had issues"
 fi
+
+# Exit non-zero if any VMs failed to start
+if [ $failed_count -gt 0 ]; then
+    return ${VDE_ERR_DOCKER_FAIL:-5}
+fi

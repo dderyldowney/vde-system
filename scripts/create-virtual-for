@@ -25,6 +25,7 @@ fi
 QUIET=false
 VERBOSE=false
 START_VM=true  # Default: start VM after creation
+FORCE=false
 
 # -----------------------
 # Usage
@@ -43,6 +44,7 @@ Options:
   -q, --quiet    Suppress progress indicators
   -v, --verbose  Show detailed output
   --no-start     Don't start the VM after creation
+  --force        Force regenerate files even if VM already exists
 
 Examples:
   create-virtual-for python    # Create and start Python language VM
@@ -78,6 +80,10 @@ while [[ $# -gt 0 ]]; do
         -v|--verbose)
             VERBOSE=true
             export VDE_ERRORS_VERBOSE=1
+            shift
+            ;;
+        --force)
+            FORCE=true
             shift
             ;;
         --no-start)
@@ -143,7 +149,7 @@ _create_one_vm() {
 
     validate_vm_name "$VM_NAME" "$_vm_type" || return 1
 
-    if vm_exists "$VM_NAME"; then
+    if [[ "$FORCE" != "true" ]] && vm_exists "$VM_NAME"; then
         vde_error_container_exists "$VM_NAME"
         return $VDE_ERR_EXISTS
     fi
@@ -156,10 +162,18 @@ _create_one_vm() {
     # -----------------------
     vde_progress_info "Allocating SSH port..."
     local SSH_PORT
-    SSH_PORT=$(find_next_available_port "$_vm_type")
-    if [[ $? -ne 0 ]]; then
-        vde_error_port_in_use "all available ports"
-        return 1
+    # When --force regenerating, preserve the existing port from the compose file
+    local _raw_vm_name="${VM_NAME#vde-}"
+    local _existing_compose="$VDE_ROOT_DIR/configs/docker/$_raw_vm_name/docker-compose.yml"
+    if [[ "$FORCE" = "true" && -f "$_existing_compose" ]]; then
+        SSH_PORT=$(grep -oE '"[0-9]+:22"' "$_existing_compose" | tr -d '"' | cut -d: -f1)
+    fi
+    if [[ -z "$SSH_PORT" ]]; then
+        SSH_PORT=$(find_next_available_port "$_vm_type")
+        if [[ $? -ne 0 ]]; then
+            vde_error_port_in_use "all available ports"
+            return 1
+        fi
     fi
     vde_progress_info "Allocated SSH port: $SSH_PORT"
 
@@ -227,7 +241,7 @@ _create_one_vm() {
     vde_progress_info "Creating environment file..."
 
     local env_file
-    env_file="$VDE_ROOT_DIR/env-files/$RAW_NAME.env"
+    env_file="$VDE_ROOT_DIR/env-files/vde-$RAW_NAME.env"
 
     cat > "$env_file" <<EOF
 # Environment variables for $_vm_display development container

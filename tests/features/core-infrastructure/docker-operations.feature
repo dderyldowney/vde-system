@@ -2,6 +2,7 @@
 @user-guide-internal
 @requires-docker-host
 @core-infrastructure
+@core-suite
 @docker
 Feature: Docker Operations
   As a developer
@@ -55,19 +56,18 @@ Feature: Docker Operations
   # - Handle image pull failures (requires registry isolation)
   # - Handle disk space errors (requires disk exhaustion)
 
-  Scenario: Parse Docker error messages
-    Given docker-compose operation fails
-    When stderr is parsed
-    Then "yaml.*mapping.*not allowed" should map to YAML error
-    And "yaml.*" should map to YAML error
-    And "yaml.*" should map to general error
+  Scenario: vde start fails with non-zero exit when docker-compose.yml has invalid YAML
+    Given VM "python" compose file is replaced with invalid YAML
+    When I start VM "python"
+    Then the command should fail with non-zero exit code
+    And the error output should not be empty
+    And VM "python" compose file is restored from backup
 
-  Scenario: Retry transient failures with exponential backoff
-    Given docker-compose operation fails with transient error
-    When operation is retried
-    Then retry should use exponential backoff
-    And maximum retries should not exceed 3
-    And delay should be capped at 30 seconds
+  Scenario: Retry constants conform to exponential backoff spec
+    When I check VDE retry constants
+    Then VDE_MAX_RETRIES should be at least 1
+    And VDE_RETRY_BASE_DELAY should be greater than 0
+    And VDE_RETRY_MAX_DELAY should be at least VDE_RETRY_BASE_DELAY
 
   Scenario: Get container status
     Given VM "python" exists

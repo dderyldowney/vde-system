@@ -1,6 +1,7 @@
 # language: en
 @user-guide-internal
 @core-infrastructure
+@core-suite
 @unit
 Feature: Natural Language Parser
   As a developer

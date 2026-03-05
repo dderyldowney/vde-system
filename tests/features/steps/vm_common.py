@@ -45,9 +45,14 @@ def is_vde_available():
         return False
 
 
+def _vde_env():
+    """Return environment dict for vde CLI calls: logs to stderr, stdout is clean."""
+    return {**os.environ, "VDE_ROOT_DIR": str(VDE_ROOT), "VDE_LOG_OUTPUT": "stderr"}
+
+
 def docker_ps():
     """Get list of running Docker container names.
-    
+
     Returns:
         list: List of running container names, empty list if none or Docker unavailable
     """
@@ -55,15 +60,16 @@ def docker_ps():
 
 
 def docker_ps_list():
-    """List running VDE containers with details via vde-ps.
-    
+    """List running VDE containers with details via vde ps.
+
     Returns:
         list: List of dicts with container info (Names, etc.), empty list if none or unavailable
     """
     try:
         result = subprocess.run(
-            ['zsh', str(SCRIPTS_DIR / 'vde-ps'), '-q'],
-            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT)
+            ['zsh', str(SCRIPTS_DIR / 'vde'), 'ps', '-q'],
+            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
+            env=_vde_env()
         )
         containers = []
         for line in result.stdout.strip().split('\n'):
@@ -76,15 +82,16 @@ def docker_ps_list():
 
 
 def docker_list_containers():
-    """List running VDE container names via vde-ps.
-    
+    """List running VDE container names via vde ps.
+
     Returns:
         list: List of running container names, empty list if none or unavailable
     """
     try:
         result = subprocess.run(
-            ['zsh', str(SCRIPTS_DIR / 'vde-ps'), '-q'],
-            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT)
+            ['zsh', str(SCRIPTS_DIR / 'vde'), 'ps', '-q'],
+            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
+            env=_vde_env()
         )
         containers = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
         return containers
@@ -92,12 +99,13 @@ def docker_list_containers():
         return []
 
 def container_exists(container_name):
-    """Check if a VDE container exists (running or stopped) via vde-ps."""
+    """Check if a VDE container exists (running or stopped) via vde ps."""
     try:
         full_name = f"vde-{container_name.replace('vde-', '')}"
         result = subprocess.run(
-            ['zsh', str(SCRIPTS_DIR / 'vde-ps'), '-a', '-q'],
-            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT)
+            ['zsh', str(SCRIPTS_DIR / 'vde'), 'ps', '-a', '-q'],
+            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
+            env=_vde_env()
         )
         return full_name in result.stdout.split()
     except Exception:
@@ -105,19 +113,20 @@ def container_exists(container_name):
 
 
 def container_is_running(container_name):
-    """Check if a VDE container is currently running via vde-ps.
-    
+    """Check if a VDE container is currently running via vde ps.
+
     Args:
         container_name: Name of the container to check (with or without vde- prefix)
-        
+
     Returns:
         bool: True if container is running, False otherwise
     """
     try:
         full_name = f"vde-{container_name.replace('vde-', '')}"
         result = subprocess.run(
-            ['zsh', str(SCRIPTS_DIR / 'vde-ps'), '-q'],
-            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT)
+            ['zsh', str(SCRIPTS_DIR / 'vde'), 'ps', '-q'],
+            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
+            env=_vde_env()
         )
         return full_name in result.stdout.split()
     except Exception:
@@ -188,8 +197,9 @@ def wait_for_container(container_name, timeout=30):
     try:
         while time.time() - start_time < timeout:
             result = subprocess.run(
-                ['zsh', str(SCRIPTS_DIR / 'vde-ps'), '-q', '--filter', f'name={container_name}'],
-                capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT)
+                ['zsh', str(SCRIPTS_DIR / 'vde'), 'ps', '-q', '--filter', f'name={container_name}'],
+                capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
+                env=_vde_env()
             )
             if result.returncode == 0 and result.stdout.strip():
                 return True
@@ -613,7 +623,8 @@ def run_vde_command(command, timeout=120, context=None):
             capture_output=True,
             text=True,
             timeout=timeout,
-            cwd=str(VDE_ROOT)
+            cwd=str(VDE_ROOT),
+            env=_vde_env()
         )
         cmd_res = CommandResult(result.stdout, result.stderr, result.returncode, args=cmd)
     except subprocess.TimeoutExpired as e:

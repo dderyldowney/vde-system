@@ -17,12 +17,6 @@ services:
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y python3 python3-pip && /usr/sbin/sshd -D"
 
-    logging:
-      driver: "json-file"
-
-    healthcheck:
-      test: ["CMD", "ls"]
-
     ports:
       - "2213:22"
 
@@ -31,7 +25,7 @@ services:
       - ../../../logs/python:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
