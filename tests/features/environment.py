@@ -255,6 +255,7 @@ def before_scenario(context, scenario):
     context.last_output = ""
     context.last_error = ""
     context.last_exit_code = 0
+    context._unset_ssh_auth_sock = False
 
     # Skip @requires-docker-host scenarios when Docker is unavailable
     if "requires-docker-host" in scenario.effective_tags:
@@ -311,6 +312,13 @@ def after_scenario(context, scenario):
     # Restore ~/.ssh/vde/ from backup (SSH scenario isolation)
     _restore_vde_ssh_dir(getattr(context, '_vde_ssh_backup', None))
     context._vde_ssh_backup = None
+
+    # Remove test artifacts from public-ssh-keys/ to prevent cross-scenario pollution
+    pub_keys_dir = Path(VDE_ROOT) / "public-ssh-keys"
+    if pub_keys_dir.exists():
+        for f in pub_keys_dir.iterdir():
+            if f.is_file() and f.name not in ('.keep', '.gitignore') and not f.name.startswith('vde_'):
+                f.unlink(missing_ok=True)
 
     # Stop containers created during @requires-docker-host scenarios
     if "requires-docker-host" in scenario.effective_tags and _docker_host_available():
