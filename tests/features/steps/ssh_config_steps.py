@@ -153,12 +153,11 @@ def step_config_with_custom_settings(context):
     ssh_config = _get_ssh_config_path()
     _ensure_vde_ssh_dir()
     
-    if not ssh_config.exists():
-        ssh_config.write_text("""Host *
+    # Always write — Given steps must establish a known state, not "setup if missing"
+    ssh_config.write_text("""Host *
     AddKeysToAgent yes
     IdentitiesOnly no
 """)
-    
     ssh_config.chmod(0o600)
     context.config_with_custom = True
 
@@ -281,12 +280,12 @@ def step_known_hosts_exists_with_content(context):
     known_hosts = _get_known_hosts_path()
     _ensure_vde_ssh_dir()
     
-    if not known_hosts.exists():
-        known_hosts.write_text("""[localhost]:2213 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV python_vde
+    # Always write — Given steps must establish a known state, not "setup if missing"
+    known_hosts.write_text("""[localhost]:2213 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV python_vde
 [localhost]:2404 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5VVVVVVVVVVVVVVVVVV postgres_vde
 """)
-        known_hosts.chmod(0o644)
-    
+    known_hosts.chmod(0o644)
+    context.known_hosts_original_content = known_hosts.read_text()
     context.known_hosts_exists = True
 
 @given('~/.ssh/vde/known_hosts does not exist')
@@ -520,6 +519,13 @@ def step_public_ssh_keys_contains_files(context):
     test_pub_key.write_text("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAATEST test@example.com\n")
     context.public_keys_exist = True
 
+@given('VM "{vm_name}" is allocated port "{port}"')
+def step_vm_allocated_port(context, vm_name, port):
+    """Register VM with a port for VM-to-VM SSH config generation."""
+    if not hasattr(context, 'vms'):
+        context.vms = {}
+    context.vms[vm_name] = {'port': port}
+
 @given('VM "{vm_name}" is created with SSH port "{port}"')
 def step_vm_created_with_ssh_port(context, vm_name, port):
     """Context: VM exists with a specific SSH port."""
@@ -724,6 +730,23 @@ def step_ssh_config_generated(context):
             context.config_generated = True
             return
         
+        # Detect primary key: context.primary_key wins, then filesystem preference order
+        # Generate one if none exists so IdentityFile is always written
+        primary_key = getattr(context, 'primary_key', None)
+        if not primary_key:
+            for key_name in ("id_ed25519", "id_rsa", "id_ecdsa"):
+                if (VDE_SSH_DIR / key_name).exists():
+                    primary_key = key_name
+                    break
+        if not primary_key:
+            key_path = VDE_SSH_DIR / "id_ed25519"
+            subprocess.run(
+                ["ssh-keygen", "-t", "ed25519", "-f", str(key_path), "-N", "", "-C", "vde_test"],
+                capture_output=True
+            )
+            primary_key = "id_ed25519"
+        identity_file = f"\n    IdentityFile ~/.ssh/vde/{primary_key}"
+
         host_entry = f"""
 Host {host_name}
     HostName localhost
@@ -731,7 +754,7 @@ Host {host_name}
     User devuser
     ForwardAgent yes
     StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
+    UserKnownHostsFile /dev/null{identity_file}
 """
         content += host_entry
         ssh_config.write_text(content)
@@ -1265,13 +1288,10 @@ def step_backup_file_exists_at_path(context, path):
 @then('known_hosts backup file should exist at "{path}"')
 def step_known_hosts_backup_exists(context, path):
     """Verify known_hosts backup exists."""
-    backup_path = Path(path.replace("~", str(Path.home())))
-    # For VDE, this would be in ~/.ssh/vde/
-    if "~/.ssh/vde/" in path:
-        backup_path = VDE_SSH_DIR / path.split("/")[-1]
-    # Backup may not exist if known_hosts didn't exist
-    # Verify the directory exists
-    assert VDE_SSH_DIR.exists(), "VDE SSH directory should exist"
+    backup_path = VDE_SSH_DIR / path.split("/")[-1] if "~/.ssh/vde/" in path \
+        else Path(path.replace("~", str(Path.home())))
+    assert backup_path.exists(), f"Known_hosts backup file should exist at {backup_path}"
+    context.verified_backup_path = backup_path
 
 @then('merged entry should contain "{content}"')
 def step_merged_entry_contains(context, content):

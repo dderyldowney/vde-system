@@ -173,12 +173,30 @@ def before_feature(context, feature):
         os.environ["VDE_NETWORK"] = "vde-testing"
 
 
+def _docker_host_available() -> bool:
+    """Return True if a Docker daemon is reachable."""
+    try:
+        r = subprocess.run(
+            ["docker", "info"],
+            capture_output=True, timeout=5
+        )
+        return r.returncode == 0
+    except Exception:
+        return False
+
+
 def before_scenario(context, scenario):
     """Reset context and start parser process for unit tests."""
     context.last_output = ""
     context.last_error = ""
     context.last_exit_code = 0
-    
+
+    # Skip @requires-docker-host scenarios when Docker is unavailable
+    if "requires-docker-host" in scenario.effective_tags:
+        if not _docker_host_available():
+            scenario.skip("Docker host not available")
+            return
+
     # Check if this is a parser test (unit test)
     if hasattr(scenario, 'feature') and hasattr(scenario.feature, 'tags'):
         if '@unit' in scenario.feature.tags:
@@ -206,7 +224,14 @@ source {VDE_PARSER}
 
 
 def after_scenario(context, scenario):
-    """Cleanup parser process."""
+    """Cleanup parser process and SSH config test state."""
+    # Remove SSH files written by test scenarios to prevent state bleed
+    vde_ssh = Path.home() / '.ssh' / 'vde'
+    for filename in ('config', 'known_hosts', 'known_hosts.vde-backup'):
+        p = vde_ssh / filename
+        if p.exists():
+            p.unlink()
+
     if hasattr(context, '_parser_proc') and context._parser_proc:
         try:
             context._parser_proc.stdin.write('exit\n')

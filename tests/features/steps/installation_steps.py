@@ -75,6 +75,29 @@ def step_just_installed_vde(context):
     all_exist = all((vde_root_path / d).exists() for d in required_dirs)
     context.vde_installed = all_exist
 
+@when('I run "create-virtual-for python"')
+def step_run_create_virtual_for_python(context):
+    """Run create-virtual-for python --no-start and accept success or already-exists."""
+    script = Path(VDE_ROOT) / "scripts" / "create-virtual-for"
+    assert script.exists(), f"create-virtual-for script not found at {script}"
+    assert os.access(script, os.X_OK), "create-virtual-for is not executable"
+
+    result = subprocess.run(
+        [str(script), "python", "--no-start", "--quiet"],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "VDE_ROOT_DIR": str(VDE_ROOT)}
+    )
+
+    VDE_ERR_EXISTS = 6
+    assert result.returncode in (0, VDE_ERR_EXISTS), (
+        f"create-virtual-for exited {result.returncode}\n"
+        f"stdout: {result.stdout}\nstderr: {result.stderr}"
+    )
+    context.create_vm_output = result.stdout + result.stderr
+    context.create_vm_returncode = result.returncode
+
+
 @given('VDE is freshly installed')
 def step_freshly_installed(context):
     """Verify VDE is installed and check for VM configs."""
