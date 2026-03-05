@@ -38,6 +38,10 @@ services:
     networks:
       - vde-net
 
+    labels:
+      - "vde.type=service"
+      - "vde.name={{NAME}}"
+
 networks:
   vde-net:
     external: true

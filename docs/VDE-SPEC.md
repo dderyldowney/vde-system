@@ -2,9 +2,9 @@
 
 **Document Type:** Technical Implementation Specification
 **Project:** Virtual Development Environment (VDE)
-**Version:** 1.3.0
+**Version:** 1.4.0
 **Status:** AUTHORITATIVE SPECIFICATION
-**Last Updated:** 2026-03-04T12:00:00Z
+**Last Updated:** 2026-03-04T14:00:00Z
 
 > **MANDATE**: This document is the authoritative specification for the VDE project. All development, bug fixes, and implementation work MUST conform to this specification.
 >
@@ -449,6 +449,10 @@ readonly INTENT_HELP="help"
 # Returns: VDE_SUCCESS
 ```
 
+> **Implementation note:** The `docker_*` names are spec-required aliases. The primary internal
+> implementation uses `start_vm`, `stop_vm`, `restart_vm`, `get_vm_status` in `scripts/lib/vde-docker`.
+> The `docker_*` aliases are appended at the end of that file for spec compliance.
+
 ### 3.8 vde-templates
 
 **File:** `scripts/lib/vde-templates`
@@ -472,6 +476,10 @@ readonly INTENT_HELP="help"
 # Output: SSH config block to stdout
 # Returns: VDE_SUCCESS
 ```
+
+> **Implementation note:** The named renderers `render_language_template`, `render_service_template`,
+> and `render_ssh_entry` are spec-required wrappers over the generic `render_template()` function.
+> They are appended at the end of `scripts/lib/vde-templates`.
 
 ### 3.9 vde-naming
 
@@ -589,6 +597,9 @@ by `vde-init`, `ensure_vde_ssh_environment`, and `build-and-start`.
 #   --rebuild               Rebuild before starting
 #   --no-cache              Build without cache
 #   --update-ssh            Regenerate SSH config
+#
+# Dispatch: All commands first attempt parser-based dispatch (detect_intent → generate_plan →
+# execute_plan). If the parser returns no plan, falls back to direct script execution.
 ```
 
 ### 4.2 Direct Scripts
@@ -668,7 +679,7 @@ networks:
 services:
   {{NAME}}:
     image: {{IMAGE}}
-    container_name: {{NAME}}
+    container_name: vde-{{NAME}}
     ports:
       - "{{SSH_PORT}}:22"
       - "{{SERVICE_PORT}}:{{SERVICE_PORT}}"
