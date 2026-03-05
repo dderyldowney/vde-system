@@ -1,10 +1,9 @@
 # language: en
-@wip
 @user-guide-installation
 @requires-docker-host
+@docker
 @core-infrastructure
 @core-suite
-@docker
 Feature: Installation and Initial Setup
   As a developer
   I want to install and configure VDE on my system
@@ -75,6 +74,7 @@ Feature: Installation and Initial Setup
     And instructions should be provided for fixing permissions
     And setup should continue with a warning
 
+  @requires-docker-host
   Scenario: Create Docker network
     Given VDE is being installed
     When the first VM is created
@@ -122,6 +122,7 @@ Feature: Installation and Initial Setup
     And platform-specific adjustments should be made
     And the installation should succeed
 
+  @requires-docker-host
   Scenario: Docker image availability
     Given I'm setting up VDE for the first time
     When I create my first VM
@@ -129,6 +130,7 @@ Feature: Installation and Initial Setup
     And base images should be built if needed
     And I should see download/build progress
 
+  @requires-docker-host
   Scenario: Quick start after installation
     Given VDE is freshly installed
     When I want to start quickly

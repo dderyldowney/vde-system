@@ -157,6 +157,29 @@ def _restore_vde_ssh_dir(backup_tmpdir):
     shutil.rmtree(backup_tmpdir, ignore_errors=True)
 
 
+def _backup_configs_dir():
+    """Copy configs/ to a temp dir. Returns temp dir path or None."""
+    configs_dir = Path(VDE_ROOT) / 'configs'
+    if configs_dir.exists():
+        tmpdir = tempfile.mkdtemp(prefix='vde_configs_backup_')
+        shutil.copytree(str(configs_dir), os.path.join(tmpdir, 'configs'), symlinks=True)
+        return tmpdir
+    return None
+
+
+def _restore_configs_dir(backup_tmpdir):
+    """Restore configs/ from backup temp dir and remove temp dir."""
+    if backup_tmpdir is None:
+        return
+    configs_dir = Path(VDE_ROOT) / 'configs'
+    backup = Path(backup_tmpdir) / 'configs'
+    if configs_dir.exists():
+        shutil.rmtree(str(configs_dir))
+    if backup.exists():
+        shutil.copytree(str(backup), str(configs_dir), symlinks=True)
+    shutil.rmtree(backup_tmpdir, ignore_errors=True)
+
+
 def _restore_stale_compose_backups():
     """Restore any .yml.bak files left by killed test runs."""
     configs_dir = Path(VDE_ROOT) / "configs" / "docker"
@@ -209,6 +232,12 @@ def before_feature(context, feature):
                 vm_name = container.replace("vde-", "") if container.startswith("vde-") else container
                 run_vde_command(f"remove {vm_name}", timeout=30)
         run_vde_command("init --networks-only --testing", timeout=30)
+        return
+
+    if "user-guide-installation" in feature.tags:
+        # Back up configs/ — installation-setup scenarios mutate real config files
+        context._configs_backup = _backup_configs_dir()
+        print("[SETUP] Installation feature — configs/ backed up")
         return
 
     if "core-infrastructure" in feature.filename:
@@ -340,6 +369,11 @@ def after_scenario(context, scenario):
 
 def after_feature(context, feature):
     """Stop all VDE containers after any feature that required Docker."""
+    if "user-guide-installation" in feature.tags:
+        _restore_configs_dir(getattr(context, '_configs_backup', None))
+        context._configs_backup = None
+        print("[TEARDOWN] Installation feature — configs/ restored")
+
     if "requires-docker-host" in feature.tags and _docker_host_available():
         running = _get_running_vde_containers()
         if running:
