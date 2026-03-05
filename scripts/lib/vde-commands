@@ -535,3 +535,12 @@ vde_exec() {
         "$@"
     fi
 }
+
+# -----------------------
+# Short-form Aliases (§3.5 spec compliance)
+# -----------------------
+vde_list()    { vde_list_vms "$@"; }
+vde_create()  { vde_create_vm "$@"; }
+vde_start()   { vde_start_vm "$@"; }
+vde_stop()    { vde_stop_vm "$@"; }
+vde_restart() { vde_restart_vm "$@"; }

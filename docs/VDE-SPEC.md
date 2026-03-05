@@ -2,9 +2,9 @@
 
 **Document Type:** Technical Implementation Specification
 **Project:** Virtual Development Environment (VDE)
-**Version:** 1.1.0
+**Version:** 1.2.0
 **Status:** AUTHORITATIVE SPECIFICATION
-**Last Updated:** 2026-02-20T06:00:00Z
+**Last Updated:** 2026-03-04T00:00:00Z
 
 > **MANDATE**: This document is the authoritative specification for the VDE project. All development, bug fixes, and implementation work MUST conform to this specification.
 >
@@ -136,6 +136,10 @@ readonly VDE_ERR_PERMISSION=4
 readonly VDE_ERR_TIMEOUT=5
 readonly VDE_ERR_EXISTS=6
 readonly VDE_ERR_DEPENDENCY=7
+readonly VDE_ERR_DOCKER=8
+readonly VDE_ERR_LOCK=9
+readonly VDE_ERR_INVALID_DATA=10
+readonly VDE_ERR_CACHE_INVALID=11
 
 # Port Ranges
 readonly LANG_PORT_START=2200
@@ -267,10 +271,6 @@ readonly VDE_SSH_IDENTITY="${VDE_SSH_DIR}/id_ed25519"
 # Output: rendered file to stdout
 # Returns: VDE_SUCCESS or VDE_ERR_NOT_FOUND (template missing)
 
-# merge_ssh_config_entry HOST PORT USER
-# Add SSH config entry atomically
-# Args: HOST (string), PORT (number), USER (string)
-# Returns: VDE_SUCCESS or VDE_ERR_EXISTS (entry exists)
 ```
 
 ### 3.4 vde-parser
@@ -406,9 +406,9 @@ readonly INTENT_HELP="help"
 # Args: VM_NAME (string), PORT (number)
 # Returns: VDE_SUCCESS
 
-# merge_ssh_config_entry ENTRY
-# Merge entry into SSH config atomically
-# Args: ENTRY (string - full config block)
+# merge_ssh_config_entry HOST PORT DISPLAY_NAME [IDENTITY_FILE]
+# Merge SSH config entry atomically (idempotent — replaces existing entry)
+# Args: HOST (string), PORT (number), DISPLAY_NAME (string), IDENTITY_FILE (path, default: VDE_SSH_IDENTITY)
 # Returns: VDE_SUCCESS or error code
 ```
 
@@ -617,33 +617,46 @@ the raw name (e.g., `python`); the template prepends `vde-` for the container
 and service keys.
 
 ```yaml
+# Template for language VMs
+# Variables: {{NAME}}, {{SSH_PORT}}, {{INSTALL_CMD}}
+name: vde-{{NAME}}
 services:
   vde-{{NAME}}:
     build:
-      context: ../../
+      context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: vde-{{NAME}}:latest
     container_name: vde-{{NAME}}
+    hostname: vde-{{NAME}}
+    restart: unless-stopped
+    command: sh -c "{{INSTALL_CMD}} && /usr/sbin/sshd -D"
+
     ports:
       - "{{SSH_PORT}}:22"
+
     volumes:
-      - {{WORKSPACE}}:/home/devuser/workspace
-      - {{LOGS}}:/home/devuser/logs
+      - ../../../projects/{{NAME}}:/home/devuser/workspace
+      - ../../../logs/{{NAME}}:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
       - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
-      - ../../public-ssh-keys:/public-ssh-keys:ro
+
     environment:
-      - SSH_PORT={{SSH_PORT}}
       - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../env-files/vde-{{NAME}}.env
+
     networks:
       - vde-net
-    restart: unless-stopped
-    user: devuser
-    labels:
-      - "vde.type=language"
-      - "vde.name=vde-{{NAME}}"
 
 networks:
   vde-net:
-    name: vde-net
     external: true
 ```
 

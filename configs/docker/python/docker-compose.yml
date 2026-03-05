@@ -39,3 +39,9 @@ services:
 networks:
   vde-net:
     external: true
+
+    logging:
+      driver: "json-file"
+
+    healthcheck:
+      test: ["CMD", "ls"]
