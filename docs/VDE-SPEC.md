@@ -2,9 +2,9 @@
 
 **Document Type:** Technical Implementation Specification
 **Project:** Virtual Development Environment (VDE)
-**Version:** 1.2.0
+**Version:** 1.3.0
 **Status:** AUTHORITATIVE SPECIFICATION
-**Last Updated:** 2026-03-04T00:00:00Z
+**Last Updated:** 2026-03-04T12:00:00Z
 
 > **MANDATE**: This document is the authoritative specification for the VDE project. All development, bug fixes, and implementation work MUST conform to this specification.
 >
@@ -389,8 +389,8 @@ readonly INTENT_HELP="help"
 # Output: key filename to stdout
 # Returns: VDE_SUCCESS or VDE_ERR_NOT_FOUND
 
-# generate_ssh_key
-# Generate new ed25519 SSH key
+# validate_or_create_ssh_key
+# Generate new ed25519 SSH key if none exists, or validate existing key
 # Returns: VDE_SUCCESS or error code
 
 # sync_ssh_keys_to_vde
@@ -1059,14 +1059,18 @@ Each requirement maps to BDD scenarios in:
 
 | Feature | Test File |
 |---------|-----------|
-| Parser | `tests/features/docker-free/natural-language-parser.feature` |
-| Cache | `tests/features/docker-free/cache-system.feature` |
-| Shell | `tests/features/docker-free/shell-compatibility.feature` |
-| VM Lifecycle | `tests/features/docker-required/vm-lifecycle.feature` |
-| SSH Config | `tests/features/docker-required/ssh-configuration.feature` |
-| Port Mgmt | `tests/features/docker-required/port-management.feature` |
-| Errors | `tests/features/docker-required/error-handling-and-recovery.feature` |
-| Docker | `tests/features/docker-required/docker-operations.feature` |
+| Parser | `tests/features/core-infrastructure/parser.feature` |
+| Cache | `tests/features/core-infrastructure/cache-system.feature` |
+| Shell | `tests/features/core-infrastructure/shell-compatibility.feature` |
+| VM Lifecycle (critical path) | `tests/features/core-infrastructure/critical-path.feature` |
+| Infrastructure invariants | `tests/features/core-infrastructure/critical-infrastructure.feature` |
+| SSH Config | `tests/features/core-infrastructure/ssh-configuration.feature` |
+| SSH Commands | `tests/features/core-infrastructure/vde-ssh-commands.feature` |
+| Error Handling | `tests/features/core-infrastructure/error-path.feature` |
+| Docker Operations | `tests/features/core-infrastructure/docker-operations.feature` (@requires-docker-host) |
+| Installation | `tests/features/core-infrastructure/installation-setup.feature` |
+
+All features live under `tests/features/core-infrastructure/`. Features tagged `@requires-docker-host` or `@docker` require a live Docker daemon and are excluded from the default `python3 -m behave` run (see `behave.ini`). Run with `--tags @docker` to include them.
 
 ---
 
