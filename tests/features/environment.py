@@ -234,10 +234,10 @@ def before_feature(context, feature):
         run_vde_command("init --networks-only --testing", timeout=30)
         return
 
-    if "user-guide-installation" in feature.tags:
-        # Back up configs/ — installation-setup scenarios mutate real config files
+    if "user-guide-installation" in feature.tags or "user-guide-internal" in feature.tags:
+        # Back up configs/ — these features mutate real config files
         context._configs_backup = _backup_configs_dir()
-        print("[SETUP] Installation feature — configs/ backed up")
+        print(f"[SETUP] {feature.name} — configs/ backed up")
         return
 
     if "core-infrastructure" in feature.filename:
@@ -369,10 +369,10 @@ def after_scenario(context, scenario):
 
 def after_feature(context, feature):
     """Stop all VDE containers after any feature that required Docker."""
-    if "user-guide-installation" in feature.tags:
+    if "user-guide-installation" in feature.tags or "user-guide-internal" in feature.tags:
         _restore_configs_dir(getattr(context, '_configs_backup', None))
         context._configs_backup = None
-        print("[TEARDOWN] Installation feature — configs/ restored")
+        print(f"[TEARDOWN] {feature.name} — configs/ restored")
 
     if "requires-docker-host" in feature.tags and _docker_host_available():
         running = _get_running_vde_containers()

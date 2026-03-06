@@ -1,10 +1,8 @@
 # language: en
-@wip
 @user-guide-internal
-@wip
 @requires-docker-host
+@core-suite
 Feature: Configuration Management
-  # SKIPPED: Configuration management tests need VDE implementation updates - deferring to Phase 3
   As a developer
   I want to configure VDE to match my project needs
   So that my development environment matches my requirements
