@@ -1,7 +1,7 @@
 # language: en
 @user-guide-connecting
 @requires-docker-host
-@wip
+@core-suite
 Feature: SSH Agent Forwarding for External Git Operations
   As a developer working inside VMs
   I want to use my host's SSH keys for Git operations
