@@ -158,17 +158,20 @@ def _restore_vde_ssh_dir(backup_tmpdir):
 
 
 def _backup_configs_dir():
-    """Copy configs/ to a temp dir. Returns temp dir path or None."""
+    """Copy configs/ and scripts/data/vm-types.json to a temp dir. Returns temp dir path or None."""
     configs_dir = Path(VDE_ROOT) / 'configs'
     if configs_dir.exists():
         tmpdir = tempfile.mkdtemp(prefix='vde_configs_backup_')
         shutil.copytree(str(configs_dir), os.path.join(tmpdir, 'configs'), symlinks=True)
+        vm_types_json = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.json'
+        if vm_types_json.exists():
+            shutil.copy2(str(vm_types_json), os.path.join(tmpdir, 'vm-types.json'))
         return tmpdir
     return None
 
 
 def _restore_configs_dir(backup_tmpdir):
-    """Restore configs/ from backup temp dir and remove temp dir."""
+    """Restore configs/ and scripts/data/vm-types.json from backup temp dir."""
     if backup_tmpdir is None:
         return
     configs_dir = Path(VDE_ROOT) / 'configs'
@@ -177,6 +180,9 @@ def _restore_configs_dir(backup_tmpdir):
         shutil.rmtree(str(configs_dir))
     if backup.exists():
         shutil.copytree(str(backup), str(configs_dir), symlinks=True)
+    vm_types_backup = Path(backup_tmpdir) / 'vm-types.json'
+    if vm_types_backup.exists():
+        shutil.copy2(str(vm_types_backup), str(Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.json'))
     shutil.rmtree(backup_tmpdir, ignore_errors=True)
 
 

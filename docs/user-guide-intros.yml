@@ -30,9 +30,437 @@ sections:
 
       ## Let's Get You Set Up! 🚀
 
-      If you don't have Docker Desktop or git installed yet, that's totally fine! We'll hold your hand through the whole process. Just find your section below — Windows, Mac, or Linux — and follow the steps.
+      If you don't have Zsh/Bash, git, or Docker Desktop installed yet, that's totally fine! We'll hold your hand through the whole process. Just find your section below — Windows, Mac, or Linux — and follow the steps.
 
       You've got this!
+
+      ---
+
+      ## Installing Homebrew (macOS Only)
+
+      Homebrew is a free package manager for macOS — think of it as an "app store for the command line" that makes installing developer tools super easy. It's totally optional, but if you plan to use it to install Zsh or Git, set it up here first so it's ready when you need it.
+
+      **Why use Homebrew?**
+      - One simple command installs almost any development tool
+      - Keeps your tools up to date easily
+      - Used by the vast majority of Mac developers
+
+      **Don't want to use Homebrew?** That's perfectly fine! We'll show you how to install Zsh and Git both with and without it.
+
+      > **Note:** Homebrew is macOS-only. Windows users will use Git Bash and the Git installer. Linux users have their own built-in package managers. Just skip this section if you're not on a Mac!
+
+      ### For macOS Users
+
+      **Step 1: Check if Homebrew is already installed**
+
+      Open **Terminal** (press Command+Space, type "Terminal", press Enter) and run:
+
+      ```
+      brew --version
+      ```
+
+      If you see a version number like `Homebrew 4.x.x`, you already have it — **skip ahead to the next section!**
+
+      **Step 2: Install Homebrew**
+
+      Paste this command into Terminal and press Enter:
+
+      ```bash
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      ```
+
+      Follow the prompts — you'll need to enter your Mac password when asked. The install may take a few minutes.
+
+      **On Apple Silicon (M1/M2/M3 Macs):** Homebrew installs to `/opt/homebrew`. After installation, follow the on-screen instructions to add Homebrew to your PATH. They'll look something like:
+
+      ```bash
+      echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+      ```
+
+      **Step 3: Verify Homebrew is working**
+
+      ```
+      brew --version
+      ```
+
+      You should see something like `Homebrew 4.x.x` — you're all set! 🍺
+
+      ---
+
+      ## Installing Zsh and Bash
+
+      Okay, quick confession: "shell" is just a fancy name for the program that runs in your terminal and understands your commands. VDE needs a modern one — specifically **Zsh 5.0+** or **Bash 4.0+**. Sound scary? Don't worry, we'll sort you out!
+
+      **Why does VDE need this?**
+      - VDE's commands are written in shell language (fancy nerd talk for "scripts that run in your terminal")
+      - Older shells don't understand some of the cool tricks we use
+      - The good news: Zsh comes standard on modern Macs, and most Linux has modern Bash
+
+      Think of it like VDE speaks a specific dialect, and we need to make sure your terminal understands it! 🗣️
+
+      ### For Windows Users
+
+      #### The Good News: Git for Windows Includes Bash!
+
+      If you installed Git for Windows (which you did in the previous section), you **already have Bash**! Git for Windows includes a program called "Git Bash" that gives you a modern Bash shell.
+
+      **How to check if you have it:**
+
+      1. Press the **Windows key** and type **"Git Bash"**
+      2. If you see "Git Bash" in the results, click it to open
+      3. A terminal window will open - this is your Bash shell!
+      4. Type this and press Enter:
+         ```
+         bash --version
+         ```
+      5. You should see something like `GNU bash, version 5.x.x` - this is perfect!
+
+      **If you don't see Git Bash:**
+      - Reinstall Git for Windows using the instructions from the "Installing Git" section
+      - Make sure to select "Git Bash" as one of the components during installation
+
+      #### Installing Zsh on Windows (Optional)
+
+      Zsh is available on Windows through WSL (Windows Subsystem for Linux):
+
+      **If you already have WSL installed (from the Docker section):**
+
+      1. Open **PowerShell** and run:
+         ```
+         wsl
+         ```
+      2. Once in WSL, install Zsh:
+         ```bash
+         sudo apt-get update
+         sudo apt-get install zsh
+         ```
+      3. Check the version:
+         ```bash
+         zsh --version
+         ```
+      4. You should see something like `zsh 5.x.x or greater`
+
+      **If you don't have WSL:**
+      - Don't worry! Git Bash is sufficient for VDE
+      - You can install WSL later if you want to use Zsh
+
+      #### What Shell Should You Use?
+
+      **For VDE on Windows:**
+      - **Git Bash** (recommended) - Already installed with Git, works great
+      - **WSL + Zsh** (optional) - More powerful, but requires WSL setup
+
+      ---
+
+      ### For macOS (Mac) Users
+
+      #### The Good News: You Almost Certainly Already Have Zsh!
+
+      Modern macOS comes with Zsh as the default shell (since macOS Catalina).
+
+      **How to check what shell you have:**
+
+      1. Open **Terminal** (press Command+Space, type "Terminal", press Enter)
+      2. Check if Zsh is running by default:
+         ```
+         echo $SHELL
+         ```
+      3. If you see `/bin/zsh`, you're already using Zsh - great!
+      4. Check the Zsh version:
+         ```
+         zsh --version
+         ```
+      5. You should see `zsh 5.x.x or greater` - this is perfect!
+
+      #### If You Need to Install or Update Zsh
+
+      **Check if you need an update:**
+      ```bash
+      zsh --version
+      ```
+
+      If the version is less than 5.0, or if Zsh isn't installed:
+
+      **Option 1: Use Homebrew (Easiest)**
+
+      1. If you installed Homebrew (from the section above), install the latest Zsh:
+         ```bash
+         brew install zsh
+         ```
+
+      2. Set Zsh as your default shell:
+         ```bash
+         chsh -s /bin/zsh
+         ```
+         (You'll need to enter your password)
+
+      3. Close and reopen Terminal - you're now using Zsh!
+
+      **Option 2: macOS Already Has Zsh (Just Need to Switch)**
+
+      If Zsh is installed but not your default:
+
+      1. Check if Zsh exists:
+         ```bash
+         ls /bin/zsh
+         ```
+      2. If it exists, switch to it:
+         ```bash
+         chsh -s /bin/zsh
+         ```
+      3. Close and reopen Terminal
+
+      #### Installing Bash on macOS (Optional)
+
+      macOS comes with Bash, but it's an older version (3.2.x). For VDE, you can use either Zsh or install a modern Bash.
+
+      **If you want the latest Bash:**
+
+      ```bash
+      brew install bash
+      ```
+
+      Check the version:
+      ```bash
+      brew list bash | grep bin
+      # This shows where bash is installed, usually /usr/local/bin/bash
+      /usr/local/bin/bash --version
+      ```
+
+      You should see `bash 5.x.x or greater`
+
+      #### What Shell Should You Use?
+
+      **For VDE on macOS:**
+      - **Zsh** (recommended) - Already installed, modern, and is the macOS default
+      - **Bash** (optional) - Install via Homebrew if you prefer Bash
+
+      ---
+
+      ### For Linux Users
+
+      #### Check What You Already Have
+
+      Most modern Linux distributions come with modern versions of Bash and Zsh pre-installed.
+
+      **Check your Bash version:**
+      ```bash
+      bash --version
+      ```
+
+      **Check if Zsh is installed:**
+      ```bash
+      zsh --version
+      ```
+
+      **What you should see:**
+      - Bash: `version 4.0 or greater` (most Linux has 4.x or 5.x)
+      - Zsh: `version 5.0 or greater` (if installed)
+
+      #### If You Need to Install or Upgrade
+
+      **For Ubuntu/Debian:**
+
+      ```bash
+      # Install or update Bash
+      sudo apt-get update
+      sudo apt-get install bash
+
+      # Install Zsh
+      sudo apt-get install zsh
+      ```
+
+      **For Fedora:**
+
+      ```bash
+      # Install or update Bash
+      sudo dnf install bash
+
+      # Install Zsh
+      sudo dnf install zsh
+      ```
+
+      **For CentOS/Red Hat:**
+
+      ```bash
+      # Install or update Bash
+      sudo yum install bash
+
+      # Install Zsh
+      sudo yum install zsh
+      ```
+
+      **For Arch Linux:**
+
+      ```bash
+      # Install or update Bash
+      sudo pacman -S bash
+
+      # Install Zsh
+      sudo pacman -S zsh
+      ```
+
+      #### Verify Your Installation
+
+      **Check Bash version:**
+      ```bash
+      bash --version
+      # Should show 4.0 or greater
+      ```
+
+      **Check Zsh version:**
+      ```bash
+      zsh --version
+      # Should show 5.0 or greater
+      ```
+
+      #### Make Zsh Your Default Shell (Optional)
+
+      If you want to use Zsh instead of Bash as your daily shell:
+
+      ```bash
+      chsh -s $(which zsh)
+      ```
+
+      Log out and log back in for the change to take effect.
+
+      #### What Shell Should You Use?
+
+      **For VDE on Linux:**
+      - **Bash** (recommended) - Almost certainly already installed and modern
+      - **Zsh** (optional) - Install if you prefer Zsh's features
+
+      ---
+
+      ## Installing Git
+
+      Git is like a digital delivery truck — it downloads code from the internet (like the VDE code) right to your computer. Handy little thing! 📦
+
+      ### For Windows Users
+
+      #### Option 1: The Easiest Way (Git for Windows)
+
+      **Step 1: Download Git for Windows**
+
+      1. Open your web browser
+      2. Go to: **https://github.com/git-guides/install-git**
+      3. Look for the **Windows** section
+      4. Click the link that says **"Click here to download"** (or go directly to https://git-scm.com/download/win)
+      5. The file will be named something like `Git-2.43.0-64-bit.exe`
+
+      **Step 2: Install Git**
+
+      1. When the download finishes, click the file to run it
+      2. If Windows asks for permission, click **"Yes"**
+      3. Click **"Next"** on the welcome screen
+      4. Keep clicking **"Next"** to accept all the default settings (they're good for most people)
+      5. On the "Choosing the default editor" screen, **Vim** will be selected - we recommend changing this to **Notepad** or **Notepad++** (easier to use)
+      6. Keep clicking **"Next"** through the rest
+      7. On the final screen, click **"Install"**
+      8. Wait for it to finish, then click **"Finish"**
+
+      **Step 3: Verify Git is Installed**
+
+      1. Press the **Windows key**, type **"PowerShell"**, and open it
+      2. Type this command and press Enter:
+         ```
+         git --version
+         ```
+      3. You should see something like `git version 2.43.0.windows.1`
+
+      **🎊 Sweet!** Git is ready to go on Windows! Halfway there!
+
+      ---
+
+      ### For macOS (Mac) Users
+
+      #### The Good News: You Might Already Have Git!
+
+      Macs come with Git built-in! Let's check if you're all set:
+
+      1. Open **Terminal** (press Command+Space, type "Terminal", press Enter)
+      2. Type this and press Enter:
+         ```
+         git --version
+         ```
+      3. If you see a version number like `git version 2.39.0`, you already have Git! **You're done!**
+
+      #### If You Need to Install Git
+
+      If you don't have Git or want a newer version, here's how:
+
+      **Option 1: Install with Homebrew (Easiest)**
+
+      If you installed Homebrew (from the section above), open Terminal and run:
+      ```
+      brew install git
+      ```
+
+      **Option 2: Download from Git Website**
+
+      1. Go to: **https://github.com/git-guides/install-git**
+      2. Look for the **macOS** section
+      3. Click the download link (or go to https://git-scm.com/download/mac)
+      4. This will download a `.dmg` file
+      5. Double-click the file to open it
+      6. Follow the same steps as installing Docker (drag to Applications)
+
+      **Verify Git is Working:**
+
+      In Terminal, type:
+      ```
+      git --version
+      ```
+
+      You should see a version number. **✅ Done!** You've got Git!
+
+      ---
+
+      ### For Linux Users
+
+      #### The Good News: Most Linux Has Git Already!
+
+      Linux is usually prepared for everything. Let's see:
+
+      1. Open your terminal
+      2. Type:
+         ```
+         git --version
+         ```
+      3. If you see a version, you're done!
+
+      #### If You Need to Install Git
+
+      **For Ubuntu/Debian:**
+      ```bash
+      sudo apt-get update
+      sudo apt-get install git
+      ```
+
+      **For Fedora:**
+      ```bash
+      sudo dnf install git
+      ```
+
+      **For CentOS/Red Hat:**
+      ```bash
+      sudo yum install git
+      ```
+
+      **For Arch Linux:**
+      ```bash
+      sudo pacman -S git
+      ```
+
+      **Verify Git is Working:**
+
+      In your terminal, type:
+      ```
+      git --version
+      ```
+
+      You should see a version number. **✅ You're set!**
 
       ---
 
@@ -252,392 +680,6 @@ sections:
       You should see something like `Docker version 24.x.x, build xxxxx`
 
       **🔥 Boom!** Docker is running on Linux! You're on fire!
-
-      ---
-
-      ## Installing Git
-
-      Git is like a digital delivery truck — it downloads code from the internet (like the VDE code) right to your computer. Handy little thing! 📦
-
-      ### For Windows Users
-
-      #### Option 1: The Easiest Way (Git for Windows)
-
-      **Step 1: Download Git for Windows**
-
-      1. Open your web browser
-      2. Go to: **https://github.com/git-guides/install-git**
-      3. Look for the **Windows** section
-      4. Click the link that says **"Click here to download"** (or go directly to https://git-scm.com/download/win)
-      5. The file will be named something like `Git-2.43.0-64-bit.exe`
-
-      **Step 2: Install Git**
-
-      1. When the download finishes, click the file to run it
-      2. If Windows asks for permission, click **"Yes"**
-      3. Click **"Next"** on the welcome screen
-      4. Keep clicking **"Next"** to accept all the default settings (they're good for most people)
-      5. On the "Choosing the default editor" screen, **Vim** will be selected - we recommend changing this to **Notepad** or **Notepad++** (easier to use)
-      6. Keep clicking **"Next"** through the rest
-      7. On the final screen, click **"Install"**
-      8. Wait for it to finish, then click **"Finish"**
-
-      **Step 3: Verify Git is Installed**
-
-      1. Press the **Windows key**, type **"PowerShell"**, and open it
-      2. Type this command and press Enter:
-         ```
-         git --version
-         ```
-      3. You should see something like `git version 2.43.0.windows.1`
-
-      **🎊 Sweet!** Git is ready to go on Windows! Halfway there!
-
-      ---
-
-      ### For macOS (Mac) Users
-
-      #### The Good News: You Might Already Have Git!
-
-      Macs come with Git built-in! Let's check if you're all set:
-
-      1. Open **Terminal** (press Command+Space, type "Terminal", press Enter)
-      2. Type this and press Enter:
-         ```
-         git --version
-         ```
-      3. If you see a version number like `git version 2.39.0`, you already have Git! **You're done!**
-
-      #### If You Need to Install Git
-
-      If you don't have Git or want a newer version, here's how:
-
-      **Option 1: Install with Homebrew (Easiest)**
-
-      1. Open Terminal
-      2. First, check if you have Homebrew (a package installer for Mac):
-         ```
-         brew --version
-         ```
-      3. If you see a version, great! Install Git with:
-         ```
-         brew install git
-         ```
-      4. If you DON'T have Homebrew, you can install it first:
-         ```
-         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.zsh)"
-         ```
-         Then install Git with: `brew install git`
-
-      **Option 2: Download from Git Website**
-
-      1. Go to: **https://github.com/git-guides/install-git**
-      2. Look for the **macOS** section
-      3. Click the download link (or go to https://git-scm.com/download/mac)
-      4. This will download a `.dmg` file
-      5. Double-click the file to open it
-      6. Follow the same steps as installing Docker (drag to Applications)
-
-      **Verify Git is Working:**
-
-      In Terminal, type:
-      ```
-      git --version
-      ```
-
-      You should see a version number. **✅ Done!** You've got Git!
-
-      ---
-
-      ### For Linux Users
-
-      #### The Good News: Most Linux Has Git Already!
-
-      Linux is usually prepared for everything. Let's see:
-
-      1. Open your terminal
-      2. Type:
-         ```
-         git --version
-         ```
-      3. If you see a version, you're done!
-
-      #### If You Need to Install Git
-
-      **For Ubuntu/Debian:**
-      ```bash
-      sudo apt-get update
-      sudo apt-get install git
-      ```
-
-      **For Fedora:**
-      ```bash
-      sudo dnf install git
-      ```
-
-      **For CentOS/Red Hat:**
-      ```bash
-      sudo yum install git
-      ```
-
-      **For Arch Linux:**
-      ```bash
-      sudo pacman -S git
-      ```
-
-      **Verify Git is Working:**
-
-      In your terminal, type:
-      ```
-      git --version
-      ```
-
-      You should see a version number. **✅ You're set!**
-
-      ---
-
-      ## Installing Zsh and Bash
-
-      Okay, quick confession: "shell" is just a fancy name for the program that runs in your terminal and understands your commands. VDE needs a modern one — specifically **Zsh 5.0+** or **Bash 4.0+**. Sound scary? Don't worry, we'll sort you out!
-
-      **Why does VDE need this?**
-      - VDE's commands are written in shell language (fancy nerd talk for "scripts that run in your terminal")
-      - Older shells don't understand some of the cool tricks we use
-      - The good news: Zsh comes standard on modern Macs, and most Linux has modern Bash
-
-      Think of it like VDE speaks a specific dialect, and we need to make sure your terminal understands it! 🗣️
-
-      ### For Windows Users
-
-      #### The Good News: Git for Windows Includes Bash!
-
-      If you installed Git for Windows (which you did in the previous section), you **already have Bash**! Git for Windows includes a program called "Git Bash" that gives you a modern Bash shell.
-
-      **How to check if you have it:**
-
-      1. Press the **Windows key** and type **"Git Bash"**
-      2. If you see "Git Bash" in the results, click it to open
-      3. A terminal window will open - this is your Bash shell!
-      4. Type this and press Enter:
-         ```
-         bash --version
-         ```
-      5. You should see something like `GNU bash, version 5.x.x` - this is perfect!
-
-      **If you don't see Git Bash:**
-      - Reinstall Git for Windows using the instructions from the "Installing Git" section
-      - Make sure to select "Git Bash" as one of the components during installation
-
-      #### Installing Zsh on Windows (Optional)
-
-      Zsh is available on Windows through WSL (Windows Subsystem for Linux):
-
-      **If you already have WSL installed (from the Docker section):**
-
-      1. Open **PowerShell** and run:
-         ```
-         wsl
-         ```
-      2. Once in WSL, install Zsh:
-         ```bash
-         sudo apt-get update
-         sudo apt-get install zsh
-         ```
-      3. Check the version:
-         ```bash
-         zsh --version
-         ```
-      4. You should see something like `zsh 5.x.x or greater`
-
-      **If you don't have WSL:**
-      - Don't worry! Git Bash is sufficient for VDE
-      - You can install WSL later if you want to use Zsh
-
-      #### What Shell Should You Use?
-
-      **For VDE on Windows:**
-      - **Git Bash** (recommended) - Already installed with Git, works great
-      - **WSL + Zsh** (optional) - More powerful, but requires WSL setup
-
-      ---
-
-      ### For macOS (Mac) Users
-
-      #### The Good News: You Almost Certainly Already Have Zsh!
-
-      Modern macOS comes with Zsh as the default shell (since macOS Catalina).
-
-      **How to check what shell you have:**
-
-      1. Open **Terminal** (press Command+Space, type "Terminal", press Enter)
-      2. Check if Zsh is running by default:
-         ```
-         echo $SHELL
-         ```
-      3. If you see `/bin/zsh`, you're already using Zsh - great!
-      4. Check the Zsh version:
-         ```
-         zsh --version
-         ```
-      5. You should see `zsh 5.x.x or greater` - this is perfect!
-
-      #### If You Need to Install or Update Zsh
-
-      **Check if you need an update:**
-      ```bash
-      zsh --version
-      ```
-
-      If the version is less than 5.0, or if Zsh isn't installed:
-
-      **Option 1: Use Homebrew (Easiest)**
-
-      1. If you have Homebrew (from the Git section), install the latest Zsh:
-         ```bash
-         brew install zsh
-         ```
-
-      2. Set Zsh as your default shell:
-         ```bash
-         chsh -s /bin/zsh
-         ```
-         (You'll need to enter your password)
-
-      3. Close and reopen Terminal - you're now using Zsh!
-
-      **Option 2: macOS Already Has Zsh (Just Need to Switch)**
-
-      If Zsh is installed but not your default:
-
-      1. Check if Zsh exists:
-         ```bash
-         ls /bin/zsh
-         ```
-      2. If it exists, switch to it:
-         ```bash
-         chsh -s /bin/zsh
-         ```
-      3. Close and reopen Terminal
-
-      #### Installing Bash on macOS (Optional)
-
-      macOS comes with Bash, but it's an older version (3.2.x). For VDE, you can use either Zsh or install a modern Bash.
-
-      **If you want the latest Bash:**
-
-      ```bash
-      brew install bash
-      ```
-
-      Check the version:
-      ```bash
-      brew list bash | grep bin
-      # This shows where bash is installed, usually /usr/local/bin/bash
-      /usr/local/bin/bash --version
-      ```
-
-      You should see `bash 5.x.x or greater`
-
-      #### What Shell Should You Use?
-
-      **For VDE on macOS:**
-      - **Zsh** (recommended) - Already installed, modern, and is the macOS default
-      - **Bash** (optional) - Install via Homebrew if you prefer Bash
-
-      ---
-
-      ### For Linux Users
-
-      #### Check What You Already Have
-
-      Most modern Linux distributions come with modern versions of Bash and Zsh pre-installed.
-
-      **Check your Bash version:**
-      ```bash
-      bash --version
-      ```
-
-      **Check if Zsh is installed:**
-      ```bash
-      zsh --version
-      ```
-
-      **What you should see:**
-      - Bash: `version 4.0 or greater` (most Linux has 4.x or 5.x)
-      - Zsh: `version 5.0 or greater` (if installed)
-
-      #### If You Need to Install or Upgrade
-
-      **For Ubuntu/Debian:**
-
-      ```bash
-      # Install or update Bash
-      sudo apt-get update
-      sudo apt-get install bash
-
-      # Install Zsh
-      sudo apt-get install zsh
-      ```
-
-      **For Fedora:**
-
-      ```bash
-      # Install or update Bash
-      sudo dnf install bash
-
-      # Install Zsh
-      sudo dnf install zsh
-      ```
-
-      **For CentOS/Red Hat:**
-
-      ```bash
-      # Install or update Bash
-      sudo yum install bash
-
-      # Install Zsh
-      sudo yum install zsh
-      ```
-
-      **For Arch Linux:**
-
-      ```bash
-      # Install or update Bash
-      sudo pacman -S bash
-
-      # Install Zsh
-      sudo pacman -S zsh
-      ```
-
-      #### Verify Your Installation
-
-      **Check Bash version:**
-      ```bash
-      bash --version
-      # Should show 4.0 or greater
-      ```
-
-      **Check Zsh version:**
-      ```bash
-      zsh --version
-      # Should show 5.0 or greater
-      ```
-
-      #### Make Zsh Your Default Shell (Optional)
-
-      If you want to use Zsh instead of Bash as your daily shell:
-
-      ```bash
-      chsh -s $(which zsh)
-      ```
-
-      Log out and log back in for the change to take effect.
-
-      #### What Shell Should You Use?
-
-      **For VDE on Linux:**
-      - **Bash** (recommended) - Almost certainly already installed and modern
-      - **Zsh** (optional) - Install if you prefer Zsh's features
 
       ---
 
