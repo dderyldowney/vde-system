@@ -15,9 +15,7 @@ import subprocess
 from pathlib import Path
 from behave import given, when, then
 from behave.api.async_step import async_run_until_complete
-
-# VDE paths - use environment or defaults
-VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR", "/Users/dderyldowney/dev"))
+from config import VDE_ROOT
 VDE_SSH_DIR = Path.home() / ".ssh" / "vde"
 PUBLIC_SSH_KEYS_DIR = VDE_ROOT / "public-ssh-keys"
 

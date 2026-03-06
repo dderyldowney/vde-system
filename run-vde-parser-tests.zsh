@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 echo "Running vde-parser unit tests..."
-cd /Users/dderyldowney/dev || exit
+cd "${0:a:h}" || exit
 echo "1. Running vde-parser.test.zsh..."
 time zsh tests/unit/vde-parser.test.zsh
 echo -e "\n2. Running test_vde_parser_comprehensive.zsh..."
