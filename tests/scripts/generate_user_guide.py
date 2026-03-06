@@ -902,7 +902,10 @@ def generate_user_guide(passing_scenarios=None):
         f.write("*💡 **Tip:** Click the ▶ triangle next to any section title below to expand or collapse that section.*\n\n")
         sections = [
             ("1. Installation", [
-                ("Installing Docker Desktop", [
+                ("Installing Homebrew (macOS Only)", [
+                    ("For macOS Users", "for-macos-users"),
+                ]),
+                ("Installing Zsh and Bash", [
                     ("For Windows Users", "for-windows-users"),
                     ("For macOS (Mac) Users", "for-macos-mac-users"),
                     ("For Linux Users", "for-linux-users"),
@@ -912,7 +915,7 @@ def generate_user_guide(passing_scenarios=None):
                     ("For macOS (Mac) Users", "for-macos-mac-users-1"),
                     ("For Linux Users", "for-linux-users-1"),
                 ]),
-                ("Installing Zsh and Bash", [
+                ("Installing Docker Desktop", [
                     ("For Windows Users", "for-windows-users-2"),
                     ("For macOS (Mac) Users", "for-macos-mac-users-2"),
                     ("For Linux Users", "for-linux-users-2"),

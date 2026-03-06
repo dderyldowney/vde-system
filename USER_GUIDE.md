@@ -9,7 +9,9 @@
 *💡 **Tip:** Click the ▶ triangle next to any section title below to expand or collapse that section.*
 
 1. [1. Installation](#1.-installation)
-   - [Installing Docker Desktop](#installing-docker-desktop)
+   - [Installing Homebrew (macOS Only)](#installing-homebrew-(macos-only))
+     - [For macOS Users](#for-macos-users)
+   - [Installing Zsh and Bash](#installing-zsh-and-bash)
      - [For Windows Users](#for-windows-users)
      - [For macOS (Mac) Users](#for-macos-mac-users)
      - [For Linux Users](#for-linux-users)
@@ -17,7 +19,7 @@
      - [For Windows Users](#for-windows-users-1)
      - [For macOS (Mac) Users](#for-macos-mac-users-1)
      - [For Linux Users](#for-linux-users-1)
-   - [Installing Zsh and Bash](#installing-zsh-and-bash)
+   - [Installing Docker Desktop](#installing-docker-desktop)
      - [For Windows Users](#for-windows-users-2)
      - [For macOS (Mac) Users](#for-macos-mac-users-2)
      - [For Linux Users](#for-linux-users-2)
