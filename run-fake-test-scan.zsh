@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # Fake test scanner - detects prohibited patterns in ALL test step files
 
-cd /Users/dderyldowney/dev
+cd "${0:a:h}"
 
 echo "=== Fake Test Pattern Scan (All Step Files) ==="
 echo ""
