@@ -1,3 +1,5 @@
+# Template for language VMs
+# Variables: cpp, 2202, apt-get update -y && apt-get install -y g++ make cmake gdb
 name: vde-cpp
 services:
   vde-cpp:
@@ -23,7 +25,7 @@ services:
       - ../../../logs/cpp:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock

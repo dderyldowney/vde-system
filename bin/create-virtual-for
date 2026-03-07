@@ -158,24 +158,16 @@ _create_one_vm() {
     vde_progress_info "Display Name: $_vm_display"
 
     # -----------------------
-    # Allocate Port
+    # Port — fixed per VM type from data/vm-types.conf
     # -----------------------
-    vde_progress_info "Allocating SSH port..."
+    vde_progress_info "Reading SSH port..."
     local SSH_PORT
-    # When --force regenerating, preserve the existing port from the compose file
-    local _raw_vm_name="${VM_NAME#vde-}"
-    local _existing_compose="$VDE_ROOT_DIR/configs/docker/$_raw_vm_name/docker-compose.yml"
-    if [[ "$FORCE" = "true" && -f "$_existing_compose" ]]; then
-        SSH_PORT=$(grep -oE '"[0-9]+:22"' "$_existing_compose" | tr -d '"' | cut -d: -f1)
-    fi
+    SSH_PORT=$(get_vm_info ssh_port "$VM_NAME")
     if [[ -z "$SSH_PORT" ]]; then
-        SSH_PORT=$(find_next_available_port "$_vm_type")
-        if [[ $? -ne 0 ]]; then
-            vde_error_port_in_use "all available ports"
-            return 1
-        fi
+        vde_error_simple "No ssh_port defined for '$VM_NAME' in vm-types.conf — cannot create VM"
+        return 1
     fi
-    vde_progress_info "Allocated SSH port: $SSH_PORT"
+    vde_progress_info "SSH port: $SSH_PORT"
 
     # -----------------------
     # Create Directories
@@ -277,10 +269,7 @@ EOF
         return 1
     fi
 
-    local project_ssh_config="$VDE_ROOT_DIR/configs/ssh/config"
-    if [ -f "$project_ssh_config" ]; then
-        cp "$VDE_SSH_CONFIG" "$project_ssh_config" 2>/dev/null || true
-    fi
+    # configs/ssh/config is the authoritative source — never overwrite it from live config
 
     # -----------------------
     # Start the VM (unless disabled)

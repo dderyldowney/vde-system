@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: rust, 2200, su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
+# Variables: rust, 2216, su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
 name: vde-rust
 services:
   vde-rust:

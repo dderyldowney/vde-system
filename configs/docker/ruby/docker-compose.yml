@@ -1,6 +1,6 @@
-name: vde-ruby
 # Template for language VMs
-# Variables: ruby, 2201, apt-get update -y && apt-get install -y ruby-full
+# Variables: ruby, 2215, apt-get update -y && apt-get install -y ruby-full
+name: vde-ruby
 services:
   vde-ruby:
     build:
@@ -25,7 +25,7 @@ services:
       - ../../../logs/ruby:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock

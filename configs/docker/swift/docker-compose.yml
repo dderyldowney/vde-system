@@ -1,11 +1,16 @@
-name: vde-swift
 # Template for language VMs
-# Variables: swift, 2214, apt-get update -y {{INSTALL_CMD}}{{INSTALL_CMD}} apt-get install -y binutils git libc6-dev curl
+# Variables: swift, 2218, apt-get update -y && apt-get install -y binutils git libc6-dev curl
+name: vde-swift
 services:
   vde-swift:
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: vde-swift:latest
     container_name: vde-swift
     hostname: vde-swift
@@ -20,12 +25,10 @@ services:
       - ../../../logs/swift:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
-      - VDE_HOME=${VDE_HOME:-}
-      - VDE_PROJECT_NAME=${VDE_PROJECT_NAME:-}
 
     env_file:
       - ../../../env-files/vde-swift.env
