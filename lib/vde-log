@@ -4,6 +4,11 @@
 # Provides JSON/text structured logging with rotation capabilities
 #===============================================================================
 
+# SOURCE GUARD
+if [ "${_VDE_LOG_LOADED:-}" = "1" ]; then
+    return 0 2>/dev/null || exit 0
+fi
+_VDE_LOG_LOADED=1
 # Source dependencies
 [[ -z "$VDE_ROOT_DIR" ]] && VDE_ROOT_DIR="${0:a:h:h}"
 [[ -f "$VDE_ROOT_DIR/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/lib/vde-constants"

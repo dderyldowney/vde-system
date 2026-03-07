@@ -164,9 +164,9 @@ readonly SVC_PORT_END=2499
 
 # Directory Paths
 readonly CONFIGS_DIR="${VDE_ROOT_DIR}/configs/docker"
-readonly SCRIPTS_DIR="${VDE_ROOT_DIR}/scripts"
-readonly TEMPLATES_DIR="${SCRIPTS_DIR}/templates"
-readonly DATA_DIR="${SCRIPTS_DIR}/data"
+readonly BIN_DIR="${VDE_ROOT_DIR}/bin"
+readonly TEMPLATES_DIR="${VDE_ROOT_DIR}/templates"
+readonly DATA_DIR="${VDE_ROOT_DIR}/data"
 readonly BACKUP_DIR="${VDE_ROOT_DIR}/backup"
 readonly CACHE_DIR="${VDE_ROOT_DIR}/.cache"
 readonly VM_TYPES_CONF="${DATA_DIR}/vm-types.conf"

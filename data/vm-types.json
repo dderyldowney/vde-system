@@ -217,6 +217,16 @@
         "install": "apt-get install -y zig",
         "service_port": null,
         "ssh_port": 2219
+      },
+      {
+        "name": "vde-testlang",
+        "aliases": [
+          "tl"
+        ],
+        "display": "Testlang",
+        "install": "echo test",
+        "service_port": null,
+        "ssh_port": 2288
       }
     ],
     "service": [

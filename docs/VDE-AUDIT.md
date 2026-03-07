@@ -10,74 +10,11 @@
 
 Port assignments are fully consistent across all four sources (vm-types.conf, vm-types.json, configs/ssh/config, templates). The scripts/ → bin/lib/ restructure is complete. Compose files, env-files, and docker-compose.yml files are now protected from deletion by VDE scripts — only manual user action can delete them.
 
-**Open findings:** 0 High, 7 Medium, 5 Low
+**Open findings:** 0 High, 0 Medium, 5 Low
 
 ---
 
-## Medium
 
-### MED-01: `vm_exists` defined twice with incompatible semantics
-
-- **Category:** Technical Bug
-- **Files:** `lib/vde-docker:93`, `lib/vm-common:790`
-- **Description:** `lib/vde-docker` defines `vm_exists` to check for compose file existence. `lib/vm-common` defines it to check for a docker-state JSON file. Because `vm-common` sources `vde-docker` after itself, the `vde-docker` version silently wins. Any code relying on the docker-state check gets the compose-file check instead.
-- **Impact:** `create-virtual-for` may block re-creation of a VM whose compose file was manually deleted but whose state file persists.
-
----
-
-### MED-02: `vde-log` lacks a source guard — re-sourcing resets log level
-
-- **Category:** Technical Bug
-- **File:** `lib/vde-log` (whole file)
-- **Description:** Every other library has an `if [ "${_VDE_*_LOADED:-}" = "1" ]; then return 0; fi` guard. `vde-log` has none. It is sourced at least twice per `vm-common` load, resetting `_VDE_LOG_CURRENT_LEVEL` to INFO on each re-source.
-- **Impact:** Any caller that sets `VDE_LOG_LEVEL=DEBUG` before sourcing vm-common will have it silently reset.
-
----
-
-### MED-03: `vde-core` redefines `_assoc_get` with broken indirect expansion
-
-- **Category:** Technical Bug
-- **File:** `lib/vde-core:141-156`
-- **Description:** After sourcing `vde-shell-compat` (which correctly defines `_assoc_get`), `vde-core` redefines it with a broken `${(P)array_name}[$key]` indirect expansion. This produces empty output for all keys, causing cache writes to emit empty values.
-- **Impact:** VM type cache is always corrupt; every startup forces a full JSON re-parse.
-
----
-
-### MED-04: `vde_get_vm_status` uses stale `-dev` container suffix
-
-- **Category:** Consistency
-- **File:** `lib/vde-commands:137-138`
-- **Description:** `vde_get_vm_status` sets `container_name="${vm_name}-dev"` for language VMs. The current naming convention is `vde-<name>` with no suffix for any VM type.
-- **Impact:** Library callers using `vde_get_vm_status` get `not_created` for all language VMs regardless of actual state.
-
----
-
-### MED-05: Suppressed source errors mask undefined error codes in `bin/vde`
-
-- **Category:** Technical Bug
-- **File:** `bin/vde:356-360`
-- **Description:** All library sources use `&>/dev/null`. If sourcing fails, `$VDE_ERR_INVALID_INPUT` is undefined. `exit $VDE_ERR_INVALID_INPUT` becomes `exit ` which exits 0, silently hiding the error.
-- **Impact:** Library load failures in `bin/vde` appear as success to calling scripts and CI pipelines.
-
----
-
-### MED-06: VDE-SPEC.md §3.1 shows stale `scripts/` subdirectory paths
-
-- **Category:** Spec Mismatch
-- **File:** `docs/VDE-SPEC.md:167-174`
-- **Description:** The spec's §3.1 vde-constants block shows `SCRIPTS_DIR`, `TEMPLATES_DIR="${SCRIPTS_DIR}/templates"`, `DATA_DIR="${SCRIPTS_DIR}/data"`. Actual lib/vde-constants defines these as top-level directories under `VDE_ROOT_DIR` with no `scripts/` prefix.
-- **Impact:** Developers implementing from the spec will build paths to non-existent directories.
-
----
-
-### MED-07: `add-vm-type` writes only to `vm-types.conf`, not `vm-types.json`
-
-- **Category:** Operational Gap
-- **File:** `bin/add-vm-type:248-253`
-- **Description:** `add-vm-type` appends to `data/vm-types.conf` but never updates `data/vm-types.json`. `load_vm_types` in vm-common prefers JSON when it exists. Because vm-types.json is always present, newly added types are invisible to the runtime.
-- **Impact:** `vde add mytype ...` appears to succeed but `vde create mytype` immediately fails with "unknown VM type".
-
----
 
 ## Low
 
@@ -158,4 +95,14 @@ All four sources are consistent. Sample cross-check:
 | ID | Resolution |
 |----|-----------|
 | CRIT-01 | `bin/cleanup-ports` created — removes stale port-registry entries for VMs not in vm-types.conf |
+| HIGH-01 | Fixed undefined function calls in `bin/remove-virtual`, `bin/shutdown-all`, `bin/nuke-vde`, `bin/uninstall-vm-type` |
+| HIGH-02 | Fixed `bin/restart-virtual` to use docker compose V2 and safe subshells |
+| HIGH-03 | Removed global `local` declarations from `bin/start-virtual` and `bin/shutdown-virtual` |
 | HIGH-04 | `bin/add-vm-type` heredoc now uses `${VDE_SSH_IDENTITY}` and `${VDE_SSH_KNOWN_HOSTS}` variables instead of hardcoded absolute paths |
+| MED-01 | Removed redundant `vm_exists` from `lib/vde-docker` |
+| MED-02 | Added source guard to `lib/vde-log` |
+| MED-03 | Removed incorrect associative array functions from `lib/vde-core` |
+| MED-04 | Fixed container naming logic in `vde-commands:vde_get_vm_status` |
+| MED-05 | Replaced silent failures with explicit fail on library load failure in `bin/vde` |
+| MED-06 | Fixed stale directory paths in `docs/VDE-SPEC.md:3.1` |
+| MED-07 | Updated `add-vm-type` to inject the new VM type directly into `vm-types.json` |
