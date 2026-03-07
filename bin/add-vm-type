@@ -252,6 +252,52 @@ echo "${VM_TYPE_STR}|vde-${VM_NAME}|${ALIASES}|${DISPLAY_NAME}|${INSTALL_CMD}|${
 
 log_success "Entry added to vm-types.conf"
 
+log_info "Adding entry to vm-types.json..."
+if [[ -f "$VM_TYPES_JSON" ]]; then
+    python3 -c '
+import json
+import sys
+
+try:
+    with open(sys.argv[1], "r") as f:
+        data = json.load(f)
+    
+    vm_type_str = sys.argv[2]
+    cat_key = "language" if vm_type_str == "lang" else "service"
+    
+    if "vms" not in data:
+        data["vms"] = {}
+    if cat_key not in data["vms"]:
+        data["vms"][cat_key] = []
+        
+    aliases = [a.strip() for a in sys.argv[4].split(",") if a.strip()] if sys.argv[4] else []
+    
+    new_entry = {
+        "name": "vde-" + sys.argv[3],
+        "aliases": aliases,
+        "display": sys.argv[5],
+        "install": sys.argv[6],
+        "service_port": sys.argv[7] if sys.argv[7] else None,
+        "ssh_port": int(sys.argv[8]) if sys.argv[8] else None
+    }
+    
+    data["vms"][cat_key].append(new_entry)
+    
+    with open(sys.argv[1], "w") as f:
+        json.dump(data, f, indent=2)
+except Exception as e:
+    print("Failed to update JSON: " + str(e), file=sys.stderr)
+    sys.exit(1)
+' "$VM_TYPES_JSON" "$VM_TYPE_STR" "$VM_NAME" "$ALIASES" "$DISPLAY_NAME" "$INSTALL_CMD" "$SVC_PORT" "$SSH_PORT"
+    
+    if [[ $? -eq 0 ]]; then
+        log_success "Entry added to vm-types.json"
+    else
+        log_warn "Failed to add entry to vm-types.json"
+    fi
+else
+    log_warn "vm-types.json not found, skipping JSON update"
+fi
 # Update configs/ssh/config with the new entry
 local project_ssh_config="$VDE_ROOT_DIR/configs/ssh/config"
 if [[ -f "$project_ssh_config" ]]; then

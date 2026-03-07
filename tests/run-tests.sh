@@ -26,7 +26,7 @@ run_unit() {
         --tags=@unit \
         --tags=~@wip \
         --format=pretty \
-        tests/features/core-infrastructure/parser.feature
+        features/core-infrastructure/parser.feature
 }
 
 run_integration() {
@@ -35,7 +35,7 @@ run_integration() {
         --tags=@integration \
         --tags=~@wip \
         --format=pretty \
-        tests/features/core-infrastructure/vde-ssh-commands.feature
+        features/core-infrastructure/vde-ssh-commands.feature
 }
 
 run_e2e() {
@@ -44,7 +44,7 @@ run_e2e() {
         --tags=@docker \
         --tags=~@wip \
         --format=pretty \
-        tests/features/core-infrastructure/
+        features/core-infrastructure/
 }
 
 run_all() {
@@ -52,7 +52,7 @@ run_all() {
     python3 -m behave \
         --tags=~@wip \
         --format=pretty \
-        tests/features/core-infrastructure/
+        features/core-infrastructure/
 }
 
 # Main

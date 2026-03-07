@@ -130,15 +130,7 @@ vde_get_vm_status() {
     local vm_name="$1"
     local container_name
 
-    # Determine container name based on VM type
-    local vm_type
-    vm_type=$(get_vm_info type "$vm_name" 2>/dev/null || echo "")
-
-    if [ "$vm_type" = "lang" ]; then
-        container_name="${vm_name}-dev"
-    else
-        container_name="$vm_name"
-    fi
+    container_name=$(vde_get_container_name "$vm_name")
 
     # Check container status
     local container_status

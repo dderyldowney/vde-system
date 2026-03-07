@@ -135,25 +135,9 @@ _vde_core_get_mtime() {
 }
 
 # -----------------------
+# -----------------------
 # Core VM Type Loading (Minimal with Caching)
 # -----------------------
-
-_assoc_keys() {
-    local array_name="$1"
-    eval "for k in \"\${(@k)$array_name}\"; do echo \"\$k\"; done"
-}
-
-_assoc_get() {
-    local array_name="$1"
-    local key="$2"
-    local value_ref="${array_name}[$key]" # Construct reference string
-    # Check if key exists in the array_name array
-    if [[ -n "${(P)array_name}[$key]+_}" ]]; then
-        echo "${(P)value_ref}" # Use indirect parameter expansion
-        return 0
-    fi
-    return 1
-}
 
 # vde_core_save_cache - Save loaded VM types to cache file
 # Args: none
