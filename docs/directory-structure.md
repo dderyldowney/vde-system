@@ -43,7 +43,7 @@ $HOME/dev/
 │   ├── js/
 │   └── ...
 ├── public-ssh-keys/            # SSH public keys for containers
-├── scripts/
+├── bin/
 │   ├── lib/
 │   │   ├── vm-common           # Shared library
 │   │   ├── vde-commands        # Command wrappers
@@ -116,7 +116,7 @@ logs/python/    # Python app logs
 logs/nginx/     # Nginx access and error logs
 ```
 
-### `scripts/`
+### `bin/`
 
 All management scripts and libraries.
 

@@ -29,9 +29,9 @@ Welcome to VDE — your new best friend for development environments. Whether yo
 | **SSH & Agent Forwarding** | [SSH Configuration](docs/ssh-configuration.md) • [VM Communication](docs/advanced-usage.md#inter-container-communication) • [SSH Troubleshooting](docs/troubleshooting.md#ssh-agent-issues) |
 | **Core Features** | [Available Scripts](docs/available-scripts.md) • [Predefined VM Types](docs/predefined-vm-types.md) • [Command Reference](docs/command-reference.md) |
 | **Configuration** | [Extending VDE](docs/extending-vde.md) • [Directory Structure](docs/directory-structure.md) |
-| **Development** | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) • [Development Workflows](docs/development-workflows.md) |
+| **Development** | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) • [Development Guide](docs/DEVELOPMENT_GUIDE.md) |
 | **Contributing** | [Contributing Guide](CONTRIBUTING.md) • [Style Guide](STYLE_GUIDE.md) • [Testing Guide](docs/TESTING.md) |
-| **Reference** | [API Reference](docs/API.md) • [User Model](docs/user-model.md) • [Architecture](docs/ARCHITECTURE.md) • [Best Practices](docs/best-practices.md) |
+| **Reference** | [API Reference](docs/API.md) • [Architecture](docs/ARCHITECTURE.md) • [Best Practices](docs/best-practices.md) |
 | **Support** | [Troubleshooting](docs/troubleshooting.md) • [Rebuild Guidelines](docs/rebuild-guidelines.md) |
 | **Upgrading** | [Upgrade Guide](#upgrade-guide) - Keeping VDE up-to-date |
 
@@ -207,14 +207,14 @@ See [SSH Configuration](docs/ssh-configuration.md) for complete details.
 | Document | Description |
 |----------|-------------|
 | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) | Using VSCode with VDE — code in comfort! |
-| [Development Workflows](docs/development-workflows.md) | Example development scenarios |
+| [Development Guide](docs/DEVELOPMENT_GUIDE.md) | Example development scenarios |
 
 ### Reference (The Nitty Gritty) 📖
 
 | Document | Description |
 |----------|-------------|
 | [API Reference](docs/API.md) | Complete API reference for scripts and libraries |
-| [User Model & Naming Conventions](docs/user-model.md) | User account and naming standards |
+| [Technical Deep Dive](docs/Technical-Deep-Dive.md) | VDE Under the Hood |
 | [Architecture](docs/ARCHITECTURE.md) | Technical architecture details |
 | [Advanced Usage](docs/advanced-usage.md) | Advanced techniques and patterns |
 | [Rebuild Guidelines](docs/rebuild-guidelines.md) | When and how to rebuild |
@@ -273,7 +273,7 @@ $HOME/dev/
 ├── logs/                  # Application logs
 ├── projects/              # Project source code
 ├── public-ssh-keys/       # SSH keys for containers
-├── scripts/               # Management scripts
+├── bin/               # Management scripts
 │   ├── lib/               # Shared libraries
 │   └── templates/         # Docker Compose templates
 └── README.md
@@ -316,9 +316,7 @@ vde list
 
 For comprehensive technical documentation, see these in-depth guides:
 
-1. **[Technical Deep Dive](docs/Technical-Deep-Dive.md)** - Complete technical deep-dive of the VDE system architecture and components. [← Back to README](../README.md)
-
-2. **[VDE PARSER Technical Deep Dive](docs/VDE-PARSER-Technical-Deep-Dive.md)** - Focused technical analysis of the VDE natural language parser. [← Back to README](../README.md)
+1. **[Technical Deep Dive](docs/Technical-Deep-Dive.md)** - Complete technical deep-dive of the VDE system architecture, components, templates, and parser. [← Back to README](README.md)
 
 ---
 

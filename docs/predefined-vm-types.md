@@ -55,12 +55,12 @@ vde list
 # List only language VMs
 vde list --lang
 # OR
-./scripts/list-vms --lang
+./bin/list-vms --lang
 
 # List only service VMs
 vde list --svc
 # OR
-./scripts/list-vms --svc
+./bin/list-vms --svc
 
 # Search for specific VMs
 vde list python

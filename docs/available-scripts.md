@@ -34,19 +34,19 @@ Individual scripts are still available but `vde` is the recommended interface:
 
 | Script | Purpose | Usage |
 |--------|---------|-------|
-| `list-vms` | List all predefined languages and services | `./scripts/list-vms [--lang|--svc] [search]` |
-| `create-virtual-for` | Create a new language or service VM | `./scripts/create-virtual-for <name>` |
-| `start-virtual` | Start one or more VMs | `./scripts/start-virtual <name> [name2] ... [--rebuild] [--no-cache]` |
-| `shutdown-virtual` | Stop one or more VMs | `./scripts/shutdown-virtual <name> [name2] ...` |
-| `build-and-start` | Shutdown all, then start all VMs with optional rebuild | `./scripts/build-and-start [--rebuild] [--no-cache]` |
-| `add-vm-type` | Add a new language or service to the predefined list | `./scripts/add-vm-type <name> "<install-cmd>" [aliases]` |
+| `list-vms` | List all predefined languages and services | `./bin/list-vms [--lang|--svc] [search]` |
+| `create-virtual-for` | Create a new language or service VM | `./bin/create-virtual-for <name>` |
+| `start-virtual` | Start one or more VMs | `./bin/start-virtual <name> [name2] ... [--rebuild] [--no-cache]` |
+| `shutdown-virtual` | Stop one or more VMs | `./bin/shutdown-virtual <name> [name2] ...` |
+| `build-and-start` | Shutdown all, then start all VMs with optional rebuild | `./bin/build-and-start [--rebuild] [--no-cache]` |
+| `add-vm-type` | Add a new language or service to the predefined list | `./bin/add-vm-type <name> "<install-cmd>" [aliases]` |
 
 ---
 
 ## Script Locations
 
 ```
-~/dev/scripts/
+~/dev/bin/
 ├── vde                     # Unified command entry point (RECOMMENDED)
 ├── lib/                    # Shared libraries
 │   ├── vm-common          # Core functions
@@ -79,8 +79,8 @@ Individual scripts are still available but `vde` is the recommended interface:
 If you encounter "permission denied" errors:
 
 ```bash
-chmod +x ~/dev/scripts/*
-chmod +x ~/dev/scripts/lib/*
+chmod +x ~/dev/bin/*
+chmod +x ~/dev/lib/*
 ```
 
 ---

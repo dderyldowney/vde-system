@@ -16,7 +16,7 @@ The VM Docker configuration system provides:
 
 ### vm-docker-config.json
 
-**Location:** `scripts/data/vm-docker-config.json`
+**Location:** `data/vm-docker-config.json`
 
 **Structure:**
 ```json
@@ -55,7 +55,7 @@ The VM Docker configuration system provides:
 
 ### vm-docker-config.schema.json
 
-**Location:** `scripts/data/vm-docker-config.schema.json`
+**Location:** `data/vm-docker-config.schema.json`
 
 **Validates:**
 - Base settings structure
@@ -110,7 +110,7 @@ Each service VM has:
 ### Load Docker Config
 
 ```zsh
-source scripts/lib/vm-common
+source lib/vm-common
 load_docker_config
 ```
 
@@ -183,12 +183,12 @@ load_docker_config
 
 ```bash
 # Using validation script
-./scripts/validate-schemas.zsh
+./bin/validate-schemas.zsh
 
 # Using vde-core directly
-source scripts/lib/vde-core
-schema=$(vde_get_schema_for_json "scripts/data/vm-docker-config.json")
-vde_validate_json_schema "scripts/data/vm-docker-config.json" "$schema"
+source lib/vde-core
+schema=$(vde_get_schema_for_json "data/vm-docker-config.json")
+vde_validate_json_schema "data/vm-docker-config.json" "$schema"
 ```
 
 ## Validation Rules
@@ -214,7 +214,7 @@ vde_validate_json_schema "scripts/data/vm-docker-config.json" "$schema"
 ### Example 1: Get Compose File Path
 
 ```zsh
-source scripts/lib/vm-common
+source lib/vm-common
 load_docker_config
 
 compose_file=$(get_docker_config COMPOSE_FILE python)
@@ -225,7 +225,7 @@ echo "Python compose file: $compose_file"
 ### Example 2: Launch Container with Config
 
 ```zsh
-source scripts/lib/vm-common
+source lib/vm-common
 load_docker_config
 
 vm_name="python"
@@ -238,7 +238,7 @@ docker-compose -f "$compose_file" --env-file "$env_file" up -d
 ### Example 3: Check All Language VMs
 
 ```zsh
-source scripts/lib/vm-common
+source lib/vm-common
 load_docker_config load_vm_types
 
 for vm in "${(@k)VM_TYPE}"; do
@@ -251,7 +251,7 @@ done
 ### Example 4: Validate Mount Paths
 
 ```zsh
-source scripts/lib/vm-common
+source lib/vm-common
 load_docker_config
 
 for vm in python rust go; do
@@ -285,7 +285,7 @@ The Docker config complements the VM types config:
 
 ```
 VDE Project Root
-├── scripts/data/
+├── data/
 │   ├── vm-types.json              # VM metadata
 │   ├── vm-types.schema.json       # VM types schema
 │   ├── vm-docker-config.json      # Docker config (NEW)
@@ -347,10 +347,10 @@ VDE Project Root
 
 ```bash
 # Validate schema
-./scripts/validate-schemas.zsh
+./bin/validate-schemas.zsh
 
 # Test loading
-zsh -c "source scripts/lib/vm-common && load_docker_config"
+zsh -c "source lib/vm-common && load_docker_config"
 ```
 
 ## Troubleshooting
@@ -360,10 +360,10 @@ zsh -c "source scripts/lib/vm-common && load_docker_config"
 **Cause**: Config doesn't match schema
 
 **Solution**:
-1. Check JSON syntax: `jq . scripts/data/vm-docker-config.json`
+1. Check JSON syntax: `jq . data/vm-docker-config.json`
 2. Verify required fields present
 3. Check naming patterns (container names, file paths)
-4. Run validation: `./scripts/validate-schemas.zsh`
+4. Run validation: `./bin/validate-schemas.zsh`
 
 ### "Docker config not found"
 
@@ -372,7 +372,7 @@ zsh -c "source scripts/lib/vm-common && load_docker_config"
 **Solution**:
 ```bash
 # Check file exists
-ls -la scripts/data/vm-docker-config.json
+ls -la data/vm-docker-config.json
 
 # Regenerate if missing
 # (File must be created manually, no auto-generation)
@@ -383,13 +383,13 @@ ls -la scripts/data/vm-docker-config.json
 **Cause**: VM not in docker config
 
 **Solution**:
-1. Check VM exists: `jq '.languages, .services | keys' scripts/data/vm-docker-config.json`
+1. Check VM exists: `jq '.languages, .services | keys' data/vm-docker-config.json`
 2. Add VM to config if missing
 3. Reload config: `load_docker_config`
 
 ## References
 
 - **JSON Schema Spec**: https://json-schema.org/
-- **VM Types Config**: `scripts/data/README.md`
-- **Schema Validation**: `docs/schema-validation.md`
-- **Validation Tool**: `scripts/validate-schemas.zsh`
+- **VM Types Config**: `data/README.md`
+- **Schema Validation**: `docs/ARCHITECTURE.md`
+- **Validation Tool**: `bin/validate-schemas.zsh`

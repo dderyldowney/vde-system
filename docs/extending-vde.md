@@ -49,12 +49,12 @@ Before extending VDE, it helps to understand how it works:
 
 | File | Purpose | Edit to Extend |
 |------|---------|----------------|
-| `scripts/data/vm-types.conf` | Defines all VM types | ✅ **Yes** - Add new entries |
-| `scripts/templates/compose-language.yml` | Language VM template | Rarely - only for structural changes |
-| `scripts/templates/compose-service.yml` | Service VM template | Rarely - only for structural changes |
-| `scripts/templates/ssh-entry.txt` | SSH config template | Rarely - only for format changes |
-| `scripts/lib/vm-common` | Core functions | Never - use templates/config instead |
-| `scripts/lib/vde-*` | Modular libraries | Never - use templates/config instead |
+| `data/vm-types.conf` | Defines all VM types | ✅ **Yes** - Add new entries |
+| `templates/compose-language.yml` | Language VM template | Rarely - only for structural changes |
+| `templates/compose-service.yml` | Service VM template | Rarely - only for structural changes |
+| `templates/ssh-entry.txt` | SSH config template | Rarely - only for format changes |
+| `lib/vm-common` | Core functions | Never - use templates/config instead |
+| `lib/vde-*` | Modular libraries | Never - use templates/config instead |
 
 ### vm-types.conf Format
 
@@ -100,7 +100,7 @@ vde create zig  # Will prompt if zig is not a known VM type
 
 **Option B: Manual Entry**
 
-Edit `scripts/data/vm-types.conf` and add a line:
+Edit `data/vm-types.conf` and add a line:
 
 ```bash
 # Format: lang|name|aliases|display|install|service_port
@@ -227,7 +227,7 @@ vde create --type service --svc-port 5672,15672 rabbitmq \
 
 **Option B: Manual Entry**
 
-Edit `scripts/data/vm-types.conf` and add a line:
+Edit `data/vm-types.conf` and add a line:
 
 ```bash
 # Format: service|name|aliases|display|install|service_port
@@ -546,7 +546,7 @@ epoch=$(_date_epoch)
 
 To add new intents to the natural language parser:
 
-1. **Edit `scripts/lib/vde-parser`** to add the intent constant:
+1. **Edit `lib/vde-parser`** to add the intent constant:
 ```zsh
 readonly INTENT_CUSTOM="custom"
 ```

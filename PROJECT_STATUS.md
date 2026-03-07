@@ -9,7 +9,7 @@ VDE is currently in a **highly functional "Developer Preview" state**. The core 
 
 ### Recent Improvements (February 20, 2026)
 
-- **Security Architecture**: Added `scripts/lib/vde-security` — a dedicated library that automatically enforces strict directory permissions (`0700`/`0600`), creates and maintains the isolated `vde-net` Docker network, and re-attaches any containers that drift from it.
+- **Security Architecture**: Added `lib/vde-security` — a dedicated library that automatically enforces strict directory permissions (`0700`/`0600`), creates and maintains the isolated `vde-net` Docker network, and re-attaches any containers that drift from it.
 - **Unified Naming Convention**: All Docker containers and SSH host aliases now strictly follow the `vde-{name}` convention (e.g., `vde-python`, `vde-postgres`). Filesystem directories retain raw names for clarity.
 - **SSH Isolation**: All VDE SSH assets are now strictly isolated in `~/.ssh/vde/`, preventing interference with the user's personal SSH configuration.
 
@@ -108,11 +108,11 @@ Overall, the project remains in a **strong** "Developer Preview" phase, with rob
 1.  **Shell Compatibility Mismashes:**
     *   **Status:** COMPLETED. All `shell: bash {0}` replaced with `shell: zsh {0}` in vde-ci.yml. All `.sh` script references updated to `.zsh`. 5 test scripts renamed from `.sh` to `.zsh`.
 2.  **Verbose Debug Output (XTRACE):**
-    *   **Status:** Addressed. `unsetopt XTRACE` was added to `scripts/lib/vm-common` and `scripts/lib/vde-parser` functions.
+    *   **Status:** Addressed. `unsetopt XTRACE` was added to `lib/vm-common` and `lib/vde-parser` functions.
 3.  **Associative Array Initialization:**
-    *   **Status:** Addressed. `typeset -gA` was added at the beginning of `load_vm_types` in `scripts/lib/vm-common`.
+    *   **Status:** Addressed. `typeset -gA` was added at the beginning of `load_vm_types` in `lib/vm-common`.
 4.  **Incompatible `zsh` Features (`${=content}`):**
-    *   **Status:** Addressed. `${=content}` was replaced with `$(echo $content)` in `scripts/lib/vm-common`.
+    *   **Status:** Addressed. `${=content}` was replaced with `$(echo $content)` in `lib/vm-common`.
 5.  **Partial VM Name Matching:**
     *   **Status:** Addressed. Logic in `extract_vm_names` was refined to only accept whole-word matches.
 

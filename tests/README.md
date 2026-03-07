@@ -454,9 +454,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source dependencies
-source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
-source "$PROJECT_ROOT/scripts/lib/vde-constants"
-source "$PROJECT_ROOT/scripts/lib/<library>"
+source "$PROJECT_ROOT/lib/vde-shell-compat"
+source "$PROJECT_ROOT/lib/vde-constants"
+source "$PROJECT_ROOT/lib/<library>"
 
 # Test configuration
 TESTS_PASSED=0

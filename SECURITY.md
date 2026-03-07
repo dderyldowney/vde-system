@@ -96,7 +96,7 @@ VDE includes several security features by design:
 
 ### Automated Security Enforcement (`vde-security` library)
 
-VDE includes a dedicated security library ([`scripts/lib/vde-security`](scripts/lib/vde-security)) that
+VDE includes a dedicated security library ([`lib/vde-security`](lib/vde-security)) that
 automatically enforces security policies at startup. It is invoked by `vde-init`,
 `ensure_vde_ssh_environment`, and `build-and-start`.
 
@@ -110,7 +110,7 @@ automatically enforces security policies at startup. It is invoked by `vde-init`
 | `env-files/*.env` | `0600` | Credential files — owner read/write only |
 | `~/.ssh/vde/` | `0700` | SSH directory — owner only |
 | SSH identity, config, known_hosts | `0600` | SSH files — owner read/write only |
-| `scripts/` and script files | `0755` | Must be executable |
+| `bin/` and script files | `0755` | Must be executable |
 
 **Network Isolation:**
 

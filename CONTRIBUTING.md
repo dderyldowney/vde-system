@@ -92,11 +92,11 @@ docker --version
 
 ```bash
 # List available VMs
-./scripts/vde list
+./bin/vde list
 
 # Create and start a test VM
-./scripts/vde create python
-./scripts/vde start python
+./bin/vde create python
+./bin/vde start python
 
 # Connect to the VM
 ssh vde-python
