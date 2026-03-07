@@ -15,6 +15,9 @@ services:
     container_name: vde-{{NAME}}
     hostname: vde-{{NAME}}
     restart: unless-stopped
+    labels:
+      vde.type: lang
+      vde.name: "vde-{{NAME}}"
     command: sh -c "{{INSTALL_CMD}} && /usr/sbin/sshd -D"
 
     ports:

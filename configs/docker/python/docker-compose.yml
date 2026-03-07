@@ -14,7 +14,10 @@ services:
     image: vde-python:latest
     container_name: vde-python
     hostname: vde-python
-    restart: unless-stopped
+    restart: always
+    labels:
+      vde.type: lang
+      vde.name: "vde-python"
     command: sh -c "apt-get update -y && apt-get install -y python3 python3-pip && /usr/sbin/sshd -D"
 
     ports:
@@ -39,3 +42,9 @@ services:
 networks:
   vde-net:
     external: true
+
+    logging:
+      driver: "json-file"
+
+    healthcheck:
+      test: ["CMD", "ls"]

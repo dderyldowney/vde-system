@@ -7,4 +7,5 @@ Host {{HOST}}
     IdentitiesOnly yes
     ForwardAgent yes
     StrictHostKeyChecking no
-    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    LogLevel ERROR
+    UserKnownHostsFile {{KNOWN_HOSTS_FILE}}

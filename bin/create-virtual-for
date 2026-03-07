@@ -186,8 +186,11 @@ _create_one_vm() {
 
     if [[ "$_vm_type" == "lang" ]]; then
         template_file="$TEMPLATES_DIR/compose-language.yml"
-    else
+    elif [[ "$_vm_type" == "service" ]]; then
         template_file="$TEMPLATES_DIR/compose-service.yml"
+    else
+        vde_error_simple "Unknown VM type: $_vm_type"
+        return 1
     fi
 
     if [[ ! -f "$template_file" ]]; then
