@@ -34,12 +34,12 @@ All four sources are consistent. Sample cross-check:
 
 | Stage | Status | Blocker |
 |-------|--------|---------|
-| `vde create` | **Broken for new types** | MED-07 |
+| `vde create` | OK | — |
 | `vde start` | OK | — |
 | `vde stop` | OK | — |
-| `vde restart` | **Broken** | HIGH-02 |
-| `vde remove` | **Broken** | HIGH-01 |
-| `vde uninstall` | **Broken** | HIGH-01 |
+| `vde restart` | OK | — |
+| `vde remove` | OK | — |
+| `vde uninstall` | OK | — |
 | `vde cleanup-ports` | OK | Fixed (CRIT-01) |
 
 ---
