@@ -35,7 +35,7 @@ This plan addresses the Error Handling and Recovery feature, which is critical i
 
 ### 1.1 Run Feature to Identify Undefined Steps
 ```bash
-cd /Users/dderyldowney/dev
+cd $VDE_ROOT_DIR
 behave tests/features/docker-required/error-handling-and-recovery.feature --no-capture --format pretty
 ```
 

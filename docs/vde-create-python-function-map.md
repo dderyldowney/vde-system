@@ -18,7 +18,7 @@ This document provides a complete execution trace of the `vde create python` com
 ```
 1. User executes: vde create python
 2. Shebang invoked: #!/usr/bin/env zsh
-3. VDE_ROOT_DIR="${0:a:h:h}" → /Users/dderyldowney/dev
+3. VDE_ROOT_DIR="${0:a:h:h}" → ~/dev
 4. Source libraries (lines 35-41):
    ├─ vde-shell-compat
    ├─ vde-constants
@@ -135,7 +135,7 @@ This document provides a complete execution trace of the `vde create python` com
 4. Load VM configuration:
    get_vm_info("vde-python")
    └─ load_vm_types() (first call, cached thereafter)
-      ├─ Read: /Users/dderyldowney/dev/scripts/data/vm-types.json
+      ├─ Read: $VDE_ROOT_DIR/scripts/data/vm-types.json
       ├─ Parse JSON with jq
       ├─ Cache in associative arrays:
       │  ├─ VM_TYPES_NAME[vde-python]="vde-python"
@@ -242,9 +242,9 @@ This document provides a complete execution trace of the `vde create python` com
   - `vde_normalize_name()` (vde-naming)
 
 **Directories Created**:
-- `/Users/dderyldowney/dev/configs/docker/python/`
-- `/Users/dderyldowney/dev/projects/python/`
-- `/Users/dderyldowney/dev/logs/python/`
+- `$VDE_ROOT_DIR/configs/docker/python/`
+- `$VDE_ROOT_DIR/projects/python/`
+- `$VDE_ROOT_DIR/logs/python/`
 
 ---
 
@@ -309,7 +309,7 @@ This document provides a complete execution trace of the `vde create python` com
 ```
 
 **Directories Created**:
-- `/Users/dderyldowney/dev/env-files/`
+- `$VDE_ROOT_DIR/env-files/`
 
 **Files Written**:
 - [`env-files/python.env`](../env-files/python.env)

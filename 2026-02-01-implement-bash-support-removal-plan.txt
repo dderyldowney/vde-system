@@ -33,9 +33,9 @@
 │                                                                              │
 │ Critical Files                                                               │
 │                                                                              │
-│ - /Users/dderyldowney/dev/tests/run-full-test-suite.sh - Master test runner  │
-│ - /Users/dderyldowney/dev/tests/analyze-failures.py - Failure analysis tool  │
-│ - /Users/dderyldowney/dev/tests/generate-remediation-plan.py - Plan          │
+│ - $VDE_ROOT_DIR/tests/run-full-test-suite.sh - Master test runner  │
+│ - $VDE_ROOT_DIR/tests/analyze-failures.py - Failure analysis tool  │
+│ - $VDE_ROOT_DIR/tests/generate-remediation-plan.py - Plan          │
 │ generator                                                                    │
 │ - Results will be in: tests/behave-results-*.json,                           │
 │ tests/failures-database.json, tests/REMEDIATION_PLAN.md                      │
@@ -45,7 +45,7 @@
 │ 1. Execute Full Test Suite (5 min)                                           │
 │                                                                              │
 │ Run test suite with all phases:                                              │
-│ cd /Users/dderyldowney/dev                                                   │
+│ cd $VDE_ROOT_DIR                                                   │
 │ ./tests/run-full-test-suite.sh                                               │
 │                                                                              │
 │ This executes 4 phases:                                                      │
@@ -247,7 +247,7 @@
   Bun v1.3.8 (b64edcb4) macOS x64
   macOS v26.2
   CPU: sse42 popcnt avx avx2
-  Args: "bun" "/Users/dderyldowney/.claude/plugins/cache/thedotmack/clau
+  Args: "bun" "~/.claude/plugins/cache/thedotmack/clau
   de-mem/9.0.5/scripts/worker-service.cjs" "start"
   Features: jsc
   Elapsed: 20ms | User: 14ms | Sys: 16ms
@@ -266,7 +266,7 @@
   Bun v1.3.8 (b64edcb4) macOS x64
   macOS v26.2
   CPU: sse42 popcnt avx avx2
-  Args: "bun" "/Users/dderyldowney/.claude/plugins/cache/thedotmack/clau
+  Args: "bun" "~/.claude/plugins/cache/thedotmack/clau
   de-mem/9.0.5/scripts/worker-service.cjs" "hook" "claude-code"
   "summarize"
   Features: jsc
@@ -303,7 +303,7 @@
      … +7 lines (ctrl+o to see all)
 
 ⏺ Bash(which bun && bun --version)
-  ⎿  /Users/dderyldowney/.bun/bin/bun
+  ⎿  ~/.bun/bin/bun
      1.3.8
   ⎿  Running PostToolUse hooks…
   ⎿  PostToolUse:Bash hook error
@@ -360,7 +360,7 @@
   Bun v1.3.8 (b64edcb4) macOS x64
   macOS v26.2
   CPU: sse42 popcnt avx avx2
-  Args: "bun" "/Users/dderyldowney/.claude/plugins/cache/thedotmack/clau
+  Args: "bun" "~/.claude/plugins/cache/thedotmack/clau
   de-mem/9.0.5/scripts/worker-service.cjs" "hook" "claude-code"
   "summarize"
   Features: jsc
@@ -380,7 +380,7 @@
   Bun v1.3.8 (b64edcb4) macOS x64
   macOS v26.2
   CPU: sse42 popcnt avx avx2
-  Args: "bun" "/Users/dderyldowney/.claude/plugins/cache/thedotmack/clau
+  Args: "bun" "~/.claude/plugins/cache/thedotmack/clau
   de-mem/9.0.5/scripts/worker-service.cjs" "start"
   Features: jsc
   Elapsed: 22ms | User: 15ms | Sys: 16ms
@@ -1535,7 +1535,7 @@
   Bun v1.3.8 (b64edcb4) macOS x64
   macOS v26.2
   CPU: sse42 popcnt avx avx2
-  Args: "bun" "/Users/dderyldowney/.claude/plugins/cache/thedotmack/clau
+  Args: "bun" "~/.claude/plugins/cache/thedotmack/clau
   de-mem/9.0.5/scripts/worker-service.cjs" "hook" "claude-code"
   "summarize"
   Features: jsc
@@ -1555,7 +1555,7 @@
   Bun v1.3.8 (b64edcb4) macOS x64
   macOS v26.2
   CPU: sse42 popcnt avx avx2
-  Args: "bun" "/Users/dderyldowney/.claude/plugins/cache/thedotmack/clau
+  Args: "bun" "~/.claude/plugins/cache/thedotmack/clau
   de-mem/9.0.5/scripts/worker-service.cjs" "start"
   Features: jsc
   Elapsed: 20ms | User: 14ms | Sys: 15ms

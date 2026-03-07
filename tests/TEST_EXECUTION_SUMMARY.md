@@ -33,9 +33,9 @@
 
 **Error**:
 ```
-ASSERT FAILED: Expected create_vm intent, got 'DEBUG: _load_vm_types_from_config called with VDE_ROOT_DIR = /Users/dderyldowney/dev
-DEBUG: VM_TYPES_CONF = /Users/dderyldowney/dev/scripts/data/vm-types.conf
-DEBUG: conf_file = /Users/dderyldowney/dev/scripts/data/vm-types.conf
+ASSERT FAILED: Expected create_vm intent, got 'DEBUG: _load_vm_types_from_config called with VDE_ROOT_DIR = ~/dev
+DEBUG: VM_TYPES_CONF = $VDE_ROOT_DIR/scripts/data/vm-types.conf
+DEBUG: conf_file = $VDE_ROOT_DIR/scripts/data/vm-types.conf
 create_vm'
 ```
 
@@ -230,7 +230,7 @@ make test-integration
 
 - **No bun dependencies** confirmed - VDE requires only zsh/bash + Docker
 - Python 3.9 has behave installed, Python 3.14 does not
-- Test runner uses `/Users/dderyldowney/Library/Python/3.9/bin/behave`
+- Test runner uses `~/Library/Python/3.9/bin/behave`
 - Sandbox restrictions resolved for unit tests
 - BDD JSON output successfully captured for analysis
 

@@ -29,7 +29,7 @@ Scenario: Parse commands with typos
 
 ### Phase 1: Quick Win - Python Library (Recommended Start)
 
-**File to modify:** `/Users/dderyldowney/dev/tests/features/steps/parser_steps.py`
+**File to modify:** `$VDE_ROOT_DIR/tests/features/steps/parser_steps.py`
 
 **Time estimate:** 1-2 hours
 
@@ -224,7 +224,7 @@ def step_corrections(context):
 
 ## Phase 2: Shell Implementation (Optional, for actual CLI)
 
-**File to modify:** `/Users/dderyldowney/dev/scripts/lib/vde-parser`
+**File to modify:** `$VDE_ROOT_DIR/scripts/lib/vde-parser`
 
 **Time estimate:** 2-3 additional hours
 

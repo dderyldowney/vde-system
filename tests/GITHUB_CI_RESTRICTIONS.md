@@ -80,7 +80,7 @@ All 27 docker-required features are tagged with GitHub-incompatible tags:
 
 1. **Security risk** - Requires `--privileged` flag which is blocked by GitHub security policies
 2. **Performance issues** - Nested containers have poor performance
-3. **Path mapping conflicts** - Host paths like `/Users/dderyldowney/dev` don't map inside CI containers
+3. **Path mapping conflicts** - Host paths like `~/dev` don't map inside CI containers
 4. **Network isolation** - CI containers can't access host Docker daemon reliably
 
 ---
