@@ -74,9 +74,9 @@ ensure_ssh_environment
 
 # Track batch operation results with zsh associative arrays
 typeset -gA BATCH_RESULTS
-local started_count=0
-local skipped_count=0
-local failed_count=0
+started_count=0
+skipped_count=0
+failed_count=0
 
 # Start VMs
 log_info "Starting ${#VMS[@]} VM(s)..."

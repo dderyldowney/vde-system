@@ -71,9 +71,9 @@ fi
 
 # Track batch operation results with zsh associative arrays
 typeset -gA BATCH_RESULTS
-local stopped_count=0
-local skipped_count=0
-local failed_count=0
+stopped_count=0
+skipped_count=0
+failed_count=0
 
 # Stop VMs
 log_info "Shutting down ${#VMS[@]} VM(s)..."

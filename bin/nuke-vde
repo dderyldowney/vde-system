@@ -259,12 +259,12 @@ shutdown_all_vms() {
 
     for vm in "${(@f)vms}"; do
         if [[ -n "$vm" ]]; then
-            if vm_is_running "$vm" 2>/dev/null; then
+            if is_vm_running "$vm" 2>/dev/null; then
                 if [[ "$DRY_RUN" = "true" ]]; then
                     print_info "[DRY RUN] Would stop VM: $vm"
                 else
                     print_info "Stopping VM: $vm"
-                    shutdown_vm "$vm" 2>/dev/null || true
+                    stop_vm "$vm" 2>/dev/null || true
                 fi
                 ((stopped_count++))
             fi

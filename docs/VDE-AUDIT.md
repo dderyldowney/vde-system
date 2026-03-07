@@ -10,36 +10,7 @@
 
 Port assignments are fully consistent across all four sources (vm-types.conf, vm-types.json, configs/ssh/config, templates). The scripts/ → bin/lib/ restructure is complete. Compose files, env-files, and docker-compose.yml files are now protected from deletion by VDE scripts — only manual user action can delete them.
 
-**Open findings:** 3 High, 7 Medium, 5 Low
-
----
-
-## High
-
-### HIGH-01: `vm_is_running` and `shutdown_vm` called but never defined
-
-- **Category:** Technical Bug
-- **Files:** `bin/remove-virtual`, `bin/shutdown-all`, `bin/nuke-vde`, `bin/uninstall-vm-type`
-- **Description:** Neither `vm_is_running` nor `shutdown_vm` is defined anywhere in lib/. The actual function names are `is_vm_running` (in `lib/vde-docker`) and `stop_vm` (in `lib/vde-docker`). Under `set -e`, scripts abort mid-flow leaving containers running when the user expects them stopped.
-- **Impact:** `vde remove`, `vde uninstall`, `shutdown-all`, and `nuke-vde` silently skip the stop step or abort mid-flow, leaving containers running.
-
----
-
-### HIGH-02: `restart-virtual` uses legacy `docker-compose` V1 binary and unguarded `cd` in loop
-
-- **Category:** Technical Bug
-- **File:** `bin/restart-virtual:58-62`
-- **Description:** The script calls `cd "$vm_dir"` at the top-level loop body (not inside a subshell), permanently changing the working directory for subsequent iterations. It then calls `docker-compose` (deprecated V1 Python binary) instead of `docker compose` (V2 Go plugin). All other lifecycle scripts use `docker compose`.
-- **Impact:** `vde restart python rust go` will fail silently for all VMs on Docker Desktop (V2-only). Multi-VM restarts leave the shell in the last VM's directory.
-
----
-
-### HIGH-03: `local` keyword at global script scope in `start-virtual` and `shutdown-virtual`
-
-- **Category:** Technical Bug
-- **Files:** `bin/start-virtual:77-79`, `bin/shutdown-virtual:74-76`
-- **Description:** `local` is only valid inside a function body. Used at top-level script scope it is a no-op or warning in standard zsh; under strict settings it can abort the script before any VM is started or stopped.
-- **Impact:** Scripts may abort at the variable declaration before doing any work under strict zsh configurations.
+**Open findings:** 0 High, 7 Medium, 5 Low
 
 ---
 
