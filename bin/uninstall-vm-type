@@ -162,12 +162,12 @@ remove_vm() {
     local vm_type="$1"
 
     if vm_exists "$vm_type" 2>/dev/null; then
-        if vm_is_running "$vm_type" 2>/dev/null; then
+        if is_vm_running "$vm_type" 2>/dev/null; then
             if [[ "$DRY_RUN" = "true" ]]; then
                 print_info "[DRY RUN] Would stop VM: $vm_type"
             else
                 print_info "Stopping VM: $vm_type"
-                shutdown_vm "$vm_type" 2>/dev/null || true
+                stop_vm "$vm_type" 2>/dev/null || true
             fi
         fi
 

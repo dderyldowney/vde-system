@@ -84,11 +84,11 @@ if [[ "$ALL_VMS" = "true" ]]; then
 
     for vm in $vms; do
         if [[ -n "$vm" ]]; then
-            if vm_is_running "$vm"; then
+            if is_vm_running "$vm"; then
                 if [[ "$FORCE" = "false" ]]; then
                     vde_progress_confirm "Stop VM '$vm'?" 0 || exit 1
                 fi
-                if shutdown_vm "$vm"; then
+                if stop_vm "$vm"; then
                     ((stopped_count++))
                 else
                     vde_progress_info "Skipping already stopped VM: $vm"
@@ -105,11 +105,11 @@ if [[ "$ALL_VMS" = "true" ]]; then
     # Shutdown a single VM
     validate_vm_exists "$VM_NAME"
 
-    if vm_is_running "$VM_NAME"; then
+    if is_vm_running "$VM_NAME"; then
         if [[ "$FORCE" = "false" ]]; then
             vde_progress_confirm "Stop VM '$VM_NAME'?" 0 || exit 1
         fi
-        shutdown_vm "$VM_NAME"
+        stop_vm "$VM_NAME"
     else
         log_info "VM '$VM_NAME' is already stopped"
     fi

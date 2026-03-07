@@ -55,11 +55,12 @@ for vm in "${VMS[@]}"; do
     echo "Restarting $vm..."
 
     # Stop the VM
-    cd "$vm_dir"
-    docker-compose down --remove-orphans 2>/dev/null || true
-
-    # Start the VM
-    docker-compose up -d
+    # Stop and Start the VM in a subshell to prevent permanently changing directory
+    (
+        cd "$vm_dir"
+        docker compose down --remove-orphans 2>/dev/null || true
+        docker compose up -d
+    )
 
     echo "Restarted $vm"
 done

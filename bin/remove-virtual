@@ -97,7 +97,7 @@ log_info "Removing VM: $VM_NAME"
 VM_TYPE=$(get_vm_info type "$VM_NAME" 2>/dev/null) || echo "unknown"
 
 # Stop the VM if running
-if vm_is_running "$VM_NAME" 2>/dev/null; then
+if is_vm_running "$VM_NAME" 2>/dev/null; then
     log_info "Stopping VM..."
     stop_vm "$VM_NAME"
 fi
