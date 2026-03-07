@@ -252,7 +252,7 @@ def step_read_retry_constants(context):
     """Read actual retry constants from the vde-constants library."""
     result = subprocess.run(
         ['zsh', '-c',
-         f'source "{VDE_ROOT}/scripts/lib/vde-constants" 2>/dev/null && '
+         f'source "{VDE_ROOT}/lib/vde-constants" 2>/dev/null && '
          f'echo "MAX_RETRIES=$VDE_MAX_RETRIES" && '
          f'echo "BASE_DELAY=$VDE_RETRY_BASE_DELAY" && '
          f'echo "MAX_DELAY=$VDE_RETRY_MAX_DELAY"'],

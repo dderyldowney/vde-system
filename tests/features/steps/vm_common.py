@@ -21,7 +21,7 @@ from config import VDE_ROOT as _VDE_ROOT
 # Use VDE_PROJECT_ROOT if set, otherwise use shared config
 project_root = os.environ.get("VDE_PROJECT_ROOT")
 VDE_ROOT = Path(project_root) if project_root and Path(project_root).exists() else _VDE_ROOT
-SCRIPTS_DIR = VDE_ROOT / "scripts"
+BIN_DIR = VDE_ROOT / "bin"
 
 # Detect if running in container vs locally on host
 # In container: VDE_ROOT_DIR is set to /vde
@@ -39,7 +39,7 @@ def is_vde_available():
         bool: True if vde command available, False otherwise
     """
     try:
-        subprocess.run(['./scripts/vde', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(['./bin/vde', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return True
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
@@ -67,7 +67,7 @@ def docker_ps_list():
     """
     try:
         result = subprocess.run(
-            ['zsh', str(SCRIPTS_DIR / 'vde'), 'ps', '-q'],
+            ['zsh', str(BIN_DIR / 'vde'), 'ps', '-q'],
             capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
             env=_vde_env()
         )
@@ -89,7 +89,7 @@ def docker_list_containers():
     """
     try:
         result = subprocess.run(
-            ['zsh', str(SCRIPTS_DIR / 'vde'), 'ps', '-q'],
+            ['zsh', str(BIN_DIR / 'vde'), 'ps', '-q'],
             capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
             env=_vde_env()
         )
@@ -103,7 +103,7 @@ def container_exists(container_name):
     try:
         full_name = f"vde-{container_name.replace('vde-', '')}"
         result = subprocess.run(
-            ['zsh', str(SCRIPTS_DIR / 'vde'), 'ps', '-a', '-q'],
+            ['zsh', str(BIN_DIR / 'vde'), 'ps', '-a', '-q'],
             capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
             env=_vde_env()
         )
@@ -124,7 +124,7 @@ def container_is_running(container_name):
     try:
         full_name = f"vde-{container_name.replace('vde-', '')}"
         result = subprocess.run(
-            ['zsh', str(SCRIPTS_DIR / 'vde'), 'ps', '-q'],
+            ['zsh', str(BIN_DIR / 'vde'), 'ps', '-q'],
             capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
             env=_vde_env()
         )
@@ -144,7 +144,7 @@ def get_container_id(container_name):
     """
     try:
         result = subprocess.run(
-            ['./scripts/vde', 'ps'],
+            ['./bin/vde', 'ps'],
             capture_output=True, text=True, timeout=10
         )
         if result.returncode == 0:
@@ -197,7 +197,7 @@ def wait_for_container(container_name, timeout=30):
     try:
         while time.time() - start_time < timeout:
             result = subprocess.run(
-                ['zsh', str(SCRIPTS_DIR / 'vde'), 'ps', '-q', '--filter', f'name={container_name}'],
+                ['zsh', str(BIN_DIR / 'vde'), 'ps', '-q', '--filter', f'name={container_name}'],
                 capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
                 env=_vde_env()
             )
@@ -283,7 +283,7 @@ def get_container_health(context, container_name):
     # Try to get actual status from vde inspect first
     try:
         result = subprocess.run(
-            [str(SCRIPTS_DIR / 'vde'), 'inspect', container_name, '--state'],
+            [str(BIN_DIR / 'vde'), 'inspect', container_name, '--state'],
             capture_output=True, text=True, timeout=5, cwd=str(VDE_ROOT)
         )
         if result.returncode == 0:
@@ -293,7 +293,7 @@ def get_container_health(context, container_name):
             # If status is 'running', check if there's a health check
             if status == 'running':
                 health_result = subprocess.run(
-                    [str(SCRIPTS_DIR / 'vde'), 'inspect', container_name, '--health'],
+                    [str(BIN_DIR / 'vde'), 'inspect', container_name, '--health'],
                     capture_output=True, text=True, timeout=5, cwd=str(VDE_ROOT)
                 )
                 if health_result.returncode == 0 and health_result.stdout.strip():
@@ -411,7 +411,7 @@ def get_vm_types():
     Returns:
         list: List of VM type names (e.g., ['python', 'go', 'rust', 'postgres', 'redis'])
     """
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    vm_types_file = VDE_ROOT / "data" / "vm-types.conf"
 
     if not vm_types_file.exists():
         return []
@@ -438,7 +438,7 @@ def get_vm_type(vm_name):
     Returns:
         str: 'lang' or 'service', or None if not found
     """
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    vm_types_file = VDE_ROOT / "data" / "vm-types.conf"
 
     if not vm_types_file.exists():
         return None
@@ -581,7 +581,7 @@ def run_vde_command(command, timeout=120, context=None):
         'create-virtual-for', 'add-vm-type', 'list-vms',
     }
 
-    # VDE parser subcommands (go through ./scripts/vde)
+    # VDE parser subcommands (go through ./bin/vde)
     _VDE_SUBCOMMANDS = {
         'create', 'start', 'stop', 'restart', 'ssh', 'remove', 'delete', 'uninstall',
         'list', 'status', 'health', 'nuke', 'help', 'rebuild', 'ssh-setup',
@@ -602,14 +602,14 @@ def run_vde_command(command, timeout=120, context=None):
     
     # Determine the actual command list
     if first_word in _DIRECT_SCRIPTS:
-        cmd = ["zsh", str(SCRIPTS_DIR / first_word)] + args[1:]
+        cmd = ["zsh", str(BIN_DIR / first_word)] + args[1:]
     elif first_word in _VDE_SUBCOMMANDS:
-        cmd = ["zsh", str(SCRIPTS_DIR / 'vde')] + args
-    elif first_word == 'vde' or first_word == './scripts/vde':
-        cmd = ["zsh", str(SCRIPTS_DIR / 'vde')] + args[1:]
+        cmd = ["zsh", str(BIN_DIR / 'vde')] + args
+    elif first_word == 'vde' or first_word == './bin/vde':
+        cmd = ["zsh", str(BIN_DIR / 'vde')] + args[1:]
     else:
         # Prepend zsh if it's a known script in scripts directory
-        potential_script = SCRIPTS_DIR / first_word
+        potential_script = BIN_DIR / first_word
         if potential_script.exists():
             cmd = ["zsh", str(potential_script)] + args[1:]
         else:

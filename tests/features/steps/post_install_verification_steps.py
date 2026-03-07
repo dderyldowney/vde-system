@@ -45,15 +45,15 @@ def step_vde_properly_installed(context):
         assert dir_path.exists(), f"Required directory {dir_name} does not exist at {dir_path}"
         assert dir_path.is_dir(), f"{dir_path} is not a directory"
 
-    # Check templates in scripts/templates/ or root templates/
-    templates_dir = vde_root / "scripts" / "templates"
+    # Check templates in templates/ or root templates/
+    templates_dir = vde_root / "templates"
     if not templates_dir.exists():
         templates_dir = vde_root / "templates"
     assert templates_dir.exists(), f"Required directory templates does not exist at {templates_dir}"
     assert templates_dir.is_dir(), f"{templates_dir} is not a directory"
 
     # Check that scripts directory has executable files
-    scripts_dir = vde_root / "scripts"
+    scripts_dir = vde_root / "bin"
     # VDE uses zsh scripts and scripts without extensions
     script_files = list(scripts_dir.glob("*.zsh")) + list(scripts_dir.glob("[a-z]*"))
     script_files = [f for f in script_files if f.is_file() and not f.name.startswith('.')]
@@ -107,9 +107,9 @@ def step_report_missing_deps(context):
     """Verify missing dependencies are reported (check command output)."""
     # This step validates that when dependencies are missing, they're clearly reported
     # Since we're testing with a working environment, we verify the reporting mechanism exists
-    setup_script = Path(VDE_ROOT) / "scripts" / "build-and-start"
+    setup_script = Path(VDE_ROOT) / "bin" / "build-and-start"
     if not setup_script.exists():
-        setup_script = Path(VDE_ROOT) / "scripts" / "install-vde.sh"
+        setup_script = Path(VDE_ROOT) / "bin" / "install-vde.sh"
     assert setup_script.exists(), f"Setup script not found at expected location: {setup_script}"
     content = setup_script.read_text()
     # Check that script has dependency checking logic
@@ -132,8 +132,8 @@ def step_configs_dir_exists(context):
 @then('templates/ directory should exist with templates')
 def step_templates_dir_exists(context):
     """Verify templates directory exists and contains templates."""
-    # Check scripts/templates/ first (actual location), fallback to root templates/
-    templates_dir = Path(VDE_ROOT) / "scripts" / "templates"
+    # Check templates/ first (actual location), fallback to root templates/
+    templates_dir = Path(VDE_ROOT) / "templates"
     if not templates_dir.exists():
         templates_dir = Path(VDE_ROOT) / "templates"
     assert templates_dir.exists(), f"templates directory does not exist at {templates_dir}"
@@ -309,7 +309,7 @@ def step_svc_vms_listed_install(context):
 @then('aliases should be shown (py, js, etc.)')
 def step_aliases_shown_install(context):
     """Verify VM type aliases are shown."""
-    vm_types_file = Path(VDE_ROOT) / "scripts" / "data" / "vm-types.conf"
+    vm_types_file = Path(VDE_ROOT) / "data" / "vm-types.conf"
     assert vm_types_file.exists(), "vm-types.conf does not exist"
 
     content = vm_types_file.read_text()
@@ -340,7 +340,7 @@ def step_vde_commands_anywhere(context):
 
     # If vde wrapper is not in PATH, check that individual scripts exist and are executable
     if not vde_in_path:
-        scripts_dir = Path(VDE_ROOT) / "scripts"
+        scripts_dir = Path(VDE_ROOT) / "bin"
         assert scripts_dir.exists(), "scripts directory does not exist"
 
         # Check for key VDE scripts
@@ -354,7 +354,7 @@ def step_vde_commands_anywhere(context):
 @then('I can run start-virtual, shutdown-virtual, etc.')
 def step_run_vde_commands(context):
     """Verify VDE commands are available and executable."""
-    scripts_dir = Path(VDE_ROOT) / "scripts"
+    scripts_dir = Path(VDE_ROOT) / "bin"
 
     # Check for core VDE commands
     vde_commands = ['start-virtual', 'shutdown-virtual', 'create-virtual-for', 'list-vms']
@@ -377,7 +377,7 @@ def step_tab_completion_works(context):
 
     # If no completion files in configs, check for scripts/completion
     if not completion_files:
-        completion_dir = Path(VDE_ROOT) / "scripts" / "completion"
+        completion_dir = Path(VDE_ROOT) / "completions"
         if completion_dir.exists():
             completion_files = list(completion_dir.glob("*"))
 
@@ -406,7 +406,7 @@ def step_docker_sudo_warning(context):
     # If Docker doesn't work without sudo, verify warning mechanism exists
     if not docker_works:
         # Check that setup scripts contain Docker permission logic
-        setup_script = Path(VDE_ROOT) / "scripts" / "install-vde.sh"
+        setup_script = Path(VDE_ROOT) / "bin" / "install-vde.sh"
         if setup_script.exists():
             content = setup_script.read_text()
             has_permission_check = (
@@ -437,9 +437,9 @@ def step_setup_continues_with_warning(context):
     """Verify setup continues even with warnings."""
     # This step validates that setup doesn't fail on warnings
     # Check that setup script has error handling
-    setup_script = Path(VDE_ROOT) / "scripts" / "build-and-start"
+    setup_script = Path(VDE_ROOT) / "bin" / "build-and-start"
     if not setup_script.exists():
-        setup_script = Path(VDE_ROOT) / "scripts" / "install-vde.sh"
+        setup_script = Path(VDE_ROOT) / "bin" / "install-vde.sh"
     assert setup_script.exists(), f"Setup script not found - cannot verify warning handling: {setup_script}"
     content = setup_script.read_text()
     # Look for warning vs error handling
@@ -509,7 +509,7 @@ def step_vms_can_communicate(context):
 def step_progress_messages(context):
     """Verify progress messages are shown during setup."""
     # Check that scripts echo progress information
-    scripts_dir = Path(VDE_ROOT) / "scripts"
+    scripts_dir = Path(VDE_ROOT) / "bin"
     assert scripts_dir.exists(), "scripts directory does not exist - cannot verify progress messages"
 
     # Check a few key scripts for progress messages
@@ -541,7 +541,7 @@ def step_python_config_created(context):
 def step_compose_generated(context):
     """Verify docker-compose.yml file is generated for VMs."""
     # Check that compose files can be generated
-    templates_dir = Path(VDE_ROOT) / "scripts" / "templates"
+    templates_dir = Path(VDE_ROOT) / "templates"
     if not templates_dir.exists():
         templates_dir = Path(VDE_ROOT) / "templates"
     assert templates_dir.exists(), "templates directory does not exist - cannot verify compose generation"
@@ -551,7 +551,7 @@ def step_compose_generated(context):
     compose_templates.extend(list(templates_dir.rglob("compose*.yml")))
 
     # Or check if generation script exists
-    scripts_dir = Path(VDE_ROOT) / "scripts"
+    scripts_dir = Path(VDE_ROOT) / "bin"
     if scripts_dir.exists():
         # Check for compose generation logic
         for script_file in scripts_dir.glob("*.sh"):
@@ -602,7 +602,7 @@ def step_next_steps_shown(context):
 def step_vde_health_status(context):
     """Verify VDE health check functionality exists."""
     # Check for vde-health script or equivalent
-    scripts_dir = Path(VDE_ROOT) / "scripts"
+    scripts_dir = Path(VDE_ROOT) / "bin"
     assert scripts_dir.exists(), "scripts directory does not exist - cannot verify health check"
 
     health_script = scripts_dir / "vde-health"
@@ -615,7 +615,7 @@ def step_vde_health_status(context):
 def step_issues_listed(context):
     """Verify issues are clearly listed in health check."""
     # Check that health script or documentation lists issues clearly
-    scripts_dir = Path(VDE_ROOT) / "scripts"
+    scripts_dir = Path(VDE_ROOT) / "bin"
     assert scripts_dir.exists(), "scripts directory does not exist - cannot verify issue listing"
 
     health_script = scripts_dir / "vde-health"
@@ -637,7 +637,7 @@ def step_fix_suggestions(context):
     """Verify fix suggestions are provided for issues."""
     # Check README or health script for fix suggestions
     readme = Path(VDE_ROOT) / "README.md"
-    scripts_dir = Path(VDE_ROOT) / "scripts"
+    scripts_dir = Path(VDE_ROOT) / "bin"
 
     fix_suggestions_found = False
 
@@ -671,7 +671,7 @@ def step_fix_suggestions(context):
 @then('I can run "create-virtual-for python && start-virtual python"')
 def step_quick_start_command(context):
     """Verify quick start command works."""
-    scripts_dir = Path(VDE_ROOT) / "scripts"
+    scripts_dir = Path(VDE_ROOT) / "bin"
 
     # Check that both commands exist and are executable
     create_script = scripts_dir / "create-virtual-for"
@@ -711,7 +711,7 @@ def step_all_scripts_executable(context):
 @then('all templates should be present')
 def step_all_templates_present(context):
     """Verify all required templates are present."""
-    templates_dir = Path(VDE_ROOT) / "scripts" / "templates"
+    templates_dir = Path(VDE_ROOT) / "templates"
     if not templates_dir.exists():
         templates_dir = Path(VDE_ROOT) / "templates"
     assert templates_dir.exists(), "templates directory does not exist"
@@ -723,7 +723,7 @@ def step_all_templates_present(context):
 @then('vm-types.conf should be valid')
 def step_vm_types_valid(context):
     """Verify vm-types.conf is valid."""
-    vm_types_file = Path(VDE_ROOT) / "scripts" / "data" / "vm-types.conf"
+    vm_types_file = Path(VDE_ROOT) / "data" / "vm-types.conf"
     assert vm_types_file.exists(), "vm-types.conf does not exist"
     content = vm_types_file.read_text()
     assert len(content.strip()) > 0, "vm-types.conf is empty"
@@ -783,7 +783,7 @@ def step_tests_readme(context):
 @then('help text should be available in commands')
 def step_help_text_available(context):
     """Verify help text is available in commands."""
-    scripts_dir = Path(VDE_ROOT) / "scripts"
+    scripts_dir = Path(VDE_ROOT) / "bin"
     if scripts_dir.exists():
         # Check a few key scripts for help functionality
         key_scripts = ['vde', 'start-virtual', 'create-virtual-for']

@@ -22,6 +22,7 @@ Arguments:
 Options:
   --type TYPE       Type of VM: lang or service (default: auto-detect)
   --svc-port PORT   Service port (required for services, e.g., 5432)
+  --ssh-port PORT   SSH host port for this VM (required; must be unique in range)
   --display NAME    Display name (default: auto-generated from name)
   --help, -h        Show this help message
 
@@ -58,6 +59,7 @@ EOF
 # -----------------------
 VM_TYPE_STR=""
 SVC_PORT=""
+SSH_PORT=""
 DISPLAY_NAME=""
 INSTALL_CMD=""
 ALIASES=""
@@ -70,6 +72,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --svc-port)
             SVC_PORT="$2"
+            shift 2
+            ;;
+        --ssh-port)
+            SSH_PORT="$2"
             shift 2
             ;;
         --display)
@@ -106,6 +112,11 @@ if [[ -z "$VM_NAME" ]] || [[ -z "$INSTALL_CMD" ]]; then
     log_error "Missing required arguments"
     echo ""
     show_usage
+    exit 1
+fi
+
+if [[ -z "$SSH_PORT" ]]; then
+    log_error "--ssh-port is required (must be unique; lang: 2200-2299, service: 2400-2499)"
     exit 1
 fi
 
@@ -148,6 +159,22 @@ fi
 # Language type should not have service port
 if [[ "$VM_TYPE_STR" == "lang" ]] && [[ -n "$SVC_PORT" ]]; then
     log_error "Language type should not specify --svc-port"
+    exit 1
+fi
+
+# Validate SSH port range
+if [[ "$VM_TYPE_STR" == "lang" ]] && { [[ "$SSH_PORT" -lt 2200 ]] || [[ "$SSH_PORT" -gt 2299 ]]; }; then
+    log_error "Language SSH port must be in range 2200-2299 (got $SSH_PORT)"
+    exit 1
+fi
+if [[ "$VM_TYPE_STR" == "service" ]] && { [[ "$SSH_PORT" -lt 2400 ]] || [[ "$SSH_PORT" -gt 2499 ]]; }; then
+    log_error "Service SSH port must be in range 2400-2499 (got $SSH_PORT)"
+    exit 1
+fi
+
+# Validate SSH port not already in use
+if grep -q "|${SSH_PORT}$" "$VM_TYPES_CONF" 2>/dev/null; then
+    log_error "SSH port $SSH_PORT is already assigned to another VM in vm-types.conf"
     exit 1
 fi
 
@@ -196,10 +223,11 @@ echo ""
 log_info "Will add the following VM type:"
 echo ""
 echo "  Type:         $VM_TYPE_STR"
-echo "  Name:         $VM_NAME"
+echo "  Name:         vde-$VM_NAME"
 echo "  Display:      $DISPLAY_NAME"
 echo "  Aliases:      ${ALIASES:-<none>}"
 echo "  Install:      $INSTALL_CMD"
+echo "  SSH Port:     $SSH_PORT"
 if [[ "$VM_TYPE_STR" == "service" ]]; then
     echo "  Service Port: $SVC_PORT"
 fi
@@ -219,10 +247,35 @@ log_success "Backup created: $backup_file"
 # -----------------------
 log_info "Adding entry to vm-types.conf..."
 
-# Format: type|name|vm_aliases|display|install|svc_port
-echo "${VM_TYPE_STR}|${VM_NAME}|${ALIASES}|${DISPLAY_NAME}|${INSTALL_CMD}|${SVC_PORT}" >> "$VM_TYPES_CONF"
+# Format: type|name|vm_aliases|display|install|svc_port|ssh_port
+echo "${VM_TYPE_STR}|vde-${VM_NAME}|${ALIASES}|${DISPLAY_NAME}|${INSTALL_CMD}|${SVC_PORT}|${SSH_PORT}" >> "$VM_TYPES_CONF"
 
-log_success "Entry added successfully"
+log_success "Entry added to vm-types.conf"
+
+# Update configs/ssh/config with the new entry
+local project_ssh_config="$VDE_ROOT_DIR/configs/ssh/config"
+if [[ -f "$project_ssh_config" ]]; then
+    cat >> "$project_ssh_config" <<SSHEOF
+
+
+Host vde-${VM_NAME}
+    HostName localhost
+    Port ${SSH_PORT}
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+SSHEOF
+    log_success "Entry added to configs/ssh/config"
+fi
+
+# Sync to live SSH config
+if [[ -f "$VDE_SSH_CONFIG" ]]; then
+    cp "$project_ssh_config" "$VDE_SSH_CONFIG"
+    log_success "Synced to $VDE_SSH_CONFIG"
+fi
 
 # -----------------------
 # Show diff

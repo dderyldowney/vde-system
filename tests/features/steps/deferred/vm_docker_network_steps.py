@@ -233,7 +233,7 @@ def step_same_network_alt(context):
 @then('specific VMs can communicate')
 def step_specific_vms_communicate(context):
     """Verify specific VMs can communicate."""
-    result = subprocess.run(['./scripts/vde', 'networks'], capture_output=True, text=True)
+    result = subprocess.run(['./bin/vde', 'networks'], capture_output=True, text=True)
     assert result.returncode == 0, "Docker network should exist for VM communication"
 
 
@@ -243,7 +243,7 @@ def step_port_accessible_host(context):
     running = docker_ps()
     if running:
         vm = list(running)[0]
-        result = subprocess.run(['./scripts/vde', 'port', vm], capture_output=True, text=True)
+        result = subprocess.run(['./bin/vde', 'port', vm], capture_output=True, text=True)
         if result.returncode == 0:
             assert '22' in result.stdout or '220' in result.stdout, \
                    f"Port should be accessible from host. Got: {result.stdout}"
@@ -252,7 +252,7 @@ def step_port_accessible_host(context):
 @then('each port should be accessible from other VMs')
 def step_port_accessible_vms(context):
     """Verify each port is accessible from other VMs."""
-    result = subprocess.run(['./scripts/vde', 'networks'], capture_output=True, text=True)
+    result = subprocess.run(['./bin/vde', 'networks'], capture_output=True, text=True)
     assert result.returncode == 0, "Docker network should enable inter-VM access"
 
 
@@ -262,6 +262,6 @@ def step_each_vm_mapped_port(context):
     running = docker_list_containers()
     if running:
         for vm in running[:3]:  # Check first 3 VMs
-            result = subprocess.run(['./scripts/vde', 'port', vm], capture_output=True, text=True)
+            result = subprocess.run(['./bin/vde', 'port', vm], capture_output=True, text=True)
             assert result.returncode == 0, f"VM {vm} should have port mapping"
     assert running is not None, "VM port mapping check completed"

@@ -154,7 +154,7 @@ def step_build_cache_used(context):
     assert '--no-cache' not in context.last_command, "Build should use cache (--no-cache should not be present)"
     
     # Verify Docker daemon is running and can support caching using VDE info command
-    result = subprocess.run(['./scripts/vde', 'info'], capture_output=True, text=True, timeout=10)
+    result = subprocess.run(['./bin/vde', 'info'], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, "Docker daemon must be running for build cache"
 
 

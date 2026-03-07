@@ -112,7 +112,7 @@ def step_migration_instructions(context):
 def step_can_stop_all_vms(context):
     """Verify all VMs can be stopped."""
     # Check that stop-all script or functionality exists
-    scripts_dir = VDE_ROOT / "scripts"
+    scripts_dir = VDE_ROOT / "bin"
     assert scripts_dir.exists(), "scripts directory does not exist - cannot verify stop functionality"
 
     # Look for stop-all or shutdown-virtual script
@@ -125,7 +125,7 @@ def step_can_stop_all_vms(context):
 def step_can_remove_vde_dirs(context):
     """Verify VDE directories can be removed."""
     # Check that uninstall script exists
-    scripts_dir = VDE_ROOT / "scripts"
+    scripts_dir = VDE_ROOT / "bin"
     assert scripts_dir.exists(), "scripts directory does not exist - cannot verify uninstall capability"
 
     uninstall_script = scripts_dir / "uninstall-vm-type"
@@ -184,7 +184,7 @@ def step_platform_adjustments(context):
     system = platform.system()
 
     # Check that scripts handle platform differences
-    scripts_dir = VDE_ROOT / "scripts"
+    scripts_dir = VDE_ROOT / "bin"
     assert scripts_dir.exists(), "scripts directory does not exist - cannot verify platform handling"
 
     # Look for platform detection in key scripts (both .sh and executable scripts)
@@ -271,7 +271,7 @@ def step_build_progress(context):
     build_scripts = list(vde_root.rglob("*build*.sh"))
     
     # Also check for vde-rebuild script (main build script, no .sh extension)
-    vde_rebuild = vde_root / "scripts" / "vde-rebuild"
+    vde_rebuild = vde_root / "bin" / "vde-rebuild"
     if vde_rebuild.exists():
         build_scripts.append(vde_rebuild)
 

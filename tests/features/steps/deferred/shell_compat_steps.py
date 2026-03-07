@@ -16,7 +16,7 @@ from config import VDE_ROOT
 
 def run_shell_command(command, shell='zsh'):
     """Run a command in the specified shell with UTF-8 encoding."""
-    cmd = f"{shell} -c 'source {VDE_ROOT}/scripts/lib/vde-shell-compat && {command}'"
+    cmd = f"{shell} -c 'source {VDE_ROOT}/lib/vde-shell-compat && {command}'"
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=VDE_ROOT, encoding='utf-8')
     return result
 

@@ -20,7 +20,7 @@ if not VDE_ROOT_STR:
         VDE_ROOT_STR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 VDE_ROOT = Path(VDE_ROOT_STR)
-VDE_SCRIPT = os.path.join(VDE_ROOT, 'scripts/vde')
+VDE_SCRIPT = os.path.join(VDE_ROOT, 'bin/vde')
 
 # All known VM types
 _ALL_VMS = {

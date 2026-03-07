@@ -592,7 +592,7 @@ def step_parallel_start(context):
 def step_all_running_complete(context):
     """Verify all VMs are running when complete."""
     for vm in ['python', 'go', 'rust']:
-        result = subprocess.run(['./scripts/vde', 'ps'], capture_output=True, text=True)
+        result = subprocess.run(['./bin/vde', 'ps'], capture_output=True, text=True)
         assert f'{vm}-dev' in result.stdout, f"Expected {vm} to be running"
 
 
@@ -608,6 +608,6 @@ def step_own_config(context):
 @then(u'all should be on the same Docker network')
 def step_same_network(context):
     """Verify all VMs are on the same Docker network."""
-    result = subprocess.run(['./scripts/vde', 'networks'], capture_output=True, text=True)
+    result = subprocess.run(['./bin/vde', 'networks'], capture_output=True, text=True)
     assert 'vde-testing' in result.stdout or 'vde' in result.stdout.lower(), \
         f"Expected vde-testing network"

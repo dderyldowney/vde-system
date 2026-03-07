@@ -83,7 +83,7 @@ def cleanup_test_vms(prefix: str = "vde-test-") -> None:
             
             # Use VDE remove command
             vde_result = subprocess.run(
-                ["./scripts/vde", "remove", container_name],
+                ["./bin/vde", "remove", container_name],
                 capture_output=True,
                 text=True,
                 check=False,
@@ -338,7 +338,7 @@ def wait_for_condition(
     
     Example:
         def container_running():
-            result = subprocess.run(["./scripts/vde", "ps", "--filter", "name=test"], 
+            result = subprocess.run(["./bin/vde", "ps", "--filter", "name=test"], 
                                    capture_output=True, text=True)
             return "test" in result.stdout
         

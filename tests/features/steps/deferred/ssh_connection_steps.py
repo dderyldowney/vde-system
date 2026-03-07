@@ -72,7 +72,7 @@ def step_accessible_ssh(context):
     running = docker_list_containers()
     if running:
         vm = running[0]
-        result = subprocess.run(['./scripts/vde', 'port', vm], capture_output=True, text=True)
+        result = subprocess.run(['./bin/vde', 'port', vm], capture_output=True, text=True)
         if result.returncode == 0:
             assert '22' in result.stdout or '220' in result.stdout, \
                    f"SSH port should be exposed. Got: {result.stdout}"
@@ -100,7 +100,7 @@ def step_receive_ssh_port(context):
     running = docker_list_containers()
     if running:
         vm = running[0]
-        result = subprocess.run(['./scripts/vde', 'port', vm], capture_output=True, text=True)
+        result = subprocess.run(['./bin/vde', 'port', vm], capture_output=True, text=True)
         if result.returncode == 0:
             assert '22' in result.stdout or '220' in result.stdout, \
                    f"SSH port should be available. Got: {result.stdout}"
@@ -142,7 +142,7 @@ def step_each_independent(context):
     import subprocess
     # We mock this check as we don't want to actually spin up multiple VMs in this unit test
     # But we can check if vde is available
-    res = subprocess.run(['./scripts/vde', '--version'], capture_output=True)
+    res = subprocess.run(['./bin/vde', '--version'], capture_output=True)
     assert res.returncode == 0, "VDE should be available"
 
 @then('each should have separate data directory')

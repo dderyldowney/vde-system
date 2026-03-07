@@ -86,30 +86,22 @@ get_docker_project_name() {
     vde_get_container_name "$1"
 }
 
-# Check if VM has been created (exists in docker-state or has container)
+# Check if VM config has been created (compose file exists)
+# A config is NOT the same as a running/built container.
 # Args: <vm_name>
-# Returns: VDE_SUCCESS (0) if exists, VDE_ERR_NOT_FOUND if not
+# Returns: VDE_SUCCESS (0) if config exists, VDE_ERR_NOT_FOUND if not
 vm_exists() {
     local vm_name="$1"
-    
-    local container_name
-    container_name=$(get_docker_project_name "$vm_name")
+    local raw_name="${vm_name#vde-}"
 
-    # Check Docker container FIRST - this is the source of truth
-    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^${container_name}$"; then
+    # Check config directory with compose file
+    if [ -f "$CONFIGS_DIR/$raw_name/docker-compose.yml" ]; then
         return $VDE_SUCCESS
     fi
-    
-    # Second check - does the config directory exist?
-    if [ -d "$CONFIGS_DIR/$vm_name" ]; then
+
+    # Backward compat: vde-prefixed dir
+    if [ -f "$CONFIGS_DIR/$vm_name/docker-compose.yml" ]; then
         return $VDE_SUCCESS
-    fi
-    
-    # Third check - does the base name directory exist? (for backward compat)
-    if [[ "$vm_name" =~ ^vde- ]]; then
-        if [ -d "$CONFIGS_DIR/${vm_name#vde-}" ]; then
-            return $VDE_SUCCESS
-        fi
     fi
 
     return $VDE_ERR_NOT_FOUND

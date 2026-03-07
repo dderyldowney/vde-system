@@ -135,7 +135,7 @@ test-real-ai-api:
 # =============================================================================
 
 COVERAGE_DIR := coverage
-COVERAGE_SCRIPT := scripts/coverage.sh
+COVERAGE_SCRIPT := bin/coverage.zsh
 
 test-coverage:
 	@echo "Running all tests with code coverage..."
@@ -199,7 +199,7 @@ lint-zsh:
 	@echo "✓ All zsh scripts passed syntax check"
 	@echo ""
 	@echo "Note: shfmt is not run in CI due to zsh compatibility issues."
-	@echo "To run locally: shfmt -w scripts/**/*.sh tests/**/*.sh"
+	@echo "To run locally: shfmt -w bin/**/*.sh tests/**/*.sh"
 
 lint-yaml:
 	@echo "Running yamllint..."
@@ -227,10 +227,10 @@ test-docker:
 	INDEX=$$((RANDOM % $${#ALL_VMS[@]})); \
 	TEST_VM=$${ALL_VMS[$$INDEX]}; \
 	echo "Selected VM: $$TEST_VM (1 of $${#ALL_VMS[@]} total VMs)"; \
-	./scripts/create-virtual-for "$$TEST_VM" && \
-	./scripts/start-virtual "$$TEST_VM" && \
+	./bin/create-virtual-for "$$TEST_VM" && \
+	./bin/start-virtual "$$TEST_VM" && \
 	echo "✓ Docker build test passed for $$TEST_VM" && \
-	./scripts/shutdown-virtual "$$TEST_VM"
+	./bin/shutdown-virtual "$$TEST_VM"
 
 # =============================================================================
 # BDD Testing (feature files in container)

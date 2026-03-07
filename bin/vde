@@ -61,6 +61,7 @@ _VDE_COMMANDS=(
     "connect:SSH into a VM (alias for ssh):ssh-vm"
     "remove:Remove a VM:remove-virtual"
     "delete:Completely delete a VM:delete-virtual"
+    "add:Add a new VM type to the registry:add-vm-type"
     "uninstall:Uninstall a language/service:uninstall-vm-type"
     "list:List all VMs:list-vms"
     "status:Show VM status:list-vms"
@@ -105,6 +106,7 @@ EOF
     printf "  %-12s %s\n" "ssh <vm>" "SSH into a VM"
     printf "  %-12s %s\n" "connect <vm>" "SSH into a VM (alias for ssh)"
     printf "  %-12s %s\n" "remove <vm>" "Remove a VM instance"
+    printf "  %-12s %s\n" "add <type>" "Add a new VM type to the registry"
     printf "  %-12s %s\n" "uninstall <type>" "Uninstall a language/service completely"
     printf "  %-12s %s\n" "list" "List all VMs"
     printf "  %-12s %s\n" "status" "Show VM status"
@@ -226,6 +228,9 @@ vde_find_command_script() {
             ;;
         delete|delete-virtual)
             script="$VDE_ROOT_DIR/bin/delete-virtual"
+            ;;
+        add|add-vm-type)
+            script="$VDE_ROOT_DIR/bin/add-vm-type"
             ;;
         uninstall|uninstall-vm-type)
             script="$VDE_ROOT_DIR/bin/uninstall-vm-type"

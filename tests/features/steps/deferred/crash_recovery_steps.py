@@ -51,7 +51,7 @@ def step_impl(context):
 def step_impl(context):
     """Restart the crashed VM."""
     # Verify restart capability by checking vde script exists
-    vde_script = subprocess.run(['test', '-x', './scripts/vde'],
+    vde_script = subprocess.run(['test', '-x', './bin/vde'],
                                capture_output=True, text=True)
     assert vde_script.returncode == 0, "VDE script should be executable for restart"
 
@@ -100,6 +100,6 @@ def step_impl(context):
 def step_impl(context):
     """Verify retry option is offered."""
     # Verify retry mechanism is available in VDE
-    vde_exists = subprocess.run(['test', '-f', './scripts/vde'],
+    vde_exists = subprocess.run(['test', '-f', './bin/vde'],
                                capture_output=True, text=True)
     assert vde_exists.returncode == 0, "VDE script should exist for retry capability"

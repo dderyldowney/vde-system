@@ -107,14 +107,14 @@ def step_some_running(context):
     # Store running VMs for later steps
     context.running_vms = {c.replace("-dev", "") for c in running if "-dev" in c}
     # At minimum, verify docker is working
-    result = subprocess.run(["./scripts/vde", "--version"], capture_output=True, text=True, timeout=10)
+    result = subprocess.run(["./bin/vde", "--version"], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, "Docker should be available"
 
 
 @given("I'm monitoring the system")
 def step_monitoring(context):
     """Monitoring the system - verify system is accessible."""
-    result = subprocess.run(["./scripts/vde", "ps"],
+    result = subprocess.run(["./bin/vde", "ps"],
                           capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, "Should be able to monitor Docker containers"
 
@@ -341,7 +341,7 @@ def step_config_modified_after(context):
     # Ensure cache exists first
     if not cache_path.exists():
         subprocess.run(
-            ['zsh', '-c', f'source {VDE_ROOT}/scripts/lib/vde-core && vde_core_load_types'],
+            ['zsh', '-c', f'source {VDE_ROOT}/lib/vde-core && vde_core_load_types'],
             capture_output=True, cwd=VDE_ROOT, timeout=10
         )
 

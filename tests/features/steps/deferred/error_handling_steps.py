@@ -46,7 +46,7 @@ def step_docker_not_available(context):
     context.docker_available = False
     # Try to verify VDE status (which depends on Docker)
     try:
-        result = subprocess.run(['./scripts/vde', '--version'],
+        result = subprocess.run(['./bin/vde', '--version'],
                                  capture_output=True, timeout=5)
         context.docker_available = result.returncode == 0
     except (FileNotFoundError, subprocess.TimeoutExpired):

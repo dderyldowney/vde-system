@@ -46,8 +46,8 @@ def step_need_multiple_ports(context):
 def step_config_includes_multiple_ports(context):
     """VM type configuration includes multiple ports."""
     # Verify vm-types.conf or schema supports multi-port configuration
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    schema_file = VDE_ROOT / "scripts" / "data" / "vm-types.schema.json"
+    vm_types_file = VDE_ROOT / "data" / "vm-types.conf"
+    schema_file = VDE_ROOT / "data" / "vm-types.schema.json"
     
     supported = False
     if vm_types_file.exists():
@@ -186,8 +186,8 @@ def step_want_undo_changes(context):
 def step_vde_installed(context):
     """Verify VDE is installed on the system."""
     # Check VDE scripts exist
-    start_script = VDE_ROOT / "scripts" / "start-virtual"
-    create_script = VDE_ROOT / "scripts" / "create-virtual-for"
+    start_script = VDE_ROOT / "bin" / "start-virtual"
+    create_script = VDE_ROOT / "bin" / "create-virtual-for"
     assert start_script.exists() or create_script.exists(), \
         "VDE should be installed (scripts should exist)"
 
@@ -223,7 +223,7 @@ def step_cannot_reproduce_bug(context):
 def step_share_vm_config(context):
     """Share VM configuration with another developer."""
     # Verify vm-types.conf exists for sharing
-    vm_types = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    vm_types = VDE_ROOT / "data" / "vm-types.conf"
     context.config_shared = vm_types.exists()
 
 
@@ -238,7 +238,7 @@ def step_port_already_in_use(context):
     """Context: A port is already in use."""
     # Find a port that might be in use
     try:
-        result = subprocess.run(['./scripts/vde', 'ps', '--format', '{{.Ports}}'],
+        result = subprocess.run(['./bin/vde', 'ps', '--format', '{{.Ports}}'],
                               capture_output=True, text=True, timeout=10)
         # Parse to find an in-use port
         context.port_in_use = '2213' if '2213' in result.stdout else None
@@ -316,7 +316,7 @@ def step_sensitive_vars_gitignored(context):
 def step_add_vm_type_custom_install(context):
     """Add a custom VM type with installation command."""
     # This step verifies the vm-types.conf can be modified
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    vm_types_file = VDE_ROOT / "data" / "vm-types.conf"
     if vm_types_file.exists():
         context.vm_type_added = True
         context.vm_types_file = str(vm_types_file)
@@ -339,7 +339,7 @@ def step_add_vm_type_with_display(context, display_name):
     import json as _json
     context.display_name = display_name
     context._display_test_vm_name = 'vde-displaytest'
-    json_path = VDE_ROOT / 'scripts' / 'data' / 'vm-types.json'
+    json_path = VDE_ROOT / 'data' / 'vm-types.json'
     data = _json.loads(json_path.read_text())
     test_entry = {
         "name": "vde-displaytest",
@@ -356,17 +356,18 @@ def step_add_vm_type_with_display(context, display_name):
     data['vms']['language'].append(test_entry)
     json_path.write_text(_json.dumps(data, indent=2))
     # Invalidate the zsh cache so list-vms re-reads the JSON
-    cache_file = VDE_ROOT / 'scripts' / 'lib' / 'cache' / 'vm-types.cache.zsh'
+    cache_file = VDE_ROOT / 'lib' / 'cache' / 'vm-types.cache.zsh'
     if cache_file.exists():
         cache_file.unlink()
 
 
 @when('I add VM type with aliases "{aliases}"')
 def step_add_vm_type_with_aliases(context, aliases):
-    """Add VM type with aliases."""
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
-    if vm_types_file.exists():
-        context.aliases = [a.strip() for a in aliases.split(',')]
+    """Add VM type (js) and register its aliases."""
+    context.aliases = [a.strip() for a in aliases.split(',')]
+    primary = context.aliases[0]  # 'js'
+    from vm_common import run_vde_command
+    run_vde_command(['create', primary], context=context)
 
 
 @when('I modify VDE_LANG_PORT_START and VDE_LANG_PORT_END')
@@ -856,13 +857,13 @@ def step_language_grows(context):
 def step_run_add_vm_type_mysql(context):
     """Run add-vm-type for mysql service (may already exist — both outcomes prove capability)."""
     result = subprocess.run(
-        ['scripts/add-vm-type', '--type', 'service', '--svc-port', '3306',
+        ['bin/add-vm-type', '--type', 'service', '--svc-port', '3306',
          'mysql', 'apt-get install -y mysql-server'],
         capture_output=True, text=True, cwd=str(VDE_ROOT)
     )
     context.add_vm_type_output = result.stdout + result.stderr
     context.add_vm_type_rc = result.returncode
-    vm_types = (VDE_ROOT / 'scripts' / 'data' / 'vm-types.conf').read_text()
+    vm_types = (VDE_ROOT / 'data' / 'vm-types.conf').read_text()
     assert 'vde-mysql' in vm_types or 'mysql' in vm_types, \
         "mysql should exist in vm-types.conf"
 
@@ -911,7 +912,7 @@ def step_each_port_accessible_from_other_vms(context):
 def step_display_name_in_list_vms(context, display_name):
     """Verify display name appears in vde list --all output."""
     result = subprocess.run(
-        ['scripts/vde', 'list', '--all'],
+        ['bin/vde', 'list', '--all'],
         capture_output=True, text=True, cwd=str(VDE_ROOT)
     )
     assert result.returncode == 0, f"vde list --all failed: {result.stderr}"
@@ -922,7 +923,7 @@ def step_display_name_in_list_vms(context, display_name):
 @then('I can use any alias to reference the VM')
 def step_can_use_alias(context):
     """Verify aliases are registered in vm-types.conf."""
-    vm_types = (VDE_ROOT / 'scripts' / 'data' / 'vm-types.conf').read_text()
+    vm_types = (VDE_ROOT / 'data' / 'vm-types.conf').read_text()
     aliases = getattr(context, 'aliases', ['js', 'node', 'nodejs'])
     for alias in aliases:
         assert alias in vm_types, \
@@ -932,7 +933,7 @@ def step_can_use_alias(context):
 @then('"start-virtual js", "start-virtual node", "start-virtual nodejs" all work')
 def step_start_virtual_aliases_work(context):
     """Verify js/node/nodejs aliases resolve via vm-types.conf and config exists."""
-    vm_types = (VDE_ROOT / 'scripts' / 'data' / 'vm-types.conf').read_text()
+    vm_types = (VDE_ROOT / 'data' / 'vm-types.conf').read_text()
     for alias in ('js', 'node', 'nodejs'):
         assert alias in vm_types, \
             f"Alias '{alias}' not in vm-types.conf — start-virtual {alias} would fail"
@@ -945,7 +946,7 @@ def step_start_virtual_aliases_work(context):
 def step_aliases_in_list_vms(context):
     """Verify aliases appear in vde list --all output."""
     result = subprocess.run(
-        ['scripts/vde', 'list', '--all'],
+        ['bin/vde', 'list', '--all'],
         capture_output=True, text=True, cwd=str(VDE_ROOT)
     )
     assert result.returncode == 0, f"vde list --all failed: {result.stderr}"
@@ -958,7 +959,7 @@ def step_aliases_in_list_vms(context):
 @when('I rebuild VMs with --rebuild')
 def step_rebuild_vms(context):
     """Verify vde rebuild script exists and is executable."""
-    rebuild_script = VDE_ROOT / 'scripts' / 'vde-rebuild'
+    rebuild_script = VDE_ROOT / 'bin' / 'vde-rebuild'
     assert rebuild_script.exists(), f"vde-rebuild script not found at {rebuild_script}"
     assert os.access(str(rebuild_script), os.X_OK), "vde-rebuild is not executable"
     context.rebuild_available = True
@@ -1030,7 +1031,7 @@ def step_check_docker_compose_config(context):
 @when('I reload VM types')
 def step_reload_vm_types(context):
     """Verify vm-types.conf is parseable (reload = re-read from source of truth)."""
-    vm_types_conf = VDE_ROOT / 'scripts' / 'data' / 'vm-types.conf'
+    vm_types_conf = VDE_ROOT / 'data' / 'vm-types.conf'
     assert vm_types_conf.exists(), "vm-types.conf not found"
     lines = [l for l in vm_types_conf.read_text().splitlines()
              if l.strip() and not l.startswith('#')]
@@ -1055,7 +1056,7 @@ def step_separate_data_directories(context):
 def step_each_runs_independently(context):
     """Verify each known VDE VM has a unique container_name so they can run side by side."""
     import re
-    vm_types_conf = (VDE_ROOT / 'scripts' / 'data' / 'vm-types.conf').read_text()
+    vm_types_conf = (VDE_ROOT / 'data' / 'vm-types.conf').read_text()
     # Collect canonical VM names from vm-types.conf (second pipe field)
     known_vms = set()
     for line in vm_types_conf.splitlines():
@@ -1091,7 +1092,7 @@ def step_each_runs_independently(context):
 def _get_running_vms():
     """Get list of running VDE VMs."""
     try:
-        result = subprocess.run(['./scripts/vde', 'ps'],
+        result = subprocess.run(['./bin/vde', 'ps'],
                               capture_output=True, text=True, timeout=10)
         if result.returncode == 0:
             return [name for name in result.stdout.strip().split('\n') if name.startswith('vde-')]

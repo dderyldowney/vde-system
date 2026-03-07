@@ -124,7 +124,7 @@ def step_request_vm_info(context, vm_name):
     
     # Parse VM info from the output or fallback to vm-types.conf
     vm_info = {}
-    vm_types_file = VDE_ROOT / 'scripts' / 'data' / 'vm-types.conf'
+    vm_types_file = VDE_ROOT / 'data' / 'vm-types.conf'
     
     if vm_types_file.exists():
         content = vm_types_file.read_text()

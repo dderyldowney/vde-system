@@ -1,6 +1,6 @@
-name: vde-rust
 # Template for language VMs
 # Variables: rust, 2200, su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
+name: vde-rust
 services:
   vde-rust:
     build:
@@ -25,7 +25,7 @@ services:
       - ../../../logs/rust:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock

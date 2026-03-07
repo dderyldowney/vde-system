@@ -27,10 +27,10 @@ if not VDE_ROOT:
     except ImportError:
         VDE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-VDE_PARSER = os.path.join(VDE_ROOT, 'scripts/lib/vde-parser')
-VDE_VM_COMMON = os.path.join(VDE_ROOT, 'scripts/lib/vm-common')
-VDE_SHELL_COMPAT = os.path.join(VDE_ROOT, 'scripts/lib/vde-shell-compat')
-VM_TYPES_CONF = os.path.join(VDE_ROOT, 'scripts/data/vm-types.conf')
+VDE_PARSER = os.path.join(VDE_ROOT, 'lib/vde-parser')
+VDE_VM_COMMON = os.path.join(VDE_ROOT, 'lib/vm-common')
+VDE_SHELL_COMPAT = os.path.join(VDE_ROOT, 'lib/vde-shell-compat')
+VM_TYPES_CONF = os.path.join(VDE_ROOT, 'data/vm-types.conf')
 
 # Import vm_common helpers for real Docker verification
 from vm_common import container_exists, compose_file_exists, run_vde_command
@@ -744,7 +744,7 @@ def step_generate_perf_plans(context):
 @given('Docker is running')
 def step_docker_running(context):
     """Verify Docker is running via VDE."""
-    result = subprocess.run(['./scripts/vde', 'info'], capture_output=True, text=True)
+    result = subprocess.run(['./bin/vde', 'info'], capture_output=True, text=True)
     context.docker_running = result.returncode == 0
 
 

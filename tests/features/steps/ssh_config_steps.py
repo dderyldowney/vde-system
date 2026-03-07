@@ -335,14 +335,14 @@ def step_config_contains_specific_content(context, content):
     """Ensure SSH config contains specific content."""
     ssh_config = _get_ssh_config_path()
     _ensure_vde_ssh_dir()
-    
+
     if not ssh_config.exists():
         ssh_config.write_text(f"{content}\n")
     else:
         existing = ssh_config.read_text()
         if content not in existing:
             ssh_config.write_text(f"{existing}\n{content}\n")
-    
+
     ssh_config.chmod(0o600)
 
 @given('~/.ssh/vde/config exists with content')
@@ -652,7 +652,7 @@ def step_run_vde_command_requires_ssh(context):
         env.pop('SSH_AUTH_SOCK', None)
         env.pop('SSH_AGENT_PID', None)
         result = subprocess.run(
-            ["zsh", "-c", f"source {VDE_ROOT}/scripts/lib/vde-ssh 2>/dev/null; "
+            ["zsh", "-c", f"source {VDE_ROOT}/lib/vde-ssh 2>/dev/null; "
                            "detect_ssh_agent 2>&1 || echo 'no agent'"],
             capture_output=True, text=True, env=env, cwd=str(VDE_ROOT)
         )
@@ -662,7 +662,7 @@ def step_run_vde_command_requires_ssh(context):
 
     # Normal path: initialise SSH agent via the setup script
     result = subprocess.run(
-        ["./scripts/ssh-agent-setup", "--init"],
+        ["./bin/ssh-agent-setup", "--init"],
         capture_output=True, text=True, cwd=str(VDE_ROOT)
     )
 
@@ -732,14 +732,16 @@ def step_ssh_config_generated(context):
         port = context.current_port
         
         content = ssh_config.read_text() if ssh_config.exists() else ""
-        
-        # Check if entry already exists to prevent duplicates
+
+        # Remove any existing entry for this host so we write the correct test port
         host_name = f"vde-{vm_name}"
         if f"Host {host_name}" in content:
-            # Entry already exists, don't add duplicate
-            context.config_generated = True
-            return
-        
+            content = re.sub(
+                rf'\nHost {re.escape(host_name)}\n(?:    [^\n]*\n)*',
+                '\n',
+                content
+            )
+
         # Detect primary key: context.primary_key wins, then filesystem preference order
         # Generate one if none exists so IdentityFile is always written
         primary_key = getattr(context, 'primary_key', None)

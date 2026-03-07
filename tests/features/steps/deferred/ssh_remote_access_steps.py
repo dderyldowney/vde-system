@@ -130,7 +130,7 @@ def step_add_ssh_config_python_dev(context):
     
     # Get port for vde-python VM
     result = subprocess.run(
-        ['./scripts/vde', 'port', 'vde-python'],
+        ['./bin/vde', 'port', 'vde-python'],
         capture_output=True, text=True, timeout=30
     )
     
@@ -204,7 +204,7 @@ def step_connect_to_python_dev(context):
     # Store connection info for vde-python
     context.current_connection = 'vde-python'
     result = subprocess.run(
-        ['./scripts/vde', 'port', 'vde-python'],
+        ['./bin/vde', 'port', 'vde-python'],
         capture_output=True, text=True, timeout=30
     )
     context.python_dev_port = result.stdout.strip() if result.returncode == 0 else '2213'
@@ -216,7 +216,7 @@ def step_connect_to_postgres_dev(context):
     # Store connection info for vde-postgres
     context.second_connection = 'vde-postgres'
     result = subprocess.run(
-        ['./scripts/vde', 'port', 'vde-postgres'],
+        ['./bin/vde', 'port', 'vde-postgres'],
         capture_output=True, text=True, timeout=30
     )
     context.postgres_dev_port = result.stdout.strip() if result.returncode == 0 else '2404'

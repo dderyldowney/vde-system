@@ -577,7 +577,7 @@ def format_scenario_for_user_guide(scenario_name, scenario_body):
             lines.append("**This is handled by the setup script:**\n")
             lines.append("")
             lines.append("```bash")
-            lines.append("./scripts/build-and-start")
+            lines.append("./bin/build-and-start")
             lines.append("```")
         # Other scenarios without commands just don't get a command block
 

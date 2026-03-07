@@ -57,7 +57,7 @@ def step_impl(context):
     """Verify VMs start in reasonable order."""
     # Verify vde script is executable for start operations
     result = subprocess.run(
-        ['test', '-x', './scripts/vde'],
+        ['test', '-x', './bin/vde'],
         capture_output=True, text=True
     )
     assert result.returncode == 0, "VDE script should be executable"
@@ -79,7 +79,7 @@ def step_impl(context):
     """Verify startup completes successfully."""
     # Check vde command exists
     result = subprocess.run(
-        ['./scripts/vde', 'help'],
+        ['./bin/vde', 'help'],
         capture_output=True, text=True, timeout=30
     )
     assert result.returncode in [0, 1], "VDE should respond to help command"
@@ -90,7 +90,7 @@ def step_impl(context):
     """Restart Python VM."""
     # Verify VM restart capability
     result = subprocess.run(
-        ['./scripts/vde', 'status', 'python'],
+        ['./bin/vde', 'status', 'python'],
         capture_output=True, text=True, timeout=30
     )
     assert result.returncode in [0, 1], "VM status should be queryable"
@@ -100,7 +100,7 @@ def step_impl(context):
 def step_impl(context):
     """Verify both Python and Rust VMs are running."""
     result = subprocess.run(
-        ['./scripts/vde', 'list'],
+        ['./bin/vde', 'list'],
         capture_output=True, text=True, timeout=30
     )
     if result.returncode == 0:

@@ -327,5 +327,5 @@ def step_project_pyjredis(context):
 def step_stop_test_vms(context):
     """Verify ability to stop test VMs independently."""
     # Verify VDE stop command exists and is executable
-    vde_script = Path(__file__).parent.parent.parent.parent / 'scripts' / 'vde'
+    vde_script = Path(__file__).parent.parent.parent.parent / 'bin' / 'vde'
     assert vde_script.exists(), "VDE script should exist for independent VM control"
