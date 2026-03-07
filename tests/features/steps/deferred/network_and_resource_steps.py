@@ -11,10 +11,10 @@ from behave import given, then, when
 # Network Patterns
 # =============================================================================
 
-@when(u'I check the ./scripts/vde networks')
+@when(u'I check the ./bin/vde networks')
 def step_check_docker_network(context):
     """Check Docker network status."""
-    result = subprocess.run(['./scripts/vde', 'networks'],
+    result = subprocess.run(['./bin/vde', 'networks'],
                           capture_output=True, text=True)
     context.docker_network_output = result.stdout
 
@@ -91,7 +91,7 @@ def step_config_validated(context):
 @when(u'I check Docker is running')
 def step_check_docker(context):
     """Check if Docker is running."""
-    result = subprocess.run(['./scripts/vde', 'info'],
+    result = subprocess.run(['./bin/vde', 'info'],
                           capture_output=True, text=True)
     context.docker_info = result.stdout
 
@@ -100,7 +100,7 @@ def step_check_docker(context):
 def step_restart_docker(context):
     """Restart Docker if needed."""
     # Check Docker status via vde info
-    result = subprocess.run(['./scripts/vde', 'info'], capture_output=True, text=True, timeout=30)
+    result = subprocess.run(['./bin/vde', 'info'], capture_output=True, text=True, timeout=30)
     context.docker_restarted = result.returncode == 0
     assert context.docker_restarted, "VDE/Docker should be available to restart"
 
@@ -190,7 +190,7 @@ def step_create_multiple_vms(context):
 def step_each_vm_starts(context):
     """Each VM starts."""
     # Verify VMs can start by checking vde script
-    result = subprocess.run(['test', '-x', './scripts/vde'], capture_output=True, text=True)
+    result = subprocess.run(['test', '-x', './bin/vde'], capture_output=True, text=True)
     assert result.returncode == 0, "VDE script should be executable for starting VMs"
 
 
@@ -261,7 +261,7 @@ def step_multiple_running_vms(context):
 @when(u'I check resource usage')
 def step_check_resource_usage(context):
     """Check resource usage."""
-    result = subprocess.run(['./scripts/vde', 'stats', '--no-stream'],
+    result = subprocess.run(['./bin/vde', 'stats', '--no-stream'],
                           capture_output=True, text=True)
     context.resource_usage = result.stdout
 
@@ -296,7 +296,7 @@ def step_system_responsive(context):
 @when(u'I query VM status')
 def step_query_vm_status(context):
     """Query VM status."""
-    result = subprocess.run(['./scripts/vde', 'status'],
+    result = subprocess.run(['./bin/vde', 'status'],
                           capture_output=True, text=True)
     context.vm_status = result.stdout
 
@@ -332,7 +332,7 @@ def step_identify_issues(context):
 @when(u'I start them again')
 def step_start_them_again(context):
     """Start VMs again."""
-    result = subprocess.run(['./scripts/vde', 'start'],
+    result = subprocess.run(['./bin/vde', 'start'],
                           capture_output=True, text=True)
     context.vde_command_result = result
 

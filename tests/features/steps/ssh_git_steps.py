@@ -41,7 +41,7 @@ def _ssh_agent_forwarding_configured(vm_name):
     content = compose.read_text()
     if 'SSH_AUTH_SOCK' not in content:
         return False
-    template = VDE_ROOT / 'scripts' / 'templates' / 'ssh-entry.txt'
+    template = VDE_ROOT / 'templates' / 'ssh-entry.txt'
     if not template.exists():
         return False
     return 'ForwardAgent yes' in template.read_text()
@@ -782,31 +782,37 @@ def step_have_python_vm_running(context):
 
 @given('I have a Go VM running')
 def step_have_go_vm_running(context):
-    """Verify Go VM config exists with SSH agent forwarding."""
+    """Ensure Go VM config exists with SSH agent forwarding (create if needed)."""
+    if not _vm_config_exists('go'):
+        run_vde_command(['create', 'go'], context=context)
     assert _vm_config_exists('go'), \
         "Go VM docker-compose.yml not found — cannot use Go VM"
     assert _vm_ssh_agent_forwarded('go'), \
-        "Go VM does not have SSH_AUTH_SOCK forwarding configured"
+        "VDE SSH agent forwarding not configured for go VM"
     context.target_vm = 'go'
 
 
 @given('I have a Rust VM running')
 def step_have_rust_vm_running(context):
-    """Verify Rust VM config exists with SSH agent forwarding."""
+    """Ensure Rust VM config exists with SSH agent forwarding (create if needed)."""
+    if not _vm_config_exists('rust'):
+        run_vde_command(['create', 'rust'], context=context)
     assert _vm_config_exists('rust'), \
         "Rust VM docker-compose.yml not found — cannot use Rust VM"
     assert _vm_ssh_agent_forwarded('rust'), \
-        "Rust VM does not have SSH_AUTH_SOCK forwarding configured"
+        "VDE SSH agent forwarding not configured for rust VM"
     context.target_vm = 'rust'
 
 
 @given('I have a Node.js VM running')
 def step_have_nodejs_vm_running(context):
-    """Verify Node.js (js) VM config exists with SSH agent forwarding."""
+    """Ensure Node.js (js) VM config exists with SSH agent forwarding (create if needed)."""
+    if not _vm_config_exists('js'):
+        run_vde_command(['create', 'js'], context=context)
     assert _vm_config_exists('js'), \
         "Node.js (js) VM docker-compose.yml not found — cannot use Node.js VM"
     assert _vm_ssh_agent_forwarded('js'), \
-        "Node.js VM does not have SSH_AUTH_SOCK forwarding configured"
+        "VDE SSH agent forwarding not configured for js VM"
     context.target_vm = 'js'
 
 
@@ -823,12 +829,14 @@ def step_have_python_vm_for_build(context):
 
 @given('I have multiple VMs for different services')
 def step_have_multiple_vms_for_services(context):
-    """Verify multiple VM configs exist, each with SSH agent forwarding."""
+    """Ensure multiple VM configs exist with SSH agent forwarding (create if needed)."""
     vm_types = ['python', 'go', 'rust', 'js']
+    for vm in vm_types:
+        if not _vm_config_exists(vm):
+            run_vde_command(['create', vm], context=context)
     configured = [vm for vm in vm_types if _vm_config_exists(vm)]
     assert len(configured) >= 2, \
         f"Expected ≥2 VM configs with SSH forwarding, found: {configured}"
-    # Verify all have SSH_AUTH_SOCK forwarding
     forwarding = [vm for vm in configured if _vm_ssh_agent_forwarded(vm)]
     assert len(forwarding) >= 2, \
         f"Expected ≥2 VMs with SSH forwarding, only: {forwarding}"
@@ -863,7 +871,7 @@ def step_ssh_into_python_vm(context):
         has_forward_agent = 'ForwardAgent yes' in content
     else:
         # Check template as fallback
-        template = VDE_ROOT / 'scripts' / 'templates' / 'ssh-entry.txt'
+        template = VDE_ROOT / 'templates' / 'ssh-entry.txt'
         has_forward_agent = template.exists() and 'ForwardAgent yes' in template.read_text()
     assert has_forward_agent, \
         "ForwardAgent yes not in VDE SSH config — agent forwarding disabled"
@@ -874,7 +882,7 @@ def step_ssh_into_python_vm(context):
 def step_ssh_into_rust_vm(context):
     """Verify Rust VM's SSH config has ForwardAgent yes."""
     ssh_config = VDE_SSH_DIR / 'config'
-    template = VDE_ROOT / 'scripts' / 'templates' / 'ssh-entry.txt'
+    template = VDE_ROOT / 'templates' / 'ssh-entry.txt'
     has_forward_agent = (ssh_config.exists() and 'ForwardAgent yes' in ssh_config.read_text()) or \
                         (template.exists() and 'ForwardAgent yes' in template.read_text())
     assert has_forward_agent, \
@@ -885,7 +893,7 @@ def step_ssh_into_rust_vm(context):
 @when('I SSH into the Node.js VM')
 def step_ssh_into_nodejs_vm(context):
     """Verify Node.js VM's SSH config has ForwardAgent yes."""
-    template = VDE_ROOT / 'scripts' / 'templates' / 'ssh-entry.txt'
+    template = VDE_ROOT / 'templates' / 'ssh-entry.txt'
     has_forward_agent = template.exists() and 'ForwardAgent yes' in template.read_text()
     assert has_forward_agent, \
         "ForwardAgent yes not in SSH template — agent forwarding would be disabled for Node.js VM"
@@ -895,7 +903,7 @@ def step_ssh_into_nodejs_vm(context):
 @when('I SSH into a VM')
 def step_ssh_into_a_vm(context):
     """Verify the VDE SSH config template has ForwardAgent yes for all VMs."""
-    template = VDE_ROOT / 'scripts' / 'templates' / 'ssh-entry.txt'
+    template = VDE_ROOT / 'templates' / 'ssh-entry.txt'
     assert template.exists(), f"SSH entry template not found at {template}"
     content = template.read_text()
     assert 'ForwardAgent yes' in content, \
@@ -909,7 +917,7 @@ def step_ssh_into_the_vm(context):
     target = getattr(context, 'new_vm_target', 'python')
     assert _vm_ssh_agent_forwarded(target), \
         f"{target} VM does not have SSH_AUTH_SOCK forwarding — Git SSH auth would not work"
-    template = VDE_ROOT / 'scripts' / 'templates' / 'ssh-entry.txt'
+    template = VDE_ROOT / 'templates' / 'ssh-entry.txt'
     assert 'ForwardAgent yes' in template.read_text(), \
         "ForwardAgent yes not in SSH template"
     context.ssh_target = target

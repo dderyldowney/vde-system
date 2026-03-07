@@ -28,7 +28,7 @@ from config import VDE_ROOT
 def step_run_vde_ssh_setup_status(context):
     """Run 'vde ssh-setup status' command."""
     result = subprocess.run(
-        [str(VDE_ROOT / "scripts" / "vde"), "ssh-setup", "status"],
+        [str(VDE_ROOT / "bin" / "vde"), "ssh-setup", "status"],
         capture_output=True,
         text=True,
         timeout=30,
@@ -43,7 +43,7 @@ def step_run_vde_ssh_setup_status(context):
 def step_run_vde_ssh_setup_init(context):
     """Run 'vde ssh-setup init' command."""
     result = subprocess.run(
-        [str(VDE_ROOT / "scripts" / "vde"), "ssh-setup", "init"],
+        [str(VDE_ROOT / "bin" / "vde"), "ssh-setup", "init"],
         capture_output=True,
         text=True,
         timeout=60,
@@ -58,7 +58,7 @@ def step_run_vde_ssh_setup_init(context):
 def step_run_vde_ssh_setup_start(context):
     """Run 'vde ssh-setup start' command."""
     result = subprocess.run(
-        [str(VDE_ROOT / "scripts" / "vde"), "ssh-setup", "start"],
+        [str(VDE_ROOT / "bin" / "vde"), "ssh-setup", "start"],
         capture_output=True,
         text=True,
         timeout=30,
@@ -73,7 +73,7 @@ def step_run_vde_ssh_setup_start(context):
 def step_run_vde_ssh_setup_generate(context):
     """Run 'vde ssh-setup generate' command."""
     result = subprocess.run(
-        [str(VDE_ROOT / "scripts" / "vde"), "ssh-setup", "generate"],
+        [str(VDE_ROOT / "bin" / "vde"), "ssh-setup", "generate"],
         capture_output=True,
         text=True,
         timeout=30,
@@ -88,7 +88,7 @@ def step_run_vde_ssh_setup_generate(context):
 def step_run_vde_ssh_sync(context):
     """Run 'vde ssh-sync' command."""
     result = subprocess.run(
-        [str(VDE_ROOT / "scripts" / "vde"), "ssh-sync"],
+        [str(VDE_ROOT / "bin" / "vde"), "ssh-sync"],
         capture_output=True,
         text=True,
         timeout=30,
@@ -103,7 +103,7 @@ def step_run_vde_ssh_sync(context):
 def step_run_vde_start_update_ssh(context):
     """Run 'vde start python --update-ssh' command."""
     result = subprocess.run(
-        [str(VDE_ROOT / "scripts" / "vde"), "start", "python", "--update-ssh"],
+        [str(VDE_ROOT / "bin" / "vde"), "start", "python", "--update-ssh"],
         capture_output=True,
         text=True,
         timeout=60,

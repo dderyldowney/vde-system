@@ -111,7 +111,7 @@ def step_should_resolve_to(context, canonical):
     else:
         # Fallback: check if the canonical name is in the available VMs
         from pathlib import Path
-        vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
+        vm_types_file = Path(VDE_ROOT) / 'data' / 'vm-types.conf'
         if vm_types_file.exists():
             content = vm_types_file.read_text()
             # Look for the canonical name in the file
@@ -137,7 +137,7 @@ def step_alias_resolves_to_canonical(context, canonical):
     else:
         # Fallback: the canonical name should exist in vm-types.conf
         from pathlib import Path
-        vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
+        vm_types_file = Path(VDE_ROOT) / 'data' / 'vm-types.conf'
         if vm_types_file.exists():
             content = vm_types_file.read_text()
             assert canonical.lower() in content.lower(), \
@@ -155,7 +155,7 @@ def step_vm_resolves_to(context, vm):
     else:
         # Fallback: the VM name should exist in vm-types.conf
         from pathlib import Path
-        vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
+        vm_types_file = Path(VDE_ROOT) / 'data' / 'vm-types.conf'
         if vm_types_file.exists():
             content = vm_types_file.read_text()
             assert vm.lower() in content.lower(), \
@@ -186,7 +186,7 @@ def step_understand_vm_categories(context):
 def step_see_all_language_vms(context):
     """Verify all language VMs are visible."""
     from pathlib import Path
-    vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
+    vm_types_file = Path(VDE_ROOT) / 'data' / 'vm-types.conf'
     if vm_types_file.exists():
         content = vm_types_file.read_text()
         # Check for common language VMs
@@ -200,7 +200,7 @@ def step_see_all_language_vms(context):
 def step_see_all_service_vms(context):
     """Verify all service VMs are visible."""
     from pathlib import Path
-    vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
+    vm_types_file = Path(VDE_ROOT) / 'data' / 'vm-types.conf'
     if vm_types_file.exists():
         content = vm_types_file.read_text()
         # Check for common service VMs
@@ -214,7 +214,7 @@ def step_see_all_service_vms(context):
 def step_each_vm_has_display_name(context):
     """Verify each VM has a display name."""
     from pathlib import Path
-    vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
+    vm_types_file = Path(VDE_ROOT) / 'data' / 'vm-types.conf'
     if vm_types_file.exists():
         content = vm_types_file.read_text()
         # Verify display names are present (format: name="Display Name")
@@ -226,7 +226,7 @@ def step_each_vm_has_display_name(context):
 def step_each_vm_shows_type(context):
     """Verify each VM shows its type."""
     from pathlib import Path
-    vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
+    vm_types_file = Path(VDE_ROOT) / 'data' / 'vm-types.conf'
     if vm_types_file.exists():
         content = vm_types_file.read_text()
         # Verify type information is present - check for lang| or service| prefix
@@ -238,7 +238,7 @@ def step_each_vm_shows_type(context):
 def step_common_languages_listed(context):
     """Verify common programming languages are listed."""
     from pathlib import Path
-    vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
+    vm_types_file = Path(VDE_ROOT) / 'data' / 'vm-types.conf'
     if vm_types_file.exists():
         content = vm_types_file.read_text()
         languages = ['python', 'go', 'rust']
@@ -286,7 +286,7 @@ def step_should_not_see_language_vms(context):
 def step_services_listed(context):
     """Verify common services are listed."""
     from pathlib import Path
-    vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
+    vm_types_file = Path(VDE_ROOT) / 'data' / 'vm-types.conf'
     if vm_types_file.exists():
         content = vm_types_file.read_text()
         services = ['postgres', 'redis']
@@ -336,7 +336,7 @@ def step_see_installation_details(context):
 def step_check_vm_exists(context, vm):
     """Check if a VM type exists and store detected VMs."""
     from pathlib import Path
-    vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
+    vm_types_file = Path(VDE_ROOT) / 'data' / 'vm-types.conf'
     detected = []
     canonical_name = None
     if vm_types_file.exists():
@@ -380,7 +380,7 @@ def step_use_alias(context, alias):
 def step_explore_vms(context):
     """Explore available VMs."""
     from pathlib import Path
-    vm_types_file = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf'
+    vm_types_file = Path(VDE_ROOT) / 'data' / 'vm-types.conf'
     if vm_types_file.exists():
         context.vm_list_output = vm_types_file.read_text()
     context.exploring_vms = True

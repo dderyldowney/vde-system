@@ -517,7 +517,7 @@ def step_workspace_mounted(context, workspace_dir):
     
     # Check vde inspect for volume mounts
     result = subprocess.run(
-        ['./scripts/vde', 'inspect', container_name, '--mounts'],
+        ['./bin/vde', 'inspect', container_name, '--mounts'],
         capture_output=True, text=True
     )
     

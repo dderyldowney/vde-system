@@ -24,9 +24,9 @@ if not VDE_ROOT:
     except ImportError:
         VDE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-VDE_PARSER = os.path.join(VDE_ROOT, 'scripts/lib/vde-parser')
-VDE_VM_COMMON = os.path.join(VDE_ROOT, 'scripts/lib/vm-common')
-VDE_SHELL_COMPAT = os.path.join(VDE_ROOT, 'scripts/lib/vde-shell-compat')
+VDE_PARSER = os.path.join(VDE_ROOT, 'lib/vde-parser')
+VDE_VM_COMMON = os.path.join(VDE_ROOT, 'lib/vm-common')
+VDE_SHELL_COMPAT = os.path.join(VDE_ROOT, 'lib/vde-shell-compat')
 
 
 def _call_vde_parser_function(function_name, input_string):

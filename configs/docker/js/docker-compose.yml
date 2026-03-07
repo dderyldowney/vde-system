@@ -1,6 +1,6 @@
-name: vde-js
 # Template for language VMs
 # Variables: js, 2200, apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs
+name: vde-js
 services:
   vde-js:
     build:
@@ -18,14 +18,14 @@ services:
     command: sh -c "apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs && /usr/sbin/sshd -D"
 
     ports:
-      - "2209:22"
+      - "2200:22"
 
     volumes:
       - ../../../projects/js:/home/devuser/workspace
       - ../../../logs/js:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock

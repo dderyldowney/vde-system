@@ -320,7 +320,7 @@ def run_vde_command(cmd, timeout=30):
         else:
             cmd_str = cmd
         result = subprocess.run(
-            f"./scripts/vde {cmd_str}",
+            f"./bin/vde {cmd_str}",
             shell=True,
             capture_output=True,
             text=True,

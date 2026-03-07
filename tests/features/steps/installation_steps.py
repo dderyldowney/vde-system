@@ -78,7 +78,7 @@ def step_just_installed_vde(context):
 @when('I run "create-virtual-for python"')
 def step_run_create_virtual_for_python(context):
     """Run create-virtual-for python --no-start and accept success or already-exists."""
-    script = Path(VDE_ROOT) / "scripts" / "create-virtual-for"
+    script = Path(VDE_ROOT) / "bin" / "create-virtual-for"
     assert script.exists(), f"create-virtual-for script not found at {script}"
     assert os.access(script, os.X_OK), "create-virtual-for is not executable"
 
@@ -155,9 +155,9 @@ def step_ive_installed_vde(context):
 @when('I run the initial setup script')
 def step_run_initial_setup(context):
     """Execute the actual setup script and capture results."""
-    setup_script = Path(VDE_ROOT) / "scripts" / "build-and-start"
+    setup_script = Path(VDE_ROOT) / "bin" / "build-and-start"
     if not setup_script.exists():
-        setup_script = Path(VDE_ROOT) / "scripts" / "install-vde.sh"
+        setup_script = Path(VDE_ROOT) / "bin" / "install-vde.sh"
     if setup_script.exists() and os.access(setup_script, os.X_OK):
         try:
             result = subprocess.run(
@@ -206,7 +206,7 @@ def step_ssh_keys_checked(context):
 @when('I run list-vms')
 def step_run_list_vms(context):
     """Run the list-vms command."""
-    list_vms_script = Path(VDE_ROOT) / "scripts" / "list-vms"
+    list_vms_script = Path(VDE_ROOT) / "bin" / "list-vms"
     if list_vms_script.exists():
         result = subprocess.run(
             [str(list_vms_script)],
@@ -224,7 +224,7 @@ def step_run_list_vms(context):
 @when('I add VDE scripts to my PATH')
 def step_add_vde_to_path(context):
     """Add VDE scripts to PATH."""
-    scripts_dir = Path(VDE_ROOT) / "scripts"
+    scripts_dir = Path(VDE_ROOT) / "bin"
     context.vde_in_path = scripts_dir.exists()
     if scripts_dir.exists():
         os.environ['PATH'] = str(scripts_dir) + ':' + os.environ.get('PATH', '')
@@ -245,7 +245,7 @@ def step_first_vm_created(context):
 @when('I run "vde-health" or check status')
 def step_run_vde_health(context):
     """Run health check."""
-    health_script = Path(VDE_ROOT) / "scripts" / "vde-health"
+    health_script = Path(VDE_ROOT) / "bin" / "vde-health"
     if health_script.exists():
         result = subprocess.run(
             [str(health_script)],
@@ -305,6 +305,6 @@ def step_run_validation_checks(context):
     """Run validation checks on VDE installation."""
     context.validation_results = {
         'scripts_executable': check_scripts_executable(context),
-        'templates_present': (Path(VDE_ROOT) / 'scripts' / 'templates').exists() or (Path(VDE_ROOT) / 'templates').exists(),
-        'vm_types_valid': (Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.conf').exists(),
+        'templates_present': (Path(VDE_ROOT) / 'templates').exists() or (Path(VDE_ROOT) / 'templates').exists(),
+        'vm_types_valid': (Path(VDE_ROOT) / 'data' / 'vm-types.conf').exists(),
     }

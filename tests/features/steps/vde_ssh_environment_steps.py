@@ -49,7 +49,7 @@ def step_ssh_initialized(context):
     # Only run init if key doesn't exist (idempotent check)
     if not vde_key.exists():
         result = subprocess.run(
-            ["./scripts/vde", "ssh-setup", "init"],
+            ["./bin/vde", "ssh-setup", "init"],
             capture_output=True, text=True, timeout=60,
             cwd=VDE_ROOT
         )

@@ -94,7 +94,7 @@ jobs:
       - name: Test vm-common library
         shell: zsh {0}
         run: |
-          source scripts/lib/vm-common
+          source lib/vm-common
 
           # Test VM type loading
           PYTHON_TYPE=$(get_vm_info type "python")
@@ -118,9 +118,9 @@ jobs:
       - name: Test vde-parser library
         shell: zsh {0}
         run: |
-          source scripts/lib/vm-common
-          source scripts/lib/vde-commands
-          source scripts/lib/vde-parser
+          source lib/vm-common
+          source lib/vde-commands
+          source lib/vde-parser
 
           # Test intent detection
           INTENT=$(detect_intent "start python")
@@ -136,8 +136,8 @@ jobs:
       - name: Test vde-commands library
         shell: zsh {0}
         run: |
-          source scripts/lib/vm-common
-          source scripts/lib/vde-commands
+          source lib/vm-common
+          source lib/vde-commands
 
           # Test VM listing
           LANG_VMS=$(vde_list_vms --lang)
@@ -167,9 +167,9 @@ jobs:
       - name: Test pattern-based parsing
         shell: zsh {0}
         run: |
-          source scripts/lib/vm-common
-          source scripts/lib/vde-commands
-          source scripts/lib/vde-parser
+          source lib/vm-common
+          source lib/vde-commands
+          source lib/vde-parser
 
           # Test all 8 supported intents
           declare -a TEST_INPUTS=(
@@ -194,9 +194,9 @@ jobs:
       - name: Test daily usage patterns
         shell: zsh {0}
         run: |
-          source scripts/lib/vm-common
-          source scripts/lib/vde-commands
-          source scripts/lib/vde-parser
+          source lib/vm-common
+          source lib/vde-commands
+          source lib/vde-parser
 
           # Test VM lifecycle
           PLAN=$(generate_plan "create a Go VM")
@@ -292,10 +292,10 @@ jobs:
         shell: zsh {0}
         run: |
           # Make coverage script executable
-          chmod +x scripts/coverage.zsh
+          chmod +x bin/coverage.zsh
 
           # Run coverage for all tests
-          ./scripts/coverage.zsh all
+          ./bin/coverage.zsh all
 
       - name: Generate coverage summary
         run: |
@@ -441,7 +441,7 @@ jobs:
         shell: zsh {0}
         env:
           VDE_TEST_MODE: '1'  # Skip SSH agent setup in CI
-        run: ./scripts/start-virtual ${{ matrix.vm }}
+        run: ./bin/start-virtual ${{ matrix.vm }}
 
       - name: Wait for Container to Be Ready
         run: |
@@ -593,7 +593,7 @@ jobs:
       - name: Cleanup Test Container
         if: always()
         shell: zsh {0}
-        run: ./scripts/shutdown-virtual ${{ matrix.vm }} || true
+        run: ./bin/shutdown-virtual ${{ matrix.vm }} || true
 
   # =============================================================================
   # Job 7: BDD Feature Tests

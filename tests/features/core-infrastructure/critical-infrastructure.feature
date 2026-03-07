@@ -111,17 +111,17 @@ Feature: Critical Infrastructure — Spec Invariants
   Scenario: configs/docker/ directory exists
     Then VDE directory "configs/docker" should exist
 
-  Scenario: scripts/ directory exists
-    Then VDE directory "scripts" should exist
+  Scenario: bin/ directory exists
+    Then VDE directory "bin" should exist
 
-  Scenario: scripts/lib/ directory exists
-    Then VDE directory "scripts/lib" should exist
+  Scenario: lib/ directory exists
+    Then VDE directory "lib" should exist
 
-  Scenario: scripts/templates/ directory exists
-    Then VDE directory "scripts/templates" should exist
+  Scenario: templates/ directory exists
+    Then VDE directory "templates" should exist
 
-  Scenario: scripts/data/ directory exists
-    Then VDE directory "scripts/data" should exist
+  Scenario: data/ directory exists
+    Then VDE directory "data" should exist
 
   Scenario: backup/ directory exists
     Then VDE directory "backup" should exist
@@ -130,16 +130,16 @@ Feature: Critical Infrastructure — Spec Invariants
     Then VDE directory ".cache" should exist
 
   Scenario: vm-types.json data file exists
-    Then VDE file "scripts/data/vm-types.json" should exist
+    Then VDE file "data/vm-types.json" should exist
 
   Scenario: compose-language.yml template exists
-    Then VDE file "scripts/templates/compose-language.yml" should exist
+    Then VDE file "templates/compose-language.yml" should exist
 
   Scenario: compose-service.yml template exists
-    Then VDE file "scripts/templates/compose-service.yml" should exist
+    Then VDE file "templates/compose-service.yml" should exist
 
   Scenario: ssh-entry.txt template exists
-    Then VDE file "scripts/templates/ssh-entry.txt" should exist
+    Then VDE file "templates/ssh-entry.txt" should exist
 
   # ── Service VM Template Rendering (spec section 5.2) ──
 

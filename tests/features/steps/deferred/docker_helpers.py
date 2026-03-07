@@ -35,7 +35,7 @@ def _run_vde_command(args: List[str], timeout: int = 10, check: bool = True) -> 
         CompletedProcess result
     """
     vde_root = _get_vde_root()
-    vde_script = os.path.join(vde_root, "scripts", "vde")
+    vde_script = os.path.join(vde_root, "bin", "vde")
     
     cmd = [vde_script] + args
     return subprocess.run(

@@ -37,16 +37,16 @@ from config import VDE_ROOT
 _SSH_AGENT_PID = None
 
 # Parser library paths
-VDE_PARSER = os.path.join(VDE_ROOT, 'scripts/lib/vde-parser')
-VDE_VM_COMMON = os.path.join(VDE_ROOT, 'scripts/lib/vm-common')
-VDE_SHELL_COMPAT = os.path.join(VDE_ROOT, 'scripts/lib/vde-shell-compat')
+VDE_PARSER = os.path.join(VDE_ROOT, 'lib/vde-parser')
+VDE_VM_COMMON = os.path.join(VDE_ROOT, 'lib/vm-common')
+VDE_SHELL_COMPAT = os.path.join(VDE_ROOT, 'lib/vde-shell-compat')
 
 
 def run_vde_command(command, timeout=60):
     """Run a VDE script and return the result."""
     env = os.environ.copy()
     env["DOCKER_BUILDKIT"] = "0"
-    vde_script = os.path.join(VDE_ROOT, "scripts", "vde")
+    vde_script = os.path.join(VDE_ROOT, "bin", "vde")
     full_cmd = f"cd {VDE_ROOT} && {vde_script} {command}"
     result = subprocess.run(
         full_cmd,
@@ -61,7 +61,7 @@ def run_vde_command(command, timeout=60):
 
 def run_vde_ps(args=None, timeout=30):
     """Run vde-ps and return the result."""
-    vde_ps = os.path.join(VDE_ROOT, "scripts", "vde-ps")
+    vde_ps = os.path.join(VDE_ROOT, "bin", "vde-ps")
     cmd = ["zsh", vde_ps]
     if args:
         cmd.extend(args)
@@ -158,12 +158,12 @@ def _restore_vde_ssh_dir(backup_tmpdir):
 
 
 def _backup_configs_dir():
-    """Copy configs/ and scripts/data/vm-types.json to a temp dir. Returns temp dir path or None."""
+    """Copy configs/ and data/vm-types.json to a temp dir. Returns temp dir path or None."""
     configs_dir = Path(VDE_ROOT) / 'configs'
     if configs_dir.exists():
         tmpdir = tempfile.mkdtemp(prefix='vde_configs_backup_')
         shutil.copytree(str(configs_dir), os.path.join(tmpdir, 'configs'), symlinks=True)
-        vm_types_json = Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.json'
+        vm_types_json = Path(VDE_ROOT) / 'data' / 'vm-types.json'
         if vm_types_json.exists():
             shutil.copy2(str(vm_types_json), os.path.join(tmpdir, 'vm-types.json'))
         return tmpdir
@@ -171,7 +171,7 @@ def _backup_configs_dir():
 
 
 def _restore_configs_dir(backup_tmpdir):
-    """Restore configs/ and scripts/data/vm-types.json from backup temp dir."""
+    """Restore configs/ and data/vm-types.json from backup temp dir."""
     if backup_tmpdir is None:
         return
     configs_dir = Path(VDE_ROOT) / 'configs'
@@ -182,7 +182,7 @@ def _restore_configs_dir(backup_tmpdir):
         shutil.copytree(str(backup), str(configs_dir), symlinks=True)
     vm_types_backup = Path(backup_tmpdir) / 'vm-types.json'
     if vm_types_backup.exists():
-        shutil.copy2(str(vm_types_backup), str(Path(VDE_ROOT) / 'scripts' / 'data' / 'vm-types.json'))
+        shutil.copy2(str(vm_types_backup), str(Path(VDE_ROOT) / 'data' / 'vm-types.json'))
     shutil.rmtree(backup_tmpdir, ignore_errors=True)
 
 

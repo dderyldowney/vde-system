@@ -12,7 +12,7 @@ VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR",
 
 def run_vde(args, timeout=30):
     """Run a VDE command and return result."""
-    cmd = [str(VDE_ROOT / 'scripts' / 'vde')] + args
+    cmd = [str(VDE_ROOT / 'bin' / 'vde')] + args
     return subprocess.run(cmd, capture_output=True, text=True,
                          timeout=timeout, cwd=str(VDE_ROOT))
 
@@ -20,7 +20,7 @@ def run_vde(args, timeout=30):
 @given('the VDE system is available')
 def step_vde_available(context):
     """Verify VDE system is available."""
-    vde_script = VDE_ROOT / 'scripts' / 'vde'
+    vde_script = VDE_ROOT / 'bin' / 'vde'
     assert vde_script.exists(), f"VDE script not found at {vde_script}"
     context.vde_root = VDE_ROOT
 
@@ -28,7 +28,7 @@ def step_vde_available(context):
 @given('the VDE natural language parser is available')
 def step_parser_available(context):
     """Verify parser script exists."""
-    parser = VDE_ROOT / 'scripts' / 'lib' / 'vde-parser'
+    parser = VDE_ROOT / 'lib' / 'vde-parser'
     assert parser.exists(), f"Parser not found at {parser}"
     context.parser_path = parser
 

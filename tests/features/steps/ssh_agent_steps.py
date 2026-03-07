@@ -187,10 +187,10 @@ def step_start_any_vm(context):
     context.vm_start_result = result.returncode == 0
 
 
-@when('I run "./scripts/ssh-agent-setup"')
+@when('I run "./bin/ssh-agent-setup"')
 def step_run_ssh_agent_setup(context):
     """Run the SSH agent setup script."""
-    script_path = VDE_ROOT / 'scripts' / 'ssh-agent-setup'
+    script_path = VDE_ROOT / 'bin' / 'ssh-agent-setup'
     
     if script_path.exists():
         result = subprocess.run(
