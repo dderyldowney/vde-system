@@ -1,0 +1,10 @@
+# {{COMMENT}}
+Host {{HOST}}
+    HostName localhost
+    Port {{SSH_PORT}}
+    User devuser
+    IdentityFile {{IDENTITY_FILE}}
+    IdentitiesOnly yes
+    ForwardAgent yes
+    StrictHostKeyChecking no
+    UserKnownHostsFile ~/.ssh/vde/known_hosts

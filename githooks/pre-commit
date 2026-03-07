@@ -1,0 +1,63 @@
+#!/usr/bin/env zsh
+# VDE Pre-commit Hook
+# Protects critical configuration files from accidental deletion
+#
+# Installation: ln -sf ../../scripts/githooks/pre-commit .git/hooks/pre-commit
+
+set -e
+
+# Colors
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+GREEN='\033[0;32m'
+RESET='\033[0m'
+
+# Get list of deleted files in this commit
+DELETED_FILES=$(git diff --cached --name-only --diff-filter=D)
+
+if [[ -z "$DELETED_FILES" ]]; then
+    exit 0
+fi
+
+# Protected file patterns (NEVER delete these)
+PROTECTED_PATTERNS=(
+    "configs/docker/[^/]+/docker-compose.yml"
+    "env-files/(postgres|redis|mongodb|nginx|mysql|rabbitmq|couchdb)\.env"
+)
+
+# Check each deleted file against protected patterns
+VIOLATIONS=()
+for file in ${(f)DELETED_FILES}; do
+    for pattern in "${PROTECTED_PATTERNS[@]}"; do
+        if [[ "$file" =~ ^$pattern$ ]]; then
+            VIOLATIONS+=("$file")
+            break
+        fi
+    done
+done
+
+if [[ ${#VIOLATIONS[@]} -gt 0 ]]; then
+    echo -e "${RED}╔════════════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${RED}║  PROTECTED CONFIG FILE DELETION BLOCKED                     ║${RESET}"
+    echo -e "${RED}╚════════════════════════════════════════════════════════════╝${RESET}"
+    echo ""
+    echo -e "${YELLOW}The following files are PROTECTED and cannot be deleted:${RESET}"
+    echo ""
+    for file in "${VIOLATIONS[@]}"; do
+        echo -e "  ${RED}✗${RESET} $file"
+    done
+    echo ""
+    echo -e "${YELLOW}These files are part of the VDE core infrastructure.${RESET}"
+    echo -e "${YELLOW}Developers depend on them for their work.${RESET}"
+    echo ""
+    echo -e "${GREEN}To restore deleted files:${RESET}"
+    echo -e "  git checkout HEAD -- <file>"
+    echo ""
+    echo -e "${YELLOW}If you really need to remove a file:${RESET}"
+    echo -e "  1. Use 'git rm --cached <file>' to untrack it"
+    echo -e "  2. Then commit with --no-verify to bypass this hook"
+    echo ""
+    exit 1
+fi
+
+exit 0

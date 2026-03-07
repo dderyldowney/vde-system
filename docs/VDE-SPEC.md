@@ -2,9 +2,9 @@
 
 **Document Type:** Technical Implementation Specification
 **Project:** Virtual Development Environment (VDE)
-**Version:** 1.4.0
+**Version:** 1.5.0
 **Status:** AUTHORITATIVE SPECIFICATION
-**Last Updated:** 2026-03-04T14:00:00Z
+**Last Updated:** 2026-03-06T21:00:00Z
 
 > **MANDATE**: This document is the authoritative specification for the VDE project. All development, bug fixes, and implementation work MUST conform to this specification.
 >
@@ -38,7 +38,7 @@ This document provides a technical specification for the Virtual Development Env
 
 ### 2.1 VM Type Configuration
 
-**File:** `scripts/data/vm-types.json`
+**File:** `data/vm-types.json`
 
 ```json
 {
@@ -81,21 +81,36 @@ typeset -ga lang_vms     # ordered list of language VM names
 typeset -ga service_vms   # ordered list of service VM names
 ```
 
-### 2.3 Port Registry
+### 2.3 Port Assignments
 
-**File:** `.cache/port-registry`
+SSH ports are **fixed** per VM type and must not be dynamically reallocated. The authoritative
+machine-readable source is `data/vm-types.conf` (column 7). The authoritative human-readable
+display is `configs/ssh/config` (git-tracked; never modified programmatically).
 
-```
-# Format: one entry per line
-vm_name:port
-python:2200
-cpp:2201
-asm:2202
-c:2203
-redis:2400
-postgres:2401
-mongodb:2402
-```
+| VM | SSH Port | VM | SSH Port |
+|----|----------|----|----------|
+| vde-asm | 2200 | vde-couchdb | 2400 |
+| vde-c | 2201 | vde-mongodb | 2401 |
+| vde-cpp | 2202 | vde-mysql | 2402 |
+| vde-csharp | 2203 | vde-nginx | 2403 |
+| vde-elixir | 2204 | vde-postgres | 2404 |
+| vde-flutter | 2205 | vde-rabbitmq | 2405 |
+| vde-go | 2206 | vde-redis | 2406 |
+| vde-haskell | 2207 | | |
+| vde-java | 2208 | | |
+| vde-js | 2209 | | |
+| vde-kotlin | 2210 | | |
+| vde-lua | 2211 | | |
+| vde-php | 2212 | | |
+| vde-python | 2213 | | |
+| vde-r | 2214 | | |
+| vde-ruby | 2215 | | |
+| vde-rust | 2216 | | |
+| vde-scala | 2217 | | |
+| vde-swift | 2218 | | |
+| vde-zig | 2219 | | |
+
+Port ranges: languages 2200–2299, services 2400–2499.
 
 ### 2.4 Cache File Format
 
@@ -124,7 +139,7 @@ service_vms=(postgres redis mongodb ...)
 
 ### 3.1 vde-constants
 
-**File:** `scripts/lib/vde-constants`
+**File:** `lib/vde-constants`
 
 ```zsh
 # Return Codes
@@ -172,7 +187,7 @@ readonly VDE_SSH_IDENTITY="${VDE_SSH_DIR}/id_ed25519"
 
 ### 3.2 vde-shell-compat
 
-**File:** `scripts/lib/vde-shell-compat`
+**File:** `lib/vde-shell-compat`
 
 ```zsh
 # _assoc_init NAME
@@ -209,7 +224,7 @@ readonly VDE_SSH_IDENTITY="${VDE_SSH_DIR}/id_ed25519"
 
 ### 3.3 vm-common
 
-**File:** `scripts/lib/vm-common`
+**File:** `lib/vm-common`
 
 ```zsh
 # load_vm_types
@@ -275,7 +290,7 @@ readonly VDE_SSH_IDENTITY="${VDE_SSH_DIR}/id_ed25519"
 
 ### 3.4 vde-parser
 
-**File:** `scripts/lib/vde-parser`
+**File:** `lib/vde-parser`
 
 ```zsh
 # Intent Constants
@@ -332,7 +347,7 @@ readonly INTENT_HELP="help"
 
 ### 3.5 vde-commands
 
-**File:** `scripts/lib/vde-commands`
+**File:** `lib/vde-commands`
 
 ```zsh
 # vde_list [filter]
@@ -372,7 +387,7 @@ readonly INTENT_HELP="help"
 
 ### 3.6 vde-ssh
 
-**File:** `scripts/lib/vde-ssh`
+**File:** `lib/vde-ssh`
 
 ```zsh
 # ensure_ssh_agent
@@ -414,7 +429,7 @@ readonly INTENT_HELP="help"
 
 ### 3.7 vde-docker
 
-**File:** `scripts/lib/vde-docker`
+**File:** `lib/vde-docker`
 
 ```zsh
 # docker_build VM_NAME
@@ -450,12 +465,12 @@ readonly INTENT_HELP="help"
 ```
 
 > **Implementation note:** The `docker_*` names are spec-required aliases. The primary internal
-> implementation uses `start_vm`, `stop_vm`, `restart_vm`, `get_vm_status` in `scripts/lib/vde-docker`.
+> implementation uses `start_vm`, `stop_vm`, `restart_vm`, `get_vm_status` in `lib/vde-docker`.
 > The `docker_*` aliases are appended at the end of that file for spec compliance.
 
 ### 3.8 vde-templates
 
-**File:** `scripts/lib/vde-templates`
+**File:** `lib/vde-templates`
 
 ```zsh
 # render_language_template NAME SSH_PORT
@@ -479,11 +494,11 @@ readonly INTENT_HELP="help"
 
 > **Implementation note:** The named renderers `render_language_template`, `render_service_template`,
 > and `render_ssh_entry` are spec-required wrappers over the generic `render_template()` function.
-> They are appended at the end of `scripts/lib/vde-templates`.
+> They are appended at the end of `lib/vde-templates`.
 
 ### 3.9 vde-naming
 
-**File:** `scripts/lib/vde-naming`
+**File:** `lib/vde-naming`
 
 Enforces the canonical `vde-{name}` naming convention for all Docker containers,
 images, and SSH host aliases. Filesystem directories (e.g., `configs/docker/python/`)
@@ -530,7 +545,7 @@ container/SSH layer.
 
 ### 3.10 vde-security
 
-**File:** `scripts/lib/vde-security`
+**File:** `lib/vde-security`
 
 Centralizes security policy enforcement. Automatically called during startup
 by `vde-init`, `ensure_vde_ssh_environment`, and `build-and-start`.
@@ -540,7 +555,7 @@ by `vde-init`, `ensure_vde_ssh_environment`, and `build-and-start`.
 # Enforce strict permissions on all sensitive VDE directories and files:
 #   0700: .cache/, .docker-state/, .locks/, data/, logs/, VDE_SSH_DIR, env-files/
 #   0600: VDE_SSH_IDENTITY, VDE_SSH_CONFIG, VDE_SSH_KNOWN_HOSTS, *.env files
-#   0755: scripts/ and all script files
+#   0755: bin/ and all script files
 # Returns: VDE_SUCCESS
 
 # vde_security_ensure_network [NETWORK_NAME]
@@ -574,7 +589,7 @@ by `vde-init`, `ensure_vde_ssh_environment`, and `build-and-start`.
 
 ### 4.1 Main Entry Point: `vde`
 
-**Location:** `scripts/vde`
+**Location:** `bin/vde`
 
 ```zsh
 #!/usr/bin/env zsh
@@ -606,14 +621,14 @@ by `vde-init`, `ensure_vde_ssh_environment`, and `build-and-start`.
 
 | Script | Location | Usage |
 |--------|----------|-------|
-| vde-init | `scripts/vde-init` | `./vde-init` (first-time setup) |
-| list-vms | `scripts/list-vms` | `./list-vms [--lang\|--svc] [search]` |
-| create-virtual-for | `scripts/create-virtual-for` | `./create-virtual-for <name>` |
-| start-virtual | `scripts/start-virtual` | `./start-virtual <name>... [--rebuild] [--no-cache]` |
-| shutdown-virtual | `scripts/shutdown-virtual` | `./shutdown-virtual <name>...` |
-| build-and-start | `scripts/build-and-start` | `./build-and-start [--rebuild] [--no-cache]` |
-| vde-networks | `scripts/vde-networks` | `./vde-networks [--create] [--quiet]` |
-| add-vm-type | `scripts/add-vm-type` | `./add-vm-type <name> "<install>" [aliases]` |
+| vde-init | `bin/vde-init` | `./vde-init` (first-time setup) |
+| list-vms | `bin/list-vms` | `./list-vms [--lang\|--svc] [search]` |
+| create-virtual-for | `bin/create-virtual-for` | `./create-virtual-for <name> [--force] [--no-start]` |
+| start-virtual | `bin/start-virtual` | `./start-virtual <name>... [--rebuild] [--no-cache]` |
+| shutdown-virtual | `bin/shutdown-virtual` | `./shutdown-virtual <name>...` |
+| build-and-start | `bin/build-and-start` | `./build-and-start [--rebuild] [--no-cache]` |
+| vde-networks | `bin/vde-networks` | `./vde-networks [--create] [--quiet]` |
+| add-vm-type | `bin/add-vm-type` | `./add-vm-type --ssh-port <port> [--type lang\|service] [--svc-port <port>] <name> "<install>" [aliases]` |
 
 ---
 
@@ -621,7 +636,7 @@ by `vde-init`, `ensure_vde_ssh_environment`, and `build-and-start`.
 
 ### 5.1 Language VM Template
 
-**File:** `scripts/templates/compose-language.yml`
+**File:** `templates/compose-language.yml`
 
 Container names MUST use the `vde-` prefix. The `{{NAME}}` placeholder receives
 the raw name (e.g., `python`); the template prepends `vde-` for the container
@@ -673,7 +688,7 @@ networks:
 
 ### 5.2 Service VM Template
 
-**File:** `scripts/templates/compose-service.yml`
+**File:** `templates/compose-service.yml`
 
 ```yaml
 services:
@@ -698,7 +713,7 @@ services:
 
 ### 5.3 SSH Config Entry Template
 
-**File:** `scripts/templates/ssh-entry.txt`
+**File:** `templates/ssh-entry.txt`
 
 SSH Host aliases MUST use the `vde-` prefix to match the container name.
 The `{{VM_NAME}}` placeholder receives the raw name (e.g., `python`);
@@ -895,59 +910,49 @@ extract_flags() {
 
 ```
 VDE_ROOT/
-├── scripts/
+├── bin/                             # Executables (add to $PATH)
 │   ├── vde                          # Main entry point
 │   ├── list-vms                     # List VMs
-│   ├── create-virtual-for            # Create VM
+│   ├── create-virtual-for           # Create VM config (compose + env)
 │   ├── start-virtual                # Start VM
 │   ├── shutdown-virtual             # Stop VM
 │   ├── remove-virtual               # Remove VM
-│   ├── add-vm-type                  # Add new VM type
-│   ├── build-and-start               # Build and start all
-│   ├── lib/
-│   │   ├── vde-constants            # Constants (return codes, ports, paths, SSH dirs)
-│   │   ├── vde-shell-compat         # Shell compatibility
-│   │   ├── vde-errors               # Error handling
-│   │   ├── vde-log                  # Logging
-│   │   ├── vde-naming               # Naming conventions (vde- prefix enforcement)
-│   │   ├── vde-security             # Security policy (permissions, network, SSH isolation)
-│   │   ├── vde-path-utils           # Path utilities
-│   │   ├── vde-core                 # Core functions
-│   │   ├── vm-common                # Common functions
-│   │   ├── vde-commands             # Command wrappers
-│   │   ├── vde-parser               # NLP parser
-│   │   ├── vde-ssh                  # SSH management
-│   │   ├── vde-docker               # Docker operations
-│   │   ├── vde-templates            # Template rendering
-│   │   ├── vde-init                 # Project initialization
-│   │   ├── vde-health               # Health checks
-│   │   ├── vde-networks             # Network management
-│   │   ├── vde-audit                # Audit logs
-│   │   └── vde-metrics              # Metrics
-│   ├── templates/
-│   │   ├── compose-language.yml
-│   │   ├── compose-service.yml
-│   │   └── ssh-entry.txt
-│   └── data/
-│       ├── vm-types.conf             # Legacy config
-│       └── vm-types.json             # JSON config
+│   ├── add-vm-type                  # Add new VM type to registry
+│   └── build-and-start              # Build and start all
+├── lib/                             # Sourced libraries (never executed directly)
+│   ├── vde-constants                # Constants (return codes, ports, paths, SSH dirs)
+│   ├── vde-shell-compat             # Shell compatibility
+│   ├── vde-errors                   # Error handling
+│   ├── vde-log                      # Logging
+│   ├── vde-naming                   # Naming conventions (vde- prefix enforcement)
+│   ├── vde-security                 # Security policy (permissions, network, SSH isolation)
+│   ├── vde-core                     # Core functions
+│   ├── vm-common                    # Common functions
+│   ├── vde-commands                 # Command wrappers
+│   ├── vde-parser                   # NLP parser
+│   ├── vde-ssh                      # SSH management
+│   ├── vde-docker                   # Docker operations
+│   ├── vde-templates                # Template rendering
+│   └── vde-networks                 # Network management
+├── templates/                       # Compose and SSH config templates
+│   ├── compose-language.yml
+│   ├── compose-service.yml
+│   └── ssh-entry.txt
+├── data/                            # VM type definitions (authoritative sources)
+│   ├── vm-types.conf                # Pipe-delimited; col 7 = fixed ssh_port
+│   └── vm-types.json                # JSON mirror of vm-types.conf
 ├── configs/
-│   └── docker/
-│       ├── vde-base.Dockerfile
-│       ├── vde-base.Dockerfile
-│       ├── c/, cpp/, python/, ...   # Per-VM configs
-│       └── postgres/, redis/, ...    # Service configs
-├── data/
-│   ├── projects/                    # Project workspaces
-│   │   ├── python/, rust/, go/, ...
-│   ├── logs/                        # VM logs
-│   └── (service data directories)
+│   ├── docker/
+│   │   ├── vde-base.Dockerfile
+│   │   ├── c/, cpp/, python/, ...   # Per-VM compose configs
+│   │   └── postgres/, redis/, ...   # Service compose configs
+│   └── ssh/
+│       └── config                   # Authoritative SSH port display (git-tracked)
 ├── public-ssh-keys/                 # SSH public keys for containers
 ├── backup/
 │   └── ssh/                         # SSH config backups
 ├── .cache/
-│   ├── vm-types.cache               # VM type cache
-│   └── port-registry               # Port allocations
+│   └── vm-types.cache               # VM type cache (auto-generated)
 ├── tests/
 │   ├── features/                   # BDD tests
 │   └── unit/                       # Unit tests
@@ -956,43 +961,24 @@ VDE_ROOT/
 
 ---
 
-## 10. Port Allocation Algorithm
+## 10. Port Assignment
 
+SSH ports are **fixed** per VM type — they are not dynamically allocated. Each VM type has a
+permanent port assigned in `data/vm-types.conf` (column 7, `ssh_port`). The port is read at
+create-time via `get_vm_info ssh_port <vm_name>` and written into the docker-compose.yml.
+
+`find_next_available_port` exists in `lib/vm-common` for use only when adding a **new** VM type
+via `bin/add-vm-type`. The operator must choose and provide `--ssh-port` explicitly; the function
+validates the port is not already in use in `data/vm-types.conf`.
+
+To add a new VM type with its permanent port:
 ```zsh
-find_next_available_port() {
-    local vm_type="$1"  # "lang" or "service"
-    
-    if [[ "$vm_type" == "lang" ]]; then
-        local start=2200
-        local end=2299
-    else
-        local start=2400
-        local end=2499
-    fi
-    
-    # Load port registry
-    local registry="${PORT_REGISTRY:-.cache/port-registry}"
-    declare -A used_ports
-    if [[ -f "$registry" ]]; then
-        while IFS=':' read -r vm port; do
-            used_ports[$port]=1
-        done < "$registry"
-    fi
-    
-    # Find first available port
-    for port in {$start..$end}; do
-        if [[ -z "${used_ports[$port]}" ]]; then
-            # Check if port is actually available on host
-            if ! nc -z localhost $port 2>/dev/null; then
-                echo $port
-                return $VDE_SUCCESS
-            fi
-        fi
-    done
-    
-    return $VDE_ERR_EXISTS  # No ports available
-}
+bin/vde add --type lang --ssh-port 2220 myvm "apt-get install -y myvm"
+# or via script directly:
+bin/add-vm-type --type lang --ssh-port 2220 myvm "apt-get install -y myvm"
 ```
+
+This appends to `data/vm-types.conf` and `configs/ssh/config`, then syncs `~/.ssh/vde/config`.
 
 ---
 
@@ -1105,7 +1091,7 @@ VDE enforces strict filesystem permissions at startup via `vde_security_enforce_
 | `VDE_SSH_IDENTITY` | `0600` | Private key — owner read/write only |
 | `VDE_SSH_CONFIG` | `0600` | SSH config — owner read/write only |
 | `VDE_SSH_KNOWN_HOSTS` | `0600` | Known hosts — owner read/write only |
-| `scripts/` and script files | `0755` | Must be executable |
+| `bin/` and script files | `0755` | Must be executable |
 
 ### 14.2 Network Isolation
 
@@ -1160,10 +1146,10 @@ Security initialization is automatically triggered at three entry points:
 
 | Entry Point | Function Called | Trigger |
 |-------------|----------------|---------|
-| `scripts/vde-init` | `vde_security_init` | First-time setup |
-| `scripts/lib/vde-ssh` `ensure_vde_ssh_environment` | `vde_security_init` | SSH environment setup |
-| `scripts/build-and-start` | `vde_security_ensure_network` + `vde_security_enforce_permissions` | Build/start all VMs |
-| `scripts/vde-networks` | `vde_security_ensure_network` | Network management |
+| `bin/vde-init` | `vde_security_init` | First-time setup |
+| `lib/vde-ssh` `ensure_vde_ssh_environment` | `vde_security_init` | SSH environment setup |
+| `bin/build-and-start` | `vde_security_ensure_network` + `vde_security_enforce_permissions` | Build/start all VMs |
+| `bin/vde-networks` | `vde_security_ensure_network` | Network management |
 
 ---
 
