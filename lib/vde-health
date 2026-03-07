@@ -27,9 +27,9 @@ _VDE_HEALTH_LOADED=1
 # Source vm-common for timeout values, constants, and get_vm_info function
 
 SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
-source "$SCRIPT_DIR/vm-common" 2>/dev/null || {
+source "$VDE_ROOT_DIR/lib/vm-common" 2>/dev/null || {
     echo "Error: Failed to source vm-common" >&2
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 # =============================================================================
@@ -353,7 +353,7 @@ vde_health_check() {
         return $VDE_SUCCESS
     else
         [ "$verbose" -eq 1 ] && echo "✗ $container_name health check: FAILED"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 }
 

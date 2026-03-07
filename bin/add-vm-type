@@ -3,7 +3,7 @@ set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 # -----------------------
 # Usage
@@ -100,7 +100,7 @@ while [[ $# -gt 0 ]]; do
                 log_error "Too many arguments"
                 echo ""
                 show_usage
-                exit 1
+                exit $VDE_ERR_GENERAL
             fi
             shift
             ;;
@@ -112,12 +112,12 @@ if [[ -z "$VM_NAME" ]] || [[ -z "$INSTALL_CMD" ]]; then
     log_error "Missing required arguments"
     echo ""
     show_usage
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 if [[ -z "$SSH_PORT" ]]; then
     log_error "--ssh-port is required (must be unique; lang: 2200-2299, service: 2400-2499)"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # -----------------------
@@ -141,41 +141,41 @@ log_info "Validating configuration..."
 # Validate VM type
 if [[ "$VM_TYPE_STR" != "lang" ]] && [[ "$VM_TYPE_STR" != "service" ]]; then
     log_error "Invalid VM type: $VM_TYPE_STR (must be 'lang' or 'service')"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Validate VM name format
 if [[ ! "$VM_NAME" =~ ^[a-z0-9]+$ ]]; then
     log_error "VM name must be lowercase alphanumeric (no spaces, hyphens, or special chars)"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Service type requires service port
 if [[ "$VM_TYPE_STR" == "service" ]] && [[ -z "$SVC_PORT" ]]; then
     log_error "Service type requires --svc-port argument"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Language type should not have service port
 if [[ "$VM_TYPE_STR" == "lang" ]] && [[ -n "$SVC_PORT" ]]; then
     log_error "Language type should not specify --svc-port"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Validate SSH port range
 if [[ "$VM_TYPE_STR" == "lang" ]] && { [[ "$SSH_PORT" -lt 2200 ]] || [[ "$SSH_PORT" -gt 2299 ]]; }; then
     log_error "Language SSH port must be in range 2200-2299 (got $SSH_PORT)"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 if [[ "$VM_TYPE_STR" == "service" ]] && { [[ "$SSH_PORT" -lt 2400 ]] || [[ "$SSH_PORT" -gt 2499 ]]; }; then
     log_error "Service SSH port must be in range 2400-2499 (got $SSH_PORT)"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Validate SSH port not already in use
 if grep -q "|${SSH_PORT}$" "$VM_TYPES_CONF" 2>/dev/null; then
     log_error "SSH port $SSH_PORT is already assigned to another VM in vm-types.conf"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Auto-generate display name if not specified
@@ -189,7 +189,7 @@ fi
 # -----------------------
 if is_known_vm "$VM_NAME"; then
     log_error "VM '$VM_NAME' already exists in vm-types.conf"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Check if name conflicts with existing vm_aliases
@@ -197,7 +197,7 @@ for existing_name in $(get_all_vms); do
     existing_vm_aliases=$(get_vm_info aliases "$existing_name")
     if [[ ",$existing_vm_aliases," =~ ",$VM_NAME," ]]; then
         log_error "VM name '$VM_NAME' conflicts with an alias for '$existing_name'"
-        exit 1
+        exit $VDE_ERR_GENERAL
     fi
 done
 
@@ -211,7 +211,7 @@ if [[ -n "$ALIASES" ]]; then
         if resolve_vm_name "$new_alias" > /dev/null 2>&1; then
             existing_vm=$(resolve_vm_name "$new_alias")
             log_error "Alias '$new_alias' conflicts with existing VM: $existing_vm"
-            exit 1
+            exit $VDE_ERR_GENERAL
         fi
     done
 fi

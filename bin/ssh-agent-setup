@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 # Parse command line arguments
 ACTION="status"
@@ -46,7 +46,7 @@ while [[ $# -gt 0 ]]; do
         *)
             echo "Unknown option: $1"
             echo "Use --help for usage information"
-            exit 1
+            exit $VDE_ERR_GENERAL
             ;;
     esac
 done
@@ -146,7 +146,7 @@ if [[ "$ACTION" == "init" ]]; then
         log_success "✓ VDE SSH key: $VDE_SSH_IDENTITY"
     else
         log_error "✗ Failed to set up VDE SSH environment"
-        exit 1
+        exit $VDE_ERR_GENERAL
     fi
 
     echo ""
@@ -202,7 +202,7 @@ if [[ "$ACTION" == "init" ]]; then
         log_success "✓ VDE public key synced to public-ssh-keys/"
     else
         log_error "✗ Failed to sync key"
-        exit 1
+        exit $VDE_ERR_GENERAL
     fi
 
     echo ""
@@ -257,7 +257,7 @@ if [[ "$ACTION" == "start" ]]; then
     # Ensure VDE SSH environment exists
     if [[ ! -f "$VDE_SSH_IDENTITY" ]]; then
         echo "⚠ VDE SSH key not found. Run: $0 --init"
-        exit 1
+        exit $VDE_ERR_GENERAL
     fi
 
     # Load VDE key

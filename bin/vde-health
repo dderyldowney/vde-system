@@ -495,7 +495,7 @@ while [[ $# -gt 0 ]]; do
         *)
             echo "Unknown option: $1"
             vde_health_usage
-            exit 1
+            exit $VDE_ERR_GENERAL
             ;;
     esac
 done

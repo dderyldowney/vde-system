@@ -219,7 +219,7 @@ _is_cache_valid() {
     local source_files=("$@")
 
     if [[ ! -f "$cache_file" ]]; then
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
     # Check if any source file is newer than cache
@@ -230,7 +230,7 @@ _is_cache_valid() {
         if [[ -f "$source_file" ]]; then
             source_mtime=$(stat -f "%m" "$source_file" 2>/dev/null || stat -c "%Y" "$source_file" 2>/dev/null)
             if [[ "$source_mtime" -gt "$cache_mtime" ]]; then
-                return 1
+                return $VDE_ERR_GENERAL
             fi
         fi
     done
@@ -451,7 +451,7 @@ load_vm_types() {
             service_vms=("${service_vms_array[@]}")
         else
             _error "JSON config not found: $VM_TYPES_JSON"
-            return 1
+            return $VDE_ERR_GENERAL
         fi
 
         # Create cache directory
@@ -777,7 +777,7 @@ vm_is_created() {
        vm_template_exists "$raw_name"; then
         return 0
     fi
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 # vm_template_exists - Check if a VM template exists
@@ -791,7 +791,7 @@ vm_template_exists() {
     if [[ -f "$configs_dir/$raw_name/docker-compose.yml" ]]; then
         return 0
     fi
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 # vm_exists - Check if a VM has been created (alias for vm_is_created)
@@ -875,7 +875,7 @@ resolve_vm_name() {
     done
     
     # Not found
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 # validate_vm_name - Validate VM name against naming conventions

@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VDE_ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 export VDE_ROOT_DIR
 
-source "$SCRIPT_DIR/../lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 DRY_RUN=false
 CLEAR_ALL=false
@@ -35,7 +35,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         *)
             log_error "Unknown option: $1"
-            exit 1
+            exit $VDE_ERR_GENERAL
             ;;
     esac
 done

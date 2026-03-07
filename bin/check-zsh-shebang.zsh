@@ -60,5 +60,5 @@ else
     echo ""
     echo "ERROR: Some scripts do not use zsh shebang"
     echo "This project requires: #!/usr/bin/env zsh or #!/bin/zsh"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi

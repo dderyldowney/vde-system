@@ -23,7 +23,7 @@ vde_validate_name() {
     
     if [ -z "$name" ]; then
         echo "VM name cannot be empty"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
     
     # Allow names with or without vde- prefix for validation
@@ -31,7 +31,7 @@ vde_validate_name() {
     
     if ! echo "$base_name" | grep -qE "$VDE_NAME_PATTERN"; then
         echo "VM name must be lowercase alphanumeric (a-z, 0-9) and can include dashes"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
     
     return 0

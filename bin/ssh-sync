@@ -10,7 +10,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 # Parse command line arguments
 if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
@@ -54,5 +54,5 @@ else
     echo "Ensure VDE SSH environment is initialized:"
     echo "  vde ssh-setup init"
     echo ""
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi

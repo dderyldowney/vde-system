@@ -3,8 +3,8 @@ set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/vm-common"
-source "$SCRIPT_DIR/../lib/vde-docker-state"
+source "$VDE_ROOT_DIR/lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vde-docker-state"
 
 # Parse arguments
 if [[ $# -eq 0 ]]; then
@@ -15,7 +15,7 @@ if [[ $# -eq 0 ]]; then
     echo "  $0 python ruby js           # Restart multiple VMs"
     echo ""
     show_known_vms
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Parse VMs
@@ -36,13 +36,13 @@ for arg in "$@"; do
         fi
     else
         log_error "Unknown VM: $arg"
-        exit 1
+        exit $VDE_ERR_GENERAL
     fi
 done
 
 if [[ ${#VMS[@]} -eq 0 ]]; then
     log_error "No valid VMs to restart"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Restart each VM

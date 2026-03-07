@@ -3,9 +3,9 @@ set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/vm-common"
-source "$SCRIPT_DIR/../lib/vde-docker-state"
-source "$SCRIPT_DIR/../lib/vde-ssh"
+source "$VDE_ROOT_DIR/lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vde-docker-state"
+source "$VDE_ROOT_DIR/lib/vde-ssh"
 
 # Parse arguments
 if [[ $# -eq 0 ]]; then
@@ -20,7 +20,7 @@ if [[ $# -eq 0 ]]; then
     echo "  start-virtual python --update-ssh       # Start and regenerate SSH config"
     echo ""
     show_known_vms
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Parse VMs and flags separately
@@ -54,7 +54,7 @@ for arg in "$@"; do
                 VMS+=("$resolved")
             else
                 vde_error_vm_not_found "$arg"
-                exit 1
+                exit $VDE_ERR_GENERAL
             fi
             ;;
     esac
@@ -65,7 +65,7 @@ if [[ ${#VMS[@]} -eq 0 ]]; then
     echo "Usage: start-virtual <vm_name1> [vm_name2] ... [--rebuild] [--no-cache] [--update-ssh]"
     echo ""
     show_known_vms
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Ensure SSH environment (automatic & silent)

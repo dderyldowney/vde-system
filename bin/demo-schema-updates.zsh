@@ -220,7 +220,7 @@ demo_complete_workflow() {
         print_success "Compatible"
     else
         print_error "Incompatible - migration needed"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
     print_step "Step 3: Detect changes"
@@ -240,7 +240,7 @@ demo_complete_workflow() {
         print_success "Validation passed"
     else
         print_error "Validation failed"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
     print_step "Step 6: Update cache if needed"

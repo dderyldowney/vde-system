@@ -20,11 +20,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VDE_ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 export VDE_ROOT_DIR
 
-source "$SCRIPT_DIR/../lib/vde-shell-compat"
-source "$SCRIPT_DIR/../lib/vde-constants"
-source "$SCRIPT_DIR/../lib/vde-errors"
-source "$SCRIPT_DIR/../lib/vde-log"
-source "$SCRIPT_DIR/../lib/vde-naming"
+source "$VDE_ROOT_DIR/lib/vde-shell-compat"
+source "$VDE_ROOT_DIR/lib/vde-constants"
+source "$VDE_ROOT_DIR/lib/vde-errors"
+source "$VDE_ROOT_DIR/lib/vde-log"
+source "$VDE_ROOT_DIR/lib/vde-naming"
 
 # Configuration
 NOCACHE=false
@@ -75,7 +75,7 @@ while [[ $# -gt 0 ]]; do
         *)
             echo "Unknown option: $1"
             show_usage
-            exit 1
+            exit $VDE_ERR_GENERAL
             ;;
     esac
 done
@@ -117,7 +117,7 @@ build_base_image() {
         return 0
     else
         echo "✗ Failed to build vde-base:latest"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 }
 
@@ -145,7 +145,7 @@ build_vm_image() {
         return 0
     else
         echo "✗ Failed to build $vm_name"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 }
 
@@ -161,13 +161,13 @@ echo ""
 
 # Check Docker
 if ! command -v docker &>/dev/null; then
-    echo "Error: Docker is not installed"
-    exit 1
+    _error "Docker is not installed"
+    exit $VDE_ERR_DOCKER
 fi
 
 if ! docker info &>/dev/null; then
-    echo "Error: Docker daemon is not running"
-    exit 1
+    _error "Docker daemon is not running"
+    exit $VDE_ERR_DOCKER
 fi
 
 # Build specific VM or all

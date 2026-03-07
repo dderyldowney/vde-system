@@ -89,7 +89,7 @@ get_vm_info_from_state() {
         cat "$state_file"
         return 0
     fi
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 # Build docker ps command with optional filter

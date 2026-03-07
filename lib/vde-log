@@ -51,12 +51,12 @@ _VDE_LOG_LAST_ROTATE_CHECK=0
 vde_log_init() {
     # Create logs directory if it doesn't exist
     if [[ ! -d "$VDE_ROOT_DIR/logs" ]]; then
-        command mkdir -p "$VDE_ROOT_DIR/logs" 2>/dev/null || return 1
+        command mkdir -p "$VDE_ROOT_DIR/logs" 2>/dev/null || return $VDE_ERR_GENERAL
     fi
     
     # Create log file if outputting to file
     if [[ "$VDE_LOG_OUTPUT" == "file" ]] && [[ ! -f "$VDE_LOG_FILE" ]]; then
-        command touch "$VDE_LOG_FILE" 2>/dev/null || return 1
+        command touch "$VDE_LOG_FILE" 2>/dev/null || return $VDE_ERR_GENERAL
         command chmod 600 "$VDE_LOG_FILE" 2>/dev/null || true
     fi
     
@@ -65,7 +65,7 @@ vde_log_init() {
     
     # Ensure logs directory is writable
     if [[ ! -w "$VDE_ROOT_DIR/logs" ]]; then
-        return 1
+        return $VDE_ERR_GENERAL
     fi
     
     _VDE_LOG_INITIALIZED=1
@@ -86,7 +86,7 @@ vde_log_set_level() {
         _VDE_LOG_CURRENT_LEVEL="${VDE_LOG_LEVELS[$level]}"
         return 0
     fi
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 # Get current log level name
@@ -110,7 +110,7 @@ vde_log_set_format() {
             return 0
             ;;
         *)
-            return 1
+            return $VDE_ERR_GENERAL
             ;;
     esac
 }
@@ -129,9 +129,9 @@ vde_log_to_file() {
     # Ensure directory exists
     local dir="$(dirname "$filepath")"
     if [[ ! -d "$dir" ]]; then
-        command mkdir -p "$dir" 2>/dev/null || return 1
+        command mkdir -p "$dir" 2>/dev/null || return $VDE_ERR_GENERAL
     fi
-    command touch "$filepath" 2>/dev/null || return 1
+    command touch "$filepath" 2>/dev/null || return $VDE_ERR_GENERAL
     return 0
 }
 
@@ -179,7 +179,7 @@ vde_log() {
     
     # Ensure initialized
     if [[ "$_VDE_LOG_INITIALIZED" -eq 0 ]]; then
-        vde_log_init || return 1
+        vde_log_init || return $VDE_ERR_GENERAL
     fi
     
     # Generate timestamp (ISO 8601)
@@ -332,7 +332,7 @@ vde_log_rotate() {
     
     # Ensure logs directory exists
     local log_dir="$(dirname "$VDE_LOG_FILE")"
-    [[ ! -d "$log_dir" ]] && command mkdir -p "$log_dir" 2>/dev/null || return 1
+    [[ ! -d "$log_dir" ]] && command mkdir -p "$log_dir" 2>/dev/null || return $VDE_ERR_GENERAL
     
     # Generate timestamp for rotated file
     local timestamp
@@ -352,7 +352,7 @@ vde_log_rotate() {
     fi
     
     # Create new log file
-    command touch "$VDE_LOG_FILE" 2>/dev/null || return 1
+    command touch "$VDE_LOG_FILE" 2>/dev/null || return $VDE_ERR_GENERAL
     command chmod 600 "$VDE_LOG_FILE" 2>/dev/null || true
     
     # Clean up old logs
@@ -454,7 +454,7 @@ vde_log_export() {
         vde_log_set_format text
         return 0
     fi
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 #===============================================================================

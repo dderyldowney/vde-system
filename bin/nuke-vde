@@ -20,12 +20,12 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VDE_ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Source shared library
-source "$SCRIPT_DIR/../lib/vde-shell-compat"
-source "$SCRIPT_DIR/../lib/vde-constants"
-source "$SCRIPT_DIR/../lib/vde-errors"
-source "$SCRIPT_DIR/../lib/vde-log"
-source "$SCRIPT_DIR/../lib/vde-core"
-source "$SCRIPT_DIR/../lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vde-shell-compat"
+source "$VDE_ROOT_DIR/lib/vde-constants"
+source "$VDE_ROOT_DIR/lib/vde-errors"
+source "$VDE_ROOT_DIR/lib/vde-log"
+source "$VDE_ROOT_DIR/lib/vde-core"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 # Initialize logging
 vde_log_init 2>/dev/null || true
@@ -112,7 +112,7 @@ ask_yes_no() {
 
         case "$yn" in
             [Yy]|[Yy][Ee][Ss]) return 0 ;;
-            [Nn]|[Nn][Oo]) return 1 ;;
+            [Nn]|[Nn][Oo]) return $VDE_ERR_GENERAL ;;
             *) echo "Please answer yes or no." ;;
         esac
     done
@@ -157,7 +157,7 @@ backup_directory() {
         return 0
     else
         print_error "Failed to backup ${dir_name}/"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 }
 
@@ -488,7 +488,7 @@ main() {
             *)
                 echo "Unknown option: $1"
                 echo "Use --help for usage information"
-                exit 1
+                exit $VDE_ERR_GENERAL
                 ;;
         esac
     done

@@ -3,8 +3,8 @@ set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/vm-common"
-source "$SCRIPT_DIR/../lib/vde-docker-state"
+source "$VDE_ROOT_DIR/lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vde-docker-state"
 
 # Parse arguments
 if [[ $# -eq 0 ]]; then
@@ -16,14 +16,14 @@ if [[ $# -eq 0 ]]; then
     echo "  $0 all                       # Stop all VMs"
     echo ""
     show_known_vms
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # _vm_has_compose_file - Check if VM has a docker-compose.yml file
 _vm_has_compose_file() {
     local vm="$1"
     local compose_file
-    compose_file=$(get_compose_file "$vm" 2>/dev/null) || return 1
+    compose_file=$(get_compose_file "$vm" 2>/dev/null) || return $VDE_ERR_GENERAL
     [[ -f "$compose_file" ]]
 }
 
@@ -53,7 +53,7 @@ for arg in "$@"; do
                 fi
             else
                 log_error "Unknown VM: $arg"
-                exit 1
+                exit $VDE_ERR_GENERAL
             fi
             ;;
     esac
@@ -66,7 +66,7 @@ if [[ ${#VMS[@]} -eq 0 ]]; then
     echo "No VMs to stop. Create VMs first with: create-virtual-for <type>"
     echo ""
     show_known_vms
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Track batch operation results with zsh associative arrays

@@ -715,19 +715,21 @@ services:
 
 **File:** `templates/ssh-entry.txt`
 
-SSH Host aliases MUST use the `vde-` prefix to match the container name.
-The `{{VM_NAME}}` placeholder receives the raw name (e.g., `python`);
-the template prepends `vde-` for the Host alias.
+The SSH entry template is rendered to generate SSH configuration blocks for the `~/.ssh/vde/config` file.
+The template must utilize the following provided variables to ensure absolute path isolation across environments.
 
 ```
-Host vde-{{VM_NAME}}
+# {{COMMENT}}
+Host {{HOST}}
     HostName localhost
     Port {{SSH_PORT}}
     User devuser
+    IdentityFile {{IDENTITY_FILE}}
+    IdentitiesOnly yes
     ForwardAgent yes
     StrictHostKeyChecking no
-    UserKnownHostsFile ~/.ssh/vde/known_hosts
-    IdentityFile ~/.ssh/vde/id_ed25519
+    LogLevel ERROR
+    UserKnownHostsFile {{KNOWN_HOSTS_FILE}}
 ```
 
 ---

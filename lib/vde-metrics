@@ -36,7 +36,7 @@ typeset -gA _VDE_METRICS_COUNTERS=()
 vde_metrics_init() {
     # Create cache directory if it doesn't exist
     if [[ ! -d "$VDE_ROOT_DIR/.cache" ]]; then
-        command mkdir -p "$VDE_ROOT_DIR/.cache" 2>/dev/null || return 1
+        command mkdir -p "$VDE_ROOT_DIR/.cache" 2>/dev/null || return $VDE_ERR_GENERAL
     fi
     
     # Create metrics file if it doesn't exist
@@ -46,7 +46,7 @@ vde_metrics_init() {
     
     # Ensure file is writable
     if [[ ! -w "$VDE_METRICS_FILE" ]]; then
-        return 1
+        return $VDE_ERR_GENERAL
     fi
     
     _VDE_METRICS_INITIALIZED=1
@@ -68,7 +68,7 @@ vde_metrics_record() {
     
     # Check if metrics are initialized
     if [[ "$_VDE_METRICS_INITIALIZED" -eq 0 ]]; then
-        vde_metrics_init || return 1
+        vde_metrics_init || return $VDE_ERR_GENERAL
     fi
     
     # Update in-memory counter
@@ -225,7 +225,7 @@ vde_metrics_export() {
         command cp "$VDE_METRICS_FILE" "$output_file"
         return 0
     fi
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 # Export metrics summary
@@ -250,7 +250,7 @@ vde_metrics_summary() {
 # Reset all metrics
 vde_metrics_reset() {
     if [[ "$_VDE_METRICS_INITIALIZED" -eq 0 ]]; then
-        vde_metrics_init || return 1
+        vde_metrics_init || return $VDE_ERR_GENERAL
     fi
     
     echo '{"metrics": {}, "timings": {}, "counters": {}, "last_updated": "'$(vde_shell_date_iso8601)'"}' > "$VDE_METRICS_FILE"

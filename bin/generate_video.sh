@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # scripts/generate_video.sh
 # Usage: ./generate_video.sh <output_path> [tape_commands...]
 # If tape_commands are not provided, it reads from stdin.
@@ -10,7 +10,7 @@ TAPE_COMMANDS="$*"
 if [ -z "$OUTPUT_PATH" ]; then
   echo "Usage: $0 <output_path> [tape_commands...]"
   echo "Example: $0 demo.gif \"Type 'ls -l'; Enter; Sleep 2s;\""
-  exit 1
+  exit $VDE_ERR_GENERAL
 fi
 
 # Create a temporary tape file

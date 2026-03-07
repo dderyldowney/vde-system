@@ -55,7 +55,7 @@ print_summary() {
         return 0
     else
         echo "✗ Some schema validations failed"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 }
 
@@ -74,7 +74,7 @@ validate_schema_file() {
         return 0
     else
         print_check "Schema integrity: $schema_name" 1
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 }
 
@@ -99,7 +99,7 @@ validate_json_config() {
         return 0
     else
         print_check "JSON validation: $config_name" 1
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 }
 

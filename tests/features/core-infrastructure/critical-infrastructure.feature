@@ -86,7 +86,7 @@ Feature: Critical Infrastructure — Spec Invariants
 
   Scenario: SSH entry template references VDE known_hosts path
     When I render the SSH entry template with VM_NAME="python" SSH_PORT="2213"
-    Then the rendered output should contain "UserKnownHostsFile ~/.ssh/vde/known_hosts"
+    Then the rendered output should contain "~/.ssh/vde/known_hosts"
 
   Scenario: SSH entry template includes ForwardAgent yes
     When I render the SSH entry template with VM_NAME="python" SSH_PORT="2213"

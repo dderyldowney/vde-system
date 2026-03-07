@@ -6,10 +6,10 @@ set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/vm-common"
-source "$SCRIPT_DIR/../lib/vde-naming"
-source "$SCRIPT_DIR/../lib/vde-ssh"
-source "$SCRIPT_DIR/../lib/vde-docker"
+source "$VDE_ROOT_DIR/lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vde-naming"
+source "$VDE_ROOT_DIR/lib/vde-ssh"
+source "$VDE_ROOT_DIR/lib/vde-docker"
 
 # Parse arguments
 if [[ $# -eq 0 ]]; then
@@ -28,7 +28,7 @@ if [[ $# -eq 0 ]]; then
     echo "  - SSH config entry (static port assignment)"
     echo "  - projects directory (your code is safe!)"
     echo ""
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 VM_NAME="$1"
@@ -37,7 +37,7 @@ VM_NAME="$1"
 RESOLVED_NAME=$(resolve_vm_name "$VM_NAME" || true)
 if [[ -z "$RESOLVED_NAME" ]]; then
     log_error "Unknown VM: $VM_NAME"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # 1. Stop and remove VM container if exists
