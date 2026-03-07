@@ -1,0 +1,791 @@
+#!/usr/bin/env zsh
+# VDE Core Library - Essential Functions for VDE
+# Source this library with: source ./lib/vde-core
+# Requires: zsh 5.0+
+#
+# This is the minimal core library containing only essential functions
+# needed for basic VDE operations. It provides:
+# - Logging functions
+# - Constants and directory paths
+# - Basic VM type loading (with caching)
+# - Essential VM info queries
+#
+# For full functionality, source vm-common which includes this core
+# plus SSH, Docker, and template functions.
+#
+# Shell Compatibility: Uses vde-shell-compat for zsh operations
+#
+# Return Codes: All functions use standardized return codes from vde-constants:
+#   VDE_SUCCESS (0)        - Operation completed successfully
+#   VDE_ERR_GENERAL (1)    - Unspecified failure
+#   VDE_ERR_INVALID_INPUT (2) - Bad arguments or validation failure
+#   VDE_ERR_NOT_FOUND (3)  - Resource doesn't exist
+
+# -----------------------
+# Source Guard
+# -----------------------
+# Prevent multiple sourcing which causes readonly variable errors
+if [ "${_VDE_CORE_GUARD_LOADED:-}" = "1" ]; then
+    return 0 2>/dev/null || exit 0
+fi
+_VDE_CORE_GUARD_LOADED=1
+
+# -----------------------
+# Bootstrap: Determine VDE Root Directory
+# -----------------------
+# Zsh-only script path detection
+# shellcheck disable=SC2296
+_VDE_CORE_SCRIPT_PATH="${(%):-%x}"
+
+# If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
+if [ -z "${VDE_ROOT_DIR:-}" ]; then
+    VDE_ROOT_DIR="$(cd "$(dirname "$_VDE_CORE_SCRIPT_PATH")/../.." && pwd)"
+fi
+export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
+
+# -----------------------
+# Source Shell Compatibility Layer
+# -----------------------
+# shellcheck source=vde-shell-compat
+. "$VDE_ROOT_DIR/lib/vde-shell-compat"
+
+# -----------------------
+# Source Constants Library
+# -----------------------
+# shellcheck source=vde-constants
+. "$VDE_ROOT_DIR/lib/vde-constants"
+
+# -----------------------
+# Directory Constants
+# -----------------------
+VDE_CORE_CONFIGS_DIR="${VDE_CORE_CONFIGS_DIR:-$VDE_ROOT_DIR/configs/docker}"
+export VDE_CORE_CONFIGS_DIR
+VDE_CORE_BIN_DIR="${VDE_CORE_BIN_DIR:-$VDE_ROOT_DIR/bin}"
+export VDE_CORE_BIN_DIR
+VDE_CORE_DATA_DIR="${VDE_CORE_DATA_DIR:-$VDE_ROOT_DIR/data}"
+export VDE_CORE_DATA_DIR
+VDE_CORE_CACHE_DIR="${VDE_CORE_CACHE_DIR:-$VDE_ROOT_DIR/.cache}"
+export VDE_CORE_CACHE_DIR
+VDE_CORE_VM_TYPES_CONF="${VDE_CORE_VM_TYPES_CONF:-$VDE_CORE_DATA_DIR/vm-types.conf}"
+export VDE_CORE_VM_TYPES_CONF
+VDE_CORE_VM_TYPES_CACHE="${VDE_CORE_VM_TYPES_CACHE:-$VDE_CORE_CACHE_DIR/vm-types.cache}"
+export VDE_CORE_VM_TYPES_CACHE
+
+# -----------------------
+# Logging Functions
+# -----------------------
+
+# log_info - Output an informational message
+log_info() {
+    echo "[INFO] $*" >&2
+    return $VDE_SUCCESS
+}
+
+# log_error - Output an error message to stderr
+log_error() {
+    echo "[ERROR] $*" >&2
+    return $VDE_SUCCESS
+}
+
+# log_success - Output a success message
+log_success() {
+    echo "[SUCCESS] $*" >&2
+    return $VDE_SUCCESS
+}
+
+# log_warning - Output a warning message
+log_warning() {
+    echo "[WARNING] $*" >&2
+    return $VDE_SUCCESS
+}
+
+# -----------------------
+# Core VM Type Data Structures
+# -----------------------
+# Initialize associative arrays using shell-compat layer
+_assoc_init "VDE_CORE_VM_TYPE"
+_assoc_init "VDE_CORE_VM_ALIASES"
+_assoc_init "VDE_CORE_VM_DISPLAY"
+_VDE_CORE_LOADED=0
+
+# -----------------------
+# Cache Helper Functions
+# -----------------------
+
+# _vde_core_ensure_cache_dir - Create cache directory if needed
+_vde_core_ensure_cache_dir() {
+    if [ ! -d "$VDE_CORE_CACHE_DIR" ]; then
+        mkdir -p "$VDE_CORE_CACHE_DIR" 2>/dev/null
+    fi
+    return $VDE_SUCCESS
+}
+
+# _vde_core_get_mtime - Get file modification time
+_vde_core_get_mtime() {
+    local filepath="$1"
+    if [ -f "$filepath" ]; then
+        if [ "$(uname)" = "Darwin" ]; then
+            stat -f %m "$filepath" 2>/dev/null || echo "0"
+        else
+            stat -c %Y "$filepath" 2>/dev/null || echo "0"
+        fi
+    else
+        echo "0"
+    fi
+}
+
+# -----------------------
+# Core VM Type Loading (Minimal with Caching)
+# -----------------------
+
+_assoc_keys() {
+    local array_name="$1"
+    eval "for k in \"\${(@k)$array_name}\"; do echo \"\$k\"; done"
+}
+
+_assoc_get() {
+    local array_name="$1"
+    local key="$2"
+    local value_ref="${array_name}[$key]" # Construct reference string
+    # Check if key exists in the array_name array
+    if [[ -n "${(P)array_name}[$key]+_}" ]]; then
+        echo "${(P)value_ref}" # Use indirect parameter expansion
+        return 0
+    fi
+    return 1
+}
+
+# vde_core_save_cache - Save loaded VM types to cache file
+# Args: none
+# Returns: VDE_SUCCESS (0) or VDE_ERR_GENERAL (1) on failure
+_vde_core_save_cache() {
+    _vde_core_ensure_cache_dir
+    
+    local cache_file="$VDE_CORE_VM_TYPES_CACHE"
+    local temp_file="${cache_file}.tmp.$$"
+    
+    # Write cache header
+    {
+        cat << 'HEREDOC_END'
+# VDE VM Types Cache
+# Generated:
+HEREDOC_END
+        # Use ISO 8601 format for machine-readable timestamp
+        date -u +'%Y-%m-%dT%H:%M:%SZ'
+        echo "# Format: ARRAY_NAME:key=value"
+        echo ""
+        
+        # Export VM_TYPE array
+        echo "# VM_TYPE definitions"
+        _assoc_keys "VDE_CORE_VM_TYPE" | sort | while read -r vm_name; do
+            local vm_type
+            vm_type=$(_assoc_get "VDE_CORE_VM_TYPE" "$vm_name")
+            echo "VM_TYPE:${vm_name}=${vm_type}"
+        done
+        
+        # Export VM_ALIASES array
+        echo ""
+        echo "# VM aliases"
+        _assoc_keys "VDE_CORE_VM_ALIASES" | sort | while read -r vm_name; do
+            local vm_aliases
+            vm_aliases=$(_assoc_get "VDE_CORE_VM_ALIASES" "$vm_name")
+            echo "VM_ALIASES:${vm_name}=${vm_aliases}"
+        done
+        
+        # Export VM_DISPLAY array
+        echo ""
+        echo "# VM display names"
+        _assoc_keys "VDE_CORE_VM_DISPLAY" | sort | while read -r vm_name; do
+            local vm_display
+            vm_display=$(_assoc_get "VDE_CORE_VM_DISPLAY" "$vm_name")
+            echo "VM_DISPLAY:${vm_name}=${vm_display}"
+        done
+    } > "$temp_file"
+    
+    # Atomic rename
+    if [ $? -eq 0 ] && [ -f "$temp_file" ]; then
+        mv "$temp_file" "$cache_file"
+        return $VDE_SUCCESS
+    else
+        rm -f "$temp_file" 2>/dev/null
+        return $VDE_ERR_GENERAL
+    fi
+}
+
+# vde_core_load_cache - Load VM types from cache file
+# Args: none
+# Returns: VDE_SUCCESS (0) if cache loaded, VDE_ERR_NOT_FOUND (3) if no cache
+_vde_core_load_cache() {
+    local cache_file="$VDE_CORE_VM_TYPES_CACHE"
+    
+    if [ ! -f "$cache_file" ]; then
+        return $VDE_ERR_NOT_FOUND
+    fi
+    
+    # Clear existing arrays
+    _assoc_clear "VDE_CORE_VM_TYPE"
+    _assoc_clear "VDE_CORE_VM_ALIASES"
+    _assoc_clear "VDE_CORE_VM_DISPLAY"
+    
+    # Parse cache file
+    while IFS=':' read -r array_name rest; do
+        case "$array_name" in
+            VM_TYPE)
+                local key value
+                key=$(echo "$rest" | cut -d'=' -f1)
+                value=$(echo "$rest" | cut -d'=' -f2-)
+                _assoc_set "VDE_CORE_VM_TYPE" "$key" "$value"
+                ;;
+            VM_ALIASES)
+                local key value
+                key=$(echo "$rest" | cut -d'=' -f1)
+                value=$(echo "$rest" | cut -d'=' -f2-)
+                _assoc_set "VDE_CORE_VM_ALIASES" "$key" "$value"
+                ;;
+            VM_DISPLAY)
+                local key value
+                key=$(echo "$rest" | cut -d'=' -f1)
+                value=$(echo "$rest" | cut -d'=' -f2-)
+                _assoc_set "VDE_CORE_VM_DISPLAY" "$key" "$value"
+                ;;
+        esac
+    done < "$cache_file"
+    
+    return $VDE_SUCCESS
+}
+
+# invalidate_vm_types_cache - Invalidate and remove VM types cache
+# Args: none
+# Returns: VDE_SUCCESS (0)
+invalidate_vm_types_cache() {
+    local cache_file="$VDE_CORE_VM_TYPES_CACHE"
+
+    # Remove cache file if it exists
+    if [ -f "$cache_file" ]; then
+        rm -f "$cache_file"
+    fi
+
+    # Reset loaded flag (if using shell compatibility layer)
+    unset _VDE_CORE_LOADED 2>/dev/null
+    unset _VM_TYPES_LOADED 2>/dev/null
+
+    return $VDE_SUCCESS
+}
+
+# vde_core_load_types - Load minimal VM type data for core operations
+# Only loads type and aliases, not install commands or service ports
+# Supports cache loading/saving for performance
+# Args: none
+# Returns: VDE_SUCCESS (0) or VDE_ERR_NOT_FOUND (3)
+vde_core_load_types() {
+    # Return early if already loaded and arrays are populated
+    # (Checking array length handles subshells where _VDE_CORE_LOADED is inherited but arrays are not)
+    if [ "$_VDE_CORE_LOADED" -eq 1 ] && [ "${#VDE_CORE_VM_TYPE}" -gt 0 ]; then
+        return $VDE_SUCCESS
+    fi
+    
+    local conf_file="$VDE_CORE_VM_TYPES_CONF"
+    local cache_file="$VDE_CORE_VM_TYPES_CACHE"
+    local conf_mtime=0
+    local cache_mtime=0
+    
+    if [ ! -f "$conf_file" ]; then
+        return $VDE_ERR_NOT_FOUND
+    fi
+    
+    # Get modification times
+    conf_mtime=$(_vde_core_get_mtime "$conf_file")
+    if [ -f "$cache_file" ]; then
+        cache_mtime=$(_vde_core_get_mtime "$cache_file")
+    fi
+    
+    # Try to load from cache if it's newer than config
+    if [ "$cache_mtime" -ge "$conf_mtime" ]; then
+        if _vde_core_load_cache; then
+            _VDE_CORE_LOADED=1
+            return $VDE_SUCCESS
+        fi
+    fi
+    
+    # Clear existing arrays
+    _assoc_clear "VDE_CORE_VM_TYPE"
+    _assoc_clear "VDE_CORE_VM_ALIASES"
+    _assoc_clear "VDE_CORE_VM_DISPLAY"
+    
+    # Parse only essential fields (type, name, aliases, display)
+    while IFS='|' read -r type name vm_aliases display _rest; do
+        # Skip comments
+        case "$type" in
+            \#*) continue ;;
+        esac
+        # Skip empty lines
+        [ -z "$type" ] && continue
+        
+        _assoc_set "VDE_CORE_VM_TYPE" "$name" "$type"
+        _assoc_set "VDE_CORE_VM_ALIASES" "$name" "$vm_aliases"
+        _assoc_set "VDE_CORE_VM_DISPLAY" "$name" "$display"
+    done < "$conf_file"
+    
+    # Save to cache for next time
+    _vde_core_save_cache
+    
+    _VDE_CORE_LOADED=1
+    return $VDE_SUCCESS
+}
+
+# -----------------------
+# Core VM Query Functions
+# -----------------------
+
+# vde_core_get_all_vms - List all known VM names
+vde_core_get_all_vms() {
+    vde_core_load_types
+    _assoc_keys "VDE_CORE_VM_TYPE" | sort
+}
+
+# vde_core_get_vm_type - Get the type of a VM (lang or service)
+vde_core_get_vm_type() {
+    local vm="$1"
+    vde_core_load_types
+    echo "$(_assoc_get "VDE_CORE_VM_TYPE" "$vm" 2>/dev/null)"
+}
+
+# vde_core_is_known_vm - Check if a VM name is known
+vde_core_is_known_vm() {
+    local vm="$1"
+    vde_core_load_types
+    if _assoc_has_key "VDE_CORE_VM_TYPE" "$vm"; then
+        return $VDE_SUCCESS
+    fi
+    return $VDE_ERR_NOT_FOUND
+}
+
+# -----------------------
+# Lazy Loading Support
+# -----------------------
+# These variables track which optional modules have been loaded
+_VDE_SSH_LOADED=0
+_VDE_DOCKER_LOADED=0
+_VDE_TEMPLATE_LOADED=0
+
+# vde_require_ssh - Ensure SSH functions are available
+# This is a stub that will be replaced by vm-common when fully loaded
+vde_require_ssh() {
+    if [ "$_VDE_SSH_LOADED" -eq 0 ]; then
+        # If we're in core-only mode, we need to source vm-common
+        if [ -z "${CONFIGS_DIR:-}" ]; then
+            # shellcheck source=vm-common
+            . "$VDE_ROOT_DIR/lib/vm-common"
+        fi
+        _VDE_SSH_LOADED=1
+    fi
+    return $VDE_SUCCESS
+}
+
+# vde_require_docker - Ensure Docker functions are available
+vde_require_docker() {
+    if [ "$_VDE_DOCKER_LOADED" -eq 0 ]; then
+        if [ -z "${CONFIGS_DIR:-}" ]; then
+            # shellcheck source=vm-common
+            . "$VDE_ROOT_DIR/lib/vm-common"
+        fi
+        _VDE_DOCKER_LOADED=1
+    fi
+    return $VDE_SUCCESS
+}
+
+# vde_require_template - Ensure template functions are available
+vde_require_template() {
+    if [ "$_VDE_TEMPLATE_LOADED" -eq 0 ]; then
+        if [ -z "${CONFIGS_DIR:-}" ]; then
+            # shellcheck source=vm-common
+            . "$VDE_ROOT_DIR/lib/vm-common"
+        fi
+        _VDE_TEMPLATE_LOADED=1
+    fi
+    return $VDE_SUCCESS
+}
+
+# -----------------------
+# JSON Schema Validation
+# -----------------------
+# Centralized schema validation and cache regeneration for all VDE libraries
+
+# vde_check_schema_integrity - Verify schema file is valid JSON with required structure
+# Args: <schema_file>
+# Returns: VDE_SUCCESS if valid, VDE_ERR_INVALID_DATA if invalid
+vde_check_schema_integrity() {
+    local schema_file="$1"
+
+    if [ ! -f "$schema_file" ]; then
+        log_error "Schema file not found: $schema_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Check if valid JSON
+    if ! python3 -c "import json; json.load(open('$schema_file'))" 2>/dev/null; then
+        log_error "Schema file is not valid JSON: $schema_file"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    # Check for required schema fields
+    if ! python3 -c "
+import json
+with open('$schema_file') as f:
+    schema = json.load(f)
+assert '\$schema' in schema or 'type' in schema, 'Missing required schema fields'
+" 2>/dev/null; then
+        log_error "Schema file missing required fields: $schema_file"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    return $VDE_SUCCESS
+}
+
+# vde_validate_json_schema - Validate JSON file against its schema
+# Args: <json_file> <schema_file>
+# Returns: VDE_SUCCESS if valid, VDE_ERR_INVALID_DATA if invalid, VDE_ERR_NOT_FOUND if file missing
+vde_validate_json_schema() {
+    local json_file="$1"
+    local schema_file="$2"
+
+    # Check files exist
+    if [ ! -f "$json_file" ]; then
+        log_error "JSON file not found: $json_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    if [ ! -f "$schema_file" ]; then
+        log_error "Schema file not found: $schema_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Verify schema integrity first
+    if ! vde_check_schema_integrity "$schema_file"; then
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    # Validate JSON against schema
+    if ! python3 -c "
+import json, sys
+
+with open('$schema_file') as f:
+    schema = json.load(f)
+with open('$json_file') as f:
+    data = json.load(f)
+
+# Basic structural validation based on schema type
+if schema.get('type') == 'object':
+    required = schema.get('required', [])
+    for field in required:
+        if field not in data:
+            print(f'Missing required field: {field}', file=sys.stderr)
+            sys.exit(1)
+
+# Additional validation for vm-types schema
+if 'vms' in schema.get('properties', {}):
+    # VM types specific validation
+    if 'vms' not in data:
+        print('Missing vms field', file=sys.stderr)
+        sys.exit(1)
+    if 'language' not in data['vms'] or 'service' not in data['vms']:
+        print('Missing language or service arrays', file=sys.stderr)
+        sys.exit(1)
+
+    # Validate language VMs
+    for idx, vm in enumerate(data['vms']['language']):
+        if not all(k in vm for k in ['name', 'display', 'install', 'ssh_port']):
+            print(f'Language VM [{idx}] missing required fields (name, display, install, ssh_port)', file=sys.stderr)
+            sys.exit(1)
+        if vm.get('service_port') is not None:
+            print(f'Language VM {vm[\"name\"]} must have null service_port', file=sys.stderr)
+            sys.exit(1)
+        if not isinstance(vm.get('ssh_port'), int):
+            print(f'Language VM {vm[\"name\"]} ssh_port must be integer', file=sys.stderr)
+            sys.exit(1)
+
+    # Validate service VMs
+    for idx, vm in enumerate(data['vms']['service']):
+        if not all(k in vm for k in ['name', 'display', 'install', 'service_port', 'ssh_port']):
+            print(f'Service VM [{idx}] missing required fields (name, display, install, service_port, ssh_port)', file=sys.stderr)
+            sys.exit(1)
+        if not isinstance(vm.get('service_port'), str):
+            print(f'Service VM {vm[\"name\"]} service_port must be string', file=sys.stderr)
+            sys.exit(1)
+        if not isinstance(vm.get('ssh_port'), int):
+            print(f'Service VM {vm[\"name\"]} ssh_port must be integer', file=sys.stderr)
+            sys.exit(1)
+" 2>/dev/null; then
+        log_error "JSON validation failed: $json_file"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    log_info "Schema validation passed: $json_file"
+    return $VDE_SUCCESS
+}
+
+# vde_validate_or_regenerate - Validate JSON, regenerate cache if needed
+# Args: <json_file> <schema_file> <cache_file>
+# Returns: VDE_SUCCESS if valid/regenerated, error code otherwise
+vde_validate_or_regenerate() {
+    local json_file="$1"
+    local schema_file="$2"
+    local cache_file="$3"
+
+    # Validate JSON against schema
+    if ! vde_validate_json_schema "$json_file" "$schema_file"; then
+        log_error "JSON validation failed, cannot regenerate cache"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    # Check if cache needs regeneration
+    local needs_regen=0
+
+    if [ ! -f "$cache_file" ]; then
+        log_info "Cache file missing, will regenerate: $cache_file"
+        needs_regen=1
+    elif [ "$json_file" -nt "$cache_file" ]; then
+        log_info "JSON file newer than cache, will regenerate: $cache_file"
+        needs_regen=1
+    fi
+
+    if [ $needs_regen -eq 1 ]; then
+        log_info "Regenerating cache from validated JSON: $cache_file"
+        # Cache regeneration happens in load_vm_types in vm-common
+        # This function just validates and signals need for regeneration
+        return $VDE_ERR_CACHE_INVALID
+    fi
+
+    return $VDE_SUCCESS
+}
+
+# vde_get_schema_for_json - Get schema file path for a JSON config file
+# Args: <json_file>
+# Returns: Outputs schema file path, returns VDE_SUCCESS if found
+vde_get_schema_for_json() {
+    local json_file="$1"
+    local schema_file="${json_file%.json}.schema.json"
+
+    if [ -f "$schema_file" ]; then
+        echo "$schema_file"
+        return $VDE_SUCCESS
+    fi
+
+    log_error "No schema found for: $json_file"
+    return $VDE_ERR_NOT_FOUND
+}
+
+# -----------------------
+# Schema Update Mechanisms
+# -----------------------
+# Functions for detecting schema changes and updating configurations
+
+# vde_get_config_version - Get version from JSON config file
+# Args: <json_file>
+# Returns: Outputs version string, returns VDE_SUCCESS if found
+vde_get_config_version() {
+    local json_file="$1"
+
+    if [ ! -f "$json_file" ]; then
+        log_error "Config file not found: $json_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    local version
+    version=$(python3 -c "import json; print(json.load(open('$json_file')).get('version', ''))" 2>/dev/null)
+
+    if [ -n "$version" ]; then
+        echo "$version"
+        return $VDE_SUCCESS
+    else
+        log_error "No version field in config: $json_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+}
+
+# vde_get_schema_version - Get version requirement from schema file
+# Args: <schema_file>
+# Returns: Outputs schema version pattern, returns VDE_SUCCESS if found
+vde_get_schema_version() {
+    local schema_file="$1"
+
+    if [ ! -f "$schema_file" ]; then
+        log_error "Schema file not found: $schema_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    local version
+    version=$(python3 -c "
+import json
+schema = json.load(open('$schema_file'))
+# Get version from properties.version.pattern or properties.version.const
+version_prop = schema.get('properties', {}).get('version', {})
+print(version_prop.get('pattern', version_prop.get('const', '')))
+" 2>/dev/null)
+
+    if [ -n "$version" ]; then
+        echo "$version"
+        return $VDE_SUCCESS
+    else
+        log_error "No version in schema: $schema_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+}
+
+# vde_check_schema_compatibility - Check if config version matches schema
+# Args: <json_file> <schema_file>
+# Returns: VDE_SUCCESS if compatible, VDE_ERR_INVALID_DATA if incompatible
+vde_check_schema_compatibility() {
+    local json_file="$1"
+    local schema_file="$2"
+
+    local config_version schema_version
+    config_version=$(vde_get_config_version "$json_file" 2>/dev/null)
+    schema_version=$(vde_get_schema_version "$schema_file" 2>/dev/null)
+
+    if [ -z "$config_version" ]; then
+        log_error "Cannot determine config version: $json_file"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    if [ -z "$schema_version" ]; then
+        log_error "Cannot determine schema version: $schema_file"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    # Check if config version matches schema pattern
+    if python3 -c "
+import re, sys
+pattern = r'$schema_version'
+version = '$config_version'
+if re.match(pattern, version):
+    sys.exit(0)
+else:
+    sys.exit(1)
+" 2>/dev/null; then
+        log_info "Config version $config_version compatible with schema"
+        return $VDE_SUCCESS
+    else
+        log_error "Config version $config_version incompatible with schema $schema_version"
+        return $VDE_ERR_INVALID_DATA
+    fi
+}
+
+# vde_detect_schema_changes - Detect if schema has been updated
+# Args: <json_file>
+# Returns: VDE_SUCCESS if schema unchanged, VDE_ERR_CACHE_INVALID if schema changed
+vde_detect_schema_changes() {
+    local json_file="$1"
+    local schema_file
+    schema_file=$(vde_get_schema_for_json "$json_file" 2>/dev/null)
+
+    if [ ! -f "$schema_file" ]; then
+        log_error "Schema file not found for: $json_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Check if schema file is newer than config
+    if [ "$schema_file" -nt "$json_file" ]; then
+        log_info "Schema has been updated, config may need regeneration"
+        return $VDE_ERR_CACHE_INVALID
+    fi
+
+    return $VDE_SUCCESS
+}
+
+# vde_backup_config - Create backup of config file before update
+# Args: <json_file>
+# Returns: VDE_SUCCESS if backup created, error code otherwise
+vde_backup_config() {
+    local json_file="$1"
+    local backup_dir="${VDE_ROOT_DIR}/.cache/config-backups"
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
+    local backup_file="${backup_dir}/$(basename "$json_file").${timestamp}.bak"
+
+    if [ ! -f "$json_file" ]; then
+        log_error "Config file not found: $json_file"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Create backup directory
+    mkdir -p "$backup_dir" 2>/dev/null
+
+    # Copy config to backup
+    if cp "$json_file" "$backup_file" 2>/dev/null; then
+        log_info "Config backed up to: $backup_file"
+        echo "$backup_file"
+        return $VDE_SUCCESS
+    else
+        log_error "Failed to create backup: $backup_file"
+        return $VDE_ERR_GENERAL
+    fi
+}
+
+# vde_validate_and_update - Validate config and update cache if needed
+# Args: <json_file> <schema_file> <cache_file>
+# Returns: VDE_SUCCESS if validated/updated, error code otherwise
+vde_validate_and_update() {
+    local json_file="$1"
+    local schema_file="$2"
+    local cache_file="$3"
+
+    log_info "Validating and updating: $json_file"
+
+    # Check compatibility
+    if ! vde_check_schema_compatibility "$json_file" "$schema_file"; then
+        log_error "Schema compatibility check failed"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    # Validate against schema
+    if ! vde_validate_json_schema "$json_file" "$schema_file"; then
+        log_error "Schema validation failed"
+        return $VDE_ERR_INVALID_DATA
+    fi
+
+    # Check if cache needs update
+    if [ -n "$cache_file" ]; then
+        if [ ! -f "$cache_file" ] || [ "$json_file" -nt "$cache_file" ] || [ "$schema_file" -nt "$cache_file" ]; then
+            log_info "Cache needs regeneration"
+            return $VDE_ERR_CACHE_INVALID
+        fi
+    fi
+
+    log_info "Validation and update check complete"
+    return $VDE_SUCCESS
+}
+
+# -----------------------
+# Performance Timing (Debug)
+# -----------------------
+# Set VDE_DEBUG_TIMING=1 to enable timing output
+
+# vde_time_start - Start a timing measurement
+# Args: <label>
+vde_time_start() {
+    local label="$1"
+    if [ "${VDE_DEBUG_TIMING:-0}" = "1" ]; then
+        eval "_VDE_TIME_${label}=\"\$(date +%s%N 2>/dev/null || date +%s)\""
+    fi
+}
+
+# vde_time_end - End a timing measurement and print result
+# Args: <label>
+vde_time_end() {
+    local label="$1"
+    if [ "${VDE_DEBUG_TIMING:-0}" = "1" ]; then
+        local start_var="_VDE_TIME_${label}"
+        local start_time
+        eval "start_time=\"\${${start_var}:-0}\""
+        local end_time
+        end_time=$(date +%s%N 2>/dev/null || date +%s)
+        
+        if [ "$start_time" != "0" ]; then
+            # Calculate duration in milliseconds
+            local duration_ns=$((end_time - start_time))
+            local duration_ms=$((duration_ns / 1000000))
+            echo "[TIMING] $label: ${duration_ms}ms" >&2
+        fi
+    fi
+}

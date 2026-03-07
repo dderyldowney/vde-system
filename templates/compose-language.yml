@@ -1,0 +1,41 @@
+# Template for language VMs
+# Variables: {{NAME}}, {{SSH_PORT}}, {{INSTALL_CMD}}
+name: vde-{{NAME}}
+services:
+  vde-{{NAME}}:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: vde-{{NAME}}:latest
+    container_name: vde-{{NAME}}
+    hostname: vde-{{NAME}}
+    restart: unless-stopped
+    command: sh -c "{{INSTALL_CMD}} && /usr/sbin/sshd -D"
+
+    ports:
+      - "{{SSH_PORT}}:22"
+
+    volumes:
+      - ../../../projects/{{NAME}}:/home/devuser/workspace
+      - ../../../logs/{{NAME}}:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../env-files/vde-{{NAME}}.env
+
+    networks:
+      - vde-net
+
+networks:
+  vde-net:
+    external: true

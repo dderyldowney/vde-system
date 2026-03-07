@@ -1,0 +1,44 @@
+#!/usr/bin/env zsh
+#===============================================================================
+# vde-exec - Execute a command in a VDE container
+# Usage: vde-exec <vm_name> <command> [args...]
+#
+# Options:
+#   vm_name   Name of the VM (with or without vde- prefix)
+#   command   Command to execute
+#   args      Optional arguments to pass to the command
+#===============================================================================
+
+# Determine VDE root directory
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
+
+# Source core libraries
+[[ -f "$VDE_ROOT_DIR/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/lib/vde-shell-compat" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/lib/vde-constants" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/lib/vde-errors" &>/dev/null
+
+# Check arguments
+if [ -z "$1" ]; then
+    vde_error_simple "VM name is required"
+    echo "Usage: vde-exec <vm_name> <command> [args...]"
+    exit $VDE_ERR_INVALID_INPUT
+fi
+
+if [ -z "$2" ]; then
+    vde_error_simple "Command is required"
+    echo "Usage: vde-exec <vm_name> <command> [args...]"
+    exit $VDE_ERR_INVALID_INPUT
+fi
+
+VM_NAME="$1"
+shift
+
+# Ensure vde- prefix for container name
+CONTAINER_NAME="$VM_NAME"
+if [[ "$VM_NAME" != vde-* ]] && [[ "$VM_NAME" != *-dev ]]; then
+    CONTAINER_NAME="vde-${VM_NAME}"
+fi
+
+docker exec "$CONTAINER_NAME" "$@"
+exit $?

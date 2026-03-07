@@ -1,0 +1,442 @@
+#!/usr/bin/env zsh
+#===============================================================================
+# vde - Unified Virtual Development Environment Command
+# Provides a single entry point for all VDE operations
+#
+# Usage: vde <command> [options] [args]
+#
+# Commands:
+#   create <vm>     Create a new VM
+#   start <vm>      Start a VM
+#   stop <vm>       Stop a VM
+#   restart <vm>    Restart a VM
+#   ssh <vm>        SSH into a VM
+#   remove <vm>     Remove a VM instance
+#   uninstall <type> Uninstall a language/service completely
+#   list            List all VMs
+#   status          Show VM status
+#   health          Run system health check
+#   nuke            Remove all of VDE
+#   help            Show this help message
+#
+# Exit codes:
+#   0 - Success
+#   1 - General error
+#   2 - Invalid input
+#   3 - Resource not found
+#===============================================================================
+
+# Determine VDE root directory
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
+
+# Source core libraries (order matters for dependencies)
+# Use &>/dev/null to suppress any output from library sourcing (e.g., function exports)
+[[ -f "$VDE_ROOT_DIR/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/lib/vde-shell-compat" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/lib/vde-constants" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/lib/vde-errors" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/lib/vde-log" ]] && source "$VDE_ROOT_DIR/lib/vde-log" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/lib/vde-naming"   ]] && source "$VDE_ROOT_DIR/lib/vde-naming"   &>/dev/null
+[[ -f "$VDE_ROOT_DIR/lib/vde-security" ]] && source "$VDE_ROOT_DIR/lib/vde-security" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/lib/vde-core" ]] && source "$VDE_ROOT_DIR/lib/vde-core" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/lib/vm-common" ]] && source "$VDE_ROOT_DIR/lib/vm-common" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/lib/vde-commands" ]] && source "$VDE_ROOT_DIR/lib/vde-commands" &>/dev/null
+[[ -f "$VDE_ROOT_DIR/lib/vde-parser"   ]] && source "$VDE_ROOT_DIR/lib/vde-parser"   &>/dev/null
+[[ -f "$VDE_ROOT_DIR/lib/vde-docker-state" ]] && source "$VDE_ROOT_DIR/lib/vde-docker-state" &>/dev/null
+
+# Initialize logging
+vde_log_init 2>/dev/null || true
+
+#===============================================================================
+# Command Registry
+#===============================================================================
+
+_VDE_COMMANDS=(
+    "rebuild:Rebuild VDE images:vde-rebuild"
+    "create:Create a new VM:create-virtual-for"
+    "start:Start a VM:start-virtual"
+    "stop:Stop a VM:shutdown-virtual"
+    "restart:Restart a VM:restart-virtual"
+    "ssh:SSH into a VM:ssh-vm"
+    "connect:SSH into a VM (alias for ssh):ssh-vm"
+    "remove:Remove a VM:remove-virtual"
+    "delete:Completely delete a VM:delete-virtual"
+    "uninstall:Uninstall a language/service:uninstall-vm-type"
+    "list:List all VMs:list-vms"
+    "status:Show VM status:list-vms"
+    "health:Run system health check:vde-health"
+    "create-and-start:Create and start VMs:create-and-start"
+    "nuke:Remove all of VDE:nuke-vde"
+    "ssh-setup:Manage VDE SSH environment:ssh-setup"
+    "ssh-sync:Sync SSH keys to build context:ssh-sync"
+    "cleanup-ports:Clean up stale port locks:cleanup-ports"
+    "init:Initialize VDE networks:vde-init"
+    "ps:List running containers:vde-ps"
+    "logs:Show container logs:vde-logs"
+    "inspect:Inspect container:vde-inspect"
+    "port:Show port mappings:vde-port"
+    "exec:Execute command in container:vde-exec"
+    "images:List VDE images:vde-images"
+    "networks:List VDE networks:vde-networks"
+    "stats:Show resource usage:vde-stats"
+    "info:Show Docker info:vde-info"
+    "ask:Natural language command interface:vde-ask"
+    "help:Show this help message:"
+)
+
+#===============================================================================
+# Helper Functions
+#===============================================================================
+
+# vde_show_help - Display help message
+vde_show_help() {
+    cat <<EOF
+Usage: vde <command> [options] [args]
+
+Virtual Development Environment - Unified Command Interface
+
+Commands:
+EOF
+    printf "  %-12s %s\n" "rebuild" "Rebuild all VDE images"
+    printf "  %-12s %s\n" "create <vm>" "Create a new VM (use --rebuild or --nocache to rebuild)"
+    printf "  %-12s %s\n" "start <vm>" "Start a VM"
+    printf "  %-12s %s\n" "stop <vm>" "Stop a VM"
+    printf "  %-12s %s\n" "restart <vm>" "Restart a VM"
+    printf "  %-12s %s\n" "ssh <vm>" "SSH into a VM"
+    printf "  %-12s %s\n" "connect <vm>" "SSH into a VM (alias for ssh)"
+    printf "  %-12s %s\n" "remove <vm>" "Remove a VM instance"
+    printf "  %-12s %s\n" "uninstall <type>" "Uninstall a language/service completely"
+    printf "  %-12s %s\n" "list" "List all VMs"
+    printf "  %-12s %s\n" "status" "Show VM status"
+    printf "  %-12s %s\n" "health" "Run system health check"
+    printf "  %-12s %s\n" "create-and-start" "Create and start VMs"
+    printf "  %-12s %s\n" "nuke" "Remove all of VDE"
+    printf "  %-12s %s\n" "ssh-setup" "Manage VDE SSH environment"
+    printf "  %-12s %s\n" "ssh-sync" "Sync SSH keys to build context"
+    printf "  %-12s %s\n" "cleanup-ports" "Clean up stale port locks"
+  printf "  %-12s %s\n" "init" "Initialize VDE networks"
+    printf "  %-12s %s\n" "ps" "List running containers"
+    printf "  %-12s %s\n" "logs <vm>" "Show container logs"
+    printf "  %-12s %s\n" "inspect <vm>" "Inspect container"
+    printf "  %-12s %s\n" "port <vm>" "Show port mappings"
+    printf "  %-12s %s\n" "exec <vm> <cmd>" "Execute command in container"
+    printf "  %-12s %s\n" "images" "List VDE images"
+    printf "  %-12s %s\n" "networks" "List VDE networks"
+    printf "  %-12s %s\n" "stats" "Show resource usage"
+    printf "  %-12s %s\n" "info" "Show Docker info"
+    printf "  %-12s %s\n" "ask <text>" "Natural language command interface"
+    printf "  %-12s %s\n" "help" "Show this help message"
+
+    cat <<EOF
+
+Options:
+  -h, --help     Show this help message
+  -v, --verbose  Enable verbose output
+  -q, --quiet   Suppress debug output (quiet mode)
+  --version      Show version information
+
+Examples:
+  vde rebuild              # Rebuild all images
+  vde rebuild --no-cache  # Rebuild from scratch
+  vde rebuild --vm python # Rebuild only python VM
+  vde list                      # List all VMs
+  vde create python             # Create Python VM
+  vde create python --rebuild  # Create and rebuild Python VM
+  vde create python --nocache  # Create Python VM without cache
+  vde start python-dev          # Start Python development VM
+  vde ssh python                # SSH into the Python VM
+  vde stop postgres             # Stop PostgreSQL service
+  vde remove rust               # Remove Rust VM instance
+  vde uninstall elixir          # Completely uninstall Elixir from VDE
+  vde health                    # Run health check
+  vde nuke                      # Remove all of VDE (prompts for backup)
+
+For more information, see: https://github.com/dderyldowney/dev/blob/main/docs/command-reference.md
+EOF
+}
+
+# vde_show_version - Display version information
+vde_show_version() {
+    echo "VDE - Virtual Development Environment"
+    echo "Version: 1.0.0 (Stage 7 - Architectural Enhancements)"
+    echo ""
+    echo "Libraries loaded:"
+    echo "  - vde-constants: OK"
+    echo "  - vde-errors: OK"
+    echo "  - vde-log: OK"
+    echo "  - vde-core: OK"
+    echo "  - vm-common: OK"
+    echo "  - vde-docker-state: OK"
+}
+
+# vde_timeout - Cross-platform timeout wrapper
+# Uses zsh's built-in TIMEOUT feature when available
+vde_timeout() {
+    local timeout_sec="$1"
+    shift
+    local command="$@"
+    
+    # zsh has built-in TIMEOUT support
+    if [[ -n "$ZSH_VERSION" ]]; then
+        TIMEOUT="$timeout_sec" "$command"
+    else
+        # Fallback to external timeout command
+        command timeout "$timeout_sec" "$command"
+    fi
+}
+
+# vde_find_command_script - Find the script for a command
+vde_find_command_script() {
+    local cmd="$1"
+    local script=""
+
+    case "$cmd" in
+        rebuild|vde-rebuild)
+            script="$VDE_ROOT_DIR/bin/vde-rebuild"
+            ;;
+        create|create-virtual-for)
+            script="$VDE_ROOT_DIR/bin/create-virtual-for"
+            ;;
+        start|start-virtual)
+            script="$VDE_ROOT_DIR/bin/start-virtual"
+            ;;
+        stop|shutdown-virtual)
+            script="$VDE_ROOT_DIR/bin/shutdown-virtual"
+            ;;
+        restart|restart-virtual)
+            script="$VDE_ROOT_DIR/bin/restart-virtual"
+            ;;
+        ssh|connect|ssh-vm)
+            script="$VDE_ROOT_DIR/bin/ssh-vm"
+            ;;
+        list|list-vms)
+            script="$VDE_ROOT_DIR/bin/list-vms"
+            ;;
+        status)
+            script="$VDE_ROOT_DIR/bin/list-vms"
+            ;;
+        health|vde-health)
+            script="$VDE_ROOT_DIR/bin/vde-health"
+            ;;
+        create-and-start)
+            script="$VDE_ROOT_DIR/bin/create-and-start"
+            ;;
+        remove|remove-virtual)
+            script="$VDE_ROOT_DIR/bin/remove-virtual"
+            ;;
+        delete|delete-virtual)
+            script="$VDE_ROOT_DIR/bin/delete-virtual"
+            ;;
+        uninstall|uninstall-vm-type)
+            script="$VDE_ROOT_DIR/bin/uninstall-vm-type"
+            ;;
+        nuke|nuke-vde)
+            script="$VDE_ROOT_DIR/bin/nuke-vde"
+            ;;
+        ssh-setup)
+            script="$VDE_ROOT_DIR/bin/ssh-setup"
+            ;;
+        ssh-sync)
+            script="$VDE_ROOT_DIR/bin/ssh-sync"
+            ;;
+        cleanup-ports)
+            script="$VDE_ROOT_DIR/bin/cleanup-ports"
+            ;;
+        init|vde-init)
+            script="$VDE_ROOT_DIR/bin/vde-init"
+            ;;
+        ps)
+            script="$VDE_ROOT_DIR/bin/vde-ps"
+            ;;
+        logs)
+            script="$VDE_ROOT_DIR/bin/vde-logs"
+            ;;
+        inspect)
+            script="$VDE_ROOT_DIR/bin/vde-inspect"
+            ;;
+        port)
+            script="$VDE_ROOT_DIR/bin/vde-port"
+            ;;
+        exec)
+            script="$VDE_ROOT_DIR/bin/vde-exec"
+            ;;
+        images)
+            script="$VDE_ROOT_DIR/bin/vde-images"
+            ;;
+        networks)
+            script="$VDE_ROOT_DIR/bin/vde-networks"
+            ;;
+        stats)
+            script="$VDE_ROOT_DIR/bin/vde-stats"
+            ;;
+        info)
+            script="$VDE_ROOT_DIR/bin/vde-info"
+            ;;
+        ask|vde-ask)
+            script="$VDE_ROOT_DIR/bin/vde-ask"
+            ;;
+        *)
+            echo ""
+            return 1
+            ;;
+    esac
+
+    echo "$script"
+    return 0
+}
+
+# vde_run_command - Run a VDE command
+vde_run_command() {
+    local cmd="$1"
+    shift
+
+    # Find the command script
+    local script
+    script=$(vde_find_command_script "$cmd")
+
+    if [ $? -ne 0 ] || [ -z "$script" ]; then
+        vde_error_simple "Unknown command: $cmd"
+        echo ""
+        echo "Run 'vde help' for available commands."
+        return $VDE_ERR_INVALID_INPUT
+    fi
+
+    # Check if script exists
+    if [ ! -f "$script" ]; then
+        vde_error_simple "Command script not found: $script"
+        return $VDE_ERR_NOT_FOUND
+    fi
+
+    # Make script executable if needed
+    if [ ! -x "$script" ]; then
+        chmod +x "$script" 2>/dev/null || true
+    fi
+
+    # Run the command
+    vde_log_info "Running command: $cmd $*" "vde"
+    "$script" "$@"
+    return $?
+}
+
+#===============================================================================
+# Main
+#===============================================================================
+
+# Parse global options first
+VERBOSE=0
+QUIET=0
+CMD=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            vde_show_help
+            exit 0
+            ;;
+        -v|--verbose)
+            VERBOSE=1
+            export VDE_ERRORS_VERBOSE=1
+            export VDE_LOG_LEVEL="DEBUG"
+            shift
+            ;;
+        -q|--quiet)
+            QUIET=1
+            export VDE_LOG_LEVEL="WARN"
+            shift
+            ;;
+        --version)
+            vde_show_version
+            exit 0
+            ;;
+        -*)
+            vde_error_simple "Unknown option: $1"
+            echo ""
+            echo "Run 'vde help' for available options."
+            exit $VDE_ERR_INVALID_INPUT
+            ;;
+        *)
+            CMD="$1"
+            shift
+            break
+            ;;
+    esac
+done
+
+# Check if command was provided
+if [ -z "$CMD" ]; then
+    vde_show_help
+    exit 0
+fi
+
+# Handle help as a command (not just an option)
+if [ "$CMD" = "help" ]; then
+    vde_show_help
+    exit 0
+fi
+
+# Special handling for create command with --rebuild or --nocache flags
+# These flags require creating the VM then starting with rebuild
+if [ "$CMD" = "create" ]; then
+    local rebuild=false
+    local nocache=false
+    local create_args=()
+    local vm_name=""
+    
+    # Parse arguments for rebuild/nocache
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --rebuild)
+                rebuild=true
+                shift
+                ;;
+            --nocache)
+                nocache=true
+                shift
+                ;;
+            *)
+                create_args+=("$1")
+                if [ -z "$vm_name" ]; then
+                    vm_name="$1"
+                fi
+                shift
+                ;;
+        esac
+    done
+    
+    # If rebuild or nocache is specified, we need special handling
+    if [ "$rebuild" = "true" ] || [ "$nocache" = "true" ]; then
+        if [ -z "$vm_name" ]; then
+            vde_error_simple "VM name is required for create with --rebuild or --nocache"
+            exit $VDE_ERR_INVALID_INPUT
+        fi
+        
+        vde_log_info "Creating VM with rebuild=$rebuild, nocache=$nocache" "vde"
+        
+        # Source required libraries for the functions
+        source "$VDE_ROOT_DIR/lib/vde-commands" 2>/dev/null || true
+        
+        # First create the VM
+        "$VDE_ROOT_DIR/bin/create-virtual-for" "$vm_name" --no-start --force
+        local create_result=$?
+        
+        if [ $create_result -ne 0 ]; then
+            vde_error_simple "Failed to create VM: $vm_name"
+            exit $create_result
+        fi
+        
+        # Then start with rebuild/nocache
+        local start_args=()
+        [ "$rebuild" = "true" ] && start_args+=(--rebuild)
+        [ "$nocache" = "true" ] && start_args+=(--no-cache)
+        
+        "$VDE_ROOT_DIR/bin/start-virtual" "$vm_name" "${start_args[@]}"
+        exit $?
+    fi
+    
+    # Restore arguments for normal processing
+    set -- "${create_args[@]}"
+fi
+
+# Direct script dispatch (parser available via 'vde ask')
+vde_run_command "$CMD" "$@"
+exit $?
