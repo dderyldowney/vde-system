@@ -141,7 +141,7 @@ This indicates you're running in bash but the script expects zsh. VDE scripts no
 1. Ensure you're using the latest VDE version
 2. Use the unified `vde` command which handles shell compatibility:
    ```bash
-   ./scripts/vde start python
+   ./bin/vde start python
    ```
 
 ### Performance Issues on bash 3.x

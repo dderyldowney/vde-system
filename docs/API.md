@@ -28,7 +28,7 @@ VDE (Virtual Development Environment) is a Docker-based container orchestration 
 
 ```
 VDE Root Directory
-├── scripts/
+├── bin/
 │   ├── lib/              # Library modules
 │   │   ├── vde-constants
 │   │   ├── vde-shell-compat
@@ -612,7 +612,7 @@ invalidate_alias_map         # Force rebuild of alias map
 
 The VM types configuration file defines all available VM types in a pipe-delimited format.
 
-**Location:** `scripts/data/vm-types.conf`
+**Location:** `data/vm-types.conf`
 
 **Format:**
 ```
@@ -661,7 +661,7 @@ POSTGRES_PORT=5432
 
 ### Template System
 
-Templates are stored in `scripts/templates/` and use shell variable substitution.
+Templates are stored in `templates/` and use shell variable substitution.
 
 **Templates:**
 
@@ -889,4 +889,4 @@ ssh rabbitmq        # RabbitMQ
 
 [← Back to README](../README.md)
 
-*This API reference is generated from the VDE source code. For the latest updates, see the source files in `scripts/lib/`.*
+*This API reference is generated from the VDE source code. For the latest updates, see the source files in `lib/`.*

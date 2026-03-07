@@ -69,16 +69,16 @@ Even if you've never used Terminal before, we've got you covered.
 VDE has a simple, unified command that does *everything*:
 
 ```bash
-./scripts/vde
+./bin/vde
 ```
 
 That's it. One command to remember. No memorizing a dozen different scripts. Just `vde`. Easy!
 
 **Need to see what's available?**
 ```bash
-./scripts/vde --help
+./bin/vde --help
 # or
-./scripts/vde help
+./bin/vde help
 ```
 
 This shows you all available actions: creating VMs, starting/stopping, listing, checking status, and more.
@@ -91,8 +91,8 @@ Ready to have your mind blown (in the best way)? Here's all it takes to get star
 
 ```bash
 # That's it. Seriously.
-./scripts/vde create python
-./scripts/vde start python
+./bin/vde create python
+./bin/vde start python
 ssh vde-python
 ```
 
@@ -112,8 +112,8 @@ ssh vde-python
 ## Want Rust Too? Go Ahead! 🦀
 
 ```bash
-./scripts/vde create rust
-./scripts/vde start rust
+./bin/vde create rust
+./bin/vde start rust
 ssh vde-rust
 ```
 
@@ -177,10 +177,10 @@ Here's your workflow:
 
 ```bash
 # Create everything
-./scripts/vde create python js postgres redis
+./bin/vde create python js postgres redis
 
 # Start everything
-./scripts/vde start python js postgres redis
+./bin/vde start python js postgres redis
 
 # Connect to your Python backend
 ssh vde-python
@@ -209,7 +209,7 @@ That's great! But consider:
 
 ### 🤔 Problem: Learning a New Language
 **Without VDE:** Install language, manage versions, risk breaking your current setup.
-**With VDE:** `./scripts/vde create elixir` and you're done. Delete it when you're finished. Easy peasy!
+**With VDE:** `./bin/vde create elixir` and you're done. Delete it when you're finished. Easy peasy!
 
 ### 🤔 Problem: "Works on My Machine"
 **Without VDE:** Endless debugging of environment differences. Frustration for everyone.
@@ -241,7 +241,7 @@ But if you *do* know Docker, you'll love that VDE generates clean, readable `doc
 
 ## For the Curious: What's Actually Happening? 🤓
 
-When you run `./scripts/vde create python`, VDE:
+When you run `./bin/vde create python`, VDE:
 
 1. Finds an available SSH port (automatically)
 2. Creates a Docker Compose configuration
@@ -251,7 +251,7 @@ When you run `./scripts/vde create python`, VDE:
 6. Loads your SSH keys (or generates a pair if you don't have one)
 7. Gets everything ready for `vde start`
 
-When you run `./scripts/vde start python`, VDE:
+When you run `./bin/vde start python`, VDE:
 
 1. Builds a Docker image with your language pre-installed
 2. Creates a container with:
@@ -350,7 +350,7 @@ We get it! Sometimes you try something and it's not for you. Or maybe you're jus
 
 ```bash
 # 1. Stop any running VMs
-./scripts/vde stop all
+./bin/vde stop all
 
 # 2. Delete the VDE directory
 cd ..
@@ -385,8 +385,8 @@ Then delete VDE, and your projects live on. Safe and sound!
 
 ```bash
 cd ~/dev  # or wherever you cloned this repo
-./scripts/vde create python  # or any language you want!
-./scripts/vde start python
+./bin/vde create python  # or any language you want!
+./bin/vde start python
 ssh vde-python
 ```
 
@@ -413,7 +413,7 @@ ssh vde-python
 - VM-to-VM communication
 - Natural language control
 - Zero Docker knowledge required
-- One unified command: `./scripts/vde`
+- One unified command: `./bin/vde`
 - A fun, encouraging community (that's you!)
 
 **You give it:**

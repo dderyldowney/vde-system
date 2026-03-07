@@ -1060,7 +1060,7 @@ And I should see success message
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Prerequisites are checked**
@@ -1080,7 +1080,7 @@ And it should report missing dependencies clearly
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Create required directory structure**
@@ -1118,7 +1118,7 @@ And .keep file should exist in public-ssh-keys/
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Initial ssh configuration**
@@ -1137,7 +1137,7 @@ And I should be able to use it as reference
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Load vm types configuration**
@@ -1235,7 +1235,7 @@ And I should be told about any manual migration needed
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Uninstall or cleanup**
@@ -1274,7 +1274,7 @@ And the installation should succeed
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Docker image availability**
@@ -1340,7 +1340,7 @@ And all directories should have correct permissions
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 </details>
@@ -1417,7 +1417,7 @@ And the public key should be synced to public-ssh-keys directory
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Sync public keys to vde directory**
@@ -1504,7 +1504,7 @@ And each entry should use "localhost" as hostname
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Prevent duplicate ssh config entries**
@@ -1540,7 +1540,7 @@ And no partial updates should occur
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Backup ssh config before modification**
@@ -1558,7 +1558,7 @@ And backup filename should contain timestamp
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Ssh config entries are static and preserved when vm is removed**
@@ -1575,7 +1575,7 @@ Then SSH config should still contain "Host vde-python"
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Vm compose file mounts ssh agent socket for agent forwarding**
@@ -1833,7 +1833,7 @@ And user's entries should be preserved
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Remove known_hosts entry when vm is removed**
@@ -2063,7 +2063,7 @@ You just created your first VM! That's honestly kind of a big deal. Give yoursel
 
 ├── logs/            # Application logs
 
-└── scripts/         # VDE management commands
+└── bin/         # VDE management commands
 
 ```
 
@@ -2350,7 +2350,7 @@ And the Git commands should use my host's SSH keys
 
 
 ```bash
-./scripts/build-and-start
+./bin/build-and-start
 ```
 
 **Scenario: Git operations in automated workflows**

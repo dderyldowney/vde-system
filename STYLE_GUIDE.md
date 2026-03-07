@@ -337,7 +337,7 @@ help:
 
 # Test target
 test:
-	./scripts/run-tests.sh
+	./bin/run-tests.sh
 ```
 
 ## Documentation Standards
@@ -386,7 +386,7 @@ test:
 zsh -n script.sh
 
 # Check all scripts
-for script in scripts/**/*.sh tests/**/*.sh; do
+for script in bin/**/*.sh tests/**/*.sh; do
     zsh -n "$script" || echo "Syntax error in: $script"
 done
 ```

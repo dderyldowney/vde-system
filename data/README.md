@@ -127,7 +127,7 @@ These are managed separately by VDE and NOT part of `vm-types.json`:
 Schema validation is **automatic** when loading VM types via `vm-common`:
 
 ```zsh
-source scripts/lib/vm-common
+source lib/vm-common
 load_vm_types  # Validates against schema automatically
 ```
 
@@ -137,9 +137,9 @@ load_vm_types  # Validates against schema automatically
 # Python validation
 python3 -c "
 import json
-with open('scripts/data/vm-types.schema.json') as f:
+with open('data/vm-types.schema.json') as f:
     schema = json.load(f)
-with open('scripts/data/vm-types.json') as f:
+with open('data/vm-types.json') as f:
     data = json.load(f)
 # Basic checks
 assert 'version' in data and 'vms' in data
@@ -190,13 +190,13 @@ Add to `vms.service[]` array in `vm-types.json`.
 
 ```bash
 # Validate schema
-python3 -c "import json; json.load(open('scripts/data/vm-types.json'))"
+python3 -c "import json; json.load(open('data/vm-types.json'))"
 
 # Run unit tests
 tests/unit/vm-types-schema.test.zsh
 
 # Test loading in vm-common
-zsh -c "source scripts/lib/vde-core && source scripts/lib/vm-common && load_vm_types"
+zsh -c "source lib/vde-core && source lib/vm-common && load_vm_types"
 ```
 
 ## Design Principles
@@ -211,7 +211,7 @@ zsh -c "source scripts/lib/vde-core && source scripts/lib/vm-common && load_vm_t
 
 **Shell access** (`vm-common`):
 ```zsh
-source scripts/lib/vm-common
+source lib/vm-common
 load_vm_types
 
 # Access VM data via associative arrays:
@@ -224,7 +224,7 @@ echo "${VM_SVC_PORT[postgres]}" # "5432"
 **Python access**:
 ```python
 import json
-with open('scripts/data/vm-types.json') as f:
+with open('data/vm-types.json') as f:
     config = json.load(f)
 
 # Access language VMs
