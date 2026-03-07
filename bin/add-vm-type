@@ -262,9 +262,9 @@ Host vde-${VM_NAME}
     HostName localhost
     Port ${SSH_PORT}
     User devuser
-    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    IdentityFile ${VDE_SSH_IDENTITY}
     StrictHostKeyChecking no
-    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    UserKnownHostsFile ${VDE_SSH_KNOWN_HOSTS}
     ForwardAgent yes
     LogLevel ERROR
 SSHEOF

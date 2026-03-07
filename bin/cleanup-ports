@@ -1,0 +1,95 @@
+#!/usr/bin/env zsh
+#===============================================================================
+# cleanup-ports - Remove stale port-registry entries
+#
+# The port registry (.cache/port-registry/*.port) can accumulate entries for
+# VMs that no longer exist in vm-types.conf (e.g. after uninstall-vm-type).
+# This script removes those orphaned entries.
+#
+# Usage:
+#   cleanup-ports [--all] [--dry-run]
+#
+# Options:
+#   --all       Clear the entire port registry, not just stale entries
+#   --dry-run   Show what would be removed without removing anything
+#===============================================================================
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VDE_ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+export VDE_ROOT_DIR
+
+source "$SCRIPT_DIR/../lib/vm-common"
+
+DRY_RUN=false
+CLEAR_ALL=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --all)      CLEAR_ALL=true; shift ;;
+        --dry-run)  DRY_RUN=true; shift ;;
+        --help|-h)
+            echo "Usage: cleanup-ports [--all] [--dry-run]"
+            echo "  --all      Remove all port registry entries"
+            echo "  --dry-run  Show what would be removed without removing"
+            exit 0
+            ;;
+        *)
+            log_error "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
+port_dir="$VDE_CACHE_DIR/port-registry"
+
+if [[ ! -d "$port_dir" ]]; then
+    log_info "Port registry is empty (no directory at $port_dir)"
+    exit 0
+fi
+
+port_files=("$port_dir"/*.port(N))
+
+if [[ ${#port_files[@]} -eq 0 ]]; then
+    log_info "Port registry is empty — nothing to clean up"
+    exit 0
+fi
+
+if [[ "$CLEAR_ALL" == "true" ]]; then
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log_info "[DRY RUN] Would clear all ${#port_files[@]} port registry entries:"
+        for f in "${port_files[@]}"; do
+            log_info "[DRY RUN]   $(basename "$f")"
+        done
+    else
+        clear_port_registry
+        log_success "Cleared all port registry entries"
+    fi
+    exit 0
+fi
+
+# Remove only stale entries — VMs not in vm-types.conf
+removed=0
+kept=0
+
+for f in "${port_files[@]}"; do
+    vm_name="$(basename "$f" .port)"
+    # Strip vde- prefix for is_known_vm lookup
+    raw_name="${vm_name#vde-}"
+    if ! is_known_vm "$raw_name" 2>/dev/null; then
+        if [[ "$DRY_RUN" == "true" ]]; then
+            log_info "[DRY RUN] Would remove stale entry: $vm_name (port $(cat "$f"))"
+        else
+            remove_port_from_registry "$vm_name"
+            log_info "Removed stale entry: $vm_name"
+            ((removed++))
+        fi
+    else
+        ((kept++))
+    fi
+done
+
+if [[ "$DRY_RUN" == "true" ]]; then
+    log_info "Dry run complete — no changes made"
+else
+    log_success "Port registry cleaned: $removed stale entries removed, $kept valid entries kept"
+fi
