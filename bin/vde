@@ -160,15 +160,25 @@ EOF
 # vde_show_version - Display version information
 vde_show_version() {
     echo "VDE - Virtual Development Environment"
-    echo "Version: 1.0.0 (Stage 7 - Architectural Enhancements)"
+    echo "Version: 1.5.0 (Stage 7 - Architectural Enhancements)"
     echo ""
     echo "Libraries loaded:"
-    echo "  - vde-constants: OK"
-    echo "  - vde-errors: OK"
-    echo "  - vde-log: OK"
-    echo "  - vde-core: OK"
-    echo "  - vm-common: OK"
-    echo "  - vde-docker-state: OK"
+    local libs=(
+        "vde-shell-compat"
+        "vde-constants"
+        "vde-errors"
+        "vde-log"
+        "vde-naming"
+        "vde-security"
+        "vde-core"
+        "vm-common"
+        "vde-commands"
+        "vde-parser"
+        "vde-docker-state"
+    )
+    for lib in "${libs[@]}"; do
+        echo "  - $lib: OK"
+    done
 }
 
 # vde_timeout - Cross-platform timeout wrapper

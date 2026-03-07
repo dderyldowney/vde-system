@@ -449,8 +449,12 @@ def step_modify_logging(context):
     if compose_file.exists():
         content = compose_file.read_text()
         if 'logging:' not in content:
-            with open(compose_file, "a") as f:
-                f.write("\n    logging:\n      driver: \"json-file\"\n")
+            # Inject right before the service-level networks block
+            content = content.replace(
+                '    networks:\n      - vde-net',
+                '    logging:\n      driver: "json-file"\n\n    networks:\n      - vde-net'
+            )
+            compose_file.write_text(content)
         
         # Verify modification
         content = compose_file.read_text()
@@ -473,8 +477,11 @@ def step_set_restart_policy(context):
                 content = content.replace('restart: unless-stopped', 'restart: always')
                 compose_file.write_text(content)
             else:
-                with open(compose_file, "a") as f:
-                    f.write("\n    restart: always\n")
+                content = content.replace(
+                    '    networks:\n      - vde-net',
+                    '    restart: always\n\n    networks:\n      - vde-net'
+                )
+                compose_file.write_text(content)
         
         content = compose_file.read_text()
         context.restart_set = 'restart:' in content and 'always' in content
@@ -491,8 +498,11 @@ def step_add_healthcheck(context):
     if compose_file.exists():
         content = compose_file.read_text()
         if 'healthcheck:' not in content:
-            with open(compose_file, "a") as f:
-                f.write("\n    healthcheck:\n      test: [\"CMD\", \"ls\"]\n")
+            content = content.replace(
+                '    networks:\n      - vde-net',
+                '    healthcheck:\n      test: ["CMD", "ls"]\n\n    networks:\n      - vde-net'
+            )
+            compose_file.write_text(content)
         
         content = compose_file.read_text()
         context.healthcheck_added = 'healthcheck:' in content

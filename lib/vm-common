@@ -761,33 +761,40 @@ is_known_vm() {
     return $VDE_ERR_NOT_FOUND
 }
 
-# vm_is_created - Check if a VM has been created (exists in docker-state or has container)
+# vm_is_created - Check if a VM has been created (config generated)
 # Args: <vm_name>
-# Returns: 0 if VM has been created, 1 otherwise
+# Returns: 0 if created, 1 otherwise
 vm_is_created() {
     local vm_name="$1"
-    local state_dir
-    state_dir=$(get_docker_state_dir)
+    local raw_name="${vm_name#vde-}"
+    local full_name="vde-${raw_name}"
+    local configs_dir="${VDE_CONFIGS_DIR:-$VDE_ROOT_DIR/configs/docker}"
+    local env_dir="${VDE_ENV_DIR:-$VDE_ROOT_DIR/env-files}"
     
-    # Check if state file exists
-    if [[ -f "$state_dir/${vm_name}.json" ]]; then
+    if [[ -d "$configs_dir/$raw_name" ]] || \
+       [[ -f "$env_dir/$full_name.env" ]] || \
+       [[ -f "$env_dir/$raw_name.env" ]] || \
+       vm_template_exists "$raw_name"; then
         return 0
     fi
     return 1
 }
 
-# vm_template_exists - Check if a VM template exists (for create validation)
+# vm_template_exists - Check if a VM template exists
 # Args: <vm_name>
 # Returns: 0 if template exists, 1 otherwise
 vm_template_exists() {
     local vm_name="$1"
-    if [[ -f "$CONFIGS_DIR/$vm_name/docker-compose.yml" ]]; then
+    local raw_name="${vm_name#vde-}"
+    local configs_dir="${VDE_CONFIGS_DIR:-$VDE_ROOT_DIR/configs/docker}"
+    
+    if [[ -f "$configs_dir/$raw_name/docker-compose.yml" ]]; then
         return 0
     fi
     return 1
 }
 
-# vm_exists - Check if a VM has been created (not just template exists)
+# vm_exists - Check if a VM has been created (alias for vm_is_created)
 # Args: <vm_name>
 # Returns: 0 if VM exists (has been created), 1 otherwise
 vm_exists() {
