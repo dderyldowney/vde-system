@@ -153,14 +153,8 @@ remove_docker_config() {
         return 0
     fi
 
-    if [[ "$DRY_RUN" = "true" ]]; then
-        print_info "[DRY RUN] Would remove directory: $config_dir"
-        return 0
-    fi
-
-    print_info "Removing config directory: $config_dir"
-    rm -rf "$config_dir"
-    print_success "Removed: $config_dir"
+    # Config directories (docker-compose.yml) are preserved — must be deleted manually.
+    print_info "Config directory preserved (manual deletion required): $config_dir"
 }
 
 # Stop and remove VM if running
@@ -179,12 +173,8 @@ remove_vm() {
 
         local compose_file="$VDE_ROOT_DIR/configs/docker/${vm_type}/docker-compose.yml"
         if [[ -f "$compose_file" ]]; then
-            if [[ "$DRY_RUN" = "true" ]]; then
-                print_info "[DRY RUN] Would remove docker-compose.yml: $compose_file"
-            else
-                rm -f "$compose_file"
-                print_success "Removed: $compose_file"
-            fi
+            # docker-compose.yml is preserved — must be deleted manually by the user.
+            print_info "Compose file preserved (manual deletion required): $compose_file"
         fi
     else
         print_info "VM '$vm_type' not built, skipping VM removal"
@@ -262,13 +252,8 @@ remove_env_files() {
         return 0
     fi
 
-    if [[ "$DRY_RUN" = "true" ]]; then
-        print_info "[DRY RUN] Would remove env file: $env_file"
-        return 0
-    fi
-
-    rm -f "$env_file"
-    print_success "Removed: $env_file"
+    # env files are preserved — must be deleted manually by the user.
+    print_info "Env file preserved (manual deletion required): $env_file"
 }
 
 # Remove logs

@@ -303,22 +303,12 @@ remove_all_vms() {
             local compose_file="${VDE_ROOT_DIR}/configs/docker/${vm}/docker-compose.yml"
             local env_dir="${VDE_ROOT_DIR}/env-files/${vm}"
 
-            if [[ "$DRY_RUN" = "true" ]]; then
-                print_info "[DRY RUN] Would remove VM configuration: $vm"
-                if [[ -f "$compose_file" ]]; then
-                    print_info "[DRY RUN]   Would delete: $compose_file"
-                fi
-                if [[ -d "$env_dir" ]]; then
-                    print_info "[DRY RUN]   Would delete: $env_dir/"
-                fi
-            else
-                print_info "Removing VM configuration: $vm"
-                if [[ -f "$compose_file" ]]; then
-                    rm -f "$compose_file"
-                fi
-                if [[ -d "$env_dir" ]]; then
-                    rm -rf "$env_dir"
-                fi
+            print_info "VM configuration preserved (manual deletion required): $vm"
+            if [[ -f "$compose_file" ]]; then
+                print_info "  Compose file preserved: $compose_file"
+            fi
+            if [[ -d "$env_dir" ]]; then
+                print_info "  Env dir preserved: $env_dir/"
             fi
 
             ((removed_count++))
@@ -433,9 +423,7 @@ remove_vde_directories() {
     print_info "Step 6: Removing VDE directories..."
 
     local dirs_to_remove=(
-        "env-files"
         "logs"
-        "data"
     )
 
     for dir in "${dirs_to_remove[@]}"; do

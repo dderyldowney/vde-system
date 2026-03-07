@@ -158,53 +158,60 @@ def _restore_vde_ssh_dir(backup_tmpdir):
 
 
 def _backup_configs_dir():
-    """Copy configs/ and data/vm-types.json to a temp dir. Returns temp dir path or None."""
+    """Snapshot configs/, env-files/, and data/vm-types.json into a temp dir.
+
+    Returns the temp dir path or None.
+    """
     configs_dir = Path(VDE_ROOT) / 'configs'
-    if configs_dir.exists():
-        tmpdir = tempfile.mkdtemp(prefix='vde_configs_backup_')
-        shutil.copytree(str(configs_dir), os.path.join(tmpdir, 'configs'), symlinks=True)
-        vm_types_json = Path(VDE_ROOT) / 'data' / 'vm-types.json'
-        if vm_types_json.exists():
-            shutil.copy2(str(vm_types_json), os.path.join(tmpdir, 'vm-types.json'))
-        return tmpdir
-    return None
+    if not configs_dir.exists():
+        return None
+    tmpdir = tempfile.mkdtemp(prefix='vde_configs_backup_')
+    shutil.copytree(str(configs_dir), os.path.join(tmpdir, 'configs'), symlinks=True)
+    env_files_dir = Path(VDE_ROOT) / 'env-files'
+    if env_files_dir.exists():
+        shutil.copytree(str(env_files_dir), os.path.join(tmpdir, 'env-files'), symlinks=True)
+    vm_types_json = Path(VDE_ROOT) / 'data' / 'vm-types.json'
+    if vm_types_json.exists():
+        shutil.copy2(str(vm_types_json), os.path.join(tmpdir, 'vm-types.json'))
+    return tmpdir
+
+
+def _merge_restore_dir(backup_parent, subdir_name, live_dir):
+    """Merge-restore a single directory from backup.
+
+    - Files created during the test run (present in live, absent in backup) are removed.
+    - Files from backup are restored (overwrite modified; recreate deleted).
+    Pre-existing files not touched by the test are never deleted.
+    """
+    backup = backup_parent / subdir_name
+    if not backup.exists():
+        return
+    if live_dir.exists():
+        backup_files = {f.relative_to(backup) for f in backup.rglob('*') if f.is_file()}
+        current_files = {f.relative_to(live_dir) for f in live_dir.rglob('*') if f.is_file()}
+        for rel in current_files - backup_files:
+            target = live_dir / rel
+            target.unlink(missing_ok=True)
+            try:
+                target.parent.rmdir()
+            except OSError:
+                pass
+        for rel in backup_files:
+            target = live_dir / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(str(backup / rel), str(target))
+    else:
+        shutil.copytree(str(backup), str(live_dir), symlinks=True)
 
 
 def _restore_configs_dir(backup_tmpdir):
-    """Restore configs/ and data/vm-types.json from backup temp dir.
-
-    Uses merge-restore instead of rmtree+copytree so that compose files and
-    env-files that existed before the feature (but were not created by it) are
-    never deleted.  Only files created during the feature run are removed.
-    """
+    """Restore configs/, env-files/, and data/vm-types.json from backup temp dir."""
     if backup_tmpdir is None:
         return
-    configs_dir = Path(VDE_ROOT) / 'configs'
-    backup = Path(backup_tmpdir) / 'configs'
-
-    if backup.exists() and configs_dir.exists():
-        # Build relative-path sets
-        backup_files = {f.relative_to(backup) for f in backup.rglob('*') if f.is_file()}
-        current_files = {f.relative_to(configs_dir) for f in configs_dir.rglob('*') if f.is_file()}
-
-        # Remove only files the feature created (in current, not in backup)
-        for rel in current_files - backup_files:
-            target = configs_dir / rel
-            target.unlink(missing_ok=True)
-            try:
-                target.parent.rmdir()  # remove dir if now empty
-            except OSError:
-                pass
-
-        # Restore every file from backup (overwrite modified, restore deleted)
-        for rel in backup_files:
-            target = configs_dir / rel
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(str(backup / rel), str(target))
-    elif backup.exists():
-        shutil.copytree(str(backup), str(configs_dir), symlinks=True)
-
-    vm_types_backup = Path(backup_tmpdir) / 'vm-types.json'
+    backup_parent = Path(backup_tmpdir)
+    _merge_restore_dir(backup_parent, 'configs', Path(VDE_ROOT) / 'configs')
+    _merge_restore_dir(backup_parent, 'env-files', Path(VDE_ROOT) / 'env-files')
+    vm_types_backup = backup_parent / 'vm-types.json'
     if vm_types_backup.exists():
         shutil.copy2(str(vm_types_backup), str(Path(VDE_ROOT) / 'data' / 'vm-types.json'))
     shutil.rmtree(backup_tmpdir, ignore_errors=True)
