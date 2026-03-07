@@ -1,8 +1,8 @@
 # Template for language VMs
-# Variables: php, 2212, apt-get update -y && apt-get install -y php php-cli php-xml php-mbstring php-curl composer
-name: vde-php
+# Variables: r, 2214, apt-get update -y && apt-get install -y r-base r-cran-littler
+name: vde-r
 services:
-  vde-php:
+  vde-r:
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
@@ -11,18 +11,18 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: vde-php:latest
-    container_name: vde-php
-    hostname: vde-php
+    image: vde-r:latest
+    container_name: vde-r
+    hostname: vde-r
     restart: unless-stopped
-    command: sh -c "apt-get update -y && apt-get install -y php php-cli php-xml php-mbstring php-curl composer && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y r-base r-cran-littler && /usr/sbin/sshd -D"
 
     ports:
-      - "2212:22"
+      - "2214:22"
 
     volumes:
-      - ../../../projects/php:/home/devuser/workspace
-      - ../../../logs/php:/logs
+      - ../../../projects/r:/home/devuser/workspace
+      - ../../../logs/r:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
       - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
@@ -31,7 +31,7 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/vde-php.env
+      - ../../../env-files/vde-r.env
 
     networks:
       - vde-net

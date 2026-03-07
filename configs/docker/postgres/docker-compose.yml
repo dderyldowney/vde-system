@@ -1,9 +1,9 @@
-name: vde-postgres
 # Template for service VMs
-# Variables: postgres, 2401, 5432, apt-get update -y && apt-get install -y postgresql-client
+# Variables: postgres, 2404, 5432, apt-get update -y && apt-get install -y postgresql-client
 # SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
+name: vde-postgres
 services:
-  postgres:
+  vde-postgres:
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
@@ -14,7 +14,7 @@ services:
         PUBLIC_KEYS_DIR: /public-ssh-keys
     image: vde-postgres:latest
     container_name: vde-postgres
-    hostname: postgres
+    hostname: vde-postgres
     restart: unless-stopped
     command: sh -c "apt-get update -y && apt-get install -y postgresql-client && /usr/sbin/sshd -D"
 
@@ -27,7 +27,7 @@ services:
       - ../../../logs/postgres:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for service VM communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
@@ -37,6 +37,10 @@ services:
 
     networks:
       - vde-net
+
+    labels:
+      - "vde.type=service"
+      - "vde.name=postgres"
 
 networks:
   vde-net:

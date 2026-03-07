@@ -1,3 +1,6 @@
+# Template for service VMs
+# Variables: mongodb, 2401, 27017, apt-get update -y && apt-get install -y mongodb-org-shell
+# SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
 name: vde-mongodb
 services:
   vde-mongodb:
@@ -24,7 +27,7 @@ services:
       - ../../../logs/mongodb:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for service VM communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
@@ -34,6 +37,10 @@ services:
 
     networks:
       - vde-net
+
+    labels:
+      - "vde.type=service"
+      - "vde.name=mongodb"
 
 networks:
   vde-net:

@@ -52,8 +52,8 @@ if [ -z "${VDE_ROOT_DIR:-}" ]; then
         _VM_COMMON_SOURCE="${BASH_SOURCE[0]:-$0}"
     fi
     
-    # Calculate absolute path to root (assuming lib/ is at lib/)
-    VDE_ROOT_DIR="$(cd "$(dirname "$_VM_COMMON_SOURCE")/../.." && pwd)"
+    # Calculate absolute path to root (lib/ is one level below VDE root)
+    VDE_ROOT_DIR="$(cd "$(dirname "$_VM_COMMON_SOURCE")/.." && pwd)"
 fi
 export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 

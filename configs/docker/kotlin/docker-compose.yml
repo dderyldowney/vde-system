@@ -1,6 +1,6 @@
-name: vde-kotlin
 # Template for language VMs
-# Variables: kotlin, 2200, apt-get update -y && apt-get install -y kotlin && curl -s "https://get.sdkman.io" 
+# Variables: kotlin, 2210, apt-get update -y && apt-get install -y kotlin && curl -s "https://get.sdkman.io" | bash && su - devuser -c "source ~/.sdkman/bin/sdkman-init.sh && sdk install kotlin"
+name: vde-kotlin
 services:
   vde-kotlin:
     build:
@@ -15,7 +15,7 @@ services:
     container_name: vde-kotlin
     hostname: vde-kotlin
     restart: unless-stopped
-    command: sh -c "apt-get update -y && apt-get install -y kotlin && curl -s "https://get.sdkman.io"  && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y kotlin && curl -s "https://get.sdkman.io" | bash && su - devuser -c "source ~/.sdkman/bin/sdkman-init.sh && sdk install kotlin" && /usr/sbin/sshd -D"
 
     ports:
       - "2210:22"
@@ -25,7 +25,7 @@ services:
       - ../../../logs/kotlin:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock

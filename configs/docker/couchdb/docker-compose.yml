@@ -1,9 +1,9 @@
 # Template for service VMs
-# Variables: nginx, 2403, 80,443, apt-get update -y && apt-get install -y nginx-extras
+# Variables: couchdb, 2400, 5984, apt-get update -y && apt-get install -y couchdb
 # SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
-name: vde-nginx
+name: vde-couchdb
 services:
-  vde-nginx:
+  vde-couchdb:
     build:
       context: ../../..
       dockerfile: configs/docker/vde-base.Dockerfile
@@ -12,20 +12,19 @@ services:
         UID: 1000
         GID: 1000
         PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: vde-nginx:latest
-    container_name: vde-nginx
-    hostname: vde-nginx
+    image: vde-couchdb:latest
+    container_name: vde-couchdb
+    hostname: vde-couchdb
     restart: unless-stopped
-    command: sh -c "apt-get update -y && apt-get install -y nginx-extras && /usr/sbin/sshd -D"
+    command: sh -c "apt-get update -y && apt-get install -y couchdb && /usr/sbin/sshd -D"
 
     ports:
-      - "2403:22"
-      - "80:80"
-      - "443:443"
+      - "2400:22"
+      - "5984:5984"
 
     volumes:
-      - ../../../data/nginx:/data
-      - ../../../logs/nginx:/logs
+      - ../../../data/couchdb:/data
+      - ../../../logs/couchdb:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for service VM communication
       - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
@@ -34,14 +33,14 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent/sock
 
     env_file:
-      - ../../../env-files/vde-nginx.env
+      - ../../../env-files/vde-couchdb.env
 
     networks:
       - vde-net
 
     labels:
       - "vde.type=service"
-      - "vde.name=nginx"
+      - "vde.name=couchdb"
 
 networks:
   vde-net:

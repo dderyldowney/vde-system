@@ -1,6 +1,6 @@
-name: vde-c
 # Template for language VMs
-# Variables: c, 2203, apt-get update -y && apt-get install -y gcc make cmake gdb
+# Variables: c, 2201, apt-get update -y && apt-get install -y gcc make cmake gdb
+name: vde-c
 services:
   vde-c:
     build:
@@ -25,7 +25,7 @@ services:
       - ../../../logs/c:/logs
       - ../../../public-ssh-keys:/public-ssh-keys:ro
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
