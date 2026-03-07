@@ -25,7 +25,7 @@ A comprehensive technical analysis of the VDE (Virtual Development Environment) 
 
 The VDE Parser (`scripts/lib/vde-parser`) is a sophisticated pattern-based command understanding system that converts free-form user input into structured execution commands. Implemented entirely in Zsh, it demonstrates natural language processing capabilities through shell native pattern matching.
 
-**Location:** `/Users/dderyldowney/dev/scripts/lib/vde-parser`
+**Location:** `$VDE_ROOT_DIR/scripts/lib/vde-parser`
 
 **Key Statistics:**
 - **458 lines** of well-documented code
@@ -1054,11 +1054,11 @@ The parser is a testament to the power of Unix philosophy: small, focused tools 
 
 ## File Reference
 
-**Primary file:** `/Users/dderyldowney/dev/scripts/lib/vde-parser`
+**Primary file:** `$VDE_ROOT_DIR/scripts/lib/vde-parser`
 
 **Dependencies:**
-- `/Users/dderyldowney/dev/scripts/lib/vm-common` (VM type queries, validation)
-- `/Users/dderyldowney/dev/scripts/lib/vde-commands` (Safe wrapper functions)
+- `$VDE_ROOT_DIR/scripts/lib/vm-common` (VM type queries, validation)
+- `$VDE_ROOT_DIR/scripts/lib/vde-commands` (Safe wrapper functions)
 
 **Configuration:**
-- `/Users/dderyldowney/dev/scripts/data/vm-types.conf` (18 languages, 7 services)
+- `$VDE_ROOT_DIR/scripts/data/vm-types.conf` (18 languages, 7 services)

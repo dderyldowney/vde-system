@@ -34,9 +34,9 @@ TEST_DIR="$(cd "$(dirname "${(%):-%x}")/../.." && pwd)"
 **Problem:** When the test file is run, `${(%):-%x}` returns `zsh` (the shell name) instead of the script path.
 
 **Impact:**
-- `TEST_DIR` is calculated as `/Users` instead of `/Users/dderyldowney/dev`
+- `TEST_DIR` is calculated as `/Users` instead of `~/dev`
 - This causes `VDE_ROOT_DIR` to be calculated incorrectly (`/` instead of project root)
-- Libraries are looked for in `/lib` instead of `/Users/dderyldowney/dev/scripts/lib`
+- Libraries are looked for in `/lib` instead of `$VDE_ROOT_DIR/scripts/lib`
 - VM type configuration is not loaded from `/vm-types.conf` (non-existent)
 - All VM name extraction tests fail with empty results
 

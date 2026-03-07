@@ -166,7 +166,7 @@ $ vde ssh python --show-command
 **Result**: SUCCESS
 
 ```
-ssh -F /Users/dderyldowney/.ssh/vde/config -o UserKnownHostsFile=/Users/dderyldowney/.ssh/vde/known_hosts vde-python
+ssh -F ~/.ssh/vde/config -o UserKnownHostsFile=~/.ssh/vde/known_hosts vde-python
 ```
 
 **Evidence**:
@@ -185,9 +185,9 @@ Host vde-python
     HostName localhost
     Port 2213
     User devuser
-    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
-    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
     LogLevel ERROR
 ```
@@ -620,7 +620,7 @@ devuser
 
 # Show underlying SSH command (for reference)
 $ vde ssh python --show-command
-ssh -F /Users/dderyldowney/.ssh/vde/config -o UserKnownHostsFile=/Users/dderyldowney/.ssh/vde/known_hosts vde-python
+ssh -F ~/.ssh/vde/config -o UserKnownHostsFile=~/.ssh/vde/known_hosts vde-python
 
 # Stop container
 $ vde stop python

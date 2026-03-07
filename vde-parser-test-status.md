@@ -37,14 +37,14 @@ The actual test results are not yet available. To verify the current state, run:
 
 ### 1. Run vde-parser.test.sh (Main Unit Tests):
 ```zsh
-cd /Users/dderyldowney/dev
+cd $VDE_ROOT_DIR
 chmod +x run-vde-parser-tests.sh run-tests.sh tests/unit/vde-parser.test.sh tests/unit/test_vde_parser_comprehensive.sh
 ./run-vde-parser-tests.sh
 ```
 
 ### 2. Alternatively, Run Tests Individually:
 ```zsh
-cd /Users/dderyldowney/dev
+cd $VDE_ROOT_DIR
 chmod +x tests/unit/vde-parser.test.sh tests/unit/test_vde_parser_comprehensive.sh
 ./tests/unit/vde-parser.test.sh
 ./tests/unit/test_vde_parser_comprehensive.sh
@@ -52,7 +52,7 @@ chmod +x tests/unit/vde-parser.test.sh tests/unit/test_vde_parser_comprehensive.
 
 ### 3. Run BDD Tests (natural-language-parser.feature):
 ```zsh
-cd /Users/dderyldowney/dev
+cd $VDE_ROOT_DIR
 python3 -m pytest tests/features/docker-free/natural-language-parser.feature -v
 ```
 
@@ -70,7 +70,7 @@ Ensure that `load_vm_types` function correctly initializes VM type configuration
 ```zsh
 #!/usr/bin/env zsh
 echo "Running vde-parser unit tests..."
-cd /Users/dderyldowney/dev || exit
+cd $VDE_ROOT_DIR || exit
 echo "1. Running vde-parser.test.sh..."
 time tests/unit/vde-parser.test.sh
 echo -e "\n2. Running test_vde_parser_comprehensive.sh..."
@@ -84,7 +84,7 @@ time python3 -m pytest tests/features/docker-free/natural-language-parser.featur
 #!/usr/bin/env zsh
 
 # Run vde-parser tests
-cd /Users/dderyldowney/dev || exit
+cd $VDE_ROOT_DIR || exit
 
 echo "Running vde-parser.test.sh..."
 echo "----------------------------"
@@ -98,7 +98,7 @@ echo "----------------------------------------"
 ```
 
 ## Next Steps:
-1. Open a terminal and navigate to /Users/dderyldowney/dev
+1. Open a terminal and navigate to ~/dev
 2. Make test files executable: `chmod +x run-vde-parser-tests.sh run-tests.sh tests/unit/vde-parser.test.sh tests/unit/test_vde_parser_comprehensive.sh`
 3. Run `./run-vde-parser-tests.sh` to run all tests
 4. Based on test failures, update this document with specific issues

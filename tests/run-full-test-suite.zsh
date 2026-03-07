@@ -7,7 +7,7 @@ set -euo pipefail
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 LOG_DIR="test-logs"
 RESULTS_DIR="tests"
-BEHAVE_CMD="/Users/dderyldowney/Library/Python/3.9/bin/behave"
+BEHAVE_CMD="${BEHAVE_CMD:-$(command -v behave 2>/dev/null || echo 'python3 -m behave')}"
 
 # Initialize
 mkdir -p "$LOG_DIR"

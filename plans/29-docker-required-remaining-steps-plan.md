@@ -214,7 +214,7 @@ def step_both_python_config(context):
 **Specific Assertion Failures Detected:**
 ```
 - SSH keys should be loaded: Error connecting to agent: No such file or directory
-- ed25519 key should be generated at /Users/dderyldowney/.ssh/vde/id_ed25519
+- ed25519 key should be generated at ~/.ssh/vde/id_ed25519
 - SSH config should contain 'ForwardAgent yes'
 - Expected Go container to be running, but Go-dev is not running
 - Expected python to be running, but python-dev is not running

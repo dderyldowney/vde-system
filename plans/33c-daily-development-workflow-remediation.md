@@ -35,7 +35,7 @@ This plan addresses the Daily Development Workflow feature, which covers the mos
 
 ### 1.1 Run Feature to Identify Undefined Steps
 ```bash
-cd /Users/dderyldowney/dev
+cd $VDE_ROOT_DIR
 behave tests/features/docker-required/daily-development-workflow.feature --no-capture --format pretty
 ```
 
