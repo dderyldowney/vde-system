@@ -8,14 +8,14 @@ set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd"
-source "$SCRIPT_DIR/../lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 # Source UX libraries (optional - for enhanced UX)
-if [[ -f "$SCRIPT_DIR/../lib/vde-progress" ]]; then
-    source "$SCRIPT_DIR/../lib/vde-progress"
+if [[ -f "$VDE_ROOT_DIR/lib/vde-progress" ]]; then
+    source "$VDE_ROOT_DIR/lib/vde-progress"
 fi
-if [[ -f "$SCRIPT_DIR/../lib/vde-errors" ]]; then
-    source "$SCRIPT_DIR/../lib/vde-errors"
+if [[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]]; then
+    source "$VDE_ROOT_DIR/lib/vde-errors"
 fi
 
 # Parse arguments
@@ -33,7 +33,7 @@ if [[ $# -eq 0 ]]; then
     echo "  -f, --force    Force shutdown (skip confirmation)"
     echo "  -q, --quiet    Suppress output"
     echo ""
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 FORCE=false
@@ -57,7 +57,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -*)
             log_error "Unknown option: $1"
-            exit 1
+            exit $VDE_ERR_GENERAL
             ;;
         *)
             VM_NAME="$1"
@@ -86,7 +86,7 @@ if [[ "$ALL_VMS" = "true" ]]; then
         if [[ -n "$vm" ]]; then
             if is_vm_running "$vm"; then
                 if [[ "$FORCE" = "false" ]]; then
-                    vde_progress_confirm "Stop VM '$vm'?" 0 || exit 1
+                    vde_progress_confirm "Stop VM '$vm'?" 0 || exit $VDE_ERR_GENERAL
                 fi
                 if stop_vm "$vm"; then
                     ((stopped_count++))
@@ -107,7 +107,7 @@ if [[ "$ALL_VMS" = "true" ]]; then
 
     if is_vm_running "$VM_NAME"; then
         if [[ "$FORCE" = "false" ]]; then
-            vde_progress_confirm "Stop VM '$VM_NAME'?" 0 || exit 1
+            vde_progress_confirm "Stop VM '$VM_NAME'?" 0 || exit $VDE_ERR_GENERAL
         fi
         stop_vm "$VM_NAME"
     else

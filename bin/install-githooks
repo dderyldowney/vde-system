@@ -21,7 +21,7 @@ echo "Installing VDE git hooks..."
 # Check if we're in a git repository
 if [[ ! -d "$HOOKS_DIR" ]]; then
     echo -e "${RED}Error: Not in a git repository${RESET}"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Check if source hooks exist

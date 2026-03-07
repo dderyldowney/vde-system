@@ -196,7 +196,7 @@ _is_port_in_use() {
     elif command -v netstat >/dev/null 2>&1; then
         netstat -tan | grep -q ":$port " && return 0
     fi
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 # =============================================================================

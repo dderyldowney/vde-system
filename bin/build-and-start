@@ -17,13 +17,13 @@ set -e
 # This script will continue even if some steps have warnings
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/vde-shell-compat"
-source "$SCRIPT_DIR/../lib/vde-constants"
-source "$SCRIPT_DIR/../lib/vde-errors"
-source "$SCRIPT_DIR/../lib/vde-log"
-source "$SCRIPT_DIR/../lib/vde-core"
-source "$SCRIPT_DIR/../lib/vde-security"
-source "$SCRIPT_DIR/../lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vde-shell-compat"
+source "$VDE_ROOT_DIR/lib/vde-constants"
+source "$VDE_ROOT_DIR/lib/vde-errors"
+source "$VDE_ROOT_DIR/lib/vde-log"
+source "$VDE_ROOT_DIR/lib/vde-core"
+source "$VDE_ROOT_DIR/lib/vde-security"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 # Initialize logging
 vde_log_init 2>/dev/null || true
@@ -42,7 +42,7 @@ for arg in "$@"; do
             ;;
         *)
             echo "Unknown option: $arg"
-            exit 1
+            exit $VDE_ERR_GENERAL
             ;;
     esac
 done
@@ -78,14 +78,14 @@ if ! command -v docker &>/dev/null; then
     log_error "Docker is not installed or not in PATH"
     echo "  Please install Docker Desktop first:"
     echo "  https://www.docker.com/products/docker-desktop/"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # Check if Docker daemon is running
 if ! docker info &>/dev/null; then
     log_error "Docker daemon is not running"
     echo "  Please start Docker Desktop and try again"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 log_success "✓ Docker is installed and running"
@@ -95,7 +95,7 @@ if ! command -v git &>/dev/null; then
     log_error "git is not installed or not in PATH"
     echo "  Please install git first:"
     echo "  https://git-scm.com/downloads"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 log_success "✓ git is installed"
@@ -141,7 +141,7 @@ if "$SCRIPT_DIR/generate-all-configs" 2>/dev/null; then
     log_success "✓ Docker configurations generated"
 else
     log_error "✗ Failed to generate configurations"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 echo ""

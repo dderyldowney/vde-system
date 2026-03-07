@@ -81,14 +81,14 @@ vde_init_check_prerequisites() {
         vde_error_simple "Docker is not installed or not in PATH"
         echo "  Please install Docker Desktop first:"
         echo "  https://www.docker.com/products/docker-desktop/"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
     # Check Docker daemon is running
     if ! docker info &>/dev/null; then
         vde_error_simple "Docker daemon is not running"
         echo "  Please start Docker Desktop and try again"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
     return 0
@@ -143,7 +143,7 @@ vde_init_generate_configs() {
         return 0
     else
         vde_error_simple "Failed to generate configurations"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 }
 
@@ -196,7 +196,7 @@ vde_init_create_network() {
         return 0
     else
         vde_error_simple "Failed to create network '$network_name'"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 }
 
@@ -306,7 +306,7 @@ while [[ $# -gt 0 ]]; do
         *)
             echo "Unknown option: $1"
             vde_init_usage
-            exit 1
+            exit $VDE_ERR_GENERAL
             ;;
     esac
 done

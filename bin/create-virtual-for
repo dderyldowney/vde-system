@@ -6,17 +6,17 @@ set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 # Source UX libraries (optional - for enhanced UX)
-if [[ -f "$SCRIPT_DIR/../lib/vde-progress" ]]; then
-    source "$SCRIPT_DIR/../lib/vde-progress"
+if [[ -f "$VDE_ROOT_DIR/lib/vde-progress" ]]; then
+    source "$VDE_ROOT_DIR/lib/vde-progress"
 fi
-if [[ -f "$SCRIPT_DIR/../lib/vde-errors" ]]; then
-    source "$SCRIPT_DIR/../lib/vde-errors"
+if [[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]]; then
+    source "$VDE_ROOT_DIR/lib/vde-errors"
 fi
-if [[ -f "$SCRIPT_DIR/../lib/vde-naming" ]]; then
-    source "$SCRIPT_DIR/../lib/vde-naming"
+if [[ -f "$VDE_ROOT_DIR/lib/vde-naming" ]]; then
+    source "$VDE_ROOT_DIR/lib/vde-naming"
 fi
 
 # -----------------------
@@ -92,7 +92,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -*)
             log_error "Unknown option: $1"
-            exit 1
+            exit $VDE_ERR_GENERAL
             ;;
         *)
             break
@@ -102,7 +102,7 @@ done
 
 if [[ $# -eq 0 ]]; then
     show_usage
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 # -----------------------
@@ -113,8 +113,8 @@ _create_one_vm() {
 
     # Validate VM name is not empty
     if [[ -z "$VM_NAME" ]]; then
-        echo "Error: VM name cannot be empty" >&2
-        return 1
+        _error "VM name cannot be empty"
+        return $VDE_ERR_INVALID_INPUT
     fi
 
     # -----------------------
@@ -129,7 +129,7 @@ _create_one_vm() {
         vde_error_alias_not_found "$VM_NAME"
         echo ""
         show_known_vms
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
     # Use resolved name
@@ -144,10 +144,10 @@ _create_one_vm() {
 
     if [[ -z "$_vm_type" ]]; then
         vde_error_vm_not_found "$VM_NAME"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
-    validate_vm_name "$VM_NAME" "$_vm_type" || return 1
+    validate_vm_name "$VM_NAME" "$_vm_type" || return $VDE_ERR_GENERAL
 
     if [[ "$FORCE" != "true" ]] && vm_exists "$VM_NAME"; then
         vde_error_container_exists "$VM_NAME"
@@ -165,7 +165,7 @@ _create_one_vm() {
     SSH_PORT=$(get_vm_info ssh_port "$VM_NAME")
     if [[ -z "$SSH_PORT" ]]; then
         vde_error_simple "No ssh_port defined for '$VM_NAME' in vm-types.conf — cannot create VM"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
     vde_progress_info "SSH port: $SSH_PORT"
 
@@ -190,12 +190,12 @@ _create_one_vm() {
         template_file="$TEMPLATES_DIR/compose-service.yml"
     else
         vde_error_simple "Unknown VM type: $_vm_type"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
     if [[ ! -f "$template_file" ]]; then
         vde_error_template_not_found "$template_file"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
     render_template "$template_file" \
@@ -220,8 +220,8 @@ _create_one_vm() {
         done < "$compose_file" > "${compose_file}.tmp"
         mv "${compose_file}.tmp" "$compose_file"
     else
-        sed -i.bak "/##SERVICE_PORTS##/d" "$compose_file"
-        rm -f "${compose_file}.bak"
+        grep -v "##SERVICE_PORTS##" "$compose_file" > "${compose_file}.tmp"
+        mv "${compose_file}.tmp" "$compose_file"
     fi
 
     vde_progress_done "Created: $compose_file"
@@ -269,7 +269,7 @@ EOF
 
     if ! merge_ssh_config_entry "$ssh_host" "$SSH_PORT" "$_vm_display" "$VDE_SSH_IDENTITY"; then
         vde_error_permission_denied "$VDE_SSH_CONFIG"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
     # configs/ssh/config is the authoritative source — never overwrite it from live config

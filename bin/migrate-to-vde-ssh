@@ -8,7 +8,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════╗"

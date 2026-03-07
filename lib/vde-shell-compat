@@ -143,7 +143,7 @@ _assoc_get() {
         eval "echo \"\${${array_name}[\${key}]}\""
         return 0
     fi
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 # _assoc_keys - Get all keys from an associative array
@@ -163,7 +163,7 @@ _assoc_keys() {
 _assoc_has_key() {
     local array_name="$1"
     local key="$2"
-    eval "if [[ -n \"\${${array_name}[\${key}]+_}\" ]]; then return 0; else return 1; fi"
+    eval "if [[ -n \"\${${array_name}[\${key}]+_}\" ]]; then return 0; else return $VDE_ERR_GENERAL; fi"
 }
 
 # _assoc_unset - Remove a key from an associative array
@@ -227,7 +227,7 @@ _array_contains() {
     local array_name="$1"
     local search_value="$2"
     eval "for v in \"\${${array_name}[@]}\"; do [ \"\$v\" = \"\$search_value\" ] && return 0; done"
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 # =============================================================================
@@ -286,7 +286,7 @@ _read_array() {
 # _check_shell_compatibility - Check and warn about shell compatibility
 # Args: none
 # Returns: 0 if compatible, 1 if unsupported
-# Example: _check_shell_compatibility || exit 1
+# Example: _check_shell_compatibility || exit $VDE_ERR_GENERAL
 _check_shell_compatibility() {
     local shell
     shell=$(_detect_shell)
@@ -298,12 +298,12 @@ _check_shell_compatibility() {
             local major="${version%%.*}"
             if [ "$major" -lt 5 ]; then
                 echo "[ERROR] zsh version $version detected. VDE requires zsh 5.0+" >&2
-                return 1
+                return $VDE_ERR_GENERAL
             fi
             ;;
         *)
             echo "[ERROR] VDE requires zsh 5.0+. Current shell: $shell" >&2
-            return 1
+            return $VDE_ERR_GENERAL
             ;;
     esac
 
@@ -321,12 +321,12 @@ _require_shell() {
 
     if [ "$required" != "zsh" ]; then
         echo "[ERROR] VDE only supports zsh. Requested: $required" >&2
-        exit 1
+        exit $VDE_ERR_GENERAL
     fi
 
     if [ "$current" != "zsh" ]; then
         echo "[ERROR] VDE requires zsh but is running in $current" >&2
-        exit 1
+        exit $VDE_ERR_GENERAL
     fi
     return 0
 }

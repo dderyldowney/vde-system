@@ -16,8 +16,8 @@ services:
     hostname: vde-{{NAME}}
     restart: unless-stopped
     labels:
-      vde.type: lang
-      vde.name: "vde-{{NAME}}"
+      - "vde.type=lang"
+      - "vde.name={{NAME}}"
     command: sh -c "{{INSTALL_CMD}} && /usr/sbin/sshd -D"
 
     ports:

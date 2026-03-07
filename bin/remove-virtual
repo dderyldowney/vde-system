@@ -6,17 +6,17 @@ set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 # Source UX libraries (optional - for enhanced UX)
-if [[ -f "$SCRIPT_DIR/../lib/vde-progress" ]]; then
-    source "$SCRIPT_DIR/../lib/vde-progress"
+if [[ -f "$VDE_ROOT_DIR/lib/vde-progress" ]]; then
+    source "$VDE_ROOT_DIR/lib/vde-progress"
 fi
-if [[ -f "$SCRIPT_DIR/../lib/vde-errors" ]]; then
-    source "$SCRIPT_DIR/../lib/vde-errors"
+if [[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]]; then
+    source "$VDE_ROOT_DIR/lib/vde-errors"
 fi
-if [[ -f "$SCRIPT_DIR/../lib/vde-naming" ]]; then
-    source "$SCRIPT_DIR/../lib/vde-naming"
+if [[ -f "$VDE_ROOT_DIR/lib/vde-naming" ]]; then
+    source "$VDE_ROOT_DIR/lib/vde-naming"
 fi
 
 # Parse arguments
@@ -38,7 +38,7 @@ if [[ $# -eq 0 ]]; then
     echo "  vde start <vm_name>"
     echo ""
     show_known_vms
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 if [[ "$VM_NAME" == "all" ]]; then
@@ -88,7 +88,7 @@ COMPOSE_FILE="$CONFIGS_DIR/$VM_NAME/docker-compose.yml"
 # Check if VM exists
 if [[ ! -f "$COMPOSE_FILE" ]]; then
     log_error "VM '$VM_NAME' not found (no docker-compose.yml at $VM_NAME)"
-    exit 1
+    exit $VDE_ERR_GENERAL
 fi
 
 log_info "Removing VM: $VM_NAME"

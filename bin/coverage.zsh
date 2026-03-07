@@ -42,7 +42,7 @@ run_test_with_coverage() {
     # Verify test passes first
     if ! zsh "$test_file" >/dev/null 2>&1; then
         print -P "${RED}✗ Test failed: $test_name${NC}"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
     # Use set -o noglob to prevent glob expansion of patterns
@@ -87,7 +87,7 @@ merge_coverage() {
 
     if [[ ${#kcov_dirs[@]} -eq 0 ]]; then
         print -P "${RED}✗ No coverage data found to merge${NC}"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
     # Copy the first coverage as base
@@ -115,7 +115,7 @@ generate_summary() {
 
     if [[ ! -f "$index_file" ]]; then
         print -P "${RED}✗ Coverage report not found at $index_file${NC}"
-        return 1
+        return $VDE_ERR_GENERAL
     fi
 
     # Extract coverage percentage from index.html
@@ -166,7 +166,7 @@ main() {
         *)
             print -P "${RED}Unknown test type: $test_type${NC}"
             print -P "Usage: $0 [all|unit|integration|comprehensive]"
-            exit 1
+            exit $VDE_ERR_GENERAL
             ;;
     esac
 

@@ -217,24 +217,6 @@
         "install": "apt-get install -y zig",
         "service_port": null,
         "ssh_port": 2219
-      },
-      {
-        "name": "vde-testlang",
-        "aliases": [
-          "tl"
-        ],
-        "display": "Testlang",
-        "install": "echo test",
-        "service_port": null,
-        "ssh_port": 2288
-      },
-      {
-        "name": "vde-displaytest",
-        "aliases": [],
-        "display": "Go Language",
-        "install": "apt-get install -y curl",
-        "service_port": null,
-        "ssh_port": 2299
       }
     ],
     "service": [

@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 # VDE Error Messages Library
 # Provides contextual error messages with remediation steps
 # Source this library with: source ./lib/vde-errors
@@ -59,7 +59,7 @@ _vde_errors_has_colors() {
     if [ -n "${TERM:-}" ] && [ "${TERM:-}" != "dumb" ]; then
         return 0
     fi
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 if _vde_errors_has_colors; then

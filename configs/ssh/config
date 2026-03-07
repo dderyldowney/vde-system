@@ -297,14 +297,3 @@ Host vde-redis
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
     LogLevel ERROR
-
-
-Host vde-testlang
-    HostName localhost
-    Port 2288
-    User devuser
-    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
-    StrictHostKeyChecking no
-    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
-    ForwardAgent yes
-    LogLevel ERROR

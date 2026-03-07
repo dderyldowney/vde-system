@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 # VDE Progress Indicators Library
 # Provides progress bars, spinners, and timing feedback for long operations
 # Source this library with: source ./lib/vde-progress
@@ -66,7 +66,7 @@ _vde_progress_has_colors() {
     if [ -n "${TERM:-}" ] && [ "${TERM:-}" != "dumb" ]; then
         return 0
     fi
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 # Color codes (disable if not a terminal)

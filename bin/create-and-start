@@ -16,12 +16,12 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VDE_ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Source shared library
-source "$SCRIPT_DIR/../lib/vde-shell-compat"
-source "$SCRIPT_DIR/../lib/vde-constants"
-source "$SCRIPT_DIR/../lib/vde-errors"
-source "$SCRIPT_DIR/../lib/vde-log"
-source "$SCRIPT_DIR/../lib/vde-core"
-source "$SCRIPT_DIR/../lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vde-shell-compat"
+source "$VDE_ROOT_DIR/lib/vde-constants"
+source "$VDE_ROOT_DIR/lib/vde-errors"
+source "$VDE_ROOT_DIR/lib/vde-log"
+source "$VDE_ROOT_DIR/lib/vde-core"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 # Initialize logging
 vde_log_init 2>/dev/null || true
@@ -89,7 +89,7 @@ main() {
         echo "  $0 --rebuild python             # Rebuild and start Python"
         echo "  $0 postgres redis               # Create and start services"
         echo ""
-        exit 1
+        exit $VDE_ERR_GENERAL
     fi
 
     # Parse options
@@ -101,7 +101,7 @@ main() {
                 ;;
             -*)
                 print_error "Unknown option: $1"
-                exit 1
+                exit $VDE_ERR_GENERAL
                 ;;
             *)
                 break
@@ -115,7 +115,7 @@ main() {
         echo ""
         echo "Available VM types:"
         get_all_vm_types 2>/dev/null | sed 's/^/  /' || echo "  (none found)"
-        exit 1
+        exit $VDE_ERR_GENERAL
     fi
 
     # Get list of VMs to create
@@ -170,7 +170,7 @@ main() {
     if [[ $created_count -eq 0 ]]; then
         echo ""
         print_error "No VMs were created, exiting"
-        exit 1
+        exit $VDE_ERR_GENERAL
     fi
 
     echo ""
@@ -252,7 +252,7 @@ main() {
 
     # Exit with error if any VMs failed
     if [[ ${#FAILED_VMS[@]} -gt 0 ]]; then
-        exit 1
+        exit $VDE_ERR_GENERAL
     fi
 }
 

@@ -3,7 +3,7 @@
 # Focuses on speed and isolation for iterative development.
 
 VDE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$VDE_ROOT" || exit 1
+cd "$VDE_ROOT" || exit $VDE_ERR_GENERAL
 
 # Default settings
 UNIT_TESTS=(
@@ -27,7 +27,7 @@ usage() {
   echo "  -v, --verbose        Show more output"
   echo "  -a, --all-unit      Run all unit tests"
   echo "  -h, --help           Show this help"
-  exit 1
+  exit $VDE_ERR_GENERAL
 }
 
 # Parse arguments
@@ -89,7 +89,7 @@ if [[ ${#UNIT_TESTS[@]} -gt 0 ]]; then
     
     if [[ $? -ne 0 ]]; then
       echo "\033[1;31mFAILED: $test_file\033[0m"
-      [[ "$FAIL_FAST" == "true" ]] && exit 1
+      [[ "$FAIL_FAST" == "true" ]] && exit $VDE_ERR_GENERAL
     else
       echo "\033[1;32mPASSED: $test_file\033[0m"
     fi
@@ -112,7 +112,7 @@ if [[ ${#BDD_TAGS[@]} -gt 0 ]]; then
   
   if [[ $? -ne 0 ]]; then
     echo "\033[1;31mBDD Tests FAILED\033[0m"
-    [[ "$FAIL_FAST" == "true" ]] && exit 1
+    [[ "$FAIL_FAST" == "true" ]] && exit $VDE_ERR_GENERAL
   else
     echo "\033[1;32mBDD Tests PASSED\033[0m"
   fi

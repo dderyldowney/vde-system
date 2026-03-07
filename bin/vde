@@ -32,20 +32,25 @@ export VDE_ROOT_DIR
 
 # Source core libraries (order matters for dependencies)
 # Use &>/dev/null to suppress any output from library sourcing (e.g., function exports)
-[[ -f "$VDE_ROOT_DIR/lib/vde-shell-compat" ]] && { source "$VDE_ROOT_DIR/lib/vde-shell-compat" >/dev/null 2>&1 || { echo "Error loading vde-shell-compat" >&2; exit 1; } }
-[[ -f "$VDE_ROOT_DIR/lib/vde-constants" ]] && { source "$VDE_ROOT_DIR/lib/vde-constants" >/dev/null 2>&1 || { echo "Error loading vde-constants" >&2; exit 1; } }
-[[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]] && { source "$VDE_ROOT_DIR/lib/vde-errors" >/dev/null 2>&1 || { echo "Error loading vde-errors" >&2; exit 1; } }
-[[ -f "$VDE_ROOT_DIR/lib/vde-log" ]] && { source "$VDE_ROOT_DIR/lib/vde-log" >/dev/null 2>&1 || { echo "Error loading vde-log" >&2; exit 1; } }
-[[ -f "$VDE_ROOT_DIR/lib/vde-naming"   ]] && { source "$VDE_ROOT_DIR/lib/vde-naming" >/dev/null 2>&1 || { echo "Error loading vde-naming" >&2; exit 1; } }
-[[ -f "$VDE_ROOT_DIR/lib/vde-security" ]] && { source "$VDE_ROOT_DIR/lib/vde-security" >/dev/null 2>&1 || { echo "Error loading vde-security" >&2; exit 1; } }
-[[ -f "$VDE_ROOT_DIR/lib/vde-core" ]] && { source "$VDE_ROOT_DIR/lib/vde-core" >/dev/null 2>&1 || { echo "Error loading vde-core" >&2; exit 1; } }
-[[ -f "$VDE_ROOT_DIR/lib/vm-common" ]] && { source "$VDE_ROOT_DIR/lib/vm-common" >/dev/null 2>&1 || { echo "Error loading vm-common" >&2; exit 1; } }
-[[ -f "$VDE_ROOT_DIR/lib/vde-commands" ]] && { source "$VDE_ROOT_DIR/lib/vde-commands" >/dev/null 2>&1 || { echo "Error loading vde-commands" >&2; exit 1; } }
-[[ -f "$VDE_ROOT_DIR/lib/vde-parser"   ]] && { source "$VDE_ROOT_DIR/lib/vde-parser" >/dev/null 2>&1 || { echo "Error loading vde-parser" >&2; exit 1; } }
-[[ -f "$VDE_ROOT_DIR/lib/vde-docker-state" ]] && { source "$VDE_ROOT_DIR/lib/vde-docker-state" >/dev/null 2>&1 || { echo "Error loading vde-docker-state" >&2; exit 1; } }
+[[ -f "$VDE_ROOT_DIR/lib/vde-shell-compat" ]] && { source "$VDE_ROOT_DIR/lib/vde-shell-compat" >/dev/null 2>&1 || { echo "Error loading vde-shell-compat" >&2; exit $VDE_ERR_GENERAL; } }
+[[ -f "$VDE_ROOT_DIR/lib/vde-constants" ]] && { source "$VDE_ROOT_DIR/lib/vde-constants" >/dev/null 2>&1 || { echo "Error loading vde-constants" >&2; exit $VDE_ERR_GENERAL; } }
+[[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]] && { source "$VDE_ROOT_DIR/lib/vde-errors" >/dev/null 2>&1 || { echo "Error loading vde-errors" >&2; exit $VDE_ERR_GENERAL; } }
+[[ -f "$VDE_ROOT_DIR/lib/vde-log" ]] && { source "$VDE_ROOT_DIR/lib/vde-log" >/dev/null 2>&1 || { echo "Error loading vde-log" >&2; exit $VDE_ERR_GENERAL; } }
+[[ -f "$VDE_ROOT_DIR/lib/vde-naming"   ]] && { source "$VDE_ROOT_DIR/lib/vde-naming" >/dev/null 2>&1 || { echo "Error loading vde-naming" >&2; exit $VDE_ERR_GENERAL; } }
+[[ -f "$VDE_ROOT_DIR/lib/vde-security" ]] && { source "$VDE_ROOT_DIR/lib/vde-security" >/dev/null 2>&1 || { echo "Error loading vde-security" >&2; exit $VDE_ERR_GENERAL; } }
+[[ -f "$VDE_ROOT_DIR/lib/vde-core" ]] && { source "$VDE_ROOT_DIR/lib/vde-core" >/dev/null 2>&1 || { echo "Error loading vde-core" >&2; exit $VDE_ERR_GENERAL; } }
+[[ -f "$VDE_ROOT_DIR/lib/vm-common" ]] && { source "$VDE_ROOT_DIR/lib/vm-common" >/dev/null 2>&1 || { echo "Error loading vm-common" >&2; exit $VDE_ERR_GENERAL; } }
+[[ -f "$VDE_ROOT_DIR/lib/vde-commands" ]] && { source "$VDE_ROOT_DIR/lib/vde-commands" >/dev/null 2>&1 || { echo "Error loading vde-commands" >&2; exit $VDE_ERR_GENERAL; } }
+[[ -f "$VDE_ROOT_DIR/lib/vde-parser"   ]] && { source "$VDE_ROOT_DIR/lib/vde-parser" >/dev/null 2>&1 || { echo "Error loading vde-parser" >&2; exit $VDE_ERR_GENERAL; } }
+[[ -f "$VDE_ROOT_DIR/lib/vde-docker-state" ]] && { source "$VDE_ROOT_DIR/lib/vde-docker-state" >/dev/null 2>&1 || { echo "Error loading vde-docker-state" >&2; exit $VDE_ERR_GENERAL; } }
 
 # Initialize logging
 vde_log_init 2>/dev/null || true
+
+# Enforce essential security permissions before executing any command
+if type vde_security_enforce_permissions >/dev/null 2>&1; then
+    vde_security_enforce_permissions >/dev/null 2>&1
+fi
 
 #===============================================================================
 # Command Registry
@@ -292,7 +297,7 @@ vde_find_command_script() {
             ;;
         *)
             echo ""
-            return 1
+            return $VDE_ERR_GENERAL
             ;;
     esac
 

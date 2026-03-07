@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 #===============================================================================
 # vde-audit - Audit Logging Library for VDE
 # Records all state-changing operations for security and compliance
@@ -46,18 +46,18 @@ _VDE_AUDIT_INITIALIZED=0
 vde_audit_init() {
     # Create logs directory if it doesn't exist
     if [[ ! -d "$VDE_ROOT_DIR/logs" ]]; then
-        command mkdir -p "$VDE_ROOT_DIR/logs" 2>/dev/null || return 1
+        command mkdir -p "$VDE_ROOT_DIR/logs" 2>/dev/null || return $VDE_ERR_GENERAL
     fi
     
     # Create audit log file if it doesn't exist
     if [[ ! -f "$VDE_AUDIT_LOG" ]]; then
-        command touch "$VDE_AUDIT_LOG" 2>/dev/null || return 1
+        command touch "$VDE_AUDIT_LOG" 2>/dev/null || return $VDE_ERR_GENERAL
         command chmod 600 "$VDE_AUDIT_LOG" 2>/dev/null || true
     fi
     
     # Ensure log file is writable
     if [[ ! -w "$VDE_AUDIT_LOG" ]]; then
-        return 1
+        return $VDE_ERR_GENERAL
     fi
     
     _VDE_AUDIT_INITIALIZED=1
@@ -88,7 +88,7 @@ vde_audit_log() {
     
     # Ensure initialized
     if [[ "$_VDE_AUDIT_INITIALIZED" -eq 0 ]]; then
-        vde_audit_init || return 1
+        vde_audit_init || return $VDE_ERR_GENERAL
     fi
     
     # Get current user
@@ -233,7 +233,7 @@ vde_audit_export_csv() {
         } > "$output_file"
         return 0
     fi
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 # Export audit log to JSON format
@@ -275,7 +275,7 @@ EOF
         echo "}" >> "$output_file"
         return 0
     fi
-    return 1
+    return $VDE_ERR_GENERAL
 }
 
 #===============================================================================

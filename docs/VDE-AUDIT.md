@@ -65,3 +65,14 @@ All four sources are consistent. Sample cross-check:
 | LOW-03 | Fixed type-check asymmetry in `bin/create-virtual-for` |
 | LOW-04 | Updated `vde --version` library list and semantic version to 1.5.0 |
 | LOW-05 | Added `vde.type` and `vde.name` labels to `templates/compose-language.yml` |
+| LOW-06 | Removed phantom `vde-displaytest` array entry from `data/vm-types.json` |
+| LOW-07 | Formatted `templates/compose-language.yml` labels array style to match `templates/compose-service.yml` |
+| LOW-08 | Removed ghost `vde-testlang` VM from `vm-types.conf`, `vm-types.json`, and `ssh config` |
+| LOW-09 | Updated `VDE-SPEC.md` section 5.3 to perfectly match the `ssh-entry.txt` (LOW-02 fixes) |
+| LOW-10 | Patched `critical_steps.py` harness to pass missing `KNOWN_HOSTS_FILE` mock and fixed test string |
+| LOW-11 | Orphaned `configs/docker/my-vm` folder | Removed dangling directory not present in valid `vm-types.conf`. | LOW |
+| LOW-12 | Raw `exit`/`echo` handling | Mass-migrated 40+ raw return codes to use VDE_ERR constants and `_error`. | LOW |
+| LOW-13 | Shebang non-compliance | Enforced `#!/usr/bin/env zsh` across all 8 out-of-spec library files. | LOW |
+| MED-01 | Relative path dependency sourcing | Fixed 20+ scripts to enforce absolute `$VDE_ROOT_DIR` bounds over local `$SCRIPT_DIR`. | MED |
+| MED-02 | Unsafe state mutations | Substituted unsafe `sed -i.bak` with atomic generation pipelines in `create-virtual-for`. | MED |
+| MED-03 | Missing CLI structural permissions | Injected `vde_security_enforce_permissions` to bind natively and persistently to the `bin/vde` multiplexer instead of exclusively upon `vde-init`. | MED |
