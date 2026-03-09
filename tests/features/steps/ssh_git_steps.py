@@ -23,6 +23,7 @@ from ssh_helpers import (
     VDE_SSH_DIR,
     VDE_SSH_CONFIG,
     vm_has_private_keys,
+    get_ssh_keys,
 )
 from vm_common import (
     docker_list_containers,
@@ -975,3 +976,9 @@ def step_only_ssh_socket_forwarded(context):
                         if 'vde' not in m.lower()]
     assert not key_mounts, \
         f"Private SSH key files mounted into VM {target}: {key_mounts}"
+
+
+@given('I have SSH keys on my host')
+def step_have_ssh_keys_on_host(context):
+    """Context: SSH keys on host."""
+    context.host_has_keys = len(get_ssh_keys()) > 0
