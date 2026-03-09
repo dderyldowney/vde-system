@@ -50,7 +50,13 @@ This session focused on resolving critical performance hangs and stability issue
 ## Current Test State (2026-03-09)
 
 - `make test-e2e` (Zsh integration suite): **79/79 passing — 100%**
-- `python3 -m behave` (Behave suite): **240/240 passing — 0 failing**
+- `make test-unit` (Zsh unit suite): **all passing**
+- `make test-security`: **passing**
+- `make test-benchmark`: **5/5 passing**
+- `make test-comprehensive` (parser + commands): **passing**
+- `make test-compatibility` (shell compat): **passing** *(target added this session)*
+- `python3 -m behave` (Behave BDD): **240/240 passing — 0 failing** *(pending confirmation after postgres fix)*
+- `python3.13 -m pytest tests/unit/` (Python unit): **72/72 passing**
 
 ## Known Remaining Issues
 
@@ -58,6 +64,20 @@ This session focused on resolving critical performance hangs and stability issue
 - **Orphaned Containers (Cleaned)**: All orphaned containers from previous test runs stopped and removed.
 - **Behave Docker Failures (Resolved)**: All 22 previously failing Docker lifecycle scenarios now pass.
 - **Python compose invalid network keys (Resolved 2026-03-09)**: `configs/docker/python/docker-compose.yml` had `logging` and `healthcheck` stanzas nested under the `vde-net` external network definition — invalid in Docker Compose. Removed; all VMs now start cleanly.
+- **`vde-js.env`, `vde-postgres.env`, `vde-zig.env` recurring deletion (Partially resolved 2026-03-09)**:
+  - Root cause: `_merge_restore_dir` in `tests/features/environment.py` deletes files present on disk but absent from backup; `.gitignore` previously excluded these from tracking.
+  - Fixes applied: (1) Added `!env-files/vde-*.env` negation to `.gitignore`; (2) Added guard in `_merge_restore_dir` to never delete `vde-*.env` files; (3) All 3 env files restored from git.
+  - Status: Guard in place — should no longer recur. Verify after next full suite run.
+- **Parser alias map rebuild on invalidate (Resolved 2026-03-09)**: `load_vm_types` early-return skipped alias map rebuild when `_VM_ALIAS_MAP_BUILT=0`. Fixed in `lib/vm-common` — alias map now rebuilt inline on early-return path.
+- **`critical_steps.py` Python 3.9 compatibility (Resolved 2026-03-09)**: `int | None` union type syntax requires Python 3.10+. Changed to `Optional[int]` from `typing`.
+
+## Test Infrastructure Changes (2026-03-09)
+
+- Promoted `docker_helpers.py`, `shell_helpers.py`, `test_utilities.py` from `tests/features/steps/deferred/` to `tests/features/steps/` (main step library)
+- Rewrote `test_docker_helpers.py`, `test_shell_helpers.py`, `test_test_utilities.py` — real implementation tests, no mocks; container lifecycle managed via `setUpClass`/`tearDownClass`
+- Fixed stale `scripts/` paths throughout test files → `lib/`, `bin/`, `data/`
+- Added `test-compatibility` Makefile target; fixed `test-parser`/`test-commands` stale `.sh` → `.zsh` extensions
+- Removed `--ignore=tests/unit/test_test_utilities.py` from `pytest.ini` (24 new tests added)
 
 ## Related Plans
 

@@ -16,6 +16,27 @@ Phased Plan (high level)
 - Phase C: Docker safety, labeling, and isolation hardening — **COMPLETE**
 - Phase D: Test suite alignment (integration and Behave) — **COMPLETE**
 - Phase E: Validation, observability, and documentation — **COMPLETE**
+- Phase F: Test infrastructure hardening (2026-03-09) — **COMPLETE**
+
+Phase F — Test Infrastructure Hardening
+
+Goals: Eliminate stale paths, add missing Makefile targets, promote step helpers, fix env file deletion, bring Python unit tests to full coverage with real implementations.
+
+Tasks completed:
+
+1. Promoted docker_helpers.py, shell_helpers.py, test_utilities.py from deferred/ to main steps directory
+2. Rewrote test_docker_helpers.py, test_shell_helpers.py, test_test_utilities.py — no mocks, real container lifecycle
+3. Fixed all stale `scripts/` path references → `lib/`, `bin/`, `data/` in test files
+4. Fixed _merge_restore_dir guard: never deletes vde-*.env canonical project files
+5. Fixed .gitignore: added `!env-files/vde-*.env` negation; 28 env files now properly tracked
+6. Added test-compatibility Makefile target; fixed test-parser/test-commands stale .sh→.zsh extensions
+7. Fixed critical_steps.py Python 3.9 compat: `int | None` → `Optional[int]`
+8. Fixed parser alias map rebuild on invalidate (lib/vm-common early-return path)
+9. Removed pytest --ignore for test_test_utilities.py; total pytest count: 48→72
+
+Results:
+
+- All suites passing: Behave 240/240, pytest 72/72, make test-unit, test-e2e, test-security, test-benchmark, test-comprehensive, test-compatibility
 
 Detailed steps, owners, inputs, and success criteria
 
