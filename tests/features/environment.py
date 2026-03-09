@@ -407,6 +407,14 @@ def after_scenario(context, scenario):
         if created_by_test:
             _stop_containers(created_by_test)
 
+    # Clean up temporarily added VM types (from vm_lifecycle_steps)
+    if getattr(context, '_temp_vm_types', None):
+        try:
+            from vm_lifecycle_steps import _cleanup_temp_vm_types
+            _cleanup_temp_vm_types(context)
+        except Exception:
+            pass
+
     if hasattr(context, '_parser_proc') and context._parser_proc:
         try:
             context._parser_proc.stdin.write('exit\n')

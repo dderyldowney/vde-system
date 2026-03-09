@@ -208,16 +208,6 @@
         "service_port": null,
         "ssh_port": 2218
       },
-      {
-        "name": "vde-zig",
-        "aliases": [
-          "zig"
-        ],
-        "display": "Zig Language",
-        "install": "apt-get install -y zig",
-        "service_port": null,
-        "ssh_port": 2219
-      }
     ],
     "service": [
       {

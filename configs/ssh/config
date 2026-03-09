@@ -211,16 +211,6 @@ Host vde-swift
     LogLevel ERROR
 
 
-Host vde-zig
-    HostName localhost
-    Port 2219
-    User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
-    StrictHostKeyChecking no
-    UserKnownHostsFile ~/.ssh/vde/known_hosts
-    ForwardAgent yes
-    LogLevel ERROR
-
 
 Host vde-couchdb
     HostName localhost

@@ -108,7 +108,6 @@ display is `configs/ssh/config` (git-tracked; never modified programmatically).
 | vde-rust | 2216 | | |
 | vde-scala | 2217 | | |
 | vde-swift | 2218 | | |
-| vde-zig | 2219 | | |
 
 Port ranges: languages 2200–2299, services 2400–2499.
 
