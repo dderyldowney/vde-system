@@ -19,6 +19,7 @@ pytest: `python3.13 -m pytest tests/unit/` → 72/72 passing
 - Fixed: rust docker-compose.yml quote syntax, vm_common.py input_text support, wait_for_container_stopped subprocess args
 - Fixed: data/vm-types.json trailing comma, restored vm-types.conf, restored env-files (vde-postgres.env, vde-js.env)
 - Pre-existing failures to investigate separately (not Phase G related)
+- Commits: `989e42a` (promote vm-lifecycle), `89d36b0` (test enhancements) - both pushed to origin/main
 
 ## Active Goal: User Guide + Deferred Mainlining
 
