@@ -27,6 +27,7 @@ from vm_common import (
     check_zsh_available,
     check_ssh_keys_exist,
     check_scripts_executable,
+    run_vde_command,
 )
 
 # =============================================================================
@@ -308,3 +309,10 @@ def step_run_validation_checks(context):
         'templates_present': (Path(VDE_ROOT) / 'templates').exists() or (Path(VDE_ROOT) / 'templates').exists(),
         'vm_types_valid': (Path(VDE_ROOT) / 'data' / 'vm-types.conf').exists(),
     }
+
+
+@when('I create my first VM')
+def step_create_first_vm(context):
+    """Create the first VM."""
+    result = run_vde_command(['create', 'python'])
+    context.vm_create_result = result.returncode == 0
