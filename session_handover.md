@@ -40,16 +40,15 @@ This session focused on resolving critical performance hangs and stability issue
 - **Problem**: `test_integration_comprehensive.zsh` had asserts that expected `generate_plan` to split compound strings like `"stop all && start go"` into two intents. The parser does NOT split on `&&`.
 - **Fix**: Updated the test suite to execute these as two sequential `vde ask` calls, matching the actual architectural capability of the parser.
 
-## Current Test State (2026-03-08)
+## Current Test State (2026-03-09)
 - `make test-e2e` (Zsh integration suite): **79/79 passing — 100%**
-- `python3 -m behave` (Behave suite): **218/240 passing — 22 failing**
-  - Failing features: `docker-operations` (14), `critical-path` (3), `installation-setup` (3), `ssh-configuration` (1), `vde-ssh-commands` (1)
-  - All failures are live Docker lifecycle scenarios (build, start, stop containers) — not parser or config issues
+- `python3 -m behave` (Behave suite): **240/240 passing — 0 failing**
 
 ## Known Remaining Issues
 - **VM Count & Config Integrity (Resolved)**: All 27 `docker-compose.yml` files present in `configs/docker/`; `data/vm-docker-config.json` reverted to tracked state.
 - **Orphaned Containers (Cleaned)**: All orphaned containers from previous test runs stopped and removed.
-- **Behave Docker Failures**: 22 scenarios require live Docker container lifecycle. Investigate whether these are environment/setup issues or real bugs.
+- **Behave Docker Failures (Resolved)**: All 22 previously failing Docker lifecycle scenarios now pass.
+- **Python compose invalid network keys (Resolved 2026-03-09)**: `configs/docker/python/docker-compose.yml` had `logging` and `healthcheck` stanzas nested under the `vde-net` external network definition — invalid in Docker Compose. Removed; all VMs now start cleanly.
 
 ## Related Plans
 - Remediation plan: See `plans/session_handover_remediation.md` for end-to-end remediation steps that accompany this handover.
@@ -62,10 +61,7 @@ This session focused on resolving critical performance hangs and stability issue
 4. **Cleanup**: Use `shutdown-virtual all` for safe, label-filtered cleanup.
 5. **generate_plan performance**: The `$()` subshell pattern is the enemy — always use direct variable writes in hot paths.
 
-(End of file - total 54 lines)
-
 ## Paired Update Policy
 - This handover is the paired companion to `plans/session_handover_remediation.md`.
 - Any update to remediation plan must be mirrored here, and vice versa, in lockstep to preserve traceability.
 - Ensure cross-links remain accurate between the two documents.
-EOF
