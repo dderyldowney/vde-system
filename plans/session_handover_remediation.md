@@ -138,3 +138,8 @@ End state
 - Critical issues resolved or mitigated; test suites healthier; Docker safety enforced; documentation synchronized.
 
 End.
+
+## Paired Update Policy
+
+- This remediation plan is the paired companion to `../session_handover.md`.
+- Updates must be synchronized with the handover document; maintain cross-links and same scope.
