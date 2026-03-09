@@ -15,6 +15,10 @@ services:
     container_name: vde-go
     hostname: vde-go
     restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=vde-go"
     command: sh -c "apt-get update -y && apt-get install -y golang-go && /usr/sbin/sshd -D"
 
     ports:

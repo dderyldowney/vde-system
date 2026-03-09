@@ -15,6 +15,10 @@ services:
     container_name: vde-kotlin
     hostname: vde-kotlin
     restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=vde-kotlin"
     command: sh -c "apt-get update -y && apt-get install -y kotlin && curl -s "https://get.sdkman.io" | bash && su - devuser -c "source ~/.sdkman/bin/sdkman-init.sh && sdk install kotlin" && /usr/sbin/sshd -D"
 
     ports:

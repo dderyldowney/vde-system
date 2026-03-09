@@ -15,6 +15,10 @@ services:
     container_name: vde-lua
     hostname: vde-lua
     restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=vde-lua"
     command: sh -c "apt-get update -y && apt-get install -y lua5.4 luarocks && /usr/sbin/sshd -D"
 
     ports:

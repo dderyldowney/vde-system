@@ -311,17 +311,12 @@ merge_ssh_config_entry() {
         return $VDE_ERR_GENERAL
     fi
 
-    # Remove existing entry for this host first (to avoid duplicates)
+    # Remove the entire Host block for this alias (header + all indented body lines)
     if [ -f "$ssh_config" ]; then
-        grep -v "^Host $host_alias$" "$ssh_config" | \
-        awk '/^Host /{host=0} /^[ \t]*$/{next} host{print}' > "$temp_file" 2>/dev/null
-        # Actually, simpler approach - remove the whole block starting with Host
-        sed -i '' "/^Host $host_alias$/,/^Host /{ /^Host $host_alias$/d; /^Host /{1d} }" "$temp_file" 2>/dev/null || true
-    fi
-    
-    # Also remove the specific Host block - use awk instead
-    if [ -f "$ssh_config" ]; then
-        awk "! /^Host $host_alias$/ || ! found {found=/^Host $host_alias$/; print}" "$ssh_config" > "$temp_file" 2>/dev/null || cp "$ssh_config" "$temp_file"
+        awk -v host="Host $host_alias" '
+            /^Host / { skip = ($0 == host) }
+            !skip { print }
+        ' "$ssh_config" > "$temp_file" 2>/dev/null || cp "$ssh_config" "$temp_file"
     fi
 
     local entry="
@@ -639,6 +634,10 @@ generate_vm_ssh_config() {
 
     # Ensure SSH directory exists
     mkdir -p "$VDE_SSH_DIR"
+
+    # Truncate existing config — this is a full regeneration, not an incremental merge
+    : > "$VDE_SSH_CONFIG"
+    chmod 600 "$VDE_SSH_CONFIG"
 
     if ! command -v get_all_vms >/dev/null 2>&1; then
         _error "Dependency error: get_all_vms function not found"

@@ -15,6 +15,10 @@ services:
     container_name: vde-swift
     hostname: vde-swift
     restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=vde-swift"
     command: sh -c "apt-get update -y && apt-get install -y binutils git libc6-dev curl && /usr/sbin/sshd -D"
 
     ports:

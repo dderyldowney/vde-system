@@ -15,6 +15,10 @@ services:
     container_name: vde-zig
     hostname: vde-zig
     restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=vde-zig"
     command: sh -c "apt-get install -y zig && /usr/sbin/sshd -D"
 
     ports:
