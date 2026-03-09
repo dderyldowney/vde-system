@@ -18,7 +18,7 @@
 # shellcheck disable=SC2296
 _RUNNER_SCRIPT_PATH="${(%):-%x}"
 _RUNNER_DIR="$(cd "$(dirname "$_RUNNER_SCRIPT_PATH")" && pwd)"
-_TEST_SCRIPT="$_RUNNER_DIR/test_shell_compat.sh"
+_TEST_SCRIPT="$_RUNNER_DIR/test_shell_compat.zsh"
 
 # Shell to test
 SHELL_TO_TEST="zsh"

@@ -76,8 +76,8 @@ test-security:
 
 test-benchmark:
 	@echo "Running performance benchmarks..."
-	@chmod +x tests/benchmark_suite.zsh
-	@zsh tests/benchmark_suite.zsh
+	@chmod +x tests/performance/benchmark_suite.zsh
+	@zsh tests/performance/benchmark_suite.zsh
 	@echo "✓ Benchmarks complete"
 
 test-integration:
