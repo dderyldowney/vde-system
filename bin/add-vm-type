@@ -332,8 +332,11 @@ diff "$backup_file" "$VM_TYPES_CONF" || true
 echo ""
 
 # -----------------------
-# Reload VM types
+# Invalidate cache and reload VM types
 # -----------------------
+log_info "Invalidating VM types cache..."
+local cache_file="${VDE_ROOT_DIR}/.cache/vm-types.cache"
+[[ -f "$cache_file" ]] && rm -f "$cache_file"
 log_info "Reloading VM types..."
 load_vm_types
 

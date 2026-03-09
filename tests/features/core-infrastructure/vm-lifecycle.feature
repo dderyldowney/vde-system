@@ -98,13 +98,13 @@ Feature: VM Lifecycle Management
     Then only VMs matching "python" should be listed
 
   Scenario: Add a new VM type
-    When I run "add-vm-type --type lang --display 'Test Language' testlang 'apt-get install -y curl'"
+    When I run "add-vm-type --type lang --display 'Test Language' --ssh-port 2298 testlang 'apt-get install -y curl'"
     Then "testlang" should be in known VM types
     And VM type "testlang" should have type "lang"
     And VM type "testlang" should have display name "Test Language"
 
   Scenario: Add VM type with aliases
-    When I run "add-vm-type --type lang --display 'Test Lang Two' testlang2 'apt-get install -y curl' 'tl2,tlalias'"
+    When I run "add-vm-type --type lang --display 'Test Lang Two' --ssh-port 2299 testlang2 'apt-get install -y curl' 'tl2,tlalias'"
     Then "testlang2" should be in known VM types
     And "testlang2" should have aliases "tl2,tlalias"
     And "tl2" should resolve to "testlang2"

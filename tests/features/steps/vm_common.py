@@ -32,14 +32,17 @@ IN_TEST_MODE = os.environ.get("VDE_TEST_MODE") == "1"
 # Allow cleanup if running in container OR in test mode
 ALLOW_CLEANUP = IN_CONTAINER or IN_TEST_MODE
 
+
 def is_vde_available():
     """Check if VDE command is available.
-    
+
     Returns:
         bool: True if vde command available, False otherwise
     """
     try:
-        subprocess.run(['./bin/vde', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(
+            ["./bin/vde", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         return True
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
@@ -67,15 +70,18 @@ def docker_ps_list():
     """
     try:
         result = subprocess.run(
-            ['zsh', str(BIN_DIR / 'vde'), 'ps', '-q'],
-            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
-            env=_vde_env()
+            ["zsh", str(BIN_DIR / "vde"), "ps", "-q"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=str(VDE_ROOT),
+            env=_vde_env(),
         )
         containers = []
-        for line in result.stdout.strip().split('\n'):
+        for line in result.stdout.strip().split("\n"):
             name = line.strip()
             if name:
-                containers.append({'Names': name})
+                containers.append({"Names": name})
         return containers
     except Exception:
         return []
@@ -89,23 +95,30 @@ def docker_list_containers():
     """
     try:
         result = subprocess.run(
-            ['zsh', str(BIN_DIR / 'vde'), 'ps', '-q'],
-            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
-            env=_vde_env()
+            ["zsh", str(BIN_DIR / "vde"), "ps", "-q"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=str(VDE_ROOT),
+            env=_vde_env(),
         )
-        containers = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
+        containers = [line.strip() for line in result.stdout.strip().split("\n") if line.strip()]
         return containers
     except Exception:
         return []
+
 
 def container_exists(container_name):
     """Check if a VDE container exists (running or stopped) via vde ps."""
     try:
         full_name = f"vde-{container_name.replace('vde-', '')}"
         result = subprocess.run(
-            ['zsh', str(BIN_DIR / 'vde'), 'ps', '-a', '-q'],
-            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
-            env=_vde_env()
+            ["zsh", str(BIN_DIR / "vde"), "ps", "-a", "-q"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=str(VDE_ROOT),
+            env=_vde_env(),
         )
         return full_name in result.stdout.split()
     except Exception:
@@ -124,9 +137,12 @@ def container_is_running(container_name):
     try:
         full_name = f"vde-{container_name.replace('vde-', '')}"
         result = subprocess.run(
-            ['zsh', str(BIN_DIR / 'vde'), 'ps', '-q'],
-            capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
-            env=_vde_env()
+            ["zsh", str(BIN_DIR / "vde"), "ps", "-q"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=str(VDE_ROOT),
+            env=_vde_env(),
         )
         return full_name in result.stdout.split()
     except Exception:
@@ -135,20 +151,17 @@ def container_is_running(container_name):
 
 def get_container_id(container_name):
     """Get the container ID for a given container name.
-    
+
     Args:
         container_name: Name of the container to look up
-        
+
     Returns:
         str: Container ID if found, empty string if not found
     """
     try:
-        result = subprocess.run(
-            ['./bin/vde', 'ps'],
-            capture_output=True, text=True, timeout=10
-        )
+        result = subprocess.run(["./bin/vde", "ps"], capture_output=True, text=True, timeout=10)
         if result.returncode == 0:
-            for line in result.stdout.strip().split('\n'):
+            for line in result.stdout.strip().split("\n"):
                 if container_name in line:
                     # Extract container ID from ps output
                     parts = line.split()
@@ -158,196 +171,215 @@ def get_container_id(container_name):
         pass
     return ""
 
+
 def get_compose_file(vm_name):
     """Get the path to a VM's docker-compose.yml file.
-    
+
     Args:
         vm_name: Name of the VM (with or without vde- prefix)
-        
+
     Returns:
         Path: Path to the compose file
     """
     # Use raw name for directory
-    raw_name = vm_name.replace('vde-', '')
+    raw_name = vm_name.replace("vde-", "")
     return VDE_ROOT / "configs" / "docker" / raw_name / "docker-compose.yml"
+
 
 def compose_file_exists(vm_name):
     """Check if a docker-compose file exists.
-    
+
     Args:
         vm_name: Name of the VM
-        
+
     Returns:
         bool: True if file exists, False otherwise
     """
     return get_compose_file(vm_name).exists()
 
-def wait_for_container(container_name, timeout=30):
+
+def wait_for_container(container_name, timeout=30, vm_name=None):
     """Wait for a VDE container to become ready using vde ps.
-    
+
     Args:
         container_name: Name of the container to wait for
         timeout: Maximum time to wait in seconds (default 30)
-        
+        vm_name: VM name for adaptive timeout (optional)
+
     Returns:
         bool: True if container becomes ready, False if timeout
     """
+    # Apply adaptive timeout if vm_name provided and no explicit timeout given
+    if timeout == 30 and vm_name:
+        vm_type = vm_name.replace("vde-", "").lower()
+        if vm_type in {"rust", "flutter", "kotlin", "swift", "haskell", "elixir", "scala"}:
+            timeout = 320
+
     start_time = time.time()
-    
+
     try:
         while time.time() - start_time < timeout:
             result = subprocess.run(
-                ['zsh', str(BIN_DIR / 'vde'), 'ps', '-q', '--filter', f'name={container_name}'],
-                capture_output=True, text=True, timeout=15, cwd=str(VDE_ROOT),
-                env=_vde_env()
+                ["zsh", str(BIN_DIR / "vde"), "ps", "-q", "--filter", f"name={container_name}"],
+                capture_output=True,
+                text=True,
+                timeout=15,
+                cwd=str(VDE_ROOT),
+                env=_vde_env(),
             )
             if result.returncode == 0 and result.stdout.strip():
                 return True
             time.sleep(1)
-        
+
         return False
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
 
+
 def ensure_vm_created(context, vm_name):
     """Ensure a VM has been created successfully.
-    
+
     Args:
         context: Behave context object
         vm_name: Name of the VM to verify
-    
+
     Returns:
         None (raises exception on failure)
     """
-    if not hasattr(context, 'vm_name') or not context.vm_name:
-        raise Exception('VM name not set in context')
-    
+    if not hasattr(context, "vm_name") or not context.vm_name:
+        raise Exception("VM name not set in context")
+
     # Verify VM exists
     if not context.vm_name:
-        raise Exception(f'VM {vm_name} was not created')
-    
+        raise Exception(f"VM {vm_name} was not created")
+
     # This step is a no-op - the creation happened earlier
     return None
 
+
 def ensure_vm_running(context, vm_name):
     """Ensure a VM is running.
-    
+
     Args:
         context: Behave context object
         vm_name: Name of the VM to verify
-    
+
     Returns:
         None (raises exception on failure)
     """
     # Check if VM container exists and is running
     container_name = f"vde-{vm_name}"
     is_running = container_exists(container_name)
-    
+
     if not is_running:
-        raise Exception(f'VM {container_name} is not running')
-    
+        raise Exception(f"VM {container_name} is not running")
+
     # Set context variable for downstream steps
     context.vm_name = container_name
     return None
 
+
 def ensure_vm_stopped(context, vm_name):
     """Ensure a VM is stopped.
-    
+
     Args:
         context: Behave context object
         vm_name: Name of the VM to verify
-    
+
     Returns:
         None (raises exception on failure)
     """
-    if not hasattr(context, 'vm_name') or not context.vm_name:
-        raise Exception('VM name not set in context')
-    
+    if not hasattr(context, "vm_name") or not context.vm_name:
+        raise Exception("VM name not set in context")
+
     # Verify VM exists and is stopped
     if not context.vm_name:
-        raise Exception(f'VM {vm_name} was not created')
-    
+        raise Exception(f"VM {vm_name} was not created")
+
     # This step is a no-op - the stop happened earlier
     return None
 
+
 def get_container_health(context, container_name):
     """Get the health status of a VDE container using vde inspect.
-    
+
     Args:
         context: Behave context object
         container_name: Name or ID of the container to check
-    
+
     Returns:
         str: Health status (e.g., "running", "healthy", "unhealthy", "starting")
     """
     # Try to get actual status from vde inspect first
     try:
         result = subprocess.run(
-            [str(BIN_DIR / 'vde'), 'inspect', container_name, '--state'],
-            capture_output=True, text=True, timeout=5, cwd=str(VDE_ROOT)
+            [str(BIN_DIR / "vde"), "inspect", container_name, "--state"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=str(VDE_ROOT),
         )
         if result.returncode == 0:
             import json
+
             state = json.loads(result.stdout.strip())
-            status = state.get('Status', '').lower()
+            status = state.get("Status", "").lower()
             # If status is 'running', check if there's a health check
-            if status == 'running':
+            if status == "running":
                 health_result = subprocess.run(
-                    [str(BIN_DIR / 'vde'), 'inspect', container_name, '--health'],
-                    capture_output=True, text=True, timeout=5, cwd=str(VDE_ROOT)
+                    [str(BIN_DIR / "vde"), "inspect", container_name, "--health"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    cwd=str(VDE_ROOT),
                 )
                 if health_result.returncode == 0 and health_result.stdout.strip():
                     health = json.loads(health_result.stdout.strip())
-                    return health.get('Status', status)
+                    return health.get("Status", status)
             return status
     except Exception:
         pass
 
     # Fallback for tests or when vde check fails
-    if hasattr(context, 'vm_name') and context.vm_name:
+    if hasattr(context, "vm_name") and context.vm_name:
         return "healthy"
-    
+
     return "unknown"
+
 
 def check_docker_available(context):
     """Check if Docker is available on the system.
-    
+
     Args:
         context: Behave context object
-    
+
     Returns:
         bool: True if Docker is available, False otherwise
     """
     try:
-        result = subprocess.run(
-            ['docker', 'info'],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        result = subprocess.run(["docker", "info"], capture_output=True, text=True, timeout=10)
         return result.returncode == 0
     except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
         return False
 
+
 def check_docker_compose_available(context):
     """Check if Docker Compose is available on the system.
-    
+
     Args:
         context: Behave context object
-    
+
     Returns:
         bool: True if Docker Compose is available, False otherwise
     """
     try:
         result = subprocess.run(
-            ['docker', 'compose', 'version'],
-            capture_output=True,
-            text=True,
-            timeout=10
+            ["docker", "compose", "version"], capture_output=True, text=True, timeout=10
         )
         return result.returncode == 0
     except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
         return False
+
 
 def check_docker_network_exists(network_name):
     """Check if a VDE Docker network exists.
@@ -362,42 +394,47 @@ def check_docker_network_exists(network_name):
         # Use docker directly since vde-networks only shows vde-net
         result = subprocess.run(
             ["docker", "network", "ls", "--format", "{{.Name}}"],
-            capture_output=True, text=True, timeout=10
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         return network_name in result.stdout
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
 
+
 def check_zsh_available(context):
     """Check if Zsh is available on the system.
-    
+
     Args:
         context: Behave context object
-    
+
     Returns:
         bool: True if Zsh is available, False otherwise
     """
     # For Docker-free tests, we assume Zsh is available (as VDE requires it)
     return True
 
+
 def check_ssh_keys_exist(context):
     """Check if SSH keys exist in the expected location.
-    
+
     Args:
         context: Behave context object
-    
+
     Returns:
         bool: True if SSH keys exist, False otherwise
     """
     # For Docker-free tests, we assume SSH keys exist
     return True
 
+
 def check_scripts_executable(context):
     """Check if VDE scripts have executable permissions.
-    
+
     Args:
         context: Behave context object
-    
+
     Returns:
         bool: True if scripts are executable, False otherwise
     """
@@ -417,17 +454,18 @@ def get_vm_types():
         return []
 
     vm_types = []
-    with open(vm_types_file, 'r') as f:
+    with open(vm_types_file, "r") as f:
         for line in f:
             line = line.strip()
             # Skip empty lines and comments
-            if line and not line.startswith('#'):
+            if line and not line.startswith("#"):
                 # Parse format: type|name|aliases|display_name|install_command|service_port
-                parts = line.split('|')
+                parts = line.split("|")
                 if len(parts) >= 2:
                     vm_types.append(parts[1].strip())
 
     return vm_types
+
 
 def get_vm_type(vm_name):
     """Get the type of a VM (lang or service).
@@ -443,21 +481,22 @@ def get_vm_type(vm_name):
     if not vm_types_file.exists():
         return None
 
-    with open(vm_types_file, 'r') as f:
+    with open(vm_types_file, "r") as f:
         for line in f:
             line = line.strip()
-            if line and not line.startswith('#'):
+            if line and not line.startswith("#"):
                 # Parse format: type|name|aliases|display_name|install_command|service_port
-                parts = line.split('|')
+                parts = line.split("|")
                 if len(parts) >= 3:
                     type_val = parts[0].strip()
                     name_val = parts[1].strip()
-                    aliases = [a.strip() for a in parts[2].split(',') if a.strip()]
-                    
+                    aliases = [a.strip() for a in parts[2].split(",") if a.strip()]
+
                     if name_val == vm_name or vm_name in aliases:
                         return type_val
 
     return None
+
 
 def get_port_from_compose(vm_name):
     """Extract the host port from a VM's docker-compose file.
@@ -469,6 +508,7 @@ def get_port_from_compose(vm_name):
         int: Host port number, or None if not found
     """
     import sys
+
     # print(f"DEBUG: Python version: {sys.version}", file=sys.stderr)
     # print(f"DEBUG: Python path: {sys.path}", file=sys.stderr)
     try:
@@ -485,24 +525,25 @@ def get_port_from_compose(vm_name):
         return None
 
     try:
-        with open(compose_file, 'r') as f:
+        with open(compose_file, "r") as f:
             data = yaml.safe_load(f)
 
         # Get first service
-        if 'services' in data:
-            for service_name, service_config in data['services'].items():
-                if 'ports' in service_config:
-                    ports = service_config['ports']
+        if "services" in data:
+            for service_name, service_config in data["services"].items():
+                if "ports" in service_config:
+                    ports = service_config["ports"]
                     if isinstance(ports, list) and len(ports) > 0:
                         # Parse port mapping like "2222:22"
                         port_mapping = str(ports[0])
-                        if ':' in port_mapping:
-                            host_port = port_mapping.split(':')[0].strip('"').strip("'")
+                        if ":" in port_mapping:
+                            host_port = port_mapping.split(":")[0].strip('"').strip("'")
                             return int(host_port)
     except Exception:
         return None
 
     return None
+
 
 def get_container_exit_code(container_name):
     """Get the exit code of a stopped container.
@@ -515,15 +556,16 @@ def get_container_exit_code(container_name):
     """
     try:
         result = subprocess.run(
-            ['docker', 'inspect', container_name, '--format', '{{.State.ExitCode}}'],
+            ["docker", "inspect", container_name, "--format", "{{.State.ExitCode}}"],
             check=True,
             capture_output=True,
             text=True,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
         )
         return int(result.stdout.strip())
     except (FileNotFoundError, subprocess.CalledProcessError, ValueError):
         return None
+
 
 def wait_for_container_stopped(container_name, timeout=30):
     """Wait for a container to stop.
@@ -540,13 +582,13 @@ def wait_for_container_stopped(container_name, timeout=30):
     try:
         while time.time() - start_time < timeout:
             result = subprocess.run(
-                ['docker', 'inspect', container_name, '--format', '{{.State.Running}}'],
+                ["docker", "inspect", container_name, "--format", "{{.State.Running}}"],
                 check=True,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
-                stderr=subprocess.PIPE
             )
-            if result.stdout.strip() == 'false':
+            if result.stdout.strip() == "false":
                 return True
             time.sleep(1)
     except (FileNotFoundError, subprocess.CalledProcessError):
@@ -562,31 +604,61 @@ class CommandResult:
         self.returncode = returncode
         self.args = args or []
 
-def run_vde_command(command, timeout=120, context=None):
+
+def run_vde_command(command, timeout=120, context=None, input_text=None):
     """Run a VDE script and return the result.
 
     Args:
         command: Command as string or list
         timeout: Command timeout in seconds
         context: Optional behave context to update with results
+        input_text: Optional stdin input (e.g., "y\\n" for confirmations)
 
     Returns:
         CommandResult: Object with stdout, stderr, and returncode
     """
     import shlex
-    
+
     # Direct VDE scripts (called directly)
     _DIRECT_SCRIPTS = {
-        'start-virtual', 'stop-virtual', 'shutdown-virtual', 'remove-virtual',
-        'create-virtual-for', 'add-vm-type', 'list-vms',
+        "start-virtual",
+        "stop-virtual",
+        "shutdown-virtual",
+        "remove-virtual",
+        "create-virtual-for",
+        "add-vm-type",
+        "list-vms",
     }
 
     # VDE parser subcommands (go through ./bin/vde)
     _VDE_SUBCOMMANDS = {
-        'create', 'start', 'stop', 'restart', 'ssh', 'remove', 'delete', 'uninstall',
-        'list', 'status', 'health', 'nuke', 'help', 'rebuild', 'ssh-setup',
-        'ssh-sync', 'cleanup-ports', 'init', 'ps', 'logs', 'inspect', 'port',
-        'exec', 'images', 'networks', 'stats', 'info',
+        "create",
+        "start",
+        "stop",
+        "restart",
+        "ssh",
+        "remove",
+        "delete",
+        "uninstall",
+        "list",
+        "status",
+        "health",
+        "nuke",
+        "help",
+        "rebuild",
+        "ssh-setup",
+        "ssh-sync",
+        "cleanup-ports",
+        "init",
+        "ps",
+        "logs",
+        "inspect",
+        "port",
+        "exec",
+        "images",
+        "networks",
+        "stats",
+        "info",
     }
 
     # Standardize to list of args
@@ -599,14 +671,14 @@ def run_vde_command(command, timeout=120, context=None):
         return CommandResult("", "Empty command", 1)
 
     first_word = args[0]
-    
+
     # Determine the actual command list
     if first_word in _DIRECT_SCRIPTS:
         cmd = ["zsh", str(BIN_DIR / first_word)] + args[1:]
     elif first_word in _VDE_SUBCOMMANDS:
-        cmd = ["zsh", str(BIN_DIR / 'vde')] + args
-    elif first_word == 'vde' or first_word == './bin/vde':
-        cmd = ["zsh", str(BIN_DIR / 'vde')] + args[1:]
+        cmd = ["zsh", str(BIN_DIR / "vde")] + args
+    elif first_word == "vde" or first_word == "./bin/vde":
+        cmd = ["zsh", str(BIN_DIR / "vde")] + args[1:]
     else:
         # Prepend zsh if it's a known script in scripts directory
         potential_script = BIN_DIR / first_word
@@ -620,22 +692,21 @@ def run_vde_command(command, timeout=120, context=None):
     try:
         result = subprocess.run(
             cmd,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
             timeout=timeout,
             cwd=str(VDE_ROOT),
-            env=_vde_env()
+            env=_vde_env(),
+            input=input_text,
         )
         cmd_res = CommandResult(result.stdout, result.stderr, result.returncode, args=cmd)
     except subprocess.TimeoutExpired as e:
         # TimeoutExpired has bytes attributes in Python 3.7+, decode them
-        stdout = e.stdout.decode('utf-8', errors='replace') if e.stdout else ''
-        stderr = e.stderr.decode('utf-8', errors='replace') if e.stderr else ''
+        stdout = e.stdout.decode("utf-8", errors="replace") if e.stdout else ""
+        stderr = e.stderr.decode("utf-8", errors="replace") if e.stderr else ""
         cmd_res = CommandResult(
-            stdout,
-            stderr + f"\n[TIMEOUT] Command timed out after {timeout}s",
-            124,
-            args=cmd
+            stdout, stderr + f"\n[TIMEOUT] Command timed out after {timeout}s", 124, args=cmd
         )
     except Exception as e:
         cmd_res = CommandResult("", str(e), 1, args=cmd)
@@ -644,12 +715,12 @@ def run_vde_command(command, timeout=120, context=None):
     if context:
         # Store full result
         context.vde_command_result = cmd_res
-        
+
         # Standardized attributes used by many step files
         # IMPORTANT: Always populate even if command failed
         context.vde_command_output = (cmd_res.stdout or "") + (cmd_res.stderr or "")
         context.vde_command_exit_code = cmd_res.returncode
-        
+
         # Legacy attributes used by some older step files
         context.last_output = cmd_res.stdout or ""
         context.last_error = cmd_res.stderr or ""

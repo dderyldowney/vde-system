@@ -208,6 +208,25 @@
         "service_port": null,
         "ssh_port": 2218
       },
+      {
+        "name": "vde-testlang2",
+        "aliases": [
+          "tl2",
+          "tlalias"
+        ],
+        "display": "Test Lang Two",
+        "install": "apt-get install -y curl",
+        "service_port": null,
+        "ssh_port": 2299
+      },
+      {
+        "name": "vde-testlang",
+        "aliases": [],
+        "display": "Test Language",
+        "install": "apt-get install -y curl",
+        "service_port": null,
+        "ssh_port": 2298
+      }
     ],
     "service": [
       {
