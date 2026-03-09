@@ -17,6 +17,40 @@ Phased Plan (high level)
 - Phase D: Test suite alignment (integration and Behave) — **COMPLETE**
 - Phase E: Validation, observability, and documentation — **COMPLETE**
 - Phase F: Test infrastructure hardening (2026-03-09) — **COMPLETE**
+- Phase G: VM lifecycle promotion + zig removal (2026-03-09) — **IN PROGRESS (BLOCKED)**
+
+Phase G — VM Lifecycle Promotion + Zig Removal
+
+Goals: Remove zig VM type entirely; promote deferred vm-lifecycle features to core suite; write vm_lifecycle_steps.py step definitions.
+
+Tasks completed:
+
+1. Removed zig from all sources: data/vm-types.json, data/vm-types.conf, configs/docker/zig/, env-files/vde-zig.env, configs/ssh/config, docs/VDE-SPEC.md
+2. Wrote tests/features/steps/vm_lifecycle_steps.py — new step definitions covering all patterns in both deferred feature files
+3. Promoted to tests/features/core-infrastructure/: vm-lifecycle.feature (13 scenarios), vm-lifecycle-management.feature (12 scenarios)
+4. Updated environment.py `after_scenario` to clean up `_temp_vm_types` via `_cleanup_temp_vm_types` import
+
+Current state: 12 failures + 3 errors (regression from 240/240 baseline)
+
+Root causes identified (see session_handover.md for detail):
+
+1. list-vms --lang/--svc filter only applies in --all section → fixed (use --all --lang)
+2. get_vm_types() returns vde-testlang (full prefix); step checked bare testlang → fixed
+3. testlang ssh_port was None; create-virtual-for needs it → fixed (port 2299)
+4. Restarting a VM: Given started python but Then checked rust → fixed
+5. Deleting a VM: step checked compose deleted; remove-virtual preserves it → fixed (check container stopped)
+6. they should be able to communicate: context.network_configured never set → fixed
+7. 3 errors + hook_errors: likely environment.py import or ssh-configuration side effects → NEEDS INVESTIGATION
+8. Start multiple VMs / Stop all running VMs: timing/state issues → NEEDS INVESTIGATION
+9. Rebuilding after code changes: vde-ask output check may not match → NEEDS INVESTIGATION
+
+Next session actions (in order):
+
+1. Run: python3 -m behave 2>&1 | grep -E "ERROR|Traceback" | head -30 → fix the 3 errors first
+2. Run new features only: python3 -m behave tests/features/core-infrastructure/vm-lifecycle.feature tests/features/core-infrastructure/vm-lifecycle-management.feature -q
+3. Verify original 240 unaffected (errors must not bleed)
+4. Fix remaining per root-cause list above
+5. Once Phase G passes: proceed to Phase H (daily workflow features promotion)
 
 Phase F — Test Infrastructure Hardening
 
