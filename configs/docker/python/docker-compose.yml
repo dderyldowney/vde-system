@@ -14,7 +14,7 @@ services:
     image: vde-python:latest
     container_name: vde-python
     hostname: vde-python
-    restart: always
+    restart: unless-stopped
     labels:
       vde.type: lang
       vde.name: "vde-python"
