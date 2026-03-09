@@ -15,6 +15,10 @@ services:
     container_name: vde-js
     hostname: vde-js
     restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=vde-js"
     command: sh -c "apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs && /usr/sbin/sshd -D"
 
     ports:

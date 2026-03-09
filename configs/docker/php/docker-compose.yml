@@ -15,6 +15,10 @@ services:
     container_name: vde-php
     hostname: vde-php
     restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=vde-php"
     command: sh -c "apt-get update -y && apt-get install -y php php-cli php-xml php-mbstring php-curl composer && /usr/sbin/sshd -D"
 
     ports:

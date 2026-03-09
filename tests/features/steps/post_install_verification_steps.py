@@ -453,14 +453,14 @@ def step_setup_continues_with_warning(context):
 
 @then('vde-testing should be created automatically')
 def step_vde_network_created(context):
-    """Verify vde-testing Docker network exists."""
-    assert check_docker_network_exists("vde-testing"), "vde-testing Docker network does not exist"
+    """Verify vde-net Docker network exists."""
+    assert check_docker_network_exists("vde-net"), "vde-net Docker network does not exist"
 
 
 @then('all VMs should use this network')
 def step_all_vms_use_network(context):
-    """Verify VMs are configured to use vde-testing."""
-    # Check that VM templates/configs reference vde-testing
+    """Verify VMs are configured to use vde-net."""
+    # Check that VM templates/configs reference vde-net
     configs_dir = Path(VDE_ROOT) / "configs"
     assert configs_dir.exists(), "configs directory does not exist - cannot verify network configuration"
 
@@ -468,26 +468,18 @@ def step_all_vms_use_network(context):
     network_found = False
     for config_file in configs_dir.rglob("*.yml"):
         content = config_file.read_text()
-        if "vde-testing" in content or "network_mode: bridge" in content:
+        if "vde-net" in content or "network_mode: bridge" in content:
             network_found = True
             break
-    
-    # Also check .env files
-    if not network_found:
-        for config_file in configs_dir.rglob(".env"):
-            content = config_file.read_text()
-            if "vde-testing" in content:
-                network_found = True
-                break
-    
-    assert network_found, "No VM configuration references vde-testing"
+
+    assert network_found, "No VM configuration references vde-net"
 
 
 @then('VMs can communicate with each other')
 def step_vms_can_communicate(context):
     """Verify VMs are configured for inter-VM communication."""
     # Check that VMs are on the same network
-    assert check_docker_network_exists("vde-testing"), "vde-testing must exist for VM communication"
+    assert check_docker_network_exists("vde-net"), "vde-net must exist for VM communication"
 
     # Verify network is bridge type (allows communication)
     try:

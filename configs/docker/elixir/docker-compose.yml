@@ -15,6 +15,10 @@ services:
     container_name: vde-elixir
     hostname: vde-elixir
     restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=vde-elixir"
     command: sh -c "apt-get update -y && apt-get install -y elixir erlang && /usr/sbin/sshd -D"
 
     ports:

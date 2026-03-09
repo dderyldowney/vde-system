@@ -40,6 +40,7 @@ services:
       - vde-net
 
     labels:
+      - "vde.managed=true"
       - "vde.type=service"
       - "vde.name=rabbitmq"
 
