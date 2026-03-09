@@ -48,8 +48,8 @@ class TestSchemaValidation:
 source "{vde_core_script}"
 
 vde_validate_json_schema \\
-    "{VDE_ROOT}/scripts/data/vm-types.json" \\
-    "{VDE_ROOT}/scripts/data/vm-types.schema.json"
+    "{VDE_ROOT}/data/vm-types.json" \\
+    "{VDE_ROOT}/data/vm-types.schema.json"
 
 exit $?
 """
@@ -69,8 +69,8 @@ exit $?
 source "{vde_core_script}"
 
 vde_validate_json_schema \\
-    "{VDE_ROOT}/scripts/data/vm-docker-config.json" \\
-    "{VDE_ROOT}/scripts/data/vm-docker-config.schema.json"
+    "{VDE_ROOT}/data/vm-docker-config.json" \\
+    "{VDE_ROOT}/data/vm-docker-config.schema.json"
 
 exit $?
 """
@@ -160,7 +160,7 @@ class TestConfigVersioning:
         script = f"""
 source "{vde_core_script}"
 
-version=$(vde_get_config_version "{VDE_ROOT}/scripts/data/vm-types.json")
+version=$(vde_get_config_version "{VDE_ROOT}/data/vm-types.json")
 echo "$version"
 """
         result = subprocess.run(
@@ -182,8 +182,8 @@ echo "$version"
 source "{vde_core_script}"
 
 vde_check_schema_compatibility \\
-    "{VDE_ROOT}/scripts/data/vm-types.json" \\
-    "{VDE_ROOT}/scripts/data/vm-types.schema.json"
+    "{VDE_ROOT}/data/vm-types.json" \\
+    "{VDE_ROOT}/data/vm-types.schema.json"
 
 exit $?
 """
@@ -275,7 +275,7 @@ class TestConfigIntegration:
     def test_vm_common_loads_validated_config(self, test_timeout):
         """Test that vm-common loads and validates configs."""
         script = f"""
-source "{VDE_ROOT}/scripts/lib/vm-common"
+source "{VDE_ROOT}/lib/vm-common"
 
 # Check that arrays are populated (config was loaded)
 if [[ ${{#VM_NAMES[@]}} -eq 0 ]]; then

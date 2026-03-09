@@ -1,84 +1,137 @@
 #!/usr/bin/env zsh
+# shutdown-virtual - Shutdown and remove VDE VM containers
+#
+# This script stops and removes VM containers gracefully.
+# It supports individual VM names, "all", and handles parallel termination.
+
 set -e
 
-# Source shared library
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Determine VDE root directory
+if [[ -z "$VDE_ROOT_DIR" ]]; then
+    export VDE_ROOT_DIR="${0:a:h:h}"
+fi
+
+# -----------------------
+# Initialization
+# -----------------------
+
+# Source libraries
 source "$VDE_ROOT_DIR/lib/vm-common"
 source "$VDE_ROOT_DIR/lib/vde-docker-state"
 
-# Parse arguments
-if [[ $# -eq 0 ]]; then
-    echo "Usage: $0 <vm_name1> [vm_name2] ... [all]"
-    echo ""
-    echo "Examples:"
-    echo "  $0 python                    # Stop single VM"
-    echo "  $0 python ruby js            # Stop multiple VMs"
-    echo "  $0 all                       # Stop all VMs"
-    echo ""
-    show_known_vms
-    exit $VDE_ERR_GENERAL
-fi
+# Source UX libraries (optional)
+[[ -f "$VDE_ROOT_DIR/lib/vde-progress" ]] && source "$VDE_ROOT_DIR/lib/vde-progress"
+[[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/lib/vde-errors"
 
-# _vm_has_compose_file - Check if VM has a docker-compose.yml file
-_vm_has_compose_file() {
-    local vm="$1"
-    local compose_file
-    compose_file=$(get_compose_file "$vm" 2>/dev/null) || return $VDE_ERR_GENERAL
-    [[ -f "$compose_file" ]]
+# -----------------------
+# Usage
+# -----------------------
+show_usage() {
+    cat <<EOF
+Usage: shutdown-virtual [OPTIONS] <vm_name1> [vm_name2] ... [all]
+
+Shutdown and remove VDE VM containers.
+
+Arguments:
+  vm_name    Name of the VM or VM type (e.g., python, postgres)
+  all        Shutdown all created VMs
+
+Options:
+  -h, --help     Show this help message
+  -q, --quiet    Suppress progress indicators
+  -v, --verbose  Show detailed output
+  -f, --force    Skip confirmation for "all" (if applicable)
+
+Examples:
+  shutdown-virtual python          # Stop single VM
+  shutdown-virtual python ruby js  # Stop multiple VMs
+  shutdown-virtual all             # Stop all VMs
+EOF
 }
 
-# Parse VMs
-VMS=()
+# -----------------------
+# Configuration
+# -----------------------
+QUIET=false
+VERBOSE=false
+FORCE=false
+VMS_TO_PROCESS=()
 
-for arg in "$@"; do
-    case $arg in
+# -----------------------
+# Parse Arguments
+# -----------------------
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            show_usage
+            exit 0
+            ;;
+        -q|--quiet)
+            QUIET=true
+            export VDE_PROGRESS_QUIET=1
+            shift
+            ;;
+        -v|--verbose)
+            VERBOSE=true
+            export VDE_ERRORS_VERBOSE=1
+            shift
+            ;;
+        -f|--force)
+            FORCE=true
+            shift
+            ;;
         all)
-            # Expand "all" to VMs that actually have compose files
+            # Expand "all" to all VMs with configurations
             for vm in $(get_all_vms); do
-                if _vm_has_compose_file "$vm"; then
-                    VMS+=("$vm")
+                # Check if it has a compose file (canonical way to check if 'created')
+                if [ -f "$(get_compose_file "$vm" 2>/dev/null || echo "/nonexistent")" ]; then
+                    VMS_TO_PROCESS+=("$vm")
                 fi
             done
+            shift
+            ;;
+        -*)
+            log_error "Unknown option: $1"
+            exit $VDE_ERR_GENERAL
             ;;
         *)
-            # Check if it's a known VM or VM type
-            local resolved
-            resolved=$(resolve_vm_name "$arg" 2>/dev/null) || true
-            if [[ -n "$resolved" ]]; then
-                # Only add if it has a compose file
-                if _vm_has_compose_file "$resolved"; then
-                    VMS+=("$resolved")
-                else
-                    log_warning "VM '$arg' not created (no compose file)"
-                fi
+            # Resolve name (handles aliases)
+            RESOLVED=$(resolve_vm_name "$1" 2>/dev/null) || true
+            if [[ -n "$RESOLVED" ]]; then
+                VMS_TO_PROCESS+=("$RESOLVED")
             else
-                log_error "Unknown VM: $arg"
+                log_error "Unknown VM: $1"
                 exit $VDE_ERR_GENERAL
             fi
+            shift
             ;;
     esac
 done
 
-# If no VMs specified, show usage
-if [[ ${#VMS[@]} -eq 0 ]]; then
-    echo "Usage: $0 <vm_name1> [vm_name2] ... [all]"
-    echo ""
-    echo "No VMs to stop. Create VMs first with: create-virtual-for <type>"
-    echo ""
-    show_known_vms
+if [[ ${#VMS_TO_PROCESS[@]} -eq 0 ]]; then
+    show_usage
     exit $VDE_ERR_GENERAL
 fi
 
-# Track batch operation results with zsh associative arrays
+# Unique VMs only
+VMS_TO_PROCESS=(${(u)VMS_TO_PROCESS})
+
+# -----------------------
+# Execution logic
+# -----------------------
 typeset -gA BATCH_RESULTS
 stopped_count=0
 skipped_count=0
 failed_count=0
 
-# Stop VMs
-log_info "Shutting down ${#VMS[@]} VM(s)..."
-for vm in "${VMS[@]}"; do
-    # Check if VM container exists (real-time Docker data)
+log_info "Shutting down ${#VMS_TO_PROCESS[@]} VM(s)..."
+
+# Step 1: Identify all running containers for parallel signal
+typeset -a containers_to_stop
+typeset -A vm_to_container
+
+for vm in "${VMS_TO_PROCESS[@]}"; do
+    # Check if container exists in Docker at all
     if ! vm_container_exists "$vm"; then
         log_warning "$vm does not exist - skipped"
         BATCH_RESULTS[$vm]="skipped:not_created"
@@ -86,70 +139,76 @@ for vm in "${VMS[@]}"; do
         continue
     fi
 
-    # Check if VM is already stopped (batch state awareness)
+    # Check if container is actually running
     if ! vm_is_container_running "$vm"; then
         log_info "$vm is already stopped - skipped"
         BATCH_RESULTS[$vm]="skipped:already_stopped"
         skipped_count=$((skipped_count + 1))
         continue
     fi
+    
+    local container_name
+    container_name=$(vde_get_container_name "$vm")
+    
+    # Safety Check: Only stop containers that are explicitly managed by VDE
+    if ! is_vde_managed "$container_name"; then
+        log_warning "$vm ($container_name) is not managed by VDE - skipped for safety"
+        BATCH_RESULTS[$vm]="skipped:not_managed"
+        skipped_count=$((skipped_count + 1))
+        continue
+    fi
+    
+    containers_to_stop+=("$container_name")
+    vm_to_container[$vm]=$container_name
+done
 
-    # Try to stop the VM
-    if stop_vm "$vm"; then
-        log_success "$vm stopped successfully"
-        BATCH_RESULTS[$vm]="stopped"
-        stopped_count=$((stopped_count + 1))
-    else
-        log_error "$vm failed to stop"
-        BATCH_RESULTS[$vm]="failed:stop_error"
-        failed_count=$((failed_count + 1))
+# Step 2: Send termination signal in parallel
+if [[ ${#containers_to_stop[@]} -gt 0 ]]; then
+    log_info "Sending termination signal to ${#containers_to_stop[@]} container(s)..."
+    # Use -t 2 to give them a brief grace period then SIGKILL if they don't respond to SIGTERM
+    docker stop -t 2 "${containers_to_stop[@]}" >/dev/null 2>&1 || true
+fi
+
+# Step 3: Run full teardown (remove volumes/networks per spec)
+for vm in "${VMS_TO_PROCESS[@]}"; do
+    # Only process if we didn't skip it above
+    if [[ -z "${BATCH_RESULTS[$vm]}" ]]; then
+        if stop_vm "$vm"; then
+            log_success "$vm stopped successfully"
+            BATCH_RESULTS[$vm]="stopped"
+            stopped_count=$((stopped_count + 1))
+        else
+            log_error "$vm failed to stop"
+            BATCH_RESULTS[$vm]="failed:stop_error"
+            failed_count=$((failed_count + 1))
+        fi
     fi
 done
 
-# Display detailed batch operation summary
+# -----------------------
+# Summary
+# -----------------------
 echo ""
 log_info "Batch operation summary:"
 
-# Show stopped VMs
 if [ $stopped_count -gt 0 ]; then
     log_success "Stopped: $stopped_count VM(s)"
-    if [[ ${#BATCH_RESULTS[@]} -gt 0 ]]; then
-        for vm in "${(@k)BATCH_RESULTS[@]}"; do
-            if [ "${BATCH_RESULTS[$vm]}" = "stopped" ]; then
-                log_info "  ✓ $vm - stopped"
-            fi
-        done
-    fi
 fi
 
-# Show skipped VMs
 if [ $skipped_count -gt 0 ]; then
     log_info "Skipped: $skipped_count VM(s)"
-    if [[ ${#BATCH_RESULTS[@]} -gt 0 ]]; then
-        for vm in "${(@k)BATCH_RESULTS[@]}"; do
-            case "${BATCH_RESULTS[$vm]}" in
-                skipped:not_created)
-                    log_warning "  ○ $vm - not created"
-                    ;;
-                skipped:already_stopped)
-                    log_info "  ○ $vm - already stopped"
-                    ;;
-            esac
-        done
-    fi
+    for vm in "${(@k)BATCH_RESULTS[@]}"; do
+        [[ "${BATCH_RESULTS[$vm]}" == "skipped:not_created" ]] && log_warning "  ○ $vm - not created"
+        [[ "${BATCH_RESULTS[$vm]}" == "skipped:already_stopped" ]] && log_info "  ○ $vm - already stopped"
+    done
 fi
 
-# Show failed VMs
 if [ $failed_count -gt 0 ]; then
     log_error "Failed: $failed_count VM(s)"
-    if [[ ${#BATCH_RESULTS[@]} -gt 0 ]]; then
-        for vm in "${(@k)BATCH_RESULTS[@]}"; do
-            if [[ "${BATCH_RESULTS[$vm]}" = "failed:"* ]]; then
-                local error_type="${BATCH_RESULTS[$vm]#*:}"
-                log_error "  ✗ $vm - $error_type"
-            fi
-        done
-    fi
+    for vm in "${(@k)BATCH_RESULTS[@]}"; do
+        [[ "${BATCH_RESULTS[$vm]}" == "failed:"* ]] && log_error "  ✗ $vm - ${BATCH_RESULTS[$vm]#*:}"
+    done
 fi
 
 log_success "VM shutdown complete!"
+exit 0

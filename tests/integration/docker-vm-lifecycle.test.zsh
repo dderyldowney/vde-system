@@ -13,6 +13,12 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
+# Source VDE libraries
+source ./lib/vde-constants
+source ./lib/vde-log
+source ./lib/vde-naming
+source ./lib/vm-common
+
 # Test configuration - use commonly used VMs for CI
 # These are the most commonly used languages and services in educational environments:
 # Languages: python, rust, js, go, csharp, flutter (6 language VMs)
@@ -40,7 +46,7 @@ else
   # - postgres: PostgreSQL database (reliable service)
   TEST_LANG_VM="js"        # Reliable language VM for testing
   TEST_SVC_VM="postgres"   # Reliable service VM for testing
-  TEST_LANG_VM2="zig"      # Another reliable language VM
+  TEST_LANG_VM2="go"      # Another reliable language VM
 fi
 
 VERBOSE=${VERBOSE:-false}
@@ -52,6 +58,10 @@ CLEANUP_ONLY=false
 if [[ "$1" == "--cleanup-only" ]]; then
     CLEANUP_ONLY=true
 fi
+
+# Only trap EXIT for cleanup when running full tests, not during individual test debugging
+# Uncommented for tests that run the full suite
+trap cleanup EXIT INT TERM
 
 # Colors
 if [[ -t 1 ]]; then
@@ -106,11 +116,7 @@ check_docker() {
     fi
 }
 
-# Check if VM exists
-vm_exists() {
-    local vm_name="$1"
-    [[ -d "configs/docker/$vm_name" ]]
-}
+
 
 # Create VM if it doesn't exist
 ensure_vm() {
@@ -123,7 +129,7 @@ ensure_vm() {
 
     info "Creating VM: $vm_name"
     # Note: Script may fail on SSH config update, but VM should still be created
-    ./scripts/create-virtual-for "$vm_name" >/dev/null 2>&1 || true
+    ./bin/create-virtual-for "$vm_name" >/dev/null 2>&1 || true
     return 0
 }
 
@@ -135,23 +141,22 @@ cleanup() {
 
     # Stop test VMs if running
     for vm in "$TEST_LANG_VM" "$TEST_SVC_VM" "$TEST_LANG_VM2"; do
-        if docker ps -q --filter "name=${vm}-dev" | grep -q . 2>/dev/null; then
-            info "Stopping ${vm}-dev"
-            docker stop "${vm}-dev" >/dev/null 2>&1 || true
-        fi
-        if docker ps -q --filter "name=${vm}" | grep -q . 2>/dev/null; then
-            info "Stopping $vm"
-            docker stop "$vm" >/dev/null 2>&1 || true
+        if [[ -z "$vm" ]]; then continue; fi
+        local container_name
+        container_name=$(vde_get_container_name "$vm")
+        if docker ps -q --filter "name=^${container_name}$" | grep -q . 2>/dev/null; then
+            info "Stopping $container_name"
+            docker stop "$container_name" >/dev/null 2>&1 || true
         fi
     done
 
     # Remove containers
     for vm in "$TEST_LANG_VM" "$TEST_SVC_VM" "$TEST_LANG_VM2"; do
-        if docker ps -aq --filter "name=${vm}-dev" | grep -q . 2>/dev/null; then
-            docker rm "${vm}-dev" >/dev/null 2>&1 || true
-        fi
-        if docker ps -aq --filter "name=${vm}" | grep -q . 2>/dev/null; then
-            docker rm "$vm" >/dev/null 2>&1 || true
+        if [[ -z "$vm" ]]; then continue; fi
+        local container_name
+        container_name=$(vde_get_container_name "$vm")
+        if docker ps -aq --filter "name=^${container_name}$" | grep -q . 2>/dev/null; then
+            docker rm "$container_name" >/dev/null 2>&1 || true
         fi
     done
 
@@ -183,9 +188,12 @@ cleanup() {
 
         # Remove env files
         for vm in "$TEST_LANG_VM" "$TEST_SVC_VM" "$TEST_LANG_VM2"; do
+            if [[ -f "env-files/vde-$vm.env" ]]; then
+                info "Removing env-files/vde-$vm.env"
+                rm -f "env-files/vde-$vm.env"
+            fi
             if [[ -f "env-files/$vm.env" ]]; then
-                info "Removing env-files/$vm.env"
-                rm -f "env-files/$vm.env"
+                rm -f "env-files/$vm.env" 2>/dev/null || true
             fi
         done
     fi
@@ -214,17 +222,20 @@ test_create_language_vm() {
 
     # Remove VM if it exists from previous test run
     if vm_exists "$TEST_LANG_VM"; then
+        local container_name
+        container_name=$(vde_get_container_name "$TEST_LANG_VM")
         # Stop container first to release file locks
-        docker stop "${TEST_LANG_VM}-dev" >/dev/null 2>&1 || true
-        docker rm "${TEST_LANG_VM}-dev" >/dev/null 2>&1 || true
+        docker stop "$container_name" >/dev/null 2>&1 || true
+        docker rm "$container_name" >/dev/null 2>&1 || true
         rm -rf "configs/docker/$TEST_LANG_VM"
         rm -rf "projects/$TEST_LANG_VM"
-        rm -f "env-files/$TEST_LANG_VM.env"
+        rm -f "env-files/vde-$TEST_LANG_VM.env"
+        rm -f "env-files/$TEST_LANG_VM.env" 2>/dev/null || true
     fi
 
     # Call the actual create-virtual-for script
     # Note: Script may fail on SSH config update, but VM should still be created
-    ./scripts/create-virtual-for "$TEST_LANG_VM" >/dev/null 2>&1 || true
+    ./bin/create-virtual-for "$TEST_LANG_VM" >/dev/null 2>&1 || true
 
     # Verify config directory was created
     if [[ ! -d "configs/docker/$TEST_LANG_VM" ]]; then
@@ -268,18 +279,21 @@ test_create_service_vm() {
 
     # Remove VM if it exists from previous test run
     if vm_exists "$TEST_SVC_VM"; then
+        local container_name
+        container_name=$(vde_get_container_name "$TEST_SVC_VM")
         # Stop container first to release file locks
-        docker stop "$TEST_SVC_VM" >/dev/null 2>&1 || true
-        docker rm "$TEST_SVC_VM" >/dev/null 2>&1 || true
+        docker stop "$container_name" >/dev/null 2>&1 || true
+        docker rm "$container_name" >/dev/null 2>&1 || true
         rm -rf "configs/docker/$TEST_SVC_VM"
         # Handle permission errors for services like mongodb
         rm -rf "data/$TEST_SVC_VM" 2>/dev/null || true
-        rm -f "env-files/$TEST_SVC_VM.env"
+        rm -f "env-files/vde-$TEST_SVC_VM.env"
+        rm -f "env-files/$TEST_SVC_VM.env" 2>/dev/null || true
     fi
 
     # Call the actual create-virtual-for script
     # Note: Script may fail on SSH config update, but VM should still be created
-    ./scripts/create-virtual-for "$TEST_SVC_VM" >/dev/null 2>&1 || true
+    ./bin/create-virtual-for "$TEST_SVC_VM" >/dev/null 2>&1 || true
 
     # Verify config directory was created
     if [[ ! -d "configs/docker/$TEST_SVC_VM" ]]; then
@@ -330,7 +344,7 @@ test_start_vm() {
     fi
 
     # Start the VM
-    if ! ./scripts/start-virtual "$vm_name" >/dev/null 2>&1; then
+    if ! ./bin/start-virtual "$vm_name" >/dev/null 2>&1; then
         test_fail "Start VM" "start-virtual script failed"
         return
     fi
@@ -338,11 +352,12 @@ test_start_vm() {
     # Wait a moment for container to start
     sleep 3
 
-    # Verify container is running (language VMs have -dev suffix)
-    local container_name="$vm_name"
-    if [[ "$is_lang_vm" == "true" ]]; then
-        container_name="${vm_name}-dev"
-    fi
+    # Wait a moment for container to start
+    sleep 3
+
+    # Verify container is running using canonical name
+    local container_name
+    container_name=$(vde_get_container_name "$vm_name")
 
     if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         test_fail "Start VM" "container not running"
@@ -378,7 +393,7 @@ test_start_multiple_vms() {
     done
 
     # Start all VMs
-    if ! ./scripts/start-virtual "${vms[@]}" >/dev/null 2>&1; then
+    if ! ./bin/start-virtual "${vms[@]}" >/dev/null 2>&1; then
         test_fail "Start multiple VMs" "start-virtual script failed"
         return
     fi
@@ -387,11 +402,7 @@ test_start_multiple_vms() {
     # Rust needs much longer due to Cargo compilation
     local wait_time
     for vm in "${vms[@]}"; do
-        container_name="$vm"
-        # Language VMs get -dev suffix
-        if [[ "$vm" == "$TEST_LANG_VM" ]] || [[ "$vm" == "$TEST_LANG_VM2" ]]; then
-            container_name="${vm}-dev"
-        fi
+        container_name=$(vde_get_container_name "$vm")
 
         # js, postgres, and zig need appropriate timeout values
         # zig needs longer due to downloading zig binary (~50MB) from official release
@@ -448,20 +459,18 @@ test_stop_vm() {
     fi
 
     # Make sure it's running first
-    local container_name="$vm_name"
-    if [[ "$is_lang_vm" == "true" ]]; then
-        container_name="${vm_name}-dev"
-    fi
+    local container_name
+    container_name=$(vde_get_container_name "$vm_name")
 
     if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         if vm_exists "$vm_name"; then
-            ./scripts/start-virtual "$vm_name" >/dev/null 2>&1
+            ./bin/start-virtual "$vm_name" >/dev/null 2>&1
             sleep 3
         fi
     fi
 
     # Stop the VM
-    if ! ./scripts/shutdown-virtual "$vm_name" >/dev/null 2>&1; then
+    if ! ./bin/shutdown-virtual "$vm_name" >/dev/null 2>&1; then
         test_fail "Stop VM" "shutdown-virtual script failed"
         return
     fi
@@ -492,21 +501,19 @@ test_stop_all_vms() {
     local vms=("$TEST_LANG_VM" "$TEST_SVC_VM")
     for vm in "${vms[@]}"; do
         ensure_vm "$vm"
-        ./scripts/start-virtual "$vm" >/dev/null 2>&1
+        ./bin/start-virtual "$vm" >/dev/null 2>&1
     done
     sleep 3
 
     # Stop all test VMs (use shutdown-virtual multiple times since 'all' would stop user VMs too)
     for vm in "${vms[@]}"; do
-        ./scripts/shutdown-virtual "$vm" >/dev/null 2>&1
+        ./bin/shutdown-virtual "$vm" >/dev/null 2>&1
     done
 
     # Verify test containers are stopped
     for vm in "${vms[@]}"; do
-        local container_name="$vm"
-        if [[ "$vm" == "$TEST_LANG_VM" ]]; then
-            container_name="${vm}-dev"
-        fi
+        local container_name
+        container_name=$(vde_get_container_name "$vm")
 
         if docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
             test_fail "Stop all VMs" "$container_name still running"
@@ -539,14 +546,12 @@ test_restart_container() {
     fi
 
     # Get the correct container name
-    local container_name="$vm_name"
-    if [[ "$is_lang_vm" == "true" ]]; then
-        container_name="${vm_name}-dev"
-    fi
+    local container_name
+    container_name=$(vde_get_container_name "$vm_name")
 
     # Ensure VM exists and is running
     ensure_vm "$vm_name"
-    if ! ./scripts/start-virtual "$vm_name" >/dev/null 2>&1; then
+    if ! ./bin/start-virtual "$vm_name" >/dev/null 2>&1; then
         test_fail "Restart container" "failed to start VM"
         return
     fi
@@ -605,21 +610,19 @@ test_rebuild_vm() {
     fi
 
     # Get the correct container name
-    local container_name="$vm_name"
-    if [[ "$is_lang_vm" == "true" ]]; then
-        container_name="${vm_name}-dev"
-    fi
+    local container_name
+    container_name=$(vde_get_container_name "$vm_name")
 
     # Ensure VM exists and is running before rebuild
     ensure_vm "$vm_name"
-    if ! ./scripts/start-virtual "$vm_name" >/dev/null 2>&1; then
+    if ! ./bin/start-virtual "$vm_name" >/dev/null 2>&1; then
         test_fail "Rebuild VM" "failed to start VM before rebuild"
         return
     fi
     sleep 5
 
     # Start with rebuild
-    if ! ./scripts/start-virtual "$vm_name" --rebuild >/dev/null 2>&1; then
+    if ! ./bin/start-virtual "$vm_name" --rebuild >/dev/null 2>&1; then
         test_fail "Rebuild VM" "start-virtual --rebuild failed"
         return
     fi
@@ -662,7 +665,7 @@ test_list_vms() {
 
     # List VMs
     local output
-    output=$(./scripts/list-vms 2>/dev/null)
+    output=$(./bin/list-vms 2>/dev/null)
 
     # Check that our test VM is listed
     if [[ "$output" != *"$check_vm"* ]]; then

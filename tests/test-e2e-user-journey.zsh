@@ -253,7 +253,7 @@ test_vm_creation() {
 
     # Run create-virtual-for
     cd "$PROJECT_ROOT"
-    if ./scripts/create-virtual-for "${TEST_LANG_VM}" 2>&1 | head -30; then
+    if ./bin/create-virtual-for "${TEST_LANG_VM}" 2>&1 | head -30; then
         echo -e "${GREEN}✓ create-virtual-for succeeded${RESET}"
     else
         echo -e "${RED}✗ create-virtual-for failed${RESET}"
@@ -286,7 +286,7 @@ test_vm_startup() {
 
     # Start the test VM
     echo "Starting: ${TEST_LANG_VM}"
-    if ./scripts/start-virtual "${TEST_LANG_VM}" 2>&1 | grep -E "started|success"; then
+    if ./bin/start-virtual "${TEST_LANG_VM}" 2>&1 | grep -E "started|success"; then
         echo -e "${GREEN}✓ VM started successfully${RESET}"
     else
         echo -e "${RED}✗ VM failed to start${RESET}"
@@ -385,7 +385,7 @@ test_vm_shutdown() {
 
     # Shutdown the VM
     echo "Stopping: ${TEST_LANG_VM}"
-    if ./scripts/shutdown-virtual "${TEST_LANG_VM}" 2>&1 | grep -E "stopped|success"; then
+    if ./bin/shutdown-virtual "${TEST_LANG_VM}" 2>&1 | grep -E "stopped|success"; then
         echo -e "${GREEN}✓ VM stopped successfully${RESET}"
     else
         echo -e "${YELLOW}⚠ VM may not have stopped cleanly${RESET}"

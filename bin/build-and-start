@@ -16,7 +16,7 @@ set -e
 
 # This script will continue even if some steps have warnings
 # Source shared library
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$VDE_ROOT_DIR/lib/vde-shell-compat"
 source "$VDE_ROOT_DIR/lib/vde-constants"
 source "$VDE_ROOT_DIR/lib/vde-errors"
@@ -137,7 +137,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 # Run the generate-all-configs script
-if "$SCRIPT_DIR/generate-all-configs" 2>/dev/null; then
+if "$VDE_SCRIPTS_DIR/generate-all-configs" 2>/dev/null; then
     log_success "✓ Docker configurations generated"
 else
     log_error "✗ Failed to generate configurations"
@@ -159,7 +159,7 @@ echo "your private keys to containers."
 echo ""
 
 # Run the SSH setup script
-if "$SCRIPT_DIR/ssh-agent-setup" --init 2>/dev/null; then
+if "$VDE_SCRIPTS_DIR/ssh-agent-setup" --init 2>/dev/null; then
     log_success "✓ SSH environment configured"
 else
     log_error "✗ SSH setup failed"

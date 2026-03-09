@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source the library under test
-source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
+source "$PROJECT_ROOT/lib/vde-shell-compat"
 
 # Test configuration
 VERBOSE=${VERBOSE:-false}

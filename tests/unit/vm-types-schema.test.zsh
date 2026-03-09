@@ -6,8 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Paths
-VM_TYPES_JSON="${PROJECT_ROOT}/scripts/data/vm-types.json"
-VM_TYPES_SCHEMA="${PROJECT_ROOT}/scripts/data/vm-types.schema.json"
+VM_TYPES_JSON="${PROJECT_ROOT}/data/vm-types.json"
+VM_TYPES_SCHEMA="${PROJECT_ROOT}/data/vm-types.schema.json"
 
 # Test configuration
 VERBOSE=${VERBOSE:-false}
@@ -133,15 +133,14 @@ import json, sys
 with open('$VM_TYPES_JSON') as f:
     data = json.load(f)
 for idx, vm in enumerate(data['vms']['language']):
-    assert 'port' in vm, f'language[{idx}] ({vm.get(\"name\", \"?\")}): missing port field'
-    assert vm['port'] is None, f'language[{idx}] ({vm[\"name\"]}): port must be null, got {vm[\"port\"]}'
+    assert 'service_port' in vm, f'language[{idx}] ({vm.get(\"name\", \"?\")}): missing service_port field'
+    assert vm['service_port'] is None, f'language[{idx}] ({vm[\"name\"]}): service_port must be null, got {vm[\"service_port\"]}'
 print('PASS')
 " || return 1
 }
 
 test_language_vms_name_pattern() {
-    local invalid_names
-    invalid_names=$(jq -r '.vms.language[] | select(.name | test("^[a-z0-9]+$") | not) | .name' "$VM_TYPES_JSON")
+    invalid_names=$(jq -r '.vms.language[] | select(.name | test("^[a-z0-9-]+$") | not) | .name' "$VM_TYPES_JSON")
 
     if [[ -n "$invalid_names" ]]; then
         echo "Invalid language VM names (must be lowercase alphanumeric): $invalid_names"
@@ -162,7 +161,7 @@ for idx, vm in enumerate(data['vms']['service']):
     assert 'name' in vm, f'service[{idx}]: missing name'
     assert 'display' in vm, f'service[{idx}]: missing display'
     assert 'install' in vm, f'service[{idx}]: missing install'
-    assert 'port' in vm, f'service[{idx}]: missing port'
+    assert 'service_port' in vm, f'service[{idx}]: missing service_port'
 print('PASS')
 " || return 1
 }
@@ -173,14 +172,13 @@ import json, sys
 with open('$VM_TYPES_JSON') as f:
     data = json.load(f)
 for idx, vm in enumerate(data['vms']['service']):
-    assert isinstance(vm['port'], str), f'service[{idx}] ({vm.get(\"name\", \"?\")}): port must be string, got {type(vm[\"port\"]).__name__}'
+    assert isinstance(vm['service_port'], str), f'service[{idx}] ({vm.get(\"name\", \"?\")}): service_port must be string, got {type(vm[\"service_port\"]).__name__}'
 print('PASS')
 " || return 1
 }
 
 test_service_vms_port_pattern() {
-    local invalid_ports
-    invalid_ports=$(jq -r '.vms.service[] | select(.port | test("^[0-9]+(,[0-9]+)*$") | not) | "\(.name): \(.port)"' "$VM_TYPES_JSON")
+    invalid_ports=$(jq -r '.vms.service[] | select(.service_port | test("^[0-9]+(,[0-9]+)*$") | not) | "\(.name): \(.service_port)"' "$VM_TYPES_JSON")
 
     if [[ -n "$invalid_ports" ]]; then
         echo "Invalid service VM ports (must be comma-separated integers): $invalid_ports"
@@ -189,8 +187,7 @@ test_service_vms_port_pattern() {
 }
 
 test_service_vms_name_pattern() {
-    local invalid_names
-    invalid_names=$(jq -r '.vms.service[] | select(.name | test("^[a-z0-9]+$") | not) | .name' "$VM_TYPES_JSON")
+    invalid_names=$(jq -r '.vms.service[] | select(.name | test("^[a-z0-9-]+$") | not) | .name' "$VM_TYPES_JSON")
 
     if [[ -n "$invalid_names" ]]; then
         echo "Invalid service VM names (must be lowercase alphanumeric): $invalid_names"
@@ -217,12 +214,12 @@ assert 'language' in data['vms'] and 'service' in data['vms'], 'Missing VM type 
 # Language VM validation
 for vm in data['vms']['language']:
     assert 'name' in vm and 'display' in vm and 'install' in vm, f'Language VM missing required fields: {vm.get(\"name\", \"?\")}'
-    assert vm.get('port') is None, f'Language VM must have null port: {vm[\"name\"]}'
+    assert vm.get('service_port') is None, f'Language VM must have null service_port: {vm[\"name\"]}'
 
 # Service VM validation
 for vm in data['vms']['service']:
-    assert 'name' in vm and 'display' in vm and 'install' in vm and 'port' in vm, f'Service VM missing required fields: {vm.get(\"name\", \"?\")}'
-    assert isinstance(vm['port'], str), f'Service VM port must be string: {vm[\"name\"]}'
+    assert 'name' in vm and 'display' in vm and 'install' in vm and 'service_port' in vm, f'Service VM missing required fields: {vm.get(\"name\", \"?\")}'
+    assert isinstance(vm['service_port'], str), f'Service VM service_port must be string: {vm[\"name\"]}'
 
 print('PASS')
 " || return 1

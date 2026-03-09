@@ -147,19 +147,31 @@ setup_test_env() {
     TEST_TMP_DIR=$(mktemp -d)
     export TEST_TMP_DIR
 
-    # Source the libraries if VDE_ROOT_DIR is set
-    if [ -n "$VDE_ROOT_DIR" ]; then
-        # shellcheck source=/dev/null
-        . "$VDE_ROOT_DIR/scripts/lib/vm-common" 2>/dev/null || true
-        # shellcheck source=/dev/null
-        . "$VDE_ROOT_DIR/scripts/lib/vde-commands" 2>/dev/null || true
-        # shellcheck source=/dev/null
-        . "$VDE_ROOT_DIR/scripts/lib/vde-parser" 2>/dev/null || true
+    # Derive VDE_ROOT_DIR if not set (assume this file is in tests/lib/)
+    if [ -z "$VDE_ROOT_DIR" ]; then
+        export VDE_ROOT_DIR="$(cd "$(dirname "${(%):-%x}")/../.." && pwd)"
     fi
 
-    # Fix VM_TYPES_CONF if it's pointing to /vm-types.conf
-    if [ "$VM_TYPES_CONF" = "/vm-types.conf" ]; then
-        export VM_TYPES_CONF="$VDE_ROOT_DIR/scripts/data/vm-types.conf"
+    # Source the libraries
+    # shellcheck source=/dev/null
+    . "$VDE_ROOT_DIR/lib/vm-common" 2>/dev/null || true
+    # shellcheck source=/dev/null
+    . "$VDE_ROOT_DIR/lib/vde-commands" 2>/dev/null || true
+    # shellcheck source=/dev/null
+    . "$VDE_ROOT_DIR/lib/vde-parser" 2>/dev/null || true
+
+    # Fix VM_TYPES configs
+    if [ "$VM_TYPES_CONF" = "/vm-types.conf" ] || [ -z "$VM_TYPES_CONF" ]; then
+        export VM_TYPES_CONF="$VDE_ROOT_DIR/data/vm-types.conf"
+    fi
+    if [ "$VM_TYPES_JSON" = "/vm-types.json" ] || [ -z "$VM_TYPES_JSON" ]; then
+        export VM_TYPES_JSON="$VDE_ROOT_DIR/data/vm-types.json"
+    fi
+    if [ -z "$VDE_CACHE_DIR" ]; then
+        export VDE_CACHE_DIR="$VDE_ROOT_DIR/.cache"
+    fi
+    if [ -z "$VM_TYPES_CACHE" ]; then
+        export VM_TYPES_CACHE="$VDE_CACHE_DIR/vm-types.cache"
     fi
 
     # Set trap to ensure cleanup happens even on error/exit
@@ -182,6 +194,31 @@ teardown_test_env() {
     # Clean up temporary directory
     if [ -n "$TEST_TMP_DIR" ] && [ -d "$TEST_TMP_DIR" ]; then
         rm -rf "$TEST_TMP_DIR"
+    fi
+
+    # Clean up lingering VDE Docker containers
+    if command -v docker >/dev/null 2>&1; then
+        local containers
+        containers=$(docker ps -a --filter "label=vde.managed=true" --format "{{.Names}}" 2>/dev/null)
+        if [[ -n "$containers" ]]; then
+            # Use space separation for docker commands
+            local container_list
+            container_list=$(echo "$containers" | tr '\n' ' ')
+            docker stop ${=container_list} >/dev/null 2>&1 || true
+            docker rm -f -v ${=container_list} >/dev/null 2>&1 || true
+        fi
+        
+        # Also prune test networks if any
+        docker network prune -f --filter "label=vde-test" >/dev/null 2>&1 || true
+    fi
+
+    # Clean up test-related environment files
+    local env_dir="${VDE_ROOT_DIR:-.}/env-files"
+    if [[ -d "$env_dir" ]]; then
+        # Remove files matching vde-test-* prefix or common test VMs
+        rm -f "$env_dir"/vde-test-*.env 2>/dev/null || true
+        rm -f "$env_dir"/vde-js.env "$env_dir"/vde-postgres.env "$env_dir"/vde-zig.env 2>/dev/null || true
+        rm -f "$env_dir"/vde-e2e-test-*.env 2>/dev/null || true
     fi
 }
 

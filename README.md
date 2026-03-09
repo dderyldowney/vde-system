@@ -270,12 +270,11 @@ $HOME/dev/
 ├── data/                  # Service data persistence
 ├── docs/                  # Documentation
 ├── env-files/             # Environment variables per VM
+├── lib/                   # Shared libraries (vde-*, vm-common)
 ├── logs/                  # Application logs
 ├── projects/              # Project source code
-├── public-ssh-keys/       # SSH keys for containers
-├── bin/               # Management scripts
-│   ├── lib/               # Shared libraries
-│   └── templates/         # Docker Compose templates
+├── templates/             # Docker Compose templates
+├── bin/                   # Management scripts (vde, list-vms, etc.)
 └── README.md
 ```
 

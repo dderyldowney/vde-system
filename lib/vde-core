@@ -68,7 +68,7 @@ VDE_CORE_CACHE_DIR="${VDE_CORE_CACHE_DIR:-$VDE_ROOT_DIR/.cache}"
 export VDE_CORE_CACHE_DIR
 VDE_CORE_VM_TYPES_CONF="${VDE_CORE_VM_TYPES_CONF:-$VDE_CORE_DATA_DIR/vm-types.conf}"
 export VDE_CORE_VM_TYPES_CONF
-VDE_CORE_VM_TYPES_CACHE="${VDE_CORE_VM_TYPES_CACHE:-$VDE_CORE_CACHE_DIR/vm-types.cache}"
+VDE_CORE_VM_TYPES_CACHE="${VDE_CORE_VM_TYPES_CACHE:-$VDE_CORE_CACHE_DIR/vm-core.cache}"
 export VDE_CORE_VM_TYPES_CACHE
 
 # -----------------------
@@ -148,41 +148,30 @@ _vde_core_save_cache() {
     local cache_file="$VDE_CORE_VM_TYPES_CACHE"
     local temp_file="${cache_file}.tmp.$$"
     
-    # Write cache header
+    # Write cache using native zsh associative array syntax for speed
     {
-        cat << 'HEREDOC_END'
-# VDE VM Types Cache
-# Generated:
-HEREDOC_END
-        # Use ISO 8601 format for machine-readable timestamp
-        date -u +'%Y-%m-%dT%H:%M:%SZ'
-        echo "# Format: ARRAY_NAME:key=value"
+        echo "# VDE VM Types Cache - Auto-generated"
+        echo "typeset -gA VDE_CORE_VM_TYPE VDE_CORE_VM_ALIASES VDE_CORE_VM_DISPLAY"
         echo ""
         
-        # Export VM_TYPE array
-        echo "# VM_TYPE definitions"
+        # Export VDE_CORE_VM_TYPE array
         _assoc_keys "VDE_CORE_VM_TYPE" | sort | while read -r vm_name; do
-            local vm_type
-            vm_type=$(_assoc_get "VDE_CORE_VM_TYPE" "$vm_name")
-            echo "VM_TYPE:${vm_name}=${vm_type}"
+            local val; val=$(_assoc_get "VDE_CORE_VM_TYPE" "$vm_name")
+            echo "VDE_CORE_VM_TYPE[${vm_name}]='${val//\'/\'\\\'\'}'"
         done
         
-        # Export VM_ALIASES array
+        # Export VDE_CORE_VM_ALIASES array
         echo ""
-        echo "# VM aliases"
         _assoc_keys "VDE_CORE_VM_ALIASES" | sort | while read -r vm_name; do
-            local vm_aliases
-            vm_aliases=$(_assoc_get "VDE_CORE_VM_ALIASES" "$vm_name")
-            echo "VM_ALIASES:${vm_name}=${vm_aliases}"
+            local val; val=$(_assoc_get "VDE_CORE_VM_ALIASES" "$vm_name")
+            echo "VDE_CORE_VM_ALIASES[${vm_name}]='${val//\'/\'\\\'\'}'"
         done
         
-        # Export VM_DISPLAY array
+        # Export VDE_CORE_VM_DISPLAY array
         echo ""
-        echo "# VM display names"
         _assoc_keys "VDE_CORE_VM_DISPLAY" | sort | while read -r vm_name; do
-            local vm_display
-            vm_display=$(_assoc_get "VDE_CORE_VM_DISPLAY" "$vm_name")
-            echo "VM_DISPLAY:${vm_name}=${vm_display}"
+            local val; val=$(_assoc_get "VDE_CORE_VM_DISPLAY" "$vm_name")
+            echo "VDE_CORE_VM_DISPLAY[${vm_name}]='${val//\'/\'\\\'\'}'"
         done
     } > "$temp_file"
     
@@ -206,35 +195,12 @@ _vde_core_load_cache() {
         return $VDE_ERR_NOT_FOUND
     fi
     
-    # Clear existing arrays
-    _assoc_clear "VDE_CORE_VM_TYPE"
-    _assoc_clear "VDE_CORE_VM_ALIASES"
-    _assoc_clear "VDE_CORE_VM_DISPLAY"
+    # Source the cache file - much faster than parsing it
+    if ! zsh -n "$cache_file" 2>/dev/null; then
+        return $VDE_ERR_GENERAL
+    fi
     
-    # Parse cache file
-    while IFS=':' read -r array_name rest; do
-        case "$array_name" in
-            VM_TYPE)
-                local key value
-                key=$(echo "$rest" | cut -d'=' -f1)
-                value=$(echo "$rest" | cut -d'=' -f2-)
-                _assoc_set "VDE_CORE_VM_TYPE" "$key" "$value"
-                ;;
-            VM_ALIASES)
-                local key value
-                key=$(echo "$rest" | cut -d'=' -f1)
-                value=$(echo "$rest" | cut -d'=' -f2-)
-                _assoc_set "VDE_CORE_VM_ALIASES" "$key" "$value"
-                ;;
-            VM_DISPLAY)
-                local key value
-                key=$(echo "$rest" | cut -d'=' -f1)
-                value=$(echo "$rest" | cut -d'=' -f2-)
-                _assoc_set "VDE_CORE_VM_DISPLAY" "$key" "$value"
-                ;;
-        esac
-    done < "$cache_file"
-    
+    source "$cache_file"
     return $VDE_SUCCESS
 }
 
@@ -517,7 +483,7 @@ vde_validate_or_regenerate() {
     local cache_file="$3"
 
     # Validate JSON against schema
-    if ! vde_validate_json_schema "$json_file" "$schema_file"; then
+    if ! vde_validate_json_schema "$json_file" "$schema_file" >/dev/null; then
         log_error "JSON validation failed, cannot regenerate cache"
         return $VDE_ERR_INVALID_DATA
     fi
@@ -723,7 +689,7 @@ vde_validate_and_update() {
     fi
 
     # Validate against schema
-    if ! vde_validate_json_schema "$json_file" "$schema_file"; then
+    if ! vde_validate_json_schema "$json_file" "$schema_file" >/dev/null; then
         log_error "Schema validation failed"
         return $VDE_ERR_INVALID_DATA
     fi

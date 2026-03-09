@@ -24,10 +24,10 @@ vde_log_warn() { :; }
 vde_log_error() { :; }
 
 # Source required libraries
-source "$(dirname "$0")/../../scripts/lib/vde-constants"
-source "$(dirname "$0")/../../scripts/lib/vde-shell-compat"
-source "$(dirname "$0")/../../scripts/lib/vde-log"
-source "$(dirname "$0")/../../scripts/lib/vde-metrics"
+source "$(dirname "$0")/../../lib/vde-constants"
+source "$(dirname "$0")/../../lib/vde-shell-compat"
+source "$(dirname "$0")/../../lib/vde-log"
+source "$(dirname "$0")/../../lib/vde-metrics"
 
 # Test 1: initialization
 test_start "vde_metrics initialization"

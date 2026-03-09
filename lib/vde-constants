@@ -211,12 +211,14 @@ VDE_SSH_IDENTITY_PUB="${VDE_SSH_IDENTITY_PUB:-$VDE_SSH_DIR/id_ed25519.pub}"
 # Core VDE directories - can be overridden by setting VDE_*_DIR environment variables
 
 # Root directory of the VDE project. Must be explicitly set by scripts sourcing this.
-VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(cd "$(dirname "${(%):-%x}")/../.." && pwd)}" # Fallback if not set by caller
+VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(cd "$(dirname "${(%):-%x}")/.." && pwd)}" # Fallback if not set by caller
 
 # Configuration directory (e.g., configs/docker)
 CONFIGS_DIR="${VDE_CONFIGS_DIR:-$VDE_ROOT_DIR/configs/docker}"
-# Bin directory
-BIN_DIR="${VDE_BIN_DIR:-$VDE_ROOT_DIR/bin}"
+# Scripts directory (standard for all VDE commands)
+VDE_SCRIPTS_DIR="${VDE_SCRIPTS_DIR:-$VDE_ROOT_DIR/bin}"
+# Maintain BIN_DIR as an alias for internal consistency
+BIN_DIR="$VDE_SCRIPTS_DIR"
 # Templates directory
 TEMPLATES_DIR="${VDE_TEMPLATES_DIR:-$VDE_ROOT_DIR/templates}"
 # Data directory

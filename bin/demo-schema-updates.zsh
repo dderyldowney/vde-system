@@ -4,14 +4,14 @@
 
 set -e
 
-SCRIPT_DIR="${0:A:h}"
-PROJECT_ROOT="${SCRIPT_DIR:h}"
+VDE_SCRIPTS_DIR="${0:A:h}"
+PROJECT_ROOT="${VDE_SCRIPTS_DIR:h}"
 
 # Source libraries
 source "$PROJECT_ROOT/lib/vde-shell-compat"
 source "$PROJECT_ROOT/lib/vde-constants"
 source "$PROJECT_ROOT/lib/vde-core"
-source "$PROJECT_ROOT/lib/vm-common"
+source "$PROJECT_ROOT/lib/vde-log"
 
 # Colors for output
 if [[ -t 1 ]]; then

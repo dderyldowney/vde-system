@@ -7,8 +7,8 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 VDE_ROOT_DIR="$PROJECT_ROOT"
 export VDE_ROOT_DIR
 
-if [ ! -d "$PROJECT_ROOT/scripts" ]; then
-    # If scripts directory not found, try current directory (common issue with relative paths)
+if [ ! -d "$PROJECT_ROOT/bin" ]; then
+    # If bin directory not found, try current directory (common issue with relative paths)
     PROJECT_ROOT="$(cd "$(pwd)" && pwd)"
 fi
 source "$PROJECT_ROOT/tests/lib/test_common.zsh"
@@ -20,7 +20,7 @@ setup_test_env
 # Debug: Check VM types loaded
 echo "DEBUG: PROJECT_ROOT = $PROJECT_ROOT"
 echo "DEBUG: VDE_ROOT_DIR = $VDE_ROOT_DIR"
-echo "DEBUG: ls -la \"$VDE_ROOT_DIR/scripts/data\": $(ls -la "$VDE_ROOT_DIR/scripts/data" 2>&1)"
+echo "DEBUG: ls -la \"$VDE_ROOT_DIR/data\": $(ls -la "$VDE_ROOT_DIR/data" 2>&1)"
 
 # Load VM types explicitly (needed for parser tests)
 echo "DEBUG: Calling load_vm_types..."
@@ -188,8 +188,8 @@ assert_contains "$VMS" "redis" "all services should include redis"
 
 # Test "all" expansion (should include both languages and services)
 VMS=$(extract_vm_names "start all")
-assert_contains "$VMS" "python" "all should include language"
-assert_contains "$VMS" "postgres" "all should include service"
+assert_contains "$VMS" "vde-python" "all should include language"
+assert_contains "$VMS" "vde-postgres" "all should include service"
 
 test_section "VM Name Extraction - No Matches"
 
@@ -268,17 +268,17 @@ test_section "Plan Generation - Single VM Operations"
 # Test start plan
 PLAN=$(generate_plan "start python")
 assert_contains "$PLAN" "INTENT:start_vm" "should have start_vm intent"
-assert_contains "$PLAN" "VM:python" "should include python VM"
+assert_contains "$PLAN" "VM:vde-python" "should include vde-python VM"
 
 # Test stop plan
 PLAN=$(generate_plan "stop postgres")
 assert_contains "$PLAN" "INTENT:stop_vm" "should have stop_vm intent"
-assert_contains "$PLAN" "VM:postgres" "should include postgres VM"
+assert_contains "$PLAN" "VM:vde-postgres" "should include vde-postgres VM"
 
 # Test restart plan
 PLAN=$(generate_plan "restart rust")
 assert_contains "$PLAN" "INTENT:restart_vm" "should have restart_vm intent"
-assert_contains "$PLAN" "VM:rust" "should include rust VM"
+assert_contains "$PLAN" "VM:vde-rust" "should include vde-rust VM"
 
 test_section "Plan Generation - Multi VM Operations"
 
@@ -296,8 +296,8 @@ test_section "Plan Generation - Full Stack Setup"
 
 PLAN=$(generate_plan "create Python and PostgreSQL")
 assert_contains "$PLAN" "INTENT:create_vm" "should have create_vm intent"
-echo "$PLAN" | grep "^VM:" | grep -q "python" || { echo "Missing python"; exit 1; }
-echo "$PLAN" | grep "^VM:" | grep -q "postgres" || { echo "Missing postgres"; exit 1; }
+echo "$PLAN" | grep "^VM:" | grep -q "vde-python" || { echo "Missing vde-python"; exit 1; }
+echo "$PLAN" | grep "^VM:" | grep -q "vde-postgres" || { echo "Missing vde-postgres"; exit 1; }
 echo -e "${GREEN}✓${NC} Full stack plan includes both VMs"
 ((TESTS_PASSED++))
 ((TESTS_RUN++))
@@ -327,7 +327,7 @@ test_section "Plan Generation - Connect Query"
 
 PLAN=$(generate_plan "how do I connect to Python?")
 assert_contains "$PLAN" "INTENT:connect" "should have connect intent"
-assert_contains "$PLAN" "VM:python" "should include python VM"
+assert_contains "$PLAN" "VM:vde-python" "should include python VM"
 
 test_section "Plan Generation - Help Query"
 
@@ -350,7 +350,7 @@ assert_contains "$PLAN" "INTENT:help" "ambiguous input should default to help"
 test_section "Edge Cases - Mixed Case Input"
 
 VMS=$(extract_vm_names "START Python AND Go")
-echo "$VMS" | grep -q "python" || { echo "Mixed case not handled"; exit 1; }
+echo "$VMS" | grep -q "vde-python" || { echo "Mixed case not handled"; exit 1; }
 echo -e "${GREEN}✓${NC} Mixed case input handled correctly"
 ((TESTS_PASSED++))
 ((TESTS_RUN++))
@@ -381,9 +381,9 @@ test_section "Real-World - Microservices Setup"
 
 PLAN=$(generate_plan "create Python API, Go service, and postgres database")
 assert_contains "$PLAN" "INTENT:create_vm" "should create multiple VMs"
-echo "$PLAN" | grep "^VM:" | grep -q "python" || { echo "Missing python"; exit 1; }
-echo "$PLAN" | grep "^VM:" | grep -q "go" || { echo "Missing go"; exit 1; }
-echo "$PLAN" | grep "^VM:" | grep -q "postgres" || { echo "Missing postgres"; exit 1; }
+echo "$PLAN" | grep "^VM:" | grep -q "vde-python" || { echo "Missing vde-python"; exit 1; }
+echo "$PLAN" | grep "^VM:" | grep -q "vde-go" || { echo "Missing vde-go"; exit 1; }
+echo "$PLAN" | grep "^VM:" | grep -q "vde-postgres" || { echo "Missing vde-postgres"; exit 1; }
 echo -e "${GREEN}✓${NC} Microservices setup plan includes all VMs"
 ((TESTS_PASSED++))
 ((TESTS_RUN++))

@@ -38,16 +38,16 @@ VDE is built on a modular library architecture that separates concerns and enabl
 The libraries must be sourced in this order due to dependencies:
 
 ```zsh
-source "$SCRIPTS_DIR/lib/vde-constants"      # 1. Base constants
-source "$SCRIPTS_DIR/lib/vde-shell-compat"   # 2. Shell compatibility
-source "$SCRIPTS_DIR/lib/vde-errors"         # 3. Error handling
-source "$SCRIPTS_DIR/lib/vde-log"            # 4. Logging
-source "$SCRIPTS_DIR/lib/vde-naming"         # 5. Naming conventions (vde- prefix)
-source "$SCRIPTS_DIR/lib/vde-security"       # 6. Security enforcement
-source "$SCRIPTS_DIR/lib/vde-core"           # 7. Core VDE functions
-source "$SCRIPTS_DIR/lib/vm-common"          # 8. Full VDE functionality
-source "$SCRIPTS_DIR/lib/vde-commands"       # 9. Command wrappers
-source "$SCRIPTS_DIR/lib/vde-parser"         # 10. Natural language parser
+source "lib/vde-constants"      # 1. Base constants
+source "lib/vde-shell-compat"   # 2. Shell compatibility
+source "lib/vde-errors"         # 3. Error handling
+source "lib/vde-log"            # 4. Logging
+source "lib/vde-naming"         # 5. Naming conventions (vde- prefix)
+source "lib/vde-security"       # 6. Security enforcement
+source "lib/vde-core"           # 7. Core VDE functions
+source "lib/vm-common"          # 8. Full VDE functionality
+source "lib/vde-commands"       # 9. Command wrappers
+source "lib/vde-parser"         # 10. Natural language parser
 ```
 
 ---

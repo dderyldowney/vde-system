@@ -6,9 +6,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source dependencies
-source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
-source "$PROJECT_ROOT/scripts/lib/vde-constants"
-source "$PROJECT_ROOT/scripts/lib/vde-core"
+source "$PROJECT_ROOT/lib/vde-shell-compat"
+source "$PROJECT_ROOT/lib/vde-constants"
+source "$PROJECT_ROOT/lib/vde-core"
 
 # Test configuration
 VERBOSE=${VERBOSE:-false}
@@ -56,7 +56,7 @@ run_test() {
 # =============================================================================
 
 test_check_schema_integrity_valid() {
-    local schema_file="$PROJECT_ROOT/scripts/data/vm-types.schema.json"
+    local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
 
     vde_check_schema_integrity "$schema_file" >/dev/null 2>&1
     test_assert "[ $? -eq $VDE_SUCCESS ]" "Valid schema passes integrity check"
@@ -90,8 +90,8 @@ test_check_schema_integrity_missing_fields() {
 # =============================================================================
 
 test_validate_json_schema_valid() {
-    local json_file="$PROJECT_ROOT/scripts/data/vm-types.json"
-    local schema_file="$PROJECT_ROOT/scripts/data/vm-types.schema.json"
+    local json_file="$PROJECT_ROOT/data/vm-types.json"
+    local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
 
     vde_validate_json_schema "$json_file" "$schema_file" >/dev/null 2>&1
     test_assert "[ $? -eq $VDE_SUCCESS ]" "Valid JSON passes schema validation"
@@ -99,14 +99,14 @@ test_validate_json_schema_valid() {
 
 test_validate_json_schema_missing_json() {
     local json_file="$TEST_TMP_DIR/missing.json"
-    local schema_file="$PROJECT_ROOT/scripts/data/vm-types.schema.json"
+    local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
 
     vde_validate_json_schema "$json_file" "$schema_file" >/dev/null 2>&1
     test_assert "[ $? -eq $VDE_ERR_NOT_FOUND ]" "Missing JSON returns NOT_FOUND"
 }
 
 test_validate_json_schema_missing_schema() {
-    local json_file="$PROJECT_ROOT/scripts/data/vm-types.json"
+    local json_file="$PROJECT_ROOT/data/vm-types.json"
     local schema_file="$TEST_TMP_DIR/missing.schema.json"
 
     vde_validate_json_schema "$json_file" "$schema_file" >/dev/null 2>&1
@@ -115,7 +115,7 @@ test_validate_json_schema_missing_schema() {
 
 test_validate_json_schema_invalid_data() {
     local json_file="$TEST_TMP_DIR/invalid-vm-types.json"
-    local schema_file="$PROJECT_ROOT/scripts/data/vm-types.schema.json"
+    local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
 
     # Create JSON missing required fields
     cat > "$json_file" <<'EOF'
@@ -138,7 +138,7 @@ EOF
 
 test_validate_json_schema_language_vm_with_port() {
     local json_file="$TEST_TMP_DIR/lang-with-port.json"
-    local schema_file="$PROJECT_ROOT/scripts/data/vm-types.schema.json"
+    local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
 
     # Create language VM with non-null port (invalid)
     cat > "$json_file" <<'EOF'
@@ -164,7 +164,7 @@ EOF
 
 test_validate_json_schema_service_vm_without_port() {
     local json_file="$TEST_TMP_DIR/service-without-port.json"
-    local schema_file="$PROJECT_ROOT/scripts/data/vm-types.schema.json"
+    local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
 
     # Create service VM without port (invalid)
     cat > "$json_file" <<'EOF'
@@ -192,7 +192,7 @@ EOF
 # =============================================================================
 
 test_get_schema_for_json_found() {
-    local json_file="$PROJECT_ROOT/scripts/data/vm-types.json"
+    local json_file="$PROJECT_ROOT/data/vm-types.json"
     local schema_file
 
     schema_file=$(vde_get_schema_for_json "$json_file" 2>/dev/null)
@@ -224,7 +224,7 @@ test_error_codes_defined() {
 
 test_vm_common_uses_validation() {
     # Test that vm-common has validation functions available
-    source "$PROJECT_ROOT/scripts/lib/vm-common" >/dev/null 2>&1
+    source "$PROJECT_ROOT/lib/vm-common" >/dev/null 2>&1
 
     # Check that validate_vm_types_config function exists
     if typeset -f validate_vm_types_config >/dev/null 2>&1; then

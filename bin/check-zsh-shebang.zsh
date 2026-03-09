@@ -4,8 +4,8 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$SCRIPT_DIR"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$VDE_SCRIPTS_DIR"
 
 echo "Checking zsh shebang enforcement..."
 

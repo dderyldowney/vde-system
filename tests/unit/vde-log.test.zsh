@@ -19,9 +19,9 @@ mkdir -p "$VDE_ROOT_DIR/logs"
 vde_shell_date_iso8601() { echo "2026-02-10T12:00:00Z"; }
 
 # Source required libraries
-source "$(dirname "$0")/../../scripts/lib/vde-constants"
-source "$(dirname "$0")/../../scripts/lib/vde-shell-compat"
-source "$(dirname "$0")/../../scripts/lib/vde-log"
+source "$(dirname "$0")/../../lib/vde-constants"
+source "$(dirname "$0")/../../lib/vde-shell-compat"
+source "$(dirname "$0")/../../lib/vde-log"
 
 # Test 1: level control
 test_start "vde_log level control"

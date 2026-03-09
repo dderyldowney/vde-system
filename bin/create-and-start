@@ -12,8 +12,8 @@
 #===============================================================================
 
 # Determine VDE root directory
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-VDE_ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+VDE_ROOT_DIR="$(cd "$VDE_SCRIPTS_DIR/.." && pwd)"
 
 # Source shared library
 source "$VDE_ROOT_DIR/lib/vde-shell-compat"
@@ -142,7 +142,7 @@ main() {
     for vm in "${vms[@]}"; do
         print_info "Creating VM: $vm"
 
-        if "$SCRIPT_DIR/create-virtual-for" "$vm" >/dev/null 2>&1; then
+        if "$VDE_SCRIPTS_DIR/create-virtual-for" "$vm" >/dev/null 2>&1; then
             print_success "Created: $vm"
             CREATED_VMS+=("$vm")
         else
@@ -182,7 +182,7 @@ main() {
     for vm in "${CREATED_VMS[@]}"; do
         if [[ "$REBUILD" = "true" ]]; then
             print_info "Starting VM: $vm (with rebuild)"
-            if "$SCRIPT_DIR/start-virtual" "$vm" --rebuild >/dev/null 2>&1; then
+            if "$VDE_SCRIPTS_DIR/start-virtual" "$vm" --rebuild >/dev/null 2>&1; then
                 print_success "Started: $vm"
                 STARTED_VMS+=("$vm")
             else
@@ -191,7 +191,7 @@ main() {
             fi
         else
             print_info "Starting VM: $vm"
-            if "$SCRIPT_DIR/start-virtual" "$vm" >/dev/null 2>&1; then
+            if "$VDE_SCRIPTS_DIR/start-virtual" "$vm" >/dev/null 2>&1; then
                 print_success "Started: $vm"
                 STARTED_VMS+=("$vm")
             else

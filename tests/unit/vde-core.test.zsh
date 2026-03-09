@@ -9,9 +9,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source dependencies
-source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
-source "$PROJECT_ROOT/scripts/lib/vde-constants"
-source "$PROJECT_ROOT/scripts/lib/vde-core"
+source "$PROJECT_ROOT/lib/vde-shell-compat"
+source "$PROJECT_ROOT/lib/vde-constants"
+source "$PROJECT_ROOT/lib/vde-core"
 
 # Test configuration
 VERBOSE=${VERBOSE:-false}
@@ -53,7 +53,7 @@ test_directory_constants_exist() {
     test_start "directory constants exist"
 
     if [[ -n "$VDE_CORE_CONFIGS_DIR" ]] && \
-       [[ -n "$VDE_CORE_SCRIPTS_DIR" ]] && \
+       [[ -n "$VDE_CORE_BIN_DIR" ]] && \
        [[ -n "$VDE_CORE_DATA_DIR" ]] && \
        [[ -n "$VDE_CORE_CACHE_DIR" ]]; then
         test_pass "directory constants exist"
@@ -67,8 +67,8 @@ test_directory_constants_values() {
     test_start "directory constants values"
 
     if [[ "$VDE_CORE_CONFIGS_DIR" == *"/configs/docker" ]] && \
-       [[ "$VDE_CORE_SCRIPTS_DIR" == *"/scripts" ]] && \
-       [[ "$VDE_CORE_DATA_DIR" == *"/scripts/data" ]]; then
+       [[ "$VDE_CORE_BIN_DIR" == *"/bin" ]] && \
+       [[ "$VDE_CORE_DATA_DIR" == *"/data" ]]; then
         test_pass "directory constants values"
         return
     fi
@@ -376,7 +376,7 @@ test_source_guard() {
     test_start "source guard"
 
     # Source again
-    source "$PROJECT_ROOT/scripts/lib/vde-core" 2>/dev/null
+    source "$PROJECT_ROOT/lib/vde-core" 2>/dev/null
 
     # Check guard is working (constants should be readonly still)
     if [[ "$VDE_SUCCESS" -eq 0 ]]; then

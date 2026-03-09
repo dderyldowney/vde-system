@@ -64,10 +64,10 @@ setup_test_env() {
     # Force reload libraries
     unset _VDE_SHELL_COMPAT_LOADED _VDE_CONSTANTS_LOADED _VDE_ERRORS_LOADED _VDE_TEMPLATES_LOADED 2>/dev/null
     
-    source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
-    source "$PROJECT_ROOT/scripts/lib/vde-constants"
-    source "$PROJECT_ROOT/scripts/lib/vde-errors"
-    source "$PROJECT_ROOT/scripts/lib/vde-templates"
+    source "$PROJECT_ROOT/lib/vde-shell-compat"
+    source "$PROJECT_ROOT/lib/vde-constants"
+    source "$PROJECT_ROOT/lib/vde-errors"
+    source "$PROJECT_ROOT/lib/vde-templates"
 }
 
 teardown_test_env() {

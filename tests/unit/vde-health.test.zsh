@@ -11,11 +11,11 @@ test_pass() { echo -e "  ${GREEN}✓ PASS: $1${RESET}"; ((TESTS_PASSED++)) }
 test_fail() { echo -e "  ${RED}✗ FAIL: $1 - $2${RESET}"; ((TESTS_FAILED++)) }
 
 # Source required libraries
-source "$(dirname "$0")/../../scripts/lib/vde-constants"
-source "$(dirname "$0")/../../scripts/lib/vde-shell-compat"
-source "$(dirname "$0")/../../scripts/lib/vm-common"
-source "$(dirname "$0")/../../scripts/lib/vde-docker-state"
-source "$(dirname "$0")/../../scripts/lib/vde-health"
+source "$(dirname "$0")/../../lib/vde-constants"
+source "$(dirname "$0")/../../lib/vde-shell-compat"
+source "$(dirname "$0")/../../lib/vm-common"
+source "$(dirname "$0")/../../lib/vde-docker-state"
+source "$(dirname "$0")/../../lib/vde-health"
 
 # Mock dependencies
 get_vm_info() {

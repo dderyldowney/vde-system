@@ -105,16 +105,27 @@ vm_is_container_stopped() {
     return $VDE_ERR_NOT_FOUND
 }
 
+# is_vde_managed - Check if a container is managed by VDE via labels
+# Args: <container_name>
+# Returns: VDE_SUCCESS (0) if managed, error otherwise
+is_vde_managed() {
+    local container_name="$1"
+    if docker inspect --format '{{index .Config.Labels "vde.managed"}}' "$container_name" 2>/dev/null | grep -q "true"; then
+        return $VDE_SUCCESS
+    fi
+    return $VDE_ERR_GENERAL
+}
+
 # list_running_containers - List all running VDE container names
 # Returns: VDE_SUCCESS (0), outputs container names (one per line)
 list_running_containers() {
-    docker ps --format '{{.Names}}' 2>/dev/null | grep -E '^vde-' || true
+    docker ps --filter "label=vde.managed=true" --format '{{.Names}}' 2>/dev/null || true
     return $VDE_SUCCESS
 }
 
 # list_all_containers - List all VDE containers (running and stopped)
 # Returns: VDE_SUCCESS (0), outputs container names with status (one per line)
 list_all_containers() {
-    docker ps -a --format '{{.Names}}\t{{.Status}}' 2>/dev/null | grep -E '^vde-' || true
+    docker ps -a --filter "label=vde.managed=true" --format '{{.Names}}\t{{.Status}}' 2>/dev/null || true
     return $VDE_SUCCESS
 }

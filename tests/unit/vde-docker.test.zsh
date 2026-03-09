@@ -70,13 +70,13 @@ setup_test_env() {
           _VDE_PATH_UTILS_LOADED _VDE_CORE_GUARD_LOADED _VM_COMMON_LOADED \
           _VDE_DOCKER_LOADED 2>/dev/null
 
-    source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
-    source "$PROJECT_ROOT/scripts/lib/vde-constants"
-    source "$PROJECT_ROOT/scripts/lib/vde-naming"
-    source "$PROJECT_ROOT/scripts/lib/vde-path-utils"
-    source "$PROJECT_ROOT/scripts/lib/vde-core"
-    source "$PROJECT_ROOT/scripts/lib/vm-common"
-    source "$PROJECT_ROOT/scripts/lib/vde-docker"
+    source "$PROJECT_ROOT/lib/vde-shell-compat"
+    source "$PROJECT_ROOT/lib/vde-constants"
+    source "$PROJECT_ROOT/lib/vde-naming"
+    source "$PROJECT_ROOT/lib/vde-path-utils"
+    source "$PROJECT_ROOT/lib/vde-core"
+    source "$PROJECT_ROOT/lib/vm-common"
+    source "$PROJECT_ROOT/lib/vde-docker"
 }
 
 teardown_test_env() {
@@ -151,6 +151,17 @@ echo "VDE Docker Library Unit Tests (Mixed Naming)"
 echo "=============================================="
 echo ""
 
+# Check if Docker is available — print clearly, don't silently fail
+DOCKER_AVAILABLE=0
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    DOCKER_AVAILABLE=1
+    echo "[INFO] Docker daemon is available — running all tests"
+else
+    echo "[SKIP] Docker daemon not available — running mock-only tests"
+    echo "       (Start Docker and re-run to include live container tests)"
+fi
+echo ""
+
 test_get_compose_file
 test_get_docker_project_name
 
@@ -158,8 +169,8 @@ echo ""
 echo "=============================================="
 echo "Test Summary"
 echo "=============================================="
-echo "Passed: $TESTS_PASSED"
-echo "Failed: $TESTS_FAILED"
+echo "Passed:  $TESTS_PASSED"
+echo "Failed:  $TESTS_FAILED"
 echo ""
 
 if [[ $TESTS_FAILED -eq 0 ]]; then

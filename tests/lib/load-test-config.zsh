@@ -30,8 +30,8 @@ load_test_config() {
     fi
 
     # Validate config if vde-core available
-    if [[ -f "$TEST_CONFIG_ROOT/scripts/lib/vde-core" ]]; then
-        source "$TEST_CONFIG_ROOT/scripts/lib/vde-core" 2>/dev/null
+    if [[ -f "$TEST_CONFIG_ROOT/lib/vde-core" ]]; then
+        source "$TEST_CONFIG_ROOT/lib/vde-core" 2>/dev/null
 
         if typeset -f vde_validate_json_schema >/dev/null 2>&1; then
             if ! vde_validate_json_schema "$PYTEST_CONFIG_JSON" "$PYTEST_SCHEMA_JSON" 2>/dev/null; then

@@ -11,9 +11,9 @@ test_pass() { echo -e "  ${GREEN}✓ PASS: $1${RESET}"; ((TESTS_PASSED++)) }
 test_fail() { echo -e "  ${RED}✗ FAIL: $1 - $2${RESET}"; ((TESTS_FAILED++)) }
 
 # Source required libraries
-source "$(dirname "$0")/../../scripts/lib/vde-constants"
-source "$(dirname "$0")/../../scripts/lib/vde-shell-compat"
-source "$(dirname "$0")/../../scripts/lib/vde-progress"
+source "$(dirname "$0")/../../lib/vde-constants"
+source "$(dirname "$0")/../../lib/vde-shell-compat"
+source "$(dirname "$0")/../../lib/vde-progress"
 
 # Test 1: format_time
 test_start "_vde_progress_format_time formats durations"

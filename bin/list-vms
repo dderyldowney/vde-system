@@ -5,8 +5,12 @@
 # Reset all zsh options to defaults to avoid local var printing issues
 emulate zsh
 
+# Determine VDE root directory
+if [[ -z "$VDE_ROOT_DIR" ]]; then
+    export VDE_ROOT_DIR="${0:a:h:h}"
+fi
+
 # Source shared library
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$VDE_ROOT_DIR/lib/vm-common"
 if [[ -f "$VDE_ROOT_DIR/lib/vde-docker-state" ]]; then
     source "$VDE_ROOT_DIR/lib/vde-docker-state"
@@ -99,20 +103,15 @@ display_vm() {
         local marker=""
 
         # Check if VM exists: has state file OR has Docker container
-        # Check both naming patterns: language VMs (*-dev) and service VMs (vde-*)
+        local container_name
+        container_name=$(vde_get_container_name "$name")
         local has_container
-        has_container=$(docker ps -a --filter "name=${name}-dev" --format "{{.Names}}" 2>/dev/null)
-        if [[ -z "$has_container" ]]; then
-            has_container=$(docker ps -a --filter "name=vde-${name}" --format "{{.Names}}" 2>/dev/null)
-        fi
+        has_container=$(docker ps -a --filter "label=vde.managed=true" --filter "name=${container_name}" --format "{{.Names}}" 2>/dev/null)
         
         if vm_is_created "$name" || [[ -n "$has_container" ]]; then
             # Query Docker directly for actual container status
             local container_status
-            container_status=$(docker ps -a --filter "name=${name}-dev" --format "{{.Status}}" 2>/dev/null)
-            if [[ -z "$container_status" ]]; then
-                container_status=$(docker ps -a --filter "name=vde-${name}" --format "{{.Status}}" 2>/dev/null)
-            fi
+            container_status=$(docker ps -a --filter "name=${container_name}" --format "{{.Status}}" 2>/dev/null)
             
             if [[ -n "$container_status" ]]; then
                 if [[ "$container_status" =~ "Up" ]]; then
@@ -192,7 +191,7 @@ get_created_vms() {
 
 # get_docker_vms - Get list of all VDE containers from Docker
 get_docker_vms() {
-    docker ps -a --format '{{.Names}}' | grep -E '\-dev$|^[a-z]+$' || true
+    docker ps -a --filter "label=vde.managed=true" --format '{{.Names}}' || true
 }
 
 # =============================================================================
@@ -205,29 +204,20 @@ if [[ "$NAME_ONLY" == "false" ]]; then
     echo ""
 fi
 
-# Get list of created VMs from docker-state directory
-local created_vms
+# Get lists
 created_vms=$(get_created_vms)
-
-# Also get Docker containers directly (for containers not tracked in docker-state)
-local docker_vms
 docker_vms=$(get_docker_vms)
 
 # Combine both lists, removing duplicates
-local all_vms
-if [[ -n "$created_vms" ]] && [[ -n "$docker_vms" ]]; then
+typeset -a all_vms
+if [[ -n "$created_vms" ]] || [[ -n "$docker_vms" ]]; then
     # Convert docker container names to VM names and combine
-    local docker_vm_names
     docker_vm_names=$(echo "$docker_vms" | sed 's/-dev$//' | sed 's/^vde-//')
-    all_vms=$(echo "$created_vms $docker_vm_names" | tr ' ' '\n' | sort -u)
-elif [[ -n "$docker_vms" ]]; then
-    # Only Docker containers exist
-    all_vms=$(echo "$docker_vms" | sed 's/-dev$//' | sed 's/^vde-//' | sort -u)
-else
-    all_vms="$created_vms"
+    # Use array expansion to correctly handle multi-line strings as separate elements
+    all_vms=(${(f)"$(echo "${created_vms}\n${docker_vm_names}" | grep -v '^$' | sort -u)"})
 fi
 
-if [[ -z "$all_vms" ]]; then
+if [[ ${#all_vms} -eq 0 ]]; then
     if [[ "$NAME_ONLY" == "false" ]]; then
         echo "  (no VMs created - run 'vde create <name>' to create one)"
         echo ""
@@ -235,11 +225,10 @@ if [[ -z "$all_vms" ]]; then
 fi
 
 # Show created VMs with their status
-for name in $all_vms; do
-    local vm_type
+for name in "${all_vms[@]}"; do
     vm_type=$(get_vm_type "$name")
-    local vm_display=$(_assoc_get "VM_DISPLAY" "$name" 2>/dev/null) || vm_display="$name"
-    local vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
+    vm_display=$(get_vm_display_name "$name")
+    vm_aliases=$(_assoc_get "VM_ALIASES" "$name" 2>/dev/null) || vm_aliases=""
     display_vm "$name" "$vm_type" "$vm_display" "$vm_aliases"
 done
 

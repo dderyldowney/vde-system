@@ -41,16 +41,76 @@ _VDE_PARSER_LOADED=1
 _assoc_init "VM_ALIAS_MAP"
 _VM_ALIAS_MAP_BUILT=0
 
-# _build_alias_map - Deprecated (now handled by load_vm_types in vm-common)
+# _build_alias_map - Build the alias-to-name mapping for fast lookup
+# This function pre-computes a hash map where each alias points to its canonical VM name
+# Args: none
+# Returns: VDE_SUCCESS (0)
+# Side Effects: Populates VM_ALIAS_MAP associative array
+# Example: _build_alias_map && echo "Map built"
 _build_alias_map() {
-    load_vm_types
+    # Ensure XTRACE is off to prevent output pollution in plans
+    unsetopt XTRACE 2>/dev/null
+    
+    # Clear existing map
+    _assoc_clear "VM_ALIAS_MAP"
+
+    # Get all VMs - convert space-separated to newline-separated for while read
+    local all_vms
+    all_vms=$(get_all_vms 2>/dev/null)
+
+    # Declare variables outside loop to avoid zsh subshell scoping issues
+    local alias_list
+    local alias_item
+
+    # Convert spaces to newlines and iterate
+    echo "$all_vms" | tr ' ' '\n' | while IFS= read -r vm; do
+        [ -n "$vm" ] || continue
+        # Map the canonical name to itself
+        _assoc_set "VM_ALIAS_MAP" "$vm" "$vm"
+        
+        # Map the prefixed name to itself (internal system names)
+        local prefixed
+        prefixed=$(vde_get_container_name "$vm")
+        if [[ "$prefixed" != "$vm" ]]; then
+            _assoc_set "VM_ALIAS_MAP" "$prefixed" "$vm"
+        fi
+
+        # Get aliases for this VM
+        local alias_list
+        alias_list=$(get_vm_info aliases "$vm" 2>/dev/null)
+
+        if [ -n "$alias_list" ]; then
+            # Split aliases by comma and add each to the map
+            echo "$alias_list" | tr ',' '\n' | while IFS= read -r alias_item; do
+                # Trim whitespace
+                local alias_clean
+                alias_item=$(echo "$alias_item" | tr -d ' ')
+                if [ -n "$alias_item" ]; then
+                    _assoc_set "VM_ALIAS_MAP" "$alias_item" "$vm"
+                fi
+            done
+        fi
+
+        # Also add display name (in lowercase) to support natural language like "JavaScript"
+        local d_name
+        d_name=$(get_vm_info display "$vm" 2>/dev/null)
+        if [ -n "$d_name" ]; then
+            local d_lower
+            d_lower=$(echo "$d_name" | tr '[:upper:]' '[:lower:]')
+            _assoc_set "VM_ALIAS_MAP" "$d_lower" "$vm"
+        fi
+    done
+
+    _VM_ALIAS_MAP_BUILT=1
     return $VDE_SUCCESS
 }
 
 # _ensure_alias_map - Ensure the alias map is built (lazy initialization)
+# Args: none
+# Returns: VDE_SUCCESS (0)
 _ensure_alias_map() {
-    if [ "${_VM_ALIAS_MAP_BUILT:-0}" -eq 0 ]; then
-        load_vm_types
+    if [ $_VM_ALIAS_MAP_BUILT -eq 0 ]; then
+        _build_alias_map
     fi
     return $VDE_SUCCESS
 }
@@ -294,29 +354,52 @@ extract_vm_names() {
     # Extract words from input and look up each in the alias map
     # This is O(w) where w is the number of words, instead of O(n×m)
     local found_vms=""
-    local -A seen_vms
+    _assoc_init "seen_vms"  # Track already-found VMs to avoid duplicates
 
-    # Split input into words
-    for word in ${(s: :)input_lower}; do
+    # Declare variables outside loop to avoid zsh subshell scoping issues
+    local canonical
+    local word
+
+    # Use a temp file to collect results (subshell-safe)
+    local tmp_file
+    tmp_file=$(mktemp 2>/dev/null || echo "/tmp/vde-extract-$$")
+
+    # Split input into words (alphanumeric sequences)
+    # Use explicit splitting for zsh/bash compatibility
+    echo "$input_lower" | tr ' ' '\n' | while IFS= read -r word; do
         # Clean the word (remove punctuation, keep only alphanumeric, dashes and plus)
-        local w_clean="${word%%[^a-z0-9+-]*}"
-        w_clean="${w_clean//[^a-z0-9+-]/}"
+        # Handle cases where word might be followed by punctuation (e.g. "python.")
+        local w_clean
+        w_clean=$(echo "$word" | sed 's/[^a-z0-9+-].*$//')
+        w_clean=$(echo "$w_clean" | tr -cd 'a-z0-9+-')
         [ -z "$w_clean" ] && continue
 
         # O(1) lookup in alias map
-        local canonical="${VM_ALIAS_MAP[$w_clean]}"
+        local canonical
+        canonical=$(_assoc_get "VM_ALIAS_MAP" "$w_clean" 2>/dev/null)
 
         if [ -n "$canonical" ]; then
-            if [[ -z "${seen_vms[$canonical]:-}" ]]; then
-                seen_vms[$canonical]=1
-                found_vms+="$canonical "
+            # Verify it's an exact match for the word
+            # Check if w_clean matches the alias/name exactly
+            if ! _assoc_has_key "seen_vms" "$canonical"; then
+                _assoc_set "seen_vms" "$canonical" "1"
+                echo "$canonical" >> "$tmp_file"
             fi
         fi
     done
 
-    # Print found VMs (clean trailing space and convert spaces to newlines)
+    # Clean up
+    _assoc_clear "seen_vms"
+
+    # Read collected VMs from temp file
+    if [ -f "$tmp_file" ]; then
+        found_vms=$(cat "$tmp_file" 2>/dev/null | tr '\n' ' ' | sed 's/ $//')
+        rm -f "$tmp_file"
+    fi
+
+    # Print found VMs
     if [ -n "$found_vms" ]; then
-        echo "${found_vms}" | sed 's/ $//' | tr ' ' '\n'
+        echo "$found_vms" | tr ' ' '\n'
     fi
     return $VDE_SUCCESS
 }
@@ -694,7 +777,7 @@ execute_plan() {
                 
                 # SECURITY: Validate each VM name (warn but don't fail for flexibility)
                 local vm
-                for vm in ${=vms}; do
+                for vm in $vms; do
                     if ! validate_vm_name_security "$vm" 2>/dev/null; then
                         log_error "Warning: VM '$vm' not in known VM list"
                     fi
@@ -726,7 +809,7 @@ execute_plan() {
     # Count VMs
     local vm_count=0
     local vm
-    for vm in ${=vms}; do
+    for vm in $vms; do
         [ -n "$vm" ] && vm_count=$((vm_count + 1))
     done
 
@@ -741,7 +824,7 @@ execute_plan() {
             if [ $vm_count -eq 0 ]; then
                 vde_get_running_vms
             else
-                for vm in ${=vms}; do
+                for vm in $vms; do
                     [ -n "$vm" ] || continue
                     local vm_status
                     vm_status=$(vde_get_vm_status "$vm")
@@ -757,7 +840,7 @@ execute_plan() {
                 return $VDE_ERR_INVALID_INPUT
             fi
 
-            for vm in ${=vms}; do
+            for vm in $vms; do
                 [ -n "$vm" ] || continue
                 if ! is_known_vm "$vm" >/dev/null 2>&1; then
                     # Unknown VM type - prompt user to confirm
@@ -788,7 +871,7 @@ execute_plan() {
                 return $VDE_ERR_INVALID_INPUT
             fi
 
-            for vm in ${=vms}; do
+            for vm in $vms; do
                 [ -n "$vm" ] || continue
                 if ! vm_exists "$vm" >/dev/null 2>&1; then
                     log_error "VM $vm does not exist. Create it first."
@@ -797,7 +880,7 @@ execute_plan() {
             done
 
             # start-virtual handles starting one or more VMs
-            ./bin/start-virtual ${=vms}
+            ./bin/start-virtual $vms
             return $?
             ;;
 
@@ -808,7 +891,7 @@ execute_plan() {
             fi
 
             # shutdown-virtual handles stopping one or more VMs
-            ./bin/shutdown-virtual ${=vms}
+            ./bin/shutdown-virtual $vms
             return $?
             ;;
 
@@ -818,7 +901,7 @@ execute_plan() {
                 return $VDE_ERR_INVALID_INPUT
             fi
 
-            for vm in ${=vms}; do
+            for vm in $vms; do
                 [ -n "$vm" ] || continue
                 # restart-virtual handles restarting a VM
                 ./bin/restart-virtual "$vm"
@@ -832,7 +915,7 @@ execute_plan() {
                 return $VDE_ERR_INVALID_INPUT
             fi
 
-            for vm in ${=vms}; do
+            for vm in $vms; do
                 [ -n "$vm" ] || continue
                 # ssh-vm handles getting connection info
                 ./bin/ssh-vm "$vm" --info

@@ -1,10 +1,3 @@
-# Behave Configuration for VDE Test Suite
-#
-# Industry-standard tiered testing:
-# - unit: Fast, no external dependencies (parser, library tests)
-# - integration: Moderate setup (vde CLI, ssh-setup)
-# - e2e: Full Docker/VM environment
-
 {
   "version": "1.0",
   "description": "VDE BDD Test Configuration - Tiered Testing",
@@ -25,21 +18,28 @@
   "tiers": {
     "unit": {
       "description": "Fast unit tests - parser, library functions",
-      "tags": ["@unit"],
+      "tags": [
+        "@unit"
+      ],
       "environment": "environment.unit",
       "timeout": 30,
       "setup": "minimal"
     },
     "integration": {
       "description": "Integration tests - vde CLI, ssh-setup",
-      "tags": ["@integration"],
-      "environment": "environment.integration", 
+      "tags": [
+        "@integration"
+      ],
+      "environment": "environment.integration",
       "timeout": 120,
       "setup": "vde_init"
     },
     "e2e": {
       "description": "End-to-end tests - full Docker/VM workflows",
-      "tags": ["@docker", "@e2e"],
+      "tags": [
+        "@docker",
+        "@e2e"
+      ],
       "environment": "environment.e2e",
       "timeout": 300,
       "setup": "full"
