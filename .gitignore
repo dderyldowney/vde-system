@@ -66,7 +66,7 @@ TODO.md
 .docker-state-*.json
 configs/docker/*/docker-compose-*.yml
 env-files/*.env
--e 
+!env-files/vde-*.env
 # Transient Docker state (per-user local state)
 .docker-state/
 .docker-state-*.json

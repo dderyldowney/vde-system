@@ -72,7 +72,7 @@ class TestConfigLoader:
         """
         # Build validation script using vde-core
         validation_script = f"""
-source "{self._vde_root}/scripts/lib/vde-core" 2>/dev/null || exit 1
+source "{self._vde_root}/lib/vde-core" 2>/dev/null || exit 1
 
 vde_validate_json_schema "{self.config_file}" "{self.schema_file}"
 exit $?

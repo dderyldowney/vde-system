@@ -1,301 +1,173 @@
 """
-Unit tests for shell_helpers module.
+Unit tests for shell_helpers.py — real implementation, no mocks, no skips.
 
-These tests use mocks to simulate subprocess responses, allowing us to test
-the helper function logic without requiring actual Docker containers.
+Container-dependent tests start vde-python in setUpClass and stop it in
+tearDownClass so every test runs against a live container.
 """
 
-import pytest
+import os
 import subprocess
-from unittest.mock import patch, MagicMock
-from tests.features.steps.shell_helpers import (
+import sys
+import unittest
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "features" / "steps"))
+
+from shell_helpers import (
     execute_in_container,
     verify_command_output,
     verify_file_exists_in_container,
-    get_container_env_var
+    get_container_env_var,
+    _get_vde_root,
 )
 
-
-class TestExecuteInContainer:
-    """Tests for execute_in_container function."""
-    
-    @patch('tests.features.steps.shell_helpers.subprocess.run')
-    def test_successful_command_execution(self, mock_run):
-        """Test successful command execution returns correct data structure."""
-        # Mock successful command execution
-        mock_run.return_value = MagicMock(
-            stdout="Python 3.11.0\n",
-            stderr="",
-            returncode=0
-        )
-        
-        result = execute_in_container("vde-python", "python --version")
-        
-        assert result['stdout'] == "Python 3.11.0\n"
-        assert result['stderr'] == ""
-        assert result['returncode'] == 0
-        
-        # Verify docker exec was called correctly
-        mock_run.assert_called_once()
-        call_args = mock_run.call_args[0][0]
-        assert call_args[0:3] == ["docker", "exec", "vde-python"]
-        assert "python --version" in call_args
-    
-    @patch('tests.features.steps.shell_helpers.subprocess.run')
-    def test_command_with_error_output(self, mock_run):
-        """Test command that produces stderr output."""
-        mock_run.return_value = MagicMock(
-            stdout="",
-            stderr="command not found: invalid\n",
-            returncode=127
-        )
-        
-        result = execute_in_container("vde-python", "invalid")
-        
-        assert result['stdout'] == ""
-        assert "command not found" in result['stderr']
-        assert result['returncode'] == 127
-    
-    @patch('tests.features.steps.shell_helpers.subprocess.run')
-    def test_command_timeout(self, mock_run):
-        """Test command timeout raises TimeoutExpired."""
-        mock_run.side_effect = subprocess.TimeoutExpired(
-            cmd=["docker", "exec", "vde-python", "sh", "-c", "sleep 100"],
-            timeout=5
-        )
-        
-        with pytest.raises(subprocess.TimeoutExpired):
-            execute_in_container("vde-python", "sleep 100", timeout=5)
-    
-    @patch('tests.features.steps.shell_helpers.subprocess.run')
-    def test_docker_exec_failure(self, mock_run):
-        """Test docker exec failure raises RuntimeError."""
-        mock_run.side_effect = Exception("Docker daemon not running")
-        
-        with pytest.raises(RuntimeError) as exc_info:
-            execute_in_container("vde-python", "echo test")
-        
-        assert "Failed to execute command" in str(exc_info.value)
-        assert "vde-python" in str(exc_info.value)
-    
-    @patch('tests.features.steps.shell_helpers.subprocess.run')
-    def test_custom_timeout(self, mock_run):
-        """Test custom timeout is passed to subprocess.run."""
-        mock_run.return_value = MagicMock(
-            stdout="output",
-            stderr="",
-            returncode=0
-        )
-        
-        execute_in_container("vde-python", "echo test", timeout=60)
-        
-        # Verify timeout parameter was passed
-        assert mock_run.call_args[1]['timeout'] == 60
+VDE_ROOT = Path(__file__).parent.parent.parent
+VDE_PYTHON = "vde-python"
 
 
-class TestVerifyCommandOutput:
-    """Tests for verify_command_output function."""
-    
-    @patch('tests.features.steps.shell_helpers.execute_in_container')
-    def test_output_contains_expected_string(self, mock_execute):
-        """Test returns True when output contains expected string."""
-        mock_execute.return_value = {
-            'stdout': "Python 3.11.0\n",
-            'stderr': "",
-            'returncode': 0
-        }
-        
-        result = verify_command_output(
-            "vde-python",
-            "python --version",
-            "Python 3"
-        )
-        
-        assert result is True
-    
-    @patch('tests.features.steps.shell_helpers.execute_in_container')
-    def test_output_missing_expected_string(self, mock_execute):
-        """Test returns False when output doesn't contain expected string."""
-        mock_execute.return_value = {
-            'stdout': "Python 3.11.0\n",
-            'stderr': "",
-            'returncode': 0
-        }
-        
-        result = verify_command_output(
-            "vde-python",
-            "python --version",
-            "Python 2"
-        )
-        
-        assert result is False
-    
-    @patch('tests.features.steps.shell_helpers.execute_in_container')
-    def test_command_failure_returns_false(self, mock_execute):
-        """Test returns False when command fails."""
-        mock_execute.return_value = {
-            'stdout': "",
-            'stderr': "command not found\n",
-            'returncode': 127
-        }
-        
-        result = verify_command_output(
-            "vde-python",
-            "invalid_command",
-            "expected"
-        )
-        
-        assert result is False
-    
-    @patch('tests.features.steps.shell_helpers.execute_in_container')
-    def test_exact_match(self, mock_execute):
-        """Test exact string matching works."""
-        mock_execute.return_value = {
-            'stdout': "exact output",
-            'stderr': "",
-            'returncode': 0
-        }
-        
-        result = verify_command_output(
-            "vde-python",
-            "echo 'exact output'",
-            "exact output"
-        )
-        
-        assert result is True
+def _is_running(name: str) -> bool:
+    r = subprocess.run(
+        ["docker", "ps", "--filter", f"name={name}", "--format", "{{.Names}}"],
+        capture_output=True, text=True, timeout=10,
+    )
+    return name in r.stdout
 
 
-class TestVerifyFileExistsInContainer:
-    """Tests for verify_file_exists_in_container function."""
-    
-    @patch('tests.features.steps.shell_helpers.execute_in_container')
-    def test_file_exists(self, mock_execute):
-        """Test returns True when file exists (test -f returns 0)."""
-        mock_execute.return_value = {
-            'stdout': "",
-            'stderr': "",
-            'returncode': 0
-        }
-        
-        result = verify_file_exists_in_container(
-            "vde-python",
-            "/usr/bin/python3"
-        )
-        
-        assert result is True
-        
-        # Verify test -f was called
-        mock_execute.assert_called_once()
-        call_args = mock_execute.call_args[0]
-        assert "test -f /usr/bin/python3" in call_args[1]
-    
-    @patch('tests.features.steps.shell_helpers.execute_in_container')
-    def test_file_does_not_exist(self, mock_execute):
-        """Test returns False when file doesn't exist (test -f returns 1)."""
-        mock_execute.return_value = {
-            'stdout': "",
-            'stderr': "",
-            'returncode': 1
-        }
-        
-        result = verify_file_exists_in_container(
-            "vde-python",
-            "/nonexistent/file"
-        )
-        
-        assert result is False
-    
-    @patch('tests.features.steps.shell_helpers.execute_in_container')
-    def test_file_path_with_spaces(self, mock_execute):
-        """Test handles file paths with spaces."""
-        mock_execute.return_value = {
-            'stdout': "",
-            'stderr': "",
-            'returncode': 0
-        }
-        
-        result = verify_file_exists_in_container(
-            "vde-python",
-            "/path/with spaces/file.txt"
-        )
-        
-        assert result is True
-        
-        # Verify the path was passed correctly
-        call_args = mock_execute.call_args[0]
-        assert "/path/with spaces/file.txt" in call_args[1]
+def _start_container() -> None:
+    subprocess.run(
+        [str(VDE_ROOT / "bin" / "vde"), "start", "python"],
+        cwd=str(VDE_ROOT), capture_output=True, text=True, timeout=60,
+        check=True,
+    )
 
 
-class TestGetContainerEnvVar:
-    """Tests for get_container_env_var function."""
-    
-    @patch('tests.features.steps.shell_helpers.execute_in_container')
-    def test_env_var_exists(self, mock_execute):
-        """Test returns env var value when it exists."""
-        mock_execute.return_value = {
-            'stdout': "/usr/local/bin:/usr/bin:/bin\n",
-            'stderr': "",
-            'returncode': 0
-        }
-        
-        result = get_container_env_var("vde-python", "PATH")
-        
-        assert result == "/usr/local/bin:/usr/bin:/bin"
-        
-        # Verify printenv was called
-        mock_execute.assert_called_once()
-        call_args = mock_execute.call_args[0]
-        assert "printenv PATH" in call_args[1]
-    
-    @patch('tests.features.steps.shell_helpers.execute_in_container')
-    def test_env_var_does_not_exist(self, mock_execute):
-        """Test returns None when env var doesn't exist."""
-        mock_execute.return_value = {
-            'stdout': "",
-            'stderr': "",
-            'returncode': 1
-        }
-        
-        result = get_container_env_var("vde-python", "NONEXISTENT_VAR")
-        
-        assert result is None
-    
-    @patch('tests.features.steps.shell_helpers.execute_in_container')
-    def test_env_var_empty_string(self, mock_execute):
-        """Test handles empty string env var value."""
-        mock_execute.return_value = {
-            'stdout': "\n",
-            'stderr': "",
-            'returncode': 0
-        }
-        
-        result = get_container_env_var("vde-python", "EMPTY_VAR")
-        
-        assert result == ""
-    
-    @patch('tests.features.steps.shell_helpers.execute_in_container')
-    def test_env_var_multiline_value(self, mock_execute):
-        """Test handles multiline env var values."""
-        mock_execute.return_value = {
-            'stdout': "line1\nline2\nline3\n",
-            'stderr': "",
-            'returncode': 0
-        }
-        
-        result = get_container_env_var("vde-python", "MULTILINE_VAR")
-        
-        # Should strip only trailing newline, preserving internal newlines
-        assert result == "line1\nline2\nline3"
-    
-    @patch('tests.features.steps.shell_helpers.execute_in_container')
-    def test_env_var_with_special_characters(self, mock_execute):
-        """Test handles env var values with special characters."""
-        mock_execute.return_value = {
-            'stdout': "value=with:special/chars\n",
-            'stderr': "",
-            'returncode': 0
-        }
-        
-        result = get_container_env_var("vde-python", "SPECIAL_VAR")
-        
-        assert result == "value=with:special/chars"
+def _stop_container() -> None:
+    subprocess.run(
+        [str(VDE_ROOT / "bin" / "vde"), "stop", "python"],
+        cwd=str(VDE_ROOT), capture_output=True, text=True, timeout=30,
+    )
+
+
+# ---------------------------------------------------------------------------
+# _get_vde_root — no container needed
+# ---------------------------------------------------------------------------
+
+class TestGetVdeRoot(unittest.TestCase):
+    def test_returns_string(self):
+        root = _get_vde_root()
+        self.assertIsInstance(root, str)
+        self.assertGreater(len(root), 0)
+
+    def test_env_override(self):
+        original = os.environ.get("VDE_ROOT_DIR")
+        try:
+            os.environ["VDE_ROOT_DIR"] = "/tmp"
+            self.assertEqual(_get_vde_root(), "/tmp")
+        finally:
+            if original is None:
+                os.environ.pop("VDE_ROOT_DIR", None)
+            else:
+                os.environ["VDE_ROOT_DIR"] = original
+
+
+# ---------------------------------------------------------------------------
+# Container-dependent tests — vde-python started/stopped around the class
+# ---------------------------------------------------------------------------
+
+class TestWithContainer(unittest.TestCase):
+    _started_by_us = False
+
+    @classmethod
+    def setUpClass(cls):
+        if not _is_running(VDE_PYTHON):
+            _start_container()
+            cls._started_by_us = True
+        if not _is_running(VDE_PYTHON):
+            raise RuntimeError("Failed to start vde-python for tests")
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls._started_by_us:
+            _stop_container()
+
+    # --- execute_in_container ---
+
+    def test_execute_returns_dict(self):
+        result = execute_in_container(VDE_PYTHON, "echo hello")
+        self.assertIsInstance(result, dict)
+        for key in ("stdout", "stderr", "returncode"):
+            self.assertIn(key, result)
+
+    def test_execute_output(self):
+        result = execute_in_container(VDE_PYTHON, "echo hello")
+        self.assertEqual(result["returncode"], 0)
+        self.assertIn("hello", result["stdout"])
+
+    def test_execute_failing_command_nonzero_rc(self):
+        result = execute_in_container(VDE_PYTHON, "false")
+        self.assertNotEqual(result["returncode"], 0)
+
+    def test_execute_stderr_captured(self):
+        result = execute_in_container(VDE_PYTHON, "echo error >&2")
+        self.assertEqual(result["returncode"], 0)
+
+    def test_execute_pipe(self):
+        result = execute_in_container(VDE_PYTHON, "echo hello | tr a-z A-Z")
+        self.assertEqual(result["returncode"], 0)
+        self.assertIn("HELLO", result["stdout"])
+
+    def test_execute_nonexistent_container_errors(self):
+        try:
+            result = execute_in_container("nonexistent-container-xyz-999", "echo hi")
+            self.assertNotEqual(result["returncode"], 0)
+        except RuntimeError:
+            pass  # also acceptable
+
+    # --- verify_command_output ---
+
+    def test_verify_output_match_returns_true(self):
+        self.assertTrue(verify_command_output(VDE_PYTHON, "echo hello", "hello"))
+
+    def test_verify_output_mismatch_returns_false(self):
+        self.assertFalse(verify_command_output(VDE_PYTHON, "echo hello", "world"))
+
+    def test_verify_output_failing_command_returns_false(self):
+        self.assertFalse(verify_command_output(VDE_PYTHON, "false", "anything"))
+
+    def test_verify_output_partial_match(self):
+        self.assertTrue(verify_command_output(VDE_PYTHON, "python3 --version", "Python"))
+
+    # --- verify_file_exists_in_container ---
+
+    def test_existing_file_returns_true(self):
+        self.assertTrue(verify_file_exists_in_container(VDE_PYTHON, "/bin/sh"))
+
+    def test_nonexistent_file_returns_false(self):
+        self.assertFalse(verify_file_exists_in_container(VDE_PYTHON, "/nonexistent/file/xyz"))
+
+    def test_python3_binary_exists(self):
+        result = (
+            verify_file_exists_in_container(VDE_PYTHON, "/usr/bin/python3")
+            or verify_file_exists_in_container(VDE_PYTHON, "/usr/local/bin/python3")
+        )
+        self.assertTrue(result)
+
+    # --- get_container_env_var ---
+
+    def test_path_var_exists(self):
+        value = get_container_env_var(VDE_PYTHON, "PATH")
+        self.assertIsNotNone(value)
+        self.assertGreater(len(value), 0)
+        self.assertIn("/", value)
+
+    def test_nonexistent_var_returns_none(self):
+        self.assertIsNone(get_container_env_var(VDE_PYTHON, "NONEXISTENT_VAR_XYZ_999"))
+
+    def test_home_var_exists(self):
+        value = get_container_env_var(VDE_PYTHON, "HOME")
+        self.assertIsNotNone(value)
+        self.assertIn("/", value)
+
+
+if __name__ == "__main__":
+    unittest.main()

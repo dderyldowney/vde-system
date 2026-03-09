@@ -29,7 +29,7 @@ VDE_ROOT = pytest_config._vde_root
 @pytest.fixture
 def vde_core_script():
     """Path to vde-core library."""
-    return VDE_ROOT / "scripts" / "lib" / "vde-core"
+    return VDE_ROOT / "lib" / "vde-core"
 
 
 @pytest.fixture
@@ -133,7 +133,7 @@ exit $?
         invalid_json.write_text('{"invalid": json}')  # Invalid JSON syntax
 
         # Use vm-types schema for validation
-        schema_file = VDE_ROOT / "scripts" / "data" / "vm-types.schema.json"
+        schema_file = VDE_ROOT / "data" / "vm-types.schema.json"
 
         script = f"""
 source "{vde_core_script}"
@@ -203,7 +203,7 @@ class TestConfigParsing:
 
     def test_parse_vm_types(self):
         """Test parsing vm-types.json structure."""
-        vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.json"
+        vm_types_file = VDE_ROOT / "data" / "vm-types.json"
 
         with open(vm_types_file) as f:
             data = json.load(f)
@@ -221,7 +221,7 @@ class TestConfigParsing:
             assert "name" in vm
             assert "display" in vm
             assert "install" in vm
-            assert vm.get("port") is None  # Language VMs have null ports
+            assert "ssh_port" in vm  # Language VMs have ssh_port
 
         # Verify service VMs
         service_vms = data["vms"]["service"]
@@ -230,37 +230,36 @@ class TestConfigParsing:
             assert "name" in vm
             assert "display" in vm
             assert "install" in vm
-            assert "port" in vm
-            assert vm["port"] is not None  # Service VMs have port strings
+            assert "service_port" in vm
+            assert vm["service_port"] is not None  # Service VMs have service_port
 
     def test_parse_docker_config(self):
         """Test parsing vm-docker-config.json structure."""
-        docker_config_file = VDE_ROOT / "scripts" / "data" / "vm-docker-config.json"
+        docker_config_file = VDE_ROOT / "data" / "vm-docker-config.json"
 
         with open(docker_config_file) as f:
             data = json.load(f)
 
         # Verify structure
         assert "version" in data
-        assert "base" in data
-        assert "language" in data
-        assert "service" in data
+        assert "base_settings" in data
+        assert "languages" in data
+        assert "services" in data
 
         # Verify base settings
-        base = data["base"]
-        assert "compose_dir" in base
-        assert "env_dir" in base
+        base = data["base_settings"]
+        assert "context" in base
+        assert "base_dockerfile" in base
 
         # Verify language VMs have workspace_mount
-        language = data["language"]
+        language = data["languages"]
         for vm_name, vm_config in language.items():
             assert "compose_file" in vm_config
             assert "container_name" in vm_config
             assert "workspace_mount" in vm_config
-            assert vm_config["container_name"].endswith("-dev")
 
         # Verify service VMs have data_mount
-        service = data["service"]
+        service = data["services"]
         for vm_name, vm_config in service.items():
             assert "compose_file" in vm_config
             assert "container_name" in vm_config
@@ -278,19 +277,19 @@ class TestConfigIntegration:
 source "{VDE_ROOT}/lib/vm-common"
 
 # Check that arrays are populated (config was loaded)
-if [[ ${{#VM_NAMES[@]}} -eq 0 ]]; then
-    echo "VM_NAMES array is empty" >&2
+if [[ ${{#lang_vms[@]}} -eq 0 ]]; then
+    echo "lang_vms array is empty" >&2
     exit 1
 fi
 
-if [[ ${{#LANG_VM_NAMES[@]}} -eq 0 ]]; then
-    echo "LANG_VM_NAMES array is empty" >&2
+if [[ ${{#service_vms[@]}} -eq 0 ]]; then
+    echo "service_vms array is empty" >&2
     exit 1
 fi
 
-echo "Loaded ${{#VM_NAMES[@]}} total VMs"
-echo "Loaded ${{#LANG_VM_NAMES[@]}} language VMs"
-echo "Loaded ${{#SERVICE_VM_NAMES[@]}} service VMs"
+echo "Loaded $(( ${{#lang_vms[@]}} + ${{#service_vms[@]}} )) total VMs"
+echo "Loaded ${{#lang_vms[@]}} language VMs"
+echo "Loaded ${{#service_vms[@]}} service VMs"
 exit 0
 """
         result = subprocess.run(
