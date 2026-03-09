@@ -7,6 +7,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 **Specification Document:** [`docs/VDE-SPEC.md`](docs/VDE-SPEC.md) (v1.0.0)
 
 > **MANDATE**: All development, bug fixes, and implementation work MUST conform to [`docs/VDE-SPEC.md`](docs/VDE-SPEC.md). This document is the single source of truth for:
+>
 > - Function signatures and interfaces
 > - Data structures and file formats
 > - CLI command specifications
@@ -14,6 +15,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 > - Implementation priorities
 >
 > **Specification Flow (Tests Prove Implementation)**:
+>
 > ```
 > USER GUIDE (Documented Workflows)
 >         ↓
@@ -36,6 +38,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Core Mandates
+
 - **MCP Server Utilization**: All agents MUST utilize connected MCP servers (e.g., `context7`, `github`, `redis`, `MCP_DOCKER`) as their primary interface for system interaction.
 - **Documentation Source-of-Truth**: All documentation updates, technical deep dives, and API/library queries MUST utilize the `context7` and `gemini-docs-mcp` MCP servers to ensure accuracy and version alignment.
 - **Active Endpoints**: Ensure all tool invocations reference active MCP endpoints.
@@ -45,7 +48,43 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 
 ---
 
+## Project Memory & Session Handover
+
+All agents MUST follow these documentation protocols to ensure continuity across sessions:
+
+### Project Memory (MEMORY.md)
+
+- **File**: `MEMORY.md` in project root
+- **Purpose**: Single source of truth for project state, current goals, and known issues across sessions
+- **Requirements**:
+  - Agents MUST read `MEMORY.md` at the start of every new session
+  - Agents MUST update `MEMORY.md` in **near real-time** as work progresses (test results, key findings, milestone completions)
+  - Use clear timestamps (ISO 8601) for all entries
+  - Include current test status, active goals, blockers, and code changes
+  - **Critical**: Keep MEMORY.md current - update immediately when significant events occur (test runs, fixes applied, phase completions)
+
+### Paired Session Handover Files
+
+- **Files**:
+  - `session_handover.md` - Current session context, accomplishments, and next steps
+  - `plans/session_handover_remediation.md` - Remediation plan with phased approach
+- **Requirements**:
+  - Agents MUST read both files at session start
+  - Agents MUST update both files when work scope changes or significant milestones are reached
+  - Updates MUST be synchronized between the two files (paired update policy)
+  - Include cross-references between documents for traceability
+- **File Paths**: Both relative to project root
+
+### Workflow Integration
+
+1. At session start: Read `MEMORY.md` → Read `session_handover.md` + `plans/session_handover_remediation.md`
+2. During work: Update files in near real-time as milestones are reached
+3. At session end: Document completed work, test results, and next steps in all three files
+
+---
+
 ## Planner
+
 - **Description**: Creates detailed implementation plans and strategies for complex features.
 - **File Path**: `agents/planner.md`
 - **Role**: Architect & Strategist
@@ -57,6 +96,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Scout
+
 - **Description**: Explores the codebase to understand structure, patterns, and conventions.
 - **File Path**: `agents/scout.md`
 - **Role**: Information Gatherer
@@ -68,6 +108,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Coder
+
 - **Description**: Writes clean, efficient, and idiomatic code adhering to project standards.
 - **File Path**: `agents/coder.md`
 - **Role**: Software Engineer
@@ -79,6 +120,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Tester
+
 - **Description**: Writes and executes tests to ensure software quality and reliability.
 - **File Path**: `agents/tester.md`
 - **Role**: QA Engineer
@@ -90,6 +132,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Reviewer
+
 - **Description**: Performs systematic code reviews to ensure quality and consistency.
 - **File Path**: `agents/reviewer.md`
 - **Role**: Quality Auditor
@@ -101,6 +144,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Debugger
+
 - **Description**: Analyzes errors and bugs to identify root causes and suggest fixes.
 - **File Path**: `agents/debugger.md`
 - **Role**: Troubleshooting Expert
@@ -112,6 +156,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Git Manager
+
 - **Description**: Manages version control operations and commit history.
 - **File Path**: `agents/git-manager.md`
 - **Role**: SCM Administrator
@@ -123,6 +168,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Security Auditor
+
 - **Description**: Conducts security audits and vulnerability scans on the codebase.
 - **File Path**: `agents/security-auditor.md`
 - **Role**: Security Engineer
@@ -134,6 +180,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Docs Manager
+
 - **Description**: Manages project documentation and ensures it stays in sync with code.
 - **File Path**: `agents/docs-manager.md`
 - **Role**: Technical Writer
@@ -145,6 +192,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Project Manager
+
 - **Description**: Oversees project progress, manages todos, and coordinates team tasks.
 - **File Path**: `agents/project-manager.md`
 - **Role**: Team Lead
@@ -156,6 +204,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Database Admin
+
 - **Description**: Manages database configurations, migrations, and performance for service VMs.
 - **File Path**: `agents/database-admin.md`
 - **Role**: Database Specialist
@@ -167,6 +216,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Backend Specialist
+
 - **Description**: Expert in server-side logic, API design, and system integration.
 - **File Path**: `agents/backend-specialist.md`
 - **Role**: Backend Architect
@@ -178,6 +228,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Fullstack Developer
+
 - **Description**: Versatile engineer capable of working across all layers of the stack.
 - **File Path**: `agents/fullstack-developer.md`
 - **Role**: Generalist Engineer
@@ -189,6 +240,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Researcher
+
 - **Description**: Researches external resources, libraries, and best practices.
 - **File Path**: `agents/researcher.md`
 - **Role**: Knowledge Specialist
@@ -200,6 +252,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Brainstormer
+
 - **Description**: Generates creative ideas and alternative approaches to problems.
 - **File Path**: `agents/brainstormer.md`
 - **Role**: Creative Thinker
@@ -211,6 +264,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## UI Designer
+
 - **Description**: Focuses on the user interface and user experience of VDE components.
 - **File Path**: `agents/ui-designer.md`
 - **Role**: UX/UI Specialist
@@ -222,6 +276,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Frontend Specialist
+
 - **Description**: Expert in frontend frameworks and user interface development.
 - **File Path**: `agents/frontend-specialist.md`
 - **Role**: Frontend Engineer
@@ -233,6 +288,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ---
 
 ## Copywriter
+
 - **Description**: Creates high-quality marketing, community, and technical content.
 - **File Path**: `agents/copywriter.md`
 - **Role**: Content Creator

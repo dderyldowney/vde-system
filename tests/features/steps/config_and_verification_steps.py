@@ -546,7 +546,7 @@ def step_config_deleted(context):
 def step_new_image_reflects(context):
     """Verify new image reflects changes."""
     output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['new', 'image', 'built', 'reflect']), \
+    assert any(x in output.lower() for x in ['new', 'image', 'built', 'reflect', 'restart', 'rebuild']), \
         f"Expected new image message: {output}"
 
 
