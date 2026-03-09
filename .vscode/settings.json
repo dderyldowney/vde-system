@@ -1,0 +1,6 @@
+{
+  "makefile.configureOnOpen": false,
+  "python.terminal.useEnvFile": true,
+  "python.envFile": "${workspaceFolder}/.env",
+  "python.defaultInterpreterPath": "/usr/local/bin/python3"
+}

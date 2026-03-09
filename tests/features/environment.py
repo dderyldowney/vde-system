@@ -13,6 +13,16 @@ import sys
 import tempfile
 from pathlib import Path
 
+# Load root .env file (python.terminal.useEnvFile equivalent for Behave)
+_env_file = Path(__file__).parent.parent.parent / ".env"
+if _env_file.is_file():
+    with open(_env_file) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _key, _, _val = _line.partition("=")
+                os.environ.setdefault(_key.strip(), _val.strip())
+
 # Add tests directory to path
 tests_dir_path = Path(__file__).parent.parent
 if str(tests_dir_path) not in sys.path:
