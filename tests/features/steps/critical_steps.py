@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 from behave import given, then, when
 
@@ -64,7 +65,7 @@ def _vde_cli(command: str, timeout: int = 30) -> subprocess.CompletedProcess:
     )
 
 
-def _ssh_port_from_compose(vm_name: str) -> int | None:
+def _ssh_port_from_compose(vm_name: str) -> Optional[int]:
     """Extract the host SSH port from a VM's docker-compose.yml."""
     compose = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
     if not compose.exists():
