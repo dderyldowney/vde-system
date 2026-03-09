@@ -1,5 +1,8 @@
 Remediation Plan: Session Handover Issues (VDE Test Suite & Performance)
 
+## Related Handovers
+- Session Handover: see ../session_handover.md
+
 Overview
 - Address the 5 problem areas captured in session_handover.md: performance hangs, subshell hot-paths, parser variable leakage, Docker safety/isolation, and integration test expectations.
 - Deliverables: robust plan execution, validated test results, hardened Docker cleanup, and clear documentation updates.
