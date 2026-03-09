@@ -55,7 +55,7 @@ This session focused on resolving critical performance hangs and stability issue
 - `make test-benchmark`: **5/5 passing**
 - `make test-comprehensive` (parser + commands): **passing**
 - `make test-compatibility` (shell compat): **passing** *(target added this session)*
-- `python3 -m behave` (Behave BDD): **240/240 passing — 0 failing** *(pending confirmation after postgres fix)*
+- `python3 -m behave` (Behave BDD): **240/240 passing — 0 failing** *(confirmed 2026-03-09)*
 - `python3.13 -m pytest tests/unit/` (Python unit): **72/72 passing**
 
 ## Known Remaining Issues
@@ -67,7 +67,7 @@ This session focused on resolving critical performance hangs and stability issue
 - **`vde-js.env`, `vde-postgres.env`, `vde-zig.env` recurring deletion (Partially resolved 2026-03-09)**:
   - Root cause: `_merge_restore_dir` in `tests/features/environment.py` deletes files present on disk but absent from backup; `.gitignore` previously excluded these from tracking.
   - Fixes applied: (1) Added `!env-files/vde-*.env` negation to `.gitignore`; (2) Added guard in `_merge_restore_dir` to never delete `vde-*.env` files; (3) All 3 env files restored from git.
-  - Status: Guard in place — should no longer recur. Verify after next full suite run.
+  - Status: **Resolved** — confirmed 240/240 passing after fix. Guard prevents future recurrence.
 - **Parser alias map rebuild on invalidate (Resolved 2026-03-09)**: `load_vm_types` early-return skipped alias map rebuild when `_VM_ALIAS_MAP_BUILT=0`. Fixed in `lib/vm-common` — alias map now rebuilt inline on early-return path.
 - **`critical_steps.py` Python 3.9 compatibility (Resolved 2026-03-09)**: `int | None` union type syntax requires Python 3.10+. Changed to `Optional[int]` from `typing`.
 
