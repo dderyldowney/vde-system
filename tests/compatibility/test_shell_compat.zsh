@@ -46,8 +46,8 @@ _TEST_DIR="$(cd "$(dirname "$_TEST_SCRIPT_PATH")" && pwd)"
 _VDE_ROOT="$(cd "$_TEST_DIR/../.." && pwd)"
 
 # Source the shell compatibility layer
-# shellcheck source=../../scripts/lib/vde-shell-compat
-. "$_VDE_ROOT/scripts/lib/vde-shell-compat"
+# shellcheck source=../../lib/vde-shell-compat
+. "$_VDE_ROOT/lib/vde-shell-compat"
 
 # Test assertion functions
 _test_pass() {

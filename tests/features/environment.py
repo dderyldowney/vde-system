@@ -200,6 +200,9 @@ def _merge_restore_dir(backup_parent, subdir_name, live_dir):
         backup_files = {f.relative_to(backup) for f in backup.rglob('*') if f.is_file()}
         current_files = {f.relative_to(live_dir) for f in live_dir.rglob('*') if f.is_file()}
         for rel in current_files - backup_files:
+            # Never delete canonical VDE env files — project config, not test artifacts
+            if subdir_name == 'env-files' and str(rel).startswith('vde-') and str(rel).endswith('.env'):
+                continue
             target = live_dir / rel
             target.unlink(missing_ok=True)
             try:

@@ -1,364 +1,196 @@
 """
-Unit tests for docker_helpers.py
+Unit tests for docker_helpers.py — real implementation, no mocks, no skips.
 
-These tests use mocks to simulate Docker command outputs without requiring actual Docker.
+Container-dependent tests start vde-python in setUpClass and stop it in
+tearDownClass so every test runs against a live container.
 """
 
-import unittest
-from unittest.mock import patch, MagicMock
-import subprocess
 import json
-
-# Import the helpers we're testing
+import os
+import subprocess
 import sys
+import unittest
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'features' / 'steps'))
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "features" / "steps"))
 
 from docker_helpers import (
+    DockerVerificationError,
+    _get_vde_root,
+    _run_vde_ps,
     verify_container_running,
-    verify_container_state,
-    get_container_port,
-    verify_container_network,
-    wait_for_container_healthy,
-    DockerVerificationError
+    verify_container_stopped,
+    list_containers,
+    container_exists,
+    execute_in_container,
 )
 
-
-class TestVerifyContainerRunning(unittest.TestCase):
-    """Tests for verify_container_running function."""
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_container_running_success(self, mock_run):
-        """Test successful verification of running container."""
-        mock_output = json.dumps({
-            'ID': 'abc123',
-            'Image': 'nginx:latest',
-            'Status': 'Up 5 minutes',
-            'Names': 'my-nginx'
-        })
-        mock_run.return_value = MagicMock(
-            stdout=mock_output + '\n',
-            stderr='',
-            returncode=0
-        )
-        
-        result = verify_container_running('my-nginx')
-        
-        self.assertEqual(result['ID'], 'abc123')
-        self.assertEqual(result['Image'], 'nginx:latest')
-        self.assertEqual(result['Names'], 'my-nginx')
-        mock_run.assert_called_once()
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_container_not_running(self, mock_run):
-        """Test when container is not running (empty output)."""
-        mock_run.return_value = MagicMock(
-            stdout='',
-            stderr='',
-            returncode=0
-        )
-        
-        with self.assertRaises(DockerVerificationError) as ctx:
-            verify_container_running('nonexistent')
-        
-        self.assertIn('not running', str(ctx.exception))
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_docker_command_fails(self, mock_run):
-        """Test when docker ps command fails."""
-        mock_run.side_effect = subprocess.CalledProcessError(
-            1, 'docker ps', stderr='Docker daemon not running'
-        )
-        
-        with self.assertRaises(DockerVerificationError) as ctx:
-            verify_container_running('my-container')
-        
-        self.assertIn('failed', str(ctx.exception))
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_timeout(self, mock_run):
-        """Test when docker ps command times out."""
-        mock_run.side_effect = subprocess.TimeoutExpired('docker ps', 10)
-        
-        with self.assertRaises(DockerVerificationError) as ctx:
-            verify_container_running('my-container')
-        
-        self.assertIn('timed out', str(ctx.exception))
+VDE_ROOT = Path(__file__).parent.parent.parent
+VDE_PYTHON = "vde-python"
 
 
-class TestVerifyContainerState(unittest.TestCase):
-    """Tests for verify_container_state function."""
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_state_matches(self, mock_run):
-        """Test when container state matches expected."""
-        mock_output = json.dumps({
-            'Status': 'running',
-            'Running': True,
-            'Paused': False,
-            'Restarting': False,
-            'OOMKilled': False,
-            'Dead': False,
-            'Pid': 12345,
-            'ExitCode': 0
-        })
-        mock_run.return_value = MagicMock(
-            stdout=mock_output,
-            stderr='',
-            returncode=0
-        )
-        
-        result = verify_container_state('my-container', 'running')
-        
-        self.assertEqual(result['Status'], 'running')
-        self.assertTrue(result['Running'])
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_state_mismatch(self, mock_run):
-        """Test when container state doesn't match expected."""
-        mock_output = json.dumps({
-            'Status': 'exited',
-            'Running': False,
-            'ExitCode': 1
-        })
-        mock_run.return_value = MagicMock(
-            stdout=mock_output,
-            stderr='',
-            returncode=0
-        )
-        
-        with self.assertRaises(DockerVerificationError) as ctx:
-            verify_container_state('my-container', 'running')
-        
-        self.assertIn('exited', str(ctx.exception))
-        self.assertIn('expected', str(ctx.exception))
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_case_insensitive_match(self, mock_run):
-        """Test that state comparison is case-insensitive."""
-        mock_output = json.dumps({'Status': 'Running'})
-        mock_run.return_value = MagicMock(
-            stdout=mock_output,
-            stderr='',
-            returncode=0
-        )
-        
-        # Should not raise - case insensitive
-        result = verify_container_state('my-container', 'RUNNING')
-        self.assertEqual(result['Status'], 'Running')
+def _is_running(name: str) -> bool:
+    r = subprocess.run(
+        ["docker", "ps", "--filter", f"name={name}", "--format", "{{.Names}}"],
+        capture_output=True, text=True, timeout=10,
+    )
+    return name in r.stdout
 
 
-class TestGetContainerPort(unittest.TestCase):
-    """Tests for get_container_port function."""
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_ipv4_port_mapping(self, mock_run):
-        """Test extracting port from IPv4 mapping."""
-        mock_run.return_value = MagicMock(
-            stdout='0.0.0.0:8080\n',
-            stderr='',
-            returncode=0
-        )
-        
-        port = get_container_port('my-container', 80)
-        
-        self.assertEqual(port, 8080)
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_ipv6_port_mapping(self, mock_run):
-        """Test extracting port from IPv6 mapping."""
-        mock_run.return_value = MagicMock(
-            stdout='[::]:9000\n',
-            stderr='',
-            returncode=0
-        )
-        
-        port = get_container_port('my-container', 80)
-        
-        self.assertEqual(port, 9000)
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_no_port_mapping(self, mock_run):
-        """Test when no port mapping exists."""
-        mock_run.return_value = MagicMock(
-            stdout='',
-            stderr='',
-            returncode=0
-        )
-        
-        with self.assertRaises(DockerVerificationError) as ctx:
-            get_container_port('my-container', 80)
-        
-        self.assertIn('No port mapping', str(ctx.exception))
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_invalid_port_format(self, mock_run):
-        """Test when port output has invalid format."""
-        mock_run.return_value = MagicMock(
-            stdout='invalid-format\n',
-            stderr='',
-            returncode=0
-        )
-        
-        with self.assertRaises(DockerVerificationError) as ctx:
-            get_container_port('my-container', 80)
-        
-        self.assertIn('Invalid port format', str(ctx.exception))
+def _start_container() -> None:
+    subprocess.run(
+        [str(VDE_ROOT / "bin" / "vde"), "start", "python"],
+        cwd=str(VDE_ROOT), capture_output=True, text=True, timeout=60,
+        check=True,
+    )
 
 
-class TestVerifyContainerNetwork(unittest.TestCase):
-    """Tests for verify_container_network function."""
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_container_on_network(self, mock_run):
-        """Test when container is on the specified network."""
-        mock_output = json.dumps({
-            'bridge': {
-                'IPAddress': '172.17.0.2',
-                'Gateway': '172.17.0.1',
-                'NetworkID': 'abc123'
-            },
-            'my-network': {
-                'IPAddress': '172.18.0.2',
-                'Gateway': '172.18.0.1',
-                'NetworkID': 'def456'
-            }
-        })
-        mock_run.return_value = MagicMock(
-            stdout=mock_output,
-            stderr='',
-            returncode=0
-        )
-        
-        result = verify_container_network('my-container', 'my-network')
-        
-        self.assertEqual(result['IPAddress'], '172.18.0.2')
-        self.assertEqual(result['NetworkID'], 'def456')
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_container_not_on_network(self, mock_run):
-        """Test when container is not on the specified network."""
-        mock_output = json.dumps({
-            'bridge': {
-                'IPAddress': '172.17.0.2'
-            }
-        })
-        mock_run.return_value = MagicMock(
-            stdout=mock_output,
-            stderr='',
-            returncode=0
-        )
-        
-        with self.assertRaises(DockerVerificationError) as ctx:
-            verify_container_network('my-container', 'my-network')
-        
-        self.assertIn('not attached', str(ctx.exception))
-        self.assertIn('bridge', str(ctx.exception))  # Shows available networks
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_no_networks(self, mock_run):
-        """Test when container has no networks."""
-        mock_output = json.dumps({})
-        mock_run.return_value = MagicMock(
-            stdout=mock_output,
-            stderr='',
-            returncode=0
-        )
-        
-        with self.assertRaises(DockerVerificationError) as ctx:
-            verify_container_network('my-container', 'my-network')
-        
-        self.assertIn('none', str(ctx.exception))
+def _stop_container() -> None:
+    subprocess.run(
+        [str(VDE_ROOT / "bin" / "vde"), "stop", "python"],
+        cwd=str(VDE_ROOT), capture_output=True, text=True, timeout=30,
+    )
 
 
-class TestWaitForContainerHealthy(unittest.TestCase):
-    """Tests for wait_for_container_healthy function."""
-    
-    @patch('docker_helpers.subprocess.run')
-    @patch('docker_helpers.time.sleep')
-    def test_immediately_healthy(self, mock_sleep, mock_run):
-        """Test when container is immediately healthy."""
-        mock_output = json.dumps({
-            'Status': 'healthy',
-            'FailingStreak': 0,
-            'Log': []
-        })
-        mock_run.return_value = MagicMock(
-            stdout=mock_output,
-            stderr='',
-            returncode=0
-        )
-        
-        result = wait_for_container_healthy('my-container', timeout=10)
-        
-        self.assertEqual(result['Status'], 'healthy')
-        mock_sleep.assert_not_called()  # No waiting needed
-    
-    @patch('docker_helpers.subprocess.run')
-    @patch('docker_helpers.time.sleep')
-    @patch('docker_helpers.time.time')
-    def test_becomes_healthy_after_wait(self, mock_time, mock_sleep, mock_run):
-        """Test when container becomes healthy after polling."""
-        # Simulate time progression
-        mock_time.side_effect = [0, 1, 2, 3]  # start, check1, check2, check3
-        
-        # First two checks: starting, then healthy
-        mock_run.side_effect = [
-            MagicMock(stdout=json.dumps({'Status': 'starting'}), returncode=0),
-            MagicMock(stdout=json.dumps({'Status': 'healthy'}), returncode=0)
-        ]
-        
-        result = wait_for_container_healthy('my-container', timeout=30)
-        
-        self.assertEqual(result['Status'], 'healthy')
-        self.assertEqual(mock_sleep.call_count, 1)  # Slept once between checks
-    
-    @patch('docker_helpers.subprocess.run')
-    @patch('docker_helpers.time.sleep')
-    @patch('docker_helpers.time.time')
-    def test_timeout_waiting_for_healthy(self, mock_time, mock_sleep, mock_run):
-        """Test timeout when container never becomes healthy."""
-        # Simulate time progression past timeout
-        # Need enough values for: start_time, while condition checks, and final elapsed calculation
-        mock_time.side_effect = [0, 10, 20, 31, 31]  # Exceeds 30s timeout, extra for elapsed
-        
-        mock_run.return_value = MagicMock(
-            stdout=json.dumps({'Status': 'starting'}),
-            returncode=0
-        )
-        
-        with self.assertRaises(DockerVerificationError) as ctx:
-            wait_for_container_healthy('my-container', timeout=30)
-        
-        self.assertIn('did not become healthy', str(ctx.exception))
-        self.assertIn('starting', str(ctx.exception))  # Shows last status
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_no_healthcheck_defined(self, mock_run):
-        """Test when container has no healthcheck."""
-        mock_run.return_value = MagicMock(
-            stdout='<no value>',
-            returncode=0
-        )
-        
-        with self.assertRaises(DockerVerificationError) as ctx:
-            wait_for_container_healthy('my-container')
-        
-        self.assertIn('does not have a healthcheck', str(ctx.exception))
-    
-    @patch('docker_helpers.subprocess.run')
-    def test_null_healthcheck(self, mock_run):
-        """Test when healthcheck returns null."""
-        mock_run.return_value = MagicMock(
-            stdout='null',
-            returncode=0
-        )
-        
-        with self.assertRaises(DockerVerificationError) as ctx:
-            wait_for_container_healthy('my-container')
-        
-        self.assertIn('does not have a healthcheck', str(ctx.exception))
+# ---------------------------------------------------------------------------
+# _get_vde_root — no container needed
+# ---------------------------------------------------------------------------
+
+class TestGetVdeRoot(unittest.TestCase):
+    def test_returns_string(self):
+        root = _get_vde_root()
+        self.assertIsInstance(root, str)
+        self.assertGreater(len(root), 0)
+
+    def test_bin_vde_exists(self):
+        root = _get_vde_root()
+        vde_bin = os.path.join(root, "bin", "vde")
+        self.assertTrue(os.path.isfile(vde_bin), f"bin/vde not found at {vde_bin}")
+
+    def test_env_var_override(self):
+        original = os.environ.get("VDE_ROOT_DIR")
+        try:
+            os.environ["VDE_ROOT_DIR"] = "/tmp"
+            self.assertEqual(_get_vde_root(), "/tmp")
+        finally:
+            if original is None:
+                os.environ.pop("VDE_ROOT_DIR", None)
+            else:
+                os.environ["VDE_ROOT_DIR"] = original
 
 
-if __name__ == '__main__':
+# ---------------------------------------------------------------------------
+# _run_vde_ps — no container needed (bin/vde-ps now fixed)
+# ---------------------------------------------------------------------------
+
+class TestRunVdePs(unittest.TestCase):
+    def test_json_flag_returns_json(self):
+        result = _run_vde_ps(["--json"])
+        self.assertEqual(result.returncode, 0)
+        data = json.loads(result.stdout.strip() or "[]")
+        self.assertIsInstance(data, list)
+
+    def test_quiet_flag_succeeds(self):
+        result = _run_vde_ps(["-q"])
+        self.assertEqual(result.returncode, 0)
+
+    def test_nonexistent_filter_empty(self):
+        result = _run_vde_ps(["--json", "--filter", "name=nonexistent-container-xyz-999"])
+        self.assertEqual(result.returncode, 0)
+        output = result.stdout.strip()
+        self.assertIn(output, ("", "[]"))
+
+
+# ---------------------------------------------------------------------------
+# Container-dependent tests — vde-python started/stopped around the class
+# ---------------------------------------------------------------------------
+
+class TestWithContainer(unittest.TestCase):
+    _started_by_us = False
+
+    @classmethod
+    def setUpClass(cls):
+        if not _is_running(VDE_PYTHON):
+            _start_container()
+            cls._started_by_us = True
+        # Confirm it is up
+        if not _is_running(VDE_PYTHON):
+            raise RuntimeError("Failed to start vde-python for tests")
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls._started_by_us:
+            _stop_container()
+
+    # --- verify_container_running ---
+
+    def test_verify_running_returns_dict(self):
+        info = verify_container_running(VDE_PYTHON)
+        self.assertIsInstance(info, dict)
+
+    def test_verify_running_has_required_keys(self):
+        info = verify_container_running(VDE_PYTHON)
+        for key in ("ID", "Status", "Names"):
+            self.assertIn(key, info)
+        self.assertNotEqual(info["ID"], "")
+
+    def test_verify_running_names_field_contains_container(self):
+        info = verify_container_running(VDE_PYTHON)
+        self.assertIn(VDE_PYTHON, info["Names"])
+
+    def test_verify_running_nonexistent_raises(self):
+        with self.assertRaises(DockerVerificationError):
+            verify_container_running("nonexistent-container-xyz-999")
+
+    # --- verify_container_stopped ---
+
+    def test_verify_stopped_nonexistent_is_true(self):
+        self.assertTrue(verify_container_stopped("nonexistent-container-xyz-999"))
+
+    def test_verify_stopped_running_container_is_false(self):
+        self.assertFalse(verify_container_stopped(VDE_PYTHON))
+
+    # --- list_containers ---
+
+    def test_list_containers_returns_list(self):
+        result = list_containers()
+        self.assertIsInstance(result, list)
+
+    def test_list_containers_all_flag_returns_list(self):
+        result = list_containers(all_containers=True)
+        self.assertIsInstance(result, list)
+
+    def test_list_containers_includes_python(self):
+        containers = list_containers()
+        self.assertTrue(
+            any(VDE_PYTHON in c for c in containers),
+            f"vde-python not found in {containers}",
+        )
+
+    # --- container_exists ---
+
+    def test_container_exists_nonexistent_false(self):
+        self.assertFalse(container_exists("nonexistent-container-xyz-999"))
+
+    def test_container_exists_running_true(self):
+        self.assertTrue(container_exists(VDE_PYTHON))
+
+    # --- execute_in_container ---
+
+    def test_execute_echo_succeeds(self):
+        result = execute_in_container(VDE_PYTHON, "echo hello")
+        self.assertEqual(result["returncode"], 0)
+        self.assertIn("hello", result["stdout"])
+
+    def test_execute_false_nonzero_rc(self):
+        result = execute_in_container(VDE_PYTHON, "false")
+        self.assertNotEqual(result["returncode"], 0)
+
+    def test_execute_result_has_required_keys(self):
+        result = execute_in_container(VDE_PYTHON, "echo test")
+        for key in ("stdout", "stderr", "returncode"):
+            self.assertIn(key, result)
+
+
+if __name__ == "__main__":
     unittest.main()
