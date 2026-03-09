@@ -1,5 +1,10 @@
 # Session Handover: VDE Test Suite & Performance Remediation
 
+## Context and Next Steps
+- This document collection is shared across sessions to keep handover and remediation aligned.
+- Context: Provides the high-level purpose, scope, and ownership for remediation work that follows the handover.
+- Next steps: Keep cross-links in sync; update both handover and remediation plan when scope or priorities shift; reference remediation progress from the handover.
+
 ## Executive Summary
 This session focused on resolving critical performance hangs and stability issues in the VDE integration test suite (`make test-e2e`). The root causes were found in redundant JSON parsing cycles, Zsh variable leakage in the parser, and logically flawed test assertions. A new safety mechanism using Docker labels was also implemented to prevent accidental cleanup of non-VDE resources. A second pass eliminated a 24s/100-plans regression by removing all subshells from the `generate_plan` hot path.
 
