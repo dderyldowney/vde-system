@@ -600,6 +600,61 @@ prompt_confirm_unknown_vm() {
 # Command Generation
 # -----------------------
 
+# _extract_vm_names_direct - Extract VM names into a variable without subshells
+# Writes space-separated canonical VM names to the named variable.
+# Args: <input_lower> - Already-lowercased input string
+#       <varname>     - Name of variable to write results into
+# Side effects: calls _ensure_alias_map (populates VM_ALIAS_MAP in current shell)
+_extract_vm_names_direct() {
+    local _evnd_input="$1"
+    local _evnd_var="$2"
+
+    # Handle wildcard expansions first
+    case "$_evnd_input" in
+        *all*|*everything*)
+            typeset -g "$_evnd_var"="$(get_all_vms)"
+            return $VDE_SUCCESS
+            ;;
+    esac
+    case "$_evnd_input" in
+        *"all languages"*|*"all lang"*)
+            typeset -g "$_evnd_var"="$(get_lang_vms)"
+            return $VDE_SUCCESS
+            ;;
+    esac
+    case "$_evnd_input" in
+        *"all services"*|*"all svc"*)
+            typeset -g "$_evnd_var"="$(get_service_vms)"
+            return $VDE_SUCCESS
+            ;;
+    esac
+
+    # Ensure alias map is available in THIS shell (no subshell — map persists)
+    _ensure_alias_map
+
+    local _evnd_found="" _evnd_word _evnd_clean _evnd_canonical
+    local -A _evnd_seen
+
+    for _evnd_word in ${(s: :)_evnd_input}; do
+        _evnd_clean="${_evnd_word%%[^a-z0-9+-]*}"
+        _evnd_clean="${_evnd_clean//[^a-z0-9+-]/}"
+        [[ -z "$_evnd_clean" ]] && continue
+
+        _evnd_canonical="${VM_ALIAS_MAP[$_evnd_clean]:-}"
+        if [[ -z "$_evnd_canonical" && -n "${VM_TYPE[$_evnd_clean]:-}" ]]; then
+            _evnd_canonical="$_evnd_clean"
+        fi
+
+        if [[ -n "$_evnd_canonical" && -z "${_evnd_seen[$_evnd_canonical]:-}" ]]; then
+            _evnd_seen[$_evnd_canonical]=1
+            _evnd_found+="$_evnd_canonical "
+        fi
+    done
+
+    typeset -g "$_evnd_var"="${_evnd_found% }"
+    return $VDE_SUCCESS
+}
+
 # generate_plan - Generate an execution plan from natural language input
 # Parses user input and creates a structured plan for execution
 # Args: <input_string> - The user's natural language input
@@ -614,39 +669,65 @@ prompt_confirm_unknown_vm() {
 generate_plan() {
     # Ensure XTRACE is off
     unsetopt XTRACE 2>/dev/null
-    
+
     local input="$1"
+    # Zsh built-in lowercase — no subshell, no fork
+    local il="${input:l}"
 
-    # Detect intent
+    # ── Detect intent inline (no subshell) ──────────────────────────────────
     local intent
-    intent=$(detect_intent "$input")
+    case "$il" in
+        *help*|*hel*|*hepl*|*"what can i do"*|*"how do i use"*)
+            intent="$INTENT_HELP" ;;
+        *running*|*"status"*|*"staus"*|*"satus"*|*"current state"*)
+            intent="$INTENT_STATUS" ;;
+        *" list"*|*"list "*|*"/list"*|*"show "*|*available*|*"what"*"can"*"i"*"create"*|*"which"*"vms"*)
+            intent="$INTENT_LIST_VMS" ;;
+        *"how do i connect"*|*"ssh into"*|*"connect to"*|*"connect "*|*conect*)
+            intent="$INTENT_CONNECT" ;;
+        *restart*|*restrat*|*resart*|*reatart*|*reboot*|*rebot*|*rebuild*)
+            intent="$INTENT_RESTART_VM" ;;
+        *"create"*|*"make a"*|*"make new"*|*"set up"*|*"add "*)
+            intent="$INTENT_CREATE_VM" ;;
+        *start*|*strt*|*strat*|*satrt*|*launch*|*launc*|*boot*)
+            intent="$INTENT_START_VM" ;;
+        *stop*|*stp*|*sto*|*stpo*|*sotp*|*shutdown*|*shutdon*|*kill*|*kil*)
+            intent="$INTENT_STOP_VM" ;;
+        *)
+            intent="$INTENT_HELP" ;;
+    esac
 
-    # Extract entities based on intent
-    local vms=""
-    local flags=""
-    local filter="all"
+    # ── Extract entities (no subshells) ─────────────────────────────────────
+    local vms="" flags="" filter="all"
 
     case "$intent" in
         "$INTENT_LIST_VMS")
-            filter=$(extract_filter "$input")
+            # Inline extract_filter
+            case "$il" in
+                *languages*|*language*|*lang*) filter="lang" ;;
+                *services*|*service*|*svc*)    filter="svc"  ;;
+                *)                             filter="all"  ;;
+            esac
             ;;
         "$INTENT_CREATE_VM"|"$INTENT_START_VM"|"$INTENT_STOP_VM"|"$INTENT_RESTART_VM"|"$INTENT_STATUS"|"$INTENT_CONNECT")
-            vms=$(extract_vm_names "$input")
-            flags=$(extract_flags "$input")
+            # VM names — direct call, no subshell
+            _extract_vm_names_direct "$il" vms
+
+            # Inline extract_flags
+            local rebuild="false" nocache="false"
+            case "$il" in *rebuild*|*"re-create"*) rebuild="true" ;; esac
+            case "$il" in *"no-cache"*|*"no cache"*|*"from scratch"*) nocache="true" ;; esac
+            flags="rebuild=$rebuild nocache=$nocache"
             ;;
     esac
 
-    # Output plan
+    # ── Output plan (Zsh string ops — no forks) ─────────────────────────────
     echo "INTENT:$intent"
-    # Convert newlines to spaces for VMs
-    if [ -n "$vms" ]; then
-        local vm_list
-        vm_list=$(echo "$vms" | tr '\n' ' ' | sed 's/ $//')
-        echo "VM:$vm_list"
-    fi
-    [ -n "$flags" ] && echo "FLAGS:$flags"
-    [ -n "$filter" ] && echo "FILTER:$filter"
-    
+    # vms is already space-separated; convert spaces→newlines not needed for output
+    [[ -n "$vms" ]] && echo "VM:$vms"
+    [[ -n "$flags" ]] && echo "FLAGS:$flags"
+    [[ -n "$filter" ]] && echo "FILTER:$filter"
+
     return $VDE_SUCCESS
 }
 
