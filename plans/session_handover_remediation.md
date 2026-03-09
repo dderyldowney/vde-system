@@ -8,11 +8,11 @@ Overview
 - Deliverables: robust plan execution, validated test results, hardened Docker cleanup, and clear documentation updates.
 
 Phased Plan (high level)
-- Phase A: Baseline verification and scoping
-- Phase B: Hot-path optimizations and parser hygiene
-- Phase C: Docker safety, labeling, and isolation hardening
-- Phase D: Test suite alignment (integration and Behave)
-- Phase E: Validation, observability, and documentation
+- Phase A: Baseline verification and scoping — **COMPLETE**
+- Phase B: Hot-path optimizations and parser hygiene — **COMPLETE**
+- Phase C: Docker safety, labeling, and isolation hardening — **COMPLETE**
+- Phase D: Test suite alignment (integration and Behave) — **COMPLETE**
+- Phase E: Validation, observability, and documentation — **COMPLETE**
 
 Detailed steps, owners, inputs, and success criteria
 
