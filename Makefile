@@ -1,7 +1,7 @@
 # VDE Makefile
 # Targets for testing and development
 
-.PHONY: help test test-unit test-integration test-comprehensive test-coverage test-ai-api test-real-ai-api test-bdd test-security test-benchmark lint check clean install-deps coverage-view coverage-clean bdd-shell docker-clean test-docker test-docker-lifecycle
+.PHONY: help test test-unit test-integration test-comprehensive test-coverage test-ai-api test-real-ai-api test-bdd test-security test-benchmark test-compatibility lint check clean install-deps coverage-view coverage-clean bdd-shell docker-clean test-docker test-docker-lifecycle
 
 # Default target
 help:
@@ -99,15 +99,21 @@ test-comprehensive: test-parser test-commands
 
 test-parser:
 	@echo "Running comprehensive vde-parser tests..."
-	@chmod +x tests/unit/test_vde_parser_comprehensive.sh
-	@zsh tests/unit/test_vde_parser_comprehensive.sh
+	@chmod +x tests/unit/test_vde_parser_comprehensive.zsh
+	@zsh tests/unit/test_vde_parser_comprehensive.zsh
 	@echo "✓ vde-parser tests passed"
 
 test-commands:
 	@echo "Running comprehensive vde-commands tests..."
-	@chmod +x tests/unit/test_vde_commands_comprehensive.sh
-	@zsh tests/unit/test_vde_commands_comprehensive.sh
+	@chmod +x tests/unit/test_vde_commands_comprehensive.zsh
+	@zsh tests/unit/test_vde_commands_comprehensive.zsh
 	@echo "✓ vde-commands tests passed"
+
+test-compatibility:
+	@echo "Running shell compatibility tests..."
+	@chmod +x tests/compatibility/run_all_shells.zsh
+	@zsh tests/compatibility/run_all_shells.zsh
+	@echo "✓ Compatibility tests passed"
 
 test-e2e:
 	echo "Running end-to-end integration tests..."
