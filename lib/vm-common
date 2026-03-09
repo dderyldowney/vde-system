@@ -255,6 +255,27 @@ load_vm_types() {
 
     # Guard to prevent redundant loading in the same process
     if [[ "$no_cache" -eq 0 ]] && [[ "${_VM_TYPES_LOADED:-0}" == "1" ]] && [[ ${#VM_TYPE[@]} -gt 0 ]]; then
+        # Rebuild alias map if it was invalidated without reloading types
+        if [[ "${_VM_ALIAS_MAP_BUILT:-0}" -eq 0 ]]; then
+            typeset -gA VM_ALIAS_MAP
+            VM_ALIAS_MAP=()
+            local _vn
+            for _vn in "${lang_vms[@]}" "${service_vms[@]}"; do
+                VM_ALIAS_MAP[$_vn]="$_vn"
+                VM_ALIAS_MAP["vde-${_vn#vde-}"]="$_vn"
+                local _al="${VM_ALIASES[$_vn]}"
+                if [[ -n "$_al" ]]; then
+                    local _a
+                    for _a in ${(s:,:)_al}; do
+                        _a="${_a//[[:space:]]/}"
+                        [[ -n "$_a" ]] && VM_ALIAS_MAP[$_a]="$_vn"
+                    done
+                fi
+                local _dp="${VM_DISPLAY[$_vn]}"
+                [[ -n "$_dp" ]] && VM_ALIAS_MAP[${(L)_dp}]="$_vn"
+            done
+            _VM_ALIAS_MAP_BUILT=1
+        fi
         return 0
     fi
 
