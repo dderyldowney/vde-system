@@ -5,7 +5,7 @@
 set -e
 
 # Source shared library
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$VDE_ROOT_DIR/lib/vm-common"
 source "$VDE_ROOT_DIR/lib/vde-naming"
 source "$VDE_ROOT_DIR/lib/vde-ssh"

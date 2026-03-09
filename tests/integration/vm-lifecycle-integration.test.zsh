@@ -9,9 +9,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source VDE libraries
-source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
-source "$PROJECT_ROOT/scripts/lib/vde-constants"
-source "$PROJECT_ROOT/scripts/lib/vm-common"
+source "$PROJECT_ROOT/lib/vde-shell-compat"
+source "$PROJECT_ROOT/lib/vde-constants"
+source "$PROJECT_ROOT/lib/vm-common"
 
 # Test configuration
 VERBOSE=${VERBOSE:-false}
@@ -457,12 +457,12 @@ test_resolve_vm_name_direct() {
     local result
     result=$(resolve_vm_name "python")
 
-    if [[ "$result" == "python" ]]; then
-        test_pass "Resolve VM name (direct)"
+    if [[ "$result" == "vde-python" ]]; then
+        test_pass "Resolve VM name (direct - $result)"
         return
     fi
 
-    test_fail "Resolve VM name" "expected 'python', got '$result'"
+    test_fail "Resolve VM name" "expected 'vde-python', got '$result'"
 }
 
 test_resolve_vm_name_alias() {
@@ -471,12 +471,12 @@ test_resolve_vm_name_alias() {
     local result
     result=$(resolve_vm_name "golang")
 
-    if [[ "$result" == "go" ]]; then
-        test_pass "Resolve VM name (alias)"
+    if [[ "$result" == "vde-go" ]]; then
+        test_pass "Resolve VM name (alias - golang -> $result)"
         return
     fi
 
-    test_fail "Resolve VM name" "alias 'golang' not resolved to 'go': $result"
+    test_fail "Resolve VM name" "alias 'golang' not resolved to 'vde-go': $result"
 }
 
 test_resolve_vm_name_unknown() {
@@ -506,7 +506,7 @@ test_get_compose_file() {
     local expected="$CONFIGS_DIR/python/docker-compose.yml"
 
     if [[ "$result" == "$expected" ]]; then
-        test_pass "Get compose file path"
+        test_pass "Get compose file path ($result)"
         return
     fi
 

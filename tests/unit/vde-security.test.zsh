@@ -15,9 +15,9 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source dependencies in correct order
 export VDE_ROOT_DIR="$PROJECT_ROOT"
-source "$PROJECT_ROOT/scripts/lib/vde-constants"
-source "$PROJECT_ROOT/scripts/lib/vde-log"
-source "$PROJECT_ROOT/scripts/lib/vde-security"
+source "$PROJECT_ROOT/lib/vde-constants"
+source "$PROJECT_ROOT/lib/vde-log"
+source "$PROJECT_ROOT/lib/vde-security"
 
 # Test configuration
 VERBOSE=${VERBOSE:-false}
@@ -107,9 +107,9 @@ _run_enforce_in_tmpdir() {
     (
         export VDE_ROOT_DIR="$tmpdir"
         # Re-source so constants pick up the new VDE_ROOT_DIR
-        source "$PROJECT_ROOT/scripts/lib/vde-constants" 2>/dev/null
-        source "$PROJECT_ROOT/scripts/lib/vde-log" 2>/dev/null
-        source "$PROJECT_ROOT/scripts/lib/vde-security" 2>/dev/null
+        source "$PROJECT_ROOT/lib/vde-constants" 2>/dev/null
+        source "$PROJECT_ROOT/lib/vde-log" 2>/dev/null
+        source "$PROJECT_ROOT/lib/vde-security" 2>/dev/null
         vde_security_enforce_permissions >/dev/null 2>&1
     )
 }
@@ -343,7 +343,7 @@ test_security_init_calls_all_three() {
 
     # Restore originals by re-sourcing
     unfunction vde_security_ensure_network vde_security_enforce_permissions vde_security_enforce_network_isolation 2>/dev/null || true
-    source "$PROJECT_ROOT/scripts/lib/vde-security" 2>/dev/null || true
+    source "$PROJECT_ROOT/lib/vde-security" 2>/dev/null || true
 
     if [[ $called_network -eq 1 && $called_perms -eq 1 && $called_isolation -eq 1 ]]; then
         test_pass "vde_security_init invokes ensure_network, enforce_permissions, enforce_isolation"

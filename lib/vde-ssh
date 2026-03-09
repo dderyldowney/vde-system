@@ -629,6 +629,9 @@ ensure_ssh_environment() {
 generate_vm_ssh_config() {
     log_info "Generating VM-to-VM SSH config..."
 
+    # Suppress incidental stdout from subshell calls inside the loop
+    exec 9>&1 >/dev/null
+
     # Ensure VM types are loaded
     if command -v load_vm_types >/dev/null 2>&1; then
         load_vm_types
@@ -636,14 +639,10 @@ generate_vm_ssh_config() {
 
     # Ensure SSH directory exists
     mkdir -p "$VDE_SSH_DIR"
-    
-    # Clear existing config file
-    echo "# VDE (Virtual Development Environment) SSH Configuration" > "$VDE_SSH_CONFIG"
-    echo "# Generated on $(date)" >> "$VDE_SSH_CONFIG"
-    echo "" >> "$VDE_SSH_CONFIG"
 
     if ! command -v get_all_vms >/dev/null 2>&1; then
         _error "Dependency error: get_all_vms function not found"
+        exec 1>&9 9>&-
         return $VDE_ERR_DEPENDENCY
     fi
 
@@ -668,6 +667,7 @@ generate_vm_ssh_config() {
         fi
     done
 
+    exec 1>&9 9>&-
     log_success "Generated SSH config for $count VMs"
     return $VDE_SUCCESS
 }

@@ -35,7 +35,7 @@ fi
 _VM_COMMON_LOADED=1
 
 # Ensure XTRACE is off to prevent output pollution during sourcing/execution
-unsetopt XTRACE 2>/dev/null
+#unsetopt XTRACE 2>/dev/null
 
 # =============================================================================
 # BOOTSTRAP: DETERMINE VDE ROOT DIRECTORY
@@ -246,115 +246,78 @@ _is_cache_valid() {
 # Uses cache if available and valid
 # Format: shortname|type|display_name|install_command|port_base
 load_vm_types() {
+    local no_cache=0
+    [[ "$1" == "--no-cache" ]] && no_cache=1
+
     # Ensure arrays are globally declared
     typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT VM_SSH_PORT
     typeset -ga lang_vms service_vms
 
-    # Guard to prevent redundant loading
-    if [[ "${_VM_TYPES_LOADED:-0}" == "1" ]] && [[ ${#VM_TYPE[@]} -gt 0 ]]; then
+    # Guard to prevent redundant loading in the same process
+    if [[ "$no_cache" -eq 0 ]] && [[ "${_VM_TYPES_LOADED:-0}" == "1" ]] && [[ ${#VM_TYPE[@]} -gt 0 ]]; then
         return 0
     fi
 
-    # Prefer JSON config if available
-    if [[ -f "$VM_TYPES_JSON" ]]; then
-        _info "Using JSON VM types config: $VM_TYPES_JSON"
-
-        # Validate against schema using centralized vde-core function
-        local schema_file
-        schema_file=$(vde_get_schema_for_json "$VM_TYPES_JSON" 2>/dev/null)
-        if [[ -n "$schema_file" && -f "$schema_file" ]]; then
-            _info "Validating config against schema: $schema_file"
-            if ! vde_validate_json_schema "$VM_TYPES_JSON" "$schema_file"; then
-                _error "VM types JSON schema validation failed"
-                _error "Config file may be corrupt or missing required fields"
-                return $VDE_ERR_INVALID_DATA
-            fi
-        else
-            _warn "No schema file found for $VM_TYPES_JSON, skipping validation"
-        fi
-    elif [[ -f "$VM_TYPES_CONF" ]]; then
-        _info "Using legacy CONF VM types config: $VM_TYPES_CONF"
-    else
-        _error "VM types configuration file not found (JSON or CONF)"
-        return $VDE_ERR_NOT_FOUND
-    fi
-
-    # Try cache first - validate it's not corrupt
+    # 1. Try cache FIRST for maximum performance
     local use_cache=0
     if _is_cache_valid "$VM_TYPES_CACHE" "$VM_TYPES_JSON" "$VM_TYPES_CONF"; then
-        # Verify cache file is valid zsh before sourcing
+        # Verify cache file has no syntax errors before sourcing
         if zsh -n "$VM_TYPES_CACHE" 2>/dev/null; then
-            _info "Loading VM types from cache..."
-            if . "$VM_TYPES_CACHE" 2>/dev/null; then
-                use_cache=1
-                # Read lang_vms and service_vms from cache if present
-                # These are stored as simple arrays after the associative arrays
-                if [[ -f "$VM_TYPES_CACHE" ]]; then
-                    # Extract lang_vms and service_vms from cache file
-                    local lang_line svc_line
-                    lang_line=$(grep "^lang_vms=" "$VM_TYPES_CACHE" 2>/dev/null)
-                    svc_line=$(grep "^service_vms=" "$VM_TYPES_CACHE" 2>/dev/null)
-                    if [[ -n "$lang_line" ]]; then
-                        local content=${lang_line#*=\(}
-                        content=${content%\)}
-                        lang_vms=($(echo $content))
-                    fi
-                    if [[ -n "$svc_line" ]]; then
-                        local content=${svc_line#*=\(}
-                        content=${content%\)}
-                        service_vms=($(echo $content))
-                    fi
+            # Load from cache - suppress all output
+            if . "$VM_TYPES_CACHE" >/dev/null 2>&1; then
+                # Extract simple arrays from cache (grep-based extraction as fallback)
+                local lang_line svc_line
+                lang_line=$(grep "^lang_vms=" "$VM_TYPES_CACHE" 2>/dev/null)
+                svc_line=$(grep "^service_vms=" "$VM_TYPES_CACHE" 2>/dev/null)
+                if [[ -n "$lang_line" ]]; then
+                    local content=${lang_line#*=\(}
+                    content=${content%\)}
+                    lang_vms=($(echo $content))
                 fi
-                # VM_INSTALL is not cached - will load from config below
-                _info "Cache loaded successfully"
-            else
-                _warn "Cache file corrupt, will regenerate: $VM_TYPES_CACHE"
-                rm -f "$VM_TYPES_CACHE"
+                if [[ -n "$svc_line" ]]; then
+                    local content=${svc_line#*=\(}
+                    content=${content%\)}
+                    service_vms=($(echo $content))
+                fi
+                use_cache=1
+                # Mark as loaded but we still need VM_INSTALL check below if JSON exists
+                export _VM_TYPES_LOADED=1
             fi
-        else
-            _warn "Cache file has syntax errors, will regenerate: $VM_TYPES_CACHE"
-            rm -f "$VM_TYPES_CACHE"
         fi
     fi
+
+    # 2. If cache failed, fall back to JSON/CONF
+    if [[ "$use_cache" -eq 0 ]]; then
+        if [[ -f "$VM_TYPES_JSON" ]]; then
+            # Validate against schema (only when not using cache)
+            local schema_file
+            schema_file=$(vde_get_schema_for_json "$VM_TYPES_JSON" 2>/dev/null)
+            if [[ -n "$schema_file" && -f "$schema_file" ]]; then
+                # Silence non-error validation output
+                vde_validate_json_schema "$VM_TYPES_JSON" "$schema_file" >/dev/null 2>&1 || {
+                    log_error "VM types JSON schema validation failed"
+                    return $VDE_ERR_INVALID_DATA
+                }
+            fi
+        elif [[ -f "$VM_TYPES_CONF" ]]; then
+            :
+        else
+            log_error "VM types configuration file not found"
+            return $VDE_ERR_NOT_FOUND
+        fi
+    fi
+
 
     # If cache was successfully loaded, we still need to load VM_INSTALL
     # as it is not cached due to complex shell syntax
     if [[ "$use_cache" -eq 1 ]]; then
+
         if [[ -f "$VM_TYPES_JSON" ]]; then
-            # Parse language VM installs - suppress all output to avoid pollution
+            # Parse all VM installs efficiently - suppress all output to avoid pollution
             {
-                lang_configs=$(jq -c ".vms.language[]" "$VM_TYPES_JSON" 2>/dev/null)
-                if [[ -n "$lang_configs" ]]; then
-                    local temp_file
-                    temp_file=$(mktemp)
-                    print -r "$lang_configs" > "$temp_file"
-                    while IFS= read -r vm_entry; do
-                        [[ -z "$vm_entry" ]] && continue
-                        local name install
-                        name=$(echo "$vm_entry" | jq -r ".name")
-                        install=$(echo "$vm_entry" | jq -r '.install // "-"')
-                        [[ -z "$name" ]] && continue
-                        VM_INSTALL[$name]="$install"
-                    done < "$temp_file"
-                    rm -f "$temp_file"
-                fi
-                # Parse service VM installs
-                local svc_configs
-                svc_configs=$(jq -c ".vms.service[]" "$VM_TYPES_JSON" 2>/dev/null)
-                if [[ -n "$svc_configs" ]]; then
-                    local temp_file
-                    temp_file=$(mktemp)
-                    print -r "$svc_configs" > "$temp_file"
-                    while IFS= read -r vm_entry; do
-                        [[ -z "$vm_entry" ]] && continue
-                        local name install
-                        name=$(echo "$vm_entry" | jq -r ".name")
-                        install=$(echo "$vm_entry" | jq -r '.install // "-"')
-                        [[ -z "$name" ]] && continue
-                        VM_INSTALL[$name]="$install"
-                    done < "$temp_file"
-                    rm -f "$temp_file"
-                fi
+                local p_installs
+                p_installs=$(jq -r '(.vms.language[], .vms.service[]) | "VM_INSTALL[\(.name)]=\(.install // "-" | @sh)"' "$VM_TYPES_JSON" 2>/dev/null)
+                [[ -n "$p_installs" ]] && eval "$p_installs"
             } >/dev/null 2>&1
         elif [[ -f "$VM_TYPES_CONF" ]]; then
             while IFS='|' read -r type name vm_aliases display install _rest; do
@@ -380,70 +343,19 @@ load_vm_types() {
         if [[ -f "$VM_TYPES_JSON" ]]; then
             _info "Parsing VM types from JSON: $VM_TYPES_JSON"
 
-            # Parse language VMs
-            local lang_vms_json
-            lang_vms_json=$(jq -c ".vms.language[]" "$VM_TYPES_JSON" 2>/dev/null)
-            if [[ -n "$lang_vms_json" ]]; then
-                while IFS= read -r vm_entry; do
-                    [[ -z "$vm_entry" ]] && continue
+            local lang_vms_array=()
+            local service_vms_array=()
+            local p_configs
+            
+            # Use jq to generate a batch of shell assignments for all properties at once
+            # Note: We escape values using @sh but keep keys and operators clean
+            p_configs=$(jq -r '
+                (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.install//"-"|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
+                (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.install//"-"|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
+            ' "$VM_TYPES_JSON" 2>/dev/null)
 
-                    vm_type="lang"
-                    name=$(echo "$vm_entry" | jq -r ".name")
-                    alias_value=$(echo "$vm_entry" | jq -r '.aliases | join(",")' )
-                    display=$(echo "$vm_entry" | jq -r ".display")
-                    install=$(echo "$vm_entry" | jq -r '.install // "-"')
-                    port=$(echo "$vm_entry" | jq -r '.service_port // empty')
-                    ssh_port=$(echo "$vm_entry" | jq -r '.ssh_port // empty')
-
-                    [[ -z "$name" ]] && continue
-
-                    VM_TYPE[$name]="$vm_type"
-                    VM_ALIASES[$name]="$alias_value"
-                    VM_DISPLAY[$name]="${display:-$name}"
-                    VM_INSTALL[$name]="${install:--}"
-                    VM_SVC_PORT[$name]="${port:-}"
-                    VM_SSH_PORT[$name]="${ssh_port:-}"
-
-                    # Build index by type
-                    if [[ -z "${lang_vms_array[*]}" ]]; then
-                        lang_vms_array=("$name")
-                    else
-                        lang_vms_array+=("$name")
-                    fi
-                done <<< "$lang_vms_json"
-            fi
-
-            # Parse service VMs
-            local svc_vms_json
-            svc_vms_json=$(jq -c ".vms.service[]" "$VM_TYPES_JSON" 2>/dev/null)
-            if [[ -n "$svc_vms_json" ]]; then
-                while IFS= read -r vm_entry; do
-                    [[ -z "$vm_entry" ]] && continue
-
-                    vm_type="service"
-                    name=$(echo "$vm_entry" | jq -r ".name")
-                    alias_value=$(echo "$vm_entry" | jq -r '.aliases | join(",")' )
-                    display=$(echo "$vm_entry" | jq -r ".display")
-                    install=$(echo "$vm_entry" | jq -r '.install // "-"')
-                    port=$(echo "$vm_entry" | jq -r '.service_port // empty')
-                    ssh_port=$(echo "$vm_entry" | jq -r '.ssh_port // empty')
-
-                    [[ -z "$name" ]] && continue
-
-                    VM_TYPE[$name]="$vm_type"
-                    VM_ALIASES[$name]="$alias_value"
-                    VM_DISPLAY[$name]="${display:-$name}"
-                    VM_INSTALL[$name]="${install:--}"
-                    VM_SVC_PORT[$name]="${port:-}"
-                    VM_SSH_PORT[$name]="${ssh_port:-}"
-
-                    # Build index by type
-                    if [[ -z "${service_vms_array[*]}" ]]; then
-                        service_vms_array=("$name")
-                    else
-                        service_vms_array+=("$name")
-                    fi
-                done <<< "$svc_vms_json"
+            if [[ -n "$p_configs" ]]; then
+                eval "$p_configs"
             fi
 
             # Export type indexes
@@ -453,6 +365,44 @@ load_vm_types() {
             _error "JSON config not found: $VM_TYPES_JSON"
             return $VDE_ERR_GENERAL
         fi
+
+        # ---------------------------------------------------------------------
+        # Build VM_ALIAS_MAP (Optimization for vde-parser)
+        # ---------------------------------------------------------------------
+        # Clear existing MAP
+        typeset -gA VM_ALIAS_MAP
+        VM_ALIAS_MAP=()
+
+        local vn=""
+        for vn in "${lang_vms[@]}" "${service_vms[@]}"; do
+            # 1. Map canonical name
+            VM_ALIAS_MAP[$vn]="$vn"
+
+            # 2. Map prefixed name
+            local prefixed="vde-${vn#vde-}"
+            VM_ALIAS_MAP[$prefixed]="$vn"
+
+            # 3. Map aliases
+            local aliases="${VM_ALIASES[$vn]}"
+            if [[ -n "$aliases" ]]; then
+                local a=""
+                for a in ${(s:,:)aliases}; do
+                    a="${a//[[:space:]]/}"
+                    [[ -n "$a" ]] && VM_ALIAS_MAP[$a]="$vn"
+                done
+            fi
+
+            # 4. Map display name (lowercase)
+            local display="${VM_DISPLAY[$vn]}"
+            if [[ -n "$display" ]]; then
+                local d_low="${(L)display}"
+                VM_ALIAS_MAP[$d_low]="$vn"
+            fi
+        done
+        _VM_ALIAS_MAP_BUILT=1
+
+        # Create cache directory
+        mkdir -p "$VDE_CACHE_DIR"
 
         # Create cache directory
         mkdir -p "$VDE_CACHE_DIR"
@@ -495,9 +445,17 @@ load_vm_types() {
                 print -r -- "VM_SSH_PORT[${key}]='${value}'"
             done
             echo ""
+            echo "typeset -gA VM_ALIAS_MAP"
+            for key in "${(@k)VM_ALIAS_MAP}"; do
+                value="${VM_ALIAS_MAP[$key]//'/'\\''}"
+                print -r -- "VM_ALIAS_MAP[${key}]='${value}'"
+            done
+            echo ""
             # Cache lang_vms and service_vms (use eval-safe quoting)
             lang_vms_quoted=("${lang_vms[@]}"); echo "lang_vms=(${lang_vms_quoted[*]})"
             service_vms_quoted=("${service_vms[@]}"); echo "service_vms=(${service_vms_quoted[*]})"
+            echo "export _VM_TYPES_LOADED=1"
+            echo "_VM_ALIAS_MAP_BUILT=1"
         } > "$VM_TYPES_CACHE"
 
         _info "VM types cached for faster loading"
@@ -505,7 +463,7 @@ load_vm_types() {
         _info "VM types loaded from cache"
     fi
 
-    _VM_TYPES_LOADED=1
+    export _VM_TYPES_LOADED=1
 }
 
 # =============================================================================
@@ -523,7 +481,7 @@ load_docker_config() {
     schema_file=$(vde_get_schema_for_json "$VM_DOCKER_CONFIG" 2>/dev/null)
     if [[ -n "$schema_file" && -f "$schema_file" ]]; then
         _info "Validating docker config against schema: $schema_file"
-        if ! vde_validate_json_schema "$VM_DOCKER_CONFIG" "$schema_file"; then
+        if ! vde_validate_json_schema "$VM_DOCKER_CONFIG" "$schema_file" >/dev/null; then
             _error "VM Docker config validation failed"
             _error "Config file may be corrupt or missing required fields"
             return $VDE_ERR_INVALID_DATA
@@ -615,6 +573,7 @@ load_docker_config() {
 get_docker_config() {
     local field="$1"
     local vm_name="$2"
+    load_vm_types
 
     # Convert field to uppercase (zsh syntax)
     local field_upper="${(U)field}"
@@ -641,7 +600,7 @@ regenerate_vm_types_cache() {
 
     # Validate JSON config first
     if [[ -n "$schema_file" && -f "$schema_file" ]]; then
-        if ! vde_validate_json_schema "$VM_TYPES_JSON" "$schema_file"; then
+        if ! vde_validate_json_schema "$VM_TYPES_JSON" "$schema_file" >/dev/null; then
             _error "Cannot regenerate cache: JSON config validation failed"
             return $VDE_ERR_INVALID_DATA
         fi
@@ -669,7 +628,7 @@ validate_vm_types_config() {
     fi
 
     _info "Validating VM types config: $VM_TYPES_JSON"
-    if vde_validate_json_schema "$VM_TYPES_JSON" "$schema_file"; then
+    if vde_validate_json_schema "$VM_TYPES_JSON" "$schema_file" >/dev/null; then
         _success "VM types config validation passed"
         return $VDE_SUCCESS
     else
@@ -686,14 +645,14 @@ validate_vm_types_config() {
 # Args: <field> <vm_name>
 # Returns: Outputs field value, or error
 get_vm_info() {
-    # Ensure XTRACE is off to prevent output pollution
-    unsetopt XTRACE 2>/dev/null
+    load_vm_types
     
     local field="$1"
-    local vm_name="$2"
-
-    # DEBUG
-    # echo "DEBUG: get_vm_info field=$field vm=$vm_name type=${VM_TYPE[$vm_name]}" >&2
+    local raw_name="$2"
+    local vm_name
+    
+    # Resolve name to canonical vde- prefixed name
+    vm_name=$(resolve_vm_name "$raw_name" 2>/dev/null) || vm_name="$raw_name"
 
     # Check if VM is known
     if [[ -z "${VM_TYPE[$vm_name]:-}" ]]; then
@@ -713,6 +672,7 @@ get_vm_info() {
 # Returns: Outputs VM names
 get_vms_by_type() {
     local vm_type="$1"
+    load_vm_types
 
     case "$vm_type" in
         lang)
@@ -729,18 +689,21 @@ get_vms_by_type() {
 
 # Get all language VMs
 get_lang_vms() {
+    load_vm_types
     echo "${lang_vms[@]}"
 }
 
 # Get all service VMs
 get_service_vms() {
+    load_vm_types
     echo "${service_vms[@]}"
 }
 
 # Get all known VMs
 get_all_vms() {
     # Ensure XTRACE is off
-    unsetopt XTRACE 2>/dev/null
+    #unsetopt XTRACE 2>/dev/null
+    load_vm_types
     
     echo "${lang_vms[@]}" "${service_vms[@]}"
 }
@@ -754,6 +717,7 @@ get_all_vms() {
 # Returns: VDE_SUCCESS (0) if known
 is_known_vm() {
     local vm_name="$1"
+    load_vm_types
 
     if [ -n "${VM_TYPE[$vm_name]}" ]; then
         return $VDE_SUCCESS
@@ -773,8 +737,7 @@ vm_is_created() {
     
     if [[ -d "$configs_dir/$raw_name" ]] || \
        [[ -f "$env_dir/$full_name.env" ]] || \
-       [[ -f "$env_dir/$raw_name.env" ]] || \
-       vm_template_exists "$raw_name"; then
+       [[ -f "$env_dir/$raw_name.env" ]]; then
         return 0
     fi
     return $VDE_ERR_GENERAL
@@ -829,13 +792,17 @@ validate_vm_type() {
 # Get VM type
 get_vm_type() {
     local vm_name="$1"
-    echo "${VM_TYPE[$vm_name]:-unknown}"
+    local resolved
+    resolved=$(resolve_vm_name "$vm_name" 2>/dev/null) || resolved="$vm_name"
+    echo "${VM_TYPE[$resolved]:-unknown}"
 }
 
 # Get VM display name
 get_vm_display_name() {
     local vm_name="$1"
-    echo "${VM_DISPLAY[$vm_name]:-$vm_name}"
+    local resolved
+    resolved=$(resolve_vm_name "$vm_name" 2>/dev/null) || resolved="$vm_name"
+    echo "${VM_DISPLAY[$resolved]:-$resolved}"
 }
 
 # Get VM install command
@@ -950,6 +917,23 @@ remove_port_from_registry() {
 clear_port_registry() {
     rm -rf "$VDE_CACHE_DIR/port-registry"
     mkdir -p "$VDE_CACHE_DIR/port-registry"
+}
+
+# release_port_reservation - Alias for remove_port_from_registry (used by tests)
+# Args: <vm_name_or_port>
+release_port_reservation() {
+    local input="$1"
+    
+    # If input is a number, it's a port - find which VM owns it and remove it
+    if [[ "$input" =~ ^[0-9]+$ ]]; then
+        for f in "$VDE_CACHE_DIR/port-registry"/*.port(N); do
+            if [[ "$input" == "$(cat "$f")" ]]; then
+                rm -f "$f"
+            fi
+        done
+    else
+        remove_port_from_registry "$input"
+    fi
 }
 
 # =============================================================================

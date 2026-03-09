@@ -24,10 +24,10 @@ whoami() { echo "testuser"; }
 hostname() { echo "testhost"; }
 
 # Source required libraries
-source "$(dirname "$0")/../../scripts/lib/vde-constants"
-source "$(dirname "$0")/../../scripts/lib/vde-shell-compat"
-source "$(dirname "$0")/../../scripts/lib/vde-log"
-source "$(dirname "$0")/../../scripts/lib/vde-audit"
+source "$(dirname "$0")/../../lib/vde-constants"
+source "$(dirname "$0")/../../lib/vde-shell-compat"
+source "$(dirname "$0")/../../lib/vde-log"
+source "$(dirname "$0")/../../lib/vde-audit"
 
 # Test 1: initialization
 test_start "vde_audit initialization"

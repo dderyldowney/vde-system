@@ -22,7 +22,7 @@ _VDE_PATH_UTILS_LOADED=1
 _VDE_PATH_UTILS_SCRIPT_PATH="${(%):-%x}"
 
 if [ -z "${VDE_ROOT_DIR:-}" ]; then
-    VDE_ROOT_DIR="$(cd "$(dirname "$_VDE_PATH_UTILS_SCRIPT_PATH")/../.." && pwd)"
+    VDE_ROOT_DIR="$(cd "$(dirname "$_VDE_PATH_UTILS_SCRIPT_PATH")/.." && pwd)"
 fi
 
 # =============================================================================
@@ -140,13 +140,13 @@ vde_is_home_path() {
     local path="$1"
 
     if [[ -z "$path" ]]; then
-        return $VDE_ERR_GENERAL
+        return 1
     fi
 
     if [[ "$path" == "$HOME"* ]]; then
         return 0
     else
-        return $VDE_ERR_GENERAL
+        return 1
     fi
 }
 

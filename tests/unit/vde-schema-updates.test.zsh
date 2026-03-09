@@ -6,9 +6,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source dependencies
-source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
-source "$PROJECT_ROOT/scripts/lib/vde-constants"
-source "$PROJECT_ROOT/scripts/lib/vde-core"
+source "$PROJECT_ROOT/lib/vde-shell-compat"
+source "$PROJECT_ROOT/lib/vde-constants"
+source "$PROJECT_ROOT/lib/vde-core"
 
 # Test configuration
 VERBOSE=${VERBOSE:-false}
@@ -54,12 +54,12 @@ run_test() {
 # =============================================================================
 
 test_get_config_version_valid() {
-    local config_file="$PROJECT_ROOT/scripts/data/vm-types.json"
+    local config_file="$PROJECT_ROOT/data/vm-types.json"
     local version
     version=$(vde_get_config_version "$config_file" 2>/dev/null)
 
     test_assert "[ -n '$version' ]" "Config version detected"
-    test_assert "[ '$version' = '1.0' ]" "Config version is 1.0"
+    test_assert "[ '$version' = '1.1' ]" "Config version is 1.1"
 }
 
 test_get_config_version_missing_file() {
@@ -78,7 +78,7 @@ test_get_config_version_no_version_field() {
 }
 
 test_get_schema_version_valid() {
-    local schema_file="$PROJECT_ROOT/scripts/data/vm-types.schema.json"
+    local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
     local version
     version=$(vde_get_schema_version "$schema_file" 2>/dev/null)
 
@@ -97,8 +97,8 @@ test_get_schema_version_missing_file() {
 # =============================================================================
 
 test_check_compatibility_valid() {
-    local config_file="$PROJECT_ROOT/scripts/data/vm-types.json"
-    local schema_file="$PROJECT_ROOT/scripts/data/vm-types.schema.json"
+    local config_file="$PROJECT_ROOT/data/vm-types.json"
+    local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
 
     vde_check_schema_compatibility "$config_file" "$schema_file" >/dev/null 2>&1
     test_assert "[ $? -eq $VDE_SUCCESS ]" "Compatible config and schema"
@@ -210,8 +210,8 @@ test_backup_config_preserves_content() {
 # =============================================================================
 
 test_validate_and_update_valid_config() {
-    local config_file="$PROJECT_ROOT/scripts/data/vm-types.json"
-    local schema_file="$PROJECT_ROOT/scripts/data/vm-types.schema.json"
+    local config_file="$PROJECT_ROOT/data/vm-types.json"
+    local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
     local cache_file="$TEST_TMP_DIR/test.cache"
 
     vde_validate_and_update "$config_file" "$schema_file" "$cache_file" >/dev/null 2>&1

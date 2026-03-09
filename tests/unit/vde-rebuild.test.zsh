@@ -46,7 +46,7 @@ test_fail() {
 test_script_exists() {
     test_start "Script exists and is executable"
     
-    local script="$PROJECT_ROOT/scripts/vde-rebuild"
+    local script="$PROJECT_ROOT/bin/vde-rebuild"
     
     if [[ -f "$script" ]]; then
         if [[ -x "$script" ]]; then
@@ -66,7 +66,7 @@ test_script_exists() {
 test_shebang() {
     test_start "Script has correct shebang"
     
-    local script="$PROJECT_ROOT/scripts/vde-rebuild"
+    local script="$PROJECT_ROOT/bin/vde-rebuild"
     local first_line=$(head -n 1 "$script")
     
     if [[ "$first_line" =~ ^#!.*zsh$ ]]; then
@@ -83,7 +83,7 @@ test_shebang() {
 test_help_option() {
     test_start "Script has --help option"
     
-    local output="$($PROJECT_ROOT/scripts/vde-rebuild --help 2>&1)"
+    local output="$($PROJECT_ROOT/bin/vde-rebuild --help 2>&1)"
     
     if echo "$output" | grep -q "Usage:"; then
         test_pass "Script has --help option"
@@ -99,7 +99,7 @@ test_help_option() {
 test_nocache_option() {
     test_start "Script has --no-cache option"
     
-    local output="$($PROJECT_ROOT/scripts/vde-rebuild --help 2>&1)"
+    local output="$($PROJECT_ROOT/bin/vde-rebuild --help 2>&1)"
     
     if echo "$output" | grep -q "\-\-no-cache"; then
         test_pass "Script has --no-cache option"
@@ -115,7 +115,7 @@ test_nocache_option() {
 test_vm_option() {
     test_start "Script has --vm option"
     
-    local output="$($PROJECT_ROOT/scripts/vde-rebuild --help 2>&1)"
+    local output="$($PROJECT_ROOT/bin/vde-rebuild --help 2>&1)"
     
     if echo "$output" | grep -q "\-\-vm"; then
         test_pass "Script has --vm option"
@@ -131,7 +131,7 @@ test_vm_option() {
 test_vde_command_includes_rebuild() {
     test_start "vde command includes rebuild"
     
-    local output="$($PROJECT_ROOT/scripts/vde help 2>&1)"
+    local output="$($PROJECT_ROOT/bin/vde help 2>&1)"
     
     if echo "$output" | grep -q "rebuild"; then
         test_pass "vde command includes rebuild"
@@ -198,7 +198,7 @@ test_rebuild_base_only() {
     test_start "Can rebuild base only (--vm base)"
     
     # This should complete without error
-    local output="$($PROJECT_ROOT/scripts/vde-rebuild --vm base 2>&1)"
+    local output="$($PROJECT_ROOT/bin/vde-rebuild --vm base 2>&1)"
     local exit_code=$?
     
     if [[ $exit_code -eq 0 ]]; then
@@ -216,7 +216,7 @@ test_rebuild_specific_vm() {
     test_start "Can rebuild specific VM (--vm python)"
     
     # This should complete without error
-    local output="$($PROJECT_ROOT/scripts/vde-rebuild --vm python 2>&1)"
+    local output="$($PROJECT_ROOT/bin/vde-rebuild --vm python 2>&1)"
     local exit_code=$?
     
     if [[ $exit_code -eq 0 ]]; then

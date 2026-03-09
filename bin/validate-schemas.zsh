@@ -2,14 +2,17 @@
 # Validate all JSON schemas in the VDE system
 # Usage: ./scripts/validate-schemas.zsh [--verbose]
 
-# Don't use set -e - we need to capture and count failures
-SCRIPT_DIR="${0:A:h}"
-PROJECT_ROOT="${SCRIPT_DIR:h}"
+# Determine VDE root directory
+VDE_SCRIPTS_DIR="${0:A:h}"
+if [[ -z "$VDE_ROOT_DIR" ]]; then
+    export VDE_ROOT_DIR="${VDE_SCRIPTS_DIR:h}"
+fi
+PROJECT_ROOT="$VDE_ROOT_DIR"
 
-# Source validation library
-source "$PROJECT_ROOT/lib/vde-shell-compat"
-source "$PROJECT_ROOT/lib/vde-constants"
-source "$PROJECT_ROOT/lib/vde-core"
+# Source libraries
+source "$VDE_ROOT_DIR/lib/vde-shell-compat"
+source "$VDE_ROOT_DIR/lib/vde-constants"
+source "$VDE_ROOT_DIR/lib/vde-core"
 
 VERBOSE=0
 if [[ "${1:-}" == "--verbose" ]]; then

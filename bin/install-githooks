@@ -5,8 +5,8 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$VDE_SCRIPTS_DIR/.." && pwd)"
 HOOKS_DIR="$PROJECT_ROOT/.git/hooks"
 SOURCE_DIR="$PROJECT_ROOT/githooks"
 

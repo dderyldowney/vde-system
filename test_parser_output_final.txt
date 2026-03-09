@@ -1,0 +1,245 @@
+
+[1;33mRunning: vde-parser Comprehensive Tests[0m
+================================
+2026-03-07T20:51:46-0500 [INFO ] [vde] Using JSON VM types config: /Users/dderyldowney/dev/data/vm-types.json
+2026-03-07T20:51:46-0500 [INFO ] [vde] Validating config against schema: /Users/dderyldowney/dev/data/vm-types.schema.json
+2026-03-07T20:51:47-0500 [INFO ] [vde] Loading VM types from cache...
+2026-03-07T20:51:47-0500 [INFO ] [vde] Cache loaded successfully
+2026-03-07T20:51:47-0500 [INFO ] [vde] VM types loaded from cache
+DEBUG: PROJECT_ROOT = /Users/dderyldowney/dev
+DEBUG: VDE_ROOT_DIR = /Users/dderyldowney/dev
+DEBUG: ls -la "/Users/dderyldowney/dev/data": total 104
+drwx------@ 16 dderyldowney  staff   512 Mar  6 11:31 .
+drwxr-xr-x@ 64 dderyldowney  staff  2048 Mar  7 20:51 ..
+drwx------   2 dderyldowney  staff    64 Feb  1 19:46 couchdb
+drwx------@ 22 dderyldowney  staff   704 Feb  4 01:59 mongodb
+drwx------@  2 dderyldowney  staff    64 Jan 15 21:22 mysql
+drwx------@  2 dderyldowney  staff    64 Jan 15 21:22 nginx
+drwx------   2 dderyldowney  staff    64 Feb  2 00:44 postgres
+drwx------   2 dderyldowney  staff    64 Feb  2 00:44 postgres_backup
+drwx------   2 dderyldowney  staff    64 Jan 15 13:50 rabbitmq
+-rw-r--r--@  1 dderyldowney  staff  7394 Mar  7 18:41 README.md
+drwx------@  5 dderyldowney  staff   160 Feb  4 01:59 redis
+-rw-r--r--@  1 dderyldowney  staff  8487 Mar  6 11:31 vm-docker-config.json
+-rw-r--r--@  1 dderyldowney  staff  5235 Mar  6 11:31 vm-docker-config.schema.json
+-rw-r--r--@  1 dderyldowney  staff  3627 Mar  7 17:30 vm-types.conf
+-rw-r--r--@  1 dderyldowney  staff  8195 Mar  7 17:30 vm-types.json
+-rw-r--r--@  1 dderyldowney  staff  4250 Mar  6 11:31 vm-types.schema.json
+DEBUG: Calling load_vm_types...
+2026-03-07T20:51:47-0500 [INFO ] [vde] Using JSON VM types config: /Users/dderyldowney/dev/data/vm-types.json
+2026-03-07T20:51:47-0500 [INFO ] [vde] Validating config against schema: /Users/dderyldowney/dev/data/vm-types.schema.json
+[INFO] Schema validation passed: /Users/dderyldowney/dev/data/vm-types.json
+2026-03-07T20:51:47-0500 [INFO ] [vde] Loading VM types from cache...
+2026-03-07T20:51:47-0500 [INFO ] [vde] Cache loaded successfully
+2026-03-07T20:51:48-0500 [INFO ] [vde] VM types loaded from cache
+DEBUG: get_all_vms returns: vde-asm vde-c vde-cpp vde-csharp vde-elixir vde-flutter vde-go vde-haskell vde-java vde-js vde-kotlin vde-lua vde-php vde-python vde-r vde-ruby vde-rust vde-scala vde-swift vde-zig vde-couchdb vde-mongodb vde-mysql vde-nginx vde-postgres vde-rabbitmq vde-redis
+
+[1;33mIntent Detection - List VMs Intent[0m
+--------------------------------
+[0;32m✓[0m list_vms intent for: what VMs can I create?
+[0;32m✓[0m list_vms intent for: list vms
+[0;32m✓[0m list_vms intent for: show available vms
+[0;32m✓[0m list_vms intent for: what vms are available?
+[0;32m✓[0m list_vms intent for: which vms can I create?
+[0;32m✓[0m list_vms intent for: show me all vms
+
+[1;33mIntent Detection - Create VM Intent[0m
+--------------------------------
+[0;32m✓[0m create_vm intent for: create a Go VM
+[0;32m✓[0m create_vm intent for: create new Python environment
+[0;32m✓[0m create_vm intent for: make a Rust VM
+[0;32m✓[0m create_vm intent for: make new JavaScript container
+[0;32m✓[0m create_vm intent for: set up a PostgreSQL VM
+[0;32m✓[0m create_vm intent for: create C# environment
+
+[1;33mIntent Detection - Start VM Intent[0m
+--------------------------------
+[0;32m✓[0m start_vm intent for: start python
+[0;32m✓[0m start_vm intent for: launch golang
+[0;32m✓[0m start_vm intent for: boot rust
+[0;32m✓[0m start_vm intent for: start the postgres container
+
+[1;33mIntent Detection - Stop VM Intent[0m
+--------------------------------
+[0;32m✓[0m stop_vm intent for: stop postgres
+[0;32m✓[0m stop_vm intent for: shutdown redis
+[0;32m✓[0m stop_vm intent for: kill nginx
+[0;32m✓[0m stop_vm intent for: stop the mongodb container
+
+[1;33mIntent Detection - Restart VM Intent[0m
+--------------------------------
+[0;32m✓[0m restart_vm intent for: restart rust
+[0;32m✓[0m restart_vm intent for: reboot python
+[0;32m✓[0m restart_vm intent for: rebuild golang
+
+[1;33mIntent Detection - Status Intent[0m
+--------------------------------
+[0;32m✓[0m status intent for: what's running?
+[0;32m✓[0m status intent for: show status
+[0;32m✓[0m status intent for: current state
+[0;32m✓[0m status intent for: running containers
+[0;32m✓[0m status intent for: status of all vms
+
+[1;33mIntent Detection - Connect Intent[0m
+--------------------------------
+[0;32m✓[0m connect intent for: how do I connect to Python?
+[0;32m✓[0m connect intent for: ssh into golang
+[0;32m✓[0m connect intent for: connect to rust container
+[0;32m✓[0m connect intent for: how do I ssh into postgres?
+
+[1;33mIntent Detection - Help Intent[0m
+--------------------------------
+[0;32m✓[0m help intent for: help
+[0;32m✓[0m help intent for: what can I do?
+[0;32m✓[0m help intent for: how do I use this?
+[0;32m✓[0m help intent for: show me help
+
+[1;33mVM Name Extraction - Direct Matches[0m
+--------------------------------
+[0;32m✓[0m should extract python
+[0;32m✓[0m should extract go
+[0;32m✓[0m should extract python (case insensitive)
+[0;32m✓[0m should extract rust (case insensitive)
+
+[1;33mVM Name Extraction - Alias Resolution[0m
+--------------------------------
+[0;32m✓[0m should resolve nodejs to js
+[0;32m✓[0m should resolve python3 to python
+[0;32m✓[0m should resolve golang to go
+
+[1;33mVM Name Extraction - Wildcard Expansions[0m
+--------------------------------
+[0;32m✓[0m all languages should include python
+[0;32m✓[0m all languages should include rust
+[0;32m✓[0m all languages should include go
+[0;32m✓[0m all services should include postgres
+[0;32m✓[0m all services should include redis
+[0;32m✓[0m all should include language
+[0;32m✓[0m all should include service
+
+[1;33mVM Name Extraction - No Matches[0m
+--------------------------------
+[0;32m✓[0m Correctly returns empty for non-existent VMs
+
+[1;33mFilter Extraction - Language Filter[0m
+--------------------------------
+[0;32m✓[0m should extract lang filter
+[0;32m✓[0m should extract lang from 'language'
+
+[1;33mFilter Extraction - Service Filter[0m
+--------------------------------
+[0;32m✓[0m should extract svc filter
+[0;32m✓[0m should extract svc from 'service'
+
+[1;33mFilter Extraction - Default/All Filter[0m
+--------------------------------
+[0;32m✓[0m should default to 'all'
+[0;32m✓[0m should default to 'all' for generic queries
+
+[1;33mFlag Extraction - Rebuild Flag[0m
+--------------------------------
+[0;32m✓[0m should set rebuild=true
+[0;32m✓[0m should detect re-create as rebuild
+[0;32m✓[0m should default rebuild to false
+
+[1;33mFlag Extraction - No Cache Flag[0m
+--------------------------------
+[0;32m✓[0m should set nocache=true
+[0;32m✓[0m should default nocache to false
+
+[1;33mFlag Extraction - Combined Flags[0m
+--------------------------------
+[0;32m✓[0m should set rebuild=true
+[0;32m✓[0m should set nocache=true
+
+[1;33mPlan Generation - Single VM Operations[0m
+--------------------------------
+[0;32m✓[0m should have start_vm intent
+[0;32m✓[0m should include vde-python VM
+[0;32m✓[0m should have stop_vm intent
+[0;32m✓[0m should include vde-postgres VM
+[0;32m✓[0m should have restart_vm intent
+[0;32m✓[0m should include vde-rust VM
+
+[1;33mPlan Generation - Multi VM Operations[0m
+--------------------------------
+[0;32m✓[0m should have start_vm intent
+[0;32m✓[0m should include VM list
+[0;32m✓[0m Multi-VM plan includes both VMs
+
+[1;33mPlan Generation - Full Stack Setup[0m
+--------------------------------
+[0;32m✓[0m should have create_vm intent
+[0;32m✓[0m Full stack plan includes both VMs
+
+[1;33mPlan Generation - Flag Handling[0m
+--------------------------------
+[0;32m✓[0m should have restart_vm intent
+[0;32m✓[0m should set rebuild flag
+[0;32m✓[0m should set nocache flag
+
+[1;33mPlan Generation - Filter Handling[0m
+--------------------------------
+[0;32m✓[0m should have list_vms intent
+[0;32m✓[0m should set lang filter
+[0;32m✓[0m should set svc filter
+
+[1;33mPlan Generation - Status Query[0m
+--------------------------------
+[0;32m✓[0m should have status intent
+
+[1;33mPlan Generation - Connect Query[0m
+--------------------------------
+[0;32m✓[0m should have connect intent
+[0;32m✓[0m should include python VM
+
+[1;33mPlan Generation - Help Query[0m
+--------------------------------
+[0;32m✓[0m should have help intent
+
+[1;33mEdge Cases - Empty Input[0m
+--------------------------------
+[0;32m✓[0m empty input should default to help
+
+[1;33mEdge Cases - Ambiguous Input[0m
+--------------------------------
+[0;32m✓[0m ambiguous input should default to help
+
+[1;33mEdge Cases - Mixed Case Input[0m
+--------------------------------
+[0;32m✓[0m Mixed case input handled correctly
+
+[1;33mEdge Cases - Partial VM Names[0m
+--------------------------------
+[0;32m✓[0m Correctly rejects partial matches
+
+[1;33mEdge Cases - Special Characters[0m
+--------------------------------
+[0;32m✓[0m should handle special characters
+
+[1;33mReal-World - Microservices Setup[0m
+--------------------------------
+[0;32m✓[0m should create multiple VMs
+[0;32m✓[0m Microservices setup plan includes all VMs
+
+[1;33mReal-World - Development Workflow[0m
+--------------------------------
+[0;32m✓[0m should start development stack
+[0;32m✓[0m should check status
+[0;32m✓[0m should provide connection info
+
+[1;33mReal-World - Cleanup Operations[0m
+--------------------------------
+[0;32m✓[0m should stop all services
+[0;32m✓[0m should stop everything
+
+[1;33mReal-World - Maintenance Operations[0m
+--------------------------------
+[0;32m✓[0m should restart with rebuild
+[0;32m✓[0m should set rebuild flag
+
+================================
+Test Suite: vde-parser Comprehensive Tests
+Tests Run: 99
+[0;32mPassed: 99[0m
+

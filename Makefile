@@ -1,7 +1,7 @@
 # VDE Makefile
 # Targets for testing and development
 
-.PHONY: help test test-unit test-integration test-comprehensive test-coverage test-ai-api test-real-ai-api test-bdd test-security test-benchmark lint check clean install-deps coverage-view coverage-clean bdd-shell
+.PHONY: help test test-unit test-integration test-comprehensive test-coverage test-ai-api test-real-ai-api test-bdd test-security test-benchmark lint check clean install-deps coverage-view coverage-clean bdd-shell docker-clean test-docker test-docker-lifecycle
 
 # Default target
 help:
@@ -76,8 +76,8 @@ test-security:
 
 test-benchmark:
 	@echo "Running performance benchmarks..."
-	@chmod +x tests/performance/benchmark_suite.sh
-	@zsh tests/performance/benchmark_suite.sh
+	@chmod +x tests/benchmark_suite.zsh
+	@zsh tests/benchmark_suite.zsh
 	@echo "✓ Benchmarks complete"
 
 test-integration:
@@ -110,10 +110,10 @@ test-commands:
 	@echo "✓ vde-commands tests passed"
 
 test-e2e:
-	@echo "Running end-to-end integration tests..."
-	@chmod +x tests/integration/test_integration_comprehensive.sh
-	@zsh tests/integration/test_integration_comprehensive.sh
-	@echo "✓ End-to-end tests passed"
+	echo "Running end-to-end integration tests..."
+	chmod +x tests/integration/test_integration_comprehensive.zsh
+	zsh tests/integration/test_integration_comprehensive.zsh
+	echo "✓ End-to-end tests passed"
 
 test-ai-api:
 	@echo "Running AI API tests..."
@@ -217,20 +217,28 @@ check: lint test
 	@echo "All Checks Passed ✓"
 	@echo "================================"
 
-# =============================================================================
-# Docker Testing
-# =============================================================================
+# docker-clean — stop and remove all vde-* containers (run before and after Docker tests)
+docker-clean:
+	echo "[CLEAN] Stopping all vde-* containers..."
+	docker ps -a --filter 'name=vde-' --format '{{.Names}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+	echo "[CLEAN] Killing orphaned ssh-agents..."
+	pgrep -x ssh-agent | while read pid; do ppid=$$(ps -o ppid= -p $$pid 2>/dev/null | tr -d ' '); [ "$$ppid" = "1" ] && kill $$pid 2>/dev/null && echo "  killed ssh-agent $$pid" || true; done || true
+	echo "[CLEAN] Done"
 
-test-docker:
-	@echo "Running Docker build test with random VM selection..."
-	@ALL_VMS=("c" "cpp" "asm" "python" "rust" "js" "csharp" "ruby" "go" "java" "kotlin" "swift" "php" "scala" "r" "lua" "flutter" "elixir" "haskell" "postgres" "redis" "mongodb" "nginx" "couchdb" "mysql" "rabbitmq"); \
-	INDEX=$$((RANDOM % $${#ALL_VMS[@]})); \
-	TEST_VM=$${ALL_VMS[$$INDEX]}; \
-	echo "Selected VM: $$TEST_VM (1 of $${#ALL_VMS[@]} total VMs)"; \
-	./bin/create-virtual-for "$$TEST_VM" && \
-	./bin/start-virtual "$$TEST_VM" && \
-	echo "✓ Docker build test passed for $$TEST_VM" && \
-	./bin/shutdown-virtual "$$TEST_VM"
+# test-docker — full lifecycle test against a random (or specified) VM
+# Usage: make test-docker [VM=python]
+# Uses /usr/local/bin/timeout (600s hard cap), shows all output
+test-docker: docker-clean
+	echo "============================="
+	echo " VDE Docker Test"
+	echo " VM: $${VM:-<random>}"
+	echo "============================="
+	chmod +x tests/integration/test_docker_lifecycle.zsh
+	/usr/local/bin/timeout 600 zsh tests/integration/test_docker_lifecycle.zsh $${VM:-}
+	$(MAKE) docker-clean
+
+# test-docker-lifecycle — alias for test-docker
+test-docker-lifecycle: test-docker
 
 # =============================================================================
 # BDD Testing (feature files in container)
@@ -238,15 +246,17 @@ test-docker:
 
 # Run docker-free tests (fast, parser logic only)
 test-docker-free:
-	@echo "Running Docker-free tests..."
-	@chmod +x tests/run-docker-free-tests.sh
-	@./tests/run-docker-free-tests.sh
+	echo "Running Docker-free tests..."
+	chmod +x tests/run-docker-free-tests.zsh
+	./tests/run-docker-free-tests.zsh
 
 # Run docker-required tests (containers, SSH, etc.)
-test-docker-required:
-	@echo "Running Docker-required tests..."
-	@chmod +x tests/run-docker-required-tests.sh
-	@./tests/run-docker-required-tests.sh
+# Wraps with timeout and pre/post cleanup
+test-docker-required: docker-clean
+	echo "Running Docker-required tests..."
+	chmod +x tests/run-docker-required-tests.sh
+	/usr/local/bin/timeout 600 ./tests/run-docker-required-tests.sh
+	$(MAKE) docker-clean
 
 # Run all BDD tests (docker-free + docker-required)
 test-bdd:

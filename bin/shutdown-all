@@ -7,7 +7,10 @@
 set -e
 
 # Source shared library
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [[ -z "$VDE_ROOT_DIR" ]]; then
+    export VDE_ROOT_DIR="$(cd "$VDE_SCRIPTS_DIR/.." && pwd)"
+fi
 source "$VDE_ROOT_DIR/lib/vm-common"
 
 # Source UX libraries (optional - for enhanced UX)

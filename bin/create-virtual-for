@@ -4,8 +4,12 @@
 
 set -e
 
+# Determine VDE root directory
+if [[ -z "$VDE_ROOT_DIR" ]]; then
+    export VDE_ROOT_DIR="${0:a:h:h}"
+fi
+
 # Source shared library
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$VDE_ROOT_DIR/lib/vm-common"
 
 # Source UX libraries (optional - for enhanced UX)

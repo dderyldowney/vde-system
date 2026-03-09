@@ -16,6 +16,7 @@ services:
     hostname: vde-{{NAME}}
     restart: unless-stopped
     labels:
+      - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name={{NAME}}"
     command: sh -c "{{INSTALL_CMD}} && /usr/sbin/sshd -D"

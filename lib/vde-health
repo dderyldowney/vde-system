@@ -88,8 +88,9 @@ vde_check_ssh_port() {
     # Check if port is accessible using netcat or bash
     local elapsed=0
     while [ $elapsed -lt $timeout ]; do
-        # Try bash built-in TCP check first (faster)
-        if timeout 1 zsh -c "cat < /dev/null > /dev/tcp/localhost/$ssh_port" 2>/dev/null; then
+        # Try bash/zsh built-in TCP check first (faster)
+        # Using a subshell with redirection is more portable than 'timeout' which might not be installed
+        if ( (zsh -c "exec 3<>/dev/tcp/localhost/$ssh_port" >/dev/null 2>&1) ) 2>/dev/null; then
             return $VDE_SUCCESS
         fi
 
@@ -140,7 +141,9 @@ vde_check_ssh_login() {
     local elapsed=0
     while [ $elapsed -lt $timeout ]; do
         # Try SSH connection with a simple echo command
-        if ssh -o ConnectTimeout=3 \
+        # BatchMode=yes prevents it from asking for passwords/passphrases
+        if ssh -o ConnectTimeout=2 \
+               -o BatchMode=yes \
                -o StrictHostKeyChecking=no \
                -o UserKnownHostsFile=/dev/null \
                -p "$ssh_port" \
@@ -221,7 +224,8 @@ vde_check_language_tool() {
     # Check if tool is available via SSH
     local elapsed=0
     while [ $elapsed -lt $timeout ]; do
-        if ssh -o ConnectTimeout=3 \
+        if ssh -o ConnectTimeout=2 \
+               -o BatchMode=yes \
                -o StrictHostKeyChecking=no \
                -o UserKnownHostsFile=/dev/null \
                -p "$ssh_port" \
@@ -270,7 +274,7 @@ vde_wait_for_container_healthy() {
         if vde_check_container_running "$vm_name"; then
             # For language VMs, also check SSH
             if [ "$vm_type" = "lang" ]; then
-                if vde_check_ssh_login "$vm_name" 5; then
+                if vde_check_ssh_login "$vm_name" 2; then
                     echo "✓ $container_name is healthy"
                     return $VDE_SUCCESS
                 fi

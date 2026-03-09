@@ -1,6 +1,11 @@
-# VDE Style Guide
-
 Coding standards and style guidelines for the VDE (Virtual Development Environment) project.
+
+## Table of Contents
+1. [Shell Scripting Standards](#shell-scripting-standards)
+2. [Testing Standards](#testing-standards)
+3. [YAML Standards](#yaml-standards)
+4. [Makefile Standards](#makefile-standards)
+5. [Documentation Standards](#documentation-standards)
 
 ## Shell Scripting Standards
 
@@ -291,6 +296,32 @@ main() {
 
 main "$@"
 ```
+
+## Testing Standards
+
+The VDE project enforces a **100% Real Tests Mandate**. Every test must execute actual VDE functionality. No fake tests, no context flags, no tautological assertions.
+
+### ⚠️ Prohibited Testing Patterns (FAKE TESTING)
+The following patterns are strictly forbidden as they undermine testing confidence:
+
+1. **Simulated State**: Any code claiming to "simulate" behavior instead of executing it.
+2. **Context Flags**: Setting internal state flags (e.g., `context.vm_started = True`) instead of running real commands.
+3. **Intent-Only Verification**: Asserting that a command *would* have been run, rather than verifying it *was* run and produced the expected outcome.
+4. **Tautological Assertions**: Using `assert True` or patterns that cannot fail (e.g. `getattr(context, 'x', True)`).
+5. **Silent Bypasses**: Using `pass` or empty steps in BDD `@then` scenarios.
+
+### Required Testing Patterns
+All tests must verify the **Actual System State**:
+
+| Category | Required Practice | Example |
+|----------|-------------------|---------|
+| **Execution** | Execute REAL VDE/Docker commands | `subprocess.run(['vde', 'start', 'python'])` |
+| **Verification** | Check ACTUAL container state | `docker ps -a --filter "name=vde-python"` |
+| **Integrity** | Check REAL exit codes and stderr | `assert result.returncode == 0` |
+| **Side Effects** | Verify REAL filesystem changes | `Path('/path/to/vde/conf').exists()` |
+
+### Rule on Regression
+IF a Fake Test violation is found, whether pre-existing or new, **IT MUST BE FIXED** before the change can be accepted. There is no "grandfathering" for legacy fake tests.
 
 ## YAML Standards
 

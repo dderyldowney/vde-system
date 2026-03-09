@@ -16,8 +16,8 @@
 set -e
 
 # Source shared library
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-VDE_ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+VDE_ROOT_DIR="$(cd "$VDE_SCRIPTS_DIR/.." && pwd)"
 export VDE_ROOT_DIR
 
 source "$VDE_ROOT_DIR/lib/vde-shell-compat"
