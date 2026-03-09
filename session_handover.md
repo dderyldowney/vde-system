@@ -63,9 +63,9 @@ This session focused on resolving critical performance hangs and stability issue
 5. **generate_plan performance**: The `$()` subshell pattern is the enemy — always use direct variable writes in hot paths.
 
 (End of file - total 54 lines)
-\n\n## Paired Update Policy\n- This handover is the paired companion to .\n- Any update to remediation plan must be mirrored here, and vice versa, in lockstep to preserve traceability.\n- Ensure cross-links remain accurate and navigable between the two documents.\n
-## Paired Update Policy
 
+## Paired Update Policy
 - This handover is the paired companion to `plans/session_handover_remediation.md`.
 - Any update to remediation plan must be mirrored here, and vice versa, in lockstep to preserve traceability.
-- Ensure cross-links remain accurate and navigable between the two documents.
+- Ensure cross-links remain accurate between the two documents.
+EOF

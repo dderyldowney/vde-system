@@ -1,0 +1,13 @@
+name: Paired Update Check
+on:
+  push:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run paired update enforcer
+        run: |
+          bash ./scripts/paired_update_enforcer.sh
+          echo "Paired update check passed."
