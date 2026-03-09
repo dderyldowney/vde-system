@@ -46,6 +46,10 @@ This session focused on resolving critical performance hangs and stability issue
 - **Orphaned Containers (Cleaned)**: All orphaned containers from previous test runs stopped and removed.
 - **Behave Docker Failures**: 22 scenarios require live Docker container lifecycle. Investigate whether these are environment/setup issues or real bugs.
 
+## Related Plans
+- Remediation plan: See `plans/session_handover_remediation.md` for end-to-end remediation steps that accompany this handover.
+- Cross-reference: This handover is aligned with the remediation plan; updates to one should be mirrored in the other.
+
 ## Persistence Instructions
 1. **Reloading Context**: Source `lib/vde-constants` and `lib/vm-common` first.
 2. **Cache**: If VM types change, run `vde_load_vm_types --no-cache` or delete `.cache/vm-types.cache`.
