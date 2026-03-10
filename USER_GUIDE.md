@@ -2668,13 +2668,28 @@ vde ssh nginx      # Nginx web server
 
 | Language | Command | Aliases |
 |----------|---------|---------|
-
+| Assembler | `vde create vde-asm` | asm,assembler,nasm |
+| C | `vde create vde-c` | c |
+| C++ | `vde create vde-cpp` | cpp,c++,gcc |
+| C# | `vde create vde-csharp` | csharp,dotnet |
+| Elixir | `vde create vde-elixir` | elixir |
+| Flutter | `vde create vde-flutter` | flutter,dart |
+| Go | `vde create vde-go` | go,golang |
+| Haskell | `vde create vde-haskell` | haskell,ghc |
+| Java | `vde create vde-java` | java,jdk |
+| JavaScript | `vde create vde-js` | js,node,nodejs,javascript |
 
 ### Service VMs (for data & infrastructure)
 
 | Service | Command | Port |
 |---------|---------|------|
-
+| CouchDB | `vde create vde-couchdb` | 5984 |
+| MongoDB | `vde create vde-mongodb` | 27017 |
+| MySQL | `vde create vde-mysql` | 3306 |
+| Nginx | `vde create vde-nginx` | 80,443 |
+| PostgreSQL | `vde create vde-postgres` | 5432 |
+| RabbitMQ | `vde create vde-rabbitmq` | 5672,15672 |
+| Redis | `vde create vde-redis` | 6379 |
 
 ---
 
