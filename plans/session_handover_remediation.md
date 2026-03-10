@@ -112,11 +112,10 @@ Implementation would:
 
 Next session actions:
 
-1. **Phase G complete** - All 25 lifecycle tests passing, 263/265 total passing
-2. **2 pre-existing failures** (not related to Phase G changes):
-   - cache-system.feature:49 - .cache/port-registry directory missing
-   - vm-lifecycle-management.feature:79 - Rebuild scenario issue
-3. **Proceed to Phase H** - Daily workflow features promotion
+1. **Phase H in progress** - Daily workflow features promotion
+2. **Fixed generate_user_guide.py** - Changed path from scripts/data/vm-types.conf to data/vm-types.conf
+3. User Guide now parses 21 language VMs, 7 service VMs correctly
+4. Added student-focused Daily Workflow section to USER_GUIDE.md
 
 Phase F — Test Infrastructure Hardening
 
