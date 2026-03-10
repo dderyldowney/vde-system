@@ -1,6 +1,21 @@
 # VDE Project Memory
 
-## Current State (2026-03-09)
+## Current State (2026-03-10)
+
+Behave suite: **265 passing, 2 failed, 56 errors**
+
+- Core tests: 265 passing (was 263 before promotion)
+- 56 errors from newly promoted features (step definitions not implemented)
+- 64 verified passing scenarios in User Guide
+
+## Phase H: Daily Workflow Promotion (2026-03-10) — IN PROGRESS
+
+- Added @core-suite tags to 4 target feature files
+- Copied feature files to core-infrastructure/
+- Added student-focused Daily Workflow section to USER_GUIDE.md
+- Blocker: Deferred step files have stub implementations
+
+## Phase G COMPLETE (2026-03-09)
 
 Behave suite: **263 scenarios passing, 2 failed** (pre-existing failures)
 Behave test run: `python3 -m behave` | Tag selection: `tags = core-suite and not wip`
@@ -45,9 +60,32 @@ Promote from deferred/ to core-infrastructure/:
 - `vm-lifecycle-management.feature` (13 scenarios) — same
 Target: 240 → 271 passing scenarios
 
-### Phase 3: Daily Workflow
+### Phase 3: Daily Workflow — PENDING APPROVAL (2026-03-09)
 
 Promote: documented-development-workflows.feature (31), daily-workflow.feature (13), daily-development-workflow.feature (7), vm-information-and-discovery.feature (7)
+
+**Plan created:** `plans/phase3-daily-workflow-promotion.md`
+
+- 58 total scenarios to promote
+- All step definitions exist (verified via dry-run)
+- No @wip tags in target files
+- Estimated duration: ~25 minutes
+
+### Phase 4: TODO
+
+Promote: collaboration-workflow.feature, debugging-troubleshooting.feature, multi-project-workflow.feature, productivity-features.feature, team-collaboration-and-maintenance.feature
+
+### Phase 5: TODO
+
+Promote: remaining deferred features
+
+### Phase 6: TODO
+
+User Guide generation from @user-guide-* tagged scenarios
+
+### Phase 7: TODO
+
+Final verification and cleanup
 Target: 271 → 329 passing scenarios
 
 ### Phase 4: Fill 4 missing Guide sections (no tests at all)

@@ -7,16 +7,14 @@ Covers: create-virtual-for, start-virtual, shutdown-virtual, list-vms,
 import json
 import os
 import shutil
-import subprocess
 import sys
 import time
-from pathlib import Path
 
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 
-from behave import given, then, when, step
+from behave import given, then, when  # type: ignore[import]
 from config import VDE_ROOT
 from vm_common import (
     run_vde_command,
@@ -234,12 +232,6 @@ def step_vm_not_created(context, vm_name):
 
 @given("I want to work with a new language")
 def step_want_new_language(context):
-    """Context setup — no action needed."""
-    pass
-
-
-@given("I need a full stack environment")
-def step_need_full_stack(context):
     """Context setup — no action needed."""
     pass
 
