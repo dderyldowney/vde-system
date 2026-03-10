@@ -109,14 +109,24 @@ ENV VDE_SSH_DIR=${VDE_HOME_DIR}/.ssh/vde
 # Expose SSH port
 EXPOSE 22
 
-# Create entrypoint script that fixes SSH agent socket permissions at startup.
-# The mounted /ssh-agent/sock is owned by root:root (660) - devuser cannot access it.
-# This script makes it world-readable so devuser can use the forwarded agent for VM-to-VM SSH.
-RUN echo '#!/bin/sh' > /usr/local/bin/vde-entrypoint && \
+# Create entrypoint script that fixes SSH agent socket permissions and syncs keys
+RUN echo '#!/bin/zsh' > /usr/local/bin/vde-entrypoint && \
     echo '# Fix SSH agent socket permissions so devuser can access it' >> /usr/local/bin/vde-entrypoint && \
     echo 'if [ -S /ssh-agent/sock ]; then' >> /usr/local/bin/vde-entrypoint && \
     echo '    chmod 666 /ssh-agent/sock 2>/dev/null || true' >> /usr/local/bin/vde-entrypoint && \
     echo 'fi' >> /usr/local/bin/vde-entrypoint && \
+    echo '' >> /usr/local/bin/vde-entrypoint && \
+    echo '# Sync public keys from mount to authorized_keys' >> /usr/local/bin/vde-entrypoint && \
+    echo 'if [ -d /public-ssh-keys ]; then' >> /usr/local/bin/vde-entrypoint && \
+    echo '    mkdir -p /home/devuser/.ssh' >> /usr/local/bin/vde-entrypoint && \
+    echo '    cat /public-ssh-keys/*.pub > /home/devuser/.ssh/authorized_keys 2>/dev/null || true' >> /usr/local/bin/vde-entrypoint && \
+    echo '    if [ -s /home/devuser/.ssh/authorized_keys ]; then' >> /usr/local/bin/vde-entrypoint && \
+    echo '        chmod 700 /home/devuser/.ssh' >> /usr/local/bin/vde-entrypoint && \
+    echo '        chmod 600 /home/devuser/.ssh/authorized_keys' >> /usr/local/bin/vde-entrypoint && \
+    echo '        chown -R devuser:devuser /home/devuser/.ssh' >> /usr/local/bin/vde-entrypoint && \
+    echo '    fi' >> /usr/local/bin/vde-entrypoint && \
+    echo 'fi' >> /usr/local/bin/vde-entrypoint && \
+    echo '' >> /usr/local/bin/vde-entrypoint && \
     echo 'exec "$@"' >> /usr/local/bin/vde-entrypoint && \
     chmod +x /usr/local/bin/vde-entrypoint
 

@@ -28,7 +28,30 @@ source "$VDE_ROOT_DIR/lib/vde-naming"
 
 # Configuration
 NOCACHE=false
+REGENERATE_KEYS=false
 SPECIFIC_VM=""
+
+#===============================================================================
+# SSH Environment
+#===============================================================================
+
+# Ensure SSH keys are synced to build context before building
+sync_keys() {
+    if [[ -f "$VDE_ROOT_DIR/lib/vde-ssh" ]]; then
+        source "$VDE_ROOT_DIR/lib/vde-ssh"
+        
+        if [[ "$REGENERATE_KEYS" == "true" ]]; then
+            vde_ssh_regenerate_keys
+        fi
+        
+        log_info "Syncing SSH keys to build context..."
+        if ensure_ssh_environment; then
+            sync_ssh_keys_to_vde
+            return 0
+        fi
+    fi
+    return 1
+}
 
 #===============================================================================
 # Help
@@ -41,9 +64,10 @@ Usage: vde-rebuild [options]
 Rebuild all VDE Docker images.
 
 Options:
-  --no-cache   Rebuild without using cache
-  --vm <name>  Rebuild only specific VM (or "base" for base image)
-  -h, --help   Show this help
+  --no-cache        Rebuild without using cache
+  --vm <name>       Rebuild only specific VM (or "base" for base image)
+  --regenerate-keys Force regeneration of VDE SSH keys before build
+  -h, --help        Show this help
 
 Examples:
   vde-rebuild              # Rebuild all images using cache
@@ -66,6 +90,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-cache)
             NOCACHE=true
+            shift
+            ;;
+        --regenerate-keys)
+            REGENERATE_KEYS=true
             shift
             ;;
         --vm)
@@ -169,6 +197,9 @@ if ! docker info &>/dev/null; then
     _error "Docker daemon is not running"
     exit $VDE_ERR_DOCKER
 fi
+
+# Ensure keys are ready for build context
+sync_keys
 
 # Build specific VM or all
 if [[ -n "$SPECIFIC_VM" ]]; then

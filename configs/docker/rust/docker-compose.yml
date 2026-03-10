@@ -5,12 +5,11 @@ services:
   vde-rust:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/rust/Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
         GID: 1000
-        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: vde-rust:latest
     container_name: vde-rust
     hostname: vde-rust
@@ -19,7 +18,7 @@ services:
       vde.managed: "true"
       vde.type: lang
       vde.name: "vde-rust"
-    command: sh -c "su devuser -c 'curl --proto =https --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y' && /usr/sbin/sshd -D"
+    command: /usr/sbin/sshd -D
 
     ports:
       - "2216:22"
@@ -33,6 +32,7 @@ services:
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
+      - PATH=/home/devuser/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
     env_file:
       - ../../../env-files/vde-rust.env

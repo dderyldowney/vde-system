@@ -25,6 +25,16 @@ vde list --lang script
 
 ---
 
+## Rebuild VM Types Cache
+
+```bash
+# Invalidate and regenerate the internal VM types cache
+# Run this after manually editing data/vm-types.conf or data/vm-types.json
+vde rebuild-cache
+```
+
+---
+
 ## Create New VMs
 
 ```bash

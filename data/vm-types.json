@@ -184,7 +184,7 @@
           "rust"
         ],
         "display": "Rust",
-        "install": "su devuser -c 'curl --proto '='https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'",
+        "install": "su devuser -c 'curl --proto \"=https\" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && . \\$HOME/.cargo/env && rustup default stable'",
         "service_port": null,
         "ssh_port": 2216
       },
