@@ -263,6 +263,20 @@ start_vm() {
 
         # Build the compose up command based on flags
         local up_result=0
+        
+        # Invalidate known_hosts if we are rebuilding or force-recreating
+        # This prevents "Man-in-the-Middle" warnings when the container gets new host keys
+        if [[ "$rebuild" = "true" || "$nocache" = "true" ]]; then
+            if command -v remove_known_hosts_entry >/dev/null 2>&1; then
+                local ssh_port
+                ssh_port=$(get_vm_ssh_port "$vm_name")
+                if [[ -n "$ssh_port" ]]; then
+                    _info "Cleaning up SSH known_hosts for '$vm_name' (rebuild requested)..."
+                    remove_known_hosts_entry "$vm_name" "$ssh_port" >/dev/null 2>&1 || true
+                fi
+            fi
+        fi
+
         if [[ "$nocache" = "true" ]]; then
             # No-cache requires a separate build step first
             docker compose -f "$compose_file" -p "$project_name" build --no-cache 2>&2 || true

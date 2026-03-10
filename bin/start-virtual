@@ -36,6 +36,7 @@ VMS=()
 REBUILD=false
 NOCACHE=false
 UPDATE_SSH=false
+REGENERATE_KEYS=false
 
 for arg in "$@"; do
     case $arg in
@@ -44,6 +45,9 @@ for arg in "$@"; do
             ;;
         --no-cache)
             NOCACHE=true
+            ;;
+        --regenerate-keys)
+            REGENERATE_KEYS=true
             ;;
         --update-ssh|--update-ssh-keys)
             UPDATE_SSH=true
@@ -78,7 +82,11 @@ fi
 
 # Ensure SSH environment (automatic & silent)
 # Starts SSH agent, loads keys, generates VM config - all without user interaction
+if [[ "$REGENERATE_KEYS" == "true" ]]; then
+    vde_ssh_regenerate_keys
+fi
 ensure_ssh_environment
+sync_ssh_keys_to_vde  # Always ensure keys are synced before potentially rebuilding
 
 # Track batch operation results with zsh associative arrays
 typeset -gA BATCH_RESULTS
@@ -106,7 +114,9 @@ for vm in "${VMS[@]}"; do
     fi
 
     # Check if VM is already running (batch state awareness)
-    if vm_is_container_running "$vm"; then
+    # If REBUILD is true, we don't skip because docker-compose up --build will handle it
+    # (or start_vm will stop/rebuild if needed)
+    if [[ "$REBUILD" != "true" && "$NOCACHE" != "true" ]] && vm_is_container_running "$vm"; then
         log_info "$vm is already running - skipped"
         BATCH_RESULTS[$vm]="skipped:already_running"
         skipped_count=$((skipped_count + 1))

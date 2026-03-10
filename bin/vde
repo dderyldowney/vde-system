@@ -58,6 +58,7 @@ fi
 
 _VDE_COMMANDS=(
     "rebuild:Rebuild VDE images:vde-rebuild"
+    "rebuild-cache:Invalidate and regenerate VM types cache:vde-rebuild-cache"
     "create:Create a new VM:create-virtual-for"
     "start:Start a VM:start-virtual"
     "stop:Stop a VM:shutdown-virtual"
@@ -104,6 +105,7 @@ Virtual Development Environment - Unified Command Interface
 Commands:
 EOF
     printf "  %-12s %s\n" "rebuild" "Rebuild all VDE images"
+    printf "  %-12s %s\n" "rebuild-cache" "Invalidate and regenerate VM types cache"
     printf "  %-12s %s\n" "create <vm>" "Create a new VM (use --rebuild or --nocache to rebuild)"
     printf "  %-12s %s\n" "start <vm>" "Start a VM"
     printf "  %-12s %s\n" "stop <vm>" "Stop a VM"
@@ -137,10 +139,11 @@ EOF
     cat <<EOF
 
 Options:
-  -h, --help     Show this help message
-  -v, --verbose  Enable verbose output
-  -q, --quiet   Suppress debug output (quiet mode)
-  --version      Show version information
+  -h, --help        Show this help message
+  -v, --verbose     Enable verbose output
+  -q, --quiet       Suppress debug output (quiet mode)
+  --regenerate-keys Force regeneration of VDE SSH keys
+  --version         Show version information
 
 Examples:
   vde rebuild              # Rebuild all images
@@ -210,6 +213,9 @@ vde_find_command_script() {
     case "$cmd" in
         rebuild|vde-rebuild)
             script="$VDE_ROOT_DIR/bin/vde-rebuild"
+            ;;
+        rebuild-cache|vde-rebuild-cache)
+            script="$VDE_ROOT_DIR/bin/vde-rebuild-cache"
             ;;
         create|create-virtual-for)
             script="$VDE_ROOT_DIR/bin/create-virtual-for"
@@ -394,11 +400,12 @@ if [ "$CMD" = "help" ]; then
     exit 0
 fi
 
-# Special handling for create command with --rebuild or --nocache flags
+# Special handling for create command with --rebuild, --nocache, or --regenerate-keys flags
 # These flags require creating the VM then starting with rebuild
 if [ "$CMD" = "create" ]; then
     local rebuild=false
     local nocache=false
+    local regenerate_keys=false
     local create_args=()
     local vm_name=""
     
@@ -413,6 +420,10 @@ if [ "$CMD" = "create" ]; then
                 nocache=true
                 shift
                 ;;
+            --regenerate-keys)
+                regenerate_keys=true
+                shift
+                ;;
             *)
                 create_args+=("$1")
                 if [ -z "$vm_name" ]; then
@@ -423,14 +434,14 @@ if [ "$CMD" = "create" ]; then
         esac
     done
     
-    # If rebuild or nocache is specified, we need special handling
-    if [ "$rebuild" = "true" ] || [ "$nocache" = "true" ]; then
+    # If special flags are specified, we need special handling
+    if [ "$rebuild" = "true" ] || [ "$nocache" = "true" ] || [ "$regenerate_keys" = "true" ]; then
         if [ -z "$vm_name" ]; then
-            vde_error_simple "VM name is required for create with --rebuild or --nocache"
+            vde_error_simple "VM name is required for create with --rebuild, --nocache, or --regenerate-keys"
             exit $VDE_ERR_INVALID_INPUT
         fi
         
-        vde_log_info "Creating VM with rebuild=$rebuild, nocache=$nocache" "vde"
+        vde_log_info "Creating VM with rebuild=$rebuild, nocache=$nocache, regenerate_keys=$regenerate_keys" "vde"
         
         # Source required libraries for the functions
         source "$VDE_ROOT_DIR/lib/vde-commands" 2>/dev/null || true
@@ -444,10 +455,11 @@ if [ "$CMD" = "create" ]; then
             exit $create_result
         fi
         
-        # Then start with rebuild/nocache
+        # Then start with rebuild/nocache/regenerate-keys
         local start_args=()
         [ "$rebuild" = "true" ] && start_args+=(--rebuild)
         [ "$nocache" = "true" ] && start_args+=(--no-cache)
+        [ "$regenerate_keys" = "true" ] && start_args+=(--regenerate-keys)
         
         "$VDE_ROOT_DIR/bin/start-virtual" "$vm_name" "${start_args[@]}"
         exit $?

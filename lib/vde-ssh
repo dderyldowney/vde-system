@@ -37,6 +37,7 @@ _VDE_SSH_LOADED=1
 . "$VDE_ROOT_DIR/lib/vde-errors"
 . "$VDE_ROOT_DIR/lib/vde-log"
 . "$VDE_ROOT_DIR/lib/vde-naming"
+. "$VDE_ROOT_DIR/lib/vde-security"
 
 # =============================================================================
 # SSH CONFIGURATION
@@ -210,6 +211,33 @@ sync_ssh_keys_to_vde() {
     fi
 
     return $VDE_SUCCESS
+}
+
+# Regenerate VDE SSH keys (force new keys)
+# Returns: VDE_SUCCESS (0) on success
+vde_ssh_regenerate_keys() {
+    log_info "Forcing regeneration of VDE SSH keys..."
+    
+    # Backup old keys just in case
+    local timestamp=$(date +%Y%m%d_%H%M%S)
+    if [[ -f "$VDE_SSH_IDENTITY" ]]; then
+        cp "$VDE_SSH_IDENTITY" "${VDE_SSH_IDENTITY}.bak.${timestamp}"
+        cp "$VDE_SSH_IDENTITY_PUB" "${VDE_SSH_IDENTITY_PUB}.bak.${timestamp}"
+    fi
+    
+    # Remove old keys
+    rm -f "$VDE_SSH_IDENTITY" "$VDE_SSH_IDENTITY_PUB"
+    
+    # Generate new ones
+    if validate_or_create_ssh_key; then
+        # If agent is running, we need to add the new key
+        if ssh_agent_is_running; then
+            ssh-add "$VDE_SSH_IDENTITY" 2>/dev/null
+        fi
+        return $VDE_SUCCESS
+    fi
+    
+    return $VDE_ERR_GENERAL
 }
 
 # Validate or create SSH key
