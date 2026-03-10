@@ -37,18 +37,18 @@ Previous sessions resolved critical performance hangs and stability issues in th
 
 - 265 passing (was 263 before promotion)
 - 2 pre-existing failures
-- 56 errors from deferred features (step definitions not implemented - stub code)
-- 64 verified passing scenarios in User Guide
+- 56 errors from deferred features (step definitions not loaded from deferred/ folder)
+- **106 verified passing scenarios in User Guide** (was 64)
 
 ### Blocker
 
-Deferred step files contain stub implementations (raise StepNotImplementedError), not real code. 56 scenarios error because steps are unimplemented. Would need ~40+ step implementations to fix.
+Deferred step files are in tests/features/steps/deferred/ but not loaded by behave. The promoted feature files (documented-development-workflows, daily-workflow, etc.) have undefined steps. To fix: copy documented_workflow_steps.py, daily_workflow_steps.py, daily_workflow_required_steps.py from deferred/ to steps/.
 
 ### Files Modified
 
 - tests/scripts/generate_user_guide.py - Fixed path
 - docs/user-guide-intros.yml - Added student Daily Workflow content
-- USER_GUIDE.md - Regenerated
+- USER_GUIDE.md - Regenerated with 106 scenarios
 - MEMORY.md - Updated
 
 ## Current Session Work (2026-03-09 — User Guide + Deferred Mainlining)

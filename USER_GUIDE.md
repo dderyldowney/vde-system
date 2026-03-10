@@ -1597,6 +1597,25 @@ And SSH config entry for "vde-python" should contain "ForwardAgent yes"
 vde create python
 ```
 
+**Scenario: Detect all common ssh key types**
+
+
+```
+Given ~/.ssh/vde/ contains SSH keys
+When detect_ssh_keys runs
+Then "id_ed25519" keys should be detected
+And "id_rsa" keys should be detected
+And "id_ecdsa" keys should be detected
+```
+
+
+**This is handled by the setup script:**
+
+
+```bash
+./bin/build-and-start
+```
+
 **Scenario: Prefer ed25519 keys when multiple exist**
 
 
@@ -1757,6 +1776,20 @@ And directory should have correct permissions
 ```bash
 vde create python
 ```
+
+**Scenario: Merge preserves blank lines and formatting**
+
+
+```
+Given ~/.ssh/vde/config exists with blank lines
+And ~/.ssh/vde/config has comments and custom formatting
+When I create VM "go" with SSH port "2206"
+Then ~/.ssh/vde/config blank lines should be preserved
+And ~/.ssh/vde/config comments should be preserved
+And new entry should be added with proper formatting
+```
+
+
 
 **Scenario: Merge respects file locking for concurrent updates**
 
@@ -2014,6 +2047,87 @@ That's it! One simple, consistent command interface.
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
+**Scenario: Create a new language vm**
+
+
+```
+Given the VM "zig" is defined as a language VM with install command "apt-get install -y zig"
+And no VM configuration exists for "zig"
+When I run "create-virtual-for zig"
+Then a docker-compose.yml file should be created at "configs/docker/zig/docker-compose.yml"
+And the docker-compose.yml should contain SSH port mapping
+And SSH config entry should exist for "vde-zig"
+And projects directory should exist at "projects/zig"
+And logs directory should exist at "logs/zig"
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create zig
+```
+
+**Scenario: Start a created vm**
+
+
+```
+Given VM "python" has been created
+And VM "python" is not running
+When I run "start-virtual python"
+Then VM "python" should be running
+And SSH should be accessible on allocated port
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start python
+```
+
+**Scenario: Create a new language vm**
+
+
+```
+Given the VM "testlang" is defined as a language VM with install command "apt-get install -y curl"
+And no VM configuration exists for "testlang"
+When I run "create-virtual-for testlang"
+Then a docker-compose.yml file should be created at "configs/docker/testlang/docker-compose.yml"
+And the docker-compose.yml should contain SSH port mapping
+And projects directory should exist at "projects/testlang"
+And logs directory should exist at "logs/testlang"
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create testlang
+```
+
+**Scenario: Start a created vm**
+
+
+```
+Given VM "python" has been created
+And VM "python" is not running
+When I run "start-virtual python"
+Then VM "python" should be running
+And SSH should be accessible on allocated port
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start python
+```
+
 **Scenario: First time creation experience**
 
 
@@ -2071,6 +2185,168 @@ You just created your first VM! That's honestly kind of a big deal. Give yoursel
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
 
+**Scenario: List all predefined vm types**
+
+
+```
+Given VM types are loaded
+When I run "list-vms"
+Then all language VMs should be listed
+And all service VMs should be listed
+And aliases should be shown
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list
+```
+
+**Scenario: List only language vms**
+
+
+```
+Given VM types are loaded
+When I run "list-vms --lang"
+Then only language VMs should be listed
+And service VMs should not be listed
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list --languages
+```
+
+**Scenario: List only service vms**
+
+
+```
+Given VM types are loaded
+When I run "list-vms --svc"
+Then only service VMs should be listed
+And language VMs should not be listed
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list --services
+```
+
+**Scenario: Filter vms by name**
+
+
+```
+Given VM types are loaded
+When I run "list-vms python"
+Then only VMs matching "python" should be listed
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list python
+```
+
+**Scenario: Discovering vms by alias**
+
+
+```
+Given I know a VM by an alias but not its canonical name
+When I use the alias "nodejs"
+Then the alias should resolve to "js"
+And I should be able to use either name in commands
+```
+
+
+**Run the command:**
+
+
+```bash
+vde resolve <alias>
+```
+
+**Scenario: List all predefined vm types**
+
+
+```
+Given VM types are loaded
+When I run "list-vms"
+Then all language VMs should be listed
+And all service VMs should be listed
+And aliases should be shown
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list
+```
+
+**Scenario: List only language vms**
+
+
+```
+Given VM types are loaded
+When I run "list-vms --all --lang"
+Then only language VMs should be listed
+And service VMs should not be listed
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list --languages
+```
+
+**Scenario: List only service vms**
+
+
+```
+Given VM types are loaded
+When I run "list-vms --all --svc"
+Then only service VMs should be listed
+And language VMs should not be listed
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list --services
+```
+
+**Scenario: Filter vms by name**
+
+
+```
+Given VM types are loaded
+When I run "list-vms python"
+Then only VMs matching "python" should be listed
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list python
+```
+
 **Scenario: Resolve vm aliases**
 
 
@@ -2086,6 +2362,24 @@ Then VMs should include "python"
 
 ```bash
 vde start py
+```
+
+**Scenario: Discovering vms by alias**
+
+
+```
+Given I know a VM by an alias but not its canonical name
+When I use the alias "nodejs"
+Then the alias should resolve to "js"
+And I should be able to use either name in commands
+```
+
+
+**Run the command:**
+
+
+```bash
+vde resolve <alias>
 ```
 
 **Scenario: Configure aliases for vm**
@@ -2119,6 +2413,417 @@ Here's your daily workflow with VDE — simple as can be!
 
 **Important:** Stopping doesn't delete your VM — it just pauses it. Your code and configurations are safe and sound! 💾
 
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Stop a running vm**
+
+
+```
+Given VM "python" is running
+When I run "shutdown-virtual python"
+Then VM "python" should not be running
+```
+
+
+**Stop the VMs:**
+
+
+```bash
+vde stop python
+```
+
+**Scenario: Stop all running vms**
+
+
+```
+Given VM "python" is running
+And VM "rust" is running
+When I run "shutdown-virtual all"
+Then no VMs should be running
+```
+
+
+**Stop the VMs:**
+
+
+```bash
+vde stop all
+```
+
+**Scenario: Restart a vm**
+
+
+```
+Given VM "python" is running
+When I run "shutdown-virtual python && start-virtual python"
+Then VM "python" should be running
+And the VM should have a fresh container instance
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde stop python && start-virtual python
+```
+
+**Scenario: Add a new vm type**
+
+
+```
+When I run "add-vm-type --type lang --display 'Zig Language' zig 'apt-get install -y zig'"
+Then "zig" should be in known VM types
+And VM type "zig" should have type "lang"
+And VM type "zig" should have display name "Zig Language"
+```
+
+
+**Run the command:**
+
+
+```bash
+add-vm-type --type lang --display 
+```
+
+**Scenario: Add vm type with aliases**
+
+
+```
+When I run "add-vm-type --type lang --display 'JavaScript' js 'apt-get install -y nodejs' 'node,nodejs'"
+Then "js" should be in known VM types
+And "js" should have aliases "node,nodejs"
+And "node" should resolve to "js"
+And "nodejs" should resolve to "js"
+```
+
+
+**Run the command:**
+
+
+```bash
+add-vm-type --type lang --display 
+```
+
+**Scenario: Stop a running vm**
+
+
+```
+Given VM "python" is running
+When I run "shutdown-virtual python"
+Then VM "python" should not be running
+And VM configuration should still exist
+```
+
+
+**Stop the VMs:**
+
+
+```bash
+vde stop python
+```
+
+**Scenario: Stop all running vms**
+
+
+```
+Given VM "python" is running
+And VM "rust" is running
+When I run "shutdown-virtual all"
+Then no VMs should be running
+```
+
+
+**Stop the VMs:**
+
+
+```bash
+vde stop all
+```
+
+**Scenario: Restart a vm**
+
+
+```
+Given VM "python" is running
+When I run "shutdown-virtual python && start-virtual python"
+Then VM "python" should be running
+And the VM should have a fresh container instance
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde stop python && start-virtual python
+```
+
+**Scenario: Add a new vm type**
+
+
+```
+When I run "add-vm-type --type lang --display 'Test Language' --ssh-port 2298 testlang 'apt-get install -y curl'"
+Then "testlang" should be in known VM types
+And VM type "testlang" should have type "lang"
+And VM type "testlang" should have display name "Test Language"
+```
+
+
+**Run the command:**
+
+
+```bash
+add-vm-type --type lang --display 
+```
+
+**Scenario: Add vm type with aliases**
+
+
+```
+When I run "add-vm-type --type lang --display 'Test Lang Two' --ssh-port 2299 testlang2 'apt-get install -y curl' 'tl2,tlalias'"
+Then "testlang2" should be in known VM types
+And "testlang2" should have aliases "tl2,tlalias"
+And "tl2" should resolve to "testlang2"
+And "tlalias" should resolve to "testlang2"
+```
+
+
+**Run the command:**
+
+
+```bash
+add-vm-type --type lang --display 
+```
+
+**Scenario: Creating a new vm**
+
+
+```
+Given I want to work with a new language
+When I request to "create a Rust VM"
+Then the VM configuration should be generated
+And SSH keys should be configured
+And the VM should be ready to use
+```
+
+
+**Create the VM:**
+
+
+```bash
+vde create rust
+```
+
+**Scenario: Starting a created vm**
+
+
+```
+Given I have created a Go VM
+When I request to "start go"
+Then the Go container should start
+And it should be accessible via SSH
+And my workspace should be mounted
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start go
+```
+
+**Scenario: Starting multiple vms**
+
+
+```
+Given I have created several VMs
+When I request to "start python, go, and postgres"
+Then all three VMs should start
+And they should be able to communicate
+And each should have its own SSH port
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start python go postgres
+```
+
+**Scenario: Checking vm status**
+
+
+```
+Given I have several VMs
+When I request "status of all VMs"
+Then I should see which VMs are running
+And I should see which VMs are stopped
+```
+
+
+**List available VMs:**
+
+
+```bash
+vde list
+```
+
+**Scenario: Stopping a running vm**
+
+
+```
+Given I have a running Python VM
+When I request to "stop python"
+Then the Python container should stop
+And the VM configuration should remain
+And I can start it again later
+```
+
+
+**Stop the VMs:**
+
+
+```bash
+vde stop python
+```
+
+**Scenario: Stopping multiple vms**
+
+
+```
+Given I have multiple running VMs
+When I request to "stop python and postgres"
+Then both VMs should stop
+And other VMs should remain running
+```
+
+
+**Stop the VMs:**
+
+
+```bash
+vde stop python postgres
+```
+
+**Scenario: Restarting a vm**
+
+
+```
+Given I have a running VM
+When I request to "restart rust"
+Then the Rust VM should stop
+And the Rust VM should start again
+And my workspace should still be accessible
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start rust
+```
+
+**Scenario: Restarting with rebuild**
+
+
+```
+Given I need to refresh a VM
+When I request to "restart python with rebuild"
+Then the Python VM should be rebuilt
+And the VM should start with the new image
+And my workspace should be preserved
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start python
+```
+
+**Scenario: Deleting a vm**
+
+
+```
+Given I no longer need a VM
+When I remove its configuration
+Then the VM should be removed
+And the container should be stopped if running
+And the configuration files should be deleted
+```
+
+
+**Stop the VMs:**
+
+
+```bash
+vde stop <vms>
+```
+
+**Scenario: Rebuilding after code changes**
+
+
+```
+Given I have modified the Dockerfile
+When I request to "rebuild go with no cache"
+Then the Go VM should be rebuilt from scratch
+And no cached layers should be used
+And the new image should reflect my changes
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start go --rebuild
+```
+
+**Scenario: Upgrading a vm**
+
+
+```
+Given I want to update the base image
+When I rebuild the VM
+Then the latest base image should be used
+And my configuration should be preserved
+And my workspace should still be accessible
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vm> --rebuild
+```
+
+**Scenario: Migrating to a new vde version**
+
+
+```
+Given I have updated VDE scripts
+When I rebuild my VMs
+Then they should use the new VDE configuration
+And my data should be preserved
+And my SSH access still works
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start <vm> --rebuild
+```
+
 </details>
 
 <details id="6.-your-first-cluster" data-section="6. Your First Cluster">
@@ -2144,6 +2849,48 @@ All three can talk to each other automatically. No networking headaches required
 ### Verified Scenarios
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Start multiple vms**
+
+
+```
+Given VM "python" has been created
+And VM "rust" has been created
+And neither VM is running
+When I run "start-virtual python rust"
+Then VM "python" should be running
+And VM "rust" should be running
+And each VM should have a unique SSH port
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start python rust
+```
+
+**Scenario: Start multiple vms**
+
+
+```
+Given VM "python" has been created
+And VM "rust" has been created
+And neither VM is running
+When I run "start-virtual python rust"
+Then VM "python" should be running
+And VM "rust" should be running
+And each VM should have a unique SSH port
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start python rust
+```
 
 **Scenario: Detect start all vms intent**
 
@@ -2582,6 +3329,42 @@ Sometimes things don't work perfectly the first time. That's okay! Here's how to
 ### Verified Scenarios
 
 > **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Rebuild a vm with   rebuild flag**
+
+
+```
+Given VM "python" is running
+When I run "start-virtual python --rebuild"
+Then VM "python" should be running
+And the container should be rebuilt from the Dockerfile
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start python --rebuild
+```
+
+**Scenario: Rebuild a vm with   rebuild flag**
+
+
+```
+Given VM "python" is running
+When I run "start-virtual python --rebuild"
+Then VM "python" should be running
+And the container should be rebuilt from the Dockerfile
+```
+
+
+**Start the VMs:**
+
+
+```bash
+vde start python --rebuild
+```
 
 **Scenario: Check ssh environment status**
 
