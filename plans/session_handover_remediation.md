@@ -49,6 +49,38 @@ Root causes FIXED:
 
 **Phase G COMPLETE - All issues resolved**
 
+---
+
+## Phase H — Daily Workflow Promotion
+
+Goals: Promote daily workflow and development workflow features to core test suite.
+
+**Plan file:** `phase3-daily-workflow-promotion.md`
+
+Target files:
+
+- documented-development-workflows.feature (31 scenarios)
+- daily-workflow.feature (13 scenarios)
+- daily-development-workflow.feature (7 scenarios)
+- vm-information-and-discovery.feature (7 scenarios)
+
+**Total: 58 scenarios to promote**
+
+Assessment completed:
+
+- All step definitions verified to exist (no "Undefined step" errors)
+- Step files in tests/features/steps/deferred/: documented_workflow_steps.py, daily_workflow_steps.py, daily_workflow_required_steps.py, vm_info_steps.py
+- No @wip tags in any target files
+
+**Status: AWAITING USER APPROVAL TO PROCEED**
+
+Implementation would:
+
+1. Add @core-suite tag to each feature file
+2. Copy 4 feature files to tests/features/core-infrastructure/
+3. Run verification tests
+4. Run full @core-suite test suite
+
 **2026-03-09 ARCHITECT REVIEW - Updated Recommendations**:
 
 1. **Test Timeout Strategy**: Rust VMs require 320s timeout causing slowdown.

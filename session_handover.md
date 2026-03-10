@@ -101,11 +101,13 @@ The new features added 25 scenarios; fixes applied to address original 12 failur
 2. **Pre-existing failures to investigate** (not related to Phase G):
    - `cache-system.feature:49` - .cache/port-registry directory missing
    - `vm-lifecycle-management.feature:79` - Rebuild scenario issue
-3. **Proceed to Phase H** - Daily workflow features promotion:
+3. **Proceed to Phase H** - Daily workflow features promotion (PLAN CREATED):
    - `documented-development-workflows.feature` (31 scenarios)
    - `daily-workflow.feature` (13 scenarios)
    - `daily-development-workflow.feature` (7 scenarios)
    - `vm-information-and-discovery.feature` (7 scenarios)
+   - **Plan file:** `plans/phase3-daily-workflow-promotion.md`
+   - **Status:** AWAITING USER APPROVAL TO PROCEED
 
 ### Critical File List
 

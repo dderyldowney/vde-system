@@ -2063,7 +2063,7 @@ You just created your first VM! That's honestly kind of a big deal. Give yoursel
 
 ├── logs/            # Application logs
 
-└── bin/         # VDE management commands
+└── scripts/         # VDE management commands
 
 ```
 
@@ -2403,7 +2403,159 @@ VDE makes working with databases delightfully simple. Your Python VM can talk to
 
 ### Your Daily Rhythm: Start, Code, Stop 🔄
 
-Here's how your day with VDE will flow. Nice and simple!
+Hey student! 👋 Welcome to your daily study routine with VDE. Whether you're learning Python for your CS101 class, setting up a database for your web development project, or experimenting with Go for the first time — VDE makes it easy!
+
+**Think of VDE as your personal computer lab that:**
+
+- Spins up instantly when you need it
+
+- Gives you fresh, clean environments for each project
+
+- Keeps everything organized so you can focus on learning
+
+- Costs nothing to try — no installation, no mess
+
+---
+
+## Ⱇ Your Morning Routine: Starting Your Study Session
+
+Every great study session starts the same way — fire up your environments!
+
+**Step 1: Start Your Docker**
+
+Make sure Docker Desktop is running (check the whale icon in your menu bar).
+
+**Step 2: Start Your VMs**
+
+Need Python for homework? One command gets you ready:
+
+```bash
+
+vde start python
+
+```
+
+Working on a project that needs a database too?
+
+```bash
+
+vde start python postgres
+
+```
+
+**Step 3: Connect and Code**
+
+```bash
+
+vde ssh python
+
+```
+
+---
+
+## Ⱇ Your Study Session: What You Can Do
+
+### Learning New Languages 🐍🦀🐹
+
+Each VM is a complete, isolated environment. Try new languages without messing up your main system:
+
+- **Python** — Data science, web dev, automation
+
+- **JavaScript/Node** — Web development, APIs
+
+- **Go** — Systems programming, cloud apps
+
+- **Rust** — Performance-critical applications
+
+- **Ruby** — Rails development
+
+- And 15+ more!
+
+### Building Projects with Databases 🗄️
+
+Need a database for your project? VDE has you covered:
+
+- **PostgreSQL** — The industry-standard relational database
+
+- **MySQL** — Another popular relational option
+
+- **MongoDB** — Flexible document database
+
+- **Redis** — Lightning-fast caching
+
+**Example: Full-Stack Project Setup**
+
+```bash
+
+# Start your language VM + database
+
+vde start python postgres
+
+# Code in Python
+
+vde ssh python
+
+# Now you're in your Python environment with PostgreSQL available!
+
+```
+
+### Exploring and Discovering 📚
+
+Not sure what's available? Ask VDE!
+
+```bash
+
+vde ask what VMs can I create?
+
+vde ask show all languages
+
+vde ask show all services
+
+```
+
+---
+
+## Ⱇ End of Session: Shutting Down
+
+When you're done studying, clean up with one command:
+
+```bash
+
+vde stop all
+
+```
+
+**That's it!** Your code stays in your project folders, but the VM environments are fresh and ready for next time.
+
+---
+
+## Ⱇ Quick Reference: Your Daily Commands
+
+| What You Need | Command |
+
+|---------------|---------|
+
+| Start Python | `vde start python` |
+
+| Start Multiple | `vde start python postgres redis` |
+
+| Connect to VM | `vde ssh python` |
+
+| See What's Running | `vde list` |
+
+| Stop Everything | `vde stop all` |
+
+| Add New Language | `vde create golang` |
+
+**Pro Tip:** Use `vde ask` to get help in plain English!
+
+```bash
+
+vde ask how do I connect to Python?
+
+vde ask what's running?
+
+```
 
 </details>
 
@@ -2516,28 +2668,13 @@ vde ssh nginx      # Nginx web server
 
 | Language | Command | Aliases |
 |----------|---------|---------|
-| Assembler | `vde create vde-asm` | asm,assembler,nasm |
-| C | `vde create vde-c` | c |
-| C++ | `vde create vde-cpp` | cpp,c++,gcc |
-| C# | `vde create vde-csharp` | csharp,dotnet |
-| Elixir | `vde create vde-elixir` | elixir |
-| Flutter | `vde create vde-flutter` | flutter,dart |
-| Go | `vde create vde-go` | go,golang |
-| Haskell | `vde create vde-haskell` | haskell,ghc |
-| Java | `vde create vde-java` | java,jdk |
-| JavaScript | `vde create vde-js` | js,node,nodejs,javascript |
+
 
 ### Service VMs (for data & infrastructure)
 
 | Service | Command | Port |
 |---------|---------|------|
-| CouchDB | `vde create vde-couchdb` | 5984 |
-| MongoDB | `vde create vde-mongodb` | 27017 |
-| MySQL | `vde create vde-mysql` | 3306 |
-| Nginx | `vde create vde-nginx` | 80,443 |
-| PostgreSQL | `vde create vde-postgres` | 5432 |
-| RabbitMQ | `vde create vde-rabbitmq` | 5672,15672 |
-| Redis | `vde create vde-redis` | 6379 |
+
 
 ---
 
