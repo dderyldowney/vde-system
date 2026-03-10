@@ -151,7 +151,7 @@ Think of it like VDE speaks a specific dialect, and we need to make sure your te
 
 ### For Windows Users
 
-#### The Good News: Git for Windows Includes Bash!
+#### The Good News: Git for Windows Includes Bash
 
 If you installed Git for Windows (which you did in the previous section), you **already have Bash**! Git for Windows includes a program called "Git Bash" that gives you a modern Bash shell.
 
@@ -231,7 +231,7 @@ Zsh is available on Windows through WSL (Windows Subsystem for Linux):
 
 ### For macOS (Mac) Users
 
-#### The Good News: You Almost Certainly Already Have Zsh!
+#### The Good News: You Almost Certainly Already Have Zsh
 
 Modern macOS comes with Zsh as the default shell (since macOS Catalina).
 
@@ -495,11 +495,11 @@ Git is like a digital delivery truck — it downloads code from the internet (li
 
 1. Open your web browser
 
-2. Go to: **https://github.com/git-guides/install-git**
+2. Go to: **<https://github.com/git-guides/install-git>**
 
 3. Look for the **Windows** section
 
-4. Click the link that says **"Click here to download"** (or go directly to https://git-scm.com/download/win)
+4. Click the link that says **"Click here to download"** (or go directly to <https://git-scm.com/download/win>)
 
 5. The file will be named something like `Git-2.43.0-64-bit.exe`
 
@@ -541,7 +541,7 @@ Git is like a digital delivery truck — it downloads code from the internet (li
 
 ### For macOS (Mac) Users
 
-#### The Good News: You Might Already Have Git!
+#### The Good News: You Might Already Have Git
 
 Macs come with Git built-in! Let's check if you're all set:
 
@@ -573,11 +573,11 @@ brew install git
 
 **Option 2: Download from Git Website**
 
-1. Go to: **https://github.com/git-guides/install-git**
+1. Go to: **<https://github.com/git-guides/install-git>**
 
 2. Look for the **macOS** section
 
-3. Click the download link (or go to https://git-scm.com/download/mac)
+3. Click the download link (or go to <https://git-scm.com/download/mac>)
 
 4. This will download a `.dmg` file
 
@@ -601,7 +601,7 @@ You should see a version number. **✅ Done!** You've got Git!
 
 ### For Linux Users
 
-#### The Good News: Most Linux Has Git Already!
+#### The Good News: Most Linux Has Git Already
 
 Linux is usually prepared for everything. Let's see:
 
@@ -709,7 +709,7 @@ Docker Desktop likes Windows 10 or Windows 11. It also prefers **Windows 10/11 P
 
 1. Open your web browser (Chrome, Edge, Firefox, etc.)
 
-2. Go to: **https://www.docker.com/products/docker-desktop**
+2. Go to: **<https://www.docker.com/products/docker-desktop>**
 
 3. Click the big blue button that says **"Download for Windows"**
 
@@ -785,7 +785,7 @@ Good news — most modern Macs work beautifully with Docker! It's happy on:
 
 1. Open your web browser (Safari, Chrome, Firefox, etc.)
 
-2. Go to: **https://www.docker.com/products/docker-desktop**
+2. Go to: **<https://www.docker.com/products/docker-desktop>**
 
 3. You'll see two options - choose the right one for your Mac:
 
@@ -881,7 +881,7 @@ First, let's check which distribution you're rocking:
 
 1. Open your web browser
 
-2. Go to: **https://www.docker.com/products/docker-desktop**
+2. Go to: **<https://www.docker.com/products/docker-desktop>**
 
 3. Click **"Download for Linux"**
 
@@ -1045,7 +1045,6 @@ Once Docker, Git, and a modern shell are installed and working, you're ready for
 
 **Scenario: Fresh installation on new system**
 
-
 ```
 Given I have a new computer with Docker installed
 And I have cloned the VDE repository to ~/dev
@@ -1055,16 +1054,13 @@ And required directories should be created
 And I should see success message
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
 ```
 
 **Scenario: Prerequisites are checked**
-
 
 ```
 Given I want to install VDE
@@ -1075,16 +1071,13 @@ And it should verify zsh is available
 And it should report missing dependencies clearly
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
 ```
 
 **Scenario: Create required directory structure**
-
 
 ```
 Given VDE is being installed
@@ -1099,10 +1092,7 @@ And backup/ directory should exist
 And cache/ directory should exist
 ```
 
-
-
 **Scenario: Generate or detect ssh keys**
-
 
 ```
 Given I'm setting up VDE for the first time
@@ -1113,16 +1103,13 @@ And public keys should be copied to public-ssh-keys/
 And .keep file should exist in public-ssh-keys/
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
 ```
 
 **Scenario: Initial ssh configuration**
-
 
 ```
 Given VDE is being set up
@@ -1132,16 +1119,13 @@ And the template should show proper SSH config format
 And I should be able to use it as reference
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
 ```
 
 **Scenario: Load vm types configuration**
-
 
 ```
 Given VDE is installed
@@ -1152,10 +1136,7 @@ And postgres, redis, mongodb, nginx should be listed
 And aliases should be shown (py, js, etc.)
 ```
 
-
-
 **Scenario: Set up shell environment**
-
 
 ```
 Given I want VDE commands available everywhere
@@ -1165,16 +1146,13 @@ And I can run start-virtual, shutdown-virtual, etc.
 And tab completion should work
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start <vms>
 ```
 
 **Scenario: Verify docker permissions**
-
 
 ```
 Given VDE is being installed
@@ -1184,10 +1162,7 @@ And instructions should be provided for fixing permissions
 And setup should continue with a warning
 ```
 
-
-
 **Scenario: Create docker network**
-
 
 ```
 Given VDE is being installed
@@ -1197,10 +1172,7 @@ And all VMs should use this network
 And VMs can communicate with each other
 ```
 
-
-
 **Scenario: Verify installation with health check**
-
 
 ```
 Given I've installed VDE
@@ -1210,16 +1182,13 @@ And any issues should be clearly listed
 And I should get fix suggestions for each issue
 ```
 
-
 **Run the command:**
-
 
 ```bash
 vde-health
 ```
 
 **Scenario: Upgrade existing installation**
-
 
 ```
 Given I have an older version of VDE
@@ -1230,16 +1199,13 @@ And my configurations should be preserved
 And I should be told about any manual migration needed
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
 ```
 
 **Scenario: Uninstall or cleanup**
-
 
 ```
 Given I no longer want VDE on my system
@@ -1250,16 +1216,13 @@ And my SSH config should be cleaned up
 And my project data should be preserved if I want
 ```
 
-
 **Stop the VMs:**
-
 
 ```bash
 vde stop <vms>
 ```
 
 **Scenario: Installation on different platforms**
-
 
 ```
 Given I'm installing VDE
@@ -1269,16 +1232,13 @@ And platform-specific adjustments should be made
 And the installation should succeed
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
 ```
 
 **Scenario: Docker image availability**
-
 
 ```
 Given I'm setting up VDE for the first time
@@ -1288,10 +1248,7 @@ And base images should be built if needed
 And I should see download/build progress
 ```
 
-
-
 **Scenario: Quick start after installation**
-
 
 ```
 Given VDE is freshly installed
@@ -1301,16 +1258,13 @@ And I should have a working Python environment
 And I can start coding immediately
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Documentation is available**
-
 
 ```
 Given VDE is installed
@@ -1321,10 +1275,7 @@ And tests/README.md should explain testing
 And help text should be available in commands
 ```
 
-
-
 **Scenario: Validate installation**
-
 
 ```
 Given VDE has been installed
@@ -1335,9 +1286,7 @@ And vm-types.conf should be valid
 And all directories should have correct permissions
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
@@ -1391,7 +1340,6 @@ Here's some good news: VDE handles SSH keys for you automatically with complete 
 
 **Scenario: Report agent unavailable when ssh_auth_sock is not set**
 
-
 ```
 Given SSH keys exist in ~/.ssh/vde/
 And SSH_AUTH_SOCK is unset in the test environment
@@ -1400,10 +1348,7 @@ Then the command output should indicate no SSH agent is available
 And no running SSH agent processes should be terminated
 ```
 
-
-
 **Scenario: Generate ssh key if none exists**
-
 
 ```
 Given no SSH keys exist in ~/.ssh/vde/
@@ -1412,16 +1357,13 @@ Then an ed25519 SSH key should be generated
 And the public key should be synced to public-ssh-keys directory
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
 ```
 
 **Scenario: Sync public keys to vde directory**
-
 
 ```
 Given SSH keys exist in ~/.ssh/vde/
@@ -1431,16 +1373,13 @@ And only .pub files should be copied
 And .keep file should exist in public-ssh-keys directory
 ```
 
-
 **Run the command:**
-
 
 ```bash
 sync_ssh_keys_to_vde
 ```
 
 **Scenario: Validate public key files only**
-
 
 ```
 Given public-ssh-keys directory contains files
@@ -1449,10 +1388,7 @@ Then non-.pub files should be rejected
 And files containing "PRIVATE KEY" should be rejected
 ```
 
-
-
 **Scenario: Create ssh config entry for new vm**
-
 
 ```
 Given VM "python" is created with SSH port "2213"
@@ -1462,9 +1398,7 @@ And SSH config should contain "Port 2213"
 And SSH config should contain "ForwardAgent yes"
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
@@ -1472,23 +1406,19 @@ vde create python
 
 **Scenario: Ssh config uses correct identity file**
 
-
 ```
 Given primary SSH key is "id_ed25519"
 When SSH config entry is created for VM "python"
 Then SSH config should contain "IdentityFile" pointing to "~/.ssh/vde/id_ed25519"
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Generate vm to vm ssh config entries**
-
 
 ```
 Given VM "python" is allocated port "2213"
@@ -1499,16 +1429,13 @@ And SSH config should contain entry for "vde-rust"
 And each entry should use "localhost" as hostname
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
 ```
 
 **Scenario: Prevent duplicate ssh config entries**
-
 
 ```
 Given SSH config already contains "Host vde-python"
@@ -1517,16 +1444,13 @@ Then duplicate SSH config entry should NOT be created
 And command should warn about existing entry
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Atomic ssh config update prevents corruption**
-
 
 ```
 Given SSH config file exists
@@ -1535,16 +1459,13 @@ Then SSH config should remain valid
 And no partial updates should occur
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
 ```
 
 **Scenario: Backup ssh config before modification**
-
 
 ```
 Given SSH config file exists
@@ -1553,9 +1474,7 @@ Then backup file should be created in "backup/ssh/" directory
 And backup filename should contain timestamp
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
@@ -1563,23 +1482,19 @@ And backup filename should contain timestamp
 
 **Scenario: Ssh config entries are static and preserved when vm is removed**
 
-
 ```
 Given SSH config contains "Host vde-python"
 When VM "python" is removed
 Then SSH config should still contain "Host vde-python"
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
 ```
 
 **Scenario: Vm compose file mounts ssh agent socket for agent forwarding**
-
 
 ```
 Given VM "python" is created with SSH port "2213"
@@ -1589,16 +1504,13 @@ And the compose file should set SSH_AUTH_SOCK environment variable
 And SSH config entry for "vde-python" should contain "ForwardAgent yes"
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Detect all common ssh key types**
-
 
 ```
 Given ~/.ssh/vde/ contains SSH keys
@@ -1608,9 +1520,7 @@ And "id_rsa" keys should be detected
 And "id_ecdsa" keys should be detected
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
@@ -1618,17 +1528,13 @@ And "id_ecdsa" keys should be detected
 
 **Scenario: Prefer ed25519 keys when multiple exist**
 
-
 ```
 Given both "id_ed25519" and "id_rsa" keys exist
 When primary SSH key is requested
 Then "id_ed25519" should be returned as primary key
 ```
 
-
-
 **Scenario: Merge new vm entry with existing ssh config**
-
 
 ```
 Given ~/.ssh/vde/config exists with existing host entries
@@ -1641,16 +1547,13 @@ And ~/.ssh/vde/config should contain new "Host vde-python" entry
 And existing entries should be unchanged
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Merge preserves user's custom ssh settings**
-
 
 ```
 Given ~/.ssh/vde/config exists with custom settings
@@ -1664,10 +1567,7 @@ And ~/.ssh/vde/config should still contain "    IdentityFile ~/.ssh/vde/mykey"
 And new "Host vde-rust" entry should be appended to end
 ```
 
-
-
 **Scenario: Merge preserves existing vde entries when adding new vm**
-
 
 ```
 Given ~/.ssh/vde/config contains "Host vde-python"
@@ -1678,16 +1578,13 @@ And ~/.ssh/vde/config should still contain "    Port 2213" under vde-python
 And new "Host vde-rust" entry should be added
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Merge does not duplicate existing vde entries**
-
 
 ```
 Given ~/.ssh/vde/config contains "Host vde-python"
@@ -1697,16 +1594,13 @@ Then ~/.ssh/vde/config should contain only one "Host vde-python" entry
 And error should indicate entry already exists
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Atomic merge prevents corruption if interrupted**
-
 
 ```
 Given ~/.ssh/vde/config exists with content
@@ -1716,16 +1610,13 @@ And ~/.ssh/vde/config should NOT be partially written
 And original config should be preserved in backup
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start <vms>
 ```
 
 **Scenario: Merge uses temporary file then atomic rename**
-
 
 ```
 Given ~/.ssh/vde/config exists
@@ -1736,10 +1627,7 @@ Then atomic mv should replace original config
 Then temporary file should be removed
 ```
 
-
-
 **Scenario: Merge creates ssh config if it doesn't exist**
-
 
 ```
 Given ~/.ssh/vde/config does not exist
@@ -1750,16 +1638,13 @@ And ~/.ssh/vde/config should have permissions "600"
 And ~/.ssh/vde/config should contain "Host vde-python"
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Merge creates ~/.ssh/vde directory if needed**
-
 
 ```
 Given ~/.ssh/vde directory does not exist
@@ -1769,16 +1654,13 @@ And ~/.ssh/vde/config should be created
 And directory should have correct permissions
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Merge preserves blank lines and formatting**
-
 
 ```
 Given ~/.ssh/vde/config exists with blank lines
@@ -1789,10 +1671,7 @@ And ~/.ssh/vde/config comments should be preserved
 And new entry should be added with proper formatting
 ```
 
-
-
 **Scenario: Merge respects file locking for concurrent updates**
-
 
 ```
 Given ~/.ssh/vde/config exists
@@ -1803,10 +1682,7 @@ And no entries should be lost
 And config file should be valid
 ```
 
-
-
 **Scenario: Merge creates backup before any modification**
-
 
 ```
 Given ~/.ssh/vde/config exists
@@ -1816,16 +1692,13 @@ And backup should contain original config content
 And backup timestamp should be before modification
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Merge entry has all required ssh config fields**
-
 
 ```
 Given ~/.ssh/vde/config exists
@@ -1839,16 +1712,13 @@ And merged entry should contain "StrictHostKeyChecking no"
 And merged entry should contain "IdentityFile" pointing to detected key
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Ssh config entries are static and preserved when vm is removed**
-
 
 ```
 Given ~/.ssh/vde/config contains "Host vde-python"
@@ -1861,16 +1731,13 @@ And ~/.ssh/vde/config should still contain "Host github.com"
 And user's entries should be preserved
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
 ```
 
 **Scenario: Remove known_hosts entry when vm is removed**
-
 
 ```
 Given VM "python" is created with SSH port "2213"
@@ -1880,16 +1747,13 @@ Then ~/.ssh/vde/known_hosts should NOT contain entry for "[localhost]:2213"
 And ~/.ssh/vde/known_hosts should NOT contain entry for "[::1]:2213"
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Remove multiple hostname patterns from known_hosts**
-
 
 ```
 Given VM "postgres" is created with SSH port "2404"
@@ -1902,10 +1766,7 @@ And ~/.ssh/vde/known_hosts should NOT contain "[::1]:2404"
 And ~/.ssh/vde/known_hosts should NOT contain "postgres" entry
 ```
 
-
-
 **Scenario: Create backup of known_hosts before cleanup**
-
 
 ```
 Given ~/.ssh/vde/known_hosts exists with content
@@ -1915,10 +1776,7 @@ Then known_hosts backup file should exist at "~/.ssh/vde/known_hosts.vde-backup"
 And backup should contain original content
 ```
 
-
-
 **Scenario: Known_hosts cleanup handles missing file gracefully**
-
 
 ```
 Given ~/.ssh/vde/known_hosts does not exist
@@ -1928,16 +1786,13 @@ Then command should succeed without error
 And no known_hosts file should be created
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Known_hosts cleanup removes entries by port number**
-
 
 ```
 Given ~/.ssh/vde/known_hosts contains multiple port entries
@@ -1948,10 +1803,7 @@ Then ~/.ssh/vde/known_hosts should NOT contain "[localhost]:2213"
 And ~/.ssh/vde/known_hosts should still contain "[localhost]:2404"
 ```
 
-
-
 **Scenario: Recreating vm after removal succeeds without host key warning**
-
 
 ```
 Given VM "python" was previously created with SSH port "2213"
@@ -1962,16 +1814,13 @@ Then SSH connection should succeed without host key warning
 And ~/.ssh/vde/known_hosts should contain new entry for "[localhost]:2213"
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
 ```
 
 **Scenario: Initialize ssh environment**
-
 
 ```
 Given VDE SSH environment is not initialized
@@ -1985,9 +1834,7 @@ And public key should be synced to build context
 And init command should show completion message
 ```
 
-
 **Run the setup:**
-
 
 ```bash
 vde ssh-setup init
@@ -2049,7 +1896,6 @@ That's it! One simple, consistent command interface.
 
 **Scenario: Create a new language vm**
 
-
 ```
 Given the VM "zig" is defined as a language VM with install command "apt-get install -y zig"
 And no VM configuration exists for "zig"
@@ -2061,16 +1907,13 @@ And projects directory should exist at "projects/zig"
 And logs directory should exist at "logs/zig"
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create zig
 ```
 
 **Scenario: Start a created vm**
-
 
 ```
 Given VM "python" has been created
@@ -2080,16 +1923,13 @@ Then VM "python" should be running
 And SSH should be accessible on allocated port
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start python
 ```
 
 **Scenario: Create a new language vm**
-
 
 ```
 Given the VM "testlang" is defined as a language VM with install command "apt-get install -y curl"
@@ -2101,16 +1941,13 @@ And projects directory should exist at "projects/testlang"
 And logs directory should exist at "logs/testlang"
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create testlang
 ```
 
 **Scenario: Start a created vm**
-
 
 ```
 Given VM "python" has been created
@@ -2120,16 +1957,13 @@ Then VM "python" should be running
 And SSH should be accessible on allocated port
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start python
 ```
 
 **Scenario: First time creation experience**
-
 
 ```
 Given I've just installed VDE
@@ -2141,9 +1975,7 @@ And SSH config should be updated
 And I should be told what to do next
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create python
@@ -2177,7 +2009,7 @@ You just created your first VM! That's honestly kind of a big deal. Give yoursel
 
 ├── logs/            # Application logs
 
-└── scripts/         # VDE management commands
+└── bin/         # VDE management commands
 
 ```
 
@@ -2187,7 +2019,6 @@ You just created your first VM! That's honestly kind of a big deal. Give yoursel
 
 **Scenario: List all predefined vm types**
 
-
 ```
 Given VM types are loaded
 When I run "list-vms"
@@ -2196,16 +2027,13 @@ And all service VMs should be listed
 And aliases should be shown
 ```
 
-
 **List available VMs:**
-
 
 ```bash
 vde list
 ```
 
 **Scenario: List only language vms**
-
 
 ```
 Given VM types are loaded
@@ -2214,16 +2042,13 @@ Then only language VMs should be listed
 And service VMs should not be listed
 ```
 
-
 **List available VMs:**
-
 
 ```bash
 vde list --languages
 ```
 
 **Scenario: List only service vms**
-
 
 ```
 Given VM types are loaded
@@ -2232,9 +2057,7 @@ Then only service VMs should be listed
 And language VMs should not be listed
 ```
 
-
 **List available VMs:**
-
 
 ```bash
 vde list --services
@@ -2242,23 +2065,19 @@ vde list --services
 
 **Scenario: Filter vms by name**
 
-
 ```
 Given VM types are loaded
 When I run "list-vms python"
 Then only VMs matching "python" should be listed
 ```
 
-
 **List available VMs:**
-
 
 ```bash
 vde list python
 ```
 
 **Scenario: Discovering vms by alias**
-
 
 ```
 Given I know a VM by an alias but not its canonical name
@@ -2267,16 +2086,13 @@ Then the alias should resolve to "js"
 And I should be able to use either name in commands
 ```
 
-
 **Run the command:**
-
 
 ```bash
 vde resolve <alias>
 ```
 
 **Scenario: List all predefined vm types**
-
 
 ```
 Given VM types are loaded
@@ -2286,16 +2102,13 @@ And all service VMs should be listed
 And aliases should be shown
 ```
 
-
 **List available VMs:**
-
 
 ```bash
 vde list
 ```
 
 **Scenario: List only language vms**
-
 
 ```
 Given VM types are loaded
@@ -2304,16 +2117,13 @@ Then only language VMs should be listed
 And service VMs should not be listed
 ```
 
-
 **List available VMs:**
-
 
 ```bash
 vde list --languages
 ```
 
 **Scenario: List only service vms**
-
 
 ```
 Given VM types are loaded
@@ -2322,9 +2132,7 @@ Then only service VMs should be listed
 And language VMs should not be listed
 ```
 
-
 **List available VMs:**
-
 
 ```bash
 vde list --services
@@ -2332,16 +2140,13 @@ vde list --services
 
 **Scenario: Filter vms by name**
 
-
 ```
 Given VM types are loaded
 When I run "list-vms python"
 Then only VMs matching "python" should be listed
 ```
 
-
 **List available VMs:**
-
 
 ```bash
 vde list python
@@ -2349,23 +2154,19 @@ vde list python
 
 **Scenario: Resolve vm aliases**
 
-
 ```
 Given "py" is an alias for "python"
 When I parse "start py"
 Then VMs should include "python"
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start py
 ```
 
 **Scenario: Discovering vms by alias**
-
 
 ```
 Given I know a VM by an alias but not its canonical name
@@ -2374,16 +2175,13 @@ Then the alias should resolve to "js"
 And I should be able to use either name in commands
 ```
 
-
 **Run the command:**
-
 
 ```bash
 vde resolve <alias>
 ```
 
 **Scenario: Configure aliases for vm**
-
 
 ```
 Given I want to reference VMs with short names
@@ -2393,9 +2191,7 @@ And "start-virtual js", "start-virtual node", "start-virtual nodejs" all work
 And aliases should show in list-vms output
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start <vms>
@@ -2419,23 +2215,19 @@ Here's your daily workflow with VDE — simple as can be!
 
 **Scenario: Stop a running vm**
 
-
 ```
 Given VM "python" is running
 When I run "shutdown-virtual python"
 Then VM "python" should not be running
 ```
 
-
 **Stop the VMs:**
-
 
 ```bash
 vde stop python
 ```
 
 **Scenario: Stop all running vms**
-
 
 ```
 Given VM "python" is running
@@ -2444,16 +2236,13 @@ When I run "shutdown-virtual all"
 Then no VMs should be running
 ```
 
-
 **Stop the VMs:**
-
 
 ```bash
 vde stop all
 ```
 
 **Scenario: Restart a vm**
-
 
 ```
 Given VM "python" is running
@@ -2462,16 +2251,13 @@ Then VM "python" should be running
 And the VM should have a fresh container instance
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde stop python && start-virtual python
 ```
 
 **Scenario: Add a new vm type**
-
 
 ```
 When I run "add-vm-type --type lang --display 'Zig Language' zig 'apt-get install -y zig'"
@@ -2480,16 +2266,13 @@ And VM type "zig" should have type "lang"
 And VM type "zig" should have display name "Zig Language"
 ```
 
-
 **Run the command:**
-
 
 ```bash
 add-vm-type --type lang --display 
 ```
 
 **Scenario: Add vm type with aliases**
-
 
 ```
 When I run "add-vm-type --type lang --display 'JavaScript' js 'apt-get install -y nodejs' 'node,nodejs'"
@@ -2499,16 +2282,13 @@ And "node" should resolve to "js"
 And "nodejs" should resolve to "js"
 ```
 
-
 **Run the command:**
-
 
 ```bash
 add-vm-type --type lang --display 
 ```
 
 **Scenario: Stop a running vm**
-
 
 ```
 Given VM "python" is running
@@ -2517,16 +2297,13 @@ Then VM "python" should not be running
 And VM configuration should still exist
 ```
 
-
 **Stop the VMs:**
-
 
 ```bash
 vde stop python
 ```
 
 **Scenario: Stop all running vms**
-
 
 ```
 Given VM "python" is running
@@ -2535,16 +2312,13 @@ When I run "shutdown-virtual all"
 Then no VMs should be running
 ```
 
-
 **Stop the VMs:**
-
 
 ```bash
 vde stop all
 ```
 
 **Scenario: Restart a vm**
-
 
 ```
 Given VM "python" is running
@@ -2553,16 +2327,13 @@ Then VM "python" should be running
 And the VM should have a fresh container instance
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde stop python && start-virtual python
 ```
 
 **Scenario: Add a new vm type**
-
 
 ```
 When I run "add-vm-type --type lang --display 'Test Language' --ssh-port 2298 testlang 'apt-get install -y curl'"
@@ -2571,16 +2342,13 @@ And VM type "testlang" should have type "lang"
 And VM type "testlang" should have display name "Test Language"
 ```
 
-
 **Run the command:**
-
 
 ```bash
 add-vm-type --type lang --display 
 ```
 
 **Scenario: Add vm type with aliases**
-
 
 ```
 When I run "add-vm-type --type lang --display 'Test Lang Two' --ssh-port 2299 testlang2 'apt-get install -y curl' 'tl2,tlalias'"
@@ -2590,16 +2358,13 @@ And "tl2" should resolve to "testlang2"
 And "tlalias" should resolve to "testlang2"
 ```
 
-
 **Run the command:**
-
 
 ```bash
 add-vm-type --type lang --display 
 ```
 
 **Scenario: Creating a new vm**
-
 
 ```
 Given I want to work with a new language
@@ -2609,16 +2374,13 @@ And SSH keys should be configured
 And the VM should be ready to use
 ```
 
-
 **Create the VM:**
-
 
 ```bash
 vde create rust
 ```
 
 **Scenario: Starting a created vm**
-
 
 ```
 Given I have created a Go VM
@@ -2628,16 +2390,13 @@ And it should be accessible via SSH
 And my workspace should be mounted
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start go
 ```
 
 **Scenario: Starting multiple vms**
-
 
 ```
 Given I have created several VMs
@@ -2647,16 +2406,13 @@ And they should be able to communicate
 And each should have its own SSH port
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start python go postgres
 ```
 
 **Scenario: Checking vm status**
-
 
 ```
 Given I have several VMs
@@ -2665,16 +2421,13 @@ Then I should see which VMs are running
 And I should see which VMs are stopped
 ```
 
-
 **List available VMs:**
-
 
 ```bash
 vde list
 ```
 
 **Scenario: Stopping a running vm**
-
 
 ```
 Given I have a running Python VM
@@ -2684,16 +2437,13 @@ And the VM configuration should remain
 And I can start it again later
 ```
 
-
 **Stop the VMs:**
-
 
 ```bash
 vde stop python
 ```
 
 **Scenario: Stopping multiple vms**
-
 
 ```
 Given I have multiple running VMs
@@ -2702,16 +2452,13 @@ Then both VMs should stop
 And other VMs should remain running
 ```
 
-
 **Stop the VMs:**
-
 
 ```bash
 vde stop python postgres
 ```
 
 **Scenario: Restarting a vm**
-
 
 ```
 Given I have a running VM
@@ -2721,16 +2468,13 @@ And the Rust VM should start again
 And my workspace should still be accessible
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start rust
 ```
 
 **Scenario: Restarting with rebuild**
-
 
 ```
 Given I need to refresh a VM
@@ -2740,16 +2484,13 @@ And the VM should start with the new image
 And my workspace should be preserved
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start python
 ```
 
 **Scenario: Deleting a vm**
-
 
 ```
 Given I no longer need a VM
@@ -2759,16 +2500,13 @@ And the container should be stopped if running
 And the configuration files should be deleted
 ```
 
-
 **Stop the VMs:**
-
 
 ```bash
 vde stop <vms>
 ```
 
 **Scenario: Rebuilding after code changes**
-
 
 ```
 Given I have modified the Dockerfile
@@ -2778,16 +2516,13 @@ And no cached layers should be used
 And the new image should reflect my changes
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start go --rebuild
 ```
 
 **Scenario: Upgrading a vm**
-
 
 ```
 Given I want to update the base image
@@ -2797,16 +2532,13 @@ And my configuration should be preserved
 And my workspace should still be accessible
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start <vm> --rebuild
 ```
 
 **Scenario: Migrating to a new vde version**
-
 
 ```
 Given I have updated VDE scripts
@@ -2816,9 +2548,7 @@ And my data should be preserved
 And my SSH access still works
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start <vm> --rebuild
@@ -2852,7 +2582,6 @@ All three can talk to each other automatically. No networking headaches required
 
 **Scenario: Start multiple vms**
 
-
 ```
 Given VM "python" has been created
 And VM "rust" has been created
@@ -2863,9 +2592,7 @@ And VM "rust" should be running
 And each VM should have a unique SSH port
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start python rust
@@ -2873,7 +2600,6 @@ vde start python rust
 
 **Scenario: Start multiple vms**
 
-
 ```
 Given VM "python" has been created
 And VM "rust" has been created
@@ -2884,9 +2610,7 @@ And VM "rust" should be running
 And each VM should have a unique SSH port
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start python rust
@@ -2894,16 +2618,13 @@ vde start python rust
 
 **Scenario: Detect start all vms intent**
 
-
 ```
 When I parse "start everything"
 Then intent should be "start_vm"
 And VMs should include all known VMs
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start everything
@@ -2965,7 +2686,6 @@ vde ssh rs    # Short for rust
 
 **Scenario: Cloning a private repository from within a vm**
 
-
 ```
 Given I have a Python VM running
 And I have a private repository on GitHub
@@ -2976,10 +2696,7 @@ And I should not be prompted for a password
 And my host's SSH keys should be used for authentication
 ```
 
-
-
 **Scenario: Pushing code to github from a vm**
-
 
 ```
 Given I have a Go VM running
@@ -2992,16 +2709,13 @@ And my host's SSH keys should be used
 And no password should be required
 ```
 
-
 **Run the command:**
-
 
 ```bash
 git commit -am 
 ```
 
 **Scenario: Pulling from multiple git hosts**
-
 
 ```
 Given I have a Python VM running
@@ -3014,10 +2728,7 @@ Then both repositories should update
 And each should use the appropriate SSH key from my host
 ```
 
-
-
 **Scenario: Using git submodules**
-
 
 ```
 Given I have a Rust VM running
@@ -3029,10 +2740,7 @@ Then the submodules should be cloned
 And authentication should use my host's SSH keys
 ```
 
-
-
 **Scenario: Git operations in microservices architecture**
-
 
 ```
 Given I have multiple VMs for different services
@@ -3045,10 +2753,7 @@ And all should use my host's SSH keys
 And no configuration should be needed in any VM
 ```
 
-
-
 **Scenario: Deploying code from vm to external server**
-
 
 ```
 Given I have a deployment server
@@ -3061,10 +2766,7 @@ Then the application should be deployed
 And my host's SSH keys should be used for both operations
 ```
 
-
-
 **Scenario: Multiple github accounts**
-
 
 ```
 Given I have multiple GitHub accounts
@@ -3078,10 +2780,7 @@ And each should use the correct SSH key
 And the agent should automatically select the right key
 ```
 
-
-
 **Scenario: Ssh key passed through to child processes**
-
 
 ```
 Given I have a Node.js VM running
@@ -3092,16 +2791,13 @@ Then the deployment should succeed
 And the Git commands should use my host's SSH keys
 ```
 
-
 **This is handled by the setup script:**
-
 
 ```bash
 ./bin/build-and-start
 ```
 
 **Scenario: Git operations in automated workflows**
-
 
 ```
 Given I have a CI/CD script in a VM
@@ -3112,10 +2808,7 @@ And my host's SSH keys should be used
 And no manual intervention should be required
 ```
 
-
-
 **Scenario: No key copying to vms required**
-
 
 ```
 Given I have a new VM that needs Git access
@@ -3127,8 +2820,6 @@ Then the clone should succeed
 And I should not have copied any keys to the VM
 And only the SSH agent socket should be forwarded
 ```
-
-
 
 </details>
 
@@ -3332,7 +3023,6 @@ Sometimes things don't work perfectly the first time. That's okay! Here's how to
 
 **Scenario: Rebuild a vm with   rebuild flag**
 
-
 ```
 Given VM "python" is running
 When I run "start-virtual python --rebuild"
@@ -3340,9 +3030,7 @@ Then VM "python" should be running
 And the container should be rebuilt from the Dockerfile
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start python --rebuild
@@ -3350,7 +3038,6 @@ vde start python --rebuild
 
 **Scenario: Rebuild a vm with   rebuild flag**
 
-
 ```
 Given VM "python" is running
 When I run "start-virtual python --rebuild"
@@ -3358,9 +3045,7 @@ Then VM "python" should be running
 And the container should be rebuilt from the Dockerfile
 ```
 
-
 **Start the VMs:**
-
 
 ```bash
 vde start python --rebuild
@@ -3368,16 +3053,13 @@ vde start python --rebuild
 
 **Scenario: Check ssh environment status**
 
-
 ```
 When I run "vde ssh-setup status"
 Then the command should succeed
 And status command should show SSH environment state
 ```
 
-
 **Run the setup:**
-
 
 ```bash
 vde ssh-setup status
@@ -3479,6 +3161,7 @@ vde ssh nginx      # Nginx web server
 ## You're Ready! 🎉
 
 Look at you go! You now have:
+
 - ✅ VDE installed and configured (you did it!)
 - ✅ SSH keys set up automatically (no manual work!)
 - ✅ Your first VM created (how cool is that?)
