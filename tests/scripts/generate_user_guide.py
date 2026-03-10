@@ -22,12 +22,13 @@ FEATURES_DIR = REPO_ROOT / "tests" / "features"
 BEHAVE_JSON_FILE = REPO_ROOT / "tests" / "behave-results.json"
 OUTPUT_FILE = REPO_ROOT / "USER_GUIDE.md"
 INTROS_YAML_FILE = REPO_ROOT / "docs" / "user-guide-intros.yml"
-VM_TYPES_CONF_FILE = REPO_ROOT / "scripts" / "data" / "vm-types.conf"
+VM_TYPES_CONF_FILE = REPO_ROOT / "data" / "vm-types.conf"
 
 
 # =============================================================================
 # YAML LOADING FUNCTIONS (Phase 2)
 # =============================================================================
+
 
 def load_section_intros_from_yaml():
     """
@@ -48,7 +49,7 @@ def load_section_intros_from_yaml():
     with open(INTROS_YAML_FILE) as f:
         for line in f:
             # Skip comments and empty lines at start
-            if line.strip().startswith('#') and not current_section:
+            if line.strip().startswith("#") and not current_section:
                 continue
 
             # Match section start: - id: "Section Name"
@@ -56,29 +57,29 @@ def load_section_intros_from_yaml():
             if section_match:
                 # Save previous section if exists
                 if current_section and current_content:
-                    sections[current_section] = '\n'.join(current_content).rstrip()
+                    sections[current_section] = "\n".join(current_content).rstrip()
                 current_section = section_match.group(1)
                 current_content = []
                 in_intro = False
                 continue
 
             # Match intro: | marker
-            if 'intro: |' in line:
+            if "intro: |" in line:
                 in_intro = True
                 continue
 
             # Collect intro content (indented lines)
             if in_intro and current_section:
                 # Remove the 6-space indentation from YAML format
-                if line.startswith('      '):
+                if line.startswith("      "):
                     current_content.append(line[6:])
-                elif line.strip() and not line.strip().startswith('order:'):
+                elif line.strip() and not line.strip().startswith("order:"):
                     # Handle lines that might not have proper indentation
                     current_content.append(line)
 
         # Save last section
         if current_section and current_content:
-            sections[current_section] = '\n'.join(current_content).rstrip()
+            sections[current_section] = "\n".join(current_content).rstrip()
 
     print(f"✓ Loaded {len(sections)} section intros from YAML")
     return sections
@@ -104,6 +105,7 @@ def get_fallback_intros():
 # =============================================================================
 # VM TYPES CONF PARSING (Phase 4)
 # =============================================================================
+
 
 def parse_vm_types_conf():
     """
@@ -140,7 +142,7 @@ def parse_vm_types_conf():
                     "aliases": aliases,
                     "display": display_name,
                     "install": install_cmd,
-                    "port": svc_port
+                    "port": svc_port,
                 }
 
                 if vm_type == "lang":
@@ -148,13 +150,16 @@ def parse_vm_types_conf():
                 elif vm_type == "service":
                     vm_types["services"].append(entry)
 
-    print(f"✓ Parsed {len(vm_types['languages'])} language VMs and {len(vm_types['services'])} service VMs")
+    print(
+        f"✓ Parsed {len(vm_types['languages'])} language VMs and {len(vm_types['services'])} service VMs"
+    )
     return vm_types
 
 
 # =============================================================================
 # BEHAVE JSON LOADING
 # =============================================================================
+
 
 def load_passing_scenarios_from_json():
     """Load the set of passing scenarios from Behave JSON output."""
@@ -187,6 +192,7 @@ def load_passing_scenarios_from_json():
 # FEATURE FILE PARSING
 # =============================================================================
 
+
 def extract_scenarios_from_feature(content):
     """
     Extract scenarios from a feature file content.
@@ -196,28 +202,30 @@ def extract_scenarios_from_feature(content):
                (scenario_name, scenario_body, tags)
     """
     feature_match = re.search(
-        r'Feature:\s*(.+?)\n(?:\s*As\s+(.+?)\n\s*I want\s+(.+?)\n\s*So\s+(.+?))?',
+        r"Feature:\s*(.+?)\n(?:\s*As\s+(.+?)\n\s*I want\s+(.+?)\n\s*So\s+(.+?))?",
         content,
-        re.DOTALL
+        re.DOTALL,
     )
     feature_name = feature_match.group(1).strip() if feature_match else "Unknown Feature"
 
     # Extract feature-level tags (if any) - tags can appear BEFORE or AFTER Feature:
     feature_tags = []
     # First try to find tags before Feature: (common Gherkin convention)
-    before_feature_match = re.search(r'((?:\s*@\w+(?:-\w+)*\n)+)\s*Feature:', content)
+    before_feature_match = re.search(r"((?:\s*@\w+(?:-\w+)*\n)+)\s*Feature:", content)
     if before_feature_match:
         tag_text = before_feature_match.group(1) or ""
-        feature_tags = [tag.strip() for tag in re.findall(r'@(\w+(?:-\w+)*)', tag_text)]
+        feature_tags = [tag.strip() for tag in re.findall(r"@(\w+(?:-\w+)*)", tag_text)]
     else:
         # Fallback: tags after Feature: (less common but valid)
-        after_feature_match = re.search(r'Feature:(.+?)\n((?:\s*@\w+(?:\s+@\w+)*\n)*)', content, re.DOTALL)
+        after_feature_match = re.search(
+            r"Feature:(.+?)\n((?:\s*@\w+(?:\s+@\w+)*\n)*)", content, re.DOTALL
+        )
         if after_feature_match:
             tag_text = after_feature_match.group(2) or ""
-            feature_tags = [tag.strip() for tag in re.findall(r'@(\w+(?:-\w+)*)', tag_text)]
+            feature_tags = [tag.strip() for tag in re.findall(r"@(\w+(?:-\w+)*)", tag_text)]
 
     # Pattern to match scenarios with optional tags before them
-    scenario_pattern = r'(?:((?:\s*@\w+(?:-\w+)*\n)+)*)\s*Scenario:\s*(.+?)\n((?:\s*(?:Given|When|Then|And)\s+.+(?:\n|$))+)'
+    scenario_pattern = r"(?:((?:\s*@\w+(?:-\w+)*\n)+)*)\s*Scenario:\s*(.+?)\n((?:\s*(?:Given|When|Then|And)\s+.+(?:\n|$))+)"
     scenarios = []
     for match in re.finditer(scenario_pattern, content, re.MULTILINE):
         tag_block = match.group(1) or ""
@@ -225,7 +233,7 @@ def extract_scenarios_from_feature(content):
         scenario_body = match.group(3).strip()
 
         # Extract tags from this scenario
-        scenario_tags = [tag.strip() for tag in re.findall(r'@(\w+(?:-\w+)*)', tag_block)]
+        scenario_tags = [tag.strip() for tag in re.findall(r"@(\w+(?:-\w+)*)", tag_block)]
 
         # Combine feature and scenario tags (feature tags are inherited, scenario tags override)
         # This ensures @user-guide-internal at feature level applies to all scenarios
@@ -242,6 +250,7 @@ def extract_scenarios_from_feature(content):
 # =============================================================================
 # COMMAND NORMALIZATION (Phase 5: Old Script Names to Unified vde Commands)
 # =============================================================================
+
 
 def normalize_vde_command(command):
     """
@@ -318,18 +327,15 @@ SCENARIO_COMMAND_MAP = {
     "check if": "vde check <vm>",
     "use the alias": "vde resolve <alias>",
     "explore available": "vde list",
-
     # Creation scenarios
     "create a Python VM": "vde create python",
     "create a go vm": "vde create go",
     "create a rust VM": "vde create rust",
     "create python and postgresql": "vde create python && vde create postgres",
     "plan to create": "vde create <vm-type>",
-
     # Start scenarios
     "start my development day": "vde start <vms>",
     "plan to start": "vde start <vms>",
-
     # Verification scenarios
     "verify installation commands": "vde list",
     "check service port configuration": "vde list",
@@ -352,26 +358,46 @@ def extract_command_from_scenario(scenario_name, scenario_body):
     lower_name = scenario_name.lower()
 
     # First, try to find explicit "When I run" commands
-    for line in scenario_body.split('\n'):
+    for line in scenario_body.split("\n"):
         line = line.strip()
-        if line.startswith('When I run'):
+        if line.startswith("When I run"):
             # Extract command from quotes
             match = re.search(r'When I run ["\']([^"\']+)["\']', line)
             if match:
                 return normalize_vde_command(match.group(1))
 
     # Handle "When I request to" and "When I request" patterns
-    for line in scenario_body.split('\n'):
+    for line in scenario_body.split("\n"):
         line = line.strip()
-        if line.startswith('When I request to') or line.startswith('When I request'):
+        if line.startswith("When I request to") or line.startswith("When I request"):
             # Extract the quoted request
             match = re.search(r'request (?:to )?["\']([^"\']+)["\']', line, re.IGNORECASE)
             if match:
                 request = match.group(1).lower()
                 # Map requests to vde commands
-                if "create" in request and ("vm" in request or any(v in request for v in ["javascript", "nginx", "go", "rust", "python", "postgres", "redis", "haskell", "flutter"])):
+                if "create" in request and (
+                    "vm" in request
+                    or any(
+                        v in request
+                        for v in [
+                            "javascript",
+                            "nginx",
+                            "go",
+                            "rust",
+                            "python",
+                            "postgres",
+                            "redis",
+                            "haskell",
+                            "flutter",
+                        ]
+                    )
+                ):
                     # Extract VM names if present
-                    vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                    vms = re.findall(
+                        r"(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)",
+                        request,
+                        re.IGNORECASE,
+                    )
                     if vms:
                         # Normalize VM names
                         vm_names = []
@@ -388,7 +414,11 @@ def extract_command_from_scenario(scenario_name, scenario_body):
                 elif "start" in request:
                     if "all services" in request or "all" in request:
                         return "vde start all"
-                    vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                    vms = re.findall(
+                        r"(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)",
+                        request,
+                        re.IGNORECASE,
+                    )
                     if vms:
                         vm_names = []
                         for vm in vms:
@@ -402,36 +432,56 @@ def extract_command_from_scenario(scenario_name, scenario_body):
                 elif "stop" in request:
                     if "everything" in request or "all" in request:
                         return "vde stop all"
-                    vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                    vms = re.findall(
+                        r"(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)",
+                        request,
+                        re.IGNORECASE,
+                    )
                     if vms:
                         return f"vde stop {' '.join(vms)}"
                     return "vde stop <vms>"
                 elif "restart" in request:
                     if "rebuild" in request or "no cache" in request:
-                        vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                        vms = re.findall(
+                            r"(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)",
+                            request,
+                            re.IGNORECASE,
+                        )
                         vm = vms[0].lower() if vms else "<vm>"
                         return f"vde restart {vm} --rebuild"
-                    vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                    vms = re.findall(
+                        r"(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)",
+                        request,
+                        re.IGNORECASE,
+                    )
                     if vms:
                         return f"vde restart {vms[0].lower()}"
                     return "vde restart <vm>"
                 elif "rebuild" in request:
-                    vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                    vms = re.findall(
+                        r"(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)",
+                        request,
+                        re.IGNORECASE,
+                    )
                     vm = vms[0].lower() if vms else "<vm>"
                     return f"vde start {vm} --rebuild"
                 elif "status" in request or "show status" in request or request == "status":
                     return "vde list"
                 # Handle "When I request to start my Python development environment"
                 if "development environment" in request:
-                    vms = re.findall(r'(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)', request, re.IGNORECASE)
+                    vms = re.findall(
+                        r"(?:javascript|nginx|go|golang|rust|python|postgres|redis|haskell|flutter|js|csharp|ruby)",
+                        request,
+                        re.IGNORECASE,
+                    )
                     if vms:
                         return f"vde start {vms[0].lower()}"
                     return "vde start <vm>"
 
     # Check for "When I ask" patterns - natural language queries
-    for line in scenario_body.split('\n'):
+    for line in scenario_body.split("\n"):
         line_lower = line.strip().lower()
-        if line_lower.startswith('when i ask'):
+        if line_lower.startswith("when i ask"):
             # Extract the quoted text
             match = re.search(r'when i ask ["\']([^"\']+)["\']', line, re.IGNORECASE)
             if match:
@@ -439,7 +489,11 @@ def extract_command_from_scenario(scenario_name, scenario_body):
                 # Map natural language queries to commands
                 if "list all languages" in query or "list languages" in query:
                     return "vde list --languages"
-                elif "list all services" in query or "list services" in query or "show all services" in query:
+                elif (
+                    "list all services" in query
+                    or "list services" in query
+                    or "show all services" in query
+                ):
                     return "vde list --services"
                 elif "what vms can i create" in query or "what vms are available" in query:
                     return "vde list"
@@ -453,9 +507,9 @@ def extract_command_from_scenario(scenario_name, scenario_body):
         return "vde list --services"
 
     # Second, try to find "When I parse" patterns (parser testing)
-    for line in scenario_body.split('\n'):
+    for line in scenario_body.split("\n"):
         line = line.strip()
-        if line.startswith('When I parse'):
+        if line.startswith("When I parse"):
             # Extract the quoted text as a parser example
             match = re.search(r'When I parse ["\']([^"\']+)["\']', line)
             if match:
@@ -494,7 +548,13 @@ def extract_command_from_scenario(scenario_name, scenario_body):
             return "vde ssh <vm>"
         elif "cluster" in lower_name or "stack" in lower_name:
             return "vde start <vms>"
-        elif "communicating" in lower_name or "connection" in lower_name or "agent forwarding" in lower_name or "vm to vm" in lower_name or "vm-to-vm" in lower_name:
+        elif (
+            "communicating" in lower_name
+            or "connection" in lower_name
+            or "agent forwarding" in lower_name
+            or "vm to vm" in lower_name
+            or "vm-to-vm" in lower_name
+        ):
             return "vde ssh <vm>"
         elif "multiple" in lower_name and ("vm" in lower_name or "vms" in lower_name):
             return "vde start <vms>"
@@ -533,7 +593,7 @@ def format_scenario_for_user_guide(scenario_name, scenario_body):
 
     # 2. Gherkin steps in code block
     lines.append("```")
-    for line in scenario_body.split('\n'):
+    for line in scenario_body.split("\n"):
         line = line.strip()
         if line:
             lines.append(line)
@@ -571,9 +631,16 @@ def format_scenario_for_user_guide(scenario_name, scenario_body):
         lower_body = scenario_body.lower()
 
         # Installation/setup scenarios get the setup script
-        if ("installation" in lower_name or "setup" in lower_name or "prerequisite" in lower_name or
-            "initial" in lower_name or "fresh" in lower_name or "ssh key" in lower_name or
-            "ssh config" in lower_name or "ssh agent" in lower_name):
+        if (
+            "installation" in lower_name
+            or "setup" in lower_name
+            or "prerequisite" in lower_name
+            or "initial" in lower_name
+            or "fresh" in lower_name
+            or "ssh key" in lower_name
+            or "ssh config" in lower_name
+            or "ssh agent" in lower_name
+        ):
             lines.append("**This is handled by the setup script:**\n")
             lines.append("")
             lines.append("```bash")
@@ -591,6 +658,7 @@ def format_scenario_for_user_guide(scenario_name, scenario_body):
 # =============================================================================
 # SECTION DETERMINATION
 # =============================================================================
+
 
 def determine_section(scenario_name, tags=None):
     """
@@ -666,11 +734,25 @@ def auto_detect_section(scenario_name):
     name_lower = scenario_name.lower()
 
     # Daily workflow patterns
-    if any(p in name_lower for p in ["daily workflow", "morning setup", "evening cleanup", "switching projects"]):
+    if any(
+        p in name_lower
+        for p in ["daily workflow", "morning setup", "evening cleanup", "switching projects"]
+    ):
         return "9. Daily Workflow"
 
     # Cluster/multi-VM patterns
-    if any(p in name_lower for p in ["example 1", "example 2", "example 3", "microservices", "full-stack", "start both", "start all"]):
+    if any(
+        p in name_lower
+        for p in [
+            "example 1",
+            "example 2",
+            "example 3",
+            "microservices",
+            "full-stack",
+            "start both",
+            "start all",
+        ]
+    ):
         return "6. Your First Cluster"
 
     # First VM patterns
@@ -678,19 +760,43 @@ def auto_detect_section(scenario_name):
         return "3. Your First VM"
 
     # Understanding VDE patterns
-    if any(p in name_lower for p in ["team onboarding", "explore languages", "understand system", "resolve", "alias", "documentation accuracy"]):
+    if any(
+        p in name_lower
+        for p in [
+            "team onboarding",
+            "explore languages",
+            "understand system",
+            "resolve",
+            "alias",
+            "documentation accuracy",
+        ]
+    ):
         return "4. Understanding"
 
     # Troubleshooting patterns
-    if any(p in name_lower for p in ["troubleshooting", "already running", "already stopped", "existing vm", "restart with rebuild"]):
+    if any(
+        p in name_lower
+        for p in [
+            "troubleshooting",
+            "already running",
+            "already stopped",
+            "existing vm",
+            "restart with rebuild",
+        ]
+    ):
         return "11. Troubleshooting"
 
     # Connecting patterns
-    if any(p in name_lower for p in ["connection info", "connect to", "get connection", "connection help"]):
+    if any(
+        p in name_lower
+        for p in ["connection info", "connect to", "get connection", "connection help"]
+    ):
         return "7. Connecting"
 
     # Database patterns
-    if any(p in name_lower for p in ["postgresql accessibility", "database", "postgres", "mongodb"]):
+    if any(
+        p in name_lower for p in ["postgresql accessibility", "database", "postgres", "mongodb"]
+    ):
         return "8. Working with Databases"
 
     # Adding more languages patterns
@@ -698,7 +804,10 @@ def auto_detect_section(scenario_name):
         return "10. Adding More Languages"
 
     # Exclude internal testing patterns
-    if any(p in name_lower for p in ["cache", "metadata", "parser", "shell compatibility", "performance", "quick plan"]):
+    if any(
+        p in name_lower
+        for p in ["cache", "metadata", "parser", "shell compatibility", "performance", "quick plan"]
+    ):
         return None
 
     return None
@@ -707,6 +816,7 @@ def auto_detect_section(scenario_name):
 # =============================================================================
 # DYNAMIC QUICK REFERENCE GENERATION (Phase 4)
 # =============================================================================
+
 
 def generate_quick_reference():
     """Generate the quick reference section from actual vm-types.conf data."""
@@ -834,6 +944,7 @@ Look at you go! You now have:
 # MAIN GENERATION FUNCTION (Phases 2 & 3: Load YAML + Write Scenarios Bug Fix)
 # =============================================================================
 
+
 def generate_user_guide(passing_scenarios=None):
     """
     Generate the complete USER_GUIDE.md with only passing scenarios.
@@ -884,44 +995,67 @@ def generate_user_guide(passing_scenarios=None):
         print(f"  Included {total_extracted} verified passing scenarios")
 
     # Write the user guide
-    with open(OUTPUT_FILE, 'w') as f:
+    with open(OUTPUT_FILE, "w") as f:
         # Logo image (always at top)
-        f.write('<p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>\n\n')
+        f.write(
+            '<p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>\n\n'
+        )
 
         # Header with verification notice
         if passing_scenarios is not None:
-            f.write("**Every workflow in this guide has been tested and verified to PASS.** Follow the steps, they will work for you too.\n\n")
+            f.write(
+                "**Every workflow in this guide has been tested and verified to PASS.** Follow the steps, they will work for you too.\n\n"
+            )
         else:
-            f.write("**WARNING: This guide was generated in UNVERIFIED mode. Scenarios have NOT been tested!**\n\n")
+            f.write(
+                "**WARNING: This guide was generated in UNVERIFIED mode. Scenarios have NOT been tested!**\n\n"
+            )
             f.write("**Run `./tests/run-bdd-tests.sh` first to generate a verified guide.**\n\n")
 
         f.write("---\n\n")
 
         # Table of contents
         f.write("## Table of Contents\n\n")
-        f.write("*💡 **Tip:** Click the ▶ triangle next to any section title below to expand or collapse that section.*\n\n")
+        f.write(
+            "*💡 **Tip:** Click the ▶ triangle next to any section title below to expand or collapse that section.*\n\n"
+        )
         sections = [
-            ("1. Installation", [
-                ("Installing Homebrew (macOS Only)", [
-                    ("For macOS Users", "for-macos-users"),
-                ]),
-                ("Installing Zsh and Bash", [
-                    ("For Windows Users", "for-windows-users"),
-                    ("For macOS (Mac) Users", "for-macos-mac-users"),
-                    ("For Linux Users", "for-linux-users"),
-                ]),
-                ("Installing Git", [
-                    ("For Windows Users", "for-windows-users-1"),
-                    ("For macOS (Mac) Users", "for-macos-mac-users-1"),
-                    ("For Linux Users", "for-linux-users-1"),
-                ]),
-                ("Installing Docker Desktop", [
-                    ("For Windows Users", "for-windows-users-2"),
-                    ("For macOS (Mac) Users", "for-macos-mac-users-2"),
-                    ("For Linux Users", "for-linux-users-2"),
-                ]),
-                ("Quick Checklist: Are You Ready?", "quick-checklist-are-you-ready"),
-            ]),
+            (
+                "1. Installation",
+                [
+                    (
+                        "Installing Homebrew (macOS Only)",
+                        [
+                            ("For macOS Users", "for-macos-users"),
+                        ],
+                    ),
+                    (
+                        "Installing Zsh and Bash",
+                        [
+                            ("For Windows Users", "for-windows-users"),
+                            ("For macOS (Mac) Users", "for-macos-mac-users"),
+                            ("For Linux Users", "for-linux-users"),
+                        ],
+                    ),
+                    (
+                        "Installing Git",
+                        [
+                            ("For Windows Users", "for-windows-users-1"),
+                            ("For macOS (Mac) Users", "for-macos-mac-users-1"),
+                            ("For Linux Users", "for-linux-users-1"),
+                        ],
+                    ),
+                    (
+                        "Installing Docker Desktop",
+                        [
+                            ("For Windows Users", "for-windows-users-2"),
+                            ("For macOS (Mac) Users", "for-macos-mac-users-2"),
+                            ("For Linux Users", "for-linux-users-2"),
+                        ],
+                    ),
+                    ("Quick Checklist: Are You Ready?", "quick-checklist-are-you-ready"),
+                ],
+            ),
             ("2. SSH Keys", []),
             ("3. Your First VM", []),
             ("4. Understanding", []),
@@ -935,20 +1069,24 @@ def generate_user_guide(passing_scenarios=None):
         ]
         for i, (section, subsections) in enumerate(sections, 1):
             section_id = section.lower().replace(" ", "-").replace(":", "")
-            f.write(f'{i}. [{section}](#{section_id})\n')
+            f.write(f"{i}. [{section}](#{section_id})\n")
             for subsection, sub_subsections in subsections:
-                subsection_id = subsection.lower().replace(" ", "-").replace(":", "").replace("?", "")
-                f.write(f'   - [{subsection}](#{subsection_id})\n')
+                subsection_id = (
+                    subsection.lower().replace(" ", "-").replace(":", "").replace("?", "")
+                )
+                f.write(f"   - [{subsection}](#{subsection_id})\n")
                 if isinstance(sub_subsections, list):
                     for sub_subsection, sub_subsection_id in sub_subsections:
-                        f.write(f'     - [{sub_subsection}](#{sub_subsection_id})\n')
+                        f.write(f"     - [{sub_subsection}](#{sub_subsection_id})\n")
         f.write("\n---\n\n")
 
         # Write each section with collapsible wrapping
         for i, (section, _) in enumerate(sections, 1):
             # Start collapsible section (default collapsed)
-            f.write(f'<details id="{section.lower().replace(" ", "-").replace(":", "")}" data-section="{section}">\n\n')
-            f.write(f'<summary><h2>{section}</h2></summary>\n\n')
+            f.write(
+                f'<details id="{section.lower().replace(" ", "-").replace(":", "")}" data-section="{section}">\n\n'
+            )
+            f.write(f"<summary><h2>{section}</h2></summary>\n\n")
 
             # Add section introduction from YAML (Phase 2)
             intro_key = section
@@ -960,7 +1098,7 @@ def generate_user_guide(passing_scenarios=None):
                 intro = section_intros[intro_key]
                 f.write(intro)
                 # Ensure intro ends with newlines before next section
-                if intro and not intro.endswith('\n\n'):
+                if intro and not intro.endswith("\n\n"):
                     f.write("\n\n")
 
             # *** PHASE 3 BUG FIX: Write scenarios after each section intro ***
@@ -968,10 +1106,18 @@ def generate_user_guide(passing_scenarios=None):
             if all_scenarios.get(section):
                 f.write("### Verified Scenarios\n\n")
                 # Preface: explain vde commands vs scripts
-                f.write("> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. ")
-                f.write("Each scenario includes the actual **`vde` command** you would run to accomplish the task. ")
-                f.write("We show the unified `vde` command because it's simpler and more consistent than ")
-                f.write("remembering individual script names like `create-virtual-for` or `start-virtual`. ")
+                f.write(
+                    "> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. "
+                )
+                f.write(
+                    "Each scenario includes the actual **`vde` command** you would run to accomplish the task. "
+                )
+                f.write(
+                    "We show the unified `vde` command because it's simpler and more consistent than "
+                )
+                f.write(
+                    "remembering individual script names like `create-virtual-for` or `start-virtual`. "
+                )
                 f.write("The `vde` command handles all the heavy lifting for you!\n\n")
                 for scenario_name, scenario_body in all_scenarios[section]:
                     f.write(format_scenario_for_user_guide(scenario_name, scenario_body))
