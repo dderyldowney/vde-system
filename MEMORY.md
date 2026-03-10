@@ -13,6 +13,7 @@ Behave suite: **265 passing, 2 failed, 56 errors**
 - Added @core-suite tags to 4 target feature files
 - Copied feature files to core-infrastructure/
 - Added student-focused Daily Workflow section to USER_GUIDE.md
+- Fixed generate_user_guide.py to use correct path (data/vm-types.conf)
 - Blocker: Deferred step files have stub implementations
 
 ## Phase G COMPLETE (2026-03-09)

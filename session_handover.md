@@ -18,6 +18,39 @@ Previous sessions resolved critical performance hangs and stability issues in th
 - Integration tests: 79/79 passing; Behave: 240/240 passing
 - Test infrastructure: promoted helper step files; fixed stale `scripts/` paths → `lib/`/`bin/`
 
+## Current Session Work (2026-03-10 — Daily Workflow Promotion)
+
+### Goal
+
+1. **User Guide** - Add student-focused Daily Workflow section
+2. **Mainline deferred tests** - Promote 4 feature files to core suite
+
+### Completed
+
+- Added @core-suite tags to 4 target feature files
+- Copied feature files to tests/features/core-infrastructure/
+- Added student-focused Daily Workflow section to USER_GUIDE.md (Section 9)
+- Fixed generate_user_guide.py path: scripts/data/vm-types.conf → data/vm-types.conf
+- Now parses 21 language VMs and 7 service VMs correctly
+
+### Test Results
+
+- 265 passing (was 263 before promotion)
+- 2 pre-existing failures
+- 56 errors from deferred features (step definitions not implemented - stub code)
+- 64 verified passing scenarios in User Guide
+
+### Blocker
+
+Deferred step files contain stub implementations (raise StepNotImplementedError), not real code. 56 scenarios error because steps are unimplemented. Would need ~40+ step implementations to fix.
+
+### Files Modified
+
+- tests/scripts/generate_user_guide.py - Fixed path
+- docs/user-guide-intros.yml - Added student Daily Workflow content
+- USER_GUIDE.md - Regenerated
+- MEMORY.md - Updated
+
 ## Current Session Work (2026-03-09 — User Guide + Deferred Mainlining)
 
 ### Goal
