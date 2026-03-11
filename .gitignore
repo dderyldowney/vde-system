@@ -70,3 +70,8 @@ env-files/*.env
 # Transient Docker state (per-user local state)
 .docker-state/
 .docker-state-*.json
+
+# Artifact outputs from tests
+behave_output*.txt
+pytest_output.txt
+shell_test_output.txt
