@@ -9,15 +9,24 @@ if [[ -n "$VDE_ROOT_DIR" ]] && [[ -d "$VDE_ROOT_DIR" ]]; then
   return 0
 fi
 
-# Attempt to infer root from the path of the invoking script.
-# ${(%):-%N} yields the path of the current script in zsh.
-SCRIPT_PATH="${(%):-%N}"
-ROOT_CANDIDATE="${SCRIPT_PATH:A:h:h}"
+# Attempt to auto-detect root by locating the VDE project within the current
+# working directory by walking up the directory tree looking for a sentinel
+# that indicates the VDE root (presence of bin/vde, lib/vde-core, or a .git dir).
+ROOT_FOUND=""
+CUR_DIR="${PWD}"
+while [[ "$CUR_DIR" != "/" ]]; do
+  if [[ -f "$CUR_DIR/bin/vde" ]] || [[ -d "$CUR_DIR/.git" ]] || [[ -f "$CUR_DIR/lib/vde-core" ]]; then
+    ROOT_FOUND="$CUR_DIR"; break
+  fi
+  CUR_DIR=$(dirname "$CUR_DIR")
+done
 
-if [[ -d "$ROOT_CANDIDATE" ]]; then
-  export VDE_ROOT_DIR="$ROOT_CANDIDATE"
+if [[ -n "$ROOT_FOUND" ]]; then
+  export VDE_ROOT_DIR="$ROOT_FOUND"
   return 0
 fi
 
-# Fallback: use the present working directory as root.
+# Fallback: use the present working directory as root
 export VDE_ROOT_DIR="${PWD}"
+
+*** End Patch
