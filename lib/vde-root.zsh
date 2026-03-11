@@ -5,7 +5,7 @@
 set -e
 
 # If VDE_ROOT_DIR is already set and valid, keep it as authoritative.
-if [[ -n "$VDE_ROOT_DIR" ]] && [[ -d "$VDE_ROOT_DIR" ]]; then
+if [[ -n "$VDE_ROOT_DIR" ]] && [[ -d "$VDE_ROOT_DIR" ]] && { [[ -f "$VDE_ROOT_DIR/bin/vde" ]] || [[ -f "$VDE_ROOT_DIR/lib/vde-core" ]]; }; then
   return 0
 fi
 
