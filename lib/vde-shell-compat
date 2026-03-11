@@ -175,13 +175,8 @@ _assoc_has_key() {
 _assoc_unset() {
     local array_name="$1"
     local key="$2"
-    if [[ -n "$ZSH_VERSION" ]] && [[ "$ZSH_VERSION" > "5.1" ]]; then
-        typeset -n ref="$array_name"
-        unset "ref[$key]"
-    else
-        local q_key="${(q)key}"
-        eval "unset \"${array_name}[$q_key]\""
-    fi
+    local q_key="${(q)key}"
+    eval "unset \"${array_name}[$q_key]\""
     return 0
 }
 
