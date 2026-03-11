@@ -213,11 +213,11 @@ teardown_test_env() {
     fi
 
     # Clean up test-related environment files
+    # NEVER delete core project env files - only delete files with test prefixes
     local env_dir="${VDE_ROOT_DIR:-.}/env-files"
     if [[ -d "$env_dir" ]]; then
-        # Remove files matching vde-test-* prefix or common test VMs
+        # Remove ONLY files matching test prefixes - protect all core project files
         rm -f "$env_dir"/vde-test-*.env 2>/dev/null || true
-        rm -f "$env_dir"/vde-js.env "$env_dir"/vde-postgres.env "$env_dir"/vde-zig.env 2>/dev/null || true
         rm -f "$env_dir"/vde-e2e-test-*.env 2>/dev/null || true
     fi
 }

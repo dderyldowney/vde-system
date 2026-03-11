@@ -241,11 +241,12 @@ test_ssh_key_generation() {
 test_vm_creation() {
     echo -e "${BLUE}Testing VM creation...${RESET}"
 
-    # Remove test VM if it already exists from previous test run
-    if [[ -f "$PROJECT_ROOT/configs/docker/${TEST_LANG_VM}/docker-compose.yml" ]]; then
-        echo "Removing old test VM: ${TEST_LANG_VM}"
-        docker-compose -f "$PROJECT_ROOT/configs/docker/${TEST_LANG_VM}/docker-compose.yml" down -v 2>/dev/null || true
-        rm -f "$PROJECT_ROOT/configs/docker/${TEST_LANG_VM}/docker-compose.yml"
+    # Remove test VM container if it exists - but NEVER delete project config files
+    # Core project files (configs/docker/*.yml, env-files/*.env) are sacrosanct
+    if docker ps -a --format '{{.Names}}' | grep -q "vde-${TEST_LANG_VM}"; then
+        echo "Stopping old test VM: ${TEST_LANG_VM}"
+        docker stop "vde-${TEST_LANG_VM}" 2>/dev/null || true
+        docker rm -f "vde-${TEST_LANG_VM}" 2>/dev/null || true
         echo ""
     fi
 
