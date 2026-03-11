@@ -16,17 +16,20 @@ Behave suite: **265 passing, 2 failed, 56 errors**
 
 ## Phase H: Daily Workflow Promotion (2026-03-10) — COMPLETE
 
-## Phase H: Root Normalization (2026-03-11) — IN PROGRESS
+## Phase H: Root Normalization (2026-03-11) — COMPLETE
 
-- Objective: Fully enforce VDE_ROOT_DIR as the single source of truth for filesystem paths; ensure all code paths are relative to VDE_ROOT_DIR and logs/artifacts stay inside the repository. Validate with a focused baseline, instrumentation hooks, and cross-document synchronization with the remediation plan.
-- Status: In progress. Implementing root normalization changes, instrumentation scaffolding, and phased verification plan.
+- Objective: Fully enforce VDE_ROOT_DIR as the sole source of truth for filesystem paths; ensure all code paths are relative to VDE_ROOT_DIR.
+- Status: ✅ Complete
 
+**Accomplishments:**
+- Created lib/vde-root (auto-discovery) and lib/vde-root-guard (detect hardcoded paths)
+- Wired both into bin/vde at startup
+- Fixed vde-root-guard false positive on /usr paths
+- Protected env-files and configs/docker from test deletion
+- Restored missing vde-js.env
+- Verified all 27 VM configs and env files exist
 
-- Added @core-suite tags to 4 target feature files
-- Copied feature files to core-infrastructure/
-- Regenerated USER_GUIDE.md with 106 verified passing scenarios
-- User Guide covers: Create, Start, Stop, Rebuild VMs + Multiple VMs (clusters)
-- 56 errors from promoted features remain - step definitions not loaded from deferred/ folder
+**Running VMs:** js, postgres, redis, rust
 
 **2026-03-11 Updates:**
 - Created lib/vde-root (auto-discovery) and lib/vde-root-guard (detect hardcoded paths)

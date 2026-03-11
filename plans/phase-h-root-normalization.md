@@ -5,7 +5,7 @@ Goals
 - Prevent hard-coded absolute paths; ensure all code uses "$VDE_ROOT_DIR/...".
 - Introduce runtime guards and observability hooks for phase verification.
 
-Status: IN PROGRESS
+Status: COMPLETE
 
 Plan & Actions
 - [A] Codebase audit for absolute paths outside VDE_ROOT_DIR ✅ DONE
