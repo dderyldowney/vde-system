@@ -3,6 +3,16 @@
 
 set -euo pipefail
 
+# Cleanup function for SSH agents
+cleanup_ssh_agents() {
+    source tests/setup-ssh-agent.zsh --cleanup 2>/dev/null || true
+    # Also kill any orphaned ssh-agents from interrupted tests
+    pkill -f "ssh-agent.*VDE" 2>/dev/null || true
+}
+
+# Trap to cleanup on exit (normal or interrupt)
+trap cleanup_ssh_agents EXIT INT TERM
+
 # Configuration
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 LOG_DIR="test-logs"
