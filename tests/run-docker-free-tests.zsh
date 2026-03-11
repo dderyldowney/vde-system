@@ -135,29 +135,29 @@ fi
 
 if [[ -n "$SPECIFIC_FEATURE" ]]; then
     echo -e "${CYAN}Running specific feature: ${SPECIFIC_FEATURE}${RESET}"
-    # Try to match the feature name in docker-free directory
-    if [[ -f "tests/features/docker-free/${SPECIFIC_FEATURE}.feature" ]]; then
-        behave_args="$behave_args tests/features/docker-free/${SPECIFIC_FEATURE}.feature"
+    # Try to match the feature name in core-infrastructure directory
+    if [[ -f "tests/features/core-infrastructure/${SPECIFIC_FEATURE}.feature" ]]; then
+        behave_args="$behave_args tests/features/core-infrastructure/${SPECIFIC_FEATURE}.feature"
     else
-        # Try to find a partial match in docker-free
-        matched_file=$(find tests/features/docker-free -name "${SPECIFIC_FEATURE}*.feature" | head -1)
+        # Try to find a partial match in core-infrastructure
+        matched_file=$(find tests/features/core-infrastructure -name "${SPECIFIC_FEATURE}*.feature" | head -1)
         if [[ -n "$matched_file" ]]; then
             echo -e "${YELLOW}Found: $matched_file${RESET}"
             behave_args="$behave_args $matched_file"
         else
-            echo -e "${RED}Error: Feature '${SPECIFIC_FEATURE}' not found in docker-free/${RESET}"
+            echo -e "${RED}Error: Feature '${SPECIFIC_FEATURE}' not found in core-infrastructure/${RESET}"
             echo "Available Docker-free features:"
-            ls tests/features/docker-free/*.feature | xargs -I {} basename {} .feature | sed 's/^/  - /'
+            ls tests/features/core-infrastructure/*.feature | xargs -I {} basename {} .feature | sed 's/^/  - /'
             exit 1
         fi
     fi
 else
-    echo -e "${CYAN}Running all Docker-free features from tests/features/docker-free/${RESET}"
+    echo -e "${CYAN}Running all Docker-free features from tests/features/core-infrastructure/${RESET}"
     # Skip @user-guide-internal tests in CI (they have design issues for clean environments)
     if [[ -n "$CI" ]]; then
-        behave_args="$behave_args tests/features/docker-free/ --tags=~@user-guide-internal"
+        behave_args="$behave_args tests/features/core-infrastructure/ --tags=~@user-guide-internal"
     else
-        behave_args="$behave_args tests/features/docker-free/"
+        behave_args="$behave_args tests/features/core-infrastructure/"
     fi
 fi
 
