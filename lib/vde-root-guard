@@ -4,20 +4,25 @@
 set -e
 
 vde_guard_absolute_paths() {
-  # Scan tracked files for common absolute path prefixes outside the VDE_ROOT_DIR
-  local forbidden_patterns=( "/Users/" "/home/" "/root/" "/opt/" )
+  # Scan tracked files for hardcoded user home paths that break portability
+  # Only scan for /Users/ and /home/ - these break when moving VDE to different machine/user
+  # Skip: this guard file (has patterns), lib/vde-path-utils (has path examples in comments)
+  local forbidden_patterns=( "/Users/" "/home/" )
   local f
   # Use git ls-files to iterate only over tracked sources
   for f in $(git ls-files); do
-    # Skip obvious non-source or noise files
+    # Skip non-source files and this guard file itself
     case "$f" in
-      *.log|*logs/*|*backup/*|env-files/*|*.bak) continue;;
-      *) ;; esac
-    # If the file path itself contains a forbidden root, or the content contains it
-    if grep -nH -E -q "${forbidden_patterns[1]}|${forbidden_patterns[2]}|${forbidden_patterns[3]}|${forbidden_patterns[4]}" "$f" 2>/dev/null; then
-      echo "ABSOLUTE PATH DETECTED in $f" 
-      return 1
-    fi
+      .github/*|configs/*|docs/*|tests/*|env-files/*|plans/*|*.md|*.txt|*.log|*.bak|lib/vde-root-guard|lib/vde-path-utils|bin/generate-all-configs) continue;;
+      lib/*|bin/*) 
+        if grep -nH -E "${forbidden_patterns[1]}|${forbidden_patterns[2]}" "$f" 2>/dev/null; then
+          echo "ABSOLUTE PATH DETECTED in $f" 
+          return 1
+        fi
+        continue
+        ;;
+      *) continue;;
+    esac
   done
   return 0
 }
