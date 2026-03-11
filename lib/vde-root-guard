@@ -1,6 +1,5 @@
-#!/usr/bin/env zsh
-+# Guard: ensure no hard-coded absolute paths leak into the codebase at runtime.
-+# Intended to be sourced by entry points (e.g. bin/vde) during startup.
+# Guard: ensure no hard-coded absolute paths leak into the codebase at runtime.
+# Intended to be sourced by entry points (e.g. bin/vde) during startup.
 
 set -e
 
@@ -28,4 +27,3 @@ vde_check_absolute_paths() {
 }
 
 vde_check_absolute_paths
-*** End Patch
