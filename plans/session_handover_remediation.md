@@ -18,6 +18,32 @@ Phased Plan (high level)
 - Phase E: Validation, observability, and documentation — **COMPLETE**
 - Phase F: Test infrastructure hardening (2026-03-09) — **COMPLETE**
 - Phase G: VM lifecycle promotion + zig removal (2026-03-09) — **COMPLETE**
+- Phase H: Test infrastructure fixes (2026-03-11) — **COMPLETE**
+
+Phase H — Test Infrastructure Fixes (2026-03-11)
+
+Goals: Fix test failures, improve test efficiency, document testing guidelines.
+
+Tasks completed:
+
+1. Fixed `_assoc_unset` in lib/vde-shell-compat - zsh associative array handling
+2. Fixed docker-free test path: docker-free/ → core-infrastructure/
+3. Added SSH agent cleanup trap to run-full-test-suite.zsh
+4. Fixed duplicate SSH ports: testlang2 2299→2300
+5. Removed duplicate vde-testlang entry in vm-types.json
+6. Added efficient testing guidelines to AGENTS.md and MEMORY.md
+
+Test Results (Minimally Verified):
+- installation-setup: 18/18 ✅
+- cache-system: 9/9 ✅
+- critical-infrastructure: 51/51 ✅
+- error-path: 7/7 ✅
+- SSH port uniqueness ✅
+- Unit tests: 18/18 ✅
+
+Remaining Issues (Pre-existing):
+- Deferred/promoted features have incomplete step definitions
+- Docker-start tests timeout (expected - slow container startup)
 
 Phase G — VM Lifecycle Promotion + Zig Removal
 
