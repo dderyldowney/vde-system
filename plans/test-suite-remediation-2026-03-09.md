@@ -20,7 +20,7 @@ and not restored. Docker Compose refuses to start any VM that references a missi
 causing all 14 docker-operations scenarios to fail with:
 
 ```
-env file /Users/dderyldowney/dev/env-files/vde-postgres.env not found
+env file $VDE_ROOT_DIR/env-files/vde-postgres.env not found
 ```
 
 **Status: FIXED** — Files restored from git history (`69e0247^`) in commit `d969bd2`.

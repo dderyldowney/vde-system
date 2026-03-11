@@ -12,8 +12,8 @@ Host vde-testlang
     HostName localhost
     Port 2298
     User devuser
-    IdentityFile /Users/dderyldowney/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
-    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
     LogLevel ERROR
