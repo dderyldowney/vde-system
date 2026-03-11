@@ -48,6 +48,38 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 
 ---
 
+## Testing Guidelines
+
+**NEVER run the full test suite during debugging or verification.** Only run full suite when explicitly needed.
+
+### Efficient Testing Protocol
+
+1. **Isolate first**: Run only the specific feature or test that relates to your fix
+   - `behave tests/features/core-infrastructure/cache-system.feature` (no Docker spinup)
+   - `zsh tests/unit/vde-shell-compat.test.zsh` (unit test, no containers)
+
+2. **Verify minimally**: Run only what you need to verify the fix works
+   - Don't spin up 27 VMs to test a port conflict
+   - Use dry-runs, unit tests, or single features first
+
+3. **Full suite only when complete**: Run `./tests/run-full-test-suite.zsh` ONLY after:
+   - All fixes are implemented
+   - You need a final verification pass
+   - User explicitly requests it
+
+4. **Document results**: Update MEMORY.md with test status after each fix
+
+### Test Execution Rules
+
+| Context | What to Run |
+|---------|-------------|
+| Fixing unit test | `zsh tests/unit/<specific>.test.zsh` |
+| Fixing BDD feature | `behave tests/features/core-infrastructure/<feature>.feature` |
+| Fixing Docker issue | `behave tests/features/core-infrastructure/<feature>.feature --tags=@requires-docker-host` |
+| After all fixes done | `./tests/run-full-test-suite.zsh` |
+
+---
+
 ## Project Memory & Session Handover
 
 All agents MUST follow these documentation protocols to ensure continuity across sessions:

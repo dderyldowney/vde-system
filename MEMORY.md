@@ -1,5 +1,23 @@
 # VDE Project Memory
 
+## Testing Guidelines (MANDATORY)
+
+**NEVER run full test suite during debugging.** Only run when explicitly needed.
+
+### Efficient Testing
+- Isolate: Run specific feature/unit test, not everything
+- Verify minimally: `zsh tests/unit/vde-X.test.zsh` or `behave tests/features/core-infrastructure/X.feature`
+- Full suite: ONLY after all fixes complete + user requests it
+
+### Examples
+| Context | Command |
+|---------|---------|
+| Fix zsh assoc array | `zsh tests/unit/vde-shell-compat.test.zsh` |
+| Fix cache test | `behave tests/features/core-infrastructure/cache-system.feature` |
+| Verify all | `./tests/run-full-test-suite.zsh` |
+
+---
+
 ## Current State (2026-03-11)
 
 **Review Session: No uncommitted changes detected**
