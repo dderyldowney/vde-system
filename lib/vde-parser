@@ -670,6 +670,12 @@ generate_plan() {
     # Ensure XTRACE is off
     unsetopt XTRACE 2>/dev/null
 
+    # ── Timing instrumentation ─────────────────────────────────────────────────
+    local _t0 _t1 _duration
+    if [[ "${VDE_LOG_LEVEL:-}" == "DEBUG" ]]; then
+        _t0=$(date +%s%N)
+    fi
+
     local input="$1"
     # Zsh built-in lowercase — no subshell, no fork
     local il="${input:l}"
@@ -727,6 +733,13 @@ generate_plan() {
     [[ -n "$vms" ]] && echo "VM:$vms"
     [[ -n "$flags" ]] && echo "FLAGS:$flags"
     [[ -n "$filter" ]] && echo "FILTER:$filter"
+
+    # ── Timing instrumentation ─────────────────────────────────────────────────
+    if [[ "${VDE_LOG_LEVEL:-}" == "DEBUG" ]]; then
+        _t1=$(date +%s%N)
+        _duration=$(( (_t1 - _t0) / 1000000 ))
+        vde_log_debug "generate_plan completed in ${_duration}ms" "vde-parser" 2>/dev/null || true
+    fi
 
     return $VDE_SUCCESS
 }
