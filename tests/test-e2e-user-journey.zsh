@@ -432,32 +432,22 @@ cleanup_test_vms() {
         fi
     fi
 
-    # Remove test VM configs (these are safe to remove)
-    if [[ -d "$PROJECT_ROOT/configs/docker/${TEST_LANG_VM}" ]]; then
-        echo "Removing ${TEST_LANG_VM} config..."
-        rm -rf "$PROJECT_ROOT/configs/docker/${TEST_LANG_VM}"
-        echo -e "${GREEN}✓ ${TEST_LANG_VM} config removed${RESET}"
+    # Remove test VM configs ONLY for test VMs (those with "test" in the name)
+    # NEVER delete core project VMs like postgres, python, js, etc.
+    if [[ "${TEST_LANG_VM}" == *test* ]] || [[ "${TEST_LANG_VM}" == *TEST* ]]; then
+        if [[ -d "$PROJECT_ROOT/configs/docker/${TEST_LANG_VM}" ]]; then
+            echo "Removing test VM ${TEST_LANG_VM} config..."
+            rm -rf "$PROJECT_ROOT/configs/docker/${TEST_LANG_VM}"
+            echo -e "${GREEN}✓ ${TEST_LANG_VM} config removed${RESET}"
+            ((cleaned++))
+        fi
+    fi
+
+    # NEVER delete configs/docker/*, env-files/*, projects/*, logs/* - these are CORE PROJECT FILES
+    # Only stop/remove containers, not project files
+    if [[ "${TEST_SVC_VM}" == *test* ]] || [[ "${TEST_SVC_VM}" == *TEST* ]]; then
+        echo -e "${GREEN}✓ ${TEST_SVC_VM} test VM container stopped${RESET}"
         ((cleaned++))
-    fi
-
-    if [[ -d "$PROJECT_ROOT/configs/docker/docker/${TEST_SVC_VM}" ]]; then
-        echo "Removing ${TEST_SVC_VM} config..."
-        rm -rf "$PROJECT_ROOT/configs/docker/docker/${TEST_SVC_VM}"
-        echo -e "${GREEN}✓ ${TEST_SVC_VM} config removed${RESET}"
-        ((cleaned++))
-    fi
-
-    # Remove test env files
-    if [[ -f "$PROJECT_ROOT/env-files/${TEST_LANG_VM}.env" ]]; then
-        rm -f "$PROJECT_ROOT/env-files/${TEST_LANG_VM}.env"
-    fi
-
-    if [[ -d "$PROJECT_ROOT/projects/${TEST_LANG_VM}" ]]; then
-        rm -rf "$PROJECT_ROOT/projects/${TEST_LANG_VM}"
-    fi
-
-    if [[ -d "$PROJECT_ROOT/logs/${TEST_LANG_VM}" ]]; then
-        rm -rf "$PROJECT_ROOT/logs/${TEST_LANG_VM}"
     fi
 
     echo ""
