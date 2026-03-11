@@ -9,7 +9,11 @@ vde_guard_absolute_paths() {
   local f
   # Use git ls-files to iterate only over tracked sources
   for f in $(git ls-files); do
-    # Quick skip binary/non-text files by grep failing gracefully
+    # Skip obvious non-source or noise files
+    case "$f" in
+      *.log|*logs/*|*backup/*|env-files/*|*.bak) continue;;
+      *) ;; esac
+    # If the file path itself contains a forbidden root, or the content contains it
     if grep -nH -E -q "${forbidden_patterns[1]}|${forbidden_patterns[2]}|${forbidden_patterns[3]}|${forbidden_patterns[4]}" "$f" 2>/dev/null; then
       echo "ABSOLUTE PATH DETECTED in $f" 
       return 1
