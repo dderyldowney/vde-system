@@ -126,7 +126,14 @@ _assoc_set() {
     local array_name="$1"
     local key="$2"
     local value="$3"
-    eval "${array_name}[\${key}]=\"\${value}\""
+    # Use nameref if available (zsh 5.2+), otherwise fallback to safe eval
+    if [[ -n "$ZSH_VERSION" ]] && [[ "$ZSH_VERSION" > "5.1" ]]; then
+        typeset -n ref="$array_name"
+        ref[$key]="$value"
+    else
+        # Use (q) flag to safely quote key and value for eval
+        eval "${array_name}[${(q)key}]=${(q)value}"
+    fi
     return 0
 }
 
@@ -137,11 +144,21 @@ _assoc_set() {
 _assoc_get() {
     local array_name="$1"
     local key="$2"
-    local value
-    # Check if key exists before trying to access, to prevent error messages
-    if eval "[[ -n \"\${${array_name}[\${key}]+_}\" ]]"; then
-        eval "echo \"\${${array_name}[\${key}]}\""
-        return 0
+    
+    # Use nameref if available (zsh 5.2+), otherwise fallback to safe eval
+    if [[ -n "$ZSH_VERSION" ]] && [[ "$ZSH_VERSION" > "5.1" ]]; then
+        typeset -n ref="$array_name"
+        if [[ -n "${ref[$key]+_}" ]]; then
+            echo "${ref[$key]}"
+            return 0
+        fi
+    else
+        # Use (q) flag to safely quote key for eval
+        local q_key="${(q)key}"
+        if eval "[[ -n \"\${${array_name}[$q_key]+_}\" ]]"; then
+            eval "echo \"\${${array_name}[$q_key]}\""
+            return 0
+        fi
     fi
     return $VDE_ERR_GENERAL
 }
@@ -152,7 +169,12 @@ _assoc_get() {
 # Example: for k in $(_assoc_keys "MY_ARRAY"); do echo "$k"; done
 _assoc_keys() {
     local array_name="$1"
-    eval "for k in \"\${(@k)${array_name}}\"; do echo \"\$k\"; done"
+    if [[ -n "$ZSH_VERSION" ]] && [[ "$ZSH_VERSION" > "5.1" ]]; then
+        typeset -n ref="$array_name"
+        for k in "${(@k)ref}"; do echo "$k"; done
+    else
+        eval "for k in \"\${(@k)${array_name}}\"; do echo \"\$k\"; done"
+    fi
     return 0
 }
 
@@ -163,7 +185,13 @@ _assoc_keys() {
 _assoc_has_key() {
     local array_name="$1"
     local key="$2"
-    eval "if [[ -n \"\${${array_name}[\${key}]+_}\" ]]; then return 0; else return $VDE_ERR_GENERAL; fi"
+    if [[ -n "$ZSH_VERSION" ]] && [[ "$ZSH_VERSION" > "5.1" ]]; then
+        typeset -n ref="$array_name"
+        [[ -n "${ref[$key]+_}" ]] && return 0 || return $VDE_ERR_GENERAL
+    else
+        local q_key="${(q)key}"
+        eval "if [[ -n \"\${${array_name}[$q_key]+_}\" ]]; then return 0; else return $VDE_ERR_GENERAL; fi"
+    fi
 }
 
 # _assoc_unset - Remove a key from an associative array
@@ -173,7 +201,13 @@ _assoc_has_key() {
 _assoc_unset() {
     local array_name="$1"
     local key="$2"
-    eval "unset \"${array_name}[\${key}]\""
+    if [[ -n "$ZSH_VERSION" ]] && [[ "$ZSH_VERSION" > "5.1" ]]; then
+        typeset -n ref="$array_name"
+        unset "ref[$key]"
+    else
+        local q_key="${(q)key}"
+        eval "unset \"${array_name}[$q_key]\""
+    fi
     return 0
 }
 

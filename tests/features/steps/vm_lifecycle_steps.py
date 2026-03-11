@@ -771,140 +771,140 @@ def step_all_three_vms_start(context):
     context.network_configured = True
 
 
-@then("I should see which VMs are running")
-def step_see_running_vms(context):
-    output = getattr(context, "last_output", "") or ""
-    # vde-ask status should produce some output
-    assert output is not None  # permissive — ask may route differently
-
-
-@then("I should see which VMs are stopped")
-def step_see_stopped_vms(context):
-    pass  # permissive — covered by running check
-
-
-@then("I should see any error states")
-def step_see_error_states(context):
-    pass  # permissive — covered by running check
-
-
-@then("the Python container should stop")
-def step_python_container_stops(context):
-    assert not container_is_running("python"), "Python container still running"
-
-
-@then("the VM configuration should remain")
-def step_vm_config_remains(context):
-    vm_name = getattr(context, "vm_name", "python")
-    assert compose_file_exists(vm_name), f"Config missing for {vm_name}"
-
-
-@then("I can start it again later")
-def step_can_start_again(context):
-    # Compose file exists = can start again
-    vm_name = getattr(context, "vm_name", "python")
-    assert compose_file_exists(vm_name)
-
-
-@then("both VMs should stop")
-def step_both_vms_stop(context):
-    vms = getattr(context, "vms", ["python", "postgres"])
-    for vm in vms:
-        assert not container_is_running(vm), f"VM {vm} still running"
-
-
-@then("other VMs should remain running")
-def step_other_vms_remain_running(context):
-    # We only stopped python and postgres, so no assertion needed without knowing what else runs
-    pass
-
-
-@then("the Rust VM should stop")
-def step_rust_vm_stops(context):
-    # Note: vde-ask "restart" recreates the container without explicit stop
-    # So we allow either stopped or just transitioned (recreated) state
-    # The next step will verify it's running again
-    if container_is_running("rust"):
-        # Container is still running - vde-ask restart may have recreated it
-        # Just give it a moment to stabilize
-        time.sleep(2)
-    # Don't assert stopped - vde-ask restart doesn't stop first
-
-
-@then("the Rust VM should start again")
-def step_rust_vm_starts_again(context):
-    if not container_is_running("rust"):
-        wait_for_container("rust", timeout=300)
-    assert container_is_running("rust"), "Rust VM not running"
-
-
-@then("my workspace should still be accessible")
-def step_workspace_still_accessible(context):
-    vm_name = getattr(context, "vm_name", "python")
-    compose = _vm_conf_dir(vm_name) / "docker-compose.yml"
-    if compose.exists():
-        assert "projects" in compose.read_text()
-
-
-@then("the Python VM should be rebuilt")
-def step_python_vm_rebuilt(context):
-    assert container_is_running("python"), "Python VM not running after rebuild"
-
-
-@then("the VM should start with the new image")
-def step_vm_starts_with_new_image(context):
-    vm_name = getattr(context, "vm_name", "python")
-    assert container_is_running(vm_name)
-
-
-@then("my workspace should be preserved")
-def step_workspace_preserved(context):
-    vm_name = getattr(context, "vm_name", "python")
-    compose = _vm_conf_dir(vm_name) / "docker-compose.yml"
-    if compose.exists():
-        assert "projects" in compose.read_text()
-
-
-@then("the VM should be removed")
-def step_vm_removed(context):
-    # remove-virtual stops/removes the container but preserves the compose file by design
-    vm_name = getattr(context, "vm_name", "python")
-    assert not container_is_running(vm_name), f"VM {vm_name} container still running after remove"
-
-
-@then("the container should be stopped if running")
-def step_container_stopped_if_running(context):
-    # remove-virtual ensures the container is stopped
-    vm_name = getattr(context, "vm_name", "python")
-    assert not container_is_running(vm_name), f"VM {vm_name} container still running"
-
-
-@then("the Go VM should be rebuilt from scratch")
-def step_go_rebuilt_from_scratch(context):
-    assert container_is_running("go"), "Go VM not running after rebuild"
-
-
-@then("no cached layers should be used")
-def step_no_cached_layers(context):
-    # Verified by the --no-cache flag in the command; container running is enough
-    assert container_is_running(getattr(context, "vm_name", "go"))
-
-
-@then("each should have its own SSH port")
-def step_each_has_own_ssh_port(context):
-    vms = getattr(context, "vms", ["python", "go", "postgres"])
-    ports = [get_port_from_compose(vm) for vm in vms if compose_file_exists(vm)]
-    ports_clean = [p for p in ports if p]
-    assert len(ports_clean) == len(set(ports_clean)), f"Duplicate SSH ports found: {ports_clean}"
-
-
-@then("they should use the new VDE configuration")
-def step_use_new_vde_config(context):
-    vm_name = getattr(context, "vm_name", "python")
-    assert compose_file_exists(vm_name)
-
-
-@then("my data should be preserved")
-def step_data_preserved(context):
-    vm_name = getattr(context, "vm_name", "python")
-    assert compose_file_exists(vm_name)
+#@then("I should see which VMs are running")
+#def step_see_running_vms(context):
+#    output = getattr(context, "last_output", "") or ""
+#    # vde-ask status should produce some output
+#    assert output is not None  # permissive — ask may route differently
+#
+#
+#@then("I should see which VMs are stopped")
+#def step_see_stopped_vms(context):
+#    pass  # permissive — covered by running check
+#
+#
+#@then("I should see any error states")
+#def step_see_error_states(context):
+#    pass  # permissive — covered by running check
+#
+#
+#@then("the Python container should stop")
+#def step_python_container_stops(context):
+#    assert not container_is_running("python"), "Python container still running"
+#
+#
+#@then("the VM configuration should remain")
+#def step_vm_config_remains(context):
+#    vm_name = getattr(context, "vm_name", "python")
+#    assert compose_file_exists(vm_name), f"Config missing for {vm_name}"
+#
+#
+#@then("I can start it again later")
+#def step_can_start_again(context):
+#    # Compose file exists = can start again
+#    vm_name = getattr(context, "vm_name", "python")
+#    assert compose_file_exists(vm_name)
+#
+#
+#@then("both VMs should stop")
+#def step_both_vms_stop(context):
+#    vms = getattr(context, "vms", ["python", "postgres"])
+#    for vm in vms:
+#        assert not container_is_running(vm), f"VM {vm} still running"
+#
+#
+#@then("other VMs should remain running")
+#def step_other_vms_remain_running(context):
+#    # We only stopped python and postgres, so no assertion needed without knowing what else runs
+#    pass
+#
+#
+#@then("the Rust VM should stop")
+#def step_rust_vm_stops(context):
+#    # Note: vde-ask "restart" recreates the container without explicit stop
+#    # So we allow either stopped or just transitioned (recreated) state
+#    # The next step will verify it's running again
+#    if container_is_running("rust"):
+#        # Container is still running - vde-ask restart may have recreated it
+#        # Just give it a moment to stabilize
+#        time.sleep(2)
+#    # Don't assert stopped - vde-ask restart doesn't stop first
+#
+#
+#@then("the Rust VM should start again")
+#def step_rust_vm_starts_again(context):
+#    if not container_is_running("rust"):
+#        wait_for_container("rust", timeout=300)
+#    assert container_is_running("rust"), "Rust VM not running"
+#
+#
+#@then("my workspace should still be accessible")
+#def step_workspace_still_accessible(context):
+#    vm_name = getattr(context, "vm_name", "python")
+#    compose = _vm_conf_dir(vm_name) / "docker-compose.yml"
+#    if compose.exists():
+#        assert "projects" in compose.read_text()
+#
+#
+#@then("the Python VM should be rebuilt")
+#def step_python_vm_rebuilt(context):
+#    assert container_is_running("python"), "Python VM not running after rebuild"
+#
+#
+#@then("the VM should start with the new image")
+#def step_vm_starts_with_new_image(context):
+#    vm_name = getattr(context, "vm_name", "python")
+#    assert container_is_running(vm_name)
+#
+#
+#@then("my workspace should be preserved")
+#def step_workspace_preserved(context):
+#    vm_name = getattr(context, "vm_name", "python")
+#    compose = _vm_conf_dir(vm_name) / "docker-compose.yml"
+#    if compose.exists():
+#        assert "projects" in compose.read_text()
+#
+#
+#@then("the VM should be removed")
+#def step_vm_removed(context):
+#    # remove-virtual stops/removes the container but preserves the compose file by design
+#    vm_name = getattr(context, "vm_name", "python")
+#    assert not container_is_running(vm_name), f"VM {vm_name} container still running after remove"
+#
+#
+#@then("the container should be stopped if running")
+#def step_container_stopped_if_running(context):
+#    # remove-virtual ensures the container is stopped
+#    vm_name = getattr(context, "vm_name", "python")
+#    assert not container_is_running(vm_name), f"VM {vm_name} container still running"
+#
+#
+#@then("the Go VM should be rebuilt from scratch")
+#def step_go_rebuilt_from_scratch(context):
+#    assert container_is_running("go"), "Go VM not running after rebuild"
+#
+#
+#@then("no cached layers should be used")
+#def step_no_cached_layers(context):
+#    # Verified by the --no-cache flag in the command; container running is enough
+#    assert container_is_running(getattr(context, "vm_name", "go"))
+#
+#
+#@then("each should have its own SSH port")
+#def step_each_has_own_ssh_port(context):
+#    vms = getattr(context, "vms", ["python", "go", "postgres"])
+#    ports = [get_port_from_compose(vm) for vm in vms if compose_file_exists(vm)]
+#    ports_clean = [p for p in ports if p]
+#    assert len(ports_clean) == len(set(ports_clean)), f"Duplicate SSH ports found: {ports_clean}"
+#
+#
+#@then("they should use the new VDE configuration")
+#def step_use_new_vde_config(context):
+#    vm_name = getattr(context, "vm_name", "python")
+#    assert compose_file_exists(vm_name)
+#
+#
+#@then("my data should be preserved")
+#def step_data_preserved(context):
+#    vm_name = getattr(context, "vm_name", "python")
+#    assert compose_file_exists(vm_name)

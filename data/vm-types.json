@@ -226,6 +226,16 @@
         "install": "apt-get install -y curl",
         "service_port": null,
         "ssh_port": 2298
+      },
+      {
+        "name": "vde-testlang",
+        "aliases": [
+          "testlang"
+        ],
+        "display": "Testlang",
+        "install": "apt-get install -y curl",
+        "service_port": null,
+        "ssh_port": 2299
       }
     ],
     "service": [

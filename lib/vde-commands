@@ -116,7 +116,7 @@ vde_get_vm_info() {
 # Returns: VDE_SUCCESS (0), outputs list of running container names to stdout
 # Example: running=$(vde_get_running_vms)
 vde_get_running_vms() {
-    docker ps --format "{{.Names}}" 2>/dev/null | grep -E "^[a-z0-9]+-dev$|^[a-z0-9]+$" || echo ""
+    docker ps --format "{{.Names}}" 2>/dev/null | grep -E "^vde-[a-z0-9]+$" || echo ""
     return $VDE_SUCCESS
 }
 
