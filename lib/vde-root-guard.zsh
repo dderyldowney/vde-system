@@ -1,0 +1,31 @@
+#!/usr/bin/env zsh
++# Guard: ensure no hard-coded absolute paths leak into the codebase at runtime.
++# Intended to be sourced by entry points (e.g. bin/vde) during startup.
+
+set -e
+
+vde_guard_absolute_paths() {
+  # Scan tracked files for common absolute path prefixes outside the VDE_ROOT_DIR
+  local forbidden_patterns=( "/Users/" "/home/" "/root/" "/opt/" )
+  local f
+  # Use git ls-files to iterate only over tracked sources
+  for f in $(git ls-files); do
+    # Quick skip binary/non-text files by grep failing gracefully
+    if grep -nH -E -q "${forbidden_patterns[1]}|${forbidden_patterns[2]}|${forbidden_patterns[3]}|${forbidden_patterns[4]}" "$f" 2>/dev/null; then
+      echo "ABSOLUTE PATH DETECTED in $f" 
+      return 1
+    fi
+  done
+  return 0
+}
+
+# Expose a simple guard that other scripts can call.
+vde_check_absolute_paths() {
+  if ! vde_guard_absolute_paths; then
+    return 1
+  fi
+  return 0
+}
+
+vde_check_absolute_paths
+*** End Patch
