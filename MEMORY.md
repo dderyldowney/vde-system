@@ -1,6 +1,6 @@
 # VDE Project Memory
 
-## Current State (2026-03-10)
+## Current State (2026-03-11)
 
 **Review Session: No uncommitted changes detected**
 
@@ -27,6 +27,15 @@ Behave suite: **265 passing, 2 failed, 56 errors**
 - Regenerated USER_GUIDE.md with 106 verified passing scenarios
 - User Guide covers: Create, Start, Stop, Rebuild VMs + Multiple VMs (clusters)
 - 56 errors from promoted features remain - step definitions not loaded from deferred/ folder
+
+**2026-03-11 Updates:**
+- Created lib/vde-root (auto-discovery) and lib/vde-root-guard (detect hardcoded paths)
+- Wired both into bin/vde at startup
+- Fixed zsh associative array compatibility in lib/vde-shell-compat
+- **CRITICAL FIX**: Tests were deleting core project files (env-files/*.env, configs/docker/*.yml)
+- Protected env-files and configs/docker from deletion in tests
+- Tests now only delete VMs with "test" in name
+- vde-postgres.env restored and verified
 
 **User Guide now includes these core workflows for new students:**
 
