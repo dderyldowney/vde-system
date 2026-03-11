@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
-source "/Users/dderyldowney/dev/tests/lib/test_common.zsh"
+VDE_ROOT_DIR="${0:a:h:h}"
+source "$VDE_ROOT_DIR/tests/lib/test_common.zsh"
 setup_test_env
 
 start_time=$(date +%s%N)
