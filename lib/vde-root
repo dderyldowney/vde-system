@@ -28,5 +28,3 @@ fi
 
 # Fallback: use the present working directory as root
 export VDE_ROOT_DIR="${PWD}"
-
-*** End Patch
