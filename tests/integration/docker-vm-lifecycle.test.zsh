@@ -25,6 +25,9 @@ source ./lib/vm-common
 # Services: postgres, redis, mongodb, mysql, nginx, rabbitmq (6 service VMs)
 # VDE supports additional VMs beyond these, but we test the most commonly used ones.
 
+# NEVER delete core project config files (env-files/*, configs/docker/*/*.yml)
+# Only stop/remove containers, not project files
+
 # Support single VM testing for CI matrix jobs
 # When TEST_VM is set, only test that VM instead of the default set
 if [[ -n "$TEST_VM" ]]; then
@@ -178,24 +181,13 @@ cleanup() {
             fi
         done
 
-        # Remove data for service VMs
-        for vm in "$TEST_SVC_VM"; do
-            if [[ -d "data/$vm" ]]; then
-                info "Removing data/$vm"
-                rm -rf "data/$vm" 2>/dev/null || true
-            fi
-        done
+        # NOTE: We no longer delete data/ or projects/ directories
+        # These are core project directories - NEVER delete them
+        # Only stop/remove containers, not project data
 
-        # Remove env files
-        for vm in "$TEST_LANG_VM" "$TEST_SVC_VM" "$TEST_LANG_VM2"; do
-            if [[ -f "env-files/vde-$vm.env" ]]; then
-                info "Removing env-files/vde-$vm.env"
-                rm -f "env-files/vde-$vm.env"
-            fi
-            if [[ -f "env-files/$vm.env" ]]; then
-                rm -f "env-files/$vm.env" 2>/dev/null || true
-            fi
-        done
+        # NOTE: We no longer delete env-files or configs/docker/*.yml
+        # These are core project files - NEVER delete them
+        # Only stop/remove containers, not project configuration
     fi
 
     if [[ "$CLEANUP_ONLY" == true ]]; then
