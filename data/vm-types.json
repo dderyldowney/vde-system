@@ -217,7 +217,7 @@
         "display": "Test Lang Two",
         "install": "apt-get install -y curl",
         "service_port": null,
-        "ssh_port": 2299
+        "ssh_port": 2300
       },
       {
         "name": "vde-testlang",
