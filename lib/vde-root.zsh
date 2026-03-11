@@ -1,4 +1,3 @@
-#!/usr/bin/env zsh
 # Centralized VDE root resolution utility (library for sourcing)
 # Purpose: ensure VDE_ROOT_DIR is defined and points to the repository root.
 # This script is intended to be sourced by other VDE scripts.
