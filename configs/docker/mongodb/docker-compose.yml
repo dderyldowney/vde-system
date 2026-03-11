@@ -6,7 +6,7 @@ services:
   vde-mongodb:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/mongodb/Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
@@ -16,7 +16,7 @@ services:
     container_name: vde-mongodb
     hostname: vde-mongodb
     restart: unless-stopped
-    command: sh -c "apt-get update -y && apt-get install -y mongodb-org-shell && /usr/sbin/sshd -D"
+    command: /usr/sbin/sshd -D
 
     ports:
       - "2401:22"

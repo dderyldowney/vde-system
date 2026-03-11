@@ -5,7 +5,7 @@ services:
   vde-kotlin:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/kotlin/Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
@@ -19,7 +19,7 @@ services:
       - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name=vde-kotlin"
-    command: sh -c "apt-get update -y && apt-get install -y kotlin && curl -s "https://get.sdkman.io" | bash && su - devuser -c "source ~/.sdkman/bin/sdkman-init.sh && sdk install kotlin" && /usr/sbin/sshd -D"
+    command: /usr/sbin/sshd -D
 
     ports:
       - "2210:22"

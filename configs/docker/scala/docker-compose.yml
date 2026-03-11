@@ -5,7 +5,7 @@ services:
   vde-scala:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/scala/Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
@@ -19,7 +19,7 @@ services:
       - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name=vde-scala"
-    command: sh -c "apt-get update -y && apt-get install -y scala-defaults sbt && /usr/sbin/sshd -D"
+    command: /usr/sbin/sshd -D
 
     ports:
       - "2217:22"

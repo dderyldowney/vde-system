@@ -5,7 +5,7 @@ services:
   vde-r:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/r/Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
@@ -19,7 +19,7 @@ services:
       - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name=vde-r"
-    command: sh -c "apt-get update -y && apt-get install -y r-base r-cran-littler && /usr/sbin/sshd -D"
+    command: /usr/sbin/sshd -D
 
     ports:
       - "2214:22"

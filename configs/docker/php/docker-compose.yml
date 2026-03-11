@@ -5,7 +5,7 @@ services:
   vde-php:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/php/Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
@@ -19,7 +19,7 @@ services:
       - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name=vde-php"
-    command: sh -c "apt-get update -y && apt-get install -y php php-cli php-xml php-mbstring php-curl composer && /usr/sbin/sshd -D"
+    command: /usr/sbin/sshd -D
 
     ports:
       - "2212:22"

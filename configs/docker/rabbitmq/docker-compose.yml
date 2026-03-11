@@ -6,7 +6,7 @@ services:
   vde-rabbitmq:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/rabbitmq/Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
@@ -16,7 +16,7 @@ services:
     container_name: vde-rabbitmq
     hostname: vde-rabbitmq
     restart: unless-stopped
-    command: sh -c "apt-get update -y && apt-get install -y erlang-nox && apt-get install -y rabbitmq-server && /usr/sbin/sshd -D"
+    command: /usr/sbin/sshd -D
 
     ports:
       - "2405:22"
