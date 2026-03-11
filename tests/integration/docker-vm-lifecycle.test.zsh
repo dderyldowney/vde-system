@@ -164,29 +164,28 @@ cleanup() {
     done
 
     # Only remove configs/data if explicitly requested (CLEANUP_ONLY mode or TEST_CLEANUP env var)
+    # and ONLY for TEST VMs (those with "test" in the name)
     if [[ "$CLEANUP_ONLY" == true ]] || [[ "$TEST_CLEANUP" == "1" ]]; then
-        # Remove configs for test VMs
+        # Remove configs ONLY for test VMs (those with "test" in the name)
         for vm in "$TEST_LANG_VM" "$TEST_SVC_VM" "$TEST_LANG_VM2"; do
-            if [[ -d "configs/docker/$vm" ]]; then
-                info "Removing configs/docker/$vm"
-                rm -rf "configs/docker/$vm"
+            # NEVER delete core project VMs - only delete test VMs
+            if [[ "$vm" == *test* ]] || [[ "$vm" == *TEST* ]]; then
+                if [[ -d "configs/docker/$vm" ]]; then
+                    info "Removing test VM configs/docker/$vm"
+                    rm -rf "configs/docker/$vm"
+                fi
+                if [[ -d "projects/$vm" ]]; then
+                    info "Removing test VM projects/$vm"
+                    rm -rf "projects/$vm"
+                fi
+                if [[ -f "env-files/vde-$vm.env" ]]; then
+                    info "Removing test VM env-files/vde-$vm.env"
+                    rm -f "env-files/vde-$vm.env"
+                fi
             fi
         done
 
-        # Remove projects
-        for vm in "$TEST_LANG_VM" "$TEST_SVC_VM" "$TEST_LANG_VM2"; do
-            if [[ -d "projects/$vm" ]]; then
-                info "Removing projects/$vm"
-                rm -rf "projects/$vm"
-            fi
-        done
-
-        # NOTE: We no longer delete data/ or projects/ directories
-        # These are core project directories - NEVER delete them
-        # Only stop/remove containers, not project data
-
-        # NOTE: We no longer delete env-files or configs/docker/*.yml
-        # These are core project files - NEVER delete them
+        # Core project files (configs/docker/*.yml, env-files/*.env) are SACROSANCT - NEVER delete
         # Only stop/remove containers, not project configuration
     fi
 
@@ -217,12 +216,9 @@ test_create_language_vm() {
         local container_name
         container_name=$(vde_get_container_name "$TEST_LANG_VM")
         # Stop container first to release file locks
+        # NEVER delete configs/docker/*, env-files/*, projects/*, data/* - these are CORE PROJECT FILES
         docker stop "$container_name" >/dev/null 2>&1 || true
         docker rm "$container_name" >/dev/null 2>&1 || true
-        rm -rf "configs/docker/$TEST_LANG_VM"
-        rm -rf "projects/$TEST_LANG_VM"
-        rm -f "env-files/vde-$TEST_LANG_VM.env"
-        rm -f "env-files/$TEST_LANG_VM.env" 2>/dev/null || true
     fi
 
     # Call the actual create-virtual-for script
@@ -274,13 +270,9 @@ test_create_service_vm() {
         local container_name
         container_name=$(vde_get_container_name "$TEST_SVC_VM")
         # Stop container first to release file locks
+        # NEVER delete configs/docker/*, env-files/*, projects/*, data/* - these are CORE PROJECT FILES
         docker stop "$container_name" >/dev/null 2>&1 || true
         docker rm "$container_name" >/dev/null 2>&1 || true
-        rm -rf "configs/docker/$TEST_SVC_VM"
-        # Handle permission errors for services like mongodb
-        rm -rf "data/$TEST_SVC_VM" 2>/dev/null || true
-        rm -f "env-files/vde-$TEST_SVC_VM.env"
-        rm -f "env-files/$TEST_SVC_VM.env" 2>/dev/null || true
     fi
 
     # Call the actual create-virtual-for script
