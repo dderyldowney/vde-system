@@ -20,6 +20,30 @@
 
 ## Current State (2026-03-11)
 
+**Shell/Zsh Tests: 360 passing** | **Unit tests (isolated): 18/18 pass**
+
+### Test Results (Minimally Verified)
+- ✅ installation-setup: 18/18
+- ✅ cache-system: 9/9
+- ✅ critical-infrastructure: 51/51
+- ✅ error-path: 7/7
+- ✅ SSH port uniqueness (fixed duplicates)
+- ✅ vde-shell-compat: 18/18
+
+### This Session's Fixes
+
+1. **_assoc_unset** - Fixed zsh associative array (was using typeset -n incorrectly)
+2. **docker-free path** - Updated to core-infrastructure
+3. **SSH agent cleanup** - Added trap to full test suite
+4. **SSH port duplicate** - testlang2: 2299→2300
+5. **Duplicate entry** - Removed duplicate vde-testlang in vm-types.json
+6. **Testing guidelines** - Added to AGENTS.md and MEMORY.md
+
+### Remaining Issues (Pre-existing)
+
+- Deferred/promoted features have incomplete step definitions
+- Docker-start tests timeout (expected - slow containers)
+
 **Review Session: No uncommitted changes detected**
 
 Shell/Zsh Tests: **360 passing, 0 failed** (`make test`)

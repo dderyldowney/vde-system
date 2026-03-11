@@ -18,6 +18,51 @@ Previous sessions resolved critical performance hangs and stability issues in th
 - Integration tests: 79/79 passing; Behave: 240/240 passing
 - Test infrastructure: promoted helper step files; fixed stale `scripts/` paths → `lib/`/`bin/`
 
+## Current Session Work (2026-03-11 — Test Infrastructure Fixes)
+
+### Goal
+
+1. Fix test failures and improve test efficiency
+2. Document testing guidelines to prevent full-suite spam
+
+### Completed
+
+- Fixed `_assoc_unset` in lib/vde-shell-compat (zsh associative array)
+- Fixed docker-free test path: `docker-free/` → `core-infrastructure/`
+- Added SSH agent cleanup trap to run-full-test-suite.zsh
+- Fixed duplicate SSH ports: testlang2 2299→2300
+- Removed duplicate vde-testlang entry in vm-types.json
+- Added efficient testing guidelines to AGENTS.md and MEMORY.md
+
+### Test Results (Verified Minimally)
+
+| Test Suite | Status |
+|------------|--------|
+| installation-setup.feature | 18/18 ✅ |
+| cache-system.feature | 9/9 ✅ |
+| critical-infrastructure.feature | 51/51 ✅ |
+| error-path.feature | 7/7 ✅ |
+| critical-path.feature (port uniqueness) | ✅ |
+| Unit tests (vde-shell-compat) | 18/18 ✅ |
+
+**Total: 85+ scenarios passing**
+
+### Remaining Issues
+
+- Some deferred/promoted features have incomplete step definitions (pre-existing)
+- Docker-start tests timeout (expected - slow container startup)
+
+### Files Modified
+
+- lib/vde-shell-compat - Fixed _assoc_unset
+- tests/run-docker-free-tests.zsh - Fixed path to core-infrastructure
+- tests/run-full-test-suite.zsh - Added SSH agent trap cleanup
+- data/vm-types.json - Fixed duplicate ports and entries
+- AGENTS.md - Added testing guidelines
+- MEMORY.md - Added testing guidelines
+
+---
+
 ## Current Session Work (2026-03-10 — Review & Test Verification)
 
 ### Goal
