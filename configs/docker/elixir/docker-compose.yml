@@ -5,7 +5,7 @@ services:
   vde-elixir:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/elixir/Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
@@ -19,7 +19,7 @@ services:
       - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name=vde-elixir"
-    command: sh -c "apt-get update -y && apt-get install -y elixir erlang && /usr/sbin/sshd -D"
+    command: /usr/sbin/sshd -D
 
     ports:
       - "2204:22"

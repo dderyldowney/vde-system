@@ -6,7 +6,7 @@ services:
   vde-nginx:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/nginx/Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
@@ -16,7 +16,7 @@ services:
     container_name: vde-nginx
     hostname: vde-nginx
     restart: unless-stopped
-    command: sh -c "apt-get update -y && apt-get install -y nginx-extras && /usr/sbin/sshd -D"
+    command: /usr/sbin/sshd -D
 
     ports:
       - "2403:22"

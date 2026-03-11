@@ -6,7 +6,7 @@ services:
   vde-mysql:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/mysql/Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
@@ -16,7 +16,7 @@ services:
     container_name: vde-mysql
     hostname: vde-mysql
     restart: unless-stopped
-    command: sh -c "apt-get update -y && apt-get install -y default-mysql-server && /usr/sbin/sshd -D"
+    command: /usr/sbin/sshd -D
 
     ports:
       - "2402:22"

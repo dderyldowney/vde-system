@@ -5,7 +5,7 @@ services:
   vde-ruby:
     build:
       context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
+      dockerfile: configs/docker/ruby/Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
@@ -19,7 +19,7 @@ services:
       - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name=vde-ruby"
-    command: sh -c "apt-get update -y && apt-get install -y ruby-full && /usr/sbin/sshd -D"
+    command: /usr/sbin/sshd -D
 
     ports:
       - "2215:22"
