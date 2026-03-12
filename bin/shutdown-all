@@ -104,7 +104,8 @@ if [[ "$ALL_VMS" = "true" ]]; then
 
     if [[ "$stopped_count" -eq 0 ]] && [[ "$FORCE" = "false" ]]; then
         log_info "All VMs already stopped"
-    else
+    fi
+else
     # Shutdown a single VM
     validate_vm_exists "$VM_NAME"
 
@@ -127,7 +128,8 @@ if [[ "$ALL_VMS" = "true" ]]; then
     fi
 else
     if [[ "$VM_NAME" != "" ]]; then
-    log_success "VM '$VM_NAME' stopped successfully"
+        log_success "VM '$VM_NAME' stopped successfully"
+    fi
 fi
 
 exit 0
