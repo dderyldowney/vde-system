@@ -1161,11 +1161,11 @@ def step_receive_status(context):
     assert intent == 'status', f"Expected status intent, got: {intent}"
 
 
-#@then('I should see which VMs are running')
-#def step_see_running_vms(context):
-#    """Verify status shows running VMs."""
-#    intent = getattr(context, 'detected_intent', None)
-#    assert intent == 'status', f"Expected status intent, got: {intent}"
+@then('I should see which VMs are running')
+def step_see_running_vms(context):
+    """Verify status shows running VMs."""
+    intent = getattr(context, 'detected_intent', None)
+    assert intent == 'status', f"Expected status intent, got: {intent}"
 
 
 @then('Python should be a valid VM type')

@@ -1,5 +1,5 @@
 # Template for language VMs
-# Variables: testlang2, 2299, apt-get install -y curl
+# Variables: testlang2, 2297, apt-get install -y curl
 name: vde-testlang2
 services:
   vde-testlang2:
@@ -22,7 +22,7 @@ services:
     command: /usr/sbin/sshd -D
 
     ports:
-      - "2300:22"
+      - "2297:22"
 
     volumes:
       - ../../../projects/testlang2:/home/devuser/workspace
