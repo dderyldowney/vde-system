@@ -1,0 +1,45 @@
+# Template for language VMs
+# Variables: testlang2, 2299, apt-get install -y curl
+name: vde-testlang2
+services:
+  vde-testlang2:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/testlang2/Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: vde-testlang2:latest
+    container_name: vde-testlang2
+    hostname: vde-testlang2
+    restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=testlang2"
+    command: /usr/sbin/sshd -D
+
+    ports:
+      - "2300:22"
+
+    volumes:
+      - ../../../projects/testlang2:/home/devuser/workspace
+      - ../../../logs/testlang2:/logs
+      - ../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../env-files/vde-testlang2.env
+
+    networks:
+      - vde-net
+
+networks:
+  vde-net:
+    external: true
