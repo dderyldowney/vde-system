@@ -12,8 +12,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Source VDE libraries
-source "$PROJECT_ROOT/scripts/lib/vde-shell-compat"
-source "$PROJECT_ROOT/scripts/lib/vde-constants"
+source "$PROJECT_ROOT/lib/vde-shell-compat"
+source "$PROJECT_ROOT/lib/vde-constants"
 
 # Test configuration
 VERBOSE=false
@@ -146,7 +146,7 @@ test_port_collision_detection() {
     test_start "Port Collision Detection"
 
     # Check if the port checking logic exists in vm-common
-    local vm_common="$PROJECT_ROOT/scripts/lib/vm-common"
+    local vm_common="$PROJECT_ROOT/lib/vm-common"
 
     if grep -q "lsof.*LISTEN" "$vm_common" 2>/dev/null; then
         info "Found lsof-based port checking"
@@ -335,7 +335,7 @@ test_dockerfile_ssh_keys_build() {
 test_container_name_regex_allows_numbers() {
     test_start "Container Name Regex Allows Numbers"
 
-    local vde_commands="$PROJECT_ROOT/scripts/lib/vde-commands"
+    local vde_commands="$PROJECT_ROOT/lib/vde-commands"
 
     # Check that regex includes numbers in character class
     if grep -E 'grep -E.*\[a-z0-9\]+.*-dev' "$vde_commands" 2>/dev/null; then
@@ -354,7 +354,7 @@ test_container_name_regex_allows_numbers() {
 test_parser_removes_hash_char() {
     test_start "Parser Removes # Character"
 
-    local vde_parser="$PROJECT_ROOT/scripts/lib/vde-parser"
+    local vde_parser="$PROJECT_ROOT/lib/vde-parser"
 
     # Check that # is NOT in the allowed characters
     if grep -q "tr -cd 'a-z0-9+'" "$vde_parser" 2>/dev/null; then
@@ -376,7 +376,7 @@ test_parser_removes_hash_char() {
 test_start_virtual_checks_vm_exists() {
     test_start "start-virtual Checks VM Existence"
 
-    local start_script="$PROJECT_ROOT/scripts/start-virtual"
+    local start_script="$PROJECT_ROOT/bin/start-virtual"
 
     # Check that vm_container_exists is called before starting
     if grep -q "vm_container_exists" "$start_script" 2>/dev/null; then
@@ -398,7 +398,7 @@ test_start_virtual_checks_vm_exists() {
 test_add_vm_type_portable_syntax() {
     test_start "add-vm-type Uses Portable Syntax"
 
-    local add_vm_script="$PROJECT_ROOT/scripts/add-vm-type"
+    local add_vm_script="$PROJECT_ROOT/bin/add-vm-type"
 
     # Check that it uses is_known_vm instead of zsh-specific syntax
     if grep -q "is_known_vm" "$add_vm_script" 2>/dev/null; then
@@ -420,7 +420,7 @@ test_add_vm_type_portable_syntax() {
 test_vde_commands_quotes_aliases() {
     test_start "vde-commands Properly Quotes Aliases"
 
-    local vde_commands="$PROJECT_ROOT/scripts/lib/vde-commands"
+    local vde_commands="$PROJECT_ROOT/lib/vde-commands"
 
     # Check that aliases is quoted when passed to add-vm-type
     if grep -E '\[ -n "\$aliases" \].*"\$aliases"' "$vde_commands" 2>/dev/null; then

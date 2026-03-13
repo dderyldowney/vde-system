@@ -517,12 +517,6 @@ def step_public_ssh_keys_contains_files(context):
     test_pub_key.write_text("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAATEST test@example.com\n")
     context.public_keys_exist = True
 
-@given('VM "{vm_name}" is allocated port "{port}"')
-def step_vm_allocated_port(context, vm_name, port):
-    """Register VM with a port for VM-to-VM SSH config generation."""
-    if not hasattr(context, 'vms'):
-        context.vms = {}
-    context.vms[vm_name] = {'port': port}
 
 @given('VM "{vm_name}" is created with SSH port "{port}"')
 def step_vm_created_with_ssh_port(context, vm_name, port):

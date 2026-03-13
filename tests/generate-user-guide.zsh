@@ -151,7 +151,7 @@ echo -e "${BLUE}Step 2: Generating verified user guide...${RESET}"
 echo ""
 
 # Generate the user guide from passing scenarios
-python3 "$PROJECT_ROOT/tests/scripts/generate_user_guide.py"
+python3 "$PROJECT_ROOT/tests/bin/generate_user_guide.py"
 
 echo ""
 echo -e "${GREEN}${BOLD}✓ VERIFIED User Guide Generated!${RESET}"

@@ -16,7 +16,7 @@ test_fail() { echo -e "  ${RED}✗ FAIL: $1 - $2${RESET}"; ((TESTS_FAILED++)) }
 
 test_scripts_executable() {
     test_start "VDE scripts are executable"
-    local vde_script="$VDE_ROOT_DIR/scripts/vde"
+    local vde_script="$VDE_ROOT_DIR/bin/vde"
     if [[ -x "$vde_script" ]]; then
         test_pass "VDE main script is executable"
     else
@@ -51,7 +51,7 @@ test_no_world_writable_configs() {
 
 test_lib_files_not_world_writable() {
     test_start "Library files not world-writable"
-    local world_writable=$(find "$VDE_ROOT_DIR/scripts/lib" -perm -o+w -type f 2>/dev/null)
+    local world_writable=$(find "$VDE_ROOT_DIR/bin/lib" -perm -o+w -type f 2>/dev/null)
     if [[ -z "$world_writable" ]]; then
         test_pass "library files protected"
     else

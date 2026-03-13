@@ -9,7 +9,7 @@ This script:
 4. Loads educational content from YAML (not hardcoded)
 5. Dynamically generates quick reference from vm-types.conf
 
-Run: python3 tests/scripts/generate_user_guide.py
+Run: python3 tests/bin/generate_user_guide.py
 """
 
 import json

@@ -39,7 +39,7 @@ time_ms() {
 # Benchmark 1: VDE help response time (target: < 3000ms)
 bench_vde_help() {
     test_start "VDE help command response time (target: < 3000ms)"
-    local ms=$(time_ms "$VDE_ROOT_DIR/scripts/vde" help)
+    local ms=$(time_ms "$VDE_ROOT_DIR/bin/vde" help)
     if [[ $ms -lt 3000 ]]; then
         test_pass "VDE help: ${ms}ms"
     else
@@ -50,7 +50,7 @@ bench_vde_help() {
 # Benchmark 2: VM type loading (target: < 2000ms)
 bench_vm_type_loading() {
     test_start "VM type loading time (target: < 2000ms)"
-    local ms=$(time_ms zsh -c "source '$VDE_ROOT_DIR/scripts/lib/vm-common' && get_all_vms")
+    local ms=$(time_ms zsh -c "source '$VDE_ROOT_DIR/lib/vm-common' && get_all_vms")
     if [[ $ms -lt 2000 ]]; then
         test_pass "VM type loading: ${ms}ms"
     else
@@ -61,7 +61,7 @@ bench_vm_type_loading() {
 # Benchmark 3: Parser simple input (target: < 2000ms)
 bench_parser_simple() {
     test_start "Parser simple input time (target: < 2000ms)"
-    local ms=$(time_ms zsh -c "source '$VDE_ROOT_DIR/scripts/lib/vde-parser' && parse_intent 'start python'")
+    local ms=$(time_ms zsh -c "source '$VDE_ROOT_DIR/lib/vde-parser' && parse_intent 'start python'")
     if [[ $ms -lt 2000 ]]; then
         test_pass "Parser simple: ${ms}ms"
     else
@@ -72,7 +72,7 @@ bench_parser_simple() {
 # Benchmark 4: Library sourcing time (target: < 1000ms)
 bench_library_sourcing() {
     test_start "Library sourcing time (target: < 1000ms)"
-    local ms=$(time_ms zsh -c "source '$VDE_ROOT_DIR/scripts/lib/vm-common'")
+    local ms=$(time_ms zsh -c "source '$VDE_ROOT_DIR/lib/vm-common'")
     if [[ $ms -lt 1000 ]]; then
         test_pass "Library sourcing: ${ms}ms"
     else
@@ -83,7 +83,7 @@ bench_library_sourcing() {
 # Benchmark 5: VDE list command (target: < 3000ms)
 bench_vde_list() {
     test_start "VDE list command time (target: < 3000ms)"
-    local ms=$(time_ms "$VDE_ROOT_DIR/scripts/vde" list)
+    local ms=$(time_ms "$VDE_ROOT_DIR/bin/vde" list)
     if [[ $ms -lt 3000 ]]; then
         test_pass "VDE list: ${ms}ms"
     else
