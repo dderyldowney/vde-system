@@ -44,26 +44,28 @@ def step_no_network(context):
 def step_network_auto_created(context):
     """Network should be auto-created - verify vde-testing exists."""
     result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=dev", "--format", "{{.Name}}"],
+        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
         capture_output=True,
         text=True,
         timeout=10,
     )
     assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "dev" in result.stdout.lower(), "VDE network should be auto-created"
+    assert "vde" in result.stdout.lower(), "VDE network should exist"
+    context.network_configured = True
 
 
 @then('they should be on the same Docker network')
 def step_they_same_network(context):
     """VMs should be on same Docker network - verify vde-testing exists."""
     result = subprocess.run(
-        ["docker", "network", "ls", "--filter", "name=dev", "--format", "{{.Name}}"],
+        ["docker", "network", "ls", "--filter", "name=vde", "--format", "{{.Name}}"],
         capture_output=True,
         text=True,
         timeout=10,
     )
     assert result.returncode == 0, "Should be able to list Docker networks"
-    assert "dev" in result.stdout.lower(), "VDE network should exist"
+    assert "vde" in result.stdout.lower(), "VDE network should exist"
+    context.network_configured = True
 
 
 @then('VDE should create the vde-testing network')

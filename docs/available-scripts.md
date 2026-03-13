@@ -20,7 +20,7 @@ The `vde` command provides a single entry point for all VDE operations:
 | `vde stop <vm>` | Stop a VM | `vde stop postgres` |
 | `vde restart <vm>` | Restart a VM | `vde restart vde-rust` |
 | `vde remove <vm>` | Remove a VM instance | `vde remove rust` |
-| `vde uninstall <type>` | Uninstall a language/service completely | `vde uninstall elixir` |
+| `vde uninstall <type>` | Remove a language/service type | `vde uninstall elixir` |
 | `vde list` | List all VMs | `vde list` |
 | `vde status` | Show VM status | `vde status` |
 | `vde health` | Run system health check | `vde health` |

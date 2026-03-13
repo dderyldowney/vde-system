@@ -108,23 +108,49 @@ def step_verify_host_path(context):
 def step_allocate_port(context):
     """Verify port allocation."""
     output = getattr(context, 'vde_command_output', '')
-    assert any(x in output for x in ['2214', '2215', 'port']), \
-        f"Expected port allocation: {output}"
+    blocked = getattr(context, 'blocked_port', 0)
+    
+    import re
+    # Look for ports in the 22xx or 23xx range
+    ports_found = re.findall(r'(2[23][0-9]{2})', output)
+    
+    # We want to find a port that is NOT the blocked one
+    success = False
+    for p in ports_found:
+        if int(p) != blocked:
+            success = True
+            context.test_allocated_port = int(p)
+            break
+            
+    assert success or 'allocated port' in output.lower(), \
+        f"Expected port allocation (not {blocked}) in output: {output}"
 
 
 @then(u'the VM should work correctly on the new port')
 def step_new_port_works(context):
-    """Verify VM works on new port."""
-    exit_code = getattr(context, 'vde_command_exit_code', 0)
-    assert exit_code == 0, f"Expected VM to work on new port"
+    """Verify VM works on new port (check compose file)."""
+    vm_name = getattr(context, 'test_vm_name', 'testlang_port_test')
+    from vm_common import get_port_from_compose
+    port = get_port_from_compose(vm_name)
+    assert port is not None, f"Expected port mapping in {vm_name} compose file"
+    
+    blocked = getattr(context, 'blocked_port', 0)
+    assert int(port) != blocked, f"VM should NOT use the blocked port {blocked}"
 
 
 @then(u'SSH config should reflect the correct port')
 def step_ssh_correct_port(context):
     """Verify SSH config has correct port."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output for x in ['220', 'port', 'ssh']), \
-        f"Expected correct port in SSH config: {output}"
+    vm_name = getattr(context, 'test_vm_name', 'testlangporttest')
+    from vm_common import get_port_from_compose
+    allocated_port = getattr(context, 'test_allocated_port', get_port_from_compose(vm_name))
+    
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
+    assert ssh_config.exists(), "VDE SSH config should exist"
+    
+    content = ssh_config.read_text()
+    assert f"Host vde-{vm_name}" in content, f"Expected entry for vde-{vm_name} in SSH config"
+    assert f"Port {allocated_port}" in content, f"Expected Port {allocated_port} in SSH config for {vm_name}"
 
 
 @then(u'I should see a clear error message')
@@ -309,9 +335,26 @@ def step_old_issues_resolved(context):
 
 @when(u'I create a new language VM')
 def step_create_new_lang_vm(context):
-    """Create a new language VM."""
-    result = run_vde_command('create')
-    context.vde_command_result = result
+    """Create a new language VM to test auto port allocation."""
+    vm_name = "testlangporttest"
+    
+    # Ensure it's clean first
+    run_vde_command(f"uninstall-vm-type {vm_name} --skip-confirm", context=context)
+    
+    # Use the add-vm-type command without --ssh-port to trigger auto-allocation
+    # Since we previously bound port 2213, it should find a conflict
+    result = run_vde_command(f"add-vm-type --type lang {vm_name} 'apt-get install -y curl'", context=context)
+    assert result.returncode == 0, f"Failed to add VM type {vm_name}: {result.stdout}\n{result.stderr}"
+    
+    # Now actually try to create the VM to verify it uses the allocated port
+    res_create = run_vde_command(f"create-virtual-for {vm_name}", context=context)
+    assert res_create.returncode == 0, f"Failed to create VM after type addition: {res_create.stdout}"
+    
+    # Store for cleanup
+    if not hasattr(context, "_temp_vm_types"):
+        context._temp_vm_types = []
+    context._temp_vm_types.append(vm_name)
+    context.test_vm_name = vm_name
 
 
 # =============================================================================

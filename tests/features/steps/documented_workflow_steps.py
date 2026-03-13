@@ -12,25 +12,12 @@ import sys
 import time
 
 from behave import given, then, when
+from config import VDE_ROOT
 
-# Add steps directory to path for config import
-steps_dir = os.path.dirname(os.path.abspath(__file__))
-if steps_dir not in sys.path:
-    sys.path.insert(0, steps_dir)
-
-# Get VDE_ROOT from environment or calculate
-VDE_ROOT = os.environ.get('VDE_ROOT_DIR')
-if not VDE_ROOT:
-    try:
-        from config import VDE_ROOT as config_root
-        VDE_ROOT = str(config_root)
-    except ImportError:
-        VDE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
-VDE_PARSER = os.path.join(VDE_ROOT, 'lib/vde-parser')
-VDE_VM_COMMON = os.path.join(VDE_ROOT, 'lib/vm-common')
-VDE_SHELL_COMPAT = os.path.join(VDE_ROOT, 'lib/vde-shell-compat')
-VM_TYPES_CONF = os.path.join(VDE_ROOT, 'data/vm-types.conf')
+VDE_PARSER = VDE_ROOT / 'lib/vde-parser'
+VDE_VM_COMMON = VDE_ROOT / 'lib/vm-common'
+VDE_SHELL_COMPAT = VDE_ROOT / 'lib/vde-shell-compat'
+VM_TYPES_CONF = VDE_ROOT / 'data/vm-types.conf'
 
 # Import vm_common helpers for real Docker verification
 from vm_common import container_exists, compose_file_exists, run_vde_command
@@ -750,16 +737,17 @@ def step_docker_running(context):
 
 @given('I previously created VMs for "{vms}"')
 def step_previously_created_vms(context, vms):
-    """Set up that VMs were previously created."""
-    vm_list = [v.strip().strip('"') for v in vms.split(',')]
+    """Ensure VMs exist (create if missing)."""
+    # Normalize string: replace 'and' with comma, strip quotes and whitespace
+    normalized = vms.replace('and', ',').replace('"', '')
+    vm_list = [v.strip() for v in normalized.split(',') if v.strip()]
+    
     context.created_vms = vm_list
-    # Initialize the context dict for compose file tracking
-    if not hasattr(context, 'prev_created_compose_exists'):
-        context.prev_created_compose_exists = {}
-    # Verify compose files exist for these VMs
     for vm in vm_list:
-        compose_file = os.path.join(VDE_ROOT, 'configs/docker', vm, 'docker-compose.yml')
-        context.prev_created_compose_exists[vm] = compose_file_exists(compose_file)
+        from vm_common import compose_file_exists
+        if not compose_file_exists(vm):
+            run_vde_command(f"create-virtual-for {vm}", context=context)
+            assert context.vde_command_exit_code == 0, f"Failed to pre-create VM {vm}: {context.vde_command_output}"
 
 
 @given('I need to start a "{vm}" project')
@@ -788,29 +776,52 @@ def step_vm_created_not_running(context, vm):
 
 
 @given('"{vm}" VM is running')
-def step_vm_running(context, vm):
-    """Set up that a VM is running."""
-    context.running_vm = vm.strip('"')
-    vm_clean = vm.strip('"')
-
-    container_name = f'vde_{vm_clean}_1'
-    context.vm_is_running = container_exists(container_name)
-
-
 @given('"{vm}" VM is currently running')
-def step_vm_currently_running(context, vm):
-    """Set up that a VM is currently running."""
-    context.currently_running_vm = vm.strip('"')
-    vm_clean = vm.strip('"')
-
-    container_name = f'vde_{vm_clean}_1'
-    context.vm_currently_running = container_exists(container_name)
+def step_vm_running(context, vm):
+    """Ensure a VM is running (start if needed)."""
+    vm_name = vm.strip('"')
+    from vm_common import container_is_running, wait_for_container
+    if not container_is_running(vm_name):
+        # We must use run_vde_command here to ensure logs/context are updated
+        # and use zsh -c to ensure the script is found correctly
+        res = run_vde_command(f"start {vm_name}", context=context)
+        assert res.returncode == 0, f"Failed to start VM {vm_name} in GIVEN step: {res.stdout}"
+        wait_for_container(vm_name, timeout=60)
+    assert container_is_running(vm_name), f"Expected VM {vm_name} to be running"
 
 
 @given('a system service is using port {port}')
 def step_system_service_port(context, port):
-    """Set up that a system service is using a specific port."""
-    context.blocked_port = int(port)
+    """Actually block a port to simulate a system service conflict.
+    We ignore the specific port number in the feature and block whatever VDE wants to use next.
+    """
+    import subprocess
+    vde_vm_common = VDE_ROOT / "lib" / "vm-common"
+    vde_shell_compat = VDE_ROOT / "lib" / "vde-shell-compat"
+    
+    # Find what VDE thinks is the next available port
+    cmd = f"source {vde_shell_compat} && source {vde_vm_common} && find_next_available_port lang"
+    res = subprocess.run(["zsh", "-c", cmd], capture_output=True, text=True, cwd=VDE_ROOT)
+    
+    if res.returncode == 0 and res.stdout.strip().isdigit():
+        port_num = int(res.stdout.strip())
+    else:
+        port_num = int(port) # Fallback
+        
+    context.blocked_port = port_num
+    
+    import socket
+    context.squatters = getattr(context, 'squatters', [])
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(('0.0.0.0', port_num))
+        s.listen(1)
+        context.squatters.append(s)
+        print(f"[SETUP] Successfully blocked port {port_num}")
+    except Exception as e:
+        print(f"[WARN] Could not block port {port_num}: {e}")
+        s.close()
 
 
 # =============================================================================

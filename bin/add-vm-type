@@ -115,11 +115,6 @@ if [[ -z "$VM_NAME" ]] || [[ -z "$INSTALL_CMD" ]]; then
     exit $VDE_ERR_GENERAL
 fi
 
-if [[ -z "$SSH_PORT" ]]; then
-    log_error "--ssh-port is required (must be unique; lang: 2200-2299, service: 2400-2499)"
-    exit $VDE_ERR_GENERAL
-fi
-
 # -----------------------
 # Auto-detect type if not specified
 # -----------------------
@@ -131,6 +126,16 @@ if [[ -z "$VM_TYPE_STR" ]]; then
         VM_TYPE_STR="lang"
     fi
     log_info "Auto-detected VM type as: $VM_TYPE_STR"
+fi
+
+if [[ -z "$SSH_PORT" ]]; then
+    log_info "No SSH port specified, auto-allocating..."
+    SSH_PORT=$(find_next_available_port "$VM_TYPE_STR")
+    if [[ -z "$SSH_PORT" ]]; then
+        log_error "Failed to auto-allocate port (range full or internal error)"
+        exit $VDE_ERR_GENERAL
+    fi
+    log_success "Allocated port: $SSH_PORT"
 fi
 
 # -----------------------
@@ -163,12 +168,13 @@ if [[ "$VM_TYPE_STR" == "lang" ]] && [[ -n "$SVC_PORT" ]]; then
 fi
 
 # Validate SSH port range
-if [[ "$VM_TYPE_STR" == "lang" ]] && { [[ "$SSH_PORT" -lt 2200 ]] || [[ "$SSH_PORT" -gt 2299 ]]; }; then
-    log_error "Language SSH port must be in range 2200-2299 (got $SSH_PORT)"
+if [[ "$VM_TYPE_STR" == "lang" ]] && { [[ "$SSH_PORT" -lt "$VDE_LANG_PORT_START" ]] || [[ "$SSH_PORT" -gt "$VDE_LANG_PORT_END" ]]; }; then
+    log_error "Language SSH port must be in range $VDE_LANG_PORT_START-$VDE_LANG_PORT_END (got $SSH_PORT)"
     exit $VDE_ERR_GENERAL
 fi
-if [[ "$VM_TYPE_STR" == "service" ]] && { [[ "$SSH_PORT" -lt 2400 ]] || [[ "$SSH_PORT" -gt 2499 ]]; }; then
-    log_error "Service SSH port must be in range 2400-2499 (got $SSH_PORT)"
+
+if [[ "$VM_TYPE_STR" == "service" ]] && { [[ "$SSH_PORT" -lt "$VDE_SVC_PORT_START" ]] || [[ "$SSH_PORT" -gt "$VDE_SVC_PORT_END" ]]; }; then
+    log_error "Service SSH port must be in range $VDE_SVC_PORT_START-$VDE_SVC_PORT_END (got $SSH_PORT)"
     exit $VDE_ERR_GENERAL
 fi
 
@@ -343,6 +349,12 @@ load_vm_types
 # -----------------------
 # Summary
 # -----------------------
+# -----------------------
+# Regenerate Configs
+# -----------------------
+log_info "Regenerating VDE configurations..."
+"$BIN_DIR/generate-all-configs" >/dev/null 2>&1
+
 log_success "VM type '$VM_NAME' added successfully!"
 echo ""
 echo "Next steps:"

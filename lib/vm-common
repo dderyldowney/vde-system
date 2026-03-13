@@ -260,20 +260,22 @@ load_vm_types() {
             typeset -gA VM_ALIAS_MAP
             VM_ALIAS_MAP=()
             local _vn
-            for _vn in "${lang_vms[@]}" "${service_vms[@]}"; do
-                VM_ALIAS_MAP[$_vn]="$_vn"
-                VM_ALIAS_MAP["vde-${_vn#vde-}"]="$_vn"
-                local _al="${VM_ALIASES[$_vn]}"
-                if [[ -n "$_al" ]]; then
-                    local _a
-                    for _a in ${(s:,:)_al}; do
-                        _a="${_a//[[:space:]]/}"
-                        [[ -n "$_a" ]] && VM_ALIAS_MAP[$_a]="$_vn"
-                    done
-                fi
-                local _dp="${VM_DISPLAY[$_vn]}"
-                [[ -n "$_dp" ]] && VM_ALIAS_MAP[${(L)_dp}]="$_vn"
-            done
+            {
+                for _vn in "${lang_vms[@]}" "${service_vms[@]}"; do
+                    VM_ALIAS_MAP[$_vn]="$_vn"
+                    VM_ALIAS_MAP["vde-${_vn#vde-}"]="$_vn"
+                    local _al="${VM_ALIASES[$_vn]}"
+                    if [[ -n "$_al" ]]; then
+                        local _alias_name
+                        for _alias_name in ${(s:,:)_al}; do
+                            _alias_name="${_alias_name//[[:space:]]/}"
+                            [[ -n "$_alias_name" ]] && VM_ALIAS_MAP[$_alias_name]="$_vn"
+                        done
+                    fi
+                    local _dp="${VM_DISPLAY[$_vn]}"
+                    [[ -n "$_dp" ]] && VM_ALIAS_MAP[${(L)_dp}]="$_vn"
+                done
+            } >/dev/null 2>&1
             _VM_ALIAS_MAP_BUILT=1
         fi
         return 0
@@ -740,7 +742,11 @@ is_known_vm() {
     local vm_name="$1"
     load_vm_types
 
-    if [ -n "${VM_TYPE[$vm_name]}" ]; then
+    # Handle both prefixed and unprefixed names
+    local raw_name="${vm_name#vde-}"
+    local full_name="vde-${raw_name}"
+
+    if [[ -n "${VM_TYPE[$full_name]}" ]] || [[ -n "${VM_TYPE[$raw_name]}" ]]; then
         return $VDE_SUCCESS
     fi
     return $VDE_ERR_NOT_FOUND
@@ -992,7 +998,27 @@ find_next_available_port() {
 find_available_port() {
     local min_port="${1:-2200}"
     local max_port="${2:-2299}"
-    local port=$min_port
+    
+    # Ensure VM types are loaded to check existing assignments
+    load_vm_types >/dev/null 2>&1
+
+    # Find the maximum port already assigned by VDE in this range
+    local max_assigned=$((min_port - 1))
+    local vm p
+    for vm in ${(k)VM_SSH_PORT}; do
+        p=$VM_SSH_PORT[$vm]
+        if [[ -n "$p" ]] && [[ "$p" -ge "$min_port" ]] && [[ "$p" -le "$max_port" ]]; then
+            if [[ "$p" -gt "$max_assigned" ]]; then
+                max_assigned=$p
+            fi
+        fi
+    done
+
+    # Start searching from max_assigned + 1
+    local port=$((max_assigned + 1))
+    if [[ "$port" -lt "$min_port" ]]; then
+        port=$min_port
+    fi
 
     while [ $port -le $max_port ]; do
         if ! _is_port_in_use "$port"; then

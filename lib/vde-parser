@@ -533,7 +533,7 @@ validate_vm_name_security() {
     known_vms=$(get_all_vms 2>/dev/null)
     
     local known
-    for known in $known_vms; do
+    for known in ${=known_vms}; do
         if [ "$vm_name" = "$known" ]; then
             return $VDE_SUCCESS
         fi
@@ -929,9 +929,21 @@ execute_plan() {
             for vm in ${=vms}; do
                 [ -n "$vm" ] || continue
                 # ssh-vm handles getting connection info
-                ./bin/ssh-vm "$vm" --info
+                local port
+                port=$(get_vm_info ssh_port "$vm" 2>/dev/null) || port="unknown"
+                echo "VM: $vm  SSH Port: $port"
+                ./bin/ssh-vm "$vm" --show-command
             done
             return $VDE_SUCCESS
+            ;;
+
+        "$INTENT_ADD_VM_TYPE")
+            # add-vm-type handles adding a new type
+            # We need to extract the raw arguments from the plan if we had them
+            # But generate_plan doesn't yet populate complex args for add_vm_type
+            # For now, we assume the user is using the structured CLI for this
+            ./bin/add-vm-type ${=vms}
+            return $?
             ;;
 
         "$INTENT_HELP")
