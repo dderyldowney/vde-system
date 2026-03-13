@@ -97,16 +97,14 @@ def step_impl(context):
 
 
 @then(u'both "python" and "rust" VMs should be running')
-def step_impl(context):
-    """Verify both Python and Rust VMs are running."""
-    result = subprocess.run(
-        ['./bin/vde', 'list'],
-        capture_output=True, text=True, timeout=30
-    )
-    if result.returncode == 0:
-        output = result.stdout.lower()
-        # Either both are running or status is queryable
-        assert 'python' in output or 'rust' in output or result.returncode == 0
+def step_both_vms_running(context):
+    """Verify both Python and Rust VMs are running using real container checks."""
+    from vm_common import container_is_running, wait_for_container
+    for vm in ['python', 'rust']:
+        if not container_is_running(vm):
+            # Try to wait a bit before failing
+            wait_for_container(vm, timeout=30)
+        assert container_is_running(vm), f"VM {vm} should be running"
 
 
 @then(u'no stopped containers should accumulate')

@@ -1,0 +1,30 @@
+INTENT:stop_vm
+VM:_a=nasm
+_a=c
+_a=gcc
+_a=dotnet
+_a=elixir
+_a=dart
+_a=golang
+_a=ghc
+_a=jdk
+_a=javascript
+_a=kotlin
+_a=lua
+_a=php
+_a=py
+_a=rlang
+_a=ruby
+_a=rust
+_a=scala
+_a=swift
+_a=tlalias
+_a=couchdb
+_a=mongo
+_a=mysql
+_a=nginx
+_a=database
+_a=rabbitmq
+vde-asm vde-c vde-cpp vde-csharp vde-elixir vde-flutter vde-go vde-haskell vde-java vde-js vde-kotlin vde-lua vde-php vde-python vde-r vde-ruby vde-rust vde-scala vde-swift vde-testlang2 vde-testlang vde-couchdb vde-mongodb vde-mysql vde-nginx vde-postgres vde-rabbitmq vde-redis
+FLAGS:rebuild=false nocache=false
+FILTER:all

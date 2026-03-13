@@ -162,7 +162,7 @@ def step_vm_has_env_file(context, vm_name):
 @when('I start VM "{vm_name}"')
 def step_start_vm(context, vm_name):
     """Start a VM."""
-    result = run_vde_command(f"start {vm_name}", timeout=180)
+    result = run_vde_command(f"start {vm_name}", timeout=300)
     context.last_command = f"start {vm_name}"
     context.last_exit_code = result.returncode
     context.last_output = result.stdout

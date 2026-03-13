@@ -246,6 +246,9 @@ def before_all(context):
     os.environ["DOCKER_BUILDKIT"] = "0"
     os.environ["VDE_TEST_MODE"] = "1"
 
+    print("[SETUP] Ensuring clean environment: shutting down all running VMs...")
+    subprocess.run(["./bin/shutdown-all", "all", "-f"], cwd=VDE_ROOT, capture_output=True)
+
     # Restore any compose file backups left by previously killed test runs
     _restore_stale_compose_backups()
 
@@ -344,7 +347,31 @@ def before_scenario(context, scenario):
 
     # Track containers before Docker scenarios for cleanup
     if "requires-docker-host" in scenario.effective_tags:
-        context._containers_before_scenario = _get_running_vde_containers()
+        print(f"[SETUP] Removing all VDE VMs for clean state: {scenario.name}")
+        
+        # Clean up port squatters if any
+        if hasattr(context, 'squatters'):
+            for s in context.squatters:
+                try:
+                    s.close()
+                except Exception:
+                    pass
+            context.squatters = []
+
+        # Use bin/vde remove which handles stopping and state cleanup
+        # We find all directories in configs/docker and remove them
+        configs_dir = VDE_ROOT / "configs" / "docker"
+        if configs_dir.exists():
+            for vm_dir in configs_dir.iterdir():
+                if vm_dir.is_dir() and vm_dir.name != "vde-base":
+                    vm_name = vm_dir.name
+                    # Standard remove-virtual doesn't delete the config, just stops and clears state
+                    subprocess.run(["./bin/vde", "remove", vm_name], cwd=VDE_ROOT, capture_output=True)
+        
+        # Ensure any leftover vde- containers are killed
+        subprocess.run(["docker", "ps", "-aq", "--filter", "name=vde-", "|", "xargs", "docker", "rm", "-f"], shell=True, capture_output=True)
+        
+        context._containers_before_scenario = []
 
     # Backup ~/.ssh/vde/ before SSH scenarios so they can't bleed state
     if any(t in scenario.effective_tags for t in ('requires-docker-ssh', 'requires-ssh-agent')):
@@ -380,6 +407,15 @@ source {VDE_PARSER}
 
 def after_scenario(context, scenario):
     """Cleanup parser process and SSH config test state."""
+    # Clean up port squatters if any
+    if hasattr(context, 'squatters'):
+        for s in context.squatters:
+            try:
+                s.close()
+            except Exception:
+                pass
+        context.squatters = []
+
     # Restore any compose file backup left by the invalid-YAML scenario
     compose_backup = getattr(context, '_compose_backup', None)
     compose_path = getattr(context, '_compose_path', None)

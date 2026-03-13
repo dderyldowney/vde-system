@@ -6,6 +6,7 @@ Only includes unique patterns not covered by vde_command_steps.py.
 import subprocess
 from pathlib import Path
 from behave import given, then, when
+from config import VDE_ROOT
 from vm_common import run_vde_command
 
 
@@ -477,9 +478,8 @@ def step_docker_compose_go(context):
 @then(u'projects/{lang} directory should be created')
 def step_project_dir_created(context, lang):
     """Verify project directory is created."""
-    import os
-    proj_dir = f"{os.path.expanduser('~')}/projects/{lang}"
-    assert os.path.exists(proj_dir), f"Expected projects/{lang} directory"
+    proj_dir = VDE_ROOT / "projects" / lang
+    assert proj_dir.exists(), f"Expected projects/{lang} directory at {proj_dir}"
 
 
 @then(u'I can start the VM with "{cmd}"')
@@ -506,8 +506,9 @@ def step_details_hostname(context):
 def step_details_port(context):
     """Verify port number in SSH details."""
     output = getattr(context, 'vde_command_output', '')
-    assert any(x in output for x in ['220', '222', 'port']), \
-        f"Expected port number: {output}"
+    import re
+    has_port = re.search(r'22[0-9]{2}', output) or 'port' in output.lower()
+    assert has_port, f"Expected port number in output: {output}"
 
 
 @then(u'the details should include the username')

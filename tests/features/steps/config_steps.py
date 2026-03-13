@@ -194,9 +194,16 @@ def step_vde_installed(context):
 
 @given('multiple VMs are running')
 def step_multiple_vms_running(context):
-    """Context: Multiple VMs are running."""
+    """Ensure multiple VMs are running (start python and postgres)."""
+    from vm_common import container_is_running, wait_for_container
+    for vm in ['python', 'postgres']:
+        if not container_is_running(vm):
+            run_vde_command(f"start {vm}", context=context)
+            wait_for_container(vm, timeout=60)
+    
     running = _get_running_vms()
-    context.multiple_vms_running = len(running) > 0
+    assert len(running) >= 2, f"Expected at least 2 VMs running, found: {running}"
+    context.multiple_vms_running = True
     context.running_vm_count = len(running)
 
 

@@ -1,14 +1,18 @@
 #!/usr/bin/env zsh
 #===============================================================================
-# uninstall-vm-type - Completely remove a language or service from VDE
+# uninstall-vm-type - Remove a language or service type from VDE
 #
-# This removes EVERYTHING associated with a VM type:
-# - Entry from vm-types.yml
-# - configs/docker/<type>/ directory
-# - VM if built
-# - All Docker images
-# - SSH config entries (~/.ssh/vde/config and project SSH config)
-# - Env files, logs
+# This removes the following associated with a VM type:
+# - Entry from vm-types.conf
+# - VM instance (container) if it exists
+# - Docker images for this VM type
+# - Logs
+#
+# The following are INVIOLATE and PRESERVED:
+# - configs/docker/<type>/ directory (docker-compose.yml)
+# - env-files/<type>.env (environment configuration)
+# - SSH config entries (static port assignments)
+# - projects/<type>/ directory (your code)
 #
 # Usage: uninstall-vm-type <vm_type> [--dry-run] [--skip-confirm]
 #===============================================================================
@@ -262,17 +266,11 @@ remove_logs() {
     local log_dir="$VDE_ROOT_DIR/logs/${vm_type}"
 
     if [[ ! -d "$log_dir" ]]; then
-        print_info "No logs directory found: $log_dir"
         return 0
     fi
 
-    if [[ "$DRY_RUN" = "true" ]]; then
-        print_info "[DRY RUN] Would remove logs directory: $log_dir"
-        return 0
-    fi
-
-    rm -rf "$log_dir"
-    print_success "Removed: $log_dir"
+    # Logs are preserved along with other configuration files
+    print_info "Logs directory preserved: $log_dir"
 }
 
 #===============================================================================
@@ -284,15 +282,19 @@ main() {
     if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
         echo "Usage: $0 <vm_type> [options]"
         echo ""
-        echo "Completely remove a language or service from VDE."
+        echo "Remove a language or service type from VDE."
         echo ""
         echo "This will remove:"
         echo "  - Entry from vm-types.conf"
+        echo "  - VM instance (container) if it exists"
+        echo "  - Docker images for this VM type"
+        echo "  - Logs"
+        echo ""
+        echo "The following are INVIOLATE and PRESERVED:"
         echo "  - configs/docker/<vm_type>/ directory"
-        echo "  - VM if it's built"
-        echo "  - All Docker images"
+        echo "  - env-files/<vm_type>.env file"
         echo "  - SSH config entries"
-        echo "  - Env files and logs"
+        echo "  - projects/<vm_type>/ directory"
         echo ""
         echo "Options:"
         echo "  --dry-run         Show what would be done without making changes"
@@ -306,15 +308,19 @@ main() {
     if [[ $# -eq 0 ]]; then
         echo "Usage: $0 <vm_type> [--dry-run] [--skip-confirm]"
         echo ""
-        echo "Completely remove a language or service from VDE."
+        echo "Remove a language or service type from VDE."
         echo ""
         echo "This will remove:"
         echo "  - Entry from vm-types.conf"
+        echo "  - VM instance (container) if it exists"
+        echo "  - Docker images for this VM type"
+        echo "  - Logs"
+        echo ""
+        echo "The following are INVIOLATE and PRESERVED:"
         echo "  - configs/docker/<vm_type>/ directory"
-        echo "  - VM if built"
-        echo "  - All Docker images"
+        echo "  - env-files/<vm_type>.env file"
         echo "  - SSH config entries"
-        echo "  - Env files and logs"
+        echo "  - projects/<vm_type>/ directory"
         echo ""
         echo "Options:"
         echo "  --dry-run         Show what would be done without making changes"
@@ -377,11 +383,15 @@ main() {
     echo ""
     echo "The following will be removed:"
     echo "  - Entry from vm-types.conf"
+    echo "  - VM instance (container) if it exists"
+    echo "  - Docker images for this VM type"
+    echo "  - Logs"
+    echo ""
+    echo "The following are INVIOLATE and PRESERVED:"
     echo "  - configs/docker/${VM_TYPE}/ directory"
-    echo "  - VM if it's built"
-    echo "  - All Docker images (dev-${VM_TYPE}:*)"
+    echo "  - env-files/${VM_TYPE}.env file"
     echo "  - SSH config entries"
-    echo "  - Env files and logs"
+    echo "  - projects/${VM_TYPE}/ directory"
     echo ""
 
     if [[ "$DRY_RUN" = "true" ]]; then

@@ -22,7 +22,7 @@
       "properties": {
         "language": {
           "type": "array",
-          "description": "Development language VMs (SSH ports 2200-2299)",
+          "description": "Development language VMs (SSH ports 2200-2399)",
           "items": {
             "$ref": "#/definitions/languageVM"
           }
@@ -42,7 +42,7 @@
   "definitions": {
     "languageVM": {
       "type": "object",
-      "description": "Development language VM configuration. Container name: {name}-dev, SSH port: static assignment 2200-2299.",
+      "description": "Development language VM configuration. Container name: {name}-dev, SSH port: static assignment 2200-2399.",
       "required": ["name", "display", "install", "ssh_port"],
       "properties": {
         "name": {
@@ -74,9 +74,9 @@
         },
         "ssh_port": {
           "type": "integer",
-          "description": "SSH port on Docker host (2200-2299 for language VMs)",
+          "description": "SSH port on Docker host (2200-2399 for language VMs)",
           "minimum": 2200,
-          "maximum": 2299
+          "maximum": 2399
         }
       },
       "additionalProperties": false

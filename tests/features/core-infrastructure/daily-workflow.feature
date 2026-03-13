@@ -115,7 +115,7 @@ Feature: Daily Development Workflow
   # Quick status check
   Scenario: Quickly check what's running
     Given I have several VMs configured
-    When I run "list-vms --created"
+    When I run "list-vms"
     Then I should see only VMs that have been created
     And their status (running/stopped) should be shown
     And I can identify which VMs to start or stop

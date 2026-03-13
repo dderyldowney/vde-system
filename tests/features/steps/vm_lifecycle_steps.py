@@ -7,6 +7,7 @@ Covers: create-virtual-for, start-virtual, shutdown-virtual, list-vms,
 import json
 import os
 import shutil
+import subprocess
 import sys
 import time
 
@@ -341,8 +342,22 @@ def step_run_command(context, command):
 @when('I request to "{request}"')
 def step_request_to(context, request):
     """Natural language request through vde ask."""
-    # vde-ask often requires confirmation - pass 'y' to stdin
-    result = run_vde_command(f"vde-ask {request}", timeout=120, context=context, input_text="y\n")
+    # Run generate_plan directly to capture intent for verification steps
+    vde_parser = VDE_ROOT / "lib" / "vde-parser"
+    vde_vm_common = VDE_ROOT / "lib" / "vm-common"
+    vde_shell_compat = VDE_ROOT / "lib" / "vde-shell-compat"
+    
+    cmd = f"source {vde_shell_compat} && source {vde_vm_common} && source {vde_parser} && generate_plan '{request}'"
+    res = subprocess.run(["zsh", "-c", cmd], capture_output=True, text=True, cwd=VDE_ROOT)
+    
+    if res.returncode == 0:
+        for line in res.stdout.split('\n'):
+            if line.startswith("INTENT:"):
+                context.detected_intent = line.replace("INTENT:", "").strip()
+                break
+    
+    # Actually execute it via vde-ask - often requires confirmation - pass 'y' to stdin
+    result = run_vde_command(f"vde-ask {request}", timeout=300, context=context, input_text="y\n")
     context.last_request = request
 
 

@@ -8,6 +8,8 @@ Feature File: tests/features/docker-required/ssh-agent-external-git-operations.f
 """
 import subprocess
 import sys
+import time
+import os
 from pathlib import Path
 
 # Add steps directory to path for config import
@@ -773,7 +775,17 @@ def step_have_ssh_keys_on_host(context):
 
 @given('I have a Python VM running')
 def step_have_python_vm_running(context):
-    """Verify Python VM config exists with SSH agent forwarding."""
+    """Verify Python VM config exists and IS RUNNING with SSH agent forwarding."""
+    if not _vm_config_exists('python'):
+        run_vde_command(['create', 'python'], context=context)
+    
+    # Ensure it's running
+    from vm_common import container_is_running
+    if not container_is_running('python'):
+        run_vde_command(['start', 'python'], context=context)
+        # Give it a moment to stabilize
+        time.sleep(2)
+
     assert _vm_config_exists('python'), \
         "Python VM docker-compose.yml not found — cannot use Python VM"
     assert _vm_ssh_agent_forwarded('python'), \
