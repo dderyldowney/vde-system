@@ -17,7 +17,7 @@ TEST_SSH_KEY_PATH="$HOME/.ssh/${TEST_SSH_KEY_NAME}"
 if [[ -z "$VDE_ROOT_DIR" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 fi
-source "$VDE_ROOT_DIR/scripts/lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 # Track if we need to clean up
 CLEANUP_AGENT=false

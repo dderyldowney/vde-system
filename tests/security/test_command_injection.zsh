@@ -7,7 +7,7 @@ TEST_DIR="$(cd "$(dirname "$0")" && pwd)"
 VDE_ROOT_DIR="$(cd "$TEST_DIR/../.." && pwd)"
 
 # Source the library
-source "$VDE_ROOT_DIR/scripts/lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 # Test infrastructure
 TESTS_PASSED=0

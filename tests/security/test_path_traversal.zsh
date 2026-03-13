@@ -3,7 +3,7 @@
 
 TEST_DIR="$(cd "$(dirname "$0")" && pwd)"
 VDE_ROOT_DIR="$(cd "$TEST_DIR/../.." && pwd)"
-source "$VDE_ROOT_DIR/scripts/lib/vm-common"
+source "$VDE_ROOT_DIR/lib/vm-common"
 
 TESTS_PASSED=0
 TESTS_FAILED=0
