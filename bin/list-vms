@@ -208,6 +208,24 @@ fi
 created_vms=$(get_created_vms)
 docker_vms=$(get_docker_vms)
 
+# If filter is provided, check if it's a specific known VM but not created
+if [[ -n "$FILTER" ]]; then
+    # If the filter matches a known VM exactly but it hasn't been created yet
+    # and we are not showing all VMs, we should still show it as "available" 
+    # or report it as not found if it's not even a known type
+    if ! is_known_vm "$FILTER"; then
+        # Check if any created/docker VM matches the filter
+        local match_found=false
+        if [[ -n "$created_vms" ]] && echo "$created_vms" | grep -q "$FILTER"; then match_found=true; fi
+        if [[ -n "$docker_vms" ]] && echo "$docker_vms" | grep -q "$FILTER"; then match_found=true; fi
+        
+        if [[ "$match_found" == "false" ]] && [[ "$SHOW_CREATED" == "false" ]]; then
+            vde_error_simple "VM not found: $FILTER" "list-vms"
+            exit 1
+        fi
+    fi
+fi
+
 # Combine both lists, removing duplicates
 typeset -a all_vms
 if [[ -n "$created_vms" ]] || [[ -n "$docker_vms" ]]; then

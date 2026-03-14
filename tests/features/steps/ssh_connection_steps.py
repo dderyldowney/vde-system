@@ -144,7 +144,7 @@ def step_each_separate_data(context):
     assert (configs_dir / "python").exists(), "Python VM config missing"
     assert (configs_dir / "go").exists(), "Go VM config missing"
 
-@then('files should be shared between host and VM')
+@then('files should be shared between host and VM via mounts')
 def step_files_shared_host_vm(context):
     """Verify files are shared between host and VM via inspect."""
     # Verify mount configuration in a known VM
@@ -178,20 +178,13 @@ def step_both_accessible_ssh(context):
     running = docker_ps()
     assert len(running) >= 1, "At least one VM should be running"
 
-@then('"start-virtual js", "start-virtual node", "start-virtual nodejs" all work')
+@then('standard Node.js aliases should be functional for starting VMs')
 def step_all_node_aliases_work(context):
     """Verify all node aliases work using vde create command."""
     for alias in ['js', 'node', 'nodejs']:
         result = run_vde_command(f"create {alias}", context=context)
         # 0 = created, 6 = already exists (both are success for this test)
         assert result.returncode in [0, 6], f"Alias '{alias}' failed with rc={result.returncode}"
-
-@then('"Go Language" should appear in list-vms output')
-def step_go_language_in_list(context):
-    """Verify Go Language appears in vde list output."""
-    result = run_vde_command("list", context=context)
-    output = result.stdout.lower()
-    assert 'go' in output, "Go should appear in list output"
 
 @then('aliases should show in list-vms output')
 def step_aliases_show_in_list(context):

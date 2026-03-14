@@ -8,7 +8,7 @@ Feature: Debugging and Troubleshooting
 
   Scenario: Diagnose why VM won't start
     Given I tried to start a VM but it failed
-    When I check status
+    When I check the VDE status
     Then I should see a clear error message
 
   @requires-docker-host
@@ -52,13 +52,13 @@ Feature: Debugging and Troubleshooting
   @requires-docker-host
   Scenario: Inspect docker-compose configuration
     Given I need to verify VM configuration
-    When I check docker-compose config
+    When I check the Docker Compose configuration detail
     Then I should see all port mappings
 
   @requires-docker-host
   Scenario: Verify volumes are mounted correctly
     Given my code changes aren't reflected in the VM
-    When I check status
+    When I check the VDE status
     Then my workspace directory should be mounted
 
   @requires-docker-host
@@ -90,7 +90,7 @@ Feature: Debugging and Troubleshooting
   @requires-docker-host
   Scenario: Validate VM configuration before starting
     Given I think my docker-compose.yml might have errors
-    When I check docker-compose config
+    When I check the Docker Compose configuration detail
     Then the configuration should be validated
 
   @requires-docker-host

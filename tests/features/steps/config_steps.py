@@ -329,7 +329,7 @@ def step_add_vm_type_custom_install(context):
         context.vm_types_file = str(vm_types_file)
 
 
-@when('all ports should be mapped in docker-compose.yml')
+@when('I check that all ports are mapped in docker-compose.yml')
 def step_all_ports_mapped(context):
     """Verify all ports are mapped in docker-compose.yml."""
     compose_file = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
@@ -591,7 +591,7 @@ def step_remove_custom_configs(context):
     context.configs_removed = not env_local.exists() and not override.exists()
 
 
-@when('my VM won\'t start due to configuration')
+@when('my VM fails to start due to configuration')
 def step_vm_wont_start(context):
     """VM fails to start due to configuration."""
     compose_file = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
@@ -885,7 +885,7 @@ def step_run_add_vm_type_mysql(context):
         "mysql should exist in vm-types.conf"
 
 
-@then('port 3306 should be mapped to host')
+@then('port 3306 should be mapped to host in configuration')
 def step_port_3306_mapped(context):
     """Verify port 3306 is mapped in MySQL docker-compose.yml."""
     compose = VDE_ROOT / 'configs' / 'docker' / 'mysql' / 'docker-compose.yml'
@@ -895,7 +895,7 @@ def step_port_3306_mapped(context):
         f"Port 3306 not found in {compose}"
 
 
-@then('I can connect to MySQL from other VMs')
+@then('I can connect to MySQL from other containers')
 def step_can_connect_mysql_from_other_vms(context):
     """Verify MySQL VM is on the shared vde-net allowing inter-VM communication."""
     compose = VDE_ROOT / 'configs' / 'docker' / 'mysql' / 'docker-compose.yml'
@@ -937,7 +937,7 @@ def step_display_name_in_list_vms(context, display_name):
         f'"{display_name}" not found in vde list --all:\n{result.stdout}'
 
 
-@then('I can use any alias to reference the VM')
+@then('I can use any configured alias to reference the VM')
 def step_can_use_alias(context):
     """Verify aliases are registered in vm-types.conf."""
     vm_types = (VDE_ROOT / 'data' / 'vm-types.conf').read_text()
@@ -947,7 +947,7 @@ def step_can_use_alias(context):
             f"Alias '{alias}' not found in vm-types.conf"
 
 
-@then('"start-virtual js", "start-virtual node", "start-virtual nodejs" all work')
+@then('all standard Node.js aliases should be recognized by the system')
 def step_start_virtual_aliases_work(context):
     """Verify js/node/nodejs aliases resolve via vm-types.conf and config exists."""
     vm_types = (VDE_ROOT / 'data' / 'vm-types.conf').read_text()
@@ -959,7 +959,7 @@ def step_start_virtual_aliases_work(context):
         "vde-js docker-compose.yml not found — alias resolution cannot succeed"
 
 
-@then('aliases should show in list-vms output')
+@then('all configured aliases should show in the list output')
 def step_aliases_in_list_vms(context):
     """Verify aliases appear in vde list --all output."""
     result = subprocess.run(
@@ -973,7 +973,7 @@ def step_aliases_in_list_vms(context):
         "JS aliases not visible in list output"
 
 
-@when('I rebuild VMs with --rebuild')
+@when('I check the VDE rebuild infrastructure')
 def step_rebuild_vms(context):
     """Verify vde rebuild script exists and is executable."""
     rebuild_script = VDE_ROOT / 'bin' / 'vde-rebuild'
@@ -982,7 +982,7 @@ def step_rebuild_vms(context):
     context.rebuild_available = True
 
 
-@then('files should be shared between host and VM')
+@then('files should be shared between host and VM in configuration')
 def step_files_shared(context):
     """Verify volume bind-mount for host↔VM file sharing in docker-compose.yml."""
     compose = VDE_ROOT / 'configs' / 'docker' / 'python' / 'docker-compose.yml'
@@ -1008,7 +1008,7 @@ def step_specific_vms_communicate(context):
         "Fewer than 2 VMs on vde-net — inter-VM communication not possible"
 
 
-@when('I check docker-compose config')
+@when('I check the Docker Compose configuration detail')
 def step_check_docker_compose_config(context):
     """Run docker compose config on a valid file to show effective config, and on an
     invalid file to demonstrate error detection capability."""
@@ -1045,7 +1045,7 @@ def step_check_docker_compose_config(context):
     context._config_error_rc = error_result.returncode
 
 
-@when('I reload VM types')
+@when('I reload the system VM types')
 def step_reload_vm_types(context):
     """Verify vm-types.conf is parseable (reload = re-read from source of truth)."""
     vm_types_conf = VDE_ROOT / 'data' / 'vm-types.conf'

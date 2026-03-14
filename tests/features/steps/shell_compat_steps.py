@@ -49,6 +49,7 @@ def run_shell_command_with_state(context, command, shell='zsh'):
 
 
 @given('running in zsh')
+@when('running in zsh')
 def step_running_zsh(context):
     """Running in zsh."""
     context.current_shell = 'zsh'
@@ -57,18 +58,6 @@ def step_running_zsh(context):
 
 
 @given('I initialize an associative array')
-def step_given_init_assoc_array(context):
-    """Initialize an associative array (Given variant)."""
-    context.array_name = 'test_array'
-    shell = getattr(context, 'current_shell', 'zsh')
-    result = run_shell_command(f"_assoc_init '{context.array_name}'", shell)
-    assert result.returncode == 0, f"Failed to initialize array: {result.stderr}"
-    context.array_initialized = True
-    # Initialize tracking for state restoration
-    if not hasattr(context, 'set_keys'):
-        context.set_keys = {}
-
-
 @when('I initialize an associative array')
 def step_init_assoc_array(context):
     """Initialize an associative array."""
@@ -76,6 +65,7 @@ def step_init_assoc_array(context):
     shell = getattr(context, 'current_shell', 'zsh')
     result = run_shell_command(f"_assoc_init '{context.array_name}'", shell)
     assert result.returncode == 0, f"Failed to initialize array: {result.stderr}"
+    context.array_initialized = True
     # Initialize tracking for state restoration
     if not hasattr(context, 'set_keys'):
         context.set_keys = {}
@@ -137,6 +127,7 @@ def step_array_ops_work(context):
 
 
 
+@given('I set key "{key}" to value "{value}"')
 @when('I set key "{key}" to value "{value}"')
 def step_set_key_value(context, key, value):
     """Set key to value in associative array."""
@@ -151,12 +142,6 @@ def step_set_key_value(context, key, value):
     if not hasattr(context, 'set_keys'):
         context.set_keys = {}
     context.set_keys[key] = value
-
-
-@given('I set key "{key}" to value "{value}"')
-def step_given_set_key_value(context, key, value):
-    """Set key to value in associative array (Given variant)."""
-    step_set_key_value(context, key, value)
 
 
 @then('getting key "{key}" should return "{value}"')
@@ -335,11 +320,6 @@ def step_keys_not_collide(context):
 # =============================================================================
 # Additional shell compatibility step definitions
 # =============================================================================
-
-@when('running in zsh')
-def step_running_in_zsh(context):
-    """Running in zsh."""
-    context.current_shell = 'zsh'
 
 @given('an associative array')
 def step_given_assoc_array(context):

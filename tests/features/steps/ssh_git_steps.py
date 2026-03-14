@@ -777,7 +777,7 @@ def step_have_python_vm_running(context):
     context.target_vm = 'python'
 
 
-@given('I have a Go VM running')
+@given('I have a Go VM running with Git support')
 def step_have_go_vm_running(context):
     """Ensure Go VM config exists with SSH agent forwarding (create if needed)."""
     if not _vm_config_exists('go'):
@@ -789,7 +789,7 @@ def step_have_go_vm_running(context):
     context.target_vm = 'go'
 
 
-@given('I have a Rust VM running')
+@given('I have a Rust VM running with Git support')
 def step_have_rust_vm_running(context):
     """Ensure Rust VM config exists with SSH agent forwarding (create if needed)."""
     if not _vm_config_exists('rust'):

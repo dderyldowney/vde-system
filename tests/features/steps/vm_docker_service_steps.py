@@ -145,7 +145,7 @@ def step_can_connect_mysql(context):
     assert 'mysqld is alive' in result.stdout, "MySQL failed to respond to ping"
 
 
-@then('port 3306 should be mapped to host')
+@then('port 3306 should be mapped to host in running VM')
 def step_port_3306_mapped(context):
     """Verify MySQL port 3306 is mapped to host via vde port."""
     if not container_exists('mysql'):

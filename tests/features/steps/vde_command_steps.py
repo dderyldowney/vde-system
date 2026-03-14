@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 
 from behave import given, then, when
-from vm_common import run_vde_command, docker_ps, wait_for_container
+from vm_common import run_vde_command, docker_ps, wait_for_container, VDE_ROOT
 
 # All known VM types
 _ALL_VMS = {
@@ -79,6 +79,27 @@ def _execute_vde_create_and_start(vm_name, context):
     return result
 
 
+def _capture_intent(request, context):
+    """Run generate_plan directly to capture intent for verification steps."""
+    vde_parser = VDE_ROOT / "lib" / "vde-parser"
+    vde_vm_common = VDE_ROOT / "lib" / "vm-common"
+    vde_shell_compat = VDE_ROOT / "lib" / "vde-shell-compat"
+    
+    cmd = f"source {vde_shell_compat} && source {vde_vm_common} && source {vde_parser} && generate_plan '{request}'"
+    res = subprocess.run(["zsh", "-c", cmd], capture_output=True, text=True, cwd=VDE_ROOT)
+    
+    context.intents = []
+    context.vms = []
+    
+    if res.returncode == 0:
+        for line in res.stdout.split('\n'):
+            if line.startswith('INTENT:'):
+                context.intents.append(line.split(':')[1])
+            elif line.startswith('VM:'):
+                context.vms.append(line.split(':')[1])
+    return res
+
+
 # =============================================================================
 # I request to "..." - Natural Language Command Patterns
 # =============================================================================
@@ -86,6 +107,10 @@ def _execute_vde_create_and_start(vm_name, context):
 @when(u'I request to "{command}"')
 def step_request_command(context, command):
     """Execute a natural language VDE command."""
+    # 1. Capture intent first for verification steps
+    _capture_intent(command, context)
+    
+    # 2. Execute the command
     command_lower = command.lower()
     all_results = []
     all_stdout = []

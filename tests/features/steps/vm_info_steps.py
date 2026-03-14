@@ -93,7 +93,7 @@ def step_know_vm_by_alias(context):
     context.expected_canonical = None
 
 
-@given('I am new to VDE')
+@given('I am a new user of VDE')
 def step_new_to_vde(context):
     """Precondition: user is new to VDE and learning about VMs."""
     context.new_user_mode = True
@@ -174,8 +174,8 @@ def step_can_use_either_name(context):
     context.both_names_usable = True
 
 
-@then('I should understand the difference between language and service VMs')
-def step_understand_vm_categories(context):
+@then('I should see the difference between language and service VMs')
+def step_understand_difference(context):
     """Verify understanding of VM categories."""
     assert hasattr(context, 'new_user_mode') and context.new_user_mode, \
         "New user mode should be active"
@@ -376,7 +376,7 @@ def step_use_alias(context, alias):
     context.alias_used = True
 
 
-@when('I explore available VMs')
+@when('I explore the available VM types')
 def step_explore_vms(context):
     """Explore available VMs."""
     from pathlib import Path

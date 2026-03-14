@@ -513,7 +513,34 @@ remove_known_hosts_entry() {
 # Check if SSH agent is running
 # Returns: 0 if running, 1 otherwise
 ssh_agent_is_running() {
-    [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ]
+    # 1. Check if currently configured
+    if [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "$SSH_AUTH_SOCK" ]; then
+        if ssh-add -l >/dev/null 2>&1 || [ $? -eq 1 ]; then
+            return 0
+        fi
+    fi
+
+    # 2. Try to discover existing agent (Linux/macOS)
+    local agent_sock
+    agent_sock=$(find /tmp/ssh-* -name "agent.*" -user $(whoami) 2>/dev/null | head -n 1)
+    
+    if [ -z "$agent_sock" ]; then
+        agent_sock=$(find /private/tmp/com.apple.launchd.* -name "Listeners" -user $(whoami) 2>/dev/null | head -n 1)
+    fi
+
+    if [ -n "$agent_sock" ] && [ -S "$agent_sock" ]; then
+        export SSH_AUTH_SOCK="$agent_sock"
+        local pid=$(echo "$agent_sock" | grep -oE '[0-9]+$' | head -n 1)
+        if [ -z "$pid" ]; then
+            pid=$(pgrep -u $(whoami) ssh-agent | head -n 1)
+        fi
+        export SSH_AGENT_PID="$pid"
+        if ssh-add -l >/dev/null 2>&1 || [ $? -eq 1 ]; then
+            return 0
+        fi
+    fi
+
+    return 1
 }
 
 # Start SSH agent and add keys
@@ -635,7 +662,7 @@ ensure_vde_ssh_environment() {
     chmod 600 "$VDE_SSH_KNOWN_HOSTS"
 
     # Ensure SSH agent if needed
-    if [ -z "$SSH_AUTH_SOCK" ] || [ ! -S "$SSH_AUTH_SOCK" ]; then
+    if [ -z "${SSH_AUTH_SOCK:-}" ] || [ ! -S "$SSH_AUTH_SOCK" ]; then
         ensure_ssh_agent
     fi
 

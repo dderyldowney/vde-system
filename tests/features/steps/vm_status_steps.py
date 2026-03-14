@@ -29,8 +29,8 @@ from vm_common import (
 # GIVEN steps - Setup status and discovery states
 # =============================================================================
 
-@given('I have VDE installed')
-def step_vde_installed(context):
+@given('VDE is fully installed')
+def step_have_vde_installed(context):
     """VDE is installed - verify VDE_ROOT and bin directory exist."""
     assert VDE_ROOT.exists(), "VDE_ROOT should exist"
     assert (VDE_ROOT / "bin").exists(), "VDE bin directory should exist"
@@ -69,7 +69,7 @@ def step_have_stopped_vms(context):
     context.has_stopped_vms = vm_types_file.exists()
 
 
-@given('I check VM status')
+@given('I check the overall VM status')
 def step_check_vm_status(context):
     """Check VM status."""
     context.status_checked = True
@@ -83,22 +83,13 @@ def step_check_vm_status(context):
 # WHEN steps - Perform status and discovery actions
 # =============================================================================
 
-@when('I request "status"')
-def step_request_status(context):
-    """Request status."""
-    result = run_vde_command("list", timeout=30, context=context)
-    context.last_exit_code = result.returncode
-    context.last_output = result.stdout
-    context.last_error = result.stderr
-
-
 @when('I view the output')
 def step_view_output(context):
     """View the output."""
     assert context.last_output, "Should have output to view"
 
 
-@when('I check status')
+@when('I check the VDE status')
 def step_check_status_again(context):
     """Check status."""
     result = run_vde_command("list", timeout=30, context=context)
@@ -146,7 +137,7 @@ def step_request_vm_info(context, vm_name):
     context.vm_info = vm_info
 
 
-@when('I reload VM types')
+@when('I rebuild the VM types cache')
 def step_reload_vm_types(context):
     """Reload VM types."""
     result = run_vde_command("rebuild-cache", timeout=30, context=context)
@@ -154,13 +145,7 @@ def step_reload_vm_types(context):
     context.last_output = result.stdout
 
 
-@when('I run "{command}"')
-def step_run_command(context, command):
-    """Execute a VDE command."""
-    run_vde_command(command, timeout=120, context=context)
-
-
-@when('I check docker-compose config')
+@when('I check the VDE system configuration')
 def step_check_compose_config(context):
     """Check docker-compose configuration via vde info."""
     result = run_vde_command("info", context=context)

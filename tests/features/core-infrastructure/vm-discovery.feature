@@ -6,7 +6,7 @@ Feature: VM Information and Discovery
   So I can make informed decisions about my development environment
 
   Scenario: Listing all available VMs
-    Given I have VDE installed
+    Given VDE is fully installed
     When I ask "what VMs can I create?"
     Then I should see all available language VMs
     And I should see all available service VMs
@@ -48,8 +48,8 @@ Feature: VM Information and Discovery
     And I should be able to use either name in commands
 
   Scenario: Understanding VM categories
-    Given I am new to VDE
-    When I explore available VMs
-    Then I should understand the difference between language and service VMs
+    Given I am a new user of VDE
+    When I explore the available VM types
+    Then I should see the difference between language and service VMs
     And language VMs should have SSH access
     And service VMs should provide infrastructure services

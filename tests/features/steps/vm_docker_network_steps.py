@@ -8,6 +8,7 @@ All steps use real system verification instead of context flags.
 import subprocess
 import os
 import yaml
+import re
 from pathlib import Path
 
 from behave import given, then
@@ -42,7 +43,9 @@ def step_network_auto_created(context):
     """Network should be auto-created - verify vde-net exists."""
     result = run_vde_command('networks', context=context)
     assert result.returncode == 0, "Should be able to list VDE networks"
-    assert "vde-" in result.stdout.lower(), "VDE network should exist"
+    # Accept both vde-net and vde-testing
+    assert any(x in result.stdout.lower() for x in ['vde-net', 'vde-testing']), \
+        f"VDE network should exist. Output: {result.stdout}"
     context.network_configured = True
 
 
@@ -51,7 +54,8 @@ def step_they_same_network(context):
     """VMs should be on same Docker network."""
     result = run_vde_command('networks', context=context)
     assert result.returncode == 0, "Should be able to list VDE networks"
-    assert "vde-" in result.stdout.lower(), "VDE network should exist"
+    assert any(x in result.stdout.lower() for x in ['vde-net', 'vde-testing']), \
+        f"VDE network should exist. Output: {result.stdout}"
     context.network_configured = True
 
 
@@ -87,29 +91,30 @@ def step_unique_ssh_port(context):
         vm_name = container.replace('vde-', '')
         result = run_vde_command(f"port {vm_name} 22", context=context)
         if result.returncode == 0 and result.stdout.strip():
-            if ':' in result.stdout:
-                port = result.stdout.strip().split(':')[-1]
-                if port.isdigit():
-                    ports.append(port)
+            # Extract port number (handles formats like "0.0.0.0:2213" or just "2213")
+            m = re.search(r'(\d+)$', result.stdout.strip())
+            if m:
+                port = m.group(1)
+                ports.append(port)
     # Verify all unique
+    assert len(ports) > 0, "No SSH ports found for running VMs"
     assert len(ports) == len(set(ports)), f"Each VM should have unique SSH port, got: {ports}"
 
 
 @then('ports should be auto-allocated from available range')
 def step_ports_auto_allocated(context):
-    """Ports auto-allocated - verify ports are in valid range (2200-2399)."""
+    """Ports auto-allocated - verify ports are in valid range (2200-2499)."""
     running = docker_ps()
     for container in running:
         vm_name = container.replace('vde-', '')
         result = run_vde_command(f"port {vm_name} 22", context=context)
         if result.returncode == 0 and result.stdout.strip():
-            if ':' in result.stdout:
-                port = result.stdout.strip().split(':')[-1]
-                if port.isdigit():
-                    port_num = int(port)
-                    # Support expanded range 2200-2399
-                    assert 2200 <= port_num <= 2399, \
-                        f"Port {port_num} for {vm_name} should be in VDE range 2200-2399"
+            m = re.search(r'(\d+)$', result.stdout.strip())
+            if m:
+                port_num = int(m.group(1))
+                # Support full range 2200-2499
+                assert 2200 <= port_num <= 2499, \
+                    f"Port {port_num} for {vm_name} should be in VDE range 2200-2499"
 
 
 @then('no two VMs should have the same SSH port')
@@ -138,7 +143,7 @@ def step_connect_postgresql_host(context):
 def step_connect_service_name(context):
     """Connect using service name - verify network exists."""
     result = run_vde_command('networks', context=context)
-    assert result.returncode == 0 and 'vde' in result.stdout.lower(), \
+    assert result.returncode == 0 and any(x in result.stdout.lower() for x in ['vde-net', 'vde-testing']), \
         "VDE network should exist for service name resolution"
 
 

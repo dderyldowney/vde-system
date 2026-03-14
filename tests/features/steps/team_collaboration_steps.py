@@ -47,7 +47,7 @@ def step_team_updated_ssh_templates(context):
     context.ssh_templates_updated = ssh_config_dir.exists()
 
 
-@given('I pull the latest changes')
+@given('I have pulled the latest changes')
 def step_pull_latest_changes(context):
     """Context: Pull latest changes."""
     # Verify git is available for pulling
@@ -89,7 +89,7 @@ def step_preconfigured_vms(context):
 # Team Onboarding WHEN steps
 # =============================================================================
 
-@when('they follow the setup instructions')
+@when('a new developer follows the setup instructions')
 def step_follow_setup_instructions(context):
     """Context: Following setup instructions."""
     # Verify setup script is available in bin/

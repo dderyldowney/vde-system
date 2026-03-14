@@ -71,7 +71,7 @@ Feature: Docker Operations
 
   Scenario: Get container status
     Given VM "python" exists
-    When I check VM status
+    When I check the running status of the VM
     Then status should be one of: "running", "stopped", "not_created", "unknown"
 
   Scenario: Detect running containers
