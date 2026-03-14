@@ -1,55 +1,133 @@
 # language: en
-@cache-system @core-infrastructure @unit @core-suite
+@core-infrastructure
+@cache-system
+@user-guide-internal
 Feature: Cache System
-  As the VDE system
-  I want VM type data cached at .cache/vm-types.cache as defined in VDE-SPEC.md section 2.4
-  So that scripts load VM types from cache without reparsing the source config each time
-
-  # ── Cache file existence and location (spec section 2.4) ──
+  As a developer
+  I want VM type data to be cached for performance
+  So that scripts don't reparse configuration on every invocation
 
   Scenario: vm-types.cache exists after VM types are loaded
-    When VM types are loaded via the vde script
-    Then ".cache/vm-types.cache" should exist
+    Given VM types are loaded
+    Then cache file should be created at ".cache/vm-types.cache"
+    And cache file should contain all VM type data
 
-  Scenario: vm-types.cache is inside the .cache directory (spec section 2.4)
-    When VM types are loaded via the vde script
-    Then ".cache/vm-types.cache" should be a file inside the VDE root
+  Scenario: Load from cache when config unchanged
+    Given VM types cache exists and is valid
+    And vm-types.conf has not been modified since cache
+    When VM types are loaded
+    Then data should be loaded from cache
+    And vm-types.conf should not be reparsed
 
-  # ── Cache file content (spec section 2.4) ──
+  Scenario: Invalidate cache when config is modified
+    Given VM types cache exists and is valid
+    And vm-types.conf has been modified after cache
+    When VM types are loaded
+    Then cache should be invalidated
+    And vm-types.conf should be reparsed
+    And cache file should be updated
 
-  Scenario: Cache contains VM_TYPE array entries
-    Given ".cache/vm-types.cache" exists
-    When I read the cache file
-    Then the cache should contain "VM_TYPE"
+  Scenario: Force cache bypass with --no-cache flag
+    Given VM types cache exists and is valid
+    When VM types are loaded with --no-cache
+    Then cache should be bypassed
+    And vm-types.conf should be reparsed
 
-  Scenario: Cache contains VM_ALIASES array entries
-    Given ".cache/vm-types.cache" exists
-    When I read the cache file
-    Then the cache should contain "VM_ALIASES"
+  Scenario: Cache stores all VM type arrays
+    Given VM types are cached
+    When cache is read
+    Then VM_TYPE array should be populated
+    And VM_ALIASES array should be populated
+    And VM_DISPLAY array should be populated
+    And VM_INSTALL array should be populated
+    And VM_SVC_PORT array should be populated
 
-  Scenario: Cache contains VM_DISPLAY array entries
-    Given ".cache/vm-types.cache" exists
-    When I read the cache file
-    Then the cache should contain "VM_DISPLAY"
+  Scenario: Cache file format is parseable
+    Given VM types cache exists and is valid
+    When cache file is read
+    Then each line should match "ARRAY_NAME:key=value" format
+    And comments should start with "#"
 
-  Scenario: Cache stores known language VM entries
-    Given ".cache/vm-types.cache" exists
-    When I read the cache file
-    Then the cache should contain "vde-python"
-    And the cache should contain "vde-rust"
+  Scenario: Port registry cache persists allocations
+    Given ports have been allocated for VMs
+    When port registry is saved
+    Then cache file should exist at ".cache/port-registry"
+    And each VM should be mapped to its port
 
-  Scenario: Cache stores known service VM entries
-    Given ".cache/vm-types.cache" exists
-    When I read the cache file
-    Then the cache should contain "vde-postgres"
-    And the cache should contain "vde-redis"
+  Scenario: Load port registry from cache
+    Given port registry cache exists
+    When port registry is loaded
+    Then allocated ports should be available without scanning compose files
 
-  # ── Port registry (spec section 2.3) ──
+  Scenario: Verify port registry consistency
+    Given port registry cache exists
+    And a VM has been removed
+    When port registry is verified
+    Then removed VM should be removed from registry
+    And cache file should be updated
 
-  Scenario: Port registry directory exists inside .cache
-    Then ".cache/port-registry" should exist as a directory
+  Scenario: Rebuild port registry from compose files
+    Given port registry cache is missing or invalid
+    When port registry is verified
+    Then registry should be rebuilt by scanning docker-compose files
+    And all allocated ports should be discovered
 
-  # ── Cache directory (spec section 9) ──
+  Scenario: Cache directory is created if missing
+    Given .cache directory does not exist
+    When cache operation is performed
+    Then .cache directory should be created
 
-  Scenario: .cache directory exists
-    Then VDE directory ".cache" should exist
+  Scenario: Cache mtime comparison works correctly
+    Given cache file was created before config file
+    And cache file is newer than config file
+    When cache validity is checked
+    Then cache should be considered valid
+
+  Scenario: Invalidate cache programmatically
+    Given VM types cache exists and is valid
+    When invalidate_vm_types_cache is called
+    Then cache file should be removed
+    And _VM_TYPES_LOADED flag should be reset
+
+  Scenario: Lazy load VM types only when needed
+    Given library has been sourced
+    And no VM operations have been performed
+    When VM types are first accessed
+    Then VM types should be loaded at that time
+    And not during initial library sourcing
+
+  # Cache Invalidation Scenarios
+  # ========================================
+
+  Scenario: Manual cache invalidation with clear command
+    Given VM types cache exists and is valid
+    When cache is manually cleared
+    Then cache file should be removed
+    And next load should rebuild cache from source
+
+  Scenario: Cache consistency across multiple operations
+    Given VM types cache exists and is valid
+    When VM types are loaded multiple times
+    Then cache should return consistent data
+    And cache file modification time should remain unchanged
+
+  Scenario: Port registry cache invalidates on VM removal
+    Given port registry cache exists for multiple VMs
+    And a VM configuration is removed
+    When port registry is reloaded
+    Then removed VM port should be freed from registry
+    And cache file should reflect updated allocations
+
+  Scenario: Port registry cache persists and survives restart
+    Given ports have been allocated for VMs
+    And port registry cache exists
+    When system is restarted
+    And port registry is loaded
+    Then previously allocated ports should be restored
+    And no port conflicts should occur
+
+  Scenario: Cache handles concurrent read operations
+    Given VM types cache exists and is valid
+    When cache is read by multiple processes simultaneously
+    Then all reads should return valid data
+    And cache file should not become corrupted

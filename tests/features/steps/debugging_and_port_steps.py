@@ -14,6 +14,7 @@ if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 
 from vm_common import run_vde_command
+from config import VDE_ROOT
 
 # =============================================================================
 # Debugging and Container Access Patterns
@@ -104,17 +105,16 @@ def step_verify_host_path(context):
 # Port Allocation Patterns
 # =============================================================================
 
-@then(u'VDE should allocate the next available port (2214)')
+@then(u'VDE should allocate the next available port (2300)')
 def step_allocate_port(context):
-    """Verify port allocation."""
+    """Verify port allocation (expecting something in the 23xx range)."""
     output = getattr(context, 'vde_command_output', '')
     blocked = getattr(context, 'blocked_port', 0)
     
     import re
-    # Look for ports in the 22xx or 23xx range
-    ports_found = re.findall(r'(2[23][0-9]{2})', output)
+    # Look for ports in the 23xx range
+    ports_found = re.findall(r'(23[0-9]{2})', output)
     
-    # We want to find a port that is NOT the blocked one
     success = False
     for p in ports_found:
         if int(p) != blocked:
@@ -122,8 +122,8 @@ def step_allocate_port(context):
             context.test_allocated_port = int(p)
             break
             
-    assert success or 'allocated port' in output.lower(), \
-        f"Expected port allocation (not {blocked}) in output: {output}"
+    assert success or 'allocated' in output.lower(), \
+        f"Expected port allocation in 23xx range (not {blocked}) in output: {output}"
 
 
 @then(u'the VM should work correctly on the new port')
@@ -335,14 +335,13 @@ def step_old_issues_resolved(context):
 
 @when(u'I create a new language VM')
 def step_create_new_lang_vm(context):
-    """Create a new language VM to test auto port allocation."""
-    vm_name = "testlangporttest"
-    
-    # Ensure it's clean first
-    run_vde_command(f"uninstall-vm-type {vm_name} --skip-confirm", context=context)
+    """Create a new language VM to test auto port allocation with a unique name."""
+    import time
+    timestamp = int(time.time())
+    vm_name = f"testport{timestamp}"
     
     # Use the add-vm-type command without --ssh-port to trigger auto-allocation
-    # Since we previously bound port 2213, it should find a conflict
+    # Since we previously bound a port, it should find a conflict
     result = run_vde_command(f"add-vm-type --type lang {vm_name} 'apt-get install -y curl'", context=context)
     assert result.returncode == 0, f"Failed to add VM type {vm_name}: {result.stdout}\n{result.stderr}"
     

@@ -807,7 +807,7 @@ sections:
       │   └── python/       # Python projects (mounted in VM)
       ├── data/            # Database data (persists across rebuilds)
       ├── logs/            # Application logs
-      └── scripts/         # VDE management commands
+      └── bin/         # VDE management commands
       ```
 
 

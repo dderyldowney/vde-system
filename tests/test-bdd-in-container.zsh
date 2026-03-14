@@ -234,7 +234,7 @@ run_tests() {
     run_cmd="$run_cmd $behave_args"
 
     echo ""
-    # IMPORTANT: We do NOT mount configs/, scripts/, or tests/ to protect host files.
+    # IMPORTANT: We do NOT mount configs/, bin/, or tests/ to protect host files.
     # The Dockerfile COPYs these into the image, so tests use the copied versions.
     # Any "deletions" only affect the container's copies, not the host.
     # We only mount docker socket for container tests and a test workspace.

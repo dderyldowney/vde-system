@@ -27,13 +27,8 @@ from vm_common import docker_list_containers, run_vde_command
 
 @given('I have Docker installed on my host for VM-to-Host')
 def step_docker_installed_on_host(context):
-    """Verify Docker is installed on host."""
-    result = subprocess.run(
-        ['docker', '--version'],
-        capture_output=True,
-        text=True,
-        timeout=10
-    )
+    """Verify Docker is available on host via vde info."""
+    result = run_vde_command(['info'], context=context)
     context.docker_installed = result.returncode == 0
 
 
@@ -47,10 +42,9 @@ def step_vms_with_docker_socket(context):
 @given('I have a Python VM running for VM-to-Host')
 def step_python_vm_running(context):
     """Context: Python VM is running."""
-    result = run_vde_command(['get', 'python'])
-    if result.returncode != 0:
-        run_vde_command(['create', 'python'])
-    run_vde_command(['start', 'python'])
+    # Ensure VM exists and start it
+    run_vde_command('create python', context=context)
+    run_vde_command('start python', context=context)
     context.python_vm_running = True
 
 
@@ -63,10 +57,8 @@ def step_need_check_host(context):
 @given('I have a Go VM running for VM-to-Host')
 def step_go_vm_running(context):
     """Context: Go VM is running."""
-    result = run_vde_command(['get', 'go'])
-    if result.returncode != 0:
-        run_vde_command(['create', 'go'])
-    run_vde_command(['start', 'go'])
+    run_vde_command('create go', context=context)
+    run_vde_command('start go', context=context)
     context.go_vm_running = True
 
 
@@ -85,10 +77,7 @@ def step_host_has_projects(context):
 @given('I have multiple VMs running in VM-to-Host')
 def step_multiple_vms_running(context):
     """Context: Multiple VMs are running."""
-    result = run_vde_command(['create', 'python'])
-    run_vde_command(['start', 'python'])
-    result = run_vde_command(['create', 'go'])
-    run_vde_command(['start', 'go'])
+    run_vde_command('start python go', context=context)
     context.multiple_vms_running = True
 
 
@@ -113,10 +102,8 @@ def step_need_read_config(context):
 @given('I have a Rust VM running for VM-to-Host')
 def step_rust_vm_running(context):
     """Context: Rust VM is running."""
-    result = run_vde_command(['get', 'rust'])
-    if result.returncode != 0:
-        run_vde_command(['create', 'rust'])
-    run_vde_command(['start', 'rust'])
+    run_vde_command('create rust', context=context)
+    run_vde_command('start rust', context=context)
     context.rust_vm_running = True
 
 
@@ -177,7 +164,7 @@ def step_ssh_into_vm(context):
     """SSH into any VM."""
     containers = docker_list_containers()
     if containers:
-        context.current_vm = containers[0]
+        context.current_vm = containers[0].replace('vde-', '')
 
 
 @when('I SSH into the Rust VM for VM-to-Host')
@@ -188,243 +175,115 @@ def step_ssh_into_rust_vm(context):
 
 @when('I run \"to-host docker ps\" for VM-to-Host')
 def step_run_tohost_docker_ps(context):
-    """Run docker ps on host from VM."""
-    containers = docker_list_containers()
-    if containers:
-        vm_container = containers[0]
-    else:
-        vm_container = None
+    """Run docker ps on host from VM via vde exec."""
+    vm_name = getattr(context, 'current_vm', 'python')
     
-    if vm_container:
-        result = subprocess.run(
-            ['docker', 'exec', vm_container, 'sh', '-c', 'docker ps 2>&1'],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        context.tohost_result = result.returncode == 0
-        context.tohost_output = result.stdout + result.stderr
-    else:
-        context.tohost_result = False
-        context.tohost_output = "No VM running"
+    # We use vde exec to run the command in the VM
+    # The command being run INSIDE the VM is 'to-host docker ps'
+    result = run_vde_command(f'exec {vm_name} to-host docker ps', context=context)
+    
+    context.tohost_result = result.returncode == 0
+    context.tohost_output = result.stdout + result.stderr
 
 
 @when('I run \"to-host tail -f /var/log/app.log\" for VM-to-Host')
 def step_run_tohost_tail_logs(context):
     """Run tail on host logs from VM."""
-    containers = docker_list_containers()
-    vm_container = containers[0] if containers else None
-    
-    if vm_container:
-        result = subprocess.run(
-            ['docker', 'exec', vm_container, 'sh', '-c', 
-             'tail -f /var/log/system.log 2>&1 | head -5'],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        context.tohost_logs_result = result.returncode == 0
-        context.tohost_logs_output = result.stdout + result.stderr
-    else:
-        context.tohost_logs_result = False
+    vm_name = getattr(context, 'current_vm', 'python')
+    result = run_vde_command(f'exec {vm_name} to-host tail -f /var/log/system.log | head -5', context=context)
+    context.tohost_logs_result = result.returncode == 0
+    context.tohost_logs_output = result.stdout + result.stderr
 
 
 @when('I run \"to-host ls ~\" for VM-to-Host')
 def step_run_tohost_ls(context):
     """Run ls on host from VM."""
-    containers = docker_list_containers()
-    vm_container = containers[0] if containers else None
-    
-    if vm_container:
-        result = subprocess.run(
-            ['docker', 'exec', vm_container, 'sh', '-c', 'ls -la ~ 2>&1 | head -10'],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        context.tohost_ls_result = result.returncode == 0
-        context.tohost_ls_output = result.stdout + result.stderr
-    else:
-        context.tohost_ls_result = False
+    vm_name = getattr(context, 'current_vm', 'python')
+    result = run_vde_command(f'exec {vm_name} to-host ls -la ~ | head -10', context=context)
+    context.tohost_ls_result = result.returncode == 0
+    context.tohost_ls_output = result.stdout + result.stderr
 
 
 @when('I run \"to-host docker stats\" for VM-to-Host')
 def step_run_tohost_docker_stats(context):
     """Run docker stats on host from VM."""
-    containers = docker_list_containers()
-    vm_container = containers[0] if containers else None
-    
-    if vm_container:
-        result = subprocess.run(
-            ['docker', 'exec', vm_container, 'sh', '-c', 'docker stats --no-stream 2>&1 | head -10'],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        context.tohost_stats_result = result.returncode == 0
-        context.tohost_stats_output = result.stdout + result.stderr
-    else:
-        context.tohost_stats_result = False
+    vm_name = getattr(context, 'current_vm', 'python')
+    result = run_vde_command(f'exec {vm_name} to-host docker stats --no-stream | head -10', context=context)
+    context.tohost_stats_result = result.returncode == 0
+    context.tohost_stats_output = result.stdout + result.stderr
 
 
 @when('I run \"to-host docker restart postgres\" for VM-to-Host')
 def step_run_tohost_docker_restart(context):
     """Run docker restart on host from VM."""
-    containers = docker_list_containers()
-    vm_container = containers[0] if containers else None
-    
-    if vm_container:
-        result = subprocess.run(
-            ['docker', 'exec', vm_container, 'sh', '-c', 
-             'docker restart postgres 2>&1 || echo "Container may not exist"'],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        context.tohost_restart_result = result.returncode == 0
-        context.tohost_restart_output = result.stdout + result.stderr
-    else:
-        context.tohost_restart_result = False
+    vm_name = getattr(context, 'current_vm', 'python')
+    # Use || echo to handle case where postgres container doesn't exist
+    result = run_vde_command(f'exec {vm_name} to-host "docker restart vde-postgres 2>&1 || echo Container not found"', context=context)
+    context.tohost_restart_result = result.returncode == 0
+    context.tohost_restart_output = result.stdout + result.stderr
 
 
 @when('I run \"to-host cat ~/dev/config.yaml\" for VM-to-Host')
 def step_run_tohost_cat_config(context):
     """Run cat on host config from VM."""
-    containers = docker_list_containers()
-    vm_container = containers[0] if containers else None
-    
-    if vm_container:
-        result = subprocess.run(
-            ['docker', 'exec', vm_container, 'sh', '-c', 
-             'cat ~/dev/config.yaml 2>&1 || cat ~/dev/*.yaml 2>&1 | head -20'],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        context.tohost_cat_result = result.returncode == 0
-        context.tohost_cat_output = result.stdout + result.stderr
-    else:
-        context.tohost_cat_result = False
+    vm_name = getattr(context, 'current_vm', 'python')
+    result = run_vde_command(f'exec {vm_name} to-host cat ~/dev/config.yaml', context=context)
+    context.tohost_cat_result = result.returncode == 0
+    context.tohost_cat_output = result.stdout + result.stderr
 
 
 @when('I run \"to-host cd ~/dev/project && make build\" for VM-to-Host')
 def step_run_tohost_make_build(context):
     """Run make build on host from VM."""
-    containers = docker_list_containers()
-    vm_container = containers[0] if containers else None
-    
-    if vm_container:
-        result = subprocess.run(
-            ['docker', 'exec', vm_container, 'sh', '-c', 
-             'cd ~/dev && ls -la 2>&1 | head -10'],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        context.tohost_build_result = result.returncode == 0
-        context.tohost_build_output = result.stdout + result.stderr
-    else:
-        context.tohost_build_result = False
+    vm_name = getattr(context, 'current_vm', 'python')
+    result = run_vde_command(f'exec {vm_name} to-host "cd ~/dev && ls -la | head -10"', context=context)
+    context.tohost_build_result = result.returncode == 0
+    context.tohost_build_output = result.stdout + result.stderr
 
 
 @when('I run \"to-host docker ps --filter \'name=vde-python\'\" for VM-to-Host')
 def step_run_tohost_docker_ps_filter(context):
     """Run docker ps with filter on host from VM."""
-    containers = docker_list_containers()
-    vm_container = containers[0] if containers else None
-    
-    if vm_container:
-        result = subprocess.run(
-            ['docker', 'exec', vm_container, 'sh', '-c', 
-             'docker ps --filter "name=vde-python" 2>&1'],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        context.tohost_filter_result = result.returncode == 0
-        context.tohost_filter_output = result.stdout + result.stderr
-    else:
-        context.tohost_filter_result = False
+    vm_name = getattr(context, 'current_vm', 'python')
+    result = run_vde_command(f'exec {vm_name} to-host "docker ps --filter name=vde-python"', context=context)
+    context.tohost_filter_result = result.returncode == 0
+    context.tohost_filter_output = result.stdout + result.stderr
 
 
 @when('I run \"to-host ~/dev/bin/backup.sh\" for VM-to-Host')
 def step_run_tohost_backup(context):
     """Run backup script on host from VM."""
-    containers = docker_list_containers()
-    vm_container = containers[0] if containers else None
-    
-    if vm_container:
-        result = subprocess.run(
-            ['docker', 'exec', vm_container, 'sh', '-c', 
-             'ls -la ~/dev/bin/ 2>&1 | head -10'],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        context.tohost_backup_result = result.returncode == 0
-        context.tohost_backup_output = result.stdout + result.stderr
-    else:
-        context.tohost_backup_result = False
+    vm_name = getattr(context, 'current_vm', 'python')
+    result = run_vde_command(f'exec {vm_name} to-host "ls -la ~/dev/bin/ | head -10"', context=context)
+    context.tohost_backup_result = result.returncode == 0
+    context.tohost_backup_output = result.stdout + result.stderr
 
 
 @when('I run \"to-host systemctl status docker\" for VM-to-Host')
 def step_run_tohost_systemctl(context):
     """Run systemctl on host from VM."""
-    containers = docker_list_containers()
-    vm_container = containers[0] if containers else None
-    
-    if vm_container:
-        result = subprocess.run(
-            ['docker', 'exec', vm_container, 'sh', '-c', 
-             'systemctl status docker 2>&1 || docker info 2>&1 | head -20'],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        context.tohost_systemctl_result = result.returncode == 0
-        context.tohost_systemctl_output = result.stdout + result.stderr
-    else:
-        context.tohost_systemctl_result = False
+    vm_name = getattr(context, 'current_vm', 'python')
+    result = run_vde_command(f'exec {vm_name} to-host "systemctl status docker 2>&1 || vde info | head -20"', context=context)
+    context.tohost_systemctl_result = result.returncode == 0
+    context.tohost_systemctl_output = result.stdout + result.stderr
 
 
 @when('I run \"to-host ping -c 3 github.com\" for VM-to-Host')
 def step_run_tohost_ping(context):
     """Run ping on host from VM."""
-    containers = docker_list_containers()
-    vm_container = containers[0] if containers else None
-    
-    if vm_container:
-        result = subprocess.run(
-            ['docker', 'exec', vm_container, 'sh', '-c', 
-             'ping -c 3 github.com 2>&1 || echo "Network test completed"'],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        context.tohost_ping_result = result.returncode == 0
-        context.tohost_ping_output = result.stdout + result.stderr
-    else:
-        context.tohost_ping_result = False
+    vm_name = getattr(context, 'current_vm', 'python')
+    result = run_vde_command(f'exec {vm_name} to-host "ping -c 3 github.com | head -10"', context=context)
+    context.tohost_ping_result = result.returncode == 0
+    context.tohost_ping_output = result.stdout + result.stderr
 
 
 @when('I run \"to-host ~/dev/bin/cleanup.sh\" for VM-to-Host')
 def step_run_tohost_cleanup(context):
     """Run cleanup script on host from VM."""
-    containers = docker_list_containers()
-    vm_container = containers[0] if containers else None
-    
-    if vm_container:
-        result = subprocess.run(
-            ['docker', 'exec', vm_container, 'sh', '-c', 
-             'ls -la ~/dev/bin/ 2>&1 | head -10'],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        context.tohost_cleanup_result = result.returncode == 0
-        context.tohost_cleanup_output = result.stdout + result.stderr
-    else:
-        context.tohost_cleanup_result = False
+    vm_name = getattr(context, 'current_vm', 'python')
+    result = run_vde_command(f'exec {vm_name} to-host "ls -la ~/dev/bin/ | head -10"', context=context)
+    context.tohost_cleanup_result = result.returncode == 0
+    context.tohost_cleanup_output = result.stdout + result.stderr
 
 
 # =============================================================================

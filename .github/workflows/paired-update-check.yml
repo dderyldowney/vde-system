@@ -9,5 +9,5 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run paired update enforcer
         run: |
-          bash ./scripts/paired_update_enforcer.sh
+          bash ./bin/paired_update_enforcer.sh
           echo "Paired update check passed."

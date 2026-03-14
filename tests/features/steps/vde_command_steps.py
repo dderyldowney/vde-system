@@ -6,21 +6,11 @@ Implements common patterns like "I request to '...'" for VM lifecycle operations
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from behave import given, then, when
-
-# Get VDE_ROOT from environment or calculate
-VDE_ROOT_STR = os.environ.get('VDE_ROOT_DIR')
-if not VDE_ROOT_STR:
-    try:
-        from config import VDE_ROOT as config_root
-        VDE_ROOT_STR = str(config_root)
-    except ImportError:
-        VDE_ROOT_STR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
-VDE_ROOT = Path(VDE_ROOT_STR)
-VDE_SCRIPT = os.path.join(VDE_ROOT, 'bin/vde')
+from vm_common import run_vde_command, docker_ps, wait_for_container
 
 # All known VM types
 _ALL_VMS = {
@@ -31,37 +21,21 @@ _ALL_VMS = {
 }
 
 
-def _run_vde_command(args):
-    """Run a VDE command and return result."""
-    cmd = [VDE_SCRIPT] + args.split()
-    result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
-    return result
-
-
 def _get_container_name(vm_name):
     """Convert VM name to container name."""
-    service_vms = {'postgres', 'redis', 'mongodb', 'mysql', 'nginx', 'rabbitmq', 'couchdb'}
-    if vm_name in service_vms:
-        return vm_name
-    return f"{vm_name}-dev"
+    return f"vde-{vm_name}"
 
 
 def _container_exists(container_name):
-    """Check if container exists (running or stopped)."""
-    result = subprocess.run(
-        ['docker', 'ps', '-a', '--format', '{{.Names}}'],
-        capture_output=True, text=True
-    )
+    """Check if container exists (running or stopped) via vde ps -a."""
+    result = run_vde_command("ps -a")
     return container_name in result.stdout
 
 
 def _container_is_running(container_name):
-    """Check if container is running."""
-    result = subprocess.run(
-        ['docker', 'ps', '--format', '{{.Names}}'],
-        capture_output=True, text=True
-    )
-    return container_name in result.stdout
+    """Check if container is running via vde ps."""
+    running = docker_ps()
+    return container_name in running
 
 
 def _extract_vms_from_command(command):
@@ -96,24 +70,12 @@ def _extract_vms_from_command(command):
     return vms
 
 
-def _execute_vde_command(args):
-    """Execute a VDE command and return result."""
-    cmd = [VDE_SCRIPT] + args.split()
-    result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
-    return result
-
-
-def _execute_vde_create_and_start(vm_name):
-    """Execute vde create and vde start for a VM, handling removed containers."""
-    # First try to start - if it fails because not created, create and start
-    result = subprocess.run([VDE_SCRIPT, 'start', vm_name],
-                          capture_output=True, text=True)
-    
-    if result.returncode != 0 and 'not_created' in result.stderr:
-        # Container doesn't exist, need to create it
-        result = subprocess.run([VDE_SCRIPT, 'create', vm_name],
-                              capture_output=True, text=True)
-    
+def _execute_vde_create_and_start(vm_name, context):
+    """Execute vde create and vde start for a VM."""
+    # Use vde create first (it's safe if already exists)
+    run_vde_command(f"create {vm_name}", context=context)
+    # Then start
+    result = run_vde_command(f"start {vm_name}", context=context)
     return result
 
 
@@ -121,7 +83,7 @@ def _execute_vde_create_and_start(vm_name):
 # I request to "..." - Natural Language Command Patterns
 # =============================================================================
 
-# @when(u'I request to "{command}"')
+@when(u'I request to "{command}"')
 def step_request_command(context, command):
     """Execute a natural language VDE command."""
     command_lower = command.lower()
@@ -132,8 +94,7 @@ def step_request_command(context, command):
     # Handle multi-part commands: "stop all and start X and Y"
     if 'stop all' in command_lower and 'start' in command_lower:
         # Stop all first
-        result = subprocess.run([VDE_SCRIPT, 'stop', 'all'],
-                              capture_output=True, text=True)
+        result = run_vde_command("stop all", context=context)
         all_results.append(result)
         all_stdout.append(result.stdout)
         all_stderr.append(result.stderr)
@@ -141,7 +102,7 @@ def step_request_command(context, command):
         # Extract VMs to start and recreate if needed
         vms = _extract_vms_from_command(command)
         for vm in vms:
-            result = _execute_vde_create_and_start(vm)
+            result = _execute_vde_create_and_start(vm, context)
             all_results.append(result)
             all_stdout.append(result.stdout)
             all_stderr.append(result.stderr)
@@ -155,7 +116,7 @@ def step_request_command(context, command):
     if 'start all services' in command_lower:
         service_vms = ['go', 'rust', 'nginx']
         for vm in service_vms:
-            result = _execute_vde_create_and_start(vm)
+            result = _execute_vde_create_and_start(vm, context)
             all_results.append(result)
             all_stdout.append(result.stdout)
             all_stderr.append(result.stderr)
@@ -167,8 +128,7 @@ def step_request_command(context, command):
 
     # Handle "stop all" / "stop everything"
     if 'stop all' in command_lower or 'stop everything' in command_lower:
-        result = subprocess.run([VDE_SCRIPT, 'stop', 'all'],
-                              capture_output=True, text=True)
+        result = run_vde_command("stop all", context=context)
         context.vde_command_result = result
         context.vde_command_output = result.stdout + result.stderr
         context.vde_command_exit_code = result.returncode
@@ -179,7 +139,7 @@ def step_request_command(context, command):
         vms = _extract_vms_from_command(command)
         if vms:
             for vm in vms:
-                result = _execute_vde_create_and_start(vm)
+                result = _execute_vde_create_and_start(vm, context)
                 all_results.append(result)
                 all_stdout.append(result.stdout)
                 all_stderr.append(result.stderr)
@@ -194,8 +154,7 @@ def step_request_command(context, command):
         vms = _extract_vms_from_command(command)
         if vms:
             for vm in vms:
-                result = subprocess.run([VDE_SCRIPT, 'create', vm],
-                                      capture_output=True, text=True)
+                result = run_vde_command(f"create {vm}", context=context)
                 all_results.append(result)
                 all_stdout.append(result.stdout)
                 all_stderr.append(result.stderr)
@@ -206,8 +165,7 @@ def step_request_command(context, command):
             return
 
     # Default: simple command
-    cmd = [VDE_SCRIPT] + command.split()
-    result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
+    result = run_vde_command(command, context=context)
     context.vde_command_result = result
     context.vde_command_output = result.stdout + result.stderr
     context.vde_command_exit_code = result.returncode

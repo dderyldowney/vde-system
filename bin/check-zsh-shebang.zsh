@@ -11,7 +11,7 @@ echo "Checking zsh shebang enforcement..."
 
 failed=0
 
-# Check all scripts in scripts/ directory
+# Check all scripts in bin/ directory
 for file in $(find . -type f -name "*.zsh" -o -name "*.sh" 2>/dev/null); do
     # Skip directories
     [[ -f "$file" ]] || continue

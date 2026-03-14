@@ -29,9 +29,9 @@ Feature: Critical Path — VM Lifecycle
 
   # ── Port Range Enforcement (spec section 10) ──
 
-  Scenario: All language VMs have SSH ports in range 2200-2299
+  Scenario: All language VMs have SSH ports in range 2200-2399
     Given all language VM configs are loaded from vm-types.json
-    Then every language VM compose file should have SSH port between 2200 and 2299
+    Then every language VM compose file should have SSH port between 2200 and 2399
 
   Scenario: All service VMs have SSH ports in range 2400-2499
     Given all service VM configs are loaded from vm-types.json

@@ -38,7 +38,7 @@ def step_vde_properly_installed(context):
     vde_root = Path(VDE_ROOT)
     assert vde_root.exists(), f"VDE_ROOT directory does not exist: {vde_root}"
 
-    # Check core directories exist - templates can be in root or scripts/templates
+    # Check core directories exist - templates can be in root or bin/templates
     required_dirs = ['scripts', 'configs', 'data', 'logs']
     for dir_name in required_dirs:
         dir_path = vde_root / dir_name
@@ -375,7 +375,7 @@ def step_tab_completion_works(context):
         # Look for completion files
         completion_files = list(configs_dir.rglob("*completion*"))
 
-    # If no completion files in configs, check for scripts/completion
+    # If no completion files in configs, check for bin/completion
     if not completion_files:
         completion_dir = Path(VDE_ROOT) / "completions"
         if completion_dir.exists():

@@ -247,7 +247,7 @@ def before_all(context):
     os.environ["VDE_TEST_MODE"] = "1"
 
     print("[SETUP] Ensuring clean environment: shutting down all running VMs...")
-    subprocess.run(["./bin/shutdown-all", "all", "-f"], cwd=VDE_ROOT, capture_output=True)
+    subprocess.run(["./bin/vde", "stop", "all", "-f"], cwd=VDE_ROOT, capture_output=True)
 
     # Restore any compose file backups left by previously killed test runs
     _restore_stale_compose_backups()
@@ -295,27 +295,31 @@ def before_feature(context, feature):
 
     if "core-infrastructure" in feature.filename:
         print("[SETUP] Core infrastructure - minimal setup")
-        os.environ["VDE_NETWORK"] = "vde-testing"
+        os.environ["VDE_NETWORK"] = "vde-net"
 
 
 def _docker_host_available() -> bool:
-    """Return True if a Docker daemon is reachable."""
+    """Return True if a Docker daemon is reachable via vde info."""
     try:
         r = subprocess.run(
-            ["docker", "info"],
-            capture_output=True, timeout=5
+            ["./bin/vde", "info"],
+            capture_output=True, timeout=10, cwd=VDE_ROOT
         )
-        return r.returncode == 0
-    except Exception:
+        available = r.returncode == 0
+        if not available:
+            print(f"[DEBUG] Docker not available. RC: {r.returncode}, Stderr: {r.stderr}")
+        return available
+    except Exception as e:
+        print(f"[DEBUG] Docker check exception: {e}")
         return False
 
 
 def _get_running_vde_containers() -> list:
-    """Return list of currently running vde-* container names."""
+    """Return list of currently running vde-* container names via vde ps."""
     try:
         r = subprocess.run(
-            ["docker", "ps", "--filter", "name=vde-", "--format", "{{.Names}}"],
-            capture_output=True, text=True, timeout=10
+            ["./bin/vde", "ps", "-q"],
+            capture_output=True, text=True, timeout=15, cwd=VDE_ROOT
         )
         return [c.strip() for c in r.stdout.splitlines() if c.strip()]
     except Exception:
@@ -323,11 +327,12 @@ def _get_running_vde_containers() -> list:
 
 
 def _stop_containers(container_names: list) -> None:
-    """Stop and remove a list of containers."""
+    """Stop and remove a list of containers via vde stop/remove."""
     for name in container_names:
         try:
-            subprocess.run(["docker", "stop", name], capture_output=True, timeout=30)
-            subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=15)
+            vm_name = name.replace("vde-", "")
+            subprocess.run(["./bin/vde", "stop", vm_name, "-f"], capture_output=True, timeout=30, cwd=VDE_ROOT)
+            subprocess.run(["./bin/vde", "remove", vm_name], capture_output=True, timeout=15, cwd=VDE_ROOT)
         except Exception:
             pass
 
@@ -347,8 +352,7 @@ def before_scenario(context, scenario):
 
     # Track containers before Docker scenarios for cleanup
     if "requires-docker-host" in scenario.effective_tags:
-        print(f"[SETUP] Removing all VDE VMs for clean state: {scenario.name}")
-        
+        print(f"[SETUP] Gracefully stopping all VMs for scenario: {scenario.name}")
         # Clean up port squatters if any
         if hasattr(context, 'squatters'):
             for s in context.squatters:
@@ -358,20 +362,10 @@ def before_scenario(context, scenario):
                     pass
             context.squatters = []
 
-        # Use bin/vde remove which handles stopping and state cleanup
-        # We find all directories in configs/docker and remove them
-        configs_dir = VDE_ROOT / "configs" / "docker"
-        if configs_dir.exists():
-            for vm_dir in configs_dir.iterdir():
-                if vm_dir.is_dir() and vm_dir.name != "vde-base":
-                    vm_name = vm_dir.name
-                    # Standard remove-virtual doesn't delete the config, just stops and clears state
-                    subprocess.run(["./bin/vde", "remove", vm_name], cwd=VDE_ROOT, capture_output=True)
+        # Use shutdown-all to be graceful and fast
+        subprocess.run(["./bin/vde", "stop", "all", "-f"], cwd=VDE_ROOT, capture_output=True)
         
-        # Ensure any leftover vde- containers are killed
-        subprocess.run(["docker", "ps", "-aq", "--filter", "name=vde-", "|", "xargs", "docker", "rm", "-f"], shell=True, capture_output=True)
-        
-        context._containers_before_scenario = []
+        context._containers_before_scenario = _get_running_vde_containers()
 
     # Backup ~/.ssh/vde/ before SSH scenarios so they can't bleed state
     if any(t in scenario.effective_tags for t in ('requires-docker-ssh', 'requires-ssh-agent')):

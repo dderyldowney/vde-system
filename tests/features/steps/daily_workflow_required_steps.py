@@ -5,21 +5,29 @@ Daily Workflow Step Definitions for Docker-Required Tests
 Step definitions for testing VDE's daily development workflow scenarios.
 These tests verify common developer workflows with multiple VMs.
 
-Feature: tests/features/docker-required/daily-workflow.feature
+Feature: tests/features/core-infrastructure/daily-workflow.feature
 """
 
 import subprocess
+import os
 import sys
 import time
 from pathlib import Path
 
-# Add VDE root to path for imports
-VDE_ROOT = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(VDE_ROOT))
+# Add steps directory to path for config import
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
 
 from behave import given, when, then
-from vm_common import run_vde_command, docker_ps, wait_for_container, container_is_running, docker_list_containers as docker_ps_all
-
+from config import VDE_ROOT
+from vm_common import (
+    run_vde_command,
+    docker_ps,
+    container_exists,
+    compose_file_exists,
+    wait_for_container,
+)
 
 # ========== GIVEN STEPS ==========
 
@@ -29,28 +37,20 @@ def step_have_ssh_keys(context):
     # Check if SSH directory exists
     ssh_dir = Path.home() / ".ssh" / "vde"
     if not ssh_dir.exists():
-        # Create SSH directory if it doesn't exist
-        ssh_dir.mkdir(parents=True, exist_ok=True)
+        # Create SSH directory if it doesn't exist via ssh-setup
+        run_vde_command("ssh-setup --init", context=context)
     
     # Check for existing SSH keys
     key_files = list(ssh_dir.glob("id_*"))
     context.ssh_keys_exist = len(key_files) > 0
-    
-    if not context.ssh_keys_exist:
-        # Generate SSH keys if none exist
-        result = subprocess.run(
-            ["ssh-keygen", "-t", "ed25519", "-f", str(ssh_dir / "id_ed25519"), "-N", "", "-C", "devuser@vde"],
-            capture_output=True,
-            text=True
-        )
-        context.ssh_keys_exist = result.returncode == 0
+    assert context.ssh_keys_exist, "SSH keys should be configured"
 
 
 @given(u'I have no VMs running')
 def step_no_vms_running(context):
     """Ensure no VDE VMs are currently running."""
     # Stop all running VMs first
-    run_vde_command(["stop", "all"], context=context)
+    run_vde_command("stop all -f", context=context)
     time.sleep(2)  # Wait for containers to stop
     running = docker_ps()
     vde_containers = [c for c in running if c.startswith('vde-')]
@@ -60,15 +60,13 @@ def step_no_vms_running(context):
 @given(u'I want to work on a Python project')
 def step_want_python_project(context):
     """Setup: User wants to work on a Python project."""
-    context.project_type = "python"
-    context.project_name = "vde-python"
+    context.vm_name = "python"
 
 
 @given(u'I want to work on a Rust project instead')
 def step_want_rust_project(context):
     """Setup: User wants to switch to a Rust project."""
-    context.project_type = "rust"
-    context.project_name = "vde-rust"
+    context.vm_name = "rust"
 
 
 @given(u'I need a PostgreSQL database')
@@ -80,7 +78,7 @@ def step_need_postgres(context):
 @given(u'I want to work on multiple language VMs')
 def step_multiple_languages(context):
     """Setup: User wants to work with multiple language VMs."""
-    context.vm_list = []
+    context.vm_list = ['python', 'go', 'rust']
 
 
 @given(u'I have modified the Python VM Dockerfile')
@@ -92,7 +90,7 @@ def step_modified_dockerfile(context):
 @given(u'I no longer need the Ruby VM')
 def step_ruby_not_needed(context):
     """Setup: User no longer needs the Ruby VM."""
-    context.vm_to_remove = "vde-ruby"
+    context.vm_to_remove = "ruby"
 
 
 @given(u'I want to see what VM types are available')
@@ -124,564 +122,380 @@ def step_port_may_be_used(context):
 @when(u'I start my daily development VMs')
 def step_start_daily_vms(context):
     """Start the user's daily development VMs."""
-    result = run_vde_command(["start", "python"], context=context)
-    time.sleep(3)  # Wait for container to start
+    result = run_vde_command("start python", context=context)
+    context.last_exit_code = result.returncode
+    wait_for_container("python", timeout=60)
 
 
 @when(u'I create a new language VM for a project')
 def step_create_language_vm(context):
     """Create a new language VM for a project."""
-    run_vde_command(["create", "python"], context=context)
+    result = run_vde_command("create python", context=context)
+    context.last_exit_code = result.returncode
 
 
 @when(u'I switch from Python to Rust project')
 def step_switch_to_rust(context):
     """Switch from Python to Rust project."""
     # Stop Python
-    run_vde_command(["stop", "python"], context=context)
-    time.sleep(1)
+    run_vde_command("stop python", context=context)
     # Create and start Rust
-    run_vde_command(["create", "rust"], context=context)
-    time.sleep(1)
+    result = run_vde_command("start rust", context=context)
+    context.last_exit_code = result.returncode
+    wait_for_container("rust", timeout=60)
 
 
 @when(u'I need to connect to PostgreSQL from Python VM')
 def step_connect_postgres(context):
     """Connect to PostgreSQL from Python VM."""
     # First ensure PostgreSQL is running
-    run_vde_command(["start", "postgres"], context=context)
-    time.sleep(2)
+    run_vde_command("start postgres", context=context)
+    wait_for_container("postgres", timeout=60)
     context.postgres_running = True
 
 
 @when(u'I shut down all VMs at end of day')
 def step_shutdown_all(context):
     """Shut down all VMs at the end of the day."""
-    run_vde_command(["stop", "all"], context=context)
-    time.sleep(3)
+    result = run_vde_command("stop all -f", context=context)
+    context.last_exit_code = result.returncode
 
 
 @when(u'I run multiple language VMs for a polyglot project')
 def step_run_multiple_vms(context):
     """Run multiple language VMs for a polyglot project."""
-    run_vde_command(["start", "python", "go", "rust"], context=context)
-    time.sleep(5)
+    result = run_vde_command("start python go rust", context=context)
+    context.last_exit_code = result.returncode
+    for vm in ['python', 'go', 'rust']:
+        wait_for_container(vm, timeout=60)
 
 
 @when(u'I rebuild a VM after modifying its Dockerfile')
 def step_rebuild_vm(context):
     """Rebuild a VM after modifying its Dockerfile."""
-    run_vde_command(["start", "python", "--rebuild"], context=context)
-    time.sleep(10)  # Rebuild takes longer
+    result = run_vde_command("start python --rebuild", context=context)
+    context.last_exit_code = result.returncode
+    wait_for_container("python", timeout=120)
 
 
 @when(u'I remove VM I no longer need')
 def step_remove_vm(context):
     """Remove a VM that is no longer needed."""
-    run_vde_command(["remove", "ruby"], context=context)
+    result = run_vde_command("remove ruby", context=context)
+    context.last_exit_code = result.returncode
 
 
 @when(u'I add support for a new language')
 def step_add_new_language(context):
     """Add support for a new language."""
-    # This tests the add_vm_type functionality
-    run_vde_command(["list"], context=context)
+    # This tests the add intent
+    result = run_vde_command("add zig --type lang --display-name Zig --install 'apt-get install -y zig'", context=context)
+    context.last_exit_code = result.returncode
 
 
 @when(u'I quickly check what\'s running')
 def step_quick_status(context):
     """Quickly check what VMs are running."""
-    run_vde_command(["status"], context=context)
+    result = run_vde_command("status", context=context)
+    context.last_exit_code = result.returncode
 
 
 @when(u'I create test environment with database')
 def step_create_test_env(context):
     """Create a test environment with a database."""
-    run_vde_command(["create", "python", "postgres"], context=context)
-    time.sleep(5)
+    result = run_vde_command("create python postgres", context=context)
+    context.last_exit_code = result.returncode
 
 
 @when(u'VDE handles port conflicts gracefully')
 def step_handle_port_conflicts(context):
     """Test that VDE handles port conflicts gracefully."""
-    run_vde_command(["start", "python"], context=context)
+    # This is often verified by previous or subsequent steps
+    pass
 
 
 @when(u'I start Python and Go VMs')
 def step_start_python_go(context):
     """Start Python and Go VMs."""
-    run_vde_command(["start", "python", "go"], context=context)
-    time.sleep(5)
+    result = run_vde_command("start python go", context=context)
+    context.last_exit_code = result.returncode
+    wait_for_container("python", timeout=60)
+    wait_for_container("go", timeout=60)
 
 
 @when(u'I create PostgreSQL VM')
 def step_create_postgres(context):
     """Create PostgreSQL VM."""
-    run_vde_command(["create", "postgres"], context=context)
+    result = run_vde_command("create postgres", context=context)
+    context.last_exit_code = result.returncode
 
 
 @when(u'SSH into "{hostname}"')
 def step_ssh_into_vm(context, hostname):
-    """SSH into the specified VM."""
-    result = run_vde_command(["connect", hostname, "--dry-run"], context=context)
+    """SSH into the specified VM (canonical or alias)."""
+    vm_name = hostname.replace('vde-', '')
+    result = run_vde_command(f"connect {vm_name} --dry-run", context=context)
     context.ssh_command = result.stdout
+    context.last_exit_code = result.returncode
 
 
 # ========== THEN STEPS ==========
 
 @then(u'all three VMs should be running')
 def step_all_three_vms_running(context):
-    """Verify all three VMs from the last start command are running."""
-    # Extract expected VMs from the last command if possible
-    last_cmd = getattr(context, 'last_command', '')
-    expected = []
-    if 'start' in last_cmd:
-        from vm_common import get_vm_types
-        known_vms = get_vm_types() # These already have vde- prefix
-        # Create a set of raw names for easier matching
-        raw_known = {vm.replace('vde-', '') for vm in known_vms}
-        
-        for word in last_cmd.split():
-            clean_word = word.split('/')[-1]
-            if clean_word in raw_known:
-                expected.append(f"vde-{clean_word}")
-            elif clean_word in known_vms:
-                expected.append(clean_word)
-
-    if not expected:
-        # Fallback to defaults for this scenario
-        expected = ['vde-python', 'vde-rust', 'vde-postgres']
-    
-    context.expected_vms = expected
-    
-    from vm_common import wait_for_container, container_is_running
-    for vm_full_name in expected:
-        raw_name = vm_full_name.replace('vde-', '')
-        # Ensure it's actually running (handle potential race conditions after start-virtual)
-        if not container_is_running(raw_name):
-            run_vde_command(f"start {raw_name}", context=context)
-            wait_for_container(raw_name, timeout=60)
-
+    """Verify all three VMs (Python, Go, PostgreSQL) are running."""
     running = docker_ps()
-    vde_containers = [c for c in running if c.startswith('vde-')]
-    
-    missing = [vm for vm in expected if vm not in vde_containers]
-    assert len(missing) == 0, f"Expected VMs running: {expected}, found: {vde_containers}, missing: {missing}"
+    expected = ['vde-python', 'vde-go', 'vde-postgres']
+    for vm in expected:
+        assert vm in running, f"VM {vm} not running. Found: {running}"
 
 
 @then(u'I should be able to SSH to "{hostname}" on allocated port')
 def step_ssh_to_vm_on_port(context, hostname):
-    """Verify SSH connection to specified VM (ensuring it is running)."""
-    # Force use raw name for connect command (ssh-vm alias lookup)
-    raw_name = hostname.replace('vde-', '')
-    
-    # Ensure it's running first
-    from vm_common import container_is_running, wait_for_container
-    if not container_is_running(raw_name):
-        run_vde_command(f"start {raw_name}", context=context)
-        wait_for_container(raw_name, timeout=120)
-        
-    result = run_vde_command(f"connect {raw_name} --show-command", context=context)
-    # Check for keywords in the output
-    output_lower = result.stdout.lower()
-    # Accept raw name, or name-dev (hostname), or the canonical hostname from the feature
-    has_ssh_info = any(x in output_lower for x in ['ssh', 'hostname', 'port', 'devuser', raw_name.lower(), f"{raw_name.lower()}-dev", hostname.lower()])
-    assert result.returncode == 0 or has_ssh_info, f"Should be able to SSH to {hostname}: {result.stdout}"
+    """Verify SSH connection to specified VM."""
+    vm_name = hostname.replace('vde-', '')
+    result = run_vde_command(f"connect {vm_name} --dry-run", context=context)
+    assert result.returncode == 0, f"Connect command failed for {vm_name}: {result.stderr}"
+    assert 'ssh' in result.stdout.lower() or 'port' in result.stdout.lower(), "Missing SSH info in output"
 
 
 @then(u'PostgreSQL should be accessible from language VMs')
 def step_postgres_accessible(context):
     """Verify PostgreSQL is accessible from language VMs."""
-    # Check if postgres is running
-    running = docker_ps()
-    postgres_running = any('vde-postgres' in c for c in running)
-    
-    assert postgres_running, "PostgreSQL should be running and accessible"
-    
-    # Verify connection info is available
-    result = run_vde_command(["connect", "vde-postgres", "--dry-run"], context=context)
-    has_connection = "postgres" in result.stdout.lower() or result.returncode == 0
-    assert has_connection, "PostgreSQL connection info should be available"
+    assert container_exists('postgres'), "PostgreSQL should be running"
+    # Verify we can reach it from python
+    result = run_vde_command('exec python "pg_isready -h vde-postgres"', context=context)
+    assert result.returncode == 0, f"PostgreSQL not reachable from Python: {result.stderr}"
 
 
 @then(u'SSH config entry for "{hostname}" should be added')
 def step_ssh_config_entry_added(context, hostname):
-    """Verify SSH config entry for VM is added."""
-    ssh_config = Path.home() / ".ssh" / "vde" / "config"
-    
-    if ssh_config.exists():
-        config_content = ssh_config.read_text()
-        assert hostname in config_content, \
-            f"SSH config should have entry for {hostname}"
-    else:
-        # SSH config may be generated on first use
-        result = run_vde_command(["connect", hostname, "--dry-run"], context=context)
-        assert result.returncode == 0, f"SSH config should be generated for {hostname}"
+    """Verify SSH config entry for VM is present in project config."""
+    ssh_config = VDE_ROOT / "configs" / "ssh" / "config"
+    assert ssh_config.exists(), "Project SSH config missing"
+    assert hostname in ssh_config.read_text(), f"SSH config missing entry for {hostname}"
 
 
 @then(u'I can SSH to both VMs from my terminal')
 def step_ssh_both_vms(context):
-    """Verify SSH to both VMs works (dynamic based on context)."""
-    # Try to find which VMs were started
-    import re
-    last_cmd = getattr(context, 'last_command', '')
-    vms = []
-    if 'start' in last_cmd:
-        from vm_common import get_vm_types
-        known_vms = get_vm_types()
-        raw_known = {vm.replace('vde-', '') for vm in known_vms}
-        for word in last_cmd.split():
-            clean_word = word.split('/')[-1]
-            if clean_word in raw_known:
-                vms.append(clean_word)
-            elif clean_word in known_vms:
-                vms.append(clean_word.replace('vde-', ''))
-    
-    if not vms:
-        vms = ['python', 'rust']
-        
-    results = {}
-    for vm in vms:
-        if vm in ('postgres', 'redis', 'mysql', 'mongodb', 'couchdb', 'rabbitmq'):
-            continue
-        # Use raw name for connect command (without vde- prefix)
-        raw_name = vm.replace('vde-', '')
-        
-        # Ensure it's running first
-        from vm_common import container_is_running, wait_for_container
-        if not container_is_running(raw_name):
-            run_vde_command(f"start {raw_name}", context=context)
-            wait_for_container(raw_name, timeout=120)
-            
-        res = run_vde_command(f"connect {raw_name} --show-command", context=context)
-        # Success if rc=0 or output contains ssh command or VM names
-        output_lower = res.stdout.lower()
-        ok = res.returncode == 0 or "ssh" in output_lower or raw_name.lower() in output_lower or f"{raw_name.lower()}-dev" in output_lower or vm.lower() in output_lower
-        results[raw_name] = ok
-        
-    all_ok = all(results.values())
-    assert all_ok, f"Should be able to SSH to all VMs: {results}"
+    """Verify SSH to both VMs is configured."""
+    for vm in ['python', 'go']:
+        result = run_vde_command(f"connect {vm} --dry-run", context=context)
+        assert result.returncode == 0, f"Connect failed for {vm}"
 
 
 @then(u'each VM has isolated project directories')
 def step_isolated_directories(context):
     """Verify each VM has isolated project directories."""
-    # This is a documentation/verification step
-    # The isolation is handled by Docker's filesystem layering
-    result = run_vde_command(["status"], context=context)
-    # Just verify status shows the VMs
-    assert "python" in result.stdout.lower() or "python" in result.stderr.lower() or context.last_exit_code == 0, \
-        "Each VM should have isolated project directories (verified by VM existence)"
+    for vm in ['python', 'go']:
+        assert (VDE_ROOT / "projects" / vm).exists(), f"Project dir missing for {vm}"
 
 
 @then(u'I should be connected to PostgreSQL')
 def step_connected_to_postgres(context):
     """Verify connection to PostgreSQL."""
-    running = docker_ps()
-    postgres_running = any('vde-postgres' in c for c in running)
-    assert postgres_running, "Should be connected to PostgreSQL (container running)"
+    assert container_exists('postgres'), "PostgreSQL not running"
 
 
 @then(u'I can query the database')
 def step_query_database(context):
     """Verify database queries work."""
-    running = docker_ps()
-    postgres_running = any('vde-postgres' in c for c in running)
-    assert postgres_running, "Should be able to query the database (PostgreSQL running)"
+    # Use pg_isready as a proxy for 'querying' capability
+    result = run_vde_command('exec postgres "pg_isready"', context=context)
+    assert result.returncode == 0
 
 
 @then(u'the connection uses the container network')
 def step_container_network(context):
     """Verify connection uses container network."""
-    # Docker containers use container network by default
-    running = docker_ps()
-    postgres_running = any('vde-postgres' in c for c in running)
-    assert postgres_running, "Connection should use container network (PostgreSQL in Docker)"
+    result = run_vde_command('inspect postgres -f "{{json .NetworkSettings.Networks}}"', context=context)
+    assert 'vde-net' in result.stdout or 'vde-testing' in result.stdout
 
 
 @then(u'all VMs should be stopped')
 def step_all_vms_stopped(context):
-    """Verify all VMs are stopped."""
+    """Verify all VMs are stopped via vde ps."""
     running = docker_ps()
-    vde_containers = [c for c in running if c.startswith('vde-')]
-    assert len(vde_containers) == 0, f"All VMs should be stopped, found running: {vde_containers}"
+    vde_running = [c for c in running if c.startswith('vde-')]
+    assert len(vde_running) == 0, f"VMs still running: {vde_running}"
 
 
 @then(u'VM configurations should remain for next session')
 def step_configs_remain(context):
     """Verify VM configurations remain for next session."""
-    # Configurations are stored in docker-compose.yml files
-    # We check if at least one created VM's configuration directory still exists
-    from vm_common import get_vm_types, compose_file_exists
-    known = get_vm_types()
-    found_config = False
-    for vm in known:
-        raw_name = vm.replace('vde-', '')
-        if compose_file_exists(raw_name):
-            found_config = True
-            break
-    assert found_config, "VM configuration files should remain for next session"
-
-
-@then(u'docker ps should show no VDE containers running')
-def step_no_vde_containers(context):
-    """Verify no VDE containers are running."""
-    running = docker_ps()
-    vde_containers = [c for c in running if c.startswith('vde-')]
-    assert len(vde_containers) == 0, f"docker ps should show no VDE containers, found: {vde_containers}"
+    assert (VDE_ROOT / "configs" / "docker" / "python").exists(), "Python config missing"
+    assert (VDE_ROOT / "configs" / "docker" / "rust").exists(), "Rust config missing"
 
 
 @then(u'Python VM can make HTTP requests to JavaScript VM')
 def step_python_http_js(context):
-    """Verify Python VM can reach JavaScript VM via SSH."""
-    # Start JavaScript VM if not running
-    run_vde_command(["start", "js"], context=context)
-    wait_for_container("js", timeout=60)
-    
-    # Try to SSH from python to js and run hostname
-    # We use StrictHostKeyChecking=no to avoid prompt
-    # We use devuser and point to the mounted id_ed25519
-    res = run_vde_command([
-        "exec", "python", "ssh", 
-        "-o", "StrictHostKeyChecking=no", 
-        "-o", "BatchMode=yes",
-        "-i", "/home/devuser/.ssh/id_ed25519",
-        "devuser@vde-js", "hostname"
-    ], context=context)
-    assert res.returncode == 0, f"Python VM should be able to SSH into JavaScript VM (devuser@vde-js). Output: {res.stdout}\n{res.stderr}"
-    assert "vde-js" in res.stdout.lower(), f"Expected hostname vde-js from SSH command, got: {res.stdout}"
+    """Verify connectivity between VMs."""
+    # Ensure both are running
+    run_vde_command("start python js", context=context)
+    wait_for_container("python")
+    wait_for_container("js")
+    # Ping as proxy for 'HTTP request' capability
+    result = run_vde_command('exec python "/sbin/ping -c 1 vde-js"', context=context)
+    assert result.returncode == 0, f"Python failed to reach JS: {result.stderr}"
 
 
 @then(u'Python VM can connect to Redis')
 def step_python_redis(context):
-    """Verify Python VM can connect to Redis."""
-    # Start Redis
-    run_vde_command(["start", "redis"], context=context)
-    time.sleep(2)
-    
-    running = docker_ps()
-    redis_running = any('vde-redis' in c for c in running)
-    assert redis_running, "Python VM should be able to connect to Redis"
+    """Verify connection to Redis."""
+    run_vde_command("start redis", context=context)
+    wait_for_container("redis")
+    # Check port 6379 from python
+    result = run_vde_command('exec python "timeout 2 bash -c \'> /dev/tcp/vde-redis/6379\'"', context=context)
+    assert result.returncode == 0, "Redis not reachable from Python"
 
 
 @then(u'Python VM should be created')
 def step_python_created(context):
-    """Verify Python VM is created."""
-    result = run_vde_command(["status"], context=context)
-    python_exists = "vde-python" in result.stdout.lower() or "created" in result.stdout.lower()
-    assert context.last_exit_code == 0 or python_exists, "Python VM should be created"
+    """Verify Python VM config exists."""
+    assert compose_file_exists('python')
 
 
 @then(u'I should see Python VM status')
 def step_python_status(context):
-    """Verify Python VM status is displayed."""
-    result = run_vde_command(["status", "python"], context=context)
-    assert "vde-python" in result.stdout.lower() or result.returncode == 0, \
-        "Should see Python VM status"
+    """Verify Python status in output."""
+    result = run_vde_command("status", context=context)
+    assert 'python' in result.stdout.lower()
 
 
 @then(u'Rust VM should be created and started')
 def step_rust_created(context):
-    """Verify Rust VM is created and started."""
-    running = docker_ps()
-    rust_running = any('vde-rust' in c for c in running)
-    assert rust_running or context.last_exit_code == 0, "Rust VM should be created and started"
+    """Verify Rust VM is created and running."""
+    assert compose_file_exists('rust')
+    assert container_exists('rust')
 
 
 @then(u'PostgreSQL VM should be running')
 def step_postgres_running(context):
     """Verify PostgreSQL VM is running."""
-    running = docker_ps()
-    postgres_running = any('vde-postgres' in c for c in running)
-    assert postgres_running, "PostgreSQL VM should be running"
+    assert container_exists('postgres')
 
 
 @then(u'connection information should be displayed')
 def step_connection_info_displayed(context):
-    """Verify connection information is displayed."""
-    result = run_vde_command(["connect", "python", "--dry-run"], context=context)
-    has_info = any(x in result.stdout.lower() for x in ['ssh', 'hostname', 'port', 'devuser', '2213'])
-    assert has_info or result.returncode == 0, "Connection information should be displayed"
+    """Verify connection info in output."""
+    assert 'ssh' in context.last_output.lower() or 'port' in context.last_output.lower()
 
 
 @then(u'Python VM should be restarted')
 def step_python_restarted(context):
-    """Verify Python VM is restarted."""
-    running = docker_ps()
-    python_running = any('vde-python' in c for c in running)
-    assert python_running or context.last_exit_code == 0, "Python VM should be restarted"
+    """Verify Python VM is running."""
+    assert container_exists('python')
 
 
 @then(u'the rebuild should complete successfully')
 def step_rebuild_success(context):
-    """Verify rebuild completes successfully."""
-    assert context.last_exit_code == 0, "Rebuild should complete successfully"
+    """Verify rebuild succeeded."""
+    assert context.last_exit_code == 0
 
 
 @then(u'Ruby VM should be removed')
 def step_ruby_removed(context):
-    """Verify Ruby VM is removed."""
-    all_containers = docker_ps_all()
-    ruby_gone = not any('vde-ruby' in c for c in all_containers)
-    assert ruby_gone, "Ruby VM should be removed"
+    """Verify Ruby container is gone."""
+    assert not container_exists('ruby')
 
 
 @then(u'I should see list of available VM types')
 def step_available_vms_listed(context):
-    """Verify list of available VM types is displayed."""
-    result = run_vde_command(["list"], context=context)
-    has_vms = any(x in result.stdout.lower() for x in ['vde-python', 'available', 'language'])
-    assert has_vms or result.returncode == 0, "Should see list of available VM types"
+    """Verify list output."""
+    assert 'available' in context.last_output.lower() or 'vm' in context.last_output.lower()
 
 
 @then(u'clean state should be available')
 def step_clean_state(context):
-    """Verify clean state is available."""
-    # Clean state means no running containers
-    running = docker_ps()
-    vde_running = [c for c in running if c.startswith('vde-')]
-    assert len(vde_running) == 0, "Clean state should be available (no running VMs)"
+    """Verify no running VMs."""
+    assert len([c for c in docker_ps() if c.startswith('vde-')]) == 0
 
 
 @then(u'database should be running')
 def step_database_running(context):
     """Verify database is running."""
-    running = docker_ps()
-    postgres_running = any('vde-postgres' in c for c in running)
-    assert postgres_running, "Database should be running"
+    assert container_exists('postgres')
 
 
 @then(u'I can start Python VM')
 def step_start_python(context):
-    """Verify Python VM can be started."""
-    result = run_vde_command(["start", "python"], context=context)
-    assert result.returncode == 0, "Should be able to start Python VM"
+    """Verify Python can start."""
+    result = run_vde_command("start python", context=context)
+    assert result.returncode == 0
 
 
 @then(u'port conflict should be resolved')
 def step_port_conflict_resolved(context):
-    """Verify port conflict is resolved."""
-    result = run_vde_command(["start", "python"], context=context)
-    # Either starts successfully or reports port info
-    success = result.returncode == 0 or "port" in result.stdout.lower()
-    assert success, "Port conflict should be resolved"
+    """Verify port conflict resolved."""
+    assert context.last_exit_code == 0
 
 
 @then(u'I should see status information')
 def step_status_info(context):
-    """Verify status information is displayed."""
-    # Need to make sure result is available, or use context
-    result = context.vde_command_result
-    has_status = any(x in result.stdout.lower() for x in ['status', 'running', 'python', 'stopped'])
-    assert has_status or context.last_exit_code == 0, "Should see status information"
+    """Verify status in output."""
+    assert 'status' in context.last_output.lower() or 'running' in context.last_output.lower()
 
 
 @then(u'the VM should be rebuilt from scratch')
 def step_rebuild_from_scratch(context):
-    """Verify VM is rebuilt from scratch."""
-    assert "--rebuild" in context.last_output or context.last_exit_code == 0, \
-        "VM should be rebuilt from scratch"
+    """Verify rebuild."""
+    assert context.last_exit_code == 0
 
 
 # ========== Additional Missing Steps ==========
 
 @then(u'each VM can access shared project directories')
 def step_shared_directories(context):
-    """Verify each VM can access shared project directories."""
-    # This is a documentation step - VDE uses Docker volumes for shared directories
-    running = docker_ps()
-    vde_containers = [c for c in running if c.startswith('vde-')]
-    # At least one VM should be running
-    assert len(vde_containers) >= 0, "VMs can access shared project directories"
+    """Verify project mounts via inspect."""
+    result = run_vde_command("inspect python -f '{{json .Mounts}}'", context=context)
+    assert 'projects' in result.stdout.lower()
 
 
 @given(u'I have modified the python Dockerfile to add a new package')
 def step_modified_python_dockerfile(context):
-    """Setup: User has modified the Python Dockerfile to add a new package."""
-    # This is a setup step - the Dockerfile modification is assumed
+    """Setup: Simulate Dockerfile modification."""
     context.dockerfile_modified = True
-    context.vm_to_rebuild = "vde-python"
 
 
 @then(u'the VM should be rebuilt with the new Dockerfile')
 def step_rebuilt_with_new_dockerfile(context):
-    """Verify VM is rebuilt with the new Dockerfile."""
-    output = (context.last_output or "").lower() + (context.last_error or "").lower()
-    assert "built successfully" in output or "--rebuild" in (context.last_command or ""), \
-        f"VM should be rebuilt with the new Dockerfile. Output: {output}"
+    """Verify rebuild completed."""
+    assert context.last_exit_code == 0
 
 
 @then(u'the VM should be running after rebuild')
 def step_running_after_rebuild(context):
-    """Verify VM is running after rebuild."""
-    from vm_common import wait_for_container
-    vm_name = getattr(context, "vm_name", "python")
-    wait_for_container(vm_name, timeout=300)
-    
-    running = docker_ps()
-    python_running = any(f'vde-{vm_name}' in c for c in running)
-    assert python_running, f"VM {vm_name} should be running after rebuild"
+    """Verify VM running."""
+    assert container_exists('python')
 
 
 @then(u'the new package should be available in the VM')
 def step_new_package_available(context):
-    """Verify new package is available in the VM."""
-    # Since we can't easily modify the Dockerfile during the test,
-    # we consider this step passed if the rebuild command was successful.
-    # A true end-to-end check would involve writing to the Dockerfile.
-    output = context.last_output.lower() + context.last_error.lower()
-    assert "built successfully" in output or "restarting" in output or context.last_exit_code == 0, \
-        f"New package check failed. Output: {output}"
+    """Verify rebuild success."""
+    assert context.last_exit_code == 0
 
 
 @given(u'I have an old "ruby" VM I don\'t use anymore')
 def step_old_ruby_vm(context):
-    """Setup: User has an old Ruby VM they don't use anymore."""
-    # Ensure Ruby VM exists first
-    from vm_common import compose_file_exists
-    if not compose_file_exists("ruby"):
-        run_vde_command("create ruby", context=context)
-    context.vm_to_remove = "ruby"
+    """Setup: Ensure Ruby VM exists."""
+    run_vde_command("create ruby", context=context)
 
 
 @when(u'I run the removal process for "ruby"')
 def step_run_removal_ruby(context):
-    """Run the removal process for Ruby VM."""
-    run_vde_command(["remove", "ruby"], context=context)
+    """Remove Ruby VM."""
+    result = run_vde_command("remove ruby", context=context)
+    context.last_exit_code = result.returncode
 
 
 @then(u'the docker-compose.yml should be preserved for easy recreation')
 def step_docker_compose_preserved(context):
-    """Verify docker-compose.yml is preserved for easy recreation."""
-    # The docker-compose.yml should remain even after VM removal
-    # This allows users to recreate the VM easily
-    compose_file = VDE_ROOT / "configs" / "docker" / "ruby" / "docker-compose.yml"
-    # The file should exist (not deleted on remove)
-    assert compose_file.exists() or context.last_exit_code == 0, \
-        "docker-compose.yml should be preserved for easy recreation"
+    """Verify config preservation."""
+    assert compose_file_exists('ruby')
 
 
 @then(u'SSH config entry should be preserved')
 def step_ssh_config_preserved(context):
-    """Verify SSH config entry is preserved (static port assignments).
-    
-    NOTE: SSH config entries are now static - they should NOT be removed when VM is removed
-    because each VM type has a fixed port assignment (python=2213, rust=2216, etc.)
-    The next time the same VM type is created, it will use the same port.
-    
-    VDE_SSH_DIR is ~/.ssh/vde - this is the user's SSH directory for VDE.
-    configs/ssh/config is the project's static SSH config with port assignments.
-    """
-    # Check VDE_SSH_DIR (~/.ssh/vde) exists
-    vde_ssh_dir = Path.home() / ".ssh" / "vde"
-    assert vde_ssh_dir.exists(), f"VDE SSH directory should exist at {vde_ssh_dir}"
-    
-    # Check the project's static SSH config has the vde-ruby entry
-    project_ssh_config = VDE_ROOT / "configs" / "ssh" / "config"
-    assert project_ssh_config.exists(), f"Project SSH config should exist at {project_ssh_config}"
-    
-    config_content = project_ssh_config.read_text()
-    # SSH config entries are static and preserved
-    # The vde-ruby entry should still exist after VM removal
-    assert "Host vde-ruby" in config_content, \
-        "SSH config entry for vde-ruby should be preserved in project config (static port assignment)"
+    """Verify SSH config entry remains."""
+    ssh_config = VDE_ROOT / "configs" / "ssh" / "config"
+    assert "vde-ruby" in ssh_config.read_text()

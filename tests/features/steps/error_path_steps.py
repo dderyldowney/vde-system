@@ -6,15 +6,13 @@ import os
 from behave import given, when, then
 from pathlib import Path
 
-VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR",
-    str(Path(__file__).parent.parent.parent.parent)))
-
+# Import shared configuration
+from vm_common import VDE_ROOT, run_vde_command
 
 def run_vde(args, timeout=30):
-    """Run a VDE command and return result."""
-    cmd = [str(VDE_ROOT / 'bin' / 'vde')] + args
-    return subprocess.run(cmd, capture_output=True, text=True,
-                         timeout=timeout, cwd=str(VDE_ROOT))
+    """Run a VDE command via unified vde script."""
+    cmd = ' '.join(args)
+    return run_vde_command(cmd, timeout=timeout)
 
 
 @given('the VDE system is available')
@@ -72,7 +70,7 @@ def step_list_vms(context):
 @when('I try to create a VM with an empty name')
 def step_create_empty_name(context):
     """Try to create VM with empty name."""
-    result = run_vde(['create', ''])
+    result = run_vde(['create', '""'])
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
@@ -80,11 +78,8 @@ def step_create_empty_name(context):
 
 @when('I parse an empty string')
 def step_parse_empty(context):
-    """Parse empty string through parser."""
-    result = subprocess.run(
-        ['zsh', '-c', f'source {context.parser_path} && parse_intent ""'],
-        capture_output=True, text=True, timeout=10, cwd=str(VDE_ROOT)
-    )
+    """Parse empty string through parser via vde ask."""
+    result = run_vde_command('ask ""', timeout=10)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
@@ -92,11 +87,8 @@ def step_parse_empty(context):
 
 @when('I parse gibberish text "{text}"')
 def step_parse_gibberish_text(context, text):
-    """Parse gibberish text through parser."""
-    result = subprocess.run(
-        ['zsh', '-c', f'source {context.parser_path} && parse_intent "{text}"'],
-        capture_output=True, text=True, timeout=10, cwd=str(VDE_ROOT)
-    )
+    """Parse gibberish text through parser via vde ask."""
+    result = run_vde_command(f'ask "{text}"', timeout=10)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
@@ -114,7 +106,7 @@ def step_check_missing_config(context):
 def step_command_fails(context):
     """Verify command failed."""
     assert context.last_exit_code != 0, \
-        f"Expected non-zero exit code, got {context.last_exit_code}"
+        f"Expected non-zero exit code, got {context.last_exit_code}. Output: {context.last_output}"
 
 
 @then('the error output should contain useful information')

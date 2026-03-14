@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# scripts/generate_video.sh
+# bin/generate_video.sh
 # Usage: ./generate_video.sh <output_path> [tape_commands...]
 # If tape_commands are not provided, it reads from stdin.
 

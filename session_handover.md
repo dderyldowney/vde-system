@@ -16,7 +16,7 @@ Previous sessions resolved critical performance hangs and stability issues in th
 - Parser stability: `extract_vm_names` rewritten as pure Zsh array loop
 - Docker safety: `vde.managed=true` label on all templates; label-filtered cleanup everywhere
 - Integration tests: 79/79 passing; Behave: 240/240 passing
-- Test infrastructure: promoted helper step files; fixed stale `scripts/` paths → `lib/`/`bin/`
+- Test infrastructure: promoted helper step files; fixed stale `bin/` paths → `lib/`/`bin/`
 
 ## Current Session Work (2026-03-11 — Test Infrastructure Fixes)
 
@@ -107,7 +107,7 @@ Previous sessions resolved critical performance hangs and stability issues in th
 - Added @core-suite tags to 4 target feature files
 - Copied feature files to tests/features/core-infrastructure/
 - Added student-focused Daily Workflow section to USER_GUIDE.md (Section 9)
-- Fixed generate_user_guide.py path: scripts/data/vm-types.conf → data/vm-types.conf
+- Fixed generate_user_guide.py path: bin/data/vm-types.conf → data/vm-types.conf
 - Now parses 21 language VMs and 7 service VMs correctly
 
 ### Test Results
@@ -123,7 +123,7 @@ Deferred step files are in tests/features/steps/deferred/ but not loaded by beha
 
 ### Files Modified
 
-- tests/scripts/generate_user_guide.py - Fixed path
+- tests/bin/generate_user_guide.py - Fixed path
 - docs/user-guide-intros.yml - Added student Daily Workflow content
 - USER_GUIDE.md - Regenerated with 106 scenarios
 - MEMORY.md - Updated
@@ -134,7 +134,7 @@ Deferred step files are in tests/features/steps/deferred/ but not loaded by beha
 
 Two parallel goals:
 
-1. **User Guide generation** via `tests/scripts/generate_user_guide.py` from `@user-guide-*` tagged scenarios
+1. **User Guide generation** via `tests/bin/generate_user_guide.py` from `@user-guide-*` tagged scenarios
 2. **Mainline deferred tests** — promote minimum needed from `tests/features/deferred/` into core suite
 
 ### Phase 1: Orphaned Step Audit — COMPLETE

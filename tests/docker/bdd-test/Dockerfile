@@ -29,13 +29,16 @@ RUN pip install --no-cache-dir \
 WORKDIR /vde
 
 # Copy VDE scripts and libraries needed for testing
-COPY scripts/ /vde/scripts/
+COPY bin/ /vde/bin/
+COPY lib/ /vde/lib/
+COPY data/ /vde/data/
+COPY templates/ /vde/templates/
 COPY tests/ /vde/tests/
 COPY configs/ /vde/configs/
 COPY env-files/ /vde/env-files/
 
 # Make scripts executable
-RUN find /vde/scripts -name "*.sh" -exec chmod +x {} \; && \
+RUN find /vde/bin -type f -exec chmod +x {} \; && \
     find /vde/tests -name "*.sh" -exec chmod +x {} \;
 
 # Create necessary directories
@@ -51,7 +54,7 @@ COPY tests/behave.ini /vde/tests/behave.ini
 ENV PYTHONUNBUFFERED=1
 ENV VDE_ROOT_DIR=/vde
 ENV VDE_TEST_MODE=1
-ENV PATH="/vde/scripts:/vde/tests:${PATH}"
+ENV PATH="/vde/bin:/vde/tests:${PATH}"
 
 # Default command runs behave
 CMD ["behave", "--format", "pretty", "--format", "json", "--outfile", "/tmp/behave-report.json"]

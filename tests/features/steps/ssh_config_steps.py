@@ -656,7 +656,7 @@ def step_run_vde_command_requires_ssh(context):
 
     # Normal path: initialise SSH agent via the setup script
     result = subprocess.run(
-        ["./bin/ssh-agent-setup", "--init"],
+        ["./bin/vde", "ssh-setup", "--init"],
         capture_output=True, text=True, cwd=str(VDE_ROOT)
     )
 
