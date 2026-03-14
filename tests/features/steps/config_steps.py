@@ -1057,7 +1057,7 @@ def step_reload_vm_types(context):
     context.vm_type_count = len(lines)
 
 
-@then('each should have separate data directory')
+@then('each VM type should have its own separate configuration directory')
 def step_separate_data_directories(context):
     """Verify each VM type has its own config directory with docker-compose.yml."""
     configs_dir = VDE_ROOT / 'configs' / 'docker'

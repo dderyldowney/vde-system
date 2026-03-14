@@ -1,15 +1,17 @@
 {
-  "timestamp": "20260202-005456",
+  "timestamp": "20260314-004017",
   "phases": {
     "docker_free": "FAIL",
     "unit": "PASS",
     "integration": "PASS",
+    "core_infra": "FAIL",
     "docker_required": "FAIL"
   },
   "logs": {
-    "docker_free": "test-logs/docker-free-20260202-005456.log",
-    "unit": "test-logs/unit-20260202-005456.log",
-    "integration": "test-logs/integration-20260202-005456.log",
-    "docker_required": "test-logs/docker-required-20260202-005456.log"
+    "docker_free": "test-logs/docker-free-20260314-004017.log",
+    "unit": "test-logs/unit-20260314-004017.log",
+    "integration": "test-logs/integration-20260314-004017.log",
+    "core_infra": "test-logs/core-infra-20260314-004017.log",
+    "docker_required": "test-logs/docker-required-20260314-004017.log"
   }
 }
