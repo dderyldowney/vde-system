@@ -55,7 +55,7 @@ Feature: Automatic SSH Setup and Key Management
 
   Scenario: Viewing SSH status
     Given I have VDE configured
-    When I run "./scripts/ssh-agent-setup"
+    When I run "./bin/ssh-agent-setup"
     Then I should see the SSH agent status
     And I should see my available SSH keys
     And I should see keys loaded in the agent

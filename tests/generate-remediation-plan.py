@@ -110,7 +110,7 @@ class RemediationPlanGenerator:
                 'impact': 'Parser receives contaminated output, intent detection fails',
                 'fix': [
                     'Redirect DEBUG output in `_load_vm_types_from_config` to stderr',
-                    'Update parser script that loads `scripts/data/vm-types.conf`',
+                    'Update parser script that loads `bin/data/vm-types.conf`',
                     'Ensure all DEBUG/logging goes to stderr, not stdout'
                 ],
                 'files': ['Parser scripts that load VM types config'],

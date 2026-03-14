@@ -48,5 +48,5 @@ See [STYLE_GUIDE.md](../../STYLE_GUIDE.md) for complete coding standards includi
 /bin/zsh tests/unit/vde-shell-compat.test.sh
 
 # Verify zsh shebang compliance
-zsh ./scripts/check-zsh-shebang.zsh
+zsh ./bin/check-zsh-shebang.zsh
 ```

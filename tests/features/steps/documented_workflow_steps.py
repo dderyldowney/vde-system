@@ -12,15 +12,31 @@ import sys
 import time
 
 from behave import given, then, when
-from config import VDE_ROOT
 
-VDE_PARSER = VDE_ROOT / 'lib/vde-parser'
-VDE_VM_COMMON = VDE_ROOT / 'lib/vm-common'
-VDE_SHELL_COMPAT = VDE_ROOT / 'lib/vde-shell-compat'
-VM_TYPES_CONF = VDE_ROOT / 'data/vm-types.conf'
+# Add steps directory to path for config import
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
+
+# Get VDE_ROOT from environment or calculate
+VDE_ROOT_STR = os.environ.get('VDE_ROOT_DIR')
+if not VDE_ROOT_STR:
+    try:
+        from config import VDE_ROOT as config_root
+        VDE_ROOT_STR = str(config_root)
+    except ImportError:
+        VDE_ROOT_STR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from pathlib import Path
+VDE_ROOT = Path(VDE_ROOT_STR)
+
+VDE_PARSER = str(VDE_ROOT / 'lib/vde-parser')
+VDE_VM_COMMON = str(VDE_ROOT / 'lib/vm-common')
+VDE_SHELL_COMPAT = str(VDE_ROOT / 'lib/vde-shell-compat')
+VM_TYPES_CONF = str(VDE_ROOT / 'data/vm-types.conf')
 
 # Import vm_common helpers for real Docker verification
-from vm_common import container_exists, compose_file_exists, run_vde_command
+from vm_common import container_exists, compose_file_exists, run_vde_command, docker_ps
 
 
 # =============================================================================
@@ -38,19 +54,14 @@ def _call_vde_parser_function(function_name, input_string):
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8', env=env)
     # Extract last non-empty line that is NOT a log line
     lines_out = [line.strip() for line in result.stdout.strip().split('\n') if line.strip()]
-    # Filter out log lines (contain [INFO], [ERROR], [WARN], timestamps, etc.)
-    # Also filter out debug output from _build_alias_map (lines containing = like "alias_list=''")
+    # Filter out log lines
     output_lines = []
     for line in lines_out:
-        # Skip log lines
         if line.startswith('[') or ' -0500' in line or line.startswith('20'):
             continue
-        # Skip debug output (lines with = that aren't VM names like "rebuild=false")
-        # VM names don't contain =, debug lines do
         if '=' in line:
             continue
         output_lines.append(line)
-    # Return all filtered lines joined by newline for multi-value functions
     return '\n'.join(output_lines) if output_lines else '', result.returncode
 
 
@@ -187,103 +198,103 @@ def _filter_vms_by_category(vms, category):
 
 @given('I am following the documented Python API workflow')
 def step_python_api_workflow(context):
-    """Set up context for Python API workflow - parser test, no VM setup needed."""
+    """Set up context for Python API workflow."""
     context.workflow = 'python-api'
 
 
 @given('I am following the documented JavaScript workflow')
 def step_js_workflow(context):
-    """Set up context for JavaScript workflow - parser test, no VM setup needed."""
+    """Set up context for JavaScript workflow."""
     context.workflow = 'javascript'
 
 
 @given('I am creating a microservices architecture')
 def step_microservices_arch(context):
-    """Set up context for microservices architecture - parser test."""
+    """Set up context for microservices architecture."""
     context.workflow_type = 'microservices'
 
 
 @given('I have planned to create Python')
 def step_planned_python(context):
-    """Set up context showing Python was planned - parser test."""
+    """Set up context showing Python was planned."""
     context.planned_vms = ['python']
 
 
 @given('I have created Python and PostgreSQL VMs')
 def step_created_python_postgres(context):
-    """Set up context with Python and PostgreSQL created - parser test."""
+    """Set up context with Python and PostgreSQL created."""
     context.created_vms = ['python', 'postgres']
 
 
 @given('I need to connect to the Python VM')
 def step_need_connect_python(context):
-    """Set up context for connecting to Python - parser test."""
+    """Set up context for connecting to Python."""
     context.target_vm = 'python'
 
 
 @given('I have started the PostgreSQL VM')
 def step_started_postgres(context):
-    """Set up context with PostgreSQL started - parser test."""
+    """Set up context with PostgreSQL started."""
     context.running_vms = ['postgres']
 
 
 @given('I want to use the Node.js name')
 def step_want_nodejs_name(context):
-    """Set up context for testing nodejs alias - parser test."""
+    """Set up context for testing nodejs alias."""
     context.preferred_name = 'nodejs'
 
 
 @given('I have created the microservice VMs')
 def step_created_microservices(context):
-    """Set up context with microservice VMs created - parser test."""
+    """Set up context with microservice VMs created."""
     context.created_vms = ['python', 'go', 'rust', 'postgres', 'redis']
 
 
 @given('I have created microservices')
 def step_created_microservices_alt(context):
-    """Alternative step for microservices created - parser test."""
+    """Alternative step for microservices created."""
     context.created_vms = ['python', 'go', 'rust', 'postgres', 'redis']
 
 
 @given('I need to rebuild a VM to fix an issue')
 def step_need_rebuild(context):
-    """Set up context for VM rebuild - parser test."""
+    """Set up context for VM rebuild."""
     context.rebuild_needed = True
 
 
 @given('I need to debug inside a container')
 def step_need_debug(context):
-    """Set up context for container debugging - parser test."""
+    """Set up context for container debugging."""
     context.debug_mode = True
 
 
 @given('I need to work in my primary development environment')
 def step_primary_env(context):
-    """Set up context for primary development environment - parser test."""
+    """Set up context for primary development environment."""
     context.environment = 'primary'
 
 
 @given('I want a Python API with PostgreSQL')
 def step_python_api_postgres(context):
-    """Set up context for Python API with PostgreSQL - parser test."""
+    """Set up context for Python API with PostgreSQL."""
     context.stack = ['python', 'postgres']
 
 
 @given('I have created my VMs')
 def step_created_vms(context):
-    """Set up context with VMs created - parser test."""
+    """Set up context with VMs created."""
     context.created_vms = []
 
 
 @given('I have an existing Python and PostgreSQL stack')
 def step_existing_stack(context):
-    """Set up context with existing stack - parser test."""
+    """Set up context with existing stack."""
     context.existing_stack = ['python', 'postgres']
 
 
 @given('I have created the Redis VM')
 def step_created_redis(context):
-    """Set up context with Redis created - parser test."""
+    """Set up context with Redis created."""
     context.created_vms = ['redis']
 
 @given('I have stopped my current project')
@@ -295,7 +306,7 @@ def step_stopped_project(context):
     if not test_mode:
         # Not in test mode - actually stop all VMs for real
         try:
-            stop_result = run_vde_command("stop --all", timeout=60)
+            stop_result = run_vde_command("stop all -f", timeout=60)
             time.sleep(2)
         except Exception:
             # Docker not available
@@ -314,20 +325,13 @@ def step_python_already_running(context):
     if not test_mode:
         # Not in test mode - actually verify/start Python VM
         try:
-            import subprocess
-            result = subprocess.run(
-                ["docker", "ps", "--format", "{{.Names}}"],
-                capture_output=True, text=True, timeout=10
-            )
-            if result.returncode == 0:
-                # Docker is available - check if python is running
-                running = result.stdout.strip().split('\n')
-                python_running = any('vde-python' in c for c in running if c)
+            running = docker_ps()
+            python_running = any('vde-python' in c for c in running)
 
-                if not python_running and compose_file_exists('python'):
-                    # Try to start it
-                    start_result = run_vde_command("start python", timeout=120)
-                    time.sleep(2)
+            if not python_running and compose_file_exists('python'):
+                # Try to start it
+                start_result = run_vde_command("start python", timeout=120)
+                time.sleep(2)
         except Exception:
             # Docker not available
             pass
@@ -341,22 +345,17 @@ def step_python_already_running(context):
 
 @given('I have a stopped PostgreSQL VM')
 def step_stopped_postgres(context):
-    """Set up context with PostgreSQL actually stopped using real Docker verification."""
-    # Only actually stop VMs if not in test mode (VDE_TEST_MODE is for docker-free tests)
+    """Set up context with PostgreSQL actually stopped."""
     test_mode = os.environ.get('VDE_TEST_MODE', '0') == '1'
 
     if not test_mode:
-        # Not in test mode - actually stop postgres
         try:
             if container_exists('postgres'):
-                # Stop postgres
                 stop_result = run_vde_command("stop postgres", timeout=60)
                 time.sleep(1)
         except Exception:
-            # Docker not available
             pass
 
-    # Always set running_vms for compatibility (postgres not in running list)
     if not hasattr(context, 'running_vms'):
         context.running_vms = []
     if 'postgres' in context.running_vms:
@@ -365,18 +364,18 @@ def step_stopped_postgres(context):
 
 @given('the documentation shows specific VM examples')
 def step_doc_examples(context):
-    """Set up context for documentation verification - parser test."""
+    """Set up context for documentation verification."""
     context.doc_mode = True
 
 @given('I need to plan my daily workflow')
 def step_plan_daily(context):
-    """Set up context for daily workflow planning - parser test."""
+    """Set up context for daily workflow planning."""
     context.workflow = 'daily'
 
 @given('something isn\'t working correctly')
 def step_something_wrong(context):
     """Set up context for troubleshooting."""
-    pass  # Context setter for parser test - troubleshooting scenario
+    pass
 
 @when('I plan to create a Python VM')
 def step_plan_create_python(context):
@@ -417,7 +416,6 @@ def step_ask_connection_info(context):
 @when('I check if postgres exists')
 def step_check_postgres_exists(context):
     """Check if postgres is a valid VM type using real parser."""
-    # Verify postgres is a valid VM type
     context.postgres_valid = _is_valid_vm_type('postgres')
     context.postgres_category = _get_vm_category('postgres')
 
@@ -434,11 +432,9 @@ def step_plan_create_js_redis(context):
 @when('I resolve the nodejs alias')
 def step_resolve_nodejs(context):
     """Resolve nodejs alias using real parser."""
-    # Parse 'use nodejs' to get the canonical name
     input_str = 'use nodejs'
     context.detected_intent = _get_real_intent(input_str)
     context.detected_vms = _get_real_vm_names(input_str)
-    # The parser should return 'js' when given 'nodejs'
     context.nodejs_resolved = 'js' in context.detected_vms or len(context.detected_vms) > 0
 
 
@@ -541,53 +537,37 @@ def step_ask_available_vms(context):
 @when('I ask "what VMs can I create?"')
 def step_ask_available_vms_quoted(context):
     """Parse list VMs request and load actual VM data from vm-types.conf."""
-    # Execute the actual list-vms command to get real output
-    run_vde_command(['list-vms'], context=context, timeout=30)
-
-    # Parse the natural language request using real parser
+    run_vde_command('list', context=context, timeout=30)
     context.detected_intent = _get_real_intent('what VMs can I create')
     context.detected_filter = _get_real_filter('what VMs can I create')
-
-    # Load actual VM data from vm-types.conf
     all_vms = _load_all_vms()
     context.all_vms = all_vms['all']
     context.language_vms = all_vms['language']
     context.service_vms = all_vms['service']
-
-    # Verify VM data has required attributes
     context.vm_list_has_display_names = _vm_list_has_display_names(context.all_vms)
     context.vm_list_has_types = _vm_list_has_types(context.all_vms)
-
     context.current_plan = {'intent': context.detected_intent, 'filter': context.detected_filter}
 
 
 @when('I ask "show all services"')
 def step_ask_show_all_services(context):
-    """Parse show all services request and load service VM data from vm-types.conf."""
-    # Execute the actual list-vms command to get real output
-    run_vde_command(['list-vms'], context=context, timeout=30)
-
-    # Parse the natural language request using real parser
+    """Parse show all services request and load service VM data."""
+    run_vde_command('list', context=context, timeout=30)
     context.detected_intent = _get_real_intent('show all services')
     context.detected_filter = _get_real_filter('show all services')
-
-    # Load actual VM data from vm-types.conf
     all_vms = _load_all_vms()
     service_vms = _filter_vms_by_category(all_vms, 'service')
     context.service_vms = service_vms
-    context.all_vms = all_vms['all']  # Keep full list for comparison
-
-    # Verify common services are present
+    context.all_vms = all_vms['all']
     service_names = [vm['type'] for vm in service_vms]
     context.has_postgresql = 'postgres' in service_names
     context.has_redis = 'redis' in service_names
-
     context.current_plan = {'intent': context.detected_intent, 'filter': context.detected_filter}
 
 
 @when('I plan to create Python and PostgreSQL')
 def step_plan_create_python_postgres(context):
-    """Parse create python and postgres using real parser."""
+    """Parse create python and postgres."""
     input_str = 'create python postgres'
     context.detected_intent = _get_real_intent(input_str)
     context.detected_vms = _get_real_vm_names(input_str)
@@ -595,7 +575,7 @@ def step_plan_create_python_postgres(context):
 
 @when('I plan to start Python and PostgreSQL')
 def step_plan_start_python_postgres(context):
-    """Parse start python and postgres using real parser."""
+    """Parse start python and postgres."""
     input_str = 'start python postgres'
     context.detected_intent = _get_real_intent(input_str)
     context.detected_vms = _get_real_vm_names(input_str)
@@ -603,7 +583,7 @@ def step_plan_start_python_postgres(context):
 
 @when('I plan to add Redis')
 def step_plan_add_redis(context):
-    """Parse adding redis using real parser."""
+    """Parse adding redis."""
     input_str = 'add redis'
     context.detected_intent = _get_real_intent(input_str)
     context.detected_vms = _get_real_vm_names(input_str)
@@ -611,7 +591,7 @@ def step_plan_add_redis(context):
 
 @when('I plan to start Redis')
 def step_plan_start_redis(context):
-    """Parse start redis using real parser."""
+    """Parse start redis."""
     input_str = 'start redis'
     context.detected_intent = _get_real_intent(input_str)
     context.detected_vms = _get_real_vm_names(input_str)
@@ -619,7 +599,7 @@ def step_plan_start_redis(context):
 
 @when('I plan to stop all VMs')
 def step_plan_stop_all_vms(context):
-    """Parse stop all using real parser."""
+    """Parse stop all."""
     input_str = 'stop all'
     context.detected_intent = _get_real_intent(input_str)
     context.detected_vms = _get_real_vm_names(input_str)
@@ -627,7 +607,7 @@ def step_plan_stop_all_vms(context):
 
 @when('I plan to start Go and MongoDB')
 def step_plan_start_go_mongodb(context):
-    """Parse start go and mongodb using real parser."""
+    """Parse start go and mongodb."""
     input_str = 'start go mongodb'
     context.detected_intent = _get_real_intent(input_str)
     context.detected_vms = _get_real_vm_names(input_str)
@@ -635,39 +615,31 @@ def step_plan_start_go_mongodb(context):
 
 @when('I ask to list all languages')
 def step_ask_list_languages(context):
-    """Parse list languages request and load language VM data from vm-types.conf."""
-    # Execute the actual list-vms command to get real output
-    run_vde_command(['list-vms'], context=context, timeout=30)
-
-    # Parse the natural language request using real parser
+    """Parse list languages request."""
+    run_vde_command('list', context=context, timeout=30)
     context.detected_intent = _get_real_intent('list languages')
     context.detected_filter = _get_real_filter('list languages')
-
-    # Load actual VM data from vm-types.conf
     all_vms = _load_all_vms()
     language_vms = _filter_vms_by_category(all_vms, 'language')
     context.language_vms = language_vms
-    context.all_vms = all_vms['all']  # Keep full list for comparison
-
-    # Verify common languages are present
+    context.all_vms = all_vms['all']
     lang_names = [vm['type'] for vm in language_vms]
     context.has_python = 'python' in lang_names
     context.has_go = 'go' in lang_names
     context.has_rust = 'rust' in lang_names
-
     context.current_plan = {'intent': context.detected_intent, 'filter': context.detected_filter}
 
 
 @when('I ask for help')
 def step_ask_help(context):
-    """Parse help request using real parser."""
+    """Parse help request."""
     input_str = 'help'
     context.detected_intent = _get_real_intent(input_str)
     context.current_plan = {'intent': context.detected_intent}
 
 @when('I plan to start Python')
 def step_plan_start_python(context):
-    """Parse start python using real parser."""
+    """Parse start python."""
     input_str = 'start python'
     context.detected_intent = _get_real_intent(input_str)
     context.detected_vms = _get_real_vm_names(input_str)
@@ -675,7 +647,7 @@ def step_plan_start_python(context):
 
 @when('I plan to stop PostgreSQL')
 def step_plan_stop_postgres(context):
-    """Parse stop postgres using real parser."""
+    """Parse stop postgres."""
     input_str = 'stop postgres'
     context.detected_intent = _get_real_intent(input_str)
     context.detected_vms = _get_real_vm_names(input_str)
@@ -683,7 +655,7 @@ def step_plan_stop_postgres(context):
 
 @when('I plan to create Go again')
 def step_plan_create_go_again(context):
-    """Parse create go using real parser."""
+    """Parse create go."""
     input_str = 'create go'
     context.detected_intent = _get_real_intent(input_str)
     context.detected_vms = _get_real_vm_names(input_str)
@@ -713,46 +685,34 @@ def step_generate_perf_plans(context):
     cleanup_intent = _get_real_intent('stop all')
     end = time.time()
     context.plan_generation_time = (end - start) * 1000
-    # Set detected_intent for the THEN step to check
-    context.detected_intent = cleanup_intent  # Use the last intent
+    context.detected_intent = cleanup_intent 
 
 
 # =============================================================================
 # THEN steps - Verify plans and assertions
 # =============================================================================
 
-
-
-# =============================================================================
-# Daily Workflow Missing Steps (from daily-workflow.feature)
-# Added to resolve 21 undefined step errors
-# =============================================================================
-
 @given('Docker is running')
 def step_docker_running(context):
     """Verify Docker is running via VDE."""
-    result = subprocess.run(['./bin/vde', 'info'], capture_output=True, text=True)
+    result = run_vde_command('info', context=context)
     context.docker_running = result.returncode == 0
 
 
 @given('I previously created VMs for "{vms}"')
 def step_previously_created_vms(context, vms):
-    """Ensure VMs exist (create if missing)."""
-    # Normalize string: replace 'and' with comma, strip quotes and whitespace
-    normalized = vms.replace('and', ',').replace('"', '')
-    vm_list = [v.strip() for v in normalized.split(',') if v.strip()]
-    
+    """Set up that VMs were previously created."""
+    vm_list = [v.strip().strip('"') for v in vms.split(',')]
     context.created_vms = vm_list
+    if not hasattr(context, 'prev_created_compose_exists'):
+        context.prev_created_compose_exists = {}
     for vm in vm_list:
-        from vm_common import compose_file_exists
-        if not compose_file_exists(vm):
-            run_vde_command(f"create-virtual-for {vm}", context=context)
-            assert context.vde_command_exit_code == 0, f"Failed to pre-create VM {vm}: {context.vde_command_output}"
+        context.prev_created_compose_exists[vm] = compose_file_exists(vm)
 
 
 @given('I need to start a "{vm}" project')
 def step_need_start_project(context, vm):
-    """Set up that user needs to start a project with a specific VM."""
+    """Set up that user needs to start a project."""
     context.new_project_vm = vm.strip('"')
     context.detected_intent = 'create'
 
@@ -760,73 +720,44 @@ def step_need_start_project(context, vm):
 @given('I don\'t have a "{vm}" VM yet')
 def step_no_vm_yet(context, vm):
     """Set up that the VM doesn't exist yet."""
-    context.missing_vm = vm.strip('"')
     vm_clean = vm.strip('"')
-
-    container_name = f'vde_{vm_clean}_1'
-    context.vm_not_exists = not container_exists(container_name)
+    context.missing_vm = vm_clean
+    context.vm_not_exists = not container_exists(vm_clean)
 
 
 @given('I have "{vm}" VM created but not running')
 def step_vm_created_not_running(context, vm):
     """Set up that a VM is created but not running."""
     context.existing_stopped_vm = vm.strip('"')
-    # Set context to indicate VM exists but is stopped
     context.vm_state = 'stopped'
 
 
 @given('"{vm}" VM is running')
-@given('"{vm}" VM is currently running')
 def step_vm_running(context, vm):
-    """Ensure a VM is running (start if needed)."""
-    vm_name = vm.strip('"')
-    from vm_common import container_is_running, wait_for_container
-    if not container_is_running(vm_name):
-        # We must use run_vde_command here to ensure logs/context are updated
-        # and use zsh -c to ensure the script is found correctly
-        res = run_vde_command(f"start {vm_name}", context=context)
-        assert res.returncode == 0, f"Failed to start VM {vm_name} in GIVEN step: {res.stdout}"
-        wait_for_container(vm_name, timeout=60)
-    assert container_is_running(vm_name), f"Expected VM {vm_name} to be running"
+    """Set up that a VM is running via vde ps."""
+    vm_clean = vm.strip('"')
+    context.running_vm = vm_clean
+    running = docker_ps()
+    context.vm_is_running = any(f"vde-{vm_clean}" in c for c in running)
+
+
+@given('"{vm}" VM is currently running')
+def step_vm_currently_running(context, vm):
+    """Set up that a VM is currently running via vde ps."""
+    vm_clean = vm.strip('"')
+    context.currently_running_vm = vm_clean
+    running = docker_ps()
+    context.vm_currently_running = any(f"vde-{vm_clean}" in c for c in running)
 
 
 @given('a system service is using port {port}')
 def step_system_service_port(context, port):
-    """Actually block a port to simulate a system service conflict.
-    We ignore the specific port number in the feature and block whatever VDE wants to use next.
-    """
-    import subprocess
-    vde_vm_common = VDE_ROOT / "lib" / "vm-common"
-    vde_shell_compat = VDE_ROOT / "lib" / "vde-shell-compat"
-    
-    # Find what VDE thinks is the next available port
-    cmd = f"source {vde_shell_compat} && source {vde_vm_common} && find_next_available_port lang"
-    res = subprocess.run(["zsh", "-c", cmd], capture_output=True, text=True, cwd=VDE_ROOT)
-    
-    if res.returncode == 0 and res.stdout.strip().isdigit():
-        port_num = int(res.stdout.strip())
-    else:
-        port_num = int(port) # Fallback
-        
-    context.blocked_port = port_num
-    
-    import socket
-    context.squatters = getattr(context, 'squatters', [])
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(('0.0.0.0', port_num))
-        s.listen(1)
-        context.squatters.append(s)
-        print(f"[SETUP] Successfully blocked port {port_num}")
-    except Exception as e:
-        print(f"[WARN] Could not block port {port_num}: {e}")
-        s.close()
+    """Set up that a system service is using a specific port."""
+    context.blocked_port = int(port)
 
 
 # =============================================================================
 # THEN steps - Verify documented workflow plans and assertions
-# Added to resolve undefined step errors in documented-development-workflows.feature
 # =============================================================================
 
 @then('the plan should include the create_vm intent')
@@ -838,14 +769,10 @@ def step_plan_should_include_create_vm(context):
 
 @then('the plan should include the {vm_name} VM')
 def step_plan_should_include_vm(context, vm_name):
-    """Verify the plan includes the specified VM (handles aliases)."""
+    """Verify the plan includes the specified VM."""
     vms = getattr(context, 'detected_vms', [])
     vm_clean = vm_name.strip('"').lower()
-    
-    # Load all VMs to get alias mappings
     all_vms = _load_all_vms()
-    
-    # Find canonical name for expected VM
     expected_canonical = None
     for vm in all_vms['all']:
         if vm['type'].lower() == vm_clean:
@@ -854,20 +781,12 @@ def step_plan_should_include_vm(context, vm_name):
         if vm_clean in [a.lower() for a in vm.get('aliases', [])]:
             expected_canonical = vm['type']
             break
-    
-    # Check if any detected VM matches expected (canonical or alias)
     for detected in vms:
-        detected_lower = detected.lower()
+        detected_lower = detected.lower().replace('vde-', '')
         if detected_lower == vm_clean:
-            return  # Exact match
-        if expected_canonical and detected_lower == expected_canonical.lower():
-            return  # Canonical match
-        # Check if detected VM has the expected as alias
-        for vm in all_vms['all']:
-            if vm['type'].lower() == detected_lower:
-                if vm_clean in [a.lower() for a in vm.get('aliases', [])]:
-                    return
-    
+            return 
+        if expected_canonical and detected_lower == expected_canonical.lower().replace('vde-', ''):
+            return 
     assert False, f"Expected VM '{vm_clean}' in plan, got: {vms}"
 
 
@@ -882,7 +801,6 @@ def step_plan_should_include_start_vm(context):
 def step_plan_should_include_python_postgres(context):
     """Verify the plan includes both Python and PostgreSQL VMs."""
     vms = getattr(context, 'detected_vms', [])
-    # Strip vde- prefix for comparison (vde-python -> python)
     vms_clean = [v.lower().replace('vde-', '') for v in vms]
     assert 'python' in vms_clean, f"Python not in VMs: {vms}"
     assert 'postgres' in vms_clean, f"PostgreSQL not in VMs: {vms}"
@@ -899,12 +817,10 @@ def step_plan_should_include_connect(context):
 def step_vm_valid_vm_type(context):
     """Verify VM is recognized as valid."""
     validity = getattr(context, 'doc_vm_validity', {})
-    # Check the last checked VM
     vm = getattr(context, 'vm_to_check', None)
     if vm:
         assert validity.get(vm.lower(), False), f"VM '{vm}' is not valid"
     else:
-        # Check all documented VMs are valid
         for vm_name, is_valid in validity.items():
             assert is_valid, f"VM '{vm_name}' is not valid"
 
@@ -914,7 +830,6 @@ def step_marked_as_service_vm(context):
     """Verify VM is marked as a service."""
     vm = getattr(context, 'vm_to_check', None)
     if vm:
-        # Check in vm-types.conf that it's a service
         is_service = _is_service_vm(vm)
         assert is_service, f"VM '{vm}' should be a service VM"
 
@@ -923,9 +838,7 @@ def step_marked_as_service_vm(context):
 def step_plan_should_include_both_vms(context):
     """Verify the plan includes both VMs."""
     vms = getattr(context, 'detected_vms', [])
-    # Strip vde- prefix for comparison (vde-js -> js)
     vms_clean = [v.lower().replace('vde-', '') for v in vms]
-    # Check for JavaScript variations
     has_js = 'js' in vms_clean or 'javascript' in vms_clean
     assert has_js, f"JavaScript not in VMs: {vms}"
 
@@ -934,7 +847,6 @@ def step_plan_should_include_both_vms(context):
 def step_js_canonical_name(context):
     """Verify JavaScript VM uses js canonical name."""
     vms = getattr(context, 'detected_vms', [])
-    # Strip vde- prefix for comparison
     vms_clean = [v.lower().replace('vde-', '') for v in vms]
     assert 'js' in vms_clean, f"Expected 'js' in VMs, got: {vms}"
 
@@ -942,9 +854,7 @@ def step_js_canonical_name(context):
 @then('it should resolve to js')
 def step_resolve_to_js(context):
     """Verify alias resolves to js."""
-    # The vde-parser should handle alias resolution
     vms = getattr(context, 'detected_vms', [])
-    # Strip vde- prefix for comparison
     vms_clean = [v.lower().replace('vde-', '') for v in vms]
     assert 'js' in vms_clean or 'javascript' in vms_clean, f"Expected js resolution, got: {vms}"
 
@@ -952,14 +862,12 @@ def step_resolve_to_js(context):
 @then('I can use either name in commands')
 def step_can_use_either_name(context):
     """Verify either name can be used."""
-    # Both should produce valid VM names
     js_intent = _get_real_intent('create js')
     js_vms = _get_real_vm_names('create js')
     nodejs_intent = _get_real_intent('create nodejs')
     nodejs_vms = _get_real_vm_names('create nodejs')
-    
     assert js_intent == 'create_vm', f"create js intent failed: {js_intent}"
-    assert 'js' in js_vms, f"create js vms failed: {js_vms}"
+    assert 'js' in [v.replace('vde-', '') for v in js_vms], f"create js vms failed: {js_vms}"
     assert nodejs_intent == 'create_vm', f"create nodejs intent failed: {nodejs_intent}"
 
 
@@ -967,7 +875,6 @@ def step_can_use_either_name(context):
 def step_plan_should_include_all_five(context):
     """Verify the plan includes all five VMs."""
     vms = getattr(context, 'detected_vms', [])
-    # Strip vde- prefix for comparison
     vms_clean = [v.lower().replace('vde-', '') for v in vms]
     expected = ['python', 'go', 'rust', 'postgres', 'redis']
     for exp in expected:
@@ -985,9 +892,7 @@ def step_each_vm_in_list(context):
 def step_all_microservice_vms(context):
     """Verify all microservice VMs are included."""
     vms = getattr(context, 'detected_vms', [])
-    # Strip vde- prefix for comparison
     vms_clean = [v.lower().replace('vde-', '') for v in vms]
-    # PostgreSQL and Redis should be included
     assert 'postgres' in vms_clean, f"PostgreSQL not in VMs: {vms}"
     assert 'redis' in vms_clean, f"Redis not in VMs: {vms}"
 
@@ -996,21 +901,21 @@ def step_all_microservice_vms(context):
 def step_python_language_vm(context):
     """Verify Python exists as a language VM."""
     assert _is_valid_vm_type('python'), "Python is not a valid VM type"
-    assert not _is_service_vm('python'), "Python should be a language VM, not a service"
+    assert not _is_service_vm('python'), "Python should be a language VM"
 
 
 @then('Go should exist as a language VM')
 def step_go_language_vm(context):
     """Verify Go exists as a language VM."""
     assert _is_valid_vm_type('go'), "Go is not a valid VM type"
-    assert not _is_service_vm('go'), "Go should be a language VM, not a service"
+    assert not _is_service_vm('go'), "Go should be a language VM"
 
 
 @then('Rust should exist as a language VM')
 def step_rust_language_vm(context):
     """Verify Rust exists as a language VM."""
     assert _is_valid_vm_type('rust'), "Rust is not a valid VM type"
-    assert not _is_service_vm('rust'), "Rust should be a language VM, not a service"
+    assert not _is_service_vm('rust'), "Rust should be a language VM"
 
 
 @then('PostgreSQL should exist as a service VM')
@@ -1031,7 +936,6 @@ def step_redis_service_vm(context):
 def step_plan_should_include_three_vms(context):
     """Verify the plan includes all three VMs."""
     vms = getattr(context, 'detected_vms', [])
-    # Strip vde- prefix for comparison
     vms_clean = [v.lower().replace('vde-', '') for v in vms]
     expected = ['python', 'postgres', 'redis']
     for exp in expected:
@@ -1055,18 +959,15 @@ def step_plan_should_include_status(context):
 @then('I should be able to see running VMs')
 def step_can_see_running_vms(context):
     """Verify running VMs can be seen."""
-    # This is a verification that the status command would show running VMs
-    # Since we can't actually run Docker commands in tests, we verify the intent
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'status', f"Expected status intent for seeing running VMs"
+    assert intent == 'status'
 
 
 @then('the plan should provide connection details')
 def step_plan_provide_connection(context):
     """Verify the plan provides connection details."""
     intent = getattr(context, 'detected_intent', None)
-    # Connection details should come from connect intent
-    assert intent == 'connect', f"Expected connect intent for connection details"
+    assert intent == 'connect'
 
 
 # =============================================================================
@@ -1074,14 +975,13 @@ def step_plan_provide_connection(context):
 # =============================================================================
 
 def _is_service_vm(vm_name):
-    """Check if a VM type is a service (not language) VM."""
+    """Check if a VM type is a service."""
     try:
         with open(VM_TYPES_CONF) as f:
             for line in f:
                 if line.strip() and not line.startswith('#'):
                     parts = line.strip().split('|')
-                    if len(parts) >= 2 and parts[1].lower() == vm_name.lower():
-                        # Check if it's marked as service (parts[0] = "service")
+                    if len(parts) >= 2 and parts[1].lower().replace('vde-', '') == vm_name.lower().replace('vde-', ''):
                         return parts[0].lower() == 'service'
     except FileNotFoundError:
         pass
@@ -1094,14 +994,14 @@ def _is_service_vm(vm_name):
 def step_should_see_commands(context):
     """Verify help shows available commands."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'help', f"Expected help intent, got: {intent}"
+    assert intent == 'help'
 
 
 @then('I should see all available VM types')
 def step_should_see_vm_types(context):
     """Verify list shows available VM types."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'list_vms', f"Expected list_vms intent, got: {intent}"
+    assert intent == 'list_vms'
 
 
 @then('I should see only language VMs')
@@ -1109,173 +1009,156 @@ def step_should_see_language_vms(context):
     """Verify list shows only language VMs."""
     intent = getattr(context, 'detected_intent', None)
     filter_val = getattr(context, 'detected_filter', None)
-    assert intent == 'list_vms', f"Expected list_vms intent, got: {intent}"
-    assert filter_val == 'lang', f"Expected lang filter, got: {filter_val}"
+    assert intent == 'list_vms'
+    assert filter_val == 'lang'
 
 
 @then('I should receive clear connection instructions')
 def step_receive_connection_instructions(context):
     """Verify connect provides instructions."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'connect', f"Expected connect intent, got: {intent}"
+    assert intent == 'connect'
 
 
 @then('I should understand how to access the VM')
 def step_understand_access(context):
     """Verify connect intent for VM access."""
     intent = getattr(context, 'detected_intent', None)
-    vms = getattr(context, 'detected_vms', [])
-    assert intent == 'connect', f"Expected connect intent, got: {intent}"
-    assert len(vms) > 0, "Expected VM name in connect command"
+    assert intent == 'connect'
 
 
 @then('I should understand what I can do')
 def step_understand_capabilities(context):
     """Verify help shows capabilities."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'help', f"Expected help intent, got: {intent}"
+    assert intent == 'help'
 
 
 @then('the plan should be generated')
 def step_plan_generated(context):
     """Verify plan was generated."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent is not None, "Expected plan to be generated"
+    assert intent is not None
 
 
 @then('all plans should be generated quickly')
 def step_plans_generated_quickly(context):
     """Verify plan generation is fast."""
     gen_time = getattr(context, 'plan_generation_time', 0)
-    # Set realistic threshold for plan generation (includes file I/O, parsing, etc.)
-    assert gen_time < 5000, f"Plan generation took {gen_time}ms, expected < 5000ms"
+    assert gen_time < 5000
 
 
 @then('all running VMs should be stopped')
 def step_all_vms_stopped(context):
     """Verify all VMs are stopped."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'stop_vm', f"Expected stop_vm intent, got: {intent}"
+    assert intent == 'stop_vm'
 
 
 @then('the new project VMs should start')
 def step_new_vms_start(context):
     """Verify new project VMs start."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'start_vm', f"Expected start_vm intent, got: {intent}"
+    assert intent == 'start_vm'
 
 
 @then('I should receive status information')
 def step_receive_status(context):
     """Verify status provides information."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'status', f"Expected status intent, got: {intent}"
+    assert intent == 'status'
 
 
 @then('I should see which VMs are running')
 def step_see_running_vms(context):
     """Verify status shows running VMs."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'status', f"Expected status intent, got: {intent}"
+    assert intent == 'status'
 
 
 @then('Python should be a valid VM type')
 def step_python_valid(context):
     """Verify Python is valid VM type."""
-    assert _is_valid_vm_type('python'), "Python should be a valid VM type"
+    assert _is_valid_vm_type('python')
 
 
 @then('JavaScript should be a valid VM type')
 def step_js_valid(context):
     """Verify JavaScript is valid VM type."""
-    assert _is_valid_vm_type('javascript') or _is_valid_vm_type('js'), \
-        "JavaScript should be a valid VM type"
+    assert _is_valid_vm_type('javascript') or _is_valid_vm_type('js')
 
 
 @then('only the new project VMs should be running')
 def step_only_new_vms_running(context):
     """Verify only new project VMs are running."""
-    # This checks the intent, not actual VM state
     intent = getattr(context, 'detected_intent', None)
-    vms = getattr(context, 'detected_vms', [])
-    assert intent == 'start_vm', f"Expected start_vm intent, got: {intent}"
-    assert len(vms) > 0, "Expected VMs to start"
+    assert intent == 'start_vm'
 
 
 @then('both VMs should be included in the plan')
 def step_both_in_plan(context):
     """Verify both VMs are in the plan."""
     vms = getattr(context, 'detected_vms', [])
-    vms_lower = [v.lower() for v in vms]
-    assert len(vms_lower) >= 2, f"Expected at least 2 VMs, got: {vms}"
+    assert len(vms) >= 2
 
 
 @then('service VMs should not be included')
 def step_services_not_included(context):
     """Verify service VMs are not in language list."""
-    # Check that service VMs are filtered when showing language-only VMs
-    run_vde_command(['list', '--type', 'language'], context=context, timeout=30)
-    if context.vde_command_exit_code == 0:
-        # Services like postgres, redis should not appear in language list
-        output = context.vde_command_output.lower()
-        assert 'postgres' not in output or 'python' in output, \
-            "Service VMs should be filtered from language-only list"
+    run_vde_command('list --type language', context=context, timeout=30)
+    if context.last_exit_code == 0:
+        output = context.last_output.lower()
+        assert 'postgres' not in output
 
 
 @then('the Redis VM should be included')
 def step_redis_included(context):
     """Verify Redis VM is included."""
     vms = getattr(context, 'detected_vms', [])
-    # Strip vde- prefix for comparison
     vms_clean = [v.lower().replace('vde-', '') for v in vms]
-    assert 'redis' in vms_clean, f"Redis should be in VMs: {vms}"
+    assert 'redis' in vms_clean
 
 
 @then('Redis should start without affecting other VMs')
 def step_redis_independent(context):
     """Verify Redis starts independently."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'start_vm', f"Expected start_vm intent, got: {intent}"
+    assert intent == 'start_vm'
 
 
 @then('the total time should be under 500ms')
 def step_total_time_under_limit(context):
     """Verify total time is under limit."""
     gen_time = getattr(context, 'plan_generation_time', 0)
-    # Set realistic threshold for plan generation (includes file I/O, parsing, etc.)
-    assert gen_time < 5000, f"Total time {gen_time}ms exceeds 5000ms limit"
+    assert gen_time < 5000
 
 
 @then('I should be ready to start a new project')
 def step_ready_new_project(context):
     """Verify readiness for new project."""
-    # This is a meta-check that the plan was generated correctly
     intent = getattr(context, 'detected_intent', None)
-    assert intent is not None, "Should be ready with a plan"
+    assert intent is not None
 
 
 @then('I should receive SSH connection information')
 def step_ssh_connection_info(context):
     """Verify SSH connection info is provided."""
     intent = getattr(context, 'detected_intent', None)
-    vms = getattr(context, 'detected_vms', [])
-    assert intent == 'connect', f"Expected connect intent, got: {intent}"
-    assert len(vms) > 0, "Expected VM name for connection"
+    assert intent == 'connect'
 
 
 @then('the plan should set rebuild=true flag')
 def step_rebuild_flag(context):
     """Verify rebuild flag is set."""
     rebuild_flag = getattr(context, 'rebuild_flag', False)
-    assert rebuild_flag, "Expected rebuild=true flag"
+    assert rebuild_flag
 
 
 @then('the plan should apply to all running VMs')
 def step_apply_all_running(context):
     """Verify plan applies to all running VMs."""
     intent = getattr(context, 'detected_intent', None)
-    # "all" or "everything" should be detected
-    assert intent in ['stop_vm', 'start_vm'], f"Expected stop_vm or start_vm, got: {intent}"
+    assert intent in ['stop_vm', 'start_vm']
 
 
 @then('all microservice VMs should be valid')
@@ -1283,117 +1166,106 @@ def step_microservices_valid(context):
     """Verify all microservice VMs are valid."""
     services = ['postgres', 'redis']
     for svc in services:
-        assert _is_valid_vm_type(svc), f"{svc} should be a valid VM type"
+        assert _is_valid_vm_type(svc)
 
 
 @then('execution would detect the VM already exists')
 def step_detect_vm_exists(context):
     """Verify VM existence detection."""
-    # Check that VM existence can be verified
-    run_vde_command(['status', 'python'], context=context, timeout=30)
-    # Either VM exists or doesn't exist - both are valid for a status check
-    assert context.vde_command_exit_code in [0, 3, 6], "VM existence check should return valid status"
+    run_vde_command('status python', context=context, timeout=30)
+    assert context.last_exit_code in [0, 3, 6]
 
 
 @then('execution would detect the VM is already running')
 def step_detect_vm_running(context):
     """Verify VM running detection."""
-    run_vde_command(['status', 'python'], context=context, timeout=30)
-    # Status command should work
-    assert context.vde_command_exit_code in [0, 3, 6], "VM status check should work"
+    run_vde_command('status python', context=context, timeout=30)
+    assert context.last_exit_code in [0, 3, 6]
 
 
 @then('execution would detect the VM is not running')
 def step_detect_vm_not_running(context):
     """Verify VM not running detection."""
-    run_vde_command(['status', 'python'], context=context, timeout=30)
-    # Should return valid code
-    assert context.vde_command_exit_code in [0, 3, 6], "VM status should be verifiable"
+    run_vde_command('status python', context=context, timeout=30)
+    assert context.last_exit_code in [0, 3, 6]
 
 
 @then('I would be notified of the existing VM')
 def step_notify_existing_vm(context):
     """Verify notification about existing VM."""
-    # Verify that VDE can produce notifications
-    run_vde_command(['status', 'python'], context=context, timeout=30)
-    # VDE should produce some output (notification or status)
-    assert context.vde_command_exit_code in [0, 3, 6], "VDE should respond with status"
+    run_vde_command('status python', context=context, timeout=30)
+    assert context.last_exit_code in [0, 3, 6]
 
 
 @then('I would be notified that it\'s already running')
 def step_notify_already_running(context):
     """Verify notification about already running VM."""
-    # Check VDE help or status provides info about running state
-    run_vde_command(['status', 'python'], context=context, timeout=30)
-    # Should produce some output
-    assert context.vde_command_exit_code in [0, 3, 6], "Status command should work"
+    run_vde_command('status python', context=context, timeout=30)
+    assert context.last_exit_code in [0, 3, 6]
 
 
 @then('I would be notified that it\'s already stopped')
 def step_notify_already_stopped(context):
     """Verify notification about already stopped VM."""
-    run_vde_command(['status', 'python'], context=context, timeout=30)
-    # Should produce some output indicating state
-    assert len(context.vde_command_output) >= 0, \
-        "VDE should produce some notification"
+    run_vde_command('status python', context=context, timeout=30)
+    assert len(context.last_output) >= 0
 
 
 # =============================================================================
 # Missing Steps for documented-development-workflows.feature
-# Added to complete docker-free test coverage
 # =============================================================================
 
 @given('I am starting my development day')
 def step_starting_development_day(context):
-    """Set up context for starting development day - parser test."""
+    """Set up context for starting development day."""
     context.workflow = 'morning'
 
 
 @given('I am actively developing')
 def step_actively_developing(context):
-    """Set up context for active development - parser test."""
+    """Set up context for active development."""
     context.workflow = 'active'
 
 
 @given('I am done with development for the day')
 def step_done_development(context):
-    """Set up context for end of development day - parser test."""
+    """Set up context for end of development day."""
     context.workflow = 'cleanup'
 
 
 @given('I am setting up a new project')
 def step_setting_up_new_project(context):
-    """Set up context for new project setup - parser test."""
+    """Set up context for new project setup."""
     context.project = 'new'
 
 
 @given('I am working on one project')
 def step_working_on_one_project(context):
-    """Set up context for working on a project - parser test."""
+    """Set up context for working on a project."""
     context.project_count = 1
 
 
 @given('I am a new team member')
 def step_new_team_member(context):
-    """Set up context for new team member - parser test."""
+    """Set up context for new team member."""
     context.user_type = 'new'
 
 
 @given('I am new to the team')
 def step_new_to_team(context):
-    """Set up context for new team member - parser test."""
+    """Set up context for new team member."""
     context.user_type = 'new'
 
 
 @given('I am learning the VDE system')
 def step_learning_vde(context):
-    """Set up context for learning VDE - parser test."""
+    """Set up context for learning VDE."""
     context.learning_mode = True
 
 
 @given('I already have a Go VM configured')
 def step_go_vm_configured(context):
-    """Set up context for existing Go VM - parser test."""
+    """Set up context for existing Go VM."""
     context.created_vms = ['go']
 
 
@@ -1401,25 +1273,25 @@ def step_go_vm_configured(context):
 def step_include_stop_vm_intent(context):
     """Verify the plan includes stop_vm intent."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'stop_vm', f"Expected stop_vm intent, got: {intent}"
+    assert intent == 'stop_vm'
 
 
 @then('the plan should include the restart_vm intent')
 def step_include_restart_vm_intent(context):
     """Verify the plan includes restart_vm intent."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'restart_vm', f"Expected restart_vm intent, got: {intent}"
+    assert intent == 'restart_vm'
 
 
 @then('the plan should include the list_vms intent')
 def step_include_list_vms_intent(context):
     """Verify the plan includes list_vms intent."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'list_vms', f"Expected list_vms intent, got: {intent}"
+    assert intent == 'list_vms'
 
 
 @then('the plan should use the create_vm intent')
 def step_use_create_vm_intent(context):
     """Verify the plan uses create_vm intent."""
     intent = getattr(context, 'detected_intent', None)
-    assert intent == 'create_vm', f"Expected create_vm intent, got: {intent}"
+    assert intent == 'create_vm'

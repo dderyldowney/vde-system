@@ -224,7 +224,7 @@ def step_installation_succeeds(context):
     assert vde_root.exists(), f"VDE_ROOT does not exist: {vde_root}"
 
     # Check core directories
-    core_dirs = ['scripts', 'configs']
+    core_dirs = ['bin', 'configs']
     for dir_name in core_dirs:
         dir_path = vde_root / dir_name
         assert dir_path.exists(), f"Core directory {dir_name} does not exist"

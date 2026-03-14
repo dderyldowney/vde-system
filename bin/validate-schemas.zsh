@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Validate all JSON schemas in the VDE system
-# Usage: ./scripts/validate-schemas.zsh [--verbose]
+# Usage: ./bin/validate-schemas.zsh [--verbose]
 
 # Determine VDE root directory
 VDE_SCRIPTS_DIR="${0:A:h}"

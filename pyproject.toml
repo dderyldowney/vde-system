@@ -102,7 +102,7 @@ ignore = [
 ]
 
 # Scripts may have different conventions
-"scripts/**/*.py" = [
+"tests/bin/**/*.py" = [
     "S101",    # Allow assert statements for validation
 ]
 

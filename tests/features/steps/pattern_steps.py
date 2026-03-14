@@ -6,47 +6,30 @@ instead of using mock context variables.
 """
 import os
 import sys
+import subprocess
+from pathlib import Path
 
-# Import shared configuration
 # Add steps directory to path for config import
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-import os
-import subprocess
-from pathlib import Path
 
 from behave import given, then, when
 
 from config import VDE_ROOT
-from vm_common import run_vde_command, docker_ps, container_exists
-
-# VDE_ROOT imported from config
-# run_vde_command, docker_ps, container_exists imported from vm_common
-
+from vm_common import run_vde_command, docker_ps, container_exists, wait_for_container
 
 # =============================================================================
-# Shell Compatibility Helper Functions (specific to pattern_steps.py)
+# Shell Compatibility Helper Functions
 # =============================================================================
 
 def run_shell_command(command, shell='zsh'):
-    """Run a command in the specified shell with vde-shell-compat loaded (UTF-8 encoding)."""
-    cmd = f"{shell} -c 'source {VDE_ROOT}/lib/vde-shell-compat && {command}'"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=VDE_ROOT, encoding='utf-8')
+    """Run a command in the specified shell with vde-shell-compat loaded."""
+    # Ensure VDE_ROOT is absolute
+    root = str(VDE_ROOT.resolve())
+    cmd = f"{shell} -c 'source {root}/lib/vde-shell-compat && {command}'"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=root, encoding='utf-8')
     return result
-
-
-def run_shell_command_with_state(context, command, shell='zsh'):
-    """Run a command with array state restored from context."""
-    array_name = getattr(context, 'array_name', 'test_array')
-    prefix = f"_assoc_init '{array_name}'; "
-    if hasattr(context, 'set_keys'):
-        for key, value in context.set_keys.items():
-            escaped_key = key.replace("'", "'\\''")
-            escaped_value = value.replace('"', '\\"')
-            prefix += f'_assoc_set "{array_name}" "{escaped_key}" "{escaped_value}"; '
-    full_command = prefix + command
-    return run_shell_command(full_command, shell)
 
 
 # =============================================================================
@@ -55,34 +38,33 @@ def run_shell_command_with_state(context, command, shell='zsh'):
 
 @given('"{vm}" VM is created but not running')
 def step_vm_created_not_running(context, vm):
-    """VM is created but not running."""
-    compose_path = VDE_ROOT / "configs" / "docker" / vm / "docker-compose.yml"
+    """VM is created but not running - check actual filesystem and Docker state."""
+    vm_name = vm.strip('"')
+    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
     context.vm_created = compose_path.exists()
-    context.vm_not_running = not container_exists(vm)
+    context.vm_not_running = not container_exists(vm_name)
+    assert context.vm_created, f"VM {vm_name} config missing"
+    assert context.vm_not_running, f"VM {vm_name} should not be running"
 
 
 @given('I have "{vm}" VM running')
 def step_i_have_vm_running(context, vm):
-    """Check if VM is running."""
-    context.vm_running = container_exists(vm)
+    """Ensure VM is running (start if needed)."""
+    vm_name = vm.strip('"')
+    if not container_exists(vm_name):
+        run_vde_command(f"start {vm_name}", context=context)
+        wait_for_container(vm_name, timeout=60)
+    assert container_exists(vm_name), f"Expected VM {vm_name} to be running"
+    context.vm_running = True
 
 
 @given('I have several VMs running')
 def step_have_several_vms_running(context):
-    """Check how many VMs are running."""
-    # Get list of running containers
-    try:
-        result = subprocess.run(
-            ['docker', 'ps', '-q', '--filter', 'label=com.docker.compose.project'],
-            capture_output=True, text=True, timeout=10
-        )
-        running = result.stdout.strip().split('\n') if result.returncode == 0 and result.stdout.strip() else []
-    except Exception:
-        running = []
-    
-    vde_running = [c for c in running if "-dev" in c]
+    """Check how many VDE VMs are running via vde ps."""
+    running = docker_ps()
+    vde_running = [c for c in running if c.startswith("vde-")]
     context.num_vms_running = len(vde_running)
-    context.running_vms = {c.replace("-dev", "") for c in vde_running}
+    context.running_vms = {c.replace("vde-", "") for c in vde_running}
 
 
 # Alias for "I have several VMs running"
@@ -94,25 +76,18 @@ def step_have_multiple_vms_running(context):
 
 @given('I have {num} VMs running')
 def step_have_n_vms_running(context, num):
-    """Check if N VMs are running."""
-    # Get list of running containers
-    try:
-        result = subprocess.run(
-            ['docker', 'ps', '-q', '--filter', 'label=com.docker.compose.project'],
-            capture_output=True, text=True, timeout=10
-        )
-        running = result.stdout.strip().split('\n') if result.returncode == 0 and result.stdout.strip() else []
-    except Exception:
-        running = []
-    
-    vde_running = [c for c in running if "-dev" in c]
+    """Check if N VDE VMs are running via vde ps."""
+    running = docker_ps()
+    vde_running = [c for c in running if c.startswith("vde-")]
     context.num_vms_running = len(vde_running)
+    assert context.num_vms_running >= int(num), f"Expected {num} VMs, found {context.num_vms_running}"
 
 
 @given('I have {num} VMs configured for my project')
 def step_n_vms_configured(context, num):
-    """Check if N VMs are configured."""
+    """Check if N VMs are configured in configs/docker."""
     configs_dir = VDE_ROOT / "configs" / "docker"
     if configs_dir.exists():
-        count = len([d for d in configs_dir.iterdir() if d.is_dir()])
-        context.num_vms_configured = min(count, int(num))
+        count = len([d for d in configs_dir.iterdir() if d.is_dir() and d.name != "vde-base"])
+        context.num_vms_configured = count
+        assert count >= int(num), f"Expected {num} configured VMs, found {count}"

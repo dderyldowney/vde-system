@@ -874,7 +874,7 @@ def step_language_grows(context):
 def step_run_add_vm_type_mysql(context):
     """Run add-vm-type for mysql service (may already exist — both outcomes prove capability)."""
     result = subprocess.run(
-        ['bin/add-vm-type', '--type', 'service', '--svc-port', '3306',
+        ['bin/vde', 'add', '--type', 'service', '--svc-port', '3306',
          'mysql', 'apt-get install -y mysql-server'],
         capture_output=True, text=True, cwd=str(VDE_ROOT)
     )

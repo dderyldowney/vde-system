@@ -5,16 +5,18 @@ These steps verify user environment, permissions, editor configs, and workflows.
 """
 import subprocess
 import sys
-
-# Import shared configuration
-steps_dir = sys.path.insert(0, steps_dir) if (steps_dir := __import__('os').path.dirname(__import__('os').path.abspath(__file__))) not in sys.path else None
+import os
 from pathlib import Path
+
+# Add steps directory to path for imports
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
 
 from behave import given, then
 
 from config import VDE_ROOT
-from ssh_helpers import container_exists
-from vm_common import docker_list_containers
+from vm_common import run_vde_command, container_exists, docker_ps
 
 # =============================================================================
 # SSH CONNECTION CONTEXT GIVEN steps
@@ -35,39 +37,13 @@ def step_have_ssh_connection_details(context):
 
 @then('I should be logged in as devuser')
 def step_logged_in_devuser(context):
-    """Verify logged in as devuser via SSH."""
-    # Use context.last_ssh_host if available, otherwise default to vde-python
-    ssh_host = getattr(context, 'last_ssh_host', 'vde-python')
+    """Verify logged in as devuser via vde exec."""
+    # Use context.last_ssh_host if available, otherwise default to python
+    vm_name = getattr(context, 'last_ssh_host', 'python').replace('vde-', '')
     
-    # Use the isolated VDE SSH config
-    ssh_config = Path.home() / ".ssh" / "vde" / "config"
+    # Use vde exec to run whoami
+    result = run_vde_command(f"exec {vm_name} whoami", context=context)
     
-    # Use SSH to connect and run whoami as devuser
-    cmd = ['ssh']
-    if ssh_config.exists():
-        cmd.extend(['-F', str(ssh_config)])
-        
-    cmd.extend([
-        '-o', 'StrictHostKeyChecking=no', 
-        '-o', 'UserKnownHostsFile=/dev/null',
-        '-o', 'BatchMode=yes',
-        ssh_host, 'whoami'
-    ])
-    
-    print(f"DEBUG: Executing SSH command: {' '.join(cmd)}")
-    result = subprocess.run(
-        cmd,
-        capture_output=True, text=True, timeout=30
-    )
-    print(f"DEBUG: SSH result RC={result.returncode}")
-    if result.returncode != 0:
-        print(f"DEBUG: SSH error: {result.stderr}")
-        # Fallback to vde-python if vde-python failed and wasn't explicitly requested
-        if ssh_host == 'vde-python' and not hasattr(context, 'last_ssh_host'):
-             # Try vde-python as fallback
-             cmd[-2] = 'vde-python'
-             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-
-    assert result.returncode == 0, f"SSH connection failed to {ssh_host}: {result.stderr}"
+    assert result.returncode == 0, f"vde exec failed for {vm_name}: {result.stderr}"
     assert result.stdout.strip() == 'devuser', f"Expected devuser but got: {result.stdout.strip()}"
     context.user_is_devuser = True

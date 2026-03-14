@@ -56,7 +56,7 @@ fail() { echo "  ✗ $1: $2" >&2; (( TESTS_FAILED++ )) }
 echo ""
 echo "--- Phase 1: create-virtual-for $TEST_VM ---"
 
-if /usr/local/bin/timeout 300 "$PROJECT_ROOT/bin/create-virtual-for" "$TEST_VM"; then
+if /usr/local/bin/timeout 300 "$PROJECT_ROOT/bin/vde" create "$TEST_VM"; then
     pass "create-virtual-for $TEST_VM"
 else
     fail "create-virtual-for $TEST_VM" "exit $?"
@@ -70,7 +70,7 @@ fi
 echo ""
 echo "--- Phase 2: start-virtual $TEST_VM ---"
 
-if /usr/local/bin/timeout 300 "$PROJECT_ROOT/bin/start-virtual" "$TEST_VM"; then
+if /usr/local/bin/timeout 300 "$PROJECT_ROOT/bin/vde" start "$TEST_VM"; then
     pass "start-virtual $TEST_VM"
 else
     fail "start-virtual $TEST_VM" "exit $?"
@@ -98,7 +98,7 @@ echo "--- Phase 4: assertions ---"
 
 # 4a: Container is running
 CONTAINER_NAME="vde-${TEST_VM##vde-}"
-STATUS=$(docker inspect -f '{{.State.Status}}' "$CONTAINER_NAME" 2>/dev/null)
+STATUS=$("$PROJECT_ROOT/bin/vde" inspect "$TEST_VM" -f '{{.State.Status}}' 2>/dev/null)
 if [[ "$STATUS" == "running" ]]; then
     pass "Container status is 'running'"
 else
@@ -143,7 +143,7 @@ fi
 echo ""
 echo "--- Phase 5: shutdown-virtual $TEST_VM ---"
 
-if /usr/local/bin/timeout 120 "$PROJECT_ROOT/bin/shutdown-virtual" "$TEST_VM"; then
+if /usr/local/bin/timeout 120 "$PROJECT_ROOT/bin/vde" stop "$TEST_VM"; then
     pass "shutdown-virtual $TEST_VM"
 else
     fail "shutdown-virtual $TEST_VM" "exit $?"
@@ -151,7 +151,7 @@ fi
 
 # Confirm stopped
 sleep 3
-STATUS=$(docker inspect -f '{{.State.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo "not_found")
+STATUS=$("$PROJECT_ROOT/bin/vde" inspect "$TEST_VM" -f '{{.State.Status}}' 2>/dev/null || echo "not_found")
 if [[ "$STATUS" != "running" ]]; then
     pass "Container stopped (status: $STATUS)"
 else

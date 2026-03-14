@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # install-githooks - Install VDE git hooks
 #
-# Installs project git hooks from scripts/githooks/ to .git/hooks/
+# Installs project git hooks from bin/githooks/ to .git/hooks/
 
 set -e
 

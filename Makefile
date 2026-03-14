@@ -197,8 +197,8 @@ lint: lint-zsh lint-yaml
 
 lint-zsh:
 	@echo "Running zsh syntax check..."
-	@for script in $$(find scripts tests -name "*.sh" -type f); do \
-		if head -1 "$$script" | grep -q "zsh"; then \
+	@for script in $$(find bin tests -name "*.sh" -type f -o -not -name "*.*"); do \
+		if [ -f "$$script" ] && head -1 "$$script" | grep -q "zsh"; then \
 			zsh -n "$$script" || { echo "✗ Syntax error in: $$script"; exit 1; }; \
 		fi \
 	done
@@ -223,13 +223,15 @@ check: lint test
 	@echo "All Checks Passed ✓"
 	@echo "================================"
 
-# docker-clean — stop and remove all vde-* containers (run before and after Docker tests)
+# docker-clean — stop and remove all vde-* containers gracefully via vde command
 docker-clean:
-	echo "[CLEAN] Stopping all vde-* containers..."
-	docker ps -a --filter 'name=vde-' --format '{{.Names}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
-	echo "[CLEAN] Killing orphaned ssh-agents..."
-	pgrep -x ssh-agent | while read pid; do ppid=$$(ps -o ppid= -p $$pid 2>/dev/null | tr -d ' '); [ "$$ppid" = "1" ] && kill $$pid 2>/dev/null && echo "  killed ssh-agent $$pid" || true; done || true
-	echo "[CLEAN] Done"
+	@echo "[CLEAN] Stopping all VDE containers..."
+	@./bin/vde stop all -f >/dev/null 2>&1 || true
+	@echo "[CLEAN] Removing all VDE VMs (preserving config)..."
+	@./bin/vde remove all >/dev/null 2>&1 || true
+	@echo "[CLEAN] Killing orphaned ssh-agents..."
+	@pgrep -x ssh-agent | while read pid; do ppid=$$(ps -o ppid= -p $$pid 2>/dev/null | tr -d ' '); [ "$$ppid" = "1" ] && kill $$pid 2>/dev/null && echo "  killed ssh-agent $$pid" || true; done || true
+	@echo "[CLEAN] Done"
 
 # test-docker — full lifecycle test against a random (or specified) VM
 # Usage: make test-docker [VM=python]

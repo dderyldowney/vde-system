@@ -16,7 +16,7 @@ services:
     container_name: vde-postgres
     hostname: vde-postgres
     restart: unless-stopped
-    command: /usr/sbin/sshd -D
+    command: /usr/local/bin/vde-start.sh
 
     ports:
       - "2404:22"

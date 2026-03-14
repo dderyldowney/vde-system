@@ -153,7 +153,7 @@ echo ""
 
 # Check if Docker is available — print clearly, don't silently fail
 DOCKER_AVAILABLE=0
-if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+if command -v docker >/dev/null 2>&1 && ./bin/vde info >/dev/null 2>&1; then
     DOCKER_AVAILABLE=1
     echo "[INFO] Docker daemon is available — running all tests"
 else

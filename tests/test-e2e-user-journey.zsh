@@ -190,9 +190,9 @@ test_or_install_vde() {
 
     # Check if setup scripts exist
     local setup_scripts=(
-        "scripts/lib"
-        "scripts/data/vm-types.conf"
-        "scripts/templates"
+        "lib"
+        "data/vm-types.conf"
+        "templates"
     )
 
     for script in "${setup_scripts[@]}"; do
@@ -252,12 +252,12 @@ test_vm_creation() {
 
     echo "Creating test language VM: ${TEST_LANG_VM}"
 
-    # Run create-virtual-for
+    # Run vde create
     cd "$PROJECT_ROOT"
-    if ./bin/create-virtual-for "${TEST_LANG_VM}" 2>&1 | head -30; then
-        echo -e "${GREEN}✓ create-virtual-for succeeded${RESET}"
+    if ./bin/vde create "${TEST_LANG_VM}" 2>&1 | head -30; then
+        echo -e "${GREEN}✓ vde create succeeded${RESET}"
     else
-        echo -e "${RED}✗ create-virtual-for failed${RESET}"
+        echo -e "${RED}✗ vde create failed${RESET}"
         return 1
     fi
 
@@ -287,7 +287,7 @@ test_vm_startup() {
 
     # Start the test VM
     echo "Starting: ${TEST_LANG_VM}"
-    if ./bin/start-virtual "${TEST_LANG_VM}" 2>&1 | grep -E "started|success"; then
+    if ./bin/vde start "${TEST_LANG_VM}" 2>&1 | grep -E "started|success"; then
         echo -e "${GREEN}✓ VM started successfully${RESET}"
     else
         echo -e "${RED}✗ VM failed to start${RESET}"
@@ -386,7 +386,7 @@ test_vm_shutdown() {
 
     # Shutdown the VM
     echo "Stopping: ${TEST_LANG_VM}"
-    if ./bin/shutdown-virtual "${TEST_LANG_VM}" 2>&1 | grep -E "stopped|success"; then
+    if ./bin/vde stop "${TEST_LANG_VM}" 2>&1 | grep -E "stopped|success"; then
         echo -e "${GREEN}✓ VM stopped successfully${RESET}"
     else
         echo -e "${YELLOW}⚠ VM may not have stopped cleanly${RESET}"

@@ -38,7 +38,7 @@ def run_vde_command(command, timeout=300, check=False):
 
     Args:
         command: Command string or list to execute
-        timeout: Timeout in seconds (default: 120)
+        timeout: Timeout in seconds (default: 300)
         check: If True, raise exception on non-zero exit
 
     Returns:
@@ -77,10 +77,10 @@ def wait_for_container_stop(vm_name, timeout=120, interval=1):
 
 def get_ssh_port(vm_name):
     """
-    Get the SSH port for a VM using docker port command.
+    Get the SSH port for a VM using vde port command.
 
     This uses the same command a user would run to check port mappings.
-    For running containers, docker port is the authoritative source.
+    For running containers, vde port is the authoritative source.
 
     Args:
         vm_name: Name of the VM
@@ -88,14 +88,9 @@ def get_ssh_port(vm_name):
     Returns:
         Port number as integer, or None if not found
     """
-    # Use vde port command (routes through VDE, uses vde- prefix)
-    import subprocess as _sp
     bare_name = vm_name.replace('vde-', '')
     try:
-        result = _sp.run(
-            ["zsh", str(SCRIPTS_DIR / "vde-port"), bare_name],
-            capture_output=True, text=True, timeout=10, cwd=str(VDE_ROOT)
-        )
+        result = _run_vde_command_base(f"port {bare_name}", timeout=10)
         if result.returncode == 0 and result.stdout.strip():
             # Output format: "0.0.0.0:2213" or "22/tcp -> 0.0.0.0:2213"
             for line in result.stdout.strip().split('\n'):
@@ -146,29 +141,25 @@ def get_vm_status(vm_name):
 # =============================================================================
 
 def create_vm(vm_name, timeout=120):
-    """Create a VM using create-virtual-for script."""
-    result = _run_vde_command_base(['create-virtual-for', vm_name], timeout=timeout)
+    """Create a VM using vde create command."""
+    result = _run_vde_command_base(f"create {vm_name}", timeout=timeout)
     return result.returncode == 0
 
 
 def start_vm(vm_name, timeout=180):
-    """Start a VM using start-virtual script."""
-    result = _run_vde_command_base(['start-virtual', vm_name], timeout=timeout)
+    """Start a VM using vde start command."""
+    result = _run_vde_command_base(f"start {vm_name}", timeout=timeout)
     if result.returncode == 0:
         wait_for_container(vm_name, timeout=60)
     return result.returncode == 0
 
 
 def stop_vm(vm_name, timeout=60):
-    """Stop a VM using stop-virtual script."""
-    result = _run_vde_command_base(['stop-virtual', vm_name], timeout=timeout)
+    """Stop a VM using vde stop command."""
+    result = _run_vde_command_base(f"stop {vm_name}", timeout=timeout)
     return result.returncode == 0
 
 
 def file_exists(path):
     """Check if a file exists."""
     return (VDE_ROOT / path).exists()
-
-
-# Legacy aliases for backwards compatibility
-VDE_ROOT = VDE_ROOT

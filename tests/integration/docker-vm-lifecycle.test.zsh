@@ -132,7 +132,7 @@ ensure_vm() {
 
     info "Creating VM: $vm_name"
     # Note: Script may fail on SSH config update, but VM should still be created
-    ./bin/create-virtual-for "$vm_name" >/dev/null 2>&1 || true
+    ./bin/vde create "$vm_name" >/dev/null 2>&1 || true
     return 0
 }
 
@@ -147,9 +147,9 @@ cleanup() {
         if [[ -z "$vm" ]]; then continue; fi
         local container_name
         container_name=$(vde_get_container_name "$vm")
-        if docker ps -q --filter "name=^${container_name}$" | grep -q . 2>/dev/null; then
+        if ./bin/vde ps -q --filter "name=^${container_name}$" | grep -q . 2>/dev/null; then
             info "Stopping $container_name"
-            docker stop "$container_name" >/dev/null 2>&1 || true
+            ./bin/vde stop "$vm" >/dev/null 2>&1 || true
         fi
     done
 
@@ -158,8 +158,8 @@ cleanup() {
         if [[ -z "$vm" ]]; then continue; fi
         local container_name
         container_name=$(vde_get_container_name "$vm")
-        if docker ps -aq --filter "name=^${container_name}$" | grep -q . 2>/dev/null; then
-            docker rm "$container_name" >/dev/null 2>&1 || true
+        if ./bin/vde ps -aq --filter "name=^${container_name}$" | grep -q . 2>/dev/null; then
+            ./bin/vde remove "$vm" >/dev/null 2>&1 || true
         fi
     done
 
@@ -217,13 +217,13 @@ test_create_language_vm() {
         container_name=$(vde_get_container_name "$TEST_LANG_VM")
         # Stop container first to release file locks
         # NEVER delete configs/docker/*, env-files/*, projects/*, data/* - these are CORE PROJECT FILES
-        docker stop "$container_name" >/dev/null 2>&1 || true
-        docker rm "$container_name" >/dev/null 2>&1 || true
+        ./bin/vde stop "$TEST_LANG_VM" >/dev/null 2>&1 || true
+        ./bin/vde remove "$TEST_LANG_VM" >/dev/null 2>&1 || true
     fi
 
-    # Call the actual create-virtual-for script
+    # Call the actual vde create command
     # Note: Script may fail on SSH config update, but VM should still be created
-    ./bin/create-virtual-for "$TEST_LANG_VM" >/dev/null 2>&1 || true
+    ./bin/vde create "$TEST_LANG_VM" >/dev/null 2>&1 || true
 
     # Verify config directory was created
     if [[ ! -d "configs/docker/$TEST_LANG_VM" ]]; then
@@ -271,13 +271,13 @@ test_create_service_vm() {
         container_name=$(vde_get_container_name "$TEST_SVC_VM")
         # Stop container first to release file locks
         # NEVER delete configs/docker/*, env-files/*, projects/*, data/* - these are CORE PROJECT FILES
-        docker stop "$container_name" >/dev/null 2>&1 || true
-        docker rm "$container_name" >/dev/null 2>&1 || true
+        ./bin/vde stop "$TEST_SVC_VM" >/dev/null 2>&1 || true
+        ./bin/vde remove "$TEST_SVC_VM" >/dev/null 2>&1 || true
     fi
 
-    # Call the actual create-virtual-for script
+    # Call the actual vde create command
     # Note: Script may fail on SSH config update, but VM should still be created
-    ./bin/create-virtual-for "$TEST_SVC_VM" >/dev/null 2>&1 || true
+    ./bin/vde create "$TEST_SVC_VM" >/dev/null 2>&1 || true
 
     # Verify config directory was created
     if [[ ! -d "configs/docker/$TEST_SVC_VM" ]]; then
@@ -328,8 +328,8 @@ test_start_vm() {
     fi
 
     # Start the VM
-    if ! ./bin/start-virtual "$vm_name" >/dev/null 2>&1; then
-        test_fail "Start VM" "start-virtual script failed"
+    if ! ./bin/vde start "$vm_name" >/dev/null 2>&1; then
+        test_fail "Start VM" "vde start command failed"
         return
     fi
 
@@ -343,10 +343,10 @@ test_start_vm() {
     local container_name
     container_name=$(vde_get_container_name "$vm_name")
 
-    if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
+    if ! ./bin/vde ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         test_fail "Start VM" "container not running"
         info "Running containers:"
-        docker ps --format "table {{.Names}}\t{{.Status}}"
+        ./bin/vde ps --format "table {{.Names}}\t{{.Status}}"
         return
     fi
 
@@ -377,8 +377,8 @@ test_start_multiple_vms() {
     done
 
     # Start all VMs
-    if ! ./bin/start-virtual "${vms[@]}" >/dev/null 2>&1; then
-        test_fail "Start multiple VMs" "start-virtual script failed"
+    if ! ./bin/vde start "${vms[@]}" >/dev/null 2>&1; then
+        test_fail "Start multiple VMs" "vde start command failed"
         return
     fi
 
@@ -403,7 +403,7 @@ test_start_multiple_vms() {
         echo "Waiting for $container_name (max ${wait_time}s)..."
         local waited=0
         while [ $waited -lt $wait_time ]; do
-            if docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
+            if ./bin/vde ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
                 echo "✓ $container_name is running"
                 break
             fi
@@ -413,7 +413,7 @@ test_start_multiple_vms() {
 
         if [ $waited -ge $wait_time ]; then
             test_fail "Start multiple VMs" "$container_name not running after ${wait_time}s"
-            docker ps --format "table {{.Names}}\t{{.Status}}"
+            ./bin/vde ps --format "table {{.Names}}\t{{.Status}}"
             return
         fi
     done
@@ -446,21 +446,21 @@ test_stop_vm() {
     local container_name
     container_name=$(vde_get_container_name "$vm_name")
 
-    if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
+    if ! ./bin/vde ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         if vm_exists "$vm_name"; then
-            ./bin/start-virtual "$vm_name" >/dev/null 2>&1
+            ./bin/vde start "$vm_name" >/dev/null 2>&1
             sleep 3
         fi
     fi
 
     # Stop the VM
-    if ! ./bin/shutdown-virtual "$vm_name" >/dev/null 2>&1; then
-        test_fail "Stop VM" "shutdown-virtual script failed"
+    if ! ./bin/vde stop "$vm_name" >/dev/null 2>&1; then
+        test_fail "Stop VM" "vde stop command failed"
         return
     fi
 
     # Verify container is stopped
-    if docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
+    if ./bin/vde ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         test_fail "Stop VM" "container still running"
         return
     fi
@@ -485,13 +485,13 @@ test_stop_all_vms() {
     local vms=("$TEST_LANG_VM" "$TEST_SVC_VM")
     for vm in "${vms[@]}"; do
         ensure_vm "$vm"
-        ./bin/start-virtual "$vm" >/dev/null 2>&1
+        ./bin/vde start "$vm" >/dev/null 2>&1
     done
     sleep 3
 
-    # Stop all test VMs (use shutdown-virtual multiple times since 'all' would stop user VMs too)
+    # Stop all test VMs (use vde stop multiple times since 'all' would stop user VMs too)
     for vm in "${vms[@]}"; do
-        ./bin/shutdown-virtual "$vm" >/dev/null 2>&1
+        ./bin/vde stop "$vm" >/dev/null 2>&1
     done
 
     # Verify test containers are stopped
@@ -499,7 +499,7 @@ test_stop_all_vms() {
         local container_name
         container_name=$(vde_get_container_name "$vm")
 
-        if docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
+        if ./bin/vde ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
             test_fail "Stop all VMs" "$container_name still running"
             return
         fi
@@ -535,36 +535,28 @@ test_restart_container() {
 
     # Ensure VM exists and is running
     ensure_vm "$vm_name"
-    if ! ./bin/start-virtual "$vm_name" >/dev/null 2>&1; then
+    if ! ./bin/vde start "$vm_name" >/dev/null 2>&1; then
         test_fail "Restart container" "failed to start VM"
         return
     fi
     sleep 5
 
     # Get the container's initial state
-    if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
+    if ! ./bin/vde ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         test_fail "Restart container" "container not running"
         return
     fi
 
-    # Restart the container directly via docker
-    # Some containers (like postgres) may not support restart, try start instead
-    if ! docker restart "$container_name" >/dev/null 2>&1; then
-        # Fallback: stop and start
-        docker stop "$container_name" >/dev/null 2>&1 || true
-        sleep 2
-        if docker start "$container_name" >/dev/null 2>&1; then
-            test_pass "Restart container"
-            return
-        fi
-        test_fail "Restart container" "docker restart failed"
+    # Restart the VM via vde
+    if ! ./bin/vde restart "$vm_name" >/dev/null 2>&1; then
+        test_fail "Restart container" "vde restart failed"
         return
     fi
 
     sleep 5
 
     # Verify container is still running
-    if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
+    if ! ./bin/vde ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         test_fail "Restart container" "container not running after restart"
         return
     fi
@@ -599,22 +591,22 @@ test_rebuild_vm() {
 
     # Ensure VM exists and is running before rebuild
     ensure_vm "$vm_name"
-    if ! ./bin/start-virtual "$vm_name" >/dev/null 2>&1; then
+    if ! ./bin/vde start "$vm_name" >/dev/null 2>&1; then
         test_fail "Rebuild VM" "failed to start VM before rebuild"
         return
     fi
     sleep 5
 
     # Start with rebuild
-    if ! ./bin/start-virtual "$vm_name" --rebuild >/dev/null 2>&1; then
-        test_fail "Rebuild VM" "start-virtual --rebuild failed"
+    if ! ./bin/vde start "$vm_name" --rebuild >/dev/null 2>&1; then
+        test_fail "Rebuild VM" "vde start --rebuild failed"
         return
     fi
 
     sleep 10
 
     # Verify container is running
-    if ! docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
+    if ! ./bin/vde ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         test_fail "Rebuild VM" "container not running after rebuild"
         return
     fi
@@ -649,7 +641,7 @@ test_list_vms() {
 
     # List VMs
     local output
-    output=$(./bin/list-vms 2>/dev/null)
+    output=$(./bin/vde list 2>/dev/null)
 
     # Check that our test VM is listed
     if [[ "$output" != *"$check_vm"* ]]; then

@@ -1887,7 +1887,7 @@ is_transient_error() {
 
 ```bash
 #!/bin/zsh
-## tests/scripts/setup-docker-test-env.zsh
+## tests/bin/setup-docker-test-env.zsh
 
 ## Start Docker daemon (for testing)
 start_docker_daemon() {
@@ -2875,7 +2875,7 @@ def step_verify_intent(context, expected):
 
 #### 3. Passing Tests Generate Documentation
 
-The [`generate_user_guide.py`](tests/scripts/generate_user_guide.py:1) script reads Behave JSON output and generates [`USER_GUIDE.md`](USER_GUIDE.md:1) from **only passing scenarios**:
+The [`generate_user_guide.py`](tests/bin/generate_user_guide.py:1) script reads Behave JSON output and generates [`USER_GUIDE.md`](USER_GUIDE.md:1) from **only passing scenarios**:
 
 ```python
 """
@@ -3220,7 +3220,7 @@ behave tests/features/docker-free/
 behave tests/features/docker-required/
 
 ## Generate user guide from passing tests
-python3 tests/scripts/generate_user_guide.py
+python3 tests/bin/generate_user_guide.py
 ```
 
 ### Tags and Organization

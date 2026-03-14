@@ -25,7 +25,7 @@
   },
   "coverage": {
     "enabled": true,
-    "source": ["scripts/lib"],
+    "source": ["lib"],
     "omit": [
       "*/tests/*",
       "*/__pycache__/*",

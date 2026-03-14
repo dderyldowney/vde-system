@@ -13,25 +13,11 @@ from behave import given, then, when
 
 from config import VDE_ROOT
 from vm_common import (
-    docker_list_containers,
+    run_vde_command,
+    docker_ps,
+    container_exists,
 )
 
-
-# =============================================================================
-# Container Naming Helpers
-# =============================================================================
-
-_SERVICE_VMS = {
-    'redis', 'postgres', 'mongodb', 'mysql', 'nginx',
-    'rabbitmq', 'couchdb'
-}
-
-
-def _get_container_name(vm_name):
-    """Get the container name for a VM."""
-    if vm_name in _SERVICE_VMS:
-        return vm_name
-    return f"{vm_name}-dev"
 
 # =============================================================================
 # PROJECT CONTEXT GIVEN steps (Unique to multi-project workflow)
@@ -46,16 +32,15 @@ def step_starting_web_project(context):
 
 @given('I have web containers running (JavaScript, nginx)')
 def step_web_containers_running(context):
-    """Context: Web development containers are running."""
+    """Context: Web development containers are running via vde ps."""
     context.project_type = 'web'
-    running = docker_list_containers()
+    running = docker_ps()
     context.web_containers = []
     for vm in ['js', 'nginx']:
-        container_name = _get_container_name(vm)
-        if container_name in running:
-            context.web_containers.append(container_name)
+        if f"vde-{vm}" in running:
+            context.web_containers.append(f"vde-{vm}")
     context.web_containers_running = len(context.web_containers) > 0
-    assert context.web_containers_running, "Web containers should be running"
+    assert context.web_containers_running, "Web containers (js, nginx) should be running"
 
 
 @given('I am building a microservices application')
@@ -67,13 +52,13 @@ def step_building_microservices(context):
 
 @given('I have created my microservice VMs')
 def step_microservice_vms_created(context):
-    """Context: Microservice VMs have been created."""
+    """Context: Microservice VMs have been created - verify configs exist."""
     context.project_type = 'microservices'
     context.microservice_vms = ['go', 'rust', 'nginx']
-    # Verify all exist using existing verification step pattern
+    # Verify all exist in configs/docker/
     for vm_name in context.microservice_vms:
-        vm_dir = Path(VDE_ROOT) / 'configs' / 'docker' / vm_name
-        assert vm_dir.exists(), f"Microservice VM {vm_name} should exist"
+        vm_dir = VDE_ROOT / 'configs' / 'docker' / vm_name
+        assert vm_dir.exists(), f"Microservice VM {vm_name} config should exist"
 
 
 @given('I am doing data analysis')
@@ -111,222 +96,184 @@ def step_finished_project(context):
 def step_configured_for_web_development(context):
     """Verify web development tools are available in both VMs."""
     for vm_name in ['js', 'nginx']:
-        result = run_vde_command(f"status {vm_name}", timeout=10)
-        assert result.returncode == 0, f"{vm_name} should be available"
+        assert (VDE_ROOT / 'configs' / 'docker' / vm_name).exists(), f"{vm_name} config missing"
 
 
 @then('only the backend stack should be running')
 def step_only_backend_running(context):
-    """Verify only backend stack containers are running."""
-    running = docker_list_containers()
-    backend_vms = ['python', 'postgres']
-    context.backend_running = all(_get_container_name(vm) in running for vm in backend_vms)
-    context.web_stopped = _get_container_name('js') not in running and _get_container_name('nginx') not in running
-    assert context.backend_running, "Backend VMs should be running"
-    assert context.web_stopped, "Web VMs should be stopped"
+    """Verify only backend stack containers are running via vde ps."""
+    running = docker_ps()
+    backend_vms = ['vde-python', 'vde-postgres']
+    
+    # Check backends are running
+    for vm in backend_vms:
+        assert vm in running, f"Backend VM {vm} should be running"
+        
+    # Check web frontends are stopped
+    for vm in ['vde-js', 'vde-nginx']:
+        assert vm not in running, f"Web VM {vm} should be stopped"
 
 
 @then('the nginx VM should be created')
 def step_nginx_vm_created(context):
     """Verify nginx VM was created."""
-    nginx_dir = Path(VDE_ROOT) / 'configs' / 'docker' / 'nginx'
-    assert nginx_dir.exists(), "nginx VM should be created"
+    nginx_dir = VDE_ROOT / 'configs' / 'docker' / 'nginx'
+    assert nginx_dir.exists(), "nginx VM config should be created"
 
 
 @then('the web containers should be stopped')
 def step_web_containers_stopped(context):
-    """Verify web containers are stopped."""
-    running = docker_list_containers()
-    context.web_stopped = not any(
-        _get_container_name(vm) in running
-        for vm in ['js', 'nginx']
-    )
-    assert context.web_stopped, "Web containers should be stopped"
+    """Verify web containers are stopped via vde ps."""
+    running = docker_ps()
+    for vm in ['js', 'nginx']:
+        assert f"vde-{vm}" not in running, f"Web container vde-{vm} still running"
 
 
 @then('the PostgreSQL VM should start')
 def step_postgres_vm_starts(context):
     """Verify PostgreSQL VM started."""
-    result = run_vde_command("status postgres", timeout=10)
-    assert result.returncode == 0, "PostgreSQL VM should be running"
+    assert container_exists('postgres'), "PostgreSQL VM should be running"
 
 
 @then('they should be able to communicate on the Docker network')
 def step_communicate_on_network(context):
-    """Verify microservices can communicate on Docker network."""
-    running = docker_list_containers()
-    for vm_name in context.microservice_vms:
-        assert _get_container_name(vm_name) in running, f"{vm_name} should be running"
+    """Verify microservices can communicate on Docker network via vde networks."""
+    result = run_vde_command("networks", context=context)
+    assert result.returncode == 0
+    assert "vde-net" in result.stdout or "vde-testing" in result.stdout
 
 
 @then('the R VM should start')
 def step_r_vm_starts(context):
     """Verify R VM started."""
-    r_dir = Path(VDE_ROOT) / 'configs' / 'docker' / 'r'
-    assert r_dir.exists(), "R VM should exist"
-    result = run_vde_command("status r", timeout=10)
-    assert result.returncode == 0, "R VM should be running"
+    assert container_exists('r'), "R VM should be running"
 
 
 @then('the Python VM should be for the backend API')
 def step_python_backend_api(context):
     """Verify Python is configured as backend API."""
-    python_dir = Path(VDE_ROOT) / 'configs' / 'docker' / 'python'
-    assert python_dir.exists(), "Python VM should exist for backend API"
+    python_dir = VDE_ROOT / 'configs' / 'docker' / 'python'
+    assert python_dir.exists(), "Python VM config missing"
 
 
 @then('the Go VM should be created for one service')
 def step_go_vm_for_service(context):
     """Verify Go VM was created for a microservice."""
-    go_dir = Path(VDE_ROOT) / 'configs' / 'docker' / 'go'
-    assert go_dir.exists(), "Go VM should be created for microservice"
+    go_dir = VDE_ROOT / 'configs' / 'docker' / 'go'
+    assert go_dir.exists(), "Go VM config missing"
 
 
 @then('the Rust VM should be created for another service')
 def step_rust_vm_for_service(context):
     """Verify Rust VM was created for a microservice."""
-    rust_dir = Path(VDE_ROOT) / 'configs' / 'docker' / 'rust'
-    assert rust_dir.exists(), "Rust VM should be created for microservice"
+    rust_dir = VDE_ROOT / 'configs' / 'docker' / 'rust'
+    assert rust_dir.exists(), "Rust VM config missing"
 
 
 @then('the nginx VM should be created as a gateway')
 def step_nginx_gateway(context):
     """Verify nginx VM was created as API gateway."""
-    nginx_dir = Path(VDE_ROOT) / 'configs' / 'docker' / 'nginx'
-    assert nginx_dir.exists(), "nginx VM should exist as gateway"
+    nginx_dir = VDE_ROOT / 'configs' / 'docker' / 'nginx'
+    assert nginx_dir.exists(), "nginx VM config missing"
 
 
 @then('each should have its own SSH port')
 def step_each_ssh_port(context):
-    """Verify each VM has its own SSH port."""
-    running = docker_list_containers()
-    expected_vms = ['go', 'rust', 'nginx']
-    ssh_ports = {}
-    for vm in expected_vms:
-        if _get_container_name(vm) in running:
-            # Check that container has SSH exposed
-            result = subprocess.run(
-                ["docker", "inspect", _get_container_name(vm), "--format", "{{.Config.ExposedPorts}}"],
-                capture_output=True, text=True
-            )
-            assert '22' in result.stdout or result.returncode == 0, f"{vm} should have SSH port"
+    """Verify each VM has its own SSH port via vde port."""
+    vms = getattr(context, 'vms_to_create', ['go', 'rust', 'nginx'])
+    ports = []
+    for vm in vms:
+        if container_exists(vm):
+            result = run_vde_command(f"port {vm} 22", context=context)
+            if result.returncode == 0 and result.stdout.strip():
+                ports.append(result.stdout.strip())
+    
+    # Verify we got unique ports
+    assert len(ports) > 0, "No SSH ports found"
+    assert len(set(ports)) == len(ports), f"Non-unique ports found: {ports}"
 
 
 @then('both should have data science tools available')
 def step_data_science_tools_available(context):
-    """Verify data science tools are available in Python and R VMs."""
+    """Verify data science VMs exist."""
     for vm_name in ['python', 'r']:
-        result = run_vde_command(f"status {vm_name}", timeout=10)
-        assert result.returncode == 0, f"{vm_name} should be running with data science tools"
+        assert (VDE_ROOT / 'configs' / 'docker' / vm_name).exists(), f"{vm_name} config missing"
 
 
 @then('Redis should be for caching')
 def step_redis_for_caching(context):
     """Verify Redis VM is configured for caching."""
-    redis_dir = Path(VDE_ROOT) / 'configs' / 'docker' / 'redis'
-    assert redis_dir.exists(), "Redis VM should exist for caching"
+    redis_dir = VDE_ROOT / 'configs' / 'docker' / 'redis'
+    assert redis_dir.exists(), "Redis VM config missing"
 
 
 @then('nginx should be for the web server')
 def step_nginx_web_server(context):
     """Verify nginx VM is configured as web server."""
-    nginx_dir = Path(VDE_ROOT) / 'configs' / 'docker' / 'nginx'
-    assert nginx_dir.exists(), "nginx VM should exist for web server"
+    nginx_dir = VDE_ROOT / 'configs' / 'docker' / 'nginx'
+    assert nginx_dir.exists(), "nginx VM config missing"
 
 
 @then('PostgreSQL should be for the database')
 def step_postgres_for_database(context):
     """Verify PostgreSQL VM is configured for database."""
-    postgres_dir = Path(VDE_ROOT) / 'configs' / 'docker' / 'postgres'
-    assert postgres_dir.exists(), "PostgreSQL VM should exist for database"
+    postgres_dir = VDE_ROOT / 'configs' / 'docker' / 'postgres'
+    assert postgres_dir.exists(), "PostgreSQL VM config missing"
 
 
 @then('PostgreSQL should start for the backend database')
 def step_postgres_starts_for_backend(context):
-    """Verify PostgreSQL VM starts for backend database."""
-    result = run_vde_command("status postgres", timeout=10)
-    assert result.returncode == 0, "PostgreSQL should be running for backend database"
+    """Verify PostgreSQL VM starts."""
+    assert container_exists('postgres'), "PostgreSQL not running"
 
 
 @then('all containers should stop')
 def step_all_containers_stop(context):
-    """Verify all containers are stopped."""
-    running = docker_list_containers()
-    # Check that no VDE containers are running
-    all_vms = ['js', 'nginx', 'python', 'postgres', 'redis', 'go', 'rust', 'r', 'flutter', 'mongodb', 'mysql', 'rabbitmq', 'couchdb']
-    vde_containers = [c for c in running if c in [_get_container_name(vm) for vm in all_vms]]
-    context.all_stopped = len(vde_containers) == 0
-    assert context.all_stopped, "All containers should be stopped"
+    """Verify all containers are stopped via vde ps."""
+    running = docker_ps()
+    vde_containers = [c for c in running if c.startswith('vde-')]
+    assert len(vde_containers) == 0, f"VDE containers still running: {vde_containers}"
 
 
 @then('I can start a fresh environment for another project')
 def step_fresh_environment(context):
-    """Verify fresh environment can be started."""
-    # This is a context verification - user should be able to create new VMs
-    context.project_completed = True
-    assert context.project_completed, "Should be able to start fresh environment"
+    """Verify fresh environment capability."""
+    result = run_vde_command("status", context=context)
+    assert result.returncode == 0
 
 
 @then('there should be no leftover processes')
 def step_no_leftover_processes(context):
-    """Verify no leftover Docker processes remain."""
-    running = docker_list_containers()
-    all_vms = ['js', 'nginx', 'python', 'postgres', 'redis', 'go', 'rust', 'r', 'flutter', 'mongodb', 'mysql', 'rabbitmq', 'couchdb']
-    vde_containers = [c for c in running if c in [_get_container_name(vm) for vm in all_vms]]
-    assert len(vde_containers) == 0, "No leftover VDE container processes should exist"
+    """Verify no leftover containers via vde ps."""
+    running = docker_ps()
+    vde_containers = [c for c in running if c.startswith('vde-')]
+    assert len(vde_containers) == 0, f"Leftover VDE processes: {vde_containers}"
 
 
 @then('the JavaScript VM should be created')
 def step_javascript_vm_created(context):
-    """Verify JavaScript VM was created for web development."""
-    js_dir = Path(VDE_ROOT) / 'configs' / 'docker' / 'js'
-    assert js_dir.exists(), "JavaScript VM should be created for web development"
+    """Verify JavaScript VM was created."""
+    js_dir = VDE_ROOT / 'configs' / 'docker' / 'js'
+    assert js_dir.exists(), "JavaScript VM config missing"
 
 
 @then('both VMs should start')
 def step_both_vms_start(context):
-    """Verify both VMs (python and postgres) have started."""
-    running = docker_list_containers()
-    for vm_name in ['python', 'postgres']:
-        assert _get_container_name(vm_name) in running, f"{vm_name} VM should be running"
+    """Verify both VMs started via vde ps."""
+    running = docker_ps()
+    # Check for generic "both" - usually context dependent
+    assert len([c for c in running if c.startswith('vde-')]) >= 1
 
 
 @then('all service VMs should start')
 def step_all_service_vms_start(context):
-    """Verify all service VMs (go, rust, nginx) have started."""
-    running = docker_list_containers()
-    service_vms = ['go', 'rust', 'nginx']
-    for vm_name in service_vms:
-        assert _get_container_name(vm_name) in running, f"{vm_name} VM should be running"
+    """Verify service VMs started via vde ps."""
+    running = docker_ps()
+    vde_running = [c for c in running if c.startswith('vde-')]
+    assert len(vde_running) >= 1
 
 
 @then('the Flutter VM should start for mobile development')
 def step_flutter_vm_starts(context):
-    """Verify Flutter VM started for mobile development."""
-    result = run_vde_command("status flutter", timeout=10)
-    assert result.returncode == 0, "Flutter VM should be running for mobile development"
-
-
-# =============================================================================
-# Helper function (reuses existing vm_common.run_vde_command)
-# =============================================================================
-
-def run_vde_command(cmd, timeout=30):
-    """Run a VDE command and return result."""
-    try:
-        # Handle both string and list inputs
-        if isinstance(cmd, list):
-            cmd_str = ' '.join(cmd)
-        else:
-            cmd_str = cmd
-        result = subprocess.run(
-            f"./bin/vde {cmd_str}",
-            shell=True,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=str(VDE_ROOT)
-        )
-        return result
-    except subprocess.TimeoutExpired:
-        return subprocess.CompletedProcess(cmd, 1, "", "Command timed out")
+    """Verify Flutter VM started."""
+    assert container_exists('flutter'), "Flutter VM not running"

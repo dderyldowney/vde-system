@@ -2,7 +2,7 @@
 # VDE Pre-commit Hook
 # Protects critical configuration files from accidental deletion
 #
-# Installation: ln -sf ../../scripts/githooks/pre-commit .git/hooks/pre-commit
+# Installation: ln -sf ../../bin/githooks/pre-commit .git/hooks/pre-commit
 
 set -e
 

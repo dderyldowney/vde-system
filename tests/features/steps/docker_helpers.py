@@ -49,19 +49,19 @@ def _run_vde_command(args: List[str], timeout: int = 10, check: bool = True) -> 
 
 
 def _run_vde_ps(args: List[str], timeout: int = 10) -> subprocess.CompletedProcess:
-    """Run vde-ps command directly.
+    """Run vde ps command via unified vde script.
     
     Args:
-        args: Arguments to pass to vde-ps
+        args: Arguments to pass to vde ps
         timeout: Command timeout in seconds
         
     Returns:
         CompletedProcess result
     """
     vde_root = _get_vde_root()
-    vde_ps = os.path.join(vde_root, "bin", "vde-ps")
+    vde_script = os.path.join(vde_root, "bin", "vde")
     
-    cmd = ["zsh", vde_ps] + args
+    cmd = [vde_script, "ps"] + args
     return subprocess.run(
         cmd,
         capture_output=True,

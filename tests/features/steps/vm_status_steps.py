@@ -5,6 +5,9 @@ All steps use real system verification instead of context flags.
 """
 
 import subprocess
+import os
+import sys
+import time
 from pathlib import Path
 
 from behave import given, then, when
@@ -28,9 +31,9 @@ from vm_common import (
 
 @given('I have VDE installed')
 def step_vde_installed(context):
-    """VDE is installed - verify VDE_ROOT exists."""
+    """VDE is installed - verify VDE_ROOT and bin directory exist."""
     assert VDE_ROOT.exists(), "VDE_ROOT should exist"
-    assert (VDE_ROOT / "scripts").exists(), "VDE scripts directory should exist"
+    assert (VDE_ROOT / "bin").exists(), "VDE bin directory should exist"
     context.vde_installed = True
 
 
@@ -54,7 +57,7 @@ def step_want_python_info(context):
 
 @given('I have running VMs')
 def step_have_running_vms(context):
-    """Have running VMs - verify actual containers are running."""
+    """Have running VMs - verify actual containers are running via vde ps."""
     running = docker_ps()
     context.has_running_vms = len(running) > 0
 
@@ -62,7 +65,7 @@ def step_have_running_vms(context):
 @given('I have stopped several VMs')
 def step_have_stopped_vms(context):
     """Have stopped VMs - verify VMs exist but are not running."""
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    vm_types_file = VDE_ROOT / "data" / "vm-types.conf"
     context.has_stopped_vms = vm_types_file.exists()
 
 
@@ -70,7 +73,7 @@ def step_have_stopped_vms(context):
 def step_check_vm_status(context):
     """Check VM status."""
     context.status_checked = True
-    result = run_vde_command("list", timeout=30)
+    result = run_vde_command("list", timeout=30, context=context)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
@@ -79,6 +82,15 @@ def step_check_vm_status(context):
 # =============================================================================
 # WHEN steps - Perform status and discovery actions
 # =============================================================================
+
+@when('I request "status"')
+def step_request_status(context):
+    """Request status."""
+    result = run_vde_command("list", timeout=30, context=context)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
 
 @when('I view the output')
 def step_view_output(context):
@@ -89,7 +101,7 @@ def step_view_output(context):
 @when('I check status')
 def step_check_status_again(context):
     """Check status."""
-    result = run_vde_command("list", timeout=30)
+    result = run_vde_command("list", timeout=30, context=context)
     context.last_exit_code = result.returncode
     context.last_output = result.stdout
     context.last_error = result.stderr
@@ -98,17 +110,11 @@ def step_check_status_again(context):
 @when('I request information about "{vm_name}"')
 def step_request_vm_info(context, vm_name):
     """Request information about specific VM using vde list or fallback to file."""
-    result = run_vde_command("list", timeout=30)
+    result = run_vde_command("list", timeout=30, context=context)
     
-    # Handle case where run_vde_command returns None
-    if result is None:
-        context.last_exit_code = 1
-        context.last_output = ''
-        context.last_error = 'Command failed'
-    else:
-        context.last_exit_code = result.returncode
-        context.last_output = result.stdout if result.stdout else ''
-        context.last_error = result.stderr if result.stderr else ''
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout if result.stdout else ''
+    context.last_error = result.stderr if result.stderr else ''
     
     context.vm_info_requested = vm_name
     context.vm_info_exit_code = context.last_exit_code
@@ -127,7 +133,7 @@ def step_request_vm_info(context, vm_name):
                 if len(parts) >= 4:
                     vm_type = parts[0].strip()
                     vm_named = parts[1].strip()
-                    if vm_named == vm_name.lower():
+                    if vm_named == vm_name.lower() or vm_named == f"vde-{vm_name.lower()}":
                         vm_info['name'] = vm_named
                         vm_info['display_name'] = parts[3].strip()
                         vm_info['alias'] = parts[2].strip() if len(parts) >= 3 else ''
@@ -140,3 +146,23 @@ def step_request_vm_info(context, vm_name):
     context.vm_info = vm_info
 
 
+@when('I reload VM types')
+def step_reload_vm_types(context):
+    """Reload VM types."""
+    result = run_vde_command("rebuild-cache", timeout=30, context=context)
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+
+
+@when('I run "{command}"')
+def step_run_command(context, command):
+    """Execute a VDE command."""
+    run_vde_command(command, timeout=120, context=context)
+
+
+@when('I check docker-compose config')
+def step_check_compose_config(context):
+    """Check docker-compose configuration via vde info."""
+    result = run_vde_command("info", context=context)
+    context.vde_command_output = result.stdout + result.stderr
+    context.vde_command_exit_code = result.returncode

@@ -8,12 +8,12 @@ import os
 import subprocess
 import sys
 import time
+from pathlib import Path
 
-# Import shared configuration
+# Add steps directory to path for imports
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from pathlib import Path
 
 from behave import given, then, when
 
@@ -31,42 +31,38 @@ from vm_common import (
 # VM Operations WHEN steps
 # =============================================================================
 
-
-
-
-
 @when('I start a language VM')
 def step_start_lang_vm(context):
     """Start a language VM using vde start command."""
-    result = run_vde_command("start python", timeout=180)
+    result = run_vde_command("start python", timeout=180, context=context)
     context.last_exit_code = result.returncode
 
 
 @when('I stop a VM for Error-Handling')
 def step_stop_vm(context):
     """Stop a VM using vde stop command."""
-    result = run_vde_command("stop python", timeout=60)
+    result = run_vde_command("stop python", timeout=60, context=context)
     context.last_exit_code = result.returncode
 
 
 @when('I restart a VM for Error-Handling')
 def step_restart_vm(context):
     """Restart a VM using vde restart command."""
-    result = run_vde_command("restart python", timeout=180)
+    result = run_vde_command("restart python", timeout=180, context=context)
     context.last_exit_code = result.returncode
 
 
 @when('I create a new VM type')
 def step_create_vm_type(context):
     """Create new VM type using vde add command."""
-    result = run_vde_command("add zig --type lang --display-name Zig --install 'apt-get install -y zig'", timeout=30)
+    result = run_vde_command("add zig --type lang --display-name Zig --install 'apt-get install -y zig'", timeout=30, context=context)
     context.last_exit_code = result.returncode
 
 
 @when('I remove an old VM')
 def step_remove_old_vm(context):
     """Remove old VM using vde remove command."""
-    result = run_vde_command("remove ruby", timeout=60)
+    result = run_vde_command("remove ruby", timeout=60, context=context)
     context.last_exit_code = result.returncode
     context.removed_vm_name = 'ruby'
 
@@ -85,8 +81,8 @@ def step_all_vms_start(context):
 def step_see_running(context):
     """Should see running VMs."""
     running = docker_ps()
-    vde_running = [c for c in running if "-dev" in c or c in ['postgres', 'redis', 'nginx', 'mongodb']]
-    assert len(vde_running) > 0, "No VMs are running"
+    vde_running = [c for c in running if c.startswith("vde-")]
+    assert len(vde_running) > 0, "No VDE VMs are running"
 
 
 @then('my VMs should shut down cleanly')
@@ -96,7 +92,7 @@ def step_vms_shutdown(context):
     # Check VMs are actually stopped
     time.sleep(2)
     running = docker_ps()
-    vde_running = [c for c in running if "-dev" in c]
+    vde_running = [c for c in running if c.startswith("vde-")]
     # All VMs should be stopped after shutdown command
     assert len(vde_running) == 0, f"VMs should be stopped after shutdown, but found: {vde_running}"
 
@@ -127,7 +123,7 @@ def step_vm_stops(context):
 @then('the new VM type should be added')
 def step_vm_type_added(context):
     """VM type should be added."""
-    vm_types_file = VDE_ROOT / "scripts" / "data" / "vm-types.conf"
+    vm_types_file = VDE_ROOT / "data" / "vm-types.conf"
     assert vm_types_file.exists(), "vm-types.conf should exist"
     content = vm_types_file.read_text()
     assert "zig" in content.lower(), "zig VM type should be added to vm-types.conf"
@@ -150,7 +146,7 @@ def step_vm_removed_check(context):
     assert compose_file_exists(removed_vm), f"{removed_vm} VM config should be preserved for easy recreation"
     # Verify container was removed
     running = docker_ps()
-    vm_containers = [c for c in running if removed_vm in c.lower()]
+    vm_containers = [c for c in running if f"vde-{removed_vm}" in c.lower()]
     assert len(vm_containers) == 0, f"{removed_vm} containers still running: {vm_containers}"
 
 
@@ -158,5 +154,5 @@ def step_vm_removed_check(context):
 def step_can_reconnect(context):
     """Can reconnect to running VMs."""
     running = docker_ps()
-    vde_running = [c for c in running if "-dev" in c]
+    vde_running = [c for c in running if c.startswith("vde-")]
     assert len(vde_running) > 0, "Should have running VMs to reconnect to"

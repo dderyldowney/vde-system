@@ -148,7 +148,7 @@ test_docker_available() {
     test_start "Docker is available"
     
     if command -v docker &>/dev/null; then
-        if docker info &>/dev/null; then
+        if ./bin/vde info &>/dev/null; then
             test_pass "Docker is available and running"
         else
             test_fail "Docker is installed but not running"
@@ -165,7 +165,7 @@ test_docker_available() {
 test_vde_base_image_exists() {
     test_start "vde-base:latest image exists"
     
-    if docker image inspect vde-base:latest &>/dev/null; then
+    if ./bin/vde inspect vde-base:latest &>/dev/null; then
         test_pass "vde-base:latest exists"
     else
         test_fail "vde-base:latest does not exist"
@@ -180,7 +180,7 @@ test_all_vm_images_exist() {
     test_start "All VM images exist"
     
     # Count existing vde- images (excluding vde-base)
-    local count=$(docker images --format '{{.Repository}}' 2>/dev/null | grep '^vde-' | grep -v ':base$' | wc -l | tr -d ' ')
+    local count=$(./bin/vde images --format '{{.Repository}}' 2>/dev/null | grep '^vde-' | grep -v ':base$' | wc -l | tr -d ' ')
     
     # We expect 26+ VM images
     if [[ $count -ge 26 ]]; then
@@ -244,13 +244,13 @@ test_vm_option
 test_vde_command_includes_rebuild
 
 # Run tests that require Docker (if available)
-if docker info &>/dev/null 2>&1; then
+if ./bin/vde info &>/dev/null 2>&1; then
     test_docker_available
     test_vde_base_image_exists
     test_all_vm_images_exist
     
     # Only run rebuild tests if images exist
-    if docker image inspect vde-base:latest &>/dev/null; then
+    if ./bin/vde inspect vde-base:latest &>/dev/null; then
         test_rebuild_base_only
         test_rebuild_specific_vm
     fi

@@ -105,19 +105,12 @@ def step_python_vm_started(context):
 
 @then('SSH access should be available on the configured port')
 def step_ssh_available(context):
-    """Verify SSH access is available."""
+    """Verify SSH access is available via vde port."""
     vm_name = getattr(context, 'vm_name', 'python')
-    # Check port is mapped
-    try:
-        result = subprocess.run(
-            ['docker', 'port', vm_name, '22'],
-            capture_output=True, text=True, timeout=5
-        )
-        has_port = result.returncode == 0 and '22' in result.stdout
-        assert has_port, f"SSH port should be available for {vm_name}"
-    except Exception:
-        # Fallback: just verify container is running
-        assert container_is_running(vm_name), f"Container {vm_name} should be running"
+    # Check port is mapped using vde port
+    result = run_vde_command(f"port {vm_name} 22", timeout=10)
+    has_port = result.returncode == 0 and ('22' in result.stdout or result.stdout.strip())
+    assert has_port, f"SSH port should be available for {vm_name}. Output: {result.stdout}"
 
 
 @then('my workspace directory should be mounted')
@@ -186,6 +179,7 @@ def step_vm_ready_to_start(context):
 
 
 @then('the Python VM should be stopped')
+@then(u'the Python container should stop')
 def step_python_stopped(context):
     """Verify Python VM is stopped."""
     running = docker_ps()

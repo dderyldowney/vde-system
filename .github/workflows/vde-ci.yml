@@ -63,7 +63,7 @@ jobs:
           echo "✓ All zsh scripts passed syntax check"
 
       # Note: shfmt disabled - has issues with zsh-specific syntax
-      # Run locally with: shfmt -w scripts/**/*.zsh tests/**/*.zsh
+      # Run locally with: shfmt -w bin/**/*.zsh tests/**/*.zsh
 
       - name: Run yamllint
         run: yamllint .github/workflows/ configs/docker/*/docker-compose.yml || true

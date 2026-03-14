@@ -287,8 +287,8 @@ def step_script_path_returned(context):
     assert script_path, "Script path should not be empty"
     # Verify it's an absolute path (starts with / on Unix)
     assert os.path.isabs(script_path), f"Script path should be absolute, got: {script_path}"
-    # Verify the path points to VDE_ROOT/scripts
-    expected_dir = os.path.join(VDE_ROOT, 'scripts')
+    # Verify the path points to VDE_ROOT/bin
+    expected_dir = os.path.join(VDE_ROOT, 'bin')
     assert script_path.startswith(expected_dir), f"Script path should be in {expected_dir}, got: {script_path}"
 
 

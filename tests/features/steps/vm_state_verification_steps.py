@@ -4,17 +4,20 @@ BDD Step Definitions for VM State Verification.
 These steps verify VM states including running, crashed, building, etc.
 """
 import subprocess
+import os
 import sys
 import time
-
-# Import shared configuration
-steps_dir = sys.path.insert(0, steps_dir) if (steps_dir := __import__('os').path.dirname(__import__('os').path.abspath(__file__))) not in sys.path else None
 from pathlib import Path
+
+# Add steps directory to path for imports
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
 
 from behave import given
 
 from config import VDE_ROOT
-from vm_common import get_container_health, docker_ps, docker_list_containers, container_exists
+from vm_common import run_vde_command, docker_ps, container_exists
 
 # =============================================================================
 # VM STATE GIVEN steps
@@ -24,59 +27,63 @@ from vm_common import get_container_health, docker_ps, docker_list_containers, c
 def step_vm_running(context):
     """A VM is running."""
     running = docker_ps()
-    context.vm_running = len(running) > 0
+    vde_running = [c for c in running if c.startswith("vde-")]
+    context.vm_running = len(vde_running) > 0
     if not hasattr(context, 'running_vms'):
         context.running_vms = set()
-    for c in running:
-        if "-dev" in c:
-            context.running_vms.add(c.replace("-dev", ""))
+    for c in vde_running:
+        context.running_vms.add(c.replace("vde-", ""))
 
 
 @given('a VM has crashed')
 def step_vm_crashed(context):
-    """VM has crashed - check for exited containers."""
-    result = subprocess.run(
-        ["docker", "ps", "-a", "--filter", "status=exited", "--format", "{{.Names}}"],
-        capture_output=True,
-        text=True,
-        timeout=10
-    )
-    crashed_containers = [name for name in result.stdout.strip().split("\n") if name]
+    """VM has crashed - check for exited containers via vde ps."""
+    result = run_vde_command("ps -a --filter status=exited", context=context)
+    # Output format includes container names
+    crashed_containers = [line for line in result.stdout.split('\n') if 'vde-' in line]
     context.vm_crashed = len(crashed_containers) > 0
     if crashed_containers:
-        context.crashed_vm = crashed_containers[0].replace("-dev", "")
+        # Simple extraction of VM name from output line
+        import re
+        m = re.search(r'vde-(\S+)', crashed_containers[0])
+        if m:
+            context.crashed_vm = m.group(1)
 
 
 @given('a VM has been removed')
 def step_vm_removed(context):
-    """VM has been removed - check for VM where compose file is missing."""
-    running = docker_list_containers()
-    configs_dir = Path(VDE_ROOT) / "configs" / "docker"
+    """VM has been removed - check for VM where config directory is missing."""
+    configs_dir = VDE_ROOT / "configs" / "docker"
+    # This is a conceptual check for BDD - if we're testing removal, 
+    # we expect some VMs to NOT have configs
     if configs_dir.exists():
-        for vm_dir in configs_dir.iterdir():
-            vm_name = vm_dir.name
-            if f"{vm_name}-dev" not in running and not vm_dir.exists():
-                context.vm_removed = True
-                context.removed_vm = vm_name
-                return
+        # Check for a VM type that exists in data but not in configs
+        vm_types_file = VDE_ROOT / "data" / "vm-types.conf"
+        if vm_types_file.exists():
+            for line in vm_types_file.read_text().splitlines():
+                if '|' in line and not line.startswith('#'):
+                    vm_name = line.split('|')[1].replace('vde-', '')
+                    if not (configs_dir / vm_name).exists():
+                        context.vm_removed = True
+                        context.removed_vm = vm_name
+                        return
     context.vm_removed = False
 
 
 @given('a VM is being built')
 def step_vm_building(context):
-    """VM is being built - check for docker build processes."""
-    result = subprocess.run(
-        ["ps", "aux"],
-        capture_output=True,
-        text=True,
-        timeout=5
-    )
-    context.vm_building = "docker build" in result.stdout.lower() or "docker-compose build" in result.stdout.lower()
+    """VM is being built - check for active VDE build processes."""
+    try:
+        result = subprocess.run(["ps", "aux"], capture_output=True, text=True, timeout=5)
+        # Check for vde start/rebuild or docker build
+        context.vm_building = any(x in result.stdout.lower() for x in ["vde start", "vde rebuild", "docker build"])
+    except Exception:
+        context.vm_building = False
 
 
 @given('a VM is not working correctly')
 def step_vm_not_working(context):
-    """VM is not working correctly - check for exited status."""
+    """VM is not working correctly - check for non-running state of an expected VM."""
+    # If no containers are running, something might be wrong
     running = docker_ps()
-    if not running:
-        context.vm_not_working = False
+    context.vm_not_working = len(running) == 0

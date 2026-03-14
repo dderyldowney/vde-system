@@ -153,7 +153,7 @@
           "py"
         ],
         "display": "Python",
-        "install": "apt-get update -y && apt-get install -y python3 python3-pip",
+        "install": "apt-get update -y && apt-get install -y python3 python3-pip postgresql-client",
         "service_port": null,
         "ssh_port": 2213
       },
@@ -209,23 +209,20 @@
         "ssh_port": 2218
       },
       {
-        "name": "vde-testlang2",
-        "aliases": [
-          "tl2",
-          "tlalias"
-        ],
-        "display": "Test Lang Two",
-        "install": "apt-get install -y curl",
+        "name": "vde-zig",
+        "aliases": [],
+        "display": "Zig",
+        "install": "apt-get install -y zig",
         "service_port": null,
-        "ssh_port": 2297
+        "ssh_port": 2219
       },
       {
-        "name": "vde-testlang",
+        "name": "vde-testport1773454612",
         "aliases": [],
-        "display": "Test Language",
+        "display": "Testport1773454612",
         "install": "apt-get install -y curl",
         "service_port": null,
-        "ssh_port": 2298
+        "ssh_port": 2221
       }
     ],
     "service": [
