@@ -52,8 +52,22 @@ else
     phase_results[integration]="FAIL"
 fi
 
-# Phase 4: Docker-required tests (check Docker first)
-echo "=== Phase 4: Docker-required BDD Tests ==="
+# Phase 4: Core Infrastructure BDD tests
+echo "=== Phase 4: Core Infrastructure BDD Tests ==="
+if docker info >/dev/null 2>&1; then
+    if (cd tests/features && $BEHAVE_CMD core-infrastructure/ --format json -o ../behave-results-core-infrastructure.json) \
+       > "$LOG_DIR/core-infra-$TIMESTAMP.log" 2>&1; then
+        phase_results[core_infra]="PASS"
+    else
+        phase_results[core_infra]="FAIL"
+    fi
+else
+    echo "Docker daemon not running, skipping core-infrastructure tests"
+    phase_results[core_infra]="SKIP"
+fi
+
+# Phase 5: Docker-required tests (check Docker first)
+echo "=== Phase 5: Docker-required BDD Tests ==="
 if docker info >/dev/null 2>&1; then
     if (cd tests/features && $BEHAVE_CMD docker-required/ --format json -o ../behave-results-docker-required.json) \
        > "$LOG_DIR/docker-required-$TIMESTAMP.log" 2>&1; then
@@ -74,12 +88,14 @@ cat > "$RESULTS_DIR/TEST_RESULTS_SUMMARY.json" <<EOF
     "docker_free": "${phase_results[docker_free]}",
     "unit": "${phase_results[unit]}",
     "integration": "${phase_results[integration]}",
+    "core_infra": "${phase_results[core_infra]}",
     "docker_required": "${phase_results[docker_required]}"
   },
   "logs": {
     "docker_free": "$LOG_DIR/docker-free-$TIMESTAMP.log",
     "unit": "$LOG_DIR/unit-$TIMESTAMP.log",
     "integration": "$LOG_DIR/integration-$TIMESTAMP.log",
+    "core_infra": "$LOG_DIR/core-infra-$TIMESTAMP.log",
     "docker_required": "$LOG_DIR/docker-required-$TIMESTAMP.log"
   }
 }
@@ -88,7 +104,7 @@ EOF
 # Print summary
 echo ""
 echo "=== Test Suite Summary ==="
-for phase in docker_free unit integration docker_required; do
+for phase in docker_free unit integration core_infra docker_required; do
     echo "$phase: ${phase_results[$phase]}"
 done
 

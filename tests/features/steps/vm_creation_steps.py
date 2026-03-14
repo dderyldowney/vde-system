@@ -93,7 +93,7 @@ def step_vm_not_created(context, vm_name):
         context.created_vms.discard(vm_name)
 
 
-@given('VM types are loaded')
+@given('VM types configuration is available on disk')
 def step_vm_types_loaded(context):
     """VM types have been loaded from config - verify vm-types.conf exists."""
     vm_types_file = VDE_ROOT / "data" / "vm-types.conf"

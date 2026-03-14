@@ -859,7 +859,7 @@ def step_have_new_vm_needing_git(context):
     context.new_vm_target = 'python'
 
 
-@when('I SSH into the Python VM')
+@when('I check SSH configuration for Python VM')
 def step_ssh_into_python_vm(context):
     """Verify Python VM's SSH config has ForwardAgent yes."""
     ssh_config = VDE_SSH_DIR / 'config'
@@ -875,7 +875,7 @@ def step_ssh_into_python_vm(context):
     context.ssh_target = 'python'
 
 
-@when('I SSH into the Rust VM')
+@when('I check SSH configuration for Rust VM')
 def step_ssh_into_rust_vm(context):
     """Verify Rust VM's SSH config has ForwardAgent yes."""
     ssh_config = VDE_SSH_DIR / 'config'
@@ -897,7 +897,7 @@ def step_ssh_into_nodejs_vm(context):
     context.ssh_target = 'js'
 
 
-@when('I SSH into a VM')
+@when('I check the standard VDE SSH configuration')
 def step_ssh_into_a_vm(context):
     """Verify the VDE SSH config template has ForwardAgent yes for all VMs."""
     template = VDE_ROOT / 'templates' / 'ssh-entry.txt'

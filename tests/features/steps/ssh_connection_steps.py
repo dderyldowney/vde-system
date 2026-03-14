@@ -130,13 +130,13 @@ def step_language_vms_ssh(context):
             content = compose_file.read_text()
             assert '22' in content, "Language VM missing SSH port mapping"
 
-@then('each can run independently')
-def step_each_independent(context):
-    """Verify VMs can run independently via vde version check."""
+@then('vde command should be available')
+def step_vde_available(context):
+    """Verify VDE command is available via version check."""
     result = run_vde_command("--version", context=context)
     assert result.returncode == 0, "VDE should be available"
 
-@then('each should have separate data directory')
+@then('each VM should have its own separate data directory')
 def step_each_separate_data(context):
     """Verify each VM has separate configuration directory."""
     configs_dir = VDE_ROOT / "configs" / "docker"
