@@ -77,17 +77,34 @@ def step_have_multiple_vms_running(context):
 @given('I have {num} VMs running')
 def step_have_n_vms_running(context, num):
     """Check if N VDE VMs are running via vde ps."""
+    # Handle descriptive numbers
+    if num.lower() in ['several', 'multiple', 'some']:
+        min_count = 2
+    else:
+        try:
+            min_count = int(num)
+        except ValueError:
+            min_count = 1
+
     running = docker_ps()
     vde_running = [c for c in running if c.startswith("vde-")]
     context.num_vms_running = len(vde_running)
-    assert context.num_vms_running >= int(num), f"Expected {num} VMs, found {context.num_vms_running}"
+    assert context.num_vms_running >= min_count, f"Expected at least {min_count} VMs, found {context.num_vms_running}"
 
 
 @given('I have {num} VMs configured for my project')
 def step_n_vms_configured(context, num):
     """Check if N VMs are configured in configs/docker."""
+    if num.lower() in ['several', 'multiple', 'some']:
+        min_count = 2
+    else:
+        try:
+            min_count = int(num)
+        except ValueError:
+            min_count = 1
+
     configs_dir = VDE_ROOT / "configs" / "docker"
     if configs_dir.exists():
         count = len([d for d in configs_dir.iterdir() if d.is_dir() and d.name != "vde-base"])
         context.num_vms_configured = count
-        assert count >= int(num), f"Expected {num} configured VMs, found {count}"
+        assert count >= min_count, f"Expected at least {min_count} configured VMs, found {count}"

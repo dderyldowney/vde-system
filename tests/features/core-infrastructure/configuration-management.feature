@@ -17,8 +17,8 @@ Feature: Configuration Management
     Given I need a MySQL service on port 3306
     When I run "add-vm-type --type service --svc-port 3306 mysql 'apt-get install -y mysql-server'"
     Then mysql VM should be created
-    And port 3306 should be mapped to host
-    And I can connect to MySQL from other VMs
+    And port 3306 should be mapped to host in configuration
+    And I can connect to MySQL from other containers
 
   Scenario: Configure VM with multiple service ports
     Given I need a service that exposes multiple ports
@@ -36,9 +36,9 @@ Feature: Configuration Management
   Scenario: Configure aliases for VM
     Given I want to reference VMs with short names
     When I add VM type with aliases "js,node,nodejs"
-    Then I can use any alias to reference the VM
-    And "start-virtual js", "start-virtual node", "start-virtual nodejs" all work
-    And aliases should show in list-vms output
+    Then I can use any configured alias to reference the VM
+    And all standard Node.js aliases should be recognized by the system
+    And all configured aliases should show in the list output
 
   Scenario: Override default port ranges
     Given I need different port ranges for my environment
@@ -71,7 +71,7 @@ Feature: Configuration Management
     Given I need to mount specific directories into the VM
     When I modify the volumes section in docker-compose.yml
     Then my custom directories should be mounted
-    And files should be shared between host and VM
+    And files should be shared between host and VM in configuration
     And changes should sync immediately
 
   Scenario: Configure container resource limits
@@ -154,13 +154,13 @@ Feature: Configuration Management
   Scenario: Reset configuration to defaults
     Given I've made configuration changes I want to undo
     When I remove my custom configurations
-    And I reload VM types
+    And I rebuild the VM types cache
     Then default configurations should be used
     And my VMs work with standard settings
 
   Scenario: Debug configuration issues
     Given my VM won't start due to configuration
-    When I check docker-compose config
+    When I check the Docker Compose configuration detail
     Then I should see the effective configuration
     And errors should be clearly indicated
     And I can identify the problematic setting

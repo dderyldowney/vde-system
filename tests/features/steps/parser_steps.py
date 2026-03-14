@@ -162,7 +162,7 @@ def step_plan_contains(context, line):
     context.plan.append(line)
 
 
-@when('plan contains "{line}"')
+@when('I add "{line}" to the plan during execution')
 def step_when_plan_contains(context, line):
     """Add a line to the plan and re-validate (for testing rejection)."""
     if not hasattr(context, 'plan'):

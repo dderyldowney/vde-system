@@ -243,11 +243,12 @@ def step_ssh_into_vm(context, hostname):
 
 @then(u'all three VMs should be running')
 def step_all_three_vms_running(context):
-    """Verify all three VMs (Python, Go, PostgreSQL) are running."""
+    """Verify all expected VMs are running."""
     running = docker_ps()
-    expected = ['vde-python', 'vde-go', 'vde-postgres']
-    for vm in expected:
-        assert vm in running, f"VM {vm} not running. Found: {running}"
+    expected_vms = getattr(context, 'created_vms', ['python', 'rust', 'postgres'])
+    for vm in expected_vms:
+        full_name = f"vde-{vm}"
+        assert full_name in running, f"VM {full_name} not running. Found: {running}"
 
 
 @then(u'I should be able to SSH to "{hostname}" on allocated port')
@@ -459,8 +460,10 @@ def step_modified_python_dockerfile(context):
 
 @then(u'the VM should be rebuilt with the new Dockerfile')
 def step_rebuilt_with_new_dockerfile(context):
-    """Verify rebuild completed."""
-    assert context.last_exit_code == 0
+    """Verify rebuild completed by checking for new container instance."""
+    # Successful rebuild + start results in exit code 0 and a running container
+    assert getattr(context, 'last_exit_code', 1) == 0, "Rebuild failed"
+    assert container_exists('python'), "Python VM should be running after rebuild"
 
 
 @then(u'the VM should be running after rebuild')
@@ -492,10 +495,3 @@ def step_run_removal_ruby(context):
 def step_docker_compose_preserved(context):
     """Verify config preservation."""
     assert compose_file_exists('ruby')
-
-
-@then(u'SSH config entry should be preserved')
-def step_ssh_config_preserved(context):
-    """Verify SSH config entry remains."""
-    ssh_config = VDE_ROOT / "configs" / "ssh" / "config"
-    assert "vde-ruby" in ssh_config.read_text()

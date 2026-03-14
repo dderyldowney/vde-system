@@ -315,10 +315,11 @@ def step_reduce_works(context):
 @then(u'all ports should be mapped in docker-compose.yml')
 def step_ports_mapped(context):
     """Verify all ports are mapped in docker-compose.yml."""
-    # This would require file verification
-    compose_path = Path.cwd() / 'docker-compose.yml'
-    assert compose_path.exists() or getattr(context, 'ports_mapped', False), \
-        f"Expected docker-compose.yml with port mappings at {compose_path}"
+    vm_name = getattr(context, 'vm_name', 'python')
+    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
+    assert compose_path.exists(), f"Expected docker-compose.yml at {compose_path}"
+    content = compose_path.read_text()
+    assert 'ports:' in content, f"No ports section found in {compose_path}"
 
 
 # =============================================================================

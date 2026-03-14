@@ -22,7 +22,7 @@ Feature: SSH Agent Forwarding for External Git Operations
     And my host's SSH keys should be used for authentication
 
   Scenario: Pushing code to GitHub from a VM
-    Given I have a Go VM running
+    Given I have Go VM running with Git support
     And I have cloned a repository in the Go VM
     And I have made changes to the code
     When I run "git commit -am 'Add new feature'"
@@ -42,7 +42,7 @@ Feature: SSH Agent Forwarding for External Git Operations
     And each should use the appropriate SSH key from my host
 
   Scenario: Using Git submodules
-    Given I have a Rust VM running
+    Given I have Rust VM running with Git support
     And I have a repository with Git submodules
     And the submodules are from GitHub
     When I SSH into the Rust VM

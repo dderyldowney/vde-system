@@ -62,16 +62,22 @@ def step_ssh_config_exists(context, hostname):
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
     assert ssh_config.exists(), "VDE SSH config missing"
     content = ssh_config.read_text()
-    assert hostname in content, f"SSH config missing entry for {hostname}"
+    assert f"Host {hostname}" in content, f"SSH config missing entry for {hostname}"
 
 
-@then('SSH config entry for "{hostname}" should be preserved')
-def step_ssh_config_preserved(context, hostname):
-    """Verify SSH config entry is preserved (static port assignments)."""
+@then('SSH config entry for "{hostname}" should be preserved in config')
+def step_ssh_config_preserved_host(context, hostname):
+    """Verify SSH config entry for a specific host is preserved."""
     ssh_config = VDE_ROOT / "configs" / "ssh" / "config"
     assert ssh_config.exists(), "Project SSH config missing"
     content = ssh_config.read_text()
-    assert hostname in content, f"SSH config missing entry for {hostname}"
+    assert f"Host {hostname}" in content, f"SSH config missing entry for {hostname}"
+
+
+@then('SSH config entry for {hostname} should be preserved')
+def step_ssh_config_preserved_generic(context, hostname):
+    """Alternative naming for preservation."""
+    step_ssh_config_preserved_host(context, hostname.strip('"'))
 
 
 @then('projects directory should exist at "{dir_path}"')

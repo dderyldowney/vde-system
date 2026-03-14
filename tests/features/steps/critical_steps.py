@@ -339,12 +339,6 @@ def step_vm_python_running(context):
     step_container_is_running(context, "vde-python")
 
 
-@then('VM "{vm_name}" should not be running')
-def step_vm_not_running(context, vm_name):
-    container = f"vde-{vm_name}" if not vm_name.startswith("vde-") else vm_name
-    step_container_not_running(context, container)
-
-
 @then('running container should be named "vde-python"')
 def step_running_container_named(context):
     step_container_is_running(context, "vde-python")

@@ -275,7 +275,7 @@ def step_pull_latest_changes(context):
     context.git_pull_exit_code = result.returncode
 
 
-@when('I want to remove it')
+@when('I request to remove VDE')
 def step_want_to_remove(context):
     """Mark intent to remove VDE."""
     context.wants_to_remove = True

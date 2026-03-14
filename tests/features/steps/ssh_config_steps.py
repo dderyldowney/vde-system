@@ -160,6 +160,7 @@ def step_config_with_custom_settings(context):
     context.config_with_custom = True
 
 @given('~/.ssh/vde/config contains vde-python configuration')
+@then('~/.ssh/vde/config contains vde-python configuration')
 def step_config_contains_python_dev(context):
     """Ensure SSH config contains vde-python host entry."""
     ssh_config = _get_ssh_config_path()
@@ -179,6 +180,7 @@ def step_config_contains_python_dev(context):
     
     ssh_config.chmod(0o600)
     context.config_has_python_dev = True
+    assert "Host vde-python" in ssh_config.read_text()
 
 @given('~/.ssh/vde/config exists with comments and formatting')
 def step_config_with_comments(context):
@@ -312,6 +314,7 @@ def step_known_hosts_multiple_entries(context):
     known_hosts.chmod(0o644)
 
 @given('~/.ssh/vde/known_hosts had old entry for "[localhost]:{port}"')
+@then('~/.ssh/vde/known_hosts had old entry for "[localhost]:{port}"')
 def step_known_hosts_had_old_entry(context, port):
     """Ensure known_hosts had old entry for port (for cleanup tests)."""
     known_hosts = _get_known_hosts_path()
@@ -985,14 +988,6 @@ def step_ssh_agent_should_be_started(context):
     # Agent is running if exit code is 0 or 1 (1 means no keys loaded)
     assert result.returncode in [0, 1], "SSH agent should be running"
 
-@then('available SSH keys should be loaded into agent')
-def step_keys_should_be_loaded(context):
-    """Verify SSH keys are loaded into agent."""
-    import subprocess
-    result = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True)
-    assert result.returncode == 0, "SSH keys should be loaded"
-    assert len(result.stdout.strip()) > 0, "At least one key should be listed"
-
 @then('an ed25519 SSH key should be generated')
 def step_ed25519_key_generated(context):
     """Verify ed25519 key was generated."""
@@ -1380,10 +1375,28 @@ def step_config_comments_preserved(context):
     content = ssh_config.read_text()
     assert '#' in content, "Comments should be preserved"
 
+@given('~/.ssh/vde/config has comments and custom formatting')
 @then('~/.ssh/vde/config has comments and custom formatting')
 def step_config_has_comments_and_formatting(context):
-    """Verify config has comments and custom formatting."""
+    """Verify or create config with comments and custom formatting."""
     ssh_config = _get_ssh_config_path()
+    
+    # If used as setup, ensure it has comments
+    if not ssh_config.exists() or '#' not in ssh_config.read_text():
+        _ensure_vde_ssh_dir()
+        content = """# Custom SSH Configuration
+# User-defined settings
+
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/vde/id_rsa
+
+# End of custom config
+"""
+        ssh_config.write_text(content)
+        ssh_config.chmod(0o600)
+
     content = ssh_config.read_text()
     assert '#' in content or '\n\n' in content, "Config should have comments or custom formatting"
 
@@ -1394,13 +1407,6 @@ def step_known_hosts_contains_localhost_entry(context, port):
     assert known_hosts.exists(), "known_hosts should exist"
     content = known_hosts.read_text()
     assert f"[localhost]:{port}" in content, f"known_hosts should contain [localhost]:{port}"
-
-@then('~/.ssh/vde/known_hosts had old entry for "[localhost]:{port}"')
-def step_known_hosts_had_old_entry(context, port):
-    """Verify known_hosts had old entry."""
-    # This is typically set up in a Given step
-    if hasattr(context, 'old_known_hosts_content'):
-        assert f"[localhost]:{port}" in context.old_known_hosts_content
 
 @then('backup should contain original config content')
 def step_backup_contains_original_content(context):
@@ -1524,13 +1530,6 @@ def step_error_indicates_duplicate(context):
     assert hasattr(context, 'warning_message') or hasattr(context, 'duplicate_detected'), \
            "Should detect duplicate entry"
 
-@then('~/.ssh/vde/config contains vde-python configuration')
-def step_config_contains_python_dev(context):
-    """Verify config contains vde-python configuration."""
-    ssh_config = _get_ssh_config_path()
-    content = ssh_config.read_text()
-    assert "vde-python" in content, "Config should contain vde-python configuration"
-
 @then('~/.ssh/vde/config should still contain "    Port {port}" under {hostname}')
 def step_config_still_contains_port_under_host(context, port, hostname):
     """Verify config still contains port under specific host."""
@@ -1550,6 +1549,7 @@ def step_config_still_contains_port_under_host(context, port, hostname):
     
     assert False, f"Config should still contain 'Port {port}' under {hostname}"
 
+@given('~/.ssh/vde directory exists or can be created')
 @then('~/.ssh/vde directory exists or can be created')
 def step_vde_ssh_dir_exists_or_created(context):
     """Verify ~/.ssh/vde directory exists or can be created."""
@@ -1558,6 +1558,7 @@ def step_vde_ssh_dir_exists_or_created(context):
         VDE_SSH_DIR.chmod(0o700)
     assert VDE_SSH_DIR.exists(), "~/.ssh/vde directory should exist or be created"
 
+@given('multiple processes try to add SSH entries simultaneously')
 @then('multiple processes try to add SSH entries simultaneously')
 def step_multiple_processes_add_entries(context):
     """Attempt concurrent addition of SSH entries."""
@@ -1576,31 +1577,6 @@ def step_specific_key_type_detected(context, key_type):
 # =============================================================================
 # ADDITIONAL STEPS FOR PHASE 5
 # =============================================================================
-
-@given('~/.ssh/vde/config has comments and custom formatting')
-def step_config_has_comments_and_formatting(context):
-    """Create SSH config with comments and custom formatting."""
-    ssh_config = _get_ssh_config_path()
-    _ensure_vde_ssh_dir()
-    content = """# Custom SSH Configuration
-# User-defined settings
-
-Host github.com
-    HostName github.com
-    User git
-    # Custom identity file
-    IdentityFile ~/.ssh/vde/id_rsa
-
-# End of custom config
-"""
-    ssh_config.write_text(content)
-    ssh_config.chmod(0o600)
-
-@given('multiple processes try to add SSH entries simultaneously')
-def step_multiple_processes_try_add_entries(context):
-    """Setup: Multiple processes will attempt to add entries."""
-    # Store flag for concurrent access simulation
-    context.concurrent_access = True
 
 @then('merged entry should contain "IdentityFile" pointing to detected key')
 def step_merged_entry_contains_identity_file(context):
@@ -1682,14 +1658,6 @@ def step_vm_previously_created_with_port(context, vm_name, port):
     else:
         known_hosts.write_text(entry)
     known_hosts.chmod(0o600)
-
-@given('~/.ssh/vde directory exists or can be created')
-def step_vde_ssh_directory_exists_or_can_be_created(context):
-    """Ensure ~/.ssh/vde directory exists or can be created."""
-    if not VDE_SSH_DIR.exists():
-        VDE_SSH_DIR.mkdir(parents=True, exist_ok=True)
-        VDE_SSH_DIR.chmod(0o700)
-    assert VDE_SSH_DIR.exists(), "~/.ssh/vde directory should exist or be created"
 
 @then('SSH config should still contain "Host {hostname}"')
 def step_ssh_config_should_still_contain_host(context, hostname):

@@ -109,7 +109,7 @@ Feature: Installation and Initial Setup
 
   Scenario: Uninstall or cleanup
     Given I no longer want VDE on my system
-    When I want to remove it
+    When I request to remove VDE
     Then I can stop all VMs
     And I can remove VDE directories
     And my SSH config should be cleaned up

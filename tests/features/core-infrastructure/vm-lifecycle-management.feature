@@ -36,7 +36,7 @@ Feature: VM Lifecycle Management
     Given I have created several VMs
     When I request to "start python, go, and postgres"
     Then all three VMs should start
-    And they should be able to communicate
+    And they should be able to communicate on the VDE network
     And each should have its own SSH port
 
   Scenario: Checking VM status
@@ -85,22 +85,22 @@ Feature: VM Lifecycle Management
 
   @requires-docker-host
   Scenario: Rebuilding after code changes
-    Given I have modified the Dockerfile
+    Given I have modified the VM Dockerfile
     When I request to "rebuild go nocache=true"
     Then the Go VM should be rebuilt from scratch
     And no cached layers should be used
 
   @requires-docker-host
   Scenario: Upgrading a VM
-    Given I want to update the base image
-    When I rebuild the VM
+    Given I want to update the VM base image
+    When I trigger a VM rebuild
     Then the latest base image should be used
     And VM configuration should still exist
     And my workspace should still be accessible
 
   @requires-docker-host
   Scenario: Migrating to a new VDE version
-    Given I have updated VDE scripts
+    Given the VDE scripts have been updated
     When I rebuild my VMs
     Then they should use the new VDE configuration
     And my data should be preserved

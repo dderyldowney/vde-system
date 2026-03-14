@@ -223,6 +223,30 @@
         "install": "apt-get install -y curl",
         "service_port": null,
         "ssh_port": 2221
+      },
+      {
+        "name": "vde-testport1773505985",
+        "aliases": [],
+        "display": "Testport1773505985",
+        "install": "apt-get install -y curl",
+        "service_port": null,
+        "ssh_port": 2222
+      },
+      {
+        "name": "vde-testport1773512567",
+        "aliases": [],
+        "display": "Testport1773512567",
+        "install": "apt-get install -y curl",
+        "service_port": null,
+        "ssh_port": 2223
+      },
+      {
+        "name": "vde-testport1773518572",
+        "aliases": [],
+        "display": "Testport1773518572",
+        "install": "apt-get install -y curl",
+        "service_port": null,
+        "ssh_port": 2224
       }
     ],
     "service": [

@@ -10,10 +10,41 @@ VDE_SSH_KEY="$VDE_SSH_DIR/id_ed25519"
 
 # Check if agent is already running and usable
 check_agent() {
-    if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -l >/dev/null 2>&1; then
-        echo "SSH agent already running (PID: $SSH_AGENT_PID)"
-        return 0
+    # If variables are already set, check if they are valid
+    if [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "$SSH_AUTH_SOCK" ]; then
+        if ssh-add -l >/dev/null 2>&1 || [ $? -eq 1 ]; then
+            echo "Using existing SSH agent (PID: ${SSH_AGENT_PID:-unknown})"
+            return 0
+        fi
     fi
+
+    # Try to find an existing agent from this user (common patterns)
+    local agent_sock
+    
+    # 1. Standard Linux /tmp/ssh-* pattern
+    agent_sock=$(find /tmp/ssh-* -name "agent.*" -user $(whoami) 2>/dev/null | head -n 1)
+    
+    # 2. macOS com.apple.launchd pattern
+    if [ -z "$agent_sock" ]; then
+        agent_sock=$(find /private/tmp/com.apple.launchd.* -name "Listeners" -user $(whoami) 2>/dev/null | head -n 1)
+    fi
+
+    if [ -n "$agent_sock" ] && [ -S "$agent_sock" ]; then
+        export SSH_AUTH_SOCK="$agent_sock"
+        # Extract PID from socket path if possible (usually /tmp/ssh-XXXXXX/agent.PID)
+        # If not possible (like on macOS), we can try to get it from pgreg
+        local pid=$(echo "$agent_sock" | grep -oE '[0-9]+$' | head -n 1)
+        if [ -z "$pid" ]; then
+            pid=$(pgrep -u $(whoami) ssh-agent | head -n 1)
+        fi
+        export SSH_AGENT_PID="$pid"
+        
+        if ssh-add -l >/dev/null 2>&1 || [ $? -eq 1 ]; then
+            echo "Discovered existing SSH agent at $SSH_AUTH_SOCK"
+            return 0
+        fi
+    fi
+    
     return 1
 }
 

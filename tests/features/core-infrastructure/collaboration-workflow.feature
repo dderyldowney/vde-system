@@ -11,7 +11,7 @@ Feature: Team Collaboration and Project Sharing
     Given I am a new developer joining the team
     And I have cloned the project repository
     And the project contains VDE configuration in configs/
-    When they follow the setup instructions
+    When a new developer follows the setup instructions
     Then VDE should detect my operating system
     And my SSH keys should be automatically configured
     And I should see available VMs with "vde list"
@@ -27,7 +27,7 @@ Feature: Team Collaboration and Project Sharing
   @requires-docker-host
   Scenario: Sync team member's SSH config changes
     Given the team has updated SSH config templates
-    And I pull the latest changes
+    And I have pulled the latest changes
     When I create or restart any VM
     Then my SSH config should be updated with new entries
     And my existing SSH entries should be preserved

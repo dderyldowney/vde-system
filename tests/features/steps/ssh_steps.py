@@ -16,6 +16,7 @@ from behave import given, then, when
 # =============================================================================
 
 @given('available SSH keys should be loaded into agent')
+@then('available SSH keys should be loaded into agent')
 def step_ssh_keys_loaded(context):
     """Verify SSH keys are loaded into the agent."""
     result = subprocess.run(
@@ -23,6 +24,8 @@ def step_ssh_keys_loaded(context):
         capture_output=True,
         text=True
     )
+    assert result.returncode == 0, "SSH keys should be loaded"
+    assert len(result.stdout.strip()) > 0, "At least one key should be listed"
 
     has_keys = result.returncode == 0
     assert has_keys, f"No SSH keys loaded in agent: {result.stderr}"
