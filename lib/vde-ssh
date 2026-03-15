@@ -512,9 +512,6 @@ remove_known_hosts_entry() {
 
 # Check if SSH agent is running
 # Returns: 0 if running, 1 otherwise
-# SSH agent environment file for persistence
-VDE_SSH_AGENT_ENV="${VDE_SSH_DIR}/agent_env"
-
 ssh_agent_is_running() {
     # 1. Always load from VDE-specific environment file to ensure isolation
     if [ -f "$VDE_SSH_AGENT_ENV" ]; then

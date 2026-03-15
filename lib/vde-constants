@@ -188,7 +188,8 @@ VDE_HOME_DIR="${VDE_HOME_DIR:-$HOME}"
 # VDE SSH ISOLATION
 # =============================================================================
 # VDE uses an isolated SSH directory to prevent interference with user's
-# personal SSH configuration. All VDE SSH files are stored under ~/.ssh/vde/
+# personal SSH configuration. All VDE SSH files are stored under .vde/ssh/
+# within the project root.
 
 # VDE SSH directory (isolated from user's SSH)
 VDE_SSH_DIR="${VDE_SSH_DIR:-${VDE_HOME_DIR}/.ssh/vde}"
@@ -204,6 +205,9 @@ VDE_SSH_IDENTITY="${VDE_SSH_IDENTITY:-$VDE_SSH_DIR/id_ed25519}"
 
 # VDE SSH public key
 VDE_SSH_IDENTITY_PUB="${VDE_SSH_IDENTITY_PUB:-$VDE_SSH_DIR/id_ed25519.pub}"
+
+# VDE SSH Agent environment file
+VDE_SSH_AGENT_ENV="${VDE_SSH_AGENT_ENV:-$VDE_SSH_DIR/agent_env}"
 
 # =============================================================================
 # VDE DIRECTORY PATHS
@@ -274,6 +278,7 @@ if [ "${VDE_TEST_MODE:-0}" -ne 1 ]; then
              VDE_COMPOSE_PROJECT_PREFIX VDE_CONTAINER_PREFIX \
              VDE_SSH_USER VDE_SSH_KEY_PREFERENCE VDE_HOME_DIR VDE_SSH_DIR \
              VDE_SSH_CONFIG VDE_SSH_KNOWN_HOSTS VDE_SSH_IDENTITY VDE_SSH_IDENTITY_PUB \
+             VDE_SSH_AGENT_ENV \
              VDE_VM_NAME_PATTERN VDE_SSH_PORT_PATTERN \
              VDE_MSG_VM_NOT_FOUND VDE_MSG_VM_EXISTS VDE_MSG_INVALID_NAME \
              VDE_MSG_DOCKER_FAILED VDE_MSG_TIMEOUT VDE_MSG_LOCK_FAILED VDE_MSG_NO_SSH_KEY
