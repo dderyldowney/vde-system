@@ -15,8 +15,7 @@ import subprocess
 from pathlib import Path
 from behave import given, when, then
 from behave.api.async_step import async_run_until_complete
-from config import VDE_ROOT
-VDE_SSH_DIR = Path.home() / ".ssh" / "vde"
+from config import VDE_ROOT, VDE_SSH_DIR
 PUBLIC_SSH_KEYS_DIR = VDE_ROOT / "public-ssh-keys"
 
 # =============================================================================
@@ -643,46 +642,39 @@ def step_config_with_blank_lines(context):
 def step_run_vde_command_requires_ssh(context):
     """Run a VDE command that requires SSH."""
     env = os.environ.copy()
+    # Pass VDE_SSH_DIR to ensure isolation matches test expectations
+    env["VDE_SSH_DIR"] = str(VDE_SSH_DIR)
 
-    # If the Given step requested SSH_AUTH_SOCK to be absent, remove it
+    # If the Given step requested SSH_AUTH_SOCK to be absent, remove it from env
+    # This tests VDE's ability to handle missing inherited agents (it should use its own)
     if getattr(context, '_unset_ssh_auth_sock', False):
         env.pop('SSH_AUTH_SOCK', None)
         env.pop('SSH_AGENT_PID', None)
-        result = subprocess.run(
-            ["zsh", "-c", f"source {VDE_ROOT}/lib/vde-ssh 2>/dev/null; "
-                           "detect_ssh_agent 2>&1 || echo 'no agent'"],
-            capture_output=True, text=True, env=env, cwd=str(VDE_ROOT)
-        )
-        context.command_result = result
-        context.command_executed = True
-        return
+        # We also need to hide the VDE agent_env if we want to simulate "no agent available"
+        vde_agent_env = VDE_SSH_DIR / "agent_env"
+        if vde_agent_env.exists():
+            vde_agent_env.rename(VDE_SSH_DIR / "agent_env.bak")
+            context._vde_agent_env_renamed = True
 
-    # Normal path: initialise SSH agent via the setup script
-    result = subprocess.run(
-        ["./bin/vde", "ssh-setup", "--init"],
-        capture_output=True, text=True, cwd=str(VDE_ROOT)
-    )
-
-    # Capture agent env vars into the process environment
-    agent_result = subprocess.run(
-        ["bash", "-c",
-         "eval $(ssh-agent -s) && "
-         "echo SSH_AUTH_SOCK=$SSH_AUTH_SOCK && "
-         "echo SSH_AGENT_PID=$SSH_AGENT_PID"],
-        capture_output=True, text=True
-    )
-    for line in agent_result.stdout.split('\n'):
-        if line.startswith('SSH_AUTH_SOCK='):
-            os.environ['SSH_AUTH_SOCK'] = line.split('=', 1)[1]
-        elif line.startswith('SSH_AGENT_PID='):
-            os.environ['SSH_AGENT_PID'] = line.split('=', 1)[1]
-
-    key_path = VDE_SSH_DIR / "id_ed25519"
-    if key_path.exists():
-        subprocess.run(["ssh-add", str(key_path)], capture_output=True)
-
+    # Use 'vde ssh-setup status' or 'init' depending on what we want to trigger
+    # Most VDE commands source the library and ensure the environment.
+    # We use 'ssh-setup status' because it's safe but sources all libs.
+    vde_bin = VDE_ROOT / "bin" / "vde"
+    
+    # If we are testing key generation, we should use a command that calls ensure_ssh_agent
+    # 'ssh-setup status' only checks, it doesn't ensure.
+    # Let's use 'ssh-setup start' to actually trigger the ensure logic.
+    result = subprocess.run(["zsh", str(vde_bin), "ssh-setup", "start"], 
+                          capture_output=True, text=True, env=env, cwd=str(VDE_ROOT))
+    
     context.command_result = result
     context.command_executed = True
+
+    # Restore agent_env if we hid it
+    if getattr(context, '_vde_agent_env_renamed', False):
+        vde_agent_env_bak = VDE_SSH_DIR / "agent_env.bak"
+        if vde_agent_env_bak.exists():
+            vde_agent_env_bak.rename(VDE_SSH_DIR / "agent_env")
 
 @when('I run "sync_ssh_keys_to_vde"')
 def step_run_sync_ssh_keys(context):
@@ -825,28 +817,27 @@ def step_create_vm_again(context, vm_name):
 @when('multiple processes try to update SSH config simultaneously')
 def step_multiple_processes_update_config(context):
     """Execute concurrent updates to the SSH config."""
-    import threading
-    import time
+    import concurrent.futures
+    import subprocess
     
-    ssh_config = _get_ssh_config_path()
     _ensure_vde_ssh_dir()
     
-    def update_config(vm_name, port):
-        content = ssh_config.read_text() if ssh_config.exists() else ""
-        content += f"\nHost vde-{vm_name}\n    Port {port}\n"
-        time.sleep(0.01)  # Simulate processing
-        ssh_config.write_text(content)
+    def run_update(i):
+        # Use the actual VDE command which implements locking
+        vm_name = f"concurrent-vm-{i}"
+        port = f"229{i}"
+        # Construct path to vde-ssh-setup relative to VDE_ROOT
+        vde_ssh_setup = VDE_ROOT / "bin" / "vde-ssh-setup"
+        # We use ~/.ssh/vde/id_ed25519 as a placeholder key
+        cmd = ["zsh", str(vde_ssh_setup), "merge", vm_name, port, "localhost", "devuser", f"{VDE_SSH_DIR}/id_ed25519"]
+        return subprocess.run(cmd, capture_output=True, text=True)
     
-    # Start multiple threads
-    threads = []
-    for i in range(3):
-        t = threading.Thread(target=update_config, args=(f"vm{i}", f"220{i}"))
-        threads.append(t)
-        t.start()
+    # Run multiple updates in parallel using a thread pool
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(run_update, i) for i in range(5)]
+        results = [f.result() for f in futures]
     
-    for t in threads:
-        t.join()
-    
+    context.concurrent_results = results
     context.concurrent_updates = True
 
 @when('SSH config is updated')
@@ -1563,7 +1554,7 @@ def step_vde_ssh_dir_exists_or_created(context):
 def step_multiple_processes_add_entries(context):
     """Attempt concurrent addition of SSH entries."""
     step_multiple_processes_update_config(context)
-    assert hasattr(context, 'concurrent_result'), "Concurrent update should have been executed"
+    assert hasattr(context, 'concurrent_results'), "Concurrent update should have been executed"
 
 @then('"{key_type}" keys should be detected')
 def step_specific_key_type_detected(context, key_type):

@@ -513,12 +513,16 @@ remove_known_hosts_entry() {
 # Check if SSH agent is running
 # Returns: 0 if running, 1 otherwise
 ssh_agent_is_running() {
-    # 1. Always load from VDE-specific environment file to ensure isolation
+    # 1. Clear any inherited SSH variables to ensure total isolation
+    # This prevents VDE from accidentally using your personal agent.
+    unset SSH_AUTH_SOCK SSH_AGENT_PID
+
+    # 2. Load from VDE-specific environment file
     if [ -f "$VDE_SSH_AGENT_ENV" ]; then
         source "$VDE_SSH_AGENT_ENV" >/dev/null 2>&1
     fi
 
-    # 2. Check if the VDE-specific agent is valid
+    # 3. Check if the VDE-specific agent is valid
     if [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "$SSH_AUTH_SOCK" ]; then
         # If we have a PID, check if it's still alive
         if [ -n "${SSH_AGENT_PID:-}" ]; then
@@ -533,74 +537,60 @@ ssh_agent_is_running() {
         fi
     fi
 
-    # 3. Try to discover existing agent (Linux/macOS)
-    local agent_sock
-    agent_sock=$(find /tmp/ssh-* -name "agent.*" -user $(whoami) 2>/dev/null | head -n 1)
-    
-    if [ -z "$agent_sock" ]; then
-        agent_sock=$(find /private/tmp/com.apple.launchd.* -name "Listeners" -user $(whoami) 2>/dev/null | head -n 1)
-    fi
-
-    if [ -n "$agent_sock" ] && [ -S "$agent_sock" ]; then
-        export SSH_AUTH_SOCK="$agent_sock"
-        local pid=$(echo "$agent_sock" | grep -oE '[0-9]+$' | head -n 1)
-        if [ -z "$pid" ]; then
-            pid=$(pgrep -u $(whoami) ssh-agent | head -n 1)
-        fi
-        export SSH_AGENT_PID="$pid"
-        if ssh-add -l >/dev/null 2>&1 || [ $? -eq 1 ]; then
-            return 0
-        fi
-    fi
-
+    # Discovery fallback removed for total isolation
     return 1
 }
 
 # Start SSH agent and add keys
 # Returns: VDE_SUCCESS (0) on success
 ensure_ssh_agent() {
-    if ssh_agent_is_running; then
-        return $VDE_SUCCESS
-    fi
-
-    # Ensure VDE_SSH_DIR exists
-    if [ ! -d "$VDE_SSH_DIR" ]; then
+    local started_new=0
+    
+    if ! ssh_agent_is_running; then
+        # Ensure VDE_SSH_DIR exists
         mkdir -p "$VDE_SSH_DIR"
         chmod 700 "$VDE_SSH_DIR"
+
+        # Start new agent and save to environment file
+        (umask 077; ssh-agent -s > "$VDE_SSH_AGENT_ENV")
+        source "$VDE_SSH_AGENT_ENV" >/dev/null 2>&1
+        
+        export SSH_AUTH_SOCK
+        export SSH_AGENT_PID
+        started_new=1
     fi
 
-    # Start new agent and save to environment file
-    (umask 077; ssh-agent -s > "$VDE_SSH_AGENT_ENV")
-    source "$VDE_SSH_AGENT_ENV" >/dev/null 2>&1
-    
-    export SSH_AUTH_SOCK
-    export SSH_AGENT_PID
+    # Ensure VDE SSH keys exist (generates if missing)
+    if ! validate_or_create_ssh_key; then
+        return $VDE_ERR_GENERAL
+    fi
 
+    # Ensure keys are loaded into the agent
     local keys
     keys=$(detect_ssh_keys)
+    local keys_added=0
+    
+    # Get currently loaded fingerprints to avoid redundant additions
+    local loaded_fingerprints
+    loaded_fingerprints=$(ssh-add -l 2>/dev/null || echo "")
 
-    local key_count=0
     local key
     for key in $keys; do
         [ -n "$key" ] || continue
-        key_count=$((key_count + 1))
+        
+        # Only add if not already loaded (or if we just started a fresh agent)
+        if [[ "$started_new" == "1" ]] || ! echo "$loaded_fingerprints" | grep -q "$(ssh-keygen -lf "$key" | awk '{print $2}')"; then
+            ssh-add "$key" 2>/dev/null
+            keys_added=$((keys_added + 1))
+        fi
     done
 
-    if [ $key_count -eq 0 ]; then
-        _info "Generating SSH key for VDE..."
-        ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -C "$(whoami)@$(hostname)-vde" >/dev/null 2>&1
-        sync_ssh_keys_to_vde >/dev/null 2>&1
-        keys=$(detect_ssh_keys)
+    if [[ "$started_new" == "1" ]]; then
+        log_info "SSH agent started with $keys_added key(s)"
+    elif [[ $keys_added -gt 0 ]]; then
+        log_info "Added $keys_added missing key(s) to existing SSH agent"
     fi
 
-    local keys_added=0
-    for key in $keys; do
-        [ -n "$key" ] || continue
-        ssh-add "$key" 2>/dev/null
-        keys_added=$((keys_added + 1))
-    done
-
-    log_info "SSH agent started with $keys_added key(s)"
     return $VDE_SUCCESS
 }
 

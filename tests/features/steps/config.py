@@ -24,3 +24,8 @@ def get_vde_root() -> Path:
 
 # Export for backwards compatibility
 VDE_ROOT = get_vde_root()
+
+# Calculate VDE_HOME and VDE_SSH_DIR
+# Use environment variables if set (for test environment overrides)
+VDE_HOME = Path(os.environ.get("VDE_HOME_DIR", Path.home()))
+VDE_SSH_DIR = Path(os.environ.get("VDE_SSH_DIR", VDE_HOME / ".ssh" / "vde"))
