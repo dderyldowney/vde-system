@@ -6,17 +6,17 @@ set -e
 # -----------------------
 
 # Determine VDE root directory
-if [[ -z "$VDE_ROOT_DIR" ]]; then
+if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="${0:a:h:h}"
 fi
 
 # Source shared library
-source "$VDE_ROOT_DIR/lib/vm-common"
-source "$VDE_ROOT_DIR/lib/vde-docker-state"
-source "$VDE_ROOT_DIR/lib/vde-ssh"
+source "${VDE_ROOT_DIR}/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vde-docker-state"
+source "${VDE_ROOT_DIR}/lib/vde-ssh"
 
 # Parse arguments
-if [[ $# -eq 0 ]]; then
+if [[ ${#} -eq 0 ]]; then
     echo "Usage: start-virtual <vm_name1> [vm_name2] ... [--rebuild] [--no-cache] [--update-ssh]"
     echo ""
     echo "Examples:"
@@ -28,7 +28,7 @@ if [[ $# -eq 0 ]]; then
     echo "  start-virtual python --update-ssh       # Start and regenerate SSH config"
     echo ""
     show_known_vms
-    exit $VDE_ERR_GENERAL
+    exit ${VDE_ERR_GENERAL}
 fi
 
 # Parse VMs and flags separately
@@ -38,8 +38,8 @@ NOCACHE=false
 UPDATE_SSH=false
 REGENERATE_KEYS=false
 
-for arg in "$@"; do
-    case $arg in
+for arg in "${@}"; do
+    case ${arg} in
         --rebuild)
             REBUILD=true
             ;;
@@ -55,18 +55,18 @@ for arg in "$@"; do
         all)
             # Expand "all" to all known VMs
             for vm in $(get_all_vms); do
-                VMS+=("$vm")
+                VMS+=("${vm}")
             done
             ;;
         *)
             # Check if it's a known VM or VM type
             local resolved
-            resolved=$(resolve_vm_name "$arg" || true)
-            if [[ -n "$resolved" ]]; then
-                VMS+=("$resolved")
+            resolved=$(resolve_vm_name "${arg}" || true)
+            if [[ -n "${resolved}" ]]; then
+                VMS+=("${resolved}")
             else
-                vde_error_vm_not_found "$arg"
-                exit $VDE_ERR_GENERAL
+                vde_error_vm_not_found "${arg}"
+                exit ${VDE_ERR_GENERAL}
             fi
             ;;
     esac
@@ -77,12 +77,12 @@ if [[ ${#VMS[@]} -eq 0 ]]; then
     echo "Usage: start-virtual <vm_name1> [vm_name2] ... [--rebuild] [--no-cache] [--update-ssh]"
     echo ""
     show_known_vms
-    exit $VDE_ERR_GENERAL
+    exit ${VDE_ERR_GENERAL}
 fi
 
 # Ensure SSH environment (automatic & silent)
 # Starts SSH agent, loads keys, generates VM config - all without user interaction
-if [[ "$REGENERATE_KEYS" == "true" ]]; then
+if [[ "${REGENERATE_KEYS}" == "true" ]]; then
     vde_ssh_regenerate_keys
 fi
 ensure_ssh_environment
@@ -97,18 +97,18 @@ failed_count=0
 # Start VMs
 log_info "Starting ${#VMS[@]} VM(s)..."
 for vm in "${VMS[@]}"; do
-    if ! is_known_vm "$vm"; then
-        vde_error_vm_not_found "$vm"
-        BATCH_RESULTS[$vm]="failed:unknown"
+    if ! is_known_vm "${vm}"; then
+        vde_error_vm_not_found "${vm}"
+        BATCH_RESULTS[${vm}]="failed:unknown"
         failed_count=$((failed_count + 1))
         continue
     fi
 
     # Check if VM exists (has configuration or container)
     # Skip this check if --rebuild is used (it will create/rebuild anyway)
-    if [[ "$REBUILD" != "true" ]] && ! vm_exists "$vm"; then
-        vde_error_vm_not_created "$vm"
-        BATCH_RESULTS[$vm]="failed:not_created"
+    if [[ "${REBUILD}" != "true" ]] && ! vm_exists "${vm}"; then
+        vde_error_vm_not_created "${vm}"
+        BATCH_RESULTS[${vm}]="failed:not_created"
         failed_count=$((failed_count + 1))
         continue
     fi
@@ -116,49 +116,49 @@ for vm in "${VMS[@]}"; do
     # Check if VM is already running (batch state awareness)
     # If REBUILD is true, we don't skip because docker-compose up --build will handle it
     # (or start_vm will stop/rebuild if needed)
-    if [[ "$REBUILD" != "true" && "$NOCACHE" != "true" ]] && vm_is_container_running "$vm"; then
-        log_info "$vm is already running - skipped"
-        BATCH_RESULTS[$vm]="skipped:already_running"
+    if [[ "${REBUILD}" != "true" && "${NOCACHE}" != "true" ]] && vm_is_container_running "${vm}"; then
+        log_info "${vm} is already running - skipped"
+        BATCH_RESULTS[${vm}]="skipped:already_running"
         skipped_count=$((skipped_count + 1))
         continue
     fi
 
     # Try to start the VM
-    if start_vm "$vm" "$REBUILD" "$NOCACHE" 3; then
-        log_success "$vm started successfully"
-        BATCH_RESULTS[$vm]="started"
+    if start_vm "${vm}" "${REBUILD}" "${NOCACHE}" 3; then
+        log_success "${vm} started successfully"
+        BATCH_RESULTS[${vm}]="started"
         started_count=$((started_count + 1))
         
         # Save Docker state to .docker-state/ (update status to running)
         local vm_type vm_display ssh_port
-        vm_type=$(get_vm_info type "$vm" 2>/dev/null) || vm_type="unknown"
-        vm_display=$(get_vm_info display "$vm" 2>/dev/null) || vm_display="$vm"
+        vm_type=$(get_vm_info type "${vm}" 2>/dev/null) || vm_type="unknown"
+        vm_display=$(get_vm_info display "${vm}" 2>/dev/null) || vm_display="${vm}"
 
         # Extract SSH port from docker-compose.yml
         local raw_name
-        raw_name=$(vde_normalize_name "$vm")
-        local compose_file="$CONFIGS_DIR/$raw_name/docker-compose.yml"
-        if [ -f "$compose_file" ]; then
-            ssh_port=$(grep -E '^\s*-\s*"[0-9]+:22"' "$compose_file" | sed -E 's/.*"([0-9]+):22".*/\1/' | head -n1)
+        raw_name=$(vde_normalize_name "${vm}")
+        local compose_file="${CONFIGS_DIR}/${raw_name}/docker-compose.yml"
+        if [ -f "${compose_file}" ]; then
+            ssh_port=$(grep -E '^\s*-\s*"[0-9]+:22"' "${compose_file}" | sed -E 's/.*"([0-9]+):22".*/\1/' | head -n1)
         fi
-        [ -z "$ssh_port" ] && ssh_port=""
+        [ -z "${ssh_port}" ] && ssh_port=""
         
         local state_json
         state_json=$(cat <<EOF
 {
-  "vm_name": "$vm",
-  "vm_type": "$vm_type",
-  "display_name": "$vm_display",
-  "ssh_port": "$ssh_port",
+  "vm_name": "${vm}",
+  "vm_type": "${vm_type}",
+  "display_name": "${vm_display}",
+  "ssh_port": "${ssh_port}",
   "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "status": "running"
 }
 EOF
 )
-        save_docker_state "$vm" "$state_json"
+        save_docker_state "${vm}" "${state_json}"
     else
-        log_error "$vm failed to start"
-        BATCH_RESULTS[$vm]="failed:start_error"
+        log_error "${vm} failed to start"
+        BATCH_RESULTS[${vm}]="failed:start_error"
         failed_count=$((failed_count + 1))
     fi
 done
@@ -168,29 +168,29 @@ echo ""
 log_info "Batch operation summary:"
 
 # Show started VMs
-if [ $started_count -gt 0 ]; then
-    log_success "Started: $started_count VM(s)"
+if [ ${started_count} -gt 0 ]; then
+    log_success "Started: ${started_count} VM(s)"
     # Check if BATCH_RESULTS has elements before iterating
     if [[ ${#BATCH_RESULTS[@]} -gt 0 ]]; then
         for vm in "${(@k)BATCH_RESULTS[@]}"; do
-            if [ "${BATCH_RESULTS[$vm]}" = "started" ]; then
-                log_info "  ✓ $vm - started"
+            if [ "${BATCH_RESULTS[${vm}]}" = "started" ]; then
+                log_info "  ✓ ${vm} - started"
             fi
         done
     fi
 fi
 
 # Show skipped VMs
-if [ $skipped_count -gt 0 ]; then
-    log_info "Skipped: $skipped_count VM(s)"
+if [ ${skipped_count} -gt 0 ]; then
+    log_info "Skipped: ${skipped_count} VM(s)"
     if [[ ${#BATCH_RESULTS[@]} -gt 0 ]]; then
         for vm in "${(@k)BATCH_RESULTS[@]}"; do
-            case "${BATCH_RESULTS[$vm]}" in
+            case "${BATCH_RESULTS[${vm}]}" in
                 skipped:already_running)
-                    log_info "  ○ $vm - already running"
+                    log_info "  ○ ${vm} - already running"
                     ;;
                 skipped:not_created)
-                    log_warning "  ○ $vm - not created"
+                    log_warning "  ○ ${vm} - not created"
                     ;;
             esac
         done
@@ -198,13 +198,13 @@ if [ $skipped_count -gt 0 ]; then
 fi
 
 # Show failed VMs
-if [ $failed_count -gt 0 ]; then
-    log_error "Failed: $failed_count VM(s)"
+if [ ${failed_count} -gt 0 ]; then
+    log_error "Failed: ${failed_count} VM(s)"
     if [[ ${#BATCH_RESULTS[@]} -gt 0 ]]; then
         for vm in "${(@k)BATCH_RESULTS[@]}"; do
-            if [[ "${BATCH_RESULTS[$vm]}" = "failed:"* ]]; then
-                local error_type="${BATCH_RESULTS[$vm]#*:}"
-                log_error "  ✗ $vm - $error_type"
+            if [[ "${BATCH_RESULTS[${vm}]}" = "failed:"* ]]; then
+                local error_type="${BATCH_RESULTS[${vm}]#*:}"
+                log_error "  ✗ ${vm} - ${error_type}"
             fi
         done
     fi
@@ -222,6 +222,6 @@ else
 fi
 
 # Exit non-zero if any VMs failed to start
-if [ $failed_count -gt 0 ]; then
+if [ ${failed_count} -gt 0 ]; then
     return ${VDE_ERR_DOCKER_FAIL:-5}
 fi

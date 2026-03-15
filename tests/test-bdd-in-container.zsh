@@ -10,13 +10,13 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Container configuration
 BDD_CONTAINER_NAME="vde-bdd-test"
 BDD_IMAGE_NAME="vde-bdd-tester"
-BDD_DOCKERFILE="$PROJECT_ROOT/tests/docker/bdd-test/Dockerfile"
+BDD_DOCKERFILE="${PROJECT_ROOT}/tests/docker/bdd-test/Dockerfile"
 
 # Test configuration
 REBUILD_CONTAINER=true
@@ -55,7 +55,7 @@ ${BOLD}VDE BDD Test Runner${RESET}
 Run BDD feature tests inside the dedicated test container.
 
 ${BOLD}Usage:${RESET}
-  $0 [OPTIONS] [FEATURE]
+  ${0} [OPTIONS] [FEATURE]
 
 ${BOLD}Arguments:${RESET}
   FEATURE         Specific feature file to test (e.g., vm-lifecycle, port-management)
@@ -70,27 +70,27 @@ ${BOLD}Options:${RESET}
   -h, --help      Show this help message
 
 ${BOLD}Examples:${RESET}
-  $0                        # Run BDD tests (Docker host tests skipped by default)
-  $0 vm-lifecycle            # Run only vm-lifecycle.feature
-  $0 --no-build              # Skip container rebuild
-  $0 --shell                 # Drop into container shell
+  ${0}                        # Run BDD tests (Docker host tests skipped by default)
+  ${0} vm-lifecycle            # Run only vm-lifecycle.feature
+  ${0} --no-build              # Skip container rebuild
+  ${0} --shell                 # Drop into container shell
 
 ${BOLD}Available Features:${RESET}
 EOF
     # List feature files from docker-required (primary)
     echo "Docker-required features:"
-    for feature in "$SCRIPT_DIR/features/docker-required"/*.feature(N); do
-        if [[ -f "$feature" ]]; then
+    for feature in "${SCRIPT_DIR}/features/docker-required"/*.feature(N); do
+        if [[ -f "${feature}" ]]; then
             local name="${feature:t:r}"
-            echo "  $name"
+            echo "  ${name}"
         fi
     done
     echo ""
     echo "Docker-free features (use run-docker-free-tests.sh instead):"
-    for feature in "$SCRIPT_DIR/features/docker-free"/*.feature(N); do
-        if [[ -f "$feature" ]]; then
+    for feature in "${SCRIPT_DIR}/features/docker-free"/*.feature(N); do
+        if [[ -f "${feature}" ]]; then
             local name="${feature:t:r}"
-            echo "  $name"
+            echo "  ${name}"
         fi
     done
     cat <<EOF
@@ -112,8 +112,8 @@ EOF
 # =============================================================================
 
 parse_args() {
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
+    while [[ ${#} -gt 0 ]]; do
+        case "${1}" in
             --no-build)
                 REBUILD_CONTAINER=false
                 shift
@@ -141,13 +141,13 @@ parse_args() {
                 exit 0
                 ;;
             -*)
-                echo -e "${RED}Error: Unknown option: $1${RESET}" >&2
+                echo -e "${RED}Error: Unknown option: ${1}${RESET}" >&2
                 echo ""
                 show_usage
                 exit 1
                 ;;
             *)
-                SPECIFIC_FEATURE="$1"
+                SPECIFIC_FEATURE="${1}"
                 shift
                 ;;
         esac
@@ -166,11 +166,11 @@ build_container() {
         build_args="--no-cache"
     fi
 
-    if docker build -t "$BDD_IMAGE_NAME" \
-        -f "$BDD_DOCKERFILE" \
-        $build_args \
+    if docker build -t "${BDD_IMAGE_NAME}" \
+        -f "${BDD_DOCKERFILE}" \
+        ${build_args} \
         --build-arg "VDE_ROOT=/vde" \
-        "$PROJECT_ROOT" 2>&1 | tee /tmp/vde-bdd-build.log; then
+        "${PROJECT_ROOT}" 2>&1 | tee /tmp/vde-bdd-build.log; then
         echo -e "${GREEN}✓ Container built successfully${RESET}"
         return 0
     else
@@ -181,10 +181,10 @@ build_container() {
 }
 
 ensure_container_image() {
-    if ! docker image inspect "$BDD_IMAGE_NAME" &>/dev/null; then
+    if ! docker image inspect "${BDD_IMAGE_NAME}" &>/dev/null; then
         echo -e "${YELLOW}Container image not found. Building...${RESET}"
         build_container
-    elif [[ "$REBUILD_CONTAINER" == "true" ]]; then
+    elif [[ "${REBUILD_CONTAINER}" == "true" ]]; then
         echo -e "${YELLOW}Rebuilding container (use --no-build to skip)...${RESET}"
         build_container
     else
@@ -199,7 +199,7 @@ run_tests() {
     echo ""
 
     local behave_args=""
-    if [[ -n "$SPECIFIC_FEATURE" ]]; then
+    if [[ -n "${SPECIFIC_FEATURE}" ]]; then
         echo -e "${BLUE}Running specific feature: ${SPECIFIC_FEATURE}${RESET}"
         # Check docker-required first, then docker-free
         if [[ -f "tests/features/docker-required/${SPECIFIC_FEATURE}.feature" ]]; then
@@ -222,16 +222,16 @@ run_tests() {
     # Run behave in container
     local run_cmd="behave --format pretty --no-color"
 
-    if [[ "$VERBOSE_OUTPUT" == "true" ]]; then
-        run_cmd="$run_cmd --verbose"
+    if [[ "${VERBOSE_OUTPUT}" == "true" ]]; then
+        run_cmd="${run_cmd} --verbose"
     fi
 
     # Add tag filters if specified
-    if [[ -n "$BEHAVE_TAGS" ]]; then
-        run_cmd="$run_cmd $BEHAVE_TAGS"
+    if [[ -n "${BEHAVE_TAGS}" ]]; then
+        run_cmd="${run_cmd} ${BEHAVE_TAGS}"
     fi
 
-    run_cmd="$run_cmd $behave_args"
+    run_cmd="${run_cmd} ${behave_args}"
 
     echo ""
     # IMPORTANT: We do NOT mount configs/, bin/, or tests/ to protect host files.
@@ -240,23 +240,23 @@ run_tests() {
     # We only mount docker socket for container tests and a test workspace.
     docker run --rm \
         -v /var/run/docker.sock:/var/run/docker.sock \
-        -v "$PROJECT_ROOT/tests/workspace:/vde/tests/workspace" \
+        -v "${PROJECT_ROOT}/tests/workspace:/vde/tests/workspace" \
         -e VDE_ROOT_DIR=/vde \
         -e PYTHONUNBUFFERED=1 \
         --network host \
-        "$BDD_IMAGE_NAME" \
-        zsh -lc "cd /vde && $run_cmd"
+        "${BDD_IMAGE_NAME}" \
+        zsh -lc "cd /vde && ${run_cmd}"
 
-    local exit_code=$?
+    local exit_code=${?}
 
     echo ""
-    if [[ $exit_code -eq 0 ]]; then
+    if [[ ${exit_code} -eq 0 ]]; then
         echo -e "${GREEN}${BOLD}✓ All BDD tests passed!${RESET}"
     else
         echo -e "${RED}${BOLD}✗ Some BDD tests failed${RESET}"
     fi
 
-    return $exit_code
+    return ${exit_code}
 }
 
 drop_into_shell() {
@@ -267,10 +267,10 @@ drop_into_shell() {
     # Use copied files from image to protect host configs
     docker run --rm -it \
         -v /var/run/docker.sock:/var/run/docker.sock \
-        -v "$PROJECT_ROOT/tests/workspace:/vde/tests/workspace" \
+        -v "${PROJECT_ROOT}/tests/workspace:/vde/tests/workspace" \
         -e VDE_ROOT_DIR=/vde \
         --network host \
-        "$BDD_IMAGE_NAME" \
+        "${BDD_IMAGE_NAME}" \
         zsh -i
 }
 
@@ -285,7 +285,7 @@ cleanup() {
 # =============================================================================
 
 main() {
-    parse_args "$@"
+    parse_args "${@}"
 
     # Trap to ensure cleanup
     trap cleanup EXIT
@@ -297,7 +297,7 @@ main() {
     fi
 
     # Either drop into shell or run tests
-    if [[ "$DROP_IN_SHELL" == "true" ]]; then
+    if [[ "${DROP_IN_SHELL}" == "true" ]]; then
         drop_into_shell
     else
         if ! run_tests; then
@@ -306,4 +306,4 @@ main() {
     fi
 }
 
-main "$@"
+main "${@}"

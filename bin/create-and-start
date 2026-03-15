@@ -12,16 +12,16 @@
 #===============================================================================
 
 # Determine VDE root directory
-VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-VDE_ROOT_DIR="$(cd "$VDE_SCRIPTS_DIR/.." && pwd)"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
+VDE_ROOT_DIR="$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)"
 
 # Source shared library
-source "$VDE_ROOT_DIR/lib/vde-shell-compat"
-source "$VDE_ROOT_DIR/lib/vde-constants"
-source "$VDE_ROOT_DIR/lib/vde-errors"
-source "$VDE_ROOT_DIR/lib/vde-log"
-source "$VDE_ROOT_DIR/lib/vde-core"
-source "$VDE_ROOT_DIR/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
+source "${VDE_ROOT_DIR}/lib/vde-constants"
+source "${VDE_ROOT_DIR}/lib/vde-errors"
+source "${VDE_ROOT_DIR}/lib/vde-log"
+source "${VDE_ROOT_DIR}/lib/vde-core"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Initialize logging
 vde_log_init 2>/dev/null || true
@@ -55,19 +55,19 @@ fi
 #===============================================================================
 
 print_success() {
-    echo "${GREEN}✓ $1${NC}"
+    echo "${GREEN}✓ ${1}${NC}"
 }
 
 print_error() {
-    echo "${RED}✗ $1${NC}"
+    echo "${RED}✗ ${1}${NC}"
 }
 
 print_warning() {
-    echo "${YELLOW}⚠ $1${NC}"
+    echo "${YELLOW}⚠ ${1}${NC}"
 }
 
 print_info() {
-    echo "${BLUE}ℹ $1${NC}"
+    echo "${BLUE}ℹ ${1}${NC}"
 }
 
 #===============================================================================
@@ -76,8 +76,8 @@ print_info() {
 
 main() {
     # Parse arguments
-    if [[ $# -eq 0 ]]; then
-        echo "Usage: $0 [--rebuild] <vm1> <vm2> ..."
+    if [[ ${#} -eq 0 ]]; then
+        echo "Usage: ${0} [--rebuild] <vm1> <vm2> ..."
         echo ""
         echo "Create and start multiple VMs in one command."
         echo ""
@@ -85,23 +85,23 @@ main() {
         echo "  --rebuild    Rebuild images before starting"
         echo ""
         echo "Examples:"
-        echo "  $0 python rust go              # Create and start Python, Rust, Go"
-        echo "  $0 --rebuild python             # Rebuild and start Python"
-        echo "  $0 postgres redis               # Create and start services"
+        echo "  ${0} python rust go              # Create and start Python, Rust, Go"
+        echo "  ${0} --rebuild python             # Rebuild and start Python"
+        echo "  ${0} postgres redis               # Create and start services"
         echo ""
-        exit $VDE_ERR_GENERAL
+        exit ${VDE_ERR_GENERAL}
     fi
 
     # Parse options
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
+    while [[ ${#} -gt 0 ]]; do
+        case "${1}" in
             --rebuild)
                 REBUILD=true
                 shift
                 ;;
             -*)
-                print_error "Unknown option: $1"
-                exit $VDE_ERR_GENERAL
+                print_error "Unknown option: ${1}"
+                exit ${VDE_ERR_GENERAL}
                 ;;
             *)
                 break
@@ -110,16 +110,16 @@ main() {
     done
 
     # Check if any VM names were provided
-    if [[ $# -eq 0 ]]; then
+    if [[ ${#} -eq 0 ]]; then
         print_error "No VM names provided"
         echo ""
         echo "Available VM types:"
         get_all_vm_types 2>/dev/null | sed 's/^/  /' || echo "  (none found)"
-        exit $VDE_ERR_GENERAL
+        exit ${VDE_ERR_GENERAL}
     fi
 
     # Get list of VMs to create
-    local vms=("$@")
+    local vms=("${@}")
 
     echo ""
     echo "============================================================================="
@@ -127,7 +127,7 @@ main() {
     echo "============================================================================="
     echo ""
     print_info "VMs to create: ${vms[*]}"
-    print_info "Rebuild images: $REBUILD"
+    print_info "Rebuild images: ${REBUILD}"
     echo ""
 
     #===========================================================================
@@ -140,14 +140,14 @@ main() {
     echo ""
 
     for vm in "${vms[@]}"; do
-        print_info "Creating VM: $vm"
+        print_info "Creating VM: ${vm}"
 
-        if "$VDE_SCRIPTS_DIR/create-virtual-for" "$vm" >/dev/null 2>&1; then
-            print_success "Created: $vm"
-            CREATED_VMS+=("$vm")
+        if "${VDE_SCRIPTS_DIR}/create-virtual-for" "${vm}" >/dev/null 2>&1; then
+            print_success "Created: ${vm}"
+            CREATED_VMS+=("${vm}")
         else
-            print_error "Failed to create: $vm"
-            FAILED_VMS+=("$vm")
+            print_error "Failed to create: ${vm}"
+            FAILED_VMS+=("${vm}")
         fi
     done
 
@@ -155,22 +155,22 @@ main() {
     local created_count=${#CREATED_VMS[@]}
     local failed_count=${#FAILED_VMS[@]}
 
-    if [[ $created_count -gt 0 ]]; then
-        print_success "Created $created_count VM(s)"
+    if [[ ${created_count} -gt 0 ]]; then
+        print_success "Created ${created_count} VM(s)"
     fi
 
-    if [[ $failed_count -gt 0 ]]; then
-        print_warning "Failed to create $failed_count VM(s): ${FAILED_VMS[*]}"
+    if [[ ${failed_count} -gt 0 ]]; then
+        print_warning "Failed to create ${failed_count} VM(s): ${FAILED_VMS[*]}"
     fi
 
     #===========================================================================
     # Start VMs
     #===========================================================================
 
-    if [[ $created_count -eq 0 ]]; then
+    if [[ ${created_count} -eq 0 ]]; then
         echo ""
         print_error "No VMs were created, exiting"
-        exit $VDE_ERR_GENERAL
+        exit ${VDE_ERR_GENERAL}
     fi
 
     echo ""
@@ -180,23 +180,23 @@ main() {
     echo ""
 
     for vm in "${CREATED_VMS[@]}"; do
-        if [[ "$REBUILD" = "true" ]]; then
-            print_info "Starting VM: $vm (with rebuild)"
-            if "$VDE_SCRIPTS_DIR/start-virtual" "$vm" --rebuild >/dev/null 2>&1; then
-                print_success "Started: $vm"
-                STARTED_VMS+=("$vm")
+        if [[ "${REBUILD}" = "true" ]]; then
+            print_info "Starting VM: ${vm} (with rebuild)"
+            if "${VDE_SCRIPTS_DIR}/start-virtual" "${vm}" --rebuild >/dev/null 2>&1; then
+                print_success "Started: ${vm}"
+                STARTED_VMS+=("${vm}")
             else
-                print_error "Failed to start: $vm"
-                FAILED_VMS+=("$vm")
+                print_error "Failed to start: ${vm}"
+                FAILED_VMS+=("${vm}")
             fi
         else
-            print_info "Starting VM: $vm"
-            if "$VDE_SCRIPTS_DIR/start-virtual" "$vm" >/dev/null 2>&1; then
-                print_success "Started: $vm"
-                STARTED_VMS+=("$vm")
+            print_info "Starting VM: ${vm}"
+            if "${VDE_SCRIPTS_DIR}/start-virtual" "${vm}" >/dev/null 2>&1; then
+                print_success "Started: ${vm}"
+                STARTED_VMS+=("${vm}")
             else
-                print_error "Failed to start: $vm"
-                FAILED_VMS+=("$vm")
+                print_error "Failed to start: ${vm}"
+                FAILED_VMS+=("${vm}")
             fi
         fi
     done
@@ -204,8 +204,8 @@ main() {
     echo ""
     local started_count=${#STARTED_VMS[@]}
 
-    if [[ $started_count -gt 0 ]]; then
-        print_success "Started $started_count VM(s)"
+    if [[ ${started_count} -gt 0 ]]; then
+        print_success "Started ${started_count} VM(s)"
     fi
 
     #===========================================================================
@@ -221,7 +221,7 @@ main() {
     if [[ ${#STARTED_VMS[@]} -gt 0 ]]; then
         echo "Successfully created and started:"
         for vm in "${STARTED_VMS[@]}"; do
-            echo "  ✓ $vm"
+            echo "  ✓ ${vm}"
         done
     fi
 
@@ -229,7 +229,7 @@ main() {
         echo ""
         print_warning "Failed VMs:"
         for vm in "${FAILED_VMS[@]}"; do
-            echo "  ✗ $vm"
+            echo "  ✗ ${vm}"
         done
     fi
 
@@ -240,20 +240,20 @@ main() {
     if [[ ${#STARTED_VMS[@]} -gt 0 ]]; then
         print_info "To connect to a VM:"
         for vm in "${STARTED_VMS[@]}"; do
-            local vm_type="$(get_vm_info type "$vm" 2>/dev/null || echo "lang")"
-            local ssh_host="$vm"
-            if [[ "$vm_type" == "lang" ]]; then
+            local vm_type="$(get_vm_info type "${vm}" 2>/dev/null || echo "lang")"
+            local ssh_host="${vm}"
+            if [[ "${vm_type}" == "lang" ]]; then
                 ssh_host="${vm}-dev"
             fi
-            echo "  ssh $ssh_host"
+            echo "  ssh ${ssh_host}"
         done
         echo ""
     fi
 
     # Exit with error if any VMs failed
     if [[ ${#FAILED_VMS[@]} -gt 0 ]]; then
-        exit $VDE_ERR_GENERAL
+        exit ${VDE_ERR_GENERAL}
     fi
 }
 
-main "$@"
+main "${@}"

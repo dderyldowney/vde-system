@@ -59,7 +59,7 @@ _vde_errors_has_colors() {
     if [ -n "${TERM:-}" ] && [ "${TERM:-}" != "dumb" ]; then
         return 0
     fi
-    return $VDE_ERR_GENERAL
+    return ${VDE_ERR_GENERAL}
 }
 
 if _vde_errors_has_colors; then
@@ -91,7 +91,7 @@ vde_error_set_verbose() {
 
 # vde_error_is_verbose - Check if verbose mode is enabled
 vde_error_is_verbose() {
-    [ "$VDE_ERRORS_VERBOSE" = "1" ]
+    [ "${VDE_ERRORS_VERBOSE}" = "1" ]
 }
 
 # =============================================================================
@@ -99,10 +99,10 @@ vde_error_is_verbose() {
 # =============================================================================
 
 _vde_error_format_block() {
-    local text="$1"
+    local text="${1}"
     local indent="${2:-4}"
-    echo "$text" | while IFS= read -r line; do
-        printf "%${indent}s%s\n" "" "$line"
+    echo "${text}" | while IFS= read -r line; do
+        printf "%${indent}s%s\n" "" "${line}"
     done
 }
 
@@ -113,25 +113,25 @@ _vde_error_format_block() {
 # vde_error_show - Show a full error message with what, why, and how
 # Args: <what> <why> <how> [doc_link]
 vde_error_show() {
-    local what="$1"
-    local why="$2"
-    local how="$3"
+    local what="${1}"
+    local why="${2}"
+    local how="${3}"
     local doc_link="${4:-}"
     
-    printf "%s%s\n" "${VDE_ERRORS_COLOR_ERROR}Error:${VDE_ERRORS_COLOR_RESET} " "$what"
+    printf "%s%s\n" "${VDE_ERRORS_COLOR_ERROR}Error:${VDE_ERRORS_COLOR_RESET} " "${what}"
     
-    if [ -n "$why" ]; then
-        printf "%s%s\n" "${VDE_ERRORS_COLOR_DIM}Reason:${VDE_ERRORS_COLOR_RESET} " "$why"
+    if [ -n "${why}" ]; then
+        printf "%s%s\n" "${VDE_ERRORS_COLOR_DIM}Reason:${VDE_ERRORS_COLOR_RESET} " "${why}"
     fi
     
-    if [ "$VDE_ERRORS_SHOW_SOLUTION" = "1" ] && [ -n "$how" ]; then
+    if [ "${VDE_ERRORS_SHOW_SOLUTION}" = "1" ] && [ -n "${how}" ]; then
         printf "%s\n" "${VDE_ERRORS_COLOR_WARNING}Solution:${VDE_ERRORS_COLOR_RESET}"
-        _vde_error_format_block "$how" | sed "s/^/${VDE_ERRORS_COLOR_INFO}/;s/$/${VDE_ERRORS_COLOR_RESET}/"
+        _vde_error_format_block "${how}" | sed "s/^/${VDE_ERRORS_COLOR_INFO}/;s/$/${VDE_ERRORS_COLOR_RESET}/"
     fi
     
-    if [ -n "$doc_link" ]; then
+    if [ -n "${doc_link}" ]; then
         local full_url="${VDE_ERRORS_DOC_URL}/${doc_link}"
-        printf "%s%s\n" "${VDE_ERRORS_COLOR_LINK}Docs:${VDE_ERRORS_COLOR_RESET} " "$full_url"
+        printf "%s%s\n" "${VDE_ERRORS_COLOR_LINK}Docs:${VDE_ERRORS_COLOR_RESET} " "${full_url}"
     fi
     
     printf '\n'
@@ -139,15 +139,15 @@ vde_error_show() {
 
 # vde_error_simple - Show a simple error message
 vde_error_simple() {
-    local message="$1"
-    printf "%s%s\n" "${VDE_ERRORS_COLOR_ERROR}Error:${VDE_ERRORS_COLOR_RESET} " "$message"
+    local message="${1}"
+    printf "%s%s\n" "${VDE_ERRORS_COLOR_ERROR}Error:${VDE_ERRORS_COLOR_RESET} " "${message}"
 }
 
 # vde_error_with_code - Show error with exit code
 vde_error_with_code() {
-    local message="$1"
-    local exit_code="$2"
-    printf "%s%s (exit code: %d)\n" "${VDE_ERRORS_COLOR_ERROR}Error:${VDE_ERRORS_COLOR_RESET} " "$message" "$exit_code"
+    local message="${1}"
+    local exit_code="${2}"
+    printf "%s%s (exit code: %d)\n" "${VDE_ERRORS_COLOR_ERROR}Error:${VDE_ERRORS_COLOR_RESET} " "${message}" "${exit_code}"
 }
 
 # =============================================================================
@@ -165,11 +165,11 @@ vde_error_docker_not_running() {
 }
 
 vde_error_port_in_use() {
-    local port="$1"
+    local port="${1}"
     vde_error_show \
-        "Port $port is already in use" \
+        "Port ${port} is already in use" \
         "Another process or container is using the required SSH port" \
-        "1. Check what's using the port: lsof -i :$port or netstat -tlnp | grep $port
+        "1. Check what's using the port: lsof -i :${port} or netstat -tlnp | grep ${port}
 2. Stop the conflicting process, or
 3. Choose a different VM name to get an automatic port assignment" \
         "troubleshooting.md#port-conflicts"
@@ -185,31 +185,31 @@ vde_error_ssh_key_missing() {
 }
 
 vde_error_container_exists() {
-    local name="$1"
+    local name="${1}"
     vde_error_show \
-        "VM '$name' already exists" \
+        "VM '${name}' already exists" \
         "A VM with this name has already been created" \
         "1. List existing VMs: vde list
-2. Start the existing VM: vde start $name
-3. Or delete the existing VM: vde remove $name" \
+2. Start the existing VM: vde start ${name}
+3. Or delete the existing VM: vde remove ${name}" \
         "command-reference.md#list"
 }
 
 vde_error_permission_denied() {
-    local path="$1"
+    local path="${1}"
     vde_error_show \
-        "Permission denied: $path" \
+        "Permission denied: ${path}" \
         "You don't have the required permissions to access this resource" \
-        "1. Check file permissions: ls -la $path
-2. Fix ownership: sudo chown -R \$(whoami):\$(whoami) $path
+        "1. Check file permissions: ls -la ${path}
+2. Fix ownership: sudo chown -R \$(whoami):\$(whoami) ${path}
 3. Or run with appropriate permissions" \
         "troubleshooting.md#permission-issues"
 }
 
 vde_error_vm_not_found() {
-    local name="$1"
+    local name="${1}"
     vde_error_show \
-        "VM '$name' not found" \
+        "VM '${name}' not found" \
         "No VM with this name exists in your configuration" \
         "1. List available VMs: vde list
 2. See available types: vde list --types
@@ -218,51 +218,51 @@ vde_error_vm_not_found() {
 }
 
 vde_error_vm_not_running() {
-    local name="$1"
+    local name="${1}"
     vde_error_show \
-        "VM '$name' is not running" \
+        "VM '${name}' is not running" \
         "The VM exists but is currently stopped" \
-        "1. Start the VM: vde start $name
+        "1. Start the VM: vde start ${name}
 2. Check VM status: vde status" \
         "command-reference.md#start"
 }
 
 vde_error_vm_not_created() {
-    local name="$1"
+    local name="${1}"
     vde_error_show \
-        "VM '$name' has not been created" \
+        "VM '${name}' has not been created" \
         "The VM configuration does not exist yet" \
-        "1. Create the VM: vde create $name
+        "1. Create the VM: vde create ${name}
 2. List available VM types: vde list
 3. Or create a VM with custom configuration: vde create <type>" \
         "command-reference.md#create"
 }
 
 vde_error_docker_build_failed() {
-    local vm="$1"
+    local vm="${1}"
     vde_error_show \
-        "Docker build failed for '$vm'" \
+        "Docker build failed for '${vm}'" \
         "The container image could not be built" \
         "1. Check Docker logs: docker logs <container>
 2. Verify Docker is running: docker ps
-3. Try rebuilding with: vde start $vm --rebuild" \
+3. Try rebuilding with: vde start ${vm} --rebuild" \
         "troubleshooting.md#docker-build-issues"
 }
 
 vde_error_network_not_found() {
-    local network="$1"
+    local network="${1}"
     vde_error_show \
-        "Docker network '$network' not found" \
+        "Docker network '${network}' not found" \
         "The required Docker network doesn't exist" \
-        "1. Create the network: docker network create $network
+        "1. Create the network: docker network create ${network}
 2. Or run VDE setup: vde setup" \
         "troubleshooting.md#docker-network"
 }
 
 vde_error_template_not_found() {
-    local template="$1"
+    local template="${1}"
     vde_error_show \
-        "Template not found: $template" \
+        "Template not found: ${template}" \
         "The required template file is missing or has been moved" \
         "1. Check template directory: ls \$VDE_ROOT_DIR/templates/
 2. Verify installation: vde doctor
@@ -271,9 +271,9 @@ vde_error_template_not_found() {
 }
 
 vde_error_invalid_vm_name() {
-    local name="$1"
+    local name="${1}"
     vde_error_show \
-        "Invalid VM name: '$name'" \
+        "Invalid VM name: '${name}'" \
         "VM names must follow the naming convention" \
         "1. Language VMs should use format: vde-<name> (e.g., vde-python, rust-dev)
 2. Service VMs should use format: <name> (e.g., postgres, redis)
@@ -282,9 +282,9 @@ vde_error_invalid_vm_name() {
 }
 
 vde_error_alias_not_found() {
-    local alias="$1"
+    local alias="${1}"
     vde_error_show \
-        "Unknown VM type or alias: '$alias'" \
+        "Unknown VM type or alias: '${alias}'" \
         "This VM type or alias is not configured" \
         "1. List known types: vde show-vm-types
 2. Add custom types in: \$VDE_ROOT_DIR/data/vm-types.conf
@@ -297,20 +297,20 @@ vde_error_alias_not_found() {
 # =============================================================================
 
 vde_success() {
-    local message="$1"
-    printf "%s%s\n" "${VDE_ERRORS_COLOR_SUCCESS}✓${VDE_ERRORS_COLOR_RESET} " "$message"
+    local message="${1}"
+    printf "%s%s\n" "${VDE_ERRORS_COLOR_SUCCESS}✓${VDE_ERRORS_COLOR_RESET} " "${message}"
 }
 
 # Note: log_error and log_success are provided by vm-common
 # These wrappers are for backward compatibility if vm-common is not sourced
 if ! command -v log_error >/dev/null 2>&1; then
     log_error() {
-        vde_error_simple "$@"
+        vde_error_simple "${@}"
     }
 fi
 
 if ! command -v log_success >/dev/null 2>&1; then
     log_success() {
-        vde_success "$@"
+        vde_success "${@}"
     }
 fi

@@ -12,7 +12,7 @@
 set -e
 
 SCRIPT_DIR="${0:a:h}"
-cd "$SCRIPT_DIR"
+cd "${SCRIPT_DIR}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -70,7 +70,7 @@ case "${1:-all}" in
         run_all
         ;;
     *)
-        echo "Usage: $0 {unit|integration|e2e|all}"
+        echo "Usage: ${0} {unit|integration|e2e|all}"
         exit 1
         ;;
 esac

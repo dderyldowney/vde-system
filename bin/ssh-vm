@@ -20,18 +20,18 @@
 # Determine VDE root directory
 # If VDE_ROOT_DIR is already set (by the vde command), use it
 # Otherwise, derive it from the script location
-if [ -z "$VDE_ROOT_DIR" ]; then
+if [ -z "${VDE_ROOT_DIR}" ]; then
     VDE_ROOT_DIR="${0:a:h:h}"
 fi
 export VDE_ROOT_DIR
 
 # Source core libraries
-source "$VDE_ROOT_DIR/lib/vde-shell-compat" &>/dev/null
-source "$VDE_ROOT_DIR/lib/vde-constants" &>/dev/null
-source "$VDE_ROOT_DIR/lib/vde-errors" &>/dev/null
-source "$VDE_ROOT_DIR/lib/vde-log" &>/dev/null
-source "$VDE_ROOT_DIR/lib/vde-core" &>/dev/null
-source "$VDE_ROOT_DIR/lib/vm-common" &>/dev/null
+source "${VDE_ROOT_DIR}/lib/vde-shell-compat" &>/dev/null
+source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
+source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
+source "${VDE_ROOT_DIR}/lib/vde-log" &>/dev/null
+source "${VDE_ROOT_DIR}/lib/vde-core" &>/dev/null
+source "${VDE_ROOT_DIR}/lib/vm-common" &>/dev/null
 
 # Initialize logging
 vde_log_init 2>/dev/null || true
@@ -70,8 +70,8 @@ EOF
 SHOW_COMMAND=false
 VM_NAME=""
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
+while [[ ${#} -gt 0 ]]; do
+    case "${1}" in
         -h|--help)
             show_usage
             exit 0
@@ -81,19 +81,19 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         -*)
-            vde_error_simple "Unknown option: $1"
+            vde_error_simple "Unknown option: ${1}"
             echo ""
             show_usage
-            exit $VDE_ERR_INVALID_INPUT
+            exit ${VDE_ERR_INVALID_INPUT}
             ;;
         *)
-            if [ -z "$VM_NAME" ]; then
-                VM_NAME="$1"
+            if [ -z "${VM_NAME}" ]; then
+                VM_NAME="${1}"
             else
                 vde_error_simple "Too many arguments. Only one VM name expected."
                 echo ""
                 show_usage
-                exit $VDE_ERR_INVALID_INPUT
+                exit ${VDE_ERR_INVALID_INPUT}
             fi
             shift
             ;;
@@ -101,52 +101,52 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate VM name was provided
-if [ -z "$VM_NAME" ]; then
+if [ -z "${VM_NAME}" ]; then
     vde_error_simple "Missing VM name argument."
     echo ""
     show_usage
-    exit $VDE_ERR_INVALID_INPUT
+    exit ${VDE_ERR_INVALID_INPUT}
 fi
 
 # Ensure VDE SSH environment is initialized
 ensure_ssh_environment
-if [ $? -ne 0 ]; then
+if [ ${?} -ne 0 ]; then
     vde_error_simple "Failed to initialize VDE SSH environment."
-    exit $VDE_ERR_GENERAL
+    exit ${VDE_ERR_GENERAL}
 fi
 
 # Load VM types (required for name resolution and running state check)
 load_vm_types
 
 # Resolve VM name (handle aliases)
-RESOLVED_NAME=$(resolve_vm_name "$VM_NAME")
-if [ $? -ne 0 ] || [ -z "$RESOLVED_NAME" ]; then
-    vde_error_simple "Unknown VM or alias: $VM_NAME"
+RESOLVED_NAME=$(resolve_vm_name "${VM_NAME}")
+if [ ${?} -ne 0 ] || [ -z "${RESOLVED_NAME}" ]; then
+    vde_error_simple "Unknown VM or alias: ${VM_NAME}"
     echo ""
     echo "Run 'vde list' to see available VMs."
-    exit $VDE_ERR_NOT_FOUND
+    exit ${VDE_ERR_NOT_FOUND}
 fi
 
 # Check if VM is running
-if ! is_vm_running "$RESOLVED_NAME"; then
-    vde_error_simple "VM '$RESOLVED_NAME' is not running."
+if ! is_vm_running "${RESOLVED_NAME}"; then
+    vde_error_simple "VM '${RESOLVED_NAME}' is not running."
     echo ""
-    echo "Start the VM with: vde start $VM_NAME"
-    exit $VDE_ERR_GENERAL
+    echo "Start the VM with: vde start ${VM_NAME}"
+    exit ${VDE_ERR_GENERAL}
 fi
 
 # Determine SSH host alias based on VM type
 # Use vde_get_ssh_host for consistent vde-* naming convention
-SSH_HOST_ALIAS=$(vde_get_ssh_host "$RESOLVED_NAME")
+SSH_HOST_ALIAS=$(vde_get_ssh_host "${RESOLVED_NAME}")
 
 # Build SSH command as array for proper word splitting
-SSH_CMD=(ssh -F "$VDE_SSH_CONFIG" -o "UserKnownHostsFile=$VDE_SSH_KNOWN_HOSTS" "$SSH_HOST_ALIAS")
+SSH_CMD=(ssh -F "${VDE_SSH_CONFIG}" -o "UserKnownHostsFile=${VDE_SSH_KNOWN_HOSTS}" "${SSH_HOST_ALIAS}")
 
 # Either show or execute the command
-if [ "$SHOW_COMMAND" = true ]; then
+if [ "${SHOW_COMMAND}" = true ]; then
     echo "${SSH_CMD[@]}"
     exit 0
 else
-    vde_log_info "Connecting to $SSH_HOST_ALIAS..." "ssh-vm"
+    vde_log_info "Connecting to ${SSH_HOST_ALIAS}..." "ssh-vm"
     exec "${SSH_CMD[@]}"
 fi

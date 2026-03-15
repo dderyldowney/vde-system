@@ -16,14 +16,14 @@ set -e
 
 # This script will continue even if some steps have warnings
 # Source shared library
-VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$VDE_ROOT_DIR/lib/vde-shell-compat"
-source "$VDE_ROOT_DIR/lib/vde-constants"
-source "$VDE_ROOT_DIR/lib/vde-errors"
-source "$VDE_ROOT_DIR/lib/vde-log"
-source "$VDE_ROOT_DIR/lib/vde-core"
-source "$VDE_ROOT_DIR/lib/vde-security"
-source "$VDE_ROOT_DIR/lib/vm-common"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
+source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
+source "${VDE_ROOT_DIR}/lib/vde-constants"
+source "${VDE_ROOT_DIR}/lib/vde-errors"
+source "${VDE_ROOT_DIR}/lib/vde-log"
+source "${VDE_ROOT_DIR}/lib/vde-core"
+source "${VDE_ROOT_DIR}/lib/vde-security"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Initialize logging
 vde_log_init 2>/dev/null || true
@@ -32,8 +32,8 @@ vde_log_init 2>/dev/null || true
 REBUILD=false
 NOCACHE=false
 
-for arg in "$@"; do
-    case $arg in
+for arg in "${@}"; do
+    case ${arg} in
         --rebuild)
             REBUILD=true
             ;;
@@ -41,8 +41,8 @@ for arg in "$@"; do
             NOCACHE=true
             ;;
         *)
-            echo "Unknown option: $arg"
-            exit $VDE_ERR_GENERAL
+            echo "Unknown option: ${arg}"
+            exit ${VDE_ERR_GENERAL}
             ;;
     esac
 done
@@ -78,14 +78,14 @@ if ! command -v docker &>/dev/null; then
     log_error "Docker is not installed or not in PATH"
     echo "  Please install Docker Desktop first:"
     echo "  https://www.docker.com/products/docker-desktop/"
-    exit $VDE_ERR_GENERAL
+    exit ${VDE_ERR_GENERAL}
 fi
 
 # Check if Docker daemon is running
 if ! docker info &>/dev/null; then
     log_error "Docker daemon is not running"
     echo "  Please start Docker Desktop and try again"
-    exit $VDE_ERR_GENERAL
+    exit ${VDE_ERR_GENERAL}
 fi
 
 log_success "✓ Docker is installed and running"
@@ -95,7 +95,7 @@ if ! command -v git &>/dev/null; then
     log_error "git is not installed or not in PATH"
     echo "  Please install git first:"
     echo "  https://git-scm.com/downloads"
-    exit $VDE_ERR_GENERAL
+    exit ${VDE_ERR_GENERAL}
 fi
 
 log_success "✓ git is installed"
@@ -112,16 +112,16 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 # Core directories
-mkdir -p "$CONFIGS_DIR"
-mkdir -p "$TEMPLATES_DIR"
-mkdir -p "$VDE_ROOT_DIR/projects"
-mkdir -p "$VDE_ROOT_DIR/data"
-mkdir -p "$VDE_ROOT_DIR/logs"
-mkdir -p "$VDE_ROOT_DIR/env-files"
-mkdir -p "$VDE_ROOT_DIR/public-ssh-keys"
-mkdir -p "$VDE_ROOT_DIR/.cache"
-mkdir -p "$VDE_ROOT_DIR/.locks"
-mkdir -p "$VDE_ROOT_DIR/.locks/ports"
+mkdir -p "${CONFIGS_DIR}"
+mkdir -p "${TEMPLATES_DIR}"
+mkdir -p "${VDE_ROOT_DIR}/projects"
+mkdir -p "${VDE_ROOT_DIR}/data"
+mkdir -p "${VDE_ROOT_DIR}/logs"
+mkdir -p "${VDE_ROOT_DIR}/env-files"
+mkdir -p "${VDE_ROOT_DIR}/public-ssh-keys"
+mkdir -p "${VDE_ROOT_DIR}/.cache"
+mkdir -p "${VDE_ROOT_DIR}/.locks"
+mkdir -p "${VDE_ROOT_DIR}/.locks/ports"
 
 log_success "✓ Core directories created"
 
@@ -137,11 +137,11 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 # Run the generate-all-configs script
-if "$VDE_SCRIPTS_DIR/generate-all-configs" 2>/dev/null; then
+if "${VDE_SCRIPTS_DIR}/generate-all-configs" 2>/dev/null; then
     log_success "✓ Docker configurations generated"
 else
     log_error "✗ Failed to generate configurations"
-    exit $VDE_ERR_GENERAL
+    exit ${VDE_ERR_GENERAL}
 fi
 
 echo ""
@@ -159,7 +159,7 @@ echo "your private keys to containers."
 echo ""
 
 # Run the SSH setup script
-if "$VDE_SCRIPTS_DIR/ssh-agent-setup" --init 2>/dev/null; then
+if "${VDE_SCRIPTS_DIR}/ssh-agent-setup" --init 2>/dev/null; then
     log_success "✓ SSH environment configured"
 else
     log_error "✗ SSH setup failed"

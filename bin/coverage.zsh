@@ -12,8 +12,8 @@ readonly BLUE='\033[0;34m'
 readonly NC='\033[0m'
 
 # Configuration
-# Get script directory using $0 (works with zsh)
-VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# Get script directory using ${0} (works with zsh)
+VDE_ROOT_DIR="$(cd "$(dirname "${0}")/.." && pwd)"
 COVERAGE_DIR="${VDE_ROOT_DIR}/coverage"
 COVERAGE_MERGED="${COVERAGE_DIR}/merged"
 
@@ -32,17 +32,17 @@ clean_coverage() {
 
 # Run a single test under kcov
 run_test_with_coverage() {
-    local test_file="$1"
+    local test_file="${1}"
     local test_name
-    test_name="$(basename "$test_file" .sh)"
+    test_name="$(basename "${test_file}" .sh)"
     local coverage_out="${COVERAGE_DIR}/${test_name}"
 
     print -P "${BLUE}Running: ${test_name}${NC}"
 
     # Verify test passes first
-    if ! zsh "$test_file" >/dev/null 2>&1; then
-        print -P "${RED}✗ Test failed: $test_name${NC}"
-        return $VDE_ERR_GENERAL
+    if ! zsh "${test_file}" >/dev/null 2>&1; then
+        print -P "${RED}✗ Test failed: ${test_name}${NC}"
+        return ${VDE_ERR_GENERAL}
     fi
 
     # Use set -o noglob to prevent glob expansion of patterns
@@ -53,26 +53,26 @@ run_test_with_coverage() {
         --exclude-region=TEST:END_TEST \
         --path-strip-level=2 \
         "${coverage_out}" \
-        zsh "$test_file" || true
+        zsh "${test_file}" || true
 
     return 0
 }
 
 # Run all tests in a directory
 run_directory_with_coverage() {
-    local dir="$1"
+    local dir="${1}"
     local test_count=0
 
     # Use setopt for null_glob behavior (zsh-specific)
     setopt local_options null_glob
     for test_file in "${dir}"/*.sh; do
-        if [[ -f "$test_file" ]]; then
-            run_test_with_coverage "$test_file"
+        if [[ -f "${test_file}" ]]; then
+            run_test_with_coverage "${test_file}"
             ((test_count++))
         fi
     done
 
-    print -P "${GREEN}✓ Ran $test_count test(s) from $dir${NC}"
+    print -P "${GREEN}✓ Ran ${test_count} test(s) from ${dir}${NC}"
 }
 
 # Merge coverage reports
@@ -87,7 +87,7 @@ merge_coverage() {
 
     if [[ ${#kcov_dirs[@]} -eq 0 ]]; then
         print -P "${RED}✗ No coverage data found to merge${NC}"
-        return $VDE_ERR_GENERAL
+        return ${VDE_ERR_GENERAL}
     fi
 
     # Copy the first coverage as base
@@ -95,8 +95,8 @@ merge_coverage() {
 
     # Merge additional coverage
     for dir in "${kcov_dirs[@]:2}"; do
-        if [[ -d "$dir" ]]; then
-            kcov --merge "${COVERAGE_MERGED}/temp" "$dir" 2>/dev/null || true
+        if [[ -d "${dir}" ]]; then
+            kcov --merge "${COVERAGE_MERGED}/temp" "${dir}" 2>/dev/null || true
         fi
     done
 
@@ -113,16 +113,16 @@ generate_summary() {
 
     local index_file="${COVERAGE_MERGED}/index.html"
 
-    if [[ ! -f "$index_file" ]]; then
-        print -P "${RED}✗ Coverage report not found at $index_file${NC}"
-        return $VDE_ERR_GENERAL
+    if [[ ! -f "${index_file}" ]]; then
+        print -P "${RED}✗ Coverage report not found at ${index_file}${NC}"
+        return ${VDE_ERR_GENERAL}
     fi
 
     # Extract coverage percentage from index.html
     local coverage
-    coverage=$(grep -oP 'covered"[^>]*>\K[0-9.]+' "$index_file" 2>/dev/null | head -1)
+    coverage=$(grep -oP 'covered"[^>]*>\K[0-9.]+' "${index_file}" 2>/dev/null | head -1)
 
-    if [[ -n "$coverage" ]]; then
+    if [[ -n "${coverage}" ]]; then
         print -P "\n${GREEN}================================${NC}"
         print -P "${GREEN}Coverage Report Generated${NC}"
         print -P "${GREEN}================================${NC}"
@@ -139,7 +139,7 @@ generate_summary() {
 main() {
     local test_type="${1:-all}"
 
-    case "$test_type" in
+    case "${test_type}" in
         unit)
             print -P "${YELLOW}Running unit tests with coverage...${NC}"
             clean_coverage
@@ -164,9 +164,9 @@ main() {
             run_directory_with_coverage "${VDE_ROOT_DIR}/tests/integration"
             ;;
         *)
-            print -P "${RED}Unknown test type: $test_type${NC}"
-            print -P "Usage: $0 [all|unit|integration|comprehensive]"
-            exit $VDE_ERR_GENERAL
+            print -P "${RED}Unknown test type: ${test_type}${NC}"
+            print -P "Usage: ${0} [all|unit|integration|comprehensive]"
+            exit ${VDE_ERR_GENERAL}
             ;;
     esac
 
@@ -174,4 +174,4 @@ main() {
     generate_summary
 }
 
-main "$@"
+main "${@}"

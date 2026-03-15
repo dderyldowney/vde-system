@@ -416,7 +416,7 @@ cleanup_test_vms() {
     if [[ -f "$PROJECT_ROOT/configs/docker/${TEST_LANG_VM}/docker-compose.yml" ]]; then
         echo "Stopping ${TEST_LANG_VM}..."
         docker-compose -f "$PROJECT_ROOT/configs/docker/${TEST_LANG_VM}/docker-compose.yml" down 2>/dev/null || true
-        if [[ ! docker ps | grep -q "${TEST_PREFIX}-${TEST_LANG_VM}" ]]; then
+        if ! docker ps | grep -q "${TEST_PREFIX}-${TEST_LANG_VM}"; then
             echo -e "${GREEN}✓ ${TEST_LANG_VM} stopped${RESET}"
             ((cleaned++))
         fi
@@ -426,7 +426,7 @@ cleanup_test_vms() {
     if [[ -f "$PROJECT_ROOT/configs/docker/${TEST_SVC_VM}/docker-compose.yml" ]]; then
         echo "Stopping ${TEST_SVC_VM}..."
         docker-compose -f "$PROJECT_ROOT/configs/docker/docker/${TEST_SVC_VM}/docker-compose.yml" down 2>/dev/null || true
-        if [[ ! docker ps | grep -q "${TEST_PREFIX}-${TEST_SVC_VM}" ]]; then
+        if ! docker ps | grep -q "${TEST_PREFIX}-${TEST_SVC_VM}"; then
             echo -e "${GREEN}✓ ${TEST_SVC_VM} stopped${RESET}"
             ((cleaned++))
         fi
@@ -469,7 +469,7 @@ main() {
     echo -e "${BOLD}══════════════════════════════════════════════════════════════${RESET}"
     echo ""
 
-    echo -e "${BLUE}Test VMs:${RESET} ${TEST_LANG_VM}, ${TEST_SVC_VM}
+    echo -e "${BLUE}Test VMs:${RESET} ${TEST_LANG_VM}, ${TEST_SVC_VM}"
     echo -e "${BLUE}Your existing VMs: ${RESET} PRESERVED (not touched)"
     echo ""
 

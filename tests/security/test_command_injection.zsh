@@ -3,11 +3,11 @@
 # Tests that VDE scripts properly reject malicious VM names and inputs
 
 # Get the directory where this test script is located
-TEST_DIR="$(cd "$(dirname "$0")" && pwd)"
-VDE_ROOT_DIR="$(cd "$TEST_DIR/../.." && pwd)"
+TEST_DIR="$(cd "$(dirname "${0}")" && pwd)"
+VDE_ROOT_DIR="$(cd "${TEST_DIR}/../.." && pwd)"
 
 # Source the library
-source "$VDE_ROOT_DIR/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Test infrastructure
 TESTS_PASSED=0
@@ -17,9 +17,9 @@ RED='\033[0;31m'
 YELLOW='\033[0;33m'
 RESET='\033[0m'
 
-test_start() { echo -e "${YELLOW}Testing: $1${RESET}" }
-test_pass() { echo -e "  ${GREEN}✓ PASS: $1${RESET}"; ((TESTS_PASSED++)) }
-test_fail() { echo -e "  ${RED}✗ FAIL: $1 - $2${RESET}"; ((TESTS_FAILED++)) }
+test_start() { echo -e "${YELLOW}Testing: ${1}${RESET}" }
+test_pass() { echo -e "  ${GREEN}✓ PASS: ${1}${RESET}"; ((TESTS_PASSED++)) }
+test_fail() { echo -e "  ${RED}✗ FAIL: ${1} - ${2}${RESET}"; ((TESTS_FAILED++)) }
 
 # Test 1: VM name with semicolon
 test_vm_name_with_semicolon() {
@@ -99,13 +99,13 @@ test_vm_name_valid_accepted() {
     local all_passed=true
 
     for name in "${valid_names[@]}"; do
-        if ! validate_vm_name "$name" 2>/dev/null; then
+        if ! validate_vm_name "${name}" 2>/dev/null; then
             all_passed=false
             break
         fi
     done
 
-    if [ "$all_passed" = "true" ]; then
+    if [ "${all_passed}" = "true" ]; then
         test_pass "valid names accepted"
     else
         test_fail "valid_names" "Some valid names were rejected"
@@ -151,11 +151,11 @@ test_vm_name_with_dots
 echo ""
 echo "========================================"
 echo "Command Injection Test Results:"
-echo "  Passed: $TESTS_PASSED"
-echo "  Failed: $TESTS_FAILED"
+echo "  Passed: ${TESTS_PASSED}"
+echo "  Failed: ${TESTS_FAILED}"
 echo "========================================"
 
-if [ $TESTS_FAILED -gt 0 ]; then
+if [ ${TESTS_FAILED} -gt 0 ]; then
     exit 1
 else
     exit 0

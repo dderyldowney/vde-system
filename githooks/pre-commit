@@ -15,7 +15,7 @@ RESET='\033[0m'
 # Get list of deleted files in this commit
 DELETED_FILES=$(git diff --cached --name-only --diff-filter=D)
 
-if [[ -z "$DELETED_FILES" ]]; then
+if [[ -z "${DELETED_FILES}" ]]; then
     exit 0
 fi
 
@@ -29,8 +29,8 @@ PROTECTED_PATTERNS=(
 VIOLATIONS=()
 for file in ${(f)DELETED_FILES}; do
     for pattern in "${PROTECTED_PATTERNS[@]}"; do
-        if [[ "$file" =~ ^$pattern$ ]]; then
-            VIOLATIONS+=("$file")
+        if [[ "${file}" =~ ^${pattern}$ ]]; then
+            VIOLATIONS+=("${file}")
             break
         fi
     done
@@ -44,7 +44,7 @@ if [[ ${#VIOLATIONS[@]} -gt 0 ]]; then
     echo -e "${YELLOW}The following files are PROTECTED and cannot be deleted:${RESET}"
     echo ""
     for file in "${VIOLATIONS[@]}"; do
-        echo -e "  ${RED}✗${RESET} $file"
+        echo -e "  ${RED}✗${RESET} ${file}"
     done
     echo ""
     echo -e "${YELLOW}These files are part of the VDE core infrastructure.${RESET}"

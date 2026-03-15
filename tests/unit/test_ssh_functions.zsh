@@ -2,17 +2,17 @@
 # Unit tests for SSH key management and agent forwarding functions
 
 TEST_DIR="$(cd "$(dirname "${(%):-%x}")/../.." && pwd)"
-source "$TEST_DIR/tests/lib/test_common.zsh"
+source "${TEST_DIR}/tests/lib/test_common.zsh"
 
 test_suite_start "SSH Functions Unit Tests"
 
 setup_test_env
 
 # Explicitly source vm-common (before setup_test_env to get VDE_ROOT_DIR)
-if [[ -z "$VDE_ROOT_DIR" ]]; then
-    export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+if [[ -z "${VDE_ROOT_DIR}" ]]; then
+    export VDE_ROOT_DIR="$(cd "$(dirname "${0}")/../.." && pwd)"
 fi
-source "$VDE_ROOT_DIR/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Test: SSH key detection
 test_section "SSH Key Detection"
@@ -48,8 +48,8 @@ test_section "Primary SSH Key Selection"
 
 if declare -f get_primary_ssh_key >/dev/null; then
     primary=$(get_primary_ssh_key)
-    if [[ -n "$primary" ]]; then
-        echo -e "${GREEN}✓${NC} get_primary_ssh_key returns: $primary"
+    if [[ -n "${primary}" ]]; then
+        echo -e "${GREEN}✓${NC} get_primary_ssh_key returns: ${primary}"
         ((TESTS_PASSED++))
     else
         echo -e "${YELLOW}○${NC} get_primary_ssh_key: No keys available"
@@ -83,10 +83,10 @@ fi
 # Test: SSH_AUTH_SOCK environment variable
 test_section "SSH_AUTH_SOCK Environment"
 
-if [[ -n "$SSH_AUTH_SOCK" ]]; then
-    echo -e "${GREEN}✓${NC} SSH_AUTH_SOCK is set: $SSH_AUTH_SOCK"
+if [[ -n "${SSH_AUTH_SOCK}" ]]; then
+    echo -e "${GREEN}✓${NC} SSH_AUTH_SOCK is set: ${SSH_AUTH_SOCK}"
     # Verify socket exists
-    if [[ -S "$SSH_AUTH_SOCK" ]]; then
+    if [[ -S "${SSH_AUTH_SOCK}" ]]; then
         echo -e "${GREEN}✓${NC} SSH_AUTH_SOCK points to valid socket"
         ((TESTS_PASSED++))
     else
@@ -107,8 +107,8 @@ test_section "SSH Keys in Agent"
 
 if ssh_agent_is_running 2>/dev/null; then
     key_count=$(ssh-add -l 2>/dev/null | wc -l)
-    if [[ $key_count -gt 0 ]]; then
-        echo -e "${GREEN}✓${NC} Keys loaded in agent: $key_count"
+    if [[ ${key_count} -gt 0 ]]; then
+        echo -e "${GREEN}✓${NC} Keys loaded in agent: ${key_count}"
         ((TESTS_PASSED++))
     else
         echo -e "${YELLOW}○${NC} No keys loaded in agent"
@@ -126,10 +126,10 @@ test_section "VM SSH Config Generation"
 
 if declare -f get_vm_ssh_port >/dev/null; then
     # Test with a known VM if it exists
-    if [[ -f "$CONFIGS_DIR/python/docker-compose.yml" ]]; then
+    if [[ -f "${CONFIGS_DIR}/python/docker-compose.yml" ]]; then
         port=$(get_vm_ssh_port "python")
-        if [[ -n "$port" ]]; then
-            echo -e "${GREEN}✓${NC} get_vm_ssh_port returns: $port"
+        if [[ -n "${port}" ]]; then
+            echo -e "${GREEN}✓${NC} get_vm_ssh_port returns: ${port}"
             ((TESTS_PASSED++))
         else
             echo -e "${YELLOW}○${NC} get_vm_ssh_port: No port found for python"
@@ -150,14 +150,14 @@ fi
 # Test: Public SSH keys directory
 test_section "Public SSH Keys Directory"
 
-if [[ -d "$VDE_ROOT_DIR/public-ssh-keys" ]]; then
+if [[ -d "${VDE_ROOT_DIR}/public-ssh-keys" ]]; then
     echo -e "${GREEN}✓${NC} public-ssh-keys directory exists"
     ((TESTS_PASSED++))
     ((TESTS_RUN++))
 
-    key_count=$(ls -1 "$VDE_ROOT_DIR/public-ssh-keys"/*.pub 2>/dev/null | wc -l)
-    if [[ $key_count -gt 0 ]]; then
-        echo -e "${GREEN}✓${NC} Public keys found: $key_count"
+    key_count=$(ls -1 "${VDE_ROOT_DIR}/public-ssh-keys"/*.pub 2>/dev/null | wc -l)
+    if [[ ${key_count} -gt 0 ]]; then
+        echo -e "${GREEN}✓${NC} Public keys found: ${key_count}"
         ((TESTS_PASSED++))
     else
         echo -e "${YELLOW}○${NC} No public keys in public-ssh-keys"
@@ -173,13 +173,13 @@ fi
 # Test: SSH config file
 test_section "SSH Config File"
 
-if [[ -f "$HOME/.ssh/vde/config" ]]; then
+if [[ -f "${HOME}/.ssh/vde/config" ]]; then
     echo -e "${GREEN}✓${NC} ~/.ssh/vde/config exists"
     ((TESTS_PASSED++))
     ((TESTS_RUN++))
 
     # Check for VDE entries
-    if grep -q "vde-python" "$HOME/.ssh/vde/config" 2>/dev/null; then
+    if grep -q "vde-python" "${HOME}/.ssh/vde/config" 2>/dev/null; then
         echo -e "${GREEN}✓${NC} VDE SSH entries found in config"
         ((TESTS_PASSED++))
     else
@@ -198,17 +198,17 @@ test_section "SSH Identity File Detection"
 
 if declare -f get_ssh_identity_file >/dev/null; then
     identity_file=$(get_ssh_identity_file)
-    if [[ -n "$identity_file" ]]; then
-        echo -e "${GREEN}✓${NC} get_ssh_identity_file returns: $identity_file"
+    if [[ -n "${identity_file}" ]]; then
+        echo -e "${GREEN}✓${NC} get_ssh_identity_file returns: ${identity_file}"
         ((TESTS_PASSED++))
         ((TESTS_RUN++))
 
         # Check if file exists
-        if [[ -f "$identity_file" ]]; then
+        if [[ -f "${identity_file}" ]]; then
             echo -e "${GREEN}✓${NC} Identity file exists"
             ((TESTS_PASSED++))
         else
-            echo -e "${RED}✗${NC} Identity file does not exist: $identity_file"
+            echo -e "${RED}✗${NC} Identity file does not exist: ${identity_file}"
             ((TESTS_FAILED++))
         fi
         ((TESTS_RUN++))
@@ -226,4 +226,4 @@ fi
 teardown_test_env
 
 test_suite_end "SSH Functions Unit Tests"
-exit $?
+exit ${?}

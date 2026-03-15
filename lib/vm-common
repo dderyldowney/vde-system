@@ -44,16 +44,16 @@ _VM_COMMON_LOADED=1
 # If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
 if [ -z "${VDE_ROOT_DIR:-}" ]; then
     # Derivation logic for VDE root directory
-    if [ -n "$ZSH_VERSION" ]; then
+    if [ -n "${ZSH_VERSION}" ]; then
         # zsh-specific way to get the path of the current file being sourced
         _VM_COMMON_SOURCE="${(%):-%x}"
     else
         # fallback for other shells
-        _VM_COMMON_SOURCE="${BASH_SOURCE[0]:-$0}"
+        _VM_COMMON_SOURCE="${BASH_SOURCE[0]:-${0}}"
     fi
     
     # Calculate absolute path to root (lib/ is one level below VDE root)
-    VDE_ROOT_DIR="$(cd "$(dirname "$_VM_COMMON_SOURCE")/.." && pwd)"
+    VDE_ROOT_DIR="$(cd "$(dirname "${_VM_COMMON_SOURCE}")/.." && pwd)"
 fi
 export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 
@@ -61,14 +61,14 @@ export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 # DEPENDENCIES (CORE)
 # =============================================================================
 
-. "$VDE_ROOT_DIR/lib/vde-log"
-. "$VDE_ROOT_DIR/lib/vde-shell-compat"
-. "$VDE_ROOT_DIR/lib/vde-constants"
-. "$VDE_ROOT_DIR/lib/vde-errors"
-. "$VDE_ROOT_DIR/lib/vde-naming"
-. "$VDE_ROOT_DIR/lib/vde-security"
-. "$VDE_ROOT_DIR/lib/vde-path-utils"
-. "$VDE_ROOT_DIR/lib/vde-core"
+. "${VDE_ROOT_DIR}/lib/vde-log"
+. "${VDE_ROOT_DIR}/lib/vde-shell-compat"
+. "${VDE_ROOT_DIR}/lib/vde-constants"
+. "${VDE_ROOT_DIR}/lib/vde-errors"
+. "${VDE_ROOT_DIR}/lib/vde-naming"
+. "${VDE_ROOT_DIR}/lib/vde-security"
+. "${VDE_ROOT_DIR}/lib/vde-path-utils"
+. "${VDE_ROOT_DIR}/lib/vde-core"
 
 # =============================================================================
 # LOGGING ALIASES (map log_*/vde_log_* to vde-log library functions)
@@ -77,49 +77,49 @@ export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 
 # Source vde-log if not already loaded
 if [[ "${_VDE_LOG_LOADED:-}" != "1" ]]; then
-    . "$VDE_ROOT_DIR/lib/vde-log"
+    . "${VDE_ROOT_DIR}/lib/vde-log"
 fi
 
 # Create aliases for scripts that expect log_* prefix
 if ! command -v log_info >/dev/null 2>&1; then
-    log_info() { vde_log_info "$@"; }
+    log_info() { vde_log_info "${@}"; }
 fi
 
 if ! command -v log_error >/dev/null 2>&1; then
-    log_error() { vde_log_error "$@"; }
+    log_error() { vde_log_error "${@}"; }
 fi
 
 if ! command -v log_warn >/dev/null 2>&1; then
-    log_warn() { vde_log_warn "$@"; }
+    log_warn() { vde_log_warn "${@}"; }
 fi
 
 if ! command -v log_debug >/dev/null 2>&1; then
-    log_debug() { vde_log_debug "$@"; }
+    log_debug() { vde_log_debug "${@}"; }
 fi
 
 if ! command -v log_success >/dev/null 2>&1; then
-    log_success() { vde_log_info "[SUCCESS] $@"; }
+    log_success() { vde_log_info "[SUCCESS] ${@}"; }
 fi
 
 # Also create aliases for underscore-prefixed versions (_info, _error, _success, _warn)
 if ! command -v _info >/dev/null 2>&1; then
-    _info() { vde_log_info "$@"; }
+    _info() { vde_log_info "${@}"; }
 fi
 
 if ! command -v _error >/dev/null 2>&1; then
-    _error() { vde_log_error "$@"; }
+    _error() { vde_log_error "${@}"; }
 fi
 
 if ! command -v _warn >/dev/null 2>&1; then
-    _warn() { vde_log_warn "$@"; }
+    _warn() { vde_log_warn "${@}"; }
 fi
 
 if ! command -v _debug >/dev/null 2>&1; then
-    _debug() { vde_log_debug "$@"; }
+    _debug() { vde_log_debug "${@}"; }
 fi
 
 if ! command -v _success >/dev/null 2>&1; then
-    _success() { vde_log_info "[SUCCESS] $@"; }
+    _success() { vde_log_info "[SUCCESS] ${@}"; }
 fi
 
 # =============================================================================
@@ -128,27 +128,27 @@ fi
 
 # Source specialized libraries (fail gracefully if not needed)
 _vde_ssh_source() {
-    if [ -f "$VDE_ROOT_DIR/lib/vde-ssh" ]; then
-        . "$VDE_ROOT_DIR/lib/vde-ssh"
-        return $VDE_SUCCESS
+    if [ -f "${VDE_ROOT_DIR}/lib/vde-ssh" ]; then
+        . "${VDE_ROOT_DIR}/lib/vde-ssh"
+        return ${VDE_SUCCESS}
     fi
-    return $VDE_ERR_DEPENDENCY
+    return ${VDE_ERR_DEPENDENCY}
 }
 
 _vde_docker_source() {
-    if [ -f "$VDE_ROOT_DIR/lib/vde-docker" ]; then
-        . "$VDE_ROOT_DIR/lib/vde-docker"
-        return $VDE_SUCCESS
+    if [ -f "${VDE_ROOT_DIR}/lib/vde-docker" ]; then
+        . "${VDE_ROOT_DIR}/lib/vde-docker"
+        return ${VDE_SUCCESS}
     fi
-    return $VDE_ERR_DEPENDENCY
+    return ${VDE_ERR_DEPENDENCY}
 }
 
 _vde_templates_source() {
-    if [ -f "$VDE_ROOT_DIR/lib/vde-templates" ]; then
-        . "$VDE_ROOT_DIR/lib/vde-templates"
-        return $VDE_SUCCESS
+    if [ -f "${VDE_ROOT_DIR}/lib/vde-templates" ]; then
+        . "${VDE_ROOT_DIR}/lib/vde-templates"
+        return ${VDE_SUCCESS}
     fi
-    return $VDE_ERR_DEPENDENCY
+    return ${VDE_ERR_DEPENDENCY}
 }
 
 # Load modular libraries (lazy loading)
@@ -162,30 +162,30 @@ _vm_common_load_modular_libs() {
 # DIRECTORY CONSTANTS (TRULY COMMON)
 # =============================================================================
 
-CONFIGS_DIR="${CONFIGS_DIR:-$VDE_ROOT_DIR/configs/docker}"
+CONFIGS_DIR="${CONFIGS_DIR:-${VDE_ROOT_DIR}/configs/docker}"
 export CONFIGS_DIR
-BIN_DIR="${BIN_DIR:-$VDE_ROOT_DIR/bin}"
+BIN_DIR="${BIN_DIR:-${VDE_ROOT_DIR}/bin}"
 export BIN_DIR
-TEMPLATES_DIR="${TEMPLATES_DIR:-$VDE_ROOT_DIR/templates}"
+TEMPLATES_DIR="${TEMPLATES_DIR:-${VDE_ROOT_DIR}/templates}"
 export TEMPLATES_DIR
-DATA_DIR="${DATA_DIR:-$VDE_ROOT_DIR/data}"
+DATA_DIR="${DATA_DIR:-${VDE_ROOT_DIR}/data}"
 export DATA_DIR
-BACKUP_DIR="${BACKUP_DIR:-$VDE_ROOT_DIR/backup}"
+BACKUP_DIR="${BACKUP_DIR:-${VDE_ROOT_DIR}/backup}"
 export BACKUP_DIR
-VDE_CACHE_DIR="${VDE_CACHE_DIR:-$VDE_ROOT_DIR/.cache}" # Defined in vde-core.
+VDE_CACHE_DIR="${VDE_CACHE_DIR:-${VDE_ROOT_DIR}/.cache}" # Defined in vde-core.
 export VDE_CACHE_DIR
 
-VM_TYPES_CONF="${VM_TYPES_CONF:-$DATA_DIR/vm-types.conf}"
+VM_TYPES_CONF="${VM_TYPES_CONF:-${DATA_DIR}/vm-types.conf}"
 export VM_TYPES_CONF
-VM_TYPES_JSON="${VM_TYPES_JSON:-$DATA_DIR/vm-types.json}"
+VM_TYPES_JSON="${VM_TYPES_JSON:-${DATA_DIR}/vm-types.json}"
 export VM_TYPES_JSON
-VM_TYPES_CACHE="${VM_TYPES_CACHE:-$VDE_CACHE_DIR/vm-types.cache}"
+VM_TYPES_CACHE="${VM_TYPES_CACHE:-${VDE_CACHE_DIR}/vm-types.cache}"
 export VM_TYPES_CACHE
-VM_DOCKER_CONFIG="${VM_DOCKER_CONFIG:-$DATA_DIR/vm-docker-config.json}"
+VM_DOCKER_CONFIG="${VM_DOCKER_CONFIG:-${DATA_DIR}/vm-docker-config.json}"
 export VM_DOCKER_CONFIG
-VM_DOCKER_CACHE="${VM_DOCKER_CACHE:-$VDE_CACHE_DIR/vm-docker-config.cache}"
+VM_DOCKER_CACHE="${VM_DOCKER_CACHE:-${VDE_CACHE_DIR}/vm-docker-config.cache}"
 export VM_DOCKER_CACHE
-PORT_REGISTRY_FILE="${PORT_REGISTRY_FILE:-$VDE_CACHE_DIR/port-registry}"
+PORT_REGISTRY_FILE="${PORT_REGISTRY_FILE:-${VDE_CACHE_DIR}/port-registry}"
 export PORT_REGISTRY_FILE
 
 # =============================================================================
@@ -214,23 +214,23 @@ declare -A VM_COMPOSE_FILE VM_ENV_FILE VM_IMAGE VM_CONTAINER_NAME VM_WORKSPACE_M
 # Returns: 0 if cache is valid, 1 if stale
 # Usage: _is_cache_valid cache_file source_file1 [source_file2 ...]
 _is_cache_valid() {
-    local cache_file="$1"
+    local cache_file="${1}"
     shift
-    local source_files=("$@")
+    local source_files=("${@}")
 
-    if [[ ! -f "$cache_file" ]]; then
-        return $VDE_ERR_GENERAL
+    if [[ ! -f "${cache_file}" ]]; then
+        return ${VDE_ERR_GENERAL}
     fi
 
     # Check if any source file is newer than cache
     local cache_mtime source_mtime
-    cache_mtime=$(stat -f "%m" "$cache_file" 2>/dev/null || stat -c "%Y" "$cache_file" 2>/dev/null)
+    cache_mtime=$(stat -f "%m" "${cache_file}" 2>/dev/null || stat -c "%Y" "${cache_file}" 2>/dev/null)
 
     for source_file in "${source_files[@]}"; do
-        if [[ -f "$source_file" ]]; then
-            source_mtime=$(stat -f "%m" "$source_file" 2>/dev/null || stat -c "%Y" "$source_file" 2>/dev/null)
-            if [[ "$source_mtime" -gt "$cache_mtime" ]]; then
-                return $VDE_ERR_GENERAL
+        if [[ -f "${source_file}" ]]; then
+            source_mtime=$(stat -f "%m" "${source_file}" 2>/dev/null || stat -c "%Y" "${source_file}" 2>/dev/null)
+            if [[ "${source_mtime}" -gt "${cache_mtime}" ]]; then
+                return ${VDE_ERR_GENERAL}
             fi
         fi
     done
@@ -247,14 +247,14 @@ _is_cache_valid() {
 # Format: shortname|type|display_name|install_command|port_base
 load_vm_types() {
     local no_cache=0
-    [[ "$1" == "--no-cache" ]] && no_cache=1
+    [[ "${1}" == "--no-cache" ]] && no_cache=1
 
     # Ensure arrays are globally declared
     typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT VM_SSH_PORT
     typeset -ga lang_vms service_vms
 
     # Guard to prevent redundant loading in the same process
-    if [[ "$no_cache" -eq 0 ]] && [[ "${_VM_TYPES_LOADED:-0}" == "1" ]] && [[ ${#VM_TYPE[@]} -gt 0 ]]; then
+    if [[ "${no_cache}" -eq 0 ]] && [[ "${_VM_TYPES_LOADED:-0}" == "1" ]] && [[ ${#VM_TYPE[@]} -gt 0 ]]; then
         # Rebuild alias map if it was invalidated without reloading types
         if [[ "${_VM_ALIAS_MAP_BUILT:-0}" -eq 0 ]]; then
             typeset -gA VM_ALIAS_MAP
@@ -262,18 +262,18 @@ load_vm_types() {
             local _vn
             {
                 for _vn in "${lang_vms[@]}" "${service_vms[@]}"; do
-                    VM_ALIAS_MAP[$_vn]="$_vn"
-                    VM_ALIAS_MAP["vde-${_vn#vde-}"]="$_vn"
-                    local _al="${VM_ALIASES[$_vn]}"
-                    if [[ -n "$_al" ]]; then
+                    VM_ALIAS_MAP[${_vn}]="${_vn}"
+                    VM_ALIAS_MAP["vde-${_vn#vde-}"]="${_vn}"
+                    local _al="${VM_ALIASES[${_vn}]}"
+                    if [[ -n "${_al}" ]]; then
                         local _alias_name
                         for _alias_name in ${(s:,:)_al}; do
                             _alias_name="${_alias_name//[[:space:]]/}"
-                            [[ -n "$_alias_name" ]] && VM_ALIAS_MAP[$_alias_name]="$_vn"
+                            [[ -n "${_alias_name}" ]] && VM_ALIAS_MAP[${_alias_name}]="${_vn}"
                         done
                     fi
-                    local _dp="${VM_DISPLAY[$_vn]}"
-                    [[ -n "$_dp" ]] && VM_ALIAS_MAP[${(L)_dp}]="$_vn"
+                    local _dp="${VM_DISPLAY[${_vn}]}"
+                    [[ -n "${_dp}" ]] && VM_ALIAS_MAP[${(L)_dp}]="${_vn}"
                 done
             } >/dev/null 2>&1
             _VM_ALIAS_MAP_BUILT=1
@@ -283,24 +283,24 @@ load_vm_types() {
 
     # 1. Try cache FIRST for maximum performance
     local use_cache=0
-    if _is_cache_valid "$VM_TYPES_CACHE" "$VM_TYPES_JSON" "$VM_TYPES_CONF"; then
+    if _is_cache_valid "${VM_TYPES_CACHE}" "${VM_TYPES_JSON}" "${VM_TYPES_CONF}"; then
         # Verify cache file has no syntax errors before sourcing
-        if zsh -n "$VM_TYPES_CACHE" 2>/dev/null; then
+        if zsh -n "${VM_TYPES_CACHE}" 2>/dev/null; then
             # Load from cache - suppress all output
-            if . "$VM_TYPES_CACHE" >/dev/null 2>&1; then
+            if . "${VM_TYPES_CACHE}" >/dev/null 2>&1; then
                 # Extract simple arrays from cache (grep-based extraction as fallback)
                 local lang_line svc_line
-                lang_line=$(grep "^lang_vms=" "$VM_TYPES_CACHE" 2>/dev/null)
-                svc_line=$(grep "^service_vms=" "$VM_TYPES_CACHE" 2>/dev/null)
-                if [[ -n "$lang_line" ]]; then
+                lang_line=$(grep "^lang_vms=" "${VM_TYPES_CACHE}" 2>/dev/null)
+                svc_line=$(grep "^service_vms=" "${VM_TYPES_CACHE}" 2>/dev/null)
+                if [[ -n "${lang_line}" ]]; then
                     local content=${lang_line#*=\(}
                     content=${content%\)}
-                    lang_vms=($(echo $content))
+                    lang_vms=($(echo ${content}))
                 fi
-                if [[ -n "$svc_line" ]]; then
+                if [[ -n "${svc_line}" ]]; then
                     local content=${svc_line#*=\(}
                     content=${content%\)}
-                    service_vms=($(echo $content))
+                    service_vms=($(echo ${content}))
                 fi
                 use_cache=1
                 # Mark as loaded but we still need VM_INSTALL check below if JSON exists
@@ -310,47 +310,47 @@ load_vm_types() {
     fi
 
     # 2. If cache failed, fall back to JSON/CONF
-    if [[ "$use_cache" -eq 0 ]]; then
-        if [[ -f "$VM_TYPES_JSON" ]]; then
+    if [[ "${use_cache}" -eq 0 ]]; then
+        if [[ -f "${VM_TYPES_JSON}" ]]; then
             # Validate against schema (only when not using cache)
             local schema_file
-            schema_file=$(vde_get_schema_for_json "$VM_TYPES_JSON" 2>/dev/null)
-            if [[ -n "$schema_file" && -f "$schema_file" ]]; then
+            schema_file=$(vde_get_schema_for_json "${VM_TYPES_JSON}" 2>/dev/null)
+            if [[ -n "${schema_file}" && -f "${schema_file}" ]]; then
                 # Silence non-error validation output
-                vde_validate_json_schema "$VM_TYPES_JSON" "$schema_file" >/dev/null 2>&1 || {
+                vde_validate_json_schema "${VM_TYPES_JSON}" "${schema_file}" >/dev/null 2>&1 || {
                     log_error "VM types JSON schema validation failed"
-                    return $VDE_ERR_INVALID_DATA
+                    return ${VDE_ERR_INVALID_DATA}
                 }
             fi
-        elif [[ -f "$VM_TYPES_CONF" ]]; then
+        elif [[ -f "${VM_TYPES_CONF}" ]]; then
             :
         else
             log_error "VM types configuration file not found"
-            return $VDE_ERR_NOT_FOUND
+            return ${VDE_ERR_NOT_FOUND}
         fi
     fi
 
 
     # If cache was successfully loaded, we still need to load VM_INSTALL
     # as it is not cached due to complex shell syntax
-    if [[ "$use_cache" -eq 1 ]]; then
+    if [[ "${use_cache}" -eq 1 ]]; then
 
-        if [[ -f "$VM_TYPES_JSON" ]]; then
+        if [[ -f "${VM_TYPES_JSON}" ]]; then
             # Parse all VM installs efficiently - suppress all output to avoid pollution
             {
                 local p_installs
-                p_installs=$(jq -r '(.vms.language[], .vms.service[]) | "VM_INSTALL[\(.name)]=\(.install // "-" | @sh)"' "$VM_TYPES_JSON" 2>/dev/null)
-                [[ -n "$p_installs" ]] && eval "$p_installs"
+                p_installs=$(jq -r '(.vms.language[], .vms.service[]) | "VM_INSTALL[\(.name)]=\(.install // "-" | @sh)"' "${VM_TYPES_JSON}" 2>/dev/null)
+                [[ -n "${p_installs}" ]] && eval "${p_installs}"
             } >/dev/null 2>&1
-        elif [[ -f "$VM_TYPES_CONF" ]]; then
+        elif [[ -f "${VM_TYPES_CONF}" ]]; then
             while IFS='|' read -r type name vm_aliases display install _rest; do
-                [[ -z "$name" || "$type" == "#"* ]] && continue
-                VM_INSTALL[$name]="$install"
-            done < "$VM_TYPES_CONF" 2>/dev/null
+                [[ -z "${name}" || "${type}" == "#"* ]] && continue
+                VM_INSTALL[${name}]="${install}"
+            done < "${VM_TYPES_CONF}" 2>/dev/null
         fi
     fi
 
-    if [[ "$use_cache" -ne 1 ]]; then
+    if [[ "${use_cache}" -ne 1 ]]; then
         _info "Loading VM types from JSON config..."
 
         # Clear existing arrays
@@ -363,8 +363,8 @@ load_vm_types() {
 
         # Read and parse configuration from JSON
         # Format: .vms.language[] and .vms.service[] with fields: name, aliases, display, install, port
-        if [[ -f "$VM_TYPES_JSON" ]]; then
-            _info "Parsing VM types from JSON: $VM_TYPES_JSON"
+        if [[ -f "${VM_TYPES_JSON}" ]]; then
+            _info "Parsing VM types from JSON: ${VM_TYPES_JSON}"
 
             local lang_vms_array=()
             local service_vms_array=()
@@ -375,18 +375,18 @@ load_vm_types() {
             p_configs=$(jq -r '
                 (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.install//"-"|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
                 (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.install//"-"|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
-            ' "$VM_TYPES_JSON" 2>/dev/null)
+            ' "${VM_TYPES_JSON}" 2>/dev/null)
 
-            if [[ -n "$p_configs" ]]; then
-                eval "$p_configs"
+            if [[ -n "${p_configs}" ]]; then
+                eval "${p_configs}"
             fi
 
             # Export type indexes
             lang_vms=("${lang_vms_array[@]}")
             service_vms=("${service_vms_array[@]}")
         else
-            _error "JSON config not found: $VM_TYPES_JSON"
-            return $VDE_ERR_GENERAL
+            _error "JSON config not found: ${VM_TYPES_JSON}"
+            return ${VDE_ERR_GENERAL}
         fi
 
         # ---------------------------------------------------------------------
@@ -399,36 +399,36 @@ load_vm_types() {
         local vn=""
         for vn in "${lang_vms[@]}" "${service_vms[@]}"; do
             # 1. Map canonical name
-            VM_ALIAS_MAP[$vn]="$vn"
+            VM_ALIAS_MAP[${vn}]="${vn}"
 
             # 2. Map prefixed name
             local prefixed="vde-${vn#vde-}"
-            VM_ALIAS_MAP[$prefixed]="$vn"
+            VM_ALIAS_MAP[${prefixed}]="${vn}"
 
             # 3. Map aliases
-            local aliases="${VM_ALIASES[$vn]}"
-            if [[ -n "$aliases" ]]; then
+            local aliases="${VM_ALIASES[${vn}]}"
+            if [[ -n "${aliases}" ]]; then
                 local a=""
                 for a in ${(s:,:)aliases}; do
                     a="${a//[[:space:]]/}"
-                    [[ -n "$a" ]] && VM_ALIAS_MAP[$a]="$vn"
+                    [[ -n "${a}" ]] && VM_ALIAS_MAP[${a}]="${vn}"
                 done
             fi
 
             # 4. Map display name (lowercase)
-            local display="${VM_DISPLAY[$vn]}"
-            if [[ -n "$display" ]]; then
+            local display="${VM_DISPLAY[${vn}]}"
+            if [[ -n "${display}" ]]; then
                 local d_low="${(L)display}"
-                VM_ALIAS_MAP[$d_low]="$vn"
+                VM_ALIAS_MAP[${d_low}]="${vn}"
             fi
         done
         _VM_ALIAS_MAP_BUILT=1
 
         # Create cache directory
-        mkdir -p "$VDE_CACHE_DIR"
+        mkdir -p "${VDE_CACHE_DIR}"
 
         # Create cache directory
-        mkdir -p "$VDE_CACHE_DIR"
+        mkdir -p "${VDE_CACHE_DIR}"
 
         # Generate cache file with proper zsh associative array syntax
         # Note: VM_INSTALL is not cached due to complex shell syntax in install commands
@@ -440,37 +440,37 @@ load_vm_types() {
             echo ""
             echo "typeset -gA VM_TYPE"
             for key in "${(@k)VM_TYPE}"; do
-                value="${VM_TYPE[$key]//'/'\\''}"
+                value="${VM_TYPE[${key}]//'/'\\''}"
                 print -r -- "VM_TYPE[${key}]='${value}'"
             done
             echo ""
             echo "typeset -gA VM_ALIASES"
             for key in "${(@k)VM_ALIASES}"; do
-                value="${VM_ALIASES[$key]//'/'\\''}"
+                value="${VM_ALIASES[${key}]//'/'\\''}"
                 print -r -- "VM_ALIASES[${key}]='${value}'"
             done
             echo ""
             echo "typeset -gA VM_DISPLAY"
             for key in "${(@k)VM_DISPLAY}"; do
-                value="${VM_DISPLAY[$key]//'/'\\''}"
+                value="${VM_DISPLAY[${key}]//'/'\\''}"
                 print -r -- "VM_DISPLAY[${key}]='${value}'"
             done
             echo ""
             echo "typeset -gA VM_SVC_PORT"
             for key in "${(@k)VM_SVC_PORT}"; do
-                value="${VM_SVC_PORT[$key]//'/'\\''}"
+                value="${VM_SVC_PORT[${key}]//'/'\\''}"
                 print -r -- "VM_SVC_PORT[${key}]='${value}'"
             done
             echo ""
             echo "typeset -gA VM_SSH_PORT"
             for key in "${(@k)VM_SSH_PORT}"; do
-                value="${VM_SSH_PORT[$key]//'/'\\''}"
+                value="${VM_SSH_PORT[${key}]//'/'\\''}"
                 print -r -- "VM_SSH_PORT[${key}]='${value}'"
             done
             echo ""
             echo "typeset -gA VM_ALIAS_MAP"
             for key in "${(@k)VM_ALIAS_MAP}"; do
-                value="${VM_ALIAS_MAP[$key]//'/'\\''}"
+                value="${VM_ALIAS_MAP[${key}]//'/'\\''}"
                 print -r -- "VM_ALIAS_MAP[${key}]='${value}'"
             done
             echo ""
@@ -479,7 +479,7 @@ load_vm_types() {
             service_vms_quoted=("${service_vms[@]}"); echo "service_vms=(${service_vms_quoted[*]})"
             echo "export _VM_TYPES_LOADED=1"
             echo "_VM_ALIAS_MAP_BUILT=1"
-        } > "$VM_TYPES_CACHE"
+        } > "${VM_TYPES_CACHE}"
 
         _info "VM types cached for faster loading"
     else
@@ -501,16 +501,16 @@ load_docker_config() {
 
     # Validate against schema using centralized vde-core function
     local schema_file
-    schema_file=$(vde_get_schema_for_json "$VM_DOCKER_CONFIG" 2>/dev/null)
-    if [[ -n "$schema_file" && -f "$schema_file" ]]; then
-        _info "Validating docker config against schema: $schema_file"
-        if ! vde_validate_json_schema "$VM_DOCKER_CONFIG" "$schema_file" >/dev/null; then
+    schema_file=$(vde_get_schema_for_json "${VM_DOCKER_CONFIG}" 2>/dev/null)
+    if [[ -n "${schema_file}" && -f "${schema_file}" ]]; then
+        _info "Validating docker config against schema: ${schema_file}"
+        if ! vde_validate_json_schema "${VM_DOCKER_CONFIG}" "${schema_file}" >/dev/null; then
             _error "VM Docker config validation failed"
             _error "Config file may be corrupt or missing required fields"
-            return $VDE_ERR_INVALID_DATA
+            return ${VDE_ERR_INVALID_DATA}
         fi
     else
-        _warn "No schema file found for $VM_DOCKER_CONFIG, skipping validation"
+        _warn "No schema file found for ${VM_DOCKER_CONFIG}, skipping validation"
     fi
 
     # Clear existing arrays
@@ -522,92 +522,92 @@ load_docker_config() {
     VM_DATA_MOUNT=()
     VM_LOGS_MOUNT=()
 
-    if [[ ! -f "$VM_DOCKER_CONFIG" ]]; then
-        _error "Docker config not found: $VM_DOCKER_CONFIG"
-        return $VDE_ERR_NOT_FOUND
+    if [[ ! -f "${VM_DOCKER_CONFIG}" ]]; then
+        _error "Docker config not found: ${VM_DOCKER_CONFIG}"
+        return ${VDE_ERR_NOT_FOUND}
     fi
 
-    _info "Parsing Docker config from JSON: $VM_DOCKER_CONFIG"
+    _info "Parsing Docker config from JSON: ${VM_DOCKER_CONFIG}"
 
     # Parse language VMs
     local lang_configs
-    lang_configs=$(jq -c '.languages | to_entries[]' "$VM_DOCKER_CONFIG" 2>/dev/null)
-    if [[ -n "$lang_configs" ]]; then
+    lang_configs=$(jq -c '.languages | to_entries[]' "${VM_DOCKER_CONFIG}" 2>/dev/null)
+    if [[ -n "${lang_configs}" ]]; then
         while IFS= read -r entry; do
-            [[ -z "$entry" ]] && continue
+            [[ -z "${entry}" ]] && continue
 
             local name compose_file env_file image container_name workspace_mount logs_mount
-            name=$(echo "$entry" | jq -r '.key')
-            compose_file=$(echo "$entry" | jq -r '.value.compose_file')
-            env_file=$(echo "$entry" | jq -r '.value.env_file')
-            image=$(echo "$entry" | jq -r '.value.image')
-            container_name=$(echo "$entry" | jq -r '.value.container_name')
-            workspace_mount=$(echo "$entry" | jq -r '.value.workspace_mount')
-            logs_mount=$(echo "$entry" | jq -r '.value.logs_mount')
+            name=$(echo "${entry}" | jq -r '.key')
+            compose_file=$(echo "${entry}" | jq -r '.value.compose_file')
+            env_file=$(echo "${entry}" | jq -r '.value.env_file')
+            image=$(echo "${entry}" | jq -r '.value.image')
+            container_name=$(echo "${entry}" | jq -r '.value.container_name')
+            workspace_mount=$(echo "${entry}" | jq -r '.value.workspace_mount')
+            logs_mount=$(echo "${entry}" | jq -r '.value.logs_mount')
 
-            [[ -z "$name" ]] && continue
+            [[ -z "${name}" ]] && continue
 
-            VM_COMPOSE_FILE[$name]="$compose_file"
-            VM_ENV_FILE[$name]="$env_file"
-            VM_IMAGE[$name]="$image"
-            VM_CONTAINER_NAME[$name]="$container_name"
-            VM_WORKSPACE_MOUNT[$name]="$workspace_mount"
-            VM_LOGS_MOUNT[$name]="$logs_mount"
-        done <<< "$lang_configs"
+            VM_COMPOSE_FILE[${name}]="${compose_file}"
+            VM_ENV_FILE[${name}]="${env_file}"
+            VM_IMAGE[${name}]="${image}"
+            VM_CONTAINER_NAME[${name}]="${container_name}"
+            VM_WORKSPACE_MOUNT[${name}]="${workspace_mount}"
+            VM_LOGS_MOUNT[${name}]="${logs_mount}"
+        done <<< "${lang_configs}"
     fi
 
     # Parse service VMs
     local svc_configs
-    svc_configs=$(jq -c '.services | to_entries[]' "$VM_DOCKER_CONFIG" 2>/dev/null)
-    if [[ -n "$svc_configs" ]]; then
+    svc_configs=$(jq -c '.services | to_entries[]' "${VM_DOCKER_CONFIG}" 2>/dev/null)
+    if [[ -n "${svc_configs}" ]]; then
         while IFS= read -r entry; do
-            [[ -z "$entry" ]] && continue
+            [[ -z "${entry}" ]] && continue
 
             local name compose_file env_file image container_name data_mount logs_mount
-            name=$(echo "$entry" | jq -r '.key')
-            compose_file=$(echo "$entry" | jq -r '.value.compose_file')
-            env_file=$(echo "$entry" | jq -r '.value.env_file')
-            image=$(echo "$entry" | jq -r '.value.image')
-            container_name=$(echo "$entry" | jq -r '.value.container_name')
-            data_mount=$(echo "$entry" | jq -r '.value.data_mount')
-            logs_mount=$(echo "$entry" | jq -r '.value.logs_mount')
+            name=$(echo "${entry}" | jq -r '.key')
+            compose_file=$(echo "${entry}" | jq -r '.value.compose_file')
+            env_file=$(echo "${entry}" | jq -r '.value.env_file')
+            image=$(echo "${entry}" | jq -r '.value.image')
+            container_name=$(echo "${entry}" | jq -r '.value.container_name')
+            data_mount=$(echo "${entry}" | jq -r '.value.data_mount')
+            logs_mount=$(echo "${entry}" | jq -r '.value.logs_mount')
 
-            [[ -z "$name" ]] && continue
+            [[ -z "${name}" ]] && continue
 
-            VM_COMPOSE_FILE[$name]="$compose_file"
-            VM_ENV_FILE[$name]="$env_file"
-            VM_IMAGE[$name]="$image"
-            VM_CONTAINER_NAME[$name]="$container_name"
-            VM_DATA_MOUNT[$name]="$data_mount"
-            VM_LOGS_MOUNT[$name]="$logs_mount"
-        done <<< "$svc_configs"
+            VM_COMPOSE_FILE[${name}]="${compose_file}"
+            VM_ENV_FILE[${name}]="${env_file}"
+            VM_IMAGE[${name}]="${image}"
+            VM_CONTAINER_NAME[${name}]="${container_name}"
+            VM_DATA_MOUNT[${name}]="${data_mount}"
+            VM_LOGS_MOUNT[${name}]="${logs_mount}"
+        done <<< "${svc_configs}"
     fi
 
     _info "Docker config loaded successfully"
-    _info "  Language configs: $(echo "$lang_configs" | wc -l | tr -d ' ')"
-    _info "  Service configs: $(echo "$svc_configs" | wc -l | tr -d ' ')"
+    _info "  Language configs: $(echo "${lang_configs}" | wc -l | tr -d ' ')"
+    _info "  Service configs: $(echo "${svc_configs}" | wc -l | tr -d ' ')"
 
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }
 
 # get_docker_config - Get Docker config value for a VM
 # Args: <field> <vm_name>
 # Returns: Outputs field value, or error
 get_docker_config() {
-    local field="$1"
-    local vm_name="$2"
+    local field="${1}"
+    local vm_name="${2}"
     load_vm_types
 
     # Convert field to uppercase (zsh syntax)
     local field_upper="${(U)field}"
-    local var_name="VM_${field_upper}[$vm_name]"
+    local var_name="VM_${field_upper}[${vm_name}]"
     local value="${(P)var_name}"
 
-    if [ -n "$value" ]; then
-        echo "$value"
-        return $VDE_SUCCESS
+    if [ -n "${value}" ]; then
+        echo "${value}"
+        return ${VDE_SUCCESS}
     else
-        return $VDE_ERR_NOT_FOUND
+        return ${VDE_ERR_NOT_FOUND}
     fi
 }
 
@@ -619,20 +619,20 @@ regenerate_vm_types_cache() {
 
     # Get schema file
     local schema_file
-    schema_file=$(vde_get_schema_for_json "$VM_TYPES_JSON" 2>/dev/null)
+    schema_file=$(vde_get_schema_for_json "${VM_TYPES_JSON}" 2>/dev/null)
 
     # Validate JSON config first
-    if [[ -n "$schema_file" && -f "$schema_file" ]]; then
-        if ! vde_validate_json_schema "$VM_TYPES_JSON" "$schema_file" >/dev/null; then
+    if [[ -n "${schema_file}" && -f "${schema_file}" ]]; then
+        if ! vde_validate_json_schema "${VM_TYPES_JSON}" "${schema_file}" >/dev/null; then
             _error "Cannot regenerate cache: JSON config validation failed"
-            return $VDE_ERR_INVALID_DATA
+            return ${VDE_ERR_INVALID_DATA}
         fi
     fi
 
     # Remove existing cache
-    if [[ -f "$VM_TYPES_CACHE" ]]; then
-        _info "Removing old cache: $VM_TYPES_CACHE"
-        rm -f "$VM_TYPES_CACHE"
+    if [[ -f "${VM_TYPES_CACHE}" ]]; then
+        _info "Removing old cache: ${VM_TYPES_CACHE}"
+        rm -f "${VM_TYPES_CACHE}"
     fi
 
     # Reload VM types (will regenerate cache)
@@ -643,20 +643,20 @@ regenerate_vm_types_cache() {
 # Returns: VDE_SUCCESS if valid, error code otherwise
 validate_vm_types_config() {
     local schema_file
-    schema_file=$(vde_get_schema_for_json "$VM_TYPES_JSON" 2>/dev/null)
+    schema_file=$(vde_get_schema_for_json "${VM_TYPES_JSON}" 2>/dev/null)
 
-    if [[ -z "$schema_file" || ! -f "$schema_file" ]]; then
-        _error "Schema file not found for $VM_TYPES_JSON"
-        return $VDE_ERR_NOT_FOUND
+    if [[ -z "${schema_file}" || ! -f "${schema_file}" ]]; then
+        _error "Schema file not found for ${VM_TYPES_JSON}"
+        return ${VDE_ERR_NOT_FOUND}
     fi
 
-    _info "Validating VM types config: $VM_TYPES_JSON"
-    if vde_validate_json_schema "$VM_TYPES_JSON" "$schema_file" >/dev/null; then
+    _info "Validating VM types config: ${VM_TYPES_JSON}"
+    if vde_validate_json_schema "${VM_TYPES_JSON}" "${schema_file}" >/dev/null; then
         _success "VM types config validation passed"
-        return $VDE_SUCCESS
+        return ${VDE_SUCCESS}
     else
         _error "VM types config validation failed"
-        return $VDE_ERR_INVALID_DATA
+        return ${VDE_ERR_INVALID_DATA}
     fi
 }
 
@@ -670,34 +670,34 @@ validate_vm_types_config() {
 get_vm_info() {
     load_vm_types
     
-    local field="$1"
-    local raw_name="$2"
+    local field="${1}"
+    local raw_name="${2}"
     local vm_name
     
     # Resolve name to canonical vde- prefixed name
-    vm_name=$(resolve_vm_name "$raw_name" 2>/dev/null) || vm_name="$raw_name"
+    vm_name=$(resolve_vm_name "${raw_name}" 2>/dev/null) || vm_name="${raw_name}"
 
     # Check if VM is known
-    if [[ -z "${VM_TYPE[$vm_name]:-}" ]]; then
-        return $VDE_ERR_NOT_FOUND
+    if [[ -z "${VM_TYPE[${vm_name}]:-}" ]]; then
+        return ${VDE_ERR_NOT_FOUND}
     fi
 
-    local var_name="VM_${(U)field}[$vm_name]"
+    local var_name="VM_${(U)field}[${vm_name}]"
     local value="${(P)var_name}"
 
     # Output value (even if empty) and return success
-    echo "$value"
-    return $VDE_SUCCESS
+    echo "${value}"
+    return ${VDE_SUCCESS}
 }
 
 # Get all VMs of a specific type
 # Args: <type> (lang|service)
 # Returns: Outputs VM names
 get_vms_by_type() {
-    local vm_type="$1"
+    local vm_type="${1}"
     load_vm_types
 
-    case "$vm_type" in
+    case "${vm_type}" in
         lang)
             echo "${lang_vms[@]}"
             ;;
@@ -739,143 +739,143 @@ get_all_vms() {
 # Args: <vm_name>
 # Returns: VDE_SUCCESS (0) if known
 is_known_vm() {
-    local vm_name="$1"
+    local vm_name="${1}"
     load_vm_types
 
     # Handle both prefixed and unprefixed names
     local raw_name="${vm_name#vde-}"
     local full_name="vde-${raw_name}"
 
-    if [[ -n "${VM_TYPE[$full_name]}" ]] || [[ -n "${VM_TYPE[$raw_name]}" ]]; then
-        return $VDE_SUCCESS
+    if [[ -n "${VM_TYPE[${full_name}]}" ]] || [[ -n "${VM_TYPE[${raw_name}]}" ]]; then
+        return ${VDE_SUCCESS}
     fi
-    return $VDE_ERR_NOT_FOUND
+    return ${VDE_ERR_NOT_FOUND}
 }
 
 # vm_is_created - Check if a VM has been created (config generated)
 # Args: <vm_name>
 # Returns: 0 if created, 1 otherwise
 vm_is_created() {
-    local vm_name="$1"
+    local vm_name="${1}"
     local raw_name="${vm_name#vde-}"
     local full_name="vde-${raw_name}"
-    local configs_dir="${VDE_CONFIGS_DIR:-$VDE_ROOT_DIR/configs/docker}"
-    local env_dir="${VDE_ENV_DIR:-$VDE_ROOT_DIR/env-files}"
+    local configs_dir="${VDE_CONFIGS_DIR:-${VDE_ROOT_DIR}/configs/docker}"
+    local env_dir="${VDE_ENV_DIR:-${VDE_ROOT_DIR}/env-files}"
     
-    if [[ -d "$configs_dir/$raw_name" ]] || \
-       [[ -f "$env_dir/$full_name.env" ]] || \
-       [[ -f "$env_dir/$raw_name.env" ]]; then
+    if [[ -d "${configs_dir}/${raw_name}" ]] || \
+       [[ -f "${env_dir}/${full_name}.env" ]] || \
+       [[ -f "${env_dir}/${raw_name}.env" ]]; then
         return 0
     fi
-    return $VDE_ERR_GENERAL
+    return ${VDE_ERR_GENERAL}
 }
 
 # vm_template_exists - Check if a VM template exists
 # Args: <vm_name>
 # Returns: 0 if template exists, 1 otherwise
 vm_template_exists() {
-    local vm_name="$1"
+    local vm_name="${1}"
     local raw_name="${vm_name#vde-}"
-    local configs_dir="${VDE_CONFIGS_DIR:-$VDE_ROOT_DIR/configs/docker}"
+    local configs_dir="${VDE_CONFIGS_DIR:-${VDE_ROOT_DIR}/configs/docker}"
     
-    if [[ -f "$configs_dir/$raw_name/docker-compose.yml" ]]; then
+    if [[ -f "${configs_dir}/${raw_name}/docker-compose.yml" ]]; then
         return 0
     fi
-    return $VDE_ERR_GENERAL
+    return ${VDE_ERR_GENERAL}
 }
 
 # vm_exists - Check if a VM has been created (alias for vm_is_created)
 # Args: <vm_name>
 # Returns: 0 if VM exists (has been created), 1 otherwise
 vm_exists() {
-    local vm_name="$1"
-    vm_is_created "$vm_name"
+    local vm_name="${1}"
+    vm_is_created "${vm_name}"
 }
 
 # validate_vm_doesnt_exist - Ensure a VM has not been created yet
 # Args: <vm_name>
 # Returns: VDE_SUCCESS (0) if not exists, VDE_ERR_EXISTS (6) if already exists
 validate_vm_doesnt_exist() {
-    local vm_name="$1"
-    if vm_is_created "$vm_name"; then
-        vde_error_container_exists "$vm_name"
-        return $VDE_ERR_EXISTS
+    local vm_name="${1}"
+    if vm_is_created "${vm_name}"; then
+        vde_error_container_exists "${vm_name}"
+        return ${VDE_ERR_EXISTS}
     fi
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }
 
 # validate_vm_type - Ensure a VM type/template exists
 # Args: <vm_name>
 # Returns: VDE_SUCCESS (0) if template exists, VDE_ERR_INVALID_DATA if not
 validate_vm_type() {
-    local vm_name="$1"
-    if ! vm_template_exists "$vm_name"; then
-        vde_error_invalid_vm_type "$vm_name"
-        return $VDE_ERR_INVALID_DATA
+    local vm_name="${1}"
+    if ! vm_template_exists "${vm_name}"; then
+        vde_error_invalid_vm_type "${vm_name}"
+        return ${VDE_ERR_INVALID_DATA}
     fi
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }
 
 # Get VM type
 get_vm_type() {
-    local vm_name="$1"
+    local vm_name="${1}"
     local resolved
-    resolved=$(resolve_vm_name "$vm_name" 2>/dev/null) || resolved="$vm_name"
-    echo "${VM_TYPE[$resolved]:-unknown}"
+    resolved=$(resolve_vm_name "${vm_name}" 2>/dev/null) || resolved="${vm_name}"
+    echo "${VM_TYPE[${resolved}]:-unknown}"
 }
 
 # Get VM display name
 get_vm_display_name() {
-    local vm_name="$1"
+    local vm_name="${1}"
     local resolved
-    resolved=$(resolve_vm_name "$vm_name" 2>/dev/null) || resolved="$vm_name"
-    echo "${VM_DISPLAY[$resolved]:-$resolved}"
+    resolved=$(resolve_vm_name "${vm_name}" 2>/dev/null) || resolved="${vm_name}"
+    echo "${VM_DISPLAY[${resolved}]:-${resolved}}"
 }
 
 # Get VM install command
 get_vm_install() {
-    local vm_name="$1"
-    echo "${VM_INSTALL[$vm_name]:--}"
+    local vm_name="${1}"
+    echo "${VM_INSTALL[${vm_name}]:--}"
 }
 
 # resolve_vm_name - Resolve VM name or alias to canonical name
 # Args: <input>
 # Returns: Outputs canonical name to stdout
 resolve_vm_name() {
-    local input="$1"
+    local input="${1}"
     
     # 1. Check as-is (canonical vde- name)
-    if [[ -n "${VM_TYPE[$input]}" ]]; then
-        echo "$input"
+    if [[ -n "${VM_TYPE[${input}]}" ]]; then
+        echo "${input}"
         return 0
     fi
     
     # 2. Check with vde- prefix if not already present
-    if [[ ! "$input" =~ ^vde- ]]; then
+    if [[ ! "${input}" =~ ^vde- ]]; then
         local prefixed="vde-${input}"
-        if [[ -n "${VM_TYPE[$prefixed]}" ]]; then
-            echo "$prefixed"
+        if [[ -n "${VM_TYPE[${prefixed}]}" ]]; then
+            echo "${prefixed}"
             return 0
         fi
     fi
     
     # 3. Check aliases
     for name in "${(@k)VM_ALIASES}"; do
-        local aliases="${VM_ALIASES[$name]}"
-        if [[ ",$aliases," == *",$input,"* ]]; then
-            echo "$name"
+        local aliases="${VM_ALIASES[${name}]}"
+        if [[ ",${aliases}," == *",${input},"* ]]; then
+            echo "${name}"
             return 0
         fi
     done
     
     # Not found
-    return $VDE_ERR_GENERAL
+    return ${VDE_ERR_GENERAL}
 }
 
 # validate_vm_name - Validate VM name against naming conventions
 # Alias for vde_validate_name from vde-naming
 validate_vm_name() {
-    vde_validate_name "$@"
+    vde_validate_name "${@}"
 }
 
 # _cache_vm_types - Manual cache generation (compat wrapper)
@@ -887,14 +887,14 @@ _cache_vm_types() {
 # Args: <min_port> <max_port>
 # Returns: Outputs list of ports to stdout
 get_allocated_ports() {
-    local min_port="$1"
-    local max_port="$2"
-    local port=$min_port
+    local min_port="${1}"
+    local max_port="${2}"
+    local port=${min_port}
     local allocated=""
 
-    while [ $port -le $max_port ]; do
-        if _is_port_in_use "$port"; then
-            allocated="$allocated $port"
+    while [ ${port} -le ${max_port} ]; do
+        if _is_port_in_use "${port}"; then
+            allocated="${allocated} ${port}"
         fi
         port=$((port + 1))
     done
@@ -910,56 +910,56 @@ get_allocated_ports() {
 # Args: <vm_name>
 # Returns: Outputs port number
 get_port_from_registry() {
-    local vm_name="$1"
-    local port_file="$VDE_CACHE_DIR/port-registry/${vm_name}.port"
+    local vm_name="${1}"
+    local port_file="${VDE_CACHE_DIR}/port-registry/${vm_name}.port"
 
-    if [ -f "$port_file" ]; then
-        cat "$port_file"
-        return $VDE_SUCCESS
+    if [ -f "${port_file}" ]; then
+        cat "${port_file}"
+        return ${VDE_SUCCESS}
     fi
-    return $VDE_ERR_NOT_FOUND
+    return ${VDE_ERR_NOT_FOUND}
 }
 
 # Save port to registry
 # Args: <vm_name> <port>
 save_port_to_registry() {
-    local vm_name="$1"
-    local port="$2"
-    local port_dir="$VDE_CACHE_DIR/port-registry"
+    local vm_name="${1}"
+    local port="${2}"
+    local port_dir="${VDE_CACHE_DIR}/port-registry"
 
-    mkdir -p "$port_dir"
-    echo "$port" > "$port_dir/${vm_name}.port"
+    mkdir -p "${port_dir}"
+    echo "${port}" > "${port_dir}/${vm_name}.port"
 }
 
 # Remove port from registry
 # Args: <vm_name>
 remove_port_from_registry() {
-    local vm_name="$1"
-    local port_file="$VDE_CACHE_DIR/port-registry/${vm_name}.port"
+    local vm_name="${1}"
+    local port_file="${VDE_CACHE_DIR}/port-registry/${vm_name}.port"
 
-    rm -f "$port_file"
+    rm -f "${port_file}"
 }
 
 # Clear port registry
 clear_port_registry() {
-    rm -rf "$VDE_CACHE_DIR/port-registry"
-    mkdir -p "$VDE_CACHE_DIR/port-registry"
+    rm -rf "${VDE_CACHE_DIR}/port-registry"
+    mkdir -p "${VDE_CACHE_DIR}/port-registry"
 }
 
 # release_port_reservation - Alias for remove_port_from_registry (used by tests)
 # Args: <vm_name_or_port>
 release_port_reservation() {
-    local input="$1"
+    local input="${1}"
     
     # If input is a number, it's a port - find which VM owns it and remove it
-    if [[ "$input" =~ ^[0-9]+$ ]]; then
-        for f in "$VDE_CACHE_DIR/port-registry"/*.port(N); do
-            if [[ "$input" == "$(cat "$f")" ]]; then
-                rm -f "$f"
+    if [[ "${input}" =~ ^[0-9]+$ ]]; then
+        for f in "${VDE_CACHE_DIR}/port-registry"/*.port(N); do
+            if [[ "${input}" == "$(cat "${f}")" ]]; then
+                rm -f "${f}"
             fi
         done
     else
-        remove_port_from_registry "$input"
+        remove_port_from_registry "${input}"
     fi
 }
 
@@ -971,25 +971,25 @@ release_port_reservation() {
 # Args: <vm_type>
 # Returns: VDE_SUCCESS (0) and outputs port to stdout
 find_next_available_port() {
-    local vm_type="$1"
+    local vm_type="${1}"
     local min_port max_port
 
-    if [ "$vm_type" = "lang" ]; then
-        min_port=$VDE_LANG_PORT_START
-        max_port=$VDE_LANG_PORT_END
+    if [ "${vm_type}" = "lang" ]; then
+        min_port=${VDE_LANG_PORT_START}
+        max_port=${VDE_LANG_PORT_END}
     else
-        min_port=$VDE_SVC_PORT_START
-        max_port=$VDE_SVC_PORT_END
+        min_port=${VDE_SVC_PORT_START}
+        max_port=${VDE_SVC_PORT_END}
     fi
 
     local port
-    port=$(find_available_port "$min_port" "$max_port")
+    port=$(find_available_port "${min_port}" "${max_port}")
     
-    if [ $? -eq 0 ] && [ -n "$port" ]; then
-        echo "$port"
-        return $VDE_SUCCESS
+    if [ ${?} -eq 0 ] && [ -n "${port}" ]; then
+        echo "${port}"
+        return ${VDE_SUCCESS}
     fi
-    return $VDE_ERR_GENERAL
+    return ${VDE_ERR_GENERAL}
 }
 
 # Find available port in range
@@ -1006,84 +1006,84 @@ find_available_port() {
     local max_assigned=$((min_port - 1))
     local vm p
     for vm in ${(k)VM_SSH_PORT}; do
-        p=$VM_SSH_PORT[$vm]
-        if [[ -n "$p" ]] && [[ "$p" -ge "$min_port" ]] && [[ "$p" -le "$max_port" ]]; then
-            if [[ "$p" -gt "$max_assigned" ]]; then
-                max_assigned=$p
+        p=${VM_SSH_PORT}[${vm}]
+        if [[ -n "${p}" ]] && [[ "${p}" -ge "${min_port}" ]] && [[ "${p}" -le "${max_port}" ]]; then
+            if [[ "${p}" -gt "${max_assigned}" ]]; then
+                max_assigned=${p}
             fi
         fi
     done
 
     # Start searching from max_assigned + 1
     local port=$((max_assigned + 1))
-    if [[ "$port" -lt "$min_port" ]]; then
-        port=$min_port
+    if [[ "${port}" -lt "${min_port}" ]]; then
+        port=${min_port}
     fi
 
-    while [ $port -le $max_port ]; do
-        if ! _is_port_in_use "$port"; then
-            echo "$port"
-            return $VDE_SUCCESS
+    while [ ${port} -le ${max_port} ]; do
+        if ! _is_port_in_use "${port}"; then
+            echo "${port}"
+            return ${VDE_SUCCESS}
         fi
         port=$((port + 1))
     done
 
-    _error "No available port in range $min_port-$max_port"
-    return $VDE_ERR_NO_PORT
+    _error "No available port in range ${min_port}-${max_port}"
+    return ${VDE_ERR_NO_PORT}
 }
 
 # Allocate port for VM
 # Args: <vm_name> [min_port] [max_port]
 # Returns: Outputs port number
 allocate_port_for_vm() {
-    local vm_name="$1"
+    local vm_name="${1}"
     local min_port="${2:-2200}"
     local max_port="${3:-2299}"
 
     local existing_port
-    existing_port=$(get_port_from_registry "$vm_name")
+    existing_port=$(get_port_from_registry "${vm_name}")
 
-    if [ -n "$existing_port" ]; then
-        echo "$existing_port"
-        return $VDE_SUCCESS
+    if [ -n "${existing_port}" ]; then
+        echo "${existing_port}"
+        return ${VDE_SUCCESS}
     fi
 
     local new_port
-    new_port=$(find_available_port "$min_port" "$max_port")
+    new_port=$(find_available_port "${min_port}" "${max_port}")
 
-    if [ -z "$new_port" ]; then
-        return $VDE_ERR_NO_PORT
+    if [ -z "${new_port}" ]; then
+        return ${VDE_ERR_NO_PORT}
     fi
 
-    save_port_to_registry "$vm_name" "$new_port"
-    echo "$new_port"
+    save_port_to_registry "${vm_name}" "${new_port}"
+    echo "${new_port}"
 }
 
 # Get or allocate port for VM
 # Args: <vm_name>
 # Returns: Outputs port number
 get_or_allocate_port() {
-    local vm_name="$1"
+    local vm_name="${1}"
     local vm_type
-    vm_type=$(get_vm_type "$vm_name")
+    vm_type=$(get_vm_type "${vm_name}")
 
     local min_port max_port
-    case "$vm_type" in
+    case "${vm_type}" in
         lang)
-            min_port=$VDE_LANG_PORT_START
-            max_port=$VDE_LANG_PORT_END
+            min_port=${VDE_LANG_PORT_START}
+            max_port=${VDE_LANG_PORT_END}
             ;;
         service)
-            min_port=$VDE_SVC_PORT_START
-            max_port=$VDE_SVC_PORT_END
+            min_port=${VDE_SVC_PORT_START}
+            max_port=${VDE_SVC_PORT_END}
             ;;
         *)
-            min_port=$VDE_LANG_PORT_START
-            max_port=$VDE_SVC_PORT_END
+            min_port=${VDE_LANG_PORT_START}
+            max_port=${VDE_SVC_PORT_END}
             ;;
     esac
 
-    allocate_port_for_vm "$vm_name" "$min_port" "$max_port"
+    allocate_port_for_vm "${vm_name}" "${min_port}" "${max_port}"
 }
 
 # =============================================================================
@@ -1094,21 +1094,21 @@ get_or_allocate_port() {
 # Args: <source_path>
 # Returns: Outputs backup path
 create_backup() {
-    local source_path="$1"
+    local source_path="${1}"
 
-    if [ ! -e "$source_path" ]; then
-        return $VDE_ERR_NOT_FOUND
+    if [ ! -e "${source_path}" ]; then
+        return ${VDE_ERR_NOT_FOUND}
     fi
 
-    local backup_dir="$BACKUP_DIR/$(date +%Y%m%d-%H%M%S)"
-    mkdir -p "$backup_dir"
+    local backup_dir="${BACKUP_DIR}/$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "${backup_dir}"
 
     local basename
-    basename=$(basename "$source_path")
-    local backup_path="$backup_dir/$basename"
+    basename=$(basename "${source_path}")
+    local backup_path="${backup_dir}/${basename}"
 
-    cp -a "$source_path" "$backup_path"
-    echo "$backup_path"
+    cp -a "${source_path}" "${backup_path}"
+    echo "${backup_path}"
 }
 
 # =============================================================================
@@ -1117,39 +1117,39 @@ create_backup() {
 
 # Get Docker state directory
 get_docker_state_dir() {
-    echo "$VDE_ROOT_DIR/.docker-state"
+    echo "${VDE_ROOT_DIR}/.docker-state"
 }
 
 # Save Docker state
 # Args: <vm_name> <state_json>
 save_docker_state() {
-    local vm_name="$1"
-    local state="$2"
+    local vm_name="${1}"
+    local state="${2}"
     local raw_name
-    raw_name=$(vde_normalize_name "$vm_name")
+    raw_name=$(vde_normalize_name "${vm_name}")
     local state_dir
     state_dir=$(get_docker_state_dir)
 
-    mkdir -p "$state_dir"
-    echo "$state" > "$state_dir/${raw_name}.json"
+    mkdir -p "${state_dir}"
+    echo "${state}" > "${state_dir}/${raw_name}.json"
 }
 
 # Load Docker state
 # Args: <vm_name>
 # Returns: Outputs state JSON
 load_docker_state() {
-    local vm_name="$1"
+    local vm_name="${1}"
     local raw_name
-    raw_name=$(vde_normalize_name "$vm_name")
+    raw_name=$(vde_normalize_name "${vm_name}")
     local state_dir
     state_dir=$(get_docker_state_dir)
-    local state_file="$state_dir/${raw_name}.json"
+    local state_file="${state_dir}/${raw_name}.json"
 
-    if [ -f "$state_file" ]; then
-        cat "$state_file"
-        return $VDE_SUCCESS
+    if [ -f "${state_file}" ]; then
+        cat "${state_file}"
+        return ${VDE_SUCCESS}
     fi
-    return $VDE_ERR_NOT_FOUND
+    return ${VDE_ERR_NOT_FOUND}
 }
 
 # Clear Docker state
@@ -1159,13 +1159,13 @@ clear_docker_state() {
     local state_dir
     state_dir=$(get_docker_state_dir)
 
-    if [ -n "$vm_name" ]; then
+    if [ -n "${vm_name}" ]; then
         local raw_name
-        raw_name=$(vde_normalize_name "$vm_name")
-        rm -f "$state_dir/${raw_name}.json"
+        raw_name=$(vde_normalize_name "${vm_name}")
+        rm -f "${state_dir}/${raw_name}.json"
     else
-        rm -rf "$state_dir"
-        mkdir -p "$state_dir"
+        rm -rf "${state_dir}"
+        mkdir -p "${state_dir}"
     fi
 }
 
@@ -1177,8 +1177,8 @@ clear_docker_state() {
 # Args: <vm_name>
 # Returns: Outputs SSH port
 get_vm_ssh_port() {
-    local vm_name="$1"
-    get_or_allocate_port "$vm_name"
+    local vm_name="${1}"
+    get_or_allocate_port "${vm_name}"
 }
 
 # =============================================================================
@@ -1188,24 +1188,24 @@ get_vm_ssh_port() {
 # Ensure VM directories exist
 # Args: <vm_name> <vm_type>
 ensure_vm_directories() {
-    local vm="$1"
-    local vm_type="$2"
+    local vm="${1}"
+    local vm_type="${2}"
     local raw_name
-    raw_name=$(vde_normalize_name "$vm")
+    raw_name=$(vde_normalize_name "${vm}")
 
     local -a dirs
 
-    if [ "$vm_type" = "lang" ]; then
-        dirs=("$CONFIGS_DIR/$raw_name" "$VDE_ROOT_DIR/projects/$raw_name" "$VDE_ROOT_DIR/logs/$raw_name")
+    if [ "${vm_type}" = "lang" ]; then
+        dirs=("${CONFIGS_DIR}/${raw_name}" "${VDE_ROOT_DIR}/projects/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
     else
-        dirs=("$CONFIGS_DIR/$raw_name" "$VDE_ROOT_DIR/data/$raw_name" "$VDE_ROOT_DIR/logs/$raw_name")
+        dirs=("${CONFIGS_DIR}/${raw_name}" "${VDE_ROOT_DIR}/data/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
     fi
 
     local dir
     for dir in "${dirs[@]}"; do
-        if [ ! -d "$dir" ]; then
-            mkdir -p "$dir"
-            _info "Created directory: $dir"
+        if [ ! -d "${dir}" ]; then
+            mkdir -p "${dir}"
+            _info "Created directory: ${dir}"
         fi
     done
 }

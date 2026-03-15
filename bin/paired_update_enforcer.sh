@@ -6,16 +6,16 @@ REMED="plans/session_handover_remediation.md"
 
 echo "Running paired-update enforcer..."
 
-if ! grep -q "Paired Update Policy" "$HANDOVER"; then
-  echo "ERROR: Paired Update Policy missing in $HANDOVER"; exit 1
+if ! grep -q "Paired Update Policy" "${HANDOVER}"; then
+  echo "ERROR: Paired Update Policy missing in ${HANDOVER}"; exit 1
 fi
-if ! grep -q "Paired Update Policy" "$REMED"; then
-  echo "ERROR: Paired Update Policy missing in $REMED"; exit 1
+if ! grep -q "Paired Update Policy" "${REMED}"; then
+  echo "ERROR: Paired Update Policy missing in ${REMED}"; exit 1
 fi
-if ! grep -q "plans/session_handover_remediation.md" "$HANDOVER"; then
+if ! grep -q "plans/session_handover_remediation.md" "${HANDOVER}"; then
   echo "ERROR: Handover missing cross-link to remediation plan"; exit 1
 fi
-if ! grep -q "\./session_handover.md" "$REMED"; then
+if ! grep -q "\./session_handover.md" "${REMED}"; then
   echo "ERROR: Remediation plan missing cross-link to handover"; exit 1
 fi
 
