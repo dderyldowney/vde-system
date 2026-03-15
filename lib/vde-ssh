@@ -512,15 +512,31 @@ remove_known_hosts_entry() {
 
 # Check if SSH agent is running
 # Returns: 0 if running, 1 otherwise
+# SSH agent environment file for persistence
+VDE_SSH_AGENT_ENV="${VDE_SSH_DIR}/agent_env"
+
 ssh_agent_is_running() {
-    # 1. Check if currently configured
+    # 1. Always load from VDE-specific environment file to ensure isolation
+    if [ -f "$VDE_SSH_AGENT_ENV" ]; then
+        source "$VDE_SSH_AGENT_ENV" >/dev/null 2>&1
+    fi
+
+    # 2. Check if the VDE-specific agent is valid
     if [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "$SSH_AUTH_SOCK" ]; then
+        # If we have a PID, check if it's still alive
+        if [ -n "${SSH_AGENT_PID:-}" ]; then
+            if ! ps -p "$SSH_AGENT_PID" >/dev/null 2>&1; then
+                return 1
+            fi
+        fi
+        
+        # Verify socket is actually responding
         if ssh-add -l >/dev/null 2>&1 || [ $? -eq 1 ]; then
             return 0
         fi
     fi
 
-    # 2. Try to discover existing agent (Linux/macOS)
+    # 3. Try to discover existing agent (Linux/macOS)
     local agent_sock
     agent_sock=$(find /tmp/ssh-* -name "agent.*" -user $(whoami) 2>/dev/null | head -n 1)
     
@@ -550,8 +566,18 @@ ensure_ssh_agent() {
         return $VDE_SUCCESS
     fi
 
-    eval "$(ssh-agent -s)" >/dev/null 2>&1
+    # Ensure VDE_SSH_DIR exists
+    if [ ! -d "$VDE_SSH_DIR" ]; then
+        mkdir -p "$VDE_SSH_DIR"
+        chmod 700 "$VDE_SSH_DIR"
+    fi
+
+    # Start new agent and save to environment file
+    (umask 077; ssh-agent -s > "$VDE_SSH_AGENT_ENV")
+    source "$VDE_SSH_AGENT_ENV" >/dev/null 2>&1
+    
     export SSH_AUTH_SOCK
+    export SSH_AGENT_PID
 
     local keys
     keys=$(detect_ssh_keys)

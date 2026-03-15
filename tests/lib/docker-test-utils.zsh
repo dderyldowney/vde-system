@@ -245,14 +245,28 @@ docker_test_setup() {
     # Pre-test cleanup
     cleanup_vde_containers
 
-    # Start a tracked ssh-agent
-    local agent_output
-    agent_output=$(ssh-agent -s 2>/dev/null)
-    if [[ -n "$agent_output" ]]; then
-        eval "$agent_output" >/dev/null 2>&1
-        _DOCKER_TEST_AGENT_PID="${SSH_AGENT_PID:-}"
-        _DOCKER_TEST_AGENT_SOCK="${SSH_AUTH_SOCK:-}"
-        echo "[SETUP] Started ssh-agent PID: $_DOCKER_TEST_AGENT_PID"
+    # Use the centralized VDE SSH agent management (isolated to ~/.ssh/vde/agent_env)
+    # This ensures we reuse the same agent across all tests in a suite run
+    if [[ -f "${VDE_ROOT_DIR:-$(pwd)}/lib/vde-ssh" ]]; then
+        source "${VDE_ROOT_DIR:-$(pwd)}/lib/vde-ssh"
+        if ensure_ssh_agent; then
+            _DOCKER_TEST_AGENT_PID="${SSH_AGENT_PID:-}"
+            _DOCKER_TEST_AGENT_SOCK="${SSH_AUTH_SOCK:-}"
+            echo "[SETUP] Using VDE isolated ssh-agent (PID: $_DOCKER_TEST_AGENT_PID)"
+        else
+            echo "[SETUP] ERROR: Failed to start/find VDE ssh-agent" >&2
+            return 1
+        fi
+    else
+        # Fallback to manual if library not found
+        local agent_output
+        agent_output=$(ssh-agent -s 2>/dev/null)
+        if [[ -n "$agent_output" ]]; then
+            eval "$agent_output" >/dev/null 2>&1
+            _DOCKER_TEST_AGENT_PID="${SSH_AGENT_PID:-}"
+            _DOCKER_TEST_AGENT_SOCK="${SSH_AUTH_SOCK:-}"
+            echo "[SETUP] Started fallback ssh-agent PID: $_DOCKER_TEST_AGENT_PID"
+        fi
     fi
 
     # Install teardown trap
@@ -276,19 +290,19 @@ docker_test_teardown() {
     for vm in "${_DOCKER_TEST_VMS[@]}"; do
         cleanup_test_vm "$vm"
     done
+# Full container sweep for safety
+cleanup_vde_containers
 
-    # Full container sweep for safety
-    cleanup_vde_containers
+# Note: We do NOT kill the agent here anymore if we want to reuse it
+# across the entire suite. The main suite runner (run-full-test-suite.zsh)
+# or the setup-ssh-agent.zsh --cleanup will handle final termination.
+if [[ -n "$_DOCKER_TEST_AGENT_PID" ]]; then
+    echo "[TEARDOWN] Released VDE ssh-agent reference (PID $_DOCKER_TEST_AGENT_PID)"
+fi
 
-    # Kill the ssh-agent we started
-    if [[ -n "$_DOCKER_TEST_AGENT_PID" ]]; then
-        echo "[TEARDOWN] Killing ssh-agent PID $_DOCKER_TEST_AGENT_PID"
-        kill "$_DOCKER_TEST_AGENT_PID" 2>/dev/null || true
-        unset SSH_AGENT_PID SSH_AUTH_SOCK
-    fi
+# Kill any remaining remaining test artifacts (not the agent)
+kill_orphan_test_sessions
 
-    # Kill any remaining orphans
-    kill_orphan_ssh_agents
 
     echo "[TEARDOWN] Cleanup complete"
     echo "============================================================"
