@@ -23,11 +23,11 @@ VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 # Source core libraries
-[[ -f "$VDE_ROOT_DIR/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/lib/vde-shell-compat" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/lib/vde-constants" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/lib/vde-errors" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-log" ]] && source "$VDE_ROOT_DIR/lib/vde-log" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-security" ]] && source "$VDE_ROOT_DIR/lib/vde-security" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-log" ]] && source "${VDE_ROOT_DIR}/lib/vde-log" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-security" ]] && source "${VDE_ROOT_DIR}/lib/vde-security" &>/dev/null
 
 # Initialize security environment (network, permissions)
 vde_security_init
@@ -81,14 +81,14 @@ vde_init_check_prerequisites() {
         vde_error_simple "Docker is not installed or not in PATH"
         echo "  Please install Docker Desktop first:"
         echo "  https://www.docker.com/products/docker-desktop/"
-        return $VDE_ERR_GENERAL
+        return ${VDE_ERR_GENERAL}
     fi
 
     # Check Docker daemon is running
     if ! docker info &>/dev/null; then
         vde_error_simple "Docker daemon is not running"
         echo "  Please start Docker Desktop and try again"
-        return $VDE_ERR_GENERAL
+        return ${VDE_ERR_GENERAL}
     fi
 
     return 0
@@ -96,71 +96,71 @@ vde_init_check_prerequisites() {
 
 # vde_init_create_directory_structure - Create VDE directories
 vde_init_create_directory_structure() {
-    if [ "$QUIET" = "0" ]; then
+    if [ "${QUIET}" = "0" ]; then
         echo "Creating VDE directory structure..."
     fi
     
     # Source constants for paths
-    source "$VDE_ROOT_DIR/lib/vde-constants" 2>/dev/null || true
+    source "${VDE_ROOT_DIR}/lib/vde-constants" 2>/dev/null || true
     
     # Core directories
-    mkdir -p "$CONFIGS_DIR" 2>/dev/null || true
-    mkdir -p "$TEMPLATES_DIR" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/projects" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/data" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/logs" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/env-files" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/public-ssh-keys" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/.cache" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/.locks" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/.locks/ports" 2>/dev/null || true
+    mkdir -p "${CONFIGS_DIR}" 2>/dev/null || true
+    mkdir -p "${TEMPLATES_DIR}" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/projects" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/data" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/logs" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/env-files" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/public-ssh-keys" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/.cache" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/.locks" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/.locks/ports" 2>/dev/null || true
     
     # Data subdirectories
-    mkdir -p "$VDE_ROOT_DIR/data/couchdb" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/data/mongodb" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/data/mysql" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/data/nginx" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/data/postgres" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/data/redis" 2>/dev/null || true
-    mkdir -p "$VDE_ROOT_DIR/data/rabbitmq" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/data/couchdb" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/data/mongodb" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/data/mysql" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/data/nginx" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/data/postgres" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/data/redis" 2>/dev/null || true
+    mkdir -p "${VDE_ROOT_DIR}/data/rabbitmq" 2>/dev/null || true
     
-    if [ "$QUIET" = "0" ]; then
+    if [ "${QUIET}" = "0" ]; then
         echo "  ✓ Directories created"
     fi
 }
 
 # vde_init_generate_configs - Generate docker-compose files
 vde_init_generate_configs() {
-    if [ "$QUIET" = "0" ]; then
+    if [ "${QUIET}" = "0" ]; then
         echo "Generating docker-compose configurations..."
     fi
     
     # Run the generate-all-configs script
-    if "$VDE_ROOT_DIR/bin/generate-all-configs" 2>/dev/null; then
-        if [ "$QUIET" = "0" ]; then
+    if "${VDE_ROOT_DIR}/bin/generate-all-configs" 2>/dev/null; then
+        if [ "${QUIET}" = "0" ]; then
             echo "  ✓ Configurations generated"
         fi
         return 0
     else
         vde_error_simple "Failed to generate configurations"
-        return $VDE_ERR_GENERAL
+        return ${VDE_ERR_GENERAL}
     fi
 }
 
 # vde_init_setup_ssh - Set up SSH keys and agent
 vde_init_setup_ssh() {
-    if [ "$QUIET" = "0" ]; then
+    if [ "${QUIET}" = "0" ]; then
         echo "Setting up SSH keys and agent..."
     fi
 
     # Run the SSH setup script
-    if "$VDE_ROOT_DIR/bin/ssh-agent-setup" --init 2>/dev/null; then
-        if [ "$QUIET" = "0" ]; then
+    if "${VDE_ROOT_DIR}/bin/ssh-agent-setup" --init 2>/dev/null; then
+        if [ "${QUIET}" = "0" ]; then
             echo "  ✓ SSH environment configured"
         fi
         return 0
     else
-        if [ "$QUIET" = "0" ]; then
+        if [ "${QUIET}" = "0" ]; then
             echo "  ⚠ SSH setup had warnings (may be OK)"
         fi
         return 0  # Don't fail on SSH issues
@@ -168,101 +168,101 @@ vde_init_setup_ssh() {
 }
 
 # vde_init_create_network - Create a Docker network
-# Args: $1 = network name
+# Args: ${1} = network name
 vde_init_create_network() {
-    local network_name="$1"
-    local force="$2"
+    local network_name="${1}"
+    local force="${2}"
     
     # Check if network already exists
-    if docker network inspect "$network_name" &>/dev/null; then
-        if [ "$force" = "1" ]; then
-            if [ "$QUIET" = "0" ]; then
-                echo "Removing existing network '$network_name'..."
+    if docker network inspect "${network_name}" &>/dev/null; then
+        if [ "${force}" = "1" ]; then
+            if [ "${QUIET}" = "0" ]; then
+                echo "Removing existing network '${network_name}'..."
             fi
-            docker network rm "$network_name" &>/dev/null || true
+            docker network rm "${network_name}" &>/dev/null || true
         else
-            if [ "$QUIET" = "0" ]; then
-                echo "  ✓ Network '$network_name' already exists"
+            if [ "${QUIET}" = "0" ]; then
+                echo "  ✓ Network '${network_name}' already exists"
             fi
             return 0
         fi
     fi
     
     # Create the network
-    if docker network create "$network_name" &>/dev/null; then
-        if [ "$QUIET" = "0" ]; then
-            echo "  ✓ Created network '$network_name'"
+    if docker network create "${network_name}" &>/dev/null; then
+        if [ "${QUIET}" = "0" ]; then
+            echo "  ✓ Created network '${network_name}'"
         fi
         return 0
     else
-        vde_error_simple "Failed to create network '$network_name'"
-        return $VDE_ERR_GENERAL
+        vde_error_simple "Failed to create network '${network_name}'"
+        return ${VDE_ERR_GENERAL}
     fi
 }
 
 # vde_init_set_permissions - Set file permissions
 vde_init_set_permissions() {
-    if [ "$QUIET" = "0" ]; then
+    if [ "${QUIET}" = "0" ]; then
         echo "Setting file permissions..."
     fi
     
     # Set proper permissions on VDE directories
-    chmod 700 "$VDE_ROOT_DIR/public-ssh-keys" 2>/dev/null || true
-    chmod 755 "$VDE_ROOT_DIR/.cache" 2>/dev/null || true
-    chmod 755 "$VDE_ROOT_DIR/.locks" 2>/dev/null || true
-    chmod 755 "$VDE_ROOT_DIR/.locks/ports" 2>/dev/null || true
-    chmod 755 "$VDE_ROOT_DIR/projects" 2>/dev/null || true
-    chmod 755 "$VDE_ROOT_DIR/data" 2>/dev/null || true
-    chmod 755 "$VDE_ROOT_DIR/logs" 2>/dev/null || true
-    chmod 755 "$VDE_ROOT_DIR/env-files" 2>/dev/null || true
-    chmod 755 "$VDE_ROOT_DIR/configs" 2>/dev/null || true
+    chmod 700 "${VDE_ROOT_DIR}/public-ssh-keys" 2>/dev/null || true
+    chmod 755 "${VDE_ROOT_DIR}/.cache" 2>/dev/null || true
+    chmod 755 "${VDE_ROOT_DIR}/.locks" 2>/dev/null || true
+    chmod 755 "${VDE_ROOT_DIR}/.locks/ports" 2>/dev/null || true
+    chmod 755 "${VDE_ROOT_DIR}/projects" 2>/dev/null || true
+    chmod 755 "${VDE_ROOT_DIR}/data" 2>/dev/null || true
+    chmod 755 "${VDE_ROOT_DIR}/logs" 2>/dev/null || true
+    chmod 755 "${VDE_ROOT_DIR}/env-files" 2>/dev/null || true
+    chmod 755 "${VDE_ROOT_DIR}/configs" 2>/dev/null || true
     
     # Set permissions on data subdirectories
     for dir in couchdb mongodb mysql nginx postgres redis rabbitmq; do
-        chmod 755 "$VDE_ROOT_DIR/data/$dir" 2>/dev/null || true
+        chmod 755 "${VDE_ROOT_DIR}/data/${dir}" 2>/dev/null || true
     done
     
     # Ensure scripts are executable
-    find "$VDE_ROOT_DIR/scripts" -type f \( -name "*.sh" -o -name "*.zsh" \) -exec chmod +x {} \; 2>/dev/null || true
+    find "${VDE_ROOT_DIR}/scripts" -type f \( -name "*.sh" -o -name "*.zsh" \) -exec chmod +x {} \; 2>/dev/null || true
     
     # Set SSH directory permissions (recursive for keys)
-    local ssh_dir="$HOME/.ssh/vde"
-    if [ -d "$ssh_dir" ]; then
-        chmod 700 "$ssh_dir" 2>/dev/null || true
+    local ssh_dir="${HOME}/.ssh/vde"
+    if [ -d "${ssh_dir}" ]; then
+        chmod 700 "${ssh_dir}" 2>/dev/null || true
         # Set permissions on all subdirectories
-        find "$ssh_dir" -type d -exec chmod 700 {} \; 2>/dev/null || true
+        find "${ssh_dir}" -type d -exec chmod 700 {} \; 2>/dev/null || true
         # Set permissions on private files (no extension)
-        find "$ssh_dir" -type f ! -name "*.pub" -exec chmod 600 {} \; 2>/dev/null || true
+        find "${ssh_dir}" -type f ! -name "*.pub" -exec chmod 600 {} \; 2>/dev/null || true
         # Set permissions on public keys
-        find "$ssh_dir" -type f -name "*.pub" -exec chmod 644 {} \; 2>/dev/null || true
+        find "${ssh_dir}" -type f -name "*.pub" -exec chmod 644 {} \; 2>/dev/null || true
     fi
     
-    if [ "$QUIET" = "0" ]; then
+    if [ "${QUIET}" = "0" ]; then
         echo "  ✓ Permissions set"
     fi
 }
 
 # vde_init_show_status - Show network status
 vde_init_show_status() {
-    local prod_network="$VDE_DOCKER_NETWORK"
-    local test_network="$VDE_TEST_NETWORK"
+    local prod_network="${VDE_DOCKER_NETWORK}"
+    local test_network="${VDE_TEST_NETWORK}"
     
     echo ""
     echo "VDE Network Status:"
     echo "==================="
     
     # Check vde-net
-    if docker network inspect "$prod_network" &>/dev/null; then
-        echo "  $prod_network: ✓ exists"
+    if docker network inspect "${prod_network}" &>/dev/null; then
+        echo "  ${prod_network}: ✓ exists"
     else
-        echo "  $prod_network: ✗ missing"
+        echo "  ${prod_network}: ✗ missing"
     fi
     
     # Check vde-testing
-    if docker network inspect "$test_network" &>/dev/null; then
-        echo "  $test_network: ✓ exists"
+    if docker network inspect "${test_network}" &>/dev/null; then
+        echo "  ${test_network}: ✓ exists"
     else
-        echo "  $test_network: ✗ missing"
+        echo "  ${test_network}: ✗ missing"
     fi
     
     echo ""
@@ -281,8 +281,8 @@ TESTING=0
 FORCE=0
 QUIET=0
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
+while [[ ${#} -gt 0 ]]; do
+    case "${1}" in
         -n|--networks-only)
             NETWORKS_ONLY=1
             shift
@@ -304,15 +304,15 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         *)
-            echo "Unknown option: $1"
+            echo "Unknown option: ${1}"
             vde_init_usage
-            exit $VDE_ERR_GENERAL
+            exit ${VDE_ERR_GENERAL}
             ;;
     esac
 done
 
 # Welcome message
-if [ "$QUIET" = "0" ]; then
+if [ "${QUIET}" = "0" ]; then
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"
     echo "║          VDE Initialization                              ║"
@@ -321,44 +321,44 @@ if [ "$QUIET" = "0" ]; then
 fi
 
 # Full setup or networks only?
-if [ "$NETWORKS_ONLY" = "1" ]; then
+if [ "${NETWORKS_ONLY}" = "1" ]; then
     # Networks-only mode
     if ! vde_init_check_prerequisites; then
-        exit $VDE_ERR_DOCKER
+        exit ${VDE_ERR_DOCKER}
     fi
     
     # Create networks
-    if [ "$TESTING" = "1" ]; then
-        NETWORK_NAME="$VDE_TEST_NETWORK"
+    if [ "${TESTING}" = "1" ]; then
+        NETWORK_NAME="${VDE_TEST_NETWORK}"
     else
-        NETWORK_NAME="$VDE_DOCKER_NETWORK"
+        NETWORK_NAME="${VDE_DOCKER_NETWORK}"
     fi
     
-    vde_init_create_network "$NETWORK_NAME" "$FORCE"
+    vde_init_create_network "${NETWORK_NAME}" "${FORCE}"
     
-    if [ "$QUIET" = "0" ]; then
+    if [ "${QUIET}" = "0" ]; then
         vde_init_show_status
     fi
 else
     # Full setup mode - invoke build-and-start
-    if [ "$QUIET" = "0" ]; then
+    if [ "${QUIET}" = "0" ]; then
         echo "Running full VDE setup..."
         echo ""
     fi
     
     # Run build-and-start for complete setup
-    if [ -f "$VDE_ROOT_DIR/bin/build-and-start" ]; then
-        if [ "$QUIET" = "0" ]; then
-            "$VDE_ROOT_DIR/bin/build-and-start"
+    if [ -f "${VDE_ROOT_DIR}/bin/build-and-start" ]; then
+        if [ "${QUIET}" = "0" ]; then
+            "${VDE_ROOT_DIR}/bin/build-and-start"
         else
-            "$VDE_ROOT_DIR/bin/build-and-start" >/dev/null 2>&1
+            "${VDE_ROOT_DIR}/bin/build-and-start" >/dev/null 2>&1
         fi
         # Apply enhanced permissions after build-and-start
         vde_init_set_permissions
     else
         # Fallback: do setup manually if build-and-start doesn't exist
         if ! vde_init_check_prerequisites; then
-            exit $VDE_ERR_DOCKER
+            exit ${VDE_ERR_DOCKER}
         fi
         
         vde_init_create_directory_structure
@@ -366,17 +366,17 @@ else
         vde_init_setup_ssh
         
         # Create production network
-        vde_init_create_network "$VDE_DOCKER_NETWORK" "$FORCE"
+        vde_init_create_network "${VDE_DOCKER_NETWORK}" "${FORCE}"
         
         # Create test network if requested
-        if [ "$TESTING" = "1" ]; then
-            vde_init_create_network "$VDE_TEST_NETWORK" "$FORCE"
+        if [ "${TESTING}" = "1" ]; then
+            vde_init_create_network "${VDE_TEST_NETWORK}" "${FORCE}"
         fi
         
         vde_init_set_permissions
     fi
     
-    if [ "$QUIET" = "0" ]; then
+    if [ "${QUIET}" = "0" ]; then
         echo ""
         echo "╔════════════════════════════════════════════════════════════╗"
         echo "║          VDE Initialization Complete!                   ║"

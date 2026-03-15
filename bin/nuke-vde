@@ -16,16 +16,16 @@
 # The script has proper error handling via return codes
 
 # Determine VDE root directory
-VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-VDE_ROOT_DIR="$(cd "$VDE_SCRIPTS_DIR/.." && pwd)"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
+VDE_ROOT_DIR="$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)"
 
 # Source shared library
-source "$VDE_ROOT_DIR/lib/vde-shell-compat"
-source "$VDE_ROOT_DIR/lib/vde-constants"
-source "$VDE_ROOT_DIR/lib/vde-errors"
-source "$VDE_ROOT_DIR/lib/vde-log"
-source "$VDE_ROOT_DIR/lib/vde-core"
-source "$VDE_ROOT_DIR/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
+source "${VDE_ROOT_DIR}/lib/vde-constants"
+source "${VDE_ROOT_DIR}/lib/vde-errors"
+source "${VDE_ROOT_DIR}/lib/vde-log"
+source "${VDE_ROOT_DIR}/lib/vde-core"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Initialize logging
 vde_log_init 2>/dev/null || true
@@ -62,22 +62,22 @@ fi
 
 # Print colored warning
 print_warning() {
-    echo "${YELLOW}WARNING: $1${NC}"
+    echo "${YELLOW}WARNING: ${1}${NC}"
 }
 
 # Print colored error
 print_error() {
-    echo "${RED}ERROR: $1${NC}"
+    echo "${RED}ERROR: ${1}${NC}"
 }
 
 # Print colored success
 print_success() {
-    echo "${GREEN}SUCCESS: $1${NC}"
+    echo "${GREEN}SUCCESS: ${1}${NC}"
 }
 
 # Print colored info
 print_info() {
-    echo "${BLUE}INFO: $1${NC}"
+    echo "${BLUE}INFO: ${1}${NC}"
 }
 
 # Print dry-run banner
@@ -91,28 +91,28 @@ print_dry_run() {
 
 # Ask yes/no question
 ask_yes_no() {
-    local prompt="$1"
+    local prompt="${1}"
     local default="${2:-n}"
 
-    if [[ "$SKIP_CONFIRM" = "true" ]] || [[ "$DRY_RUN" = "true" ]]; then
+    if [[ "${SKIP_CONFIRM}" = "true" ]] || [[ "${DRY_RUN}" = "true" ]]; then
         return 0
     fi
 
     local yn
-    if [[ "$default" = "y" ]]; then
-        prompt="$prompt [Y/n]"
+    if [[ "${default}" = "y" ]]; then
+        prompt="${prompt} [Y/n]"
     else
-        prompt="$prompt [y/N]"
+        prompt="${prompt} [y/N]"
     fi
 
     while true; do
-        echo -n "$prompt "
+        echo -n "${prompt} "
         read -r yn
-        yn=${yn:-$default}
+        yn=${yn:-${default}}
 
-        case "$yn" in
+        case "${yn}" in
             [Yy]|[Yy][Ee][Ss]) return 0 ;;
-            [Nn]|[Nn][Oo]) return $VDE_ERR_GENERAL ;;
+            [Nn]|[Nn][Oo]) return ${VDE_ERR_GENERAL} ;;
             *) echo "Please answer yes or no." ;;
         esac
     done
@@ -124,23 +124,23 @@ ask_yes_no() {
 
 # Backup a directory to a zip file
 backup_directory() {
-    local dir_name="$1"
+    local dir_name="${1}"
     local source_dir="${VDE_ROOT_DIR}/${dir_name}"
 
-    if [[ ! -d "$source_dir" ]]; then
+    if [[ ! -d "${source_dir}" ]]; then
         print_info "Directory ${dir_name}/ does not exist, skipping backup"
         return 0
     fi
 
     # Check if directory is empty
-    if [[ -z "$(ls -A "$source_dir" 2>/dev/null)" ]]; then
+    if [[ -z "$(ls -A "${source_dir}" 2>/dev/null)" ]]; then
         print_info "Directory ${dir_name}/ is empty, skipping backup"
         return 0
     fi
 
     local backup_file="${BACKUP_LOCATION}/${UNINSTALL_BACKUP_DIR}/${dir_name}.zip"
 
-    if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ "${DRY_RUN}" = "true" ]]; then
         print_info "[DRY RUN] Would create backup: ${backup_file}"
         return 0
     fi
@@ -149,22 +149,22 @@ backup_directory() {
     mkdir -p "${BACKUP_LOCATION}/${UNINSTALL_BACKUP_DIR}"
 
     # Create zip archive
-    (cd "$VDE_ROOT_DIR" && zip -rq "$backup_file" "$dir_name")
+    (cd "${VDE_ROOT_DIR}" && zip -rq "${backup_file}" "${dir_name}")
 
-    if [[ $? -eq 0 ]]; then
+    if [[ ${?} -eq 0 ]]; then
         print_success "Backed up ${dir_name}/ to ${backup_file}"
-        print_info "Size: $(du -h "$backup_file" | cut -f1)"
+        print_info "Size: $(du -h "${backup_file}" | cut -f1)"
         return 0
     else
         print_error "Failed to backup ${dir_name}/"
-        return $VDE_ERR_GENERAL
+        return ${VDE_ERR_GENERAL}
     fi
 }
 
 # Offer to backup data and projects
 offer_backup() {
     # In dry-run mode, skip backup prompts
-    if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ "${DRY_RUN}" = "true" ]]; then
         echo ""
         print_info "[DRY RUN] Skipping backup prompts"
         return 0
@@ -178,9 +178,9 @@ offer_backup() {
     local backup_projects=false
 
     # Check if data/ exists and has content
-    if [[ -d "$VDE_ROOT_DIR/data" && -n "$(ls -A "$VDE_ROOT_DIR/data" 2>/dev/null)" ]]; then
+    if [[ -d "${VDE_ROOT_DIR}/data" && -n "$(ls -A "${VDE_ROOT_DIR}/data" 2>/dev/null)" ]]; then
         echo "Found data/ directory with:"
-        ls -1 "$VDE_ROOT_DIR/data" 2>/dev/null | sed 's/^/  - /'
+        ls -1 "${VDE_ROOT_DIR}/data" 2>/dev/null | sed 's/^/  - /'
         echo ""
 
         if ask_yes_no "Backup the data/ directory?"; then
@@ -189,10 +189,10 @@ offer_backup() {
     fi
 
     # Check if projects/ exists and has content
-    if [[ -d "$VDE_ROOT_DIR/projects" && -n "$(ls -A "$VDE_ROOT_DIR/projects" 2>/dev/null)" ]]; then
+    if [[ -d "${VDE_ROOT_DIR}/projects" && -n "$(ls -A "${VDE_ROOT_DIR}/projects" 2>/dev/null)" ]]; then
         echo ""
         echo "Found projects/ directory with:"
-        ls -1 "$VDE_ROOT_DIR/projects" 2>/dev/null | sed 's/^/  - /'
+        ls -1 "${VDE_ROOT_DIR}/projects" 2>/dev/null | sed 's/^/  - /'
         echo ""
 
         if ask_yes_no "Backup the projects/ directory?"; then
@@ -200,7 +200,7 @@ offer_backup() {
         fi
     fi
 
-    if [[ "$backup_data" = "false" && "$backup_projects" = "false" ]]; then
+    if [[ "${backup_data}" = "false" && "${backup_projects}" = "false" ]]; then
         echo ""
         print_info "No backups selected"
         return 0
@@ -212,19 +212,19 @@ offer_backup() {
     # Perform backups
     local backup_failed=false
 
-    if [[ "$backup_data" = "true" ]]; then
+    if [[ "${backup_data}" = "true" ]]; then
         if ! backup_directory "data"; then
             backup_failed=true
         fi
     fi
 
-    if [[ "$backup_projects" = "true" ]]; then
+    if [[ "${backup_projects}" = "true" ]]; then
         if ! backup_directory "projects"; then
             backup_failed=true
         fi
     fi
 
-    if [[ "$backup_failed" = "true" ]]; then
+    if [[ "${backup_failed}" = "true" ]]; then
         print_error "Some backups failed. Continue with uninstall?"
         if ! ask_yes_no "" "n"; then
             print_info "Uninstall cancelled by user"
@@ -249,7 +249,7 @@ shutdown_all_vms() {
     local vms
     vms=$(get_all_vms 2>/dev/null || echo "")
 
-    if [[ -z "$vms" ]]; then
+    if [[ -z "${vms}" ]]; then
         print_info "No VMs found to shut down"
         return 0
     fi
@@ -258,24 +258,24 @@ shutdown_all_vms() {
     local stopped_count=0
 
     for vm in "${(@f)vms}"; do
-        if [[ -n "$vm" ]]; then
-            if is_vm_running "$vm" 2>/dev/null; then
-                if [[ "$DRY_RUN" = "true" ]]; then
-                    print_info "[DRY RUN] Would stop VM: $vm"
+        if [[ -n "${vm}" ]]; then
+            if is_vm_running "${vm}" 2>/dev/null; then
+                if [[ "${DRY_RUN}" = "true" ]]; then
+                    print_info "[DRY RUN] Would stop VM: ${vm}"
                 else
-                    print_info "Stopping VM: $vm"
-                    stop_vm "$vm" 2>/dev/null || true
+                    print_info "Stopping VM: ${vm}"
+                    stop_vm "${vm}" 2>/dev/null || true
                 fi
                 ((stopped_count++))
             fi
         fi
     done
 
-    if [[ $stopped_count -gt 0 ]]; then
-        if [[ "$DRY_RUN" = "true" ]]; then
-            print_info "[DRY RUN] Would stop $stopped_count VM(s)"
+    if [[ ${stopped_count} -gt 0 ]]; then
+        if [[ "${DRY_RUN}" = "true" ]]; then
+            print_info "[DRY RUN] Would stop ${stopped_count} VM(s)"
         else
-            print_success "Stopped $stopped_count VM(s)"
+            print_success "Stopped ${stopped_count} VM(s)"
         fi
     else
         print_info "No VMs were running"
@@ -290,7 +290,7 @@ remove_all_vms() {
     local vms
     vms=$(get_all_vms 2>/dev/null || echo "")
 
-    if [[ -z "$vms" ]]; then
+    if [[ -z "${vms}" ]]; then
         print_info "No VMs found to remove"
         return 0
     fi
@@ -299,26 +299,26 @@ remove_all_vms() {
     local removed_count=0
 
     for vm in "${(@f)vms}"; do
-        if [[ -n "$vm" ]]; then
+        if [[ -n "${vm}" ]]; then
             local compose_file="${VDE_ROOT_DIR}/configs/docker/${vm}/docker-compose.yml"
             local env_dir="${VDE_ROOT_DIR}/env-files/${vm}"
 
-            print_info "VM configuration preserved (manual deletion required): $vm"
-            if [[ -f "$compose_file" ]]; then
-                print_info "  Compose file preserved: $compose_file"
+            print_info "VM configuration preserved (manual deletion required): ${vm}"
+            if [[ -f "${compose_file}" ]]; then
+                print_info "  Compose file preserved: ${compose_file}"
             fi
-            if [[ -d "$env_dir" ]]; then
-                print_info "  Env dir preserved: $env_dir/"
+            if [[ -d "${env_dir}" ]]; then
+                print_info "  Env dir preserved: ${env_dir}/"
             fi
 
             ((removed_count++))
         fi
     done
 
-    if [[ "$DRY_RUN" = "true" ]]; then
-        print_info "[DRY RUN] Would remove $removed_count VM configuration(s)"
+    if [[ "${DRY_RUN}" = "true" ]]; then
+        print_info "[DRY RUN] Would remove ${removed_count} VM configuration(s)"
     else
-        print_success "Removed $removed_count VM configuration(s)"
+        print_success "Removed ${removed_count} VM configuration(s)"
     fi
 }
 
@@ -330,28 +330,28 @@ remove_docker_images() {
     local images
     images=$(docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep "^dev-" || echo "")
 
-    if [[ -z "$images" ]]; then
+    if [[ -z "${images}" ]]; then
         print_info "No VDE images found"
         return 0
     fi
 
-    local image_count=$(echo "$images" | wc -l | tr -d ' ')
+    local image_count=$(echo "${images}" | wc -l | tr -d ' ')
 
-    if [[ "$DRY_RUN" = "true" ]]; then
-        print_info "[DRY RUN] Would remove $image_count VDE image(s)..."
-        echo "$images" | while read -r image; do
-            [[ -n "$image" ]] && print_info "[DRY RUN]   Would remove image: $image"
+    if [[ "${DRY_RUN}" = "true" ]]; then
+        print_info "[DRY RUN] Would remove ${image_count} VDE image(s)..."
+        echo "${images}" | while read -r image; do
+            [[ -n "${image}" ]] && print_info "[DRY RUN]   Would remove image: ${image}"
         done
         return 0
     fi
 
-    print_info "Removing $image_count VDE image(s)..."
+    print_info "Removing ${image_count} VDE image(s)..."
 
-    echo "$images" | while read -r image; do
-        [[ -n "$image" ]] && print_info "Removing image: $image"
+    echo "${images}" | while read -r image; do
+        [[ -n "${image}" ]] && print_info "Removing image: ${image}"
     done
 
-    echo "$images" | xargs docker rmi -f >/dev/null 2>&1 || true
+    echo "${images}" | xargs docker rmi -f >/dev/null 2>&1 || true
 
     print_success "VDE images removed"
 }
@@ -365,8 +365,8 @@ remove_docker_resources() {
     local network_exists
     network_exists=$(docker network ls --format "{{.Name}}" 2>/dev/null | grep "^vde-network$" || echo "")
 
-    if [[ -n "$network_exists" ]]; then
-        if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ -n "${network_exists}" ]]; then
+        if [[ "${DRY_RUN}" = "true" ]]; then
             print_info "[DRY RUN] Would remove Docker network: vde-network"
         else
             print_info "Removing Docker network: vde-network"
@@ -381,16 +381,16 @@ remove_docker_resources() {
     local volumes
     volumes=$(docker volume ls --format "{{.Name}}" 2>/dev/null | grep "^vde-" || echo "")
 
-    if [[ -n "$volumes" ]]; then
-        if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ -n "${volumes}" ]]; then
+        if [[ "${DRY_RUN}" = "true" ]]; then
             print_info "[DRY RUN] Would remove VDE volumes:"
-            echo "$volumes" | while read -r vol; do
-                [[ -n "$vol" ]] && print_info "[DRY RUN]   Would remove volume: $vol"
+            echo "${volumes}" | while read -r vol; do
+                [[ -n "${vol}" ]] && print_info "[DRY RUN]   Would remove volume: ${vol}"
             done
         else
             print_info "Removing VDE volumes..."
-            echo "$volumes" | while read -r vol; do
-                [[ -n "$vol" ]] && docker volume rm "$vol" >/dev/null 2>&1 || true
+            echo "${volumes}" | while read -r vol; do
+                [[ -n "${vol}" ]] && docker volume rm "${vol}" >/dev/null 2>&1 || true
             done
             print_success "Removed VDE volumes"
         fi
@@ -404,13 +404,13 @@ remove_ssh_config_entries() {
     echo ""
     print_info "Step 5: Removing VDE SSH configuration..."
 
-    if [[ -d "$VDE_SSH_DIR" ]]; then
-        if [[ "$DRY_RUN" = "true" ]]; then
-            print_info "[DRY RUN] Would remove VDE SSH directory: $VDE_SSH_DIR"
+    if [[ -d "${VDE_SSH_DIR}" ]]; then
+        if [[ "${DRY_RUN}" = "true" ]]; then
+            print_info "[DRY RUN] Would remove VDE SSH directory: ${VDE_SSH_DIR}"
             return 0
         fi
-        print_info "Removing VDE SSH directory: $VDE_SSH_DIR"
-        rm -rf "$VDE_SSH_DIR"
+        print_info "Removing VDE SSH directory: ${VDE_SSH_DIR}"
+        rm -rf "${VDE_SSH_DIR}"
         print_success "Removed VDE SSH configuration"
     else
         print_info "VDE SSH directory not found"
@@ -428,15 +428,15 @@ remove_vde_directories() {
 
     for dir in "${dirs_to_remove[@]}"; do
         local dir_path="${VDE_ROOT_DIR}/${dir}"
-        if [[ -d "$dir_path" ]]; then
-            if [[ "$DRY_RUN" = "true" ]]; then
+        if [[ -d "${dir_path}" ]]; then
+            if [[ "${DRY_RUN}" = "true" ]]; then
                 print_info "[DRY RUN] Would remove directory: ${dir}/"
-                du -sh "$dir_path" 2>/dev/null | while read -r size path; do
-                    print_info "[DRY RUN]   Size: $size"
+                du -sh "${dir_path}" 2>/dev/null | while read -r size path; do
+                    print_info "[DRY RUN]   Size: ${size}"
                 done
             else
                 print_info "Removing: ${dir}/"
-                rm -rf "$dir_path"
+                rm -rf "${dir_path}"
                 print_success "Removed ${dir}/"
             fi
         fi
@@ -449,8 +449,8 @@ remove_vde_directories() {
 
 main() {
     # Parse arguments
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
+    while [[ ${#} -gt 0 ]]; do
+        case "${1}" in
             --skip-confirm)
                 SKIP_CONFIRM=true
                 shift
@@ -464,7 +464,7 @@ main() {
                 shift
                 ;;
             -h|--help)
-                echo "Usage: $0 [options]"
+                echo "Usage: ${0} [options]"
                 echo ""
                 echo "Options:"
                 echo "  --skip-confirm    Skip confirmation prompts (dangerous!)"
@@ -486,9 +486,9 @@ main() {
                 exit 0
                 ;;
             *)
-                echo "Unknown option: $1"
+                echo "Unknown option: ${1}"
                 echo "Use --help for usage information"
-                exit $VDE_ERR_GENERAL
+                exit ${VDE_ERR_GENERAL}
                 ;;
         esac
     done
@@ -516,7 +516,7 @@ main() {
     print_info "VDE project: ${VDE_ROOT_DIR}"
     echo ""
 
-    if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ "${DRY_RUN}" = "true" ]]; then
         print_dry_run
     fi
 
@@ -527,7 +527,7 @@ main() {
     fi
 
     # Second mandatory confirmation (unless --skip-confirm is used)
-    if [[ "$SKIP_CONFIRM" != "true" ]]; then
+    if [[ "${SKIP_CONFIRM}" != "true" ]]; then
         if ! ask_yes_no "This is your last chance - are you REALLY sure?" "n"; then
             print_info "Uninstall cancelled"
             exit 0
@@ -538,7 +538,7 @@ main() {
     # Backup (if requested)
     #===========================================================================
 
-    if [[ "$SKIP_BACKUP" != "true" ]]; then
+    if [[ "${SKIP_BACKUP}" != "true" ]]; then
         offer_backup
     fi
 
@@ -548,7 +548,7 @@ main() {
 
     echo ""
     echo "============================================================================="
-    if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ "${DRY_RUN}" = "true" ]]; then
         print_info "DRY RUN - Showing what would be done..."
     else
         print_info "Starting VDE uninstall..."
@@ -568,7 +568,7 @@ main() {
 
     echo ""
     echo "============================================================================="
-    if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ "${DRY_RUN}" = "true" ]]; then
         print_success "DRY RUN COMPLETE - No changes were made"
     else
         print_success "VDE uninstall complete!"
@@ -576,12 +576,12 @@ main() {
     echo "============================================================================="
     echo ""
 
-    if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ "${DRY_RUN}" = "true" ]]; then
         print_info "To run the actual uninstall, run:"
-        echo "  $0"
+        echo "  ${0}"
         echo ""
         print_info "Or with backup:"
-        echo "  $0 --no-backup"
+        echo "  ${0} --no-backup"
         echo ""
     else
         if [[ -d "${BACKUP_LOCATION}/${UNINSTALL_BACKUP_DIR}" ]]; then
@@ -600,4 +600,4 @@ main() {
     echo ""
 }
 
-main "$@"
+main "${@}"

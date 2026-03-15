@@ -16,15 +16,15 @@
 set -e
 
 # Source shared library
-VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-VDE_ROOT_DIR="$(cd "$VDE_SCRIPTS_DIR/.." && pwd)"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
+VDE_ROOT_DIR="$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)"
 export VDE_ROOT_DIR
 
-source "$VDE_ROOT_DIR/lib/vde-shell-compat"
-source "$VDE_ROOT_DIR/lib/vde-constants"
-source "$VDE_ROOT_DIR/lib/vde-errors"
-source "$VDE_ROOT_DIR/lib/vde-log"
-source "$VDE_ROOT_DIR/lib/vde-naming"
+source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
+source "${VDE_ROOT_DIR}/lib/vde-constants"
+source "${VDE_ROOT_DIR}/lib/vde-errors"
+source "${VDE_ROOT_DIR}/lib/vde-log"
+source "${VDE_ROOT_DIR}/lib/vde-naming"
 
 # Configuration
 NOCACHE=false
@@ -37,10 +37,10 @@ SPECIFIC_VM=""
 
 # Ensure SSH keys are synced to build context before building
 sync_keys() {
-    if [[ -f "$VDE_ROOT_DIR/lib/vde-ssh" ]]; then
-        source "$VDE_ROOT_DIR/lib/vde-ssh"
+    if [[ -f "${VDE_ROOT_DIR}/lib/vde-ssh" ]]; then
+        source "${VDE_ROOT_DIR}/lib/vde-ssh"
         
-        if [[ "$REGENERATE_KEYS" == "true" ]]; then
+        if [[ "${REGENERATE_KEYS}" == "true" ]]; then
             vde_ssh_regenerate_keys
         fi
         
@@ -82,8 +82,8 @@ EOF
 # Parse Arguments
 #===============================================================================
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
+while [[ ${#} -gt 0 ]]; do
+    case "${1}" in
         -h|--help)
             show_usage
             exit 0
@@ -97,13 +97,13 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --vm)
-            SPECIFIC_VM="$2"
+            SPECIFIC_VM="${2}"
             shift 2
             ;;
         *)
-            echo "Unknown option: $1"
+            echo "Unknown option: ${1}"
             show_usage
-            exit $VDE_ERR_GENERAL
+            exit ${VDE_ERR_GENERAL}
             ;;
     esac
 done
@@ -113,13 +113,13 @@ done
 #===============================================================================
 
 get_vm_list() {
-    local vm_types_file="$VDE_ROOT_DIR/data/vm-types.conf"
-    if [[ -f "$vm_types_file" ]]; then
-        grep -v '^#' "$vm_types_file" | grep -v '^$' | cut -d'|' -f2
+    local vm_types_file="${VDE_ROOT_DIR}/data/vm-types.conf"
+    if [[ -f "${vm_types_file}" ]]; then
+        grep -v '^#' "${vm_types_file}" | grep -v '^$' | cut -d'|' -f2
     else
         # Fallback to directory listing, but ensure we return prefixed names for consistency
-        ls -1 "$CONFIGS_DIR" 2>/dev/null | grep -v '^$' | grep -v "vde-base.Dockerfile" | while read -r raw; do
-            vde_get_container_name "$raw"
+        ls -1 "${CONFIGS_DIR}" 2>/dev/null | grep -v '^$' | grep -v "vde-base.Dockerfile" | while read -r raw; do
+            vde_get_container_name "${raw}"
         done || true
     fi
 }
@@ -129,10 +129,10 @@ get_vm_list() {
 #===============================================================================
 
 build_base_image() {
-    local build_cmd="docker build -t vde-base:latest -f $CONFIGS_DIR/vde-base.Dockerfile $VDE_ROOT_DIR"
+    local build_cmd="docker build -t vde-base:latest -f ${CONFIGS_DIR}/vde-base.Dockerfile ${VDE_ROOT_DIR}"
     
-    if [[ "$NOCACHE" == "true" ]]; then
-        build_cmd="$build_cmd --no-cache"
+    if [[ "${NOCACHE}" == "true" ]]; then
+        build_cmd="${build_cmd} --no-cache"
     fi
     
     echo ""
@@ -140,40 +140,40 @@ build_base_image() {
     echo "Building vde-base:latest..."
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
-    if eval "$build_cmd"; then
+    if eval "${build_cmd}"; then
         echo "✓ vde-base:latest built successfully"
         return 0
     else
         echo "✗ Failed to build vde-base:latest"
-        return $VDE_ERR_GENERAL
+        return ${VDE_ERR_GENERAL}
     fi
 }
 
 build_vm_image() {
-    local vm_name="$1"
+    local vm_name="${1}"
     local raw_name
-    raw_name=$(vde_normalize_name "$vm_name")
-    local compose_file="$CONFIGS_DIR/$raw_name/docker-compose.yml"
+    raw_name=$(vde_normalize_name "${vm_name}")
+    local compose_file="${CONFIGS_DIR}/${raw_name}/docker-compose.yml"
     
-    if [[ ! -f "$compose_file" ]]; then
-        echo "⚠ Skipping $vm_name: no docker-compose.yml found at $compose_file"
+    if [[ ! -f "${compose_file}" ]]; then
+        echo "⚠ Skipping ${vm_name}: no docker-compose.yml found at ${compose_file}"
         return 0
     fi
     
-    local build_cmd="docker compose -f $compose_file build"
+    local build_cmd="docker compose -f ${compose_file} build"
     
-    if [[ "$NOCACHE" == "true" ]]; then
-        build_cmd="$build_cmd --no-cache"
+    if [[ "${NOCACHE}" == "true" ]]; then
+        build_cmd="${build_cmd} --no-cache"
     fi
     
-    echo "Building $vm_name..."
+    echo "Building ${vm_name}..."
     
-    if (cd "$CONFIGS_DIR/$raw_name" && eval "$build_cmd" 2>&1); then
-        echo "✓ $vm_name built successfully"
+    if (cd "${CONFIGS_DIR}/${raw_name}" && eval "${build_cmd}" 2>&1); then
+        echo "✓ ${vm_name} built successfully"
         return 0
     else
-        echo "✗ Failed to build $vm_name"
-        return $VDE_ERR_GENERAL
+        echo "✗ Failed to build ${vm_name}"
+        return ${VDE_ERR_GENERAL}
     fi
 }
 
@@ -190,27 +190,27 @@ echo ""
 # Check Docker
 if ! command -v docker &>/dev/null; then
     _error "Docker is not installed"
-    exit $VDE_ERR_DOCKER
+    exit ${VDE_ERR_DOCKER}
 fi
 
 if ! docker info &>/dev/null; then
     _error "Docker daemon is not running"
-    exit $VDE_ERR_DOCKER
+    exit ${VDE_ERR_DOCKER}
 fi
 
 # Ensure keys are ready for build context
 sync_keys
 
 # Build specific VM or all
-if [[ -n "$SPECIFIC_VM" ]]; then
-    if [[ "$SPECIFIC_VM" == "base" ]]; then
+if [[ -n "${SPECIFIC_VM}" ]]; then
+    if [[ "${SPECIFIC_VM}" == "base" ]]; then
         build_base_image
     else
         # For specific VM, build base first if needed
         if ! docker image inspect vde-base:latest &>/dev/null; then
             build_base_image
         fi
-        build_vm_image "$SPECIFIC_VM"
+        build_vm_image "${SPECIFIC_VM}"
     fi
 else
     # Build all: base first, then all VMs
@@ -222,7 +222,7 @@ else
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
     for vm in $(get_vm_list); do
-        build_vm_image "$vm" || true
+        build_vm_image "${vm}" || true
     done
     
     echo ""

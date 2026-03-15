@@ -12,15 +12,15 @@ VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 # Source core libraries
-[[ -f "$VDE_ROOT_DIR/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/lib/vde-shell-compat" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/lib/vde-constants" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/lib/vde-errors" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
 
 # Parse options
 QUIET=0
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
+while [[ ${#} -gt 0 ]]; do
+    case "${1}" in
         -q|--quiet)
             QUIET=1
             shift
@@ -34,7 +34,7 @@ done
 # Get VDE image prefix
 VDE_PREFIX="${VDE_IMAGE_PREFIX:-vde-}"
 
-if [ $QUIET -eq 1 ]; then
+if [ ${QUIET} -eq 1 ]; then
     docker images --format '{{.ID}}' | grep "^${VDE_PREFIX}" || true
 else
     docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}' | grep "^${VDE_PREFIX}" || true

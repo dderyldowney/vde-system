@@ -44,7 +44,7 @@ _VM_ALIAS_MAP_BUILT=0
 # _build_alias_map - Deprecated (now handled by load_vm_types in vm-common)
 _build_alias_map() {
     load_vm_types
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }
 
 # _ensure_alias_map - Ensure the alias map is built (lazy initialization)
@@ -52,7 +52,7 @@ _ensure_alias_map() {
     if [ "${_VM_ALIAS_MAP_BUILT:-0}" -eq 0 ]; then
         load_vm_types
     fi
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }
 
 # _lookup_vm_by_alias - O(1) lookup of VM name by alias
@@ -62,27 +62,27 @@ _ensure_alias_map() {
 #   VDE_ERR_NOT_FOUND (3) - No matching VM found
 # Example: vm=$(_lookup_vm_by_alias "py")  # outputs "python"
 _lookup_vm_by_alias() {
-    local input="$1"
+    local input="${1}"
     
     # Ensure map is built
     _ensure_alias_map
     
     # Check if input is already a canonical name (higher priority)
-    if [[ -n "${VM_TYPE[$input]:-}" ]]; then
-        echo "$input"
-        return $VDE_SUCCESS
+    if [[ -n "${VM_TYPE[${input}]:-}" ]]; then
+        echo "${input}"
+        return ${VDE_SUCCESS}
     fi
 
     # Direct O(1) lookup in alias map
     local canonical
-    canonical=$(_assoc_get "VM_ALIAS_MAP" "$input" 2>/dev/null)
+    canonical=$(_assoc_get "VM_ALIAS_MAP" "${input}" 2>/dev/null)
     
-    if [ -n "$canonical" ]; then
-        echo "$canonical"
-        return $VDE_SUCCESS
+    if [ -n "${canonical}" ]; then
+        echo "${canonical}"
+        return ${VDE_SUCCESS}
     fi
     
-    return $VDE_ERR_NOT_FOUND
+    return ${VDE_ERR_NOT_FOUND}
 }
 
 # invalidate_alias_map - Force rebuild of alias map
@@ -92,7 +92,7 @@ _lookup_vm_by_alias() {
 invalidate_alias_map() {
     _VM_ALIAS_MAP_BUILT=0
     _assoc_clear "VM_ALIAS_MAP"
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }
 
 # canonical_to_display - Convert canonical VM name to display name
@@ -103,16 +103,16 @@ invalidate_alias_map() {
 #   VDE_ERR_NOT_FOUND (3) - VM not found
 # Example: display=$(canonical_to_display "postgres")  # outputs "PostgreSQL"
 canonical_to_display() {
-    local canonical="$1"
+    local canonical="${1}"
     local display
-    display=$(get_vm_info display "$canonical" 2>/dev/null)
-    if [ -n "$display" ]; then
-        echo "$display"
-        return $VDE_SUCCESS
+    display=$(get_vm_info display "${canonical}" 2>/dev/null)
+    if [ -n "${display}" ]; then
+        echo "${display}"
+        return ${VDE_SUCCESS}
     fi
     # Fallback to canonical name if no display name found
-    echo "$canonical"
-    return $VDE_SUCCESS
+    echo "${canonical}"
+    return ${VDE_SUCCESS}
 }
 
 # extract_vm_names_to_display - Extract VM names and convert to display names
@@ -122,17 +122,17 @@ canonical_to_display() {
 #   VDE_SUCCESS (0) - Outputs display names to stdout (one per line)
 # Example: displays=$(extract_vm_names_to_display "start PostgreSQL and Python")  # outputs "PostgreSQL\nPython"
 extract_vm_names_to_display() {
-    local input="$1"
+    local input="${1}"
     local canonical_vms
-    canonical_vms=$(extract_vm_names "$input")
-    if [ -z "$canonical_vms" ]; then
-        return $VDE_SUCCESS
+    canonical_vms=$(extract_vm_names "${input}")
+    if [ -z "${canonical_vms}" ]; then
+        return ${VDE_SUCCESS}
     fi
     local vm
-    echo "$canonical_vms" | while IFS= read -r vm; do
-        [ -n "$vm" ] && canonical_to_display "$vm"
+    echo "${canonical_vms}" | while IFS= read -r vm; do
+        [ -n "${vm}" ] && canonical_to_display "${vm}"
     done
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }
 
 # -----------------------
@@ -170,78 +170,78 @@ readonly INTENT_HELP
 # Output: One of the INTENT_* constants (e.g., INTENT_START_VM)
 # Example: intent=$(detect_intent "start the python VM")  # outputs "start_vm"
 detect_intent() {
-    local input="$1"
+    local input="${1}"
     local input_lower
-    input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
+    input_lower=$(echo "${input}" | tr '[:upper:]' '[:lower:]')
 
     # Check for help intent first (includes common typos: hel, hepl)
-    case "$input_lower" in
+    case "${input_lower}" in
         *help*|*hel*|*hepl*|*"what can i do"*|*"how do i use"*)
-            echo "$INTENT_HELP"
-            return $VDE_SUCCESS
+            echo "${INTENT_HELP}"
+            return ${VDE_SUCCESS}
             ;;
     esac
 
     # Check for status (be specific to avoid false positives)
-    case "$input_lower" in
+    case "${input_lower}" in
         *running*|*"status"*|*"staus"*|*"satus"*|*"current state"*)
-            echo "$INTENT_STATUS"
-            return $VDE_SUCCESS
+            echo "${INTENT_STATUS}"
+            return ${VDE_SUCCESS}
             ;;
     esac
 
     # Check for list/show intents (general patterns)
-    case "$input_lower" in
+    case "${input_lower}" in
         *" list"*|*"list "*|*"/list"*|*"show "*|*available*|*what*can*i*create*|*which*vms*)
-            echo "$INTENT_LIST_VMS"
-            return $VDE_SUCCESS
+            echo "${INTENT_LIST_VMS}"
+            return ${VDE_SUCCESS}
             ;;
     esac
 
     # Check for connect intent (includes typo: conect)
-    case "$input_lower" in
+    case "${input_lower}" in
         *"how do i connect"*|*"ssh into"*|*"connect to"*|*"connect "*|*conect*)
-            echo "$INTENT_CONNECT"
-            return $VDE_SUCCESS
+            echo "${INTENT_CONNECT}"
+            return ${VDE_SUCCESS}
             ;;
     esac
 
     # Check for restart intent (must be checked before start/stop)
-    case "$input_lower" in
+    case "${input_lower}" in
         *restart*|*restrat*|*resart*|*reatart*|*reboot*|*rebot*|*rebuild*)
-            echo "$INTENT_RESTART_VM"
-            return $VDE_SUCCESS
+            echo "${INTENT_RESTART_VM}"
+            return ${VDE_SUCCESS}
             ;;
     esac
 
     # Check for create intent (be specific)
-    case "$input_lower" in
+    case "${input_lower}" in
         *"create"*|*"make a"*|*"make new"*|*"set up"*|*"add "*)
-            echo "$INTENT_CREATE_VM"
-            return $VDE_SUCCESS
+            echo "${INTENT_CREATE_VM}"
+            return ${VDE_SUCCESS}
             ;;
     esac
 
     # Check for start intent
-    case "$input_lower" in
+    case "${input_lower}" in
         *start*|*strt*|*strat*|*satrt*|*launch*|*launc*|*boot*)
-            echo "$INTENT_START_VM"
-            return $VDE_SUCCESS
+            echo "${INTENT_START_VM}"
+            return ${VDE_SUCCESS}
             ;;
     esac
 
     # Check for stop intent
     # Includes typo patterns: stp, sto (prefix omission), stpo, sotp (transposition)
-    case "$input_lower" in
+    case "${input_lower}" in
         *stop*|*stp*|*sto*|*stpo*|*sotp*|*shutdown*|*shutdon*|*kill*|*kil*)
-            echo "$INTENT_STOP_VM"
-            return $VDE_SUCCESS
+            echo "${INTENT_STOP_VM}"
+            return ${VDE_SUCCESS}
             ;;
     esac
 
     # Default: return help for unmatched/empty input
-    echo "$INTENT_HELP"
-    return $VDE_SUCCESS
+    echo "${INTENT_HELP}"
+    return ${VDE_SUCCESS}
 }
 
 # -----------------------
@@ -260,31 +260,31 @@ extract_vm_names() {
     # Ensure XTRACE is off
     unsetopt XTRACE 2>/dev/null
     
-    local input="$1"
+    local input="${1}"
     local input_lower
-    input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
+    input_lower=$(echo "${input}" | tr '[:upper:]' '[:lower:]')
 
     # Handle "all", "everything" first (before word extraction)
-    case "$input_lower" in
+    case "${input_lower}" in
         *all*|*everything*)
             get_all_vms | tr ' ' '\n'
-            return $VDE_SUCCESS
+            return ${VDE_SUCCESS}
             ;;
     esac
 
     # Handle "all languages"
-    case "$input_lower" in
+    case "${input_lower}" in
         *"all languages"*|*"all lang"*)
             get_lang_vms | tr ' ' '\n'
-            return $VDE_SUCCESS
+            return ${VDE_SUCCESS}
             ;;
     esac
 
     # Handle "all services"
-    case "$input_lower" in
+    case "${input_lower}" in
         *"all services"*|*"all svc"*)
             get_service_vms | tr ' ' '\n'
-            return $VDE_SUCCESS
+            return ${VDE_SUCCESS}
             ;;
     esac
 
@@ -301,24 +301,24 @@ extract_vm_names() {
         # Clean the word (remove punctuation, keep only alphanumeric, dashes and plus)
         local w_clean="${word%%[^a-z0-9+-]*}"
         w_clean="${w_clean//[^a-z0-9+-]/}"
-        [ -z "$w_clean" ] && continue
+        [ -z "${w_clean}" ] && continue
 
         # O(1) lookup in alias map
-        local canonical="${VM_ALIAS_MAP[$w_clean]}"
+        local canonical="${VM_ALIAS_MAP[${w_clean}]}"
 
-        if [ -n "$canonical" ]; then
-            if [[ -z "${seen_vms[$canonical]:-}" ]]; then
-                seen_vms[$canonical]=1
-                found_vms+="$canonical "
+        if [ -n "${canonical}" ]; then
+            if [[ -z "${seen_vms[${canonical}]:-}" ]]; then
+                seen_vms[${canonical}]=1
+                found_vms+="${canonical} "
             fi
         fi
     done
 
     # Print found VMs (clean trailing space and convert spaces to newlines)
-    if [ -n "$found_vms" ]; then
+    if [ -n "${found_vms}" ]; then
         echo "${found_vms}" | sed 's/ $//' | tr ' ' '\n'
     fi
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }
 
 # extract_filter - Extract filter type from input for listing commands
@@ -329,11 +329,11 @@ extract_vm_names() {
 # Output: One of "lang", "svc", or "all"
 # Example: filter=$(extract_filter "show all language VMs")  # outputs "lang"
 extract_filter() {
-    local input="$1"
+    local input="${1}"
     local input_lower
-    input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
+    input_lower=$(echo "${input}" | tr '[:upper:]' '[:lower:]')
 
-    case "$input_lower" in
+    case "${input_lower}" in
         *languages*|*language*|*lang*)
             echo "lang"
             ;;
@@ -344,7 +344,7 @@ extract_filter() {
             echo "all"
             ;;
     esac
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }
 
 # extract_flags - Extract operation flags from input
@@ -355,27 +355,27 @@ extract_filter() {
 # Output: Space-separated key=value pairs (e.g., "rebuild=true nocache=false")
 # Example: flags=$(extract_flags "rebuild python with no cache")
 extract_flags() {
-    local input="$1"
+    local input="${1}"
     local input_lower
-    input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
+    input_lower=$(echo "${input}" | tr '[:upper:]' '[:lower:]')
 
     local rebuild="false"
     local nocache="false"
 
-    case "$input_lower" in
+    case "${input_lower}" in
         *rebuild*|*"re-create"*)
             rebuild="true"
             ;;
     esac
 
-    case "$input_lower" in
+    case "${input_lower}" in
         *"no-cache"*|*"no cache"*|*"from scratch"*)
             nocache="true"
             ;;
     esac
 
-    echo "rebuild=$rebuild nocache=$nocache"
-    return $VDE_SUCCESS
+    echo "rebuild=${rebuild} nocache=${nocache}"
+    return ${VDE_SUCCESS}
 }
 
 # -----------------------
@@ -398,14 +398,14 @@ readonly ALLOWED_FLAGS
 #   VDE_ERR_NOT_FOUND (3) - No dangerous characters (string is safe)
 # Example: contains_dangerous_chars "hello; rm -rf /" && echo "DANGER!"
 contains_dangerous_chars() {
-    local str="$1"
+    local str="${1}"
     # Check for each dangerous character explicitly
-    case "$str" in
+    case "${str}" in
         *";"*|*"|"*|*"&"*|*'$'*|*'`'*|*"("*|*")"*|*"{"*|*"}"*|*"["*|*"]"*|*"<"*|*">"*|*"!"*|*"#"*|*"*"*|*"?"*|*"\\"*|*'"'*)
-            return $VDE_SUCCESS
+            return ${VDE_SUCCESS}
             ;;
     esac
-    return $VDE_ERR_NOT_FOUND
+    return ${VDE_ERR_NOT_FOUND}
 }
 
 # validate_plan_line - Validate a single plan line against whitelist
@@ -416,10 +416,10 @@ contains_dangerous_chars() {
 #   VDE_ERR_INVALID_INPUT (2) - Line contains invalid key or dangerous characters
 # Example: validate_plan_line "INTENT:start_vm" && echo "Valid"
 validate_plan_line() {
-    local line="$1"
+    local line="${1}"
     
     # Empty lines are valid (skip them)
-    [ -z "$line" ] && return $VDE_SUCCESS
+    [ -z "${line}" ] && return ${VDE_SUCCESS}
     
     # Extract key (everything before first colon)
     local key="${line%%:*}"
@@ -429,25 +429,25 @@ validate_plan_line() {
     local key_valid=false
     local allowed_key
     # Explicitly word-split ALLOWED_PLAN_KEYS using set
-    for allowed_key in $(echo "$ALLOWED_PLAN_KEYS"); do
-        if [ "$key" = "$allowed_key" ]; then
+    for allowed_key in $(echo "${ALLOWED_PLAN_KEYS}"); do
+        if [ "${key}" = "${allowed_key}" ]; then
             key_valid=true
             break
         fi
     done
     
-    if [ "$key_valid" = "false" ]; then
-        log_error "SECURITY: Rejected unknown plan key: $key"
-        return $VDE_ERR_INVALID_INPUT
+    if [ "${key_valid}" = "false" ]; then
+        log_error "SECURITY: Rejected unknown plan key: ${key}"
+        return ${VDE_ERR_INVALID_INPUT}
     fi
     
     # SECURITY: Check for dangerous shell metacharacters in value
-    if contains_dangerous_chars "$value"; then
-        log_error "SECURITY: Rejected value containing shell metacharacters: $value"
-        return $VDE_ERR_INVALID_INPUT
+    if contains_dangerous_chars "${value}"; then
+        log_error "SECURITY: Rejected value containing shell metacharacters: ${value}"
+        return ${VDE_ERR_INVALID_INPUT}
     fi
     
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }
 
 # parse_flags - Parse FLAGS value safely without eval
@@ -459,56 +459,56 @@ validate_plan_line() {
 # Side Effects: Sets 'rebuild' and 'nocache' variables in caller's scope
 # Example: parse_flags "rebuild=true nocache=false"
 parse_flags() {
-    local flags_string="$1"
+    local flags_string="${1}"
     
     # Initialize to safe defaults
     rebuild="false"
     nocache="false"
     
     # SECURITY: Reject if contains dangerous characters
-    if contains_dangerous_chars "$flags_string"; then
+    if contains_dangerous_chars "${flags_string}"; then
         log_error "SECURITY: Rejected FLAGS containing shell metacharacters"
-        return $VDE_ERR_INVALID_INPUT
+        return ${VDE_ERR_INVALID_INPUT}
     fi
     
     # Parse each space-separated token
     local token
     # Explicitly word-split flags_string to ensure proper iteration
-    for token in $(echo "$flags_string"); do
+    for token in $(echo "${flags_string}"); do
         # Extract key=value
         local flag_key="${token%%=*}"
         local flag_value="${token#*=}"
         
         # SECURITY: Only accept whitelisted flags
-        case "$flag_key" in
+        case "${flag_key}" in
             rebuild)
-                if [ "$flag_value" = "true" ]; then
+                if [ "${flag_value}" = "true" ]; then
                     rebuild="true"
-                elif [ "$flag_value" = "false" ]; then
+                elif [ "${flag_value}" = "false" ]; then
                     rebuild="false"
                 else
-                    log_error "SECURITY: Invalid value for rebuild flag: $flag_value"
-                    return $VDE_ERR_INVALID_INPUT
+                    log_error "SECURITY: Invalid value for rebuild flag: ${flag_value}"
+                    return ${VDE_ERR_INVALID_INPUT}
                 fi
                 ;;
             nocache)
-                if [ "$flag_value" = "true" ]; then
+                if [ "${flag_value}" = "true" ]; then
                     nocache="true"
-                elif [ "$flag_value" = "false" ]; then
+                elif [ "${flag_value}" = "false" ]; then
                     nocache="false"
                 else
-                    log_error "SECURITY: Invalid value for nocache flag: $flag_value"
-                    return $VDE_ERR_INVALID_INPUT
+                    log_error "SECURITY: Invalid value for nocache flag: ${flag_value}"
+                    return ${VDE_ERR_INVALID_INPUT}
                 fi
                 ;;
             *)
-                log_error "SECURITY: Rejected unknown flag: $flag_key"
-                return $VDE_ERR_INVALID_INPUT
+                log_error "SECURITY: Rejected unknown flag: ${flag_key}"
+                return ${VDE_ERR_INVALID_INPUT}
                 ;;
         esac
     done
     
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }
 
 # validate_vm_name_security - Validate VM name against known VMs
@@ -520,12 +520,12 @@ parse_flags() {
 #   VDE_ERR_NOT_FOUND (3) - VM name not in known VMs list
 # Example: validate_vm_name_security "python" && echo "Valid VM"
 validate_vm_name_security() {
-    local vm_name="$1"
+    local vm_name="${1}"
     
     # SECURITY: Check for dangerous characters first
-    if contains_dangerous_chars "$vm_name"; then
-        log_error "SECURITY: VM name contains dangerous characters: $vm_name"
-        return $VDE_ERR_INVALID_INPUT
+    if contains_dangerous_chars "${vm_name}"; then
+        log_error "SECURITY: VM name contains dangerous characters: ${vm_name}"
+        return ${VDE_ERR_INVALID_INPUT}
     fi
     
     # Check against known VMs
@@ -534,13 +534,13 @@ validate_vm_name_security() {
     
     local known
     for known in ${=known_vms}; do
-        if [ "$vm_name" = "$known" ]; then
-            return $VDE_SUCCESS
+        if [ "${vm_name}" = "${known}" ]; then
+            return ${VDE_SUCCESS}
         fi
     done
     
-    log_error "SECURITY: Unknown VM name: $vm_name"
-    return $VDE_ERR_NOT_FOUND
+    log_error "SECURITY: Unknown VM name: ${vm_name}"
+    return ${VDE_ERR_NOT_FOUND}
 }
 
 # -----------------------
@@ -555,10 +555,10 @@ validate_vm_name_security() {
 #   1 - User declined (abort creation)
 # Example: if prompt_confirm_unknown_vm "directory"; then create_vm; fi
 prompt_confirm_unknown_vm() {
-    local vm_name="$1"
+    local vm_name="${1}"
 
     # Validate input
-    [ -n "$vm_name" ] || return $VDE_ERR_GENERAL
+    [ -n "${vm_name}" ] || return ${VDE_ERR_GENERAL}
 
     local available
     available=$(vde_list_vms 2>/dev/null | tr '\n' ' ')
@@ -567,31 +567,31 @@ prompt_confirm_unknown_vm() {
     # Check if we can open /dev/tty for interactive input
     if ! exec 3</dev/tty 2>/dev/null; then
         # Non-interactive mode (piped input, script, etc.)
-        log_error "Unknown VM type: '$vm_name'"
-        log_error "Available VMs: $available"
+        log_error "Unknown VM type: '${vm_name}'"
+        log_error "Available VMs: ${available}"
         log_error "Cannot confirm in non-interactive mode. Aborting."
-        return $VDE_ERR_GENERAL
+        return ${VDE_ERR_GENERAL}
     fi
     exec 3<&-  # Close the test descriptor
 
     # Display warning and available VMs
     echo >&2
-    echo "WARNING: '$vm_name' is not a known VM type." >&2
+    echo "WARNING: '${vm_name}' is not a known VM type." >&2
     echo >&2
     echo "Available VM types:" >&2
-    echo "  $available" >&2
+    echo "  ${available}" >&2
     echo >&2
-    echo -n "Did you mean to create a VM called '$vm_name' anyway? [y/N] " >&2
+    echo -n "Did you mean to create a VM called '${vm_name}' anyway? [y/N] " >&2
     read -r response </dev/tty
 
-    case "$response" in
+    case "${response}" in
         [yY]|[yY][eE][sS])
-            echo "Proceeding with VM creation for '$vm_name'..." >&2
+            echo "Proceeding with VM creation for '${vm_name}'..." >&2
             return 0
             ;;
         *)
             echo "VM creation aborted." >&2
-            return $VDE_ERR_GENERAL
+            return ${VDE_ERR_GENERAL}
             ;;
     esac
 }
@@ -606,26 +606,26 @@ prompt_confirm_unknown_vm() {
 #       <varname>     - Name of variable to write results into
 # Side effects: calls _ensure_alias_map (populates VM_ALIAS_MAP in current shell)
 _extract_vm_names_direct() {
-    local _evnd_input="$1"
-    local _evnd_var="$2"
+    local _evnd_input="${1}"
+    local _evnd_var="${2}"
 
     # Handle wildcard expansions first
-    case "$_evnd_input" in
+    case "${_evnd_input}" in
         *all*|*everything*)
-            typeset -g "$_evnd_var"="$(get_all_vms)"
-            return $VDE_SUCCESS
+            typeset -g "${_evnd_var}"="$(get_all_vms)"
+            return ${VDE_SUCCESS}
             ;;
     esac
-    case "$_evnd_input" in
+    case "${_evnd_input}" in
         *"all languages"*|*"all lang"*)
-            typeset -g "$_evnd_var"="$(get_lang_vms)"
-            return $VDE_SUCCESS
+            typeset -g "${_evnd_var}"="$(get_lang_vms)"
+            return ${VDE_SUCCESS}
             ;;
     esac
-    case "$_evnd_input" in
+    case "${_evnd_input}" in
         *"all services"*|*"all svc"*)
-            typeset -g "$_evnd_var"="$(get_service_vms)"
-            return $VDE_SUCCESS
+            typeset -g "${_evnd_var}"="$(get_service_vms)"
+            return ${VDE_SUCCESS}
             ;;
     esac
 
@@ -638,21 +638,21 @@ _extract_vm_names_direct() {
     for _evnd_word in ${(s: :)_evnd_input}; do
         _evnd_clean="${_evnd_word%%[^a-z0-9+-]*}"
         _evnd_clean="${_evnd_clean//[^a-z0-9+-]/}"
-        [[ -z "$_evnd_clean" ]] && continue
+        [[ -z "${_evnd_clean}" ]] && continue
 
-        _evnd_canonical="${VM_ALIAS_MAP[$_evnd_clean]:-}"
-        if [[ -z "$_evnd_canonical" && -n "${VM_TYPE[$_evnd_clean]:-}" ]]; then
-            _evnd_canonical="$_evnd_clean"
+        _evnd_canonical="${VM_ALIAS_MAP[${_evnd_clean}]:-}"
+        if [[ -z "${_evnd_canonical}" && -n "${VM_TYPE[${_evnd_clean}]:-}" ]]; then
+            _evnd_canonical="${_evnd_clean}"
         fi
 
-        if [[ -n "$_evnd_canonical" && -z "${_evnd_seen[$_evnd_canonical]:-}" ]]; then
-            _evnd_seen[$_evnd_canonical]=1
-            _evnd_found+="$_evnd_canonical "
+        if [[ -n "${_evnd_canonical}" && -z "${_evnd_seen[${_evnd_canonical}]:-}" ]]; then
+            _evnd_seen[${_evnd_canonical}]=1
+            _evnd_found+="${_evnd_canonical} "
         fi
     done
 
-    typeset -g "$_evnd_var"="${_evnd_found% }"
-    return $VDE_SUCCESS
+    typeset -g "${_evnd_var}"="${_evnd_found% }"
+    return ${VDE_SUCCESS}
 }
 
 # generate_plan - Generate an execution plan from natural language input
@@ -676,63 +676,63 @@ generate_plan() {
         _t0=$(date +%s%N)
     fi
 
-    local input="$1"
+    local input="${1}"
     # Zsh built-in lowercase — no subshell, no fork
     local il="${input:l}"
 
     # ── Detect intent inline (no subshell) ──────────────────────────────────
     local intent
-    case "$il" in
+    case "${il}" in
         *help*|*hel*|*hepl*|*"what can i do"*|*"how do i use"*)
-            intent="$INTENT_HELP" ;;
+            intent="${INTENT_HELP}" ;;
         *running*|*"status"*|*"staus"*|*"satus"*|*"current state"*)
-            intent="$INTENT_STATUS" ;;
+            intent="${INTENT_STATUS}" ;;
         *" list"*|*"list "*|*"/list"*|*"show "*|*available*|*"what"*"can"*"i"*"create"*|*"which"*"vms"*)
-            intent="$INTENT_LIST_VMS" ;;
+            intent="${INTENT_LIST_VMS}" ;;
         *"how do i connect"*|*"ssh into"*|*"connect to"*|*"connect "*|*conect*)
-            intent="$INTENT_CONNECT" ;;
+            intent="${INTENT_CONNECT}" ;;
         *restart*|*restrat*|*resart*|*reatart*|*reboot*|*rebot*|*rebuild*)
-            intent="$INTENT_RESTART_VM" ;;
+            intent="${INTENT_RESTART_VM}" ;;
         *"create"*|*"make a"*|*"make new"*|*"set up"*|*"add "*)
-            intent="$INTENT_CREATE_VM" ;;
+            intent="${INTENT_CREATE_VM}" ;;
         *start*|*strt*|*strat*|*satrt*|*launch*|*launc*|*boot*)
-            intent="$INTENT_START_VM" ;;
+            intent="${INTENT_START_VM}" ;;
         *stop*|*stp*|*sto*|*stpo*|*sotp*|*shutdown*|*shutdon*|*kill*|*kil*)
-            intent="$INTENT_STOP_VM" ;;
+            intent="${INTENT_STOP_VM}" ;;
         *)
-            intent="$INTENT_HELP" ;;
+            intent="${INTENT_HELP}" ;;
     esac
 
     # ── Extract entities (no subshells) ─────────────────────────────────────
     local vms="" flags="" filter="all"
 
-    case "$intent" in
-        "$INTENT_LIST_VMS")
+    case "${intent}" in
+        "${INTENT_LIST_VMS}")
             # Inline extract_filter
-            case "$il" in
+            case "${il}" in
                 *languages*|*language*|*lang*) filter="lang" ;;
                 *services*|*service*|*svc*)    filter="svc"  ;;
                 *)                             filter="all"  ;;
             esac
             ;;
-        "$INTENT_CREATE_VM"|"$INTENT_START_VM"|"$INTENT_STOP_VM"|"$INTENT_RESTART_VM"|"$INTENT_STATUS"|"$INTENT_CONNECT")
+        "${INTENT_CREATE_VM}"|"${INTENT_START_VM}"|"${INTENT_STOP_VM}"|"${INTENT_RESTART_VM}"|"${INTENT_STATUS}"|"${INTENT_CONNECT}")
             # VM names — direct call, no subshell
-            _extract_vm_names_direct "$il" vms
+            _extract_vm_names_direct "${il}" vms
 
             # Inline extract_flags
             local rebuild="false" nocache="false"
-            case "$il" in *rebuild*|*"re-create"*) rebuild="true" ;; esac
-            case "$il" in *"no-cache"*|*"no cache"*|*"from scratch"*) nocache="true" ;; esac
-            flags="rebuild=$rebuild nocache=$nocache"
+            case "${il}" in *rebuild*|*"re-create"*) rebuild="true" ;; esac
+            case "${il}" in *"no-cache"*|*"no cache"*|*"from scratch"*) nocache="true" ;; esac
+            flags="rebuild=${rebuild} nocache=${nocache}"
             ;;
     esac
 
     # ── Output plan (Zsh string ops — no forks) ─────────────────────────────
-    echo "INTENT:$intent"
+    echo "INTENT:${intent}"
     # vms is already space-separated; convert spaces→newlines not needed for output
-    [[ -n "$vms" ]] && echo "VM:$vms"
-    [[ -n "$flags" ]] && echo "FLAGS:$flags"
-    [[ -n "$filter" ]] && echo "FILTER:$filter"
+    [[ -n "${vms}" ]] && echo "VM:${vms}"
+    [[ -n "${flags}" ]] && echo "FLAGS:${flags}"
+    [[ -n "${filter}" ]] && echo "FILTER:${filter}"
 
     # ── Timing instrumentation ─────────────────────────────────────────────────
     if [[ "${VDE_LOG_LEVEL:-}" == "DEBUG" ]]; then
@@ -741,7 +741,7 @@ generate_plan() {
         vde_log_debug "generate_plan completed in ${_duration}ms" "vde-parser" 2>/dev/null || true
     fi
 
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }
 
 # -----------------------
@@ -767,50 +767,50 @@ execute_plan() {
     # Parse plan from stdin
     while IFS= read -r line; do
         # SECURITY: Validate each line before processing
-        if ! validate_plan_line "$line"; then
+        if ! validate_plan_line "${line}"; then
             log_error "SECURITY: Plan validation failed, aborting execution"
-            return $VDE_ERR_INVALID_INPUT
+            return ${VDE_ERR_INVALID_INPUT}
         fi
         
         local key="${line%%:*}"
         local value="${line#*:}"
 
-        case "$key" in
+        case "${key}" in
             INTENT)
-                intent="$value"
+                intent="${value}"
                 ;;
             VM)
                 local vm_list
-                vm_list=$(echo "$value" | tr '\n' ' ')
+                vm_list=$(echo "${value}" | tr '\n' ' ')
                 # Trim trailing whitespace
-                vm_list=$(echo "$vm_list" | sed 's/[[:space:]]*$//')
-                vms="$vm_list"
+                vm_list=$(echo "${vm_list}" | sed 's/[[:space:]]*$//')
+                vms="${vm_list}"
                 
                 # SECURITY: Validate each VM name (warn but don't fail for flexibility)
                 local vm
                 for vm in ${=vms}; do
-                    if ! validate_vm_name_security "$vm" 2>/dev/null; then
-                        log_error "Warning: VM '$vm' not in known VM list"
+                    if ! validate_vm_name_security "${vm}" 2>/dev/null; then
+                        log_error "Warning: VM '${vm}' not in known VM list"
                     fi
                 done
                 ;;
             FLAGS)
                 # SECURITY: Use safe flag parsing instead of eval
-                # This replaces the dangerous: eval "$value"
-                if ! parse_flags "$value"; then
+                # This replaces the dangerous: eval "${value}"
+                if ! parse_flags "${value}"; then
                     log_error "SECURITY: Invalid FLAGS value, aborting"
-                    return $VDE_ERR_INVALID_INPUT
+                    return ${VDE_ERR_INVALID_INPUT}
                 fi
                 ;;
             FILTER)
                 # SECURITY: Validate filter value
-                case "$value" in
+                case "${value}" in
                     all|lang|svc)
-                        filter="$value"
+                        filter="${value}"
                         ;;
                     *)
-                        log_error "SECURITY: Invalid FILTER value: $value"
-                        return $VDE_ERR_INVALID_INPUT
+                        log_error "SECURITY: Invalid FILTER value: ${value}"
+                        return ${VDE_ERR_INVALID_INPUT}
                         ;;
                 esac
                 ;;
@@ -821,140 +821,140 @@ execute_plan() {
     local vm_count=0
     local vm
     for vm in ${=vms}; do
-        [ -n "$vm" ] && vm_count=$((vm_count + 1))
+        [ -n "${vm}" ] && vm_count=$((vm_count + 1))
     done
 
     # Execute based on intent
-    case "$intent" in
-        "$INTENT_LIST_VMS")
-            vde_list_vms "--$filter"
-            return $?
+    case "${intent}" in
+        "${INTENT_LIST_VMS}")
+            vde_list_vms "--${filter}"
+            return ${?}
             ;;
 
-        "$INTENT_STATUS")
-            if [ $vm_count -eq 0 ]; then
+        "${INTENT_STATUS}")
+            if [ ${vm_count} -eq 0 ]; then
                 vde_get_running_vms
             else
                 for vm in ${=vms}; do
-                    [ -n "$vm" ] || continue
+                    [ -n "${vm}" ] || continue
                     local vm_status
-                    vm_status=$(vde_get_vm_status "$vm")
-                    echo "$vm: $vm_status"
+                    vm_status=$(vde_get_vm_status "${vm}")
+                    echo "${vm}: ${vm_status}"
                 done
             fi
-            return $VDE_SUCCESS
+            return ${VDE_SUCCESS}
             ;;
 
-        "$INTENT_CREATE_VM")
-            if [ $vm_count -eq 0 ]; then
+        "${INTENT_CREATE_VM}")
+            if [ ${vm_count} -eq 0 ]; then
                 log_error "No VM specified. Please specify which VM to create."
-                return $VDE_ERR_INVALID_INPUT
+                return ${VDE_ERR_INVALID_INPUT}
             fi
 
             for vm in ${=vms}; do
-                [ -n "$vm" ] || continue
-                if ! is_known_vm "$vm" >/dev/null 2>&1; then
+                [ -n "${vm}" ] || continue
+                if ! is_known_vm "${vm}" >/dev/null 2>&1; then
                     # Unknown VM type - prompt user to confirm
-                    if ! prompt_confirm_unknown_vm "$vm"; then
-                        return $VDE_ERR_NOT_FOUND
+                    if ! prompt_confirm_unknown_vm "${vm}"; then
+                        return ${VDE_ERR_NOT_FOUND}
                     fi
                     # User confirmed - proceed with creation attempt
                 fi
 
-                if vm_exists "$vm" >/dev/null 2>&1; then
-                    log_info "VM $vm already exists. Skipping creation."
+                if vm_exists "${vm}" >/dev/null 2>&1; then
+                    log_info "VM ${vm} already exists. Skipping creation."
                 else
                     # create-virtual-for handles the actual creation
-                    ./bin/create-virtual-for "$vm"
-                    local create_rc=$?
+                    ./bin/create-virtual-for "${vm}"
+                    local create_rc=${?}
                     # 0=created, 6=exists
-                    if [ $create_rc -ne 0 ] && [ $create_rc -ne 6 ]; then
-                        return $create_rc
+                    if [ ${create_rc} -ne 0 ] && [ ${create_rc} -ne 6 ]; then
+                        return ${create_rc}
                     fi
                 fi
             done
-            return $VDE_SUCCESS
+            return ${VDE_SUCCESS}
             ;;
 
-        "$INTENT_START_VM")
-            if [ $vm_count -eq 0 ]; then
+        "${INTENT_START_VM}")
+            if [ ${vm_count} -eq 0 ]; then
                 log_error "No VM specified. Please specify which VM to start."
-                return $VDE_ERR_INVALID_INPUT
+                return ${VDE_ERR_INVALID_INPUT}
             fi
 
             for vm in ${=vms}; do
-                [ -n "$vm" ] || continue
-                if ! vm_exists "$vm" >/dev/null 2>&1; then
-                    log_error "VM $vm does not exist. Create it first."
-                    return $VDE_ERR_NOT_FOUND
+                [ -n "${vm}" ] || continue
+                if ! vm_exists "${vm}" >/dev/null 2>&1; then
+                    log_error "VM ${vm} does not exist. Create it first."
+                    return ${VDE_ERR_NOT_FOUND}
                 fi
             done
 
             # start-virtual handles starting one or more VMs
             ./bin/start-virtual ${=vms}
-            return $?
+            return ${?}
             ;;
 
-        "$INTENT_STOP_VM")
-            if [ $vm_count -eq 0 ]; then
+        "${INTENT_STOP_VM}")
+            if [ ${vm_count} -eq 0 ]; then
                 log_error "No VM specified. Please specify which VM to stop."
-                return $VDE_ERR_INVALID_INPUT
+                return ${VDE_ERR_INVALID_INPUT}
             fi
 
             # shutdown-virtual handles stopping one or more VMs
             ./bin/shutdown-virtual ${=vms}
-            return $?
+            return ${?}
             ;;
 
-        "$INTENT_RESTART_VM")
-            if [ $vm_count -eq 0 ]; then
+        "${INTENT_RESTART_VM}")
+            if [ ${vm_count} -eq 0 ]; then
                 log_error "No VM specified. Please specify which VM to restart."
-                return $VDE_ERR_INVALID_INPUT
+                return ${VDE_ERR_INVALID_INPUT}
             fi
 
             for vm in ${=vms}; do
-                [ -n "$vm" ] || continue
+                [ -n "${vm}" ] || continue
                 # restart-virtual handles restarting a VM
-                ./bin/restart-virtual "$vm"
+                ./bin/restart-virtual "${vm}"
             done
-            return $VDE_SUCCESS
+            return ${VDE_SUCCESS}
             ;;
 
-        "$INTENT_CONNECT")
-            if [ $vm_count -eq 0 ]; then
+        "${INTENT_CONNECT}")
+            if [ ${vm_count} -eq 0 ]; then
                 log_error "No VM specified. Please specify which VM you want to connect to."
-                return $VDE_ERR_INVALID_INPUT
+                return ${VDE_ERR_INVALID_INPUT}
             fi
 
             for vm in ${=vms}; do
-                [ -n "$vm" ] || continue
+                [ -n "${vm}" ] || continue
                 # ssh-vm handles getting connection info
                 local port
-                port=$(get_vm_info ssh_port "$vm" 2>/dev/null) || port="unknown"
-                echo "VM: $vm  SSH Port: $port"
-                ./bin/ssh-vm "$vm" --show-command
+                port=$(get_vm_info ssh_port "${vm}" 2>/dev/null) || port="unknown"
+                echo "VM: ${vm}  SSH Port: ${port}"
+                ./bin/ssh-vm "${vm}" --show-command
             done
-            return $VDE_SUCCESS
+            return ${VDE_SUCCESS}
             ;;
 
-        "$INTENT_ADD_VM_TYPE")
+        "${INTENT_ADD_VM_TYPE}")
             # add-vm-type handles adding a new type
             # We need to extract the raw arguments from the plan if we had them
             # But generate_plan doesn't yet populate complex args for add_vm_type
             # For now, we assume the user is using the structured CLI for this
             ./bin/add-vm-type ${=vms}
-            return $?
+            return ${?}
             ;;
 
-        "$INTENT_HELP")
+        "${INTENT_HELP}")
             show_parser_help
-            return $VDE_SUCCESS
+            return ${VDE_SUCCESS}
             ;;
 
         *)
-            log_error "Unknown intent: $intent"
+            log_error "Unknown intent: ${intent}"
             show_parser_help
-            return $VDE_ERR_INVALID_INPUT
+            return ${VDE_ERR_INVALID_INPUT}
             ;;
     esac
 }
@@ -1019,5 +1019,5 @@ show_parser_help() {
     echo "  vde-nlp start Python and PostgreSQL"
     echo "  vde-nlp stop everything"
 
-    return $VDE_SUCCESS
+    return ${VDE_SUCCESS}
 }

@@ -10,9 +10,9 @@ if [ "${_VDE_LOG_LOADED:-}" = "1" ]; then
 fi
 _VDE_LOG_LOADED=1
 # Source dependencies
-[[ -z "$VDE_ROOT_DIR" ]] && VDE_ROOT_DIR="${0:a:h:h}"
-[[ -f "$VDE_ROOT_DIR/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/lib/vde-constants"
-[[ -f "$VDE_ROOT_DIR/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/lib/vde-shell-compat"
+[[ -z "${VDE_ROOT_DIR}" ]] && VDE_ROOT_DIR="${0:a:h:h}"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
 
 #===============================================================================
 # Logging Configuration
@@ -50,22 +50,22 @@ _VDE_LOG_LAST_ROTATE_CHECK=0
 # Initialize logging system
 vde_log_init() {
     # Create logs directory if it doesn't exist
-    if [[ ! -d "$VDE_ROOT_DIR/logs" ]]; then
-        command mkdir -p "$VDE_ROOT_DIR/logs" 2>/dev/null || return $VDE_ERR_GENERAL
+    if [[ ! -d "${VDE_ROOT_DIR}/logs" ]]; then
+        command mkdir -p "${VDE_ROOT_DIR}/logs" 2>/dev/null || return ${VDE_ERR_GENERAL}
     fi
     
     # Create log file if outputting to file
-    if [[ "$VDE_LOG_OUTPUT" == "file" ]] && [[ ! -f "$VDE_LOG_FILE" ]]; then
-        command touch "$VDE_LOG_FILE" 2>/dev/null || return $VDE_ERR_GENERAL
-        command chmod 600 "$VDE_LOG_FILE" 2>/dev/null || true
+    if [[ "${VDE_LOG_OUTPUT}" == "file" ]] && [[ ! -f "${VDE_LOG_FILE}" ]]; then
+        command touch "${VDE_LOG_FILE}" 2>/dev/null || return ${VDE_ERR_GENERAL}
+        command chmod 600 "${VDE_LOG_FILE}" 2>/dev/null || true
     fi
     
     # Set log level from environment or default
-    vde_log_set_level "$VDE_LOG_LEVEL"
+    vde_log_set_level "${VDE_LOG_LEVEL}"
     
     # Ensure logs directory is writable
-    if [[ ! -w "$VDE_ROOT_DIR/logs" ]]; then
-        return $VDE_ERR_GENERAL
+    if [[ ! -w "${VDE_ROOT_DIR}/logs" ]]; then
+        return ${VDE_ERR_GENERAL}
     fi
     
     _VDE_LOG_INITIALIZED=1
@@ -80,18 +80,18 @@ vde_log_init() {
 # Args: level (DEBUG|INFO|WARN|ERROR)
 vde_log_set_level() {
     local level="${1:-INFO}"
-    level=$(echo "$level" | tr '[:lower:]' '[:upper:]')
+    level=$(echo "${level}" | tr '[:lower:]' '[:upper:]')
     
-    if [[ -n "${VDE_LOG_LEVELS[$level]}" ]]; then
-        _VDE_LOG_CURRENT_LEVEL="${VDE_LOG_LEVELS[$level]}"
+    if [[ -n "${VDE_LOG_LEVELS[${level}]}" ]]; then
+        _VDE_LOG_CURRENT_LEVEL="${VDE_LOG_LEVELS[${level}]}"
         return 0
     fi
-    return $VDE_ERR_GENERAL
+    return ${VDE_ERR_GENERAL}
 }
 
 # Get current log level name
 vde_log_get_level() {
-    echo "${VDE_LOG_LEVEL_NAMES[$_VDE_LOG_CURRENT_LEVEL + 1]}"
+    echo "${VDE_LOG_LEVEL_NAMES[${_VDE_LOG_CURRENT_LEVEL} + 1]}"
 }
 
 #===============================================================================
@@ -102,15 +102,15 @@ vde_log_get_level() {
 # Args: format (text|json|syslog)
 vde_log_set_format() {
     local format="${1:-text}"
-    format=$(echo "$format" | tr '[:lower:]' '[:upper:]')
+    format=$(echo "${format}" | tr '[:lower:]' '[:upper:]')
     
-    case "$format" in
+    case "${format}" in
         TEXT|JSON|SYSLOG)
-            VDE_LOG_FORMAT=$(echo "$format" | tr '[:upper:]' '[:lower:]')
+            VDE_LOG_FORMAT=$(echo "${format}" | tr '[:upper:]' '[:lower:]')
             return 0
             ;;
         *)
-            return $VDE_ERR_GENERAL
+            return ${VDE_ERR_GENERAL}
             ;;
     esac
 }
@@ -122,16 +122,16 @@ vde_log_set_format() {
 # Configure logging to output to file
 # Args: filepath (optional, defaults to VDE_LOG_FILE)
 vde_log_to_file() {
-    local filepath="${1:-$VDE_LOG_FILE}"
-    VDE_LOG_FILE="$filepath"
+    local filepath="${1:-${VDE_LOG_FILE}}"
+    VDE_LOG_FILE="${filepath}"
     VDE_LOG_OUTPUT="file"
     
     # Ensure directory exists
-    local dir="$(dirname "$filepath")"
-    if [[ ! -d "$dir" ]]; then
-        command mkdir -p "$dir" 2>/dev/null || return $VDE_ERR_GENERAL
+    local dir="$(dirname "${filepath}")"
+    if [[ ! -d "${dir}" ]]; then
+        command mkdir -p "${dir}" 2>/dev/null || return ${VDE_ERR_GENERAL}
     fi
-    command touch "$filepath" 2>/dev/null || return $VDE_ERR_GENERAL
+    command touch "${filepath}" 2>/dev/null || return ${VDE_ERR_GENERAL}
     return 0
 }
 
@@ -154,32 +154,32 @@ vde_log_to_stderr() {
 # Generic logging function
 # Args: level, message, [component], [context...]
 vde_log() {
-    local level="$1"
-    local message="$2"
+    local level="${1}"
+    local message="${2}"
     local component="${3:-vde}"
     local context=""
     
     # Only shift if we have at least 3 args
-    if [[ $# -ge 3 ]]; then
+    if [[ ${#} -ge 3 ]]; then
         shift 3
-        context="$@"
+        context="${@}"
     fi
     
     # Validate level
-    level=$(echo "$level" | tr '[:lower:]' '[:upper:]')
-    if [[ -z "${VDE_LOG_LEVELS[$level]}" ]]; then
+    level=$(echo "${level}" | tr '[:lower:]' '[:upper:]')
+    if [[ -z "${VDE_LOG_LEVELS[${level}]}" ]]; then
         level="INFO"
     fi
     
     # Check if we should log this level
-    local level_num="${VDE_LOG_LEVELS[$level]}"
-    if [[ "$level_num" -lt "$_VDE_LOG_CURRENT_LEVEL" ]]; then
+    local level_num="${VDE_LOG_LEVELS[${level}]}"
+    if [[ "${level_num}" -lt "${_VDE_LOG_CURRENT_LEVEL}" ]]; then
         return 0
     fi
     
     # Ensure initialized
-    if [[ "$_VDE_LOG_INITIALIZED" -eq 0 ]]; then
-        vde_log_init || return $VDE_ERR_GENERAL
+    if [[ "${_VDE_LOG_INITIALIZED}" -eq 0 ]]; then
+        vde_log_init || return ${VDE_ERR_GENERAL}
     fi
     
     # Generate timestamp (ISO 8601)
@@ -188,15 +188,15 @@ vde_log() {
     
     # Format based on output type
     local output
-    case "$VDE_LOG_FORMAT" in
+    case "${VDE_LOG_FORMAT}" in
         json)
-            output=$(vde_log_format_json "$timestamp" "$level" "$component" "$message" "$context")
+            output=$(vde_log_format_json "${timestamp}" "${level}" "${component}" "${message}" "${context}")
             ;;
         syslog)
-            output=$(vde_log_format_syslog "$timestamp" "$level" "$component" "$message")
+            output=$(vde_log_format_syslog "${timestamp}" "${level}" "${component}" "${message}")
             ;;
         *)
-            output=$(vde_log_format_text "$timestamp" "$level" "$component" "$message")
+            output=$(vde_log_format_text "${timestamp}" "${level}" "${component}" "${message}")
             ;;
     esac
     
@@ -204,15 +204,15 @@ vde_log() {
     vde_log_check_rotation
     
     # Write output
-    case "$VDE_LOG_OUTPUT" in
+    case "${VDE_LOG_OUTPUT}" in
         file)
-            echo "$output" >> "$VDE_LOG_FILE"
+            echo "${output}" >> "${VDE_LOG_FILE}"
             ;;
         stdout)
-            echo "$output"
+            echo "${output}"
             ;;
         stderr)
-            echo "$output" >&2
+            echo "${output}" >&2
             ;;
     esac
     
@@ -221,19 +221,19 @@ vde_log() {
 
 # Level-specific logging functions
 vde_log_debug() {
-    vde_log "DEBUG" "$@"
+    vde_log "DEBUG" "${@}"
 }
 
 vde_log_info() {
-    vde_log "INFO" "$@"
+    vde_log "INFO" "${@}"
 }
 
 vde_log_warn() {
-    vde_log "WARN" "$@"
+    vde_log "WARN" "${@}"
 }
 
 vde_log_error() {
-    vde_log "ERROR" "$@"
+    vde_log "ERROR" "${@}"
 }
 
 #===============================================================================
@@ -242,48 +242,48 @@ vde_log_error() {
 
 # Format log entry as JSON
 vde_log_format_json() {
-    local timestamp="$1"
-    local level="$2"
-    local component="$3"
-    local message="$4"
-    local context="$5"
+    local timestamp="${1}"
+    local level="${2}"
+    local component="${3}"
+    local message="${4}"
+    local context="${5}"
     
     # Escape special characters for JSON
-    message=$(echo "$message" | command sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\r/\\r/g; s/\n/\\n/g')
+    message=$(echo "${message}" | command sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\r/\\r/g; s/\n/\\n/g')
     
     # Build JSON object
-    local json="{\"timestamp\":\"$timestamp\",\"level\":\"$level\",\"component\":\"$component\",\"message\":\"$message\""
+    local json="{\"timestamp\":\"${timestamp}\",\"level\":\"${level}\",\"component\":\"${component}\",\"message\":\"${message}\""
     
-    if [[ -n "$context" ]]; then
-        context=$(echo "$context" | command sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\r/\\r/g; s/\n/\\n/g')
-        json="$json,\"context\":\"$context\""
+    if [[ -n "${context}" ]]; then
+        context=$(echo "${context}" | command sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\r/\\r/g; s/\n/\\n/g')
+        json="${json},\"context\":\"${context}\""
     fi
     
-    json="$json}"
-    echo "$json"
+    json="${json}}"
+    echo "${json}"
 }
 
 # Format log entry as syslog-style text
 vde_log_format_syslog() {
-    local timestamp="$1"
-    local level="$2"
-    local component="$3"
-    local message="$4"
+    local timestamp="${1}"
+    local level="${2}"
+    local component="${3}"
+    local message="${4}"
     
     # Syslog format: timestamp level component: message
-    echo "$timestamp $level $component: $message"
+    echo "${timestamp} ${level} ${component}: ${message}"
 }
 
 # Format log entry as human-readable text
 vde_log_format_text() {
-    local timestamp="$1"
-    local level="$2"
-    local component="$3"
-    local message="$4"
+    local timestamp="${1}"
+    local level="${2}"
+    local component="${3}"
+    local message="${4}"
     
     # Text format with severity indicators
     local indicator
-    case "$level" in
+    case "${level}" in
         DEBUG) indicator="[DEBUG]" ;;
         INFO)  indicator="[INFO ]" ;;
         WARN)  indicator="[WARN ]" ;;
@@ -291,7 +291,7 @@ vde_log_format_text() {
         *)     indicator="[????]" ;;
     esac
     
-    echo "$timestamp $indicator [$component] $message"
+    echo "${timestamp} ${indicator} [${component}] ${message}"
 }
 
 #===============================================================================
@@ -300,13 +300,13 @@ vde_log_format_text() {
 
 # Check if log rotation is needed
 vde_log_check_rotation() {
-    if [[ "$VDE_LOG_RETENTION_POLICY" != "disabled" ]]; then
+    if [[ "${VDE_LOG_RETENTION_POLICY}" != "disabled" ]]; then
         # Check based on size
-        if [[ "$VDE_LOG_RETENTION_POLICY" == "size" ]] || [[ "$VDE_LOG_RETENTION_POLICY" == "both" ]]; then
-            if [[ -f "$VDE_LOG_FILE" ]]; then
+        if [[ "${VDE_LOG_RETENTION_POLICY}" == "size" ]] || [[ "${VDE_LOG_RETENTION_POLICY}" == "both" ]]; then
+            if [[ -f "${VDE_LOG_FILE}" ]]; then
                 local size
-                size=$(command stat -f%z "$VDE_LOG_FILE" 2>/dev/null || command stat -c%s "$VDE_LOG_FILE" 2>/dev/null || echo 0)
-                if [[ "$size" -ge "$VDE_LOG_MAX_SIZE" ]]; then
+                size=$(command stat -f%z "${VDE_LOG_FILE}" 2>/dev/null || command stat -c%s "${VDE_LOG_FILE}" 2>/dev/null || echo 0)
+                if [[ "${size}" -ge "${VDE_LOG_MAX_SIZE}" ]]; then
                     vde_log_rotate
                 fi
             fi
@@ -315,10 +315,10 @@ vde_log_check_rotation() {
         # Check based on time (daily)
         local current_date
         current_date=$(date +%Y%m%d 2>/dev/null || echo "unknown")
-        if [[ "$VDE_LOG_RETENTION_POLICY" == "time" ]] || [[ "$VDE_LOG_RETENTION_POLICY" == "both" ]]; then
-            if [[ "$current_date" != "$_VDE_LOG_LAST_ROTATE_CHECK" ]]; then
+        if [[ "${VDE_LOG_RETENTION_POLICY}" == "time" ]] || [[ "${VDE_LOG_RETENTION_POLICY}" == "both" ]]; then
+            if [[ "${current_date}" != "${_VDE_LOG_LAST_ROTATE_CHECK}" ]]; then
                 vde_log_rotate
-                _VDE_LOG_LAST_ROTATE_CHECK="$current_date"
+                _VDE_LOG_LAST_ROTATE_CHECK="${current_date}"
             fi
         fi
     fi
@@ -326,13 +326,13 @@ vde_log_check_rotation() {
 
 # Perform log rotation
 vde_log_rotate() {
-    if [[ ! -f "$VDE_LOG_FILE" ]]; then
+    if [[ ! -f "${VDE_LOG_FILE}" ]]; then
         return 0
     fi
     
     # Ensure logs directory exists
-    local log_dir="$(dirname "$VDE_LOG_FILE")"
-    [[ ! -d "$log_dir" ]] && command mkdir -p "$log_dir" 2>/dev/null || return $VDE_ERR_GENERAL
+    local log_dir="$(dirname "${VDE_LOG_FILE}")"
+    [[ ! -d "${log_dir}" ]] && command mkdir -p "${log_dir}" 2>/dev/null || return ${VDE_ERR_GENERAL}
     
     # Generate timestamp for rotated file
     local timestamp
@@ -343,17 +343,17 @@ vde_log_rotate() {
     
     # Check if gzip is available
     if command -v gzip >/dev/null 2>&1; then
-        command gzip -c "$VDE_LOG_FILE" > "$rotated_file" 2>/dev/null || {
+        command gzip -c "${VDE_LOG_FILE}" > "${rotated_file}" 2>/dev/null || {
             # Fallback: just rename if gzip fails
-            command mv "$VDE_LOG_FILE" "${VDE_LOG_FILE}.${timestamp}" 2>/dev/null
+            command mv "${VDE_LOG_FILE}" "${VDE_LOG_FILE}.${timestamp}" 2>/dev/null
         }
     else
-        command mv "$VDE_LOG_FILE" "${VDE_LOG_FILE}.${timestamp}" 2>/dev/null
+        command mv "${VDE_LOG_FILE}" "${VDE_LOG_FILE}.${timestamp}" 2>/dev/null
     fi
     
     # Create new log file
-    command touch "$VDE_LOG_FILE" 2>/dev/null || return $VDE_ERR_GENERAL
-    command chmod 600 "$VDE_LOG_FILE" 2>/dev/null || true
+    command touch "${VDE_LOG_FILE}" 2>/dev/null || return ${VDE_ERR_GENERAL}
+    command chmod 600 "${VDE_LOG_FILE}" 2>/dev/null || true
     
     # Clean up old logs
     vde_log_cleanup
@@ -363,23 +363,23 @@ vde_log_rotate() {
 
 # Clean up old log files
 vde_log_cleanup() {
-    local log_dir="$(dirname "$VDE_LOG_FILE")"
+    local log_dir="$(dirname "${VDE_LOG_FILE}")"
     
-    if [[ ! -d "$log_dir" ]]; then
+    if [[ ! -d "${log_dir}" ]]; then
         return 0
     fi
     
-    local base_name="$(basename "$VDE_LOG_FILE")"
+    local base_name="$(basename "${VDE_LOG_FILE}")"
     
     # Find and remove files older than retention period
     if command -v find >/dev/null 2>&1; then
         # Calculate cutoff date
         local cutoff_date
-        cutoff_date=$(date -d "$VDE_LOG_MAX_DAYS days ago" +%Y%m%d 2>/dev/null || date -v-"${VDE_LOG_MAX_DAYS}d" +%Y%m%d 2>/dev/null || echo "19700101")
+        cutoff_date=$(date -d "${VDE_LOG_MAX_DAYS} days ago" +%Y%m%d 2>/dev/null || date -v-"${VDE_LOG_MAX_DAYS}d" +%Y%m%d 2>/dev/null || echo "19700101")
         
         # Remove old rotated log files
-        command find "$log_dir" -name "${base_name}.*.gz" -mtime +"$VDE_LOG_MAX_DAYS" -delete 2>/dev/null || true
-        command find "$log_dir" -name "${base_name}.*" ! -name "$base_name" -mtime +"$VDE_LOG_MAX_DAYS" -delete 2>/dev/null || true
+        command find "${log_dir}" -name "${base_name}.*.gz" -mtime +"${VDE_LOG_MAX_DAYS}" -delete 2>/dev/null || true
+        command find "${log_dir}" -name "${base_name}.*" ! -name "${base_name}" -mtime +"${VDE_LOG_MAX_DAYS}" -delete 2>/dev/null || true
     fi
     
     return 0
@@ -394,23 +394,23 @@ vde_log_cleanup() {
 vde_log_recent() {
     local count="${1:-50}"
     
-    if [[ -f "$VDE_LOG_FILE" ]]; then
-        command tail -n "$count" "$VDE_LOG_FILE"
+    if [[ -f "${VDE_LOG_FILE}" ]]; then
+        command tail -n "${count}" "${VDE_LOG_FILE}"
     fi
 }
 
 # Search logs
 # Args: pattern [files...]
 vde_log_grep() {
-    local pattern="$1"
+    local pattern="${1}"
     
     # Only shift if we have more than 1 arg
-    if [[ $# -gt 1 ]]; then
+    if [[ ${#} -gt 1 ]]; then
         shift
     fi
     
-    if [[ -f "$VDE_LOG_FILE" ]]; then
-        command grep -E "$pattern" "$VDE_LOG_FILE" "$@"
+    if [[ -f "${VDE_LOG_FILE}" ]]; then
+        command grep -E "${pattern}" "${VDE_LOG_FILE}" "${@}"
     fi
 }
 
@@ -418,8 +418,8 @@ vde_log_grep() {
 vde_log_errors() {
     local count="${1:-100}"
     
-    if [[ -f "$VDE_LOG_FILE" ]]; then
-        command grep -E "\[ERROR\]" "$VDE_LOG_FILE" | command tail -n "$count"
+    if [[ -f "${VDE_LOG_FILE}" ]]; then
+        command grep -E "\[ERROR\]" "${VDE_LOG_FILE}" | command tail -n "${count}"
     fi
 }
 
@@ -430,17 +430,17 @@ vde_log_errors() {
 # Log function entry (for debugging)
 vde_log_function() {
     local func_name="${FUNCNAME[1]:-unknown}"
-    vde_log_debug "Entering function: $func_name" "core"
+    vde_log_debug "Entering function: ${func_name}" "core"
 }
 
 # Log function exit (for debugging)
 vde_log_function_return() {
     local func_name="${FUNCNAME[1]:-unknown}"
-    local exit_code="$?"
-    if [[ "$exit_code" -eq 0 ]]; then
-        vde_log_debug "Exiting function: $func_name (success)" "core"
+    local exit_code="${?}"
+    if [[ "${exit_code}" -eq 0 ]]; then
+        vde_log_debug "Exiting function: ${func_name} (success)" "core"
     else
-        vde_log_debug "Exiting function: $func_name (exit code: $exit_code)" "core"
+        vde_log_debug "Exiting function: ${func_name} (exit code: ${exit_code})" "core"
     fi
 }
 
@@ -448,13 +448,13 @@ vde_log_function_return() {
 vde_log_export() {
     local output_file="${1:-${VDE_ROOT_DIR}/logs/vde-exported.json}"
     
-    if [[ -f "$VDE_LOG_FILE" ]]; then
+    if [[ -f "${VDE_LOG_FILE}" ]]; then
         vde_log_set_format json
-        command cp "$VDE_LOG_FILE" "$output_file"
+        command cp "${VDE_LOG_FILE}" "${output_file}"
         vde_log_set_format text
         return 0
     fi
-    return $VDE_ERR_GENERAL
+    return ${VDE_ERR_GENERAL}
 }
 
 #===============================================================================
@@ -463,7 +463,7 @@ vde_log_export() {
 
 # Legacy log function (maps to vde_log_info)
 _vde_log() {
-    vde_log_info "$@"
+    vde_log_info "${@}"
 }
 
 # Export functions for backward compatibility

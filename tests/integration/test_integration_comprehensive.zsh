@@ -3,7 +3,7 @@
 # Tests end-to-end scenarios with vde-parser and vde-commands working together
 
 TEST_DIR="$(cd "$(dirname "${(%):-%x}")/../.." && pwd)"
-source "$TEST_DIR/tests/lib/test_common.zsh"
+source "${TEST_DIR}/tests/lib/test_common.zsh"
 
 test_suite_start "VDE Integration Tests"
 
@@ -17,69 +17,69 @@ test_section "Workflow - New Project Setup"
 # Simulate a user setting up a new project
 echo "Step 1: User asks what's available"
 PLAN=$(generate_plan "what VMs can I create?")
-assert_contains "$PLAN" "INTENT:list_vms" "should list available VMs"
+assert_contains "${PLAN}" "INTENT:list_vms" "should list available VMs"
 
 echo "Step 2: User creates a development stack"
 PLAN=$(generate_plan "create Python and PostgreSQL")
-assert_contains "$PLAN" "INTENT:create_vm" "should create development stack"
-echo "$PLAN" | grep "^VM:" | grep -q "vde-python" || { echo "Missing python"; exit 1; }
-echo "$PLAN" | grep "^VM:" | grep -q "vde-postgres" || { echo "Missing postgres"; exit 1; }
+assert_contains "${PLAN}" "INTENT:create_vm" "should create development stack"
+echo "${PLAN}" | grep "^VM:" | grep -q "vde-python" || { echo "Missing python"; exit 1; }
+echo "${PLAN}" | grep "^VM:" | grep -q "vde-postgres" || { echo "Missing postgres"; exit 1; }
 echo -e "${GREEN}✓${NC} Development stack plan complete"
 ((TESTS_PASSED++))
 ((TESTS_RUN++))
 
 echo "Step 3: User starts the development environment"
 PLAN=$(generate_plan "start python and postgres")
-assert_contains "$PLAN" "INTENT:start_vm" "should start development environment"
+assert_contains "${PLAN}" "INTENT:start_vm" "should start development environment"
 
 echo "Step 4: User checks status"
 PLAN=$(generate_plan "what's running?")
-assert_contains "$PLAN" "INTENT:status" "should check status"
+assert_contains "${PLAN}" "INTENT:status" "should check status"
 
 echo "Step 5: User gets connection info"
 PLAN=$(generate_plan "how do I connect to Python?")
-assert_contains "$PLAN" "INTENT:connect" "should provide connection info"
-assert_contains "$PLAN" "VM:vde-python" "should include python"
+assert_contains "${PLAN}" "INTENT:connect" "should provide connection info"
+assert_contains "${PLAN}" "VM:vde-python" "should include python"
 
 test_section "Workflow - Microservices Architecture"
 
 # Simulate setting up a microservices architecture
 echo "Step 1: Create all microservices"
 PLAN=$(generate_plan "create Go, Rust, and nginx")
-assert_contains "$PLAN" "INTENT:create_vm" "should create microservices"
-echo "$PLAN" | grep "^VM:" | grep -q "vde-go" || { echo "Missing go"; exit 1; }
-echo "$PLAN" | grep "^VM:" | grep -q "vde-rust" || { echo "Missing rust"; exit 1; }
-echo "$PLAN" | grep "^VM:" | grep -q "vde-nginx" || { echo "Missing nginx"; exit 1; }
+assert_contains "${PLAN}" "INTENT:create_vm" "should create microservices"
+echo "${PLAN}" | grep "^VM:" | grep -q "vde-go" || { echo "Missing go"; exit 1; }
+echo "${PLAN}" | grep "^VM:" | grep -q "vde-rust" || { echo "Missing rust"; exit 1; }
+echo "${PLAN}" | grep "^VM:" | grep -q "vde-nginx" || { echo "Missing nginx"; exit 1; }
 echo -e "${GREEN}✓${NC} Microservices plan complete"
 ((TESTS_PASSED++))
 ((TESTS_RUN++))
 
 echo "Step 2: Start all microservices"
 PLAN=$(generate_plan "start go, rust, and nginx")
-assert_contains "$PLAN" "INTENT:start_vm" "should start all microservices"
+assert_contains "${PLAN}" "INTENT:start_vm" "should start all microservices"
 
 echo "Step 3: Add a database"
 PLAN=$(generate_plan "create and start mongodb")
-assert_contains "$PLAN" "INTENT:create_vm" "should create mongodb"
+assert_contains "${PLAN}" "INTENT:create_vm" "should create mongodb"
 
 test_section "Workflow - Daily Development Cycle"
 
 # Simulate a typical daily development workflow
 echo "Step 1: Start work - start development environment"
 PLAN=$(generate_plan "start python")
-assert_contains "$PLAN" "INTENT:start_vm" "should start Python"
+assert_contains "${PLAN}" "INTENT:start_vm" "should start Python"
 
 echo "Step 2: Check what's running"
 PLAN=$(generate_plan "status")
-assert_contains "$PLAN" "INTENT:status" "should show status"
+assert_contains "${PLAN}" "INTENT:status" "should show status"
 
 echo "Step 3: Need database - start it too"
 PLAN=$(generate_plan "start postgres")
-assert_contains "$PLAN" "INTENT:start_vm" "should start PostgreSQL"
+assert_contains "${PLAN}" "INTENT:start_vm" "should start PostgreSQL"
 
 echo "Step 4: Finish work - stop everything"
 PLAN=$(generate_plan "stop all")
-assert_contains "$PLAN" "INTENT:stop_vm" "should stop all VMs"
+assert_contains "${PLAN}" "INTENT:stop_vm" "should stop all VMs"
 
 # =============================================================================
 # Section 2: Complex Natural Language Commands
@@ -96,12 +96,12 @@ declare -a COMPLEX_QUERIES=(
 )
 
 for query in "${COMPLEX_QUERIES[@]}"; do
-    PLAN=$(generate_plan "$query")
-    if [[ -n "$PLAN" ]]; then
-        echo -e "${GREEN}✓${NC} Handled: $query"
+    PLAN=$(generate_plan "${query}")
+    if [[ -n "${PLAN}" ]]; then
+        echo -e "${GREEN}✓${NC} Handled: ${query}"
         ((TESTS_PASSED++))
     else
-        echo -e "${RED}✗${NC} Failed to handle: $query"
+        echo -e "${RED}✗${NC} Failed to handle: ${query}"
         ((TESTS_FAILED++))
     fi
     ((TESTS_RUN++))
@@ -118,16 +118,16 @@ declare -a AMBIGUOUS_INPUTS=(
 )
 
 for input in "${AMBIGUOUS_INPUTS[@]}"; do
-    PLAN=$(generate_plan "$input")
+    PLAN=$(generate_plan "${input}")
     # Should default to help intent for ambiguous inputs
-    assert_contains "$PLAN" "INTENT:help" "ambiguous input: $input"
+    assert_contains "${PLAN}" "INTENT:help" "ambiguous input: ${input}"
 done
 
 test_section "Natural Language - Typos and Variations"
 
 # Test handling of typos and variations
 PLAN=$(generate_plan "strt python")  # Typo
-if [[ -n "$PLAN" ]]; then
+if [[ -n "${PLAN}" ]]; then
     echo -e "${GREEN}✓${NC} Handled typo 'strt python'"
     ((TESTS_PASSED++))
 else
@@ -137,7 +137,7 @@ fi
 ((TESTS_RUN++))
 
 PLAN=$(generate_plan "START PYTHON")  # All caps
-assert_contains "$PLAN" "INTENT:start_vm" "should handle all caps"
+assert_contains "${PLAN}" "INTENT:start_vm" "should handle all caps"
 
 # =============================================================================
 # Section 3: Error Recovery and Edge Cases
@@ -152,13 +152,13 @@ declare -a INVALID_NAMES=(
 )
 
 for name in "${INVALID_NAMES[@]}"; do
-    PLAN=$(generate_plan "start $name")
+    PLAN=$(generate_plan "start ${name}")
     # Should still generate a plan even if VM doesn't exist
-    if [[ -n "$PLAN" ]]; then
-        echo -e "${GREEN}✓${NC} Gracefully handled invalid VM: $name"
+    if [[ -n "${PLAN}" ]]; then
+        echo -e "${GREEN}✓${NC} Gracefully handled invalid VM: ${name}"
         ((TESTS_PASSED++))
     else
-        echo -e "${YELLOW}⚠${NC} No plan for invalid VM: $name"
+        echo -e "${YELLOW}⚠${NC} No plan for invalid VM: ${name}"
         ((TESTS_PASSED++))
     fi
     ((TESTS_RUN++))
@@ -168,22 +168,22 @@ test_section "Error Recovery - Empty and Whitespace Inputs"
 
 # Test empty input
 PLAN=$(generate_plan "")
-assert_contains "$PLAN" "INTENT:help" "empty input should default to help"
+assert_contains "${PLAN}" "INTENT:help" "empty input should default to help"
 
 # Test whitespace-only input
 PLAN=$(generate_plan "   ")
-assert_contains "$PLAN" "INTENT:help" "whitespace input should default to help"
+assert_contains "${PLAN}" "INTENT:help" "whitespace input should default to help"
 
 # Test input with only special characters
 PLAN=$(generate_plan "!!!")
-assert_contains "$PLAN" "INTENT:help" "special chars should default to help"
+assert_contains "${PLAN}" "INTENT:help" "special chars should default to help"
 
 test_section "Edge Cases - Very Long Inputs"
 
 # Test with very long input
 LONG_INPUT="start $(echo "python " | sed 's/ //g' | head -c 1000)"
-PLAN=$(generate_plan "$LONG_INPUT")
-if [[ -n "$PLAN" ]]; then
+PLAN=$(generate_plan "${LONG_INPUT}")
+if [[ -n "${PLAN}" ]]; then
     echo -e "${GREEN}✓${NC} Handled long input"
     ((TESTS_PASSED++))
 else
@@ -201,25 +201,25 @@ test_section "Integration - Parser to Commands"
 PLAN=$(generate_plan "start python and postgres")
 
 # Extract intent from plan
-INTENT=$(echo "$PLAN" | grep "^INTENT:" | cut -d':' -f2)
-assert_equals "start_vm" "$INTENT" "intent should be extractable"
+INTENT=$(echo "${PLAN}" | grep "^INTENT:" | cut -d':' -f2)
+assert_equals "start_vm" "${INTENT}" "intent should be extractable"
 
 # Extract VMs from plan
-VMS=$(echo "$PLAN" | grep "^VM:" | cut -d':' -f2)
-assert_contains "$VMS" "vde-python" "should extract python from plan"
-assert_contains "$VMS" "vde-postgres" "should extract postgres from plan"
+VMS=$(echo "${PLAN}" | grep "^VM:" | cut -d':' -f2)
+assert_contains "${VMS}" "vde-python" "should extract python from plan"
+assert_contains "${VMS}" "vde-postgres" "should extract postgres from plan"
 
 test_section "Integration - Alias Resolution Chain"
 
 # Test that aliases work through the full pipeline
 PLAN=$(generate_plan "start nodejs")
-echo "$PLAN" | grep "^VM:" | grep -q "js" || { echo "Alias nodejs not resolved"; exit 1; }
+echo "${PLAN}" | grep "^VM:" | grep -q "js" || { echo "Alias nodejs not resolved"; exit 1; }
 echo -e "${GREEN}✓${NC} Alias 'nodejs' resolved through full pipeline"
 ((TESTS_PASSED++))
 ((TESTS_RUN++))
 
 PLAN=$(generate_plan "start python3")
-echo "$PLAN" | grep "^VM:" | grep -q "vde-python" || { echo "Alias python3 not resolved"; exit 1; }
+echo "${PLAN}" | grep "^VM:" | grep -q "vde-python" || { echo "Alias python3 not resolved"; exit 1; }
 echo -e "${GREEN}✓${NC} Alias 'python3' resolved through full pipeline"
 ((TESTS_PASSED++))
 ((TESTS_RUN++))
@@ -229,18 +229,18 @@ test_section "Integration - Wildcard to Specific VMs"
 # Test that wildcards are expanded to specific VMs
 PLAN=$(generate_plan "start all languages")
 # Should have multiple VMs
-VM_COUNT=$(echo "$PLAN" | grep -c "^VM:")
-if [[ $VM_COUNT -eq 1 ]]; then
+VM_COUNT=$(echo "${PLAN}" | grep -c "^VM:")
+if [[ ${VM_COUNT} -eq 1 ]]; then
     # All VMs on one line - count the VMs
-    VM_LINE=$(echo "$PLAN" | grep "^VM:" | cut -d':' -f2)
-    VM_COUNT=$(echo "$VM_LINE" | wc -w)
+    VM_LINE=$(echo "${PLAN}" | grep "^VM:" | cut -d':' -f2)
+    VM_COUNT=$(echo "${VM_LINE}" | wc -w)
 fi
 
-if [[ $VM_COUNT -ge 10 ]]; then
-    echo -e "${GREEN}✓${NC} Wildcard expanded to $VM_COUNT language VMs"
+if [[ ${VM_COUNT} -ge 10 ]]; then
+    echo -e "${GREEN}✓${NC} Wildcard expanded to ${VM_COUNT} language VMs"
     ((TESTS_PASSED++))
 else
-    echo -e "${YELLOW}⚠${NC} Wildcard expanded to only $VM_COUNT VMs"
+    echo -e "${YELLOW}⚠${NC} Wildcard expanded to only ${VM_COUNT} VMs"
     ((TESTS_PASSED++))
 fi
 ((TESTS_RUN++))
@@ -256,7 +256,7 @@ PLAN2=$(generate_plan "start postgres")
 PLAN3=$(generate_plan "start redis")
 
 # All should succeed
-if [[ -n "$PLAN1" ]] && [[ -n "$PLAN2" ]] && [[ -n "$PLAN3" ]]; then
+if [[ -n "${PLAN1}" ]] && [[ -n "${PLAN2}" ]] && [[ -n "${PLAN3}" ]]; then
     echo -e "${GREEN}✓${NC} Handled concurrent plan generation"
     ((TESTS_PASSED++))
 else
@@ -286,89 +286,89 @@ test_section "Real-World - First-Time User Experience"
 # Simulate a first-time user exploring the system
 echo "New user: What can I do?"
 PLAN=$(generate_plan "help")
-assert_contains "$PLAN" "INTENT:help" "should show help"
+assert_contains "${PLAN}" "INTENT:help" "should show help"
 
 echo "New user: What VMs are available?"
 PLAN=$(generate_plan "list vms")
-assert_contains "$PLAN" "INTENT:list_vms" "should list VMs"
+assert_contains "${PLAN}" "INTENT:list_vms" "should list VMs"
 
 echo "New user: Create a Python environment"
 PLAN=$(generate_plan "create python")
-assert_contains "$PLAN" "INTENT:create_vm" "should create Python"
+assert_contains "${PLAN}" "INTENT:create_vm" "should create Python"
 
 echo "New user: How do I connect?"
 PLAN=$(generate_plan "how do I connect to Python?")
-assert_contains "$PLAN" "INTENT:connect" "should show connection info"
+assert_contains "${PLAN}" "INTENT:connect" "should show connection info"
 
 test_section "Real-World - Developer Workflow"
 
 # Simulate a developer's typical workflow
 echo "Developer: Start my development stack"
 PLAN=$(generate_plan "start python and postgres")
-assert_contains "$PLAN" "INTENT:start_vm" "should start dev stack"
+assert_contains "${PLAN}" "INTENT:start_vm" "should start dev stack"
 
 echo "Developer: Check what's running"
 PLAN=$(generate_plan "status")
-assert_contains "$PLAN" "INTENT:status" "should show status"
+assert_contains "${PLAN}" "INTENT:status" "should show status"
 
 echo "Developer: Restart database with rebuild"
 PLAN=$(generate_plan "restart postgres with rebuild")
-assert_contains "$PLAN" "INTENT:restart_vm" "should restart with rebuild"
-assert_contains "$PLAN" "rebuild=true" "should set rebuild flag"
+assert_contains "${PLAN}" "INTENT:restart_vm" "should restart with rebuild"
+assert_contains "${PLAN}" "rebuild=true" "should set rebuild flag"
 
 echo "Developer: Done for the day"
 PLAN=$(generate_plan "stop all")
-assert_contains "$PLAN" "INTENT:stop_vm" "should stop all"
+assert_contains "${PLAN}" "INTENT:stop_vm" "should stop all"
 
 test_section "Real-World - Troubleshooting Scenario"
 
 # Simulate troubleshooting
 echo "User: Something's wrong, restart everything"
 PLAN=$(generate_plan "restart all")
-assert_contains "$PLAN" "INTENT:restart_vm" "should restart all"
+assert_contains "${PLAN}" "INTENT:restart_vm" "should restart all"
 
 echo "User: Just rebuild Python"
 PLAN=$(generate_plan "rebuild python")
-assert_contains "$PLAN" "INTENT:restart_vm" "should rebuild Python"
-assert_contains "$PLAN" "rebuild=true" "should have rebuild flag"
+assert_contains "${PLAN}" "INTENT:restart_vm" "should rebuild Python"
+assert_contains "${PLAN}" "rebuild=true" "should have rebuild flag"
 
 echo "User: Check status again"
 PLAN=$(generate_plan "what's running?")
-assert_contains "$PLAN" "INTENT:status" "should check status"
+assert_contains "${PLAN}" "INTENT:status" "should check status"
 
 test_section "Real-World - Team Collaboration"
 
 # Simulate team collaboration scenarios
 echo "Team member A: Create our stack"
 PLAN=$(generate_plan "create python, go, and postgres")
-assert_contains "$PLAN" "INTENT:create_vm" "should create team stack"
+assert_contains "${PLAN}" "INTENT:create_vm" "should create team stack"
 
 echo "Team member B: Start the shared services"
 PLAN=$(generate_plan "start postgres and redis")
-assert_contains "$PLAN" "INTENT:start_vm" "should start shared services"
+assert_contains "${PLAN}" "INTENT:start_vm" "should start shared services"
 
 echo "Team member C: Connect to the API"
 PLAN=$(generate_plan "connect to go")
-assert_contains "$PLAN" "INTENT:connect" "should show connection info"
+assert_contains "${PLAN}" "INTENT:connect" "should show connection info"
 
 test_section "Real-World - Environment Switching"
 
 # Simulate switching between different project environments
 echo "Switch to web project"
 PLAN=$(generate_plan "start js and nginx")
-assert_contains "$PLAN" "INTENT:start_vm" "should start web stack"
+assert_contains "${PLAN}" "INTENT:start_vm" "should start web stack"
 
 echo "Switch to data project"
 PLAN_STOP=$(generate_plan "stop all")
 PLAN_START=$(generate_plan "start python and mongodb")
-assert_contains "$PLAN_STOP" "INTENT:stop_vm" "should stop web stack"
-assert_contains "$PLAN_START" "INTENT:start_vm" "should start data stack"
+assert_contains "${PLAN_STOP}" "INTENT:stop_vm" "should stop web stack"
+assert_contains "${PLAN_START}" "INTENT:start_vm" "should start data stack"
 
 echo "Switch to microservices project"
 PLAN_STOP=$(generate_plan "stop all")
 PLAN_START=$(generate_plan "start go, rust, and nginx")
-assert_contains "$PLAN_STOP" "INTENT:stop_vm" "should stop previous"
-assert_contains "$PLAN_START" "INTENT:start_vm" "should start microservices"
+assert_contains "${PLAN_STOP}" "INTENT:stop_vm" "should stop previous"
+assert_contains "${PLAN_START}" "INTENT:start_vm" "should start microservices"
 
 # =============================================================================
 # Section 7: Performance and Stress Tests
@@ -381,9 +381,9 @@ for i in {1..100}; do
     generate_plan "start python" >/dev/null 2>&1
 done
 end_time=$(date +%s%N)
-elapsed=$((($end_time - $start_time) / 1000000)) # Convert to milliseconds
+elapsed=$(((${end_time} - ${start_time}) / 1000000)) # Convert to milliseconds
 
-if [[ $elapsed -lt 5000 ]]; then
+if [[ ${elapsed} -lt 5000 ]]; then
     echo -e "${GREEN}✓${NC} 100 plans generated in ${elapsed}ms (< 5000ms)"
     ((TESTS_PASSED++))
 else
@@ -398,9 +398,9 @@ test_section "Performance - Complex Plan Generation"
 start_time=$(date +%s%N)
 generate_plan "start python, go, rust, postgres, redis, mongodb, and nginx" >/dev/null 2>&1
 end_time=$(date +%s%N)
-elapsed=$((($end_time - $start_time) / 1000000))
+elapsed=$(((${end_time} - ${start_time}) / 1000000))
 
-if [[ $elapsed -lt 1000 ]]; then
+if [[ ${elapsed} -lt 1000 ]]; then
     echo -e "${GREEN}✓${NC} Complex plan took ${elapsed}ms (< 1000ms)"
     ((TESTS_PASSED++))
 else
@@ -415,9 +415,9 @@ test_section "Performance - Wildcard Expansion"
 start_time=$(date +%s%N)
 generate_plan "start all" >/dev/null 2>&1
 end_time=$(date +%s%N)
-elapsed=$((($end_time - $start_time) / 1000000))
+elapsed=$(((${end_time} - ${start_time}) / 1000000))
 
-if [[ $elapsed -lt 1000 ]]; then
+if [[ ${elapsed} -lt 1000 ]]; then
     echo -e "${GREEN}✓${NC} Wildcard expansion took ${elapsed}ms (< 1000ms)"
     ((TESTS_PASSED++))
 else
@@ -447,14 +447,14 @@ for intent_pair in "${ALL_INTENTS[@]}"; do
     expected_intent="${intent_pair%%|*}"
     test_input="${intent_pair##*|}"
 
-    PLAN=$(generate_plan "$test_input")
-    ACTUAL=$(echo "$PLAN" | grep "^INTENT:" | cut -d':' -f2)
+    PLAN=$(generate_plan "${test_input}")
+    ACTUAL=$(echo "${PLAN}" | grep "^INTENT:" | cut -d':' -f2)
 
-    if [[ "$ACTUAL" == "$expected_intent" ]]; then
-        echo -e "${GREEN}✓${NC} Intent $expected_intent works"
+    if [[ "${ACTUAL}" == "${expected_intent}" ]]; then
+        echo -e "${GREEN}✓${NC} Intent ${expected_intent} works"
         ((TESTS_PASSED++))
     else
-        echo -e "${RED}✗${NC} Intent $expected_intent failed (got $ACTUAL)"
+        echo -e "${RED}✗${NC} Intent ${expected_intent} failed (got ${ACTUAL})"
         ((TESTS_FAILED++))
     fi
     ((TESTS_RUN++))
@@ -465,22 +465,22 @@ test_section "Coverage - All VM Categories"
 # Test that all VM categories work
 echo "Testing language VMs"
 LANG_PLAN=$(generate_plan "start python")
-echo "$LANG_PLAN" | grep -q "VM:.*vde-python" || { echo "Language VM failed"; exit 1; }
+echo "${LANG_PLAN}" | grep -q "VM:.*vde-python" || { echo "Language VM failed"; exit 1; }
 echo -e "${GREEN}✓${NC} Language VMs work"
 ((TESTS_PASSED++))
 ((TESTS_RUN++))
 
 echo "Testing service VMs"
 SVC_PLAN=$(generate_plan "start postgres")
-echo "$SVC_PLAN" | grep -q "VM:.*vde-postgres" || { echo "Service VM failed"; exit 1; }
+echo "${SVC_PLAN}" | grep -q "VM:.*vde-postgres" || { echo "Service VM failed"; exit 1; }
 echo -e "${GREEN}✓${NC} Service VMs work"
 ((TESTS_PASSED++))
 ((TESTS_RUN++))
 
 echo "Testing mixed VMs"
 MIXED_PLAN=$(generate_plan "start python and postgres")
-echo "$MIXED_PLAN" | grep -q "VM:.*vde-python" || { echo "Mixed failed - python"; exit 1; }
-echo "$MIXED_PLAN" | grep -q "VM:.*vde-postgres" || { echo "Mixed failed - postgres"; exit 1; }
+echo "${MIXED_PLAN}" | grep -q "VM:.*vde-python" || { echo "Mixed failed - python"; exit 1; }
+echo "${MIXED_PLAN}" | grep -q "VM:.*vde-postgres" || { echo "Mixed failed - postgres"; exit 1; }
 echo -e "${GREEN}✓${NC} Mixed VMs work"
 ((TESTS_PASSED++))
 ((TESTS_RUN++))
@@ -498,11 +498,11 @@ for flag_test in "${FLAG_TESTS[@]}"; do
     flag_name="${flag_test%%|*}"
     test_input="${flag_test##*|}"
 
-    PLAN=$(generate_plan "$test_input")
+    PLAN=$(generate_plan "${test_input}")
 
-    case "$flag_name" in
+    case "${flag_name}" in
         "rebuild")
-            if echo "$PLAN" | grep -q "rebuild=true"; then
+            if echo "${PLAN}" | grep -q "rebuild=true"; then
                 echo -e "${GREEN}✓${NC} Rebuild flag works"
                 ((TESTS_PASSED++))
             else
@@ -511,7 +511,7 @@ for flag_test in "${FLAG_TESTS[@]}"; do
             fi
             ;;
         "nocache")
-            if echo "$PLAN" | grep -q "nocache=true"; then
+            if echo "${PLAN}" | grep -q "nocache=true"; then
                 echo -e "${GREEN}✓${NC} No cache flag works"
                 ((TESTS_PASSED++))
             else
@@ -520,7 +520,7 @@ for flag_test in "${FLAG_TESTS[@]}"; do
             fi
             ;;
         "both")
-            if echo "$PLAN" | grep -q "rebuild=true" && echo "$PLAN" | grep -q "nocache=true"; then
+            if echo "${PLAN}" | grep -q "rebuild=true" && echo "${PLAN}" | grep -q "nocache=true"; then
                 echo -e "${GREEN}✓${NC} Both flags work"
                 ((TESTS_PASSED++))
             else
@@ -535,4 +535,4 @@ done
 teardown_test_env
 
 test_suite_end "VDE Integration Tests"
-exit $?
+exit ${?}

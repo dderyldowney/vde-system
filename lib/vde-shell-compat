@@ -26,11 +26,11 @@
 # Returns: "zsh" or "unknown"
 # Example: shell=$(_detect_shell)
 _detect_shell() {
-    if [ -n "$ZSH_VERSION" ]; then
+    if [ -n "${ZSH_VERSION}" ]; then
         echo "zsh"
-    elif [ -n "$BASH_VERSION" ]; then
+    elif [ -n "${BASH_VERSION}" ]; then
         echo "bash"
-    elif [[ "$SHELL" == *"zsh"* ]]; then
+    elif [[ "${SHELL}" == *"zsh"* ]]; then
         echo "zsh"
     else
         # Try a zsh-specific feature test
@@ -43,10 +43,10 @@ _detect_shell() {
 # Returns: Version string (e.g., "5.8" for zsh)
 # Example: version=$(_shell_version)
 _shell_version() {
-    if [ -n "$ZSH_VERSION" ]; then
-        echo "$ZSH_VERSION"
-    elif [ -n "$BASH_VERSION" ]; then
-        echo "$BASH_VERSION"
+    if [ -n "${ZSH_VERSION}" ]; then
+        echo "${ZSH_VERSION}"
+    elif [ -n "${BASH_VERSION}" ]; then
+        echo "${BASH_VERSION}"
     else
         echo "unknown"
     fi
@@ -56,7 +56,7 @@ _shell_version() {
 # Returns: 0 if zsh, 1 otherwise
 # Example: _is_zsh && echo "Running in zsh"
 _is_zsh() {
-    [ -n "$ZSH_VERSION" ] || [[ "$(_detect_shell)" == "zsh" ]]
+    [ -n "${ZSH_VERSION}" ] || [[ "$(_detect_shell)" == "zsh" ]]
 }
 
 # _shell_supports_native_assoc - Check if shell supports native associative arrays
@@ -87,20 +87,20 @@ _get_script_dir() {
     script_path=$(_get_script_path)
     
     # Handle relative paths
-    if [ "${script_path#/}" = "$script_path" ]; then
+    if [ "${script_path#/}" = "${script_path}" ]; then
         # Relative path - prepend PWD
-        script_path="$PWD/$script_path"
+        script_path="${PWD}/${script_path}"
     fi
     
     # Get directory
     local dir
-    dir=$(dirname "$script_path")
+    dir=$(dirname "${script_path}")
     
     # Resolve to absolute path if possible
-    if [ -d "$dir" ]; then
-        (cd "$dir" && pwd)
+    if [ -d "${dir}" ]; then
+        (cd "${dir}" && pwd)
     else
-        echo "$dir"
+        echo "${dir}"
     fi
 }
 
@@ -113,8 +113,8 @@ _get_script_dir() {
 # Returns: 0 on success
 # Example: _assoc_init "MY_ARRAY"
 _assoc_init() {
-    local array_name="$1"
-    eval "typeset -gA $array_name"
+    local array_name="${1}"
+    eval "typeset -gA ${array_name}"
     return 0
 }
 
@@ -123,9 +123,9 @@ _assoc_init() {
 # Returns: 0 on success
 # Example: _assoc_set "MY_ARRAY" "foo" "bar"
 _assoc_set() {
-    local array_name="$1"
-    local key="$2"
-    local value="$3"
+    local array_name="${1}"
+    local key="${2}"
+    local value="${3}"
     # Use eval with proper quoting for zsh compatibility
     eval "${array_name}[${(q)key}]=${(q)value}"
     return 0
@@ -136,22 +136,22 @@ _assoc_set() {
 # Returns: 0 on success (outputs value to stdout), 1 if key not found
 # Example: value=$(_assoc_get "MY_ARRAY" "foo")
 _assoc_get() {
-    local array_name="$1"
-    local key="$2"
+    local array_name="${1}"
+    local key="${2}"
     # Use eval with proper quoting for zsh compatibility
     eval "if [[ -n \"\${${array_name}[${(q)key}]+_}\" ]]; then
         eval \"echo \\\"\${${array_name}[${(q)key}]}\\\"\"
         return 0
     fi"
-    return $VDE_ERR_GENERAL
+    return ${VDE_ERR_GENERAL}
 }
 
 # _assoc_keys - Get all keys from an associative array
 # Args: <array_name>
 # Returns: 0 on success (outputs keys to stdout, one per line)
-# Example: for k in $(_assoc_keys "MY_ARRAY"); do echo "$k"; done
+# Example: for k in $(_assoc_keys "MY_ARRAY"); do echo "${k}"; done
 _assoc_keys() {
-    local array_name="$1"
+    local array_name="${1}"
     # Use eval for zsh compatibility
     eval "for k in \"\${(@k)${array_name}}\"; do echo \"\$k\"; done"
     return 0
@@ -162,10 +162,10 @@ _assoc_keys() {
 # Returns: 0 if key exists, 1 otherwise
 # Example: _assoc_has_key "MY_ARRAY" "foo" && echo "Key exists"
 _assoc_has_key() {
-    local array_name="$1"
-    local key="$2"
+    local array_name="${1}"
+    local key="${2}"
     # Use eval with proper quoting for zsh compatibility
-    eval "if [[ -n \"\${${array_name}[${(q)key}]+_}\" ]]; then return 0; else return $VDE_ERR_GENERAL; fi"
+    eval "if [[ -n \"\${${array_name}[${(q)key}]+_}\" ]]; then return 0; else return ${VDE_ERR_GENERAL}; fi"
 }
 
 # _assoc_unset - Remove a key from an associative array
@@ -173,10 +173,10 @@ _assoc_has_key() {
 # Returns: 0 on success
 # Example: _assoc_unset "MY_ARRAY" "foo"
 _assoc_unset() {
-    local array_name="$1"
-    local key="$2"
+    local array_name="${1}"
+    local key="${2}"
     local q_key="${(q)key}"
-    eval "unset \"${array_name}[$q_key]\""
+    eval "unset \"${array_name}[${q_key}]\""
     return 0
 }
 
@@ -185,8 +185,8 @@ _assoc_unset() {
 # Returns: 0 on success
 # Example: _assoc_clear "MY_ARRAY"
 _assoc_clear() {
-    local array_name="$1"
-    eval "unset $array_name; typeset -gA $array_name"
+    local array_name="${1}"
+    eval "unset ${array_name}; typeset -gA ${array_name}"
     return 0
 }
 
@@ -207,7 +207,7 @@ _assoc_cleanup() {
 # Returns: 0 on success (outputs length to stdout)
 # Example: len=$(_array_length "MY_ARRAY")
 _array_length() {
-    local array_name="$1"
+    local array_name="${1}"
     eval "echo \${#${array_name}[@]}"
 }
 
@@ -216,8 +216,8 @@ _array_length() {
 # Returns: 0 on success
 # Example: _array_append "MY_ARRAY" "new_value"
 _array_append() {
-    local array_name="$1"
-    local value="$2"
+    local array_name="${1}"
+    local value="${2}"
     eval "${array_name}+=(\"\$value\")"
     return 0
 }
@@ -227,10 +227,10 @@ _array_append() {
 # Returns: 0 if found, 1 otherwise
 # Example: _array_contains "MY_ARRAY" "value" && echo "Found"
 _array_contains() {
-    local array_name="$1"
-    local search_value="$2"
+    local array_name="${1}"
+    local search_value="${2}"
     eval "for v in \"\${${array_name}[@]}\"; do [ \"\$v\" = \"\$search_value\" ] && return 0; done"
-    return $VDE_ERR_GENERAL
+    return ${VDE_ERR_GENERAL}
 }
 
 # =============================================================================
@@ -242,9 +242,9 @@ _array_contains() {
 # Returns: 0 on success
 # Example: _string_split "a,b,c" "," "MY_ARRAY"
 _string_split() {
-    local string="$1"
-    local delimiter="$2"
-    local array_name="$3"
+    local string="${1}"
+    local delimiter="${2}"
+    local array_name="${3}"
     eval "${array_name}=(\${(s:${delimiter}:)string})"
     return 0
 }
@@ -254,14 +254,14 @@ _string_split() {
 # Returns: 0 on success (outputs trimmed string to stdout)
 # Example: trimmed=$(_string_trim "  hello  ")
 _string_trim() {
-    local string="$1"
+    local string="${1}"
     
     # Remove leading whitespace
     string="${string#"${string%%[![:space:]]*}"}"
     # Remove trailing whitespace
     string="${string%"${string##*[![:space:]]}"}"
     
-    echo "$string"
+    echo "${string}"
 }
 
 # =============================================================================
@@ -274,10 +274,10 @@ _string_trim() {
 # Returns: 0 on success
 # Example: echo -e "a\nb\nc" | _read_array "MY_ARRAY"
 _read_array() {
-    local array_name="$1"
+    local array_name="${1}"
     eval "${array_name}=()"
     while IFS= read -r line; do
-        _array_append "$array_name" "$line"
+        _array_append "${array_name}" "${line}"
     done
     return 0
 }
@@ -289,24 +289,24 @@ _read_array() {
 # _check_shell_compatibility - Check and warn about shell compatibility
 # Args: none
 # Returns: 0 if compatible, 1 if unsupported
-# Example: _check_shell_compatibility || exit $VDE_ERR_GENERAL
+# Example: _check_shell_compatibility || exit ${VDE_ERR_GENERAL}
 _check_shell_compatibility() {
     local shell
     shell=$(_detect_shell)
     local version
     version=$(_shell_version)
 
-    case "$shell" in
+    case "${shell}" in
         zsh)
             local major="${version%%.*}"
-            if [ "$major" -lt 5 ]; then
-                echo "[ERROR] zsh version $version detected. VDE requires zsh 5.0+" >&2
-                return $VDE_ERR_GENERAL
+            if [ "${major}" -lt 5 ]; then
+                echo "[ERROR] zsh version ${version} detected. VDE requires zsh 5.0+" >&2
+                return ${VDE_ERR_GENERAL}
             fi
             ;;
         *)
-            echo "[ERROR] VDE requires zsh 5.0+. Current shell: $shell" >&2
-            return $VDE_ERR_GENERAL
+            echo "[ERROR] VDE requires zsh 5.0+. Current shell: ${shell}" >&2
+            return ${VDE_ERR_GENERAL}
             ;;
     esac
 
@@ -318,18 +318,18 @@ _check_shell_compatibility() {
 # Returns: 0 if running in zsh, exits with error otherwise
 # Example: _require_shell "zsh"
 _require_shell() {
-    local required="$1"
+    local required="${1}"
     local current
     current=$(_detect_shell)
 
-    if [ "$required" != "zsh" ]; then
-        echo "[ERROR] VDE only supports zsh. Requested: $required" >&2
-        exit $VDE_ERR_GENERAL
+    if [ "${required}" != "zsh" ]; then
+        echo "[ERROR] VDE only supports zsh. Requested: ${required}" >&2
+        exit ${VDE_ERR_GENERAL}
     fi
 
-    if [ "$current" != "zsh" ]; then
-        echo "[ERROR] VDE requires zsh but is running in $current" >&2
-        exit $VDE_ERR_GENERAL
+    if [ "${current}" != "zsh" ]; then
+        echo "[ERROR] VDE requires zsh but is running in ${current}" >&2
+        exit ${VDE_ERR_GENERAL}
     fi
     return 0
 }
@@ -343,9 +343,9 @@ _require_shell() {
 # Returns: 0 on success
 # Example: _declare_global "MY_VAR" "value"
 _declare_global() {
-    local var_name="$1"
+    local var_name="${1}"
     local value="${2:-}"
-    eval "typeset -g $var_name=\"\$value\""
+    eval "typeset -g ${var_name}=\"\$value\""
     return 0
 }
 
@@ -354,8 +354,8 @@ _declare_global() {
 # Returns: 0 on success
 # Example: _declare_global_array "MY_ARRAY"
 _declare_global_array() {
-    local array_name="$1"
-    eval "typeset -ga $array_name"
+    local array_name="${1}"
+    eval "typeset -ga ${array_name}"
     return 0
 }
 
@@ -364,8 +364,8 @@ _declare_global_array() {
 # Returns: 0 on success
 # Example: _declare_global_assoc "MY_ASSOC"
 _declare_global_assoc() {
-    local array_name="$1"
-    _assoc_init "$array_name"
+    local array_name="${1}"
+    _assoc_init "${array_name}"
 }
 
 # =============================================================================
@@ -405,7 +405,7 @@ _date_iso8601() {
 # Returns: Unix timestamp
 # Example: epoch=$(_date_epoch)
 _date_epoch() {
-    print $EPOCHSECONDS
+    print ${EPOCHSECONDS}
 }
 
 # Export functions for VDE libraries

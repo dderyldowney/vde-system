@@ -9,9 +9,9 @@ VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 # Source core libraries
-[[ -f "$VDE_ROOT_DIR/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/lib/vde-shell-compat" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/lib/vde-constants" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/lib/vde-errors" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
 
 docker info
-exit $?
+exit ${?}

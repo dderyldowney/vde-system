@@ -181,8 +181,8 @@ VDE_SSH_KEY_PREFERENCE="${VDE_SSH_KEY_PREFERENCE:-id_ed25519 id_ecdsa id_rsa id_
 # Supports Linux native, WSL2, and macOS
 
 # User home directory (cross-platform)
-# NOTE: Use this instead of raw $HOME for consistency
-VDE_HOME_DIR="${VDE_HOME_DIR:-$HOME}"
+# NOTE: Use this instead of raw ${HOME} for consistency
+VDE_HOME_DIR="${VDE_HOME_DIR:-${HOME}}"
 
 # =============================================================================
 # VDE SSH ISOLATION
@@ -195,19 +195,19 @@ VDE_HOME_DIR="${VDE_HOME_DIR:-$HOME}"
 VDE_SSH_DIR="${VDE_SSH_DIR:-${VDE_HOME_DIR}/.ssh/vde}"
 
 # VDE SSH config file (contains only VDE VM entries)
-VDE_SSH_CONFIG="${VDE_SSH_CONFIG:-$VDE_SSH_DIR/config}"
+VDE_SSH_CONFIG="${VDE_SSH_CONFIG:-${VDE_SSH_DIR}/config}"
 
 # VDE SSH known_hosts file (contains only VDE VM host keys)
-VDE_SSH_KNOWN_HOSTS="${VDE_SSH_KNOWN_HOSTS:-$VDE_SSH_DIR/known_hosts}"
+VDE_SSH_KNOWN_HOSTS="${VDE_SSH_KNOWN_HOSTS:-${VDE_SSH_DIR}/known_hosts}"
 
 # VDE SSH identity key (auto-generated, VDE-specific)
-VDE_SSH_IDENTITY="${VDE_SSH_IDENTITY:-$VDE_SSH_DIR/id_ed25519}"
+VDE_SSH_IDENTITY="${VDE_SSH_IDENTITY:-${VDE_SSH_DIR}/id_ed25519}"
 
 # VDE SSH public key
-VDE_SSH_IDENTITY_PUB="${VDE_SSH_IDENTITY_PUB:-$VDE_SSH_DIR/id_ed25519.pub}"
+VDE_SSH_IDENTITY_PUB="${VDE_SSH_IDENTITY_PUB:-${VDE_SSH_DIR}/id_ed25519.pub}"
 
 # VDE SSH Agent environment file
-VDE_SSH_AGENT_ENV="${VDE_SSH_AGENT_ENV:-$VDE_SSH_DIR/agent_env}"
+VDE_SSH_AGENT_ENV="${VDE_SSH_AGENT_ENV:-${VDE_SSH_DIR}/agent_env}"
 
 # =============================================================================
 # VDE DIRECTORY PATHS
@@ -218,33 +218,33 @@ VDE_SSH_AGENT_ENV="${VDE_SSH_AGENT_ENV:-$VDE_SSH_DIR/agent_env}"
 VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(cd "$(dirname "${(%):-%x}")/.." && pwd)}" # Fallback if not set by caller
 
 # Configuration directory (e.g., configs/docker)
-CONFIGS_DIR="${VDE_CONFIGS_DIR:-$VDE_ROOT_DIR/configs/docker}"
+CONFIGS_DIR="${VDE_CONFIGS_DIR:-${VDE_ROOT_DIR}/configs/docker}"
 # Scripts directory (standard for all VDE commands)
-VDE_SCRIPTS_DIR="${VDE_SCRIPTS_DIR:-$VDE_ROOT_DIR/bin}"
+VDE_SCRIPTS_DIR="${VDE_SCRIPTS_DIR:-${VDE_ROOT_DIR}/bin}"
 # Maintain BIN_DIR as an alias for internal consistency
-BIN_DIR="$VDE_SCRIPTS_DIR"
+BIN_DIR="${VDE_SCRIPTS_DIR}"
 # Templates directory
-TEMPLATES_DIR="${VDE_TEMPLATES_DIR:-$VDE_ROOT_DIR/templates}"
+TEMPLATES_DIR="${VDE_TEMPLATES_DIR:-${VDE_ROOT_DIR}/templates}"
 # Data directory
-DATA_DIR="${VDE_DATA_DIR:-$VDE_ROOT_DIR/data}"
+DATA_DIR="${VDE_DATA_DIR:-${VDE_ROOT_DIR}/data}"
 # Backup directory
-BACKUP_DIR="${VDE_BACKUP_DIR:-$VDE_ROOT_DIR/backup}"
+BACKUP_DIR="${VDE_BACKUP_DIR:-${VDE_ROOT_DIR}/backup}"
 # Cache directory
-VDE_CACHE_DIR="${VDE_CACHE_DIR:-$VDE_ROOT_DIR/.cache}"
+VDE_CACHE_DIR="${VDE_CACHE_DIR:-${VDE_ROOT_DIR}/.cache}"
 
 # =============================================================================
 # FILE PATHS DERIVED FROM DIRECTORY CONSTANTS
 # =============================================================================
 
 # VM type configuration files
-VM_TYPES_CONF="${VDE_VM_TYPES_CONF:-$DATA_DIR/vm-types.conf}"
-VM_TYPES_JSON="${VDE_VM_TYPES_JSON:-$DATA_DIR/vm-types.json}"
+VM_TYPES_CONF="${VDE_VM_TYPES_CONF:-${DATA_DIR}/vm-types.conf}"
+VM_TYPES_JSON="${VDE_VM_TYPES_JSON:-${DATA_DIR}/vm-types.json}"
 
 # Cache files
-VM_TYPES_CACHE="${VDE_VM_TYPES_CACHE:-$VDE_CACHE_DIR/vm-types.cache}"
-VM_DOCKER_CONFIG="${VDE_VM_DOCKER_CONFIG:-$DATA_DIR/vm-docker-config.json}"
-VM_DOCKER_CACHE="${VDE_VM_DOCKER_CACHE:-$VDE_CACHE_DIR/vm-docker-config.cache}"
-PORT_REGISTRY="${VDE_PORT_REGISTRY:-$VDE_CACHE_DIR/port-registry}" # This is a directory for port files
+VM_TYPES_CACHE="${VDE_VM_TYPES_CACHE:-${VDE_CACHE_DIR}/vm-types.cache}"
+VM_DOCKER_CONFIG="${VDE_VM_DOCKER_CONFIG:-${DATA_DIR}/vm-docker-config.json}"
+VM_DOCKER_CACHE="${VDE_VM_DOCKER_CACHE:-${VDE_CACHE_DIR}/vm-docker-config.cache}"
+PORT_REGISTRY="${VDE_PORT_REGISTRY:-${VDE_CACHE_DIR}/port-registry}" # This is a directory for port files
 
 # =============================================================================
 # VALIDATION PATTERNS

@@ -9,16 +9,16 @@
 #===============================================================================
 
 # Determine VDE root directory
-VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-VDE_ROOT_DIR="$(cd "$VDE_SCRIPTS_DIR/.." && pwd)"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
+VDE_ROOT_DIR="$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)"
 
 # Source shared library
-source "$VDE_ROOT_DIR/lib/vde-shell-compat"
-source "$VDE_ROOT_DIR/lib/vde-constants"
-source "$VDE_ROOT_DIR/lib/vde-errors"
-source "$VDE_ROOT_DIR/lib/vde-log"
-source "$VDE_ROOT_DIR/lib/vde-core"
-source "$VDE_ROOT_DIR/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
+source "${VDE_ROOT_DIR}/lib/vde-constants"
+source "${VDE_ROOT_DIR}/lib/vde-errors"
+source "${VDE_ROOT_DIR}/lib/vde-log"
+source "${VDE_ROOT_DIR}/lib/vde-core"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Ensure VM types are loaded
 load_vm_types 2>/dev/null || true
@@ -32,12 +32,12 @@ load_vm_types 2>/dev/null || true
 
 # Get SSH port for a VM type (strips vde- prefix if needed)
 get_ssh_port() {
-  local name="$1"
+  local name="${1}"
   # Try with vde- prefix first, then without
-  if [[ -n "${VM_SSH_PORT[vde-$name]}" ]]; then
-    echo "${VM_SSH_PORT[vde-$name]}"
-  elif [[ -n "${VM_SSH_PORT[$name]}" ]]; then
-    echo "${VM_SSH_PORT[$name]}"
+  if [[ -n "${VM_SSH_PORT[vde-${name}]}" ]]; then
+    echo "${VM_SSH_PORT[vde-${name}]}"
+  elif [[ -n "${VM_SSH_PORT[${name}]}" ]]; then
+    echo "${VM_SSH_PORT[${name}]}"
   else
     echo ""
   fi
@@ -45,12 +45,12 @@ get_ssh_port() {
 
 # Get service port for a VM type (strips vde- prefix if needed)
 get_service_port() {
-  local name="$1"
+  local name="${1}"
   # Try with vde- prefix first, then without
-  if [[ -n "${VM_SVC_PORT[vde-$name]}" ]]; then
-    echo "${VM_SVC_PORT[vde-$name]}"
-  elif [[ -n "${VM_SVC_PORT[$name]}" ]]; then
-    echo "${VM_SVC_PORT[$name]}"
+  if [[ -n "${VM_SVC_PORT[vde-${name}]}" ]]; then
+    echo "${VM_SVC_PORT[vde-${name}]}"
+  elif [[ -n "${VM_SVC_PORT[${name}]}" ]]; then
+    echo "${VM_SVC_PORT[${name}]}"
   else
     echo ""
   fi
@@ -58,14 +58,14 @@ get_service_port() {
 
 # Generate SSH config with entries for all known VM types
 generate_ssh_config() {
-  local ssh_config="$VDE_ROOT_DIR/configs/ssh/config"
+  local ssh_config="${VDE_ROOT_DIR}/configs/ssh/config"
   local timestamp=$(date)
   
-  mkdir -p "$(dirname "$ssh_config")"
+  mkdir -p "$(dirname "${ssh_config}")"
   
-  cat > "$ssh_config" <<EOF
+  cat > "${ssh_config}" <<EOF
 # VDE (Virtual Development Environment) SSH Configuration
-# Generated on $timestamp
+# Generated on ${timestamp}
 #
 # This file contains SSH config entries for all known language and service VMs.
 # Each VM type has a fixed SSH port assignment:
@@ -79,14 +79,14 @@ EOF
   # Add entries for all language VMs from loaded VM types
   for vm_name in "${lang_vms[@]}"; do
     local port=$(get_ssh_port "${vm_name#vde-}")
-    if [[ -z "$port" ]]; then
+    if [[ -z "${port}" ]]; then
       continue
     fi
     local short_name="${vm_name#vde-}"
-    cat >> "$ssh_config" <<EOF
-Host vde-$short_name
+    cat >> "${ssh_config}" <<EOF
+Host vde-${short_name}
     HostName localhost
-    Port $port
+    Port ${port}
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -100,14 +100,14 @@ EOF
   # Add entries for all service VMs from loaded VM types
   for vm_name in "${service_vms[@]}"; do
     local port=$(get_ssh_port "${vm_name#vde-}")
-    if [[ -z "$port" ]]; then
+    if [[ -z "${port}" ]]; then
       continue
     fi
     local short_name="${vm_name#vde-}"
-    cat >> "$ssh_config" <<EOF
-Host vde-$short_name
+    cat >> "${ssh_config}" <<EOF
+Host vde-${short_name}
     HostName localhost
-    Port $port
+    Port ${port}
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -118,61 +118,61 @@ Host vde-$short_name
 EOF
   done
 
-  chmod 600 "$ssh_config"
-  echo "Generated: $ssh_config"
+  chmod 600 "${ssh_config}"
+  echo "Generated: ${ssh_config}"
 }
 
 # Generate environment file
 generate_env_file() {
-  local name="$1"
-  local ssh_port="$2"
-  local is_service="$3"  # "true" for service VMs, "false" for language VMs
+  local name="${1}"
+  local ssh_port="${2}"
+  local is_service="${3}"  # "true" for service VMs, "false" for language VMs
 
-  local env_file="$VDE_ROOT_DIR/env-files/${name}.env"
+  local env_file="${VDE_ROOT_DIR}/env-files/${name}.env"
 
-  cat > "$env_file" <<EOF
+  cat > "${env_file}" <<EOF
 # Environment variables for ${name} development container
-SSH_PORT=$ssh_port
+SSH_PORT=${ssh_port}
 DATABASE_URL=postgresql://devuser:SuperSecretPassword123!@postgres:5432/${name}_dev_db
 REDIS_HOST=redis
 REDIS_PORT=6379
 EOF
 
   # For service VMs, add the service-specific port variable
-  if [[ "$is_service" == "true" ]]; then
-    local service_port=$(get_service_port "$name")
-    if [[ -n "$service_port" ]]; then
-      upper_name=$(echo "$name" | tr '[:lower:]' '[:upper:]')
+  if [[ "${is_service}" == "true" ]]; then
+    local service_port=$(get_service_port "${name}")
+    if [[ -n "${service_port}" ]]; then
+      upper_name=$(echo "${name}" | tr '[:lower:]' '[:upper:]')
       # Handle multi-port services (comma-separated) - zsh compatible
       local -a ports
       IFS=',' ports=("${(@s[,])service_port}")
       for port in "${ports[@]}"; do
-        port=$(echo "$port" | tr -d ' ')
+        port=$(echo "${port}" | tr -d ' ')
         # For RabbitMQ which has management port on 15672
-        if [[ "$name" == "rabbitmq" ]]; then
-          echo "RABBITMQ_PORT=$port" >> "$env_file"
+        if [[ "${name}" == "rabbitmq" ]]; then
+          echo "RABBITMQ_PORT=${port}" >> "${env_file}"
         else
-          echo "${upper_name}_PORT=$port" >> "$env_file"
+          echo "${upper_name}_PORT=${port}" >> "${env_file}"
         fi
       done
     fi
   fi
 
-  echo "Generated: $env_file"
+  echo "Generated: ${env_file}"
 }
 
 # Generate language docker-compose.yml
 generate_language_config() {
-  local name="$1"
-  local install_cmd="$2"
-  local ssh_port=$(get_ssh_port "$name")
+  local name="${1}"
+  local install_cmd="${2}"
+  local ssh_port=$(get_ssh_port "${name}")
 
-  local config_dir="$VDE_ROOT_DIR/configs/docker/${name}"
-  local compose_file="$config_dir/docker-compose.yml"
+  local config_dir="${VDE_ROOT_DIR}/configs/docker/${name}"
+  local compose_file="${config_dir}/docker-compose.yml"
 
-  mkdir -p "$config_dir"
+  mkdir -p "${config_dir}"
 
-  cat > "$compose_file" <<EOF
+  cat > "${compose_file}" <<EOF
 services:
   ${name}-dev:
     build:
@@ -213,36 +213,36 @@ networks:
     external: true
 EOF
 
-  echo "Generated: $compose_file"
+  echo "Generated: ${compose_file}"
 
   # Also generate env file
-  generate_env_file "$name" "$ssh_port" "false"
+  generate_env_file "${name}" "${ssh_port}" "false"
 }
 
 # Generate service docker-compose.yml
 generate_service_config() {
-  local name="$1"
-  local install_cmd="$2"
-  local ssh_port=$(get_ssh_port "$name")
-  local service_port=$(get_service_port "$name")
+  local name="${1}"
+  local install_cmd="${2}"
+  local ssh_port=$(get_ssh_port "${name}")
+  local service_port=$(get_service_port "${name}")
 
-  local config_dir="$VDE_ROOT_DIR/configs/docker/${name}"
-  local compose_file="$config_dir/docker-compose.yml"
+  local config_dir="${VDE_ROOT_DIR}/configs/docker/${name}"
+  local compose_file="${config_dir}/docker-compose.yml"
 
-  mkdir -p "$config_dir"
+  mkdir -p "${config_dir}"
 
   # Build port mappings for services
   local port_mappings=""
-  if [[ -n "$service_port" ]]; then
+  if [[ -n "${service_port}" ]]; then
     # Split by comma and generate port mappings
     local -a ports
-    IFS=',' read -rA ports <<< "$service_port"
+    IFS=',' read -rA ports <<< "${service_port}"
     for port in "${ports[@]}"; do
       port_mappings="${port_mappings}      - \"${port}:${port}\"\n"
     done
   fi
 
-  cat > "$compose_file" <<EOF
+  cat > "${compose_file}" <<EOF
 services:
   ${name}:
     build:
@@ -261,7 +261,7 @@ services:
 
     ports:
       - "${ssh_port}:22"
-$(echo -e "$port_mappings")
+$(echo -e "${port_mappings}")
 
     volumes:
       - ../../../data/${name}:/data
@@ -284,10 +284,10 @@ networks:
     external: true
 EOF
 
-  echo "Generated: $compose_file"
+  echo "Generated: ${compose_file}"
 
   # Also generate env file
-  generate_env_file "$name" "$ssh_port" "true"
+  generate_env_file "${name}" "${ssh_port}" "true"
 }
 
 #===============================================================================
@@ -297,22 +297,22 @@ EOF
 FORCE_REGENERATE=false
 
 # Parse arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
+while [[ ${#} -gt 0 ]]; do
+  case "${1}" in
     --force|-f)
       FORCE_REGENERATE=true
       shift
       ;;
     *)
-      echo "Unknown option: $1"
-      echo "Usage: $0 [--force]"
-      exit $VDE_ERR_GENERAL
+      echo "Unknown option: ${1}"
+      echo "Usage: ${0} [--force]"
+      exit ${VDE_ERR_GENERAL}
       ;;
   esac
 done
 
 main() {
-  if [[ "$FORCE_REGENERATE" == "true" ]]; then
+  if [[ "${FORCE_REGENERATE}" == "true" ]]; then
     echo "Regenerating ALL configs and env files..."
   else
     echo "Generating missing docker-compose.yml and env files..."
@@ -325,30 +325,30 @@ main() {
   local env_skipped_count=0
 
   # Get all VM types from cache
-  if [[ -f "$VDE_CACHE_DIR/vm-types.cache" ]]; then
+  if [[ -f "${VDE_CACHE_DIR}/vm-types.cache" ]]; then
     # Process each VM type
     while IFS='=' read -r key value; do
       # Extract VM type from key (format: VM_TYPE:name=value)
-      if [[ "$key" =~ ^VM_TYPE:(.+)$ ]]; then
+      if [[ "${key}" =~ ^VM_TYPE:(.+)$ ]]; then
         local vm_type="${match[1]}"
       else
         continue
       fi
 
       # Skip if already has config (unless --force)
-      local config_file="$VDE_ROOT_DIR/configs/docker/${vm_type}/docker-compose.yml"
-      if [[ -f "$config_file" ]] && [[ "$FORCE_REGENERATE" != "true" ]]; then
+      local config_file="${VDE_ROOT_DIR}/configs/docker/${vm_type}/docker-compose.yml"
+      if [[ -f "${config_file}" ]] && [[ "${FORCE_REGENERATE}" != "true" ]]; then
         ((skipped_count++))
         # Still check if env file exists
-        local env_file="$VDE_ROOT_DIR/env-files/${vm_type}.env"
-        if [[ ! -f "$env_file" ]]; then
+        local env_file="${VDE_ROOT_DIR}/env-files/${vm_type}.env"
+        if [[ ! -f "${env_file}" ]]; then
           # Generate missing env file
-          local category="$(get_vm_info type "$vm_type" 2>/dev/null || echo "")"
-          local ssh_port=$(get_ssh_port "$vm_type")
-          if [[ "$category" == "service" ]]; then
-            generate_env_file "$vm_type" "$ssh_port" "true"
+          local category="$(get_vm_info type "${vm_type}" 2>/dev/null || echo "")"
+          local ssh_port=$(get_ssh_port "${vm_type}")
+          if [[ "${category}" == "service" ]]; then
+            generate_env_file "${vm_type}" "${ssh_port}" "true"
           else
-            generate_env_file "$vm_type" "$ssh_port" "false"
+            generate_env_file "${vm_type}" "${ssh_port}" "false"
           fi
           ((env_generated_count++))
         else
@@ -358,19 +358,19 @@ main() {
       fi
 
       # Get VM category and install command
-      local category="$(get_vm_info type "$vm_type" 2>/dev/null || echo "")"
-      local install_cmd="$(get_vm_info install "$vm_type" 2>/dev/null || echo "")"
+      local category="$(get_vm_info type "${vm_type}" 2>/dev/null || echo "")"
+      local install_cmd="$(get_vm_info install "${vm_type}" 2>/dev/null || echo "")"
 
-      if [[ "$category" == "lang" ]]; then
-        generate_language_config "$vm_type" "$install_cmd"
+      if [[ "${category}" == "lang" ]]; then
+        generate_language_config "${vm_type}" "${install_cmd}"
         ((generated_count++))
-      elif [[ "$category" == "service" ]]; then
-        generate_service_config "$vm_type" "$install_cmd"
+      elif [[ "${category}" == "service" ]]; then
+        generate_service_config "${vm_type}" "${install_cmd}"
         ((generated_count++))
       fi
       ((env_generated_count++))
 
-    done < "$VDE_CACHE_DIR/vm-types.cache"
+    done < "${VDE_CACHE_DIR}/vm-types.cache"
   fi
 
   # Always generate SSH config (it's authoritative)
@@ -380,10 +380,10 @@ main() {
 
   echo ""
   echo "============================================================================="
-  echo "Docker configs: Generated $generated_count, Skipped $skipped_count"
-  echo "Env files:       Generated $env_generated_count, Skipped $env_skipped_count"
+  echo "Docker configs: Generated ${generated_count}, Skipped ${skipped_count}"
+  echo "Env files:       Generated ${env_generated_count}, Skipped ${env_skipped_count}"
   echo "SSH config:      Generated"
   echo "============================================================================="
 }
 
-main "$@"
+main "${@}"

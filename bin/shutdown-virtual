@@ -7,7 +7,7 @@
 set -e
 
 # Determine VDE root directory
-if [[ -z "$VDE_ROOT_DIR" ]]; then
+if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="${0:a:h:h}"
 fi
 
@@ -16,12 +16,12 @@ fi
 # -----------------------
 
 # Source libraries
-source "$VDE_ROOT_DIR/lib/vm-common"
-source "$VDE_ROOT_DIR/lib/vde-docker-state"
+source "${VDE_ROOT_DIR}/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vde-docker-state"
 
 # Source UX libraries (optional)
-[[ -f "$VDE_ROOT_DIR/lib/vde-progress" ]] && source "$VDE_ROOT_DIR/lib/vde-progress"
-[[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/lib/vde-errors"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-progress" ]] && source "${VDE_ROOT_DIR}/lib/vde-progress"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors"
 
 # -----------------------
 # Usage
@@ -60,8 +60,8 @@ VMS_TO_PROCESS=()
 # -----------------------
 # Parse Arguments
 # -----------------------
-while [[ $# -gt 0 ]]; do
-    case "$1" in
+while [[ ${#} -gt 0 ]]; do
+    case "${1}" in
         -h|--help)
             show_usage
             exit 0
@@ -84,24 +84,24 @@ while [[ $# -gt 0 ]]; do
             # Expand "all" to all VMs with configurations
             for vm in $(get_all_vms); do
                 # Check if it has a compose file (canonical way to check if 'created')
-                if [ -f "$(get_compose_file "$vm" 2>/dev/null || echo "/nonexistent")" ]; then
-                    VMS_TO_PROCESS+=("$vm")
+                if [ -f "$(get_compose_file "${vm}" 2>/dev/null || echo "/nonexistent")" ]; then
+                    VMS_TO_PROCESS+=("${vm}")
                 fi
             done
             shift
             ;;
         -*)
-            log_error "Unknown option: $1"
-            exit $VDE_ERR_GENERAL
+            log_error "Unknown option: ${1}"
+            exit ${VDE_ERR_GENERAL}
             ;;
         *)
             # Resolve name (handles aliases)
-            RESOLVED=$(resolve_vm_name "$1" 2>/dev/null) || true
-            if [[ -n "$RESOLVED" ]]; then
-                VMS_TO_PROCESS+=("$RESOLVED")
+            RESOLVED=$(resolve_vm_name "${1}" 2>/dev/null) || true
+            if [[ -n "${RESOLVED}" ]]; then
+                VMS_TO_PROCESS+=("${RESOLVED}")
             else
-                log_error "Unknown VM: $1"
-                exit $VDE_ERR_GENERAL
+                log_error "Unknown VM: ${1}"
+                exit ${VDE_ERR_GENERAL}
             fi
             shift
             ;;
@@ -110,7 +110,7 @@ done
 
 if [[ ${#VMS_TO_PROCESS[@]} -eq 0 ]]; then
     show_usage
-    exit $VDE_ERR_GENERAL
+    exit ${VDE_ERR_GENERAL}
 fi
 
 # Unique VMs only
@@ -132,34 +132,34 @@ typeset -A vm_to_container
 
 for vm in "${VMS_TO_PROCESS[@]}"; do
     # Check if container exists in Docker at all
-    if ! vm_container_exists "$vm"; then
-        log_warning "$vm does not exist - skipped"
-        BATCH_RESULTS[$vm]="skipped:not_created"
+    if ! vm_container_exists "${vm}"; then
+        log_warning "${vm} does not exist - skipped"
+        BATCH_RESULTS[${vm}]="skipped:not_created"
         skipped_count=$((skipped_count + 1))
         continue
     fi
 
     # Check if container is actually running
-    if ! vm_is_container_running "$vm"; then
-        log_info "$vm is already stopped - skipped"
-        BATCH_RESULTS[$vm]="skipped:already_stopped"
+    if ! vm_is_container_running "${vm}"; then
+        log_info "${vm} is already stopped - skipped"
+        BATCH_RESULTS[${vm}]="skipped:already_stopped"
         skipped_count=$((skipped_count + 1))
         continue
     fi
     
     local container_name
-    container_name=$(vde_get_container_name "$vm")
+    container_name=$(vde_get_container_name "${vm}")
     
     # Safety Check: Only stop containers that are explicitly managed by VDE
-    if ! is_vde_managed "$container_name"; then
-        log_warning "$vm ($container_name) is not managed by VDE - skipped for safety"
-        BATCH_RESULTS[$vm]="skipped:not_managed"
+    if ! is_vde_managed "${container_name}"; then
+        log_warning "${vm} (${container_name}) is not managed by VDE - skipped for safety"
+        BATCH_RESULTS[${vm}]="skipped:not_managed"
         skipped_count=$((skipped_count + 1))
         continue
     fi
     
-    containers_to_stop+=("$container_name")
-    vm_to_container[$vm]=$container_name
+    containers_to_stop+=("${container_name}")
+    vm_to_container[${vm}]=${container_name}
 done
 
 # Step 2: Send termination signal in parallel
@@ -172,14 +172,14 @@ fi
 # Step 3: Run full teardown (remove volumes/networks per spec)
 for vm in "${VMS_TO_PROCESS[@]}"; do
     # Only process if we didn't skip it above
-    if [[ -z "${BATCH_RESULTS[$vm]}" ]]; then
-        if stop_vm "$vm"; then
-            log_success "$vm stopped successfully"
-            BATCH_RESULTS[$vm]="stopped"
+    if [[ -z "${BATCH_RESULTS[${vm}]}" ]]; then
+        if stop_vm "${vm}"; then
+            log_success "${vm} stopped successfully"
+            BATCH_RESULTS[${vm}]="stopped"
             stopped_count=$((stopped_count + 1))
         else
-            log_error "$vm failed to stop"
-            BATCH_RESULTS[$vm]="failed:stop_error"
+            log_error "${vm} failed to stop"
+            BATCH_RESULTS[${vm}]="failed:stop_error"
             failed_count=$((failed_count + 1))
         fi
     fi
@@ -191,22 +191,22 @@ done
 echo ""
 log_info "Batch operation summary:"
 
-if [ $stopped_count -gt 0 ]; then
-    log_success "Stopped: $stopped_count VM(s)"
+if [ ${stopped_count} -gt 0 ]; then
+    log_success "Stopped: ${stopped_count} VM(s)"
 fi
 
-if [ $skipped_count -gt 0 ]; then
-    log_info "Skipped: $skipped_count VM(s)"
+if [ ${skipped_count} -gt 0 ]; then
+    log_info "Skipped: ${skipped_count} VM(s)"
     for vm in "${(@k)BATCH_RESULTS[@]}"; do
-        [[ "${BATCH_RESULTS[$vm]}" == "skipped:not_created" ]] && log_warning "  ○ $vm - not created"
-        [[ "${BATCH_RESULTS[$vm]}" == "skipped:already_stopped" ]] && log_info "  ○ $vm - already stopped"
+        [[ "${BATCH_RESULTS[${vm}]}" == "skipped:not_created" ]] && log_warning "  ○ ${vm} - not created"
+        [[ "${BATCH_RESULTS[${vm}]}" == "skipped:already_stopped" ]] && log_info "  ○ ${vm} - already stopped"
     done
 fi
 
-if [ $failed_count -gt 0 ]; then
-    log_error "Failed: $failed_count VM(s)"
+if [ ${failed_count} -gt 0 ]; then
+    log_error "Failed: ${failed_count} VM(s)"
     for vm in "${(@k)BATCH_RESULTS[@]}"; do
-        [[ "${BATCH_RESULTS[$vm]}" == "failed:"* ]] && log_error "  ✗ $vm - ${BATCH_RESULTS[$vm]#*:}"
+        [[ "${BATCH_RESULTS[${vm}]}" == "failed:"* ]] && log_error "  ✗ ${vm} - ${BATCH_RESULTS[${vm}]#*:}"
     done
 fi
 

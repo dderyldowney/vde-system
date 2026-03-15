@@ -18,11 +18,11 @@
 
 set -e
 
-VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
+VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(cd "$(dirname "${0}")/.." && pwd)}"
 export VDE_ROOT_DIR
 
-echo "VDE Root Directory: $VDE_ROOT_DIR"
-cd "$VDE_ROOT_DIR"
+echo "VDE Root Directory: ${VDE_ROOT_DIR}"
+cd "${VDE_ROOT_DIR}"
 
 # Prevent Python from writing bytecode cache during test runs
 # This ensures tests always use the latest code without caching issues
@@ -34,12 +34,12 @@ export PYTHONDONTWRITEBYTECODE=1
 clear_python_cache() {
     local cache_cleared=0
     for pycache in $(find tests/features -name "__pycache__" -type d 2>/dev/null); do
-        rm -rf "$pycache" 2>/dev/null && cache_cleared=$((cache_cleared + 1))
+        rm -rf "${pycache}" 2>/dev/null && cache_cleared=$((cache_cleared + 1))
     done
     for pyc in $(find tests/features -name "*.pyc" 2>/dev/null); do
-        rm -f "$pyc" 2>/dev/null && cache_cleared=$((cache_cleared + 1))
+        rm -f "${pyc}" 2>/dev/null && cache_cleared=$((cache_cleared + 1))
     done
-    [[ $cache_cleared -gt 0 ]] && echo "Cleared $cache_cleared Python cache entries"
+    [[ ${cache_cleared} -gt 0 ]] && echo "Cleared ${cache_cleared} Python cache entries"
     return 0
 }
 
@@ -67,14 +67,14 @@ fi
 SPECIFIC_FEATURE=""
 VERBOSE_OUTPUT="false"
 
-while [[ $# -gt 0 ]]; do
-    case $1 in
+while [[ ${#} -gt 0 ]]; do
+    case ${1} in
         --verbose|-v)
             VERBOSE_OUTPUT="true"
             shift
             ;;
         --help|-h)
-            echo "Usage: $0 [feature-name] [--verbose]"
+            echo "Usage: ${0} [feature-name] [--verbose]"
             echo ""
             echo "Run BDD tests without Docker (fast execution)"
             echo ""
@@ -83,17 +83,17 @@ while [[ $# -gt 0 ]]; do
             echo "  --verbose, -v   Enable verbose output"
             echo ""
             echo "Examples:"
-            echo "  $0                    # Run all Docker-free tests"
-            echo "  $0 cache-system       # Run cache-system tests"
-            echo "  $0 template --verbose # Run template tests with verbose output"
+            echo "  ${0}                    # Run all Docker-free tests"
+            echo "  ${0} cache-system       # Run cache-system tests"
+            echo "  ${0} template --verbose # Run template tests with verbose output"
             exit 0
             ;;
         -*)
-            echo -e "${RED}Unknown option: $1${RESET}"
+            echo -e "${RED}Unknown option: ${1}${RESET}"
             exit 1
             ;;
         *)
-            SPECIFIC_FEATURE="$1"
+            SPECIFIC_FEATURE="${1}"
             shift
             ;;
     esac
@@ -129,21 +129,21 @@ mkdir -p .cache .locks
 # Build behave command
 behave_args="--format pretty --no-color"
 
-if [[ "$VERBOSE_OUTPUT" == "true" ]]; then
-    behave_args="$behave_args --verbose"
+if [[ "${VERBOSE_OUTPUT}" == "true" ]]; then
+    behave_args="${behave_args} --verbose"
 fi
 
-if [[ -n "$SPECIFIC_FEATURE" ]]; then
+if [[ -n "${SPECIFIC_FEATURE}" ]]; then
     echo -e "${CYAN}Running specific feature: ${SPECIFIC_FEATURE}${RESET}"
     # Try to match the feature name in core-infrastructure directory
     if [[ -f "tests/features/core-infrastructure/${SPECIFIC_FEATURE}.feature" ]]; then
-        behave_args="$behave_args tests/features/core-infrastructure/${SPECIFIC_FEATURE}.feature"
+        behave_args="${behave_args} tests/features/core-infrastructure/${SPECIFIC_FEATURE}.feature"
     else
         # Try to find a partial match in core-infrastructure
         matched_file=$(find tests/features/core-infrastructure -name "${SPECIFIC_FEATURE}*.feature" | head -1)
-        if [[ -n "$matched_file" ]]; then
-            echo -e "${YELLOW}Found: $matched_file${RESET}"
-            behave_args="$behave_args $matched_file"
+        if [[ -n "${matched_file}" ]]; then
+            echo -e "${YELLOW}Found: ${matched_file}${RESET}"
+            behave_args="${behave_args} ${matched_file}"
         else
             echo -e "${RED}Error: Feature '${SPECIFIC_FEATURE}' not found in core-infrastructure/${RESET}"
             echo "Available Docker-free features:"
@@ -154,19 +154,19 @@ if [[ -n "$SPECIFIC_FEATURE" ]]; then
 else
     echo -e "${CYAN}Running all Docker-free features from tests/features/core-infrastructure/${RESET}"
     # Skip @user-guide-internal tests in CI (they have design issues for clean environments)
-    if [[ -n "$CI" ]]; then
-        behave_args="$behave_args tests/features/core-infrastructure/ --tags=~@user-guide-internal"
+    if [[ -n "${CI}" ]]; then
+        behave_args="${behave_args} tests/features/core-infrastructure/ --tags=~@user-guide-internal"
     else
-        behave_args="$behave_args tests/features/core-infrastructure/"
+        behave_args="${behave_args} tests/features/core-infrastructure/"
     fi
 fi
 
 echo ""
-echo -e "${CYAN}Command: $BEHAVE_CMD $behave_args${RESET}"
+echo -e "${CYAN}Command: ${BEHAVE_CMD} ${behave_args}${RESET}"
 echo ""
 
 # Run behave
-if eval $BEHAVE_CMD $behave_args; then
+if eval ${BEHAVE_CMD} ${behave_args}; then
     echo ""
     echo -e "${GREEN}✓ All fast BDD tests passed!${RESET}"
     exit 0

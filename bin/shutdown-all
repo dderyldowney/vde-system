@@ -7,28 +7,28 @@
 set -e
 
 # Source shared library
-VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-if [[ -z "$VDE_ROOT_DIR" ]]; then
-    export VDE_ROOT_DIR="$(cd "$VDE_SCRIPTS_DIR/.." && pwd)"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
+if [[ -z "${VDE_ROOT_DIR}" ]]; then
+    export VDE_ROOT_DIR="$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)"
 fi
-source "$VDE_ROOT_DIR/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Source UX libraries (optional - for enhanced UX)
-if [[ -f "$VDE_ROOT_DIR/lib/vde-progress" ]]; then
-    source "$VDE_ROOT_DIR/lib/vde-progress"
+if [[ -f "${VDE_ROOT_DIR}/lib/vde-progress" ]]; then
+    source "${VDE_ROOT_DIR}/lib/vde-progress"
 fi
-if [[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]]; then
-    source "$VDE_ROOT_DIR/lib/vde-errors"
+if [[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]]; then
+    source "${VDE_ROOT_DIR}/lib/vde-errors"
 fi
 
 # Parse arguments
-if [[ $# -eq 0 ]]; then
-    echo "Usage: $0 [options] <vm_name> OR 'all'"
+if [[ ${#} -eq 0 ]]; then
+    echo "Usage: ${0} [options] <vm_name> OR 'all'"
     echo ""
     echo "Shutdown one VM or all VMs gracefully:"
     echo ""
-    echo "  $0 python              # Shutdown python VM"
-    echo "  $0 all                # Shutdown all VMs"
+    echo "  ${0} python              # Shutdown python VM"
+    echo "  ${0} all                # Shutdown all VMs"
     echo ""
     echo "This is NOT destructive - VMs can be restarted after shutdown"
     echo ""
@@ -36,15 +36,15 @@ if [[ $# -eq 0 ]]; then
     echo "  -f, --force    Force shutdown (skip confirmation)"
     echo "  -q, --quiet    Suppress output"
     echo ""
-    exit $VDE_ERR_GENERAL
+    exit ${VDE_ERR_GENERAL}
 fi
 
 FORCE=false
 QUIET=false
 
 # Parse arguments
-while [[ $# -gt 0 ]]; do
-    case "$1" in
+while [[ ${#} -gt 0 ]]; do
+    case "${1}" in
         -f|--force)
             FORCE=true
             shift
@@ -59,17 +59,17 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         -*)
-            log_error "Unknown option: $1"
-            exit $VDE_ERR_GENERAL
+            log_error "Unknown option: ${1}"
+            exit ${VDE_ERR_GENERAL}
             ;;
         *)
-            VM_NAME="$1"
+            VM_NAME="${1}"
             shift
             ;;
     esac
 done
 
-if [[ "$ALL_VMS" = "true" ]]; then
+if [[ "${ALL_VMS}" = "true" ]]; then
     # Shutdown all VMs
     log_info "Shutting down all VMs..."
 
@@ -77,7 +77,7 @@ if [[ "$ALL_VMS" = "true" ]]; then
     local vms
     vms=$(get_all_vms)
 
-    if [[ -z "$vms" ]]; then
+    if [[ -z "${vms}" ]]; then
         log_warning "No VMs found to shutdown"
         exit 0
     fi
@@ -85,50 +85,50 @@ if [[ "$ALL_VMS" = "true" ]]; then
     local vm
     local stopped_count=0
 
-    for vm in $vms; do
-        if [[ -n "$vm" ]]; then
-            if is_vm_running "$vm"; then
-                if [[ "$FORCE" = "false" ]]; then
-                    vde_progress_confirm "Stop VM '$vm'?" 0 || exit $VDE_ERR_GENERAL
+    for vm in ${vms}; do
+        if [[ -n "${vm}" ]]; then
+            if is_vm_running "${vm}"; then
+                if [[ "${FORCE}" = "false" ]]; then
+                    vde_progress_confirm "Stop VM '${vm}'?" 0 || exit ${VDE_ERR_GENERAL}
                 fi
-                if stop_vm "$vm"; then
+                if stop_vm "${vm}"; then
                     ((stopped_count++))
                 else
-                    vde_progress_info "Skipping already stopped VM: $vm"
+                    vde_progress_info "Skipping already stopped VM: ${vm}"
                 fi
             else
-                vde_progress_info "Skipping already stopped VM: $vm"
+                vde_progress_info "Skipping already stopped VM: ${vm}"
             fi
         fi
     done
 
-    if [[ "$stopped_count" -eq 0 ]] && [[ "$FORCE" = "false" ]]; then
+    if [[ "${stopped_count}" -eq 0 ]] && [[ "${FORCE}" = "false" ]]; then
         log_info "All VMs already stopped"
     fi
 else
     # Shutdown a single VM
-    validate_vm_exists "$VM_NAME"
+    validate_vm_exists "${VM_NAME}"
 
-    if is_vm_running "$VM_NAME"; then
-        if [[ "$FORCE" = "false" ]]; then
-            vde_progress_confirm "Stop VM '$VM_NAME'?" 0 || exit $VDE_ERR_GENERAL
+    if is_vm_running "${VM_NAME}"; then
+        if [[ "${FORCE}" = "false" ]]; then
+            vde_progress_confirm "Stop VM '${VM_NAME}'?" 0 || exit ${VDE_ERR_GENERAL}
         fi
-        stop_vm "$VM_NAME"
+        stop_vm "${VM_NAME}"
     else
-        log_info "VM '$VM_NAME' is already stopped"
+        log_info "VM '${VM_NAME}' is already stopped"
     fi
 fi
 
 # Show summary
-if [[ "$ALL_VMS" = "true" ]]; then
-    if [[ "$stopped_count" -gt 0 ]]; then
-        log_success "Stopped $stopped_count VM(s)"
+if [[ "${ALL_VMS}" = "true" ]]; then
+    if [[ "${stopped_count}" -gt 0 ]]; then
+        log_success "Stopped ${stopped_count} VM(s)"
     else
         log_success "All VMs already stopped"
     fi
 else
-    if [[ "$VM_NAME" != "" ]]; then
-        log_success "VM '$VM_NAME' stopped successfully"
+    if [[ "${VM_NAME}" != "" ]]; then
+        log_success "VM '${VM_NAME}' stopped successfully"
     fi
 fi
 

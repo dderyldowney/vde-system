@@ -14,17 +14,17 @@
 #   --dry-run   Show what would be removed without removing anything
 #===============================================================================
 
-VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-VDE_ROOT_DIR="$(cd "$VDE_SCRIPTS_DIR/.." && pwd)"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
+VDE_ROOT_DIR="$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)"
 export VDE_ROOT_DIR
 
-source "$VDE_ROOT_DIR/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
 DRY_RUN=false
 CLEAR_ALL=false
 
-while [[ $# -gt 0 ]]; do
-    case $1 in
+while [[ ${#} -gt 0 ]]; do
+    case ${1} in
         --all)      CLEAR_ALL=true; shift ;;
         --dry-run)  DRY_RUN=true; shift ;;
         --help|-h)
@@ -34,31 +34,31 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         *)
-            log_error "Unknown option: $1"
-            exit $VDE_ERR_GENERAL
+            log_error "Unknown option: ${1}"
+            exit ${VDE_ERR_GENERAL}
             ;;
     esac
 done
 
-port_dir="$VDE_CACHE_DIR/port-registry"
+port_dir="${VDE_CACHE_DIR}/port-registry"
 
-if [[ ! -d "$port_dir" ]]; then
-    log_info "Port registry is empty (no directory at $port_dir)"
+if [[ ! -d "${port_dir}" ]]; then
+    log_info "Port registry is empty (no directory at ${port_dir})"
     exit 0
 fi
 
-port_files=("$port_dir"/*.port(N))
+port_files=("${port_dir}"/*.port(N))
 
 if [[ ${#port_files[@]} -eq 0 ]]; then
     log_info "Port registry is empty — nothing to clean up"
     exit 0
 fi
 
-if [[ "$CLEAR_ALL" == "true" ]]; then
-    if [[ "$DRY_RUN" == "true" ]]; then
+if [[ "${CLEAR_ALL}" == "true" ]]; then
+    if [[ "${DRY_RUN}" == "true" ]]; then
         log_info "[DRY RUN] Would clear all ${#port_files[@]} port registry entries:"
         for f in "${port_files[@]}"; do
-            log_info "[DRY RUN]   $(basename "$f")"
+            log_info "[DRY RUN]   $(basename "${f}")"
         done
     else
         clear_port_registry
@@ -72,15 +72,15 @@ removed=0
 kept=0
 
 for f in "${port_files[@]}"; do
-    vm_name="$(basename "$f" .port)"
+    vm_name="$(basename "${f}" .port)"
     # Strip vde- prefix for is_known_vm lookup
     raw_name="${vm_name#vde-}"
-    if ! is_known_vm "$raw_name" 2>/dev/null; then
-        if [[ "$DRY_RUN" == "true" ]]; then
-            log_info "[DRY RUN] Would remove stale entry: $vm_name (port $(cat "$f"))"
+    if ! is_known_vm "${raw_name}" 2>/dev/null; then
+        if [[ "${DRY_RUN}" == "true" ]]; then
+            log_info "[DRY RUN] Would remove stale entry: ${vm_name} (port $(cat "${f}"))"
         else
-            remove_port_from_registry "$vm_name"
-            log_info "Removed stale entry: $vm_name"
+            remove_port_from_registry "${vm_name}"
+            log_info "Removed stale entry: ${vm_name}"
             ((removed++))
         fi
     else
@@ -88,8 +88,8 @@ for f in "${port_files[@]}"; do
     fi
 done
 
-if [[ "$DRY_RUN" == "true" ]]; then
+if [[ "${DRY_RUN}" == "true" ]]; then
     log_info "Dry run complete — no changes made"
 else
-    log_success "Port registry cleaned: $removed stale entries removed, $kept valid entries kept"
+    log_success "Port registry cleaned: ${removed} stale entries removed, ${kept} valid entries kept"
 fi

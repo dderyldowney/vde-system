@@ -3,22 +3,22 @@
 # Usage: ./generate_video.sh <output_path> [tape_commands...]
 # If tape_commands are not provided, it reads from stdin.
 
-OUTPUT_PATH=$1
+OUTPUT_PATH=${1}
 shift
-TAPE_COMMANDS="$*"
+TAPE_COMMANDS="${*}"
 
-if [ -z "$OUTPUT_PATH" ]; then
-  echo "Usage: $0 <output_path> [tape_commands...]"
-  echo "Example: $0 demo.gif \"Type 'ls -l'; Enter; Sleep 2s;\""
-  exit $VDE_ERR_GENERAL
+if [ -z "${OUTPUT_PATH}" ]; then
+  echo "Usage: ${0} <output_path> [tape_commands...]"
+  echo "Example: ${0} demo.gif \"Type 'ls -l'; Enter; Sleep 2s;\""
+  exit ${VDE_ERR_GENERAL}
 fi
 
 # Create a temporary tape file
 TEMP_TAPE=$(mktemp /tmp/vhs_XXXXXX.tape)
 
 # Write VHS configuration (you can customize these defaults)
-cat <<EOF > "$TEMP_TAPE"
-Output "$OUTPUT_PATH"
+cat <<EOF > "${TEMP_TAPE}"
+Output "${OUTPUT_PATH}"
 Set FontSize 16
 Set FontFamily "JetBrains Mono"
 Set Width 1200
@@ -29,28 +29,28 @@ Set WindowBar Colorful
 EOF
 
 # Append commands
-if [ -n "$TAPE_COMMANDS" ]; then
+if [ -n "${TAPE_COMMANDS}" ]; then
   # Replace semicolons with newlines for easier single-string scripting
-  echo "$TAPE_COMMANDS" | tr ';' '\n' >> "$TEMP_TAPE"
+  echo "${TAPE_COMMANDS}" | tr ';' '\n' >> "${TEMP_TAPE}"
 else
   # Read from stdin
-  cat >> "$TEMP_TAPE"
+  cat >> "${TEMP_TAPE}"
 fi
 
 echo "Generating VHS video..."
 echo "--- Tape Contents ---"
-cat "$TEMP_TAPE"
+cat "${TEMP_TAPE}"
 echo "---------------------"
 
-vhs < "$TEMP_TAPE"
-VHS_STATUS=$?
+vhs < "${TEMP_TAPE}"
+VHS_STATUS=${?}
 
 # Clean up
-rm "$TEMP_TAPE"
+rm "${TEMP_TAPE}"
 
-if [ $VHS_STATUS -eq 0 ]; then
-  echo "Success! Video saved to $OUTPUT_PATH"
+if [ ${VHS_STATUS} -eq 0 ]; then
+  echo "Success! Video saved to ${OUTPUT_PATH}"
 else
   echo "Failed to generate video. Check vhs output above."
-  exit $VHS_STATUS
+  exit ${VHS_STATUS}
 fi

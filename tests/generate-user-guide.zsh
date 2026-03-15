@@ -4,8 +4,8 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║     Generate VERIFIED User Guide from PASSING Tests       ║"
@@ -34,8 +34,8 @@ SKIP_TAGS=""
 RUN_ALL_FEATURES=true
 SPECIFIC_FEATURE=""
 
-for arg in "$@"; do
-    case "$arg" in
+for arg in "${@}"; do
+    case "${arg}" in
         --skip-docker-host)
             SKIP_TAGS="--tags=~requires-docker-host"
             shift
@@ -46,7 +46,7 @@ for arg in "$@"; do
             shift
             ;;
         -h|--help)
-            echo "Usage: $0 [OPTIONS]"
+            echo "Usage: ${0} [OPTIONS]"
             echo ""
             echo "Generate a VERIFIED user guide from PASSING BDD tests."
             echo ""
@@ -61,9 +61,9 @@ for arg in "$@"; do
             echo "  -h, --help            Show this help"
             echo ""
             echo "Examples:"
-            echo "  $0                              # Run all tests, generate verified guide"
-            echo "  $0 --skip-docker-host           # Skip Docker host tests (for CI)"
-            echo "  $0 --feature=vm-lifecycle       # Only test vm-lifecycle feature"
+            echo "  ${0}                              # Run all tests, generate verified guide"
+            echo "  ${0} --skip-docker-host           # Skip Docker host tests (for CI)"
+            echo "  ${0} --feature=vm-lifecycle       # Only test vm-lifecycle feature"
             exit 0
             ;;
     esac
@@ -83,7 +83,7 @@ else
 fi
 
 # Determine feature to test
-if [[ "$RUN_ALL_FEATURES" == "true" ]]; then
+if [[ "${RUN_ALL_FEATURES}" == "true" ]]; then
     BEHAVE_PATH="tests/features/"
 else
     BEHAVE_PATH="tests/features/${SPECIFIC_FEATURE}.feature"
@@ -93,22 +93,22 @@ fi
 echo -e "${BLUE}Running Behave tests with JSON output...${RESET}"
 docker run --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    -v "$PROJECT_ROOT/tests/workspace:/vde/tests/workspace" \
-    -v "$PROJECT_ROOT/tests:/vde/tests-output" \
+    -v "${PROJECT_ROOT}/tests/workspace:/vde/tests/workspace" \
+    -v "${PROJECT_ROOT}/tests:/vde/tests-output" \
     -e VDE_ROOT_DIR=/vde \
     -e PYTHONUNBUFFERED=1 \
     --network host \
     vde-bdd-tester \
     zsh -lc "
         cd /vde && \
-        behave --format json --outfile /vde/tests-output/behave-results.json $SKIP_TAGS '$BEHAVE_PATH' 2>&1 | head -100
+        behave --format json --outfile /vde/tests-output/behave-results.json ${SKIP_TAGS} '${BEHAVE_PATH}' 2>&1 | head -100
     " || {
     echo ""
     echo -e "${YELLOW}⚠ Some tests failed, but generating guide with PASSING scenarios only${RESET}"
 }
 
 # Check if JSON was generated
-if [[ ! -f "$PROJECT_ROOT/tests/behave-results.json" ]]; then
+if [[ ! -f "${PROJECT_ROOT}/tests/behave-results.json" ]]; then
     echo -e "${RED}✗${RESET} Failed to generate test results"
     exit 1
 fi
@@ -119,7 +119,7 @@ echo -e "${GREEN}✓${RESET} Test results saved to tests/behave-results.json"
 # Count passing scenarios
 PASSING_COUNT=$(python3 -c "
 import json
-with open('$PROJECT_ROOT/tests/behave-results.json') as f:
+with open('${PROJECT_ROOT}/tests/behave-results.json') as f:
     data = json.load(f)
 count = 0
 for feature in data:
@@ -131,7 +131,7 @@ print(count)
 
 FAILING_COUNT=$(python3 -c "
 import json
-with open('$PROJECT_ROOT/tests/behave-results.json') as f:
+with open('${PROJECT_ROOT}/tests/behave-results.json') as f:
     data = json.load(f)
 count = 0
 for feature in data:
@@ -143,15 +143,15 @@ print(count)
 
 echo ""
 echo -e "${BLUE}Test Results Summary:${RESET}"
-echo "  Passing:  ${GREEN}$PASSING_COUNT${RESET} scenarios"
-echo "  Failing:  ${RED}$FAILING_COUNT${RESET} scenarios"
+echo "  Passing:  ${GREEN}${PASSING_COUNT}${RESET} scenarios"
+echo "  Failing:  ${RED}${FAILING_COUNT}${RESET} scenarios"
 echo ""
 
 echo -e "${BLUE}Step 2: Generating verified user guide...${RESET}"
 echo ""
 
 # Generate the user guide from passing scenarios
-python3 "$PROJECT_ROOT/tests/bin/generate_user_guide.py"
+python3 "${PROJECT_ROOT}/tests/bin/generate_user_guide.py"
 
 echo ""
 echo -e "${GREEN}${BOLD}✓ VERIFIED User Guide Generated!${RESET}"

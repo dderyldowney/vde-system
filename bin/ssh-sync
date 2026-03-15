@@ -9,11 +9,11 @@
 
 set -e
 
-VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$VDE_ROOT_DIR/lib/vm-common"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Parse command line arguments
-if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+if [[ "${1}" == "--help" ]] || [[ "${1}" == "-h" ]]; then
     cat <<EOF
 VDE SSH Sync - Sync SSH keys to VDE build context
 
@@ -45,7 +45,7 @@ echo ""
 if sync_ssh_keys_to_vde; then
     log_success "✓ VDE SSH public key synced"
     echo ""
-    echo "Build context location: $VDE_ROOT_DIR/public-ssh-keys/"
+    echo "Build context location: ${VDE_ROOT_DIR}/public-ssh-keys/"
     echo ""
     exit 0
 else
@@ -54,5 +54,5 @@ else
     echo "Ensure VDE SSH environment is initialized:"
     echo "  vde ssh-setup init"
     echo ""
-    exit $VDE_ERR_GENERAL
+    exit ${VDE_ERR_GENERAL}
 fi

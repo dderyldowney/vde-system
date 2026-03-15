@@ -18,16 +18,16 @@
 #===============================================================================
 
 # Determine VDE root directory
-VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-VDE_ROOT_DIR="$(cd "$VDE_SCRIPTS_DIR/.." && pwd)"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
+VDE_ROOT_DIR="$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)"
 
 # Source shared library
-source "$VDE_ROOT_DIR/lib/vde-shell-compat"
-source "$VDE_ROOT_DIR/lib/vde-constants"
-source "$VDE_ROOT_DIR/lib/vde-errors"
-source "$VDE_ROOT_DIR/lib/vde-log"
-source "$VDE_ROOT_DIR/lib/vde-core"
-source "$VDE_ROOT_DIR/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
+source "${VDE_ROOT_DIR}/lib/vde-constants"
+source "${VDE_ROOT_DIR}/lib/vde-errors"
+source "${VDE_ROOT_DIR}/lib/vde-log"
+source "${VDE_ROOT_DIR}/lib/vde-core"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Initialize logging
 vde_log_init 2>/dev/null || true
@@ -38,7 +38,7 @@ vde_log_init 2>/dev/null || true
 
 DRY_RUN=false
 SKIP_CONFIRM=false
-VM_TYPES_FILE="$VDE_ROOT_DIR/data/vm-types.conf"
+VM_TYPES_FILE="${VDE_ROOT_DIR}/data/vm-types.conf"
 
 # Colors
 if [[ -t 1 ]]; then
@@ -60,19 +60,19 @@ fi
 #===============================================================================
 
 print_warning() {
-    echo "${YELLOW}WARNING: $1${NC}"
+    echo "${YELLOW}WARNING: ${1}${NC}"
 }
 
 print_error() {
-    echo "${RED}ERROR: $1${NC}"
+    echo "${RED}ERROR: ${1}${NC}"
 }
 
 print_success() {
-    echo "${GREEN}SUCCESS: $1${NC}"
+    echo "${GREEN}SUCCESS: ${1}${NC}"
 }
 
 print_info() {
-    echo "${BLUE}INFO: $1${NC}"
+    echo "${BLUE}INFO: ${1}${NC}"
 }
 
 print_dry_run() {
@@ -84,28 +84,28 @@ print_dry_run() {
 }
 
 ask_yes_no() {
-    local prompt="$1"
+    local prompt="${1}"
     local default="${2:-n}"
 
-    if [[ "$SKIP_CONFIRM" = "true" ]]; then
+    if [[ "${SKIP_CONFIRM}" = "true" ]]; then
         return 0
     fi
 
     local yn
-    if [[ "$default" = "y" ]]; then
-        prompt="$prompt [Y/n]"
+    if [[ "${default}" = "y" ]]; then
+        prompt="${prompt} [Y/n]"
     else
-        prompt="$prompt [y/N]"
+        prompt="${prompt} [y/N]"
     fi
 
     while true; do
-        echo -n "$prompt "
+        echo -n "${prompt} "
         read -r yn
-        yn=${yn:-$default}
+        yn=${yn:-${default}}
 
-        case "$yn" in
+        case "${yn}" in
             [Yy]|[Yy][Ee][Ss]) return 0 ;;
-            [Nn]|[Nn][Oo]) return $VDE_ERR_GENERAL ;;
+            [Nn]|[Nn][Oo]) return ${VDE_ERR_GENERAL} ;;
             *) echo "Please answer yes or no." ;;
         esac
     done
@@ -117,124 +117,124 @@ ask_yes_no() {
 
 # Remove entry from vm-types.yml
 remove_vm_type_entry() {
-    local vm_type="$1"
+    local vm_type="${1}"
 
-    if [[ ! -f "$VM_TYPES_FILE" ]]; then
+    if [[ ! -f "${VM_TYPES_FILE}" ]]; then
         print_info "No vm-types.conf file found"
         return 0
     fi
 
     local temp_file="${VM_TYPES_FILE}.tmp"
 
-    if [[ "$DRY_RUN" = "true" ]]; then
-        print_info "[DRY RUN] Would remove entry for '$vm_type' from vm-types.conf"
-        grep -E "^(lang|service)\|${vm_type}\|" "$VM_TYPES_FILE" 2>/dev/null || print_info "[DRY RUN]   (no entry found)"
+    if [[ "${DRY_RUN}" = "true" ]]; then
+        print_info "[DRY RUN] Would remove entry for '${vm_type}' from vm-types.conf"
+        grep -E "^(lang|service)\|${vm_type}\|" "${VM_TYPES_FILE}" 2>/dev/null || print_info "[DRY RUN]   (no entry found)"
         return 0
     fi
 
     # Remove lines matching the VM type (format: lang|rust|... or service|postgres|...)
-    grep -v -E "^(lang|service)\|${vm_type}\|" "$VM_TYPES_FILE" > "$temp_file" 2>/dev/null || true
+    grep -v -E "^(lang|service)\|${vm_type}\|" "${VM_TYPES_FILE}" > "${temp_file}" 2>/dev/null || true
 
-    if ! cmp -s "$VM_TYPES_FILE" "$temp_file" 2>/dev/null; then
-        mv "$temp_file" "$VM_TYPES_FILE"
-        print_success "Removed '$vm_type' from vm-types.conf"
+    if ! cmp -s "${VM_TYPES_FILE}" "${temp_file}" 2>/dev/null; then
+        mv "${temp_file}" "${VM_TYPES_FILE}"
+        print_success "Removed '${vm_type}' from vm-types.conf"
 
         # Invalidate the cache so it gets regenerated
-        rm -f "$VDE_CACHE_DIR/vm-types.cache" 2>/dev/null || true
+        rm -f "${VDE_CACHE_DIR}/vm-types.cache" 2>/dev/null || true
     else
-        rm -f "$temp_file"
-        print_info "No entry found for '$vm_type' in vm-types.conf"
+        rm -f "${temp_file}"
+        print_info "No entry found for '${vm_type}' in vm-types.conf"
     fi
 }
 
 # Remove docker config directory
 remove_docker_config() {
-    local vm_type="$1"
-    local config_dir="$VDE_ROOT_DIR/configs/docker/${vm_type}"
+    local vm_type="${1}"
+    local config_dir="${VDE_ROOT_DIR}/configs/docker/${vm_type}"
 
-    if [[ ! -d "$config_dir" ]]; then
-        print_info "No config directory found: $config_dir"
+    if [[ ! -d "${config_dir}" ]]; then
+        print_info "No config directory found: ${config_dir}"
         return 0
     fi
 
     # Config directories (docker-compose.yml) are preserved — must be deleted manually.
-    print_info "Config directory preserved (manual deletion required): $config_dir"
+    print_info "Config directory preserved (manual deletion required): ${config_dir}"
 }
 
 # Stop and remove VM if running
 remove_vm() {
-    local vm_type="$1"
+    local vm_type="${1}"
 
-    if vm_exists "$vm_type" 2>/dev/null; then
-        if is_vm_running "$vm_type" 2>/dev/null; then
-            if [[ "$DRY_RUN" = "true" ]]; then
-                print_info "[DRY RUN] Would stop VM: $vm_type"
+    if vm_exists "${vm_type}" 2>/dev/null; then
+        if is_vm_running "${vm_type}" 2>/dev/null; then
+            if [[ "${DRY_RUN}" = "true" ]]; then
+                print_info "[DRY RUN] Would stop VM: ${vm_type}"
             else
-                print_info "Stopping VM: $vm_type"
-                stop_vm "$vm_type" 2>/dev/null || true
+                print_info "Stopping VM: ${vm_type}"
+                stop_vm "${vm_type}" 2>/dev/null || true
             fi
         fi
 
-        local compose_file="$VDE_ROOT_DIR/configs/docker/${vm_type}/docker-compose.yml"
-        if [[ -f "$compose_file" ]]; then
+        local compose_file="${VDE_ROOT_DIR}/configs/docker/${vm_type}/docker-compose.yml"
+        if [[ -f "${compose_file}" ]]; then
             # docker-compose.yml is preserved — must be deleted manually by the user.
-            print_info "Compose file preserved (manual deletion required): $compose_file"
+            print_info "Compose file preserved (manual deletion required): ${compose_file}"
         fi
     else
-        print_info "VM '$vm_type' not built, skipping VM removal"
+        print_info "VM '${vm_type}' not built, skipping VM removal"
     fi
 }
 
 # Remove Docker images for the VM type
 remove_docker_images() {
-    local vm_type="$1"
+    local vm_type="${1}"
     local image_prefix="vde-${vm_type}"
 
     local images
     images=$(docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep "^${image_prefix}" || echo "")
 
-    if [[ -z "$images" ]]; then
-        print_info "No Docker images found for '$vm_type'"
+    if [[ -z "${images}" ]]; then
+        print_info "No Docker images found for '${vm_type}'"
         return 0
     fi
 
-    local image_count=$(echo "$images" | wc -l | tr -d ' ')
+    local image_count=$(echo "${images}" | wc -l | tr -d ' ')
 
-    if [[ "$DRY_RUN" = "true" ]]; then
-        print_info "[DRY RUN] Would remove $image_count Docker image(s) for '$vm_type':"
-        echo "$images" | while read -r image; do
-            [[ -n "$image" ]] && print_info "[DRY RUN]   - $image"
+    if [[ "${DRY_RUN}" = "true" ]]; then
+        print_info "[DRY RUN] Would remove ${image_count} Docker image(s) for '${vm_type}':"
+        echo "${images}" | while read -r image; do
+            [[ -n "${image}" ]] && print_info "[DRY RUN]   - ${image}"
         done
         return 0
     fi
 
-    print_info "Removing $image_count Docker image(s) for '$vm_type'..."
-    echo "$images" | while read -r image; do
-        [[ -n "$image" ]] && docker rmi -f "$image" >/dev/null 2>&1 || true
+    print_info "Removing ${image_count} Docker image(s) for '${vm_type}'..."
+    echo "${images}" | while read -r image; do
+        [[ -n "${image}" ]] && docker rmi -f "${image}" >/dev/null 2>&1 || true
     done
-    print_success "Removed Docker images for '$vm_type'"
+    print_success "Removed Docker images for '${vm_type}'"
 }
 
 # Remove SSH config entries
 remove_ssh_entries() {
-    local vm_type="$1"
+    local vm_type="${1}"
 
     # Get VM category to determine SSH hostname
     local vm_category
-    vm_category=$(get_vm_info type "$vm_type" 2>/dev/null || echo "")
+    vm_category=$(get_vm_info type "${vm_type}" 2>/dev/null || echo "")
 
     local ssh_hosts=()
 
-    if [[ "$vm_category" == "lang" ]]; then
+    if [[ "${vm_category}" == "lang" ]]; then
         ssh_hosts=("${vm_type}-dev")
-    elif [[ "$vm_category" == "service" ]]; then
-        ssh_hosts=("$vm_type")
+    elif [[ "${vm_category}" == "service" ]]; then
+        ssh_hosts=("${vm_type}")
     else
         # Default: treat as language
         ssh_hosts=("${vm_type}-dev")
     fi
 
-    if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ "${DRY_RUN}" = "true" ]]; then
         print_info "[DRY RUN] Would remove SSH config entries for: ${ssh_hosts[*]}"
         return 0
     fi
@@ -248,29 +248,29 @@ remove_ssh_entries() {
 
 # Remove env files
 remove_env_files() {
-    local vm_type="$1"
-    local env_file="$VDE_ROOT_DIR/env-files/${vm_type}.env"
+    local vm_type="${1}"
+    local env_file="${VDE_ROOT_DIR}/env-files/${vm_type}.env"
 
-    if [[ ! -f "$env_file" ]]; then
-        print_info "No env file found: $env_file"
+    if [[ ! -f "${env_file}" ]]; then
+        print_info "No env file found: ${env_file}"
         return 0
     fi
 
     # env files are preserved — must be deleted manually by the user.
-    print_info "Env file preserved (manual deletion required): $env_file"
+    print_info "Env file preserved (manual deletion required): ${env_file}"
 }
 
 # Remove logs
 remove_logs() {
-    local vm_type="$1"
-    local log_dir="$VDE_ROOT_DIR/logs/${vm_type}"
+    local vm_type="${1}"
+    local log_dir="${VDE_ROOT_DIR}/logs/${vm_type}"
 
-    if [[ ! -d "$log_dir" ]]; then
+    if [[ ! -d "${log_dir}" ]]; then
         return 0
     fi
 
     # Logs are preserved along with other configuration files
-    print_info "Logs directory preserved: $log_dir"
+    print_info "Logs directory preserved: ${log_dir}"
 }
 
 #===============================================================================
@@ -279,8 +279,8 @@ remove_logs() {
 
 main() {
     # Handle --help first
-    if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
-        echo "Usage: $0 <vm_type> [options]"
+    if [[ "${1}" == "--help" ]] || [[ "${1}" == "-h" ]]; then
+        echo "Usage: ${0} <vm_type> [options]"
         echo ""
         echo "Remove a language or service type from VDE."
         echo ""
@@ -305,8 +305,8 @@ main() {
     fi
 
     # Parse arguments
-    if [[ $# -eq 0 ]]; then
-        echo "Usage: $0 <vm_type> [--dry-run] [--skip-confirm]"
+    if [[ ${#} -eq 0 ]]; then
+        echo "Usage: ${0} <vm_type> [--dry-run] [--skip-confirm]"
         echo ""
         echo "Remove a language or service type from VDE."
         echo ""
@@ -326,14 +326,14 @@ main() {
         echo "  --dry-run         Show what would be done without making changes"
         echo "  --skip-confirm    Skip confirmation prompts (dangerous!)"
         echo ""
-        exit $VDE_ERR_GENERAL
+        exit ${VDE_ERR_GENERAL}
     fi
 
-    local VM_TYPE="$1"
+    local VM_TYPE="${1}"
     shift
 
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
+    while [[ ${#} -gt 0 ]]; do
+        case "${1}" in
             --dry-run)
                 DRY_RUN=true
                 shift
@@ -343,8 +343,8 @@ main() {
                 shift
                 ;;
             *)
-                echo "Unknown option: $1"
-                exit $VDE_ERR_GENERAL
+                echo "Unknown option: ${1}"
+                exit ${VDE_ERR_GENERAL}
                 ;;
         esac
     done
@@ -357,15 +357,15 @@ main() {
     load_vm_types 2>/dev/null || true
 
     # Check if VM type exists by checking if it's in the cache
-    if ! grep -q "^VM_TYPE:${VM_TYPE}=" "$VDE_CACHE_DIR/vm-types.cache" 2>/dev/null; then
-        print_error "VM type '$VM_TYPE' not found"
+    if ! grep -q "^VM_TYPE:${VM_TYPE}=" "${VDE_CACHE_DIR}/vm-types.cache" 2>/dev/null; then
+        print_error "VM type '${VM_TYPE}' not found"
         echo ""
         echo "Available VM types:"
         # Get all VM types from the cache
-        if [[ -f "$VDE_CACHE_DIR/vm-types.cache" ]]; then
-            grep "^VM_TYPE:" "$VDE_CACHE_DIR/vm-types.cache" | sed 's/^VM_TYPE:/  /' | sed 's/=.*//' | sort
+        if [[ -f "${VDE_CACHE_DIR}/vm-types.cache" ]]; then
+            grep "^VM_TYPE:" "${VDE_CACHE_DIR}/vm-types.cache" | sed 's/^VM_TYPE:/  /' | sed 's/=.*//' | sort
         fi
-        exit $VDE_ERR_GENERAL
+        exit ${VDE_ERR_GENERAL}
     fi
 
     #===========================================================================
@@ -374,10 +374,10 @@ main() {
 
     echo ""
     echo "============================================================================="
-    echo "                COMPLETE REMOVAL OF VM TYPE: $VM_TYPE"
+    echo "                COMPLETE REMOVAL OF VM TYPE: ${VM_TYPE}"
     echo "============================================================================="
     echo ""
-    print_warning "This will COMPLETELY remove '$VM_TYPE' from VDE!"
+    print_warning "This will COMPLETELY remove '${VM_TYPE}' from VDE!"
     echo ""
     print_warning "This action is NOT reversible (unless you re-add it with add-vm-type)"
     echo ""
@@ -394,18 +394,18 @@ main() {
     echo "  - projects/${VM_TYPE}/ directory"
     echo ""
 
-    if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ "${DRY_RUN}" = "true" ]]; then
         print_dry_run
     fi
 
     # Mandatory confirmation
-    if ! ask_yes_no "Are you sure you want to completely remove '$VM_TYPE' from VDE?" "n"; then
+    if ! ask_yes_no "Are you sure you want to completely remove '${VM_TYPE}' from VDE?" "n"; then
         print_info "Uninstall cancelled"
         exit 0
     fi
 
     # Second confirmation for safety
-    if [[ "$SKIP_CONFIRM" != "true" ]]; then
+    if [[ "${SKIP_CONFIRM}" != "true" ]]; then
         if ! ask_yes_no "This is your last chance - are you REALLY sure?" "n"; then
             print_info "Uninstall cancelled"
             exit 0
@@ -418,22 +418,22 @@ main() {
 
     echo ""
     echo "============================================================================="
-    if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ "${DRY_RUN}" = "true" ]]; then
         print_info "DRY RUN - Showing what would be done..."
     else
-        print_info "Removing '$VM_TYPE' from VDE..."
+        print_info "Removing '${VM_TYPE}' from VDE..."
     fi
     echo "============================================================================="
     echo ""
 
     # Remove in safe order
-    remove_vm "$VM_TYPE"
-    remove_docker_images "$VM_TYPE"
-    remove_ssh_entries "$VM_TYPE"
-    remove_env_files "$VM_TYPE"
-    remove_logs "$VM_TYPE"
-    remove_docker_config "$VM_TYPE"
-    remove_vm_type_entry "$VM_TYPE"
+    remove_vm "${VM_TYPE}"
+    remove_docker_images "${VM_TYPE}"
+    remove_ssh_entries "${VM_TYPE}"
+    remove_env_files "${VM_TYPE}"
+    remove_logs "${VM_TYPE}"
+    remove_docker_config "${VM_TYPE}"
+    remove_vm_type_entry "${VM_TYPE}"
 
     #===========================================================================
     # Final Message
@@ -441,25 +441,25 @@ main() {
 
     echo ""
     echo "============================================================================="
-    if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ "${DRY_RUN}" = "true" ]]; then
         print_success "DRY RUN COMPLETE - No changes were made"
     else
-        print_success "VM type '$VM_TYPE' has been completely removed from VDE"
+        print_success "VM type '${VM_TYPE}' has been completely removed from VDE"
     fi
     echo "============================================================================="
     echo ""
 
-    if [[ "$DRY_RUN" = "true" ]]; then
+    if [[ "${DRY_RUN}" = "true" ]]; then
         print_info "To run the actual uninstall, run:"
-        echo "  vde uninstall $VM_TYPE"
+        echo "  vde uninstall ${VM_TYPE}"
         echo "  or"
-        echo "  ./bin/uninstall-vm-type $VM_TYPE"
+        echo "  ./bin/uninstall-vm-type ${VM_TYPE}"
         echo ""
     else
         print_info "To re-add this VM type, use:"
-        echo "  ./bin/add-vm-type $VM_TYPE"
+        echo "  ./bin/add-vm-type ${VM_TYPE}"
         echo ""
     fi
 }
 
-main "$@"
+main "${@}"

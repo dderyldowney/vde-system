@@ -13,31 +13,31 @@ VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 # Source core libraries
-[[ -f "$VDE_ROOT_DIR/lib/vde-shell-compat" ]] && source "$VDE_ROOT_DIR/lib/vde-shell-compat" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-constants" ]] && source "$VDE_ROOT_DIR/lib/vde-constants" &>/dev/null
-[[ -f "$VDE_ROOT_DIR/lib/vde-errors" ]] && source "$VDE_ROOT_DIR/lib/vde-errors" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
 
 # Check arguments
-if [ -z "$1" ]; then
+if [ -z "${1}" ]; then
     vde_error_simple "VM name is required"
     echo "Usage: vde-port <vm_name> [port]"
-    exit $VDE_ERR_INVALID_INPUT
+    exit ${VDE_ERR_INVALID_INPUT}
 fi
 
-VM_NAME="$1"
+VM_NAME="${1}"
 shift
 
 # Ensure vde- prefix for container name
-CONTAINER_NAME="$VM_NAME"
-if [[ "$VM_NAME" != vde-* ]] && [[ "$VM_NAME" != *-dev ]]; then
+CONTAINER_NAME="${VM_NAME}"
+if [[ "${VM_NAME}" != vde-* ]] && [[ "${VM_NAME}" != *-dev ]]; then
     CONTAINER_NAME="vde-${VM_NAME}"
 fi
 
 # Check if a specific port was requested
-if [ -n "$1" ]; then
-    docker port "$CONTAINER_NAME" "$1"
+if [ -n "${1}" ]; then
+    docker port "${CONTAINER_NAME}" "${1}"
 else
-    docker port "$CONTAINER_NAME"
+    docker port "${CONTAINER_NAME}"
 fi
 
-exit $?
+exit ${?}

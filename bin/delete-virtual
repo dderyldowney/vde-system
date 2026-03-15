@@ -5,15 +5,15 @@
 set -e
 
 # Source shared library
-VDE_SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$VDE_ROOT_DIR/lib/vm-common"
-source "$VDE_ROOT_DIR/lib/vde-naming"
-source "$VDE_ROOT_DIR/lib/vde-ssh"
-source "$VDE_ROOT_DIR/lib/vde-docker"
+VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
+source "${VDE_ROOT_DIR}/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vde-naming"
+source "${VDE_ROOT_DIR}/lib/vde-ssh"
+source "${VDE_ROOT_DIR}/lib/vde-docker"
 
 # Parse arguments
-if [[ $# -eq 0 ]]; then
-    echo "Usage: $0 <vm_name>"
+if [[ ${#} -eq 0 ]]; then
+    echo "Usage: ${0} <vm_name>"
     echo ""
     echo "Completely remove a VM container and image."
     echo ""
@@ -28,53 +28,53 @@ if [[ $# -eq 0 ]]; then
     echo "  - SSH config entry (static port assignment)"
     echo "  - projects directory (your code is safe!)"
     echo ""
-    exit $VDE_ERR_GENERAL
+    exit ${VDE_ERR_GENERAL}
 fi
 
-VM_NAME="$1"
+VM_NAME="${1}"
 
 # Resolve VM name
-RESOLVED_NAME=$(resolve_vm_name "$VM_NAME" || true)
-if [[ -z "$RESOLVED_NAME" ]]; then
-    log_error "Unknown VM: $VM_NAME"
-    exit $VDE_ERR_GENERAL
+RESOLVED_NAME=$(resolve_vm_name "${VM_NAME}" || true)
+if [[ -z "${RESOLVED_NAME}" ]]; then
+    log_error "Unknown VM: ${VM_NAME}"
+    exit ${VDE_ERR_GENERAL}
 fi
 
 # 1. Stop and remove VM container if exists
-if vm_exists "$RESOLVED_NAME"; then
-    log_info "Stopping and removing container for $RESOLVED_NAME..."
-    stop_vm "$RESOLVED_NAME" >/dev/null 2>&1 || true
+if vm_exists "${RESOLVED_NAME}"; then
+    log_info "Stopping and removing container for ${RESOLVED_NAME}..."
+    stop_vm "${RESOLVED_NAME}" >/dev/null 2>&1 || true
 fi
 
 # 2. Remove the VM image
-log_info "Removing image for $RESOLVED_NAME..."
+log_info "Removing image for ${RESOLVED_NAME}..."
 IMAGE_NAME="vde-${RESOLVED_NAME}"
-if docker image inspect "$IMAGE_NAME" &>/dev/null; then
-    docker rmi "$IMAGE_NAME" 2>/dev/null || log_warning "Could not remove image $IMAGE_NAME (may be in use)"
+if docker image inspect "${IMAGE_NAME}" &>/dev/null; then
+    docker rmi "${IMAGE_NAME}" 2>/dev/null || log_warning "Could not remove image ${IMAGE_NAME} (may be in use)"
 else
-    log_info "Image $IMAGE_NAME not found (already removed)"
+    log_info "Image ${IMAGE_NAME} not found (already removed)"
 fi
 
 # 3. Clean up known_hosts
-if [[ -f "$VDE_SSH_KNOWN_HOSTS" ]]; then
-    log_info "Cleaning up known_hosts for $RESOLVED_NAME..."
+if [[ -f "${VDE_SSH_KNOWN_HOSTS}" ]]; then
+    log_info "Cleaning up known_hosts for ${RESOLVED_NAME}..."
     # Get port if possible
-    port=$(get_vm_ssh_port "$RESOLVED_NAME")
-    if [[ -n "$port" ]]; then
-        remove_known_hosts_entry "$RESOLVED_NAME" "$port" >/dev/null 2>&1 || true
+    port=$(get_vm_ssh_port "${RESOLVED_NAME}")
+    if [[ -n "${port}" ]]; then
+        remove_known_hosts_entry "${RESOLVED_NAME}" "${port}" >/dev/null 2>&1 || true
     fi
 fi
 
 # 4. SSH config entries are static - they should NOT be removed when VM is removed
 # because each VM type has a fixed port assignment (python=2213, rust=2216, etc.)
 # The next time the same VM type is created, it will use the same port.
-ssh_host=$(vde_get_ssh_host "$RESOLVED_NAME")
-log_info "SSH config entry for $ssh_host preserved (static port assignment)"
+ssh_host=$(vde_get_ssh_host "${RESOLVED_NAME}")
+log_info "SSH config entry for ${ssh_host} preserved (static port assignment)"
 
 # 5. Clear Docker state from .docker-state/
-clear_docker_state "$RESOLVED_NAME" 2>/dev/null || true
+clear_docker_state "${RESOLVED_NAME}" 2>/dev/null || true
 
-log_success "VM '$RESOLVED_NAME' container and image have been removed."
+log_success "VM '${RESOLVED_NAME}' container and image have been removed."
 echo ""
 echo "Note: Configuration files preserved for easy recreation:"
 echo "  - configs/docker/${RESOLVED_NAME}/docker-compose.yml"

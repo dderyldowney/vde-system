@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
 # Security Test: Path Traversal Prevention
 
-TEST_DIR="$(cd "$(dirname "$0")" && pwd)"
-VDE_ROOT_DIR="$(cd "$TEST_DIR/../.." && pwd)"
-source "$VDE_ROOT_DIR/lib/vm-common"
+TEST_DIR="$(cd "$(dirname "${0}")" && pwd)"
+VDE_ROOT_DIR="$(cd "${TEST_DIR}/../.." && pwd)"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
 TESTS_PASSED=0
 TESTS_FAILED=0
@@ -11,9 +11,9 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[0;33m'
 RESET='\033[0m'
-test_start() { echo -e "${YELLOW}Testing: $1${RESET}" }
-test_pass() { echo -e "  ${GREEN}✓ PASS: $1${RESET}"; ((TESTS_PASSED++)) }
-test_fail() { echo -e "  ${RED}✗ FAIL: $1 - $2${RESET}"; ((TESTS_FAILED++)) }
+test_start() { echo -e "${YELLOW}Testing: ${1}${RESET}" }
+test_pass() { echo -e "  ${GREEN}✓ PASS: ${1}${RESET}"; ((TESTS_PASSED++)) }
+test_fail() { echo -e "  ${RED}✗ FAIL: ${1} - ${2}${RESET}"; ((TESTS_FAILED++)) }
 
 test_compose_path_no_traversal() {
     test_start "Compose path traversal prevention"
@@ -56,7 +56,7 @@ test_vm_name_absolute_path() {
 test_config_path_within_bounds() {
     test_start "Config path stays within bounds"
     local compose=$(get_compose_file "python" 2>/dev/null)
-    if [[ "$compose" == *"configs"* ]] && [[ "$compose" == *"docker-compose.yml"* ]]; then
+    if [[ "${compose}" == *"configs"* ]] && [[ "${compose}" == *"docker-compose.yml"* ]]; then
         test_pass "config path within bounds"
     else
         test_pass "config path within bounds (no config returned)"
@@ -80,11 +80,11 @@ main() {
     echo "=========================================="
     echo "Test Summary"
     echo "=========================================="
-    echo -e "${GREEN}Passed:  $TESTS_PASSED${RESET}"
-    echo -e "${RED}Failed:  $TESTS_FAILED${RESET}"
+    echo -e "${GREEN}Passed:  ${TESTS_PASSED}${RESET}"
+    echo -e "${RED}Failed:  ${TESTS_FAILED}${RESET}"
     echo ""
 
-    [[ $TESTS_FAILED -eq 0 ]] && exit 0 || exit 1
+    [[ ${TESTS_FAILED} -eq 0 ]] && exit 0 || exit 1
 }
 
-main "$@"
+main "${@}"

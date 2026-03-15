@@ -4,8 +4,8 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Test configuration
 VERBOSE=${VERBOSE:-false}
@@ -52,7 +52,7 @@ show_usage() {
     cat <<EOF
 ${BOLD}VDE Test Suite Runner${RESET}
 
-Usage: $0 [OPTIONS] [TEST_SELECTOR]
+Usage: ${0} [OPTIONS] [TEST_SELECTOR]
 
 ${BOLD}TEST SELECTORS:${RESET}
   all                    Run all tests (default)
@@ -68,10 +68,10 @@ ${BOLD}OPTIONS:${RESET}
   --list                 List all available test suites
 
 ${BOLD}EXAMPLES:${RESET}
-  $0                      # Run all tests
-  $0 unit                 # Run only unit tests
-  $0 -v bug-fix           # Run bug fix tests with verbose output
-  $0 unit/vm-common       # Run specific unit test
+  ${0}                      # Run all tests
+  ${0} unit                 # Run only unit tests
+  ${0} -v bug-fix           # Run bug fix tests with verbose output
+  ${0} unit/vm-common       # Run specific unit test
 
 ${BOLD}TEST STRUCTURE:${RESET}
   tests/
@@ -96,9 +96,9 @@ EOF
 # =============================================================================
 
 discover_tests() {
-    local selector="$1"
+    local selector="${1}"
 
-    case "$selector" in
+    case "${selector}" in
         all)
             TEST_SUITES=(
                 "Bug Fix Validation:bug-fix-validation"
@@ -123,12 +123,12 @@ discover_tests() {
             ;;
         *)
             # Check if it's a specific test file
-            if [[ -f "$SCRIPT_DIR/$selector.test.zsh" ]]; then
-                TEST_SUITES=("Custom:$selector")
-            elif [[ -f "$SCRIPT_DIR/$selector" ]]; then
-                TEST_SUITES=("Custom:$selector")
+            if [[ -f "${SCRIPT_DIR}/${selector}.test.zsh" ]]; then
+                TEST_SUITES=("Custom:${selector}")
+            elif [[ -f "${SCRIPT_DIR}/${selector}" ]]; then
+                TEST_SUITES=("Custom:${selector}")
             else
-                echo -e "${RED}Error: Test selector '$selector' not found${RESET}"
+                echo -e "${RED}Error: Test selector '${selector}' not found${RESET}"
                 echo ""
                 show_usage
                 exit 1
@@ -142,15 +142,15 @@ list_tests() {
     echo ""
 
     # Bug fix validation
-    if [[ -f "$SCRIPT_DIR/bug-fix-validation.test.zsh" ]]; then
+    if [[ -f "${SCRIPT_DIR}/bug-fix-validation.test.zsh" ]]; then
         echo "  ${CYAN}bug-fix${RESET}         Bug fix validation tests"
     fi
 
     # Unit tests
     echo ""
     echo "  ${CYAN}unit${RESET}             Unit tests:"
-    for test in "$SCRIPT_DIR"/unit/*.test.zsh(N); do
-        if [[ -f "$test" ]]; then
+    for test in "${SCRIPT_DIR}"/unit/*.test.zsh(N); do
+        if [[ -f "${test}" ]]; then
             local name="${test:t:r}"
             echo "    ${name}"
         fi
@@ -159,8 +159,8 @@ list_tests() {
     # Integration tests
     echo ""
     echo "  ${CYAN}integration${RESET}      Integration tests:"
-    for test in "$SCRIPT_DIR"/integration/*.test.zsh(N); do
-        if [[ -f "$test" ]]; then
+    for test in "${SCRIPT_DIR}"/integration/*.test.zsh(N); do
+        if [[ -f "${test}" ]]; then
             local name="${test:t:r}"
             echo "    ${name}"
         fi
@@ -174,23 +174,23 @@ list_tests() {
 # =============================================================================
 
 run_test_suite() {
-    local suite_name="$1"
-    local suite_id="$2"
-    local test_file="$3"
+    local suite_name="${1}"
+    local suite_id="${2}"
+    local test_file="${3}"
 
     echo ""
     echo -e "${BLUE}========================================${RESET}"
-    echo -e "${BLUE}Running:${RESET} ${BOLD}$suite_name${RESET}"
+    echo -e "${BLUE}Running:${RESET} ${BOLD}${suite_name}${RESET}"
     echo -e "${BLUE}========================================${RESET}"
     echo ""
 
-    local test_path="$SCRIPT_DIR/$test_file"
-    if [[ ! -f "$test_path" ]]; then
-        test_path="$test_file"
+    local test_path="${SCRIPT_DIR}/${test_file}"
+    if [[ ! -f "${test_path}" ]]; then
+        test_path="${test_file}"
     fi
 
-    if [[ ! -f "$test_path" ]]; then
-        echo -e "${RED}Error: Test file not found: $test_path${RESET}"
+    if [[ ! -f "${test_path}" ]]; then
+        echo -e "${RED}Error: Test file not found: ${test_path}${RESET}"
         return 1
     fi
 
@@ -198,21 +198,21 @@ run_test_suite() {
     local output
     local exit_code
 
-    if [[ "$VERBOSE" == "true" ]]; then
-        output=$(zsh "$test_path" 2>&1)
-        exit_code=$?
-        echo "$output"
+    if [[ "${VERBOSE}" == "true" ]]; then
+        output=$(zsh "${test_path}" 2>&1)
+        exit_code=${?}
+        echo "${output}"
     else
-        output=$(zsh "$test_path" 2>&1)
-        exit_code=$?
+        output=$(zsh "${test_path}" 2>&1)
+        exit_code=${?}
     fi
 
     # Parse results
     local passed failed skipped total
-    passed=$(echo "$output" | grep "Passed:" | awk '{print $2}' | head -1)
-    failed=$(echo "$output" | grep "Failed:" | awk '{print $2}' | head -1)
-    skipped=$(echo "$output" | grep "Skipped:" | awk '{print $2}' | head -1)
-    total=$(echo "$output" | grep "^Total:" | awk '{print $2}' | head -1)
+    passed=$(echo "${output}" | grep "Passed:" | awk '{print ${2}}' | head -1)
+    failed=$(echo "${output}" | grep "Failed:" | awk '{print ${2}}' | head -1)
+    skipped=$(echo "${output}" | grep "Skipped:" | awk '{print ${2}}' | head -1)
+    total=$(echo "${output}" | grep "^Total:" | awk '{print ${2}}' | head -1)
 
     # Default to 0 if not found
     passed=${passed:-0}
@@ -221,7 +221,7 @@ run_test_suite() {
     total=${total:-0}
 
     # Store results
-    TEST_RESULTS[$suite_id]="$passed|$failed|$skipped|$total|$exit_code"
+    TEST_RESULTS[${suite_id}]="${passed}|${failed}|${skipped}|${total}|${exit_code}"
 
     # Update totals
     ((TOTAL_PASSED += passed))
@@ -231,13 +231,13 @@ run_test_suite() {
     ((TOTAL_RUN += 1))
 
     # Print summary line
-    if [[ $exit_code -eq 0 ]]; then
-        echo -e "${GREEN}✓ $suite_name: PASSED${RESET} ($passed passed, $failed failed, $skipped skipped)"
+    if [[ ${exit_code} -eq 0 ]]; then
+        echo -e "${GREEN}✓ ${suite_name}: PASSED${RESET} (${passed} passed, ${failed} failed, ${skipped} skipped)"
     else
-        echo -e "${RED}✗ $suite_name: FAILED${RESET} ($passed passed, $failed failed, $skipped skipped)"
+        echo -e "${RED}✗ ${suite_name}: FAILED${RESET} (${passed} passed, ${failed} failed, ${skipped} skipped)"
     fi
 
-    return $exit_code
+    return ${exit_code}
 }
 
 run_all_tests() {
@@ -248,7 +248,7 @@ run_all_tests() {
         local suite_id="${suite_spec#*:}"
 
         local test_file
-        case "$suite_id" in
+        case "${suite_id}" in
             bug-fix-validation)
                 test_file="bug-fix-validation.test.zsh"
                 ;;
@@ -265,16 +265,16 @@ run_all_tests() {
                 test_file="integration/vm-lifecycle-integration.test.zsh"
                 ;;
             *)
-                test_file="$suite_id"
+                test_file="${suite_id}"
                 ;;
         esac
 
-        if ! run_test_suite "$suite_name" "$suite_id" "$test_file"; then
+        if ! run_test_suite "${suite_name}" "${suite_id}" "${test_file}"; then
             overall_success=false
         fi
     done
 
-    return $overall_success
+    return ${overall_success}
 }
 
 # =============================================================================
@@ -294,7 +294,7 @@ print_summary() {
         local suite_name="${suite_spec%:*}"
         local suite_id="${suite_spec#*:}"
 
-        local result="${TEST_RESULTS[$suite_id]}"
+        local result="${TEST_RESULTS[${suite_id}]}"
         local passed="${result%%|*}"
         local rest="${result#*|}"
         local failed="${rest%%|*}"
@@ -304,29 +304,29 @@ print_summary() {
         local total="${rest%%|*}"
         local exit_code="${rest##*|}"
 
-        if [[ $exit_code -eq 0 ]]; then
-            echo -e "  ${GREEN}✓${RESET} $suite_name"
+        if [[ ${exit_code} -eq 0 ]]; then
+            echo -e "  ${GREEN}✓${RESET} ${suite_name}"
         else
-            echo -e "  ${RED}✗${RESET} $suite_name"
+            echo -e "  ${RED}✗${RESET} ${suite_name}"
         fi
-        echo "     Passed: $passed, Failed: $failed, Skipped: $skipped, Total: $total"
+        echo "     Passed: ${passed}, Failed: ${failed}, Skipped: ${skipped}, Total: ${total}"
     done
 
     echo ""
     echo -e "${BOLD}Overall Results:${RESET}"
-    echo -e "  Test Suites Run:  ${CYAN}$TOTAL_RUN${RESET}"
-    echo -e "  Total Tests:      ${CYAN}$TOTAL_TESTS${RESET}"
-    echo -e "  ${GREEN}Passed:${RESET}           $TOTAL_PASSED"
-    echo -e "  ${RED}Failed:${RESET}           $TOTAL_FAILED"
-    echo -e "  ${YELLOW}Skipped:${RESET}          $TOTAL_SKIPPED"
+    echo -e "  Test Suites Run:  ${CYAN}${TOTAL_RUN}${RESET}"
+    echo -e "  Total Tests:      ${CYAN}${TOTAL_TESTS}${RESET}"
+    echo -e "  ${GREEN}Passed:${RESET}           ${TOTAL_PASSED}"
+    echo -e "  ${RED}Failed:${RESET}           ${TOTAL_FAILED}"
+    echo -e "  ${YELLOW}Skipped:${RESET}          ${TOTAL_SKIPPED}"
 
     echo ""
     local pass_rate=0
-    if [[ $TOTAL_TESTS -gt 0 ]]; then
+    if [[ ${TOTAL_TESTS} -gt 0 ]]; then
         pass_rate=$((TOTAL_PASSED * 100 / TOTAL_TESTS))
     fi
 
-    if [[ $TOTAL_FAILED -eq 0 ]]; then
+    if [[ ${TOTAL_FAILED} -eq 0 ]]; then
         echo -e "${GREEN}${BOLD}All tests passed!${RESET} (Pass rate: ${pass_rate}%)"
         echo ""
         return 0
@@ -352,7 +352,7 @@ run_tests_parallel() {
         local suite_id="${suite_spec#*:}"
 
         local test_file
-        case "$suite_id" in
+        case "${suite_id}" in
             bug-fix-validation)
                 test_file="bug-fix-validation.test.zsh"
                 ;;
@@ -369,18 +369,18 @@ run_tests_parallel() {
                 test_file="integration/vm-lifecycle-integration.test.zsh"
                 ;;
             *)
-                test_file="$suite_id"
+                test_file="${suite_id}"
                 ;;
         esac
 
-        echo "Starting $suite_name..."
-        zsh "$SCRIPT_DIR/$test_file" > "/tmp/vde-test-${suite_id}.log" 2>&1 &
-        pids+=($!)
+        echo "Starting ${suite_name}..."
+        zsh "${SCRIPT_DIR}/${test_file}" > "/tmp/vde-test-${suite_id}.log" 2>&1 &
+        pids+=(${!})
     done
 
     # Wait for all tests
     for i in {1..${#pids[@]}}; do
-        wait ${pids[$i]}
+        wait ${pids[${i}]}
     done
 
     # Collect results
@@ -388,9 +388,9 @@ run_tests_parallel() {
         local suite_id="${suite_spec#*:}"
         local log_file="/tmp/vde-test-${suite_id}.log"
 
-        if [[ -f "$log_file" ]]; then
-            cat "$log_file"
-            rm -f "$log_file"
+        if [[ -f "${log_file}" ]]; then
+            cat "${log_file}"
+            rm -f "${log_file}"
         fi
     done
 }
@@ -400,11 +400,11 @@ run_tests_parallel() {
 # =============================================================================
 
 main() {
-    local test_selector="$TEST_SELECTOR"
+    local test_selector="${TEST_SELECTOR}"
 
     # Parse arguments
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
+    while [[ ${#} -gt 0 ]]; do
+        case "${1}" in
             -v|--verbose)
                 VERBOSE=true
                 shift
@@ -422,20 +422,20 @@ main() {
                 exit 0
                 ;;
             -*)
-                echo -e "${RED}Error: Unknown option: $1${RESET}"
+                echo -e "${RED}Error: Unknown option: ${1}${RESET}"
                 echo ""
                 show_usage
                 exit 1
                 ;;
             *)
-                test_selector="$1"
+                test_selector="${1}"
                 shift
                 ;;
         esac
     done
 
     # Discover tests
-    discover_tests "$test_selector"
+    discover_tests "${test_selector}"
 
     # Print header
     echo ""
@@ -443,25 +443,25 @@ main() {
     echo -e "${BOLD}    VDE Test Suite${RESET}"
     echo -e "${BOLD}══════════════════════════════════════════════════${RESET}"
     echo ""
-    echo "Selector: $test_selector"
-    echo "Verbose:  $VERBOSE"
-    echo "Parallel: $PARALLEL"
+    echo "Selector: ${test_selector}"
+    echo "Verbose:  ${VERBOSE}"
+    echo "Parallel: ${PARALLEL}"
     echo ""
 
     # Run tests
     local exit_code
-    if [[ "$PARALLEL" == "true" ]]; then
+    if [[ "${PARALLEL}" == "true" ]]; then
         run_tests_parallel
-        exit_code=$?
+        exit_code=${?}
     else
         run_all_tests
-        exit_code=$?
+        exit_code=${?}
     fi
 
     # Print summary
     print_summary
-    exit $exit_code
+    exit ${exit_code}
 }
 
 # Run main
-main "$@"
+main "${@}"

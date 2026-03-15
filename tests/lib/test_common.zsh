@@ -20,37 +20,37 @@ TESTS_FAILED=0
 # Assert two values are equal
 assert_equals() {
     TESTS_RUN=$((TESTS_RUN + 1))
-    local expected="$1"
-    local actual="$2"
+    local expected="${1}"
+    local actual="${2}"
     local message="${3:-assert_equals failed}"
 
-    if [ "$actual" = "$expected" ]; then
+    if [ "${actual}" = "${expected}" ]; then
         TESTS_PASSED=$((TESTS_PASSED + 1))
-        printf "${GREEN}✓${NC} %s\n" "$message"
+        printf "${GREEN}✓${NC} %s\n" "${message}"
     else
         TESTS_FAILED=$((TESTS_FAILED + 1))
-        printf "${RED}✗${NC} %s\n" "$message"
-        echo "  Expected: $expected"
-        echo "  Actual: $actual"
+        printf "${RED}✗${NC} %s\n" "${message}"
+        echo "  Expected: ${expected}"
+        echo "  Actual: ${actual}"
     fi
 }
 
 # Assert haystack contains needle
 assert_contains() {
     TESTS_RUN=$((TESTS_RUN + 1))
-    local haystack="$1"
-    local needle="$2"
+    local haystack="${1}"
+    local needle="${2}"
     local message="${3:-assert_contains failed}"
 
-    case "$haystack" in
-        *"$needle"*)
+    case "${haystack}" in
+        *"${needle}"*)
             TESTS_PASSED=$((TESTS_PASSED + 1))
-            printf "${GREEN}✓${NC} %s\n" "$message"
+            printf "${GREEN}✓${NC} %s\n" "${message}"
             ;;
         *)
             TESTS_FAILED=$((TESTS_FAILED + 1))
-            printf "${RED}✗${NC} %s\n" "$message"
-            echo "  String '$needle' not found in: $haystack"
+            printf "${RED}✗${NC} %s\n" "${message}"
+            echo "  String '${needle}' not found in: ${haystack}"
             ;;
     esac
 }
@@ -58,45 +58,45 @@ assert_contains() {
 # Assert command succeeded (exit code 0)
 assert_success() {
     TESTS_RUN=$((TESTS_RUN + 1))
-    local exit_code="$1"
+    local exit_code="${1}"
     local message="${2:-command should succeed}"
 
-    if [ "$exit_code" -eq 0 ]; then
+    if [ "${exit_code}" -eq 0 ]; then
         TESTS_PASSED=$((TESTS_PASSED + 1))
-        printf "${GREEN}✓${NC} %s\n" "$message"
+        printf "${GREEN}✓${NC} %s\n" "${message}"
     else
         TESTS_FAILED=$((TESTS_FAILED + 1))
-        printf "${RED}✗${NC} %s (exit code: %s)\n" "$message" "$exit_code"
+        printf "${RED}✗${NC} %s (exit code: %s)\n" "${message}" "${exit_code}"
     fi
 }
 
 # Assert file exists
 assert_file_exists() {
     TESTS_RUN=$((TESTS_RUN + 1))
-    local file="$1"
-    local message="${2:-file should exist: $file}"
+    local file="${1}"
+    local message="${2:-file should exist: ${file}}"
 
-    if [ -f "$file" ]; then
+    if [ -f "${file}" ]; then
         TESTS_PASSED=$((TESTS_PASSED + 1))
-        printf "${GREEN}✓${NC} %s\n" "$message"
+        printf "${GREEN}✓${NC} %s\n" "${message}"
     else
         TESTS_FAILED=$((TESTS_FAILED + 1))
-        printf "${RED}✗${NC} %s\n" "$message"
+        printf "${RED}✗${NC} %s\n" "${message}"
     fi
 }
 
 # Assert directory exists
 assert_dir_exists() {
     TESTS_RUN=$((TESTS_RUN + 1))
-    local dir="$1"
-    local message="${2:-directory should exist: $dir}"
+    local dir="${1}"
+    local message="${2:-directory should exist: ${dir}}"
 
-    if [ -d "$dir" ]; then
+    if [ -d "${dir}" ]; then
         TESTS_PASSED=$((TESTS_PASSED + 1))
-        printf "${GREEN}✓${NC} %s\n" "$message"
+        printf "${GREEN}✓${NC} %s\n" "${message}"
     else
         TESTS_FAILED=$((TESTS_FAILED + 1))
-        printf "${RED}✗${NC} %s\n" "$message"
+        printf "${RED}✗${NC} %s\n" "${message}"
     fi
 }
 
@@ -106,34 +106,34 @@ assert_dir_exists() {
 
 # Start a test suite
 test_suite_start() {
-    local name="$1"
+    local name="${1}"
     echo ""
-    printf "${YELLOW}Running: %s${NC}\n" "$name"
+    printf "${YELLOW}Running: %s${NC}\n" "${name}"
     echo "================================"
 }
 
 # End a test suite and display results
 test_suite_end() {
-    local name="$1"
+    local name="${1}"
     echo ""
     echo "================================"
-    echo "Test Suite: $name"
-    echo "Tests Run: $TESTS_RUN"
-    printf "${GREEN}Passed: %s${NC}\n" "$TESTS_PASSED"
-    if [ "$TESTS_FAILED" -gt 0 ]; then
-        printf "${RED}Failed: %s${NC}\n" "$TESTS_FAILED"
+    echo "Test Suite: ${name}"
+    echo "Tests Run: ${TESTS_RUN}"
+    printf "${GREEN}Passed: %s${NC}\n" "${TESTS_PASSED}"
+    if [ "${TESTS_FAILED}" -gt 0 ]; then
+        printf "${RED}Failed: %s${NC}\n" "${TESTS_FAILED}"
     fi
     echo ""
 
     # Return error code if any tests failed
-    [ "$TESTS_FAILED" -eq 0 ]
+    [ "${TESTS_FAILED}" -eq 0 ]
 }
 
 # Print a section header
 test_section() {
-    local name="$1"
+    local name="${1}"
     echo ""
-    printf "${YELLOW}%s${NC}\n" "$name"
+    printf "${YELLOW}%s${NC}\n" "${name}"
     echo "--------------------------------"
 }
 
@@ -148,30 +148,30 @@ setup_test_env() {
     export TEST_TMP_DIR
 
     # Derive VDE_ROOT_DIR if not set (assume this file is in tests/lib/)
-    if [ -z "$VDE_ROOT_DIR" ]; then
+    if [ -z "${VDE_ROOT_DIR}" ]; then
         export VDE_ROOT_DIR="$(cd "$(dirname "${(%):-%x}")/../.." && pwd)"
     fi
 
     # Source the libraries
     # shellcheck source=/dev/null
-    . "$VDE_ROOT_DIR/lib/vm-common" 2>/dev/null || true
+    . "${VDE_ROOT_DIR}/lib/vm-common" 2>/dev/null || true
     # shellcheck source=/dev/null
-    . "$VDE_ROOT_DIR/lib/vde-commands" 2>/dev/null || true
+    . "${VDE_ROOT_DIR}/lib/vde-commands" 2>/dev/null || true
     # shellcheck source=/dev/null
-    . "$VDE_ROOT_DIR/lib/vde-parser" 2>/dev/null || true
+    . "${VDE_ROOT_DIR}/lib/vde-parser" 2>/dev/null || true
 
     # Fix VM_TYPES configs
-    if [ "$VM_TYPES_CONF" = "/vm-types.conf" ] || [ -z "$VM_TYPES_CONF" ]; then
-        export VM_TYPES_CONF="$VDE_ROOT_DIR/data/vm-types.conf"
+    if [ "${VM_TYPES_CONF}" = "/vm-types.conf" ] || [ -z "${VM_TYPES_CONF}" ]; then
+        export VM_TYPES_CONF="${VDE_ROOT_DIR}/data/vm-types.conf"
     fi
-    if [ "$VM_TYPES_JSON" = "/vm-types.json" ] || [ -z "$VM_TYPES_JSON" ]; then
-        export VM_TYPES_JSON="$VDE_ROOT_DIR/data/vm-types.json"
+    if [ "${VM_TYPES_JSON}" = "/vm-types.json" ] || [ -z "${VM_TYPES_JSON}" ]; then
+        export VM_TYPES_JSON="${VDE_ROOT_DIR}/data/vm-types.json"
     fi
-    if [ -z "$VDE_CACHE_DIR" ]; then
-        export VDE_CACHE_DIR="$VDE_ROOT_DIR/.cache"
+    if [ -z "${VDE_CACHE_DIR}" ]; then
+        export VDE_CACHE_DIR="${VDE_ROOT_DIR}/.cache"
     fi
-    if [ -z "$VM_TYPES_CACHE" ]; then
-        export VM_TYPES_CACHE="$VDE_CACHE_DIR/vm-types.cache"
+    if [ -z "${VM_TYPES_CACHE}" ]; then
+        export VM_TYPES_CACHE="${VDE_CACHE_DIR}/vm-types.cache"
     fi
 
     # Set trap to ensure cleanup happens even on error/exit
@@ -183,8 +183,8 @@ teardown_test_env() {
     # Clean up SSH agent to prevent CI hangs
     # This is critical in CI environments where SSH agent can cause jobs to hang
     # Use kill instead of ssh-agent -k which can hang waiting for input
-    if [ -n "$SSH_AGENT_PID" ]; then
-        kill "$SSH_AGENT_PID" >/dev/null 2>&1 || true
+    if [ -n "${SSH_AGENT_PID}" ]; then
+        kill "${SSH_AGENT_PID}" >/dev/null 2>&1 || true
         unset SSH_AUTH_SOCK SSH_AGENT_PID
     fi
 
@@ -192,18 +192,18 @@ teardown_test_env() {
     pkill -9 ssh-agent >/dev/null 2>&1 || true
 
     # Clean up temporary directory
-    if [ -n "$TEST_TMP_DIR" ] && [ -d "$TEST_TMP_DIR" ]; then
-        rm -rf "$TEST_TMP_DIR"
+    if [ -n "${TEST_TMP_DIR}" ] && [ -d "${TEST_TMP_DIR}" ]; then
+        rm -rf "${TEST_TMP_DIR}"
     fi
 
     # Clean up lingering VDE Docker containers
     if command -v docker >/dev/null 2>&1; then
         local containers
         containers=$(docker ps -a --filter "label=vde.managed=true" --format "{{.Names}}" 2>/dev/null)
-        if [[ -n "$containers" ]]; then
+        if [[ -n "${containers}" ]]; then
             # Use space separation for docker commands
             local container_list
-            container_list=$(echo "$containers" | tr '\n' ' ')
+            container_list=$(echo "${containers}" | tr '\n' ' ')
             docker stop ${=container_list} >/dev/null 2>&1 || true
             docker rm -f -v ${=container_list} >/dev/null 2>&1 || true
         fi
@@ -215,10 +215,10 @@ teardown_test_env() {
     # Clean up test-related environment files
     # NEVER delete core project env files - only delete files with test prefixes
     local env_dir="${VDE_ROOT_DIR:-.}/env-files"
-    if [[ -d "$env_dir" ]]; then
+    if [[ -d "${env_dir}" ]]; then
         # Remove ONLY files matching test prefixes - protect all core project files
-        rm -f "$env_dir"/vde-test-*.env 2>/dev/null || true
-        rm -f "$env_dir"/vde-e2e-test-*.env 2>/dev/null || true
+        rm -f "${env_dir}"/vde-test-*.env 2>/dev/null || true
+        rm -f "${env_dir}"/vde-e2e-test-*.env 2>/dev/null || true
     fi
 }
 
@@ -261,12 +261,12 @@ reset_test_counters() {
 
 # Get test summary
 get_test_summary() {
-    printf "Tests: %s | ${GREEN}Passed: %s${NC} | ${RED}Failed: %s${NC}\n" "$TESTS_RUN" "$TESTS_PASSED" "$TESTS_FAILED"
+    printf "Tests: %s | ${GREEN}Passed: %s${NC} | ${RED}Failed: %s${NC}\n" "${TESTS_RUN}" "${TESTS_PASSED}" "${TESTS_FAILED}"
 }
 
 # Exit with error if tests failed
 exit_on_test_failure() {
-    if [ "$TESTS_FAILED" -gt 0 ]; then
+    if [ "${TESTS_FAILED}" -gt 0 ]; then
         echo ""
         printf "${RED}Some tests failed!${NC}\n"
         exit 1
