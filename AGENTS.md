@@ -40,6 +40,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 ## Core Mandates
 
 - **MCP Server Utilization**: All agents MUST utilize connected MCP servers (e.g., `context7`, `github`, `redis`, `MCP_DOCKER`) as their primary interface for system interaction.
+- **No Circular Delegation**: Only the **Main Agent** (Gemini CLI) is permitted to use the `generalist` sub-agent tool. Specialized sub-agents MUST NOT attempt to delegate tasks further or invoke the `generalist` tool. They must complete assigned tasks using their own specialized tools and context.
 - **Documentation Source-of-Truth**: All documentation updates, technical deep dives, and API/library queries MUST utilize the `context7` and `gemini-docs-mcp` MCP servers to ensure accuracy and version alignment.
 - **Active Endpoints**: Ensure all tool invocations reference active MCP endpoints.
 - **Connectivity Validation**: Validate server connectivity prior to execution.
