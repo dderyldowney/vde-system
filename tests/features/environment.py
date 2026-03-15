@@ -41,7 +41,7 @@ steps_dir = os.path.join(features_dir, "steps")
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 
-from config import VDE_ROOT
+from config import VDE_ROOT, VDE_SSH_DIR
 
 # Track state
 _SSH_AGENT_PID = None
@@ -56,6 +56,8 @@ def run_vde_command(command, timeout=60):
     """Run a VDE script and return the result."""
     env = os.environ.copy()
     env["DOCKER_BUILDKIT"] = "0"
+    # Ensure VDE_SSH_DIR is passed to subprocess
+    env["VDE_SSH_DIR"] = str(VDE_SSH_DIR)
     vde_script = os.path.join(VDE_ROOT, "bin", "vde")
     full_cmd = f"cd {VDE_ROOT} && {vde_script} {command}"
     result = subprocess.run(
@@ -71,11 +73,13 @@ def run_vde_command(command, timeout=60):
 
 def run_vde_ps(args=None, timeout=30):
     """Run vde-ps and return the result."""
+    env = os.environ.copy()
+    env["VDE_SSH_DIR"] = str(VDE_SSH_DIR)
     vde_ps = os.path.join(VDE_ROOT, "bin", "vde-ps")
     cmd = ["zsh", vde_ps]
     if args:
         cmd.extend(args)
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=VDE_ROOT)
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=VDE_ROOT, env=env)
     return result
 
 
@@ -144,27 +148,26 @@ def get_parser_helper():
 # =============================================================================
 
 def _backup_vde_ssh_dir():
-    """Copy ~/.ssh/vde/ to a temp dir. Returns temp dir path or None."""
-    vde_ssh = Path.home() / '.ssh' / 'vde'
-    if vde_ssh.exists():
+    """Copy VDE_SSH_DIR to a temp dir. Returns temp dir path or None."""
+    if VDE_SSH_DIR.exists():
         tmpdir = tempfile.mkdtemp(prefix='vde_ssh_backup_')
-        shutil.copytree(str(vde_ssh), os.path.join(tmpdir, 'vde'), symlinks=True)
+        shutil.copytree(str(VDE_SSH_DIR), os.path.join(tmpdir, 'vde'), symlinks=True)
         return tmpdir
     return None
 
 
 def _restore_vde_ssh_dir(backup_tmpdir):
-    """Restore ~/.ssh/vde/ from backup temp dir and remove temp dir."""
+    """Restore VDE_SSH_DIR from backup temp dir and remove temp dir."""
     if backup_tmpdir is None:
         return
-    vde_ssh = Path.home() / '.ssh' / 'vde'
     backup = Path(backup_tmpdir) / 'vde'
-    if vde_ssh.exists():
-        shutil.rmtree(str(vde_ssh))
+    if VDE_SSH_DIR.exists():
+        shutil.rmtree(str(VDE_SSH_DIR))
     if backup.exists():
-        shutil.copytree(str(backup), str(vde_ssh), symlinks=True)
-        vde_ssh.chmod(0o700)
+        shutil.copytree(str(backup), str(VDE_SSH_DIR), symlinks=True)
+        VDE_SSH_DIR.chmod(0o700)
     shutil.rmtree(backup_tmpdir, ignore_errors=True)
+
 
 
 def _backup_configs_dir():

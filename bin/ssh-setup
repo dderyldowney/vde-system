@@ -152,38 +152,21 @@ if [[ "$ACTION" == "init" ]]; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
-    if ssh_agent_is_running; then
-        log_info "SSH agent already running"
+    if ensure_ssh_agent; then
+        log_success "✓ SSH environment ready (Agent PID: $SSH_AGENT_PID)"
     else
-        log_info "Starting SSH agent..."
-        eval "$(ssh-agent -s)" >/dev/null 2>&1
-        export SSH_AUTH_SOCK
-        export SSH_AGENT_PID
-        log_success "✓ SSH agent started (PID: $SSH_AGENT_PID)"
+        log_error "✗ Failed to set up SSH agent"
+        exit $VDE_ERR_GENERAL
     fi
 
     echo ""
 
-    # Step 3: Load VDE key into agent
+    # Step 3 is now covered by ensure_ssh_agent
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "Step 3: Loading VDE key into SSH agent"
+    echo "Step 3: Keys loaded"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
-
-    local keys_loaded=0
-    if ssh-add "$VDE_SSH_IDENTITY" 2>/dev/null; then
-        log_success "✓ Loaded: VDE SSH key"
-        keys_loaded=1
-    else
-        log_warning "⚠ Could not load VDE key (may require passphrase)"
-        echo "  Load manually with: ssh-add $VDE_SSH_IDENTITY"
-    fi
-
-    if [[ $keys_loaded -gt 0 ]]; then
-        log_success "✓ VDE key loaded into agent"
-    else
-        log_warning "⚠ No keys were loaded"
-    fi
+    ssh-add -l 2>/dev/null || echo "  (no keys loaded)"
 
     echo ""
 
@@ -234,51 +217,15 @@ fi
 # Start Mode -- Just start agent and load VDE key
 # ==============================================================================
 if [[ "$ACTION" == "start" ]]; then
-    # Start agent if not running
-    if ssh_agent_is_running; then
-        echo "SSH agent already running"
+    # Use centralized agent management
+    if ensure_ssh_agent; then
         echo "export SSH_AUTH_SOCK='$SSH_AUTH_SOCK'"
         echo "export SSH_AGENT_PID='$SSH_AGENT_PID'"
+        echo "✓ SSH environment ready"
     else
-        # Start ssh-agent once and capture output
-        agent_output=$(ssh-agent -s)
-        SSH_AUTH_SOCK=$(echo "$agent_output" | grep -o 'SSH_AUTH_SOCK=[^;]*' | cut -d= -f2)
-        SSH_AGENT_PID=$(echo "$agent_output" | grep -o 'SSH_AGENT_PID=[0-9]*' | cut -d= -f2)
-        
-        # Output eval-able commands for ssh-agent
-        echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
-        echo "SSH_AGENT_PID=$SSH_AGENT_PID"
-        
-        # Export for current shell
-        export SSH_AUTH_SOCK SSH_AGENT_PID
-        echo "✓ SSH agent started"
-    fi
-
-    # Ensure VDE SSH environment exists
-    if [[ ! -f "$VDE_SSH_IDENTITY" ]]; then
-        log_error "VDE SSH key not found. Run 'vde ssh-setup init'"
+        log_error "Failed to start/find SSH agent"
         exit $VDE_ERR_GENERAL
     fi
-
-    # Load VDE key
-    local keys_loaded=0
-    
-    # Try to load the key - if agent is accessible
-    if ssh-add "$VDE_SSH_IDENTITY" 2>/dev/null; then
-        echo "✓ Loaded: VDE SSH key"
-        keys_loaded=1
-    else
-        # If we can't connect to agent (subprocess isolation), check if any key exists
-        # The key file exists, so consider it available for when agent is properly accessed
-        echo "✓ VDE SSH key available"
-        keys_loaded=1
-    fi
-
-    echo ""
-    echo "$keys_loaded key(s) loaded into SSH agent"
-    echo ""
-    echo "To use in current shell, run:"
-    echo "  eval \$(vde ssh-setup start)"
     exit 0
 fi
 
