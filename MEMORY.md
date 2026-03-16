@@ -24,8 +24,17 @@
 
 **Unit tests: 292/292 pass** | **Cache System BDD: 19/19 scenarios, 84/84 steps pass**
 
-### This Session's Achievements (2026-03-16)
+### Recent Sessions
 
+#### Session 2026-03-16 (Late)
+1. **Documentation Path Fix**:
+    - Fixed incorrect paths in `.kilocode/rules/vde_context.md` and `tests/generate-remediation-plan.py`
+    - Changed `bin/lib/` → `lib/` and `bin/data/` → `data/`
+    - Committed: `a5e8cf3`
+2. **Session Startup Enforcement**:
+    - Added mandatory MEMORY.md read to `vde_context.md` session startup section
+
+#### Session 2026-03-16 (Earlier)
 1. **Port Range Constant Fix**:
     - Corrected `VDE_LANG_PORT_END` from `2399` → `2299` to match spec (2200-2299 for languages).
     - Updated unit test to expect correct value.
@@ -48,6 +57,10 @@
 - **Port Registry Source of Truth**: `vm-types.conf` and `vm-types.json` (column 7 / `ssh_port` field).
 - **SSH Config**: Generated from vm-types, only changes when VM types are added/removed.
 - **No compose file scanning**: Compose files are templates, not authoritative for port data.
+
+### Next Steps
+- No immediate blockers or pending work
+- Ready for new feature development or bug fixes
 
 ### Agent Governance
 - Established "No Circular Delegation" mandate in `AGENTS.md`.
