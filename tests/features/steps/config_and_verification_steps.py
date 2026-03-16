@@ -14,153 +14,173 @@ from vm_common import run_vde_command
 # Configuration Management Patterns
 # =============================================================================
 
-@then(u'both should use python base configuration')
+
+@then("both should use python base configuration")
 def step_both_python_config(context):
     """Verify both VMs use Python base configuration."""
-    output = getattr(context, 'vde_command_output', '')
-    assert 'python' in output.lower() or 'base' in output.lower(), \
+    output = getattr(context, "vde_command_output", "")
+    assert "python" in output.lower() or "base" in output.lower(), (
         f"Expected Python base configuration: {output}"
+    )
 
 
-@then(u'syntax errors should be caught')
+@then("syntax errors should be caught")
 def step_syntax_errors_caught(context):
     """Verify syntax errors are caught."""
-    if hasattr(context, 'validation_run'):
+    if hasattr(context, "validation_run"):
         assert context.validation_run, "Expected validation to run and catch errors"
     else:
-        exit_code = getattr(context, 'vde_command_exit_code', 0)
-        output = getattr(context, 'vde_command_output', '')
-        assert exit_code != 0 or 'error' in output.lower() or 'syntax' in output.lower(), \
+        exit_code = getattr(context, "vde_command_exit_code", 0)
+        output = getattr(context, "vde_command_output", "")
+        assert exit_code != 0 or "error" in output.lower() or "syntax" in output.lower(), (
             f"Expected syntax error detection: {output}"
+        )
 
 
-@then(u'invalid ports should be rejected')
+@then("invalid ports should be rejected")
 def step_invalid_ports_rejected(context):
     """Verify invalid ports are rejected."""
-    exit_code = getattr(context, 'vde_command_exit_code', 0)
-    output = getattr(context, 'vde_command_output', '')
-    assert exit_code != 0 or 'invalid' in output.lower() or 'port' in output.lower(), \
+    exit_code = getattr(context, "vde_command_exit_code", 0)
+    output = getattr(context, "vde_command_output", "")
+    assert exit_code != 0 or "invalid" in output.lower() or "port" in output.lower(), (
         f"Expected port validation: {output}"
+    )
 
 
-@then(u'missing required fields should be reported')
+@then("missing required fields should be reported")
 def step_missing_fields_reported(context):
     """Verify missing required fields are reported."""
-    output = getattr(context, 'vde_command_output', '')
-    assert 'missing' in output.lower() or 'required' in output.lower() or 'field' in output.lower(), \
-        f"Expected missing field reporting: {output}"
+    output = getattr(context, "vde_command_output", "")
+    assert (
+        "missing" in output.lower() or "required" in output.lower() or "field" in output.lower()
+    ), f"Expected missing field reporting: {output}"
 
 
-@then(u'old configurations should still work')
+@then("old configurations should still work")
 def step_old_configs_work(context):
     """Verify old configurations still work."""
-    exit_code = getattr(context, 'vde_command_exit_code', 0)
-    assert exit_code == 0, \
-        f"Expected old configurations to work, got exit code {exit_code}"
+    exit_code = getattr(context, "vde_command_exit_code", 0)
+    assert exit_code == 0, f"Expected old configurations to work, got exit code {exit_code}"
 
 
-@then(u'migration should happen automatically')
+@then("migration should happen automatically")
 def step_migration_auto(context):
     """Verify automatic migration."""
-    if hasattr(context, 'latest_pulled'):
+    if hasattr(context, "latest_pulled"):
         assert context.latest_pulled, "Expected migration (pull) to succeed"
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert 'migrat' in output.lower() or 'update' in output.lower() or 'upgrade' in output.lower(), \
-            f"Expected migration message: {output}"
+        output = getattr(context, "vde_command_output", "")
+        assert (
+            "migrat" in output.lower() or "update" in output.lower() or "upgrade" in output.lower()
+        ), f"Expected migration message: {output}"
 
 
-@then(u'I should be told about manual steps if needed')
+@then("I should be told about manual steps if needed")
 def step_manual_steps_told(context):
     """Verify user is told about manual steps."""
-    if hasattr(context, 'latest_pulled'):
-        assert context.latest_pulled, "Expected manual steps check to pass (implied by pull success)"
+    if hasattr(context, "latest_pulled"):
+        assert context.latest_pulled, (
+            "Expected manual steps check to pass (implied by pull success)"
+        )
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert 'manual' in output.lower() or 'step' in output.lower() or 'action' in output.lower(), \
-            f"Expected manual steps notification: {output}"
+        output = getattr(context, "vde_command_output", "")
+        assert (
+            "manual" in output.lower() or "step" in output.lower() or "action" in output.lower()
+        ), f"Expected manual steps notification: {output}"
 
 
-@then(u'default configurations should be used')
+@then("default configurations should be used")
 def step_defaults_used(context):
     """Verify default configurations are used."""
-    if hasattr(context, 'configs_removed'):
-        assert context.configs_removed, "Expected custom configs to be removed, reverting to defaults"
+    if hasattr(context, "configs_removed"):
+        assert context.configs_removed, (
+            "Expected custom configs to be removed, reverting to defaults"
+        )
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert 'default' in output.lower() or 'using' in output.lower(), \
+        output = getattr(context, "vde_command_output", "")
+        assert "default" in output.lower() or "using" in output.lower(), (
             f"Expected default configuration message: {output}"
+        )
 
 
-@then(u'my VMs work with standard settings')
+@then("my VMs work with standard settings")
 def step_standard_settings(context):
     """Verify VMs work with standard settings."""
-    exit_code = getattr(context, 'vde_command_exit_code', 0)
-    assert exit_code == 0, \
-        f"Expected VMs to work with standard settings"
+    exit_code = getattr(context, "vde_command_exit_code", 0)
+    assert exit_code == 0, f"Expected VMs to work with standard settings"
 
 
-@then(u'I should see the effective configuration')
+@then("I should see the effective configuration")
 def step_effective_config(context):
     """Verify effective configuration is shown."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['config', 'setting', 'effective', 'current']), \
+    output = getattr(context, "vde_command_output", "")
+    assert any(x in output.lower() for x in ["config", "setting", "effective", "current"]), (
         f"Expected effective configuration: {output}"
+    )
 
 
-@then(u'errors should be clearly indicated')
+@then("errors should be clearly indicated")
 def step_errors_clear(context):
     """Verify errors are clearly indicated."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['error', 'fail', 'validating', 'not allowed']), \
+    output = getattr(context, "vde_command_output", "")
+    assert any(x in output.lower() for x in ["error", "fail", "validating", "not allowed"]), (
         f"Expected clear error indication: {output}"
+    )
 
 
-@then(u'I can identify the problematic setting')
+@then("I can identify the problematic setting")
 def step_identify_problem(context):
     """Verify problematic setting can be identified."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['problem', 'error', 'invalid', 'config']), \
+    output = getattr(context, "vde_command_output", "")
+    assert any(x in output.lower() for x in ["problem", "error", "invalid", "config"]), (
         f"Expected to identify problematic setting: {output}"
+    )
 
 
-@then(u'I can customize for my environment')
+@then("I can customize for my environment")
 def step_can_customize(context):
     """Verify customization is possible."""
-    if hasattr(context, 'local_override_created'):
+    if hasattr(context, "local_override_created"):
         assert context.local_override_created, "Expected customization to be possible"
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert any(x in output.lower() for x in ['custom', 'config', 'override', 'setting']), \
+        output = getattr(context, "vde_command_output", "")
+        assert any(x in output.lower() for x in ["custom", "config", "override", "setting"]), (
             f"Expected customization message: {output}"
+        )
 
 
-@then(u'my local overrides are not committed')
+@then("my local overrides are not committed")
 def step_overrides_not_committed(context):
     """Verify local overrides are not committed."""
     # This is a best-effort check - git status would show this
-    gitignore_path = Path.cwd() / '.gitignore'
-    assert gitignore_path.exists() or getattr(context, 'local_overrides_ignored', False) or getattr(context, 'local_override_created', False), \
-        "Expected .gitignore to exist for local overrides"
+    gitignore_path = Path.cwd() / ".gitignore"
+    assert (
+        gitignore_path.exists()
+        or getattr(context, "local_overrides_ignored", False)
+        or getattr(context, "local_override_created", False)
+    ), "Expected .gitignore to exist for local overrides"
 
 
-@then(u'team configuration is not affected')
+@then("team configuration is not affected")
 def step_team_config_affected(context):
     """Verify team configuration is not affected."""
-    if hasattr(context, 'local_override_created'):
-        assert context.local_override_created, "Expected local override to be created without affecting team config"
+    if hasattr(context, "local_override_created"):
+        assert context.local_override_created, (
+            "Expected local override to be created without affecting team config"
+        )
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert 'team' not in output.lower() or 'not affected' in output.lower(), \
+        output = getattr(context, "vde_command_output", "")
+        assert "team" not in output.lower() or "not affected" in output.lower(), (
             f"Expected team config not affected: {output}"
+        )
 
 
-@when(u'I add it to .gitignore')
+@when("I add it to .gitignore")
 def step_add_gitignore(context):
     """Add to .gitignore."""
     # This is a setup step - best effort
-    gitignore_path = Path.cwd() / '.gitignore'
-    context.gitignore_exists = gitignore_path.exists() 
+    gitignore_path = Path.cwd() / ".gitignore"
+    context.gitignore_exists = gitignore_path.exists()
     assert context.gitignore_exists, "Expected .gitignore to exist or be creatable"
 
 
@@ -168,197 +188,217 @@ def step_add_gitignore(context):
 # Error Handling Patterns
 # =============================================================================
 
-@given(u'my VM won\'t start due to configuration')
+
+@given("my VM won't start due to configuration")
 def step_vm_wont_start_config(context):
     """Set up scenario where VM won't start due to configuration."""
     context.vm_config_error = True
 
 
-@then(u'Docker monitors VM health')
+@then("Docker monitors VM health")
 def step_docker_monitors_health(context):
     """Verify Docker monitors VM health."""
-    if hasattr(context, 'healthcheck_added'):
+    if hasattr(context, "healthcheck_added"):
         assert context.healthcheck_added, "Expected health check to be added"
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert any(x in output.lower() for x in ['health', 'monitor', 'status', 'check']), \
+        output = getattr(context, "vde_command_output", "")
+        assert any(x in output.lower() for x in ["health", "monitor", "status", "check"]), (
             f"Expected health monitoring: {output}"
+        )
 
 
-@then(u'I can see health status in docker ps')
+@then("I can see health status in docker ps")
 def step_health_in_docker_ps(context):
     """Verify health status visible in docker ps."""
     # This would be verified with actual Docker command
     import shutil
-    docker_available = shutil.which('docker') is not None
-    assert docker_available or getattr(context, 'docker_health_visible', False), \
+
+    docker_available = shutil.which("docker") is not None
+    assert docker_available or getattr(context, "docker_health_visible", False), (
         "Expected docker ps to show health status (docker available or health visible in context)"
+    )
 
 
-@then(u'unhealthy VMs can be restarted automatically')
+@then("unhealthy VMs can be restarted automatically")
 def step_unhealthy_auto_restart(context):
     """Verify unhealthy VMs can be auto-restarted."""
-    if hasattr(context, 'healthcheck_added'):
+    if hasattr(context, "healthcheck_added"):
         assert context.healthcheck_added, "Expected health check allowing auto-restart"
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert any(x in output.lower() for x in ['restart', 'unhealthy', 'health', 'auto']), \
+        output = getattr(context, "vde_command_output", "")
+        assert any(x in output.lower() for x in ["restart", "unhealthy", "health", "auto"]), (
             f"Expected auto-restart for unhealthy: {output}"
+        )
 
 
-@then(u'VM restarts if it crashes')
+@then("VM restarts if it crashes")
 def step_vm_restart_crash(context):
     """Verify VM restarts if it crashes."""
-    if hasattr(context, 'restart_set'):
+    if hasattr(context, "restart_set"):
         assert context.restart_set, "Expected restart policy to be set"
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert any(x in output.lower() for x in ['restart', 'crash', 'recover', 'auto']), \
+        output = getattr(context, "vde_command_output", "")
+        assert any(x in output.lower() for x in ["restart", "crash", "recover", "auto"]), (
             f"Expected crash restart: {output}"
+        )
 
 
-@then(u'VM starts on system boot (if Docker does)')
+@then("VM starts on system boot (if Docker does)")
 def step_vm_boot_start(context):
     """Verify VM starts on system boot."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['boot', 'start', 'restart', 'policy']), \
-        f"Expected boot start: {output}"
+    if hasattr(context, "restart_set"):
+        assert context.restart_set, "Expected restart policy to be set"
+    else:
+        output = getattr(context, "vde_command_output", "")
+        assert any(x in output.lower() for x in ["boot", "start", "restart", "policy"]), (
+            f"Expected boot start: {output}"
+        )
 
 
-@then(u'my environment recovers automatically')
+@then("my environment recovers automatically")
 def step_env_auto_recover(context):
     """Verify environment recovers automatically."""
     # Allow 0 (success) or 6 (already exists/running)
-    exit_code = getattr(context, 'vde_command_exit_code', 0)
-    assert exit_code in [0, 6], \
-        f"Expected automatic recovery (exit code {exit_code})"
+    exit_code = getattr(context, "vde_command_exit_code", 0)
+    assert exit_code in [0, 6], f"Expected automatic recovery (exit code {exit_code})"
 
 
 # =============================================================================
 # Logging Patterns
 # =============================================================================
 
-@then(u'logs can go to files, syslog, or stdout')
+
+@then("logs can go to files, syslog, or stdout")
 def step_logs_destination(context):
     """Verify logs can go to different destinations."""
-    if hasattr(context, 'logging_modified'):
+    if hasattr(context, "logging_modified"):
         assert context.logging_modified, "Expected log destinations configuration to be successful"
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert any(x in output.lower() for x in ['log', 'file', 'syslog', 'stdout']), \
+        output = getattr(context, "vde_command_output", "")
+        assert any(x in output.lower() for x in ["log", "file", "syslog", "stdout"]), (
             f"Expected log destinations: {output}"
+        )
 
 
-@then(u'log rotation can be configured')
+@then("log rotation can be configured")
 def step_log_rotation(context):
     """Verify log rotation can be configured."""
-    if hasattr(context, 'logging_modified'):
+    if hasattr(context, "logging_modified"):
         assert context.logging_modified, "Expected log rotation configuration to be successful"
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert any(x in output.lower() for x in ['rotation', 'log', 'rotate', 'config']), \
+        output = getattr(context, "vde_command_output", "")
+        assert any(x in output.lower() for x in ["rotation", "log", "rotate", "config"]), (
             f"Expected log rotation: {output}"
+        )
 
 
-@then(u'I can control log verbosity')
+@then("I can control log verbosity")
 def step_log_verbosity(context):
     """Verify log verbosity can be controlled."""
-    if hasattr(context, 'logging_modified'):
+    if hasattr(context, "logging_modified"):
         assert context.logging_modified, "Expected log verbosity configuration to be successful"
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert any(x in output.lower() for x in ['verbos', 'log', 'level', 'debug']), \
+        output = getattr(context, "vde_command_output", "")
+        assert any(x in output.lower() for x in ["verbos", "log", "level", "debug"]), (
             f"Expected log verbosity control: {output}"
+        )
 
 
 # =============================================================================
 # Team Collaboration Patterns
 # =============================================================================
 
-@then(u'team members get identical configuration')
+
+@then("team members get identical configuration")
 def step_identical_config(context):
     """Verify team members get identical configuration."""
-    if hasattr(context, 'config_committed'):
+    if hasattr(context, "config_committed"):
         assert context.config_committed, "Expected config to be committed"
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert any(x in output.lower() for x in ['identical', 'same', 'config', 'team']), \
+        output = getattr(context, "vde_command_output", "")
+        assert any(x in output.lower() for x in ["identical", "same", "config", "team"]), (
             f"Expected identical config: {output}"
+        )
 
 
-@then(u'environment is consistent across team')
+@then("environment is consistent across team")
 def step_consistent_env(context):
     """Verify environment is consistent across team."""
-    if hasattr(context, 'config_committed'):
+    if hasattr(context, "config_committed"):
         assert context.config_committed, "Expected environment to be consistent (committed)"
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert any(x in output.lower() for x in ['consistent', 'environment', 'team', 'same']), \
+        output = getattr(context, "vde_command_output", "")
+        assert any(x in output.lower() for x in ["consistent", "environment", "team", "same"]), (
             f"Expected consistent environment: {output}"
+        )
 
 
-@then(u'"works on my machine" is reduced')
+@then('"works on my machine" is reduced')
 def step_reduce_works(context):
     """Verify 'works on my machine' is reduced."""
-    if hasattr(context, 'config_committed'):
+    if hasattr(context, "config_committed"):
         assert context.config_committed, "Expected 'works on my machine' reduction"
     else:
-        output = getattr(context, 'vde_command_output', '')
-        assert any(x in output.lower() for x in ['works', 'machine', 'consistent', 'same']), \
+        output = getattr(context, "vde_command_output", "")
+        assert any(x in output.lower() for x in ["works", "machine", "consistent", "same"]), (
             f"Expected 'works on my machine' reduction: {output}"
+        )
 
 
 # =============================================================================
 # Configuration Files Patterns
 # =============================================================================
 
-@then(u'all ports should be mapped in docker-compose.yml')
+
+@then("all ports should be mapped in docker-compose.yml")
 def step_ports_mapped(context):
     """Verify all ports are mapped in docker-compose.yml."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
     assert compose_path.exists(), f"Expected docker-compose.yml at {compose_path}"
     content = compose_path.read_text()
-    assert 'ports:' in content, f"No ports section found in {compose_path}"
+    assert "ports:" in content, f"No ports section found in {compose_path}"
 
 
 # =============================================================================
 # Template System Patterns
 # =============================================================================
 
-@when(u'I render template with NAME="{name}" and SSH_PORT="{port}"')
+
+@when('I render template with NAME="{name}" and SSH_PORT="{port}"')
 def step_render_template_params(context, name, port):
     """Render template with specific parameters."""
-    context.template_params = {'name': name, 'ssh_port': port}
+    context.template_params = {"name": name, "ssh_port": port}
 
 
-@when(u'I render template with NAME="{name}" and SERVICE_PORT="{port}"')
+@when('I render template with NAME="{name}" and SERVICE_PORT="{port}"')
 def step_render_service_template(context, name, port):
     """Render service template with specific parameters."""
-    context.template_params = {'name': name, 'service_port': port}
+    context.template_params = {"name": name, "service_port": port}
 
 
-@when(u'I render template with value containing "/" or "&"')
+@when('I render template with value containing "/" or "&"')
 def step_render_special_chars(context):
     """Render template with special characters."""
     context.template_special_chars = True
 
 
-@then(u'special characters should be properly escaped')
+@then("special characters should be properly escaped")
 def step_special_chars_escaped(context):
     """Verify special characters are escaped."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output for x in ['/', '&', '\\', '%']), \
+    output = getattr(context, "vde_command_output", "")
+    assert any(x in output for x in ["/", "&", "\\", "%"]), (
         f"Expected escaped special characters: {output}"
+    )
 
 
-@given(u'language VM template is rendered')
+@given("language VM template is rendered")
 def step_lang_template_rendered(context):
     """Set up that language VM template is rendered."""
     # Actually render a language template (c)
     # Using 'c' as it's a basic language VM
-    vm_name = 'c'
-    run_vde_command(['create', vm_name], context=context)
+    vm_name = "c"
+    run_vde_command(["create", vm_name], context=context)
     # 0=created, 6=exists
     if context.vde_command_exit_code in [0, 6]:
         config_path = Path(VDE_ROOT) / "configs" / "docker" / vm_name / "docker-compose.yml"
@@ -367,28 +407,30 @@ def step_lang_template_rendered(context):
     context.lang_template = True
 
 
-@then(u'rendered output should contain .ssh volume mount')
+@then("rendered output should contain .ssh volume mount")
 def step_ssh_volume_mount(context):
     """Verify .ssh volume mount in rendered output."""
-    output = getattr(context, 'rendered_output', None) or getattr(context, 'vde_command_output', '')
-    assert '.ssh' in output.lower() or 'volume' in output.lower(), \
+    output = getattr(context, "rendered_output", None) or getattr(context, "vde_command_output", "")
+    assert ".ssh" in output.lower() or "volume" in output.lower(), (
         f"Expected .ssh volume mount: {output}"
+    )
 
 
-@then(u'volume should be mounted at /public-ssh-keys')
+@then("volume should be mounted at /public-ssh-keys")
 def step_public_ssh_keys_mount(context):
     """Verify /public-ssh-keys mount."""
-    output = getattr(context, 'rendered_output', None) or getattr(context, 'vde_command_output', '')
-    assert 'public-ssh-keys' in output.lower() or '/public' in output.lower(), \
+    output = getattr(context, "rendered_output", None) or getattr(context, "vde_command_output", "")
+    assert "public-ssh-keys" in output.lower() or "/public" in output.lower(), (
         f"Expected public-ssh-keys mount: {output}"
+    )
 
 
-@given(u'any VM template is rendered')
+@given("any VM template is rendered")
 def step_any_template_rendered(context):
     """Set up that any VM template is rendered."""
     # Actually render a template (c)
-    vm_name = 'c'
-    run_vde_command(['create', vm_name], context=context)
+    vm_name = "c"
+    run_vde_command(["create", vm_name], context=context)
     if context.vde_command_exit_code in [0, 6]:
         config_path = Path(VDE_ROOT) / "configs" / "docker" / vm_name / "docker-compose.yml"
         if config_path.exists():
@@ -396,63 +438,64 @@ def step_any_template_rendered(context):
     context.any_template = True
 
 
-@then(u'rendered output should contain "vde-testing" network')
+@then('rendered output should contain "vde-testing" network')
 def step_dev_net_network(context):
     """Verify vde-testing network in rendered output."""
-    output = getattr(context, 'rendered_output', None) or getattr(context, 'vde_command_output', '')
-    assert 'vde-testing' in output.lower() or 'network' in output.lower(), \
+    output = getattr(context, "rendered_output", None) or getattr(context, "vde_command_output", "")
+    assert "vde-testing" in output.lower() or "network" in output.lower(), (
         f"Expected vde-testing network: {output}"
+    )
 
 
-@then(u'rendered output should specify UID and GID as "{uid}"')
+@then('rendered output should specify UID and GID as "{uid}"')
 def step_uid_gid_specified(context, uid):
     """Verify UID and GID are specified."""
-    output = getattr(context, 'rendered_output', None) or getattr(context, 'vde_command_output', '')
-    assert uid in output, \
-        f"Expected UID/GID {uid}: {output}"
+    output = getattr(context, "rendered_output", None) or getattr(context, "vde_command_output", "")
+    assert uid in output, f"Expected UID/GID {uid}: {output}"
 
 
-@then(u'rendered output should expose port "22"')
+@then('rendered output should expose port "22"')
 def step_port_22_exposed(context):
     """Verify port 22 is exposed."""
-    output = getattr(context, 'rendered_output', None) or getattr(context, 'vde_command_output', '')
-    assert '22' in output or 'port' in output.lower(), \
-        f"Expected port 22 exposure: {output}"
+    output = getattr(context, "rendered_output", None) or getattr(context, "vde_command_output", "")
+    assert "22" in output or "port" in output.lower(), f"Expected port 22 exposure: {output}"
 
 
-@then(u'rendered output should map SSH port to host port')
+@then("rendered output should map SSH port to host port")
 def step_ssh_port_mapped(context):
     """Verify SSH port mapping."""
-    output = getattr(context, 'rendered_output', None) or getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['port', 'map', '22', 'ssh']), \
+    output = getattr(context, "rendered_output", None) or getattr(context, "vde_command_output", "")
+    assert any(x in output.lower() for x in ["port", "map", "22", "ssh"]), (
         f"Expected SSH port mapping: {output}"
+    )
 
 
-@given(u'VM "{vm}" has install command "{cmd}"')
+@given('VM "{vm}" has install command "{cmd}"')
 def step_vm_install_command(context, vm, cmd):
     """Set up VM with install command."""
     context.vm_install_command = {vm: cmd}
 
 
-@then(u'rendered output should include the install command')
+@then("rendered output should include the install command")
 def step_install_command_included(context):
     """Verify install command is included."""
-    output = getattr(context, 'rendered_output', None) or getattr(context, 'vde_command_output', '')
-    assert 'install' in output.lower() or 'command' in output.lower(), \
+    output = getattr(context, "rendered_output", None) or getattr(context, "vde_command_output", "")
+    assert "install" in output.lower() or "command" in output.lower(), (
         f"Expected install command: {output}"
+    )
 
 
-@given(u'template file does not exist')
+@given("template file does not exist")
 def step_template_not_exists(context):
     """Set up that template file doesn't exist."""
     context.template_missing = True
 
 
-@when(u'I try to render the template')
+@when("I try to render the template")
 def step_try_render_template(context):
     """Try to render template."""
     # Check if template rendering is possible
-    run_vde_command(['help'], context=context, timeout=30)
+    run_vde_command(["help"], context=context, timeout=30)
     context.template_rendering_tested = context.vde_command_exit_code in [0, 1]
 
 
@@ -460,158 +503,180 @@ def step_try_render_template(context):
 # Multi-Project Workflow Patterns (Unique ones only)
 # =============================================================================
 
-@then(u'a go development environment should be created')
+
+@then("a go development environment should be created")
 def step_go_env_created(context):
     """Verify Go development environment is created."""
-    output = getattr(context, 'vde_command_output', '')
-    assert 'go' in output.lower() or 'created' in output.lower(), \
+    output = getattr(context, "vde_command_output", "")
+    assert "go" in output.lower() or "created" in output.lower(), (
         f"Expected Go environment creation: {output}"
+    )
 
 
-@then(u'docker-compose.yml should be configured for go')
+@then("docker-compose.yml should be configured for go")
 def step_docker_compose_go(context):
     """Verify docker-compose.yml is configured for Go."""
-    output = getattr(context, 'vde_command_output', '')
-    assert 'docker-compose' in output.lower() or 'go' in output.lower(), \
+    output = getattr(context, "vde_command_output", "")
+    assert "docker-compose" in output.lower() or "go" in output.lower(), (
         f"Expected docker-compose for Go: {output}"
+    )
 
 
-@then(u'projects/{lang} directory should be created')
+@then("projects/{lang} directory should be created")
 def step_project_dir_created(context, lang):
     """Verify project directory is created."""
     proj_dir = VDE_ROOT / "projects" / lang
     assert proj_dir.exists(), f"Expected projects/{lang} directory at {proj_dir}"
 
 
-@then(u'I can start the VM with "{cmd}"')
+@then('I can start the VM with "{cmd}"')
 def step_can_start_vm(context, cmd):
     """Verify VM can be started with command."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['start', 'ready', 'vm']), \
+    output = getattr(context, "vde_command_output", "")
+    assert any(x in output.lower() for x in ["start", "ready", "vm"]), (
         f"Expected start command availability: {output}"
+    )
 
 
 # =============================================================================
 # SSH Details Patterns (Unique ones only)
 # =============================================================================
 
-@then(u'the details should include the hostname')
+
+@then("the details should include the hostname")
 def step_details_hostname(context):
     """Verify hostname in SSH details."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['host', 'hostname', 'localhost']), \
+    output = getattr(context, "vde_command_output", "")
+    assert any(x in output.lower() for x in ["host", "hostname", "localhost"]), (
         f"Expected hostname: {output}"
+    )
 
 
-@then(u'the details should include the port number')
+@then("the details should include the port number")
 def step_details_port(context):
     """Verify port number in SSH details."""
-    output = getattr(context, 'vde_command_output', '')
+    output = getattr(context, "vde_command_output", "")
     import re
-    has_port = re.search(r'22[0-9]{2}', output) or 'port' in output.lower()
+
+    has_port = re.search(r"22[0-9]{2}", output) or "port" in output.lower()
     assert has_port, f"Expected port number in output: {output}"
 
 
-@then(u'the details should include the username')
+@then("the details should include the username")
 def step_details_username(context):
     """Verify username in SSH details."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['user', 'username', 'devuser']), \
+    output = getattr(context, "vde_command_output", "")
+    assert any(x in output.lower() for x in ["user", "username", "devuser"]), (
         f"Expected username: {output}"
+    )
 
 
 # =============================================================================
 # VM Lifecycle Additional Patterns (Unique ones only)
 # =============================================================================
 
-@then(u'they should be able to communicate')
+
+@then("they should be able to communicate")
 def step_should_communicate(context):
     """Verify VMs can communicate."""
     # This would require network verification
-    network_configured = getattr(context, 'network_configured', False)
-    compose_path = Path.cwd() / 'docker-compose.yml'
-    assert network_configured or compose_path.exists(), \
+    network_configured = getattr(context, "network_configured", False)
+    compose_path = Path.cwd() / "docker-compose.yml"
+    assert network_configured or compose_path.exists(), (
         "Expected network to be configured for VM communication"
+    )
 
 
-@then(u'the configuration files should be deleted')
+@then("the configuration files should be deleted")
 def step_config_deleted(context):
     """Verify configuration files are deleted."""
     # This would check file system
-    deleted = getattr(context, 'config_deleted', False)
-    compose_path = Path.cwd() / 'docker-compose.yml'
-    assert deleted or not compose_path.exists() or getattr(context, 'last_exit_code', 1) == 0, \
+    deleted = getattr(context, "config_deleted", False)
+    compose_path = Path.cwd() / "docker-compose.yml"
+    assert deleted or not compose_path.exists() or getattr(context, "last_exit_code", 1) == 0, (
         "Expected configuration files to be deleted"
+    )
 
 
-@then(u'the new image should reflect my changes')
+@then("the new image should reflect my changes")
 def step_new_image_reflects(context):
     """Verify new image reflects changes."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['new', 'image', 'built', 'reflect', 'restart', 'rebuild']), \
-        f"Expected new image message: {output}"
+    output = getattr(context, "vde_command_output", "")
+    assert any(
+        x in output.lower() for x in ["new", "image", "built", "reflect", "restart", "rebuild"]
+    ), f"Expected new image message: {output}"
 
 
-@then(u'the latest base image should be used')
+@then("the latest base image should be used")
 def step_latest_base_image(context):
     """Verify latest base image is used."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['latest', 'base', 'image', 'pull']), \
+    output = getattr(context, "vde_command_output", "")
+    assert any(x in output.lower() for x in ["latest", "base", "image", "pull"]), (
         f"Expected latest base image: {output}"
+    )
 
 
-@then(u'my SSH access still works')
+@then("my SSH access still works")
 def step_ssh_still_works(context):
     """Verify SSH access still works."""
     # This would verify SSH configuration
-    ssh_config = Path.home() / '.ssh' / 'config'
-    ssh_keys_exist = any((Path.home() / '.ssh').glob('id_*'))
-    assert ssh_config.exists() or ssh_keys_exist or getattr(context, 'ssh_configured', False), \
+    ssh_config = Path.home() / ".ssh" / "config"
+    ssh_keys_exist = any((Path.home() / ".ssh").glob("id_*"))
+    assert ssh_config.exists() or ssh_keys_exist or getattr(context, "ssh_configured", False), (
         "Expected SSH configuration to be present"
+    )
 
 
-@then(u'my configuration should be preserved')
+@then("my configuration should be preserved")
 def step_config_preserved(context):
     """Verify configuration is preserved."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['preserved', 'config', 'kept', 'maintained']), \
+    output = getattr(context, "vde_command_output", "")
+    assert any(x in output.lower() for x in ["preserved", "config", "kept", "maintained"]), (
         f"Expected config preservation: {output}"
+    )
 
 
 # =============================================================================
 # Multi-VM Operation Patterns (Unique ones only)
 # =============================================================================
 
-@then(u'all three VMs should start in parallel')
+
+@then("all three VMs should start in parallel")
 def step_parallel_start(context):
     """Verify VMs start in parallel."""
-    output = getattr(context, 'vde_command_output', '')
-    assert any(x in output.lower() for x in ['parallel', 'start', 'simultaneous', 'all']), \
+    output = getattr(context, "vde_command_output", "")
+    assert any(x in output.lower() for x in ["parallel", "start", "simultaneous", "all"]), (
         f"Expected parallel start: {output}"
+    )
 
 
-@then(u'all VMs should be running when complete')
+@then("all VMs should be running when complete")
 def step_all_running_complete(context):
     """Verify all VMs are running when complete."""
-    for vm in ['python', 'go', 'rust']:
-        result = subprocess.run(['./bin/vde', 'ps'], capture_output=True, text=True)
-        assert f'{vm}-dev' in result.stdout, f"Expected {vm} to be running"
+    for vm in ["python", "go", "rust"]:
+        result = subprocess.run(["./bin/vde", "ps"], capture_output=True, text=True)
+        assert f"{vm}-dev" in result.stdout, f"Expected {vm} to be running"
 
 
-@then(u'each should have its own configuration')
+@then("each should have its own configuration")
 def step_own_config(context):
     """Verify each VM has its own configuration."""
     from vm_common import VDE_ROOT
-    for vm in ['python', 'postgres', 'redis']:
+
+    for vm in ["python", "postgres", "redis"]:
         # Match the VMs requested in the previous step
         config_path = VDE_ROOT / "configs" / "docker" / vm
         assert config_path.exists(), f"Expected config for {vm} at {config_path}"
 
 
-@then(u'all should be on the same Docker network')
+@then("all should be on the same Docker network")
 def step_same_network(context):
     """Verify all VMs are on the same Docker network."""
     from vm_common import VDE_ROOT
-    result = subprocess.run([str(VDE_ROOT / 'bin' / 'vde'), 'networks'], capture_output=True, text=True)
-    assert 'vde-testing' in result.stdout or 'vde' in result.stdout.lower(), \
+
+    result = subprocess.run(
+        [str(VDE_ROOT / "bin" / "vde"), "networks"], capture_output=True, text=True
+    )
+    assert "vde-testing" in result.stdout or "vde" in result.stdout.lower(), (
         f"Expected vde-testing network"
+    )

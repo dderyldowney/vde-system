@@ -953,36 +953,24 @@ clear_port_registry() {
     chmod 755 "${VDE_CACHE_DIR}/port-registry"
 }
 
-# Verify and rebuild port registry
-# Scans .docker-state/ for created VMs and extracts ports from their compose files
+# Verify and rebuild port registry from vm-types source of truth
+# Reads SSH ports from vm-types.conf/json (authoritative) and caches them
 verify_port_registry() {
-    local state_dir
-    state_dir=$(get_docker_state_dir)
+    # Ensure VM types are loaded (source of truth for port assignments)
+    load_vm_types >/dev/null 2>&1
     
-    [[ "${VDE_LOG_LEVEL:-}" == "DEBUG" ]] && _info "Verifying port registry. State dir: ${state_dir}"
-    
-    [[ ! -d "${state_dir}" ]] && return ${VDE_SUCCESS}
+    [[ "${VDE_LOG_LEVEL:-}" == "DEBUG" ]] && _info "Verifying port registry from vm-types source"
     
     # Ensure registry dir exists
     mkdir -p "${VDE_CACHE_DIR}/port-registry"
     
-    local f vm_name port compose_file
-    # Use find to get json files reliably
-    for f in $(find "${state_dir}" -maxdepth 1 -name "*.json" 2>/dev/null); do
-        vm_name=$(basename "${f}" .json)
-        compose_file=$(get_compose_file "${vm_name}")
-        
-        [[ "${VDE_LOG_LEVEL:-}" == "DEBUG" ]] && _info "Scanning VM ${vm_name} (Compose: ${compose_file})"
-        
-        if [[ -f "${compose_file}" ]]; then
-            # Extract port that maps to container port 22 (SSH)
-            # Match formats like "2213:22", '2213:22', or - 2213:22
-            port=$(grep -E "['\"- ]*[0-9]+:22['\"]*" "${compose_file}" 2>/dev/null | grep -oE "[0-9]+:22" | cut -d: -f1 | head -n 1)
-            
-            if [[ -n "${port}" ]]; then
-                save_port_to_registry "${vm_name}" "${port}"
-                [[ "${VDE_LOG_LEVEL:-}" == "DEBUG" ]] && _info "Rebuilt port registry for ${vm_name}: ${port}"
-            fi
+    # Build port registry from VM_SSH_PORT (populated from vm-types.conf/json)
+    local vm port
+    for vm in ${(k)VM_SSH_PORT}; do
+        port="${VM_SSH_PORT[$vm]}"
+        if [[ -n "${port}" ]]; then
+            save_port_to_registry "${vm}" "${port}"
+            [[ "${VDE_LOG_LEVEL:-}" == "DEBUG" ]] && _info "Port registry: ${vm} -> ${port}"
         fi
     done
     

@@ -57,7 +57,7 @@ Feature: Cache System
   Scenario: Load port registry from cache
     Given port registry cache exists
     When port registry is loaded
-    Then allocated ports should be available without scanning compose files
+    Then allocated ports should be available from cache
 
   Scenario: Verify port registry consistency
     Given port registry cache exists
@@ -66,11 +66,10 @@ Feature: Cache System
     Then removed VM should be removed from registry
     And cache file should be updated
 
-  @wip
-  Scenario: Rebuild port registry from compose files
+  Scenario: Rebuild port registry from vm-types source
     Given port registry cache is missing or invalid
     When port registry is verified
-    Then registry should be rebuilt by scanning docker-compose files
+    Then registry should be rebuilt from vm-types configuration
     And all allocated ports should be discovered
 
   Scenario: Cache directory is created if missing

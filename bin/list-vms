@@ -206,12 +206,6 @@ get_docker_vms() {
 # Main Logic
 # =============================================================================
 
-# Header (only if not --name-only)
-if [[ "${NAME_ONLY}" == "false" ]]; then
-    echo "Created VMs:"
-    echo ""
-fi
-
 # Get lists
 created_vms=$(get_created_vms)
 docker_vms=$(get_docker_vms)
@@ -245,23 +239,63 @@ fi
 
 if [[ ${#all_vms} -eq 0 ]]; then
     if [[ "${NAME_ONLY}" == "false" ]]; then
-        echo "  (no VMs created - run 'vde create <name>' to create one)"
+        echo "No VMs created yet."
         echo ""
+        echo "Run 'vde create <name>' to create one."
     fi
+    exit 0
 fi
 
-# Show created VMs with their status
+# Separate VMs by type for categorized display
+typeset -a lang_created service_created
 for name in "${all_vms[@]}"; do
     vm_type=$(get_vm_type "${name}")
     # Apply type filter if specified
     if [[ -n "${LIST_TYPE}" ]] && [[ "${vm_type}" != "${LIST_TYPE}" ]]; then
         continue
     fi
-    
-    vm_display=$(get_vm_display_name "${name}")
-    vm_aliases=$(_assoc_get "VM_ALIASES" "${name}" 2>/dev/null) || vm_aliases=""
-    display_vm "${name}" "${vm_type}" "${vm_display}" "${vm_aliases}"
+    if [[ "${vm_type}" == "lang" ]]; then
+        lang_created+=("${name}")
+    elif [[ "${vm_type}" == "service" ]]; then
+        service_created+=("${name}")
+    fi
 done
+
+# Show created VMs categorized by type
+if [[ "${NAME_ONLY}" == "false" ]]; then
+    echo "Created VMs:"
+    echo ""
+fi
+
+# Show Language VMs
+if [[ ${#lang_created} -gt 0 ]] && [[ "${LIST_TYPE}" != "service" ]]; then
+    if [[ "${NAME_ONLY}" == "false" ]]; then
+        echo "Language VMs:"
+    fi
+    for name in "${lang_created[@]}"; do
+        vm_display=$(get_vm_display_name "${name}")
+        vm_aliases=$(_assoc_get "VM_ALIASES" "${name}" 2>/dev/null) || vm_aliases=""
+        display_vm "${name}" "lang" "${vm_display}" "${vm_aliases}"
+    done
+    if [[ "${NAME_ONLY}" == "false" ]]; then
+        echo ""
+    fi
+fi
+
+# Show Service VMs
+if [[ ${#service_created} -gt 0 ]] && [[ "${LIST_TYPE}" != "lang" ]]; then
+    if [[ "${NAME_ONLY}" == "false" ]]; then
+        echo "Service VMs:"
+    fi
+    for name in "${service_created[@]}"; do
+        vm_display=$(get_vm_display_name "${name}")
+        vm_aliases=$(_assoc_get "VM_ALIASES" "${name}" 2>/dev/null) || vm_aliases=""
+        display_vm "${name}" "service" "${vm_display}" "${vm_aliases}"
+    done
+    if [[ "${NAME_ONLY}" == "false" ]]; then
+        echo ""
+    fi
+fi
 
 # Show available VM types if --all flag is set
 if [[ "${SHOW_CREATED}" == "true" ]]; then

@@ -109,7 +109,7 @@ test_port_ranges_values() {
     test_start "port ranges values"
 
     if [[ "$VDE_LANG_PORT_START" -eq 2200 ]] && \
-       [[ "$VDE_LANG_PORT_END" -eq 2399 ]] && \
+       [[ "$VDE_LANG_PORT_END" -eq 2299 ]] && \
        [[ "$VDE_SVC_PORT_START" -eq 2400 ]] && \
        [[ "$VDE_SVC_PORT_END" -eq 2499 ]]; then
         test_pass "port ranges values"
