@@ -48,7 +48,7 @@ def is_vde_available():
     """
     try:
         subprocess.run(
-            ["./bin/vde", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            [str(BIN_DIR / "vde"), "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         return True
     except (FileNotFoundError, subprocess.CalledProcessError):
@@ -57,7 +57,14 @@ def is_vde_available():
 
 def _vde_env():
     """Return environment dict for vde CLI calls: logs to stderr, stdout is clean."""
-    return {**os.environ, "VDE_ROOT_DIR": str(VDE_ROOT), "VDE_LOG_OUTPUT": "stderr"}
+    from config import VDE_CACHE_DIR
+    return {
+        **os.environ, 
+        "VDE_ROOT_DIR": str(VDE_ROOT), 
+        "VDE_LOG_OUTPUT": "stderr",
+        "VDE_CACHE_DIR": str(VDE_CACHE_DIR),
+        "VDE_LOG_LEVEL": "DEBUG"
+    }
 
 
 def docker_ps():
@@ -142,18 +149,21 @@ def container_is_running(container_name):
         bool: True if container is running, False otherwise
     """
     try:
-        full_name = f"vde-{container_name.replace('vde-', '')}"
+        simple_name = container_name.replace('vde-', '')
+        full_name = f"vde-{simple_name}"
+        # Use explicit filtering for speed and accuracy
         result = subprocess.run(
-            ["zsh", str(BIN_DIR / "vde"), "ps", "-q"],
+            ["zsh", str(BIN_DIR / "vde"), "ps", "-q", "--filter", f"name={simple_name}"],
             capture_output=True,
             text=True,
             timeout=15,
             cwd=str(VDE_ROOT),
             env=_vde_env(),
         )
-        return full_name in result.stdout.split()
+        return full_name in result.stdout
     except Exception:
         return False
+
 
 
 def get_container_id(container_name):
@@ -166,7 +176,7 @@ def get_container_id(container_name):
         str: Container ID if found, empty string if not found
     """
     try:
-        result = subprocess.run(["./bin/vde", "ps"], capture_output=True, text=True, timeout=10)
+        result = subprocess.run([str(BIN_DIR / "vde"), "ps"], capture_output=True, text=True, timeout=10)
         if result.returncode == 0:
             for line in result.stdout.strip().split("\n"):
                 if container_name in line:
@@ -596,7 +606,7 @@ class CommandResult:
         self.args = args or []
 
 
-def run_vde_command(command, timeout=120, context=None, input_text=None):
+def run_vde_command(command, timeout=300, context=None, input_text=None, env=None):
     """Run a VDE script and return the result.
 
     Args:
@@ -674,6 +684,11 @@ def run_vde_command(command, timeout=120, context=None, input_text=None):
         # Fallback to direct execution with zsh if it's not a recognized VDE command
         cmd = ["zsh", "-c", " ".join(args)]
 
+    # Prepare environment
+    full_env = _vde_env()
+    if env:
+        full_env.update(env)
+
     # Execute the command
     try:
         result = subprocess.run(
@@ -683,7 +698,7 @@ def run_vde_command(command, timeout=120, context=None, input_text=None):
             text=True,
             timeout=timeout,
             cwd=str(VDE_ROOT),
-            env=_vde_env(),
+            env=full_env,
             input=input_text,
         )
         cmd_res = CommandResult(result.stdout, result.stderr, result.returncode, args=cmd)

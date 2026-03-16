@@ -389,7 +389,7 @@ fi
 test_section "SSH Key Fingerprint"
 
 if [[ -f "${TEST_SSH_KEY_PATH}.pub" ]]; then
-    fingerprint=$(ssh-keygen -lf "${TEST_SSH_KEY_PATH}.pub" 2>/dev/null | awk '{print ${2}}')
+    fingerprint=$(ssh-keygen -lf "${TEST_SSH_KEY_PATH}.pub" 2>/dev/null | awk '{print $2}')
     if [[ -n "${fingerprint}" ]]; then
         echo -e "${GREEN}✓${NC} Test key fingerprint: ${fingerprint}"
         ((TESTS_PASSED++))

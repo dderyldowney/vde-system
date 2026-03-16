@@ -187,7 +187,7 @@ fi
 # Auto-generate display name if not specified
 if [[ -z "${DISPLAY_NAME}" ]]; then
     # Capitalize first letter
-    DISPLAY_NAME="$(echo "${VM_NAME}" | awk '{print toupper(substr(${0},1,1)) substr(${0},2)}')"
+    DISPLAY_NAME="$(echo "${VM_NAME}" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
 fi
 
 # -----------------------

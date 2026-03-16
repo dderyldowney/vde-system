@@ -231,7 +231,7 @@ vde_health_disk() {
     
     # Get disk usage
     local disk_usage
-    disk_usage=$(command df -h / 2>/dev/null | command tail -1 | command awk '{print ${5}}' | command tr -d '%' || echo 0)
+    disk_usage=$(command df -h / 2>/dev/null | command tail -1 | command awk '{print $5}' | command tr -d '%' || echo 0)
     
     if [[ "${disk_usage}" -ge 90 ]]; then
         health_status="CRITICAL"
@@ -274,11 +274,11 @@ vde_health_memory() {
             local wired_pages
             local speculative_pages
             
-            free_pages=$(echo "${vm_stat_output}" | command grep "Pages free" | command awk '{print ${3}}' | command tr -d '.')
-            active_pages=$(echo "${vm_stat_output}" | command grep "Pages active" | command awk '{print ${3}}' | command tr -d '.')
-            inactive_pages=$(echo "${vm_stat_output}" | command grep "Pages inactive" | command awk '{print ${3}}' | command tr -d '.')
-            wired_pages=$(echo "${vm_stat_output}" | command grep "Pages wired down" | command awk '{print ${4}}' | command tr -d '.')
-            speculative_pages=$(echo "${vm_stat_output}" | command grep "Pages speculative" | command awk '{print ${3}}' | command tr -d '.')
+            free_pages=$(echo "${vm_stat_output}" | command grep "Pages free" | command awk '{print $3}' | command tr -d '.')
+            active_pages=$(echo "${vm_stat_output}" | command grep "Pages active" | command awk '{print $3}' | command tr -d '.')
+            inactive_pages=$(echo "${vm_stat_output}" | command grep "Pages inactive" | command awk '{print $3}' | command tr -d '.')
+            wired_pages=$(echo "${vm_stat_output}" | command grep "Pages wired down" | command awk '{print $4}' | command tr -d '.')
+            speculative_pages=$(echo "${vm_stat_output}" | command grep "Pages speculative" | command awk '{print $3}' | command tr -d '.')
             
             # Calculate total pages and used pages
             local total_pages=$((free_pages + active_pages + inactive_pages + wired_pages + speculative_pages))
@@ -291,7 +291,7 @@ vde_health_memory() {
         fi
     else
         # Linux: Use free command
-        mem_usage=$(command free 2>/dev/null | command grep Mem | command awk '{print int(${3}/${2} * 100)}' || echo 0)
+        mem_usage=$(command free 2>/dev/null | command grep Mem | command awk '{print int($3/$2 * 100)}' || echo 0)
     fi
     
     if [[ "${mem_usage}" -ge 90 ]]; then

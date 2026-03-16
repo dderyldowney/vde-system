@@ -209,10 +209,10 @@ run_test_suite() {
 
     # Parse results
     local passed failed skipped total
-    passed=$(echo "${output}" | grep "Passed:" | awk '{print ${2}}' | head -1)
-    failed=$(echo "${output}" | grep "Failed:" | awk '{print ${2}}' | head -1)
-    skipped=$(echo "${output}" | grep "Skipped:" | awk '{print ${2}}' | head -1)
-    total=$(echo "${output}" | grep "^Total:" | awk '{print ${2}}' | head -1)
+    passed=$(echo "${output}" | grep "Passed:" | awk '{print $2}' | head -1)
+    failed=$(echo "${output}" | grep "Failed:" | awk '{print $2}' | head -1)
+    skipped=$(echo "${output}" | grep "Skipped:" | awk '{print $2}' | head -1)
+    total=$(echo "${output}" | grep "^Total:" | awk '{print $2}' | head -1)
 
     # Default to 0 if not found
     passed=${passed:-0}

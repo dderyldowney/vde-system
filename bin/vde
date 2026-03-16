@@ -195,7 +195,7 @@ vde_show_version() {
         "vde-parser"
         "vde-docker-state"
     )
-    for lib in "${libs}[@]"; do
+    for lib in "${libs[@]}"; do
         echo "  - ${lib}: OK"
     done
 }

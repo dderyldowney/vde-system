@@ -18,7 +18,7 @@ BIN_DIR = VDE_ROOT / "bin"
 LIB_DIR = VDE_ROOT / "lib"
 
 # Import shared configuration
-from vm_common import run_vde_command, container_is_running, compose_file_exists, wait_for_container
+from vm_common import run_vde_command, container_is_running, compose_file_exists, wait_for_container, docker_ps
 
 # =============================================================================
 # Helper functions - call real vde-parser

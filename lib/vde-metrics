@@ -97,7 +97,7 @@ vde_metrics_record() {
     # Use jq if available, otherwise fallback to simple append
     if command -v jq >/dev/null 2>&1; then
         echo "${metrics_json}" | jq --arg n "${escaped_name}" --argjson v "${new_entry}" \
-            '.metrics[${n}] = .metrics[${n}] // [] | .metrics[${n}] += [${v}] | .last_updated = "'"${timestamp}"'"' > "${VDE_METRICS_FILE}.${$}" 2>/dev/null
+            '.metrics[$n] = .metrics[$n] // [] | .metrics[$n] += [$v] | .last_updated = "'"${timestamp}"'"' > "${VDE_METRICS_FILE}.${$}" 2>/dev/null
         command mv "${VDE_METRICS_FILE}.${$}" "${VDE_METRICS_FILE}" 2>/dev/null
     else
         # Fallback: just append to counters in memory
