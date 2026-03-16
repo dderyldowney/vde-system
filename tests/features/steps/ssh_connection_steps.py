@@ -66,8 +66,11 @@ def step_web_service_in_vm(context):
 @then('the VM should be ready to use')
 def step_vm_ready_ssh(context):
     """Verify VM is ready - container running."""
+    from vm_common import docker_ps
     running = docker_ps()
-    assert len(running) > 0, "At least one VDE VM should be running"
+    # Check for anything starting with vde- or tagged with vde.managed
+    vde_running = [c for c in running if c.startswith('vde-')]
+    assert len(vde_running) > 0, f"No VDE VMs are running. Found: {running}"
 
 @then('it should be accessible via SSH')
 def step_accessible_ssh(context):

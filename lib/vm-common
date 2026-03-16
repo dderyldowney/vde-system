@@ -248,6 +248,7 @@ _is_cache_valid() {
 load_vm_types() {
     local no_cache=0
     [[ "${1}" == "--no-cache" ]] && no_cache=1
+    [[ "${VDE_NO_CACHE:-0}" == "1" ]] && no_cache=1
 
     # Ensure arrays are globally declared
     typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT VM_SSH_PORT
@@ -281,13 +282,18 @@ load_vm_types() {
         return 0
     fi
 
-    # 1. Try cache FIRST for maximum performance
+    # 1. Try cache FIRST for maximum performance (unless --no-cache requested)
     local use_cache=0
-    if _is_cache_valid "${VM_TYPES_CACHE}" "${VM_TYPES_JSON}" "${VM_TYPES_CONF}"; then
+    if [[ "${no_cache}" -eq 0 ]] && _is_cache_valid "${VM_TYPES_CACHE}" "${VM_TYPES_JSON}" "${VM_TYPES_CONF}"; then
         # Verify cache file has no syntax errors before sourcing
         if zsh -n "${VM_TYPES_CACHE}" 2>/dev/null; then
-            # Load from cache - suppress all output
-            if . "${VM_TYPES_CACHE}" >/dev/null 2>&1; then
+            # Load from cache - suppress output unless debugging
+            if [[ "${VDE_LOG_LEVEL:-}" == "DEBUG" ]]; then
+                . "${VM_TYPES_CACHE}"
+            else
+                . "${VM_TYPES_CACHE}" >/dev/null 2>&1
+            fi
+            if [[ $? -eq 0 ]]; then
                 # Extract simple arrays from cache (grep-based extraction as fallback)
                 local lang_line svc_line
                 lang_line=$(grep "^lang_vms=" "${VM_TYPES_CACHE}" 2>/dev/null)
@@ -944,6 +950,43 @@ remove_port_from_registry() {
 clear_port_registry() {
     rm -rf "${VDE_CACHE_DIR}/port-registry"
     mkdir -p "${VDE_CACHE_DIR}/port-registry"
+    chmod 755 "${VDE_CACHE_DIR}/port-registry"
+}
+
+# Verify and rebuild port registry
+# Scans .docker-state/ for created VMs and extracts ports from their compose files
+verify_port_registry() {
+    local state_dir
+    state_dir=$(get_docker_state_dir)
+    
+    [[ "${VDE_LOG_LEVEL:-}" == "DEBUG" ]] && _info "Verifying port registry. State dir: ${state_dir}"
+    
+    [[ ! -d "${state_dir}" ]] && return ${VDE_SUCCESS}
+    
+    # Ensure registry dir exists
+    mkdir -p "${VDE_CACHE_DIR}/port-registry"
+    
+    local f vm_name port compose_file
+    # Use find to get json files reliably
+    for f in $(find "${state_dir}" -maxdepth 1 -name "*.json" 2>/dev/null); do
+        vm_name=$(basename "${f}" .json)
+        compose_file=$(get_compose_file "${vm_name}")
+        
+        [[ "${VDE_LOG_LEVEL:-}" == "DEBUG" ]] && _info "Scanning VM ${vm_name} (Compose: ${compose_file})"
+        
+        if [[ -f "${compose_file}" ]]; then
+            # Extract port that maps to container port 22 (SSH)
+            # Match formats like "2213:22", '2213:22', or - 2213:22
+            port=$(grep -E "['\"- ]*[0-9]+:22['\"]*" "${compose_file}" 2>/dev/null | grep -oE "[0-9]+:22" | cut -d: -f1 | head -n 1)
+            
+            if [[ -n "${port}" ]]; then
+                save_port_to_registry "${vm_name}" "${port}"
+                [[ "${VDE_LOG_LEVEL:-}" == "DEBUG" ]] && _info "Rebuilt port registry for ${vm_name}: ${port}"
+            fi
+        fi
+    done
+    
+    return ${VDE_SUCCESS}
 }
 
 # release_port_reservation - Alias for remove_port_from_registry (used by tests)
@@ -1006,7 +1049,7 @@ find_available_port() {
     local max_assigned=$((min_port - 1))
     local vm p
     for vm in ${(k)VM_SSH_PORT}; do
-        p=${VM_SSH_PORT}[${vm}]
+        p="${VM_SSH_PORT[$vm]}"
         if [[ -n "${p}" ]] && [[ "${p}" -ge "${min_port}" ]] && [[ "${p}" -le "${max_port}" ]]; then
             if [[ "${p}" -gt "${max_assigned}" ]]; then
                 max_assigned=${p}

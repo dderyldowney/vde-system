@@ -57,7 +57,7 @@ vm_container_status() {
     
     # Get container status from Docker
     docker ps -a --format '{{.Names}}\t{{.State}}' 2>/dev/null | \
-        awk -v name="${container_name}" '${1} == name {print ${2}}' | \
+        awk -v name="${container_name}" '$1 == name {print $2}' | \
         head -n1
     
     return ${VDE_SUCCESS}

@@ -45,6 +45,14 @@ while [[ ${#} -gt 0 ]]; do
             SHOW_CREATED=true
             shift
             ;;
+        --no-cache)
+            # Handled by load_vm_types in library
+            shift
+            ;;
+        --verify)
+            verify_port_registry
+            shift
+            ;;
         --help|-h)
             echo "Usage: list-vms [OPTIONS] [filter]"
             echo ""
@@ -245,6 +253,11 @@ fi
 # Show created VMs with their status
 for name in "${all_vms[@]}"; do
     vm_type=$(get_vm_type "${name}")
+    # Apply type filter if specified
+    if [[ -n "${LIST_TYPE}" ]] && [[ "${vm_type}" != "${LIST_TYPE}" ]]; then
+        continue
+    fi
+    
     vm_display=$(get_vm_display_name "${name}")
     vm_aliases=$(_assoc_get "VM_ALIASES" "${name}" 2>/dev/null) || vm_aliases=""
     display_vm "${name}" "${vm_type}" "${vm_display}" "${vm_aliases}"

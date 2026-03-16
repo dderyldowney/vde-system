@@ -579,7 +579,7 @@ ensure_ssh_agent() {
         [ -n "${key}" ] || continue
         
         # Only add if not already loaded (or if we just started a fresh agent)
-        if [[ "${started_new}" == "1" ]] || ! echo "${loaded_fingerprints}" | grep -q "$(ssh-keygen -lf "${key}" | awk '{print ${2}}')"; then
+        if [[ "${started_new}" == "1" ]] || ! echo "${loaded_fingerprints}" | grep -q "$(ssh-keygen -lf "${key}" | awk '{print $2}')"; then
             ssh-add "${key}" 2>/dev/null
             keys_added=$((keys_added + 1))
         fi

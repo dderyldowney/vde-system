@@ -156,39 +156,40 @@ def step_ssh_agent_running(context):
 def step_ssh_agent_key_loaded(context):
     """Verify VDE key was loaded into SSH agent.
     
-    Note: Due to subprocess isolation, we verify from command output rather than
-    connecting to the agent directly.
+    This step now correctly uses the isolated VDE agent environment.
     """
     output = None
     
     # Check for start command output
     if hasattr(context, 'ssh_start_output'):
         output = context.ssh_start_output
-    # Check for init command output (Full SSH workflow scenario)
     elif hasattr(context, 'ssh_init_output'):
         output = context.ssh_init_output
     
+    # Fallback to direct verification if output check fails or is missing
+    # We MUST source the isolated agent_env first
+    agent_env = Path.home() / ".ssh" / "vde" / "agent_env"
+    if agent_env.exists():
+        cmd = f"source {agent_env} >/dev/null && ssh-add -l"
+        result = subprocess.run(["zsh", "-c", cmd], capture_output=True, text=True)
+        if result.returncode == 0:
+            output_lower = result.stdout.lower()
+            if "vde" in output_lower or "ed25519" in output_lower:
+                return # SUCCESS
+
     if output:
-        # Verify key was loaded - check for loaded message
+        # Check output as a secondary verification
         key_loaded = (
             "✓ Loaded: VDE SSH key" in output or
             "✓ VDE SSH key available" in output or
             "1 key(s) loaded" in output or
             "Step 3: Loading VDE key" in output or
+            "SSH environment ready" in output or
             "ed25519" in output.lower()
         )
-        assert key_loaded, \
-            f"VDE SSH key was not loaded. Output: {output}"
+        assert key_loaded, f"VDE SSH key was not loaded. Output: {output}"
     else:
-        # Fallback: try to connect to any running agent
-        result = subprocess.run(
-            ["ssh-add", "-l"],
-            capture_output=True, text=True, timeout=10
-        )
-        assert result.returncode == 0, "SSH agent is not running or has no keys"
-        output_lower = result.stdout.lower()
-        assert "vde" in output_lower or "ed25519" in output_lower, \
-            f"VDE SSH key not found in agent. Keys loaded: {result.stdout}"
+        assert False, "Could not verify VDE key: agent_env missing or key not loaded"
 
 
 @then('SSH agent should have at least one key loaded')

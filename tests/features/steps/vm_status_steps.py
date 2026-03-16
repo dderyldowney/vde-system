@@ -137,6 +137,27 @@ def step_request_vm_info(context, vm_name):
     context.vm_info = vm_info
 
 
+@when('I ask "what VMs can I create?"')
+def step_ask_available_vms(context):
+    """Ask for all available VMs."""
+    result = run_vde_command("list --all", timeout=30, context=context)
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+
+@when('I ask to list all languages')
+def step_ask_languages(context):
+    """Ask for language VMs."""
+    result = run_vde_command("list --lang --all", timeout=30, context=context)
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+
+@when('I ask "show all services"')
+def step_ask_services(context):
+    """Ask for service VMs."""
+    result = run_vde_command("list --svc --all", timeout=30, context=context)
+    context.last_output = result.stdout
+    context.last_exit_code = result.returncode
+
 @when('I rebuild the VM types cache')
 def step_reload_vm_types(context):
     """Reload VM types."""
@@ -151,3 +172,13 @@ def step_check_compose_config(context):
     result = run_vde_command("info", context=context)
     context.vde_command_output = result.stdout + result.stderr
     context.vde_command_exit_code = result.returncode
+
+# =============================================================================
+# THEN steps - Verify status and discovery results
+# =============================================================================
+
+@then('I should see only language VMs')
+def step_see_only_languages(context):
+    """Verify only languages are shown."""
+    assert "Language VMs" in context.last_output
+    assert "Service VMs" not in context.last_output

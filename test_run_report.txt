@@ -1,0 +1,6 @@
+=== Setting up SSH Agent ===
+tests/setup-ssh-agent.zsh:11: VDE_ROOT_DIR: parameter not set
+=== Phase 1: Docker-free BDD Tests ===
+=== Phase 2: Unit Tests ===
+=== Phase 3: Integration Tests ===
+=== Phase 4: Core Infrastructure BDD Tests ===

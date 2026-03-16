@@ -249,7 +249,17 @@ def step_common_languages_listed(context):
 
 @then('I should not see language VMs')
 def step_should_not_see_language_vms(context):
-    """Verify language VMs are not visible when listing services."""
+    """Verify language VMs are not visible."""
+    if hasattr(context, 'last_output') and context.last_output:
+        output_lower = context.last_output.lower()
+        # Should not see the header or common language names
+        assert "language vms" not in output_lower
+        language_keywords = ['python', 'rust', 'golang', 'java', 'ruby']
+        found = [kw for kw in language_keywords if kw in output_lower]
+        assert not found, f"Should not see language VMs but found keywords: {found}"
+        context.language_vms_hidden = True
+        return
+
     # Check if we're in service-only mode (set by 'I ask "show all services"')
     if hasattr(context, 'services_only') and context.services_only:
         # In service-only mode, check that service_vms were loaded
@@ -349,15 +359,17 @@ def step_check_vm_exists(context, vm):
                 parts = line.split('|')
                 if len(parts) >= 2:
                     vm_name = parts[1].strip()
+                    # Strip vde- prefix for canonical comparison if needed
+                    simple_name = vm_name.replace('vde-', '')
                     detected.append(vm_name)
                     # Check if this is the VM we're looking for (canonical or alias)
-                    if vm.lower() == vm_name.lower():
-                        canonical_name = vm_name
+                    if vm.lower() == vm_name.lower() or vm.lower() == simple_name.lower():
+                        canonical_name = simple_name
                     elif len(parts) >= 3:
-                        # Check aliases (position 3 onwards)
-                        aliases = [a.strip().lower() for a in parts[2:]]
+                        # Check aliases (index 2, comma separated)
+                        aliases = [a.strip().lower() for a in parts[2].split(',')]
                         if vm.lower() in aliases:
-                            canonical_name = vm_name
+                            canonical_name = simple_name
         context.detected_vms = detected
         # Store resolution result (canonical name) for later verification
         context.vm_resolution_result = canonical_name if canonical_name else vm

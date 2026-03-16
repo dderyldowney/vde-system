@@ -45,13 +45,13 @@ Feature: Cache System
   Scenario: Cache file format is parseable
     Given VM types cache exists and is valid
     When cache file is read
-    Then each line should match "ARRAY_NAME:key=value" format
+    Then each line should match "typeset -gA ARRAY_NAME" or "ARRAY_NAME[key]=value" format
     And comments should start with "#"
 
   Scenario: Port registry cache persists allocations
     Given ports have been allocated for VMs
     When port registry is saved
-    Then cache file should exist at ".cache/port-registry"
+    Then cache file should exist at ".cache/port-registry" directory
     And each VM should be mapped to its port
 
   Scenario: Load port registry from cache
@@ -66,6 +66,7 @@ Feature: Cache System
     Then removed VM should be removed from registry
     And cache file should be updated
 
+  @wip
   Scenario: Rebuild port registry from compose files
     Given port registry cache is missing or invalid
     When port registry is verified

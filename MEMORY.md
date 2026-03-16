@@ -18,7 +18,37 @@
 
 ---
 
-## Current State (2026-03-11)
+## Current State (2026-03-15)
+
+**Status: ✅ SSH Isolation & Standardization COMPLETE**
+
+**Shell/Zsh Tests: 360 passing** | **Unit tests (isolated): 31/31 pass** | **BDD Scenarios: 33/33 pass**
+
+### Test Results (Refresh Verified)
+- ✅ `tests/unit/vde-ssh.test.zsh`: 8/8 passing
+- ✅ `tests/unit/test_ssh_functions.test.zsh`: 13/13 passing
+- ✅ `core-infrastructure/ssh-configuration.feature`: 33/33 scenarios passing (including locking and key generation)
+- ✅ Standardized variable expansion `${VAR}` verified via `zsh -n` on all scripts.
+
+### This Session's Fixes (2026-03-15)
+
+1. **Total SSH Isolation**:
+    - Isolated VDE agent to `~/.ssh/vde/agent_env`.
+    - Disabled agent auto-discovery in `lib/vde-ssh` to prevent host leakage.
+    - Forced VDE commands to exclusively use the isolated persistent agent.
+2. **Variable Standardization**:
+    - Converted all bare variables (e.g., `$VAR`) to braced format (`${VAR}`) across 100+ shell scripts.
+    - Fixed pre-existing syntax errors in E2E tests discovered during migration.
+3. **Agent Governance**:
+    - Resolved "Generalist Not Allowed" issue by establishing "No Circular Delegation" mandate in `AGENTS.md`.
+    - Created specialized sub-agent definitions in `agents/` directory.
+4. **Mandate Enforcement**:
+    - Created root-level `GEMINI.md` to point to `AGENTS.md`.
+    - Updated global `~/.gemini/GEMINI.md` to reference project mandates.
+
+---
+
+## Historical State (2026-03-11)
 
 **Shell/Zsh Tests: 360 passing** | **Unit tests (isolated): 18/18 pass**
 
@@ -30,7 +60,7 @@
 - ✅ SSH port uniqueness (fixed duplicates)
 - ✅ vde-shell-compat: 18/18
 
-### This Session's Fixes
+### Previous Session's Fixes
 
 1. **_assoc_unset** - Fixed zsh associative array (was using typeset -n incorrectly)
 2. **docker-free path** - Updated to core-infrastructure

@@ -601,15 +601,17 @@ def step_all_running_complete(context):
 @then(u'each should have its own configuration')
 def step_own_config(context):
     """Verify each VM has its own configuration."""
-    import os
-    for vm in ['python', 'go', 'rust']:
-        config_path = f"{os.path.expanduser('~')}/.vde/vms/{vm}"
-        assert os.path.exists(config_path), f"Expected config for {vm}"
+    from vm_common import VDE_ROOT
+    for vm in ['python', 'postgres', 'redis']:
+        # Match the VMs requested in the previous step
+        config_path = VDE_ROOT / "configs" / "docker" / vm
+        assert config_path.exists(), f"Expected config for {vm} at {config_path}"
 
 
 @then(u'all should be on the same Docker network')
 def step_same_network(context):
     """Verify all VMs are on the same Docker network."""
-    result = subprocess.run(['./bin/vde', 'networks'], capture_output=True, text=True)
+    from vm_common import VDE_ROOT
+    result = subprocess.run([str(VDE_ROOT / 'bin' / 'vde'), 'networks'], capture_output=True, text=True)
     assert 'vde-testing' in result.stdout or 'vde' in result.stdout.lower(), \
         f"Expected vde-testing network"
