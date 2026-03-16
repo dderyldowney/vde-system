@@ -18,31 +18,36 @@
 
 ---
 
-## Current State (2026-03-15)
+## Current State (2026-03-16)
 
 **Status: ✅ Core Infrastructure Remediation COMPLETE**
 
-**Unit tests (isolated): 31/31 pass** | **BDD Scenarios: 58/59 pass** | **Overall Shell Coverage: 100+ files**
+**Unit tests: 292/292 pass** | **Cache System BDD: 19/19 scenarios, 84/84 steps pass**
 
-### This Session's Achievements (2026-03-15)
+### This Session's Achievements (2026-03-16)
 
-1. **Total SSH Isolation**:
-    - Decoupled VDE agent from personal shell; isolated to `~/.ssh/vde/agent_env`.
-    - Disabled agent auto-discovery to prevent leakage from the host system.
-    - Standardized `ensure_ssh_agent` to always validate keys, even if agent is running.
-2. **Robust Variable Expansion**:
-    - Converted 100+ shell scripts to `${VAR}` braced format for reliability.
-    - **Critical Fix**: Reverted accidentally braced `awk` positional parameters (e.g., `${1}` → `$1`).
-3. **Cache & Port Management**:
-    - Implemented `verify_port_registry` in `lib/vm-common` to rebuild registry from Docker Compose files.
-    - Modernized port registry to use directory-based storage (`.cache/port-registry/`).
-    - Added `--verify` flag to `list-vms` for manual registry validation.
-4. **Standardized Container Detection**:
-    - Enforced `vde.managed=true` label filtering in `vde-ps` and BDD steps for reliable discovery.
-5. **BDD Suite Stabilization**:
-    - Increased subprocess timeouts to **300s** for slow Docker operations.
-    - Resolved `AmbiguousStep` errors and fixed hardcoded paths in Python steps.
-    - Achieved **100% pass rate** for `ssh-configuration.feature`, `cache-system.feature` (excluding 1 @wip), and `vm-discovery.feature`.
+1. **Port Range Constant Fix**:
+    - Corrected `VDE_LANG_PORT_END` from `2399` → `2299` to match spec (2200-2299 for languages).
+    - Updated unit test to expect correct value.
+2. **Port Registry Architecture**:
+    - Fixed `verify_port_registry` to use `vm-types.conf/json` as source of truth (not compose files).
+    - Updated cache-system BDD tests to reflect correct architecture.
+    - Removed `@wip` tag from "Rebuild port registry" scenario - now fully passing.
+3. **list-vms Categorization**:
+    - Updated `list-vms` to display VMs categorized by type (Language/Service sections).
+    - Fixed `--lang` and `--svc` flags to show only the requested type.
+4. **Configuration Test Fix**:
+    - Fixed `step_vm_boot_start` to check `context.restart_set` attribute before output fallback.
+5. **Fake Test Remediation** (cache_steps.py):
+    - Replaced 6 `assert True` with real verification logic.
+    - Steps now verify: cache mtime, port file existence, valid port ranges, command execution.
+6. **Knowledge Base Refresh**:
+    - Updated syntax/semantics for ZSH, Python, YAML, JSON, Docker via context7 MCP.
+
+### Key Architecture Decisions
+- **Port Registry Source of Truth**: `vm-types.conf` and `vm-types.json` (column 7 / `ssh_port` field).
+- **SSH Config**: Generated from vm-types, only changes when VM types are added/removed.
+- **No compose file scanning**: Compose files are templates, not authoritative for port data.
 
 ### Agent Governance
 - Established "No Circular Delegation" mandate in `AGENTS.md`.
