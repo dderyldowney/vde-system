@@ -17,6 +17,13 @@ services:
     hostname: vde-postgres
     restart: unless-stopped
     command: /usr/local/bin/vde-start.sh
+    shm_size: '256m'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
     ports:
       - "2404:22"

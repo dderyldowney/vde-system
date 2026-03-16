@@ -18,15 +18,55 @@
 
 ---
 
-## Current State (2026-03-16)
+## Current State (2026-03-16 Session 34)
 
-**Status: ✅ Core Infrastructure Remediation COMPLETE**
+**Status: ✅ Fake Test Remediation COMPLETE**
 
-**Unit tests: 292/292 pass** | **Cache System BDD: 19/19 scenarios, 84/84 steps pass**
+**Test Suite Status:**
+- Docker-free BDD: ✅ PASS (10 scenarios, 34 steps)
+- Unit Tests: ✅ PASS (~108 tests)
+- Integration Tests: ✅ PASS
+- Core Infrastructure BDD: ⚠️ CRASHED (empty log - needs investigation)
+- Docker-required BDD: ❌ FAIL (15 failures, 23 undefined steps)
+- Postgres OOM: ✅ FIXED (no OOM detected, memory within 1GiB limit)
 
-### Recent Sessions
+### Remediation Completed
 
-#### Session 2026-03-16 (Late)
+| Task | Count | Status |
+|------|-------|--------|
+| TASK 1: Delete unused steps | 6 | ✅ DONE |
+| TASK 2: Fix `assert True` violations | 7 | ✅ DONE |
+| TASK 3: Implement missing WHEN/THEN steps | 2 | ✅ DONE |
+| TASK 4: Implement missing step definition | 1 | ✅ DONE |
+| TASK 5: Fix tautological THEN steps | 21 | ✅ DONE |
+| TASK 6: Fix `or True` patterns | 11 | ✅ DONE |
+| TASK 7: Fix Postgres OOM | 1 | ✅ DONE |
+| TASK 8: Delete meaningless simulation step | 1 | ✅ DONE |
+| Mark Given steps as NARRATIVE | 13 | ✅ DONE |
+
+### Remaining Issues (Not Fake Tests)
+
+1. **Undefined Steps** (23 scenarios): Feature files written but step definitions not implemented
+   - `ssh-agent-automatic-setup.feature`: 12 scenarios
+   - `ssh-agent-forwarding-vm-to-vm.feature`: 10 scenarios
+   - These are INCOMPLETE tests, not fake tests
+
+2. **VDE_ROOT_DIR Environment**: Test runner fails when not pre-set
+
+3. **Core Infrastructure BDD Crash**: Empty log output - needs investigation
+
+### Key Architecture Notes
+
+- **Given steps with `pass` are NARRATIVE markers** - Legitimate for User Guide generation
+- **THEN steps must have real verification** - No tautological patterns
+- **Port Registry Source of Truth**: `vm-types.conf` and `vm-types.json`
+- **Postgres Config**: Added `shm_size: '256m'` and `memory: 1G` limit
+
+---
+
+## Historical State (2026-03-16 Earlier Sessions)
+
+### Session 2026-03-16 (Late)
 1. **Documentation Path Fix**:
     - Fixed incorrect paths in `.kilocode/rules/vde_context.md` and `tests/generate-remediation-plan.py`
     - Changed `bin/lib/` → `lib/` and `bin/data/` → `data/`
@@ -34,7 +74,7 @@
 2. **Session Startup Enforcement**:
     - Added mandatory MEMORY.md read to `vde_context.md` session startup section
 
-#### Session 2026-03-16 (Earlier)
+### Session 2026-03-16 (Earlier)
 1. **Port Range Constant Fix**:
     - Corrected `VDE_LANG_PORT_END` from `2399` → `2299` to match spec (2200-2299 for languages).
     - Updated unit test to expect correct value.
@@ -50,27 +90,3 @@
 5. **Fake Test Remediation** (cache_steps.py):
     - Replaced 6 `assert True` with real verification logic.
     - Steps now verify: cache mtime, port file existence, valid port ranges, command execution.
-6. **Knowledge Base Refresh**:
-    - Updated syntax/semantics for ZSH, Python, YAML, JSON, Docker via context7 MCP.
-
-### Key Architecture Decisions
-- **Port Registry Source of Truth**: `vm-types.conf` and `vm-types.json` (column 7 / `ssh_port` field).
-- **SSH Config**: Generated from vm-types, only changes when VM types are added/removed.
-- **No compose file scanning**: Compose files are templates, not authoritative for port data.
-
-### Next Steps
-- No immediate blockers or pending work
-- Ready for new feature development or bug fixes
-
-### Agent Governance
-- Established "No Circular Delegation" mandate in `AGENTS.md`.
-- Created specialized agent definitions in `agents/` (Scout, Coder, etc.).
-- Created root-level `GEMINI.md` to strictly enforce `AGENTS.md` protocols.
-
----
-
-## Historical State (2026-03-11)
-
-**Shell/Zsh Tests: 360 passing** | **Unit tests (isolated): 18/18 pass**
-
-... [rest of file remains same] ...
