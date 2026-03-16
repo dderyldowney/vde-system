@@ -18,17 +18,22 @@
 
 ---
 
-## Current State (2026-03-16 Session 34)
+## Current State (2026-03-16 Session 35)
 
 **Status: ✅ Fake Test Remediation COMPLETE**
 
-**Test Suite Status:**
-- Docker-free BDD: ✅ PASS (10 scenarios, 34 steps)
-- Unit Tests: ✅ PASS (~108 tests)
+**Test Suite Status (Verified 2026-03-16T12:17):**
+- Docker-free BDD: ✅ PASS (10 scenarios)
+- Unit Tests: ✅ PASS (~36+ tests across 3 test files)
 - Integration Tests: ✅ PASS
-- Core Infrastructure BDD: ⚠️ CRASHED (empty log - needs investigation)
-- Docker-required BDD: ❌ FAIL (15 failures, 23 undefined steps)
+- Core Infrastructure BDD: ⚠️ JSON corrupted (needs re-run)
+- Docker-required BDD: ❌ FAIL (8 passed, 15 failed, 23 error)
 - Postgres OOM: ✅ FIXED (no OOM detected, memory within 1GiB limit)
+
+**Docker-Required Breakdown:**
+- Scenarios: 8 passed, 15 failed, 23 error (undefined steps blocking)
+- Steps: 129 passed, 15 failed, 58 skipped, 127 undefined
+- Features: 2 failed (ssh-agent-vm-to-host, ssh-and-remote-access), 2 error (ssh-agent-automatic-setup, ssh-agent-forwarding-vm-to-vm)
 
 ### Remediation Completed
 
@@ -46,14 +51,19 @@
 
 ### Remaining Issues (Not Fake Tests)
 
-1. **Undefined Steps** (23 scenarios): Feature files written but step definitions not implemented
-   - `ssh-agent-automatic-setup.feature`: 12 scenarios
-   - `ssh-agent-forwarding-vm-to-vm.feature`: 10 scenarios
-   - These are INCOMPLETE tests, not fake tests
+1. **Undefined Steps** (127 steps, 23 scenarios blocked):
+    - `ssh-agent-automatic-setup.feature`: 12 scenarios (Given/When/Then for SSH setup)
+    - `ssh-agent-forwarding-vm-to-vm.feature`: 10 scenarios (VM-to-VM SSH steps)
+    - `ssh-and-remote-access.feature`: 1 scenario (scp file transfer)
+    - These are INCOMPLETE tests needing step definitions
 
-2. **VDE_ROOT_DIR Environment**: Test runner fails when not pre-set
+2. **Failed Scenarios** (15 failures):
+    - `ssh-agent-vm-to-host-communication.feature`: 9 failures (Docker socket, host operations)
+    - `ssh-and-remote-access.feature`: 6 failures (SSH connection, shell config)
 
-3. **Core Infrastructure BDD Crash**: Empty log output - needs investigation
+3. **VDE_ROOT_DIR Environment**: Test runner fails when not pre-set
+
+4. **Core Infrastructure BDD**: JSON results corrupted - needs fresh re-run
 
 ### Key Architecture Notes
 

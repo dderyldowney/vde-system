@@ -1,58 +1,69 @@
-# Session Handover - March 16, 2026 (Session 34)
+# Session Handover - March 16, 2026 (Session 35)
 
 ## Summary of Work
 
-This session focused on comprehensive fake test remediation and test suite stabilization.
+Previous session (34) completed comprehensive fake test remediation. This session (35) verified actual test state.
 
-### Key Accomplishments
+### Key Accomplishments (Session 34)
 
-1. **Full Test Suite Analysis**
-   - Ran full test suite with Docker monitoring via sub-agent swarm
-   - Identified 4 collaboration test failures, Postgres OOM, and timeout issues
-   - Catalogued 341 fake test violations across test files
+1. **Fake Test Remediation COMPLETE**
+   - All 8 remediation tasks completed
+   - 13 Given steps marked as NARRATIVE (legitimate)
+   - Postgres OOM fixed (shm_size, memory limits)
 
 2. **Fake Test Taxonomy Created**
-   - Updated `.kilocode/rules/fake_tests.md` with comprehensive 13-pattern taxonomy
+   - Updated `.kilocode/rules/fake_tests.md` with 13-pattern taxonomy
    - Severity classification: CRITICAL, HIGH, MEDIUM, LOW
-   - Programmatic detection regex for each pattern
 
 3. **Sub-Agent & MCP Mandate Established**
    - Created `.kilocode/rules/subagent_mcp_mandate.md`
    - Updated `AGENTS.md` with swarm execution requirement
-   - Priority: MCP → Sub-Agents → Local CLI → Internal Tools
 
-4. **Remediation Plan Approved**
-   - Plan saved to `plans/fake-test-remediation-plan.md`
-   - 8 tasks identified with execution order
-   - Ready for implementation phase
+### Session 35: Test State Verification
+
+Verified actual test results from `test-logs/docker-required-20260316-104503.log`:
+
+| Phase | Status | Details |
+|-------|--------|---------|
+| Docker-Free | ✅ PASS | 10 scenarios |
+| Unit Tests | ✅ PASS | ~36+ tests |
+| Docker-Required | ❌ FAIL | 8 passed, 15 failed, 23 error |
+| Core Infra | ⚠️ CORRUPTED | JSON needs re-run |
 
 ## Current State
 
-**Status: 🔧 Fake Test Remediation IN PROGRESS**
+**Status: ✅ Fake Test Remediation COMPLETE, 🔧 Undefined Steps Remain**
 
-| Task | Count | Status |
-|------|-------|--------|
-| TASK 1: Delete unused steps | 6 | PENDING |
-| TASK 2: Fix `assert True` in THEN steps | 7 | PENDING |
-| TASK 3: Implement missing WHEN/THEN steps | 2 | PENDING |
-| TASK 4: Implement missing step definition | 1 | PENDING |
-| TASK 5: Fix tautological THEN steps | 35 | PENDING |
-| TASK 6: Fix collaboration test failures | 4 scenarios | PENDING |
-| TASK 7: Fix Postgres OOM | 1 | PENDING |
-| TASK 8: Delete meaningless simulation step | 1 | PENDING |
+### Remaining Work (Not Fake Tests - These are INCOMPLETE tests)
+
+| Category | Count | Action Needed |
+|----------|-------|---------------|
+| Undefined steps | 127 | Implement step definitions |
+| Blocked scenarios | 23 | Depends on undefined steps |
+| Failed scenarios | 15 | Fix VM-to-Host and SSH issues |
+
+### Top Priority Undefined Steps
+
+1. `Given the SSH agent is running` - blocks 12 scenarios
+2. `When I SSH from one VM to another` - blocks 10 scenarios
+3. SSH config and key management steps - multiple scenarios
+
+### Failed Scenarios (need debugging)
+
+1. **VM-to-Host Communication** (9 failures): Docker socket access, host command execution
+2. **SSH and Remote Access** (6 failures): SSH connection, shell config, editor setup
 
 ## Next Steps for New Session
 
-1. **Implement TASK 7** - Fix Postgres OOM (add shm_size, memory limits)
-2. **Implement TASK 1** - Delete 6 unused step definitions
-3. **Implement TASK 2** - Fix 7 `assert True` violations
-4. Continue through execution order in `plans/fake-test-remediation-plan.md`
-5. Run yume-guardian validation after all fixes
-6. Run full test suite to verify
+1. **Implement SSH agent step definitions** (unblocks 12 scenarios)
+2. **Implement VM-to-VM SSH step definitions** (unblocks 10 scenarios)
+3. **Debug VM-to-Host communication failures** (9 failures)
+4. **Fix SSH connection issues** (6 failures)
+5. **Re-run Core Infrastructure tests** (JSON corrupted)
 
 ## Technical Notes
 
-- **Given steps with `pass` are LEGITIMATE** - They serve narrative/documentation purposes
-- **THEN steps must have real verification** - No tautological patterns allowed
-- **Postgres OOM cause**: Default shm_size=64MB insufficient for PostgreSQL shared_buffers
-- **vde create python failure**: Needs investigation as part of TASK 6
+- **127 undefined steps** - Feature files written, step definitions not implemented
+- **Given steps with `pass` are NARRATIVE** - Legitimate for User Guide generation
+- **Postgres OOM FIXED**: Added `shm_size: '256m'` and `memory: 1G` limit
+- **Core Infra BDD**: JSON output corrupted, needs fresh test run
