@@ -39,7 +39,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 
 ## Core Mandates
 
-- **MCP Server Utilization**: All agents MUST utilize connected MCP servers (e.g., `context7`, `github`, `redis`, `MCP_DOCKER`) as their primary interface for system interaction.
+- **Sub-Agent Swarm Execution (MANDATORY)**: ALL work MUST use sub-agents, preferably in swarm form (parallel execution). Single-agent direct execution is forbidden except for trivial read-only queries. See `.kilocode/rules/subagent_mcp_mandate.md` for full protocol.
+- **MCP Server Utilization (PRIMARY)**: All agents MUST utilize connected MCP servers (e.g., `context7`, `github`, `redis`, `MCP_DOCKER`) as their PRIMARY interface. MCP services are ALWAYS preferred over local tools. Priority: MCP → Sub-Agents → Local CLI → Internal Tools.
 - **No Circular Delegation**: Only the **Main Agent** (Gemini CLI) is permitted to use the `generalist` sub-agent tool. Specialized sub-agents MUST NOT attempt to delegate tasks further or invoke the `generalist` tool. They must complete assigned tasks using their own specialized tools and context.
 - **Documentation Source-of-Truth**: All documentation updates, technical deep dives, and API/library queries MUST utilize the `context7` and `gemini-docs-mcp` MCP servers to ensure accuracy and version alignment.
 - **Active Endpoints**: Ensure all tool invocations reference active MCP endpoints.

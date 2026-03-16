@@ -268,13 +268,6 @@ def step_load_port_registry(context):
     run_vde_command("list", context=context)
 
 
-@when("system is restarted")
-def step_system_restart(context):
-    """Simulate system restart by clearing in-memory state."""
-    # In-memory state is already fresh per scenario in behave
-    pass
-
-
 @when("port registry is verified")
 def step_verify_port_registry(context):
     """Verify port registry consistency."""

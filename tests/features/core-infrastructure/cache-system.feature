@@ -121,8 +121,7 @@ Feature: Cache System
   Scenario: Port registry cache persists and survives restart
     Given ports have been allocated for VMs
     And port registry cache exists
-    When system is restarted
-    And port registry is loaded
+    When port registry is loaded
     Then previously allocated ports should be restored
     And no port conflicts should occur
 
