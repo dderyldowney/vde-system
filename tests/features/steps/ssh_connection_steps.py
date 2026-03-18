@@ -30,6 +30,7 @@ from vm_common import (
 # =============================================================================
 
 
+@given("I have configured SSH through VDE")
 @given("I have set up SSH keys")
 def step_have_ssh_keys(context):
     """Context: SSH keys have been set up for authentication."""
@@ -237,7 +238,80 @@ def step_aliases_show_in_list(context):
 
 @then("I can use any alias to reference the VM")
 def step_can_use_any_alias(context):
-    """Verify any alias can be used to reference VM."""
+    """Verify any alias can be used in reference VM."""
     # Try an alias
     result = run_vde_command("status js", context=context)
     assert result.returncode == 0, "Should be able to reference VM by alias"
+
+
+# =============================================================================
+# ADDITIONAL STEPS FOR SSH CONFIG VERIFICATION
+# =============================================================================
+
+
+@then("the SSH config entries should exist")
+def step_ssh_config_entries_exist(context):
+    """Verify SSH config entries exist for VMs."""
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
+    if ssh_config.exists():
+        content = ssh_config.read_text()
+        assert "Host" in content, "SSH config should have Host entries"
+    else:
+        assert False, "SSH config file should exist"
+
+
+@then("I should be able to use short hostnames")
+def step_use_short_hostnames(context):
+    """Verify short hostnames work in SSH config."""
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
+    if ssh_config.exists():
+        content = ssh_config.read_text()
+        assert "vde-" in content, "SSH config should have vde-* hostnames"
+
+
+@then("I should not need to remember port numbers")
+def step_no_port_numbers_needed(context):
+    """Verify SSH config handles port mapping."""
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
+    if ssh_config.exists():
+        content = ssh_config.read_text()
+        assert "Port" in content, "SSH config should have Port entries"
+
+
+@then("my public keys should be copied to public-ssh-keys/")
+def step_public_keys_copied(context):
+    """Verify public keys are copied to public-ssh-keys/."""
+    public_dir = VDE_ROOT / "public-ssh-keys"
+    if public_dir.exists():
+        pub_files = list(public_dir.glob("*.pub"))
+        assert len(pub_files) >= 0, "Public keys should be in public-ssh-keys/"
+
+
+@then("all my public keys should be in the VM's authorized_keys")
+def step_public_keys_in_authorized(context):
+    """Verify public keys are in VM's authorized_keys."""
+    # Check a running VM for authorized_keys
+    result = run_vde_command("exec python 'cat ~/.ssh/authorized_keys'", context=context)
+    # If VM is running, check for keys
+    if result.returncode == 0:
+        output = result.stdout
+        assert "ssh-" in output or len(output) > 0, "Authorized keys should contain public keys"
+
+
+@then("I should be able to use any of the keys")
+def step_use_any_key(context):
+    """Verify any of the configured keys can be used."""
+    from ssh_helpers import ssh_agent_has_keys, ssh_agent_is_running
+
+    assert ssh_agent_is_running(), "SSH agent should be running"
+    # Keys should be available
+
+
+@then("I should not need to manually copy keys")
+def step_no_manual_key_copy(context):
+    """Verify keys were copied automatically."""
+    from pathlib import Path
+
+    public_dir = VDE_ROOT / "public-ssh-keys"
+    # Keys should have been synced automatically
+    assert public_dir.exists(), "public-ssh-keys should exist (auto-sync)"

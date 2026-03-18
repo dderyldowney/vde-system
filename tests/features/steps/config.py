@@ -15,12 +15,20 @@ from pathlib import Path
 # Calculate VDE_ROOT once, correctly
 # This file is at: tests/features/steps/config.py
 # Project root is 4 levels up
-_VDE_ROOT = Path(os.environ.get("VDE_ROOT_DIR",
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
+_VDE_ROOT = Path(
+    os.environ.get(
+        "VDE_ROOT_DIR",
+        os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        ),
+    )
+)
+
 
 def get_vde_root() -> Path:
     """Get the VDE project root directory."""
     return _VDE_ROOT
+
 
 # Export for backwards compatibility
 VDE_ROOT = get_vde_root()
@@ -29,4 +37,5 @@ VDE_ROOT = get_vde_root()
 # Use environment variables if set (for test environment overrides)
 VDE_HOME = Path(os.environ.get("VDE_HOME_DIR", Path.home()))
 VDE_SSH_DIR = Path(os.environ.get("VDE_SSH_DIR", VDE_HOME / ".ssh" / "vde"))
+VDE_SSH_CONFIG = VDE_SSH_DIR / "config"
 VDE_CACHE_DIR = Path(os.environ.get("VDE_CACHE_DIR", VDE_ROOT / ".cache"))

@@ -4,6 +4,7 @@ Comprehensive catch-all step definitions for VDE BDD tests.
 These steps use actual VDE scripts and check real system state
 instead of using mock context variables.
 """
+
 import os
 import sys
 import subprocess
@@ -23,18 +24,22 @@ from vm_common import run_vde_command, docker_ps, container_exists, wait_for_con
 # Shell Compatibility Helper Functions
 # =============================================================================
 
-def run_shell_command(command, shell='zsh'):
+
+def run_shell_command(command, shell="zsh"):
     """Run a command in the specified shell with vde-shell-compat loaded."""
     # Ensure VDE_ROOT is absolute
     root = str(VDE_ROOT.resolve())
     cmd = f"{shell} -c 'source {root}/lib/vde-shell-compat && {command}'"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=root, encoding='utf-8')
+    result = subprocess.run(
+        cmd, shell=True, capture_output=True, text=True, cwd=root, encoding="utf-8"
+    )
     return result
 
 
 # =============================================================================
 # VM STATE PATTERNS
 # =============================================================================
+
 
 @given('"{vm}" VM is created but not running')
 def step_vm_created_not_running(context, vm):
@@ -58,27 +63,37 @@ def step_i_have_vm_running(context, vm):
     context.vm_running = True
 
 
-@given('I have several VMs running')
+@given("I have multiple VMs running")
+@given("I have several VMs running")
 def step_have_several_vms_running(context):
-    """Check how many VDE VMs are running via vde ps."""
+    """Ensure multiple VMs are running (start if needed)."""
     running = docker_ps()
     vde_running = [c for c in running if c.startswith("vde-")]
+
+    if len(vde_running) < 2:
+        run_vde_command("start python go", context=context)
+        wait_for_container("python", timeout=60)
+        wait_for_container("go", timeout=60)
+        running = docker_ps()
+        vde_running = [c for c in running if c.startswith("vde-")]
+
     context.num_vms_running = len(vde_running)
     context.running_vms = {c.replace("vde-", "") for c in vde_running}
+    assert len(vde_running) >= 2, f"Expected 2+ VMs, found {len(vde_running)}"
 
 
 # Alias for "I have several VMs running"
-@given('I have multiple VMs running for VM-to-Host')
+@given("I have multiple VMs running for VM-to-Host")
 def step_have_multiple_vms_running(context):
     """Alias for checking how many VMs are running."""
     step_have_several_vms_running(context)
 
 
-@given('I have {num} VMs running')
+@given("I have {num} VMs running")
 def step_have_n_vms_running(context, num):
     """Check if N VDE VMs are running via vde ps."""
     # Handle descriptive numbers
-    if num.lower() in ['several', 'multiple', 'some']:
+    if num.lower() in ["several", "multiple", "some"]:
         min_count = 2
     else:
         try:
@@ -89,13 +104,15 @@ def step_have_n_vms_running(context, num):
     running = docker_ps()
     vde_running = [c for c in running if c.startswith("vde-")]
     context.num_vms_running = len(vde_running)
-    assert context.num_vms_running >= min_count, f"Expected at least {min_count} VMs, found {context.num_vms_running}"
+    assert context.num_vms_running >= min_count, (
+        f"Expected at least {min_count} VMs, found {context.num_vms_running}"
+    )
 
 
-@given('I have {num} VMs configured for my project')
+@given("I have {num} VMs configured for my project")
 def step_n_vms_configured(context, num):
     """Check if N VMs are configured in configs/docker."""
-    if num.lower() in ['several', 'multiple', 'some']:
+    if num.lower() in ["several", "multiple", "some"]:
         min_count = 2
     else:
         try:
