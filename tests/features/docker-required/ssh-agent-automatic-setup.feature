@@ -93,8 +93,8 @@ Feature: Automatic SSH Setup and Key Management
   Scenario: SSH setup works with different SSH clients
     Given I have configured SSH through VDE
     When I use the system ssh command
-    And when I use OpenSSH clients
-    And when I use VSCode Remote-SSH
+    And I use OpenSSH clients
+    And I use VSCode Remote-SSH
     Then all should work with the same configuration
     And all should use my SSH keys
 

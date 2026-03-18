@@ -329,6 +329,7 @@ def step_old_issues_resolved(context):
 # =============================================================================
 
 
+@given("I create a VM")
 @when("I create a new language VM")
 def step_create_new_lang_vm(context):
     """Create a new language VM to test auto port allocation with a unique name."""

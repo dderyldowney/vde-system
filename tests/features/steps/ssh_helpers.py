@@ -6,6 +6,7 @@ used across all SSH-related BDD step definitions.
 
 All SSH operations now use VDE-specific isolated paths at ~/.ssh/vde/
 """
+
 import os
 import subprocess
 
@@ -31,24 +32,64 @@ VDE_SSH_IDENTITY = VDE_SSH_DIR / "id_ed25519"
 
 from vm_common import run_vde_command, docker_ps, container_exists
 
+
 def ssh_agent_is_running():
-    """Check if SSH agent is running."""
+    """Check if SSH agent is running (including VDE's isolated agent)."""
+    # First check for VDE's agent environment
+    vde_agent_env = VDE_SSH_DIR / "agent_env"
+    if vde_agent_env.exists():
+        try:
+            content = vde_agent_env.read_text()
+            for line in content.split("\n"):
+                if "SSH_AUTH_SOCK=" in line:
+                    parts = line.split(";")[0].split("=")
+                    if len(parts) == 2:
+                        sock_path = parts[1].strip('"').strip("'")
+                        if Path(sock_path).exists():
+                            return True
+                if "SSH_AGENT_PID=" in line:
+                    parts = line.split(";")[0].split("=")
+                    if len(parts) == 2:
+                        pid = parts[1].strip('"').strip("'")
+                        # Check if process exists
+                        result = subprocess.run(["kill", "-0", pid], capture_output=True)
+                        if result.returncode == 0:
+                            return True
+        except Exception:
+            pass
+
+    # Check system SSH agent
     try:
-        result = subprocess.run(
-            ["ssh-add", "-l"],
-            capture_output=True, text=True, timeout=5
-        )
+        result = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True, timeout=5)
         return result.returncode == 0 or "no identities" in result.stderr.lower()
     except Exception:
         return False
 
 
 def ssh_agent_has_keys():
-    """Check if SSH agent has any keys loaded."""
+    """Check if SSH agent has any keys loaded (including VDE's isolated agent)."""
+    # First try to use VDE's agent environment
+    vde_agent_env = VDE_SSH_DIR / "agent_env"
+    env = os.environ.copy()
+
+    if vde_agent_env.exists():
+        try:
+            content = vde_agent_env.read_text()
+            for line in content.split("\n"):
+                if "SSH_AUTH_SOCK=" in line:
+                    parts = line.split(";")[0].split("=")
+                    if len(parts) == 2:
+                        env["SSH_AUTH_SOCK"] = parts[1].strip('"').strip("'")
+                if "SSH_AGENT_PID=" in line:
+                    parts = line.split(";")[0].split("=")
+                    if len(parts) == 2:
+                        env["SSH_AGENT_PID"] = parts[1].strip('"').strip("'")
+        except Exception:
+            pass
+
     try:
         result = subprocess.run(
-            ["ssh-add", "-l"],
-            capture_output=True, text=True, timeout=5
+            ["ssh-add", "-l"], capture_output=True, text=True, timeout=5, env=env
         )
         return result.returncode == 0 and result.stdout.strip()
     except Exception:
@@ -83,16 +124,16 @@ def ssh_config_get_host_entry(host):
     if VDE_SSH_CONFIG.exists():
         try:
             content = VDE_SSH_CONFIG.read_text()
-            lines = content.split('\n')
+            lines = content.split("\n")
             for i, line in enumerate(lines):
                 if line.strip() == f"Host {host}":
                     # Return the host entry
                     entry = [line]
-                    for j in range(i+1, len(lines)):
-                        if lines[j].strip() and not lines[j].startswith((' ', '\t')):
+                    for j in range(i + 1, len(lines)):
+                        if lines[j].strip() and not lines[j].startswith((" ", "\t")):
                             break
                         entry.append(lines[j])
-                    return '\n'.join(entry)
+                    return "\n".join(entry)
         except Exception:
             pass
     return None
@@ -151,18 +192,28 @@ def vm_has_private_keys(vm_name):
         # Check for private keys in container's /home/devuser/.ssh location
         # (This is a security check to ensure no private keys were copied into the VM)
         private_key_patterns = [
-            "id_rsa", "id_ed25519", "id_ecdsa", "id_dsa",
-            "id_ed25519_sk", "id_ecdsa_sk"
+            "id_rsa",
+            "id_ed25519",
+            "id_ecdsa",
+            "id_dsa",
+            "id_ed25519_sk",
+            "id_ecdsa_sk",
         ]
 
         for key_name in private_key_patterns:
             # Use docker exec to check if the private key file exists in container
             result = subprocess.run(
-                ["docker", "exec", container_name,
-                 "sh", "-c", f"test -f /home/devuser/.ssh/{key_name} && echo FOUND"],
+                [
+                    "docker",
+                    "exec",
+                    container_name,
+                    "sh",
+                    "-c",
+                    f"test -f /home/devuser/.ssh/{key_name} && echo FOUND",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             if result.returncode == 0 and "FOUND" in result.stdout:
@@ -170,21 +221,33 @@ def vm_has_private_keys(vm_name):
 
         # Also check /home/devuser/.ssh/ if devuser is the user
         result = subprocess.run(
-            ["docker", "exec", container_name,
-             "sh", "-c", "test -d /home/devuser/.ssh && echo EXISTS"],
+            [
+                "docker",
+                "exec",
+                container_name,
+                "sh",
+                "-c",
+                "test -d /home/devuser/.ssh && echo EXISTS",
+            ],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
 
         if result.returncode == 0 and "EXISTS" in result.stdout:
             for key_name in private_key_patterns:
                 result = subprocess.run(
-                    ["docker", "exec", container_name,
-                     "sh", "-c", f"test -f /home/devuser/.ssh/{key_name} && echo FOUND"],
+                    [
+                        "docker",
+                        "exec",
+                        container_name,
+                        "sh",
+                        "-c",
+                        f"test -f /home/devuser/.ssh/{key_name} && echo FOUND",
+                    ],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
                 )
 
                 if result.returncode == 0 and "FOUND" in result.stdout:
@@ -199,7 +262,7 @@ def vm_has_private_keys(vm_name):
 
 # Test mode detection - ALLOW_CLEANUP indicates we can modify state
 # When VDE_TEST_CLEANUP is not 'false', we allow cleanup operations
-ALLOW_CLEANUP = os.environ.get('VDE_TEST_CLEANUP', 'true') != 'false'
+ALLOW_CLEANUP = os.environ.get("VDE_TEST_CLEANUP", "true") != "false"
 
 
 # =============================================================================

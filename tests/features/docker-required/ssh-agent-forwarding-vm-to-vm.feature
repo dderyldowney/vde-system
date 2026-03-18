@@ -6,24 +6,21 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
   I want to SSH between VMs using my host's SSH keys
   So I don't need to manage separate keys for each VM
 
-  Background:
-    Given I have SSH keys configured on my host
-    And the SSH agent is running
-    And my keys are loaded in the agent
-
   Scenario: Automatically setting up SSH environment when creating a VM
     Given I do not have an SSH agent running
     And I do not have any SSH keys
-    When I create a Python VM
-    Then an SSH agent should be started automatically
+    When I create a VM
+    Then the SSH agent should be started automatically
     And an SSH key should be generated automatically
     And the key should be loaded into the agent
     And no manual configuration should be required
 
   Scenario: Communicating between language VMs
-    Given I have a Go VM running
+    Given I have SSH keys configured on my host
+    And the SSH agent is running
+    And my keys are loaded in the agent
+    And I have a Go VM running
     And I have a Python VM running
-    And I have started the SSH agent
     When I SSH into the Go VM
     And I run "ssh vde-python" from within the Go VM
     Then I should connect to the Python VM
@@ -32,7 +29,10 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     And I should not need to copy keys to the Go VM
 
   Scenario: Communicating between language and service VMs
-    Given I have a Python VM running
+    Given I have SSH keys configured on my host
+    And the SSH agent is running
+    And my keys are loaded in the agent
+    And I have a Python VM running
     And I have a PostgreSQL VM running
     When I SSH into the Python VM
     And I run "ssh vde-postgres" from within the Python VM
@@ -41,7 +41,10 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     And authentication should use my host's SSH keys
 
   Scenario: Copying files between VMs using SCP
-    Given I have a Python VM running
+    Given I have SSH keys configured on my host
+    And the SSH agent is running
+    And my keys are loaded in the agent
+    And I have a Python VM running
     And I have a Go VM running
     When I create a file in the Python VM
     And I run "scp vde-go:/tmp/file ." from the Python VM
@@ -49,7 +52,10 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     And no password should be required
 
   Scenario: Running commands on remote VMs
-    Given I have a Python VM running
+    Given I have SSH keys configured on my host
+    And the SSH agent is running
+    And my keys are loaded in the agent
+    And I have a Python VM running
     And I have a Rust VM running
     When I run "ssh vde-rust pwd" from the Python VM
     Then the command should execute on the Rust VM
@@ -57,7 +63,10 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     And authentication should use my host's SSH keys
 
   Scenario: Full stack development workflow
-    Given I create a Python VM for my API
+    Given I have SSH keys configured on my host
+    And the SSH agent is running
+    And my keys are loaded in the agent
+    And I create a Python VM for my API
     And I create a PostgreSQL VM for my database
     And I create a Redis VM for caching
     And I start all VMs
@@ -69,7 +78,10 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     And all connections should use my host's SSH keys
 
   Scenario: Microservices architecture communication
-    Given I have a Go VM running as an API gateway
+    Given I have SSH keys configured on my host
+    And the SSH agent is running
+    And my keys are loaded in the agent
+    And I have a Go VM running as an API gateway
     And I have a Python VM running as a payment service
     And I have a Rust VM running as an analytics service
     When I SSH into the Go VM
@@ -79,7 +91,10 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     And all authentications should use my host's SSH keys
 
   Scenario: VM-to-VM SSH in development workflow
-    Given I am developing a full-stack application
+    Given I have SSH keys configured on my host
+    And the SSH agent is running
+    And my keys are loaded in the agent
+    And I am developing a full-stack application
     And I have frontend, backend, and database VMs
     When I need to test the backend from the frontend VM
     And I run "ssh vde-backend pytest tests/"
@@ -88,7 +103,10 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     And authentication should be automatic
 
   Scenario: SSH keys never leave the host
-    Given I have SSH keys on my host
+    Given I have SSH keys configured on my host
+    And the SSH agent is running
+    And my keys are loaded in the agent
+    And I have SSH keys on my host
     And I have multiple VMs running
     When I SSH from one VM to another
     Then the private keys should remain on the host
@@ -96,7 +114,10 @@ Feature: SSH Agent Forwarding for VM-to-VM Communication
     And the VMs should not have copies of my private keys
 
   Scenario: Multiple VMs can use the same agent
-    Given I have 5 VMs running
+    Given I have SSH keys configured on my host
+    And the SSH agent is running
+    And my keys are loaded in the agent
+    And I have 5 VMs running
     And I have 2 SSH keys loaded in the agent
     When I SSH from VM1 to VM2
     And I SSH from VM2 to VM3

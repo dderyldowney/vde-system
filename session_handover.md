@@ -1,69 +1,87 @@
-# Session Handover - March 16, 2026 (Session 35)
+# Session Handover - March 17, 2026 (Session 36)
 
 ## Summary of Work
 
-Previous session (34) completed comprehensive fake test remediation. This session (35) verified actual test state.
+Previous session (35) verified test state. This session (36) implemented undefined step definitions.
 
-### Key Accomplishments (Session 34)
+### Key Accomplishments (Session 36)
 
-1. **Fake Test Remediation COMPLETE**
-   - All 8 remediation tasks completed
-   - 13 Given steps marked as NARRATIVE (legitimate)
-   - Postgres OOM fixed (shm_size, memory limits)
+1. **Step Definition Remediation COMPLETE**
+   - Added 13 decorators to existing steps for wording pattern matches
+   - Implemented ~70 new step definitions across 5 files
+   - Fixed 2 variable reference bugs in vm_to_host_steps.py
 
-2. **Fake Test Taxonomy Created**
-   - Updated `.kilocode/rules/fake_tests.md` with 13-pattern taxonomy
-   - Severity classification: CRITICAL, HIGH, MEDIUM, LOW
+2. **Files Modified**
+   | File | Changes |
+   |------|---------|
+   | `ssh_config_steps.py` | +130 lines (decorators + new steps) |
+   | `vm_lifecycle_steps.py` | +100 lines (decorators + new steps) |
+   | `ssh_connection_steps.py` | +40 lines (new steps) |
+   | `documented_workflow_steps.py` | +70 lines (new steps) |
+   | `ssh_remote_access_steps.py` | +50 lines (new steps) |
+   | `vm_to_host_steps.py` | Bug fixes |
+   | `pattern_steps.py` | Decorator + VM startup logic |
 
-3. **Sub-Agent & MCP Mandate Established**
-   - Created `.kilocode/rules/subagent_mcp_mandate.md`
-   - Updated `AGENTS.md` with swarm execution requirement
-
-### Session 35: Test State Verification
-
-Verified actual test results from `test-logs/docker-required-20260316-104503.log`:
-
-| Phase | Status | Details |
-|-------|--------|---------|
-| Docker-Free | ✅ PASS | 10 scenarios |
-| Unit Tests | ✅ PASS | ~36+ tests |
-| Docker-Required | ❌ FAIL | 8 passed, 15 failed, 23 error |
-| Core Infra | ⚠️ CORRUPTED | JSON needs re-run |
+3. **Test Status**
+   - Before: 127 undefined steps
+   - After: 0 undefined steps (dry-run passes all feature files)
 
 ## Current State
 
-**Status: ✅ Fake Test Remediation COMPLETE, 🔧 Undefined Steps Remain**
+**Status: ✅ All Step Definitions Implemented, ⏳ Needs Actual Test Execution**
 
-### Remaining Work (Not Fake Tests - These are INCOMPLETE tests)
+### What Was Fixed
 
-| Category | Count | Action Needed |
-|----------|-------|---------------|
-| Undefined steps | 127 | Implement step definitions |
-| Blocked scenarios | 23 | Depends on undefined steps |
-| Failed scenarios | 15 | Fix VM-to-Host and SSH issues |
+| Issue | Solution |
+|-------|----------|
+| `Given the SSH agent is running` | Added decorator to existing step in ssh_config_steps.py |
+| `Given I have just cloned VDE` | Added decorator to existing step in installation_steps.py |
+| `Given I have VDE configured` | Added decorator to existing step in documented_workflow_steps.py |
+| `Given I have multiple VMs running` | Added decorator + startup logic to pattern_steps.py |
+| `Given I have created VMs before` | Added decorator to existing step in vm_lifecycle_steps.py |
+| Variable bugs in vm_to_host_steps.py | Fixed undefined `result` references |
 
-### Top Priority Undefined Steps
+### Fake Test Patterns Fixed
 
-1. `Given the SSH agent is running` - blocks 12 scenarios
-2. `When I SSH from one VM to another` - blocks 10 scenarios
-3. SSH config and key management steps - multiple scenarios
-
-### Failed Scenarios (need debugging)
-
-1. **VM-to-Host Communication** (9 failures): Docker socket access, host command execution
-2. **SSH and Remote Access** (6 failures): SSH connection, shell config, editor setup
+- Removed `or True` patterns that always pass
+- Replaced with real assertions checking file existence, container state, command output
+- Added proper error messages to assertions
 
 ## Next Steps for New Session
 
-1. **Implement SSH agent step definitions** (unblocks 12 scenarios)
-2. **Implement VM-to-VM SSH step definitions** (unblocks 10 scenarios)
-3. **Debug VM-to-Host communication failures** (9 failures)
-4. **Fix SSH connection issues** (6 failures)
-5. **Re-run Core Infrastructure tests** (JSON corrupted)
+1. **Run Actual Tests** (Docker required):
+   ```bash
+   behave tests/features/docker-required/ssh-agent-automatic-setup.feature
+   behave tests/features/docker-required/ssh-agent-forwarding-vm-to-vm.feature
+   behave tests/features/docker-required/ssh-agent-vm-to-host-communication.feature
+   behave tests/features/docker-required/ssh-and-remote-access.feature
+   ```
+
+2. **Run Full Test Suite**:
+   ```bash
+   ./tests/run-full-test-suite.zsh
+   ```
+
+3. **Debug Any Failures** - Check logs in `tests/test-logs/`
+
+4. **Update USER_GUIDE.md** - After all tests pass:
+   ```bash
+   ./tests/run-docker-required-tests.sh
+   behave --format json -o tests/behave-results.json tests/features/
+   python3 tests/bin/generate_user_guide.py
+   ```
 
 ## Technical Notes
 
-- **127 undefined steps** - Feature files written, step definitions not implemented
-- **Given steps with `pass` are NARRATIVE** - Legitimate for User Guide generation
-- **Postgres OOM FIXED**: Added `shm_size: '256m'` and `memory: 1G` limit
-- **Core Infra BDD**: JSON output corrupted, needs fresh test run
+- **All undefined steps resolved** - Feature files now have matching step definitions
+- **Dry-run passes** - All step patterns found
+- **VM startup logic added** - Steps now start VMs if not running
+- **Fake test patterns removed** - Real verification in all new steps
+- **MEMORY.md updated** - Contains full session context
+
+## Key Files Reference
+
+- **Remediation Plan:** `plans/PRIORITY_REMEDIATION_PLAN.md`
+- **Memory:** `MEMORY.md`
+- **Step Definitions:** `tests/features/steps/*.py`
+- **Feature Files:** `tests/features/docker-required/*.feature`
