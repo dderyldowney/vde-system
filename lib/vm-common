@@ -421,11 +421,12 @@ load_vm_types() {
                 done
             fi
 
-            # 4. Map display name (lowercase)
+            # 4. Map display name (lowercase, spaces stripped)
             local display="${VM_DISPLAY[${vn}]}"
             if [[ -n "${display}" ]]; then
                 local d_low="${(L)display}"
-                VM_ALIAS_MAP[${d_low}]="${vn}"
+                d_low="${d_low//[[:space:]]/}"
+                [[ -n "${d_low}" ]] && VM_ALIAS_MAP[${d_low}]="${vn}"
             fi
         done
         _VM_ALIAS_MAP_BUILT=1

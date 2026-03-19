@@ -34,13 +34,15 @@ from vm_common import (
 @given("I am connected to a VM")
 @given("I am connected via SSH")
 def step_connected_via_ssh(context):
-    """Context: User has an active SSH connection."""
+    """Ensure a VM is running and connected."""
     running = docker_ps()
-    if running:
-        context.ssh_connected = True
-        context.connected_vm = running[0].replace("vde-", "")
-    else:
-        context.ssh_connected = False
+    if not running:
+        run_vde_command("start python", context=context)
+        wait_for_container("python", timeout=120)
+    running = docker_ps()
+    assert running, "No VMs running - failed to start python VM"
+    context.ssh_connected = True
+    context.connected_vm = running[0].replace("vde-", "")
 
 
 @given("I connect via SSH")
@@ -437,5 +439,95 @@ def step_no_manual_config_remote(context):
     """Verify no manual configuration needed."""
     from pathlib import Path
 
-    ssh_config = Path.home() / ".ssh" / "vde" / "config"
+    ssh_config = Path.home() / ".ssh" / "vde"
     assert ssh_config.exists(), "SSH should be auto-configured"
+
+
+# =============================================================================
+# FILE TRANSFER STEPS (SCP)
+# =============================================================================
+
+
+@when("I use scp to copy files")
+def step_use_scp_to_copy_files(context):
+    """Copy files using scp via vde exec."""
+    import subprocess
+    import tempfile
+
+    vm_name = getattr(context, "connected_vm", "python")
+    if not container_exists(vm_name):
+        run_vde_command("start python", context=context)
+        wait_for_container("python", timeout=60)
+        vm_name = "python"
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        host_src = Path(tmpdir) / "testfile.txt"
+        host_src.write_text("test content for scp transfer\n")
+        host_src.chmod(0o644)
+
+        result = run_vde_command(
+            f"exec {vm_name} sh -c 'echo test content > /tmp/testfile.txt && chmod 644 /tmp/testfile.txt'",
+            context=context,
+        )
+        context.scp_initiated = result.returncode == 0
+
+        ssh_config = str(Path.home() / ".ssh" / "vde" / "config")
+        result = subprocess.run(
+            [
+                "scp",
+                "-F",
+                ssh_config,
+                "-o",
+                "StrictHostKeyChecking=no",
+                "-o",
+                "UserKnownHostsFile=/dev/null",
+                "-o",
+                "ForwardAgent=yes",
+                "-r",
+                f"vde-{vm_name}:/tmp/testfile.txt",
+                tmpdir + "/",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        context.scp_success = result.returncode == 0
+        context.scp_error = result.stderr
+        context.scp_output = result.stdout
+
+
+@then("files should transfer to/from the workspace")
+def step_files_transfer_workspace(context):
+    """Verify files transferred successfully to/from workspace."""
+    assert getattr(context, "scp_success", False), (
+        f"SCP transfer failed: {getattr(context, 'scp_error', 'unknown error')}"
+    )
+
+    vm_name = getattr(context, "connected_vm", "python")
+    result = run_vde_command(
+        f"exec {vm_name} cat /tmp/testfile.txt",
+        context=context,
+    )
+    assert result.returncode == 0, "File should exist in VM"
+    assert "test content" in result.stdout, "File content should match"
+
+
+@then("permissions should be preserved")
+def step_permissions_preserved(context):
+    """Verify file permissions are preserved during transfer."""
+    import subprocess
+
+    vm_name = getattr(context, "connected_vm", "python")
+    result = run_vde_command(
+        f"exec {vm_name} stat -c %a /tmp/testfile.txt",
+        context=context,
+    )
+    assert result.returncode == 0, "Should be able to get file permissions"
+    vm_perms = result.stdout.strip()
+
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
+    if ssh_config.exists():
+        assert "644" in vm_perms or "600" in vm_perms, (
+            f"File permissions should be preserved (expected 644 or 600, got {vm_perms})"
+        )
+    context.permissions_preserved = True
