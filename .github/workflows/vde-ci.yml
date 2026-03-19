@@ -355,7 +355,6 @@ jobs:
           - {vm: php, category: lang, timeout: 20}
           - {vm: r, category: lang, timeout: 20}
           - {vm: lua, category: lang, timeout: 20}
-          - {vm: zig, category: lang, timeout: 20}
           - {vm: elixir, category: lang, timeout: 20}
           # Language VMs - Medium (JVM install overhead)
           - {vm: java, category: lang, timeout: 30}
@@ -505,7 +504,7 @@ jobs:
           CONTAINER_NAME="${{ matrix.vm }}-dev"
           SSH_PORT="${{ steps.ssh-port.outputs.port }}"
           # Two tiers: 10 min (fast), 20 min (slow) - extended for CI
-          if [[ "${{ matrix.vm }}" =~ ^(rust|flutter|swift|java|kotlin|scala|haskell|r|zig|php|lua|elixir)$ ]]; then
+          if [[ "${{ matrix.vm }}" =~ ^(rust|flutter|swift|java|kotlin|scala|haskell|r|php|lua|elixir)$ ]]; then
             MAX_WAIT=1200
           else
             MAX_WAIT=600

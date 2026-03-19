@@ -13,15 +13,12 @@ Before extending VDE, it helps to understand how it works:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         User Request                            │
-│                    vde create zig                               │
-│                    vde start zig                                │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                  vm-common (Shared Library)                     │
 │  • Parses vm-types.conf (with caching)                          │
-│  • Resolves aliases (ziglang → zig)                             │
 │  • Allocates SSH port (from port registry)                      │
 │  • Validates configuration                                      │
 └────────────────────────────┬────────────────────────────────────┘
@@ -65,10 +62,7 @@ type|name|aliases|display_name|install_command|service_port
 | Field | Description | Example |
 |-------|-------------|---------|
 | `type` | `lang` or `service` | `lang` |
-| `name` | Primary name (lowercase, alphanumeric) | `zig` |
-| `aliases` | Comma-separated alternate names | `ziglang,z` |
 | `display_name` | Human-readable name | `Zig` |
-| `install_command` | Shell command to install | `apt-get update -y && apt-get install -y zig` |
 | `service_port` | Port number (services only, empty for lang) | `5432` |
 
 ---
@@ -85,17 +79,12 @@ You can do this manually or with the `add-vm-type` script.
 
 ```bash
 # Basic language addition
-vde create zig "apt-get update -y && apt-get install -y zig"
 
 # With aliases
-vde create zig "apt-get update -y && apt-get install -y zig" "ziglang,z"
 
 # With custom display name
-vde create --display "Zig Language" zig \
-    "apt-get update -y && apt-get install -y zig"
 
 # Create with auto-prompt (if type not known)
-vde create zig  # Will prompt if zig is not a known VM type
 ```
 
 **Option B: Manual Entry**
@@ -104,7 +93,6 @@ Edit `data/vm-types.conf` and add a line:
 
 ```bash
 # Format: lang|name|aliases|display|install|service_port
-lang|zig|ziglang,z|Zig|apt-get update -y && apt-get install -y zig|
 ```
 
 **Important:** For languages, the `service_port` field must be empty (just a trailing `|`).
@@ -113,33 +101,23 @@ lang|zig|ziglang,z|Zig|apt-get update -y && apt-get install -y zig|
 
 ```bash
 # Create the Zig VM
-vde create zig
 
 # Verify it was created
-vde list zig
 
 # Start the VM
-vde start zig
 
 # Connect
-ssh vde-zig
 ```
 
 ### What Gets Created
 
 ```
-configs/docker/zig/
-└── docker-compose.yml     # Container: vde-zig, SSH: vde-zig
 
 env-files/
-└── zig.env                 # SSH_PORT=2205 (or next available)
 
-projects/zig/               # Empty workspace directory
 
-logs/zig/                   # Empty log directory
 
 ~/.ssh/vde/config               # New entry appended:
-                            # Host vde-zig
                             #     HostName localhost
                             #     Port 2206
                             #     User devuser
@@ -151,7 +129,6 @@ logs/zig/                   # Empty log directory
 
 **Simple apt packages:**
 ```bash
-vde create zig "apt-get update -y && apt-get install -y zig"
 ```
 
 **Language version managers:**
@@ -173,13 +150,7 @@ vde create terraform \
 **Download and install from URL:**
 ```bash
 # Download binary, extract, symlink
-vde create zig \
     "apt-get update -y && apt-get install -y xz-utils wget && \
-     wget https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz -O /tmp/zig.tar.xz && \
-     tar -xf /tmp/zig.tar.xz -C /tmp && \
-     mv /tmp/zig-linux-x86_64-0.11.0 /opt/zig && \
-     ln -s /opt/zig/zig /usr/local/bin/zig && \
-     rm /tmp/zig.tar.xz"
 ```
 
 **Install as devuser (for user-scoped tools):**
@@ -283,7 +254,6 @@ logs/rabbitmq/              # Empty log directory
 | Port range | 2200-2299 | 2400-2499 |
 | Volume mount | `projects/<name>/` | `data/<name>/` |
 | Purpose | Development workspace | Persistent data |
-| Example | `vde-zig`, port 2205 | `rabbitmq`, port 2405 |
 
 ### Service Installation Examples
 

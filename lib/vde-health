@@ -205,7 +205,6 @@ vde_check_language_tool() {
         "c" "gcc --version"
         "lua" "lua -v"
         "r" "R --version"
-        "zig" "zig version"
         "elixir" "elixir --version"
         "swift" "swift --version"
         "flutter" "flutter --version"

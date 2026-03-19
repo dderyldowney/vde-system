@@ -1383,23 +1383,19 @@ stop_vm() {
 New VM types can be added by editing `vm-types.conf` directly or using the vde command:
 
 ```bash
-vde add-vm-type zig "apt-get update -y && apt-get install -y zig"
 ```
 
 **Flow:**
 
-1. **Validate** (zig doesn't exist, name is valid)
 2. **Backup** vm-types.conf
 3. **Append** line:
    ```bash
-   lang|zig||Zig|apt-get update -y && apt-get install -y zig|
    ```
 4. **Reload** VM types: `source lib/vm-common` → `load_vm_types`
 5. **Show diff** of changes
 
 Now you can:
 ```bash
-vde create zig
 ```
 
 ---

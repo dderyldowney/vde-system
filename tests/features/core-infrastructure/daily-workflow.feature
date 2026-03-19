@@ -96,11 +96,11 @@ Feature: Daily Development Workflow
 
   # Add a new language to VDE
   Scenario: Add support for a new language
-    Given VDE doesn't support "zig" yet
-    When I run "vde add zig --type lang --display 'Zig' --install 'apt-get install -y zig'"
-    Then "zig" should be available as a VM type
-    And I can create a zig VM with "vde create zig"
-    And zig should appear in "vde list" output
+    Given VDE doesn't support "foobar" yet
+    When I run "vde add foobar --type lang --display 'Foobar' --install 'apt-get install -y curl'"
+    Then "foobar" should be available as a VM type
+    And I can create a foobar VM with "vde create foobar"
+    And foobar should appear in "vde list" output
 
   # View all available VMs
   Scenario: Check what VMs I can create
