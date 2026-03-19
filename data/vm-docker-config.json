@@ -162,14 +162,6 @@
       "container_name": "vde-haskell",
       "workspace_mount": "projects/haskell:/home/devuser/workspace",
       "logs_mount": "logs/haskell:/logs"
-    },
-    "zig": {
-      "compose_file": "configs/docker/zig/docker-compose.yml",
-      "env_file": "env-files/vde-zig.env",
-      "image": "vde-zig:latest",
-      "container_name": "vde-zig",
-      "workspace_mount": "projects/zig:/home/devuser/workspace",
-      "logs_mount": "logs/zig:/logs"
     }
   },
   "services": {
