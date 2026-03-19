@@ -9,14 +9,14 @@ Feature: VM Lifecycle Management
   @requires-docker-host
   @user-guide-first-vm
   Scenario: Create a new language VM
-    Given the VM "zig" is defined as a language VM with install command "apt-get install -y zig"
-    And no VM configuration exists for "zig"
-    When I run "vde create zig"
-    Then a docker-compose.yml file should be created at "configs/docker/zig/docker-compose.yml"
+    Given the VM "elixir" is defined as a language VM with install command "apt-get update -y && apt-get install -y elixir erlang"
+    And no VM configuration exists for "elixir"
+    When I run "vde create elixir"
+    Then a docker-compose.yml file should be created at "configs/docker/elixir/docker-compose.yml"
     And the docker-compose.yml should contain SSH port mapping
-    And SSH config entry should exist for "vde-zig"
-    And projects directory should exist at "projects/zig"
-    And logs directory should exist at "logs/zig"
+    And SSH config entry should exist for "vde-elixir"
+    And projects directory should exist at "projects/elixir"
+    And logs directory should exist at "logs/elixir"
 
   @requires-docker-host
   @user-guide-cluster
@@ -131,10 +131,10 @@ Feature: VM Lifecycle Management
     But container should be gone
 
   Scenario: Add a new VM type
-    When I run "vde add zig --type lang --display 'Zig Language' --install 'apt-get install -y zig'"
-    Then "zig" should be in known VM types
-    And VM type "zig" should have type "lang"
-    And VM type "zig" should have display name "Zig Language"
+    When I run "vde add mylang --type lang --display 'My Language' --install 'apt-get install -y curl'"
+    Then "mylang" should be in known VM types
+    And VM type "mylang" should have type "lang"
+    And VM type "mylang" should have display name "My Language"
 
   Scenario: Add VM type with aliases
     When I run "vde add js --type lang --display 'JavaScript' --install 'apt-get install -y nodejs' --aliases 'node,nodejs'"
