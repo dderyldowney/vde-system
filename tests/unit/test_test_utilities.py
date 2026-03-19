@@ -49,6 +49,7 @@ VDE_ROOT = Path(__file__).parent.parent.parent
 # create_test_vm_config (no Docker required — pure file I/O)
 # ---------------------------------------------------------------------------
 
+
 class TestCreateTestVmConfig:
     def test_creates_file(self):
         path = create_test_vm_config("python")
@@ -110,6 +111,7 @@ class TestCreateTestVmConfig:
 # wait_for_condition (no Docker required — pure timing)
 # ---------------------------------------------------------------------------
 
+
 class TestWaitForCondition:
     def test_immediately_true(self):
         calls = []
@@ -157,6 +159,7 @@ class TestWaitForCondition:
 # register_cleanup_handler (no Docker required)
 # ---------------------------------------------------------------------------
 
+
 class TestRegisterCleanupHandler:
     def setup_method(self):
         test_utilities._cleanup_handlers.clear()
@@ -195,6 +198,7 @@ class TestRegisterCleanupHandler:
 # ---------------------------------------------------------------------------
 # before_scenario (Behave hook — no Docker required for basic paths)
 # ---------------------------------------------------------------------------
+
 
 class TestBeforeScenario:
     def _make_context(self):
@@ -261,6 +265,7 @@ class TestBeforeScenario:
 # cleanup_port_registry (real file I/O — no Docker required)
 # ---------------------------------------------------------------------------
 
+
 class TestCleanupPortRegistry:
     def test_no_registry_file_is_noop(self, tmp_path, monkeypatch):
         """cleanup_port_registry should silently do nothing if file absent."""
@@ -287,38 +292,48 @@ class TestCleanupPortRegistry:
     def test_removes_test_prefixed_entries(self):
         """Test entries prefixed vde-test- are removed from the registry.
 
-        cleanup_port_registry resolves the registry via Path(__file__).parent^4 / .vde / port-registry.json
+        cleanup_port_registry resolves the registry via Path(__file__).parent^4 / .cache / port-registry
         where __file__ is tests/features/steps/test_utilities.py, so parent^4 = VDE_ROOT.
-        We write a fixture to the real registry path, run the function, then restore.
+        The port registry is a directory containing per-VM .port files.
+        We write fixture .port files to the real registry path, run the function, then restore.
         """
-        real_registry = VDE_ROOT / ".vde" / "port-registry.json"
-        data = {
-            "vde-test-python": {"8000": "8000"},
-            "vde-test-js": {"3000": "3000"},
-            "vde-production": {"9000": "9000"},
-        }
-        backup = real_registry.read_text() if real_registry.exists() else None
+        registry_dir = VDE_ROOT / ".cache" / "port-registry"
+        backup_files = {}
+        test_files = ["vde-test-python.port", "vde-test-js.port", "vde-production.port"]
         try:
-            real_registry.parent.mkdir(parents=True, exist_ok=True)
-            real_registry.write_text(json.dumps(data))
+            registry_dir.mkdir(parents=True, exist_ok=True)
+            # Backup existing .port files
+            for f in registry_dir.iterdir():
+                if f.name.endswith(".port"):
+                    backup_files[f.name] = f.read_text()
+                    f.unlink()
+            # Write test fixture .port files
+            for fname in test_files:
+                (registry_dir / fname).write_text("allocated")
 
             cleanup_port_registry()
 
-            remaining = json.loads(real_registry.read_text())
-            assert "vde-test-python" not in remaining
-            assert "vde-test-js" not in remaining
-            assert "vde-production" in remaining
+            # vde-test-* files should be removed, vde-production should remain
+            remaining = [
+                f.name for f in registry_dir.iterdir() if f.is_file() and f.name.endswith(".port")
+            ]
+            assert "vde-test-python.port" not in remaining
+            assert "vde-test-js.port" not in remaining
+            assert "vde-production.port" in remaining
         finally:
-            if backup is not None:
-                real_registry.write_text(backup)
-            elif real_registry.exists():
-                real_registry.unlink()
+            # Restore backup files
+            for f in registry_dir.iterdir():
+                if f.is_file() and f.name.endswith(".port"):
+                    f.unlink()
+            for name, content in backup_files.items():
+                (registry_dir / name).write_text(content)
 
 
 # ---------------------------------------------------------------------------
 # cleanup_test_containers / cleanup_docker_networks / cleanup_docker_volumes
 # These call docker directly; we verify they don't raise when nothing exists.
 # ---------------------------------------------------------------------------
+
 
 class TestCleanupFunctionsWithNoTargets:
     """Verify cleanup functions are idempotent when no matching resources exist."""

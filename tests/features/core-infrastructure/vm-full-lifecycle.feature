@@ -1,5 +1,5 @@
 # language: en
-@critical-path @requires-docker-host
+@critical-path @requires-docker-host @rebuild
 Feature: VM Full Lifecycle Critical Path
 
   Scenario: Full VM lifecycle for Python development environment
