@@ -50,6 +50,44 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 
 ---
 
+## Project Portability (FUNDAMENTAL DESIGN GOAL)
+
+The entire VDE project is designed to be **fully portable**. A user can clone the project to any directory and move it anywhere on their system without regenerating configs.
+
+### Portability Architecture
+
+| Component | Storage | Portability |
+|-----------|---------|-------------|
+| `VDE_ROOT_DIR` | Derived from `bin/vde` location | Automatic on move |
+| `VDE_SSH_DIR` | `$HOME/.ssh/vde` | Fixed (user-specific) |
+| Docker compose files | Relative paths (`../../../`) | Works from new location |
+| SSH config | `~/.ssh/vde/config` | Independent of project |
+| Cache (`.cache/`) | VM metadata only (no paths) | Moves with project |
+
+### Key Principles
+
+1. **NO hardcoded paths** - Everything derives from `VDE_ROOT_DIR` or uses relative paths
+2. **SSH operations** use `VDE_SSH_DIR="$HOME/.ssh/vde"` - completely independent of project location
+3. **Cache contains no paths** - Only VM names, aliases, and metadata
+4. **Relative paths in compose files** - `../../../projects/python` works from any project location
+
+### What Happens on Project Move
+
+When user moves project (e.g., `mv ~/dev ~/vde-system`):
+1. `bin/vde` derives `VDE_ROOT_DIR=~/vde-system` automatically
+2. Cache moves with project (inside `.cache/`)
+3. Docker compose files use relative paths from new location
+4. SSH config untouched (in `~/.ssh/vde/`)
+5. **No regeneration needed** - everything Just Works
+
+### User Responsibilities
+
+- Add `VDE_ROOT_DIR/bin` to `$PATH` in `~/.zshrc`
+- Re-source `~/.zshrc` after moving project
+- Sync SSH config after `generate-all-configs`: `cp configs/ssh/config ~/.ssh/vde/config`
+
+---
+
 ## Testing Guidelines
 
 **NEVER run the full test suite during debugging or verification.** Only run full suite when explicitly needed.

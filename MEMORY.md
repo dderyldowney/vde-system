@@ -109,3 +109,89 @@
 - NO `or True` patterns
 - NO `pass` statements
 - NO placeholder implementations
+
+---
+
+## Lesson Learned: VM Startup in Step Definitions (2026-03-19)
+
+**Problem**: Step definitions like `Given I am connected to a VM` were FAKE TESTS - they only checked if a VM was running but did NOT start one. This caused cascading failures in isolated scenario runs.
+
+**Bad Pattern** (FAKE TEST):
+```python
+@given("I am connected to a VM")
+def step_connected_via_ssh(context):
+    running = docker_ps()
+    if running:
+        context.ssh_connected = True
+    else:
+        context.ssh_connected = False  # FAILS LATER - no real action taken
+```
+
+**Good Pattern** (REAL TEST):
+```python
+@given("I am connected to a VM")
+def step_connected_via_ssh(context):
+    running = docker_ps()
+    if not running:
+        run_vde_command("start python", context=context)
+        wait_for_container("python", timeout=120)
+    running = docker_ps()
+    assert running, "No VMs running - failed to start python VM"
+    context.ssh_connected = True
+```
+
+**Rule**: Any step that implies a VM is running ("I am connected to a VM", "I have a running VM", etc.) MUST actually start the VM if none is running.
+
+**Files Fixed**:
+- `tests/features/steps/ssh_remote_access_steps.py:34` - Added VM startup
+
+---
+
+## Cache Corruption Fix (2026-03-19)
+
+**Root Cause:** `vde-displaytest` has display name "Go Language" with a space. The cache builder was creating `VM_ALIAS_MAP[go language]=vde-displaytest` which breaks zsh associative array syntax.
+
+**Fix Applied:** lib/vm-common line 427 - added space stripping for display names:
+```zsh
+d_low="${d_low//[[:space:]]/}"
+```
+
+**Files Modified:**
+- `lib/vm-common` - Fixed display name space stripping
+
+**Verification:** `./bin/vde start python` now returns exit 0 (previously returned exit 1 due to cache error).
+
+---
+
+## SSH Config Sync Issue (2026-03-19)
+
+**Problem:** `~/.ssh/vde/config` had absolute paths (`/Users/dderyldowney/.ssh/vde/`) while `configs/ssh/config` (authoritative) had tilde paths (`~/.ssh/vde/`). SCP uses `-F` flag but step definitions need correct paths in config.
+
+**Rule:** Always use `configs/ssh/config` as authoritative. Copy to `~/.ssh/vde/config`:
+```bash
+cp configs/ssh/config ~/.ssh/vde/config
+```
+
+**Files Needing SSH Config Path Fix:**
+- `tests/features/steps/ssh_remote_access_steps.py` - scp command now uses `-F` flag with correct config path
+
+---
+
+## Portability Architecture (2026-03-19)
+
+**Design Principle:**
+- `VDE_ROOT_DIR` - wherever user cloned the project (portable)
+- `VDE_SSH_DIR="$HOME/.ssh/vde"` - SSH operations (always in $HOME)
+
+**Path Usage:**
+- Project configs use relative paths from `VDE_ROOT_DIR`
+- SSH config uses `~/.ssh/vde/` (tilde, portable)
+- Docker compose uses relative paths (`../../../`)
+
+**SSH Config Synchronization:**
+- Authoritative source: `configs/ssh/config`
+- Installed location: `~/.ssh/vde/config`
+- Always use `cp configs/ssh/config ~/.ssh/vde/config` to sync
+- Never edit `~/.ssh/vde/config` manually - it is managed by `generate-all-configs`
+
+**Important:** When `generate-all-configs` regenerates configs, it updates `configs/ssh/config` but does NOT automatically copy to `~/.ssh/vde/config`. User must manually sync or run `vde-init`.

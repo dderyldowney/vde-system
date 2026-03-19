@@ -14,3 +14,15 @@
 
 ## User Model
 devuser with passwordless sudo, SSH key auth only, neovim/LazyVim
+
+## Project Portability (FUNDAMENTAL)
+The project is **fully portable** - can be moved anywhere without regeneration.
+
+| Component | Location | Notes |
+|-----------|----------|-------|
+| `VDE_ROOT_DIR` | Derived from `bin/vde` | Auto-updates on project move |
+| `VDE_SSH_DIR` | `$HOME/.ssh/vde` | Fixed, independent of project |
+| Cache | `.cache/` | Contains only VM metadata (no paths) |
+| Compose files | `configs/docker/*/docker-compose.yml` | Use relative `../../../` paths |
+
+**Move project:** `mv ~/dev ~/vde-system` → works immediately, no regeneration needed.
