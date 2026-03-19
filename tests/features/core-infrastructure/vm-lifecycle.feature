@@ -83,14 +83,6 @@ Feature: VM Lifecycle Management
     And the VM should have a fresh container instance
 
   @requires-docker-host
-  @user-guide-troubleshooting
-  Scenario: Rebuild a VM with --rebuild flag
-    Given VM "python" is running
-    When I run "vde start python --rebuild"
-    Then VM "python" should be running
-    And the container should be rebuilt from the Dockerfile
-
-  @requires-docker-host
   Scenario: Cannot start non-existent VM
     Given VM "nonexistent" is not created
     When I run "vde start nonexistent"

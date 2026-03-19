@@ -8,9 +8,8 @@
 #   source tests/setup-ssh-agent.zsh --cleanup  # Cleanup (stop agent)
 
 # Ensure VDE_ROOT_DIR is set (needed for sourcing libraries)
-if [[ -z "${VDE_ROOT_DIR}" ]]; then
-    export VDE_ROOT_DIR=$(pwd)
-fi
+# Use script location for portability - two directories up from tests/
+export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h}}"
 
 # Source VDE SSH library
 if [[ -f "${VDE_ROOT_DIR}/lib/vde-ssh" ]]; then

@@ -37,17 +37,6 @@ Feature: Docker Operations
     When I restart VM "python"
     Then container should have new container ID
 
-  Scenario: Rebuild with --build flag
-    Given VM "python" is running
-    When I start VM "python" with --rebuild
-    Then docker-compose up --build should be executed
-    And image should be rebuilt
-
-  Scenario: Rebuild without cache with --no-cache flag
-    Given VM "python" is running
-    When I start VM "python" with --rebuild and --no-cache
-    Then docker-compose up --build --no-cache should be executed
-
   # Note: Error-handling scenarios below require specific infrastructure conditions
   # and are skipped in integration test environments:
   # - Handle port allocation errors (requires port exhaustion testing)

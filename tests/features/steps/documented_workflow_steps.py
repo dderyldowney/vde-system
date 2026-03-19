@@ -12,6 +12,11 @@ import sys
 from pathlib import Path
 from behave import given, then, when
 
+# Add steps directory to path for imports
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
+
 # Determine VDE root directory
 VDE_ROOT = Path(__file__).parent.parent.parent.parent
 BIN_DIR = VDE_ROOT / "bin"

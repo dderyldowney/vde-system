@@ -25,6 +25,7 @@ declare -A phase_results
 
 # Setup SSH agent for tests (required for ssh-agent tests)
 echo "=== Setting up SSH Agent ==="
+export VDE_ROOT_DIR="${0:a:h:h}"
 source tests/setup-ssh-agent.zsh
 
 # Phase 1: Docker-free tests
