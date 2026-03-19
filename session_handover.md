@@ -1,87 +1,90 @@
-# Session Handover - March 17, 2026 (Session 36)
+# Session Handover - March 19, 2026 (Session 37)
 
 ## Summary of Work
 
-Previous session (35) verified test state. This session (36) implemented undefined step definitions.
+### Completed Fixes (Session 37)
 
-### Key Accomplishments (Session 36)
+1. **3 Missing Step Definitions Added** (`ssh_remote_access_steps.py`):
+   - `When I use scp to copy files` (line 451)
+   - `Then files should transfer to/from the workspace` (line 499)
+   - `Then permissions should be preserved` (line 515)
 
-1. **Step Definition Remediation COMPLETE**
-   - Added 13 decorators to existing steps for wording pattern matches
-   - Implemented ~70 new step definitions across 5 files
-   - Fixed 2 variable reference bugs in vm_to_host_steps.py
+2. **Fake Test Pattern Fixed** (`ssh_remote_access_steps.py:34`):
+   - `Given I am connected to a VM` now actually starts a VM if none running
+   - Previously only set a context flag (fake test)
 
-2. **Files Modified**
-   | File | Changes |
-   |------|---------|
-   | `ssh_config_steps.py` | +130 lines (decorators + new steps) |
-   | `vm_lifecycle_steps.py` | +100 lines (decorators + new steps) |
-   | `ssh_connection_steps.py` | +40 lines (new steps) |
-   | `documented_workflow_steps.py` | +70 lines (new steps) |
-   | `ssh_remote_access_steps.py` | +50 lines (new steps) |
-   | `vm_to_host_steps.py` | Bug fixes |
-   | `pattern_steps.py` | Decorator + VM startup logic |
+3. **Cache Corruption Fixed** (`lib/vm-common:427`):
+   - `vde-displaytest` had display name "Go Language" with space
+   - Cache builder created `VM_ALIAS_MAP[go language]=vde-displaytest` breaking zsh syntax
+   - Added space stripping: `d_low="${d_low//[[:space:]]/}"`
 
-3. **Test Status**
-   - Before: 127 undefined steps
-   - After: 0 undefined steps (dry-run passes all feature files)
+4. **SCP SSH Config Path Fixed** (`ssh_remote_access_steps.py:474`):
+   - Added `-F ~/.ssh/vde/config` to scp command
+   - SSH config now properly specified
 
-## Current State
+5. **Portability Documentation Added**:
+   - `AGENTS.md` - Full portability section
+   - `.kilocode/rules/vde_context.md` - Portability architecture
+   - `MEMORY.md` - Lessons learned documented
 
-**Status: ✅ All Step Definitions Implemented, ⏳ Needs Actual Test Execution**
+### Files Modified
 
-### What Was Fixed
+| File | Changes |
+|------|---------|
+| `tests/features/steps/ssh_remote_access_steps.py` | Added 3 step definitions, VM startup, SCP -F flag |
+| `lib/vm-common` | Fixed display name space stripping |
+| `AGENTS.md` | Added portability architecture section |
+| `.kilocode/rules/vde_context.md` | Added portability architecture |
+| `MEMORY.md` | Updated with lessons learned |
 
-| Issue | Solution |
-|-------|----------|
-| `Given the SSH agent is running` | Added decorator to existing step in ssh_config_steps.py |
-| `Given I have just cloned VDE` | Added decorator to existing step in installation_steps.py |
-| `Given I have VDE configured` | Added decorator to existing step in documented_workflow_steps.py |
-| `Given I have multiple VMs running` | Added decorator + startup logic to pattern_steps.py |
-| `Given I have created VMs before` | Added decorator to existing step in vm_lifecycle_steps.py |
-| Variable bugs in vm_to_host_steps.py | Fixed undefined `result` references |
+## Test Status
 
-### Fake Test Patterns Fixed
+### Scenario: Transferring files (ssh-and-remote-access.feature:76)
+- **Status**: ✅ PASSING
+- Steps verified: 4 passed, 0 failed
 
-- Removed `or True` patterns that always pass
-- Replaced with real assertions checking file existence, container state, command output
-- Added proper error messages to assertions
+### Key Fix Verified
+- VM starts correctly when scenario runs in isolation
+- SCP file transfer works with proper SSH config
+- Cache regenerates without corruption
 
-## Next Steps for New Session
+## Next Session: Continue Docker-Required Test Fixes
 
-1. **Run Actual Tests** (Docker required):
-   ```bash
-   behave tests/features/docker-required/ssh-agent-automatic-setup.feature
-   behave tests/features/docker-required/ssh-agent-forwarding-vm-to-vm.feature
-   behave tests/features/docker-required/ssh-agent-vm-to-host-communication.feature
-   behave tests/features/docker-required/ssh-and-remote-access.feature
-   ```
+### Remaining Issues in docker-required Tests
 
-2. **Run Full Test Suite**:
-   ```bash
-   ./tests/run-full-test-suite.zsh
-   ```
+1. **Many scenarios still fail** due to:
+   - SSH agent not running
+   - SSH keys not set up
+   - VM preconditions not met
 
-3. **Debug Any Failures** - Check logs in `tests/test-logs/`
+2. **Next Steps**:
+   - Run individual failing scenarios to identify missing step implementations
+   - Apply same "VM startup" fix pattern to other steps that imply VMs are running
+   - Verify SSH agent setup steps work correctly
 
-4. **Update USER_GUIDE.md** - After all tests pass:
-   ```bash
-   ./tests/run-docker-required-tests.sh
-   behave --format json -o tests/behave-results.json tests/features/
-   python3 tests/bin/generate_user_guide.py
-   ```
+### How to Run Single Scenario
+```bash
+cd tests/features
+python3 -m behave docker-required/ssh-and-remote-access.feature:76
+```
+
+### How to Run Single Feature
+```bash
+cd tests/features
+python3 -m behave docker-required/ssh-and-remote-access.feature
+```
+
+## Key Lessons Learned
+
+1. **Fake Test Pattern**: Steps like "I am connected to a VM" MUST start the VM if not running - never just set a context flag
+
+2. **Cache Portability**: Cache only contains VM metadata (no paths) - fully portable on project move
+
+3. **SSH Config Sync**: Always `cp configs/ssh/config ~/.ssh/vde/config` after generate-all-configs
 
 ## Technical Notes
 
-- **All undefined steps resolved** - Feature files now have matching step definitions
-- **Dry-run passes** - All step patterns found
-- **VM startup logic added** - Steps now start VMs if not running
-- **Fake test patterns removed** - Real verification in all new steps
-- **MEMORY.md updated** - Contains full session context
-
-## Key Files Reference
-
-- **Remediation Plan:** `plans/PRIORITY_REMEDIATION_PLAN.md`
-- **Memory:** `MEMORY.md`
-- **Step Definitions:** `tests/features/steps/*.py`
-- **Feature Files:** `tests/features/docker-required/*.feature`
+- `VDE_ROOT_DIR` derives from `bin/vde` location - auto-updates on project move
+- `VDE_SSH_DIR="$HOME/.ssh/vde"` - independent of project location
+- Docker compose files use relative paths (`../../../`)
+- Project is fully portable: `mv ~/dev ~/vde-system` works without regeneration
