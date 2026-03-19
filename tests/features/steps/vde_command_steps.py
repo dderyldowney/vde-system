@@ -39,7 +39,6 @@ _ALL_VMS = {
     "haskell",
     "lua",
     "elixir",
-    "zig",
     "asm",
 }
 

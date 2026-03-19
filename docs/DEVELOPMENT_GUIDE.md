@@ -50,7 +50,6 @@ VDE uses a modular library architecture that separates concerns and enables code
 | **vde-path-utils** | Path manipulation utilities |
 
 ### VM Architecture
-- **Language VMs (20 total)**: Ports 2200-2299 (c, cpp, asm, python, rust, js, csharp, ruby, go, java, kotlin, swift, php, scala, r, lua, flutter, elixir, haskell, zig)
 - **Service VMs (7 total)**: Ports 2400-2499 (postgres, redis, mongodb, nginx, mysql, rabbitmq, couchdb)
 - **Port Registry**: `.cache/port-registry` for fast port lookups
 

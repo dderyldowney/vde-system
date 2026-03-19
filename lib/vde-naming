@@ -91,7 +91,7 @@ vde_detect_vm_type_from_name() {
 
     # Fallback to common patterns
     case "${base_name}" in
-        python|rust|js|go|ruby|c|cpp|asm|java|kotlin|swift|php|scala|r|lua|flutter|elixir|haskell|zig)
+        python|rust|js|go|ruby|c|cpp|asm|java|kotlin|swift|php|scala|r|lua|flutter|elixir|haskell)
             echo "lang"
             ;;
         postgres|redis|mongodb|nginx|couchdb|mysql|rabbitmq)

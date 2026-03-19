@@ -450,7 +450,6 @@ VDE's NLP enables **natural language command parsing** with intent detection:
 
 #### Language VMs
 
-`c`, `cpp`, `asm`, `python`, `rust`, `js`, `csharp`, `ruby`, `go`, `java`, `kotlin`, `swift`, `php`, `scala`, `r`, `lua`, `flutter`, `elixir`, `haskell`, `zig`
 
 #### Service VMs
 

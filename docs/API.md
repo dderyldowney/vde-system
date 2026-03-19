@@ -711,7 +711,6 @@ render_template <template_file> NAME "python" SSH_PORT 2213 INSTALL_CMD "..." SE
 | flutter | dart, flutter | Flutter | 2216 |
 | elixir | elixir | Elixir | 2217 |
 | haskell | ghc, haskell | Haskell | 2218 |
-| zig | | Zig Language | 2219 |
 
 **Container Naming:** `<name>-dev` (e.g., `vde-python`)
 
@@ -873,7 +872,6 @@ ssh vde-lua         # Lua development
 ssh vde-flutter     # Flutter development
 ssh vde-elixir      # Elixir development
 ssh vde-haskell     # Haskell development
-ssh vde-zig         # Zig development
 
 # Service VMs
 ssh postgres        # PostgreSQL database

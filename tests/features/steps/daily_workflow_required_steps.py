@@ -190,9 +190,10 @@ def step_remove_vm(context):
 @when("I add support for a new language")
 def step_add_new_language(context):
     """Add support for a new language."""
-    # This tests the add intent
+    # This tests the add intent - using non-existent language
     result = run_vde_command(
-        "add zig --type lang --display-name Zig --install 'apt-get install -y zig'", context=context
+        "add newlang --type lang --display-name 'New Language' --install 'apt-get install -y curl'",
+        context=context,
     )
     context.last_exit_code = result.returncode
 

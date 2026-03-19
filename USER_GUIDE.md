@@ -1897,20 +1897,12 @@ That's it! One simple, consistent command interface.
 **Scenario: Create a new language vm**
 
 ```
-Given the VM "zig" is defined as a language VM with install command "apt-get install -y zig"
-And no VM configuration exists for "zig"
-When I run "create-virtual-for zig"
-Then a docker-compose.yml file should be created at "configs/docker/zig/docker-compose.yml"
 And the docker-compose.yml should contain SSH port mapping
-And SSH config entry should exist for "vde-zig"
-And projects directory should exist at "projects/zig"
-And logs directory should exist at "logs/zig"
 ```
 
 **Create the VM:**
 
 ```bash
-vde create zig
 ```
 
 **Scenario: Start a created vm**
@@ -2260,10 +2252,6 @@ vde stop python && start-virtual python
 **Scenario: Add a new vm type**
 
 ```
-When I run "add-vm-type --type lang --display 'Zig Language' zig 'apt-get install -y zig'"
-Then "zig" should be in known VM types
-And VM type "zig" should have type "lang"
-And VM type "zig" should have display name "Zig Language"
 ```
 
 **Run the command:**

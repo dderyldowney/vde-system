@@ -388,12 +388,9 @@ test_start_multiple_vms() {
     for vm in "${vms[@]}"; do
         container_name=$(vde_get_container_name "$vm")
 
-        # js, postgres, and zig need appropriate timeout values
-        # zig needs longer due to downloading zig binary (~50MB) from official release
+        # js and postgres need appropriate timeout values
         if [[ "$vm" == "js" ]]; then
             wait_time=15
-        elif [[ "$vm" == "zig" ]]; then
-            wait_time=60
         elif [[ "$vm" == "postgres" ]]; then
             wait_time=15
         else

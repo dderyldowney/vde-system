@@ -15,7 +15,7 @@ Usage: add-vm-type [OPTIONS] <name> "<install_cmd>" [aliases]
 Add a new language or service to the predefined VM types list.
 
 Arguments:
-  name          Name of the VM (e.g., zig, dart, couchdb)
+  name          Name of the VM (e.g., dart, couchdb)
   install_cmd   Installation command (must be quoted)
   aliases       Optional comma-separated aliases (e.g., "js,node,nodejs")
 
@@ -28,7 +28,7 @@ Options:
 
 Examples:
   # Add a language (auto-detects type as 'lang')
-  add-vm-type zig "apt-get update -y && apt-get install -y zig"
+  add-vm-type dart "apt-get update -y && apt-get install -y dart"
 
   # Add a language with aliases
   add-vm-type dart "apt-get update -y && apt-get install -y dart" "dartlang,flutter"
@@ -38,8 +38,8 @@ Examples:
       "apt-get update -y && apt-get install -y rabbitmq-server" "rabbit"
 
   # Add with custom display name
-  add-vm-type --display "Zig Language" zig \\
-      "apt-get update -y && apt-get install -y zig"
+  add-vm-type --display "Dart Language" dart \\
+      "apt-get update -y && apt-get install -y dart"
 
 The script will:
   1. Validate the VM type and parameters

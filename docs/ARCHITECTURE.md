@@ -129,7 +129,6 @@ Container names use the mandatory `vde-` prefix. SSH access: `ssh vde-{name}` (u
 | flutter | dart, flutter | vde-flutter | 2205 |
 | elixir | elixir | vde-elixir | 2215 |
 | haskell | ghc, haskell | vde-haskell | 2216 |
-| zig | zig | vde-zig | 2219 |
 | ruby | ruby | vde-ruby | 2215 |
 | python | python3 | vde-python | 2213 |
 

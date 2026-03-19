@@ -121,7 +121,6 @@ vde create-and-start all --rebuild --no-cache
 
 ```bash
 # Add a language (auto-detects type)
-vde create zig "apt-get update -y && apt-get install -y zig"
 
 # Add with aliases
 vde create dart "apt-get update -y && apt-get install -y dart" "dartlang,flutter"
@@ -131,8 +130,6 @@ vde create --type service --svc-port 5672 rabbitmq \
     "apt-get install -y rabbitmq-server" "rabbit"
 
 # Add with custom display name
-vde create --display "Zig Language" zig \
-    "apt-get update -y && apt-get install -y zig"
 
 # Show help
 vde create --help
