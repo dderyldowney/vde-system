@@ -55,6 +55,8 @@ __pycache__
 # Test output files
 tests/behave-results.json
 tests/pretty.output
+# Test run output data - accidentally not added earlier
+tests/behave-*.json
 
 # Local-only documentation (session notes, not to be committed)
 SESSION_STATE.md
