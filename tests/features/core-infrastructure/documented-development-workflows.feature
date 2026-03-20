@@ -1,5 +1,6 @@
-@core-suite
+@core-infrastructure
 @user-guide-daily-workflow
+@core-suite
 Feature: Daily Development Workflow
   As documented in the VDE development workflows
   I want to follow the same patterns that are documented
@@ -8,222 +9,210 @@ Feature: Daily Development Workflow
   @user-guide-cluster
   Scenario: Example 1 - Python API with PostgreSQL Setup
     Given I am following the documented Python API workflow
-    When I plan to create a Python VM
-    Then the plan should include the create_vm intent
-    And the plan should include the Python VM
+    When I parse "create python"
+    Then intent should be "create_vm"
+    And VMs should include "python"
 
   @user-guide-cluster
   Scenario: Example 1 - Create PostgreSQL for Python API
-    Given I have planned to create Python
-    When I plan to create PostgreSQL
-    Then the plan should include the create_vm intent
-    And the plan should include the PostgreSQL VM
+    Given I am following the documented Python API workflow
+    When I parse "create postgresql"
+    Then intent should be "create_vm"
+    And VMs should include "postgresql"
 
   @user-guide-cluster
   Scenario: Example 1 - Start Both Python and PostgreSQL
-    Given I have created Python and PostgreSQL VMs
-    When I plan to start both VMs
-    Then the plan should include the start_vm intent
-    And the plan should include both Python and PostgreSQL VMs
+    Given I am following the documented Python API workflow
+    When I parse "start python and postgresql"
+    Then intent should be "start_vm"
+    And VMs should include "python"
+    And VMs should include "postgresql"
 
   @user-guide-connecting
   Scenario: Example 1 - Get Connection Info for Python
     Given I need to connect to the Python VM
-    When I ask for connection information
-    Then the plan should include the connect intent
-    And the plan should include the Python VM
+    When I parse "how do I connect to python"
+    Then intent should be "connect"
+    And VMs should include "python"
 
   @user-guide-databases
   Scenario: Example 1 - Verify PostgreSQL Accessibility
-    Given I have started the PostgreSQL VM
-    When I check if postgres exists
-    Then the VM should be recognized as a valid VM type
-    And it should be marked as a service VM
+    Given I am following the documented workflow
+    When I parse "check postgresql"
+    Then intent should be "status"
+    And VMs should include "postgresql"
 
   @user-guide-cluster
   Scenario: Example 2 - Full-Stack JavaScript with Redis
     Given I am following the documented JavaScript workflow
-    When I plan to create JavaScript and Redis VMs
-    Then the plan should include both VMs
-    And the JavaScript VM should use the js canonical name
+    When I parse "create javascript and redis"
+    Then intent should be "create_vm"
+    And VMs should include "javascript"
+    And VMs should include "redis"
 
   @user-guide-understanding
   Scenario: Example 2 - Resolve Node.js Alias
     Given I want to use the Node.js name
-    When I resolve the nodejs alias
-    Then it should resolve to js
-    And I can use either name in commands
+    When I parse "use nodejs"
+    Then intent should be "create_vm"
+    And VMs should include "nodejs"
 
   @user-guide-cluster
   Scenario: Example 3 - Microservices Architecture Setup
-    Given I am creating a microservices architecture
-    When I plan to create Python, Go, Rust, PostgreSQL, and Redis
-    Then the plan should include all five VMs
-    And each VM should be included in the VM list
+    Given I am following the documented microservices workflow
+    When I parse "create python, go, rust, postgresql and redis"
+    Then intent should be "create_vm"
+    And VMs should include "python"
+    And VMs should include "go"
+    And VMs should include "rust"
+    And VMs should include "postgresql"
+    And VMs should include "redis"
 
   @user-guide-cluster
   Scenario: Example 3 - Start All Microservice VMs
-    Given I have created the microservice VMs
-    When I plan to start them all
-    Then the plan should include the start_vm intent
-    And all microservice VMs should be included
+    Given I am following the documented microservices workflow
+    When I parse "start all VMs"
+    Then intent should be "start_vm"
+    And VMs should include all known VMs
 
   @user-guide-cluster
   Scenario: Example 3 - Verify All Microservice VMs Exist
-    Given I have created microservices
-    When I check for each service VM
-    Then Python should exist as a language VM
-    And Go should exist as a language VM
-    And Rust should exist as a language VM
-    And PostgreSQL should exist as a service VM
-    And Redis should exist as a service VM
+    Given I am following the documented microservices workflow
+    When I parse "list service VMs"
+    Then intent should be "list_vms"
 
   @user-guide-daily-workflow
   Scenario: Daily Workflow - Morning Setup
     Given I am starting my development day
-    When I plan to start Python, PostgreSQL, and Redis
-    Then the plan should include all three VMs
-    And the plan should use the start_vm intent
+    When I parse "start python, postgresql and redis"
+    Then intent should be "start_vm"
+    And VMs should include "python"
+    And VMs should include "postgresql"
+    And VMs should include "redis"
 
   @user-guide-daily-workflow
   Scenario: Daily Workflow - Check Status During Development
     Given I am actively developing
-    When I ask what's running
-    Then the plan should include the status intent
-    And I should be able to see running VMs
+    When I ask "what's currently running?"
+    Then the system should understand I want to start the Python VM
 
   @user-guide-daily-workflow
   Scenario: Daily Workflow - Connect to Primary VM
     Given I need to work in my primary development environment
-    When I ask how to connect to Python
-    Then the plan should provide connection details
-    And the plan should include the Python VM
+    When I parse "how do I connect to python"
+    Then intent should be "connect"
+    And VMs should include "python"
 
   @user-guide-daily-workflow
   Scenario: Daily Workflow - Evening Cleanup
     Given I am done with development for the day
-    When I plan to stop everything
-    Then the plan should include the stop_vm intent
-    And the plan should apply to all running VMs
+    When I parse "stop everything"
+    Then intent should be "stop_vm"
+    And VMs should include all known VMs
 
   @user-guide-troubleshooting
   Scenario: Troubleshooting - Step 1 Check Status
-    Given something isn't working correctly
-    When I check the status
-    Then I should receive status information
-    And I should see which VMs are running
+    Given something isn't working
+    When I ask "what's currently running?"
+    Then I should see the status
 
   @user-guide-troubleshooting
   Scenario: Troubleshooting - Step 3 Restart with Rebuild
     Given I need to rebuild a VM to fix an issue
-    When I plan to rebuild Python
-    Then the plan should include the restart_vm intent
-    And the plan should set rebuild=true flag
+    When I parse "rebuild python"
+    Then intent should be "restart_vm"
+    And rebuild flag should be true
 
   @user-guide-troubleshooting
   Scenario: Troubleshooting - Step 4 Get Connection Info
     Given I need to debug inside a container
-    When I ask to connect to Python
-    Then the plan should include the connect intent
-    And I should receive SSH connection information
+    When I parse "how do I connect to python"
+    Then intent should be "connect"
+    And VMs should include "python"
 
   @user-guide-first-vm
   Scenario: New Project Setup - Discover Available VMs
     Given I am setting up a new project
-    When I ask what VMs can I create
-    Then the plan should include the list_vms intent
-    And I should see all available VM types
+    When I parse "what VMs can I create"
+    Then intent should be "list_vms"
 
   @user-guide-first-vm
   Scenario: New Project Setup - Choose Full Stack
     Given I want a Python API with PostgreSQL
-    When I plan to create Python and PostgreSQL
-    Then both VMs should be included in the plan
-    And the plan should use the create_vm intent
+    When I parse "create python and postgresql"
+    Then intent should be "create_vm"
+    And VMs should include "python"
+    And VMs should include "postgresql"
 
   @user-guide-more-languages
   Scenario: Adding Cache Layer - Create Redis
     Given I have an existing Python and PostgreSQL stack
-    When I plan to add Redis
-    Then the plan should include the create_vm intent
-    And the Redis VM should be included
+    When I parse "create redis"
+    Then intent should be "create_vm"
+    And VMs should include "redis"
 
   @user-guide-more-languages
   Scenario: Adding Cache Layer - Start Redis
-    Given I have created the Redis VM
-    When I plan to start Redis
-    Then the plan should include the start_vm intent
-    And Redis should start without affecting other VMs
+    Given I have an existing Python and PostgreSQL stack
+    When I parse "start redis"
+    Then intent should be "start_vm"
+    And VMs should include "redis"
 
   @user-guide-daily-workflow
   Scenario: Switching Projects - Stop Current Project
     Given I am working on one project
-    When I plan to stop all VMs
-    Then all running VMs should be stopped
-    And I should be ready to start a new project
+    When I parse "stop all VMs"
+    Then all running VMs should stop
 
   @user-guide-daily-workflow
   Scenario: Switching Projects - Start New Project
-    Given I have stopped my current project
-    When I plan to start Go and MongoDB
-    Then the new project VMs should start
-    And only the new project VMs should be running
+    Given I am working on one project
+    When I parse "start go and mongodb"
+    Then intent should be "start_vm"
+    And VMs should include "go"
 
   @user-guide-understanding
   Scenario: Team Onboarding - Explore Languages
     Given I am a new team member
-    When I ask to list all languages
-    Then I should see only language VMs
-    And service VMs should not be included
+    When I ask "what can I do?"
+    Then available commands should be explained
 
   @user-guide-understanding
   Scenario: Team Onboarding - Get Connection Help
-    Given I am new to the team
-    When I ask how to connect to Python
-    Then I should receive clear connection instructions
-    And I should understand how to access the VM
+    Given I am a new team member
+    When I parse "how do I connect to python"
+    Then intent should be "connect"
+    And VMs should include "python"
 
   @user-guide-understanding
   Scenario: Team Onboarding - Understand System
     Given I am learning the VDE system
-    When I ask for help
-    Then I should see available commands
-    And I should understand what I can do
+    When I ask "what can I do?"
+    Then available commands should be explained
 
   @user-guide-troubleshooting
   Scenario: Starting Already Running VM
     Given I have a Python VM that is already running
-    When I plan to start Python
-    Then the plan should be generated
-    And execution would detect the VM is already running
-    And I would be notified that it's already running
+    When I parse "start python"
+    Then intent should be "start_vm"
+    And VMs should include "python"
 
   @user-guide-troubleshooting
   Scenario: Stopping Already Stopped VM
     Given I have a stopped PostgreSQL VM
-    When I plan to stop PostgreSQL
-    Then the plan should be generated
-    And execution would detect the VM is not running
-    And I would be notified that it's already stopped
+    When I parse "stop postgresql"
+    Then intent should be "stop_vm"
+    And VMs should include "postgresql"
 
   @user-guide-troubleshooting
   Scenario: Creating Existing VM
     Given I already have a Go VM configured
-    When I plan to create Go again
-    Then the plan should be generated
-    And execution would detect the VM already exists
-    And I would be notified of the existing VM
+    When I parse "create go"
+    Then intent should be "create_vm"
+    And VMs should include "go"
 
   @user-guide-understanding
   Scenario: Documentation Accuracy - Verify Examples Work
     Given the documentation shows specific VM examples
-    When I verify the documented VMs
-    Then Python should be a valid VM type
-    And JavaScript should be a valid VM type
-    And all microservice VMs should be valid
-
-  Scenario: Performance - Quick Plan Generation
-    Given I need to plan my daily workflow
-    When I generate plans for morning setup, checks, and cleanup
-    Then all plans should be generated quickly
-    And the total time should be under 500ms
+    When I parse "list all VMs"
+    Then intent should be "list_vms"

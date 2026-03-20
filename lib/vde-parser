@@ -152,9 +152,8 @@ readonly INTENT_RESTART_VM
 INTENT_STATUS="status"
 readonly INTENT_STATUS
 INTENT_CONNECT="connect"
-readonly INTENT_CONNECT
 INTENT_ADD_VM_TYPE="add_vm_type"
-readonly INTENT_ADD_VM_TYPE
+INTENT_REMOVE_VM="remove_vm"
 INTENT_HELP="help"
 readonly INTENT_HELP
 
@@ -184,7 +183,7 @@ detect_intent() {
 
     # Check for status (be specific to avoid false positives)
     case "${input_lower}" in
-        *running*|*"status"*|*"staus"*|*"satus"*|*"current state"*)
+        *running*|*"status"*|*"staus"*|*"satus"*|*"current state"*|*check*)
             echo "${INTENT_STATUS}"
             return ${VDE_SUCCESS}
             ;;
@@ -214,9 +213,17 @@ detect_intent() {
             ;;
     esac
 
+    # Check for add new VM type intent (before create, to distinguish "add X" from "add new type X")
+    case "${input_lower}" in
+        *"add new"*|*"add a new"*|*"add-vm-type"*|*"add vm type"*|*"add type"*|*"add support for"*)
+            echo "${INTENT_ADD_VM_TYPE}"
+            return ${VDE_SUCCESS}
+            ;;
+    esac
+
     # Check for create intent (be specific)
     case "${input_lower}" in
-        *"create"*|*"make a"*|*"make new"*|*"set up"*|*"add "*)
+        *"create"*|*"make a"*|*"make new"*|*"set up"*|*"use "*)
             echo "${INTENT_CREATE_VM}"
             return ${VDE_SUCCESS}
             ;;
@@ -235,6 +242,14 @@ detect_intent() {
     case "${input_lower}" in
         *stop*|*stp*|*sto*|*stpo*|*sotp*|*shutdown*|*shutdon*|*kill*|*kil*)
             echo "${INTENT_STOP_VM}"
+            return ${VDE_SUCCESS}
+            ;;
+    esac
+
+    # Check for remove/destroy intent
+    case "${input_lower}" in
+        *remove*|*destroy*|*delete*)
+            echo "${INTENT_REMOVE_VM}"
             return ${VDE_SUCCESS}
             ;;
     esac

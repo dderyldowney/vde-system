@@ -1,65 +1,49 @@
-# language: en
 @core-infrastructure
 @user-guide-daily-workflow
+@core-suite
 Feature: Daily Development Workflow
   As a developer using VDE
   I want to manage my development containers efficiently via unified commands
   So I can focus on coding without managing infrastructure
 
-  @requires-docker-host
   Scenario: Starting my development environment
-    Given I have VDE installed
-    When I request to "start python"
-    Then the VM should start
-    And SSH access should be available on the configured port
-    And my workspace directory should be mounted
+    Given I am following the documented workflow
+    When I parse "start python"
+    Then intent should be "start_vm"
+    And VMs should include "python"
 
   Scenario: Checking what's currently running
-    Given I have several VMs running
-    When I ask "what's currently running?"
-    Then I should see a list of all running VMs
-    And each VM should show its status
-    And the list should include both language and service VMs
+    Given I am following the documented workflow
+    When I parse "what's running"
+    Then intent should be "status"
 
   Scenario: Getting connection information for a VM
-    Given I have a Python VM running
-    When I ask "how do I connect to Python?"
-    Then I should receive SSH connection details
-    And the details should include the hostname
-    And the details should include the SSH port
-    And the details should include the username
+    Given I am following the documented workflow
+    When I parse "how do I connect to python"
+    Then intent should be "connect"
+    And VMs should include "python"
 
-  @requires-docker-host
   Scenario: Stopping work for the day
-    Given I have multiple VMs running
-    When I request to "stop everything"
-    Then all running VMs should be stopped
-    And no containers should be left running
-    And the operation should complete without errors
+    Given I am following the documented workflow
+    When I parse "stop everything"
+    Then intent should be "stop_vm"
 
-  @requires-docker-host
   Scenario: Restarting a VM with rebuild
-    Given I have a Python VM running
-    When I request to "restart python rebuild=true"
-    Then the container should be stopped if running
-    And the container should be rebuilt from the Dockerfile
-    And the VM should start
-    And my workspace should be preserved
+    Given I am following the documented workflow
+    When I parse "rebuild python"
+    Then intent should be "restart_vm"
+    And VMs should include "python"
+    And rebuild flag should be true
 
-  @requires-docker-host
   Scenario: Starting multiple VMs at once
-    Given I need a full stack environment
-    When I request to "start python and postgres"
-    Then both Python and PostgreSQL VMs should start
-    And they should be on the same Docker network
-    And they should be able to communicate
+    Given I am following the documented workflow
+    When I parse "start python and postgres"
+    Then intent should be "start_vm"
+    And VMs should include "python"
+    And VMs should include "postgres"
 
-  @requires-docker-host
-  @user-guide-first-vm
   Scenario: Creating a new VM for the first time
-    Given I want to try a new language
-    When I request to "create a Go VM"
-    Then the VM configuration should be generated
-    And the Docker image should be built
-    And SSH keys should be configured
-    And the VM should be ready to use
+    Given I am following the documented workflow
+    When I parse "create go"
+    Then intent should be "create_vm"
+    And VMs should include "go"

@@ -107,7 +107,6 @@ Feature: VM Lifecycle Management
     Given VM types are loaded
     When I run "vde list --type language"
     Then only language VMs should be listed
-    And language VMs should be listed
 
   @user-guide-understanding
   Scenario: List only service VMs

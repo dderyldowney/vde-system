@@ -7,7 +7,7 @@ Feature: VM Image Rebuild Tests
   Run separately with: python3 -m behave core-infrastructure/vm-rebuild.feature
 
   Scenario: Rebuild with --rebuild flag
-    Given the VM "python" has been created
+    Given VM "python" has been created
     And VM "python" is running
     When I start VM "python" with --rebuild
     Then docker-compose up --build should be executed

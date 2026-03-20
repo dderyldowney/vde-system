@@ -6,10 +6,16 @@ These steps handle assertions for VM lifecycle management tests.
 import subprocess
 import re
 import os
+import sys
 import time
 from pathlib import Path
 
 from behave import given, then, when
+
+# Add steps directory to path for config import
+steps_dir = os.path.dirname(os.path.abspath(__file__))
+if steps_dir not in sys.path:
+    sys.path.insert(0, steps_dir)
 
 from config import VDE_ROOT
 from vm_common import (
@@ -24,6 +30,7 @@ from vm_common import (
 # THEN steps - File and directory assertions
 # =============================================================================
 
+
 @then('a docker-compose.yml file should be created at "{compose_path}"')
 def step_compose_file_created(context, compose_path):
     """Verify docker-compose.yml file was created at the specified path."""
@@ -31,7 +38,7 @@ def step_compose_file_created(context, compose_path):
     assert full_path.exists(), f"docker-compose.yml should exist at {compose_path}"
 
 
-@then('the docker-compose.yml should contain SSH port mapping')
+@then("the docker-compose.yml should contain SSH port mapping")
 def step_compose_has_ssh_mapping(context):
     """Verify docker-compose.yml contains SSH port mapping."""
     configs_dir = VDE_ROOT / "configs" / "docker"
@@ -39,7 +46,7 @@ def step_compose_has_ssh_mapping(context):
     compose_file = configs_dir / "python" / "docker-compose.yml"
     if compose_file.exists():
         content = compose_file.read_text()
-        assert '22:' in content or 'ports' in content.lower()
+        assert "22:" in content or "ports" in content.lower()
 
 
 @then('the docker-compose.yml should contain service port mapping "{port}"')
@@ -47,11 +54,11 @@ def step_compose_has_service_port(context, port):
     """Verify docker-compose.yml contains specific service port mapping."""
     configs_dir = VDE_ROOT / "configs" / "docker"
     # Check all service VMs
-    for svc in ['postgres', 'redis', 'mongodb', 'mysql']:
+    for svc in ["postgres", "redis", "mongodb", "mysql"]:
         compose_file = configs_dir / svc / "docker-compose.yml"
         if compose_file.exists():
             content = compose_file.read_text()
-            if f'{port}:' in content:
+            if f"{port}:" in content:
                 return
     assert False, f"No docker-compose.yml found with service port mapping {port}"
 
@@ -74,7 +81,7 @@ def step_ssh_config_preserved_host(context, hostname):
     assert f"Host {hostname}" in content, f"SSH config missing entry for {hostname}"
 
 
-@then('SSH config entry for {hostname} should be preserved')
+@then("SSH config entry for {hostname} should be preserved")
 def step_ssh_config_preserved_generic(context, hostname):
     """Alternative naming for preservation."""
     step_ssh_config_preserved_host(context, hostname.strip('"'))
@@ -106,9 +113,11 @@ def step_data_dir_exists(context, dir_path):
     full_path = VDE_ROOT / dir_path
     assert full_path.exists()
 
+
 # =============================================================================
 # THEN steps - VM status assertions
 # =============================================================================
+
 
 @then('VM "{vm_name}" should be running')
 def step_vm_should_be_running(context, vm_name):
@@ -124,7 +133,7 @@ def step_vm_not_running(context, vm_name):
     assert f"vde-{vm_name}" not in running, f"VM {vm_name} should not be running"
 
 
-@then('all created VMs should be running')
+@then("all created VMs should be running")
 def step_all_vms_running(context):
     """Verify all created VMs are running via vde ps."""
     running = docker_ps()
@@ -132,7 +141,7 @@ def step_all_vms_running(context):
     assert len(vde_running) >= 1
 
 
-@then('no VMs should be running')
+@then("no VMs should be running")
 def step_no_vms_running(context):
     """Verify no VMs are running via vde ps."""
     running = docker_ps()
@@ -140,73 +149,74 @@ def step_no_vms_running(context):
     assert len(vde_running) == 0, f"VMs still running: {vde_running}"
 
 
-@then('each VM should have a unique SSH port')
+@then("each VM should have a unique SSH port")
 def step_unique_ssh_ports(context):
     """Verify each running VM has a unique SSH port via vde port."""
     running = docker_ps()
     ports = []
     for container in running:
-        vm_name = container.replace('vde-', '')
+        vm_name = container.replace("vde-", "")
         result = run_vde_command(f"port {vm_name} 22", context=context)
         if result.returncode == 0 and result.stdout.strip():
             ports.append(result.stdout.strip())
     assert len(ports) == len(set(ports))
 
 
-@then('SSH should be accessible on allocated port')
+@then("SSH should be accessible on allocated port")
 def step_ssh_accessible(context):
     """Verify SSH is accessible on the allocated port."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     result = run_vde_command(f"port {vm_name} 22", context=context)
     assert result.returncode == 0 and result.stdout.strip()
 
 
-@then('the VM should have a fresh container instance')
+@then("the VM should have a fresh container instance")
 def step_fresh_container(context):
     """Verify the VM has a fresh container instance."""
     # Start command handled fresh lifecycle
-    assert getattr(context, 'last_exit_code', 1) == 0
+    assert getattr(context, "last_exit_code", 1) == 0
 
 
-@then('the container should be rebuilt from the Dockerfile')
+@then("the container should be rebuilt from the Dockerfile")
 def step_container_rebuilt(context):
     """Verify the container was rebuilt."""
-    assert getattr(context, 'last_exit_code', 1) == 0
+    assert getattr(context, "last_exit_code", 1) == 0
 
 
 # =============================================================================
 # THEN steps - VM type listing assertions
 # =============================================================================
 
-@then('all language VMs should be listed')
+
+@then("all language VMs should be listed")
 def step_all_lang_vms_listed(context):
     """Verify all language VMs are listed in vde list output."""
     result = run_vde_command("list", context=context)
     output = result.stdout.lower()
-    for lang in ['python', 'rust', 'go', 'js']:
+    for lang in ["python", "rust", "go", "js"]:
         assert lang in output
 
 
-@then('aliases should be shown')
+@then("aliases should be shown")
 def step_aliases_shown(context):
     """Verify VM aliases are shown in the output."""
     result = run_vde_command("list", context=context)
-    assert 'alias' in result.stdout.lower() or '(' in result.stdout
+    assert "alias" in result.stdout.lower() or "(" in result.stdout
 
 
-@then('only language VMs should be listed')
+@then("only language VMs should be listed")
 def step_only_lang_vms_listed(context):
     """Verify only language VMs are listed."""
     result = run_vde_command("list --type language", context=context)
-    assert 'python' in result.stdout.lower()
-    assert 'postgres' not in result.stdout.lower()
+    assert "python" in result.stdout.lower()
+    assert "postgres" not in result.stdout.lower()
 
 
-@then('language VMs should not be listed')
+@then("language VMs should not be listed")
 def step_lang_vms_not_listed(context):
     """Verify language VMs are not listed."""
     result = run_vde_command("list --type service", context=context)
-    assert 'python' not in result.stdout.lower()
+    assert "python" not in result.stdout.lower()
 
 
 @then('only VMs matching "{pattern}" should be listed')
@@ -219,6 +229,7 @@ def step_vms_matching_pattern(context, pattern):
 # =============================================================================
 # THEN steps - VM type management assertions
 # =============================================================================
+
 
 @then('"{vm_name}" should be in known VM types')
 def step_vm_in_known_types(context, vm_name):
@@ -256,19 +267,20 @@ def step_alias_resolves_to(context, alias, vm_name):
     assert alias in vm_types_file.read_text()
 
 
-@then('VM configuration should still exist')
+@then("VM configuration should still exist")
 def step_config_still_exists(context):
     """Verify VM configuration still exists."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     assert (VDE_ROOT / "configs" / "docker" / vm_name).exists()
 
 
-@then('the VM should be marked as not created')
+@then("the VM should be marked as not created")
 def step_vm_not_created(context):
     """Verify the VM is marked as not created by checking config existence."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     # If not created, the compose file should not exist
     from vm_common import compose_file_exists
+
     assert not compose_file_exists(vm_name), f"VM {vm_name} config should not exist"
 
 
@@ -276,19 +288,20 @@ def step_vm_not_created(context):
 # GIVEN steps - VM state setup
 # =============================================================================
 
+
 @given('VM "{vm_name}" is not running')
 def step_given_vm_not_running(context, vm_name):
     """Ensure VM is not running."""
     run_vde_command(f"stop {vm_name} -f", context=context)
 
 
-@given('neither VM is running')
+@given("neither VM is running")
 def step_given_neither_vm_running(context):
     """Ensure multiple VMs are not running."""
     run_vde_command("stop all -f", context=context)
 
 
-@given('none of the VMs are running')
+@given("none of the VMs are running")
 def step_given_none_of_vms_running(context):
     """Ensure no VMs are running."""
     run_vde_command("stop all -f", context=context)
@@ -298,24 +311,25 @@ def step_given_none_of_vms_running(context):
 # THEN steps - VM lifecycle verification
 # =============================================================================
 
-@then('workspace should be mounted at ~/{workspace_dir}')
+
+@then("workspace should be mounted at ~/{workspace_dir}")
 def step_workspace_mounted(context, workspace_dir):
     """Verify workspace directory is mounted in the container."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     result = run_vde_command(f"inspect {vm_name} -f '{{{{json .Mounts}}}}'", context=context)
-    assert 'projects' in result.stdout.lower() or 'workspace' in result.stdout.lower()
+    assert "projects" in result.stdout.lower() or "workspace" in result.stdout.lower()
 
 
-@then('the container should be rebuilt without cache')
+@then("the container should be rebuilt without cache")
 def step_container_rebuilt_no_cache(context):
     """Verify the container was rebuilt without cache."""
-    assert getattr(context, 'last_exit_code', 1) == 0
+    assert getattr(context, "last_exit_code", 1) == 0
 
 
-@then('SSH connection should still work')
+@then("SSH connection should still work")
 def step_ssh_still_works(context):
     """Verify SSH connection still works."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     result = run_vde_command(f"port {vm_name} 22", context=context)
     assert result.returncode == 0
 
@@ -326,34 +340,36 @@ def step_vm_config_preserved(context, vm_name):
     assert (VDE_ROOT / "configs" / "docker" / vm_name).exists()
 
 
-@then('container should be gone')
+@then("container should be gone")
 def step_container_gone(context):
     """Verify the Docker container was removed."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     assert not container_exists(vm_name)
 
 
-@then('SSH config entry should be preserved')
+@then("SSH config entry should be preserved")
 def step_ssh_config_preserved_assertion(context):
     """Verify SSH config entry is preserved (static port assignments)."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     ssh_host = f"vde-{vm_name}"
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
     assert ssh_config.exists(), "VDE SSH config missing"
     content = ssh_config.read_text()
-    assert ssh_host in content, f"SSH config entry for {ssh_host} should be preserved (static port assignment)"
+    assert ssh_host in content, (
+        f"SSH config entry for {ssh_host} should be preserved (static port assignment)"
+    )
 
 
-@then('SSH keys should be generated if none exist')
+@then("SSH keys should be generated if none exist")
 def step_ssh_keys_generated(context):
     """Verify SSH keys were generated."""
     assert (Path.home() / ".ssh" / "vde" / "id_ed25519").exists()
 
 
-@then('public key should be copied to VM\'s authorized_keys')
+@then("public key should be copied to VM's authorized_keys")
 def step_public_key_copied(context):
     """Verify public key was copied."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     result = run_vde_command(f"exec {vm_name} 'ls ~/.ssh/authorized_keys'", context=context)
     assert result.returncode == 0
 
@@ -361,6 +377,6 @@ def step_public_key_copied(context):
 @when('I SSH to "{ssh_host}"')
 def step_i_ssh_to(context, ssh_host):
     """Attempt SSH connection."""
-    vm_name = ssh_host.replace('vde-', '')
+    vm_name = ssh_host.replace("vde-", "")
     result = run_vde_command(f"connect {vm_name} --dry-run", context=context)
     assert result.returncode == 0
