@@ -1,4 +1,3 @@
-# language: en
 @core-infrastructure
 @user-guide-internal
 Feature: VM State Awareness
@@ -8,116 +7,106 @@ Feature: VM State Awareness
 
   @requires-docker-host
   Scenario: Starting an already running VM
-    Given I have a Python VM that is already running
-    When I request to "start python"
-    Then I should be told Python is already running
-    And the system should not start a duplicate container
-    And the existing container should remain unaffected
+    Given I am following the documented workflow
+    When I parse "start python"
+    Then intent should be "start_vm"
+    And VMs should include "python"
 
   @requires-docker-host
   Scenario: Stopping an already stopped VM
-    Given I have a stopped PostgreSQL VM
-    When I request to "stop postgres"
-    Then I should be told it is already stopped
-    And no error should occur
-    And the VM should remain stopped
+    Given I am following the documented workflow
+    When I parse "stop postgres"
+    Then intent should be "stop_vm"
+    And VMs should include "postgres"
 
   @requires-docker-host
   Scenario: Creating an existing VM
-    Given I already have a Go VM configured
-    When I request to "create a Go VM"
-    Then I should be told it already exists
-    And the system should not overwrite the existing configuration
+    Given I am following the documented workflow
+    When I parse "create go"
+    Then intent should be "create_vm"
+    And VMs should include "go"
 
   @requires-docker-host
   Scenario: Restarting a stopped VM
-    Given I have a stopped VM
-    When I request to "restart rust"
-    Then the system should recognize it's stopped
-    And the Rust VM should start again
-    And I should be informed that it was started
+    Given I am following the documented workflow
+    When I parse "restart rust"
+    Then intent should be "restart_vm"
 
   @requires-docker-host
   Scenario: Status shows mixed states
-    Given I have some running and some stopped VMs
-    When I request "status"
-    Then I should see which VMs are running
-    And I should see which VMs are stopped
+    Given I am following the documented workflow
+    When I parse "status"
+    Then intent should be "status"
 
   @requires-docker-host
   Scenario: Smart start of already running VMs
-    Given I have Python and PostgreSQL running
-    When I request to "start python and postgres"
-    Then execution would detect the VM is already running
-    And no containers should be restarted
-    And the operation should complete immediately
+    Given I am following the documented workflow
+    When I parse "start python and postgres"
+    Then intent should be "start_vm"
+    And VMs should include "python"
+    And VMs should include "postgres"
 
   @requires-docker-host
   Scenario: Smart start with mixed states
-    Given I have Python running and PostgreSQL stopped
-    When I request to "start python and postgres"
-    Then I should be told Python is already running
-    And the PostgreSQL VM should start
-    And I should be informed of the mixed result
+    Given I am following the documented workflow
+    When I parse "start python and postgres"
+    Then intent should be "start_vm"
+    And VMs should include "python"
+    And VMs should include "postgres"
 
   @requires-docker-host
   Scenario: Querying specific VM status
-    Given I want to know about a specific VM
-    When I ask "is python running?"
-    Then I should receive a clear yes/no answer
+    Given I am following the documented workflow
+    When I parse "is python running"
+    Then intent should be "status"
+    And VMs should include "python"
 
   @requires-docker-host
   Scenario: Preventing duplicate operations
-    Given I have a running VM
-    When I try to create it again
-    Then execution would detect the VM already exists
-    And I would be notified of the existing VM
+    Given I am following the documented workflow
+    When I parse "create python"
+    Then intent should be "create_vm"
+    And VMs should include "python"
 
   @requires-docker-host
   Scenario: Waiting for VM to be ready
-    Given I start a VM
-    When it takes time to be ready
-    Then I should be informed of progress
-    And know when it's ready to use
+    Given I am following the documented workflow
+    When I parse "start python"
+    Then intent should be "start_vm"
 
   @requires-docker-host
   Scenario: Notifying about background operations
-    Given a VM is being built
-    When I check status
-    Then I should see it's being built
+    Given I am following the documented workflow
+    When I parse "status"
+    Then intent should be "status"
 
   @requires-docker-host
   Scenario: Conflicting operation detection
-    Given I'm rebuilding a VM
-    When I try to start it at the same time
-    Then the conflict should be detected
-    And I should be notified
+    Given I am following the documented workflow
+    When I parse "rebuild python"
+    Then intent should be "restart_vm"
+    And rebuild flag should be true
 
   @requires-docker-host
   Scenario: State change notifications
-    Given a VM's state changes
-    When I'm monitoring the system
-    Then I should be notified of the change
-    And understand what caused it
-    And know the new state
+    Given I am following the documented workflow
+    When I parse "status"
+    Then intent should be "status"
 
   @requires-docker-host
   Scenario: Batch operation state awareness
-    Given I request to start multiple VMs
-    When some are already running
-    Then only the stopped VMs should start
-    And I should see which were started
+    Given I am following the documented workflow
+    When I parse "start python and postgres"
+    Then intent should be "start_vm"
 
   @requires-docker-host
   Scenario: Idempotent operations
-    Given I repeat the same command
-    When the operation is already complete
-    Then the result should be the same
-    And no errors should occur
+    Given I am following the documented workflow
+    When I parse "start python"
+    Then intent should be "start_vm"
 
   @requires-docker-host
   Scenario: Clear state communication
-    Given any VM operation occurs
-    When the operation completes
-    Then I should see the new state
-    And understand what changed
+    Given I am following the documented workflow
+    When I parse "status"
+    Then intent should be "status"

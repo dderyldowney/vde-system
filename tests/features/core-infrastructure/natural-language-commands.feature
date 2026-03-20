@@ -1,6 +1,7 @@
 # language: en
 @core-infrastructure
 @user-guide-internal
+@core-suite
 Feature: Natural Language Commands
   As a developer using VDE
   I want to control my environment using natural language

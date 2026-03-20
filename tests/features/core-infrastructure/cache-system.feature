@@ -2,6 +2,7 @@
 @core-infrastructure
 @cache-system
 @user-guide-internal
+@core-suite
 Feature: Cache System
   As a developer
   I want VM type data to be cached for performance

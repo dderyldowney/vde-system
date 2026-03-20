@@ -3,6 +3,7 @@ Step definitions for @critical-path and @critical-infrastructure features.
 
 All steps invoke the ACTUAL VDE implementation — no mocks, no fakes.
 """
+
 import json
 import os
 import re
@@ -28,6 +29,7 @@ VM_TYPES_JSON = VDE_ROOT / "data" / "vm-types.json"
 
 # ── helpers ────────────────────────────────────────────────────────────────
 
+
 def _zsh(script: str, timeout: int = 10) -> subprocess.CompletedProcess:
     """Run a zsh snippet with VDE libraries sourced."""
     full = f"""
@@ -36,10 +38,7 @@ source "{LIB_DIR}/vde-constants"
 source "{LIB_DIR}/vde-naming"
 {script}
 """
-    return subprocess.run(
-        ["zsh", "-c", full],
-        capture_output=True, text=True, timeout=timeout
-    )
+    return subprocess.run(["zsh", "-c", full], capture_output=True, text=True, timeout=timeout)
 
 
 def _zsh_with_common(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
@@ -50,17 +49,16 @@ source "{LIB_DIR}/vde-constants" 2>/dev/null
 source "{LIB_DIR}/vm-common" 2>/dev/null
 {script}
 """
-    return subprocess.run(
-        ["zsh", "-c", full],
-        capture_output=True, text=True, timeout=timeout
-    )
+    return subprocess.run(["zsh", "-c", full], capture_output=True, text=True, timeout=timeout)
 
 
 def _vde_cli(command: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Run `vde <command>` with VDE_ROOT_DIR set. Logs go to stderr, stdout is clean output."""
     return subprocess.run(
         [str(BIN_DIR / "vde")] + command.split(),
-        capture_output=True, text=True, timeout=timeout,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
         env={**os.environ, "VDE_ROOT_DIR": str(VDE_ROOT), "VDE_LOG_OUTPUT": "stderr"},
     )
 
@@ -78,13 +76,14 @@ def _load_vm_types() -> tuple[list[str], list[str]]:
     """Return (lang_names, svc_names) as raw names (no vde- prefix)."""
     data = json.loads(VM_TYPES_JSON.read_text())
     langs = [v["name"].removeprefix("vde-") for v in data["vms"].get("language", [])]
-    svcs  = [v["name"].removeprefix("vde-") for v in data["vms"].get("service", [])]
+    svcs = [v["name"].removeprefix("vde-") for v in data["vms"].get("service", [])]
     return langs, svcs
 
 
 # =============================================================================
 # GIVEN steps
 # =============================================================================
+
 
 @given('VM "{vm_name}" config exists at "{path}"')
 def step_vm_config_exists(context, vm_name, path):
@@ -93,19 +92,19 @@ def step_vm_config_exists(context, vm_name, path):
     context.compose_path = full
 
 
-@given('all language VM configs are loaded from vm-types.json')
+@given("all language VM configs are loaded from vm-types.json")
 def step_load_lang_vms(context):
     langs, _ = _load_vm_types()
     context.lang_vms = langs
 
 
-@given('all service VM configs are loaded from vm-types.json')
+@given("all service VM configs are loaded from vm-types.json")
 def step_load_svc_vms(context):
     _, svcs = _load_vm_types()
     context.svc_vms = svcs
 
 
-@given('all VM configs are loaded from vm-types.json')
+@given("all VM configs are loaded from vm-types.json")
 def step_load_all_vms(context):
     langs, svcs = _load_vm_types()
     context.lang_vms = langs
@@ -116,7 +115,9 @@ def step_load_all_vms(context):
 def step_container_running(context, container_name):
     r = subprocess.run(
         ["docker", "ps", "--filter", f"name={container_name}", "--format", "{{.Names}}"],
-        capture_output=True, text=True, timeout=10
+        capture_output=True,
+        text=True,
+        timeout=10,
     )
     if container_name not in r.stdout:
         # Try to start it
@@ -130,11 +131,14 @@ def step_container_running(context, container_name):
 # WHEN steps
 # =============================================================================
 
+
 @when('I run the list-vms script with "{args}"')
 def step_run_list_vms(context, args):
     result = subprocess.run(
         [str(BIN_DIR / "list-vms")] + args.split(),
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
         env={**os.environ, "VDE_ROOT_DIR": str(VDE_ROOT)},
     )
     context.command_output = result.stdout + result.stderr
@@ -169,7 +173,7 @@ def step_call_normalize_name(context, name):
     context.zsh_result = r.stdout.strip()
 
 
-@when('I read {constant} from vde-constants')
+@when("I read {constant} from vde-constants")
 def step_read_constant(context, constant):
     r = _zsh(f'echo "${constant}"')
     assert r.returncode == 0, f"Failed reading {constant}: {r.stderr}"
@@ -186,8 +190,9 @@ def step_render_lang_template(context, name, port):
     )
     assert r.returncode == 0, f"render_template failed: {r.stderr}"
     # Strip log lines (lines starting with date or [INFO])
-    lines = [ln for ln in r.stdout.splitlines()
-             if not re.match(r'^\d{4}-\d{2}-\d{2}|^\[INFO\]', ln)]
+    lines = [
+        ln for ln in r.stdout.splitlines() if not re.match(r"^\d{4}-\d{2}-\d{2}|^\[INFO\]", ln)
+    ]
     context.rendered_output = "\n".join(lines)
 
 
@@ -203,26 +208,27 @@ def step_render_ssh_entry(context, vm_name, port):
         f'IDENTITY_FILE "{identity}" KNOWN_HOSTS_FILE "{known_hosts}" COMMENT "{vm_name}" 2>/dev/null'
     )
     assert r.returncode == 0, f"render_template failed: {r.stderr}"
-    lines = [ln for ln in r.stdout.splitlines()
-             if not re.match(r'^\d{4}-\d{2}-\d{2}|^\[INFO\]', ln)]
+    lines = [
+        ln for ln in r.stdout.splitlines() if not re.match(r"^\d{4}-\d{2}-\d{2}|^\[INFO\]", ln)
+    ]
     context.rendered_output = "\n".join(lines)
 
 
-@when('I check the VDE SSH directory path from vde-constants')
+@when("I check the VDE SSH directory path from vde-constants")
 def step_check_ssh_dir(context):
     r = _zsh('echo "$VDE_SSH_DIR"')
     assert r.returncode == 0
     context.zsh_result = r.stdout.strip()
 
 
-@when('I check the VDE SSH config path from vde-constants')
+@when("I check the VDE SSH config path from vde-constants")
 def step_check_ssh_config(context):
     r = _zsh('echo "$VDE_SSH_CONFIG"')
     assert r.returncode == 0
     context.zsh_result = r.stdout.strip()
 
 
-@when('I check the VDE SSH known_hosts path from vde-constants')
+@when("I check the VDE SSH known_hosts path from vde-constants")
 def step_check_ssh_known_hosts(context):
     r = _zsh('echo "$VDE_SSH_KNOWN_HOSTS"')
     assert r.returncode == 0
@@ -233,16 +239,14 @@ def step_check_ssh_known_hosts(context):
 # THEN steps
 # =============================================================================
 
+
 @then('the compose file should contain "{text}"')
 def step_compose_contains(context, text):
     content = context.compose_path.read_text()
-    assert text in content, (
-        f"Expected '{text}' in {context.compose_path}\n"
-        f"Got:\n{content[:500]}"
-    )
+    assert text in content, f"Expected '{text}' in {context.compose_path}\nGot:\n{content[:500]}"
 
 
-@then('every language VM compose file should have SSH port between {lo:d} and {hi:d}')
+@then("every language VM compose file should have SSH port between {lo:d} and {hi:d}")
 def step_lang_ports_in_range(context, lo, hi):
     errors = []
     for vm in context.lang_vms:
@@ -254,7 +258,7 @@ def step_lang_ports_in_range(context, lo, hi):
     assert not errors, "Port range violations:\n" + "\n".join(errors)
 
 
-@then('every service VM compose file should have SSH port between {lo:d} and {hi:d}')
+@then("every service VM compose file should have SSH port between {lo:d} and {hi:d}")
 def step_svc_ports_in_range(context, lo, hi):
     errors = []
     for vm in context.svc_vms:
@@ -266,7 +270,7 @@ def step_svc_ports_in_range(context, lo, hi):
     assert not errors, "Port range violations:\n" + "\n".join(errors)
 
 
-@then('no two VMs should share the same SSH port')
+@then("no two VMs should share the same SSH port")
 def step_unique_ports(context):
     all_vms = list(context.lang_vms) + list(context.svc_vms)
     ports: dict[int, str] = {}
@@ -296,7 +300,7 @@ def step_output_not_contains(context, text):
     )
 
 
-@then('the exit code should be {code:d}')
+@then("the exit code should be {code:d}")
 def step_exit_code(context, code):
     assert context.command_exit_code == code, (
         f"Expected exit code {code}, got {context.command_exit_code}\n"
@@ -315,28 +319,19 @@ def step_container_is_running(context, container_name):
 @then('container "{container_name}" should not be running')
 def step_container_not_running(context, container_name):
     r = _vde_cli(f"ps --filter name={container_name} -q", timeout=10)
-    assert container_name not in r.stdout, (
-        f"Container '{container_name}' is still running."
-    )
+    assert container_name not in r.stdout, f"Container '{container_name}' is still running."
 
 
 @then('container "{container_name}" should not exist')
 def step_container_not_exist(context, container_name):
     r = _vde_cli(f"ps -a --filter name={container_name} -q", timeout=10)
-    assert container_name not in r.stdout, (
-        f"Container '{container_name}' still exists."
-    )
+    assert container_name not in r.stdout, f"Container '{container_name}' still exists."
 
 
 @then('"{path}" should still exist')
 def step_path_still_exists(context, path):
     full = VDE_ROOT / path
     assert full.exists(), f"Expected '{full}' to still exist but it is gone."
-
-
-@then('VM "python" should be running')
-def step_vm_python_running(context):
-    step_container_is_running(context, "vde-python")
 
 
 @then('running container should be named "vde-python"')
@@ -352,18 +347,15 @@ def step_python_config_still_exists(context):
 
 # ── critical-infrastructure THEN steps ────────────────────────────────────
 
+
 @then('the result should be "{expected}"')
 def step_result_equals(context, expected):
-    assert context.zsh_result == expected, (
-        f"Expected '{expected}', got '{context.zsh_result}'"
-    )
+    assert context.zsh_result == expected, f"Expected '{expected}', got '{context.zsh_result}'"
 
 
 @then('the value should be "{expected}"')
 def step_value_equals(context, expected):
-    assert context.zsh_result == expected, (
-        f"Expected '{expected}', got '{context.zsh_result}'"
-    )
+    assert context.zsh_result == expected, f"Expected '{expected}', got '{context.zsh_result}'"
 
 
 @then('every VM compose file should have container_name starting with "vde-"')
@@ -375,7 +367,7 @@ def step_all_container_names_prefixed(context):
         if not compose.exists():
             continue  # VM not created yet; only check existing compose files
         text = compose.read_text()
-        m = re.search(r'container_name:\s*(\S+)', text)
+        m = re.search(r"container_name:\s*(\S+)", text)
         if not m:
             errors.append(f"{vm}: no container_name in compose file")
         elif not m.group(1).startswith("vde-"):
@@ -434,7 +426,8 @@ def step_vde_file_exists(context, rel_path):
 # Error-path steps
 # =============================================================================
 
-@then('the exit code should not be 0')
+
+@then("the exit code should not be 0")
 def step_exit_code_nonzero(context):
     assert context.command_exit_code != 0, (
         f"Expected non-zero exit code, got 0\nOutput:\n{context.command_output}"
@@ -462,7 +455,9 @@ source "{LIB_DIR}/vde-shell-compat" 2>/dev/null || source "{LIB_DIR}/vm-common" 
 def _zsh_compat(script: str, timeout: int = 10) -> subprocess.CompletedProcess:
     return subprocess.run(
         ["zsh", "-c", _SHELL_COMPAT_INIT + "\n" + script],
-        capture_output=True, text=True, timeout=timeout
+        capture_output=True,
+        text=True,
+        timeout=timeout,
     )
 
 
@@ -475,9 +470,9 @@ def step_new_assoc_array(context, arr_name):
 def step_key_preset(context, key, value, arr_name):
     r = _zsh_compat(f'_assoc_init "{arr_name}"; _assoc_set "{arr_name}" "{key}" "{value}"')
     assert r.returncode == 0, f"_assoc_set failed: {r.stderr}"
-    if not hasattr(context, 'assoc_array'):
+    if not hasattr(context, "assoc_array"):
         context.assoc_array = arr_name
-    if not hasattr(context, 'assoc_presets'):
+    if not hasattr(context, "assoc_presets"):
         context.assoc_presets = []
     context.assoc_presets.append((arr_name, key, value))
 
@@ -485,10 +480,8 @@ def step_key_preset(context, key, value, arr_name):
 @when('I set key "{key}" to value "{value}" in "{arr_name}"')
 def step_assoc_set(context, key, value, arr_name):
     # Build init + all preset sets + this set
-    presets = getattr(context, 'assoc_presets', [])
-    preset_cmds = "".join(
-        f'_assoc_set "{a}" "{k}" "{v}"\n' for a, k, v in presets
-    )
+    presets = getattr(context, "assoc_presets", [])
+    preset_cmds = "".join(f'_assoc_set "{a}" "{k}" "{v}"\n' for a, k, v in presets)
     r = _zsh_compat(
         f'_assoc_init "{arr_name}"\n{preset_cmds}'
         f'_assoc_set "{arr_name}" "{key}" "{value}"\n'
@@ -499,21 +492,18 @@ def step_assoc_set(context, key, value, arr_name):
     context.last_set_arr = arr_name
     context.last_set_value = value
     # Track all sets for multi-step scenarios
-    if not hasattr(context, 'assoc_sets'):
+    if not hasattr(context, "assoc_sets"):
         context.assoc_sets = []
     context.assoc_sets.append((arr_name, key, value))
 
 
 @then('getting key "{key}" from "{arr_name}" should return "{expected}"')
 def step_assoc_get_expected(context, key, arr_name, expected):
-    sets = getattr(context, 'assoc_sets', [])
-    presets = getattr(context, 'assoc_presets', [])
+    sets = getattr(context, "assoc_sets", [])
+    presets = getattr(context, "assoc_presets", [])
     all_sets = presets + sets
     set_cmds = "".join(f'_assoc_set "{a}" "{k}" "{v}"\n' for a, k, v in all_sets)
-    r = _zsh_compat(
-        f'_assoc_init "{arr_name}"\n{set_cmds}'
-        f'_assoc_get "{arr_name}" "{key}"'
-    )
+    r = _zsh_compat(f'_assoc_init "{arr_name}"\n{set_cmds}_assoc_get "{arr_name}" "{key}"')
     assert r.returncode == 0, f"_assoc_get failed: {r.stderr}"
     actual = r.stdout.strip()
     assert actual == expected, f"key '{key}': expected '{expected}', got '{actual}'"
@@ -521,24 +511,23 @@ def step_assoc_get_expected(context, key, arr_name, expected):
 
 @when('I check if key "{key}" exists in "{arr_name}"')
 def step_assoc_has_key_check(context, key, arr_name):
-    presets = getattr(context, 'assoc_presets', [])
+    presets = getattr(context, "assoc_presets", [])
     set_cmds = "".join(f'_assoc_set "{a}" "{k}" "{v}"\n' for a, k, v in presets)
     r = _zsh_compat(
-        f'_assoc_init "{arr_name}"\n{set_cmds}'
-        f'_assoc_has_key "{arr_name}" "{key}"; echo $?'
+        f'_assoc_init "{arr_name}"\n{set_cmds}_assoc_has_key "{arr_name}" "{key}"; echo $?'
     )
     assert r.returncode == 0, f"_assoc_has_key failed: {r.stderr}"
     context.has_key_result = r.stdout.strip()
 
 
-@then('the key existence check should return true')
+@then("the key existence check should return true")
 def step_key_exists_true(context):
     assert context.has_key_result == "0", (
         f"Expected key to exist (exit 0), got {context.has_key_result}"
     )
 
 
-@then('the key existence check should return false')
+@then("the key existence check should return false")
 def step_key_exists_false(context):
     assert context.has_key_result != "0", (
         f"Expected key not to exist (non-zero exit), got {context.has_key_result}"
@@ -547,12 +536,9 @@ def step_key_exists_false(context):
 
 @when('I clear "{arr_name}"')
 def step_assoc_clear(context, arr_name):
-    presets = getattr(context, 'assoc_presets', [])
+    presets = getattr(context, "assoc_presets", [])
     set_cmds = "".join(f'_assoc_set "{a}" "{k}" "{v}"\n' for a, k, v in presets)
-    r = _zsh_compat(
-        f'_assoc_init "{arr_name}"\n{set_cmds}'
-        f'_assoc_clear "{arr_name}"'
-    )
+    r = _zsh_compat(f'_assoc_init "{arr_name}"\n{set_cmds}_assoc_clear "{arr_name}"')
     assert r.returncode == 0, f"_assoc_clear failed: {r.stderr}"
     context.cleared_array = arr_name
     context.assoc_presets = []
@@ -560,10 +546,7 @@ def step_assoc_clear(context, arr_name):
 
 @then('key "{key}" should not exist in "{arr_name}"')
 def step_key_not_in_array(context, key, arr_name):
-    r = _zsh_compat(
-        f'_assoc_init "{arr_name}"\n'
-        f'_assoc_has_key "{arr_name}" "{key}"; echo $?'
-    )
+    r = _zsh_compat(f'_assoc_init "{arr_name}"\n_assoc_has_key "{arr_name}" "{key}"; echo $?')
     result = r.stdout.strip()
     assert result != "0", f"Key '{key}' should not exist in '{arr_name}' but it does"
 
@@ -572,12 +555,15 @@ def step_key_not_in_array(context, key, arr_name):
 # Cache-system steps (spec section 2.3, 2.4)
 # =============================================================================
 
-@when('VM types are loaded via the vde script')
+
+@when("VM types are loaded via the vde script")
 def step_load_vm_types(context):
     # Running any vde command triggers VM type loading and cache creation
     result = subprocess.run(
         [str(BIN_DIR / "list-vms"), "--all"],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
         env={**os.environ, "VDE_ROOT_DIR": str(VDE_ROOT)},
     )
     context.command_output = result.stdout + result.stderr
@@ -591,7 +577,7 @@ def step_rel_path_exists(context, rel_path):
     context.cache_path = full
 
 
-@when('I read the cache file')
+@when("I read the cache file")
 def step_read_cache_file(context):
     cache = VDE_ROOT / ".cache" / "vm-types.cache"
     assert cache.exists(), f"Cache file not found: {cache}"
@@ -628,7 +614,10 @@ def step_rel_path_is_dir(context, rel_path):
 # Service template rendering steps (spec section 5.2)
 # =============================================================================
 
-@when('I render the service template with NAME="{name}" SSH_PORT="{port}" SERVICE_PORT="{svc_port}"')
+
+@when(
+    'I render the service template with NAME="{name}" SSH_PORT="{port}" SERVICE_PORT="{svc_port}"'
+)
 def step_render_svc_template(context, name, port, svc_port):
     template = TEMPLATES_DIR / "compose-service.yml"
     assert template.exists(), f"Template not found: {template}"
@@ -637,8 +626,9 @@ def step_render_svc_template(context, name, port, svc_port):
         f'INSTALL_CMD "echo test" SERVICE_PORT "{svc_port}" 2>/dev/null'
     )
     assert r.returncode == 0, f"render_template failed: {r.stderr}"
-    lines = [ln for ln in r.stdout.splitlines()
-             if not re.match(r'^\d{4}-\d{2}-\d{2}|^\[INFO\]', ln)]
+    lines = [
+        ln for ln in r.stdout.splitlines() if not re.match(r"^\d{4}-\d{2}-\d{2}|^\[INFO\]", ln)
+    ]
     context.rendered_output = "\n".join(lines)
 
 
@@ -646,15 +636,14 @@ def step_render_svc_template(context, name, port, svc_port):
 # Permission policy steps (spec section 14.1)
 # =============================================================================
 
+
 @then('VDE directory "{rel_path}" should have permissions {octal}')
 def step_vde_dir_permissions(context, rel_path, octal):
     full = VDE_ROOT / rel_path
     assert full.is_dir(), f"Directory '{full}' does not exist"
     mode = oct(full.stat().st_mode & 0o777)
     expected = oct(int(octal, 8))
-    assert mode == expected, (
-        f"'{rel_path}' has permissions {mode}, expected {expected}"
-    )
+    assert mode == expected, f"'{rel_path}' has permissions {mode}, expected {expected}"
 
 
 @then('VDE SSH file "{filename}" should have permissions {octal}')
@@ -668,20 +657,18 @@ def step_vde_ssh_file_permissions(context, filename, octal):
         return
     mode = oct(full.stat().st_mode & 0o777)
     expected = oct(int(octal, 8))
-    assert mode == expected, (
-        f"'{filename}' has permissions {mode}, expected {expected}"
-    )
+    assert mode == expected, f"'{filename}' has permissions {mode}, expected {expected}"
 
 
 # =============================================================================
 # Network isolation steps (spec section 14.2)
 # =============================================================================
 
+
 @then('the Docker network "{network_name}" should exist')
 def step_docker_network_exists(context, network_name):
     r = subprocess.run(
-        ["docker", "network", "inspect", network_name],
-        capture_output=True, text=True, timeout=10
+        ["docker", "network", "inspect", network_name], capture_output=True, text=True, timeout=10
     )
     assert r.returncode == 0, (
         f"Docker network '{network_name}' does not exist.\n"
@@ -693,10 +680,10 @@ def step_docker_network_exists(context, network_name):
 def step_docker_network_is_bridge(context, network_name):
     r = subprocess.run(
         ["docker", "network", "inspect", network_name, "--format", "{{.Driver}}"],
-        capture_output=True, text=True, timeout=10
+        capture_output=True,
+        text=True,
+        timeout=10,
     )
     assert r.returncode == 0, f"Could not inspect network '{network_name}'"
     driver = r.stdout.strip()
-    assert driver == "bridge", (
-        f"Network '{network_name}' driver is '{driver}', expected 'bridge'"
-    )
+    assert driver == "bridge", f"Network '{network_name}' driver is '{driver}', expected 'bridge'"

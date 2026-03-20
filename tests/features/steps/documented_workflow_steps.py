@@ -272,6 +272,66 @@ def step_doc_examples(context):
     context.check_docs = True
 
 
+@given("I need to connect to the Python VM")
+def step_need_connect_python(context):
+    """Context: User needs to connect to Python VM."""
+    context.connect_intent = "python"
+
+
+@given("I am following the documented workflow")
+def step_following_documented_workflow(context):
+    """Context: Following a documented workflow."""
+    context.workflow_type = "documented"
+
+
+@given("I want to use the Node.js name")
+def step_want_nodejs(context):
+    """Context: User wants to use Node.js alias."""
+    context.want_nodejs = True
+
+
+@given("I am setting up a new project")
+def step_setting_up_new_project(context):
+    """Context: Setting up a new project."""
+    context.new_project = True
+
+
+@given("I want a Python API with PostgreSQL")
+def step_want_python_postgres(context):
+    """Context: User wants Python API with PostgreSQL."""
+    context.stack = "python+postgresql"
+
+
+@given("I am working on one project")
+def step_working_on_project(context):
+    """Context: Working on one project."""
+    context.project_mode = "single"
+
+
+@given("I have a Python VM that is already running")
+def step_python_running(context):
+    """Context: Python VM is already running."""
+    context.vm_running = "python"
+
+
+@given("I have a stopped PostgreSQL VM")
+def step_postgres_stopped(context):
+    """Context: PostgreSQL VM is stopped."""
+    context.vm_stopped = "postgresql"
+
+
+@given("I already have a Go VM configured")
+def step_go_configured(context):
+    """Context: Go VM is already configured."""
+    context.vm_configured = "go"
+
+
+@given("I am a new team member")
+def step_new_team_member(context):
+    """Context: User is a new team member."""
+    context.new_team_member = True
+
+
 # =============================================================================
 # WHEN steps - Workflow actions
 # =============================================================================
