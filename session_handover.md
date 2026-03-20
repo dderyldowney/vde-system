@@ -1,26 +1,29 @@
-# Session Handover - March 20, 2026 (Session 45)
+# Session Handover - March 20, 2026 (Session 46)
 
 ## Summary
 
-Fixed corrupted `configs/docker/python/docker-compose.yml` (root cause of TestWithContainer failures) and renamed `environment.py`'s `run_vde_command` to `test_vde_command` to avoid confusion with project's `run_vde_command`. **All tests passing**.
+Deleted 3 dead environment files (237 lines of dead code) that contained duplicate `run_vde_command` implementations. **All tests passing**.
 
 ---
 
-## Session 45 Accomplishments
+## Session 46 Accomplishments
 
-### 1. Fixed Corrupted docker-compose.yml
+### 1. Deleted Dead Environment Files
 
-**Problem:** TestWithContainer tests were failing inconsistently.
+**Problem:** Code bloat with unused files.
 
-**Root Cause:** `configs/docker/python/docker-compose.yml` was corrupted/truncated to only 4 lines (should be 45 lines).
+**Deleted (never loaded by behave):**
+- `tests/features/environment.e2e.py` - duplicate `run_vde_command`, 120s timeout
+- `tests/features/environment.integration.py` - duplicate `run_vde_command`, 60s timeout
+- `tests/features/environment.unit.py` - duplicate `run_vde_command`
 
-**Solution:** Restored from git: `git checkout HEAD -- configs/docker/python/docker-compose.yml`
+**Rationale:** Behave only auto-loads `environment.py`. These files were dead code.
 
-### 2. Renamed environment.py's run_vde_command
+### 2. Consolidated run_vde_command Implementations
 
-**Problem:** There are 6 different `run_vde_command` implementations in the project causing confusion.
-
-**Solution:** Renamed `environment.py`'s version to `test_vde_command` since it's testing-specific with different timeout defaults (60s vs 300s).
+**Remaining (2 active):**
+1. `vm_common.py:run_vde_command` - canonical, 300s timeout, used by all step files
+2. `environment.py:test_vde_command` - testing-specific, 60s timeout, for environment hooks
 
 ---
 
@@ -28,16 +31,17 @@ Fixed corrupted `configs/docker/python/docker-compose.yml` (root cause of TestWi
 
 ```
 Shell compat: 18/18 passing
-Python unit tests: 72/72 passing (including TestWithContainer 20/20)
-Parser/intent BDD: 58/58 passing
+Python unit tests: 72/72 passing
+Parser/intent BDD: 46/46 passing
 ```
 
 ---
 
-## Files Modified
+## Files Deleted
 
-- `configs/docker/python/docker-compose.yml` - restored from git
-- `tests/features/environment.py` - renamed `run_vde_command` → `test_vde_command`
+- `tests/features/environment.e2e.py` - dead code
+- `tests/features/environment.integration.py` - dead code
+- `tests/features/environment.unit.py` - dead code
 
 ---
 
