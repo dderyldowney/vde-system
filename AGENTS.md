@@ -39,6 +39,8 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 
 ## Core Mandates
 
+- **DRY Principle (MANDATORY - ALL CODE AND TESTS)**: ALL code, tests, scripts, configs MUST follow DRY. No duplicate logic, no copy-paste functions, no nearly-identical implementations. Create ONE generalized function with parameters instead of multiple similar functions. When consolidating code, **ELIMINATE duplicates - don't preserve them**. See `.kilocode/rules/dry_requirement.md` for full protocol.
+- **CODE REVIEW MANDATORY**: All code changes MUST be reviewed before commit. See Phase 4 workflow in `.kilocode/rules/workflow.md`.
 - **Sub-Agent Swarm Execution (MANDATORY)**: ALL work MUST use sub-agents, preferably in swarm form (parallel execution). Single-agent direct execution is forbidden except for trivial read-only queries. See `.kilocode/rules/subagent_mcp_mandate.md` for full protocol.
 - **MCP Server Utilization (PRIMARY)**: All agents MUST utilize connected MCP servers (e.g., `context7`, `github`, `redis`, `MCP_DOCKER`) as their PRIMARY interface. MCP services are ALWAYS preferred over local tools. Priority: MCP → Sub-Agents → Local CLI → Internal Tools.
 - **No Circular Delegation**: Only the **Main Agent** (Gemini CLI) is permitted to use the `generalist` sub-agent tool. Specialized sub-agents MUST NOT attempt to delegate tasks further or invoke the `generalist` tool. They must complete assigned tasks using their own specialized tools and context.
