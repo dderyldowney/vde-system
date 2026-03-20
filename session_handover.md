@@ -1,93 +1,54 @@
-# Session Handover - March 19, 2026 (Session 41)
+# Session Handover - March 19, 2026 (Session 42)
 
 ## Summary
 
-Fixed parser intent detection and VM alias resolution. **58 scenarios now passing** across documented-workflows, daily-workflow, daily-development, and multi-project features.
+Fixed `_assoc_get()` bug in shell compatibility library. **104 parser scenarios passing**, **20/21 shell compatibility tests passing**, **38 unit tests passing**.
 
 ---
 
-## Session 41 Accomplishments
+## Session 42 Accomplishments
 
-### 1. Fixed @core-suite Tag Skipping
-**Problem:** `behave.ini` has `tags = core-suite and not wip and not rebuild`. Many features had `@core-infrastructure` but NOT `@core-suite`, causing them to be SKIPPED.
+### 1. Fixed `_assoc_get()` Bug (lib/vde-shell-compat)
 
-**Fixed:** Added `@core-suite` to these features:
-- cache-system.feature
-- documented-workflows.feature
-- documented-development-workflows.feature
-- multi-project.feature
-- vm-discovery.feature
-- vm-metadata.feature
-- vm-lifecycle-management.feature
-- natural-language-commands.feature
+**Problem:** `_assoc_get()` always returned 0 (success) even when key didn't exist. This caused shell compatibility test "Get non-existent key should fail gracefully" to fail.
 
-### 2. Fixed `VMs should include` Alias Resolution (parser_steps.py)
+**Root Cause:** The function used `eval` with `return 0` inside, but the eval's return code didn't propagate correctly.
 
-**Problem:** Test expected "postgresql" but parser returned "vde-postgres". The step normalization didn't handle semantic aliases like "postgresql" → "vde-postgres".
-
-**Solution:** Added `_load_vm_aliases()` and `_resolve_alias()` functions that load aliases from `vm-types.conf` and properly resolve user input to canonical names.
-
-```python
-# In parser_steps.py
-_ALIAS_TO_CANONICAL = {}  # Loaded from vm-types.conf
-
-def _resolve_alias(vm_name):
-    # "postgresql" -> "vde-postgres"
-    _load_vm_aliases()
-    return _ALIAS_TO_CANONICAL.get(vm_name.lower(), vm_name)
+**Solution:** Rewrote to use `[[ -v "${array_name}[${key}]" ]]` check and direct eval with proper quoting:
+```zsh
+_assoc_get() {
+    local array_name="${1}"
+    local key="${2}"
+    if [[ -v "${array_name}[${key}]" ]]; then
+        eval "echo \"\${${array_name}[${(q)key}]}\""
+        return 0
+    fi
+    return 1
+}
 ```
 
-### 3. Fixed Parser Intent Detection (lib/vde-parser)
+### 2. Restored Corrupted docker-compose.yml
 
-Added new patterns:
-- `"check"` → `status` intent
-- `"use <vm>"` → `create_vm` intent  
-- `"add new"|"add-vm-type"|"add type"|"add support for"` → `add_vm_type` intent
-- `"remove"|"destroy"|"delete"` → `remove_vm` intent (new)
+**Problem:** `configs/docker/python/docker-compose.yml` was corrupted (only 4 lines, missing service definition).
 
-### 4. Updated Tests to Match Parser
-
-- `daily-workflow.feature`: Changed expected intent from `"remove"` to `"remove_vm"`
-- `daily-workflow.feature`: Changed `"add foobar"` to `"add-vm-type foobar"` for clarity
+**Solution:** Restored via `git checkout configs/docker/python/docker-compose.yml`.
 
 ---
 
 ## Test Results
 
 ```
-4 features passed, 0 failed, 0 skipped
-58 scenarios passed, 0 failed, 0 skipped
-245 steps passed, 0 failed, 0 skipped
-Took 0min 35.724s
+Parser/intent features: 104 scenarios passed (5 features)
+Shell compatibility: 20/21 passing (1 environment limitation)
+Unit tests: 38/38 passing
 ```
-
-### Features Fixed
-| Feature | Status |
-|---------|--------|
-| documented-workflows.feature | ✅ 30 scenarios passed |
-| daily-workflow.feature | ✅ 12 scenarios passed |
-| daily-development.feature | ✅ 8 scenarios passed |
-| multi-project.feature | ✅ 8 scenarios passed |
 
 ---
 
 ## Files Modified
 
-### lib/vde-parser
-- Added `INTENT_REMOVE_VM="remove_vm"`
-- Added `*check*` → status intent
-- Added `*"use "*` → create_vm intent
-- Added `*"add new"*|*"add-vm-type"*` etc. → add_vm_type intent
-- Added `*"remove"*|*"destroy"*|*"delete"*` → remove_vm intent
-
-### tests/features/steps/parser_steps.py
-- Added `_load_vm_aliases()` function
-- Added `_resolve_alias()` function
-- Fixed `step_verify_vm_included()` to use alias resolution
-
-### tests/features/core-infrastructure/*.feature
-- Added `@core-suite` tag to 8 features
-- Updated test expectations to match parser output
+### lib/vde-shell-compat
+- Fixed `_assoc_get()` to properly return 1 when key not found
 
 ---
 

@@ -138,12 +138,13 @@ _assoc_set() {
 _assoc_get() {
     local array_name="${1}"
     local key="${2}"
-    # Use eval with proper quoting for zsh compatibility
-    eval "if [[ -n \"\${${array_name}[${(q)key}]+_}\" ]]; then
-        eval \"echo \\\"\${${array_name}[${(q)key}]}\\\"\"
+    
+    # Check if key exists using -v (zsh)
+    if [[ -v "${array_name}[${key}]" ]]; then
+        eval "echo \"\${${array_name}[${(q)key}]}\""
         return 0
-    fi"
-    return ${VDE_ERR_GENERAL}
+    fi
+    return 1
 }
 
 # _assoc_keys - Get all keys from an associative array
