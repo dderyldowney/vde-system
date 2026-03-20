@@ -145,6 +145,7 @@ Feature: Daily Development Workflow
     And VMs should include "postgresql"
 
   @user-guide-more-languages
+  @requires-docker-host
   Scenario: Adding Cache Layer - Create Redis
     Given I have an existing Python and PostgreSQL stack
     When I parse "create redis"
@@ -152,6 +153,7 @@ Feature: Daily Development Workflow
     And VMs should include "redis"
 
   @user-guide-more-languages
+  @requires-docker-host
   Scenario: Adding Cache Layer - Start Redis
     Given I have an existing Python and PostgreSQL stack
     When I parse "start redis"

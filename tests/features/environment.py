@@ -31,6 +31,7 @@ if str(tests_dir_path) not in sys.path:
 try:
     from test_config_loader import get_behave_config
 except ImportError:
+
     def get_behave_config():
         return None
 
@@ -47,9 +48,9 @@ from config import VDE_ROOT, VDE_SSH_DIR
 _SSH_AGENT_PID = None
 
 # Parser library paths
-VDE_PARSER = os.path.join(VDE_ROOT, 'lib/vde-parser')
-VDE_VM_COMMON = os.path.join(VDE_ROOT, 'lib/vm-common')
-VDE_SHELL_COMPAT = os.path.join(VDE_ROOT, 'lib/vde-shell-compat')
+VDE_PARSER = os.path.join(VDE_ROOT, "lib/vde-parser")
+VDE_VM_COMMON = os.path.join(VDE_ROOT, "lib/vm-common")
+VDE_SHELL_COMPAT = os.path.join(VDE_ROOT, "lib/vde-shell-compat")
 
 
 def run_vde_command(command, timeout=60):
@@ -79,13 +80,16 @@ def run_vde_ps(args=None, timeout=30):
     cmd = ["zsh", vde_ps]
     if args:
         cmd.extend(args)
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=VDE_ROOT, env=env)
+    result = subprocess.run(
+        cmd, capture_output=True, text=True, timeout=timeout, cwd=VDE_ROOT, env=env
+    )
     return result
 
 
 # =============================================================================
 # PARSER TEST OPTIMIZATION: Persistent zsh process
 # =============================================================================
+
 
 def _read_until_prompt(proc, timeout=10):
     """Read output from persistent process until prompt."""
@@ -97,22 +101,22 @@ def _read_until_prompt(proc, timeout=10):
             if not char:
                 break
             output.append(char)
-            if char == '\n' and output:
-                if len(output) > 2 and output[-3] in ('$', '#'):
+            if char == "\n" and output:
+                if len(output) > 2 and output[-3] in ("$", "#"):
                     break
         else:
             if proc.poll() is not None:
                 break
         if len(output) > 10000:
             break
-    return ''.join(output)
+    return "".join(output)
 
 
 def _call_parser_function(context, function_name, input_string):
     """Call a vde-parser function in the persistent process."""
-    if not hasattr(context, '_parser_proc') or not context._parser_proc:
+    if not hasattr(context, "_parser_proc") or not context._parser_proc:
         raise RuntimeError("Parser process not initialized")
-    
+
     proc = context._parser_proc
     cmd = f'''
 export VDE_TEST_INPUT="{input_string}"
@@ -122,24 +126,24 @@ echo "$output"
     proc.stdin.write(cmd)
     proc.stdin.flush()
     output = _read_until_prompt(proc)
-    
-    lines = [line.strip() for line in output.strip().split('\n') if line.strip()]
+
+    lines = [line.strip() for line in output.strip().split("\n") if line.strip()]
     output_lines = []
     for line in lines:
-        if line.startswith('[') or ' -0500' in line or line.startswith('20'):
+        if line.startswith("[") or " -0500" in line or line.startswith("20"):
             continue
-        if '=' in line and "'" in line:
+        if "=" in line and "'" in line:
             continue
         output_lines.append(line)
-    
-    return '\n'.join(output_lines), 0
+
+    return "\n".join(output_lines), 0
 
 
 # Expose to step modules via module-level function
 def get_parser_helper():
     """Return parser helper functions for use in steps."""
     return {
-        '_call_parser_function': _call_parser_function,
+        "_call_parser_function": _call_parser_function,
     }
 
 
@@ -147,11 +151,12 @@ def get_parser_helper():
 # STANDARD HOOKS
 # =============================================================================
 
+
 def _backup_vde_ssh_dir():
     """Copy VDE_SSH_DIR to a temp dir. Returns temp dir path or None."""
     if VDE_SSH_DIR.exists():
-        tmpdir = tempfile.mkdtemp(prefix='vde_ssh_backup_')
-        shutil.copytree(str(VDE_SSH_DIR), os.path.join(tmpdir, 'vde'), symlinks=True)
+        tmpdir = tempfile.mkdtemp(prefix="vde_ssh_backup_")
+        shutil.copytree(str(VDE_SSH_DIR), os.path.join(tmpdir, "vde"), symlinks=True)
         return tmpdir
     return None
 
@@ -160,7 +165,7 @@ def _restore_vde_ssh_dir(backup_tmpdir):
     """Restore VDE_SSH_DIR from backup temp dir and remove temp dir."""
     if backup_tmpdir is None:
         return
-    backup = Path(backup_tmpdir) / 'vde'
+    backup = Path(backup_tmpdir) / "vde"
     if VDE_SSH_DIR.exists():
         shutil.rmtree(str(VDE_SSH_DIR))
     if backup.exists():
@@ -169,23 +174,22 @@ def _restore_vde_ssh_dir(backup_tmpdir):
     shutil.rmtree(backup_tmpdir, ignore_errors=True)
 
 
-
 def _backup_configs_dir():
     """Snapshot configs/, env-files/, and data/vm-types.json into a temp dir.
 
     Returns the temp dir path or None.
     """
-    configs_dir = Path(VDE_ROOT) / 'configs'
+    configs_dir = Path(VDE_ROOT) / "configs"
     if not configs_dir.exists():
         return None
-    tmpdir = tempfile.mkdtemp(prefix='vde_configs_backup_')
-    shutil.copytree(str(configs_dir), os.path.join(tmpdir, 'configs'), symlinks=True)
-    env_files_dir = Path(VDE_ROOT) / 'env-files'
+    tmpdir = tempfile.mkdtemp(prefix="vde_configs_backup_")
+    shutil.copytree(str(configs_dir), os.path.join(tmpdir, "configs"), symlinks=True)
+    env_files_dir = Path(VDE_ROOT) / "env-files"
     if env_files_dir.exists():
-        shutil.copytree(str(env_files_dir), os.path.join(tmpdir, 'env-files'), symlinks=True)
-    vm_types_json = Path(VDE_ROOT) / 'data' / 'vm-types.json'
+        shutil.copytree(str(env_files_dir), os.path.join(tmpdir, "env-files"), symlinks=True)
+    vm_types_json = Path(VDE_ROOT) / "data" / "vm-types.json"
     if vm_types_json.exists():
-        shutil.copy2(str(vm_types_json), os.path.join(tmpdir, 'vm-types.json'))
+        shutil.copy2(str(vm_types_json), os.path.join(tmpdir, "vm-types.json"))
     return tmpdir
 
 
@@ -200,11 +204,15 @@ def _merge_restore_dir(backup_parent, subdir_name, live_dir):
     if not backup.exists():
         return
     if live_dir.exists():
-        backup_files = {f.relative_to(backup) for f in backup.rglob('*') if f.is_file()}
-        current_files = {f.relative_to(live_dir) for f in live_dir.rglob('*') if f.is_file()}
+        backup_files = {f.relative_to(backup) for f in backup.rglob("*") if f.is_file()}
+        current_files = {f.relative_to(live_dir) for f in live_dir.rglob("*") if f.is_file()}
         for rel in current_files - backup_files:
             # Never delete canonical VDE env files — project config, not test artifacts
-            if subdir_name == 'env-files' and str(rel).startswith('vde-') and str(rel).endswith('.env'):
+            if (
+                subdir_name == "env-files"
+                and str(rel).startswith("vde-")
+                and str(rel).endswith(".env")
+            ):
                 continue
             target = live_dir / rel
             target.unlink(missing_ok=True)
@@ -225,11 +233,11 @@ def _restore_configs_dir(backup_tmpdir):
     if backup_tmpdir is None:
         return
     backup_parent = Path(backup_tmpdir)
-    _merge_restore_dir(backup_parent, 'configs', Path(VDE_ROOT) / 'configs')
-    _merge_restore_dir(backup_parent, 'env-files', Path(VDE_ROOT) / 'env-files')
-    vm_types_backup = backup_parent / 'vm-types.json'
+    _merge_restore_dir(backup_parent, "configs", Path(VDE_ROOT) / "configs")
+    _merge_restore_dir(backup_parent, "env-files", Path(VDE_ROOT) / "env-files")
+    vm_types_backup = backup_parent / "vm-types.json"
     if vm_types_backup.exists():
-        shutil.copy2(str(vm_types_backup), str(Path(VDE_ROOT) / 'data' / 'vm-types.json'))
+        shutil.copy2(str(vm_types_backup), str(Path(VDE_ROOT) / "data" / "vm-types.json"))
     shutil.rmtree(backup_tmpdir, ignore_errors=True)
 
 
@@ -283,9 +291,11 @@ def before_feature(context, feature):
         os.environ["VDE_NETWORK"] = "vde-testing"
         result = run_vde_ps(["-a", "-q"])
         if result.returncode == 0:
-            containers = [c.strip() for c in result.stdout.split('\n') if c.strip()]
+            containers = [c.strip() for c in result.stdout.split("\n") if c.strip()]
             for container in containers:
-                vm_name = container.replace("vde-", "") if container.startswith("vde-") else container
+                vm_name = (
+                    container.replace("vde-", "") if container.startswith("vde-") else container
+                )
                 run_vde_command(f"remove {vm_name}", timeout=30)
         run_vde_command("init --networks-only --testing", timeout=30)
         return
@@ -304,10 +314,7 @@ def before_feature(context, feature):
 def _docker_host_available() -> bool:
     """Return True if a Docker daemon is reachable via vde info."""
     try:
-        r = subprocess.run(
-            ["./bin/vde", "info"],
-            capture_output=True, timeout=10, cwd=VDE_ROOT
-        )
+        r = subprocess.run(["./bin/vde", "info"], capture_output=True, timeout=10, cwd=VDE_ROOT)
         available = r.returncode == 0
         if not available:
             print(f"[DEBUG] Docker not available. RC: {r.returncode}, Stderr: {r.stderr}")
@@ -321,8 +328,7 @@ def _get_running_vde_containers() -> list:
     """Return list of currently running vde-* container names via vde ps."""
     try:
         r = subprocess.run(
-            ["./bin/vde", "ps", "-q"],
-            capture_output=True, text=True, timeout=15, cwd=VDE_ROOT
+            ["./bin/vde", "ps", "-q"], capture_output=True, text=True, timeout=15, cwd=VDE_ROOT
         )
         return [c.strip() for c in r.stdout.splitlines() if c.strip()]
     except Exception:
@@ -334,8 +340,12 @@ def _stop_containers(container_names: list) -> None:
     for name in container_names:
         try:
             vm_name = name.replace("vde-", "")
-            subprocess.run(["./bin/vde", "stop", vm_name, "-f"], capture_output=True, timeout=30, cwd=VDE_ROOT)
-            subprocess.run(["./bin/vde", "remove", vm_name], capture_output=True, timeout=15, cwd=VDE_ROOT)
+            subprocess.run(
+                ["./bin/vde", "stop", vm_name, "-f"], capture_output=True, timeout=30, cwd=VDE_ROOT
+            )
+            subprocess.run(
+                ["./bin/vde", "remove", vm_name], capture_output=True, timeout=15, cwd=VDE_ROOT
+            )
         except Exception:
             pass
 
@@ -357,7 +367,7 @@ def before_scenario(context, scenario):
     if "requires-docker-host" in scenario.effective_tags:
         print(f"[SETUP] Gracefully stopping all VMs for scenario: {scenario.name}")
         # Clean up port squatters if any
-        if hasattr(context, 'squatters'):
+        if hasattr(context, "squatters"):
             for s in context.squatters:
                 try:
                     s.close()
@@ -367,35 +377,38 @@ def before_scenario(context, scenario):
 
         # Use shutdown-all to be graceful and fast
         subprocess.run(["./bin/vde", "stop", "all", "-f"], cwd=VDE_ROOT, capture_output=True)
-        
+
         context._containers_before_scenario = _get_running_vde_containers()
+        context._docker_cleanup_needed = True
+    else:
+        context._docker_cleanup_needed = False
 
     # Backup ~/.ssh/vde/ before SSH scenarios so they can't bleed state
-    if any(t in scenario.effective_tags for t in ('requires-docker-ssh', 'requires-ssh-agent')):
+    if any(t in scenario.effective_tags for t in ("requires-docker-ssh", "requires-ssh-agent")):
         context._vde_ssh_backup = _backup_vde_ssh_dir()
     else:
         context._vde_ssh_backup = None
 
     # Check if this is a parser test (unit test)
-    if hasattr(scenario, 'feature') and hasattr(scenario.feature, 'tags'):
-        if '@unit' in scenario.feature.tags:
+    if hasattr(scenario, "feature") and hasattr(scenario.feature, "tags"):
+        if "@unit" in scenario.feature.tags:
             # Start persistent zsh for parser tests
             env = os.environ.copy()
-            env['VDE_LOG_LEVEL'] = 'ERROR'
-            
-            init_cmd = f'''
+            env["VDE_LOG_LEVEL"] = "ERROR"
+
+            init_cmd = f"""
 source {VDE_SHELL_COMPAT}
 source {VDE_VM_COMMON}
 source {VDE_PARSER}
-'''
+"""
             context._parser_proc = subprocess.Popen(
-                ['zsh'],
+                ["zsh"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 env=env,
                 text=True,
-                bufsize=1
+                bufsize=1,
             )
             context._parser_proc.stdin.write(init_cmd)
             context._parser_proc.stdin.flush()
@@ -405,7 +418,7 @@ source {VDE_PARSER}
 def after_scenario(context, scenario):
     """Cleanup parser process and SSH config test state."""
     # Clean up port squatters if any
-    if hasattr(context, 'squatters'):
+    if hasattr(context, "squatters"):
         for s in context.squatters:
             try:
                 s.close()
@@ -414,43 +427,48 @@ def after_scenario(context, scenario):
         context.squatters = []
 
     # Restore any compose file backup left by the invalid-YAML scenario
-    compose_backup = getattr(context, '_compose_backup', None)
-    compose_path = getattr(context, '_compose_path', None)
+    compose_backup = getattr(context, "_compose_backup", None)
+    compose_path = getattr(context, "_compose_path", None)
     if compose_backup and Path(compose_backup).exists():
         if compose_path and Path(compose_path).exists():
             Path(compose_path).unlink()
         Path(compose_backup).rename(compose_path)
 
     # Restore ~/.ssh/vde/ from backup (SSH scenario isolation)
-    _restore_vde_ssh_dir(getattr(context, '_vde_ssh_backup', None))
+    _restore_vde_ssh_dir(getattr(context, "_vde_ssh_backup", None))
     context._vde_ssh_backup = None
 
     # Remove test artifacts from public-ssh-keys/ to prevent cross-scenario pollution
     pub_keys_dir = Path(VDE_ROOT) / "public-ssh-keys"
     if pub_keys_dir.exists():
         for f in pub_keys_dir.iterdir():
-            if f.is_file() and f.name not in ('.keep', '.gitignore') and not f.name.startswith('vde_'):
+            if (
+                f.is_file()
+                and f.name not in (".keep", ".gitignore")
+                and not f.name.startswith("vde_")
+            ):
                 f.unlink(missing_ok=True)
 
-    # Stop containers created during @requires-docker-host scenarios
-    if "requires-docker-host" in scenario.effective_tags and _docker_host_available():
-        before = getattr(context, '_containers_before_scenario', [])
+    # Stop containers created during the scenario
+    if getattr(context, "_docker_cleanup_needed", False) and _docker_host_available():
+        before = getattr(context, "_containers_before_scenario", [])
         after = _get_running_vde_containers()
         created_by_test = [c for c in after if c not in before]
         if created_by_test:
             _stop_containers(created_by_test)
 
     # Clean up temporarily added VM types (from vm_lifecycle_steps)
-    if getattr(context, '_temp_vm_types', None):
+    if getattr(context, "_temp_vm_types", None):
         try:
             from vm_lifecycle_steps import _cleanup_temp_vm_types
+
             _cleanup_temp_vm_types(context)
         except Exception:
             pass
 
-    if hasattr(context, '_parser_proc') and context._parser_proc:
+    if hasattr(context, "_parser_proc") and context._parser_proc:
         try:
-            context._parser_proc.stdin.write('exit\n')
+            context._parser_proc.stdin.write("exit\n")
             context._parser_proc.stdin.flush()
             context._parser_proc.terminate()
             context._parser_proc.wait(timeout=5)
@@ -461,14 +479,16 @@ def after_scenario(context, scenario):
 def after_feature(context, feature):
     """Stop all VDE containers after any feature that required Docker."""
     if "user-guide-installation" in feature.tags or "user-guide-internal" in feature.tags:
-        _restore_configs_dir(getattr(context, '_configs_backup', None))
+        _restore_configs_dir(getattr(context, "_configs_backup", None))
         context._configs_backup = None
         print(f"[TEARDOWN] {feature.name} — configs/ restored")
 
     if "requires-docker-host" in feature.tags and _docker_host_available():
         running = _get_running_vde_containers()
         if running:
-            print(f"[TEARDOWN] Stopping {len(running)} VDE container(s) after feature: {feature.name}")
+            print(
+                f"[TEARDOWN] Stopping {len(running)} VDE container(s) after feature: {feature.name}"
+            )
             _stop_containers(running)
 
 
