@@ -1,194 +1,324 @@
 """
-Shell command execution helpers for VDE container testing.
+VDE helper functions for BDD tests.
 
-This module provides utilities for executing shell commands within VDE containers
-and verifying their outputs. All functions perform REAL command execution using
-subprocess.run() with actual VDE commands via the vde CLI.
+Provides:
+- execute_in_container() - run commands in containers (shell or raw mode)
+- Container verification functions
+- VM naming utilities
+
+All functions use actual VDE CLI commands via subprocess. NO fake tests.
 """
 
 import os
 import subprocess
+import time
+import json
 from typing import Dict, Any, Optional, List
+
+
+class DockerVerificationError(Exception):
+    """Raised when VDE verification fails."""
+
+    pass
 
 
 def _get_vde_root() -> str:
     """Get the VDE root directory."""
-    return os.environ.get("VDE_ROOT_DIR", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+    return os.environ.get(
+        "VDE_ROOT_DIR",
+        os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        ),
+    )
 
 
-def _run_vde_command(args: List[str], timeout: int = 30, check: bool = False) -> subprocess.CompletedProcess:
-    """Run a vde command and return the result.
-    
-    Args:
-        args: Arguments to pass to vde command
-        timeout: Command timeout in seconds
-        check: Whether to raise on non-zero exit
-        
-    Returns:
-        CompletedProcess result
-    """
+def _run_vde_command(
+    args: List[str], timeout: int = 30, check: bool = False
+) -> subprocess.CompletedProcess:
+    """Run a vde command and return the result."""
     vde_root = _get_vde_root()
     vde_script = os.path.join(vde_root, "bin", "vde")
-    
     cmd = [vde_script] + args
     return subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        check=check,
-        cwd=vde_root
+        cmd, capture_output=True, text=True, timeout=timeout, check=check, cwd=vde_root
     )
+
+
+def _run_vde_ps(args: List[str], timeout: int = 10) -> subprocess.CompletedProcess:
+    """Run vde ps command."""
+    vde_root = _get_vde_root()
+    vde_script = os.path.join(vde_root, "bin", "vde")
+    cmd = [vde_script, "ps"] + args
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=vde_root)
 
 
 def execute_in_container(
-    container_name: str,
-    command: str,
-    timeout: int = 30
+    container_name: str, command: str, timeout: int = 30, use_shell: bool = True
 ) -> Dict[str, Any]:
     """
-    Execute a shell command inside a VDE container using vde exec.
-    
+    Execute a command inside a VDE container using vde exec.
+
     Args:
-        container_name: Name of the container (with or without vde- prefix)
-        command: Shell command to execute
+        container_name: Name of the container
+        command: Command to execute (string, will be split if use_shell=False)
         timeout: Command timeout in seconds (default: 30)
-    
+        use_shell: If True, run via 'sh -c' (shell interpretation).
+                   If False, run command directly (no shell).
+
     Returns:
-        Dict containing:
-            - stdout: Command standard output (str)
-            - stderr: Command standard error (str)
-            - returncode: Command exit code (int)
-    
-    Raises:
-        subprocess.TimeoutExpired: If command exceeds timeout
-        RuntimeError: If vde exec command fails to start
-    
-    Example:
+        Dict with 'stdout', 'stderr', 'returncode'
+
+    Example (shell mode):
         result = execute_in_container("python", "python --version")
-        if result['returncode'] == 0:
-            print(f"Python version: {result['stdout']}")
+        result = execute_in_container("python", "echo $HOME")
+
+    Example (raw mode):
+        result = execute_in_container("python", "python --version", use_shell=False)
     """
     try:
-        result = _run_vde_command(
-            ["exec", container_name, "sh", "-c", command],
-            timeout=timeout,
-            check=False
-        )
-        
-        return {
-            'stdout': result.stdout,
-            'stderr': result.stderr,
-            'returncode': result.returncode
-        }
+        if use_shell:
+            cmd_args = ["exec", container_name, "sh", "-c", command]
+        else:
+            cmd_args = ["exec", container_name] + command.split()
+        result = _run_vde_command(cmd_args, timeout=timeout, check=False)
+        return {"stdout": result.stdout, "stderr": result.stderr, "returncode": result.returncode}
     except subprocess.TimeoutExpired as e:
-        raise subprocess.TimeoutExpired(
-            cmd=["vde", "exec", container_name, "sh", "-c", command],
-            timeout=timeout,
-            output=e.output,
-            stderr=e.stderr
-        )
-    except Exception as e:
-        raise RuntimeError(
-            f"Failed to execute command in container '{container_name}': {e}"
-        )
+        return {"stdout": "", "stderr": str(e), "returncode": -1}
 
 
 def verify_command_output(
-    container_name: str,
-    command: str,
-    expected_output: str,
-    timeout: int = 30
+    container_name: str, command: str, expected_output: str, timeout: int = 30
 ) -> bool:
-    """
-    Execute a command in a container and verify its output contains expected string.
-    
-    Args:
-        container_name: Name of the container (with or without vde- prefix)
-        command: Shell command to execute
-        expected_output: String that should be present in stdout
-        timeout: Command timeout in seconds (default: 30)
-    
-    Returns:
-        True if expected_output is found in stdout, False otherwise
-    
-    Raises:
-        subprocess.TimeoutExpired: If command exceeds timeout
-        RuntimeError: If vde exec command fails to start
-    
-    Example:
-        if verify_command_output("python", "python --version", "Python 3"):
-            print("Python 3 is installed")
-    """
+    """Execute a command and verify its output contains expected string."""
     result = execute_in_container(container_name, command, timeout)
-    
-    if result['returncode'] != 0:
-        return False
-    
-    return expected_output in result['stdout']
+    return result["returncode"] == 0 and expected_output in result["stdout"]
 
 
-def verify_file_exists_in_container(
-    container_name: str,
-    file_path: str
-) -> bool:
-    """
-    Verify that a file exists inside a VDE container.
-    
-    Args:
-        container_name: Name of the container (with or without vde- prefix)
-        file_path: Absolute path to the file inside the container
-    
-    Returns:
-        True if file exists, False otherwise
-    
-    Raises:
-        RuntimeError: If vde exec command fails to start
-    
-    Example:
-        if verify_file_exists_in_container("python", "/usr/bin/python3"):
-            print("Python3 binary exists")
-    """
-    # Use test -f to check if file exists (returns 0 if exists, 1 if not)
-    result = execute_in_container(
-        container_name,
-        f"test -f {file_path}",
-        timeout=10
-    )
-    
-    return result['returncode'] == 0
+def verify_file_exists_in_container(container_name: str, file_path: str) -> bool:
+    """Verify that a file exists inside a VDE container."""
+    result = execute_in_container(container_name, f"test -f {file_path}", timeout=10)
+    return result["returncode"] == 0
 
 
-def get_container_env_var(
-    container_name: str,
-    var_name: str
-) -> Optional[str]:
-    """
-    Get the value of an environment variable from a VDE container.
-    
-    Args:
-        container_name: Name of the container (with or without vde- prefix)
-        var_name: Name of the environment variable
-    
-    Returns:
-        Value of the environment variable, or None if not set
-    
-    Raises:
-        RuntimeError: If vde exec command fails to start
-    
-    Example:
-        path = get_container_env_var("python", "PATH")
-        if path:
-            print(f"Container PATH: {path}")
-    """
-    result = execute_in_container(
-        container_name,
-        f"printenv {var_name}",
-        timeout=10
-    )
-    
-    if result['returncode'] != 0:
+def get_container_env_var(container_name: str, var_name: str) -> Optional[str]:
+    """Get the value of an environment variable from a VDE container."""
+    result = execute_in_container(container_name, f"printenv {var_name}", timeout=10)
+    if result["returncode"] != 0:
         return None
-    
-    # Strip trailing newline from printenv output
-    return result['stdout'].strip()
+    return result["stdout"].strip()
+
+
+# =============================================================================
+# Container Verification Functions (from docker_helpers)
+# =============================================================================
+
+
+def verify_container_running(container_name: str) -> Dict[str, str]:
+    """Verify that a container is running using `vde ps`."""
+    try:
+        result = _run_vde_ps(["--json", "--filter", f"name={container_name}"])
+        if result.returncode != 0:
+            raise DockerVerificationError(f"vde ps command failed: {result.stderr}")
+        output = result.stdout.strip()
+        if not output or output == "[]":
+            raise DockerVerificationError(f"Container '{container_name}' is not running")
+        containers = json.loads(output)
+        if not containers:
+            raise DockerVerificationError(f"Container '{container_name}' is not running")
+        c = containers[0]
+        return {
+            "ID": c.get("id", ""),
+            "Image": c.get("image", ""),
+            "Status": c.get("status", ""),
+            "Names": c.get("name", ""),
+        }
+    except subprocess.TimeoutExpired as e:
+        raise DockerVerificationError(f"vde ps command timed out: {e}")
+    except json.JSONDecodeError as e:
+        raise DockerVerificationError(f"Failed to parse vde ps output: {e}")
+
+
+def verify_container_state(container_name: str, expected_state: str) -> Dict[str, Any]:
+    """Verify container state using `vde inspect`."""
+    try:
+        result = _run_vde_command(["inspect", container_name, "--state"])
+        if result.returncode != 0:
+            raise DockerVerificationError(f"vde inspect command failed: {result.stderr}")
+        state_info = json.loads(result.stdout.strip())
+        actual_state = state_info.get("Status", "").lower()
+        if actual_state != expected_state.lower():
+            raise DockerVerificationError(
+                f"Container '{container_name}' state is '{actual_state}', expected '{expected_state}'"
+            )
+        return state_info
+    except subprocess.TimeoutExpired as e:
+        raise DockerVerificationError(f"vde inspect command timed out: {e}")
+    except json.JSONDecodeError as e:
+        raise DockerVerificationError(f"Failed to parse vde inspect output: {e}")
+
+
+def get_container_port(container_name: str, internal_port: int) -> int:
+    """Get the host port mapped to a container's internal port."""
+    try:
+        result = _run_vde_command(["port", container_name, str(internal_port)])
+        if result.returncode != 0:
+            raise DockerVerificationError(f"vde port command failed: {result.stderr}")
+        output = result.stdout.strip()
+        if not output:
+            raise DockerVerificationError(
+                f"No port mapping found for '{container_name}' port {internal_port}"
+            )
+        return int(output.split(":")[-1])
+    except subprocess.TimeoutExpired as e:
+        raise DockerVerificationError(f"vde port command timed out: {e}")
+
+
+def verify_container_network(container_name: str, network_name: str) -> Dict[str, Any]:
+    """Verify that a container is attached to a specific network."""
+    try:
+        result = _run_vde_command(["inspect", container_name, "--network"])
+        if result.returncode != 0:
+            raise DockerVerificationError(f"vde inspect command failed: {result.stderr}")
+        networks_data = json.loads(result.stdout.strip())
+        networks = networks_data.get("Networks", networks_data)
+        if network_name not in networks:
+            available = ", ".join(networks.keys()) if networks else "none"
+            raise DockerVerificationError(
+                f"Container '{container_name}' is not on network '{network_name}'. Available: {available}"
+            )
+        return networks[network_name]
+    except subprocess.TimeoutExpired as e:
+        raise DockerVerificationError(f"vde inspect command timed out: {e}")
+    except json.JSONDecodeError as e:
+        raise DockerVerificationError(f"Failed to parse vde inspect output: {e}")
+
+
+def wait_for_container_healthy(container_name: str, timeout: int = 30) -> Dict[str, Any]:
+    """Poll container health status using `vde inspect` until healthy or timeout."""
+    start_time = time.time()
+    last_status = None
+    while time.time() - start_time < timeout:
+        try:
+            result = _run_vde_command(["inspect", container_name, "--health"], timeout=5)
+            if result.returncode != 0:
+                raise DockerVerificationError(f"vde inspect failed: {result.stderr}")
+            output = result.stdout.strip()
+            if output == "<no value>" or output == "null" or not output:
+                raise DockerVerificationError(f"Container '{container_name}' has no healthcheck")
+            health_info = json.loads(output)
+            last_status = health_info.get("Status", "unknown")
+            if last_status == "healthy":
+                return health_info
+            time.sleep(1)
+        except subprocess.TimeoutExpired:
+            continue
+        except json.JSONDecodeError as e:
+            raise DockerVerificationError(f"Failed to parse vde inspect output: {e}")
+    elapsed = time.time() - start_time
+    raise DockerVerificationError(
+        f"Container '{container_name}' did not become healthy within {timeout}s "
+        f"(last status: {last_status}, elapsed: {elapsed:.1f}s)"
+    )
+
+
+def verify_container_stopped(container_name: str) -> bool:
+    """Verify container is not running (stopped or removed)."""
+    try:
+        result = _run_vde_ps(["--json", "--filter", f"name={container_name}"])
+        output = result.stdout.strip()
+        if not output or output == "[]":
+            return True
+        containers = json.loads(output)
+        return len(containers) == 0
+    except subprocess.TimeoutExpired as e:
+        raise DockerVerificationError(f"vde ps command timed out: {e}")
+    except json.JSONDecodeError as e:
+        raise DockerVerificationError(f"Failed to parse vde ps output: {e}")
+
+
+def cleanup_test_container(container_name: str) -> bool:
+    """Safely remove a test container using vde remove."""
+    try:
+        result = _run_vde_command(["remove", container_name], timeout=10, check=False)
+        return result.returncode == 0
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return False
+
+
+def list_containers(all_containers: bool = False) -> List[str]:
+    """List VDE container names using vde ps."""
+    try:
+        args = ["-q"]
+        if all_containers:
+            args.append("-a")
+        result = _run_vde_ps(args)
+        if result.returncode != 0:
+            return []
+        return [line.strip() for line in result.stdout.strip().split("\n") if line.strip()]
+    except Exception:
+        return []
+
+
+def container_exists(container_name: str) -> bool:
+    """Check if a container exists (running or stopped) using vde ps."""
+    try:
+        result = _run_vde_ps(["-a", "-q", "--filter", f"name={container_name}"])
+        return container_name in result.stdout or f"vde-{container_name}" in result.stdout
+    except Exception:
+        return False
+
+
+# =============================================================================
+# VM Naming Utilities (consolidated from vm_naming_helpers)
+# =============================================================================
+
+SERVICE_VMS = frozenset(
+    {
+        "postgres",
+        "redis",
+        "mongodb",
+        "mysql",
+        "nginx",
+        "rabbitmq",
+        "couchdb",
+    }
+)
+
+ALL_SERVICE_VMS = frozenset(
+    {
+        "postgres",
+        "redis",
+        "mongodb",
+        "mysql",
+        "nginx",
+        "rabbitmq",
+        "couchdb",
+    }
+)
+
+
+def _get_container_name(vm_name: str) -> str:
+    """Convert VM name to container name."""
+    return f"vde-{vm_name}"
+
+
+def _get_vm_name(container_name: str) -> str:
+    """Convert container name back to VM name."""
+    if container_name.startswith("vde-"):
+        return container_name[4:]
+    return container_name
+
+
+def is_service_vm(vm_name: str) -> bool:
+    """Check if VM is a service VM."""
+    return vm_name in SERVICE_VMS
+
+
+def is_language_vm(vm_name: str) -> bool:
+    """Check if VM is a language VM."""
+    return vm_name not in SERVICE_VMS
+
+
+def normalize_vm_name(vm_name: str) -> str:
+    """Normalize VM name to container name."""
+    return _get_container_name(vm_name)

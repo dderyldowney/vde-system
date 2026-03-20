@@ -1,71 +1,62 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-20T18:15:00-04:00
-**Session Focus:** HARDCODE STREAMLINING - deleted dead files, consolidated SSH steps
+**Last Updated:** 2026-03-20T19:30:00-04:00
+**Session Focus:** HELPER CONSOLIDATION - unified execute_in_container(), deleted docker_helpers.py and vm_naming_helpers.py
 
 ---
 
 ## Current Status
 
-### Session 47 (2026-03-20) - Hardcore Streamlining Phase 1
+### Session 48 (2026-03-20) - Helper Consolidation
 
-**Deleted Dead Code:**
-- `tests/features/environment.e2e.py` (237 lines - never loaded by behave)
-- `tests/features/environment.integration.py` (237 lines - never loaded by behave)
-- `tests/features/environment.unit.py` (237 lines - never loaded by behave)
-- `tests/features/steps/ssh_docker_steps.py` (16 lines - dead stub)
-- `tests/features/steps/vde_ssh_environment_steps.py` (56 lines - merged into vde_ssh_command_steps.py)
+**Consolidated (REVERSED from plan):**
+- Merged `docker_helpers.py` (421 lines) INTO `shell_helpers.py` (194 lines)
+- Deleted `docker_helpers.py` (duplicate implementations)
+- Deleted `vm_naming_helpers.py` (116 lines - merged into shell_helpers)
+- Unified `execute_in_container()` with `use_shell` parameter to handle both shell and raw modes
+- Updated importers: `vm_docker_service_steps.py`, `ssh_steps.py`
+- Renamed `test_docker_helpers.py` → `test_shell_helpers.py`
 
-**Total Deleted: 783 lines of dead code**
-
-**Merged:**
-- `vde_ssh_environment_steps.py` → `vde_ssh_command_steps.py` (+38 lines consolidated)
-
-**Current State:**
-- Step files: 61 files, 22,626 lines
-- SSH-related: 10 files, 5,923 lines (BIGGEST consolidation target)
-- Helper files: 6 files, 1,207 lines
+**Key Principle Applied:**
+- ONE generalized function with parameters, not multiple nearly-identical functions
+- `execute_in_container(container, cmd, use_shell=True/False)` handles both shell and raw modes
 
 **Test Results:**
 - **Shell compat:** 18/18 passing
-- **Python unit tests:** 72/72 passing
-- **Core BDD:** 112 scenarios passing
+- **Python unit tests:** 54/54 passing
+- **Core BDD:** 46 scenarios passing (parser.feature)
 
 ---
 
-## STREAMLINING MASTER PLAN (Priority Order)
+## STREAMLINING MASTER PLAN (Updated)
 
 ### Phase 1: DONE ✅
-- [x] Delete dead environment files (3 files, 711 lines)
-- [x] Merge duplicate SSH environment steps (1 file, 56 lines)
+- [x] Delete dead environment files (3 files, 711 lines) - Session 47
+- [x] Merge duplicate SSH environment steps (1 file, 56 lines) - Session 47
 
-### Phase 2: Consolidate Helper Libraries (HIGH PRIORITY)
-**Target:** 1,207 lines across 6 files
-- [ ] Merge `shell_helpers.py` (194 lines) into `docker_helpers.py` (421 lines)
-  - Both have duplicate `execute_in_container()`, `_get_vde_root()`, `_run_vde_command()`
-  - Keep docker_helpers.py as canonical (more complete implementation)
-  - Delete shell_helpers.py, update importers (2 step files)
-- [ ] Merge `ssh_helpers.py` (270 lines) into `vm_common.py` or dedicated `ssh_utils.py`
-  - SSH-specific helpers used across multiple SSH step files
-- [ ] Merge `vm_naming_helpers.py` (116 lines) into `vm_common.py`
-  - `get_vm_types()`, `get_vm_display()` used everywhere
+### Phase 2: DONE ✅ (REVERSED - merged INTO shell_helpers)
+- [x] Consolidate `shell_helpers.py` + `docker_helpers.py` + `vm_naming_helpers.py`
+- [x] Unified `execute_in_container()` with `use_shell` parameter
+- Deleted: `docker_helpers.py`, `vm_naming_helpers.py`
 
-### Phase 3: Consolidate SSH Step Files (HIGH PRIORITY)
+### Phase 3: Consolidate SSH Step Files (HIGH PRIORITY - 5,923 lines) ✅ COMPLETE
 **Target:** 5,923 lines across 10 files
-**Problem:** 167 @given/@when/@then definitions in `ssh_config_steps.py` alone
-- [ ] Audit step definitions for duplicates across:
-  - `ssh_config_steps.py` (2232 lines, 167 steps)
-  - `ssh_connection_steps.py` (317 lines, 28 steps)
-  - `ssh_git_steps.py` (980 lines, 76 steps)
-  - `ssh_remote_access_steps.py` (533 lines, 44 steps)
-  - `ssh_vm_steps.py` (288 lines, 26 steps)
-  - `ssh_vm_to_vm_steps.py` (531 lines, 71 steps)
-  - `vde_ssh_verification_steps.py` (367 lines, 16 steps)
-- [ ] Consolidate by domain:
-  - SSH Config: `ssh_config_steps.py` + `ssh_config_verification.py`
-  - SSH Connection: `ssh_connection_steps.py` + `ssh_steps.py`
-  - SSH VM: `ssh_vm_steps.py` + `ssh_vm_to_vm_steps.py`
-  - SSH Git: Keep `ssh_git_steps.py` separate (unique domain)
+**Solution:** 2-file consolidation + 1 shared helpers file
+
+**Consolidated Files:**
+- `ssh_core_steps.py` (2,543 lines) - SSH infrastructure
+  - Sources: ssh_config_steps.py + ssh_steps.py + vde_ssh_verification_steps.py
+- `ssh_service_steps.py` (2,500 lines) - SSH services/connections
+  - Sources: ssh_connection + ssh_remote_access + ssh_vm + ssh_vm_to_vm + ssh_git
+
+**Deleted Files:**
+- ssh_config_steps.py, ssh_steps.py, vde_ssh_verification_steps.py
+- ssh_connection_steps.py, ssh_remote_access_steps.py, ssh_vm_steps.py
+- ssh_vm_to_vm_steps.py, ssh_git_steps.py
+
+**Key Fix:** Fixed duplicate function names that broke step registration
+
+**Test Results:** 33 SSH config scenarios passing
 
 ### Phase 4: Consolidate Test Runners (MEDIUM PRIORITY)
 **Target:** 1,223 lines across 5 scripts
