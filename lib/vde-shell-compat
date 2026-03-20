@@ -131,19 +131,18 @@ _assoc_set() {
     return 0
 }
 
-# _assoc_get - Get a value from an associative array
-# Args: <array_name> <key>
-# Returns: 0 on success (outputs value to stdout), 1 if key not found
-# Example: value=$(_assoc_get "MY_ARRAY" "foo")
 _assoc_get() {
     local array_name="${1}"
     local key="${2}"
-    
-    # Check if key exists using -v (zsh)
-    if [[ -v "${array_name}[${key}]" ]]; then
-        eval "echo \"\${${array_name}[${(q)key}]}\""
+    local q_key="${(q)key}"
+
+    local value
+    eval "value=\"\${${array_name}[${q_key}]-}\""
+    if [[ -n "${value}" ]]; then
+        echo "${value}"
         return 0
     fi
+    eval "if [[ -n \"\${${array_name}[${q_key}]+1}\" ]]; then echo \"\"; return 0; fi"
     return 1
 }
 

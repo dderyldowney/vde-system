@@ -1,46 +1,44 @@
-# Session Handover - March 19, 2026 (Session 42)
+# Session Handover - March 20, 2026 (Session 43)
 
 ## Summary
 
-Fixed `_assoc_get()` bug in shell compatibility library. **104 parser scenarios passing**, **20/21 shell compatibility tests passing**, **38 unit tests passing**.
+Fixed `_assoc_get()` empty key handling bug in shell compatibility library. **All unit tests passing** (18 shell compat, 100+ zsh unit, 72 pytest, 58 parser BDD).
 
 ---
 
-## Session 42 Accomplishments
+## Session 43 Accomplishments
 
-### 1. Fixed `_assoc_get()` Bug (lib/vde-shell-compat)
+### 1. Fixed `_assoc_get()` Empty Key Bug (lib/vde-shell-compat)
 
-**Problem:** `_assoc_get()` always returned 0 (success) even when key didn't exist. This caused shell compatibility test "Get non-existent key should fail gracefully" to fail.
+**Problem:** `_assoc_get()` failed when key was empty string (zsh `[[ -v ]]` doesn't support empty subscripts).
 
-**Root Cause:** The function used `eval` with `return 0` inside, but the eval's return code didn't propagate correctly.
-
-**Solution:** Rewrote to use `[[ -v "${array_name}[${key}]" ]]` check and direct eval with proper quoting:
+**Solution:** Replaced `[[ -v "${array_name}[${key}]" ]]` with parameter expansion `${array[key]-}`:
 ```zsh
 _assoc_get() {
     local array_name="${1}"
     local key="${2}"
-    if [[ -v "${array_name}[${key}]" ]]; then
-        eval "echo \"\${${array_name}[${(q)key}]}\""
+    local q_key="${(q)key}"
+
+    local value
+    eval "value=\"\${${array_name}[${q_key}]-}\""
+    if [[ -n "${value}" ]]; then
+        echo "${value}"
         return 0
     fi
+    eval "if [[ -n \"\${${array_name}[${q_key}]+1}\" ]]; then echo \"\"; return 0; fi"
     return 1
 }
 ```
-
-### 2. Restored Corrupted docker-compose.yml
-
-**Problem:** `configs/docker/python/docker-compose.yml` was corrupted (only 4 lines, missing service definition).
-
-**Solution:** Restored via `git checkout configs/docker/python/docker-compose.yml`.
 
 ---
 
 ## Test Results
 
 ```
-Parser/intent features: 104 scenarios passed (5 features)
-Shell compatibility: 20/21 passing (1 environment limitation)
-Unit tests: 38/38 passing
+Shell compat: 18/18 passing (was 17/18)
+All zsh unit tests: 100+ passing
+Python unit tests: 72/72 passing
+Parser/intent BDD: 58/58 passing
 ```
 
 ---
@@ -48,38 +46,29 @@ Unit tests: 38/38 passing
 ## Files Modified
 
 ### lib/vde-shell-compat
-- Fixed `_assoc_get()` to properly return 1 when key not found
+- Fixed `_assoc_get()` to handle empty string keys
 
 ---
 
-## VM Naming Convention
+## SSH Config Drift
 
-**Actual VM names** (Docker containers, SSH hosts): `vde-python`, `vde-go`, `vde-postgres`
-**Aliases** (user input): `python`, `go`, `postgres`, `postgresql`, `database`, `pg`
+`configs/ssh/config` has uncommitted changes:
+- zig entries removed (expected)
+- test VMs added (expected)
 
-The `VMs should include "postgresql"` step now resolves "postgresql" to "vde-postgres" by loading aliases from `data/vm-types.conf`.
-
----
-
-## Next Steps
-
-1. Run full test suite to verify no regressions
-2. Investigate remaining failing features (docker-management, collaboration-workflow, etc.)
-3. Some features still hang when trying to start actual VMs
+To sync: `cp configs/ssh/config ~/.ssh/vde/config`
 
 ---
 
 ## Running Tests
 
 ```bash
-# Run parser-based features (~36s)
-python3 -m behave \
-  tests/features/core-infrastructure/documented-workflows.feature \
+# Shell compat
+zsh tests/unit/vde-shell-compat.test.zsh
+
+# Parser/intent features
+python3 -m behave tests/features/core-infrastructure/documented-workflows.feature \
   tests/features/core-infrastructure/daily-workflow.feature \
   tests/features/core-infrastructure/daily-development.feature \
-  tests/features/core-infrastructure/multi-project.feature \
-  -q
-
-# Full core suite (may hang on docker-dependent features)
-python3 -m behave tests/features/core-infrastructure/ --tags="core-suite and not wip and not rebuild"
+  tests/features/core-infrastructure/multi-project.feature -q
 ```
