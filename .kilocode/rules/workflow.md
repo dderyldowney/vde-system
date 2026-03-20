@@ -8,4 +8,4 @@ Entry: Code changes complete (Phase 2) | Action: Run `yume-guardian` on all chan
 ## Phase 4: Code Review
 Entry: Yume-guardian CLEAN (Phase 3) | Action: Run `code-reviewer` agent on unstaged changes | Exit Gate: Requires BOTH `code-reviewer` approval and user approval | Violation Protocol: Proceeding without both approvals → STOP immediately
 ## Phase 5: Git Hygiene
-Entry: Code-reviewer approval AND user approval (Phase 4) | Action: Verify tests, verify guardian, verify reviewer | Commit: `git add -A` followed by a final guardian check before committing | Exit Gate: Changes committed to repository | Violation Protocol: Skipping verification steps → STOP immediately
+Entry: Code-reviewer approval AND user approval (Phase 4) | Action: Verify tests, verify guardian, verify reviewer | Commit: `git add -A` followed by a final guardian check before committing | **Push: DO NOT push to origin unless User explicitly authorizes** | Exit Gate: Changes committed to repository | Violation Protocol: Skipping verification steps → STOP immediately

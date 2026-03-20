@@ -47,6 +47,7 @@ This file documents the specialized AI agents available within the Gemini-Kit te
 - **Connectivity Validation**: Validate server connectivity prior to execution.
 - **Interaction Logging**: Log all MCP interactions for audit and troubleshooting.
 - **Specification Compliance**: All implementations must match [`docs/VDE-SPEC.md`](docs/VDE-SPEC.md).
+- **Git Hygiene (LOCAL FIRST)**: Commit locally freely. **DO NOT push to origin until User explicitly authorizes.** This prevents dirty git history if commits need modification.
 
 ---
 
