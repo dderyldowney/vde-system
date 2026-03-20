@@ -1,7 +1,36 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-19T20:30:00-04:00
-**Session Focus:** Fixed parser intent detection and VM alias resolution in tests
+**Last Updated:** 2026-03-19T21:10:00-04:00
+**Session Focus:** Continued parser tests; discovered docker-compose.yml corruption issue
+
+---
+
+## Current Status
+
+### Session 42 (2026-03-19) - Docker Compose Corruption Issue
+
+**Issue Found:**
+- `configs/docker/python/docker-compose.yml` was corrupted (only 4 lines, missing service definition)
+- Restored via `git checkout configs/docker/python/docker-compose.yml`
+- Root cause: unclear - possibly a test ran `vde create` which overwrote the file incorrectly
+
+**Test Results:**
+- **Unit tests:** 38/38 passing (shell_helpers + docker_helpers)
+- **Parser/intent features:** 104 scenarios passing (5 features)
+- **Shell compatibility:** 20/21 passing (1 pre-existing environment limitation)
+- **Docker-dependent tests:** Time out due to slow container startup (~5min for Rust)
+  - vm-lifecycle.feature, vm-full-lifecycle.feature require long timeouts
+  - Batch Docker tests in groups of 1-2 to avoid iTerm2 permission prompts
+
+**iTerm2 Permission Issue:**
+- macOS Privacy & Security prompt appears when scripts access other apps
+- No apps listed under Automation setting
+- Workaround: Run Docker-dependent tests separately with longer timeouts
+
+**Bug Fixed:**
+- `_assoc_get()` in `lib/vde-shell-compat` was always returning 0 (success) even when key didn't exist
+- Root cause: `eval` return code wasn't properly propagating
+- Fixed by using `[[ -v "${array_name}[${key}]" ]]` check and direct eval
 
 ---
 
