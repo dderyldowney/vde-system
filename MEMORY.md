@@ -1,33 +1,38 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-20T17:40:00-04:00
-**Session Focus:** Fixed corrupted docker-compose.yml and renamed environment.py's run_vde_command to test_vde_command
+**Last Updated:** 2026-03-20T18:00:00-04:00
+**Session Focus:** Deleted dead environment files; consolidated run_vde_command
 
 ---
 
 ## Current Status
 
-### Session 45 (2026-03-20) - Fixed TestWithContainer Failures
+### Session 46 (2026-03-20) - Deleted Dead Code
 
-**Bugs Fixed:**
+**Refactored:**
+- Deleted 3 never-used environment files (237 lines of dead code):
+  - `tests/features/environment.e2e.py`
+  - `tests/features/environment.integration.py`
+  - `tests/features/environment.unit.py`
+- These were never loaded by behave (only `environment.py` is auto-loaded)
+- They contained duplicate `run_vde_command` implementations
 
-1. **Corrupted `configs/docker/python/docker-compose.yml`** - Root cause of flaky TestWithContainer tests
-   - File was truncated to 4 lines (only ports section)
-   - Restored from git: `git checkout HEAD -- configs/docker/python/docker-compose.yml`
-
-2. **Renamed `environment.py:run_vde_command` to `test_vde_command`**
-   - There are 6 different `run_vde_command` implementations in the project causing confusion
-   - `vm_common.py` has the main implementation; `environment.py` had a duplicate with different defaults
-   - Renamed to clarify testing-specific function
+**Remaining `run_vde_command` implementations (2 active):**
+1. `vm_common.py:run_vde_command` - canonical, 300s timeout, used by all step files
+2. `environment.py:test_vde_command` - testing-specific, 60s timeout, for environment hooks
 
 **Test Results:**
 - **Shell compat:** 18/18 passing
-- **Python unit tests:** 72/72 passing (including TestWithContainer - 20/20)
-- **Parser/intent BDD:** 58/58 passing
+- **Python unit tests:** 72/72 passing
+- **Parser/intent BDD:** 46/46 passing
 
-**Files Modified:**
-- `configs/docker/python/docker-compose.yml` - restored from git
-- `tests/features/environment.py` - renamed `run_vde_command` to `test_vde_command`
+---
+
+### Session 45 (2026-03-20) - Fixed TestWithContainer Failures
+
+**Bugs Fixed:**
+1. **Corrupted `configs/docker/python/docker-compose.yml`** - Restored from git
+2. **Renamed `environment.py:run_vde_command` to `test_vde_command`** - Clarified purpose
 
 ---
 
