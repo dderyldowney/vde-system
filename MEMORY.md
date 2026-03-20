@@ -1,36 +1,30 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-19T21:10:00-04:00
-**Session Focus:** Continued parser tests; discovered docker-compose.yml corruption issue
+**Last Updated:** 2026-03-20T00:15:00-04:00
+**Session Focus:** Fixed _assoc_get() empty key handling; all unit tests passing
 
 ---
 
 ## Current Status
 
-### Session 42 (2026-03-19) - Docker Compose Corruption Issue
-
-**Issue Found:**
-- `configs/docker/python/docker-compose.yml` was corrupted (only 4 lines, missing service definition)
-- Restored via `git checkout configs/docker/python/docker-compose.yml`
-- Root cause: unclear - possibly a test ran `vde create` which overwrote the file incorrectly
-
-**Test Results:**
-- **Unit tests:** 38/38 passing (shell_helpers + docker_helpers)
-- **Parser/intent features:** 104 scenarios passing (5 features)
-- **Shell compatibility:** 20/21 passing (1 pre-existing environment limitation)
-- **Docker-dependent tests:** Time out due to slow container startup (~5min for Rust)
-  - vm-lifecycle.feature, vm-full-lifecycle.feature require long timeouts
-  - Batch Docker tests in groups of 1-2 to avoid iTerm2 permission prompts
-
-**iTerm2 Permission Issue:**
-- macOS Privacy & Security prompt appears when scripts access other apps
-- No apps listed under Automation setting
-- Workaround: Run Docker-dependent tests separately with longer timeouts
+### Session 43 (2026-03-20) - Fixed _assoc_get() Empty Key Handling
 
 **Bug Fixed:**
-- `_assoc_get()` in `lib/vde-shell-compat` was always returning 0 (success) even when key didn't exist
-- Root cause: `eval` return code wasn't properly propagating
-- Fixed by using `[[ -v "${array_name}[${key}]" ]]` check and direct eval
+- `_assoc_get()` in `lib/vde-shell-compat:138` failed on empty string keys
+- Root cause: `[[ -v array[key] ]]` doesn't work when key is empty in zsh
+- Fixed using `${array[key]-}` parameter expansion to detect existence
+- Shell compat tests: 18/18 passing (was 17/18)
+
+**Test Results:**
+- **Shell compat:** 18/18 passing
+- **All zsh unit tests:** 100+ passing
+- **Python unit tests:** 72/72 passing
+- **Parser/intent BDD:** 58/58 passing
+- **Docker-dependent tests:** Timeout due to slow container startup (expected)
+
+**SSH Config Drift:**
+- `configs/ssh/config` has uncommitted changes (zig removed, test VMs added)
+- To sync: `cp configs/ssh/config ~/.ssh/vde/config`
 
 ---
 
