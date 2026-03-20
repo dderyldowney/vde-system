@@ -1,13 +1,31 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-20T19:30:00-04:00
-**Session Focus:** HELPER CONSOLIDATION - unified execute_in_container(), deleted docker_helpers.py and vm_naming_helpers.py
+**Last Updated:** 2026-03-20T20:00:00-04:00
+**Session Focus:** SSH Step Consolidation + DRY Mandate
+
+---
+
+## MANDATORY REQUIREMENTS
+
+### DRY Principle (HARDCORE)
+- **ALL code and tests MUST follow DRY** - No duplicate logic, no copy-paste
+- ONE generalized function with parameters, not multiple nearly-identical functions
+- When consolidating code, **ELIMINATE duplicates - don't preserve them**
+- See `.kilocode/rules/dry_requirement.md` for full protocol
+
+### Code Review (MANDATORY)
+- All code changes MUST be reviewed before commit
+- See Phase 4 workflow in `.kilocode/rules/workflow.md`
+
+### Agent Files (MANDATORY)
+- Read `agents/*.md` files at session start for your role
+- Coder, Tester, Planner, Reviewer, Scout all have specific DRY guidance
 
 ---
 
 ## Current Status
 
-### Session 48 (2026-03-20) - Helper Consolidation
+### Session 48 (2026-03-20) - SSH Step Consolidation + DRY
 
 **Consolidated (REVERSED from plan):**
 - Merged `docker_helpers.py` (421 lines) INTO `shell_helpers.py` (194 lines)

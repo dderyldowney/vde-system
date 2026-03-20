@@ -2,11 +2,29 @@
 
 ## Summary
 
-**PHASE 3 COMPLETE - SSH Step Consolidation.** Merged 8 SSH step files into 2 consolidated files. **All tests passing.**
+**PHASE 3 COMPLETE - SSH Step Consolidation + DRY Mandate.** Merged 8 SSH step files into 2 consolidated files. Added DRY requirement to all agent files and documentation. **All tests passing.**
+
+---
+
+## MANDATORY REQUIREMENTS (Read at Session Start)
+
+1. **DRY Principle (HARDCORE)**: ALL code and tests MUST follow DRY
+   - ONE generalized function with parameters, not multiple similar functions
+   - When consolidating, ELIMINATE duplicates - don't preserve them
+   - See `.kilocode/rules/dry_requirement.md`
+
+2. **Code Review (MANDATORY)**: All code changes reviewed before commit
+
+3. **Read Agent Files**: `agents/coder.md`, `agents/tester.md`, etc. for role-specific guidance
 
 ---
 
 ## Session 48 Accomplishments
+
+### DRY Mandate Added
+- Added DRY requirement to AGENTS.md Core Mandates
+- Created `.kilocode/rules/dry_requirement.md` with DRY definitions
+- Updated agent files: coder.md, tester.md, planner.md, reviewer.md, scout.md
 
 ### Phase 3: SSH Step Consolidation (2-File Plan)
 
