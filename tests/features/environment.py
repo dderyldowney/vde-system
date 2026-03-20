@@ -53,7 +53,7 @@ VDE_VM_COMMON = os.path.join(VDE_ROOT, "lib/vm-common")
 VDE_SHELL_COMPAT = os.path.join(VDE_ROOT, "lib/vde-shell-compat")
 
 
-def run_vde_command(command, timeout=60):
+def test_vde_command(command, timeout=60):
     """Run a VDE script and return the result."""
     env = os.environ.copy()
     env["DOCKER_BUILDKIT"] = "0"
@@ -279,7 +279,7 @@ def before_feature(context, feature):
     if "@integration" in tags:
         print("[SETUP] Integration test mode")
         os.environ["VDE_NETWORK"] = "vde-testing"
-        run_vde_command("init --networks-only --testing", timeout=30)
+        test_vde_command("init --networks-only --testing", timeout=30)
         return
 
     if "@docker" in tags:
@@ -296,8 +296,8 @@ def before_feature(context, feature):
                 vm_name = (
                     container.replace("vde-", "") if container.startswith("vde-") else container
                 )
-                run_vde_command(f"remove {vm_name}", timeout=30)
-        run_vde_command("init --networks-only --testing", timeout=30)
+                test_vde_command(f"remove {vm_name}", timeout=30)
+        test_vde_command("init --networks-only --testing", timeout=30)
         return
 
     if "user-guide-installation" in feature.tags or "user-guide-internal" in feature.tags:
