@@ -76,26 +76,29 @@
 
 **Test Results:** 33 SSH config scenarios passing
 
-### Phase 4: Consolidate Test Runners (MEDIUM PRIORITY)
-**Target:** 1,223 lines across 5 scripts
-- [ ] Merge `run-docker-free-tests.zsh` into `run-full-test-suite.zsh`
-  - Both use similar structure, just different test paths
-- [ ] Merge `run-docker-required-tests.zsh` into `run-full-test-suite.zsh`
-- [ ] Consolidate to: `run-all-tests.zsh` (full), `run-quick-tests.zsh` (docker-free only)
+### Phase 4: Consolidate Test Runners (COMPLETE ✅)
+**Target:** 1,223 lines across 5 scripts → 2 consolidated files
+- [x] Merged `run-docker-free-tests.zsh` + `run-docker-required-tests.zsh` + `run-full-test-suite.zsh`
+- [x] Created `run-all-tests.zsh` (full suite, 225 lines)
+- [x] Created `run-quick-tests.zsh` (docker-free only, 107 lines)
+- [x] Deleted old files (680 lines removed)
+- **Kept:** `run-all-known-tests.zsh` (different purpose - shell-based unit tests)
 
-### Phase 5: Audit BDD Features for Redundancy (MEDIUM PRIORITY)
-**Target:** 24+ feature files
-- [ ] Audit features that test same functionality:
-  - `critical-infrastructure.feature` vs `critical-path.feature` (overlap?)
-  - `daily-workflow.feature` vs `daily-development.feature` (overlap?)
-  - `documented-workflows.feature` vs `documented-development-workflows.feature` (overlap?)
-- [ ] Merge or de-duplicate overlapping scenarios
+### Phase 5: Audit BDD Features for Redundancy (COMPLETE ✅)
+**Target:** 34 feature files audited
+- [x] Audited all 34 feature files
+- [x] Found: `daily-development` + `daily-development-workflow` are COMPLEMENTARY (parser vs integration tests)
+- [x] Found: `critical-infrastructure` + `critical-path` are DIFFERENT (function tests vs compose tests)
+- [x] Found: `documented-workflows` + `documented-development-workflows` are DUPLICATES
+- [x] Deleted: `documented-development-workflows.feature` (duplicate)
+- **Net: 1 file deleted (65 lines removed)**
 
-### Phase 6: Eliminate Dead Step Definitions (LOW PRIORITY)
-**Target:** Unknown - audit step files for unused definitions
-- [ ] Run feature coverage analysis
-- [ ] Identify steps defined but never used
-- [ ] Delete orphaned step definitions
+### Phase 6: Eliminate Dead Step Definitions (PARTIAL ✅)
+**Target:** 52 step files audited
+- [x] Verified all step files load without import errors
+- [x] No critical orphan files found
+- [x] Step files with few definitions reviewed (host_access_steps.py - helper functions)
+- **Note:** Full dead-step elimination requires complex usage analysis (deferred)
 
 ---
 

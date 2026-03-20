@@ -78,6 +78,44 @@ python3 -m behave tests/features/core-infrastructure/ssh-configuration.feature -
 
 ---
 
+## Phase 4: Test Runner Consolidation (COMPLETE ✅)
+
+**Created:**
+- `tests/run-all-tests.zsh` - Full test suite (225 lines)
+- `tests/run-quick-tests.zsh` - Docker-free only (107 lines)
+
+**Deleted:**
+- `tests/run-docker-free-tests.zsh` (177 lines)
+- `tests/run-docker-required-tests.zsh` (381 lines)
+- `tests/run-full-test-suite.zsh` (122 lines)
+
+**Kept:**
+- `tests/run-all-known-tests.zsh` (different purpose - shell unit tests)
+
+**Lines removed:** 680
+
+---
+
+## Phase 5: BDD Feature Audit (COMPLETE ✅)
+
+**Found:**
+- `daily-development` + `daily-development-workflow` - COMPLEMENTARY (parser vs integration)
+- `critical-infrastructure` + `critical-path` - DIFFERENT (function vs compose tests)
+- `documented-workflows` + `documented-development-workflows` - DUPLICATES
+
+**Deleted:**
+- `documented-development-workflows.feature` (65 lines)
+
+---
+
+## Phase 6: Dead Step Definitions (PARTIAL ✅)
+
+- Verified 52 step files load without errors
+- No critical orphan files found
+- Full audit deferred (complex analysis)
+
+---
+
 ## Files Changed This Session
 
 - `tests/features/steps/ssh_core_steps.py` - NEW consolidated file
