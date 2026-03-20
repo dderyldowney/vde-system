@@ -1,22 +1,26 @@
-# Session Handover - March 20, 2026 (Session 44)
+# Session Handover - March 20, 2026 (Session 45)
 
 ## Summary
 
-Fixed test isolation issue in documented-workflows.feature. Added `@requires-docker-host` tag to scenarios that create Docker VMs. **All tests passing** (18 shell compat, 72 pytest, 58 parser BDD, 20 docker helpers).
+Fixed corrupted `configs/docker/python/docker-compose.yml` (root cause of TestWithContainer failures) and renamed `environment.py`'s `run_vde_command` to `test_vde_command` to avoid confusion with project's `run_vde_command`. **All tests passing**.
 
 ---
 
-## Session 44 Accomplishments
+## Session 45 Accomplishments
 
-### 1. Fixed Test Isolation in documented-workflows.feature
+### 1. Fixed Corrupted docker-compose.yml
 
-**Problem:** Scenario "Switching Projects - Stop Current Project" failed with "VMs still running: ['vde-python']"
+**Problem:** TestWithContainer tests were failing inconsistently.
 
-**Root Cause:** Previous scenario "Adding Cache Layer - Start Redis" created VMs via `Given I have an existing Python and PostgreSQL stack` which calls `vde create python postgres`. Cleanup only happened for scenarios tagged `@requires-docker-host`, but those scenarios weren't tagged.
+**Root Cause:** `configs/docker/python/docker-compose.yml` was corrupted/truncated to only 4 lines (should be 45 lines).
 
-**Solution:** Added `@requires-docker-host` tag to scenarios that create Docker VMs:
-- Scenario: Adding Cache Layer - Create Redis
-- Scenario: Adding Cache Layer - Start Redis
+**Solution:** Restored from git: `git checkout HEAD -- configs/docker/python/docker-compose.yml`
+
+### 2. Renamed environment.py's run_vde_command
+
+**Problem:** There are 6 different `run_vde_command` implementations in the project causing confusion.
+
+**Solution:** Renamed `environment.py`'s version to `test_vde_command` since it's testing-specific with different timeout defaults (60s vs 300s).
 
 ---
 
@@ -24,26 +28,22 @@ Fixed test isolation issue in documented-workflows.feature. Added `@requires-doc
 
 ```
 Shell compat: 18/18 passing
-Python unit tests: 72/72 passing
-Docker helper tests: 20/20 passing
-Parser/intent BDD: 58/58 passing (4 features, 34.7s)
+Python unit tests: 72/72 passing (including TestWithContainer 20/20)
+Parser/intent BDD: 58/58 passing
 ```
 
 ---
 
 ## Files Modified
 
-### tests/features/core-infrastructure/documented-workflows.feature
-- Added `@requires-docker-host` tag to 2 scenarios that create Docker VMs
+- `configs/docker/python/docker-compose.yml` - restored from git
+- `tests/features/environment.py` - renamed `run_vde_command` → `test_vde_command`
 
 ---
 
 ## SSH Config Drift
 
-`configs/ssh/config` has uncommitted changes:
-- zig entries removed (expected)
-- test VMs added (expected)
-
+`configs/ssh/config` has uncommitted changes (zig removed, test VMs added).
 To sync: `cp configs/ssh/config ~/.ssh/vde/config`
 
 ---
@@ -54,15 +54,9 @@ To sync: `cp configs/ssh/config ~/.ssh/vde/config`
 # Shell compat
 zsh tests/unit/vde-shell-compat.test.zsh
 
-# Python unit tests
+# Python unit tests (including TestWithContainer)
 python3 -m pytest tests/unit/ -q
 
 # Parser/intent features
-python3 -m behave tests/features/core-infrastructure/documented-workflows.feature \
-  tests/features/core-infrastructure/daily-workflow.feature \
-  tests/features/core-infrastructure/daily-development.feature \
-  tests/features/core-infrastructure/multi-project.feature -q
-
-# Docker helper tests
-python3 -m pytest tests/unit/test_docker_helpers.py -q
+python3 -m behave tests/features/core-infrastructure/parser.feature -q
 ```

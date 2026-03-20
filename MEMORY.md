@@ -1,34 +1,37 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-20T15:45:00-04:00
-**Session Focus:** Fixed test isolation issue in documented-workflows.feature; all tests passing
+**Last Updated:** 2026-03-20T17:40:00-04:00
+**Session Focus:** Fixed corrupted docker-compose.yml and renamed environment.py's run_vde_command to test_vde_command
 
 ---
 
 ## Current Status
 
-### Session 44 (2026-03-20) - Fixed Test Isolation in documented-workflows.feature
+### Session 45 (2026-03-20) - Fixed TestWithContainer Failures
 
-**Bug Fixed:**
-- Scenario "Switching Projects - Stop Current Project" failed with "VMs still running: ['vde-python']"
-- Root cause: Previous scenario created VMs via `Given I have an existing Python and PostgreSQL stack` but cleanup only happened for `@requires-docker-host` tagged scenarios
-- Fix: Added `@requires-docker-host` tag to scenarios that create Docker VMs (Adding Cache Layer - Create Redis, Adding Cache Layer - Start Redis)
+**Bugs Fixed:**
 
-**Files Modified:**
-- `tests/features/core-infrastructure/documented-workflows.feature`: Added `@requires-docker-host` tag to 2 scenarios
+1. **Corrupted `configs/docker/python/docker-compose.yml`** - Root cause of flaky TestWithContainer tests
+   - File was truncated to 4 lines (only ports section)
+   - Restored from git: `git checkout HEAD -- configs/docker/python/docker-compose.yml`
+
+2. **Renamed `environment.py:run_vde_command` to `test_vde_command`**
+   - There are 6 different `run_vde_command` implementations in the project causing confusion
+   - `vm_common.py` has the main implementation; `environment.py` had a duplicate with different defaults
+   - Renamed to clarify testing-specific function
 
 **Test Results:**
 - **Shell compat:** 18/18 passing
-- **Python unit tests:** 72/72 passing (was 66/72 due to docker-dependent tests not finding containers)
-- **Parser/intent BDD:** 58/58 passing (4 features, 34.7s)
-- **Docker helper tests:** 20/20 passing
+- **Python unit tests:** 72/72 passing (including TestWithContainer - 20/20)
+- **Parser/intent BDD:** 58/58 passing
 
-**Known Issues:**
-- Docker-required BDD tests (vm-lifecycle, etc.) timeout due to ~35 min container startup - expected behavior
+**Files Modified:**
+- `configs/docker/python/docker-compose.yml` - restored from git
+- `tests/features/environment.py` - renamed `run_vde_command` to `test_vde_command`
 
 ---
 
-## Session 43 (2026-03-20) - Fixed _assoc_get() Empty Key Handling
+## Session 44 (2026-03-20) - Fixed Test Isolation in documented-workflows.feature
 
 **Bug Fixed:**
 - `_assoc_get()` in `lib/vde-shell-compat:138` failed on empty string keys
