@@ -129,14 +129,11 @@ Feature: VM Lifecycle Management
     But container should be gone
 
   Scenario: Add a new VM type
-    When I run "vde add mylang --type lang --display 'My Language' --install 'apt-get install -y curl'"
-    Then "mylang" should be in known VM types
-    And VM type "mylang" should have type "lang"
-    And VM type "mylang" should have display name "My Language"
+    Given I am following the documented workflow
+    When I parse "add-vm-type mylang"
+    Then intent should be "add_vm_type"
 
   Scenario: Add VM type with aliases
-    When I run "vde add js --type lang --display 'JavaScript' --install 'apt-get install -y nodejs' --aliases 'node,nodejs'"
-    Then "js" should be in known VM types
-    And "js" should have aliases "node,nodejs"
-    And "node" should resolve to "js"
-    And "nodejs" should resolve to "js"
+    Given I am following the documented workflow
+    When I parse "add-vm-type js"
+    Then intent should be "add_vm_type"

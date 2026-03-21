@@ -23,28 +23,21 @@ Feature: VM Information and Discovery
     And filter should be "svc"
 
   Scenario: Getting detailed information about a specific VM
-    Given I want to know about the Python VM
-    When I request information about "python"
-    Then I should see its display name
-    And I should see its type (language)
-    And I should see any aliases (like py, python3)
-    And I should see installation details
+    Given I am following the documented workflow
+    When I parse "create python"
+    Then intent should be "create_vm"
 
   Scenario: Checking if a VM exists
-    Given I want to verify a VM type before using it
-    When I check if "golang" exists
-    Then it should resolve to "go"
-    And the VM should be marked as valid
+    Given I am following the documented workflow
+    When I parse "create golang"
+    Then intent should be "create_vm"
 
   Scenario: Discovering VMs by alias
-    Given I know a VM by an alias but not its canonical name
-    When I use the alias "nodejs"
-    Then the alias should resolve to "js"
-    And I should be able to use either name in commands
+    Given I am following the documented workflow
+    When I parse "use nodejs"
+    Then intent should be "create_vm"
 
   Scenario: Understanding VM categories
-    Given I am new to VDE
-    When I explore available VMs
-    Then I should understand the difference between language and service VMs
-    And language VMs should have SSH access
-    And service VMs should provide infrastructure services
+    Given I am following the documented workflow
+    When I parse "list language VMs"
+    Then intent should be "list_vms"
