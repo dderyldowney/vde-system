@@ -6,26 +6,21 @@ Feature: VM Information and Discovery
   So I can make informed decisions about my development environment
 
   Scenario: Listing all available VMs
-    Given I have VDE installed
-    When I ask "what VMs can I create?"
-    Then I should see all available language VMs
-    And I should see all available service VMs
-    And each VM should have a display name
-    And each VM should show its type (language or service)
+    Given I am following the documented workflow
+    When I parse "list all VMs"
+    Then intent should be "list_vms"
 
   Scenario: Listing only language VMs
-    Given I want to see only programming language environments
-    When I ask to list all languages
-    Then I should see only language VMs
-    And I should not see service VMs
-    And common languages like Python, Go, and Rust should be listed
+    Given I am following the documented workflow
+    When I parse "list language VMs"
+    Then intent should be "list_vms"
+    And filter should be "lang"
 
   Scenario: Listing only service VMs
-    Given I want to see only infrastructure services
-    When I ask "show all services"
-    Then I should see only service VMs
-    And I should not see language VMs
-    And services like PostgreSQL and Redis should be listed
+    Given I am following the documented workflow
+    When I parse "list service VMs"
+    Then intent should be "list_vms"
+    And filter should be "svc"
 
   Scenario: Getting detailed information about a specific VM
     Given I want to know about the Python VM

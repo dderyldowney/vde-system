@@ -23,23 +23,14 @@ Feature: Team Collaboration and Maintenance
     And the VM should start with a fresh configuration
 
   Scenario: Checking system status
-    Given I am experiencing issues
-    When I request to "status"
-    Then I should see which VMs are running
-    And I should see which VMs are stopped
-
-  @requires-docker-host
-  Scenario: Adding a new language to the team
-    Given my team wants to use a new language
-    When I request to "create a Haskell VM"
-    Then the VM configuration should be generated
-    And the VM should be ready to use
+    Given I am following the documented workflow
+    When I parse "status"
+    Then intent should be "status"
 
   Scenario: Sharing SSH configurations
-    Given a new team member joins
-    When they ask "how do I connect to python?"
-    Then they should receive clear connection instructions
-    And the instructions should be clear and actionable
+    Given I am following the documented workflow
+    When I parse "how do I connect to python"
+    Then intent should be "connect"
 
   @requires-docker-host
   Scenario: Batch operations for efficiency

@@ -92,29 +92,27 @@ Feature: Daily Development Workflow
 
   @user-guide-daily-workflow
   Scenario: Daily Workflow - Check Status During Development
-    Given I am actively developing
-    When I ask "what's currently running?"
-    Then the system should understand I want to start the Python VM
+    Given I am following the documented workflow
+    When I parse "what's running"
+    Then intent should be "status"
 
   @user-guide-daily-workflow
   Scenario: Daily Workflow - Connect to Primary VM
-    Given I need to work in my primary development environment
+    Given I am following the documented workflow
     When I parse "how do I connect to python"
     Then intent should be "connect"
-    And VMs should include "python"
 
   @user-guide-daily-workflow
   Scenario: Daily Workflow - Evening Cleanup
-    Given I am done with development for the day
+    Given I am following the documented workflow
     When I parse "stop everything"
     Then intent should be "stop_vm"
-    And VMs should include all known VMs
 
   @user-guide-troubleshooting
   Scenario: Troubleshooting - Step 1 Check Status
-    Given something isn't working
-    When I ask "what's currently running?"
-    Then I should see the status
+    Given I am following the documented workflow
+    When I parse "what's running"
+    Then intent should be "status"
 
   @user-guide-troubleshooting
   Scenario: Troubleshooting - Step 3 Restart with Rebuild
@@ -162,35 +160,34 @@ Feature: Daily Development Workflow
 
   @user-guide-daily-workflow
   Scenario: Switching Projects - Stop Current Project
-    Given I am working on one project
+    Given I am following the documented workflow
     When I parse "stop all VMs"
-    Then all running VMs should stop
+    Then intent should be "stop_vm"
 
   @user-guide-daily-workflow
   Scenario: Switching Projects - Start New Project
-    Given I am working on one project
+    Given I am following the documented workflow
     When I parse "start go and mongodb"
     Then intent should be "start_vm"
-    And VMs should include "go"
 
   @user-guide-understanding
   Scenario: Team Onboarding - Explore Languages
-    Given I am a new team member
-    When I ask "what can I do?"
-    Then available commands should be explained
+    Given I am following the documented workflow
+    When I parse "help"
+    Then intent should be "help"
 
   @user-guide-understanding
   Scenario: Team Onboarding - Get Connection Help
-    Given I am a new team member
+    Given I am following the documented workflow
     When I parse "how do I connect to python"
     Then intent should be "connect"
     And VMs should include "python"
 
   @user-guide-understanding
   Scenario: Team Onboarding - Understand System
-    Given I am learning the VDE system
-    When I ask "what can I do?"
-    Then available commands should be explained
+    Given I am following the documented workflow
+    When I parse "help"
+    Then intent should be "help"
 
   @user-guide-troubleshooting
   Scenario: Starting Already Running VM

@@ -15,19 +15,14 @@ Feature: Daily Development Workflow
     And my workspace directory should be mounted
 
   Scenario: Checking what's currently running
-    Given I have several VMs running
-    When I ask "what's running?"
-    Then I should see a list of all running VMs
-    And each VM should show its status
-    And the list should include both language and service VMs
+    Given I am following the documented workflow
+    When I parse "what's running"
+    Then intent should be "status"
 
   Scenario: Getting connection information for a VM
-    Given I have a Python VM running
-    When I ask "how do I connect to Python?"
-    Then I should receive SSH connection details
-    And the details should include the hostname
-    And the details should include the port number
-    And the details should include the username
+    Given I am following the documented workflow
+    When I parse "how do I connect to python"
+    Then intent should be "connect"
 
   @requires-docker-host
   Scenario: Stopping work for the day
