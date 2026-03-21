@@ -82,8 +82,9 @@ python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
 | critical-infrastructure (51 scenarios) | ✅ PASS |
 | ssh-configuration (33 scenarios) | ✅ PASS |
 | shell-compat (18 tests) | ✅ PASS |
+| daily-workflow (12 scenarios) | ✅ PASS |
 
-**Essential Tests:** 130 scenarios + 18 shell tests = **148 total tests passing**
+**Essential Tests:** 142+ scenarios + 18 shell tests passing
 
 ---
 
@@ -110,11 +111,18 @@ python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
 - `get_container_name` (from 2 copies)
 - `get_vm_name` (from 2 copies)
 
-### Remaining Duplicate Step Functions (Different Implementations - OK)
-- `step_python_vm_running` - 2 files (different logic)
-- `step_ssh_agent_running` - 2 files (different logic)
-- `step_new_to_vde` - 2 files (slightly different context)
-- `step_no_vms_running` - 2 files
+### Restored Step Files (Session 53)
+- `documented_workflow_steps.py` - "I am following the documented workflow" step
+- `common_steps.py` - common scenario steps
+- `vm_metadata_steps.py` - VM metadata assertions
+
+### Test Status (Current)
+- parser: 46 ✅
+- critical-infrastructure: 51 ✅
+- ssh-configuration: 33 ✅
+- daily-workflow: 12 ✅
+- vm-metadata: 12 pass, 2 fail (parser behavior test issue)
+- **Total: 142+ scenarios passing**
 
 ### Test Status
 - parser: 46 ✅

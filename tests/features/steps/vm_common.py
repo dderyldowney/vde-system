@@ -739,6 +739,10 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
 # =============================================================================
 # CANONICAL STEP DEFINITIONS (reused across multiple step files)
 # =============================================================================
+# NOTE: Functions below are the SINGLE canonical implementations.
+# Any other step functions with similar names in other files are
+# intentionally DIFFERENT implementations for different contexts.
+# DO NOT consolidate these - they serve different test scenarios.
 
 
 def step_vde_installed(context):
