@@ -62,6 +62,7 @@ Feature: Team Collaboration and Maintenance
     Then the container should be stopped if running
     And the VM should start again
 
+  @requires-docker-host
   Scenario: Monitoring resource usage
     Given I want to check VM resource consumption
     When I check resource usage
