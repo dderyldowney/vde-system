@@ -2,6 +2,29 @@
 
 This file documents the specialized AI agents available within the Gemini-Kit team for developing and maintaining the Virtual Development Environment (VDE).
 
+## STREAMLINING MANDATE (Current Priority)
+
+**Mission:** Reduce VDE codebase to MINIMAL essential code that accomplishes stated goals + validates with tests
+
+### Why Streamline?
+- Current test step definitions: 20,000+ lines
+- Massive duplication: same step definitions repeated 2-3x
+- Goal: Every line must help users accomplish VDE goals
+
+### Core Principles
+1. **DRY or ELIMINATE**: One function with params, NOT multiple similar functions
+2. **Tests Validate Goals**: Every test must prove a goal from VDE-SPEC.md
+3. **No Dead Code**: Unused imports/helpers/files = DELETE
+4. **Minimal Footprint**: If it doesn't help users = REMOVE
+
+### Consolidation Progress
+- SSH steps: 10 files → 2 (8 deleted)
+- Test runners: 5 → 2 (3 deleted)
+- Step files: 2 deleted, helpers consolidated
+- **~7,000 lines removed**
+
+---
+
 ## Authoritative Specification
 
 **Specification Document:** [`docs/VDE-SPEC.md`](docs/VDE-SPEC.md) (v1.0.0)
