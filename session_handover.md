@@ -39,14 +39,14 @@
 
 ## Key Findings
 
-### Duplicate Step Functions Found (not yet consolidated)
-- `step_vde_installed` - 3 copies
-- `step_modified_dockerfile` - 3 copies  
-- `step_python_vm_running` - 2 copies
-- `step_ssh_agent_running` - 2 copies
+### Duplicate Step Functions Consolidated (THIS SESSION)
+- `step_vde_installed` - 3 copies → 1 canonical in vm_common ✅
+- `step_modified_dockerfile` - 3 copies → 1 canonical in vm_common ✅
+- `_container_is_running` - removed duplicate in vde_command_steps ✅
 
-### Redundant Helper Functions
-- `_container_is_running` - defined in vm_common AND vde_command_steps (FIXED)
+### Remaining Duplicates (different implementations - OK)
+- `step_python_vm_running` - 2 copies (different logic)
+- `step_ssh_agent_running` - 2 copies (different logic)
 
 ---
 
