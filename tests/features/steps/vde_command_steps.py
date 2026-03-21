@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 
 from behave import given, then, when
-from vm_common import run_vde_command, docker_ps, wait_for_container, VDE_ROOT
+from vm_common import run_vde_command, docker_ps, wait_for_container, VDE_ROOT, container_is_running
 
 # All known VM types
 _ALL_VMS = {
@@ -52,12 +52,6 @@ def _container_exists(container_name):
     """Check if container exists (running or stopped) via vde ps -a."""
     result = run_vde_command("ps -a")
     return container_name in result.stdout
-
-
-def _container_is_running(container_name):
-    """Check if container is running via vde ps."""
-    running = docker_ps()
-    return container_name in running
 
 
 def _extract_vms_from_command(command):
