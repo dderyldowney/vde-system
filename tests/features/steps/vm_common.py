@@ -761,3 +761,21 @@ def step_modified_dockerfile(context, vm_name="python"):
     """
     context.vm_name = vm_name
     context.dockerfile_modified = True
+
+
+def get_container_name(vm_name):
+    """Convert VM name to container name.
+
+    Canonical implementation - adds vde- prefix if not present.
+    """
+    return f"vde-{vm_name}"
+
+
+def get_vm_name(container_name):
+    """Convert container name back to VM name.
+
+    Canonical implementation - removes vde- prefix if present.
+    """
+    if container_name.startswith("vde-"):
+        return container_name[4:]
+    return container_name

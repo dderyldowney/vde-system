@@ -70,8 +70,7 @@ def _config_based_git_ok(vm_name="python"):
 
 def _vm_config_exists(vm_name):
     """Return True if docker-compose.yml exists for the given vm name."""
-    compose = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    return compose.exists()
+    return compose_file_exists(vm_name)
 
 
 def _vm_ssh_agent_forwarded(vm_name):

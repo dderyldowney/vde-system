@@ -10,7 +10,14 @@ import time
 from pathlib import Path
 
 from behave import given, then, when
-from vm_common import run_vde_command, docker_ps, wait_for_container, VDE_ROOT, container_is_running
+from vm_common import (
+    run_vde_command,
+    docker_ps,
+    wait_for_container,
+    VDE_ROOT,
+    container_is_running,
+    get_container_name,
+)
 
 # All known VM types
 _ALL_VMS = {
@@ -41,11 +48,6 @@ _ALL_VMS = {
     "elixir",
     "asm",
 }
-
-
-def _get_container_name(vm_name):
-    """Convert VM name to container name."""
-    return f"vde-{vm_name}"
 
 
 def _container_exists(container_name):
