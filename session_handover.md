@@ -59,6 +59,40 @@
 
 ---
 
+## STREAMLINING SNAPSHOT (Session 50)
+
+### Progress
+- **~7,500+ lines removed/consolidated** total
+- SSH steps: 10 → 2 files
+- Test runners: 5 → 2 files  
+- Step files: 53 → 51 files
+
+### Canonical Functions Added to vm_common.py
+- `step_vde_installed` (from 3 copies)
+- `step_modified_dockerfile` (from 3 copies)
+- `get_container_name` (from 2 copies)
+- `get_vm_name` (from 2 copies)
+
+### Remaining Duplicate Step Functions (Different Implementations)
+- `step_python_vm_running` - 2 files (different logic)
+- `step_ssh_agent_running` - 2 files (different logic)
+- `step_new_to_vde` - 2 files (slightly different context)
+- `step_no_vms_running` - 2 files
+
+### Test Status
+- parser: 46 ✅
+- critical-infrastructure: 51 ✅
+- ssh-configuration: 33 ✅
+- Total: 130 scenarios passing
+
+### Direction
+Continue consolidating duplicate helpers/step definitions WITHOUT changing behavior. Focus on:
+1. Functions with identical implementations
+2. Imports that duplicate vm_common functionality
+3. Small step files that could be merged
+
+---
+
 ## Running Tests
 
 ```bash
