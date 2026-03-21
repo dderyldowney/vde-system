@@ -68,12 +68,12 @@ Feature: VM Lifecycle Management
   Scenario: Removing a VM instance
     Given I am following the documented workflow
     When I parse "remove ruby"
-    Then intent should be "remove"
+    Then intent should be "remove_vm"
     And VMs should include "ruby"
 
   Scenario: Rebuilding after code changes
     Given I am following the documented workflow
-    When I parse "rebuild go nocache=true"
+    When I parse "rebuild go from scratch"
     Then intent should be "restart_vm"
     And VMs should include "go"
     And nocache flag should be true
