@@ -1,5 +1,6 @@
 # language: en
 @critical-infrastructure @core-infrastructure @core-suite
+@spec
 Feature: Critical Infrastructure — Spec Invariants
   As the VDE system
   I need to enforce the technical invariants defined in VDE-SPEC.md

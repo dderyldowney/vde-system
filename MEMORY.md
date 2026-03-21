@@ -81,10 +81,20 @@ python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
 | parser (46 scenarios) | ✅ PASS |
 | critical-infrastructure (51 scenarios) | ✅ PASS |
 | ssh-configuration (33 scenarios) | ✅ PASS |
-| shell-compat (18 tests) | ✅ PASS |
 | daily-workflow (12 scenarios) | ✅ PASS |
+| documented-workflows (28 scenarios) | ✅ PASS |
+| vm-metadata (14 scenarios) | ✅ PASS |
+| vm-lifecycle-management (13 scenarios) | ✅ PASS |
+| Other features | ✅ PASS |
 
-**Essential Tests:** 142+ scenarios + 18 shell tests passing
+**Total: 259+ scenarios passing**
+
+### New Tagging Scheme
+- Fast tests: @parser, @spec, @config, @error-path (no Docker)
+- Integration: @integration, @vm-lifecycle, @vm-rebuild, @ssh-access, @networking, @storage
+- behave.ini updated: default runs `(@parser or @spec or @config or @error-path) and not wip`
+
+**Essential Tests:** 259+ scenarios + 18 shell tests passing
 
 ---
 

@@ -100,23 +100,53 @@ Continue consolidating duplicate helpers/step definitions WITHOUT changing behav
 ## Running Tests
 
 ```bash
-# Core validation (fast, no Docker)
-zsh tests/unit/vde-shell-compat.test.zsh
-python3 -m behave tests/features/core-infrastructure/parser.feature -q
+# Fast tests (no Docker required)
+python3 -m behave  # runs @parser, @spec, @config, @error-path
 
-# Full suite (requires Docker)
-python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
+# Individual fast tags
+python3 -m behave --tags=@parser
+python3 -m behave --tags=@spec
+python3 -m behave --tags=@config
+python3 -m behave --tags=@error-path
+
+# Integration tests (require Docker)
+python3 -m behave --tags=@integration
+
+# Unit tests
+zsh tests/unit/vde-shell-compat.test.zsh
 ```
 
 ---
 
-## Files Changed This Session
+## Session 53-54 Progress: Test Retagging
 
-**Restored (from git):**
-- `tests/features/steps/documented_workflow_steps.py` - "I am following the documented workflow" step
-- `tests/features/steps/common_steps.py` - common scenario steps
-- `tests/features/steps/vm_metadata_steps.py` - VM metadata assertions
+### Completed
+- behave.ini: Updated default tags to (@parser or @spec or @config or @error-path)
+- parser.feature: Added @parser
+- critical-infrastructure.feature: Added @spec  
+- ssh-configuration.feature: Added @config
+- error-path.feature: Already has @error-path
+- Fixed vde status command (bin/list-vms grep fix)
+- Remediated 18+ feature files to use parser steps
 
-**Modified:**
-- `tests/features/steps/vm_common.py` - Added canonical function note
-- `MEMORY.md` - Updated test status and notes
+### Remaining Work
+Add new tags to ALL feature files:
+- @parser for parser-based features
+- @integration for Docker-requiring features
+- Sub-tags: @vm-lifecycle, @vm-rebuild, @ssh-access, @networking, @storage
+
+Files needing tags:
+- vm-metadata.feature -> @parser
+- vm-lifecycle-management.feature -> @parser
+- daily-workflow.feature -> @parser
+- multi-project.feature -> @parser
+- daily-development.feature -> @parser
+- natural-language-commands.feature -> @parser
+- documented-workflows.feature -> @parser
+- vm-discovery.feature -> @parser
+- vm-information-and-discovery.feature -> @parser
+- debugging.feature -> @integration
+- daily-development-workflow.feature -> @integration
+- collaboration.feature -> @integration
+- vm-lifecycle.feature -> @integration
+- All other Docker-requiring features -> @integration

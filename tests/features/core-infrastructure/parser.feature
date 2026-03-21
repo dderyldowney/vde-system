@@ -3,6 +3,7 @@
 @core-infrastructure
 @core-suite
 @unit
+@parser
 Feature: Natural Language Parser
   As a developer
   I want to control VDE using natural language commands
