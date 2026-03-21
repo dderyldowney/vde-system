@@ -1,10 +1,13 @@
 # language: en
 @core-infrastructure
 @docker-free
+@requires-docker-host
 Feature: Shell Compatibility Layer
   As a developer
   I want VDE to work in zsh
   So that VDE has consistent shell behavior
+
+  # Note: Actual shell compatibility tested by unit tests in tests/unit/vde-shell-compat.test.zsh
 
   Scenario: Detect zsh shell
     When running in zsh

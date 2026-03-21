@@ -5,6 +5,7 @@ Feature: SSH and Remote Access
   I want to access my VMs via SSH
   So I can use my preferred tools and editors
 
+  @requires-docker-host
   Scenario: Getting SSH connection information
     Given I have a Python VM running
     When I ask "how do I connect to Python?"
