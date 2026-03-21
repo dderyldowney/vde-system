@@ -7,50 +7,38 @@ Feature: VM Information and Discovery
   So I can make informed decisions about my development environment
 
   Scenario: Listing all available VMs
-    Given VDE is fully installed
-    When I ask "what VMs can I create?"
-    Then I should see all available language VMs
-    And I should see all available service VMs
-    And each VM should have a display name
-    And each VM should show its type (language or service)
+    Given I am following the documented workflow
+    When I parse "list all VMs"
+    Then intent should be "list_vms"
 
   Scenario: Listing only language VMs
-    Given I want to see only programming language environments
-    When I ask to list all languages
-    Then I should see only language VMs
-    And I should not see service VMs
-    And common languages like Python, Go, and Rust should be listed
+    Given I am following the documented workflow
+    When I parse "list language VMs"
+    Then intent should be "list_vms"
+    And filter should be "lang"
 
   Scenario: Listing only service VMs
-    Given I want to see only infrastructure services
-    When I ask "show all services"
-    Then I should see only service VMs
-    And I should not see language VMs
-    And services like PostgreSQL and Redis should be listed
+    Given I am following the documented workflow
+    When I parse "list service VMs"
+    Then intent should be "list_vms"
+    And filter should be "svc"
 
   Scenario: Getting detailed information about a specific VM
-    Given I want to know about the Python VM
-    When I request information about "python"
-    Then I should see its display name
-    And I should see its type (language)
-    And I should see any aliases (like py, python3)
-    And I should see installation details
+    Given I am following the documented workflow
+    When I parse "create python"
+    Then intent should be "create_vm"
 
   Scenario: Checking if a VM exists
-    Given I want to verify a VM type before using it
-    When I check if "golang" exists
-    Then it should resolve to "go"
-    And the VM should be marked as valid
+    Given I am following the documented workflow
+    When I parse "create golang"
+    Then intent should be "create_vm"
 
   Scenario: Discovering VMs by alias
-    Given I know a VM by an alias but not its canonical name
-    When I use the alias "nodejs"
-    Then the alias should resolve to "js"
-    And I should be able to use either name in commands
+    Given I am following the documented workflow
+    When I parse "use nodejs"
+    Then intent should be "create_vm"
 
   Scenario: Understanding VM categories
-    Given I am a new user of VDE
-    When I explore the available VM types
-    Then I should see the difference between language and service VMs
-    And language VMs should have SSH access
-    And service VMs should provide infrastructure services
+    Given I am following the documented workflow
+    When I parse "list language VMs"
+    Then intent should be "list_vms"

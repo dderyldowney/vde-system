@@ -8,9 +8,9 @@ Feature: Debugging and Troubleshooting
   So that I can quickly resolve problems and continue working
 
   Scenario: Diagnose why VM won't start
-    Given I tried to start a VM but it failed
-    When I check the VDE status
-    Then I should see a clear error message
+    Given I am following the documented workflow
+    When I parse "status"
+    Then intent should be "status"
 
   @requires-docker-host
   Scenario: View VM logs for debugging

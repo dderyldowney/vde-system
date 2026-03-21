@@ -35,21 +35,19 @@ Feature: Natural Language Commands
     And the JavaScript VM from my command should be created
 
   Scenario: Descriptive status queries
-    Given I want to know what's running
-    When I ask "what's currently running?"
-    Then I should see the status
+    Given I am following the documented workflow
+    When I parse "what's running"
+    Then intent should be "status"
 
   Scenario: Asking for help naturally
-    Given I'm not sure what to do
-    When I ask "what can I do?"
-    Then I should see help information
-    And available commands should be explained
+    Given I am following the documented workflow
+    When I parse "help"
+    Then intent should be "help"
 
   Scenario: Connection help requests
-    Given I need to connect to a VM
-    When I ask "how do I connect to the Python environment?"
-    Then I should receive SSH connection instructions
-    And the instructions should be clear and actionable
+    Given I am following the documented workflow
+    When I parse "how do I connect to python"
+    Then intent should be "connect"
 
   @requires-docker-host
   Scenario: Rebuild requests

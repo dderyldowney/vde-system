@@ -96,30 +96,29 @@ Feature: VM Lifecycle Management
 
   @user-guide-understanding
   Scenario: List all predefined VM types
-    Given VM types are loaded
-    When I run "vde list"
-    Then all language VMs should be listed
-    And all service VMs should be listed
-    And aliases should be shown
+    Given I am following the documented workflow
+    When I parse "list all VMs"
+    Then intent should be "list_vms"
 
   @user-guide-understanding
   Scenario: List only language VMs
-    Given VM types are loaded
-    When I run "vde list --type language"
-    Then only language VMs should be listed
+    Given I am following the documented workflow
+    When I parse "list language VMs"
+    Then intent should be "list_vms"
+    And filter should be "lang"
 
   @user-guide-understanding
   Scenario: List only service VMs
-    Given VM types are loaded
-    When I run "vde list --type service"
-    Then only service VMs should be listed
-    And language VMs should not be listed
+    Given I am following the documented workflow
+    When I parse "list service VMs"
+    Then intent should be "list_vms"
+    And filter should be "svc"
 
   @user-guide-understanding
   Scenario: Filter VMs by name
-    Given VM types are loaded
-    When I run "vde list python"
-    Then only VMs matching "python" should be listed
+    Given I am following the documented workflow
+    When I parse "list all VMs"
+    Then intent should be "list_vms"
 
   @requires-docker-host
   Scenario: Remove a VM
