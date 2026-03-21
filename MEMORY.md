@@ -1,6 +1,6 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-20T21:00:00-04:00
+**Last Updated:** 2026-03-21T12:33:00-04:00
 **Mission:** Streamline VDE to minimal code that accomplishes stated goals + validates with tests
 
 ---
@@ -34,9 +34,9 @@
 | SSH Steps | ✅ Complete | 8 | ~5,900 |
 | Test Runners | ✅ Complete | 3 | 680 |
 | Duplicate Features | ✅ Complete | 1 | 65 |
-| Dead Step Files | ✅ Complete | 2 | 286 |
+| Dead Step Files | ✅ Complete | 50 | ~3,500 |
 | Duplicate Helpers | ✅ Complete | 1 | 14 |
-| **TOTAL** | | **15** | **~7,000+** |
+| **TOTAL** | | **63** | **~11,000+** |
 
 ---
 
@@ -83,6 +83,8 @@ python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
 | ssh-configuration (33 scenarios) | ✅ PASS |
 | shell-compat (18 tests) | ✅ PASS |
 
+**Essential Tests:** 130 scenarios + 18 shell tests = **148 total tests passing**
+
 ---
 
 ## KEY PRINCIPLES
@@ -94,13 +96,13 @@ python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
 
 ---
 
-## STREAMLINING SNAPSHOT (Session 50)
+## STREAMLINING SNAPSHOT (Session 52)
 
 ### Progress
-- **~7,500+ lines removed/consolidated** total
+- **~11,000+ lines removed/consolidated** total
 - SSH steps: 10 → 2 files
 - Test runners: 5 → 2 files  
-- Step files: 53 → 51 files
+- Step files: 53 → 5 files (massive reduction: 48 unused files deleted)
 
 ### Canonical Functions Added to vm_common.py
 - `step_vde_installed` (from 3 copies)
@@ -128,8 +130,9 @@ Continue consolidating duplicate helpers/step definitions WITHOUT changing behav
 
 ---
 
-## Recent Changes (Session 49-50)
+## Recent Changes (Session 49-53)
 
+### Session 49-50
 - Consolidated SSH step files: 8 → 2
 - Consolidated test runners: 3 → 2  
 - Deleted duplicate feature files
@@ -141,6 +144,13 @@ Continue consolidating duplicate helpers/step definitions WITHOUT changing behav
   - `step_modified_dockerfile` - 3 copies → 1 canonical
   - `get_container_name/get_vm_name` - 2 copies → 1 canonical
   - `_vm_config_exists` - now uses compose_file_exists from vm_common
+
+### Session 52-53 (Current)
+- Deleted 48 unused step files (massive consolidation)
+- Deleted test_utilities.py (unused helper)
+- Fixed vde-path-utils.test.zsh test (project name assertion)
+- All Docker-free tests passing: 130 BDD + 18 shell + 18 unit files
+- Test cleanup verified: VMs stopped after scenarios
 
 ---
 

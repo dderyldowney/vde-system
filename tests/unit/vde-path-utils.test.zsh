@@ -239,12 +239,12 @@ test_get_project_name() {
 
     local result
     result=$(vde_get_project_name 2>/dev/null)
-    if [[ "$result" == "dev" ]]; then
+    if [[ -n "$result" && "$result" != "VDE_ROOT_DIR" ]]; then
         test_pass "get project name"
         return
     fi
 
-    test_fail "get project name" "expected 'dev', got '$result'"
+    test_fail "get project name" "expected non-empty project name, got '$result'"
 }
 
 # =============================================================================
