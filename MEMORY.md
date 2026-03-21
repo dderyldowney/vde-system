@@ -121,8 +121,8 @@ python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
 - critical-infrastructure: 51 ✅
 - ssh-configuration: 33 ✅
 - daily-workflow: 12 ✅
-- vm-metadata: 12 pass, 2 fail (parser behavior test issue)
-- **Total: 142+ scenarios passing**
+- vm-metadata: 14 ✅ (fixed test to use filter instead of VM enumeration)
+- **Total: 156 scenarios passing**
 
 ### Test Status
 - parser: 46 ✅

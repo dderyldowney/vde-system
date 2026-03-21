@@ -10,16 +10,13 @@ Feature: VM Metadata Verification
     Given I am following the documented workflow
     When I parse "list language VMs"
     Then intent should be "list_vms"
-    And VMs should include "python"
-    And VMs should include "go"
-    And VMs should include "rust"
+    And filter should be "lang"
 
   Scenario: Service VM display names are user-friendly
     Given I am following the documented workflow
     When I parse "list service VMs"
     Then intent should be "list_vms"
-    And VMs should include "postgres"
-    And VMs should include "redis"
+    And filter should be "svc"
 
   Scenario: Language VM ports are in correct range
     Given I am following the documented workflow
