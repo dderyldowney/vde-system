@@ -27,6 +27,7 @@ from vm_common import (
     container_exists,
     compose_file_exists,
     wait_for_container,
+    step_modified_dockerfile,
 )
 
 # ========== GIVEN STEPS ==========
@@ -83,9 +84,9 @@ def step_multiple_languages(context):
 
 
 @given("I have modified the Python VM Dockerfile")
-def step_modified_dockerfile(context):
+def step_modified_dockerfile_daily(context):
     """Setup: User has modified the Python VM Dockerfile."""
-    context.dockerfile_modified = True
+    step_modified_dockerfile(context, "python")
 
 
 @given("I no longer need the Ruby VM")

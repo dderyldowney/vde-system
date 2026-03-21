@@ -102,6 +102,9 @@ python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
 - Deleted unused step files (vde_test_helpers, host_access_steps)
 - Removed .bak files
 - Fixed duplicate `_container_is_running` function
+- Consolidated duplicate step functions into vm_common.py:
+  - `step_vde_installed` - 3 copies → 1 canonical
+  - `step_modified_dockerfile` - 3 copies → 1 canonical
 
 ---
 

@@ -15,7 +15,7 @@ from behave import given, then, when
 
 # Import shared configuration and helpers
 from config import VDE_ROOT
-from vm_common import run_vde_command, compose_file_exists, container_exists
+from vm_common import run_vde_command, compose_file_exists, container_exists, step_vde_installed
 
 
 # =============================================================================
@@ -191,14 +191,9 @@ def step_want_undo_changes(context):
 
 
 @given("VDE is installed on my system")
-def step_vde_installed(context):
+def step_vde_installed_config(context):
     """Verify VDE is installed on the system."""
-    # Check VDE scripts exist
-    start_script = VDE_ROOT / "bin" / "start-virtual"
-    create_script = VDE_ROOT / "bin" / "create-virtual-for"
-    assert start_script.exists() or create_script.exists(), (
-        "VDE should be installed (scripts should exist)"
-    )
+    step_vde_installed(context)
 
 
 @given("multiple VMs are running")
