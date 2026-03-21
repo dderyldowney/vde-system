@@ -105,6 +105,8 @@ python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
 - Consolidated duplicate step functions into vm_common.py:
   - `step_vde_installed` - 3 copies → 1 canonical
   - `step_modified_dockerfile` - 3 copies → 1 canonical
+  - `get_container_name/get_vm_name` - 2 copies → 1 canonical
+  - `_vm_config_exists` - now uses compose_file_exists from vm_common
 
 ---
 
