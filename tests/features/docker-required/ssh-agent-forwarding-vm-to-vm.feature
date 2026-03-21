@@ -1,6 +1,6 @@
-# language: en
-@user-guide-cluster
-@requires-docker-host
+@integration
+@ssh-access
+@networking
 Feature: SSH Agent Forwarding for VM-to-VM Communication
   As a developer working with multiple VMs
   I want to SSH between VMs using my host's SSH keys

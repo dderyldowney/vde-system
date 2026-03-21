@@ -1,5 +1,5 @@
-# language: en
-@user-guide-connecting
+@integration
+@ssh-access
 Feature: SSH and Remote Access
   As a developer using VDE
   I want to access my VMs via SSH

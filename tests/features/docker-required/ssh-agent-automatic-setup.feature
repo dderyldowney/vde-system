@@ -1,6 +1,5 @@
-# language: en
-@user-guide-ssh-keys
-@requires-docker-host
+@integration
+@ssh-access
 Feature: Automatic SSH Setup and Key Management
   As a developer getting started with VDE
   I want SSH to be configured automatically

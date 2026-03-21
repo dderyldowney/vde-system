@@ -1,6 +1,5 @@
-# language: en
-@user-guide-connecting
-@requires-docker-host
+@integration
+@networking
 Feature: VM-to-Host Communication
   As a developer working inside a VM
   I want to execute commands on my host machine
