@@ -16,6 +16,7 @@ from vm_common import (
     compose_file_exists,
     container_exists,
     run_vde_command,
+    step_modified_dockerfile,
 )
 
 
@@ -37,11 +38,9 @@ def step_rebuild_language_vm(context):
 
 
 @given("I have modified the Dockerfile")
-def step_modified_dockerfile(context):
+def step_modified_dockerfile_build(context):
     """Simulate modifying a Dockerfile."""
-    # We'll use python as representative
-    context.vm_name = "python"
-    context.dockerfile_modified = True
+    step_modified_dockerfile(context, "python")
 
 
 @given("I want to update the base image")

@@ -29,6 +29,7 @@ from vm_common import (
     check_ssh_keys_exist,
     check_scripts_executable,
     run_vde_command,
+    step_vde_installed,
 )
 
 # =============================================================================
@@ -153,19 +154,15 @@ def step_vde_being_setup(context):
 
 
 @given("VDE is installed")
-def step_vde_installed(context):
+def step_vde_installed_installation(context):
     """Verify VDE is actually installed."""
-    vde_root_path = Path(VDE_ROOT)
-    required_dirs = ["scripts", "configs", "templates"]
-    context.vde_installed = all((vde_root_path / d).exists() for d in required_dirs)
+    step_vde_installed(context)
 
 
 @given("I've installed VDE")
 def step_ive_installed_vde(context):
     """Verify VDE is actually installed."""
-    vde_root_path = Path(VDE_ROOT)
-    required_dirs = ["scripts", "configs", "templates"]
-    context.vde_installed = all((vde_root_path / d).exists() for d in required_dirs)
+    step_vde_installed(context)
 
 
 # =============================================================================

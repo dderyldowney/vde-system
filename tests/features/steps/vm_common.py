@@ -36,7 +36,7 @@ ALLOW_CLEANUP = IN_CONTAINER or IN_TEST_MODE
 def _vm_conf_dir(vm_name):
     """Get VM configuration directory in configs/docker/."""
     # Normalize name (remove vde- prefix if present)
-    name = vm_name.replace('vde-', '')
+    name = vm_name.replace("vde-", "")
     return VDE_ROOT / "configs" / "docker" / name
 
 
@@ -48,7 +48,10 @@ def is_vde_available():
     """
     try:
         subprocess.run(
-            [str(BIN_DIR / "vde"), "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            [str(BIN_DIR / "vde"), "--version"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
         return True
     except (FileNotFoundError, subprocess.CalledProcessError):
@@ -58,12 +61,13 @@ def is_vde_available():
 def _vde_env():
     """Return environment dict for vde CLI calls: logs to stderr, stdout is clean."""
     from config import VDE_CACHE_DIR
+
     return {
-        **os.environ, 
-        "VDE_ROOT_DIR": str(VDE_ROOT), 
+        **os.environ,
+        "VDE_ROOT_DIR": str(VDE_ROOT),
         "VDE_LOG_OUTPUT": "stderr",
         "VDE_CACHE_DIR": str(VDE_CACHE_DIR),
-        "VDE_LOG_LEVEL": "DEBUG"
+        "VDE_LOG_LEVEL": "DEBUG",
     }
 
 
@@ -149,7 +153,7 @@ def container_is_running(container_name):
         bool: True if container is running, False otherwise
     """
     try:
-        simple_name = container_name.replace('vde-', '')
+        simple_name = container_name.replace("vde-", "")
         full_name = f"vde-{simple_name}"
         # Use explicit filtering for speed and accuracy
         result = subprocess.run(
@@ -165,7 +169,6 @@ def container_is_running(container_name):
         return False
 
 
-
 def get_container_id(container_name):
     """Get the container ID for a given container name.
 
@@ -176,7 +179,9 @@ def get_container_id(container_name):
         str: Container ID if found, empty string if not found
     """
     try:
-        result = subprocess.run([str(BIN_DIR / "vde"), "ps"], capture_output=True, text=True, timeout=10)
+        result = subprocess.run(
+            [str(BIN_DIR / "vde"), "ps"], capture_output=True, text=True, timeout=10
+        )
         if result.returncode == 0:
             for line in result.stdout.strip().split("\n"):
                 if container_name in line:
@@ -729,3 +734,30 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
         context.last_command = " ".join(args)
 
     return cmd_res
+
+
+# =============================================================================
+# CANONICAL STEP DEFINITIONS (reused across multiple step files)
+# =============================================================================
+
+
+def step_vde_installed(context):
+    """Verify VDE is installed on the system.
+
+    Canonical implementation - used by config_steps, documented_workflow_steps,
+    installation_steps, and other step files.
+    """
+    # Check main vde script exists and is executable
+    vde_script = BIN_DIR / "vde"
+    assert vde_script.exists(), "vde script missing"
+    assert vde_script.stat().st_mode & 0o111, "vde script not executable"
+
+
+def step_modified_dockerfile(context, vm_name="python"):
+    """Simulate modifying a Dockerfile.
+
+    Canonical implementation - used by vm_lifecycle_steps, vm_docker_build_steps,
+    daily_workflow_required_steps, and other step files.
+    """
+    context.vm_name = vm_name
+    context.dockerfile_modified = True

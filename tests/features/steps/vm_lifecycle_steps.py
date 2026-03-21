@@ -27,6 +27,7 @@ from vm_common import (
     wait_for_container,
     docker_ps,
     _vm_conf_dir,
+    step_modified_dockerfile,
 )
 
 
@@ -134,9 +135,9 @@ def step_no_longer_need(context):
 
 
 @given("I have modified the VM Dockerfile")
-def step_modified_dockerfile(context):
+def step_modified_dockerfile_lifecycle(context):
     """Simulate modifying a Dockerfile."""
-    context.vm_name = "python"
+    step_modified_dockerfile(context, "python")
     context.rebuild_required = True
 
 

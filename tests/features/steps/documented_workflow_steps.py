@@ -29,6 +29,7 @@ from vm_common import (
     compose_file_exists,
     wait_for_container,
     docker_ps,
+    step_vde_installed,
 )
 
 # =============================================================================
@@ -61,10 +62,9 @@ def _parse_with_vde_parser(request):
 
 @given("I have VDE configured")
 @given("I have VDE installed")
-def step_vde_installed(context):
+def step_vde_installed_docworkflow(context):
     """Verify VDE is installed."""
-    assert (BIN_DIR / "vde").exists(), "vde script missing"
-    assert (BIN_DIR / "vde").stat().st_mode & 0o111, "vde script not executable"
+    step_vde_installed(context)
 
 
 @given("I am a new VDE user")
