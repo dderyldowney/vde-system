@@ -112,25 +112,11 @@ python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
 
 ## Files Changed This Session
 
-**Created:**
-- `tests/run-all-tests.zsh`
-- `tests/run-quick-tests.zsh`
-
-**Deleted:**
-- `tests/run-docker-free-tests.zsh`
-- `tests/run-docker-required-tests.zsh`
-- `tests/run-full-test-suite.zsh`
-- `tests/features/steps/vde_test_helpers.py`
-- `tests/features/steps/host_access_steps.py`
-- `tests/features/steps/common_steps.py`
-- `tests/features/steps/user_workflow_steps.py`
-- `tests/features/steps/test_utilities.py`
-- `tests/features/core-infrastructure/documented-development-workflows.feature`
-- `lib/vde-docker-state.bak`, `lib/vde-docker.bak`, `lib/vde-ssh.bak`
-- `bin/add-vm-type.bak`, `bin/vde-health.bak`
-- **48 unused step files** (massive consolidation):
-  - cache_steps.py, collaboration_steps.py, config_and_verification_steps.py, config_steps.py, crash_recovery_steps.py, daily_development_workflow_steps.py, daily_workflow_required_steps.py, daily_workflow_steps.py, debugging_and_port_steps.py, docker_lifecycle_steps.py, documented_workflow_steps.py, file_verification_steps.py, installation_steps.py, multi_project_workflow_steps.py, natural_language_steps.py, network_and_resource_steps.py, pattern_steps.py, productivity_steps.py, shell_compat_steps.py, ssh_service_steps.py, team_collaboration_steps.py, uninstallation_steps.py, vde_command_steps.py, vde_ssh_command_steps.py, vm_creation_steps.py, vm_docker_build_steps.py, vm_docker_network_steps.py, vm_docker_service_steps.py, vm_info_steps.py, vm_lifecycle_assertion_steps.py, vm_lifecycle_steps.py, vm_metadata_steps.py, vm_operations_steps.py, vm_state_verification_steps.py, vm_status_steps.py, vm_to_host_steps.py
+**Restored (from git):**
+- `tests/features/steps/documented_workflow_steps.py` - "I am following the documented workflow" step
+- `tests/features/steps/common_steps.py` - common scenario steps
+- `tests/features/steps/vm_metadata_steps.py` - VM metadata assertions
 
 **Modified:**
-- `vde_command_steps.py` - Removed duplicate `_container_is_running`
-- Consolidated SSH step files (Session 48)
+- `tests/features/steps/vm_common.py` - Added canonical function note
+- `MEMORY.md` - Updated test status and notes
