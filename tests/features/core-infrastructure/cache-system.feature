@@ -3,6 +3,7 @@
 @cache-system
 @user-guide-internal
 @core-suite
+@requires-docker-host
 Feature: Cache System
   As a developer
   I want VM type data to be cached for performance
