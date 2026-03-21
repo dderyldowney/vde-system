@@ -15,6 +15,11 @@ import time
 import json
 from typing import Dict, Any, Optional, List
 
+from vm_common import (
+    get_container_name as _get_container_name_canonical,
+    get_vm_name as _get_vm_name_canonical,
+)
+
 
 class DockerVerificationError(Exception):
     """Raised when VDE verification fails."""
@@ -297,16 +302,9 @@ ALL_SERVICE_VMS = frozenset(
 )
 
 
-def _get_container_name(vm_name: str) -> str:
-    """Convert VM name to container name."""
-    return f"vde-{vm_name}"
-
-
-def _get_vm_name(container_name: str) -> str:
-    """Convert container name back to VM name."""
-    if container_name.startswith("vde-"):
-        return container_name[4:]
-    return container_name
+# Use canonical functions from vm_common
+get_container_name = _get_container_name_canonical
+get_vm_name = _get_vm_name_canonical
 
 
 def is_service_vm(vm_name: str) -> bool:
