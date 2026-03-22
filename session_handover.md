@@ -4,38 +4,47 @@
 
 ---
 
-## Latest: Tagging Retagging (2026-03-22)
+## Latest: Tagging & Docker Separation (2026-03-22)
 
 ### Completed - TAG_SCHEME.md Compliance
 All feature files retagged to use TAG_SCHEME.md tags:
 
-| Tag | Count | Description |
-|-----|-------|-------------|
-| `@parser` | 9 | Fast - No Docker (parser tests) |
-| `@spec` | 2 | Fast - Spec invariants |
-| `@config` | 1 | Fast - Config generation |
-| `@error-path` | 1 | Fast - Error handling |
-| `@integration` | 14 | Docker - General integration |
-| `@vm-lifecycle` | 4 | Docker - VM lifecycle |
-| `@ssh-access` | 5 | Docker - SSH access |
-| `@networking` | 2 | Docker - VM networking |
-| `@vm-rebuild` | 1 | Docker - Rebuild tests |
-| `@storage` | 1 | Docker - Storage tests |
+| Tag | Type | Description |
+|-----|------|-------------|
+| `@parser` | Fast | No Docker - parser tests (~143 scenarios) |
+| `@spec` | Fast | No Docker - spec invariants (~70) |
+| `@config` | Fast | No Docker - config generation (~33) |
+| `@error-path` | Fast | No Docker - error handling (7) |
+| `@integration` | Docker | General integration (~140) |
+| `@vm-lifecycle` | Docker | VM lifecycle (~58) |
+| `@ssh-access` | Docker | SSH access (~14) |
+| `@networking` | Docker | VM networking |
+| `@vm-rebuild` | Docker (slow) | Rebuild tests - 3 scenarios, ignored for now |
+| `@storage` | Docker | Storage tests (4) |
+
+### Docker Separation
+- Separated @vm-rebuild from @vm-lifecycle (slow tests run separately)
+- Removed rebuild duplication from vm-full-lifecycle.feature
+- Fixed vm-lifecycle.feature: added @parser to parser scenarios
+- Docker tests now filterable by tag
 
 **Changes:**
-- 32 files modified, 1 deleted (shell-compatibility.feature - redundant)
-- Replaced: @core-suite, @core-infrastructure, @user-guide-*, @requires-docker-host, etc.
-- Verified: parser, spec, config, error-path tests pass
+- 32+ files modified
+- Removed unused helpers: container_exists, docker_ps_list, get_vm_type, get_port_from_compose, get_container_exit_code, wait_for_container_stopped
+- Fast tests verified: ~253 scenarios passing
 
 **Run Commands:**
 ```bash
 # Fast tests (no Docker)
 python3 -m behave --tags="@parser,@spec,@config,@error-path"
 
-# Integration tests
+# Docker tests (require Docker host)
 python3 -m behave --tags="@integration"
 python3 -m behave --tags="@vm-lifecycle"
 python3 -m behave --tags="@ssh-access"
+
+# Skip slow rebuild tests
+python3 -m behave --tags="-@vm-rebuild"
 ```
 
 ---
@@ -60,8 +69,32 @@ python3 -m behave --tags="@ssh-access"
 | Step Files (unused) | 53 | 5 | 48 files |
 | Features (duplicate) | 34 | 33 | 1 file |
 | Backup files | 5 | 0 | 5 files |
-| Helper files | - | - | 1 file (test_utilities.py) |
+| Helper functions | - | - | 6 functions (container_exists, docker_ps_list, etc.) |
 | **TOTAL** | | | **~11,000+ lines** |
+
+### Test Status
+
+| Test Type | Tag | Scenarios | Status |
+|-----------|-----|-----------|--------|
+| Fast (no Docker) | @parser | ~143 | ✅ PASS |
+| Fast (no Docker) | @spec | ~70 | ✅ PASS |
+| Fast (no Docker) | @config | ~33 | ✅ PASS |
+| Fast (no Docker) | @error-path | 7 | ✅ PASS |
+| Docker | @vm-lifecycle | ~58 | Next Session |
+| Docker | @integration | ~140 | Next Session |
+| Docker | @ssh-access | ~14 | Next Session |
+| Docker | @storage | 4 | Next Session |
+
+---
+
+## NEXT SESSION FOCUS: Docker-Dependent Tests
+
+When Docker is available, focus on:
+1. Run @vm-lifecycle tests - verify they pass
+2. Run @integration tests - verify they pass  
+3. Run @ssh-access tests - verify they pass
+4. Identify and fix any failing Docker tests
+5. Consider consolidating Docker test step definitions
 
 ### Test Status (ALL PASSING)
 
