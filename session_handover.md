@@ -4,6 +4,42 @@
 
 ---
 
+## Latest: Tagging Retagging (2026-03-22)
+
+### Completed - TAG_SCHEME.md Compliance
+All feature files retagged to use TAG_SCHEME.md tags:
+
+| Tag | Count | Description |
+|-----|-------|-------------|
+| `@parser` | 9 | Fast - No Docker (parser tests) |
+| `@spec` | 2 | Fast - Spec invariants |
+| `@config` | 1 | Fast - Config generation |
+| `@error-path` | 1 | Fast - Error handling |
+| `@integration` | 14 | Docker - General integration |
+| `@vm-lifecycle` | 4 | Docker - VM lifecycle |
+| `@ssh-access` | 5 | Docker - SSH access |
+| `@networking` | 2 | Docker - VM networking |
+| `@vm-rebuild` | 1 | Docker - Rebuild tests |
+| `@storage` | 1 | Docker - Storage tests |
+
+**Changes:**
+- 32 files modified, 1 deleted (shell-compatibility.feature - redundant)
+- Replaced: @core-suite, @core-infrastructure, @user-guide-*, @requires-docker-host, etc.
+- Verified: parser, spec, config, error-path tests pass
+
+**Run Commands:**
+```bash
+# Fast tests (no Docker)
+python3 -m behave --tags="@parser,@spec,@config,@error-path"
+
+# Integration tests
+python3 -m behave --tags="@integration"
+python3 -m behave --tags="@vm-lifecycle"
+python3 -m behave --tags="@ssh-access"
+```
+
+---
+
 ## MANDATE
 
 1. **DRY Principle**: ONE function with parameters, NOT multiple similar functions
