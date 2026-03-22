@@ -264,15 +264,6 @@ def list_containers(all_containers: bool = False) -> List[str]:
         return []
 
 
-def container_exists(container_name: str) -> bool:
-    """Check if a container exists (running or stopped) using vde ps."""
-    try:
-        result = _run_vde_ps(["-a", "-q", "--filter", f"name={container_name}"])
-        return container_name in result.stdout or f"vde-{container_name}" in result.stdout
-    except Exception:
-        return False
-
-
 # =============================================================================
 # VM Naming Utilities (consolidated from vm_naming_helpers)
 # =============================================================================
