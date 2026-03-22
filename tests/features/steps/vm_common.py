@@ -80,31 +80,6 @@ def docker_ps():
     return docker_list_containers()
 
 
-def docker_ps_list():
-    """List running VDE containers with details via vde ps.
-
-    Returns:
-        list: List of dicts with container info (Names, etc.), empty list if none or unavailable
-    """
-    try:
-        result = subprocess.run(
-            ["zsh", str(BIN_DIR / "vde"), "ps", "-q"],
-            capture_output=True,
-            text=True,
-            timeout=15,
-            cwd=str(VDE_ROOT),
-            env=_vde_env(),
-        )
-        containers = []
-        for line in result.stdout.strip().split("\n"):
-            name = line.strip()
-            if name:
-                containers.append({"Names": name})
-        return containers
-    except Exception:
-        return []
-
-
 def docker_list_containers():
     """List running VDE container names via vde ps.
 
