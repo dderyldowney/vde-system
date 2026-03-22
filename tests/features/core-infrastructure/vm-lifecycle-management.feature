@@ -1,6 +1,4 @@
-@core-infrastructure
-@user-guide-starting-stopping
-@core-suite
+@parser
 Feature: VM Lifecycle Management
   As a developer using VDE
   I want to manage the complete lifecycle of my VMs via conversational commands

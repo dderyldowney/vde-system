@@ -1,6 +1,5 @@
 # language: en
-@core-suite
-@user-guide-daily-workflow
+@integration
 Feature: Daily Development Workflow
   As a developer using VDE
   I want to manage my development containers efficiently

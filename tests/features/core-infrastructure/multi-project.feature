@@ -1,6 +1,4 @@
-@core-infrastructure
-@user-guide-daily-workflow
-@core-suite
+@parser
 Feature: Multi-Project Workflow
   As a developer working on multiple projects
   I want to switch between different development environments via unified commands

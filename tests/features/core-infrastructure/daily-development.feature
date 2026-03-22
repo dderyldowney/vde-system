@@ -1,6 +1,4 @@
-@core-infrastructure
-@user-guide-daily-workflow
-@core-suite
+@parser
 Feature: Daily Development Workflow
   As a developer using VDE
   I want to manage my development containers efficiently via unified commands

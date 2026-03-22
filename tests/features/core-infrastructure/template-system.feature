@@ -1,6 +1,4 @@
-@core-infrastructure
-@user-guide-internal
-@requires-docker-host
+@integration
 Feature: Template System
   As a developer
   I want VM configurations to be generated from templates

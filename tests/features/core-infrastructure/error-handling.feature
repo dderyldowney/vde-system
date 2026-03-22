@@ -1,7 +1,5 @@
 # language: en
-@core-infrastructure
-@user-guide-troubleshooting
-@requires-docker-host
+@integration
 Feature: Error Handling and Recovery
   As a developer using VDE
   I want the system to handle errors gracefully

@@ -1,6 +1,4 @@
-@core-infrastructure
-@user-guide-understanding
-@core-suite
+@parser
 Feature: VM Information and Discovery
   As a developer using VDE
   I want to discover what VMs are available and get information about them

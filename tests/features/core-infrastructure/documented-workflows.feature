@@ -1,6 +1,4 @@
-@core-infrastructure
-@user-guide-daily-workflow
-@core-suite
+@parser
 Feature: Daily Development Workflow
   As documented in the VDE development workflows
   I want to follow the same patterns that are documented

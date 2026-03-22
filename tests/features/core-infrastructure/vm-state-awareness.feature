@@ -1,5 +1,4 @@
-@core-infrastructure
-@user-guide-internal
+@vm-lifecycle
 Feature: VM State Awareness
   As a developer using VDE
   I want the system to be aware of VM states

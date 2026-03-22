@@ -1,7 +1,5 @@
 # language: en
-@user-guide-internal
-@requires-docker-host
-@core-suite
+@vm-lifecycle
 Feature: Configuration Management
   As a developer
   I want to configure VDE to match my project needs
