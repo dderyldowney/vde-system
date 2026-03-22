@@ -1,11 +1,10 @@
 # language: en
-@vm-lifecycle
+@vm-lifecycle @requires-docker-host
 Feature: VM Lifecycle Management
   As a developer
   I want to create, start, stop, and manage development VMs via the vde command
   So that I can work in isolated development environments
 
-  @requires-docker-host
   @user-guide-first-vm
   Scenario: Create a new language VM
     Given the VM "elixir" is defined as a language VM with install command "apt-get update -y && apt-get install -y elixir erlang"
@@ -17,7 +16,6 @@ Feature: VM Lifecycle Management
     And projects directory should exist at "projects/elixir"
     And logs directory should exist at "logs/elixir"
 
-  @requires-docker-host
   @user-guide-cluster
   Scenario: Create a new service VM with custom port
     Given the VM "rabbitmq" is defined as a service VM with port "5672"
@@ -27,7 +25,6 @@ Feature: VM Lifecycle Management
     And the docker-compose.yml should contain service port mapping "5672"
     And data directory should exist at "data/rabbitmq"
 
-  @requires-docker-host
   @user-guide-first-vm
   Scenario: Start a created VM
     Given VM "python" has been created
@@ -36,7 +33,6 @@ Feature: VM Lifecycle Management
     Then VM "python" should be running
     And SSH should be accessible on allocated port
 
-  @requires-docker-host
   @user-guide-cluster
   Scenario: Start multiple VMs
     Given VM "python" has been created
@@ -47,7 +43,6 @@ Feature: VM Lifecycle Management
     And VM "rust" should be running
     And each VM should have a unique SSH port
 
-  @requires-docker-host
   @user-guide-daily-workflow
   Scenario: Start all VMs
     Given VM "python" has been created
@@ -57,7 +52,6 @@ Feature: VM Lifecycle Management
     When I run "vde start all"
     Then all created VMs should be running
 
-  @requires-docker-host
   @user-guide-starting-stopping
   Scenario: Stop a running VM
     Given VM "python" is running
@@ -65,7 +59,6 @@ Feature: VM Lifecycle Management
     Then VM "python" should not be running
     But VM configuration should still exist
 
-  @requires-docker-host
   @user-guide-starting-stopping
   Scenario: Stop all running VMs
     Given VM "python" is running
@@ -73,7 +66,6 @@ Feature: VM Lifecycle Management
     When I run "vde stop all"
     Then no VMs should be running
 
-  @requires-docker-host
   @user-guide-starting-stopping
   Scenario: Restart a VM
     Given VM "python" is running
@@ -81,25 +73,25 @@ Feature: VM Lifecycle Management
     Then VM "python" should be running
     And the VM should have a fresh container instance
 
-  @requires-docker-host
   Scenario: Cannot start non-existent VM
     Given VM "nonexistent" is not created
     When I run "vde start nonexistent"
     Then the command should fail with error "Unknown VM: nonexistent"
 
-  @requires-docker-host
   Scenario: Cannot create duplicate VM
     Given VM "python" has been created
     When I run "vde create python"
     Then the command should fail with error "already exists"
 
   @user-guide-understanding
+  @parser
   Scenario: List all predefined VM types
     Given I am following the documented workflow
     When I parse "list all VMs"
     Then intent should be "list_vms"
 
   @user-guide-understanding
+  @parser
   Scenario: List only language VMs
     Given I am following the documented workflow
     When I parse "list language VMs"
@@ -107,6 +99,7 @@ Feature: VM Lifecycle Management
     And filter should be "lang"
 
   @user-guide-understanding
+  @parser
   Scenario: List only service VMs
     Given I am following the documented workflow
     When I parse "list service VMs"
@@ -114,12 +107,12 @@ Feature: VM Lifecycle Management
     And filter should be "svc"
 
   @user-guide-understanding
+  @parser
   Scenario: Filter VMs by name
     Given I am following the documented workflow
     When I parse "list all VMs"
     Then intent should be "list_vms"
 
-  @requires-docker-host
   Scenario: Remove a VM
     Given VM "python" has been created
     When I run "vde remove python"
@@ -127,11 +120,13 @@ Feature: VM Lifecycle Management
     And projects directory should still exist at "projects/python"
     But container should be gone
 
+  @parser
   Scenario: Add a new VM type
     Given I am following the documented workflow
     When I parse "add-vm-type mylang"
     Then intent should be "add_vm_type"
 
+  @parser
   Scenario: Add VM type with aliases
     Given I am following the documented workflow
     When I parse "add-vm-type js"
