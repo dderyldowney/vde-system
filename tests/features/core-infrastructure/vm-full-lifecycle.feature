@@ -1,5 +1,5 @@
 # language: en
-@vm-lifecycle @vm-rebuild
+@vm-lifecycle
 Feature: VM Full Lifecycle Critical Path
 
   Scenario: Full VM lifecycle for Python development environment
