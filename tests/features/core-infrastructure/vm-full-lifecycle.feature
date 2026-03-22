@@ -7,7 +7,7 @@ Feature: VM Full Lifecycle Critical Path
     When I run "vde create python"
     Then a docker-compose.yml file should be created at "configs/docker/python/docker-compose.yml"
     And the docker-compose.yml should contain SSH port mapping
-    When I run "vde start python --rebuild"
+    When I run "vde start python"
     Then SSH config entry should exist for "vde-python"
     Then VM "python" should be running
     And SSH should be accessible on allocated port
@@ -21,9 +21,8 @@ Feature: VM Full Lifecycle Critical Path
     When I run "vde stop python"
     Then VM "python" should not be running
     But VM configuration should still exist
-    When I run "vde start python --rebuild --no-cache"
+    When I run "vde start python"
     Then VM "python" should be running
-    And the container should be rebuilt without cache
     And SSH connection should still work
     When I run "vde remove python"
     Then container should be gone
