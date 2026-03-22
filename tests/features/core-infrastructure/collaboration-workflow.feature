@@ -1,6 +1,5 @@
 # language: en
-@core-infrastructure
-@user-guide-internal
+@integration
 Feature: Team Collaboration and Project Sharing
   As a developer working with a team
   I want to share VDE configurations with my team via unified commands

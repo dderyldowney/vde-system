@@ -1,6 +1,5 @@
 # language: en
-@core-infrastructure
-@user-guide-starting-stopping
+@vm-lifecycle
 Feature: VM Lifecycle Management
   As a developer
   I want to create, start, stop, and manage development VMs via the vde command

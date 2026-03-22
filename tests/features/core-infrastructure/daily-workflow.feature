@@ -1,6 +1,4 @@
-@core-infrastructure
-@user-guide-daily-workflow
-@core-suite
+@parser
 Feature: Daily Development Workflow
   As a developer
   I want to manage multiple development environments seamlessly via unified commands

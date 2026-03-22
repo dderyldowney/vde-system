@@ -1,5 +1,5 @@
 # language: en
-@rebuild @requires-docker-host
+@vm-rebuild
 Feature: VM Image Rebuild Tests
 
   These scenarios test VM image rebuild functionality with --rebuild and --no-cache flags.

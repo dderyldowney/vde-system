@@ -1,8 +1,4 @@
 # language: en
-@user-guide-ssh-keys
-@requires-docker-ssh
-@core-infrastructure
-@core-suite
 @config
 Feature: SSH Configuration
   As a developer

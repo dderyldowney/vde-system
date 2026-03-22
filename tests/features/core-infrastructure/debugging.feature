@@ -1,7 +1,5 @@
 # language: en
-@core-infrastructure
-@user-guide-troubleshooting
-@core-suite
+@integration
 Feature: Debugging and Troubleshooting
   As a developer
   I want tools to diagnose and fix VM issues via unified commands

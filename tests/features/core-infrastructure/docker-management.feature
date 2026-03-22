@@ -1,6 +1,5 @@
 # language: en
-@core-infrastructure
-@user-guide-internal
+@integration
 Feature: Docker and Container Management
   As a developer using VDE
   I want VDE to handle Docker container complexity

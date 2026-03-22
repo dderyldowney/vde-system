@@ -1,6 +1,5 @@
 # language: en
-@core-infrastructure
-@user-guide-internal
+@integration
 Feature: Team Collaboration and Maintenance
   As a developer in a team environment
   I want to maintain and share development environments via unified commands

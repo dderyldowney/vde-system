@@ -1,6 +1,5 @@
 # language: en
-@core-infrastructure
-@requires-docker-host
+@storage
 Feature: Productivity Features for Developers
   As a developer
   I want shortcuts and automation for common tasks via unified commands

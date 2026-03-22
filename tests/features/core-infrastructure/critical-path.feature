@@ -1,5 +1,5 @@
 # language: en
-@critical-path @core-infrastructure @core-suite
+@vm-lifecycle
 Feature: Critical Path — VM Lifecycle
   As a developer
   I want to create, start, stop, and use VMs via the vde CLI
