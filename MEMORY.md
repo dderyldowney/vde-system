@@ -1,6 +1,6 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-21T12:33:00-04:00
+**Last Updated:** 2026-03-22T19:06:00-04:00
 **Mission:** Streamline VDE to minimal code that accomplishes stated goals + validates with tests
 
 ---
@@ -171,9 +171,33 @@ Continue consolidating duplicate helpers/step definitions WITHOUT changing behav
 - All Docker-free tests passing: 130 BDD + 18 shell + 18 unit files
 - Test cleanup verified: VMs stopped after scenarios
 
+### Session 54-55 (Tagging & Docker Separation)
+- Implemented TAG_SCHEME.md tagging: @parser, @spec, @config, @error-path (fast) vs @vm-lifecycle, @integration, @ssh-access, @networking, @storage, @vm-rebuild (Docker)
+- Retagged 32 feature files
+- Removed duplicate container_exists from shell_helpers.py
+- Removed unused docker_ps_list from vm_common.py
+- Removed unused helper functions: get_vm_type, get_port_from_compose, get_container_exit_code, wait_for_container_stopped
+- Separated @vm-rebuild from @vm-lifecycle (slow rebuild tests run separately)
+- Removed rebuild duplication from vm-full-lifecycle.feature
+- Fixed vm-lifecycle.feature: added @parser to parser scenarios
+- All fast tests passing: ~253 scenarios
+
+**Test Tag Distribution:**
+| Tag | Type | Scenarios |
+|-----|------|-----------|
+| @parser | Fast | ~143 |
+| @spec | Fast | ~70 |
+| @config | Fast | ~33 |
+| @error-path | Fast | 7 |
+| @vm-lifecycle | Docker | ~58 |
+| @integration | Docker | ~140 |
+| @ssh-access | Docker | ~14 |
+| @storage | Docker | 4 |
+| @vm-rebuild | Docker (slow) | 3 |
+
 ---
 
-## What To Eliminate Next
+## What To Eliminate Next (Next Session Focus)
 
 1. **Duplicate step definitions** - `step_vde_installed` appears 3 times
 2. **Duplicate helper functions** - Same functions in multiple files
