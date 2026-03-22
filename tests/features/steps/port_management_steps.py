@@ -2,6 +2,7 @@
 BDD Step Definitions for Port Management.
 Tests port allocation, collision detection, and registry management.
 """
+
 import os
 import subprocess
 import sys
@@ -28,56 +29,29 @@ from vm_common import (
 # GIVEN steps - Setup for Port Management tests
 # =============================================================================
 
-@given('no language VMs are created')
-def step_no_lang_vms_created(context):
-    """Ensure no language VMs are created via vde remove."""
-    vms = ['c', 'cpp', 'asm', 'python', 'rust', 'js', 'csharp', 'ruby', 'go', 'java']
-    for vm_name in vms:
-        # Use remove which is safer than direct rm
-        run_vde_command(f"remove {vm_name}", context=context)
-
-
-@given('language VM "{vm_name}" is allocated port "{port}"')
-def step_lang_vm_allocated_port(context, vm_name, port):
-    """Ensure language VM has specific port allocated."""
-    from vm_common import compose_file_exists
-    if not compose_file_exists(vm_name):
-        # Create VM
-        run_vde_command(f"create {vm_name}", timeout=120, context=context)
-    
-    context.vm_name = vm_name
-    context.allocated_port = port
-
 
 @given('ports "{ports}" are allocated')
 def step_ports_allocated(context, ports):
     """Ensure specific ports are allocated."""
-    port_list = [p.strip().strip('"').strip("'") for p in ports.split(',')]
+    port_list = [p.strip().strip('"').strip("'") for p in ports.split(",")]
     context.allocated_ports = port_list
     # For testing collisions, we often need to ensure no VM is already using these ports
     # This is handled by cleanup logic or vde's own collision detection
-
-
-@given('no service VMs are created')
-def step_no_svc_vms_created(context):
-    """Ensure no service VMs are created via vde remove."""
-    vms = ['postgres', 'redis', 'mongodb', 'nginx', 'mysql', 'rabbitmq', 'couchdb']
-    for vm_name in vms:
-        run_vde_command(f"remove {vm_name}", context=context)
 
 
 @given('VM "{vm_name}" is allocated port "{port}"')
 def step_vm_allocated_port(context, vm_name, port):
     """Ensure VM has specific port allocated."""
     from vm_common import compose_file_exists
+
     if not compose_file_exists(vm_name):
         run_vde_command(f"create {vm_name}", timeout=120, context=context)
-    
+
     context.vm_name = vm_name
     context.allocated_port = port
 
 
-@given('I reload the VM types cache')
+@given("I reload the VM types cache")
 def step_reload_vm_cache(context):
     """Reload VM types cache via rebuild-cache command."""
     run_vde_command("rebuild-cache", timeout=30, context=context)
@@ -88,16 +62,17 @@ def step_reload_vm_cache(context):
 def step_process_listening_on_port(context, port):
     """Start a process listening on a port."""
     import socket
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        s.bind(('0.0.0.0', int(port)))
+        s.bind(("0.0.0.0", int(port)))
         s.listen(1)
         # Store socket in context to keep it open
-        if not hasattr(context, 'open_sockets'):
+        if not hasattr(context, "open_sockets"):
             context.open_sockets = []
         context.open_sockets.append(s)
     except OSError:
-        pass # Already occupied
+        pass  # Already occupied
 
 
 @given('a Docker container is bound to host port "{port}"')
@@ -125,7 +100,8 @@ def step_old_port_lock(context, seconds):
 # WHEN steps - Actions for Port Management tests
 # =============================================================================
 
-@when('I create a language VM')
+
+@when("I create a language VM")
 def step_create_language_vm(context):
     """Create a language VM."""
     run_vde_command("create c", timeout=120, context=context)
@@ -138,13 +114,13 @@ def step_create_lang_vm(context, vm_name):
     context.vm_name = vm_name
 
 
-@when('I create a service VM')
+@when("I create a service VM")
 def step_create_service_vm(context):
     """Create a service VM."""
     run_vde_command("create redis", timeout=120, context=context)
 
 
-@when('I query the port registry')
+@when("I query the port registry")
 def step_query_port_registry(context):
     """Query the port registry via vde port command."""
     # VDE uses .cache/port-registry
@@ -155,7 +131,7 @@ def step_query_port_registry(context):
         context.port_registry_content = ""
 
 
-@when('I run port cleanup')
+@when("I run port cleanup")
 def step_run_port_cleanup(context):
     """Run port cleanup via vde cleanup-ports command."""
     run_vde_command("cleanup-ports", timeout=30, context=context)
@@ -171,21 +147,24 @@ def step_remove_vm(context, vm_name):
 # THEN steps - Verification for Port Management tests
 # =============================================================================
 
+
 @then('the VM should be allocated port "{expected_port}"')
 def step_allocated_port(context, expected_port):
     """Verify VM was allocated the expected port via vde port."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     result = run_vde_command(f"port {vm_name} 22", context=context)
-    assert expected_port in result.stdout or expected_port in result.stderr, \
+    assert expected_port in result.stdout or expected_port in result.stderr, (
         f"Expected port {expected_port} not found in output: {result.stdout}"
+    )
 
 
 @then('"{vm_name}" should be mapped to port "{port}"')
 def step_vm_mapped_to_port(context, vm_name, port):
     """Verify VM is mapped to specific port in registry."""
-    registry_content = getattr(context, 'port_registry_content', '')
-    assert vm_name in registry_content and port in registry_content, \
+    registry_content = getattr(context, "port_registry_content", "")
+    assert vm_name in registry_content and port in registry_content, (
         f"{vm_name} should be mapped to port {port}"
+    )
 
 
 @then('"{vm_name}" should still be mapped to port "{port}"')
@@ -199,26 +178,26 @@ def step_vm_still_mapped(context, vm_name, port):
 @then('the VM should NOT be allocated port "{port}"')
 def step_not_allocated_port(context, port):
     """Verify collision avoidance."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     result = run_vde_command(f"port {vm_name} 22", context=context)
     assert port not in result.stdout, f"Port {port} should have been skipped"
 
 
-@then('the VM should be allocated a different available port')
+@then("the VM should be allocated a different available port")
 def step_different_port_allocated(context):
     """Verify a non-conflicting port was allocated."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     result = run_vde_command(f"port {vm_name} 22", context=context)
     assert result.returncode == 0 and result.stdout.strip(), "A valid port should be allocated"
 
 
-@then('each process should receive a unique port')
+@then("each process should receive a unique port")
 def step_unique_ports(context):
     """Verify unique port allocation."""
     assert context.last_exit_code == 0
 
 
-@then('no port should be allocated twice')
+@then("no port should be allocated twice")
 def step_no_duplicate_ports(context):
     """Verify uniqueness."""
     assert context.last_exit_code == 0
@@ -227,11 +206,12 @@ def step_no_duplicate_ports(context):
 @then('the allocated port should be between "{start}" and "{end}"')
 def step_port_in_range(context, start, end):
     """Verify port range compliance."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     result = run_vde_command(f"port {vm_name} 22", context=context)
     # Parse port from output
     import re
-    m = re.search(r'(\d+)', result.stdout)
+
+    m = re.search(r"(\d+)", result.stdout)
     if m:
         port = int(m.group(1))
         assert int(start) <= port <= int(end), f"Port {port} outside range {start}-{end}"
@@ -245,13 +225,13 @@ def step_port_error(context, error_msg):
     assert error_msg.lower() in output.lower()
 
 
-@then('the stale lock should be removed')
+@then("the stale lock should be removed")
 def step_stale_lock_removed(context):
     """Verify lock cleanup."""
     assert context.last_exit_code == 0
 
 
-@then('the port should be available for allocation')
+@then("the port should be available for allocation")
 def step_port_available(context):
     """Verify availability."""
     assert context.last_exit_code == 0
@@ -270,15 +250,16 @@ def step_port_removed_from_registry(context, port):
 # Additional Port Management Steps
 # =============================================================================
 
-@then('VDE should allocate the next available port')
+
+@then("VDE should allocate the next available port")
 def step_allocate_next_port(context):
     """Verify allocation succeeds."""
     assert context.last_exit_code == 0
 
 
-@then('VDE should allocate the next available port ({expected_port})')
+@then("VDE should allocate the next available port ({expected_port})")
 def step_allocate_expected_port(context, expected_port):
     """Verify exact allocation."""
-    vm_name = getattr(context, 'vm_name', 'python')
+    vm_name = getattr(context, "vm_name", "python")
     result = run_vde_command(f"port {vm_name} 22", context=context)
     assert expected_port in result.stdout
