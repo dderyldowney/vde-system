@@ -1,6 +1,6 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-22T21:30:00-04:00
+**Last Updated:** 2026-03-23T16:38:00-04:00
 **Mission:** Streamline VDE to minimal code that accomplishes stated goals + validates with tests
 
 ---
@@ -80,10 +80,11 @@ python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
 |------|--------|
 | Core features (parser, critical-infra, ssh-config, error-path) | ✅ 137 PASS |
 | cache-system.feature | ✅ 3 PASS (simplified) |
-| @parser features | Next Session focus |
+| @parser features (145 scenarios) | ✅ ALL PASS |
 | @vm-lifecycle | Next Session focus |
+| @integration | Next Session focus |
 
-**Total: 140 scenarios passing (fast tests)**
+**Total: 145 @parser scenarios passing**
 
 ### New Tagging Scheme
 - Fast tests: @parser, @spec, @config, @error-path (no Docker)
@@ -177,30 +178,17 @@ Continue consolidating duplicate helpers/step definitions WITHOUT changing behav
 - Removed rebuild duplication from vm-full-lifecycle.feature
 - Fixed vm-lifecycle.feature: added @parser to parser scenarios
 
-### Session 56 (Cache-System Fix)
-- Added cache_system_steps.py with step definitions
-- Simplified cache-system.feature to 3 realistic scenarios
-- Fixed undefined steps issue (was blocking @spec tag)
-- 140 fast tests now passing
+### Session 57 (Current - Test Verification)
 
-**Test Tag Distribution:**
-| Tag | Type | Scenarios |
-|-----|------|-----------|
-| @parser | Fast | ~143 |
-| @spec | Fast | ~70 |
-| @config | Fast | ~33 |
-| @error-path | Fast | 7 |
-| @vm-lifecycle | Docker | ~58 |
-| @integration | Docker | ~140 |
-| @ssh-access | Docker | ~14 |
-| @storage | Docker | 4 |
-| @vm-rebuild | Docker (slow) | 3 |
+- Verified fast tests: 184 passing scenarios
+- No failures detected - only skipped (require Docker)
+- Confirmed DRY consolidation complete
+- @vm-rebuild tests: 3 scenarios (require Docker image rebuild)
+
+### Next Session Focus: vm-rebuild.feature
+
+- Focus on: `tests/features/core-infrastructure/vm-rebuild.feature`
+- 3 scenarios tagged with @vm-rebuild
+- Requires Docker for image rebuild tests
 
 ---
-
-## What To Eliminate Next (Next Session Focus)
-
-1. **Duplicate step definitions** - `step_vde_installed` appears 3 times
-2. **Duplicate helper functions** - Same functions in multiple files
-3. **Redundant features** - Features testing same thing
-4. **Unused bin scripts** - Scripts never called by tests
