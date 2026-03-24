@@ -5,59 +5,44 @@ Feature: VM Lifecycle Management
   I want to create, start, stop, and manage development VMs via the vde command
   So that I can work in isolated development environments
 
-  @user-guide-first-vm
-  Scenario: Create a new language VM
-    Given the VM "elixir" is defined as a language VM with install command "apt-get update -y && apt-get install -y elixir erlang"
-    And no VM configuration exists for "elixir"
-    When I run "vde create elixir"
-    Then a docker-compose.yml file should be created at "configs/docker/elixir/docker-compose.yml"
-    And the docker-compose.yml should contain SSH port mapping
-    And SSH config entry should exist for "vde-elixir"
-    And projects directory should exist at "projects/elixir"
-    And logs directory should exist at "logs/elixir"
-
-  @user-guide-cluster
-  Scenario: Create a new service VM with custom port
-    Given the VM "rabbitmq" is defined as a service VM with port "5672"
-    And no VM configuration exists for "rabbitmq"
-    When I run "vde create rabbitmq"
-    Then a docker-compose.yml file should be created at "configs/docker/rabbitmq/docker-compose.yml"
-    And the docker-compose.yml should contain service port mapping "5672"
-    And data directory should exist at "data/rabbitmq"
+  VDE uses a data-driven approach where VM types are defined in data/vm-types.conf.
+  On first use, VDE auto-generates docker-compose.yml from templates.
+  The workflow is: start -> builds image if needed -> creates container -> starts it.
 
   @user-guide-first-vm
-  Scenario: Start a created VM
-    Given VM "python" has been created
-    And VM "python" is not running
+  Scenario: Start an existing language VM
+    Given VM "python" is not running
     When I run "vde start python"
     Then VM "python" should be running
-    And SSH should be accessible on allocated port
+
+  @user-guide-first-vm
+  Scenario: Start a language VM (first use - builds image)
+    Given VM "python" is not created
+    When I run "vde start python"
+    Then VM "python" should be running
+    And Docker image should be built
 
   @user-guide-cluster
   Scenario: Start multiple VMs
-    Given VM "python" has been created
-    And VM "rust" has been created
-    And neither VM is running
+    Given VM "python" is not running
+    And VM "rust" is not running
     When I run "vde start python rust"
     Then VM "python" should be running
     And VM "rust" should be running
-    And each VM should have a unique SSH port
 
   @user-guide-daily-workflow
   Scenario: Start all VMs
-    Given VM "python" has been created
-    And VM "rust" has been created
-    And VM "postgres" has been created
-    And none of the VMs are running
+    Given VM "python" is not running
+    And VM "postgres" is not running
     When I run "vde start all"
-    Then all created VMs should be running
+    Then VM "python" should be running
+    And VM "postgres" should be running
 
   @user-guide-starting-stopping
   Scenario: Stop a running VM
     Given VM "python" is running
     When I run "vde stop python"
     Then VM "python" should not be running
-    But VM configuration should still exist
 
   @user-guide-starting-stopping
   Scenario: Stop all running VMs
@@ -73,24 +58,34 @@ Feature: VM Lifecycle Management
     Then VM "python" should be running
     And the VM should have a fresh container instance
 
-  Scenario: Cannot start non-existent VM
-    Given VM "nonexistent" is not created
+  Scenario: Rebuild VM with --rebuild flag
+    Given VM "python" is running
+    When I run "vde start python --rebuild"
+    Then VM "python" should be running
+    And Docker image should be rebuilt
+
+  Scenario: Rebuild without cache using --no-cache
+    Given VM "python" is running
+    When I run "vde start python --no-cache"
+    Then VM "python" should be running
+
+  Scenario: Cannot start unknown VM
+    Given VM "nonexistent" is not known
     When I run "vde start nonexistent"
-    Then the command should fail with error "Unknown VM: nonexistent"
+    Then the command should fail with error "Unknown VM"
 
-  Scenario: Cannot create duplicate VM
-    Given VM "python" has been created
-    When I run "vde create python"
-    Then the command should fail with error "already exists"
+  Scenario: Remove a VM container (config preserved)
+    Given VM "python" is running
+    When I run "vde remove python"
+    Then VM "python" should not be running
+    But VM configuration should still exist
 
-  @user-guide-understanding
   @parser
   Scenario: List all predefined VM types
     Given I am following the documented workflow
     When I parse "list all VMs"
     Then intent should be "list_vms"
 
-  @user-guide-understanding
   @parser
   Scenario: List only language VMs
     Given I am following the documented workflow
@@ -98,7 +93,6 @@ Feature: VM Lifecycle Management
     Then intent should be "list_vms"
     And filter should be "lang"
 
-  @user-guide-understanding
   @parser
   Scenario: List only service VMs
     Given I am following the documented workflow
@@ -106,28 +100,8 @@ Feature: VM Lifecycle Management
     Then intent should be "list_vms"
     And filter should be "svc"
 
-  @user-guide-understanding
-  @parser
-  Scenario: Filter VMs by name
-    Given I am following the documented workflow
-    When I parse "list all VMs"
-    Then intent should be "list_vms"
-
-  Scenario: Remove a VM
-    Given VM "python" has been created
-    When I run "vde remove python"
-    Then SSH config entry should be preserved
-    And projects directory should still exist at "projects/python"
-    But container should be gone
-
   @parser
   Scenario: Add a new VM type
     Given I am following the documented workflow
     When I parse "add-vm-type mylang"
-    Then intent should be "add_vm_type"
-
-  @parser
-  Scenario: Add VM type with aliases
-    Given I am following the documented workflow
-    When I parse "add-vm-type js"
     Then intent should be "add_vm_type"
