@@ -20,6 +20,44 @@ Phased Plan (high level)
 - Phase G: VM lifecycle promotion + zig removal (2026-03-09) — **COMPLETE**
 - Phase H: Test infrastructure fixes (2026-03-11) — **COMPLETE**
 - Phase I: Cache-system fix (2026-03-22) — **COMPLETE**
+- Phase J: VM rebuild feature implementation (2026-03-23) — **COMPLETE**
+- Phase K: VM lifecycle feature update (2026-03-24) — **COMPLETE**
+
+Phase K — VM Lifecycle Feature Update (2026-03-24)
+
+Goals: Update vm-lifecycle.feature to match VDE's actual workflow.
+
+Tasks completed:
+
+1. Rewrote vm-lifecycle.feature to test actual VDE workflow:
+   - Start/stop/restart/remove VMs (not config creation)
+   - VDE auto-generates configs from vm-types.conf on first use
+
+2. Added step definitions to vm_rebuild_steps.py:
+   - Given: VM not running, not created, not known
+   - When: vde start/stop/restart/remove commands
+   - Then: Docker image built/rebuilt assertions
+
+3. Fixed duplicate step definitions (DRY compliance)
+
+**Result: 15 vm-lifecycle scenarios, all steps defined**
+
+---
+
+Phase J — VM Rebuild Feature (2026-03-23)
+
+Goals: Implement step definitions for vm-rebuild.feature tests.
+
+Tasks completed:
+
+1. Created `vm_rebuild_steps.py` with all step definitions for rebuild tests
+2. Fixed undefined step: `I run "vde start python --rebuild"`
+3. All 3 @vm-rebuild scenarios now have working step definitions
+4. Dry-run verification: 14 steps defined, 0 undefined
+
+**Result: 3 @vm-rebuild scenarios ready for Docker testing**
+
+---
 
 Phase I — Cache-System Fix (2026-03-22)
 
