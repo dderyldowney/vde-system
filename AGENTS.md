@@ -1,6 +1,21 @@
 # VDE Agent Directory
 
-This file documents the specialized AI agents available within the Claude Code setup for developing and maintaining the Virtual Development Environment (VDE).
+This file documents the specialized AI agents available within the Claude Code / Kilo CLI setup for developing and maintaining the Virtual Development Environment (VDE).
+
+## Agent Loading (MANDATORY AT STARTUP)
+
+**At session start, agents MUST be scanned and loaded into context immediately, not lazy-loaded.**
+
+The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` (Kilo) must be read at session initialization before any task execution. This ensures all sub-agent capabilities are available immediately.
+
+## CLI-Specific Paths
+
+| CLI | Commands | Agents | Rules |
+|-----|----------|--------|-------|
+| **Claude Code** | `.claude/commands/` | `.claude/agents/` | `.claude/rules/` |
+| **Kilo** | `.kilocode/commands/` | `.kilocode/agents/` | `.kilocode/rules/` |
+
+**Sync Requirement**: When adding a new agent/command, copy to BOTH `.claude/` and `.kilocode/` directories to ensure availability regardless of which CLI is used.
 
 ## Quick Reference
 
@@ -14,11 +29,15 @@ This file documents the specialized AI agents available within the Claude Code s
 | `/vde-debug` | Debugger - analyzes failures |
 | `/vde-spec` | Docs Manager - spec updates |
 
-**Sub-agents** (use via Task tool with `subagent_type`): `planner`, `scout`, `coder`, `tester`, `reviewer`, `debugger`, `git-manager`, `security-auditor`, `docs-manager`
+**Sub-agents** (use via Task tool with `subagent_type`): `planner`, `scout`, `coder`, `tester`, `reviewer`, `debugger`, `git-manager`, `security-auditor`, `docs-manager`, `rule-enforcer`
 
-**File Locations:**
-- Commands: `.claude/commands/vde-*.md` (slash commands)
-- Agent definitions: `.claude/agents/*.md` (sub-agent templates)
+## File Locations
+
+| Component | Claude Code Path | Kilo Path |
+|-----------|------------------|-----------|
+| Slash Commands | `.claude/commands/vde-*.md` | `.kilocode/commands/vde-*.md` |
+| Agent Definitions | `.claude/agents/*.md` | `.kilocode/agents/*.md` |
+| Rules | `.claude/rules/*.md` | `.kilocode/rules/*.md` |
 
 ## STREAMLINING MANDATE (Current Priority)
 
@@ -97,7 +116,7 @@ This file documents the specialized AI agents available within the Claude Code s
 ## Rule Enforcer
 
 - **Description**: Supervisor agent. Checks every major change, plan, or refactor against the 3 framework rules. **Highest authority — overrules Claude's own confidence. Violations block all further work.**
-- **File Path**: `.claude/agents/rule-enforcer.md`
+- **File Path**: `.kilocode/agents/rule-enforcer.md` (Kilo) / `.claude/agents/rule-enforcer.md` (Claude Code)
 - **Role**: Framework Compliance Supervisor
 - **The 3 Rules**:
   1. **TDD** — failing test first (red), minimal code to pass (green), refactor. No fake/pink tests.
@@ -221,7 +240,7 @@ All agents MUST follow these documentation protocols to ensure continuity across
 ## Planner
 
 - **Description**: Creates detailed implementation plans and strategies for complex features.
-- **File Path**: `.claude/agents/planner.md`
+- **File Path**: `.kilocode/agents/planner.md` (Kilo) / `.claude/agents/planner.md` (Claude Code)
 - **Role**: Architect & Strategist
 - **Core Capabilities**: Task decomposition, architectural planning, dependency mapping, **MCP-driven roadmap generation**.
 - **Dependencies**: Scout, Codebase Investigator, Context7.
@@ -233,7 +252,7 @@ All agents MUST follow these documentation protocols to ensure continuity across
 ## Scout
 
 - **Description**: Explores the codebase to understand structure, patterns, and conventions.
-- **File Path**: `.claude/agents/scout.md`
+- **File Path**: `.kilocode/agents/scout.md` (Kilo) / `.claude/agents/scout.md` (Claude Code)
 - **Role**: Information Gatherer
 - **Core Capabilities**: Codebase traversal, pattern identification, convention discovery, **integrated MCP tool discovery**.
 - **Dependencies**: None.
@@ -245,7 +264,7 @@ All agents MUST follow these documentation protocols to ensure continuity across
 ## Coder
 
 - **Description**: Writes clean, efficient, and idiomatic code adhering to project standards.
-- **File Path**: `.claude/agents/coder.md`
+- **File Path**: `.kilocode/agents/coder.md` (Kilo) / `.claude/agents/coder.md` (Claude Code)
 - **Role**: Software Engineer
 - **Core Capabilities**: Scripting (Zsh), Python development, Docker configuration, **MCP-integrated development workflows**.
 - **Dependencies**: Planner, Scout, MCP_DOCKER.
@@ -257,7 +276,7 @@ All agents MUST follow these documentation protocols to ensure continuity across
 ## Tester
 
 - **Description**: Writes and executes tests to ensure software quality and reliability.
-- **File Path**: `.claude/agents/tester.md`
+- **File Path**: `.kilocode/agents/tester.md` (Kilo) / `.claude/agents/tester.md` (Claude Code)
 - **Role**: QA Engineer
 - **Core Capabilities**: Behave BDD tests, Pytest, shell script verification, **MCP-driven automated testing**.
 - **Dependencies**: Coder, MCP_DOCKER.
@@ -269,7 +288,7 @@ All agents MUST follow these documentation protocols to ensure continuity across
 ## Reviewer
 
 - **Description**: Performs systematic code reviews to ensure quality and consistency.
-- **File Path**: `.claude/agents/reviewer.md`
+- **File Path**: `.kilocode/agents/reviewer.md` (Kilo) / `.claude/agents/reviewer.md` (Claude Code)
 - **Role**: Quality Auditor
 - **Core Capabilities**: Static analysis, best practice verification, security checks, **MCP-assisted code auditing**.
 - **Dependencies**: Coder, Github.
@@ -281,7 +300,7 @@ All agents MUST follow these documentation protocols to ensure continuity across
 ## Debugger
 
 - **Description**: Analyzes errors and bugs to identify root causes and suggest fixes.
-- **File Path**: `.claude/agents/debugger.md`
+- **File Path**: `.kilocode/agents/debugger.md` (Kilo) / `.claude/agents/debugger.md` (Claude Code)
 - **Role**: Troubleshooting Expert
 - **Core Capabilities**: Log analysis, trace investigation, root cause analysis, **contextual bug tracing via MCP**.
 - **Dependencies**: Scout, Tester, Memory.
@@ -293,7 +312,7 @@ All agents MUST follow these documentation protocols to ensure continuity across
 ## Git Manager
 
 - **Description**: Manages version control operations and commit history.
-- **File Path**: `.claude/agents/git-manager.md`
+- **File Path**: `.kilocode/agents/git-manager.md` (Kilo) / `.claude/agents/git-manager.md` (Claude Code)
 - **Role**: SCM Administrator
 - **Core Capabilities**: Commit preparation, branch management, PR drafting, **Github MCP integration**.
 - **Dependencies**: Reviewer, Github.
@@ -305,7 +324,7 @@ All agents MUST follow these documentation protocols to ensure continuity across
 ## Security Auditor
 
 - **Description**: Conducts security audits and vulnerability scans on the codebase.
-- **File Path**: `.claude/agents/security-auditor.md`
+- **File Path**: `.kilocode/agents/security-auditor.md` (Kilo) / `.claude/agents/security-auditor.md` (Claude Code)
 - **Role**: Security Engineer
 - **Core Capabilities**: Vulnerability detection, secret scanning, permission auditing, **automated security scanning via MCP**.
 - **Dependencies**: Codebase Investigator, Security.
@@ -317,7 +336,7 @@ All agents MUST follow these documentation protocols to ensure continuity across
 ## Docs Manager
 
 - **Description**: Manages project documentation and ensures it stays in sync with code.
-- **File Path**: `.claude/agents/docs-manager.md`
+- **File Path**: `.kilocode/agents/docs-manager.md` (Kilo) / `.claude/agents/docs-manager.md` (Claude Code)
 - **Role**: Technical Writer
 - **Core Capabilities**: Markdown generation, technical deep dives, README updates, **Documentation synchronization via Context7 and fetch MCP**.
 - **Dependencies**: Coder, Context7.
