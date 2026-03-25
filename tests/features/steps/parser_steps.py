@@ -497,3 +497,56 @@ def step_verify_intent_empty(context):
     """Verify the detected intent is an empty string."""
     detected = getattr(context, "detected_intent", "")
     assert detected == "", f"Expected empty intent, but got '{detected}'"
+
+
+# =============================================================================
+# Natural language phrasing aliases (map prose steps to parser assertions)
+# =============================================================================
+
+
+@given("I need to rebuild a container")
+@given("I want to type less")
+@given("I want to perform common actions")
+@given("I can phrase commands in different ways")
+@given("I need to work with multiple environments")
+@given("I know a VM by its alias")
+@given("I need to rebuild a container")
+@given("I want to operate on all VMs of a type")
+@given("I'm done working")
+@given("I use conversational language")
+@given("something isn't working")
+@given("I type commands in various cases")
+def step_generic_context(context):
+    """Generic context setup for natural language command scenarios."""
+    context.workflow_type = "natural_language"
+
+
+@when('I say "{input_text}"')
+def step_say_input(context, input_text):
+    """Natural language alias for 'I parse' — feeds input through the real vde-parser."""
+    step_parse_input(context, input_text)
+
+
+@then("the rebuild flag should be set")
+def step_verify_rebuild_flag_set(context):
+    """Alias: verify rebuild flag is detected."""
+    flags = getattr(context, "detected_flags", {"rebuild": False})
+    assert flags.get("rebuild", False) is True, (
+        f"Expected rebuild flag to be true, but got {flags.get('rebuild', False)}"
+    )
+
+
+@then("no cache should be used")
+def step_verify_nocache_flag_set(context):
+    """Alias: verify nocache flag is detected."""
+    flags = getattr(context, "detected_flags", {"nocache": False})
+    assert flags.get("nocache", False) is True, (
+        f"Expected nocache flag to be true, but got {flags.get('nocache', False)}"
+    )
+
+
+@then('it should understand "{alias}" means "{canonical}"')
+@then('"{alias}" should mean "{canonical}"')
+def step_alias_resolves(context, alias, canonical):
+    """Verify that an alias resolves to the expected canonical VM name."""
+    step_verify_vm_included(context, canonical)
