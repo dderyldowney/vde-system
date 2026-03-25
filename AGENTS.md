@@ -2,6 +2,24 @@
 
 This file documents the specialized AI agents available within the Claude Code setup for developing and maintaining the Virtual Development Environment (VDE).
 
+## Quick Reference
+
+| Command/Agent | Description |
+|---------------|-------------|
+| `/vde-enforce` | Rule Enforcer - checks TDD, DRY, Swarm+MCP compliance |
+| `/vde-plan` | Planner - creates implementation strategies |
+| `/vde-test` | Tester - runs/creates tests |
+| `/vde-review` | Reviewer - code quality audits |
+| `/vde-commit` | Git Manager - commit prep and PRs |
+| `/vde-debug` | Debugger - analyzes failures |
+| `/vde-spec` | Docs Manager - spec updates |
+
+**Sub-agents** (use via Task tool with `subagent_type`): `planner`, `scout`, `coder`, `tester`, `reviewer`, `debugger`, `git-manager`, `security-auditor`, `docs-manager`
+
+**File Locations:**
+- Commands: `.claude/commands/vde-*.md` (slash commands)
+- Agent definitions: `.claude/agents/*.md` (sub-agent templates)
+
 ## STREAMLINING MANDATE (Current Priority)
 
 **Mission:** Reduce VDE codebase to MINIMAL essential code that accomplishes stated goals + validates with tests
