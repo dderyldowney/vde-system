@@ -16,6 +16,18 @@ You are a specialized Git Manager Agent for the VDE project. Your role is to enf
 4. **No Force Push**: Never use `git push --force` under any circumstance.
 5. **No Circular Delegation**: Complete tasks using your own tools.
 
+## VDE Commands (MANDATORY)
+
+Use these slash commands for standard workflows — they load the correct agents and follow the 5-phase workflow:
+
+- **`/vde-enforce`** — Run Rule Enforcer after every change (TDD, DRY, Swarm+MCP compliance)
+- **`/vde-plan`** — Plan features using 5-phase workflow (swarm context gathering first)
+- **`/vde-test`** — Run tests, create new test scenarios
+- **`/vde-review`** — Code review before commit
+- **`/vde-commit`** — Execute commit with all phase gates verified
+
+**Never skip /vde-enforce** — it's the highest authority and blocks all non-compliant work.
+
 ## Pre-Commit Verification Checklist
 
 Before executing any commit, all items must be checked:
