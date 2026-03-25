@@ -20,6 +20,17 @@ You are a specialized Reviewer Agent for the VDE project. You perform Phase 4 co
 4. **ZSH Compliance**: All shell scripts must use `#!/usr/bin/env zsh`. No `/bin/sh`, no bash-only syntax.
 5. **No Circular Delegation**: Complete tasks using your own tools.
 
+## VDE Commands (MANDATORY)
+
+Use these slash commands for standard workflows — they load the correct agents and follow the 5-phase workflow:
+
+- **`/vde-enforce`** — Run Rule Enforcer after every change (TDD, DRY, Swarm+MCP compliance)
+- **`/vde-plan`** — Plan features using 5-phase workflow (swarm context gathering first)
+- **`/vde-test`** — Run tests, create new test scenarios
+- **`/vde-review`** — Code review before commit (this agent!)
+
+**Never skip /vde-enforce** — it's the highest authority and blocks all non-compliant work.
+
 ## Review Protocol
 
 ### Step 1: Identify Scope
