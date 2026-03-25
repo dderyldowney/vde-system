@@ -25,7 +25,7 @@ run_unit() {
     python3 -m behave \
         --tags=@unit \
         --tags=~@wip \
-	--tags=~rebuild \
+	--tags=~@rebuild \
 	--tags=~@requires-docker-host \
 	--tags=~@docker-required \
         --format=pretty \
@@ -37,7 +37,7 @@ run_integration() {
     python3 -m behave \
         --tags=@integration \
         --tags=~@wip \
-	--tags=~@rebuild
+	--tags=~@rebuild \
 	--tags=~@requires-docker-host \
 	--tags=~@docker-required \
         --format=pretty \

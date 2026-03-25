@@ -1,5 +1,6 @@
 # language: en
 @integration
+@requires-docker-host
 Feature: Installation and Initial Setup
   As a developer
   I want to install and configure VDE on my system

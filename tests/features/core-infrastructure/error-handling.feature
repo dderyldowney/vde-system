@@ -1,5 +1,6 @@
 # language: en
 @integration
+@requires-docker-host
 Feature: Error Handling and Recovery
   As a developer using VDE
   I want the system to handle errors gracefully

@@ -1,5 +1,6 @@
 # language: en
 @integration
+@requires-docker-host
 Feature: Docker Operations
   As a developer
   I want reliable Docker Compose operations with error handling
