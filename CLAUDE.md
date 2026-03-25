@@ -56,6 +56,23 @@ Full detail in `.kilocode/rules/workflow.md`. Summary:
 4. **Review** — `code-reviewer` approval + user approval (both required)
 5. **Git** — Verify tests → commit locally. **NO push without explicit user auth.**
 
+## Use VDE Commands When Available (MANDATORY)
+
+If a VDE slash command exists for your task, you MUST use it — never do the work directly.
+
+| Task | Use This Command |
+|------|------------------|
+| Check framework compliance | `/vde-enforce` |
+| Plan a new feature/fix | `/vde-plan` |
+| Run or create tests | `/vde-test` |
+| Code review before commit | `/vde-review` |
+| Execute commit with verification | `/vde-commit` |
+| Update spec documentation | `/vde-spec` (requires user auth) |
+| Debug a failing test | `/vde-debug` |
+| Create a new VM | `/vde-new-vm` |
+
+**Why:** Commands load the correct specialized agents, enforce the 5-phase workflow, and ensure no steps are skipped.
+
 ## Sub-Agent Swarm (MANDATORY)
 
 Full detail in `.kilocode/rules/subagent_mcp_mandate.md`. Summary:
