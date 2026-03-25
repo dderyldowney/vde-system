@@ -15,12 +15,7 @@ from pathlib import Path
 from behave import given, then, when
 
 from config import VDE_ROOT
-from vm_common import get_container_name, run_vde_command
-
-
-def _get_compose_file(vm_name):
-    """Get docker-compose.yml path for a VM."""
-    return VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
+from vm_common import get_container_name, run_vde_command, get_compose_file
 
 
 def _container_exists(vm_name):
@@ -223,6 +218,25 @@ def step_no_vms_running(context):
 
 @then("the VM should have a fresh container instance")
 def step_fresh_container(context):
-    """Verify VM has fresh container."""
-    # Container restart counts as fresh
-    pass
+    """Verify VM has fresh container by checking restart count."""
+    vm_name = getattr(context, "vm_name", None)
+    if not vm_name:
+        for var in ["vm_name", "vm"]:
+            if hasattr(context, var):
+                vm_name = getattr(context, var)
+                break
+    if not vm_name:
+        raise AssertionError("No VM name found in context")
+
+    container = get_container_name(vm_name)
+    result = subprocess.run(
+        ["docker", "inspect", container, "--format", "{{.RestartCount}}"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise AssertionError(f"Container {container} not found")
+    restart_count = int(result.stdout.strip())
+    assert restart_count > 0, (
+        f"Container {container} was not restarted (restart count: {restart_count})"
+    )

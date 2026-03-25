@@ -545,6 +545,7 @@ def step_ssh_agent_is_running(context):
                 parts = line.split(";")[0].split("=")
                 if len(parts) == 2:
                     os.environ[parts[0]] = parts[1]
+        context.ssh_agent_started = True
     context.ssh_agent_running = True
 
 

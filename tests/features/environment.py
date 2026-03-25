@@ -438,6 +438,15 @@ def after_scenario(context, scenario):
     _restore_vde_ssh_dir(getattr(context, "_vde_ssh_backup", None))
     context._vde_ssh_backup = None
 
+    # Clean up ssh-agent processes started during this scenario
+    if getattr(context, "ssh_agent_started", False):
+        import subprocess
+
+        subprocess.run(
+            ["pkill", "-u", os.environ.get("USER", "devuser"), "ssh-agent"], capture_output=True
+        )
+        context.ssh_agent_started = False
+
     # Remove test artifacts from public-ssh-keys/ to prevent cross-scenario pollution
     pub_keys_dir = Path(VDE_ROOT) / "public-ssh-keys"
     if pub_keys_dir.exists():
