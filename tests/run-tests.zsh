@@ -41,7 +41,7 @@ run_integration() {
 	--tags=~@requires-docker-host \
 	--tags=~@docker-required \
         --format=pretty \
-        features/core-infrastructure/vde-ssh-commands.feature
+        features/core-infrastructure/
 }
 
 run_e2e() {
