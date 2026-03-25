@@ -1,5 +1,6 @@
 # language: en
 @integration
+@requires-docker-host
 Feature: Debugging and Troubleshooting
   As a developer
   I want tools to diagnose and fix VM issues via unified commands

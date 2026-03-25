@@ -1,5 +1,6 @@
 # language: en
 @integration
+@requires-docker-host
 Feature: Natural Language Commands
   As a developer using VDE
   I want to control my environment using natural language

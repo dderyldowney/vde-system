@@ -1,5 +1,6 @@
 # language: en
 @integration
+@requires-docker-host
 Feature: Team Collaboration and Maintenance
   As a developer in a team environment
   I want to maintain and share development environments via unified commands

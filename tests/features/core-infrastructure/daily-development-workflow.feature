@@ -1,5 +1,6 @@
 # language: en
 @integration
+@requires-docker-host
 Feature: Daily Development Workflow
   As a developer using VDE
   I want to manage my development containers efficiently

@@ -1,5 +1,6 @@
 # language: en
 @integration
+@requires-docker-host
 Feature: Docker and Container Management
   As a developer using VDE
   I want VDE to handle Docker container complexity
