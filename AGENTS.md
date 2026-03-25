@@ -167,8 +167,8 @@ When user moves project (e.g., `mv ~/dev ~/vde-system`):
 ## Testing Guidelines
 
 **NEVER run the full test suite during debugging or verification.** Only run full suite when explicitly needed.
-**NEVER run any tests tagged @rebuild or @docker-required unless explicitly told to by the User. If told to by the User,
-then manually run the command using python3 and the behave framework overriding the @rebuild and/or @docker-required tag negations
+**NEVER run any tests tagged @rebuild, @requires-docker-host or @docker-required unless explicitly told to by the User. If told to by the User,
+then manually run the command using python3 and the behave framework overriding the @rebuild, @requires-docker-host, and/or @docker-required tag negations
 in the normal test runner.
 
 ### Efficient Testing Protocol
