@@ -202,10 +202,18 @@ Continue consolidating duplicate helpers/step definitions WITHOUT changing behav
 - Ran full non-Docker test suite — all clean
 - BDD: 243 passed, 0 failed, 214 skipped (Docker-required), 2m 9s
 - ZSH unit tests: 24/24 files, 0 failures
-- Python unit tests: 10/10 passed
+- Python unit tests: 10/10 passing
 - Streamlined agents/ directory (legacy agent files deleted)
 - Added CLAUDE.md, .claude/ config, tests/run-tests.zsh
 - Removed tests/run-tests.sh (bash → zsh migration)
+
+### Session 61 (Fake Test Fixes 2026-03-24)
+
+- Fixed fake test violations found by Supervisor:
+  - ssh_core_steps.py:2018-2023 - replaced assert True with key preference verification
+  - ssh_core_steps.py:2048 - removed 'or True'  
+  - cache_system_steps.py:357 - replaced context flag with cache mtime verification
+- Supervisor: PASS (TDD ✓ | DRY ✓ | Swarm+MCP ✓)
 
 ### Fast Tests Status (243 BDD scenarios passing)
 - parser: 46 ✅

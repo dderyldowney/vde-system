@@ -22,8 +22,21 @@ Phased Plan (high level)
 - Phase I: Cache-system fix (2026-03-22) — **COMPLETE**
 - Phase J: VM rebuild feature implementation (2026-03-23) — **COMPLETE**
 - Phase K: VM lifecycle feature update (2026-03-24) — **COMPLETE**
+- Phase L: Supervisor fake test fixes (2026-03-24) — **COMPLETE**
 
-Phase K — VM Lifecycle Feature Update (2026-03-24)
+Phase L — Supervisor Fake Test Fixes (2026-03-24)
+
+Goals: Fix fake test violations found by Supervisor enforcement.
+
+Tasks completed:
+
+1. Fixed ssh_core_steps.py:2018-2023 - replaced assert True with actual key preference verification
+2. Fixed ssh_core_steps.py:2048 - removed 'or True' pattern  
+3. Fixed cache_system_steps.py:357 - replaced context flag with cache mtime verification
+
+**Result: Supervisor PASS (TDD ✓ | DRY ✓ | Swarm+MCP ✓)**
+
+---
 
 Goals: Update vm-lifecycle.feature to match VDE's actual workflow.
 
