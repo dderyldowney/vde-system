@@ -56,6 +56,30 @@ Full detail in `.kilocode/rules/workflow.md`. Summary:
 4. **Review** — `code-reviewer` approval + user approval (both required)
 5. **Git** — Verify tests → commit locally. **NO push without explicit user auth.**
 
+## Agent Orchestration Flow (MANDATORY)
+
+```
+Main Agent
+    │
+    ├──► Supervisor (/vde-enforce) — ALWAYS runs first, checks TDD/DRY/Swarm+MCP
+    │        │
+    │        └──► Sub‑Agents (planner, coder, tester, etc.) — controlled by supervisor
+    │               │
+    │               └──► /vde‑plan → Spawns scout swarm for context
+    │               └──► /vde‑test → Runs tests, creates scenarios
+    │               └──► /vde‑debug → Isolates and remediates errors
+    │
+    ├──► After changes: /vde‑review → Code reviewer checks DRY, security, spec
+    │
+    └──► Final: /vde‑enforce → Verify compliance before commit
+```
+
+**Key Rules:**
+- **Supervisor is always first** — `/vde-enforce` runs at session start and after every change
+- **Code reviewer called whenever changes are made** — After code, after debugging fixes, before commit
+- **Debugger isolates errors** — `/vde-debug` used when tests fail, then re-review
+- **Enforcer always verifies compliance** — Never skip `/vde-enforce`
+
 ## Use VDE Commands When Available (MANDATORY)
 
 If a VDE slash command exists for your task, you MUST use it — never do the work directly.
