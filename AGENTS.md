@@ -21,7 +21,7 @@ The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` 
 
 | Command/Agent | Description |
 |---------------|-------------|
-| `/vde-enforce` | Rule Enforcer - checks TDD, DRY, Swarm+MCP compliance |
+| `/vde-enforce` | Supervisor - checks TDD, DRY, Swarm+MCP compliance |
 | `/vde-plan` | Planner - creates implementation strategies |
 | `/vde-test` | Tester - runs/creates tests |
 | `/vde-review` | Reviewer - code quality audits |
@@ -29,7 +29,7 @@ The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` 
 | `/vde-debug` | Debugger - analyzes failures |
 | `/vde-spec` | Docs Manager - spec updates |
 
-**Sub-agents** (use via Task tool with `subagent_type`): `planner`, `scout`, `coder`, `tester`, `reviewer`, `debugger`, `git-manager`, `security-auditor`, `docs-manager`, `rule-enforcer`
+**Sub-agents** (use via Task tool with `subagent_type`): `planner`, `scout`, `coder`, `tester`, `reviewer`, `debugger`, `git-manager`, `security-auditor`, `docs-manager`, `supervisor`
 
 ## File Locations
 
@@ -113,15 +113,12 @@ The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` 
 
 ---
 
-## Rule Enforcer
+## Supervisor
 
 - **Description**: Supervisor agent. Checks every major change, plan, or refactor against the 3 framework rules. **Highest authority — overrules Claude's own confidence. Violations block all further work.**
-- **File Path**: `.kilocode/agents/rule-enforcer.md` (Kilo) / `.claude/agents/rule-enforcer.md` (Claude Code)
+- **File Path**: `.kilocode/agents/supervisor.md` (Kilo) / `.claude/agents/rule-enforcer.md` (Claude Code)
 - **Role**: Framework Compliance Supervisor
-- **The 3 Rules**:
-  1. **TDD** — failing test first (red), minimal code to pass (green), refactor. No fake/pink tests.
-  2. **DRY** — no repeated code or logic. One parameterized function, never near-identical copies.
-  3. **Swarm+MCP** — MCP before local tools, parallel sub-agents spawned simultaneously, main agent synthesizes only.
+- **Note**: Claude Code uses `rule-enforcer` as agent type; Kilo uses `supervisor` as agent type. Both invoke via `/vde-enforce` command.
 - **When to Run**: After EVERY major change, plan, refactor, or new feature. Non-negotiable. Cannot be skipped.
 - **If BLOCKED**: Stop all work. Fix every listed violation. Re-run. Only proceed on PASS.
 - **Interaction Protocol**: Invoke via `/vde-enforce` after every change. If Claude disagrees with a ruling, Claude is wrong.
