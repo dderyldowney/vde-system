@@ -4,17 +4,30 @@
 
 ---
 
-## Latest: Supervisor Fixes (2026-03-24)
+## Latest: Test Suite Verification (2026-03-25)
 
-### Supervisor Check Performed
+### Test Results (docker-free)
 
-Ran `/vde-enforce` to verify framework compliance:
+```
+BDD:    281 passed, 0 failed, 38 error, 138 skipped
+ZSH:    24/24 passing
+Python: 10/10 passed
+```
 
-| Check | Result |
-|-------|--------|
-| TDD | ✓ PASS |
-| DRY | ✓ PASS |
-| Swarm+MCP | ✓ PASS |
+### Delta from Session 60 (2026-03-24)
+- BDD passed: 243 → 281 (+38 scenarios now running/passing)
+- BDD errors: 0 → 38 (ssh-agent-external-git-operations.feature + vm-full-lifecycle.feature)
+- BDD skipped: 214 → 138 (fewer Docker-skipped scenarios)
+- ZSH/Python: unchanged
+
+### Known Issues
+- `ssh-agent-external-git-operations.feature` — 2 error scenarios (undefined steps)
+- `vm-full-lifecycle.feature` — errors at line 5 (requires Docker)
+- `test_shell_helpers.py` + `test_test_utilities.py` — pre-existing import error (`ModuleNotFoundError: 'test_utilities'`)
+
+---
+
+## Previous: Supervisor Fixes (2026-03-24)
 
 ### Fake Test Violations Fixed
 
@@ -22,11 +35,7 @@ Ran `/vde-enforce` to verify framework compliance:
 2. **ssh_core_steps.py:2048** - Removed `or True` pattern
 3. **cache_system_steps.py:357** - Replaced context flag with real cache mtime verification
 
-### Test Verification
-
-```
-parser: 46 ✅
-```
+Supervisor: PASS (TDD ✓ | DRY ✓ | Swarm+MCP ✓)
 
 ---
 
@@ -70,6 +79,7 @@ python3 -m behave tests/features/core-infrastructure/vm-rebuild.feature --tags=@
 
 ## Next Steps
 
+- Investigate 38 BDD errors: fix undefined steps in ssh-agent-external-git-operations.feature
 - Run Docker-required tests when Docker host available
 - Continue streamlining if further duplication found
-- Keep BDD scenario count at 243+ passing
+- BDD baseline is now 281 passing
