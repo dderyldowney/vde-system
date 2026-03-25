@@ -1,13 +1,7 @@
 ---
 name: coder
 description: Writes clean, efficient, and idiomatic code adhering to project standards.
-tools:
-  - read
-  - write
-  - edit
-  - grep
-  - glob
-  - bash
+permission: {}
 ---
 
 # Coder Agent

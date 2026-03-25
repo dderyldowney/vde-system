@@ -1,11 +1,7 @@
 ---
 name: rule-enforcer
 description: Supervisor agent. Checks every major change, plan, or refactor against the 3 framework rules: TDD (red/green/refactor), DRY, and swarm+MCP compliance. Higher authority than Claude's own confidence. Violations block all further work until fixed.
-tools:
-  - read
-  - grep
-  - glob
-  - bash
+permission: {}
 ---
 
 # Rule Enforcer Agent

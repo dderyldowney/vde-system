@@ -1,11 +1,7 @@
 ---
 name: debugger
 description: Diagnoses Zsh library errors, Python BDD test failures, and Docker runtime issues in VDE. Read-only — reports root cause and fix plan, does not implement.
-tools:
-  - read
-  - grep
-  - glob
-  - bash
+permission: {}
 ---
 
 # Debugger Agent

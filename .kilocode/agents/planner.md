@@ -1,11 +1,7 @@
 ---
 name: planner
 description: Designs phased implementation plans for VDE features and fixes. Reads VDE-SPEC.md, checks DRY opportunities, maps files to change, and produces a numbered plan with HARD STOP before any code is written.
-tools:
-  - read
-  - grep
-  - glob
-  - bash
+permission: {}
 ---
 
 # Planner Agent
