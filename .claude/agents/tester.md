@@ -48,3 +48,12 @@ You are a specialized Tester Agent for the VDE project. Your primary goal is to 
 - Create or run tests following DRY principles
 - Verify no duplicate test logic exists
 - Report consolidated patterns
+
+## Test Execution
+
+When running BDD tests, ALWAYS use `--tags="not @integration"` to exclude Docker-requiring tests and avoid timeouts:
+
+```bash
+# Fast tests only
+python3 -m behave tests/features/core-infrastructure/ --tags="not @integration" -q
+```

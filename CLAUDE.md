@@ -81,6 +81,7 @@ Full detail in `.kilocode/rules/dry_requirement.md`. Core rule:
 Full detail in `AGENTS.md` Testing Guidelines. Summary:
 - **Isolate first**: run only the specific failing feature/test
 - **Fast tags** (no Docker): `@parser`, `@spec`, `@config`, `@error-path`
+- **Avoid timeouts**: Always use `--tags="not @integration"` when running BDD tests to exclude Docker-requiring tests
 - **BDD**: `python3 -m behave tests/features/core-infrastructure/<feature>.feature`
 - **Full suite**: `./tests/run-full-test-suite.zsh` — final verification only
 - **No fake tests**: see `.kilocode/rules/fake_tests.md`
