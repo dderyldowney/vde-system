@@ -3,10 +3,10 @@
 # VDE Test Runner - Industry Standard Tiered Testing
 #
 # Usage:
-#   ./run-tests.sh unit        # Fast unit tests (parser)
-#   ./run-tests.sh integration # CLI integration tests
-#   ./run-tests.sh e2e        # Full Docker/VM tests
-#   ./run-tests.sh all        # All tests
+#   ./run-tests.zsh unit        # Fast unit tests (parser)
+#   ./run-tests.zsh integration # CLI integration tests
+#   ./run-tests.zsh e2e        # Full Docker/VM tests
+#   ./run-tests.zsh all        # All tests
 #===============================================================================
 
 set -e
@@ -25,6 +25,8 @@ run_unit() {
     python3 -m behave \
         --tags=@unit \
         --tags=~@wip \
+	--tags=~rebuild \
+	--tags=~@docker-required \
         --format=pretty \
         features/core-infrastructure/parser.feature
 }
@@ -34,6 +36,8 @@ run_integration() {
     python3 -m behave \
         --tags=@integration \
         --tags=~@wip \
+	--tags=~@rebuild
+	--tags=~@docker-required \
         --format=pretty \
         features/core-infrastructure/vde-ssh-commands.feature
 }
@@ -43,6 +47,7 @@ run_e2e() {
     python3 -m behave \
         --tags=@docker \
         --tags=~@wip \
+	--tags=~@rebuild \
         --format=pretty \
         features/core-infrastructure/
 }
