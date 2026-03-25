@@ -1,6 +1,5 @@
 # language: en
 @integration
-@requires-docker-host
 Feature: Natural Language Commands
   As a developer using VDE
   I want to control my environment using natural language
@@ -48,7 +47,6 @@ Feature: Natural Language Commands
     When I parse "how do I connect to python"
     Then intent should be "connect"
 
-  @requires-docker-host
   Scenario: Rebuild requests
     Given I need to rebuild a container
     When I say "rebuild python from scratch"
@@ -89,7 +87,6 @@ Feature: Natural Language Commands
     Then the system should understand I want to start the Python VM
     And the Python VM should start
 
-  @requires-docker-host
   Scenario: Minimal typing commands
     Given I want to type less
     When I say "start py and pg"
