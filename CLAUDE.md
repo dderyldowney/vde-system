@@ -13,8 +13,20 @@
 
 The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` (Kilo) must be read at session initialization before any task execution. This ensures all sub-agent capabilities are available immediately.
 
-## STARTUP
-On session startup, after reading the core checklist files, you MUST read AGENTS.md and immediately load any instructions that are not already in *this* file into working memory before handing session control over to the User. The Supervisor MUST be loaded at session startup (e.g `/vde-enforce`) before handing session control over to the User. The Supervisor MUST be run (or verified that it *is* running) before ALL tasks. This is non negotiable. No exceptions!
+## STARTUP (MANDATORY — EXECUTE BEFORE FIRST RESPONSE)
+
+**ALL steps below MUST be executed automatically at session start — before answering ANY user prompt. No exceptions. No lazy-loading. No skipping for "simple" sessions.**
+
+1. **Read `MEMORY.md`** — load project state, test status, active goals
+2. **Read `session_handover.md`** — load current session context and next steps
+3. **Read `plans/session_handover_remediation.md`** — load active remediation plan
+4. **Query `memory` MCP** — retrieve cross-session context from knowledge graph
+5. **Scan and load agent definitions** from `.claude/agents/` — load all sub-agent capabilities into working memory
+6. **Read `AGENTS.md`** — load any instructions not already in this file into working memory
+7. **Run `/vde-enforce`** (Supervisor) — verify framework compliance before any work begins
+
+**Session control MUST NOT be handed to the user until all 7 steps above are complete.**
+If any step fails, report the failure to the user before proceeding.
 
 ## Rule Enforcer (HIGHEST AUTHORITY — NON-NEGOTIABLE)
 
@@ -94,10 +106,15 @@ Commit locally freely. **DO NOT `git push` without explicit user instruction.**
 
 ## Session Start Checklist
 
+This checklist is **automatically executed** (not optionally consulted) at every session start per the STARTUP section above. Steps are listed here for reference only.
+
 1. Read `MEMORY.md` — project state, test status, active goals
 2. Read `session_handover.md` — current session context, next steps
 3. Read `plans/session_handover_remediation.md` — active remediation plan
 4. Query `memory` MCP for cross-session context
+5. Scan and load `.claude/agents/` agent definitions
+6. Read `AGENTS.md` and load into working memory
+7. Run `/vde-enforce` — Supervisor compliance check
 
 ## Agent Additions / Command Additions
 
