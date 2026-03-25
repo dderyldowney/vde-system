@@ -1,6 +1,6 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-23T16:38:00-04:00
+**Last Updated:** 2026-03-24T16:30:00-04:00
 **Mission:** Streamline VDE to minimal code that accomplishes stated goals + validates with tests
 
 ---
@@ -90,13 +90,9 @@ python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
 | daily-workflow | 12 | ✅ PASS |
 | vm-rebuild | 3 | ✅ PASS |
 
-**Total: 212 fast scenarios passing**
-
-### VM Lifecycle Tests - NEEDS REVIEW
-The `vm-lifecycle.feature` has 17 scenarios that need step definitions. Issues:
-- Feature assumes VMs don't exist - but VDE auto-creates from vm-types.conf
-- Tests like "Create new language VM" fail because config already exists
-- Many steps undefined - needs consolidation with existing step files
+**BDD Total: 243 scenarios passed, 0 failed, 214 skipped (Docker-required)**
+**ZSH Unit Tests: 24/24 files passing, 0 failures**
+**Python Unit Tests: 10/10 passed**
 
 ### Next Steps
 - Focus on fast tests only for CI
@@ -194,14 +190,24 @@ Continue consolidating duplicate helpers/step definitions WITHOUT changing behav
 - Confirmed DRY consolidation complete
 - @vm-rebuild tests: 3 scenarios (require Docker image rebuild)
 
-### Session 58-59 (Current - VM Lifecycle Complete)
+### Session 58-59 (VM Lifecycle Complete)
 
 - Updated vm-lifecycle.feature to match VDE's actual workflow
 - All step definitions now in place (0 undefined steps)
 - Tests use existing steps from vm_rebuild_steps.py (no new duplicates)
 - Fast tests: 212 scenarios passing
 
-### Fast Tests Status (212 scenarios passing)
+### Session 60 (Current - Full Non-Docker Test Verification 2026-03-24)
+
+- Ran full non-Docker test suite — all clean
+- BDD: 243 passed, 0 failed, 214 skipped (Docker-required), 2m 9s
+- ZSH unit tests: 24/24 files, 0 failures
+- Python unit tests: 10/10 passed
+- Streamlined agents/ directory (legacy agent files deleted)
+- Added CLAUDE.md, .claude/ config, tests/run-tests.zsh
+- Removed tests/run-tests.sh (bash → zsh migration)
+
+### Fast Tests Status (243 BDD scenarios passing)
 - parser: 46 ✅
 - critical-infrastructure: 51 ✅
 - ssh-configuration: 33 ✅
@@ -212,12 +218,11 @@ Continue consolidating duplicate helpers/step definitions WITHOUT changing behav
 - cache-system: 3 ✅
 - daily-workflow: 12 ✅
 - vm-rebuild: 3 ✅
+- (additional features via 14 feature pass)
 
 ### VM Lifecycle Feature
 - 15 scenarios (start/stop/restart/remove + parser tests)
 - All steps defined via vm_rebuild_steps.py
 - Requires Docker - run with longer timeout
-
-- Run full Docker-required tests to verify VM lifecycle
 
 ---
