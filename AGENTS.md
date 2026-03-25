@@ -2,11 +2,21 @@
 
 This file documents the specialized AI agents available within the Claude Code / Kilo CLI setup for developing and maintaining the Virtual Development Environment (VDE).
 
-## Agent Loading (MANDATORY AT STARTUP)
+## Agent Loading & Startup Execution (MANDATORY AT STARTUP)
 
-**At session start, agents and commands MUST be scanned and loaded into context immediately, not lazy-loaded, before ANY tasks run. This applies to initial startup AND any context refresh steps before tasks run. e.g the `/new` command.**
+**ALL steps below MUST be executed automatically at session start — before answering ANY user prompt. No exceptions. No lazy-loading. No skipping for "simple" sessions.**
 
-The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` (Kilo) must be read at session initialization before any task execution. This ensures all sub-agent capabilities are available immediately.
+1. **Read `MEMORY.md`** — load project state, test status, active goals
+2. **Read `session_handover.md`** — load current session context and next steps
+3. **Read `plans/session_handover_remediation.md`** — load active remediation plan
+4. **Query `memory` MCP** — retrieve cross-session context from knowledge graph
+5. **Scan and load agent definitions** from `.claude/agents/` (Claude Code) or `.kilocode/agents/` (Kilo) — load all sub-agent capabilities into working memory
+6. **Read `AGENTS.md`** — load any instructions not already in CLAUDE.md into working memory
+7. **Run `/vde-enforce`** (Supervisor) — verify framework compliance before any work begins
+
+**Session control MUST NOT be handed to the user until all 7 steps above are complete.**
+If any step fails, report the failure to the user before proceeding.
+This applies to initial startup AND any context refresh steps (e.g. the `/new` command).
 
 ## CLI-Specific Paths
 
@@ -228,9 +238,9 @@ All agents MUST follow these documentation protocols to ensure continuity across
 
 ### Workflow Integration
 
-1. At session start: Read `MEMORY.md` → Read `session_handover.md` + `plans/session_handover_remediation.md`
-2. During work: Update files in near real-time as milestones are reached
-3. At session end: Document completed work, test results, and next steps in all three files
+1. **Session start**: Execute the full 7-step Startup Checklist (see "Agent Loading & Startup Execution" above) — BEFORE answering any user prompt
+2. **During work**: Update MEMORY.md, session_handover.md, and plans/session_handover_remediation.md in near real-time as milestones are reached
+3. **Session end**: Document completed work, test results, and next steps in all three files
 
 ---
 
