@@ -4,7 +4,7 @@ This file documents the specialized AI agents available within the Claude Code /
 
 ## Agent Loading (MANDATORY AT STARTUP)
 
-**At session start, agents MUST be scanned and loaded into context immediately, not lazy-loaded.**
+**At session start, agents and commands MUST be scanned and loaded into context immediately, not lazy-loaded, before ANY tasks run. This applies to initial startup AND any context refresh steps before tasks run. e.g the `/new` command.**
 
 The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` (Kilo) must be read at session initialization before any task execution. This ensures all sub-agent capabilities are available immediately.
 
@@ -15,7 +15,7 @@ The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` 
 | **Claude Code** | `.claude/commands/` | `.claude/agents/` | `.claude/rules/` |
 | **Kilo** | `.kilocode/commands/` | `.kilocode/agents/` | `.kilocode/rules/` |
 
-**Sync Requirement**: When adding a new agent/command, copy to BOTH `.claude/` and `.kilocode/` directories to ensure availability regardless of which CLI is used.
+**Sync Requirement**: When adding a new agent/command, copy to BOTH `.claude/` and `.kilocode/` directories to ensure availability regardless of which CLI is used. When running under Claude Code CLI, convert to Kilo format before copying into the .kilocode directories. When running under Kilo CLI, convert to Claude Code format before copying into the .claude directories. Convert in-memory only to the other CLI's format before writing into the other CLI's directories. Never touch the source file on disk before copying. This is to prevent incorrectly copying the wrong format to the wrong CLI.  
 
 ## Quick Reference
 
