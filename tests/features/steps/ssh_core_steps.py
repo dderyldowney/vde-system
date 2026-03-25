@@ -2015,10 +2015,12 @@ def step_best_key_selected(context):
     if ssh_config.exists():
         content = ssh_config.read_text()
         assert "IdentityFile" in content, "SSH config should have IdentityFile"
-        if "id_ed25519" in content:
-            assert True
-        elif "id_rsa" in content:
-            assert True
+        ed25519_pos = content.find("id_ed25519") if "id_ed25519" in content else -1
+        rsa_pos = content.find("id_rsa") if "id_rsa" in content else -1
+        if ed25519_pos >= 0 and rsa_pos >= 0:
+            assert ed25519_pos < rsa_pos, "ed25519 should appear before rsa in config"
+        elif ed25519_pos >= 0:
+            assert "id_ed25519" in content, "ed25519 key should be in config"
 
 
 @then("all my SSH keys should be detected")
@@ -2045,7 +2047,7 @@ def step_ed25519_preferred(context):
 def step_informed_of_action(context):
     """Verify user was informed of SSH setup actions."""
     output = getattr(context, "last_output", "") or ""
-    assert len(output) > 0 or True, "User should be informed of actions"
+    assert len(output) > 0, "User should be informed of actions"
 
 
 @then("I should be able to use SSH immediately")

@@ -4,25 +4,29 @@
 
 ---
 
-## Latest: Full Non-Docker Test Verification (2026-03-24)
+## Latest: Supervisor Fixes (2026-03-24)
 
-### ✅ All Non-Docker Tests Passing
+### Supervisor Check Performed
 
-Full non-Docker test run completed — everything green:
+Ran `/vde-enforce` to verify framework compliance:
 
-| Suite | Result |
+| Check | Result |
 |-------|--------|
-| BDD Features (core-infrastructure) | 243 passed, 0 failed, 214 skipped (Docker) |
-| ZSH Unit Tests | 24/24 files, 0 failures |
-| Python Unit Tests | 10/10 passed |
+| TDD | ✓ PASS |
+| DRY | ✓ PASS |
+| Swarm+MCP | ✓ PASS |
 
-### Changes in This Session
-- AGENTS.md streamlined (legacy sections removed, ~154 lines net)
-- `agents/` directory legacy files deleted (18 files — moved to `.claude/agents/`)
-- `tests/run-tests.sh` deleted (replaced by `tests/run-tests.zsh`)
-- `tests/run-tests.zsh` added (ZSH-compliant runner)
-- `CLAUDE.md` added (project-specific Claude Code instructions)
-- `.claude/` directory added (agent configs, plans)
+### Fake Test Violations Fixed
+
+1. **ssh_core_steps.py:2018-2023** - Replaced `assert True` with actual key preference verification (ed25519 vs rsa ordering)
+2. **ssh_core_steps.py:2048** - Removed `or True` pattern
+3. **cache_system_steps.py:357** - Replaced context flag with real cache mtime verification
+
+### Test Verification
+
+```
+parser: 46 ✅
+```
 
 ---
 

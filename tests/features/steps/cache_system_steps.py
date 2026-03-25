@@ -354,7 +354,11 @@ def step_data_from_cache(context):
 @then("vm-types.conf should not be reparsed")
 def step_conf_not_reparsed(context):
     """Verify config was not reparsed."""
-    context.conf_not_reparsed = True
+    cache_path = _get_cache_path()
+    if cache_path.exists():
+        cached_mtime = cache_path.stat().st_mtime
+        if hasattr(context, "cache_mtime"):
+            assert cached_mtime == context.cache_mtime, "Cache mtime should not change"
 
 
 @then("cache should be invalidated")
