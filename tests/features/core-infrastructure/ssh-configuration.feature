@@ -49,6 +49,7 @@ Feature: SSH Configuration
     When SSH config entry is created for VM "python"
     Then SSH config should contain "IdentityFile" pointing to "~/.ssh/vde/id_ed25519"
 
+  @integration
   @requires-docker-ssh
   Scenario: Generate VM-to-VM SSH config entries
     Given VM "python" is allocated port "2213"
@@ -65,6 +66,7 @@ Feature: SSH Configuration
     Then duplicate SSH config entry should NOT be created
     And command should warn about existing entry
 
+  @integration
   @requires-docker-ssh
   Scenario: Atomic SSH config update prevents corruption
     Given SSH config file exists
@@ -85,6 +87,7 @@ Feature: SSH Configuration
     When VM "python" is removed
     Then SSH config should still contain "Host vde-python"
 
+  @integration
   @requires-docker-ssh
   Scenario: VM compose file mounts SSH agent socket for agent forwarding
     Given VM "python" is created with SSH port "2213"
@@ -195,6 +198,7 @@ Feature: SSH Configuration
     And ~/.ssh/vde/config comments should be preserved
     And new entry should be added with proper formatting
 
+  @integration
   @requires-docker-ssh
   Scenario: Merge respects file locking for concurrent updates
     Given ~/.ssh/vde/config exists
