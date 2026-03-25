@@ -7,6 +7,12 @@
 - All implementations must conform to it.
 - See `AGENTS.md` for the full authority chain and mandate details.
 
+## Agent Loading (MANDATORY AT STARTUP)
+
+**At session start, agents and commands MUST be scanned and loaded into context immediately, not lazy-loaded, before ANY tasks run. This applies to initial startup AND any context refresh steps before tasks run. e.g the `/new` command.**
+
+The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` (Kilo) must be read at session initialization before any task execution. This ensures all sub-agent capabilities are available immediately.
+
 ## Rule Enforcer (HIGHEST AUTHORITY — NON-NEGOTIABLE)
 
 **Run `/vde-enforce` after every major change, plan, refactor, or new feature. No exceptions.**
@@ -90,6 +96,9 @@ Commit locally freely. **DO NOT `git push` without explicit user instruction.**
 3. Read `plans/session_handover_remediation.md` — active remediation plan
 4. Query `memory` MCP for cross-session context
 
+## Agent Additions / Command Additions
+
+**Sync Requirement**: When adding a new agent/command, copy to BOTH `.claude/` and `.kilocode/` directories to ensure availability regardless of which CLI is used. When running under Claude Code CLI, convert to Kilo format before copying into the .kilocode directories. When running under Kilo CLI, convert to Claude Code format before copying into the .claude directories. Convert in-memory only to the other CLI's format before writing into the other CLI's directories. Never touch the source file on disk before copying. This is to prevent incorrectly copying the wrong format to the wrong CLI.
 ## Quick Reference
 
 ```zsh
