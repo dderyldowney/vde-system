@@ -32,21 +32,25 @@ Feature: Natural Language Commands
     Then the system should understand I want to create the JavaScript VM
     And the JavaScript VM from my command should be created
 
+  @parser
   Scenario: Descriptive status queries
     Given I am following the documented workflow
     When I parse "what's running"
     Then intent should be "status"
 
+  @parser
   Scenario: Asking for help naturally
     Given I am following the documented workflow
     When I parse "help"
     Then intent should be "help"
 
+  @parser
   Scenario: Connection help requests
     Given I am following the documented workflow
     When I parse "how do I connect to python"
     Then intent should be "connect"
 
+  @parser
   Scenario: Rebuild requests
     Given I need to rebuild a container
     When I say "rebuild python from scratch"
@@ -87,6 +91,7 @@ Feature: Natural Language Commands
     Then the system should understand I want to start the Python VM
     And the Python VM should start
 
+  @parser
   Scenario: Minimal typing commands
     Given I want to type less
     When I say "start py and pg"
