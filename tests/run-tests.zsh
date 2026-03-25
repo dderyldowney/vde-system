@@ -23,39 +23,33 @@ NC='\033[0m' # No Color
 run_unit() {
     echo -e "${GREEN}Running UNIT tests (parser, libraries)...${NC}"
     python3 -m behave \
-        --tags=@unit \
+        --tags=@parser \
         --tags=~@wip \
-	--tags=~@rebuild \
-	--tags=~@requires-docker-host \
-	--tags=~@docker-required \
         --format=pretty \
-        features/core-infrastructure/parser.feature
+        features/core-infrastructure/
 }
 
 run_integration() {
-    echo -e "${GREEN}Running INTEGRATION tests (vde CLI, ssh-setup)...${NC}"
+    echo -e "${GREEN}Running INTEGRATION tests (vde CLI, ssh-setup, VM lifecycle)...${NC}"
     python3 -m behave \
         --tags=@integration \
         --tags=~@wip \
-	--tags=~@rebuild \
-	--tags=~@requires-docker-host \
-	--tags=~@docker-required \
         --format=pretty \
         features/core-infrastructure/
 }
 
 run_e2e() {
-    echo -e "${GREEN}Running E2E tests (Docker/VM workflows)...${NC}"
+    echo -e "${GREEN}Running E2E tests (Docker/VM workflows, rebuild)...${NC}"
     python3 -m behave \
-        --tags=@docker \
+        --tags=@vm-lifecycle \
+        --tags=@vm-rebuild \
         --tags=~@wip \
-	--tags=~@rebuild \
         --format=pretty \
         features/core-infrastructure/
 }
 
 run_all() {
-    echo -e "${GREEN}Running ALL tests...${NC}"
+    echo -e "${GREEN}Running ALL tests (except @wip)...${NC}"
     python3 -m behave \
         --tags=~@wip \
         --format=pretty \
