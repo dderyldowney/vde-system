@@ -26,6 +26,7 @@ run_unit() {
         --tags=@unit \
         --tags=~@wip \
 	--tags=~rebuild \
+	--tags=~@requires-docker-host \
 	--tags=~@docker-required \
         --format=pretty \
         features/core-infrastructure/parser.feature
@@ -37,6 +38,7 @@ run_integration() {
         --tags=@integration \
         --tags=~@wip \
 	--tags=~@rebuild
+	--tags=~@requires-docker-host \
 	--tags=~@docker-required \
         --format=pretty \
         features/core-infrastructure/vde-ssh-commands.feature
