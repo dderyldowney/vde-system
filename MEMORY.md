@@ -1,6 +1,6 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-24T16:30:00-04:00
+**Last Updated:** 2026-03-25T14:50:00-04:00
 **Mission:** Streamline VDE to minimal code that accomplishes stated goals + validates with tests
 
 ---
@@ -76,23 +76,21 @@ python3 -m behave tests/features/core-infrastructure/ --tags=@core-suite -q
 
 ## CURRENT TEST STATUS
 
-### Fast Tests (No Docker) - ALL PASSING
-| Feature | Scenarios | Status |
-|---------|-----------|--------|
-| parser | 46 | ✅ PASS |
-| critical-infrastructure | 51 | ✅ PASS |
-| ssh-configuration | 33 | ✅ PASS |
-| error-path | 7 | ✅ PASS |
-| documented-workflows | 30 | ✅ PASS |
-| vm-metadata | 14 | ✅ PASS |
-| vm-lifecycle-management | 13 | ✅ PASS |
-| cache-system | 3 | ✅ PASS |
-| daily-workflow | 12 | ✅ PASS |
-| vm-rebuild | 3 | ✅ PASS |
+### BDD Tests (docker-free, core-infrastructure/) — 2026-03-25
+```
+18 features passed, 0 failed, 4 error, 10 skipped
+281 scenarios passed, 0 failed, 38 error, 138 skipped
+950 steps passed, 0 failed, 623 skipped, 246 undefined
+```
+**BDD Total: 281 scenarios passed, 0 failed, 38 error, 138 skipped**
 
-**BDD Total: 243 scenarios passed, 0 failed, 214 skipped (Docker-required)**
+Known error sources:
+- `ssh-agent-external-git-operations.feature` — 2 scenarios (undefined steps)
+- `vm-full-lifecycle.feature` — errors (requires Docker)
+
 **ZSH Unit Tests: 24/24 files passing, 0 failures**
-**Python Unit Tests: 10/10 passed**
+**Python Unit Tests: 10/10 passed** (test_vde_validation.py + test_config_loader.py)
+> Note: test_shell_helpers.py and test_test_utilities.py have pre-existing import errors (ModuleNotFoundError: 'test_utilities') and are excluded from the count.
 
 ### Next Steps
 - Focus on fast tests only for CI
@@ -211,22 +209,19 @@ Continue consolidating duplicate helpers/step definitions WITHOUT changing behav
 
 - Fixed fake test violations found by Supervisor:
   - ssh_core_steps.py:2018-2023 - replaced assert True with key preference verification
-  - ssh_core_steps.py:2048 - removed 'or True'  
+  - ssh_core_steps.py:2048 - removed 'or True'
   - cache_system_steps.py:357 - replaced context flag with cache mtime verification
 - Supervisor: PASS (TDD ✓ | DRY ✓ | Swarm+MCP ✓)
 
-### Fast Tests Status (243 BDD scenarios passing)
-- parser: 46 ✅
-- critical-infrastructure: 51 ✅
-- ssh-configuration: 33 ✅
-- error-path: 7 ✅
-- documented-workflows: 30 ✅
-- vm-metadata: 14 ✅
-- vm-lifecycle-management: 13 ✅
-- cache-system: 3 ✅
-- daily-workflow: 12 ✅
-- vm-rebuild: 3 ✅
-- (additional features via 14 feature pass)
+### Session 62 (Test Suite Verification 2026-03-25)
+
+- Ran full docker-free BDD suite + all unit tests
+- BDD: 281 passed (+38 vs Session 60), 38 errors, 138 skipped
+  - Increase from 243→281: additional features/scenarios now running
+  - 38 errors: ssh-agent-external-git-operations.feature + vm-full-lifecycle.feature
+  - 246 undefined steps (pre-existing, Docker-dependent scenarios)
+- ZSH unit: 24/24 ✅ (unchanged)
+- Python unit: 10/10 ✅ (unchanged; 2 files excluded due to pre-existing import errors)
 
 ### VM Lifecycle Feature
 - 15 scenarios (start/stop/restart/remove + parser tests)
