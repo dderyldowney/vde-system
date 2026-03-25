@@ -1,13 +1,7 @@
 ---
 name: tester
 description: Writes and executes tests to ensure software quality and reliability.
-tools:
-  - read
-  - write
-  - edit
-  - grep
-  - glob
-  - bash
+permission: {}
 ---
 
 # Tester Agent

@@ -1,11 +1,7 @@
 ---
 name: security-auditor
 description: Audits VDE for SSH key security, Docker container isolation, hardcoded credentials, shell injection vulnerabilities, and port conflicts. Read-only — reports findings, does not modify files.
-tools:
-  - read
-  - grep
-  - glob
-  - bash
+permission: {}
 ---
 
 # Security Auditor Agent

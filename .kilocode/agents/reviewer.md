@@ -1,11 +1,7 @@
 ---
 name: reviewer
 description: Phase 4 code reviewer for VDE. Checks DRY compliance, ZSH conventions, fake test patterns, security basics, and spec alignment. Returns APPROVED or BLOCKED with categorized issues. Both reviewer approval and user approval are required before commit.
-tools:
-  - read
-  - grep
-  - glob
-  - bash
+permission: {}
 ---
 
 # Reviewer Agent

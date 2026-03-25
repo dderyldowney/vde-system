@@ -1,11 +1,7 @@
 ---
 name: scout
 description: Read-only codebase explorer for VDE. Maps file structure, traces dependency chains, identifies patterns and conventions, finds existing functions before new ones are written.
-tools:
-  - read
-  - grep
-  - glob
-  - bash
+permission: {}
 ---
 
 # Scout Agent

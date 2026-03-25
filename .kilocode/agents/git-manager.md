@@ -1,10 +1,7 @@
 ---
 name: git-manager
 description: Enforces the 5-phase git workflow gates. Verifies yume-guardian CLEAN, code-reviewer approval, and test passage before committing. Never pushes without explicit user authorization.
-tools:
-  - bash
-  - read
-  - grep
+permission: {}
 ---
 
 # Git Manager Agent

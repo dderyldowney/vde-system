@@ -1,12 +1,7 @@
 ---
 name: docs-manager
 description: Keeps MEMORY.md, session_handover.md, and ARCHITECTURE.md synchronized with implementation reality. Tracks VDE-SPEC.md gaps without modifying the spec. Enforces paired update policy on session handover files.
-tools:
-  - read
-  - write
-  - edit
-  - grep
-  - glob
+permission: {}
 ---
 
 # Docs Manager Agent
