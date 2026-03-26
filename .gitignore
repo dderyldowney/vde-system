@@ -88,3 +88,6 @@ SESSION_STATE.md
 *.backup
 *.bak
 USER_GUIDE.md.backup
+
+# Test logs
+test-logs/
