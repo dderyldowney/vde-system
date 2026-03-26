@@ -4,7 +4,36 @@
 
 ---
 
-## Latest: Test Infrastructure & Agent Orchestration (2026-03-25)
+## Latest: BDD Fast-Suite Cleanup — Phase N (2026-03-26)
+
+### Problem
+Fast test run (`--tags="not @integration"`) was running Docker-requiring features, causing:
+- 14-17 minute runtimes (Docker container start/stop)
+- 41 errors and 3 failures from Docker-dependent scenarios
+
+### Solution
+Added `@integration` tag to 6 feature files that require Docker but lacked the tag:
+1. `vm-lifecycle.feature` — `@requires-docker-host` but missing `@integration`
+2. `vm-full-lifecycle.feature` — Docker container lifecycle
+3. `vm-rebuild.feature` — `docker-compose up --build`
+4. `configuration-management.feature` — container installs, connects
+5. `productivity.feature` — postgres start/stop
+6. `vde-ssh-commands.feature` — `@requires-docker-host` + undefined steps
+
+### Result
+```
+Fast tests (--tags="not @integration"): 268 passed, 0 failed, 0 errors, 187 skipped ✅
+Dry-run: 0 undefined steps, 0 errors ✅
+```
+Baseline improved: 205 → 268 passing, 41 errors → 0, runtime: ~2 min (was 14-17 min)
+
+### Next Steps
+- Run Docker-required tests when Docker host available (187 @integration scenarios)
+- Continue streamlining if further duplication found
+
+---
+
+## Previous: Test Infrastructure & Agent Orchestration (2026-03-25)
 
 ### Problem Discovered
 - Running full BDD test suite caused timeouts

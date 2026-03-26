@@ -1,5 +1,5 @@
 # language: en
-@storage
+@storage @integration
 Feature: Productivity Features for Developers
   As a developer
   I want shortcuts and automation for common tasks via unified commands

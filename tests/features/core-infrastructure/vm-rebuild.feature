@@ -1,5 +1,5 @@
 # language: en
-@vm-rebuild
+@vm-rebuild @integration
 Feature: VM Image Rebuild Tests
 
   These scenarios test VM image rebuild functionality with --rebuild and --no-cache flags.
