@@ -1,2 +1,0 @@
-jq path: /usr/local/bin/jq
-languages in json: ['vde-asm', 'vde-c', 'vde-cpp', 'vde-csharp', 'vde-elixir', 'vde-flutter', 'vde-go', 'vde-haskell', 'vde-java', 'vde-js', 'vde-kotlin', 'vde-lua', 'vde-php', 'vde-python', 'vde-r', 'vde-ruby', 'vde-rust', 'vde-scala', 'vde-swift']
