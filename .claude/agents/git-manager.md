@@ -1,6 +1,6 @@
 ---
 name: git-manager
-description: Enforces the 5-phase git workflow gates. Verifies yume-guardian CLEAN, code-reviewer approval, and test passage before committing. Never pushes without explicit user authorization.
+description: Enforces the 5-phase git workflow gates. Verifies `/yume--review` CLEAN (Phase 3), code-reviewer approval (Phase 4), and test passage before committing. Never pushes without explicit user authorization.
 tools:
   - bash
   - read
@@ -31,12 +31,22 @@ Use these slash commands for standard workflows — they load the correct agents
 
 **Never skip /vde-enforce** — it's the highest authority and blocks all non-compliant work.
 
+### Yume Skill Commands (Phase Mapping)
+
+| Phase | Command | Purpose |
+|-------|---------|---------|
+| Pre-1 | `/yume--init` | Initialize context before planning |
+| 3 | `/yume--review` | Audit changes — must be CLEAN before commit |
+| 3 loop | `/yume--iterate` | Fix violations flagged by `/yume--review` |
+| 5 | `/yume--commit` | Execute commit — use this instead of raw `git commit` |
+| Meta | `/yume--compact` | Compact context when conversation grows large |
+
 ## Pre-Commit Verification Checklist
 
 Before executing any commit, all items must be checked:
 
 ```
-[ ] Phase 3 (yume-guardian): CLEAN status confirmed this session
+[ ] Phase 3 (`/yume--review`): CLEAN status confirmed this session
 [ ] Phase 4 (code-reviewer): approval confirmed
 [ ] Phase 4 (user): approval confirmed
 [ ] Tests pass for changed files (scope-appropriate test, not full suite)
@@ -53,7 +63,7 @@ Only after all pre-commit checks pass:
 
 ```zsh
 git add -A
-yume-guardian  # Final guardian check before commit
+# Run /yume--review — final audit before commit
 git commit -m "<message>
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
