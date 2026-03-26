@@ -63,7 +63,7 @@ git add -A
 # Run /yume--review — final audit before commit
 git commit -m "<message>
 
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+"
 git status
 ```
 
