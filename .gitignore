@@ -58,22 +58,27 @@ tests/pretty.output
 # Test run output data - accidentally not added earlier
 tests/behave-*.json
 
-# Local-only documentation (session notes, not to be committed)
-SESSION_STATE.md
-WHY_ARE_WE_DOING_THIS.md
-TODO.md
-.claude/agents/
-.agents/
-.docker-state/
-.docker-state-*.json
-configs/docker/*/docker-compose-*.yml
-env-files/*.env
-!env-files/vde-*.env
-# Transient Docker state (per-user local state)
-.docker-state/
-.docker-state-*.json
-
 # Artifact outputs from tests
 behave_output*.txt
 pytest_output.txt
 shell_test_output.txt
+output/
+tests/test-logs/
+*.log
+*.txt
+*.zsh
+bdd_results.txt
+e2e_results.txt
+pytest_results.txt
+run_plan.zsh
+test_*.zsh
+test_*.txt
+unit_test_results.txt
+vmload.txt
+vmtest.txt
+test_parser_output*.txt
+test_run_report.txt
+
+# Session and agent files
+SESSION_STATE.md
+.agents/
