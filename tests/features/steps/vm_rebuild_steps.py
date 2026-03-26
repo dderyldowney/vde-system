@@ -47,6 +47,15 @@ def _stop_and_remove_vm(vm_name):
     subprocess.run(["docker", "rm", container], capture_output=True)
 
 
+@given("VM types are loaded from configuration")
+def step_vm_types_loaded_from_config(context):
+    """Load VM types from vm-types.json into context."""
+    import json
+    vm_types_path = VDE_ROOT / "data" / "vm-types.json"
+    with open(vm_types_path) as f:
+        context.vm_types = json.load(f)
+
+
 @given('VM "{vm_name}" has been created')
 def step_vm_created(context, vm_name):
     """Create a VM if it doesn't exist."""
@@ -111,10 +120,10 @@ def step_verify_vm_running(context, vm_name):
     assert _container_running(vm_name), f"VM {vm_name} is not running"
 
 
-@when('I run "vde start python --rebuild"')
-def step_run_vde_start_rebuild(context):
-    """Run vde start python --rebuild command."""
-    result = run_vde_command("start python --rebuild", timeout=300, context=context)
+@when('I run "vde start {vm_name} --rebuild"')
+def step_run_vde_start_rebuild(context, vm_name):
+    """Run vde start {vm_name} --rebuild command."""
+    result = run_vde_command(f"start {vm_name} --rebuild", timeout=300, context=context)
     context.last_exit_code = result.returncode
     context.rebuild_executed = True
 
@@ -162,7 +171,7 @@ def step_vde_stop(context, vm_name):
     context.last_exit_code = result.returncode
 
 
-@when('I run "vde restart python"')
+@when('I run "vde restart {vm_name}"')
 def step_vde_restart(context, vm_name):
     """Run vde restart command."""
     result = run_vde_command(f"restart {vm_name}", timeout=120, context=context)
