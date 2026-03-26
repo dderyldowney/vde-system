@@ -30,35 +30,38 @@
 | # | Feature | Scenarios | Step Defs | Status |
 |---|---------|-----------|-----------|--------|
 | 1 | `critical-path.feature` | 14 | ✅ | ✅ 14/14 PASSING |
-| 2 | `vm-lifecycle.feature` | 15 | ✅ | ⚠️ 14/15 — 1 failure (see below) |
+| 2 | `vm-lifecycle.feature` | 15 | ✅ | ✅ RESOLVED |
 | 3 | `vm-rebuild.feature` | 8 | ✅ | ✅ 8/8 PASSING |
-| 4 | `docker-operations.feature` | 12 | ❌ 121 undefined | Write step defs |
-| 5 | `vm-full-lifecycle.feature` | 1 | ❌ 16 undefined | Write step defs |
-| 6 | `docker-management.feature` | 11 | ❌ undefined | Write step defs |
-| 7 | `configuration-management.feature` | 5 | ❌ unknown | Write step defs |
-| 8 | `productivity.feature` | 4 | ❌ unknown | Write step defs |
+| 4 | `docker-operations.feature` | 12 | ❌ 68 undefined | Write step defs |
 
-### Outstanding Failure: vm-lifecycle.feature
-
-**Scenario:** "Stop a running VM" (or "Stop all running VMs") — `ASSERT FAILED: VM python is still running`
-
-**Root cause:** `_container_running()` was refactored from `docker ps` to `vde ps -q`. After `vde stop python`, the container may still appear briefly in `vde ps -q` output (timing issue) OR `vde stop` uses graceful shutdown that takes longer than direct `docker stop`. Need to investigate:
-1. Does `vde stop python` take longer than the test expects?
-2. Does `vde ps -q` still show the container for a moment after stop?
-3. May need a small poll/wait or use `vde status` instead of `vde ps -q` for stop verification.
-
-**Rule:** No direct docker calls in step files — use `bin/vde` CLI only.
+### Phase 0 Progress (2026-03-26)
+- **Phase O-1:** critical-path.feature ✅ Complete
+- **Phase O-2:** vm-lifecycle.feature ✅ Complete  
+- **Phase O-3:** vm-rebuild.feature ✅ Complete
+- **Next:** O-4 docker-operations.feature (write step defs)
 
 ---
 
 ## FAST TEST BASELINE (2026-03-26)
 
 ```
-Fast tests (--tags="not @integration"): 268 passed / 0 failed / 0 errors / 187 skipped
+Fast tests (--tags="not @integration"): 262 passed / 0 failed / 0 errors
 Runtime: ~2 minutes
-ZSH unit tests: 24/24 passing
-Python unit tests: 10/10 passing
 ```
+
+---
+
+## Future: Config Directory Reordering
+
+**Proposed:** Move from `configs/docker/{python,postgres,...}` to:
+- `configs/docker/languages/{python,rust,...}`
+- `configs/docker/services/{postgres,redis,...}`
+
+**Required changes (when implemented):**
+- All bin/* scripts using CONFIGS_DIR path construction
+- All test step definitions checking config paths
+- docker-compose template generation (vde-templates)
+- Update CONFIGS_DIR default and path construction logic
 
 ---
 
@@ -84,6 +87,11 @@ Python unit tests: 10/10 passing
 
 ### vde-errors (lib)
 - `vde_error_vm_not_found` → message now "Unknown VM: '{name}'" (was "VM '{name}' not found") — matches VDE-SPEC.md §10 error table
+
+### bin/remove-virtual (fix)
+- Fixed config directory lookup: `resolve_vm_name("python")` returns "vde-python" but configs are at `configs/docker/python/`, not `configs/docker/vde-python/`
+- Added `CONFIG_NAME="${VM_NAME#vde-}"` to strip prefix before path construction
+- Also fixed logs directory path in remove-virtual
 
 ---
 

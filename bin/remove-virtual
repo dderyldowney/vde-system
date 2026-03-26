@@ -82,12 +82,15 @@ if [[ -n "${RESOLVED_VM}" ]]; then
     VM_NAME="${RESOLVED_VM}"
 fi
 
+# Strip vde- prefix for config directory lookup (configs/docker/python/, not configs/docker/vde-python/)
+CONFIG_NAME="${VM_NAME#vde-}"
+
 # Get compose file path
-COMPOSE_FILE="${CONFIGS_DIR}/${VM_NAME}/docker-compose.yml"
+COMPOSE_FILE="${CONFIGS_DIR}/${CONFIG_NAME}/docker-compose.yml"
 
 # Check if VM exists
 if [[ ! -f "${COMPOSE_FILE}" ]]; then
-    log_error "VM '${VM_NAME}' not found (no docker-compose.yml at ${VM_NAME})"
+    log_error "VM '${VM_NAME}' not found (no docker-compose.yml at ${CONFIG_NAME})"
     exit ${VDE_ERR_GENERAL}
 fi
 
@@ -115,7 +118,7 @@ fi
 # Remove logs directory if empty
 
 # Remove logs directory if empty
-LOGS_DIR="${VDE_ROOT_DIR}/logs/${VM_NAME}"
+LOGS_DIR="${VDE_ROOT_DIR}/logs/${CONFIG_NAME}"
 if [[ -d "${LOGS_DIR}" ]]; then
     rmdir "${LOGS_DIR}" 2>/dev/null && log_success "Removed empty logs directory" || true
 fi
