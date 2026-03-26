@@ -1,103 +1,97 @@
 # Session Handover — Docker Feature Stack
 
 **Mission:** Validate core Docker infrastructure, then stack Docker-tagged features one by one.
-**Rule:** Nothing Docker works if core capabilities are not properly implemented first.
+**Rule:** Step files must use `bin/vde` CLI — no direct `docker` subprocess calls.
 
 ---
 
-## CURRENT FOCUS (2026-03-26)
+## CURRENT STATE (2026-03-26 end of session)
 
-### Docker Feature Stack Order
+### Phase 0 Results
 
-| # | Feature | Scenarios | Step Defs | Status |
-|---|---------|-----------|-----------|--------|
-| 1 | `critical-path.feature` (2 docker scenarios) | 2 | ✅ exist | **START HERE** |
-| 2 | `vm-lifecycle.feature` (docker scenarios) | 10 | ✅ exist | Next |
-| 3 | `vm-rebuild.feature` | 4 | ✅ exist | Next |
-| 4 | `docker-operations.feature` | 12 | ❌ 121 undefined | Write step defs |
-| 5 | `vm-full-lifecycle.feature` | 1 | ❌ 16 undefined | Write step defs |
-| 6 | `docker-management.feature` | 11 | ❌ undefined | Write step defs |
-| 7 | `configuration-management.feature` | 5 | ❌ unknown | Write step defs |
-| 8 | `productivity.feature` | 4 | ❌ unknown | Write step defs |
+| # | Feature | Scenarios | Result |
+|---|---------|-----------|--------|
+| 1 | `critical-path.feature` | 14 | ✅ 14/14 |
+| 2 | `vm-lifecycle.feature` | 15 | ⚠️ 14/15 |
+| 3 | `vm-rebuild.feature` | 8 | ✅ 8/8 |
 
-### Next Action
-Run `critical-path.feature` docker scenarios with Docker available:
+**Fast baseline:** 268 passed / 0 failed (unchanged)
+
+---
+
+## OUTSTANDING FAILURE — MUST FIX FIRST
+
+**Feature:** `vm-lifecycle.feature`
+**Failure:** `ASSERT FAILED: VM python is still running`
+**Most likely scenario:** "Stop a running VM" or "Stop all running VMs"
+
+**Root cause:** `_container_running()` in `vm_rebuild_steps.py` was refactored from `docker ps` to `vde ps -q`. After `vde stop python`, the container may still briefly appear in `vde ps -q` (timing), or `vde stop` (graceful shutdown) takes longer than the direct `docker stop` it replaced.
+
+**Next session: diagnose first.**
 ```zsh
-python3 -m behave tests/features/core-infrastructure/critical-path.feature -q
+# Run the failing scenario in isolation to get full output:
+python3 -m behave tests/features/core-infrastructure/vm-lifecycle.feature:42 -q
+python3 -m behave tests/features/core-infrastructure/vm-lifecycle.feature:48 -q
 ```
-Expected: 12 pass (already passing), 2 docker scenarios should pass too.
+
+**Fix options:**
+1. Add a wait/poll loop in `_container_running()` after stop commands
+2. Check if `vde ps -q` output has timing lag vs docker ps
+3. Or use `vde status` which reads .docker-state/ files (may be more reliable)
 
 ---
 
-## FAST TEST BASELINE (2026-03-26)
+## WHAT WAS DONE THIS SESSION
+
+### Fixes in vm_rebuild_steps.py
+1. Hardcoded step `'I run "vde restart python"'` → `'I run "vde restart {vm_name}"'`
+2. Hardcoded step `'I run "vde start python --rebuild"'` → `'I run "vde start {vm_name} --rebuild"'`
+3. Added missing `Given VM types are loaded from configuration` step
+4. `context.vm_name = vm_name` in `step_vde_restart` (needed by `step_fresh_container`)
+5. Fixed `step_fresh_container` — VDE restart creates new container so RestartCount=0 is correct
+6. `step_config_still_exists` — now actually asserts compose_file.exists()
+7. **Full rewrite to remove all direct docker calls** — uses `vde ps -q`, `vde stop`, `vde remove`
+
+### Fixes in critical_steps.py
+- `container "vde-python" is running` → `_vde_cli("ps -q")`
+- Network existence/bridge type checks → `_vde_cli("networks")`
+
+### Fix in lib/vde-errors
+- `vde_error_vm_not_found` → "Unknown VM: '{name}'" (was "VM '{name}' not found")
+- Matches VDE-SPEC.md §10: `VDE_ERR_NOT_FOUND` → "Unknown VM: $VM_NAME"
+
+---
+
+## FAST TEST BASELINE
 
 ```
 Fast tests (--tags="not @integration"): 268 passed / 0 failed / 0 errors / 187 skipped
 Runtime: ~2 minutes
-ZSH unit tests: 24/24 passing
-Python unit tests: 10/10 passing
 ```
 
 Do not regress this baseline.
 
 ---
 
-## DOCKER FEATURE ANALYSIS
+## DOCKER FEATURE STACK ORDER (next features)
 
-### Features with step defs (Tier 0 — just needs Docker running)
+After fixing the vm-lifecycle stop failure, proceed to:
 
-**`critical-path.feature`** — 2 docker scenarios
-- `vde start python` → container `vde-python` should be running
-- `vde stop python` → container `vde-python` should not be running
-- Steps: `critical_steps.py` lines 148, 311, 319, 331
-- Run: `python3 -m behave tests/features/core-infrastructure/critical-path.feature -q`
-
-**`vm-lifecycle.feature`** — 10 docker scenarios
-- start/stop/restart/remove VMs
-- Steps: `vm_rebuild_steps.py`
-- Run: `python3 -m behave tests/features/core-infrastructure/vm-lifecycle.feature --tags="@vm-lifecycle" -q`
-
-**`vm-rebuild.feature`** — 4 docker scenarios
-- `vde start python --rebuild`, `--no-cache`, rust/go rebuilds
-- Steps: `vm_rebuild_steps.py`
-- Run: `python3 -m behave tests/features/core-infrastructure/vm-rebuild.feature --tags="@vm-rebuild" -q`
-
-### Features needing step defs (Tier 1)
-
-**`docker-operations.feature`** — 12 scenarios (121 undefined steps)
-- Build image, start/stop/restart container, error handling, status check
-- container naming convention, volume mounts, env vars
-- Key step patterns to implement: `docker-compose build`, `docker-compose up -d`, `docker-compose down`
-
-**`vm-full-lifecycle.feature`** — 1 large scenario (16 undefined steps)
-- Full E2E: create → start → SSH → stop → start again → remove
-- Missing: SSH assertions + `SSH config entry should be preserved`
-
-**`docker-management.feature`** — 11 scenarios
-- Network creation, port allocation, service ports, volumes, data persistence
-- Resource limits, health monitoring, cleanup, multi-stage builds, isolation, logs
-
-**`configuration-management.feature`** — 5 scenarios
-- Custom install commands, service ports, multiple ports, display names, aliases
-
-**`productivity.feature`** — 4 scenarios
-- Data persistence, clean state, backups, background services
+| # | Feature | Status |
+|---|---------|--------|
+| 4 | `docker-operations.feature` | 12 scenarios, 121 undefined steps — write step defs |
+| 5 | `vm-full-lifecycle.feature` | 1 scenario, 16 undefined steps — write step defs |
+| 6 | `docker-management.feature` | 11 scenarios — write step defs |
+| 7 | `configuration-management.feature` | 5 scenarios |
+| 8 | `productivity.feature` | 4 scenarios |
 
 ---
 
-## STEP DEF STRATEGY (when writing new ones)
+## STEP DEF STRATEGY
 
-- All new step defs go in an appropriate existing file (no new files unless no fit)
-- Docker operations (build/run/stop) → extend `vm_rebuild_steps.py` or `vm_common.py`
-- Container assertions → `critical_steps.py` already has container running/not-running checks
-- No duplicate step patterns — check existing files before writing
-
----
-
-## Previous: BDD Fast-Suite Cleanup (2026-03-26)
-
-Added `@integration` tag to 6 features missing it:
-- `vm-lifecycle.feature`, `vm-full-lifecycle.feature`, `vm-rebuild.feature`
-- `configuration-management.feature`, `productivity.feature`, `vde-ssh-commands.feature`
-
-Result: Fast baseline improved 205 → 268 passed, 41 errors → 0, runtime 14-17 min → ~2 min
+- All new step defs go in appropriate existing file (no new files unless no fit)
+- Docker state checks → `vde ps -q` (running) or `vde ps --all -q` (any state)
+- Stop → `vde stop {vm_name}`
+- Remove → `vde remove {vm_name}`
+- Network checks → `vde networks`
+- **Never use direct `docker` subprocess calls in step files**

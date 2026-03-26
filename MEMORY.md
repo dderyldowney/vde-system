@@ -1,6 +1,6 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-26T00:00:00-04:00
+**Last Updated:** 2026-03-26T13:00:00-04:00
 **Mission:** Ensure core Docker infrastructure is working and passing, then stack Docker features one by one
 
 ---
@@ -20,26 +20,34 @@
 
 ---
 
-## CURRENT FOCUS: Docker Feature Stack (Session 64+)
+## CURRENT FOCUS: Docker Feature Stack (Session 65)
 
 **Goal:** Validate core Docker infrastructure first, then stack Docker-tagged features on top one by one.
 **Rule:** Nothing Docker works if core capabilities are not properly implemented.
 
 ### Feature Order (easiest → hardest)
 
-| # | Feature | Scenarios | Step Defs | Docker Need |
-|---|---------|-----------|-----------|-------------|
-| 1 | `critical-path.feature` (docker scenarios) | 2 | ✅ All exist | start/stop only |
-| 2 | `vm-lifecycle.feature` (docker scenarios) | 10 | ✅ All exist | start/stop/restart/remove |
-| 3 | `vm-rebuild.feature` | 4 | ✅ All exist | build + --rebuild flag |
-| 4 | `docker-operations.feature` | 12 | ❌ 121 undefined | build/start/stop/status |
-| 5 | `vm-full-lifecycle.feature` | 1 | ❌ 16 undefined | full E2E happy path |
-| 6 | `docker-management.feature` | 11 | ❌ 121 undefined | network/ports/volumes |
-| 7 | `configuration-management.feature` | 5 | ❌ unknown | custom installs/ports |
-| 8 | `productivity.feature` | 4 | ❌ unknown | persistence/backup |
+| # | Feature | Scenarios | Step Defs | Status |
+|---|---------|-----------|-----------|--------|
+| 1 | `critical-path.feature` | 14 | ✅ | ✅ 14/14 PASSING |
+| 2 | `vm-lifecycle.feature` | 15 | ✅ | ⚠️ 14/15 — 1 failure (see below) |
+| 3 | `vm-rebuild.feature` | 8 | ✅ | ✅ 8/8 PASSING |
+| 4 | `docker-operations.feature` | 12 | ❌ 121 undefined | Write step defs |
+| 5 | `vm-full-lifecycle.feature` | 1 | ❌ 16 undefined | Write step defs |
+| 6 | `docker-management.feature` | 11 | ❌ undefined | Write step defs |
+| 7 | `configuration-management.feature` | 5 | ❌ unknown | Write step defs |
+| 8 | `productivity.feature` | 4 | ❌ unknown | Write step defs |
 
-### Current Position
-- Starting at #1: `critical-path.feature` — zero code to write, just needs Docker running
+### Outstanding Failure: vm-lifecycle.feature
+
+**Scenario:** "Stop a running VM" (or "Stop all running VMs") — `ASSERT FAILED: VM python is still running`
+
+**Root cause:** `_container_running()` was refactored from `docker ps` to `vde ps -q`. After `vde stop python`, the container may still appear briefly in `vde ps -q` output (timing issue) OR `vde stop` uses graceful shutdown that takes longer than direct `docker stop`. Need to investigate:
+1. Does `vde stop python` take longer than the test expects?
+2. Does `vde ps -q` still show the container for a moment after stop?
+3. May need a small poll/wait or use `vde status` instead of `vde ps -q` for stop verification.
+
+**Rule:** No direct docker calls in step files — use `bin/vde` CLI only.
 
 ---
 
@@ -52,30 +60,43 @@ ZSH unit tests: 24/24 passing
 Python unit tests: 10/10 passing
 ```
 
-**Run fast tests:**
-```zsh
-python3 -m behave tests/features/core-infrastructure/ --tags="not @integration" -q
-```
+---
 
-**Run specific docker feature (needs Docker):**
-```zsh
-python3 -m behave tests/features/core-infrastructure/critical-path.feature -q
-python3 -m behave tests/features/core-infrastructure/vm-lifecycle.feature --tags="@vm-lifecycle" -q
-python3 -m behave tests/features/core-infrastructure/vm-rebuild.feature --tags="@vm-rebuild" -q
-```
+## CHANGES MADE THIS SESSION (2026-03-26)
+
+### vm_rebuild_steps.py — full rewrite
+- Removed all direct `docker` subprocess calls
+- `_container_exists()` → `vde ps --all -q`
+- `_container_running()` → `vde ps -q`
+- `_stop_vm()` → `vde stop {vm_name}`
+- `_stop_and_remove_vm()` → `vde stop` + `vde remove`
+- `step_no_vms_running` → `vde ps -q` empty check
+- Fixed hardcoded step decorators: `restart python` → `restart {vm_name}`, `start python --rebuild` → `start {vm_name} --rebuild`
+- Added missing `Given VM types are loaded from configuration` step
+- Set `context.vm_name` in restart step
+- Fixed `step_fresh_container` (RestartCount=0 is correct for VDE restart — creates new container)
+- `step_config_still_exists` now actually asserts compose_file.exists()
+
+### critical_steps.py
+- `container "vde-python" is running` → uses `_vde_cli("ps -q")` instead of `docker ps`
+- `the Docker network X should exist` → uses `_vde_cli("networks")` instead of `docker network inspect`
+- `the Docker network X should be a bridge network` → parses `vde networks` output
+
+### vde-errors (lib)
+- `vde_error_vm_not_found` → message now "Unknown VM: '{name}'" (was "VM '{name}' not found") — matches VDE-SPEC.md §10 error table
 
 ---
 
 ## STEP DEFS STATUS
 
 ### Existing step files (tests/features/steps/)
-- `critical_steps.py` — critical-path, port range, container start/stop assertions
-- `vm_rebuild_steps.py` — vm-lifecycle, vm-rebuild step defs
-- `vm_common.py` — shared helpers (container checks, wait_for_container, etc.)
+- `critical_steps.py` — critical-path, port range, container start/stop assertions (VDE CLI only)
+- `vm_rebuild_steps.py` — vm-lifecycle, vm-rebuild step defs (VDE CLI only)
+- `vm_common.py` — shared helpers (run_vde_command, get_compose_file, etc.)
 - `parser_steps.py` — parser/intent steps
 - `ssh_core_steps.py` — SSH config and access steps
 - `common_steps.py` — shared scenario setup
-- `documented_workflow_steps.py` — workflow step
+- `documented_workflow_steps.py` — workflow steps
 - `vm_metadata_steps.py` — VM metadata assertions
 - `cache_system_steps.py` — cache steps
 - `port_management_steps.py` — port steps
@@ -83,18 +104,11 @@ python3 -m behave tests/features/core-infrastructure/vm-rebuild.feature --tags="
 - `ssh_helpers.py` — SSH connection helpers
 
 ### Needs step defs written
-- `docker-operations.feature` — 121 undefined steps (build/start/stop/status/naming/volumes/env)
-- `vm-full-lifecycle.feature` — 16 undefined steps (SSH + remove + workspace)
-- `docker-management.feature` — 11 scenarios (network/ports/persistence/health/logs)
-
----
-
-## CONSOLIDATION COMPLETE (Sessions 49-63)
-
-- **~11,000+ lines removed**: SSH steps, test runners, dead step files, duplicate helpers
-- **63 files deleted**
-- **Fast suite clean**: 268 passed, 0 errors, 0 failures
-- **Tagging scheme**: @parser/@spec/@config/@error-path (fast) vs @integration (Docker)
+- `docker-operations.feature` — 12 scenarios, 121 undefined steps
+- `vm-full-lifecycle.feature` — 1 scenario, 16 undefined steps
+- `docker-management.feature` — 11 scenarios
+- `configuration-management.feature` — 5 scenarios
+- `productivity.feature` — 4 scenarios
 
 ---
 
@@ -105,3 +119,4 @@ python3 -m behave tests/features/core-infrastructure/vm-rebuild.feature --tags="
 3. **No Dead Code**: Unused imports, helpers, step files = DELETE.
 4. **Minimal Footprint**: If it doesn't help users accomplish goals = REMOVE.
 5. **Core First**: Validate infrastructure before stacking features on top.
+6. **No Direct Docker Calls**: Step files must use `bin/vde` CLI — not `docker` subprocess calls.

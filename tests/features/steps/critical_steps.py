@@ -113,14 +113,8 @@ def step_load_all_vms(context):
 
 @given('container "{container_name}" is running')
 def step_container_running(context, container_name):
-    r = subprocess.run(
-        ["docker", "ps", "--filter", f"name={container_name}", "--format", "{{.Names}}"],
-        capture_output=True,
-        text=True,
-        timeout=10,
-    )
-    if container_name not in r.stdout:
-        # Try to start it
+    r = _vde_cli("ps -q", timeout=10)
+    if container_name not in r.stdout.splitlines():
         vde_name = container_name.removeprefix("vde-")
         result = _vde_cli(f"start {vde_name}", timeout=120)
         assert result.returncode == 0, f"Could not start {vde_name}: {result.stderr}"
@@ -667,23 +661,21 @@ def step_vde_ssh_file_permissions(context, filename, octal):
 
 @then('the Docker network "{network_name}" should exist')
 def step_docker_network_exists(context, network_name):
-    r = subprocess.run(
-        ["docker", "network", "inspect", network_name], capture_output=True, text=True, timeout=10
-    )
-    assert r.returncode == 0, (
+    r = _vde_cli("networks", timeout=10)
+    assert network_name in r.stdout, (
         f"Docker network '{network_name}' does not exist.\n"
-        "Run 'vde setup' or 'vde start <vm>' to create it."
+        "Run 'vde init' or 'vde start <vm>' to create it."
     )
 
 
 @then('the Docker network "{network_name}" should be a bridge network')
 def step_docker_network_is_bridge(context, network_name):
-    r = subprocess.run(
-        ["docker", "network", "inspect", network_name, "--format", "{{.Driver}}"],
-        capture_output=True,
-        text=True,
-        timeout=10,
-    )
-    assert r.returncode == 0, f"Could not inspect network '{network_name}'"
-    driver = r.stdout.strip()
-    assert driver == "bridge", f"Network '{network_name}' driver is '{driver}', expected 'bridge'"
+    r = _vde_cli("networks", timeout=10)
+    assert r.returncode == 0, f"Could not list networks"
+    for line in r.stdout.splitlines():
+        if network_name in line:
+            assert "bridge" in line, (
+                f"Network '{network_name}' is not a bridge network: {line}"
+            )
+            return
+    raise AssertionError(f"Network '{network_name}' not found in vde networks output")

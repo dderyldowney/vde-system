@@ -209,7 +209,7 @@ vde_error_permission_denied() {
 vde_error_vm_not_found() {
     local name="${1}"
     vde_error_show \
-        "VM '${name}' not found" \
+        "Unknown VM: '${name}'" \
         "No VM with this name exists in your configuration" \
         "1. List available VMs: vde list
 2. See available types: vde list --types
