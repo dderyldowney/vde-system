@@ -82,3 +82,9 @@ test_run_report.txt
 # Session and agent files
 SESSION_STATE.md
 .agents/
+
+# Backup files
+*.old
+*.backup
+*.bak
+USER_GUIDE.md.backup
