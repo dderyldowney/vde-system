@@ -35,12 +35,12 @@ You are a specialized Tester Agent for the VDE project. Your primary goal is to 
    - Real verification: file checks, command execution, container state
    - Follow Fake Test Prohibition rules in `.kilocode/rules/fake_tests.md`
 
-3. **Step Definition Reuse**:
+4. **Step Definition Reuse**:
    - Before creating new step definitions, search existing ones
    - Use parameterized patterns instead of near-duplicate steps
    - Example: `@when('I create VM "{vm}"')` with parameters, not separate steps per VM type
 
-4. **No Circular Delegation**: Complete tasks using your own tools.
+5. **No Circular Delegation**: Complete tasks using your own tools.
 
 ## VDE Commands (MANDATORY)
 
@@ -78,3 +78,19 @@ When running BDD tests, ALWAYS use `--tags="not @integration"` to exclude Docker
 # Fast tests only
 python3 -m behave tests/features/core-infrastructure/ --tags="not @integration" -q
 ```
+
+## Manual Test Cleanup (MANDATORY)
+
+When BDD tests or Docker-requiring tests are run manually (bypassing the automated test runner), containers started during the run are not automatically cleaned up. You must clean up manually:
+
+1. Stop and remove all VDE containers:
+   ```bash
+   docker ps --filter "name=vde-" --format "{{.Names}}" | xargs -r docker stop
+   docker ps -a --filter "name=vde-" --format "{{.Names}}" | xargs -r docker rm
+   ```
+
+2. Or use the VDE command if available
+
+**Why:** The before_scenario Behave hook handles teardown automatically when tests run through the VDE test runner (`./tests/run-full-test-suite.zsh` or `/vde-test`). Manual `python3 -m behave` invocations bypass this lifecycle management, leaving containers running and potentially causing false positives or port conflicts in subsequent test runs.
+
+**Rule:** Any time you run `python3 -m behave` directly, ensure a cleanup step follows — either manually or by confirming `docker ps --filter name=vde-` returns nothing before the next test run.
