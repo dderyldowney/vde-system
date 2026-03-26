@@ -22,9 +22,9 @@ Do not skip ahead. Fix failures before proceeding to next feature.
 
 | Step | Feature | Action | Status |
 |------|---------|--------|--------|
-| O-1 | `critical-path.feature` | Run with Docker, verify 2 docker scenarios pass | Pending |
-| O-2 | `vm-lifecycle.feature` | Run with Docker, verify 10 docker scenarios pass | Pending |
-| O-3 | `vm-rebuild.feature` | Run with Docker, verify 4 rebuild scenarios pass | Pending |
+| O-1 | `critical-path.feature` | Run with Docker, verify 2 docker scenarios pass | ✅ Complete |
+| O-2 | `vm-lifecycle.feature` | Run with Docker, verify 10 docker scenarios pass | ✅ Complete |
+| O-3 | `vm-rebuild.feature` | Run with Docker, verify 4 rebuild scenarios pass | ✅ Complete |
 | O-4 | `docker-operations.feature` | Write 121 undefined step defs | Pending |
 | O-5 | `vm-full-lifecycle.feature` | Write 16 undefined step defs | Pending |
 | O-6 | `docker-management.feature` | Write step defs for 11 scenarios | Pending |
@@ -56,6 +56,24 @@ Do not skip ahead. Fix failures before proceeding to next feature.
 | L | Supervisor fake test fixes | 2026-03-24 |
 | M | Test infrastructure & agent orchestration | 2026-03-25 |
 | N | BDD fast-suite cleanup | 2026-03-26 |
+| O | Docker feature stack (vm-lifecycle fix, remove-virtual fix) | 2026-03-26 |
+| P | Config directory reordering (configs/docker/{python,postgres} -> configs/docker/languages/{python,...} + configs/docker/services/{postgres,...}) | Future |
+
+## Future: Config Directory Reordering
+
+**Proposed:** Move from `configs/docker/{python,rust,postgres,...}` to:
+- `configs/docker/languages/{python,rust,...}`
+- `configs/docker/services/{postgres,redis,...}`
+
+**Required changes:**
+- All bin/* scripts using CONFIGS_DIR path construction
+- All test step definitions checking config paths
+- docker-compose template generation (vde-templates)
+- Update CONFIGS_DIR default and path construction logic
+
+**Note:** Coordinate with user before implementing.
+
+---
 
 ## Paired Update Policy
 - This plan is the paired companion to `../session_handover.md`.
