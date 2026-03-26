@@ -1,4 +1,4 @@
-@ssh-access
+@ssh-access @integration
 Feature: VDE SSH Commands
   As a VDE user
   I want to manage SSH through the vde command interface

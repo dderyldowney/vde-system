@@ -1,5 +1,5 @@
 # language: en
-@vm-lifecycle
+@vm-lifecycle @integration
 Feature: VM Full Lifecycle Critical Path
 
   Scenario: Full VM lifecycle for Python development environment

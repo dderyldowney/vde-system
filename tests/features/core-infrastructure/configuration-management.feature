@@ -1,5 +1,5 @@
 # language: en
-@vm-lifecycle
+@vm-lifecycle @integration
 Feature: Configuration Management
   As a developer
   I want to configure VDE to match my project needs

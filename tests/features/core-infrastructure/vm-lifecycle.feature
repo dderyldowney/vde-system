@@ -1,5 +1,5 @@
 # language: en
-@vm-lifecycle @requires-docker-host
+@vm-lifecycle @requires-docker-host @integration
 Feature: VM Lifecycle Management
   As a developer
   I want to create, start, stop, and manage development VMs via the vde command

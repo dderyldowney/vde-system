@@ -13,6 +13,7 @@ Phased Plan (high level)
 
 - Phase A: Baseline verification and scoping — **COMPLETE**
 - Phase B: Hot-path optimizations and parser hygiene — **COMPLETE**
+- Phase N: BDD fast-suite cleanup (2026-03-26) — **COMPLETE**
 - Phase C: Docker safety, labeling, and isolation hardening — **COMPLETE**
 - Phase D: Test suite alignment (integration and Behave) — **COMPLETE**
 - Phase E: Validation, observability, and documentation — **COMPLETE**
@@ -432,6 +433,26 @@ Tasks completed:
    - Documents mandatory /vde-* command usage
 
 **Result: Test infrastructure optimized, agent workflow formalized, all commits pushed**
+
+---
+
+## Phase N — BDD Fast-Suite Cleanup (2026-03-26)
+
+Goals: Eliminate all errors from `--tags="not @integration"` fast test run. Remove Docker-requiring scenarios from the fast suite.
+
+Tasks completed:
+
+1. Added `@integration` tag to 6 feature files lacking it:
+   - `vm-lifecycle.feature` (had `@requires-docker-host` but not `@integration`)
+   - `vm-full-lifecycle.feature`
+   - `vm-rebuild.feature`
+   - `configuration-management.feature`
+   - `productivity.feature`
+   - `vde-ssh-commands.feature`
+
+2. Verified dry-run: 0 undefined steps, 0 errors
+
+**Result: Fast test baseline 268 passed / 0 failed / 0 errors / 187 skipped (was: 280/2/41/172 with 14-17 min Docker ops)**
 
 ---
 
