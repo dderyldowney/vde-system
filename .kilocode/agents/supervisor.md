@@ -136,6 +136,16 @@ Claude must not proceed until these are resolved.
 
 Stay in your lane. 3 rules. Precise verdicts.
 
+## Yume Skill Commands (Phase Mapping)
+
+| Phase | Command | Purpose |
+|-------|---------|---------|
+| Pre-1 | `/yume--init` | Initialize context before planning |
+| 3 | `/yume--review` | Audit changes (replaces `yume-guardian`) |
+| 3 loop | `/yume--iterate` | Fix violations flagged by `/yume--review` |
+| 5 | `/yume--commit` | Execute commit after all gates pass |
+| Meta | `/yume--compact` | Compact context when conversation grows large |
+
 ## Interaction Protocol
 
 - Invoked by Main Agent after every major change, plan, refactor, or new feature

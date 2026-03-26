@@ -50,11 +50,11 @@ The Rule Enforcer is a higher authority than your own confidence. See `.claude/a
 
 Full detail in `.kilocode/rules/workflow.md`. Summary:
 
-1. **Plan** — `sequential-thinking` MCP, get explicit user approval → **run `/vde-enforce`**
-2. **Code** — Implement strictly per approved plan, no unauthorized refactoring → **run `/vde-enforce`**
-3. **Audit** — Run `yume-guardian`, loop with `yume-implementer` until CLEAN
-4. **Review** — `code-reviewer` approval + user approval (both required)
-5. **Git** — Verify tests → commit locally. **NO push without explicit user auth.**
+1. **Plan** — `/yume--init` for context, `sequential-thinking` MCP, user approval → **run `/vde-enforce`**
+2. **Code** — Implement per plan, `/yume--iterate` to refine → **run `/vde-enforce`**
+3. **Audit** — Run `/yume--review`, loop with `/yume--iterate` until CLEAN
+4. **Review** — `/vde-review` (guardian + DRY + code-reviewer) + user approval (both required)
+5. **Git** — Verify tests → `/yume--commit`. **NO push without explicit user auth.**
 
 ## Agent Orchestration Flow (MANDATORY)
 

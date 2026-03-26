@@ -48,6 +48,17 @@ Use these slash commands for standard workflows — they load the correct agents
 
 **Never skip /vde-enforce** — it's the highest authority and blocks all non-compliant work.
 
+### Yume Skill Commands (Phase Mapping)
+
+| Phase | Command | Purpose |
+|-------|---------|---------|
+| Pre-1 | `/yume--init` | Initialize context before planning |
+| 2 | `/yume--iterate` | Refine implementation during coding |
+| 3 | `/yume--review` | Audit changes (replaces `yume-guardian`) |
+| 3 loop | `/yume--iterate` | Fix violations flagged by `/yume--review` |
+| 5 | `/yume--commit` | Execute commit after all gates pass |
+| Meta | `/yume--compact` | Compact context when conversation grows large |
+
 ## Interaction Protocol
 
 - Receive implementation tasks from Main Agent

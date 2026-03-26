@@ -31,6 +31,16 @@ Use these slash commands for standard workflows — they load the correct agents
 
 **Never skip /vde-enforce** — it's the highest authority and blocks all non-compliant work.
 
+### Yume Skill Commands (Phase Mapping)
+
+| Phase | Command | Purpose |
+|-------|---------|---------|
+| Pre-1 | `/yume--init` | Initialize context before planning |
+| 3 | `/yume--review` | Audit fix for violations after debugging |
+| 3 loop | `/yume--iterate` | Iterate on fix until `/yume--review` is CLEAN |
+| 5 | `/yume--commit` | Execute commit after all gates pass |
+| Meta | `/yume--compact` | Compact context when conversation grows large |
+
 ## Zsh Library Dependency Chain
 
 When tracing Zsh errors, follow this mandatory dependency order:
