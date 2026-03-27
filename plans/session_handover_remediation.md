@@ -25,8 +25,8 @@ Do not skip ahead. Fix failures before proceeding to next feature.
 | O-1 | `critical-path.feature` | Run with Docker, verify 2 docker scenarios pass | ✅ Complete |
 | O-2 | `vm-lifecycle.feature` | Run with Docker, verify 10 docker scenarios pass | ✅ Complete |
 | O-3 | `vm-rebuild.feature` | Run with Docker, verify 4 rebuild scenarios pass | ✅ Complete |
-| O-4 | `docker-operations.feature` | Write 121 undefined step defs | Pending |
-| O-5 | `vm-full-lifecycle.feature` | Write 16 undefined step defs | Pending |
+| O-4 | `docker-operations.feature` | Fixed 2 bugs — 12/12 pass | ✅ Complete (e88416b) |
+| O-5 | `vm-full-lifecycle.feature` | Wrote 16 step defs — 1/1 pass | ✅ Complete (25381d6) |
 | O-6 | `docker-management.feature` | Write step defs for 11 scenarios | Pending |
 | O-7 | `configuration-management.feature` | Write step defs for 5 scenarios | Pending |
 | O-8 | `productivity.feature` | Write step defs for 4 scenarios | Pending |
