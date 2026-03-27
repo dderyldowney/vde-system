@@ -220,3 +220,52 @@ def step_fresh_container(context):
         raise AssertionError("No VM name found in context")
     # VDE restart uses docker compose down+up — always creates a fresh container.
     assert _container_running(vm_name), f"VM {vm_name} is not running after restart"
+
+
+# =============================================================================
+# VM FULL LIFECYCLE steps (vm-full-lifecycle.feature)
+# =============================================================================
+
+
+@given('no running VM instance exists for "{vm_name}"')
+def step_no_running_vm_instance(context, vm_name):
+    """Ensure no running or stopped VM instance exists."""
+    _stop_and_remove_vm(vm_name)
+    context.vm_name = vm_name
+
+
+@when('I run "vde create {vm_name}"')
+def step_run_vde_create(context, vm_name):
+    """Run vde create for the given VM type."""
+    result = run_vde_command(f"create {vm_name}", timeout=120, context=context)
+    context.vm_name = vm_name
+    context.last_exit_code = result.returncode
+    context.last_output = result.stdout
+    context.last_error = result.stderr
+
+
+@then('a docker-compose.yml file should be created at "{compose_path}"')
+def step_compose_file_created(context, compose_path):
+    """Verify compose file was created at the given path (relative to VDE_ROOT)."""
+    full_path = VDE_ROOT / compose_path
+    assert full_path.exists(), f"docker-compose.yml not found at {full_path}"
+
+
+@then("the docker-compose.yml should contain SSH port mapping")
+def step_compose_has_ssh_port(context):
+    """Verify compose file contains an SSH port mapping (port 22 target)."""
+    vm_name = getattr(context, "vm_name", "python")
+    compose = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
+    content = compose.read_text()
+    assert ":22" in content or "target: 22" in content, (
+        f"No SSH port mapping found in compose file:\n{content[:400]}"
+    )
+
+
+@then("container should be gone")
+def step_container_gone(context):
+    """Verify container no longer exists (running or stopped)."""
+    vm_name = getattr(context, "vm_name", "python")
+    assert not _container_exists(vm_name), (
+        f"Container vde-{vm_name} still exists after vde remove"
+    )
