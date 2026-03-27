@@ -146,13 +146,17 @@ def step_service_vm_is_started(context, vm_name):
 @given('VM "{vm_name}" compose file is replaced with invalid YAML')
 def step_replace_compose_invalid_yaml(context, vm_name):
     """Replace compose file with invalid YAML; back up original first."""
+    # Stop VM first so vde start must actually invoke docker-compose with the broken file
+    run_vde_command(f"stop {vm_name}", timeout=60)
     compose = _compose_file(vm_name)
     assert compose.exists(), f"Compose file not found: {compose}"
     backup = compose.with_suffix(".yml.bak")
     backup.write_text(compose.read_text())
     compose.write_text("{ invalid: yaml: [broken\n")
     context.vm_name = vm_name
-    context.compose_backup = backup
+    context.compose_backup = backup       # for THEN step (belt+suspenders)
+    context._compose_backup = str(backup)  # for after_scenario hook on failure
+    context._compose_path = str(compose)   # for after_scenario hook on failure
 
 
 @given('VM "{vm_name}" has env file')
