@@ -2544,3 +2544,138 @@ def step_command_succeeds_or_vm_not_created(context):
         assert exit_code in (1, 2, 3), (
             f"Command failed with unexpected exit code {exit_code}: {stderr or stdout or 'no output'}"
         )
+
+
+# =============================================================================
+# VM FULL LIFECYCLE SSH steps (vm-full-lifecycle.feature)
+# =============================================================================
+
+
+def _assert_ssh_config_has_host(host_name: str) -> None:
+    """Assert VDE SSH config contains an entry for host_name."""
+    ssh_config = _get_ssh_config_path()
+    assert ssh_config.exists(), f"SSH config not found: {ssh_config}"
+    content = ssh_config.read_text()
+    assert f"Host {host_name}" in content, (
+        f"No 'Host {host_name}' entry in SSH config:\n{content[:400]}"
+    )
+
+
+def _run_ssh_command(host: str, command: str, timeout: int = 15) -> subprocess.CompletedProcess:
+    """Run a command on a VDE VM via SSH using the VDE SSH config file."""
+    ssh_config = _get_ssh_config_path()
+    return subprocess.run(
+        [
+            "ssh", "-F", str(ssh_config),
+            "-o", "BatchMode=yes",
+            "-o", "ConnectTimeout=10",
+            "-o", "StrictHostKeyChecking=no",
+            host, command,
+        ],
+        capture_output=True, text=True, timeout=timeout,
+    )
+
+
+@then('SSH config entry should exist for "{vm_name}"')
+def step_ssh_config_entry_exists(context, vm_name):
+    """Verify VDE SSH config has an entry for the VM."""
+    host = f"vde-{vm_name.lstrip('vde-')}"
+    _assert_ssh_config_has_host(host)
+
+
+@then("SSH should be accessible on allocated port")
+def step_ssh_accessible(context):
+    """Verify SSH connection succeeds via the VDE SSH config."""
+    vm_name = getattr(context, "vm_name", "python")
+    host = f"vde-{vm_name.lstrip('vde-')}"
+    result = _run_ssh_command(host, "echo ok")
+    assert result.returncode == 0, (
+        f"SSH not accessible for {host}. rc={result.returncode}\n"
+        f"stderr: {result.stderr}\nstdout: {result.stdout}"
+    )
+
+
+@then("SSH keys should be generated if none exist")
+def step_ssh_keys_generated(context):
+    """Verify SSH keys exist in the VDE SSH directory."""
+    vde_ssh = _get_vde_ssh_dir()
+    keys = list(vde_ssh.glob("id_*"))
+    assert keys, f"No SSH keys found in {vde_ssh}"
+
+
+@then("public key should be copied to VM's authorized_keys")
+def step_public_key_in_authorized_keys(context):
+    """Verify a public key is present in public-ssh-keys/ for VM injection."""
+    pub_keys_dir = VDE_ROOT / "public-ssh-keys"
+    pub_keys = list(pub_keys_dir.glob("*.pub")) if pub_keys_dir.exists() else []
+    assert pub_keys, (
+        f"No public keys found in {pub_keys_dir}. "
+        "Expected at least one .pub file for VM authorized_keys injection."
+    )
+
+
+@when('I SSH to "{host}"')
+def step_ssh_to_host(context, host):
+    """SSH to the given VDE host and store the result in context."""
+    result = _run_ssh_command(host, "echo connected")
+    context.ssh_result = result
+    context.ssh_host = host
+
+
+@then("I should connect to the Python VM")
+def step_should_connect(context):
+    """Verify the SSH connection from 'When I SSH to' succeeded."""
+    result = getattr(context, "ssh_result", None)
+    assert result is not None, "No SSH result found — run 'When I SSH to' first"
+    assert result.returncode == 0, (
+        f"SSH connection failed. rc={result.returncode}\nstderr: {result.stderr}"
+    )
+
+
+@then("I should be logged in as devuser")
+def step_logged_in_as_devuser(context):
+    """Verify SSH login user is devuser."""
+    host = getattr(context, "ssh_host", "vde-python")
+    result = _run_ssh_command(host, "whoami")
+    assert result.returncode == 0 and "devuser" in result.stdout, (
+        f"Expected 'devuser', got: {result.stdout.strip()} (rc={result.returncode})"
+    )
+
+
+@then("I should have a zsh shell")
+def step_have_zsh_shell(context):
+    """Verify the login shell is zsh."""
+    host = getattr(context, "ssh_host", "vde-python")
+    result = _run_ssh_command(host, "echo $SHELL")
+    assert result.returncode == 0 and "zsh" in result.stdout, (
+        f"Expected zsh shell, got: {result.stdout.strip()} (rc={result.returncode})"
+    )
+
+
+@then("workspace should be mounted at ~/workspace")
+def step_workspace_mounted(context):
+    """Verify ~/workspace exists inside the VM."""
+    host = getattr(context, "ssh_host", "vde-python")
+    result = _run_ssh_command(host, "test -d ~/workspace && echo exists")
+    assert result.returncode == 0 and "exists" in result.stdout, (
+        f"~/workspace not found in VM. rc={result.returncode}\nstderr: {result.stderr}"
+    )
+
+
+@then("SSH connection should still work")
+def step_ssh_still_works(context):
+    """Verify SSH connection still works (re-check after VM restart)."""
+    vm_name = getattr(context, "vm_name", "python")
+    host = f"vde-{vm_name.lstrip('vde-')}"
+    result = _run_ssh_command(host, "echo ok")
+    assert result.returncode == 0, (
+        f"SSH no longer works for {host}. rc={result.returncode}\nstderr: {result.stderr}"
+    )
+
+
+@then("SSH config entry should be preserved")
+def step_ssh_config_preserved(context):
+    """Verify SSH config entry persists after vde remove (config not cleaned up)."""
+    vm_name = getattr(context, "vm_name", "python")
+    host = f"vde-{vm_name.lstrip('vde-')}"
+    _assert_ssh_config_has_host(host)
