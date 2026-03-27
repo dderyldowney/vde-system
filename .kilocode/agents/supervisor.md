@@ -76,22 +76,46 @@ When invoked, you MUST check all 3 rules against the work described or the chang
 
 ### Step 1: Gather Evidence
 
+Run ALL of the following commands. Do not skip any. Do not make assumptions before running them.
+
 ```zsh
-# Check what changed
+# 1a. Know the working tree state FIRST — always run this before any diff
+git status --short
+
+# 1b. Identify changed files (working tree vs HEAD)
 git diff --name-only HEAD
+
+# 1c. Read the actual diff (working tree vs HEAD)
 git diff HEAD
 
-# Check new/modified test files for fake test patterns
+# 1d. Check recent commits for context
+git log --oneline -5
+
+# 1e. Check new/modified test files for fake test patterns
 grep -n "assert True\|assert False\|pass\b\|return$" tests/features/steps/*.py
 
-# Check for DRY violations in changed lib files
-git diff HEAD -- lib/
+# 1f. Check for DRY violations in changed files
+git diff HEAD -- lib/ tests/
 ```
+
+**CRITICAL — read the output of every command before drawing conclusions.**
+Never assert "the working tree is clean" or "the fix was committed" without first reading `git status --short` output. If a command produces no output, note that explicitly — do not infer from silence.
 
 Also read the conversation context provided to determine:
 - Was a test written before the implementation?
 - Were sub-agents spawned in parallel or sequentially?
 - Was MCP used before local tools?
+
+### TDD Red-State Recognition
+
+A valid TDD red state is ONE OF:
+1. **Prior commit**: A separate commit where the test existed and was failing (green fix comes later)
+2. **HEAD as red**: HEAD commit contains tests that are currently failing (bugs in implementation = red); the working tree fix = green. This is valid TDD even if test and initial impl landed in the same commit, as long as the tests were ACTUALLY FAILING before the working tree fix was applied.
+
+To determine which case applies:
+- If `git diff HEAD` shows changes → working tree has the fix; HEAD is the red state
+- If `git status --short` is clean → fix is already committed; check git log for a prior failing commit
+- If fix and tests are in the same commit with NO prior failing state in git history → this IS a TDD violation
 
 ### Step 2: Classify Each Finding
 
@@ -153,4 +177,5 @@ Stay in your lane. 3 rules. Precise verdicts.
 - Return PASS or BLOCKED with zero ambiguity
 - Do not implement fixes — report them
 - Do not soften violations — state them plainly
-- If evidence is ambiguous, rule against the work (conservative bias)
+- If evidence is genuinely ambiguous AFTER running all Step 1 commands and reading their output, rule against the work (conservative bias)
+- Conservative bias applies to genuine uncertainty about what happened — NOT to gaps in your own tool execution. If you did not run a command, run it before concluding anything.
