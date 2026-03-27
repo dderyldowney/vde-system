@@ -5,7 +5,7 @@
 
 ---
 
-## CURRENT STATE (2026-03-26 end of session)
+## CURRENT STATE (2026-03-27 end of session)
 
 ### Phase 0 Results
 
@@ -14,8 +14,10 @@
 | 1 | `critical-path.feature` | 14 | ✅ 14/14 |
 | 2 | `vm-lifecycle.feature` | 15 | ✅ RESOLVED |
 | 3 | `vm-rebuild.feature` | 8 | ✅ 8/8 |
+| 4 | `docker-operations.feature` | 12 | ✅ 12/12 |
+| 5 | `vm-full-lifecycle.feature` | 1 | ✅ 1/1 (25/25 steps) |
 
-**Fast baseline:** 262 passed / 0 failed (unchanged)
+**Fast baseline:** 268 passed / 0 failed (unchanged)
 
 ---
 
@@ -34,33 +36,23 @@
 
 ---
 
-## CURRENT STATE (2026-03-26)
+## CURRENT STATE (2026-03-27)
 
 ---
 
 ## WHAT WAS DONE THIS SESSION
 
-### Fixes in vm_rebuild_steps.py
-1. Hardcoded step `'I run "vde restart python"'` → `'I run "vde restart {vm_name}"'`
-2. Hardcoded step `'I run "vde start python --rebuild"'` → `'I run "vde start {vm_name} --rebuild"'`
-3. Added missing `Given VM types are loaded from configuration` step
-4. `context.vm_name = vm_name` in `step_vde_restart` (needed by `step_fresh_container`)
-5. Fixed `step_fresh_container` — VDE restart creates new container so RestartCount=0 is correct
-6. `step_config_still_exists` — now actually asserts compose_file.exists()
-7. **Full rewrite to remove all direct docker calls** — uses `vde ps -q`, `vde stop`, `vde remove`
+### Phase O-4 — docker-operations.feature (commit: e88416b)
+Fixed 2 bugs in `tests/features/steps/docker_operations_steps.py`:
+1. `step_replace_compose_invalid_yaml`: added `vde stop` before replacing compose file — `vde start` returns 0 if container already running, masking the YAML error
+2. Same step: corrected attribute names to `context._compose_backup` / `context._compose_path` to match `after_scenario` hook expectations (was `context.compose_backup` — no underscore)
+- Result: 12/12 scenarios pass
 
-### Fixes in critical_steps.py
-- `container "vde-python" is running` → `_vde_cli("ps -q")`
-- Network existence/bridge type checks → `_vde_cli("networks")`
-
-### Fix in lib/vde-errors
-- `vde_error_vm_not_found` → "Unknown VM: '{name}'" (was "VM '{name}' not found")
-- Matches VDE-SPEC.md §10: `VDE_ERR_NOT_FOUND` → "Unknown VM: $VM_NAME"
-
-### Fix in bin/remove-virtual
-- Config directory lookup bug: `resolve_vm_name("python")` returns "vde-python" but configs are at `configs/docker/python/`
-- Added `CONFIG_NAME="${VM_NAME#vde-}"` to strip prefix before path construction
-- Also fixed logs directory path (`logs/${CONFIG_NAME}` not `logs/${VM_NAME}`)
+### Phase O-5 — vm-full-lifecycle.feature (commit: 25381d6)
+Added 16 undefined step defs (split across 2 existing files, no new files):
+- `tests/features/steps/vm_rebuild_steps.py` — 5 steps: no running VM instance, vde create, compose file created, SSH port mapping check, container gone
+- `tests/features/steps/ssh_core_steps.py` — 11 steps: SSH config entry, SSH accessible, SSH keys generated, public key copied, SSH to host, connect/user/shell/workspace checks, SSH still works after restart, config preserved after remove
+- Result: 1/1 scenario passes, 25/25 steps pass
 
 ---
 
@@ -81,11 +73,11 @@ After fixing the vm-lifecycle stop failure, proceed to:
 
 | # | Feature | Status |
 |---|---------|--------|
-| 4 | `docker-operations.feature` | 12 scenarios, 121 undefined steps — write step defs |
-| 5 | `vm-full-lifecycle.feature` | 1 scenario, 16 undefined steps — write step defs |
-| 6 | `docker-management.feature` | 11 scenarios — write step defs |
-| 7 | `configuration-management.feature` | 5 scenarios |
-| 8 | `productivity.feature` | 4 scenarios |
+| 4 | `docker-operations.feature` | 12/12 | ✅ DONE |
+| 5 | `vm-full-lifecycle.feature` | 1/1 | ✅ DONE |
+| 6 | `docker-management.feature` | 11 scenarios — write step defs | NEXT |
+| 7 | `configuration-management.feature` | 5 scenarios | PENDING |
+| 8 | `productivity.feature` | 4 scenarios | PENDING |
 
 ---
 
