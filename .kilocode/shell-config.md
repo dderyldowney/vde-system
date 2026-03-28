@@ -8,8 +8,25 @@
 |----------|---------|
 | [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) | Canonical VDE architecture breakdown - Control Center, Configuration Center, VM Architecture, Execution Flow |
 | `.kilocode/rules/vde_context.md` | VDE project context and working directory |
+| `.claude/memory/feedback_context7_language_refresh.md` | Context7 MCP refresh requirements for all implementation languages and tools |
 
 These documents define the authoritative architecture and are required reading before any task execution.
+
+---
+
+## Context7 Language & Tool Refresh (MANDATORY — RUN AT EVERY SESSION START)
+
+At every session start, refresh docs for all VDE implementation languages/tools via context7 MCP. Run all calls in parallel:
+
+1. `Python` — subprocess, pathlib, json, os, sys, re, unittest, pytest
+2. `behave` — step defs, hooks, fixtures, context patterns
+3. `PyYAML` — safe_load, safe_dump, multi-doc streams
+4. `Docker` — containers, images, networking, volumes, exec
+5. `docker-compose` — services, networks, volumes, build, healthcheck
+6. `Zsh` — associative arrays, process substitution, parameter expansion
+7. `SSH` — config, key auth, port forwarding, ssh_config directives
+
+Full details: `.claude/memory/feedback_context7_language_refresh.md`
 
 ---
 
