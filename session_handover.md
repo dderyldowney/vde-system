@@ -16,67 +16,54 @@
 | 3 | `vm-rebuild.feature` | 8 | ✅ 8/8 |
 | 4 | `docker-operations.feature` | 12 | ✅ 12/12 |
 | 5 | `vm-full-lifecycle.feature` | 1 | ✅ 1/1 (25/25 steps) |
+| 6 | `docker-management.feature` | 13 | ✅ 13/13 (0 undefined) |
 
-**Fast baseline:** 268 passed / 0 failed (unchanged)
-
----
-
-## OUTSTANDING FAILURE — RESOLVED
-
-**Previous Feature:** `vm-lifecycle.feature`
-**Previous Failure:** `ASSERT FAILED: VM python is still running`
-
-**Investigation (2026-03-26):**
-- Individual stop scenarios pass in isolation
-- `vde stop python` completes in ~5 seconds
-- `vde ps -q` returns empty after stop (correct)
-- Full suite timeout is infrastructure issue, not code bug
-
-**Resolution:** Mark as resolved. Tests pass correctly.
+**Fast baseline:** 268 passed / 0 failed / 187 skipped (confirmed ×2)
 
 ---
 
-## CURRENT STATE (2026-03-27)
+## WHAT WAS DONE THIS SESSION (2026-03-27)
 
----
+### O-5 Compliance Revisit
+- Swarm review confirmed: all 16 O-5 step defs have real assertions, VDE CLI only, no stubs
+- Regression found and fixed: `vm-full-lifecycle.feature @1.1 missing_service` scenario
+  - Root cause: step wrote compose file to unrelated path; `vde create` used own templates, always succeeded
+  - Fix: use non-existent VM type name — `vde_create_vm` rejects unknown types before touching compose files
+  - Commit: `b5c69b1`
 
-## WHAT WAS DONE THIS SESSION
-
-### Phase O-4 — docker-operations.feature (commit: e88416b)
-Fixed 2 bugs in `tests/features/steps/docker_operations_steps.py`:
-1. `step_replace_compose_invalid_yaml`: added `vde stop` before replacing compose file — `vde start` returns 0 if container already running, masking the YAML error
-2. Same step: corrected attribute names to `context._compose_backup` / `context._compose_path` to match `after_scenario` hook expectations (was `context.compose_backup` — no underscore)
-- Result: 12/12 scenarios pass
-
-### Phase O-5 — vm-full-lifecycle.feature (commit: 25381d6)
-Added 16 undefined step defs (split across 2 existing files, no new files):
-- `tests/features/steps/vm_rebuild_steps.py` — 5 steps: no running VM instance, vde create, compose file created, SSH port mapping check, container gone
-- `tests/features/steps/ssh_core_steps.py` — 11 steps: SSH config entry, SSH accessible, SSH keys generated, public key copied, SSH to host, connect/user/shell/workspace checks, SSH still works after restart, config preserved after remove
-- Result: 1/1 scenario passes, 25/25 steps pass
+### Phase O-6 — docker-management.feature (commit: 82b46db)
+- Created `tests/features/steps/docker_management_steps.py` — 52 step defs, 973 lines
+- Covers all 13 scenarios: networking, port allocation, PostgreSQL ports, workspace volumes,
+  data persistence, resource limits, health monitoring, lifecycle cleanup, compose integration,
+  multi-stage builds, startup order, container isolation, container logs
+- All steps use `run_vde_command` / `vm_common` helpers — no direct docker calls
+- 3 steps deferred to pre-existing `documented_workflow_steps.py` definitions (no conflicts)
+- Built via parallel swarm: 3 agents simultaneously (networking+ports, volumes+persistence, lifecycle+logs)
 
 ---
 
 ## FAST TEST BASELINE
 
 ```
-Fast tests (--tags="not @integration"): 262 passed / 0 failed / 0 errors
-Runtime: ~2-3 minutes
+Fast tests (--tags="not @integration"): 268 passed / 0 failed / 187 skipped
+Runtime: ~2.5 minutes
 ```
 
 Do not regress this baseline.
 
 ---
 
-## DOCKER FEATURE STACK ORDER (next features)
-
-After fixing the vm-lifecycle stop failure, proceed to:
+## DOCKER FEATURE STACK ORDER
 
 | # | Feature | Status |
 |---|---------|--------|
-| 4 | `docker-operations.feature` | 12/12 | ✅ DONE |
-| 5 | `vm-full-lifecycle.feature` | 1/1 | ✅ DONE |
-| 6 | `docker-management.feature` | 11 scenarios — write step defs | NEXT |
-| 7 | `configuration-management.feature` | 5 scenarios | PENDING |
+| 1 | `critical-path.feature` | ✅ DONE |
+| 2 | `vm-lifecycle.feature` | ✅ DONE |
+| 3 | `vm-rebuild.feature` | ✅ DONE |
+| 4 | `docker-operations.feature` | ✅ DONE (e88416b) |
+| 5 | `vm-full-lifecycle.feature` | ✅ DONE (25381d6) |
+| 6 | `docker-management.feature` | ✅ DONE (82b46db) |
+| 7 | `configuration-management.feature` | 20 scenarios — write step defs | NEXT |
 | 8 | `productivity.feature` | 4 scenarios | PENDING |
 
 ---
