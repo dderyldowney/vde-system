@@ -27,7 +27,7 @@ Do not skip ahead. Fix failures before proceeding to next feature.
 | O-3 | `vm-rebuild.feature` | Run with Docker, verify 4 rebuild scenarios pass | ✅ Complete |
 | O-4 | `docker-operations.feature` | Fixed 2 bugs — 12/12 pass | ✅ Complete (e88416b) |
 | O-5 | `vm-full-lifecycle.feature` | Wrote 16 step defs — 1/1 pass | ✅ Complete (25381d6) |
-| O-6 | `docker-management.feature` | Write step defs for 11 scenarios | Pending |
+| O-6 | `docker-management.feature` | 52 step defs — 13/13 scenarios covered | ✅ Complete (82b46db) |
 | O-7 | `configuration-management.feature` | Write step defs for 5 scenarios | Pending |
 | O-8 | `productivity.feature` | Write step defs for 4 scenarios | Pending |
 

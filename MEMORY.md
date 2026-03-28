@@ -1,6 +1,6 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-26T13:00:00-04:00
+**Last Updated:** 2026-03-27T00:00:00-04:00
 **Mission:** Ensure core Docker infrastructure is working and passing, then stack Docker features one by one
 
 ---
@@ -20,7 +20,7 @@
 
 ---
 
-## CURRENT FOCUS: Docker Feature Stack (Session 65)
+## CURRENT FOCUS: Docker Feature Stack
 
 **Goal:** Validate core Docker infrastructure first, then stack Docker-tagged features on top one by one.
 **Rule:** Nothing Docker works if core capabilities are not properly implemented.
@@ -32,21 +32,23 @@
 | 1 | `critical-path.feature` | 14 | ✅ | ✅ 14/14 PASSING |
 | 2 | `vm-lifecycle.feature` | 15 | ✅ | ✅ RESOLVED |
 | 3 | `vm-rebuild.feature` | 8 | ✅ | ✅ 8/8 PASSING |
-| 4 | `docker-operations.feature` | 12 | ❌ 68 undefined | Write step defs |
+| 4 | `docker-operations.feature` | 12 | ✅ | ✅ 12/12 PASSING |
+| 5 | `vm-full-lifecycle.feature` | 1 | ✅ | ✅ 1/1 PASSING |
+| 6 | `docker-management.feature` | 13 | ✅ | ✅ 0 undefined |
+| 7 | `configuration-management.feature` | 20 | ❌ | NEXT |
+| 8 | `productivity.feature` | 4 | ❌ | PENDING |
 
-### Phase 0 Progress (2026-03-26)
-- **Phase O-1:** critical-path.feature ✅ Complete
-- **Phase O-2:** vm-lifecycle.feature ✅ Complete  
-- **Phase O-3:** vm-rebuild.feature ✅ Complete
-- **Next:** O-4 docker-operations.feature (write step defs)
+### Phase 0 Progress (2026-03-27)
+- **O-1 through O-6:** ✅ Complete
+- **Next:** O-7 configuration-management.feature (write step defs)
 
 ---
 
-## FAST TEST BASELINE (2026-03-26)
+## FAST TEST BASELINE (2026-03-27)
 
 ```
-Fast tests (--tags="not @integration"): 262 passed / 0 failed / 0 errors
-Runtime: ~2 minutes
+Fast tests (--tags="not @integration"): 268 passed / 0 failed / 187 skipped
+Runtime: ~2.5 minutes
 ```
 
 ---
@@ -65,44 +67,16 @@ Runtime: ~2 minutes
 
 ---
 
-## CHANGES MADE THIS SESSION (2026-03-26)
-
-### vm_rebuild_steps.py — full rewrite
-- Removed all direct `docker` subprocess calls
-- `_container_exists()` → `vde ps --all -q`
-- `_container_running()` → `vde ps -q`
-- `_stop_vm()` → `vde stop {vm_name}`
-- `_stop_and_remove_vm()` → `vde stop` + `vde remove`
-- `step_no_vms_running` → `vde ps -q` empty check
-- Fixed hardcoded step decorators: `restart python` → `restart {vm_name}`, `start python --rebuild` → `start {vm_name} --rebuild`
-- Added missing `Given VM types are loaded from configuration` step
-- Set `context.vm_name` in restart step
-- Fixed `step_fresh_container` (RestartCount=0 is correct for VDE restart — creates new container)
-- `step_config_still_exists` now actually asserts compose_file.exists()
-
-### critical_steps.py
-- `container "vde-python" is running` → uses `_vde_cli("ps -q")` instead of `docker ps`
-- `the Docker network X should exist` → uses `_vde_cli("networks")` instead of `docker network inspect`
-- `the Docker network X should be a bridge network` → parses `vde networks` output
-
-### vde-errors (lib)
-- `vde_error_vm_not_found` → message now "Unknown VM: '{name}'" (was "VM '{name}' not found") — matches VDE-SPEC.md §10 error table
-
-### bin/remove-virtual (fix)
-- Fixed config directory lookup: `resolve_vm_name("python")` returns "vde-python" but configs are at `configs/docker/python/`, not `configs/docker/vde-python/`
-- Added `CONFIG_NAME="${VM_NAME#vde-}"` to strip prefix before path construction
-- Also fixed logs directory path in remove-virtual
-
----
-
 ## STEP DEFS STATUS
 
 ### Existing step files (tests/features/steps/)
 - `critical_steps.py` — critical-path, port range, container start/stop assertions (VDE CLI only)
-- `vm_rebuild_steps.py` — vm-lifecycle, vm-rebuild step defs (VDE CLI only)
+- `vm_rebuild_steps.py` — vm-lifecycle, vm-rebuild, vm-full-lifecycle step defs (VDE CLI only)
+- `ssh_core_steps.py` — SSH config and access steps + O-5 full-lifecycle SSH steps
+- `docker_operations_steps.py` — docker-operations step defs (VDE CLI only)
+- `docker_management_steps.py` — docker-management 52 step defs (VDE CLI only) [NEW O-6]
 - `vm_common.py` — shared helpers (run_vde_command, get_compose_file, etc.)
 - `parser_steps.py` — parser/intent steps
-- `ssh_core_steps.py` — SSH config and access steps
 - `common_steps.py` — shared scenario setup
 - `documented_workflow_steps.py` — workflow steps
 - `vm_metadata_steps.py` — VM metadata assertions
@@ -112,11 +86,8 @@ Runtime: ~2 minutes
 - `ssh_helpers.py` — SSH connection helpers
 
 ### Needs step defs written
-- `docker-operations.feature` — 12 scenarios, 121 undefined steps
-- `vm-full-lifecycle.feature` — 1 scenario, 16 undefined steps
-- `docker-management.feature` — 11 scenarios
-- `configuration-management.feature` — 5 scenarios
-- `productivity.feature` — 4 scenarios
+- `configuration-management.feature` — 20 scenarios (NEXT: O-7)
+- `productivity.feature` — 4 scenarios (O-8)
 
 ---
 
