@@ -121,18 +121,31 @@ Each phase MUST begin with:
 
 ---
 
-## Standing Rule — Hard Stop
+## Pre-Edit Gate (MANDATORY BEHAVIORAL STEP — ALL agents, ALL file-modifying actions)
 
-**BEFORE making your 2nd direct Edit, Write, or Bash call in a single task batch: STOP.**
+Before EVERY direct Edit, Write, or Bash call that modifies files, execute this protocol:
 
-Ask yourself:
-1. How many items am I about to fix/change?
-2. If the answer is >1 → you MUST spawn a sub-agent swarm NOW instead of continuing directly.
+```
+PRE-EDIT GATE:
+1. STATE: "I am about to make [N] direct edit(s) to [files]."
+2. COUNT: Is N > 1?
+   - YES → STOP. Spawn coder sub-agent swarm. Do NOT proceed.
+   - NO → STATE: "1 edit. Proceeding directly." Then execute.
+3. AFTER: Run /vde-enforce to verify compliance.
+```
 
-Applying 2 or more direct edits in a single batch without spawning a swarm is a Rule 3 violation.
-The Rule Enforcer will BLOCK this. The check is:
+This is NOT a description of best practices — it is a mandatory behavioral step that must be executed before every file-modifying action. Skipping the gate is itself a Rule 3 violation.
 
-> "Did the main agent make >1 direct file edit for a single task, when a swarm could have been used?"
-> If yes → BLOCKED.
+**Sub-agent refusal protocol:** If a sub-agent receives a task requiring >1 file edit, it MUST respond with:
+> "This task requires >1 file edit. Split into a swarm or re-assign."
+It must NOT proceed. Expanding scope beyond the assigned file/item is forbidden.
 
-There is no exception for "simple fixes" or "obviously correct" changes. Simplicity does not override the rule.
+**No exceptions.** "Simple" fixes, "obviously correct" changes, "just a config update" — none of these override the gate. The gate is the spine.
+
+## Sub-Agent Compliance (ALL agents — not just main agent)
+
+Sub-agents (coder, tester, reviewer, scout, debugger, etc.) are bound by the same threshold:
+
+- If a sub-agent receives a task that requires >1 file edit: it MUST report back to the main agent with: **"This task requires >1 file edit. Split into a swarm or re-assign."** It must NOT proceed with multi-file edits.
+- Sub-agents must NOT silently expand scope beyond the single file/item assigned to them.
+- If a sub-agent discovers additional files need changes during its work, it must STOP and report back rather than editing them directly.
