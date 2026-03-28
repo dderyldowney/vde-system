@@ -79,6 +79,17 @@ The threshold is **>1 item**. This means:
 "Fix items" means: distinct files edited, distinct bugs fixed, or distinct refactors applied.
 A single commit that modifies 9 files via direct main-agent edits = Rule 3 violation, even if all edits are correct.
 
+#### Pre-Action Enforcement (MANDATORY — check BEFORE every edit, not after)
+
+Before making ANY direct Edit, Write, or Bash call that modifies files, the agent MUST:
+1. Count: how many files will this touch? How many distinct changes?
+2. If count > 1: STOP. Spawn a coder sub-agent swarm. Do NOT proceed directly.
+3. If count = 1: proceed directly, then run `/vde-enforce` after.
+
+Sub-agents receiving multi-file tasks MUST report back: "This task requires >1 file change. Split into a swarm or re-assign." They must NOT proceed with multi-file edits.
+
+The enforcer checks this by reading conversation context — did the agent spawn a swarm before making edits, or did it skip straight to direct edits? Swarming is a PRE-ACTION requirement, not a post-action cleanup.
+
 ---
 
 ## Audit Protocol
@@ -185,6 +196,27 @@ Stay in your lane. 3 rules. Precise verdicts.
 | 3 loop | `/yume--iterate` | Fix violations flagged by `/yume--review` |
 | 5 | `/yume--commit` | Execute commit after all gates pass |
 | Meta | `/yume--compact` | Compact context when conversation grows large |
+
+## Pre-Edit Gate (MANDATORY BEHAVIORAL STEP — ALL agents, ALL file-modifying actions)
+
+Before EVERY direct Edit, Write, or Bash call that modifies files, execute this protocol:
+
+```
+PRE-EDIT GATE:
+1. STATE: "I am about to make [N] direct edit(s) to [files]."
+2. COUNT: Is N > 1?
+   - YES → STOP. Spawn coder sub-agent swarm. Do NOT proceed.
+   - NO → STATE: "1 edit. Proceeding directly." Then execute.
+3. AFTER: Run /vde-enforce to verify compliance.
+```
+
+This is NOT a description of best practices — it is a mandatory behavioral step that must be executed before every file-modifying action. Skipping the gate is itself a Rule 3 violation.
+
+**Sub-agent refusal protocol:** If a sub-agent receives a task requiring >1 file edit, it MUST respond with:
+> "This task requires >1 file edit. Split into a swarm or re-assign."
+It must NOT proceed. Expanding scope beyond the assigned file/item is forbidden.
+
+**No exceptions.** "Simple" fixes, "obviously correct" changes, "just a config update" — none of these override the gate. The gate is the spine.
 
 ## Interaction Protocol
 

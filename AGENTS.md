@@ -122,6 +122,27 @@ This applies to initial startup AND any context refresh steps (e.g. the `/new` c
 - **Specification Compliance**: All implementations must match [`docs/VDE-SPEC.md`](docs/VDE-SPEC.md).
 - **Git Hygiene (LOCAL FIRST)**: Commit locally freely. **DO NOT push to origin until User explicitly authorizes.** This prevents dirty git history if commits need modification.
 
+### Pre-Edit Gate (MANDATORY BEHAVIORAL STEP — ALL agents, ALL file-modifying actions)
+
+Before EVERY direct Edit, Write, or Bash call that modifies files, execute this protocol:
+
+```
+PRE-EDIT GATE:
+1. STATE: "I am about to make [N] direct edit(s) to [files]."
+2. COUNT: Is N > 1?
+   - YES → STOP. Spawn coder sub-agent swarm. Do NOT proceed.
+   - NO → STATE: "1 edit. Proceeding directly." Then execute.
+3. AFTER: Run /vde-enforce to verify compliance.
+```
+
+This is NOT a description of best practices — it is a mandatory behavioral step that must be executed before every file-modifying action. Skipping the gate is itself a Rule 3 violation.
+
+**Sub-agent refusal protocol:** If a sub-agent receives a task requiring >1 file edit, it MUST respond with:
+> "This task requires >1 file edit. Split into a swarm or re-assign."
+It must NOT proceed. Expanding scope beyond the assigned file/item is forbidden.
+
+**No exceptions.** "Simple" fixes, "obviously correct" changes, "just a config update" — none of these override the gate. The gate is the spine.
+
 ---
 
 ## Supervisor
