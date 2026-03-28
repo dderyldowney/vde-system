@@ -132,6 +132,8 @@ Also read the conversation context provided to determine:
 - Was a test written before the implementation?
 - Were sub-agents spawned in parallel or sequentially?
 - Was MCP used before local tools?
+- Before any commit: did BOTH the code-reviewer AND the user explicitly approve? If a commit was made without both approvals, flag as a violation.
+- Was `git push` run without explicit user instruction? Flag as a violation.
 
 ### TDD Red-State Recognition
 
