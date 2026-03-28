@@ -40,71 +40,45 @@ af75360 docs: update remediation plan with audit fix list pointer for O-8
 
 ## NEXT SESSION — START HERE
 
-### Step 1: Load audit findings
-Read `/Users/dderyldowney/.claude/projects/-Users-dderyldowney-VDE/memory/project_audit_findings.md`
-This has the full prioritized fix list with file:line references.
+### Current State (as of 2026-03-28 end of session 2)
+All HIGH/MEDIUM audit items fixed and committed. Fast baseline green.
 
-### Step 2: Fix in priority order (HIGH bugs first)
+**NOTHING BLOCKING.** Choose from optional improvements below.
 
-**CRITICAL — fix first:**
+### Optional: Remaining LOW systemic items
+Full details in `project_audit_findings.md`. These are non-blocking quality improvements:
 
-1. **BUG-1** `critical_steps.py:307,315,321` — vde ps `--filter name=vde-python` double-prefixes to `vde-vde-python`. Strip `vde-` before passing. Container running checks always return false currently.
+- **FAKE-3** `configuration_management_steps.py:464-471` — env vars check directory, not runtime loading
+- **FAKE-4** `configuration_management_steps.py:803-805` — health restart checks script, not behavior
+- **DRY-2** `_load_vm_types()` duplicated in `critical_steps.py` + `configuration_management_steps.py`
+- **DRY-3** Compose-file path computed in 3 places; `vm_common.get_compose_file()` should be used everywhere
+- **DRY-6** Near-identical SSH port step text collision risk (`critical_steps.py` vs `docker_management_steps.py`)
+- **DRY-7** Workspace host-path resolution duplicated in `docker_management_steps.py:379-392` vs `401-425`
+- VDE_ROOT import inconsistency (4 files import direct from `config` instead of via `vm_common`)
+- Timeout inconsistencies (see audit file for per-file recommendations)
+- Config management cleanup gap (`_cleanup_test_vm_type` inside `@then` — move to `@after_scenario`)
 
-2. **BUG-6** `shell_helpers.py:312` — `_get_container_name` unbound (import alias mismatch). Will raise `NameError` at runtime.
-
-3. **BUG-7** `environment.py:462` — `_docker_cleanup_needed` flag never set in `docker_management_steps.py` or `productivity_steps.py`. Add `context._docker_cleanup_needed = True` in any `@given` that starts a container in those files.
-
-4. **BUG-2** `productivity_steps.py:136-139` — backup else-branch creates placeholder `.backup_marker` when `data/postgres/` absent → fake test passes in cold CI. Replace with `assert src.exists()`.
-
-5. **BUG-3** `configuration_management_steps.py:401-404` — `step_rebuild_vms` never executes vde-rebuild. Always passes. Fix: run `run_vde_command("start python --rebuild")` + assert output contains "Building".
-
-6. **BUG-4** `documented_workflow_steps.py:578` — `subprocess.run(["docker", "inspect", ...])` direct docker call. Replace with `run_vde_command("inspect python ...")` + assert Memory > 0.
-
-7. **BUG-5** `vm_rebuild_steps.py:156` — stores `context.last_stdout` but `port_management_steps.py:224` reads `context.last_output`. Fix: set both or rename.
-
-**FAKE TESTS — fix after bugs:**
-
-8. **FAKE-1** `vm_rebuild_steps.py:88-107` — rebuild steps assert only exit code. Add output check for "Building" keyword.
-
-9. **FAKE-2** `docker_operations_steps.py:239-275` — compose build/up/down assert only exit code. Add output check.
-
-10. **FAKE-6** `productivity_steps.py:144-153` — backup scenario never restores. Add: stop postgres → copy backup back → restart → query sentinel row `persistence-check`.
-
-**DRY + systemic — fix after fakes:**
-
-11. **DRY-1** Consolidate three `_is_container_running()` implementations → use `vm_common.container_is_running()` everywhere.
-
-12. **Context contract** — document canonical names in `vm_common.py`; alias `command_exit_code` → `last_exit_code` in `critical_steps.py`.
-
-13. All remaining DRY, timeout, VDE_ROOT import, cleanup gaps — see full audit file.
-
-### Step 3: Re-run fast baseline
+### Optional: Full integration test suite
+```zsh
+./tests/run-full-test-suite.zsh
 ```
-python3 -m behave --tags="not @integration" --no-capture 2>&1 | tail -5
-# Must show: 268 passed / 0 failed
-```
+Run once to verify all @integration Docker scenarios pass end-to-end.
 
-### Step 4: Re-run dry-run on each feature
-```
-python3 -m behave --dry-run tests/features/core-infrastructure/productivity.feature
-# Repeat for each feature if step text was changed
-```
-
-### Step 5: /vde-review → /vde-commit
+### Optional: Phase P — Config directory reordering
+Move `configs/docker/{python,postgres}` → `configs/docker/languages/` + `configs/docker/services/`.
+Requires user authorization before starting.
 
 ---
 
 ## WHAT WAS DONE THIS SESSION (2026-03-28)
 
-### O-8 — productivity.feature (implemented, NOT committed)
+### O-8 — productivity.feature (implemented and committed — 23914c3)
 - Created `tests/features/steps/productivity_steps.py` — 10 step defs
 - Covers all 4 scenarios: data persistence, clean-state teardown, backup creation, background services
 - Step reword: `When I stop and restart postgres VM` → `When I stop and restart PostgreSQL` (matched existing def)
 - `_seed_postgres_table()` helper for DRY seeding logic
-- Fast baseline confirmed: 268 passed / 0 failed
-- Dry-run: all 13 steps resolved (0 undefined)
-- Guardian: CLEAN | Reviewer: APPROVED | Enforcer: PASS
-- **Audit then found BUG-2 (backup fake path) and FAKE-6 (no restore) — must fix**
+- Audit found BUG-2 (backup fake path) and FAKE-6 (no restore) — both fixed in 23914c3
+- Fast baseline: 268 passed / 0 failed ✅
 
 ### Full audit run (O-1 through O-8)
 - Spawned 3 parallel guardian agents (O-1–O-4, O-5–O-8, cross-cutting)
