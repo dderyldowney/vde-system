@@ -2,7 +2,7 @@
 
 ## Related Handovers
 - Session Handover: see `../session_handover.md`
-- **Active fix list (MUST READ at startup):** `/Users/dderyldowney/.claude/projects/-Users-dderyldowney-VDE/memory/project_audit_findings.md`
+- **Active fix list (MUST READ at startup):** `.claude/memory/project_audit_findings.md`
   This file contains 7 bugs, 6 fake tests, and systemic issues found in the O-1–O-8 pre-commit audit.
   It must be loaded into context before any work begins this session — do not skip it.
 
