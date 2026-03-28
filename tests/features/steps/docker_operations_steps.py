@@ -18,17 +18,15 @@ if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 
 from config import VDE_ROOT
-from vm_common import BIN_DIR, _vde_env, run_vde_command
+from vm_common import BIN_DIR, _vde_env, run_vde_command, container_is_running
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
 
 
 def _is_running(vm_name: str) -> bool:
-    """Check if VM container is running via vde ps -q."""
-    r = run_vde_command("ps -q")
-    container = f"vde-{vm_name.lstrip('vde-')}"
-    return container in r.stdout.splitlines()
+    """Thin wrapper — delegates to canonical container_is_running."""
+    return container_is_running(f"vde-{vm_name.lstrip('vde-')}")
 
 
 def _ensure_running(vm_name: str, timeout: int = 120) -> None:

@@ -52,6 +52,10 @@ source "{LIB_DIR}/vm-common" 2>/dev/null
     return subprocess.run(["zsh", "-c", full], capture_output=True, text=True, timeout=timeout)
 
 
+# DRY-4: single source of truth for log/debug line filter pattern
+_LOG_LINE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}|^\[INFO\]")
+
+
 def _vde_cli(command: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Run `vde <command>` with VDE_ROOT_DIR set. Logs go to stderr, stdout is clean output."""
     return subprocess.run(
@@ -137,6 +141,8 @@ def step_run_list_vms(context, args):
     )
     context.command_output = result.stdout + result.stderr
     context.command_exit_code = result.returncode
+    context.last_output = context.command_output
+    context.last_exit_code = context.command_exit_code
 
 
 @when('I run vde-cli "{command}"')
@@ -144,6 +150,8 @@ def step_run_vde_cli(context, command):
     result = _vde_cli(command)
     context.command_output = result.stdout + result.stderr
     context.command_exit_code = result.returncode
+    context.last_output = context.command_output
+    context.last_exit_code = context.command_exit_code
 
 
 @when('I call vde_get_container_name with "{name}"')
@@ -185,7 +193,7 @@ def step_render_lang_template(context, name, port):
     assert r.returncode == 0, f"render_template failed: {r.stderr}"
     # Strip log lines (lines starting with date or [INFO])
     lines = [
-        ln for ln in r.stdout.splitlines() if not re.match(r"^\d{4}-\d{2}-\d{2}|^\[INFO\]", ln)
+        ln for ln in r.stdout.splitlines() if not _LOG_LINE_RE.match(ln)
     ]
     context.rendered_output = "\n".join(lines)
 
@@ -203,7 +211,7 @@ def step_render_ssh_entry(context, vm_name, port):
     )
     assert r.returncode == 0, f"render_template failed: {r.stderr}"
     lines = [
-        ln for ln in r.stdout.splitlines() if not re.match(r"^\d{4}-\d{2}-\d{2}|^\[INFO\]", ln)
+        ln for ln in r.stdout.splitlines() if not _LOG_LINE_RE.match(ln)
     ]
     context.rendered_output = "\n".join(lines)
 
@@ -567,6 +575,8 @@ def step_load_vm_types(context):
     )
     context.command_output = result.stdout + result.stderr
     context.command_exit_code = result.returncode
+    context.last_output = context.command_output
+    context.last_exit_code = context.command_exit_code
 
 
 @given('"{rel_path}" exists')
@@ -626,7 +636,7 @@ def step_render_svc_template(context, name, port, svc_port):
     )
     assert r.returncode == 0, f"render_template failed: {r.stderr}"
     lines = [
-        ln for ln in r.stdout.splitlines() if not re.match(r"^\d{4}-\d{2}-\d{2}|^\[INFO\]", ln)
+        ln for ln in r.stdout.splitlines() if not _LOG_LINE_RE.match(ln)
     ]
     context.rendered_output = "\n".join(lines)
 
