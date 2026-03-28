@@ -473,6 +473,7 @@ def step_have_multiple_running_vms(context):
     for vm in ("python", "postgres"):
         r = run_vde_command(f"start {vm}", timeout=300)
         assert r.returncode == 0, f"Could not start {vm}: {r.stderr}"
+    context._docker_cleanup_needed = True
     context.multi_vms = ["vde-python", "vde-postgres"]
 
 
@@ -505,6 +506,7 @@ def step_have_running_vms(context):
     """Ensure at least one VM (python) is running."""
     r = run_vde_command("start python", timeout=300)
     assert r.returncode == 0, f"Could not start python VM: {r.stderr}"
+    context._docker_cleanup_needed = True
     context.vm_name = "python"
 
 
@@ -702,6 +704,7 @@ def step_rebuild_language_vm(context):
         f"vde rebuild {_REBUILD_VM} failed (rc={result.returncode}):\n"
         f"{result.stdout}\n{result.stderr}"
     )
+    context._docker_cleanup_needed = True
     context.rebuilt_vm = _REBUILD_VM
 
 

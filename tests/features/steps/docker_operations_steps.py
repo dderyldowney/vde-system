@@ -237,10 +237,15 @@ def step_container_is_started(context):
 
 @then("docker-compose build should be executed")
 def step_compose_build_executed(context):
-    """Verify vde start triggered a build (rc=0)."""
+    """Verify vde start triggered a build (rc=0 and 'Building' in output)."""
     assert context.last_exit_code == 0, (
         f"vde start failed (rc={context.last_exit_code}). "
         f"stderr: {context.last_error}"
+    )
+    output = getattr(context, "last_output", "") or ""
+    assert "Building" in output, (
+        f"Expected 'Building' in build output to confirm docker-compose ran --build.\n"
+        f"output: {output}"
     )
 
 
@@ -253,10 +258,14 @@ def step_image_built_successfully(context):
 
 @then("docker-compose up -d should be executed")
 def step_compose_up_executed(context):
-    """Verify vde start succeeded (rc=0)."""
+    """Verify vde start succeeded (rc=0 and container is running)."""
     assert context.last_exit_code == 0, (
         f"vde start failed (rc={context.last_exit_code}). "
         f"stderr: {context.last_error}"
+    )
+    vm_name = getattr(context, "vm_name", "python")
+    assert _is_running(vm_name), (
+        f"Container vde-{vm_name} not running after compose up"
     )
 
 
@@ -269,9 +278,13 @@ def step_generic_container_running(context):
 
 @then("docker-compose down should be executed")
 def step_compose_down_executed(context):
-    """Verify vde stop succeeded (rc=0)."""
+    """Verify vde stop succeeded (rc=0 and container is not running)."""
     assert context.last_exit_code == 0, (
         f"vde stop failed (rc={context.last_exit_code})"
+    )
+    vm_name = getattr(context, "vm_name", "python")
+    assert not _is_running(vm_name), (
+        f"Container vde-{vm_name} still running after compose down"
     )
 
 
