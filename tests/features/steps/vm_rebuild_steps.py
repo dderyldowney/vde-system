@@ -14,7 +14,7 @@ from pathlib import Path
 from behave import given, then, when
 
 from config import VDE_ROOT
-from vm_common import run_vde_command, get_compose_file
+from vm_common import run_vde_command, get_compose_file, container_is_running
 
 
 def _container_exists(vm_name):
@@ -25,10 +25,8 @@ def _container_exists(vm_name):
 
 
 def _container_running(vm_name):
-    """Check if VM container is running via vde ps."""
-    result = run_vde_command("ps -q")
-    container = f"vde-{vm_name.lstrip('vde-')}"
-    return container in result.stdout.splitlines()
+    """Thin wrapper — delegates to canonical container_is_running."""
+    return container_is_running(f"vde-{vm_name.lstrip('vde-')}")
 
 
 def _stop_vm(vm_name):

@@ -73,6 +73,9 @@ def step_have_data_in_postgres(context):
 @given("I need to test with fresh database")
 def step_need_fresh_database(context):
     """Record intent to test with a clean postgres database."""
+    # Guarantee clean state regardless of prior scenario residue
+    run_vde_command("stop postgres", timeout=60)
+    run_vde_command("remove postgres", timeout=60)
     context.fresh_db_test = True
     context._docker_cleanup_needed = True
 
