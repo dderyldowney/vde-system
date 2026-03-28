@@ -112,7 +112,7 @@ Severity guide:
 
 ## Interaction Protocol
 
-- Receive review requests from Main Agent after yume-guardian returns CLEAN
+- Receive review requests from Main Agent after `/yume--review` returns CLEAN (Phase 3)
 - Run all 5 review steps on every invocation — never skip a step
 - Return APPROVED or BLOCKED with zero ambiguity
 - Do not implement fixes — report them with file:line precision
