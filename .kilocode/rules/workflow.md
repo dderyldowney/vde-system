@@ -1,4 +1,14 @@
 # DEVELOPMENT WORKFLOW PHASES
+
+## Pre-Edit Gate (MANDATORY — applies to ALL phases)
+
+Before EVERY direct Edit, Write, or Bash call that modifies files:
+1. STATE: "I am about to make [N] direct edit(s) to [files]."
+2. COUNT: Is N > 1? → YES = STOP, spawn coder sub-agent swarm. NO = proceed directly.
+3. AFTER: Run `/vde-enforce` to verify compliance.
+
+This gate applies to ALL agents in ALL phases. Skipping the gate is a Rule 3 violation.
+
 ## Phase 1: Plan Mode
 Entry: User requests implementation | Action: Use `EnterPlanMode`, analyze with sequential-thinking, generate step-by-step plan | Exit Gate: HARD STOP for explicit user approval | Violation Protocol: Proceeding without approval → STOP immediately, return to Plan Mode
 ## Phase 2: Code Mode
