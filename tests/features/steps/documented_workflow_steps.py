@@ -31,6 +31,7 @@ from vm_common import (
     docker_ps,
     step_vde_installed,
 )
+from ssh_helpers import VDE_SSH_CONFIG
 
 # =============================================================================
 # Helper functions - call real vde-parser
@@ -414,17 +415,15 @@ def step_see_available_list(context):
 @then("my SSH config should be updated with new entries")
 def step_ssh_config_updated(context):
     """Verify SSH config has entries."""
-    ssh_config = Path.home() / ".ssh" / "vde" / "config"
-    assert ssh_config.exists()
-    assert "Host vde-" in ssh_config.read_text()
+    assert VDE_SSH_CONFIG.exists()
+    assert "Host vde-" in VDE_SSH_CONFIG.read_text()
 
 
 @then("my existing SSH entries should be preserved")
 def step_ssh_entries_preserved(context):
     """Verify custom entries persist."""
-    ssh_config = Path.home() / ".ssh" / "vde" / "config"
-    assert ssh_config.exists(), "SSH config file should exist"
-    content = ssh_config.read_text()
+    assert VDE_SSH_CONFIG.exists(), "SSH config file should exist"
+    content = VDE_SSH_CONFIG.read_text()
     assert "Host vde-" in content, "SSH config should contain VDE host entries"
 
 
@@ -581,9 +580,7 @@ def step_no_monopoly(context):
             memory = int(result.stdout.strip())
         except ValueError:
             memory = 0
-        assert memory > 0, (
-            f"Expected python container Memory > 0, got: {result.stdout.strip()}"
-        )
+        assert memory > 0, f"Expected python container Memory > 0, got: {result.stdout.strip()}"
     else:
         compose_file = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
         assert compose_file.exists(), f"Compose file not found: {compose_file}"

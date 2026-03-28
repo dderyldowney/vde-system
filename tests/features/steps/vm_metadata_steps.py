@@ -314,12 +314,6 @@ def step_service_has_display_names(context):
         assert display, f"Service VM '{name}' has no display name"
 
 
-@then('all language VM ports should be between 2200 and 2399')
-def step_lang_ports_in_range(context):
-    """Verify all language VM SSH ports are in correct range (expanded)."""
-    for vm_name, port in context.lang_ports:
-        assert 2200 <= port <= 2399, \
-            f"Language VM '{vm_name}' has port {port} outside range 2200-2399"
 
 
 @then('all service VM ports should be between 2400 and 2499')

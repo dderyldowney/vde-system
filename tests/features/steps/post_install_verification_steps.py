@@ -4,6 +4,7 @@ BDD Step Definitions for Post-Installation Verification.
 These steps verify that VDE has been properly installed and configured.
 All steps use real system verification - no context flags or fake tests.
 """
+
 import os
 import subprocess
 import sys
@@ -26,20 +27,22 @@ from vm_common import (
     check_ssh_keys_exist,
     get_vm_types,
 )
+from ssh_helpers import VDE_SSH_CONFIG
 
 
 # =============================================================================
 # Post-Installation Verification THEN steps
 # =============================================================================
 
-@then('VDE should be properly installed')
+
+@then("VDE should be properly installed")
 def step_vde_properly_installed(context):
     """Verify VDE is properly installed by checking directory structure and scripts."""
     vde_root = Path(VDE_ROOT)
     assert vde_root.exists(), f"VDE_ROOT directory does not exist: {vde_root}"
 
     # Check core directories exist - templates can be in root or bin/templates
-    required_dirs = ['scripts', 'configs', 'data', 'logs']
+    required_dirs = ["scripts", "configs", "data", "logs"]
     for dir_name in required_dirs:
         dir_path = vde_root / dir_name
         assert dir_path.exists(), f"Required directory {dir_name} does not exist at {dir_path}"
@@ -56,53 +59,55 @@ def step_vde_properly_installed(context):
     scripts_dir = vde_root / "bin"
     # VDE uses zsh scripts and scripts without extensions
     script_files = list(scripts_dir.glob("*.zsh")) + list(scripts_dir.glob("[a-z]*"))
-    script_files = [f for f in script_files if f.is_file() and not f.name.startswith('.')]
+    script_files = [f for f in script_files if f.is_file() and not f.name.startswith(".")]
     assert len(script_files) > 0, "No shell scripts found in scripts directory"
     assert check_scripts_executable(context), "Not all scripts are executable"
 
 
-@then('required directories should be created')
+@then("required directories should be created")
 def step_required_dirs_created(context):
     """Verify all required VDE directories are created."""
     # cache can be .cache or cache
-    required_dirs = ['configs', 'data', 'logs', 'projects', 'env-files', 'backup']
+    required_dirs = ["configs", "data", "logs", "projects", "env-files", "backup"]
     for dir_name in required_dirs:
         dir_path = Path(VDE_ROOT) / dir_name
         assert dir_path.exists(), f"Required directory {dir_name} does not exist at {dir_path}"
         assert dir_path.is_dir(), f"{dir_path} is not a directory"
 
 
-@then('I should see success message')
+@then("I should see success message")
 def step_see_success_message(context):
     """Verify a success message was displayed (check command output if available)."""
     # If a command was run, check its output
-    if hasattr(context, 'last_command_output'):
+    if hasattr(context, "last_command_output"):
         output = context.last_command_output
         # Check for success indicators
-        success_indicators = ['success', 'completed', 'done', 'installed', 'ready']
+        success_indicators = ["success", "completed", "done", "installed", "ready"]
         has_success = any(indicator in output.lower() for indicator in success_indicators)
         assert has_success, f"No success message found in output: {output}"
 
 
-@then('it should verify Docker is installed')
+@then("it should verify Docker is installed")
 def step_verify_docker_installed(context):
     """Verify Docker installation is checked."""
     assert check_docker_available(context), "Docker is not installed or not accessible"
 
 
-@then('it should verify docker-compose is available')
+@then("it should verify docker-compose is available")
 def step_verify_docker_compose(context):
     """Verify docker-compose availability is checked."""
-    assert check_docker_compose_available(context), "docker-compose is not installed or not accessible"
+    assert check_docker_compose_available(context), (
+        "docker-compose is not installed or not accessible"
+    )
 
 
-@then('it should verify zsh is available')
+@then("it should verify zsh is available")
 def step_verify_zsh_available(context):
     """Verify zsh availability is checked."""
     assert check_zsh_available(context), "zsh is not installed or not accessible"
 
 
-@then('it should report missing dependencies clearly')
+@then("it should report missing dependencies clearly")
 def step_report_missing_deps(context):
     """Verify missing dependencies are reported (check command output)."""
     # This step validates that when dependencies are missing, they're clearly reported
@@ -114,14 +119,12 @@ def step_report_missing_deps(context):
     content = setup_script.read_text()
     # Check that script has dependency checking logic
     has_dependency_check = (
-        'docker' in content.lower() or
-        'zsh' in content.lower() or
-        'depend' in content.lower()
+        "docker" in content.lower() or "zsh" in content.lower() or "depend" in content.lower()
     )
     assert has_dependency_check, "Setup script does not contain dependency checking logic"
 
 
-@then('configs/ directory should exist')
+@then("configs/ directory should exist")
 def step_configs_dir_exists(context):
     """Verify configs directory exists."""
     configs_dir = Path(VDE_ROOT) / "configs"
@@ -129,7 +132,7 @@ def step_configs_dir_exists(context):
     assert configs_dir.is_dir(), f"{configs_dir} is not a directory"
 
 
-@then('templates/ directory should exist with templates')
+@then("templates/ directory should exist with templates")
 def step_templates_dir_exists(context):
     """Verify templates directory exists and contains templates."""
     # Check templates/ first (actual location), fallback to root templates/
@@ -145,7 +148,7 @@ def step_templates_dir_exists(context):
     assert len(template_files) > 0, "templates directory is empty"
 
 
-@then('data/ directory should exist for persistent data')
+@then("data/ directory should exist for persistent data")
 def step_data_dir_exists(context):
     """Verify data directory exists."""
     data_dir = Path(VDE_ROOT) / "data"
@@ -153,7 +156,7 @@ def step_data_dir_exists(context):
     assert data_dir.is_dir(), f"{data_dir} is not a directory"
 
 
-@then('logs/ directory should exist')
+@then("logs/ directory should exist")
 def step_logs_dir_exists(context):
     """Verify logs directory exists."""
     logs_dir = Path(VDE_ROOT) / "logs"
@@ -161,7 +164,7 @@ def step_logs_dir_exists(context):
     assert logs_dir.is_dir(), f"{logs_dir} is not a directory"
 
 
-@then('projects/ directory should exist for code')
+@then("projects/ directory should exist for code")
 def step_projects_dir_exists(context):
     """Verify projects directory exists."""
     projects_dir = Path(VDE_ROOT) / "projects"
@@ -169,7 +172,7 @@ def step_projects_dir_exists(context):
     assert projects_dir.is_dir(), f"{projects_dir} is not a directory"
 
 
-@then('env-files/ directory should exist')
+@then("env-files/ directory should exist")
 def step_env_files_dir_exists(context):
     """Verify env-files directory exists."""
     env_files_dir = Path(VDE_ROOT) / "env-files"
@@ -177,7 +180,7 @@ def step_env_files_dir_exists(context):
     assert env_files_dir.is_dir(), f"{env_files_dir} is not a directory"
 
 
-@then('backup/ directory should exist')
+@then("backup/ directory should exist")
 def step_backup_dir_exists(context):
     """Verify backup directory exists."""
     backup_dir = Path(VDE_ROOT) / "backup"
@@ -185,16 +188,7 @@ def step_backup_dir_exists(context):
     assert backup_dir.is_dir(), f"{backup_dir} is not a directory"
 
 
-@then('cache/ directory should exist')
-def step_cache_dir_exists(context):
-    """Verify cache directory exists."""
-    # VDE uses .cache (hidden directory)
-    cache_dir = Path(VDE_ROOT) / ".cache"
-    assert cache_dir.exists(), f"cache directory does not exist at {cache_dir}"
-    assert cache_dir.is_dir(), f"{cache_dir} is not a directory"
-
-
-@then('if keys exist, they should be detected')
+@then("if keys exist, they should be detected")
 def step_keys_detected_if_exist(context):
     """Verify existing SSH keys would be detected."""
     # Check if SSH keys actually exist in VDE isolated location
@@ -207,7 +201,7 @@ def step_keys_detected_if_exist(context):
     # If keys don't exist, this step documents that they would be detected if present
 
 
-@then('if no keys exist, ed25519 keys should be generated')
+@then("if no keys exist, ed25519 keys should be generated")
 def step_keys_generated(context):
     """Verify SSH keys are generated when they don't exist."""
     # Check if SSH keys now exist (should be generated by setup)
@@ -224,34 +218,17 @@ def step_keys_generated(context):
     # In test scenarios, keys may already exist, so we just verify the mechanism
 
 
-@then('public keys should be copied to public-ssh-keys/')
-def step_public_keys_copied(context):
-    """Verify public keys are copied to public-ssh-keys directory."""
-    public_ssh_dir = Path(VDE_ROOT) / "public-ssh-keys"
-    assert public_ssh_dir.exists(), f"public-ssh-keys directory does not exist at {public_ssh_dir}"
-
-    # Check for .pub files
-    pub_files = list(public_ssh_dir.glob("*.pub"))
-    assert len(pub_files) > 0, "No public key files found in public-ssh-keys directory"
-
-
-@then('.keep file should exist in public-ssh-keys/')
-def step_keep_file_exists(context):
-    """Verify .keep file exists in public-ssh-keys directory."""
-    public_ssh_dir = Path(VDE_ROOT) / "public-ssh-keys"
-    keep_file = public_ssh_dir / ".keep"
-    assert keep_file.exists(), f".keep file does not exist at {keep_file}"
-
-
-@then('backup/ssh/config should exist as a template')
+@then("backup/ssh/config should exist as a template")
 def step_backup_ssh_config_exists(context):
     """Verify SSH config template exists in backup directory."""
     backup_ssh_config = Path(VDE_ROOT) / "backup" / "ssh" / "config"
-    assert backup_ssh_config.exists(), f"backup/ssh/config template does not exist at {backup_ssh_config}"
+    assert backup_ssh_config.exists(), (
+        f"backup/ssh/config template does not exist at {backup_ssh_config}"
+    )
     assert backup_ssh_config.is_file(), f"{backup_ssh_config} is not a file"
 
 
-@then('the template should show proper SSH config format')
+@then("the template should show proper SSH config format")
 def step_ssh_template_format(context):
     """Verify SSH config template has proper format."""
     backup_ssh_config = Path(VDE_ROOT) / "backup" / "ssh" / "config"
@@ -259,54 +236,66 @@ def step_ssh_template_format(context):
 
     content = backup_ssh_config.read_text()
     # Check for SSH config format indicators
-    ssh_config_indicators = ['Host', 'HostName', 'User', 'Port', 'IdentityFile']
+    ssh_config_indicators = ["Host", "HostName", "User", "Port", "IdentityFile"]
     has_valid_format = any(indicator in content for indicator in ssh_config_indicators)
     assert has_valid_format, "SSH config template does not contain valid SSH config format"
 
 
-@then('I should be able to use it as reference')
+@then("I should be able to use it as reference")
 def step_can_use_as_reference(context):
     """Verify SSH config template is readable for reference."""
     backup_ssh_config = Path(VDE_ROOT) / "backup" / "ssh" / "config"
     assert backup_ssh_config.exists(), "SSH config template does not exist"
 
     # Verify file is readable
-    assert os.access(backup_ssh_config, os.R_OK), f"SSH config template is not readable: {backup_ssh_config}"
+    assert os.access(backup_ssh_config, os.R_OK), (
+        f"SSH config template is not readable: {backup_ssh_config}"
+    )
 
 
-@then('all predefined VM types should be shown')
+@then("all predefined VM types should be shown")
 def step_all_vm_types_shown(context):
     """Verify all VM types from vm-types.conf can be listed."""
     vm_types = get_vm_types()
     assert len(vm_types) > 0, "No VM types found in vm-types.conf"
 
     # Check for common VM types (names in vm-types.conf are prefixed with vde-)
-    common_vms = ['vde-python', 'vde-rust', 'vde-js', 'vde-csharp', 'vde-ruby', 'vde-postgres', 'vde-redis', 'vde-mongodb', 'vde-nginx']
+    common_vms = [
+        "vde-python",
+        "vde-rust",
+        "vde-js",
+        "vde-csharp",
+        "vde-ruby",
+        "vde-postgres",
+        "vde-redis",
+        "vde-mongodb",
+        "vde-nginx",
+    ]
     found_vms = [vm for vm in common_vms if vm in vm_types]
     assert len(found_vms) > 0, f"No common VM types found. Available: {vm_types}"
 
 
-@then('python, rust, js, csharp, ruby should be listed')
+@then("python, rust, js, csharp, ruby should be listed")
 def step_lang_vms_listed_install(context):
     """Verify language VM types are listed."""
     vm_types = get_vm_types()
     # VM names in vm-types.conf are prefixed with vde-
-    language_vms = ['vde-python', 'vde-rust', 'vde-js', 'vde-csharp', 'vde-ruby']
+    language_vms = ["vde-python", "vde-rust", "vde-js", "vde-csharp", "vde-ruby"]
     for vm in language_vms:
         assert vm in vm_types, f"Language VM {vm} not found in vm-types.conf. Available: {vm_types}"
 
 
-@then('postgres, redis, mongodb, nginx should be listed')
+@then("postgres, redis, mongodb, nginx should be listed")
 def step_svc_vms_listed_install(context):
     """Verify service VM types are listed."""
     vm_types = get_vm_types()
     # VM names in vm-types.conf are prefixed with vde-
-    service_vms = ['vde-postgres', 'vde-redis', 'vde-mongodb', 'vde-nginx']
+    service_vms = ["vde-postgres", "vde-redis", "vde-mongodb", "vde-nginx"]
     for vm in service_vms:
         assert vm in vm_types, f"Service VM {vm} not found in vm-types.conf. Available: {vm_types}"
 
 
-@then('aliases should be shown (py, js, etc.)')
+@then("aliases should be shown (py, js, etc.)")
 def step_aliases_shown_install(context):
     """Verify VM type aliases are shown."""
     vm_types_file = Path(VDE_ROOT) / "data" / "vm-types.conf"
@@ -314,26 +303,21 @@ def step_aliases_shown_install(context):
 
     content = vm_types_file.read_text()
     # Check for alias definitions (lines with multiple VM names separated by |)
-    has_aliases = '|' in content
+    has_aliases = "|" in content
     assert has_aliases, "No aliases found in vm-types.conf"
 
     # Check for specific common aliases
-    common_aliases = ['py', 'js', 'node', 'ts']
+    common_aliases = ["py", "js", "node", "ts"]
     found_aliases = [alias for alias in common_aliases if alias in content]
     assert len(found_aliases) > 0, f"No common aliases found. Content includes: {content[:200]}"
 
 
-@then('I can run vde commands from any directory')
+@then("I can run vde commands from any directory")
 def step_vde_commands_anywhere(context):
     """Verify VDE commands are accessible (scripts are in PATH or vde wrapper exists)."""
     # Check if 'vde' command exists (wrapper script)
     try:
-        result = subprocess.run(
-            ["which", "vde"],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
+        result = subprocess.run(["which", "vde"], capture_output=True, text=True, timeout=5)
         vde_in_path = result.returncode == 0
     except (FileNotFoundError, subprocess.TimeoutExpired):
         vde_in_path = False
@@ -344,27 +328,27 @@ def step_vde_commands_anywhere(context):
         assert scripts_dir.exists(), "scripts directory does not exist"
 
         # Check for key VDE scripts
-        key_scripts = ['start-virtual', 'shutdown-virtual', 'create-virtual-for']
+        key_scripts = ["start-virtual", "shutdown-virtual", "create-virtual-for"]
         for script in key_scripts:
             script_path = scripts_dir / script
             assert script_path.exists(), f"VDE script {script} does not exist at {script_path}"
             assert os.access(script_path, os.X_OK), f"VDE script {script} is not executable"
 
 
-@then('I can run start-virtual, shutdown-virtual, etc.')
+@then("I can run start-virtual, shutdown-virtual, etc.")
 def step_run_vde_commands(context):
     """Verify VDE commands are available and executable."""
     scripts_dir = Path(VDE_ROOT) / "bin"
 
     # Check for core VDE commands
-    vde_commands = ['start-virtual', 'shutdown-virtual', 'create-virtual-for', 'list-vms']
+    vde_commands = ["start-virtual", "shutdown-virtual", "create-virtual-for", "list-vms"]
     for command in vde_commands:
         script_path = scripts_dir / command
         assert script_path.exists(), f"VDE command {command} does not exist at {script_path}"
         assert os.access(script_path, os.X_OK), f"VDE command {command} is not executable"
 
 
-@then('tab completion should work')
+@then("tab completion should work")
 def step_tab_completion_works(context):
     """Verify tab completion configuration exists."""
     # Check for completion scripts in configs directory
@@ -388,17 +372,12 @@ def step_tab_completion_works(context):
             assert os.access(cf, os.R_OK), f"Completion file {cf} is not readable"
 
 
-@then('I should be warned if I can\'t run Docker without sudo')
+@then("I should be warned if I can't run Docker without sudo")
 def step_docker_sudo_warning(context):
     """Verify Docker permission check would warn if needed."""
     # Check if Docker can be run without sudo
     try:
-        result = subprocess.run(
-            ["docker", "ps"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        result = subprocess.run(["docker", "ps"], capture_output=True, text=True, timeout=10)
         docker_works = result.returncode == 0
     except (FileNotFoundError, subprocess.TimeoutExpired):
         docker_works = False
@@ -409,15 +388,12 @@ def step_docker_sudo_warning(context):
         setup_script = Path(VDE_ROOT) / "bin" / "install-vde.sh"
         if setup_script.exists():
             content = setup_script.read_text()
-            has_permission_check = (
-                'sudo' in content.lower() and
-                'docker' in content.lower()
-            )
+            has_permission_check = "sudo" in content.lower() and "docker" in content.lower()
             assert has_permission_check, "Setup script does not contain Docker permission checking"
     # If Docker works, no warning needed
 
 
-@then('instructions should be provided for fixing permissions')
+@then("instructions should be provided for fixing permissions")
 def step_permission_fix_instructions(context):
     """Verify permission fix instructions exist."""
     # Check README or setup documentation for permission instructions
@@ -425,14 +401,13 @@ def step_permission_fix_instructions(context):
     assert readme.exists(), "README.md not found - cannot verify permission instructions"
     content = readme.read_text().lower()
     # Look for Docker permission instructions
-    has_permission_instructions = (
-        'docker' in content and
-        ('permission' in content or 'sudo' in content or 'group' in content)
+    has_permission_instructions = "docker" in content and (
+        "permission" in content or "sudo" in content or "group" in content
     )
     assert has_permission_instructions, "README does not contain Docker permission instructions"
 
 
-@then('setup should continue with a warning')
+@then("setup should continue with a warning")
 def step_setup_continues_with_warning(context):
     """Verify setup continues even with warnings."""
     # This step validates that setup doesn't fail on warnings
@@ -440,29 +415,31 @@ def step_setup_continues_with_warning(context):
     setup_script = Path(VDE_ROOT) / "bin" / "build-and-start"
     if not setup_script.exists():
         setup_script = Path(VDE_ROOT) / "bin" / "install-vde.sh"
-    assert setup_script.exists(), f"Setup script not found - cannot verify warning handling: {setup_script}"
+    assert setup_script.exists(), (
+        f"Setup script not found - cannot verify warning handling: {setup_script}"
+    )
     content = setup_script.read_text()
     # Look for warning vs error handling
     has_warning_handling = (
-        'warn' in content.lower() or
-        'warning' in content.lower() or
-        'continue' in content.lower()
+        "warn" in content.lower() or "warning" in content.lower() or "continue" in content.lower()
     )
     assert has_warning_handling, "Setup script does not appear to have warning handling"
 
 
-@then('vde-testing should be created automatically')
+@then("vde-testing should be created automatically")
 def step_vde_network_created(context):
     """Verify vde-net Docker network exists."""
     assert check_docker_network_exists("vde-net"), "vde-net Docker network does not exist"
 
 
-@then('all VMs should use this network')
+@then("all VMs should use this network")
 def step_all_vms_use_network(context):
     """Verify VMs are configured to use vde-net."""
     # Check that VM templates/configs reference vde-net
     configs_dir = Path(VDE_ROOT) / "configs"
-    assert configs_dir.exists(), "configs directory does not exist - cannot verify network configuration"
+    assert configs_dir.exists(), (
+        "configs directory does not exist - cannot verify network configuration"
+    )
 
     # Look for network references in config files (.yml and .env)
     network_found = False
@@ -475,7 +452,7 @@ def step_all_vms_use_network(context):
     assert network_found, "No VM configuration references vde-net"
 
 
-@then('VMs can communicate with each other')
+@then("VMs can communicate with each other")
 def step_vms_can_communicate(context):
     """Verify VMs are configured for inter-VM communication."""
     # Check that VMs are on the same network
@@ -487,56 +464,65 @@ def step_vms_can_communicate(context):
             ["docker", "network", "inspect", "vde-testing"],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
         if result.returncode == 0:
             # Check if it's a bridge network
-            assert "bridge" in result.stdout or "macvlan" in result.stdout, \
+            assert "bridge" in result.stdout or "macvlan" in result.stdout, (
                 "vde-testing is not configured for inter-VM communication"
+            )
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass  # Docker not available - skip bridge type verification
 
 
-@then('I should see helpful progress messages')
+@then("I should see helpful progress messages")
 def step_progress_messages(context):
     """Verify progress messages are shown during setup."""
     # Check that scripts echo progress information
     scripts_dir = Path(VDE_ROOT) / "bin"
-    assert scripts_dir.exists(), "scripts directory does not exist - cannot verify progress messages"
+    assert scripts_dir.exists(), (
+        "scripts directory does not exist - cannot verify progress messages"
+    )
 
     # Check a few key scripts for progress messages
     setup_script = scripts_dir / "build-and-start"
     if not setup_script.exists():
         setup_script = scripts_dir / "install-vde.sh"
-    assert setup_script.exists(), f"Setup script not found - cannot verify progress messages: {setup_script}"
+    assert setup_script.exists(), (
+        f"Setup script not found - cannot verify progress messages: {setup_script}"
+    )
     content = setup_script.read_text()
     # Look for progress indicators
     has_progress = (
-        'echo' in content or
-        'print' in content or
-        'progress' in content.lower() or
-        'installing' in content.lower() or
-        'setting' in content.lower()
+        "echo" in content
+        or "print" in content
+        or "progress" in content.lower()
+        or "installing" in content.lower()
+        or "setting" in content.lower()
     )
     assert has_progress, "Setup script does not contain progress messages"
 
 
-@then('configs/docker/python/ should be created')
+@then("configs/docker/python/ should be created")
 def step_python_config_created(context):
     """Verify Python VM config directory exists."""
     python_config_dir = Path(VDE_ROOT) / "configs" / "docker" / "python"
-    assert python_config_dir.exists(), f"Python config directory does not exist at {python_config_dir}"
+    assert python_config_dir.exists(), (
+        f"Python config directory does not exist at {python_config_dir}"
+    )
     assert python_config_dir.is_dir(), f"{python_config_dir} is not a directory"
 
 
-@then('docker-compose.yml should be generated')
+@then("docker-compose.yml should be generated")
 def step_compose_generated(context):
     """Verify docker-compose.yml file is generated for VMs."""
     # Check that compose files can be generated
     templates_dir = Path(VDE_ROOT) / "templates"
     if not templates_dir.exists():
         templates_dir = Path(VDE_ROOT) / "templates"
-    assert templates_dir.exists(), "templates directory does not exist - cannot verify compose generation"
+    assert templates_dir.exists(), (
+        "templates directory does not exist - cannot verify compose generation"
+    )
 
     # Look for docker-compose templates
     compose_templates = list(templates_dir.rglob("docker-compose*.yml"))
@@ -554,25 +540,20 @@ def step_compose_generated(context):
     assert len(compose_templates) > 0, "No docker-compose templates found"
 
 
-@then('SSH config should be updated')
+@then("SSH config should be updated")
 def step_ssh_config_updated_install(context):
     """Verify SSH config is updated for VM access."""
     # Check if SSH config includes VDE VM entries
-    ssh_config = Path.home() / ".ssh" / "vde" / "config"
-    if ssh_config.exists():
-        content = ssh_config.read_text()
+    if VDE_SSH_CONFIG.exists():
+        content = VDE_SSH_CONFIG.read_text()
         # Look for VDE-specific SSH entries (vde- prefix or similar)
-        has_vde_entries = (
-            'vde-' in content or
-            'vde_' in content or
-            'virtual' in content.lower()
-        )
+        has_vde_entries = "vde-" in content or "vde_" in content or "virtual" in content.lower()
         # In test scenarios, SSH config may not be modified - just verify file exists
-        assert ssh_config.exists(), "SSH config file does not exist"
+        assert VDE_SSH_CONFIG.exists(), "SSH config file does not exist"
     # If SSH config doesn't exist, that's acceptable for test scenarios
 
 
-@then('I should be told what to do next')
+@then("I should be told what to do next")
 def step_next_steps_shown(context):
     """Verify next steps are provided after installation."""
     # Check README for next steps
@@ -582,15 +563,15 @@ def step_next_steps_shown(context):
     content = readme.read_text().lower()
     # Look for next steps or getting started sections
     has_next_steps = (
-        'next step' in content or
-        'getting started' in content or
-        'quick start' in content or
-        'after install' in content
+        "next step" in content
+        or "getting started" in content
+        or "quick start" in content
+        or "after install" in content
     )
     assert has_next_steps, "README does not contain next steps or getting started section"
 
 
-@then('I should see if VDE is properly configured')
+@then("I should see if VDE is properly configured")
 def step_vde_health_status(context):
     """Verify VDE health check functionality exists."""
     # Check for vde-health script or equivalent
@@ -603,7 +584,7 @@ def step_vde_health_status(context):
     # If health script doesn't exist, it may be integrated differently
 
 
-@then('any issues should be clearly listed')
+@then("any issues should be clearly listed")
 def step_issues_listed(context):
     """Verify issues are clearly listed in health check."""
     # Check that health script or documentation lists issues clearly
@@ -615,16 +596,16 @@ def step_issues_listed(context):
         content = health_script.read_text()
         # Look for issue reporting logic
         has_issue_listing = (
-            'error' in content.lower() or
-            'issue' in content.lower() or
-            'problem' in content.lower() or
-            'check' in content.lower()
+            "error" in content.lower()
+            or "issue" in content.lower()
+            or "problem" in content.lower()
+            or "check" in content.lower()
         )
         assert has_issue_listing, "Health check script does not contain issue listing logic"
     # If health script doesn't exist, issue listing may be in a different mechanism
 
 
-@then('I should get fix suggestions for each issue')
+@then("I should get fix suggestions for each issue")
 def step_fix_suggestions(context):
     """Verify fix suggestions are provided for issues."""
     # Check README or health script for fix suggestions
@@ -637,10 +618,10 @@ def step_fix_suggestions(context):
         content = readme.read_text().lower()
         # Look for fix suggestions
         has_fix_suggestions = (
-            'fix' in content or
-            'resolve' in content or
-            'solution' in content or
-            'troubleshoot' in content
+            "fix" in content
+            or "resolve" in content
+            or "solution" in content
+            or "troubleshoot" in content
         )
         if has_fix_suggestions:
             fix_suggestions_found = True
@@ -649,11 +630,7 @@ def step_fix_suggestions(context):
         health_script = scripts_dir / "vde-health"
         if health_script.exists():
             content = health_script.read_text().lower()
-            has_fix_suggestions = (
-                'fix' in content or
-                'resolve' in content or
-                'solution' in content
-            )
+            has_fix_suggestions = "fix" in content or "resolve" in content or "solution" in content
             if has_fix_suggestions:
                 fix_suggestions_found = True
 
@@ -676,13 +653,14 @@ def step_quick_start_command(context):
     assert os.access(start_script, os.X_OK), "start-virtual is not executable"
 
 
-@then('I should have a working Python environment')
+@then("I should have a working Python environment")
 def step_python_env_working(context):
     """Verify Python environment can be created and accessed."""
     # Check that Python VM type is defined (names in vm-types.conf are prefixed with vde-)
     vm_types = get_vm_types()
-    assert 'vde-python' in vm_types, \
+    assert "vde-python" in vm_types, (
         f"Python VM type not found in vm-types.conf. Available: {vm_types}"
+    )
 
     # Check that Python VM config/template exists
     python_config = Path(VDE_ROOT) / "configs" / "docker" / "python"
@@ -694,13 +672,13 @@ def step_python_env_working(context):
             assert len(python_templates) > 0, "No Python VM configuration found"
 
 
-@then('all scripts should be executable')
+@then("all scripts should be executable")
 def step_all_scripts_executable(context):
     """Verify all scripts are executable."""
     assert check_scripts_executable(context), "Not all scripts are executable"
 
 
-@then('all templates should be present')
+@then("all templates should be present")
 def step_all_templates_present(context):
     """Verify all required templates are present."""
     templates_dir = Path(VDE_ROOT) / "templates"
@@ -712,7 +690,7 @@ def step_all_templates_present(context):
     assert len(non_keep_files) > 0, "No template files found"
 
 
-@then('vm-types.conf should be valid')
+@then("vm-types.conf should be valid")
 def step_vm_types_valid(context):
     """Verify vm-types.conf is valid."""
     vm_types_file = Path(VDE_ROOT) / "data" / "vm-types.conf"
@@ -720,15 +698,16 @@ def step_vm_types_valid(context):
     content = vm_types_file.read_text()
     assert len(content.strip()) > 0, "vm-types.conf is empty"
     # Check it has valid format (lines with VM definitions)
-    lines = [l.strip() for l in content.split('\n') if l.strip() and not l.startswith('#')]
+    lines = [l.strip() for l in content.split("\n") if l.strip() and not l.startswith("#")]
     assert len(lines) > 0, "vm-types.conf has no VM definitions"
 
 
-@then('all directories should have correct permissions')
+@then("all directories should have correct permissions")
 def step_directories_permissions(context):
     """Verify directories have correct permissions."""
     import stat
-    required_dirs = ['configs', 'templates', 'data', 'logs', 'scripts']
+
+    required_dirs = ["configs", "templates", "data", "logs", "scripts"]
     for dir_name in required_dirs:
         dir_path = Path(VDE_ROOT) / dir_name
         if dir_path.exists():
@@ -738,14 +717,14 @@ def step_directories_permissions(context):
             assert mode & stat.S_IXUSR, f"{dir_name} is not traversable"
 
 
-@then('I can start coding immediately')
+@then("I can start coding immediately")
 def step_can_start_coding(context):
     """Verify user can start coding immediately."""
     # This is verified by having a working Python environment
     step_python_env_working(context)
 
 
-@then('README.md should provide overview')
+@then("README.md should provide overview")
 def step_readme_overview(context):
     """Verify README provides overview."""
     readme = Path(VDE_ROOT) / "README.md"
@@ -754,7 +733,7 @@ def step_readme_overview(context):
     assert len(content) > 100, "README.md is too short to provide overview"
 
 
-@then('Technical-Deep-Dive.md should explain internals')
+@then("Technical-Deep-Dive.md should explain internals")
 def step_technical_deep_dive(context):
     """Verify Technical-Deep-Dive.md exists and explains internals."""
     doc = Path(VDE_ROOT) / "docs" / "Technical-Deep-Dive.md"
@@ -763,7 +742,7 @@ def step_technical_deep_dive(context):
     assert len(content) > 100, "Technical-Deep-Dive.md is too short"
 
 
-@then('tests/README.md should explain testing')
+@then("tests/README.md should explain testing")
 def step_tests_readme(context):
     """Verify tests/README.md exists."""
     readme = Path(VDE_ROOT) / "tests" / "README.md"
@@ -772,32 +751,34 @@ def step_tests_readme(context):
     assert tests_dir.exists(), "tests directory does not exist"
 
 
-@then('help text should be available in commands')
+@then("help text should be available in commands")
 def step_help_text_available(context):
     """Verify help text is available in commands."""
     scripts_dir = Path(VDE_ROOT) / "bin"
     if scripts_dir.exists():
         # Check a few key scripts for help functionality
-        key_scripts = ['vde', 'start-virtual', 'create-virtual-for']
+        key_scripts = ["vde", "start-virtual", "create-virtual-for"]
         for script_name in key_scripts:
             script = scripts_dir / script_name
             if script.exists():
                 content = script.read_text().lower()
-                has_help = '--help' in content or '-h' in content or 'help' in content
+                has_help = "--help" in content or "-h" in content or "help" in content
                 # Not all scripts may have help, so just log if missing
                 if not has_help:
                     pass  # Help text not found in script
 
 
-@then('command should succeed without error')
+@then("command should succeed without error")
 def step_command_succeeds(context):
     """Verify the last command succeeded."""
-    if hasattr(context, 'last_exit_code'):
-        assert context.last_exit_code == 0, f"Command failed with exit code {context.last_exit_code}"
+    if hasattr(context, "last_exit_code"):
+        assert context.last_exit_code == 0, (
+            f"Command failed with exit code {context.last_exit_code}"
+        )
     # If no last_exit_code, assume success
 
 
-@given('SSH config file exists')
+@given("SSH config file exists")
 def step_ssh_config_file_exists(context):
     """Verify SSH config file exists."""
     ssh_config = Path.home() / ".ssh" / "config"
