@@ -46,7 +46,7 @@ All HIGH/MEDIUM audit items fixed and committed. Fast baseline green.
 **NOTHING BLOCKING.** Choose from optional improvements below.
 
 ### Optional: Remaining LOW systemic items
-Full details in `project_audit_findings.md`. These are non-blocking quality improvements:
+Full details in `.claude/memory/project_audit_findings.md`. These are non-blocking quality improvements:
 
 - **FAKE-3** `configuration_management_steps.py:464-471` — env vars check directory, not runtime loading
 - **FAKE-4** `configuration_management_steps.py:803-805` — health restart checks script, not behavior
