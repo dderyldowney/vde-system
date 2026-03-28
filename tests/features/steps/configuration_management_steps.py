@@ -402,6 +402,13 @@ def step_modify_base_dockerfile(context):
 def step_rebuild_vms(context):
     rebuild_script = BIN_DIR / "vde-rebuild"
     assert rebuild_script.exists(), f"vde-rebuild not found at {rebuild_script}"
+    r = run_vde_command("start python --rebuild", timeout=600)
+    assert r.returncode == 0, (
+        f"vde start python --rebuild failed (rc={r.returncode}): {r.stderr}"
+    )
+    assert "Building" in r.stdout or "Building" in r.stderr, (
+        f"Expected 'Building' in vde rebuild output, got:\nstdout: {r.stdout}\nstderr: {r.stderr}"
+    )
 
 
 @then("VMs should use my custom base image")

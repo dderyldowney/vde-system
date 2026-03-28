@@ -304,7 +304,10 @@ def step_exit_code(context, code):
 
 @then('container "{container_name}" should be running')
 def step_container_is_running(context, container_name):
-    r = _vde_cli(f"ps --filter name={container_name} -q", timeout=10)
+    # Strip vde- prefix: vde ps --filter auto-prepends vde-, so passing vde-python
+    # would result in filtering for vde-vde-python (always empty).
+    bare_name = container_name.removeprefix("vde-")
+    r = _vde_cli(f"ps --filter name={bare_name} -q", timeout=10)
     assert container_name in r.stdout, (
         f"Container '{container_name}' is not running.\nvde ps output: {r.stdout}"
     )
@@ -312,13 +315,15 @@ def step_container_is_running(context, container_name):
 
 @then('container "{container_name}" should not be running')
 def step_container_not_running(context, container_name):
-    r = _vde_cli(f"ps --filter name={container_name} -q", timeout=10)
+    bare_name = container_name.removeprefix("vde-")
+    r = _vde_cli(f"ps --filter name={bare_name} -q", timeout=10)
     assert container_name not in r.stdout, f"Container '{container_name}' is still running."
 
 
 @then('container "{container_name}" should not exist')
 def step_container_not_exist(context, container_name):
-    r = _vde_cli(f"ps -a --filter name={container_name} -q", timeout=10)
+    bare_name = container_name.removeprefix("vde-")
+    r = _vde_cli(f"ps -a --filter name={bare_name} -q", timeout=10)
     assert container_name not in r.stdout, f"Container '{container_name}' still exists."
 
 

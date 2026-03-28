@@ -310,4 +310,4 @@ def is_language_vm(vm_name: str) -> bool:
 
 def normalize_vm_name(vm_name: str) -> str:
     """Normalize VM name to container name."""
-    return _get_container_name(vm_name)
+    return _get_container_name_canonical(vm_name)

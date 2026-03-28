@@ -574,19 +574,23 @@ def step_no_data_loss(context):
 
 @then("no single VM should monopolize resources")
 def step_no_monopoly(context):
-    """Verify resource caps."""
-    result = subprocess.run(
-        ["docker", "inspect", "--format", "{{.HostConfig.Memory}}", "vde-python"],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
+    """Verify resource caps via compose file or running container inspection."""
+    result = run_vde_command("inspect python -f '{{.HostConfig.Memory}}'", timeout=15)
+    if result.returncode == 0:
+        try:
+            memory = int(result.stdout.strip())
+        except ValueError:
+            memory = 0
+        assert memory > 0, (
+            f"Expected python container Memory > 0, got: {result.stdout.strip()}"
+        )
+    else:
         compose_file = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
-        if compose_file.exists():
-            content = compose_file.read_text()
-            assert "mem_limit" in content or "memory" in content or "deploy" in content, (
-                "Compose file should define resource limits"
-            )
+        assert compose_file.exists(), f"Compose file not found: {compose_file}"
+        content = compose_file.read_text()
+        assert "mem_limit" in content or "memory" in content or "deploy" in content, (
+            "Compose file should define resource limits"
+        )
 
 
 @then("I can troubleshoot problems")

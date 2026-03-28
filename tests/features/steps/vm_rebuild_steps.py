@@ -90,6 +90,11 @@ def step_verify_build_executed(context):
     """Verify vde start --rebuild was executed successfully."""
     assert hasattr(context, "rebuild_executed"), "Rebuild flag was not set"
     assert context.last_exit_code == 0, f"Rebuild failed with exit code {context.last_exit_code}"
+    output = getattr(context, "last_output", "") or getattr(context, "last_stdout", "") or ""
+    assert "Building" in output, (
+        f"Expected 'Building' in rebuild output to confirm docker-compose ran with --build.\n"
+        f"output: {output}"
+    )
 
 
 @then("docker-compose up --build --no-cache should be executed")
@@ -99,12 +104,20 @@ def step_verify_build_no_cache_executed(context):
     assert context.last_exit_code == 0, (
         f"Rebuild --no-cache failed with exit code {context.last_exit_code}"
     )
+    output = getattr(context, "last_output", "") or getattr(context, "last_stdout", "") or ""
+    assert "Building" in output, (
+        f"Expected 'Building' in --no-cache rebuild output.\noutput: {output}"
+    )
 
 
 @then("image should be rebuilt")
 def step_verify_image_rebuilt(context):
     """Verify the image was rebuilt via vde start --rebuild."""
     assert context.last_exit_code == 0, "Image rebuild failed"
+    output = getattr(context, "last_output", "") or getattr(context, "last_stdout", "") or ""
+    assert "Building" in output, (
+        f"Expected 'Building' in rebuild output.\noutput: {output}"
+    )
 
 
 @then('VM "{vm_name}" should be running')
@@ -154,6 +167,7 @@ def step_vde_start(context, vm_name):
     result = run_vde_command(f"start {vm_name}", timeout=300, context=context)
     context.last_exit_code = result.returncode
     context.last_stdout = result.stdout
+    context.last_output = result.stdout
 
 
 @when('I run "vde stop {vm_name}"')
