@@ -1,8 +1,11 @@
 # Shell Configuration
 
 ## Required Knowledge for All AI Agents & CLIs
+> **SCOPE: MAIN AGENT ONLY.** Sub-agents spawned by the main agent must NOT execute startup steps. They inherit context from the main agent and must begin their assigned task immediately.
 
-**Upon session start, ALL agents and CLIs MUST read:**
+> **Idempotent loading:** Before each step, check whether the content is already present in the current context. If it is, skip that step — never reload information already loaded this session.
+
+**Upon session start, the main agent MUST read (skip any already in context):**
 
 | Document | Purpose |
 |----------|---------|
@@ -14,9 +17,9 @@ These documents define the authoritative architecture and are required reading b
 
 ---
 
-## Context7 Language & Tool Refresh (MANDATORY — RUN AT EVERY SESSION START)
+## Context7 Language & Tool Refresh (MANDATORY — MAIN AGENT ONLY, ONCE PER SESSION)
 
-At every session start, refresh docs for all VDE implementation languages/tools via context7 MCP. Run all calls in parallel:
+At session start, refresh docs for all VDE implementation languages/tools via context7 MCP. Run all calls in parallel. Skip if already loaded in the current context:
 
 1. `Python` — subprocess, pathlib, json, os, sys, re, unittest, pytest
 2. `behave` — step defs, hooks, fixtures, context patterns
