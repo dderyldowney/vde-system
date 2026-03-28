@@ -79,6 +79,7 @@ Main Agent
 - **Code reviewer called whenever changes are made** — After code, after debugging fixes, before commit
 - **Debugger isolates errors** — `/vde-debug` used when tests fail, then re-review
 - **Enforcer always verifies compliance** — Never skip `/vde-enforce`
+- **Fix batches >3 items: always swarm** — spawn yume-implementer agents in parallel, one per fix group
 
 ## Use VDE Commands When Available (MANDATORY)
 
@@ -103,6 +104,16 @@ Full detail in `.kilocode/rules/subagent_mcp_mandate.md`. Summary:
 - ALL multi-step work uses sub-agents in parallel swarm form
 - Single-agent direct execution is forbidden (except trivial read-only queries)
 - Spawn all agents simultaneously; main agent synthesizes results only
+
+### Hard Threshold
+
+| Condition | Action |
+|-----------|--------|
+| >3 file edits in one batch | MUST spawn coder sub-agents — do not apply directly |
+| >3 independent fix items | MUST spawn parallel coder agents — one per fix group |
+| Main agent makes 4th direct Edit call | STOP — spawn swarm — this is a Rule 3 violation |
+
+**No exception for "simple" or "obviously correct" fixes.** Simplicity does not override the swarm rule.
 
 ## MCP Priority (MANDATORY)
 

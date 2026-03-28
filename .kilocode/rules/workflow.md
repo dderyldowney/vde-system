@@ -2,7 +2,7 @@
 ## Phase 1: Plan Mode
 Entry: User requests implementation | Action: Use `EnterPlanMode`, analyze with sequential-thinking, generate step-by-step plan | Exit Gate: HARD STOP for explicit user approval | Violation Protocol: Proceeding without approval → STOP immediately, return to Plan Mode
 ## Phase 2: Code Mode
-Entry: Plan approved | Action: Switch to Code Mode. Implement strictly in sequence | Constraint: No unauthorized refactoring or optimizations | Violation Protocol: Changes beyond approved plan → Return to Phase 1, get approval for revised plan
+Entry: Plan approved | Action: Switch to Code Mode. Implement strictly in sequence | Swarm Gate: If >3 file changes or >3 fix items → spawn coder sub-agent swarm BEFORE direct edits. Main agent must not apply >3 direct edits in a single batch. | Constraint: No unauthorized refactoring or optimizations | Violation Protocol: Changes beyond approved plan → Return to Phase 1, get approval for revised plan
 ## Phase 3: Audit
 Entry: Code changes complete (Phase 2) | Action: Run `/yume--review` on all changes | Loop: If fails, use `/yume--iterate` to fix and re-run until CLEAN | Constraint: No git actions allowed during this phase | Exit Gate: `/yume--review` returns CLEAN (zero violations) | Violation Protocol: Git actions during audit → STOP immediately
 ## Phase 4: Code Review

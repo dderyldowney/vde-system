@@ -19,6 +19,7 @@ This is not optional. Single-agent direct execution is forbidden except for triv
 | Code changes | Coder + Reviewer + Tester |
 | Research | Researcher + Context7 lookup + Web search |
 | Debugging | Debugger + Log analyzer + Scout |
+| Fix/edit batch | >3 items OR >3 file edits | MANDATORY swarm — spawn coder agents |
 
 ### Swarm Execution Rules
 
@@ -76,6 +77,21 @@ Launch simultaneously:
 
 ---
 
+## Pre-Task Checklist (MANDATORY before any multi-step work)
+
+Before starting any task, answer these questions:
+
+| Question | Threshold | Action if Exceeded |
+|----------|-----------|-------------------|
+| How many files will I edit? | >3 files | Spawn implementation swarm |
+| How many independent fix items? | >3 items | Spawn parallel coder agents |
+| How many research queries needed? | >2 queries | Spawn explore/scout agent |
+| Is this a planning task? | Any | Use sequential-thinking MCP first |
+
+If ANY threshold is exceeded, sub-agents MUST be spawned before any direct tool use begins.
+
+---
+
 ## Workflow Integration
 
 ### Phase 0: Pre-Work (NEW)
@@ -105,8 +121,18 @@ Each phase MUST begin with:
 
 ---
 
-## Standing Rule
+## Standing Rule — Hard Stop
 
-**IF you are about to execute a task directly, STOP and ask: "Can I delegate this to a sub-agent or MCP service?"**
+**BEFORE making your 4th direct Edit, Write, or Bash call in a single task batch: STOP.**
 
-If the answer is YES, you MUST delegate.
+Ask yourself:
+1. How many items am I about to fix/change?
+2. If the answer is >3 → you MUST spawn a sub-agent swarm NOW instead of continuing directly.
+
+Applying 4 or more direct edits in a single batch without spawning a swarm is a Rule 3 violation.
+The Rule Enforcer will BLOCK this. The check is:
+
+> "Did the main agent make >3 direct file edits for a single task, when a swarm could have been used?"
+> If yes → BLOCKED.
+
+There is no exception for "simple fixes" or "obviously correct" changes. Simplicity does not override the rule.
