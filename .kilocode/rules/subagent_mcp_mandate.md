@@ -57,11 +57,14 @@ Launch simultaneously:
 | Service | Purpose | Use Case |
 |---------|---------|----------|
 | `sequential-thinking` | Complex reasoning | ALL multi-step thinking |
-| `github` | GitHub operations | PRs, issues, search |
 | `context7` | Library/API docs | Documentation queries |
 | `fetch` | Web requests | URL-based queries |
+| `github` | GitHub operations | PRs, issues, search |
 | `memory` | Knowledge graph | Cross-session context |
+| `MCP_DOCKER` | Docker operations | Container management, orchestration |
+| `filesystem` | File operations | Read/write/search local files |
 | `redis` | Cache/state | Fast data operations |
+| `web_reader` | Web-to-Markdown | Web content extraction with images |
 
 ---
 
