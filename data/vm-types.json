@@ -323,6 +323,14 @@
         "install": "apt-get update -y && apt-get install -y redis-tools",
         "service_port": "6379",
         "ssh_port": 2406
+      },
+      {
+        "name": "vde-testcfgmysql",
+        "aliases": [],
+        "display": "Testcfgmysql",
+        "install": "apt-get install -y mysql-server",
+        "service_port": "3306",
+        "ssh_port": 2407
       }
     ]
   }
