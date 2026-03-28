@@ -74,15 +74,16 @@ Any implementation that violates the spec is invalid.
 
 ## 5. Core Execution Rules
 
-1.  DRY is mandatory\
-2.  Code review is mandatory\
-3.  Sub-agents required for non-trivial work\
-4.  MCP-first\
-5.  No circular delegation\
-6.  Docs via context7/fetch\
-7.  Validate MCP connectivity\
-8.  Log MCP interactions\
+1.  DRY is mandatory
+2.  Code review is mandatory — both code-reviewer AND user approval required before commit
+3.  Sub-agents required for non-trivial work
+4.  MCP-first
+5.  No circular delegation
+6.  Docs via context7/fetch
+7.  Validate MCP connectivity
+8.  Log MCP interactions
 9.  Local-first git hygiene
+10. **No-push policy**: DO NOT `git push` without explicit user instruction
 
 ------------------------------------------------------------------------
 

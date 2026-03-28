@@ -27,3 +27,11 @@ When performing a review in this project, adhere to the following standards:
 - Use inline code snippets to show suggested refactors.
 - Categorize feedback as: **[Critical]**, **[Major]**, or **[Minor/Nit]**.
 
+## 5. Exit Gate (MANDATORY — review is not complete until BOTH pass)
+
+1. **Code-reviewer approval** — the reviewing agent explicitly states approval.
+2. **User approval** — the user explicitly approves.
+
+Both approvals are independently required. Code-reviewer approval alone does NOT permit proceeding to commit. Work is blocked until the user also approves.
+
+**No-push policy:** DO NOT `git push` without explicit user instruction, even after both approvals.
