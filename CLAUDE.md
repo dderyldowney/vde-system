@@ -7,13 +7,17 @@
 - All implementations must conform to it.
 - See `AGENTS.md` for the full authority chain and mandate details.
 
-## Agent Loading (MANDATORY AT STARTUP)
+## Agent Loading (MANDATORY AT STARTUP — MAIN AGENT ONLY)
+> **SCOPE: MAIN AGENT ONLY.** Sub-agents must NOT scan or load agent definitions. They inherit context from the main agent.
 
-**At session start, agents and commands MUST be scanned and loaded into context immediately, not lazy-loaded, before ANY tasks run. This applies to initial startup AND any context refresh steps before tasks run. e.g the `/new` command.**
+**At session start, agents and commands MUST be scanned and loaded into context immediately, not lazy-loaded, before ANY tasks run. Skip if agent definitions are already loaded in the current context. This applies to initial startup AND any context refresh steps before tasks run (e.g. `/new`).**
 
 The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` (Kilo) must be read at session initialization before any task execution. This ensures all sub-agent capabilities are available immediately.
 
 ## STARTUP (MANDATORY — EXECUTE BEFORE FIRST RESPONSE)
+> **SCOPE: MAIN AGENT ONLY.** These steps apply to the top-level interactive Claude Code / Kilo CLI session. Sub-agents spawned via the Agent tool must NOT run these steps. Sub-agents inherit context from the main agent and must begin their assigned task immediately.
+
+> **Idempotent loading:** Before executing each step, check whether the information is already present in the current context. If it is, skip that step — never reload information already loaded this session.
 
 **ALL steps below MUST be executed automatically at session start — before answering ANY user prompt. No exceptions. No lazy-loading. No skipping for "simple" sessions.**
 
@@ -178,8 +182,9 @@ Check `data/vm-types.json` before assigning any port. No conflicts permitted.
 Commit locally freely. **DO NOT `git push` without explicit user instruction.**
 
 ## Session Start Checklist
+> **SCOPE: MAIN AGENT ONLY.** Sub-agents must NOT execute this checklist.
 
-This checklist is **automatically executed** (not optionally consulted) at every session start per the STARTUP section above. Steps are listed here for reference only.
+This checklist is **automatically executed** (not optionally consulted) at every session start per the STARTUP section above. Skip any step whose content is already in the current context. Steps are listed here for reference only.
 
 1. Read `MEMORY.md` — project state, test status, active goals
 2. Read `session_handover.md` — current session context, next steps

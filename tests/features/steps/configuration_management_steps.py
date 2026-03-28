@@ -71,7 +71,7 @@ def _first_service(compose):
 
 @given("I need specific packages in my Python VM")
 def step_need_specific_packages(context):
-    context.cfg_vm = "test-cfg-custompkg"
+    context.cfg_vm = "testcfgcustompkg"
     context.cfg_install = "apt-get install -y python3 python3-pip my-package"
     _cleanup_test_vm_type(context.cfg_vm)
 
@@ -114,7 +114,7 @@ def step_custom_packages_in_registry(context):
 
 @given("I need a MySQL service on port 3306")
 def step_need_mysql_service(context):
-    context.mysql_vm = "test-cfg-mysql"
+    context.mysql_vm = "testcfgmysql"
     context.mysql_port = 3306
     _cleanup_test_vm_type(context.mysql_vm)
 
@@ -221,7 +221,7 @@ def step_each_port_accessible_vms(context):
 
 @given("I want friendly names in listings")
 def step_want_friendly_names(context):
-    context.display_vm = "test-cfg-godisp"
+    context.display_vm = "testcfggodisp"
     context.display_name = "Go Language"
     _cleanup_test_vm_type(context.display_vm)
 
@@ -265,7 +265,7 @@ def step_display_name_persisted(context):
 
 @given("I want to reference VMs with short names")
 def step_want_short_names(context):
-    context.alias_vm = "test-cfg-nodealias"
+    context.alias_vm = "testcfgnodealias"
     context.alias_list = "js,node,nodejs"
     _cleanup_test_vm_type(context.alias_vm)
 
@@ -318,7 +318,7 @@ def step_all_aliases_in_list(context):
 
 @given("I need different port ranges for my environment")
 def step_need_different_port_ranges(context):
-    context.port_vm = "test-cfg-portrange"
+    context.port_vm = "testcfgportrange"
     context.custom_start = 2219
     context.custom_end = 2230
     _cleanup_test_vm_type(context.port_vm)

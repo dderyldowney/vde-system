@@ -4,7 +4,7 @@
 
 Before EVERY direct Edit, Write, or Bash call that modifies files:
 1. STATE: "I am about to make [N] direct edit(s) to [files]."
-2. COUNT: Is N > 1? → YES = STOP, spawn coder sub-agent swarm. NO = proceed directly.
+2. COUNT: Is N > 1? → MAIN AGENT: YES = STOP, spawn coder sub-agent swarm. SUB-AGENT: YES = STOP, report back "This task requires >1 file edit. Split into a swarm or re-assign." NO = proceed directly.
 3. AFTER: Run `/vde-enforce` to verify compliance.
 
 This gate applies to ALL agents in ALL phases. Skipping the gate is a Rule 3 violation.
