@@ -7,7 +7,7 @@ Feature: Productivity Features for Developers
 
   Scenario: Persistent data survives container restart
     Given I have data in postgres
-    When I stop and restart postgres VM
+    When I stop and restart PostgreSQL
     Then my data should still be there
 
   Scenario: Test with clean state quickly
