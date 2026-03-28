@@ -191,11 +191,6 @@ def step_different_port_allocated(context):
     assert result.returncode == 0 and result.stdout.strip(), "A valid port should be allocated"
 
 
-@then("each process should receive a unique port")
-def step_unique_ports(context):
-    """Verify unique port allocation."""
-    assert context.last_exit_code == 0
-
 
 @then("no port should be allocated twice")
 def step_no_duplicate_ports(context):
