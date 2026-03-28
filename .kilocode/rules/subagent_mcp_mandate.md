@@ -19,7 +19,7 @@ This is not optional. Single-agent direct execution is forbidden except for triv
 | Code changes | Coder + Reviewer + Tester |
 | Research | Researcher + Context7 lookup + Web search |
 | Debugging | Debugger + Log analyzer + Scout |
-| Fix/edit batch | >3 items OR >3 file edits | MANDATORY swarm — spawn coder agents |
+| Fix/edit batch | >1 item OR >1 file edit | MANDATORY swarm — spawn coder agents |
 
 ### Swarm Execution Rules
 
@@ -83,8 +83,8 @@ Before starting any task, answer these questions:
 
 | Question | Threshold | Action if Exceeded |
 |----------|-----------|-------------------|
-| How many files will I edit? | >3 files | Spawn implementation swarm |
-| How many independent fix items? | >3 items | Spawn parallel coder agents |
+| How many files will I edit? | >1 file | Spawn implementation swarm |
+| How many independent fix items? | >1 item | Spawn parallel coder agents |
 | How many research queries needed? | >2 queries | Spawn explore/scout agent |
 | Is this a planning task? | Any | Use sequential-thinking MCP first |
 
@@ -123,16 +123,16 @@ Each phase MUST begin with:
 
 ## Standing Rule — Hard Stop
 
-**BEFORE making your 4th direct Edit, Write, or Bash call in a single task batch: STOP.**
+**BEFORE making your 2nd direct Edit, Write, or Bash call in a single task batch: STOP.**
 
 Ask yourself:
 1. How many items am I about to fix/change?
-2. If the answer is >3 → you MUST spawn a sub-agent swarm NOW instead of continuing directly.
+2. If the answer is >1 → you MUST spawn a sub-agent swarm NOW instead of continuing directly.
 
-Applying 4 or more direct edits in a single batch without spawning a swarm is a Rule 3 violation.
+Applying 2 or more direct edits in a single batch without spawning a swarm is a Rule 3 violation.
 The Rule Enforcer will BLOCK this. The check is:
 
-> "Did the main agent make >3 direct file edits for a single task, when a swarm could have been used?"
+> "Did the main agent make >1 direct file edit for a single task, when a swarm could have been used?"
 > If yes → BLOCKED.
 
 There is no exception for "simple fixes" or "obviously correct" changes. Simplicity does not override the rule.

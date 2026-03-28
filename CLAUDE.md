@@ -24,6 +24,7 @@ The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` 
 5. **Scan and load agent definitions** from `.claude/agents/` — load all sub-agent capabilities into working memory
 6. **Read `AGENTS.md`** — load any instructions not already in this file into working memory
 7. **Run `/vde-enforce`** (Supervisor) — verify framework compliance before any work begins
+8. **Context7 language refresh** — run `mcp__context7__query-docs` in parallel for all implementation languages/tools: Python, behave, PyYAML, Docker, docker-compose, Zsh, SSH (see `.claude/memory/feedback_context7_language_refresh.md`)
 
 **Session control MUST NOT be handed to the user until all 7 steps above are complete.**
 If any step fails, report the failure to the user before proceeding.
@@ -79,7 +80,7 @@ Main Agent
 - **Code reviewer called whenever changes are made** — After code, after debugging fixes, before commit
 - **Debugger isolates errors** — `/vde-debug` used when tests fail, then re-review
 - **Enforcer always verifies compliance** — Never skip `/vde-enforce`
-- **Fix batches >3 items: always swarm** — spawn yume-implementer agents in parallel, one per fix group
+- **Fix batches >1 item: always swarm** — spawn yume-implementer agents in parallel, one per fix group
 
 ## Use VDE Commands When Available (MANDATORY)
 
@@ -109,9 +110,9 @@ Full detail in `.kilocode/rules/subagent_mcp_mandate.md`. Summary:
 
 | Condition | Action |
 |-----------|--------|
-| >3 file edits in one batch | MUST spawn coder sub-agents — do not apply directly |
-| >3 independent fix items | MUST spawn parallel coder agents — one per fix group |
-| Main agent makes 4th direct Edit call | STOP — spawn swarm — this is a Rule 3 violation |
+| >1 file edit in one batch | MUST spawn coder sub-agents — do not apply directly |
+| >1 independent fix item | MUST spawn parallel coder agents — one per fix group |
+| Main agent makes 2nd direct Edit call | STOP — spawn swarm — this is a Rule 3 violation |
 
 **No exception for "simple" or "obviously correct" fixes.** Simplicity does not override the swarm rule.
 
@@ -168,6 +169,7 @@ This checklist is **automatically executed** (not optionally consulted) at every
 5. Scan and load `.claude/agents/` agent definitions
 6. Read `AGENTS.md` and load into working memory
 7. Run `/vde-enforce` — Supervisor compliance check
+8. Context7 language refresh — fetch Python, behave, PyYAML, Docker, docker-compose, Zsh, SSH docs
 
 ## Agent Additions / Command Additions
 

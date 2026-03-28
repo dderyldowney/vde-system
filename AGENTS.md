@@ -13,6 +13,7 @@ This file documents the specialized AI agents available within the Claude Code /
 5. **Scan and load agent definitions** from `.claude/agents/` (Claude Code) or `.kilocode/agents/` (Kilo) — load all sub-agent capabilities into working memory
 6. **Read `AGENTS.md`** — load any instructions not already in CLAUDE.md into working memory
 7. **Run `/vde-enforce`** (Supervisor) — verify framework compliance before any work begins
+8. **Context7 language refresh** — run `mcp__context7__query-docs` in parallel for all implementation languages/tools: Python, behave, PyYAML, Docker, docker-compose, Zsh, SSH (see `.claude/memory/feedback_context7_language_refresh.md`)
 
 **Session control MUST NOT be handed to the user until all 7 steps above are complete.**
 If any step fails, report the failure to the user before proceeding.
