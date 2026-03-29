@@ -125,12 +125,18 @@ display_vm() {
                 elif [[ "${vm_status}" == "exited" || "${vm_status}" == "stopped" ]]; then
                     marker=" [STOPPED]"
                 else
-                    # created, paused, restarting, etc.
+                    # This captures Docker's native 'created' state among others
                     marker=" [${(U)vm_status}]"
                 fi
             else
-                # Config exists but no container yet
-                marker=" [CREATED]"
+                # No container, but VDE config trio exists
+                # Check if Docker image has been built yet
+                local image_name="vde-${name#vde-}"
+                if [[ -n "$(docker images -q "${image_name}" 2>/dev/null)" ]]; then
+                    marker=" [IMAGE]"
+                else
+                    marker=" [CONFIGURED]"
+                fi
             fi
         else
             # VM not created - skip (don't show undefined VMs)
