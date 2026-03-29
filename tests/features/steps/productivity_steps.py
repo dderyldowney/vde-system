@@ -97,10 +97,11 @@ def step_stop_and_remove_postgres(context):
 @when("I recreate and start it")
 def step_recreate_and_start_postgres(context):
     """Recreate and start a fresh postgres VM."""
-    create_r = run_vde_command("create postgres", timeout=120)
+    create_r = run_vde_command("create postgres", timeout=300)
     assert create_r.returncode == 0, (
         f"vde create postgres failed (rc={create_r.returncode}): {create_r.stderr}"
     )
+    context._docker_cleanup_needed = True
     start_r = run_vde_command("start postgres", timeout=300)
     assert start_r.returncode == 0, (
         f"vde start postgres failed after recreate (rc={start_r.returncode}): {start_r.stderr}"

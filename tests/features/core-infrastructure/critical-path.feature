@@ -39,7 +39,7 @@ Feature: Critical Path — VM Lifecycle
 
   Scenario: No two VMs share the same SSH port
     Given all VM configs are loaded from vm-types.json
-    Then no two VMs should share the same SSH port
+    Then all configured VMs should have unique SSH ports in their compose files
 
   # ── CLI Commands (spec section 4.1) ──
 

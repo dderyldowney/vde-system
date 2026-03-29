@@ -17,8 +17,7 @@ from pathlib import Path
 
 from behave import given, then, when
 
-from config import VDE_ROOT
-from vm_common import run_vde_command
+from vm_common import VDE_ROOT, run_vde_command
 
 # =============================================================================
 # HELPER FUNCTIONS

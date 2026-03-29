@@ -17,8 +17,8 @@ steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 
-from config import VDE_ROOT
-from vm_common import BIN_DIR, _vde_env, run_vde_command, container_is_running
+from config import VDE_ROOT as _CONFIG_VDE_ROOT
+from vm_common import BIN_DIR, VDE_ROOT, _vde_env, run_vde_command, container_is_running, get_compose_file
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
@@ -33,12 +33,6 @@ def _ensure_running(vm_name: str, timeout: int = 120) -> None:
     """Start VM if not already running."""
     if not _is_running(vm_name):
         run_vde_command(f"start {vm_name}", timeout=timeout)
-
-
-def _compose_file(vm_name: str) -> Path:
-    """Return path to the VM's docker-compose.yml."""
-    name = vm_name.lstrip("vde-")
-    return VDE_ROOT / "configs" / "docker" / name / "docker-compose.yml"
 
 
 def _env_file(vm_name: str) -> Path:
@@ -83,7 +77,7 @@ def step_bare_vm_is_started(context, vm_name):
 @given('VM "{vm_name}" docker-compose.yml exists')
 def step_vm_compose_exists(context, vm_name):
     """Assert docker-compose.yml exists for the VM."""
-    compose = _compose_file(vm_name)
+    compose = get_compose_file(vm_name)
     assert compose.exists(), f"docker-compose.yml not found: {compose}"
     context.compose_file = compose
     context.vm_name = vm_name
@@ -107,7 +101,7 @@ def step_image_exists(context, vm_name):
 @given('VM "{vm_name}" exists')
 def step_vm_exists(context, vm_name):
     """Ensure VM config exists."""
-    compose = _compose_file(vm_name)
+    compose = get_compose_file(vm_name)
     assert compose.exists(), f"VM '{vm_name}' compose file not found: {compose}"
     context.vm_name = vm_name
 
@@ -146,7 +140,7 @@ def step_replace_compose_invalid_yaml(context, vm_name):
     """Replace compose file with invalid YAML; back up original first."""
     # Stop VM first so vde start must actually invoke docker-compose with the broken file
     run_vde_command(f"stop {vm_name}", timeout=60)
-    compose = _compose_file(vm_name)
+    compose = get_compose_file(vm_name)
     assert compose.exists(), f"Compose file not found: {compose}"
     backup = compose.with_suffix(".yml.bak")
     backup.write_text(compose.read_text())
@@ -323,7 +317,7 @@ def step_error_output_not_empty(context):
 def step_restore_compose_backup(context, vm_name):
     """Restore compose file from backup created in the Given step."""
     backup = getattr(context, "compose_backup", None)
-    compose = _compose_file(vm_name)
+    compose = get_compose_file(vm_name)
     if backup and backup.exists():
         compose.write_text(backup.read_text())
         backup.unlink()
@@ -385,7 +379,7 @@ def step_stopped_not_listed(context):
 def step_compose_project_name(context, project_name):
     """Verify docker-compose project name in compose file (top-level 'name:' field)."""
     vm_name = getattr(context, "vm_name", "python")
-    compose = _compose_file(vm_name)
+    compose = get_compose_file(vm_name)
     content = compose.read_text()
     assert f"name: {project_name}" in content, (
         f"Expected 'name: {project_name}' in compose file.\n"
@@ -407,7 +401,7 @@ def step_container_named(context, container_name):
 @then("projects/{vm_name} volume should be mounted")
 def step_projects_volume_mounted(context, vm_name):
     """Verify projects/<vm_name> path is in the compose volumes section."""
-    compose = _compose_file(vm_name)
+    compose = get_compose_file(vm_name)
     content = compose.read_text()
     assert f"projects/{vm_name}" in content, (
         f"No 'projects/{vm_name}' volume entry in compose file"
@@ -417,7 +411,7 @@ def step_projects_volume_mounted(context, vm_name):
 @then("logs/{vm_name} volume should be mounted")
 def step_logs_volume_mounted(context, vm_name):
     """Verify logs/<vm_name> path is in the compose volumes section."""
-    compose = _compose_file(vm_name)
+    compose = get_compose_file(vm_name)
     content = compose.read_text()
     assert f"logs/{vm_name}" in content, (
         f"No 'logs/{vm_name}' volume entry in compose file"
@@ -428,7 +422,7 @@ def step_logs_volume_mounted(context, vm_name):
 def step_volume_from_host(context):
     """Verify volumes use host-path mounts (relative or absolute paths)."""
     vm_name = getattr(context, "vm_name", "python")
-    compose = _compose_file(vm_name)
+    compose = get_compose_file(vm_name)
     content = compose.read_text()
     assert re.search(r"volumes:", content), "No 'volumes:' section in compose file"
     # Host mounts use relative (../…) or absolute (/) paths, not named volumes
@@ -441,7 +435,7 @@ def step_volume_from_host(context):
 def step_env_file_read_by_compose(context):
     """Verify compose file references an env_file directive."""
     vm_name = getattr(context, "vm_name", "python")
-    compose = _compose_file(vm_name)
+    compose = get_compose_file(vm_name)
     content = compose.read_text()
     assert "env_file" in content, (
         f"No 'env_file:' directive found in compose file for {vm_name}"

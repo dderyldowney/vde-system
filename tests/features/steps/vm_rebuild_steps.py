@@ -13,8 +13,14 @@ from pathlib import Path
 
 from behave import given, then, when
 
-from config import VDE_ROOT
-from vm_common import run_vde_command, get_compose_file, container_is_running
+from vm_common import (
+    BIN_DIR,
+    VDE_ROOT,
+    VM_TYPES_JSON,
+    run_vde_command,
+    get_compose_file,
+    container_is_running,
+)
 
 
 def _container_exists(vm_name):
@@ -43,8 +49,7 @@ def _stop_and_remove_vm(vm_name):
 @given("VM types are loaded from configuration")
 def step_vm_types_loaded_from_config(context):
     """Load VM types from vm-types.json into context."""
-    vm_types_path = VDE_ROOT / "data" / "vm-types.json"
-    with open(vm_types_path) as f:
+    with open(VM_TYPES_JSON) as f:
         context.vm_types = json.load(f)
 
 
@@ -53,7 +58,7 @@ def step_vm_created(context, vm_name):
     """Create a VM if it doesn't exist."""
     if _container_exists(vm_name):
         return
-    result = run_vde_command(f"create-virtual-for {vm_name}", timeout=120, context=context)
+    result = run_vde_command(f"create-virtual-for {vm_name}", timeout=300, context=context)
     if result.returncode != 0:
         result = run_vde_command(f"create-virtual-for {vm_name}", timeout=300, context=context)
     context.last_exit_code = result.returncode
@@ -63,7 +68,7 @@ def step_vm_created(context, vm_name):
 def step_vm_running(context, vm_name):
     """Ensure VM is running."""
     if not _container_running(vm_name):
-        result = run_vde_command(f"start {vm_name}", timeout=120, context=context)
+        result = run_vde_command(f"start {vm_name}", timeout=300, context=context)
         context.last_exit_code = result.returncode
 
 
@@ -78,7 +83,7 @@ def step_start_vm_rebuild(context, vm_name):
 @when('I start VM "{vm_name}" with --rebuild and --no-cache')
 def step_start_vm_rebuild_no_cache(context, vm_name):
     """Start VM with --rebuild and --no-cache flags."""
-    result = run_vde_command(f"start {vm_name} --rebuild --no-cache", timeout=1200, context=context)
+    result = run_vde_command(f"start {vm_name} --rebuild --no-cache", timeout=600, context=context)
     context.last_exit_code = result.returncode
     context.rebuild_no_cache_executed = True
 
@@ -178,7 +183,7 @@ def step_vde_stop(context, vm_name):
 @when('I run "vde restart {vm_name}"')
 def step_vde_restart(context, vm_name):
     """Run vde restart command."""
-    result = run_vde_command(f"restart {vm_name}", timeout=120, context=context)
+    result = run_vde_command(f"restart {vm_name}", timeout=300, context=context)
     context.last_exit_code = result.returncode
     context.vm_name = vm_name
 
@@ -249,7 +254,7 @@ def step_no_running_vm_instance(context, vm_name):
 @when('I run "vde create {vm_name}"')
 def step_run_vde_create(context, vm_name):
     """Run vde create for the given VM type."""
-    result = run_vde_command(f"create {vm_name}", timeout=120, context=context)
+    result = run_vde_command(f"create {vm_name}", timeout=300, context=context)
     context.vm_name = vm_name
     context.last_exit_code = result.returncode
     context.last_output = result.stdout

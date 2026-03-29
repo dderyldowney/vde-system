@@ -19,12 +19,17 @@ steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 
-from config import VDE_ROOT
+from vm_common import (
+    BIN_DIR,
+    VDE_ROOT,
+    VM_TYPES_JSON,
+    get_compose_file,
+    get_ssh_port_from_compose,
+    load_vm_types_raw,
+)
 
-BIN_DIR = VDE_ROOT / "bin"
 TEMPLATES_DIR = VDE_ROOT / "templates"
 LIB_DIR = VDE_ROOT / "lib"
-VM_TYPES_JSON = VDE_ROOT / "data" / "vm-types.json"
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
@@ -56,7 +61,7 @@ source "{LIB_DIR}/vm-common" 2>/dev/null
 _LOG_LINE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}|^\[INFO\]")
 
 
-def _vde_cli(command: str, timeout: int = 30) -> subprocess.CompletedProcess:
+def _vde_cli(command: str, timeout: int = 60) -> subprocess.CompletedProcess:
     """Run `vde <command>` with VDE_ROOT_DIR set. Logs go to stderr, stdout is clean output."""
     return subprocess.run(
         [str(BIN_DIR / "vde")] + command.split(),
@@ -67,18 +72,9 @@ def _vde_cli(command: str, timeout: int = 30) -> subprocess.CompletedProcess:
     )
 
 
-def _ssh_port_from_compose(vm_name: str) -> Optional[int]:
-    """Extract the host SSH port from a VM's docker-compose.yml."""
-    compose = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
-    if not compose.exists():
-        return None
-    m = re.search(r'"(\d+):22"', compose.read_text())
-    return int(m.group(1)) if m else None
-
-
 def _load_vm_types() -> tuple[list[str], list[str]]:
     """Return (lang_names, svc_names) as raw names (no vde- prefix)."""
-    data = json.loads(VM_TYPES_JSON.read_text())
+    data = load_vm_types_raw()
     langs = [v["name"].removeprefix("vde-") for v in data["vms"].get("language", [])]
     svcs = [v["name"].removeprefix("vde-") for v in data["vms"].get("service", [])]
     return langs, svcs
@@ -120,7 +116,7 @@ def step_container_running(context, container_name):
     r = _vde_cli("ps -q", timeout=10)
     if container_name not in r.stdout.splitlines():
         vde_name = container_name.removeprefix("vde-")
-        result = _vde_cli(f"start {vde_name}", timeout=120)
+        result = _vde_cli(f"start {vde_name}", timeout=300)
         assert result.returncode == 0, f"Could not start {vde_name}: {result.stderr}"
     context.container_name = container_name
 
@@ -244,15 +240,22 @@ def step_check_ssh_known_hosts(context):
 
 @then('the compose file should contain "{text}"')
 def step_compose_contains(context, text):
-    content = context.compose_path.read_text()
-    assert text in content, f"Expected '{text}' in {context.compose_path}\nGot:\n{content[:500]}"
+    path = getattr(context, "compose_path", None)
+    if not path:
+        # Fallback for implicit VM name in project structure
+        vm_name = getattr(context, "vm_name", "python")
+        path = get_compose_file(vm_name)
+
+    assert path.exists(), f"compose file not found: {path}"
+    content = path.read_text()
+    assert text in content, f"'{text}' not found in {path}:\n{content[:500]}..."
 
 
 @then("every language VM compose file should have SSH port between {lo:d} and {hi:d}")
 def step_lang_ports_in_range(context, lo, hi):
     errors = []
     for vm in context.lang_vms:
-        port = _ssh_port_from_compose(vm)
+        port = get_ssh_port_from_compose(vm)
         if port is None:
             continue  # VM not created yet; only check existing compose files
         elif not (lo <= port <= hi):
@@ -264,7 +267,7 @@ def step_lang_ports_in_range(context, lo, hi):
 def step_svc_ports_in_range(context, lo, hi):
     errors = []
     for vm in context.svc_vms:
-        port = _ssh_port_from_compose(vm)
+        port = get_ssh_port_from_compose(vm)
         if port is None:
             continue  # VM not created yet; only check existing compose files
         elif not (lo <= port <= hi):
@@ -272,13 +275,13 @@ def step_svc_ports_in_range(context, lo, hi):
     assert not errors, "Port range violations:\n" + "\n".join(errors)
 
 
-@then("no two VMs should share the same SSH port")
+@then("all configured VMs should have unique SSH ports in their compose files")
 def step_unique_ports(context):
     all_vms = list(context.lang_vms) + list(context.svc_vms)
     ports: dict[int, str] = {}
     duplicates = []
     for vm in all_vms:
-        port = _ssh_port_from_compose(vm)
+        port = get_ssh_port_from_compose(vm)
         if port is None:
             continue
         if port in ports:

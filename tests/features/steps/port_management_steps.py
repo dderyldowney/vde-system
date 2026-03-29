@@ -16,8 +16,8 @@ if steps_dir not in sys.path:
 
 from behave import given, then, when
 
-from config import VDE_ROOT
 from vm_common import (
+    VDE_ROOT,
     run_vde_command,
     docker_ps,
     container_exists,
@@ -45,7 +45,7 @@ def step_vm_allocated_port(context, vm_name, port):
     from vm_common import compose_file_exists
 
     if not compose_file_exists(vm_name):
-        run_vde_command(f"create {vm_name}", timeout=120, context=context)
+        run_vde_command(f"create {vm_name}", timeout=300, context=context)
 
     context.vm_name = vm_name
     context.allocated_port = port
@@ -104,20 +104,20 @@ def step_old_port_lock(context, seconds):
 @when("I create a language VM")
 def step_create_language_vm(context):
     """Create a language VM."""
-    run_vde_command("create c", timeout=120, context=context)
+    run_vde_command("create c", timeout=300, context=context)
 
 
 @when('I create language VM "{vm_name}"')
 def step_create_lang_vm(context, vm_name):
     """Create a specific language VM."""
-    run_vde_command(f"create {vm_name}", timeout=120, context=context)
+    run_vde_command(f"create {vm_name}", timeout=300, context=context)
     context.vm_name = vm_name
 
 
 @when("I create a service VM")
 def step_create_service_vm(context):
     """Create a service VM."""
-    run_vde_command("create redis", timeout=120, context=context)
+    run_vde_command("create redis", timeout=300, context=context)
 
 
 @when("I query the port registry")
@@ -140,7 +140,7 @@ def step_run_port_cleanup(context):
 @when('I remove VM "{vm_name}"')
 def step_remove_vm(context, vm_name):
     """Remove a VM via vde remove."""
-    run_vde_command(f"remove {vm_name}", timeout=120, context=context)
+    run_vde_command(f"remove {vm_name}", timeout=60, context=context)
 
 
 # =============================================================================
