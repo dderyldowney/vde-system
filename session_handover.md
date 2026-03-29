@@ -19,7 +19,7 @@
 - **Behavioral Assertions**: Replaced "fake" tests in `configuration_management_steps.py` with real runtime/config checks.
 - **Robust Port Search**: `find_available_port` in `lib/vm-common` now searches for the first free port in the range.
 - **Cache Rebuild Fix**: Fixed logic bug in `load_vm_types` that was preventing `vde rebuild-cache` from forcing a fresh reload.
-- **Improved VM Status**: Refactored `vde list` to use real-time Docker data; replaced `[ORPHANED]` with `[CREATED]` for VMs with config but no container instance.
+- **Improved VM Status**: Refactored `vde list` to use real-time Docker data; aligned `[CREATED]` with Docker native state, and added `[IMAGE]` and `[CONFIGURED]` for finer granularity.
 - **Forever Port Protection**: Shortened `VDE_LANG_PORT_END` to 2289, reserving 2290-2299 for manual test VMs (`testport1`, `testport2`, `displaytest`).
 - **Unified VDE Command**: Refactored all test steps to use `vde <command>` instead of calling underlying scripts in `bin/` directly.
 
