@@ -10,4 +10,5 @@ git commit -m "<type>: <description>
 ```
 **Types:** `feat:`, `fix:`, `docs:`, `test:`, `refactor:`
 ## Batching Rules
-Complete ONE task → Ask what's next. DO NOT batch without user confirmation.
+**User-facing tasks:** Complete ONE user-requested task → Ask what's next. DO NOT batch user tasks without explicit user confirmation.
+**Internal swarm (autonomous):** Internal sub-agent swarms spawned per `subagent_mcp_mandate.md` run in parallel autonomously — no user confirmation required. This rule governs user-visible task sequencing only.

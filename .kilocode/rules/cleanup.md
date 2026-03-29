@@ -13,5 +13,5 @@ To avoid 429 errors during housekeeping:
 3. **Standby:** Once the cleanup command is issued, cease all further background "thinking" or API requests.
 
 ## Final Summary
-Conclude the session with a concise, single-paragraph summary of the "Root Cause" and the "Resolution." Do not ask for separate permission to clean up; initiate this protocol immediately upon confirmation of the fix.
+Conclude the session with a concise, single-paragraph summary of the "Root Cause" and the "Resolution." Do not ask for separate permission to clean up; initiate this protocol immediately upon confirmation of the fix (this autonomous action applies to cleanup only — general task batching still requires user confirmation per formats.md).
 

@@ -83,7 +83,9 @@ If any item is unchecked: STOP. Report which gate failed. Do not commit.
 Only after all pre-commit checks pass:
 
 ```zsh
-git add -A
+git add <specific-files-from-checklist>
+# Stage only files verified in the pre-commit checklist above.
+# Never use git add -A or git add . — they can include sensitive files (.env, credentials).
 # Run /yume--review — final audit before commit
 git commit -m "<message>
 
