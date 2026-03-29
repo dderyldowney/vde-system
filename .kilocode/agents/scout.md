@@ -73,10 +73,10 @@ grep -rn "function_name" bin/ lib/ tests/features/steps/
 
 ### Mapping Structure
 ```
-# Internal Glob tool calls (not shell commands)
-Glob: lib/**
-Glob: tests/features/**/*.feature
-Glob: .claude/agents/*.md
+# File inventory — use the Glob internal tool, not a shell command
+# Glob: lib/**
+# Glob: tests/features/**/*.feature
+# Glob: .kilocode/agents/*.md
 ```
 
 ### Pattern Discovery

@@ -25,4 +25,4 @@ The project is **fully portable** - can be moved anywhere without regeneration.
 | Cache | `.cache/` | Contains only VM metadata (no paths) |
 | Compose files | `configs/docker/*/docker-compose.yml` | Use relative `../../../` paths |
 
-**Move project:** `mv ~/dev ~/vde-system` → works immediately, no regeneration needed.
+**Move project:** `mv ~/VDE ~/vde-system` → works immediately, no regeneration needed.

@@ -11,5 +11,3 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/*
 
 # VDE-TEST-CUSTOM-BASE
-
-# VDE-TEST-CUSTOM-BASE

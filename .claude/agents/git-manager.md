@@ -83,7 +83,8 @@ If any item is unchecked: STOP. Report which gate failed. Do not commit.
 Only after all pre-commit checks pass:
 
 ```zsh
-git add <specific-files-from-checklist>
+# Replace the line below with actual file paths before executing:
+# git add path/to/file1 path/to/file2 ...
 # Stage only files verified in the pre-commit checklist above.
 # Never use git add -A or git add . — they can include sensitive files (.env, credentials).
 # Run /yume--review — final audit before commit
