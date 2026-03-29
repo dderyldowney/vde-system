@@ -24,6 +24,8 @@
 - **Resolved Systemic Debt**: Consolidated VM loaders, host-path resolvers, and SSH port extractors into canonical helpers in `vm_common.py`.
 - **Standardized Infrastructure**: Aligned timeouts and standardized imports across 10+ BDD step definition files.
 - **Fixed Port Allocation**: Refactored `find_available_port` to find first available port instead of max+1, preventing range exhaustion in tests.
+- **Fixed Cache Rebuild**: Resolved logic guard bug in `load_vm_types` that prevented `vde rebuild-cache` from forcing a fresh reload.
+- **Improved VM State Classification**: Refactored `vde list` to use real-time Docker data; replaced misleading `[ORPHANED]` marker with `[CREATED]` for VMs with config but no container.
 - **Protected Forever Ports**: Shortened auto-allocation range to 2200-2289, reserving 2290-2299 for manual/test VMs.
 - **Unified Command Enforcement**: Refactored all test steps to exclusively use the canonical `vde` entry point, ensuring only `bin/vde` calls underlying scripts or Docker.
 - **Stable Green State**: 268+ fast tests and full integration features passing consistently.
