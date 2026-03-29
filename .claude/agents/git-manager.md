@@ -88,6 +88,7 @@ Only after all pre-commit checks pass:
 # Stage only files verified in the pre-commit checklist above.
 # Never use git add -A or git add . — they can include sensitive files (.env, credentials).
 # Run /yume--review — final audit before commit
+# IMPORTANT: Run the git add lines above (with real paths) before executing git commit.
 git commit -m "<message>
 
 "
