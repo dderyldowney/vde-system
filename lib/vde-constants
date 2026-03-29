@@ -64,7 +64,8 @@ VDE_ERR_CACHE_INVALID=11
 # (Python, Ruby, Rust, Go, JavaScript, etc.)
 # Range provides capacity for up to 100 language VMs
 VDE_LANG_PORT_START=2200
-VDE_LANG_PORT_END=2299
+VDE_LANG_PORT_END=2289
+
 
 # Service VM SSH Port Range (2400-2499)
 # These ports are used for SSH access to service containers

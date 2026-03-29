@@ -49,6 +49,16 @@
         "ssh_port": 2203
       },
       {
+        "name": "vde-displaytest",
+        "aliases": [
+          "displaytest"
+        ],
+        "display": "Go Language",
+        "install": "apt-get update -y && apt-get install -y golang-go",
+        "service_port": null,
+        "ssh_port": 2299
+      },
+      {
         "name": "vde-elixir",
         "aliases": [
           "elixir"
@@ -207,6 +217,26 @@
         "install": "apt-get update -y && apt-get install -y binutils git libc6-dev curl",
         "service_port": null,
         "ssh_port": 2218
+      },
+      {
+        "name": "vde-testport1",
+        "aliases": [
+          "testport1"
+        ],
+        "display": "Test Port 1",
+        "install": "apt-get update -y",
+        "service_port": null,
+        "ssh_port": 2290
+      },
+      {
+        "name": "vde-testport2",
+        "aliases": [
+          "testport2"
+        ],
+        "display": "Test Port 2",
+        "install": "apt-get update -y",
+        "service_port": null,
+        "ssh_port": 2291
       }
     ],
     "service": [

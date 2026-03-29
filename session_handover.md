@@ -18,6 +18,8 @@
 - **Timeout Alignment**: Aligned all container operation timeouts (`start`/`create`: 300s, `stop`/`remove`: 60s).
 - **Behavioral Assertions**: Replaced "fake" tests in `configuration_management_steps.py` with real runtime/config checks.
 - **Robust Port Search**: `find_available_port` in `lib/vm-common` now searches for the first free port in the range.
+- **Forever Port Protection**: Shortened `VDE_LANG_PORT_END` to 2289, reserving 2290-2299 for manual test VMs (`testport1`, `testport2`, `displaytest`).
+- **Unified VDE Command**: Refactored all test steps to use `vde <command>` instead of calling underlying scripts in `bin/` directly.
 
 ---
 

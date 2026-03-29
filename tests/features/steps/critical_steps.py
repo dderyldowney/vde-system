@@ -26,6 +26,7 @@ from vm_common import (
     get_compose_file,
     get_ssh_port_from_compose,
     load_vm_types_raw,
+    run_vde_command,
 )
 
 TEMPLATES_DIR = VDE_ROOT / "templates"
@@ -59,17 +60,6 @@ source "{LIB_DIR}/vm-common" 2>/dev/null
 
 # DRY-4: single source of truth for log/debug line filter pattern
 _LOG_LINE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}|^\[INFO\]")
-
-
-def _vde_cli(command: str, timeout: int = 60) -> subprocess.CompletedProcess:
-    """Run `vde <command>` with VDE_ROOT_DIR set. Logs go to stderr, stdout is clean output."""
-    return subprocess.run(
-        [str(BIN_DIR / "vde")] + command.split(),
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        env={**os.environ, "VDE_ROOT_DIR": str(VDE_ROOT), "VDE_LOG_OUTPUT": "stderr"},
-    )
 
 
 def _load_vm_types() -> tuple[list[str], list[str]]:
@@ -113,10 +103,10 @@ def step_load_all_vms(context):
 
 @given('container "{container_name}" is running')
 def step_container_running(context, container_name):
-    r = _vde_cli("ps -q", timeout=10)
+    r = run_vde_command("ps -q", timeout=10, context=context)
     if container_name not in r.stdout.splitlines():
         vde_name = container_name.removeprefix("vde-")
-        result = _vde_cli(f"start {vde_name}", timeout=300)
+        result = run_vde_command(f"start {vde_name}", timeout=300, context=context)
         assert result.returncode == 0, f"Could not start {vde_name}: {result.stderr}"
     context.container_name = container_name
 
@@ -128,13 +118,7 @@ def step_container_running(context, container_name):
 
 @when('I run the list-vms script with "{args}"')
 def step_run_list_vms(context, args):
-    result = subprocess.run(
-        [str(BIN_DIR / "list-vms")] + args.split(),
-        capture_output=True,
-        text=True,
-        timeout=30,
-        env={**os.environ, "VDE_ROOT_DIR": str(VDE_ROOT)},
-    )
+    result = run_vde_command(f"list-vms {args}", timeout=30, context=context)
     context.command_output = result.stdout + result.stderr
     context.command_exit_code = result.returncode
     context.last_output = context.command_output
@@ -143,7 +127,7 @@ def step_run_list_vms(context, args):
 
 @when('I run vde-cli "{command}"')
 def step_run_vde_cli(context, command):
-    result = _vde_cli(command)
+    result = run_vde_command(command, context=context)
     context.command_output = result.stdout + result.stderr
     context.command_exit_code = result.returncode
     context.last_output = context.command_output
@@ -318,7 +302,7 @@ def step_container_is_running(context, container_name):
     # Strip vde- prefix: vde ps --filter auto-prepends vde-, so passing vde-python
     # would result in filtering for vde-vde-python (always empty).
     bare_name = container_name.removeprefix("vde-")
-    r = _vde_cli(f"ps --filter name={bare_name} -q", timeout=10)
+    r = run_vde_command(f"ps --filter name={bare_name} -q", timeout=10, context=context)
     assert container_name in r.stdout, (
         f"Container '{container_name}' is not running.\nvde ps output: {r.stdout}"
     )
@@ -327,14 +311,14 @@ def step_container_is_running(context, container_name):
 @then('container "{container_name}" should not be running')
 def step_container_not_running(context, container_name):
     bare_name = container_name.removeprefix("vde-")
-    r = _vde_cli(f"ps --filter name={bare_name} -q", timeout=10)
+    r = run_vde_command(f"ps --filter name={bare_name} -q", timeout=10, context=context)
     assert container_name not in r.stdout, f"Container '{container_name}' is still running."
 
 
 @then('container "{container_name}" should not exist')
 def step_container_not_exist(context, container_name):
     bare_name = container_name.removeprefix("vde-")
-    r = _vde_cli(f"ps -a --filter name={bare_name} -q", timeout=10)
+    r = run_vde_command(f"ps -a --filter name={bare_name} -q", timeout=10, context=context)
     assert container_name not in r.stdout, f"Container '{container_name}' still exists."
 
 
@@ -569,13 +553,7 @@ def step_key_not_in_array(context, key, arr_name):
 @when("VM types are loaded via the vde script")
 def step_load_vm_types(context):
     # Running any vde command triggers VM type loading and cache creation
-    result = subprocess.run(
-        [str(BIN_DIR / "list-vms"), "--all"],
-        capture_output=True,
-        text=True,
-        timeout=30,
-        env={**os.environ, "VDE_ROOT_DIR": str(VDE_ROOT)},
-    )
+    result = run_vde_command("list-vms --all", timeout=30, context=context)
     context.command_output = result.stdout + result.stderr
     context.command_exit_code = result.returncode
     context.last_output = context.command_output
@@ -679,7 +657,7 @@ def step_vde_ssh_file_permissions(context, filename, octal):
 
 @then('the Docker network "{network_name}" should exist')
 def step_docker_network_exists(context, network_name):
-    r = _vde_cli("networks", timeout=10)
+    r = run_vde_command("networks", timeout=10, context=context)
     assert network_name in r.stdout, (
         f"Docker network '{network_name}' does not exist.\n"
         "Run 'vde init' or 'vde start <vm>' to create it."
@@ -688,7 +666,7 @@ def step_docker_network_exists(context, network_name):
 
 @then('the Docker network "{network_name}" should be a bridge network')
 def step_docker_network_is_bridge(context, network_name):
-    r = _vde_cli("networks", timeout=10)
+    r = run_vde_command("networks", timeout=10, context=context)
     assert r.returncode == 0, f"Could not list networks"
     for line in r.stdout.splitlines():
         if network_name in line:
