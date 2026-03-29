@@ -110,26 +110,27 @@ display_vm() {
     else
         local marker=""
 
-        # Check if VM exists: has state file OR has Docker container
+        # Check if VM exists: has config file OR has Docker container
         local container_name
         container_name=$(vde_get_container_name "${name}")
-        local has_container
-        has_container=$(docker ps -a --filter "label=vde.managed=true" --format "{{.Names}}" 2>/dev/null | grep -w "^${container_name}$" || true)
         
-        if vm_is_created "${name}" || [[ -n "${has_container}" ]]; then
-            # Query Docker directly for actual container status
-            local container_status
-            container_status=$(docker ps -a --format "{{.Names}} {{.Status}}" 2>/dev/null | grep -w "^${container_name}" | awk '{print $2,$3,$4,$5}' || true)
+        if vm_is_created "${name}" || vm_container_exists "${name}"; then
+            # Query real-time status
+            local vm_status
+            vm_status=$(vm_container_status "${name}")
             
-            if [[ -n "${container_status}" ]]; then
-                if [[ "${container_status}" =~ "Up" ]]; then
+            if [[ -n "${vm_status}" ]]; then
+                if [[ "${vm_status}" == "running" ]]; then
                     marker=" [RUNNING]"
-                else
+                elif [[ "${vm_status}" == "exited" || "${vm_status}" == "stopped" ]]; then
                     marker=" [STOPPED]"
+                else
+                    # created, paused, restarting, etc.
+                    marker=" [${(U)vm_status}]"
                 fi
             else
-                # Has state file but no container - orphaned state
-                marker=" [ORPHANED]"
+                # Config exists but no container yet
+                marker=" [CREATED]"
             fi
         else
             # VM not created - skip (don't show undefined VMs)
