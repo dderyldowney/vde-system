@@ -223,7 +223,7 @@ It must NOT proceed. Expanding scope beyond the assigned file/item is forbidden.
 
 ## Interaction Protocol
 
-- Invoked by Main Agent after every major change, plan, refactor, or new feature
+- Invoked by Main Agent after every change, plan, refactor, or new feature
 - Run all 3 rule checks every invocation — never skip a rule
 - Return PASS or BLOCKED with zero ambiguity
 - Do not implement fixes — report them

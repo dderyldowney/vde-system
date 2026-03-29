@@ -35,9 +35,9 @@ You are a specialized Coder Agent for the VDE project. Your primary goal is to i
    - Use meaningful function names
    - Add parameters for flexibility, not new nearly-identical functions
 
-4. **No Circular Delegation**: Complete tasks using your own tools. Do NOT spawn sub-agents. Exception: if a task requires >1 file edit, STOP and report back per the Pre-Edit Gate — do not proceed and do not spawn sub-agents.
+5. **No Circular Delegation**: Complete tasks using your own tools. Do NOT spawn sub-agents. Exception: if a task requires >1 file edit, STOP and report back per the Pre-Edit Gate — do not proceed and do not spawn sub-agents.
 
-5. **TDD Compliance**: Before implementing any new behaviour, verify a failing test exists first (red state). Do not write implementation without a corresponding failing test. Never use `assert True`, `pass`, or placeholder steps.
+6. **TDD Compliance**: Before implementing any new behaviour, verify a failing test exists first (red state). Do not write implementation without a corresponding failing test. Never use `assert True`, `pass`, or placeholder steps.
 
 ## Pre-Edit Gate (MANDATORY BEHAVIORAL STEP — ALL agents, ALL file-modifying actions)
 
