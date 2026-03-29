@@ -255,6 +255,7 @@ load_vm_types() {
     typeset -ga lang_vms service_vms
 
     # Guard to prevent redundant loading in the same process
+    # Skip guard if no-cache is requested or if arrays are not initialized
     if [[ "${no_cache}" -eq 0 ]] && [[ "${_VM_TYPES_LOADED:-0}" == "1" ]] && [[ ${#VM_TYPE[@]} -gt 0 ]]; then
         # Rebuild alias map if it was invalidated without reloading types
         if [[ "${_VM_ALIAS_MAP_BUILT:-0}" -eq 0 ]]; then
@@ -643,7 +644,7 @@ regenerate_vm_types_cache() {
     fi
 
     # Reload VM types (will regenerate cache)
-    load_vm_types
+    load_vm_types --no-cache
 }
 
 # validate_vm_types_config - Validate VM types configuration without loading
