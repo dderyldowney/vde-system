@@ -25,17 +25,17 @@ The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` 
 2. **Read `session_handover.md`** — load current session context and next steps
 3. **Read `plans/session_handover_remediation.md`** — load active remediation plan
 4. **Query `memory` MCP** — retrieve cross-session context from knowledge graph
-5. **Scan and load agent definitions** from `.claude/agents/` — load all sub-agent capabilities into working memory
+5. **Scan and load agent definitions** from `.claude/agents/` (Claude Code) or `.kilocode/agents/` (Kilo) — load all sub-agent capabilities into working memory
 6. **Read `AGENTS.md`** — load any instructions not already in this file into working memory
 7. **Run `/vde-enforce`** (Supervisor) — verify framework compliance before any work begins
 8. **Context7 language refresh** — run `mcp__context7__query-docs` in parallel for all implementation languages/tools: Python, behave, PyYAML, Docker, docker-compose, Zsh, SSH (see `.claude/memory/feedback_context7_language_refresh.md`)
 
-**Session control MUST NOT be handed to the user until all 7 steps above are complete.**
+**Session control MUST NOT be handed to the user until all 8 steps above are complete.**
 If any step fails, report the failure to the user before proceeding.
 
 ## Rule Enforcer (HIGHEST AUTHORITY — NON-NEGOTIABLE)
 
-**Run `/vde-enforce` after every major change, plan, refactor, or new feature. No exceptions.**
+**Run `/vde-enforce` after every change, plan, refactor, or new feature. No exceptions.**
 
 The Rule Enforcer checks 3 rules:
 1. **TDD** — failing test first (red), minimal code to pass (green), then refactor. No fake/pink tests.
@@ -49,7 +49,7 @@ The Rule Enforcer checks 3 rules:
 - Only proceed when it returns PASS.
 
 **If you disagree with a ruling: you are wrong. Fix the violation.**
-The Rule Enforcer is a higher authority than your own confidence. See `.claude/agents/rule-enforcer.md`.
+The Rule Enforcer is a higher authority than your own confidence. See `.claude/agents/rule-enforcer.md` (Claude Code) or `.kilocode/agents/supervisor.md` (Kilo).
 
 ## 5-Phase Workflow (MANDATORY)
 
@@ -184,7 +184,7 @@ Commit locally freely. **DO NOT `git push` without explicit user instruction.**
 ## Session Start Checklist
 > **SCOPE: MAIN AGENT ONLY.** Sub-agents must NOT execute this checklist.
 
-This checklist is **automatically executed** (not optionally consulted) at every session start per the STARTUP section above. Skip any step whose content is already in the current context. Steps are listed here for reference only.
+This checklist is **automatically executed** (not optionally consulted) at every session start per the STARTUP section above. Skip any step whose content is already in the current context. The STARTUP section above is authoritative; this is a quick-reference duplicate.
 
 1. Read `MEMORY.md` — project state, test status, active goals
 2. Read `session_handover.md` — current session context, next steps

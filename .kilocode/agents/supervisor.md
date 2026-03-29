@@ -207,7 +207,8 @@ Before EVERY direct Edit, Write, or Bash call that modifies files, execute this 
 PRE-EDIT GATE:
 1. STATE: "I am about to make [N] direct edit(s) to [files]."
 2. COUNT: Is N > 1?
-   - YES → STOP. Report back: "This task requires >1 file edit. Split into a swarm or re-assign." Do NOT spawn sub-agents. Do NOT proceed.
+   - MAIN AGENT: STOP. Spawn coder sub-agent swarm. Do NOT proceed directly.
+   - SUB-AGENT: STOP. Report back: "This task requires >1 file edit. Split into a swarm or re-assign." Do NOT spawn sub-agents. Do NOT proceed.
    - NO → STATE: "1 edit. Proceeding directly." Then execute.
 3. AFTER: Run /vde-enforce to verify compliance.
 ```

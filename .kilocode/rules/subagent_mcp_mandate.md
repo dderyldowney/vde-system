@@ -19,7 +19,7 @@ This is not optional. Single-agent direct execution is forbidden except for triv
 | Code changes | Coder + Reviewer + Tester |
 | Research | Researcher + Context7 lookup + Web search |
 | Debugging | Debugger + Log analyzer + Scout |
-| Fix/edit batch | >1 item OR >1 file edit | MANDATORY swarm — spawn coder agents |
+| Fix/edit batch (>1 item or >1 file) | MANDATORY swarm — spawn coder agents |
 
 ### Swarm Execution Rules
 
@@ -63,7 +63,6 @@ Launch simultaneously:
 | `memory` | Knowledge graph | Cross-session context |
 | `MCP_DOCKER` | Docker operations | Container management, orchestration |
 | `filesystem` | File operations | Read/write/search local files |
-| `redis` | Cache/state | Fast data operations |
 | `web_reader` | Web-to-Markdown | Web content extraction with images |
 
 ---
@@ -88,7 +87,7 @@ Before starting any task, answer these questions:
 |----------|-----------|-------------------|
 | How many files will I edit? | >1 file | Spawn implementation swarm |
 | How many independent fix items? | >1 item | Spawn parallel coder agents |
-| How many research queries needed? | >2 queries | Spawn explore/scout agent |
+| How many research queries needed? | >1 query | Spawn explore/scout agent |
 | Is this a planning task? | Any | Use sequential-thinking MCP first |
 
 If ANY threshold is exceeded, sub-agents MUST be spawned before any direct tool use begins.
@@ -111,16 +110,6 @@ Each phase MUST begin with:
 - Sub-agent spawn for the phase's work
 - MCP service queries for context
 - Swarm aggregation for results
-
----
-
-## Token Economy Benefits
-
-| Approach | Token Cost | Speed | Quality |
-|----------|------------|-------|---------|
-| Single agent direct | HIGH | Slow | Variable |
-| Sub-agent swarm | LOW (distributed) | Fast | High |
-| MCP-first | LOWEST | Fastest | Consistent |
 
 ---
 

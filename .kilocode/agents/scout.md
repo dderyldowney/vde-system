@@ -72,11 +72,11 @@ grep -rn "function_name" bin/ lib/ tests/features/steps/
 ```
 
 ### Mapping Structure
-```zsh
-# File inventory
-glob "lib/**" | sort
-glob "tests/features/**/*.feature" | sort
-glob ".claude/agents/*.md"
+```
+# Internal Glob tool calls (not shell commands)
+Glob: lib/**
+Glob: tests/features/**/*.feature
+Glob: .claude/agents/*.md
 ```
 
 ### Pattern Discovery

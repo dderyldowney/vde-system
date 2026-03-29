@@ -1,8 +1,8 @@
 # VDE PROJECT CONTEXT
-**Working Directory:** `~/dev` | **Project:** VDE (Virtual Development Environment) — Docker-based container orchestration for 19+ language VMs with shared services.
+**Working Directory:** `~/VDE` | **Project:** VDE (Virtual Development Environment) — Docker-based container orchestration for 19+ language VMs with shared services.
 
 ## Session Startup (MANDATORY)
-**Read `MEMORY.md` at session start** - before any other work. This is the single source of truth for project state, test status, and active work.
+**Read `MEMORY.md` at session start** - before any other work. This is the single source of truth for project state, test status, and active work. See `AGENTS.md` section 1 for the full 8-step startup checklist. Skip any step whose content is already in context.
 
 ## Critical Architecture
 - `lib/` — Core libraries (vde-constants, vde-shell-compat, vde-errors, vde-log, vde-core, vm-common, vde-commands, vde-parser) | `data/vm-types.conf` — VM definitions (data-driven, single-line additions) | `tests/features/` — BDD tests

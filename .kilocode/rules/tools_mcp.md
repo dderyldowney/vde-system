@@ -16,9 +16,7 @@
 | `github` | PRs, issues, file operations, search, code review | Any GitHub interaction |
 | `context7` | Library/API docs, code examples from official sources | Documentation queries |
 | `fetch` | Web requests, fetch HTML/JSON/Markdown/TXT | URL-based queries |
-| `4.5v-mcp` | Image analysis | Image file inputs |
 | `memory` | Knowledge graph - create entities, relations, observations | Cross-session context |
 | `web_reader` | Web-to-Markdown conversion with image handling | Reading web content |
-| `claude-mem` | Search/timeline memory observations | Retrieving session context |
 ## File Command Priority Order
 **1. MCP File Services (PRIMARY)** - Use for: GitHub search, fetch, web_reader - When available: ALWAYS use first | **2. Local Toolsets (SECONDARY)** - Use when: MCP file services are unavailable - Tools: `jq`, `grep`, `find`, `cat`, `head`, `tail`, `sed`, `awk` | **3. Internal Toolsets (FALLBACK)** - Use when: Both MCP and local tools are unavailable - Tools: Read tool, Grep tool, Glob tool, Edit tool
