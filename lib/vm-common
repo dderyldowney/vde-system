@@ -1030,30 +1030,25 @@ find_next_available_port() {
 find_available_port() {
     local min_port="${1:-2200}"
     local max_port="${2:-2299}"
-    
+
     # Ensure VM types are loaded to check existing assignments
     load_vm_types >/dev/null 2>&1
 
-    # Find the maximum port already assigned by VDE in this range
-    local max_assigned=$((min_port - 1))
+    # Create a set of assigned ports for fast lookup
+    typeset -gA assigned_ports
+    assigned_ports=()
     local vm p
     for vm in ${(k)VM_SSH_PORT}; do
         p="${VM_SSH_PORT[$vm]}"
         if [[ -n "${p}" ]] && [[ "${p}" -ge "${min_port}" ]] && [[ "${p}" -le "${max_port}" ]]; then
-            if [[ "${p}" -gt "${max_assigned}" ]]; then
-                max_assigned=${p}
-            fi
+            assigned_ports[${p}]=1
         fi
     done
 
-    # Start searching from max_assigned + 1
-    local port=$((max_assigned + 1))
-    if [[ "${port}" -lt "${min_port}" ]]; then
-        port=${min_port}
-    fi
-
+    # Find the first available port
+    local port=${min_port}
     while [ ${port} -le ${max_port} ]; do
-        if ! _is_port_in_use "${port}"; then
+        if [[ -z "${assigned_ports[${port}]}" ]] && ! _is_port_in_use "${port}"; then
             echo "${port}"
             return ${VDE_SUCCESS}
         fi
@@ -1063,7 +1058,6 @@ find_available_port() {
     _error "No available port in range ${min_port}-${max_port}"
     return ${VDE_ERR_NO_PORT}
 }
-
 # Allocate port for VM
 # Args: <vm_name> [min_port] [max_port]
 # Returns: Outputs port number

@@ -153,3 +153,9 @@ Do not regress this baseline.
 - All test step definitions checking config paths
 - docker-compose template generation (vde-templates)
 - Update CONFIGS_DIR default and path construction logic
+
+---
+
+## Paired Update Policy
+- This handover is the paired companion to `plans/session_handover_remediation.md`.
+- Updates must be synchronized; maintain cross-links and same scope.

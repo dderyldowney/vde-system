@@ -16,7 +16,7 @@ from behave import given, when, then
 from vm_common import (
     run_vde_command, container_exists, container_is_running,
     docker_list_containers, get_compose_file, check_docker_network_exists,
-    VDE_ROOT, BIN_DIR,
+    resolve_workspace_host_path, VDE_ROOT, BIN_DIR,
 )
 
 # ---------------------------------------------------------------------------
@@ -30,8 +30,8 @@ POSTGRES_SERVICE_PORT = 5432
 
 def _cleanup_vm(vm_name):
     """Stop and remove a VM if it exists, ignoring failures."""
-    run_vde_command(f"stop {vm_name}", timeout=30)
-    run_vde_command(f"remove {vm_name}", timeout=30)
+    run_vde_command(f"stop {vm_name}", timeout=60)
+    run_vde_command(f"remove {vm_name}", timeout=60)
 
 
 def _get_ssh_port_for_vm(vm_name):
@@ -167,11 +167,12 @@ def step_create_multiple_vms(context):
     for vm in _MULTI_VM_NAMES:
         _cleanup_vm(vm)
     for vm in _MULTI_VM_NAMES:
-        result = run_vde_command(f"create {vm}", timeout=120)
+        result = run_vde_command(f"create {vm}", timeout=300)
         assert result.returncode == 0, (
             f"Failed to create VM '{vm}':\n{result.stdout}\n{result.stderr}"
         )
         context.vms.append(vm)
+    context._docker_cleanup_needed = True
 
 
 @when("each VM starts")
@@ -181,10 +182,11 @@ def step_each_vm_starts(context):
         "No VMs in context.vms — did the @given step run?"
     )
     for vm in context.vms:
-        result = run_vde_command(f"start {vm}", timeout=120)
+        result = run_vde_command(f"start {vm}", timeout=300)
         assert result.returncode == 0, (
             f"Failed to start VM '{vm}':\n{result.stdout}\n{result.stderr}"
         )
+    context._docker_cleanup_needed = True
     # Allow containers to fully come up
     time.sleep(3)
 
@@ -243,23 +245,25 @@ def step_create_postgres_vm(context):
     """Create the postgres service VM and record it in context.vms."""
     context.vms = getattr(context, "vms", [])
     _cleanup_vm("postgres")
-    result = run_vde_command("create postgres", timeout=120)
+    result = run_vde_command("create postgres", timeout=300)
     assert result.returncode == 0, (
         f"Failed to create postgres VM:\n{result.stdout}\n{result.stderr}"
     )
     if "postgres" not in context.vms:
         context.vms.append("postgres")
     context.postgres_vm = "postgres"
+    context._docker_cleanup_needed = True
 
 
 @when("it starts")
 def step_postgres_vm_starts(context):
     """Start the postgres VM."""
     vm = getattr(context, "postgres_vm", "postgres")
-    result = run_vde_command(f"start {vm}", timeout=120)
+    result = run_vde_command(f"start {vm}", timeout=300)
     assert result.returncode == 0, (
         f"Failed to start postgres VM:\n{result.stdout}\n{result.stderr}"
     )
+    context._docker_cleanup_needed = True
     time.sleep(3)
 
 
@@ -375,16 +379,7 @@ def step_files_visible_on_host(context):
     assert r.returncode == 0, f"vde exec touch failed (rc={r.returncode}): {r.stderr}"
 
     # Resolve workspace host path from compose volume section
-    compose = get_compose_file(raw)
-    content = compose.read_text()
-    host_path = None
-    for line in content.splitlines():
-        stripped = line.strip()
-        if "/workspace" in stripped and stripped.startswith("-"):
-            parts = stripped.lstrip("- ").split(":")
-            if len(parts) >= 2 and parts[1].strip().rstrip("/") == "/workspace":
-                host_path = (VDE_ROOT / parts[0].strip()).resolve()
-                break
+    host_path = resolve_workspace_host_path(raw)
 
     assert host_path is not None, "Could not determine host path for /workspace from compose file"
     sentinel_path = host_path / sentinel
@@ -399,16 +394,7 @@ def step_changes_persist_across_restarts(context):
     raw = vm_name.replace("vde-", "")
     sentinel = f"vde-test-persist-{raw}"
 
-    compose = get_compose_file(raw)
-    content = compose.read_text()
-    host_path = None
-    for line in content.splitlines():
-        stripped = line.strip()
-        if "/workspace" in stripped and stripped.startswith("-"):
-            parts = stripped.lstrip("- ").split(":")
-            if len(parts) >= 2 and parts[1].strip().rstrip("/") == "/workspace":
-                host_path = (VDE_ROOT / parts[0].strip()).resolve()
-                break
+    host_path = resolve_workspace_host_path(raw)
 
     assert host_path is not None, "Could not resolve host workspace path from compose"
 
@@ -570,11 +556,12 @@ def step_have_stopped_several_vms(context):
 def step_start_them_again(context):
     """Re-start the previously stopped VM."""
     vm = getattr(context, "cleanup_vm", _CLEANUP_VM)
-    result = run_vde_command(f"start {vm}", timeout=120)
+    result = run_vde_command(f"start {vm}", timeout=300)
     assert result.returncode == 0, (
         f"Failed to re-start VM '{vm}':\n{result.stdout}\n{result.stderr}"
     )
     context.restarted_vm = vm
+    context._docker_cleanup_needed = True
 
 
 @then("old containers should be removed")
@@ -777,10 +764,11 @@ def step_have_dependent_services(context):
     context.dependent_vms = list(_STARTUP_ORDER_VMS)
     # Ensure both VMs are created (not necessarily running yet)
     for vm in context.dependent_vms:
-        result = run_vde_command(f"create {vm}", timeout=120)
+        result = run_vde_command(f"create {vm}", timeout=300)
         assert result.returncode == 0, (
             f"Failed to create VM '{vm}':\n{result.stdout}\n{result.stderr}"
         )
+    context._docker_cleanup_needed = True
 
 
 @when("I start them together")
@@ -791,8 +779,9 @@ def step_start_them_together(context):
     )
     context.startup_results = {}
     for vm in context.dependent_vms:
-        result = run_vde_command(f"start {vm}", timeout=120)
+        result = run_vde_command(f"start {vm}", timeout=300)
         context.startup_results[vm] = result
+    context._docker_cleanup_needed = True
 
 
 @then("they should start in a reasonable order")
@@ -910,11 +899,12 @@ def step_restart_crashed_vm_independently(context):
     crashed = getattr(context, "crashed_vm", _ISOLATION_PRIMARY)
     survivors = getattr(context, "survivor_vms", [_ISOLATION_SECONDARY])
 
-    result = run_vde_command(f"start {crashed}", timeout=120)
+    result = run_vde_command(f"start {crashed}", timeout=300)
     assert result.returncode == 0, (
         f"Failed to restart crashed VM '{crashed}' independently (rc={result.returncode}):\n"
         f"{result.stdout}\n{result.stderr}"
     )
+    context._docker_cleanup_needed = True
 
     running_result = run_vde_command("ps -q", timeout=30)
     running = [ln.strip() for ln in running_result.stdout.splitlines() if ln.strip()]

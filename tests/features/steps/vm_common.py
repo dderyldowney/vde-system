@@ -22,6 +22,8 @@ from config import VDE_ROOT as _VDE_ROOT
 project_root = os.environ.get("VDE_PROJECT_ROOT")
 VDE_ROOT = Path(project_root) if project_root and Path(project_root).exists() else _VDE_ROOT
 BIN_DIR = VDE_ROOT / "bin"
+VM_TYPES_JSON = VDE_ROOT / "data" / "vm-types.json"
+VM_TYPES_CONF = VDE_ROOT / "data" / "vm-types.conf"
 
 # Detect if running in container vs locally on host
 # In container: VDE_ROOT_DIR is set to /vde
@@ -455,6 +457,42 @@ def get_vm_types():
                     vm_types.append(parts[1].strip())
 
     return vm_types
+
+
+def load_vm_types_raw():
+    """Load the raw VM types dictionary from vm-types.json."""
+    import json
+
+    if not VM_TYPES_JSON.exists():
+        return {"vms": {"language": [], "service": []}}
+    with open(VM_TYPES_JSON) as fh:
+        return json.load(fh)
+
+
+def resolve_workspace_host_path(vm_name):
+    """Resolve the host-side path for the /workspace volume mount."""
+    compose = get_compose_file(vm_name)
+    if not compose.exists():
+        return None
+    content = compose.read_text()
+    for line in content.splitlines():
+        stripped = line.strip()
+        if "/workspace" in stripped and stripped.startswith("-"):
+            parts = stripped.lstrip("- ").split(":")
+            if len(parts) >= 2 and parts[1].strip().rstrip("/") == "/workspace":
+                return (VDE_ROOT / parts[0].strip()).resolve()
+    return None
+
+
+def get_ssh_port_from_compose(vm_name):
+    """Extract the host SSH port from a VM's docker-compose.yml."""
+    compose = get_compose_file(vm_name)
+    if not compose.exists():
+        return None
+    import re
+
+    m = re.search(r'"(\d+):22"', compose.read_text())
+    return int(m.group(1)) if m else None
 
 
 class CommandResult:
