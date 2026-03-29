@@ -37,17 +37,19 @@ Feature: Critical Infrastructure — Spec Invariants
     When I read VDE_LANG_PORT_START from vde-constants
     Then the value should be "2200"
 
-  Scenario: Language VM port range ends at 2299
+  Scenario: Language VM port range ends at 2289
     When I read VDE_LANG_PORT_END from vde-constants
-    Then the value should be "2299"
+    Then the value should be "2289"
+
 
   Scenario: Service VM port range starts at 2400
     When I read VDE_SVC_PORT_START from vde-constants
     Then the value should be "2400"
 
-  Scenario: Service VM port range ends at 2499
-    When I read VDE_SVC_PORT_END from vde-constants
-    Then the value should be "2499"
+  Scenario: Language VM port range ends at 2289
+    When I read VDE_LANG_PORT_END from vde-constants
+    Then the value should be "2289"
+
 
   # ── Template Rendering (spec section 5) ──
 

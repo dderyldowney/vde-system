@@ -375,11 +375,12 @@ def step_tab_completion_works(context):
 @then("I should be warned if I can't run Docker without sudo")
 def step_docker_sudo_warning(context):
     """Verify Docker permission check would warn if needed."""
-    # Check if Docker can be run without sudo
+    from vm_common import run_vde_command
+    # Check if Docker can be run without sudo via vde ps
     try:
-        result = subprocess.run(["docker", "ps"], capture_output=True, text=True, timeout=10)
+        result = run_vde_command("ps", timeout=10)
         docker_works = result.returncode == 0
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except Exception:
         docker_works = False
 
     # If Docker doesn't work without sudo, verify warning mechanism exists

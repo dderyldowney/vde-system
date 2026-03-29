@@ -394,8 +394,6 @@ def step_modify_base_dockerfile(context):
 
 @when("I rebuild VMs with --rebuild")
 def step_rebuild_vms(context):
-    rebuild_script = BIN_DIR / "vde-rebuild"
-    assert rebuild_script.exists(), f"vde-rebuild not found at {rebuild_script}"
     r = run_vde_command("start python --rebuild", timeout=600)
     assert r.returncode == 0, (
         f"vde start python --rebuild failed (rc={r.returncode}): {r.stderr}"
@@ -720,8 +718,8 @@ def step_log_rotation_configurable(context):
 
 @then("I can control log verbosity")
 def step_can_control_log_verbosity(context):
-    logs_script = BIN_DIR / "vde-logs"
-    assert logs_script.exists(), f"vde-logs not found at {logs_script}"
+    r = run_vde_command("logs --help", timeout=10)
+    assert r.returncode == 0, "vde logs --help failed"
 
 
 # ============================================================
@@ -807,14 +805,9 @@ def step_health_status_in_docker_ps(context):
 
 @then("unhealthy VMs can be restarted automatically")
 def step_unhealthy_vms_restart(context):
-    # Verify the restart policy is configured in the temp YAML
-    parsed = yaml.safe_load(context.health_compose_yaml)
-    service = _first_service(parsed)
-    # It's okay if it's missing from the temp YAML if VDE adds it during generation,
-    # but here we are checking the YAML we just created.
-    # Actually, let's just check if vde-health script exists as a fallback.
-    health_script = BIN_DIR / "vde-health"
-    assert health_script.exists(), "vde-health script missing"
+    r = run_vde_command("health", timeout=10)
+    # Even if no containers are running, the command should succeed (return 0)
+    assert r.returncode == 0, f"vde health failed (rc={r.returncode})"
 
 
 # ============================================================
@@ -976,11 +969,7 @@ def step_modified_vm_configuration(context):
 
 @when("I run validation or try to start VM")
 def step_run_validation(context):
-    result = subprocess.run(
-        ["zsh", str(context.validate_script)],
-        capture_output=True, text=True,
-        env={**os.environ, "VDE_ROOT": str(VDE_ROOT)},
-    )
+    result = run_vde_command("validate-schemas", timeout=60, context=context)
     context.validation_result = result
 
 
@@ -1041,17 +1030,15 @@ def step_old_configs_still_work(context):
 
 @then("migration should happen automatically")
 def step_migration_automatic(context):
-    rebuild_script = BIN_DIR / "vde-rebuild-cache"
-    assert rebuild_script.exists(), f"vde-rebuild-cache not found at {rebuild_script}"
-    assert os.access(str(rebuild_script), os.X_OK), "vde-rebuild-cache is not executable"
+    r = run_vde_command("rebuild-cache", timeout=30)
+    assert r.returncode == 0, f"vde rebuild-cache failed (rc={r.returncode})"
 
 
 @then("I should be told about manual steps if needed")
 def step_told_about_manual_steps(context):
-    content = (BIN_DIR / "validate-schemas.zsh").read_text()
-    assert "echo" in content, (
-        "validate-schemas.zsh has no echo output — user feedback absent"
-    )
+    r = run_vde_command("validate-schemas --help", timeout=10)
+    assert r.returncode == 0, "vde validate-schemas --help failed"
+    assert "usage" in r.stdout.lower() or "Usage" in r.stdout, "Help output should contain usage info"
 
 
 # ============================================================
@@ -1060,8 +1047,9 @@ def step_told_about_manual_steps(context):
 
 @given("I've made configuration changes I want to undo")
 def step_made_changes_to_undo(context):
-    rebuild_script = BIN_DIR / "vde-rebuild-cache"
-    assert rebuild_script.exists(), f"vde-rebuild-cache not found"
+    # Verify rebuild-cache works
+    r = run_vde_command("rebuild-cache", timeout=30)
+    assert r.returncode == 0, "vde rebuild-cache failed"
     context.vm_types_before = load_vm_types_raw()
 
 
@@ -1113,11 +1101,7 @@ def step_vm_wont_start(context):
 def step_check_compose_config_detail(context):
     context.debug_compose = yaml.safe_load(context.debug_compose_path.read_text())
     # Run validation so result is available for @then steps
-    context.validation_result = subprocess.run(
-        ["zsh", str(BIN_DIR / "validate-schemas.zsh")],
-        capture_output=True, text=True,
-        env={**os.environ, "VDE_ROOT": str(VDE_ROOT)}
-    )
+    context.validation_result = run_vde_command("validate-schemas", timeout=60, context=context)
 
 
 @then("I should see the effective configuration")
