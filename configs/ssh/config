@@ -1,5 +1,5 @@
 # VDE (Virtual Development Environment) SSH Configuration
-# Generated on Sat Mar 28 18:23:30 EDT 2026
+# Generated on Sun Mar 29 19:46:08 EDT 2026
 #
 # This file contains SSH config entries for all known language and service VMs.
 # Each VM type has a fixed SSH port assignment:
@@ -41,6 +41,16 @@ Host vde-cpp
 Host vde-csharp
     HostName localhost
     Port 2203
+    User devuser
+    IdentityFile ~/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+Host vde-displaytest
+    HostName localhost
+    Port 2299
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -198,9 +208,9 @@ Host vde-swift
     ForwardAgent yes
     LogLevel ERROR
 
-Host vde-testport1773454612
+Host vde-testport1
     HostName localhost
-    Port 2221
+    Port 2290
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -208,9 +218,9 @@ Host vde-testport1773454612
     ForwardAgent yes
     LogLevel ERROR
 
-Host vde-testport1773505985
+Host vde-testport2
     HostName localhost
-    Port 2222
+    Port 2291
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -218,29 +228,9 @@ Host vde-testport1773505985
     ForwardAgent yes
     LogLevel ERROR
 
-Host vde-testport1773512567
+Host vde-testcfgportrange
     HostName localhost
-    Port 2223
-    User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
-    StrictHostKeyChecking no
-    UserKnownHostsFile ~/.ssh/vde/known_hosts
-    ForwardAgent yes
-    LogLevel ERROR
-
-Host vde-testport1773518572
-    HostName localhost
-    Port 2224
-    User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
-    StrictHostKeyChecking no
-    UserKnownHostsFile ~/.ssh/vde/known_hosts
-    ForwardAgent yes
-    LogLevel ERROR
-
-Host vde-displaytest
-    HostName localhost
-    Port 2299
+    Port 2220
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
@@ -311,16 +301,6 @@ Host vde-rabbitmq
 Host vde-redis
     HostName localhost
     Port 2406
-    User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
-    StrictHostKeyChecking no
-    UserKnownHostsFile ~/.ssh/vde/known_hosts
-    ForwardAgent yes
-    LogLevel ERROR
-
-Host vde-testcfgmysql
-    HostName localhost
-    Port 2407
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
