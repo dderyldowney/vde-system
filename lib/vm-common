@@ -762,7 +762,7 @@ is_known_vm() {
 
 # vm_is_created - Check if a VM has been created (config generated)
 # Args: <vm_name>
-# Returns: 0 if created, 1 otherwise
+# Returns: 0 if created (all 3 core files exist), 1 otherwise
 vm_is_created() {
     local vm_name="${1}"
     local raw_name="${vm_name#vde-}"
@@ -770,9 +770,10 @@ vm_is_created() {
     local configs_dir="${VDE_CONFIGS_DIR:-${VDE_ROOT_DIR}/configs/docker}"
     local env_dir="${VDE_ENV_DIR:-${VDE_ROOT_DIR}/env-files}"
     
-    if [[ -d "${configs_dir}/${raw_name}" ]] || \
-       [[ -f "${env_dir}/${full_name}.env" ]] || \
-       [[ -f "${env_dir}/${raw_name}.env" ]]; then
+    # A VM is only "created" if it has the complete trio: compose, Dockerfile, and env file
+    if [[ -f "${configs_dir}/${raw_name}/docker-compose.yml" ]] && \
+       [[ -f "${configs_dir}/${raw_name}/Dockerfile" ]] && \
+       [[ -f "${env_dir}/${full_name}.env" ]]; then
         return 0
     fi
     return ${VDE_ERR_GENERAL}
