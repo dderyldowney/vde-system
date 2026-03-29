@@ -1,6 +1,6 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-27T00:00:00-04:00
+**Last Updated:** 2026-03-29T00:00:00-04:00
 **Mission:** Ensure core Docker infrastructure is working and passing, then stack Docker features one by one
 
 ---
@@ -17,6 +17,15 @@
 3. SSH access to VMs
 4. Service VMs (PostgreSQL, Redis, etc.)
 5. Multi-VM clusters
+
+---
+
+## RECENT ACHIEVEMENTS (Wave 4)
+- **Resolved Systemic Debt**: Consolidated VM loaders, host-path resolvers, and SSH port extractors into canonical helpers in `vm_common.py`.
+- **Standardized Infrastructure**: Aligned timeouts and standardized imports across 10+ BDD step definition files.
+- **Fixed Port Allocation**: Refactored `find_available_port` to find first available port instead of max+1, preventing range exhaustion in tests.
+- **Behavioral Verification**: Replaced legacy "fake" tests with real assertions verifying runtime state and configuration files.
+- **Stable Green State**: 268+ fast tests and full integration features (O-1, O-6, O-7) passing consistently.
 
 ---
 
