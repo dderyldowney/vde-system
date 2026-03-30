@@ -5,8 +5,8 @@ name: vde-nginx
 services:
   vde-nginx:
     build:
-      context: ../../..
-      dockerfile: configs/docker/nginx/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

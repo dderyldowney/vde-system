@@ -4,8 +4,8 @@ name: vde-r
 services:
   vde-r:
     build:
-      context: ../../..
-      dockerfile: configs/docker/r/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

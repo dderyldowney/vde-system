@@ -4,8 +4,8 @@ name: vde-haskell
 services:
   vde-haskell:
     build:
-      context: ../../..
-      dockerfile: configs/docker/haskell/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

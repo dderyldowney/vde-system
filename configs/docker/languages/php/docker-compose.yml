@@ -4,8 +4,8 @@ name: vde-php
 services:
   vde-php:
     build:
-      context: ../../..
-      dockerfile: configs/docker/php/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

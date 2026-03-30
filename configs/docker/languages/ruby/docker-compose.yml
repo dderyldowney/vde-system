@@ -4,8 +4,8 @@ name: vde-ruby
 services:
   vde-ruby:
     build:
-      context: ../../..
-      dockerfile: configs/docker/ruby/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

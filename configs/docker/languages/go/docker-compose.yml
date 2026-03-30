@@ -4,8 +4,8 @@ name: vde-go
 services:
   vde-go:
     build:
-      context: ../../..
-      dockerfile: configs/docker/go/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

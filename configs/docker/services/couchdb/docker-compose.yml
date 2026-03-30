@@ -5,8 +5,8 @@ name: vde-couchdb
 services:
   vde-couchdb:
     build:
-      context: ../../..
-      dockerfile: configs/docker/couchdb/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

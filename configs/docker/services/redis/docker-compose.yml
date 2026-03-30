@@ -5,8 +5,8 @@ name: vde-redis
 services:
   vde-redis:
     build:
-      context: ../../..
-      dockerfile: configs/docker/redis/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

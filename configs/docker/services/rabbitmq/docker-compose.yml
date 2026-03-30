@@ -5,8 +5,8 @@ name: vde-rabbitmq
 services:
   vde-rabbitmq:
     build:
-      context: ../../..
-      dockerfile: configs/docker/rabbitmq/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

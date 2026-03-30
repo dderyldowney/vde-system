@@ -5,8 +5,8 @@ name: vde-mongodb
 services:
   vde-mongodb:
     build:
-      context: ../../..
-      dockerfile: configs/docker/mongodb/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
