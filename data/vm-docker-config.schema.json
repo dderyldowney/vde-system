@@ -98,17 +98,17 @@
         "image": {
           "type": "string",
           "description": "Docker image name",
-          "pattern": "^dev-[a-z0-9]+:latest$"
+          "pattern": "^vde-[a-z0-9]+:latest$"
         },
         "container_name": {
           "type": "string",
-          "description": "Docker container name (must end with -dev for language VMs)",
-          "pattern": "^[a-z0-9]+-dev$"
+          "description": "Docker container name (must start with vde-)",
+          "pattern": "^vde-[a-z0-9]+$"
         },
         "workspace_mount": {
           "type": "string",
           "description": "Workspace volume mount (format: host_path:container_path)",
-          "pattern": "^projects/[a-z0-9]+:/home/devuser/workspace$"
+          "pattern": "^projects/[a-z0-9]+:/home/vdeuser/workspace$"
         },
         "logs_mount": {
           "type": "string",
@@ -136,12 +136,12 @@
         "image": {
           "type": "string",
           "description": "Docker image name",
-          "pattern": "^dev-[a-z0-9]+:latest$"
+          "pattern": "^vde-[a-z0-9]+:latest$"
         },
         "container_name": {
           "type": "string",
-          "description": "Docker container name (no -dev suffix for service VMs)",
-          "pattern": "^[a-z0-9]+$"
+          "description": "Docker container name (must start with vde-)",
+          "pattern": "^vde-[a-z0-9]+$"
         },
         "data_mount": {
           "type": "string",

@@ -166,7 +166,7 @@ Examples:
   vde create python             # Create Python VM
   vde create python --rebuild  # Create and rebuild Python VM
   vde create python --nocache  # Create Python VM without cache
-  vde start python-dev          # Start Python development VM
+  vde start python              # Start Python development VM
   vde ssh python                # SSH into the Python VM
   vde stop postgres             # Stop PostgreSQL service
   vde remove rust               # Remove Rust VM instance
@@ -174,7 +174,7 @@ Examples:
   vde health                    # Run health check
   vde nuke                      # Remove all of VDE (prompts for backup)
 
-For more information, see: https://github.com/dderyldowney/dev/blob/main/docs/command-reference.md
+For more information, see: https://github.com/dderyldowney/VDE/blob/main/docs/command-reference.md
 EOF
 }
 
