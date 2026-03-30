@@ -4,8 +4,8 @@ name: vde-cpp
 services:
   vde-cpp:
     build:
-      context: ../../..
-      dockerfile: configs/docker/cpp/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

@@ -4,8 +4,8 @@ name: vde-kotlin
 services:
   vde-kotlin:
     build:
-      context: ../../..
-      dockerfile: configs/docker/kotlin/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

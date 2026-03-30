@@ -4,8 +4,8 @@ name: vde-flutter
 services:
   vde-flutter:
     build:
-      context: ../../..
-      dockerfile: configs/docker/flutter/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

@@ -4,8 +4,8 @@ name: vde-scala
 services:
   vde-scala:
     build:
-      context: ../../..
-      dockerfile: configs/docker/scala/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

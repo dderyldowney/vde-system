@@ -4,8 +4,8 @@ name: vde-python
 services:
   vde-python:
     build:
-      context: ../../..
-      dockerfile: configs/docker/python/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

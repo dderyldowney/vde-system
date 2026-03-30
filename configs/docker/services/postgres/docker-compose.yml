@@ -5,8 +5,8 @@ name: vde-postgres
 services:
   vde-postgres:
     build:
-      context: ../../..
-      dockerfile: configs/docker/postgres/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

@@ -4,8 +4,8 @@ name: vde-asm
 services:
   vde-asm:
     build:
-      context: ../../..
-      dockerfile: configs/docker/asm/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

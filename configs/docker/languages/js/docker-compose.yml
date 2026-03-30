@@ -4,8 +4,8 @@ name: vde-js
 services:
   vde-js:
     build:
-      context: ../../..
-      dockerfile: configs/docker/js/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000

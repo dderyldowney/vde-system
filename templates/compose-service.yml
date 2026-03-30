@@ -7,6 +7,7 @@ services:
     build:
       context: ../../../..
       dockerfile: configs/docker/vde-base.Dockerfile
+
       args:
         USERNAME: devuser
         UID: 1000

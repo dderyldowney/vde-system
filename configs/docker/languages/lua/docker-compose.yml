@@ -4,8 +4,8 @@ name: vde-lua
 services:
   vde-lua:
     build:
-      context: ../../..
-      dockerfile: configs/docker/lua/Dockerfile
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
       args:
         USERNAME: devuser
         UID: 1000
