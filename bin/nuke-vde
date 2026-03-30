@@ -328,7 +328,7 @@ remove_docker_images() {
     print_info "Step 3: Removing VDE Docker images..."
 
     local images
-    images=$(docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep "^dev-" || echo "")
+    images=$(docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep "^vde-" || echo "")
 
     if [[ -z "${images}" ]]; then
         print_info "No VDE images found"
@@ -482,7 +482,7 @@ main() {
                 echo "  7. Remove VDE directories (data, logs, env-files)"
                 echo ""
                 echo "After running this script, you can safely:"
-                echo "  cd .. && rm -rf dev"
+                echo "  cd .. && rm -rf $(basename "${VDE_ROOT_DIR}")"
                 exit 0
                 ;;
             *)
@@ -592,7 +592,7 @@ main() {
 
         print_info "To remove the VDE project directory, run:"
         echo "  cd .."
-        echo "  rm -rf dev"
+        echo "  rm -rf $(basename "${VDE_ROOT_DIR}")"
         echo ""
     fi
 

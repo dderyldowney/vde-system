@@ -103,12 +103,11 @@ RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/in
 
 # VDE environment variables for cross-platform path handling
 ENV VDE_HOME_DIR=/home/devuser
-ENV VDE_PROJECT_NAME=dev
+ENV VDE_PROJECT_NAME=vde
 ENV VDE_SSH_DIR=${VDE_HOME_DIR}/.ssh/vde
 
 # Expose SSH port
 EXPOSE 22
-
 # Create entrypoint script that fixes SSH agent socket permissions and syncs keys
 RUN echo '#!/bin/zsh' > /usr/local/bin/vde-entrypoint && \
     echo '# Fix SSH agent socket permissions so devuser can access it' >> /usr/local/bin/vde-entrypoint && \

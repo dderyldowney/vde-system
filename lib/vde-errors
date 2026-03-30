@@ -43,7 +43,7 @@ VDE_ERRORS_VERBOSE="${VDE_ERRORS_VERBOSE:-0}"
 export VDE_ERRORS_VERBOSE
 
 # Documentation base URL
-VDE_ERRORS_DOC_URL="${VDE_ERRORS_DOC_URL:-https://github.com/dderyldowney/dev/blob/main/docs}"
+VDE_ERRORS_DOC_URL="${VDE_ERRORS_DOC_URL:-https://github.com/dderyldowney/VDE/blob/main/docs}"
 
 # Show remediation steps by default
 VDE_ERRORS_SHOW_SOLUTION="${VDE_ERRORS_SHOW_SOLUTION:-1}"
@@ -275,9 +275,8 @@ vde_error_invalid_vm_name() {
     vde_error_show \
         "Invalid VM name: '${name}'" \
         "VM names must follow the naming convention" \
-        "1. Language VMs should use format: vde-<name> (e.g., vde-python, rust-dev)
-2. Service VMs should use format: <name> (e.g., postgres, redis)
-3. Only lowercase alphanumeric characters are allowed" \
+        "1. All VMs should use format: vde-<name> (e.g., vde-python, vde-postgres)
+2. Only lowercase alphanumeric characters are allowed" \
         "predefined-vm-types.md#naming-convention"
 }
 
