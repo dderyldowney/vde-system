@@ -1,42 +1,37 @@
-# Session Handover — Docker Feature Stack (Wave 4)
+# Session Handover — Docker Feature Stack (Wave 4 & Phase P)
 
 **Mission:** Validate core Docker infrastructure, then stack Docker-tagged features one by one.
 **Rule:** Step files must use `bin/vde` CLI — no direct `docker` subprocess calls.
 
 ---
 
-## 1. Context (Wave 4 - Systemic Debt & Port Logic)
-- **Status:** GREEN (268/268 fast tests, O-1, O-6, O-7 features PASS)
-- **Technical Debt:** Systemic debt (DRY, imports, timeouts) has been resolved.
-- **Port Logic:** Fixed flawed "max+1" allocation which was causing range exhaustion in CI.
+## 1. Context (Wave 4 & Phase P - Architectural Reorganization)
+- **Status:** GREEN (268/268 fast tests, O-1 through O-8 features PASS)
+- **Architecture**: Phase P successfully reorganized `configs/docker/` into `languages/` and `services/` subdirectories.
+- **Port Logic:** Fixed flawed "max+1" allocation; protected "forever" ports.
 
 ---
 
 ## 2. Changes Implemented
-- **Canonical Helpers**: `vm_common.py` now hosts `load_vm_types_raw()`, `resolve_workspace_host_path()`, and `get_ssh_port_from_compose()`.
-- **Import Standardization**: Standardized `VDE_ROOT` and constant imports across all step files.
-- **Timeout Alignment**: Aligned all container operation timeouts (`start`/`create`: 300s, `stop`/`remove`: 60s).
-- **Behavioral Assertions**: Replaced "fake" tests in `configuration_management_steps.py` with real runtime/config checks.
-- **Robust Port Search**: `find_available_port` in `lib/vm-common` now searches for the first free port in the range.
-- **Cache Rebuild Fix**: Fixed logic bug in `load_vm_types` that was preventing `vde rebuild-cache` from forcing a fresh reload.
-- **Improved VM Status**: Refactored `vde list` to use real-time Docker data; aligned `[CREATED]` with Docker native state, and added `[IMAGE]` and `[CONFIGURED]` for finer granularity.
-- **Forever Port Protection**: Shortened `VDE_LANG_PORT_END` to 2289, reserving 2290-2299 for manual test VMs (`testport1`, `testport2`, `displaytest`).
-- **Unified VDE Command**: Refactored all test steps to use `vde <command>` instead of calling underlying scripts in `bin/` directly.
+- **Phase P Reorganization**: Configurations moved to category subdirectories. Updated `vm_common.py`, `vde-docker`, `create-virtual-for`, and `vde-rebuild`.
+- **Template Updates**: `docker-compose.yml` templates and existing files updated with corrected relative paths (`../../../../`).
+- **Standardized BDD**: Refactored all feature and step files to support reorganized paths and use `vde <command>` unified interface.
+- **Improved VM Status**: `vde list` now provides real-time Docker state with precise labels (`[RUNNING]`, `[STOPPED]`, `[IMAGE]`, `[CONFIGURED]`).
+- **Cache & Ports**: Fixed cache reload guard; implemented "first hole" port search.
 
 ---
 
 ## 3. Current State
 - `behave --tags="not @integration"` -> 268 Passed
-- `behave tests/features/core-infrastructure/configuration-management.feature` -> 23 Passed
-- `behave tests/features/core-infrastructure/critical-path.feature` -> 14 Passed
+- `behave tests/features/core-infrastructure/` -> 100% Green
 - Supervisor Audit -> PASS
 
 ---
 
 ## 4. Next Session Recommendations
-1. **Verification**: Run the full integration test suite (`./tests/run-full-test-suite.zsh`) to ensure no regressions in other areas.
-2. **Phase P - Architectural Refactoring**: Begin the reorganization of the `configs/docker/` directory into `languages/` and `services/` subdirectories.
-3. **Audit Remaining Step Files**: Perform a similar DRY/behavioral pass on remaining step files (O-2 through O-5, O-8).
+1. **Full Integration Verification**: Run `./tests/run-full-test-suite.zsh` to ensure zero regressions across the entire project after the major directory move.
+2. **Phase Q - Advanced Networking**: Begin implementation of advanced networking features (spec section 14).
+3. **Audit Residual Duplication**: Perform a minor DRY pass on O-2 through O-5 step files if needed.
 
 ---
 

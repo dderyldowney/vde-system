@@ -1,6 +1,6 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-29T00:00:00-04:00
+**Last Updated:** 2026-03-29T23:00:00-04:00
 **Mission:** Ensure core Docker infrastructure is working and passing, then stack Docker features one by one
 
 ---
@@ -20,7 +20,8 @@
 
 ---
 
-## RECENT ACHIEVEMENTS (Wave 4)
+## RECENT ACHIEVEMENTS (Wave 4 & Phase P)
+- **Phase P Architectural Refactoring**: Successfully reorganized `configs/docker/` into `languages/` and `services/` subdirectories. Updated all core logic, CLI scripts, and BDD tests to be category-aware.
 - **Resolved Systemic Debt**: Consolidated VM loaders, host-path resolvers, and SSH port extractors into canonical helpers in `vm_common.py`.
 - **Standardized Infrastructure**: Aligned timeouts and standardized imports across 10+ BDD step definition files.
 - **Fixed Port Allocation**: Refactored `find_available_port` to find first available port instead of max+1, preventing range exhaustion in tests.
@@ -28,7 +29,7 @@
 - **Improved VM State Classification**: Refactored `vde list` to use real-time Docker data; aligned `[CREATED]` with Docker native state, and added `[IMAGE]` and `[CONFIGURED]` for finer granularity.
 - **Protected Forever Ports**: Shortened auto-allocation range to 2200-2289, reserving 2290-2299 for manual/test VMs.
 - **Unified Command Enforcement**: Refactored all test steps to exclusively use the canonical `vde` entry point, ensuring only `bin/vde` calls underlying scripts or Docker.
-- **Stable Green State**: 268+ fast tests and full integration features passing consistently.
+- **Stable Green State**: 268+ fast tests and full integration features (O-1, O-6, O-7) passing consistently.
 
 ---
 
@@ -46,20 +47,20 @@
 | 3 | `vm-rebuild.feature` | 8 | ✅ | ✅ 8/8 PASSING |
 | 4 | `docker-operations.feature` | 12 | ✅ | ✅ 12/12 PASSING |
 | 5 | `vm-full-lifecycle.feature` | 1 | ✅ | ✅ 1/1 PASSING |
-| 6 | `docker-management.feature` | 13 | ✅ | ✅ 0 undefined |
-| 7 | `configuration-management.feature` | 20 | ❌ | NEXT |
-| 8 | `productivity.feature` | 4 | ❌ | PENDING |
+| 6 | `docker-management.feature` | 13 | ✅ | ✅ 13/13 PASSING |
+| 7 | `configuration-management.feature` | 23 | ✅ | ✅ 23/23 PASSING |
+| 8 | `productivity.feature` | 4 | ✅ | ✅ 4/4 PASSING |
 
-### Phase 0 Progress (2026-03-27)
-- **O-1 through O-6:** ✅ Complete
-- **Next:** O-7 configuration-management.feature (write step defs)
+### Phase 0 Progress (2026-03-29)
+- **O-1 through O-8:** ✅ Complete
+- **Next:** Verify full project with `run-full-test-suite.zsh`.
 
 ---
 
-## FAST TEST BASELINE (2026-03-27)
+## FAST TEST BASELINE (2026-03-29)
 
 ```
-Fast tests (--tags="not @integration"): 268 passed / 0 failed / 187 skipped
+Fast tests (--tags="not @integration"): 268 passed / 0 failed / 233 skipped
 Runtime: ~2.5 minutes
 ```
 
