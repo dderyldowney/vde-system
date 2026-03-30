@@ -770,7 +770,18 @@ vm_is_created() {
     local configs_dir="${VDE_CONFIGS_DIR:-${VDE_ROOT_DIR}/configs/docker}"
     local env_dir="${VDE_ENV_DIR:-${VDE_ROOT_DIR}/env-files}"
     
-    # A VM is only "created" if it has the complete trio: compose, Dockerfile, and env file
+    # 1. Check NEW category-specific path first
+    local category
+    category=$(get_vm_category "${vm_name}")
+    if [[ "${category}" != "unknown" ]]; then
+        if [[ -f "${configs_dir}/${category}/${raw_name}/docker-compose.yml" ]] && \
+           [[ -f "${configs_dir}/${category}/${raw_name}/Dockerfile" ]] && \
+           [[ -f "${env_dir}/${full_name}.env" ]]; then
+            return 0
+        fi
+    fi
+
+    # 2. Fallback to OLD conventional path
     if [[ -f "${configs_dir}/${raw_name}/docker-compose.yml" ]] && \
        [[ -f "${configs_dir}/${raw_name}/Dockerfile" ]] && \
        [[ -f "${env_dir}/${full_name}.env" ]]; then
@@ -787,6 +798,16 @@ vm_template_exists() {
     local raw_name="${vm_name#vde-}"
     local configs_dir="${VDE_CONFIGS_DIR:-${VDE_ROOT_DIR}/configs/docker}"
     
+    # Check NEW category-specific path first
+    local category
+    category=$(get_vm_category "${vm_name}")
+    if [[ "${category}" != "unknown" ]]; then
+        if [[ -f "${configs_dir}/${category}/${raw_name}/docker-compose.yml" ]]; then
+            return 0
+        fi
+    fi
+
+    # Fallback to OLD conventional path
     if [[ -f "${configs_dir}/${raw_name}/docker-compose.yml" ]]; then
         return 0
     fi
@@ -845,6 +866,26 @@ get_vm_display_name() {
 get_vm_install() {
     local vm_name="${1}"
     echo "${VM_INSTALL[${vm_name}]:--}"
+}
+
+# Get VM category (languages or services)
+# Args: <vm_name>
+get_vm_category() {
+    local vm_name="${1}"
+    local vm_type
+    vm_type=$(get_vm_type "${vm_name}")
+    
+    case "${vm_type}" in
+        lang)
+            echo "languages"
+            ;;
+        service)
+            echo "services"
+            ;;
+        *)
+            echo "unknown"
+            ;;
+    esac
 }
 
 # resolve_vm_name - Resolve VM name or alias to canonical name
@@ -1220,13 +1261,22 @@ ensure_vm_directories() {
     local vm_type="${2}"
     local raw_name
     raw_name=$(vde_normalize_name "${vm}")
+    
+    local category
+    category=$(get_vm_category "${vm}")
 
     local -a dirs
+    local config_dest
+    if [[ "${category}" != "unknown" ]]; then
+        config_dest="${CONFIGS_DIR}/${category}/${raw_name}"
+    else
+        config_dest="${CONFIGS_DIR}/${raw_name}"
+    fi
 
     if [ "${vm_type}" = "lang" ]; then
-        dirs=("${CONFIGS_DIR}/${raw_name}" "${VDE_ROOT_DIR}/projects/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
+        dirs=("${config_dest}" "${VDE_ROOT_DIR}/projects/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
     else
-        dirs=("${CONFIGS_DIR}/${raw_name}" "${VDE_ROOT_DIR}/data/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
+        dirs=("${config_dest}" "${VDE_ROOT_DIR}/data/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
     fi
 
     local dir

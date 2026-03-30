@@ -67,8 +67,18 @@ get_compose_file() {
     compose_file=$(get_docker_config compose_file "${raw_name}" 2>/dev/null) || true
     
     if [ -z "${compose_file}" ]; then
-        # Fallback to conventional path using raw name
-        compose_file="${CONFIGS_DIR}/${raw_name}/docker-compose.yml"
+        # Check NEW category-specific path first
+        local category
+        category=$(get_vm_category "${vm_name}" 2>/dev/null) || category="unknown"
+        
+        if [[ "${category}" != "unknown" ]]; then
+            compose_file="${CONFIGS_DIR}/${category}/${raw_name}/docker-compose.yml"
+        fi
+        
+        # Fallback to OLD conventional path if new path doesn't exist
+        if [[ -z "${compose_file}" || ! -f "${compose_file}" ]]; then
+            compose_file="${CONFIGS_DIR}/${raw_name}/docker-compose.yml"
+        fi
     fi
 
     if [ -f "${compose_file}" ]; then

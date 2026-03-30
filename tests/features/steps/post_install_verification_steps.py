@@ -504,10 +504,10 @@ def step_progress_messages(context):
     assert has_progress, "Setup script does not contain progress messages"
 
 
-@then("configs/docker/python/ should be created")
+@then("configs/docker/languages/python/ should be created")
 def step_python_config_created(context):
     """Verify Python VM config directory exists."""
-    python_config_dir = Path(VDE_ROOT) / "configs" / "docker" / "python"
+    python_config_dir = get_vm_conf_dir("python")
     assert python_config_dir.exists(), (
         f"Python config directory does not exist at {python_config_dir}"
     )
@@ -664,7 +664,7 @@ def step_python_env_working(context):
     )
 
     # Check that Python VM config/template exists
-    python_config = Path(VDE_ROOT) / "configs" / "docker" / "python"
+    python_config = get_vm_conf_dir("python")
     if not python_config.exists():
         # May use templates
         templates_dir = Path(VDE_ROOT) / "templates"

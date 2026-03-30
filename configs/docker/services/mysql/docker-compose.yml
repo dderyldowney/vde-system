@@ -1,0 +1,48 @@
+# Template for service VMs
+# Variables: mysql, 2402, 3306, apt-get update -y && apt-get install -y default-mysql-server
+# SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
+name: vde-mysql
+services:
+  vde-mysql:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/mysql/Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: vde-mysql:latest
+    container_name: vde-mysql
+    hostname: vde-mysql
+    restart: unless-stopped
+    command: /usr/sbin/sshd -D
+
+    ports:
+      - "2402:22"
+      - "3306:3306"
+
+    volumes:
+      - ../../../../data/mysql:/data
+      - ../../../../logs/mysql:/logs
+      - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for service VM communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../../env-files/vde-mysql.env
+
+    networks:
+      - vde-net
+
+    labels:
+      - "vde.managed=true"
+      - "vde.type=service"
+      - "vde.name=mysql"
+
+networks:
+  vde-net:
+    external: true

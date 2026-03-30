@@ -1,0 +1,45 @@
+# Template for language VMs
+# Variables: c, 2201, apt-get update -y && apt-get install -y gcc make cmake gdb
+name: vde-c
+services:
+  vde-c:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/c/Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: vde-c:latest
+    container_name: vde-c
+    hostname: vde-c
+    restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=vde-c"
+    command: /usr/sbin/sshd -D
+
+    ports:
+      - "2201:22"
+
+    volumes:
+      - ../../../../projects/c:/home/devuser/workspace
+      - ../../../../logs/c:/logs
+      - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../../env-files/vde-c.env
+
+    networks:
+      - vde-net
+
+networks:
+  vde-net:
+    external: true

@@ -12,7 +12,7 @@ from pathlib import Path
 from behave import given, then, when
 
 # Import shared configuration
-from vm_common import VDE_ROOT, run_vde_command
+from vm_common import VDE_ROOT, run_vde_command, get_compose_file
 
 # =============================================================================
 # VM Types Configuration Parsing
@@ -140,10 +140,9 @@ def step_check_lang_ports(context):
     _ensure_vms_loaded(context)
     context.lang_ports = []
 
-    configs_dir = VDE_ROOT / "configs" / "docker"
     for vm_name, vm_data in context.vms.items():
         if vm_data['type'] == 'lang':
-            compose_file = configs_dir / vm_name.replace('vde-', '') / "docker-compose.yml"
+            compose_file = get_compose_file(vm_name)
             if compose_file.exists():
                 content = compose_file.read_text()
                 match = re.search(r'"(\d+):22"', content)
@@ -158,10 +157,9 @@ def step_check_service_ports(context):
     _ensure_vms_loaded(context)
     context.service_ports = []
 
-    configs_dir = VDE_ROOT / "configs" / "docker"
     for vm_name, vm_data in context.vms.items():
         if vm_data['type'] == 'service':
-            compose_file = configs_dir / vm_name.replace('vde-', '') / "docker-compose.yml"
+            compose_file = get_compose_file(vm_name)
             if compose_file.exists():
                 content = compose_file.read_text()
                 match = re.search(r'"(\d+):22"', content)
@@ -206,11 +204,11 @@ def step_query_service_aliases(context):
 def step_check_lang_container_naming(context):
     """Check container naming pattern for language VMs."""
     _ensure_vms_loaded(context)
-    configs_dir = VDE_ROOT / "configs" / "docker"
     context.lang_container_names = {}
     for vm_name, vm_data in context.vms.items():
         if vm_data['type'] == 'lang':
-            compose_file = configs_dir / vm_name.replace('vde-', '') / "docker-compose.yml"
+            # Use get_compose_file which is category-aware
+            compose_file = get_compose_file(vm_name.replace('vde-', ''))
             if compose_file.exists():
                 content = compose_file.read_text()
                 match = re.search(r'container_name:\s*(\S+)', content)
@@ -222,11 +220,11 @@ def step_check_lang_container_naming(context):
 def step_check_service_container_naming(context):
     """Check container naming pattern for service VMs."""
     _ensure_vms_loaded(context)
-    configs_dir = VDE_ROOT / "configs" / "docker"
     context.service_container_names = {}
     for vm_name, vm_data in context.vms.items():
         if vm_data['type'] == 'service':
-            compose_file = configs_dir / vm_name.replace('vde-', '') / "docker-compose.yml"
+            # Use get_compose_file which is category-aware
+            compose_file = get_compose_file(vm_name.replace('vde-', ''))
             if compose_file.exists():
                 content = compose_file.read_text()
                 match = re.search(r'container_name:\s*(\S+)', content)

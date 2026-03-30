@@ -84,7 +84,7 @@ Feature: Installation and Initial Setup
     Given I've just installed VDE
     When I run "create-virtual-for python"
     Then I should see helpful progress messages
-    And configs/docker/python/ should be created
+    And configs/docker/languages/python/ should be created
     And docker-compose.yml should be generated
     And SSH config should be updated
     And I should be told what to do next

@@ -131,8 +131,11 @@ def step_following_workflow(context, workflow_name):
 
 @given("the project contains VDE configuration in configs/")
 def step_project_has_configs(context):
-    """Verify configs/docker directory exists."""
+    """Verify configs/ directory exists and has docker configs."""
     assert (VDE_ROOT / "configs" / "docker").is_dir()
+    # Ensure there are some VM configs present
+    docker_configs = list((VDE_ROOT / "configs" / "docker").rglob("docker-compose.yml"))
+    assert len(docker_configs) > 0, "No docker-compose configs found in configs/docker/"
 
 
 @given("I am experiencing issues")
@@ -438,7 +441,8 @@ def step_all_vms_running_fast(context):
     """Verify VM configurations are ready for quick startup."""
     configs_dir = VDE_ROOT / "configs" / "docker"
     assert configs_dir.is_dir(), "VM configs directory should exist"
-    compose_files = list(configs_dir.glob("*/docker-compose.yml"))
+    # Search recursively for compose files to handle category subdirectories
+    compose_files = list(configs_dir.rglob("docker-compose.yml"))
     assert len(compose_files) >= 1, "Should have at least one VM config ready"
 
 
@@ -582,7 +586,7 @@ def step_no_monopoly(context):
             memory = 0
         assert memory > 0, f"Expected python container Memory > 0, got: {result.stdout.strip()}"
     else:
-        compose_file = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+        compose_file = get_compose_file("python")
         assert compose_file.exists(), f"Compose file not found: {compose_file}"
         content = compose_file.read_text()
         assert "mem_limit" in content or "memory" in content or "deploy" in content, (

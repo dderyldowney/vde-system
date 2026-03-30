@@ -88,7 +88,7 @@
         "compose_file": {
           "type": "string",
           "description": "Path to docker-compose.yml file",
-          "pattern": "^configs/docker/[a-z0-9]+/docker-compose\\.yml$"
+          "pattern": "^configs/docker/(languages|services)/[a-z0-9]+/docker-compose\\.yml$"
         },
         "env_file": {
           "type": "string",
@@ -126,7 +126,7 @@
         "compose_file": {
           "type": "string",
           "description": "Path to docker-compose.yml file",
-          "pattern": "^configs/docker/[a-z0-9]+/docker-compose\\.yml$"
+          "pattern": "^configs/docker/(languages|services)/[a-z0-9]+/docker-compose\\.yml$"
         },
         "env_file": {
           "type": "string",
