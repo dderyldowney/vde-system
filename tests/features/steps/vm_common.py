@@ -35,11 +35,60 @@ IN_TEST_MODE = os.environ.get("VDE_TEST_MODE") == "1"
 ALLOW_CLEANUP = IN_CONTAINER or IN_TEST_MODE
 
 
-def _vm_conf_dir(vm_name):
-    """Get VM configuration directory in configs/docker/."""
+def get_vm_conf_dir(vm_name):
+    """Get VM configuration directory in configs/docker/<category>/."""
     # Normalize name (remove vde- prefix if present)
     name = vm_name.replace("vde-", "")
+    
+    # Check NEW category-specific path first
+    category = get_vm_category(vm_name)
+    if category != "unknown":
+        new_path = VDE_ROOT / "configs" / "docker" / category / name
+        if new_path.exists():
+            return new_path
+            
+    # Fallback to OLD conventional path
     return VDE_ROOT / "configs" / "docker" / name
+
+
+def get_vm_type(vm_name):
+    """Get VM type (lang or service) from configuration."""
+    # Resolve name to canonical vde- prefixed name
+    raw_name = vm_name.replace("vde-", "")
+    full_name = f"vde-{raw_name}"
+    
+    vm_types = load_vm_types_raw()
+    
+    # Check languages
+    for lang in vm_types.get("vms", {}).get("language", []):
+        if lang.get("name") == full_name or raw_name in lang.get("aliases", []):
+            return "lang"
+            
+    # Check services
+    for service in vm_types.get("vms", {}).get("service", []):
+        if service.get("name") == full_name or raw_name in service.get("aliases", []):
+            return "service"
+            
+    return "unknown"
+
+
+def get_vm_category(vm_name):
+    """Get VM category (languages or services) for a given VM name."""
+    vm_type = get_vm_type(vm_name)
+    
+    if vm_type == "lang":
+        return "languages"
+    elif vm_type == "service":
+        return "services"
+    
+    # Fallback/Backward compatibility: check directories if not found in config
+    raw_name = vm_name.replace("vde-", "")
+    if (VDE_ROOT / "configs" / "docker" / "languages" / raw_name).exists():
+        return "languages"
+    if (VDE_ROOT / "configs" / "docker" / "services" / raw_name).exists():
+        return "services"
+        
+    return "unknown"
 
 
 def is_vde_available():
@@ -180,9 +229,19 @@ def get_compose_file(vm_name):
     Returns:
         Path: Path to the compose file
     """
-    # Use raw name for directory
-    raw_name = vm_name.replace("vde-", "")
-    return VDE_ROOT / "configs" / "docker" / raw_name / "docker-compose.yml"
+    return get_vm_conf_dir(vm_name) / "docker-compose.yml"
+
+
+def get_dockerfile(vm_name):
+    """Get the path to a VM's Dockerfile.
+
+    Args:
+        vm_name: Name of the VM (with or without vde- prefix)
+
+    Returns:
+        Path: Path to the Dockerfile
+    """
+    return get_vm_conf_dir(vm_name) / "Dockerfile"
 
 
 def compose_file_exists(vm_name):

@@ -8,23 +8,23 @@ Feature: Critical Path — VM Lifecycle
   # ── VM Config Structure (spec sections 4.1, 5.1, 5.2) ──
 
   Scenario: Language VM docker-compose.yml has correct container name
-    Given VM "python" config exists at "configs/docker/python/docker-compose.yml"
+    Given VM "python" config exists at "configs/docker/languages/python/docker-compose.yml"
     Then the compose file should contain "container_name: vde-python"
 
   Scenario: Service VM docker-compose.yml has correct container name
-    Given VM "postgres" config exists at "configs/docker/postgres/docker-compose.yml"
+    Given VM "postgres" config exists at "configs/docker/services/postgres/docker-compose.yml"
     Then the compose file should contain "container_name: vde-postgres"
 
   Scenario: VM docker-compose.yml uses vde-net network
-    Given VM "python" config exists at "configs/docker/python/docker-compose.yml"
+    Given VM "python" config exists at "configs/docker/languages/python/docker-compose.yml"
     Then the compose file should contain "vde-net"
 
   Scenario: VM docker-compose.yml has restart: unless-stopped
-    Given VM "python" config exists at "configs/docker/python/docker-compose.yml"
+    Given VM "python" config exists at "configs/docker/languages/python/docker-compose.yml"
     Then the compose file should contain "restart: unless-stopped"
 
   Scenario: Service VM docker-compose.yml exposes service port
-    Given VM "redis" config exists at "configs/docker/redis/docker-compose.yml"
+    Given VM "redis" config exists at "configs/docker/services/redis/docker-compose.yml"
     Then the compose file should contain "6379:6379"
 
   # ── Port Range Enforcement (spec section 10) ──
@@ -74,4 +74,4 @@ Feature: Critical Path — VM Lifecycle
     Given container "vde-python" is running
     When I run vde-cli "stop python"
     Then container "vde-python" should not be running
-    And "configs/docker/python/docker-compose.yml" should still exist
+    And "configs/docker/languages/python/docker-compose.yml" should still exist

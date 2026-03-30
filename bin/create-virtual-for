@@ -184,9 +184,11 @@ _create_one_vm() {
     # -----------------------
     vde_progress_info "Creating docker-compose.yml..."
 
-    local RAW_NAME compose_file template_file
+    local RAW_NAME compose_file template_file category
     RAW_NAME=$(vde_normalize_name "${VM_NAME}")
-    compose_file="${CONFIGS_DIR}/${RAW_NAME}/docker-compose.yml"
+    category=$(get_vm_category "${VM_NAME}")
+    
+    compose_file="${CONFIGS_DIR}/${category}/${RAW_NAME}/docker-compose.yml"
 
     if [[ "${_vm_type}" == "lang" ]]; then
         template_file="${TEMPLATES_DIR}/compose-language.yml"

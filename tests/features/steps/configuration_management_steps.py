@@ -9,7 +9,15 @@ import subprocess
 import yaml
 from pathlib import Path
 from behave import given, when, then
-from vm_common import run_vde_command, get_compose_file, VDE_ROOT, BIN_DIR, load_vm_types_raw, container_is_running
+from vm_common import (
+    run_vde_command,
+    get_compose_file,
+    get_vm_conf_dir,
+    VDE_ROOT,
+    BIN_DIR,
+    load_vm_types_raw,
+    container_is_running,
+)
 
 VM_TYPES_JSON = VDE_ROOT / "data" / "vm-types.json"
 VM_TYPES_CONF = VDE_ROOT / "data" / "vm-types.conf"
@@ -379,7 +387,7 @@ def step_existing_vms_keep_ports(context):
 
 @given("I need a different base OS or variant")
 def step_need_different_base_os(context):
-    dockerfile = VDE_ROOT / "configs" / "docker" / "python" / "Dockerfile"
+    dockerfile = get_vm_conf_dir("python") / "Dockerfile"
     assert dockerfile.exists(), f"Dockerfile not found: {dockerfile}"
     context.base_dockerfile = dockerfile
     context.base_dockerfile_original = dockerfile.read_text()
@@ -871,7 +879,7 @@ def step_need_local_config_different(context):
 
 @when("I create .env.local or docker-compose.override.yml")
 def step_create_local_override_files(context):
-    compose = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    compose = get_compose_file("python")
     assert compose.exists(), "python docker-compose.yml missing — no base for override"
     context.override_patterns = [".env", ".env-files/*"]
 
@@ -894,11 +902,11 @@ def step_local_overrides_not_committed(context):
 def step_team_config_not_affected(context):
     result = subprocess.run(
         ["git", "-C", str(VDE_ROOT), "ls-files",
-         "configs/docker/python/docker-compose.yml"],
+         "configs/docker/languages/python/docker-compose.yml"],
         capture_output=True, text=True,
     )
     assert "docker-compose.yml" in result.stdout, (
-        "configs/docker/python/docker-compose.yml not tracked by git"
+        "configs/docker/languages/python/docker-compose.yml not tracked by git"
     )
 
 
@@ -1056,7 +1064,7 @@ def step_made_changes_to_undo(context):
 
 @when("I remove my custom configurations")
 def step_remove_custom_configurations(context):
-    compose = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    compose = get_compose_file("python")
     assert compose.exists(), "python docker-compose.yml removed — cannot reset to defaults"
 
 
@@ -1083,7 +1091,7 @@ def step_vms_work_with_standard_settings(context):
         None,
     )
     assert python_vm is not None, "vde-python missing after cache rebuild"
-    compose = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    compose = get_compose_file("python")
     assert compose.exists(), "python docker-compose.yml missing after rebuild"
 
 

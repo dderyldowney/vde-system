@@ -1,0 +1,48 @@
+# Template for service VMs
+# Variables: redis, 2406, 6379, apt-get update -y && apt-get install -y redis-tools
+# SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
+name: vde-redis
+services:
+  vde-redis:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/redis/Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: vde-redis:latest
+    container_name: vde-redis
+    hostname: vde-redis
+    restart: unless-stopped
+    command: /usr/sbin/sshd -D
+
+    ports:
+      - "2406:22"
+      - "6379:6379"
+
+    volumes:
+      - ../../../../data/redis:/data
+      - ../../../../logs/redis:/logs
+      - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for service VM communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../../env-files/vde-redis.env
+
+    networks:
+      - vde-net
+
+    labels:
+      - "vde.managed=true"
+      - "vde.type=service"
+      - "vde.name=redis"
+
+networks:
+  vde-net:
+    external: true

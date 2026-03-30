@@ -1,0 +1,48 @@
+# Template for service VMs
+# Variables: mongodb, 2401, 27017, apt-get update -y && apt-get install -y mongodb-org-shell
+# SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
+name: vde-mongodb
+services:
+  vde-mongodb:
+    build:
+      context: ../../..
+      dockerfile: configs/docker/mongodb/Dockerfile
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: vde-mongodb:latest
+    container_name: vde-mongodb
+    hostname: vde-mongodb
+    restart: unless-stopped
+    command: /usr/sbin/sshd -D
+
+    ports:
+      - "2401:22"
+      - "27017:27017"
+
+    volumes:
+      - ../../../../data/mongodb:/data
+      - ../../../../logs/mongodb:/logs
+      - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for service VM communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../../env-files/vde-mongodb.env
+
+    networks:
+      - vde-net
+
+    labels:
+      - "vde.managed=true"
+      - "vde.type=service"
+      - "vde.name=mongodb"
+
+networks:
+  vde-net:
+    external: true

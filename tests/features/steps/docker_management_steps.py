@@ -705,7 +705,7 @@ def step_build_uses_multistage_dockerfile(context):
     on top of a shared base, matching the intent of multi-stage build efficiency.
     """
     vm = getattr(context, "rebuilt_vm", _REBUILD_VM)
-    dockerfile_path = VDE_ROOT / "configs" / "docker" / vm / "Dockerfile"
+    dockerfile_path = get_dockerfile(vm)
     assert dockerfile_path.exists(), (
         f"Dockerfile not found at {dockerfile_path}"
     )

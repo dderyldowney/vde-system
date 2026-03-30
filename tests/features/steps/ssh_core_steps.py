@@ -1121,7 +1121,8 @@ def step_vm_with_port_removed(context, port):
 @when('I inspect the docker-compose.yml for VM "{vm_name}"')
 def step_inspect_compose_for_vm(context, vm_name):
     """Read the docker-compose.yml for the given VM into context."""
-    compose_path = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
+    from vm_common import get_compose_file
+    compose_path = get_compose_file(vm_name)
     assert compose_path.exists(), f"docker-compose.yml not found for VM '{vm_name}': {compose_path}"
     context.compose_content = compose_path.read_text()
 

@@ -20,11 +20,7 @@ VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
 VDE_ROOT_DIR="$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)"
 export VDE_ROOT_DIR
 
-source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
-source "${VDE_ROOT_DIR}/lib/vde-constants"
-source "${VDE_ROOT_DIR}/lib/vde-errors"
-source "${VDE_ROOT_DIR}/lib/vde-log"
-source "${VDE_ROOT_DIR}/lib/vde-naming"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Configuration
 NOCACHE=false
@@ -118,8 +114,16 @@ get_vm_list() {
         grep -v '^#' "${vm_types_file}" | grep -v '^$' | cut -d'|' -f2
     else
         # Fallback to directory listing, but ensure we return prefixed names for consistency
-        ls -1 "${CONFIGS_DIR}" 2>/dev/null | grep -v '^$' | grep -v "vde-base.Dockerfile" | while read -r raw; do
-            vde_get_container_name "${raw}"
+        # Recursively find all docker-compose.yml files in CONFIGS_DIR subcategories
+        for cat in languages services; do
+            [[ ! -d "${CONFIGS_DIR}/${cat}" ]] && continue
+            find "${CONFIGS_DIR}/${cat}" -name "docker-compose.yml" | while read -r compose_file; do
+                local parent_dir
+                parent_dir=$(dirname "${compose_file}")
+                local raw
+                raw=$(basename "${parent_dir}")
+                vde_get_container_name "${raw}"
+            done
         done || true
     fi
 }
@@ -153,10 +157,20 @@ build_vm_image() {
     local vm_name="${1}"
     local raw_name
     raw_name=$(vde_normalize_name "${vm_name}")
-    local compose_file="${CONFIGS_DIR}/${raw_name}/docker-compose.yml"
+    local category
+    category=$(get_vm_category "${vm_name}")
+    local compose_file
     
+    # Try new structure first
+    compose_file="${CONFIGS_DIR}/${category}/${raw_name}/docker-compose.yml"
+    
+    # Fallback to get_compose_file for legacy or custom paths
     if [[ ! -f "${compose_file}" ]]; then
-        echo "⚠ Skipping ${vm_name}: no docker-compose.yml found at ${compose_file}"
+        compose_file=$(get_compose_file "${vm_name}" 2>/dev/null) || true
+    fi
+    
+    if [[ -z "${compose_file}" || ! -f "${compose_file}" ]]; then
+        echo "⚠ Skipping ${vm_name}: no docker-compose.yml found"
         return 0
     fi
     
@@ -168,7 +182,7 @@ build_vm_image() {
     
     echo "Building ${vm_name}..."
     
-    if (cd "${CONFIGS_DIR}/${raw_name}" && eval "${build_cmd}" 2>&1); then
+    if (cd "$(dirname "${compose_file}")" && eval "${build_cmd}" 2>&1); then
         echo "✓ ${vm_name} built successfully"
         return 0
     else

@@ -5,7 +5,7 @@ Feature: VM Full Lifecycle Critical Path
   Scenario: Full VM lifecycle for Python development environment
     Given no running VM instance exists for "python"
     When I run "vde create python"
-    Then a docker-compose.yml file should be created at "configs/docker/python/docker-compose.yml"
+    Then a docker-compose.yml file should be created at "configs/docker/languages/python/docker-compose.yml"
     And the docker-compose.yml should contain SSH port mapping
     When I run "vde start python"
     Then SSH config entry should exist for "vde-python"

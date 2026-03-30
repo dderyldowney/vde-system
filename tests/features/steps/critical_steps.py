@@ -335,7 +335,7 @@ def step_running_container_named(context):
 
 @then('VM config should still exist for "python"')
 def step_python_config_still_exists(context):
-    compose = VDE_ROOT / "configs" / "docker" / "python" / "docker-compose.yml"
+    compose = get_compose_file("python")
     assert compose.exists(), f"compose file gone after stop: {compose}"
 
 
@@ -357,7 +357,7 @@ def step_all_container_names_prefixed(context):
     all_vms = list(context.lang_vms) + list(context.svc_vms)
     errors = []
     for vm in all_vms:
-        compose = VDE_ROOT / "configs" / "docker" / vm / "docker-compose.yml"
+        compose = get_compose_file(vm)
         if not compose.exists():
             continue  # VM not created yet; only check existing compose files
         text = compose.read_text()

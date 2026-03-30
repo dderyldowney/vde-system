@@ -218,7 +218,7 @@ def step_docker_image_rebuilt(context):
 def step_config_still_exists(context):
     """Verify VM configuration still exists after remove."""
     vm_name = getattr(context, "vm_name", "python")
-    compose_file = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
+    compose_file = get_compose_file(vm_name)
     assert compose_file.exists(), f"VM config not found: {compose_file}"
 
 
@@ -272,7 +272,7 @@ def step_compose_file_created(context, compose_path):
 def step_compose_has_ssh_port(context):
     """Verify compose file contains an SSH port mapping (port 22 target)."""
     vm_name = getattr(context, "vm_name", "python")
-    compose = VDE_ROOT / "configs" / "docker" / vm_name / "docker-compose.yml"
+    compose = get_compose_file(vm_name)
     content = compose.read_text()
     assert ":22" in content or "target: 22" in content, (
         f"No SSH port mapping found in compose file:\n{content[:400]}"
