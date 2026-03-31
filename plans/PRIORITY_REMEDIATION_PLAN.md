@@ -23,74 +23,50 @@
 
 ### 1.1 Approach: Decorator Stacking
 
-Instead of creating a new file, add multiple `@given`/`@when`/`@then` decorators to existing functions. This is the idiomatic Behave approach:
+Instead of creating a new file, add multiple `@given`/`@when`/`@then` decorators to existing functions. 
 
-```python
-# BEFORE:
-@given('SSH agent is running')
-def step_ssh_agent_is_running(context):
-    ...
+### 1.2 Verified Mapping
 
-# AFTER:
-@given('SSH agent is running')
-@given('the SSH agent is running')  # NEW: matches feature file wording
-def step_ssh_agent_is_running(context):
-    ...
-```
+**File: `tests/features/steps/ssh_core_steps.py`**
 
-### 1.2 Changes Required
-
-**File: `tests/features/steps/ssh_config_steps.py`**
-
-| Line | Current | Add Decorator |
+| Function | Current Decorators | Add Decorator |
 |------|---------|---------------|
-| 566 | `@given('SSH agent is running')` | `@given('the SSH agent is running')` |
-| 583 | `@given('keys are loaded into agent')` | `@given('my keys are loaded in the agent')` |
-| 504 | `@given('no SSH keys exist in ~/.ssh/vde/')` | `@given('I do not have any SSH keys')` |
-| 50 | `@given('~/.ssh/vde/ contains SSH keys')` | `@given('I have SSH keys of different types in VDE')` |
+| `step_ssh_agent_is_running` (L537) | `@given("the SSH agent is running")`<br>`@given("SSH agent is running")` | (Already exists) |
+| `step_ssh_keys_loaded` (L781) | `@then("available SSH keys should be loaded into agent")` | `@given("my keys are loaded in the agent")`<br>`@given("keys are loaded into agent")` |
+| `step_no_ssh_keys_in_vde` (L471) | `@given("no SSH keys exist in ~/.ssh/vde/")` | `@given("I do not have any SSH keys")` |
+| `step_ssh_vde_contains_keys` (L99) | `@given("~/.ssh/vde/ contains SSH keys")` | `@given("I have SSH keys of different types in VDE")` |
 
-**File: `tests/features/steps/installation_steps.py`**
+**File: `tests/features/steps/post_install_verification_steps.py`**
 
-| Line | Current | Add Decorator |
+| Function | Current Decorators | Add Decorator |
 |------|---------|---------------|
-| 43 | `@given('I have cloned the VDE repository to ~/dev')` | `@given('I have just cloned VDE')` |
+| `step_impl` (L43) | (Verify existing step for cloning) | `@given("I have just cloned VDE")`<br>`@given("I have cloned the VDE repository to ~/dev")` |
 
 **File: `tests/features/steps/documented_workflow_steps.py`**
 
-| Line | Current | Add Decorator |
+| Function | Current Decorators | Add Decorator |
 |------|---------|---------------|
-| 57 | `@given("I have VDE installed")` | `@given("I have VDE configured")` |
-| 64 | `@given("I am new to VDE")` | `@given("I am a new VDE user")` |
+| `step_vde_installed` (L67) | `@given("I have VDE configured")`<br>`@given("I have VDE installed")` | (Already exists) |
+| `step_new_to_vde` (L74) | `@given("I am new to VDE")` | `@given("I am a new VDE user")` |
 
-**File: `tests/features/steps/pattern_steps.py`**
+**File: `tests/features/steps/docker_management_steps.py`**
 
-| Line | Current | Add Decorator |
+| Function | Current Decorators | Add Decorator |
 |------|---------|---------------|
-| 61 | `@given('I have several VMs running')` | `@given('I have multiple VMs running')` |
+| `step_have_multiple_vms_running` (L843) | `@given("I have multiple VMs running")` | `@given("I have several VMs running")` |
+| `step_have_several_created` (Check L170 context) | (Identify creation step) | `@given("I have created multiple VMs")`<br>`@given("I have created VMs before")`<br>`@given("I have created several VMs")` |
 
-**File: `tests/features/steps/vm_lifecycle_steps.py`**
+**File: `tests/features/steps/vm_to_host_steps.py`**
 
-| Line | Current | Add Decorator |
+| Function | Current Decorators | Add Decorator |
 |------|---------|---------------|
-| 80 | `@given("I have created several VMs")` | `@given("I have created VMs before")`<br>`@given("I have created multiple VMs")` |
+| `step_ssh_into_vm_tohost` (L34) | `@when('I SSH into the {vm_name} VM for VM-to-Host')` | `@given("I am connected to a VM")`<br>`@given("I am connected via SSH")` |
 
-**File: `tests/features/steps/ssh_connection_steps.py`**
+**File: `tests/features/steps/critical_steps.py`**
 
-| Line | Current | Add Decorator |
+| Function | Current Decorators | Add Decorator |
 |------|---------|---------------|
-| 33 | `@given("I have set up SSH keys")` | `@given("I have configured SSH through VDE")` |
-
-**File: `tests/features/steps/ssh_remote_access_steps.py`**
-
-| Line | Current | Add Decorator |
-|------|---------|---------------|
-| 31 | `@given('I am connected via SSH')` | `@given('I am connected to a VM')` |
-
-**File: `tests/features/steps/debugging_and_port_steps.py`**
-
-| Line | Current | Add Decorator |
-|------|---------|---------------|
-| 332 | `@when('I create a new language VM')` | `@when('I create a VM')` |
+| `step_run_vde_cli` (L128) | `@when('I run VDE command "{command}"')` | `@when("I create a VM")`<br>`@when("I create a new language VM")` |
 
 ### 1.3 New Steps Required
 

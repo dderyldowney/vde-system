@@ -839,6 +839,7 @@ _ISOLATION_PRIMARY = "python"
 _ISOLATION_SECONDARY = "go"
 
 
+@given("I have several VMs running")
 @given("I have multiple VMs running")
 def step_have_multiple_vms_running(context):
     """Ensure at least two VMs are running for isolation testing."""

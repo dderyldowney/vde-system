@@ -30,6 +30,8 @@ def step_multiple_vms_running_tohost(context):
             wait_for_container(vm, timeout=60)
     context.num_vms_running = 2
 
+@given("I am connected to a VM")
+@given("I am connected via SSH")
 @when('I SSH into the {vm_name} VM for VM-to-Host')
 @when('I SSH into a VM for VM-to-Host')
 def step_ssh_into_vm_tohost(context, vm_name='python'):

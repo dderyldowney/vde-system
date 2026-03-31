@@ -784,3 +784,11 @@ def step_ssh_config_file_exists(context):
     """Verify SSH config file exists."""
     ssh_config = Path.home() / ".ssh" / "config"
     context.ssh_config_exists = ssh_config.exists()
+
+
+@given("I have just cloned VDE")
+@given("I have cloned the VDE repository to ~/dev")
+def step_cloned_vde(context):
+    """Ensure VDE repository is cloned."""
+    import os
+    assert os.path.isdir(os.environ.get("VDE_ROOT_DIR", os.getcwd())), "VDE root not found"
