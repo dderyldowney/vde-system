@@ -25,7 +25,7 @@
 | THEN | `I should see my available SSH keys` | Check output lists keys |
 | THEN | `I should see keys loaded in the agent` | Check agent has keys |
 | THEN | `I should see usage examples` | Check output has examples |
-| THEN | `the list-vms command should show available VMs` | Run vde list-vms |
+| THEN | `the list-vms command should show available VMs` | Run VDE command "vde list" |
 | THEN | `my keys should be loaded automatically` | Verify keys in agent |
 | THEN | `my keys should be loaded into the agent` | Verify keys in agent |
 | THEN | `all keys should be loaded into the agent` | Verify all keys loaded |

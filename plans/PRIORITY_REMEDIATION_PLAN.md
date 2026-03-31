@@ -409,26 +409,19 @@ behave tests/features/docker-required/ssh-agent-vm-to-host-communication.feature
 
 ---
 
-## Phase 5: Refactor Feature Files (P0)
+## Phase 5: Refactor Feature Files (P0) ✅ COMPLETE
 
 **Goal:** Eliminate all direct script/Docker calls in `.feature` files to reflect the User's perspective.
 
-| Pattern | Action | New Pattern |
-|---------|--------|-------------|
-| `When I run "./bin/ssh-agent-setup"` | REFACTOR | `When I run "vde ssh-setup"` |
-| `And I run "create-virtual-for python"` | REFACTOR | `And I run "vde create python"` |
-| `When I run "docker ps"` | REFACTOR | `When I run "vde ps"` |
-| `And I run "to-host ..."` | REFACTOR | `And I run "vde to-host ..."` |
+Refactored all features to use canonical `When I run VDE command "vde <cmd>"` pattern.
 
 ---
 
-## Phase 6: Step Definition Hardening (P0)
+## Phase 6: Step Definition Hardening (P0) ✅ COMPLETE
 
 **Goal:** Ensure step definitions reflect the user's interaction with the canonical `vde` CLI.
 
-1.  **Refactor `step_run_vde_cli`:** Ensure it handles subcommands and flags via `run_vde_command`.
-2.  **Refactor `to-host` steps:** Update `vm_to_host_steps.py` to use `vde to-host`.
-3.  **Audit `shell_helpers.py`:** Ensure `_run_vde_command` is the exclusive execution path.
+Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousStep` conflicts.
 
 ---
 
@@ -436,8 +429,8 @@ behave tests/features/docker-required/ssh-agent-vm-to-host-communication.feature
 
 **Goal:** Maintain global visibility of remediation strategies.
 
-1.  **Paired Linkage:** Ensure `session_handover_remediation.md` links to this plan.
-2.  **Step Mapping:** Update `MISSING_STEPS_PLAN.md` implementation notes to use `vde` CLI.
+1.  **Paired Linkage:** `session_handover_remediation.md` is updated.
+2.  **Step Mapping:** `MISSING_STEPS_PLAN.md` updated with `VDE command` wording.
 
 ---
 
