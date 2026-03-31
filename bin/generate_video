@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
-# bin/generate_video.sh
-# Usage: ./generate_video.sh <output_path> [tape_commands...]
+# bin/generate_video
+# Usage: ./generate_video <output_path> [tape_commands...]
 # If tape_commands are not provided, it reads from stdin.
 
 OUTPUT_PATH=${1}
