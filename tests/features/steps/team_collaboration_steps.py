@@ -110,27 +110,9 @@ def step_teammate_clones_repo(context):
     result = run_vde_command("info", context=context)
     assert result.returncode == 0, "VDE commands not working after 'clone'"
 
-# @when('they run "vde create {vm_name}"')
-# def step_teammate_runs_create(context, vm_name):
-#     """Duplicate of documented_workflow_steps.py."""
-#     result = run_vde_command(f"create {vm_name}", context=context)
-#     assert result.returncode == 0, f"vde create {vm_name} failed: {result.stderr}"
-
 # =============================================================================
 # THEN steps
 # =============================================================================
-
-# @then('VDE should detect my operating system')
-# def step_vde_detects_os(context):
-#     """Duplicate of documented_workflow_steps.py."""
-#     result = run_vde_command("info", context=context)
-#     assert result.returncode == 0, f"vde info failed: {result.stderr}"
-#     
-#     output = result.stdout.lower()
-#     # Check for OS-related keywords
-#     os_keywords = ["os:", "operating system", "darwin", "linux", "kernel"]
-#     found = any(k in output for k in os_keywords)
-#     assert found, f"Operating system info not detected in 'vde info' output:\n{result.stdout}"
 
 @then('they should get the same Python environment I have')
 def step_same_python_environment(context):
@@ -148,66 +130,8 @@ def step_same_python_environment(context):
     version_out = (result.stdout + result.stderr).strip()
     assert "Python 3." in version_out, f"Unexpected Python version environment: {version_out}"
 
-# @then('each developer gets their own isolated PostgreSQL instance')
-def step_isolated_postgres_instance(context):
-    """Verify VDE_ROOT pathing in docker-compose.yml ensures isolation."""
-    compose_file = get_compose_file("postgres")
-    assert compose_file.exists(), f"Postgres compose file missing: {compose_file}"
-    
-    content = compose_file.read_text()
-    
-    # 1. Isolation via container name
-    assert "container_name: vde-postgres" in content, "Missing standard container name for isolation"
-    
-    # 2. Isolation via local data volumes (relative to VDE_ROOT)
-    # Looking for something like ./data/postgres:/var/lib/postgresql/data
-    assert "data/postgres" in content, "Postgres data should be mapped to local VDE 'data/postgres' for isolation"
-    
-    # 3. Network isolation
-    assert "networks:" in content and "vde-net" in content, "Postgres should be on isolated vde-net"
-
-# @then('anyone can create the VM using the standard name')
-def step_anyone_can_create_standard_vm(context):
-    """Run 'vde create python' and assert success."""
-    # Clean up first to ensure a fresh creation
-    run_vde_command("remove python", context=context)
-    
-    result = run_vde_command("create python", context=context)
-    assert result.returncode == 0, f"Failed to create VM using standard name 'python': {result.stderr}"
-    
-    # Verify the result of creation
-    compose_file = get_compose_file("python")
-    assert compose_file.exists(), f"Creation failed: {compose_file} not found"
-
-# @then('my SSH keys should be automatically configured')
-def step_ssh_keys_automatically_configured(context):
-    """Verify ~/.ssh/vde/ config and keys exist."""
-    ssh_dir = Path.home() / ".ssh" / "vde"
-    assert ssh_dir.is_dir(), f"SSH directory {ssh_dir} was not created"
-    assert (ssh_dir / "id_ed25519").exists(), "VDE private key missing"
-    assert (ssh_dir / "config").exists(), "VDE SSH config missing"
-
-# @then('I should see available VMs with "vde list"')
-def step_see_available_vms(context):
-    """Run vde list and check for VMs."""
-    result = run_vde_command("list", context=context)
-    assert result.returncode == 0, f"vde list failed: {result.stderr}"
-    assert "python" in result.stdout.lower(), "Standard VM 'python' should be listed"
-
-# @then('all dependencies should be installed')
-def step_all_dependencies_installed(context):
-    """Verify dependencies (like pip packages) are present in the environment."""
-    # For python, check if pip works
-    result = run_vde_command("exec python pip --version", context=context)
-    assert result.returncode == 0, f"Dependencies verification failed: {result.stderr}"
-
 @then('data persists in each developer\'s local data/postgres/')
 def step_data_persists_locally(context):
     """Verify local data directory exists."""
     data_dir = VDE_ROOT / "data" / "postgres"
     assert data_dir.is_dir(), f"Local data directory {data_dir} missing"
-
-# @then('everyone gets consistent configurations')
-def step_consistent_configurations(context):
-    """Verify that creation results in standard structure."""
-    step_anyone_can_create_standard_vm(context)
