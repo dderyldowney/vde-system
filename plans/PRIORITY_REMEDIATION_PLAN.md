@@ -465,11 +465,30 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
+## Phase 10: Installation & Setup Remediation (P1)
+
+**Goal:** Implement 53 missing steps for Installation and Initial Setup features.
+
+### 10.1 Key Implementations
+
+1.  **Installation Steps File:** Create `tests/features/steps/vde_installation_steps.py`.
+2.  **Prerequisite Checks:**
+    - `THEN: 'it should verify Docker is installed'`: Verify `docker info` success.
+    - `THEN: 'it should verify zsh is available'`: Verify `zsh --version`.
+3.  **Directory Structure:**
+    - `THEN: 'configs/ directory should exist'`: Verify path exists via `VDE_ROOT`.
+    - `THEN: 'env-files/ directory should exist'`: Verify path exists.
+4.  **Network & Permissions:**
+    - `THEN: 'vde-net should be created automatically'`: Verify `vde networks` output.
+    - `THEN: 'I should be warned if I can\'t run Docker without sudo'`: Verify logic in `vde-health`.
+
+---
+
 ## Success Criteria
 
 | Metric | Target |
 |--------|--------|
-| Undefined Steps (Maintenance) | **0** |
+| Undefined Steps (Installation) | **0** |
 | Fake/Pink Tests | **0** |
 | Core Test Pass Rate | **100%** |
 
