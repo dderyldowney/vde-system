@@ -484,11 +484,30 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
+## Phase 11: Error Handling & Recovery (P1)
+
+**Goal:** Implement 79 missing steps for Error Handling, Diagnostic, and Recovery features.
+
+### 11.1 Key Implementations
+
+1.  **Error Steps File:** Create `tests/features/steps/vde_error_steps.py`.
+2.  **Simulation & Verification:**
+    - `GIVEN: 'I try to use a VM that doesn\'t exist'`: Verify `vde start unknown`.
+    - `THEN: 'I should receive a clear error message'`: Assert `Error:` in output.
+    - `THEN: 'the error should explain what went wrong'`: Assert `Reason:` in output.
+    - `GIVEN: 'Docker is not available'`: Simulate by masking `docker` command in a subshell.
+    - `GIVEN: 'a port is already in use'`: Bind a socket to a fixed VDE port (e.g., 2200).
+3.  **Validation Logic:**
+    - Assert that output contains the `Solution:` block from `lib/vde-errors`.
+    - Verify exit codes (e.g., 1 for general, 2 for invalid input).
+
+---
+
 ## Success Criteria
 
 | Metric | Target |
 |--------|--------|
-| Undefined Steps (Installation) | **0** |
+| Undefined Steps (Error Handling) | **0** |
 | Fake/Pink Tests | **0** |
 | Core Test Pass Rate | **100%** |
 
