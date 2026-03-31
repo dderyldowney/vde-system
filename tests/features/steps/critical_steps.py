@@ -124,8 +124,6 @@ def step_run_list_vms(context, args):
     context.last_exit_code = context.command_exit_code
 
 
-@when("I create a VM")
-@when("I create a new language VM")
 @when('I run VDE command "{command}"')
 def step_run_vde_cli(context, command):
     result = run_vde_command(command, context=context)

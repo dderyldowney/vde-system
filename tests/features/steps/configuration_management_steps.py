@@ -158,9 +158,35 @@ def step_mysql_inter_container_access(context):
     assert entry is not None, f"mysql VM type '{context.mysql_vm}' not in vm-types.json"
     # Check if it's in the service category
     data = load_vm_types_raw()
-    is_service = any(v["name"] == context.mysql_vm or v["name"] == f"vde-{context.mysql_vm}" 
-                   for v in data["vms"].get("service", []))
+    is_service = any(
+        v["name"] == context.mysql_vm or v["name"] == f"vde-{context.mysql_vm}"
+        for v in data["vms"].get("service", [])
+    )
     assert is_service, f"Expected {context.mysql_vm} to be a service VM"
+
+
+@given("a system service is using port {port:d}")
+def step_system_service_using_port(context, port):
+    """Simulate a port conflict by binding a socket to the specified port."""
+    import socket
+
+    context.port_conflict_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    context.port_conflict_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        context.port_conflict_socket.bind(("127.0.0.1", port))
+        context.port_conflict_socket.listen(1)
+        context.conflict_port = port
+
+        # Register cleanup to release the port
+        def cleanup_port():
+            if hasattr(context, "port_conflict_socket"):
+                context.port_conflict_socket.close()
+
+        context.add_cleanup(cleanup_port)
+    except OSError as e:
+        # If port is already in use, that's fine for our test
+        print(f"Port {port} already in use: {e}")
+        context.conflict_port = port
 
 
 # ============================================================

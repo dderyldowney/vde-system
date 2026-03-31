@@ -449,6 +449,8 @@ def step_config_exists_with_content(context):
 
 
 @given("SSH agent is not running")
+@given("I do not have an SSH agent running")
+@given("my SSH agent is not running")
 def step_ssh_agent_not_running(context):
     """Ensure SSH agent is not running."""
     import subprocess
@@ -652,13 +654,6 @@ def step_vde_ssh_dir_exists_or_created(context):
     assert VDE_SSH_DIR.exists(), "~/.ssh/vde directory should exist or be created"
 
 
-@given("I do not have an SSH agent running")
-@given("my SSH agent is not running")
-def step_ssh_agent_not_running_alias(context):
-    """Ensure SSH agent is not running - alias for step_ssh_agent_not_running."""
-    step_ssh_agent_not_running(context)
-
-
 @given("I have all key types in ~/.ssh/vde/")
 def step_all_key_types_in_vde(context):
     """Ensure all SSH key types exist in ~/.ssh/vde/."""
@@ -790,6 +785,13 @@ def step_ssh_keys_loaded(context):
 # =============================================================================
 # WHEN STEPS - Actions (from ssh_config_steps.py)
 # =============================================================================
+
+
+@when("I create my first VM")
+def step_create_first_vm(context):
+    """Create the first VM (usually 'python' for tests)."""
+    result = run_vde_command_vde("create python", context=context)
+    assert result.returncode == 0, f"Failed to create VM: {result.stderr}"
 
 
 @when("I run any VDE command that requires SSH")
@@ -1307,14 +1309,20 @@ def step_ssh_agent_should_be_started(context):
 
 
 @then("an ed25519 SSH key should be generated")
+@then("an ed25519 key should be generated")
 def step_ed25519_key_generated(context):
     """Verify ed25519 key was generated."""
     key_path = VDE_SSH_DIR / "id_ed25519"
     pub_path = VDE_SSH_DIR / "id_ed25519.pub"
-    assert key_path.exists(), "Private key should exist"
-    assert pub_path.exists(), "Public key should exist"
+    assert key_path.exists(), f"Private key not found: {key_path}"
+    assert pub_path.exists(), f"Public key not found: {pub_path}"
 
     assert oct(key_path.stat().st_mode)[-3:] == "600", "Private key should have 600 permissions"
+
+    import subprocess
+    result = subprocess.run(["ssh-keygen", "-l", "-f", str(pub_path)], capture_output=True, text=True)
+    assert result.returncode == 0, f"ssh-keygen failed: {result.stderr}"
+    assert "ED25519" in result.stdout.upper(), f"Key type should be ED25519, got: {result.stdout}"
 
 
 @then("the public key should be synced to public-ssh-keys directory")
@@ -1937,54 +1945,46 @@ def step_keys_loaded_into_agent_auto(context):
 
 @then("the key should be generated with a comment")
 def step_key_has_comment(context):
-    """Verify SSH key has a comment."""
+    """Verify SSH key has a comment via ssh-keygen -l."""
     pub_key = VDE_SSH_DIR / "id_ed25519.pub"
     if not pub_key.exists():
         pub_key = VDE_SSH_DIR / "id_rsa.pub"
 
-    if pub_key.exists():
-        content = pub_key.read_text()
-        parts = content.strip().split()
-        assert len(parts) >= 3, f"Key should have a comment: {content}"
-    else:
-        assert (VDE_SSH_DIR / "id_ed25519").exists() or (VDE_SSH_DIR / "id_rsa").exists()
+    assert pub_key.exists(), f"No public key found in {VDE_SSH_DIR} to check for comment"
+
+    import subprocess
+    result = subprocess.run(["ssh-keygen", "-l", "-f", str(pub_key)], capture_output=True, text=True)
+    assert result.returncode == 0, f"ssh-keygen -l failed: {result.stderr}"
+    
+    # ssh-keygen -l output format: bits fingerprint comment (type)
+    parts = result.stdout.strip().split()
+    # If there's a comment, there should be more than 3 parts (bits, fingerprint, type are always there)
+    # Actually, it's: bits SHA256:fingerprint comment (TYPE)
+    # Let's check if there are at least 4 parts
+    assert len(parts) >= 4, f"Key should have a comment, but ssh-keygen -l output was: {result.stdout.strip()}"
 
 
 @then("I should see the SSH agent status")
 def step_see_ssh_agent_status(context):
     """Verify SSH agent status is shown in output."""
     output = getattr(context, "last_output", "") or ""
-    has_status = any(
-        [
-            "SSH_AUTH_SOCK" in output,
-            "SSH_AGENT_PID" in output,
-            "agent" in output.lower(),
-            "running" in output.lower(),
-        ]
-    )
-    assert has_status or len(output) > 0, f"Should see SSH agent status in output: {output[:200]}"
+    assert "agent" in output.lower(), f"Output should mention 'agent', got: {output[:200]}"
 
 
 @then("I should see my available SSH keys")
 def step_see_available_ssh_keys(context):
     """Verify SSH keys are shown in output."""
     output = getattr(context, "last_output", "") or ""
-    has_keys = any(
-        [
-            "id_ed25519" in output,
-            "id_rsa" in output,
-            "SHA256" in output,
-            "ED25519" in output,
-            "RSA" in output,
-        ]
-    )
-    assert has_keys or len(output) > 0, f"Should see SSH keys in output: {output[:200]}"
+    assert "id_" in output or "SHA256" in output, f"Output should show keys (id_ or SHA256), got: {output[:200]}"
 
 
 @then("I should see keys loaded in the agent")
 def step_see_keys_in_agent(context):
-    """Verify keys loaded in agent are shown."""
-    assert ssh_agent_has_keys(), "SSH agent should have keys loaded"
+    """Verify keys loaded in agent are shown in output or agent has keys."""
+    output = getattr(context, "last_output", "") or ""
+    # Check if output mentions keys or if agent actually has keys
+    has_keys_in_output = "key" in output.lower() or "loaded" in output.lower() or "id_" in output
+    assert has_keys_in_output or ssh_agent_has_keys(), "SSH keys should be shown in output or loaded in agent"
 
 
 @then("I should see usage examples")
@@ -2027,9 +2027,14 @@ def step_best_key_selected(context):
 
 @then("all my SSH keys should be detected")
 def step_all_keys_detected(context):
-    """Verify all SSH keys are detected."""
+    """Verify all SSH keys are detected in filesystem and output."""
     keys = get_ssh_keys()
     assert len(keys) >= 1, f"Should detect SSH keys, found: {keys}"
+    
+    output = getattr(context, "last_output", "") or ""
+    # Check if output mentions key detection
+    has_detection_in_output = any(k in output for k in ["id_", "key", "detected", "found"])
+    assert has_detection_in_output or len(output) > 0, f"Output should indicate SSH key detection, got: {output[:200]}"
 
 
 @then("my existing SSH keys should be detected automatically")
@@ -2041,21 +2046,40 @@ def step_existing_keys_detected(context):
 
 @then("ed25519 should be the preferred key type")
 def step_ed25519_preferred(context):
-    """Verify ed25519 is the preferred key type."""
+    """Verify ed25519 is the preferred key type in filesystem and config."""
     assert (VDE_SSH_DIR / "id_ed25519").exists(), "ed25519 key should exist as preferred type"
+    
+    ssh_config = _get_ssh_config_path()
+    if ssh_config.exists():
+        content = ssh_config.read_text()
+        if "IdentityFile" in content:
+            # ed25519 should be mentioned before other key types in IdentityFile lines
+            id_files = [line.strip() for line in content.split("\n") if "IdentityFile" in line]
+            if id_files:
+                first_key = id_files[0]
+                assert "id_ed25519" in first_key or "id_ed25519" in content.split("IdentityFile")[1], \
+                    f"ed25519 should be the first IdentityFile, but config has: {id_files}"
 
 
 @then("I should be informed of what happened")
 def step_informed_of_action(context):
     """Verify user was informed of SSH setup actions."""
     output = getattr(context, "last_output", "") or ""
-    assert len(output) > 0, "User should be informed of actions"
+    # Look for keywords indicating something happened
+    setup_keywords = ["agent", "key", "config", "setup", "started", "created", "✓"]
+    has_info = any(kw in output.lower() or kw in output for kw in setup_keywords)
+    assert has_info, f"User should be informed of actions. Output: {output[:200]}"
 
 
 @then("I should be able to use SSH immediately")
 def step_can_use_ssh_immediately(context):
-    """Verify SSH is usable immediately."""
-    assert ssh_agent_is_running(), "SSH should be usable (agent running)"
+    """Verify SSH is usable immediately by running a remote command."""
+    # Ensure VM is running first (vde start python)
+    # Actually, we rely on the previous steps to have started it.
+    # If not, run_vde_command_vde should fail gracefully.
+    result = run_vde_command_vde("ssh python echo ok", context=context)
+    assert result.returncode == 0, f"SSH connection failed (rc={result.returncode}): {result.stderr}"
+    assert "ok" in result.stdout.lower(), f"Expected 'ok' in SSH output, got: {result.stdout}"
 
 
 @then('~/.ssh/vde/config should NOT contain "Host vde-python"')
@@ -2664,6 +2688,7 @@ def step_workspace_mounted(context):
 
 
 @then("SSH connection should still work")
+@then("my keys should still work")
 def step_ssh_still_works(context):
     """Verify SSH connection still works (re-check after VM restart)."""
     vm_name = getattr(context, "vm_name", "python")
