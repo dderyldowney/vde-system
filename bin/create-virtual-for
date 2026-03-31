@@ -289,7 +289,7 @@ EOF
     if [[ "${START_VM}" == "true" ]]; then
         vde_progress_info "Starting VM..."
 
-        if "${VDE_ROOT_DIR}/bin/vde" start "${VM_NAME}" 2>/dev/null; then
+        if "${VDE_ROOT_DIR}/bin/start-virtual" "${VM_NAME}" 2>/dev/null; then
             vde_progress_done "Started VM: ${VM_NAME}"
 
             local state_json
