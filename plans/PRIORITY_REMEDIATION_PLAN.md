@@ -621,11 +621,29 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
+## Phase 19: Installation & Setup Hardening (P0)
+
+**Goal:** Harden the Installation & Setup suite by replacing "pink" tests with real behavioral logic.
+
+### 19.1 Key Implementations (Empirical Verification)
+
+1.  **Refactor `post_install_verification_steps.py`**:
+    - `THEN: 'help text should be available in commands'`: Actually run `vde --help` and assert content.
+    - `THEN: 'setup should continue with a warning'`: Run `vde init` in a subshell where Docker is initially failing but then recovers.
+2.  **Consolidate Installation Steps**:
+    - Merge `post_install_verification_steps.py` into `vde_installation_steps.py`.
+    - Ensure all `Given` steps perform real environmental checks (e.g., `I have just cloned VDE` verifies the current directory).
+3.  **User Perspective Enforcement**:
+    - Every scenario in `installation-setup.feature` must interact only through `vde init` or other top-level commands.
+
+---
+
 ## Success Criteria
 
 | Metric | Target |
 |--------|--------|
-| Undefined Steps (Lifecycle/Config) | **0** |
+| Pink/Fake Tests (Installation) | **0** |
+| Undefined Steps (Installation) | **0** |
 | Real Logic usage | **100%** |
 | Core Test Pass Rate | **100%** |
 
