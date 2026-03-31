@@ -115,6 +115,9 @@ fi
 _create_one_vm() {
     local VM_NAME="${1}"
 
+    # Guard against low disk space (proactive check)
+    vde_ensure_disk_space 95 || return ${?}
+
     # Validate VM name is not empty
     if [[ -z "${VM_NAME}" ]]; then
         _error "VM name cannot be empty"
@@ -124,9 +127,6 @@ _create_one_vm() {
     # -----------------------
     # Validation
     # -----------------------
-    # Guard against low disk space
-    vde_ensure_disk_space 95 || exit ${?}
-
     vde_progress_info "Validating configuration for '${VM_NAME}'..."
 
     # Resolve VM name (handles aliases)
