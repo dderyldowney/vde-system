@@ -425,12 +425,23 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
-## Phase 7: Sync Workspace Plans (P0)
+## Phase 8: Team Collaboration Steps (P1)
 
-**Goal:** Maintain global visibility of remediation strategies.
+**Goal:** Implement 62 missing steps for Team Collaboration and Sharing features.
 
-1.  **Paired Linkage:** `session_handover_remediation.md` is updated.
-2.  **Step Mapping:** `MISSING_STEPS_PLAN.md` updated with `VDE command` wording.
+### 8.1 Key Implementations
+
+1.  **Collaboration Steps File:** Create `tests/features/steps/team_collaboration_steps.py`.
+2.  **Shared Configuration:**
+    - `GIVEN: 'I am a new developer joining the team'`: Ensure clean state + `vde init`.
+    - `GIVEN: 'the project contains VDE configuration in configs/'`: Verify `configs/docker` structure.
+    - `THEN: 'VDE should detect my operating system'`: Run `vde info` or `vde health` and check output.
+3.  **Git Integration:**
+    - `WHEN: 'a teammate clones the repository'`: Simulate via temp directory or local clone.
+    - `THEN: 'they should get the same Python environment I have'`: Verify `python --version` via `vde exec`.
+4.  **Service Collaboration:**
+    - `GIVEN: 'the team uses PostgreSQL for development'`: Verify `vde-postgres` config exists.
+    - `THEN: 'each developer gets their own isolated PostgreSQL instance'`: Verify data dir pathing.
 
 ---
 
@@ -438,13 +449,13 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 | Metric | Target |
 |--------|--------|
-| Direct Script/Docker Calls in Gherkin | **0** |
-| Undefined Steps | **0** |
-| Tautological (Fake) Tests | **0** |
+| Undefined Steps (Collaboration) | **0** |
+| Fake/Pink Tests | **0** |
 | Core Test Pass Rate | **100%** |
 
 ---
 
 **END OF PLAN**
+
 
 **Key Improvement:** No new files needed. All changes are additive decorators to existing functions + 2 bug fixes.
