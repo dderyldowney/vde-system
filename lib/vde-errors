@@ -261,6 +261,19 @@ vde_error_docker_build_failed() {
         "troubleshooting.md#docker-build-issues"
 }
 
+vde_error_ssh_connection_failed() {
+    local host="${1}"
+    local port="${2}"
+    vde_error_show \
+        "SSH connection failed to '${host}'" \
+        "Could not connect to SSH on port ${port}" \
+        "1. Verify the container is running: vde status
+2. Check if SSH service is active in container: vde exec ${host} 'ps aux | grep sshd'
+3. Verify port mapping: vde port ${host}
+4. Ensure your SSH agent is running and keys are loaded: vde ssh-setup status" \
+        "troubleshooting.md#ssh-connection-issues"
+}
+
 vde_error_network_not_found() {
     local network="${1}"
     vde_error_show \
