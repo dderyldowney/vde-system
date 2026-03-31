@@ -77,6 +77,7 @@ Any implementation that violates the spec is invalid.
 
 1.  DRY is mandatory
 2.  Code review is mandatory — both code-reviewer AND user approval required before commit
+   - Ask yourself "What would a seasoned, experienced, perfectionist developer reject in code review?"
 3.  Sub-agents required for non-trivial work
 4.  MCP-first
 5.  No circular delegation
