@@ -14,13 +14,13 @@ Feature: Debugging and Troubleshooting
   @requires-docker-host
   Scenario: View VM logs for debugging
     Given a VM is running but misbehaving
-    When I run VDE command "vde logs python"
+    When I run VDE command "logs python"
     Then I should see the container logs
 
   @requires-docker-host
   Scenario: Access VM shell for debugging
     Given a VM is running
-    When I run VDE command "vde exec python /bin/zsh"
+    When I run VDE command "exec python /bin/zsh"
     Then I should be logged in as devuser
 
   @requires-docker-host

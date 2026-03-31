@@ -7,23 +7,23 @@ Feature: VDE SSH Commands
   @requires-docker-host
   Scenario: Check SSH environment status
     Given VDE SSH environment is initialized
-    When I run VDE command "vde ssh-setup status"
+    When I run VDE command "ssh-setup status"
     Then the command should succeed
 
   @requires-docker-host
   Scenario: Initialize SSH environment
     Given VDE SSH environment is not initialized
-    When I run VDE command "vde ssh-setup init"
+    When I run VDE command "ssh-setup init"
     Then the command should succeed
 
   @requires-docker-host
   Scenario: Start VM with SSH update flag
     Given VDE SSH environment is initialized
-    When I run VDE command "vde start python"
+    When I run VDE command "start python"
     Then the command should succeed
 
   @requires-docker-host
   Scenario: Full SSH workflow
     Given VDE SSH environment is not initialized
-    When I run VDE command "vde ssh-setup init"
+    When I run VDE command "ssh-setup init"
     Then the command should succeed

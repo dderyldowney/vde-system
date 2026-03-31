@@ -129,7 +129,7 @@ def step_verify_vm_running(context, vm_name):
     assert _container_running(vm_name), f"VM {vm_name} is not running"
 
 
-@when('I run "vde start {vm_name} --rebuild"')
+@when('I rebuild the VM "{vm_name}"')
 def step_run_vde_start_rebuild(context, vm_name):
     """Run vde start {vm_name} --rebuild command."""
     result = run_vde_command(f"start {vm_name} --rebuild", timeout=300, context=context)

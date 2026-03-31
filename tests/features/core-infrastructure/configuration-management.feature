@@ -13,7 +13,7 @@ Feature: Configuration Management
 
   Scenario: Add service VM with custom port
     Given I need a MySQL service on port 3306
-    When I run VDE command "vde add --type service --svc-port 3306 mysql 'apt-get install -y mysql-server'"
+    When I run VDE command "add --type service --svc-port 3306 mysql 'apt-get install -y mysql-server'"
     Then mysql VM should be created
     And port 3306 should be mapped to host in configuration
     And I can connect to MySQL from other containers

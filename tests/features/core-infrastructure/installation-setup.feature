@@ -82,7 +82,7 @@ Feature: Installation and Initial Setup
   @user-guide-first-vm
   Scenario: First time creation experience
     Given I've just installed VDE
-    When I run VDE command "vde create python"
+    When I run VDE command "create python"
     Then I should see helpful progress messages
     And configs/docker/languages/python/ should be created
     And docker-compose.yml should be generated
@@ -91,7 +91,7 @@ Feature: Installation and Initial Setup
 
   Scenario: Verify installation with health check
     Given I've installed VDE
-    When I run VDE command "vde health" or check status
+    When I run VDE command "health" or check status
     Then I should see if VDE is properly configured
     And any issues should be clearly listed
     And I should get fix suggestions for each issue

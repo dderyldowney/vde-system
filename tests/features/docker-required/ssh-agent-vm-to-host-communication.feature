@@ -13,7 +13,7 @@ Feature: VM-to-Host Communication
     Given I have a Python VM running for VM-to-Host
     And I need to check what's running on my host
     When I SSH into the Python VM for VM-to-Host
-    And I run VDE command "vde to-host docker ps" for VM-to-Host
+    And I run VDE command "to-host docker ps" for VM-to-Host
     Then I should see a list of running containers
     And the output should show my host's containers
 
@@ -21,7 +21,7 @@ Feature: VM-to-Host Communication
     Given I have a Go VM running for VM-to-Host
     And my host has application logs
     When I SSH into the Go VM for VM-to-Host
-    And I run VDE command "vde to-host tail -f /var/log/app.log" for VM-to-Host
+    And I run VDE command "to-host tail -f /var/log/app.log" for VM-to-Host
     Then I should see the host's log output
     And the output should update in real-time
 
@@ -29,7 +29,7 @@ Feature: VM-to-Host Communication
     Given I have a Python VM running for VM-to-Host
     And I have projects on my host for VM-to-Host
     When I SSH into the Python VM for VM-to-Host
-    And I run VDE command "vde to-host ls ~" for VM-to-Host
+    And I run VDE command "to-host ls ~" for VM-to-Host
     Then I should see a list of my host's directories
     And I should be able to navigate the host filesystem
 
@@ -37,7 +37,7 @@ Feature: VM-to-Host Communication
     Given I have multiple VMs running in VM-to-Host
     And I need to check resource usage
     When I SSH into a VM for VM-to-Host
-    And I run VDE command "vde to-host docker stats" for VM-to-Host
+    And I run VDE command "to-host docker stats" for VM-to-Host
     Then I should see resource usage for all containers
     And I should see CPU, memory, and I/O statistics
 
@@ -45,7 +45,7 @@ Feature: VM-to-Host Communication
     Given I have a Python VM running for VM-to-Host
     And I need to restart a service on my host
     When I SSH into the Python VM for VM-to-Host
-    And I run VDE command "vde to-host docker restart postgres" for VM-to-Host
+    And I run VDE command "to-host docker restart postgres" for VM-to-Host
     Then the PostgreSQL container should restart
     And I should be able to verify the restart
 
@@ -53,7 +53,7 @@ Feature: VM-to-Host Communication
     Given I have a Python VM running for VM-to-Host
     And I need to read a configuration file on my host
     When I SSH into the Python VM for VM-to-Host
-    And I run VDE command "vde to-host cat ~/dev/config.yaml" for VM-to-Host
+    And I run VDE command "to-host cat ~/dev/config.yaml" for VM-to-Host
     Then I should see the contents of the host file
     And I should be able to use the content in the VM
 
@@ -61,7 +61,7 @@ Feature: VM-to-Host Communication
     Given I have a Rust VM running for VM-to-Host
     And I need to trigger a build on my host
     When I SSH into the Rust VM for VM-to-Host
-    And I run VDE command "vde to-host cd ~/dev/project && make build" for VM-to-Host
+    And I run VDE command "to-host cd ~/dev/project && make build" for VM-to-Host
     Then the build should execute on my host
     And I should see the build output for VM-to-Host
 
@@ -69,7 +69,7 @@ Feature: VM-to-Host Communication
     Given I have a Go VM running for VM-to-Host
     And I need to check the status of other VMs
     When I SSH into the Go VM for VM-to-Host
-    And I run VDE command "vde to-host docker ps --filter 'name=vde-python'" for VM-to-Host
+    And I run VDE command "to-host docker ps --filter 'name=vde-python'" for VM-to-Host
     Then I should see the status of the Python VM
     And I can make decisions based on the status
 
@@ -77,7 +77,7 @@ Feature: VM-to-Host Communication
     Given I have a Python VM running for VM-to-Host
     And I need to trigger a backup on my host
     When I SSH into the Python VM for VM-to-Host
-    And I run VDE command "vde to-host ~/dev/bin/backup.sh" for VM-to-Host
+    And I run VDE command "to-host ~/dev/bin/backup.sh" for VM-to-Host
     Then the backup should execute on my host
     And my data should be backed up
 
@@ -85,7 +85,7 @@ Feature: VM-to-Host Communication
     Given I have a Go VM running for VM-to-Host
     And my host has an issue I need to diagnose
     When I SSH into the Go VM for VM-to-Host
-    And I run VDE command "vde to-host systemctl status docker" for VM-to-Host
+    And I run VDE command "to-host systemctl status docker" for VM-to-Host
     Then I should see the Docker service status
     And I can diagnose the issue
 
@@ -93,7 +93,7 @@ Feature: VM-to-Host Communication
     Given I have a Rust VM running for VM-to-Host
     And I need to check host network connectivity
     When I SSH into the Rust VM for VM-to-Host
-    And I run VDE command "vde to-host ping -c 3 github.com" for VM-to-Host
+    And I run VDE command "to-host ping -c 3 github.com" for VM-to-Host
     Then I should see network connectivity results
     And I can diagnose network issues
 
@@ -101,6 +101,6 @@ Feature: VM-to-Host Communication
     Given I have a Python VM running for VM-to-Host
     And I have custom scripts on my host for VM-to-Host
     When I SSH into the Python VM for VM-to-Host
-    And I run VDE command "vde to-host ~/dev/bin/cleanup.sh" for VM-to-Host
+    And I run VDE command "to-host ~/dev/bin/cleanup.sh" for VM-to-Host
     Then the script should execute on my host
     And the cleanup should be performed
