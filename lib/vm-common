@@ -101,6 +101,20 @@ if ! command -v log_success >/dev/null 2>&1; then
     log_success() { vde_log_info "[SUCCESS] ${@}"; }
 fi
 
+# vde_ensure_disk_space - Guard against low disk space
+# Returns: VDE_SUCCESS (0) if space is sufficient, VDE_ERR_GENERAL (1) otherwise
+vde_ensure_disk_space() {
+    local threshold="${1:-95}"
+    local usage
+    usage=$(df -h / 2>/dev/null | tail -1 | awk '{print $5}' | tr -d '%' || echo 0)
+    
+    if [[ "${usage}" -ge "${threshold}" ]]; then
+        vde_error_insufficient_disk "${usage}"
+        return ${VDE_ERR_GENERAL}
+    fi
+    return ${VDE_SUCCESS}
+}
+
 # Also create aliases for underscore-prefixed versions (_info, _error, _success, _warn)
 if ! command -v _info >/dev/null 2>&1; then
     _info() { vde_log_info "${@}"; }
