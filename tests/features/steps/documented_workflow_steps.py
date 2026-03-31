@@ -625,10 +625,18 @@ def step_check_dependencies(context):
 
 @when("I read the documentation")
 def step_read_documentation(context):
-    """Read VDE documentation."""
-    result = run_vde_command("--help", context=context)
-    context.doc_output = result.stdout + result.stderr
+    """Read VDE documentation (README.md and vde --help)."""
+    # Read README.md
+    readme_path = VDE_ROOT / "README.md"
+    readme_content = ""
+    if readme_path.exists():
+        readme_content = readme_path.read_text()
 
+    # Run vde --help
+    result = run_vde_command("--help", context=context)
+    help_output = result.stdout + result.stderr
+
+    context.doc_output = readme_content + "\n" + help_output
     context.doc_read = True
 
 
@@ -668,36 +676,51 @@ def step_no_ssh_config_messages(context):
     """Verify no verbose SSH messages during normal ops."""
     output = getattr(context, "last_output", "")
     # Should not have verbose SSH setup messages
-    has_verbose = "generating ssh key" in output.lower() or "ssh agent started" in output.lower()
+    has_verbose = any(
+        msg in output.lower()
+        for msg in [
+            "generating ssh key",
+            "ssh agent started",
+            "ssh-keygen",
+            "starting agent",
+        ]
+    )
     assert not has_verbose, f"No verbose SSH config messages should appear. Got: {output[:200]}"
 
 
 @then("the setup should happen automatically")
 def step_setup_automatic(context):
-    """Verify automatic setup."""
-    from ssh_helpers import ssh_agent_is_running
-    from pathlib import Path
+    """Verify automatic setup happened without user interaction."""
+    from ssh_helpers import ssh_agent_is_running, has_ssh_keys
 
-    ssh_dir = Path.home() / ".ssh" / "vde"
-    key_exists = (ssh_dir / "id_ed25519").exists() or (ssh_dir / "id_rsa").exists()
-    assert ssh_agent_is_running() or key_exists, (
-        "SSH setup should be automatic (agent running or keys exist)"
+    assert has_ssh_keys() or ssh_agent_is_running(), (
+        "SSH setup should be automatic (keys exist or agent running)"
     )
 
 
 @then("I should only see VM creation messages")
 def step_only_vm_messages(context):
-    """Verify output focuses on VM creation."""
+    """Verify output focuses on VM creation and does not contain SSH noise."""
     output = getattr(context, "last_output", "")
-    # Should have VM-related output, not SSH details
+
+    # Should have VM-related output
     has_vm_content = any(
-        [
-            "vm" in output.lower(),
-            "container" in output.lower(),
-            "created" in output.lower(),
-            "started" in output.lower(),
-            "python" in output.lower(),
-            "docker" in output.lower(),
-        ]
+        kw in output.lower() for kw in ["vm", "container", "created", "started", "docker"]
     )
-    assert has_vm_content, f"Should see VM-related output. Got: {output[:200]}"
+    assert has_vm_content, f"Expected VM creation messages in output, but got: {output[:200]}"
+
+    # Should NOT have SSH generation/agent messages
+    ssh_noise = ["generating key", "starting agent", "ssh-keygen", "ssh-agent"]
+    for noise in ssh_noise:
+        assert noise not in output.lower(), (
+            f"Unexpected SSH noise found in output: '{noise}'. Output: {output[:200]}"
+        )
+
+
+@then("I should not need to configure anything manually")
+def step_no_manual_config(context):
+    """Final verification of automated state."""
+    from ssh_helpers import ssh_agent_is_running, has_ssh_keys
+
+    assert has_ssh_keys(), "SSH keys should be present (automatically created)"
+    assert ssh_agent_is_running(), "SSH agent should be running (automatically started)"
