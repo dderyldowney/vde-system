@@ -66,18 +66,21 @@ def step_run_command_tohost(context, command):
 @then("the output should show my host's containers")
 def step_see_host_containers(context):
     """Verify host containers are shown."""
-    output = getattr(context, 'tohost_output', '')
-    tohost_result = getattr(context, 'tohost_result', False)
-    assert tohost_result or 'CONTAINER' in output.upper() or 'NAMES' in output, \
+    output = getattr(context, "tohost_output", "")
+    tohost_result = getattr(context, "tohost_result", False)
+    assert tohost_result or "CONTAINER" in output.upper() or "NAMES" in output, (
         f"Output should show host containers. Got: {output[:200]}"
+    )
 
-@then('the PostgreSQL container should restart')
+
+@then("the PostgreSQL container should restart")
 def step_postgres_restarted(context):
     """Verify PostgreSQL restarted."""
-    output = getattr(context, 'tohost_restart_output', '')
-    tohost_result = getattr(context, 'tohost_restart_result', False)
-    assert tohost_result or 'postgres' in output.lower() or 'restarted' in output.lower(), \
+    output = getattr(context, "tohost_restart_output", "")
+    tohost_result = getattr(context, "tohost_restart_result", False)
+    assert tohost_result or "postgres" in output.lower() or "restarted" in output.lower(), (
         f"PostgreSQL restart verification failed. Output: {output[:200]}"
+    )
 
 # -----------------------------------------------------------------------------
 # Contextual "Feel-Good" Steps (Given/And)
