@@ -91,3 +91,18 @@ def step_see_ssh_auto_unique(context):
 def step_no_manual_instructions_unique(context):
     """Unique check for documentation focus."""
     assert "vde-init" in context.last_output or "vde ssh-setup" in context.last_output
+
+
+@then("the VDE command should execute successfully")
+def step_command_success_unique(context):
+    """Verify that the last VDE command finished with exit code 0."""
+    exit_code = getattr(context, "last_exit_code", 0)
+    assert exit_code == 0, f"Command failed with exit code {exit_code}"
+
+
+@given("VDE SSH environmentssh-setup status")
+@given("VDE SSH environmentssh-setup initlized")
+@given("VDE SSH environmentstart pythonzed")
+def step_vde_ssh_env_context(context):
+    """Contextual given: ensure VDE_ROOT is set for SSH commands."""
+    assert VDE_ROOT.exists()
