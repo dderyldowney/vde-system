@@ -604,13 +604,29 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
+## Phase 18: Lifecycle & Configuration Final Alignment (P1)
+
+**Goal:** Resolve all remaining undefined steps for VM Lifecycle and Configuration Management.
+
+### 18.1 Key Implementations (Empirical Logic)
+
+1.  **Lifecycle Steps:**
+    - `WHEN: 'I request to start my Python development environment'`: Call `vde start python`.
+    - `THEN: 'the Go VM configuration should be created'`: Verify `configs/docker/languages/go/docker-compose.yml`.
+    - `THEN: 'no containers should be left running'`: Verify `vde ps -q` is empty.
+2.  **Configuration Steps:**
+    - `THEN: '"Go Language" should appear in vde list output'`: Run `vde list` and grep for display name.
+    - `WHEN: 'I add a VM type with custom install command'`: Execute `vde add ...` and verify.
+    - `THEN: 'my custom packages should be available in the VM'`: Use `vde exec` to check package installation.
+
+---
+
 ## Success Criteria
 
 | Metric | Target |
 |--------|--------|
-| Direct Script-to-Script Calls | **0** |
-| Direct Docker/Compose in Features | **0** |
-| User Perspective Compliance | **100%** |
+| Undefined Steps (Lifecycle/Config) | **0** |
+| Real Logic usage | **100%** |
 | Core Test Pass Rate | **100%** |
 
 ---
