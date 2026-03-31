@@ -503,11 +503,30 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
+## Phase 12: Advanced Error Handling & Recovery (P1)
+
+**Goal:** Implement remaining 41 missing steps for Advanced Error Handling, Logging, and Recovery.
+
+### 12.1 Key Implementations
+
+1.  **Permission & Config Errors:**
+    - `GIVEN: 'I don\'t have permission for an operation'`: `chmod 000` on a required VDE path.
+    - `GIVEN: 'a docker-compose.yml is malformed'`: Inject syntax error into a test VM config.
+2.  **System Resilience:**
+    - `GIVEN: 'one VM fails to start'`: Use a failing Dockerfile for a test VM.
+    - `THEN: 'other VMs should continue'`: Verify successful start of sibling VMs.
+3.  **Observability:**
+    - `THEN: 'the error should be logged'`: Verify JSON/text entry in `logs/vde.log`.
+4.  **Recovery Logic:**
+    - `THEN: 'VDE should clean up partial state'`: Verify container/file removal after failure.
+
+---
+
 ## Success Criteria
 
 | Metric | Target |
 |--------|--------|
-| Undefined Steps (Error Handling) | **0** |
+| Undefined Steps (Advanced Errors) | **0** |
 | Fake/Pink Tests | **0** |
 | Core Test Pass Rate | **100%** |
 
