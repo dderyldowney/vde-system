@@ -2674,9 +2674,27 @@ def step_ssh_still_works(context):
     )
 
 
+@given("SSH config entry should be preserved")
 @then("SSH config entry should be preserved")
 def step_ssh_config_preserved(context):
     """Verify SSH config entry persists after vde remove (config not cleaned up)."""
     vm_name = getattr(context, "vm_name", "python")
     host = f"vde-{vm_name.lstrip('vde-')}"
     _assert_ssh_config_has_host(host)
+
+
+@given("I have a running VM with SSH configured")
+def step_running_vm_with_ssh(context):
+    """Ensure a VM is running with SSH configured."""
+    from vm_common import container_is_running, run_vde_command, wait_for_container
+    from pathlib import Path
+
+    vm_name = "python"
+    if not container_is_running(vm_name):
+        run_vde_command(f"start {vm_name}", context=context)
+        wait_for_container(vm_name, timeout=60)
+
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
+    context.ssh_configured = ssh_config.exists()
+    context.current_vm = vm_name
+    context.ssh_host = f"vde-{vm_name}"
