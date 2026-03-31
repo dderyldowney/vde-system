@@ -558,13 +558,32 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
+## Phase 15: Integration & Collaboration Hardening (P0)
+
+**Goal:** Implement the final 162 missing steps for Collaboration, Installation, and SSH Commands.
+
+### 15.1 Key Implementations (Verified Logic)
+
+1.  **Shared Environment Sync:**
+    - `GIVEN: 'the team has updated SSH config templates'`: Touch `templates/ssh-entry.txt`.
+    - `THEN: 'my SSH config should be updated with new entries'`: Verify mtime or grep for new markers.
+2.  **Installation Deep Verification:**
+    - `THEN: 'it should verify docker-compose is available'`: Verify `docker compose version` success.
+    - `THEN: 'required directories should be created'`: Assert exist: `logs`, `data`, `env-files`.
+3.  **VDE SSH CLI Workflow:**
+    - `WHEN: 'I run VDE command "ssh-setup init"'`: Execute and verify full setup completion.
+    - `THEN: 'the command should succeed'`: Assert exit code 0 and log output.
+
+---
+
 ## Success Criteria
 
 | Metric | Target |
 |--------|--------|
-| Undefined Steps (SSH Setup) | **0** |
+| Undefined Steps (Integration) | **0** |
 | Fake/Pink Tests | **0** |
 | AmbiguousStep Conflicts | **0** |
+| Overall Test Pass Rate | **100%** |
 
 ---
 
