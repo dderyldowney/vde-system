@@ -35,6 +35,16 @@ if [[ ${#} -eq 0 ]]; then
 fi
 
 input="${*}"
+DRY_RUN=0
+
+# Check for --dry-run flag
+if [[ "${input}" == *"--dry-run"* ]]; then
+    DRY_RUN=1
+    # Remove --dry-run from input so it doesn't confuse the parser
+    input="${input/--dry-run/}"
+    input="${input/  / }" # Clean double spaces
+    input=$(echo "${input}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+fi
 
 # Verify parser functions are available
 if ! type generate_plan &>/dev/null || ! type execute_plan &>/dev/null; then
@@ -51,6 +61,10 @@ if [[ -z "${plan}" ]]; then
     exit ${VDE_ERR_INVALID_INPUT}
 fi
 
-# Execute the plan
-echo "${plan}" | execute_plan
+# Execute or display the plan
+if [[ ${DRY_RUN} -eq 1 ]]; then
+    echo "${plan}"
+else
+    echo "${plan}" | execute_plan
+fi
 exit ${?}
