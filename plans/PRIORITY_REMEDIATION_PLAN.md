@@ -433,18 +433,49 @@ behave tests/features/docker-required/ssh-agent-vm-to-host-communication.feature
 
 ---
 
-## Success Criteria
+## Phase 5: Refactor Feature Files (P0)
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Undefined Steps | 127 | **0** |
-| SSH Agent Setup | 0/12 | **12/12** |
-| VM-to-VM Forwarding | 0/12 | **12/12** |
-| VM-to-Host | 3/12 | **12/12** |
-| SSH Remote Access | 6/12 | **12/12** |
+**Goal:** Eliminate all direct script/Docker calls in `.feature` files to reflect the User's perspective.
+
+| Pattern | Action | New Pattern |
+|---------|--------|-------------|
+| `When I run "./bin/ssh-agent-setup"` | REFACTOR | `When I run "vde ssh-setup"` |
+| `And I run "create-virtual-for python"` | REFACTOR | `And I run "vde create python"` |
+| `When I run "docker ps"` | REFACTOR | `When I run "vde ps"` |
+| `And I run "to-host ..."` | REFACTOR | `And I run "vde to-host ..."` |
 
 ---
 
-**END OF PLAN - AWAITING APPROVAL**
+## Phase 6: Step Definition Hardening (P0)
+
+**Goal:** Ensure step definitions reflect the user's interaction with the canonical `vde` CLI.
+
+1.  **Refactor `step_run_vde_cli`:** Ensure it handles subcommands and flags via `run_vde_command`.
+2.  **Refactor `to-host` steps:** Update `vm_to_host_steps.py` to use `vde to-host`.
+3.  **Audit `shell_helpers.py`:** Ensure `_run_vde_command` is the exclusive execution path.
+
+---
+
+## Phase 7: Sync Workspace Plans (P0)
+
+**Goal:** Maintain global visibility of remediation strategies.
+
+1.  **Paired Linkage:** Ensure `session_handover_remediation.md` links to this plan.
+2.  **Step Mapping:** Update `MISSING_STEPS_PLAN.md` implementation notes to use `vde` CLI.
+
+---
+
+## Success Criteria
+
+| Metric | Target |
+|--------|--------|
+| Direct Script/Docker Calls in Gherkin | **0** |
+| Undefined Steps | **0** |
+| Tautological (Fake) Tests | **0** |
+| Core Test Pass Rate | **100%** |
+
+---
+
+**END OF PLAN**
 
 **Key Improvement:** No new files needed. All changes are additive decorators to existing functions + 2 bug fixes.

@@ -12,13 +12,13 @@ Feature: VM Lifecycle Management
   @user-guide-first-vm
   Scenario: Start an existing language VM
     Given VM "python" is not running
-    When I run "vde start python"
+    When I run VDE command "vde start python"
     Then VM "python" should be running
 
   @user-guide-first-vm
   Scenario: Start a language VM (first use - builds image)
     Given VM "python" is not created
-    When I run "vde start python"
+    When I run VDE command "vde start python"
     Then VM "python" should be running
     And Docker image should be built
 
@@ -26,7 +26,7 @@ Feature: VM Lifecycle Management
   Scenario: Start multiple VMs
     Given VM "python" is not running
     And VM "rust" is not running
-    When I run "vde start python rust"
+    When I run VDE command "vde start python rust"
     Then VM "python" should be running
     And VM "rust" should be running
 
@@ -34,49 +34,49 @@ Feature: VM Lifecycle Management
   Scenario: Start all VMs
     Given VM "python" is not running
     And VM "postgres" is not running
-    When I run "vde start all"
+    When I run VDE command "vde start all"
     Then VM "python" should be running
     And VM "postgres" should be running
 
   @user-guide-starting-stopping
   Scenario: Stop a running VM
     Given VM "python" is running
-    When I run "vde stop python"
+    When I run VDE command "vde stop python"
     Then VM "python" should not be running
 
   @user-guide-starting-stopping
   Scenario: Stop all running VMs
     Given VM "python" is running
     And VM "rust" is running
-    When I run "vde stop all"
+    When I run VDE command "vde stop all"
     Then no VMs should be running
 
   @user-guide-starting-stopping
   Scenario: Restart a VM
     Given VM "python" is running
-    When I run "vde restart python"
+    When I run VDE command "vde restart python"
     Then VM "python" should be running
     And the VM should have a fresh container instance
 
   Scenario: Rebuild VM with --rebuild flag
     Given VM "python" is running
-    When I run "vde start python --rebuild"
+    When I run VDE command "vde start python --rebuild"
     Then VM "python" should be running
     And Docker image should be rebuilt
 
   Scenario: Rebuild without cache using --no-cache
     Given VM "python" is running
-    When I run "vde start python --no-cache"
+    When I run VDE command "vde start python --no-cache"
     Then VM "python" should be running
 
   Scenario: Cannot start unknown VM
     Given VM "nonexistent" is not known
-    When I run "vde start nonexistent"
+    When I run VDE command "vde start nonexistent"
     Then the command should fail with error "Unknown VM"
 
   Scenario: Remove a VM container (config preserved)
     Given VM "python" is running
-    When I run "vde remove python"
+    When I run VDE command "vde remove python"
     Then VM "python" should not be running
     But VM configuration should still exist
 
@@ -103,5 +103,5 @@ Feature: VM Lifecycle Management
   @parser
   Scenario: Add a new VM type
     Given I am following the documented workflow
-    When I parse "add-vm-type mylang"
+    When I parse "vde add mylang"
     Then intent should be "add_vm_type"

@@ -13,7 +13,7 @@ Feature: Configuration Management
 
   Scenario: Add service VM with custom port
     Given I need a MySQL service on port 3306
-    When I run "add-vm-type --type service --svc-port 3306 mysql 'apt-get install -y mysql-server'"
+    When I run VDE command "vde add --type service --svc-port 3306 mysql 'apt-get install -y mysql-server'"
     Then mysql VM should be created
     And port 3306 should be mapped to host in configuration
     And I can connect to MySQL from other containers
@@ -28,7 +28,7 @@ Feature: Configuration Management
   Scenario: Set display name for VM
     Given I want friendly names in listings
     When I add VM type with --display "Go Language"
-    Then "Go Language" should appear in list-vms output
+    Then "Go Language" should appear in vde list output
     And the display name should be used in all user-facing messages
 
   Scenario: Configure aliases for VM

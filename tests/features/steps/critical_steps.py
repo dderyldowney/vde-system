@@ -116,7 +116,7 @@ def step_container_running(context, container_name):
 # =============================================================================
 
 
-@when('I run the list-vms script with "{args}"')
+@when('I run VDE command "list {args}"')
 def step_run_list_vms(context, args):
     result = run_vde_command(f"list-vms {args}", timeout=30, context=context)
     context.command_output = result.stdout + result.stderr
@@ -125,7 +125,7 @@ def step_run_list_vms(context, args):
     context.last_exit_code = context.command_exit_code
 
 
-@when('I run vde-cli "{command}"')
+@when('I run VDE command "{command}"')
 def step_run_vde_cli(context, command):
     result = run_vde_command(command, context=context)
     context.command_output = result.stdout + result.stderr
