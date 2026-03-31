@@ -576,14 +576,28 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
+## Phase 16: Discovery & Parser Hardening (P1)
+
+**Goal:** Implement 23 missing steps for VM Discovery and Natural Language Parsing.
+
+### 16.1 Key Implementations (100% Real Logic)
+
+1.  **Refactor Parser Steps:** Update `tests/features/steps/vde_parser_steps.py`.
+2.  **Behavioral Verification:**
+    - `WHEN: 'I parse "{text}"'`: Execute actual `vde ask "{text}" --dry-run` and capture the structured plan JSON.
+    - `THEN: 'intent should be "{intent}"'`: Assert the `intent` field in the captured plan matches.
+    - `THEN: 'filter should be "{category}"'`: Verify the category filter in the generated plan.
+    - `THEN: 'VMs should include "{vm_name}"'`: Verify the target VMs list in the plan.
+
+---
+
 ## Success Criteria
 
 | Metric | Target |
 |--------|--------|
-| Undefined Steps (Integration) | **0** |
-| Fake/Pink Tests | **0** |
-| AmbiguousStep Conflicts | **0** |
-| Overall Test Pass Rate | **100%** |
+| Undefined Steps (Discovery) | **0** |
+| Real Logic usage | **100%** |
+| Core Test Pass Rate | **100%** |
 
 ---
 
