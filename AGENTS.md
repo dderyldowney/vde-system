@@ -21,6 +21,7 @@ Run before answering any user prompt, and again after any context reset (e.g. `/
 7.  Run `/vde-enforce`
 8.  Run Context7 refresh for: Python, behave, PyYAML, Docker,
     docker-compose, Zsh, SSH
+9.  Strip dead props, unused exports, orphaned imports, and debug logs. Commit that separately, and only then proceed.
 
 Do not proceed until all startup steps complete. If any step fails,
 report it before continuing.
