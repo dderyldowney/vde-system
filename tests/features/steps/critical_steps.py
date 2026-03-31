@@ -116,7 +116,6 @@ def step_container_running(context, container_name):
 # =============================================================================
 
 
-@when('I run VDE command "list {args}"')
 def step_run_list_vms(context, args):
     result = run_vde_command(f"list-vms {args}", timeout=30, context=context)
     context.command_output = result.stdout + result.stderr
