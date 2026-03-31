@@ -164,6 +164,18 @@ vde_error_docker_not_running() {
         "troubleshooting.md#docker-daemon-not-running"
 }
 
+vde_error_insufficient_disk() {
+    local usage="${1}"
+    vde_error_show \
+        "Insufficient disk space" \
+        "System disk usage is at ${usage}%" \
+        "1. Clean up Docker images: docker image prune -a
+2. Remove unused volumes: docker volume prune
+3. Clean up VDE logs: vde nuke --logs-only
+4. Free up space on your host machine" \
+        "troubleshooting.md#disk-space"
+}
+
 vde_error_port_in_use() {
     local port="${1}"
     vde_error_show \

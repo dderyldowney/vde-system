@@ -15,14 +15,14 @@ Feature: Error Handling and Recovery
 
   Scenario: Port conflict resolution
     Given a port is already in use
-    When I try to start a VM
+    When I attempt to start a VM
     Then VDE should detect the conflict
     And allocate an available port
     And continue with the operation
 
   Scenario: Docker daemon not running
     Given Docker is not available
-    When I try to start a VM
+    When I attempt to start a VM
     Then I should receive a helpful error
     And the error should explain Docker is required
     And suggest how to fix it
@@ -36,7 +36,7 @@ Feature: Error Handling and Recovery
 
   Scenario: Network creation failure
     Given the Docker network can't be created
-    When I start a VM
+    When I attempt to start a VM
     Then VDE should report the specific error
     And suggest troubleshooting steps
     And offer to retry

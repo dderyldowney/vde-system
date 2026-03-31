@@ -52,10 +52,6 @@ def step_request_start_vm(context, vm_name):
     context.last_result = result
     context.last_output = result.stdout + result.stderr
 
-@when("I try to start a VM")
-def step_try_start_vm(context):
-    """Attempt to start a standard VM (e.g., python)."""
-    step_request_start_vm(context, "python")
 
 # =============================================================================
 # THEN steps
@@ -99,3 +95,98 @@ def step_detect_port_conflict(context):
     """Verify port conflict detection message."""
     # Triggered by vde_error_port_in_use
     assert "already in use" in context.last_output.lower(), "Port conflict not detected in output"
+
+
+@given("my disk is nearly full")
+def step_disk_nearly_full(context):
+    """Set simulation flag for disk full."""
+    context.simulate_disk_full = True
+
+
+@when("I try to create a VM")
+def step_try_create_vm_error(context):
+    """Call vde create with simulated errors."""
+    import subprocess
+    vm_name = getattr(context, "target_vm", "python")
+    
+    if getattr(context, "simulate_disk_full", False):
+        # Run a zsh command that aliases df to return 99%
+        # We must point to the absolute path of bin/vde because we're in tests/features/steps
+        cmd = f'df() {{ echo "Filesystem 50G 49G 1G 99% /"; }}; export VDE_ROOT_DIR="{VDE_ROOT}"; {VDE_ROOT}/bin/vde create {vm_name}'
+        result = subprocess.run(["zsh", "-c", cmd], capture_output=True, text=True)
+        context.last_result = result
+        context.last_output = result.stdout + result.stderr
+    else:
+        # Normal create try
+        result = run_vde_command(f"create {vm_name}", context=context)
+        context.last_result = result
+        context.last_output = result.stdout + result.stderr
+
+
+@then("VDE should detect the issue")
+def step_vde_detect_issue(context):
+    """Verify that an error or warning was detected."""
+    # VDE errors start with 'Error:' or '[CRITICAL]'
+    assert "Error:" in context.last_output or "CRITICAL" in context.last_output, \
+        f"Issue not detected in output: {context.last_output}"
+
+
+@then("warn me before starting")
+def step_warn_before_starting(context):
+    """Verify that a warning message is shown."""
+    assert "Insufficient disk space" in context.last_output or "Disk usage is" in context.last_output, \
+        "Warning message not found"
+
+
+@then("suggest cleaning up")
+def step_suggest_cleanup(context):
+    """Verify that cleanup suggestions are provided."""
+    # Matches solution block in vde_error_insufficient_disk
+    assert "Clean up Docker images" in context.last_output, "Cleanup suggestions not found"
+
+
+@given("the Docker network can't be created")
+def step_network_create_fail(context):
+    """Set simulation flag for network creation failure."""
+    context.simulate_network_fail = True
+
+
+@when("I attempt to start a VM")
+def step_start_vm_error(context):
+    """Call vde start with simulated errors."""
+    import subprocess
+    vm_name = getattr(context, "target_vm", "python")
+    
+    if getattr(context, "simulate_network_fail", False):
+        # Alias docker to fail on network create
+        # Use a comma as delimiter for the command string to avoid escaping hell
+        cmd = f'docker() {{ if [[ "$1 $2" == "network inspect" ]]; then return 1; fi; command docker "$@"; }}; export VDE_ROOT_DIR="{VDE_ROOT}"; {VDE_ROOT}/bin/vde start {vm_name}'
+        result = subprocess.run(["zsh", "-c", cmd], capture_output=True, text=True)
+        context.last_result = result
+        context.last_output = result.stdout + result.stderr
+    else:
+        # Normal start try
+        result = run_vde_command(f"start {vm_name}", context=context)
+        context.last_result = result
+        context.last_output = result.stdout + result.stderr
+
+
+@then("VDE should report the specific error")
+def step_report_specific_error(context):
+    """Verify that a specific error message is shown."""
+    assert "Error:" in context.last_output, "No error reported"
+
+
+@then("suggest troubleshooting steps")
+def step_suggest_troubleshooting(context):
+    """Verify that a solution block is provided."""
+    assert "Solution:" in context.last_output or "run 'vde init'" in context.last_output, \
+        "Troubleshooting steps not found"
+
+
+@then("offer to retry")
+def step_offer_retry(context):
+    """Verify that retry logic or advice is provided."""
+    # Most VDE solutions end with advice on how to retry
+    assert "vde start" in context.last_output or "vde create" in context.last_output, \
+        "Retry offer/advice not found"
