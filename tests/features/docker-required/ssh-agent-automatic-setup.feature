@@ -13,15 +13,15 @@ Feature: Automatic SSH Setup and Key Management
     Then an SSH key should be generated automatically
     And the SSH agent should be started automatically
     And the key should be loaded into the agent
-    And I should be informed of what happened
-    And I should be able to use SSH immediately
+    And VDE should inform me of the SSH setup status
+    And I can immediately use SSH to run commands
 
   Scenario: First-time user with existing SSH keys
     Given I have just cloned VDE
     And I have existing SSH keys in ~/.ssh/vde/
     And I do not have an SSH agent running
     When I create my first VM
-    Then my existing SSH keys should be detected automatically
+    Then my existing VDE SSH keys should be detected
     And the SSH agent should be started automatically
     And my keys should be loaded into the agent
     And I should not need to configure anything manually
@@ -40,9 +40,9 @@ Feature: Automatic SSH Setup and Key Management
     Given I have created VMs before
     And I have SSH configured
     When I create a new VM
-    Then no SSH configuration messages should be displayed
+    Then no SSH-related configuration messages should be shown
     And the setup should happen automatically
-    And I should only see VM creation messages
+    And I should see exactly the VM creation progress
 
   Scenario: SSH agent restart if not running
     Given I have VMs configured
@@ -100,6 +100,6 @@ Feature: Automatic SSH Setup and Key Management
   Scenario: No manual SSH configuration needed
     Given I am a new VDE user
     When I read the documentation
-    Then I should see that SSH is automatic
-    And I should not see manual setup instructions
+    Then I should see that SSH management is automatic
+    And no manual SSH setup instructions should be present
     And I should be able to start using VMs immediately

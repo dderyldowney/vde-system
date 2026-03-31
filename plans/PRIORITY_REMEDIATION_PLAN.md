@@ -522,17 +522,54 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
+## Phase 13: SSH Subsystem Hardening (P1)
+
+**Goal:** Implement remaining 25 missing steps for SSH Agent, Key Management, and Sync.
+
+### 13.1 Key Implementations
+
+1.  **Refactor SSH Steps:** Update `tests/features/steps/ssh_core_steps.py`.
+2.  **Agent & Key Verification:**
+    - `THEN: 'the SSH agent should be started automatically'`: Run `vde ssh-setup status` and assert `SSH agent is running`.
+    - `THEN: 'an ed25519 key should be generated'`: Run `ssh-keygen -l -f ~/.ssh/vde/id_ed25519` and assert `ED25519`.
+    - `THEN: 'the key should be loaded into the agent'`: Run `ssh-add -l` and match fingerprint.
+3.  **Synchronization Verification:**
+    - `THEN: 'my public keys should be copied to public-ssh-keys/'`: Verify file existence and type.
+    - `THEN: 'all my public keys should be in the VM\'s authorized_keys'`: Run `vde exec cat ~/.ssh/authorized_keys` and verify.
+4.  **CLI Consistency:**
+    - Ensure all SSH-related "Givens" (e.g., `I have SSH configured`) perform real checks via `vde ssh-setup status`.
+
+---
+
+## Phase 14: Final SSH & Lifecycle Wording Alignment (P1)
+
+**Goal:** Resolve the final 6 undefined steps in `ssh-agent-automatic-setup.feature`.
+
+### 14.1 Key Implementations (Unique Wording)
+
+1.  **File:** `tests/features/steps/vde_ssh_hardening_steps.py`.
+2.  **Steps:**
+    - `GIVEN: 'I have created multiple VMs'`: Verify `configs/docker` has >1 subdirectory.
+    - `GIVEN: 'I have created VMs before'`: Verify `configs/docker` has at least 1 subdirectory.
+    - `GIVEN: 'I have configured SSH through VDE'`: Run `vde ssh-setup status` and verify keys.
+    - `GIVEN: 'I have SSH keys on my host'`: Verify `~/.ssh/id_rsa` or similar exists.
+    - `THEN: 'the vde list command should show available VMs'`: Run `vde list` and assert output contains VM names.
+    - `GIVEN: 'I create a new VM'`: (Contextual Given) Set `context.target_vm = "python"`.
+
+---
+
 ## Success Criteria
 
 | Metric | Target |
 |--------|--------|
-| Undefined Steps (Advanced Errors) | **0** |
+| Undefined Steps (SSH Setup) | **0** |
 | Fake/Pink Tests | **0** |
-| Core Test Pass Rate | **100%** |
+| AmbiguousStep Conflicts | **0** |
 
 ---
 
 **END OF PLAN**
+
 
 
 **Key Improvement:** No new files needed. All changes are additive decorators to existing functions + 2 bug fixes.
