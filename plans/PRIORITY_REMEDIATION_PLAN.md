@@ -445,11 +445,31 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
+## Phase 9: Maintenance & Natural Language Steps (P1)
+
+**Goal:** Implement 26 missing steps for Maintenance, Natural Language, and System Status features.
+
+### 9.1 Key Implementations
+
+1.  **Maintenance Steps:**
+    - `GIVEN: 'I have updated my system Docker'`: Verify docker engine is available.
+    - `WHEN: 'I request to "rebuild python nocache=true"'`: Call `vde rebuild python --no-cache`.
+    - `THEN: 'the Python VM should be rebuilt from scratch'`: Verify image creation time.
+2.  **Natural Language Integration:**
+    - `GIVEN: 'I am following the documented workflow'`: Verify `VDE_ROOT`.
+    - `WHEN: 'I parse "{text}"'`: Call `vde ask "{text}"` and check generated plan.
+    - `THEN: 'intent should be "{intent}"'`: Assert generated command matches.
+3.  **System Status & Monitoring:**
+    - `WHEN: 'I check resource usage'`: Call `vde stats`.
+    - `THEN: 'I can see CPU and memory usage'`: Assert output format.
+
+---
+
 ## Success Criteria
 
 | Metric | Target |
 |--------|--------|
-| Undefined Steps (Collaboration) | **0** |
+| Undefined Steps (Maintenance) | **0** |
 | Fake/Pink Tests | **0** |
 | Core Test Pass Rate | **100%** |
 
