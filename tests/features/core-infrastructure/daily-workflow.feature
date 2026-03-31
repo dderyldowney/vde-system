@@ -59,7 +59,7 @@ Feature: Daily Development Workflow
 
   Scenario: Add support for a new language
     Given I am following the documented workflow
-    When I parse "add-vm-type foobar"
+    When I parse "vde add foobar"
     Then intent should be "add_vm_type"
 
   Scenario: Check what VMs I can create

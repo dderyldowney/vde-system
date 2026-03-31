@@ -23,7 +23,7 @@ Feature: SSH Configuration
   @requires-ssh-agent
   Scenario: Sync public keys to VDE directory
     Given SSH keys exist in ~/.ssh/vde/
-    When I run "sync_ssh_keys_to_vde"
+    When I run VDE command "sync_ssh_keys_to_vde"
     Then public keys should be copied to "public-ssh-keys" directory
     And only .pub files should be copied
     And .keep file should exist in public-ssh-keys directory

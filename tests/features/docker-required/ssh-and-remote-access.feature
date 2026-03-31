@@ -16,7 +16,7 @@ Feature: SSH and Remote Access
   @requires-docker-host
   Scenario: Connecting with SSH client
     Given I have the SSH connection details
-    When I run "ssh vde-python"
+    When I run VDE command "ssh vde-python"
     Then I should connect to the Python VM
     And I should be logged in as devuser
     And I should have a zsh shell

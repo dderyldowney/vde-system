@@ -51,7 +51,7 @@ Feature: Installation and Initial Setup
 
   Scenario: Load VM types configuration
     Given VDE is installed
-    When I run list-vms
+    When I run vde list
     Then all predefined VM types should be shown
     And python, rust, js, csharp, ruby should be listed
     And postgres, redis, mongodb, nginx should be listed
@@ -61,7 +61,7 @@ Feature: Installation and Initial Setup
     Given I want VDE commands available everywhere
     When I add VDE scripts to my PATH
     Then I can run vde commands from any directory
-    And I can run start-virtual, shutdown-virtual, etc.
+    And I can run vde start, vde stop, etc.
     And tab completion should work
 
   Scenario: Verify Docker permissions
@@ -82,7 +82,7 @@ Feature: Installation and Initial Setup
   @user-guide-first-vm
   Scenario: First time creation experience
     Given I've just installed VDE
-    When I run "create-virtual-for python"
+    When I run VDE command "vde create python"
     Then I should see helpful progress messages
     And configs/docker/languages/python/ should be created
     And docker-compose.yml should be generated
@@ -91,7 +91,7 @@ Feature: Installation and Initial Setup
 
   Scenario: Verify installation with health check
     Given I've installed VDE
-    When I run "vde-health" or check status
+    When I run VDE command "vde health" or check status
     Then I should see if VDE is properly configured
     And any issues should be clearly listed
     And I should get fix suggestions for each issue
@@ -131,7 +131,7 @@ Feature: Installation and Initial Setup
   Scenario: Quick start after installation
     Given VDE is freshly installed
     When I want to start quickly
-    Then I can run "create-virtual-for python && start-virtual python"
+    Then I can run "vde create python && vde start python"
     And I should have a working Python environment
     And I can start coding immediately
 

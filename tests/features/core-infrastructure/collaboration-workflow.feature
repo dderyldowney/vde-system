@@ -84,6 +84,6 @@ Feature: Team Collaboration and Project Sharing
   @requires-docker-host
   Scenario: Team expands VDE with new language support
     Given I want to work with a new language
-    When one developer runs "add-vm-type dart 'apt-get install -y dart'"
+    When one developer runs "vde add dart 'apt-get install -y dart'"
     And commits the vm-types.conf change
     Then all developers can create dart VMs

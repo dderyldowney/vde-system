@@ -28,7 +28,7 @@ Feature: VM Image Rebuild Tests
   @vm-rebuild
   Scenario: Rebuild Rust VM with --rebuild flag
     Given VM "rust" is running
-    When I run "vde start rust --rebuild"
+    When I run VDE command "vde start rust --rebuild"
     Then VM "rust" should be running
     And the container should be rebuilt from the Dockerfile
 

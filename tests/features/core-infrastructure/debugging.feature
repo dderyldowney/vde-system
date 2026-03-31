@@ -14,13 +14,13 @@ Feature: Debugging and Troubleshooting
   @requires-docker-host
   Scenario: View VM logs for debugging
     Given a VM is running but misbehaving
-    When I run "vde logs python"
+    When I run VDE command "vde logs python"
     Then I should see the container logs
 
   @requires-docker-host
   Scenario: Access VM shell for debugging
     Given a VM is running
-    When I run "vde exec python /bin/zsh"
+    When I run VDE command "vde exec python /bin/zsh"
     Then I should be logged in as devuser
 
   @requires-docker-host
@@ -77,7 +77,7 @@ Feature: Debugging and Troubleshooting
   @requires-docker-host
   Scenario: Verify network connectivity between VMs
     Given two VMs can't communicate
-    When I check the ./bin/vde networks
+    When I check the ./vde networks
     Then I should see both VMs on "vde-testing"
     And I can ping one VM from another
 

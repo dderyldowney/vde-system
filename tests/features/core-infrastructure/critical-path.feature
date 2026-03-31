@@ -43,35 +43,35 @@ Feature: Critical Path — VM Lifecycle
 
   # ── CLI Commands (spec section 4.1) ──
 
-  Scenario: vde list-vms shows all spec-defined language VMs
-    When I run the list-vms script with "--all"
+  Scenario: vde list shows all spec-defined language VMs
+    When I run VDE command "list --all"
     Then the output should contain "python"
     And the output should contain "rust"
     And the output should contain "go"
 
-  Scenario: vde list-vms shows all spec-defined service VMs
-    When I run the list-vms script with "--all"
+  Scenario: vde list shows all spec-defined service VMs
+    When I run VDE command "list --all"
     Then the output should contain "postgres"
     And the output should contain "redis"
 
   Scenario: vde create returns VDE_ERR_EXISTS=6 for existing VM
-    When I run vde-cli "create python"
+    When I run VDE command "create python"
     Then the exit code should be 6
 
   Scenario: vde create returns VDE_ERR_EXISTS=6 for existing service VM
-    When I run vde-cli "create redis"
+    When I run VDE command "create redis"
     Then the exit code should be 6
 
   # ── Docker-required scenarios (spec section 4.1) ──
 
   @requires-docker-host
   Scenario: vde start runs a VM container with correct name
-    When I run vde-cli "start python"
+    When I run VDE command "start python"
     Then container "vde-python" should be running
 
   @requires-docker-host
   Scenario: vde stop stops a running VM container
     Given container "vde-python" is running
-    When I run vde-cli "stop python"
+    When I run VDE command "stop python"
     Then container "vde-python" should not be running
     And "configs/docker/languages/python/docker-compose.yml" should still exist
