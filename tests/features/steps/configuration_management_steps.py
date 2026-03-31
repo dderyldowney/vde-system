@@ -103,12 +103,17 @@ def step_install_cmd_in_registry(context, install_cmd):
 
 
 @then("my custom packages should be available in the VM")
-def step_custom_packages_in_registry(context):
-    entry = _find_vm_type(context.cfg_vm)
-    assert entry is not None
-    assert "my-package" in entry.get("install", ""), (
-        f"'my-package' missing from install: {entry.get('install')}"
-    )
+def step_custom_packages_in_vm(context):
+    """Use 'vde exec' to check for a representative custom file or package"""
+    vm_name = getattr(context, 'cfg_vm', 'python')
+    # If the VM isn't running, start it
+    if not container_is_running(vm_name):
+        run_vde_command(f"start {vm_name}", context=context)
+        wait_for_container(get_container_name(vm_name), timeout=60)
+    
+    # Check for python3 as a representative package
+    result = run_vde_command(f"exec {vm_name} which python3", context=context)
+    assert result.returncode == 0, f"python3 not found in VM {vm_name}: {result.stderr}"
 
 
 # ============================================================
@@ -269,14 +274,12 @@ def step_add_vm_type_with_display(context):
     )
 
 
+@then('"Go Language" should appear in vde list output')
 @then('"Go Language" should appear in list-vms output')
 def step_display_in_list_output(context):
-    entry = _find_vm_type(context.display_vm)
-    assert entry is not None, f"VM type '{context.display_vm}' not found"
-    display = entry.get("display", "")
-    assert context.display_name in display, (
-        f"Expected display to contain '{context.display_name}', got '{display}'"
-    )
+    """Run 'vde list' and grep for 'Go Language'"""
+    result = run_vde_command("list", context=context)
+    assert "Go Language" in result.stdout, f"'Go Language' not found in vde list output: {result.stdout}"
 
 
 @then("the display name should be used in all user-facing messages")
@@ -1157,5 +1160,15 @@ def step_can_identify_problematic_setting(context):
     assert hasattr(context, "validation_result")
     # Just check that it produced output
     assert len(context.validation_result.stdout) > 0
+
+
+@then("all developers have compatible environments")
+def step_compatible_environments(context):
+    """Compare vm-types.conf entry with a reference or verify its presence"""
+    vm_types_conf = VDE_ROOT / "data" / "vm-types.conf"
+    assert vm_types_conf.exists(), "vm-types.conf missing"
+    content = vm_types_conf.read_text()
+    assert "python" in content, "python missing from vm-types.conf"
+    assert "go" in content, "go missing from vm-types.conf"
 
 

@@ -463,13 +463,6 @@ def step_consistent_configs(context):
     assert (VDE_ROOT / "configs" / "docker").is_dir()
 
 
-@then("all developers have compatible environments")
-def step_compatible_envs(context):
-    """Verify environment compatibility via vde info."""
-    result = run_vde_command("info", context=context)
-    assert result.returncode == 0
-
-
 @then("the VM should start with a fresh configuration")
 def step_fresh_config_start(context):
     """Verify VM start after rebuild."""
