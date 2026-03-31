@@ -591,12 +591,26 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
+## Phase 17: Unified Canonical CLI Enforcement (P0)
+
+**Goal:** Unify the entire project (code, scripts, and tests) to interact exclusively through the canonical `vde` CLI from the User's perspective.
+
+### 17.1 Key Objectives
+
+1.  **Internal Script Audit:** Ensure all scripts in `bin/` call other VDE functions through the `vde` entry point when performing CLI-level operations (e.g., using `vde stop` instead of calling `shutdown-virtual` directly).
+2.  **Global BDD Alignment:** Final sweep of all `.feature` files and step definitions to ensure NO direct script or Docker calls remain.
+3.  **Command Registry Hardening:** Ensure `bin/vde` is the single source of truth for all command dispatching and that all sub-scripts are correctly registered.
+4.  **Perspective Enforcement:** Every automated test scenario must read as a set of actions a User would perform at their terminal.
+
+---
+
 ## Success Criteria
 
 | Metric | Target |
 |--------|--------|
-| Undefined Steps (Discovery) | **0** |
-| Real Logic usage | **100%** |
+| Direct Script-to-Script Calls | **0** |
+| Direct Docker/Compose in Features | **0** |
+| User Perspective Compliance | **100%** |
 | Core Test Pass Rate | **100%** |
 
 ---
