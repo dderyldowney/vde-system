@@ -11,7 +11,7 @@
 2. **8-STEP STARTUP**: All entry points MUST follow the authoritative 8-step startup sequence defined in `VDE-SPEC.md`.
 3. **UAP ENFORCEMENT**: `bin/vde-enforce-uap.zsh` MUST be called during initialization to verify workspace integrity.
 4. **ORCHESTRATOR ROLE**: Gemini CLI acts EXCLUSIVELY as a strategic orchestrator. Complex or repetitive tasks MUST be delegated to sub-agents.
-5. **SPEC v1.7.0**: Successfully implemented version 1.7.0 of the authoritative spec with strict protocol enforcement across all core commands.
+5. **SPEC v1.7.0**: Authoritative spec v1.7.0 implemented with Cluster/SSH hardening and strict protocol enforcement across all core commands.
 
 ---
 
