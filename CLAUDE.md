@@ -1,20 +1,13 @@
 # VDE Project — Claude Code Instructions
 
-## Authority
+**CRITICAL MANDATE: Claude MUST adhere to the VDE Universal Agent Protocol (UAP) defined in `AGENTS.md`. There are NO EXCEPTIONS.**
 
-**AGENTS.md** is the single source of truth for all AI agent behavior.
-- All interactions MUST follow the **Universal Agent Protocol (UAP)** defined in `AGENTS.md`.
-- No agent (Claude, Kilo, Gemini, etc.) may bypass the UAP mandates.
-
-## Core Mandates (Universal)
-
-1.  **DRY is Absolute**: No duplicate code.
-2.  **TDD is Non-Negotiable**: RED -> GREEN -> REFACTOR.
-3.  **No Fake Tests**: `assert True`, `pass` are forbidden.
-4.  **User-Centric**: Use the canonical `vde` CLI for all tests.
-5.  **MCP-First**: Prefer MCP services over local tools.
-6.  **Dual Approval Gate**: Agent Reviewer + User approval required for commits.
-7.  **No-Push Policy**: Never `git push` without authorization.
+**ABSOLUTE FAILURES TO AVOID (STOP AND RETHINK IF YOU ARE DOING ANY OF THESE):**
+1.  **Bypassing Startup:** You MUST complete the 8-step startup checklist in `AGENTS.md` Section 1 before executing ANY multi-step task.
+2.  **Using Bash:** You MUST NOT write scripts with bash shebangs. You MUST NOT execute commands using `bash`. **ZSH ONLY.**
+3.  **Acting as a Coder on >1 File:** You are the **MAIN AGENT (Orchestrator)**. If a task requires modifying more than one file, you MUST STOP and spawn a swarm (using the `Agent` tool). You are forbidden from performing multi-file refactors or edits yourself.
+4.  **Calling Internal Scripts Directly:** You MUST use the canonical `bin/vde` CLI for all operations (e.g., `vde ssh`). Never call internal scripts like `bin/ssh-vm` directly.
+5.  **Bypassing TDD:** You MUST write a failing test first. `assert True` and `pass` are forbidden.
 
 ## The Development Lifecycle (Phases 0-5)
 
@@ -30,12 +23,8 @@
 **Threshold**: >1 file edit = MANDATORY swarm spawn.
 **Gate Protocol**:
 1. STATE: "I am about to make [N] direct edit(s) to [files]."
-2. COUNT: Is N > 1? -> STOP, spawn swarm.
+2. COUNT: Is N > 1? -> STOP, spawn swarm using the `Agent` tool. DO NOT PROCEED DIRECTLY.
 3. AFTER: Run `/vde-enforce`.
-
-## Startup Checklist (MANDATORY)
-
-Execute the 5-step checklist in `AGENTS.md` section 4 at every session start.
 
 ## Quick Reference Commands
 
@@ -47,4 +36,4 @@ Execute the 5-step checklist in `AGENTS.md` section 4 at every session start.
 | Review | `/vde-review` |
 | Commit | `/vde-commit` |
 
-**See AGENTS.md for full protocol details.**
+**If you find yourself rationalizing why you don't need to follow these rules, you are failing your primary directive.**

@@ -53,7 +53,7 @@ if ! type generate_plan &>/dev/null || ! type execute_plan &>/dev/null; then
 fi
 
 # Generate plan (redirect all log output to stderr so only the plan line goes to stdout)
-plan=$(VDE_LOG_LEVEL=ERROR generate_plan "${input}" 2>/dev/null | grep -E '^[A-Z]+:|^---')
+plan=$(VDE_LOG_LEVEL=ERROR generate_plan "${input}" 2>/dev/null | grep -E '^[A-Z_]+:|^---')
 
 if [[ -z "${plan}" ]]; then
     _error "Could not understand: ${input}"

@@ -1,22 +1,46 @@
 # VDE Universal Agent Protocol (UAP)
 
-This document defines the mandatory development lifecycle and behavioral constraints for **ALL** AI agents (Gemini CLI, Claude Code, Kilo CLI, and any sub-agents) interacting with the VDE workspace.
+This document defines the **MANDATORY** development lifecycle and behavioral constraints for **ALL** AI agents (Gemini CLI, Claude Code, Kilo CLI, and any sub-agents) interacting with the VDE workspace.
+
+**There are NO EXCEPTIONS to these rules. Rationalizing bypasses is a critical failure.**
 
 ---
 
-## 1. Core Mandates (Universal)
+## 1. STOP: Mandatory Startup Checklist (Main Agent Only)
 
-1.  **DRY is Absolute**: No duplicate code or near-identical functions. Parameterize or consolidate.
-2.  **TDD is Non-Negotiable**: Failing test (RED) first, then minimal implementation (GREEN), then refactor.
-3.  **No Fake Tests**: `assert True`, `pass`, and placeholder context flags are strictly forbidden.
-4.  **User-Centric Perspective**: All interactions and tests must use the canonical `vde` CLI.
-5.  **MCP-First**: Always prefer MCP services (`sequential-thinking`, `context7`, etc.) over local CLI or internal tools.
-6.  **Dual Approval Gate**: Commits require BOTH code-reviewer (agent) and user approval.
-7.  **No-Push Policy**: Never `git push` without explicit user instruction.
+**DO NOT EXECUTE ANY TASK OR WRITE ANY CODE UNTIL THIS CHECKLIST IS COMPLETE.**
+
+The main agent MUST complete these 8 steps sequentially before doing *anything else* (other than read-only discovery to find these files). 
+*Note: Sub-agents inherit this context and MUST skip these steps to begin their assigned task immediately.*
+
+1.  **Read `MEMORY.md`**: Understand the current project mission, recent achievements, and immediate focus.
+2.  **Read `session_handover.md`**: Identify the specific goals and constraints of the current session.
+3.  **Read Paired Remediation Plan**: (e.g., `plans/session_handover_remediation.md`) Identify strategic debt and pending fixes.
+4.  **Read `docs/VDE-SPEC.md`**: Refresh knowledge of authoritative technical requirements and implementation priority.
+5.  **Read `PROJECT_STATUS.md`**: Understand the current reliability, pass rates, and identified gaps.
+6.  **Query `memory` MCP**: Retrieve cross-session context and semantically relevant conversation history.
+7.  **Refresh Library Documentation**: Use `context7` to fetch up-to-date documentation for any relevant libraries or frameworks.
+8.  **Perform Housekeeping**: Strip dead logs, remove unused code, and meticulously verify `bin/` script compliance (ZSH shebangs only).
 
 ---
 
-## 2. The Development Lifecycle (Phases 0-5)
+## 2. STRICT Core Mandates (Universal)
+
+Violating any of these mandates is a failure of the agent's primary directive.
+
+1.  **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`. Bash is strictly forbidden. The agent MUST NOT use `bash` to execute commands.
+2.  **Main Agent is Orchestrator ONLY**: The Main Agent MUST NOT write implementation code if it spans >1 file. The Main Agent's job is planning, orchestrating, and verifying.
+3.  **DRY is Absolute**: No duplicate code or near-identical functions. Parameterize or consolidate.
+4.  **TDD is Non-Negotiable**: Failing test (RED) first, then minimal implementation (GREEN), then refactor.
+5.  **No Fake Tests**: `assert True`, `pass`, and placeholder context flags are strictly forbidden.
+6.  **User-Centric Perspective**: All interactions and tests must use the canonical `vde` CLI (e.g., `vde ssh`). Never call internal `bin/` scripts directly.
+7.  **MCP-First**: Always prefer MCP services (`sequential-thinking`, `context7`, etc.) over local CLI or internal tools.
+8.  **Dual Approval Gate**: Commits require BOTH code-reviewer (agent) and user approval.
+9.  **No-Push Policy**: Never `git push` without explicit user instruction.
+
+---
+
+## 3. The Development Lifecycle (Phases 0-5)
 
 All work must proceed through these phases in order. Skipping phases or "optimizing away" gates is a protocol violation.
 
@@ -32,11 +56,11 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ### Phase 2: Implementation (TDD + Swarm)
 - **Action**: Follow Red-Green-Refactor.
-- **Pre-Edit Gate (MANDATORY)**:
+- **Pre-Edit Gate (CRITICAL STOP)**:
   1. STATE: "I am about to make [N] direct edit(s) to [files]."
   2. COUNT: Is N > 1?
-     - MAIN AGENT: STOP. Spawn a coder sub-agent swarm. Do NOT proceed directly.
-     - SUB-AGENT: STOP. Report back: "This task requires >1 file edit. Split into a swarm or re-assign."
+     - MAIN AGENT: **STOP.** Spawn a coder sub-agent swarm. **DO NOT PROCEED DIRECTLY.**
+     - SUB-AGENT: **STOP.** Report back: "This task requires >1 file edit. Split into a swarm or re-assign."
      - N = 1: Proceed directly.
   3. AFTER: Run `/vde-enforce` to verify compliance.
 
@@ -56,22 +80,12 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ---
 
-## 3. Swarm Orchestration Rules
+## 4. Swarm Orchestration Rules
 
-- **Main Agent**: Acts as the orchestrator. Synthesizes results, maintains `MEMORY.md`, and spawns swarms.
+- **Main Agent**: Acts as the orchestrator. Synthesizes results, maintains `MEMORY.md`, and spawns swarms. **Does NOT write multi-file code.**
 - **Sub-Agents**: Specialized experts. They inherit context from the Main Agent and perform isolated, single-file tasks.
 - **Scope Limit**: If a sub-agent receives a task requiring >1 file edit, it **MUST STOP** and report back. It cannot expand its own scope or spawn its own sub-agents.
 - **Parallelism**: Swarms must be launched simultaneously in a single message block, not sequentially.
-
----
-
-## 4. Mandatory Startup checklist (Main Agent Only)
-
-1. Read `MEMORY.md`.
-2. Read `session_handover.md` and remediation plans.
-3. Query `memory` MCP for cross-session context.
-4. Refresh library documentation via `context7`.
-5. Perform housekeeping (strip dead logs/unused code).
 
 ---
 

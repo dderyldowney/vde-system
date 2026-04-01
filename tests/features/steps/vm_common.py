@@ -616,6 +616,7 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
         "networks",
         "stats",
         "info",
+        "cluster",
         "validate-schemas",
         "ask",
         "vde-ask",

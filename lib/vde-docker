@@ -115,6 +115,11 @@ container_exists() {
 # Args: <vm_name> (raw or with vde- prefix)
 # Returns: VDE_SUCCESS (0) if running
 is_vm_running() {
+    # If skipping auto-load (e.g. --show-command), assume running for the check
+    if [[ "${VDE_SKIP_AUTO_LOAD:-0}" == "1" ]]; then
+        return ${VDE_SUCCESS}
+    fi
+
     local vm_name="${1}"
     local container_name
 

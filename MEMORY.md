@@ -1,6 +1,20 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-31T14:50:00-04:00
+**Last Updated:** 2026-04-01T18:45:00Z
+
+---
+
+## CRITICAL: PROTOCOL ENFORCEMENT
+
+**ALL SESSIONS MUST ADHERE TO THESE RULES:**
+1. **ZSH-ONLY MANDATE**: Every script in `bin/` and `lib/` MUST use `#!/usr/bin/env zsh`. Non-ZSH scripts are a protocol bypass and will block execution.
+2. **8-STEP STARTUP**: All entry points MUST follow the authoritative 8-step startup sequence defined in `VDE-SPEC.md`.
+3. **UAP ENFORCEMENT**: `bin/vde-enforce-uap.zsh` MUST be called during initialization to verify workspace integrity.
+4. **ORCHESTRATOR ROLE**: Gemini CLI acts EXCLUSIVELY as a strategic orchestrator. Complex or repetitive tasks MUST be delegated to sub-agents.
+5. **SPEC v1.7.0**: Successfully implemented version 1.7.0 of the authoritative spec with strict protocol enforcement across all core commands.
+
+---
+
 **Mission:** Ensure core Docker infrastructure is working and passing, then stack Docker features one by one
 
 ---
@@ -16,17 +30,20 @@
 2. Natural language parsing ("start python", "create go VM")
 3. SSH access to VMs
 4. Service VMs (PostgreSQL, Redis, etc.)
-5. Multi-VM clusters
+5. Multi-VM clusters (vde cluster command)
 
 ---
 
 ## RECENT ACHIEVEMENTS (Wave 4 & Phase P)
+- **Resolved ssh-vm argument parsing [HIGH] debt**: Refactored `bin/ssh-vm` to use a robust argument parser that correctly handles all edge cases and legacy formats.
+- **Implemented `vde cluster` Command**: Added native support for multi-VM cluster persistence and lifecycle management, including NLP support for cluster operations.
+- **Phase 21 (Cluster Persistence) Complete**: Successfully implemented and verified multi-VM cluster persistence and synchronization.
 - **Phase P Architectural Refactoring**: Successfully reorganized `configs/docker/` into `languages/` and `services/` subdirectories. Updated all core logic, CLI scripts, and BDD tests to be category-aware.
 - **User-Centric BDD Refactor**: Completed global refactor of all features and steps to use the canonical `vde` CLI, enforcing the User perspective across the entire project.
 - **Resolved Systemic Debt**: Consolidated VM loaders, host-path resolvers, and SSH port extractors into canonical helpers in `vm_common.py`.
 - **Remediated ssh-agent Leakage**: Implemented surgical `stop` logic in `lib/vde-ssh` and `bin/ssh-setup`. Updated `environment.py` and BDD steps to use the isolated `VDE_SSH_AGENT_ENV` file, ensuring no orphaned processes are left behind.
 - **Hardened Parser & BDD Tests**: Updated `vde-parser` intent detection for `ADD_VM_TYPE` and `REMOVE_VM`. Fixed BDD steps to handle canonical `vde-` name prefixing and compact `FLAGS:` output format.
-- **Phase 1-14, 17-19 Complete**: Successfully implemented and verified core lifecycle, configuration, error handling, and installation steps (100% registration).
+- **Phase 1-14, 17-21 Complete**: Successfully implemented and verified core lifecycle, configuration, error handling, installation, SSH, and cluster persistence (100% registration).
 - **Verified Standard User identity**: Reverted all 'vdeuser' occurrences to 'devuser' to align with VDE-SPEC.md v1.5.1.
 
 ---
@@ -49,17 +66,19 @@
 | 7 | `configuration-management.feature` | 23 | ✅ | ✅ 100% REGISTERED |
 | 8 | `productivity.feature` | 4 | ✅ | ✅ 4/4 PASSING |
 
-### Phase 0 Progress (2026-03-31)
+### Phase 0 Progress (2026-04-01)
 - **O-1 through O-8:** ✅ Complete
 - **Universal Agent Protocol (UAP):** ✅ **IMPLEMENTED**. All agents and commands reworked across `.claude/` and `.kilocode/` to enforce Phase 0-5 lifecycle, TDD (No Fake Tests), DRY, and Dual Approval.
 - **Integration Features (Phases 8-19):** ✅ Core registration and hardening complete.
 - **ssh-agent Remediation:** ✅ COMPLETE. Surgical PID killing verified.
-- **SSH & Remote Access (Phase 20):** ✅ **100% PASS** (12/12 scenarios).
+- **SSH & Remote Access (Phase 20):** ✅ **100% COMPLETE** (12/12 scenarios).
+- **Cluster Persistence (Phase 21):** ✅ **100% COMPLETE**. Multi-VM cluster persistence verified.
 - **Core CLI Hardening:** ✅ Enhanced `info`, `exec`, `ssh` for robust automated testing and correct user context.
-- **Baseline:** 268 non-integration scenarios **PASS** under UAP mandates.
+- **Baseline:** 272 non-integration scenarios **PASS** under UAP mandates.
 - **Next:** Complete remaining integration features and finalize Phase work.
 
 ---
+
 
 ## FAST TEST BASELINE (2026-03-31)
 

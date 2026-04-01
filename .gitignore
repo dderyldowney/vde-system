@@ -66,7 +66,15 @@ output/
 tests/test-logs/
 *.log
 *.txt
-*.zsh
+# Ignore top-level .zsh files that are usually temporary test scripts
+/*.zsh
+# But specifically allow the new permanent scripts
+!/cleanup_orphans.zsh
+!/test_shutdown.zsh
+# And allow all .zsh in bin/ and lib/
+!bin/**/*.zsh
+!lib/**/*.zsh
+
 bdd_results.txt
 e2e_results.txt
 pytest_results.txt
@@ -78,6 +86,12 @@ vmload.txt
 vmtest.txt
 test_parser_output*.txt
 test_run_report.txt
+
+# Explicitly allow permanent scripts that might match the patterns above
+!/cleanup_orphans.zsh
+!/test_shutdown.zsh
+!bin/**/*.zsh
+!lib/**/*.zsh
 
 # Session and agent files
 SESSION_STATE.md

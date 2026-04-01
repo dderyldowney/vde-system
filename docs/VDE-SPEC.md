@@ -2,11 +2,13 @@
 
 **Document Type:** Technical Implementation Specification
 **Project:** Virtual Development Environment (VDE)
-**Version:** 1.5.1
+**Version:** 1.7.0
 **Status:** AUTHORITATIVE SPECIFICATION
-**Last Updated:** 2026-03-07T21:00:00Z
+**Last Updated:** 2026-04-01T18:45:00Z
 
 > **MANDATE**: This document is the authoritative specification for the VDE project. All development, bug fixes, and implementation work MUST conform to this specification.
+>
+> **ZSH-ONLY MANDATE**: All scripts (bin/) and libraries (lib/) MUST be written exclusively in ZSH. No Bash, Sh, or other shell scripts are permitted. All shebangs MUST be `#!/usr/bin/env zsh`.
 >
 > **Specification by Tests - Complete Flow**:
 > ```
@@ -605,6 +607,7 @@ by `vde-init`, `ensure_vde_ssh_environment`, and `build-and-start`.
 #   status                  Show VM status
 #   health                  Run health check
 #   networks                Manage Docker networks
+#   cluster [action]        Manage multi-VM clusters (save, start, stop, list, remove)
 #   help                    Show help
 #
 # Options:
@@ -981,6 +984,17 @@ bin/add-vm-type --type lang --ssh-port 2220 myvm "apt-get install -y myvm"
 
 This appends to `data/vm-types.conf` and `configs/ssh/config`, then syncs `~/.ssh/vde/config`.
 
+### 10.1 Strict SSH Argument Parsing
+
+All VDE commands that facilitate SSH connections or command execution within a VM (e.g., `vde ssh`, `vde exec`) MUST implement strict argument parsing using the `--` separator.
+
+**Requirement:**
+- The `--` separator MUST be used to signal the end of VDE-specific option parsing.
+- All arguments following the `--` separator MUST be passed verbatim to the target VM or the underlying command (e.g., `ssh` or `docker exec`), bypassing any further processing by the VDE parser.
+- This ensures that flags intended for the command running inside the VM are not incorrectly interpreted as VDE flags.
+
+Example: `vde ssh my-vm -- ls -la /tmp`
+
 ---
 
 ## 11. SSH Config Merge Algorithm
@@ -1151,6 +1165,53 @@ Security initialization is automatically triggered at three entry points:
 | `lib/vde-ssh` `ensure_vde_ssh_environment` | `vde_security_init` | SSH environment setup |
 | `bin/build-and-start` | `vde_security_ensure_network` + `vde_security_enforce_permissions` | Build/start all VMs |
 | `bin/vde-networks` | `vde_security_ensure_network` | Network management |
+
+---
+
+## 15. Universal Agent Protocol (UAP)
+
+VDE workspace adheres to the **Universal Agent Protocol (UAP)** to ensure cross-agent compatibility and protocol safety.
+
+### 15.1 Core Requirements
+- **ZSH-only Execution**: All scripts in `bin/` and `lib/` MUST use `#!/usr/bin/env zsh`.
+- **8-Step Startup Protocol**:
+  1. Root discovery (`VDE_ROOT_DIR`).
+  2. Root library loading (`lib/vde-root`).
+  3. Root guard enforcement (`lib/vde-root-guard`).
+  4. Core library sourcing (`vde-shell-compat`, `vde-constants`, etc.).
+  5. Security initialization (`vde_security_init`).
+  6. Configuration loading (VM types, registry).
+  7. Protocol enforcement (`vde-enforce-uap.zsh`).
+  8. Main execution loop / dispatch.
+- **Orchestrator-Only Role**: Agents act as strategic orchestrators, delegating complex tasks to specialized sub-agents and maintaining session state through `MEMORY.md`.
+
+### 15.2 Mandatory Config Files
+The following files MUST exist in the project root:
+- `AGENTS.md`: Defines agent roles and boundaries.
+- `GEMINI.md`: Context and mandates for Gemini CLI agents.
+- `CLAUDE.md`: Workflow and persona instructions for Claude agents.
+
+### 15.3 Protocol Enforcement
+The `bin/vde-enforce-uap.zsh` script must be called during any non-lightweight initialization to verify compliance with these rules.
+
+---
+
+*End of Technical Specification*
+lization to verify compliance with these rules.
+
+---
+
+*End of Technical Specification*
+gic orchestrators, delegating complex tasks to specialized sub-agents and maintaining session state through `MEMORY.md`.
+
+### 15.2 Mandatory Config Files
+The following files MUST exist in the project root:
+- `AGENTS.md`: Defines agent roles and boundaries.
+- `GEMINI.md`: Context and mandates for Gemini CLI agents.
+- `CLAUDE.md`: Workflow and persona instructions for Claude agents.
+
+### 15.3 Protocol Enforcement
+The `bin/vde-enforce-uap.zsh` script must be called during any non-lightweight initialization to verify compliance with these rules.
 
 ---
 
