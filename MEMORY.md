@@ -51,10 +51,12 @@
 
 ### Phase 0 Progress (2026-03-31)
 - **O-1 through O-8:** ✅ Complete
+- **Universal Agent Protocol (UAP):** ✅ **IMPLEMENTED**. All agents and commands reworked across `.claude/` and `.kilocode/` to enforce Phase 0-5 lifecycle, TDD (No Fake Tests), DRY, and Dual Approval.
 - **Integration Features (Phases 8-19):** ✅ Core registration and hardening complete.
 - **ssh-agent Remediation:** ✅ COMPLETE. Surgical PID killing verified.
 - **SSH & Remote Access (Phase 20):** ✅ **100% PASS** (12/12 scenarios).
 - **Core CLI Hardening:** ✅ Enhanced `info`, `exec`, `ssh` for robust automated testing and correct user context.
+- **Baseline:** 268 non-integration scenarios **PASS** under UAP mandates.
 - **Next:** Complete remaining integration features and finalize Phase work.
 
 ---

@@ -1,148 +1,87 @@
-# VDE Agent Directory --- Strict Ops Edition
+# VDE Universal Agent Protocol (UAP)
 
-Operational rules for Claude Code / Kilo CLI in VDE. This file is
-intentionally minimal and normative.
+This document defines the mandatory development lifecycle and behavioral constraints for **ALL** AI agents (Gemini CLI, Claude Code, Kilo CLI, and any sub-agents) interacting with the VDE workspace.
 
-------------------------------------------------------------------------
+---
 
-## 1. Mandatory Startup
-> **SCOPE: MAIN AGENT ONLY.** Sub-agents spawned via the Agent tool must NOT run these steps. They inherit context from the main agent and must begin their assigned task immediately.
+## 1. Core Mandates (Universal)
 
-**Idempotent loading:** Before each step, check whether the content is already present in the current context. If it is, skip that step — never reload information already loaded this session.
+1.  **DRY is Absolute**: No duplicate code or near-identical functions. Parameterize or consolidate.
+2.  **TDD is Non-Negotiable**: Failing test (RED) first, then minimal implementation (GREEN), then refactor.
+3.  **No Fake Tests**: `assert True`, `pass`, and placeholder context flags are strictly forbidden.
+4.  **User-Centric Perspective**: All interactions and tests must use the canonical `vde` CLI.
+5.  **MCP-First**: Always prefer MCP services (`sequential-thinking`, `context7`, etc.) over local CLI or internal tools.
+6.  **Dual Approval Gate**: Commits require BOTH code-reviewer (agent) and user approval.
+7.  **No-Push Policy**: Never `git push` without explicit user instruction.
 
-Run before answering any user prompt, and again after any context reset (e.g. `/new`). Skip any step whose content is already in context.
+---
 
-1.  Read `MEMORY.md`
-2.  Read `session_handover.md`
-3.  Read `plans/session_handover_remediation.md`
-4.  Query `memory` MCP
-5.  Load agent definitions from `.claude/agents/` or `.kilocode/agents/`
-6.  Read `AGENTS.md`
-7.  Run `/vde-enforce`
-8.  Run Context7 refresh for: Python, behave, PyYAML, Docker,
-    docker-compose, Zsh, SSH
-9.  Strip dead props, unused exports, orphaned imports, and debug logs. Commit that separately, and only then proceed.
+## 2. The Development Lifecycle (Phases 0-5)
 
-Do not proceed until all startup steps complete. If any step fails,
-report it before continuing.
+All work must proceed through these phases in order. Skipping phases or "optimizing away" gates is a protocol violation.
 
-------------------------------------------------------------------------
+### Phase 0: Discovery (Swarm Mode)
+- **Action**: Gather context using MCP services.
+- **Swarm**: Spawn `scout` and `security-auditor` agents to map dependencies and security posture.
+- **Output**: Identification of DRY reuse opportunities and architectural constraints.
 
-## 2. CLI Layout
+### Phase 1: Planning (Hard Gate)
+- **Action**: Use `EnterPlanMode` / `vde-plan`.
+- **Constraint**: Design a TDD strategy with explicit failing test cases.
+- **Exit Gate**: **Explicit User Approval**.
 
-  ------------------------------------------------------------------------------------
-  CLI               Commands                Agents                Rules
-  ----------------- ----------------------- --------------------- --------------------
-  Claude Code       `.claude/commands/`     `.claude/agents/`     `.claude/rules/`
+### Phase 2: Implementation (TDD + Swarm)
+- **Action**: Follow Red-Green-Refactor.
+- **Pre-Edit Gate (MANDATORY)**:
+  1. STATE: "I am about to make [N] direct edit(s) to [files]."
+  2. COUNT: Is N > 1?
+     - MAIN AGENT: STOP. Spawn a coder sub-agent swarm. Do NOT proceed directly.
+     - SUB-AGENT: STOP. Report back: "This task requires >1 file edit. Split into a swarm or re-assign."
+     - N = 1: Proceed directly.
+  3. AFTER: Run `/vde-enforce` to verify compliance.
 
-  Kilo              `.kilocode/commands/`   `.kilocode/agents/`   `.kilocode/rules/`
-  ------------------------------------------------------------------------------------
+### Phase 3: Audit (The Guardian)
+- **Action**: Run `/vde-enforce` (or `yume-guardian` equivalent).
+- **Checks**: Automated verification of TDD (red state existence), DRY, and Swarm compliance.
+- **Exit Gate**: Must return **PASS (CLEAN)**.
 
-### Sync Rule
+### Phase 4: Review (Dual Approval)
+- **Action**: Run `/vde-review`.
+- **Swarm**: `reviewer` agent performs deep logic, performance, and security audit.
+- **Exit Gate**: **Reviewer Approval AND User Approval**.
 
-Every new command or agent must exist in both trees.
+### Phase 5: Finalization
+- **Action**: Final test run + commit using `/vde-commit`.
+- **Hygiene**: Update `MEMORY.md` and session handovers.
 
--   Convert in memory before writing to the other CLI's directory
--   Do not overwrite the source file's native format before copying
+---
 
-------------------------------------------------------------------------
+## 3. Swarm Orchestration Rules
 
-## 3. Commands
+- **Main Agent**: Acts as the orchestrator. Synthesizes results, maintains `MEMORY.md`, and spawns swarms.
+- **Sub-Agents**: Specialized experts. They inherit context from the Main Agent and perform isolated, single-file tasks.
+- **Scope Limit**: If a sub-agent receives a task requiring >1 file edit, it **MUST STOP** and report back. It cannot expand its own scope or spawn its own sub-agents.
+- **Parallelism**: Swarms must be launched simultaneously in a single message block, not sequentially.
 
-See `.claude/rules/commands-reference.md` for full list.
+---
 
-Quick reference: `/vde-enforce`, `/vde-plan`, `/vde-test`, `/vde-review`, `/vde-commit`, `/vde-debug`, `/vde-spec`
+## 4. Mandatory Startup checklist (Main Agent Only)
 
-------------------------------------------------------------------------
+1. Read `MEMORY.md`.
+2. Read `session_handover.md` and remediation plans.
+3. Query `memory` MCP for cross-session context.
+4. Refresh library documentation via `context7`.
+5. Perform housekeeping (strip dead logs/unused code).
 
-## 4. Specification Authority
+---
 
-**Source of truth:** `docs/VDE-SPEC.md`
+## 5. Agent-Platform Mapping
 
-All implementation and tests must conform to it.
+| Capability | Gemini CLI | Claude Code / Kilo |
+|------------|------------|---------------------|
+| Plan Mode | `enter_plan_mode` | `/vde-plan` |
+| Sub-Agents | `generalist`, `codebase_investigator` | `Agent` tool |
+| Compliance | `/vde-enforce` | `/vde-enforce` |
+| Review | `/vde-review` | `/vde-review` |
 
-Flow:
-
-USER GUIDE → SPEC → CODE → TESTS
-
-Rules: - Do not modify `docs/VDE-SPEC.md` without explicit user
-approval - Every spec change must: - bump version - update full ISO 8601
-timestamp
-
-Any implementation that violates the spec is invalid.
-
-------------------------------------------------------------------------
-
-## 5. Core Execution Rules
-
-1.  DRY is mandatory
-2.  Code review is mandatory — both code-reviewer AND user approval required before commit
-   - Ask yourself "What would a seasoned, experienced, perfectionist developer reject in code review?"
-3.  Sub-agents required for non-trivial work
-4.  MCP-first
-5.  No circular delegation
-6.  Docs via context7/fetch
-7.  Validate MCP connectivity
-8.  Log MCP interactions
-9.  Local-first git hygiene
-10. **No-push policy**: DO NOT `git push` without explicit user instruction
-
-------------------------------------------------------------------------
-
-## 6. Pre-Edit Gate
-
-```
-PRE-EDIT GATE:
-1. STATE: "I am about to make [N] direct edit(s) to [files]."
-2. COUNT: Is N > 1?
-   - MAIN AGENT: STOP. Spawn coder sub-agent swarm. Do NOT proceed directly.
-   - SUB-AGENT: STOP. Report back: "This task requires >1 file edit. Split into a swarm or re-assign." Do NOT spawn sub-agents. Do NOT proceed.
-   - NO → STATE: "1 edit. Proceeding directly." Then execute.
-3. AFTER: Run /vde-enforce to verify compliance.
-```
-
-Sub-agent rule: "This task requires >1 file edit. Split into a swarm or re-assign."
-
-------------------------------------------------------------------------
-
-## 7. Streamlining Mandate
-
--   DRY or delete
--   Tests must validate spec goals
--   Delete dead code
--   Keep only goal-serving code
-
-------------------------------------------------------------------------
-
-## 8. Portability Rules
-
--   No hardcoded paths
--   `VDE_ROOT_DIR` from `bin/vde`
--   SSH: `$HOME/.ssh/vde`
--   Relative compose paths
--   Cache contains no project paths
-
-------------------------------------------------------------------------
-
-## 9. Testing Rules
-
--   No full suite during debugging
--   No docker-tagged tests unless user explicitly requests
--   Run minimal scope first
--   Update MEMORY.md after tests
-
-------------------------------------------------------------------------
-
-## 10. Session Files
-
--   `MEMORY.md`
--   `session_handover.md`
--   `plans/session_handover_remediation.md`
-
-Read at start. Update during work. Keep synchronized.
-
-------------------------------------------------------------------------
-
-## 11. Agent Map
-
-See `.claude/rules/agents-reference.md` for agent responsibility mapping.
+**The Agent Directory is the single source of truth. Rules apply regardless of which CLI is used.**

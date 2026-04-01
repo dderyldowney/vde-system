@@ -1,55 +1,22 @@
-Run the Supervisor agent pass on recent work.
+# /vde-enforce Command (UAP Edition)
+
+Universal Supervisor Pass. Verifies compliance with Phase 0-5 lifecycle and UAP mandates.
 
 ## Usage
-/vde-enforce $ARGUMENTS
-
-`$ARGUMENTS` = description of work just completed (e.g., "added vde_check_http_endpoint to vde-health"), or empty to check recent git changes.
+/vde-enforce [description of work]
 
 ## What This Does
-
-The Supervisor agent checks exactly 3 rules. It cannot be skipped. It cannot be overruled.
-
-**Rule 1 — TDD**: Was a failing test written FIRST? Is implementation minimal? Are all tests real (no fake/pink tests)?
-
-**Rule 2 — DRY**: Is there any repeated logic, copy-pasted code, or near-identical functions that should be parameterized?
-
-**Rule 3 — Swarm+MCP**: Was MCP used before local tools? Were parallel sub-agents spawned simultaneously, not sequentially? Did the main agent delegate rather than do research itself?
+The Rule Enforcer (Supervisor) performs an automated audit of the 3 core rules:
+1.  **Rule 1: TDD**: Checks for red state existence, minimal implementation, and fake test prohibition.
+2.  **Rule 2: DRY**: Checks for duplicated logic or assertion patterns.
+3.  **Rule 3: Swarm+MCP**: Verifies Phase 0 discovery, parallel swarms, and Pre-Edit Gate compliance.
 
 ## Execution
+Main Agent spawns Rule Enforcer Agent with:
+- description of work
+- `git status --short`
+- `git diff HEAD`
 
-Spawn the `supervisor` agent with full context:
-
-1. Pass the description: `$ARGUMENTS`
-2. Pass the list of changed files: `git diff --name-only HEAD`
-3. Pass the git diff of changed code: `git diff HEAD`
-4. Include context about how the work was executed (swarm usage, MCP calls, test sequence)
-
-The supervisor agent will return either:
-
-```
-SUPERVISOR: PASS
-Rules checked: TDD ✓ | DRY ✓ | Swarm+MCP ✓
-Work may proceed.
-```
-
-or:
-
-```
-SUPERVISOR: BLOCKED
-VIOLATION N — Rule X: <name>
-  What was broken: <exact description>
-  Evidence: <file:line or action>
-  Required fix: <what must change>
-Work is BLOCKED. Fix all violations before continuing.
-```
-
-## If BLOCKED
-
-**Stop immediately.** Do not continue to the next task.
-
-1. Read each violation carefully
-2. Fix every violation listed — do not skip any
-3. Run `/vde-enforce` again after fixing
-4. Only proceed when SUPERVISOR returns PASS
-
-**The Supervisor is a higher authority than your own confidence. If you disagree with a ruling, you are wrong. Fix the violation.**
+## Results
+- **PASS**: Lifecycle proceeds.
+- **BLOCKED**: STOP immediately. All violations MUST be fixed. No work can proceed until PASS is returned.

@@ -9,18 +9,17 @@
 2. **Parser intent detection**: ✅ RESOLVED. `vde-parser` now handles all core intents robustly.
 3. **BDD test regressions**: ✅ RESOLVED. `parser_steps.py` updated for Wave 5 normalization.
 4. **Advanced SSH Integration (Phase 20)**: ✅ **100% PASS** (12/12 scenarios).
-5. **Core CLI Hardening**: ✅ Enhanced `info`, `exec`, `ssh` for robust automation.
+5. **Universal Agent Protocol (UAP)**: ✅ **IMPLEMENTED**. Unified dev cycle across all platforms.
+6. **Core CLI Hardening**: ✅ Enhanced `info`, `exec`, `ssh` for robust automation.
 
 ## Strategic Debt & Remaining Work
 - **Code Review Remediation (Phase 20)**: 
-  - [MEDIUM] `vde-info`: Optimize `docker-compose.yml` lookup (replace recursive `find` with direct category-aware pathing).
-  - [HIGH] `ssh-vm`: Harden argument parsing for SSH options (avoid greedy flag capture, use `--` separator).
-  - [MEDIUM] `vm_common.py`: Harden log filtering regex against timestamp/format changes.
-  - [MEDIUM] `ssh_remote_access_steps.py`: Refine permissions check to handle host/VM umask or filesystem differences.
-  - [LOW] `bin/vde`: Verify `exec` usage doesn't bypass critical post-subcommand cleanup logic.
+  - [MEDIUM] `vde-info`: Optimize `docker-compose.yml` lookup (direct category pathing).
+  - [HIGH] `ssh-vm`: Harden argument parsing (strict `--` separator).
+  - [MEDIUM] `vm_common.py`: Harden log filtering regex.
+  - [MEDIUM] `ssh_remote_access_steps.py`: Refine permissions check for filesystem differences.
 - **Integration Hardening**: Implementing real logic for remaining integration features (HIGH priority).
 - **Phase 21 (Cluster Persistence)**: Implementation of multi-VM state tracking (MEDIUM priority).
-- **Residual DRY pass**: Minor duplication in older step files (LOW priority).
 
 ## Verification Success
 - Fast Test Pass Rate: **100%** (268/268 scenarios).

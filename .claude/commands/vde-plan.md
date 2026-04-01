@@ -1,40 +1,23 @@
-Plan a VDE feature or fix using the 5-phase workflow.
+# /vde-plan Command (UAP Edition)
+
+Plan a VDE feature or fix following the Phase 0-1 UAP mandates.
 
 ## Usage
-/vde-plan $ARGUMENTS
+/vde-plan <description>
 
-## Execution
+## Execution Flow
 
-**Phase 0: Context Gathering (Swarm — spawn simultaneously)**
+### Phase 0: Discovery (Swarm)
+The Main Agent MUST spawn a scout swarm simultaneously to establish ground truth:
+- Scout Agent: Explore codebase for DRY reuse opportunities.
+- Memory MCP: Query cross-session context.
+- sequential-thinking MCP: Analyze requirements against VDE-SPEC.md.
 
-- Scout agent: explore codebase for related code, patterns, existing functions relevant to `$ARGUMENTS`
-- Memory MCP: query cross-session context for `$ARGUMENTS`
-- sequential-thinking MCP: analyze `$ARGUMENTS` against VDE-SPEC.md requirements
+### Phase 1: Plan Construction
+Using swarm results, the Planner Agent designs a strategy that includes:
+1.  **TDD Plan**: Explicit identification of failing test scenarios.
+2.  **DRY Analysis**: List of existing functions to extend vs. new parameterized ones.
+3.  **Swarm Config**: Identification of implementation swarm for Phase 2 (if >1 file).
 
-**Phase 1: Plan Construction**
-
-Using swarm results:
-1. Read `docs/VDE-SPEC.md` sections relevant to `$ARGUMENTS`
-2. Identify all files that must change
-3. DRY analysis: find existing functions to extend vs. new ones needed (check `lib/`, `tests/features/steps/`)
-4. Port range check if adding a VM (language: 2200-2299, service: 2400-2499, check `data/vm-types.json`)
-5. List BDD test scenarios required (feature file + step definitions)
-6. Identify minimal test command to verify the change (isolate first)
-
-**Output Format**
-
-```
-PLAN: <title>
-SPEC REF: <docs/VDE-SPEC.md section>
-FILES TO CHANGE:
-  - <path> — <what changes>
-DRY ANALYSIS: <existing functions to reuse or extend>
-NEW FUNCTIONS: <parameterized signatures — no near-duplicates>
-TEST PLAN:
-  - Isolate: <specific feature file>
-  - Verify: <exact behave command>
-  - Full suite: only at final verification
-ESTIMATED SCOPE: <lines changed>
-```
-
-**HARD STOP**: Present plan and wait for explicit user approval before any code changes.
+## Exit Gate (MANDATORY)
+**HARD STOP**: Present the plan and wait for explicit **User Approval** before proceeding to Phase 2 (Implementation).
