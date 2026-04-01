@@ -5,11 +5,11 @@
 
 ## Executive Summary
 
-VDE has reached a **high-stability "Developer Ready" state**. Core functional blocks (parsing, CLI, container lifecycle, SSH management, and cluster persistence) are 100% verified and robust. The system is optimized for daily development workflows with strict protocol enforcement (VDE-SPEC v1.6.0) and a ZSH-only execution mandate.
+VDE has reached a **high-stability "Developer Ready" state**. Core functional blocks (parsing, CLI, container lifecycle, SSH management, and cluster persistence) are 100% verified and robust. The system is optimized for daily development workflows with strict protocol enforcement (VDE-SPEC v1.7.0) and a ZSH-only execution mandate.
 
 ### Recent Improvements (April 01, 2026)
 
-- **Protocol Hardening (SPEC v1.6.0)**: Fully implemented the authoritative 8-step startup sequence and Universal Agent Protocol (UAP) enforcement. All core scripts are now ZSH-native, ensuring zero-dependency workspace integrity.
+- **Protocol Hardening (SPEC v1.7.0)**: Fully implemented the authoritative 8-step startup sequence and Universal Agent Protocol (UAP) enforcement. All core scripts are now ZSH-native, ensuring zero-dependency workspace integrity.
 - **Cluster Persistence**: Successfully launched the `vde cluster` command, enabling robust multi-VM persistence and lifecycle management across sessions.
 - **SSH Argument Parsing**: Resolved high-priority debt in `ssh-vm` argument parsing, ensuring seamless connectivity regardless of input format.
 - **Security Architecture**: Enforced strict directory permissions and isolated networking via `lib/vde-security`, re-attaching any containers that drift from the `vde-net` network.
@@ -53,7 +53,7 @@ VDE has reached a **high-stability "Developer Ready" state**. Core functional bl
 2.  `ssh-vm python`: Robust argument parsing handles aliases and direct names flawlessly.
 3.  `UAP Enforcement`: Workspace integrity verified via `vde-enforce-uap.zsh` on initialization.
 4.  `ZSH-Only Mandate`: All bin/ and lib/ scripts verified to use native ZSH associative arrays.
-5.  `SPEC v1.6.0 Compliance`: 8-step startup sequence strictly enforced across all entry points.
+5.  `SPEC v1.7.0 Compliance`: 8-step startup sequence strictly enforced across all entry points.
 
 ### 2. Multi-VM & Service Integration (Status: 🟡 PARTIAL)
 *   **Configuration Management**: Standard configurations for 19+ languages and 7+ services are functional. 
