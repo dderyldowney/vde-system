@@ -5,24 +5,24 @@
 
 ## Current Project State (2026-03-31)
 - **BDD Pass Rate**: 100% for fast tests (`--tags="not @integration"`). 268 passed, 0 failed, 233 skipped.
+- **Universal Agent Protocol (UAP)**: ✅ **IMPLEMENTED**.
+  - Reworked all 10 agents across `.claude/` and `.kilocode/` for UAP compliance.
+  - Mandatory Phase 0-5 lifecycle, TDD, DRY, and Dual Approval gates enforced.
+  - Universal Pre-Edit Gate implemented for all file-modifying actions.
+- **Phase 20 (SSH & Remote Access)**: ✅ **100% PASS** (12/12 scenarios).
+  - Hardened `vde info`, `vde exec`, and `vde ssh` for robust integration.
+  - Replaced all tautological "pink" steps with real behavioral assertions.
 - **Architectural Debt**: ALL Systemic Debt and Architectural Reorganization (Phase P) items are resolved.
-- **ssh-agent Remediation**: ✅ **RESOLVED**.
-  - Implemented `stop_ssh_agent()` in `lib/vde-ssh`.
-  - Added `stop` action to `bin/vde ssh-setup`.
-  - Updated `tests/features/environment.py` to surgically kill the specific PID from `VDE_SSH_AGENT_ENV`.
-  - Updated `ssh_core_steps.py` to use isolated environment setup.
-- **Parser Hardening**: ✅ **COMPLETED**.
-  - `vde-parser` now correctly handles `ADD_VM_TYPE` and `REMOVE_VM` intents.
-  - BDD steps in `parser_steps.py` now handle `vde-` name normalization and the new `FLAGS:` output format.
 
 ## Critical Audit Findings
-- **Resolved**: `ssh-agent -s` process leakage. Verified that `vde ssh-setup stop` correctly terminates the agent and cleans up the environment file and socket.
-- **Resolved**: BDD regressions caused by Wave 5 normalization (canonical naming and compact flag output).
+- **Resolved**: `ssh-agent -s` process leakage. Surgical PID killing verified.
+- **Resolved**: Non-compliant `refactor_features.sh` converted to `.zsh` per project mandate.
+- **Resolved**: Forbidden "Co-Authored-By" attributions removed from all agent/command files.
 
 ## Next Session Recommendations
 1. **Phase 21 (Cluster Persistence)**: Start working on multi-VM state persistence.
-2. **Integration Hardening**: Begin implementing real logic for remaining integration features (Automatic SSH Setup, Agent Forwarding).
-3. **DRY Pass**: Perform a minor DRY pass on older step files if needed.
+2. **Code Review Remediation**: Address identified items in `plans/session_handover_remediation.md` (e.g., `vde-info` optimization).
+3. **Integration Hardening**: Implement real logic for remaining integration features.
 
 ## Verification Command
 ```zsh

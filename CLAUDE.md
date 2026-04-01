@@ -2,236 +2,49 @@
 
 ## Authority
 
-**VDE-SPEC.md** (`docs/VDE-SPEC.md`) is the single source of truth.
-- Never modify it without explicit user authorization.
-- All implementations must conform to it.
-- See `AGENTS.md` for the full authority chain and mandate details.
+**AGENTS.md** is the single source of truth for all AI agent behavior.
+- All interactions MUST follow the **Universal Agent Protocol (UAP)** defined in `AGENTS.md`.
+- No agent (Claude, Kilo, Gemini, etc.) may bypass the UAP mandates.
 
-## Agent Loading (MANDATORY AT STARTUP — MAIN AGENT ONLY)
-> **SCOPE: MAIN AGENT ONLY.** Sub-agents must NOT scan or load agent definitions. They inherit context from the main agent.
+## Core Mandates (Universal)
 
-**At session start, agents and commands MUST be scanned and loaded into context immediately, not lazy-loaded, before ANY tasks run. Skip if agent definitions are already loaded in the current context. This applies to initial startup AND any context refresh steps before tasks run (e.g. `/new`).**
+1.  **DRY is Absolute**: No duplicate code.
+2.  **TDD is Non-Negotiable**: RED -> GREEN -> REFACTOR.
+3.  **No Fake Tests**: `assert True`, `pass` are forbidden.
+4.  **User-Centric**: Use the canonical `vde` CLI for all tests.
+5.  **MCP-First**: Prefer MCP services over local tools.
+6.  **Dual Approval Gate**: Agent Reviewer + User approval required for commits.
+7.  **No-Push Policy**: Never `git push` without authorization.
 
-The agent definitions in `.claude/agents/` (Claude Code) or `.kilocode/agents/` (Kilo) must be read at session initialization before any task execution. This ensures all sub-agent capabilities are available immediately.
+## The Development Lifecycle (Phases 0-5)
 
-## STARTUP (MANDATORY — EXECUTE BEFORE FIRST RESPONSE)
-> **SCOPE: MAIN AGENT ONLY.** These steps apply to the top-level interactive Claude Code / Kilo CLI session. Sub-agents spawned via the Agent tool must NOT run these steps. Sub-agents inherit context from the main agent and must begin their assigned task immediately.
+1. **Phase 0: Discovery** — Context gathering via MCP + Scout Swarm.
+2. **Phase 1: Planning** — `vde-plan` + User approval.
+3. **Phase 2: Implementation** — TDD + Pre-Edit Gate + Coder Swarm.
+4. **Phase 3: Audit** — `/vde-enforce` (Supervisor) must be CLEAN.
+5. **Phase 4: Review** — `/vde-review` + User approval.
+6. **Phase 5: Finalization** — Final tests + `/vde-commit`.
 
-> **Idempotent loading:** Before executing each step, check whether the information is already present in the current context. If it is, skip that step — never reload information already loaded this session.
+## Swarm & Pre-Edit Gate
 
-**ALL steps below MUST be executed automatically at session start — before answering ANY user prompt. No exceptions. No lazy-loading. No skipping for "simple" sessions.**
-
-1. **Read `MEMORY.md`** — load project state, test status, active goals
-2. **Read `session_handover.md`** — load current session context and next steps
-3. **Read `plans/session_handover_remediation.md`** — load active remediation plan
-4. **Query `memory` MCP** — retrieve cross-session context from knowledge graph
-5. **Scan and load agent definitions** from `.claude/agents/` (Claude Code) or `.kilocode/agents/` (Kilo) — load all sub-agent capabilities into working memory
-6. **Read `AGENTS.md`** — load any instructions not already in this file into working memory
-7. **Run `/vde-enforce`** (Supervisor) — verify framework compliance before any work begins
-8. **Context7 language refresh** — run `mcp__context7__query-docs` in parallel for all implementation languages/tools: Python, behave, PyYAML, Docker, docker-compose, Zsh, SSH (see `.claude/memory/feedback_context7_language_refresh.md`)
-
-**Session control MUST NOT be handed to the user until all 8 steps above are complete.**
-If any step fails, report the failure to the user before proceeding.
-
-## Rule Enforcer (HIGHEST AUTHORITY — NON-NEGOTIABLE)
-
-**Run `/vde-enforce` after every change, plan, refactor, or new feature. No exceptions.**
-
-The Rule Enforcer checks 3 rules:
-1. **TDD** — failing test first (red), minimal code to pass (green), then refactor. No fake/pink tests.
-2. **DRY** — no repeated code or logic. One parameterized function, never near-identical copies.
-3. **Swarm+MCP** — MCP before local tools, parallel sub-agents spawned simultaneously, main agent synthesizes only.
-
-**If the Rule Enforcer returns BLOCKED:**
-- Stop immediately. Do not continue to the next task.
-- Fix every listed violation.
-- Run `/vde-enforce` again.
-- Only proceed when it returns PASS.
-
-**If you disagree with a ruling: you are wrong. Fix the violation.**
-The Rule Enforcer is a higher authority than your own confidence. See `.claude/agents/rule-enforcer.md` (Claude Code) or `.kilocode/agents/supervisor.md` (Kilo).
-
-## 5-Phase Workflow (MANDATORY)
-
-Full detail in `.kilocode/rules/workflow.md`. Summary:
-
-1. **Plan** — `/yume--init` for context, `sequential-thinking` MCP, user approval → **run `/vde-enforce`**
-2. **Code** — Implement per plan, `/yume--iterate` to refine → **run `/vde-enforce`**
-3. **Audit** — Run `/yume--review`, loop with `/yume--iterate` until CLEAN
-4. **Review** — `/vde-review` (guardian + DRY + code-reviewer) + user approval (both required)
-5. **Git** — Verify tests → `/yume--commit`. **NO push without explicit user auth.**
-
-## Agent Orchestration Flow (MANDATORY)
-
-```
-Main Agent
-    │
-    ├──► Supervisor (/vde-enforce) — ALWAYS runs first, checks TDD/DRY/Swarm+MCP
-    │        │
-    │        └──► Sub‑Agents (planner, coder, tester, etc.) — controlled by supervisor
-    │               │
-    │               └──► /vde‑plan → Spawns scout swarm for context
-    │               └──► /vde‑test → Runs tests, creates scenarios
-    │               └──► /vde‑debug → Isolates and remediates errors
-    │
-    ├──► After changes: /vde‑review → Code reviewer checks DRY, security, spec
-    │
-    └──► Final: /vde‑enforce → Verify compliance before commit
-```
-
-**Key Rules:**
-- **Supervisor is always first** — `/vde-enforce` runs at session start and after every change
-- **Code reviewer called whenever changes are made** — After code, after debugging fixes, before commit
-- **Debugger isolates errors** — `/vde-debug` used when tests fail, then re-review
-- **Enforcer always verifies compliance** — Never skip `/vde-enforce`
-- **Fix batches >1 item: always swarm** — spawn yume-implementer agents in parallel, one per fix group
-
-## Use VDE Commands When Available (MANDATORY)
-
-If a VDE slash command exists for your task, you MUST use it — never do the work directly.
-
-| Task | Use This Command |
-|------|------------------|
-| Check framework compliance | `/vde-enforce` |
-| Plan a new feature/fix | `/vde-plan` |
-| Run or create tests | `/vde-test` |
-| Code review before commit | `/vde-review` |
-| Execute commit with verification | `/vde-commit` |
-| Update spec documentation | `/vde-spec` (requires user auth) |
-| Debug a failing test | `/vde-debug` |
-| Create a new VM | `/vde-new-vm` |
-
-**Why:** Commands load the correct specialized agents, enforce the 5-phase workflow, and ensure no steps are skipped.
-
-## Sub-Agent Swarm (MANDATORY)
-
-Full detail in `.kilocode/rules/subagent_mcp_mandate.md`. Summary:
-- ALL multi-step work uses sub-agents in parallel swarm form
-- Single-agent direct execution is forbidden (except trivial read-only queries)
-- Spawn all agents simultaneously; main agent synthesizes results only
-
-### Hard Threshold
-
-| Condition | Action |
-|-----------|--------|
-| >1 file edit in one batch | MUST spawn coder sub-agents — do not apply directly |
-| >1 independent fix item | MUST spawn parallel coder agents — one per fix group |
-| Main agent makes 2nd direct Edit call | STOP — spawn swarm — this is a Rule 3 violation |
-
-**No exception for "simple" or "obviously correct" fixes.** Simplicity does not override the swarm rule.
-
-### Pre-Edit Gate (MANDATORY BEHAVIORAL STEP — not optional)
-
-Before EVERY direct Edit/Write/Bash call that modifies files, execute this protocol:
-
-```
-PRE-EDIT GATE:
+**Threshold**: >1 file edit = MANDATORY swarm spawn.
+**Gate Protocol**:
 1. STATE: "I am about to make [N] direct edit(s) to [files]."
-2. COUNT: Is N > 1?
-   - YES → STOP. Spawn coder sub-agent swarm. Do NOT proceed.
-   - NO → STATE: "1 edit. Proceeding directly." Then execute.
-3. AFTER: Run /vde-enforce to verify compliance.
-```
+2. COUNT: Is N > 1? -> STOP, spawn swarm.
+3. AFTER: Run `/vde-enforce`.
 
-This is NOT a description — it is a mandatory behavioral step. Every agent (main and sub) MUST execute this gate before every file-modifying action. Skipping the gate is itself a violation.
+## Startup Checklist (MANDATORY)
 
-**Sub-agent refusal protocol:** If a sub-agent receives a task requiring >1 file edit, it MUST respond with:
-> "This task requires >1 file edit. Split into a swarm or re-assign."
-It must NOT proceed. Expanding scope beyond the assigned file/item is forbidden.
+Execute the 5-step checklist in `AGENTS.md` section 4 at every session start.
 
-## MCP Priority (MANDATORY)
+## Quick Reference Commands
 
-1. MCP Services: `sequential-thinking`, `context7`, `github`, `fetch`, `memory`, `MCP_DOCKER`
-2. Sub-Agents
-3. Local CLI
-4. Internal Tools (last resort)
+| Task | Command |
+|------|---------|
+| Compliance | `/vde-enforce` |
+| Plan | `/vde-plan` |
+| Test | `/vde-test` |
+| Review | `/vde-review` |
+| Commit | `/vde-commit` |
 
-## DRY (MANDATORY)
-
-Full detail in `.kilocode/rules/dry_requirement.md`. Core rule:
-- ONE parameterized function, never multiple near-identical functions
-- Violations are rejected in review — no exceptions
-
-## Test Protocol
-
-Full detail in `AGENTS.md` Testing Guidelines. Summary:
-- **Isolate first**: run only the specific failing feature/test
-- **Fast tags** (no Docker): `@parser`, `@spec`, `@config`, `@error-path`
-- **Avoid timeouts**: Always use `--tags="not @integration"` when running BDD tests to exclude Docker-requiring tests
-- **BDD**: `python3 -m behave tests/features/core-infrastructure/<feature>.feature`
-- **Full suite**: `./tests/run-full-test-suite.zsh` — final verification only
-- **No fake tests**: see `.kilocode/rules/fake_tests.md`
-
-## Port Allocation
-
-| Range | VM Type |
-|-------|---------|
-| 2200–2299 | Language VMs (20 slots) |
-| 2400–2499 | Service VMs (7 slots) |
-
-Check `data/vm-types.json` before assigning any port. No conflicts permitted.
-
-## Shell Rules
-
-- **ZSH ONLY**: `#!/usr/bin/env zsh` — mandatory for all shell scripts
-- **FORBIDDEN**: `/bin/sh`, `/usr/bin/env sh`, bash-only syntax
-- Features used: associative arrays, process substitution, zsh 5.x
-
-## No-Push Policy
-
-Commit locally freely. **DO NOT `git push` without explicit user instruction.**
-
-## Session Start Checklist
-> **SCOPE: MAIN AGENT ONLY.** Sub-agents must NOT execute this checklist.
-
-This checklist is **automatically executed** (not optionally consulted) at every session start per the STARTUP section above. Skip any step whose content is already in the current context. The STARTUP section above is authoritative; this is a quick-reference duplicate.
-
-1. Read `MEMORY.md` — project state, test status, active goals
-2. Read `session_handover.md` — current session context, next steps
-3. Read `plans/session_handover_remediation.md` — active remediation plan
-4. Query `memory` MCP for cross-session context
-5. Scan and load `.claude/agents/` agent definitions
-6. Read `AGENTS.md` and load into working memory
-7. Run `/vde-enforce` — Supervisor compliance check
-8. Context7 language refresh — fetch Python, behave, PyYAML, Docker, docker-compose, Zsh, SSH docs
-
-## Agent Additions / Command Additions
-
-**Sync Requirement**: When adding a new agent/command, copy to BOTH `.claude/` and `.kilocode/` directories to ensure availability regardless of which CLI is used. When running under Claude Code CLI, convert to Kilo format before copying into the .kilocode directories. When running under Kilo CLI, convert to Claude Code format before copying into the .claude directories. Convert in-memory only to the other CLI's format before writing into the other CLI's directories. Never touch the source file on disk before copying. This is to prevent incorrectly copying the wrong format to the wrong CLI.
-## Quick Reference
-
-```zsh
-# Run specific BDD feature (fast, no Docker)
-python3 -m behave tests/features/core-infrastructure/parser.feature
-
-# Run docker-free test suite
-./tests/run-docker-free-tests.zsh
-
-# Run full suite (final verification only)
-./tests/run-full-test-suite.zsh
-
-# Run specific unit test
-zsh tests/unit/<libname>.test.zsh
-```
-
-## Available Slash Commands
-
-| Command | Purpose |
-|---------|---------|
-| `/vde-enforce` | **Rule Enforcer pass (run after every change)** |
-| `/vde-plan` | Plan a feature or fix (swarm + VDE-SPEC.md) |
-| `/vde-test` | Smart test runner (auto-detects scope) |
-| `/vde-review` | yume-guardian + DRY + code-reviewer |
-| `/vde-commit` | Phase 3-5 verified commit |
-| `/vde-spec` | Spec compliance check vs VDE-SPEC.md |
-| `/vde-debug` | Debug failing tests or runtime errors |
-| `/vde-new-vm` | Guided new VM type workflow |
-
-## Rule Files Reference
-
-- `.kilocode/rules/workflow.md` — 5-phase workflow detail
-- `.kilocode/rules/subagent_mcp_mandate.md` — swarm execution protocol
-- `.kilocode/rules/dry_requirement.md` — DRY enforcement
-- `.kilocode/rules/fake_tests.md` — fake test prohibition
-- `.kilocode/rules/review.md` — code review standards
-- `AGENTS.md` — agent directory, mandates, testing guidelines, session handover
+**See AGENTS.md for full protocol details.**
