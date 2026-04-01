@@ -655,6 +655,24 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
+## Phase 21: Code Review Remediation (P1)
+
+**Goal:** Resolve maintainability and edge-case issues identified during Phase 20 review.
+
+### 21.1 Key Implementations
+
+1.  **Harden `ssh-vm` Argument Parsing (HIGH):**
+    - Refactor argument loop to use `--` as a strict separator for passthrough SSH options.
+    - Prevent unrecognized flags from being greedily captured as SSH options.
+2.  **Optimize `vde-info` Config Lookup (MEDIUM):**
+    - Replace recursive `find` with direct category-aware path construction using `get_vm_category`.
+3.  **Harden Test Output Filtering (MEDIUM):**
+    - Move log filtering logic in `vm_common.py` to a more robust parser or use environment-based log suppression.
+4.  **Refine Permissions Verification (MEDIUM):**
+    - Update `step_permissions_preserved_remote` to handle umask differences or focus on existence and readability where bits may vary by host OS.
+
+---
+
 ## Success Criteria
 
 | Metric | Target |

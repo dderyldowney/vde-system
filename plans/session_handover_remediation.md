@@ -12,6 +12,12 @@
 5. **Core CLI Hardening**: ✅ Enhanced `info`, `exec`, `ssh` for robust automation.
 
 ## Strategic Debt & Remaining Work
+- **Code Review Remediation (Phase 20)**: 
+  - [MEDIUM] `vde-info`: Optimize `docker-compose.yml` lookup (replace recursive `find` with direct category-aware pathing).
+  - [HIGH] `ssh-vm`: Harden argument parsing for SSH options (avoid greedy flag capture, use `--` separator).
+  - [MEDIUM] `vm_common.py`: Harden log filtering regex against timestamp/format changes.
+  - [MEDIUM] `ssh_remote_access_steps.py`: Refine permissions check to handle host/VM umask or filesystem differences.
+  - [LOW] `bin/vde`: Verify `exec` usage doesn't bypass critical post-subcommand cleanup logic.
 - **Integration Hardening**: Implementing real logic for remaining integration features (HIGH priority).
 - **Phase 21 (Cluster Persistence)**: Implementation of multi-VM state tracking (MEDIUM priority).
 - **Residual DRY pass**: Minor duplication in older step files (LOW priority).
