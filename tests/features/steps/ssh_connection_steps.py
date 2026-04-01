@@ -111,8 +111,15 @@ def step_access_localhost_vm_port(context):
 
 @when("I connect to a VM")
 def step_connect_to_vm(context):
-    """Verify connection capability."""
+    """Verify connection capability, ensuring VM is running."""
+    from vm_common import container_is_running, wait_for_container
     vm_name = getattr(context, "vm_name", "python")
+    
+    # Ensure VM is running
+    if not container_is_running(vm_name):
+        run_vde_command(f"start {vm_name}", context=context)
+        wait_for_container(vm_name, timeout=60)
+        
     # run_vde_command handles prefixing
-    result = run_vde_command(f"connect {vm_name} -- echo ok", context=context)
+    result = run_vde_command(f"connect {vm_name} echo ok", context=context)
     assert result.returncode == 0, f"Failed to connect to VM {vm_name}"

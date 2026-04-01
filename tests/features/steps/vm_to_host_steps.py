@@ -35,9 +35,15 @@ def step_multiple_vms_running_tohost(context):
 @when('I SSH into the {vm_name} VM for VM-to-Host')
 @when('I SSH into a VM for VM-to-Host')
 def step_ssh_into_vm_tohost(context, vm_name='python'):
-    """Simulate SSHing into a VM."""
-    context.connected_vm = vm_name.lower()
+    """Simulate SSHing into a VM, ensuring it is running."""
+    vm_name = vm_name.lower()
+    if not container_is_running(vm_name):
+        run_vde_command(f'start {vm_name}', context=context)
+        wait_for_container(vm_name, timeout=60)
+    context.connected_vm = vm_name
+    context.current_vm = vm_name
 
+@when('I run VDE command "{command}" for VM-to-Host')
 @when('I run "{command}" for VM-to-Host')
 def step_run_command_tohost(context, command):
     """Run a command that uses to-host inside the VM."""

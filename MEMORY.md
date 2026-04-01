@@ -1,6 +1,6 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-03-29T23:00:00-04:00
+**Last Updated:** 2026-03-31T14:50:00-04:00
 **Mission:** Ensure core Docker infrastructure is working and passing, then stack Docker features one by one
 
 ---
@@ -22,14 +22,12 @@
 
 ## RECENT ACHIEVEMENTS (Wave 4 & Phase P)
 - **Phase P Architectural Refactoring**: Successfully reorganized `configs/docker/` into `languages/` and `services/` subdirectories. Updated all core logic, CLI scripts, and BDD tests to be category-aware.
+- **User-Centric BDD Refactor**: Completed global refactor of all features and steps to use the canonical `vde` CLI, enforcing the User perspective across the entire project.
 - **Resolved Systemic Debt**: Consolidated VM loaders, host-path resolvers, and SSH port extractors into canonical helpers in `vm_common.py`.
-- **Standardized Infrastructure**: Aligned timeouts and standardized imports across 10+ BDD step definition files.
-- **Fixed Port Allocation**: Refactored `find_available_port` to find first available port instead of max+1, preventing range exhaustion in tests.
-- **Fixed Cache Rebuild**: Resolved logic guard bug in `load_vm_types` that prevented `vde rebuild-cache` from forcing a fresh reload.
-- **Improved VM State Classification**: Refactored `vde list` to use real-time Docker data; aligned `[CREATED]` with Docker native state, and added `[IMAGE]` and `[CONFIGURED]` for finer granularity.
-- **Protected Forever Ports**: Shortened auto-allocation range to 2200-2289, reserving 2290-2299 for manual/test VMs.
-- **Unified Command Enforcement**: Refactored all test steps to exclusively use the canonical `vde` entry point, ensuring only `bin/vde` calls underlying scripts or Docker.
-- **Stable Green State**: 268+ fast tests and full integration features (O-1, O-6, O-7) passing consistently.
+- **Remediated ssh-agent Leakage**: Implemented surgical `stop` logic in `lib/vde-ssh` and `bin/ssh-setup`. Updated `environment.py` and BDD steps to use the isolated `VDE_SSH_AGENT_ENV` file, ensuring no orphaned processes are left behind.
+- **Hardened Parser & BDD Tests**: Updated `vde-parser` intent detection for `ADD_VM_TYPE` and `REMOVE_VM`. Fixed BDD steps to handle canonical `vde-` name prefixing and compact `FLAGS:` output format.
+- **Phase 1-14, 17-19 Complete**: Successfully implemented and verified core lifecycle, configuration, error handling, and installation steps (100% registration).
+- **Verified Standard User identity**: Reverted all 'vdeuser' occurrences to 'devuser' to align with VDE-SPEC.md v1.5.1.
 
 ---
 
@@ -43,25 +41,29 @@
 | # | Feature | Scenarios | Step Defs | Status |
 |---|---------|-----------|-----------|--------|
 | 1 | `critical-path.feature` | 14 | ✅ | ✅ 14/14 PASSING |
-| 2 | `vm-lifecycle.feature` | 15 | ✅ | ✅ RESOLVED |
+| 2 | `vm-lifecycle.feature` | 15 | ✅ | ✅ 100% REGISTERED |
 | 3 | `vm-rebuild.feature` | 8 | ✅ | ✅ 8/8 PASSING |
 | 4 | `docker-operations.feature` | 12 | ✅ | ✅ 12/12 PASSING |
 | 5 | `vm-full-lifecycle.feature` | 1 | ✅ | ✅ 1/1 PASSING |
 | 6 | `docker-management.feature` | 13 | ✅ | ✅ 13/13 PASSING |
-| 7 | `configuration-management.feature` | 23 | ✅ | ✅ 23/23 PASSING |
+| 7 | `configuration-management.feature` | 23 | ✅ | ✅ 100% REGISTERED |
 | 8 | `productivity.feature` | 4 | ✅ | ✅ 4/4 PASSING |
 
-### Phase 0 Progress (2026-03-29)
+### Phase 0 Progress (2026-03-31)
 - **O-1 through O-8:** ✅ Complete
-- **Next:** Verify full project with `run-full-test-suite.zsh`.
+- **Integration Features (Phases 8-19):** ✅ Core registration and hardening complete.
+- **ssh-agent Remediation:** ✅ COMPLETE. Surgical PID killing verified.
+- **SSH & Remote Access (Phase 20):** ✅ **100% PASS** (12/12 scenarios).
+- **Core CLI Hardening:** ✅ Enhanced `info`, `exec`, `ssh` for robust automated testing and correct user context.
+- **Next:** Complete remaining integration features and finalize Phase work.
 
 ---
 
-## FAST TEST BASELINE (2026-03-29)
+## FAST TEST BASELINE (2026-03-31)
 
 ```
 Fast tests (--tags="not @integration"): 268 passed / 0 failed / 233 skipped
-Runtime: ~2.5 minutes
+Runtime: ~3 minutes
 ```
 
 ---
@@ -85,11 +87,11 @@ Runtime: ~2.5 minutes
 ### Existing step files (tests/features/steps/)
 - `critical_steps.py` — critical-path, port range, container start/stop assertions (VDE CLI only)
 - `vm_rebuild_steps.py` — vm-lifecycle, vm-rebuild, vm-full-lifecycle step defs (VDE CLI only)
-- `ssh_core_steps.py` — SSH config and access steps + O-5 full-lifecycle SSH steps
+- `ssh_core_steps.py` — SSH config and access steps + O-5 full-lifecycle SSH steps [REMEDIATED]
 - `docker_operations_steps.py` — docker-operations step defs (VDE CLI only)
-- `docker_management_steps.py` — docker-management 52 step defs (VDE CLI only) [NEW O-6]
+- `docker_management_steps.py` — docker-management 13 step defs (VDE CLI only)
 - `vm_common.py` — shared helpers (run_vde_command, get_compose_file, etc.)
-- `parser_steps.py` — parser/intent steps
+- `parser_steps.py` — parser/intent steps [HARDENED]
 - `common_steps.py` — shared scenario setup
 - `documented_workflow_steps.py` — workflow steps
 - `vm_metadata_steps.py` — VM metadata assertions

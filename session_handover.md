@@ -3,35 +3,35 @@
 **Mission:** Validate core Docker infrastructure, then stack Docker-tagged features one by one.
 **Rule:** Step files must use `bin/vde` CLI — no direct `docker` subprocess calls.
 
----
+## Current Project State (2026-03-31)
+- **BDD Pass Rate**: 100% for fast tests (`--tags="not @integration"`). 268 passed, 0 failed, 233 skipped.
+- **Architectural Debt**: ALL Systemic Debt and Architectural Reorganization (Phase P) items are resolved.
+- **ssh-agent Remediation**: ✅ **RESOLVED**.
+  - Implemented `stop_ssh_agent()` in `lib/vde-ssh`.
+  - Added `stop` action to `bin/vde ssh-setup`.
+  - Updated `tests/features/environment.py` to surgically kill the specific PID from `VDE_SSH_AGENT_ENV`.
+  - Updated `ssh_core_steps.py` to use isolated environment setup.
+- **Parser Hardening**: ✅ **COMPLETED**.
+  - `vde-parser` now correctly handles `ADD_VM_TYPE` and `REMOVE_VM` intents.
+  - BDD steps in `parser_steps.py` now handle `vde-` name normalization and the new `FLAGS:` output format.
 
-## 1. Context (Wave 4 & Phase P - Architectural Reorganization)
-- **Status:** GREEN (268/268 fast tests, O-1 through O-8 features PASS)
-- **Architecture**: Phase P successfully reorganized `configs/docker/` into `languages/` and `services/` subdirectories.
-- **Port Logic:** Fixed flawed "max+1" allocation; protected "forever" ports.
+## Critical Audit Findings
+- **Resolved**: `ssh-agent -s` process leakage. Verified that `vde ssh-setup stop` correctly terminates the agent and cleans up the environment file and socket.
+- **Resolved**: BDD regressions caused by Wave 5 normalization (canonical naming and compact flag output).
 
----
+## Next Session Recommendations
+1. **Phase 21 (Cluster Persistence)**: Start working on multi-VM state persistence.
+2. **Integration Hardening**: Begin implementing real logic for remaining integration features (Automatic SSH Setup, Agent Forwarding).
+3. **DRY Pass**: Perform a minor DRY pass on older step files if needed.
 
-## 2. Changes Implemented
-- **Phase P Reorganization**: Configurations moved to category subdirectories. Updated `vm_common.py`, `vde-docker`, `create-virtual-for`, and `vde-rebuild`.
-- **Template Updates**: `docker-compose.yml` templates and existing files updated with corrected relative paths (`../../../../`).
-- **Standardized BDD**: Refactored all feature and step files to support reorganized paths and use `vde <command>` unified interface.
-- **Improved VM Status**: `vde list` now provides real-time Docker state with precise labels (`[RUNNING]`, `[STOPPED]`, `[IMAGE]`, `[CONFIGURED]`).
-- **Cache & Ports**: Fixed cache reload guard; implemented "first hole" port search.
+## Verification Command
+```zsh
+# Run this to verify the current 100% pass rate baseline (fast tests)
+behave --tags="not @integration"
 
----
-
-## 3. Current State
-- `behave --tags="not @integration"` -> 268 Passed
-- `behave tests/features/core-infrastructure/` -> 100% Green
-- Supervisor Audit -> PASS
-
----
-
-## 4. Next Session Recommendations
-1. **Full Integration Verification**: Run `./tests/run-full-test-suite.zsh` to ensure zero regressions across the entire project after the major directory move.
-2. **Phase Q - Advanced Networking**: Begin implementation of advanced networking features (spec section 14).
-3. **Audit Residual Duplication**: Perform a minor DRY pass on O-2 through O-5 step files if needed.
+# Run this to verify the 100% PASS on the newly implemented SSH feature
+behave tests/features/docker-required/ssh-and-remote-access.feature
+```
 
 ---
 

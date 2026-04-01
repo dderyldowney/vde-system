@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 # Refactor script for VDE BDD features
 
 FILES=$(find tests/features -name "*.feature")

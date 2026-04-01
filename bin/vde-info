@@ -1,17 +1,80 @@
 #!/usr/bin/env zsh
 #===============================================================================
-# vde-info - Show Docker system information
-# Usage: vde-info
+# vde-info - Show VDE system and VM information
+# Usage: vde-info [vm_name]
 #===============================================================================
 
 # Determine VDE root directory
-VDE_ROOT_DIR="${0:a:h:h}"
-export VDE_ROOT_DIR
+if [[ -z "${VDE_ROOT_DIR}" ]]; then
+    export VDE_ROOT_DIR="${0:a:h:h}"
+fi
 
 # Source core libraries
-[[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat" &>/dev/null
-[[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
-[[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
+source "${VDE_ROOT_DIR}/lib/vm-common"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-docker-state" ]] && source "${VDE_ROOT_DIR}/lib/vde-docker-state"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-naming" ]] && source "${VDE_ROOT_DIR}/lib/vde-naming"
 
-docker info
-exit ${?}
+# Default to docker info if no VM name provided
+if [[ ${#} -eq 0 ]]; then
+    docker info
+    exit ${?}
+fi
+
+VM_NAME="${1}"
+RESOLVED_NAME=$(resolve_vm_name "${VM_NAME}" 2>/dev/null) || RESOLVED_NAME="${VM_NAME}"
+
+if ! is_known_vm "${RESOLVED_NAME}"; then
+    echo "Error: Unknown VM '${VM_NAME}'"
+    exit ${VDE_ERR_NOT_FOUND}
+fi
+
+# Gather metadata
+VM_TYPE=$(get_vm_type "${RESOLVED_NAME}")
+VM_DISPLAY=$(get_vm_display_name "${RESOLVED_NAME}")
+VM_STATUS=$(vm_container_status "${RESOLVED_NAME}" 2>/dev/null || echo "not created")
+CONTAINER=$(vde_get_container_name "${RESOLVED_NAME}")
+HOSTNAME=$(vde_get_hostname "${RESOLVED_NAME}")
+
+# Try to get SSH port from registry/constants
+SSH_PORT=$(get_vm_ssh_port "${RESOLVED_NAME}" 2>/dev/null)
+
+# FALLBACK 1: If registry/constants fails, try to parse from ANY docker-compose.yml
+if [[ -z "${SSH_PORT}" || "${SSH_PORT}" == "0" ]]; then
+    local raw_name="${RESOLVED_NAME#vde-}"
+    # Search for compose file in any subdirectory of configs/docker
+    local compose_file
+    compose_file=$(find "${VDE_ROOT_DIR}/configs/docker" -name "docker-compose.yml" | grep "/${raw_name}/" | head -n1)
+    
+    if [[ -f "${compose_file}" ]]; then
+        SSH_PORT=$(grep -oE "[0-9]+:22" "${compose_file}" | cut -d: -f1 | head -n1)
+    fi
+fi
+
+# FALLBACK 2: If still empty and container is running, parse from Docker runtime
+if [[ -z "${SSH_PORT}" ]] && [[ "${VM_STATUS}" == "running" ]]; then
+    SSH_PORT=$(docker inspect --format='{{(index (index .NetworkSettings.Ports "22/tcp") 0).HostPort}}' "${CONTAINER}" 2>/dev/null)
+fi
+
+# Final Fallback
+[[ -z "${SSH_PORT}" ]] && SSH_PORT="not assigned"
+
+# Show VDE Info
+echo "VDE VM Information: ${RESOLVED_NAME}"
+echo "----------------------------------------"
+echo "Display Name:   ${VM_DISPLAY}"
+echo "Category:       ${VM_TYPE}"
+echo "Status:         [${(U)VM_STATUS}]"
+echo "Container Name: ${CONTAINER}"
+echo "SSH Hostname:   ${HOSTNAME}"
+echo "SSH Port:       ${SSH_PORT}"
+echo "Username:       devuser"
+
+# Show Docker details if running
+if [[ "${VM_STATUS}" == "running" ]]; then
+    echo "----------------------------------------"
+    echo "Docker Details:"
+    docker inspect --format 'IP Address:    {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}
+Exposed Ports: {{range $p, $conf := .NetworkSettings.Ports}}{{$p}} -> {{(index $conf 0).HostPort}}{{end}}' "${CONTAINER}"
+fi
+
+exit 0

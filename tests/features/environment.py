@@ -365,18 +365,22 @@ def before_scenario(context, scenario):
 
     # Track containers before Docker scenarios for cleanup
     if "requires-docker-host" in scenario.effective_tags:
-        print(f"[SETUP] Gracefully stopping all VMs for scenario: {scenario.name}")
-        # Clean up port squatters if any
-        if hasattr(context, "squatters"):
-            for s in context.squatters:
-                try:
-                    s.close()
-                except Exception:
-                    pass
-            context.squatters = []
+        # Only stop all VMs if explicitly requested via @fresh-vms tag
+        if "fresh-vms" in scenario.effective_tags:
+            print(f"[SETUP] Gracefully stopping all VMs for scenario: {scenario.name}")
+            # Clean up port squatters if any
+            if hasattr(context, "squatters"):
+                for s in context.squatters:
+                    try:
+                        s.close()
+                    except Exception:
+                        pass
+                context.squatters = []
 
-        # Use shutdown-all to be graceful and fast
-        subprocess.run(["./bin/vde", "stop", "all", "-f"], cwd=VDE_ROOT, capture_output=True)
+            # Use stop all to be graceful and fast
+            subprocess.run(["./bin/vde", "stop", "all", "-f"], cwd=VDE_ROOT, capture_output=True)
+        else:
+            print(f"[SETUP] Using existing VMs for scenario: {scenario.name}")
 
         context._containers_before_scenario = _get_running_vde_containers()
         context._docker_cleanup_needed = True
@@ -440,11 +444,7 @@ def after_scenario(context, scenario):
 
     # Clean up ssh-agent processes started during this scenario
     if getattr(context, "ssh_agent_started", False):
-        import subprocess
-
-        subprocess.run(
-            ["pkill", "-u", os.environ.get("USER", "devuser"), "ssh-agent"], capture_output=True
-        )
+        subprocess.run(["./bin/vde", "ssh-setup", "stop"], capture_output=True, cwd=VDE_ROOT)
         context.ssh_agent_started = False
 
     # Remove test artifacts from public-ssh-keys/ to prevent cross-scenario pollution

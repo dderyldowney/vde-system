@@ -8,6 +8,7 @@
 #   status    Show SSH environment status (default)
 #   init      Initialize SSH environment (keys, agent, config)
 #   start     Start SSH agent and load VDE key
+#   stop      Stop VDE-specific SSH agent
 #   autostart Configure shell to auto-start SSH agent on login
 #   generate  Regenerate VM SSH config only
 
@@ -30,6 +31,7 @@ Actions:
   status    Show SSH environment status (default)
   init      Initialize SSH environment (keys, agent, config)
   start     Start SSH agent and load VDE key
+  stop      Stop VDE-specific SSH agent
   autostart Configure shell to auto-start SSH agent on login
   generate  Regenerate VM SSH config only
 
@@ -38,6 +40,7 @@ Examples:
   vde ssh-setup status       # Show status (explicit)
   vde ssh-setup init         # Full setup: keys + agent + config
   vde ssh-setup start        # Start agent and load keys
+  vde ssh-setup stop         # Stop the VDE-specific agent
   vde ssh-setup autostart    # Auto-start agent on shell login
   vde ssh-setup generate     # Regenerate SSH config for VMs
 
@@ -224,6 +227,19 @@ if [[ "${ACTION}" == "start" ]]; then
         echo "✓ SSH environment ready"
     else
         log_error "Failed to start/find SSH agent"
+        exit ${VDE_ERR_GENERAL}
+    fi
+    exit 0
+fi
+
+# ==============================================================================
+# Stop Mode -- Stop the VDE-specific SSH agent
+# ==============================================================================
+if [[ "${ACTION}" == "stop" ]]; then
+    if stop_ssh_agent; then
+        log_success "VDE SSH agent stopped"
+    else
+        log_error "Failed to stop VDE SSH agent"
         exit ${VDE_ERR_GENERAL}
     fi
     exit 0
