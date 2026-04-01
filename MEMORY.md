@@ -66,6 +66,16 @@
 | 7 | `configuration-management.feature` | 23 | ✅ | ✅ 100% REGISTERED |
 | 8 | `productivity.feature` | 4 | ✅ | ✅ 4/4 PASSING |
 
+### Production Sprint (Phases 22-26)
+
+| # | Phase | Focus | Status |
+|---|-------|-------|--------|
+| 22 | Service & Volume Hardening | Networking & Persistence | 🟡 Planned |
+| 23 | Deterministic Readiness | Health Checks vs. Sleep | 🟡 Planned |
+| 24 | The Big Step Completion | 366 Undefined Steps | 🔴 Blocked |
+| 25 | Concurrency & Stress | Port/Locking Races | ⚪ Pending |
+| 26 | Error Engine & Polish | UX & SPEC v2.0.0 | ⚪ Pending |
+
 ### Phase 0 Progress (2026-04-01)
 - **O-1 through O-8:** ✅ Complete
 - **Universal Agent Protocol (UAP):** ✅ **IMPLEMENTED**. All agents and commands reworked across `.claude/` and `.kilocode/` to enforce Phase 0-5 lifecycle, TDD (No Fake Tests), DRY, and Dual Approval.
@@ -75,7 +85,7 @@
 - **Cluster Persistence (Phase 21):** ✅ **100% COMPLETE**. Multi-VM cluster persistence verified.
 - **Core CLI Hardening:** ✅ Enhanced `info`, `exec`, `ssh` for robust automated testing and correct user context.
 - **Baseline:** 272 non-integration scenarios **PASS** under UAP mandates.
-- **Next:** Complete remaining integration features and finalize Phase work.
+- **Next:** Phase 22: Service & Volume Hardening (Integration)
 
 ---
 

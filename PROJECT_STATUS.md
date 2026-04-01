@@ -14,6 +14,18 @@ VDE has reached a **high-stability "Developer Ready" state**. Core functional bl
 - **SSH Argument Parsing**: Resolved high-priority debt in `ssh-vm` argument parsing, ensuring seamless connectivity regardless of input format.
 - **Security Architecture**: Enforced strict directory permissions and isolated networking via `lib/vde-security`, re-attaching any containers that drift from the `vde-net` network.
 
+## Production Readiness Dashboard
+
+**Current Readiness:** 🟢 85% (Developer Ready)
+**Strategic Roadmap:** See [plans/production-readiness-roadmap.md](plans/production-readiness-roadmap.md)
+
+| Target | Gap | Phase | Status |
+|--------|-----|-------|--------|
+| **100% Coverage** | 366 Undefined Steps | Phase 24 | 🔴 Blocked |
+| **Zero Flakiness** | Dependency on sleep | Phase 23 | 🟡 Planned |
+| **Service Integrity** | Multi-port & Volume Edge Cases | Phase 22 | 🟡 Planned |
+| **User UX** | Suggestion Engine & Solutions | Phase 26 | ⚪ Pending |
+
 ---
 
 ## Technical Health Dashboard
