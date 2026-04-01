@@ -638,12 +638,28 @@ Standardized generic runner in `critical_steps.py` and resolved all `AmbiguousSt
 
 ---
 
+## Phase 20: Advanced SSH Integration Hardening (P0)
+
+**Goal:** Resolve the final 139 missing steps for VM-to-VM, VM-to-Host, and Remote Access integration.
+
+### 20.1 Key Implementations (Empirical Verification)
+
+1.  **VM-to-VM Forwarding**:
+    - `WHEN: 'I attempt to SSH from one VM to another'`: Run `vde exec vm1 ssh vde-vm2 echo ok`.
+    - `THEN: 'connection should succeed without password'`: Verify exit code 0 and no interactive prompts.
+2.  **VM-to-Host Communication**:
+    - `WHEN: 'I run VDE command "vde to-host docker ps"'`: Execute and verify host-side results.
+    - `THEN: 'it should execute on the host machine'`: Verify output contains containers not managed by VDE (if any) or specific host markers.
+3.  **SSH Agent Persistence**:
+    - `THEN: 'I can reconnect to the same session'`: Verify SSH session socket or tmux/screen persistence logic if implemented.
+
+---
+
 ## Success Criteria
 
 | Metric | Target |
 |--------|--------|
-| Pink/Fake Tests (Installation) | **0** |
-| Undefined Steps (Installation) | **0** |
+| Undefined Steps (SSH Integration) | **0** |
 | Real Logic usage | **100%** |
 | Core Test Pass Rate | **100%** |
 

@@ -356,8 +356,7 @@ vde_run_command() {
 
     # Run the command
     vde_log_info "Running command: ${cmd} ${*}" "vde"
-    "${script}" "${@}"
-    return ${?}
+    exec "${script}" "${@}"
 }
 
 #===============================================================================

@@ -84,12 +84,15 @@ def step_parse_input(context, input_text):
         elif line.startswith("FILTER:"):
             context.detected_filter = line.replace("FILTER:", "").strip()
         elif line.startswith("VM:"):
-            vm = line.replace("VM:", "").strip()
-            if vm:
-                context.detected_vms.append(vm)
-        elif "REBUILD:true" in line:
+            vm_line = line.replace("VM:", "").strip()
+            if vm_line:
+                # Handle multiple VMs on one line
+                context.detected_vms.extend(vm_line.split())
+        
+        # Check for flags in any format (new FLAGS: line or old separate lines)
+        if "rebuild=true" in line or "REBUILD:true" in line:
             context.detected_flags["rebuild"] = True
-        elif "NOCACHE:true" in line:
+        if "nocache=true" in line or "NOCACHE:true" in line:
             context.detected_flags["nocache"] = True
 
 
@@ -153,11 +156,34 @@ def step_verify_vm_included(context, vm_name):
     if detected_vms == "all":
         return
 
+    vm_lower = vm_name.lower()
     found = False
+    
     for detected in detected_vms:
-        if vm_name.lower() in detected.lower() or detected.lower() in vm_name.lower():
-            found = True
-            break
+        det_lower = detected.lower()
+        # 1. Direct match
+        if vm_lower == det_lower:
+            found = True; break
+        # 2. Canonical vde- prefix match (both directions)
+        if det_lower.startswith("vde-") and vm_lower == det_lower[4:]:
+            found = True; break
+        if not vm_lower.startswith("vde-") and f"vde-{vm_lower}" == det_lower:
+            found = True; break
+        # 3. Known aliases from data/vm-types.json
+        if vm_lower in ["node", "nodejs", "javascript"] and det_lower == "vde-js":
+            found = True; break
+        if vm_lower in ["postgresql", "postgres", "pg", "database"] and det_lower == "vde-postgres":
+            found = True; break
+        if vm_lower in ["py", "python3"] and det_lower == "vde-python":
+            found = True; break
+        if vm_lower in ["golang"] and det_lower == "vde-go":
+            found = True; break
+        if vm_lower in ["dotnet"] and det_lower == "vde-csharp":
+            found = True; break
+        if vm_lower in ["jdk"] and det_lower == "vde-java":
+            found = True; break
+        if vm_lower in ["mongo"] and det_lower == "vde-mongodb":
+            found = True; break
     
     assert found, f"Expected VM '{vm_name}' to be in detected VMs: {detected_vms}"
 
@@ -167,11 +193,22 @@ def step_verify_vm_excluded(context, vm_name):
     """Verify VM name is NOT detected in the parsed input."""
     detected_vms = getattr(context, "detected_vms", [])
     
+    vm_lower = vm_name.lower()
     found = False
+    
     for detected in detected_vms:
-        if vm_name.lower() in detected.lower() or detected.lower() in vm_name.lower():
-            found = True
-            break
+        det_lower = detected.lower()
+        # Use same logic as included check
+        if vm_lower == det_lower:
+            found = True; break
+        if det_lower.startswith("vde-") and vm_lower == det_lower[4:]:
+            found = True; break
+        if not vm_lower.startswith("vde-") and f"vde-{vm_lower}" == det_lower:
+            found = True; break
+        if vm_lower in ["node", "nodejs", "javascript"] and det_lower == "vde-js":
+            found = True; break
+        if vm_lower in ["postgresql", "postgres", "pg", "database"] and det_lower == "vde-postgres":
+            found = True; break
             
     assert not found, f"Expected VM '{vm_name}' NOT to be in detected VMs: {detected_vms}"
 

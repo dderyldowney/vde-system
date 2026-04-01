@@ -594,6 +594,40 @@ ensure_ssh_agent() {
     return ${VDE_SUCCESS}
 }
 
+# Stop SSH agent and clean up environment
+# Returns: VDE_SUCCESS (0) on success
+stop_ssh_agent() {
+    # 1. Load from VDE-specific environment file
+    if [ -f "${VDE_SSH_AGENT_ENV}" ]; then
+        source "${VDE_SSH_AGENT_ENV}" >/dev/null 2>&1
+    else
+        log_debug "No VDE SSH agent environment file found at ${VDE_SSH_AGENT_ENV}"
+        return ${VDE_SUCCESS}
+    fi
+
+    # 2. Kill the agent process if it exists
+    if [ -n "${SSH_AGENT_PID:-}" ]; then
+        if ps -p "${SSH_AGENT_PID}" >/dev/null 2>&1; then
+            log_info "Stopping VDE SSH agent (PID: ${SSH_AGENT_PID})..."
+            kill "${SSH_AGENT_PID}" 2>/dev/null || kill -9 "${SSH_AGENT_PID}" 2>/dev/null
+        fi
+    fi
+
+    # 3. Clean up the socket if it exists
+    if [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "${SSH_AUTH_SOCK}" ]; then
+        rm -f "${SSH_AUTH_SOCK}" 2>/dev/null
+    fi
+
+    # 4. Remove the environment file
+    rm -f "${VDE_SSH_AGENT_ENV}" 2>/dev/null
+
+    # 5. Unset environment variables in current shell
+    unset SSH_AUTH_SOCK
+    unset SSH_AGENT_PID
+
+    return ${VDE_SUCCESS}
+}
+
 # =============================================================================
 # SSH SETUP AND VERIFICATION
 # =============================================================================

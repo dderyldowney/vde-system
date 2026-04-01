@@ -698,9 +698,9 @@ generate_plan() {
     # ── Detect intent inline (no subshell) ──────────────────────────────────
     local intent
     case "${il}" in
-        *help*|*hel*|*hepl*|*"what can i do"*|*"how do i use"*)
+        *help*|*hel*|*hepl*|*"what can i do"*|*"how do i use vde"*)
             intent="${INTENT_HELP}" ;;
-        *running*|*"status"*|*"staus"*|*"satus"*|*"current state"*)
+        *running*|*"status"*|*"staus"*|*"satus"*|*"current state"*|*check*)
             intent="${INTENT_STATUS}" ;;
         *" list"*|*"list "*|*"/list"*|*"show "*|*available*|*"what"*"can"*"i"*"create"*|*"which"*"vms"*)
             intent="${INTENT_LIST_VMS}" ;;
@@ -708,7 +708,11 @@ generate_plan() {
             intent="${INTENT_CONNECT}" ;;
         *restart*|*restrat*|*resart*|*reatart*|*reboot*|*rebot*|*rebuild*)
             intent="${INTENT_RESTART_VM}" ;;
-        *"create"*|*"make a"*|*"make new"*|*"set up"*|*"add "*)
+        *remove*|*delete*|*uninstall*|*destroy*|*nuke*)
+            intent="${INTENT_REMOVE_VM}" ;;
+        *define*|*"add type"*|*"new type"*|*register*|*"vde add"*)
+            intent="${INTENT_ADD_VM_TYPE}" ;;
+        *create*|*"make a"*|*"make new"*|*"set up"*|*use*)
             intent="${INTENT_CREATE_VM}" ;;
         *start*|*strt*|*strat*|*satrt*|*launch*|*launc*|*boot*)
             intent="${INTENT_START_VM}" ;;
@@ -730,7 +734,7 @@ generate_plan() {
                 *)                             filter="all"  ;;
             esac
             ;;
-        "${INTENT_CREATE_VM}"|"${INTENT_START_VM}"|"${INTENT_STOP_VM}"|"${INTENT_RESTART_VM}"|"${INTENT_STATUS}"|"${INTENT_CONNECT}")
+        "${INTENT_CREATE_VM}"|"${INTENT_START_VM}"|"${INTENT_STOP_VM}"|"${INTENT_RESTART_VM}"|"${INTENT_STATUS}"|"${INTENT_CONNECT}"|"${INTENT_REMOVE_VM}"|"${INTENT_ADD_VM_TYPE}")
             # VM names — direct call, no subshell
             _extract_vm_names_direct "${il}" vms
 

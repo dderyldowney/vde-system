@@ -126,11 +126,19 @@ def step_run_list_vms(context, args):
 
 @when('I run VDE command "{command}"')
 def step_run_vde_cli(context, command):
+    # For automated tests, we must run SSH non-interactively
+    if command.startswith("ssh ") and len(command.split()) == 2:
+        command = f"{command} whoami"
+        
     result = run_vde_command(command, context=context)
     context.command_output = result.stdout + result.stderr
     context.command_exit_code = result.returncode
     context.last_output = context.command_output
     context.last_exit_code = context.command_exit_code
+    
+    # Store result for ssh_core_steps.py
+    if "ssh" in command:
+        context.ssh_result = result
 
 
 @when('I call vde_get_container_name with "{name}"')
