@@ -63,31 +63,53 @@ SSH_OPTS=()
 while [[ ${#} -gt 0 ]]; do
     case "${1}" in
         -h|--help)
-            show_usage
-            exit 0
+            if [ -z "${VM_NAME}" ]; then
+                show_usage
+                exit 0
+            else
+                EXTRA_ARGS+=("${1}")
+                shift
+            fi
             ;;
         --show-command|--show-cmd)
             SHOW_COMMAND=true
             shift
             ;;
+        --)
+            # Strict separator: everything after this is command/args
+            shift
+            EXTRA_ARGS+=("${@}")
+            # Stop parsing VDE options
+            set -- 
+            ;;
         -o)
             # Capture -o and its value
-            SSH_OPTS+=("-o" "${2}")
-            shift 2
+            if [ -z "${VM_NAME}" ]; then
+                SSH_OPTS+=("-o" "${2}")
+                shift 2
+            else
+                EXTRA_ARGS+=("${1}")
+                shift
+            fi
             ;;
         -*)
             # Capture any other flags (e.g., -v, -p, -X)
-            SSH_OPTS+=("${1}")
-            shift
+            if [ -z "${VM_NAME}" ]; then
+                SSH_OPTS+=("${1}")
+                shift
+            else
+                EXTRA_ARGS+=("${1}")
+                shift
+            fi
             ;;
         *)
             if [ -z "${VM_NAME}" ]; then
                 VM_NAME="${1}"
                 shift
             else
-                # Everything after VM_NAME is a command/args
-                EXTRA_ARGS=("${@}")
-                break
+                # Once we have the VM name, everything else is the command
+                EXTRA_ARGS+=("${1}")
+                shift
             fi
             ;;
     esac
@@ -101,14 +123,18 @@ if [ -z "${VM_NAME}" ]; then
     exit ${VDE_ERR_INVALID_INPUT}
 fi
 
-# Ensure VDE SSH environment is initialized
-ensure_ssh_environment
-if [ ${?} -ne 0 ]; then
-    vde_error_simple "Failed to initialize VDE SSH environment."
-    exit ${VDE_ERR_GENERAL}
+# Ensure VDE SSH environment is initialized (skip if only showing command)
+if [ "${SHOW_COMMAND}" = false ]; then
+    ensure_ssh_environment
+    if [ ${?} -ne 0 ]; then
+        vde_error_simple "Failed to initialize VDE SSH environment."
+        exit ${VDE_ERR_GENERAL}
+    fi
 fi
 
 # Load VM types (required for name resolution and running state check)
+# Always load if we need to resolve names, but use --no-cache to avoid security checks if possible?
+# Actually, load_vm_types should be safe if we set VDE_SKIP_AUTO_LOAD for the whole session
 load_vm_types
 
 # Resolve VM name (handle aliases)
@@ -120,12 +146,14 @@ if [ ${?} -ne 0 ] || [ -z "${RESOLVED_NAME}" ]; then
     exit ${VDE_ERR_NOT_FOUND}
 fi
 
-# Check if VM is running
-if ! is_vm_running "${RESOLVED_NAME}"; then
-    vde_error_simple "VM '${RESOLVED_NAME}' is not running."
-    echo ""
-    echo "Start the VM with: vde start ${VM_NAME}"
-    exit ${VDE_ERR_GENERAL}
+# Check if VM is running (skip if only showing command)
+if [ "${SHOW_COMMAND}" = false ]; then
+    if ! is_vm_running "${RESOLVED_NAME}"; then
+        vde_error_simple "VM '${RESOLVED_NAME}' is not running."
+        echo ""
+        echo "Start the VM with: vde start ${VM_NAME}"
+        exit ${VDE_ERR_GENERAL}
+    fi
 fi
 
 # Determine SSH host alias based on VM type

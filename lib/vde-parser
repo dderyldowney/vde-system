@@ -154,6 +154,7 @@ readonly INTENT_STATUS
 INTENT_CONNECT="connect"
 INTENT_ADD_VM_TYPE="add_vm_type"
 INTENT_REMOVE_VM="remove_vm"
+INTENT_CLUSTER_OP="cluster_op"
 INTENT_HELP="help"
 readonly INTENT_HELP
 
@@ -242,6 +243,14 @@ detect_intent() {
     case "${input_lower}" in
         *stop*|*stp*|*sto*|*stpo*|*sotp*|*shutdown*|*shutdon*|*kill*|*kil*)
             echo "${INTENT_STOP_VM}"
+            return ${VDE_SUCCESS}
+            ;;
+    esac
+
+    # Check for cluster operations
+    case "${input_lower}" in
+        *cluster*|*stack*|*group*)
+            echo "${INTENT_CLUSTER_OP}"
             return ${VDE_SUCCESS}
             ;;
     esac
@@ -398,7 +407,7 @@ extract_flags() {
 # -----------------------
 
 # SECURITY: Whitelist of allowed plan keys
-ALLOWED_PLAN_KEYS="INTENT VM FLAGS FILTER"
+ALLOWED_PLAN_KEYS="INTENT VM FLAGS FILTER CLUSTER_ACTION CLUSTER_NAME"
 readonly ALLOWED_PLAN_KEYS
 
 # SECURITY: Whitelist of allowed flags
@@ -708,6 +717,8 @@ generate_plan() {
             intent="${INTENT_CONNECT}" ;;
         *restart*|*restrat*|*resart*|*reatart*|*reboot*|*rebot*|*rebuild*)
             intent="${INTENT_RESTART_VM}" ;;
+        *cluster*|*stack*|*group*)
+            intent="${INTENT_CLUSTER_OP}" ;;
         *remove*|*delete*|*uninstall*|*destroy*|*nuke*)
             intent="${INTENT_REMOVE_VM}" ;;
         *define*|*"add type"*|*"new type"*|*register*|*"vde add"*)
@@ -723,9 +734,38 @@ generate_plan() {
     esac
 
     # ── Extract entities (no subshells) ─────────────────────────────────────
-    local vms="" flags="" filter="all"
+    local vms="" flags="" filter="all" cluster_action="" cluster_name=""
 
     case "${intent}" in
+        "${INTENT_CLUSTER_OP}")
+            # Cluster Action extraction
+            case "${il}" in
+                *save*) cluster_action="save" ;;
+                *start*) cluster_action="start" ;;
+                *stop*) cluster_action="stop" ;;
+                *list*) cluster_action="list" ;;
+                *remove*|*delete*) cluster_action="remove" ;;
+            esac
+            
+            # Extract cluster name (look for "cluster [name]" or "stack [name]" or "as [name]")
+            # Handle variants like "start the my-project cluster" or "save this as my-project"
+            cluster_name=$(echo "${il}" | sed -E 's/.*(cluster|stack|group|as)[[:space:]]+(the[[:space:]]+)?([a-z0-9_-]+).*/\3/' | head -n1)
+            
+            # Refinement for "the [name] cluster"
+            if [[ "${il}" =~ "the ([a-z0-9_-]+) (cluster|stack)" ]]; then
+                cluster_name="${match[1]}"
+            fi
+
+            # If sed didn't match and returned the whole line, or returned a common noise word
+            if [[ "${cluster_name}" == "${il}" || "${cluster_name}" == "this" || "${cluster_name}" == "the" || "${cluster_name}" == "a" ]]; then
+                cluster_name=""
+            fi
+
+            # VM names for 'save' action
+            if [[ "${cluster_action}" == "save" ]]; then
+                _extract_vm_names_direct "${il}" vms
+            fi
+            ;;
         "${INTENT_LIST_VMS}")
             # Inline extract_filter
             case "${il}" in
@@ -748,6 +788,8 @@ generate_plan() {
 
     # ── Output plan (Zsh string ops — no forks) ─────────────────────────────
     echo "INTENT:${intent}"
+    [[ -n "${cluster_action}" ]] && echo "CLUSTER_ACTION:${cluster_action}"
+    [[ -n "${cluster_name}" ]] && echo "CLUSTER_NAME:${cluster_name}"
     # vms is already space-separated; convert spaces→newlines not needed for output
     [[ -n "${vms}" ]] && echo "VM:${vms}"
     [[ -n "${flags}" ]] && echo "FLAGS:${flags}"
@@ -782,6 +824,8 @@ execute_plan() {
     local rebuild="false"
     local nocache="false"
     local filter="all"
+    local cluster_action=""
+    local cluster_name=""
 
     # Parse plan from stdin
     while IFS= read -r line; do
@@ -797,6 +841,12 @@ execute_plan() {
         case "${key}" in
             INTENT)
                 intent="${value}"
+                ;;
+            CLUSTER_ACTION)
+                cluster_action="${value}"
+                ;;
+            CLUSTER_NAME)
+                cluster_name="${value}"
                 ;;
             VM)
                 local vm_list
@@ -963,6 +1013,52 @@ execute_plan() {
             # For now, we assume the user is using the structured CLI for this
             ./bin/add-vm-type ${=vms}
             return ${?}
+            ;;
+
+        "${INTENT_CLUSTER_OP}")
+            if [[ -z "${cluster_action}" ]]; then
+                log_error "No cluster action specified (save, start, stop, list, remove)."
+                return ${VDE_ERR_INVALID_INPUT}
+            fi
+
+            case "${cluster_action}" in
+                save)
+                    if [[ -z "${cluster_name}" ]] || [[ ${vm_count} -eq 0 ]]; then
+                        log_error "Usage: save cluster <name> <vms...>"
+                        return ${VDE_ERR_INVALID_INPUT}
+                    fi
+                    ./bin/vde cluster save "${cluster_name}" ${=vms}
+                    return ${?}
+                    ;;
+                start)
+                    if [[ -z "${cluster_name}" ]]; then
+                        log_error "Usage: start cluster <name>"
+                        return ${VDE_ERR_INVALID_INPUT}
+                    fi
+                    ./bin/vde cluster start "${cluster_name}"
+                    return ${?}
+                    ;;
+                stop)
+                    if [[ -z "${cluster_name}" ]]; then
+                        log_error "Usage: stop cluster <name>"
+                        return ${VDE_ERR_INVALID_INPUT}
+                    fi
+                    ./bin/vde cluster stop "${cluster_name}"
+                    return ${?}
+                    ;;
+                list)
+                    ./bin/vde cluster list
+                    return ${?}
+                    ;;
+                remove)
+                    if [[ -z "${cluster_name}" ]]; then
+                        log_error "Usage: remove cluster <name>"
+                        return ${VDE_ERR_INVALID_INPUT}
+                    fi
+                    ./bin/vde cluster remove "${cluster_name}"
+                    return ${?}
+                    ;;
+            esac
             ;;
 
         "${INTENT_HELP}")

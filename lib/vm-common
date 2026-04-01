@@ -1319,8 +1319,10 @@ show_known_vms() {
 # AUTO-INITIALIZATION
 # =============================================================================
 
-# Load VM types on library source
-load_vm_types
+# Load VM types on library source (unless skipped)
+if [[ "${VDE_SKIP_AUTO_LOAD:-0}" != "1" ]]; then
+    load_vm_types
+fi
 
 # Load modular libraries
 _vm_common_load_modular_libs

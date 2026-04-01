@@ -54,12 +54,33 @@ fi
 [[ -f "${VDE_ROOT_DIR}/lib/vde-parser"   ]] && { source "${VDE_ROOT_DIR}/lib/vde-parser" >/dev/null 2>&1 || { echo "Error loading vde-parser" >&2; exit ${VDE_ERR_GENERAL}; } }
 [[ -f "${VDE_ROOT_DIR}/lib/vde-docker-state" ]] && { source "${VDE_ROOT_DIR}/lib/vde-docker-state" >/dev/null 2>&1 || { echo "Error loading vde-docker-state" >&2; exit ${VDE_ERR_GENERAL}; } }
 
+# Detect if we should skip heavy initialization (e.g., for --show-command)
+SKIP_HEAVY_INIT=0
+# We need to scan the arguments to see if --show-command is present
+# UNLESS it appears after a -- separator (which means it belongs to the target command)
+for arg in "${@}"; do
+  if [[ "${arg}" == "--" ]]; then
+    break # Everything after -- is for the VM, not for VDE/ssh-vm parsing
+  fi
+  if [[ "${arg}" == "--show-command" || "${arg}" == "--show-cmd" ]]; then
+    SKIP_HEAVY_INIT=1
+    export VDE_SKIP_AUTO_LOAD=1
+    break
+  fi
+done
+
 # Initialize logging
 vde_log_init 2>/dev/null || true
 
 # Enforce essential security permissions before executing any command
-if type vde_security_enforce_permissions >/dev/null 2>&1; then
-  vde_security_enforce_permissions >/dev/null 2>&1
+if [[ "${SKIP_HEAVY_INIT}" -eq 0 ]]; then
+  if type vde_security_enforce_permissions >/dev/null 2>&1; then
+    vde_security_enforce_permissions >/dev/null 2>&1
+  fi
+  # Protocol Enforcement (UAP)
+  if [[ -f "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" ]]; then
+    zsh "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" || exit ${?}
+  fi
 fi
 
 #===============================================================================
@@ -97,6 +118,7 @@ _VDE_COMMANDS=(
     "networks:List VDE networks:vde-networks"
     "stats:Show resource usage:vde-stats"
     "info:Show Docker info:vde-info"
+    "cluster:Manage multi-VM clusters:vde-cluster"
     "validate-schemas:Validate JSON schemas:validate-schemas.zsh"
     "ask:Natural language command interface:vde-ask"
     "help:Show this help message:"
@@ -145,6 +167,7 @@ EOF
     printf "  %-12s %s\n" "networks" "List VDE networks"
     printf "  %-12s %s\n" "stats" "Show resource usage"
     printf "  %-12s %s\n" "info" "Show Docker info"
+    printf "  %-12s %s\n" "cluster" "Manage multi-VM clusters"
     printf "  %-12s %s\n" "validate-schemas" "Validate JSON schemas"
     printf "  %-12s %s\n" "ask <text>" "Natural language command interface"
     printf "  %-12s %s\n" "help" "Show this help message"
@@ -310,6 +333,9 @@ vde_find_command_script() {
             ;;
         info)
             script="${VDE_ROOT_DIR}/bin/vde-info"
+            ;;
+        cluster)
+            script="${VDE_ROOT_DIR}/bin/vde-cluster"
             ;;
         validate-schemas)
             script="${VDE_ROOT_DIR}/bin/validate-schemas.zsh"
