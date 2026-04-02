@@ -13,11 +13,12 @@ This document defines the **MANDATORY** development lifecycle and behavioral con
 The main agent MUST complete these 8 steps sequentially before doing *anything else* (other than read-only discovery to find these files). 
 *Note: Sub-agents inherit this context and MUST skip these steps to begin their assigned task immediately.*
 
-1.  **Read `MEMORY.md`**: Understand the current project mission, recent achievements, and immediate focus.
-2.  **Read `session_handover.md`**: Identify the specific goals and constraints of the current session.
-3.  **Read Paired Remediation Plan**: (e.g., `plans/session_handover_remediation.md`) Identify strategic debt and pending fixes.
-4.  **Read `docs/VDE-SPEC.md`**: Refresh knowledge of authoritative technical requirements and implementation priority.
-5.  **Read `PROJECT_STATUS.md`**: Understand the current reliability, pass rates, and identified gaps.
+1.  **Read @MEMORY.md**: Understand the current project mission, recent achievements, and immediate focus.
+2.  **Read @session_handover.md**: Identify the specific goals and constraints of the current session.
+3.  **Read @plans/session_handover_remediation.md**: Identify strategic debt and pending fixes.
+4.  **Read @docs/VDE-SPEC.md**: Refresh knowledge of authoritative technical requirements and implementation priority.
+5.  **Read @PROJECT_STATUS.md**: Understand the current reliability, pass rates, and identified gaps.
+
 6.  **Query `memory` MCP**: Retrieve cross-session context and semantically relevant conversation history.
 7.  **Refresh Library Documentation**: Use `context7` to fetch up-to-date documentation for any relevant libraries or frameworks.
 8.  **Perform Housekeeping**: Strip dead logs, remove unused code, and meticulously verify `bin/` script compliance (ZSH shebangs only).
@@ -29,14 +30,17 @@ The main agent MUST complete these 8 steps sequentially before doing *anything e
 Violating any of these mandates is a failure of the agent's primary directive.
 
 1.  **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`. Bash is strictly forbidden. The agent MUST NOT use `bash` to execute commands.
-2.  **Main Agent is Orchestrator ONLY**: The Main Agent MUST NOT write implementation code if it spans >1 file. The Main Agent's job is planning, orchestrating, and verifying.
-3.  **DRY is Absolute**: No duplicate code or near-identical functions. Parameterize or consolidate.
-4.  **TDD is Non-Negotiable**: Failing test (RED) first, then minimal implementation (GREEN), then refactor.
-5.  **No Fake Tests**: `assert True`, `pass`, and placeholder context flags are strictly forbidden.
-6.  **User-Centric Perspective**: All interactions and tests must use the canonical `vde` CLI (e.g., `vde ssh`). Never call internal `bin/` scripts directly.
-7.  **MCP-First**: Always prefer MCP services (`sequential-thinking`, `context7`, etc.) over local CLI or internal tools.
-8.  **Dual Approval Gate**: Commits require BOTH code-reviewer (agent) and user approval.
-9.  **No-Push Policy**: Never `git push` without explicit user instruction.
+2.  **Main Agent is Orchestrator ONLY**: The Main Agent MUST NOT write implementation code if it spans >1 file. The Main Agent's job is planning, orchestrating, and verifying. *Exception: If sub-agents are technically unavailable, the Main Agent may perform direct implementation provided every action is strictly supervised by the Enforcer.*
+3.  **Enforcer Supervision (Rule A)**: Every single action (shell commands, dispatches, verification steps, and cleanup) MUST be run under the supervision of the Enforcer (`bin/vde-enforce-uap.zsh`).
+4.  **Phase-End Re-Audit Swarm (Rule B)**: Every development phase MUST automatically conclude with a supervised re-audit swarm. This swarm MUST assume errors exist, search for regressions or weak spots, rerun all relevant Behave scenarios, and provide a summary of findings. Skipping or shortening this re-audit is a total mandate failure.
+5.  **Explicit Commit Gate (Rule C)**: Following a successful re-audit, the agent MUST ask for explicit 'commit now' approval from the user. No commits are allowed without this manual gate.
+6.  **DRY is Absolute**: No duplicate code or near-identical functions. Parameterize or consolidate.
+7.  **TDD is Non-Negotiable**: Failing test (RED) first, then minimal implementation (GREEN), then refactor.
+8.  **No Fake Tests**: `assert True`, `pass`, and placeholder context flags are strictly forbidden.
+9.  **User-Centric Perspective**: All interactions and tests must use the canonical `vde` CLI (e.g., `vde ssh`). Never call internal `bin/` scripts directly.
+10. **MCP-First**: Always prefer MCP services (`sequential-thinking`, `context7`, etc.) over local CLI or internal tools.
+11. **Dual Approval Gate**: Commits require BOTH code-reviewer (agent) and user approval.
+12. **No-Push Policy**: Never `git push` without explicit user instruction.
 
 ---
 
@@ -82,8 +86,9 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ## 4. Swarm Orchestration Rules
 
-- **Main Agent**: Acts as the orchestrator. Synthesizes results, maintains `MEMORY.md`, and spawns swarms. **Does NOT write multi-file code.**
+- **Main Agent**: Acts as the orchestrator. Synthesizes results, maintains `MEMORY.md`, and spawns swarms. **Does NOT write multi-file code UNLESS sub-agents are technically unavailable, in which case it may perform direct implementation provided every action is strictly supervised by the Enforcer.**
 - **Sub-Agents**: Specialized experts. They inherit context from the Main Agent and perform isolated, single-file tasks.
+- **Inheritance Mandate**: Sub-agents MUST inherit all context from the Main Agent. Re-reading or freshly pulling files that are already present in the Main Agent's context (specifically those loaded via the `@` startup checklist) is strictly forbidden. This prevents infinite loops and context window crashes.
 - **Scope Limit**: If a sub-agent receives a task requiring >1 file edit, it **MUST STOP** and report back. It cannot expand its own scope or spawn its own sub-agents.
 - **Parallelism**: Swarms must be launched simultaneously in a single message block, not sequentially.
 
