@@ -129,3 +129,44 @@ list_all_containers() {
     docker ps -a --filter "label=vde.managed=true" --format '{{.Names}}\t{{.Status}}' 2>/dev/null || true
     return ${VDE_SUCCESS}
 }
+
+# -----------------------
+# Persistent State Functions
+# -----------------------
+
+# save_docker_state - Save VM state to JSON file
+# Args: <vm_name> <json_content>
+save_docker_state() {
+    local vm="${1}"
+    local content="${2}"
+    local state_dir="${VDE_ROOT_DIR}/.docker-state"
+    
+    mkdir -p "${state_dir}"
+    echo "${content}" > "${state_dir}/${vm}.json"
+    return ${VDE_SUCCESS}
+}
+
+# load_docker_state - Load VM state from JSON file
+# Args: <vm_name>
+# Returns: Outputs JSON content to stdout
+load_docker_state() {
+    local vm="${1}"
+    local state_file="${VDE_ROOT_DIR}/.docker-state/${vm}.json"
+    
+    if [ -f "${state_file}" ]; then
+        cat "${state_file}"
+        return ${VDE_SUCCESS}
+    fi
+    
+    return ${VDE_ERR_NOT_FOUND}
+}
+
+# _vde_extract_json_field - Extract a field from a simple JSON string without jq
+# Args: <json_string> <field_name>
+# Returns: Outputs field value to stdout
+_vde_extract_json_field() {
+    local json="${1}"
+    local field="${2}"
+    # This regex handles simple "key": "value" or "key": 123 formats
+    echo "${json}" | grep "\"${field}\":" | sed -E 's/.*:[[:space:]]*"?([^",]*)"?,?/\1/' | sed 's/[[:space:]]*$//'
+}

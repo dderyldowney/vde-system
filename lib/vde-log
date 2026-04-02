@@ -228,6 +228,10 @@ vde_log_info() {
     vde_log "INFO" "${@}"
 }
 
+vde_log_success() {
+    vde_log "INFO" "${@}"
+}
+
 vde_log_warn() {
     vde_log "WARN" "${@}"
 }

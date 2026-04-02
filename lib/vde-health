@@ -86,8 +86,8 @@ vde_check_ssh_port() {
     fi
 
     # Check if port is accessible using netcat or bash
-    local elapsed=0
-    while [ ${elapsed} -lt ${timeout} ]; do
+    typeset -F elapsed=0
+    while (( elapsed < timeout )); do
         # Try bash/zsh built-in TCP check first (faster)
         # Using a subshell with redirection is more portable than 'timeout' which might not be installed
         if ( (zsh -c "exec 3<>/dev/tcp/localhost/${ssh_port}" >/dev/null 2>&1) ) 2>/dev/null; then
@@ -102,9 +102,9 @@ vde_check_ssh_port() {
         fi
 
         # Only sleep if we haven't exceeded timeout
-        local next_elapsed=$((elapsed + 2))
-        if [ ${next_elapsed} -le ${timeout} ]; then
-            sleep 2
+        typeset -F next_elapsed=$((elapsed + 0.2))
+        if (( next_elapsed <= timeout )); then
+            sleep 0.2
             elapsed=${next_elapsed}
         else
             # Don't sleep beyond timeout
@@ -138,8 +138,8 @@ vde_check_ssh_login() {
     fi
 
     # Check SSH login
-    local elapsed=0
-    while [ ${elapsed} -lt ${timeout} ]; do
+    typeset -F elapsed=0
+    while (( elapsed < timeout )); do
         # Try SSH connection with a simple echo command
         # BatchMode=yes prevents it from asking for passwords/passphrases
         if ssh -o ConnectTimeout=2 \
@@ -153,9 +153,9 @@ vde_check_ssh_login() {
         fi
 
         # Only sleep if we haven't exceeded timeout
-        local next_elapsed=$((elapsed + 2))
-        if [ ${next_elapsed} -le ${timeout} ]; then
-            sleep 2
+        typeset -F next_elapsed=$((elapsed + 0.2))
+        if (( next_elapsed <= timeout )); then
+            sleep 0.2
             elapsed=${next_elapsed}
         else
             # Don't sleep beyond timeout
@@ -221,8 +221,8 @@ vde_check_language_tool() {
     fi
 
     # Check if tool is available via SSH
-    local elapsed=0
-    while [ ${elapsed} -lt ${timeout} ]; do
+    typeset -F elapsed=0
+    while (( elapsed < timeout )); do
         if ssh -o ConnectTimeout=2 \
                -o BatchMode=yes \
                -o StrictHostKeyChecking=no \
@@ -234,9 +234,9 @@ vde_check_language_tool() {
         fi
 
         # Only sleep if we haven't exceeded timeout
-        local next_elapsed=$((elapsed + 2))
-        if [ ${next_elapsed} -le ${timeout} ]; then
-            sleep 2
+        typeset -F next_elapsed=$((elapsed + 0.2))
+        if (( next_elapsed <= timeout )); then
+            sleep 0.2
             elapsed=${next_elapsed}
         else
             # Don't sleep beyond timeout
@@ -247,7 +247,7 @@ vde_check_language_tool() {
     return ${VDE_ERR_TIMEOUT}
 }
 
-# vde_wait_for_container_healthy - Wait for container to be healthy with exponential backoff
+# vde_wait_for_container_healthy - Wait for container to be healthy with deterministic polling
 # Args:
 #   vm_name - Name of the VM
 #   max_wait - Maximum wait time in seconds (default: VDE_DOCKER_TIMEOUT)
@@ -262,36 +262,51 @@ vde_wait_for_container_healthy() {
 
     local vm_type=$(get_vm_info type "${vm_name}" 2>/dev/null)
 
-    local elapsed=0
-    local check_interval=1
-    local max_interval=5
+    # Use floating point for sub-second precision in zsh
+    typeset -F elapsed=0
+    typeset -F check_interval=0.2
+    local max_interval=2
 
     echo "Waiting for ${container_name} to be healthy (max ${max_wait}s)..."
 
-    while [ ${elapsed} -lt ${max_wait} ]; do
-        # Check container running
-        if vde_check_container_running "${vm_name}"; then
-            # For language VMs, also check SSH
-            if [ "${vm_type}" = "lang" ]; then
-                if vde_check_ssh_login "${vm_name}" 2; then
-                    echo "✓ ${container_name} is healthy"
+    while (( elapsed < max_wait )); do
+        # Check for Docker Health status first (deterministic)
+        local health_status
+        health_status=$(docker inspect --format '{{.State.Health.Status}}' "${container_name}" 2>/dev/null)
+        
+        if [ "${health_status}" = "healthy" ]; then
+             echo "✓ ${container_name} is healthy (via Docker)"
+             return ${VDE_SUCCESS}
+        elif [ -z "${health_status}" ] || [ "${health_status}" = "<nil>" ]; then
+            # No healthcheck defined in compose, fall back to running check + SSH for lang VMs
+            if vde_check_container_running "${vm_name}" >/dev/null 2>&1; then
+                if [ "${vm_type}" = "lang" ]; then
+                    if vde_check_ssh_login "${vm_name}" 2 >/dev/null 2>&1; then
+                        echo "✓ ${container_name} is running and SSH is ready"
+                        return ${VDE_SUCCESS}
+                    fi
+                else
+                    echo "✓ ${container_name} is running"
                     return ${VDE_SUCCESS}
                 fi
-            else
-                echo "✓ ${container_name} is healthy"
-                return ${VDE_SUCCESS}
             fi
         fi
 
-        # Exponential backoff with max cap
+        # Deterministic sleep
         sleep ${check_interval}
-        elapsed=$((elapsed + check_interval))
-        check_interval=$((check_interval * 2))
-        [ ${check_interval} -gt ${max_interval} ] && check_interval=${max_interval}
+        (( elapsed += check_interval ))
+        
+        # Exponential backoff but smaller increments for responsiveness
+        (( check_interval *= 1.5 ))
+        if (( check_interval > max_interval )); then
+            check_interval=${max_interval}
+        fi
 
         # Progress update every 30 seconds
-        if [ $((elapsed % 30)) -eq 0 ] && [ ${elapsed} -gt 0 ]; then
-            echo "  [${elapsed}/${max_wait}s] Still waiting for ${container_name}..."
+        local elapsed_int=${elapsed%.*}
+        if [ $((elapsed_int % 30)) -eq 0 ] && [ ${elapsed_int} -gt 0 ] && [ "${last_progress:-0}" != "${elapsed_int}" ]; then
+            echo "  [${elapsed_int}/${max_wait}s] Still waiting for ${container_name}..."
+            last_progress=${elapsed_int}
         fi
     done
 

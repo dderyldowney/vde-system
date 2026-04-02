@@ -7,6 +7,7 @@ services:
     build:
       context: ../../../..
       dockerfile: configs/docker/vde-base.Dockerfile
+
       args:
         USERNAME: devuser
         UID: 1000
@@ -16,14 +17,25 @@ services:
     container_name: vde-postgres
     hostname: vde-postgres
     restart: unless-stopped
-    command: /usr/local/bin/vde-start.sh
-    shm_size: '256m'
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-        reservations:
-          memory: 512M
+    # Orchestrate service and SSH startup
+    command: >
+      sh -c "if [ -n \"apt-get update -y && apt-get install -y postgresql-client\" ]; then
+               apt-get update -y && apt-get install -y postgresql-client;
+             fi;
+             if [ \"postgres\" = \"postgres\" ]; then
+               chown -R postgres:postgres /var/lib/postgresql/data;
+               if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
+                 sudo -u postgres /usr/lib/postgresql/15/bin/initdb -D /var/lib/postgresql/data;
+                 echo \"host all all all trust\" | sudo -u postgres tee -a /var/lib/postgresql/data/pg_hba.conf >/dev/null;
+               fi;
+               sudo -u postgres /usr/lib/postgresql/15/bin/pg_ctl -D /var/lib/postgresql/data -o \"-c listen_addresses='*'\" start;
+               until sudo -u postgres psql -c 'select 1' >/dev/null 2>&1; do sleep 1; done;
+               sudo -u postgres psql -c \"CREATE ROLE devuser WITH LOGIN SUPERUSER\" 2>/dev/null || true;
+             elif [ \"postgres\" = \"redis\" ]; then
+               chown -R devuser:devuser /data;
+               sudo -u devuser redis-server --daemonize yes --dir /data --bind 0.0.0.0 --protected-mode no;
+             fi; 
+             /usr/sbin/sshd -D"
 
     ports:
       - "2404:22"
@@ -33,11 +45,16 @@ services:
       - ../../../../data/postgres:/data
       - ../../../../logs/postgres:/logs
       - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      # Persistence mapping
+      - ../../../../data/postgres/pgdata:/var/lib/postgresql/data
       # SSH agent forwarding for service VM communication
       - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+      - REDIS_ARGS=--save 60 1 --loglevel warning
 
     env_file:
       - ../../../../env-files/vde-postgres.env
@@ -49,6 +66,13 @@ services:
       - "vde.managed=true"
       - "vde.type=service"
       - "vde.name=postgres"
+
+    healthcheck:
+      test: ["CMD-SHELL", "if command -v pg_isready >/dev/null; then pg_isready -U postgres; elif command -v redis-cli >/dev/null; then redis-cli ping; else exit 0; fi"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 
 networks:
   vde-net:

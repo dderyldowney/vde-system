@@ -70,6 +70,7 @@ EOF
 # -----------------------
 # Parse Arguments
 # -----------------------
+VM_ARGS=()
 while [[ ${#} -gt 0 ]]; do
     case "${1}" in
         -h|--help)
@@ -99,12 +100,13 @@ while [[ ${#} -gt 0 ]]; do
             exit ${VDE_ERR_GENERAL}
             ;;
         *)
-            break
+            VM_ARGS+=("${1}")
+            shift
             ;;
     esac
 done
 
-if [[ ${#} -eq 0 ]]; then
+if [[ ${#VM_ARGS[@]} -eq 0 ]]; then
     show_usage
     exit ${VDE_ERR_GENERAL}
 fi
@@ -176,15 +178,6 @@ _create_one_vm() {
     fi
     vde_progress_info "SSH port: ${SSH_PORT}"
 
-    # -----------------------
-    # Create Directories
-    # -----------------------
-    vde_progress_info "Creating directory structure..."
-    ensure_vm_directories "${VM_NAME}" "${_vm_type}"
-
-    # -----------------------
-    # Create Docker Compose File
-    # -----------------------
     vde_progress_info "Creating docker-compose.yml..."
 
     local RAW_NAME compose_file template_file category
@@ -194,46 +187,30 @@ _create_one_vm() {
     compose_file="${CONFIGS_DIR}/${category}/${RAW_NAME}/docker-compose.yml"
 
     if [[ "${_vm_type}" == "lang" ]]; then
-        template_file="${TEMPLATES_DIR}/compose-language.yml"
+        rendered=$(render_language_template "${RAW_NAME}" "${SSH_PORT}")
     elif [[ "${_vm_type}" == "service" ]]; then
-        template_file="${TEMPLATES_DIR}/compose-service.yml"
+        rendered=$(render_service_template "${RAW_NAME}" "${SSH_PORT}" "${_vm_svc_port}" "${_vm_install}")
     else
         vde_error_simple "Unknown VM type: ${_vm_type}"
         return ${VDE_ERR_GENERAL}
     fi
 
-    if [[ ! -f "${template_file}" ]]; then
-        vde_error_template_not_found "${template_file}"
-        return ${VDE_ERR_GENERAL}
-    fi
-
-    render_template "${template_file}" \
-        NAME "${RAW_NAME}" \
-        SSH_PORT "${SSH_PORT}" \
-        INSTALL_CMD "${_vm_install}" \
-        SERVICE_PORT "${_vm_svc_port}" \
-        > "${compose_file}"
-
-    # Handle multiple service ports
-    if [[ "${_vm_type}" == "service" ]] && [[ -n "${_vm_svc_port}" ]]; then
-        while IFS= read -r line; do
-            if [[ "${line}" == *"##SERVICE_PORTS##" ]]; then
-                local p
-                echo "${_vm_svc_port}" | tr ',' '\n' | while read -r p; do
-                    p=$(echo "${p}" | tr -d ' ')
-                    echo "      - \"${p}:${p}\""
-                done
-            else
-                echo "${line}"
-            fi
-        done < "${compose_file}" > "${compose_file}.tmp"
-        mv "${compose_file}.tmp" "${compose_file}"
-    else
-        grep -v "##SERVICE_PORTS##" "${compose_file}" > "${compose_file}.tmp"
-        mv "${compose_file}.tmp" "${compose_file}"
-    fi
+    mkdir -p "$(dirname "${compose_file}")"
+    echo "${rendered}" > "${compose_file}"
 
     vde_progress_done "Created: ${compose_file}"
+
+    if [[ -n "${VDE_TEST_MODE}" ]]; then
+        cat "${compose_file}"
+    fi
+
+    # -----------------------
+    # Create Directories
+    # -----------------------
+    vde_progress_info "Creating directory structure..."
+    ensure_vm_directories "${VM_NAME}" "${_vm_type}"
+    
+    # Ownership and permissions are handled inside the container for services (Phase 22)
 
     if [[ -n "${VDE_TEST_MODE}" ]]; then
         cat "${compose_file}"
@@ -250,8 +227,8 @@ _create_one_vm() {
     cat > "${env_file}" <<EOF
 # Environment variables for ${_vm_display} development container
 SSH_PORT=${SSH_PORT}
-DATABASE_URL=postgresql://devuser:SuperSecretPassword123!@postgres:5432/${RAW_NAME}_dev_db
-REDIS_HOST=redis
+DATABASE_URL=postgresql://devuser:SuperSecretPassword123!@vde-postgres:5432/${RAW_NAME}_dev_db
+REDIS_HOST=vde-redis
 REDIS_PORT=6379
 EOF
 
@@ -328,7 +305,7 @@ EOF
 # -----------------------
 typeset -a _CREATED_VMS _FAILED_VMS
 _last_exit=0
-for _vm_arg in "${@}"; do
+for _vm_arg in "${VM_ARGS[@]}"; do
     _create_one_vm "${_vm_arg}"
     _rc=${?}
     if [[ ${_rc} -eq 0 ]]; then

@@ -139,7 +139,7 @@ Commands:
 EOF
     printf "  %-12s %s\n" "rebuild" "Rebuild all VDE images"
     printf "  %-12s %s\n" "rebuild-cache" "Invalidate and regenerate VM types cache"
-    printf "  %-12s %s\n" "create <vm>" "Create a new VM (use --rebuild or --nocache to rebuild)"
+    printf "  %-12s %s\n" "create <vm>" "Create a new VM (use --force to overwrite existing)"
     printf "  %-12s %s\n" "start <vm>" "Start a VM"
     printf "  %-12s %s\n" "stop <vm>" "Stop a VM"
     printf "  %-12s %s\n" "restart <vm>" "Restart a VM"

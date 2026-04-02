@@ -1,5 +1,5 @@
 # VDE (Virtual Development Environment) SSH Configuration
-# Generated on Sun Mar 29 22:40:26 EDT 2026
+# Generated on Thu Apr  2 11:56:50 EDT 2026
 #
 # This file contains SSH config entries for all known language and service VMs.
 # Each VM type has a fixed SSH port assignment:
@@ -221,16 +221,6 @@ Host vde-testport1
 Host vde-testport2
     HostName localhost
     Port 2291
-    User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
-    StrictHostKeyChecking no
-    UserKnownHostsFile ~/.ssh/vde/known_hosts
-    ForwardAgent yes
-    LogLevel ERROR
-
-Host vde-testcfgportrange
-    HostName localhost
-    Port 2220
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     StrictHostKeyChecking no

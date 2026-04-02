@@ -1,5 +1,5 @@
 # Template for service VMs
-# Variables: redis, 2406, 6379, apt-get update -y && apt-get install -y redis-tools
+# Variables: redis, 2406, 6379,6380, apt-get update -y && apt-get install -y redis-tools
 # SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
 name: vde-redis
 services:
@@ -7,6 +7,7 @@ services:
     build:
       context: ../../../..
       dockerfile: configs/docker/vde-base.Dockerfile
+
       args:
         USERNAME: devuser
         UID: 1000
@@ -16,21 +17,46 @@ services:
     container_name: vde-redis
     hostname: vde-redis
     restart: unless-stopped
-    command: /usr/sbin/sshd -D
+    # Orchestrate service and SSH startup
+    command: >
+      sh -c "if [ -n \"apt-get update -y && apt-get install -y redis-tools\" ]; then
+               apt-get update -y && apt-get install -y redis-tools;
+             fi;
+             if [ \"redis\" = \"postgres\" ]; then
+               chown -R postgres:postgres /var/lib/postgresql/data;
+               if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
+                 sudo -u postgres /usr/lib/postgresql/15/bin/initdb -D /var/lib/postgresql/data;
+                 echo \"host all all all trust\" | sudo -u postgres tee -a /var/lib/postgresql/data/pg_hba.conf >/dev/null;
+               fi;
+               sudo -u postgres /usr/lib/postgresql/15/bin/pg_ctl -D /var/lib/postgresql/data -o \"-c listen_addresses='*'\" start;
+               until pg_isready -q -h localhost -U postgres; do sleep 0.2; done;
+               sudo -u postgres psql -c \"CREATE ROLE devuser WITH LOGIN SUPERUSER\" 2>/dev/null || true;
+               elif [ \"redis\" = \"redis\" ]; then
+               chown -R devuser:devuser /data;
+               sudo -u devuser redis-server --daemonize yes --dir /data --bind 0.0.0.0 --protected-mode no;
+               until redis-cli ping >/dev/null 2>&1; do sleep 0.2; done;
+               fi; 
+               /usr/sbin/sshd -D"
 
     ports:
       - "2406:22"
       - "6379:6379"
+      - "6380:6380"
 
     volumes:
       - ../../../../data/redis:/data
       - ../../../../logs/redis:/logs
       - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      # Persistence mapping
+      - ../../../../data/redis/pgdata:/var/lib/postgresql/data
       # SSH agent forwarding for service VM communication
       - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+      - REDIS_ARGS=--save 60 1 --loglevel warning
 
     env_file:
       - ../../../../env-files/vde-redis.env
@@ -42,6 +68,13 @@ services:
       - "vde.managed=true"
       - "vde.type=service"
       - "vde.name=redis"
+
+    healthcheck:
+      test: ["CMD-SHELL", "if command -v pg_isready >/dev/null; then pg_isready -U postgres; elif command -v redis-cli >/dev/null; then redis-cli ping; else exit 0; fi"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 
 networks:
   vde-net:
