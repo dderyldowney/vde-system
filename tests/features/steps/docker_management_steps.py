@@ -17,6 +17,7 @@ from vm_common import (
     run_vde_command, container_exists, container_is_running,
     docker_list_containers, get_compose_file, check_docker_network_exists,
     resolve_workspace_host_path, VDE_ROOT, BIN_DIR,
+    vde_wait_for_container_healthy,
 )
 
 # ---------------------------------------------------------------------------
@@ -93,7 +94,7 @@ def step_vde_testing_network_exists(context):
         if check_docker_network_exists("vde-testing"):
             network_found = True
             break
-        time.sleep(2)
+        time.sleep(0.5)
 
     networks_result = run_vde_command("networks", timeout=30)
     assert network_found, (
@@ -186,9 +187,9 @@ def step_each_vm_starts(context):
         assert result.returncode == 0, (
             f"Failed to start VM '{vm}':\n{result.stdout}\n{result.stderr}"
         )
+        assert vde_wait_for_container_healthy(vm), f"VM '{vm}' failed to become healthy after start"
     context._docker_cleanup_needed = True
-    # Allow containers to fully come up
-    time.sleep(3)
+    # Containers are already healthy, no need to sleep
 
 
 @then("each should get a unique SSH port")
@@ -263,8 +264,8 @@ def step_postgres_vm_starts(context):
     assert result.returncode == 0, (
         f"Failed to start postgres VM:\n{result.stdout}\n{result.stderr}"
     )
+    assert vde_wait_for_container_healthy(vm), f"PostgreSQL VM '{vm}' failed to become healthy after start"
     context._docker_cleanup_needed = True
-    time.sleep(3)
 
 
 @then("the PostgreSQL port should be mapped")

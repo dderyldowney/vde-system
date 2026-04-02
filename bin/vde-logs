@@ -16,6 +16,7 @@ export VDE_ROOT_DIR
 [[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat" &>/dev/null
 [[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
 [[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-naming" ]] && source "${VDE_ROOT_DIR}/lib/vde-naming" &>/dev/null
 
 # Check arguments
 if [ -z "${1}" ]; then
@@ -26,6 +27,9 @@ fi
 
 VM_NAME="${1}"
 shift
+
+# Get container name
+CONTAINER_NAME=$(vde_get_container_name "${VM_NAME}")
 
 # Parse options
 TAIL="50"
@@ -49,9 +53,9 @@ done
 
 # Run docker logs
 if [ ${FOLLOW} -eq 1 ]; then
-    docker logs --tail "${TAIL}" -f "${VM_NAME}"
+    docker logs --tail "${TAIL}" -f "${CONTAINER_NAME}"
 else
-    docker logs --tail "${TAIL}" "${VM_NAME}"
+    docker logs --tail "${TAIL}" "${CONTAINER_NAME}"
 fi
 
 exit 0

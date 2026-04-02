@@ -12,36 +12,45 @@ export VDE_ROOT_DIR
 [[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat" &>/dev/null
 [[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
 [[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-naming" ]] && source "${VDE_ROOT_DIR}/lib/vde-naming" &>/dev/null
 
 # Check arguments
-if [ -z "${1}" ]; then
-    vde_error_simple "VM name is required"
-    echo "Usage: vde-exec <vm_name> <command> [args...]"
-    exit ${VDE_ERR_INVALID_INPUT}
-fi
+USER_OVERRIDE=""
+while [[ ${#} -gt 0 ]]; do
+    case "${1}" in
+        -u|--user)
+            USER_OVERRIDE="${2}"
+            shift 2
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
-if [ -z "${2}" ]; then
-    vde_error_simple "Command is required"
-    echo "Usage: vde-exec <vm_name> <command> [args...]"
-    exit ${VDE_ERR_INVALID_INPUT}
+if [ -z "${1}" ]; then
+    echo "Usage: vde-exec [-u user] <vm_name> <command> [args...]"
+    exit ${VDE_ERR_INVALID_INPUT:-2}
 fi
 
 VM_NAME="${1}"
 shift
 
-# Ensure vde- prefix for container name
-CONTAINER_NAME="${VM_NAME}"
-if [[ "${VM_NAME}" != vde-* ]] && [[ "${VM_NAME}" != *-dev ]]; then
-    CONTAINER_NAME="vde-${VM_NAME}"
-fi
+# Get container name
+CONTAINER_NAME=$(vde_get_container_name "${VM_NAME}")
 
 # Use -i always, -t only if attached to a terminal
 DOCKER_OPTS="-i"
-[[ -t 0 ]] && DOCKER_OPTS="${DOCKER_OPTS}t"
+[[ -t 0 ]] && DOCKER_OPTS="${DOCKER_OPTS} -t"
 
-# Run as devuser by default to match VDE environment
-# Use -u 1000:1000 or -u devuser
-DOCKER_OPTS="${DOCKER_OPTS} -u devuser"
+# Use specified user or default to devuser
+if [[ -n "${USER_OVERRIDE}" ]]; then
+    DOCKER_OPTS="${DOCKER_OPTS} -u ${USER_OVERRIDE}"
+else
+    # Default to devuser for VDE containers
+    # Official images might not have devuser, but we use vde-base
+    DOCKER_OPTS="${DOCKER_OPTS} -u devuser"
+fi
 
 # If only one argument is provided after VM_NAME, it might be a shell command string
 if [[ ${#} -eq 1 ]]; then

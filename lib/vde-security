@@ -21,7 +21,7 @@ _VDE_SECURITY_LOADED=1
 
 # vde_security_enforce_permissions - Enforce strict permissions on core directories
 vde_security_enforce_permissions() {
-    log_info "Enforcing strict directory permissions..."
+    vde_log_info "Enforcing strict directory permissions..."
 
     # Project root itself
     chmod 755 "${VDE_ROOT_DIR}"
@@ -29,7 +29,11 @@ vde_security_enforce_permissions() {
     # Data and Logs (Highly sensitive - 700)
     if [ -d "${VDE_ROOT_DIR}/data" ]; then
         chmod 700 "${VDE_ROOT_DIR}/data"
-        find "${VDE_ROOT_DIR}/data" -mindepth 1 -maxdepth 1 -type d -exec chmod 700 {} + 2>/dev/null || true
+        # Set permissions and ownership for all service data directories
+        find "${VDE_ROOT_DIR}/data" -mindepth 1 -maxdepth 1 -type d | while read -r d; do
+            chmod 700 "${d}"
+            chown -R 1000:1000 "${d}" 2>/dev/null || true
+        done
     fi
     if [ -d "${VDE_ROOT_DIR}/logs" ]; then
         chmod 700 "${VDE_ROOT_DIR}/logs"
@@ -73,7 +77,7 @@ vde_security_enforce_permissions() {
         find "${VDE_ROOT_DIR}/scripts" -type f -not -path "*/.*" -exec chmod 755 {} +
     fi
 
-    log_success "Directory permissions enforced"
+    vde_log_success "Directory permissions enforced"
 }
 
 # vde_security_ensure_network - Ensure isolated VDE network exists
@@ -81,7 +85,7 @@ vde_security_ensure_network() {
     local network_name="${1:-${VDE_DOCKER_NETWORK}}"
     
     if ! docker network inspect "${network_name}" >/dev/null 2>&1; then
-        log_info "Creating isolated VDE network: ${network_name}"
+        vde_log_info "Creating isolated VDE network: ${network_name}"
         # Create with internal options for segmentation if supported
         docker network create \
             --driver bridge \
@@ -95,7 +99,7 @@ vde_security_ensure_network() {
 vde_security_validate_naming() {
     local invalid_found=0
     
-    log_info "Auditing container naming convention..."
+    vde_log_info "Auditing container naming convention..."
     
     # Check running containers
     local vde_containers
@@ -112,15 +116,15 @@ vde_security_validate_naming() {
 vde_security_enforce_network_isolation() {
     local network_name="${1:-${VDE_DOCKER_NETWORK}}"
     
-    log_info "Enforcing container network isolation..."
+    vde_log_info "Enforcing container network isolation..."
     
     # Get all containers starting with vde- (one per line)
     # Use process substitution to iterate line-by-line safely
     while IFS= read -r container; do
         [[ -z "${container}" ]] && continue
         # Check if container is on the network
-        if ! docker inspect "${container}" --format '{{range ${net}, ${conf} := .NetworkSettings.Networks}}{{$net}} {{end}}' 2>/dev/null | grep -q "${network_name}"; then
-            log_warning "Container ${container} is not on ${network_name}. Fixing..."
+        if ! docker inspect "${container}" --format '{{range $net, $conf := .NetworkSettings.Networks}}{{$net}} {{end}}' 2>/dev/null | grep -q "${network_name}"; then
+            vde_log_warn "Container ${container} is not on ${network_name}. Fixing..."
             docker network connect "${network_name}" "${container}" 2>/dev/null || true
         fi
     done < <(docker ps --format '{{.Names}}' 2>/dev/null | grep -E '^vde-' || true)
@@ -128,6 +132,7 @@ vde_security_enforce_network_isolation() {
 
 # vde_security_init - Initialize security environment
 vde_security_init() {
+    vde_log_info "Initializing VDE security environment..."
     vde_security_ensure_network
     vde_security_enforce_permissions
     vde_security_enforce_network_isolation

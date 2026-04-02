@@ -121,29 +121,67 @@ remove_vm_type_entry() {
 
     if [[ ! -f "${VM_TYPES_FILE}" ]]; then
         print_info "No vm-types.conf file found"
-        return 0
+    else
+        local temp_file="${VM_TYPES_FILE}.tmp"
+
+        if [[ "${DRY_RUN}" = "true" ]]; then
+            print_info "[DRY RUN] Would remove entry for '${vm_type}' from vm-types.conf"
+            grep -E "^(lang|service)\|${vm_type}\|" "${VM_TYPES_FILE}" 2>/dev/null || print_info "[DRY RUN]   (no entry found)"
+        else
+            # Remove lines matching the VM type (format: lang|rust|... or service|postgres|...)
+            grep -v -E "^(lang|service)\|${vm_type}\|" "${VM_TYPES_FILE}" > "${temp_file}" 2>/dev/null || true
+
+            if ! cmp -s "${VM_TYPES_FILE}" "${temp_file}" 2>/dev/null; then
+                mv "${temp_file}" "${VM_TYPES_FILE}"
+                print_success "Removed '${vm_type}' from vm-types.conf"
+            else
+                rm -f "${temp_file}"
+                print_info "No entry found for '${vm_type}' in vm-types.conf"
+            fi
+        fi
     fi
 
-    local temp_file="${VM_TYPES_FILE}.tmp"
+    # Also remove from vm-types.json
+    local json_file="${VDE_ROOT_DIR}/data/vm-types.json"
+    if [[ -f "${json_file}" ]]; then
+        if [[ "${DRY_RUN}" = "true" ]]; then
+            print_info "[DRY RUN] Would remove entry for '${vm_type}' from vm-types.json"
+        else
+            python3 -c '
+import json
+import sys
 
-    if [[ "${DRY_RUN}" = "true" ]]; then
-        print_info "[DRY RUN] Would remove entry for '${vm_type}' from vm-types.conf"
-        grep -E "^(lang|service)\|${vm_type}\|" "${VM_TYPES_FILE}" 2>/dev/null || print_info "[DRY RUN]   (no entry found)"
-        return 0
+try:
+    with open(sys.argv[1], "r") as f:
+        data = json.load(f)
+    
+    vm_name = sys.argv[2]
+    modified = False
+    
+    if "vms" in data:
+        for cat in ["language", "service"]:
+            if cat in data["vms"]:
+                initial_len = len(data["vms"][cat])
+                data["vms"][cat] = [vm for vm in data["vms"][cat] if vm["name"] != vm_name]
+                if len(data["vms"][cat]) < initial_len:
+                    modified = True
+    
+    if modified:
+        with open(sys.argv[1], "w") as f:
+            json.dump(data, f, indent=2)
+        print("Removed from vm-types.json")
+    else:
+        print("No entry found in vm-types.json")
+except Exception as e:
+    print("Failed to update JSON: " + str(e), file=sys.stderr)
+    sys.exit(1)
+' "${json_file}" "${vm_type}"
+        fi
     fi
 
-    # Remove lines matching the VM type (format: lang|rust|... or service|postgres|...)
-    grep -v -E "^(lang|service)\|${vm_type}\|" "${VM_TYPES_FILE}" > "${temp_file}" 2>/dev/null || true
-
-    if ! cmp -s "${VM_TYPES_FILE}" "${temp_file}" 2>/dev/null; then
-        mv "${temp_file}" "${VM_TYPES_FILE}"
-        print_success "Removed '${vm_type}' from vm-types.conf"
-
+    if [[ "${DRY_RUN}" != "true" ]]; then
         # Invalidate the cache so it gets regenerated
         rm -f "${VDE_CACHE_DIR}/vm-types.cache" 2>/dev/null || true
-    else
-        rm -f "${temp_file}"
-        print_info "No entry found for '${vm_type}' in vm-types.conf"
     fi
 }
 
@@ -329,7 +367,7 @@ main() {
         exit ${VDE_ERR_GENERAL}
     fi
 
-    local VM_TYPE="${1}"
+    local UNINSTALL_VM_NAME="${1}"
     shift
 
     while [[ ${#} -gt 0 ]]; do
@@ -356,16 +394,22 @@ main() {
     # Ensure VM types are loaded
     load_vm_types 2>/dev/null || true
 
-    # Check if VM type exists by checking if it's in the cache
-    if ! grep -q "^VM_TYPE:${VM_TYPE}=" "${VDE_CACHE_DIR}/vm-types.cache" 2>/dev/null; then
-        print_error "VM type '${VM_TYPE}' not found"
+    # Check if VM type exists using the associative array
+    if [[ -z "${VM_TYPE[${UNINSTALL_VM_NAME}]:-}" ]] && [[ -z "${VM_TYPE[vde-${UNINSTALL_VM_NAME}]:-}" ]]; then
+        print_error "VM type '${UNINSTALL_VM_NAME}' not found"
         echo ""
         echo "Available VM types:"
-        # Get all VM types from the cache
-        if [[ -f "${VDE_CACHE_DIR}/vm-types.cache" ]]; then
-            grep "^VM_TYPE:" "${VDE_CACHE_DIR}/vm-types.cache" | sed 's/^VM_TYPE:/  /' | sed 's/=.*//' | sort
-        fi
+        # Get all VM types from the associative array keys
+        for k in "${(@k)VM_TYPE}"; do
+            echo "  ${k}"
+        done | sort
         exit ${VDE_ERR_GENERAL}
+    fi
+
+    # Determine canonical name
+    local CANONICAL_NAME="${UNINSTALL_VM_NAME}"
+    if [[ -z "${VM_TYPE[${UNINSTALL_VM_NAME}]:-}" ]]; then
+        CANONICAL_NAME="vde-${UNINSTALL_VM_NAME}"
     fi
 
     #===========================================================================
@@ -374,10 +418,10 @@ main() {
 
     echo ""
     echo "============================================================================="
-    echo "                COMPLETE REMOVAL OF VM TYPE: ${VM_TYPE}"
+    echo "                COMPLETE REMOVAL OF VM TYPE: ${CANONICAL_NAME}"
     echo "============================================================================="
     echo ""
-    print_warning "This will COMPLETELY remove '${VM_TYPE}' from VDE!"
+    print_warning "This will COMPLETELY remove '${CANONICAL_NAME}' from VDE!"
     echo ""
     print_warning "This action is NOT reversible (unless you re-add it with add-vm-type)"
     echo ""
@@ -388,10 +432,10 @@ main() {
     echo "  - Logs"
     echo ""
     echo "The following are INVIOLATE and PRESERVED:"
-    echo "  - configs/docker/${VM_TYPE}/ directory"
-    echo "  - env-files/${VM_TYPE}.env file"
+    echo "  - configs/docker/${CANONICAL_NAME}/ directory"
+    echo "  - env-files/${CANONICAL_NAME}.env file"
     echo "  - SSH config entries"
-    echo "  - projects/${VM_TYPE}/ directory"
+    echo "  - projects/${CANONICAL_NAME}/ directory"
     echo ""
 
     if [[ "${DRY_RUN}" = "true" ]]; then
@@ -399,7 +443,7 @@ main() {
     fi
 
     # Mandatory confirmation
-    if ! ask_yes_no "Are you sure you want to completely remove '${VM_TYPE}' from VDE?" "n"; then
+    if ! ask_yes_no "Are you sure you want to completely remove '${CANONICAL_NAME}' from VDE?" "n"; then
         print_info "Uninstall cancelled"
         exit 0
     fi
@@ -421,19 +465,19 @@ main() {
     if [[ "${DRY_RUN}" = "true" ]]; then
         print_info "DRY RUN - Showing what would be done..."
     else
-        print_info "Removing '${VM_TYPE}' from VDE..."
+        print_info "Removing '${CANONICAL_NAME}' from VDE..."
     fi
     echo "============================================================================="
     echo ""
 
     # Remove in safe order
-    remove_vm "${VM_TYPE}"
-    remove_docker_images "${VM_TYPE}"
-    remove_ssh_entries "${VM_TYPE}"
-    remove_env_files "${VM_TYPE}"
-    remove_logs "${VM_TYPE}"
-    remove_docker_config "${VM_TYPE}"
-    remove_vm_type_entry "${VM_TYPE}"
+    remove_vm "${CANONICAL_NAME}"
+    remove_docker_images "${CANONICAL_NAME}"
+    remove_ssh_entries "${CANONICAL_NAME}"
+    remove_env_files "${CANONICAL_NAME}"
+    remove_logs "${CANONICAL_NAME}"
+    remove_docker_config "${CANONICAL_NAME}"
+    remove_vm_type_entry "${CANONICAL_NAME}"
 
     #===========================================================================
     # Final Message
@@ -444,20 +488,20 @@ main() {
     if [[ "${DRY_RUN}" = "true" ]]; then
         print_success "DRY RUN COMPLETE - No changes were made"
     else
-        print_success "VM type '${VM_TYPE}' has been completely removed from VDE"
+        print_success "VM type '${CANONICAL_NAME}' has been completely removed from VDE"
     fi
     echo "============================================================================="
     echo ""
 
     if [[ "${DRY_RUN}" = "true" ]]; then
         print_info "To run the actual uninstall, run:"
-        echo "  vde uninstall ${VM_TYPE}"
+        echo "  vde uninstall ${CANONICAL_NAME}"
         echo "  or"
-        echo "  ./bin/uninstall-vm-type ${VM_TYPE}"
+        echo "  ./bin/uninstall-vm-type ${CANONICAL_NAME}"
         echo ""
     else
         print_info "To re-add this VM type, use:"
-        echo "  ./bin/add-vm-type ${VM_TYPE}"
+        echo "  ./bin/add-vm-type ${CANONICAL_NAME#vde-}"
         echo ""
     fi
 }

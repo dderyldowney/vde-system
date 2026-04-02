@@ -306,12 +306,10 @@
       },
       {
         "name": "vde-redis",
-        "aliases": [
-          "redis"
-        ],
+        "aliases": [],
         "display": "Redis",
         "install": "apt-get update -y && apt-get install -y redis-tools",
-        "service_port": "6379",
+        "service_port": "6379,6380",
         "ssh_port": 2406
       }
     ]

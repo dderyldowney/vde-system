@@ -1,11 +1,12 @@
 # Template for language VMs
-# Variables: python, 2213, apt-get update -y && apt-get install -y python3 python3-pip
+# Variables: python, 2213, 
 name: vde-python
 services:
   vde-python:
     build:
       context: ../../../..
       dockerfile: configs/docker/vde-base.Dockerfile
+
       args:
         USERNAME: devuser
         UID: 1000
@@ -16,10 +17,10 @@ services:
     hostname: vde-python
     restart: unless-stopped
     labels:
-      vde.managed: "true"
-      vde.type: lang
-      vde.name: "vde-python"
-    command: /usr/sbin/sshd -D
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=python"
+    command: ["/usr/local/bin/vde-entrypoint", "/usr/sbin/sshd", "-D"]
 
     ports:
       - "2213:22"

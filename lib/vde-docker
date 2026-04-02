@@ -247,14 +247,24 @@ build_docker_opts() {
 # =============================================================================
 
 # Start VM
-# Args: <vm_name> [max_attempts]
+# Args: <vm_name> [rebuild] [nocache] [max_attempts] [wait_for_health]
 # Returns: VDE_SUCCESS (0) on success
 start_vm() {
     local vm_name="${1}"
     local rebuild="${2:-false}"
     local nocache="${3:-false}"
     local max_attempts="${4:-3}"
+    local wait_for_health="${5:-false}"
     local attempt=1
+
+    # Default wait_for_health to true for services if not specified
+    if [[ "${wait_for_health}" == "false" ]]; then
+        local vm_type
+        vm_type=$(get_vm_info type "${vm_name}" 2>/dev/null) || vm_type=""
+        if [[ "${vm_type}" == "service" ]]; then
+            wait_for_health="true"
+        fi
+    fi
 
     # Skip vm_exists check if rebuild is requested (we'll create the container anyway)
     if [[ "${rebuild}" != "true" ]] && ! vm_exists "${vm_name}"; then
@@ -307,6 +317,14 @@ start_vm() {
 
         if [[ ${up_result} -eq 0 ]]; then
             _info "VM '${vm_name}' started successfully"
+            
+            if [[ "${wait_for_health}" == "true" ]]; then
+                _info "Waiting for VM '${vm_name}' to be healthy..."
+                if ! wait_for_container_healthy "${vm_name}" 60; then
+                    _warn "VM '${vm_name}' failed health check, but container is running"
+                fi
+            fi
+            
             return ${VDE_SUCCESS}
         fi
 
@@ -378,9 +396,8 @@ restart_vm() {
         return ${VDE_ERR_GENERAL}
     fi
 
-    sleep 2
-
-    if ! start_vm "${vm_name}"; then
+    # Use start_vm with wait_for_health=true instead of sleep
+    if ! start_vm "${vm_name}" false false 3 true; then
         return ${VDE_ERR_GENERAL}
     fi
 
@@ -528,9 +545,10 @@ check_docker_available() {
 wait_for_container_healthy() {
     local vm_name="${1}"
     local timeout="${2:-60}"
-    local elapsed=0
+    typeset -F elapsed=0
+    typeset -F interval=0.2
 
-    while [ ${elapsed} -lt ${timeout} ]; do
+    while (( elapsed < timeout )); do
         local container_id
         container_id=$(get_container_id "${vm_name}")
 
@@ -546,8 +564,8 @@ wait_for_container_healthy() {
             return ${VDE_SUCCESS}
         fi
 
-        sleep 5
-        elapsed=$((elapsed + 5))
+        sleep ${interval}
+        (( elapsed += interval ))
     done
 
     _error "Container '${vm_name}' did not become healthy within ${timeout}s"
