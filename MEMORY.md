@@ -1,6 +1,6 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-04-01T18:45:00Z
+**Last Updated:** 2026-04-02T12:00:00Z
 
 ---
 
@@ -10,8 +10,13 @@
 1. **ZSH-ONLY MANDATE**: Every script in `bin/` and `lib/` MUST use `#!/usr/bin/env zsh`. Non-ZSH scripts are a protocol bypass and will block execution.
 2. **8-STEP STARTUP**: All entry points MUST follow the authoritative 8-step startup sequence defined in `VDE-SPEC.md`.
 3. **UAP ENFORCEMENT**: `bin/vde-enforce-uap.zsh` MUST be called during initialization to verify workspace integrity.
-4. **ORCHESTRATOR ROLE**: Gemini CLI acts EXCLUSIVELY as a strategic orchestrator. Complex or repetitive tasks MUST be delegated to sub-agents.
-5. **SPEC v1.7.0**: Authoritative spec v1.7.0 implemented with Cluster/SSH hardening and strict protocol enforcement across all core commands.
+4. **CANONICAL NETWORKING**: Always use canonical `vde-` container names (e.g., `vde-postgres`, `vde-redis`) for inter-container communication and environment variables. `localhost` refers ONLY to the local container or host machine, not the service VM. The name without `vde-` is the software, not the VM.
+5. **ORCHESTRATOR ROLE**: Gemini CLI acts EXCLUSIVELY as a strategic orchestrator. Complex or repetitive tasks MUST be delegated to sub-agents.
+6. **INHERITANCE MANDATE**: Sub-agents MUST inherit context from the Main Agent. Freshly pulling information already present in the Main Agent's context (e.g., @-loaded files) is strictly forbidden.
+7. **SPEC v1.7.2**: Authoritative spec v1.7.2 implemented with Cluster/SSH hardening and strict protocol enforcement across all core commands.
+8. **Rule A (Enforcer Supervision)**: Every single action (shell commands, sub-agent dispatches, verification steps, and cleanup) MUST be run under the supervision of the Enforcer (`bin/vde-enforce-uap.zsh`).
+9. **Rule B (Phase-End Re-Audit Swarm)**: Every development phase MUST automatically conclude with a supervised re-audit swarm. This swarm MUST assume errors exist, search for regressions or weak spots, rerun all relevant Behave scenarios, and provide a summary of findings. Skipping or shortening this re-audit is a total mandate failure.
+10. **Rule C (Explicit Commit Gate)**: Following a successful re-audit, the agent MUST ask for explicit 'commit now' approval from the user. No commits are allowed without this manual gate.
 
 ---
 
@@ -53,87 +58,30 @@
 **Goal:** Validate core Docker infrastructure first, then stack Docker-tagged features on top one by one.
 **Rule:** Nothing Docker works if core capabilities are not properly implemented.
 
-### Feature Order (easiest → hardest)
-
-| # | Feature | Scenarios | Step Defs | Status |
-|---|---------|-----------|-----------|--------|
-| 1 | `critical-path.feature` | 14 | ✅ | ✅ 14/14 PASSING |
-| 2 | `vm-lifecycle.feature` | 15 | ✅ | ✅ 100% REGISTERED |
-| 3 | `vm-rebuild.feature` | 8 | ✅ | ✅ 8/8 PASSING |
-| 4 | `docker-operations.feature` | 12 | ✅ | ✅ 12/12 PASSING |
-| 5 | `vm-full-lifecycle.feature` | 1 | ✅ | ✅ 1/1 PASSING |
-| 6 | `docker-management.feature` | 13 | ✅ | ✅ 13/13 PASSING |
-| 7 | `configuration-management.feature` | 23 | ✅ | ✅ 100% REGISTERED |
-| 8 | `productivity.feature` | 4 | ✅ | ✅ 4/4 PASSING |
-
 ### Production Sprint (Phases 22-26)
 
 | # | Phase | Focus | Status |
 |---|-------|-------|--------|
-| 22 | Service & Volume Hardening | Networking & Persistence | 🟡 Planned |
-| 23 | Deterministic Readiness | Health Checks vs. Sleep | 🟡 Planned |
+| 22 | Service & Volume Hardening | Networking & Persistence | ✅ COMPLETE |
+| 23 | Deterministic Readiness | Health Checks vs. Sleep | ✅ COMPLETE |
 | 24 | The Big Step Completion | 366 Undefined Steps | 🔴 Blocked |
 | 25 | Concurrency & Stress | Port/Locking Races | ⚪ Pending |
 | 26 | Error Engine & Polish | UX & SPEC v2.0.0 | ⚪ Pending |
 
-### Phase 0 Progress (2026-04-01)
+### Phase 0 Progress (2026-04-02)
 - **O-1 through O-8:** ✅ Complete
-- **Universal Agent Protocol (UAP):** ✅ **IMPLEMENTED**. All agents and commands reworked across `.claude/` and `.kilocode/` to enforce Phase 0-5 lifecycle, TDD (No Fake Tests), DRY, and Dual Approval.
+- **Universal Agent Protocol (UAP):** ✅ **IMPLEMENTED**. All agents and commands reworked across `.claude/` and `.kilocode/` to enforce Phase 0-5 lifecycle, TDD (No Fake Tests), Dual Approval.
+- **Service & Volume Hardening (Phase 22):** ✅ **COMPLETE**. 
+- **Deterministic Readiness (Phase 23):** ✅ **COMPLETE**.
+    - Replaced all static `sleep` calls >0.5s in `bin/` and `lib/` with high-precision 0.2s polling loops using ZSH floating-point arithmetic (`typeset -F`).
+    - Standardized `vde_wait_for_container_healthy` to use `docker inspect --health` directly.
+    - Added **Rule A (Enforcer Supervision)**, **Rule B (Phase-End Re-Audit)**, and **Rule C (Commit Gate)** as permanent global mandates to `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, and `VDE-SPEC.md`.
+    - Added **Inheritance Mandate** to ensure sub-agents use Main Agent context.
 - **Integration Features (Phases 8-19):** ✅ Core registration and hardening complete.
-- **ssh-agent Remediation:** ✅ COMPLETE. Surgical PID killing verified.
 - **SSH & Remote Access (Phase 20):** ✅ **100% COMPLETE** (12/12 scenarios).
 - **Cluster Persistence (Phase 21):** ✅ **100% COMPLETE**. Multi-VM cluster persistence verified.
-- **Core CLI Hardening:** ✅ Enhanced `info`, `exec`, `ssh` for robust automated testing and correct user context.
 - **Baseline:** 272 non-integration scenarios **PASS** under UAP mandates.
-- **Next:** Phase 22: Service & Volume Hardening (Integration)
-
----
-
-
-## FAST TEST BASELINE (2026-03-31)
-
-```
-Fast tests (--tags="not @integration"): 268 passed / 0 failed / 233 skipped
-Runtime: ~3 minutes
-```
-
----
-
-## Future: Config Directory Reordering
-
-**Proposed:** Move from `configs/docker/{python,postgres,...}` to:
-- `configs/docker/languages/{python,rust,...}`
-- `configs/docker/services/{postgres,redis,...}`
-
-**Required changes (when implemented):**
-- All bin/* scripts using CONFIGS_DIR path construction
-- All test step definitions checking config paths
-- docker-compose template generation (vde-templates)
-- Update CONFIGS_DIR default and path construction logic
-
----
-
-## STEP DEFS STATUS
-
-### Existing step files (tests/features/steps/)
-- `critical_steps.py` — critical-path, port range, container start/stop assertions (VDE CLI only)
-- `vm_rebuild_steps.py` — vm-lifecycle, vm-rebuild, vm-full-lifecycle step defs (VDE CLI only)
-- `ssh_core_steps.py` — SSH config and access steps + O-5 full-lifecycle SSH steps [REMEDIATED]
-- `docker_operations_steps.py` — docker-operations step defs (VDE CLI only)
-- `docker_management_steps.py` — docker-management 13 step defs (VDE CLI only)
-- `vm_common.py` — shared helpers (run_vde_command, get_compose_file, etc.)
-- `parser_steps.py` — parser/intent steps [HARDENED]
-- `common_steps.py` — shared scenario setup
-- `documented_workflow_steps.py` — workflow steps
-- `vm_metadata_steps.py` — VM metadata assertions
-- `cache_system_steps.py` — cache steps
-- `port_management_steps.py` — port steps
-- `shell_helpers.py` — shell exec helpers
-- `ssh_helpers.py` — SSH connection helpers
-
-### Needs step defs written
-- `configuration-management.feature` — 20 scenarios (NEXT: O-7)
-- `productivity.feature` — 4 scenarios (O-8)
+- **Next:** Phase 24 (The Big Step Completion)
 
 ---
 
