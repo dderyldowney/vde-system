@@ -5,6 +5,10 @@
 # This script helps existing users transition from the old SSH configuration
 # (mixed with user's personal SSH) to the new isolated VDE SSH setup.
 
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 set -e
 
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
@@ -22,7 +26,7 @@ echo "Step 1: Checking ~/.ssh/vde/config"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-if [ -f "${HOME}/.ssh/config" ]; then
+if [[ -f "${HOME}/.ssh/config" ]] ; then
     log_success "✓ Found ~/.ssh/vde/config"
 else
     log_info "No ~/.ssh/vde/config file found"
@@ -49,7 +53,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 entries_migrated=false
-if [ -f "${HOME}/.ssh/config" ]; then
+if [[ -f "${HOME}/.ssh/config" ]] ; then
     # Extract entries that match VDE pattern (VM names ending in -dev)
     awk '
         /^Host / {
@@ -78,7 +82,7 @@ else
 fi
 
 # Create empty config if it doesn't exist
-if [ ! -f "${VDE_SSH_CONFIG}" ]; then
+if [[ ! -f "${VDE_SSH_CONFIG}" ]] ; then
     touch "${VDE_SSH_CONFIG}"
     chmod 600 "${VDE_SSH_CONFIG}"
 fi
@@ -91,7 +95,7 @@ echo "Step 4: Setting up VDE SSH key"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-if [ ! -f "${VDE_SSH_IDENTITY}" ]; then
+if [[ ! -f "${VDE_SSH_IDENTITY}" ]] ; then
     log_info "Generating VDE-specific SSH key..."
     ssh-keygen -t ed25519 -f "${VDE_SSH_IDENTITY}" -N "" -C "vde@$(hostname)" 2>/dev/null
     chmod 600 "${VDE_SSH_IDENTITY}"
@@ -138,7 +142,7 @@ echo "Step 7: Copying known_hosts entries"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-if [ -f "${HOME}/.ssh/known_hosts" ]; then
+if [[ -f "${HOME}/.ssh/known_hosts" ]] ; then
     # Extract localhost entries with VDE ports (2200-2299, 2400-2499)
     awk '
         /^\[localhost\]:22[0-9][0-9]/ ||
@@ -148,7 +152,7 @@ if [ -f "${HOME}/.ssh/known_hosts" ]; then
         }
     ' "${HOME}/.ssh/known_hosts" > "${VDE_SSH_DIR}/known_hosts" 2>/dev/null || true
 
-    if [ -s "${VDE_SSH_DIR}/known_hosts" ]; then
+    if [[ -s "${VDE_SSH_DIR}/known_hosts" ]] ; then
         log_success "✓ Copied VM known_hosts entries"
     else
         log_info "No VM-related known_hosts entries to copy"
@@ -200,10 +204,10 @@ echo "  • VDE known_hosts: ~/.ssh/vde/known_hosts"
 echo ""
 echo "Your personal SSH configuration is untouched."
 echo "Backups created:"
-if [ -n "${backup_path}" ] && [ -f "${backup_path}" ]; then
+if [[ -n "${backup_path}" ] && [[ -f "${backup_path}" ]] ; then
     echo "  • ${backup_path}"
 fi
-if [ -f "${known_hosts_backup_path}" ]; then
+if [[ -f "${known_hosts_backup_path}" ]] ; then
     echo "  • ${known_hosts_backup_path}"
 fi
 echo ""

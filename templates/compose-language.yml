@@ -20,7 +20,11 @@ services:
       - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name={{NAME}}"
-    command: ["/usr/local/bin/vde-entrypoint", "/usr/sbin/sshd", "-D"]
+    command: >
+      sh -c "if [ -n \"{{INSTALL_CMD}}\" ]; then
+               {{INSTALL_CMD}};
+             fi;
+             /usr/sbin/sshd -D"
 
     ports:
       - "{{SSH_PORT}}:22"

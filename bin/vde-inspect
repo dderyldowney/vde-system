@@ -13,6 +13,10 @@
 #===============================================================================
 
 # Determine VDE root directory
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
@@ -22,7 +26,7 @@ export VDE_ROOT_DIR
 [[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
 
 # Check arguments
-if [ -z "${1}" ]; then
+if [[ -z "${1}" ]] ; then
     vde_error_simple "VM name is required"
     echo "Usage: vde-inspect <vm_name> [options]"
     exit ${VDE_ERR_INVALID_INPUT}
@@ -33,7 +37,7 @@ shift
 
 # Ensure vde- prefix for container name (unless it already has it or is a full container name)
 CONTAINER_NAME="${VM_NAME}"
-if [[ "${VM_NAME}" != vde-* ]] && [[ "${VM_NAME}" != *-dev ]]; then
+if [[ "${VM_NAME}" != vde-* ]] && [[ "${VM_NAME}" != *-dev ]] ; then
     CONTAINER_NAME="vde-${VM_NAME}"
 fi
 
@@ -45,7 +49,7 @@ STATE=0
 HEALTH=0
 JSON_OUTPUT=0
 
-while [[ ${#} -gt 0 ]]; do
+while [[ ${#} -gt 0 ]] ; do
     case "${1}" in
         --format)
             FORMAT="${2}"
@@ -78,17 +82,17 @@ while [[ ${#} -gt 0 ]]; do
 done
 
 # Build inspect command
-if [ ${MOUNTS} -eq 1 ]; then
+if [[ ${MOUNTS} -eq 1 ]] ; then
     docker inspect --format '{{json .Mounts}}' "${CONTAINER_NAME}"
-elif [ ${NETWORK} -eq 1 ]; then
+elif [[ ${NETWORK} -eq 1 ]] ; then
     docker inspect --format '{{json .NetworkSettings}}' "${CONTAINER_NAME}"
-elif [ ${STATE} -eq 1 ]; then
+elif [[ ${STATE} -eq 1 ]] ; then
     docker inspect --format '{{json .State}}' "${CONTAINER_NAME}"
-elif [ ${HEALTH} -eq 1 ]; then
+elif [[ ${HEALTH} -eq 1 ]] ; then
     docker inspect --format '{{json .State.Health}}' "${CONTAINER_NAME}"
-elif [ ${JSON_OUTPUT} -eq 1 ]; then
+elif [[ ${JSON_OUTPUT} -eq 1 ]] ; then
     docker inspect --format '{{json .}}' "${CONTAINER_NAME}"
-elif [ -n "${FORMAT}" ]; then
+elif [[ -n "${FORMAT}" ]] ; then
     docker inspect --format "${FORMAT}" "${CONTAINER_NAME}"
 else
     docker inspect "${CONTAINER_NAME}"

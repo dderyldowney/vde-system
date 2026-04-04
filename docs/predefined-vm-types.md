@@ -6,43 +6,45 @@ All available programming languages and services that can be created with VDE.
 
 ---
 
-## Language VMs (19 total, ports 2200-2299)
+## Language VMs (21 total, ports 2200-2299)
 
-| Name | Aliases | Display Name | Container Name | SSH Host | Install Command |
+| Name | Aliases | Display Name | Container Name | SSH Port | Install Command |
 |------|---------|--------------|----------------|----------|-----------------|
-| c | c | C | vde-c | vde-c | gcc, make, cmake, gdb |
-| cpp | c++, gcc | C++ | vde-cpp | vde-cpp | g++, make, cmake, gdb |
-| asm | assembler, nasm | Assembler | vde-asm | vde-asm | nasm, yasm, gdb |
-| python | python3 | Python | vde-python | vde-python | python3, python3-pip |
-| rust | rust | Rust | vde-rust | vde-rust | rustup (via install script) |
-| js | node, nodejs | JavaScript | vde-js | vde-js | Node.js LTS |
-| csharp | dotnet | C# | vde-csharp | vde-csharp | dotnet-sdk-8.0 |
-| ruby | ruby | Ruby | vde-ruby | vde-ruby | ruby-full |
-| go | golang | Go | vde-go | vde-go | golang-go |
-| java | jdk | Java | vde-java | vde-java | default-jdk, maven, gradle |
-| kotlin | kotlin | Kotlin | vde-kotlin | vde-kotlin | kotlin, SDKMAN |
-| swift | swift | Swift | vde-swift | vde-swift | binutils, git, libc6-dev, curl |
-| php | php | PHP | vde-php | vde-php | php, php-cli, composer |
-| scala | scala | Scala | vde-scala | vde-scala | scala-defaults, sbt |
-| r | rlang, r | R | vde-r | vde-r | r-base, r-cran-littler |
-| lua | lua | Lua | vde-lua | vde-lua | lua5.4, luarocks |
-| flutter | dart, flutter | Flutter | vde-flutter | vde-flutter | flutter SDK |
-| elixir | elixir | Elixir | vde-elixir | vde-elixir | elixir, erlang |
-| haskell | ghc, haskell | Haskell | vde-haskell | vde-haskell | ghc, cabal-install |
+| vde-asm | asm, assembler, nasm | Assembler | vde-asm | 2200 | nasm, yasm, gdb |
+| vde-c | c | C | vde-c | 2201 | gcc, make, cmake, gdb |
+| vde-cpp | cpp, c++, gcc | C++ | vde-cpp | 2202 | g++, make, cmake, gdb |
+| vde-csharp | csharp, dotnet | C# | vde-csharp | 2203 | dotnet-sdk-8.0 |
+| vde-displaytest | displaytest | Go Language | vde-displaytest | 2204 | golang-go |
+| vde-elixir | elixir, ex, iex | Elixir | vde-elixir | 2205 | elixir, erlang |
+| vde-flutter | flutter, dart | Flutter | vde-flutter | 2206 | flutter SDK |
+| vde-go | go, golang | Go | vde-go | 2207 | golang-go |
+| vde-haskell | haskell, ghc | Haskell | vde-haskell | 2208 | ghc, cabal-install |
+| vde-java | java, jdk | Java | vde-java | 2209 | default-jdk, maven, gradle |
+| vde-js | js, node, nodejs, npm | Node.js | vde-js | 2210 | Node.js 22.x |
+| vde-kotlin | kotlin | Kotlin | vde-kotlin | 2211 | kotlin, SDKMAN |
+| vde-lua | lua | Lua | vde-lua | 2212 | lua5.4, luarocks |
+| vde-php | php | PHP | vde-php | 2213 | php, php-cli, composer |
+| vde-python | python, python3, py | Python | vde-python | 2214 | python3, python3-pip |
+| vde-ruby | ruby | Ruby | vde-ruby | 2215 | ruby-full |
+| vde-rust | rust, rs, rustc | Rust | vde-rust | 2216 | rustup |
+| vde-scala | scala | Scala | vde-scala | 2217 | scala-defaults, sbt |
+| vde-swift | swift | Swift | vde-swift | 2218 | binutils, git, libc6-dev, curl |
+| vde-testport1 | testport1 | Test Port 1 | vde-testport1 | 2219 | test |
+| vde-testport2 | testport2 | Test Port 2 | vde-testport2 | 2220 | test |
 
 ---
 
 ## Service VMs (7 total, ports 2400-2499)
 
-| Name | Aliases | Display Name | Container Name | SSH Host | Service Port | Purpose |
-|------|---------|--------------|----------------|----------|--------------|---------|
-| postgres | postgresql | PostgreSQL | postgres | postgres | 5432 | PostgreSQL database |
-| redis | redis | Redis | redis | redis | 6379 | Key-value store |
-| mongodb | mongo | MongoDB | mongodb | mongodb | 27017 | Document database |
-| nginx | nginx | Nginx | nginx | nginx | 80, 443 | Web server |
-| couchdb | couchdb | CouchDB | couchdb | couchdb | 5984 | NoSQL database |
-| mysql | mysql | MySQL | mysql | mysql | 3306 | MySQL database |
-| rabbitmq | rabbitmq | RabbitMQ | rabbitmq | rabbitmq | 5672, 15672 | Message queue |
+| Name | Aliases | Display Name | Container Name | Service Port | SSH Port | Purpose |
+|------|---------|--------------|----------------|--------------|----------|---------|
+| vde-couchdb | couchdb | CouchDB | vde-couchdb | 5984 | 2400 | NoSQL database |
+| vde-mongodb | mongo | MongoDB | vde-mongodb | 27017 | 2401 | Document database |
+| vde-mysql | mysql | MySQL | vde-mysql | 3306 | 2402 | MySQL database |
+| vde-nginx | nginx | Nginx | vde-nginx | 80, 443 | 2403 | Web server |
+| vde-postgres | postgresql | PostgreSQL | vde-postgres | 5432 | 2404 | PostgreSQL database |
+| vde-rabbitmq | rabbitmq | RabbitMQ | vde-rabbitmq | 5672, 15672 | 2405 | Message queue |
+| vde-redis | redis | Redis | vde-redis | 6379 | 2406 | Key-value store |
 
 ---
 

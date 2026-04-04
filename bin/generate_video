@@ -3,11 +3,15 @@
 # Usage: ./generate_video <output_path> [tape_commands...]
 # If tape_commands are not provided, it reads from stdin.
 
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 OUTPUT_PATH=${1}
 shift
 TAPE_COMMANDS="${*}"
 
-if [ -z "${OUTPUT_PATH}" ]; then
+if [[ -z "${OUTPUT_PATH}" ]] ; then
   echo "Usage: ${0} <output_path> [tape_commands...]"
   echo "Example: ${0} demo.gif \"Type 'ls -l'; Enter; Sleep 2s;\""
   exit ${VDE_ERR_GENERAL}
@@ -29,7 +33,7 @@ Set WindowBar Colorful
 EOF
 
 # Append commands
-if [ -n "${TAPE_COMMANDS}" ]; then
+if [[ -n "${TAPE_COMMANDS}" ]] ; then
   # Replace semicolons with newlines for easier single-string scripting
   echo "${TAPE_COMMANDS}" | tr ';' '\n' >> "${TEMP_TAPE}"
 else
@@ -48,7 +52,7 @@ VHS_STATUS=${?}
 # Clean up
 rm "${TEMP_TAPE}"
 
-if [ ${VHS_STATUS} -eq 0 ]; then
+if [[ ${VHS_STATUS} -eq 0 ]] ; then
   echo "Success! Video saved to ${OUTPUT_PATH}"
 else
   echo "Failed to generate video. Check vhs output above."

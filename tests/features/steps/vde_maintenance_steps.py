@@ -3,6 +3,7 @@ import subprocess
 import time
 from pathlib import Path
 from vm_common import run_vde_command, VDE_ROOT, docker_ps
+from shell_helpers import wait_for_condition
 
 @given('I have updated my system Docker')
 def step_updated_system_docker(context):
@@ -56,15 +57,17 @@ def step_stop_everything(context):
 
 @then('all running VMs should be stopped')
 def step_all_vms_stopped(context):
-    """Verify 'vde ps -q' is empty."""
+    """Verify 'vde ps -q' is empty with deterministic polling."""
     # REAL behavioral assertion: verify NO running containers with the vde- prefix
-    result = run_vde_command("ps -q", context=context)
-    # Give it a moment to stabilize if needed
-    if result.stdout.strip() != "":
-        time.sleep(2)
+    try:
+        wait_for_condition(
+            lambda: run_vde_command("ps -q", context=context).stdout.strip() == "",
+            timeout=10,
+            description="all VMs to stop"
+        )
+    except Exception:
         result = run_vde_command("ps -q", context=context)
-        
-    assert result.stdout.strip() == "", f"Some VMs are still running: {result.stdout}"
+        assert False, f"Some VMs are still running after timeout: {result.stdout}"
 
 # def step_check_resource_usage(context):
 #     """Duplicate of docker_management_steps.py."""

@@ -688,31 +688,33 @@ render_template <template_file> NAME "python" SSH_PORT 2213 INSTALL_CMD "..." SE
 
 ## VM Types Reference
 
-### Language VMs (19 total)
+### Language VMs (21 total)
 
 | Name | Aliases | Display Name | Default Port |
 |------|---------|--------------|--------------|
-| c | c | C | 2201 |
-| cpp | c++, gcc | C++ | 2202 |
-| asm | assembler, nasm | Assembler | 2202 |
-| python | python3, py | Python | 2203 |
-| rust | vde-rust | Rust | 2204 |
-| js | node, nodejs | JavaScript | 2205 |
-| csharp | dotnet | C# | 2206 |
-| ruby | rb, ruby | Ruby | 2207 |
-| go | golang | Go | 2208 |
-| java | jdk | Java | 2209 |
-| kotlin | kotlin | Kotlin | 2210 |
-| swift | swift | Swift | 2211 |
-| php | php | PHP | 2212 |
-| scala | scala | Scala | 2213 |
-| r | rlang, r | R | 2214 |
-| lua | lua | Lua | 2215 |
-| flutter | dart, flutter | Flutter | 2216 |
-| elixir | elixir | Elixir | 2217 |
-| haskell | ghc, haskell | Haskell | 2218 |
+| vde-asm | asm, assembler, nasm | Assembler | 2200 |
+| vde-c | c | C | 2201 |
+| vde-cpp | cpp, c++, gcc | C++ | 2202 |
+| vde-csharp | csharp, dotnet | C# | 2203 |
+| vde-displaytest | displaytest | Go Language | 2204 |
+| vde-elixir | elixir, ex, iex | Elixir | 2205 |
+| vde-flutter | flutter, dart | Flutter | 2206 |
+| vde-go | go, golang | Go | 2207 |
+| vde-haskell | haskell, ghc | Haskell | 2208 |
+| vde-java | java, jdk | Java | 2209 |
+| vde-js | js, node, nodejs, npm | Node.js | 2210 |
+| vde-kotlin | kotlin | Kotlin | 2211 |
+| vde-lua | lua | Lua | 2212 |
+| vde-php | php | PHP | 2213 |
+| vde-python | python, python3, py | Python | 2214 |
+| vde-ruby | ruby | Ruby | 2215 |
+| vde-rust | rust, rs, rustc | Rust | 2216 |
+| vde-scala | scala | Scala | 2217 |
+| vde-swift | swift | Swift | 2218 |
+| vde-testport1 | testport1 | Test Port 1 | 2219 |
+| vde-testport2 | testport2 | Test Port 2 | 2220 |
 
-**Container Naming:** `<name>-dev` (e.g., `vde-python`)
+**Container Naming:** `vde-<name>` (e.g., `vde-python`)
 
 **Port Range:** 2200-2299
 
@@ -720,15 +722,15 @@ render_template <template_file> NAME "python" SSH_PORT 2213 INSTALL_CMD "..." SE
 
 | Name | Aliases | Display Name | Service Port | Default Port |
 |------|---------|--------------|--------------|--------------|
-| postgres | postgresql | PostgreSQL | 5432 | 2404 |
-| redis | redis | Redis | 6379 | 2406 |
-| mongodb | mongo | MongoDB | 27017 | 2402 |
-| nginx | nginx | Nginx | 80,443 | 2403 |
-| couchdb | couchdb | CouchDB | 5984 | 2404 |
-| mysql | mysql | MySQL | 3306 | 2405 |
-| rabbitmq | rabbitmq | RabbitMQ | 5672,15672 | 2406 |
+| vde-couchdb | couchdb | CouchDB | 5984 | 2400 |
+| vde-mongodb | mongo | MongoDB | 27017 | 2401 |
+| vde-mysql | mysql | MySQL | 3306 | 2402 |
+| vde-nginx | nginx | Nginx | 80,443 | 2403 |
+| vde-postgres | postgresql | PostgreSQL | 5432 | 2404 |
+| vde-rabbitmq | rabbitmq | RabbitMQ | 5672,15672 | 2405 |
+| vde-redis | redis | Redis | 6379 | 2406 |
 
-**Container Naming:** `<name>` (no suffix)
+**Container Naming:** `vde-<name>` (e.g., `vde-postgres`)
 
 **Port Range:** 2400-2499
 

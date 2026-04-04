@@ -19,6 +19,10 @@
 #===============================================================================
 
 # Determine VDE root directory
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
@@ -96,7 +100,7 @@ vde_init_check_prerequisites() {
 
 # vde_init_create_directory_structure - Create VDE directories
 vde_init_create_directory_structure() {
-    if [ "${QUIET}" = "0" ]; then
+    if [[ "${QUIET}" = "0" ]] ; then
         echo "Creating VDE directory structure..."
     fi
     
@@ -124,20 +128,20 @@ vde_init_create_directory_structure() {
     mkdir -p "${VDE_ROOT_DIR}/data/redis" 2>/dev/null || true
     mkdir -p "${VDE_ROOT_DIR}/data/rabbitmq" 2>/dev/null || true
     
-    if [ "${QUIET}" = "0" ]; then
+    if [[ "${QUIET}" = "0" ]] ; then
         echo "  ✓ Directories created"
     fi
 }
 
 # vde_init_generate_configs - Generate docker-compose files
 vde_init_generate_configs() {
-    if [ "${QUIET}" = "0" ]; then
+    if [[ "${QUIET}" = "0" ]] ; then
         echo "Generating docker-compose configurations..."
     fi
     
     # Run the generate-all-configs script
     if "${VDE_ROOT_DIR}/bin/generate-all-configs" 2>/dev/null; then
-        if [ "${QUIET}" = "0" ]; then
+        if [[ "${QUIET}" = "0" ]] ; then
             echo "  ✓ Configurations generated"
         fi
         return 0
@@ -149,18 +153,18 @@ vde_init_generate_configs() {
 
 # vde_init_setup_ssh - Set up SSH keys and agent
 vde_init_setup_ssh() {
-    if [ "${QUIET}" = "0" ]; then
+    if [[ "${QUIET}" = "0" ]] ; then
         echo "Setting up SSH keys and agent..."
     fi
 
     # Run the SSH setup script
     if "${VDE_ROOT_DIR}/bin/ssh-agent-setup" --init 2>/dev/null; then
-        if [ "${QUIET}" = "0" ]; then
+        if [[ "${QUIET}" = "0" ]] ; then
             echo "  ✓ SSH environment configured"
         fi
         return 0
     else
-        if [ "${QUIET}" = "0" ]; then
+        if [[ "${QUIET}" = "0" ]] ; then
             echo "  ⚠ SSH setup had warnings (may be OK)"
         fi
         return 0  # Don't fail on SSH issues
@@ -175,13 +179,13 @@ vde_init_create_network() {
     
     # Check if network already exists
     if docker network inspect "${network_name}" &>/dev/null; then
-        if [ "${force}" = "1" ]; then
-            if [ "${QUIET}" = "0" ]; then
+        if [[ "${force}" = "1" ]] ; then
+            if [[ "${QUIET}" = "0" ]] ; then
                 echo "Removing existing network '${network_name}'..."
             fi
             docker network rm "${network_name}" &>/dev/null || true
         else
-            if [ "${QUIET}" = "0" ]; then
+            if [[ "${QUIET}" = "0" ]] ; then
                 echo "  ✓ Network '${network_name}' already exists"
             fi
             return 0
@@ -190,7 +194,7 @@ vde_init_create_network() {
     
     # Create the network
     if docker network create "${network_name}" &>/dev/null; then
-        if [ "${QUIET}" = "0" ]; then
+        if [[ "${QUIET}" = "0" ]] ; then
             echo "  ✓ Created network '${network_name}'"
         fi
         return 0
@@ -202,7 +206,7 @@ vde_init_create_network() {
 
 # vde_init_set_permissions - Set file permissions
 vde_init_set_permissions() {
-    if [ "${QUIET}" = "0" ]; then
+    if [[ "${QUIET}" = "0" ]] ; then
         echo "Setting file permissions..."
     fi
     
@@ -227,7 +231,7 @@ vde_init_set_permissions() {
     
     # Set SSH directory permissions (recursive for keys)
     local ssh_dir="${HOME}/.ssh/vde"
-    if [ -d "${ssh_dir}" ]; then
+    if [[ -d "${ssh_dir}" ]] ; then
         chmod 700 "${ssh_dir}" 2>/dev/null || true
         # Set permissions on all subdirectories
         find "${ssh_dir}" -type d -exec chmod 700 {} \; 2>/dev/null || true
@@ -237,7 +241,7 @@ vde_init_set_permissions() {
         find "${ssh_dir}" -type f -name "*.pub" -exec chmod 644 {} \; 2>/dev/null || true
     fi
     
-    if [ "${QUIET}" = "0" ]; then
+    if [[ "${QUIET}" = "0" ]] ; then
         echo "  ✓ Permissions set"
     fi
 }
@@ -281,7 +285,7 @@ TESTING=0
 FORCE=0
 QUIET=0
 
-while [[ ${#} -gt 0 ]]; do
+while [[ ${#} -gt 0 ]] ; do
     case "${1}" in
         -n|--networks-only)
             NETWORKS_ONLY=1
@@ -312,7 +316,7 @@ while [[ ${#} -gt 0 ]]; do
 done
 
 # Welcome message
-if [ "${QUIET}" = "0" ]; then
+if [[ "${QUIET}" = "0" ]] ; then
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"
     echo "║          VDE Initialization                              ║"
@@ -321,14 +325,14 @@ if [ "${QUIET}" = "0" ]; then
 fi
 
 # Full setup or networks only?
-if [ "${NETWORKS_ONLY}" = "1" ]; then
+if [[ "${NETWORKS_ONLY}" = "1" ]] ; then
     # Networks-only mode
     if ! vde_init_check_prerequisites; then
         exit ${VDE_ERR_DOCKER}
     fi
     
     # Create networks
-    if [ "${TESTING}" = "1" ]; then
+    if [[ "${TESTING}" = "1" ]] ; then
         NETWORK_NAME="${VDE_TEST_NETWORK}"
     else
         NETWORK_NAME="${VDE_DOCKER_NETWORK}"
@@ -336,19 +340,19 @@ if [ "${NETWORKS_ONLY}" = "1" ]; then
     
     vde_init_create_network "${NETWORK_NAME}" "${FORCE}"
     
-    if [ "${QUIET}" = "0" ]; then
+    if [[ "${QUIET}" = "0" ]] ; then
         vde_init_show_status
     fi
 else
     # Full setup mode - invoke build-and-start
-    if [ "${QUIET}" = "0" ]; then
+    if [[ "${QUIET}" = "0" ]] ; then
         echo "Running full VDE setup..."
         echo ""
     fi
     
     # Run build-and-start for complete setup
-    if [ -f "${VDE_ROOT_DIR}/bin/build-and-start" ]; then
-        if [ "${QUIET}" = "0" ]; then
+    if [[ -f "${VDE_ROOT_DIR}/bin/build-and-start" ]] ; then
+        if [[ "${QUIET}" = "0" ]] ; then
             "${VDE_ROOT_DIR}/bin/build-and-start"
         else
             "${VDE_ROOT_DIR}/bin/build-and-start" >/dev/null 2>&1
@@ -369,14 +373,14 @@ else
         vde_init_create_network "${VDE_DOCKER_NETWORK}" "${FORCE}"
         
         # Create test network if requested
-        if [ "${TESTING}" = "1" ]; then
+        if [[ "${TESTING}" = "1" ]] ; then
             vde_init_create_network "${VDE_TEST_NETWORK}" "${FORCE}"
         fi
         
         vde_init_set_permissions
     fi
     
-    if [ "${QUIET}" = "0" ]; then
+    if [[ "${QUIET}" = "0" ]] ; then
         echo ""
         echo "╔════════════════════════════════════════════════════════════╗"
         echo "║          VDE Initialization Complete!                   ║"

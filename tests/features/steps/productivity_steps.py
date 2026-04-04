@@ -206,8 +206,13 @@ def step_have_background_services_running(context):
 
 @when("I continue my work on host")
 def step_continue_work_on_host(context):
-    """Simulate host-side work by sleeping briefly."""
-    time.sleep(1)
+    """Simulate host-side work and verify VM connectivity."""
+    vm_name = getattr(context, "bg_vm", "postgres")
+    # Real connectivity check instead of fake sleep
+    check_r = run_vde_command(f"ssh {vm_name} whoami", timeout=10)
+    assert check_r.returncode == 0, (
+        f"VM {vm_name} is not reachable via SSH: {check_r.stderr}"
+    )
 
 
 @then("services should keep running in background")

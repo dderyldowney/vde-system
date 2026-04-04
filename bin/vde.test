@@ -7,7 +7,7 @@
 #===============================================================================
 
 # Determine VDE root directory
-if [ -z "${VDE_ROOT_DIR}" ]; then
+if [[ -z "${VDE_ROOT_DIR}" ]]; then
     VDE_ROOT_DIR="${0:a:h:h}"
 fi
 export VDE_ROOT_DIR

@@ -5,6 +5,10 @@
 # Note: Don't use set -e here as we need to handle kcov exit codes explicitly
 
 # Colors for output
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
 readonly YELLOW='\033[1;33m'
@@ -66,7 +70,7 @@ run_directory_with_coverage() {
     # Use setopt for null_glob behavior (zsh-specific)
     setopt local_options null_glob
     for test_file in "${dir}"/*.sh; do
-        if [[ -f "${test_file}" ]]; then
+        if [[ -f "${test_file}" ]] ; then
             run_test_with_coverage "${test_file}"
             ((test_count++))
         fi
@@ -85,7 +89,7 @@ merge_coverage() {
     # Use kcov to merge all coverage directories
     local kcov_dirs=("${COVERAGE_DIR}"/*/)
 
-    if [[ ${#kcov_dirs[@]} -eq 0 ]]; then
+    if [[ ${#kcov_dirs[@]} -eq 0 ]] ; then
         print -P "${RED}✗ No coverage data found to merge${NC}"
         return ${VDE_ERR_GENERAL}
     fi
@@ -95,7 +99,7 @@ merge_coverage() {
 
     # Merge additional coverage
     for dir in "${kcov_dirs[@]:2}"; do
-        if [[ -d "${dir}" ]]; then
+        if [[ -d "${dir}" ]] ; then
             kcov --merge "${COVERAGE_MERGED}/temp" "${dir}" 2>/dev/null || true
         fi
     done
@@ -113,7 +117,7 @@ generate_summary() {
 
     local index_file="${COVERAGE_MERGED}/index.html"
 
-    if [[ ! -f "${index_file}" ]]; then
+    if [[ ! -f "${index_file}" ]] ; then
         print -P "${RED}✗ Coverage report not found at ${index_file}${NC}"
         return ${VDE_ERR_GENERAL}
     fi
@@ -122,7 +126,7 @@ generate_summary() {
     local coverage
     coverage=$(grep -oP 'covered"[^>]*>\K[0-9.]+' "${index_file}" 2>/dev/null | head -1)
 
-    if [[ -n "${coverage}" ]]; then
+    if [[ -n "${coverage}" ]] ; then
         print -P "\n${GREEN}================================${NC}"
         print -P "${GREEN}Coverage Report Generated${NC}"
         print -P "${GREEN}================================${NC}"

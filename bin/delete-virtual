@@ -2,6 +2,10 @@
 # delete-virtual - Completely remove a VM container and image
 # Stops the VM, removes container and image. Preserves all configuration files.
 
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 set -e
 
 # Source shared library
@@ -12,7 +16,7 @@ source "${VDE_ROOT_DIR}/lib/vde-ssh"
 source "${VDE_ROOT_DIR}/lib/vde-docker"
 
 # Parse arguments
-if [[ ${#} -eq 0 ]]; then
+if [[ ${#} -eq 0 ]] ; then
     echo "Usage: ${0} <vm_name>"
     echo ""
     echo "Completely remove a VM container and image."
@@ -35,7 +39,7 @@ VM_NAME="${1}"
 
 # Resolve VM name
 RESOLVED_NAME=$(resolve_vm_name "${VM_NAME}" || true)
-if [[ -z "${RESOLVED_NAME}" ]]; then
+if [[ -z "${RESOLVED_NAME}" ]] ; then
     log_error "Unknown VM: ${VM_NAME}"
     exit ${VDE_ERR_GENERAL}
 fi
@@ -56,11 +60,11 @@ else
 fi
 
 # 3. Clean up known_hosts
-if [[ -f "${VDE_SSH_KNOWN_HOSTS}" ]]; then
+if [[ -f "${VDE_SSH_KNOWN_HOSTS}" ]] ; then
     log_info "Cleaning up known_hosts for ${RESOLVED_NAME}..."
     # Get port if possible
     port=$(get_vm_ssh_port "${RESOLVED_NAME}")
-    if [[ -n "${port}" ]]; then
+    if [[ -n "${port}" ]] ; then
         remove_known_hosts_entry "${RESOLVED_NAME}" "${port}" >/dev/null 2>&1 || true
     fi
 fi

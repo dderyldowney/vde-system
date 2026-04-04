@@ -99,7 +99,7 @@ build_docker_ps_cmd() {
     local filter="${3}"
     
     local cmd="docker ps"
-    [ "${show_all}" = "1" ] && cmd="${cmd} -a"
+    [[ "${show_all}" = "1" ]] && cmd="${cmd} -a"
     cmd="${cmd} --format '${format}'"
     
     # Always filter by vde.managed label
@@ -127,17 +127,17 @@ build_docker_ps_cmd() {
 # Build output based on format
 if [[ "${FORMAT}" == "json" ]]; then
     # JSON output - filter for vde-managed containers
-    if [ ${QUIET} -eq 1 ]; then
+    if [[ ${QUIET} -eq 1 ]]; then
         eval "$(build_docker_ps_cmd ${SHOW_ALL} '{"name":"{{.Names}}"}' "${FILTER}")" | jq -s '.' || echo "[]"
     else
         eval "$(build_docker_ps_cmd ${SHOW_ALL} '{"id":"{{.ID}}","name":"{{.Names}}","image":"{{.Image}}","status":"{{.Status}}","ports":"{{.Ports}}"}' "${FILTER}")" | jq -s '.' || echo "[]"
     fi
 else
     # Table output (default)
-    if [ ${QUIET} -eq 1 ]; then
+    if [[ ${QUIET} -eq 1 ]]; then
         eval "$(build_docker_ps_cmd ${SHOW_ALL} '{{.Names}}' "${FILTER}")" || true
     else
-        if [ ${SHOW_ALL} -eq 1 ]; then
+        if [[ ${SHOW_ALL} -eq 1 ]]; then
             # Show all containers with enhanced info from docker-state if available
             echo "CONTAINER ID       NAME                    STATUS                     PORTS"
             echo "----------------- ---------------------- -------------------------- ----------------------"
@@ -146,7 +146,7 @@ else
             containers=$(eval "$(build_docker_ps_cmd 1 '{{.Names}}' "${FILTER}")")
             
             for container in ${(f)containers}; do
-                [ -z "${container}" ] && continue
+                [[ -z "${container}" ]] && continue
                 local vm_name
                 vm_name=$(get_vm_name_from_container "${container}")
                 

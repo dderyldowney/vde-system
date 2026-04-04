@@ -17,8 +17,9 @@ from vm_common import (
     run_vde_command, container_exists, container_is_running,
     docker_list_containers, get_compose_file, check_docker_network_exists,
     resolve_workspace_host_path, VDE_ROOT, BIN_DIR,
-    vde_wait_for_container_healthy,
 )
+from critical_steps import ensure_vm_accessible
+from shell_helpers import wait_for_condition
 
 # ---------------------------------------------------------------------------
 # Helpers shared within this file
@@ -88,19 +89,18 @@ def _get_service_port_mapping(vm_name, service_port):
 def step_vde_testing_network_exists(context):
     """Assert that the vde-testing Docker network was created by VDE."""
     # Allow a short settling period in case the VM just started
-    deadline = time.time() + 15
-    network_found = False
-    while time.time() < deadline:
-        if check_docker_network_exists("vde-testing"):
-            network_found = True
-            break
-        time.sleep(0.5)
-
-    networks_result = run_vde_command("networks", timeout=30)
-    assert network_found, (
-        "Expected 'vde-testing' network to exist after starting a VM.\n"
-        f"vde networks output:\n{networks_result.stdout}\n{networks_result.stderr}"
-    )
+    try:
+        wait_for_condition(
+            lambda: check_docker_network_exists("vde-testing"),
+            timeout=15,
+            description="vde-testing network existence"
+        )
+    except Exception:
+        networks_result = run_vde_command("networks", timeout=30)
+        assert False, (
+            "Expected 'vde-testing' network to exist after starting a VM.\n"
+            f"vde networks output:\n{networks_result.stdout}\n{networks_result.stderr}"
+        )
 
 
 @then("all VMs should join this network")
@@ -187,7 +187,7 @@ def step_each_vm_starts(context):
         assert result.returncode == 0, (
             f"Failed to start VM '{vm}':\n{result.stdout}\n{result.stderr}"
         )
-        assert vde_wait_for_container_healthy(vm), f"VM '{vm}' failed to become healthy after start"
+        assert ensure_vm_accessible(context, vm), f"VM '{vm}' did not become accessible via SSH"
     context._docker_cleanup_needed = True
     # Containers are already healthy, no need to sleep
 
@@ -264,7 +264,7 @@ def step_postgres_vm_starts(context):
     assert result.returncode == 0, (
         f"Failed to start postgres VM:\n{result.stdout}\n{result.stderr}"
     )
-    assert vde_wait_for_container_healthy(vm), f"PostgreSQL VM '{vm}' failed to become healthy after start"
+    assert ensure_vm_accessible(context, vm), f"PostgreSQL VM '{vm}' did not become accessible via SSH"
     context._docker_cleanup_needed = True
 
 
@@ -406,6 +406,7 @@ def step_changes_persist_across_restarts(context):
     assert stop_r.returncode == 0, f"vde stop failed: {stop_r.stderr}"
     start_r = run_vde_command(f"start {raw}", timeout=300)
     assert start_r.returncode == 0, f"vde start failed after stop: {start_r.stderr}"
+    assert ensure_vm_accessible(context, raw), f"VM {raw} did not become accessible via SSH"
 
     sentinel_path = host_path / sentinel
     assert sentinel_path.exists(), f"Sentinel file '{sentinel}' lost after container restart at {sentinel_path}"
@@ -423,6 +424,7 @@ def step_stop_and_restart_postgresql(context):
     stop_r = run_vde_command("stop postgres", timeout=60)
     assert stop_r.returncode == 0, f"vde stop postgres failed: {stop_r.stderr}"
     start_r = run_vde_command("start postgres", timeout=300)
+    assert ensure_vm_accessible(context, "postgres"), "PostgreSQL VM did not become accessible via SSH"
     context.pg_restart_rc = start_r.returncode
     context.pg_restart_stderr = start_r.stderr
     context.vm_name = "postgres"
@@ -460,6 +462,7 @@ def step_have_multiple_running_vms(context):
     for vm in ("python", "postgres"):
         r = run_vde_command(f"start {vm}", timeout=300)
         assert r.returncode == 0, f"Could not start {vm}: {r.stderr}"
+        assert ensure_vm_accessible(context, vm), f"VM {vm} did not become accessible via SSH"
     context._docker_cleanup_needed = True
     context.multi_vms = ["vde-python", "vde-postgres"]
 
@@ -493,6 +496,7 @@ def step_have_running_vms(context):
     """Ensure at least one VM (python) is running."""
     r = run_vde_command("start python", timeout=300)
     assert r.returncode == 0, f"Could not start python VM: {r.stderr}"
+    assert ensure_vm_accessible(context, "python"), "VM python did not become accessible via SSH"
     context._docker_cleanup_needed = True
     context.vm_name = "python"
 

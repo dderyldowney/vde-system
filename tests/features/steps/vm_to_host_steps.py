@@ -1,5 +1,6 @@
 from behave import given, when, then
 from vm_common import run_vde_command, container_exists, container_is_running, wait_for_container, check_docker_available
+from critical_steps import ensure_vm_accessible
 import os
 
 @given('I have Docker installed on my host for VM-to-Host')
@@ -18,7 +19,7 @@ def step_vm_running_tohost(context, vm_name):
     vm_name = vm_name.lower()
     if not container_is_running(vm_name):
         run_vde_command(f'start {vm_name}', context=context)
-        wait_for_container(vm_name, timeout=60)
+        assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
     context.current_vm = vm_name
 
 @given('I have multiple VMs running in VM-to-Host')
@@ -27,7 +28,7 @@ def step_multiple_vms_running_tohost(context):
     for vm in ['python', 'go']:
         if not container_is_running(vm):
             run_vde_command(f'start {vm}', context=context)
-            wait_for_container(vm, timeout=60)
+            assert ensure_vm_accessible(context, vm), f"VM {vm} did not become accessible via SSH"
     context.num_vms_running = 2
 
 @given("I am connected to a VM")
@@ -39,7 +40,7 @@ def step_ssh_into_vm_tohost(context, vm_name='python'):
     vm_name = vm_name.lower()
     if not container_is_running(vm_name):
         run_vde_command(f'start {vm_name}', context=context)
-        wait_for_container(vm_name, timeout=60)
+        assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
     context.connected_vm = vm_name
     context.current_vm = vm_name
 

@@ -16,6 +16,7 @@ from vm_common import (
     container_is_running,
     wait_for_container
 )
+from critical_steps import ensure_vm_accessible
 
 # =============================================================================
 # GIVEN steps
@@ -100,8 +101,7 @@ def step_team_member_starts_vm(context, vm_name):
     
     # Wait for container to be ready
     container_name = f"vde-{vm_name}"
-    ready = wait_for_container(container_name, timeout=60)
-    assert ready, f"Container {container_name} failed to become ready after start"
+    assert ensure_vm_accessible(context, container_name), f"VM {container_name} did not become accessible via SSH"
 
 @when('a teammate clones the repository')
 def step_teammate_clones_repo(context):
@@ -120,7 +120,7 @@ def step_same_python_environment(context):
     # Ensure VM is started
     if not container_is_running("vde-python"):
         run_vde_command("start python", context=context)
-        wait_for_container("vde-python", timeout=60)
+        assert ensure_vm_accessible(context, "python"), "VM python did not become accessible via SSH"
     
     # Check python version
     result = run_vde_command("exec python python --version", context=context)
@@ -168,6 +168,7 @@ def step_create_or_restart_any(context):
     """Run vde restart python as a representative action."""
     result = run_vde_command("restart python", context=context)
     assert result.returncode == 0, f"Restart failed: {result.stderr}"
+    assert ensure_vm_accessible(context, "python"), "VM python did not become accessible via SSH"
 
 @given('postgres VM configuration is in the repository')
 def step_postgres_config_in_repo(context):
@@ -264,6 +265,8 @@ def step_start_daily_vms(context):
     """Run batch start command."""
     result = run_vde_command("start python postgres", context=context)
     assert result.returncode == 0, f"Daily VM start failed: {result.stderr}"
+    assert ensure_vm_accessible(context, "python"), "VM python did not become accessible via SSH"
+    assert ensure_vm_accessible(context, "postgres"), "VM postgres did not become accessible via SSH"
     context.last_output = result.stdout + result.stderr
 
 @then('environment variables should be loaded from env-file')
@@ -292,6 +295,7 @@ def step_developer_recreates_vm(context):
     """Run vde restart python --rebuild."""
     result = run_vde_command("restart python --rebuild", context=context)
     assert result.returncode == 0, f"Rebuild restart failed: {result.stderr}"
+    assert ensure_vm_accessible(context, "python"), "VM python did not become accessible via SSH"
 
 @then('both developers have identical environments')
 def step_identical_environments(context):

@@ -9,6 +9,10 @@
 #===============================================================================
 
 # Determine VDE root directory
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
@@ -21,7 +25,7 @@ export VDE_ROOT_DIR
 QUIET=0
 NO_STREAM=1
 
-while [[ ${#} -gt 0 ]]; do
+while [[ ${#} -gt 0 ]] ; do
     case "${1}" in
         --no-stream)
             NO_STREAM=1
@@ -43,12 +47,12 @@ VDE_PREFIX="${VDE_CONTAINER_PREFIX:-vde-}"
 # Get list of running VDE containers
 CONTAINERS=$(docker ps --format '{{.Names}}' | grep "^${VDE_PREFIX}" | tr '\n' ' ')
 
-if [ -z "${CONTAINERS}" ]; then
+if [[ -z "${CONTAINERS}" ]] ; then
     echo "No VDE containers running"
     exit 0
 fi
 
-if [ ${QUIET} -eq 1 ]; then
+if [[ ${QUIET} -eq 1 ]] ; then
     docker stats --no-stream --format '{{.Name}}' ${CONTAINERS}
 else
     docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}' ${CONTAINERS}

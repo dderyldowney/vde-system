@@ -40,8 +40,8 @@ The VDE (Virtual Development Environment) system is a **template-based, data-dri
                 ┌───────────────┼───────────────┐
                 ▼               ▼               ▼
         ┌──────────────┐ ┌──────────┐ ┌──────────────┐
-        │  vde-python  │ │  vde-go  │ │  postgres    │
-        │  :2213       │ │  :2206   │ │  :2404       │
+        │  vde-python  │ │  vde-go  │ │  vde-postgres │
+        │  :2214       │ │  :2207   │ │  :2404       │
         └──────────────┘ └──────────┘ └──────────────┘
                 │               │               │
                 └───────────────┴───────────────┘
@@ -407,39 +407,41 @@ service|postgres|postgresql|PostgreSQL|apt-get update -y && apt-get install -y p
 | `install_command` | Shell command | Runs during container startup |
 | `service_port` | `5432` or empty | Service port(s) for containers, empty for languages |
 
-**All 19 Language VMs:**
+**All 21 Language VMs:**
 | Name | Aliases | Display Name | SSH Port Range |
 |------|---------|--------------|---------------|
-| c | c | C | 2200-2219 |
-| cpp | c++,gcc | C++ | 2200-2219 |
-| asm | assembler,nasm | Assembler | 2200-2219 |
-| python | python3 | Python | 2200-2219 |
-| rust | rust | Rust | 2200-2219 |
-| js | node,nodejs | JavaScript | 2200-2219 |
-| csharp | dotnet | C# | 2200-2219 |
-| ruby | ruby | Ruby | 2200-2219 |
-| go | golang | Go | 2200-2219 |
-| java | jdk | Java | 2200-2219 |
-| kotlin | kotlin | Kotlin | 2200-2219 |
-| swift | swift | Swift | 2200-2219 |
-| php | php | PHP | 2200-2219 |
-| scala | scala | Scala | 2200-2219 |
-| r | rlang,r | R | 2200-2219 |
-| lua | lua | Lua | 2200-2219 |
-| flutter | dart,flutter | Flutter | 2200-2219 |
-| elixir | elixir | Elixir | 2200-2219 |
-| haskell | ghc,haskell | Haskell | 2200-2219 |
+| vde-asm | asm, assembler, nasm | Assembler | 2200-2220 |
+| vde-c | c | C | 2200-2220 |
+| vde-cpp | cpp, c++, gcc | C++ | 2200-2220 |
+| vde-csharp | csharp, dotnet | C# | 2200-2220 |
+| vde-displaytest | displaytest | Go Language | 2200-2220 |
+| vde-elixir | elixir, ex, iex | Elixir | 2200-2220 |
+| vde-flutter | flutter, dart | Flutter | 2200-2220 |
+| vde-go | go, golang | Go | 2200-2220 |
+| vde-haskell | haskell, ghc | Haskell | 2200-2220 |
+| vde-java | java, jdk | Java | 2200-2220 |
+| vde-js | js, node, nodejs, npm | Node.js | 2200-2220 |
+| vde-kotlin | kotlin | Kotlin | 2200-2220 |
+| vde-lua | lua | Lua | 2200-2220 |
+| vde-php | php | PHP | 2200-2220 |
+| vde-python | python, python3, py | Python | 2200-2220 |
+| vde-ruby | ruby | Ruby | 2200-2220 |
+| vde-rust | rust, rs, rustc | Rust | 2200-2220 |
+| vde-scala | scala | Scala | 2200-2220 |
+| vde-swift | swift | Swift | 2200-2220 |
+| vde-testport1 | testport1 | Test Port 1 | 2200-2220 |
+| vde-testport2 | testport2 | Test Port 2 | 2200-2220 |
 
 **All 7 Service VMs:**
 | Name | Aliases | Display Name | SSH Port | Service Port(s) |
 |------|---------|--------------|----------|----------------|
-| postgres | postgresql | PostgreSQL | 2400-2406 | 5432 |
-| redis | redis | Redis | 2400-2406 | 6379 |
-| mongodb | mongo | MongoDB | 2400-2406 | 27017 |
-| nginx | nginx | Nginx | 2400-2406 | 80,443 |
-| couchdb | couchdb | CouchDB | 2400-2406 | 5984 |
-| mysql | mysql | MySQL | 2400-2406 | 3306 |
-| rabbitmq | rabbitmq | RabbitMQ | 2400-2406 | 5672,15672 |
+| vde-couchdb | couchdb | CouchDB | 2400 | 5984 |
+| vde-mongodb | mongo | MongoDB | 2401 | 27017 |
+| vde-mysql | mysql | MySQL | 2402 | 3306 |
+| vde-nginx | nginx | Nginx | 2403 | 80,443 |
+| vde-postgres | postgresql | PostgreSQL | 2404 | 5432 |
+| vde-rabbitmq | rabbitmq | RabbitMQ | 2405 | 5672,15672 |
+| vde-redis | redis | Redis | 2406 | 6379 |
 
 **Why this format:**
 - ✅ Simple to parse (shell built-in `read -A`)
@@ -1034,10 +1036,10 @@ merge_ssh_config_entry "$ssh_host" "2200" "Go"
 
 **Generated SSH entry:**
 ```ssh-config
-# Go Dev VM
-Host vde-go
+# Python Dev VM
+Host vde-python
     HostName localhost
-    Port 2213
+    Port 2214
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     IdentitiesOnly yes
@@ -1254,9 +1256,9 @@ Service VMs (like PostgreSQL) work differently:
 
 | Aspect | Language VM | Service VM |
 |--------|-------------|------------|
-| Container name | `vde-go` | `postgres` (no suffix) |
-| SSH host | `vde-go` | `postgres` |
-| SSH port range | 2200-2218 (19 languages) | 2400-2406 (7 services) |
+| Container name | `vde-go` | `vde-postgres` (canonical) |
+| SSH host | `vde-go` | `vde-postgres` |
+| SSH port range | 2200-2220 (21 languages) | 2400-2499 (7 services) |
 | Volume mount | `projects/go/` | `data/postgres/` |
 | Purpose | Development workspace | Persistent data |
 
@@ -1295,8 +1297,8 @@ All containers are on the `vde-net` Docker network, enabling communication:
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│ vde-python  │     │  postgres   │     │    redis    │
-│   :2213     │     │   :2404     │     │   :2406     │
+│ vde-python  │     │ vde-postgres │     │  vde-redis  │
+│   :2214     │     │   :2404     │     │   :2406     │
 └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
        │                  │                  │
        └──────────────────┴──────────────────┘
@@ -1310,10 +1312,10 @@ All containers are on the `vde-net` Docker network, enabling communication:
 **From vde-python container:**
 ```bash
 # Connect to PostgreSQL
-psql -h postgres -U devuser -d mydb
+psql -h vde-postgres -U devuser -d mydb
 
 # Connect to Redis
-redis-cli -h redis
+redis-cli -h vde-redis
 
 # SSH to another container
 ssh vde-go

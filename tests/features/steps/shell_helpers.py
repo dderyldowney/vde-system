@@ -198,31 +198,50 @@ def verify_container_network(container_name: str, network_name: str) -> Dict[str
         raise DockerVerificationError(f"Failed to parse vde inspect output: {e}")
 
 
+def wait_for_condition(condition_func, timeout: int = 30, description: str = "condition") -> Any:
+    """
+    Sober Polling: Wait for a condition to be met using exponential backoff.
+    Replaces 'Pink' fixed sleep loops.
+    """
+    start_time = time.time()
+    delay = 0.1  # Initial delay
+    max_delay = 2.0
+    
+    while time.time() - start_time < timeout:
+        result = condition_func()
+        if result:
+            return result
+        
+        time.sleep(delay)
+        delay = min(delay * 2, max_delay)  # Exponential backoff
+        
+    elapsed = time.time() - start_time
+    raise DockerVerificationError(
+        f"Timeout waiting for {description} after {elapsed:.1f}s"
+    )
+
+
 def wait_for_container_healthy(container_name: str, timeout: int = 30) -> Dict[str, Any]:
     """Poll container health status using `vde inspect` until healthy or timeout."""
-    start_time = time.time()
-    last_status = None
-    while time.time() - start_time < timeout:
+    def check_health():
         try:
             result = _run_vde_command(["inspect", container_name, "--health"], timeout=5)
             if result.returncode != 0:
-                raise DockerVerificationError(f"vde inspect failed: {result.stderr}")
+                return None
             output = result.stdout.strip()
             if output == "<no value>" or output == "null" or not output:
-                raise DockerVerificationError(f"Container '{container_name}' has no healthcheck")
+                return None
             health_info = json.loads(output)
-            last_status = health_info.get("Status", "unknown")
-            if last_status == "healthy":
+            if health_info.get("Status") == "healthy":
                 return health_info
-            time.sleep(1)
-        except subprocess.TimeoutExpired:
-            continue
-        except json.JSONDecodeError as e:
-            raise DockerVerificationError(f"Failed to parse vde inspect output: {e}")
-    elapsed = time.time() - start_time
-    raise DockerVerificationError(
-        f"Container '{container_name}' did not become healthy within {timeout}s "
-        f"(last status: {last_status}, elapsed: {elapsed:.1f}s)"
+        except (subprocess.TimeoutExpired, json.JSONDecodeError):
+            pass
+        return None
+
+    return wait_for_condition(
+        check_health,
+        timeout=timeout,
+        description=f"container '{container_name}' health"
     )
 
 

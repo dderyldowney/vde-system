@@ -2742,13 +2742,14 @@ def step_ssh_config_preserved(context):
 @given("I have a running VM with SSH configured")
 def step_running_vm_with_ssh(context):
     """Ensure a VM is running with SSH configured."""
-    from vm_common import container_is_running, run_vde_command, wait_for_container
+    from vm_common import container_is_running, run_vde_command
+    from critical_steps import ensure_vm_accessible
     from pathlib import Path
 
     vm_name = "python"
     if not container_is_running(vm_name):
         run_vde_command(f"start {vm_name}", context=context)
-        wait_for_container(vm_name, timeout=60)
+        assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
 
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
     context.ssh_configured = ssh_config.exists()

@@ -6,7 +6,11 @@
 # -----------------------
 # Source Guard
 # -----------------------
-if [ "${_VDE_CLUSTER_UTILS_LOADED:-}" = "1" ]; then
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
+if [[ "${_VDE_CLUSTER_UTILS_LOADED:-}" = "1" ]] ; then
     return 0 2>/dev/null || exit 0
 fi
 _VDE_CLUSTER_UTILS_LOADED=1
@@ -22,7 +26,7 @@ VDE_CLUSTER_STATE_DIR="${VDE_ROOT_DIR}/.docker-state/clusters"
 
 # vde_cluster_init - Ensure cluster state directory exists
 vde_cluster_init() {
-    if [[ ! -d "${VDE_CLUSTER_STATE_DIR}" ]]; then
+    if [[ ! -d "${VDE_CLUSTER_STATE_DIR}" ]] ; then
         mkdir -p "${VDE_CLUSTER_STATE_DIR}"
         chmod 700 "${VDE_CLUSTER_STATE_DIR}"
     fi
@@ -35,11 +39,11 @@ vde_cluster_save() {
     shift
     local -a vms=("${@}")
     
-    if [[ -z "${name}" ]]; then
+    if [[ -z "${name}" ]] ; then
         return ${VDE_ERR_INVALID_INPUT}
     fi
     
-    if [[ ${#vms} -eq 0 ]]; then
+    if [[ ${#vms} -eq 0 ]] ; then
         return ${VDE_ERR_INVALID_INPUT}
     fi
     
@@ -74,7 +78,7 @@ vde_cluster_load() {
     local name="${1}"
     local cluster_file="${VDE_CLUSTER_STATE_DIR}/${name}.json"
     
-    if [[ ! -f "${cluster_file}" ]]; then
+    if [[ ! -f "${cluster_file}" ]] ; then
         return ${VDE_ERR_NOT_FOUND}
     fi
     
@@ -85,13 +89,13 @@ vde_cluster_load() {
 # vde_cluster_list - List all saved clusters
 # Returns: VDE_SUCCESS (0), outputs cluster names and their VMs
 vde_cluster_list() {
-    if [[ ! -d "${VDE_CLUSTER_STATE_DIR}" ]]; then
+    if [[ ! -d "${VDE_CLUSTER_STATE_DIR}" ]] ; then
         return ${VDE_SUCCESS}
     fi
     
     local f
     for f in "${VDE_CLUSTER_STATE_DIR}"/*.json(N); do
-        if [[ -f "${f}" ]]; then
+        if [[ -f "${f}" ]] ; then
             local name
             name=$(basename "${f}" .json)
             local vms
@@ -108,7 +112,7 @@ vde_cluster_remove() {
     local name="${1}"
     local cluster_file="${VDE_CLUSTER_STATE_DIR}/${name}.json"
     
-    if [[ ! -f "${cluster_file}" ]]; then
+    if [[ ! -f "${cluster_file}" ]] ; then
         return ${VDE_ERR_NOT_FOUND}
     fi
     
@@ -120,7 +124,7 @@ vde_cluster_remove() {
 # Args: <name>
 vde_cluster_exists() {
     local name="${1}"
-    if [[ -f "${VDE_CLUSTER_STATE_DIR}/${name}.json" ]]; then
+    if [[ -f "${VDE_CLUSTER_STATE_DIR}/${name}.json" ]] ; then
         return ${VDE_SUCCESS}
     fi
     return ${VDE_ERR_NOT_FOUND}

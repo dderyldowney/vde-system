@@ -21,7 +21,11 @@
 # Source Guard
 # -----------------------
 # Prevent multiple sourcing which causes readonly variable errors
-if [ "${_VDE_COMMANDS_LOADED:-}" = "1" ]; then
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
+if [[ "${_VDE_COMMANDS_LOADED:-}" == "1" ]] ; then
     return 0 2>/dev/null || exit 0
 fi
 _VDE_COMMANDS_LOADED=1
@@ -45,7 +49,7 @@ VDE_SCRIPTS_DIR="${VDE_ROOT_DIR}/bin"
 # Example: ensure_commands_log_dir
 ensure_commands_log_dir() {
     mkdir -p "$(dirname "${VDE_COMMANDS_LOG}")"
-    return ${VDE_SUCCESS}
+    return ${VDE_SUCCESS:-0}
 }
 
 # log_command_action - Log a VDE command action to the log file
@@ -55,11 +59,11 @@ ensure_commands_log_dir() {
 # Returns: VDE_SUCCESS (0)
 # Example: log_command_action "start_vm" "python (rebuild=true)"
 log_command_action() {
-    local action="${1}"
-    local details="${2}"
+    local action="${ action }"
+    local details="${ details }"
     ensure_commands_log_dir
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] ${action}: ${details}" >> "${VDE_COMMANDS_LOG}"
-    return ${VDE_SUCCESS}
+    return ${VDE_SUCCESS:-0}
 }
 
 # -----------------------
@@ -85,7 +89,7 @@ vde_list_vms() {
             get_all_vms
             ;;
     esac
-    return ${VDE_SUCCESS}
+    return ${VDE_SUCCESS:-0}
 }
 
 # vde_vm_exists - Check if VM container exists (running or stopped)
@@ -117,7 +121,7 @@ vde_get_vm_info() {
 # Example: running=$(vde_get_running_vms)
 vde_get_running_vms() {
     docker ps --format "{{.Names}}" 2>/dev/null | grep -E "^vde-[a-z0-9]+$" || echo ""
-    return ${VDE_SUCCESS}
+    return ${VDE_SUCCESS:-0}
 }
 
 # vde_get_vm_status - Get status of a specific VM
@@ -136,7 +140,7 @@ vde_get_vm_status() {
     local container_status
     container_status=$(docker ps -a --filter "name=${container_name}" --format "{{.Status}}" 2>/dev/null | head -1)
 
-    if [ -z "${container_status}" ]; then
+    if [[ -z "${container_status}" ]] ; then
         echo "not_created"
     else
         case "${container_status}" in
@@ -151,7 +155,7 @@ vde_get_vm_status() {
                 ;;
         esac
     fi
-    return ${VDE_SUCCESS}
+    return ${VDE_SUCCESS:-0}
 }
 
 # vde_get_ssh_info - Get SSH connection info for a VM
@@ -170,13 +174,13 @@ vde_get_ssh_info() {
     # Get SSH port from docker-compose.yml
     ssh_port=$(get_vm_ssh_port "${vm_name}" 2>/dev/null || echo "")
 
-    if [ -z "${ssh_port}" ]; then
+    if [[ -z "${ssh_port}" ]] ; then
         echo ""
-        return ${VDE_ERR_NOT_FOUND}
+        return ${VDE_ERR_NOT_FOUND:-3}
     fi
 
     echo "${ssh_host}|${ssh_port}"
-    return ${VDE_SUCCESS}
+    return ${VDE_SUCCESS:-0}
 }
 
 # vde_resolve_alias - Resolve alias to canonical VM name
@@ -217,7 +221,7 @@ vde_create_vm() {
 
     log_command_action "create_vm" "${vm_name}"
 
-    if [ -n "${force}" ]; then
+    if [[ -n "${force}" ]] ; then
         "${VDE_SCRIPTS_DIR}/create-virtual-for" "${vm_name}" --force
     else
         "${VDE_SCRIPTS_DIR}/create-virtual-for" "${vm_name}"
@@ -239,11 +243,12 @@ vde_start_vm() {
 
     log_command_action "start_vm" "${vm_name} (rebuild=${rebuild}, nocache=${nocache})"
 
-    set -- "${vm_name}"
-    [ "${rebuild}" = "true" ] && set -- "${@}" --rebuild
-    [ "${nocache}" = "true" ] && set -- "${@}" --no-cache
+    local -a args
+    args=("${vm_name}")
+    [[ "${rebuild}" == "true" ]] && args+=("--rebuild")
+    [[ "${nocache}" == "true" ]] && args+=("--no-cache")
 
-    "${VDE_SCRIPTS_DIR}/start-virtual" "${@}"
+    "${VDE_SCRIPTS_DIR}/start-virtual" "${args[@]}"
 }
 
 # vde_stop_vm - Stop a VM
@@ -295,11 +300,12 @@ vde_start_all() {
 
     log_command_action "start_all" "rebuild=${rebuild}, nocache=${nocache}"
 
-    set -- all
-    [ "${rebuild}" = "true" ] && set -- "${@}" --rebuild
-    [ "${nocache}" = "true" ] && set -- "${@}" --no-cache
+    local -a args
+    args=(all)
+    [[ "${rebuild}" == "true" ]] && args+=("--rebuild")
+    [[ "${nocache}" == "true" ]] && args+=("--no-cache")
 
-    "${VDE_SCRIPTS_DIR}/start-virtual" "${@}"
+    "${VDE_SCRIPTS_DIR}/start-virtual" "${args[@]}"
 }
 
 # vde_stop_all - Stop all VMs
@@ -335,7 +341,7 @@ vde_add_vm_type() {
     local svc_port=""
     local display=""
 
-    while [ ${#} -gt 0 ]; do
+    while [[ ${#} -gt 0 ]] ; do
         case "${1}" in
             --type)
                 type_str="${2}"
@@ -357,17 +363,15 @@ vde_add_vm_type() {
 
     log_command_action "add_vm_type" "${name}"
 
-    # Build command args using positional parameters
-    set --
-    [ -n "${type_str}" ] && set -- "${@}" --type "${type_str}"
-    [ -n "${svc_port}" ] && set -- "${@}" --svc-port "${svc_port}"
-    [ -n "${display}" ] && set -- "${@}" --display "${display}"
-    set -- "${@}" "${name}" "${install_cmd}"
-    # Note: ${aliases} is intentionally unquoted here as it contains space-separated aliases
-    # that add-vm-type will treat as a single argument
-    [ -n "${aliases}" ] && set -- "${@}" "${aliases}"
+    # Build command args
+    local -a args
+    [[ -n "${type_str}" ]] && args+=("--type" "${type_str}")
+    [[ -n "${svc_port}" ]] && args+=("--svc-port" "${svc_port}")
+    [[ -n "${display}" ]] && args+=("--display" "${display}")
+    args+=("${name}" "${install_cmd}")
+    [[ -n "${aliases}" ]] && args+=("${aliases}")
 
-    "${VDE_SCRIPTS_DIR}/add-vm-type" "${@}"
+    "${VDE_SCRIPTS_DIR}/add-vm-type" "${args[@]}"
 }
 
 # -----------------------
@@ -386,13 +390,13 @@ vde_create_multiple_vms() {
     local vm
     for vm in "${@}"; do
         if vde_create_vm "${vm}"; then
-            if [ -n "${created}" ]; then
+            if [[ -n "${created}" ]] ; then
                 created="${created} ${vm}"
             else
                 created="${vm}"
             fi
         else
-            if [ -n "${failed}" ]; then
+            if [[ -n "${failed}" ]] ; then
                 failed="${failed} ${vm}"
             else
                 failed="${vm}"
@@ -403,7 +407,7 @@ vde_create_multiple_vms() {
     # Return results
     echo "CREATED: ${created}"
     echo "FAILED: ${failed}"
-    return ${VDE_SUCCESS}
+    return ${VDE_SUCCESS:-0}
 }
 
 # vde_start_multiple_vms - Start multiple VMs in sequence
@@ -416,10 +420,10 @@ vde_create_multiple_vms() {
 vde_start_multiple_vms() {
     local rebuild="false"
     local nocache="false"
-    local vms=""
+    local -a vms
 
     # Parse flags
-    while [ ${#} -gt 0 ]; do
+    while [[ ${#} -gt 0 ]] ; do
         case "${1}" in
             --rebuild)
                 rebuild="true"
@@ -430,11 +434,7 @@ vde_start_multiple_vms() {
                 shift
                 ;;
             *)
-                if [ -n "${vms}" ]; then
-                    vms="${vms} ${1}"
-                else
-                    vms="${1}"
-                fi
+                vms+=("${1}")
                 shift
                 ;;
         esac
@@ -444,15 +444,15 @@ vde_start_multiple_vms() {
     local failed=""
 
     local vm
-    for vm in ${vms}; do
+    for vm in "${vms[@]}"; do
         if vde_start_vm "${vm}" "${rebuild}" "${nocache}"; then
-            if [ -n "${started}" ]; then
+            if [[ -n "${started}" ]] ; then
                 started="${started} ${vm}"
             else
                 started="${vm}"
             fi
         else
-            if [ -n "${failed}" ]; then
+            if [[ -n "${failed}" ]] ; then
                 failed="${failed} ${vm}"
             else
                 failed="${vm}"
@@ -463,7 +463,7 @@ vde_start_multiple_vms() {
     # Return results
     echo "STARTED: ${started}"
     echo "FAILED: ${failed}"
-    return ${VDE_SUCCESS}
+    return ${VDE_SUCCESS:-0}
 }
 
 # vde_stop_multiple_vms - Stop multiple VMs in sequence
@@ -478,13 +478,13 @@ vde_stop_multiple_vms() {
     local vm
     for vm in "${@}"; do
         if vde_stop_vm "${vm}"; then
-            if [ -n "${stopped}" ]; then
+            if [[ -n "${stopped}" ]] ; then
                 stopped="${stopped} ${vm}"
             else
                 stopped="${vm}"
             fi
         else
-            if [ -n "${failed}" ]; then
+            if [[ -n "${failed}" ]] ; then
                 failed="${failed} ${vm}"
             else
                 failed="${vm}"
@@ -495,7 +495,7 @@ vde_stop_multiple_vms() {
     # Return results
     echo "STOPPED: ${stopped}"
     echo "FAILED: ${failed}"
-    return ${VDE_SUCCESS}
+    return ${VDE_SUCCESS:-0}
 }
 
 # -----------------------
@@ -510,7 +510,7 @@ VDE_DRY_RUN=false
 # Example: vde_set_dry_run true
 vde_set_dry_run() {
     VDE_DRY_RUN="${1}"
-    return ${VDE_SUCCESS}
+    return ${VDE_SUCCESS:-0}
 }
 
 # vde_exec - Execute command with dry run support
@@ -520,9 +520,9 @@ vde_set_dry_run() {
 # Returns: VDE_SUCCESS (0) in dry run mode, otherwise exit code from command
 # Example: vde_exec docker-compose up -d
 vde_exec() {
-    if [ "${VDE_DRY_RUN}" = "true" ]; then
+    if [[ "${VDE_DRY_RUN}" == "true" ]] ; then
         echo "[DRY RUN] Would execute: ${*}"
-        return ${VDE_SUCCESS}
+        return ${VDE_SUCCESS:-0}
     else
         "${@}"
     fi

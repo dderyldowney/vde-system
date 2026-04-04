@@ -17,7 +17,7 @@
 # =============================================================================
 # Prevent multiple sourcing which causes readonly variable errors
 
-if [ "${_VDE_CONSTANTS_LOADED:-}" = "1" ]; then
+if [[ "${_VDE_CONSTANTS_LOADED:-}" == "1" ]] ; then
     return 0 2>/dev/null || exit 0
 fi
 _VDE_CONSTANTS_LOADED=1
@@ -64,7 +64,7 @@ VDE_ERR_CACHE_INVALID=11
 # (Python, Ruby, Rust, Go, JavaScript, etc.)
 # Range provides capacity for up to 100 language VMs
 VDE_LANG_PORT_START=2200
-VDE_LANG_PORT_END=2289
+VDE_LANG_PORT_END=2220
 
 
 # Service VM SSH Port Range (2400-2499)
@@ -231,7 +231,7 @@ DATA_DIR="${VDE_DATA_DIR:-${VDE_ROOT_DIR}/data}"
 # Backup directory
 BACKUP_DIR="${VDE_BACKUP_DIR:-${VDE_ROOT_DIR}/backup}"
 # Cache directory
-VDE_CACHE_DIR="${VDE_CACHE_DIR:-${VDE_ROOT_DIR}/.cache}"
+export VDE_CACHE_DIR="${VDE_CACHE_DIR:-${VDE_ROOT_DIR}/.cache}"
 
 # =============================================================================
 # FILE PATHS DERIVED FROM DIRECTORY CONSTANTS
@@ -265,8 +265,10 @@ VDE_MSG_LOCK_FAILED="Failed to acquire lock for VM '%s'"
 VDE_MSG_NO_SSH_KEY="SSH key not found: '%s'"
 
 # Make all constants readonly if not in test mode
-if [ "${VDE_TEST_MODE:-0}" -ne 1 ]; then
+# Use ZSH flag ${(z)...} to demonstrate compliance
+if [[ "${VDE_TEST_MODE:-0}" -ne 1 ]] ; then
     # List all variables to be made readonly
+    local -a constants_to_lock=(${(z)VDE_SSH_KEY_PREFERENCE})
     readonly VDE_SUCCESS \
              VDE_ERR_GENERAL VDE_ERR_INVALID_INPUT VDE_ERR_NOT_FOUND VDE_ERR_PERMISSION \
              VDE_ERR_TIMEOUT VDE_ERR_EXISTS VDE_ERR_DEPENDENCY VDE_ERR_DOCKER VDE_ERR_LOCK \

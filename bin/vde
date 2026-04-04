@@ -1,446 +1,162 @@
 #!/usr/bin/env zsh
 #===============================================================================
-# vde - Unified Virtual Development Environment Command
-# Provides a single entry point for all VDE operations
-#
-# Usage: vde <command> [options] [args]
-#
-# Commands:
-#   create <vm>     Create a new VM
-#   start <vm>      Start a VM
-#   stop <vm>       Stop a VM
-#   restart <vm>    Restart a VM
-#   ssh <vm>        SSH into a VM
-#   remove <vm>     Remove a VM instance
-#   uninstall <type> Uninstall a language/service completely
-#   list            List all VMs
-#   status          Show VM status
-#   health          Run system health check
-#   nuke            Remove all of VDE
-#   help            Show this help message
-#
-# Exit codes:
-#   0 - Success
-#   1 - General error
-#   2 - Invalid input
-#   3 - Resource not found
+# VDE CLI - Unified Virtual Development Environment
+# Version: 2.0.3 (Absolute - Final)
 #===============================================================================
 
-# Determine VDE root directory
-VDE_ROOT_DIR="${0:a:h:h}"
+# --- 1. BOOTSTRAP & ROOT DISCOVERY ---
+_VDE_CORE_SCRIPT_PATH="${(%):-%x}"
+VDE_ROOT_DIR="$(cd "$(dirname "${_VDE_CORE_SCRIPT_PATH}")/.." && pwd)"
 export VDE_ROOT_DIR
 
-# Load VDE root library to ensure robust root discovery across PATH invocations
-if [[ -f "${VDE_ROOT_DIR}/lib/vde-root" ]]; then
-  source "${VDE_ROOT_DIR}/lib/vde-root" 2>/dev/null || true
+# --- 2. SOURCE CORE ECOSYSTEM ---
+if [[ -f "${VDE_ROOT_DIR}/lib/vm-common" ]]; then
+    source "${VDE_ROOT_DIR}/lib/vm-common"
+else
+    echo "CRITICAL: lib/vm-common not found."
+    exit 1
 fi
 
-# Load and run root-guard to ensure no hard-coded absolute paths leak at startup
-if [[ -f "${VDE_ROOT_DIR}/lib/vde-root-guard" ]]; then
-  source "${VDE_ROOT_DIR}/lib/vde-root-guard" 2>/dev/null || true
-fi
-
-# Source core libraries (order matters for dependencies)
-# Use &>/dev/null to suppress any output from library sourcing (e.g., function exports)
-[[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && { source "${VDE_ROOT_DIR}/lib/vde-shell-compat" >/dev/null 2>&1 || { echo "Error loading vde-shell-compat" >&2; exit ${VDE_ERR_GENERAL}; } }
-[[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && { source "${VDE_ROOT_DIR}/lib/vde-constants" >/dev/null 2>&1 || { echo "Error loading vde-constants" >&2; exit ${VDE_ERR_GENERAL}; } }
-[[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && { source "${VDE_ROOT_DIR}/lib/vde-errors" >/dev/null 2>&1 || { echo "Error loading vde-errors" >&2; exit ${VDE_ERR_GENERAL}; } }
-[[ -f "${VDE_ROOT_DIR}/lib/vde-log" ]] && { source "${VDE_ROOT_DIR}/lib/vde-log" >/dev/null 2>&1 || { echo "Error loading vde-log" >&2; exit ${VDE_ERR_GENERAL}; } }
-[[ -f "${VDE_ROOT_DIR}/lib/vde-naming"   ]] && { source "${VDE_ROOT_DIR}/lib/vde-naming" >/dev/null 2>&1 || { echo "Error loading vde-naming" >&2; exit ${VDE_ERR_GENERAL}; } }
-[[ -f "${VDE_ROOT_DIR}/lib/vde-security" ]] && { source "${VDE_ROOT_DIR}/lib/vde-security" >/dev/null 2>&1 || { echo "Error loading vde-security" >&2; exit ${VDE_ERR_GENERAL}; } }
-[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && { source "${VDE_ROOT_DIR}/lib/vde-core" >/dev/null 2>&1 || { echo "Error loading vde-core" >&2; exit ${VDE_ERR_GENERAL}; } }
-[[ -f "${VDE_ROOT_DIR}/lib/vm-common" ]] && { source "${VDE_ROOT_DIR}/lib/vm-common" >/dev/null 2>&1 || { echo "Error loading vm-common" >&2; exit ${VDE_ERR_GENERAL}; } }
-[[ -f "${VDE_ROOT_DIR}/lib/vde-commands" ]] && { source "${VDE_ROOT_DIR}/lib/vde-commands" >/dev/null 2>&1 || { echo "Error loading vde-commands" >&2; exit ${VDE_ERR_GENERAL}; } }
-[[ -f "${VDE_ROOT_DIR}/lib/vde-parser"   ]] && { source "${VDE_ROOT_DIR}/lib/vde-parser" >/dev/null 2>&1 || { echo "Error loading vde-parser" >&2; exit ${VDE_ERR_GENERAL}; } }
-[[ -f "${VDE_ROOT_DIR}/lib/vde-docker-state" ]] && { source "${VDE_ROOT_DIR}/lib/vde-docker-state" >/dev/null 2>&1 || { echo "Error loading vde-docker-state" >&2; exit ${VDE_ERR_GENERAL}; } }
-
-# Detect if we should skip heavy initialization (e.g., for --show-command)
-SKIP_HEAVY_INIT=0
-# We need to scan the arguments to see if --show-command is present
-# UNLESS it appears after a -- separator (which means it belongs to the target command)
-for arg in "${@}"; do
-  if [[ "${arg}" == "--" ]]; then
-    break # Everything after -- is for the VM, not for VDE/ssh-vm parsing
-  fi
-  if [[ "${arg}" == "--show-command" || "${arg}" == "--show-cmd" ]]; then
-    SKIP_HEAVY_INIT=1
-    export VDE_SKIP_AUTO_LOAD=1
-    break
-  fi
-done
-
-# Initialize logging
-vde_log_init 2>/dev/null || true
-
-# Enforce essential security permissions before executing any command
-if [[ "${SKIP_HEAVY_INIT}" -eq 0 ]]; then
-  if type vde_security_enforce_permissions >/dev/null 2>&1; then
-    vde_security_enforce_permissions >/dev/null 2>&1
-  fi
-  # Protocol Enforcement (UAP)
-  if [[ -f "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" ]]; then
-    zsh "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" || exit ${?}
-  fi
-fi
-
-#===============================================================================
-# Command Registry
-#===============================================================================
-
-_VDE_COMMANDS=(
-    "rebuild:Rebuild VDE images:vde-rebuild"
-    "rebuild-cache:Invalidate and regenerate VM types cache:vde-rebuild-cache"
-    "create:Create a new VM:create-virtual-for"
-    "start:Start a VM:start-virtual"
-    "stop:Stop a VM:shutdown-virtual"
-    "restart:Restart a VM:restart-virtual"
-    "ssh:SSH into a VM:ssh-vm"
-    "connect:SSH into a VM (alias for ssh):ssh-vm"
-    "remove:Remove a VM:remove-virtual"
-    "delete:Completely delete a VM:delete-virtual"
-    "add:Add a new VM type to the registry:add-vm-type"
-    "uninstall:Uninstall a language/service:uninstall-vm-type"
-    "list:List all VMs:list-vms"
-    "status:Show VM status:list-vms"
-    "health:Run system health check:vde-health"
-    "create-and-start:Create and start VMs:create-and-start"
-    "nuke:Remove all of VDE:nuke-vde"
-    "ssh-setup:Manage VDE SSH environment:ssh-setup"
-    "ssh-sync:Sync SSH keys to build context:ssh-sync"
-    "cleanup-ports:Clean up stale port locks:cleanup-ports"
-    "init:Initialize VDE networks:vde-init"
-    "ps:List running containers:vde-ps"
-    "logs:Show container logs:vde-logs"
-    "inspect:Inspect container:vde-inspect"
-    "port:Show port mappings:vde-port"
-    "exec:Execute command in container:vde-exec"
-    "images:List VDE images:vde-images"
-    "networks:List VDE networks:vde-networks"
-    "stats:Show resource usage:vde-stats"
-    "info:Show Docker info:vde-info"
-    "cluster:Manage multi-VM clusters:vde-cluster"
-    "validate-schemas:Validate JSON schemas:validate-schemas.zsh"
-    "ask:Natural language command interface:vde-ask"
-    "help:Show this help message:"
-)
-
-#===============================================================================
-# Helper Functions
-#===============================================================================
-
-# vde_show_help - Display help message
-vde_show_help() {
-    cat <<EOF
-Usage: vde <command> [options] [args]
-
-Virtual Development Environment - Unified Command Interface
-
-Commands:
-EOF
-    printf "  %-12s %s\n" "rebuild" "Rebuild all VDE images"
-    printf "  %-12s %s\n" "rebuild-cache" "Invalidate and regenerate VM types cache"
-    printf "  %-12s %s\n" "create <vm>" "Create a new VM (use --force to overwrite existing)"
-    printf "  %-12s %s\n" "start <vm>" "Start a VM"
-    printf "  %-12s %s\n" "stop <vm>" "Stop a VM"
-    printf "  %-12s %s\n" "restart <vm>" "Restart a VM"
-    printf "  %-12s %s\n" "ssh <vm>" "SSH into a VM"
-    printf "  %-12s %s\n" "connect <vm>" "SSH into a VM (alias for ssh)"
-    printf "  %-12s %s\n" "remove <vm>" "Remove a VM instance"
-    printf "  %-12s %s\n" "delete <vm>" "Completely delete a VM"
-    printf "  %-12s %s\n" "add <type>" "Add a new VM type to the registry"
-    printf "  %-12s %s\n" "uninstall <type>" "Uninstall a language/service completely"
-    printf "  %-12s %s\n" "list" "List all VMs"
-    printf "  %-12s %s\n" "status" "Show VM status"
-    printf "  %-12s %s\n" "health" "Run system health check"
-    printf "  %-12s %s\n" "create-and-start" "Create and start VMs"
-    printf "  %-12s %s\n" "nuke" "Remove all of VDE"
-    printf "  %-12s %s\n" "ssh-setup" "Manage VDE SSH environment"
-    printf "  %-12s %s\n" "ssh-sync" "Sync SSH keys to build context"
-    printf "  %-12s %s\n" "cleanup-ports" "Clean up stale port locks"
-    printf "  %-12s %s\n" "init" "Initialize VDE networks"
-    printf "  %-12s %s\n" "ps" "List running containers"
-    printf "  %-12s %s\n" "logs <vm>" "Show container logs"
-    printf "  %-12s %s\n" "inspect <vm>" "Inspect container"
-    printf "  %-12s %s\n" "port <vm>" "Show port mappings"
-    printf "  %-12s %s\n" "exec <vm> <cmd>" "Execute command in container"
-    printf "  %-12s %s\n" "images" "List VDE images"
-    printf "  %-12s %s\n" "networks" "List VDE networks"
-    printf "  %-12s %s\n" "stats" "Show resource usage"
-    printf "  %-12s %s\n" "info" "Show Docker info"
-    printf "  %-12s %s\n" "cluster" "Manage multi-VM clusters"
-    printf "  %-12s %s\n" "validate-schemas" "Validate JSON schemas"
-    printf "  %-12s %s\n" "ask <text>" "Natural language command interface"
-    printf "  %-12s %s\n" "help" "Show this help message"
-
-    cat <<EOF
-
-Options:
-  -h, --help        Show this help message
-  -v, --verbose     Enable verbose output
-  -q, --quiet       Suppress debug output (quiet mode)
-  --regenerate-keys Force regeneration of VDE SSH keys
-  --version         Show version information
-
-Examples:
-  vde rebuild              # Rebuild all images
-  vde rebuild --no-cache  # Rebuild from scratch
-  vde rebuild --vm python # Rebuild only python VM
-  vde list                      # List all VMs
-  vde create python             # Create Python VM
-  vde create python --rebuild  # Create and rebuild Python VM
-  vde create python --nocache  # Create Python VM without cache
-  vde start python              # Start Python development VM
-  vde ssh python                # SSH into the Python VM
-  vde stop postgres             # Stop PostgreSQL service
-  vde remove rust               # Remove Rust VM instance
-  vde uninstall elixir          # Completely uninstall Elixir from VDE
-  vde health                    # Run health check
-  vde nuke                      # Remove all of VDE (prompts for backup)
-
-For more information, see: https://github.com/dderyldowney/VDE/blob/main/docs/command-reference.md
-EOF
-}
-
-# vde_show_version - Display version information
-vde_show_version() {
-    echo "VDE - Virtual Development Environment"
-    echo "Version: 1.5.0 (Stage 7 - Architectural Enhancements)"
-    echo ""
-    echo "Libraries loaded:"
-    local libs=(
-        "vde-shell-compat"
-        "vde-constants"
-        "vde-errors"
-        "vde-log"
-        "vde-naming"
-        "vde-security"
-        "vde-core"
-        "vm-common"
-        "vde-commands"
-        "vde-parser"
-        "vde-docker-state"
-    )
-    for lib in "${libs[@]}"; do
-        echo "  - ${lib}: OK"
-    done
-}
-
-# vde_timeout - Cross-platform timeout wrapper
-# Uses zsh's built-in TIMEOUT feature when available
-vde_timeout() {
-    local timeout_sec="${1}"
-    shift
-    local command="${@}"
-    
-    # zsh has built-in TIMEOUT support
-    if [[ -n "${ZSH_VERSION}" ]]; then
-        TIMEOUT="${timeout_sec}" "${command}"
+# Zero-Host-Dependency JQ Wrapper
+vde_query_json() {
+    if command -v jq >/dev/null 2>&1; then
+        jq -r "$1" "$2"
     else
-        # Fallback to external timeout command
-        command timeout "${timeout_sec}" "${command}"
+        docker run --rm -v "${VDE_ROOT_DIR}:/vde" vde-base jq -r "$1" "/vde/${2#$VDE_ROOT_DIR/}"
     fi
 }
 
-# vde_find_command_script - Find the script for a command
-vde_find_command_script() {
-    local cmd="${1}"
-    local script=""
+# Define Data Paths
+TYPES_JSON="${VDE_ROOT_DIR}/data/vm-types.json"
+TYPES_SCHEMA="${VDE_ROOT_DIR}/data/vm-types.schema.json"
+TYPES_CACHE="${VDE_ROOT_DIR}/.cache/vm-types.cache"
 
-    case "${cmd}" in
-        rebuild|vde-rebuild)
-            script="${VDE_ROOT_DIR}/bin/vde-rebuild"
-            ;;
-        rebuild-cache|vde-rebuild-cache)
-            script="${VDE_ROOT_DIR}/bin/vde-rebuild-cache"
-            ;;
-        create|create-virtual-for)
-            script="${VDE_ROOT_DIR}/bin/create-virtual-for"
-            ;;
-        start|start-virtual)
-            script="${VDE_ROOT_DIR}/bin/start-virtual"
-            ;;
-        stop|shutdown-virtual)
-            script="${VDE_ROOT_DIR}/bin/shutdown-virtual"
-            ;;
-        restart|restart-virtual)
-            script="${VDE_ROOT_DIR}/bin/restart-virtual"
-            ;;
-        ssh|connect|ssh-vm)
-            script="${VDE_ROOT_DIR}/bin/ssh-vm"
-            ;;
-        list|list-vms)
-            script="${VDE_ROOT_DIR}/bin/list-vms"
-            ;;
-        status)
-            script="${VDE_ROOT_DIR}/bin/list-vms"
-            ;;
-        health|vde-health)
-            script="${VDE_ROOT_DIR}/bin/vde-health"
-            ;;
-        create-and-start)
-            script="${VDE_ROOT_DIR}/bin/create-and-start"
-            ;;
-        remove|remove-virtual)
-            script="${VDE_ROOT_DIR}/bin/remove-virtual"
-            ;;
-        delete|delete-virtual)
-            script="${VDE_ROOT_DIR}/bin/delete-virtual"
-            ;;
-        add|add-vm-type)
-            script="${VDE_ROOT_DIR}/bin/add-vm-type"
-            ;;
-        uninstall|uninstall-vm-type)
-            script="${VDE_ROOT_DIR}/bin/uninstall-vm-type"
-            ;;
-        nuke|nuke-vde)
-            script="${VDE_ROOT_DIR}/bin/nuke-vde"
-            ;;
-        ssh-setup)
-            script="${VDE_ROOT_DIR}/bin/ssh-setup"
-            ;;
-        ssh-sync)
-            script="${VDE_ROOT_DIR}/bin/ssh-sync"
-            ;;
-        cleanup-ports)
-            script="${VDE_ROOT_DIR}/bin/cleanup-ports"
-            ;;
-        init|vde-init)
-            script="${VDE_ROOT_DIR}/bin/vde-init" 
-            ;;
-        ps)
-            script="${VDE_ROOT_DIR}/bin/vde-ps"
-            ;;
-        logs)
-            script="${VDE_ROOT_DIR}/bin/vde-logs"
-            ;;
-        inspect)
-            script="${VDE_ROOT_DIR}/bin/vde-inspect"
-            ;;
-        port)
-            script="${VDE_ROOT_DIR}/bin/vde-port"
-            ;;
-        exec)
-            script="${VDE_ROOT_DIR}/bin/vde-exec"
-            ;;
-        images)
-            script="${VDE_ROOT_DIR}/bin/vde-images"
-            ;;
-        networks)
-            script="${VDE_ROOT_DIR}/bin/vde-networks"
-            ;;
-        stats)
-            script="${VDE_ROOT_DIR}/bin/vde-stats"
-            ;;
-        info)
-            script="${VDE_ROOT_DIR}/bin/vde-info"
-            ;;
-        cluster)
-            script="${VDE_ROOT_DIR}/bin/vde-cluster"
-            ;;
-        validate-schemas)
-            script="${VDE_ROOT_DIR}/bin/validate-schemas.zsh"
-            ;;
-        ask|vde-ask)
-            script="${VDE_ROOT_DIR}/bin/vde-ask"
-            ;;
-        *)
-            echo ""
-            return ${VDE_ERR_GENERAL}
-            ;;
-    esac
-
-    echo "${script}"
-    return 0
-}
-
-# vde_run_command - Run a VDE command
-vde_run_command() {
-    local cmd="${1}"
-    shift
-
-    # Find the command script
-    local script
-    script=$(vde_find_command_script "${cmd}")
-
-    if [ ${?} -ne 0 ] || [ -z "${script}" ]; then
-        vde_error_simple "Unknown command: ${cmd}"
-        echo ""
-        echo "Run 'vde help' for available commands."
-        return ${VDE_ERR_INVALID_INPUT}
-    fi
-
-    # Check if script exists
-    if [ ! -f "${script}" ]; then
-        vde_error_simple "Command script not found: ${script}"
-        return ${VDE_ERR_NOT_FOUND}
-    fi
-
-    # Make script executable if needed
-    if [ ! -x "${script}" ]; then
-        chmod +x "${script}" 2>/dev/null || true
-    fi
-
-    # Run the command
-    vde_log_info "Running command: ${cmd} ${*}" "vde"
-    exec "${script}" "${@}"
-}
-
-#===============================================================================
-# Main
-#===============================================================================
-
-# Parse global options first
-VERBOSE=0
-QUIET=0
-CMD=""
-
-while [[ ${#} -gt 0 ]]; do
-    case "${1}" in
-        -h|--help)
-            vde_show_help
-            exit 0
-            ;;
-        -v|--verbose)
-            VERBOSE=1
-            export VDE_ERRORS_VERBOSE=1
-            export VDE_LOG_LEVEL="DEBUG"
-            shift
-            ;;
-        -q|--quiet)
-            QUIET=1
-            export VDE_LOG_LEVEL="WARN"
-            shift
-            ;;
-        --version)
-            vde_show_version
-            exit 0
-            ;;
-        -*)
-            vde_error_simple "Unknown option: ${1}"
-            echo ""
-            echo "Run 'vde help' for available options."
-            exit ${VDE_ERR_INVALID_INPUT}
-            ;;
-        *)
-            CMD="${1}"
-            shift
-            break
-            ;;
-    esac
-done
-
-# Check if command was provided
-if [ -z "${CMD}" ]; then
-    vde_show_help
-    exit 0
+# --- 3. VALIDATE & LOAD DATA ---
+if [[ -f "${TYPES_JSON}" && -f "${TYPES_SCHEMA}" ]]; then
+    vde_validate_and_update "${TYPES_JSON}" "${TYPES_SCHEMA}" "${TYPES_CACHE}"
 fi
 
-# Handle help as a command (not just an option)
-if [ "${CMD}" = "help" ]; then
-    vde_show_help
-    exit 0
-fi
+load_vm_types
 
-# Dispatch
-vde_run_command "${CMD}" "${@}"
-exit ${?}
+# --- 4. COMMAND ROUTER ---
+CMD="$1"
+TYPE_ARG="$2"
+
+CANONICAL_NAME=$(resolve_vm_name "${TYPE_ARG}" 2>/dev/null)
+BASE_NAME="${CANONICAL_NAME#vde-}"
+
+case "${CMD}" in
+    rebuild)
+        local build_args=()
+        # Check for --no-cache or other flags in remaining args
+        for arg in "$@"; do
+            [[ "$arg" == "--no-cache" ]] && build_args+=("--no-cache")
+        done
+
+        if [[ "${TYPE_ARG}" == "base" ]]; then
+            vde_log_info "Baking foundation: vde-base..." "docker"
+            docker build "${build_args[@]}" \
+                -f "${VDE_ROOT_DIR}/configs/docker/vde-base.Dockerfile" \
+                -t "vde-base" .
+            exit 0
+        fi
+
+        [[ -z "${CANONICAL_NAME}" ]] && vde_log_error "Unknown type: '${TYPE_ARG}'" && exit 1
+        
+        # Extract both standard pkgs and special custom_cmd
+        local pkgs=$(vde_query_json "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .pkgs // empty" "${TYPES_JSON}")
+        local custom_cmd=$(vde_query_json "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .custom_cmd // empty" "${TYPES_JSON}")
+        
+        if [[ -z "${pkgs}" && -z "${custom_cmd}" ]]; then
+            vde_log_error "No installation method (pkgs or custom_cmd) defined for ${CANONICAL_NAME}"
+            exit 1
+        fi
+
+        vde_log_info "Baking ${CANONICAL_NAME}..." "docker"
+        docker build "${build_args[@]}" \
+            -f "${VDE_ROOT_DIR}/configs/docker/vde-lang.Dockerfile" \
+            --build-arg PKGS_TO_INSTALL="${pkgs}" \
+            --build-arg CUSTOM_BUILD_CMD="${custom_cmd}" \
+            -t "${CANONICAL_NAME}" .
+        ;;
+
+    start)
+        [[ -z "${CANONICAL_NAME}" ]] && vde_log_error "Unknown type: '${TYPE_ARG}'" && exit 1
+        
+        # --- Conflict Prevention ---
+        if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+            vde_log_info "Removing existing container ${CANONICAL_NAME}..." "docker"
+            docker rm -f "${CANONICAL_NAME}" >/dev/null
+        fi
+
+        local ssh_port=$(get_vm_ssh_port "${CANONICAL_NAME}")
+        if [[ -z "${ssh_port}" ]]; then
+            ssh_port=$(vde_query_json "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${TYPES_JSON}")
+        fi
+        
+        local svc_ports=($(vde_query_json "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | (.service_ports[]?, .service_port?) // empty" "${TYPES_JSON}" | grep -v "null"))
+        
+        local vm_category=$(get_vm_category "${CANONICAL_NAME}")
+        local mount_src="${VDE_ROOT_DIR}/projects/${BASE_NAME}"
+        local mount_dst="/home/devuser/workspace"
+
+        if [[ "${vm_category}" == "services" ]]; then
+            mount_src="${VDE_ROOT_DIR}/data/${BASE_NAME}"
+            [[ "${BASE_NAME}" == *"postgres"* ]] && mount_dst="/var/lib/postgresql/data"
+        fi
+        
+        ensure_vm_directories "${CANONICAL_NAME}" "$(get_vm_type "${CANONICAL_NAME}")"
+
+        local port_args=("-p" "${ssh_port}:22")
+        for p in "${svc_ports[@]}"; do
+            [[ -n "${p}" ]] && port_args+=("-p" "${p}:${p}")
+        done
+
+        vde_log_info "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})..." "docker"
+        docker run -d \
+            --name "${CANONICAL_NAME}" \
+            "${port_args[@]}" \
+            -v "${mount_src}:${mount_dst}" \
+            -v "${VDE_ROOT_DIR}/public-ssh-keys/vde_student.pub:/home/devuser/.ssh/authorized_keys:ro" \
+            "${CANONICAL_NAME}"
+        ;;
+
+    stop)
+        [[ -z "${CANONICAL_NAME}" ]] && vde_log_error "Unknown type: '${TYPE_ARG}'" && exit 1
+
+        if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+            vde_log_info "Stopping ${CANONICAL_NAME}..." "docker"
+            docker stop "${CANONICAL_NAME}" >/dev/null
+        else
+            vde_log_info "${CANONICAL_NAME} is not running." "vde"
+        fi
+        ;;
+
+    exec)
+        [[ -z "${CANONICAL_NAME}" ]] && vde_log_error "Unknown VM: '${TYPE_ARG}'" && exit 1
+        shift 2
+        local user_flag=("-u" "devuser")
+        if [[ "$1" == "--root" ]]; then
+            user_flag=()
+            shift
+        fi
+        docker exec "${user_flag[@]}" "${CANONICAL_NAME}" "$@"
+        ;;
+
+    enter)
+        [[ -z "${CANONICAL_NAME}" ]] && vde_log_error "Unknown VM: '${TYPE_ARG}'" && exit 1
+        local ssh_port=$(get_vm_ssh_port "${CANONICAL_NAME}")
+        if [[ -z "${ssh_port}" ]]; then
+            ssh_port=$(vde_query_json "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${TYPES_JSON}")
+        fi
+        
+        vde_log_info "Entering ${CANONICAL_NAME} via port ${ssh_port}..." "ssh"
+        shift 2
+        ssh -i "${HOME}/.ssh/vde/vde_student" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p "${ssh_port}" devuser@localhost "$@"
+        ;;
+
+    list) show_known_vms ;;
+    version|--version) echo "VDE v${VDE_VERSION:-2.0.3}" ;;
+    help|*) echo "Usage: vde {rebuild|start|stop|exec|enter|list} [type/alias]" ;;
+esac
+

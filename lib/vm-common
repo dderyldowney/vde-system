@@ -29,7 +29,7 @@
 # SOURCE GUARD
 # =============================================================================
 
-if [ "${_VM_COMMON_LOADED:-}" = "1" ]; then
+if [[ "${_VM_COMMON_LOADED:-}" = "1" ]]; then
     return 0 2>/dev/null || exit 0
 fi
 _VM_COMMON_LOADED=1
@@ -42,14 +42,14 @@ _VM_COMMON_LOADED=1
 # =============================================================================
 
 # If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
-if [ -z "${VDE_ROOT_DIR:-}" ]; then
+if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
     # Derivation logic for VDE root directory
-    if [ -n "${ZSH_VERSION}" ]; then
+    if [[ -n "${ZSH_VERSION}" ]]; then
         # zsh-specific way to get the path of the current file being sourced
         _VM_COMMON_SOURCE="${(%):-%x}"
     else
         # fallback for other shells
-        _VM_COMMON_SOURCE="${BASH_SOURCE[0]:-${0}}"
+        _VM_COMMON_SOURCE="${BASH_SOURCE[1]:-${0}}"
     fi
     
     # Calculate absolute path to root (lib/ is one level below VDE root)
@@ -142,7 +142,7 @@ fi
 
 # Source specialized libraries (fail gracefully if not needed)
 _vde_ssh_source() {
-    if [ -f "${VDE_ROOT_DIR}/lib/vde-ssh" ]; then
+    if [[ -f "${VDE_ROOT_DIR}/lib/vde-ssh" ]]; then
         . "${VDE_ROOT_DIR}/lib/vde-ssh"
         return ${VDE_SUCCESS}
     fi
@@ -150,7 +150,7 @@ _vde_ssh_source() {
 }
 
 _vde_docker_source() {
-    if [ -f "${VDE_ROOT_DIR}/lib/vde-docker" ]; then
+    if [[ -f "${VDE_ROOT_DIR}/lib/vde-docker" ]]; then
         . "${VDE_ROOT_DIR}/lib/vde-docker"
         return ${VDE_SUCCESS}
     fi
@@ -158,7 +158,7 @@ _vde_docker_source() {
 }
 
 _vde_templates_source() {
-    if [ -f "${VDE_ROOT_DIR}/lib/vde-templates" ]; then
+    if [[ -f "${VDE_ROOT_DIR}/lib/vde-templates" ]]; then
         . "${VDE_ROOT_DIR}/lib/vde-templates"
         return ${VDE_SUCCESS}
     fi
@@ -265,7 +265,7 @@ load_vm_types() {
     [[ "${VDE_NO_CACHE:-0}" == "1" ]] && no_cache=1
 
     # Ensure arrays are globally declared
-    typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT VM_SSH_PORT
+    typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_CUSTOM_CMD VM_SVC_PORT VM_SSH_PORT
     typeset -ga lang_vms service_vms
 
     # Guard to prevent redundant loading in the same process
@@ -352,21 +352,22 @@ load_vm_types() {
     fi
 
 
-    # If cache was successfully loaded, we still need to load VM_INSTALL
-    # as it is not cached due to complex shell syntax
+    # If cache was successfully loaded, we still need to load VM_INSTALL and VM_CUSTOM_CMD
+    # as they are not cached due to complex shell syntax
     if [[ "${use_cache}" -eq 1 ]]; then
 
         if [[ -f "${VM_TYPES_JSON}" ]]; then
-            # Parse all VM installs efficiently - suppress all output to avoid pollution
+            # Parse all VM installs and custom commands efficiently
             {
                 local p_installs
-                p_installs=$(jq -r '(.vms.language[], .vms.service[]) | "VM_INSTALL[\(.name)]=\(.install // "-" | @sh)"' "${VM_TYPES_JSON}" 2>/dev/null)
+                p_installs=$(jq -r '(.vms.language[], .vms.service[]) | "VM_INSTALL[\(.name)]=\(.pkgs // "-" | @sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd // "" | @sh)"' "${VM_TYPES_JSON}" 2>/dev/null)
                 [[ -n "${p_installs}" ]] && eval "${p_installs}"
             } >/dev/null 2>&1
         elif [[ -f "${VM_TYPES_CONF}" ]]; then
-            while IFS='|' read -r type name vm_aliases display install _rest; do
+            while IFS='|' read -r type name vm_aliases display pkgs custom_cmd _rest; do
                 [[ -z "${name}" || "${type}" == "#"* ]] && continue
-                VM_INSTALL[${name}]="${install}"
+                VM_INSTALL[${name}]="${pkgs}"
+                VM_CUSTOM_CMD[${name}]="${custom_cmd}"
             done < "${VM_TYPES_CONF}" 2>/dev/null
         fi
     fi
@@ -379,11 +380,12 @@ load_vm_types() {
         VM_ALIASES=()
         VM_DISPLAY=()
         VM_INSTALL=()
+        VM_CUSTOM_CMD=()
         VM_SVC_PORT=()
         VM_SSH_PORT=()
 
         # Read and parse configuration from JSON
-        # Format: .vms.language[] and .vms.service[] with fields: name, aliases, display, install, port
+        # Format: .vms.language[] and .vms.service[] with fields: name, aliases, display, pkgs, custom_cmd, port
         if [[ -f "${VM_TYPES_JSON}" ]]; then
             _info "Parsing VM types from JSON: ${VM_TYPES_JSON}"
 
@@ -394,8 +396,8 @@ load_vm_types() {
             # Use jq to generate a batch of shell assignments for all properties at once
             # Note: We escape values using @sh but keep keys and operators clean
             p_configs=$(jq -r '
-                (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.install//"-"|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
-                (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.install//"-"|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
+                (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
+                (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
             ' "${VM_TYPES_JSON}" 2>/dev/null)
 
             if [[ -n "${p_configs}" ]]; then
@@ -473,9 +475,15 @@ load_vm_types() {
             done
             echo ""
             echo "typeset -gA VM_DISPLAY"
-            for key in "${(@k)VM_DISPLAY}"; do
-                value="${VM_DISPLAY[${key}]//'/'\\''}"
-                print -r -- "VM_DISPLAY[${key}]='${value}'"
+            for key in "${(@k)VM_INSTALL}"; do
+                value="${VM_INSTALL[${key}]//'/'\\''}"
+                print -r -- "VM_INSTALL[${key}]='${value}'"
+            done
+            echo ""
+            echo "typeset -gA VM_CUSTOM_CMD"
+            for key in "${(@k)VM_CUSTOM_CMD}"; do
+                value="${VM_CUSTOM_CMD[${key}]//'/'\\''}"
+                print -r -- "VM_CUSTOM_CMD[${key}]='${value}'"
             done
             echo ""
             echo "typeset -gA VM_SVC_PORT"
@@ -625,7 +633,7 @@ get_docker_config() {
     local var_name="VM_${field_upper}[${vm_name}]"
     local value="${(P)var_name}"
 
-    if [ -n "${value}" ]; then
+    if [[ -n "${value}" ]]; then
         echo "${value}"
         return ${VDE_SUCCESS}
     else
@@ -954,7 +962,7 @@ get_allocated_ports() {
     local port=${min_port}
     local allocated=""
 
-    while [ ${port} -le ${max_port} ]; do
+    while [[ ${port} -le ${max_port} ]]; do
         if _is_port_in_use "${port}"; then
             allocated="${allocated} ${port}"
         fi
@@ -975,7 +983,7 @@ get_port_from_registry() {
     local vm_name="${1}"
     local port_file="${VDE_CACHE_DIR}/port-registry/${vm_name}.port"
 
-    if [ -f "${port_file}" ]; then
+    if [[ -f "${port_file}" ]]; then
         cat "${port_file}"
         return ${VDE_SUCCESS}
     fi
@@ -1061,7 +1069,7 @@ find_next_available_port() {
     local vm_type="${1}"
     local min_port max_port
 
-    if [ "${vm_type}" = "lang" ]; then
+    if [[ "${vm_type}" = "lang" ]]; then
         min_port=${VDE_LANG_PORT_START}
         max_port=${VDE_LANG_PORT_END}
     else
@@ -1072,7 +1080,7 @@ find_next_available_port() {
     local port
     port=$(find_available_port "${min_port}" "${max_port}")
     
-    if [ ${?} -eq 0 ] && [ -n "${port}" ]; then
+    if [[ ${?} -eq 0 ]] && [[ -n "${port}" ]]; then
         echo "${port}"
         return ${VDE_SUCCESS}
     fi
@@ -1102,7 +1110,7 @@ find_available_port() {
 
     # Find the first available port
     local port=${min_port}
-    while [ ${port} -le ${max_port} ]; do
+    while [[ ${port} -le ${max_port} ]]; do
         if [[ -z "${assigned_ports[${port}]}" ]] && ! _is_port_in_use "${port}"; then
             echo "${port}"
             return ${VDE_SUCCESS}
@@ -1124,7 +1132,7 @@ allocate_port_for_vm() {
     local existing_port
     existing_port=$(get_port_from_registry "${vm_name}")
 
-    if [ -n "${existing_port}" ]; then
+    if [[ -n "${existing_port}" ]]; then
         echo "${existing_port}"
         return ${VDE_SUCCESS}
     fi
@@ -1132,7 +1140,7 @@ allocate_port_for_vm() {
     local new_port
     new_port=$(find_available_port "${min_port}" "${max_port}")
 
-    if [ -z "${new_port}" ]; then
+    if [[ -z "${new_port}" ]]; then
         return ${VDE_ERR_NO_PORT}
     fi
 
@@ -1177,7 +1185,7 @@ get_or_allocate_port() {
 create_backup() {
     local source_path="${1}"
 
-    if [ ! -e "${source_path}" ]; then
+    if [[ ! -e "${source_path}" ]]; then
         return ${VDE_ERR_NOT_FOUND}
     fi
 
@@ -1226,7 +1234,7 @@ load_docker_state() {
     state_dir=$(get_docker_state_dir)
     local state_file="${state_dir}/${raw_name}.json"
 
-    if [ -f "${state_file}" ]; then
+    if [[ -f "${state_file}" ]]; then
         cat "${state_file}"
         return ${VDE_SUCCESS}
     fi
@@ -1240,7 +1248,7 @@ clear_docker_state() {
     local state_dir
     state_dir=$(get_docker_state_dir)
 
-    if [ -n "${vm_name}" ]; then
+    if [[ -n "${vm_name}" ]]; then
         local raw_name
         raw_name=$(vde_normalize_name "${vm_name}")
         rm -f "${state_dir}/${raw_name}.json"
@@ -1285,7 +1293,7 @@ ensure_vm_directories() {
         config_dest="${CONFIGS_DIR}/${raw_name}"
     fi
 
-    if [ "${vm_type}" = "lang" ]; then
+    if [[ "${vm_type}" = "lang" ]]; then
         dirs=("${config_dest}" "${VDE_ROOT_DIR}/projects/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
     else
         dirs=("${config_dest}" "${VDE_ROOT_DIR}/data/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
@@ -1293,7 +1301,7 @@ ensure_vm_directories() {
 
     local dir
     for dir in "${dirs[@]}"; do
-        if [ ! -d "${dir}" ]; then
+        if [[ ! -d "${dir}" ]]; then
             mkdir -p "${dir}"
             _info "Created directory: ${dir}"
         fi

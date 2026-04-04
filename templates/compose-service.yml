@@ -29,14 +29,21 @@ services:
                  echo \"host all all all trust\" | sudo -u postgres tee -a /var/lib/postgresql/data/pg_hba.conf >/dev/null;
                fi;
                sudo -u postgres /usr/lib/postgresql/15/bin/pg_ctl -D /var/lib/postgresql/data -o \"-c listen_addresses='*'\" start;
-               until pg_isready -q -h localhost -U postgres; do sleep 0.2; done;
+               until pg_isready -q -h localhost -U postgres; do zmodload zsh/zselect 2>/dev/null && zselect -t 20; done;
                sudo -u postgres psql -c \"CREATE ROLE devuser WITH LOGIN SUPERUSER\" 2>/dev/null || true;
-               elif [ \"{{NAME}}\" = \"redis\" ]; then
+             elif [ \"{{NAME}}\" = \"redis\" ]; then
                chown -R devuser:devuser /data;
                sudo -u devuser redis-server --daemonize yes --dir /data --bind 0.0.0.0 --protected-mode no;
-               until redis-cli ping >/dev/null 2>&1; do sleep 0.2; done;
-               fi; 
-               /usr/sbin/sshd -D"
+               until redis-cli ping >/dev/null 2>&1; do zmodload zsh/zselect 2>/dev/null && zselect -t 20; done;
+             elif [ \"{{NAME}}\" = \"mysql\" ]; then
+               chown -R mysql:mysql /var/lib/mysql;
+               if [ ! -d /var/lib/mysql/mysql ]; then
+                 mysqld --initialize-insecure --user=mysql;
+               fi;
+               mysqld_safe --user=mysql --bind-address=0.0.0.0 --skip-grant-tables &
+               until mysqladmin ping -h localhost --silent; do zmodload zsh/zselect 2>/dev/null && zselect -t 20; done;
+             fi; 
+             /usr/sbin/sshd -D"
 
     ports:
       - "{{SSH_PORT}}:22"
@@ -69,8 +76,8 @@ services:
       - "vde.name={{NAME}}"
 
     healthcheck:
-      test: ["CMD-SHELL", "if command -v pg_isready >/dev/null; then pg_isready -U postgres; elif command -v redis-cli >/dev/null; then redis-cli ping; else exit 0; fi"]
-      interval: 3s
+      test: ["CMD-SHELL", "if [ \"{{NAME}}\" = \"mysql\" ]; then mysqladmin ping -h localhost; elif command -v pg_isready >/dev/null; then pg_isready -U postgres; elif command -v redis-cli >/dev/null; then redis-cli ping; else exit 0; fi"]
+      interval: 5s
       timeout: 3s
       retries: 10
       start_period: 10s

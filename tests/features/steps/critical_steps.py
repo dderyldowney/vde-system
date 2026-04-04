@@ -28,12 +28,35 @@ from vm_common import (
     load_vm_types_raw,
     run_vde_command,
 )
+from shell_helpers import wait_for_condition
 
 TEMPLATES_DIR = VDE_ROOT / "templates"
 LIB_DIR = VDE_ROOT / "lib"
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
+
+
+def ensure_vm_accessible(context, vm_name: str, timeout: int = 30) -> bool:
+    """
+    Deterministically verify VM is ready for SSH connections.
+    Replaces fake time.sleep() calls with real whoami checks.
+    """
+    vde_name = vm_name.removeprefix("vde-")
+    
+    def check_ssh():
+        # Use vde ssh <vm> whoami to verify transport bridge is alive
+        result = run_vde_command(f"ssh {vde_name} whoami", context=context, timeout=5)
+        return result.returncode == 0
+
+    try:
+        return wait_for_condition(
+            check_ssh,
+            timeout=timeout,
+            description=f"VM '{vde_name}' SSH accessibility"
+        )
+    except Exception:
+        return False
 
 
 def _zsh(script: str, timeout: int = 10) -> subprocess.CompletedProcess:
