@@ -48,12 +48,19 @@ BASE_NAME="${CANONICAL_NAME#vde-}"
 case "${CMD}" in
     rebuild)
         local build_args=()
-        # Check for --no-cache or other flags in remaining args
-        for arg in "$@"; do
-            [[ "$arg" == "--no-cache" ]] && build_args+=("--no-cache")
+        local target_type="${TYPE_ARG}"
+        
+        # Capture all arguments after 'rebuild'
+        shift 
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                --no-cache) build_args+=("--no-cache") ;;
+                *) [[ -z "${target_type}" ]] && target_type="$1" ;;
+            esac
+            shift
         done
 
-        if [[ "${TYPE_ARG}" == "base" ]]; then
+        if [[ "${target_type}" == "base" ]]; then
             vde_log_info "Baking foundation: vde-base..." "docker"
             docker build "${build_args[@]}" \
                 -f "${VDE_ROOT_DIR}/configs/docker/vde-base.Dockerfile" \
@@ -61,9 +68,9 @@ case "${CMD}" in
             exit 0
         fi
 
-        [[ -z "${CANONICAL_NAME}" ]] && vde_log_error "Unknown type: '${TYPE_ARG}'" && exit 1
+        CANONICAL_NAME=$(resolve_vm_name "${target_type}" 2>/dev/null)
+        [[ -z "${CANONICAL_NAME}" ]] && vde_log_error "Unknown type: '${target_type}'" && exit 1
         
-        # Extract both standard pkgs and special custom_cmd
         local pkgs=$(vde_query_json "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .pkgs // empty" "${TYPES_JSON}")
         local custom_cmd=$(vde_query_json "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .custom_cmd // empty" "${TYPES_JSON}")
         
