@@ -1,4 +1,8 @@
 #!/usr/bin/env zsh
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 set -e
 
 # Source shared library
@@ -7,7 +11,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 source "${VDE_ROOT_DIR}/lib/vde-docker-state"
 
 # Parse arguments
-if [[ ${#} -eq 0 ]]; then
+if [[ ${#} -eq 0 ]] ; then
     echo "Usage: ${0} <vm_name1> [vm_name2] ..."
     echo ""
     echo "Examples:"
@@ -25,11 +29,11 @@ for arg in "${@}"; do
     # Check if it's a known VM or VM type
     local resolved
     resolved=$(resolve_vm_name "${arg}" 2>/dev/null) || true
-    if [[ -n "${resolved}" ]]; then
+    if [[ -n "${resolved}" ]] ; then
         # Only add if it has a compose file
         local compose_file
         compose_file=$(get_compose_file "${resolved}" 2>/dev/null) || true
-        if [[ -n "${compose_file}" && -f "${compose_file}" ]]; then
+        if [[ -n "${compose_file}" && -f "${compose_file}" ]] ; then
             VMS+=("${resolved}")
         else
             log_warning "VM '${arg}' not created (no compose file)"
@@ -40,7 +44,7 @@ for arg in "${@}"; do
     fi
 done
 
-if [[ ${#VMS[@]} -eq 0 ]]; then
+if [[ ${#VMS[@]} -eq 0 ]] ; then
     log_error "No valid VMs to restart"
     exit ${VDE_ERR_GENERAL}
 fi

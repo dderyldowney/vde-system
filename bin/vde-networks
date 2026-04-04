@@ -10,6 +10,10 @@
 #===============================================================================
 
 # Determine VDE root directory
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
@@ -23,7 +27,7 @@ QUIET=0
 CREATE=0
 SHOW_ALL=0
 
-while [[ ${#} -gt 0 ]]; do
+while [[ ${#} -gt 0 ]] ; do
     case "${1}" in
         -c|--create)
             CREATE=1
@@ -48,13 +52,13 @@ done
 VDE_NETWORK="${VDE_DOCKER_NETWORK}"
 
 # Create network if requested
-if [ ${CREATE} -eq 1 ]; then
+if [[ ${CREATE} -eq 1 ]] ; then
     source "${VDE_ROOT_DIR}/lib/vde-security"
     vde_security_ensure_network "${VDE_NETWORK}"
 fi
 
 # Show all VDE networks (vde-*) or just the main network
-if [ ${SHOW_ALL} -eq 1 ]; then
+if [[ ${SHOW_ALL} -eq 1 ]] ; then
     # Show all VDE networks (vde-*)
     VDE_NETWORK_FILTER="vde-"
 else
@@ -62,7 +66,7 @@ else
     VDE_NETWORK_FILTER="${VDE_NETWORK}"
 fi
 
-if [ ${QUIET} -eq 1 ]; then
+if [[ ${QUIET} -eq 1 ]] ; then
     docker network ls --format '{{.Name}}' | grep "^${VDE_NETWORK_FILTER}" || true
 else
     docker network ls --format 'table {{.Name}}\t{{.Driver}}\t{{.Scope}}' | grep "^${VDE_NETWORK_FILTER}" || true

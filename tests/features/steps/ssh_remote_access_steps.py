@@ -8,7 +8,8 @@ OpenSSH clients, and VSCode Remote-SSH.
 
 from behave import given, when, then
 from config import VDE_ROOT, VDE_SSH_CONFIG
-from vm_common import run_vde_command, container_is_running, wait_for_container
+from vm_common import run_vde_command, container_is_running
+from critical_steps import ensure_vm_accessible
 from ssh_helpers import ssh_agent_has_keys
 import os
 import subprocess
@@ -27,7 +28,7 @@ def step_python_vm_running_remote(context, vm_type="python", role=None):
     
     if not container_is_running(vm_name):
         run_vde_command(f"start {vm_name}", context=context)
-        wait_for_container(vm_name, timeout=60)
+        assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
     context.current_vm = vm_name
     context.ssh_host = f"vde-{vm_name}"
 
@@ -69,7 +70,7 @@ def step_have_ssh_details(context):
     # Ensure VM is running
     if not container_is_running(vm_name):
         run_vde_command(f"start {vm_name}", context=context)
-        wait_for_container(vm_name, timeout=60)
+        assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
         
     result = run_vde_command(f"info {vm_name}", context=context)
     # Extract port from "SSH Port: 2213"
@@ -92,7 +93,7 @@ def step_add_ssh_config_vscode(context, vm_name):
     raw_name = vm_name.lower().replace("vde-", "")
     if not container_is_running(raw_name):
         run_vde_command(f"start {raw_name}", context=context)
-        wait_for_container(raw_name, timeout=60)
+        assert ensure_vm_accessible(context, raw_name), f"VM {raw_name} did not become accessible via SSH"
         
     run_vde_command("ssh-setup generate", context=context)
     assert VDE_SSH_CONFIG.exists(), f"SSH config not found at {VDE_SSH_CONFIG}"
@@ -132,17 +133,22 @@ def step_can_edit_files(context):
 def step_connect_to_vm_remote(context, vm_name=None, vm_name2=None):
     """Simulate connecting to multiple VMs."""
     target = vm_name or vm_name2
+    
     if not hasattr(context, "connected_vms"):
         context.connected_vms = []
+        
     if target:
         # Normalize name (strip vde- if present)
         clean_target = target.lower().replace("vde-", "")
-        # Ensure it's running
+        
+        # Standard connection step
         if not container_is_running(clean_target):
             run_vde_command(f"start {clean_target}", context=context)
-            wait_for_container(clean_target, timeout=60)
-        context.connected_vms.append(clean_target)
-        context.ssh_host = f"vde-{clean_target}" # For steps in ssh_core_steps.py
+            assert ensure_vm_accessible(context, clean_target), f"VM {clean_target} did not become accessible via SSH"
+        
+        if clean_target not in context.connected_vms:
+            context.connected_vms.append(clean_target)
+        context.ssh_host = f"vde-{clean_target}"
 
 @when('I run VDE command "{command}" from within the {vm_name} VM')
 @when('I run VDE command "{command}" from the {vm_name} VM')
@@ -165,7 +171,7 @@ def step_run_command_in_vm(context, command, vm_name):
     # Ensure VM is running
     if not container_is_running(target):
         run_vde_command(f"start {target}", context=context)
-        wait_for_container(target, timeout=60)
+        assert ensure_vm_accessible(context, target), f"VM {target} did not become accessible via SSH"
         
     # Use vde exec for commands instead of ssh to avoid argument parsing issues in CLI
     exec_cmd = f"exec {target} \"{command}\""
@@ -206,7 +212,7 @@ def step_no_password_prompt_remote(context):
     # Ensure it's running
     if not container_is_running(vm_name):
         run_vde_command(f"start {vm_name}", context=context)
-        wait_for_container(vm_name, timeout=60)
+        assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
         
     # BatchMode=yes fails if a password/passphrase is required
     # Use result.stdout for the check as run_vde_command cleans it
@@ -231,7 +237,7 @@ def step_navigate_workspace(context):
     # Ensure VM is running
     if not container_is_running(vm_name):
         run_vde_command(f"start {vm_name}", context=context)
-        wait_for_container(vm_name, timeout=60)
+        assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
         
     # Ensure at least one keyword-matching directory exists for the next step
     run_vde_command(f"exec {vm_name} \"mkdir -p ~/workspace/VDE\"", context=context)
@@ -282,7 +288,7 @@ def step_need_admin_tasks(context):
     # Ensure VM is running
     if not container_is_running(vm_name):
         run_vde_command(f"start {vm_name}", context=context)
-        wait_for_container(vm_name, timeout=60)
+        assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
         
     # Check if sudo is installed
     res = run_vde_command(f"exec {vm_name} \"which sudo\"", context=context)
@@ -295,7 +301,7 @@ def step_run_sudo_commands(context):
     # Ensure VM is running
     if not container_is_running(vm_name):
         run_vde_command(f"start {vm_name}", context=context)
-        wait_for_container(vm_name, timeout=60)
+        assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
         
     # We use sudo id -u to check for root elevation capability
     result = run_vde_command(f"exec {vm_name} \"sudo id -u\"", context=context)
@@ -319,7 +325,7 @@ def step_connect_via_ssh_remote(context):
     vm_name = "python"
     if not container_is_running(vm_name):
         run_vde_command(f"start {vm_name}", context=context)
-        wait_for_container(vm_name, timeout=60)
+        assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
     context.current_vm = vm_name
     context.ssh_host = "vde-python"
 
@@ -378,7 +384,7 @@ def step_full_stack_context(context):
     for vm in ["python", "go"]:
         if not container_is_running(vm):
             run_vde_command(f"start {vm}", context=context)
-            wait_for_container(vm, timeout=60)
+            assert ensure_vm_accessible(context, vm), f"VM {vm} did not become accessible via SSH"
     context.current_vm = "python"
 
 @given("I have {vm1}, {vm2}, and {vm3} VMs")
@@ -397,7 +403,7 @@ def step_multiple_vms_running(context, vm1="python", vm2="go", vm3="postgres", c
         
         if not container_is_running(vm_type):
             run_vde_command(f"start {vm_type}", context=context)
-            wait_for_container(vm_type, timeout=60)
+            assert ensure_vm_accessible(context, vm_type), f"VM {vm_type} did not become accessible via SSH"
 
 @given("I create a Python VM for my API")
 @given("I create a PostgreSQL VM for my database")
@@ -429,7 +435,7 @@ def step_use_scp(context):
     # Ensure VM is running
     if not container_is_running("python"):
         run_vde_command("start python", context=context)
-        wait_for_container("python", timeout=60)
+        assert ensure_vm_accessible(context, "python"), "VM python did not become accessible via SSH"
         
     # Ensure file exists
     run_vde_command("exec python \"echo 'content' > /tmp/scp-test\"", context=context)
@@ -496,7 +502,7 @@ def step_long_running_task(context):
     # Ensure VM is running
     if not container_is_running(vm_name):
         run_vde_command(f"start {vm_name}", context=context)
-        wait_for_container(vm_name, timeout=60)
+        assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
         
     # Start a sleep in background that creates a file when done
     # Use nohup and & to ensure it persists
@@ -512,8 +518,10 @@ def step_ssh_connection_drops(context):
 def step_task_continues(context):
     """Verify the task is still running by checking process list via vde exec."""
     vm_name = getattr(context, "current_vm", "python").replace("vde-", "")
-    import time
-    time.sleep(1) # Wait a bit for it to start
+    
+    # Real deterministic check instead of fake sleep
+    assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
+    
     result = run_vde_command(f"exec {vm_name} \"ps aux\"", context=context)
     assert "sleep 10" in result.stdout, f"Task 'sleep 10' not found in process list: {result.stdout}"
 
@@ -532,7 +540,7 @@ def step_use_system_ssh(context):
     # Ensure VM is running
     if not container_is_running("python"):
         run_vde_command("start python", context=context)
-        wait_for_container("python", timeout=60)
+        assert ensure_vm_accessible(context, "python"), "VM python did not become accessible via SSH"
         
     ssh_cmd = f"/usr/bin/ssh -F {VDE_SSH_CONFIG} vde-python echo connected"
     result = run_vde_command(ssh_cmd, context=context)

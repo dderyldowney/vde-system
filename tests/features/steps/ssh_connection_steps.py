@@ -1,6 +1,7 @@
 from behave import given, when, then
 from config import VDE_ROOT, VDE_SSH_CONFIG
-from vm_common import run_vde_command
+from vm_common import run_vde_command, wait_for_container, container_is_running
+from critical_steps import ensure_vm_accessible
 import os
 
 # Define PUBLIC_SSH_KEYS_DIR as it's not in config.py
@@ -112,13 +113,12 @@ def step_access_localhost_vm_port(context):
 @when("I connect to a VM")
 def step_connect_to_vm(context):
     """Verify connection capability, ensuring VM is running."""
-    from vm_common import container_is_running, wait_for_container
     vm_name = getattr(context, "vm_name", "python")
     
     # Ensure VM is running
     if not container_is_running(vm_name):
         run_vde_command(f"start {vm_name}", context=context)
-        wait_for_container(vm_name, timeout=60)
+        assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
         
     # run_vde_command handles prefixing
     result = run_vde_command(f"connect {vm_name} echo ok", context=context)

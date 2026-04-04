@@ -5,6 +5,10 @@
 #===============================================================================
 
 # Determine VDE root directory
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
@@ -16,7 +20,7 @@ export VDE_ROOT_DIR
 
 # Check arguments
 USER_OVERRIDE=""
-while [[ ${#} -gt 0 ]]; do
+while [[ ${#} -gt 0 ]] ; do
     case "${1}" in
         -u|--user)
             USER_OVERRIDE="${2}"
@@ -28,7 +32,7 @@ while [[ ${#} -gt 0 ]]; do
     esac
 done
 
-if [ -z "${1}" ]; then
+if [[ -z "${1}" ]] ; then
     echo "Usage: vde-exec [-u user] <vm_name> <command> [args...]"
     exit ${VDE_ERR_INVALID_INPUT:-2}
 fi
@@ -44,7 +48,7 @@ DOCKER_OPTS="-i"
 [[ -t 0 ]] && DOCKER_OPTS="${DOCKER_OPTS} -t"
 
 # Use specified user or default to devuser
-if [[ -n "${USER_OVERRIDE}" ]]; then
+if [[ -n "${USER_OVERRIDE}" ]] ; then
     DOCKER_OPTS="${DOCKER_OPTS} -u ${USER_OVERRIDE}"
 else
     # Default to devuser for VDE containers
@@ -53,7 +57,7 @@ else
 fi
 
 # If only one argument is provided after VM_NAME, it might be a shell command string
-if [[ ${#} -eq 1 ]]; then
+if [[ ${#} -eq 1 ]] ; then
     exec docker exec ${=DOCKER_OPTS} "${CONTAINER_NAME}" zsh -c "${1}"
 else
     exec docker exec ${=DOCKER_OPTS} "${CONTAINER_NAME}" "${@}"

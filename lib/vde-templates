@@ -8,7 +8,7 @@
 # - VM-specific template wrappers (language, service)
 # - SSH configuration entry generation
 
-if [ "${_VDE_TEMPLATES_LOADED:-}" = "1" ]; then
+if [[ "${_VDE_TEMPLATES_LOADED:-}" = "1" ]]; then
     return 0 2>/dev/null || exit 0
 fi
 _VDE_TEMPLATES_LOADED=1
@@ -22,7 +22,7 @@ _VDE_TEMPLATES_LOADED=1
 # Generic template renderer using zsh native substitution
 render_template() {
     local template_file="${1}"
-    [ ! -f "${template_file}" ] && return ${VDE_ERR_NOT_FOUND}
+    [[ ! -f "${template_file}" ]] && return ${VDE_ERR_NOT_FOUND}
     shift
 
     local content
@@ -40,12 +40,12 @@ render_template() {
     echo "${content}"
 }
 
-# render_language_template NAME SSH_PORT
+# render_language_template NAME SSH_PORT INSTALL_CMD
 # Render docker-compose.yml for language VM
 render_language_template() {
-    local name="${1}" ssh_port="${2}"
+    local name="${1}" ssh_port="${2}" install_cmd="${3:-}"
     render_template "${TEMPLATES_DIR}/compose-language.yml" \
-        NAME "${name}" SSH_PORT "${ssh_port}" INSTALL_CMD ""
+        NAME "${name}" SSH_PORT "${ssh_port}" INSTALL_CMD "${install_cmd}"
 }
 
 # render_service_template NAME SSH_PORT SERVICE_PORT INSTALL_CMD
@@ -54,7 +54,7 @@ render_service_template() {
     local name="${1}" ssh_port="${2}" service_ports="${3}" install_cmd="${4:-}"
     local template_file="${TEMPLATES_DIR}/compose-service.yml"
     
-    if [ ! -f "${template_file}" ]; then
+    if [[ ! -f "${template_file}" ]]; then
         vde_log_error "Service template not found: ${template_file}"
         return ${VDE_ERR_NOT_FOUND}
     fi
@@ -71,8 +71,8 @@ render_service_template() {
         ports_array=(${(s:,:)service_ports})
         for p in "${ports_array[@]}"; do
             p=$(echo "${p}" | tr -d ' ')
-            if [ -n "${p}" ]; then
-                [ -n "${port_mapping}" ] && port_mapping="${port_mapping}
+            if [[ -n "${p}" ]]; then
+                [[ -n "${port_mapping}" ]] && port_mapping="${port_mapping}
 "
                 port_mapping="${port_mapping}      - \"${p}:${p}\""
             fi

@@ -84,7 +84,7 @@ while [[ ${#} -gt 0 ]]; do
             # Expand "all" to all VMs with configurations
             for vm in $(get_all_vms); do
                 # Check if it has a compose file (canonical way to check if 'created')
-                if [ -f "$(get_compose_file "${vm}" 2>/dev/null || echo "/nonexistent")" ]; then
+                if [[ -f "$(get_compose_file "${vm}" 2>/dev/null || echo "/nonexistent")" ]]; then
                     VMS_TO_PROCESS+=("${vm}")
                 fi
             done
@@ -191,11 +191,11 @@ done
 echo ""
 log_info "Batch operation summary:"
 
-if [ ${stopped_count} -gt 0 ]; then
+if [[ ${stopped_count} -gt 0 ]]; then
     log_success "Stopped: ${stopped_count} VM(s)"
 fi
 
-if [ ${skipped_count} -gt 0 ]; then
+if [[ ${skipped_count} -gt 0 ]]; then
     log_info "Skipped: ${skipped_count} VM(s)"
     for vm in "${(@k)BATCH_RESULTS[@]}"; do
         [[ "${BATCH_RESULTS[${vm}]}" == "skipped:not_created" ]] && log_warning "  ○ ${vm} - not created"
@@ -203,7 +203,7 @@ if [ ${skipped_count} -gt 0 ]; then
     done
 fi
 
-if [ ${failed_count} -gt 0 ]; then
+if [[ ${failed_count} -gt 0 ]]; then
     log_error "Failed: ${failed_count} VM(s)"
     for vm in "${(@k)BATCH_RESULTS[@]}"; do
         [[ "${BATCH_RESULTS[${vm}]}" == "failed:"* ]] && log_error "  ✗ ${vm} - ${BATCH_RESULTS[${vm}]#*:}"

@@ -2,6 +2,10 @@
 # remove-virtual - Stop and remove a VM container
 # Stops the VM, preserves all configuration for easy recreation
 
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 set -e
 
 # Source shared library
@@ -9,18 +13,18 @@ VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
 source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Source UX libraries (optional - for enhanced UX)
-if [[ -f "${VDE_ROOT_DIR}/lib/vde-progress" ]]; then
+if [[ -f "${VDE_ROOT_DIR}/lib/vde-progress" ]] ; then
     source "${VDE_ROOT_DIR}/lib/vde-progress"
 fi
-if [[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]]; then
+if [[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] ; then
     source "${VDE_ROOT_DIR}/lib/vde-errors"
 fi
-if [[ -f "${VDE_ROOT_DIR}/lib/vde-naming" ]]; then
+if [[ -f "${VDE_ROOT_DIR}/lib/vde-naming" ]] ; then
     source "${VDE_ROOT_DIR}/lib/vde-naming"
 fi
 
 # Parse arguments
-if [[ ${#} -eq 0 ]]; then
+if [[ ${#} -eq 0 ]] ; then
     echo "Usage: ${0} <vm_name>"
     echo ""
     echo "Stop and remove a VM container."
@@ -41,7 +45,7 @@ if [[ ${#} -eq 0 ]]; then
     exit ${VDE_ERR_GENERAL}
 fi
 
-if [[ "${VM_NAME}" == "all" ]]; then
+if [[ "${VM_NAME}" == "all" ]] ; then
     # Delete all VMs but keep images, configs, and project
     log_info "Deleting all VMs..."
 
@@ -49,7 +53,7 @@ if [[ "${VM_NAME}" == "all" ]]; then
     local vms
     vms=$(get_all_vms)
 
-    if [[ -z "${vms}" ]]; then
+    if [[ -z "${vms}" ]] ; then
         log_info "No VMs found to delete"
         exit 0
     fi
@@ -58,14 +62,14 @@ if [[ "${VM_NAME}" == "all" ]]; then
     local deleted_count=0
 
     for vm in ${vms}; do
-        if [[ -n "${vm}" ]]; then
+        if [[ -n "${vm}" ]] ; then
             # Recursively call remove-virtual for each VM
             remove-virtual "${vm}" || log_warning "Failed to remove VM: ${vm}"
             ((deleted_count++))
         fi
     done
 
-    if [[ ${deleted_count} -gt 0 ]]; then
+    if [[ ${deleted_count} -gt 0 ]] ; then
         log_success "Deleted ${deleted_count} VM(s)"
     else
         log_info "All VMs already deleted"
@@ -78,7 +82,7 @@ VM_NAME="${1}"
 
 # Resolve VM name if it's an alias
 RESOLVED_VM=$(resolve_vm_name "${VM_NAME}" 2>/dev/null) || true
-if [[ -n "${RESOLVED_VM}" ]]; then
+if [[ -n "${RESOLVED_VM}" ]] ; then
     VM_NAME="${RESOLVED_VM}"
 fi
 
@@ -89,7 +93,7 @@ CONFIG_NAME="${VM_NAME#vde-}"
 COMPOSE_FILE="${CONFIGS_DIR}/${CONFIG_NAME}/docker-compose.yml"
 
 # Check if VM exists
-if [[ ! -f "${COMPOSE_FILE}" ]]; then
+if [[ ! -f "${COMPOSE_FILE}" ]] ; then
     log_error "VM '${VM_NAME}' not found (no docker-compose.yml at ${CONFIG_NAME})"
     exit ${VDE_ERR_GENERAL}
 fi
@@ -97,7 +101,7 @@ fi
 log_info "Removing VM: ${VM_NAME}"
 
 # Get VM type to determine SSH hostname
-VM_TYPE=$(get_vm_info type "${VM_NAME}" 2>/dev/null) || echo "unknown"
+_vm_type=$(get_vm_info type "${VM_NAME}" 2>/dev/null) || echo "unknown"
 
 # Stop the VM if running
 if is_vm_running "${VM_NAME}" 2>/dev/null; then
@@ -105,8 +109,9 @@ if is_vm_running "${VM_NAME}" 2>/dev/null; then
     stop_vm "${VM_NAME}"
 fi
 
+
 # Remove SSH known_hosts entries (before removing config, so we can still get port)
-if [[ -z "${VDE_TEST_MODE}" ]]; then
+if [[ -z "${VDE_TEST_MODE}" ]] ; then
     log_info "Cleaning up SSH known_hosts..."
     remove_known_hosts_entry "${VM_NAME}" 2>/dev/null || true
 fi
@@ -119,12 +124,12 @@ fi
 
 # Remove logs directory if empty
 LOGS_DIR="${VDE_ROOT_DIR}/logs/${CONFIG_NAME}"
-if [[ -d "${LOGS_DIR}" ]]; then
+if [[ -d "${LOGS_DIR}" ]] ; then
     rmdir "${LOGS_DIR}" 2>/dev/null && log_success "Removed empty logs directory" || true
 fi
 
 # Remove SSH config entry (skip in test mode)
-if [[ -z "${VDE_TEST_MODE}" ]]; then
+if [[ -z "${VDE_TEST_MODE}" ]] ; then
     log_info "Removing SSH config entry..."
 
     # All VMs now use vde- prefix

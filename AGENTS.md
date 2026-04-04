@@ -37,10 +37,21 @@ Violating any of these mandates is a failure of the agent's primary directive.
 6.  **DRY is Absolute**: No duplicate code or near-identical functions. Parameterize or consolidate.
 7.  **TDD is Non-Negotiable**: Failing test (RED) first, then minimal implementation (GREEN), then refactor.
 8.  **No Fake Tests**: `assert True`, `pass`, and placeholder context flags are strictly forbidden.
-9.  **User-Centric Perspective**: All interactions and tests must use the canonical `vde` CLI (e.g., `vde ssh`). Never call internal `bin/` scripts directly.
+9.  **Canonical Entrypoint**: `bin/vde` is the single canonical entrypoint. All operations must go through `bin/vde` subcommands; calling underlying scripts directly is out of mandate, except in tests whose explicit purpose is to unit‑test that script in isolation (not as a side effect of a normal bin/vde call).
 10. **MCP-First**: Always prefer MCP services (`sequential-thinking`, `context7`, etc.) over local CLI or internal tools.
-11. **Dual Approval Gate**: Commits require BOTH code-reviewer (agent) and user approval.
-12. **No-Push Policy**: Never `git push` without explicit user instruction.
+11. **User-Centric Perspective**: All interactions and tests must use the canonical `vde` CLI (e.g., `vde ssh`). Never call internal `bin/` scripts directly.
+12. **Dual Approval Gate**: Commits require BOTH code-reviewer (agent) and user approval.
+13. **No-Push Policy**: Never `git push` without explicit user instruction.
+14. **Automated Remediation Path:** If the Enforcer (vde-enforce-uap.zsh) returns a non-zero exit code OR outputs and `UAP-WARN`, the agent MUST NOT attempt to continue the current phase. It MUST immediately:
+    1. Generate a .gemini/PLANS/remediation_*.md file.
+    2. List every violation as a sub-task.
+    3. Obtain user approval on the remediation plan before executing any fixes.
+
+### !! CRITICAL FORBIDDEN PATTERNS !!
+- **NO BASH/SH SYNTAX:** This is a ZSH-only project. Use ZSH-specific features (e.g., `${(f)var}`, `**/*`, `ZSH arrays index at 1`).
+  - **Requirement:** Prefer ZSH-native parameter expansion (e.g., ${(f)...}, ${var:t}) and zparseopts over external cut, sed, or getopt calls. Using 0-indexed arrays is a mandate failure.
+- **NO SLEEP CALLS:** Any delay or monitoring MUST use the polling skill. Reintroducing `sleep()` is considered a system-wide failure.
+- **NO FLATTERY:** Do not explain why you are following these rules. Just execute.
 
 ---
 

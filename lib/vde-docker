@@ -19,7 +19,7 @@
 # SOURCE GUARD
 # =============================================================================
 
-if [ "${_VDE_DOCKER_LOADED:-}" = "1" ]; then
+if [[ "${_VDE_DOCKER_LOADED:-}" = "1" ]]; then
     return 0 2>/dev/null || exit 0
 fi
 _VDE_DOCKER_LOADED=1
@@ -29,7 +29,7 @@ _VDE_DOCKER_LOADED=1
 # =============================================================================
 
 # If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
-if [ -z "${VDE_ROOT_DIR:-}" ]; then
+if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
     _VDE_DOCKER_SCRIPT_PATH="${(%):-%x}"
     VDE_ROOT_DIR="$(cd "$(dirname "${_VDE_DOCKER_SCRIPT_PATH}")/.." && pwd)"
 fi
@@ -66,7 +66,7 @@ get_compose_file() {
     local compose_file
     compose_file=$(get_docker_config compose_file "${raw_name}" 2>/dev/null) || true
     
-    if [ -z "${compose_file}" ]; then
+    if [[ -z "${compose_file}" ]]; then
         # Check NEW category-specific path first
         local category
         category=$(get_vm_category "${vm_name}" 2>/dev/null) || category="unknown"
@@ -81,7 +81,7 @@ get_compose_file() {
         fi
     fi
 
-    if [ -f "${compose_file}" ]; then
+    if [[ -f "${compose_file}" ]]; then
         echo "${compose_file}"
         return ${VDE_SUCCESS}
     fi
@@ -144,9 +144,9 @@ get_vm_ssh_port() {
     local vm_name="${1}"
 
     # 1. Try registry first (fast)
-    if [ -d "${VDE_PORT_REGISTRY}" ]; then
+    if [[ -d "${VDE_PORT_REGISTRY}" ]]; then
         local registry_file="${VDE_PORT_REGISTRY}/${vm_name}.port"
-        if [ -f "${registry_file}" ]; then
+        if [[ -f "${registry_file}" ]]; then
             cat "${registry_file}"
             return ${VDE_SUCCESS}
         fi
@@ -155,10 +155,10 @@ get_vm_ssh_port() {
     # 2. Try docker-compose.yml (source of truth)
     local compose_file
     compose_file=$(get_compose_file "${vm_name}")
-    if [ -f "${compose_file}" ]; then
+    if [[ -f "${compose_file}" ]]; then
         local port
         port=$(grep -oE '[0-9]+:22' "${compose_file}" | head -1 | cut -d':' -f1)
-        if [ -n "${port}" ]; then
+        if [[ -n "${port}" ]]; then
             echo "${port}"
             return ${VDE_SUCCESS}
         fi
@@ -188,7 +188,7 @@ find_available_ssh_port() {
     local max_port="${2:-2299}"
 
     local port=${min_port}
-    while [ ${port} -le ${max_port} ]; do
+    while [[ ${port} -le ${max_port} ]]; do
         if ! _is_port_in_use "${port}"; then
             echo "${port}"
             return ${VDE_SUCCESS}
@@ -227,15 +227,15 @@ build_docker_opts() {
 
     local docker_opts=""
 
-    if [ "${rebuild}" = "true" ]; then
+    if [[ "${rebuild}" = "true" ]]; then
         docker_opts="--build"
     fi
 
-    if [ "${nocache}" = "true" ]; then
+    if [[ "${nocache}" = "true" ]]; then
         docker_opts="${docker_opts} --no-cache"
     fi
 
-    if [ -n "${VDE_DOCKER_NETWORK}" ]; then
+    if [[ -n "${VDE_DOCKER_NETWORK}" ]]; then
         docker_opts="${docker_opts} --network ${VDE_DOCKER_NETWORK}"
     fi
 
@@ -283,7 +283,7 @@ start_vm() {
 
     _info "Starting VM '${vm_name}'..."
 
-    while [ ${attempt} -le ${max_attempts} ]; do
+    while [[ ${attempt} -le ${max_attempts} ]]; do
         _info "Attempt ${attempt} of ${max_attempts}..."
 
         # Build the compose up command based on flags
@@ -362,7 +362,7 @@ stop_vm() {
 
     _info "Stopping VM '${vm_name}'..."
 
-    while [ ${attempt} -le ${max_attempts} ]; do
+    while [[ ${attempt} -le ${max_attempts} ]]; do
         if docker compose -f "${compose_file}" -p "${project_name}" down -v -t "${timeout}" --remove-orphans 2>&1; then
             _info "VM '${vm_name}' stopped successfully"
             # Update state file to reflect stopped status
@@ -437,7 +437,7 @@ get_or_allocate_ssh_port() {
     local existing_port
     existing_port=$(get_vm_ssh_port "${vm_name}")
 
-    if [ -n "${existing_port}" ]; then
+    if [[ -n "${existing_port}" ]]; then
         echo "${existing_port}"
         return ${VDE_SUCCESS}
     fi
@@ -445,7 +445,7 @@ get_or_allocate_ssh_port() {
     local new_port
     new_port=$(find_available_ssh_port)
 
-    if [ -z "${new_port}" ]; then
+    if [[ -z "${new_port}" ]]; then
         _error "Failed to allocate SSH port for VM: ${vm_name}"
         return ${VDE_ERR_NO_PORT}
     fi
@@ -478,7 +478,7 @@ get_container_ip() {
     local container_id
     container_id=$(get_container_id "${vm_name}")
 
-    if [ -z "${container_id}" ]; then
+    if [[ -z "${container_id}" ]]; then
         return ${VDE_ERR_NOT_FOUND}
     fi
 
@@ -494,7 +494,7 @@ exec_in_container() {
     local container_id
     container_id=$(get_container_id "${vm_name}")
 
-    if [ -z "${container_id}" ]; then
+    if [[ -z "${container_id}" ]]; then
         _error "Container not found for VM: ${vm_name}"
         return ${VDE_ERR_NOT_FOUND}
     fi
@@ -511,7 +511,7 @@ get_container_logs() {
     local container_id
     container_id=$(get_container_id "${vm_name}")
 
-    if [ -z "${container_id}" ]; then
+    if [[ -z "${container_id}" ]]; then
         _error "Container not found for VM: ${vm_name}"
         return ${VDE_ERR_NOT_FOUND}
     fi
@@ -552,7 +552,7 @@ wait_for_container_healthy() {
         local container_id
         container_id=$(get_container_id "${vm_name}")
 
-        if [ -z "${container_id}" ]; then
+        if [[ -z "${container_id}" ]]; then
             _error "Container not found: ${vm_name}"
             return ${VDE_ERR_NOT_FOUND}
         fi
@@ -560,11 +560,11 @@ wait_for_container_healthy() {
         local status
         status=$(docker inspect -f '{{.State.Health.Status}}' "${container_id}" 2>/dev/null)
 
-        if [ "${status}" = "healthy" ]; then
+        if [[ "${status}" = "healthy" ]]; then
             return ${VDE_SUCCESS}
         fi
 
-        sleep ${interval}
+        zmodload zsh/zselect 2>/dev/null && zselect -t 20
         (( elapsed += interval ))
     done
 

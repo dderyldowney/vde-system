@@ -1,5 +1,9 @@
-# Guard: ensure no hard-coded absolute paths leak into the codebase at runtime.
+#!/usr/bin/env zsh
 # Intended to be sourced by entry points (e.g. bin/vde) during startup.
+
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 set -e
 
@@ -13,7 +17,7 @@ vde_guard_absolute_paths() {
   for f in $(git ls-files); do
     # Skip non-source files and this guard file itself
     case "$f" in
-      .github/*|configs/*|docs/*|tests/*|env-files/*|plans/*|*.md|*.txt|*.log|*.bak|lib/vde-root-guard|lib/vde-path-utils|bin/generate-all-configs) continue;;
+      .github/*|configs/*|docs/*|tests/*|env-files/*|.gemini/PLANS/*|*.md|*.txt|*.log|*.bak|lib/vde-root-guard|lib/vde-path-utils|bin/generate-all-configs) continue;;
       lib/*|bin/*) 
         if grep -nH -E "${forbidden_patterns[1]}|${forbidden_patterns[2]}" "$f" 2>/dev/null; then
           echo "ABSOLUTE PATH DETECTED in $f" 

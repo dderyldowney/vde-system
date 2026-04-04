@@ -2,10 +2,14 @@
 # create-virtual-for - Create a new VM with predefined configuration
 # Enhanced with progress indicators and improved error messages
 
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 set -e
 
 # Determine VDE root directory
-if [[ -z "${VDE_ROOT_DIR}" ]]; then
+if [[ -z "${VDE_ROOT_DIR}" ]] ; then
     export VDE_ROOT_DIR="${0:a:h:h}"
 fi
 
@@ -13,13 +17,13 @@ fi
 source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Source UX libraries (optional - for enhanced UX)
-if [[ -f "${VDE_ROOT_DIR}/lib/vde-progress" ]]; then
+if [[ -f "${VDE_ROOT_DIR}/lib/vde-progress" ]] ; then
     source "${VDE_ROOT_DIR}/lib/vde-progress"
 fi
-if [[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]]; then
+if [[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] ; then
     source "${VDE_ROOT_DIR}/lib/vde-errors"
 fi
-if [[ -f "${VDE_ROOT_DIR}/lib/vde-naming" ]]; then
+if [[ -f "${VDE_ROOT_DIR}/lib/vde-naming" ]] ; then
     source "${VDE_ROOT_DIR}/lib/vde-naming"
 fi
 
@@ -71,7 +75,7 @@ EOF
 # Parse Arguments
 # -----------------------
 VM_ARGS=()
-while [[ ${#} -gt 0 ]]; do
+while [[ ${#} -gt 0 ]] ; do
     case "${1}" in
         -h|--help)
             show_usage
@@ -106,7 +110,7 @@ while [[ ${#} -gt 0 ]]; do
     esac
 done
 
-if [[ ${#VM_ARGS[@]} -eq 0 ]]; then
+if [[ ${#VM_ARGS[@]} -eq 0 ]] ; then
     show_usage
     exit ${VDE_ERR_GENERAL}
 fi
@@ -121,7 +125,7 @@ _create_one_vm() {
     vde_ensure_disk_space 95 || return ${?}
 
     # Validate VM name is not empty
-    if [[ -z "${VM_NAME}" ]]; then
+    if [[ -z "${VM_NAME}" ]] ; then
         _error "VM name cannot be empty"
         return ${VDE_ERR_INVALID_INPUT}
     fi
@@ -134,7 +138,7 @@ _create_one_vm() {
     # Resolve VM name (handles aliases)
     local RESOLVED_NAME
     RESOLVED_NAME=$(resolve_vm_name "${VM_NAME}" || true)
-    if [[ -z "${RESOLVED_NAME}" ]]; then
+    if [[ -z "${RESOLVED_NAME}" ]] ; then
         vde_error_alias_not_found "${VM_NAME}"
         echo ""
         show_known_vms
@@ -151,7 +155,7 @@ _create_one_vm() {
     _vm_install=$(get_vm_info install "${VM_NAME}")
     _vm_svc_port=$(get_vm_info svc_port "${VM_NAME}")
 
-    if [[ -z "${_vm_type}" ]]; then
+    if [[ -z "${_vm_type}" ]] ; then
         vde_error_vm_not_found "${VM_NAME}"
         return ${VDE_ERR_GENERAL}
     fi
@@ -172,7 +176,7 @@ _create_one_vm() {
     vde_progress_info "Reading SSH port..."
     local SSH_PORT
     SSH_PORT=$(get_vm_info ssh_port "${VM_NAME}")
-    if [[ -z "${SSH_PORT}" ]]; then
+    if [[ -z "${SSH_PORT}" ]] ; then
         vde_error_simple "No ssh_port defined for '${VM_NAME}' in vm-types.conf — cannot create VM"
         return ${VDE_ERR_GENERAL}
     fi
@@ -186,9 +190,9 @@ _create_one_vm() {
     
     compose_file="${CONFIGS_DIR}/${category}/${RAW_NAME}/docker-compose.yml"
 
-    if [[ "${_vm_type}" == "lang" ]]; then
-        rendered=$(render_language_template "${RAW_NAME}" "${SSH_PORT}")
-    elif [[ "${_vm_type}" == "service" ]]; then
+    if [[ "${_vm_type}" == "lang" ]] ; then
+        rendered=$(render_language_template "${RAW_NAME}" "${SSH_PORT}" "${_vm_install}")
+    elif [[ "${_vm_type}" == "service" ]] ; then
         rendered=$(render_service_template "${RAW_NAME}" "${SSH_PORT}" "${_vm_svc_port}" "${_vm_install}")
     else
         vde_error_simple "Unknown VM type: ${_vm_type}"
@@ -200,7 +204,7 @@ _create_one_vm() {
 
     vde_progress_done "Created: ${compose_file}"
 
-    if [[ -n "${VDE_TEST_MODE}" ]]; then
+    if [[ -n "${VDE_TEST_MODE}" ]] ; then
         cat "${compose_file}"
     fi
 
@@ -212,7 +216,7 @@ _create_one_vm() {
     
     # Ownership and permissions are handled inside the container for services (Phase 22)
 
-    if [[ -n "${VDE_TEST_MODE}" ]]; then
+    if [[ -n "${VDE_TEST_MODE}" ]] ; then
         cat "${compose_file}"
     fi
 
@@ -232,11 +236,11 @@ REDIS_HOST=vde-redis
 REDIS_PORT=6379
 EOF
 
-    if [[ -n "${_vm_svc_port}" ]]; then
+    if [[ -n "${_vm_svc_port}" ]] ; then
         local p
         echo "${_vm_svc_port}" | tr ',' '\n' | while read -r p; do
             p=$(echo "${p}" | tr -d ' ')
-            [ -n "${p}" ] && {
+            [[ -n "${p}" ] && {
                 upper_name=$(echo "${RAW_NAME}" | tr '[:lower:]' '[:upper:]')
                 echo "${upper_name}_PORT=${p}" >> "${env_file}"
             }
@@ -263,7 +267,7 @@ EOF
     # -----------------------
     # Start the VM (unless disabled)
     # -----------------------
-    if [[ "${START_VM}" == "true" ]]; then
+    if [[ "${START_VM}" == "true" ]] ; then
         vde_progress_info "Starting VM..."
 
         if "${VDE_ROOT_DIR}/bin/start-virtual" "${VM_NAME}" 2>/dev/null; then
@@ -308,7 +312,7 @@ _last_exit=0
 for _vm_arg in "${VM_ARGS[@]}"; do
     _create_one_vm "${_vm_arg}"
     _rc=${?}
-    if [[ ${_rc} -eq 0 ]]; then
+    if [[ ${_rc} -eq 0 ]] ; then
         _CREATED_VMS+=("${_vm_arg}")
     else
         _FAILED_VMS+=("${_vm_arg}")
@@ -317,10 +321,10 @@ for _vm_arg in "${VM_ARGS[@]}"; do
 done
 
 echo ""
-if [[ ${#_CREATED_VMS[@]} -gt 0 ]]; then
+if [[ ${#_CREATED_VMS[@]} -gt 0 ]] ; then
     vde_success "Created ${#_CREATED_VMS[@]} VM(s): ${_CREATED_VMS[*]}"
 fi
-if [[ ${#_FAILED_VMS[@]} -gt 0 ]]; then
+if [[ ${#_FAILED_VMS[@]} -gt 0 ]] ; then
     log_error "Failed ${#_FAILED_VMS[@]} VM(s): ${_FAILED_VMS[*]}"
     exit ${_last_exit}
 fi

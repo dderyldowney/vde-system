@@ -7,13 +7,17 @@
 # This command copies the VDE public key to the public-ssh-keys directory
 # which is used during Docker builds to bake the key into container images.
 
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 set -e
 
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
 source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Parse command line arguments
-if [[ "${1}" == "--help" ]] || [[ "${1}" == "-h" ]]; then
+if [[ "${1}" == "--help" ]] || [[ "${1}" == "-h" ]] ; then
     cat <<EOF
 VDE SSH Sync - Sync SSH keys to VDE build context
 

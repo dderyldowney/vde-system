@@ -14,6 +14,7 @@ if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 
 from vm_common import VDE_ROOT, run_vde_command, container_is_running, get_container_id
+from shell_helpers import wait_for_condition
 
 @given("{vm_name} service VM is created")
 def step_service_vm_created(context, vm_name):
@@ -53,49 +54,52 @@ def step_vm_stopped(context, vm_name):
 
 @given('I create a test table "{table_name}" in "{vm_name}"')
 def step_create_test_table(context, table_name, vm_name):
-    # Execute psql command in container as devuser (sudo to postgres)
-    # Add retry loop to handle "database system is starting up"
-    # Use IF NOT EXISTS to prevent error if already present from previous interrupted run
+    """Prerequisite: Create a test table in the VM."""
+    step_create_table(context, table_name, vm_name)
+
+@when('I create a table "{table_name}" in "{vm_name}"')
+def step_create_table(context, table_name, vm_name):
     cmd = f"exec {vm_name} \"sudo -u postgres psql -d postgres -c 'CREATE TABLE IF NOT EXISTS {table_name} (id serial PRIMARY KEY);'\""
-    
-    start_time = time.time()
-    timeout = 30
-    last_err = ""
-    while time.time() - start_time < timeout:
+
+    def try_create():
         r = run_vde_command(cmd, timeout=10)
         if r.returncode == 0:
-            return
-        last_err = r.stderr
-        # Broaden retry to catch socket errors and connection refused
-        low_err = last_err.lower()
-        if "starting up" not in low_err and "no such file" not in low_err and "connection refused" not in low_err and "could not connect" not in low_err:
-            break
-        # Use sub-second sleep for faster response
-        time.sleep(0.5)
-        
-    assert False, f"Failed to create table within {timeout}s: {last_err}"
+            return True
+        last_err = r.stderr.lower()
+        if "starting up" in last_err or "no such file" in last_err or "connection refused" in last_err or "could not connect" in last_err:
+            return False
+        raise Exception(f"Failed to create table: {r.stderr}")
 
+    try:
+        wait_for_condition(
+            try_create,
+            timeout=30,
+            description=f"table '{table_name}' creation in {vm_name}"
+        )
+    except Exception as e:
+        assert False, str(e)
 @then('the table "{table_name}" should still exist in "{vm_name}"')
 def step_table_should_exist(context, table_name, vm_name):
     cmd = f"exec {vm_name} \"sudo -u postgres psql -d postgres -c '\\dt {table_name}'\""
     
-    start_time = time.time()
-    timeout = 30
-    last_err = ""
-    while time.time() - start_time < timeout:
+    def check_table():
         r = run_vde_command(cmd, timeout=10)
         if r.returncode == 0:
             assert table_name in r.stdout, f"Table {table_name} not found in {vm_name}"
-            return
-        last_err = r.stderr
-        # Broaden retry to catch socket errors and connection refused
-        low_err = last_err.lower()
-        if "starting up" not in low_err and "no such file" not in low_err and "connection refused" not in low_err and "could not connect" not in low_err:
-            break
-        # Use sub-second sleep for faster response
-        time.sleep(0.5)
-        
-    assert False, f"Failed to check table existence within {timeout}s: {last_err}"
+            return True
+        last_err = r.stderr.lower()
+        if "starting up" in last_err or "no such file" in last_err or "connection refused" in last_err or "could not connect" in last_err:
+            return False
+        raise Exception(f"Failed to check table: {r.stderr}")
+
+    try:
+        wait_for_condition(
+            check_table,
+            timeout=30,
+            description=f"table '{table_name}' existence in {vm_name}"
+        )
+    except Exception as e:
+        assert False, str(e)
 
 @then('host port {port:d} should be open')
 def step_port_should_be_open(context, port):
@@ -108,14 +112,14 @@ def step_port_should_be_open(context, port):
 
 @then('I should wait for VM "{vm_name}" to be healthy')
 def step_wait_for_healthy(context, vm_name):
-    start_time = time.time()
-    timeout = 60
-    while time.time() - start_time < timeout:
-        r = run_vde_command(f"inspect {vm_name} --health", timeout=10)
-        if r.returncode == 0 and "healthy" in r.stdout.lower():
-            return
-        time.sleep(0.5)
-    assert False, f"VM {vm_name} did not become healthy within {timeout}s"
+    try:
+        wait_for_condition(
+            lambda: "healthy" in run_vde_command(f"inspect {vm_name} --health", timeout=10).stdout.lower(),
+            timeout=60,
+            description=f"VM '{vm_name}' health"
+        )
+    except Exception:
+        assert False, f"VM {vm_name} did not become healthy within timeout"
 
 @then('the database should be ready for connections immediately')
 def step_db_ready_immediately(context):

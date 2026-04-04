@@ -8,6 +8,10 @@
 #===============================================================================
 
 # Determine VDE root directory
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
@@ -19,7 +23,7 @@ export VDE_ROOT_DIR
 # Parse options
 QUIET=0
 
-while [[ ${#} -gt 0 ]]; do
+while [[ ${#} -gt 0 ]] ; do
     case "${1}" in
         -q|--quiet)
             QUIET=1
@@ -34,7 +38,7 @@ done
 # Get VDE image prefix
 VDE_PREFIX="${VDE_IMAGE_PREFIX:-vde-}"
 
-if [ ${QUIET} -eq 1 ]; then
+if [[ ${QUIET} -eq 1 ]] ; then
     docker images --format '{{.ID}}' | grep "^${VDE_PREFIX}" || true
 else
     docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}' | grep "^${VDE_PREFIX}" || true

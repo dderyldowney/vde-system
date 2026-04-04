@@ -9,6 +9,10 @@
 #        vde ask "create a rust development environment"
 #===============================================================================
 
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
@@ -24,7 +28,7 @@ export VDE_ROOT_DIR
 [[ -f "${VDE_ROOT_DIR}/lib/vde-commands"     ]] && source "${VDE_ROOT_DIR}/lib/vde-commands"     &>/dev/null
 [[ -f "${VDE_ROOT_DIR}/lib/vde-parser"       ]] && source "${VDE_ROOT_DIR}/lib/vde-parser"       &>/dev/null
 
-if [[ ${#} -eq 0 ]]; then
+if [[ ${#} -eq 0 ]] ; then
     echo "Usage: vde ask <natural language input>"
     echo ""
     echo "Examples:"
@@ -38,7 +42,7 @@ input="${*}"
 DRY_RUN=0
 
 # Check for --dry-run flag
-if [[ "${input}" == *"--dry-run"* ]]; then
+if [[ "${input}" == *"--dry-run"* ]] ; then
     DRY_RUN=1
     # Remove --dry-run from input so it doesn't confuse the parser
     input="${input/--dry-run/}"
@@ -55,14 +59,14 @@ fi
 # Generate plan (redirect all log output to stderr so only the plan line goes to stdout)
 plan=$(VDE_LOG_LEVEL=ERROR generate_plan "${input}" 2>/dev/null | grep -E '^[A-Z_]+:|^---')
 
-if [[ -z "${plan}" ]]; then
+if [[ -z "${plan}" ]] ; then
     _error "Could not understand: ${input}"
     _info "Try 'vde help' for available commands."
     exit ${VDE_ERR_INVALID_INPUT}
 fi
 
 # Execute or display the plan
-if [[ ${DRY_RUN} -eq 1 ]]; then
+if [[ ${DRY_RUN} -eq 1 ]] ; then
     echo "${plan}"
 else
     echo "${plan}" | execute_plan

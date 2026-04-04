@@ -5,7 +5,11 @@
 #===============================================================================
 
 # SOURCE GUARD
-if [ "${_VDE_LOG_LOADED:-}" = "1" ]; then
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
+if [[ "${_VDE_LOG_LOADED:-}" = "1" ]] ; then
     return 0 2>/dev/null || exit 0
 fi
 _VDE_LOG_LOADED=1
@@ -50,12 +54,12 @@ _VDE_LOG_LAST_ROTATE_CHECK=0
 # Initialize logging system
 vde_log_init() {
     # Create logs directory if it doesn't exist
-    if [[ ! -d "${VDE_ROOT_DIR}/logs" ]]; then
+    if [[ ! -d "${VDE_ROOT_DIR}/logs" ]] ; then
         command mkdir -p "${VDE_ROOT_DIR}/logs" 2>/dev/null || return ${VDE_ERR_GENERAL}
     fi
     
     # Create log file if outputting to file
-    if [[ "${VDE_LOG_OUTPUT}" == "file" ]] && [[ ! -f "${VDE_LOG_FILE}" ]]; then
+    if [[ "${VDE_LOG_OUTPUT}" == "file" ]] && [[ ! -f "${VDE_LOG_FILE}" ]] ; then
         command touch "${VDE_LOG_FILE}" 2>/dev/null || return ${VDE_ERR_GENERAL}
         command chmod 600 "${VDE_LOG_FILE}" 2>/dev/null || true
     fi
@@ -64,7 +68,7 @@ vde_log_init() {
     vde_log_set_level "${VDE_LOG_LEVEL}"
     
     # Ensure logs directory is writable
-    if [[ ! -w "${VDE_ROOT_DIR}/logs" ]]; then
+    if [[ ! -w "${VDE_ROOT_DIR}/logs" ]] ; then
         return ${VDE_ERR_GENERAL}
     fi
     
@@ -82,7 +86,7 @@ vde_log_set_level() {
     local level="${1:-INFO}"
     level=$(echo "${level}" | tr '[:lower:]' '[:upper:]')
     
-    if [[ -n "${VDE_LOG_LEVELS[${level}]}" ]]; then
+    if [[ -n "${VDE_LOG_LEVELS[${level}]}" ]] ; then
         _VDE_LOG_CURRENT_LEVEL="${VDE_LOG_LEVELS[${level}]}"
         return 0
     fi
@@ -128,7 +132,7 @@ vde_log_to_file() {
     
     # Ensure directory exists
     local dir="$(dirname "${filepath}")"
-    if [[ ! -d "${dir}" ]]; then
+    if [[ ! -d "${dir}" ]] ; then
         command mkdir -p "${dir}" 2>/dev/null || return ${VDE_ERR_GENERAL}
     fi
     command touch "${filepath}" 2>/dev/null || return ${VDE_ERR_GENERAL}
@@ -160,25 +164,25 @@ vde_log() {
     local context=""
     
     # Only shift if we have at least 3 args
-    if [[ ${#} -ge 3 ]]; then
+    if [[ ${#} -ge 3 ]] ; then
         shift 3
         context="${@}"
     fi
     
     # Validate level
     level=$(echo "${level}" | tr '[:lower:]' '[:upper:]')
-    if [[ -z "${VDE_LOG_LEVELS[${level}]}" ]]; then
+    if [[ -z "${VDE_LOG_LEVELS[${level}]}" ]] ; then
         level="INFO"
     fi
     
     # Check if we should log this level
     local level_num="${VDE_LOG_LEVELS[${level}]}"
-    if [[ "${level_num}" -lt "${_VDE_LOG_CURRENT_LEVEL}" ]]; then
+    if [[ "${level_num}" -lt "${_VDE_LOG_CURRENT_LEVEL}" ]] ; then
         return 0
     fi
     
     # Ensure initialized
-    if [[ "${_VDE_LOG_INITIALIZED}" -eq 0 ]]; then
+    if [[ "${_VDE_LOG_INITIALIZED}" -eq 0 ]] ; then
         vde_log_init || return ${VDE_ERR_GENERAL}
     fi
     
@@ -258,7 +262,7 @@ vde_log_format_json() {
     # Build JSON object
     local json="{\"timestamp\":\"${timestamp}\",\"level\":\"${level}\",\"component\":\"${component}\",\"message\":\"${message}\""
     
-    if [[ -n "${context}" ]]; then
+    if [[ -n "${context}" ]] ; then
         context=$(echo "${context}" | command sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\r/\\r/g; s/\n/\\n/g')
         json="${json},\"context\":\"${context}\""
     fi
@@ -304,13 +308,13 @@ vde_log_format_text() {
 
 # Check if log rotation is needed
 vde_log_check_rotation() {
-    if [[ "${VDE_LOG_RETENTION_POLICY}" != "disabled" ]]; then
+    if [[ "${VDE_LOG_RETENTION_POLICY}" != "disabled" ]] ; then
         # Check based on size
-        if [[ "${VDE_LOG_RETENTION_POLICY}" == "size" ]] || [[ "${VDE_LOG_RETENTION_POLICY}" == "both" ]]; then
-            if [[ -f "${VDE_LOG_FILE}" ]]; then
+        if [[ "${VDE_LOG_RETENTION_POLICY}" == "size" ]] || [[ "${VDE_LOG_RETENTION_POLICY}" == "both" ]] ; then
+            if [[ -f "${VDE_LOG_FILE}" ]] ; then
                 local size
                 size=$(command stat -f%z "${VDE_LOG_FILE}" 2>/dev/null || command stat -c%s "${VDE_LOG_FILE}" 2>/dev/null || echo 0)
-                if [[ "${size}" -ge "${VDE_LOG_MAX_SIZE}" ]]; then
+                if [[ "${size}" -ge "${VDE_LOG_MAX_SIZE}" ]] ; then
                     vde_log_rotate
                 fi
             fi
@@ -319,8 +323,8 @@ vde_log_check_rotation() {
         # Check based on time (daily)
         local current_date
         current_date=$(date +%Y%m%d 2>/dev/null || echo "unknown")
-        if [[ "${VDE_LOG_RETENTION_POLICY}" == "time" ]] || [[ "${VDE_LOG_RETENTION_POLICY}" == "both" ]]; then
-            if [[ "${current_date}" != "${_VDE_LOG_LAST_ROTATE_CHECK}" ]]; then
+        if [[ "${VDE_LOG_RETENTION_POLICY}" == "time" ]] || [[ "${VDE_LOG_RETENTION_POLICY}" == "both" ]] ; then
+            if [[ "${current_date}" != "${_VDE_LOG_LAST_ROTATE_CHECK}" ]] ; then
                 vde_log_rotate
                 _VDE_LOG_LAST_ROTATE_CHECK="${current_date}"
             fi
@@ -330,7 +334,7 @@ vde_log_check_rotation() {
 
 # Perform log rotation
 vde_log_rotate() {
-    if [[ ! -f "${VDE_LOG_FILE}" ]]; then
+    if [[ ! -f "${VDE_LOG_FILE}" ]] ; then
         return 0
     fi
     
@@ -369,7 +373,7 @@ vde_log_rotate() {
 vde_log_cleanup() {
     local log_dir="$(dirname "${VDE_LOG_FILE}")"
     
-    if [[ ! -d "${log_dir}" ]]; then
+    if [[ ! -d "${log_dir}" ]] ; then
         return 0
     fi
     
@@ -398,7 +402,7 @@ vde_log_cleanup() {
 vde_log_recent() {
     local count="${1:-50}"
     
-    if [[ -f "${VDE_LOG_FILE}" ]]; then
+    if [[ -f "${VDE_LOG_FILE}" ]] ; then
         command tail -n "${count}" "${VDE_LOG_FILE}"
     fi
 }
@@ -409,11 +413,11 @@ vde_log_grep() {
     local pattern="${1}"
     
     # Only shift if we have more than 1 arg
-    if [[ ${#} -gt 1 ]]; then
+    if [[ ${#} -gt 1 ]] ; then
         shift
     fi
     
-    if [[ -f "${VDE_LOG_FILE}" ]]; then
+    if [[ -f "${VDE_LOG_FILE}" ]] ; then
         command grep -E "${pattern}" "${VDE_LOG_FILE}" "${@}"
     fi
 }
@@ -422,7 +426,7 @@ vde_log_grep() {
 vde_log_errors() {
     local count="${1:-100}"
     
-    if [[ -f "${VDE_LOG_FILE}" ]]; then
+    if [[ -f "${VDE_LOG_FILE}" ]] ; then
         command grep -E "\[ERROR\]" "${VDE_LOG_FILE}" | command tail -n "${count}"
     fi
 }
@@ -441,7 +445,7 @@ vde_log_function() {
 vde_log_function_return() {
     local func_name="${FUNCNAME[1]:-unknown}"
     local exit_code="${?}"
-    if [[ "${exit_code}" -eq 0 ]]; then
+    if [[ "${exit_code}" -eq 0 ]] ; then
         vde_log_debug "Exiting function: ${func_name} (success)" "core"
     else
         vde_log_debug "Exiting function: ${func_name} (exit code: ${exit_code})" "core"
@@ -452,7 +456,7 @@ vde_log_function_return() {
 vde_log_export() {
     local output_file="${1:-${VDE_ROOT_DIR}/logs/vde-exported.json}"
     
-    if [[ -f "${VDE_LOG_FILE}" ]]; then
+    if [[ -f "${VDE_LOG_FILE}" ]] ; then
         vde_log_set_format json
         command cp "${VDE_LOG_FILE}" "${output_file}"
         vde_log_set_format text

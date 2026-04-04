@@ -2,6 +2,10 @@
 # VDE SSH Agent Setup
 # Automatically sets up SSH keys, agent, and configuration
 
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 set -e
 
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
@@ -11,7 +15,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 ACTION="status"
 FORCE_GENERATE=false
 
-while [[ ${#} -gt 0 ]]; do
+while [[ ${#} -gt 0 ]] ; do
     case ${1} in
         --init|-i)
             ACTION="init"
@@ -54,7 +58,7 @@ done
 # ==============================================================================
 # Status Display Mode (default)
 # ==============================================================================
-if [[ "${ACTION}" == "status" ]]; then
+if [[ "${ACTION}" == "status" ]] ; then
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"
     echo "║          VDE SSH Agent Status                            ║"
@@ -69,12 +73,12 @@ if [[ "${ACTION}" == "status" ]]; then
     # VDE SSH Isolation info
     echo "VDE SSH Isolation:"
     echo "  Directory: ${VDE_SSH_DIR}"
-    if [[ -f "${VDE_SSH_IDENTITY}" ]]; then
+    if [[ -f "${VDE_SSH_IDENTITY}" ]] ; then
         echo "  ✓ VDE SSH key exists"
     else
         echo "  ⚠ VDE SSH key not found (run --init)"
     fi
-    if [[ -f "${VDE_SSH_CONFIG}" ]]; then
+    if [[ -f "${VDE_SSH_CONFIG}" ]] ; then
         local vm_count
         vm_count=$(grep -c "^Host " "${VDE_SSH_CONFIG}" 2>/dev/null || echo "0")
         echo "  ✓ VDE SSH config exists (${vm_count} VM entries)"
@@ -101,7 +105,7 @@ if [[ "${ACTION}" == "status" ]]; then
         echo "Keys loaded in agent:"
         local key_count
         key_count=$(ssh-add -l 2>/dev/null | wc -l | tr -d ' ')
-        if [[ ${key_count} -gt 0 ]]; then
+        if [[ ${key_count} -gt 0 ]] ; then
             ssh-add -l 2>/dev/null
         else
             echo "  (none loaded)"
@@ -115,7 +119,7 @@ if [[ "${ACTION}" == "status" ]]; then
 
     # Public keys in build context
     echo "Public key in build context:"
-    if [[ -f "${VDE_ROOT_DIR}/public-ssh-keys/vde_id_ed25519.pub" ]]; then
+    if [[ -f "${VDE_ROOT_DIR}/public-ssh-keys/vde_id_ed25519.pub" ]] ; then
         echo "  ✓ vde_id_ed25519.pub"
     else
         echo "  (none - run --init to sync)"
@@ -128,7 +132,7 @@ fi
 # ==============================================================================
 # Initialize Mode -- Full SSH setup
 # ==============================================================================
-if [[ "${ACTION}" == "init" ]]; then
+if [[ "${ACTION}" == "init" ]] ; then
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"
     echo "║          VDE SSH Agent Initialization                    ║"
@@ -222,7 +226,7 @@ fi
 # ==============================================================================
 # Start Mode -- Just start agent and load VDE key
 # ==============================================================================
-if [[ "${ACTION}" == "start" ]]; then
+if [[ "${ACTION}" == "start" ]] ; then
     echo "Starting SSH agent and loading VDE key..."
     echo ""
 

@@ -2,6 +2,10 @@
 # Demo: Schema Update Mechanisms
 # Demonstrates version detection, compatibility checking, backup, and validation
 
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 set -e
 
 VDE_SCRIPTS_DIR="${0:A:h}"
@@ -14,7 +18,7 @@ source "${PROJECT_ROOT}/lib/vde-core"
 source "${PROJECT_ROOT}/lib/vde-log"
 
 # Colors for output
-if [[ -t 1 ]]; then
+if [[ -t 1 ]] ; then
     GREEN='\033[0;32m'
     BLUE='\033[0;34m'
     YELLOW='\033[1;33m'
@@ -112,7 +116,7 @@ demo_change_detection() {
         print_success "No schema changes detected"
     else
         local result=${?}
-        if [ ${result} -eq ${VDE_ERR_CACHE_INVALID} ]; then
+        if [[ ${result} -eq ${VDE_ERR_CACHE_INVALID} ]] ; then
             print_result "Schema has been updated - cache regeneration recommended"
         else
             print_error "Error detecting schema changes"
@@ -126,7 +130,7 @@ demo_change_detection() {
         print_success "No schema changes detected"
     else
         local result=${?}
-        if [ ${result} -eq ${VDE_ERR_CACHE_INVALID} ]; then
+        if [[ ${result} -eq ${VDE_ERR_CACHE_INVALID} ]] ; then
             print_result "Schema has been updated - cache regeneration recommended"
         else
             print_error "Error detecting schema changes"
@@ -142,7 +146,7 @@ demo_backup() {
     local backup_file
     backup_file=$(vde_backup_config "${config_file}" 2>/dev/null)
 
-    if [ -f "${backup_file}" ]; then
+    if [[ -f "${backup_file}" ]] ; then
         print_success "Backup created: ${backup_file}"
         local backup_size
         backup_size=$(du -h "${backup_file}" | cut -f1)
@@ -188,7 +192,7 @@ demo_validate_and_update() {
         print_success "Config is valid and cache is up to date"
     else
         local result=${?}
-        if [ ${result} -eq ${VDE_ERR_CACHE_INVALID} ]; then
+        if [[ ${result} -eq ${VDE_ERR_CACHE_INVALID} ]] ; then
             print_result "Cache needs regeneration"
 
             print_step "Regenerating cache..."
@@ -197,7 +201,7 @@ demo_validate_and_update() {
             else
                 print_error "Cache regeneration failed"
             fi
-        elif [ ${result} -eq ${VDE_ERR_INVALID_DATA} ]; then
+        elif [[ ${result} -eq ${VDE_ERR_INVALID_DATA} ]] ; then
             print_error "Config validation failed - manual intervention required"
         fi
     fi

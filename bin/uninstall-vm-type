@@ -117,7 +117,7 @@ ask_yes_no() {
 
 # Remove entry from vm-types.yml
 remove_vm_type_entry() {
-    local vm_type="${1}"
+    local _vm_target_type="${1}"
 
     if [[ ! -f "${VM_TYPES_FILE}" ]]; then
         print_info "No vm-types.conf file found"
@@ -125,18 +125,18 @@ remove_vm_type_entry() {
         local temp_file="${VM_TYPES_FILE}.tmp"
 
         if [[ "${DRY_RUN}" = "true" ]]; then
-            print_info "[DRY RUN] Would remove entry for '${vm_type}' from vm-types.conf"
-            grep -E "^(lang|service)\|${vm_type}\|" "${VM_TYPES_FILE}" 2>/dev/null || print_info "[DRY RUN]   (no entry found)"
+            print_info "[DRY RUN] Would remove entry for '${_vm_target_type}' from vm-types.conf"
+            grep -E "^(lang|service)\|${_vm_target_type}\|" "${VM_TYPES_FILE}" 2>/dev/null || print_info "[DRY RUN]   (no entry found)"
         else
             # Remove lines matching the VM type (format: lang|rust|... or service|postgres|...)
-            grep -v -E "^(lang|service)\|${vm_type}\|" "${VM_TYPES_FILE}" > "${temp_file}" 2>/dev/null || true
+            grep -v -E "^(lang|service)\|${_vm_target_type}\|" "${VM_TYPES_FILE}" > "${temp_file}" 2>/dev/null || true
 
             if ! cmp -s "${VM_TYPES_FILE}" "${temp_file}" 2>/dev/null; then
                 mv "${temp_file}" "${VM_TYPES_FILE}"
-                print_success "Removed '${vm_type}' from vm-types.conf"
+                print_success "Removed '${_vm_target_type}' from vm-types.conf"
             else
                 rm -f "${temp_file}"
-                print_info "No entry found for '${vm_type}' in vm-types.conf"
+                print_info "No entry found for '${_vm_target_type}' in vm-types.conf"
             fi
         fi
     fi
@@ -145,7 +145,7 @@ remove_vm_type_entry() {
     local json_file="${VDE_ROOT_DIR}/data/vm-types.json"
     if [[ -f "${json_file}" ]]; then
         if [[ "${DRY_RUN}" = "true" ]]; then
-            print_info "[DRY RUN] Would remove entry for '${vm_type}' from vm-types.json"
+            print_info "[DRY RUN] Would remove entry for '${_vm_target_type}' from vm-types.json"
         else
             python3 -c '
 import json
@@ -175,7 +175,7 @@ try:
 except Exception as e:
     print("Failed to update JSON: " + str(e), file=sys.stderr)
     sys.exit(1)
-' "${json_file}" "${vm_type}"
+' "${json_file}" "${_vm_target_type}"
         fi
     fi
 
@@ -187,8 +187,8 @@ except Exception as e:
 
 # Remove docker config directory
 remove_docker_config() {
-    local vm_type="${1}"
-    local config_dir="${VDE_ROOT_DIR}/configs/docker/${vm_type}"
+    local _vm_target_type="${1}"
+    local config_dir="${VDE_ROOT_DIR}/configs/docker/${_vm_target_type}"
 
     if [[ ! -d "${config_dir}" ]]; then
         print_info "No config directory found: ${config_dir}"
@@ -201,75 +201,75 @@ remove_docker_config() {
 
 # Stop and remove VM if running
 remove_vm() {
-    local vm_type="${1}"
+    local _vm_target_type="${1}"
 
-    if vm_exists "${vm_type}" 2>/dev/null; then
-        if is_vm_running "${vm_type}" 2>/dev/null; then
+    if vm_exists "${_vm_target_type}" 2>/dev/null; then
+        if is_vm_running "${_vm_target_type}" 2>/dev/null; then
             if [[ "${DRY_RUN}" = "true" ]]; then
-                print_info "[DRY RUN] Would stop VM: ${vm_type}"
+                print_info "[DRY RUN] Would stop VM: ${_vm_target_type}"
             else
-                print_info "Stopping VM: ${vm_type}"
-                stop_vm "${vm_type}" 2>/dev/null || true
+                print_info "Stopping VM: ${_vm_target_type}"
+                stop_vm "${_vm_target_type}" 2>/dev/null || true
             fi
         fi
 
-        local compose_file="${VDE_ROOT_DIR}/configs/docker/${vm_type}/docker-compose.yml"
+        local compose_file="${VDE_ROOT_DIR}/configs/docker/${_vm_target_type}/docker-compose.yml"
         if [[ -f "${compose_file}" ]]; then
             # docker-compose.yml is preserved — must be deleted manually by the user.
             print_info "Compose file preserved (manual deletion required): ${compose_file}"
         fi
     else
-        print_info "VM '${vm_type}' not built, skipping VM removal"
+        print_info "VM '${_vm_target_type}' not built, skipping VM removal"
     fi
 }
 
 # Remove Docker images for the VM type
 remove_docker_images() {
-    local vm_type="${1}"
-    local image_prefix="vde-${vm_type}"
+    local _vm_target_type="${1}"
+    local image_prefix="vde-${_vm_target_type}"
 
     local images
     images=$(docker images --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep "^${image_prefix}" || echo "")
 
     if [[ -z "${images}" ]]; then
-        print_info "No Docker images found for '${vm_type}'"
+        print_info "No Docker images found for '${_vm_target_type}'"
         return 0
     fi
 
     local image_count=$(echo "${images}" | wc -l | tr -d ' ')
 
     if [[ "${DRY_RUN}" = "true" ]]; then
-        print_info "[DRY RUN] Would remove ${image_count} Docker image(s) for '${vm_type}':"
+        print_info "[DRY RUN] Would remove ${image_count} Docker image(s) for '${_vm_target_type}':"
         echo "${images}" | while read -r image; do
             [[ -n "${image}" ]] && print_info "[DRY RUN]   - ${image}"
         done
         return 0
     fi
 
-    print_info "Removing ${image_count} Docker image(s) for '${vm_type}'..."
+    print_info "Removing ${image_count} Docker image(s) for '${_vm_target_type}'..."
     echo "${images}" | while read -r image; do
         [[ -n "${image}" ]] && docker rmi -f "${image}" >/dev/null 2>&1 || true
     done
-    print_success "Removed Docker images for '${vm_type}'"
+    print_success "Removed Docker images for '${_vm_target_type}'"
 }
 
 # Remove SSH config entries
 remove_ssh_entries() {
-    local vm_type="${1}"
+    local _vm_target_type="${1}"
 
     # Get VM category to determine SSH hostname
     local vm_category
-    vm_category=$(get_vm_info type "${vm_type}" 2>/dev/null || echo "")
+    vm_category=$(get_vm_info type "${_vm_target_type}" 2>/dev/null || echo "")
 
     local ssh_hosts=()
 
     if [[ "${vm_category}" == "lang" ]]; then
-        ssh_hosts=("${vm_type}-dev")
+        ssh_hosts=("${_vm_target_type}-dev")
     elif [[ "${vm_category}" == "service" ]]; then
-        ssh_hosts=("${vm_type}")
+        ssh_hosts=("${_vm_target_type}")
     else
         # Default: treat as language
-        ssh_hosts=("${vm_type}-dev")
+        ssh_hosts=("${_vm_target_type}-dev")
     fi
 
     if [[ "${DRY_RUN}" = "true" ]]; then
@@ -286,8 +286,8 @@ remove_ssh_entries() {
 
 # Remove env files
 remove_env_files() {
-    local vm_type="${1}"
-    local env_file="${VDE_ROOT_DIR}/env-files/${vm_type}.env"
+    local _vm_target_type="${1}"
+    local env_file="${VDE_ROOT_DIR}/env-files/${_vm_target_type}.env"
 
     if [[ ! -f "${env_file}" ]]; then
         print_info "No env file found: ${env_file}"
@@ -300,8 +300,8 @@ remove_env_files() {
 
 # Remove logs
 remove_logs() {
-    local vm_type="${1}"
-    local log_dir="${VDE_ROOT_DIR}/logs/${vm_type}"
+    local _vm_target_type="${1}"
+    local log_dir="${VDE_ROOT_DIR}/logs/${_vm_target_type}"
 
     if [[ ! -d "${log_dir}" ]]; then
         return 0

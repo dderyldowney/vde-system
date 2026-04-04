@@ -254,7 +254,7 @@ Not:
 #!/bin/sh   # Wrong - we use zsh features
 ```
 
-Reference: See [`.kilocode/shell-config.md`](.kilocode/shell-config.md) for project shell paths.
+Reference: See [`.gemini/RULES/shell-config.md`](.gemini/RULES/shell-config.md) for project shell paths.
 
 ### File Organization
 For larger scripts, organize with sections:

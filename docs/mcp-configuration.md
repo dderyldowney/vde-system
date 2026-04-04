@@ -124,4 +124,4 @@ npm cache clean --force
 ## References
 
 - [MCP Implementation Plan](../mcp-implementation-plan.md)
-- [Kilo Code MCP Rules](../.kilocode/rules/tools_mcp.md)
+- [Kilo Code MCP Rules](../.gemini/RULES/tools_mcp.md)

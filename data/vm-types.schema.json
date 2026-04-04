@@ -43,7 +43,7 @@
     "languageVM": {
       "type": "object",
       "description": "Development language VM configuration. Container name: {name}-dev, SSH port: static assignment 2200-2399.",
-      "required": ["name", "display", "install", "ssh_port"],
+      "required": ["name", "display", "pkgs", "ssh_port"],
       "properties": {
         "name": {
           "type": "string",
@@ -63,14 +63,23 @@
           "description": "Human-readable name for UI/logging",
           "minLength": 1
         },
-        "install": {
+        "pkgs": {
           "type": "string",
           "description": "Shell command for container provisioning (runs as root)",
           "minLength": 1
         },
+        "custom_cmd": {
+          "type": ["string", "null"],
+          "description": "Custom shell command for non-apt installations (curl, git, etc.)"
+        },
         "service_port": {
           "type": "null",
           "description": "Must be null for language VMs (no service ports)"
+        },
+        "service_ports": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "description": "Optional list of service ports"
         },
         "ssh_port": {
           "type": "integer",
@@ -84,7 +93,7 @@
     "serviceVM": {
       "type": "object",
       "description": "Infrastructure service VM configuration. Container name: {name}, SSH port: static assignment 2400-2499, service ports: defined here.",
-      "required": ["name", "display", "install", "service_port", "ssh_port"],
+      "required": ["name", "display", "pkgs", "service_port", "ssh_port"],
       "properties": {
         "name": {
           "type": "string",
@@ -104,15 +113,24 @@
           "description": "Human-readable name for UI/logging",
           "minLength": 1
         },
-        "install": {
+        "pkgs": {
           "type": "string",
           "description": "Shell command for container provisioning (runs as root)",
           "minLength": 1
+        },
+        "custom_cmd": {
+          "type": ["string", "null"],
+          "description": "Custom shell command for non-apt installations (curl, git, etc.)"
         },
         "service_port": {
           "type": "string",
           "description": "Service port(s) to expose (comma-separated integers: '80' or '80,443')",
           "pattern": "^[0-9]+(,[0-9]+)*$"
+        },
+        "service_ports": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "description": "Optional list of service ports"
         },
         "ssh_port": {
           "type": "integer",

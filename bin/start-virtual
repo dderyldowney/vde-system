@@ -130,25 +130,25 @@ for vm in "${VMS[@]}"; do
         started_count=$((started_count + 1))
         
         # Save Docker state to .docker-state/ (update status to running)
-        local vm_type vm_display ssh_port
-        vm_type=$(get_vm_info type "${vm}" 2>/dev/null) || vm_type="unknown"
-        vm_display=$(get_vm_info display "${vm}" 2>/dev/null) || vm_display="${vm}"
+        local _vm_type _vm_display ssh_port
+        _vm_type=$(get_vm_info type "${vm}" 2>/dev/null) || _vm_type="unknown"
+        _vm_display=$(get_vm_info display "${vm}" 2>/dev/null) || _vm_display="${vm}"
 
         # Extract SSH port from docker-compose.yml
         local raw_name
         raw_name=$(vde_normalize_name "${vm}")
         local compose_file="${CONFIGS_DIR}/${raw_name}/docker-compose.yml"
-        if [ -f "${compose_file}" ]; then
+        if [[ -f "${compose_file}" ]]; then
             ssh_port=$(grep -E '^\s*-\s*"[0-9]+:22"' "${compose_file}" | sed -E 's/.*"([0-9]+):22".*/\1/' | head -n1)
         fi
-        [ -z "${ssh_port}" ] && ssh_port=""
+        [[ -z "${ssh_port}" ]] && ssh_port=""
         
         local state_json
         state_json=$(cat <<EOF
 {
   "vm_name": "${vm}",
-  "vm_type": "${vm_type}",
-  "display_name": "${vm_display}",
+  "vm_type": "${_vm_type}",
+  "display_name": "${_vm_display}",
   "ssh_port": "${ssh_port}",
   "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "status": "running"
@@ -168,12 +168,12 @@ echo ""
 log_info "Batch operation summary:"
 
 # Show started VMs
-if [ ${started_count} -gt 0 ]; then
+if [[ ${started_count} -gt 0 ]]; then
     log_success "Started: ${started_count} VM(s)"
     # Check if BATCH_RESULTS has elements before iterating
     if [[ ${#BATCH_RESULTS[@]} -gt 0 ]]; then
         for vm in "${(@k)BATCH_RESULTS[@]}"; do
-            if [ "${BATCH_RESULTS[${vm}]}" = "started" ]; then
+            if [[ "${BATCH_RESULTS[${vm}]}" = "started" ]]; then
                 log_info "  ✓ ${vm} - started"
             fi
         done
@@ -181,7 +181,7 @@ if [ ${started_count} -gt 0 ]; then
 fi
 
 # Show skipped VMs
-if [ ${skipped_count} -gt 0 ]; then
+if [[ ${skipped_count} -gt 0 ]]; then
     log_info "Skipped: ${skipped_count} VM(s)"
     if [[ ${#BATCH_RESULTS[@]} -gt 0 ]]; then
         for vm in "${(@k)BATCH_RESULTS[@]}"; do
@@ -198,7 +198,7 @@ if [ ${skipped_count} -gt 0 ]; then
 fi
 
 # Show failed VMs
-if [ ${failed_count} -gt 0 ]; then
+if [[ ${failed_count} -gt 0 ]]; then
     log_error "Failed: ${failed_count} VM(s)"
     if [[ ${#BATCH_RESULTS[@]} -gt 0 ]]; then
         for vm in "${(@k)BATCH_RESULTS[@]}"; do
@@ -222,6 +222,6 @@ else
 fi
 
 # Exit non-zero if any VMs failed to start
-if [ ${failed_count} -gt 0 ]; then
+if [[ ${failed_count} -gt 0 ]]; then
     return ${VDE_ERR_DOCKER_FAIL:-5}
 fi

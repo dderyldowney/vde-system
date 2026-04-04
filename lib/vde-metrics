@@ -5,6 +5,10 @@
 #===============================================================================
 
 # Source dependencies
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 [[ -z "${VDE_ROOT_DIR}" ]] && VDE_ROOT_DIR="${0:a:h:h}"
 [[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants"
 [[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
@@ -35,17 +39,17 @@ typeset -gA _VDE_METRICS_COUNTERS=()
 # Initialize metrics system
 vde_metrics_init() {
     # Create cache directory if it doesn't exist
-    if [[ ! -d "${VDE_ROOT_DIR}/.cache" ]]; then
+    if [[ ! -d "${VDE_ROOT_DIR}/.cache" ]] ; then
         command mkdir -p "${VDE_ROOT_DIR}/.cache" 2>/dev/null || return ${VDE_ERR_GENERAL}
     fi
     
     # Create metrics file if it doesn't exist
-    if [[ ! -f "${VDE_METRICS_FILE}" ]]; then
+    if [[ ! -f "${VDE_METRICS_FILE}" ]] ; then
         echo '{"metrics": {}, "timings": {}, "counters": {}, "last_updated": "'$(vde_shell_date_iso8601)'"}' > "${VDE_METRICS_FILE}"
     fi
     
     # Ensure file is writable
-    if [[ ! -w "${VDE_METRICS_FILE}" ]]; then
+    if [[ ! -w "${VDE_METRICS_FILE}" ]] ; then
         return ${VDE_ERR_GENERAL}
     fi
     
@@ -67,7 +71,7 @@ vde_metrics_record() {
     local unit="${3:-count}"
     
     # Check if metrics are initialized
-    if [[ "${_VDE_METRICS_INITIALIZED}" -eq 0 ]]; then
+    if [[ "${_VDE_METRICS_INITIALIZED}" -eq 0 ]] ; then
         vde_metrics_init || return ${VDE_ERR_GENERAL}
     fi
     
@@ -78,7 +82,7 @@ vde_metrics_record() {
     local metrics_json
     metrics_json=$(command cat "${VDE_METRICS_FILE}" 2>/dev/null)
     
-    if [[ -z "${metrics_json}" ]]; then
+    if [[ -z "${metrics_json}" ]] ; then
         metrics_json='{"metrics": {}, "timings": {}, "counters": {}, "last_updated": "'$(vde_shell_date_iso8601)'"}'
     fi
     
@@ -146,7 +150,7 @@ vde_metrics_timing_end() {
     
     local duration=$((end_time - start_time))
     
-    if [[ "${duration}" -gt 0 ]]; then
+    if [[ "${duration}" -gt 0 ]] ; then
         vde_metrics_record "${metric_name}" "${duration}" "milliseconds"
     fi
     
@@ -177,7 +181,7 @@ vde_metrics_time_command() {
 vde_metrics_get() {
     local pattern="${1:-.*}"
     
-    if [[ -f "${VDE_METRICS_FILE}" ]]; then
+    if [[ -f "${VDE_METRICS_FILE}" ]] ; then
         if command -v jq >/dev/null 2>&1; then
             command jq -r ".metrics | to_entries[] | select(.key | test(\"${pattern}\")) | \"\(.key): \(.value)\"" "${VDE_METRICS_FILE}" 2>/dev/null || true
         else
@@ -191,7 +195,7 @@ vde_metrics_get() {
 vde_metrics_get_value() {
     local metric_name="${1}"
     
-    if [[ -f "${VDE_METRICS_FILE}" ]]; then
+    if [[ -f "${VDE_METRICS_FILE}" ]] ; then
         if command -v jq >/dev/null 2>&1; then
             command jq -r ".metrics[\"${metric_name}\"] | last | .value // 0" "${VDE_METRICS_FILE}" 2>/dev/null || echo "0"
         fi
@@ -200,7 +204,7 @@ vde_metrics_get_value() {
 
 # Get metrics statistics
 vde_metrics_stats() {
-    if [[ -f "${VDE_METRICS_FILE}" ]]; then
+    if [[ -f "${VDE_METRICS_FILE}" ]] ; then
         if command -v jq >/dev/null 2>&1; then
             command jq '{
                 total_metrics: (.metrics | length),
@@ -221,7 +225,7 @@ vde_metrics_stats() {
 vde_metrics_export() {
     local output_file="${1:-${VDE_ROOT_DIR}/logs/vde-metrics-export.json}"
     
-    if [[ -f "${VDE_METRICS_FILE}" ]]; then
+    if [[ -f "${VDE_METRICS_FILE}" ]] ; then
         command cp "${VDE_METRICS_FILE}" "${output_file}"
         return 0
     fi
@@ -233,7 +237,7 @@ vde_metrics_summary() {
     echo "Metrics Summary"
     echo "==============="
     
-    if [[ -f "${VDE_METRICS_FILE}" ]]; then
+    if [[ -f "${VDE_METRICS_FILE}" ]] ; then
         local total_entries
         total_entries=$(command jq '.metrics | map_values(length) | values | add // 0' "${VDE_METRICS_FILE}" 2>/dev/null || echo "0")
         echo "Total metric entries: ${total_entries}"
@@ -249,7 +253,7 @@ vde_metrics_summary() {
 
 # Reset all metrics
 vde_metrics_reset() {
-    if [[ "${_VDE_METRICS_INITIALIZED}" -eq 0 ]]; then
+    if [[ "${_VDE_METRICS_INITIALIZED}" -eq 0 ]] ; then
         vde_metrics_init || return ${VDE_ERR_GENERAL}
     fi
     
@@ -299,12 +303,12 @@ vde_metrics_record_cache_miss() {
 
 # Get cache hit rate percentage
 vde_metrics_get_cache_hit_rate() {
-    if [[ -f "${VDE_METRICS_FILE}" ]]; then
+    if [[ -f "${VDE_METRICS_FILE}" ]] ; then
         if command -v jq >/dev/null 2>&1; then
             local hits=$(command jq -r ".metrics[\"${VDE_METRICS_CACHE_HIT_RATE}.hit\"] | length // 0" "${VDE_METRICS_FILE}" 2>/dev/null || echo "0")
             local misses=$(command jq -r ".metrics[\"${VDE_METRICS_CACHE_HIT_RATE}.miss\"] | length // 0" "${VDE_METRICS_FILE}" 2>/dev/null || echo "0")
             local total=$((hits + misses))
-            if [[ "${total}" -gt 0 ]]; then
+            if [[ "${total}" -gt 0 ]] ; then
                 echo $((hits * 100 / total))
             else
                 echo "0"

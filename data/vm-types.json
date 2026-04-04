@@ -11,7 +11,7 @@
           "nasm"
         ],
         "display": "Assembler",
-        "install": "apt-get update -y && apt-get install -y nasm yasm gdb",
+        "pkgs": "nasm yasm gdb",
         "service_port": null,
         "ssh_port": 2200
       },
@@ -21,7 +21,7 @@
           "c"
         ],
         "display": "C",
-        "install": "apt-get update -y && apt-get install -y gcc make cmake gdb",
+        "pkgs": "gcc make cmake gdb",
         "service_port": null,
         "ssh_port": 2201
       },
@@ -33,7 +33,7 @@
           "gcc"
         ],
         "display": "C++",
-        "install": "apt-get update -y && apt-get install -y g++ make cmake gdb",
+        "pkgs": "build-essential g++ make cmake gdb",
         "service_port": null,
         "ssh_port": 2202
       },
@@ -44,7 +44,8 @@
           "dotnet"
         ],
         "display": "C#",
-        "install": "apt-get update -y && apt-get install -y wget apt-transport-https && wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && dpkg -i /tmp/packages-microsoft-prod.deb && rm /tmp/packages-microsoft-prod.deb && apt-get update -y && apt-get install -y dotnet-sdk-8.0 aspnetcore-runtime-8.0",
+        "pkgs": "curl libicu-dev ca-certificates",
+        "custom_cmd": "zsh /vde/scripts/setup/csharp-init.zsh",
         "service_port": null,
         "ssh_port": 2203
       },
@@ -54,19 +55,22 @@
           "displaytest"
         ],
         "display": "Go Language",
-        "install": "apt-get update -y && apt-get install -y golang-go",
+        "pkgs": "golang-go",
         "service_port": null,
-        "ssh_port": 2299
+        "ssh_port": 2204
       },
       {
         "name": "vde-elixir",
         "aliases": [
-          "elixir"
+          "elixir",
+          "ex",
+          "iex"
         ],
         "display": "Elixir",
-        "install": "apt-get update -y && apt-get install -y elixir erlang",
+        "pkgs": "git curl build-essential libssl-dev automake autoconf libncurses5-dev unzip wget locales ca-certificates",
+        "custom_cmd": "zsh /vde/scripts/setup/elixir-init.zsh",
         "service_port": null,
-        "ssh_port": 2204
+        "ssh_port": 2205
       },
       {
         "name": "vde-flutter",
@@ -75,9 +79,9 @@
           "dart"
         ],
         "display": "Flutter",
-        "install": "apt-get update -y && apt-get install -y curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH=\"$PATH:/home/devuser/flutter/bin\" && flutter precache'",
+        "pkgs": "curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH=\"$PATH:/home/devuser/flutter/bin\" && flutter precache'",
         "service_port": null,
-        "ssh_port": 2205
+        "ssh_port": 2206
       },
       {
         "name": "vde-go",
@@ -86,9 +90,9 @@
           "golang"
         ],
         "display": "Go",
-        "install": "apt-get update -y && apt-get install -y golang-go",
+        "pkgs": "golang-go",
         "service_port": null,
-        "ssh_port": 2206
+        "ssh_port": 2207
       },
       {
         "name": "vde-haskell",
@@ -97,9 +101,9 @@
           "ghc"
         ],
         "display": "Haskell",
-        "install": "apt-get update -y && apt-get install -y ghc cabal-install",
+        "pkgs": "ghc cabal-install",
         "service_port": null,
-        "ssh_port": 2207
+        "ssh_port": 2208
       },
       {
         "name": "vde-java",
@@ -108,9 +112,9 @@
           "jdk"
         ],
         "display": "Java",
-        "install": "apt-get update -y && apt-get install -y default-jdk maven gradle",
+        "pkgs": "default-jdk maven gradle",
         "service_port": null,
-        "ssh_port": 2208
+        "ssh_port": 2209
       },
       {
         "name": "vde-js",
@@ -118,12 +122,13 @@
           "js",
           "node",
           "nodejs",
-          "javascript"
+          "npm"
         ],
-        "display": "JavaScript",
-        "install": "apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs",
+        "display": "Node.js",
+        "pkgs": "curl git build-essential",
+        "custom_cmd": "zsh /vde/scripts/setup/js-init.zsh",
         "service_port": null,
-        "ssh_port": 2209
+        "ssh_port": 2210
       },
       {
         "name": "vde-kotlin",
@@ -131,9 +136,10 @@
           "kotlin"
         ],
         "display": "Kotlin",
-        "install": "apt-get update -y && apt-get install -y kotlin && curl -s \"https://get.sdkman.io\" | bash && su - devuser -c \"source ~/.sdkman/bin/sdkman-init.sh && sdk install kotlin\"",
+        "pkgs": "curl zip unzip",
+        "custom_cmd": "zsh /vde/scripts/setup/kotlin-init.zsh",
         "service_port": null,
-        "ssh_port": 2210
+        "ssh_port": 2211
       },
       {
         "name": "vde-lua",
@@ -141,9 +147,9 @@
           "lua"
         ],
         "display": "Lua",
-        "install": "apt-get update -y && apt-get install -y lua5.4 luarocks",
+        "pkgs": "lua5.4 luarocks",
         "service_port": null,
-        "ssh_port": 2211
+        "ssh_port": 2212
       },
       {
         "name": "vde-php",
@@ -151,9 +157,9 @@
           "php"
         ],
         "display": "PHP",
-        "install": "apt-get update -y && apt-get install -y php php-cli php-xml php-mbstring php-curl composer",
+        "pkgs": "php php-cli php-xml php-mbstring php-curl composer",
         "service_port": null,
-        "ssh_port": 2212
+        "ssh_port": 2213
       },
       {
         "name": "vde-python",
@@ -163,18 +169,7 @@
           "py"
         ],
         "display": "Python",
-        "install": "apt-get update -y && apt-get install -y python3 python3-pip postgresql-client",
-        "service_port": null,
-        "ssh_port": 2213
-      },
-      {
-        "name": "vde-r",
-        "aliases": [
-          "r",
-          "rlang"
-        ],
-        "display": "R",
-        "install": "apt-get update -y && apt-get install -y r-base r-cran-littler",
+        "pkgs": "python3 python3-pip python-is-python3 postgresql-client",
         "service_port": null,
         "ssh_port": 2214
       },
@@ -184,18 +179,21 @@
           "ruby"
         ],
         "display": "Ruby",
-        "install": "apt-get update -y && apt-get install -y ruby-full",
+        "pkgs": "ruby-full",
         "service_port": null,
         "ssh_port": 2215
       },
       {
         "name": "vde-rust",
         "aliases": [
-          "rust"
+          "rust",
+          "rs",
+          "rustc"
         ],
         "display": "Rust",
-        "install": "su devuser -c 'curl --proto \"=https\" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && . \\$HOME/.cargo/env && rustup default stable'",
-        "service_port": null,
+        "pkgs": "build-essential curl git",
+        "custom_cmd": "zsh /vde/scripts/setup/rust-init.zsh",
+        "service_ports": [],
         "ssh_port": 2216
       },
       {
@@ -204,7 +202,7 @@
           "scala"
         ],
         "display": "Scala",
-        "install": "apt-get update -y && apt-get install -y scala-defaults sbt",
+        "pkgs": "scala-defaults sbt",
         "service_port": null,
         "ssh_port": 2217
       },
@@ -214,7 +212,7 @@
           "swift"
         ],
         "display": "Swift",
-        "install": "apt-get update -y && apt-get install -y binutils git libc6-dev curl",
+        "pkgs": "binutils git libc6-dev curl",
         "service_port": null,
         "ssh_port": 2218
       },
@@ -224,9 +222,9 @@
           "testport1"
         ],
         "display": "Test Port 1",
-        "install": "apt-get update -y",
+        "pkgs": "top",
         "service_port": null,
-        "ssh_port": 2290
+        "ssh_port": 2219
       },
       {
         "name": "vde-testport2",
@@ -234,9 +232,9 @@
           "testport2"
         ],
         "display": "Test Port 2",
-        "install": "apt-get update -y",
+        "pkgs": "top",
         "service_port": null,
-        "ssh_port": 2291
+        "ssh_port": 2220
       }
     ],
     "service": [
@@ -246,7 +244,7 @@
           "couchdb"
         ],
         "display": "CouchDB",
-        "install": "apt-get update -y && apt-get install -y couchdb",
+        "pkgs": "couchdb",
         "service_port": "5984",
         "ssh_port": 2400
       },
@@ -257,7 +255,7 @@
           "mongo"
         ],
         "display": "MongoDB",
-        "install": "apt-get update -y && apt-get install -y mongodb-org-shell",
+        "pkgs": "mongodb-org-shell",
         "service_port": "27017",
         "ssh_port": 2401
       },
@@ -267,7 +265,7 @@
           "mysql"
         ],
         "display": "MySQL",
-        "install": "apt-get update -y && apt-get install -y default-mysql-server",
+        "pkgs": "default-mysql-server",
         "service_port": "3306",
         "ssh_port": 2402
       },
@@ -277,7 +275,7 @@
           "nginx"
         ],
         "display": "Nginx",
-        "install": "apt-get update -y && apt-get install -y nginx-extras",
+        "pkgs": "nginx-extras",
         "service_port": "80,443",
         "ssh_port": 2403
       },
@@ -290,7 +288,8 @@
           "database"
         ],
         "display": "PostgreSQL",
-        "install": "apt-get update -y && apt-get install -y postgresql-client",
+        "pkgs": "postgresql postgresql-contrib",
+        "custom_cmd": "zsh /vde/scripts/setup/postgres-init.zsh",
         "service_port": "5432",
         "ssh_port": 2404
       },
@@ -300,7 +299,7 @@
           "rabbitmq"
         ],
         "display": "RabbitMQ",
-        "install": "apt-get update -y && apt-get install -y erlang-nox && apt-get install -y rabbitmq-server",
+        "pkgs": "erlang-nox rabbitmq-server",
         "service_port": "5672,15672",
         "ssh_port": 2405
       },
@@ -308,7 +307,7 @@
         "name": "vde-redis",
         "aliases": [],
         "display": "Redis",
-        "install": "apt-get update -y && apt-get install -y redis-tools",
+        "pkgs": "redis-tools",
         "service_port": "6379,6380",
         "ssh_port": 2406
       }

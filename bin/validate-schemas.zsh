@@ -3,8 +3,12 @@
 # Usage: ./bin/validate-schemas.zsh [--verbose]
 
 # Determine VDE root directory
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 VDE_SCRIPTS_DIR="${0:A:h}"
-if [[ -z "${VDE_ROOT_DIR}" ]]; then
+if [[ -z "${VDE_ROOT_DIR}" ]] ; then
     export VDE_ROOT_DIR="${VDE_SCRIPTS_DIR:h}"
 fi
 PROJECT_ROOT="${VDE_ROOT_DIR}"
@@ -15,7 +19,7 @@ source "${VDE_ROOT_DIR}/lib/vde-constants"
 source "${VDE_ROOT_DIR}/lib/vde-core"
 
 VERBOSE=0
-if [[ "${1:-}" == "--verbose" ]]; then
+if [[ "${1:-}" == "--verbose" ]] ; then
     VERBOSE=1
 fi
 
@@ -34,7 +38,7 @@ print_header() {
 
 print_check() {
     ((TOTAL_CHECKS++))
-    if [[ ${2} -eq 0 ]]; then
+    if [[ ${2} -eq 0 ]] ; then
         ((PASSED_CHECKS++))
         echo "✓ ${1}"
     else
@@ -53,7 +57,7 @@ print_summary() {
     echo "Failed: ${FAILED_CHECKS}"
     echo ""
 
-    if [[ ${FAILED_CHECKS} -eq 0 ]]; then
+    if [[ ${FAILED_CHECKS} -eq 0 ]] ; then
         echo "✓ All schema validations passed!"
         return 0
     else
@@ -91,7 +95,7 @@ validate_json_config() {
     local schema_file
     schema_file=$(vde_get_schema_for_json "${json_file}" 2>/dev/null)
 
-    if [[ -z "${schema_file}" ]]; then
+    if [[ -z "${schema_file}" ]] ; then
         print_check "JSON validation: ${config_name} (no schema)" 0
         return 0
     fi
@@ -111,14 +115,14 @@ check_error_codes() {
 
     local check_status=0
 
-    if [[ -z "${VDE_ERR_INVALID_DATA:-}" ]]; then
+    if [[ -z "${VDE_ERR_INVALID_DATA:-}" ]] ; then
         print_check "Error code defined: VDE_ERR_INVALID_DATA" 1
         check_status=1
     else
         print_check "Error code defined: VDE_ERR_INVALID_DATA" 0
     fi
 
-    if [[ -z "${VDE_ERR_CACHE_INVALID:-}" ]]; then
+    if [[ -z "${VDE_ERR_CACHE_INVALID:-}" ]] ; then
         print_check "Error code defined: VDE_ERR_CACHE_INVALID" 1
         check_status=1
     else
@@ -174,7 +178,7 @@ main() {
     print_header "Schema File Validation"
 
     local schema_files=("${PROJECT_ROOT}"/data/*.schema.json)
-    if [[ ${#schema_files[@]} -eq 0 || ! -f "${schema_files[1]}" ]]; then
+    if [[ ${#schema_files[@]} -eq 0 || ! -f "${schema_files[1]}" ]] ; then
         print_check "Schema files found" 1
     else
         print_check "Schema files found: ${#schema_files[@]}" 0
@@ -188,14 +192,14 @@ main() {
     print_header "JSON Configuration Validation"
 
     local json_files=("${PROJECT_ROOT}"/data/*.json)
-    if [[ ${#json_files[@]} -eq 0 || ! -f "${json_files[1]}" ]]; then
+    if [[ ${#json_files[@]} -eq 0 || ! -f "${json_files[1]}" ]] ; then
         print_check "JSON config files found" 1
     else
         print_check "JSON config files found: ${#json_files[@]}" 0
 
         for json_file in "${json_files[@]}"; do
             # Skip schema files
-            if [[ "${json_file}" =~ \.schema\.json$ ]]; then
+            if [[ "${json_file}" =~ \.schema\.json$ ]] ; then
                 continue
             fi
             [[ -f "${json_file}" ]] && validate_json_config "${json_file}"

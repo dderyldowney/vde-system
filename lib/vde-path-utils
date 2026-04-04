@@ -10,7 +10,7 @@
 # SOURCE GUARD
 # =============================================================================
 
-if [ "${_VDE_PATH_UTILS_LOADED:-}" = "1" ]; then
+if [[ "${_VDE_PATH_UTILS_LOADED:-}" = "1" ]]; then
     return 0 2>/dev/null || exit 0
 fi
 _VDE_PATH_UTILS_LOADED=1
@@ -21,7 +21,7 @@ _VDE_PATH_UTILS_LOADED=1
 # shellcheck disable=SC2296
 _VDE_PATH_UTILS_SCRIPT_PATH="${(%):-%x}"
 
-if [ -z "${VDE_ROOT_DIR:-}" ]; then
+if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
     VDE_ROOT_DIR="$(cd "$(dirname "${_VDE_PATH_UTILS_SCRIPT_PATH}")/.." && pwd)"
 fi
 
@@ -30,7 +30,7 @@ fi
 # =============================================================================
 
 # Ensure HOME is set
-if [ -z "${HOME}" ]; then
+if [[ -z "${HOME}" ]]; then
     export HOME="$(eval echo ~$(whoami))"
 fi
 

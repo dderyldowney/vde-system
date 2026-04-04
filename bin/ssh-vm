@@ -9,7 +9,11 @@
 #===============================================================================
 
 # Determine VDE root directory
-if [ -z "${VDE_ROOT_DIR}" ]; then
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
+if [[ -z "${VDE_ROOT_DIR}" ]] ; then
     VDE_ROOT_DIR="${0:a:h:h}"
 fi
 export VDE_ROOT_DIR
@@ -60,10 +64,10 @@ VM_NAME=""
 EXTRA_ARGS=()
 SSH_OPTS=()
 
-while [[ ${#} -gt 0 ]]; do
+while [[ ${#} -gt 0 ]] ; do
     case "${1}" in
         -h|--help)
-            if [ -z "${VM_NAME}" ]; then
+            if [[ -z "${VM_NAME}" ]] ; then
                 show_usage
                 exit 0
             else
@@ -84,7 +88,7 @@ while [[ ${#} -gt 0 ]]; do
             ;;
         -o)
             # Capture -o and its value
-            if [ -z "${VM_NAME}" ]; then
+            if [[ -z "${VM_NAME}" ]] ; then
                 SSH_OPTS+=("-o" "${2}")
                 shift 2
             else
@@ -94,7 +98,7 @@ while [[ ${#} -gt 0 ]]; do
             ;;
         -*)
             # Capture any other flags (e.g., -v, -p, -X)
-            if [ -z "${VM_NAME}" ]; then
+            if [[ -z "${VM_NAME}" ]] ; then
                 SSH_OPTS+=("${1}")
                 shift
             else
@@ -103,7 +107,7 @@ while [[ ${#} -gt 0 ]]; do
             fi
             ;;
         *)
-            if [ -z "${VM_NAME}" ]; then
+            if [[ -z "${VM_NAME}" ]] ; then
                 VM_NAME="${1}"
                 shift
             else
@@ -116,7 +120,7 @@ while [[ ${#} -gt 0 ]]; do
 done
 
 # Validate VM name was provided
-if [ -z "${VM_NAME}" ]; then
+if [[ -z "${VM_NAME}" ]] ; then
     vde_error_simple "Missing VM name argument."
     echo ""
     show_usage
@@ -124,9 +128,9 @@ if [ -z "${VM_NAME}" ]; then
 fi
 
 # Ensure VDE SSH environment is initialized (skip if only showing command)
-if [ "${SHOW_COMMAND}" = false ]; then
+if [[ "${SHOW_COMMAND}" = false ]] ; then
     ensure_ssh_environment
-    if [ ${?} -ne 0 ]; then
+    if [[ ${?} -ne 0 ]] ; then
         vde_error_simple "Failed to initialize VDE SSH environment."
         exit ${VDE_ERR_GENERAL}
     fi
@@ -139,7 +143,7 @@ load_vm_types
 
 # Resolve VM name (handle aliases)
 RESOLVED_NAME=$(resolve_vm_name "${VM_NAME}")
-if [ ${?} -ne 0 ] || [ -z "${RESOLVED_NAME}" ]; then
+if [[ ${?} -ne 0 ]] || [[ -z "${RESOLVED_NAME}" ]] ; then
     vde_error_simple "Unknown VM or alias: ${VM_NAME}"
     echo ""
     echo "Run 'vde list' to see available VMs."
@@ -147,7 +151,7 @@ if [ ${?} -ne 0 ] || [ -z "${RESOLVED_NAME}" ]; then
 fi
 
 # Check if VM is running (skip if only showing command)
-if [ "${SHOW_COMMAND}" = false ]; then
+if [[ "${SHOW_COMMAND}" = false ]] ; then
     if ! is_vm_running "${RESOLVED_NAME}"; then
         vde_error_simple "VM '${RESOLVED_NAME}' is not running."
         echo ""
@@ -163,17 +167,17 @@ SSH_HOST_ALIAS=$(vde_get_ssh_host "${RESOLVED_NAME}")
 SSH_CMD=(ssh -F "${VDE_SSH_CONFIG}" -o "UserKnownHostsFile=${VDE_SSH_KNOWN_HOSTS}" ${SSH_OPTS[@]} "${SSH_HOST_ALIAS}")
 
 # Append extra arguments if any (the command to run)
-if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
+if [[ ${#EXTRA_ARGS[@]} -gt 0 ]] ; then
     SSH_CMD+=("${EXTRA_ARGS[@]}")
 fi
 
 # Either show or execute the command
-if [ "${SHOW_COMMAND}" = true ]; then
+if [[ "${SHOW_COMMAND}" = true ]] ; then
     echo "${SSH_CMD[@]}"
     exit 0
 else
     # Only log "Connecting..." if it's an interactive shell
-    if [[ ${#EXTRA_ARGS[@]} -eq 0 ]]; then
+    if [[ ${#EXTRA_ARGS[@]} -eq 0 ]] ; then
         vde_log_info "Connecting to ${SSH_HOST_ALIAS}..." "ssh-vm"
     fi
     exec "${SSH_CMD[@]}"

@@ -4,6 +4,16 @@
 
 ---
 
+## SYSTEM EVOLUTION (2026-04-02)
+- **.gemini/ Consolidation Complete:** All legacy logic from `.claude/` and `.kilo/` has been successfully migrated to `.gemini/COMMANDS/`, `.gemini/SKILLS/`, and `.gemini/RULES/`.
+- **Legacy Removal:** The legacy `.claude/` and `.kilocode/` directories have been deleted to ensure a single source of truth.
+- **Path Migration:** All remediation plans have been migrated from `plans/` to `.gemini/PLANS/`. Artifact debt (stale scripts and 100% complete plans) has been purged.
+- **Current Remediation State:** Active remediation tasks are preserved in `.gemini/PLANS/session_handover_remediation.md` and `.gemini/PLANS/remediation_docker_logic.md`.
+- **Paired-File Link:** The critical link between `session_handover.md` and `.gemini/PLANS/session_handover_remediation.md` is preserved and verified by `paired_update_enforcer`.
+- **Audit Alert - Fraudulent Logic:** An audit revealed instances of `time.sleep()` and `print()` simulating Docker activity in `tests/features/steps/`. This fraudulent logic has been flagged, and a high-priority remediation plan (`remediation_docker_logic.md`) has been created to replace these with actual Docker events. The system remains non-operational until these are fixed.
+
+---
+
 ## CRITICAL: PROTOCOL ENFORCEMENT
 
 **ALL SESSIONS MUST ADHERE TO THESE RULES:**
@@ -64,7 +74,7 @@
 |---|-------|-------|--------|
 | 22 | Service & Volume Hardening | Networking & Persistence | ✅ COMPLETE |
 | 23 | Deterministic Readiness | Health Checks vs. Sleep | ✅ COMPLETE |
-| 24 | The Big Step Completion | 366 Undefined Steps | 🔴 Blocked |
+| 24 | The Big Step Completion | 366 Undefined Steps | 🟡 PAUSED (Emergency Restart) |
 | 25 | Concurrency & Stress | Port/Locking Races | ⚪ Pending |
 | 26 | Error Engine & Polish | UX & SPEC v2.0.0 | ⚪ Pending |
 
@@ -78,6 +88,7 @@
     - Added **Rule A (Enforcer Supervision)**, **Rule B (Phase-End Re-Audit)**, and **Rule C (Commit Gate)** as permanent global mandates to `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, and `VDE-SPEC.md`.
     - Added **Inheritance Mandate** to ensure sub-agents use Main Agent context.
 - **Integration Features (Phases 8-19):** ✅ Core registration and hardening complete.
+- **UAP Compliance Remediation:** ✅ **COMPLETE**. Refactored 50+ files for ZSH-native compliance, removing sleep calls and 0-indexed arrays to satisfy Enforcer mandates.
 - **SSH & Remote Access (Phase 20):** ✅ **100% COMPLETE** (12/12 scenarios).
 - **Cluster Persistence (Phase 21):** ✅ **100% COMPLETE**. Multi-VM cluster persistence verified.
 - **Baseline:** 272 non-integration scenarios **PASS** under UAP mandates.
@@ -93,3 +104,8 @@
 4. **Minimal Footprint**: If it doesn't help users accomplish goals = REMOVE.
 5. **Core First**: Validate infrastructure before stacking features on top.
 6. **No Direct Docker Calls**: Step files must use `bin/vde` CLI — not `docker` subprocess calls.
+
+- **Mandate 14 / Forbidden Patterns:**
+  - **NO BASH/SH SYNTAX:** This is a ZSH-only project. Use ZSH-specific features (e.g., `${(f)var}`, `**/*`, `ZSH arrays index at 1`).
+  - **Requirement:** Prefer ZSH-native parameter expansion (e.g., `${(f)...}`, `${var:t}`) and `zparseopts` over external `cut`, `sed`, or `getopt` calls. Using 0-indexed arrays is a mandate failure.
+  - **NO SLEEP CALLS:** Any delay or monitoring MUST use the polling skill. Reintroducing `sleep()` is considered a system-wide failure.

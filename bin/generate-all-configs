@@ -167,51 +167,19 @@ generate_language_config() {
   local install_cmd="${2}"
   local ssh_port=$(get_ssh_port "${name}")
 
-  local config_dir="${VDE_ROOT_DIR}/configs/docker/${name}"
+  local config_dir="${VDE_ROOT_DIR}/configs/docker/languages/${name}"
   local compose_file="${config_dir}/docker-compose.yml"
+  local template_file="${VDE_ROOT_DIR}/templates/compose-language.yml"
 
   mkdir -p "${config_dir}"
 
-  cat > "${compose_file}" <<EOF
-services:
-  vde-${name}:
-    build:
-      context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
-      args:
-        USERNAME: devuser
-        UID: 1000
-        GID: 1000
-        PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: vde-${name}:latest
-    container_name: vde-${name}
-    hostname: vde-${name}
-    restart: unless-stopped
-    command: sh -c "${install_cmd} && /usr/sbin/sshd -D"
+  if [[ ! -f "${template_file}" ]]; then
+    echo "Error: Template not found at ${template_file}"
+    return 1
+  fi
 
-    ports:
-      - "${ssh_port}:22"
-
-    volumes:
-      - ../../../projects/${name}:/home/devuser/workspace
-      - ../../../logs/${name}:/logs
-      - ../../../public-ssh-keys:/public-ssh-keys:ro
-      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - \${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
-
-    environment:
-      - SSH_AUTH_SOCK=/ssh-agent/sock
-
-    env_file:
-      - ../../../env-files/${name}.env
-
-    networks:
-      - vde-net
-
-networks:
-  vde-net:
-    external: true
-EOF
+  # Replace variables in template
+  sed "s@{{NAME}}@${name}@g; s@{{SSH_PORT}}@${ssh_port}@g; s@{{INSTALL_CMD}}@${install_cmd}@g" "${template_file}" > "${compose_file}"
 
   echo "Generated: ${compose_file}"
 
@@ -226,63 +194,33 @@ generate_service_config() {
   local ssh_port=$(get_ssh_port "${name}")
   local service_port=$(get_service_port "${name}")
 
-  local config_dir="${VDE_ROOT_DIR}/configs/docker/${name}"
+  local config_dir="${VDE_ROOT_DIR}/configs/docker/services/${name}"
   local compose_file="${config_dir}/docker-compose.yml"
+  local template_file="${VDE_ROOT_DIR}/templates/compose-service.yml"
 
   mkdir -p "${config_dir}"
+
+  if [[ ! -f "${template_file}" ]]; then
+    echo "Error: Template not found at ${template_file}"
+    return 1
+  fi
 
   # Build port mappings for services
   local port_mappings=""
   if [[ -n "${service_port}" ]]; then
-    # Split by comma and generate port mappings
+    # Split by comma and generate port mappings - handle zsh array
     local -a ports
-    IFS=',' read -rA ports <<< "${service_port}"
+    IFS=',' ports=("${(@s[,])service_port}")
     for port in "${ports[@]}"; do
+      port=$(echo "${port}" | tr -d ' ')
       port_mappings="${port_mappings}      - \"${port}:${port}\"\n"
     done
   fi
 
-  cat > "${compose_file}" <<EOF
-services:
-  vde-${name}:
-    build:
-      context: ../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
-      args:
-        USERNAME: devuser
-        UID: 1000
-        GID: 1000
-        PUBLIC_KEYS_DIR: /public-ssh-keys
-    image: vde-${name}:latest
-    container_name: vde-${name}
-    hostname: vde-${name}
-    restart: unless-stopped
-    command: sh -c "${install_cmd} && /usr/sbin/sshd -D"
-
-    ports:
-      - "${ssh_port}:22"
-$(echo -e "${port_mappings}")
-
-    volumes:
-      - ../../../data/${name}:/data
-      - ../../../logs/${name}:/logs
-      - ../../../public-ssh-keys:/public-ssh-keys:ro
-      # SSH agent forwarding for service VM communication
-      - \${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
-
-    environment:
-      - SSH_AUTH_SOCK=/ssh-agent/sock
-
-    env_file:
-      - ../../../env-files/${name}.env
-
-    networks:
-      - vde-net
-
-networks:
-  vde-net:
-    external: true
-EOF
+  # Replace variables in template
+  # First handle service ports mapping block
+  sed "s@##SERVICE_PORTS##@${port_mappings}@g" "${template_file}" | \
+  sed "s@{{NAME}}@${name}@g; s@{{SSH_PORT}}@${ssh_port}@g; s@{{INSTALL_CMD}}@${install_cmd}@g; s@{{SERVICE_PORT}}@${service_port}@g" > "${compose_file}"
 
   echo "Generated: ${compose_file}"
 
@@ -324,54 +262,42 @@ main() {
   local env_generated_count=0
   local env_skipped_count=0
 
-  # Get all VM types from cache
-  if [[ -f "${VDE_CACHE_DIR}/vm-types.cache" ]]; then
-    # Process each VM type
-    while IFS='=' read -r key value; do
-      # Extract VM type from key (format: VM_TYPE:name=value)
-      if [[ "${key}" =~ ^VM_TYPE:(.+)$ ]]; then
-        local vm_type="${match[1]}"
-      else
-        continue
-      fi
+  # Ensure VM types are loaded in current shell context
+  load_vm_types >/dev/null 2>&1
 
-      # Skip if already has config (unless --force)
-      local config_file="${VDE_ROOT_DIR}/configs/docker/${vm_type}/docker-compose.yml"
-      if [[ -f "${config_file}" ]] && [[ "${FORCE_REGENERATE}" != "true" ]]; then
-        ((skipped_count++))
-        # Still check if env file exists
-        local env_file="${VDE_ROOT_DIR}/env-files/${vm_type}.env"
-        if [[ ! -f "${env_file}" ]]; then
-          # Generate missing env file
-          local category="$(get_vm_info type "${vm_type}" 2>/dev/null || echo "")"
-          local ssh_port=$(get_ssh_port "${vm_type}")
-          if [[ "${category}" == "service" ]]; then
-            generate_env_file "${vm_type}" "${ssh_port}" "true"
-          else
-            generate_env_file "${vm_type}" "${ssh_port}" "false"
-          fi
-          ((env_generated_count++))
-        else
-          ((env_skipped_count++))
-        fi
-        continue
-      fi
+  # Process language VMs
+  for vm_type in "${lang_vms[@]}"; do
+    local short_name="${vm_type#vde-}"
+    
+    # Skip if already has config (unless --force)
+    local config_file="${VDE_ROOT_DIR}/configs/docker/languages/${short_name}/docker-compose.yml"
+    if [[ -f "${config_file}" ]] && [[ "${FORCE_REGENERATE}" != "true" ]]; then
+      ((skipped_count++))
+      continue
+    fi
 
-      # Get VM category and install command
-      local category="$(get_vm_info type "${vm_type}" 2>/dev/null || echo "")"
-      local install_cmd="$(get_vm_info install "${vm_type}" 2>/dev/null || echo "")"
+    local install_cmd="$(get_vm_info install "${short_name}" 2>/dev/null || echo "")"
+    generate_language_config "${short_name}" "${install_cmd}"
+    ((generated_count++))
+    ((env_generated_count++))
+  done
 
-      if [[ "${category}" == "lang" ]]; then
-        generate_language_config "${vm_type}" "${install_cmd}"
-        ((generated_count++))
-      elif [[ "${category}" == "service" ]]; then
-        generate_service_config "${vm_type}" "${install_cmd}"
-        ((generated_count++))
-      fi
-      ((env_generated_count++))
+  # Process service VMs
+  for vm_type in "${service_vms[@]}"; do
+    local short_name="${vm_type#vde-}"
+    
+    # Skip if already has config (unless --force)
+    local config_file="${VDE_ROOT_DIR}/configs/docker/services/${short_name}/docker-compose.yml"
+    if [[ -f "${config_file}" ]] && [[ "${FORCE_REGENERATE}" != "true" ]]; then
+      ((skipped_count++))
+      continue
+    fi
 
-    done < "${VDE_CACHE_DIR}/vm-types.cache"
-  fi
+    local install_cmd="$(get_vm_info install "${short_name}" 2>/dev/null || echo "")"
+    generate_service_config "${short_name}" "${install_cmd}"
+    ((generated_count++))
+    ((env_generated_count++))
+  done
 
   # Always generate SSH config (it's authoritative)
   echo ""

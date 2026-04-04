@@ -14,7 +14,11 @@
 #===============================================================================
 
 # Determine VDE root directory
-if [ -z "${VDE_ROOT_DIR}" ]; then
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
+if [[ -z "${VDE_ROOT_DIR}" ]] ; then
     VDE_ROOT_DIR="${0:a:h:h}"
 fi
 export VDE_ROOT_DIR
@@ -60,7 +64,7 @@ EOF
 # Main
 #===============================================================================
 
-if [[ ${#} -lt 1 ]]; then
+if [[ ${#} -lt 1 ]] ; then
     show_usage
     exit ${VDE_ERR_INVALID_INPUT}
 fi
@@ -70,7 +74,7 @@ shift
 
 case "${ACTION}" in
     save)
-        if [[ ${#} -lt 2 ]]; then
+        if [[ ${#} -lt 2 ]] ; then
             vde_error_simple "Usage: vde cluster save <name> <vms...>" "vde-cluster"
             exit ${VDE_ERR_INVALID_INPUT}
         fi
@@ -80,7 +84,7 @@ case "${ACTION}" in
         
         vde_log_info "Saving cluster '${NAME}' with VMs: ${VMS[*]}" "vde-cluster"
         vde_cluster_save "${NAME}" "${VMS[@]}"
-        if [[ ${?} -eq 0 ]]; then
+        if [[ ${?} -eq 0 ]] ; then
             vde_log_success "Cluster '${NAME}' saved." "vde-cluster"
         else
             vde_error_simple "Failed to save cluster '${NAME}'." "vde-cluster"
@@ -89,7 +93,7 @@ case "${ACTION}" in
         ;;
 
     start)
-        if [[ ${#} -lt 1 ]]; then
+        if [[ ${#} -lt 1 ]] ; then
             vde_error_simple "Usage: vde cluster start <name>" "vde-cluster"
             exit ${VDE_ERR_INVALID_INPUT}
         fi
@@ -109,7 +113,7 @@ case "${ACTION}" in
         ;;
 
     stop)
-        if [[ ${#} -lt 1 ]]; then
+        if [[ ${#} -lt 1 ]] ; then
             vde_error_simple "Usage: vde cluster stop <name>" "vde-cluster"
             exit ${VDE_ERR_INVALID_INPUT}
         fi
@@ -134,14 +138,14 @@ case "${ACTION}" in
         ;;
 
     remove|delete)
-        if [[ ${#} -lt 1 ]]; then
+        if [[ ${#} -lt 1 ]] ; then
             vde_error_simple "Usage: vde cluster remove <name>" "vde-cluster"
             exit ${VDE_ERR_INVALID_INPUT}
         fi
         NAME="${1}"
         
         vde_cluster_remove "${NAME}"
-        if [[ ${?} -eq 0 ]]; then
+        if [[ ${?} -eq 0 ]] ; then
             vde_log_success "Cluster '${NAME}' removed." "vde-cluster"
         else
             vde_error_simple "Cluster '${NAME}' not found." "vde-cluster"

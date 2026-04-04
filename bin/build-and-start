@@ -111,17 +111,24 @@ echo "Step 2: Creating VDE Directory Structure"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-# Core directories
-mkdir -p "${CONFIGS_DIR}"
-mkdir -p "${TEMPLATES_DIR}"
-mkdir -p "${VDE_ROOT_DIR}/projects"
-mkdir -p "${VDE_ROOT_DIR}/data"
-mkdir -p "${VDE_ROOT_DIR}/logs"
-mkdir -p "${VDE_ROOT_DIR}/env-files"
-mkdir -p "${VDE_ROOT_DIR}/public-ssh-keys"
-mkdir -p "${VDE_ROOT_DIR}/.cache"
-mkdir -p "${VDE_ROOT_DIR}/.locks"
-mkdir -p "${VDE_ROOT_DIR}/.locks/ports"
+# Core directories - Use ZSH array and expansion flags
+local -a core_dirs=(
+    "${CONFIGS_DIR}"
+    "${TEMPLATES_DIR}"
+    "${VDE_ROOT_DIR}/projects"
+    "${VDE_ROOT_DIR}/data"
+    "${VDE_ROOT_DIR}/logs"
+    "${VDE_ROOT_DIR}/env-files"
+    "${VDE_ROOT_DIR}/public-ssh-keys"
+    "${VDE_ROOT_DIR}/.cache"
+    "${VDE_ROOT_DIR}/.locks"
+    "${VDE_ROOT_DIR}/.locks/ports"
+)
+
+# Demonstrate ZSH-native logic with expansion flag (f)
+for dir in "${(f)$(printf "%s\n" "${core_dirs[@]}")}"; do
+    mkdir -p "${dir}"
+done
 
 log_success "✓ Core directories created"
 

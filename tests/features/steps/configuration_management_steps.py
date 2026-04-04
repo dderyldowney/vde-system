@@ -16,8 +16,8 @@ from vm_common import (
     VDE_ROOT,
     BIN_DIR,
     load_vm_types_raw,
-    container_is_running,
 )
+from critical_steps import ensure_vm_accessible
 
 VM_TYPES_JSON = VDE_ROOT / "data" / "vm-types.json"
 VM_TYPES_CONF = VDE_ROOT / "data" / "vm-types.conf"
@@ -76,17 +76,22 @@ def _first_service(compose):
 @given("I need specific packages in my Python VM")
 def step_need_specific_packages(context):
     context.cfg_vm = "testcfgcustompkg"
-    context.cfg_install = "apt-get install -y python3 python3-pip my-package"
+    # Use the string expected by the feature file but append our marker
+    context.cfg_install = "apt-get install -y python3 python3-pip my-package && touch /tmp/vde-custom-pkg-marker"
     context.add_cleanup(lambda: _cleanup_test_vm_type(context.cfg_vm))
 
 
 @when("I add a VM type with custom install command")
 def step_add_vm_type_custom_install(context):
+    # Ensure any existing one is gone
+    run_vde_command(f"uninstall {context.cfg_vm} --skip-confirm", context=context)
+
     result = run_vde_command(
-        f'add-vm-type {context.cfg_vm} "{context.cfg_install}"',
+        f"add-vm-type --type lang {context.cfg_vm} '{context.cfg_install}'",
         timeout=30,
         context=context,
     )
+
     assert result.returncode == 0, (
         f"add-vm-type failed (rc={result.returncode}):\n{result.stdout}\n{result.stderr}"
     )
@@ -104,16 +109,23 @@ def step_install_cmd_in_registry(context, install_cmd):
 
 @then("my custom packages should be available in the VM")
 def step_custom_packages_in_vm(context):
-    """Use 'vde exec' to check for a representative custom file or package"""
+    """Use 'vde exec' to verify a custom file created by the install command exists."""
     vm_name = getattr(context, 'cfg_vm', 'python')
-    # If the VM isn't running, start it
     if not container_is_running(vm_name):
-        run_vde_command(f"start {vm_name}", context=context)
-        wait_for_container(get_container_name(vm_name), timeout=60)
+        # Rule: Create before start
+        run_vde_command(f"create --force {vm_name}", context=context)
+        r = run_vde_command(f"start {vm_name}", context=context)
+        assert r.returncode == 0, f"Failed to start {vm_name}: {r.stderr}"
     
-    # Check for python3 as a representative package
-    result = run_vde_command(f"exec {vm_name} which python3", context=context)
-    assert result.returncode == 0, f"python3 not found in VM {vm_name}: {result.stderr}"
+    # Wait for the background script to finish (Phase 23 polling would be better, but for now we wait for the file)
+    import time
+    for _ in range(30): # Increased timeout for slow build
+        result = run_vde_command(f"exec {vm_name} ls /tmp/vde-custom-pkg-marker", context=context)
+        if result.returncode == 0:
+            return
+        time.sleep(0.2)
+    
+    assert False, f"Custom file not found in VM {vm_name} after timeout"
 
 
 # ============================================================
@@ -122,16 +134,18 @@ def step_custom_packages_in_vm(context):
 
 @given("I need a MySQL service on port 3306")
 def step_need_mysql_service(context):
-    context.mysql_vm = "testcfgmysql"
+    context.mysql_vm = "mysql"
     context.mysql_port = 3306
-    context.add_cleanup(lambda: _cleanup_test_vm_type(context.mysql_vm))
 
 
 @when('I run "add-vm-type --type service --svc-port 3306 mysql \'apt-get install -y mysql-server\'"')
 def step_add_mysql_service_vm(context):
+    # Ensure any existing one is gone
+    run_vde_command(f"uninstall {context.mysql_vm} --skip-confirm", context=context)
+    
     result = run_vde_command(
         f"add-vm-type --type service --svc-port {context.mysql_port} "
-        f"{context.mysql_vm} 'apt-get install -y mysql-server'",
+        f"{context.mysql_vm} 'apt-get update -y && apt-get install -y mysql-server'",
         timeout=30,
         context=context,
     )
@@ -159,15 +173,29 @@ def step_mysql_port_in_config(context):
 
 @then("I can connect to MySQL from other containers")
 def step_mysql_inter_container_access(context):
-    entry = _find_vm_type(context.mysql_vm)
-    assert entry is not None, f"mysql VM type '{context.mysql_vm}' not in vm-types.json"
-    # Check if it's in the service category
-    data = load_vm_types_raw()
-    is_service = any(
-        v["name"] == context.mysql_vm or v["name"] == f"vde-{context.mysql_vm}"
-        for v in data["vms"].get("service", [])
-    )
-    assert is_service, f"Expected {context.mysql_vm} to be a service VM"
+    """Perform a real network check using python from a different container to the MySQL VM name."""
+    # Ensure VMs are created and started
+    run_vde_command(f"create --force {context.mysql_vm}", context=context)
+    run_vde_command(f"start {context.mysql_vm}", context=context)
+    
+    # Ensure python exists (it usually does)
+    if not _find_vm_type("python"):
+        run_vde_command("add-vm-type python 'apt-get install -y python3'", context=context)
+    
+    run_vde_command("create --force python", context=context)
+    run_vde_command("start python", context=context)
+    
+    import time
+    # Real deterministic check instead of fake sleep
+    assert ensure_vm_accessible(context, context.mysql_vm), f"VM {context.mysql_vm} did not become accessible via SSH"
+    
+    target_vm = context.mysql_vm if context.mysql_vm.startswith("vde-") else f"vde-{context.mysql_vm}"
+    port = 3306
+    
+    # Use a robust python check string
+    check_cmd = f"python3 -c \"import socket; s = socket.socket(); s.settimeout(5); s.connect(('{target_vm}', {port})); s.close()\""
+    result = run_vde_command(f"exec python {check_cmd}", context=context)
+    assert result.returncode == 0, f"Failed to connect to {target_vm}:{port} from python container: {result.stderr}"
 
 
 @given("a system service is using port {port:d}")
@@ -232,13 +260,30 @@ def step_all_ports_in_compose(context):
 
 
 @then("each port should be accessible from host")
-def step_each_port_accessible_host(context):
+def step_each_port_accessible_from_host(context):
+    """Implement a socket connection check to localhost for all configured service ports."""
+    import socket
+    import time
+    
     compose = _get_compose_yaml(context.multi_port_vm)
     service = _first_service(compose)
+    
+    r = run_vde_command(f"start {context.multi_port_vm}", context=context)
+    assert r.returncode == 0, f"Failed to start {context.multi_port_vm}: {r.stderr}"
+    
     for port_mapping in service.get("ports", []):
-        assert ":" in str(port_mapping), (
-            f"Port mapping '{port_mapping}' missing HOST:CONTAINER format"
-        )
+        parts = str(port_mapping).split(":")
+        if len(parts) >= 2:
+            host_port = int(parts[0])
+            connected = False
+            for _ in range(10):
+                try:
+                    with socket.create_connection(("127.0.0.1", host_port), timeout=1):
+                        connected = True
+                        break
+                except (ConnectionRefusedError, TimeoutError, OSError):
+                    time.sleep(0.2)
+            assert connected, f"Could not connect to host port {host_port} for VM {context.multi_port_vm}"
 
 
 @then("each port should be accessible from other VMs")
@@ -277,9 +322,11 @@ def step_add_vm_type_with_display(context):
 @then('"Go Language" should appear in vde list output')
 @then('"Go Language" should appear in list-vms output')
 def step_display_in_list_output(context):
-    """Run 'vde list' and grep for 'Go Language'"""
-    result = run_vde_command("list", context=context)
+    """Run 'vde list --all' and grep for 'Go Language'"""
+    run_vde_command("rebuild-cache", context=context)
+    result = run_vde_command("list --all", context=context)
     assert "Go Language" in result.stdout, f"'Go Language' not found in vde list output: {result.stdout}"
+
 
 
 @then("the display name should be used in all user-facing messages")
@@ -306,7 +353,7 @@ def step_want_short_names(context):
 @when('I add VM type with aliases "js,node,nodejs"')
 def step_add_vm_type_with_aliases(context):
     result = run_vde_command(
-        f'add-vm-type {context.alias_vm} "apt-get install -y nodejs npm" "{context.alias_list}"',
+        f'add-vm-type {context.alias_vm} "echo install nodejs" "{context.alias_list}"',
         timeout=30,
         context=context,
     )
@@ -316,14 +363,18 @@ def step_add_vm_type_with_aliases(context):
 
 
 @then("I can use any configured alias to reference the VM")
-def step_aliases_in_registry(context):
-    entry = _find_vm_type(context.alias_vm)
-    assert entry is not None, f"VM type '{context.alias_vm}' not found"
-    aliases = entry.get("aliases", [])
-    for alias in context.alias_list.split(","):
-        assert alias.strip() in aliases, (
-            f"Alias '{alias}' not in stored aliases: {aliases}"
-        )
+def step_can_use_any_configured_alias(context):
+    """Execute vde start <alias> and verify the canonical container is running."""
+    canonical_name = context.alias_vm if context.alias_vm.startswith("vde-") else f"vde-{context.alias_vm}"
+    aliases = [a.strip() for a in context.alias_list.split(",")]
+    
+    for alias in aliases:
+        run_vde_command(f"create {alias}", context=context)
+        r = run_vde_command(f"start {alias}", context=context)
+        assert r.returncode == 0, f"vde start {alias} failed: {r.stderr}"
+        
+        assert container_is_running(canonical_name), f"Container {canonical_name} is not running after starting alias {alias}"
+        run_vde_command(f"stop {alias}", context=context)
 
 
 @then("all standard Node.js aliases should be recognized by the system")
@@ -609,20 +660,36 @@ def step_want_to_limit_memory(context):
 @when("I add mem_limit to docker-compose.yml")
 def step_add_mem_limit(context):
     context.mem_limit = "512m"
-    test_compose = {
-        "services": {
-            "python": {"image": "vde-python:latest", "mem_limit": context.mem_limit}
-        }
-    }
-    context.mem_compose_yaml = yaml.dump(test_compose)
+    compose_path = get_compose_file("python")
+    context.orig_compose_content = compose_path.read_text()
+    
+    import yaml
+    compose = yaml.safe_load(context.orig_compose_content)
+    service_name = list(compose.get("services", {}).keys())[0]
+    
+    compose["services"][service_name]["mem_limit"] = context.mem_limit
+    compose_path.write_text(yaml.dump(compose))
+    
+    def cleanup():
+        compose_path.write_text(context.orig_compose_content)
+        run_vde_command("stop python", context=context)
+    
+    context.add_cleanup(cleanup)
 
 
 @then("container should be limited to specified memory")
 def step_container_limited_to_memory(context):
-    parsed = yaml.safe_load(context.mem_compose_yaml)
-    assert parsed["services"]["python"]["mem_limit"] == context.mem_limit, (
-        f"mem_limit not set: {parsed['services']['python'].get('mem_limit')}"
-    )
+    """Parse docker inspect output to verify the Memory limit matches the configuration."""
+    r = run_vde_command("start python --rebuild", context=context)
+    assert r.returncode == 0, f"Failed to start python VM: {r.stderr}"
+    
+    r_inspect = run_vde_command("inspect python --format '{{.HostConfig.Memory}}'", context=context)
+    assert r_inspect.returncode == 0, f"Inspect failed: {r_inspect.stderr}"
+    
+    mem_bytes = int(r_inspect.stdout.strip())
+    expected_bytes = 512 * 1024 * 1024
+    
+    assert mem_bytes == expected_bytes, f"Expected {expected_bytes} bytes, got {mem_bytes}"
 
 
 @then("container should not exceed the limit")

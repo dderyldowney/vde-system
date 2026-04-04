@@ -9,6 +9,10 @@
 #===============================================================================
 
 # Determine VDE root directory
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
@@ -18,7 +22,7 @@ export VDE_ROOT_DIR
 [[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
 
 # Check arguments
-if [ -z "${1}" ]; then
+if [[ -z "${1}" ]] ; then
     vde_error_simple "VM name is required"
     echo "Usage: vde-port <vm_name> [port]"
     exit ${VDE_ERR_INVALID_INPUT}
@@ -29,12 +33,12 @@ shift
 
 # Ensure vde- prefix for container name
 CONTAINER_NAME="${VM_NAME}"
-if [[ "${VM_NAME}" != vde-* ]] && [[ "${VM_NAME}" != *-dev ]]; then
+if [[ "${VM_NAME}" != vde-* ]] && [[ "${VM_NAME}" != *-dev ]] ; then
     CONTAINER_NAME="vde-${VM_NAME}"
 fi
 
 # Check if a specific port was requested
-if [ -n "${1}" ]; then
+if [[ -n "${1}" ]] ; then
     docker port "${CONTAINER_NAME}" "${1}"
 else
     docker port "${CONTAINER_NAME}"

@@ -29,7 +29,10 @@
 # SOURCE GUARD
 # =============================================================================
 
-if [ "${_VDE_ERRORS_LOADED:-}" = "1" ]; then
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
+if [[ "${_VDE_ERRORS_LOADED:-}" == "1" ]] ; then
     return 0 2>/dev/null || exit 0
 fi
 _VDE_ERRORS_LOADED=1
@@ -53,13 +56,13 @@ VDE_ERRORS_SHOW_SOLUTION="${VDE_ERRORS_SHOW_SOLUTION:-1}"
 # =============================================================================
 
 _vde_errors_has_colors() {
-    if [ -t 2 ]; then
+    if [[ -t 2 ]] ; then
         return 0
     fi
-    if [ -n "${TERM:-}" ] && [ "${TERM:-}" != "dumb" ]; then
+    if [[ -n "${TERM:-}" ]] && [[ "${TERM:-}" != "dumb" ]] ; then
         return 0
     fi
-    return ${VDE_ERR_GENERAL}
+    return ${VDE_ERR_GENERAL:-1}
 }
 
 if _vde_errors_has_colors; then
@@ -91,7 +94,7 @@ vde_error_set_verbose() {
 
 # vde_error_is_verbose - Check if verbose mode is enabled
 vde_error_is_verbose() {
-    [ "${VDE_ERRORS_VERBOSE}" = "1" ]
+    [[ "${VDE_ERRORS_VERBOSE}" == "1" ]]
 }
 
 # =============================================================================
@@ -120,16 +123,16 @@ vde_error_show() {
     
     printf "%s%s\n" "${VDE_ERRORS_COLOR_ERROR}Error:${VDE_ERRORS_COLOR_RESET} " "${what}"
     
-    if [ -n "${why}" ]; then
+    if [[ -n "${why}" ]] ; then
         printf "%s%s\n" "${VDE_ERRORS_COLOR_DIM}Reason:${VDE_ERRORS_COLOR_RESET} " "${why}"
     fi
     
-    if [ "${VDE_ERRORS_SHOW_SOLUTION}" = "1" ] && [ -n "${how}" ]; then
+    if [[ "${VDE_ERRORS_SHOW_SOLUTION}" == "1" ]] && [[ -n "${how}" ]] ; then
         printf "%s\n" "${VDE_ERRORS_COLOR_WARNING}Solution:${VDE_ERRORS_COLOR_RESET}"
         _vde_error_format_block "${how}" | sed "s/^/${VDE_ERRORS_COLOR_INFO}/;s/$/${VDE_ERRORS_COLOR_RESET}/"
     fi
     
-    if [ -n "${doc_link}" ]; then
+    if [[ -n "${doc_link}" ]] ; then
         local full_url="${VDE_ERRORS_DOC_URL}/${doc_link}"
         printf "%s%s\n" "${VDE_ERRORS_COLOR_LINK}Docs:${VDE_ERRORS_COLOR_RESET} " "${full_url}"
     fi

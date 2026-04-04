@@ -1,24 +1,30 @@
 #!/usr/bin/env zsh
 #===============================================================================
-# vde-enforce-uap.zsh - Universal Agent Protocol Enforcement
+# vde-enforce-uap.zsh - Universal Agent Protocol Enforcement (Hardened)
 #
-# Checks for non-ZSH shebangs in bin/ and lib/ and verifies the existence 
-# of mandatory agent config files.
+# Enforces the Strict Core Mandates from AGENTS.md:
+# 1. Absolute ZSH Purity (Shebang & Content)
+# 2. Forbidden Patterns (No sleep, No bash-isms)
+# 3. Structural Integrity (Mandatory Configs)
 #===============================================================================
 
 VDE_ROOT_DIR="${0:a:h:h}"
 
-# Mandatory config files
-MANDATORY_FILES=("AGENTS.md" "GEMINI.md" "CLAUDE.md")
+# Counters for Verdict
+errors=0
+warnings=0
+
+# Mandatory config files (Mandate 0 & 14 integration)
+MANDATORY_FILES=("AGENTS.md" "GEMINI.md" "CLAUDE.md" "MEMORY.md")
 
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-errors=0
-
-# 1. Check for mandatory config files
+# 1. Check for mandatory config files [Mandate 0]
+echo -e "${GREEN}[UAP-START]${NC} Verifying mandatory configurations..."
 for file in "${MANDATORY_FILES[@]}"; do
     if [[ ! -f "${VDE_ROOT_DIR}/${file}" ]]; then
         echo -e "${RED}[UAP-ERROR]${NC} Mandatory file missing: ${file}"
@@ -26,28 +32,68 @@ for file in "${MANDATORY_FILES[@]}"; do
     fi
 done
 
-# 2. Check shebangs in bin/ and lib/
-check_shebangs() {
+# 2. The Audit Function (Deep Content Inspection)
+audit_file_content() {
+    local file=$1
+    local first_line
+    
+    # Mandate 1: Absolute Shebang Check
+    read -r first_line < "$file"
+    if [[ "${first_line}" != "#!/usr/bin/env zsh" ]]; then
+        echo -e "${RED}[UAP-ERROR]${NC} Non-canonical shebang in ${file#${VDE_ROOT_DIR}/}. Expected #!/usr/bin/env zsh"
+        errors=$((errors + 1))
+    fi
+
+    # Forbidden Pattern: Sleep Calls [CRITICAL FORBIDDEN PATTERNS]
+    if grep -qE "\bsleep [0-9]+" "$file"; then
+        echo -e "${RED}[UAP-ERROR]${NC} Forbidden 'sleep' found in ${file#${VDE_ROOT_DIR}/}. Use polling."
+        errors=$((errors + 1))
+    fi
+
+    # Bash-ism: Single Brackets [CRITICAL FORBIDDEN PATTERNS]
+    if grep -q " \[ " "$file" && ! grep -q " \[\[ " "$file"; then
+         echo -e "${YELLOW}[UAP-WARN]${NC} Potential Bash-style '[' in ${file#${VDE_ROOT_DIR}/}. Use ZSH '[[ ]]'"
+         warnings=$((warnings + 1))
+    fi
+
+    # Mandate 1: 0-indexed Arrays (Shibboleth)
+    if grep -q "\[0\]" "$file"; then
+        echo -e "${RED}[UAP-ERROR]${NC} 0-indexed array found in ${file#${VDE_ROOT_DIR}/}. ZSH is 1-indexed."
+        errors=$((errors + 1))
+    fi
+
+    # Mandate 1: "Fake ZSH" Detection (Checks for lack of expansion flags)
+    if [[ $(wc -l < "$file") -gt 30 ]] && ! grep -q "\${(" "$file"; then
+        echo -e "${YELLOW}[UAP-WARN]${NC} ${file#${VDE_ROOT_DIR}/} lacks ZSH parameter flags. Verify ZSH-native logic."
+        warnings=$((warnings + 1))
+    fi
+}
+
+# 3. Directory Traversal Logic
+check_dir() {
     local dir=$1
-    for file in "${dir}"/*; do
-        if [[ -f "${file}" ]]; then
-            # Read first line
-            read -r first_line < "${file}"
-            # Check if it starts with #! but doesn't contain zsh
-            if [[ "${first_line}" == \#!* && "${first_line}" != *zsh* ]]; then
-                echo -e "${RED}[UAP-ERROR]${NC} Non-ZSH shebang found in ${file#${VDE_ROOT_DIR}/}: ${first_line}"
-                errors=$((errors + 1))
-            fi
+    if [[ ! -d "$dir" ]]; then return; fi
+    
+    echo -e "${GREEN}[UAP-CHECK]${NC} Auditing directory: ${dir#${VDE_ROOT_DIR}/}"
+    for file in "${dir}"/*(N.); do
+        # Only audit executable scripts or known logic files (skip markdown)
+        if [[ -f "$file" && "$file" != *.md ]]; then
+            audit_file_content "$file"
         fi
     done
 }
 
-check_shebangs "${VDE_ROOT_DIR}/bin"
-check_shebangs "${VDE_ROOT_DIR}/lib"
+# Run Audits on bin/, lib/, and .gemini/
+check_dir "${VDE_ROOT_DIR}/bin"
+check_dir "${VDE_ROOT_DIR}/lib"
+check_dir "${VDE_ROOT_DIR}/.gemini"
 
-if [[ ${errors} -gt 0 ]]; then
-    echo -e "${RED}[UAP-FAILURE]${NC} Protocol bypass detected (${errors} errors). VDE execution blocked."
+# 4. Final Verdict [REWRITTEN]
+if [[ $errors -gt 0 ]] || [[ $warnings -gt 0 ]]; then
+    echo -e "\n${RED}[UAP-FAILURE]${NC} $errors violations and $warnings warnings detected."
+    echo -e "${YELLOW}[MANDATE 14 ACTIVE]${NC} Agent must halt current phase and generate a remediation plan."
     exit 1
+else
+    echo -e "\n${GREEN}[UAP-SUCCESS]${NC} All core mandates satisfied. Agent is cleared for action."
+    exit 0
 fi
-
-exit 0

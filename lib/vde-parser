@@ -23,7 +23,7 @@
 # Source Guard
 # -----------------------
 # Prevent multiple sourcing which causes readonly variable errors
-if [ "${_VDE_PARSER_LOADED:-}" = "1" ]; then
+if [[ "${_VDE_PARSER_LOADED:-}" = "1" ]]; then
     return 0 2>/dev/null || exit 0
 fi
 _VDE_PARSER_LOADED=1
@@ -49,7 +49,7 @@ _build_alias_map() {
 
 # _ensure_alias_map - Ensure the alias map is built (lazy initialization)
 _ensure_alias_map() {
-    if [ "${_VM_ALIAS_MAP_BUILT:-0}" -eq 0 ]; then
+    if [[ "${_VM_ALIAS_MAP_BUILT:-0}" -eq 0 ]]; then
         load_vm_types
     fi
     return ${VDE_SUCCESS}
@@ -77,7 +77,7 @@ _lookup_vm_by_alias() {
     local canonical
     canonical=$(_assoc_get "VM_ALIAS_MAP" "${input}" 2>/dev/null)
     
-    if [ -n "${canonical}" ]; then
+    if [[ -n "${canonical}" ]]; then
         echo "${canonical}"
         return ${VDE_SUCCESS}
     fi
@@ -106,7 +106,7 @@ canonical_to_display() {
     local canonical="${1}"
     local display
     display=$(get_vm_info display "${canonical}" 2>/dev/null)
-    if [ -n "${display}" ]; then
+    if [[ -n "${display}" ]]; then
         echo "${display}"
         return ${VDE_SUCCESS}
     fi
@@ -125,12 +125,12 @@ extract_vm_names_to_display() {
     local input="${1}"
     local canonical_vms
     canonical_vms=$(extract_vm_names "${input}")
-    if [ -z "${canonical_vms}" ]; then
+    if [[ -z "${canonical_vms}" ]]; then
         return ${VDE_SUCCESS}
     fi
     local vm
     echo "${canonical_vms}" | while IFS= read -r vm; do
-        [ -n "${vm}" ] && canonical_to_display "${vm}"
+        [[ -n "${vm}" ]] && canonical_to_display "${vm}"
     done
     return ${VDE_SUCCESS}
 }
@@ -325,12 +325,12 @@ extract_vm_names() {
         # Clean the word (remove punctuation, keep only alphanumeric, dashes and plus)
         local w_clean="${word%%[^a-z0-9+-]*}"
         w_clean="${w_clean//[^a-z0-9+-]/}"
-        [ -z "${w_clean}" ] && continue
+        [[ -z "${w_clean}" ]] && continue
 
         # O(1) lookup in alias map
         local canonical="${VM_ALIAS_MAP[${w_clean}]}"
 
-        if [ -n "${canonical}" ]; then
+        if [[ -n "${canonical}" ]]; then
             if [[ -z "${seen_vms[${canonical}]:-}" ]]; then
                 seen_vms[${canonical}]=1
                 found_vms+="${canonical} "
@@ -339,7 +339,7 @@ extract_vm_names() {
     done
 
     # Print found VMs (clean trailing space and convert spaces to newlines)
-    if [ -n "${found_vms}" ]; then
+    if [[ -n "${found_vms}" ]]; then
         echo "${found_vms}" | sed 's/ $//' | tr ' ' '\n'
     fi
     return ${VDE_SUCCESS}
@@ -443,7 +443,7 @@ validate_plan_line() {
     local line="${1}"
     
     # Empty lines are valid (skip them)
-    [ -z "${line}" ] && return ${VDE_SUCCESS}
+    [[ -z "${line}" ]] && return ${VDE_SUCCESS}
     
     # Extract key (everything before first colon)
     local key="${line%%:*}"
@@ -454,13 +454,13 @@ validate_plan_line() {
     local allowed_key
     # Explicitly word-split ALLOWED_PLAN_KEYS using set
     for allowed_key in $(echo "${ALLOWED_PLAN_KEYS}"); do
-        if [ "${key}" = "${allowed_key}" ]; then
+        if [[ "${key}" = "${allowed_key}" ]]; then
             key_valid=true
             break
         fi
     done
     
-    if [ "${key_valid}" = "false" ]; then
+    if [[ "${key_valid}" = "false" ]]; then
         log_error "SECURITY: Rejected unknown plan key: ${key}"
         return ${VDE_ERR_INVALID_INPUT}
     fi
@@ -506,9 +506,9 @@ parse_flags() {
         # SECURITY: Only accept whitelisted flags
         case "${flag_key}" in
             rebuild)
-                if [ "${flag_value}" = "true" ]; then
+                if [[ "${flag_value}" = "true" ]]; then
                     rebuild="true"
-                elif [ "${flag_value}" = "false" ]; then
+                elif [[ "${flag_value}" = "false" ]]; then
                     rebuild="false"
                 else
                     log_error "SECURITY: Invalid value for rebuild flag: ${flag_value}"
@@ -516,9 +516,9 @@ parse_flags() {
                 fi
                 ;;
             nocache)
-                if [ "${flag_value}" = "true" ]; then
+                if [[ "${flag_value}" = "true" ]]; then
                     nocache="true"
-                elif [ "${flag_value}" = "false" ]; then
+                elif [[ "${flag_value}" = "false" ]]; then
                     nocache="false"
                 else
                     log_error "SECURITY: Invalid value for nocache flag: ${flag_value}"
@@ -558,7 +558,7 @@ validate_vm_name_security() {
     
     local known
     for known in ${=known_vms}; do
-        if [ "${vm_name}" = "${known}" ]; then
+        if [[ "${vm_name}" = "${known}" ]]; then
             return ${VDE_SUCCESS}
         fi
     done
@@ -582,7 +582,7 @@ prompt_confirm_unknown_vm() {
     local vm_name="${1}"
 
     # Validate input
-    [ -n "${vm_name}" ] || return ${VDE_ERR_GENERAL}
+    [[ -n "${vm_name}" ]] || return ${VDE_ERR_GENERAL}
 
     local available
     available=$(vde_list_vms 2>/dev/null | tr '\n' ' ')
@@ -890,7 +890,7 @@ execute_plan() {
     local vm_count=0
     local vm
     for vm in ${=vms}; do
-        [ -n "${vm}" ] && vm_count=$((vm_count + 1))
+        [[ -n "${vm}" ]] && vm_count=$((vm_count + 1))
     done
 
     # Execute based on intent
@@ -901,11 +901,11 @@ execute_plan() {
             ;;
 
         "${INTENT_STATUS}")
-            if [ ${vm_count} -eq 0 ]; then
+            if [[ ${vm_count} -eq 0 ]]; then
                 vde_get_running_vms
             else
                 for vm in ${=vms}; do
-                    [ -n "${vm}" ] || continue
+                    [[ -n "${vm}" ]] || continue
                     local vm_status
                     vm_status=$(vde_get_vm_status "${vm}")
                     echo "${vm}: ${vm_status}"
@@ -915,13 +915,13 @@ execute_plan() {
             ;;
 
         "${INTENT_CREATE_VM}")
-            if [ ${vm_count} -eq 0 ]; then
+            if [[ ${vm_count} -eq 0 ]]; then
                 log_error "No VM specified. Please specify which VM to create."
                 return ${VDE_ERR_INVALID_INPUT}
             fi
 
             for vm in ${=vms}; do
-                [ -n "${vm}" ] || continue
+                [[ -n "${vm}" ]] || continue
                 if ! is_known_vm "${vm}" >/dev/null 2>&1; then
                     # Unknown VM type - prompt user to confirm
                     if ! prompt_confirm_unknown_vm "${vm}"; then
@@ -937,7 +937,7 @@ execute_plan() {
                     ./bin/create-virtual-for "${vm}"
                     local create_rc=${?}
                     # 0=created, 6=exists
-                    if [ ${create_rc} -ne 0 ] && [ ${create_rc} -ne 6 ]; then
+                    if [[ ${create_rc} -ne 0 ]] && [[ ${create_rc} -ne 6 ]]; then
                         return ${create_rc}
                     fi
                 fi
@@ -946,13 +946,13 @@ execute_plan() {
             ;;
 
         "${INTENT_START_VM}")
-            if [ ${vm_count} -eq 0 ]; then
+            if [[ ${vm_count} -eq 0 ]]; then
                 log_error "No VM specified. Please specify which VM to start."
                 return ${VDE_ERR_INVALID_INPUT}
             fi
 
             for vm in ${=vms}; do
-                [ -n "${vm}" ] || continue
+                [[ -n "${vm}" ]] || continue
                 if ! vm_exists "${vm}" >/dev/null 2>&1; then
                     log_error "VM ${vm} does not exist. Create it first."
                     return ${VDE_ERR_NOT_FOUND}
@@ -965,7 +965,7 @@ execute_plan() {
             ;;
 
         "${INTENT_STOP_VM}")
-            if [ ${vm_count} -eq 0 ]; then
+            if [[ ${vm_count} -eq 0 ]]; then
                 log_error "No VM specified. Please specify which VM to stop."
                 return ${VDE_ERR_INVALID_INPUT}
             fi
@@ -976,13 +976,13 @@ execute_plan() {
             ;;
 
         "${INTENT_RESTART_VM}")
-            if [ ${vm_count} -eq 0 ]; then
+            if [[ ${vm_count} -eq 0 ]]; then
                 log_error "No VM specified. Please specify which VM to restart."
                 return ${VDE_ERR_INVALID_INPUT}
             fi
 
             for vm in ${=vms}; do
-                [ -n "${vm}" ] || continue
+                [[ -n "${vm}" ]] || continue
                 # restart-virtual handles restarting a VM
                 ./bin/restart-virtual "${vm}"
             done
@@ -990,13 +990,13 @@ execute_plan() {
             ;;
 
         "${INTENT_CONNECT}")
-            if [ ${vm_count} -eq 0 ]; then
+            if [[ ${vm_count} -eq 0 ]]; then
                 log_error "No VM specified. Please specify which VM you want to connect to."
                 return ${VDE_ERR_INVALID_INPUT}
             fi
 
             for vm in ${=vms}; do
-                [ -n "${vm}" ] || continue
+                [[ -n "${vm}" ]] || continue
                 # ssh-vm handles getting connection info
                 local port
                 port=$(get_vm_info ssh_port "${vm}" 2>/dev/null) || port="unknown"

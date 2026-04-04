@@ -256,14 +256,14 @@ fi
 # Separate VMs by type for categorized display
 typeset -a lang_created service_created
 for name in "${all_vms[@]}"; do
-    vm_type=$(get_vm_type "${name}")
+    _vm_type=$(get_vm_type "${name}")
     # Apply type filter if specified
-    if [[ -n "${LIST_TYPE}" ]] && [[ "${vm_type}" != "${LIST_TYPE}" ]]; then
+    if [[ -n "${LIST_TYPE}" ]] && [[ "${_vm_type}" != "${LIST_TYPE}" ]]; then
         continue
     fi
-    if [[ "${vm_type}" == "lang" ]]; then
+    if [[ "${_vm_type}" == "lang" ]]; then
         lang_created+=("${name}")
-    elif [[ "${vm_type}" == "service" ]]; then
+    elif [[ "${_vm_type}" == "service" ]]; then
         service_created+=("${name}")
     fi
 done
@@ -280,9 +280,10 @@ if [[ ${#lang_created} -gt 0 ]] && [[ "${LIST_TYPE}" != "service" ]]; then
         echo "Language VMs:"
     fi
     for name in "${lang_created[@]}"; do
-        vm_display=$(get_vm_display_name "${name}")
-        vm_aliases=$(_assoc_get "VM_ALIASES" "${name}" 2>/dev/null) || vm_aliases=""
-        display_vm "${name}" "lang" "${vm_display}" "${vm_aliases}"
+        _vm_display=$(get_vm_display_name "${name}")
+        _vm_aliases=$(_assoc_get "VM_ALIASES" "${name}" 2>/dev/null) || _vm_aliases=""
+        display_vm "${name}" "lang" "${_vm_display}" "${_vm_aliases}"
+
     done
     if [[ "${NAME_ONLY}" == "false" ]]; then
         echo ""
@@ -295,14 +296,15 @@ if [[ ${#service_created} -gt 0 ]] && [[ "${LIST_TYPE}" != "lang" ]]; then
         echo "Service VMs:"
     fi
     for name in "${service_created[@]}"; do
-        vm_display=$(get_vm_display_name "${name}")
-        vm_aliases=$(_assoc_get "VM_ALIASES" "${name}" 2>/dev/null) || vm_aliases=""
-        display_vm "${name}" "service" "${vm_display}" "${vm_aliases}"
+        _vm_display=$(get_vm_display_name "${name}")
+        _vm_aliases=$(_assoc_get "VM_ALIASES" "${name}" 2>/dev/null) || _vm_aliases=""
+        display_vm "${name}" "service" "${_vm_display}" "${_vm_aliases}"
     done
     if [[ "${NAME_ONLY}" == "false" ]]; then
         echo ""
     fi
 fi
+
 
 # Show available VM types if --all flag is set
 if [[ "${SHOW_CREATED}" == "true" ]]; then

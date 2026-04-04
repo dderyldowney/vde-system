@@ -3,6 +3,10 @@
 #
 # Installs project git hooks from bin/githooks/ to .git/hooks/
 
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
 set -e
 
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
@@ -19,13 +23,13 @@ RESET='\033[0m'
 echo "Installing VDE git hooks..."
 
 # Check if we're in a git repository
-if [[ ! -d "${HOOKS_DIR}" ]]; then
+if [[ ! -d "${HOOKS_DIR}" ]] ; then
     echo -e "${RED}Error: Not in a git repository${RESET}"
     exit ${VDE_ERR_GENERAL}
 fi
 
 # Check if source hooks exist
-if [[ ! -d "${SOURCE_DIR}" ]]; then
+if [[ ! -d "${SOURCE_DIR}" ]] ; then
     echo -e "${YELLOW}Warning: No hooks to install in ${SOURCE_DIR}${RESET}"
     exit 0
 fi
@@ -33,12 +37,12 @@ fi
 # Install each hook
 INSTALLED=0
 for hook in "${SOURCE_DIR}"/*; do
-    if [[ -f "${hook}" ]]; then
+    if [[ -f "${hook}" ]] ; then
         hook_name=$(basename "${hook}")
         target="${HOOKS_DIR}/${hook_name}"
 
         # Remove existing hook
-        if [[ -e "${target}" ]]; then
+        if [[ -e "${target}" ]] ; then
             rm -f "${target}"
         fi
 
@@ -51,7 +55,7 @@ for hook in "${SOURCE_DIR}"/*; do
     fi
 done
 
-if [[ ${INSTALLED} -eq 0 ]]; then
+if [[ ${INSTALLED} -eq 0 ]] ; then
     echo -e "${YELLOW}No hooks found to install${RESET}"
 else
     echo ""
