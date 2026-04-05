@@ -1,316 +1,261 @@
 {
   "version": "1.1",
-  "description": "VDE VM Type Configuration",
   "vms": {
     "language": [
-      {
-        "name": "vde-asm",
-        "aliases": [
-          "asm",
-          "assembler",
-          "nasm"
-        ],
-        "display": "Assembler",
-        "pkgs": "nasm yasm gdb",
-        "service_port": null,
-        "ssh_port": 2200
-      },
-      {
-        "name": "vde-c",
-        "aliases": [
-          "c"
-        ],
-        "display": "C",
-        "pkgs": "gcc make cmake gdb",
-        "service_port": null,
-        "ssh_port": 2201
-      },
-      {
-        "name": "vde-cpp",
-        "aliases": [
-          "cpp",
-          "c++",
-          "gcc"
-        ],
-        "display": "C++",
-        "pkgs": "build-essential g++ make cmake gdb",
-        "service_port": null,
-        "ssh_port": 2202
-      },
-      {
-        "name": "vde-csharp",
-        "aliases": [
-          "csharp",
-          "dotnet"
-        ],
-        "display": "C#",
-        "pkgs": "curl libicu-dev ca-certificates",
-        "custom_cmd": "zsh /vde/scripts/setup/csharp-init.zsh",
-        "service_port": null,
-        "ssh_port": 2203
-      },
-      {
-        "name": "vde-displaytest",
-        "aliases": [
-          "displaytest"
-        ],
-        "display": "Go Language",
-        "pkgs": "golang-go",
-        "service_port": null,
-        "ssh_port": 2204
-      },
-      {
-        "name": "vde-elixir",
-        "aliases": [
-          "elixir",
-          "ex",
-          "iex"
-        ],
-        "display": "Elixir",
-        "pkgs": "git curl build-essential libssl-dev automake autoconf libncurses5-dev unzip wget locales ca-certificates",
-        "custom_cmd": "zsh /vde/scripts/setup/elixir-init.zsh",
-        "service_port": null,
-        "ssh_port": 2205
-      },
-      {
-        "name": "vde-flutter",
-        "aliases": [
-          "flutter",
-          "dart"
-        ],
-        "display": "Flutter",
-        "pkgs": "curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH=\"$PATH:/home/devuser/flutter/bin\" && flutter precache'",
-        "service_port": null,
-        "ssh_port": 2206
-      },
-      {
-        "name": "vde-go",
-        "aliases": [
-          "go",
-          "golang"
-        ],
-        "display": "Go",
-        "pkgs": "golang-go",
-        "service_port": null,
-        "ssh_port": 2207
-      },
-      {
-        "name": "vde-haskell",
-        "aliases": [
-          "haskell",
-          "ghc"
-        ],
-        "display": "Haskell",
-        "pkgs": "ghc cabal-install",
-        "service_port": null,
-        "ssh_port": 2208
-      },
-      {
-        "name": "vde-java",
-        "aliases": [
-          "java",
-          "jdk"
-        ],
-        "display": "Java",
-        "pkgs": "default-jdk maven gradle",
-        "service_port": null,
-        "ssh_port": 2209
-      },
-      {
-        "name": "vde-js",
-        "aliases": [
-          "js",
-          "node",
-          "nodejs",
-          "npm"
-        ],
-        "display": "Node.js",
-        "pkgs": "curl git build-essential",
-        "custom_cmd": "zsh /vde/scripts/setup/js-init.zsh",
-        "service_port": null,
-        "ssh_port": 2210
-      },
-      {
-        "name": "vde-kotlin",
-        "aliases": [
-          "kotlin"
-        ],
-        "display": "Kotlin",
-        "pkgs": "curl zip unzip",
-        "custom_cmd": "su devuser -c 'zsh /vde/scripts/setup/kotlin-init.zsh'",
-        "service_port": null,
-        "ssh_port": 2211
-      },
-      {
-        "name": "vde-lua",
-        "aliases": [
-          "lua"
-        ],
-        "display": "Lua",
-        "pkgs": "lua5.4 luarocks",
-        "service_port": null,
-        "ssh_port": 2212
-      },
-      {
-        "name": "vde-php",
-        "aliases": [
-          "php"
-        ],
-        "display": "PHP",
-        "pkgs": "php php-cli php-xml php-mbstring php-curl composer",
-        "service_port": null,
-        "ssh_port": 2213
-      },
-      {
-        "name": "vde-python",
-        "aliases": [
-          "python",
-          "python3",
-          "py"
-        ],
-        "display": "Python",
-        "pkgs": "python3 python3-pip python-is-python3 postgresql-client",
-        "service_port": null,
-        "ssh_port": 2214
-      },
-      {
-        "name": "vde-ruby",
-        "aliases": [
-          "ruby"
-        ],
-        "display": "Ruby",
-        "pkgs": "ruby-full",
-        "service_port": null,
-        "ssh_port": 2215
-      },
-      {
-        "name": "vde-rust",
-        "aliases": [
-          "rust",
-          "rs",
-          "rustc"
-        ],
-        "display": "Rust",
-        "pkgs": "build-essential curl git",
-        "custom_cmd": "zsh /vde/scripts/setup/rust-init.zsh",
-        "service_ports": [],
-        "ssh_port": 2216
-      },
-      {
-        "name": "vde-scala",
-        "aliases": [
-          "scala"
-        ],
-        "display": "Scala",
-        "pkgs": "scala-defaults sbt",
-        "service_port": null,
-        "ssh_port": 2217
-      },
-      {
-        "name": "vde-swift",
-        "aliases": [
-          "swift"
-        ],
-        "display": "Swift",
-        "pkgs": "binutils git libc6-dev curl",
-        "service_port": null,
-        "ssh_port": 2218
-      },
-      {
-        "name": "vde-testport1",
-        "aliases": [
-          "testport1"
-        ],
-        "display": "Test Port 1",
-        "pkgs": "top",
-        "service_port": null,
-        "ssh_port": 2219
-      },
-      {
-        "name": "vde-testport2",
-        "aliases": [
-          "testport2"
-        ],
-        "display": "Test Port 2",
-        "pkgs": "top",
-        "service_port": null,
-        "ssh_port": 2220
-      }
+        {
+          "name": "vde-asm",
+          "aliases": ["asm","assembler","nasm"],
+          "display": "Assembler",
+          "pkgs": "nasm yasm gdb",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2200
+        },
+        {
+          "name": "vde-c",
+          "aliases": ["c"],
+          "display": "C",
+          "pkgs": "gcc make cmake gdb",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2201
+        },
+        {
+          "name": "vde-cpp",
+          "aliases": ["cpp","c++","gcc"],
+          "display": "C++",
+          "pkgs": "build-essential g++ make cmake gdb",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2202
+        },
+        {
+          "name": "vde-csharp",
+          "aliases": ["csharp","dotnet"],
+          "display": "C#",
+          "pkgs": "curl libicu-dev ca-certificates",
+          "custom_cmd": "zsh /vde/scripts/setup/csharp-init.zsh",
+          "service_port": null,
+          "ssh_port": 2203
+        },
+        {
+          "name": "vde-displaytest",
+          "aliases": ["displaytest"],
+          "display": "Go Language",
+          "pkgs": "golang-go",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2204
+        },
+        {
+          "name": "vde-elixir",
+          "aliases": ["elixir","ex","iex"],
+          "display": "Elixir",
+          "pkgs": "git curl build-essential libssl-dev automake autoconf libncurses5-dev unzip wget locales ca-certificates",
+          "custom_cmd": "zsh /vde/scripts/setup/elixir-init.zsh",
+          "service_port": null,
+          "ssh_port": 2205
+        },
+        {
+          "name": "vde-flutter",
+          "aliases": ["flutter","dart"],
+          "display": "Flutter",
+          "pkgs": "curl git unzip xz-utils zip libglu1-mesa && su devuser -c 'git clone --depth 1 https://github.com/flutter/flutter.git /home/devuser/flutter && export PATH=\"$PATH:/home/devuser/flutter/bin\" && flutter precache'",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2206
+        },
+        {
+          "name": "vde-go",
+          "aliases": ["go","golang"],
+          "display": "Go",
+          "pkgs": "golang-go",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2207
+        },
+        {
+          "name": "vde-haskell",
+          "aliases": ["haskell","ghc"],
+          "display": "Haskell",
+          "pkgs": "ghc cabal-install",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2208
+        },
+        {
+          "name": "vde-java",
+          "aliases": ["java","jdk"],
+          "display": "Java",
+          "pkgs": "default-jdk maven gradle",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2209
+        },
+        {
+          "name": "vde-js",
+          "aliases": ["js","node","nodejs","npm"],
+          "display": "Node.js",
+          "pkgs": "curl git build-essential",
+          "custom_cmd": "zsh /vde/scripts/setup/js-init.zsh",
+          "service_port": null,
+          "ssh_port": 2210
+        },
+        {
+          "name": "vde-kotlin",
+          "aliases": ["kotlin"],
+          "display": "Kotlin",
+          "pkgs": "curl zip unzip vim",
+          "custom_cmd": "su devuser -c 'zsh /vde/scripts/setup/kotlin-init.zsh'",
+          "service_port": null,
+          "ssh_port": 2211
+        },
+        {
+          "name": "vde-lua",
+          "aliases": ["lua"],
+          "display": "Lua",
+          "pkgs": "lua5.4 luarocks",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2212
+        },
+        {
+          "name": "vde-php",
+          "aliases": ["php"],
+          "display": "PHP",
+          "pkgs": "php php-cli php-xml php-mbstring php-curl composer",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2213
+        },
+        {
+          "name": "vde-python",
+          "aliases": ["python","python3","py"],
+          "display": "Python",
+          "pkgs": "python3 python3-pip python-is-python3 postgresql-client",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2214
+        },
+        {
+          "name": "vde-ruby",
+          "aliases": ["ruby"],
+          "display": "Ruby",
+          "pkgs": "ruby-full",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2215
+        },
+        {
+          "name": "vde-rust",
+          "aliases": ["rust","rs","rustc"],
+          "display": "Rust",
+          "pkgs": "build-essential curl git",
+          "custom_cmd": "zsh /vde/scripts/setup/rust-init.zsh",
+          "service_port": null,
+          "ssh_port": 2216
+        },
+        {
+          "name": "vde-scala",
+          "aliases": ["scala"],
+          "display": "Scala",
+          "pkgs": "scala-defaults sbt",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2217
+        },
+        {
+          "name": "vde-swift",
+          "aliases": ["swift"],
+          "display": "Swift",
+          "pkgs": "binutils git libc6-dev curl",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2218
+        },
+        {
+          "name": "vde-testport1",
+          "aliases": ["testport1"],
+          "display": "Test Port 1",
+          "pkgs": "top",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2219
+        },
+        {
+          "name": "vde-testport2",
+          "aliases": ["testport2"],
+          "display": "Test Port 2",
+          "pkgs": "top",
+          "custom_cmd": null,
+          "service_port": null,
+          "ssh_port": 2220
+        }
     ],
     "service": [
-      {
-        "name": "vde-couchdb",
-        "aliases": [
-          "couchdb"
-        ],
-        "display": "CouchDB",
-        "pkgs": "couchdb",
-        "service_port": "5984",
-        "ssh_port": 2400
-      },
-      {
-        "name": "vde-mongodb",
-        "aliases": [
-          "mongodb",
-          "mongo"
-        ],
-        "display": "MongoDB",
-        "pkgs": "mongodb-org-shell",
-        "service_port": "27017",
-        "ssh_port": 2401
-      },
-      {
-        "name": "vde-mysql",
-        "aliases": [
-          "mysql"
-        ],
-        "display": "MySQL",
-        "pkgs": "default-mysql-server",
-        "service_port": "3306",
-        "ssh_port": 2402
-      },
-      {
-        "name": "vde-nginx",
-        "aliases": [
-          "nginx"
-        ],
-        "display": "Nginx",
-        "pkgs": "nginx-extras",
-        "service_port": "80,443",
-        "ssh_port": 2403
-      },
-      {
-        "name": "vde-postgres",
-        "aliases": [
-          "postgres",
-          "postgresql",
-          "pg",
-          "database"
-        ],
-        "display": "PostgreSQL",
-        "pkgs": "postgresql postgresql-contrib",
-        "custom_cmd": "zsh /vde/scripts/setup/postgres-init.zsh",
-        "service_port": "5432",
-        "ssh_port": 2404
-      },
-      {
-        "name": "vde-rabbitmq",
-        "aliases": [
-          "rabbitmq"
-        ],
-        "display": "RabbitMQ",
-        "pkgs": "erlang-nox rabbitmq-server",
-        "service_port": "5672,15672",
-        "ssh_port": 2405
-      },
-      {
-        "name": "vde-redis",
-        "aliases": [],
-        "display": "Redis",
-        "pkgs": "redis-tools",
-        "service_port": "6379,6380",
-        "ssh_port": 2406
-      }
+        {
+          "name": "vde-couchdb",
+          "aliases": ["couchdb"],
+          "display": "CouchDB",
+          "pkgs": "couchdb",
+          "custom_cmd": null,
+          "service_port": "5984",
+          "ssh_port": 2400
+        },
+        {
+          "name": "vde-mongodb",
+          "aliases": ["mongodb","mongo"],
+          "display": "MongoDB",
+          "pkgs": "mongodb-org-shell",
+          "custom_cmd": null,
+          "service_port": "27017",
+          "ssh_port": 2401
+        },
+        {
+          "name": "vde-mysql",
+          "aliases": ["mysql"],
+          "display": "MySQL",
+          "pkgs": "default-mysql-server",
+          "custom_cmd": null,
+          "service_port": "3306",
+          "ssh_port": 2402
+        },
+        {
+          "name": "vde-nginx",
+          "aliases": ["nginx"],
+          "display": "Nginx",
+          "pkgs": "nginx-extras",
+          "custom_cmd": null,
+          "service_port": "80,443",
+          "ssh_port": 2403
+        },
+        {
+          "name": "vde-postgres",
+          "aliases": ["postgres","postgresql","pg","database"],
+          "display": "PostgreSQL",
+          "pkgs": "postgresql postgresql-contrib",
+          "custom_cmd": "zsh /vde/scripts/setup/postgres-init.zsh",
+          "service_port": "5432",
+          "ssh_port": 2404
+        },
+        {
+          "name": "vde-rabbitmq",
+          "aliases": ["rabbitmq"],
+          "display": "RabbitMQ",
+          "pkgs": "erlang-nox rabbitmq-server",
+          "custom_cmd": null,
+          "service_port": "5672,15672",
+          "ssh_port": 2405
+        },
+        {
+          "name": "vde-redis",
+          "aliases": [],
+          "display": "Redis",
+          "pkgs": "redis-tools",
+          "custom_cmd": null,
+          "service_port": "6379,6380",
+          "ssh_port": 2406
+        }
     ]
   }
 }
