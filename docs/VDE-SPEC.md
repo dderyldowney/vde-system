@@ -1,10 +1,11 @@
-# VDE-SPEC v2.0.4 (Absolute)
+# VDE-SPEC v2.0.5 (Absolute)
 
 ## VERSION HISTORY
 | Version | Date       | Changes                                                                 |
 | :---    | :---       | :---                                                                    |
 | 2.0.3   | 2026-04-03 | Aligned SSH identity naming (vde_student) across the bridge.            |
 | 2.0.4   | 2026-04-04 | Implemented Ignition Sync, Universal Script Parity (USP), and 8-Field Registry Standard. |
+| 2.0.5   | 2026-04-04 | Version bump to 2.0.5.                                                  |
 
 **Status:** AUTHORITATIVE  
 **Last Updated:** 2026-04-04T23:10:00Z  
@@ -30,7 +31,7 @@
 
 ## 3. Universal Agent Protocol (UAP)
 
-1. **Startup**: Verify local environment, version (v2.0.4), and execute Ignition Sync.
+1. **Startup**: Verify local environment, version (v2.0.5), and execute Ignition Sync.
 2. **Planning**: Design a TDD strategy with explicit failing tests.
 3. **Implementation**: Execute changes under `bin/vde-enforce-uap.zsh` using local, unique-prefixed variables.
 4. **Audit**: Confirm USP compliance and "Born Ready" status.

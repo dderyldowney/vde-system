@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # VDE CLI - Unified Virtual Development Environment
-# Version: 2.0.3 (Absolute - Final)
+# Version: 2.0.5 (Absolute - Final)
 #===============================================================================
 
 # --- 1. BOOTSTRAP & ROOT DISCOVERY ---
@@ -174,7 +174,7 @@ case "${CMD}" in
         ;;
 
     list) show_known_vms ;;
-    version|--version) echo "VDE v${VDE_VERSION:-2.0.3}" ;;
+    version|--version) echo "VDE v${VDE_VERSION:-2.0.5}" ;;
     help|*) echo "Usage: vde {rebuild|start|stop|exec|enter|list} [type/alias]" ;;
 esac
 
