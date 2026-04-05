@@ -109,3 +109,4 @@ test-logs/
 # Docker state
 .docker-state/
 .docker-state-*.json
+.tmp.driveupload/

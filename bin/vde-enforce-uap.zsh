@@ -95,5 +95,10 @@ if [[ $errors -gt 0 ]] || [[ $warnings -gt 0 ]]; then
     exit 1
 else
     echo -e "\n${GREEN}[UAP-SUCCESS]${NC} All core mandates satisfied. Agent is cleared for action."
+    # Support wrapping commands for Mandatory Enforcer Supervision (Mandate 3)
+    if [[ $# -gt 0 ]]; then
+        echo -e "${GREEN}[UAP-EXEC]${NC} Executing supervised command: $@"
+        exec "$@"
+    fi
     exit 0
 fi

@@ -82,6 +82,7 @@ case "${CMD}" in
         vde_log_info "Baking ${CANONICAL_NAME}..." "docker"
         docker build "${build_args[@]}" \
             -f "${VDE_ROOT_DIR}/configs/docker/vde-lang.Dockerfile" \
+            --build-arg VM_NAME="${BASE_NAME}" \
             --build-arg PKGS_TO_INSTALL="${pkgs}" \
             --build-arg CUSTOM_BUILD_CMD="${custom_cmd}" \
             -t "${CANONICAL_NAME}" .
