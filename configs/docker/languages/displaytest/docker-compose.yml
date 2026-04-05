@@ -1,0 +1,50 @@
+# Template for language VMs
+# Variables: displaytest, 2204, 
+name: vde-displaytest
+services:
+  vde-displaytest:
+    build:
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
+
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: vde-displaytest:latest
+    container_name: vde-displaytest
+    hostname: vde-displaytest
+    restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=displaytest"
+    command: >
+      sh -c "if [ -n \"\" ]; then
+               ;
+             fi;
+             /usr/sbin/sshd -D"
+
+    ports:
+      - "2204:22"
+
+    volumes:
+      - ../../../../projects/displaytest:/home/devuser/workspace
+      - ../../../../logs/displaytest:/logs
+      - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../../env-files/vde-displaytest.env
+
+    networks:
+      - vde-net
+
+networks:
+  vde-net:
+    external: true

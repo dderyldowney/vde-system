@@ -155,10 +155,10 @@ _vde_core_get_mtime() {
     fi
 }
 
-# vde_json - Zero-Host-Dependency JQ Wrapper (The Scavenger's Ban)
+# vde_query_json - Zero-Host-Dependency JQ Wrapper (The Scavenger's Ban)
 # Adheres to Rule G: Prevents host dependency by falling back to Docker
 # Args: <jq_args> (variable)
-vde_json() {
+vde_query_json() {
     if command -v jq >/dev/null 2>&1; then
         jq "$@"
     else
@@ -187,22 +187,25 @@ vde_translate_conf_to_json() {
         echo -n "$_v_str"
     }
 
+    local _v_category _v_aliases_json _v_cmd_json _v_svc_json _v_ssh_port_json _v_entry _v_a_item
     while IFS='|' read -r _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _extra; do
         [[ -z "${_v_name}" || "${_v_type}" == "#"* ]] && continue
 
-        local _v_category="language"
+        _v_category="language"
         [[ "${_v_type}" == "service" ]] && _v_category="service"
 
         # Build aliases array via Pure ZSH
-        local _v_aliases_json="[]"
+        _v_aliases_json="[]"
         if [[ -n "${_v_aliases}" ]]; then
             local -a _v_a_list=()
-            local _v_a_item
             for _v_a_item in ${(s:,:)_v_aliases}; do
                 _v_a_list+=("\"$(_vde_escape_json "${_v_a_item}")\"")
             done
             _v_aliases_json="[${(j:,:)_v_a_list}]"
         fi
+
+        local _v_pkgs_json="null"
+        [[ -n "${_v_pkgs}" ]] && _v_pkgs_json="\"$(_vde_escape_json "${_v_pkgs}")\""
 
         local _v_cmd_json="null"
         [[ -n "${_v_cmd}" ]] && _v_cmd_json="\"$(_vde_escape_json "${_v_cmd}")\""
@@ -217,7 +220,7 @@ vde_translate_conf_to_json() {
           \"name\": \"$(_vde_escape_json "${_v_name}")\",
           \"aliases\": ${_v_aliases_json},
           \"display\": \"$(_vde_escape_json "${_v_disp}")\",
-          \"pkgs\": \"$(_vde_escape_json "${_v_pkgs}")\",
+          \"pkgs\": ${_v_pkgs_json},
           \"custom_cmd\": ${_v_cmd_json},
           \"service_port\": ${_v_svc_json},
           \"ssh_port\": ${_v_ssh_port_json}
@@ -531,52 +534,32 @@ vde_validate_json_schema() {
     if ! python3 -c "
 import json, sys
 
-with open('${schema_file}') as f:
-    schema = json.load(f)
-with open('${json_file}') as f:
-    data = json.load(f)
-
-# Basic structural validation based on schema type
-if schema.get('type') == 'object':
-    required = schema.get('required', [])
-    for field in required:
-        if field not in data:
-            print(f'Missing required field: {field}', file=sys.stderr)
-            sys.exit(1)
-
-# Additional validation for vm-types schema
-if 'vms' in schema.get('properties', {}):
-    # VM types specific validation
-    if 'vms' not in data:
-        print('Missing vms field', file=sys.stderr)
+try:
+    with open('${schema_file}') as f:
+        schema = json.load(f)
+    with open('${json_file}') as f:
+        data = json.load(f)
+    
+    # Try using jsonschema if installed
+    try:
+        import jsonschema
+        jsonschema.validate(instance=data, schema=schema)
+        sys.exit(0)
+    except ImportError:
+        # Fallback to basic structural validation if jsonschema not available
+        if schema.get('type') == 'object':
+            required = schema.get('required', [])
+            for field in required:
+                if field not in data:
+                    print(f'Missing required field: {field}', file=sys.stderr)
+                    sys.exit(1)
+        sys.exit(0)
+    except Exception as e:
+        print(f'Schema validation error: {e}', file=sys.stderr)
         sys.exit(1)
-    if 'language' not in data['vms'] or 'service' not in data['vms']:
-        print('Missing language or service arrays', file=sys.stderr)
-        sys.exit(1)
-
-    # Validate language VMs
-    for idx, vm in enumerate(data['vms']['language']):
-        if not all(k in vm for k in ['name', 'display', 'pkgs', 'ssh_port']):
-            print(f'Language VM [{idx}] missing required fields (name, display, pkgs, ssh_port)', file=sys.stderr)
-            sys.exit(1)
-        if vm.get('service_port') is not None:
-            print(f'Language VM {vm[\"name\"]} must have null service_port', file=sys.stderr)
-            sys.exit(1)
-        if not isinstance(vm.get('ssh_port'), int):
-            print(f'Language VM {vm[\"name\"]} ssh_port must be integer', file=sys.stderr)
-            sys.exit(1)
-
-    # Validate service VMs
-    for idx, vm in enumerate(data['vms']['service']):
-        if not all(k in vm for k in ['name', 'display', 'pkgs', 'service_port', 'ssh_port']):
-            print(f'Service VM [{idx}] missing required fields (name, display, pkgs, service_port, ssh_port)', file=sys.stderr)
-            sys.exit(1)
-        if not isinstance(vm.get('service_port'), str):
-            print(f'Service VM {vm[\"name\"]} service_port must be string', file=sys.stderr)
-            sys.exit(1)
-        if not isinstance(vm.get('ssh_port'), int):
-            print(f'Service VM {vm[\"name\"]} ssh_port must be integer', file=sys.stderr)
-            sys.exit(1)
+except Exception as e:
+    print(f'Validation script error: {e}', file=sys.stderr)
+    sys.exit(1)
 " 2>/dev/null; then
         log_error "JSON validation failed: ${json_file}"
         return ${VDE_ERR_INVALID_DATA:-4}

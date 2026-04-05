@@ -5,7 +5,6 @@ Covers: networking, port allocation, service ports, volumes, persistence,
 """
 import os
 import sys
-import time
 
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
@@ -19,7 +18,7 @@ from vm_common import (
     resolve_workspace_host_path, VDE_ROOT, BIN_DIR,
 )
 from critical_steps import ensure_vm_accessible
-from shell_helpers import wait_for_condition
+from shell_helpers import vde_poll
 
 # ---------------------------------------------------------------------------
 # Helpers shared within this file
@@ -88,19 +87,12 @@ def _get_service_port_mapping(vm_name, service_port):
 @then("VDE should create the vde-testing network")
 def step_vde_testing_network_exists(context):
     """Assert that the vde-testing Docker network was created by VDE."""
-    # Allow a short settling period in case the VM just started
-    try:
-        wait_for_condition(
-            lambda: check_docker_network_exists("vde-testing"),
-            timeout=15,
-            description="vde-testing network existence"
-        )
-    except Exception:
-        networks_result = run_vde_command("networks", timeout=30)
-        assert False, (
-            "Expected 'vde-testing' network to exist after starting a VM.\n"
-            f"vde networks output:\n{networks_result.stdout}\n{networks_result.stderr}"
-        )
+    # Map to vde-poll --network
+    vde_poll(
+        ["--network", "vde-testing"],
+        timeout=15,
+        description="vde-testing network existence"
+    )
 
 
 @then("all VMs should join this network")
@@ -710,6 +702,7 @@ def step_build_uses_multistage_dockerfile(context):
     on top of a shared base, matching the intent of multi-stage build efficiency.
     """
     vm = getattr(context, "rebuilt_vm", _REBUILD_VM)
+    from vm_common import get_dockerfile
     dockerfile_path = get_dockerfile(vm)
     assert dockerfile_path.exists(), (
         f"Dockerfile not found at {dockerfile_path}"
@@ -944,7 +937,7 @@ def step_have_a_running_vm(context):
 def step_can_view_container_logs(context):
     """Run vde logs <vm> and verify it returns output successfully."""
     vm_name = getattr(context, "vm_name", "python")
-    # Strip vde- prefix if present for the CLI argument
+    # Strip vde-prefix if present for the CLI argument
     raw_name = vm_name.replace("vde-", "")
     result = run_vde_command(f"logs {raw_name}", timeout=30)
     assert result.returncode == 0, (

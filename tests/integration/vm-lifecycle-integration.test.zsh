@@ -386,8 +386,8 @@ test_cache_invalidation() {
     # Invalidate
     invalidate_vm_types_cache
 
-    # Small sleep to ensure mtime changes (mtime granularity is 1 second)
-    sleep 1.1
+    # Wait for mtime to change (high-precision)
+    zmodload zsh/zselect 2>/dev/null && zselect -t 110
 
     # Reload
     load_vm_types

@@ -6,7 +6,6 @@ Tests port allocation, collision detection, and registry management.
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 # Add steps directory to path for config import

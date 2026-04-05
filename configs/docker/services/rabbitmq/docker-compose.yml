@@ -1,0 +1,89 @@
+# Template for service VMs
+# Variables: rabbitmq, 2405, 5672,15672, 
+# SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
+name: vde-rabbitmq
+services:
+  vde-rabbitmq:
+    build:
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
+
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: vde-rabbitmq:latest
+    container_name: vde-rabbitmq
+    hostname: vde-rabbitmq
+    restart: unless-stopped
+    # Orchestrate service and SSH startup
+    command: >
+      sh -c "if [ -n \"\" ]; then
+               ;
+             fi;
+             if [ \"rabbitmq\" = \"postgres\" ]; then
+               chown -R postgres:postgres /var/lib/postgresql/data;
+               if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
+                 sudo -u postgres /usr/lib/postgresql/15/bin/initdb -D /var/lib/postgresql/data;
+                 echo \"host all all all trust\" | sudo -u postgres tee -a /var/lib/postgresql/data/pg_hba.conf >/dev/null;
+               fi;
+               sudo -u postgres /usr/lib/postgresql/15/bin/pg_ctl -D /var/lib/postgresql/data -o \"-c listen_addresses='*'\" start;
+               until pg_isready -q -h localhost -U postgres; do zmodload zsh/zselect 2>/dev/null && zselect -t 20; done;
+               sudo -u postgres psql -c \"CREATE ROLE devuser WITH LOGIN SUPERUSER\" 2>/dev/null || true;
+             elif [ \"rabbitmq\" = \"redis\" ]; then
+               chown -R devuser:devuser /data;
+               sudo -u devuser redis-server --daemonize yes --dir /data --bind 0.0.0.0 --protected-mode no;
+               until redis-cli ping >/dev/null 2>&1; do zmodload zsh/zselect 2>/dev/null && zselect -t 20; done;
+             elif [ \"rabbitmq\" = \"mysql\" ]; then
+               chown -R mysql:mysql /var/lib/mysql;
+               if [ ! -d /var/lib/mysql/mysql ]; then
+                 mysqld --initialize-insecure --user=mysql;
+               fi;
+               mysqld_safe --user=mysql --bind-address=0.0.0.0 --skip-grant-tables &
+               until mysqladmin ping -h localhost --silent; do zmodload zsh/zselect 2>/dev/null && zselect -t 20; done;
+             fi; 
+             /usr/sbin/sshd -D"
+
+    ports:
+      - "2405:22"
+      - "5672:5672"
+      - "15672:15672"
+
+
+    volumes:
+      - ../../../../data/rabbitmq:/data
+      - ../../../../logs/rabbitmq:/logs
+      - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      # Persistence mapping
+      - ../../../../data/rabbitmq/pgdata:/var/lib/postgresql/data
+      # SSH agent forwarding for service VM communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+      - REDIS_ARGS=--save 60 1 --loglevel warning
+
+    env_file:
+      - ../../../../env-files/vde-rabbitmq.env
+
+    networks:
+      - vde-net
+
+    labels:
+      - "vde.managed=true"
+      - "vde.type=service"
+      - "vde.name=rabbitmq"
+
+    healthcheck:
+      test: ["CMD-SHELL", "if [ \"rabbitmq\" = \"mysql\" ]; then mysqladmin ping -h localhost; elif command -v pg_isready >/dev/null; then pg_isready -U postgres; elif command -v redis-cli >/dev/null; then redis-cli ping; else exit 0; fi"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+networks:
+  vde-net:
+    external: true

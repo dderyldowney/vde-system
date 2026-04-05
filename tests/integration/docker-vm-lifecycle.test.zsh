@@ -333,11 +333,11 @@ test_start_vm() {
         return
     fi
 
-    # Wait a moment for container to start
-    sleep 3
-
-    # Wait a moment for container to start
-    sleep 3
+    # Wait for container to start via deterministic poll
+    if ! ./bin/vde-poll "$vm_name" --timeout 30 >/dev/null 2>&1; then
+        test_fail "Start VM" "container failed to reach ready state"
+        return
+    fi
 
     # Verify container is running using canonical name
     local container_name
@@ -398,21 +398,12 @@ test_start_multiple_vms() {
         fi
 
         echo "Waiting for $container_name (max ${wait_time}s)..."
-        local waited=0
-        while [ $waited -lt $wait_time ]; do
-            if ./bin/vde ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
-                echo "✓ $container_name is running"
-                break
-            fi
-            sleep 5
-            waited=$((waited + 5))
-        done
-
-        if [ $waited -ge $wait_time ]; then
+        if ! ./bin/vde-poll "$vm" --timeout "${wait_time}" >/dev/null 2>&1; then
             test_fail "Start multiple VMs" "$container_name not running after ${wait_time}s"
             ./bin/vde ps --format "table {{.Names}}\t{{.Status}}"
             return
         fi
+        echo "✓ $container_name is running"
     done
 
     test_pass "Start multiple VMs"
@@ -446,7 +437,7 @@ test_stop_vm() {
     if ! ./bin/vde ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
         if vm_exists "$vm_name"; then
             ./bin/vde start "$vm_name" >/dev/null 2>&1
-            sleep 3
+            ./bin/vde-poll "$vm_name" --timeout 30 >/dev/null 2>&1
         fi
     fi
 
@@ -536,7 +527,7 @@ test_restart_container() {
         test_fail "Restart container" "failed to start VM"
         return
     fi
-    sleep 5
+    ./bin/vde-poll "$vm_name" --timeout 30 >/dev/null 2>&1
 
     # Get the container's initial state
     if ! ./bin/vde ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
@@ -600,7 +591,7 @@ test_rebuild_vm() {
         return
     fi
 
-    sleep 10
+    ./bin/vde-poll "$vm_name" --timeout 60 >/dev/null 2>&1
 
     # Verify container is running
     if ! ./bin/vde ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
@@ -756,3 +747,4 @@ main() {
 
 # Run main
 main "$@"
+

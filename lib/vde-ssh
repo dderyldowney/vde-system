@@ -314,7 +314,8 @@ acquire_lock() {
         if mkdir "${lock_file}" 2>/dev/null; then
             return ${VDE_SUCCESS}
         fi
-        zmodload zsh/zselect 2>/dev/null && zselect -t 20
+        # High-precision sub-second wait via zselect (Rule 23)
+        zmodload zsh/zselect 2>/dev/null && zselect -t $((check_interval * 100))
         (( elapsed += check_interval ))
     done
 

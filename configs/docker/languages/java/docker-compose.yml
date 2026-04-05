@@ -1,0 +1,50 @@
+# Template for language VMs
+# Variables: java, 2209, 
+name: vde-java
+services:
+  vde-java:
+    build:
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
+
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: vde-java:latest
+    container_name: vde-java
+    hostname: vde-java
+    restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=java"
+    command: >
+      sh -c "if [ -n \"\" ]; then
+               ;
+             fi;
+             /usr/sbin/sshd -D"
+
+    ports:
+      - "2209:22"
+
+    volumes:
+      - ../../../../projects/java:/home/devuser/workspace
+      - ../../../../logs/java:/logs
+      - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../../env-files/vde-java.env
+
+    networks:
+      - vde-net
+
+networks:
+  vde-net:
+    external: true

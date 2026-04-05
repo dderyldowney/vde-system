@@ -1,0 +1,50 @@
+# Template for language VMs
+# Variables: testport2, 2220, 
+name: vde-testport2
+services:
+  vde-testport2:
+    build:
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
+
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: vde-testport2:latest
+    container_name: vde-testport2
+    hostname: vde-testport2
+    restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=testport2"
+    command: >
+      sh -c "if [ -n \"\" ]; then
+               ;
+             fi;
+             /usr/sbin/sshd -D"
+
+    ports:
+      - "2220:22"
+
+    volumes:
+      - ../../../../projects/testport2:/home/devuser/workspace
+      - ../../../../logs/testport2:/logs
+      - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../../env-files/vde-testport2.env
+
+    networks:
+      - vde-net
+
+networks:
+  vde-net:
+    external: true

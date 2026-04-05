@@ -7,7 +7,6 @@ import os
 import re
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 # Import shared configuration
@@ -257,7 +256,7 @@ def compose_file_exists(vm_name):
 
 
 def wait_for_container(container_name, timeout=30, vm_name=None):
-    """Wait for a VDE container to become ready using vde ps.
+    """Wait for a VDE container to become ready using vde-poll.
 
     Args:
         container_name: Name of the container to wait for
@@ -273,29 +272,22 @@ def wait_for_container(container_name, timeout=30, vm_name=None):
         if vm_type in {"rust", "flutter", "kotlin", "swift", "haskell", "elixir", "scala"}:
             timeout = 320
 
-    start_time = time.time()
-
+    from shell_helpers import vde_poll
+    
     try:
-        while time.time() - start_time < timeout:
-            result = subprocess.run(
-                ["zsh", str(BIN_DIR / "vde"), "ps", "-q", "--filter", f"name={container_name}"],
-                capture_output=True,
-                text=True,
-                timeout=15,
-                cwd=str(VDE_ROOT),
-                env=_vde_env(),
-            )
-            if result.returncode == 0 and result.stdout.strip():
-                return True
-            time.sleep(0.2)
-
-        return False
-    except (FileNotFoundError, subprocess.CalledProcessError):
+        # Default vde-poll check is 'running'
+        vde_poll(
+            [container_name],
+            timeout=timeout,
+            description=f"container {container_name} readiness"
+        )
+        return True
+    except Exception:
         return False
 
 
 def vde_wait_for_container_healthy(vm_name, timeout=60):
-    """Wait for a VDE container to be healthy using deterministic polling.
+    """Wait for a VDE container to be healthy using deterministic polling via vde-poll.
 
     Args:
         vm_name: Name of the VM (with or without vde- prefix)
@@ -304,70 +296,24 @@ def vde_wait_for_container_healthy(vm_name, timeout=60):
     Returns:
         bool: True if container becomes healthy, False otherwise
     """
-    container_name = f"vde-{vm_name.replace('vde-', '')}"
-    start_time = time.time()
-    
     # Adaptive timeout for heavy language VMs
     if timeout == 60:
         raw_name = vm_name.replace("vde-", "").lower()
         if raw_name in {"rust", "flutter", "kotlin", "swift", "haskell", "elixir", "scala"}:
             timeout = 360
 
-    while time.time() - start_time < timeout:
-        # Check running state first
-        if not container_is_running(container_name):
-            time.sleep(0.2)
-            continue
-            
-        # Check health status via vde inspect
-        try:
-            result = subprocess.run(
-                [str(BIN_DIR / "vde"), "inspect", container_name, "--health"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-                cwd=str(VDE_ROOT),
-                env=_vde_env(),
-            )
-            if result.returncode == 0 and result.stdout.strip():
-                import json
-                health = json.loads(result.stdout.strip())
-                status = health.get("Status", "").lower()
-                if status == "healthy":
-                    return True
-            else:
-                # No health check defined, so running + SSH port is our proxy for "healthy"
-                # For service VMs, running is usually enough if no healthcheck
-                vm_type = get_vm_type(vm_name)
-                if vm_type == "service":
-                    return True
-                
-                # For language VMs, check SSH login as proxy for readiness
-                if vm_type == "lang":
-                    # Short-circuit check: see if we can get port mapping
-                    port = get_ssh_port_from_compose(vm_name)
-                    if port:
-                        # Try a quick SSH check
-                        try:
-                            # Use ssh-vm check if available or direct ssh
-                            ssh_check = subprocess.run(
-                                [str(BIN_DIR / "vde"), "exec", vm_name, "echo", "ready"],
-                                capture_output=True,
-                                text=True,
-                                timeout=5,
-                                cwd=str(VDE_ROOT),
-                                env=_vde_env(),
-                            )
-                            if ssh_check.returncode == 0:
-                                return True
-                        except Exception:
-                            pass
-        except Exception:
-            pass
-            
-        time.sleep(0.2)
-        
-    return False
+    from shell_helpers import vde_poll
+    
+    try:
+        # Call vde-poll --health
+        vde_poll(
+            ["--health", vm_name],
+            timeout=timeout,
+            description=f"container {vm_name} health"
+        )
+        return True
+    except Exception:
+        return False
 
 
 def ensure_vm_created(context, vm_name):

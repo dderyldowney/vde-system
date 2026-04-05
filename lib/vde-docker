@@ -564,7 +564,8 @@ wait_for_container_healthy() {
             return ${VDE_SUCCESS}
         fi
 
-        zmodload zsh/zselect 2>/dev/null && zselect -t 20
+        # High-precision sub-second wait via zselect (Rule 23)
+        zmodload zsh/zselect 2>/dev/null && zselect -t $((interval * 100))
         (( elapsed += interval ))
     done
 

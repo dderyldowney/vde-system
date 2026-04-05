@@ -6,7 +6,6 @@ Covers: data seeding, clean-state teardown, backup creation,
 import os
 import sys
 import shutil
-import time
 from datetime import datetime
 from pathlib import Path
 

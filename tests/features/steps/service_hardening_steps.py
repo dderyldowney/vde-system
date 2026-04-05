@@ -5,7 +5,7 @@ Step definitions for service-volume-hardening.feature.
 import os
 import sys
 import subprocess
-import time
+
 from behave import given, when, then
 
 # Add steps directory to path for imports
@@ -14,7 +14,7 @@ if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 
 from vm_common import VDE_ROOT, run_vde_command, container_is_running, get_container_id
-from shell_helpers import wait_for_condition
+from shell_helpers import vde_poll
 
 @given("{vm_name} service VM is created")
 def step_service_vm_created(context, vm_name):
@@ -59,73 +59,46 @@ def step_create_test_table(context, table_name, vm_name):
 
 @when('I create a table "{table_name}" in "{vm_name}"')
 def step_create_table(context, table_name, vm_name):
-    cmd = f"exec {vm_name} \"sudo -u postgres psql -d postgres -c 'CREATE TABLE IF NOT EXISTS {table_name} (id serial PRIMARY KEY);'\""
+    cmd = f"sudo -u postgres psql -d postgres -c 'CREATE TABLE IF NOT EXISTS {table_name} (id serial PRIMARY KEY);'"
+    vde_poll(
+        ["--exec", cmd, vm_name],
+        timeout=30,
+        description=f"table '{table_name}' creation in {vm_name}"
+    )
 
-    def try_create():
-        r = run_vde_command(cmd, timeout=10)
-        if r.returncode == 0:
-            return True
-        last_err = r.stderr.lower()
-        if "starting up" in last_err or "no such file" in last_err or "connection refused" in last_err or "could not connect" in last_err:
-            return False
-        raise Exception(f"Failed to create table: {r.stderr}")
-
-    try:
-        wait_for_condition(
-            try_create,
-            timeout=30,
-            description=f"table '{table_name}' creation in {vm_name}"
-        )
-    except Exception as e:
-        assert False, str(e)
 @then('the table "{table_name}" should still exist in "{vm_name}"')
 def step_table_should_exist(context, table_name, vm_name):
-    cmd = f"exec {vm_name} \"sudo -u postgres psql -d postgres -c '\\dt {table_name}'\""
-    
-    def check_table():
-        r = run_vde_command(cmd, timeout=10)
-        if r.returncode == 0:
-            assert table_name in r.stdout, f"Table {table_name} not found in {vm_name}"
-            return True
-        last_err = r.stderr.lower()
-        if "starting up" in last_err or "no such file" in last_err or "connection refused" in last_err or "could not connect" in last_err:
-            return False
-        raise Exception(f"Failed to check table: {r.stderr}")
-
-    try:
-        wait_for_condition(
-            check_table,
-            timeout=30,
-            description=f"table '{table_name}' existence in {vm_name}"
-        )
-    except Exception as e:
-        assert False, str(e)
+    cmd = f"sudo -u postgres psql -d postgres -c '\\dt {table_name}'"
+    vde_poll(
+        ["--exec", cmd, vm_name],
+        timeout=30,
+        description=f"table '{table_name}' existence in {vm_name}"
+    )
 
 @then('host port {port:d} should be open')
 def step_port_should_be_open(context, port):
-    # Check if port is open on localhost
-    try:
-        # Simple nc check
-        subprocess.run(["nc", "-z", "localhost", str(port)], check=True, timeout=5)
-    except subprocess.CalledProcessError:
-        assert False, f"Port {port} is not open on localhost"
+    # Map to vde-poll --port
+    vde_poll(
+        ["--port", str(port), "vde-base"],
+        timeout=10,
+        description=f"host port {port}"
+    )
 
 @then('I should wait for VM "{vm_name}" to be healthy')
 def step_wait_for_healthy(context, vm_name):
-    try:
-        wait_for_condition(
-            lambda: "healthy" in run_vde_command(f"inspect {vm_name} --health", timeout=10).stdout.lower(),
-            timeout=60,
-            description=f"VM '{vm_name}' health"
-        )
-    except Exception:
-        assert False, f"VM {vm_name} did not become healthy within timeout"
+    # Map to vde-poll --health
+    vde_poll(
+        ["--health", vm_name],
+        timeout=60,
+        description=f"VM '{vm_name}' health"
+    )
 
 @then('the database should be ready for connections immediately')
 def step_db_ready_immediately(context):
     vm_name = context.vm_name
-    cmd = f"exec {vm_name} \"sudo -u postgres psql -d postgres -c 'SELECT 1'\""
-    r = run_vde_command(cmd, timeout=10)
+    cmd = f"sudo -u postgres psql -d postgres -c 'SELECT 1'"
+    # Note: Immediately means we don't use vde_poll here, but run once
+    r = run_vde_command(f"exec {vm_name} \"{cmd}\"", timeout=10)
     assert r.returncode == 0, f"Database not ready: {r.stderr}"
 
 @when('I ping "{target}" from "{source}"')

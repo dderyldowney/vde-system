@@ -110,3 +110,4 @@ test-logs/
 .docker-state/
 .docker-state-*.json
 .tmp.driveupload/
+conductor

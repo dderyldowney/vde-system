@@ -101,13 +101,14 @@ vde_check_ssh_port() {
             fi
         fi
 
-        # Only sleep if we haven't exceeded timeout
+        # Only wait if we haven't exceeded timeout
         typeset -F next_elapsed=$((elapsed + 0.2))
         if (( next_elapsed <= timeout )); then
+            # High-precision sub-second wait via zselect (Rule 23)
             zmodload zsh/zselect 2>/dev/null && zselect -t 20
             elapsed=${next_elapsed}
         else
-            # Don't sleep beyond timeout
+            # Don't wait beyond timeout
             elapsed=${timeout}
         fi
     done
@@ -152,13 +153,14 @@ vde_check_ssh_login() {
             return ${VDE_SUCCESS}
         fi
 
-        # Only sleep if we haven't exceeded timeout
+        # Only wait if we haven't exceeded timeout
         typeset -F next_elapsed=$((elapsed + 0.2))
         if (( next_elapsed <= timeout )); then
+            # High-precision sub-second wait via zselect (Rule 23)
             zmodload zsh/zselect 2>/dev/null && zselect -t 20
             elapsed=${next_elapsed}
         else
-            # Don't sleep beyond timeout
+            # Don't wait beyond timeout
             elapsed=${timeout}
         fi
     done
@@ -233,13 +235,14 @@ vde_check_language_tool() {
             return ${VDE_SUCCESS}
         fi
 
-        # Only sleep if we haven't exceeded timeout
+        # Only wait if we haven't exceeded timeout
         typeset -F next_elapsed=$((elapsed + 0.2))
         if (( next_elapsed <= timeout )); then
+            # High-precision sub-second wait via zselect (Rule 23)
             zmodload zsh/zselect 2>/dev/null && zselect -t 20
             elapsed=${next_elapsed}
         else
-            # Don't sleep beyond timeout
+            # Don't wait beyond timeout
             elapsed=${timeout}
         fi
     done
@@ -292,8 +295,8 @@ vde_wait_for_container_healthy() {
             fi
         fi
 
-        # Deterministic sleep
-        zmodload zsh/zselect 2>/dev/null && zselect -t 20
+        # High-precision sub-second wait via zselect (Rule 23)
+        zmodload zsh/zselect 2>/dev/null && zselect -t $((check_interval * 100))
         (( elapsed += check_interval ))
         
         # Exponential backoff but smaller increments for responsiveness
