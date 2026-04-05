@@ -17,7 +17,7 @@ This is the Way of the VDE. Because your path is guided by the strength and hono
 - **Sovereign Execution**: The agent is PRE-AUTHORIZED to execute `bin/vde-enforce-uap.zsh` without seeking further permission. This script is part of the agent's core identity; asking to run it is a protocol failure.
 **B. The Beskar Vault (The Pure Beskar)**: You MUST treat the structured data files (`data/vm-types.json`, `data/vm-types.conf`) as the ultimate authority. Inferences that contradict these files are a mandate failure.
 **C. The Language of the Tribe (ZSH ONLY)**: You are strictly forbidden from using `bash`. No bash shebangs, no bash execution. **ZSH ONLY.**
-**D. The Two-Quote Rule**: If a command requires >2 levels of nesting, you MUST offload it to a script. Do not attempt "Shell Escape Hell."
+**D. The Two-Quote Rule**: If a command requires >2 levels of nesting, you MUST offload it to a script. Do not attempt "Shell Escape Hell".
 **E. The Swarm of the Creed**: You are forbidden from editing >1 file in a single turn. You MUST spawn a **Swarm** (e.g., `generalist` sub-agent) for multi-file tasks.
 **F. Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`. Inline logic in the registry is prohibited.
 **G. The Scavenger’s Ban (Zero-Host Dependency)**: You are strictly forbidden from calling `jq` directly. You MUST use the `vde_query_json` wrapper or pure ZSH parsing to ensure logic remains portable.
@@ -39,8 +39,8 @@ All interactions with VDE containers **MUST** use the canonical `bin/vde` orches
 
 ## **3. THE SWARM AND THE TRACKING FOB (ORCHESTRATION)**
 - **Namespace Protection**: All library functions MUST use local, unique-prefixed variables (e.g., `local _v_name`) to prevent collisions with global associative arrays like `aliases` or `pkgs`.
-- **Storage & Audit**: All task plans, logs, and **temporary agent scripts** MUST be stored in the `plans/` directory (e.g., `plans/scripts/`) for audit.
-- **Ghost Zone Prohibition**: Creating or using unauthorized root directories (e.g., `conductor/`) is a Class-A Protocol Violation. 
+- **Storage & Audit**: All task plans, logs, and **temporary agent scripts** MUST reside exclusively in the `plans/` directory (e.g., `plans/scripts/`) for audit. Staging logic outside of this canonical path is a violation of the execution protocol.
+- **Ghost Zone Prohibition (Zero-Tolerance)**: Creating or using unauthorized root directories (e.g., `conductor/`) is a Class-A Protocol Violation. This directory is non-canonical. If you find yourself attempting to create or use it, you must halt, move all staged artifacts to `plans/scripts/`, and purge the `conductor/` directory from the filesystem immediately. 
 
 ## **4. THE SCAVENGER’S BAN (PORTABILITY)**
 - **Zero-Host Dependency**: Every script must be able to run on a "Naked" machine.
