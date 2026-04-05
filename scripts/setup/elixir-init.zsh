@@ -1,15 +1,18 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # elixir-init.zsh - VDE Elixir Environment Initialization
-#
-# This script handles the asdf-based Elixir/Erlang source build.
-# It is executed as root during the Docker build process.
+# Part of the Universal Script Parity (USP) mandate.
 #===============================================================================
+set -e
 
-# 1. Generate Locales
+# 1. Install system packages
+apt-get update
+apt-get install -y git curl build-essential libssl-dev automake autoconf libncurses5-dev unzip wget locales ca-certificates
+
+# 2. Generate Locales
 locale-gen en_US.UTF-8
 
-# 2. Create the Installation Script for devuser
+# 3. Create the Installation Script for devuser
 INSTALL_SCRIPT="/tmp/install-elixir-as-devuser.sh"
 
 cat <<EOF > "${INSTALL_SCRIPT}"
@@ -41,9 +44,11 @@ echo 'source \$HOME/.asdf/asdf.sh' >> "\$HOME/.zshenv"
 echo 'export LANG=en_US.UTF-8' >> "\$HOME/.zshenv"
 EOF
 
-# 3. Execute as devuser
+# 4. Execute as devuser
 chmod +x "${INSTALL_SCRIPT}"
 su - devuser -c "${INSTALL_SCRIPT}"
 
-# 4. Cleanup
+# 5. Cleanup
+apt-get clean
+rm -rf /var/lib/apt/lists/*
 rm -f "${INSTALL_SCRIPT}"

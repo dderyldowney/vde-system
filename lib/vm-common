@@ -390,27 +390,27 @@ load_vm_types() {
         # Strategy: Use JQ if available (fastest for JSON), fallback to ZSH CONF parser (Rule G)
         if [[ -f "${VM_TYPES_JSON}" ]] && command -v jq >/dev/null 2>&1; then
             _info "Parsing VM types from JSON via JQ: ${VM_TYPES_JSON}"
-            local p_configs
-            p_configs=$(vde_json -r '
+            local _v_p_configs
+            _v_p_configs=$(vde_json -r '
                 (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
                 (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
             ' "${VM_TYPES_JSON}" 2>/dev/null)
 
-            if [[ -n "${p_configs}" ]]; then
-                eval "${p_configs}"
+            if [[ -n "${_v_p_configs}" ]]; then
+                eval "${_v_p_configs}"
             fi
         elif [[ -f "${VM_TYPES_CONF}" ]]; then
             _info "Parsing VM types from Raw Beskar (.conf) via Pure ZSH..."
-            local _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _extra
-            while IFS='|' read -r _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _extra; do
+            local _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _v_extra
+            while IFS='|' read -r _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _v_extra; do
                 [[ -z "${_v_name}" || "${_v_type}" == "#"* ]] && continue
                 
-                local cat="lang"
-                [[ "${_v_type}" == "service" ]] && cat="service"
+                local _v_cat="lang"
+                [[ "${_v_type}" == "service" ]] && _v_cat="service"
                 
-                VM_TYPE[${_v_name}]="${cat}"
-                [[ "${cat}" == "lang" ]] && lang_vms_array+=("${_v_name}")
-                [[ "${cat}" == "service" ]] && service_vms_array+=("${_v_name}")
+                VM_TYPE[${_v_name}]="${_v_cat}"
+                [[ "${_v_cat}" == "lang" ]] && lang_vms_array+=("${_v_name}")
+                [[ "${_v_cat}" == "service" ]] && service_vms_array+=("${_v_name}")
                 
                 VM_ALIASES[${_v_name}]="${_v_aliases}"
                 VM_DISPLAY[${_v_name}]="${_v_disp}"
@@ -435,31 +435,31 @@ load_vm_types() {
         typeset -gA VM_ALIAS_MAP
         VM_ALIAS_MAP=()
 
-        local vn=""
-        for vn in "${lang_vms[@]}" "${service_vms[@]}"; do
+        local _v_vm_name=""
+        for _v_vm_name in "${lang_vms[@]}" "${service_vms[@]}"; do
             # 1. Map canonical name
-            VM_ALIAS_MAP[${vn}]="${vn}"
+            VM_ALIAS_MAP[${_v_vm_name}]="${_v_vm_name}"
 
             # 2. Map prefixed name
-            local prefixed="vde-${vn#vde-}"
-            VM_ALIAS_MAP[${prefixed}]="${vn}"
+            local _v_prefixed="vde-${_v_vm_name#vde-}"
+            VM_ALIAS_MAP[${_v_prefixed}]="${_v_vm_name}"
 
             # 3. Map aliases
-            local aliases="${VM_ALIASES[${vn}]}"
-            if [[ -n "${aliases}" ]]; then
-                local a=""
-                for a in ${(s:,:)aliases}; do
-                    a="${a//[[:space:]]/}"
-                    [[ -n "${a}" ]] && VM_ALIAS_MAP[${a}]="${vn}"
+            local _v_aliases="${VM_ALIASES[${_v_vm_name}]}"
+            if [[ -n "${_v_aliases}" ]]; then
+                local _v_alias=""
+                for _v_alias in ${(s:,:)_v_aliases}; do
+                    _v_alias="${_v_alias//[[:space:]]/}"
+                    [[ -n "${_v_alias}" ]] && VM_ALIAS_MAP[${_v_alias}]="${_v_vm_name}"
                 done
             fi
 
             # 4. Map display name (lowercase, spaces stripped)
-            local display="${VM_DISPLAY[${vn}]}"
-            if [[ -n "${display}" ]]; then
-                local d_low="${(L)display}"
-                d_low="${d_low//[[:space:]]/}"
-                [[ -n "${d_low}" ]] && VM_ALIAS_MAP[${d_low}]="${vn}"
+            local _v_display="${VM_DISPLAY[${_v_vm_name}]}"
+            if [[ -n "${_v_display}" ]]; then
+                local _v_display_low="${(L)_v_display}"
+                _v_display_low="${_v_display_low//[[:space:]]/}"
+                [[ -n "${_v_display_low}" ]] && VM_ALIAS_MAP[${_v_display_low}]="${_v_vm_name}"
             fi
         done
         _VM_ALIAS_MAP_BUILT=1
