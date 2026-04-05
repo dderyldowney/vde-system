@@ -18,8 +18,8 @@ This is the Way of the VDE. Because your path is guided by the strength and hono
 **D. The Two-Quote Rule**: If a command requires >2 levels of nesting, you MUST offload it to a script. Do not attempt "Shell Escape Hell."
 **E. The Swarm of the Creed**: You are forbidden from editing >1 file in a single turn. You MUST spawn a **Swarm** (e.g., `generalist` sub-agent) for multi-file tasks.
 **F. Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`. Inline logic is prohibited.
-**G. The Scavenger’s Ban (Zero-Host Dependency)**: You are strictly forbidden from calling `jq` directly. You MUST use the `vde_query_json` wrapper or pure ZSH parsing to ensure the logic remains portable.
-**H. The Pre-Flight Mandate (Ignition Sync)**: The CLI MUST perform a timestamp audit at ignition. If the `.conf` is newer than the `.json`, or the `.json` newer than the `.cache`, you MUST trigger a re-smelt immediately.
+**G. The Scavenger’s Ban (Zero-Host Dependency)**: You are strictly forbidden from calling `jq` directly. You MUST use the `vde_query_json` wrapper or pure ZSH parsing.
+**H. The Pre-Flight Mandate (Ignition Sync)**: The CLI MUST perform a timestamp audit at ignition. If source files are newer than the cache, a re-smelt is mandatory.
 **I. The 8-Field Standard**: You are forbidden from deviating from the strict 8-field registry layout. There is no room for "guessed" or "implied" fields.
 
 ---
@@ -33,41 +33,32 @@ All interactions with VDE containers **MUST** use the canonical `bin/vde` orches
 - **Authority**: `data/vm-types.json` and `data/vm-types.conf` are the sole sources of truth.
 - **Strict 8-Field Registry Standard**: All parsers and translators MUST respect this exact layout: 
   1. `type` | 2. `name` | 3. `aliases` | 4. `display` | 5. `pkgs` | 6. `custom_cmd` | 7. `env` | 8. `ports`.
-- **Port Precision**: Use specific field names `ssh_port` and `service_port` within logic. Generic "port" references are a scavenger’s laziness and are prohibited.
+- **Port Precision**: Use specific field names `ssh_port` and `service_port`. Generic "port" references are prohibited.
 
-## **3. THE RULE OF SINGLE RESPONSIBILITY**
-Scripts must do one thing with absolute lethality. 
-- `bin/vde-rebuild`: Bakes the armor.
-- `lib/vm-common`: Holds the knowledge of the Tribe.
-- `scripts/setup/*`: Hydrates the specific environment.
+## **3. THE SWARM AND THE TRACKING FOB (ORCHESTRATION)**
+- **Namespace Protection**: All library functions MUST use local, unique-prefixed variables (e.g., `local _v_name`) to prevent collisions with global associative arrays.
+- **Storage & Audit**: All task plans, logs, and **temporary execution scripts** MUST be stored in the `plans/` directory (e.g., `plans/scripts/`) for audit.
+- **Ghost Zone Prohibition**: Creating or using a `conductor/` directory is a Class-A Protocol Violation. All staging belongs in `plans/` or `scripts/setup/`.
 
-## **4. THE SWARM AND THE TRACKING FOB (ORCHESTRATION)**
-- **Namespace Protection**: All library functions MUST use local, unique-prefixed variables (e.g., `local _v_name`) to prevent collisions with global associative arrays like `aliases` or `pkgs`.
-- **Storage**: All task plans and logs **MUST** be stored in the `plans/` directory for audit.
-
-## **5. THE SCAVENGER’S BAN (PORTABILITY)**
+## **4. THE SCAVENGER’S BAN (PORTABILITY)**
 - **Zero-Host Dependency**: Every script must be able to run on a "Naked" machine.
-- **Atomic Translation**: Translators MUST be written in pure ZSH. Using `jq` for the internal translation logic (Conf -> JSON) is forbidden to ensure the Forge works during bootstrap.
+- **Atomic Translation**: Translators MUST be written in pure ZSH.
 
-## **6. THE FORGE BUILD STRATEGY (ANTI-ENTROPY)**
+## **5. THE FORGE BUILD STRATEGY (ANTI-ENTROPY)**
 - **Purge the Ghosts**: All `apt` installations MUST be followed by `sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*`.
-- **Statelessness**: Images must be immutable. All persistent data belongs in `/home/devuser`.
 
-## **7. THE PRE-FLIGHT MANDATE (IGNITION SYNC)**
-- **Active Audit**: The `bin/vde` script must check if manual edits to the `.conf` exist before loading. 
-- **The Ritual**: If `data/vm-types.conf` is newer than `data/vm-types.json`, call the translator. If JSON is newer than `.cache`, re-smelt the cache.
+## **6. THE PRE-FLIGHT MANDATE (IGNITION SYNC)**
+- **Active Audit**: If `data/vm-types.conf` is newer than `data/vm-types.json`, call the translator. If JSON is newer than `.cache`, re-smelt the cache.
 
-## **8. FOREST-FIRST DIAGNOSTICS**
+## **7. FOREST-FIRST DIAGNOSTICS**
 When a bug occurs, perform an architectural audit **before** code analysis.
 - **Phase 1 (The Forest)**: Audit `lib/vm-common` for global shadowing and trace data flow from `.conf` through the translator to `.json` and finally `.cache/`.
 - **Phase 2 (The Trees)**: Inspect variable types (Scalar vs. Array) and verify the 8-field parsing logic.
-- **Pure Beskar Verification**: Physically `cat` the cache and JSON files to ensure they match the manual edits.
 
-## **9. THE RULE SPINE (UAP ENFORCEMENT)**
+## **8. THE RULE SPINE (UAP ENFORCEMENT)**
 - **Mandate**: Every execution turn must be accompanied by a call to `bin/vde-enforce-uap.zsh`.
-- **Logic**: This script is the ultimate arbiter. If it identifies a violation of the Supreme Law or Portability, you must halt and rectify immediately before proceeding.
-- **No Wiggle Room**: You MUST NOT bypass script verification. If a setup script is required by USP, it must be verified as functional before the corresponding package data is struck from the registry.
+- **No Wiggle Room**: You MUST NOT bypass script verification. Setup scripts must be verified as functional before package data is struck from the registry.
 
 ---
-*Version: 1.8.5*
-*Reference: VDE-SPEC v2.0.3*
+*Version: 2.0.5*
+*Reference: VDE-SPEC v2.0.5*

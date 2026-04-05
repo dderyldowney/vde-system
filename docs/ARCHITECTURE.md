@@ -1,10 +1,11 @@
-# ARCHITECTURE v2.0.4 (Absolute)
+# ARCHITECTURE v2.0.5 (Absolute)
 
 ## VERSION HISTORY
 | Version | Date       | Changes                                                                 |
 | :---    | :---       | :---                                                                    |
 | 2.0.3   | 2026-04-03 | Standardized SSH Key naming convention for vde-bootstrap.               |
 | 2.0.4   | 2026-04-04 | Shifted hydration logic to USP setup scripts and formalized the Ignition Pipeline. |
+| 2.0.5   | 2026-04-04 | Version bump to 2.0.5.                                                  |
 
 ## 1. The Hub-and-Spoke Tiered Model
 
