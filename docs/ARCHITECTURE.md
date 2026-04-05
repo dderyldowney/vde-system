@@ -1,12 +1,10 @@
-# ARCHITECTURE v2.0.3 (Absolute)
+# ARCHITECTURE v2.0.4 (Absolute)
 
 ## VERSION HISTORY
-| Version | Date | Changes |
-| :--- | :--- | :--- |
-| 1.7.2 | 2026-04-02 | Modular Library and template-heavy design. |
-| 2.0.0 | 2026-04-03 | Implemented Hub-and-Spoke model with Build-Time parameterization. |
-| 2.0.1 | 2026-04-03 | Integrated OS-level upgrades in Hub for stability. |
-| 2.0.3 | 2026-04-03 | Standardized SSH Key naming convention for vde-bootstrap. |
+| Version | Date       | Changes                                                                 |
+| :---    | :---       | :---                                                                    |
+| 2.0.3   | 2026-04-03 | Standardized SSH Key naming convention for vde-bootstrap.               |
+| 2.0.4   | 2026-04-04 | Shifted hydration logic to USP setup scripts and formalized the Ignition Pipeline. |
 
 ## 1. The Hub-and-Spoke Tiered Model
 
@@ -15,20 +13,27 @@ VDE uses a three-tier inheritance model to ensure identity consistency while all
 | Tier | Name | Component | Role |
 | :--- | :--- | :--- | :--- |
 | **Tier 1** | **The Hub** | `vde-base` | Defines Identity (devuser), Shell (Zsh), and Core Security (SSH/Sudo). |
-| **Tier 2** | **The Spoke** | `vde-lang` | A parameterized template using `ARG PKGS_TO_INSTALL` to bake skills at build-time. |
+| **Tier 2** | **The Spoke** | `scripts/setup/` | USP rituals that hydrate the environment at build-time using absolute logic. |
 | **Tier 3** | **The Jail** | Container | The running process (e.g., `vde-python`). Functional in <1s. |
 
-## 2. Parameterized Manufacturing Logic
+## 2. The Ignition Pipeline (Pre-Flight)
 
-We have replaced individual language Dockerfiles with **Build-Time Injection**.
+We have replaced static configurations with a **Reactive Sync Ritual**.
 
-- **The Master Template**: `configs/docker/vde-lang.Dockerfile`.
-- **Skill Injection**: The CLI passes the package list (e.g., `python3 python3-pip`) as a build argument.
-- **Result**: The image is "Billed" as a finished product. No placeholders or runtime scripts are used.
+1. **The Raw Beskar**: `data/vm-types.conf` (User-edited source).
+2. **The Pure Beskar**: `data/vm-types.json` (Atomic 8-field registry).
+3. **The Tracking Fob**: `.cache/vm-types.cache` (High-speed runtime hydration).
 
-## 3. Persistence & Identity Mapping
+- **Automatic Reconciliation**: If any upstream file is newer (`-nt`) than its downstream target, the CLI triggers a pure ZSH re-smelt immediately to ensure the environment matches the latest manual strike.
+
+## 3. Universal Script Parity (USP) Logic
+
+Manufacturing logic has moved from build-args to modular scripts:
+- **Registry Independence**: `vm-types.conf` defines *what* exists; `scripts/setup/` defines *how* it is built.
+- **Image Hygiene**: Every USP script is mandated to purge its own ghosts (`apt-get clean`) to ensure the final jail is pure.
+
+## 4. Persistence & Identity Mapping
 
 - **Workspace**: `/home/devuser/workspace` mapped to `projects/<lang>/`.
 - **SSH Bridge**: `vde_student.pub` is mapped to the container's `authorized_keys` at start.
-- **Identity**: All jails use the same `vde_student` private key for seamless access.
-
+- **Namespace Protection**: All library functions use local, unique-prefixed variables to prevent collisions with the global registry.
