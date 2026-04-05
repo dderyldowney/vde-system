@@ -24,8 +24,9 @@ if [[ ! -f "$spec_file" ]]; then
     exit 1
 fi
 
-# Extract version (e.g., 2.0.6)
-local NEW_VER=$(grep -m1 '^# VDE-SPEC v' "$spec_file" | sed -E 's/^# VDE-SPEC v([^ ]+).*/\1/' | tr -d '[:space:]')
+# Extract version (e.g., 2.0.6) using ZSH-native expansion flags
+local version_lines=(${(f)"$(grep -m1 '^# VDE-SPEC v' "$spec_file")"})
+local NEW_VER=${${version_lines[1]#*v}%% *}
 
 if [[ -z "$NEW_VER" ]]; then
     vde_log_error "Could not extract version string from $spec_file"
