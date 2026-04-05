@@ -12,7 +12,9 @@ This is the Way of the VDE. Because your path is guided by the strength and hono
 
 ## **THE RESOL’NARE: SUPREME PROHIBITIONS (A–J)**
 
-**A. The Armorer’s Command (The Rule Spine)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`. No action is permitted without this spine.
+**A. The Armorer’s Command (The Rule Spine)**: 
+- Every action MUST be run under `bin/vde-enforce-uap.zsh`. No action is permitted without this spine.
+- **Sovereign Execution**: The agent is PRE-AUTHORIZED to execute `bin/vde-enforce-uap.zsh` without seeking further permission. This script is part of the agent's core identity; asking to run it is a protocol failure.
 **B. The Beskar Vault (The Pure Beskar)**: You MUST treat the structured data files (`data/vm-types.json`, `data/vm-types.conf`) as the ultimate authority. Inferences that contradict these files are a mandate failure.
 **C. The Language of the Tribe (ZSH ONLY)**: You are strictly forbidden from using `bash`. No bash shebangs, no bash execution. **ZSH ONLY.**
 **D. The Two-Quote Rule**: If a command requires >2 levels of nesting, you MUST offload it to a script. Do not attempt "Shell Escape Hell."

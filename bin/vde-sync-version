@@ -1,55 +1,43 @@
 #!/usr/bin/env zsh
 #===============================================================================
-# VDE Version Synchronizer (Absolute Hardened)
+# VDE Version Synchronizer (Host-Aware v2.0.6)
 #===============================================================================
 
 # 1. Initialize the Spine
 VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(pwd)}"
+source "${VDE_ROOT_DIR}/lib/vde-core"
 
-# 2. Source the Tribe's Knowledge (Try to find the logs)
-[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core"
-[[ -f "${VDE_ROOT_DIR}/lib/vm-common" ]] && source "${VDE_ROOT_DIR}/lib/vm-common"
+# 2. Extract the current version from the Beskar Source
+local -a NEW_VER_RAW=( ${(f)"$(vde_get_version)"} )
+local NEW_VER="${NEW_VER_RAW[1]}"
+[[ "$NEW_VER" == "0.0.0-unknown" ]] && { echo "ERROR: No version in Spec."; exit 1; }
 
-# 3. Logging Fallbacks (Ensures the script works even if libraries are missing)
+# 3. Logging Fallbacks
 if ! command -v vde_log_info >/dev/null; then
     vde_log_info() { echo "\033[1;34m[INFO]\033[0m $1"; }
     vde_log_success() { echo "\033[1;32m[SUCCESS]\033[0m $1"; }
-    vde_log_error() { echo "\033[1;31m[ERROR]\033[0m $1"; }
 fi
 
-# 4. The Extraction Ritual (Finding the version in docs/VDE-SPEC.md)
-local spec_file="${VDE_ROOT_DIR}/docs/VDE-SPEC.md"
-if [[ ! -f "$spec_file" ]]; then
-    vde_log_error "Beskar Source not found at $spec_file"
-    exit 1
+vde_log_info "Synchronizing Tribe to Version: ${NEW_VER}" "forge"
+
+# 4. Strike docs/ARCHITECTURE.md
+sed -i '' "1s/^# ARCHITECTURE v.*/# ARCHITECTURE v${NEW_VER} (Absolute)/" "${VDE_ROOT_DIR}/docs/ARCHITECTURE.md"
+vde_log_success "Aligned docs/ARCHITECTURE.md" "forge"
+
+# 5. Strike .gemini/instructions.md
+sed -i '' "s/Version: [0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
+sed -i '' "s/VDE-SPEC v[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/VDE-SPEC v${NEW_VER}/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
+vde_log_success "Aligned .gemini/instructions.md" "forge"
+
+# 6. Strike $HOME/.zshrc (The Host Handshake)
+local zshrc="${HOME}/.zshrc"
+if [[ -f "$zshrc" ]]; then
+    # Strikes the gvde function's handshake prompt version
+    sed -i '' "s/Initialize VDE Session v[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/Initialize VDE Session v${NEW_VER}/" "$zshrc"
+    # Strikes any VDE_VERSION="X.X.X" variable
+    sed -i '' "s/\(VDE_VERSION=\)[\"'][0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}[\"']/\1\"${NEW_VER}\"/" "$zshrc"
+    vde_log_success "Aligned \$HOME/.zshrc gvde handshake" "forge"
 fi
 
-# Extract version (e.g., 2.0.6) using ZSH-native expansion flags
-local version_lines=(${(f)"$(grep -m1 '^# VDE-SPEC v' "$spec_file")"})
-local NEW_VER=${${version_lines[1]#*v}%% *}
-
-if [[ -z "$NEW_VER" ]]; then
-    vde_log_error "Could not extract version string from $spec_file"
-    exit 1
-fi
-
-vde_log_info "Synchronizing Tribe to Version: ${NEW_VER}"
-
-# 5. Strike docs/ARCHITECTURE.md
-local arch_file="${VDE_ROOT_DIR}/docs/ARCHITECTURE.md"
-if [[ -f "$arch_file" ]]; then
-    sed -i '' "1s/^# ARCHITECTURE v.*/# ARCHITECTURE v${NEW_VER} (Absolute)/" "$arch_file"
-    vde_log_success "Aligned docs/ARCHITECTURE.md"
-fi
-
-# 6. Strike .gemini/instructions.md
-local inst_file="${VDE_ROOT_DIR}/.gemini/instructions.md"
-if [[ -f "$inst_file" ]]; then
-    # Update both the Version line and the Reference line at the bottom
-    sed -i '' "s/Version: [0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/Version: ${NEW_VER}/" "$inst_file"
-    sed -i '' "s/VDE-SPEC v[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/VDE-SPEC v${NEW_VER}/" "$inst_file"
-    vde_log_success "Aligned .gemini/instructions.md"
-fi
-
-vde_log_success "Alignment Complete for Version ${NEW_VER}."
+vde_log_success "Alignment Complete for Version ${NEW_VER}." "forge"
 
