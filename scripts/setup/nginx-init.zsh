@@ -1,15 +1,15 @@
 #!/usr/bin/env zsh
-# Nginx Initialization Script (USP Compliant)
-# Part of the Universal Script Parity (USP) mandate.
+# VDE Initialization Script: nginx
+# USP compliant - strictly ZSH
+# Forged in Beskar
 
-vde_log_info "Initializing Nginx service VM..." "setup"
+# 1. THE PACKAGE ALLOY: Define requirements with unique local prefix
+local vde_nginx_pkgs="nginx-extras"
 
-# 1. Install packages
+# 2. THE FORGE WORK: Update and install
 apt-get update
-apt-get install -y nginx-extras
+apt-get install -y ${=vde_nginx_pkgs}
 
-# 2. Cleanup
+# 3. PURGING THE GHOSTS: Cleanup apt artifacts
 apt-get clean
 rm -rf /var/lib/apt/lists/*
-
-vde_log_success "Nginx initialization complete." "setup"
