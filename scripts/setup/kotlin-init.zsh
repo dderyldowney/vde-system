@@ -9,8 +9,8 @@ sudo apt-get update
 echo "Fixing the Scavenger's Bug (missing man1 dir)..."
 sudo mkdir -p /usr/share/man/man1
 
-echo "Hammering in the Headless JDK..."
-sudo apt-get install -y --no-install-recommends default-jdk-headless
+echo "Hammering in the Headless JDK and core tools..."
+sudo apt-get install -y --no-install-recommends default-jdk-headless curl zip unzip vim
 
 # 2. PURGING THE GHOSTS: Clean up apt artifacts immediately.
 sudo apt-get clean

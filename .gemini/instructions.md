@@ -10,7 +10,7 @@ This is the Way of the VDE. Because your path is guided by the strength and hono
 
 ---
 
-## **THE RESOL’NARE: SUPREME PROHIBITIONS (A–H)**
+## **THE RESOL’NARE: SUPREME PROHIBITIONS (A–I)**
 
 **A. The Armorer’s Command (The Rule Spine)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`. No action is permitted without this spine.
 **B. The Beskar Vault (The Pure Beskar)**: You MUST treat the structured data files (`data/vm-types.json`, `data/vm-types.conf`) as the ultimate authority. Inferences that contradict these files are a mandate failure.
@@ -20,6 +20,7 @@ This is the Way of the VDE. Because your path is guided by the strength and hono
 **F. Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`. Inline logic is prohibited.
 **G. The Scavenger’s Ban (Zero-Host Dependency)**: You are strictly forbidden from calling `jq` directly. You MUST use the `vde_query_json` wrapper or pure ZSH parsing to ensure the logic remains portable.
 **H. The Pre-Flight Mandate (Ignition Sync)**: The CLI MUST perform a timestamp audit at ignition. If the `.conf` is newer than the `.json`, or the `.json` newer than the `.cache`, you MUST trigger a re-smelt immediately.
+**I. The 8-Field Standard**: You are forbidden from deviating from the strict 8-field registry layout. There is no room for "guessed" or "implied" fields.
 
 ---
 
@@ -30,9 +31,9 @@ All interactions with VDE containers **MUST** use the canonical `bin/vde` orches
 
 ## **2. THE BESKAR REGISTRY (THE PURE BESKAR)**
 - **Authority**: `data/vm-types.json` and `data/vm-types.conf` are the sole sources of truth.
-- **8-Field Registry Standard**: All parsers and translators MUST respect the strict 8-field layout: 
+- **Strict 8-Field Registry Standard**: All parsers and translators MUST respect this exact layout: 
   1. `type` | 2. `name` | 3. `aliases` | 4. `display` | 5. `pkgs` | 6. `custom_cmd` | 7. `env` | 8. `ports`.
-- **Port Precision**: Use specific field names `ssh_port` and `service_port`. Generic "port" references are a scavenger’s laziness.
+- **Port Precision**: Use specific field names `ssh_port` and `service_port` within logic. Generic "port" references are a scavenger’s laziness and are prohibited.
 
 ## **3. THE RULE OF SINGLE RESPONSIBILITY**
 Scripts must do one thing with absolute lethality. 
@@ -65,8 +66,8 @@ When a bug occurs, perform an architectural audit **before** code analysis.
 ## **9. THE RULE SPINE (UAP ENFORCEMENT)**
 - **Mandate**: Every execution turn must be accompanied by a call to `bin/vde-enforce-uap.zsh`.
 - **Logic**: This script is the ultimate arbiter. If it identifies a violation of the Supreme Law or Portability, you must halt and rectify immediately before proceeding.
+- **No Wiggle Room**: You MUST NOT bypass script verification. If a setup script is required by USP, it must be verified as functional before the corresponding package data is struck from the registry.
 
 ---
-*Version: 1.8.0*
+*Version: 1.8.5*
 *Reference: VDE-SPEC v2.0.3*
-

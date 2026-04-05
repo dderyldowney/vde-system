@@ -1,6 +1,15 @@
 #!/usr/bin/env zsh
 # vde-csharp initialization (Anti-Entropy Hardened)
+# Part of the Universal Script Parity (USP) mandate.
 set -e
+
+# 1. Install system packages
+apt-get update
+apt-get install -y curl libicu-dev ca-certificates
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+# 2. Setup .NET
 DOTNET_INSTALL_DIR="/usr/share/dotnet"
 mkdir -p "${DOTNET_INSTALL_DIR}"
 
