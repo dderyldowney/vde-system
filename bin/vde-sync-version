@@ -1,0 +1,12 @@
+#!/usr/bin/env zsh
+source "${0:h}/../lib/vde-core"
+
+local NEW_VER=$(vde_get_version)
+vde_log_info "Aligning Spoke documents to Version ${NEW_VER}..." "forge"
+
+# Use sed to update headers in ARCHITECTURE.md and instructions.md
+sed -i '' "1s/^# ARCHITECTURE v.*/# ARCHITECTURE v${NEW_VER} (Absolute)/" "${VDE_ROOT_DIR}/ARCHITECTURE.md"
+sed -i '' "s/Version: [0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/instructions.md"
+
+vde_log_success "Documents are now in parity with the Beskar Source." "forge"
+
