@@ -360,7 +360,7 @@ load_vm_types() {
             # Parse all VM installs and custom commands efficiently
             {
                 local p_installs
-                p_installs=$(jq -r '(.vms.language[], .vms.service[]) | "VM_INSTALL[\(.name)]=\(.pkgs // "-" | @sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd // "" | @sh)"' "${VM_TYPES_JSON}" 2>/dev/null)
+                p_installs=$(vde_json -r '(.vms.language[], .vms.service[]) | "VM_INSTALL[\(.name)]=\(.pkgs // "-" | @sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd // "" | @sh)"' "${VM_TYPES_JSON}" 2>/dev/null)
                 [[ -n "${p_installs}" ]] && eval "${p_installs}"
             } >/dev/null 2>&1
         elif [[ -f "${VM_TYPES_CONF}" ]]; then
@@ -373,7 +373,7 @@ load_vm_types() {
     fi
 
     if [[ "${use_cache}" -ne 1 ]]; then
-        _info "Loading VM types from JSON config..."
+        _info "Loading VM types configuration..."
 
         # Clear existing arrays
         VM_TYPE=()
@@ -384,18 +384,14 @@ load_vm_types() {
         VM_SVC_PORT=()
         VM_SSH_PORT=()
 
-        # Read and parse configuration from JSON
-        # Format: .vms.language[] and .vms.service[] with fields: name, aliases, display, pkgs, custom_cmd, port
-        if [[ -f "${VM_TYPES_JSON}" ]]; then
-            _info "Parsing VM types from JSON: ${VM_TYPES_JSON}"
+        local lang_vms_array=()
+        local service_vms_array=()
 
-            local lang_vms_array=()
-            local service_vms_array=()
+        # Strategy: Use JQ if available (fastest for JSON), fallback to ZSH CONF parser (Rule G)
+        if [[ -f "${VM_TYPES_JSON}" ]] && command -v jq >/dev/null 2>&1; then
+            _info "Parsing VM types from JSON via JQ: ${VM_TYPES_JSON}"
             local p_configs
-            
-            # Use jq to generate a batch of shell assignments for all properties at once
-            # Note: We escape values using @sh but keep keys and operators clean
-            p_configs=$(jq -r '
+            p_configs=$(vde_json -r '
                 (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
                 (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
             ' "${VM_TYPES_JSON}" 2>/dev/null)
@@ -403,14 +399,34 @@ load_vm_types() {
             if [[ -n "${p_configs}" ]]; then
                 eval "${p_configs}"
             fi
-
-            # Export type indexes
-            lang_vms=("${lang_vms_array[@]}")
-            service_vms=("${service_vms_array[@]}")
+        elif [[ -f "${VM_TYPES_CONF}" ]]; then
+            _info "Parsing VM types from Raw Beskar (.conf) via Pure ZSH..."
+            local _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _extra
+            while IFS='|' read -r _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _extra; do
+                [[ -z "${_v_name}" || "${_v_type}" == "#"* ]] && continue
+                
+                local cat="lang"
+                [[ "${_v_type}" == "service" ]] && cat="service"
+                
+                VM_TYPE[${_v_name}]="${cat}"
+                [[ "${cat}" == "lang" ]] && lang_vms_array+=("${_v_name}")
+                [[ "${cat}" == "service" ]] && service_vms_array+=("${_v_name}")
+                
+                VM_ALIASES[${_v_name}]="${_v_aliases}"
+                VM_DISPLAY[${_v_name}]="${_v_disp}"
+                VM_INSTALL[${_v_name}]="${_v_pkgs}"
+                VM_CUSTOM_CMD[${_v_name}]="${_v_cmd}"
+                VM_SVC_PORT[${_v_name}]="${_v_env}"
+                VM_SSH_PORT[${_v_name}]="${_v_port}"
+            done < "${VM_TYPES_CONF}"
         else
-            _error "JSON config not found: ${VM_TYPES_JSON}"
+            _error "No configuration source found (JSON/CONF missing)"
             return ${VDE_ERR_GENERAL}
         fi
+
+        # Export type indexes
+        lang_vms=("${lang_vms_array[@]}")
+        service_vms=("${service_vms_array[@]}")
 
         # ---------------------------------------------------------------------
         # Build VM_ALIAS_MAP (Optimization for vde-parser)

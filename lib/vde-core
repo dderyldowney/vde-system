@@ -134,7 +134,98 @@ _vde_core_get_mtime() {
     fi
 }
 
-# -----------------------
+# vde_json - Zero-Host-Dependency JQ Wrapper (The Scavenger's Ban)
+# Adheres to Rule G: Prevents host dependency by falling back to Docker
+# Args: <jq_args> (variable)
+vde_json() {
+    if command -v jq >/dev/null 2>&1; then
+        jq "$@"
+    else
+        # Use -i for interactive/stdin pipe support
+        docker run --rm -i -v "${VDE_ROOT_DIR}:/vde" vde-base jq "$@"
+    fi
+}
+
+# The Armorer's Translator: Hammers .conf (pipe) into .json
+# Adheres to Rule G: Uses pure ZSH to avoid host JQ dependencies during smelting.
+vde_translate_conf_to_json() {
+    # Force disable xtrace to prevent assignment output (Rule G / Zero-Host portability)
+    unsetopt XTRACE 2>/dev/null
+    local conf_file="$1"
+    local json_file="$2"
+
+    local lang_entries=()
+    local svc_entries=()
+
+    # Helper to escape JSON strings (The Scavenger's Escaper)
+    _vde_escape_json() {
+        local str="$1"
+        str="${str//\\/\\\\}" # Backslashes
+        str="${str//\"/\\\"}" # Quotes
+        str="${str//$'\n'/\\n}" # Newlines
+        echo -n "$str"
+    }
+
+    while IFS='|' read -r _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _extra; do
+        [[ -z "${_v_name}" || "${_v_type}" == "#"* ]] && continue
+
+        local category="language"
+        [[ "${_v_type}" == "service" ]] && category="service"
+
+        # Build aliases array via Pure ZSH
+        local aliases_json="[]"
+        if [[ -n "${_v_aliases}" ]]; then
+            local a_list=()
+            local a_item
+            for a_item in ${(s:,:)_v_aliases}; do
+                a_list+=("\"$(_vde_escape_json "${a_item}")\"")
+            done
+            aliases_json="[${(j:,:)a_list}]"
+        fi
+
+        local cmd_json="null"
+        [[ -n "${_v_cmd}" ]] && cmd_json="\"$(_vde_escape_json "${_v_cmd}")\""
+
+        local svc_json="null"
+        [[ -n "${_v_env}" ]] && svc_json="\"$(_vde_escape_json "${_v_env}")\""
+
+        local ssh_port_json="null"
+        [[ -n "${_v_port}" ]] && ssh_port_json="${_v_port}"
+
+        local entry="        {
+          \"name\": \"$(_vde_escape_json "${_v_name}")\",
+          \"aliases\": ${aliases_json},
+          \"display\": \"$(_vde_escape_json "${_v_disp}")\",
+          \"pkgs\": \"$(_vde_escape_json "${_v_pkgs}")\",
+          \"custom_cmd\": ${cmd_json},
+          \"service_port\": ${svc_json},
+          \"ssh_port\": ${ssh_port_json}
+        }"
+
+        if [[ "${category}" == "service" ]]; then
+            svc_entries+=("${entry}")
+        else
+            lang_entries+=("${entry}")
+        fi
+    done < "$conf_file"
+
+    # Build final JSON using Pure Beskar template
+    {
+        echo "{"
+        echo "  \"version\": \"1.1\","
+        echo "  \"vms\": {"
+        echo "    \"language\": ["
+        echo "${(j:,\n:)lang_entries}"
+        echo "    ],"
+        echo "    \"service\": ["
+        echo "${(j:,\n:)svc_entries}"
+        echo "    ]"
+        echo "  }"
+        echo "}"
+    } > "$json_file"
+
+    vde_log_success "The Pure Beskar (.json) has been reconciled via Pure ZSH." "forge"
+}
 # -----------------------
 # Core VM Type Loading (Minimal with Caching)
 # -----------------------
