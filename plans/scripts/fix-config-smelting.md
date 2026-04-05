@@ -14,7 +14,7 @@ Eliminate dependency on `jq` for core VM configuration tasks (smelting and loadi
 ### 1. Refactor `vde_translate_conf_to_json` in `lib/vde-core`
 - Implement pure ZSH conversion from `.conf` to `.json`.
 - Use an internal JSON escaping helper for safety.
-- Eliminate the `vde_json` (JQ) call inside the `while` loop.
+- Eliminate the `vde_query_json` (JQ) call inside the `while` loop.
 
 ### 2. Refactor `load_vm_types` in `lib/vm-common`
 - Add a pure ZSH parser for the `.conf` file as the primary fallback if `jq` is missing or the cache is invalid.

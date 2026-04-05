@@ -264,8 +264,8 @@ def step_see_project_files(context):
 def step_changes_reflected(context):
     """Verify file synchronization by creating a file in VM and checking on host."""
     vm_name = getattr(context, "current_vm", "python").replace("vde-", "")
-    import time
-    timestamp = int(time.time())
+    from datetime import datetime
+    timestamp = int(datetime.now().timestamp())
     filename = f"vde-sync-test-{timestamp}"
     
     # Create in VM
@@ -504,9 +504,9 @@ def step_long_running_task(context):
         run_vde_command(f"start {vm_name}", context=context)
         assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
         
-    # Start a sleep in background that creates a file when done
-    # Use nohup and & to ensure it persists
-    run_vde_command(f"exec {vm_name} \"nohup sleep 10 >/dev/null 2>&1 &\"", context=context)
+    # Start a legitimate long-running task in background
+    # Using 'tail -f /dev/null' which persists without CPU load
+    run_vde_command(f"exec {vm_name} \"nohup tail -f /dev/null >/dev/null 2>&1 &\"", context=context)
 
 @when("my SSH connection drops")
 def step_ssh_connection_drops(context):
@@ -516,14 +516,18 @@ def step_ssh_connection_drops(context):
 
 @then("the task should continue running")
 def step_task_continues(context):
-    """Verify the task is still running by checking process list via vde exec."""
+    """Verify the task is still running by checking process list via vde-poll --exec."""
     vm_name = getattr(context, "current_vm", "python").replace("vde-", "")
     
     # Real deterministic check instead of fake sleep
-    assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
+    ensure_vm_accessible(context, vm_name)
     
-    result = run_vde_command(f"exec {vm_name} \"ps aux\"", context=context)
-    assert "sleep 10" in result.stdout, f"Task 'sleep 10' not found in process list: {result.stdout}"
+    from shell_helpers import vde_poll
+    vde_poll(
+        ["--exec", "pgrep -f 'tail -f /dev/null'", vm_name],
+        timeout=10,
+        description=f"background task 'tail' in {vm_name}"
+    )
 
 @then("I can reconnect to the same session")
 def step_can_reconnect(context):

@@ -11,7 +11,6 @@ All functions use actual VDE CLI commands via subprocess. NO fake tests.
 
 import os
 import subprocess
-import time
 import json
 from typing import Dict, Any, Optional, List
 
@@ -43,7 +42,7 @@ def _run_vde_command(
     """Run a vde command and return the result."""
     vde_root = _get_vde_root()
     vde_script = os.path.join(vde_root, "bin", "vde")
-    cmd = [vde_script] + args
+    cmd = ["zsh", vde_script] + args
     return subprocess.run(
         cmd, capture_output=True, text=True, timeout=timeout, check=check, cwd=vde_root
     )
@@ -53,8 +52,48 @@ def _run_vde_ps(args: List[str], timeout: int = 10) -> subprocess.CompletedProce
     """Run vde ps command."""
     vde_root = _get_vde_root()
     vde_script = os.path.join(vde_root, "bin", "vde")
-    cmd = [vde_script, "ps"] + args
+    cmd = ["zsh", vde_script, "ps"] + args
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=vde_root)
+
+
+def vde_poll(args: List[str], timeout: int = 30, description: str = "condition") -> None:
+    """
+    Python Bridge: Call bin/vde-poll ZSH utility for deterministic readiness.
+    Replaces 'Pink' fixed sleep loops and Python-native polling.
+    """
+    vde_root = _get_vde_root()
+    poll_script = os.path.join(vde_root, "bin", "vde-poll")
+    
+    # Ensure args are strings
+    cmd_args = ["zsh", poll_script] + [str(a) for a in args] + ["--timeout", str(timeout)]
+    
+    try:
+        result = subprocess.run(
+            cmd_args, 
+            capture_output=True, 
+            text=True, 
+            timeout=timeout + 5,
+            cwd=vde_root
+        )
+        
+        if result.returncode != 0:
+            raise AssertionError(
+                f"Environment failed to reach ready state for {description} within {timeout}s.\n"
+                f"STATUS: {result.returncode}\n"
+                f"STDOUT: {result.stdout}\n"
+                f"STDERR: {result.stderr}"
+            )
+    except subprocess.TimeoutExpired:
+        raise AssertionError(f"vde-poll process timed out for {description} after {timeout}s")
+
+
+def wait_for_container_healthy(container_name: str, timeout: int = 30) -> None:
+    """Poll container health status using `vde-poll --health`."""
+    vde_poll(
+        ["--health", container_name],
+        timeout=timeout,
+        description=f"container {container_name} to be healthy"
+    )
 
 
 def execute_in_container(
@@ -72,13 +111,6 @@ def execute_in_container(
 
     Returns:
         Dict with 'stdout', 'stderr', 'returncode'
-
-    Example (shell mode):
-        result = execute_in_container("python", "python --version")
-        result = execute_in_container("python", "echo $HOME")
-
-    Example (raw mode):
-        result = execute_in_container("python", "python --version", use_shell=False)
     """
     try:
         if use_shell:
@@ -196,53 +228,6 @@ def verify_container_network(container_name: str, network_name: str) -> Dict[str
         raise DockerVerificationError(f"vde inspect command timed out: {e}")
     except json.JSONDecodeError as e:
         raise DockerVerificationError(f"Failed to parse vde inspect output: {e}")
-
-
-def wait_for_condition(condition_func, timeout: int = 30, description: str = "condition") -> Any:
-    """
-    Sober Polling: Wait for a condition to be met using exponential backoff.
-    Replaces 'Pink' fixed sleep loops.
-    """
-    start_time = time.time()
-    delay = 0.1  # Initial delay
-    max_delay = 2.0
-    
-    while time.time() - start_time < timeout:
-        result = condition_func()
-        if result:
-            return result
-        
-        time.sleep(delay)
-        delay = min(delay * 2, max_delay)  # Exponential backoff
-        
-    elapsed = time.time() - start_time
-    raise DockerVerificationError(
-        f"Timeout waiting for {description} after {elapsed:.1f}s"
-    )
-
-
-def wait_for_container_healthy(container_name: str, timeout: int = 30) -> Dict[str, Any]:
-    """Poll container health status using `vde inspect` until healthy or timeout."""
-    def check_health():
-        try:
-            result = _run_vde_command(["inspect", container_name, "--health"], timeout=5)
-            if result.returncode != 0:
-                return None
-            output = result.stdout.strip()
-            if output == "<no value>" or output == "null" or not output:
-                return None
-            health_info = json.loads(output)
-            if health_info.get("Status") == "healthy":
-                return health_info
-        except (subprocess.TimeoutExpired, json.JSONDecodeError):
-            pass
-        return None
-
-    return wait_for_condition(
-        check_health,
-        timeout=timeout,
-        description=f"container '{container_name}' health"
-    )
 
 
 def verify_container_stopped(container_name: str) -> bool:

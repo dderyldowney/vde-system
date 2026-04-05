@@ -6,7 +6,6 @@ import os
 import shlex
 import subprocess
 import sys
-import time
 
 # Import shared configuration
 # Add steps directory to path for config import

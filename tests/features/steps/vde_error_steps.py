@@ -2,7 +2,6 @@ from behave import given, when, then
 import socket
 import os
 import subprocess
-import time
 import re
 from pathlib import Path
 from vm_common import run_vde_command, VDE_ROOT

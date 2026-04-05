@@ -56,7 +56,8 @@ fi
 # Test 3: timing
 test_start "vde_metrics timing"
 vde_metrics_timing_start "test_op"
-sleep 0.1
+# Wait for timing (high-precision)
+zmodload zsh/zselect 2>/dev/null && zselect -t 10
 vde_metrics_timing_end "test_op" "test.latency"
 val=$(vde_metrics_get_value "test.latency")
 if [[ "$val" -ge 0 ]]; then

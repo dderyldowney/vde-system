@@ -203,7 +203,8 @@ wait_for_container_ready() {
 
         printf "[WAIT] %ds: %s (status=%s, health=%s)\n" \
             "${elapsed}" "${container}" "${status:-not_found}" "${health:-?}"
-        sleep ${interval}
+        # High-precision sub-second wait via zselect (Rule 23)
+        zmodload zsh/zselect 2>/dev/null && zselect -t $((interval * 100))
         elapsed=$((elapsed + interval))
     done
 

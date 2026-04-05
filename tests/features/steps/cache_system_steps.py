@@ -6,7 +6,6 @@ Tests VM type caching, cache invalidation, and cache consistency.
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 # Add steps directory to path for config import

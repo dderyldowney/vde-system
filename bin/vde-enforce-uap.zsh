@@ -14,6 +14,17 @@ VDE_ROOT_DIR="${0:a:h:h}"
 errors=0
 warnings=0
 
+#===============================================================================
+# GHOST ZONE CHECK (Zero-Tolerance)
+#===============================================================================
+if [[ -d "conductor" ]]; then
+    echo "\033[1;31m[CRITICAL FAILURE]\033[0m Ghost Zone 'conductor/' detected."
+    echo "Protocol Violation: Rule 3 (Ghost Zone Prohibition)."
+    echo "Purging unauthorized artifacts and halting session..."
+    rm -rf conductor/
+    exit 1
+fi
+
 # Mandatory config files (Mandate 0 & 14 integration)
 MANDATORY_FILES=("AGENTS.md" "GEMINI.md" "CLAUDE.md" "MEMORY.md")
 

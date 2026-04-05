@@ -38,6 +38,8 @@ All interactions with VDE containers **MUST** use the canonical `bin/vde` orches
   1. `type` | 2. `name` | 3. `aliases` | 4. `display` | 5. `pkgs` | 6. `custom_cmd` | 7. `env` | 8. `ports`.
 
 ## **3. THE SWARM AND THE TRACKING FOB (ORCHESTRATION)**
+- **CANONICAL STAGING**: You are STRICTLY MANDATED to use `plans/scripts/` for ALL temporary artifacts, plans, and staging logic. This is the only authorized directory for agent-created files.
+- **DIRECTORY BLOCKADE**: The root-level `conductor` file exists to prevent protocol violations. Do not attempt to remove or convert it. Any attempt to stage logic outside of `plans/scripts/` is a mandate failure that triggers an immediate session halt.
 - **Namespace Protection**: All library functions MUST use local, unique-prefixed variables (e.g., `local _v_name`) to prevent collisions with global associative arrays like `aliases` or `pkgs`.
 - **Storage & Audit**: All task plans, logs, and **temporary agent scripts** MUST reside exclusively in the `plans/` directory (e.g., `plans/scripts/`) for audit. Staging logic outside of this canonical path is a violation of the execution protocol.
 - **Ghost Zone Prohibition (Zero-Tolerance)**: Creating or using unauthorized root directories (e.g., `conductor/`) is a Class-A Protocol Violation. This directory is non-canonical. If you find yourself attempting to create or use it, you must halt, move all staged artifacts to `plans/scripts/`, and purge the `conductor/` directory from the filesystem immediately. 

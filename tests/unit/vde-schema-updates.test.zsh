@@ -144,7 +144,8 @@ test_detect_schema_changes_no_change() {
 
     # Create config
     echo '{"version": "1.0"}' > "$config_file"
-    sleep 1
+    # Wait for mtime to change (high-precision)
+    zmodload zsh/zselect 2>/dev/null && zselect -t 110
     # Create schema (newer than config)
     echo '{"type": "object"}' > "$schema_file"
 
@@ -161,7 +162,8 @@ test_detect_schema_changes_config_newer() {
 
     # Create schema first
     echo '{"type": "object"}' > "$schema_file"
-    sleep 1
+    # Wait for mtime to change (high-precision)
+    zmodload zsh/zselect 2>/dev/null && zselect -t 110
     # Create config (newer)
     echo '{"version": "1.0"}' > "$config_file"
 
@@ -251,7 +253,8 @@ EOF
 EOF
 
     # Create cache (newer than config and schema)
-    sleep 1
+    # Wait for mtime to change (high-precision)
+    zmodload zsh/zselect 2>/dev/null && zselect -t 110
     echo "# cache" > "$cache_file"
 
     vde_validate_and_update "$config_file" "$schema_file" "$cache_file" >/dev/null 2>&1

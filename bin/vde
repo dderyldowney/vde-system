@@ -17,7 +17,7 @@ else
     exit 1
 fi
 
-# Zero-Host-Dependency JQ Wrapper is now provided by lib/vde-core as vde_json()
+# Zero-Host-Dependency JQ Wrapper is now provided by lib/vde-core as vde_query_json()
 
 # Define Data Paths
 TYPES_JSON="${VDE_ROOT_DIR}/data/vm-types.json"
@@ -26,6 +26,11 @@ TYPES_SCHEMA="${VDE_ROOT_DIR}/data/vm-types.schema.json"
 TYPES_CACHE="${VDE_ROOT_DIR}/.cache/vm-types.cache"
 
 # --- 3. VALIDATE & LOAD DATA (The Ignition Sync) ---
+# Ensure version synchronization (The Triple Strike)
+if [[ -f "${VDE_ROOT_DIR}/bin/vde-sync-version" ]]; then
+    "${VDE_ROOT_DIR}/bin/vde-sync-version" >/dev/null 2>&1
+fi
+
 # Ensure the Raw Beskar (.conf) is hammered into the Pure Beskar (.json)
 if [[ -f "${TYPES_CONF}" ]]; then
     if [[ ! -f "${TYPES_JSON}" || "${TYPES_CONF}" -nt "${TYPES_JSON}" ]]; then
@@ -80,8 +85,8 @@ case "${CMD}" in
         CANONICAL_NAME=$(resolve_vm_name "${target_type}" 2>/dev/null)
         [[ -z "${CANONICAL_NAME}" ]] && vde_log_error "Unknown type: '${target_type}'" && exit 1
         
-        local pkgs=$(vde_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .pkgs // empty" "${TYPES_JSON}")
-        local custom_cmd=$(vde_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .custom_cmd // empty" "${TYPES_JSON}")
+        local pkgs=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .pkgs // empty" "${TYPES_JSON}")
+        local custom_cmd=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .custom_cmd // empty" "${TYPES_JSON}")
         
         if [[ -z "${pkgs}" && -z "${custom_cmd}" ]]; then
             vde_log_error "No installation method (pkgs or custom_cmd) defined for ${CANONICAL_NAME}"
@@ -108,10 +113,10 @@ case "${CMD}" in
 
         local ssh_port=$(get_vm_ssh_port "${CANONICAL_NAME}")
         if [[ -z "${ssh_port}" ]]; then
-            ssh_port=$(vde_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${TYPES_JSON}")
+            ssh_port=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${TYPES_JSON}")
         fi
         
-        local svc_ports_raw=$(vde_json "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | (.service_ports[]?, .service_port?) // empty" "${TYPES_JSON}" | grep -v "null" | tr -d '"')
+        local svc_ports_raw=$(vde_query_json "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | (.service_ports[]?, .service_port?) // empty" "${TYPES_JSON}" | grep -v "null" | tr -d '"')
         local svc_ports=(${(s:,:)${(f)svc_ports_raw}})
         
         local vm_category=$(get_vm_category "${CANONICAL_NAME}")
@@ -165,7 +170,7 @@ case "${CMD}" in
         [[ -z "${CANONICAL_NAME}" ]] && vde_log_error "Unknown VM: '${TYPE_ARG}'" && exit 1
         local ssh_port=$(get_vm_ssh_port "${CANONICAL_NAME}")
         if [[ -z "${ssh_port}" ]]; then
-            ssh_port=$(vde_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${TYPES_JSON}")
+            ssh_port=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${TYPES_JSON}")
         fi
         
         vde_log_info "Entering ${CANONICAL_NAME} via port ${ssh_port}..." "ssh"
@@ -174,7 +179,23 @@ case "${CMD}" in
         ;;
 
     list) show_known_vms ;;
+    add-vm-type|add) 
+        shift
+        "${VDE_ROOT_DIR}/bin/add-vm-type" "$@" 
+        ;;
+    uninstall|remove-type)
+        shift
+        "${VDE_ROOT_DIR}/bin/uninstall-vm-type" "$@"
+        ;;
+    validate-schemas|validate)
+        shift
+        "${VDE_ROOT_DIR}/bin/validate-schemas.zsh" "$@"
+        ;;
+    rebuild-cache)
+        shift
+        load_vm_types --no-cache
+        ;;
     version|--version) echo "VDE v${VDE_VERSION:-2.0.5}" ;;
-    help|*) echo "Usage: vde {rebuild|start|stop|exec|enter|list} [type/alias]" ;;
+    help|*) echo "Usage: vde {rebuild|start|stop|exec|enter|list|add|uninstall|validate|rebuild-cache} [type/alias]" ;;
 esac
 
