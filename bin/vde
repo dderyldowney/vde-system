@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # VDE CLI - Unified Virtual Development Environment
-# Version: 2.0.5 (Absolute - Final)
+# Version: ${VDE_VERSION:-$(vde_get_version)}
 #===============================================================================
 
 # --- 1. BOOTSTRAP & ROOT DISCOVERY ---

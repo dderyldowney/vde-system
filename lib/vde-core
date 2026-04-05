@@ -22,6 +22,23 @@
 #   VDE_ERR_NOT_FOUND (3)  - Resource doesn't exist
 
 # -----------------------
+# VDE Versioning
+# -----------------------
+# The Rule of One: Extract version from the Beskar Source (VDE-SPEC.md)
+vde_get_version() {
+    local spec_file="${VDE_ROOT_DIR}/VDE-SPEC.md"
+    if [[ -f "${spec_file}" ]]; then
+        # Extracts "2.0.5" from "# VDE-SPEC v2.0.5 (Absolute)"
+        grep -m1 '^# VDE-SPEC v' "${spec_file}" | sed -E 's/^# VDE-SPEC v([^ ]+).*/\1/'
+    else
+        echo "0.0.0-unknown"
+    fi
+}
+
+# Export it so the entire ecosystem sees the same number
+export VDE_VERSION=$(vde_get_version)
+
+# -----------------------
 # Source Guard
 # -----------------------
 # Prevent multiple sourcing which causes readonly variable errors
