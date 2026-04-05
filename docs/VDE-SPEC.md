@@ -1,4 +1,4 @@
-# VDE-SPEC v2.0.5 (Absolute)
+# VDE-SPEC v2.0.6 (Absolute)
 
 ## VERSION HISTORY
 | Version | Date       | Changes                                                                 |

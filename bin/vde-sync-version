@@ -1,12 +1,54 @@
 #!/usr/bin/env zsh
-source "${0:h}/../lib/vde-core"
+#===============================================================================
+# VDE Version Synchronizer (Absolute Hardened)
+#===============================================================================
 
-local NEW_VER=$(vde_get_version)
-vde_log_info "Aligning Spoke documents to Version ${NEW_VER}..." "forge"
+# 1. Initialize the Spine
+VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(pwd)}"
 
-# Use sed to update headers in ARCHITECTURE.md and instructions.md
-sed -i '' "1s/^# ARCHITECTURE v.*/# ARCHITECTURE v${NEW_VER} (Absolute)/" "${VDE_ROOT_DIR}/ARCHITECTURE.md"
-sed -i '' "s/Version: [0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/instructions.md"
+# 2. Source the Tribe's Knowledge (Try to find the logs)
+[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core"
+[[ -f "${VDE_ROOT_DIR}/lib/vm-common" ]] && source "${VDE_ROOT_DIR}/lib/vm-common"
 
-vde_log_success "Documents are now in parity with the Beskar Source." "forge"
+# 3. Logging Fallbacks (Ensures the script works even if libraries are missing)
+if ! command -v vde_log_info >/dev/null; then
+    vde_log_info() { echo "\033[1;34m[INFO]\033[0m $1"; }
+    vde_log_success() { echo "\033[1;32m[SUCCESS]\033[0m $1"; }
+    vde_log_error() { echo "\033[1;31m[ERROR]\033[0m $1"; }
+fi
+
+# 4. The Extraction Ritual (Finding the version in docs/VDE-SPEC.md)
+local spec_file="${VDE_ROOT_DIR}/docs/VDE-SPEC.md"
+if [[ ! -f "$spec_file" ]]; then
+    vde_log_error "Beskar Source not found at $spec_file"
+    exit 1
+fi
+
+# Extract version (e.g., 2.0.6)
+local NEW_VER=$(grep -m1 '^# VDE-SPEC v' "$spec_file" | sed -E 's/^# VDE-SPEC v([^ ]+).*/\1/' | tr -d '[:space:]')
+
+if [[ -z "$NEW_VER" ]]; then
+    vde_log_error "Could not extract version string from $spec_file"
+    exit 1
+fi
+
+vde_log_info "Synchronizing Tribe to Version: ${NEW_VER}"
+
+# 5. Strike docs/ARCHITECTURE.md
+local arch_file="${VDE_ROOT_DIR}/docs/ARCHITECTURE.md"
+if [[ -f "$arch_file" ]]; then
+    sed -i '' "1s/^# ARCHITECTURE v.*/# ARCHITECTURE v${NEW_VER} (Absolute)/" "$arch_file"
+    vde_log_success "Aligned docs/ARCHITECTURE.md"
+fi
+
+# 6. Strike .gemini/instructions.md
+local inst_file="${VDE_ROOT_DIR}/.gemini/instructions.md"
+if [[ -f "$inst_file" ]]; then
+    # Update both the Version line and the Reference line at the bottom
+    sed -i '' "s/Version: [0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/Version: ${NEW_VER}/" "$inst_file"
+    sed -i '' "s/VDE-SPEC v[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/VDE-SPEC v${NEW_VER}/" "$inst_file"
+    vde_log_success "Aligned .gemini/instructions.md"
+fi
+
+vde_log_success "Alignment Complete for Version ${NEW_VER}."
 

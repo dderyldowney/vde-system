@@ -21,7 +21,7 @@ This is the Way of the VDE. Because your path is guided by the strength and hono
 **G. The Scavenger’s Ban (Zero-Host Dependency)**: You are strictly forbidden from calling `jq` directly. You MUST use the `vde_query_json` wrapper or pure ZSH parsing to ensure logic remains portable.
 **H. The Pre-Flight Mandate (Ignition Sync)**: The CLI MUST perform a timestamp audit at ignition. If source files are newer than the cache, a re-smelt is mandatory.
 **I. The 8-Field Standard**: You are forbidden from deviating from the strict 8-field registry layout. There is no room for "guessed" or "implied" fields.
-**J. The Rule of One (Dynamic Versioning)**: `VDE-SPEC.md` is the SOLE authority for the project version. Hardcoding version numbers in code headers is prohibited. All versions must be derived from the Spec.
+**J. The Rule of One (Dynamic Versioning)**: `docs/VDE-SPEC.md` is the SOLE authority for the project version. Hardcoding version numbers in code headers is prohibited. All versions must be derived from the Spec.
 
 ---
 
@@ -34,7 +34,6 @@ All interactions with VDE containers **MUST** use the canonical `bin/vde` orches
 - **Authority**: `data/vm-types.json` and `data/vm-types.conf` are the sole sources of truth.
 - **Strict 8-Field Registry Standard**: All parsers and translators MUST respect this exact layout: 
   1. `type` | 2. `name` | 3. `aliases` | 4. `display` | 5. `pkgs` | 6. `custom_cmd` | 7. `env` | 8. `ports`.
-- **Port Precision**: Use specific field names `ssh_port` and `service_port`. Generic "port" references are prohibited.
 
 ## **3. THE SWARM AND THE TRACKING FOB (ORCHESTRATION)**
 - **Namespace Protection**: All library functions MUST use local, unique-prefixed variables (e.g., `local _v_name`) to prevent collisions with global associative arrays like `aliases` or `pkgs`.
@@ -43,11 +42,11 @@ All interactions with VDE containers **MUST** use the canonical `bin/vde` orches
 
 ## **4. THE SCAVENGER’S BAN (PORTABILITY)**
 - **Zero-Host Dependency**: Every script must be able to run on a "Naked" machine.
-- **Atomic Translation**: Translators MUST be written in pure ZSH. Using `jq` for internal translation logic (Conf -> JSON) is forbidden to ensure the Forge works during bootstrap.
+- **Atomic Translation**: Translators MUST be written in pure ZSH. Using `jq` for internal translation logic is forbidden.
 
 ## **5. THE FORGE BUILD STRATEGY (ANTI-ENTROPY)**
 - **Purge the Ghosts**: All `apt` installations MUST be followed by `sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*`.
-- **Born Ready (BTO)**: Images must be immutable and functional in <1s. No runtime `apt` calls.
+- **Born Ready (BTO)**: Images must be immutable. No runtime `apt` calls.
 
 ## **6. THE PRE-FLIGHT MANDATE (IGNITION SYNC)**
 - **Active Audit**: The `bin/vde` script must check if manual edits to the `.conf` exist before loading. 
@@ -57,12 +56,11 @@ All interactions with VDE containers **MUST** use the canonical `bin/vde` orches
 When a bug occurs, perform an architectural audit **before** code analysis.
 - **Phase 1 (The Forest)**: Audit `lib/vm-common` for global shadowing and trace data flow from `.conf` through the translator to `.json` and finally `.cache/`.
 - **Phase 2 (The Trees)**: Inspect variable types (Scalar vs. Array) and verify the 8-field parsing logic.
-- **Pure Beskar Verification**: Physically `cat` the cache and JSON files to ensure they match the manual edits.
 
 ## **8. THE RULE SPINE (UAP ENFORCEMENT)**
 - **Mandate**: Every execution turn must be accompanied by a call to `bin/vde-enforce-uap.zsh`.
 - **No Wiggle Room**: You MUST NOT bypass script verification. Setup scripts must be verified as functional before package data is struck from the registry.
 
 ---
-*Version: 1.9.0*
-*Reference: VDE-SPEC v2.0.5*
+Version: 2.0.6
+Reference: VDE-SPEC v2.0.6
