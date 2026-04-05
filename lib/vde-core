@@ -24,17 +24,21 @@
 # -----------------------
 # VDE Versioning
 # -----------------------
-# The Rule of One: Extract version from the Beskar Source (VDE-SPEC.md)
+# The Rule of One: Extract version from the Beskar Source (docs/VDE-SPEC.md)
 vde_get_version() {
-    local spec_file="${VDE_ROOT_DIR}/VDE-SPEC.md"
+    # Resolve the root directory relative to the script's location if not set
+    local root="${VDE_ROOT_DIR:-$(pwd)}"
+    local spec_file="${root}/docs/VDE-SPEC.md"
+
     if [[ -f "${spec_file}" ]]; then
-        # Extracts "2.0.5" from "# VDE-SPEC v2.0.5 (Absolute)"
-        grep -m1 '^# VDE-SPEC v' "${spec_file}" | sed -E 's/^# VDE-SPEC v([^ ]+).*/\1/'
+        # Extracts "2.0.6" from "# VDE-SPEC v2.0.6 (Absolute)"
+        # Note: Added -E and trimmed spaces to be more forgiving
+        grep -m1 '^# VDE-SPEC v' "${spec_file}" | sed -E 's/^# VDE-SPEC v([^ ]+).*/\1/' | tr -d '[:space:]'
     else
+        # Strike failed: File not found
         echo "0.0.0-unknown"
     fi
 }
-
 # Export it so the entire ecosystem sees the same number
 export VDE_VERSION=$(vde_get_version)
 
