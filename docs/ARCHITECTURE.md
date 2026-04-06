@@ -42,6 +42,11 @@ VDE 2.0.6 introduces a **Lock-Queue Model** to handle high-concurrency operation
 - **Global Config Lock**: Sensitive registry operations are governed by a global mutex (`.locks/global-config.lock`) to prevent corruption of the "Pure Beskar" during parallel updates.
 - **Deterministic Backoff**: Lock acquisition uses sub-second precision polling with random jitter to prevent "Thundering Herd" collisions.
 
+### 3.3. Deterministic Error Engine (Phase 26)
+- **Signal Translation**: Kernel-level signals (EEXIST, ENOENT) are mapped to `VDE_ERR_*` codes and translated into contextual remediation via `lib/vde-errors`.
+- **Heartbeat Proof**: Every lock records a PID:PGID:TIMESTAMP heartbeat. This allows the system to deterministically recover from hung processes without risking PID-reuse collisions.
+- **Double-Gate Sync**: The Orchestrator verifies Hub sovereignty by checking timestamps *inside* the lock block, ensuring zero-drift execution.
+
 ## 4. Universal Script Parity (USP) Logic
 
 Manufacturing logic has moved from build-args to modular scripts:

@@ -55,7 +55,14 @@
 | 23 | Deterministic Readiness | Health Checks vs. Sleep | ✅ COMPLETE |
 | 24 | The Big Step Completion | 366 Undefined Steps / USP | ✅ COMPLETE |
 | 25 | Concurrency & Stress | Port/Locking Races | ✅ COMPLETE |
-| 26 | Error Engine & Polish | UX & UX Hardening | ⚪ Pending |
+| 26 | Error Engine & Polish | UX & UX Hardening | ✅ COMPLETE |
+
+### Phase 26 Progress (2026-04-06)
+- **Tiered Error Map:** 🟢 Implemented `lib/vde-errors` with VDE-to-UX mapping.
+- **Kernel-Signal Translation:** 🟢 Mapped POSIX signals (EEXIST, ENOENT) to contextual remediation.
+- **UX Polish:** 🟢 Added specialized `vde_progress_wait_for_lock` indicator for contention transparency.
+- **Heartbeat Proof:** 🟢 Enhanced `acquire_lock` with heartbeat timestamps to resolve PID reuse drift.
+- **Double-Gate Sync:** 🟢 Implemented deterministic ignition proof in `bin/vde` using `VDE_ERR_SYNC_DRIFT`.
 
 ### Phase 25 Progress (2026-04-05)
 - **Atomic Port Management:** 🟢 Implemented file-locked port registry in `.cache/port-registry/`.

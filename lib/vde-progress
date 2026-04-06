@@ -385,6 +385,19 @@ vde_progress_error() {
     printf "%s%s\n" "${VDE_PROGRESS_COLOR_ERROR}✗${VDE_PROGRESS_COLOR_RESET} " "${message}" >&2
 }
 
+# vde_progress_wait_for_lock - Show a waiting message for lock contention
+# Args: <lock_name> <elapsed>
+vde_progress_wait_for_lock() {
+    local lock_name="${1}"
+    local elapsed="${2}"
+    
+    [[ "${VDE_PROGRESS_QUIET}" = "1" ]] && return
+    
+    # Use yellow warning color for contention
+    printf "\r%s" "$(printf ' %.0s' {1..200})"
+    printf "\r%s%s (Wait: %ss)... " "${VDE_PROGRESS_COLOR_WARNING}⏳ Waiting for lock: ${lock_name}${VDE_PROGRESS_COLOR_RESET}" "" "${elapsed}"
+}
+
 # =============================================================================
 # QUIET MODE UTILITIES
 # =============================================================================
