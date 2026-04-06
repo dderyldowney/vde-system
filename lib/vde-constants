@@ -233,6 +233,11 @@ BACKUP_DIR="${VDE_BACKUP_DIR:-${VDE_ROOT_DIR}/backup}"
 # Cache directory
 export VDE_CACHE_DIR="${VDE_CACHE_DIR:-${VDE_ROOT_DIR}/.cache}"
 
+# Lock directory
+VDE_LOCKS_DIR="${VDE_LOCKS_DIR:-${VDE_ROOT_DIR}/.locks}"
+VDE_VM_LOCKS_DIR="${VDE_VM_LOCKS_DIR:-${VDE_LOCKS_DIR}/vms}"
+VDE_PORT_LOCKS_DIR="${VDE_PORT_LOCKS_DIR:-${VDE_LOCKS_DIR}/ports}"
+
 # =============================================================================
 # FILE PATHS DERIVED FROM DIRECTORY CONSTANTS
 # =============================================================================
@@ -243,8 +248,6 @@ VM_TYPES_JSON="${VDE_VM_TYPES_JSON:-${DATA_DIR}/vm-types.json}"
 
 # Cache files
 VM_TYPES_CACHE="${VDE_VM_TYPES_CACHE:-${VDE_CACHE_DIR}/vm-types.cache}"
-VM_DOCKER_CONFIG="${VDE_VM_DOCKER_CONFIG:-${DATA_DIR}/vm-docker-config.json}"
-VM_DOCKER_CACHE="${VDE_VM_DOCKER_CACHE:-${VDE_CACHE_DIR}/vm-docker-config.cache}"
 PORT_REGISTRY="${VDE_PORT_REGISTRY:-${VDE_CACHE_DIR}/port-registry}" # This is a directory for port files
 
 # =============================================================================

@@ -3,6 +3,7 @@ set -e
 
 # Source shared library
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
+source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # -----------------------
@@ -130,8 +131,8 @@ fi
 
 if [[ -z "${SSH_PORT}" ]]; then
     log_info "No SSH port specified, auto-allocating..."
-    SSH_PORT=$(find_next_available_port "${VM_TYPE_STR}")
-    if [[ -z "${SSH_PORT}" ]]; then
+    SSH_PORT=$(find_available_ssh_port)
+    if [[ $? -ne 0 ]]; then
         log_error "Failed to auto-allocate port (range full or internal error)"
         exit ${VDE_ERR_GENERAL}
     fi
@@ -249,19 +250,32 @@ cp "${VM_TYPES_CONF}" "${backup_file}"
 log_success "Backup created: ${backup_file}"
 
 # -----------------------
-# Append new entry
+# Atomic Registry Update
 # -----------------------
-log_info "Adding entry to vm-types.conf..."
+log_info "Updating Pure Beskar registry..."
+local global_lock="${VDE_LOCKS_DIR}/global-config.lock"
+acquire_lock "${global_lock}" 60 || exit 1
 
-# Format: type|name|vm_aliases|display|pkgs|custom_cmd|env|ports
-# Note: In VDE 2.0.6, 'install' is split into 'pkgs' and 'custom_cmd'
-# For backward compatibility with this script's arguments, we put the command in 'custom_cmd'
-# and assume it points to a setup script or a simple command.
-# 8-FIELD STANDARD: type|name|aliases|display|pkgs|custom_cmd|env|ports
-local _entry="${VM_TYPE_STR}|vde-${VM_NAME}|${ALIASES}|${DISPLAY_NAME}||zsh /vde/scripts/setup/${VM_NAME}-init.zsh||${SVC_PORT}"
-echo "${_entry}" >> "${VM_TYPES_CONF}"
+{
+    # 1. Atomic Append to Raw Beskar (.conf)
+    # 8-FIELD STANDARD: type|name|aliases|display|pkgs|custom_cmd|env|ports
+    local _entry="${VM_TYPE_STR}|vde-${VM_NAME}|${ALIASES}|${DISPLAY_NAME}||zsh /vde/scripts/setup/${VM_NAME}-init.zsh|${SVC_PORT}|${SSH_PORT}"
+    echo "${_entry}" >> "${VM_TYPES_CONF}"
+    
+    # 2. Re-smelt JSON from CONF (vde_translate_conf_to_json handles its own internal locking now too, 
+    # but we wrap it here for logical atomicity of the whole operation)
+    vde_translate_conf_to_json "${VM_TYPES_CONF}" "${VM_TYPES_JSON}"
+    
+    # 3. Commit Port to Registry (Numeric lock file)
+    allocate_ssh_port "${VM_NAME}" "${SSH_PORT}"
+    
+    # 4. Invalidate cache to force Ignition on next load
+    rm -f "${VDE_ROOT_DIR}/.cache/vm-types.cache" 2>/dev/null
+} always {
+    release_lock "${global_lock}"
+}
 
-log_success "Entry added to vm-types.conf"
+log_success "Registry updated and port committed."
 
 # Create the hydration script if it doesn't exist
 local _init_script="${VDE_ROOT_DIR}/scripts/setup/${VM_NAME}-init.zsh"
@@ -271,11 +285,13 @@ if [[ ! -f "${_init_script}" ]]; then
     cat <<EOF > "${_init_script}"
 #!/usr/bin/env zsh
 # VDE USP Hydration Script: ${VM_NAME}
-# Forged via add-vm-type
+# Part of the Universal Script Parity (USP) mandate.
+# Forged in Beskar
+set -e
 
 # 1. THE PACKAGE ALLOY
-# Define packages here
-local vde_pkgs=""
+export DEBIAN_FRONTEND=noninteractive
+local vde_${VM_NAME}_pkgs=""
 
 # 2. THE FORGE WORK
 ${INSTALL_CMD}
@@ -288,10 +304,6 @@ EOF
     log_success "Hydration script forged."
 fi
 
-# Re-smelt the JSON from the authoritative CONF
-log_info "Re-smelting Pure Beskar (.json)..."
-vde_translate_conf_to_json "${VM_TYPES_CONF}" "${VM_TYPES_JSON}"
-log_success "Pure Beskar updated."
 # Update configs/ssh/config with the new entry
 local project_ssh_config="${VDE_ROOT_DIR}/configs/ssh/config"
 if [[ -f "${project_ssh_config}" ]]; then

@@ -176,7 +176,23 @@ allocate_ssh_port() {
 
     mkdir -p "${VDE_PORT_REGISTRY}"
     echo "${ssh_port}" > "${VDE_PORT_REGISTRY}/${vm_name}.port"
+    # Also ensure the numeric lock file reflects this VM
+    echo "${vm_name}" > "${VDE_PORT_REGISTRY}/${ssh_port}.lock"
 
+    return ${VDE_SUCCESS}
+}
+
+# Release SSH port for VM
+# Args: <vm_name>
+vde_port_release() {
+    local vm_name="${1}"
+    local port_registry_file="${VDE_PORT_REGISTRY}/${vm_name}.port"
+    
+    if [[ -f "${port_registry_file}" ]]; then
+        local port=$(cat "${port_registry_file}" 2>/dev/null)
+        rm -f "${port_registry_file}" 2>/dev/null
+        [[ -n "${port}" ]] && rm -f "${VDE_PORT_REGISTRY}/${port}.lock" 2>/dev/null
+    fi
     return ${VDE_SUCCESS}
 }
 
@@ -186,15 +202,37 @@ allocate_ssh_port() {
 find_available_ssh_port() {
     local min_port="${1:-2200}"
     local max_port="${2:-2299}"
+    local lock_dir="${VDE_PORT_LOCKS_DIR}/allocation.lock"
 
-    local port=${min_port}
-    while [[ ${port} -le ${max_port} ]]; do
-        if ! _is_port_in_use "${port}"; then
-            echo "${port}"
-            return ${VDE_SUCCESS}
-        fi
-        port=$((port + 1))
-    done
+    # Ensure lock directory exists
+    mkdir -p "${VDE_PORT_LOCKS_DIR}" 2>/dev/null
+
+    # Acquire global allocation lock to prevent double-scans
+    if ! acquire_lock "${lock_dir}" 30; then
+        _error "Failed to acquire port allocation lock"
+        return ${VDE_ERR_LOCK}
+    fi
+
+    # Ensure cleanup on return
+    {
+        local port=${min_port}
+        while [[ ${port} -le ${max_port} ]]; do
+            local port_file="${VDE_PORT_REGISTRY}/${port}.lock"
+            
+            # Check if port is in use by system OR reserved in registry
+            if ! _is_port_in_use "${port}" && [[ ! -f "${port_file}" ]]; then
+                # Reserve the port immediately
+                mkdir -p "${VDE_PORT_REGISTRY}" 2>/dev/null
+                echo "${$}" > "${port_file}"
+                echo "${port}"
+                release_lock "${lock_dir}"
+                return ${VDE_SUCCESS}
+            fi
+            port=$((port + 1))
+        done
+    } always {
+        release_lock "${lock_dir}"
+    }
 
     _error "No available SSH port in range ${min_port}-${max_port}"
     return ${VDE_ERR_NO_PORT}
