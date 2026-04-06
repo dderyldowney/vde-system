@@ -1,13 +1,16 @@
 #!/usr/bin/env zsh
 # VDE USP Hydration Script: testcfggodisp
-# Forged via add-vm-type
+# Part of the Universal Script Parity (USP) mandate.
+# Forged in Beskar
+set -e
 
 # 1. THE PACKAGE ALLOY
-# Define packages here
-local vde_pkgs=""
+export DEBIAN_FRONTEND=noninteractive
+local vde_testcfggodisp_pkgs="golang"
 
 # 2. THE FORGE WORK
-apt-get install -y golang
+apt-get update
+apt-get install -y ${=vde_testcfggodisp_pkgs}
 
 # 3. PURGING THE GHOSTS
 apt-get clean

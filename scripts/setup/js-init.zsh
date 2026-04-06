@@ -1,17 +1,23 @@
 #!/usr/bin/env zsh
-# vde-js initialization (Anti-Entropy Hardened)
+# VDE USP Hydration Script: js
 # Part of the Universal Script Parity (USP) mandate.
+# Forged in Beskar
 set -e
 
-# 1. Install core tools
-apt-get update
-apt-get install -y curl git build-essential
+# 1. THE PACKAGE ALLOY
+export DEBIAN_FRONTEND=noninteractive
+local vde_js_pkgs="curl git build-essential"
 
-# 2. Setup Node.js
+# 2. THE FORGE WORK
+apt-get update
+apt-get install -y ${=vde_js_pkgs}
+
+# Setup Node.js via NodeSource
 curl -fsSL https://deb.nodesource.com/setup_22.x -o /tmp/setup_node.sh
 bash /tmp/setup_node.sh
 apt-get install -y nodejs
 
-# 3. Cleanup
+# 3. PURGING THE GHOSTS
 apt-get clean
 rm -rf /var/lib/apt/lists/*
+rm -f /tmp/setup_node.sh
