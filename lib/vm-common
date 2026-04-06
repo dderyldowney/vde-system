@@ -332,202 +332,191 @@ load_vm_types() {
 
     # 2. If cache failed, fall back to JSON/CONF
     if [[ "${use_cache}" -eq 0 ]]; then
-        if [[ -f "${VM_TYPES_JSON}" ]]; then
-            # Validate against schema (only when not using cache)
-            local schema_file
-            schema_file=$(vde_get_schema_for_json "${VM_TYPES_JSON}" 2>/dev/null)
-            if [[ -n "${schema_file}" && -f "${schema_file}" ]]; then
-                # Silence non-error validation output
-                vde_validate_json_schema "${VM_TYPES_JSON}" "${schema_file}" >/dev/null 2>&1 || {
-                    log_error "VM types JSON schema validation failed"
-                    return ${VDE_ERR_INVALID_DATA}
-                }
-            fi
-        elif [[ -f "${VM_TYPES_CONF}" ]]; then
-            :
-        else
-            log_error "VM types configuration file not found"
-            return ${VDE_ERR_NOT_FOUND}
-        fi
-    fi
-
-
-    # If cache was successfully loaded, we still need to load VM_INSTALL and VM_CUSTOM_CMD
-    # as they are not cached due to complex shell syntax
-    if [[ "${use_cache}" -eq 1 ]]; then
-
-        if [[ -f "${VM_TYPES_JSON}" ]]; then
-            # Parse all VM installs and custom commands efficiently
-            {
-                local p_installs
-                p_installs=$(vde_query_json -r '(.vms.language[], .vms.service[]) | "VM_INSTALL[\(.name)]=\(.pkgs // "-" | @sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd // "" | @sh)"' "${VM_TYPES_JSON}" 2>/dev/null)
-                [[ -n "${p_installs}" ]] && eval "${p_installs}"
-            } >/dev/null 2>&1
-        elif [[ -f "${VM_TYPES_CONF}" ]]; then
-            while IFS='|' read -r type name vm_aliases display pkgs custom_cmd _rest; do
-                [[ -z "${name}" || "${type}" == "#"* ]] && continue
-                VM_INSTALL[${name}]="${pkgs}"
-                VM_CUSTOM_CMD[${name}]="${custom_cmd}"
-            done < "${VM_TYPES_CONF}" 2>/dev/null
-        fi
-    fi
-
-    if [[ "${use_cache}" -ne 1 ]]; then
-        _info "Loading VM types configuration..."
-
-        # Clear existing arrays
-        VM_TYPE=()
-        VM_ALIASES=()
-        VM_DISPLAY=()
-        VM_INSTALL=()
-        VM_CUSTOM_CMD=()
-        VM_SVC_PORT=()
-        VM_SSH_PORT=()
-
-        local lang_vms_array=()
-        local service_vms_array=()
-
-        # Strategy: Use JQ if available (fastest for JSON), fallback to ZSH CONF parser (Rule G)
-        if [[ -f "${VM_TYPES_JSON}" ]] && command -v jq >/dev/null 2>&1; then
-            _info "Parsing VM types from JSON via JQ: ${VM_TYPES_JSON}"
-            local _v_p_configs
-            _v_p_configs=$(vde_query_json -r '
-                (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
-                (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
-            ' "${VM_TYPES_JSON}" 2>/dev/null)
-
-            if [[ -n "${_v_p_configs}" ]]; then
-                eval "${_v_p_configs}"
-            fi
-        elif [[ -f "${VM_TYPES_CONF}" ]]; then
-            _info "Parsing VM types from Raw Beskar (.conf) via Pure ZSH..."
-            local _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _v_extra
-            while IFS='|' read -r _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _v_extra; do
-                [[ -z "${_v_name}" || "${_v_type}" == "#"* ]] && continue
-                
-                local _v_cat="lang"
-                [[ "${_v_type}" == "service" ]] && _v_cat="service"
-                
-                VM_TYPE[${_v_name}]="${_v_cat}"
-                [[ "${_v_cat}" == "lang" ]] && lang_vms_array+=("${_v_name}")
-                [[ "${_v_cat}" == "service" ]] && service_vms_array+=("${_v_name}")
-                
-                VM_ALIASES[${_v_name}]="${_v_aliases}"
-                VM_DISPLAY[${_v_name}]="${_v_disp}"
-                VM_INSTALL[${_v_name}]="${_v_pkgs}"
-                VM_CUSTOM_CMD[${_v_name}]="${_v_cmd}"
-                VM_SVC_PORT[${_v_name}]="${_v_env}"
-                VM_SSH_PORT[${_v_name}]="${_v_port}"
-            done < "${VM_TYPES_CONF}"
-        else
-            _error "No configuration source found (JSON/CONF missing)"
-            return ${VDE_ERR_GENERAL}
-        fi
-
-        # Export type indexes
-        lang_vms=("${lang_vms_array[@]}")
-        service_vms=("${service_vms_array[@]}")
-
-        # ---------------------------------------------------------------------
-        # Build VM_ALIAS_MAP (Optimization for vde-parser)
-        # ---------------------------------------------------------------------
-        # Clear existing MAP
-        typeset -gA VM_ALIAS_MAP
-        VM_ALIAS_MAP=()
-
-        local _v_vm_name=""
-        for _v_vm_name in "${lang_vms[@]}" "${service_vms[@]}"; do
-            # 1. Map canonical name
-            VM_ALIAS_MAP[${_v_vm_name}]="${_v_vm_name}"
-
-            # 2. Map prefixed name
-            local _v_prefixed="vde-${_v_vm_name#vde-}"
-            VM_ALIAS_MAP[${_v_prefixed}]="${_v_vm_name}"
-
-            # 3. Map aliases
-            local _v_aliases="${VM_ALIASES[${_v_vm_name}]}"
-            if [[ -n "${_v_aliases}" ]]; then
-                local _v_alias=""
-                for _v_alias in ${(s:,:)_v_aliases}; do
-                    _v_alias="${_v_alias//[[:space:]]/}"
-                    [[ -n "${_v_alias}" ]] && VM_ALIAS_MAP[${_v_alias}]="${_v_vm_name}"
-                done
-            fi
-
-            # 4. Map display name (lowercase, spaces stripped)
-            local _v_display="${VM_DISPLAY[${_v_vm_name}]}"
-            if [[ -n "${_v_display}" ]]; then
-                local _v_display_low="${(L)_v_display}"
-                _v_display_low="${_v_display_low//[[:space:]]/}"
-                [[ -n "${_v_display_low}" ]] && VM_ALIAS_MAP[${_v_display_low}]="${_v_vm_name}"
-            fi
-        done
-        _VM_ALIAS_MAP_BUILT=1
-
-        # Create cache directory
-        mkdir -p "${VDE_CACHE_DIR}"
-
-        # Create cache directory
-        mkdir -p "${VDE_CACHE_DIR}"
-
-        # Generate cache file with proper zsh associative array syntax
-        # Note: VM_INSTALL is not cached due to complex shell syntax in install commands
-        # Use typeset -gA to ensure variables persist when sourced inside functions
+        # GLOBAL CONFIGURATION LOCK: Prevent redundant re-smelting
+        local global_lock="${VDE_LOCKS_DIR}/global-config.lock"
+        acquire_lock "${global_lock}" 30 || return ${VDE_ERR_LOCK}
+        
         {
-            echo "# VM Types Cache - Auto-generated by load_vm_types()"
-            echo "# DO NOT EDIT MANUALLY"
-            echo "# VM_INSTALL array is NOT cached due to shell command complexity"
-            echo ""
-            echo "typeset -gA VM_TYPE"
-            for key in "${(@k)VM_TYPE}"; do
-                value="${VM_TYPE[${key}]//'/'\\''}"
-                print -r -- "VM_TYPE[${key}]='${value}'"
-            done
-            echo ""
-            echo "typeset -gA VM_ALIASES"
-            for key in "${(@k)VM_ALIASES}"; do
-                value="${VM_ALIASES[${key}]//'/'\\''}"
-                print -r -- "VM_ALIASES[${key}]='${value}'"
-            done
-            echo ""
-            echo "typeset -gA VM_DISPLAY"
-            for key in "${(@k)VM_INSTALL}"; do
-                value="${VM_INSTALL[${key}]//'/'\\''}"
-                print -r -- "VM_INSTALL[${key}]='${value}'"
-            done
-            echo ""
-            echo "typeset -gA VM_CUSTOM_CMD"
-            for key in "${(@k)VM_CUSTOM_CMD}"; do
-                value="${VM_CUSTOM_CMD[${key}]//'/'\\''}"
-                print -r -- "VM_CUSTOM_CMD[${key}]='${value}'"
-            done
-            echo ""
-            echo "typeset -gA VM_SVC_PORT"
-            for key in "${(@k)VM_SVC_PORT}"; do
-                value="${VM_SVC_PORT[${key}]//'/'\\''}"
-                print -r -- "VM_SVC_PORT[${key}]='${value}'"
-            done
-            echo ""
-            echo "typeset -gA VM_SSH_PORT"
-            for key in "${(@k)VM_SSH_PORT}"; do
-                value="${VM_SSH_PORT[${key}]//'/'\\''}"
-                print -r -- "VM_SSH_PORT[${key}]='${value}'"
-            done
-            echo ""
-            echo "typeset -gA VM_ALIAS_MAP"
-            for key in "${(@k)VM_ALIAS_MAP}"; do
-                value="${VM_ALIAS_MAP[${key}]//'/'\\''}"
-                print -r -- "VM_ALIAS_MAP[${key}]='${value}'"
-            done
-            echo ""
-            # Cache lang_vms and service_vms (use eval-safe quoting)
-            lang_vms_quoted=("${lang_vms[@]}"); echo "lang_vms=(${lang_vms_quoted[*]})"
-            service_vms_quoted=("${service_vms[@]}"); echo "service_vms=(${service_vms_quoted[*]})"
-            echo "export _VM_TYPES_LOADED=1"
-            echo "_VM_ALIAS_MAP_BUILT=1"
-        } > "${VM_TYPES_CACHE}"
+            # Double-check if another process just finished smelting the cache while we waited
+            if [[ "${no_cache}" -eq 0 ]] && _is_cache_valid "${VM_TYPES_CACHE}" "${VM_TYPES_JSON}" "${VM_TYPES_CONF}"; then
+                if zsh -n "${VM_TYPES_CACHE}" 2>/dev/null; then
+                    . "${VM_TYPES_CACHE}" >/dev/null 2>&1 && {
+                        use_cache=1
+                        export _VM_TYPES_LOADED=1
+                    }
+                fi
+            fi
 
-        _info "VM types cached for faster loading"
+            if [[ "${use_cache}" -eq 0 ]]; then
+                _info "Loading VM types configuration..."
+
+                # Clear existing arrays
+                VM_TYPE=()
+                VM_ALIASES=()
+                VM_DISPLAY=()
+                VM_INSTALL=()
+                VM_CUSTOM_CMD=()
+                VM_SVC_PORT=()
+                VM_SSH_PORT=()
+
+                local lang_vms_array=()
+                local service_vms_array=()
+
+                # Strategy: Use JQ if available (fastest for JSON), fallback to ZSH CONF parser (Rule G)
+                if [[ -f "${VM_TYPES_JSON}" ]]; then
+                    # Validate against schema (only when not using cache)
+                    local schema_file
+                    schema_file=$(vde_get_schema_for_json "${VM_TYPES_JSON}" 2>/dev/null)
+                    if [[ -n "${schema_file}" && -f "${schema_file}" ]]; then
+                        vde_validate_json_schema "${VM_TYPES_JSON}" "${schema_file}" >/dev/null 2>&1 || {
+                            log_error "VM types JSON schema validation failed"
+                            # If we fail validation, we MUST release the lock and return
+                            release_lock "${global_lock}"
+                            return ${VDE_ERR_INVALID_DATA}
+                        }
+                    fi
+
+                    _info "Parsing VM types from JSON via JQ: ${VM_TYPES_JSON}"
+                    local _v_p_configs
+                    _v_p_configs=$(vde_query_json -r '
+                        (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
+                        (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_port//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
+                    ' "${VM_TYPES_JSON}" 2>/dev/null)
+
+                    if [[ -n "${_v_p_configs}" ]]; then
+                        eval "${_v_p_configs}"
+                    fi
+                elif [[ -f "${VM_TYPES_CONF}" ]]; then
+                    _info "Parsing VM types from Raw Beskar (.conf) via Pure ZSH..."
+                    local _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _v_extra
+                    while IFS='|' read -r _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _v_extra; do
+                        [[ -z "${_v_name}" || "${_v_type}" == "#"* ]] && continue
+                        
+                        local _v_cat="lang"
+                        [[ "${_v_type}" == "service" ]] && _v_cat="service"
+                        
+                        VM_TYPE[${_v_name}]="${_v_cat}"
+                        [[ "${_v_cat}" == "lang" ]] && lang_vms_array+=("${_v_name}")
+                        [[ "${_v_cat}" == "service" ]] && service_vms_array+=("${_v_name}")
+                        
+                        VM_ALIASES[${_v_name}]="${_v_aliases}"
+                        VM_DISPLAY[${_v_name}]="${_v_disp}"
+                        VM_INSTALL[${_v_name}]="${_v_pkgs}"
+                        VM_CUSTOM_CMD[${_v_name}]="${_v_cmd}"
+                        VM_SVC_PORT[${_v_name}]="${_v_env}"
+                        VM_SSH_PORT[${_v_name}]="${_v_port}"
+                    done < "${VM_TYPES_CONF}"
+                else
+                    _error "No configuration source found (JSON/CONF missing)"
+                    release_lock "${global_lock}"
+                    return ${VDE_ERR_NOT_FOUND}
+                fi
+
+                # Export type indexes
+                lang_vms=("${lang_vms_array[@]}")
+                service_vms=("${service_vms_array[@]}")
+
+                # ---------------------------------------------------------------------
+                # Build VM_ALIAS_MAP (Optimization for vde-parser)
+                # ---------------------------------------------------------------------
+                # Clear existing MAP
+                typeset -gA VM_ALIAS_MAP
+                VM_ALIAS_MAP=()
+
+                local _v_vm_name=""
+                for _v_vm_name in "${lang_vms[@]}" "${service_vms[@]}"; do
+                    # 1. Map canonical name
+                    VM_ALIAS_MAP[${_v_vm_name}]="${_v_vm_name}"
+
+                    # 2. Map prefixed name
+                    local _v_prefixed="vde-${_v_vm_name#vde-}"
+                    VM_ALIAS_MAP[${_v_prefixed}]="${_v_vm_name}"
+
+                    # 3. Map aliases
+                    local _v_aliases="${VM_ALIASES[${_v_vm_name}]}"
+                    if [[ -n "${_v_aliases}" ]]; then
+                        local _v_alias=""
+                        for _v_alias in ${(s:,:)_v_aliases}; do
+                            _v_alias="${_v_alias//[[:space:]]/}"
+                            [[ -n "${_v_alias}" ]] && VM_ALIAS_MAP[${_v_alias}]="${_v_vm_name}"
+                        done
+                    fi
+
+                    # 4. Map display name (lowercase, spaces stripped)
+                    local _v_display="${VM_DISPLAY[${_v_vm_name}]}"
+                    if [[ -n "${_v_display}" ]]; then
+                        local _v_display_low="${(L)_v_display}"
+                        _v_display_low="${_v_display_low//[[:space:]]/}"
+                        [[ -n "${_v_display_low}" ]] && VM_ALIAS_MAP[${_v_display_low}]="${_v_vm_name}"
+                    fi
+                done
+                _VM_ALIAS_MAP_BUILT=1
+
+                # Create cache directory
+                mkdir -p "${VDE_CACHE_DIR}"
+
+                # Generate cache file with proper zsh associative array syntax
+                local cache_tmp="${VM_TYPES_CACHE}.tmp.${$}"
+                {
+                    echo "# VM Types Cache - Auto-generated by load_vm_types()"
+                    echo "# DO NOT EDIT MANUALLY"
+                    echo "# VM_INSTALL array is NOT cached due to shell command complexity"
+                    echo ""
+                    echo "typeset -gA VM_TYPE"
+                    for key in "${(@k)VM_TYPE}"; do
+                        value="${VM_TYPE[${key}]//'/'\\''}"
+                        print -r -- "VM_TYPE[${key}]='${value}'"
+                    done
+                    echo ""
+                    echo "typeset -gA VM_ALIASES"
+                    for key in "${(@k)VM_ALIASES}"; do
+                        value="${VM_ALIASES[${key}]//'/'\\''}"
+                        print -r -- "VM_ALIASES[${key}]='${value}'"
+                    done
+                    echo ""
+                    echo "typeset -gA VM_DISPLAY"
+                    for key in "${(@k)VM_DISPLAY}"; do
+                        value="${VM_DISPLAY[${key}]//'/'\\''}"
+                        print -r -- "VM_DISPLAY[${key}]='${value}'"
+                    done
+                    echo ""
+                    echo "typeset -gA VM_CUSTOM_CMD"
+                    for key in "${(@k)VM_CUSTOM_CMD}"; do
+                        value="${VM_CUSTOM_CMD[${key}]//'/'\\''}"
+                        print -r -- "VM_CUSTOM_CMD[${key}]='${value}'"
+                    done
+                    echo ""
+                    echo "typeset -gA VM_SVC_PORT"
+                    for key in "${(@k)VM_SVC_PORT}"; do
+                        value="${VM_SVC_PORT[${key}]//'/'\\''}"
+                        print -r -- "VM_SVC_PORT[${key}]='${value}'"
+                    done
+                    echo ""
+                    echo "typeset -gA VM_SSH_PORT"
+                    for key in "${(@k)VM_SSH_PORT}"; do
+                        value="${VM_SSH_PORT[${key}]//'/'\\''}"
+                        print -r -- "VM_SSH_PORT[${key}]='${value}'"
+                    done
+                    echo ""
+                    echo "typeset -gA VM_ALIAS_MAP"
+                    for key in "${(@k)VM_ALIAS_MAP}"; do
+                        value="${VM_ALIAS_MAP[${key}]//'/'\\''}"
+                        print -r -- "VM_ALIAS_MAP[${key}]='${value}'"
+                    done
+                    echo ""
+                    # Cache lang_vms and service_vms (use eval-safe quoting)
+                    lang_vms_quoted=("${lang_vms[@]}"); echo "lang_vms=(${lang_vms_quoted[*]})"
+                    service_vms_quoted=("${service_vms[@]}"); echo "service_vms=(${service_vms_quoted[*]})"
+                    echo "export _VM_TYPES_LOADED=1"
+                    echo "_VM_ALIAS_MAP_BUILT=1"
+                } > "${cache_tmp}"
+                
+                mv "${cache_tmp}" "${VM_TYPES_CACHE}"
+                _info "VM types cached for faster loading"
+            fi
+        } always {
+            release_lock "${global_lock}"
+        }
     else
         _info "VM types loaded from cache"
     fi
@@ -542,119 +531,88 @@ load_vm_types() {
 # load_docker_config - Load VM Docker configuration from JSON
 # This function loads docker-compose file locations, env files, and mount paths
 # Returns: VDE_SUCCESS if loaded, error code otherwise
-load_docker_config() {
-    _info "Loading VM Docker configuration..."
+# =============================================================================
+# SPOKE METADATA DERIVATION
+# =============================================================================
 
-    # Validate against schema using centralized vde-core function
-    local schema_file
-    schema_file=$(vde_get_schema_for_json "${VM_DOCKER_CONFIG}" 2>/dev/null)
-    if [[ -n "${schema_file}" && -f "${schema_file}" ]]; then
-        _info "Validating docker config against schema: ${schema_file}"
-        if ! vde_validate_json_schema "${VM_DOCKER_CONFIG}" "${schema_file}" >/dev/null; then
-            _error "VM Docker config validation failed"
-            _error "Config file may be corrupt or missing required fields"
-            return ${VDE_ERR_INVALID_DATA}
-        fi
+# get_vm_compose_file - Derives compose file path from Hub name
+# Args: <vm_name>
+get_vm_compose_file() {
+    local vm_name="${1}"
+    local category
+    category=$(get_vm_category "${vm_name}")
+    local raw_name
+    raw_name=$(vde_normalize_name "${vm_name}")
+    
+    if [[ "${category}" != "unknown" ]]; then
+        echo "configs/docker/${category}/${raw_name}/docker-compose.yml"
     else
-        _warn "No schema file found for ${VM_DOCKER_CONFIG}, skipping validation"
+        echo "configs/docker/${raw_name}/docker-compose.yml"
     fi
-
-    # Clear existing arrays
-    VM_COMPOSE_FILE=()
-    VM_ENV_FILE=()
-    VM_IMAGE=()
-    VM_CONTAINER_NAME=()
-    VM_WORKSPACE_MOUNT=()
-    VM_DATA_MOUNT=()
-    VM_LOGS_MOUNT=()
-
-    if [[ ! -f "${VM_DOCKER_CONFIG}" ]]; then
-        _error "Docker config not found: ${VM_DOCKER_CONFIG}"
-        return ${VDE_ERR_NOT_FOUND}
-    fi
-
-    _info "Parsing Docker config from JSON: ${VM_DOCKER_CONFIG}"
-
-    # Parse language VMs
-    local lang_configs
-    lang_configs=$(jq -c '.languages | to_entries[]' "${VM_DOCKER_CONFIG}" 2>/dev/null)
-    if [[ -n "${lang_configs}" ]]; then
-        while IFS= read -r entry; do
-            [[ -z "${entry}" ]] && continue
-
-            local name compose_file env_file image container_name workspace_mount logs_mount
-            name=$(echo "${entry}" | jq -r '.key')
-            compose_file=$(echo "${entry}" | jq -r '.value.compose_file')
-            env_file=$(echo "${entry}" | jq -r '.value.env_file')
-            image=$(echo "${entry}" | jq -r '.value.image')
-            container_name=$(echo "${entry}" | jq -r '.value.container_name')
-            workspace_mount=$(echo "${entry}" | jq -r '.value.workspace_mount')
-            logs_mount=$(echo "${entry}" | jq -r '.value.logs_mount')
-
-            [[ -z "${name}" ]] && continue
-
-            VM_COMPOSE_FILE[${name}]="${compose_file}"
-            VM_ENV_FILE[${name}]="${env_file}"
-            VM_IMAGE[${name}]="${image}"
-            VM_CONTAINER_NAME[${name}]="${container_name}"
-            VM_WORKSPACE_MOUNT[${name}]="${workspace_mount}"
-            VM_LOGS_MOUNT[${name}]="${logs_mount}"
-        done <<< "${lang_configs}"
-    fi
-
-    # Parse service VMs
-    local svc_configs
-    svc_configs=$(jq -c '.services | to_entries[]' "${VM_DOCKER_CONFIG}" 2>/dev/null)
-    if [[ -n "${svc_configs}" ]]; then
-        while IFS= read -r entry; do
-            [[ -z "${entry}" ]] && continue
-
-            local name compose_file env_file image container_name data_mount logs_mount
-            name=$(echo "${entry}" | jq -r '.key')
-            compose_file=$(echo "${entry}" | jq -r '.value.compose_file')
-            env_file=$(echo "${entry}" | jq -r '.value.env_file')
-            image=$(echo "${entry}" | jq -r '.value.image')
-            container_name=$(echo "${entry}" | jq -r '.value.container_name')
-            data_mount=$(echo "${entry}" | jq -r '.value.data_mount')
-            logs_mount=$(echo "${entry}" | jq -r '.value.logs_mount')
-
-            [[ -z "${name}" ]] && continue
-
-            VM_COMPOSE_FILE[${name}]="${compose_file}"
-            VM_ENV_FILE[${name}]="${env_file}"
-            VM_IMAGE[${name}]="${image}"
-            VM_CONTAINER_NAME[${name}]="${container_name}"
-            VM_DATA_MOUNT[${name}]="${data_mount}"
-            VM_LOGS_MOUNT[${name}]="${logs_mount}"
-        done <<< "${svc_configs}"
-    fi
-
-    _info "Docker config loaded successfully"
-    _info "  Language configs: $(echo "${lang_configs}" | wc -l | tr -d ' ')"
-    _info "  Service configs: $(echo "${svc_configs}" | wc -l | tr -d ' ')"
-
-    return ${VDE_SUCCESS}
 }
 
-# get_docker_config - Get Docker config value for a VM
+# get_vm_env_file - Derives env file path from Hub name
+# Args: <vm_name>
+get_vm_env_file() {
+    local raw_name
+    raw_name=$(vde_normalize_name "${1}")
+    echo "env-files/vde-${raw_name}.env"
+}
+
+# get_vm_image - Derives image name from Hub name
+# Args: <vm_name>
+get_vm_image() {
+    local raw_name
+    raw_name=$(vde_normalize_name "${1}")
+    echo "vde-${raw_name}:latest"
+}
+
+# get_vm_mounts - Derives volume mounts from Hub name/category
+# Args: <vm_name>
+# Returns: format: src:dst|src:dst
+get_vm_mounts() {
+    local vm_name="${1}"
+    local category
+    category=$(get_vm_category "${vm_name}")
+    local raw_name
+    raw_name=$(vde_normalize_name "${vm_name}")
+    
+    local src_path dst_path
+    if [[ "${category}" == "languages" ]]; then
+        src_path="projects/${raw_name}"
+        dst_path="/home/devuser/workspace"
+    elif [[ "${category}" == "services" ]]; then
+        src_path="data/${raw_name}"
+        dst_path="/data"
+        # Spoke override for postgres
+        [[ "${raw_name}" == *"postgres"* ]] && dst_path="/var/lib/postgresql/data"
+    else
+        src_path="projects/${raw_name}"
+        dst_path="/home/devuser/workspace"
+    fi
+    
+    echo "${src_path}:${dst_path}|logs/${raw_name}:/logs"
+}
+
+# get_docker_config - Get Docker config value for a VM (legacy wrapper)
 # Args: <field> <vm_name>
 # Returns: Outputs field value, or error
 get_docker_config() {
     local field="${1}"
     local vm_name="${2}"
-    load_vm_types
-
-    # Convert field to uppercase (zsh syntax)
-    local field_upper="${(U)field}"
-    local var_name="VM_${field_upper}[${vm_name}]"
-    local value="${(P)var_name}"
-
-    if [[ -n "${value}" ]]; then
-        echo "${value}"
-        return ${VDE_SUCCESS}
-    else
-        return ${VDE_ERR_NOT_FOUND}
-    fi
+    
+    case "${field}" in
+        compose_file) get_vm_compose_file "${vm_name}" ;;
+        env_file) get_vm_env_file "${vm_name}" ;;
+        image) get_vm_image "${vm_name}" ;;
+        workspace_mount|data_mount|logs_mount) 
+            # This is a bit complex due to legacy field expectations
+            # Most scripts now use the direct get_vm_* functions
+            get_vm_mounts "${vm_name}" | tr '|' '\n' | grep "${field%_mount}" | cut -d: -f1
+            ;;
+        *) return ${VDE_ERR_NOT_FOUND} ;;
+    esac
+    return ${VDE_SUCCESS}
 }
 
 # regenerate_vm_types_cache - Force regeneration of VM types cache
@@ -1341,10 +1299,10 @@ show_known_vms() {
 # AUTO-INITIALIZATION
 # =============================================================================
 
+# Load modular libraries
+_vm_common_load_modular_libs
+
 # Load VM types on library source (unless skipped)
 if [[ "${VDE_SKIP_AUTO_LOAD:-0}" != "1" ]]; then
     load_vm_types
 fi
-
-# Load modular libraries
-_vm_common_load_modular_libs

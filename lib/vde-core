@@ -175,80 +175,91 @@ vde_translate_conf_to_json() {
     local _v_conf_file="$1"
     local _v_json_file="$2"
 
-    local -a _v_lang_entries=()
-    local -a _v_svc_entries=()
+    # GLOBAL CONFIGURATION LOCK: Ensure atomic translation
+    local global_lock="${VDE_LOCKS_DIR}/global-config.lock"
+    # Wait longer for translation which might be slow
+    acquire_lock "${global_lock}" 120 || return ${VDE_ERR_LOCK}
 
-    # Helper to escape JSON strings (The Scavenger's Escaper)
-    _vde_escape_json() {
-        local _v_str="$1"
-        _v_str="${_v_str//\\/\\\\}" # Backslashes
-        _v_str="${_v_str//\"/\\\"}" # Quotes
-        _v_str="${_v_str//$'\n'/\\n}" # Newlines
-        echo -n "$_v_str"
-    }
-
-    local _v_category _v_aliases_json _v_cmd_json _v_svc_json _v_ssh_port_json _v_entry _v_a_item
-    while IFS='|' read -r _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _extra; do
-        [[ -z "${_v_name}" || "${_v_type}" == "#"* ]] && continue
-
-        _v_category="language"
-        [[ "${_v_type}" == "service" ]] && _v_category="service"
-
-        # Build aliases array via Pure ZSH
-        _v_aliases_json="[]"
-        if [[ -n "${_v_aliases}" ]]; then
-            local -a _v_a_list=()
-            for _v_a_item in ${(s:,:)_v_aliases}; do
-                _v_a_list+=("\"$(_vde_escape_json "${_v_a_item}")\"")
-            done
-            _v_aliases_json="[${(j:,:)_v_a_list}]"
-        fi
-
-        local _v_pkgs_json="null"
-        [[ -n "${_v_pkgs}" ]] && _v_pkgs_json="\"$(_vde_escape_json "${_v_pkgs}")\""
-
-        local _v_cmd_json="null"
-        [[ -n "${_v_cmd}" ]] && _v_cmd_json="\"$(_vde_escape_json "${_v_cmd}")\""
-
-        local _v_svc_json="null"
-        [[ -n "${_v_env}" ]] && _v_svc_json="\"$(_vde_escape_json "${_v_env}")\""
-
-        local _v_ssh_port_json="null"
-        [[ -n "${_v_port}" ]] && _v_ssh_port_json="${_v_port}"
-
-        local _v_entry="        {
-          \"name\": \"$(_vde_escape_json "${_v_name}")\",
-          \"aliases\": ${_v_aliases_json},
-          \"display\": \"$(_vde_escape_json "${_v_disp}")\",
-          \"pkgs\": ${_v_pkgs_json},
-          \"custom_cmd\": ${_v_cmd_json},
-          \"service_port\": ${_v_svc_json},
-          \"ssh_port\": ${_v_ssh_port_json}
-        }"
-
-        if [[ "${_v_category}" == "service" ]]; then
-            _v_svc_entries+=("${_v_entry}")
-        else
-            _v_lang_entries+=("${_v_entry}")
-        fi
-    done < "$_v_conf_file"
-
-    # Build final JSON using Pure Beskar template
     {
-        echo "{"
-        echo "  \"version\": \"1.1\","
-        echo "  \"vms\": {"
-        echo "    \"language\": ["
-        echo "${(j:,\n:)_v_lang_entries}"
-        echo "    ],"
-        echo "    \"service\": ["
-        echo "${(j:,\n:)_v_svc_entries}"
-        echo "    ]"
-        echo "  }"
-        echo "}"
-    } > "$_v_json_file"
+        local -a _v_lang_entries=()
+        local -a _v_svc_entries=()
 
-    vde_log_success "The Pure Beskar (.json) has been reconciled via Pure ZSH." "forge"
+        # Helper to escape JSON strings (The Scavenger's Escaper)
+        _vde_escape_json() {
+            local _v_str="$1"
+            _v_str="${_v_str//\\/\\\\}" # Backslashes
+            _v_str="${_v_str//\"/\\\"}" # Quotes
+            _v_str="${_v_str//$'\n'/\\n}" # Newlines
+            echo -n "$_v_str"
+        }
+
+        local _v_category _v_aliases_json _v_cmd_json _v_svc_json _v_ssh_port_json _v_entry _v_a_item
+        while IFS='|' read -r _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _extra; do
+            [[ -z "${_v_name}" || "${_v_type}" == "#"* ]] && continue
+
+            _v_category="language"
+            [[ "${_v_type}" == "service" ]] && _v_category="service"
+
+            # Build aliases array via Pure ZSH
+            _v_aliases_json="[]"
+            if [[ -n "${_v_aliases}" ]]; then
+                local -a _v_a_list=()
+                for _v_a_item in ${(s:,:)_v_aliases}; do
+                    _v_a_list+=("\"$(_vde_escape_json "${_v_a_item}")\"")
+                done
+                _v_aliases_json="[${(j:,:)_v_a_list}]"
+            fi
+
+            local _v_pkgs_json="null"
+            [[ -n "${_v_pkgs}" ]] && _v_pkgs_json="\"$(_vde_escape_json "${_v_pkgs}")\""
+
+            local _v_cmd_json="null"
+            [[ -n "${_v_cmd}" ]] && _v_cmd_json="\"$(_vde_escape_json "${_v_cmd}")\""
+
+            local _v_svc_json="null"
+            [[ -n "${_v_env}" ]] && _v_svc_json="\"$(_vde_escape_json "${_v_env}")\""
+
+            local _v_ssh_port_json="null"
+            [[ -n "${_v_port}" ]] && _v_ssh_port_json="${_v_port}"
+
+            local _v_entry="        {
+              \"name\": \"$(_vde_escape_json "${_v_name}")\",
+              \"aliases\": ${_v_aliases_json},
+              \"display\": \"$(_vde_escape_json "${_v_disp}")\",
+              \"pkgs\": ${_v_pkgs_json},
+              \"custom_cmd\": ${_v_cmd_json},
+              \"service_port\": ${_v_svc_json},
+              \"ssh_port\": ${_v_ssh_port_json}
+            }"
+
+            if [[ "${_v_category}" == "service" ]]; then
+                _v_svc_entries+=("${_v_entry}")
+            else
+                _v_lang_entries+=("${_v_entry}")
+            fi
+        done < "$_v_conf_file"
+
+        # Build final JSON using Pure Beskar template
+        local _v_json_tmp="${_v_json_file}.tmp.${$}"
+        {
+            echo "{"
+            echo "  \"version\": \"1.1\","
+            echo "  \"vms\": {"
+            echo "    \"language\": ["
+            echo "${(j:,\n:)_v_lang_entries}"
+            echo "    ],"
+            echo "    \"service\": ["
+            echo "${(j:,\n:)_v_svc_entries}"
+            echo "    ]"
+            echo "  }"
+            echo "}"
+        } > "$_v_json_tmp"
+
+        mv "$_v_json_tmp" "$_v_json_file"
+        vde_log_success "The Pure Beskar (.json) has been reconciled via Pure ZSH." "forge"
+    } always {
+        release_lock "${global_lock}"
+    }
 }
 # -----------------------
 # Core VM Type Loading (Minimal with Caching)

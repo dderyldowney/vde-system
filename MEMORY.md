@@ -53,12 +53,20 @@
 |---|-------|-------|--------|
 | 22 | Service & Volume Hardening | Networking & Persistence | ✅ COMPLETE |
 | 23 | Deterministic Readiness | Health Checks vs. Sleep | ✅ COMPLETE |
-| 24 | The Big Step Completion | 366 Undefined Steps / USP | 🟡 IN PROGRESS |
-| 25 | Concurrency & Stress | Port/Locking Races | ⚪ Pending |
+| 24 | The Big Step Completion | 366 Undefined Steps / USP | ✅ COMPLETE |
+| 25 | Concurrency & Stress | Port/Locking Races | ✅ COMPLETE |
 | 26 | Error Engine & Polish | UX & UX Hardening | ⚪ Pending |
 
+### Phase 25 Progress (2026-04-05)
+- **Atomic Port Management:** 🟢 Implemented file-locked port registry in `.cache/port-registry/`.
+- **VM Lifecycle Locking:** 🟢 Mandatory `.lock` directories implemented for `rebuild` and `start`.
+- **Core Locking Hardening:** 🟢 `acquire_lock` enhanced with PID-based stale lock detection.
+- **Stress Verification:** 🟢 Parallel Ignition stress test passing (5+ simultaneous VMs).
+- **Cache Integrity:** 🟢 Atomic move (`mv`) enforced for cache re-smelting.
+
 ### Phase 24 Progress (2026-04-05)
-- **Ignition Sync Verification:** ✅ `bin/vde-sync-version` executed.
-- **USP Compliance Audit:** 🟡 Migrating hydration logic to `scripts/setup/`.
-- **Fraudulent Logic Cleanup:** 🟡 Replacing `time.sleep()` in `tests/features/steps/` with `vde_poll`.
-- **Configuration Hardening:** 🟡 Resolving `vde add-vm-type` and `docker-compose.yml` generation issues.
+- **USP Compliance (Scripts):** 🟢 28/28 setup scripts present and hardened in `scripts/setup/`.
+- **USP Compliance (Registry):** 🟢 `vde-kotlin` entry canonicalized (inline logic removed).
+- **Fraudulent Logic Cleanup:** 🟢 All `time.sleep()` in `tests/features/steps/` replaced with `vde_poll`.
+- **Hardening Verification:** 🟢 BDD validation suite implemented and passing (`usp-validation.feature`).
+- **Configuration Hardening:** ✅ Resolving `vde add-vm-type` and `docker-compose.yml` generation issues.

@@ -106,7 +106,7 @@
           "aliases": ["kotlin"],
           "display": "Kotlin",
           "pkgs": null,
-          "custom_cmd": "su devuser -c 'zsh /vde/scripts/setup/kotlin-init.zsh'",
+          "custom_cmd": "zsh /vde/scripts/setup/kotlin-init.zsh",
           "service_port": null,
           "ssh_port": 2211
         },

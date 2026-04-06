@@ -84,64 +84,79 @@ case "${CMD}" in
 
         CANONICAL_NAME=$(resolve_vm_name "${target_type}" 2>/dev/null)
         [[ -z "${CANONICAL_NAME}" ]] && vde_log_error "Unknown type: '${target_type}'" && exit 1
-        
-        local pkgs=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .pkgs // empty" "${TYPES_JSON}")
-        local custom_cmd=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .custom_cmd // empty" "${TYPES_JSON}")
-        
-        if [[ -z "${pkgs}" && -z "${custom_cmd}" ]]; then
-            vde_log_error "No installation method (pkgs or custom_cmd) defined for ${CANONICAL_NAME}"
-            exit 1
-        fi
+        BASE_NAME="${CANONICAL_NAME#vde-}"
 
-        vde_log_info "Baking ${CANONICAL_NAME}..." "docker"
-        docker build "${build_args[@]}" \
-            -f "${VDE_ROOT_DIR}/configs/docker/vde-lang.Dockerfile" \
-            --build-arg VM_NAME="${BASE_NAME}" \
-            --build-arg PKGS_TO_INSTALL="${pkgs}" \
-            --build-arg CUSTOM_BUILD_CMD="${custom_cmd}" \
-            -t "${CANONICAL_NAME}" .
+        # --- CONCURRENCY LOCK ---
+        local vm_lock="${VDE_VM_LOCKS_DIR}/${BASE_NAME}.lock"
+        acquire_lock "${vm_lock}" 300 || exit 1
+        {
+            local pkgs=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .pkgs // empty" "${TYPES_JSON}")
+            local custom_cmd=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .custom_cmd // empty" "${TYPES_JSON}")
+            
+            if [[ -z "${pkgs}" && -z "${custom_cmd}" ]]; then
+                vde_log_error "No installation method (pkgs or custom_cmd) defined for ${CANONICAL_NAME}"
+                exit 1
+            fi
+
+            vde_log_info "Baking ${CANONICAL_NAME}..." "docker"
+            docker build "${build_args[@]}" \
+                -f "${VDE_ROOT_DIR}/configs/docker/vde-lang.Dockerfile" \
+                --build-arg VM_NAME="${BASE_NAME}" \
+                --build-arg PKGS_TO_INSTALL="${pkgs}" \
+                --build-arg CUSTOM_BUILD_CMD="${custom_cmd}" \
+                -t "${CANONICAL_NAME}" .
+        } always {
+            release_lock "${vm_lock}"
+        }
         ;;
 
     start)
         [[ -z "${CANONICAL_NAME}" ]] && vde_log_error "Unknown type: '${TYPE_ARG}'" && exit 1
         
-        # --- Conflict Prevention ---
-        if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
-            vde_log_info "Removing existing container ${CANONICAL_NAME}..." "docker"
-            docker rm -f "${CANONICAL_NAME}" >/dev/null
-        fi
+        # --- CONCURRENCY LOCK ---
+        local vm_lock="${VDE_VM_LOCKS_DIR}/${BASE_NAME}.lock"
+        acquire_lock "${vm_lock}" 60 || exit 1
+        {
+            # --- Conflict Prevention ---
+            if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+                vde_log_info "Removing existing container ${CANONICAL_NAME}..." "docker"
+                docker rm -f "${CANONICAL_NAME}" >/dev/null
+            fi
 
-        local ssh_port=$(get_vm_ssh_port "${CANONICAL_NAME}")
-        if [[ -z "${ssh_port}" ]]; then
-            ssh_port=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${TYPES_JSON}")
-        fi
-        
-        local svc_ports_raw=$(vde_query_json "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | (.service_ports[]?, .service_port?) // empty" "${TYPES_JSON}" | grep -v "null" | tr -d '"')
-        local svc_ports=(${(s:,:)${(f)svc_ports_raw}})
-        
-        local vm_category=$(get_vm_category "${CANONICAL_NAME}")
-        local mount_src="${VDE_ROOT_DIR}/projects/${BASE_NAME}"
-        local mount_dst="/home/devuser/workspace"
+            local ssh_port=$(get_vm_ssh_port "${CANONICAL_NAME}")
+            if [[ -z "${ssh_port}" ]]; then
+                ssh_port=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${TYPES_JSON}")
+            fi
+            
+            local svc_ports_raw=$(vde_query_json "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | (.service_ports[]?, .service_port?) // empty" "${TYPES_JSON}" | grep -v "null" | tr -d '"')
+            local svc_ports=(${(s:,:)${(f)svc_ports_raw}})
+            
+            local vm_category=$(get_vm_category "${CANONICAL_NAME}")
+            local mount_src="${VDE_ROOT_DIR}/projects/${BASE_NAME}"
+            local mount_dst="/home/devuser/workspace"
 
-        if [[ "${vm_category}" == "services" ]]; then
-            mount_src="${VDE_ROOT_DIR}/data/${BASE_NAME}"
-            [[ "${BASE_NAME}" == *"postgres"* ]] && mount_dst="/var/lib/postgresql/data"
-        fi
-        
-        ensure_vm_directories "${CANONICAL_NAME}" "$(get_vm_type "${CANONICAL_NAME}")"
+            if [[ "${vm_category}" == "services" ]]; then
+                mount_src="${VDE_ROOT_DIR}/data/${BASE_NAME}"
+                [[ "${BASE_NAME}" == *"postgres"* ]] && mount_dst="/var/lib/postgresql/data"
+            fi
+            
+            ensure_vm_directories "${CANONICAL_NAME}" "$(get_vm_type "${CANONICAL_NAME}")"
 
-        local port_args=("-p" "${ssh_port}:22")
-        for p in "${svc_ports[@]}"; do
-            [[ -n "${p}" ]] && port_args+=("-p" "${p}:${p}")
-        done
+            local port_args=("-p" "${ssh_port}:22")
+            for p in "${svc_ports[@]}"; do
+                [[ -n "${p}" ]] && port_args+=("-p" "${p}:${p}")
+            done
 
-        vde_log_info "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})..." "docker"
-        docker run -d \
-            --name "${CANONICAL_NAME}" \
-            "${port_args[@]}" \
-            -v "${mount_src}:${mount_dst}" \
-            -v "${VDE_ROOT_DIR}/public-ssh-keys/vde_student.pub:/home/devuser/.ssh/authorized_keys:ro" \
-            "${CANONICAL_NAME}"
+            vde_log_info "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})..." "docker"
+            docker run -d \
+                --name "${CANONICAL_NAME}" \
+                "${port_args[@]}" \
+                -v "${mount_src}:${mount_dst}" \
+                -v "${VDE_ROOT_DIR}/public-ssh-keys/vde_student.pub:/home/devuser/.ssh/authorized_keys:ro" \
+                "${CANONICAL_NAME}"
+        } always {
+            release_lock "${vm_lock}"
+        }
         ;;
 
     stop)
