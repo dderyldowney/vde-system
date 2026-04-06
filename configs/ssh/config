@@ -1,5 +1,5 @@
 # VDE (Virtual Development Environment) SSH Configuration
-# Generated on Sun Apr  5 02:17:59 EDT 2026
+# Generated on Sun Apr  5 20:43:52 EDT 2026
 #
 # This file contains SSH config entries for all known language and service VMs.
 # Each VM type has a fixed SSH port assignment:
