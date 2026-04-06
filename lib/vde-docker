@@ -191,7 +191,10 @@ vde_port_release() {
     if [[ -f "${port_registry_file}" ]]; then
         local port=$(cat "${port_registry_file}" 2>/dev/null)
         rm -f "${port_registry_file}" 2>/dev/null
-        [[ -n "${port}" ]] && rm -f "${VDE_PORT_REGISTRY}/${port}.lock" 2>/dev/null
+        if [[ -n "${port}" ]]; then
+            rm -f "${VDE_PORT_REGISTRY}/${port}.lock" 2>/dev/null
+            rmdir "${VDE_PORT_LOCKS_DIR}/${port}.lock" 2>/dev/null
+        fi
     fi
     return ${VDE_SUCCESS}
 }
@@ -202,37 +205,37 @@ vde_port_release() {
 find_available_ssh_port() {
     local min_port="${1:-2200}"
     local max_port="${2:-2299}"
-    local lock_dir="${VDE_PORT_LOCKS_DIR}/allocation.lock"
 
     # Ensure lock directory exists
     mkdir -p "${VDE_PORT_LOCKS_DIR}" 2>/dev/null
 
-    # Acquire global allocation lock to prevent double-scans
-    if ! acquire_lock "${lock_dir}" 30; then
-        _error "Failed to acquire port allocation lock"
-        return ${VDE_ERR_LOCK}
-    fi
-
-    # Ensure cleanup on return
-    {
-        local port=${min_port}
-        while [[ ${port} -le ${max_port} ]]; do
-            local port_file="${VDE_PORT_REGISTRY}/${port}.lock"
-            
-            # Check if port is in use by system OR reserved in registry
-            if ! _is_port_in_use "${port}" && [[ ! -f "${port_file}" ]]; then
-                # Reserve the port immediately
-                mkdir -p "${VDE_PORT_REGISTRY}" 2>/dev/null
-                echo "${$}" > "${port_file}"
+    local port=${min_port}
+    while [[ ${port} -le ${max_port} ]]; do
+        local port_lock="${VDE_PORT_LOCKS_DIR}/${port}.lock"
+        local registry_file="${VDE_PORT_REGISTRY}/${port}.lock"
+        
+        # 1. KERNEL REFEREE: Attempt to claim this specific port lock
+        if mkdir "${port_lock}" 2>/dev/null; then
+            # 2. TRIPLE-CHECK: Verify port is truly available across all authorities
+            # a) Live system (netstat/lsof)
+            # b) Hub Registry (.conf)
+            # c) Permanent Lock Registry (.cache/port-registry)
+            if ! _is_port_in_use "${port}" && \
+               ! grep -q "|${port}$" "${VM_TYPES_CONF}" && \
+               [[ ! -f "${registry_file}" ]]; then
+                # Success: Port reserved and verified
                 echo "${port}"
-                release_lock "${lock_dir}"
                 return ${VDE_SUCCESS}
+            else
+                # Port is taken, release this specific lock and continue
+                rmdir "${port_lock}" 2>/dev/null
             fi
-            port=$((port + 1))
-        done
-    } always {
-        release_lock "${lock_dir}"
-    }
+        fi
+        port=$((port + 1))
+        
+        # Tiny stagger to avoid perfect loop synchronization
+        zmodload zsh/zselect 2>/dev/null && zselect -t $(( RANDOM % 5 ))
+    done
 
     _error "No available SSH port in range ${min_port}-${max_port}"
     return ${VDE_ERR_NO_PORT}

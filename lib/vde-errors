@@ -319,6 +319,49 @@ vde_error_alias_not_found() {
         "predefined-vm-types.md"
 }
 
+vde_error_lock_contention() {
+    local lock_name="${1}"
+    vde_error_show \
+        "Resource lock contention: ${lock_name}" \
+        "The resource is currently being modified by another VDE process" \
+        "1. Wait for the other process to complete
+2. If you are sure no other process is running, manually remove: \$VDE_ROOT_DIR/.locks/${lock_name}
+3. Check for hung processes: ps aux | grep vde" \
+        "concurrency.md#lock-contention"
+}
+
+vde_error_sync_drift() {
+    local source="${1:-vm-types.conf}"
+    vde_error_show \
+        "Synchronization Drift Detected" \
+        "The Pure Beskar (.json) or Cache is out of sync with ${source}" \
+        "1. Force reconciliation: vde rebuild-cache
+2. Check file timestamps: ls -l \$VDE_ROOT_DIR/data/
+3. Ensure no manual edits to .json bypass the .conf authority" \
+        "architecture.md#ignition-sync"
+}
+
+# vde_error_map - Tiered Error Map
+# Maps kernel signals and VDE error codes to contextual UX responses
+# Args: <exit_code> [context_info]
+vde_error_map() {
+    local code="${1}"
+    local info="${2:-}"
+    
+    case "${code}" in
+        ${VDE_ERR_NOT_FOUND:-2}) vde_error_vm_not_found "${info}" ;;
+        ${VDE_ERR_PERMISSION:-3}) vde_error_permission_denied "${info}" ;;
+        ${VDE_ERR_TIMEOUT:-4}) vde_error_ssh_connection_failed "${info}" ;;
+        ${VDE_ERR_EXISTS:-5}) vde_error_container_exists "${info}" ;;
+        ${VDE_ERR_DOCKER:-8}) vde_error_docker_build_failed "${info}" ;;
+        ${VDE_ERR_LOCK:-9}) vde_error_show "Failed to acquire lock" "System timeout or kernel EEXIST" "Retry the command or check for deadlocks." ;;
+        ${VDE_ERR_INVALID_DATA:-10}) vde_error_show "Invalid Data Structure" "JSON Schema validation failed" "Run 'vde validate' to fix the registry." ;;
+        ${VDE_ERR_LOCK_CONTENTION:-12}) vde_error_lock_contention "${info}" ;;
+        ${VDE_ERR_SYNC_DRIFT:-13}) vde_error_sync_drift "${info}" ;;
+        *) vde_error_simple "Unexpected error occurred (Code: ${code}) ${info}" ;;
+    esac
+}
+
 # =============================================================================
 # SUCCESS MESSAGES
 # =============================================================================

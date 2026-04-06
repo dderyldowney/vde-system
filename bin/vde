@@ -17,6 +17,22 @@ else
     exit 1
 fi
 
+# Centralized Error Handler (Phase 26)
+vde_handle_error() {
+    local rc=$?
+    local cmd="$1"
+    local info="$2"
+    
+    if [[ $rc -ne 0 ]]; then
+        if command -v vde_error_map >/dev/null 2>&1; then
+            vde_error_map $rc "${info}"
+        else
+            vde_log_error "Command '${cmd}' failed with code ${rc}"
+        fi
+        exit $rc
+    fi
+}
+
 # Zero-Host-Dependency JQ Wrapper is now provided by lib/vde-core as vde_query_json()
 
 # Define Data Paths
@@ -36,6 +52,7 @@ if [[ -f "${TYPES_CONF}" ]]; then
     if [[ ! -f "${TYPES_JSON}" || "${TYPES_CONF}" -nt "${TYPES_JSON}" ]]; then
         vde_log_info "The Raw Beskar (.conf) is newer or JSON missing. Re-smelting..." "forge"
         vde_translate_conf_to_json "${TYPES_CONF}" "${TYPES_JSON}"
+        vde_handle_error "re-smelt" "${TYPES_JSON}"
     fi
 fi
 
@@ -44,12 +61,20 @@ if [[ -f "${TYPES_JSON}" && -f "${TYPES_SCHEMA}" ]]; then
     if ! _is_cache_valid "${TYPES_CACHE}" "${TYPES_JSON}" "${TYPES_CONF}"; then
         vde_log_info "The Pure Beskar has changed. Re-smelting the cache..." "forge"
         load_vm_types --no-cache
+        vde_handle_error "cache-re-smelt" "${TYPES_CACHE}"
     else
         vde_validate_and_update "${TYPES_JSON}" "${TYPES_SCHEMA}" "${TYPES_CACHE}"
         load_vm_types
     fi
 else
     load_vm_types
+fi
+
+# FINAL SYNC PROOF: Ensure we are not executing on a drifted state
+if [[ -f "${TYPES_CONF}" && -f "${TYPES_JSON}" ]] && [[ "${TYPES_CONF}" -nt "${TYPES_JSON}" ]]; then
+    # If we still have drift after the smelt attempt, it's a fatal non-deterministic state
+    vde_error_map ${VDE_ERR_SYNC_DRIFT:-13} "${TYPES_CONF}"
+    exit ${VDE_ERR_SYNC_DRIFT:-13}
 fi
 
 # --- 4. COMMAND ROUTER ---
@@ -88,7 +113,9 @@ case "${CMD}" in
 
         # --- CONCURRENCY LOCK ---
         local vm_lock="${VDE_VM_LOCKS_DIR}/${BASE_NAME}.lock"
-        acquire_lock "${vm_lock}" 300 || exit 1
+        acquire_lock "${vm_lock}" 300
+        vde_handle_error "rebuild" "${CANONICAL_NAME}"
+        
         {
             local pkgs=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .pkgs // empty" "${TYPES_JSON}")
             local custom_cmd=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .custom_cmd // empty" "${TYPES_JSON}")
@@ -105,6 +132,7 @@ case "${CMD}" in
                 --build-arg PKGS_TO_INSTALL="${pkgs}" \
                 --build-arg CUSTOM_BUILD_CMD="${custom_cmd}" \
                 -t "${CANONICAL_NAME}" .
+            vde_handle_error "docker build" "${CANONICAL_NAME}"
         } always {
             release_lock "${vm_lock}"
         }
@@ -115,7 +143,9 @@ case "${CMD}" in
         
         # --- CONCURRENCY LOCK ---
         local vm_lock="${VDE_VM_LOCKS_DIR}/${BASE_NAME}.lock"
-        acquire_lock "${vm_lock}" 60 || exit 1
+        acquire_lock "${vm_lock}" 60
+        vde_handle_error "start" "${CANONICAL_NAME}"
+        
         {
             # --- Conflict Prevention ---
             if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
@@ -132,13 +162,8 @@ case "${CMD}" in
             local svc_ports=(${(s:,:)${(f)svc_ports_raw}})
             
             local vm_category=$(get_vm_category "${CANONICAL_NAME}")
-            local mount_src="${VDE_ROOT_DIR}/projects/${BASE_NAME}"
-            local mount_dst="/home/devuser/workspace"
-
-            if [[ "${vm_category}" == "services" ]]; then
-                mount_src="${VDE_ROOT_DIR}/data/${BASE_NAME}"
-                [[ "${BASE_NAME}" == *"postgres"* ]] && mount_dst="/var/lib/postgresql/data"
-            fi
+            local mounts
+            mounts=$(get_vm_mounts "${CANONICAL_NAME}")
             
             ensure_vm_directories "${CANONICAL_NAME}" "$(get_vm_type "${CANONICAL_NAME}")"
 
@@ -147,13 +172,19 @@ case "${CMD}" in
                 [[ -n "${p}" ]] && port_args+=("-p" "${p}:${p}")
             done
 
+            local mount_args=()
+            for m in ${(s:|:)mounts}; do
+                mount_args+=("-v" "${VDE_ROOT_DIR}/${m}")
+            done
+
             vde_log_info "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})..." "docker"
             docker run -d \
                 --name "${CANONICAL_NAME}" \
                 "${port_args[@]}" \
-                -v "${mount_src}:${mount_dst}" \
+                "${mount_args[@]}" \
                 -v "${VDE_ROOT_DIR}/public-ssh-keys/vde_student.pub:/home/devuser/.ssh/authorized_keys:ro" \
                 "${CANONICAL_NAME}"
+            vde_handle_error "docker run" "${CANONICAL_NAME}"
         } always {
             release_lock "${vm_lock}"
         }

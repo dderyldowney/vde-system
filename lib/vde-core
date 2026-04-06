@@ -181,6 +181,12 @@ vde_translate_conf_to_json() {
     acquire_lock "${global_lock}" 120 || return ${VDE_ERR_LOCK}
 
     {
+        # Double-check if another process already translated while we waited
+        if [[ -f "$_v_json_file" && ! ("$_v_conf_file" -nt "$_v_json_file") ]]; then
+            vde_log_info "Pure Beskar already reconciled (Concurrency Win)." "forge"
+            return ${VDE_SUCCESS}
+        fi
+
         local -a _v_lang_entries=()
         local -a _v_svc_entries=()
 

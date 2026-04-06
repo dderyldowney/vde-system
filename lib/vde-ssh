@@ -317,10 +317,26 @@ acquire_lock() {
     while (( elapsed < timeout )); do
         # Use mkdir as the atomic entry gate
         if mkdir "${lock_file}" 2>/dev/null; then
-            # Record ownership IMMEDIATELY
+            # Record ownership IMMEDIATELY: PID:PGID:TIMESTAMP
             local pgid=$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')
-            echo "$$:${pgid}" > "${pid_file}" 2>/dev/null
+            local now=$(date +%s)
+            echo "$$:${pgid}:${now}" > "${pid_file}" 2>/dev/null
+            
+            # If we were showing a wait message, clear it
+            if (( elapsed > 1.0 )) && command -v vde_progress_wait_for_lock >/dev/null 2>&1; then
+                printf "\r%s\r" "$(printf ' %.0s' {1..200})"
+            fi
+            
             return ${VDE_SUCCESS}
+        fi
+
+        # UX POLISH: Notify user of contention if we've been waiting > 1s
+        if (( elapsed > 1.0 )); then
+            if command -v vde_progress_wait_for_lock >/dev/null 2>&1; then
+                vde_progress_wait_for_lock "$(basename "${lock_file}")" "${elapsed%.*}"
+            else
+                vde_log_warn "Waiting for resource lock: $(basename "${lock_file}") (Contention)..." "lock"
+            fi
         fi
 
         # ATOMIC CLEANUP: Ensure only one process attempts forced removal
@@ -335,15 +351,32 @@ acquire_lock() {
         if [[ -f "${pid_file}" ]]; then
             local lock_info=$(cat "${pid_file}" 2>/dev/null)
             local lock_pid="${lock_info%%:*}"
+            local lock_ts="${lock_info##*:}"
+            
             if [[ -n "${lock_pid}" ]]; then
-                if ! kill -0 "${lock_pid}" 2>/dev/null; then
+                local is_alive=0
+                kill -0 "${lock_pid}" 2>/dev/null && is_alive=1
+                
+                # HEARTBEAT CHECK: Deterministic timeout even if PID is alive
+                # (Prevents hangs from zombie/stuck processes)
+                local age=$(( now - lock_ts ))
+                local force_cleanup=0
+                
+                if [[ ${is_alive} -eq 0 ]]; then
+                    force_cleanup=1
+                elif [[ ${age} -gt ${VDE_STALE_LOCK_AGE:-300} ]]; then
+                    vde_log_warn "Lock heartbeat expired (${age}s > ${VDE_STALE_LOCK_AGE:-300}s): ${lock_file}"
+                    force_cleanup=1
+                fi
+                
+                if [[ ${force_cleanup} -eq 1 ]]; then
                     # ATOMIC CLEANUP: Ensure only one process attempts forced removal
                     local cleanup_lock="${lock_file}.cleanup"
                     if mkdir "${cleanup_lock}" 2>/dev/null; then
                         # Double-check owner hasn't changed before forced removal
-                        local current_owner=$(cat "${pid_file}" 2>/dev/null)
+                        local current_owner=$(<"${pid_file}" 2>/dev/null)
                         if [[ -n "${current_owner}" && "${current_owner}" == "${lock_info}" ]]; then
-                            vde_log_warn "Cleaning up stale lock from dead PID ${lock_pid}: ${lock_file}"
+                            vde_log_warn "Cleaning up stale lock (Force: ${force_cleanup}): ${lock_file}"
                             rm -rf "${lock_file}" 2>/dev/null
                         fi
                         rmdir "${cleanup_lock}" 2>/dev/null
