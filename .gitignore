@@ -66,6 +66,9 @@ output/
 tests/test-logs/
 *.log
 *.txt
+!plans/scripts/**/*.log
+!plans/scripts/**/*.txt
+!plans/scripts/**/*.zsh
 # Ignore top-level .zsh files that are usually temporary test scripts
 /*.zsh
 # But specifically allow the new permanent scripts
