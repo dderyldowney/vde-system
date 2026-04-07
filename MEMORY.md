@@ -58,7 +58,7 @@
 | 26 | Error Engine & Polish | UX & UX Hardening | ✅ COMPLETE |
 
 ### Phase 26 Progress (2026-04-07)
-- **Redis Service Repair:** 🟢 Fixed "connection refused" by adding `redis` alias to `vde-redis` and rebuilding VM to execute the USP hydration script (`redis-init.zsh`).
+- **Redis Service Repair:** ✅ DEPLOYED. Fixed "connection reset" by modifying `scripts/setup/redis-init.zsh` to bind to `0.0.0.0` and disable `protected-mode`. Verified via `mcp_redis_info`.
 - **Tiered Error Map:** 🟢 Implemented `lib/vde-errors` with VDE-to-UX mapping.
 - **Kernel-Signal Translation:** 🟢 Mapped POSIX signals (EEXIST, ENOENT) to contextual remediation.
 - **UX Polish:** 🟢 Added specialized `vde_progress_wait_for_lock` indicator for contention transparency.
