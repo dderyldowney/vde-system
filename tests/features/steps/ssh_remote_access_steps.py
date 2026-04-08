@@ -34,10 +34,8 @@ def step_python_vm_running_remote(context, vm_type="python", role=None):
 
 @when('I ask "how do I connect to {vm_name}?"')
 def step_ask_connect_info(context, vm_name):
-    """Get connection info using vde info."""
-    # Strip "VM" and vde- if present
-    vm_type = vm_name.lower().replace("vm", "").replace("vde-", "").strip()
-    result = run_vde_command(f"info {vm_type}", context=context)
+    """Get connection info using vde ask."""
+    result = run_vde_command(f'ask "how do I connect to {vm_name}?"', context=context)
     context.last_output = result.stdout
     context.command_exit_code = result.returncode
 
@@ -226,9 +224,10 @@ def step_key_auth_used_remote(context):
     vm_name = getattr(context, "current_vm", "python").replace("vde-", "")
     # Use -v to see auth methods
     result = run_vde_command(f"ssh vde-{vm_name} -v -o BatchMode=yes echo identity-check", context=context)
-    assert result.returncode == 0, f"SSH failed for {vm_name}. Output: {result.stderr}"
-    assert any(m in result.stderr for m in ["Offering public key", "Authenticating with public key"]), \
-        f"Public key authentication not found in SSH output: {result.stderr}"
+    raw_out = getattr(context, 'vde_command_output_raw', result.stdout)
+    assert result.returncode == 0, f"SSH failed for {vm_name}. Output: {raw_out}"
+    assert any(m in raw_out for m in ["Offering public key", "Authenticating with public key", "next auth method: publickey"]), \
+        f"Public key authentication not found in SSH output: {raw_out}"
 
 @when("I navigate to ~/workspace")
 def step_navigate_workspace(context):

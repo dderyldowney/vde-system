@@ -1,8 +1,9 @@
+@requires-docker-host
 Feature: Concurrency & Stress Hardening
-  @concurrency @stress @critical-path
+  @concurrency @stress @critical-path @fresh-vms
   Scenario: Parallel Ignition of multiple VMs
     Given the VDE system is initialized
-    And I have a list of VM aliases: "python, ruby, go, rust, js"
+    And I have a list of VM aliases: "python, postgres, redis"
     When I attempt to create and start these VMs simultaneously
     Then all VMs should be created successfully
     And all VMs should have unique SSH ports

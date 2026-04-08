@@ -109,15 +109,16 @@ def is_vde_available():
 
 
 def _vde_env():
-    """Return environment dict for vde CLI calls: logs to stderr, stdout is clean."""
+    """Return environment dict for vde CLI calls: logs to file, clean stdout."""
     from config import VDE_CACHE_DIR
 
     return {
         **os.environ,
         "VDE_ROOT_DIR": str(VDE_ROOT),
-        "VDE_LOG_OUTPUT": "stderr",
+        "VDE_LOG_OUTPUT": "file",
         "VDE_CACHE_DIR": str(VDE_CACHE_DIR),
         "VDE_LOG_LEVEL": "DEBUG",
+        "VDE_TEST_MODE": "1",
     }
 
 
@@ -600,21 +601,14 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
 
     # VDE subcommands (all go through ./bin/vde)
     _VDE_SUBCOMMANDS = {
-        "start-virtual",
-        "stop-virtual",
-        "shutdown-virtual",
-        "remove-virtual",
-        "create-virtual-for",
-        "add-vm-type",
-        "list-vms",
-        "create",
         "start",
         "stop",
         "restart",
         "ssh",
-        "connect",
+        "enter",
         "remove",
         "delete",
+        "create",
         "add",
         "uninstall",
         "list",
@@ -624,11 +618,6 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
         "help",
         "rebuild",
         "rebuild-cache",
-        "create-and-start",
-        "ssh-setup",
-        "ssh-sync",
-        "cleanup-ports",
-        "init",
         "ps",
         "logs",
         "inspect",
@@ -638,10 +627,8 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
         "networks",
         "stats",
         "info",
-        "cluster",
-        "validate-schemas",
         "ask",
-        "vde-ask",
+        "validate-schemas",
     }
 
     # Standardize to list of args
@@ -657,27 +644,8 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
 
     # Determine the actual command list - all known VDE commands go through bin/vde
     vde_script = str(BIN_DIR / "vde")
-    if first_word == "exec":
-        # BYPASS: Directly call docker for exec to avoid output capture issues
-        vm_name = args[1]
-        container_name = f"vde-{vm_name}" if not vm_name.startswith("vde-") else vm_name
-        exec_args = args[2:]
-        
-        # Check if container exists and is running first
-        check_proc = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", container_name], 
-                                   capture_output=True, text=True)
-        is_running = check_proc.stdout.strip() == "true"
-        
-        if os.environ.get("VDE_DEBUG_TESTS") == "1":
-            print(f"[DEBUG] EXEC Bypass - VM: {vm_name}, Container: {container_name}, Running: {is_running}")
-            
-        # Use -i for non-interactive output capture
-        cmd = ["docker", "exec", "-i", "-u", "devuser", container_name]
-        if len(exec_args) == 1:
-            cmd.extend(["zsh", "-c", exec_args[0]])
-        else:
-            cmd.extend(exec_args)
-    elif first_word in _VDE_SUBCOMMANDS:
+    if first_word in _VDE_SUBCOMMANDS:
+        cmd = ["zsh", vde_script] + args
         cmd = ["zsh", vde_script] + args
     elif first_word == "vde" or first_word == "./bin/vde":
         cmd = ["zsh", vde_script] + args[1:]
@@ -697,7 +665,7 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
         result = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
             timeout=timeout,
             cwd=str(VDE_ROOT),
@@ -706,20 +674,39 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
         )
         
         if os.environ.get("VDE_DEBUG_TESTS") == "1":
-            print(f"[DEBUG] RC: {result.returncode}")
-            if result.stdout: print(f"[DEBUG] STDOUT: {result.stdout[:100]}...")
-            if result.stderr: print(f"[DEBUG] STDERR: {result.stderr[:100]}...")
+            import sys
+            print(f"[DEBUG] RC: {result.returncode}", file=sys.stderr)
+            print(f"[DEBUG] STDOUT: {result.stdout}", file=sys.stderr)
+            print(f"[DEBUG] STDERR: {result.stderr}", file=sys.stderr)
             
         # Clean stdout: remove VDE log lines (timestamps or [LEVEL] markers)
-        clean_stdout = ""
-        if result.stdout:
-            for line in result.stdout.splitlines():
-                # Skip lines that look like VDE logs: 2026-03-31... or [INFO] ...
-                if re.match(r"^\d{4}-\d{2}-\d{2}", line) or re.match(r"^\[(INFO|DEBUG|WARN|ERROR|SUCCESS)\]", line):
-                    continue
-                clean_stdout += line + "\n"
+        # BUG FIX: Stop stripping logs, BDD tests need to see them for verification
+        raw_output = result.stdout or ""
         
-        cmd_res = CommandResult(clean_stdout.strip(), result.stderr, result.returncode, args=cmd)
+        # Strip ANSI escape codes for clean version
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        clean_stdout = ansi_escape.sub('', raw_output)
+        
+        # Filter out VDE infrastructure logs (e.g. [INFO] Validating..., [SUCCESS] ..., etc)
+        # These headers confuse BDD step assertions.
+        filtered_lines = []
+        for line in clean_stdout.splitlines():
+            if not re.match(r'^\[(INFO|SUCCESS|WARN|ERROR|DEBUG|DOCKER|FORGE|SSH|VDE)\]', line) and not re.match(r'^\d{4}-\d{2}-\d{2}T', line):
+                filtered_lines.append(line)
+        clean_stdout = "\n".join(filtered_lines).strip()
+
+        # IMPORTANT: Always populate even if command failed
+        context.vde_command_output_raw = raw_output
+        context.vde_command_output = raw_output
+        context.vde_command_exit_code = result.returncode
+
+        # Legacy attributes used by some older step files
+        context.last_output = raw_output
+        context.last_error = "" # Stderr was merged into stdout
+        context.last_exit_code = result.returncode
+        context.last_command = " ".join(args)
+        
+        cmd_res = CommandResult(clean_stdout.strip(), "", result.returncode, args=cmd)
     except subprocess.TimeoutExpired as e:
         # TimeoutExpired has bytes attributes in Python 3.7+, decode them
         stdout = e.stdout.decode("utf-8", errors="replace") if e.stdout else ""
@@ -742,7 +729,7 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
 
         # Legacy attributes used by some older step files
         context.last_output = cmd_res.stdout or ""
-        context.last_error = cmd_res.stderr or ""
+        context.last_error = "" # Stderr was merged into stdout
         context.last_exit_code = cmd_res.returncode
         context.last_command = " ".join(args)
 
@@ -778,6 +765,24 @@ def step_modified_dockerfile(context, vm_name="python"):
     """
     context.vm_name = vm_name
     context.dockerfile_modified = True
+
+
+def get_vm_ssh_port(vm_name):
+    """Get the assigned SSH port for a VM from vm-types.json."""
+    vm_types = load_vm_types_raw()
+    full_name = f"vde-{vm_name.replace('vde-', '')}"
+    
+    # Check languages
+    for lang in vm_types.get("vms", {}).get("language", []):
+        if lang.get("name") == full_name:
+            return str(lang.get("ssh_port", ""))
+            
+    # Check services
+    for service in vm_types.get("vms", {}).get("service", []):
+        if service.get("name") == full_name:
+            return str(service.get("ssh_port", ""))
+            
+    return ""
 
 
 def get_container_name(vm_name):

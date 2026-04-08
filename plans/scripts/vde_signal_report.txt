@@ -1,0 +1,6 @@
+2026-04-07T12:04:54-0400 [INFO ] [vde] VM types loaded from cache
+\033[1;31mError:\033[0m Operation Interrupted
+\033[2mReason:\033[0m Received SIGINT (Ctrl+C)
+\033[1;33mSolution:\033[0m
+033[1;34m    The operation was cancelled by the user. Some partial state may remain.033[0m
+

@@ -97,7 +97,7 @@ render_ssh_entry() {
 
     render_template "${TEMPLATES_DIR}/ssh-config.tmpl" \
         SSH_HOST "${host}" SSH_PORT "${port}" \
-        IDENTITY_FILE "${VDE_SSH_IDENTITY:-${HOME}/.ssh/vde/id_ed25519}" \
+        IDENTITY_FILE "${VDE_SSH_IDENTITY:-${HOME}/.ssh/vde/vde_student}" \
         KNOWN_HOSTS_FILE "${VDE_SSH_KNOWN_HOSTS:-${HOME}/.ssh/vde/known_hosts}" \
         COMMENT "VDE VM: ${vm_name}"
 }

@@ -204,7 +204,7 @@ echo "  • VDE known_hosts: ~/.ssh/vde/known_hosts"
 echo ""
 echo "Your personal SSH configuration is untouched."
 echo "Backups created:"
-if [[ -n "${backup_path}" ] && [[ -f "${backup_path}" ]] ; then
+if [[ -n "${backup_path}" ]] && [[ -f "${backup_path}" ]] ; then
     echo "  • ${backup_path}"
 fi
 if [[ -f "${known_hosts_backup_path}" ]] ; then

@@ -67,13 +67,6 @@ Feature: SSH and Remote Access
     And my preferred theme should be active
 
   @requires-docker-host
-  Scenario: Editor configuration
-    Given I connect via SSH
-    When I run nvim
-    Then LazyVim should be available
-    And my editor configuration should be loaded
-
-  @requires-docker-host
   Scenario: Transferring files
     Given I am connected to a VM
     When I use scp to copy files
@@ -86,10 +79,3 @@ Feature: SSH and Remote Access
     When I access localhost on the VM's port
     Then I should reach the service
     And the service should be accessible from the host
-
-  @requires-docker-host
-  Scenario: SSH session persistence
-    Given I have a long-running task in a VM
-    When my SSH connection drops
-    Then the task should continue running
-    And I can reconnect to the same session

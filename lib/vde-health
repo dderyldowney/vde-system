@@ -307,7 +307,7 @@ vde_wait_for_container_healthy() {
 
         # Progress update every 30 seconds
         local elapsed_int=${elapsed%.*}
-        if [[ $((elapsed_int % 30)) -eq 0 ] && [[ ${elapsed_int} -gt 0 ] && [[ "${last_progress:-0}" != "${elapsed_int}" ]] ; then
+        if [[ $((elapsed_int % 30)) -eq 0 ]] && [[ ${elapsed_int} -gt 0 ]] && [[ "${last_progress:-0}" != "${elapsed_int}" ]] ; then
             echo "  [${elapsed_int}/${max_wait}s] Still waiting for ${container_name}..."
             last_progress=${elapsed_int}
         fi
@@ -333,47 +333,47 @@ vde_health_check() {
 
     local vm_type=$(get_vm_info type "${vm_name}" 2>/dev/null)
 
-    [[ "${verbose}" -eq 1 ] && echo "Health check for ${container_name}:"
+    [[ "${verbose}" -eq 1 ]] && echo "Health check for ${container_name}:"
 
     # Check 1: Container running
     if vde_check_container_running "${vm_name}"; then
-        [[ "${verbose}" -eq 1 ] && echo "  ✓ Container is running"
+        [[ "${verbose}" -eq 1 ]] && echo "  ✓ Container is running"
     else
-        [[ "${verbose}" -eq 1 ] && echo "  ✗ Container is not running"
+        [[ "${verbose}" -eq 1 ]] && echo "  ✗ Container is not running"
         all_passed=false
     fi
 
     # Check 2: SSH port (language VMs only)
     if [[ "${vm_type}" = "lang" ]] ; then
         if vde_check_ssh_port "${vm_name}" 10; then
-            [[ "${verbose}" -eq 1 ] && echo "  ✓ SSH port is accessible"
+            [[ "${verbose}" -eq 1 ]] && echo "  ✓ SSH port is accessible"
         else
-            [[ "${verbose}" -eq 1 ] && echo "  ✗ SSH port is not accessible"
+            [[ "${verbose}" -eq 1 ]] && echo "  ✗ SSH port is not accessible"
             all_passed=false
         fi
 
         # Check 3: SSH login
         if vde_check_ssh_login "${vm_name}" 10; then
-            [[ "${verbose}" -eq 1 ] && echo "  ✓ SSH login works"
+            [[ "${verbose}" -eq 1 ]] && echo "  ✓ SSH login works"
         else
-            [[ "${verbose}" -eq 1 ] && echo "  ✗ SSH login failed"
+            [[ "${verbose}" -eq 1 ]] && echo "  ✗ SSH login failed"
             all_passed=false
         fi
 
         # Check 4: Language tool
         if vde_check_language_tool "${vm_name}" 10; then
-            [[ "${verbose}" -eq 1 ] && echo "  ✓ Language tool is available"
+            [[ "${verbose}" -eq 1 ]] && echo "  ✓ Language tool is available"
         else
-            [[ "${verbose}" -eq 1 ] && echo "  ✗ Language tool check failed"
+            [[ "${verbose}" -eq 1 ]] && echo "  ✗ Language tool check failed"
             all_passed=false
         fi
     fi
 
     if [[ "${all_passed}" = "true" ]] ; then
-        [[ "${verbose}" -eq 1 ] && echo "✓ ${container_name} health check: PASSED"
+        [[ "${verbose}" -eq 1 ]] && echo "✓ ${container_name} health check: PASSED"
         return ${VDE_SUCCESS}
     else
-        [[ "${verbose}" -eq 1 ] && echo "✗ ${container_name} health check: FAILED"
+        [[ "${verbose}" -eq 1 ]] && echo "✗ ${container_name} health check: FAILED"
         return ${VDE_ERR_GENERAL}
     fi
 }

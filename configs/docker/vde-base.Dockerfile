@@ -13,7 +13,17 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     build-essential \
     procps \
     locales \
+    ca-certificates \
+    gnupg \
+    lsb-release \
     && rm -rf /var/lib/apt/lists/*
+
+# 1.1 Install Docker CLI (for Sovereign features)
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && apt-get install -y docker-ce-cli && \
+    rm -rf /var/lib/apt/lists/*
 
 # 2. Locale & Identity Setup
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
@@ -27,7 +37,8 @@ RUN useradd -ms /bin/zsh -u 1000 devuser && \
 # 3. SSH Server Configuration (The Gate)
 RUN mkdir -p /var/run/sshd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
-    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    echo "AuthorizedKeysFile .ssh/vde/authorized_keys" >> /etc/ssh/sshd_config
 
 # 4. The Student Environment (Oh-My-Zsh)
 USER devuser
@@ -38,8 +49,14 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 
 # 5. SSH Key Preparation
 # We create the directory; the CLI 'vde-bootstrap' will handle key injection.
-RUN mkdir -p /home/devuser/.ssh && chmod 700 /home/devuser/.ssh
+RUN mkdir -p /home/devuser/.ssh/vde && \
+    chmod 700 /home/devuser/.ssh && \
+    chmod 700 /home/devuser/.ssh/vde
+
+# 6. The Atomic Handshake (Entrypoint)
+COPY scripts/vde-entrypoint.zsh /usr/local/bin/vde-entrypoint.zsh
+RUN sudo chmod +x /usr/local/bin/vde-entrypoint.zsh
 
 WORKDIR /home/devuser/workspace
-CMD ["sudo", "/usr/sbin/sshd", "-D"]
+ENTRYPOINT ["/usr/local/bin/vde-entrypoint.zsh"]
 

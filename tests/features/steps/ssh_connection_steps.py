@@ -95,9 +95,9 @@ def step_access_localhost_vm_port(context):
     # Get port via vde port
     result = run_vde_command(f"port {vm_name}", context=context)
     assert result.returncode == 0, f"Failed to get port for {vm_name}"
-    # Example output: "python: 2200" or similar
     import re
-    match = re.search(r"(\d+)$", result.stdout.strip())
+    # Hardened regex for UAP-wrapped output
+    match = re.search(r"(\d+)", result.stdout.splitlines()[-1])
     assert match, f"Could not parse port from output: {result.stdout}"
     port = match.group(1)
     
@@ -121,5 +121,5 @@ def step_connect_to_vm(context):
         assert ensure_vm_accessible(context, vm_name), f"VM {vm_name} did not become accessible via SSH"
         
     # run_vde_command handles prefixing
-    result = run_vde_command(f"connect {vm_name} echo ok", context=context)
+    result = run_vde_command(f"enter {vm_name} echo ok", context=context)
     assert result.returncode == 0, f"Failed to connect to VM {vm_name}"

@@ -1,4 +1,4 @@
-# VDE-SPEC v2.0.9 (Absolute)
+# VDE-SPEC v2.1.0 (Absolute)
 
 ## VERSION HISTORY
 | Version | Date       | Changes                                                                 |
@@ -10,9 +10,10 @@
 | 2.0.7   | 2026-04-07 | Codified Section 10: THE SEEKER’S RECON (The Verification Law).         |
 | 2.0.8   | 2026-04-07 | Codified Section 11: THE ARCHIVIST’S INTEL (The Researcher Law).        |
 | 2.0.9   | 2026-04-07 | Refined Section 11: Real-time intelligence and physical verification.   |
+| 2.1.0   | 2026-04-07 | Sovereign Ecosystem: Docker Socket Sovereignty and SSH Agent Trust Bridge. |
 
 **Status:** AUTHORITATIVE  
-**Last Updated:** 2026-04-07T18:55:00Z  
+**Last Updated:** 2026-04-07T23:55:00Z  
 
 ## 1. Absolute Mandates
 
@@ -22,6 +23,8 @@
 - **8-Field Standard**: Data integrity is maintained via a strict 8-field registry layout: `type|name|aliases|display|pkgs|custom_cmd|env|ports`.
 - **ZSH-ONLY**: All CLI tools, libraries, and jail shells MUST use `#!/usr/bin/env zsh`.
 - **Absolute Portability**: Images must function identically without requiring internet access for setup once built.
+- **Docker Socket Sovereignty**: Containers MUST have dynamic non-root access to the host Docker daemon.
+- **SSH Agent Trust Bridge**: Host SSH identities MUST be forwarded to guest VMs via secure agent bridging.
 
 ## 2. Directory Structure
 
@@ -35,7 +38,7 @@
 
 ## 3. Universal Agent Protocol (UAP)
 
-1. **Startup**: Verify local environment, version (v2.0.9), and execute Ignition Sync.
+1. **Startup**: Verify local environment, version (v2.1.0), and execute Ignition Sync.
 2. **Planning**: Design a TDD strategy with explicit failing tests.
 3. **Implementation**: Execute changes under `bin/vde-enforce-uap.zsh` using local, unique-prefixed variables.
 4. **Audit**: Confirm USP compliance and "Born Ready" status.

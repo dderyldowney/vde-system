@@ -87,8 +87,8 @@ check_dir() {
     
     echo -e "${GREEN}[UAP-CHECK]${NC} Auditing directory: ${dir#${VDE_ROOT_DIR}/}"
     for file in "${dir}"/*(N.); do
-        # Only audit executable scripts or known logic files (skip markdown)
-        if [[ -f "$file" && "$file" != *.md ]]; then
+        # Only audit executable scripts or known logic files (skip markdown and data)
+        if [[ -f "$file" && "$file" != *.md && "$file" != *.json ]]; then
             audit_file_content "$file"
         fi
     done

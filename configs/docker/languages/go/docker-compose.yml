@@ -33,8 +33,12 @@ services:
       - ../../../../projects/go:/home/devuser/workspace
       - ../../../../logs/go:/logs
       - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      # Docker Socket Sovereignty (Physical Verification Law)
+      - /var/run/docker.sock:/var/run/docker.sock
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
       - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+      # macOS Canonical Bridge (if exists)
+      - /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock
 
     environment:
       - SSH_AUTH_SOCK=/ssh-agent/sock

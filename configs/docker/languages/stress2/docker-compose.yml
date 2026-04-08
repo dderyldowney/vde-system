@@ -1,0 +1,50 @@
+# Template for language VMs
+# Variables: stress2, 2222, 
+name: vde-stress2
+services:
+  vde-stress2:
+    build:
+      context: ../../../..
+      dockerfile: configs/docker/vde-base.Dockerfile
+
+      args:
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+        PUBLIC_KEYS_DIR: /public-ssh-keys
+    image: vde-stress2:latest
+    container_name: vde-stress2
+    hostname: vde-stress2
+    restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=stress2"
+    command: >
+      sh -c "if [ -n \"\" ]; then
+               ;
+             fi;
+             /usr/sbin/sshd -D"
+
+    ports:
+      - "2222:22"
+
+    volumes:
+      - ../../../../projects/stress2:/home/devuser/workspace
+      - ../../../../logs/stress2:/logs
+      - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent/sock
+
+    env_file:
+      - ../../../../env-files/vde-stress2.env
+
+    networks:
+      - vde-net
+
+networks:
+  vde-net:
+    external: true
