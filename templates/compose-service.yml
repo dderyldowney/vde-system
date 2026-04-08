@@ -50,6 +50,7 @@ services:
 ##SERVICE_PORTS##
 
     volumes:
+      - ../../../../:/vde:ro
       - ../../../../data/{{NAME}}:/data
       - ../../../../logs/{{NAME}}:/logs
       - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro

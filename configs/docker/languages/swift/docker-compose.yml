@@ -30,18 +30,19 @@ services:
       - "2218:22"
 
     volumes:
+      - ../../../../:/vde:ro
       - ../../../../projects/swift:/home/devuser/workspace
       - ../../../../logs/swift:/logs
-      - ../../../../public-ssh-keys:/public-ssh-keys:ro
+      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/ssh-agent/sock:ro
+      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/run/host-services/ssh-auth.sock:ro
       # macOS Canonical Bridge (if exists)
       - /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock
 
     environment:
-      - SSH_AUTH_SOCK=/ssh-agent/sock
+      - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock
 
     env_file:
       - ../../../../env-files/vde-swift.env

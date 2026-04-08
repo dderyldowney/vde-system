@@ -120,3 +120,52 @@ def step_verify_8_field_standard(context):
                 continue
             fields = line.split('|')
             assert len(fields) >= 8, f"Line does not follow 8-field standard: {line}"
+
+@given('the VDE Registry is loaded')
+def step_load_registry_spine(context):
+    from vm_common import load_vm_types_raw
+    context.vm_types = load_vm_types_raw()
+    context.container_name = "vde-python" # Default for this scenario
+
+@given('"vde-python" is currently running')
+def step_ensure_running_python(context):
+    run_vde_command("start python")
+    res = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", "vde-python"], capture_output=True, text=True)
+    assert res.stdout.strip() == "true", "vde-python is not running"
+
+@when('I run the one true way to stop "{vm_alias}"')
+def step_stop_vm(context, vm_alias):
+    res = run_vde_command(f"stop {vm_alias}")
+    assert res.returncode == 0, f"vde stop failed: {res.stderr}"
+
+@then('the container "{container_name}" should be stopped')
+def step_verify_stopped(context, container_name):
+    res = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", container_name], capture_output=True, text=True)
+    # Container might still exist but should not be running
+    assert res.stdout.strip() == "false", f"{container_name} is still running"
+
+@then('the VM-level lock should be released')
+def step_verify_lock_released(context):
+    lock_file = VDE_ROOT / ".locks" / "vms" / f"{context.container_name}.lock"
+    assert not lock_file.exists(), f"Lock file still exists: {lock_file}"
+
+@when('I run the one true way to remove "{vm_alias}"')
+def step_remove_vm(context, vm_alias):
+    res = run_vde_command(f"remove {vm_alias}")
+    assert res.returncode == 0, f"vde remove failed: {res.stderr}"
+
+@then('the container "{container_name}" should be destroyed')
+def step_verify_destroyed(context, container_name):
+    res = subprocess.run(["docker", "inspect", container_name], capture_output=True)
+    assert res.returncode != 0, f"Container {container_name} still exists"
+
+@then('the SSH configuration should be preserved')
+def step_verify_ssh_preserved(context):
+    # SSH config should NOT be deleted on 'remove' by mandate
+    ssh_config = Path.home() / ".ssh" / "vde_config"
+    if not ssh_config.exists():
+        ssh_config = VDE_ROOT / "configs" / "ssh" / "vde_config"
+    
+    assert ssh_config.exists(), "VDE SSH config was deleted!"
+    content = ssh_config.read_text()
+    assert context.container_name in content, f"Config entry for {context.container_name} was removed"

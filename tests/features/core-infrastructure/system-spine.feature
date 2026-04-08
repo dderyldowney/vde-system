@@ -1,4 +1,5 @@
 Feature: System Spine Integrity
+
   @spine @critical-path
   Scenario: Hub-to-Spoke Deterministic Ignition
     Given the VDE Hub "data/vm-types.conf" is the sole authority
@@ -15,3 +16,13 @@ Feature: System Spine Integrity
     Then every VM defined in the Hub must have a corresponding USP init script
     And every VM must be startable via the VDE orchestrator
     And every VM must adhere to the 8-field registry standard
+
+  Scenario: VM Lifecycle Termination (Stop/Remove)
+    Given the VDE Registry is loaded
+    And "vde-python" is currently running
+    When I run the one true way to stop "python"
+    Then the container "vde-python" should be stopped
+    And the VM-level lock should be released
+    When I run the one true way to remove "python"
+    Then the container "vde-python" should be destroyed
+    And the SSH configuration should be preserved

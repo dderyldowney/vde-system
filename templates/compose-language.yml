@@ -30,6 +30,7 @@ services:
       - "{{SSH_PORT}}:22"
 
     volumes:
+      - ../../../../:/vde:ro
       - ../../../../projects/{{NAME}}:/home/devuser/workspace
       - ../../../../logs/{{NAME}}:/logs
       - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
