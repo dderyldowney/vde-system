@@ -1,4 +1,4 @@
-# VDE-SPEC v2.0.6 (Absolute)
+# VDE-SPEC v2.0.9 (Absolute)
 
 ## VERSION HISTORY
 | Version | Date       | Changes                                                                 |
@@ -6,9 +6,13 @@
 | 2.0.3   | 2026-04-03 | Aligned SSH identity naming (vde_student) across the bridge.            |
 | 2.0.4   | 2026-04-04 | Implemented Ignition Sync, Universal Script Parity (USP), and 8-Field Registry Standard. |
 | 2.0.5   | 2026-04-04 | Version bump to 2.0.5.                                                  |
+| 2.0.6   | 2026-04-05 | Implemented Fleet Strike (3-VM Concurrent Limit).                       |
+| 2.0.7   | 2026-04-07 | Codified Section 10: THE SEEKER’S RECON (The Verification Law).         |
+| 2.0.8   | 2026-04-07 | Codified Section 11: THE ARCHIVIST’S INTEL (The Researcher Law).        |
+| 2.0.9   | 2026-04-07 | Refined Section 11: Real-time intelligence and physical verification.   |
 
 **Status:** AUTHORITATIVE  
-**Last Updated:** 2026-04-04T23:10:00Z  
+**Last Updated:** 2026-04-07T18:55:00Z  
 
 ## 1. Absolute Mandates
 
@@ -31,7 +35,8 @@
 
 ## 3. Universal Agent Protocol (UAP)
 
-1. **Startup**: Verify local environment, version (v2.0.5), and execute Ignition Sync.
+1. **Startup**: Verify local environment, version (v2.0.9), and execute Ignition Sync.
 2. **Planning**: Design a TDD strategy with explicit failing tests.
 3. **Implementation**: Execute changes under `bin/vde-enforce-uap.zsh` using local, unique-prefixed variables.
 4. **Audit**: Confirm USP compliance and "Born Ready" status.
+5. **Research**: When the path is obscured or platform quirks arise, dispatch the Researcher for physical verification.

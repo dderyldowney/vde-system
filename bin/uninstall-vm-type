@@ -118,70 +118,39 @@ ask_yes_no() {
 # Remove entry from vm-types.yml
 remove_vm_type_entry() {
     local _vm_target_type="${1}"
+    local global_lock="${VDE_ROOT_DIR}/.locks/global-config.lock"
 
     if [[ ! -f "${VM_TYPES_FILE}" ]]; then
         print_info "No vm-types.conf file found"
     else
-        local temp_file="${VM_TYPES_FILE}.tmp"
+        claim_lock "${global_lock}" || { print_error "Failed to acquire registry lock"; return 1; }
+        {
+            local temp_file="${VM_TYPES_FILE}.tmp"
 
-        if [[ "${DRY_RUN}" = "true" ]]; then
-            print_info "[DRY RUN] Would remove entry for '${_vm_target_type}' from vm-types.conf"
-            grep -E "^(lang|service)\|${_vm_target_type}\|" "${VM_TYPES_FILE}" 2>/dev/null || print_info "[DRY RUN]   (no entry found)"
-        else
-            # Remove lines matching the VM type (format: lang|rust|... or service|postgres|...)
-            grep -v -E "^(lang|service)\|${_vm_target_type}\|" "${VM_TYPES_FILE}" > "${temp_file}" 2>/dev/null || true
-
-            if ! cmp -s "${VM_TYPES_FILE}" "${temp_file}" 2>/dev/null; then
-                mv "${temp_file}" "${VM_TYPES_FILE}"
-                print_success "Removed '${_vm_target_type}' from vm-types.conf"
+            if [[ "${DRY_RUN}" = "true" ]]; then
+                print_info "[DRY RUN] Would remove entry for '${_vm_target_type}' from vm-types.conf"
+                grep -E "^(lang|service)\|vde-${_vm_target_type}\|" "${VM_TYPES_FILE}" 2>/dev/null || print_info "[DRY RUN]   (no entry found)"
             else
-                rm -f "${temp_file}"
-                print_info "No entry found for '${_vm_target_type}' in vm-types.conf"
+                # Remove lines matching the VM type (canonical name is in field 2)
+                grep -v -E "^(lang|service)\|${_vm_target_type}\|" "${VM_TYPES_FILE}" > "${temp_file}" 2>/dev/null || true
+
+                if ! cmp -s "${VM_TYPES_FILE}" "${temp_file}" 2>/dev/null; then
+                    mv "${temp_file}" "${VM_TYPES_FILE}"
+                    print_success "Removed '${_vm_target_type}' from vm-types.conf"
+                    
+                    # Re-smelt JSON from CONF (vde_translate_conf_to_json handles its own lock depth)
+                    vde_translate_conf_to_json "${VM_TYPES_FILE}" "${VDE_ROOT_DIR}/data/vm-types.json"
+                    
+                    # Invalidate the cache
+                    rm -f "${VDE_CACHE_DIR}/vm-types.cache" 2>/dev/null || true
+                else
+                    rm -f "${temp_file}"
+                    print_info "No entry found for '${_vm_target_type}' in vm-types.conf"
+                fi
             fi
-        fi
-    fi
-
-    # Also remove from vm-types.json
-    local json_file="${VDE_ROOT_DIR}/data/vm-types.json"
-    if [[ -f "${json_file}" ]]; then
-        if [[ "${DRY_RUN}" = "true" ]]; then
-            print_info "[DRY RUN] Would remove entry for '${_vm_target_type}' from vm-types.json"
-        else
-            python3 -c '
-import json
-import sys
-
-try:
-    with open(sys.argv[1], "r") as f:
-        data = json.load(f)
-    
-    vm_name = sys.argv[2]
-    modified = False
-    
-    if "vms" in data:
-        for cat in ["language", "service"]:
-            if cat in data["vms"]:
-                initial_len = len(data["vms"][cat])
-                data["vms"][cat] = [vm for vm in data["vms"][cat] if vm["name"] != vm_name]
-                if len(data["vms"][cat]) < initial_len:
-                    modified = True
-    
-    if modified:
-        with open(sys.argv[1], "w") as f:
-            json.dump(data, f, indent=2)
-        print("Removed from vm-types.json")
-    else:
-        print("No entry found in vm-types.json")
-except Exception as e:
-    print("Failed to update JSON: " + str(e), file=sys.stderr)
-    sys.exit(1)
-' "${json_file}" "${_vm_target_type}"
-        fi
-    fi
-
-    if [[ "${DRY_RUN}" != "true" ]]; then
-        # Invalidate the cache so it gets regenerated
-        rm -f "${VDE_CACHE_DIR}/vm-types.cache" 2>/dev/null || true
+        } always {
+            release_lock "${global_lock}"
+        }
     fi
 }
 

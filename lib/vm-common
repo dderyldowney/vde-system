@@ -68,7 +68,9 @@ export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 . "${VDE_ROOT_DIR}/lib/vde-naming"
 . "${VDE_ROOT_DIR}/lib/vde-security"
 . "${VDE_ROOT_DIR}/lib/vde-path-utils"
+. "${VDE_ROOT_DIR}/lib/vde-progress"
 . "${VDE_ROOT_DIR}/lib/vde-core"
+. "${VDE_ROOT_DIR}/lib/vm-lock"
 
 # =============================================================================
 # LOGGING ALIASES (map log_*/vde_log_* to vde-log library functions)
@@ -334,7 +336,7 @@ load_vm_types() {
     if [[ "${use_cache}" -eq 0 ]]; then
         # GLOBAL CONFIGURATION LOCK: Prevent redundant re-smelting
         local global_lock="${VDE_LOCKS_DIR}/global-config.lock"
-        acquire_lock "${global_lock}" 30 || return ${VDE_ERR_LOCK}
+        claim_lock "${global_lock}" || return ${VDE_ERR_LOCK}
         
         {
             # Double-check if another process just finished smelting the cache while we waited
@@ -970,9 +972,14 @@ save_port_to_registry() {
     local vm_name="${1}"
     local port="${2}"
     local port_dir="${VDE_CACHE_DIR}/port-registry"
+    local lock_dir="${port_dir}/port-${port}.lock"
 
     mkdir -p "${port_dir}"
     echo "${port}" > "${port_dir}/${vm_name}.port"
+    
+    # Register PID in lock for concurrency hardening
+    mkdir -p "${lock_dir}"
+    echo "$$" > "${lock_dir}/PID"
 }
 
 # Remove port from registry
@@ -1015,20 +1022,36 @@ verify_port_registry() {
     return ${VDE_SUCCESS}
 }
 
-# release_port_reservation - Alias for remove_port_from_registry (used by tests)
+# release_port - Release an atomically reserved port
+# Args: <port>
+release_port() {
+    local port="${1}"
+    local lock_dir="${VDE_CACHE_DIR}/port-registry/port-${port}.lock"
+    
+    if [[ -d "${lock_dir}" ]]; then
+        # Use rm -rf to handle STALE_HOST or other content inside the lock dir
+        rm -rf "${lock_dir}"
+        return ${VDE_SUCCESS}
+    fi
+    return ${VDE_ERR_NOT_FOUND}
+}
+
+# release_port_reservation - Alias for release_port (updated for Atomic Strategy)
 # Args: <vm_name_or_port>
 release_port_reservation() {
     local input="${1}"
     
-    # If input is a number, it's a port - find which VM owns it and remove it
+    # If input is a number, it's a port
     if [[ "${input}" =~ ^[0-9]+$ ]]; then
-        for f in "${VDE_CACHE_DIR}/port-registry"/*.port(N); do
-            if [[ "${input}" == "$(cat "${f}")" ]]; then
-                rm -f "${f}"
-            fi
-        done
+        release_port "${input}"
     else
-        remove_port_from_registry "${input}"
+        # Find the port associated with this VM and release it
+        local port
+        port=$(get_port_from_registry "${input}")
+        if [[ -n "${port}" ]]; then
+            release_port "${port}"
+            remove_port_from_registry "${input}"
+        fi
     fi
 }
 
@@ -1061,58 +1084,73 @@ find_next_available_port() {
     return ${VDE_ERR_GENERAL}
 }
 
-# Find available port in range
-# Args: [min_port] [max_port]
+# Find available port in range (Atomic Reservation Strategy VDE v2.0.6 Hardened)
+# Args: [min_port] [max_port] [exclude_ports_str]
 # Returns: Outputs port number
 find_available_port() {
-    local min_port="${1:-2200}"
-    local max_port="${2:-2299}"
-
-    # Ensure VM types are loaded to check existing assignments
-    load_vm_types >/dev/null 2>&1
-
-    # Create a set of assigned ports for fast lookup
-    typeset -gA assigned_ports
-    assigned_ports=()
-    local vm p
-    for vm in ${(k)VM_SSH_PORT}; do
-        p="${VM_SSH_PORT[$vm]}"
-        if [[ -n "${p}" ]] && [[ "${p}" -ge "${min_port}" ]] && [[ "${p}" -le "${max_port}" ]]; then
-            assigned_ports[${p}]=1
-        fi
-    done
-
-    # Find the first available port
+    local min_port=$1
+    local max_port=$2
+    local registry_dir="${VDE_CACHE_DIR}/port-registry"
+    
+    mkdir -p "${registry_dir}"
+    
     local port=${min_port}
     while [[ ${port} -le ${max_port} ]]; do
-        if [[ -z "${assigned_ports[${port}]}" ]] && ! _is_port_in_use "${port}"; then
+        # Atomic Reservation: mkdir is atomic across processes
+        if mkdir "${registry_dir}/port-${port}.lock" 2>/dev/null; then
+            
+            # THE SEEKER'S RECON (Section 10.3): Physical Handshake
+            # Attempt to bind the port via a transient Docker container
+            if ! docker run --rm --name "vde-port-probe-${port}" -p "${port}:22" vde-base true >/dev/null 2>&1; then
+                # Port is a Ghost or occupied by Scavengers
+                touch "${registry_dir}/port-${port}.lock/STALE_HOST"
+                # Keep the lock to prevent others from retrying this failed port immediately
+                port=$((port + 1))
+                continue
+            fi
+            
+            # Port is verified clear.
             echo "${port}"
-            return ${VDE_SUCCESS}
+            return 0
         fi
         port=$((port + 1))
     done
-
-    _error "No available port in range ${min_port}-${max_port}"
-    return ${VDE_ERR_NO_PORT}
+    return 1
 }
+
 # Allocate port for VM
-# Args: <vm_name> [min_port] [max_port]
+# Args: <vm_name> [min_port] [max_port] [exclude_ports_str]
 # Returns: Outputs port number
 allocate_port_for_vm() {
     local vm_name="${1}"
     local min_port="${2:-2200}"
     local max_port="${3:-2299}"
+    local exclude_ports_str="${4}"
 
     local existing_port
     existing_port=$(get_port_from_registry "${vm_name}")
 
     if [[ -n "${existing_port}" ]]; then
-        echo "${existing_port}"
-        return ${VDE_SUCCESS}
+        # If port is already in registry, respect it, unless it's in the exclusion list
+        if [[ -z "${exclude_ports_map[${existing_port}]}" ]]; then
+            echo "${existing_port}"
+            return ${VDE_SUCCESS}
+        fi
+    fi
+
+    # New logic: check VM_SSH_PORT (pre-assigned)
+    load_vm_types >/dev/null 2>&1
+    local pre_assigned_port="${VM_SSH_PORT[${vm_name}]}"
+    if [[ -n "${pre_assigned_port}" ]] && [[ "${pre_assigned_port}" -ge "${min_port}" ]] && [[ "${pre_assigned_port}" -le "${max_port}" ]] && ! _is_port_in_use "${pre_assigned_port}"; then
+        if [[ -z "${exclude_ports_map[${pre_assigned_port}]}" ]]; then
+            save_port_to_registry "${vm_name}" "${pre_assigned_port}"
+            echo "${pre_assigned_port}"
+            return ${VDE_SUCCESS}
+        fi
     fi
 
     local new_port
-    new_port=$(find_available_port "${min_port}" "${max_port}")
+    new_port=$(find_available_port "${min_port}" "${max_port}" "${exclude_ports_str}")
 
     if [[ -z "${new_port}" ]]; then
         return ${VDE_ERR_NO_PORT}
@@ -1239,8 +1277,51 @@ clear_docker_state() {
 # Get SSH port for VM (uses cache/registry)
 # Args: <vm_name>
 # Returns: Outputs SSH port
+# Get SSH port for a VM
+# Args: <vm_name>
+# Returns: Outputs SSH port to stdout, or error
 get_vm_ssh_port() {
     local vm_name="${1}"
+    local registry_dir="${VDE_CACHE_DIR}/port-registry"
+    local registry_file="${registry_dir}/${vm_name}.port"
+
+    # 1. Try registry first (fast)
+    if [[ -f "${registry_file}" ]]; then
+        cat "${registry_file}"
+        return ${VDE_SUCCESS}
+    fi
+
+    # 2. Try docker-compose.yml (source of truth for running VMs)
+    # This provides self-healing if the registry was purged but container exists
+    local compose_file="${CONFIGS_DIR}/services/${vm_name#vde-}/docker-compose.yml"
+    if [[ ! -f "${compose_file}" ]]; then
+        # Check if it's a language VM (often doesn't have its own compose file, uses base)
+        # But for services, it's reliable.
+        compose_file=$(docker inspect --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}/docker-compose.yml' "${vm_name}" 2>/dev/null)
+    fi
+
+    if [[ -f "${compose_file}" ]]; then
+        local port
+        port=$(grep -oE '[0-9]+:22' "${compose_file}" | head -1 | cut -d':' -f1)
+        if [[ -n "${port}" ]]; then
+            # SELF-HEAL: Repopulate registry
+            save_port_to_registry "${vm_name}" "${port}"
+            echo "${port}"
+            return ${VDE_SUCCESS}
+        fi
+    fi
+
+    # 3. Try Docker Ground Truth (The Final Authority)
+    local docker_port
+    docker_port=$(docker inspect --format '{{(index (index .NetworkSettings.Ports "22/tcp") 0).HostPort}}' "${vm_name}" 2>/dev/null)
+    if [[ -n "${docker_port}" ]]; then
+        # SELF-HEAL: Repopulate registry from running container
+        save_port_to_registry "${vm_name}" "${docker_port}"
+        echo "${docker_port}"
+        return ${VDE_SUCCESS}
+    fi
+
+    # 4. Fallback to standard allocation
     get_or_allocate_port "${vm_name}"
 }
 

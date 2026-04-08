@@ -77,6 +77,11 @@ export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 . "${VDE_ROOT_DIR}/lib/vde-constants"
 
 # -----------------------
+# Source Atomic Locking Library
+# -----------------------
+. "${VDE_ROOT_DIR}/lib/vm-lock"
+
+# -----------------------
 # Directory Constants
 # -----------------------
 VDE_CORE_CONFIGS_DIR="${VDE_CORE_CONFIGS_DIR:-${VDE_ROOT_DIR}/configs/docker}"
@@ -177,8 +182,7 @@ vde_translate_conf_to_json() {
 
     # GLOBAL CONFIGURATION LOCK: Ensure atomic translation
     local global_lock="${VDE_LOCKS_DIR}/global-config.lock"
-    # Wait longer for translation which might be slow
-    acquire_lock "${global_lock}" 120 || return ${VDE_ERR_LOCK}
+    claim_lock "${global_lock}" || return ${VDE_ERR_LOCK}
 
     {
         # Double-check if another process already translated while we waited
@@ -548,7 +552,7 @@ vde_validate_json_schema() {
     fi
 
     # Validate JSON against schema
-    if ! python3 -c "
+    if python3 -c "
 import json, sys
 
 try:
@@ -577,7 +581,9 @@ try:
 except Exception as e:
     print(f'Validation script error: {e}', file=sys.stderr)
     sys.exit(1)
-" 2>/dev/null; then
+" ; then
+        : # Success
+    else
         log_error "JSON validation failed: ${json_file}"
         return ${VDE_ERR_INVALID_DATA:-4}
     fi

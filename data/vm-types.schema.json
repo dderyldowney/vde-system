@@ -48,7 +48,7 @@
         "name": {
           "type": "string",
           "description": "VM identifier (lowercase alphanumeric). Used for container naming, SSH config, directories.",
-          "pattern": "^vde-[a-z0-9]+$"
+          "pattern": "^vde-[a-z0-9-]+$"
         },
         "aliases": {
           "type": "array",
@@ -97,7 +97,7 @@
         "name": {
           "type": "string",
           "description": "VM identifier (lowercase alphanumeric). Used for container naming, SSH config, directories.",
-          "pattern": "^vde-[a-z0-9]+$"
+          "pattern": "^vde-[a-z0-9-]+$"
         },
         "aliases": {
           "type": "array",

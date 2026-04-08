@@ -3,6 +3,8 @@ set -e
 
 # Source shared library
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
+VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)}"
+export VDE_ROOT_DIR
 source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vm-common"
 
@@ -132,77 +134,26 @@ if [[ -z "${VM_TYPE_STR}" ]]; then
     log_info "Auto-detected VM type as: ${VM_TYPE_STR}"
 fi
 
-if [[ -z "${SSH_PORT}" ]]; then
-    log_info "No SSH port specified, auto-allocating..."
-    SSH_PORT=$(find_available_ssh_port)
-    if [[ $? -ne 0 ]]; then
-        log_error "Failed to auto-allocate port (range full or internal error)"
-        exit ${VDE_ERR_GENERAL}
-    fi
-    log_success "Allocated port: ${SSH_PORT}"
-fi
-
-# -----------------------
-# Validation
-# -----------------------
-log_info "Validating configuration..."
-
-# Validate VM type
-if [[ "${VM_TYPE_STR}" != "lang" ]] && [[ "${VM_TYPE_STR}" != "service" ]]; then
-    log_error "Invalid VM type: ${VM_TYPE_STR} (must be 'lang' or 'service')"
-    exit ${VDE_ERR_GENERAL}
-fi
-
-# Validate VM name format
-if [[ ! "${VM_NAME}" =~ ^[a-z0-9]+$ ]]; then
-    log_error "VM name must be lowercase alphanumeric (no spaces, hyphens, or special chars)"
-    exit ${VDE_ERR_GENERAL}
-fi
-
-# Service type requires service port
-if [[ "${VM_TYPE_STR}" == "service" ]] && [[ -z "${SVC_PORT}" ]]; then
-    log_error "Service type requires --svc-port argument"
-    exit ${VDE_ERR_GENERAL}
-fi
-
-# Language type should not have service port
-if [[ "${VM_TYPE_STR}" == "lang" ]] && [[ -n "${SVC_PORT}" ]]; then
-    log_error "Language type should not specify --svc-port"
-    exit ${VDE_ERR_GENERAL}
-fi
-
-# Validate SSH port range
-if [[ "${VM_TYPE_STR}" == "lang" ]] && { [[ "${SSH_PORT}" -lt "${VDE_LANG_PORT_START}" ]] || [[ "${SSH_PORT}" -gt "${VDE_LANG_PORT_END}" ]]; }; then
-    log_error "Language SSH port must be in range ${VDE_LANG_PORT_START}-${VDE_LANG_PORT_END} (got ${SSH_PORT})"
-    exit ${VDE_ERR_GENERAL}
-fi
-
-if [[ "${VM_TYPE_STR}" == "service" ]] && { [[ "${SSH_PORT}" -lt "${VDE_SVC_PORT_START}" ]] || [[ "${SSH_PORT}" -gt "${VDE_SVC_PORT_END}" ]]; }; then
-    log_error "Service SSH port must be in range ${VDE_SVC_PORT_START}-${VDE_SVC_PORT_END} (got ${SSH_PORT})"
-    exit ${VDE_ERR_GENERAL}
-fi
-
-# Validate SSH port not already in use
-# Skip if the VM name is already in the file (concurrency win)
-if grep -q "|${SSH_PORT}$" "${VM_TYPES_CONF}" 2>/dev/null; then
-    if ! grep -q "vde-${VM_NAME}" "${VM_TYPES_CONF}"; then
-        log_error "SSH port ${SSH_PORT} is already assigned to another VM in vm-types.conf"
-        exit ${VDE_ERR_GENERAL}
-    fi
-fi
-
-# Auto-generate display name if not specified
+# Ensure display name satisfies schema (minLength: 1)
 if [[ -z "${DISPLAY_NAME}" ]]; then
-    # Capitalize first letter
-    DISPLAY_NAME="$(echo "${VM_NAME}" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
+    DISPLAY_NAME="${VM_NAME:c}"
 fi
 
 # -----------------------
 # Atomic Registry Update
 # -----------------------
+if [[ -z "${SSH_PORT}" ]]; then
+    log_info "No SSH port specified, auto-allocating..."
+    SSH_PORT=$(find_available_ssh_port)
+    vde_handle_error "port-allocation" "${VM_NAME}"
+    log_success "Allocated port: ${SSH_PORT}"
+fi
+
 log_info "Updating Pure Beskar registry..."
 local global_lock="${VDE_LOCKS_DIR}/global-config.lock"
-acquire_lock "${global_lock}" 60 || exit 1
+
+# The Seeker's Staggered Entry (Rule 10 Enhancement)
+claim_lock "${global_lock}" || vde_handle_error "lock-acquisition" "${global_lock}"
 
 {
     # TRIPLE-GATE VALIDATION (Inside Lock)
@@ -210,13 +161,13 @@ acquire_lock "${global_lock}" 60 || exit 1
     # 1. Re-check VM existence
     if grep -q "|vde-${VM_NAME}|" "${VM_TYPES_CONF}"; then
         log_error "VM '${VM_NAME}' was already added by another process"
-        exit ${VDE_ERR_GENERAL}
+        exit ${VDE_ERR_EXISTS}
     fi
 
     # 2. Re-check Port availability
     if grep -q "|${SSH_PORT}$" "${VM_TYPES_CONF}" 2>/dev/null; then
         log_error "SSH port ${SSH_PORT} was claimed by another process"
-        exit ${VDE_ERR_GENERAL}
+        exit ${VDE_ERR_EXISTS}
     fi
 
     # 1. Atomic Update to Raw Beskar (.conf)
@@ -227,11 +178,13 @@ acquire_lock "${global_lock}" 60 || exit 1
     echo "${_entry}" >> "${_conf_tmp}"
     mv "${_conf_tmp}" "${VM_TYPES_CONF}"
     
-    # 2. Re-smelt JSON from CONF
+    # 2. Re-smelt JSON from CONF (vde_translate_conf_to_json handles its own lock)
     vde_translate_conf_to_json "${VM_TYPES_CONF}" "${VM_TYPES_JSON}"
+    vde_handle_error "re-smelt" "${VM_TYPES_JSON}"
     
     # 3. Commit Port to Registry (Numeric lock file)
-    allocate_ssh_port "${VM_NAME}" "${SSH_PORT}"
+    # Already done by find_available_ssh_port via mkdir, but we ensure persistence
+    allocate_ssh_port "vde-${VM_NAME}" "${SSH_PORT}"
     
     # 4. Invalidate cache to force Ignition on next load
     rm -f "${VDE_ROOT_DIR}/.cache/vm-types.cache" 2>/dev/null
@@ -302,13 +255,10 @@ diff "${backup_file}" "${VM_TYPES_CONF}" || true
 echo ""
 
 # -----------------------
-# Invalidate cache and reload VM types
+# THE IGNITION RITUAL (Rule H)
 # -----------------------
-log_info "Invalidating VM types cache..."
-local cache_file="${VDE_ROOT_DIR}/.cache/vm-types.cache"
-[[ -f "${cache_file}" ]] && rm -f "${cache_file}"
-log_info "Reloading VM types..."
-load_vm_types
+log_info "Triggering the Ignition Ritual..."
+"${VDE_ROOT_DIR}/bin/vde" rebuild-cache
 
 # -----------------------
 # Summary
