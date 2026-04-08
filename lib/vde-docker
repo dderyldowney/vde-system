@@ -98,6 +98,20 @@ get_docker_project_name() {
 
 
 
+# Check if image exists
+# Args: <vm_name>
+# Returns: VDE_SUCCESS (0) if exists
+image_exists() {
+    local vm_name="${1}"
+    local image_name
+    image_name=$(get_vm_image "${vm_name}")
+    
+    if docker image inspect "${image_name}" >/dev/null 2>&1; then
+        return ${VDE_SUCCESS}
+    fi
+    return ${VDE_ERR_NOT_FOUND}
+}
+
 # Check if container exists
 # Args: <container_name>
 # Returns: VDE_SUCCESS (0) if exists

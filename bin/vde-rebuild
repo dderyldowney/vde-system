@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-rebuild - Rebuild all VDE Docker images
-# Usage: vde-rebuild [options]
+# Usage: vde-rebuild [options] [vm_name...]
 #
 # Options:
 #   --no-cache   Rebuild without using cache
@@ -31,6 +31,7 @@ NOCACHE=false
 REGENERATE_KEYS=false
 PULL=false
 SPECIFIC_VM=""
+REBUILD_TARGETS=()
 
 #===============================================================================
 # SSH Environment
@@ -60,7 +61,7 @@ sync_keys() {
 
 show_usage() {
     cat <<EOF
-Usage: vde-rebuild [options]
+Usage: vde-rebuild [options] [vm_name...]
 
 Rebuild all VDE Docker images.
 
@@ -74,6 +75,7 @@ Examples:
   vde-rebuild              # Rebuild vde-base using cache
   vde-rebuild --no-cache   # Rebuild vde-base from scratch
   vde-rebuild --vm base    # Rebuild only vde-base
+  vde-rebuild python       # Rebuild vde-python
 
 EOF
 }
@@ -102,19 +104,17 @@ while [[ ${#} -gt 0 ]] ; do
             ;;
         --vm)
             SPECIFIC_VM="${2}"
-            if [[ "${SPECIFIC_VM}" != "base" ]]; then
-                echo "Error: Only 'base' is supported via --vm. Use 'vde rebuild <type>' for Spokes."
-                exit 1
-            fi
             shift 2
             ;;
         *)
-            echo "Unknown option: ${1}"
-            show_usage
-            exit ${VDE_ERR_GENERAL}
+            REBUILD_TARGETS+=("${1}")
+            shift
             ;;
     esac
 done
+
+# If --vm was used, add it to rebuild targets
+[[ -n "${SPECIFIC_VM}" ]] && REBUILD_TARGETS+=("${SPECIFIC_VM}")
 
 #===============================================================================
 # Build Functions
@@ -141,38 +141,85 @@ build_base_image() {
     fi
 }
 
+build_vm_image() {
+    local vm_alias="${1}"
+    local canonical_name
+    canonical_name=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
+    
+    if [[ -z "${canonical_name}" ]]; then
+        vde_log_error "Unknown VM alias: ${vm_alias}"
+        return 1
+    fi
+    
+    local compose_file
+    compose_file=$(get_vm_compose_file "${canonical_name}")
+    
+    if [[ ! -f "${compose_file}" ]]; then
+        vde_log_error "Compose file not found for ${canonical_name}: ${compose_file}"
+        return 1
+    fi
+    
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Rebuilding ${canonical_name}..."
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    
+    local build_cmd="docker compose -f ${compose_file} build"
+    [[ "${NOCACHE}" == "true" ]] && build_cmd="${build_cmd} --no-cache"
+    
+    if eval "${build_cmd}"; then
+        echo "✓ ${canonical_name} rebuilt successfully"
+        return 0
+    else
+        echo "✗ Failed to rebuild ${canonical_name}"
+        return 1
+    fi
+}
+
 #===============================================================================
 # Main
 #===============================================================================
 
-echo ""
-echo "╔════════════════════════════════════════════════════════════╗"
-echo "║          VDE Base Image Rebuild                            ║"
-echo "╚════════════════════════════════════════════════════════════╝"
-echo ""
-
 # Check Docker
 if ! command -v docker &>/dev/null; then
-    _error "Docker is not installed"
-    exit ${VDE_ERR_DOCKER}
+    echo "[ERROR] Docker is not installed"
+    exit ${VDE_ERR_DOCKER:-1}
 fi
 
 if ! docker info &>/dev/null; then
-    _error "Docker daemon is not running"
-    exit ${VDE_ERR_DOCKER}
+    echo "[ERROR] Docker daemon is not running"
+    exit ${VDE_ERR_DOCKER:-1}
 fi
 
 # Ensure keys are ready for build context
 sync_keys
 
-# Build base image
-build_base_image
+# Logic:
+# 1. If NO targets specified, build base only (default legacy behavior of this script)
+# 2. If 'base' in targets, build base.
+# 3. If other targets, build them.
 
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Rebuild complete!"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-docker images | grep "^vde-base"
+local build_base=false
+[[ ${#REBUILD_TARGETS} -eq 0 ]] && build_base=true
+
+local -a spokes
+spokes=()
+
+for target in "${REBUILD_TARGETS[@]}"; do
+    if [[ "${target}" == "base" ]]; then
+        build_base=true
+    else
+        spokes+=("${target}")
+    fi
+done
+
+if [[ "${build_base}" == "true" ]]; then
+    build_base_image
+fi
+
+for spoke in "${spokes[@]}"; do
+    build_vm_image "${spoke}"
+done
 
 echo ""
 echo "Done!"

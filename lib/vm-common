@@ -240,13 +240,22 @@ _is_cache_valid() {
 
     # Check if any source file is newer than cache
     local cache_mtime source_mtime
-    cache_mtime=$(stat -f "%m" "${cache_file}" 2>/dev/null || stat -c "%Y" "${cache_file}" 2>/dev/null)
+    if [[ "$(uname)" == "Darwin" ]]; then
+        cache_mtime=$(stat -f "%m" "${cache_file}" 2>/dev/null || echo 0)
+    else
+        cache_mtime=$(stat -c "%Y" "${cache_file}" 2>/dev/null || echo 0)
+    fi
 
     for source_file in "${source_files[@]}"; do
         if [[ -f "${source_file}" ]]; then
-            source_mtime=$(stat -f "%m" "${source_file}" 2>/dev/null || stat -c "%Y" "${source_file}" 2>/dev/null)
-            if [[ "${source_mtime}" -gt "${cache_mtime}" ]]; then
-                return ${VDE_ERR_GENERAL}
+            if [[ "$(uname)" == "Darwin" ]]; then
+                source_mtime=$(stat -f "%m" "${source_file}" 2>/dev/null || echo 0)
+            else
+                source_mtime=$(stat -c "%Y" "${source_file}" 2>/dev/null || echo 0)
+            fi
+            
+            if [[ -n "${source_mtime}" && -n "${cache_mtime}" ]] && (( source_mtime > cache_mtime )); then
+                return ${VDE_ERR_GENERAL:-1}
             fi
         fi
     done
@@ -580,6 +589,9 @@ get_vm_mounts() {
     raw_name=$(vde_normalize_name "${vm_name}")
     
     local src_path dst_path
+    # Base mounts for all VMs
+    local mounts=".:/vde:ro"
+    
     if [[ "${category}" == "languages" ]]; then
         src_path="projects/${raw_name}"
         dst_path="/home/devuser/workspace"
@@ -593,7 +605,7 @@ get_vm_mounts() {
         dst_path="/home/devuser/workspace"
     fi
     
-    echo "${src_path}:${dst_path}|logs/${raw_name}:/logs"
+    echo "${mounts}|${src_path}:${dst_path}|logs/${raw_name}:/logs"
 }
 
 # get_docker_config - Get Docker config value for a VM (legacy wrapper)
@@ -1274,55 +1286,33 @@ clear_docker_state() {
 # VM SSH PORT (compat function)
 # =============================================================================
 
-# Get SSH port for VM (uses cache/registry)
-# Args: <vm_name>
-# Returns: Outputs SSH port
-# Get SSH port for a VM
+# get_vm_ssh_port - Get SSH port for a VM
 # Args: <vm_name>
 # Returns: Outputs SSH port to stdout, or error
 get_vm_ssh_port() {
     local vm_name="${1}"
-    local registry_dir="${VDE_CACHE_DIR}/port-registry"
-    local registry_file="${registry_dir}/${vm_name}.port"
-
-    # 1. Try registry first (fast)
-    if [[ -f "${registry_file}" ]]; then
-        cat "${registry_file}"
+    load_vm_types >/dev/null 2>&1
+    local port="${VM_SSH_PORT[${vm_name}]}"
+    if [[ -n "${port}" ]]; then
+        echo "${port}"
         return ${VDE_SUCCESS}
     fi
+    return ${VDE_ERR_NOT_FOUND}
+}
 
-    # 2. Try docker-compose.yml (source of truth for running VMs)
-    # This provides self-healing if the registry was purged but container exists
-    local compose_file="${CONFIGS_DIR}/services/${vm_name#vde-}/docker-compose.yml"
-    if [[ ! -f "${compose_file}" ]]; then
-        # Check if it's a language VM (often doesn't have its own compose file, uses base)
-        # But for services, it's reliable.
-        compose_file=$(docker inspect --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}/docker-compose.yml' "${vm_name}" 2>/dev/null)
-    fi
-
-    if [[ -f "${compose_file}" ]]; then
-        local port
-        port=$(grep -oE '[0-9]+:22' "${compose_file}" | head -1 | cut -d':' -f1)
-        if [[ -n "${port}" ]]; then
-            # SELF-HEAL: Repopulate registry
-            save_port_to_registry "${vm_name}" "${port}"
-            echo "${port}"
-            return ${VDE_SUCCESS}
-        fi
-    fi
-
-    # 3. Try Docker Ground Truth (The Final Authority)
-    local docker_port
-    docker_port=$(docker inspect --format '{{(index (index .NetworkSettings.Ports "22/tcp") 0).HostPort}}' "${vm_name}" 2>/dev/null)
-    if [[ -n "${docker_port}" ]]; then
-        # SELF-HEAL: Repopulate registry from running container
-        save_port_to_registry "${vm_name}" "${docker_port}"
-        echo "${docker_port}"
+# get_vm_service_ports - Get service ports for a VM
+# Args: <vm_name>
+# Returns: Outputs service ports to stdout, or error
+get_vm_service_ports() {
+    local vm_name="${1}"
+    load_vm_types >/dev/null 2>&1
+    local ports="${VM_SVC_PORT[${vm_name}]}"
+    if [[ -n "${ports}" ]] && [[ "${ports}" != "null" ]]; then
+        echo "${ports}"
         return ${VDE_SUCCESS}
     fi
-
-    # 4. Fallback to standard allocation
-    get_or_allocate_port "${vm_name}"
+    echo ""
+    return ${VDE_SUCCESS}
 }
 
 # =============================================================================
