@@ -34,6 +34,7 @@
 8. **Ghost Zone Kill Switch**: Any artifact outside `plans/scripts/` or presence of `conductor/` triggers immediate session halt.
 9. **Verification Law (Section 10)**: Docker Probe mandatory for port allocation.
 10. **Researcher Law (Section 11)**: Physical intent web research mandatory; Clone Prohibition absolute.
+11. **Empirical Proof Mandate**: The Testing Suite MUST provide empirical proof of all contracts the Codebase makes. AT ALL TIMES!
 
 ---
 
@@ -45,7 +46,7 @@
 
 ## CURRENT FOCUS: Phase 27 (The Sovereign Ecosystem)
 
-**Goal:** Achieve Full Feature Parity for Networking, Identity, and Host Communication.
+**Goal:** Empirical Verification and Hardening of Sovereign Bridges (Docker Socket & SSH Forwarding).
 
 ### Sprint Status (VDE 2.1.0)
 
@@ -54,9 +55,9 @@
 | 24 | The Big Step Completion | 366 Undefined Steps / USP | ✅ COMPLETE |
 | 25 | Concurrency & Stress | Port/Locking Races | ✅ COMPLETE |
 | 26 | Forge Hardening Strike | Section 10/11 & vm-lock | ✅ COMPLETE |
-| 27 | Sovereign Ecosystem | Networking & Identity | 🟡 IN PROGRESS |
+| 27 | Sovereign Ecosystem | Verification & Hardening | 🟡 IN PROGRESS |
 
-### Phase 27 Progress (2026-04-07)
-- **Infrastructure (27.1):** ✅ COMPLETE. Integrated `ask`, `port`, `info`, `ssh` subcommands. Standardized `vde_student` identity. Achieved 100% pass rate on `ssh-and-remote-access.feature`.
-- **Sovereignty (27.2):** ✅ COMPLETE. Implemented Docker Socket Sovereignty and SSH Agent Trust Bridge. Rebuilt `vde-base` with Docker CLI and Atomic Handshake entrypoint.
-- **Workflow (27.3):** ⏳ PENDING. Hardening shared configs and multi-user sync.
+### Phase 27 Progress (2026-04-08)
+- **Sovereign Audit (v2.1.0):** ✅ COMPLETE. Pruned ~24,000 lines of redundant and "pink" test code. Condensed suite to 2 high-fidelity Behave features and 11 verified ZSH scripts.
+- **Sovereignty (27.2):** ✅ COMPLETE. Docker Socket Sovereignty and SSH Agent Trust Bridge are implemented in `scripts/vde-entrypoint.zsh`.
+- **Verification (27.3):** ⏳ IN PROGRESS. Implementing high-fidelity empirical verification for sovereign bridges in `system-spine.feature`.

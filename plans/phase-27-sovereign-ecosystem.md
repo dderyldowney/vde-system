@@ -1,69 +1,49 @@
-# Implementation Plan: VDE Phase 27 — The Sovereign Ecosystem
+# Implementation Plan: VDE Phase 27 — The Sovereign Ecosystem (Sovereign Verification)
 
-**Version**: 2.1.0 (Target)
-**Objective**: Achieve full feature parity for complex networking and testing scenarios, specifically unblocking the 23 failing/undefined BDD features and resolving VM-to-Host/VM-to-VM communication gaps.
+**Version**: 2.1.0 (Hardened)
+**Objective**: Hardening and Empirical Verification of the "Sovereign Bridges" (Docker Socket & SSH Agent Forwarding).
 
-## Background & Motivation
-Phase 26 ("The Forge Hardening") successfully stabilized the core CLI and deterministic ignition. However, `PROJECT_STATUS.md` and `tests/TEST_STATUS_REPORT.md` reveal significant gaps in "Sovereign" features where VMs must interact with the host or each other via SSH Agent forwarding and Docker socket access. Additionally, 127 BDD steps remain undefined, preventing full verification of these advanced features.
+## 1. Reevaluation: The Equal Metrics (v2.1.0)
+The success of Phase 27 is measured by the absolute alignment of the following two metrics:
+- **Metric A (Codebase)**: `scripts/vde-entrypoint.zsh` must contain idempotent, deterministic logic for GID mapping and identity forwarding.
+- **Metric B (Testing Suite)**: `tests/features/core-infrastructure/system-spine.feature` must provide direct empirical evidence of these bridges working under real container ignition.
 
-## Scope & Impact
-- **BDD Completion**: Implement 127 undefined steps across 23 scenarios.
-- **VM-to-Host Sovereignty**: Fix failures in listing host directories, resource usage, and container management from within a VM.
-- **VM-to-VM Networking**: Enable and verify SSH Agent forwarding for seamless VM-to-VM communication.
-- **Workflow Hardening**: Improve "Shared Configs" and "Syncing" reliability to 100%.
+## 2. Background & Motivation
+The "Sovereign Audit" (April 2026) revealed that core bridge logic is already present but lacks verified fidelity. The test suite was pruned of ~24,000 lines of redundant code to prioritize high-signal empirical evidence. Phase 27 will transition the VDE from "implemented" to "certified sovereign."
 
-## Key Files & Context
-- `tests/features/steps/`: Location for new Python step definitions.
-- `lib/vde-ssh`: Core SSH and agent management logic.
-- `configs/ssh/`: SSH configuration templates for forwarding.
-- `bin/vde-exec`: Entry point for cross-VM command execution.
+## 3. Sovereign Bridge Hardening
 
-## Proposed Solution (Phase 27)
+### Bridge 1: Docker Socket Sovereignty
+- **Current State**: GID detection and `chmod 666` are implemented.
+- **Hardening Logic**:
+    - Ensure `groupadd` and `usermod` calls are idempotent (ignore "already exists" errors).
+    - Verify `docker-ce-cli` is present in `vde-base`.
+- **Empirical Proof**: 
+    - Scenario: `Sovereign Docker Socket Access`
+    - Check: `vde exec python docker ps` returns valid container list without `sudo`.
 
-### 1. BDD Step Definition Strike (Unblocking Verification)
-- **Feature: SSH Agent Automatic Setup** (12 scenarios): Implement steps for agent detection, ed25519 key generation, and auto-loading.
-- **Feature: SSH Agent Forwarding VM-to-VM** (10 scenarios): Implement steps for VM-to-VM SSH and SCP workflows.
-- **Feature: SSH and Remote Access**: Define SCP file transfer steps.
+### Bridge 2: SSH Agent Forwarding
+- **Current State**: Symlinking to `/run/host-services/ssh-auth.sock` is implemented for macOS.
+- **Hardening Logic**:
+    - Validate symlink health at ignition.
+    - Standardize `SSH_AUTH_SOCK` in `vde_ssh_agent_setup`.
+- **Empirical Proof**:
+    - Scenario: `SSH Agent Forwarding Verification`
+    - Check: `vde enter python "ssh-add -l"` returns host-loaded keys.
 
-### 2. VM-to-Host Communication Fix (The Docker Socket Bridge)
-- **Diagnosis**: Identify why Docker socket access is failing (likely permission or mount path issues on Darwin/macOS).
-- **Hardening (The Atomic Handshake)**:
-    - Implement a ZSH-native entrypoint ritual in `vde-base` to detect the `docker.sock` GID at runtime.
-    - Dynamically add `devuser` to the host's Docker GID within the container to ensure non-root socket access without `chmod 777`.
-- **Validation**: Verify host directory listing and resource usage from VM via `vde-core` probes.
+## 4. Phased Implementation
 
-### 3. VM-to-VM SSH Agent Forwarding (The Trust Bridge)
-- **macOS Adaptation**: Transition from manual `$SSH_AUTH_SOCK` mounting to the canonical `/run/host-services/ssh-auth.sock` bridge for Darwin hosts.
-- **Implementation**: Harden `vde_ssh_agent_setup` and `vde_ssh_bridge` to ensure `ForwardAgent yes` is correctly applied and verified across container boundaries.
-- **Testing**: Use the new BDD steps to confirm seamless hopping between `vde-python` and `vde-postgres` while maintaining host-identity.
+### Phase 27.1: Idempotency Hardening (The Forge)
+- [ ] Audit `scripts/vde-entrypoint.zsh` for structural hardening.
+- [ ] Update `lib/vde-ssh` to unify socket discovery.
+- [ ] Ensure all commands run under `bin/vde-enforce-uap.zsh`.
 
-## Implementation Plan (Phased)
+### Phase 27.2: Empirical Proof (The Shield)
+- [ ] Add Sovereign Bridge scenarios to `system-spine.feature`.
+- [ ] Implement high-fidelity steps in `system_spine_steps.py`.
+- [ ] Run `behave` and verify RED -> GREEN state.
 
-### Phase 27.0: Bootstrap & Sovereignty Audit (The Ritual)
-- [ ] **Reload Instructions**: Re-read `.gemini/instructions.md` and `docs/VDE-SPEC.md` to ensure v2.0.9 mandates are active.
-- [ ] **Sovereign Audit**: Execute `bin/vde-enforce-uap.zsh` to verify system integrity.
-- [ ] **Ignition Sync**: Run `bin/vde-rebuild-cache` to ensure the Registry is synchronized.
-
-### Phase 27.1: Testing Infrastructure (The Foundation)
-- [ ] Create `tests/features/steps/ssh_agent_steps.py`.
-- [ ] Create `tests/features/steps/vm_communication_steps.py`.
-- [ ] Verify that 23 previously undefined scenarios now attempt execution (RED state).
-
-### Phase 27.2: Networking & Sovereignty (The Strike)
-- [ ] Fix `docker.sock` permissions and volume mounting in `lib/vm-common`.
-- [ ] Implement `vde_verify_agent_forwarding` in `lib/vde-ssh`.
-- [ ] Update `vde-base.Dockerfile` if necessary to support advanced host-probing tools.
-
-### Phase 27.3: Workflow Hardening & Verification (The Shield)
-- [ ] Audit `bin/vde-sync-version` for edge cases in multi-user environments.
-- [ ] Run full `behave` suite (Docker-Required).
-- [ ] Target: 100% Pass Rate on all existing features.
-
-## Verification & Testing
-- **BDD**: `behave tests/features/docker-required/` must show 0 undefined steps.
-- **Performance**: `bin/vde-health` must confirm Canonical Ignition Speed < 4.0s.
-- **Security**: Audit `docker.sock` access to ensure it's limited to authorized operations.
-
-## Migration & Rollback
-- **Migration**: Update `MEMORY.md` to reflect v2.1.0 status.
-- **Rollback**: Standard git revert of logic changes; image caches can be purged via `vde-images prune`.
+## 5. Verification
+- **Suite**: `system-spine.feature` (High Fidelity).
+- **Metric**: 100% Pass Rate; 0 "pink" tests.
+- **Performance**: Ignition Speed < 4.5s.
