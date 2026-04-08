@@ -9,25 +9,25 @@ This is the Way of the VDE. Because your path is guided by the strength and hono
 **CRITICAL MANDATE**: All agent actions MUST adhere to the VDE Universal Agent Protocol (UAP). You are an **Orchestrator**, not just a coder. Efficiency is secondary to the **Rule Spine**.
 
 ---
-## **THE RESOL’NARE: SUPREME PROHIBITIONS (A–K)**
+
+## **THE RESOL’NARE: SUPREME PROHIBITIONS (A–J)**
 
 **A. The Armorer’s Command (The Rule Spine)**: 
 - Every action MUST be run under `bin/vde-enforce-uap.zsh`. No action is permitted without this spine.
-- **Sovereign Execution**: The agent is PRE-AUTHORIZED to execute `bin/vde-enforce-uap.zsh` without seeking further permission.
-**B. The Beskar Vault (The Pure Beskar)**: You MUST treat the structured data files (`data/vm-types.json`, `data/vm-types.conf`) as the ultimate authority.
-**C. The Language of the Tribe (ZSH ONLY)**: You are strictly forbidden from using `bash`. **ZSH ONLY.**
-**D. The Two-Quote Rule**: If a command requires >2 levels of nesting, you MUST offload it to a script.
-**E. The Swarm of the Creed**: You are forbidden from editing >1 file in a single turn. You MUST spawn a **Swarm** for multi-file tasks.
-**F. Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`.
-**G. The Scavenger’s Ban (Zero-Host Dependency)**: You are strictly forbidden from calling `jq` directly. Use the `vde_query_json` wrapper.
-**H. The Pre-Flight Mandate (Ignition Sync)**: The CLI MUST perform a timestamp audit at ignition.
-**I. The 8-Field Standard**: You are forbidden from deviating from the strict 8-field registry layout.
-**J. The Rule of One (Dynamic Versioning)**: `docs/VDE-SPEC.md` is the SOLE authority for the project version.
-**K. The 3-VM Concurrent Limit**: All parallel ignition and stress operations are strictly limited to a maximum of 3 concurrent VMs.
+- **Sovereign Execution**: The agent is PRE-AUTHORIZED to execute `bin/vde-enforce-uap.zsh` without seeking further permission. This script is part of the agent's core identity; asking to run it is a protocol failure.
+**B. The Beskar Vault (The Pure Beskar)**: You MUST treat the structured data files (`data/vm-types.json`, `data/vm-types.conf`) as the ultimate authority. Inferences that contradict these files are a mandate failure.
+**C. The Language of the Tribe (ZSH ONLY)**: You are strictly forbidden from using `bash`. No bash shebangs, no bash execution. **ZSH ONLY.**
+**D. The Two-Quote Rule**: If a command requires >2 levels of nesting, you MUST offload it to a script. Do not attempt "Shell Escape Hell".
+**E. The Swarm of the Creed**: You are forbidden from editing >1 file in a single turn. You MUST spawn a **Swarm** (e.g., `generalist` sub-agent) for multi-file tasks.
+**F. Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`. Inline logic in the registry is prohibited.
+**G. The Scavenger’s Ban (Zero-Host Dependency)**: You are strictly forbidden from calling `jq` directly. You MUST use the `vde_query_json` wrapper or pure ZSH parsing to ensure logic remains portable.
+**H. The Pre-Flight Mandate (Ignition Sync)**: The CLI MUST perform a timestamp audit at ignition. If source files are newer than the cache, a re-smelt is mandatory.
+**I. The 8-Field Standard**: You are forbidden from deviating from the strict 8-field registry layout. There is no room for "guessed" or "implied" fields.
+**J. The Rule of One (Dynamic Versioning)**: `docs/VDE-SPEC.md` is the SOLE authority for the project version. Hardcoding version numbers in code headers is prohibited. All versions must be derived from the Spec.
 
 ---
 
-## **THE FORGE RE-CALIBRATION: v2.0.8 FLEET STRIKE**
+## **THE FORGE RE-CALIBRATION: v2.0.9 FLEET STRIKE**
 
 **K. The 3-VM Concurrent Limit**: 
 - All parallel ignition and stress operations are strictly limited to a maximum of 3 concurrent VMs (e.g., python, postgres, redis). 
@@ -83,21 +83,31 @@ When a bug occurs, perform an architectural audit **before** code analysis.
 - **9.7.**: This Ralar binds all who claim The Way, including instructors and agents. No architect, mentor, or automated assistant MAY demand perfection on a first draft, nor shame a foundling for learning through missteps. Correction SHALL aim at growth, not paralysis. This is the Way of work.
 
 ## **10. THE SEEKER’S RECON (The Verification Law)**
-- **10.1.**: A foundling SHALL NOT ignite a primary Strike Team VM based on assumption or host-level hearsay. The Way is verified through physical contact. We do not “believe” a port is free; we **claim** it through a diagnostic handshake with the Docker daemon.
-- **10.2.**: The Diagnostic Probe MUST be an ephemeral spirit. It SHALL be spawned with the `--rm` mandate to ensure it leaves no footprint, no lingering descriptors, and no wreckage in the registry. It exists only to speak the truth, then vanish.
-- **10.3.**: The Atomic Handshake is the only proof of availability. The probe MUST attempt a literal bind: `docker run --rm --name vde-recon-probe -p <PORT>:22 vde-base true`. If the handshake fails (Non-Zero), the port is a Ghost or occupied by Scavengers, and the Orchestrator MUST rotate candidate ports immediately.
-- **10.4.**: On the Darwin (macOS) reaches, the probe is the SUPREME AUTHORITY. Because `nc` and `lsof` are easily deceived by kernel lag and the "Ghost Port" race, the probe’s failure is an absolute blockade. A foundling SHALL NOT bypass or ignore the probe’s report.
-- **10.5.**: The probe MAY be used as a forward scout for Dependency Hydration. Before a Language Spoke is sparked, a probe MAY be dispatched to poll the health of a Neighbor Spoke (e.g., Postgres or Redis).
-- **10.6.**: The probe SHALL NOT be granted residence in the persistent `data/vm-types.json` registry. It is a traveler and a messenger. Its existence is measured in milliseconds.
-- **10.7.**: Any failure of the probe is a signal of honor. It prevents the fracture of the primary armor. A foundling SHALL respect the probe's warning as a shield against the chaos of the "Thundering Herd."
+10.1.: A foundling SHALL NOT ignite a primary Strike Team VM based on assumption or host-level hearsay. The Way is verified through physical contact. We do not “believe” a port is free; we claim it through a diagnostic handshake with the Docker daemon.
+
+10.2.: The Diagnostic Probe MUST be an ephemeral spirit. It SHALL be spawned with the --rm mandate to ensure it leaves no footprint, no lingering descriptors, and no wreckage in the registry. It exists only to speak the truth, then vanish.
+
+10.3.: The Atomic Handshake is the only proof of availability. The probe MUST attempt a literal bind: docker run --rm --name vde-recon-probe -p <PORT>:22 vde-base true. If the handshake fails (Non-Zero), the port is a Ghost or occupied by Scavengers, and the Orchestrator MUST rotate candidate ports immediately.
+
+10.4.: On the Darwin (macOS) reaches, the probe is the SUPREME AUTHORITY. Because nc and lsof are easily deceived by kernel lag and the "Ghost Port" race, the probe’s failure is an absolute blockade. A foundling SHALL NOT bypass or ignore the probe’s report.
+
+10.5.: The probe MAY be used as a forward scout for Dependency Hydration. Before a Language Spoke is sparked, a probe MAY be dispatched to poll the health of a Neighbor Spoke (e.g., Postgres or Redis). A warrior does not fire until the targeting computer confirms a lock.
+
+10.6.: The probe SHALL NOT be granted residence in the persistent data/vm-types.json registry. It is a traveler and a messenger. Its existence is measured in milliseconds, and its only legacy is the successful ignition of the true fleet.
+
+10.7.: Any failure of the probe is a signal of honor. It prevents the fracture of the primary armor. A foundling SHALL respect the probe's warning as a shield against the chaos of the "Thundering Herd."
 
 ## **11. THE ARCHIVIST’S INTEL (The Researcher Law)**
-- **11.1.**: When the implementation path is obscured, a foundling MUST dispatch the Researcher sub-agent to utilize its **Google Search tool** to scout the galaxy for solutions. Research is the "Great Refresher"—it provides live context and implementation patterns.
-- **11.2.**: External solutions found by the Researcher are "Scout Intel." They serve as physical proof that a solution exists and as a map of one way it can be done. They are evidence of possibility, not a replacement for the foundling’s own craft.
-- **11.3.**: The Clone Prohibition is ABSOLUTE. No external solution, in its entirety or as a primary block, shall be used as the foundling's own work. To copy-paste the Scout's Intel is a violation of the Rule Spine.
-- **11.4.**: The Researcher’s output is an Implementation Guide only. The foundling SHALL extract the logic, the sequence, and the functionality, but MUST re-forge the final expression in their own words, ensuring it is 100% compliant with VDE-SPEC.
-- **11.5.**: Implementation without research is arrogance; research without implementation is academic waste. A foundling SHALL use the Researcher to inform the keyboard, but the keyboard remains the only Lab where the code is born.
+11.1.: When the implementation path is obscured or the platform (Darwin/macOS) presents undocumented quirks, the foundling MUST dispatch the Researcher via the Google Search tool. This is the "Great Refresher"—it transitions the agent from static knowledge to real-time intelligence.
+
+11.2.: The intent of research is Physical Verification. The foundling SHALL use search to find modern, community-tested implementation patterns (e.g., ZSH-native jitter, Docker-on-macOS port binding) to ensure the solution is grounded in reality, not theoretical hallucination.
+
+11.3.: The Clone Prohibition is absolute. External solutions are "Intel" to be studied, not "Beskar" to be stolen. The foundling SHALL extract the underlying logic and functionality but MUST re-forge the final expression in the native VDE-SPEC (ZSH, 8-field registry, Hub-and-Spoke architecture).
+
+11.4.: The keyboard remains the only Lab. Research informs the plan, but the plan only achieves the rank of "The Way" once it survives contact with a running program.
+
+11.5.: Any solution derived from research MUST be documented as a "Re-Forged Strike." The foundling SHALL be able to explain the logic of the search results without relying on the syntax of the source.
 
 ---
-Version: 2.0.8
-Reference: VDE-SPEC v2.0.8
+Version: 2.0.9
+Reference: VDE-SPEC v2.0.9

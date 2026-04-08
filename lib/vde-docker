@@ -137,35 +137,7 @@ is_vm_running() {
 # SSH PORT MANAGEMENT
 # =============================================================================
 
-# Get SSH port for a VM
-# Args: <vm_name>
-# Returns: Outputs SSH port to stdout, or error
-get_vm_ssh_port() {
-    local vm_name="${1}"
-
-    # 1. Try registry first (fast)
-    if [[ -d "${VDE_PORT_REGISTRY}" ]]; then
-        local registry_file="${VDE_PORT_REGISTRY}/${vm_name}.port"
-        if [[ -f "${registry_file}" ]]; then
-            cat "${registry_file}"
-            return ${VDE_SUCCESS}
-        fi
-    fi
-
-    # 2. Try docker-compose.yml (source of truth)
-    local compose_file
-    compose_file=$(get_compose_file "${vm_name}")
-    if [[ -f "${compose_file}" ]]; then
-        local port
-        port=$(grep -oE '[0-9]+:22' "${compose_file}" | head -1 | cut -d':' -f1)
-        if [[ -n "${port}" ]]; then
-            echo "${port}"
-            return ${VDE_SUCCESS}
-        fi
-    fi
-
-    return ${VDE_ERR_NOT_FOUND}
-}
+# Note: get_vm_ssh_port is provided by lib/vm-common
 
 # Allocate SSH port for VM
 # Args: <vm_name> <ssh_port>
@@ -173,11 +145,12 @@ get_vm_ssh_port() {
 allocate_ssh_port() {
     local vm_name="${1}"
     local ssh_port="${2}"
+    local lock_dir="${VDE_PORT_REGISTRY}/port-${ssh_port}.lock"
 
-    mkdir -p "${VDE_PORT_REGISTRY}"
+    mkdir -p "${lock_dir}" 2>/dev/null
     echo "${ssh_port}" > "${VDE_PORT_REGISTRY}/${vm_name}.port"
     # Also ensure the numeric lock file reflects this VM
-    echo "${vm_name}" > "${VDE_PORT_REGISTRY}/${ssh_port}.lock"
+    echo "${vm_name}" > "${lock_dir}/vm_name"
 
     return ${VDE_SUCCESS}
 }
@@ -192,8 +165,7 @@ vde_port_release() {
         local port=$(cat "${port_registry_file}" 2>/dev/null)
         rm -f "${port_registry_file}" 2>/dev/null
         if [[ -n "${port}" ]]; then
-            rm -f "${VDE_PORT_REGISTRY}/${port}.lock" 2>/dev/null
-            rmdir "${VDE_PORT_LOCKS_DIR}/${port}.lock" 2>/dev/null
+            rm -rf "${VDE_PORT_REGISTRY}/port-${port}.lock" 2>/dev/null
         fi
     fi
     return ${VDE_SUCCESS}
@@ -205,36 +177,60 @@ vde_port_release() {
 find_available_ssh_port() {
     local min_port="${1:-2200}"
     local max_port="${2:-2299}"
+    local registry_dir="${VDE_CACHE_DIR}/port-registry"
 
-    # Ensure lock directory exists
-    mkdir -p "${VDE_PORT_LOCKS_DIR}" 2>/dev/null
+    # Ensure registry dir exists
+    mkdir -p "${registry_dir}" 2>/dev/null
+
+    vde_log_debug "Searching for SSH port in range ${min_port}-${max_port}" "port"
 
     local port=${min_port}
     while [[ ${port} -le ${max_port} ]]; do
-        local port_lock="${VDE_PORT_LOCKS_DIR}/${port}.lock"
-        local registry_file="${VDE_PORT_REGISTRY}/${port}.lock"
+        local lock_dir="${registry_dir}/port-${port}.lock"
         
         # 1. KERNEL REFEREE: Attempt to claim this specific port lock
-        if mkdir "${port_lock}" 2>/dev/null; then
-            # 2. TRIPLE-CHECK: Verify port is truly available across all authorities
-            # a) Live system (netstat/lsof)
-            # b) Hub Registry (.conf)
-            # c) Permanent Lock Registry (.cache/port-registry)
-            if ! _is_port_in_use "${port}" && \
-               ! grep -q "|${port}$" "${VM_TYPES_CONF}" && \
-               [[ ! -f "${registry_file}" ]]; then
-                # Success: Port reserved and verified
-                echo "${port}"
-                return ${VDE_SUCCESS}
-            else
-                # Port is taken, release this specific lock and continue
-                rmdir "${port_lock}" 2>/dev/null
+        if mkdir "${lock_dir}" 2>/dev/null; then
+            vde_log_info "Probing port ${port}..." "port"
+            # THE SEEKER'S RECON (Section 10.3): Physical Handshake
+            # Attempt to bind the port via a transient Docker container
+            # MANDATE: Unique probe name to allow parallel checks
+            
+            # Ensure no lingering probe container from previous crash
+            docker rm -f "vde-port-probe-${port}" >/dev/null 2>&1
+            
+            if ! docker run --rm --name "vde-port-probe-${port}" -p "${port}:${VDE_CONTAINER_SSH_PORT:-22}" vde-base true >/dev/null 2>&1; then
+                # Port is a Ghost or occupied by Scavengers
+                vde_log_warn "Port ${port} is occupied (Ghost or Scavenger). Skipping." "port"
+                touch "${lock_dir}/STALE_HOST"
+                # Keep the lock to prevent others from retrying this failed port immediately
+                port=$((port + 1))
+                continue
             fi
+
+            # 2. HUB REGISTRY CHECK: Ensure it's not pre-defined in Beskar
+            if grep -q "|${port}$" "${VM_TYPES_CONF}" 2>/dev/null; then
+                vde_log_warn "Port ${port} is pre-defined in Beskar. Skipping." "port"
+                rm -rf "${lock_dir}" 2>/dev/null || true
+                port=$((port + 1))
+                continue
+            fi
+
+            # Port is verified clear across all authorities.
+            vde_log_success "Port ${port} verified clear." "port"
+            echo "${port}"
+            # Record owner
+            echo "$$" > "${lock_dir}/pid" 2>/dev/null || true
+            return ${VDE_SUCCESS}
+        else
+            vde_log_debug "Port ${port} is already locked by another process. Skipping." "port"
         fi
+        
         port=$((port + 1))
         
-        # Tiny stagger to avoid perfect loop synchronization
-        zmodload zsh/zselect 2>/dev/null && zselect -t $(( RANDOM % 5 ))
+        # Tiny stagger to avoid perfect loop synchronization (Rule 23)
+        local stagger_ms=$(( (RANDOM % 20) + 1 ))
+        local stagger_sec=$(( stagger_ms / 1000.0 ))
+        "${VDE_ROOT_DIR}/bin/vde-poll" --wait "${stagger_sec}" "all" >/dev/null 2>&1 || true
     done
 
     _error "No available SSH port in range ${min_port}-${max_port}"
@@ -292,89 +288,9 @@ build_docker_opts() {
 # Returns: VDE_SUCCESS (0) on success
 start_vm() {
     local vm_name="${1}"
-    local rebuild="${2:-false}"
-    local nocache="${3:-false}"
-    local max_attempts="${4:-3}"
-    local wait_for_health="${5:-false}"
-    local attempt=1
-
-    # Default wait_for_health to true for services if not specified
-    if [[ "${wait_for_health}" == "false" ]]; then
-        local vm_type
-        vm_type=$(get_vm_info type "${vm_name}" 2>/dev/null) || vm_type=""
-        if [[ "${vm_type}" == "service" ]]; then
-            wait_for_health="true"
-        fi
-    fi
-
-    # Skip vm_exists check if rebuild is requested (we'll create the container anyway)
-    if [[ "${rebuild}" != "true" ]] && ! vm_exists "${vm_name}"; then
-        _error "VM '${vm_name}' does not exist"
-        return ${VDE_ERR_NOT_FOUND}
-    fi
-
-    local compose_file
-    compose_file=$(get_compose_file "${vm_name}")
-    if [[ -z "${compose_file}" ]]; then
-        _error "Compose file not found for VM '${vm_name}'"
-        return ${VDE_ERR_NOT_FOUND}
-    fi
-    local project_name
-    project_name=$(get_docker_project_name "${vm_name}")
-
-    _info "Starting VM '${vm_name}'..."
-
-    while [[ ${attempt} -le ${max_attempts} ]]; do
-        _info "Attempt ${attempt} of ${max_attempts}..."
-
-        # Build the compose up command based on flags
-        local up_result=0
-        
-        # Invalidate known_hosts if we are rebuilding or force-recreating
-        # This prevents "Man-in-the-Middle" warnings when the container gets new host keys
-        if [[ "${rebuild}" = "true" || "${nocache}" = "true" ]]; then
-            if command -v remove_known_hosts_entry >/dev/null 2>&1; then
-                local ssh_port
-                ssh_port=$(get_vm_ssh_port "${vm_name}")
-                if [[ -n "${ssh_port}" ]]; then
-                    _info "Cleaning up SSH known_hosts for '${vm_name}' (rebuild requested)..."
-                    remove_known_hosts_entry "${vm_name}" "${ssh_port}" >/dev/null 2>&1 || true
-                fi
-            fi
-        fi
-
-        if [[ "${nocache}" = "true" ]]; then
-            # No-cache requires a separate build step first
-            docker compose -f "${compose_file}" -p "${project_name}" build --no-cache 2>&2 || true
-            docker compose -f "${compose_file}" -p "${project_name}" up -d 2>&2
-            up_result=${?}
-        elif [[ "${rebuild}" = "true" ]]; then
-            docker compose -f "${compose_file}" -p "${project_name}" up -d --build 2>&2
-            up_result=${?}
-        else
-            docker compose -f "${compose_file}" -p "${project_name}" up -d 2>&2
-            up_result=${?}
-        fi
-
-        if [[ ${up_result} -eq 0 ]]; then
-            _info "VM '${vm_name}' started successfully"
-            
-            if [[ "${wait_for_health}" == "true" ]]; then
-                _info "Waiting for VM '${vm_name}' to be healthy..."
-                if ! wait_for_container_healthy "${vm_name}" 60; then
-                    _warn "VM '${vm_name}' failed health check, but container is running"
-                fi
-            fi
-            
-            return ${VDE_SUCCESS}
-        fi
-
-        _warn "Failed to start VM '${vm_name}' (attempt ${attempt})"
-        attempt=$((attempt + 1))
-    done
-
-    _error "Failed to start VM '${vm_name}' after ${max_attempts} attempts"
-    return ${VDE_ERR_GENERAL}
+    vde_log_warn "LEGACY INTERNAL: 'start_vm' in lib/vde-docker is deprecated. Redirecting to 'bin/vde start ${vm_name}'." "legacy"
+    "${VDE_ROOT_DIR}/bin/vde" start "${vm_name}"
+    return ${?}
 }
 
 # Stop VM
@@ -382,49 +298,9 @@ start_vm() {
 # Returns: VDE_SUCCESS (0) on success
 stop_vm() {
     local vm_name="${1}"
-    local timeout="${2:-2}"
-    local max_attempts="${3:-3}"
-    local attempt=1
-
-    if ! vm_exists "${vm_name}"; then
-        _warn "VM '${vm_name}' does not exist, nothing to stop"
-        return ${VDE_SUCCESS}
-    fi
-
-    if ! is_vm_running "${vm_name}"; then
-        _info "VM '${vm_name}' is not running"
-        return ${VDE_SUCCESS}
-    fi
-
-    local compose_file
-    compose_file=$(get_compose_file "${vm_name}")
-    local project_name
-    project_name=$(get_docker_project_name "${vm_name}")
-
-    _info "Stopping VM '${vm_name}'..."
-
-    while [[ ${attempt} -le ${max_attempts} ]]; do
-        if docker compose -f "${compose_file}" -p "${project_name}" down -v -t "${timeout}" --remove-orphans 2>&1; then
-            _info "VM '${vm_name}' stopped successfully"
-            # Update state file to reflect stopped status
-            if command -v load_docker_state >/dev/null 2>&1; then
-                local existing_state
-                existing_state=$(load_docker_state "${vm_name}" 2>/dev/null) || true
-                if [[ -n "${existing_state}" ]]; then
-                    local updated_state
-                    updated_state=$(echo "${existing_state}" | sed 's/"status": *"[^"]*"/"status": "stopped"/')
-                    save_docker_state "${vm_name}" "${updated_state}"
-                fi
-            fi
-            return ${VDE_SUCCESS}
-        fi
-
-        _warn "Failed to stop VM '${vm_name}' (attempt ${attempt})"
-        attempt=$((attempt + 1))
-    done
-
-    _error "Failed to stop VM '${vm_name}' after ${max_attempts} attempts"
-    return ${VDE_ERR_GENERAL}
+    vde_log_warn "LEGACY INTERNAL: 'stop_vm' in lib/vde-docker is deprecated. Redirecting to 'bin/vde stop ${vm_name}'." "legacy"
+    "${VDE_ROOT_DIR}/bin/vde" stop "${vm_name}"
+    return ${?}
 }
 
 # Restart VM
