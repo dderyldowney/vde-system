@@ -30,6 +30,7 @@ Options:
   --network <name>      Poll for Docker network existence
   --state <state>       Poll for container state (running, stopped, exited)
   --count <n>           Poll for exact number of running VDE containers
+  --wait <seconds>      Wait for a fixed duration (jitter/stagger support)
   --timeout <seconds>   Maximum wait time (default: 30)
   --interval <seconds>  Polling interval (default: 0.2)
 
@@ -40,19 +41,31 @@ Examples:
   vde-poll --network vde-net vde-any
   vde-poll --state stopped vde-python
   vde-poll --count 0 all
+  vde-poll --wait 1.5 all
 EOF
 }
 
 # --- 4. ARGUMENT PARSING ---
 zmodload zsh/zutil
 local -A opts
-zparseopts -D -A opts -health -port: -exec: -network: -state: -count: -timeout: -interval:
+zparseopts -D -A opts -health -port: -exec: -network: -state: -count: -timeout: -interval: -wait:
 
 VM_NAME="$1"
-[[ -z "${VM_NAME}" && -z "${opts[--network]}" && -z "${opts[--count]}" ]] && show_usage && exit ${VDE_ERR_INVALID_INPUT}
+[[ -z "${VM_NAME}" && -z "${opts[--network]}" && -z "${opts[--count]}" && -z "${opts[--wait]}" ]] && show_usage && exit ${VDE_ERR_INVALID_INPUT}
 
 TIMEOUT=${opts[--timeout]:-30}
 INTERVAL=${opts[--interval]:-0.2}
+
+# --- 4.5 FIXED WAIT STRIKE ---
+if [[ -n "${opts[--wait]}" ]]; then
+    vde_log_info "Executing fixed wait: ${opts[--wait]}s (Jitter/Stagger Mandate)..." "poll"
+    # Convert seconds to deciseconds for zselect -t
+    # Use floating point math via zsh built-in $(( ))
+    local wait_ticks=$(( ${opts[--wait]} * 100 ))
+    zmodload zsh/zselect 2>/dev/null && zselect -t ${wait_ticks} || sleep ${opts[--wait]}
+    exit ${VDE_SUCCESS}
+fi
+
 CONTAINER_NAME=$(resolve_vm_name "${VM_NAME}" 2>/dev/null) || CONTAINER_NAME="${VM_NAME}"
 
 # --- 5. THE DETERMINISTIC STRIKE ---

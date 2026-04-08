@@ -842,7 +842,7 @@ _ISOLATION_SECONDARY = "go"
 def step_have_multiple_vms_running(context):
     """Ensure at least two VMs are running for isolation testing."""
     for vm in (_ISOLATION_PRIMARY, _ISOLATION_SECONDARY):
-        r = run_vde_command(f"start {vm}", timeout=300)
+        r = run_vde_command(f"start {vm}", timeout=300, context=context)
         assert r.returncode == 0, f"Could not start {vm}: {r.stderr}"
     context.expected_running = [f"vde-{_ISOLATION_PRIMARY}", f"vde-{_ISOLATION_SECONDARY}"]
     context.vm_name = _ISOLATION_PRIMARY

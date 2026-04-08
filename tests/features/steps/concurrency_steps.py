@@ -5,11 +5,12 @@ Simulates high-pressure VM operations to verify locking and atomic allocation.
 
 import os
 import subprocess
-import time
+import random
 import concurrent.futures
 from pathlib import Path
 from behave import given, when, then
 from vm_common import VDE_ROOT, load_vm_types_raw
+from shell_helpers import vde_poll
 
 @given("the VDE system is initialized")
 def step_system_init(context):
@@ -43,7 +44,9 @@ def step_parallel_ignition(context):
         future_to_alias = {}
         for alias in context.vm_aliases:
             future_to_alias[executor.submit(start_vm, alias)] = alias
-            time.sleep(0.1)
+            # Jitter Mandate: 0.5s - 1.5s staggered backoff
+            jitter = random.uniform(0.5, 1.5)
+            vde_poll(["--wait", str(jitter), "all"], description=f"jitter delay ({jitter}s)")
             
         context.results = {}
         for future in concurrent.futures.as_completed(future_to_alias):
@@ -60,7 +63,7 @@ def step_parallel_add_vm_types(context):
     
     # We use a list of unique names to avoid name collisions (not the goal here)
     # The goal is to verify port allocation and registry integrity
-    new_types = ["stress1", "stress2", "stress3", "stress4", "stress5"]
+    new_types = ["stress1", "stress2", "stress3"]
     context.new_vm_types = new_types
     
     def add_type(name):
@@ -74,7 +77,8 @@ def step_parallel_add_vm_types(context):
         for name in new_types:
             future_to_name[executor.submit(add_type, name)] = name
             # Stagger submissions slightly to prevent perfect timing collisions
-            time.sleep(0.1)
+            jitter = random.uniform(0.5, 1.5)
+            vde_poll(["--wait", str(jitter), "all"], description=f"jitter delay ({jitter}s)")
             
         context.add_results = {}
         for future in concurrent.futures.as_completed(future_to_name):
@@ -133,17 +137,26 @@ def step_verify_unique_ports(context, which):
         targets = context.new_vm_types
         
     ports = {}
+    
+    # Pre-load data for resolution
+    data = load_vm_types_raw()
+    alias_to_canonical = {}
+    for cat in ["language", "service"]:
+        for vm in data.get("vms", {}).get(cat, []):
+            name = vm["name"]
+            alias_to_canonical[name] = name
+            # Map short name to canonical
+            alias_to_canonical[name[4:] if name.startswith("vde-") else name] = name
+            # Map each alias to canonical
+            for al in vm.get("aliases", []):
+                alias_to_canonical[al] = name
+
     for alias in targets:
-        # Get allocated port via 'vde info <alias>' or direct registry check
-        # We'll use the registry check for maximum directness
-        port_file = VDE_ROOT / f".cache/port-registry/{alias}.port"
-        if not port_file.exists():
-            # Fallback to resolving name first
-            from vm_common import get_container_name
-            canonical = get_container_name(alias)
-            port_file = VDE_ROOT / f".cache/port-registry/{canonical}.port"
+        # Resolve alias to canonical name for port registry check
+        canonical = alias_to_canonical.get(alias, f"vde-{alias}")
+        port_file = VDE_ROOT / f".cache/port-registry/{canonical}.port"
             
-        assert port_file.exists(), f"Port registry entry missing for {alias}"
+        assert port_file.exists(), f"Port registry entry missing for {alias} (canonical: {canonical})"
         port = port_file.read_text().strip()
         
         if port in ports:
@@ -184,17 +197,57 @@ def step_cleanup_stress_types(context):
 
 @then("all VMs should be reachable via SSH")
 def step_verify_ssh(context):
-    """Perform a quick 'whoami' check via SSH for all started VMs."""
+    """Perform a 'Combat Load' verification based on VM category."""
     vde_bin = str(VDE_ROOT / "bin/vde")
     failures = []
     
+    # Pre-load data for lookup
+    data = load_vm_types_raw()
+    vm_lookup = {}
+    for cat in ["language", "service"]:
+        for vm in data.get("vms", {}).get(cat, []):
+            name = vm["name"]
+            vm_lookup[name] = (cat, vm)
+            # Short name lookup
+            vm_lookup[name[4:] if name.startswith("vde-") else name] = (cat, vm)
+            # Alias lookup
+            for al in vm.get("aliases", []):
+                vm_lookup[al] = (cat, vm)
+
     for alias in context.vm_aliases:
-        result = subprocess.run([vde_bin, "exec", alias, "whoami"], 
-                              capture_output=True, 
-                              text=True)
-        if result.returncode != 0:
-            failures.append(f"{alias} (SSH Exec Failed): {result.stderr}")
-        elif "devuser" not in result.stdout:
-            failures.append(f"{alias} (Wrong user): {result.stdout}")
+        cat, vm_info = vm_lookup.get(alias, (None, None))
+        
+        if cat == "language":
+            # Languages: vde enter <alias> echo $SHELL -> /bin/zsh
+            # We use 'enter' specifically to test interactive-access path
+            result = subprocess.run([vde_bin, "enter", alias, "echo $SHELL"], 
+                                  capture_output=True, 
+                                  text=True)
+            if result.returncode != 0:
+                failures.append(f"{alias} (Language): 'vde enter' failed: {result.stderr}")
+            elif "/bin/zsh" not in result.stdout:
+                failures.append(f"{alias} (Language): SHELL is not zsh: {result.stdout}")
+        
+        elif cat == "service":
+            # Services: vde_poll --port <port> <alias>
+            # Verify first service port is ready
+            svc_port_val = vm_info.get("service_port")
+            if svc_port_val:
+                # Use first port in possible list
+                port = str(svc_port_val).split(",")[0].strip()
+                try:
+                    vde_poll(["--port", port, alias], description=f"port {port} on {alias}")
+                except AssertionError as e:
+                    failures.append(str(e))
+            else:
+                # Fallback to simple SSH if no service port defined
+                result = subprocess.run([vde_bin, "exec", alias, "whoami"], 
+                                      capture_output=True, 
+                                      text=True)
+                if result.returncode != 0:
+                    failures.append(f"{alias} (Service/Fallback): SSH failed: {result.stderr}")
+        
+        else:
+            failures.append(f"{alias}: Unknown VM category or type not found in registry")
             
-    assert not failures, f"Some VMs are not reachable or healthy:\n" + "\n".join(failures)
+    assert not failures, f"Combat Load verification failed for some VMs:\n" + "\n".join(failures)

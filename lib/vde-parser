@@ -1000,7 +1000,7 @@ execute_plan() {
                 # ssh-vm handles getting connection info
                 local port
                 port=$(get_vm_info ssh_port "${vm}" 2>/dev/null) || port="unknown"
-                echo "VM: ${vm}  SSH Port: ${port}"
+                echo "VM: ${vm}  SSH Port: ${port}  User: devuser"
                 ./bin/ssh-vm "${vm}" --show-command
             done
             return ${VDE_SUCCESS}

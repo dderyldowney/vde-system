@@ -1,0 +1,3 @@
+#!/usr/bin/env zsh
+# Legacy wrapper for 'vde stop'
+exec "$(dirname "$0")/vde" stop "$@"

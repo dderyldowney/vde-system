@@ -66,14 +66,13 @@ Rebuild all VDE Docker images.
 
 Options:
   --no-cache        Rebuild without using cache
-  --vm <name>       Rebuild only specific VM (or "base" for base image)
+  --vm base         Rebuild only vde-base image
   --regenerate-keys Force regeneration of VDE SSH keys before build
   -h, --help        Show this help
 
 Examples:
-  vde-rebuild              # Rebuild all images using cache
-  vde-rebuild --no-cache   # Rebuild all images from scratch
-  vde-rebuild --vm python  # Rebuild only python VM
+  vde-rebuild              # Rebuild vde-base using cache
+  vde-rebuild --no-cache   # Rebuild vde-base from scratch
   vde-rebuild --vm base    # Rebuild only vde-base
 
 EOF
@@ -103,6 +102,10 @@ while [[ ${#} -gt 0 ]] ; do
             ;;
         --vm)
             SPECIFIC_VM="${2}"
+            if [[ "${SPECIFIC_VM}" != "base" ]]; then
+                echo "Error: Only 'base' is supported via --vm. Use 'vde rebuild <type>' for Spokes."
+                exit 1
+            fi
             shift 2
             ;;
         *)
@@ -112,30 +115,6 @@ while [[ ${#} -gt 0 ]] ; do
             ;;
     esac
 done
-
-#===============================================================================
-# Get VM List
-#===============================================================================
-
-get_vm_list() {
-    local vm_types_file="${VDE_ROOT_DIR}/data/vm-types.conf"
-    if [[ -f "${vm_types_file}" ]] ; then
-        grep -v '^#' "${vm_types_file}" | grep -v '^$' | cut -d'|' -f2
-    else
-        # Fallback to directory listing, but ensure we return prefixed names for consistency
-        # Recursively find all docker-compose.yml files in CONFIGS_DIR subcategories
-        for cat in languages services; do
-            [[ ! -d "${CONFIGS_DIR}/${cat}" ]] && continue
-            find "${CONFIGS_DIR}/${cat}" -name "docker-compose.yml" | while read -r compose_file; do
-                local parent_dir
-                parent_dir=$(dirname "${compose_file}")
-                local raw
-                raw=$(basename "${parent_dir}")
-                vde_get_container_name "${raw}"
-            done
-        done || true
-    fi
-}
 
 #===============================================================================
 # Build Functions
@@ -162,51 +141,13 @@ build_base_image() {
     fi
 }
 
-build_vm_image() {
-    local vm_name="${1}"
-    local raw_name
-    raw_name=$(vde_normalize_name "${vm_name}")
-    local category
-    category=$(get_vm_category "${vm_name}")
-    local compose_file
-    
-    # Try new structure first
-    compose_file="${CONFIGS_DIR}/${category}/${raw_name}/docker-compose.yml"
-    
-    # Fallback to get_compose_file for legacy or custom paths
-    if [[ ! -f "${compose_file}" ]] ; then
-        compose_file=$(get_compose_file "${vm_name}" 2>/dev/null) || true
-    fi
-    
-    if [[ -z "${compose_file}" || ! -f "${compose_file}" ]] ; then
-        echo "⚠ Skipping ${vm_name}: no docker-compose.yml found"
-        return 0
-    fi
-    
-    local build_cmd="docker compose -f ${compose_file} build $([[ "${PULL}" == "true" ]] && echo "--pull")"
-    
-    if [[ "${NOCACHE}" == "true" ]] ; then
-        build_cmd="${build_cmd} --no-cache"
-    fi
-    
-    echo "Building ${vm_name}..."
-    
-    if (cd "$(dirname "${compose_file}")" && eval "${build_cmd}" 2>&1); then
-        echo "✓ ${vm_name} built successfully"
-        return 0
-    else
-        echo "✗ Failed to build ${vm_name}"
-        return ${VDE_ERR_GENERAL}
-    fi
-}
-
 #===============================================================================
 # Main
 #===============================================================================
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║          VDE Image Rebuild                                ║"
+echo "║          VDE Base Image Rebuild                            ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -224,36 +165,14 @@ fi
 # Ensure keys are ready for build context
 sync_keys
 
-# Build specific VM or all
-if [[ -n "${SPECIFIC_VM}" ]] ; then
-    if [[ "${SPECIFIC_VM}" == "base" ]] ; then
-        build_base_image
-    else
-        # For specific VM, build base first if needed
-        if ! docker image inspect vde-base:latest &>/dev/null; then
-            build_base_image
-        fi
-        build_vm_image "${SPECIFIC_VM}"
-    fi
-else
-    # Build all: base first, then all VMs
-    build_base_image
-    
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "Building all VM images..."
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    
-    for vm in $(get_vm_list); do
-        build_vm_image "${vm}" || true
-    done
-    
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "Build complete!"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    docker images | grep "^vde-"
-fi
+# Build base image
+build_base_image
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Rebuild complete!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+docker images | grep "^vde-base"
 
 echo ""
 echo "Done!"

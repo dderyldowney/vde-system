@@ -1,0 +1,436 @@
+#!/usr/bin/env zsh
+#===============================================================================
+# VDE CLI - Unified Virtual Development Environment
+# Version: ${VDE_VERSION:-$(vde_get_version)}
+#===============================================================================
+
+# --- 1. BOOTSTRAP & ROOT DISCOVERY ---
+_VDE_CORE_SCRIPT_PATH="${(%):-%x}"
+VDE_ROOT_DIR="$(cd "$(dirname "${_VDE_CORE_SCRIPT_PATH}")/.." && pwd)"
+export VDE_ROOT_DIR
+
+# --- 2. SOURCE CORE ECOSYSTEM ---
+if [[ -f "${VDE_ROOT_DIR}/lib/vm-common" ]]; then
+    source "${VDE_ROOT_DIR}/lib/vm-common"
+else
+    echo "CRITICAL: lib/vm-common not found."
+    exit 1
+fi
+
+# Zero-Host-Dependency JQ Wrapper is now provided by lib/vde-core as vde_query_json()
+
+# Define Data Paths
+TYPES_JSON="${VDE_ROOT_DIR}/data/vm-types.json"
+TYPES_CONF="${VDE_ROOT_DIR}/data/vm-types.conf"
+TYPES_SCHEMA="${VDE_ROOT_DIR}/data/vm-types.schema.json"
+TYPES_CACHE="${VDE_ROOT_DIR}/.cache/vm-types.cache"
+
+# --- 3. VALIDATE & LOAD DATA (The Ignition Sync) ---
+# Ensure version synchronization (The Triple Strike)
+if [[ -f "${VDE_ROOT_DIR}/bin/vde-sync-version" ]]; then
+    "${VDE_ROOT_DIR}/bin/vde-sync-version" >/dev/null 2>&1
+fi
+
+# Ensure the Raw Beskar (.conf) is hammered into the Pure Beskar (.json)
+if [[ -f "${TYPES_CONF}" ]]; then
+    if [[ ! -f "${TYPES_JSON}" || "${TYPES_CONF}" -nt "${TYPES_JSON}" ]]; then
+        vde_log_info "The Raw Beskar (.conf) is newer or JSON missing. Re-smelting..." "forge"
+        vde_translate_conf_to_json "${TYPES_CONF}" "${TYPES_JSON}"
+        vde_handle_error "re-smelt" "${TYPES_JSON}"
+    fi
+fi
+
+# Now ensure the Cache is fresh
+if [[ -f "${TYPES_JSON}" && -f "${TYPES_SCHEMA}" ]]; then
+    if ! _is_cache_valid "${TYPES_CACHE}" "${TYPES_JSON}" "${TYPES_CONF}"; then
+        vde_log_info "The Pure Beskar has changed. Re-smelting the cache..." "forge"
+        load_vm_types --no-cache
+        vde_handle_error "cache-re-smelt" "${TYPES_CACHE}"
+    else
+        vde_validate_and_update "${TYPES_JSON}" "${TYPES_SCHEMA}" "${TYPES_CACHE}"
+        load_vm_types
+    fi
+else
+    load_vm_types
+fi
+
+# FINAL SYNC PROOF: Ensure we are not executing on a drifted state
+if [[ -f "${TYPES_CONF}" && -f "${TYPES_JSON}" ]] && [[ "${TYPES_CONF}" -nt "${TYPES_JSON}" ]]; then
+    # If we still have drift after the smelt attempt, it's a fatal non-deterministic state
+    vde_error_map ${VDE_ERR_SYNC_DRIFT:-13} "${TYPES_CONF}"
+    exit ${VDE_ERR_SYNC_DRIFT:-13}
+fi
+
+# Initialize logging
+vde_log_init
+
+# --- 4. COMMAND ROUTER ---
+CMD="$1"
+TYPE_ARG="$2"
+
+CANONICAL_NAME=$(resolve_vm_name "${TYPE_ARG}" 2>/dev/null)
+BASE_NAME="${CANONICAL_NAME#vde-}"
+
+case "${CMD}" in
+    rebuild)
+        vde_ensure_disk_space "${VDE_DISK_THRESHOLD:-95}" || exit $?
+        local build_args=()
+        local targets=()
+        
+        # Capture all arguments after 'rebuild'
+        shift 
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                --no-cache) build_args+=("--no-cache") ;;
+                -*) build_args+=("$1") ;;
+                *) targets+=("$1") ;;
+            esac
+            shift
+        done
+
+        if [[ ${#targets[@]} -eq 0 ]]; then
+            vde_log_error "Usage: vde rebuild [--no-cache] <alias...>"
+            exit 1
+        fi
+
+        for TARGET_VM in "${targets[@]}"; do
+            if [[ "${TARGET_VM}" == "base" ]]; then
+                vde_progress_with_docker "Baking foundation: vde-base" "Base image ready" \
+                    "docker build ${build_args[*]} -f ${VDE_ROOT_DIR}/configs/docker/vde-base.Dockerfile -t vde-base ."
+                continue
+            fi
+
+            CANONICAL_NAME=$(resolve_vm_name "${TARGET_VM}" 2>/dev/null)
+            if [[ -z "${CANONICAL_NAME}" ]]; then
+                vde_log_error "Unknown type: '${TARGET_VM}'"
+                continue
+            fi
+            BASE_NAME="${CANONICAL_NAME#vde-}"
+
+            # --- CONCURRENCY LOCK ---
+            local vm_lock="${VDE_VM_LOCKS_DIR}/${BASE_NAME}.lock"
+            acquire_lock "${vm_lock}" 300
+            vde_handle_error "rebuild" "${CANONICAL_NAME}"
+            
+            {
+                local pkgs=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .pkgs // empty" "${TYPES_JSON}")
+                local custom_cmd=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .custom_cmd // empty" "${TYPES_JSON}")
+                
+                if [[ -z "${pkgs}" && -z "${custom_cmd}" ]]; then
+                    vde_log_error "No installation method (pkgs or custom_cmd) defined for ${CANONICAL_NAME}"
+                    continue
+                fi
+
+                # --- Atomic Rollback: Stop existing before bake ---
+                if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+                    vde_log_info "Removing existing ${CANONICAL_NAME} before bake..." "docker"
+                    docker rm -f "${CANONICAL_NAME}" >/dev/null 2>&1
+                fi
+
+                vde_progress_with_docker "Baking ${CANONICAL_NAME}" "${CANONICAL_NAME} image ready" \
+                    "docker build ${build_args[*]} -f ${VDE_ROOT_DIR}/configs/docker/vde-lang.Dockerfile \
+                    --build-arg VM_NAME=${BASE_NAME} \
+                    --build-arg PKGS_TO_INSTALL='${pkgs}' \
+                    --build-arg CUSTOM_BUILD_CMD='${custom_cmd}' \
+                    -t ${CANONICAL_NAME} ."
+                vde_handle_error "docker build" "${CANONICAL_NAME}"
+            } always {
+                release_lock "${vm_lock}"
+            }
+        done
+        ;;
+
+    start)
+        vde_ensure_disk_space "${VDE_DISK_THRESHOLD:-95}" || exit $?
+        shift
+        if [[ $# -eq 0 ]]; then
+            vde_log_error "Usage: vde start <alias...>"
+            exit 1
+        fi
+        
+        # --- IGNITION TRAP (VDE v2.0.6 Hardened) ---
+        local ALLOCATED_PORT=""
+        trap '[[ -n "${ALLOCATED_PORT}" ]] && release_port_reservation "${ALLOCATED_PORT}"' EXIT
+
+        for TARGET_VM in "$@"; do
+            CANONICAL_NAME=$(resolve_vm_name "${TARGET_VM}" 2>/dev/null)
+            if [[ -z "${CANONICAL_NAME}" ]]; then
+                vde_error_alias_not_found "${TARGET_VM}"
+                continue
+            fi
+            BASE_NAME="${CANONICAL_NAME#vde-}"
+            
+            # --- CONCURRENCY LOCK ---
+            local vm_lock="${VDE_VM_LOCKS_DIR}/${BASE_NAME}.lock"
+            acquire_lock "${vm_lock}" 60
+            vde_handle_error "start" "${CANONICAL_NAME}"
+            
+            {
+                # --- Conflict Prevention ---
+                if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+                    vde_log_info "Removing existing container ${CANONICAL_NAME}..." "docker"
+                    docker rm -f "${CANONICAL_NAME}" >/dev/null
+                fi
+
+                local ssh_port
+                # --- 3-VM Striking Array: Standardized Atomic Reservation ---
+                ssh_port=$(get_vm_ssh_port "${CANONICAL_NAME}")
+                if [[ -z "${ssh_port}" ]]; then
+                    ssh_port=$(allocate_port_for_vm "${CANONICAL_NAME}")
+                fi
+                
+                # Record allocated port for trap cleanup if we exit early
+                ALLOCATED_PORT="${ssh_port}"
+                
+                if [[ -z "${ssh_port}" ]] || [[ "${ssh_port}" == "0" ]]; then
+                    vde_log_error "Failed to allocate SSH port for ${CANONICAL_NAME}"
+                    continue
+                fi
+                
+                local svc_ports_raw=$(vde_query_json "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | (.service_ports[]?, .service_port?) // empty" "${TYPES_JSON}" | grep -v "null" | tr -d '"')
+                local svc_ports=(${(s:,:)${(f)svc_ports_raw}})
+                
+                local vm_category=$(get_vm_category "${CANONICAL_NAME}")
+                local mounts
+                mounts=$(get_vm_mounts "${CANONICAL_NAME}")
+                
+                ensure_vm_directories "${CANONICAL_NAME}" "$(get_vm_type "${CANONICAL_NAME}")"
+
+                local port_args=("-p" "${ssh_port}:22")
+                for p in "${svc_ports[@]}"; do
+                    [[ -n "${p}" ]] && port_args+=("-p" "${p}:${p}")
+                done
+
+                local mount_args=()
+                for m in ${(s:|:)mounts}; do
+                    mount_args+=("-v" "${VDE_ROOT_DIR}/${m}")
+                done
+
+                # Check for service port conflicts
+                zmodload zsh/net/tcp >/dev/null 2>&1
+                for p in "${svc_ports[@]}"; do
+                    if [[ -n "${p}" ]]; then
+                        local conflict=0
+                        if command -v lsof >/dev/null 2>&1; then
+                            lsof -Pi :${p} -sTCP:LISTEN -t >/dev/null 2>&1 && conflict=1
+                        elif command -v netstat >/dev/null 2>&1; then
+                            netstat -ant | grep -q "LISTEN" | grep -q ":${p}" && conflict=1
+                        fi
+                        
+                        if [[ ${conflict} -eq 1 ]]; then
+                            vde_log_warn "Port ${p} is already in use by another process." "vde"
+                        fi
+                    fi
+                done
+
+                # Ensure network exists
+                local net_name="${VDE_DOCKER_NETWORK:-vde-net}"
+                if ! docker network inspect "${net_name}" >/dev/null 2>&1; then
+                    vde_log_info "Creating Docker network: ${net_name}..." "docker"
+                    if ! docker network create "${net_name}" >/dev/null 2>&1; then
+                        vde_log_error "Failed to create Docker network: ${net_name}"
+                        vde_error_map ${VDE_ERR_DOCKER:-8} "network create"
+                        [[ -n "${ALLOCATED_PORT}" ]] && release_port_reservation "${ALLOCATED_PORT}"
+                        ALLOCATED_PORT=""
+                        continue
+                    fi
+                fi
+
+                vde_progress_spinner_start "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})"
+                local max_ignite_retries=3
+                local ignite_attempt=1
+                local ignite_success=false
+                typeset -A tried_ports
+                tried_ports=()
+                
+                local run_err_file=$(mktemp)
+                while [[ ${ignite_attempt} -le ${max_ignite_retries} ]]; do
+                    vde_progress_spinner_update
+                    if docker run -d \
+                        --name "${CANONICAL_NAME}" \
+                        --label "vde.managed=true" \
+                        --network "${net_name}" \
+                        "${port_args[@]}" \
+                        "${mount_args[@]}" \
+                        -v "${VDE_ROOT_DIR}/public-ssh-keys/vde_student.pub:/home/devuser/.ssh/authorized_keys:ro" \
+                        "${CANONICAL_NAME}" >/dev/null 2>"${run_err_file}"; then
+                        ignite_success=true
+                        vde_progress_spinner_stop "${CANONICAL_NAME} ignited"
+                        ALLOCATED_PORT="" # Ignition successful: release trap
+                        break
+                    else
+                        local err_msg=$(cat "${run_err_file}")
+                        
+                        if echo "${err_msg}" | grep -qE "port is already (allocated|in use)"; then
+                            vde_log_warn "Port conflict detected for ${CANONICAL_NAME} (Attempt ${ignite_attempt}/${max_ignite_retries}). Retrying with new port..." "docker"
+                            # Release current lock and add to tried_ports
+                            release_port_reservation "${ssh_port}"
+                            tried_ports[${ssh_port}]=1
+                            local exclude_str="${(j:,:)tried_ports}"
+                            
+                            # Re-derive port_args with new port
+                            ssh_port=$(allocate_port_for_vm "${CANONICAL_NAME}" "" "" "${exclude_str}")
+                            ALLOCATED_PORT="${ssh_port}"
+                            port_args=("-p" "${ssh_port}:22")
+                            for p in "${svc_ports[@]}"; do [[ -n "${p}" ]] && port_args+=("-p" "${p}:${p}"); done
+                        else
+                            vde_progress_spinner_stop "" "Critical ignition failure for ${CANONICAL_NAME}: ${err_msg}" 1
+                            rm -f "${run_err_file}"
+                            break
+                        fi
+                    fi
+                    ignite_attempt=$((ignite_attempt + 1))
+                    # Random jitter using vde-poll (Rule 23 & Jitter Mandate)
+                    local jitter_val=$(( (10 + RANDOM % 40) / 100.0 ))
+                    "${VDE_ROOT_DIR}/bin/vde-poll" --wait "${jitter_val}" "all" >/dev/null 2>&1
+                done
+                rm -f "${run_err_file}"
+                
+                if [[ "${ignite_success}" != "true" ]]; then
+                    vde_log_error "Failed to ignite ${CANONICAL_NAME} after ${max_ignite_retries} attempts."
+                    [[ -n "${ALLOCATED_PORT}" ]] && release_port_reservation "${ALLOCATED_PORT}"
+                    ALLOCATED_PORT=""
+                    continue
+                fi
+            } always {
+                release_lock "${vm_lock}"
+            }
+        done
+        ;;
+
+    create)
+        vde_ensure_disk_space "${VDE_DISK_THRESHOLD:-95}" || exit $?
+        shift
+        if [[ $# -eq 0 ]]; then
+            vde_log_error "Usage: vde create <alias...>"
+            exit 1
+        fi
+        
+        for TARGET_VM in "$@"; do
+            CANONICAL_NAME=$(resolve_vm_name "${TARGET_VM}" 2>/dev/null)
+            if [[ -z "${CANONICAL_NAME}" ]]; then
+                vde_log_error "Unknown type: '${TARGET_VM}'"
+                continue
+            fi
+            BASE_NAME="${CANONICAL_NAME#vde-}"
+            
+            local vm_lock="${VDE_VM_LOCKS_DIR}/${BASE_NAME}.lock"
+            acquire_lock "${vm_lock}" 60
+            vde_handle_error "create" "${CANONICAL_NAME}"
+            {
+                vde_log_info "Ensuring directories for ${CANONICAL_NAME}..." "forge"
+                ensure_vm_directories "${CANONICAL_NAME}" "$(get_vm_type "${CANONICAL_NAME}")"
+                vde_log_success "VM structure verified for ${CANONICAL_NAME}."
+            } always {
+                release_lock "${vm_lock}"
+            }
+        done
+        ;;
+
+    remove|delete)
+        shift
+        if [[ $# -eq 0 ]]; then
+            vde_log_error "Usage: vde remove <alias...>"
+            exit 1
+        fi
+        
+        for TARGET_VM in "$@"; do
+            CANONICAL_NAME=$(resolve_vm_name "${TARGET_VM}" 2>/dev/null)
+            if [[ -z "${CANONICAL_NAME}" ]]; then
+                vde_log_error "Unknown type: '${TARGET_VM}'"
+                continue
+            fi
+            BASE_NAME="${CANONICAL_NAME#vde-}"
+            
+            local vm_lock="${VDE_VM_LOCKS_DIR}/${BASE_NAME}.lock"
+            acquire_lock "${vm_lock}" 60
+            vde_handle_error "remove" "${CANONICAL_NAME}"
+            {
+                if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+                    vde_log_info "Purging container ${CANONICAL_NAME}..." "docker"
+                    docker rm -f "${CANONICAL_NAME}" >/dev/null
+                    vde_log_success "Container ${CANONICAL_NAME} purged."
+                else
+                    vde_log_info "No container found for ${CANONICAL_NAME}." "vde"
+                fi
+            } always {
+                release_lock "${vm_lock}"
+            }
+        done
+        ;;
+
+    stop)
+        shift
+        if [[ $# -eq 0 ]]; then
+            vde_log_error "Usage: vde stop <alias...>"
+            exit 1
+        fi
+
+        for TARGET_VM in "$@"; do
+            CANONICAL_NAME=$(resolve_vm_name "${TARGET_VM}" 2>/dev/null)
+            if [[ -z "${CANONICAL_NAME}" ]]; then
+                vde_log_error "Unknown type: '${TARGET_VM}'"
+                continue
+            fi
+
+            if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+                vde_log_info "Stopping ${CANONICAL_NAME}..." "docker"
+                docker stop "${CANONICAL_NAME}" >/dev/null
+            else
+                vde_log_info "${CANONICAL_NAME} is not running." "vde"
+            fi
+        done
+        ;;
+
+    exec)
+        if [[ -z "${CANONICAL_NAME}" ]]; then
+            vde_log_error "Unknown VM: '${TYPE_ARG}'"
+            exit 1
+        fi
+        shift 2
+        local user_flag=("-u" "devuser")
+        if [[ "$1" == "--root" ]]; then
+            user_flag=()
+            shift
+        fi
+        
+        # If only one argument left, treat as shell command string
+        if [[ ${#} -eq 1 ]]; then
+            docker exec -i "${user_flag[@]}" "${CANONICAL_NAME}" zsh -c "$1"
+        else
+            docker exec -i "${user_flag[@]}" "${CANONICAL_NAME}" "$@"
+        fi
+        ;;
+
+    enter)
+        [[ -z "${CANONICAL_NAME}" ]] && vde_log_error "Unknown VM: '${TYPE_ARG}'" && exit 1
+        local ssh_port=$(get_vm_ssh_port "${CANONICAL_NAME}")
+        if [[ -z "${ssh_port}" ]]; then
+            ssh_port=$(vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${TYPES_JSON}")
+        fi
+        
+        vde_log_info "Entering ${CANONICAL_NAME} via port ${ssh_port}..." "ssh"
+        shift 2
+        ssh -i "${HOME}/.ssh/vde/vde_student" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p "${ssh_port}" devuser@localhost "$@"
+        ;;
+
+    list) show_known_vms ;;
+    add-vm-type|add) 
+        shift
+        "${VDE_ROOT_DIR}/bin/add-vm-type" "$@" 
+        ;;
+    uninstall|remove-type)
+        shift
+        "${VDE_ROOT_DIR}/bin/uninstall-vm-type" "$@"
+        ;;
+    validate-schemas|validate)
+        shift
+        "${VDE_ROOT_DIR}/bin/validate-schemas.zsh" "$@"
+        ;;
+    rebuild-cache)
+        shift
+        load_vm_types --no-cache
+        ;;
+    version|--version) echo "VDE v${VDE_VERSION:-2.0.5}" ;;
+    help|*) echo "Usage: vde {rebuild|start|stop|exec|enter|list|add|uninstall|validate|rebuild-cache} [type/alias]" ;;
+esac

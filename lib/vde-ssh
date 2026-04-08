@@ -198,7 +198,7 @@ sync_ssh_keys_to_vde() {
         return ${VDE_ERR_NOT_FOUND}
     fi
 
-    local dest_path="${VDE_SSH_KEYS_DIR}/vde_id_ed25519.pub"
+    local dest_path="${VDE_SSH_KEYS_DIR}/vde_student.pub"
 
     if ! validate_public_key_file "${VDE_SSH_IDENTITY_PUB}"; then
         _error "SECURITY: Invalid VDE public key file"
@@ -756,4 +756,33 @@ generate_vm_ssh_config() {
 # Get SSH directory
 get_ssh_dir() {
     echo "${VDE_SSH_DIR}"
+}
+
+# vde_verify_agent_forwarding - Verify that SSH agent forwarding is active in a VM
+# Args: <vm_name>
+# Returns: VDE_SUCCESS (0) if active, VDE_ERR_SSH (7) otherwise
+vde_verify_agent_forwarding() {
+    local vm_name="${1}"
+    [[ -z "${vm_name}" ]] && return ${VDE_ERR_INVALID_INPUT}
+
+    local canonical_name=$(resolve_vm_name "${vm_name}" 2>/dev/null)
+    [[ -z "${canonical_name}" ]] && return ${VDE_ERR_NOT_FOUND}
+
+    # Perform physical verification via vde exec
+    # We check if SSH_AUTH_SOCK is set AND if ssh-add -l can communicate with it
+    local output
+    output=$(./bin/vde exec "${canonical_name}" "ssh-add -l" 2>&1)
+    local rc=$?
+
+    if [[ ${rc} -eq 0 ]]; then
+        vde_log_success "SSH Agent Forwarding active in ${canonical_name}" "ssh"
+        return ${VDE_SUCCESS}
+    elif [[ ${rc} -eq 1 ]]; then
+        # rc 1 means agent is reachable but has no identities
+        vde_log_warning "SSH Agent reachable in ${canonical_name} but has no identities" "ssh"
+        return ${VDE_SUCCESS}
+    else
+        vde_log_error "SSH Agent Forwarding failed in ${canonical_name}: ${output}" "ssh"
+        return ${VDE_ERR_SSH}
+    fi
 }

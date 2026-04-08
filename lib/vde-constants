@@ -97,7 +97,7 @@ VDE_SSH_TIMEOUT=60
 
 # Lock acquisition timeout (seconds)
 # Maximum time to wait when acquiring file locks
-VDE_LOCK_TIMEOUT=30
+VDE_LOCK_TIMEOUT=60
 
 # Health check timeout (seconds)
 # Maximum time to wait for container health check
@@ -130,8 +130,7 @@ VDE_RETRY_MAX_DELAY=30
 
 # Stale lock threshold (seconds)
 # Locks older than this are considered stale and can be cleaned up
-# Reduced from 300s to 30s because we also check PID liveness
-VDE_STALE_LOCK_AGE=30
+VDE_STALE_LOCK_AGE=120
 
 # Lock check interval base (seconds)
 # Base interval for checking lock availability
@@ -166,6 +165,14 @@ VDE_COMPOSE_PROJECT_PREFIX="${VDE_COMPOSE_PROJECT_PREFIX:-vde}"
 
 # Container naming patterns - All VMs now consistently use vde- prefix
 VDE_CONTAINER_PREFIX="${VDE_CONTAINER_PREFIX:-vde-}"
+
+# Maximum parallel VM load (Fleet Reduction Strike v2.0.6)
+VDE_MAX_PARALLEL_VMS=3
+
+# Docker port probe cooldown (milliseconds)
+# Tunable delay after a successful Docker port probe before actual docker run.
+# Addresses Docker networking lag on macOS.
+VDE_PORT_PROBE_COOLDOWN=500
 
 # =============================================================================
 # SSH CONFIGURATION
@@ -206,10 +213,10 @@ VDE_SSH_CONFIG="${VDE_SSH_CONFIG:-${VDE_SSH_DIR}/config}"
 VDE_SSH_KNOWN_HOSTS="${VDE_SSH_KNOWN_HOSTS:-${VDE_SSH_DIR}/known_hosts}"
 
 # VDE SSH identity key (auto-generated, VDE-specific)
-VDE_SSH_IDENTITY="${VDE_SSH_IDENTITY:-${VDE_SSH_DIR}/id_ed25519}"
+VDE_SSH_IDENTITY="${VDE_SSH_IDENTITY:-${VDE_SSH_DIR}/vde_student}"
 
 # VDE SSH public key
-VDE_SSH_IDENTITY_PUB="${VDE_SSH_IDENTITY_PUB:-${VDE_SSH_DIR}/id_ed25519.pub}"
+VDE_SSH_IDENTITY_PUB="${VDE_SSH_IDENTITY_PUB:-${VDE_SSH_DIR}/vde_student.pub}"
 
 # VDE SSH Agent environment file
 VDE_SSH_AGENT_ENV="${VDE_SSH_AGENT_ENV:-${VDE_SSH_DIR}/agent_env}"
@@ -252,7 +259,8 @@ VM_TYPES_JSON="${VDE_VM_TYPES_JSON:-${DATA_DIR}/vm-types.json}"
 
 # Cache files
 VM_TYPES_CACHE="${VDE_VM_TYPES_CACHE:-${VDE_CACHE_DIR}/vm-types.cache}"
-PORT_REGISTRY="${VDE_PORT_REGISTRY:-${VDE_CACHE_DIR}/port-registry}" # This is a directory for port files
+VDE_PORT_REGISTRY="${VDE_PORT_REGISTRY:-${VDE_CACHE_DIR}/port-registry}"
+PORT_REGISTRY="${VDE_PORT_REGISTRY}" # Maintain alias for backward compatibility
 
 # =============================================================================
 # VALIDATION PATTERNS
@@ -283,6 +291,7 @@ if [[ "${VDE_TEST_MODE:-0}" -ne 1 ]] ; then
              VDE_ERR_LOCK_CONTENTION VDE_ERR_SYNC_DRIFT \
              VDE_LOCKS_DIR VDE_VM_LOCKS_DIR VDE_PORT_LOCKS_DIR \
              VDE_CONTAINER_SSH_PORT VDE_DOCKER_TIMEOUT VDE_SSH_TIMEOUT VDE_LOCK_TIMEOUT \
+             VDE_MAX_PARALLEL_VMS VDE_PORT_PROBE_COOLDOWN \
              VDE_HEALTH_TIMEOUT VDE_STARTUP_WAIT VDE_MAX_RETRIES VDE_RETRY_BASE_DELAY \
              VDE_RETRY_MAX_DELAY VDE_STALE_LOCK_AGE VDE_LOCK_CHECK_INTERVAL \
              VDE_LOG_RETENTION_DAYS VDE_MAX_LOG_SIZE VDE_DOCKER_NETWORK VDE_TEST_NETWORK \

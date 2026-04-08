@@ -1,0 +1,7 @@
+2026-04-07T09:14:49-0400 [INFO ] [vde] VM types loaded from cache
+[INFO] Validating and updating: /Users/dderyldowney/VDE/data/vm-types.json
+[INFO] Config version 1.1 compatible with schema
+[INFO] Schema validation passed: /Users/dderyldowney/VDE/data/vm-types.json
+[INFO] Validation and update check complete
+2026-04-07T09:14:49-0400 [WARN ] [vde] Cleaning up stale lock (Force: 1): /Users/dderyldowney/VDE/.locks/vms/python.lock
+\033[1;34m⠋\033[0m Baking vde-python... 
