@@ -1,27 +1,26 @@
-# Remediation Plan: VDE 2.0.6 Architectural Alignment
+# Remediation Plan: VDE v2.1.0 Sovereign Verification
 
 ## High-Priority Architectural Debt
-- **vde-info speedup**: Performs multiple `docker inspect` calls. Should cache these labels in `.docker-state/*.json` during startup/refresh.
-- **USP Compliance**: Ensure all VM types have an isolated hydration ritual in `scripts/setup/` and that `data/vm-types.json` correctly points to them.
-- **Ignition Link**: Modify `bin/vde` to call `bin/vde-sync-version` during ignition to ensure the "Automatic Versioning" mandate is met.
+- **Sovereign Bridge Hardening**: Core logic exists in `scripts/vde-entrypoint.zsh` but requires idempotency hardening and empirical verification.
+- **USP Finalization**: Ensure 100% of registered VM types follow the hardened USP pattern (set -e, apt-get clean, rm -rf lists).
+- **Test Suite Modernization**: The suite has been condensed; any new tests MUST follow the high-fidelity empirical pattern established in `system-spine.feature`.
 
 ## Remediation Goals
-- **Deterministic Readiness (The big step)**:
-    - Replace arbitrary `time.sleep()` calls in Python BDD Step Definitions (`tests/features/steps/`) with deterministic polling using `vde_poll`.
-    - Rename `wait_for_condition` in `shell_helpers.py` to `vde_poll` to align with the project's canonical terminology.
-- **USP Verification**: Confirm all hydrations move to Tier 2 (The Spoke) rituals in `scripts/setup/`. Purge any inline logic or reliance on build-args for runtime setup.
-- **Zero-Host Dependency**:
-    - Ensure `vde_query_json` is correctly defined in `lib/vde-core`.
-    - Refactor all legacy `jq` calls to use the `vde_query_json` wrapper.
-- **100% Coverage**: Complete the implementation of the 366 undefined steps to ensure 100% documentation-to-code parity under v2.0.6 constraints.
+- **Sovereign Verification**:
+    - Verify Docker Socket bridge (non-root access).
+    - Verify SSH Agent Forwarding bridge (host identity visibility).
+- **Idempotency Hardening**:
+    - Harden `scripts/vde-entrypoint.zsh` to handle existing groups/users gracefully.
+    - Ensure `bin/vde-enforce-uap.zsh` remains the supreme audit authority.
+- **Equal Metrics Alignment**:
+    - Align codebase implementation with testing scenarios as equal indicators of system health.
 
 ## Task Tracking
-- [X] System Re-Alignment (The Triple Strike)
-- [X] Update MEMORY.md to v2.0.6
-- [X] Update session_handover.md with Sovereign Audit mandate
-- [ ] Rename `wait_for_condition` to `vde_poll` in `shell_helpers.py`
-- [ ] Implement `vde_poll` based logic in `configuration_management_steps.py`
-- [ ] Update `bin/vde` ignition sequence with `bin/vde-sync-version`
-- [ ] Audit and verify 100% USP compliance in `scripts/setup/`
+- [X] Sovereign Audit (v2.1.0)
+- [X] Condensed Test Suite (Pruned 24k lines)
+- [X] Implementation of Core Bridge Logic
+- [ ] Harden `vde-entrypoint.zsh` idempotency
+- [ ] Add Sovereign scenarios to `system-spine.feature`
+- [ ] Complete empirical verification of bridges
 
 See ./session_handover.md

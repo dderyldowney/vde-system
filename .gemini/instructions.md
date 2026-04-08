@@ -76,6 +76,7 @@ All interactions with VDE containers **MUST** use the canonical `bin/vde` orches
 * **10.2.**: The Diagnostic Probe MUST be an ephemeral spirit. It SHALL be spawned with the `--rm` mandate.
 * **10.3.**: The Atomic Handshake: The probe MUST attempt a literal bind: `docker run --rm --name vde-recon-probe -p <PORT>:22 vde-base true`. If the handshake fails, rotate candidate ports immediately.
 * **10.4.**: On Darwin (macOS) reaches, the probe is the SUPREME AUTHORITY. Because `nc` and `lsof` are easily deceived by kernel lag, the probe’s failure is an absolute blockade.
+* **10.5.**: The Testing Suite MUST provide empirical proof of all contracts the Codebase makes. AT ALL TIMES!
 
 ## **11. THE ARCHIVIST’S INTEL (The Researcher Law)**
 * **11.1.**: When the implementation path is obscured or the platform presents undocumented quirks, the foundling MUST dispatch the Researcher via the **Google Search tool**.
