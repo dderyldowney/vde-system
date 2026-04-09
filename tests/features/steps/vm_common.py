@@ -112,7 +112,7 @@ def _vde_env():
     """Return environment dict for vde CLI calls: logs to file, clean stdout."""
     from config import VDE_CACHE_DIR
 
-    return {
+    env = {
         **os.environ,
         "VDE_ROOT_DIR": str(VDE_ROOT),
         "VDE_LOG_OUTPUT": "file",
@@ -120,6 +120,12 @@ def _vde_env():
         "VDE_LOG_LEVEL": "DEBUG",
         "VDE_TEST_MODE": "1",
     }
+    
+    # Bridge host SSH agent into the subprocess
+    if "SSH_AUTH_SOCK" in os.environ:
+        env["SSH_AUTH_SOCK"] = os.environ["SSH_AUTH_SOCK"]
+        
+    return env
 
 
 def docker_ps():
@@ -656,6 +662,10 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
     full_env = _vde_env()
     if env:
         full_env.update(env)
+    
+    # CRITICAL: Ensure SSH_AUTH_SOCK is inherited for Agent Forwarding (Section 10.5)
+    if "SSH_AUTH_SOCK" in os.environ:
+        full_env["SSH_AUTH_SOCK"] = os.environ["SSH_AUTH_SOCK"]
 
     # Execute the command
     try:
@@ -695,16 +705,18 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
                 filtered_lines.append(line)
         clean_stdout = "\n".join(filtered_lines).strip()
 
-        # IMPORTANT: Always populate even if command failed
-        context.vde_command_output_raw = raw_output
-        context.vde_command_output = raw_output
-        context.vde_command_exit_code = result.returncode
+        # Update context if provided
+        if context:
+            # IMPORTANT: Always populate even if command failed
+            context.vde_command_output_raw = raw_output
+            context.vde_command_output = raw_output
+            context.vde_command_exit_code = result.returncode
 
-        # Legacy attributes used by some older step files
-        context.last_output = raw_output
-        context.last_error = "" # Stderr was merged into stdout
-        context.last_exit_code = result.returncode
-        context.last_command = " ".join(args)
+            # Legacy attributes used by some older step files
+            context.last_output = raw_output
+            context.last_error = "" # Stderr was merged into stdout
+            context.last_exit_code = result.returncode
+            context.last_command = " ".join(args)
         
         cmd_res = CommandResult(clean_stdout.strip(), "", result.returncode, args=cmd)
     except subprocess.TimeoutExpired as e:
@@ -717,8 +729,8 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
     except Exception as e:
         cmd_res = CommandResult("", str(e), 1, args=cmd)
 
-    # Update context if provided
-    if context:
+    # Update context if provided (for exceptions too)
+    if context and 'cmd_res' in locals():
         # Store full result
         context.vde_command_result = cmd_res
 

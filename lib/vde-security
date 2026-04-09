@@ -132,6 +132,8 @@ vde_security_enforce_network_isolation() {
             docker network connect "${network_name}" "${container}" 2>/dev/null || true
         fi
     done < <(docker ps --format '{{.Names}}' 2>/dev/null | grep -E '^vde-' || true)
+    
+    return ${VDE_SUCCESS}
 }
 
 # vde_security_init - Initialize security environment
@@ -140,4 +142,6 @@ vde_security_init() {
     vde_security_ensure_network
     vde_security_enforce_permissions
     vde_security_enforce_network_isolation
+    
+    return ${VDE_SUCCESS}
 }

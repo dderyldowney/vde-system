@@ -1111,9 +1111,26 @@ find_available_port() {
         # Atomic Reservation: mkdir is atomic across processes
         if mkdir "${registry_dir}/port-${port}.lock" 2>/dev/null; then
             
-            # THE SEEKER'S RECON (Section 10.3): Physical Handshake
-            # Attempt to bind the port via a transient Docker container
-            if ! docker run --rm --name "vde-port-probe-${port}" -p "${port}:22" vde-base true >/dev/null 2>&1; then
+            # THE SEEKER'S RECON (Section 10.3): Hardened Physical Handshake
+            # 1. Dynamic Identity: Prevent name collisions on Darwin
+            local probe_name="vde-recon-probe-${port}-${RANDOM}"
+            
+            # 2. Resource Jitter (Section 11.2): Allow Docker-on-macOS socket to breathe
+            local jitter_val=$(( (RANDOM % 20) + 10 ))
+            zmodload zsh/zselect 2>/dev/null && zselect -t ${jitter_val}
+            
+            # 3. Sovereign Timeout (3s Strike): Prevent hangs on port conflict
+            ( docker run --rm --name "${probe_name}" --entrypoint /bin/true -p "${port}:22" vde-base >/dev/null 2>&1 ) & local _probe_pid=$!
+            ( zmodload zsh/zselect 2>/dev/null && zselect -t 300 2>/dev/null; kill -9 $_probe_pid 2>/dev/null ) & local _timer_pid=$!
+            
+            wait $_probe_pid
+            local _probe_rc=$?
+            kill -9 $_timer_pid 2>/dev/null
+            
+            # 4. Sentinel Audit (Section 12): Purge ephemeral spirit
+            docker rm -f "${probe_name}" >/dev/null 2>&1
+            
+            if [[ $_probe_rc -ne 0 ]]; then
                 # Port is a Ghost or occupied by Scavengers
                 touch "${registry_dir}/port-${port}.lock/STALE_HOST"
                 # Keep the lock to prevent others from retrying this failed port immediately

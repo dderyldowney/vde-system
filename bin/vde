@@ -42,6 +42,12 @@ case ${COMMAND} in
             local vm_lock="${VDE_VM_LOCKS_DIR}/${BASE_NAME}.lock"
             claim_lock "${vm_lock}" 60 || { vde_error_map ${VDE_ERR_LOCK:-9} "${CANONICAL_NAME}"; continue; }
             {
+                # Conflict Prevention (Atomic Handshake)
+                if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+                    vde_log_info "Removing existing ${CANONICAL_NAME}..." "docker"
+                    docker rm -f "${CANONICAL_NAME}" >/dev/null 2>&1
+                fi
+
                 if is_vm_running "${CANONICAL_NAME}"; then
                     vde_log_info "${CANONICAL_NAME} is already running."
                     continue
@@ -87,12 +93,26 @@ case ${COMMAND} in
                 fi
 
                 # Ignition Phase (The Handshake)
-                # We prioritize the SSH agent socket bridge for macOS/Linux
+                # We prioritize the LIVE host SSH agent socket bridge
                 local host_ssh_auth_sock="${SSH_AUTH_SOCK}"
-                # Handle Darwin-specific bridge if agent_env exists
-                if [[ -f "${HOME}/.ssh/vde/agent_env" ]]; then
-                    local _parsed_sock=$(grep "^SSH_AUTH_SOCK=" "${HOME}/.ssh/vde/agent_env" | head -1 | sed 's/^SSH_AUTH_SOCK=\([^;]*\);.*/\1/')
-                    [[ -n "${_parsed_sock}" ]] && host_ssh_auth_sock="${_parsed_sock}"
+                
+                # If current env is missing or invalid, attempt to load from VDE agent file
+                if [[ ! -S "${host_ssh_auth_sock}" ]]; then
+                    if [[ -f "${HOME}/.ssh/vde/agent_env" ]]; then
+                        local _parsed_sock=$(grep "^SSH_AUTH_SOCK=" "${HOME}/.ssh/vde/agent_env" | head -1 | sed 's/^SSH_AUTH_SOCK=\([^;]*\);.*/\1/')
+                        if [[ -S "${_parsed_sock}" ]]; then
+                            host_ssh_auth_sock="${_parsed_sock}"
+                        fi
+                    fi
+                fi
+
+                # Physical Handshake Verification (Section 10.3)
+                if [[ ! -S "${host_ssh_auth_sock}" ]]; then
+                    vde_log_error "SSH Bridge Blockade: Host socket not found or invalid." "ssh"
+                    vde_log_error "Attempted Path: ${host_ssh_auth_sock:-[EMPTY]}" "ssh"
+                    vde_log_error "Check your SSH agent: echo \$SSH_AUTH_SOCK" "ssh"
+                    GLOBAL_RC=1
+                    continue
                 fi
 
                 vde_progress_spinner_start "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})"
@@ -118,6 +138,7 @@ case ${COMMAND} in
                         -v "${HOME}/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro" \
                         -v "/var/run/docker.sock:/var/run/docker.sock" \
                         -v "${host_ssh_auth_sock}:/run/host-services/ssh-auth.sock" \
+                        -v "${host_ssh_auth_sock}:/run/vde-ssh.sock" \
                         -e "SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock" \
                         "${CANONICAL_NAME}" >/dev/null 2>"${run_err_file}"; then
                         ignite_success=true
@@ -159,7 +180,61 @@ case ${COMMAND} in
 
     stop)
         shift
-        "${VDE_ROOT_DIR}/bin/vde-stop" "$@"
+        local targets=("${@}")
+        local force=false
+        # Filter out flags
+        local vms=()
+        for t in "${targets[@]}"; do
+            [[ "${t}" == "-f" || "${t}" == "--force" ]] && force=true && continue
+            vms+=("${t}")
+        done
+
+        if [[ "${vms}" == "all" ]]; then
+            vms=($(get_all_vms))
+        fi
+
+        [[ -z "${vms}" ]] && vde_log_error "Usage: vde stop [-f] <alias...|all>" && exit 1
+
+        for vm_alias in "${vms[@]}"; do
+            CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
+            if [[ -z "${CANONICAL_NAME}" ]]; then
+                vde_log_warn "Unknown VM: ${vm_alias}"
+                continue
+            fi
+
+            if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+                vde_log_info "Stopping ${CANONICAL_NAME}..." "docker"
+                docker stop "${CANONICAL_NAME}" >/dev/null 2>&1 || true
+                vde_log_success "${CANONICAL_NAME} stopped."
+            else
+                vde_log_info "${CANONICAL_NAME} is not running." "vde"
+            fi
+        done
+        ;;
+    remove|delete)
+        shift
+        local targets=("${@}")
+        [[ -z "${targets}" ]] && vde_log_error "Usage: vde remove <alias...|all>" && exit 1
+
+        if [[ "${targets}" == "all" ]]; then
+            targets=($(get_all_vms))
+        fi
+
+        for vm_alias in "${targets[@]}"; do
+            CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
+            if [[ -z "${CANONICAL_NAME}" ]]; then
+                vde_log_warn "Unknown VM: ${vm_alias}"
+                continue
+            fi
+
+            if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+                vde_log_info "Removing container ${CANONICAL_NAME}..." "docker"
+                docker rm -f "${CANONICAL_NAME}" >/dev/null 2>&1 || true
+                vde_log_success "${CANONICAL_NAME} removed."
+            else
+                vde_log_info "No container found for ${CANONICAL_NAME}." "vde"
+            fi
+        done
         ;;
     exec)
         shift
@@ -167,11 +242,11 @@ case ${COMMAND} in
         ;;
     enter)
         shift
-        "${VDE_ROOT_DIR}/bin/vde-enter" "$@"
+        "${VDE_ROOT_DIR}/bin/ssh-vm" "$@"
         ;;
     list)
         shift
-        "${VDE_ROOT_DIR}/bin/vde-list" "$@"
+        "${VDE_ROOT_DIR}/bin/list-vms" "$@"
         ;;
     add)
         shift

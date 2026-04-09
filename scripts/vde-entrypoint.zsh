@@ -12,12 +12,18 @@ if [[ -S "/var/run/docker.sock" ]]; then
     echo "[VDE-ENTRYPOINT] Detected docker.sock GID: ${_docker_gid}"
     
     if [[ "${_docker_gid}" != "0" ]]; then
-        if ! getent group docker > /dev/null; then
-            echo "[VDE-ENTRYPOINT] Creating docker group with GID ${_docker_gid}..."
-            sudo groupadd -g "${_docker_gid}" docker
+        # Check if GID is already assigned to a group
+        local _existing_group=$(getent group "${_docker_gid}" | cut -d: -f1)
+        if [[ -n "${_existing_group}" ]]; then
+            echo "[VDE-ENTRYPOINT] GID ${_docker_gid} is already assigned to group: ${_existing_group}"
+            sudo usermod -aG "${_existing_group}" devuser
+        else
+            if ! getent group docker > /dev/null; then
+                echo "[VDE-ENTRYPOINT] Creating docker group with GID ${_docker_gid}..."
+                sudo groupadd -g "${_docker_gid}" docker
+            fi
+            sudo usermod -aG docker devuser
         fi
-        echo "[VDE-ENTRYPOINT] Adding devuser to docker group..."
-        sudo usermod -aG docker devuser
     else
         echo "[VDE-ENTRYPOINT] docker.sock is owned by root, adding devuser to root group (fallback)..."
         sudo usermod -aG root devuser
@@ -28,16 +34,60 @@ else
     echo "[VDE-ENTRYPOINT] Warning: docker.sock not found or not a socket"
 fi
 
-# 2. SSH Agent Forwarding (macOS Bridge)
-if [[ -S "/run/host-services/ssh-auth.sock" ]]; then
-    echo "[VDE-ENTRYPOINT] macOS SSH bridge detected, symlinking..."
+# 2. SSH Agent Forwarding (Sovereign Bridge)
+local -a _bridge_candidates=(
+    "/run/host-services/ssh-auth.sock" # Canonical Darwin / Realignment Path
+    "/run/vde-ssh.sock"                # VDE 2026 Standard
+    "/ssh-agent"                       # Legacy / Alternative
+)
+
+local _found_bridge=""
+echo "[VDE-ENTRYPOINT] Initializing Sovereign Bridge Handshake..."
+for candidate in "${_bridge_candidates[@]}"; do
+    echo "[VDE-ENTRYPOINT] Searching for SSH bridge at ${candidate}..."
+    if [[ -S "${candidate}" ]]; then
+        _found_bridge="${candidate}"
+        echo "[VDE-ENTRYPOINT] SUCCESS: Valid socket found at ${_found_bridge}"
+        break
+    elif [[ -d "${candidate}" ]]; then
+        echo "[VDE-ENTRYPOINT] GHOST DETECTED: ${candidate} is a directory (Mount Failure)."
+        # Attempt recovery: see if a socket exists INSIDE the ghost directory
+        local _inner_sock=$(find "${candidate}" -maxdepth 2 -type s | head -1)
+        if [[ -n "${_inner_sock}" ]]; then
+            _found_bridge="${_inner_sock}"
+            echo "[VDE-ENTRYPOINT] RECOVERY: Found inner socket at ${_found_bridge}"
+            break
+        fi
+    fi
+done
+
+if [[ -n "${_found_bridge}" ]]; then
     mkdir -p "/home/devuser/.ssh/vde"
-    # Recursive chown to handle root-owned parent dirs from mounts
-    sudo chown -R devuser:devuser "/home/devuser/.ssh"
+    sudo chown -R devuser:devuser "/home/devuser"
     chmod 700 "/home/devuser/.ssh"
     chmod 700 "/home/devuser/.ssh/vde"
-    export SSH_AUTH_SOCK="/home/devuser/.ssh/vde/agent.sock"
-    ln -sf /run/host-services/ssh-auth.sock "${SSH_AUTH_SOCK}"
+    
+    local _proxy_sock="/home/devuser/.ssh/vde/agent.sock"
+    export SSH_AUTH_SOCK="${_proxy_sock}"
+    
+    # Symbolic Handshake (The Bridge Proxy)
+    if command -v socat >/dev/null 2>&1; then
+        echo "[VDE-ENTRYPOINT] SUCCESS: Proxying ${_found_bridge} to ${_proxy_sock}..."
+        # Run proxy in background
+        sudo -u devuser socat UNIX-LISTEN:"${_proxy_sock}",fork,unlink-early UNIX-CONNECT:"${_found_bridge}" &
+    else
+        echo "[VDE-ENTRYPOINT] WARNING: socat missing. Falling back to direct symlink (may fail permissions)."
+        ln -sf "${_found_bridge}" "${_proxy_sock}"
+        sudo chmod 666 "${_found_bridge}" 2>/dev/null || true
+    fi
+    
+    # Persistent bridge for non-login shells
+    echo "export SSH_AUTH_SOCK=${_proxy_sock}" > /home/devuser/.zshenv
+    sudo chown devuser:devuser /home/devuser/.zshenv
+    echo "[VDE-ENTRYPOINT] Persistent bridge established at /home/devuser/.zshenv"
+else
+    echo "[VDE-ENTRYPOINT] WARNING: All SSH bridge candidates failed."
+    echo "[VDE-ENTRYPOINT] Blockade: Verification of Section 10.5 will fail."
 fi
 
 # 3. Universal Port Configuration (Rule I)

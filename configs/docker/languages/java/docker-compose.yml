@@ -1,17 +1,18 @@
 # Template for language VMs
-# Variables: java, 2209, 
+# Variables: java, 2209, , zsh /vde/scripts/setup/java-init.zsh
 name: vde-java
 services:
   vde-java:
     build:
       context: ../../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
-
+      dockerfile: configs/docker/vde-lang.Dockerfile
       args:
+        VM_NAME: java
+        PKGS_TO_INSTALL: ""
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/java-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000
-        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: vde-java:latest
     container_name: vde-java
     hostname: vde-java
@@ -20,26 +21,23 @@ services:
       - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name=java"
-    command: >
-      sh -c "if [ -n \"\" ]; then
-               ;
-             fi;
-             /usr/sbin/sshd -D"
+    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
-      - "2209:22"
+      - "2209:2209"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../projects/java:/home/devuser/workspace
       - ../../../../logs/java:/logs
       - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
+      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
-      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/run/host-services/ssh-auth.sock:ro
-      # macOS Canonical Bridge (if exists)
-      - /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock
+      # macOS Canonical Bridge (Hardened to use explicit host socket)
+      - ${SSH_AUTH_SOCK}:/run/host-services/ssh-auth.sock
+      # VDE 2026 Sovereign Bridge
+      - ${SSH_AUTH_SOCK}:/run/vde-ssh.sock
 
     environment:
       - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock

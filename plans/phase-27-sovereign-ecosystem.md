@@ -39,9 +39,12 @@ The "Sovereign Audit" (April 2026) revealed that core bridge logic is already pr
 - [ ] Ensure all commands run under `bin/vde-enforce-uap.zsh`.
 
 ### Phase 27.2: Empirical Proof (The Shield)
-- [ ] Add Sovereign Bridge scenarios to `system-spine.feature`.
-- [ ] Implement high-fidelity steps in `system_spine_steps.py`.
-- [ ] Run `behave` and verify RED -> GREEN state.
+- [x] Add Sovereign Bridge scenarios to `system-spine.feature`.
+- [x] Implement high-fidelity steps in `system_spine_steps.py`.
+- [x] Run `behave` and verify RED -> GREEN state.
+- [x] Harden Atomic Handshake against Darwin kernel lag (Dynamic identity + 3s Strike Timeout).
+- [x] Harden Sovereign Bridges (Docker socket access + SSH Agent persistent bridge via .zshenv).
+- [x] Physical Handshake Verification (Fail-fast check for host SSH socket).
 
 ## 5. Verification
 - **Suite**: `system-spine.feature` (High Fidelity).

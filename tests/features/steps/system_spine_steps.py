@@ -70,12 +70,23 @@ def step_verify_hydration(context, script_path):
 
 @then('the SSH port should be atomically allocated and recorded in the registry')
 def step_verify_port_allocation(context):
-    # Check .cache/port-registry/
-    port_file = VDE_ROOT / ".cache" / "port-registry" / f"{context.container_name}.port"
-    assert port_file.exists(), f"Port registry entry missing for {context.container_name}"
+    # In v2.1.0, the authoritative port is recorded in .cache/vm-types.cache
+    cache_file = VDE_ROOT / ".cache" / "vm-types.cache"
+    assert cache_file.exists(), "VM types cache missing"
     
-    port = port_file.read_text().strip()
-    assert re.match(r"^\d+$", port), f"Invalid port recorded: {port}"
+    # Check if the port is recorded for the canonical name
+    pattern = fr"VM_SSH_PORT\[{context.container_name}\]='(\d+)'"
+    content = cache_file.read_text()
+    match = re.search(pattern, content)
+    
+    if not match:
+        # Try raw name
+        pattern = fr"VM_SSH_PORT\[{context.vm_alias}\]='(\d+)'"
+        match = re.search(pattern, content)
+        
+    assert match, f"Port not found in cache for {context.container_name}"
+    port = match.group(1)
+    assert int(port) > 0, f"Invalid port recorded: {port}"
 
 @then('I should be able to SSH into "{container_name}" and verify the environment')
 def step_verify_ssh_env(context, container_name):
@@ -156,16 +167,84 @@ def step_remove_vm(context, vm_alias):
 
 @then('the container "{container_name}" should be destroyed')
 def step_verify_destroyed(context, container_name):
-    res = subprocess.run(["docker", "inspect", container_name], capture_output=True)
-    assert res.returncode != 0, f"Container {container_name} still exists"
+    # Use exact matching to avoid false positives with similar names
+    res = subprocess.run(["docker", "ps", "-a", "--filter", f"name=^{container_name}$", "--format", "{{.Names}}"], capture_output=True, text=True)
+    assert container_name not in res.stdout.strip().split('\n'), f"Container {container_name} still exists"
 
 @then('the SSH configuration should be preserved')
 def step_verify_ssh_preserved(context):
     # SSH config should NOT be deleted on 'remove' by mandate
-    ssh_config = Path.home() / ".ssh" / "vde_config"
-    if not ssh_config.exists():
-        ssh_config = VDE_ROOT / "configs" / "ssh" / "vde_config"
+    # VDE v2.1.0 standard is ~/.ssh/vde/config
+    ssh_config = Path.home() / ".ssh" / "vde" / "config"
     
-    assert ssh_config.exists(), "VDE SSH config was deleted!"
+    assert ssh_config.exists(), f"VDE SSH config missing at {ssh_config}"
     content = ssh_config.read_text()
-    assert context.container_name in content, f"Config entry for {context.container_name} was removed"
+    # Scenarios often use short names in host aliases, e.g. Host vde-python
+    assert context.container_name in content or context.vm_alias in content, f"Config entry for {context.container_name} was removed"
+
+@when('I execute "{command}" inside "{vm_alias}" as "{user}"')
+def step_execute_inside(context, command, vm_alias, user):
+    user_flag = "-u root" if user == "root" else ""
+    # Store vm_alias for later steps if needed
+    context.vm_alias = vm_alias
+    
+    # DEBUG: Check bridge state
+    if command == "ssh-add -l":
+        debug_res = run_vde_command(f"exec {vm_alias} cat /home/devuser/.zshenv && ls -la /home/devuser/.ssh/vde/agent.sock")
+        print(f"DEBUG BRIDGE: {debug_res.stdout}")
+
+    # Execute via bin/vde exec which handles .zshenv sourcing
+    vde_cmd = f"exec {user_flag} {vm_alias} {command}"
+    context.last_result = run_vde_command(vde_cmd)
+    
+    if os.environ.get("VDE_DEBUG_TESTS") == "1":
+        print(f"DEBUG: Command: {vde_cmd}")
+        print(f"DEBUG: RC: {context.last_result.returncode}")
+        print(f"DEBUG: Out: {context.last_result.stdout}")
+
+@when('I enter "{vm_alias}" and run "{command}"')
+def step_enter_and_run(context, vm_alias, command):
+    # Strip vde- prefix if present for the CLI command
+    alias = vm_alias.replace("vde-", "")
+    context.vm_alias = alias
+    
+    # Use BatchMode to fail immediately if there are prompt issues
+    vde_cmd = f"enter -o BatchMode=yes {alias} {command}"
+    context.last_result = run_vde_command(vde_cmd)
+    
+    if os.environ.get("VDE_DEBUG_TESTS") == "1":
+        print(f"DEBUG: Command: {vde_cmd}")
+        print(f"DEBUG: RC: {context.last_result.returncode}")
+        print(f"DEBUG: Out: {context.last_result.stdout}")
+
+@then('the command execution should succeed')
+def step_command_succeed(context):
+    # Support both CommandResult and subprocess.CompletedProcess
+    rc = getattr(context.last_result, 'returncode', None)
+    if rc is None:
+        rc = getattr(context.last_result, 'last_exit_code', 1)
+    assert rc == 0, f"Command failed with RC {rc}: {context.last_result.stderr}"
+
+@then('the execution output should contain "{text}"')
+def step_output_contains(context, text):
+    assert text in context.last_result.stdout, f"Output does not contain '{text}': {context.last_result.stdout}"
+
+@given('I have identities loaded in my host SSH agent')
+def step_identities_loaded(context):
+    # Verify host has identities
+    import os
+    print(f"DEBUG: Host SSH_AUTH_SOCK={os.environ.get('SSH_AUTH_SOCK')}")
+    res = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True)
+    if res.returncode != 0:
+        # If no agent or no keys, attempt to add the vde_student key if it exists
+        vde_key = Path.home() / ".ssh" / "vde" / "vde_student"
+        if vde_key.exists():
+            subprocess.run(["ssh-add", str(vde_key)], capture_output=True)
+            res = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True)
+            
+    assert res.returncode == 0, "No identities loaded in host SSH agent and could not load vde_student."
+
+@then('the output should contain my host identities')
+def step_verify_forwarded_identities(context):
+    # Check if the output contains a fingerprint (usually SHA256:)
+    assert "SHA256:" in context.last_result.stdout, f"No identities found in container agent: {context.last_result.stdout}"
