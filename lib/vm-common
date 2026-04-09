@@ -592,7 +592,10 @@ get_vm_mounts() {
     # Base mounts for all VMs
     local mounts=".:/vde:ro"
     
-    if [[ "${category}" == "languages" ]]; then
+    if [[ "${raw_name}" == "jupyterlab" ]]; then
+        src_path="projects/python/jupyterlabs"
+        dst_path="/home/devuser/workspace"
+    elif [[ "${category}" == "languages" ]]; then
         src_path="projects/${raw_name}"
         dst_path="/home/devuser/workspace"
     elif [[ "${category}" == "services" ]]; then
