@@ -1,5 +1,5 @@
 # VDE (Virtual Development Environment) SSH Configuration
-# Generated on Wed Apr  8 21:10:22 EDT 2026
+# Generated on Wed Apr  8 23:17:21 EDT 2026
 #
 # This file contains SSH config entries for all known language and service VMs.
 # Each VM type has a fixed SSH port assignment:
@@ -281,6 +281,16 @@ Host vde-rabbitmq
 Host vde-redis
     HostName localhost
     Port 2406
+    User devuser
+    IdentityFile ~/.ssh/vde/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+Host vde-jupyterlab
+    HostName localhost
+    Port 2407
     User devuser
     IdentityFile ~/.ssh/vde/id_ed25519
     StrictHostKeyChecking no
