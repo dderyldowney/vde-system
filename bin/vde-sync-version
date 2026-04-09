@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 #===============================================================================
-# VDE Version Synchronizer (Host-Aware v2.0.6)
+# VDE Version Synchronizer (v1.0.0 Hardened)
 #===============================================================================
 
 # 1. Initialize the Spine
@@ -8,8 +8,7 @@ VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(pwd)}"
 source "${VDE_ROOT_DIR}/lib/vde-core"
 
 # 2. Extract the current version from the Beskar Source
-local -a NEW_VER_RAW=( ${(f)"$(vde_get_version)"} )
-local NEW_VER="${NEW_VER_RAW[1]}"
+local NEW_VER=$(vde_get_version)
 [[ "$NEW_VER" == "0.0.0-unknown" ]] && { echo "ERROR: No version in Spec."; exit 1; }
 
 # 3. Logging Fallbacks
@@ -25,11 +24,28 @@ sed -i '' "1s/^# ARCHITECTURE v.*/# ARCHITECTURE v${NEW_VER} (Absolute)/" "${VDE
 vde_log_success "Aligned docs/ARCHITECTURE.md" "forge"
 
 # 5. Strike .gemini/instructions.md
+# Update title and version footer
+sed -i '' "s/# \*\*The Way of the VDE: v[0-9.]* (.*)\*\*/# **The Way of the VDE: v${NEW_VER} (The Sovereign Handshake)**/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
 sed -i '' "s/Version: [0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
 sed -i '' "s/VDE-SPEC v[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/VDE-SPEC v${NEW_VER}/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
 vde_log_success "Aligned .gemini/instructions.md" "forge"
 
-# 6. Strike $HOME/.zshrc (The Host Handshake)
+# 6. Strike MEMORY.md
+sed -i '' "s/Version: [0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/MEMORY.md"
+sed -i '' "s/SYSTEM BENCHMARKS (VDE [0-9.]*)/SYSTEM BENCHMARKS (VDE ${NEW_VER})/" "${VDE_ROOT_DIR}/MEMORY.md"
+vde_log_success "Aligned MEMORY.md" "forge"
+
+# 7. Strike PROJECT_STATUS.md
+sed -i '' "s/# Project Status: VDE (.* v[0-9.]*)/# Project Status: VDE (Official Release v${NEW_VER})/" "${VDE_ROOT_DIR}/PROJECT_STATUS.md"
+sed -i '' "s/persistence (v[0-9.]*)/persistence (v${NEW_VER})/" "${VDE_ROOT_DIR}/PROJECT_STATUS.md"
+vde_log_success "Aligned PROJECT_STATUS.md" "forge"
+
+# 8. Strike tests/TEST_STATUS_REPORT.md
+sed -i '' "s/# VDE Test Status Report (Sovereign Certification v[0-9.]*)/# VDE Test Status Report (Sovereign Certification v${NEW_VER})/" "${VDE_ROOT_DIR}/tests/TEST_STATUS_REPORT.md"
+sed -i '' "s/SSH Forwarding verified (v[0-9.]*)/SSH Forwarding verified (v${NEW_VER})/" "${VDE_ROOT_DIR}/tests/TEST_STATUS_REPORT.md"
+vde_log_success "Aligned tests/TEST_STATUS_REPORT.md" "forge"
+
+# 9. Strike $HOME/.zshrc (The Host Handshake)
 local zshrc="${HOME}/.zshrc"
 if [[ -f "$zshrc" ]]; then
     # Strikes the gvde function's handshake prompt version
@@ -40,4 +56,3 @@ if [[ -f "$zshrc" ]]; then
 fi
 
 vde_log_success "Alignment Complete for Version ${NEW_VER}." "forge"
-
