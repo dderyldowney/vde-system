@@ -1,4 +1,4 @@
-# VDE-SPEC v1.1.0 (Absolute)
+# VDE-SPEC v1.2.0 (Absolute)
 
 ## 1. Absolute Mandates (The Rule Spine)
 

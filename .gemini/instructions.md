@@ -1,4 +1,4 @@
-# **The Way of the VDE: v1.1.0 (The Sovereign Handshake)**
+# **The Way of the VDE: v1.2.0 (The Sovereign Handshake)**
 
 This is the Way of the VDE. Certified production-ready as of version 1.0.0. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
@@ -261,5 +261,5 @@ The VDE is not built on hope; it is built on verification. No functional code sh
 - ❌ Deleting tests after the implementation is complete. A Mandalorian keeps their trophies.
 
 ---
-Version: 1.1.0
-Reference: VDE-SPEC v1.1.0
+Version: 1.2.0
+Reference: VDE-SPEC v1.2.0
