@@ -3,7 +3,7 @@ Feature: Universal Script Parity (USP) Validation
   The VDE system enforces Universal Script Parity (USP) to ensure that every VM
   is hydrated through a standardized, hardened, and deterministic process.
 
-  @usp @critical-path @usp-hardening
+  @usp @critical-path @usp-hardening @user-guide-installation
   Scenario: Verify all registered VMs have compliant setup scripts
     Given the VDE registry is loaded
     Then every VM must have a setup script in scripts/setup/

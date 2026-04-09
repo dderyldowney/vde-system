@@ -1,7 +1,7 @@
 @core-infrastructure @system-spine
 Feature: System Spine Integrity
 
-  @spine @critical-path
+  @spine @critical-path @user-guide-first-vm
   Scenario: Hub-to-Spoke Deterministic Ignition
     Given the VDE Hub "data/vm-types.conf" is the sole authority
     And the VDE Registry "data/vm-types.json" is synchronized with the Hub
@@ -18,6 +18,7 @@ Feature: System Spine Integrity
     And every VM must be startable via the VDE orchestrator
     And every VM must adhere to the 8-field registry standard
 
+  @user-guide-starting-stopping
   Scenario: VM Lifecycle Termination (Stop/Remove)
     Given the VDE Registry is loaded
     And "vde-python" is currently running
@@ -36,7 +37,7 @@ Feature: System Spine Integrity
     Then the command execution should succeed
     And the execution output should contain "vde-python"
 
-  @bridge @ssh-forwarding
+  @bridge @ssh-forwarding @user-guide-ssh-keys
   Scenario: SSH Agent Forwarding Verification
     Given the VDE system is healthy
     And "vde-python" is currently running
