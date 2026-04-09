@@ -33,12 +33,12 @@ vde_acquire_global_lock() {
 
 ### Step 2: Update `bin/add-vm-type`
 Replace:
-```bash
+```zsh
 acquire_lock "${global_lock}" 60
 vde_handle_error "lock-acquisition" "${global_lock}"
 ```
 With:
-```bash
+```zsh
 vde_acquire_global_lock 60 || vde_handle_error "lock-acquisition" "${global_lock}"
 ```
 
@@ -47,7 +47,7 @@ Update `vde_translate_conf_to_json` to use `vde_acquire_global_lock`.
 
 ## Verification
 Re-run the concurrency stress test:
-```bash
+```zsh
 bin/vde stop --all && \
 rm -rf .cache/port-registry/* .locks/vms/* && \
 python3 -m behave tests/features/core-infrastructure/concurrency-stress.feature

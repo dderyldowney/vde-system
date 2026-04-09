@@ -9,7 +9,7 @@ To bring the orchestrator into compliance with Section 10 by performing a surgic
 
 ## Implementation Steps
 1. Replace the `find_available_port` function in `lib/vm-common` with the provided refactored logic:
-```bash
+```zsh
 find_available_port() {
     local min_port=$1
     local max_port=$2
@@ -44,7 +44,7 @@ find_available_port() {
 
 ## Verification & Testing
 Run the following final strike sequence to verify the 3-VM parallel ignition:
-```bash
+```zsh
 bin/vde stop --all && \
 rm -rf .cache/port-registry/* .locks/vms/* && \
 python3 -m behave tests/features/core-infrastructure/concurrency-stress.feature

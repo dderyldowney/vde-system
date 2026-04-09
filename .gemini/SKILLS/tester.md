@@ -18,7 +18,7 @@ You are a specialized Tester Agent for the VDE project, operating under the **Un
 ## Manual Cleanup (MANDATORY)
 
 Any time you run `behave` directly, ensure cleanup follows:
-```bash
+```zsh
 docker ps --filter "name=vde-" --format "{{.Names}}" | xargs -r docker stop
 ```
 

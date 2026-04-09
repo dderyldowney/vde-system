@@ -68,14 +68,14 @@ Even if you've never used Terminal before, we've got you covered.
 
 VDE has a simple, unified command that does *everything*:
 
-```bash
+```zsh
 ./bin/vde
 ```
 
 That's it. One command to remember. No memorizing a dozen different scripts. Just `vde`. Easy!
 
 **Need to see what's available?**
-```bash
+```zsh
 ./bin/vde --help
 # or
 ./bin/vde help
@@ -89,7 +89,7 @@ This shows you all available actions: creating VMs, starting/stopping, listing, 
 
 Ready to have your mind blown (in the best way)? Here's all it takes to get started with Python:
 
-```bash
+```zsh
 # That's it. Seriously.
 ./bin/vde create python
 ./bin/vde start python
@@ -111,7 +111,7 @@ ssh vde-python
 
 ## Want Rust Too? Go Ahead! 🦀
 
-```bash
+```zsh
 ./bin/vde create rust
 ./bin/vde start rust
 ssh vde-rust
@@ -152,7 +152,7 @@ This is where VDE gets *really* cool. Like, actually magic.
 
 Imagine you're working in your Python container and you need to test something against the PostgreSQL database. You don't need to exit, open a new terminal, or mess with connection strings:
 
-```bash
+```zsh
 # From inside your Python VM
 ssh vde-postgres psql -U devuser
 ```
@@ -175,7 +175,7 @@ Let's say you want to build a web app with:
 
 Here's your workflow:
 
-```bash
+```zsh
 # Create everything
 ./bin/vde create python js postgres redis
 
@@ -191,7 +191,7 @@ python app.py
 
 In another terminal:
 
-```bash
+```zsh
 # Connect to your JavaScript frontend
 ssh vde-js
 cd ~/workspace/my-app
@@ -348,7 +348,7 @@ We get it! Sometimes you try something and it's not for you. Or maybe you're jus
 
 ### The Two-Step Farewell 👋
 
-```bash
+```zsh
 # 1. Stop any running VMs
 ./bin/vde stop all
 
@@ -365,7 +365,7 @@ Your Docker images will take up some disk space (you can clean those with Docker
 
 **Absolutely!** Your code is in the `projects/` directory inside the VDE folder. Before deleting VDE:
 
-```bash
+```zsh
 # Copy your projects somewhere safe
 cp -r dev/projects ~/my-projects-backup
 
@@ -383,7 +383,7 @@ Then delete VDE, and your projects live on. Safe and sound!
 
 **Your first VDE is three commands away:**
 
-```bash
+```zsh
 cd ~/dev  # or wherever you cloned this repo
 ./bin/vde create python  # or any language you want!
 ./bin/vde start python

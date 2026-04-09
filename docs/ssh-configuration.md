@@ -83,7 +83,7 @@ When you run `create-virtual-for` or `start-virtual`, VDE automatically:
 
 ### No Manual Steps Required
 
-```bash
+```zsh
 # Just create and start VMs - SSH is handled automatically
 vde create python
 vde start python
@@ -125,7 +125,7 @@ SSH from one VM to another using your host's SSH keys:
 
 ### Basic Examples
 
-```bash
+```zsh
 # From your host
 ssh vde-go                    # Connect to Go VM
 
@@ -137,7 +137,7 @@ scp vde-python:/data/file .   # Copy file from Python VM
 
 ### Full Stack Example
 
-```bash
+```zsh
 # Create and start VMs
 vde create python postgres redis
 vde start python postgres redis
@@ -150,7 +150,7 @@ ssh vde-redis redis-cli             # Connect to Redis
 
 ### Microservices Example
 
-```bash
+```zsh
 # Create microservices architecture
 vde create go python rust postgres
 vde start go python rust postgres
@@ -194,7 +194,7 @@ Execute commands on your host from within any VM:
 
 ### Using the `to-host` Helper
 
-```bash
+```zsh
 # From within any VM
 to-host ls ~/dev                    # List host's dev directory
 to-host tail -f logs/app.log        # View host's log files
@@ -203,7 +203,7 @@ to-host docker ps                   # Check host's containers
 
 ### Direct Docker Commands
 
-```bash
+```zsh
 # From within any VM
 docker exec vde-python ls           # Execute in Python VM
 docker exec vde-postgres psql       # Execute in PostgreSQL
@@ -217,7 +217,7 @@ Use your host's SSH keys for external services from within any VM:
 
 ### Git Operations
 
-```bash
+```zsh
 # From within any VM - uses your GitHub/GitLab keys
 git clone github.com:user/repo
 git push origin main
@@ -225,7 +225,7 @@ git push origin main
 
 ### External SSH
 
-```bash
+```zsh
 # From within any VM - uses your host keys
 ssh user@external-server.com
 scp user@external-server.com:/path/file .
@@ -237,7 +237,7 @@ scp user@external-server.com:/path/file .
 
 ### View SSH Status
 
-```bash
+```zsh
 # Interactive status display
 vde health  # Includes SSH status check
 ```
@@ -251,7 +251,7 @@ This shows:
 
 ### Manual Commands
 
-```bash
+```zsh
 # Check if SSH agent is running
 ps aux | grep ssh-agent
 
@@ -273,26 +273,26 @@ While VDE handles everything automatically, you can perform manual operations if
 
 ### Add a New Key to Agent
 
-```bash
+```zsh
 ssh-add ~/.ssh/vde/new_key
 ```
 
 ### Start SSH Agent Manually
 
-```bash
+```zsh
 eval "$(ssh-agent -s)"
 ssh-add
 ```
 
 ### Stop Agent
 
-```bash
+```zsh
 ssh-agent -k
 ```
 
 ### Restart Agent
 
-```bash
+```zsh
 eval "$(ssh-agent -s)" && ssh-add
 ```
 
@@ -306,7 +306,7 @@ eval "$(ssh-agent -s)" && ssh-add
 
 **Solution**: VDE starts agent automatically, but you can manually start:
 
-```bash
+```zsh
 eval "$(ssh-agent -s)"
 ssh-add
 ```
@@ -317,7 +317,7 @@ ssh-add
 
 **Solution**: Add your keys:
 
-```bash
+```zsh
 ssh-add ~/.ssh/vde/vde_student
 # Or add all keys
 for key in ~/.ssh/vde/id_*; do [ -f "$key" ] && ssh-add "$key"; done
@@ -329,13 +329,13 @@ for key in ~/.ssh/vde/id_*; do [ -f "$key" ] && ssh-add "$key"; done
 
 **Solution**: Check that both VMs are running:
 
-```bash
+```zsh
 docker ps | grep -E "python|go"
 ```
 
 Regenerate VM SSH config:
 
-```bash
+```zsh
 vde health
 ```
 
@@ -346,23 +346,23 @@ vde health
 **Solutions**:
 
 1. Check key permissions:
-```bash
+```zsh
 chmod 600 ~/.ssh/vde/vde_student
 chmod 644 ~/.ssh/vde/vde_student.pub
 ```
 
 2. Verify key is in agent:
-```bash
+```zsh
 ssh-add -l
 ```
 
 3. Check SSH config:
-```bash
+```zsh
 cat ~/.ssh/vde/config
 ```
 
 4. Rebuild VM with updated keys:
-```bash
+```zsh
 vde stop python
 vde start python --rebuild
 ```
@@ -374,24 +374,24 @@ vde start python --rebuild
 **Solutions**:
 
 1. Check if container is running:
-```bash
+```zsh
 docker ps | grep python
 ```
 
 2. Check container logs:
-```bash
+```zsh
 docker logs vde-python
 ```
 
 3. Restart container:
-```bash
+```zsh
 vde stop python
 vde start python
 ```
 
 ### Verbose Debugging
 
-```bash
+```zsh
 # Enable verbose SSH output
 ssh -v vde-python
 
@@ -410,7 +410,7 @@ If you previously set up SSH manually:
 
 ### Old Way (Manual)
 
-```bash
+```zsh
 # 1. Generate key
 ssh-keygen -t ed25519
 
@@ -429,7 +429,7 @@ EOF
 
 ### New Way (Automatic)
 
-```bash
+```zsh
 # Just create VM - everything else is automatic
 vde create python
 vde start python

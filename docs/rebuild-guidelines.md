@@ -23,7 +23,7 @@ When and how to rebuild your VDE containers.
 
 ### Single VM
 
-```bash
+```zsh
 # Rebuild single VM
 vde start python --rebuild
 
@@ -33,7 +33,7 @@ vde start python --rebuild --no-cache
 
 ### Multiple VMs
 
-```bash
+```zsh
 # Rebuild multiple VMs
 vde start python go rust --rebuild
 
@@ -65,28 +65,28 @@ vde start all --rebuild
 
 ### After Changing vde-base.Dockerfile
 
-```bash
+```zsh
 # Rebuild all VMs that use the base image
 vde start all --rebuild
 ```
 
 ### After Adding System Packages
 
-```bash
+```zsh
 # Rebuild specific VM
 vde start python --rebuild
 ```
 
 ### After Updating SSH Keys
 
-```bash
+```zsh
 # Rebuild to bake in new keys
 vde start all --rebuild
 ```
 
 ### After Base Image Update
 
-```bash
+```zsh
 # Full clean rebuild
 vde start all --rebuild --no-cache
 ```
@@ -97,21 +97,21 @@ vde start all --rebuild --no-cache
 
 ### Rebuild Takes Too Long
 
-```bash
+```zsh
 # Use cached layers (faster, but may not pick up all changes)
 vde start python --rebuild
 ```
 
 ### Rebuild Doesn't Pick Up Changes
 
-```bash
+```zsh
 # Force rebuild without cache
 vde start python --rebuild --no-cache
 ```
 
 ### Container Won't Start After Rebuild
 
-```bash
+```zsh
 # Check logs
 docker logs <container-name>
 

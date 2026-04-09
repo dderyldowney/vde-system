@@ -8,7 +8,7 @@ Get up and running with VDE in minutes.
 
 ## First-Time Setup
 
-```bash
+```zsh
 # 1. Navigate to your dev directory
 cd ~/dev  # or wherever you cloned this repo
 
@@ -34,7 +34,7 @@ cd ~/workspace  # Your project directory
 >
 > If `ssh vde-go` doesn't work, you can connect manually:
 >
-> ```bash
+> ```zsh
 > ssh devuser@localhost -p 2213
 > ```
 >
@@ -72,7 +72,7 @@ When you ran `vde start go`:
 
 With SSH agent forwarding, you can communicate between VMs:
 
-```bash
+```zsh
 # Create and start multiple VMs
 vde create python postgres
 vde start python postgres

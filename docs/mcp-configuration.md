@@ -68,7 +68,7 @@ Context7 provides up-to-date documentation. It is configured to run via `npx`. E
 
 The Redis MCP server can be configured via `uvx` or `docker`. For VDE, we prefer the Docker-based approach for isolation:
 
-```bash
+```zsh
 gemini mcp add redis docker run --rm --name redis-mcp-server -i -e REDIS_URL=redis://localhost:6379/0 mcp-redis
 ```
 
@@ -81,7 +81,7 @@ The GitHub MCP server requires a personal access token:
    - Create token with scopes: `repo`, `read:org`, `read:user`
 
 2. Set the environment variable:
-   ```bash
+   ```zsh
    export GITHUB_TOKEN="your_token_here"
    ```
 
@@ -107,17 +107,17 @@ The GitHub MCP server requires a personal access token:
 ## Troubleshooting
 
 ### Check Configuration
-```bash
+```zsh
 cat .gemini/settings.json | jq .
 ```
 
 ### Test Individual Server
-```bash
+```zsh
 npx -y @modelcontextprotocol/server-[name]
 ```
 
 ### Clear NPX Cache (if issues)
-```bash
+```zsh
 npm cache clean --force
 ```
 

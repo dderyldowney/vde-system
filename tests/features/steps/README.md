@@ -195,7 +195,7 @@ def step_logged_in_real(context):
 
 ## Testing Your Steps
 
-```bash
+```zsh
 # Run specific feature file
 behave tests/features/your-feature.feature
 

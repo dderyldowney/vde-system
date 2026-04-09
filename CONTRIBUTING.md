@@ -75,7 +75,7 @@ We welcome contributions in many forms beyond just code!
 See [TESTING.md](docs/TESTING.md) for detailed installation instructions.
 
 ### Initial Setup
-```bash
+```zsh
 # Clone the repository
 git clone https://github.com/YOUR_USERNAME/vde-system.git
 cd vde-system
@@ -90,7 +90,7 @@ docker --version
 
 ### Creating a Development Environment
 
-```bash
+```zsh
 # List available VMs
 ./bin/vde list
 
@@ -119,7 +119,7 @@ Please read:
 - Update documentation
 
 ### Quick Reference
-```bash
+```zsh
 # Check syntax
 zsh -n your-script.sh
 
@@ -136,7 +136,7 @@ make check
 ## Testing
 
 ### Before Submitting
-```bash
+```zsh
 # Run full test suite
 make check
 

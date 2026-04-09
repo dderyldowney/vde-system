@@ -50,7 +50,7 @@ All available programming languages and services that can be created with VDE.
 
 ## Viewing Available VMs
 
-```bash
+```zsh
 # List all VMs (using unified CLI)
 vde list
 

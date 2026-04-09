@@ -622,7 +622,7 @@ def format_scenario_for_user_guide(scenario_name, scenario_body):
 
         lines.append(f"**{action_label}:**\n")
         lines.append("")
-        lines.append("```bash")
+        lines.append("```zsh")
         lines.append(command)
         lines.append("```")
     else:
@@ -643,7 +643,7 @@ def format_scenario_for_user_guide(scenario_name, scenario_body):
         ):
             lines.append("**This is handled by the setup script:**\n")
             lines.append("")
-            lines.append("```bash")
+            lines.append("```zsh")
             lines.append("./bin/build-and-start")
             lines.append("```")
         # Other scenarios without commands just don't get a command block
@@ -842,7 +842,7 @@ def generate_quick_reference():
 
 ### Essential Commands (Your Cheat Sheet!)
 
-```bash
+```zsh
 # See what VMs are available
 vde list
 
@@ -864,7 +864,7 @@ vde start <vm> --rebuild
 
 ### SSH Connections
 
-```bash
+```zsh
 # VDE SSH - Simple connections to your VMs
 vde ssh python     # Python development
 vde ssh rust       # Rust development
@@ -1030,7 +1030,7 @@ def generate_user_guide(passing_scenarios=None):
                         ],
                     ),
                     (
-                        "Installing Zsh and Bash",
+                        "Installing Zsh",
                         [
                             ("For Windows Users", "for-windows-users"),
                             ("For macOS (Mac) Users", "for-macos-mac-users"),
@@ -1066,6 +1066,7 @@ def generate_user_guide(passing_scenarios=None):
             ("9. Daily Workflow", []),
             ("10. Adding More Languages", []),
             ("11. Troubleshooting", []),
+            ("12. Trial of the Gauntlet", []),
         ]
         for i, (section, subsections) in enumerate(sections, 1):
             section_id = section.lower().replace(" ", "-").replace(":", "")

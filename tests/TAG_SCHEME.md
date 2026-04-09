@@ -29,7 +29,7 @@ Run all fast tests: `behave --tags=@parser,@spec,@config,@error-path`
 
 ## Usage Examples
 
-```bash
+```zsh
 # Run only fast tests (no Docker)
 behave --tags=@parser,@spec,@config,@error-path
 

@@ -78,7 +78,7 @@ Individual scripts are still available but `vde` is the recommended interface:
 
 If you encounter "permission denied" errors:
 
-```bash
+```zsh
 chmod +x ~/dev/bin/*
 chmod +x ~/dev/lib/*
 ```

@@ -87,7 +87,7 @@ All 27 docker-required features are tagged with GitHub-incompatible tags:
 
 ## How to Run Docker-Required Tests Locally
 
-```bash
+```zsh
 # Run all docker-required tests locally
 ./tests/run-local-bdd.sh
 

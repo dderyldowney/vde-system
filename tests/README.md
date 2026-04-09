@@ -85,13 +85,13 @@ tests/
 
 ### Run All Tests
 
-```bash
+```zsh
 ./tests/run-all-known-tests.sh
 ```
 
 ### Run Specific Test Categories
 
-```bash
+```zsh
 # Bug fix validation only
 ./tests/run-all-known-tests.sh bug-fix
 
@@ -107,7 +107,7 @@ tests/
 
 ### Run Individual Test Files
 
-```bash
+```zsh
 # Bug fix validation
 ./tests/bug-fix-validation.test.sh
 
@@ -122,7 +122,7 @@ tests/
 
 ### Options
 
-```bash
+```zsh
 # Verbose output
 ./tests/run-all-known-tests.sh -v
 ./tests/run-all-known-tests.sh --verbose
@@ -443,7 +443,7 @@ tests/
 
 ### Test File Template
 
-```bash
+```zsh
 #!/usr/bin/env zsh
 # Unit Tests for <library>
 # Tests <description>
@@ -557,7 +557,7 @@ jobs:
 
 ### Pre-commit Hook
 
-```bash
+```zsh
 #!/usr/bin/env zsh
 # .git/hooks/pre-commit
 
@@ -598,7 +598,7 @@ jobs:
 
 Integration tests MUST use **test-only VM names** that will never match production VM types:
 
-```bash
+```zsh
 # ✅ CORRECT - Test-only names
 TEST_LANG_VM="vde-test-lang"    # Not in vm-types.conf
 TEST_SVC_VM="vde-test-svc"      # Not in vm-types.conf
