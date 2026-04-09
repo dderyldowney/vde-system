@@ -1,52 +1,26 @@
 # Template for service VMs
-# Variables: nginx, 2403, 80,443, 
-# SERVICE_PORT can be a single port (e.g., "5432") or multiple ports (e.g., "80,443")
+# Variables: nginx, 2403, 80,443, , zsh /vde/scripts/setup/nginx-init.zsh
 name: vde-nginx
 services:
   vde-nginx:
     build:
       context: ../../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
-
+      dockerfile: configs/docker/vde-lang.Dockerfile
       args:
+        VM_NAME: nginx
+        PKGS_TO_INSTALL: ""
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/nginx-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000
-        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: vde-nginx:latest
     container_name: vde-nginx
     hostname: vde-nginx
     restart: unless-stopped
-    # Orchestrate service and SSH startup
-    command: >
-      sh -c "if [ -n \"\" ]; then
-               ;
-             fi;
-             if [ \"nginx\" = \"postgres\" ]; then
-               chown -R postgres:postgres /var/lib/postgresql/data;
-               if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
-                 sudo -u postgres /usr/lib/postgresql/15/bin/initdb -D /var/lib/postgresql/data;
-                 echo \"host all all all trust\" | sudo -u postgres tee -a /var/lib/postgresql/data/pg_hba.conf >/dev/null;
-               fi;
-               sudo -u postgres /usr/lib/postgresql/15/bin/pg_ctl -D /var/lib/postgresql/data -o \"-c listen_addresses='*'\" start;
-               until pg_isready -q -h localhost -U postgres; do zmodload zsh/zselect 2>/dev/null && zselect -t 20; done;
-               sudo -u postgres psql -c \"CREATE ROLE devuser WITH LOGIN SUPERUSER\" 2>/dev/null || true;
-             elif [ \"nginx\" = \"redis\" ]; then
-               chown -R devuser:devuser /data;
-               sudo -u devuser redis-server --daemonize yes --dir /data --bind 0.0.0.0 --protected-mode no;
-               until redis-cli ping >/dev/null 2>&1; do zmodload zsh/zselect 2>/dev/null && zselect -t 20; done;
-             elif [ \"nginx\" = \"mysql\" ]; then
-               chown -R mysql:mysql /var/lib/mysql;
-               if [ ! -d /var/lib/mysql/mysql ]; then
-                 mysqld --initialize-insecure --user=mysql;
-               fi;
-               mysqld_safe --user=mysql --bind-address=0.0.0.0 --skip-grant-tables &
-               until mysqladmin ping -h localhost --silent; do zmodload zsh/zselect 2>/dev/null && zselect -t 20; done;
-             fi; 
-             /usr/sbin/sshd -D"
+    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
-      - "2403:22"
+      - "2403:2403"
       - "80:80"
       - "443:443"
 
@@ -56,14 +30,15 @@ services:
       - ../../../../data/nginx:/data
       - ../../../../logs/nginx:/logs
       - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
+      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Persistence mapping
       - ../../../../data/nginx/pgdata:/var/lib/postgresql/data
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
-      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/run/host-services/ssh-auth.sock:ro
-      # macOS Canonical Bridge (if exists)
-      - /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock
+      # macOS Canonical Bridge (Hardened to use explicit host socket)
+      - ${SSH_AUTH_SOCK}:/run/host-services/ssh-auth.sock
+      # VDE 2026 Sovereign Bridge
+      - ${SSH_AUTH_SOCK}:/run/vde-ssh.sock
 
     environment:
       - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock

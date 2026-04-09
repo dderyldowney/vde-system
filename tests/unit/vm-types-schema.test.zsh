@@ -122,7 +122,7 @@ with open('$VM_TYPES_JSON') as f:
 for idx, vm in enumerate(data['vms']['language']):
     assert 'name' in vm, f'language[{idx}]: missing name'
     assert 'display' in vm, f'language[{idx}]: missing display'
-    assert 'install' in vm, f'language[{idx}]: missing install'
+    assert 'pkgs' in vm or 'custom_cmd' in vm, f'language[{idx}]: missing installation fields'
 print('PASS')
 " || return 1
 }
@@ -134,7 +134,7 @@ with open('$VM_TYPES_JSON') as f:
     data = json.load(f)
 for idx, vm in enumerate(data['vms']['language']):
     assert 'service_port' in vm, f'language[{idx}] ({vm.get(\"name\", \"?\")}): missing service_port field'
-    assert vm['service_port'] is None, f'language[{idx}] ({vm[\"name\"]}): service_port must be null, got {vm[\"service_port\"]}'
+    assert vm['service_port'] is None or vm['service_port'] == '', f'language[{idx}] ({vm[\"name\"]}): service_port must be null or empty, got {vm[\"service_port\"]}'
 print('PASS')
 " || return 1
 }
@@ -160,7 +160,7 @@ with open('$VM_TYPES_JSON') as f:
 for idx, vm in enumerate(data['vms']['service']):
     assert 'name' in vm, f'service[{idx}]: missing name'
     assert 'display' in vm, f'service[{idx}]: missing display'
-    assert 'install' in vm, f'service[{idx}]: missing install'
+    assert 'pkgs' in vm or 'custom_cmd' in vm, f'service[{idx}]: missing installation fields'
     assert 'service_port' in vm, f'service[{idx}]: missing service_port'
 print('PASS')
 " || return 1
@@ -213,12 +213,14 @@ assert 'language' in data['vms'] and 'service' in data['vms'], 'Missing VM type 
 
 # Language VM validation
 for vm in data['vms']['language']:
-    assert 'name' in vm and 'display' in vm and 'install' in vm, f'Language VM missing required fields: {vm.get(\"name\", \"?\")}'
-    assert vm.get('service_port') is None, f'Language VM must have null service_port: {vm[\"name\"]}'
+    assert 'name' in vm and 'display' in vm, f'Language VM missing required fields: {vm.get(\"name\", \"?\")}'
+    assert 'pkgs' in vm or 'custom_cmd' in vm, f'Language VM missing installation fields: {vm.get(\"name\", \"?\")}'
+    assert vm.get('service_port') is None or vm.get('service_port') == '', f'Language VM must have null or empty service_port: {vm[\"name\"]}'
 
 # Service VM validation
 for vm in data['vms']['service']:
-    assert 'name' in vm and 'display' in vm and 'install' in vm and 'service_port' in vm, f'Service VM missing required fields: {vm.get(\"name\", \"?\")}'
+    assert 'name' in vm and 'display' in vm and 'service_port' in vm, f'Service VM missing required fields: {vm.get(\"name\", \"?\")}'
+    assert 'pkgs' in vm or 'custom_cmd' in vm, f'Service VM missing installation fields: {vm.get(\"name\", \"?\")}'
     assert isinstance(vm['service_port'], str), f'Service VM service_port must be string: {vm[\"name\"]}'
 
 print('PASS')

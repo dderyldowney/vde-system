@@ -91,18 +91,19 @@ test_vm_types_have_required_fields() {
     test_start "VM types have required fields"
 
     local vm="python"
-    local type display install
+    local type display pkgs custom_cmd
 
     type=$(get_vm_info type "$vm")
     display=$(get_vm_info display "$vm")
-    install=$(get_vm_info install "$vm")
+    pkgs=$(get_vm_info pkgs "$vm")
+    custom_cmd=$(get_vm_info custom_cmd "$vm")
 
-    if [[ -n "$type" ]] && [[ -n "$display" ]] && [[ -n "$install" ]]; then
+    if [[ -n "$type" ]] && [[ -n "$display" ]] && { [[ -n "$pkgs" ]] || [[ -n "$custom_cmd" ]]; }; then
         test_pass "VM types have required fields"
         return
     fi
 
-    test_fail "VM types fields" "missing fields - type:$type display:$display install:$install"
+    test_fail "VM types fields" "missing fields - type:$type display:$display pkgs:$pkgs custom_cmd:$custom_cmd"
 }
 
 # =============================================================================

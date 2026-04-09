@@ -1,17 +1,18 @@
 # Template for language VMs
-# Variables: scala, 2217, 
+# Variables: scala, 2217, , zsh /vde/scripts/setup/scala-init.zsh
 name: vde-scala
 services:
   vde-scala:
     build:
       context: ../../../..
-      dockerfile: configs/docker/vde-base.Dockerfile
-
+      dockerfile: configs/docker/vde-lang.Dockerfile
       args:
+        VM_NAME: scala
+        PKGS_TO_INSTALL: ""
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/scala-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000
-        PUBLIC_KEYS_DIR: /public-ssh-keys
     image: vde-scala:latest
     container_name: vde-scala
     hostname: vde-scala
@@ -20,26 +21,23 @@ services:
       - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name=scala"
-    command: >
-      sh -c "if [ -n \"\" ]; then
-               ;
-             fi;
-             /usr/sbin/sshd -D"
+    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
-      - "2217:22"
+      - "2217:2217"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../projects/scala:/home/devuser/workspace
       - ../../../../logs/scala:/logs
       - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
+      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
-      # SSH agent forwarding for VM->VM, VM->Host, VM->External communication
-      - ${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}:/run/host-services/ssh-auth.sock:ro
-      # macOS Canonical Bridge (if exists)
-      - /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock
+      # macOS Canonical Bridge (Hardened to use explicit host socket)
+      - ${SSH_AUTH_SOCK}:/run/host-services/ssh-auth.sock
+      # VDE 2026 Sovereign Bridge
+      - ${SSH_AUTH_SOCK}:/run/vde-ssh.sock
 
     environment:
       - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock

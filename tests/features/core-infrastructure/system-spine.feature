@@ -1,3 +1,4 @@
+@core-infrastructure @system-spine
 Feature: System Spine Integrity
 
   @spine @critical-path
@@ -26,3 +27,20 @@ Feature: System Spine Integrity
     When I run the one true way to remove "python"
     Then the container "vde-python" should be destroyed
     And the SSH configuration should be preserved
+
+  @bridge @docker-socket
+  Scenario: Sovereign Docker Socket Access
+    Given the VDE system is healthy
+    And "vde-python" is currently running
+    When I execute "docker ps" inside "vde-python" as "devuser"
+    Then the command execution should succeed
+    And the execution output should contain "vde-python"
+
+  @bridge @ssh-forwarding
+  Scenario: SSH Agent Forwarding Verification
+    Given the VDE system is healthy
+    And "vde-python" is currently running
+    And I have identities loaded in my host SSH agent
+    When I execute "ssh-add -l" inside "vde-python" as "devuser"
+    Then the command execution should succeed
+    And the output should contain my host identities

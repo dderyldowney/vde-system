@@ -43,6 +43,19 @@ def step_verify_scripts_exist(context):
         if script_path not in context.setup_scripts:
             context.setup_scripts.append(script_path)
 
+@then(r"every script must follow the '(.+)' standardized header ritual")
+def step_verify_header_ritual(context, ritual_name):
+    """Verify that every setup script follows the required header ritual."""
+    assert hasattr(context, "setup_scripts"), "No setup scripts found to check"
+    
+    missing = []
+    for script in context.setup_scripts:
+        content = script.read_text()
+        if ritual_name not in content:
+            missing.append(script.name)
+            
+    assert not missing, f"Scripts missing ritual '{ritual_name}': {', '.join(missing)}"
+
 @then(r"every script must have '(.+)' (?:for|to) (.+)")
 def step_verify_script_content(context, pattern, reason):
     """Verify that every setup script contains the required hardening pattern."""
@@ -55,3 +68,24 @@ def step_verify_script_content(context, pattern, reason):
             missing.append(script.name)
             
     assert not missing, f"Scripts missing '{pattern}' ({reason}): {', '.join(missing)}"
+
+@then(r'every script in "(.+)" must be associated with a registered VM')
+def step_verify_no_ghost_scripts(context, directory):
+    """Verify that every script in the specified directory is registered in the Hub."""
+    setup_dir = VDE_ROOT / directory
+    all_scripts = list(setup_dir.glob("*-init.zsh"))
+    
+    # Get all registered script names
+    registered_scripts = []
+    for vm in context.all_vms:
+        custom_cmd = vm.get("custom_cmd", "")
+        if custom_cmd:
+            script_name = custom_cmd.split()[-1].split("/")[-1]
+            registered_scripts.append(script_name)
+            
+    ghosts = []
+    for script in all_scripts:
+        if script.name not in registered_scripts:
+            ghosts.append(script.name)
+            
+    assert not ghosts, f"Ghost scripts detected in {directory} (not registered): {', '.join(ghosts)}"

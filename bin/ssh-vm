@@ -29,6 +29,18 @@ source "${VDE_ROOT_DIR}/lib/vm-common" &>/dev/null
 # Initialize logging
 vde_log_init 2>/dev/null || true
 
+# --- ENVIRONMENT RECOVERY (Rule G Hardening) ---
+# If SSH_AUTH_SOCK is missing or invalid, attempt recovery from VDE agent environment
+if [[ ! -S "${SSH_AUTH_SOCK}" ]]; then
+    local _vde_agent_env="${HOME}/.ssh/vde/agent_env"
+    if [[ -f "${_vde_agent_env}" ]]; then
+        local _recovered_sock=$(grep "^SSH_AUTH_SOCK=" "${_vde_agent_env}" | head -1 | sed 's/^SSH_AUTH_SOCK=\([^;]*\);.*/\1/')
+        if [[ -S "${_recovered_sock}" ]]; then
+            export SSH_AUTH_SOCK="${_recovered_sock}"
+        fi
+    fi
+fi
+
 #===============================================================================
 # Usage
 #===============================================================================
@@ -164,7 +176,7 @@ fi
 SSH_HOST_ALIAS=$(vde_get_ssh_host "${RESOLVED_NAME}")
 
 # Build SSH command as array
-SSH_CMD=(ssh -F "${VDE_SSH_CONFIG}" -o "UserKnownHostsFile=${VDE_SSH_KNOWN_HOSTS}" ${SSH_OPTS[@]} "${SSH_HOST_ALIAS}")
+SSH_CMD=(ssh -tt -A -F "${VDE_SSH_CONFIG}" -o "UserKnownHostsFile=${VDE_SSH_KNOWN_HOSTS}" ${SSH_OPTS[@]} "${SSH_HOST_ALIAS}")
 
 # Append extra arguments if any (the command to run)
 if [[ ${#EXTRA_ARGS[@]} -gt 0 ]] ; then

@@ -164,7 +164,8 @@ EOF
 # Generate language docker-compose.yml
 generate_language_config() {
   local name="${1}"
-  local install_cmd="${2}"
+  local pkgs="${2}"
+  local custom_cmd="${3}"
   local ssh_port=$(get_ssh_port "${name}")
 
   local config_dir="${VDE_ROOT_DIR}/configs/docker/languages/${name}"
@@ -179,7 +180,7 @@ generate_language_config() {
   fi
 
   # Replace variables in template
-  sed "s@{{NAME}}@${name}@g; s@{{SSH_PORT}}@${ssh_port}@g; s@{{INSTALL_CMD}}@${install_cmd}@g" "${template_file}" > "${compose_file}"
+  sed "s@{{NAME}}@${name}@g; s@{{SSH_PORT}}@${ssh_port}@g; s@{{PKGS}}@${pkgs}@g; s@{{CUSTOM_CMD}}@${custom_cmd}@g" "${template_file}" > "${compose_file}"
 
   echo "Generated: ${compose_file}"
 
@@ -190,7 +191,8 @@ generate_language_config() {
 # Generate service docker-compose.yml
 generate_service_config() {
   local name="${1}"
-  local install_cmd="${2}"
+  local pkgs="${2}"
+  local custom_cmd="${3}"
   local ssh_port=$(get_ssh_port "${name}")
   local service_port=$(get_service_port "${name}")
 
@@ -220,7 +222,7 @@ generate_service_config() {
   # Replace variables in template
   # First handle service ports mapping block
   sed "s@##SERVICE_PORTS##@${port_mappings}@g" "${template_file}" | \
-  sed "s@{{NAME}}@${name}@g; s@{{SSH_PORT}}@${ssh_port}@g; s@{{INSTALL_CMD}}@${install_cmd}@g; s@{{SERVICE_PORT}}@${service_port}@g" > "${compose_file}"
+  sed "s@{{NAME}}@${name}@g; s@{{SSH_PORT}}@${ssh_port}@g; s@{{PKGS}}@${pkgs}@g; s@{{CUSTOM_CMD}}@${custom_cmd}@g; s@{{SERVICE_PORT}}@${service_port}@g" > "${compose_file}"
 
   echo "Generated: ${compose_file}"
 
@@ -276,8 +278,9 @@ main() {
       continue
     fi
 
-    local install_cmd="$(get_vm_info install "${short_name}" 2>/dev/null || echo "")"
-    generate_language_config "${short_name}" "${install_cmd}"
+    local pkgs="$(get_vm_info install "${short_name}" 2>/dev/null || echo "")"
+    local custom_cmd="$(get_vm_info custom_cmd "${short_name}" 2>/dev/null || echo "")"
+    generate_language_config "${short_name}" "${pkgs}" "${custom_cmd}"
     ((generated_count++))
     ((env_generated_count++))
   done
@@ -293,8 +296,9 @@ main() {
       continue
     fi
 
-    local install_cmd="$(get_vm_info install "${short_name}" 2>/dev/null || echo "")"
-    generate_service_config "${short_name}" "${install_cmd}"
+    local pkgs="$(get_vm_info install "${short_name}" 2>/dev/null || echo "")"
+    local custom_cmd="$(get_vm_info custom_cmd "${short_name}" 2>/dev/null || echo "")"
+    generate_service_config "${short_name}" "${pkgs}" "${custom_cmd}"
     ((generated_count++))
     ((env_generated_count++))
   done
