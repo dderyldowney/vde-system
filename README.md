@@ -1,238 +1,219 @@
 <p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-# VDE - Your Virtual Development Playground! 🎉
+# The Way of the VDE: v1.0.0 (The Sovereign Handshake)
 
 ![CI Status](https://github.com/dderyldowney/vde-system/actions/workflows/vde-ci.yml/badge.svg)
 
+A sovereign, template-based ecosystem of Dockerized Spokes. Supporting 19+ Language Spokes and 7+ Service Spokes, forged for the warrior who demands consistent hydration and absolute isolation. Accessible via the **Sovereign Handshake (SSH)** with a single, unyielding identity.
 
-A modular, template-based Docker development environment supporting 19+ programming languages and 7+ services, all accessible via SSH with consistent user configuration. Designed for daily development work with VSCode Remote-SSH.
-
-**Shell Support:** zsh 5.0+, bash 4.0+, bash 3.x (with fallbacks) — [See Requirements](docs/requirements.md)
-
----
-
-## Hey There! 👋
-
-Welcome to VDE — your new best friend for development environments. Whether you're a total beginner or a seasoned pro, whether you code in Python or Rust or something entirely new — VDE is here to make your life easier. You're going to love it here! ✨
-
-> **🎉 New to VDE?** Start here: [**Why Use VDE?**](docs/WHY_USE_VDE.md) — Discover how VDE transforms your development workflow.
+**The Language of the Tribe:** Strictly **ZSH 5.0+**. No bash-isms, no shortcuts. [See Requirements](docs/requirements.md)
 
 ---
 
-## Quick Links (Your Cheat Sheet!) 📇
+## This is the Way. 👋
+
+Welcome, Foundling, to the VDE — the Beskar Hub for your development Spokes. Whether you strike in Python, Rust, or the ancient scripts of C, the VDE provides the armor you need. Each environment is pre-hydrated, isolated, and ready for the Forge.
+
+> **🛡️ New to the Creed?** Start here: [**The Seeker's Recon (Why VDE?)**](docs/WHY_USE_VDE.md) — Discover how the VDE transforms your workflow into the Way.
+
+---
+
+## The Archivist's Intel (Quick Links) 📇
 
 | Section | Description |
 |---------|-------------|
-| **🎉 Why Use VDE?** | [Why Use VDE?](docs/WHY_USE_VDE.md) - Learn what VDE can do for you |
-| **📘 User Guide** | [USER_GUIDE.md](USER_GUIDE.md) - Step-by-step guide for new users |
-| **Getting Started** | [Requirements](docs/requirements.md) • [Quick Start](docs/quick-start.md) |
-| **SSH & Agent Forwarding** | [SSH Configuration](docs/ssh-configuration.md) • [VM Communication](docs/advanced-usage.md#inter-container-communication) • [SSH Troubleshooting](docs/troubleshooting.md#ssh-agent-issues) |
-| **Core Features** | [Available Scripts](docs/available-scripts.md) • [Predefined VM Types](docs/predefined-vm-types.md) • [Command Reference](docs/command-reference.md) |
-| **Configuration** | [Extending VDE](docs/extending-vde.md) • [Directory Structure](docs/directory-structure.md) |
-| **Development** | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) • [Development Guide](docs/DEVELOPMENT_GUIDE.md) |
-| **Contributing** | [Contributing Guide](CONTRIBUTING.md) • [Style Guide](STYLE_GUIDE.md) • [Testing Guide](docs/TESTING.md) |
-| **Reference** | [API Reference](docs/API.md) • [Architecture](docs/ARCHITECTURE.md) • [Best Practices](docs/best-practices.md) |
-| **Support** | [Troubleshooting](docs/troubleshooting.md) • [Rebuild Guidelines](docs/rebuild-guidelines.md) |
-| **Upgrading** | [Upgrade Guide](#upgrade-guide) - Keeping VDE up-to-date |
+| **🛡️ Why the Way?** | [The Seeker's Recon](docs/WHY_USE_VDE.md) - Learn the power of VDE |
+| **📘 The Warrior's Guide** | [USER_GUIDE.md](USER_GUIDE.md) - Step-by-step hydration for new Foundlings |
+| **Ignition Prerequisites** | [Requirements](docs/requirements.md) • [Quick Strike](docs/quick-start.md) |
+| **Sovereign Handshake** | [SSH Configuration](docs/ssh-configuration.md) • [Spoke Communication](docs/advanced-usage.md#inter-container-communication) • [Handshake Troubleshooting](docs/troubleshooting.md#ssh-agent-issues) |
+| **Core Mandates** | [Available Rituals](docs/available-scripts.md) • [Predefined Spokes](docs/predefined-vm-types.md) • [Command Reference](docs/command-reference.md) |
+| **The Beskar Vault** | [Extending the Creed](docs/extending-vde.md) • [Directory Hierarchy](docs/directory-structure.md) |
+| **The Forge** | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) • [Development Guide](docs/DEVELOPMENT_GUIDE.md) |
+| **The Tribe's Contribution** | [Contributing Guide](CONTRIBUTING.md) • [The Language of the Tribe](STYLE_GUIDE.md) • [Testing Mandates](docs/TESTING.md) |
+| **Ancient Intel** | [API Reference](docs/API.md) • [Architecture v1.0.0](docs/ARCHITECTURE.md) • [Best Practices](docs/best-practices.md) |
+| **Reinforcements** | [Troubleshooting](docs/troubleshooting.md) • [Rebuild Mandates](docs/rebuild-guidelines.md) |
+| **Evolution** | [Evolution Guide](#the-evolution-of-armor) - Keeping the Hub up-to-date |
 
 ---
 
-## Prerequisites
+## Prerequisites (The Warrior's Rights)
 
-### Docker Permissions
+### Docker Sovereignty
 
-To run VDE, you need permission to access Docker. If you see permission errors:
+To ignite the Spokes, you must have sovereignty over the Docker daemon. If the daemon denies your handshake:
 
-- **Linux:** Add your user to the docker group: `sudo usermod -aG docker $USER`, then log out and back in
-- **macOS:** Install Docker Desktop and ensure it's running
-- **Permission Issues:** If Docker requires sudo, fix with: `sudo usermod -aG docker $USER`
+- **Darwin (macOS):** Install Docker Desktop and ensure the engine is humming.
+- **Linux:** Add your warrior to the guild: `sudo usermod -aG docker $USER`, then re-ignite your session.
+- **Protocol Failures:** If Docker demands `sudo` for every strike, fix it with: `sudo usermod -aG docker $USER`
 
 ---
 
-## Upgrade Guide
+## The Evolution of Armor (Upgrade Guide)
 
-VDE is designed to preserve your existing configurations and VMs when upgrading. Here's how to keep your setup up-to-date:
+The VDE is forged to preserve your Beskar and your Spokes during evolution. Here is how you keep your armor strong:
 
-### Upgrading VDE
+### Strengthening the Hub
 
-```bash
-# Navigate to your VDE installation
+```zsh
+# Navigate to the VDE Root
 cd ~/dev
 
-# Pull the latest changes
+# Pull the latest Intel from the Tribe
 git pull
 
-# Rebuild base images (optional but recommended)
+# Re-smelt the base images (The Forge Ritual)
 vde rebuild
 ```
 
-### What Happens During Upgrade
+### What Occurs During Evolution
 
-- **Your VMs continue working**: Existing VM configurations in `configs/docker/` are preserved
-- **New VM types become available**: New languages/services added to `vm-types.conf` 
-- **Your data is safe**: Data directories (`data/`, `projects/`) are untouched
-
-### Manual Migration
-
-If significant changes are introduced, migration instructions will be posted in the [release notes](https://github.com/dderyldowney/vde-system/releases). Most upgrades require no manual intervention.
+- **Your Spokes Remain Active**: Existing configurations in `configs/docker/` are protected.
+- **New Spokes Appear**: New Language and Service templates added to the Beskar Vault become available.
+- **The Beskar is Safe**: Your data (`data/`) and projects (`projects/`) are never struck.
 
 ---
 
-## Overview (The Good Stuff!) ✨
+## The Resol’nare (The Core Mandates) 🛡️
 
-VDE provides isolated development environments for multiple programming languages and services, all accessible via SSH. Each environment has:
+The VDE provides isolated jails for your work, all accessible via the Sovereign Handshake. Every jail contains:
 
-- **Consistent user setup** (`devuser` with zsh, neovim, oh-my-zsh)
-- **SSH key-based access** on auto-allocated ports
-- **Persistent workspace** mounted from your host
-- **Shared network** for inter-container communication
+- **The Tribal Identity** (`devuser` with zsh, neovim, and the oh-my-zsh ritual)
+- **The Sovereign Handshake** on auto-allocated, audited ports
+- **Persistent Beskar** (Workspace) mounted from your host
+- **The Hub Network** for seamless inter-Spoke communication
 
-### Key Features (Why You'll Love It)
+### The Mandates of the Creed
 
-- **19+ Language VMs**: Python, Rust, Go, Java, JavaScript, C#, Ruby, and more — all waiting for you!
-- **7+ Service VMs**: PostgreSQL, Redis, MongoDB, Nginx, MySQL, RabbitMQ, CouchDB — ready when you are
-- **Template-based**: Add new languages/services without code changes — it just works!
-- **VSCode Ready**: Full IDE support via Remote-SSH — code in comfort
-- **SSH Agent Forwarding**: VM-to-VM and VM-to-Host communication using your host's SSH keys — like magic!
-- **Automatic SSH Setup**: VDE handles SSH agent, keys, and configuration automatically — zero manual setup
+- **19+ Language Spokes**: Python, Rust, Go, Java, JavaScript, C#, Ruby — the Hub supports them all.
+- **7+ Service Spokes**: PostgreSQL, Redis, MongoDB, Nginx, MySQL, RabbitMQ, CouchDB — pre-hydrated and ready.
+- **Born Ready (BTO)**: Add new Spokes via the Beskar Vault without rewriting the rituals — it just works.
+- **The Forge Ready**: Full IDE support via Remote-SSH — code in the comfort of your armor.
+- **SSH Agent Trust Bridge**: Spoke-to-Spoke and Spoke-to-Host communication using your host's identities — the magic of the Tribe.
+- **Atomic SSH Setup**: The VDE handles the agent, the keys, and the config — zero manual toil.
 
 ---
 
-## Quick Start (You're 3 Commands Away!) 🚀
+## The Quick Strike (You're 3 Rituals Away!) 🚀
 
-```bash
-# 1. Navigate to your dev directory
+```zsh
+# 1. Enter the VDE Root
 cd ~/dev
 
-# 2. List all predefined VM types
+# 2. Audit all predefined Spokes
 vde list
 
-# 3. Create a new language VM
+# 3. Forge a new Language Spoke
 vde create go
 
-# 4. Start the VM
+# 4. Ignite the Spoke
 vde start go
 
-# 5. Connect via SSH
+# 5. Connect via the Sovereign Handshake
 ssh vde-go
 
-# 6. Start working
+# 6. Begin your work
 cd ~/workspace
 ```
 
-**And just like that...** you're a Go developer! 🎊
+**And just like that...** you are a Go warrior. 🛡️
 
-**Next Steps:**
-- 📘 **Read the [USER_GUIDE.md](USER_GUIDE.md)** for a complete step-by-step walkthrough (it's really friendly!)
-- Read the [Quick Start guide](docs/quick-start.md) for detailed setup
-- See [Command Reference](docs/command-reference.md) for all available commands
-
----
-
-## SSH Agent Forwarding & VM Communication (The Magic Sauce!) ✨
-
-VDE includes **automatic SSH agent forwarding**, enabling seamless communication between VMs and with external services. It's like magic, but better!
-
-### What This Means (In Plain English)
-
-- **VM → VM**: SSH from one VM to another using your host's SSH keys — no copying required!
-- **VM → Host**: Execute commands on your host from within a VM — super convenient!
-- **VM → External**: Use your GitHub/GitLab keys from within any VM — your credentials, wherever you need them!
-- **Automatic Setup**: No manual configuration required — VDE handles it all for you
-
-### Example: VM-to-VM Communication
-
-```bash
-# From your host
-ssh vde-go                    # Connect to Go VM
-
-# From within Go VM
-ssh vde-python                # SSH to Python VM (uses your host keys!)
-ssh vde-rust pwd              # Check directory on Rust VM
-scp vde-python:/data/file .   # Copy file from Python VM
-
-# Use Git with your credentials
-git clone github.com:user/repo  # Uses your GitHub SSH key
-```
-
-### Example: VM-to-Host Communication
-
-```bash
-# From within any VM
-to-host ls ~/dev              # List host's dev directory
-to-host tail -f logs/app.log  # View host's log files
-```
-
-### How It Works
-
-- VDE automatically starts SSH agent and loads your keys
-- Your SSH keys **never leave** the host machine (security)
-- VMs access keys via SSH agent socket forwarding
-- Works with any SSH key type (ed25519, RSA, ECDSA, DSA)
-- All your SSH keys are automatically detected and used
-
-**No manual setup required** — VDE handles everything for you. Sit back and relax! ☕
-
-See [SSH Configuration](docs/ssh-configuration.md) for complete details.
+**Next Rituals:**
+- 📘 **Read the [Warrior's Guide (USER_GUIDE.md)](USER_GUIDE.md)** for a complete step-by-step walkthrough.
+- Read the [Quick Start Intel](docs/quick-start.md) for detailed ignition.
+- See the [Ritual Reference](docs/command-reference.md) for all available commands.
 
 ---
 
-## Documentation (We've Got You Covered!) 📚
+## SSH Agent Trust Bridge & Spoke Communication 🛡️
 
-### Getting Started (Your Journey Begins Here!) 🌟
+VDE includes **Atomic SSH Agent Forwarding**, enabling the Sovereign Handshake between Spokes and with external repositories.
+
+### The Way of the Bridge
+
+- **Spoke → Spoke**: SSH from one Spoke to another using your host's identity — the Beskar stays on the host.
+- **Spoke → Host**: Execute commands on your host from within a jail — use `to-host`.
+- **Spoke → External**: Use your GitHub/GitLab identities from within any Spoke — your honor goes where you go.
+- **Zero-Toil Setup**: No manual configuration — the Tribe handles the handshake.
+
+### Example: Spoke-to-Spoke Handshake
+
+```zsh
+# From your host (The Hub)
+ssh vde-go                    # Connect to Go Spoke
+
+# From within the Go Spoke
+ssh vde-python                # Handshake with Python Spoke
+ssh vde-rust pwd              # Audit the Rust Spoke
+scp vde-python:/data/file .   # Extract intel from Python Spoke
+
+# Strike a repository
+git clone git@github.com:user/repo.git  # Uses your host identities
+```
+
+### Example: Spoke-to-Host Communication
+
+```zsh
+# From within any Spoke jail
+to-host ls ~/dev              # Audit the Hub's directory
+to-host tail -f logs/app.log  # Observe the Hub's logs
+```
+
+**No manual setup is permitted.** The VDE handles the handshake for you. This is the Way.
+
+See [Handshake Configuration](docs/ssh-configuration.md) for complete intel.
+
+---
+
+## Intel (The Archive) 📚
+
+### Ignition (The Journey Begins) 🌟
 
 | Document | Description |
 |----------|-------------|
-| [Requirements](docs/requirements.md) | System requirements and prerequisites |
-| [Quick Start](docs/quick-start.md) | Get up and running in minutes — let's go! |
+| [Requirements](docs/requirements.md) | Hub requirements and prerequisites |
+| [Quick Strike](docs/quick-start.md) | Ignite your Spokes in minutes. |
 
-### Core Features (The Good Stuff!) 🌟
-
-| Document | Description |
-|----------|-------------|
-| [Available Scripts](docs/available-scripts.md) | Overview of all VDE scripts |
-| [Predefined VM Types](docs/predefined-vm-types.md) | All available languages and services |
-| [Command Reference](docs/command-reference.md) | Complete command reference |
-
-### Configuration (Make It Yours!) 🔧
+### Core Mandates 🌟
 
 | Document | Description |
 |----------|-------------|
-| [Extending VDE](docs/extending-vde.md) | Add new languages and services |
-| [SSH Configuration & Agent Forwarding](docs/ssh-configuration.md) | SSH setup, agent forwarding, VM-to-VM communication |
-| [Directory Structure](docs/directory-structure.md) | Complete directory layout |
+| [Available Rituals](docs/available-scripts.md) | Overview of all VDE management scripts |
+| [Predefined Spokes](docs/predefined-vm-types.md) | All available Languages and Services |
+| [Ritual Reference](docs/command-reference.md) | Complete command reference |
 
-### Development (Build Cool Things!) 💻
-
-| Document | Description |
-|----------|-------------|
-| [VSCode Remote-SSH](docs/vscode-remote-ssh.md) | Using VSCode with VDE — code in comfort! |
-| [Development Guide](docs/DEVELOPMENT_GUIDE.md) | Example development scenarios |
-
-### Reference (The Nitty Gritty) 📖
+### The Beskar Vault (Configuration) 🔧
 
 | Document | Description |
 |----------|-------------|
-| [API Reference](docs/API.md) | Complete API reference for scripts and libraries |
+| [Extending the Creed](docs/extending-vde.md) | Forge new Spokes |
+| [The Sovereign Handshake](docs/ssh-configuration.md) | SSH setup, agent trust, and Spoke communication |
+| [Directory Hierarchy](docs/directory-structure.md) | The structure of the Hub |
+
+### The Forge (Development) 💻
+
+| Document | Description |
+|----------|-------------|
+| [VSCode Remote-SSH](docs/vscode-remote-ssh.md) | Code in comfort via the Sovereign Handshake. |
+| [Development Guide](docs/DEVELOPMENT_GUIDE.md) | Example battle scenarios |
+
+### Ancient Intel (Reference) 📖
+
+| Document | Description |
+|----------|-------------|
+| [API Rituals](docs/API.md) | Complete API reference for scripts and libraries |
 | [Technical Deep Dive](docs/Technical-Deep-Dive.md) | VDE Under the Hood |
-| [Architecture](docs/ARCHITECTURE.md) | Technical architecture details |
-| [Advanced Usage](docs/advanced-usage.md) | Advanced techniques and patterns |
-| [Rebuild Guidelines](docs/rebuild-guidelines.md) | When and how to rebuild |
-| [Best Practices](docs/best-practices.md) | Recommended practices |
-
-### Support
-
-| Document | Description |
-|----------|-------------|
-| [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
+| [Architecture v1.0.0](docs/ARCHITECTURE.md) | Technical blueprint of the Hub |
+| [Advanced Strikes](docs/advanced-usage.md) | Advanced techniques and patterns |
+| [Rebuild Mandates](docs/rebuild-guidelines.md) | When to re-smelt your armor |
+| [The Way (Best Practices)](docs/best-practices.md) | Recommended practices for the Tribe |
 
 ---
 
-## Example Workflows (Build Cool Things!) 🏗️
+## Battle Scenarios (Example Workflows) 🏗️
 
 ### Python API with PostgreSQL
 
-```bash
+```zsh
 vde create python
 vde create postgres
 vde start python postgres
@@ -241,84 +222,82 @@ cd ~/workspace
 pip install fastapi uvicorn psycopg2-binary
 ```
 
-### Microservices Architecture (Your Distributed System!) 🌐
+### The Sovereign Swarm (Distributed Systems) 🌐
 
-```bash
-# Create VMs for each service
-vde create python   # API Gateway
-vde create go       # Payment Service
-vde create rust     # Analytics
-vde create postgres # Database
-vde create redis    # Cache
+```zsh
+# Ignite Spokes for the Swarm
+vde create python   # The Gatekeeper
+vde create go       # The Payment Warrior
+vde create rust     # The Analyst
+vde create postgres # The Beskar Vault
+vde create redis    # The Messenger
 
-# Start all services
+# Start the Swarm
 vde start python go rust postgres redis
 
-# Services can communicate via SSH (VM-to-VM)
-# From python VM:
-ssh vde-postgres psql -U devuser  # Connect to database
-ssh vde-redis redis-cli           # Connect to cache
+# Spokes communicate via the Trust Bridge
+# From the python Spoke:
+ssh vde-postgres psql -U devuser  # Connect to the Vault
+ssh vde-redis redis-cli           # Connect to the Messenger
 ```
 
 ---
 
-## Project Structure
+## Hub Structure
 
 ```
 $HOME/dev/
-├── configs/docker/       # VM configurations (auto-generated)
-├── data/                  # Service data persistence
-├── docs/                  # Documentation
-├── env-files/             # Environment variables per VM
-├── lib/                   # Shared libraries (vde-*, vm-common)
-├── logs/                  # Application logs
-├── projects/              # Project source code
-├── templates/             # Docker Compose templates
-├── bin/                   # Management scripts (vde, list-vms, etc.)
-└── README.md
+├── configs/docker/       # Spoke configurations (Forged)
+├── data/                  # Service Beskar persistence
+├── docs/                  # Ancient Intel
+├── env-files/             # Environment variables per Spoke
+├── lib/                   # The Core Tribe Libraries
+├── logs/                  # Hub & Spoke logs
+├── projects/              # Warrior workspace
+├── templates/             # Docker Forge templates
+├── bin/                   # Ritual Management scripts
+└── README.md              # The Way
 ```
-
-See [Directory Structure](docs/directory-structure.md) for complete details.
 
 ---
 
-## Support (We've Got Your Back!) 🆘
+## Reinforcements (The Tracking Fob) 🆘
 
-### Getting Help
+### Seeking Help
 
-```bash
-# Built-in help
+```zsh
+# Built-in Ritual help
 vde help
 
-# List available VMs
+# List all Spokes
 vde list
 ```
 
-### Common Issues
+### Protocol Blockades (Common Issues)
 
-| Issue | Solution |
+| Blockade | Resolution |
 |-------|----------|
-| Port conflicts | See [Troubleshooting → Port Conflicts](docs/troubleshooting.md#port-conflicts) |
-| SSH connection issues | See [SSH Configuration → Troubleshooting](docs/ssh-configuration.md#troubleshooting) |
-| SSH agent not working | See [Troubleshooting → SSH Agent Issues](docs/troubleshooting.md#ssh-agent-issues) |
-| VM-to-VM SSH not working | See [SSH Configuration → VM-to-VM](docs/ssh-configuration.md#vm-to-vm-communication) |
-| Container won't start | See [Rebuild Guidelines](docs/rebuild-guidelines.md) |
-| VSCode can't connect | See [VSCode Remote-SSH](docs/vscode-remote-ssh.md) |
+| Port Ambiguity | See [Troubleshooting → Port Conflicts](docs/troubleshooting.md#port-conflicts) |
+| Handshake Failure | See [Sovereign Handshake → Troubleshooting](docs/ssh-configuration.md#troubleshooting) |
+| Agent Disconnect | See [Troubleshooting → SSH Agent Issues](docs/troubleshooting.md#ssh-agent-issues) |
+| Spoke-to-Spoke Block | See [Sovereign Handshake → Spoke Communication](docs/ssh-configuration.md#vm-to-vm-communication) |
+| Spoke Won't Ignite | See [Rebuild Mandates](docs/rebuild-guidelines.md) |
+| VSCode Denied | See [VSCode Remote-SSH](docs/vscode-remote-ssh.md) |
 
 ---
 
-## Appendix: Technical Deep Dives 🤓
+## Appendix: The Seeker's Technical Recon 🤓
 
-**Quick heads up!** These documents go deep into the technical weeds. They're written for the fellow nerdy types (like VDE's creator!) who want to understand every nut and bolt of how VDE works under the hood.
+**Heads up, Seeker!** These documents delve into the deep Beskar. They are written for the Armorers who want to understand every nut and bolt of the Hub.
 
-**But hey!** Even if you're not a "nerdy type," you're more than welcome to follow along! It's not as scary as all that — we promise! 😉 These guides are comprehensive, detailed, and written for folks who love to understand *how* things work under the hood. You might just learn something cool!
+For comprehensive technical intel, see these in-depth scrolls:
 
-For comprehensive technical documentation, see these in-depth guides:
-
-1. **[Technical Deep Dive](docs/Technical-Deep-Dive.md)** - Complete technical deep-dive of the VDE system architecture, components, templates, and parser. [← Back to README](README.md)
+1. **[Technical Deep Dive](docs/Technical-Deep-Dive.md)** - Complete technical blueprint of the VDE system, templates, and the Parser Ritual. [← Back to The Way](README.md)
 
 ---
 
-## License (Legal Stuff, But Still Important) ⚖️
+## The Creed (License) ⚖️
 
-This VDE system is provided as-is for development purposes.
+This VDE system is provided as-is for the warrior's journey. Use it with honor.
+
+This is the Way.
