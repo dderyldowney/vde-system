@@ -5,17 +5,17 @@
 
 ---
 
-## THE MILESTONE: v1.0.0 — THE SOVEREIGN HANDSHAKE
+## THE MILESTONE: v1.1.0 — THE SOVEREIGN HANDSHAKE
 - **Official Release**: Cut on 2026-04-08. The VDE is now a production-ready developer utility.
 - **Test Fidelity**: 100% GREEN status across all BDD, Unit, Integration, and Security tests.
 - **Core Stability**: Deterministic Ignition, Sovereign Identity (SSH), and Hardened Security (GID/Registry) are certified.
 
 ---
 
-## SYSTEM BENCHMARKS (VDE 1.0.0)
+## SYSTEM BENCHMARKS (VDE 1.1.0)
 - **Canonical Ignition Speed:** 3.959s. This is the benchmark for 3-VM Parallel Ignition (python, postgres, redis) on current hardware. Any future refactor that slows this down is a deviation from the Way.
 
-## THE VERDICT: v1.0 READY
+## THE VERDICT: v1.1.0 READY
 - **Utility Over Exploration**: The VDE has transitioned from a project of exploration to a project of utility. It is now a platform a developer can rely on for daily work without environmental friction.
 - **Reliability Handshake**: Ignition is deterministic (< 4.5s), Identity is persistent (SSH bridge), and Security is enforced (GID mapping/8-field standard).
 - **Certification**: The ecosystem is 100% stable and verified as of v2.2.0. This is the foundation for the v1.0.0 GitHub release.
@@ -69,9 +69,10 @@
 | 24 | The Big Step Completion | 366 Undefined Steps / USP | ✅ COMPLETE |
 | 25 | Concurrency & Stress | Port/Locking Races | ✅ COMPLETE |
 | 26 | Forge Hardening Strike | Section 10/11 & vm-lock | ✅ COMPLETE |
-| 27 | Sovereign Ecosystem | Verification & Hardening | 🟡 IN PROGRESS |
+| 27 | Sovereign Ecosystem | Verification & Hardening | ✅ COMPLETE |
 
-### Phase 27 Progress (2026-04-08)
-- **Sovereign Audit (v2.1.0):** ✅ COMPLETE. Pruned ~24,000 lines of redundant and "pink" test code. Condensed suite to 2 high-fidelity Behave features and 11 verified ZSH scripts.
-- **Sovereignty (27.2):** ✅ COMPLETE. Docker Socket Sovereignty and SSH Agent Trust Bridge are implemented in `scripts/vde-entrypoint.zsh`.
-- **Verification (27.3):** ⏳ IN PROGRESS. Implementing high-fidelity empirical verification for sovereign bridges in `system-spine.feature`.
+### Phase 27 Completion (2026-04-08)
+- **Unified Socket Discovery:** ✅ COMPLETE. Implemented `vde_get_host_ssh_sock` in `lib/vde-ssh` to unify discovery logic between CLI and libraries.
+- **Rule Spine Enforcement:** ✅ COMPLETE. Integrated `bin/vde-enforce-uap.zsh --quiet` into the core `vde` entrypoint to ensure mandatory supervision of all actions.
+- **Empirical Verification:** ✅ COMPLETE. High-fidelity BDD scenarios in `system-spine.feature` verified Docker Socket and SSH Agent bridges with 100% pass rate.
+- **JupyterLab Spoke Certification:** ✅ COMPLETE. Successfully integrated and verified the `vde-jupyterlab` VM type with modern startup patterns (`tini`, `jupyter-server`).
