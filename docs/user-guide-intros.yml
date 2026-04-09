@@ -55,7 +55,7 @@ sections:
 
       Open **Terminal** (press Command+Space, type "Terminal", press Enter) and run:
 
-      ```
+      ```zsh
       brew --version
       ```
 
@@ -80,7 +80,7 @@ sections:
 
       **Step 3: Verify Homebrew is working**
 
-      ```
+      ```zsh
       brew --version
       ```
 
@@ -99,6 +99,8 @@ sections:
 
       Think of it like VDE speaks a specific dialect, and we need to make sure your terminal understands it! 🗣️
 
+      ---
+
       ### For Windows Users
 
       #### Installing Zsh on Windows
@@ -108,7 +110,7 @@ sections:
       **If you already have WSL installed (from the Docker section):**
 
       1. Open **PowerShell** and run:
-         ```
+         ```zsh
          wsl
          ```
       2. Once in WSL, install Zsh:
@@ -142,12 +144,12 @@ sections:
 
       1. Open **Terminal** (press Command+Space, type "Terminal", press Enter)
       2. Check if Zsh is running by default:
-         ```
+         ```zsh
          echo $SHELL
          ```
       3. If you see `/bin/zsh`, you're already using Zsh - great!
       4. Check the Zsh version:
-         ```
+         ```zsh
          zsh --version
          ```
       5. You should see `zsh 5.x.x or greater` - this is perfect!
@@ -275,7 +277,7 @@ sections:
 
       **Step 2: Install Git**
 
-      1. When the download finishes, click the file to run it
+      1. When the download finishes, click the file to open it
       2. If Windows asks for permission, click **"Yes"**
       3. Click **"Next"** on the welcome screen
       4. Keep clicking **"Next"** to accept all the default settings (they're good for most people)
@@ -288,7 +290,7 @@ sections:
 
       1. Press the **Windows key**, type **"PowerShell"**, and open it
       2. Type this command and press Enter:
-         ```
+         ```zsh
          git --version
          ```
       3. You should see something like `git version 2.43.0.windows.1`
@@ -305,7 +307,7 @@ sections:
 
       1. Open **Terminal** (press Command+Space, type "Terminal", press Enter)
       2. Type this and press Enter:
-         ```
+         ```zsh
          git --version
          ```
       3. If you see a version number like `git version 2.39.0`, you already have Git! **You're done!**
@@ -317,7 +319,7 @@ sections:
       **Option 1: Install with Homebrew (Easiest)**
 
       If you installed Homebrew (from the section above), open Terminal and run:
-      ```
+      ```zsh
       brew install git
       ```
 
@@ -333,7 +335,7 @@ sections:
       **Verify Git is Working:**
 
       In Terminal, type:
-      ```
+      ```zsh
       git --version
       ```
 
@@ -349,7 +351,7 @@ sections:
 
       1. Open your terminal
       2. Type:
-         ```
+         ```zsh
          git --version
          ```
       3. If you see a version, you're done!
@@ -380,7 +382,7 @@ sections:
       **Verify Git is Working:**
 
       In your terminal, type:
-      ```
+      ```zsh
       git --version
       ```
 
@@ -409,7 +411,7 @@ sections:
       1. Press Windows key, type **"PowerShell"**
       2. Right-click "Windows PowerShell" and select **"Run as administrator"**
       3. Copy and paste this command (right-click in PowerShell to paste):
-         ```
+         ```zsh
          wsl --install
          ```
       4. Press Enter and wait for it to finish
@@ -445,7 +447,7 @@ sections:
 
       1. Press the **Windows key**, type **"PowerShell"**, and open it
       2. Type this command and press Enter:
-         ```
+         ```zsh
          docker --version
          ```
       3. You should see something like `Docker version 24.x.x, build xxxxx`
@@ -509,7 +511,7 @@ sections:
 
       1. Open **Terminal** (press Command+Space, type "Terminal", press Enter)
       2. Type this command and press Enter:
-         ```
+         ```zsh
          docker --version
          ```
       3. You should see something like `docker version 24.x.x, build xxxxx`
@@ -528,7 +530,7 @@ sections:
 
       1. Open your **Terminal** (press Ctrl+Alt+T)
       2. Type this command and press Enter:
-         ```
+         ```zsh
          cat /etc/os-release
          ```
       3. Look for the `NAME=` line - this tells you your distribution (e.g., "Ubuntu", "Fedora", "Debian")
@@ -583,12 +585,12 @@ sections:
       #### Step 4: Start Docker Desktop
 
       1. After installation, you can start Docker by typing in your terminal:
-         ```
+         ```zsh
          systemctl --user start docker-desktop
          ```
 
       2. To make Docker start automatically when you log in:
-         ```
+         ```zsh
          systemctl --user enable docker-desktop
          ```
 
@@ -597,7 +599,7 @@ sections:
       #### Step 5: Verify Docker is Working
 
       In your terminal, type:
-      ```
+      ```zsh
       docker --version
       ```
 
@@ -652,36 +654,8 @@ sections:
       Once Docker, Git, and Zsh are installed and working, you're ready for the fun part! You've made it through the setup — you're awesome! 🌟
 
 
-  - id: "2. SSH Keys"
+  - id: "2. Your First VM"
     order: 2
-    intro: |
-      ### SSH Keys? Automatic! 🔑
-
-      Here's some good news: VDE handles SSH keys for you automatically with complete isolation. We wanted to mention this so you know what's happening, but you don't need to do anything. It's like magic! ✨
-
-      **What happens:**
-      1. VDE creates an isolated SSH directory at `~/.ssh/vde/`
-      2. VDE generates its own SSH key (`~/.ssh/vde/vde_student`) automatically
-      3. The public key is copied to `public-ssh-keys/vde_student.pub` for Docker builds
-      4. VMs are configured to use this isolated VDE key
-
-      **What this means for you:**
-      - ✅ Your personal SSH config (`~/.ssh/config`) is never touched
-      - ✅ Your personal SSH keys remain private
-      - ✅ VDE has its own complete SSH setup
-      - ✅ Easy cleanup: just `rm -rf ~/.ssh/vde`
-
-      **You don't need to:**
-      - Manually create SSH keys
-      - Edit your SSH config file
-      - Copy keys to VMs
-      - Set up SSH agent forwarding
-
-      **VDE does all of this for you.** Sit back and relax! ☕
-
-
-  - id: "3. Your First VM"
-    order: 3
     intro: |
       ## Let's Create Your First VM! 🎉
 
@@ -693,8 +667,7 @@ sections:
 
       ```zsh
       vde create python    # Create a new VM
-      vde start rust      # Start a VM
-      vde stop all        # Stop VMs
+      vde start python     # Start the VM
       vde list            # List all VMs
       ```
 
@@ -714,56 +687,8 @@ sections:
       That's it! One simple, consistent command interface.
 
 
-  - id: "4. Understanding"
-    order: 4
-    intro: |
-      ### Let's See What You Built! 🔍
-
-      You just created your first VM! That's honestly kind of a big deal. Give yourself a pat on the back! Let's make sure everything is working and understand what you now have.
-
-      ### Understanding Your Directory Structure
-
-      **Your directory structure:**
-      ```
-      ~/dev/
-      ├── configs/          # VM configurations
-      ├── projects/         # YOUR CODE GOES HERE
-      │   └── python/       # Python projects (mounted in VM)
-      ├── data/            # Database data (persists across rebuilds)
-      ├── logs/            # Application logs
-      └── bin/         # VDE management commands
-      ```
-
-
-  - id: "5. Starting and Stopping"
-    order: 5
-    intro: |
-      ### Daily Rhythm: Start, Code, Stop, Repeat 🔄
-
-      Here's your daily workflow with VDE — simple as can be!
-
-      **Important:** Stopping doesn't delete your VM — it just pauses it. Your code and configurations are safe and sound! 💾
-
-
-  - id: "6. Your First Cluster"
-    order: 6
-    intro: |
-      ### Time to Build Something Real! 🏗️
-
-      Now let's build a real application stack. This is where VDE really shines — you can have multiple VMs working together like a well-oiled machine.
-
-      ### What We're Building
-
-      You'll have a complete tech stack:
-      - **Python VM** — Your application code (port 2213)
-      - **PostgreSQL VM** — Your database (port 2404)
-      - **Redis VM** — Your cache (port 2406)
-
-      All three can talk to each other automatically. No networking headaches required!
-
-
-  - id: "7. Connecting"
-    order: 7
+  - id: "3. Connecting to your VM"
+    order: 3
     intro: |
       ### Step Inside Your VM! 🚪
 
@@ -795,6 +720,76 @@ sections:
       ```
 
 
+  - id: "4. The Magic Behind the Scenes (SSH Keys)"
+    order: 4
+    intro: |
+      ### SSH Keys? Automatic! 🔑
+
+      Here's some good news: VDE handles SSH keys for you automatically with complete isolation. We wanted to mention this so you know what's happening, but you don't need to do anything. It's like magic! ✨
+
+      **What happens:**
+      1. VDE creates an isolated SSH directory at `~/.ssh/vde/`
+      2. VDE generates its own SSH key (`~/.ssh/vde/vde_student`) automatically
+      3. The public key is copied to `public-ssh-keys/vde_student.pub` for Docker builds
+      4. VMs are configured to use this isolated VDE key
+
+      **What this means for you:**
+      - ✅ Your personal SSH config (`~/.ssh/config`) is never touched
+      - ✅ Your personal SSH keys remain private
+      - ✅ VDE has its own complete SSH setup
+      - ✅ Easy cleanup: just `rm -rf ~/.ssh/vde`
+
+      **VDE does all of this for you.** Sit back and relax! ☕
+
+
+  - id: "5. Understanding Your Workspace"
+    order: 5
+    intro: |
+      ### Let's See What You Built! 🔍
+
+      You just created your first VM! That's honestly kind of a big deal. Give yourself a pat on the back! Let's make sure everything is working and understand what you now have.
+
+      ### Understanding Your Directory Structure
+
+      **Your directory structure:**
+      ```
+      ~/dev/
+      ├── configs/          # VM configurations
+      ├── projects/         # YOUR CODE GOES HERE
+      │   └── python/       # Python projects (mounted in VM)
+      ├── data/            # Database data (persists across rebuilds)
+      ├── logs/            # Application logs
+      └── bin/         # VDE management commands
+      ```
+
+
+  - id: "6. Starting, Stopping, and Restarting"
+    order: 6
+    intro: |
+      ### Daily Rhythm: Start, Code, Stop, Repeat 🔄
+
+      Here's your daily workflow with VDE — simple as can be!
+
+      **Important:** Stopping doesn't delete your VM — it just pauses it. Your code and configurations are safe and sound! 💾
+
+
+  - id: "7. Your First Cluster (Multi-VM)"
+    order: 7
+    intro: |
+      ### Time to Build Something Real! 🏗️
+
+      Now let's build a real application stack. This is where VDE really shines — you can have multiple VMs working together like a well-oiled machine.
+
+      ### What We're Building
+
+      You'll have a complete tech stack:
+      - **Python VM** — Your application code (port 2213)
+      - **PostgreSQL VM** — Your database (port 2404)
+      - **Redis VM** — Your cache (port 2406)
+
+      All three can talk to each other automatically. No networking headaches required!
+
+
   - id: "8. Working with Databases"
     order: 8
     intro: |
@@ -805,7 +800,7 @@ sections:
       **Important:** Database data in `~/dev/data/postgres/` persists even when you rebuild VMs. Your precious data is safe and sound! 💾
 
 
-  - id: "9. Daily Workflow"
+  - id: "9. Daily Study Routine"
     order: 9
     intro: |
       ### Your Daily Rhythm: Start, Code, Stop 🔄

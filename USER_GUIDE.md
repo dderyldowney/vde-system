@@ -24,14 +24,14 @@
      - [For macOS (Mac) Users](#for-macos-mac-users-2)
      - [For Linux Users](#for-linux-users-2)
    - [Quick Checklist: Are You Ready?](#quick-checklist-are-you-ready)
-2. [2. SSH Keys](#2.-ssh-keys)
-3. [3. Your First VM](#3.-your-first-vm)
-4. [4. Understanding](#4.-understanding)
-5. [5. Starting and Stopping](#5.-starting-and-stopping)
-6. [6. Your First Cluster](#6.-your-first-cluster)
-7. [7. Connecting](#7.-connecting)
+2. [2. Your First VM](#2.-your-first-vm)
+3. [3. Connecting to your VM](#3.-connecting-to-your-vm)
+4. [4. The Magic Behind the Scenes (SSH Keys)](#4.-the-magic-behind-the-scenes-(ssh-keys))
+5. [5. Understanding Your Workspace](#5.-understanding-your-workspace)
+6. [6. Starting, Stopping, and Restarting](#6.-starting,-stopping,-and-restarting)
+7. [7. Your First Cluster (Multi-VM)](#7.-your-first-cluster-(multi-vm))
 8. [8. Working with Databases](#8.-working-with-databases)
-9. [9. Daily Workflow](#9.-daily-workflow)
+9. [9. Daily Study Routine](#9.-daily-study-routine)
 10. [10. Adding More Languages](#10.-adding-more-languages)
 11. [11. Troubleshooting](#11.-troubleshooting)
 12. [12. Trial of the Gauntlet](#12.-trial-of-the-gauntlet)
@@ -94,7 +94,7 @@ Homebrew is a free package manager for macOS — think of it as an "app store fo
 
 Open **Terminal** (press Command+Space, type "Terminal", press Enter) and run:
 
-```
+```zsh
 
 brew --version
 
@@ -126,7 +126,7 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 
 **Step 3: Verify Homebrew is working**
 
-```
+```zsh
 
 brew --version
 
@@ -150,6 +150,8 @@ Okay, quick confession: "shell" is just a fancy name for the program that runs i
 
 Think of it like VDE speaks a specific dialect, and we need to make sure your terminal understands it! 🗣️
 
+---
+
 ### For Windows Users
 
 #### Installing Zsh on Windows
@@ -160,7 +162,7 @@ Zsh is available on Windows through WSL (Windows Subsystem for Linux). This is t
 
 1. Open **PowerShell** and run:
 
-   ```
+   ```zsh
 
    wsl
 
@@ -210,7 +212,7 @@ Modern macOS comes with Zsh as the default shell (since macOS Catalina).
 
 2. Check if Zsh is running by default:
 
-   ```
+   ```zsh
 
    echo $SHELL
 
@@ -220,7 +222,7 @@ Modern macOS comes with Zsh as the default shell (since macOS Catalina).
 
 4. Check the Zsh version:
 
-   ```
+   ```zsh
 
    zsh --version
 
@@ -396,7 +398,7 @@ Git is like a digital delivery truck — it downloads code from the internet (li
 
 **Step 2: Install Git**
 
-1. When the download finishes, click the file to run it
+1. When the download finishes, click the file to open it
 
 2. If Windows asks for permission, click **"Yes"**
 
@@ -418,7 +420,7 @@ Git is like a digital delivery truck — it downloads code from the internet (li
 
 2. Type this command and press Enter:
 
-   ```
+   ```zsh
 
    git --version
 
@@ -440,7 +442,7 @@ Macs come with Git built-in! Let's check if you're all set:
 
 2. Type this and press Enter:
 
-   ```
+   ```zsh
 
    git --version
 
@@ -456,7 +458,7 @@ If you don't have Git or want a newer version, here's how:
 
 If you installed Homebrew (from the section above), open Terminal and run:
 
-```
+```zsh
 
 brew install git
 
@@ -480,7 +482,7 @@ brew install git
 
 In Terminal, type:
 
-```
+```zsh
 
 git --version
 
@@ -500,7 +502,7 @@ Linux is usually prepared for everything. Let's see:
 
 2. Type:
 
-   ```
+   ```zsh
 
    git --version
 
@@ -548,7 +550,7 @@ sudo pacman -S git
 
 In your terminal, type:
 
-```
+```zsh
 
 git --version
 
@@ -586,7 +588,7 @@ Docker Desktop likes Windows 10 or Windows 11. It also prefers **Windows 10/11 P
 
 3. Copy and paste this command (right-click in PowerShell to paste):
 
-   ```
+   ```zsh
 
    wsl --install
 
@@ -642,7 +644,7 @@ Docker Desktop likes Windows 10 or Windows 11. It also prefers **Windows 10/11 P
 
 2. Type this command and press Enter:
 
-   ```
+   ```zsh
 
    docker --version
 
@@ -736,7 +738,7 @@ Good news — most modern Macs work beautifully with Docker! It's happy on:
 
 2. Type this command and press Enter:
 
-   ```
+   ```zsh
 
    docker --version
 
@@ -760,7 +762,7 @@ First, let's check which distribution you're rocking:
 
 2. Type this command and press Enter:
 
-   ```
+   ```zsh
 
    cat /etc/os-release
 
@@ -836,7 +838,7 @@ First, let's check which distribution you're rocking:
 
 1. After installation, you can start Docker by typing in your terminal:
 
-   ```
+   ```zsh
 
    systemctl --user start docker-desktop
 
@@ -844,7 +846,7 @@ First, let's check which distribution you're rocking:
 
 2. To make Docker start automatically when you log in:
 
-   ```
+   ```zsh
 
    systemctl --user enable docker-desktop
 
@@ -856,7 +858,7 @@ First, let's check which distribution you're rocking:
 
 In your terminal, type:
 
-```
+```zsh
 
 docker --version
 
@@ -957,75 +959,9 @@ And every script must follow the 'Forged in Beskar' standardized header ritual
 
 </details>
 
-<details id="2.-ssh-keys" data-section="2. SSH Keys">
+<details id="2.-your-first-vm" data-section="2. Your First VM">
 
-<summary><h2>2. SSH Keys</h2></summary>
-
-### SSH Keys? Automatic! 🔑
-
-Here's some good news: VDE handles SSH keys for you automatically with complete isolation. We wanted to mention this so you know what's happening, but you don't need to do anything. It's like magic! ✨
-
-**What happens:**
-
-1. VDE creates an isolated SSH directory at `~/.ssh/vde/`
-
-2. VDE generates its own SSH key (`~/.ssh/vde/vde_student`) automatically
-
-3. The public key is copied to `public-ssh-keys/vde_student.pub` for Docker builds
-
-4. VMs are configured to use this isolated VDE key
-
-**What this means for you:**
-
-- ✅ Your personal SSH config (`~/.ssh/config`) is never touched
-
-- ✅ Your personal SSH keys remain private
-
-- ✅ VDE has its own complete SSH setup
-
-- ✅ Easy cleanup: just `rm -rf ~/.ssh/vde`
-
-**You don't need to:**
-
-- Manually create SSH keys
-
-- Edit your SSH config file
-
-- Copy keys to VMs
-
-- Set up SSH agent forwarding
-
-**VDE does all of this for you.** Sit back and relax! ☕
-
-### Verified Scenarios
-
-> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
-
-**Scenario: Ssh agent forwarding verification**
-
-
-```
-Given the VDE system is healthy
-And "vde-python" is currently running
-And I have identities loaded in my host SSH agent
-When I execute "ssh-add -l" inside "vde-python" as "devuser"
-Then the command execution should succeed
-And the output should contain my host identities
-```
-
-
-**This is handled by the setup script:**
-
-
-```zsh
-./bin/build-and-start
-```
-
-</details>
-
-<details id="3.-your-first-vm" data-section="3. Your First VM">
-
-<summary><h2>3. Your First VM</h2></summary>
+<summary><h2>2. Your First VM</h2></summary>
 
 ## Let's Create Your First VM! 🎉
 
@@ -1039,9 +975,7 @@ The `vde` command is your single, unified interface for all VDE operations:
 
 vde create python    # Create a new VM
 
-vde start rust      # Start a VM
-
-vde stop all        # Stop VMs
+vde start python     # Start the VM
 
 vde list            # List all VMs
 
@@ -1099,101 +1033,9 @@ vde create python
 
 </details>
 
-<details id="4.-understanding" data-section="4. Understanding">
+<details id="3.-connecting-to-your-vm" data-section="3. Connecting to your VM">
 
-<summary><h2>4. Understanding</h2></summary>
-
-### Let's See What You Built! 🔍
-
-You just created your first VM! That's honestly kind of a big deal. Give yourself a pat on the back! Let's make sure everything is working and understand what you now have.
-
-### Understanding Your Directory Structure
-
-**Your directory structure:**
-
-```
-
-~/dev/
-
-├── configs/          # VM configurations
-
-├── projects/         # YOUR CODE GOES HERE
-
-│   └── python/       # Python projects (mounted in VM)
-
-├── data/            # Database data (persists across rebuilds)
-
-├── logs/            # Application logs
-
-└── bin/         # VDE management commands
-
-```
-
-</details>
-
-<details id="5.-starting-and-stopping" data-section="5. Starting and Stopping">
-
-<summary><h2>5. Starting and Stopping</h2></summary>
-
-### Daily Rhythm: Start, Code, Stop, Repeat 🔄
-
-Here's your daily workflow with VDE — simple as can be!
-
-**Important:** Stopping doesn't delete your VM — it just pauses it. Your code and configurations are safe and sound! 💾
-
-### Verified Scenarios
-
-> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
-
-**Scenario: Vm lifecycle termination (stop/remove)**
-
-
-```
-Given the VDE Registry is loaded
-And "vde-python" is currently running
-When I run the one true way to stop "python"
-Then the container "vde-python" should be stopped
-And the VM-level lock should be released
-When I run the one true way to remove "python"
-Then the container "vde-python" should be destroyed
-And the SSH configuration should be preserved
-```
-
-
-**Stop the VMs:**
-
-
-```zsh
-vde stop <vms>
-```
-
-</details>
-
-<details id="6.-your-first-cluster" data-section="6. Your First Cluster">
-
-<summary><h2>6. Your First Cluster</h2></summary>
-
-### Time to Build Something Real! 🏗️
-
-Now let's build a real application stack. This is where VDE really shines — you can have multiple VMs working together like a well-oiled machine.
-
-### What We're Building
-
-You'll have a complete tech stack:
-
-- **Python VM** — Your application code (port 2213)
-
-- **PostgreSQL VM** — Your database (port 2404)
-
-- **Redis VM** — Your cache (port 2406)
-
-All three can talk to each other automatically. No networking headaches required!
-
-</details>
-
-<details id="7.-connecting" data-section="7. Connecting">
-
-<summary><h2>7. Connecting</h2></summary>
+<summary><h2>3. Connecting to your VM</h2></summary>
 
 ### Step Inside Your VM! 🚪
 
@@ -1241,6 +1083,154 @@ vde ssh rs    # Short for rust
 
 </details>
 
+<details id="4.-the-magic-behind-the-scenes-(ssh-keys)" data-section="4. The Magic Behind the Scenes (SSH Keys)">
+
+<summary><h2>4. The Magic Behind the Scenes (SSH Keys)</h2></summary>
+
+### SSH Keys? Automatic! 🔑
+
+Here's some good news: VDE handles SSH keys for you automatically with complete isolation. We wanted to mention this so you know what's happening, but you don't need to do anything. It's like magic! ✨
+
+**What happens:**
+
+1. VDE creates an isolated SSH directory at `~/.ssh/vde/`
+
+2. VDE generates its own SSH key (`~/.ssh/vde/vde_student`) automatically
+
+3. The public key is copied to `public-ssh-keys/vde_student.pub` for Docker builds
+
+4. VMs are configured to use this isolated VDE key
+
+**What this means for you:**
+
+- ✅ Your personal SSH config (`~/.ssh/config`) is never touched
+
+- ✅ Your personal SSH keys remain private
+
+- ✅ VDE has its own complete SSH setup
+
+- ✅ Easy cleanup: just `rm -rf ~/.ssh/vde`
+
+**VDE does all of this for you.** Sit back and relax! ☕
+
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Ssh agent forwarding verification**
+
+
+```
+Given the VDE system is healthy
+And "vde-python" is currently running
+And I have identities loaded in my host SSH agent
+When I execute "ssh-add -l" inside "vde-python" as "devuser"
+Then the command execution should succeed
+And the output should contain my host identities
+```
+
+
+**This is handled by the setup script:**
+
+
+```zsh
+./bin/build-and-start
+```
+
+</details>
+
+<details id="5.-understanding-your-workspace" data-section="5. Understanding Your Workspace">
+
+<summary><h2>5. Understanding Your Workspace</h2></summary>
+
+### Let's See What You Built! 🔍
+
+You just created your first VM! That's honestly kind of a big deal. Give yourself a pat on the back! Let's make sure everything is working and understand what you now have.
+
+### Understanding Your Directory Structure
+
+**Your directory structure:**
+
+```
+
+~/dev/
+
+├── configs/          # VM configurations
+
+├── projects/         # YOUR CODE GOES HERE
+
+│   └── python/       # Python projects (mounted in VM)
+
+├── data/            # Database data (persists across rebuilds)
+
+├── logs/            # Application logs
+
+└── bin/         # VDE management commands
+
+```
+
+</details>
+
+<details id="6.-starting,-stopping,-and-restarting" data-section="6. Starting, Stopping, and Restarting">
+
+<summary><h2>6. Starting, Stopping, and Restarting</h2></summary>
+
+### Daily Rhythm: Start, Code, Stop, Repeat 🔄
+
+Here's your daily workflow with VDE — simple as can be!
+
+**Important:** Stopping doesn't delete your VM — it just pauses it. Your code and configurations are safe and sound! 💾
+
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Vm lifecycle termination (stop/remove)**
+
+
+```
+Given the VDE Registry is loaded
+And "vde-python" is currently running
+When I run the one true way to stop "python"
+Then the container "vde-python" should be stopped
+And the VM-level lock should be released
+When I run the one true way to remove "python"
+Then the container "vde-python" should be destroyed
+And the SSH configuration should be preserved
+```
+
+
+**Stop the VMs:**
+
+
+```zsh
+vde stop <vms>
+```
+
+</details>
+
+<details id="7.-your-first-cluster-(multi-vm)" data-section="7. Your First Cluster (Multi-VM)">
+
+<summary><h2>7. Your First Cluster (Multi-VM)</h2></summary>
+
+### Time to Build Something Real! 🏗️
+
+Now let's build a real application stack. This is where VDE really shines — you can have multiple VMs working together like a well-oiled machine.
+
+### What We're Building
+
+You'll have a complete tech stack:
+
+- **Python VM** — Your application code (port 2213)
+
+- **PostgreSQL VM** — Your database (port 2404)
+
+- **Redis VM** — Your cache (port 2406)
+
+All three can talk to each other automatically. No networking headaches required!
+
+</details>
+
 <details id="8.-working-with-databases" data-section="8. Working with Databases">
 
 <summary><h2>8. Working with Databases</h2></summary>
@@ -1253,9 +1243,9 @@ VDE makes working with databases delightfully simple. Your Python VM can talk to
 
 </details>
 
-<details id="9.-daily-workflow" data-section="9. Daily Workflow">
+<details id="9.-daily-study-routine" data-section="9. Daily Study Routine">
 
-<summary><h2>9. Daily Workflow</h2></summary>
+<summary><h2>9. Daily Study Routine</h2></summary>
 
 ### Your Daily Rhythm: Start, Code, Stop 🔄
 
