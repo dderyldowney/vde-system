@@ -6,6 +6,7 @@
 # 1. Initialize the Spine
 emulate -L zsh
 setopt LOCAL_OPTIONS
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(pwd)}"
 source "${VDE_ROOT_DIR}/lib/vde-core"
 
