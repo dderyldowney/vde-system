@@ -31,9 +31,9 @@ vde_get_version() {
     local spec_file="${root}/docs/VDE-SPEC.md"
 
     if [[ -f "${spec_file}" ]]; then
-        # Extracts "2.0.6" from "# VDE-SPEC v2.0.6 (Absolute)"
+        # Extracts "1.0.0" from "# VDE-SPEC v1.0.0 (Absolute)"
         # Note: Added -E and trimmed spaces to be more forgiving
-        grep -m1 '^# VDE-SPEC v' "${spec_file}" | sed -E 's/^# VDE-SPEC v([^ ]+).*/\1/' | tr -d '[:space:]'
+        grep -m1 '^# VDE-SPEC v' "${spec_file}" | sed -E 's/^# VDE-SPEC v([0-9.]+).*/\1/' | tr -d '[:space:]'
     else
         # Strike failed: File not found
         echo "0.0.0-unknown"
