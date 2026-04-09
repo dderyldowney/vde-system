@@ -54,12 +54,15 @@ vde_validate_name_or_fail() {
     fi
 }
 
-# vde_normalize_name - Normalize a name to raw canonical format (strips prefix)
+# vde_normalize_name - Normalize a name to raw canonical format (strips prefix and non-safe chars)
 # This is used for directory paths and metadata lookups.
+# SECURITY: Strictly enforces alphanumeric + dash to prevent path traversal.
 vde_normalize_name() {
     local name="${1}"
     name=$(echo "${name}" | tr '[:upper:]' '[:lower:]')
-    echo "${name#vde-}"
+    name="${name#vde-}"
+    # Strip everything except lowercase a-z, 0-9, and -
+    echo "${name//[^a-z0-9-]/}"
 }
 
 # vde_get_container_name - Get the Docker container name for a VM

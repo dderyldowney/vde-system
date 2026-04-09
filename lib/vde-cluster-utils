@@ -16,6 +16,12 @@ fi
 _VDE_CLUSTER_UTILS_LOADED=1
 
 # -----------------------
+# Dependencies
+# -----------------------
+[[ -z "${VDE_ROOT_DIR}" ]] && VDE_ROOT_DIR="${0:a:h:h}"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-naming" ]] && source "${VDE_ROOT_DIR}/lib/vde-naming"
+
+# -----------------------
 # Constants
 # -----------------------
 VDE_CLUSTER_STATE_DIR="${VDE_ROOT_DIR}/.docker-state/clusters"
@@ -35,7 +41,7 @@ vde_cluster_init() {
 # vde_cluster_save - Save a group of VMs as a named cluster
 # Args: <name> <vms...>
 vde_cluster_save() {
-    local name="${1}"
+    local name=$(vde_normalize_name "${1}")
     shift
     local -a vms=("${@}")
     
@@ -75,7 +81,7 @@ EOF
 # Args: <name>
 # Returns: VDE_SUCCESS (0), outputs space-separated VM names to stdout
 vde_cluster_load() {
-    local name="${1}"
+    local name=$(vde_normalize_name "${1}")
     local cluster_file="${VDE_CLUSTER_STATE_DIR}/${name}.json"
     
     if [[ ! -f "${cluster_file}" ]] ; then
@@ -109,7 +115,7 @@ vde_cluster_list() {
 # vde_cluster_remove - Delete a cluster definition
 # Args: <name>
 vde_cluster_remove() {
-    local name="${1}"
+    local name=$(vde_normalize_name "${1}")
     local cluster_file="${VDE_CLUSTER_STATE_DIR}/${name}.json"
     
     if [[ ! -f "${cluster_file}" ]] ; then
@@ -123,7 +129,7 @@ vde_cluster_remove() {
 # vde_cluster_exists - Check if a cluster definition exists
 # Args: <name>
 vde_cluster_exists() {
-    local name="${1}"
+    local name=$(vde_normalize_name "${1}")
     if [[ -f "${VDE_CLUSTER_STATE_DIR}/${name}.json" ]] ; then
         return ${VDE_SUCCESS}
     fi

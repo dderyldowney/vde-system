@@ -143,10 +143,11 @@ list_all_containers() {
 save_docker_state() {
     local vm="${1}"
     local content="${2}"
+    local raw_name=$(vde_normalize_name "${vm}")
     local state_dir="${VDE_ROOT_DIR}/.docker-state"
     
     mkdir -p "${state_dir}"
-    echo "${content}" > "${state_dir}/${vm}.json"
+    echo "${content}" > "${state_dir}/${raw_name}.json"
     return ${VDE_SUCCESS:-0}
 }
 
@@ -155,7 +156,8 @@ save_docker_state() {
 # Returns: Outputs JSON content to stdout
 load_docker_state() {
     local vm="${1}"
-    local state_file="${VDE_ROOT_DIR}/.docker-state/${vm}.json"
+    local raw_name=$(vde_normalize_name "${vm}")
+    local state_file="${VDE_ROOT_DIR}/.docker-state/${raw_name}.json"
     
     if [[ -f "${state_file}" ]] ; then
         cat "${state_file}"
