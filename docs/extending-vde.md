@@ -8,7 +8,7 @@ VDE is designed to be easily extensible. You can add support for new programming
 
 ## Understanding VDE Architecture
 
-Before extending VDE, it helps to understand how it works:
+Before extending VDE, it helps to understand the Hub-and-Spoke model detailed in `docs/ARCHITECTURE.md`:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -46,45 +46,41 @@ Before extending VDE, it helps to understand how it works:
 
 | File | Purpose | Edit to Extend |
 |------|---------|----------------|
-| `data/vm-types.conf` | Defines all VM types | ✅ **Yes** - Add new entries |
+| `data/vm-types.conf` | Defines all VM types (Beskar Source) | ✅ **Yes** - Add new entries |
 | `templates/compose-language.yml` | Language VM template | Rarely - only for structural changes |
 | `templates/compose-service.yml` | Service VM template | Rarely - only for structural changes |
 | `templates/ssh-entry.txt` | SSH config template | Rarely - only for format changes |
 | `lib/vm-common` | Core functions | Never - use templates/config instead |
 | `lib/vde-*` | Modular libraries | Never - use templates/config instead |
 
-### vm-types.conf Format
+### vm-types.conf Format (The 8-Field Standard)
 
 ```
-type|name|aliases|display_name|install_command|service_port
+type|name|aliases|display_name|pkgs|custom_cmd|service_port|ssh_port
 ```
 
 | Field | Description | Example |
 |-------|-------------|---------|
 | `type` | `lang` or `service` | `lang` |
 | `display_name` | Human-readable name | `Zig` |
-| `service_port` | Port number (services only, empty for lang) | `5432` |
+| `pkgs` | Required system packages | `zig-sdk` |
+| `custom_cmd` | USP initialization script | `zsh /vde/scripts/setup/zig-init.zsh` |
+| `service_port` | Port number (services only) | `5432` |
 
 ---
 
 ## Adding New Languages
 
-Adding a new programming language to VDE is a two-step process:
+Adding a new programming language to VDE is a three-step process:
 
 ### Step 1: Add to vm-types.conf
 
 You can do this manually or with the `add-vm-type` script.
 
-**Option A: Using vde create (Recommended)**
+**Option A: Using vde add (Recommended)**
 
 ```zsh
-# Basic language addition
-
-# With aliases
-
-# With custom display name
-
-# Create with auto-prompt (if type not known)
+vde add lang zig "Zig" "zig-sdk" "zsh /vde/scripts/setup/zig-init.zsh"
 ```
 
 **Option B: Manual Entry**
@@ -92,30 +88,35 @@ You can do this manually or with the `add-vm-type` script.
 Edit `data/vm-types.conf` and add a line:
 
 ```zsh
-# Format: lang|name|aliases|display|install|service_port
+lang|vde-zig|zig|Zig|zig-sdk|zsh /vde/scripts/setup/zig-init.zsh||
 ```
 
-**Important:** For languages, the `service_port` field must be empty (just a trailing `|`).
+### Step 2: Create the USP Hydration Script
 
-### Step 2: Create the VM
+Create `scripts/setup/zig-init.zsh`. It MUST be ZSH-only and follow the USP mandate (Rule F).
 
 ```zsh
-# Create the Zig VM
+#!/usr/bin/env zsh
+set -e
+# Install logic here
+apt-get update && apt-get install -y zig
+apt-get clean && rm -rf /var/lib/apt/lists/*
+```
 
-# Verify it was created
+### Step 3: Ignite the Spoke
 
-# Start the VM
-
-# Connect
+```zsh
+vde start zig
 ```
 
 ### What Gets Created
 
 ```
+configs/docker/zig/
+└── docker-compose.yml
 
 env-files/
-
-
+└── zig.env
 
 ~/.ssh/vde/config               # New entry appended:
                             #     HostName localhost
@@ -125,298 +126,24 @@ env-files/
                             #     IdentitiesOnly yes
 ```
 
-### Language Installation Best Practices
-
-**Simple apt packages:**
-```zsh
-```
-
-**Language version managers:**
-```zsh
-# Using SDKMAN (for Java/Kotlin/scala variants)
-vde create gradle \
-    "apt-get update -y && apt-get install -y curl && \
-     su devuser -c 'curl -s \"https://get.sdkman.io\" | bash' && \
-     su devuser -c 'source ~/.sdkman/bin/sdkman-init.zsh && sdk install gradle'"
-
-# Using asdf (multi-language version manager)
-vde create terraform \
-    "apt-get update -y && apt-get install -y curl git && \
-     su devuser -c 'git clone https://github.com/asdf-vm/asdf.git ~/.asdf --depth 1' && \
-     su devuser -c '~/.asdf/bin/asdf plugin-add terraform && \
-                      ~/.asdf/bin/asdf install terraform latest'"
-```
-
-**Download and install from URL:**
-```zsh
-# Download binary, extract, symlink
-    "apt-get update -y && apt-get install -y xz-utils wget && \
-```
-
-**Install as devuser (for user-scoped tools):**
-```zsh
-# Rust-style installers
-vde create rust \
-    "su devuser -c 'curl --proto =https --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'"
-
-# Node.js via nvm
-vde create node \
-    "apt-get update -y && apt-get install -y curl && \
-     su devuser -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.zsh | bash' && \
-     su devuser -c 'export NVM_DIR=\"\$HOME/.nvm\" && \
-                      [ -s \"\$NVM_DIR/nvm.zsh\" ] && \\. \"\$NVM_DIR/nvm.zsh\" && \
-                      nvm install --lts'"
-```
-
 ---
 
 ## Adding New Services
 
-Adding a service (database, cache, message queue, etc.) is similar to adding a language, with the additional requirement of specifying the service port.
+Adding a service (database, cache, etc.) requires specifying the service port.
 
 ### Step 1: Add to vm-types.conf
 
-**Option A: Using vde create (Recommended)**
-
 ```zsh
-# Basic service (single port)
-vde create --type service --svc-port 5672 rabbitmq \
-    "apt-get update -y && apt-get install -y rabbitmq-server"
-
-# With aliases
-vde create --type service --svc-port 5672 rabbitmq \
-    "apt-get update -y && apt-get install -y rabbitmq-server" \
-    "rabbit,rabbitmq-server"
-
-# Multiple ports (comma-separated)
-vde create --type service --svc-port 5672,15672 rabbitmq \
-    "apt-get update -y && apt-get install -y rabbitmq-server" \
-    "rabbit"
-
-# Note: services require explicit --type and --svc-port
+service|vde-rabbitmq|rabbit,rabbitmq-server|RabbitMQ|rabbitmq-server|zsh /vde/scripts/setup/rabbitmq-init.zsh|5672,15672|2405
 ```
-
-**Option B: Manual Entry**
-
-Edit `data/vm-types.conf` and add a line:
-
-```zsh
-# Format: service|name|aliases|display|install|service_port
-service|rabbitmq|rabbit,rabbitmq-server|RabbitMQ|apt-get update -y && apt-get install -y rabbitmq-server|5672,15672
-```
-
-**Important:** For services, the `service_port` field is **required**.
 
 ### Step 2: Create the Service VM
 
 ```zsh
-# Create the RabbitMQ VM
-vde create --type service --svc-port 5672 rabbitmq
-
-# Verify it was created
-vde list --svc
-
-# Start the VM
+vde create rabbitmq
 vde start rabbitmq
-
-# Connect
 ssh rabbitmq
-```
-
-### What Gets Created (Different from Languages)
-
-```
-configs/docker/rabbitmq/
-└── docker-compose.yml     # Container: rabbitmq (no -dev suffix)
-                            # Ports: SSH_PORT:22, 5672:5672, 15672:15672
-
-env-files/
-└── rabbitmq.env           # SSH_PORT=2405 (or next available)
-
-data/rabbitmq/              # Persistent data directory (not projects/)
-logs/rabbitmq/              # Empty log directory
-
-~/.ssh/vde/config               # New entry appended:
-                            # Host rabbitmq
-                            #     HostName localhost
-                            #     Port 2404
-                            #     User devuser
-                            #     IdentityFile ~/.ssh/vde/vde_student
-                            #     IdentitiesOnly yes
-```
-
-### Key Differences: Language vs Service VMs
-
-| Aspect | Language VM | Service VM |
-|--------|-------------|------------|
-| Container name | `<name>-dev` | `<name>` |
-| SSH config | `<name>-dev` | `<name>` |
-| Port range | 2200-2299 | 2400-2499 |
-| Volume mount | `projects/<name>/` | `data/<name>/` |
-| Purpose | Development workspace | Persistent data |
-
-### Service Installation Examples
-
-**Database with client tools only:**
-```zsh
-# PostgreSQL client (connects to external Postgres)
-vde create --type service --svc-port 5432 postgres-client \
-    "apt-get update -y && apt-get install -y postgresql-client"
-```
-
-**Full database server:**
-```zsh
-# MySQL server
-vde create --type service --svc-port 3306 mysql \
-    "apt-get update -y && apt-get install -y default-mysql-server && \
-     service mysql start"
-
-# MongoDB
-vde create --type service --svc-port 27017 mongodb \
-    "apt-get update -y && apt-get install -y mongodb-org && \
-     service mongod start"
-```
-
-**Message queue:**
-```zsh
-# RabbitMQ
-vde create --type service --svc-port 5672,15672 rabbitmq \
-    "apt-get update -y && apt-get install -y erlang-nox && \
-     wget https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.12/rabbitmq-server_3.12-1_all.deb && \
-     dpkg -i rabbitmq-server_3.12-1_all.deb && \
-     service rabbitmq-server start"
-```
-
-**Web server:**
-```zsh
-# Nginx with HTTP and HTTPS
-vde create --type service --svc-port 80,443 nginx \
-    "apt-get update -y && apt-get install -y nginx-extras && \
-     service nginx start"
-```
-
-**Cache server:**
-```zsh
-# Memcached
-vde create --type service --svc-port 11211 memcached \
-    "apt-get update -y && apt-get install -y memcached && \
-     service memcached start"
-```
-
----
-
-## Advanced Extension Patterns
-
-### Custom Container Names
-
-By default, language VMs get a `-dev` suffix. To customize this, edit the templates:
-
-**Edit `templates/compose-language.yml`:**
-```yaml
-# Change container_name from {{NAME}}-dev to your preferred pattern
-container_name: {{NAME}}-workspace  # or just {{NAME}}
-```
-
-**Edit `templates/ssh-entry.txt`:**
-```ssh
-# Update the Host entry to match
-Host {{HOST}}  # Pass a custom HOST variable during creation
-```
-
-### Multi-Language Images
-
-For languages that work together (e.g., TypeScript + JavaScript), you can create composite VMs:
-
-```zsh
-# Add TypeScript as an alias of JavaScript (same VM)
-# In vm-types.conf:
-lang|js|node,nodejs,typescript|JavaScript|apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs && npm install -g typescript|
-
-# Now both create the same VM:
-vde create js
-vde create typescript  # Creates the same VM
-```
-
-### Custom Base Images
-
-If a language needs a different base OS:
-
-1. Create a new Dockerfile: `configs/docker/custom-base.Dockerfile`
-2. Modify the template to use it:
-
-**Edit `templates/compose-language.yml`:**
-```yaml
-services:
-  {{NAME}}-dev:
-    build:
-      context: ../../..
-      dockerfile: configs/docker/custom-base.Dockerfile  # Changed from vde-base
-```
-
-### Environment-Specific Installations
-
-Install different tools based on environment variables:
-
-```zsh
-vde create python \
-    "apt-get update -y && apt-get install -y python3 python3-pip && \
-     if [ \"\${VDE_PYTHON_VERSION:-latest}\" = \"3.11\" ]; then \
-       apt-get install -y python3.11 python3.11-venv; \
-     else \
-       apt-get install -y python3.12 python3.12-venv; \
-     fi"
-```
-
-Then in `env-files/python.env`:
-```zsh
-VDE_PYTHON_VERSION=3.11
-```
-
-### Post-Installation Scripts
-
-For complex setups, you can add a post-install script:
-
-```zsh
-vde create dotnet \
-    "apt-get update -y && apt-get install -y wget apt-transport-https && \
-     wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && \
-     dpkg -i /tmp/packages-microsoft-prod.deb && rm /tmp/packages-microsoft-prod.deb && \
-     apt-get update -y && apt-get install -y dotnet-sdk-8.0 aspnetcore-runtime-8.0 && \
-     # Post-install: Enable global tools
-     su devuser -c 'dotnet tool install --global dotnet-format'"
-```
-
-### Validation and Testing
-
-After adding a new language or service, validate it:
-
-```zsh
-# 1. Verify it appears in the list
-vde list <name>
-
-# 2. Create the VM
-vde create <name>
-
-# 3. Check the generated files
-cat configs/docker/<name>/docker-compose.yml
-cat env-files/<name>.env
-cat ~/.ssh/vde/config | grep -A 5 "<name>"
-
-# 4. Start the VM
-vde start <name>
-
-# 5. Verify container is running
-docker ps | grep <name>
-
-# 6. Connect and test the installation
-ssh <name>
-<test the language or service>
-
-# 7. Verify service port (if applicable)
-docker port <name>
-
-# 8. Run health check
-vde health
 ```
 
 ---
@@ -427,13 +154,11 @@ VDE's modular library architecture allows for extension without modifying core c
 
 ### Using vde-core for Lightweight Operations
 
-For scripts that don't need full VDE functionality, use `vde-core` instead of `vm-common`:
+For scripts that don't need full VDE functionality, use `vde-core`:
 
 ```zsh
-#!/bin/zsh
-# Lightweight script that only needs to query VM types
-
-source "$SCRIPTS_DIR/lib/vde-core"
+#!/usr/bin/env zsh
+source "lib/vde-core"
 
 # Load VM types (with caching)
 vde_core_load_types
@@ -442,9 +167,6 @@ vde_core_load_types
 if vde_core_is_known_vm "python"; then
     echo "Python is a known VM type"
 fi
-
-# List all VMs
-vde_core_get_all_vms
 ```
 
 ### Adding Custom Error Messages
@@ -452,64 +174,13 @@ vde_core_get_all_vms
 Use `vde-errors` to provide contextual error messages:
 
 ```zsh
-source "$SCRIPTS_DIR/lib/vde-errors"
+source "lib/vde-errors"
 
-# Show error with remediation
 vde_error_show \
     "Custom operation failed" \
     "Because of X condition" \
     "1. Do this\n2. Do that" \
     "docs/troubleshooting.md#custom-error"
-```
-
-### Using Structured Logging
-
-Use `vde-log` for structured logging with rotation:
-
-```zsh
-source "$SCRIPTS_DIR/lib/vde-log"
-
-# Initialize logging
-vde_log_init
-
-# Set log level
-vde_log_set_level "DEBUG"
-
-# Set output format
-vde_log_set_format "json"  # or "text", "syslog"
-
-# Log messages
-vde_log_info "Operation started" "my-component"
-vde_log_error "Operation failed" "my-component" "Additional context"
-
-# Query logs
-vde_log_recent 50
-vde_log_errors 100
-vde_log_grep "ERROR.*my-component"
-```
-
-### Shell-Portable Scripts
-
-Use `vde-shell-compat` for scripts that work on both zsh and bash:
-
-```zsh
-source "$SCRIPTS_DIR/lib/vde-shell-compat"
-
-# Detect shell
-if _is_zsh; then
-    echo "Running in zsh $ZSH_VERSION"
-elif _is_bash; then
-    echo "Running in bash $BASH_VERSION"
-fi
-
-# Portable associative arrays
-_assoc_init "MY_DATA"
-_assoc_set "MY_DATA" "key1" "value1"
-value=$(_assoc_get "MY_DATA" "key1")
-
-# Portable date/time
-timestamp=$(_date_iso8601)
-epoch=$(_date_epoch)
 ```
 
 ### Extending the Parser
@@ -539,17 +210,11 @@ fi
 
 ---
 
-## Current VM Types (As of Stage 7)
+## Current VM Types (v1.2.0 Hardened)
 
-### Language VMs (18)
+VDE supports 29+ pre-configured VM types including Python, Go, Rust, PostgreSQL, Redis, and JupyterLab.
 
-c, cpp, asm, python, rust, js, csharp, ruby, go, java, kotlin, swift, php, scala, r, lua, flutter, elixir, haskell
-
-### Service VMs (7)
-
-postgres, redis, mongodb, nginx, couchdb, mysql, rabbitmq
-
-See [predefined-vm-types.md](./predefined-vm-types.md) for detailed information about each VM type.
+See [predefined-vm-types.md](./predefined-vm-types.md) for detailed information.
 
 ---
 

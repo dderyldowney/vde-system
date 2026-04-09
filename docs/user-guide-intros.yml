@@ -642,7 +642,7 @@ sections:
 
       1. **Docker won't start?** Make sure your computer is compatible and you've restarted after installation
       2. **Can't find the terminal?**
-         - Windows: Press Windows key, type "PowerShell", "Windows Terminal", or "Git Bash"
+         - Windows: Press Windows key, type "PowerShell", "Windows Terminal", or "ZSH"
          - Mac: Press Command+Space, type "Terminal"
          - Linux: Press Ctrl+Alt+T
       3. **Permission errors?** Make sure you have administrator rights on your computer

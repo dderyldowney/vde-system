@@ -46,7 +46,7 @@ You only need **three things** installed on your computer:
 |------|-----|------------------|
 | **Docker** | VDE runs everything in Docker containers | Open Terminal and run: `docker --version` |
 | **Git** | To clone the VDE repository | Run: `git --version` |
-| **Bash or Zsh** | Your shell (runs VDE scripts) | Run: `echo $SHELL` |
+| **Zsh (Mandatory)** | Your shell (runs VDE scripts) | Run: `echo $SHELL` |
 
 **That's it!** No language runtimes. No databases. No package managers. Just Docker, Git, and a shell. Simple!
 
@@ -56,7 +56,7 @@ The [**User Guide**](./USER_GUIDE.md) includes **beginner-friendly, no-knowledge
 
 - Installing Docker Desktop (Mac, Windows, Linux)
 - Installing Git
-- Checking which shell you're using (bash or zsh)
+- Checking which shell you're using (zsh)
 
 Even if you've never used Terminal before, we've got you covered.
 
