@@ -255,6 +255,15 @@
               "custom_cmd": "zsh /vde/scripts/setup/redis-init.zsh",
               "service_port": "6379,6380",
               "ssh_port": 2406
+            },
+        {
+              "name": "vde-jupyterlab",
+              "aliases": ["jupyter", "lab", "notebook", "jupyterlab"],
+              "display": "JupyterLab Data Science Suite",
+              "pkgs": "python3-pip python3-venv",
+              "custom_cmd": "zsh /vde/scripts/setup/jupyterlab-init.zsh",
+              "service_port": "8888",
+              "ssh_port": 2407
             }
     ]
   }
