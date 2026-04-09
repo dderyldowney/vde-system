@@ -4,11 +4,13 @@
 #===============================================================================
 
 # 1. Initialize the Spine
+emulate -L zsh
+setopt LOCAL_OPTIONS
 VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(pwd)}"
 source "${VDE_ROOT_DIR}/lib/vde-core"
 
 # 2. Extract the current version from the Beskar Source
-local NEW_VER=$(vde_get_version)
+local NEW_VER=${(z)$(vde_get_version)}
 [[ -z "$NEW_VER" || "$NEW_VER" == "0.0.0-unknown" ]] && { echo "ERROR: No version in Spec."; exit 1; }
 
 # 3. Logging Fallbacks

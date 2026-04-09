@@ -43,7 +43,7 @@ local _zshenv="/home/devuser/.zshenv"
 mkdir -p /home/devuser
 touch "${_zshenv}"
 grep -q "jupyter lab" "${_zshenv}" || {
-    echo "nohup ${_venv_path}/bin/jupyter lab --config=${_jupyter_config} >/logs/jupyter.log 2>&1 &" >> "${_zshenv}"
+    echo "pgrep -f \"jupyter lab\" >/dev/null || nohup ${_venv_path}/bin/jupyter lab --config=${_jupyter_config} >/logs/jupyter.log 2>&1 &" >> "${_zshenv}"
 }
 chown devuser:devuser "${_zshenv}"
 
