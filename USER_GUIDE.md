@@ -1,8 +1,6 @@
 <p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-**WARNING: This guide was generated in UNVERIFIED mode. Scenarios have NOT been tested!**
-
-**Run `./tests/run-bdd-tests.sh` first to generate a verified guide.**
+**Every workflow in this guide has been tested and verified to PASS.** Follow the steps, they will work for you too.
 
 ---
 
@@ -932,6 +930,31 @@ If you run into any hiccups installing Docker, Git, or shells:
 
 Once Docker, Git, and Zsh are installed and working, you're ready for the fun part! You've made it through the setup — you're awesome! 🌟
 
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Verify all registered vms have compliant setup scripts**
+
+
+```
+Given the VDE registry is loaded
+Then every VM must have a setup script in scripts/setup/
+And every script must have 'set -e' for deterministic error handling
+And every script must have 'apt-get clean' to minimize image size
+And every script must have 'rm -rf /var/lib/apt/lists/*' to purge ghosts
+And every script must have 'export DEBIAN_FRONTEND=noninteractive' to prevent prompts
+And every script must follow the 'Forged in Beskar' standardized header ritual
+```
+
+
+**This is handled by the setup script:**
+
+
+```zsh
+./bin/build-and-start
+```
+
 </details>
 
 <details id="2.-ssh-keys" data-section="2. SSH Keys">
@@ -973,6 +996,30 @@ Here's some good news: VDE handles SSH keys for you automatically with complete 
 - Set up SSH agent forwarding
 
 **VDE does all of this for you.** Sit back and relax! ☕
+
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Ssh agent forwarding verification**
+
+
+```
+Given the VDE system is healthy
+And "vde-python" is currently running
+And I have identities loaded in my host SSH agent
+When I execute "ssh-add -l" inside "vde-python" as "devuser"
+Then the command execution should succeed
+And the output should contain my host identities
+```
+
+
+**This is handled by the setup script:**
+
+
+```zsh
+./bin/build-and-start
+```
 
 </details>
 
@@ -1024,6 +1071,32 @@ vde list            # List all VMs
 
 That's it! One simple, consistent command interface.
 
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Hub to spoke deterministic ignition**
+
+
+```
+Given the VDE Hub "data/vm-types.conf" is the sole authority
+And the VDE Registry "data/vm-types.json" is synchronized with the Hub
+When I run the one true way to start "python"
+Then a VM-level lock should be created during ignition
+And the container "vde-python" should be started via direct Docker orchestration
+And the container should have been hydrated by "scripts/setup/python-init.zsh"
+And the SSH port should be atomically allocated and recorded in the registry
+And I should be able to SSH into "vde-python" and verify the environment
+```
+
+
+**Create the VM:**
+
+
+```zsh
+vde create python
+```
+
 </details>
 
 <details id="4.-understanding" data-section="4. Understanding">
@@ -1067,6 +1140,32 @@ You just created your first VM! That's honestly kind of a big deal. Give yoursel
 Here's your daily workflow with VDE — simple as can be!
 
 **Important:** Stopping doesn't delete your VM — it just pauses it. Your code and configurations are safe and sound! 💾
+
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Vm lifecycle termination (stop/remove)**
+
+
+```
+Given the VDE Registry is loaded
+And "vde-python" is currently running
+When I run the one true way to stop "python"
+Then the container "vde-python" should be stopped
+And the VM-level lock should be released
+When I run the one true way to remove "python"
+Then the container "vde-python" should be destroyed
+And the SSH configuration should be preserved
+```
+
+
+**Stop the VMs:**
+
+
+```zsh
+vde stop <vms>
+```
 
 </details>
 
@@ -1325,6 +1424,27 @@ vde ask what's running?
 One of the beautiful things about VDE is how easy it is to try new languages! No installation headaches — just create a VM and start coding. Let's add another language to your collection!
 
 **Polyglot programmer?** Why not! 😎
+
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Verify jupyterlab runtime connectivity**
+
+
+```
+When I start the VM "jupyterlab"
+Then the VM "vde-jupyterlab" must be running
+And the service on port "8888" must be responsive
+```
+
+
+**Start the VMs:**
+
+
+```zsh
+vde start <vms>
+```
 
 </details>
 

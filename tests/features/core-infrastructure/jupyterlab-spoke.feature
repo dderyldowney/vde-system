@@ -22,7 +22,7 @@ Feature: JupyterLab Data Science Spoke
   Scenario: Verify JupyterLab Workspace Mounting
     Then the workspace mount for "vde-jupyterlab" must point to "projects/python/jupyterlabs"
 
-  @runtime @connectivity
+  @runtime @connectivity @user-guide-more-languages
   Scenario: Verify JupyterLab Runtime Connectivity
     When I start the VM "jupyterlab"
     Then the VM "vde-jupyterlab" must be running
