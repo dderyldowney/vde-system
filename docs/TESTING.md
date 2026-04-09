@@ -371,7 +371,7 @@ The **docker-free** test suite (146 passing scenarios) validates VDE's core infr
 VDE is designed as a **zsh-first** orchestration system:
 
 - **Native zsh features**: Uses `typeset -A` for associative arrays, process substitution `()`, and shell detection via `$_` or `$0`
-- **Shell compatibility layer**: [`lib/vde-shell-compat`](lib/vde-shell-compat) abstracts shell differences for cross-shell support
+- **Zsh abstraction layer**: [`lib/`](lib/) abstracts shell differences for cross-shell support
 - **Unicode & special character handling**: Keys/values support `/`, `:`, `-`, spaces, emojis, and newlines via hex encoding
 - **Key patterns**: `[[` for string comparisons, `local` for function-scoped variables, exit codes 0/success, non-zero/failure
 
@@ -379,7 +379,7 @@ VDE is designed as a **zsh-first** orchestration system:
 
 | Library | Purpose |
 |---------|---------|
-| `vde-shell-compat` | Portable shell operations (zsh/bash compatibility) |
+| `` | Portable shell operations () |
 | `vde-constants` | Centralized constants (return codes, port ranges, timeouts) |
 | `vde-core` | Essential VDE functions (VM types, queries, caching) |
 | `vm-common` | Full VDE functionality (VM types, ports, Docker, SSH, templates) |
@@ -633,7 +633,7 @@ This section describes the complete orchestration flow from user command to runn
 │  │   │                     │         │ (bridge network)    │         │                     │ │   │
 │  │   │ Keys:               │         │                     │         │ git@github.com      │ │   │
 │  │   │ - vde_student       │         │  ┌───────────────┐  │         │ git@gitlab.com      │ │   │
-│  │   │ - id_rsa           │         │  │vde-python     │  │         │                     │ │   │
+│  │   │                     │         │  │vde-python     │  │         │                     │ │   │
 │  │   │                     │         │  │               │  │         └─────────────────────┘ │   │
 │  │   └─────────┬───────────┘         │  │ SSH:2222◄────┐│  │                                 │   │
 │  │             │                       │  │ Agent:/tmp/ ││  │                                 │   │
@@ -1091,9 +1091,7 @@ VDE implements a **zero-trust SSH agent forwarding** architecture where private 
 │  │ SSH Agent       │           │ ~/.ssh/vde/                  │     │
 │  │ (ssh-agent)     │           │ ├── vde_student              │     │
 │  │                 │           │ ├── vde_student.pub          │     │
-│  │ PID: 12345      │           │ ├── id_rsa                 │     │
-│  │ Socket:         │           │ ├── id_rsa.pub             │     │
-│  │ /tmp/ssh-xxxx/ │           │ └── config                  │     │
+│  │ PID: 12345      │           │ └── config                  │     │
 │  └────────┬────────┘           └─────────────────────────────┘     │
 │           │                                                       │
 │           │ SSH_AUTH_SOCK                                         │
@@ -1210,7 +1208,7 @@ _sync_public_keys() {
   # Sync all public keys from public-ssh-keys/
   for pub_key in public-ssh-keys/*.pub; do
     if [[ -f "$pub_key" ]]; then
-      docker exec "$container" bash -c "cat >> /home/${container_user}/.ssh/authorized_keys" < "$pub_key"
+      docker exec "$container" zsh -c "cat >> /home/${container_user}/.ssh/authorized_keys" < "$pub_key"
     fi
   done
   
@@ -1259,7 +1257,7 @@ _get_preferred_key() {
   
   # SSH into container
   docker exec -e SSH_AUTH_SOCK=/tmp/ssh-agent.sock "$container" \
-    bash -c "git clone ${repo}"
+    zsh -c "git clone ${repo}"
   
   # Verify clone succeeded
   docker exec "$container" test -d "/home/devuser/private-repo"
@@ -2074,7 +2072,7 @@ The VDE test suite uses a **hybrid approach** with both **Zsh tests** and **Pyte
 
 **Examples:**
 - `vde-constants.test.zsh` - Tests zsh constants and variable exports
-- `vde-shell-compat.test.zsh` - Tests shell compatibility features
+- `.test.zsh` - Tests shell compatibility features
 - Tests that verify associative array population
 
 **Pattern:**

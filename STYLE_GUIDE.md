@@ -14,8 +14,8 @@ Coding standards and style guidelines for the VDE (Virtual Development Environme
 - Zsh version: 5.0 or later required
 - **FORBIDDEN**: `/bin/sh` and `/usr/bin/env sh` are not allowed in this project
   - Using sh-compatible shebangs will result in immediate build failure
-  - This project is zsh-only; bash/sh scripts will not be accepted
-- Do not use bash/sh for new scripts
+  - This project is zsh-only; contributions not following the ZSH-ONLY mandate will be rejected
+- Do not use any non-ZSH shells for new scripts
 
 ### Project-Wide Shell Requirement
 **Zsh is the official and only shell of this project.**
@@ -245,12 +245,10 @@ print -P "${RED}Error:${NC} Something failed"
 ### Shebang
 Always use explicit shell paths:
 - For zsh scripts: `#!/bin/zsh`
-- For bash scripts: `#!/usr/local/bin/bash`
+- Or: `#!/usr/bin/env zsh`
 
 Not:
 ```zsh
-#!/usr/bin/env zsh  # Avoid /usr/bin/env pattern
-#!/usr/bin/env bash  # Avoid /usr/bin/env pattern
 #!/bin/sh   # Wrong - we use zsh features
 ```
 

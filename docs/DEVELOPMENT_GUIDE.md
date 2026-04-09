@@ -35,7 +35,6 @@ VDE uses a modular library architecture that separates concerns and enables code
 | Library | Purpose |
 |---------|---------|
 | **vde-constants** | Centralized constants (return codes, port ranges, timeouts) |
-| **vde-shell-compat** | Portable shell operations (zsh/bash compatibility) |
 | **vde-errors** | Error messages with remediation steps |
 | **vde-log** | Structured logging with rotation (JSON/text/syslog) |
 | **vde-core** | Essential VDE functions (VM types, queries, caching) |

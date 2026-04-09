@@ -9,10 +9,10 @@ This plan outlines the surgical strikes required to remediate the vulnerabilitie
 **Verification**: Run `tests/security/test_cluster_traversal.zsh` and ensure it fails to exploit.
 
 ## STRIKE 2: Command Injection Purge (HIGH)
-**Target**: `bin/vde-exec`, `lib/vde-shell-compat`
+**Target**: `bin/vde-exec`, `lib/`
 **Strategy**: 
 - Refactor `bin/vde-exec` to pass arguments individually to `docker exec` instead of joining them into a string for `zsh -c`.
-- Audit and harden `eval` calls in `lib/vde-shell-compat` to ensure they only operate on internally defined variable names.
+- Audit and harden `eval` calls in `lib/` to ensure they only operate on internally defined variable names.
 **Verification**: Run `tests/security/test_exec_injection.zsh` and ensure it fails to exploit.
 
 ## STRIKE 3: Secret Scrubbing (MEDIUM)

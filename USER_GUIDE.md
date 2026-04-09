@@ -916,7 +916,7 @@ If you run into any hiccups installing Docker, Git, or shells:
 
 2. **Can't find the terminal?**
 
-   - Windows: Press Windows key, type "PowerShell", "Windows Terminal", or "Git Bash"
+   - Windows: Press Windows key, type "PowerShell", "Windows Terminal", or "ZSH"
 
    - Mac: Press Command+Space, type "Terminal"
 

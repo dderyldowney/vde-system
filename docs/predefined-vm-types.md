@@ -45,6 +45,7 @@ All available programming languages and services that can be created with VDE.
 | vde-postgres | postgresql | PostgreSQL | vde-postgres | 5432 | 2404 | PostgreSQL database |
 | vde-rabbitmq | rabbitmq | RabbitMQ | vde-rabbitmq | 5672, 15672 | 2405 | Message queue |
 | vde-redis | redis | Redis | vde-redis | 6379 | 2406 | Key-value store |
+| vde-jupyterlab | jupyterlab | JupyterLab | vde-jupyterlab | 8888 | 2407 | Data Science Suite |
 
 ---
 

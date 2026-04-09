@@ -39,7 +39,7 @@
 - `vde-parser.test.zsh`
 - `vde-schema-validation.test.zsh`
 - `vde-security.test.zsh`
-- `vde-shell-compat.test.zsh`
+- `.test.zsh`
 - `vde-ssh.test.zsh`
 - `vm-types-schema.test.zsh`
 

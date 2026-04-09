@@ -12,7 +12,7 @@
 
 ## 2. Command Injection Prevention
 - [x] **bin/vde-exec**: Refactor `docker exec` call to avoid `zsh -c` string interpolation (Line 65).
-- [x] **lib/vde-shell-compat**: Harden `eval` calls in associative array helpers (Lines 111-413).
+- [x] **lib/**: Harden `eval` calls in associative array helpers (Lines 111-413).
 - [x] **lib/vde-audit**: Remove or harden `vde_audit_wrap` `eval` (Line 332).
 - [x] **lib/vde-core**: Harden `vde_time_start`/`end` `eval` (Lines 834-845).
 - [x] **lib/vde-log**: Harden `vde_log_grep` pattern handling (Line 328).

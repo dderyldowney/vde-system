@@ -55,8 +55,7 @@ Individual scripts are still available but `vde` is the recommended interface:
 │   ├── vde-constants      # Constants and configuration
 │   ├── vde-errors         # Error handling
 │   ├── vde-log            # Logging utilities
-│   ├── vde-core           # Core operations
-│   └── vde-shell-compat   # Shell compatibility layer
+│   └── vde-core           # Core operations
 ├── templates/             # Docker Compose templates
 ├── data/
 │   └── vm-types.conf      # VM type definitions
