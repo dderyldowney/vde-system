@@ -316,42 +316,6 @@ EOF
 }
 
 #===============================================================================
-# Wrapper for Command Auditing
-#===============================================================================
-
-# Wrap a command with audit logging
-# Args: operation_name, command_to_run, [expected_success]
-vde_audit_wrap() {
-    local operation="${1}"
-    local cmd="${2}"
-    local expected_success="${3:-1}"
-    local result="success"
-    local exit_code=0
-    
-    # Run the command
-    eval "${cmd}"
-    exit_code=${?}
-    
-    # Determine result
-    if [[ "${expected_success}" -eq 1 ]] ; then
-        if [[ "${exit_code}" -ne 0 ]] ; then
-            result="failure"
-        fi
-    else
-        if [[ "${exit_code}" -eq 0 ]] ; then
-            result="failure"
-        else
-            result="success"
-        fi
-    fi
-    
-    # Log the audit entry
-    vde_audit_log "${operation}" "${result}" "exit_code=${exit_code}"
-    
-    return "${exit_code}"
-}
-
-#===============================================================================
 # Backward Compatibility
 #===============================================================================
 
