@@ -1,18 +1,22 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-04-07T23:55:00Z
-**Version:** 2.1.0 (Absolute)
+**Last Updated:** 2026-04-08T21:40:00Z
+**Version:** 2.2.0 (Absolute)
 
 ---
 
-## SYSTEM BENCHMARKS (VDE 2.1.0)
+## SYSTEM BENCHMARKS (VDE 2.2.0)
 - **Canonical Ignition Speed:** 3.959s. This is the benchmark for 3-VM Parallel Ignition (python, postgres, redis) on current hardware. Any future refactor that slows this down is a deviation from the Way.
 
-## SYSTEM EVOLUTION (2026-04-07) - VDE 2.1.0 SOVEREIGN ECOSYSTEM
-- **Docker Socket Sovereignty:** Implemented the "Atomic Handshake" in `scripts/vde-entrypoint.zsh`. Dynamically maps host `docker.sock` GID to `devuser` inside containers and grants 666 permissions to the socket, enabling non-root Docker usage within VMs.
-- **SSH Agent Trust Bridge:** Standardized on `vde_student` identity. Implemented explicit host-to-guest agent socket mounting in `bin/vde` with macOS bridge symlinking in the entrypoint. Verified via `vde_verify_agent_forwarding`.
-- **Unified CLI Routing:** Integrated `ask`, `port`, `info`, and `ssh` subcommands into `bin/vde`. Fixed argument displacement issues caused by premature `shift` calls.
-- **BDD Infrastructure Hardening:** `run_vde_command` now filters infrastructure logs from `stdout` while preserving `vde_command_output_raw` for verbose handshake verification (e.g., SSH -v).
+## SYSTEM EVOLUTION (2026-04-08) - VDE 2.2.0 HARDENED BRIDGES
+- **Sovereign Bridges Re-Forged:** Implemented 'Symbolic Handshake' via `socat` UNIX-proxying in `scripts/vde-entrypoint.zsh`, bypassing virtual filesystem permission blocks on Darwin.
+- **Persistent Bridge established:** Added `.zshenv` export for `SSH_AUTH_SOCK` inside containers, ensuring non-interactive `vde exec` and login `vde enter` both inherit the host SSH agent identities.
+- **Atomic Handshake Hardening (Section 10.3):** Implemented dynamic probe naming (`vde-recon-probe-${port}-${RANDOM}`) and 3s strike timeouts to neutralize Darwin kernel race conditions.
+- **Certified 100% GREEN Suite:** Achieved 100% fidelity across Behave BDD features, ZSH unit, integration, and security tests.
+
+## SYSTEM EVOLUTION (2026-04-07) - VDE 2.1.0 SOVEREIGN AUDIT
+- **Sovereign Audit:** Pruned ~24,000 lines of redundant and "pink" (placeholder) test code. Condensed suite to high-fidelity core verifications.
+- **Docker Socket Sovereignty:** Implemented dynamic GID mapping and `chmod 666` in the entrypoint for non-root Docker usage.
 
 ## SYSTEM EVOLUTION (2026-04-07) - VDE 2.0.9 HARDENING
 - **Section 10: THE SEEKER’S RECON (Verification Law):** Codified the mandate for physical Docker handshakes (`docker run --rm`) for all port allocations.

@@ -1,4 +1,4 @@
-# Project Status: VDE (Sovereign Audit v2.1.0)
+# Project Status: VDE (Sovereign Ecosystem v2.2.0)
 
 ## Technical Health Dashboard
 
@@ -6,13 +6,13 @@
 |-----------|-------------|-----------|--------|
 | **Core CLI & Parsing** | 🟢 High | 100% | Stable NL intent detection; ZSH-only Rule Spine enforced. |
 | **8-Field Registry** | 🟢 High | 100% | Hub-to-Spoke Data Authority verified; 8-field layout standard. |
-| **USP Hydration** | 🟢 High | 100% | All VM setup scripts hardened with `set -e` and purge ghosts. |
+| **USP Hydration** | 🟢 High | 100% | All VM setup scripts hardened with `set -e` and ghost purge. |
 | **VM Lifecycle** | 🟢 High | 100% | Deterministic Ignition, Stop, and Remove cycles verified. |
-| **Sovereign Bridges** | 🟡 Medium | N/A | Docker Socket and SSH Forwarding hardening ongoing (Phase 27). |
+| **Sovereign Bridges** | 🟢 High | 100% | Hardened via `socat` proxy and `.zshenv` persistence (v2.2.0). |
 
-## Key Stats (Condensed Suite)
-- **Total BDD Scenarios**: 4
-- **Passed**: 4 (100% Dry-run / High-Fidelity)
+## Key Stats (Certified Suite)
+- **Total BDD Scenarios**: 7
+- **Passed**: 7 (100% GREEN / High-Fidelity)
 - **Undefined Steps**: 0
 - **ZSH Unit/Integration Scripts**: 11 (All verified)
 

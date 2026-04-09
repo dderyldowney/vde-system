@@ -92,5 +92,5 @@ All interactions with VDE containers **MUST** use the canonical `bin/vde` orches
 * **12.5.**: **The Immutable Seal**: In accordance with Rule 5, the Sentinel MUST verify that no `apt` artifacts or temporary debris remain in the final images. A warrior travels light; a sovereign system carries no ghosts.
 
 ---
-Version: 2.1.0
-Reference: VDE-SPEC v2.1.0
+Version: 2.2.0
+Reference: VDE-SPEC v2.2.0

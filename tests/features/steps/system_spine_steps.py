@@ -188,6 +188,10 @@ def step_execute_inside(context, command, vm_alias, user):
     # Store vm_alias for later steps if needed
     context.vm_alias = vm_alias
     
+    # Give the entrypoint a moment to finish the Atomic Handshake if just started
+    import time
+    time.sleep(2)
+    
     # DEBUG: Check bridge state
     if command == "ssh-add -l":
         debug_res = run_vde_command(f"exec {vm_alias} cat /home/devuser/.zshenv && ls -la /home/devuser/.ssh/vde/agent.sock")
