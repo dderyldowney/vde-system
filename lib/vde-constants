@@ -184,7 +184,7 @@ VDE_SSH_USER="${VDE_SSH_USER:-devuser}"
 
 # SSH key types in order of preference (most secure first)
 # Note: Array syntax is compatible with both bash and zsh
-VDE_SSH_KEY_PREFERENCE="${VDE_SSH_KEY_PREFERENCE:-id_ed25519 id_ecdsa id_rsa id_dsa}"
+VDE_SSH_KEY_PREFERENCE="${VDE_SSH_KEY_PREFERENCE:-vde_student id_ecdsa id_rsa id_dsa}"
 
 # =============================================================================
 # HOME DIRECTORY CONFIGURATION

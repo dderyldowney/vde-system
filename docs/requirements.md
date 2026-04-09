@@ -106,7 +106,7 @@ docker ps
 docker-compose --version || docker compose version
 
 # Check for SSH keys
-ls -la ~/.ssh/vde/id_ed25519 2>/dev/null || ls -la ~/.ssh/vde/id_rsa
+ls -la ~/.ssh/vde/vde_student 2>/dev/null || ls -la ~/.ssh/vde/id_rsa
 ```
 
 If you don't have SSH keys, generate them:

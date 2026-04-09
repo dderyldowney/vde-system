@@ -632,7 +632,7 @@ This section describes the complete orchestration flow from user command to runn
 │  │   │ SSH Agent          │         │ vde-net         │         │ GitHub/GitLab       │ │   │
 │  │   │                     │         │ (bridge network)    │         │                     │ │   │
 │  │   │ Keys:               │         │                     │         │ git@github.com      │ │   │
-│  │   │ - id_ed25519       │         │  ┌───────────────┐  │         │ git@gitlab.com      │ │   │
+│  │   │ - vde_student       │         │  ┌───────────────┐  │         │ git@gitlab.com      │ │   │
 │  │   │ - id_rsa           │         │  │vde-python     │  │         │                     │ │   │
 │  │   │                     │         │  │               │  │         └─────────────────────┘ │   │
 │  │   └─────────┬───────────┘         │  │ SSH:2222◄────┐│  │                                 │   │
@@ -648,8 +648,8 @@ This section describes the complete orchestration flow from user command to runn
 │  │                                      │  │               │  │                    │         │   │
 │  │   ┌─────────────────────┐           │  └───────────────┘  │                    │         │   │
 │  │   │ ~/.ssh/vde/         │           │                     │                    │         │   │
-│  │   │ - id_ed25519        │           │  ┌───────────────┐  │                    │         │   │
-│  │   │ - id_ed25519.pub    │───────────┼─▶│ /home/devuser │  │                    │         │   │
+│  │   │ - vde_student        │           │  ┌───────────────┐  │                    │         │   │
+│  │   │ - vde_student.pub    │───────────┼─▶│ /home/devuser │  │                    │         │   │
 │  │   │ - config            │   sync    │  │   /.ssh/      │  │                    │         │   │
 │  │   │ - known_hosts       │           │  │   authorized_ │  │                    │         │   │
 │  │   └─────────────────────┘           │  │   keys        │◄─┼────────────────────┘         │   │
@@ -806,7 +806,7 @@ _generate_ssh_config "python" "2200" "lang" | merge_ssh_config_entry
 ##       User devuser
 ##       ForwardAgent yes
 ##       StrictHostKeyChecking no
-##       IdentityFile ~/.ssh/vde/id_ed25519
+##       IdentityFile ~/.ssh/vde/vde_student
 
 ## =============================================================================
 ## STEP 8: SSH Known Hosts Update
@@ -877,7 +877,7 @@ ssh vde-python
 ##       Port 2200
 ##       User devuser
 ##       ForwardAgent yes
-##       IdentityFile ~/.ssh/vde/id_ed25519
+##       IdentityFile ~/.ssh/vde/vde_student
 
 ## =============================================================================
 ## STEP 3: Connection Establishment
@@ -924,7 +924,7 @@ $ ssh vde-python "echo \$SSH_AUTH_SOCK"
 
 ## Verify key is available:
 $ ssh vde-python "ssh-add -l"
-2048 SHA256:xxxxx id_ed25519 (RSA)
+2048 SHA256:xxxxx vde_student (RSA)
 
 ## Verify Git works:
 $ ssh vde-python "git ls-remote git@github.com:myuser/repo.git"
@@ -1089,8 +1089,8 @@ VDE implements a **zero-trust SSH agent forwarding** architecture where private 
 │                                                                      │
 │  ┌─────────────────┐           ┌─────────────────────────────┐     │
 │  │ SSH Agent       │           │ ~/.ssh/vde/                  │     │
-│  │ (ssh-agent)     │           │ ├── id_ed25519              │     │
-│  │                 │           │ ├── id_ed25519.pub          │     │
+│  │ (ssh-agent)     │           │ ├── vde_student              │     │
+│  │                 │           │ ├── vde_student.pub          │     │
 │  │ PID: 12345      │           │ ├── id_rsa                 │     │
 │  │ Socket:         │           │ ├── id_rsa.pub             │     │
 │  │ /tmp/ssh-xxxx/ │           │ └── config                  │     │

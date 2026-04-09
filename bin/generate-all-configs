@@ -88,7 +88,7 @@ Host vde-${short_name}
     HostName localhost
     Port ${port}
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -109,7 +109,7 @@ Host vde-${short_name}
     HostName localhost
     Port ${port}
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes

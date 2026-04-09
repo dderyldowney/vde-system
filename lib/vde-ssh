@@ -758,6 +758,31 @@ get_ssh_dir() {
     echo "${VDE_SSH_DIR}"
 }
 
+# vde_get_host_ssh_sock - Discover the authoritative host SSH agent socket
+# Priority: 1. Live environment, 2. VDE agent environment file
+# Returns: Outputs socket path to stdout, VDE_SUCCESS (0) if found
+vde_get_host_ssh_sock() {
+    local host_sock="${SSH_AUTH_SOCK:-}"
+
+    # 1. Check live environment
+    if [[ -S "${host_sock}" ]]; then
+        echo "${host_sock}"
+        return ${VDE_SUCCESS}
+    fi
+
+    # 2. Attempt discovery from VDE agent environment file
+    if [[ -f "${VDE_SSH_AGENT_ENV}" ]]; then
+        local parsed_sock
+        parsed_sock=$(grep "^SSH_AUTH_SOCK=" "${VDE_SSH_AGENT_ENV}" | head -1 | sed 's/^SSH_AUTH_SOCK=\([^;]*\);.*/\1/')
+        if [[ -S "${parsed_sock}" ]]; then
+            echo "${parsed_sock}"
+            return ${VDE_SUCCESS}
+        fi
+    fi
+
+    return ${VDE_ERR_NOT_FOUND}
+}
+
 # vde_verify_agent_forwarding - Verify that SSH agent forwarding is active in a VM
 # Args: <vm_name>
 # Returns: VDE_SUCCESS (0) if active, VDE_ERR_SSH (7) otherwise

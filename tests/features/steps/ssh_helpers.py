@@ -23,7 +23,7 @@ from config import VDE_ROOT
 VDE_SSH_DIR = Path.home() / ".ssh" / "vde"
 VDE_SSH_CONFIG = VDE_SSH_DIR / "config"
 VDE_SSH_KNOWN_HOSTS = VDE_SSH_DIR / "known_hosts"
-VDE_SSH_IDENTITY = VDE_SSH_DIR / "id_ed25519"
+VDE_SSH_IDENTITY = VDE_SSH_DIR / "vde_student"
 
 
 # =============================================================================
@@ -100,7 +100,7 @@ def get_ssh_keys():
     """Get list of SSH keys in ~/.ssh/vde/ (VDE isolated)."""
     keys = []
     if VDE_SSH_DIR.exists():
-        for key_type in ["id_ed25519", "id_rsa", "id_ecdsa", "id_dsa"]:
+        for key_type in ["vde_student", "id_rsa", "id_ecdsa", "id_dsa"]:
             if (VDE_SSH_DIR / key_type).exists():
                 keys.append(str(VDE_SSH_DIR / key_type))
             if (VDE_SSH_DIR / f"{key_type}.pub").exists():
@@ -192,11 +192,11 @@ def vm_has_private_keys(vm_name):
         # Check for private keys in container's /home/devuser/.ssh location
         # (This is a security check to ensure no private keys were copied into the VM)
         private_key_patterns = [
+            "vde_student",
+            "vde_student_sk",
             "id_rsa",
-            "id_ed25519",
             "id_ecdsa",
             "id_dsa",
-            "id_ed25519_sk",
             "id_ecdsa_sk",
         ]
 

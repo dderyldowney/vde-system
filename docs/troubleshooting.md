@@ -104,7 +104,7 @@ ssh -v vde-python
 ssh-add -l
 
 # Add keys if needed
-ssh-add ~/.ssh/vde/id_ed25519
+ssh-add ~/.ssh/vde/vde_student
 
 # Test GitHub/GitLab SSH connection
 ssh -T git@github.com
@@ -138,9 +138,9 @@ docker exec vde-go /usr/sbin/sshd
 
 ```bash
 # Ensure correct permissions
-chmod 600 ~/.ssh/vde/id_ed25519
+chmod 600 ~/.ssh/vde/vde_student
 chmod 600 ~/.ssh/vde/config
-chmod 644 ~/.ssh/vde/id_ed25519.pub
+chmod 644 ~/.ssh/vde/vde_student.pub
 ```
 
 ---
