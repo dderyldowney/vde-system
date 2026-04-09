@@ -1,8 +1,9 @@
-# VDE-SPEC v2.2.0 (Absolute)
+# VDE-SPEC v1.0.0 (Absolute)
 
 ## VERSION HISTORY
 | Version | Date       | Changes                                                                 |
 | :---    | :---       | :---                                                                    |
+| 1.0.0   | 2026-04-08 | Official Release: The Sovereign Handshake. Hardened bridges and 100% green suite. |
 | 2.2.0   | 2026-04-08 | Hardened Sovereign Bridges (Docker/SSH Socat Proxy) and certified 100% GREEN high-fidelity test suite. |
 | 2.1.0   | 2026-04-07 | Completed Sovereign Audit; pruned 24k lines of redundant tests.         |
 | 2.0.3   | 2026-04-03 | Aligned SSH identity naming (vde_student) across the bridge.            |
