@@ -108,8 +108,9 @@ vde create go
 # 4. Ignite the Spoke
 vde start go
 
-# 5. Connect via the Sovereign Handshake
-ssh vde-go
+# 5. Connect via the Sovereign Handshake (The Code Contract)
+vde enter go                  # MANDATORY: 'vde enter go' MUST work (Code Contract).
+ssh vde-go                    # SECONDARY: 'ssh vde-go' SHOULD work.
 
 # 6. Begin your work
 cd ~/workspace
