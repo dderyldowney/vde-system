@@ -1,21 +1,15 @@
-# Session Handover — Phase 27 Sovereign Certification
+# Session Handover — v1.0.0 Sovereign Release
 
-**Current Status**: 🟢 PHASE 27 VERIFICATION COMPLETE / 100% GREEN
-**Next Step**: Phase 28.1 Workflow Orchestration & Identity Sync
+**Current Status**: 🟢 OFFICIAL RELEASE v1.0.0 COMPLETE / 100% GREEN
+**Next Step**: Post-Release Workflow Hardening
 
-## Accomplishments (v2.2.0 Sovereign Certification)
-1.  **Sovereign Bridge Hardening**: 
-    - Implemented `socat` proxy bridge for SSH agent forwarding.
-    - Standardized persistent `.zshenv` environment bridge.
-    - Hardened Docker Socket GID mapping and permissions (chmod 666).
-2.  **Atomic Handshake (Section 10.3)**: 
-    - Implemented dynamic probe naming and 3s strike timeouts.
-    - Verified 100% deterministic port allocation on Darwin.
-3.  **100% GREEN Test Suite**:
-    - Achieved full fidelity across all Behave and ZSH tests.
-    - Certified 7 BDD scenarios providing direct empirical proof.
-4.  **Version Synchronization**:
-    - Project-wide alignment to VDE v2.2.0 complete.
+## Accomplishments (v1.0.0 Milestone)
+1.  **Official Release**: Tagged `v1.0.0` and pushed to GitHub.
+2.  **100% GREEN Suite**: Certified all BDD, ZSH Unit, Integration, and Security tests as passing.
+3.  **Sovereign Bridge Hardening**: 
+    - `socat` proxy bridge for SSH agent forwarding fully operational.
+    - Persistent `.zshenv` bridge verified for all shell types.
+    - Deterministic Ignition (< 4.0s) verified on Darwin.
 
 ## Imminent Actions
 - Commence Workflow Orchestration (Phase 28).

@@ -1,4 +1,4 @@
-# Project Status: VDE (Sovereign Ecosystem v2.2.0)
+# Project Status: VDE (Official Release v1.0.0)
 
 ## Technical Health Dashboard
 
@@ -8,7 +8,7 @@
 | **8-Field Registry** | 🟢 High | 100% | Hub-to-Spoke Data Authority verified; 8-field layout standard. |
 | **USP Hydration** | 🟢 High | 100% | All VM setup scripts hardened with `set -e` and ghost purge. |
 | **VM Lifecycle** | 🟢 High | 100% | Deterministic Ignition, Stop, and Remove cycles verified. |
-| **Sovereign Bridges** | 🟢 High | 100% | Hardened via `socat` proxy and `.zshenv` persistence (v2.2.0). |
+| **Sovereign Bridges** | 🟢 High | 100% | Hardened via `socat` proxy and `.zshenv` persistence (v1.0.0). |
 
 ## Key Stats (Certified Suite)
 - **Total BDD Scenarios**: 7

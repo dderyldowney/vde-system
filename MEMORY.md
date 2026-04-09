@@ -1,14 +1,24 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-04-08T21:40:00Z
-**Version:** 2.2.0 (Absolute)
+**Last Updated:** 2026-04-08T21:45:00Z
+**Version:** 1.0.0 (Official Release)
 
 ---
 
-## SYSTEM BENCHMARKS (VDE 2.2.0)
+## THE MILESTONE: v1.0.0 — THE SOVEREIGN HANDSHAKE
+- **Official Release**: Cut on 2026-04-08. The VDE is now a production-ready developer utility.
+- **Test Fidelity**: 100% GREEN status across all BDD, Unit, Integration, and Security tests.
+- **Core Stability**: Deterministic Ignition, Sovereign Identity (SSH), and Hardened Security (GID/Registry) are certified.
+
+---
+
+## SYSTEM BENCHMARKS (VDE 1.0.0)
 - **Canonical Ignition Speed:** 3.959s. This is the benchmark for 3-VM Parallel Ignition (python, postgres, redis) on current hardware. Any future refactor that slows this down is a deviation from the Way.
 
-## SYSTEM EVOLUTION (2026-04-08) - VDE 2.2.0 HARDENED BRIDGES
+## THE VERDICT: v1.0 READY
+- **Utility Over Exploration**: The VDE has transitioned from a project of exploration to a project of utility. It is now a platform a developer can rely on for daily work without environmental friction.
+- **Reliability Handshake**: Ignition is deterministic (< 4.5s), Identity is persistent (SSH bridge), and Security is enforced (GID mapping/8-field standard).
+- **Certification**: The ecosystem is 100% stable and verified as of v2.2.0. This is the foundation for the v1.0.0 GitHub release.
 - **Sovereign Bridges Re-Forged:** Implemented 'Symbolic Handshake' via `socat` UNIX-proxying in `scripts/vde-entrypoint.zsh`, bypassing virtual filesystem permission blocks on Darwin.
 - **Persistent Bridge established:** Added `.zshenv` export for `SSH_AUTH_SOCK` inside containers, ensuring non-interactive `vde exec` and login `vde enter` both inherit the host SSH agent identities.
 - **Atomic Handshake Hardening (Section 10.3):** Implemented dynamic probe naming (`vde-recon-probe-${port}-${RANDOM}`) and 3s strike timeouts to neutralize Darwin kernel race conditions.

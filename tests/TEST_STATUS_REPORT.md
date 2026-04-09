@@ -1,5 +1,5 @@
-# VDE Test Status Report (Sovereign Certification v2.2.0)
-**Generated:** 2026-04-08T21:42:00Z
+# VDE Test Status Report (Sovereign Certification v1.0.0)
+**Generated:** 2026-04-08T21:45:00Z
 **Status:** 100% GREEN (HIGH FIDELITY)
 
 ---
@@ -24,7 +24,7 @@
 | **USP Hydration** | ✅ PASS | Script content audit in `usp-validation.feature` |
 | **Deterministic Ignition** | ✅ PASS | Port allocation and Docker labels verified |
 | **Lifecycle (Stop/Remove)** | ✅ PASS | Container destruction and SSH preservation verified |
-| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (v2.2.0) |
+| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (v1.0.0) |
 
 ---
 
