@@ -412,7 +412,7 @@ test:
 ## Tools and Validation
 
 ### Syntax Checking
-```bash
+```zsh
 # Check zsh script syntax
 zsh -n script.sh
 
@@ -423,7 +423,7 @@ done
 ```
 
 ### Formatting (Local Only)
-```bash
+```zsh
 # Basic formatting (use with caution - may not handle all zsh features)
 shfmt -w script.sh
 

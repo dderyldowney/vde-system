@@ -8,7 +8,7 @@ Complete reference for all VDE commands.
 
 ## List Available VMs
 
-```bash
+```zsh
 # List all VMs
 vde list
 
@@ -27,7 +27,7 @@ vde list --lang script
 
 ## Rebuild VM Types Cache
 
-```bash
+```zsh
 # Invalidate and regenerate the internal VM types cache
 # Run this after manually editing data/vm-types.conf or data/vm-types.json
 vde rebuild-cache
@@ -37,7 +37,7 @@ vde rebuild-cache
 
 ## Create New VMs
 
-```bash
+```zsh
 # Create a language VM
 vde create go
 
@@ -65,7 +65,7 @@ vde create --help
 
 ## Start VMs
 
-```bash
+```zsh
 # Start single VM
 vde start python
 
@@ -89,7 +89,7 @@ vde start python postgres redis
 
 ## Stop VMs
 
-```bash
+```zsh
 # Stop single VM
 vde stop python
 
@@ -104,7 +104,7 @@ vde stop all
 
 ## Build and Start All VMs
 
-```bash
+```zsh
 # Shutdown all, then start all
 vde create-and-start all
 
@@ -119,7 +119,7 @@ vde create-and-start all --rebuild --no-cache
 
 ## Add New VM Types
 
-```bash
+```zsh
 # Add a language (auto-detects type)
 
 # Add with aliases

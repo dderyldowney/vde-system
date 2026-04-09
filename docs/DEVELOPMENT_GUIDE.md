@@ -67,7 +67,7 @@ VDE uses a modular library architecture that separates concerns and enables code
 - **Test Execution**: `./run-tests.zsh` for all tests, `./run-vde-parser-tests.zsh` for parser tests
 
 ### Test Commands
-```bash
+```zsh
 ./run-tests.zsh              # Run all tests
 ./run-vde-parser-tests.zsh   # Run parser-specific tests
 behave tests/features/       # Run BDD tests directly
@@ -97,7 +97,7 @@ Example workflows for common development scenarios with VDE.
 
 A full-stack Python API with PostgreSQL database.
 
-```bash
+```zsh
 ## 1. Create Python VM
 vde create python
 
@@ -133,7 +133,7 @@ uvicorn main:app --reload
 
 Node.js/Express application with Redis caching.
 
-```bash
+```zsh
 ## 1. Create VMs
 vde create js
 vde create redis
@@ -179,7 +179,7 @@ node app.js
 
 A microservices architecture using different languages for each service.
 
-```bash
+```zsh
 ## 1. Create VMs for each service
 vde create python   # API Gateway
 vde create go       # Payment Service
@@ -207,14 +207,14 @@ vde start python go rust postgres redis
 
 #### Morning Setup
 
-```bash
+```zsh
 ## Start your development environments
 vde start python postgres redis
 ```
 
 #### During Development
 
-```bash
+```zsh
 ## Check what's running
 docker ps
 
@@ -228,7 +228,7 @@ cd ~/workspace
 
 #### Evening Cleanup
 
-```bash
+```zsh
 ## Stop everything to save resources
 vde stop all
 ```
@@ -239,7 +239,7 @@ vde stop all
 
 When something isn't working:
 
-```bash
+```zsh
 ## 1. Check container status
 vde status
 

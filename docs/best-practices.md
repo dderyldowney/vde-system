@@ -12,7 +12,7 @@ Recommended practices for working with VDE effectively.
 
 All code is in `projects/<lang>/` which persists on your host.
 
-```bash
+```zsh
 # Good: Work in projects directory
 cd ~/dev/projects/python/my-api
 # Edit files, they appear in container at ~/workspace
@@ -38,7 +38,7 @@ Edit code locally with full IDE support.
 
 Your code is safe on the host, containers are ephemeral.
 
-```bash
+```zsh
 # Git repo on host
 cd ~/dev/projects/python/my-api
 git commit -am "Work in progress"
@@ -52,7 +52,7 @@ vde start python --rebuild
 
 Databases and caches run in separate containers.
 
-```bash
+```zsh
 # Good: Use separate service containers
 vde create postgres
 vde create redis
@@ -66,7 +66,7 @@ psql -h postgres -U devuser  # Works!
 
 All VMs share the `vde-net` network and have SSH agent forwarding enabled.
 
-```bash
+```zsh
 # From vde-python, connect to postgres using host's SSH keys
 ssh vde-postgres
 psql -h localhost -U devuser
@@ -87,7 +87,7 @@ psql -h postgres -U devuser
 
 ### Start Only What You Need
 
-```bash
+```zsh
 # Good: Start only what you're using
 vde start python postgres
 
@@ -97,7 +97,7 @@ vde start all  # Uses more resources
 
 ### Stop When Done
 
-```bash
+```zsh
 # Stop VMs to free resources
 vde stop python postgres
 
@@ -107,7 +107,7 @@ vde stop all
 
 ### Check Status Regularly
 
-```bash
+```zsh
 # See what's running
 docker ps
 ```
@@ -120,14 +120,14 @@ docker ps
 
 VDE automatically manages `~/.ssh/vde/config`, but verify it:
 
-```bash
+```zsh
 # Check SSH entries
 cat ~/.ssh/vde/config | grep -A 5 "Host "
 ```
 
 ### Backup Important Data
 
-```bash
+```zsh
 # Service data persists on host
 ls ~/data/postgres/
 
@@ -139,7 +139,7 @@ tar -czf postgres-backup.tar.gz ~/data/postgres/
 
 Store configuration in `env-files/<name>.env`:
 
-```bash
+```zsh
 # env-files/python.env
 SSH_PORT=2213
 PYTHON_VERSION=3.11
@@ -156,7 +156,7 @@ See [Rebuild Guidelines](./rebuild-guidelines.md) for details.
 
 ### Monitor Resource Usage
 
-```bash
+```zsh
 # Check container resource usage
 docker stats
 
@@ -188,7 +188,7 @@ VDE uses SSH agent forwarding for secure authentication.
 
 Password authentication is disabled. VDE automatically generates SSH keys if you don't have any.
 
-```bash
+```zsh
 # VDE handles this automatically - no manual steps needed
 vde create python
 vde start python
@@ -197,7 +197,7 @@ vde start python
 
 ### Keep Containers Updated
 
-```bash
+```zsh
 # Rebuild with latest base image
 vde start python --rebuild --no-cache
 ```
@@ -206,7 +206,7 @@ vde start python --rebuild --no-cache
 
 You have passwordless sudo in containers, but use it carefully:
 
-```bash
+```zsh
 # In container
 sudo apt-get update  # Needed for system packages
 # But prefer user-space tools when possible
@@ -218,14 +218,14 @@ sudo apt-get update  # Needed for system packages
 
 ### Check Logs First
 
-```bash
+```zsh
 # Container logs
 docker logs <container-name>
 ```
 
 ### Verify Networking
 
-```bash
+```zsh
 # Check Docker network
 docker network ls | grep vde-net
 
@@ -235,7 +235,7 @@ docker exec vde-python ping postgres
 
 ### Use Verbose SSH
 
-```bash
+```zsh
 # Debug SSH issues
 ssh -v vde-go
 ```
@@ -248,7 +248,7 @@ ssh -v vde-go
 
 Each project should have its own README:
 
-```bash
+```zsh
 # projects/python/my-api/README.md
 # Document how to run, test, and deploy
 ```

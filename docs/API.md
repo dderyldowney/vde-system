@@ -1,892 +1,150 @@
 # VDE API Reference
 
-**Version:** 1.0.0 (Stage 7 - Architectural Enhancements)
-**Last Updated:** 2026-01-15
+**Version:** 1.2.0 (The Hardened Handshake)
+**Status:** AUTHORITATIVE
 
 This document provides the complete API reference for the Virtual Development Environment (VDE) system.
 
 ---
 
-## Table of Contents
+## 1. Overview (The Rule Spine)
 
-1. [Overview](#overview)
-2. [Scripts Reference](#scripts-reference)
-3. [Library API](#library-api)
-4. [Configuration Reference](#configuration-reference)
-5. [VM Types Reference](#vm-types-reference)
-6. [Exit Codes](#exit-codes)
-7. [Port Allocation](#port-allocation)
-8. [Environment Variables](#environment-variables)
-
----
-
-## Overview
-
-VDE (Virtual Development Environment) is a Docker-based container orchestration system providing isolated development environments for multiple programming languages and infrastructure services.
+VDE is a **ZSH-ONLY** Docker-based container orchestration system. All libraries and scripts are designed for native ZSH execution.
 
 ### Architecture
 
 ```
 VDE Root Directory
 ├── bin/
-│   ├── lib/              # Library modules
+│   ├── lib/              # Hardened Library modules
 │   │   ├── vde-constants
-│   │   ├── vde-shell-compat
 │   │   ├── vde-errors
 │   │   ├── vde-log
 │   │   ├── vde-core
 │   │   ├── vm-common
 │   │   ├── vde-commands
 │   │   └── vde-parser
-│   ├── data/             # Configuration data
+│   ├── data/             # The Beskar Vault
 │   │   └── vm-types.conf
 │   └── templates/        # Docker Compose templates
 ├── configs/              # Generated VM configs
-├── projects/             # Project source code
+├── projects/             # User workspace
 ├── data/                 # Persistent data
-├── logs/                 # Application logs
-└── env-files/            # Environment variables
+├── logs/                 # Hardened logs
+└── env-files/            # Environment templates
 ```
 
-### Supported Environments
+### Supported Environment
 
-- **Shell:** zsh 5.0+, bash 4.0+ (bash 3.x with fallbacks)
-- **Platform:** macOS, Linux
-- **Requirements:** Docker Desktop or Docker daemon
+- **Shell:** zsh 5.0+ (Mandatory)
+- **Platform:** macOS (Darwin), Linux
+- **Requirements:** Docker Desktop or Engine 20.10+
 
 ---
 
-## Scripts Reference
+## 2. Scripts Reference
 
-### `vde` - Unified Command Interface
+### `vde` - Unified Orchestrator
 
-The main entry point for all VDE operations.
+The main entry point for all VDE operations. Supervised by `vde-enforce-uap.zsh`.
 
 **Usage:**
-```bash
+```zsh
 vde <command> [options] [args]
 ```
 
-**Commands:**
+**Core Commands:**
 
 | Command | Description |
 |---------|-------------|
-| `create <vm>` | Create a new VM |
-| `start <vm>` | Start a VM |
-| `stop <vm>` | Stop a VM |
-| `restart <vm>` | Restart a VM |
-| `list` | List all VMs |
-| `status` | Show VM status |
-| `health` | Run system health check |
-| `help` | Show help message |
-
-**Options:**
-- `-h, --help` - Show help message
-- `-v, --verbose` - Enable verbose output
-- `--version` - Show version information
-
-**Examples:**
-```bash
-vde list                          # List all VMs
-vde create python                 # Create Python VM
-vde start vde-python              # Start Python VM
-vde stop postgres                 # Stop PostgreSQL service
-vde health                        # Run health check
-```
-
-**Exit Codes:**
-- `0` - Success
-- `1` - General error
-- `2` - Invalid input
-- `3` - Resource not found
+| `create <vm>` | Create a new VM from templates |
+| `start <vm>` | Ignite a VM (Deterministic) |
+| `stop <vm>` | Shutdown a VM (Graceful) |
+| `restart <vm>` | Cycle a VM (Supports --rebuild) |
+| `list` | List available Spokes |
+| `status` | Show real-time Hub status |
+| `health` | Execute Sovereign Audit |
+| `ask <text>` | Natural Language Interface |
 
 ---
 
-### Legacy Scripts
-
-The following scripts are still available but are now primarily accessed through the unified `vde` command:
-
-- `create-virtual-for` - Use `vde create` instead
-- `start-virtual` - Use `vde start` instead
-- `shutdown-virtual` - Use `vde stop` instead
-- `list-vms` - Use `vde list` instead
-- `add-vm-type` - Use `vde add-vm-type` instead
-
----
-
-## Library API
+## 3. Library API
 
 ### vde-constants
 
 Standardized constants for VDE operations.
 
-**Return Codes:**
+**Return Codes (Exit Codes):**
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `VDE_SUCCESS` | 0 | Operation completed successfully |
-| `VDE_ERR_GENERAL` | 1 | Unspecified failure |
-| `VDE_ERR_INVALID_INPUT` | 2 | Bad arguments or validation failure |
-| `VDE_ERR_NOT_FOUND` | 3 | Resource doesn't exist |
-| `VDE_ERR_EXISTS` | 4 | Resource already exists |
-| `VDE_ERR_DOCKER` | 5 | Docker operation failed |
-| `VDE_ERR_SSH` | 6 | SSH operation failed |
-| `VDE_ERR_PORT` | 7 | Port allocation failed |
-| `VDE_ERR_TEMPLATE` | 8 | Template processing failed |
-| `VDE_ERR_LOCK` | 9 | Lock acquisition failed |
+| `VDE_SUCCESS` | 0 | Operation complete |
+| `VDE_ERR_GENERAL` | 1 | General failure |
+| `VDE_ERR_INVALID_INPUT` | 2 | Validation failure |
+| `VDE_ERR_NOT_FOUND` | 3 | Resource missing |
+| `VDE_ERR_EXISTS` | 4 | Resource conflict |
+| `VDE_ERR_DOCKER` | 5 | Docker daemon error |
+| `VDE_ERR_SSH` | 6 | SSH bridge failure |
+| `VDE_ERR_PORT` | 7 | Allocation conflict |
+| `VDE_ERR_LOCK` | 9 | Spinlock failure |
 
-**Port Ranges:**
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `LANG_PORT_START` | 2200 | Starting port for language VMs |
-| `LANG_PORT_END` | 2299 | Ending port for language VMs |
-| `SVC_PORT_START` | 2400 | Starting port for service VMs |
-| `SVC_PORT_END` | 2499 | Ending port for service VMs |
-| `NEXT_PORT_FILE` | `.cache/next-port` | Port allocation registry |
-
-**Timeouts:**
+**Identity Configuration:**
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `DOCKER_TIMEOUT` | 300 | Docker operation timeout (seconds) |
-| `SSH_TIMEOUT` | 30 | SSH operation timeout (seconds) |
-| `CONTAINER_START_TIMEOUT` | 120 | Container startup timeout (seconds) |
-
-**Retry Configuration:**
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `MAX_RETRIES` | 3 | Maximum retry attempts |
-| `BASE_DELAY` | 2 | Base exponential delay (seconds) |
-| `MAX_DELAY` | 30 | Maximum delay between retries (seconds) |
-
-**Lock Configuration:**
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `SSH_LOCK_FILE` | `.cache/ssh-config.lock` | SSH config lock file path |
-| `PORT_LOCK_FILE` | `.cache/port-allocation.lock` | Port allocation lock file path |
-| `STALE_LOCK_AGE` | 300 | Age before lock is considered stale (seconds) |
-
-**Docker Configuration:**
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `VDE_DOCKER_NETWORK` | "vde-net" | Docker network name |
-| `LANG_CONTAINER_SUFFIX` | "-dev" | Suffix for language container names |
-| `SVC_CONTAINER_SUFFIX` | "" | Suffix for service container names |
-
-**SSH Preferences:**
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `SSH_KEY_TYPES` | "vde_student id_ecdsa id_rsa id_ecdsa_sk vde_student_sk" | Preferred SSH key types |
-
-**Error Message Templates:**
-
-```bash
-VDE_MSG_VM_NOT_CREATED="VM '%s' is not created yet"
-VDE_MSG_VM_ALREADY_RUNNING="VM '%s' is already running"
-VDE_MSG_VM_NOT_RUNNING="VM '%s' is not running"
-VDE_MSG_PORT_IN_USE="Port %d is already in use"
-VDE_MSG_NO_PORTS_AVAILABLE="No available ports in range %d-%d"
-```
+| `VDE_SSH_IDENTITY` | `~/.ssh/vde/vde_student` | Mission identity key |
+| `VDE_SSH_KEY_TYPES` | "vde_student id_ecdsa id_rsa" | Preferred key types |
 
 ---
 
-### vde-shell-compat
+### vde-naming (Security Hardened)
 
-Portable shell compatibility layer for cross-shell operations.
-
-**Shell Detection Functions:**
-
-| Function | Returns | Description |
-|----------|---------|-------------|
-| `_detect_shell` | "zsh", "bash", "unknown" | Detect current shell type |
-| `_shell_version` | Version string | Get shell version |
-| `_is_zsh` | 0 if zsh, 1 otherwise | Check if running in zsh |
-| `_is_bash` | 0 if bash, 1 otherwise | Check if running in bash |
-| `_bash_version_major` | Major version number | Get bash major version |
-| `_shell_supports_native_assoc` | 0 if supported, 1 otherwise | Check for native associative arrays |
-
-**Script Path Functions:**
-
-| Function | Returns | Description |
-|----------|---------|-------------|
-| `_get_script_path` | Absolute path | Get path of current script |
-| `_get_script_dir` | Absolute path | Get directory of current script |
-
-**Associative Array Functions:**
+**Core Functions:**
 
 | Function | Description |
 |----------|-------------|
-| `_assoc_init <array_name>` | Initialize an associative array |
-| `_assoc_set <array> <key> <value>` | Set a value in an associative array |
-| `_assoc_get <array> <key>` | Get a value from an associative array |
-| `_assoc_keys <array>` | Get all keys from an associative array |
-| `_assoc_has_key <array> <key>` | Check if a key exists |
-| `_assoc_unset <array> <key>` | Remove a key from an associative array |
-| `_assoc_clear <array>` | Clear all entries from an associative array |
-| `_assoc_cleanup` | Clean up file-based storage |
-
-**Array Operations:**
-
-| Function | Description |
-|----------|-------------|
-| `_array_length <array>` | Get the length of an indexed array |
-| `_array_append <array> <value>` | Append a value to an array |
-| `_array_contains <array> <value>` | Check if array contains a value |
-
-**String Operations:**
-
-| Function | Description |
-|----------|-------------|
-| `_string_split <string> <delimiter> <array>` | Split string by delimiter into array |
-| `_string_trim <string>` | Trim leading and trailing whitespace |
-
-**Date/Time Operations:**
-
-| Function | Returns | Description |
-|----------|---------|-------------|
-| `_date_iso8601` | ISO 8601 timestamp | Get current timestamp |
-| `_date_epoch` | Unix timestamp | Get current epoch time |
-
-**Compatibility Checking:**
-
-| Function | Description |
-|----------|-------------|
-| `_check_shell_compatibility` | Check and warn about shell compatibility |
-| `_require_shell <shell_name>` | Require a specific shell or exit |
+| `vde_normalize_name <name>` | Strips prefix and non-alphanumeric chars (Path Traversal Protection) |
+| `vde_validate_name <name>` | Enforces `^[a-z0-9-]+$` pattern |
+| `vde_get_container_name <name>` | Returns `vde-<name>` |
 
 ---
 
-### vde-errors
-
-Error messages with remediation steps.
-
-**Core Error Functions:**
-
-```bash
-# Show full error message with what, why, and how
-vde_error_show <what> <why> <how> [doc_link]
-
-# Show simple error message
-vde_error_simple <message>
-
-# Show error with exit code
-vde_error_with_code <message> <exit_code>
-
-# Show success message
-vde_success <message>
-```
-
-**Common Error Scenarios:**
-
-| Function | Description |
-|----------|-------------|
-| `vde_error_docker_not_running` | Docker daemon not running |
-| `vde_error_port_in_use <port>` | Port already in use |
-| `vde_error_ssh_key_missing` | No SSH key found |
-| `vde_error_container_exists <name>` | VM already exists |
-| `vde_error_permission_denied <path>` | Permission denied |
-| `vde_error_vm_not_found <name>` | VM not found |
-| `vde_error_vm_not_running <name>` | VM not running |
-| `vde_error_docker_build_failed <vm>` | Docker build failed |
-| `vde_error_network_not_found <network>` | Docker network not found |
-| `vde_error_template_not_found <template>` | Template not found |
-| `vde_error_invalid_vm_name <name>` | Invalid VM name |
-| `vde_error_alias_not_found <alias>` | Unknown VM type or alias |
-
-**Configuration:**
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `VDE_ERRORS_VERBOSE` | 0 | Enable verbose mode |
-| `VDE_ERRORS_DOC_URL` | GitHub docs URL | Documentation base URL |
-| `VDE_ERRORS_SHOW_SOLUTION` | 1 | Show remediation steps |
-
----
-
-### vde-log
-
-Structured logging with rotation capabilities.
-
-**Log Levels:**
-
-| Level | Value | Description |
-|-------|-------|-------------|
-| DEBUG | 0 | Debug messages |
-| INFO | 1 | Informational messages |
-| WARN | 2 | Warning messages |
-| ERROR | 3 | Error messages |
-
-**Initialization:**
-
-```bash
-vde_log_init                    # Initialize logging system
-```
-
-**Level Control:**
-
-```bash
-vde_log_set_level <level>       # Set minimum log level (DEBUG|INFO|WARN|ERROR)
-vde_log_get_level               # Get current log level name
-```
-
-**Format Control:**
-
-```bash
-vde_log_set_format <format>     # Set output format (text|json|syslog)
-```
+### vde-log (Structured)
 
 **Output Control:**
 
-```bash
-vde_log_to_file [filepath]      # Configure logging to file
-vde_log_to_stdout               # Configure logging to stdout
-vde_log_to_stderr               # Configure logging to stderr
+```zsh
+vde_log_to_stdout               # Default output
+vde_log_set_level <LEVEL>       # DEBUG, INFO, WARN, ERROR
 ```
 
-**Logging Functions:**
+**Logging:**
 
-```bash
-vde_log_debug <message> [component] [context...]
-vde_log_info <message> [component] [context...]
-vde_log_warn <message> [component] [context...]
-vde_log_error <message> [component] [context...]
-```
-
-**Log Rotation:**
-
-```bash
-vde_log_check_rotation          # Check if rotation is needed
-vde_log_rotate                  # Perform log rotation
-vde_log_cleanup                 # Clean up old log files
-```
-
-**Query Functions:**
-
-```bash
-vde_log_recent [count]          # Get recent log entries (default: 50)
-vde_log_grep <pattern>          # Search logs
-vde_log_errors [count]          # Get error logs (default: 100)
-```
-
-**Configuration Variables:**
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `VDE_LOG_LEVEL` | INFO | Minimum log level |
-| `VDE_LOG_FORMAT` | text | Output format |
-| `VDE_LOG_OUTPUT` | stdout | Output destination |
-| `VDE_LOG_FILE` | logs/vde.log | Log file path |
-| `VDE_LOG_MAX_SIZE` | 10485760 | Max log size (10MB) |
-| `VDE_LOG_MAX_DAYS` | 7 | Log retention days |
-| `VDE_LOG_RETENTION_POLICY` | size | Retention policy (size\|time\|both) |
-
----
-
-### vde-core
-
-Core VM type loading and essential functions.
-
-**Directory Constants:**
-
-| Variable | Value | Description |
-|----------|-------|-------------|
-| `VDE_CORE_CONFIGS_DIR` | $VDE_ROOT_DIR/configs/docker | VM configurations |
-| `VDE_CORE_SCRIPTS_DIR` | $VDE_ROOT_DIR/scripts | Scripts directory |
-| `VDE_CORE_DATA_DIR` | $VDE_CORE_SCRIPTS_DIR/data | Data directory |
-| `VDE_CORE_CACHE_DIR` | $VDE_ROOT_DIR/.cache | Cache directory |
-| `VDE_CORE_VM_TYPES_CONF` | $VDE_CORE_DATA_DIR/vm-types.conf | VM types config |
-| `VDE_CORE_VM_TYPES_CACHE` | $VDE_CORE_CACHE_DIR/vm-types.cache | VM types cache |
-
-**Logging Functions:**
-
-```bash
-log_info <message>     # Output informational message
-log_error <message>    # Output error message to stderr
-log_success <message>  # Output success message
-log_warning <message>  # Output warning message
-```
-
-**VM Type Loading:**
-
-```bash
-vde_core_load_types    # Load minimal VM type data
-```
-
-**Core VM Query Functions:**
-
-```bash
-vde_core_get_all_vms       # List all known VM names
-vde_core_get_vm_type <vm>  # Get the type of a VM (lang or service)
-vde_core_is_known_vm <vm>  # Check if a VM name is known
-```
-
-**Performance Timing (Debug):**
-
-```bash
-vde_time_start <label>     # Start a timing measurement
-vde_time_end <label>       # End a timing measurement and print result
+```zsh
+vde_log_info "Message" "component"
+vde_log_error "Failure" "component"
 ```
 
 ---
 
-### vm-common
+## 4. Port Allocation (Atomic)
 
-Core VM management functionality.
+Ports are managed via atomic spinlocks in `.cache/port-registry/`.
 
-**VM Type Caching:**
-
-```bash
-load_vm_types                      # Load VM types from config
-load_vm_types_if_needed            # Load if cache is stale
-invalidate_vm_cache                # Force reload of VM types
-get_all_vms                        # Get all VM names
-get_lang_vms                       # Get language VM names
-get_service_vms                    # Get service VM names
-get_vm_info <field> <vm>           # Get VM info field (type, name, aliases, display, install, svc_port)
-is_known_vm <vm>                   # Check if VM is known
-```
-
-**Port Management:**
-
-```bash
-find_next_available_port <type>    # Find next available SSH port
-allocate_port <vm> <port>          # Register port allocation
-get_vm_port <vm>                   # Get allocated port for VM
-is_port_available <port>           # Check if port is available
-read_port_registry                 # Read port allocation registry
-write_port_registry <data>         # Write port allocation registry
-```
-
-**Docker Compose Operations:**
-
-```bash
-docker_compose_with_retry <args>   # Run docker-compose with retry logic
-get_compose_file <vm>              # Get path to docker-compose.yml
-vm_exists <vm>                     # Check if VM has been created
-is_vm_running <vm>                 # Check if VM container is running
-wait_for_container <vm> [timeout]  # Wait for container to be ready
-```
-
-**SSH Key Management:**
-
-```bash
-detect_ssh_keys                    # Detect available SSH keys
-get_first_ssh_key                  # Get path to first available SSH key
-ensure_ssh_environment             # Ensure SSH agent and keys are set up
-copy_public_keys                   # Copy public keys to VDE directory
-```
-
-**Template Rendering:**
-
-```bash
-render_template <template> [key=value...]  # Render template with variables
-```
-
-**SSH Config Management:**
-
-```bash
-merge_ssh_config_entry <host> <port> <display>  # Add SSH config entry atomically
-get_ssh_host <vm>                 # Get SSH hostname for VM
-```
-
-**Validation Functions:**
-
-```bash
-validate_vm_name <vm>             # Validate VM name format
-validate_vm_doesnt_exist <vm>     # Ensure VM doesn't exist
-ensure_vm_directories <vm> <type> # Create VM directories
-resolve_vm_name <name>            # Resolve alias to canonical name
-vde_detect_vm_type_from_name <name>  # Detect VM type from name
-```
-
-**Directory Creation:**
-
-```bash
-ensure_directory <path>           # Create directory if it doesn't exist
-```
+| Range | Usage |
+|-------|-------|
+| 2200-2299 | Language VM SSH |
+| 2400-2499 | Service VM SSH |
 
 ---
 
-### vde-commands
-
-High-level command wrappers for AI/CLI operations.
-
-**Query Functions:**
-
-```bash
-vde_list_vms [--all|--lang|--svc]     # List available VMs
-vde_vm_exists <vm>                     # Check if VM exists
-vde_get_vm_info <vm>                   # Get detailed VM information
-vde_get_running_vms                    # Get list of running VMs
-vde_get_vm_status <vm>                 # Get status of a VM
-vde_get_ssh_info <vm>                  # Get SSH connection info (host|port)
-vde_resolve_alias <alias>              # Resolve alias to VM name
-vde_validate_vm_type <vm>              # Validate VM type
-```
-
-**Action Functions:**
-
-```bash
-vde_create_vm <vm>                     # Create a new VM
-vde_start_vm <vm> [rebuild] [nocache]  # Start a VM
-vde_stop_vm <vm>                       # Stop a VM
-vde_restart_vm <vm> [rebuild] [nocache] # Restart a VM
-vde_start_all                          # Start all VMs
-vde_stop_all                           # Stop all VMs
-vde_add_vm_type <name> <install> [aliases]  # Add new VM type
-```
-
-**Batch Operations:**
-
-```bash
-vde_create_multiple_vms <vm1> <vm2> ...  # Create multiple VMs
-vde_start_multiple_vms <vm1> <vm2> ...   # Start multiple VMs
-vde_stop_multiple_vms <vm1> <vm2> ...    # Stop multiple VMs
-```
-
-**Dry Run Mode:**
-
-```bash
-vde_set_dry_run <true|false>            # Enable/disable dry run mode
-vde_exec <command> [args...]            # Execute command (respects dry run)
-```
-
----
-
-### vde-parser
-
-Natural language parsing for conversational commands.
-
-**Intent Detection:**
-
-```bash
-detect_intent <input>    # Detect primary intent from user input
-```
-
-**Supported Intents:**
-
-| Intent Constant | Description |
-|-----------------|-------------|
-| `INTENT_LIST_VMS` | List available VMs |
-| `INTENT_CREATE_VM` | Create new VMs |
-| `INTENT_START_VM` | Start VMs |
-| `INTENT_STOP_VM` | Stop VMs |
-| `INTENT_RESTART_VM` | Restart VMs |
-| `INTENT_STATUS` | Show VM status |
-| `INTENT_CONNECT` | Get connection info |
-| `INTENT_ADD_VM_TYPE` | Add new VM type |
-| `INTENT_HELP` | Show help |
-
-**Entity Extraction:**
-
-```bash
-extract_vm_names <input>     # Extract VM names from input
-extract_filter <input>       # Extract filter type (all|lang|svc)
-extract_flags <input>        # Extract operation flags (rebuild, nocache)
-```
-
-**Command Generation:**
-
-```bash
-generate_plan <input>        # Generate execution plan from input
-execute_plan                 # Execute a generated plan (reads from stdin)
-```
-
-**Alias Mapping:**
-
-```bash
-_lookup_vm_by_alias <alias>  # O(1) lookup of VM name by alias
-invalidate_alias_map         # Force rebuild of alias map
-```
-
----
-
-## Configuration Reference
-
-### vm-types.conf Format
-
-The VM types configuration file defines all available VM types in a pipe-delimited format.
-
-**Location:** `data/vm-types.conf`
-
-**Format:**
-```
-type|name|aliases|display_name|install_command|service_port
-```
-
-**Fields:**
-
-| Field | Description | Example |
-|-------|-------------|---------|
-| type | VM type (lang or service) | lang |
-| name | Canonical VM name | python |
-| aliases | Comma-separated aliases | python3,py |
-| display_name | Human-readable name | Python |
-| install_command | Shell installation command | apt-get install -y python3 |
-| service_port | Service port(s) - empty for languages | 5432 |
-
-**Example Entry:**
-```
-lang|python|python3|Python|apt-get update -y && apt-get install -y python3 python3-pip|
-service|postgres|postgresql|PostgreSQL|apt-get update -y && apt-get install -y postgresql-client|5432
-```
-
-**Comments:** Lines starting with `#` are ignored.
-
----
-
-### Environment Files
-
-Each VM has its own environment file in `env-files/<vm_name>.env`.
-
-**Variables:**
-
-```bash
-SSH_PORT=<allocated_ssh_port>           # SSH port for this VM
-<VM_NAME>_PORT=<service_port>            # Service port (for service VMs)
-```
-
-**Example (postgres.env):**
-```bash
-SSH_PORT=2404
-POSTGRES_PORT=5432
-```
-
----
-
-### Template System
-
-Templates are stored in `templates/` and use shell variable substitution.
-
-**Templates:**
-
-| Template | Description |
-|----------|-------------|
-| `compose-language.yml` | Docker Compose template for language VMs |
-| `compose-service.yml` | Docker Compose template for service VMs |
-
-**Template Variables:**
-
-| Variable | Description |
-|----------|-------------|
-| `NAME` | VM name |
-| `SSH_PORT` | Allocated SSH port |
-| `INSTALL_CMD` | Installation command from vm-types.conf |
-| `SERVICE_PORT` | Service port from vm-types.conf |
-
-**Rendering:**
-```bash
-render_template <template_file> NAME "python" SSH_PORT 2213 INSTALL_CMD "..." SERVICE_PORT ""
-```
-
----
-
-## VM Types Reference
-
-### Language VMs (21 total)
-
-| Name | Aliases | Display Name | Default Port |
-|------|---------|--------------|--------------|
-| vde-asm | asm, assembler, nasm | Assembler | 2200 |
-| vde-c | c | C | 2201 |
-| vde-cpp | cpp, c++, gcc | C++ | 2202 |
-| vde-csharp | csharp, dotnet | C# | 2203 |
-| vde-displaytest | displaytest | Go Language | 2204 |
-| vde-elixir | elixir, ex, iex | Elixir | 2205 |
-| vde-flutter | flutter, dart | Flutter | 2206 |
-| vde-go | go, golang | Go | 2207 |
-| vde-haskell | haskell, ghc | Haskell | 2208 |
-| vde-java | java, jdk | Java | 2209 |
-| vde-js | js, node, nodejs, npm | Node.js | 2210 |
-| vde-kotlin | kotlin | Kotlin | 2211 |
-| vde-lua | lua | Lua | 2212 |
-| vde-php | php | PHP | 2213 |
-| vde-python | python, python3, py | Python | 2214 |
-| vde-ruby | ruby | Ruby | 2215 |
-| vde-rust | rust, rs, rustc | Rust | 2216 |
-| vde-scala | scala | Scala | 2217 |
-| vde-swift | swift | Swift | 2218 |
-| vde-testport1 | testport1 | Test Port 1 | 2219 |
-| vde-testport2 | testport2 | Test Port 2 | 2220 |
-
-**Container Naming:** `vde-<name>` (e.g., `vde-python`)
-
-**Port Range:** 2200-2299
-
-### Service VMs (7 total)
-
-| Name | Aliases | Display Name | Service Port | Default Port |
-|------|---------|--------------|--------------|--------------|
-| vde-couchdb | couchdb | CouchDB | 5984 | 2400 |
-| vde-mongodb | mongo | MongoDB | 27017 | 2401 |
-| vde-mysql | mysql | MySQL | 3306 | 2402 |
-| vde-nginx | nginx | Nginx | 80,443 | 2403 |
-| vde-postgres | postgresql | PostgreSQL | 5432 | 2404 |
-| vde-rabbitmq | rabbitmq | RabbitMQ | 5672,15672 | 2405 |
-| vde-redis | redis | Redis | 6379 | 2406 |
-
-**Container Naming:** `vde-<name>` (e.g., `vde-postgres`)
-
-**Port Range:** 2400-2499
-
----
-
-## Exit Codes
-
-VDE uses standardized exit codes across all scripts and libraries.
-
-| Code | Constant | Description |
-|------|----------|-------------|
-| 0 | VDE_SUCCESS | Operation completed successfully |
-| 1 | VDE_ERR_GENERAL | Unspecified failure |
-| 2 | VDE_ERR_INVALID_INPUT | Bad arguments or validation failure |
-| 3 | VDE_ERR_NOT_FOUND | Resource doesn't exist |
-| 4 | VDE_ERR_EXISTS | Resource already exists |
-| 5 | VDE_ERR_DOCKER | Docker operation failed |
-| 6 | VDE_ERR_SSH | SSH operation failed |
-| 7 | VDE_ERR_PORT | Port allocation failed |
-| 8 | VDE_ERR_TEMPLATE | Template processing failed |
-| 9 | VDE_ERR_LOCK | Lock acquisition failed |
-
----
-
-## Port Allocation
-
-### Port Ranges
-
-| Type | Range | Usage |
-|------|-------|-------|
-| Language VMs | 2200-2299 | SSH access to development containers |
-| Service VMs | 2400-2499 | SSH access to service containers |
-
-### Port Allocation System
-
-Ports are allocated atomically using a file-based registry to prevent collisions.
-
-**Registry File:** `.cache/next-port`
-
-**Allocation Process:**
-1. Acquire lock on `.cache/port-allocation.lock`
-2. Read current port from registry
-3. Find next available port in range
-4. Update registry with allocated port
-5. Release lock
-
-**Functions:**
-```bash
-find_next_available_port <type>    # Find and allocate next port
-get_vm_port <vm>                   # Get port allocated to VM
-is_port_available <port>           # Check if port is in use
-```
-
-### SSH Host Aliases
-
-For language VMs, the SSH host alias is `<name>-dev`.
-For service VMs, the SSH host alias is `<name>`.
-
-Examples:
-- `vde-python` → Port 2213
-- `postgres` → Port 2404
-
----
-
-## Environment Variables
-
-### VDE Configuration
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `VDE_ROOT_DIR` | VDE root directory | Auto-detected |
-| `VDE_LOG_LEVEL` | Logging level | INFO |
-| `VDE_LOG_FORMAT` | Log format | text |
-| `VDE_ERRORS_VERBOSE` | Enable verbose errors | 0 |
-| `VDE_DEBUG_TIMING` | Enable performance timing | 0 |
-| `VDE_SKIP_COMPAT_CHECK` | Skip shell compatibility check | 0 |
-
-### Docker Configuration
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `VDE_DOCKER_NETWORK` | Docker network name | vde-net |
-| `DOCKER_TIMEOUT` | Docker operation timeout | 300 |
-
-### SSH Configuration
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `VDE_SSH_KEY_TYPES` | Preferred SSH key types | vde_student id_ecdsa id_rsa |
-| `SSH_TIMEOUT` | SSH operation timeout | 30 |
-
----
-
-## Quick Reference
-
-### Essential Commands
-
-```bash
-# List available VMs
-vde list
-
-# Create a new VM
-vde create <name>
-
-# Start VMs
-vde start <name> [--rebuild] [--no-cache]
-
-# Stop VMs
-vde stop <name>
-
-# Stop everything
-vde stop all
-
-# Restart a VM
-vde restart <name> [--rebuild]
-
-# Add custom VM type
-vde add-vm-type <name> "<install_cmd>"
-```
-
-### SSH Connections
-
-```bash
-# Language VMs
-ssh vde-c           # C development
-ssh vde-cpp         # C++ development
-ssh vde-asm         # Assembler development
-ssh vde-python      # Python development
-ssh vde-rust        # Rust development
-ssh vde-js          # JavaScript/Node.js
-ssh vde-csharp      # C# development
-ssh vde-ruby        # Ruby development
-ssh vde-go          # Go development
-ssh vde-java        # Java development
-ssh vde-kotlin      # Kotlin development
-ssh vde-swift       # Swift development
-ssh vde-php         # PHP development
-ssh vde-scala       # Scala development
-ssh vde-r           # R development
-ssh vde-lua         # Lua development
-ssh vde-flutter     # Flutter development
-ssh vde-elixir      # Elixir development
-ssh vde-haskell     # Haskell development
-
-# Service VMs
-ssh postgres        # PostgreSQL database
-ssh redis           # Redis cache
-ssh mongodb         # MongoDB
-ssh nginx           # Nginx web server
-ssh couchdb         # CouchDB
-ssh mysql           # MySQL
-ssh rabbitmq        # RabbitMQ
-```
+## 5. Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `VDE_ROOT_DIR` | Repository root authority |
+| `VDE_DEBUG_TIMING` | Enable millisecond performance tracing |
 
 ---
 
 [← Back to README](../README.md)
-
-*This API reference is generated from the VDE source code. For the latest updates, see the source files in `lib/`.*

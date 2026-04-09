@@ -20,7 +20,7 @@ Install the [Remote-SSH extension](https://marketplace.visualstudio.com/items?it
 
 ### 3. Open Your Project
 
-```bash
+```zsh
 File > Open Folder > /home/devuser/workspace
 ```
 

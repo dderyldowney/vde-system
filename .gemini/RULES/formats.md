@@ -1,6 +1,6 @@
 # REQUIRED OUTPUT FORMATS
 ## Git Commit Format
-```bash
+```zsh
 git commit -m "<type>: <description>
 
 - Detail 1

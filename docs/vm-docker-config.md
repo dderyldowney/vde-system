@@ -181,7 +181,7 @@ load_docker_config
 
 ### Manual Validation
 
-```bash
+```zsh
 # Using validation script
 ./bin/validate-schemas.zsh
 
@@ -345,7 +345,7 @@ VDE Project Root
 
 ### Validation After Changes
 
-```bash
+```zsh
 # Validate schema
 ./bin/validate-schemas.zsh
 
@@ -370,7 +370,7 @@ zsh -c "source lib/vm-common && load_docker_config"
 **Cause**: Missing config file
 
 **Solution**:
-```bash
+```zsh
 # Check file exists
 ls -la data/vm-docker-config.json
 

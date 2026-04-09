@@ -37,7 +37,7 @@ Expected: SUCCESS
 
 - [ ] **Step 3: Commit registry update**
 
-```bash
+```zsh
 git add data/vm-types.json
 git commit -m "feat: Add vde-jupyterlab to VM registry"
 ```
@@ -79,7 +79,7 @@ Expected: Outputs `.:/vde:ro|projects/python/jupyterlabs:/home/devuser/workspace
 
 - [ ] **Step 3: Commit mount override**
 
-```bash
+```zsh
 git add lib/vm-common
 git commit -m "feat: Implement workspace mount override for vde-jupyterlab"
 ```
@@ -154,7 +154,7 @@ Run: `chmod +x scripts/setup/jupyterlab-init.zsh`
 
 - [ ] **Step 3: Commit hydration script**
 
-```bash
+```zsh
 git add scripts/setup/jupyterlab-init.zsh
 git commit -m "feat: Create jupyterlab-init.zsh hydration script"
 ```
@@ -182,7 +182,7 @@ Expected: HTTP/1.1 200 OK (or similar)
 
 - [ ] **Step 4: Commit workspace anchor**
 
-```bash
+```zsh
 git add projects/python/jupyterlabs/.keep
 git commit -m "chore: Initialize jupyterlab workspace directory"
 ```

@@ -5,13 +5,13 @@ Complete guide for testing the VDE (Virtual Development Environment) system.
 ## Quick Start
 
 ### Run All Tests
-```bash
+```zsh
 # From repository root
 make test
 ```
 
 ### Run Specific Test Suite
-```bash
+```zsh
 # Unit tests only
 make test-unit
 
@@ -35,7 +35,7 @@ make lint
 - **shfmt** (>=3.6.0): Shell script formatter (for local use)
 
 ### Installation
-```bash
+```zsh
 # macOS
 brew install zsh kcov jq
 pip install yamllint
@@ -68,7 +68,7 @@ The VDE codebase uses **zsh-specific syntax** that is not compatible with tradit
 For detailed coverage documentation, see [COVERAGE.md](COVERAGE.md).
 
 ### Quick Coverage Commands
-```bash
+```zsh
 # Run all tests with coverage
 make test-coverage
 
@@ -150,7 +150,7 @@ For detailed coverage information and reports, see [COVERAGE.md](COVERAGE.md).
 ## Troubleshooting
 
 ### Tests Failing Locally
-```bash
+```zsh
 # Ensure all dependencies are sourced
 cd ~/dev
 source lib/vm-common
@@ -163,7 +163,7 @@ chmod +x tests/**/*.zsh
 ```
 
 ### Docker Build Tests Failing
-```bash
+```zsh
 # Check Docker daemon
 docker ps
 
@@ -176,7 +176,7 @@ docker system prune -f
 ```
 
 ### SSH Connection Tests Failing
-```bash
+```zsh
 # Verify SSH key generation
 ssh-keygen -t ed25519 -f /tmp/test_key -N ""
 
@@ -188,7 +188,7 @@ ssh -i /tmp/test_key -p 2213 devuser@localhost hostname
 ```
 
 ### Linting Errors
-```bash
+```zsh
 # Check zsh script syntax
 zsh -n lib/vm-common
 
@@ -200,7 +200,7 @@ shfmt -w bin/**/*.zsh tests/**/*.zsh
 ```
 
 ### Coverage Issues
-```bash
+```zsh
 # Run coverage manually to see detailed output
 ./bin/coverage.zsh all
 
@@ -329,7 +329,7 @@ BDD tests that create Docker containers use **test-specific labels** for isolati
 - Tests are deterministic and don't fail due to unrelated running containers
 
 **Label Implementation:**
-```bash
+```zsh
 # Test containers are labeled when created:
 docker run --label vde.test=true ...
 
@@ -482,7 +482,7 @@ VM_SVC_PORT:postgres=5432
 
 ### 6. Running the Tests
 
-```bash
+```zsh
 ## Run all docker-free tests
 ./tests/run-docker-free-tests.zsh
 
@@ -692,7 +692,7 @@ This section describes the complete orchestration flow from user command to runn
 │   └────────────────────────────────────────────────────────────────────────────────────────────┘     │
 │                                                                                                      │
 │   SSH Config for VM-to-VM:                                                                          │
-│   ```bash                                                                                           │
+│   ```zsh                                                                                           │
 │   Host vde-python                                                                                   │
 │       HostName localhost                                                                            │
 │       Port 2200                                                                                     │
@@ -732,7 +732,7 @@ This section describes the complete orchestration flow from user command to runn
 
 #### 1.3 E2E Flow: Create and Start Python VM
 
-```bash
+```zsh
 #!/usr/bin/env zsh
 ## E2E Flow: create-virtual-for python && start-virtual python
 
@@ -859,7 +859,7 @@ _check_container_status "vde-python"
 
 #### 1.4 E2E Flow: SSH Connection with Agent Forwarding
 
-```bash
+```zsh
 #!/usr/bin/env zsh
 ## E2E Flow: SSH into Python VM with agent forwarding
 
@@ -933,7 +933,7 @@ $ ssh vde-python "git ls-remote git@github.com:myuser/repo.git"
 
 #### 1.5 E2E Flow: Multi-VM Git Push
 
-```bash
+```zsh
 #!/usr/bin/env zsh
 ## E2E Flow: Make changes in Python VM and push to GitHub
 
@@ -974,7 +974,7 @@ ssh vde-python "cd myproject && git push origin main"
 
 #### 1.6 E2E Flow: Port Conflict Resolution
 
-```bash
+```zsh
 #!/usr/bin/env zsh
 ## E2E Flow: Handle port conflict during VM creation
 
@@ -1020,7 +1020,7 @@ _allocate_port "lang"
 
 #### 1.7 E2E Flow: Error Handling and Recovery
 
-```bash
+```zsh
 #!/usr/bin/env zsh
 ## E2E Flow: Handle Docker daemon restart during operation
 
@@ -1148,7 +1148,7 @@ services:
 
 #### 2.4 Socket Mounting Mechanism
 
-```bash
+```zsh
 ## lib/vde-commands
 
 ## Detect SSH agent socket
@@ -1196,7 +1196,7 @@ _mount_ssh_socket() {
 
 #### 2.5 Key Synchronization
 
-```bash
+```zsh
 ## lib/vde-ssh-keys
 
 ## Sync public keys to container
@@ -1251,7 +1251,7 @@ _get_preferred_key() {
 
 #### 2.6 Git Operations with Agent Forwarding
 
-```bash
+```zsh
 ## Test: Clone private repository from within VM
 @test "Clone private repository from within VM" {
   local container="vde-python"
@@ -1279,7 +1279,7 @@ _get_preferred_key() {
 
 VDE uses **atomic file operations** to prevent SSH config corruption during concurrent updates:
 
-```bash
+```zsh
 ## lib/vde-ssh-config
 
 ## Atomic merge of SSH config entry
@@ -1327,7 +1327,7 @@ merge_ssh_config_entry() {
 
 #### 3.2 SSH Config Entry Structure
 
-```bash
+```zsh
 ## Generated SSH config entry for language VM
 _generate_ssh_config() {
   local vm_name="$1"
@@ -1361,7 +1361,7 @@ EOF
 
 #### 3.3 Known Hosts Management
 
-```bash
+```zsh
 ## lib/vde-known-hosts
 
 ## Add VM to known_hosts
@@ -1402,7 +1402,7 @@ _known_hosts_remove() {
 
 #### 3.4 Concurrent Access Handling
 
-```bash
+```zsh
 ## lib/vde-file-lock
 
 ## Acquire exclusive lock on file
@@ -1457,7 +1457,7 @@ _release_file_lock() {
 
 #### 4.1 VM Creation Pipeline
 
-```bash
+```zsh
 ## bin/create-virtual-for
 
 create_virtual_for() {
@@ -1499,7 +1499,7 @@ create_virtual_for() {
 
 #### 4.2 Docker Compose Generation
 
-```bash
+```zsh
 ## lib/vde-docker
 
 _generate_docker_compose() {
@@ -1559,7 +1559,7 @@ EOF
 
 #### 4.3 Port Allocation Algorithm
 
-```bash
+```zsh
 ## lib/vde-port-allocator
 
 _allocate_port() {
@@ -1629,7 +1629,7 @@ _is_port_available() {
 
 #### 4.4 Port Registry Persistence
 
-```bash
+```zsh
 ## lib/vde-port-registry
 
 _port_registry_file="${VDE_CACHE_DIR:-.cache}/port-registry"
@@ -1688,7 +1688,7 @@ _port_registry_remove() {
 
 #### 5.1 Docker Compose Command Building
 
-```bash
+```zsh
 ## lib/vde-docker-ops
 
 _build_docker_command() {
@@ -1741,7 +1741,7 @@ _execute_docker_compose() {
 
 #### 5.2 Error Parsing and Classification
 
-```bash
+```zsh
 ## lib/vde-errors
 
 _parse_docker_error() {
@@ -1813,7 +1813,7 @@ _get_error_remediation() {
 
 #### 5.3 Retry Logic Implementation
 
-```bash
+```zsh
 ## lib/vde-retry
 
 ## Retry with exponential backoff
@@ -1884,7 +1884,7 @@ is_transient_error() {
 
 #### 6.2 Test Setup Commands
 
-```bash
+```zsh
 #!/bin/zsh
 ## tests/bin/setup-docker-test-env.zsh
 
@@ -1942,7 +1942,7 @@ setup_test_vms() {
 
 #### 6.3 Test Execution Commands
 
-```bash
+```zsh
 #!/bin/zsh
 ## tests/run-docker-required-tests.zsh
 
@@ -2011,7 +2011,7 @@ run_docker_tests() {
 
 #### 7.4 Test Execution Status
 
-```bash
+```zsh
 ## Current test execution results
 $ ./tests/run-docker-required-tests.zsh
 
@@ -2224,25 +2224,25 @@ tests/
 ### Running Tests
 
 #### All Tests
-```bash
+```zsh
 ## Run all tests (zsh + pytest + behave)
 ./run-all-tests.zsh
 ```
 
 #### Zsh Unit Tests Only
-```bash
+```zsh
 ## Run zsh unit tests
 zsh run-unit-tests.zsh
 ```
 
 #### Pytest Unit Tests Only
-```bash
+```zsh
 ## Run pytest tests
 pytest tests/unit/test_*.py -v
 ```
 
 #### Behave Integration Tests
-```bash
+```zsh
 ## Run all behave tests
 cd tests && behave
 
@@ -2254,7 +2254,7 @@ cd tests && behave --tags=@docker
 ```
 
 #### Verify Config Integration
-```bash
+```zsh
 ## Test config loading
 python3 tests/test-config-integration.py
 
@@ -2552,7 +2552,7 @@ jsonschema.validate(instance=config, schema=schema)
 
 **File:** `tests/test-config-integration.py`
 
-```bash
+```zsh
 python3 tests/test-config-integration.py
 ```
 
@@ -2566,7 +2566,7 @@ Tests:
 
 **File:** `tests/unit/test-framework-config.test.zsh`
 
-```bash
+```zsh
 zsh tests/unit/test-framework-config.test.zsh
 ```
 
@@ -2662,7 +2662,7 @@ except ConfigValidationError as e:
 
 ### Verification
 
-```bash
+```zsh
 ## Verify integration
 python3 tests/test-config-integration.py
 
@@ -2741,7 +2741,7 @@ These tests verify:
 ### Infrastructure Requirements
 
 #### Minimum (Category A + B)
-```bash
+```zsh
 ## Verify Docker is available
 docker --version  # Must return version info
 
@@ -2750,7 +2750,7 @@ ls configs/docker/*/docker-compose.yml  # Must list 27+ files
 ```
 
 #### Full Integration (Category C)
-```bash
+```zsh
 ## All requirements above PLUS:
 ## - Ports 2200-2299 available (language VMs)
 ## - Ports 2400-2499 available (service VMs)
@@ -3210,7 +3210,7 @@ Passing Tests → User Guide (Documentation)
 
 ### Running the Tests
 
-```bash
+```zsh
 ## Run all feature tests
 cd tests && behave
 

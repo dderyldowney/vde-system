@@ -21,7 +21,7 @@ sections:
       **What you need:**
       - [ ] Docker Desktop installed and running (this is the engine that makes everything go)
       - [ ] Git installed (for downloading the VDE code)
-      - [ ] Zsh 5.0+ or Bash 4.0+ (fancy names for your terminal — we'll explain!)
+      - [ ] Zsh 5.0+ (the mandatory shell for the VDE ecosystem)
       - [ ] About 5GB of free disk space (roughly the size of a few HD movies)
 
       **Don't have these?** No stress! We'll walk you through getting each one. Just find your computer type below and follow along.
@@ -30,7 +30,7 @@ sections:
 
       ## Let's Get You Set Up! 🚀
 
-      If you don't have Zsh/Bash, git, or Docker Desktop installed yet, that's totally fine! We'll hold your hand through the whole process. Just find your section below — Windows, Mac, or Linux — and follow the steps.
+      If you don't have Zsh, git, or Docker Desktop installed yet, that's totally fine! We'll hold your hand through the whole process. Just find your section below — Windows, Mac, or Linux — and follow the steps.
 
       You've got this!
 
@@ -47,7 +47,7 @@ sections:
 
       **Don't want to use Homebrew?** That's perfectly fine! We'll show you how to install Zsh and Git both with and without it.
 
-      > **Note:** Homebrew is macOS-only. Windows users will use Git Bash and the Git installer. Linux users have their own built-in package managers. Just skip this section if you're not on a Mac!
+      > **Note:** Homebrew is macOS-only. Windows users will use WSL or PowerShell. Linux users have their own built-in package managers. Just skip this section if you're not on a Mac!
 
       ### For macOS Users
 
@@ -65,7 +65,7 @@ sections:
 
       Paste this command into Terminal and press Enter:
 
-      ```bash
+      ```zsh
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       ```
 
@@ -73,7 +73,7 @@ sections:
 
       **On Apple Silicon (M1/M2/M3 Macs):** Homebrew installs to `/opt/homebrew`. After installation, follow the on-screen instructions to add Homebrew to your PATH. They'll look something like:
 
-      ```bash
+      ```zsh
       echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
       eval "$(/opt/homebrew/bin/brew shellenv)"
       ```
@@ -88,41 +88,22 @@ sections:
 
       ---
 
-      ## Installing Zsh and Bash
+      ## Installing Zsh
 
-      Okay, quick confession: "shell" is just a fancy name for the program that runs in your terminal and understands your commands. VDE needs a modern one — specifically **Zsh 5.0+** or **Bash 4.0+**. Sound scary? Don't worry, we'll sort you out!
+      Okay, quick confession: "shell" is just a fancy name for the program that runs in your terminal and understands your commands. VDE needs a specific one — **Zsh 5.0+**. Sound scary? Don't worry, we'll sort you out!
 
       **Why does VDE need this?**
-      - VDE's commands are written in shell language (fancy nerd talk for "scripts that run in your terminal")
-      - Older shells don't understand some of the cool tricks we use
-      - The good news: Zsh comes standard on modern Macs, and most Linux has modern Bash
+      - VDE's commands are written in ZSH language (fancy nerd talk for "scripts that run in your terminal")
+      - Other shells like Bash are not supported to ensure absolute stability
+      - The good news: Zsh comes standard on modern Macs and is easily installed on Windows and Linux
 
       Think of it like VDE speaks a specific dialect, and we need to make sure your terminal understands it! 🗣️
 
       ### For Windows Users
 
-      #### The Good News: Git for Windows Includes Bash!
+      #### Installing Zsh on Windows
 
-      If you installed Git for Windows (which you did in the previous section), you **already have Bash**! Git for Windows includes a program called "Git Bash" that gives you a modern Bash shell.
-
-      **How to check if you have it:**
-
-      1. Press the **Windows key** and type **"Git Bash"**
-      2. If you see "Git Bash" in the results, click it to open
-      3. A terminal window will open - this is your Bash shell!
-      4. Type this and press Enter:
-         ```
-         bash --version
-         ```
-      5. You should see something like `GNU bash, version 5.x.x` - this is perfect!
-
-      **If you don't see Git Bash:**
-      - Reinstall Git for Windows using the instructions from the "Installing Git" section
-      - Make sure to select "Git Bash" as one of the components during installation
-
-      #### Installing Zsh on Windows (Optional)
-
-      Zsh is available on Windows through WSL (Windows Subsystem for Linux):
+      Zsh is available on Windows through WSL (Windows Subsystem for Linux). This is the best way to run VDE on Windows.
 
       **If you already have WSL installed (from the Docker section):**
 
@@ -131,25 +112,23 @@ sections:
          wsl
          ```
       2. Once in WSL, install Zsh:
-         ```bash
+         ```zsh
          sudo apt-get update
          sudo apt-get install zsh
          ```
       3. Check the version:
-         ```bash
+         ```zsh
          zsh --version
          ```
       4. You should see something like `zsh 5.x.x or greater`
 
       **If you don't have WSL:**
-      - Don't worry! Git Bash is sufficient for VDE
-      - You can install WSL later if you want to use Zsh
+      - Please install WSL to use VDE on Windows. It provides a real Linux environment that VDE loves!
 
       #### What Shell Should You Use?
 
       **For VDE on Windows:**
-      - **Git Bash** (recommended) - Already installed with Git, works great
-      - **WSL + Zsh** (optional) - More powerful, but requires WSL setup
+      - **WSL + Zsh** (Mandatory) - Provides the power and compatibility VDE requires.
 
       ---
 
@@ -176,7 +155,7 @@ sections:
       #### If You Need to Install or Update Zsh
 
       **Check if you need an update:**
-      ```bash
+      ```zsh
       zsh --version
       ```
 
@@ -185,12 +164,12 @@ sections:
       **Option 1: Use Homebrew (Easiest)**
 
       1. If you installed Homebrew (from the section above), install the latest Zsh:
-         ```bash
+         ```zsh
          brew install zsh
          ```
 
       2. Set Zsh as your default shell:
-         ```bash
+         ```zsh
          chsh -s /bin/zsh
          ```
          (You'll need to enter your password)
@@ -202,39 +181,14 @@ sections:
       If Zsh is installed but not your default:
 
       1. Check if Zsh exists:
-         ```bash
+         ```zsh
          ls /bin/zsh
          ```
       2. If it exists, switch to it:
-         ```bash
+         ```zsh
          chsh -s /bin/zsh
          ```
       3. Close and reopen Terminal
-
-      #### Installing Bash on macOS (Optional)
-
-      macOS comes with Bash, but it's an older version (3.2.x). For VDE, you can use either Zsh or install a modern Bash.
-
-      **If you want the latest Bash:**
-
-      ```bash
-      brew install bash
-      ```
-
-      Check the version:
-      ```bash
-      brew list bash | grep bin
-      # This shows where bash is installed, usually /usr/local/bin/bash
-      /usr/local/bin/bash --version
-      ```
-
-      You should see `bash 5.x.x or greater`
-
-      #### What Shell Should You Use?
-
-      **For VDE on macOS:**
-      - **Zsh** (recommended) - Already installed, modern, and is the macOS default
-      - **Bash** (optional) - Install via Homebrew if you prefer Bash
 
       ---
 
@@ -242,94 +196,64 @@ sections:
 
       #### Check What You Already Have
 
-      Most modern Linux distributions come with modern versions of Bash and Zsh pre-installed.
-
-      **Check your Bash version:**
-      ```bash
-      bash --version
-      ```
+      Most modern Linux distributions come with Zsh available in their package managers.
 
       **Check if Zsh is installed:**
-      ```bash
+      ```zsh
       zsh --version
       ```
 
       **What you should see:**
-      - Bash: `version 4.0 or greater` (most Linux has 4.x or 5.x)
       - Zsh: `version 5.0 or greater` (if installed)
 
       #### If You Need to Install or Upgrade
 
       **For Ubuntu/Debian:**
 
-      ```bash
-      # Install or update Bash
-      sudo apt-get update
-      sudo apt-get install bash
-
+      ```zsh
       # Install Zsh
+      sudo apt-get update
       sudo apt-get install zsh
       ```
 
       **For Fedora:**
 
-      ```bash
-      # Install or update Bash
-      sudo dnf install bash
-
+      ```zsh
       # Install Zsh
       sudo dnf install zsh
       ```
 
       **For CentOS/Red Hat:**
 
-      ```bash
-      # Install or update Bash
-      sudo yum install bash
-
+      ```zsh
       # Install Zsh
       sudo yum install zsh
       ```
 
       **For Arch Linux:**
 
-      ```bash
-      # Install or update Bash
-      sudo pacman -S bash
-
+      ```zsh
       # Install Zsh
       sudo pacman -S zsh
       ```
 
       #### Verify Your Installation
 
-      **Check Bash version:**
-      ```bash
-      bash --version
-      # Should show 4.0 or greater
-      ```
-
       **Check Zsh version:**
-      ```bash
+      ```zsh
       zsh --version
       # Should show 5.0 or greater
       ```
 
-      #### Make Zsh Your Default Shell (Optional)
+      #### Make Zsh Your Default Shell
 
-      If you want to use Zsh instead of Bash as your daily shell:
+      To use Zsh as your daily shell:
 
-      ```bash
+      ```zsh
       chsh -s $(which zsh)
       ```
 
       Log out and log back in for the change to take effect.
-
-      #### What Shell Should You Use?
-
-      **For VDE on Linux:**
-      - **Bash** (recommended) - Almost certainly already installed and modern
-      - **Zsh** (optional) - Install if you prefer Zsh's features
 
       ---
 
@@ -433,23 +357,23 @@ sections:
       #### If You Need to Install Git
 
       **For Ubuntu/Debian:**
-      ```bash
+      ```zsh
       sudo apt-get update
       sudo apt-get install git
       ```
 
       **For Fedora:**
-      ```bash
+      ```zsh
       sudo dnf install git
       ```
 
       **For CentOS/Red Hat:**
-      ```bash
+      ```zsh
       sudo yum install git
       ```
 
       **For Arch Linux:**
-      ```bash
+      ```zsh
       sudo pacman -S git
       ```
 
@@ -588,7 +512,7 @@ sections:
          ```
          docker --version
          ```
-      3. You should see something like `Docker version 24.x.x, build xxxxx`
+      3. You should see something like `docker version 24.x.x, build xxxxx`
 
       **✨ Perfect!** Docker is all set up on your Mac! Looking good!
 
@@ -626,7 +550,7 @@ sections:
       1. Open your terminal
       2. Type these commands one at a time, pressing Enter after each:
 
-         ```bash
+         ```zsh
          # Go to your Downloads folder
          cd ~/Downloads
 
@@ -644,7 +568,7 @@ sections:
       1. Open your terminal
       2. Type these commands one at a time, pressing Enter after each:
 
-         ```bash
+         ```zsh
          # Go to your Downloads folder
          cd ~/Downloads
 
@@ -677,7 +601,7 @@ sections:
       docker --version
       ```
 
-      You should see something like `Docker version 24.x.x, build xxxxx`
+      You should see something like `docker version 24.x.x, build xxxxx`
 
       **🔥 Boom!** Docker is running on Linux! You're on fire!
 
@@ -689,7 +613,7 @@ sections:
 
       **Open your terminal (PowerShell on Windows, Terminal on Mac/Linux) and run:**
 
-      ```bash
+      ```zsh
       # Check Docker
       docker --version
 
@@ -722,10 +646,10 @@ sections:
          - Mac: Press Command+Space, type "Terminal"
          - Linux: Press Ctrl+Alt+T
       3. **Permission errors?** Make sure you have administrator rights on your computer
-      4. **Shell not found?** On Windows, make sure you installed Git for Windows - it includes Git Bash
-      5. **Version too old?** On macOS, use Homebrew to install the latest version. On Linux, use your package manager
+      4. **Shell not found?** Ensure you have Zsh 5.0+ installed.
+      5. **Version too old?** Use your package manager or Homebrew to install the latest Zsh.
 
-      Once Docker, Git, and a modern shell are installed and working, you're ready for the fun part! You've made it through the setup — you're awesome! 🌟
+      Once Docker, Git, and Zsh are installed and working, you're ready for the fun part! You've made it through the setup — you're awesome! 🌟
 
 
   - id: "2. SSH Keys"
@@ -767,7 +691,7 @@ sections:
 
       The `vde` command is your single, unified interface for all VDE operations:
 
-      ```bash
+      ```zsh
       vde create python    # Create a new VM
       vde start rust      # Start a VM
       vde stop all        # Stop VMs
@@ -865,7 +789,7 @@ sections:
       | nginx | `vde ssh nginx` | Nginx web server |
 
       **Note:** The `vde ssh` command automatically uses VDE's isolated SSH configuration. You can also use VM aliases:
-      ```bash
+      ```zsh
       vde ssh py    # Short for python
       vde ssh rs    # Short for rust
       ```
@@ -905,17 +829,17 @@ sections:
 
       **Step 2: Start Your VMs**
       Need Python for homework? One command gets you ready:
-      ```bash
+      ```zsh
       vde start python
       ```
 
       Working on a project that needs a database too?
-      ```bash
+      ```zsh
       vde start python postgres
       ```
 
       **Step 3: Connect and Code**
-      ```bash
+      ```zsh
       vde ssh python
       ```
 
@@ -940,7 +864,7 @@ sections:
       - **Redis** — Lightning-fast caching
 
       **Example: Full-Stack Project Setup**
-      ```bash
+      ```zsh
       # Start your language VM + database
       vde start python postgres
 
@@ -951,7 +875,7 @@ sections:
 
       ### Exploring and Discovering 📚
       Not sure what's available? Ask VDE!
-      ```bash
+      ```zsh
       vde ask what VMs can I create?
       vde ask show all languages
       vde ask show all services
@@ -962,7 +886,7 @@ sections:
       ## Ⱇ End of Session: Shutting Down
 
       When you're done studying, clean up with one command:
-      ```bash
+      ```zsh
       vde stop all
       ```
 
@@ -982,7 +906,7 @@ sections:
       | Add New Language | `vde create golang` |
 
       **Pro Tip:** Use `vde ask` to get help in plain English!
-      ```bash
+      ```zsh
       vde ask how do I connect to Python?
       vde ask what's running?
       ```
@@ -1004,3 +928,32 @@ sections:
       ### Hiccups Happen — We've Got Your Back! 🛠️
 
       Sometimes things don't work perfectly the first time. That's okay! Here's how to handle common issues.
+
+
+  - id: "12. Trial of the Gauntlet"
+    order: 12
+    intro: |
+      ### ⚔️ The Law of the Red-Green-Refactor
+
+      The VDE Hub is a hardened ecosystem. To ensure absolute stability and security, all new features or bug fixes MUST pass through the **Trial of the Gauntlet**. This is not a suggestion; it is the Way.
+
+      **The Three Strikes of the Forge:**
+
+      1.  **Strike One: The Red Gauntlet (The Mark)**
+          - Before writing any implementation code, you MUST create a physical test file (e.g., `tests/unit/test_feature.zsh`).
+          - You MUST execute this test and demonstrate a **RED** failure. This proves the target is marked.
+
+      2.  **Strike Two: The Green Victory (The Strike)**
+          - Write the **minimal** code required to make the test pass.
+          - Execute the test again to achieve a **GREEN** result.
+
+      3.  **Strike Three: The Refiner's Fire (The Refactor)**
+          - With the test Green, clean up your code. Improve readability and ensure ZSH 5.0+ purity.
+          - The test MUST remain Green. If it turns Red, you have failed the trial.
+
+      **Why we do this:**
+      - ✅ **Empirical Proof**: We don't "hope" it works; we prove it.
+      - ✅ **Anti-Regression**: Your tests protect your work from future changes.
+      - ✅ **Security**: The Gauntlet forces you to think about edge cases before they become vulnerabilities.
+
+      **Every workflow in the Hub is verified. Your contribution must be too.**

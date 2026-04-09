@@ -90,7 +90,7 @@ vde_release_lock() {
 
 ### 3. Verify the Fix
 - Run the final strike sequence:
-```bash
+```zsh
 bin/vde stop all && \
 rm -rf .cache/port-registry/* .locks/vms/* && \
 python3 -m behave tests/features/core-infrastructure/concurrency-stress.feature

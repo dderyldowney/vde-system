@@ -25,7 +25,7 @@ Apply the Section 10 "Physical Handshake" (Docker Probe) discipline to all port 
 
 ## Verification
 - Re-run the full concurrency stress suite:
-```bash
+```zsh
 bin/vde stop --all && \
 rm -rf .cache/port-registry/* .locks/vms/* && \
 python3 -m behave tests/features/core-infrastructure/concurrency-stress.feature

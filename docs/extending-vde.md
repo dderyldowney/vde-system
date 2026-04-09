@@ -77,7 +77,7 @@ You can do this manually or with the `add-vm-type` script.
 
 **Option A: Using vde create (Recommended)**
 
-```bash
+```zsh
 # Basic language addition
 
 # With aliases
@@ -91,7 +91,7 @@ You can do this manually or with the `add-vm-type` script.
 
 Edit `data/vm-types.conf` and add a line:
 
-```bash
+```zsh
 # Format: lang|name|aliases|display|install|service_port
 ```
 
@@ -99,7 +99,7 @@ Edit `data/vm-types.conf` and add a line:
 
 ### Step 2: Create the VM
 
-```bash
+```zsh
 # Create the Zig VM
 
 # Verify it was created
@@ -128,11 +128,11 @@ env-files/
 ### Language Installation Best Practices
 
 **Simple apt packages:**
-```bash
+```zsh
 ```
 
 **Language version managers:**
-```bash
+```zsh
 # Using SDKMAN (for Java/Kotlin/scala variants)
 vde create gradle \
     "apt-get update -y && apt-get install -y curl && \
@@ -148,13 +148,13 @@ vde create terraform \
 ```
 
 **Download and install from URL:**
-```bash
+```zsh
 # Download binary, extract, symlink
     "apt-get update -y && apt-get install -y xz-utils wget && \
 ```
 
 **Install as devuser (for user-scoped tools):**
-```bash
+```zsh
 # Rust-style installers
 vde create rust \
     "su devuser -c 'curl --proto =https --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'"
@@ -178,7 +178,7 @@ Adding a service (database, cache, message queue, etc.) is similar to adding a l
 
 **Option A: Using vde create (Recommended)**
 
-```bash
+```zsh
 # Basic service (single port)
 vde create --type service --svc-port 5672 rabbitmq \
     "apt-get update -y && apt-get install -y rabbitmq-server"
@@ -200,7 +200,7 @@ vde create --type service --svc-port 5672,15672 rabbitmq \
 
 Edit `data/vm-types.conf` and add a line:
 
-```bash
+```zsh
 # Format: service|name|aliases|display|install|service_port
 service|rabbitmq|rabbit,rabbitmq-server|RabbitMQ|apt-get update -y && apt-get install -y rabbitmq-server|5672,15672
 ```
@@ -209,7 +209,7 @@ service|rabbitmq|rabbit,rabbitmq-server|RabbitMQ|apt-get update -y && apt-get in
 
 ### Step 2: Create the Service VM
 
-```bash
+```zsh
 # Create the RabbitMQ VM
 vde create --type service --svc-port 5672 rabbitmq
 
@@ -258,14 +258,14 @@ logs/rabbitmq/              # Empty log directory
 ### Service Installation Examples
 
 **Database with client tools only:**
-```bash
+```zsh
 # PostgreSQL client (connects to external Postgres)
 vde create --type service --svc-port 5432 postgres-client \
     "apt-get update -y && apt-get install -y postgresql-client"
 ```
 
 **Full database server:**
-```bash
+```zsh
 # MySQL server
 vde create --type service --svc-port 3306 mysql \
     "apt-get update -y && apt-get install -y default-mysql-server && \
@@ -278,7 +278,7 @@ vde create --type service --svc-port 27017 mongodb \
 ```
 
 **Message queue:**
-```bash
+```zsh
 # RabbitMQ
 vde create --type service --svc-port 5672,15672 rabbitmq \
     "apt-get update -y && apt-get install -y erlang-nox && \
@@ -288,7 +288,7 @@ vde create --type service --svc-port 5672,15672 rabbitmq \
 ```
 
 **Web server:**
-```bash
+```zsh
 # Nginx with HTTP and HTTPS
 vde create --type service --svc-port 80,443 nginx \
     "apt-get update -y && apt-get install -y nginx-extras && \
@@ -296,7 +296,7 @@ vde create --type service --svc-port 80,443 nginx \
 ```
 
 **Cache server:**
-```bash
+```zsh
 # Memcached
 vde create --type service --svc-port 11211 memcached \
     "apt-get update -y && apt-get install -y memcached && \
@@ -327,7 +327,7 @@ Host {{HOST}}  # Pass a custom HOST variable during creation
 
 For languages that work together (e.g., TypeScript + JavaScript), you can create composite VMs:
 
-```bash
+```zsh
 # Add TypeScript as an alias of JavaScript (same VM)
 # In vm-types.conf:
 lang|js|node,nodejs,typescript|JavaScript|apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs && npm install -g typescript|
@@ -357,7 +357,7 @@ services:
 
 Install different tools based on environment variables:
 
-```bash
+```zsh
 vde create python \
     "apt-get update -y && apt-get install -y python3 python3-pip && \
      if [ \"\${VDE_PYTHON_VERSION:-latest}\" = \"3.11\" ]; then \
@@ -368,7 +368,7 @@ vde create python \
 ```
 
 Then in `env-files/python.env`:
-```bash
+```zsh
 VDE_PYTHON_VERSION=3.11
 ```
 
@@ -376,7 +376,7 @@ VDE_PYTHON_VERSION=3.11
 
 For complex setups, you can add a post-install script:
 
-```bash
+```zsh
 vde create dotnet \
     "apt-get update -y && apt-get install -y wget apt-transport-https && \
      wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && \
@@ -390,7 +390,7 @@ vde create dotnet \
 
 After adding a new language or service, validate it:
 
-```bash
+```zsh
 # 1. Verify it appears in the list
 vde list <name>
 

@@ -30,7 +30,7 @@ What actually happened (include error messages, screenshots, etc.).
 
 ## Logs
 If applicable, paste relevant logs here:
-```bash
+```zsh
 # Paste your logs here
 ```
 

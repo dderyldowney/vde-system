@@ -101,7 +101,7 @@ data/redis/       # Redis persistence files
 
 Environment variables for each VM. These are sourced by Docker Compose when starting containers.
 
-```bash
+```zsh
 # python.env example
 SSH_PORT=2213
 PYTHON_VERSION=3.11

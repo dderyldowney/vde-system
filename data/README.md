@@ -51,7 +51,7 @@ JSON Schema defining validation rules for `vm-types.json`. Ensures configuration
 - Service ports must match pattern: `^[0-9]+(,[0-9]+)*$`
 
 **Usage:**
-```bash
+```zsh
 # Validate configuration (automatic during vm-common loading)
 python3 -c "
 import json
@@ -133,7 +133,7 @@ load_vm_types  # Validates against schema automatically
 
 **Manual validation:**
 
-```bash
+```zsh
 # Python validation
 python3 -c "
 import json
@@ -188,7 +188,7 @@ Add to `vms.service[]` array in `vm-types.json`.
 
 ### Validation after changes
 
-```bash
+```zsh
 # Validate schema
 python3 -c "import json; json.load(open('data/vm-types.json'))"
 
@@ -248,7 +248,7 @@ Coverage:
 - Service port pattern validation (comma-separated integers)
 
 **Run tests:**
-```bash
+```zsh
 tests/unit/vm-types-schema.test.zsh
 # Expected: 10 passed, 0 failed
 ```

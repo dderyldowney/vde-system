@@ -10,14 +10,14 @@ Advanced techniques and patterns for power users.
 
 ### Multi-Step Installation
 
-```bash
+```zsh
 # Download and install from URL
     "apt-get update && apt-get install -y wget && \
 ```
 
 ### Install as devuser
 
-```bash
+```zsh
 # Rust-style installers
 vde create rust \
     "su devuser -c 'curl --proto =https --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'"
@@ -27,7 +27,7 @@ vde create rust \
 
 ## Multiple Service Ports
 
-```bash
+```zsh
 # For services with multiple ports
 vde create --type service --svc-port 80,443 nginx \
     "apt-get update -y && apt-get install -y nginx-extras"
@@ -37,7 +37,7 @@ vde create --type service --svc-port 80,443 nginx \
 
 ## Custom Display Names
 
-```bash
+```zsh
 # Override the auto-generated display name
 vde create --display "Rust Programming Language" rust \
     "apt-get update -y && apt-get install -y rustc"
@@ -47,7 +47,7 @@ vde create --display "Rust Programming Language" rust \
 
 ## Environment-Specific Installations
 
-```bash
+```zsh
 vde create python \
     "apt-get update -y && apt-get install -y python3 python3-pip && \
      if [ \"\${VDE_PYTHON_VERSION:-latest}\" = \"3.11\" ]; then \
@@ -58,7 +58,7 @@ vde create python \
 ```
 
 Then in `env-files/python.env`:
-```bash
+```zsh
 VDE_PYTHON_VERSION=3.11
 ```
 
@@ -84,7 +84,7 @@ services:
 
 ## Post-Installation Scripts
 
-```bash
+```zsh
 vde create dotnet \
     "apt-get update -y && apt-get install -y wget apt-transport-https && \
      wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb && \
@@ -99,7 +99,7 @@ vde create dotnet \
 
 Create composite VMs by adding aliases:
 
-```bash
+```zsh
 # In vm-types.conf
 lang|js|node,nodejs,typescript|JavaScript|apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs && npm install -g typescript|
 
@@ -135,7 +135,7 @@ All containers share the `vde-net` Docker network and have SSH agent forwarding 
 
 With SSH agent forwarding, you can SSH between VMs using your host's SSH keys:
 
-```bash
+```zsh
 # From Go VM, connect to Python VM
 ssh vde-go
 ssh vde-python                # Uses your host's SSH keys!
@@ -145,7 +145,7 @@ scp vde-python:/data/file .   # Copy file from Python VM
 
 ### Full Stack Development
 
-```bash
+```zsh
 # Create a full stack: API, database, cache
 vde create python postgres redis
 vde start python postgres redis
@@ -158,7 +158,7 @@ ssh vde-redis redis-cli INCR counter
 
 ### Microservices Architecture
 
-```bash
+```zsh
 # Create microservices
 vde create go python rust postgres
 vde start go python rust postgres
@@ -173,7 +173,7 @@ ssh vde-postgres "psql -c 'SELECT COUNT(*) FROM orders'"
 
 ### Service Mesh Pattern
 
-```bash
+```zsh
 # Create service mesh
 vde create nginx go python postgres redis
 vde start nginx go python postgres redis
@@ -189,7 +189,7 @@ curl http://vde-python:8000/api/status
 
 Execute commands on your host from within any VM:
 
-```bash
+```zsh
 # From within any VM
 to-host ls ~/dev                    # List host's dev directory
 to-host docker ps                   # Check host's containers
@@ -200,7 +200,7 @@ to-host tail -f logs/app.log        # View host's log files
 
 Use your host's SSH keys for Git operations from within any VM:
 
-```bash
+```zsh
 # From within any VM
 git clone github.com:user/repo      # Uses your GitHub key
 git push origin main                # Authentication works automatically

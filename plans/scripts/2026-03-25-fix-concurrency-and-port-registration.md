@@ -107,7 +107,7 @@ acquire_lock "${global_lock}" 60 || exit 1
 
 - [ ] **Step 1: Perform Clean Sweep**
 Run the following commands:
-```bash
+```zsh
 bin/shutdown-all all -f
 rm -rf .cache/port-registry/*
 rm -rf .locks/vms/*
@@ -115,7 +115,7 @@ rm -rf .locks/vms/*
 
 - [ ] **Step 2: Run Concurrency Stress Test**
 Run:
-```bash
+```zsh
 bin/vde-enforce-uap.zsh behave tests/features/core-infrastructure/concurrency-stress.feature
 ```
 
