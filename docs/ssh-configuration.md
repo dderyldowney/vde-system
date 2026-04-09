@@ -22,9 +22,9 @@ VDE handles all SSH setup automatically through the `vm-common` library and rela
 
 VDE automatically detects and uses any of these key types (in priority order):
 
-- **id_ed25519** (preferred, most secure)
+- **vde_student** (preferred, most secure)
 - **id_ecdsa_sk** (security key)
-- **id_ed25519_sk** (security key)
+- **vde_student_sk** (security key)
 - **id_ecdsa**
 - **id_rsa**
 - **id_dsa** (legacy)
@@ -44,7 +44,7 @@ Priority order: ed25519 > ecdsa-sk > ed25519-sk > ecdsa > rsa > dsa
 │  ┌──────────────┐         ┌──────────────────────────────────┐ │
 │  │ VDE SSH Keys │         │ SSH Agent                        │ │
 │  │ ~/.ssh/vde/vde/  │◄────────┤ • Holds private keys             │ │
-│  │ id_ed25519  │         │ • Never exposes keys directly     │ │
+│  │ vde_student  │         │ • Never exposes keys directly     │ │
 │  │ ...         │         │ • Socket: $SSH_AUTH_SOCK         │ │
 │  └──────────────┘         └──────────────▲───────────────────┘ │
 │                                          │                     │
@@ -108,11 +108,11 @@ vssh vde-python
 
 VDE automatically detects and uses any of these key types:
 
-- **id_ed25519** (preferred)
+- **vde_student** (preferred)
 - **id_ecdsa**
 - **id_rsa**
 - **id_ecdsa_sk**
-- **id_ed25519_sk**
+- **vde_student_sk**
 - **id_dsa** (legacy)
 
 Priority order: ed25519 > ecdsa > rsa > dsa
@@ -172,7 +172,7 @@ Host vde-python
     HostName localhost
     Port 2213
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     IdentitiesOnly yes
 
 # Go Dev VM
@@ -180,7 +180,7 @@ Host vde-go
     HostName localhost
     Port 2206
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     IdentitiesOnly yes
 ```
 
@@ -318,7 +318,7 @@ ssh-add
 **Solution**: Add your keys:
 
 ```bash
-ssh-add ~/.ssh/vde/id_ed25519
+ssh-add ~/.ssh/vde/vde_student
 # Or add all keys
 for key in ~/.ssh/vde/id_*; do [ -f "$key" ] && ssh-add "$key"; done
 ```
@@ -347,8 +347,8 @@ vde health
 
 1. Check key permissions:
 ```bash
-chmod 600 ~/.ssh/vde/id_ed25519
-chmod 644 ~/.ssh/vde/id_ed25519.pub
+chmod 600 ~/.ssh/vde/vde_student
+chmod 644 ~/.ssh/vde/vde_student.pub
 ```
 
 2. Verify key is in agent:
@@ -415,7 +415,7 @@ If you previously set up SSH manually:
 ssh-keygen -t ed25519
 
 # 2. Copy to VDE
-cp ~/.ssh/vde/id_ed25519.pub ~/dev/public-ssh-keys/
+cp ~/.ssh/vde/vde_student.pub ~/dev/public-ssh-keys/
 
 # 3. Create SSH entry manually
 cat >> ~/.ssh/vde/config << 'EOF'
@@ -423,7 +423,7 @@ Host vde-python
     HostName localhost
     Port 2213
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
 EOF
 ```
 

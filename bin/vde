@@ -6,6 +6,10 @@
 
 # Source libraries
 VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Enforce Universal Agent Protocol (The Rule Spine)
+"${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" --quiet || exit 1
+
 source "${VDE_ROOT_DIR}/lib/vm-common"
 source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vde-naming"
@@ -93,18 +97,9 @@ case ${COMMAND} in
                 fi
 
                 # Ignition Phase (The Handshake)
-                # We prioritize the LIVE host SSH agent socket bridge
-                local host_ssh_auth_sock="${SSH_AUTH_SOCK}"
-                
-                # If current env is missing or invalid, attempt to load from VDE agent file
-                if [[ ! -S "${host_ssh_auth_sock}" ]]; then
-                    if [[ -f "${HOME}/.ssh/vde/agent_env" ]]; then
-                        local _parsed_sock=$(grep "^SSH_AUTH_SOCK=" "${HOME}/.ssh/vde/agent_env" | head -1 | sed 's/^SSH_AUTH_SOCK=\([^;]*\);.*/\1/')
-                        if [[ -S "${_parsed_sock}" ]]; then
-                            host_ssh_auth_sock="${_parsed_sock}"
-                        fi
-                    fi
-                fi
+                # We prioritize the LIVE host SSH agent socket bridge via unified discovery
+                local host_ssh_auth_sock
+                host_ssh_auth_sock=$(vde_get_host_ssh_sock)
 
                 # Physical Handshake Verification (Section 10.3)
                 if [[ ! -S "${host_ssh_auth_sock}" ]]; then

@@ -207,7 +207,7 @@ def step_render_ssh_entry(context, vm_name, port):
     template = TEMPLATES_DIR / "ssh-entry.txt"
     assert template.exists(), f"Template not found: {template}"
     host = f"vde-{vm_name}"
-    identity = "~/.ssh/vde/id_ed25519"
+    identity = "~/.ssh/vde/vde_student"
     known_hosts = "~/.ssh/vde/known_hosts"
     r = _zsh_with_common(
         f'render_template "{template}" HOST "{host}" SSH_PORT "{port}" '

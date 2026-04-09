@@ -12,7 +12,7 @@ Host vde-asm
     HostName localhost
     Port 2200
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -22,7 +22,7 @@ Host vde-c
     HostName localhost
     Port 2201
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -32,7 +32,7 @@ Host vde-cpp
     HostName localhost
     Port 2202
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -42,7 +42,7 @@ Host vde-csharp
     HostName localhost
     Port 2203
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -52,7 +52,7 @@ Host vde-displaytest
     HostName localhost
     Port 2204
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -62,7 +62,7 @@ Host vde-elixir
     HostName localhost
     Port 2205
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -72,7 +72,7 @@ Host vde-flutter
     HostName localhost
     Port 2206
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -82,7 +82,7 @@ Host vde-go
     HostName localhost
     Port 2207
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -92,7 +92,7 @@ Host vde-haskell
     HostName localhost
     Port 2208
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -102,7 +102,7 @@ Host vde-java
     HostName localhost
     Port 2209
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -112,7 +112,7 @@ Host vde-js
     HostName localhost
     Port 2210
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -122,7 +122,7 @@ Host vde-kotlin
     HostName localhost
     Port 2211
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -132,7 +132,7 @@ Host vde-lua
     HostName localhost
     Port 2212
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -142,7 +142,7 @@ Host vde-php
     HostName localhost
     Port 2213
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -152,7 +152,7 @@ Host vde-python
     HostName localhost
     Port 2214
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -162,7 +162,7 @@ Host vde-ruby
     HostName localhost
     Port 2215
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -172,7 +172,7 @@ Host vde-rust
     HostName localhost
     Port 2216
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -182,7 +182,7 @@ Host vde-scala
     HostName localhost
     Port 2217
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -192,7 +192,7 @@ Host vde-swift
     HostName localhost
     Port 2218
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -202,7 +202,7 @@ Host vde-testport1
     HostName localhost
     Port 2219
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -212,7 +212,7 @@ Host vde-testport2
     HostName localhost
     Port 2220
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -222,7 +222,7 @@ Host vde-couchdb
     HostName localhost
     Port 2400
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -232,7 +232,7 @@ Host vde-mongodb
     HostName localhost
     Port 2401
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -242,7 +242,7 @@ Host vde-mysql
     HostName localhost
     Port 2402
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -252,7 +252,7 @@ Host vde-nginx
     HostName localhost
     Port 2403
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -262,7 +262,7 @@ Host vde-postgres
     HostName localhost
     Port 2404
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -272,7 +272,7 @@ Host vde-rabbitmq
     HostName localhost
     Port 2405
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -282,7 +282,7 @@ Host vde-redis
     HostName localhost
     Port 2406
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
@@ -292,7 +292,7 @@ Host vde-jupyterlab
     HostName localhost
     Port 2407
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes

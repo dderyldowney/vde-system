@@ -181,7 +181,7 @@ Standardized constants for VDE operations.
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `SSH_KEY_TYPES` | "id_ed25519 id_ecdsa id_rsa id_ecdsa_sk id_ed25519_sk" | Preferred SSH key types |
+| `SSH_KEY_TYPES` | "vde_student id_ecdsa id_rsa id_ecdsa_sk vde_student_sk" | Preferred SSH key types |
 
 **Error Message Templates:**
 
@@ -819,7 +819,7 @@ Examples:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `VDE_SSH_KEY_TYPES` | Preferred SSH key types | id_ed25519 id_ecdsa id_rsa |
+| `VDE_SSH_KEY_TYPES` | Preferred SSH key types | vde_student id_ecdsa id_rsa |
 | `SSH_TIMEOUT` | SSH operation timeout | 30 |
 
 ---

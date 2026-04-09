@@ -121,8 +121,8 @@ if [[ "${ACTION}" == "status" ]] ; then
 
     # Public keys in build context
     echo "Public key in build context:"
-    if [[ -f "${VDE_ROOT_DIR}/public-ssh-keys/vde_id_ed25519.pub" ]] ; then
-        echo "  ✓ vde_id_ed25519.pub"
+    if [[ -f "${VDE_ROOT_DIR}/public-ssh-keys/vde_student.pub" ]] ; then
+        echo "  ✓ vde_student.pub"
     else
         echo "  (none - run 'vde ssh-sync' to sync)"
     fi

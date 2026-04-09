@@ -10,6 +10,13 @@
 
 VDE_ROOT_DIR="${0:a:h:h}"
 
+# Parse flags
+quiet=0
+if [[ "${1}" == "--quiet" || "${1}" == "-q" ]]; then
+    quiet=1
+    shift
+fi
+
 # Counters for Verdict
 errors=0
 warnings=0
@@ -35,7 +42,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # 1. Check for mandatory config files [Mandate 0]
-echo -e "${GREEN}[UAP-START]${NC} Verifying mandatory configurations..."
+[[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-START]${NC} Verifying mandatory configurations..."
 for file in "${MANDATORY_FILES[@]}"; do
     if [[ ! -f "${VDE_ROOT_DIR}/${file}" ]]; then
         echo -e "${RED}[UAP-ERROR]${NC} Mandatory file missing: ${file}"
@@ -85,7 +92,7 @@ check_dir() {
     local dir=$1
     if [[ ! -d "$dir" ]]; then return; fi
     
-    echo -e "${GREEN}[UAP-CHECK]${NC} Auditing directory: ${dir#${VDE_ROOT_DIR}/}"
+    [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-CHECK]${NC} Auditing directory: ${dir#${VDE_ROOT_DIR}/}"
     for file in "${dir}"/*(N.); do
         # Only audit executable scripts or known logic files (skip markdown and data)
         if [[ -f "$file" && "$file" != *.md && "$file" != *.json ]]; then
@@ -105,10 +112,10 @@ if [[ $errors -gt 0 ]] || [[ $warnings -gt 0 ]]; then
     echo -e "${YELLOW}[MANDATE 14 ACTIVE]${NC} Agent must halt current phase and generate a remediation plan."
     exit 1
 else
-    echo -e "\n${GREEN}[UAP-SUCCESS]${NC} All core mandates satisfied. Agent is cleared for action."
+    [[ $quiet -eq 0 ]] && echo -e "\n${GREEN}[UAP-SUCCESS]${NC} All core mandates satisfied. Agent is cleared for action."
     # Support wrapping commands for Mandatory Enforcer Supervision (Mandate 3)
     if [[ $# -gt 0 ]]; then
-        echo -e "${GREEN}[UAP-EXEC]${NC} Executing supervised command: $@"
+        [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-EXEC]${NC} Executing supervised command: $@"
         exec "$@"
     fi
     exit 0

@@ -121,7 +121,7 @@ env-files/
                             #     HostName localhost
                             #     Port 2206
                             #     User devuser
-                            #     IdentityFile ~/.ssh/vde/id_ed25519
+                            #     IdentityFile ~/.ssh/vde/vde_student
                             #     IdentitiesOnly yes
 ```
 
@@ -241,7 +241,7 @@ logs/rabbitmq/              # Empty log directory
                             #     HostName localhost
                             #     Port 2404
                             #     User devuser
-                            #     IdentityFile ~/.ssh/vde/id_ed25519
+                            #     IdentityFile ~/.ssh/vde/vde_student
                             #     IdentitiesOnly yes
 ```
 

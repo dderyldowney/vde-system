@@ -201,7 +201,7 @@ test_enforce_permissions_env_files() {
 test_enforce_permissions_ssh_identity() {
     test_start "vde_security_enforce_permissions sets 0600 on SSH identity file"
 
-    # VDE_SSH_IDENTITY is a readonly var pointing to ~/.ssh/vde/id_ed25519.
+    # VDE_SSH_IDENTITY is a readonly var pointing to ~/.ssh/vde/vde_student.
     # We test using the actual path: create a test key file there if absent,
     # set it to 644, run enforce_permissions, verify it becomes 600, then clean up.
     local created_test_file=0

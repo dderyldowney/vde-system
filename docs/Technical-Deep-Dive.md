@@ -67,7 +67,7 @@ VDE includes a comprehensive SSH agent forwarding system that enables secure VM-
 │  ┌──────────────┐         ┌──────────────────────────────────┐ │
 │  │ SSH Keys     │         │ SSH Agent                        │ │
 │  │ ~/.ssh/vde/      │◄────────┤ • Holds private keys             │ │
-│  │ id_ed25519  │         │ • Socket: $SSH_AUTH_SOCK         │ │
+│  │ vde_student  │         │ • Socket: $SSH_AUTH_SOCK         │ │
 │  │ id_rsa      │         │ • Auto-started by VDE             │ │
 │  │ ...         │         └──────────────▲───────────────────┘ │
 │  └──────────────┘                        │                     │
@@ -949,7 +949,7 @@ validate_vm_doesnt_exist "$VM_NAME"
 # Checks: does configs/docker/go/docker-compose.yml exist? No.
 
 validate_ssh_key_exists
-# Checks: does ~/.ssh/vde/id_ed25519 exist? Yes.
+# Checks: does ~/.ssh/vde/vde_student exist? Yes.
 ```
 
 ### Step 4: Query VM Configuration
@@ -1041,7 +1041,7 @@ Host vde-python
     HostName localhost
     Port 2214
     User devuser
-    IdentityFile ~/.ssh/vde/id_ed25519
+    IdentityFile ~/.ssh/vde/vde_student
     IdentitiesOnly yes
 ```
 
@@ -1193,7 +1193,7 @@ ssh vde-go
 │    - HostName: localhost                                       │
 │    - Port: 2200                                                │
 │    - User: devuser                                             │
-│    - IdentityFile: ~/.ssh/vde/id_ed25519                           │
+│    - IdentityFile: ~/.ssh/vde/vde_student                           │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼

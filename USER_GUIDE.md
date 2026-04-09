@@ -1306,9 +1306,9 @@ Here's some good news: VDE handles SSH keys for you automatically with complete 
 
 1. VDE creates an isolated SSH directory at `~/.ssh/vde/`
 
-2. VDE generates its own SSH key (`~/.ssh/vde/id_ed25519`) automatically
+2. VDE generates its own SSH key (`~/.ssh/vde/vde_student`) automatically
 
-3. The public key is copied to `public-ssh-keys/vde_id_ed25519.pub` for Docker builds
+3. The public key is copied to `public-ssh-keys/vde_student.pub` for Docker builds
 
 4. VMs are configured to use this isolated VDE key
 
@@ -1407,9 +1407,9 @@ vde create python
 **Scenario: Ssh config uses correct identity file**
 
 ```
-Given primary SSH key is "id_ed25519"
+Given primary SSH key is "vde_student"
 When SSH config entry is created for VM "python"
-Then SSH config should contain "IdentityFile" pointing to "~/.ssh/vde/id_ed25519"
+Then SSH config should contain "IdentityFile" pointing to "~/.ssh/vde/vde_student"
 ```
 
 **Create the VM:**
@@ -1515,7 +1515,7 @@ vde create python
 ```
 Given ~/.ssh/vde/ contains SSH keys
 When detect_ssh_keys runs
-Then "id_ed25519" keys should be detected
+Then "vde_student" keys should be detected
 And "id_rsa" keys should be detected
 And "id_ecdsa" keys should be detected
 ```
@@ -1529,9 +1529,9 @@ And "id_ecdsa" keys should be detected
 **Scenario: Prefer ed25519 keys when multiple exist**
 
 ```
-Given both "id_ed25519" and "id_rsa" keys exist
+Given both "vde_student" and "id_rsa" keys exist
 When primary SSH key is requested
-Then "id_ed25519" should be returned as primary key
+Then "vde_student" should be returned as primary key
 ```
 
 **Scenario: Merge new vm entry with existing ssh config**
