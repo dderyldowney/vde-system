@@ -1,6 +1,6 @@
-# VDE Test Status Report (Sovereign Audit v2.1.0)
-**Generated:** 2026-04-08T15:15:00Z
-**Status:** HIGH FIDELITY
+# VDE Test Status Report (Sovereign Certification v2.2.0)
+**Generated:** 2026-04-08T21:42:00Z
+**Status:** 100% GREEN (HIGH FIDELITY)
 
 ---
 
@@ -8,7 +8,7 @@
 
 | Metric | Count |
 |--------|-------|
-| **Behave Scenarios** | 4 passed (Dry-run verified) |
+| **Behave Scenarios** | 7 passed (Empirical verification) |
 | **ZSH Unit Tests** | 7 passed |
 | **ZSH Integration** | 1 passed |
 | **Security Tests** | 3 passed |
@@ -24,6 +24,7 @@
 | **USP Hydration** | ✅ PASS | Script content audit in `usp-validation.feature` |
 | **Deterministic Ignition** | ✅ PASS | Port allocation and Docker labels verified |
 | **Lifecycle (Stop/Remove)** | ✅ PASS | Container destruction and SSH preservation verified |
+| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (v2.2.0) |
 
 ---
 
