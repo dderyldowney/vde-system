@@ -123,22 +123,6 @@ vde_log_set_format() {
 # Output Control
 #===============================================================================
 
-# Configure logging to output to file
-# Args: filepath (optional, defaults to VDE_LOG_FILE)
-vde_log_to_file() {
-    local filepath="${1:-${VDE_LOG_FILE}}"
-    VDE_LOG_FILE="${filepath}"
-    VDE_LOG_OUTPUT="file"
-    
-    # Ensure directory exists
-    local dir="$(dirname "${filepath}")"
-    if [[ ! -d "${dir}" ]] ; then
-        command mkdir -p "${dir}" 2>/dev/null || return ${VDE_ERR_GENERAL}
-    fi
-    command touch "${filepath}" 2>/dev/null || return ${VDE_ERR_GENERAL}
-    return 0
-}
-
 # Configure logging to output to stdout
 vde_log_to_stdout() {
     VDE_LOG_OUTPUT="stdout"
@@ -483,7 +467,6 @@ export -f vde_log_warn >/dev/null 2>&1 || true
 export -f vde_log_error >/dev/null 2>&1 || true
 export -f vde_log_set_level >/dev/null 2>&1 || true
 export -f vde_log_set_format >/dev/null 2>&1 || true
-export -f vde_log_to_file >/dev/null 2>&1 || true
 export -f vde_log_to_stdout >/dev/null 2>&1 || true
 export -f vde_log_rotate >/dev/null 2>&1 || true
 export -f vde_log_check_rotation >/dev/null 2>&1 || true
