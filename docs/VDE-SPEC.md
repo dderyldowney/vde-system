@@ -1,48 +1,47 @@
 # VDE-SPEC v1.1.0 (Absolute)
 
-## VERSION HISTORY
-| Version | Date       | Changes                                                                 |
-| :---    | :---       | :---                                                                    |
-| 1.0.0   | 2026-04-08 | Official Release: The Sovereign Handshake. Hardened bridges and 100% green suite. |
-| 2.2.0   | 2026-04-08 | Hardened Sovereign Bridges (Docker/SSH Socat Proxy) and certified 100% GREEN high-fidelity test suite. |
-| 2.1.0   | 2026-04-07 | Completed Sovereign Audit; pruned 24k lines of redundant tests.         |
-| 2.0.3   | 2026-04-03 | Aligned SSH identity naming (vde_student) across the bridge.            |
-| 2.0.4   | 2026-04-04 | Implemented Ignition Sync, Universal Script Parity (USP), and 8-Field Registry Standard. |
-| 2.0.5   | 2026-04-04 | Version bump to 2.0.5.                                                  |
-| 2.0.6   | 2026-04-05 | Implemented Fleet Strike (3-VM Concurrent Limit).                       |
-| 2.0.7   | 2026-04-07 | Codified Section 10: THE SEEKER’S RECON (The Verification Law).         |
-| 2.0.8   | 2026-04-07 | Codified Section 11: THE ARCHIVIST’S INTEL (The Researcher Law).        |
-| 2.0.9   | 2026-04-07 | Refined Section 11: Real-time intelligence and physical verification.   |
-| 2.1.0   | 2026-04-07 | Sovereign Ecosystem: Docker Socket Sovereignty and SSH Agent Trust Bridge. |
+## 1. Absolute Mandates (The Rule Spine)
 
-**Status:** AUTHORITATIVE  
-**Last Updated:** 2026-04-07T23:55:00Z  
+- **Language of the Tribe (ZSH ONLY)**: All CLI tools, libraries, and jail shells MUST use `#!/usr/bin/env zsh`. `bash` is strictly prohibited.
+- **The Armorer’s Command (UAP)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`. No action is permitted without this spine.
+- **Born Ready (BTO)**: Every jail MUST be fully functional at image creation. Runtime `apt` calls or network-dependent configurations are prohibited.
+- **Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`. Inline logic is prohibited.
+- **The Beskar Vault (Data Authority)**: `data/vm-types.json` and `data/vm-types.conf` are the sole sources of truth. Data integrity is maintained via the **8-Field Standard**: `type|name|aliases|display|pkgs|custom_cmd|env|ports`.
+- **Ignition Sync (Pre-Flight)**: The CLI MUST perform a timestamp audit at ignition. If source files are newer than the cache, a re-smelt is mandatory.
+- **The 3-VM Concurrent Limit**: Parallel ignition and stress operations are strictly limited to a maximum of 3 concurrent VMs.
+- **The Rule of One (Versioning)**: This document is the SOLE authority for the project version.
 
-## 1. Absolute Mandates
+## 2. Architecture (The Hub-and-Spoke Model)
 
-- **Born Ready (BTO)**: Every jail MUST be fully functional at the moment of image creation. No network-dependent configurations are permitted during container runtime.
-- **Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`. Inline logic is strictly prohibited.
-- **Ignition Sync (Pre-Flight)**: The CLI MUST perform a timestamp audit at ignition. If source files (`.conf`, `.json`) are newer than the cache, a re-smelt is mandatory.
-- **8-Field Standard**: Data integrity is maintained via a strict 8-field registry layout: `type|name|aliases|display|pkgs|custom_cmd|env|ports`.
-- **ZSH-ONLY**: All CLI tools, libraries, and jail shells MUST use `#!/usr/bin/env zsh`.
-- **Absolute Portability**: Images must function identically without requiring internet access for setup once built.
-- **Docker Socket Sovereignty**: Containers MUST have dynamic non-root access to the host Docker daemon.
-- **SSH Agent Trust Bridge**: Host SSH identities MUST be forwarded to guest VMs via secure agent bridging.
+VDE adheres to the three-tier inheritance model detailed in `docs/ARCHITECTURE.md`:
+1.  **The Hub (`vde-base`)**: Defines Identity (devuser), Shell (Zsh), and Core Security.
+2.  **The Spoke (`scripts/setup/`)**: USP rituals that hydrate the environment at build-time.
+3.  **The Jail (Container)**: The immutable running process.
 
-## 2. Directory Structure
+## 3. The Trial of the Gauntlet (TDD Mandate)
 
-- `bin/`: CLI entry points (`vde`, `vde-bootstrap`).
-- `lib/`: Sourced ZSH libraries.
-- `data/`: The Beskar Vault (`vm-types.conf`, `vm-types.json`).
-- `scripts/setup/`: USP-compliant initialization rituals.
-- `configs/docker/`: The Hub (`vde-base.Dockerfile`) and Spoke templates.
-- `projects/`: Student workspace mounted from host.
-- `.cache/`: Persistent tool caches and VM registry cache.
+All implementation strikes MUST follow the **Red-Green-Refactor** law codified in Section 14 of `.gemini/instructions.md`:
+1.  **The Red Gauntlet**: A physical, failing test file MUST exist before implementation.
+2.  **The Green Victory**: Implementation must be minimal, solving only what the test demands.
+3.  **The Refiner's Fire**: Refactoring occurs only under a Green light.
 
-## 3. Universal Agent Protocol (UAP)
+## 4. Directory Structure
 
-1. **Startup**: Verify local environment, version (v2.1.0), and execute Ignition Sync.
-2. **Planning**: Design a TDD strategy with explicit failing tests.
-3. **Implementation**: Execute changes under `bin/vde-enforce-uap.zsh` using local, unique-prefixed variables.
-4. **Audit**: Confirm USP compliance and "Born Ready" status.
-5. **Research**: When the path is obscured or platform quirks arise, dispatch the Researcher for physical verification.
+- `bin/`: CLI entry points and UAP enforcement.
+- `lib/`: Hardened ZSH-native libraries.
+- `data/`: The Beskar Vault (Registry and Schemas).
+- `scripts/setup/`: USP-compliant hydration rituals.
+- `configs/docker/`: Hub and Spoke configurations.
+- `projects/`: User workspace mounted from host.
+- `.cache/`: High-speed runtime hydration and port registry.
+- `.locks/`: Atomic lifecycle spinlocks.
+
+## 5. Persistence & Identity
+
+- **Identity Key**: All SSH operations MUST use the `vde_student` identity.
+- **Workspace Mapping**: `/home/devuser/workspace` maps to `projects/<name>/`.
+- **Data Persistence**: Databases and services map to `data/<name>/`.
+
+---
+Version: 1.1.0
+Reference: ARCHITECTURE v1.1.0 (Absolute)
