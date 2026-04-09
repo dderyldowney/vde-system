@@ -1,4 +1,4 @@
-# Project Status: VDE (Official Release v1.0.0)
+# Project Status: VDE (Official Release v1.1.0)
 
 ## Technical Health Dashboard
 
@@ -8,13 +8,17 @@
 | **8-Field Registry** | 🟢 High | 100% | Hub-to-Spoke Data Authority verified; 8-field layout standard. |
 | **USP Hydration** | 🟢 High | 100% | All VM setup scripts hardened with `set -e` and ghost purge. |
 | **VM Lifecycle** | 🟢 High | 100% | Deterministic Ignition, Stop, and Remove cycles verified. |
-| **Sovereign Bridges** | 🟢 High | 100% | Hardened via `socat` proxy and `.zshenv` persistence (v1.0.0). |
+| **Sovereign Bridges** | 🟢 High | 100% | Verified with direct empirical evidence in `system-spine.feature`. |
 
 ## Key Stats (Certified Suite)
-- **Total BDD Scenarios**: 7
-- **Passed**: 7 (100% GREEN / High-Fidelity)
+- **Total BDD Scenarios**: 11
+- **Passed**: 11 (100% GREEN / High-Fidelity)
 - **Undefined Steps**: 0
-- **ZSH Unit/Integration Scripts**: 11 (All verified)
+- **ZSH Unit/Integration Scripts**: 12 (All verified)
+
+## Recent Milestones
+- **Phase 27 (Sovereign Ecosystem):** ✅ COMPLETE. Docker Socket and SSH Agent bridges hardened and verified.
+- **JupyterLab Spoke:** ✅ COMPLETE. Hardened Data Science environment with modern startup patterns.
 
 ## Recent Pruning (The Sovereign Audit)
 - Removed ~24,000 lines of redundant/pink test code.
