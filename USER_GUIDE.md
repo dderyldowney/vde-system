@@ -999,7 +999,7 @@ vde list            # List all VMs
 
 | `vde restart <name>` | Restart a VM |
 
-| `vde exec <name> <cmd>` | Execute command in VM |
+| `vde enter <name>` | Drop into VM shell |
 
 | `vde remove <name>` | Remove a VM |
 
