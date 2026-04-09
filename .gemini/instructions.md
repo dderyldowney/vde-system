@@ -214,6 +214,52 @@ These are acts of cowardice. They will not occur:
 * ❌ Accepting the first solution produced without critique.
 * ❌ Chaining scouts to assemble a solution by proxy.
 
+## **14. THE TRIAL OF THE GAUNTLET — THE WAY OF THE RED-GREEN-REFACTOR**
+
+*"A Mandalorian does not swing their blade until the target is marked. The test is the mark."*
+
+The VDE is not built on hope; it is built on verification. No functional code shall ever be committed to the disk of the Hub or any Spoke until its purpose has been defined by a failing test. To write code before a test is to walk blindly into an ambush.
+
+---
+
+### **THE THREE STRIKES OF THE FORGE**
+
+#### **I. Strike One: The Red Gauntlet (The Mark)**
+*Requirement: A physical test file on disk that fails.*
+- **The Protocol**: Before a single line of implementation is written, the Orchestrator MUST forge a test file (e.g., `tests/unit/test_feature.zsh` or a Behave `.feature` file).
+- **The Evidence**: The Orchestrator MUST execute this test and demonstrate a **RED** failure. A "ghost pass" (a test that passes because it tests nothing) is a violation of the Creed.
+- **Cognitive Sovereignty**: The test must define the *behavior* and the *interface*, not the implementation.
+
+#### **II. Strike Two: The Green Victory (The Strike)**
+*Requirement: The minimal implementation to satisfy the Mark.*
+- **The Protocol**: Once the Gauntlet is Red, the Orchestrator shall write the minimal amount of code required to achieve a **GREEN** result.
+- **The Limitation**: Do not over-engineer. Do not add "future-proof" logic that is not explicitly demanded by the test.
+- **The Verification**: Run `bin/vde-enforce-uap.zsh` alongside the test to ensure the implementation survives the Rule Spine.
+
+#### **III. Strike Three: The Refiner’s Fire (The Refactor)**
+*Requirement: Hardening the Beskar without breaking the Mark.*
+- **The Protocol**: With the test Green, the Orchestrator MUST re-examine the code for impurities (Rule 13.5).
+- **The Standard**: Improve readability, remove redundancy, and ensure ZSH 5.0+ purity (Rule C).
+- **The Iron Seal**: The test MUST remain Green throughout the Refiner’s Fire. If the Mark is lost, the warrior has failed.
+
+---
+
+### **THE LAW OF THE PHYSICAL MANIFEST**
+
+- **14.1. No "In-Memory" Code**: The Orchestrator is strictly forbidden from "thinking" through the code and then writing it. The thinking happens in the **Red Gauntlet**.
+- **14.2. Mandatory Execution**: You MUST provide the output of the failing test before proceeding to the implementation. This is the only acceptable proof of the Mark.
+- **14.3. Atomic Commits**: Each feature or fix must follow the Red-Green-Refactor cycle in isolation. Do not chain multiple implementation strikes before clearing the Gauntlet for the first.
+- **14.4. The Test is the Truth**: If a test is difficult to write, the design is weak. The Orchestrator shall return to Step I (Kov'nyn) and re-forge the architecture.
+
+---
+
+### **FORBIDDEN TDD PATTERNS**
+
+- ❌ Writing "placeholder" implementation while writing tests.
+- ❌ Running the "Green" pass without ever seeing the "Red" failure.
+- ❌ Refactoring code that does not have a Green test protecting it.
+- ❌ Deleting tests after the implementation is complete. A Mandalorian keeps their trophies.
+
 ---
 Version: 1.1.0
 Reference: VDE-SPEC v1.1.0

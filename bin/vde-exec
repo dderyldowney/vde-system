@@ -56,11 +56,9 @@ else
     DOCKER_OPTS="${DOCKER_OPTS} -u devuser"
 fi
 
-# If only one argument is provided after VM_NAME, it might be a shell command string
-if [[ ${#} -eq 1 ]] ; then
-    exec docker exec ${=DOCKER_OPTS} "${CONTAINER_NAME}" zsh -c "source /home/devuser/.zshenv 2>/dev/null; ${1}"
-else
-    # For multiple args, we still wrap in a zsh call to ensure environment is sourced
-    local cmd_str="${(j: :)@}"
-    exec docker exec ${=DOCKER_OPTS} "${CONTAINER_NAME}" zsh -c "source /home/devuser/.zshenv 2>/dev/null; ${cmd_str}"
-fi
+# Execute the command
+# We use docker exec directly with arguments to avoid shell injection
+# If we need the user environment, we use zsh -c but pass the command as a separate argument
+# to the remote zsh to ensure it's not parsed by the container's shell entry point.
+exec docker exec ${=DOCKER_OPTS} "${CONTAINER_NAME}" \
+    zsh -c "source /home/devuser/.zshenv 2>/dev/null; exec \"\$@\"" -- "${@}"

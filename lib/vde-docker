@@ -159,12 +159,13 @@ is_vm_running() {
 allocate_ssh_port() {
     local vm_name="${1}"
     local ssh_port="${2}"
+    local raw_name=$(vde_normalize_name "${vm_name}")
     local lock_dir="${VDE_PORT_REGISTRY}/port-${ssh_port}.lock"
 
     mkdir -p "${lock_dir}" 2>/dev/null
-    echo "${ssh_port}" > "${VDE_PORT_REGISTRY}/${vm_name}.port"
+    echo "${ssh_port}" > "${VDE_PORT_REGISTRY}/${raw_name}.port"
     # Also ensure the numeric lock file reflects this VM
-    echo "${vm_name}" > "${lock_dir}/vm_name"
+    echo "${raw_name}" > "${lock_dir}/vm_name"
 
     return ${VDE_SUCCESS}
 }
@@ -173,7 +174,8 @@ allocate_ssh_port() {
 # Args: <vm_name>
 vde_port_release() {
     local vm_name="${1}"
-    local port_registry_file="${VDE_PORT_REGISTRY}/${vm_name}.port"
+    local raw_name=$(vde_normalize_name "${vm_name}")
+    local port_registry_file="${VDE_PORT_REGISTRY}/${raw_name}.port"
     
     if [[ -f "${port_registry_file}" ]]; then
         local port=$(cat "${port_registry_file}" 2>/dev/null)
