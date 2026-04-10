@@ -10,6 +10,10 @@ VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 # Enforce Universal Agent Protocol (The Rule Spine)
 "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" --quiet || exit 1
 
+# Enforce @system-spine tetrad (Section 16)
+# This is the cognitive context and operational spine
+"${VDE_ROOT_DIR}/bin/vde-spine-check.zsh" --quiet || exit 1
+
 source "${VDE_ROOT_DIR}/lib/vm-common"
 source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vde-naming"
