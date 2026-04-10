@@ -1229,6 +1229,40 @@ You'll have a complete tech stack:
 
 All three can talk to each other automatically. No networking headaches required!
 
+### Verified Scenarios
+
+> **💡 Note:** The scenarios below show the Gherkin test steps used to verify VDE's behavior. Each scenario includes the actual **`vde` command** you would run to accomplish the task. We show the unified `vde` command because it's simpler and more consistent than remembering individual script names like `create-virtual-for` or `start-virtual`. The `vde` command handles all the heavy lifting for you!
+
+**Scenario: Verify the sovereign tech stack cluster**
+
+
+```
+Given the VDE system is healthy
+When I run the one true way to start the VMs "python postgres redis"
+And I execute "sudo service postgresql start" inside "vde-postgres" as "root"
+And I execute "sudo /usr/bin/redis-server /etc/redis/redis.conf --daemonize yes" inside "vde-redis" as "root"
+Then the container "vde-python" should be started via direct Docker orchestration
+And the container "vde-postgres" should be started via direct Docker orchestration
+And the container "vde-redis" should be started via direct Docker orchestration
+And the VM "vde-postgres" must be responsive on port "5432"
+And the VM "vde-redis" must be responsive on port "6379"
+When I execute "pg_isready -h localhost -p 5432" inside "vde-postgres" as "devuser"
+Then the command execution should succeed
+When I execute "redis-cli ping" inside "vde-redis" as "devuser"
+Then the command execution should succeed
+When I execute "pg_isready -h vde-postgres -p 5432" inside "vde-python" as "devuser"
+Then the command execution should succeed
+And the stack should be gracefully terminated
+```
+
+
+**Start the VMs:**
+
+
+```zsh
+vde start <vms>
+```
+
 </details>
 
 <details id="8.-working-with-databases" data-section="8. Working with Databases">
