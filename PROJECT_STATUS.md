@@ -1,4 +1,4 @@
-# Project Status: VDE (Official Release v1.2.0)
+# Project Status: VDE (Official Release v1.2.1)
 
 ## Technical Health Dashboard
 

@@ -1,4 +1,4 @@
-@core-infrastructure @usp-validation
+@core-infrastructure @usp-validation @system-spine
 Feature: Universal Script Parity (USP) Validation
   The VDE system enforces Universal Script Parity (USP) to ensure that every VM
   is hydrated through a standardized, hardened, and deterministic process.

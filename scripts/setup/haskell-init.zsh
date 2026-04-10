@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_haskell_pkgs="ghc cabal-install"
+local vde_haskell_pkgs="ghc cabal-install git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

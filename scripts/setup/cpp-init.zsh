@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_cpp_pkgs="build-essential g++ make cmake gdb"
+local vde_cpp_pkgs="build-essential g++ make cmake gdb git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

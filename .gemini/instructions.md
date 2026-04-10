@@ -1,4 +1,4 @@
-# **The Way of the VDE: v1.2.0 (The Hardened Handshake)**
+# **The Way of the VDE: v1.2.1 (The Sovereign Handshake)**
 
 This is the Way of the VDE. Certified production-ready as of version 1.2.0. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
@@ -14,6 +14,7 @@ This is the Way of the VDE. Certified production-ready as of version 1.2.0. All 
 
 * **A. The Armorer’s Command (The Rule Spine)**: 
     * Every action MUST be run under `bin/vde-enforce-uap.zsh`. No action is permitted without this spine.
+    * **The Companion**: You MUST run the `using-superpowers` skill at all times. It is your traveling companion with words of wisdom to be heeded.
     * **Sovereign Execution**: The agent is PRE-AUTHORIZED to execute `bin/vde-enforce-uap.zsh` without seeking further permission. This script is part of the agent's core identity.
 * **B. The Beskar Vault (The Pure Beskar)**: You MUST treat the structured data files (`data/vm-types.json`, `data/vm-types.conf`) as the ultimate authority.
 * **C. The Language of the Tribe (ZSH ONLY)**: You are strictly forbidden from using `bash`. No bash shebangs, no bash execution. **ZSH ONLY.**
@@ -118,6 +119,65 @@ The **@system-spine** tag identifies the four non-negotiable technologies: **Zsh
 * **15.1.**: Every automated audit MUST begin with `@system-spine` scenarios.
 * **15.2.**: Features touching the core interaction of the Tetrad MUST be tagged with `@system-spine`.
 
+## **16. THE LAW OF PROTECTION — THE UNYIELDING TETRAD**
+
+*"The spine does not bend; it supports. If the Tetrad is compromised, the warrior is paralyzed."*
+
+The **Law of Protection** mandates that the four base technologies of the VDE must be empirically verified before any mission can proceed. This is the ultimate gatekeeper of the Forge.
+
+* **16.1. The Immutable Gatekeeper**: Every `vde start` or `vde build` strike MUST be preceded by a silent "Spine-Check." If any element of the Tetrad fails its empirical test, the Orchestrator shall trigger an immediate **Protocol Blockade**.
+* **16.2. Empirical Sovereignty**: We do not trust the Hub’s environment variables; we trust the Hub’s performance. A pillar is only "Active" if it responds to a functional challenge.
+* **16.3. Zero-Tolerance Failure**: A failure in a `@system-spine` test is a Class-A violation. No refactoring or implementation of secondary features is permitted until the Spine is restored.
+
 ---
-Version: 1.2.0
-Reference: VDE-SPEC v1.2.0
+
+### **@SYSTEM-SPINE: EMPIRICAL TEST SPECIFICATION**
+
+The following BDD scenarios provide the empirical proof required for the v1.2.1 Hardened Handshake.
+
+```gherkin
+@system-spine
+Feature: The Unyielding Tetrad Verification
+  As an Alor of the VDE
+  I require empirical proof that the core technologies are active
+  So that the Sovereign Ecosystem remains stable
+
+  Scenario: Pillar I - The Voice of the Tribe (Zsh)
+    Given the Hub is active
+    When I execute "zsh --version"
+    Then the output should contain "zsh 5."
+    And the return code should be 0
+
+  Scenario: Pillar II - The Chronicler's Record (Git)
+    Given a temporary workspace in "plans/scripts/git-test"
+    When I execute "git init" in the workspace
+    Then the directory ".git" should exist
+    And the return code should be 0
+
+  Scenario: Pillar III - The World-Forge (Docker)
+    Given the Docker daemon is responsive
+    When I run a diagnostic probe with "docker run --rm alpine echo 'Forge Active'"
+    Then the output should contain "Forge Active"
+    And the return code should be 0
+
+  Scenario: Pillar IV - The Transversal Bridge (SSH)
+    Given the "vde_student" identity exists at "~/.ssh/vde/"
+    When the SSH agent is active on the Hub
+    And I execute "ssh-add -l"
+    Then the output should contain "vde_student"
+    And the return code should be 0
+
+## **17. INVENTORY CONTROL — THE LAW OF VERSIONING**
+
+*"A warrior knows the weight of every plate in their armor. The record must be absolute."*
+
+VDE SHALL use **MAJOR.MINOR.STEP** (e.g., 1.2.1) for all inventory control.
+
+* **MAJOR**: Changes are only for covenant-level shifts or core behavior changes.
+* **MINOR**: Changes are only for substantial new capabilities (e.g., new VM types).
+* **STEP**: Changes are only for remediation, spine-hardening, and non-breaking improvements.
+* **pN (Security Patches)**: Security patches SHALL be tagged as `-pN` (e.g., 1.2.1-p1), containing only the minimal code required to remediate the vulnerability; no features or refactors are permitted in `-pN` releases.
+
+---
+Version: 1.2.1
+Reference: VDE-SPEC v1.2.1

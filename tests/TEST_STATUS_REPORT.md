@@ -1,4 +1,4 @@
-# VDE Test Status Report (Sovereign Certification v1.2.0)
+# VDE Test Status Report (Sovereign Certification v1.2.1)
 **Generated:** 2026-04-08T21:45:00Z
 **Status:** 100% GREEN (HIGH FIDELITY)
 
@@ -17,6 +17,7 @@
 ---
 
 ## 1. Core Mandate Verification
+**Verification Unification:** The `@system-spine` tag now unifies and verifies all core technology proofs across the infrastructure suite.
 
 | Feature | Status | Empirical Evidence |
 |---------|--------|--------------------|
@@ -24,15 +25,17 @@
 | **USP Hydration** | ✅ PASS | Script content audit in `usp-validation.feature` |
 | **Deterministic Ignition** | ✅ PASS | Port allocation and Docker labels verified |
 | **Lifecycle (Stop/Remove)** | ✅ PASS | Container destruction and SSH preservation verified |
-| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (v1.2.0) |
+| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (v1.2.1) |
 
 ---
 
 ## 2. Active Test Suite
 
 ### Behave BDD (`tests/features/core-infrastructure/`)
-- `usp-validation.feature`
-- `system-spine.feature`
+- `system-spine.feature` (Unified via `@system-spine`)
+- `usp-validation.feature` (Unified via `@system-spine`)
+- `tech-stack-cluster.feature` (Unified via `@system-spine`)
+- `jupyterlab-spoke.feature` (Unified via `@system-spine`)
 
 ### ZSH Unit (`tests/unit/`)
 - `vde-core.test.zsh`

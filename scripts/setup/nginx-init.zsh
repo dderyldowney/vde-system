@@ -5,7 +5,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_nginx_pkgs="nginx-extras"
+local vde_nginx_pkgs="nginx-extras git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_testport1_pkgs="top"
+local vde_testport1_pkgs="top git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update
