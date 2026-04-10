@@ -60,5 +60,6 @@ fi
 # We use docker exec directly with arguments to avoid shell injection
 # If we need the user environment, we use zsh -c but pass the command as a separate argument
 # to the remote zsh to ensure it's not parsed by the container's shell entry point.
+# We pass CONTAINER_NAME as $0 to zsh -c so that $@ contains the full command.
 exec docker exec ${=DOCKER_OPTS} "${CONTAINER_NAME}" \
-    zsh -c "source /home/devuser/.zshenv 2>/dev/null; exec \"\$@\"" -- "${@}"
+    zsh -c "source /home/devuser/.zshenv 2>/dev/null; exec \"\$@\"" "${CONTAINER_NAME}" "${@}"

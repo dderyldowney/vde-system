@@ -46,28 +46,28 @@ Feature: System Spine Integrity
     Then the command execution should succeed
     And the output should contain my host identities
 
-  @law-of-protection @zsh
+  @system-spine @critical-path @zsh
   Scenario: Pillar I - The Voice of the Tribe (Zsh)
     Given the Hub is active
     When I execute "zsh --version"
     Then the output should contain "zsh 5."
     And the return code should be 0
 
-  @law-of-protection @git
+  @system-spine @critical-path @git
   Scenario: Pillar II - The Chronicler's Record (Git)
     Given a temporary workspace in "plans/scripts/git-test"
     When I execute "git init" in the workspace
     Then the directory ".git" should exist
     And the return code should be 0
 
-  @law-of-protection @docker
+  @system-spine @critical-path @docker
   Scenario: Pillar III - The World-Forge (Docker)
     Given the Docker daemon is responsive
     When I run a diagnostic probe with "docker run --rm alpine echo 'Forge Active'"
     Then the output should contain "Forge Active"
     And the return code should be 0
 
-  @law-of-protection @ssh
+  @system-spine @critical-path @ssh
   Scenario: Pillar IV - The Transversal Bridge (SSH)
     Given the "vde_student" identity exists at "~/.ssh/vde/"
     When the SSH agent is active on the Hub

@@ -36,8 +36,8 @@ fi
 
 # 2. SSH Agent Forwarding (Sovereign Bridge)
 local -a _bridge_candidates=(
+    "/run/vde-ssh.sock"                # VDE 2026 Standard (Direct Bind)
     "/run/host-services/ssh-auth.sock" # Canonical Darwin / Realignment Path
-    "/run/vde-ssh.sock"                # VDE 2026 Standard
     "/ssh-agent"                       # Legacy / Alternative
 )
 
@@ -48,6 +48,8 @@ for candidate in "${_bridge_candidates[@]}"; do
     if [[ -S "${candidate}" ]]; then
         _found_bridge="${candidate}"
         echo "[VDE-ENTRYPOINT] SUCCESS: Valid socket found at ${_found_bridge}"
+        # Grant permissions to the bridge to ensure devuser can access it via socat
+        sudo chmod 666 "${_found_bridge}"
         break
     elif [[ -d "${candidate}" ]]; then
         echo "[VDE-ENTRYPOINT] GHOST DETECTED: ${candidate} is a directory (Mount Failure)."
@@ -68,23 +70,28 @@ if [[ -n "${_found_bridge}" ]]; then
     chmod 700 "/home/devuser/.ssh/vde"
     
     local _proxy_sock="/home/devuser/.ssh/vde/agent.sock"
-    export SSH_AUTH_SOCK="${_proxy_sock}"
     
-    # Symbolic Handshake (The Bridge Proxy)
-    if command -v socat >/dev/null 2>&1; then
-        echo "[VDE-ENTRYPOINT] SUCCESS: Proxying ${_found_bridge} to ${_proxy_sock}..."
-        # Run proxy in background
-        sudo -u devuser socat UNIX-LISTEN:"${_proxy_sock}",fork,unlink-early UNIX-CONNECT:"${_found_bridge}" &
+    # Only establish proxy if SSH_AUTH_SOCK is NOT already set by a legitimate SSH connection
+    if [[ -z "${SSH_AUTH_SOCK}" ]] || [[ "${SSH_AUTH_SOCK}" == "${_proxy_sock}" ]]; then
+        export SSH_AUTH_SOCK="${_proxy_sock}"
+        
+        # Symbolic Handshake (The Bridge Proxy)
+        if command -v socat >/dev/null 2>&1; then
+            echo "[VDE-ENTRYPOINT] SUCCESS: Proxying ${_found_bridge} to ${_proxy_sock}..."
+            # Run proxy in background as devuser
+            sudo -u devuser socat UNIX-LISTEN:"${_proxy_sock}",fork,unlink-early UNIX-CONNECT:"${_found_bridge}" &
+        else
+            echo "[VDE-ENTRYPOINT] WARNING: socat missing. Falling back to direct symlink."
+            ln -sf "${_found_bridge}" "${_proxy_sock}"
+        fi
+        
+        # Persistent bridge for non-login shells
+        echo "export SSH_AUTH_SOCK=${_proxy_sock}" > /home/devuser/.zshenv
+        sudo chown devuser:devuser /home/devuser/.zshenv
+        echo "[VDE-ENTRYPOINT] Persistent bridge established at /home/devuser/.zshenv"
     else
-        echo "[VDE-ENTRYPOINT] WARNING: socat missing. Falling back to direct symlink (may fail permissions)."
-        ln -sf "${_found_bridge}" "${_proxy_sock}"
-        sudo chmod 666 "${_found_bridge}" 2>/dev/null || true
+        echo "[VDE-ENTRYPOINT] SUCCESS: SSH agent already established via protocol forwarding."
     fi
-    
-    # Persistent bridge for non-login shells
-    echo "export SSH_AUTH_SOCK=${_proxy_sock}" > /home/devuser/.zshenv
-    sudo chown devuser:devuser /home/devuser/.zshenv
-    echo "[VDE-ENTRYPOINT] Persistent bridge established at /home/devuser/.zshenv"
 else
     echo "[VDE-ENTRYPOINT] WARNING: All SSH bridge candidates failed."
     echo "[VDE-ENTRYPOINT] Blockade: Verification of Section 10.5 will fail."

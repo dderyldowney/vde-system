@@ -215,7 +215,7 @@ case ${COMMAND} in
             fi
         done
         ;;
-    remove|delete)
+    remove|delete|rm)
         shift
         local targets=("${@}")
         [[ -z "${targets}" ]] && vde_log_error "Usage: vde remove <alias...|all>" && exit 1
