@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 #===============================================================================
-# VDE Version Synchronizer (v1.1.0 Hardened)
+# VDE Version Synchronizer (v1.2.1 Hardened)
 #===============================================================================
 
 # 1. Initialize the Spine
@@ -22,39 +22,45 @@ fi
 
 vde_log_info "Synchronizing Tribe to Version: ${NEW_VER}" "forge"
 
-# 4. Strike docs/ARCHITECTURE.md
+# 4. Strike docs/VDE-SPEC.md (The Beskar Source)
+# Synchronize the bottom footer if it exists
+sed -i '' -E "s/Version: [0-9.]+/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/docs/VDE-SPEC.md"
+sed -i '' -E "s/ARCHITECTURE v[0-9.]+/ARCHITECTURE v${NEW_VER}/" "${VDE_ROOT_DIR}/docs/VDE-SPEC.md"
+vde_log_success "Aligned docs/VDE-SPEC.md footer" "forge"
+
+# 5. Strike docs/ARCHITECTURE.md
 sed -i '' -E "1s/^# ARCHITECTURE v.*/# ARCHITECTURE v${NEW_VER} (Absolute)/" "${VDE_ROOT_DIR}/docs/ARCHITECTURE.md"
 vde_log_success "Aligned docs/ARCHITECTURE.md" "forge"
 
-# 5. Strike .gemini/instructions.md
+# 6. Strike .gemini/instructions.md
 # Update title and version footer
 sed -i '' -E "s/# \*\*The Way of the VDE: v[0-9.]+ .*\*\*/# **The Way of the VDE: v${NEW_VER} (The Sovereign Handshake)**/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
 sed -i '' -E "s/Version: [0-9.]+/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
 sed -i '' -E "s/VDE-SPEC v[0-9.]+/VDE-SPEC v${NEW_VER}/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
 vde_log_success "Aligned .gemini/instructions.md" "forge"
 
-# 6. Strike MEMORY.md
+# 7. Strike MEMORY.md
 sed -i '' -E "s/Version: [0-9.]+/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/MEMORY.md"
 sed -i '' -E "s/SYSTEM BENCHMARKS \(VDE [0-9.]+\)/SYSTEM BENCHMARKS (VDE ${NEW_VER})/" "${VDE_ROOT_DIR}/MEMORY.md"
 sed -i '' -E "s/THE MILESTONE: v[0-9.]+/THE MILESTONE: v${NEW_VER}/" "${VDE_ROOT_DIR}/MEMORY.md"
 sed -i '' -E "s/THE VERDICT: v[0-9.]+ READY/THE VERDICT: v${NEW_VER} READY/" "${VDE_ROOT_DIR}/MEMORY.md"
 vde_log_success "Aligned MEMORY.md" "forge"
 
-# 7. Strike PROJECT_STATUS.md
+# 8. Strike PROJECT_STATUS.md
 sed -i '' -E "s/# Project Status: VDE \(.* v[0-9.]+\)/# Project Status: VDE (Official Release v${NEW_VER})/" "${VDE_ROOT_DIR}/PROJECT_STATUS.md"
 sed -i '' -E "s/persistence \(v[0-9.]+\)/persistence (v${NEW_VER})/" "${VDE_ROOT_DIR}/PROJECT_STATUS.md"
 vde_log_success "Aligned PROJECT_STATUS.md" "forge"
 
-# 8. Strike tests/TEST_STATUS_REPORT.md
+# 9. Strike tests/TEST_STATUS_REPORT.md
 sed -i '' -E "s/# VDE Test Status Report \(.* v[0-9.]+\)/# VDE Test Status Report (Sovereign Certification v${NEW_VER})/" "${VDE_ROOT_DIR}/tests/TEST_STATUS_REPORT.md"
 sed -i '' -E "s/verified \(v[0-9.]+\)/verified (v${NEW_VER})/" "${VDE_ROOT_DIR}/tests/TEST_STATUS_REPORT.md"
 vde_log_success "Aligned tests/TEST_STATUS_REPORT.md" "forge"
 
-# 9. Strike $HOME/.zshrc (The Host Handshake)
+# 10. Strike $HOME/.zshrc (The Host Handshake)
 local zshrc="${HOME}/.zshrc"
 if [[ -f "$zshrc" ]]; then
-    # Strikes the gvde function's handshake prompt version
-    sed -i '' -E "s/Initialize VDE Session v[0-9.]+/Initialize VDE Session v${NEW_VER}/" "$zshrc"
+    # Strikes the gvde function's handshake prompt version (v is optional)
+    sed -i '' -E "s/Initialize VDE Session v?[0-9.]+/Initialize VDE Session ${NEW_VER}/" "$zshrc"
     # Strikes any VDE_VERSION="X.X.X" variable
     sed -i '' -E "s/(VDE_VERSION=)[\"'][0-9.]+[\"']/\1\"${NEW_VER}\"/" "$zshrc"
     vde_log_success "Aligned \$HOME/.zshrc gvde handshake" "forge"

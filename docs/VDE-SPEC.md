@@ -43,5 +43,5 @@ All implementation strikes MUST follow the **Red-Green-Refactor** law codified i
 - **Data Persistence**: Databases and services map to `data/<name>/`.
 
 ---
-Version: 1.1.0
-Reference: ARCHITECTURE v1.1.0 (Absolute)
+Version: 1.2.1
+Reference: ARCHITECTURE v1.2.1 (Absolute)
