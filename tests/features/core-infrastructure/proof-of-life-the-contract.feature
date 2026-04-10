@@ -21,7 +21,14 @@ Feature: The Proof of Life - The Contract
     And the SSH bridge to "python" should be established
     And the return code should be 0
 
-    # 3. The Handshake (Enter & Shell Execution)
+    # 3. The Reinforcement (Rebuild)
+    When I execute "bin/vde rebuild python"
+    Then the command should succeed
+    And the Docker image "vde-python" should exist on the Hub
+    And the container "vde-python" should be running
+    And the return code should be 0
+
+    # 4. The Handshake (Enter & Shell Execution)
     # Note: We use 'vde enter' to prove orchestration, NOT raw SSH.
     When I execute "bin/vde enter python --command 'echo \"The Contract is Signed\"'"
     Then the output should contain "The Contract is Signed"
@@ -36,4 +43,12 @@ Feature: The Proof of Life - The Contract
     # 5. The Dissolution (Remove)
     When I execute "bin/vde rm python"
     Then the container "vde-python" should not exist
+    And the return code should be 0
+
+  Scenario: The Forge Hardening - Hardened Rebuild
+    Given the 4 Pillars (Zsh, Git, Docker, SSH) have passed their individual proofs
+    And I have a valid VM definition for "python" in the Beskar Registry
+    When I execute "bin/vde rebuild --no-cache python"
+    Then the command should succeed
+    And the Docker image "vde-python" should exist on the Hub
     And the return code should be 0

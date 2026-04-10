@@ -390,6 +390,7 @@ def step_verify_command_identity(context, identity):
         assert "devuser" in res.stdout, f"Command not executed as devuser (expected for {identity})"
 
 @then('the command execution should succeed')
+@then('the command should succeed')
 def step_command_succeed(context):
     # Support both CommandResult and subprocess.CompletedProcess
     rc = getattr(context.last_result, 'returncode', None)
@@ -427,3 +428,13 @@ def step_verify_container_not_running(context, container_name):
 def step_verify_container_not_exist(context, container_name):
     res = subprocess.run(["docker", "ps", "-a", "--filter", f"name=^{container_name}$", "--format", "{{.Names}}"], capture_output=True, text=True)
     assert container_name not in res.stdout.strip().split('\n'), f"Container {container_name} still exists"
+
+def after_scenario(context, scenario):
+    """Cleanup after each scenario to enforce hygiene."""
+    if hasattr(context, 'workspace') and "git-test" in str(context.workspace):
+        import shutil
+        if context.workspace.exists():
+            shutil.rmtree(context.workspace)
+        # Re-create empty with .keep to satisfy git
+        context.workspace.mkdir(parents=True, exist_ok=True)
+        (context.workspace / ".keep").touch()

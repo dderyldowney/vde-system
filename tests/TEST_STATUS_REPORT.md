@@ -21,7 +21,8 @@
 
 | Feature | Status | Empirical Evidence |
 |---------|--------|--------------------|
-| **The Contract (Lifecycle)** | ✅ PASS | Proof of Life verified (Create/Start/Enter/Stop/Remove) |
+| **The Contract (Lifecycle)** | ✅ PASS | Proof of Life verified (Create/Rebuild/Start/Enter/Stop/Remove) |
+| **Hardened Rebuild** | ✅ PASS | `rebuild --no-cache` verified in `proof-of-life-the-contract.feature` |
 | **Hub-to-Spoke Registry** | ✅ PASS | 8-field layout verified in `system-spine.feature` |
 | **USP Hydration** | ✅ PASS | Script content audit in `usp-validation.feature` |
 | **Deterministic Ignition** | ✅ PASS | Port allocation and Docker labels verified |
