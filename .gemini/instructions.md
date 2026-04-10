@@ -26,6 +26,7 @@ This is the Way of the VDE. Certified production-ready as of version 1.2.0. All 
 * **I. The 8-Field Standard**: You are forbidden from deviating from the strict 8-field registry layout.
 * **J. The Rule of One (Dynamic Versioning)**: `docs/VDE-SPEC.md` is the SOLE authority for the project version. Hardcoding version numbers in headers is prohibited.
 * **K. The 3-VM Concurrent Limit**: All parallel ignition and stress operations are strictly limited to a maximum of 3 concurrent Spokes (containers).
+* **L. The Proof of Life Mandate (Lifecycle Authority)**: The Proof of Life contract (`plans/system-spine-contract.md`) is the **Heartbeat** of the project. It defines the minimum functional standard (create, rebuild, start, enter, stop, remove). Any failure to meet this standard constitutes a **Blockage**. All Blockages MUST be remedied immediately; no secondary implementation or refactoring is permitted until the Heartbeat is restored.
 
 ---
 

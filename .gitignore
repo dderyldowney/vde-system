@@ -109,8 +109,6 @@ USER_GUIDE.md.backup
 # Test logs
 test-logs/
 
-# Docker state
-.docker-state/
-.docker-state-*.json
-.tmp.driveupload/
-conductor
+# Test artifacts
+plans/scripts/git-test/
+tests/.test-tmp/
