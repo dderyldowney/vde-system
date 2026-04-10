@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_csharp_pkgs="curl libicu-dev ca-certificates"
+local vde_csharp_pkgs="curl libicu-dev ca-certificates git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

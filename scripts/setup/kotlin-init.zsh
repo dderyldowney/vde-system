@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_kotlin_pkgs="default-jdk-headless curl zip unzip vim"
+local vde_kotlin_pkgs="default-jdk-headless curl zip unzip vim git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

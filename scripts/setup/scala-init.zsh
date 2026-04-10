@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_scala_pkgs="scala-defaults sbt"
+local vde_scala_pkgs="scala-defaults sbt git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

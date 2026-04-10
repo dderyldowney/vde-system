@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_swift_pkgs="binutils git libc6-dev curl"
+local vde_swift_pkgs="binutils git libc6-dev curl docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

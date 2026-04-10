@@ -5,7 +5,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_redis_pkgs="redis-server redis-tools"
+local vde_redis_pkgs="redis-server redis-tools git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

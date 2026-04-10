@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_asm_pkgs="nasm yasm gdb"
+local vde_asm_pkgs="nasm yasm gdb git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

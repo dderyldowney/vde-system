@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_elixir_pkgs="git curl build-essential libssl-dev automake autoconf libncurses5-dev unzip wget locales ca-certificates"
+local vde_elixir_pkgs="git curl build-essential libssl-dev automake autoconf libncurses5-dev unzip wget locales ca-certificates docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_python_pkgs="python3 python3-pip python-is-python3 postgresql-client redis-tools"
+local vde_python_pkgs="python3 python3-pip python-is-python3 postgresql-client redis-tools docker.io git"
 
 # 2. THE FORGE WORK
 apt-get update

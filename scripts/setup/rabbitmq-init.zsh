@@ -5,7 +5,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_rabbitmq_pkgs="erlang-nox rabbitmq-server"
+local vde_rabbitmq_pkgs="erlang-nox rabbitmq-server git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

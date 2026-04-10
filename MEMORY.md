@@ -5,17 +5,17 @@
 
 ---
 
-## THE MILESTONE: v1.2.0 — THE SOVEREIGN HANDSHAKE
+## THE MILESTONE: v1.2.1 — THE SOVEREIGN HANDSHAKE
 - **Official Release**: Cut on 2026-04-08. The VDE is now a production-ready developer utility.
 - **Test Fidelity**: 100% GREEN status across all BDD, Unit, Integration, and Security tests.
 - **Core Stability**: Deterministic Ignition, Sovereign Identity (SSH), and Hardened Security (GID/Registry) are certified.
 
 ---
 
-## SYSTEM BENCHMARKS (VDE 1.2.0)
+## SYSTEM BENCHMARKS (VDE 1.2.1)
 - **Canonical Ignition Speed:** 3.959s. This is the benchmark for 3-VM Parallel Ignition (python, postgres, redis) on current hardware. Any future refactor that slows this down is a deviation from the Way.
 
-## THE VERDICT: v1.2.0 READY
+## THE VERDICT: v1.2.1 READY
 - **Utility Over Exploration**: The VDE has transitioned from a project of exploration to a project of utility. It is now a platform a developer can rely on for daily work without environmental friction.
 - **Reliability Handshake**: Ignition is deterministic (< 4.5s), Identity is persistent (SSH bridge), and Security is enforced (GID mapping/8-field standard).
 - **Certification**: The ecosystem is 100% stable and verified as of v2.2.0. This is the foundation for the v1.0.0 GitHub release.

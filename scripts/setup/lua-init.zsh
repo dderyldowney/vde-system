@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_lua_pkgs="lua5.4 luarocks"
+local vde_lua_pkgs="lua5.4 luarocks git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

@@ -5,7 +5,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_mongodb_pkgs="mongodb-org-shell mongodb"
+local vde_mongodb_pkgs="mongodb-org-shell mongodb git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

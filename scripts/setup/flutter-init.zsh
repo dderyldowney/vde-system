@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_flutter_pkgs="curl git unzip xz-utils zip libglu1-mesa"
+local vde_flutter_pkgs="curl git unzip xz-utils zip libglu1-mesa docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

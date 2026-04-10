@@ -252,3 +252,74 @@ def step_identities_loaded(context):
 def step_verify_forwarded_identities(context):
     # Check if the output contains a fingerprint (usually SHA256:)
     assert "SHA256:" in context.last_result.stdout, f"No identities found in container agent: {context.last_result.stdout}"
+
+@given('the Hub is active')
+def step_hub_active(context):
+    # The Hub is the host machine running these tests
+    pass
+
+@when('I execute "{command}"')
+def step_execute_hub(context, command):
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    context.last_result = result
+    context.command_output = result.stdout + result.stderr
+    context.command_exit_code = result.returncode
+
+@then('the return code should be {code:d}')
+def step_check_rc(context, code):
+    rc = getattr(context, 'command_exit_code', None)
+    if rc is None:
+        rc = getattr(context.last_result, 'returncode', None)
+    assert rc == code, f"Expected RC {code}, but got {rc}. Output: {context.command_output if hasattr(context, 'command_output') else 'N/A'}"
+
+@given('a temporary workspace in "{path}"')
+def step_temp_workspace(context, path):
+    context.workspace = VDE_ROOT / path
+    if context.workspace.exists():
+        import shutil
+        shutil.rmtree(context.workspace)
+    context.workspace.mkdir(parents=True)
+
+@when('I execute "{command}" in the workspace')
+def step_execute_workspace(context, command):
+    result = subprocess.run(command, shell=True, capture_output=True, text=True, cwd=context.workspace)
+    context.last_result = result
+    context.command_output = result.stdout + result.stderr
+    context.command_exit_code = result.returncode
+
+@then('the directory "{path}" should exist')
+def step_dir_exists(context, path):
+    # Relative to workspace if defined, else relative to VDE_ROOT
+    base = getattr(context, 'workspace', VDE_ROOT)
+    assert (base / path).exists(), f"Directory {path} does not exist in {base}"
+
+@given('the Docker daemon is responsive')
+def step_docker_responsive(context):
+    res = subprocess.run(["docker", "info"], capture_output=True)
+    assert res.returncode == 0, "Docker daemon not responsive"
+
+@when('I run a diagnostic probe with "{command}"')
+def step_diagnostic_probe(context, command):
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    context.last_result = result
+    context.command_output = result.stdout + result.stderr
+    context.command_exit_code = result.returncode
+
+@given('the "{identity}" identity exists at "{path}"')
+def step_identity_exists(context, identity, path):
+    # Resolve ~/ paths
+    full_path = Path(os.path.expanduser(path)) / identity
+    assert full_path.exists(), f"Identity {identity} missing at {full_path}"
+
+@when('the SSH agent is active on the Hub')
+def step_agent_active_hub(context):
+    # We already check this in some scenarios, but let's be explicit
+    assert "SSH_AUTH_SOCK" in os.environ, "SSH_AUTH_SOCK environment variable missing"
+    assert Path(os.environ["SSH_AUTH_SOCK"]).exists(), "SSH agent socket does not exist"
+    
+    # Ensure vde_student is loaded if possible
+    vde_key = Path.home() / ".ssh" / "vde" / "vde_student"
+    if vde_key.exists():
+        res = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True)
+        if "vde_student" not in res.stdout:
+            subprocess.run(["ssh-add", str(vde_key)], capture_output=True)

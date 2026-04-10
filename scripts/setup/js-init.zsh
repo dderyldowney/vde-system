@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_js_pkgs="curl git build-essential"
+local vde_js_pkgs="curl git build-essential docker.io"
 
 # 2. THE FORGE WORK
 apt-get update
