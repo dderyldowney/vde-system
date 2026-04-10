@@ -32,6 +32,11 @@ case ${COMMAND} in
         shift
         "${VDE_ROOT_DIR}/bin/vde-rebuild" "$@"
         ;;
+    create)
+        shift
+        # Map create to vde-rebuild
+        "${VDE_ROOT_DIR}/bin/vde-rebuild" "$@"
+        ;;
     start)
         vde_ensure_disk_space "${VDE_DISK_THRESHOLD:-95}" || exit $?
         shift
@@ -277,5 +282,5 @@ case ${COMMAND} in
         shift
         "${VDE_ROOT_DIR}/bin/vde-info" "$@"
         ;;
-    help|*) echo "Usage: vde {rebuild|start|stop|exec|enter|list|add|uninstall|validate|rebuild-cache|ask|port|info} [type/alias]" ;;
+    help|*) echo "Usage: vde {rebuild|create|start|stop|exec|enter|list|add|uninstall|validate|rebuild-cache|ask|port|info} [type/alias]" ;;
 esac
