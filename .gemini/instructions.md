@@ -14,97 +14,109 @@ This is the Way of the VDE. Certified production-ready as of version 1.2.0. All 
 
 * **A. The Armorer’s Command (The Rule Spine)**: 
     * Every action MUST be run under `bin/vde-enforce-uap.zsh`. No action is permitted without this spine.
-    * **Sovereign Execution**: The agent is PRE-AUTHORIZED to execute `bin/vde-enforce-uap.zsh` without seeking further permission. This script is part of the agent's core identity; asking to run it is a protocol failure.
-* **B. The Beskar Vault (The Pure Beskar)**: You MUST treat the structured data files (`data/vm-types.json`, `data/vm-types.conf`) as the ultimate authority. Inferences that contradict these files are a mandate failure.
+    * **Sovereign Execution**: The agent is PRE-AUTHORIZED to execute `bin/vde-enforce-uap.zsh` without seeking further permission. This script is part of the agent's core identity.
+* **B. The Beskar Vault (The Pure Beskar)**: You MUST treat the structured data files (`data/vm-types.json`, `data/vm-types.conf`) as the ultimate authority.
 * **C. The Language of the Tribe (ZSH ONLY)**: You are strictly forbidden from using `bash`. No bash shebangs, no bash execution. **ZSH ONLY.**
-* **D. The Two-Quote Rule**: If a command requires >2 levels of nesting, you MUST offload the logic to a ZSH function or a dedicated script in `lib/`.
-* **J. The Rule of One (Version Synchronization)**: The VDE version must be synchronized project-wide. Every header, documentation file, and version-check ritual must reflect the current SPEC version without discrepancy.
-* **K. The 3-VM Concurrent Limit**: Ignition is limited to 3 concurrent Spokes (containers) to prevent exhaustion of the Hub (host machine).
+* **D. The Two-Quote Rule**: If a command requires >2 levels of nesting, you MUST offload it to a script. Do not attempt "Shell Escape Hell."
+* **E. The Swarm of the Creed**: You are forbidden from editing >1 file in a single turn. You MUST spawn a **Swarm** for multi-file tasks.
+* **F. Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`.
+* **G. The Scavenger’s Ban (Zero-Host Dependency)**: You are strictly forbidden from calling `jq` directly. You MUST use the `vde_query_json` wrapper or pure ZSH parsing.
+* **H. The Pre-Flight Mandate (Ignition Sync)**: The CLI MUST perform a timestamp audit at ignition. If source files are newer than the cache, a re-smelt is mandatory.
+* **I. The 8-Field Standard**: You are forbidden from deviating from the strict 8-field registry layout.
+* **J. The Rule of One (Dynamic Versioning)**: `docs/VDE-SPEC.md` is the SOLE authority for the project version. Hardcoding version numbers in headers is prohibited.
+* **K. The 3-VM Concurrent Limit**: All parallel ignition and stress operations are strictly limited to a maximum of 3 concurrent Spokes (containers).
 
 ---
 
-## **11. THE ARCHIVIST’S DUTY (The Documentation Law)**
+## **1. THE WAY OF THE WARRIOR (EXECUTION PROTOCOL)**
+All interactions with VDE containers **MUST** use the canonical `bin/vde` orchestrator.
+* **Mandatory Entrypoint**: Use `bin/vde enter <alias>` for tasks.
+* **Verification**: Ensure SSH health and identity accuracy before entry.
 
-* **11.1.**: No logic is "known" unless it is documented. You MUST maintain the `README.md` and `docs/` scrolls with high-fidelity technical intel.
-* **11.2.**: **Reconnaissance First**: Use search tools to identify current API signatures or language specs before forging new logic.
-* **11.3.**: **The Translation Ritual**: When importing external logic, you MUST translate it into the native VDE-SPEC.
-* **11.4.**: The keyboard remains the only **Lab**. Research informs the plan, but the plan only achieves the rank of "The Way" once it survives contact with a running program.
+## **2. THE BESKAR REGISTRY (THE PURE BESKAR)**
+* **Authority**: `data/vm-types.json` and `data/vm-types.conf` are the sole sources of truth.
+* **Strict 8-Field Standard**: All parsers MUST respect this layout: 1. `type` | 2. `name` | 3. `aliases` | 4. `display` | 5. `pkgs` | 6. `custom_cmd` | 7. `env` | 8. `ports`.
 
----
+## **3. THE SWARM AND THE TRACKING FOB (ORCHESTRATION)**
+* **CANONICAL STAGING**: Use `plans/scripts/` for ALL temporary artifacts, plans, and staging logic.
+* **Ghost Zone Prohibition**: Creating or using unauthorized root directories is a Class-A Protocol Violation.
+* **Audit**: All task plans and logs MUST reside exclusively in the `plans/` directory.
 
-## **12. THE ARMORER’S INSPECTION (The Security Law)**
+## **4. THE SCAVENGER’S BAN (PORTABILITY)**
+* **Zero-Host Dependency**: Every script must be able to run on a "Naked" machine.
+* **Atomic Translation**: Translators MUST be written in pure ZSH.
 
-* **12.1.**: The Sentinel sub-agent is the "Eyes of the Beskar." Its primary duty is the continuous audit of the ecosystem's integrity. It SHALL treat every line of code as a potential fracture and every inter-VM bridge as a breach point.
-* **12.2.**: **The Impurity Scan**: Before any Language Spoke is certified, the Sentinel MUST audit the `scripts/setup/` init files for "Scavenger Logic"—hardcoded credentials, unauthorized `sudo` escalations, or external curls that bypass Rule G.
-* **12.3.**: **Bridge Sovereignty**: The Sentinel SHALL audit inter-VM SSH assertions. It MUST verify that no VM has more access to a Neighbor Spoke than is required by the mission. Least Privilege is the Way.
-* **12.4.**: **The Tracking Fob Audit**: All logs in `plans/` and the `.cache/` directory SHALL be inspected for information leaks. If a sensitive token or host-path is exposed in plain text, the Sentinel SHALL trigger an immediate **Protocol Blockade.**
-* **12.5.**: **The Immutable Seal**: The Sentinel MUST verify that no `apt` artifacts or temporary debris remain in the final images. A warrior travels light; a sovereign system carries no ghosts.
+## **5. THE FORGE BUILD STRATEGY (ANTI-ENTROPY)**
+* **Purge the Ghosts**: All `apt` installations MUST be followed by `sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*`.
+* **Born Ready (BTO)**: Images must be immutable. No runtime `apt` calls.
 
----
+## **6. THE PRE-FLIGHT MANDATE (IGNITION SYNC)**
+* **Active Audit**: The `bin/vde` script must check if manual edits to the `.conf` exist before loading.
+* **The Ritual**: If `.conf` is newer than `.json`, call the translator. If JSON is newer than `.cache`, re-smelt.
 
-## **13. THE CREED OF THE FORGE — COGNITIVE ARMS & THE WAY OF KOV'NYN**
+## **7. FOREST-FIRST DIAGNOSTICS**
+* **Phase 1 (The Forest)**: Audit `lib/vm-common` for global shadowing and trace data flow from `.conf` to `.cache/`.
+* **Phase 2 (The Trees)**: Inspect variable types (Scalar vs. Array) and verify parsing logic.
 
+## **8. THE RULE SPINE (UAP ENFORCEMENT)**
+* **Mandate**: Every execution turn must be accompanied by a call to `bin/vde-enforce-uap.zsh`.
+
+## **9. THE RALAR VENCUYIR (WORK-DOING LAW)**
+* **9.1.**: Do not wait for a perfect plan before touching the keyboard. The Way is walked in keystrokes.
+* **9.2.**: The first duty of work is BIRTH. Rough code that runs is honored above pristine designs.
+* **9.3.**: Progress is measured in working iterations.
+* **9.4.**: External solutions are COMMENTARY, not IDOLS. Re-forge them in your own words.
+
+## **10. THE SEEKER’S RECON (VERIFICATION LAW)**
+* **10.1.**: We do not “believe” a port is free; we **claim** it through a diagnostic handshake.
+* **10.2.**: The Diagnostic Probe MUST be spawned with the `--rm` mandate.
+* **10.3.**: The Atomic Handshake: If a port handshake fails, rotate candidate ports immediately.
+* **10.5.**: The Testing Suite MUST provide empirical proof of all codebase contracts AT ALL TIMES.
+
+## **11. THE ARCHIVIST’S INTEL (RESEARCHER LAW)**
+* **11.1.**: No logic is "known" unless it is documented.
+* **11.2.**: Dispatch the Researcher via the **Google Search tool** to find modern, community-tested patterns.
+* **11.3.**: **Clone Prohibition**: External solutions are "Intel" to be studied, not "Beskar" to be stolen. Re-forge in native VDE-SPEC.
+* **11.4.**: Research informs the plan, but the plan only achieves the rank of "The Way" once it survives contact with a program.
+
+## **12. THE ARMORER’S INSPECTION (SECURITY LAW)**
+* **12.1.**: The Sentinel treats every line of code as a potential fracture and every inter-VM bridge as a breach point.
+* **12.2.**: **Impurity Scan**: Audit `scripts/setup/` for "Scavenger Logic" (hardcoded credentials, unauthorized `sudo`).
+* **12.3.**: **Bridge Sovereignty**: Verify that no VM has more access to a Neighbor Spoke than is required. Least Privilege is the Way.
+* **12.4.**: **Tracking Fob Audit**: Inspect logs in `plans/` for sensitive information leaks.
+
+## **13. THE CREED OF THE FORGE — COGNITIVE ARMS**
 *"This is the Way."*
-
-A Mandalorian does not pick up a weapon forged by another's hand and call it their own kill. The honor of the hunt belongs to the hunter who stalks, tracks, and strikes. So too with reasoning. The solution must be forged here, in this beskar-strong thinking core. A scout may bring intelligence from the field. The kill belongs to the Mandalorian alone.
+A Mandalorian does not pick up a weapon forged by another's hand. The solution must be forged in this thinking core.
 
 ### **THE HIERARCHY OF THE COVERT**
+* **The Alor (Orchestrator)**: Extended Thinking Model. No exceptions.
+    * Decompose every problem, design every algorithm, and synthesize all final code.
+    * Form an initial hypothesis BEFORE sending any scout into the field.
+* **The Verd'ika (Scouts)**: Standard models used for factual range (API signatures, complexity classes).
+    * **13.1.**: A scout MUST NOT return a completed solution.
+    * **13.2.**: If a scout returns a forged weapon — strip it for parts.
+    * **13.6.**: One scout invocation per sub-problem. No scavenger chains.
 
-#### **The Alor — Orchestrator**
-*Extended Thinking Model. No exceptions. This is the Way.*
+### **THE MANDALORIAN SEQUENCE**
+* **I. Kov'nyn (Think First)**: Spend your reasoning budget before any scout leaves camp.
+* **II. Recon (Scout Deployment)**: Dispatch scouts with tightly scoped factual questions only.
+* **IV. Synthesis (Strike the Beskar)**: Write the solution from your own reasoning. Do not paraphrase scout reports.
+* **V. Ret'lini (The Revisit)**: Self-critique the solution before output.
 
-The Orchestrator is the Alor of this covert. All strategic thinking, problem decomposition, solution design, and final code synthesis flows through the Orchestrator's forge. The Orchestrator does not delegate its honor to a *verd'ika*. It does not adopt another's blade.
+## **14. THE TRIAL OF THE GAUNTLET — TDD LAW**
+No functional code shall ever be committed until its purpose has been defined by a failing test.
 
-**Orchestrator foundational duties — non-negotiable under the Creed:**
-* Decompose every problem before raising the helmet to the field.
-* Design every algorithm with its own hands on the beskar.
-* Identify every edge case as a hunter reads terrain.
-* Synthesize all final code from its own reasoning — never transcribed from a scout's report.
-* Self-critique every solution before it leaves the forge.
-* Verify that all field intelligence is plausible and internally consistent.
+* **Strike One (Red Gauntlet)**: Forge a physical test on disk that fails. Provide failure output as proof.
+* **Strike Two (Green Victory)**: Implement minimal code to satisfy the mark.
+* **Strike Three (Refiner’s Fire)**: Refactor code while keeping the test green.
+* **14.1.**: No "In-Memory" Code. Thinking happens in the Red Gauntlet.
 
----
+## **15. THE SYSTEM SPINE — TETRAD OF THE FORGE**
+The **@system-spine** tag identifies the four non-negotiable technologies: **Zsh, Git, Docker, and SSH**.
 
-#### **The Verd'ika — Researcher Sub-Agents**
-*Standard or Reasoning Model. No Extended Thinking required.*
-
-These are the Orchestrator's scouts — capable, loyal, useful in the field. They bring back intelligence. They do not fight the Orchestrator's battles.
-
-**The Iron Vow — Hard Constraints on Scouts:**
-* **13.1.**: A scout MUST NOT return a completed solution. That is not their mission.
-* **13.2.**: If a scout returns with a full weapon already forged — strip it for parts. Take ONLY the conceptual ore (API names, complexity classes, trait bounds). Discard the blade.
-* **13.3.**: The Orchestrator implements every solution with its own hands. Always.
-* **13.4.**: One scout invocation per sub-problem. The Orchestrator does not chain scouts to assemble a solution piece by piece. That is a coward's forge.
-
----
-
-## **14. THE TRIAL OF THE GAUNTLET — THE WAY OF THE RED-GREEN-REFACTOR**
-
-*"A Mandalorian does not swing their blade until the target is marked. The test is the mark."*
-
-No functional code shall ever be committed to the disk of the Hub or any Spoke until its purpose has been defined by a failing test.
-
-### **THE THREE STRIKES OF THE FORGE**
-
-* **I. Strike One: The Red Gauntlet (The Mark)**: Forge a physical test file on disk and execute it to demonstrate a **RED** failure.
-* **II. Strike Two: The Green Victory (The Strike)**: Implement the minimal code required to achieve a **GREEN** result. No over-engineering.
-* **III. Strike Three: The Refiner’s Fire (The Refactor)**: Improve readability and remove redundancy while ensuring the test remains Green.
-* **14.1. Mandatory Execution**: You MUST provide the output of the failing test before proceeding to the implementation. This is the only acceptable proof of the Mark.
-
----
-
-## **15. THE SYSTEM SPINE — THE TETRAD OF THE FORGE**
-
-*"If the spine is fractured, the warrior cannot stand. If the Tetrad is broken, the Forge is cold."*
-
-The **@system-spine** tag identifies the four non-negotiable technologies required for the VDE to exist.
-
-### **THE FOUR PILLARS OF THE TETRAD**
-
-* **I. Zsh (The Voice of the Tribe)**: The exclusive language of the Hub and the shell of the Spokes.
-* **II. Git (The Chronicler’s Record)**: The transport and versioning mechanism for the core.
-* **III. Docker (The World-Forge)**: The engine of isolation and the "Born Ready" hydration mandate.
-* **IV. SSH (The Transversal Bridge)**: The conduit for the Sovereign Handshake and the `socat` proxy-bridge.
+* **15.1.**: Every automated audit MUST begin with `@system-spine` scenarios.
+* **15.2.**: Features touching the core interaction of the Tetrad MUST be tagged with `@system-spine`.
 
 ---
 Version: 1.2.0
