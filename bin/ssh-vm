@@ -91,6 +91,11 @@ while [[ ${#} -gt 0 ]] ; do
             SHOW_COMMAND=true
             shift
             ;;
+        --command)
+            # Take next argument as command
+            EXTRA_ARGS+=("${2}")
+            shift 2
+            ;;
         --)
             # Strict separator: everything after this is command/args
             shift
