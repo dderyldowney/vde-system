@@ -124,9 +124,9 @@ check_for_private_keys_in_public_dir() {
         esac
 
         case "${basename}" in
-            *.pub) ;;
+            vde_student.pub) ;;
             *)
-                _warn "SECURITY WARNING: Non-.pub file in public keys directory: ${basename}"
+                _error "SECURITY BLOCKADE: Unauthorized file in public keys directory: ${basename}"
                 found_private=true
                 ;;
         esac
