@@ -377,9 +377,13 @@ vde_error_map() {
         ${VDE_ERR_SYNC_DRIFT:-13}) vde_error_sync_drift "${info}" ;;
         
         # --- POSIX SIGNAL TRANSLATION (Rule 26 Hardening) ---
-        130) vde_error_show "Operation Interrupted" "Received SIGINT (Ctrl+C)" "The operation was cancelled by the user. Some partial state may remain." ;;
+        130) vde_error_show "Operation Interrupted" "Received SIGINT (Ctrl+C)" "The operation was cancelled by the user. Some partial state may remain. Clean up with 'vde stop' if necessary." ;;
         137) vde_error_show "Process Terminated" "Received SIGKILL (Forceful)" "The process was killed by the system. This often indicates an Out-Of-Memory (OOM) condition or Docker daemon failure. Check system resources." ;;
         143) vde_error_show "Termination Requested" "Received SIGTERM (Graceful)" "A termination request was received from the system or a supervisor process." ;;
+        
+        # --- KERNEL EXIT CODES ---
+        126) vde_error_show "Execution Error" "Permission denied or command not executable" "Check file permissions and ensure the command is a valid binary/script." ;;
+        127) vde_error_show "Command Not Found" "The requested binary was not found in PATH" "Ensure all dependencies are installed and properly configured." ;;
         
         *) vde_error_simple "Unexpected error occurred (Code: ${code}) ${info}" ;;
     esac

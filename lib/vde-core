@@ -97,6 +97,30 @@ export VDE_CORE_VM_TYPES_CONF
 VDE_CORE_VM_TYPES_CACHE="${VDE_CORE_VM_TYPES_CACHE:-${VDE_CORE_CACHE_DIR}/vm-core.cache}"
 export VDE_CORE_VM_TYPES_CACHE
 
+# vde_run - The Deterministic Execution Wrapper (Phase 26)
+# Wraps commands, captures exit codes, and triggers the Error Engine.
+# Args: <info_context> <command...>
+vde_run() {
+    local info="${1}"
+    shift
+    local cmd=("$@")
+    
+    # Execute actual command
+    "${cmd[@]}"
+    local rc=$?
+    
+    # If failure detected, hand off to Error Engine
+    if [[ $rc -ne 0 ]]; then
+        if command -v vde_error_map >/dev/null 2>&1; then
+            vde_error_map $rc "${info}"
+        else
+            echo "[ERROR] ${info} failed with code ${rc}" >&2
+        fi
+        return $rc
+    fi
+    return 0
+}
+
 # -----------------------
 # Logging Functions
 # -----------------------
