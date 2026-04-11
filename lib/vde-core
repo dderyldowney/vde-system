@@ -56,7 +56,7 @@ _VDE_CORE_GUARD_LOADED=1
 # -----------------------
 # Zsh-only script path detection
 # shellcheck disable=SC2296
-_VDE_CORE_SCRIPT_PATH="${(%):-%x}"
+_VDE_CORE_SCRIPT_PATH="${(%):-%N}"
 
 # If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
 if [[ -z "${VDE_ROOT_DIR:-}" ]] ; then
