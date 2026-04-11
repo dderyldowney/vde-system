@@ -12,6 +12,16 @@
 
 ---
 
+## SYSTEM EVOLUTION (2026-04-10) - VDE 1.2.2 HARDENING STRIKE
+- **Spoke Ignition Hook:** Implemented `/usr/local/bin/vde-spoke-ignition.zsh` hook in `scripts/vde-entrypoint.zsh`. This allows spokes to register background services that start automatically on container ignition, detaching them from the SSH gate lifecycle.
+- **Rebuild Hardening:** Updated `bin/vde-rebuild` to default to `NOCACHE=true` and `PULL=true`. This ensures all rebuilds are "Pure Beskar," pulling fresh layers from original source images and capturing script changes that Docker's build-cache might miss.
+- **Ignition Performance Optimization:** Redacted the recursive `sudo chown -R devuser:devuser /home/devuser` from the entrypoint. Replaced with targeted `chown` on `.ssh` directory. This resolves critical ignition blocks on large mounted workspaces (like JupyterLab).
+- **JupyterLab Certification (100% Green):** 
+    - Verified full Data Science stack (pandas, tensorflow, matplotlib, scikit-learn).
+    - Implemented background startup via the new Ignition Hook.
+    - Achieved "Born Ready (BTO)" compliance by moving heavy hydration (venv/pkg installation) and directory ownership finalization to the build phase.
+- **Test Fidelity:** Updated `Makefile` to include `*.zsh` in all test targets and added reliable polling to the JupyterLab integration suite to account for service binding time.
+
 ## SYSTEM BENCHMARKS (VDE 1.2.2)
 - **Canonical Ignition Speed:** 3.959s. This is the benchmark for 3-VM Parallel Ignition (python, postgres, redis) on current hardware. Any future refactor that slows this down is a deviation from the Way.
 

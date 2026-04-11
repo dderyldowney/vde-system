@@ -27,9 +27,9 @@ export VDE_ROOT_DIR
 source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Configuration
-NOCACHE=false
+NOCACHE=true
 REGENERATE_KEYS=false
-PULL=false
+PULL=true
 SPECIFIC_VM=""
 REBUILD_TARGETS=()
 
@@ -218,6 +218,12 @@ if [[ "${build_base}" == "true" ]]; then
 fi
 
 for spoke in "${spokes[@]}"; do
+    build_vm_image "${spoke}"
+done
+
+echo ""
+echo "Done!"
+@]}"; do
     build_vm_image "${spoke}"
 done
 
