@@ -1,4 +1,4 @@
-# ARCHITECTURE v1.2.1 (Absolute)
+# ARCHITECTURE v1.2.2 (Absolute)
 
 ## VERSION HISTORY
 | Version | Date       | Changes                                                                 |
