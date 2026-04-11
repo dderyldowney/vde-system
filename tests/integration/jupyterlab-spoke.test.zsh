@@ -115,11 +115,24 @@ test_runtime_connectivity() {
         "$PROJECT_ROOT/bin/vde" start jupyterlab >/dev/null 2>&1
     fi
     
-    # Verify HTTP response
-    if curl -s -I http://localhost:8888 | grep -q "HTTP/1.1"; then
+    # Polling for service readiness (Jupyter can take a few seconds to bind)
+    local max_retries=15
+    local retry=0
+    local success=0
+    
+    while [[ $retry -lt $max_retries ]]; do
+        if curl -s -I http://localhost:8888 | grep -q "HTTP/1.1"; then
+            success=1
+            break
+        fi
+        sleep 1
+        ((retry++))
+    done
+    
+    if [[ $success -eq 1 ]]; then
         test_pass
     else
-        test_fail "JupyterLab UI not responding on port 8888"
+        test_fail "JupyterLab UI not responding on port 8888 after ${max_retries}s"
     fi
 }
 

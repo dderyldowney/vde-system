@@ -65,7 +65,11 @@ done
 
 if [[ -n "${_found_bridge}" ]]; then
     mkdir -p "/home/devuser/.ssh/vde"
-    sudo chown -R devuser:devuser "/home/devuser"
+    # Minimum viable chown for bridge functionality
+    # Avoid recursive blocks on large directories like .vde-venv
+    sudo chown devuser:devuser "/home/devuser"
+    sudo chown -R devuser:devuser "/home/devuser/.ssh"
+    
     chmod 700 "/home/devuser/.ssh"
     chmod 700 "/home/devuser/.ssh/vde"
     
@@ -161,6 +165,17 @@ else
 fi
 
 echo "[VDE-ENTRYPOINT] Handshake complete. Starting SSH Gate on port ${_vde_ssh_port}..."
-# 5. Start SSH Server (The Gate)
+
+# 5. Spoke Ignition (Sovereign Service Mandate)
+# If a spoke has a specific startup script, trigger it now.
+# Use /usr/local/bin to avoid being overwritten by /vde mount
+local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
+if [[ -f "${_spoke_ignition}" ]]; then
+    echo "[VDE-ENTRYPOINT] Triggering Spoke Ignition: ${_spoke_ignition}..."
+    # Execute in background, detached from the SSH gate
+    zsh "${_spoke_ignition}" &
+fi
+
+# 6. Start SSH Server (The Gate)
 # We override the port via command line argument
 sudo /usr/sbin/sshd -D -p "${_vde_ssh_port}"

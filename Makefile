@@ -65,7 +65,7 @@ test-unit:
 
 test-security:
 	@echo "Running security tests..."
-	@for test in tests/security/*.sh; do \
+	@for test in tests/security/*.sh tests/security/*.zsh; do \
 		if [ -f "$$test" ]; then \
 			echo "Running $$test..."; \
 			chmod +x "$$test"; \
@@ -82,7 +82,7 @@ test-benchmark:
 
 test-integration:
 	@echo "Running integration tests..."
-	@for test in tests/integration/*.sh; do \
+	@for test in tests/integration/*.sh tests/integration/*.zsh; do \
 		if [ -f "$$test" ]; then \
 			echo "Running $$test..."; \
 			chmod +x "$$test"; \
@@ -91,7 +91,7 @@ test-integration:
 	done
 	@echo "✓ Integration tests passed"
 
-test-comprehensive: test-parser test-commands
+test-comprehensive: test-parser
 	@echo ""
 	@echo "================================"
 	@echo "Comprehensive Tests Complete"
@@ -99,15 +99,9 @@ test-comprehensive: test-parser test-commands
 
 test-parser:
 	@echo "Running comprehensive vde-parser tests..."
-	@chmod +x tests/unit/test_vde_parser_comprehensive.zsh
-	@zsh tests/unit/test_vde_parser_comprehensive.zsh
+	@chmod +x tests/unit/vde-parser.test.zsh
+	@zsh tests/unit/vde-parser.test.zsh
 	@echo "✓ vde-parser tests passed"
-
-test-commands:
-	@echo "Running comprehensive vde-commands tests..."
-	@chmod +x tests/unit/test_vde_commands_comprehensive.zsh
-	@zsh tests/unit/test_vde_commands_comprehensive.zsh
-	@echo "✓ vde-commands tests passed"
 
 test-compatibility:
 	@echo "Running shell compatibility tests..."

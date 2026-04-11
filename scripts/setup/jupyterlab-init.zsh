@@ -42,14 +42,36 @@ EOF"
 local _zshenv="/home/devuser/.zshenv"
 mkdir -p /home/devuser
 touch "${_zshenv}"
-# Guarded start to prevent process leaks during SSH sessions
-grep -q "jupyter-server" "${_zshenv}" || {
-    echo "if ! pgrep -f \"jupyter-server\" >/dev/null; then" >> "${_zshenv}"
-    echo "    nohup tini -g -- ${_venv_path}/bin/jupyter lab --config=${_jupyter_config} >/logs/jupyter.log 2>&1 &" >> "${_zshenv}"
-    echo "fi" >> "${_zshenv}"
+
+# Ensure logs directory exists for the service
+mkdir -p /logs
+chown devuser:devuser /logs
+
+# Guarded bridge setup (Jupyter startup moved to Ignition Hook)
+grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
+    echo "export SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock" >> "${_zshenv}"
 }
 chown devuser:devuser "${_zshenv}"
 
-# 7. PURGING THE GHOSTS
+# 7. SPOKE IGNITION REGISTRATION
+local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
+cat <<EOF > "${_spoke_ignition}"
+#!/usr/bin/env zsh
+# JupyterLab Spoke Ignition
+# Starts the DS stack in the background on container start
+
+if ! pgrep -f "jupyter-server" >/dev/null; then
+    echo "[VDE-JUPYTER] Forged in Beskar: Starting JupyterLab..." >> /logs/jupyter.log
+    sudo -u devuser nohup tini -g -- ${_venv_path}/bin/jupyter lab --config=${_jupyter_config} >> /logs/jupyter.log 2>&1 &
+fi
+EOF
+chmod +x "${_spoke_ignition}"
+
+# 8. PERMISSION FINALIZATION
+# Set ownership now to avoid slow recursive chown at runtime
+chown -R devuser:devuser "${_venv_path}"
+chown -R devuser:devuser /home/devuser/.jupyter
+
+# 9. PURGING THE GHOSTS
 apt-get clean
 rm -rf /var/lib/apt/lists/*
