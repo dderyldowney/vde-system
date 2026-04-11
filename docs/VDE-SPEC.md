@@ -1,4 +1,4 @@
-# VDE-SPEC v1.2.1 (Absolute)
+# VDE-SPEC v1.2.2 (Absolute)
 
 ## 1. Absolute Mandates (The Rule Spine)
 
@@ -43,5 +43,5 @@ All implementation strikes MUST follow the **Red-Green-Refactor** law codified i
 - **Data Persistence**: Databases and services map to `data/<name>/`.
 
 ---
-Version: 1.2.1
-Reference: ARCHITECTURE v1.2.1 (Absolute)
+Version: 1.2.2
+Reference: ARCHITECTURE v1.2.2 (Absolute)
