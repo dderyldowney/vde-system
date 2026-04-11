@@ -5,8 +5,9 @@
 
 ---
 
-## THE MILESTONE: v1.2.2 — THE SOVEREIGN HANDSHAKE
-- **Official Release**: Cut on 2026-04-08. The VDE is now a production-ready developer utility.
+## THE MILESTONE: v1.2.3 — THE SOVEREIGN HANDSHAKE
+- **Official Release**: Cut on 2026-04-11. The VDE is now a production-ready developer utility with a unified onboarding experience.
+- **Sovereign Installation**: Codified `VDE_INSTALL.md` as the mandatory first ritual for all new Foundlings.
 - **Test Fidelity**: 100% GREEN status across all BDD, Unit, Integration, and Security tests.
 - **Core Stability**: Deterministic Ignition, Sovereign Identity (SSH), and Hardened Security (GID/Registry) are certified.
 
