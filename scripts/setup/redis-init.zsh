@@ -15,34 +15,36 @@ apt-get install -y ${=vde_redis_pkgs}
 service redis-server stop || true
 pkill redis-server || true
 
-# 3. PERSISTENCE ANCHOR (ONLY FOR SERVICES: mysql, redis, mongodb, rabbitmq, couchdb, nginx, postgres)
-# Append start command to devuser's .zshenv if not present
-local _zshenv="/home/devuser/.zshenv"
-if [[ "true" == "true" ]]; then
-    # Configure Redis for container access
-    local _conf="/etc/redis/redis.conf"
-    if [[ -f "${_conf}" ]]; then
-        sed -i "s/^bind .*/bind 0.0.0.0/" "${_conf}"
-        sed -i "s/^protected-mode .*/protected-mode no/" "${_conf}"
-        # Ensure it doesn't run as a daemon within the service manager if that's causing issues
-        sed -i "s/^daemonize yes/daemonize no/" "${_conf}"
-    fi
+# 3. SPOKE IGNITION REGISTRATION
+local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
+cat <<EOF > "${_spoke_ignition}"
+#!/usr/bin/env zsh
+# Redis Spoke Ignition
+# Starts the server in the background on container start
 
-    # Ensure the service directory exists for PID file
-    mkdir -p /run/redis
-    chown redis:redis /run/redis
-
-    # Start service to verify configuration during build
-    # We use the init script directly to ensure it uses the config
-    /usr/bin/redis-server /etc/redis/redis.conf --daemonize yes
-
-    mkdir -p /home/devuser
-    touch "${_zshenv}"
-    # Use the config file explicitly in the startup command
-    grep -q "redis-server /etc/redis/redis.conf" "${_zshenv}" || echo "sudo /usr/bin/redis-server /etc/redis/redis.conf --daemonize yes >/dev/null 2>&1" >> "${_zshenv}"
-    chown devuser:devuser "${_zshenv}"
+if ! pgrep -f "redis-server" >/dev/null; then
+    echo "[VDE-REDIS] Forged in Beskar: Starting Redis..."
+    sudo /usr/bin/redis-server /etc/redis/redis.conf --daemonize yes >/dev/null 2>&1
 fi
+EOF
+chmod +x "${_spoke_ignition}"
 
-# 4. PURGING THE GHOSTS
+# 4. PERSISTENCE ANCHOR (Hardened Bridge)
+local _zshenv="/home/devuser/.zshenv"
+mkdir -p /home/devuser
+touch "${_zshenv}"
+# Remove legacy startup if present
+sed -i "/redis-server/d" "${_zshenv}"
+# Ensure bridge identity is available
+grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
+    echo "export SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock" >> "${_zshenv}"
+}
+chown devuser:devuser "${_zshenv}"
+
+# Stop service to maintain BTO state
+service redis-server stop || true
+pkill redis-server || true
+
+# 5. PURGING THE GHOSTS
 apt-get clean
 rm -rf /var/lib/apt/lists/*

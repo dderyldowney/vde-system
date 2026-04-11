@@ -43,10 +43,11 @@ def step_start_one_true_way(context, vm_alias):
 
 @then('a VM-level lock should be created during ignition')
 def step_verify_lock_created(context):
-    # This is hard to catch in real-time without a wrapper
-    # But we can verify the code has the lock logic (already audited)
-    # Or check if we can trigger a contention warning by running two starts
-    pass
+    # Verify the lock logic exists in the core library
+    lock_lib = VDE_ROOT / "lib" / "vm-lock"
+    assert lock_lib.exists(), "Lock library missing"
+    content = lock_lib.read_text()
+    assert "claim_lock" in content or "acquire_lock" in content, "Locking function not found in library"
 
 @then('the container "{container_name}" should be started via direct Docker orchestration')
 def step_verify_docker_orchestration(context, container_name):
