@@ -408,3 +408,25 @@ Host vde-dynamic-cmd-vm
     UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
     ForwardAgent yes
     LogLevel ERROR
+
+
+Host vde-dynamic-pkg-vm
+    HostName localhost
+    Port 2298
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/vde_student
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
+
+
+Host vde-dynamic-cmd-vm
+    HostName localhost
+    Port 2299
+    User devuser
+    IdentityFile /Users/dderyldowney/.ssh/vde/vde_student
+    StrictHostKeyChecking no
+    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
+    ForwardAgent yes
+    LogLevel ERROR
