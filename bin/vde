@@ -214,9 +214,12 @@ case ${COMMAND} in
             fi
 
             if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
-                vde_log_info "Stopping ${CANONICAL_NAME}..." "docker"
-                docker stop "${CANONICAL_NAME}" >/dev/null 2>&1 || true
-                vde_log_success "${CANONICAL_NAME} stopped."
+                vde_progress_spinner_start "Stopping ${CANONICAL_NAME}"
+                if vde_run "${CANONICAL_NAME}" docker stop "${CANONICAL_NAME}" >/dev/null 2>&1; then
+                    vde_progress_spinner_stop "${CANONICAL_NAME} stopped"
+                else
+                    vde_progress_spinner_stop "" "Failed to stop ${CANONICAL_NAME}" 1
+                fi
             else
                 vde_log_info "${CANONICAL_NAME} is not running." "vde"
             fi
@@ -239,9 +242,12 @@ case ${COMMAND} in
             fi
 
             if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
-                vde_log_info "Removing container ${CANONICAL_NAME}..." "docker"
-                docker rm -f "${CANONICAL_NAME}" >/dev/null 2>&1 || true
-                vde_log_success "${CANONICAL_NAME} removed."
+                vde_progress_spinner_start "Removing container ${CANONICAL_NAME}"
+                if vde_run "${CANONICAL_NAME}" docker rm -f "${CANONICAL_NAME}" >/dev/null 2>&1; then
+                    vde_progress_spinner_stop "${CANONICAL_NAME} removed"
+                else
+                    vde_progress_spinner_stop "" "Failed to remove ${CANONICAL_NAME}" 1
+                fi
             else
                 vde_log_info "No container found for ${CANONICAL_NAME}." "vde"
             fi
@@ -249,45 +255,45 @@ case ${COMMAND} in
         ;;
     exec)
         shift
-        "${VDE_ROOT_DIR}/bin/vde-exec" "$@"
+        vde_run "exec" "${VDE_ROOT_DIR}/bin/vde-exec" "$@"
         ;;
     enter)
         shift
-        "${VDE_ROOT_DIR}/bin/ssh-vm" "$@"
+        vde_run "enter" "${VDE_ROOT_DIR}/bin/ssh-vm" "$@"
         ;;
     list)
         shift
-        "${VDE_ROOT_DIR}/bin/list-vms" "$@"
+        vde_run "list" "${VDE_ROOT_DIR}/bin/list-vms" "$@"
         ;;
     add)
         shift
-        "${VDE_ROOT_DIR}/bin/add-vm-type" "$@"
+        vde_run "add" "${VDE_ROOT_DIR}/bin/add-vm-type" "$@"
         ;;
     uninstall)
         shift
-        "${VDE_ROOT_DIR}/bin/uninstall-vm-type" "$@"
+        vde_run "uninstall" "${VDE_ROOT_DIR}/bin/uninstall-vm-type" "$@"
         ;;
     validate)
         shift
-        "${VDE_ROOT_DIR}/bin/validate-schemas.zsh" "$@"
+        vde_run "validate" "${VDE_ROOT_DIR}/bin/validate-schemas.zsh" "$@"
         ;;
     rebuild-cache)
         shift
-        "${VDE_ROOT_DIR}/bin/vde-rebuild-cache" "$@"
+        vde_run "rebuild-cache" "${VDE_ROOT_DIR}/bin/vde-rebuild-cache" "$@"
         ;;
     ask)
         shift
-        "${VDE_ROOT_DIR}/bin/vde-ask" "$@"
+        vde_run "ask" "${VDE_ROOT_DIR}/bin/vde-ask" "$@"
         ;;
     port)
         local vm_alias=$2
         CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
-        vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${TYPES_JSON}"
+        vde_run "port" vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${TYPES_JSON}"
         exit $?
         ;;
     info)
         shift
-        "${VDE_ROOT_DIR}/bin/vde-info" "$@"
+        vde_run "info" "${VDE_ROOT_DIR}/bin/vde-info" "$@"
         ;;
     help|*) echo "Usage: vde {rebuild|create|start|stop|exec|enter|list|add|uninstall|validate|rebuild-cache|ask|port|info} [type/alias]" ;;
 esac
