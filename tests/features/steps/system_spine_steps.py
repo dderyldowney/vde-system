@@ -53,10 +53,17 @@ def step_verify_lock_created(context):
 def step_verify_docker_orchestration(context, container_name):
     # Verify it was started with the vde.managed=true label
     result = subprocess.run(
-        ["docker", "inspect", "--format", "{{index .Config.Labels \"vde.managed\"}}", container_name],
+        ["docker", "inspect", "--format", '{{index .Config.Labels "vde.managed"}}', container_name],
         capture_output=True, text=True
     )
-    assert result.stdout.strip() == "true", f"Container {container_name} is not VDE-managed"
+    label_val = result.stdout.strip()
+    if label_val != "true":
+        # Fallback: check all labels to see what is actually there
+        full_inspect = subprocess.run(
+            ["docker", "inspect", "--format", "{{json .Config.Labels}}", container_name],
+            capture_output=True, text=True
+        )
+        raise AssertionError(f"Container {container_name} is not VDE-managed. \nLabels found: {full_inspect.stdout.strip()}\nError: {result.stderr.strip()}")
 
 @then('the container should have been hydrated by "{script_path}"')
 def step_verify_hydration(context, script_path):
