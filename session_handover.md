@@ -1,25 +1,34 @@
-# Session Handover — v1.2.0 Sovereign Release
+# Session Handover — v1.2.2 Absolute Release
 
-**Current Status**: 🟢 OFFICIAL RELEASE v1.2.0 COMPLETE / 100% GREEN
-**Next Step**: v1.2.1 Minor Update (The Sovereign Handshake)
+**Current Status**: 🟢 VDE v1.2.2 ABSOLUTE HARDENING COMPLETE / 100% GREEN
+**Next Step**: High-Velocity Cluster Expansion (v1.3.0)
 
-## Accomplishments (v1.2.0 Milestone)
-1.  **Official Release**: Tagged `v1.2.0` and pushed to GitHub.
-2.  **100% GREEN Suite**: Certified all BDD, ZSH Unit, Integration, and Security tests as passing.
-3.  **Sovereign Bridge Hardening**: 
-    - `socat` proxy bridge for SSH agent forwarding fully operational.
-    - Persistent `.zshenv` bridge verified for all shell types.
-    - Deterministic Ignition (< 4.0s) verified on Darwin.
+## Accomplishments (v1.2.2 Hardening Strike)
+1.  **Lock-Queue Model (Phase 25 - Absolute)**:
+    - Replaced competitive spinlocks with deterministic FIFO ticket-based sequencing in `lib/vm-lock`.
+    - Eliminated "thundering herd" race conditions under high concurrency (10+ simultaneous requests).
+2.  **Deterministic Error Engine (Phase 26 - Absolute)**:
+    - Implemented `vde_run` execution wrapper for system-wide signal awareness.
+    - Hardened Signal Translation (SIGINT, SIGKILL, SIGTERM) with descriptive remediation mapping.
+    - Integrated global `SIGINT` traps into the `bin/vde` orchestrator.
+3.  **Sovereign Ignition Hooks**:
+    - Migrated 100% of service spokes (MySQL, Postgres, Redis, etc.) to asynchronous background ignition via `/usr/local/bin/vde-spoke-ignition.zsh`.
+    - Achieved "Born Ready (BTO)" compliance by stopping services at hydration end and removing legacy `.zshenv` process leaks.
+4.  **100% BDD Fidelity**:
+    - Purged all "pink" (simulated) steps.
+    - Verified 155 high-fidelity scenarios using physical system states and real signals.
+5.  **Workspace Optimization**:
+    - Resolved critical ignition blocks on large workspaces by optimizing recursive `chown` logic in the entrypoint.
 
 ## Imminent Actions
-- Commencing v1.2.1 Minor Update (The Sovereign Handshake).
-- Harden the "Unyielding Tetrad" (Zsh, Git, Docker, SSH) with empirical verification.
-- Finalize the Rule Spine (Rule A) for AI Orchestration.
+- Expansion of the Tech Stack Cluster matrix (MEAN, LAMP, etc.).
+- Performance telemetry for the Error Engine (logging signal frequency).
+- Final UI polish for the `vde add` workflow.
 
 ## Mandate Compliance
-- **Empirical Proof**: The suite proves all contracts (Rule 11).
-- **Rule Spine**: 100% supervision by `bin/vde-enforce-uap.zsh`.
-- **Zero-Ghost Policy**: Setup scripts verified and associated with Hub registry.
+- **Absolute ZSH Purity**: 100% compliant across all `bin/`, `lib/`, and `scripts/`.
+- **No Simulation**: All tests verified against physical system state (actual PIDs, real locks).
+- **Rule Spine**: Every action executed under `bin/vde-enforce-uap.zsh` supervision.
 
-**Version**: 1.2.1
+**Version**: 1.2.2
 **This is the Way.**
