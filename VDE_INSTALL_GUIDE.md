@@ -1,4 +1,4 @@
-# VDE Installation & Configuration Guide (v1.2.2)
+# VDE Installation & Configuration Guide
 
 Welcome, Foundling! This guide will walk you through the **Installation Ritual** for the Virtualized Development Environment (VDE). Follow these steps to forge your sovereign development ecosystem.
 
@@ -6,7 +6,7 @@ Welcome, Foundling! This guide will walk you through the **Installation Ritual**
 
 ## 1. Prerequisites (The Warrior's Rights)
 
-Before you ignite the Forge, you must have the following three pillars installed on your host machine.
+Before you ignite the Forge, you must have the following four pillars installed on your host machine. Together, they form the **Unyielding Tetrad**.
 
 ### Pillar I: Docker Desktop (The World-Forge)
 Docker is the engine that runs your isolated development Spokes.
@@ -25,6 +25,11 @@ VDE is forged strictly in Zsh. **Bash is prohibited.**
 - **macOS:** Default shell since Catalina. Check with `zsh --version`.
 - **Windows:** Install via [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install) (e.g., `sudo apt install zsh`).
 - **Linux:** `sudo apt install zsh` (Debian/Ubuntu) or `sudo dnf install zsh` (Fedora).
+
+### Pillar IV: SSH (The Transversal Bridge)
+Secure shell is the bridge that connects your host to the Spokes.
+- **Requirement:** Ensure an SSH client is installed and your SSH agent is active.
+- **Identity:** VDE uses the `vde_student` identity (handled automatically during the bootstrap ritual).
 
 ---
 
