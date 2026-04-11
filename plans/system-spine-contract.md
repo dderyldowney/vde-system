@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Establish the **System-Spine** as a cognitive context and implement empirical verification of the core tetrad (Zsh, Git, Docker, SSH) to achieve **v1.2.3 The Sovereign Baseline** certification.
- This plan codifies the **Proof of Life** standard (create, rebuild, start, enter, stop, remove).
+ This plan codifies the **Proof of Life** standard (init, create, rebuild, start, enter, stop, remove).
 
 **Architecture:** A lightweight, silent ZSH script `bin/vde-spine-check.zsh` will perform functional challenges for each of the four pillars. This script will be integrated into `bin/vde` as a mandatory pre-flight check. The System-Spine is codified as a cognitive context for all VDE operations and is finalized with the `@system-spine` git tag.
 

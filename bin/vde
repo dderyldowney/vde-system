@@ -35,6 +35,10 @@ vde_security_init
 # Main command router
 COMMAND=$1
 case ${COMMAND} in
+    init)
+        shift
+        vde_run "init" "${VDE_ROOT_DIR}/bin/vde-init" "$@"
+        ;;
     rebuild)
         shift
         vde_run "rebuild" "${VDE_ROOT_DIR}/bin/vde-rebuild" "$@"
@@ -295,5 +299,37 @@ case ${COMMAND} in
         shift
         vde_run "info" "${VDE_ROOT_DIR}/bin/vde-info" "$@"
         ;;
-    help|*) echo "Usage: vde {rebuild|create|start|stop|exec|enter|list|add|uninstall|validate|rebuild-cache|ask|port|info} [type/alias]" ;;
+    ps)
+        shift
+        vde_run "ps" "${VDE_ROOT_DIR}/bin/vde-ps" "$@"
+        ;;
+    inspect)
+        shift
+        vde_run "inspect" "${VDE_ROOT_DIR}/bin/vde-inspect" "$@"
+        ;;
+    logs)
+        shift
+        vde_run "logs" "${VDE_ROOT_DIR}/bin/vde-logs" "$@"
+        ;;
+    images)
+        shift
+        vde_run "images" "${VDE_ROOT_DIR}/bin/vde-images" "$@"
+        ;;
+    stats)
+        shift
+        vde_run "stats" "${VDE_ROOT_DIR}/bin/vde-stats" "$@"
+        ;;
+    health)
+        shift
+        vde_run "health" "${VDE_ROOT_DIR}/bin/vde-health" "$@"
+        ;;
+    cluster)
+        shift
+        vde_run "cluster" "${VDE_ROOT_DIR}/bin/vde-cluster" "$@"
+        ;;
+    networks)
+        shift
+        vde_run "networks" "${VDE_ROOT_DIR}/bin/vde-networks" "$@"
+        ;;
+    help|*) echo "Usage: vde {init|rebuild|create|start|stop|exec|enter|list|add|uninstall|validate|rebuild-cache|ask|port|info|ps|inspect|logs|images|stats|health|cluster|networks} [type/alias]" ;;
 esac
