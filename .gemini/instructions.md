@@ -29,7 +29,7 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
 * **K. The 3-VM Concurrent Limit**: All parallel ignition and stress operations are strictly limited to a maximum of 3 concurrent Spokes (containers).
 * **L. The Proof of Life Mandate (Lifecycle Authority)**: The Proof of Life contract (`plans/system-spine-contract.md`) is the **Heartbeat** of the project. It defines the minimum functional standard (create, rebuild, start, enter, stop, remove, add, uninstall). Any failure to meet this standard constitutes a **Blockage**. All Blockages MUST be remedied immediately; no secondary implementation or refactoring is permitted until the Heartbeat is restored.
 
-## **THE SOVEREIGN INSTRUCTION SET v1.2.1**
+## **THE SOVEREIGN INSTRUCTION SET v1.2.3**
 
 *"The core beating heart forged in every piece of Beskar made by this Forge."*
 
@@ -156,7 +156,7 @@ The **Law of Protection** mandates that the four base technologies of the VDE mu
 
 ### **@SYSTEM-SPINE: EMPIRICAL TEST SPECIFICATION**
 
-The following BDD scenarios provide the empirical proof required for the v1.2.1 Hardened Handshake.
+The following BDD scenarios provide the empirical proof required for the v1.2.3 The Sovereign Baseline.
 
 ```gherkin
 @system-spine
@@ -194,12 +194,12 @@ Feature: The Unyielding Tetrad Verification
 
 *"A warrior knows the weight of every plate in their armor. The record must be absolute."*
 
-VDE SHALL use **MAJOR.MINOR.STEP** (e.g., 1.2.1) for all inventory control.
+VDE SHALL use **MAJOR.MINOR.STEP** (e.g., 1.2.3) for all inventory control.
 
 * **MAJOR**: Changes are only for covenant-level shifts or core behavior changes.
 * **MINOR**: Changes are only for substantial new capabilities (e.g., new VM types).
 * **STEP**: Changes are only for remediation, spine-hardening, and non-breaking improvements.
-* **pN (Security Patches)**: Security patches SHALL be tagged as `-pN` (e.g., 1.2.1-p1), containing only the minimal code required to remediate the vulnerability; no features or refactors are permitted in `-pN` releases.
+* **pN (Security Patches)**: Security patches SHALL be tagged as `-pN` (e.g., 1.2.3-p1), containing only the minimal code required to remediate the vulnerability; no features or refactors are permitted in `-pN` releases.
 
 ---
 Version: 1.2.3

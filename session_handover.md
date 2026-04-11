@@ -1,14 +1,14 @@
-# Session Handover — v1.2.2 Absolute Release
+# Session Handover — v1.2.3 (The Sovereign Baseline)
 
-**Current Status**: 🟢 VDE v1.2.2 ABSOLUTE HARDENING COMPLETE / 100% GREEN
+**Current Status**: 🟢 VDE v1.2.3 SOVEREIGN BASELINE CERTIFIED / 100% GREEN
 **Active Branch**: `develop` (STRICT MANDATE: Work on `develop` only)
 **Next Step**: High-Velocity Cluster Expansion (v1.3.0)
 
-## Accomplishments (v1.2.2 Hardening Strike)
-1.  **Lock-Queue Model (Phase 25 - Absolute)**:
+## Accomplishments (v1.2.3 Sovereign Baseline)
+1.  **Lock-Queue Model (Phase 25 - The Sovereign Baseline)**:
     - Replaced competitive spinlocks with deterministic FIFO ticket-based sequencing in `lib/vm-lock`.
     - Eliminated "thundering herd" race conditions under high concurrency (10+ simultaneous requests).
-2.  **Deterministic Error Engine (Phase 26 - Absolute)**:
+2.  **Deterministic Error Engine (Phase 26 - The Sovereign Baseline)**:
     - Implemented `vde_run` execution wrapper for system-wide signal awareness.
     - Hardened Signal Translation (SIGINT, SIGKILL, SIGTERM) with descriptive remediation mapping.
     - Integrated global `SIGINT` traps into the `bin/vde` orchestrator.
@@ -27,9 +27,9 @@
 - Final UI polish for the `vde add` workflow.
 
 ## Mandate Compliance
-- **Absolute ZSH Purity**: 100% compliant across all `bin/`, `lib/`, and `scripts/`.
+- **Sovereign ZSH Purity**: 100% compliant across all `bin/`, `lib/`, and `scripts/`.
 - **No Simulation**: All tests verified against physical system state (actual PIDs, real locks).
 - **Rule Spine**: Every action executed under `bin/vde-enforce-uap.zsh` supervision.
 
-**Version**: 1.2.2
+**Version**: 1.2.3
 **This is the Way.**

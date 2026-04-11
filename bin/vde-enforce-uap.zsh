@@ -3,7 +3,7 @@
 # vde-enforce-uap.zsh - Universal Agent Protocol Enforcement (Hardened)
 #
 # Enforces the Strict Core Mandates from AGENTS.md:
-# 1. Absolute ZSH Purity (Shebang & Content)
+# 1. Sovereign ZSH Purity (Shebang & Content)
 # 2. Forbidden Patterns (No sleep, No bash-isms)
 # 3. Structural Integrity (Mandatory Configs)
 #===============================================================================
@@ -55,7 +55,7 @@ audit_file_content() {
     local file=$1
     local first_line
     
-    # Mandate 1: Absolute Shebang Check
+    # Mandate 1: Sovereign Shebang Check
     read -r first_line < "$file"
     if [[ "${first_line}" != "#!/usr/bin/env zsh" ]]; then
         echo -e "${RED}[UAP-ERROR]${NC} Non-canonical shebang in ${file#${VDE_ROOT_DIR}/}. Expected #!/usr/bin/env zsh"

@@ -86,7 +86,7 @@ vde start python
 ```
 
 ### Step 3: Enter the Jail
-Connect to your new environment via the **Sovereign Handshake**.
+Connect to your new environment via **The Sovereign Baseline**.
 
 ```zsh
 vde enter python

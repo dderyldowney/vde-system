@@ -4,7 +4,7 @@
 VDE_SSH_DIR="$HOME/.ssh/vde"
 VDE_KEY="$VDE_SSH_DIR/vde_student"
 
-echo "==> VDE: Initiating Absolute Bootstrap..."
+echo "==> VDE: Initiating The Sovereign Baseline Bootstrap..."
 
 if [[ ! -d "$VDE_SSH_DIR" ]]; then
     mkdir -p "$VDE_SSH_DIR"

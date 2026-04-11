@@ -7,7 +7,7 @@
 v1.2.3 is officially declared the functional baseline for the VDE project. All technical debt from previous versions has been remediated or archived.
 
 ### 1. CORE MILESTONES COMPLETED
-- [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars (v1.2.2).
+- [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars (v1.2.3).
 - [x] **Proof of Life Contract**: Codified and verified full lifecycle (create, rebuild, start, enter, stop, remove, add, uninstall).
 - [x] **Deterministic Error Engine (Phase 26)**: 100% of CLI commands wrapped in `vde_run`. Signal translation (SIGINT/SIGKILL/SIGTERM) and lock transparency (PID reporting) active.
 - [x] **Lock-Queue Model (Phase 25)**: Replaced competitive spinlocks with deterministic First-In-First-Out (FIFO) sequencing. Verified under high-volume concurrency (10+ simultaneous requests).

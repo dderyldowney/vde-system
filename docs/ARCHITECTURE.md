@@ -1,12 +1,12 @@
-# ARCHITECTURE v1.2.2 (Absolute)
+# ARCHITECTURE v1.2.3 (The Sovereign Baseline)
 
 ## VERSION HISTORY
 | Version | Date       | Changes                                                                 |
 | :---    | :---       | :---                                                                    |
-| 2.0.3   | 2026-04-03 | Standardized SSH Key naming convention for vde-bootstrap.               |
-| 2.0.4   | 2026-04-04 | Shifted hydration logic to USP setup scripts and formalized the Ignition Pipeline. |
-| 2.0.5   | 2026-04-04 | Version bump to 2.0.5.                                                  |
-| 2.0.6   | 2026-04-06 | Implemented Phase 25: Concurrency Hardening. Atomic port management and VM-level locking spinlocks. |
+| 1.2.3   | 2026-04-11 | Established The Sovereign Baseline and VDE_INSTALL.md.                  |
+| 1.2.2   | 2026-04-10 | Absolute release with FIFO locking and deterministic signals.           |
+| 1.2.1   | 2026-04-09 | Hardened System Spine Tetrad and Rule Spine integration.                |
+| 1.2.0   | 2026-04-08 | Initial production release with Sovereign Handshake (SSH).              |
 
 ## 1. The Hub-and-Spoke Tiered Model
 
@@ -30,20 +30,20 @@ We have replaced static configurations with a **Reactive Sync Ritual**.
 
 ## 3. Concurrency & Resource Stewardship (Phase 25)
 
-VDE 2.0.6 introduces a **Lock-Queue Model** to handle high-concurrency operations.
+VDE introduces a **FIFO Lock-Queue Model** to handle high-concurrency operations.
 
 ### 3.1. Atomic Port Management
 - **The Registry**: Located at `.cache/port-registry/`.
 - **The Protocol**: Uses atomic `<port>.lock` files to reserve ports before assignment. This prevents "Double Allocation" when multiple VMs are created simultaneously.
 - **Stewardship**: Ports are now verified against both the registry and the live host bridge before being struck.
 
-### 3.2. Lifecycle Spinlocks
-- **VM Locking**: Every lifecycle operation (`rebuild`, `start`) is protected by a mandatory directory lock at `.locks/vms/<vm_name>.lock`.
+### 3.2. Lifecycle FIFO Queue
+- **VM Locking**: Every lifecycle operation (`rebuild`, `start`) is protected by a deterministic FIFO ticket queue at `.locks/vms/<vm_name>/`.
 - **Global Config Lock**: Sensitive registry operations are governed by a global mutex (`.locks/global-config.lock`) to prevent corruption of the "Pure Beskar" during parallel updates.
-- **Deterministic Backoff**: Lock acquisition uses sub-second precision polling with random jitter to prevent "Thundering Herd" collisions.
+- **Deterministic Sequencing**: Lock acquisition uses ticket-based sequencing to eliminate "Thundering Herd" collisions and ensure arrival-order service.
 
 ### 3.3. Deterministic Error Engine (Phase 26)
-- **Signal Translation**: Kernel-level signals (EEXIST, ENOENT) are mapped to `VDE_ERR_*` codes and translated into contextual remediation via `lib/vde-errors`.
+- **Signal Translation**: Kernel-level signals (SIGINT, SIGTERM, SIGKILL) are captured by the `vde_run` wrapper and translated into contextual UX remediation via `lib/vde-errors`.
 - **Heartbeat Proof**: Every lock records a PID:PGID:TIMESTAMP heartbeat. This allows the system to deterministically recover from hung processes without risking PID-reuse collisions.
 - **Double-Gate Sync**: The Orchestrator verifies Hub sovereignty by checking timestamps *inside* the lock block, ensuring zero-drift execution.
 
