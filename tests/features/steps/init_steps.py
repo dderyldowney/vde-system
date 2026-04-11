@@ -19,6 +19,19 @@ def step_verify_vde_ssh_identity(context, identity):
     assert priv_key.exists(), f"Private key '{priv_key}' missing in {ssh_dir}"
     assert pub_key.exists(), f"Public key '{pub_key}' missing in {ssh_dir}"
 
+@then('the VM "{vm_alias}" should no longer be registered')
+def step_vm_not_registered(context, vm_alias):
+    from vm_common import VM_TYPES_CONF, VM_TYPES_JSON
+    # Check .conf
+    with open(VM_TYPES_CONF, 'r') as f:
+        conf_content = f.read()
+    assert vm_alias not in conf_content, f"VM {vm_alias} still present in {VM_TYPES_CONF}"
+    
+    # Check .json
+    with open(VM_TYPES_JSON, 'r') as f:
+        json_content = f.read()
+    assert vm_alias not in json_content, f"VM {vm_alias} still present in {VM_TYPES_JSON}"
+
 @then('the file "{filename}" should exist')
 def step_file_exists(context, filename):
     path = VDE_ROOT / filename
