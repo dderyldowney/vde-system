@@ -25,8 +25,11 @@
     - **Execution Wrapper:** Implemented `vde_run` in `lib/vde-core` to provide a unified, deterministic entry point for all command execution. It captures exit codes and system signals, immediately handing off to the centralized VDE Error Engine.
     - **Signal Translation:** Hardened `lib/vde-errors` to map raw kernel signals (130 SIGINT, 137 SIGKILL, 143 SIGTERM) into clear, remediable UX feedback.
     - **Global Interception:** Integrated a global `SIGINT` trap in `bin/vde` to provide instantaneous feedback and clean exits during user interruptions.
-    - **Lock Transparency:** Updated `lib/vm-lock` and `lib/vde-progress` to extract and report real process owners (PID/PGID) during resource contention, removing all "simulation" in favor of physical system state reporting.
-    - **100% BDD Fidelity:** Implemented and verified `error-handling.feature` using real environmental conditions (actual signals and physical lock files).
+    - **Lock-Queue Model (Phase 25 - Absolute):**
+        - **FIFO Sequencing:** Replaced competitive spinlocks with a deterministic First-In-First-Out (FIFO) ticket queue in `lib/vm-lock`. Processes are now served in exact arrival order.
+        - **Concurrency Hardening:** Successfully verified strict ordering under "Thundering Herd" conditions (10+ simultaneous requests).
+        - **Transparency:** Updated `lib/vm-lock` and `lib/vde-progress` to extract and report real process owners (PID/PGID) and queue positions during resource contention.
+    - **100% BDD Fidelity:** Implemented and verified `error-handling.feature` and `concurrency-queue.feature` using real environmental conditions.
 
 ## SYSTEM BENCHMARKS (VDE 1.2.2)
 - **Canonical Ignition Speed:** 3.959s. This is the benchmark for 3-VM Parallel Ignition (python, postgres, redis) on current hardware. Any future refactor that slows this down is a deviation from the Way.

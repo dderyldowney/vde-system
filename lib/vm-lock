@@ -13,15 +13,16 @@ _VM_LOCK_LOADED=1
 
 # Global state for recursive locking
 typeset -gA VDE_LOCK_DEPTH
+typeset -gA VDE_LOCK_TICKETS
 
-# claim_lock - Atomic locking with "Registry Retry Ritual"
+# claim_lock - Atomic locking with "Lock-Queue Model" (Phase 25 FIFO)
 # Args: <lock_file>
-# Features: 10-cycle limit, 0.1s-0.5s ZSH-Native Jitter, mkdir atomicity
 claim_lock() {
     local lock_file="${1}"
-    local max_attempts=10
+    local max_attempts=30 # Increased for high-concurrency queuing
     local attempt=1
     local pid_file="${lock_file}/pid"
+    local queue_dir="${lock_file}.queue"
 
     # RE-ENTRANCY CHECK
     if [[ "${VDE_LOCK_DEPTH[${lock_file}]}" -gt 0 ]]; then
@@ -29,23 +30,46 @@ claim_lock() {
         return 0
     fi
 
+    # 1. THE TICKET REGISTRATION (Phase 25 Arrival Sequencing)
+    mkdir -p "${queue_dir}" 2>/dev/null
+    
+    # Use ZSH native precise timing for ticket sequencing
+    zmodload zsh/datetime 2>/dev/null
+    local ticket_id="${EPOCHREALTIME:-$(date +%s).$RANDOM}-$$"
+    local ticket_file="${queue_dir}/${ticket_id}"
+    touch "${ticket_file}"
+    VDE_LOCK_TICKETS[${lock_file}]="${ticket_id}"
+
     # Ensure parent directory exists
     mkdir -p "$(dirname "${lock_file}")" 2>/dev/null
 
+    # Cleanup closure for failures
+    _vde_lock_cleanup_retreat() {
+        rm -f "${ticket_file}" 2>/dev/null
+        unset "VDE_LOCK_TICKETS[${lock_file}]"
+    }
+
     while [[ ${attempt} -le ${max_attempts} ]]; do
-        # THE ATOMIC GATE: mkdir is atomic at the kernel level
-        if mkdir "${lock_file}" 2>/dev/null; then
-            # Record ownership ATOMICALLY
-            local now=$(date +%s)
-            local pgid=$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')
-            local tmp_pid_file="${pid_file}.tmp.$RANDOM"
-            
-            # Write PID info: PID:PGID:TIMESTAMP
-            echo "$$:${pgid}:${now}" > "${tmp_pid_file}" 2>/dev/null
-            mv "${tmp_pid_file}" "${pid_file}" 2>/dev/null
-            
-            VDE_LOCK_DEPTH[${lock_file}]=1
-            return 0
+        # 2. THE LINE CHECK (FIFO Enforcement)
+        # Find the oldest ticket (numerically sorted by timestamp)
+        local oldest_ticket
+        oldest_ticket=$(ls -1 "${queue_dir}" 2>/dev/null | sort -n | head -n 1)
+        
+        if [[ "${oldest_ticket}" == "${ticket_id}" ]]; then
+            # At the front of the line! THE ATOMIC GATE: mkdir is atomic at the kernel level
+            if mkdir "${lock_file}" 2>/dev/null; then
+                # Record ownership ATOMICALLY
+                local now=$(date +%s)
+                local pgid=$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')
+                local tmp_pid_file="${pid_file}.tmp.$RANDOM"
+                
+                # Write PID info: PID:PGID:TIMESTAMP
+                echo "$$:${pgid}:${now}" > "${tmp_pid_file}" 2>/dev/null
+                mv "${tmp_pid_file}" "${pid_file}" 2>/dev/null
+                
+                VDE_LOCK_DEPTH[${lock_file}]=1
+                return 0
+            fi
         fi
         
         # LOCK CONTENTION TRANSPARENCY (Phase 26)
@@ -54,6 +78,8 @@ claim_lock() {
             local pid_data=$(cat "${pid_file}" 2>/dev/null)
             local owner_pid="${pid_data%%:*}"
             owner_info="PID ${owner_pid}"
+        elif [[ "${oldest_ticket}" != "${ticket_id}" ]]; then
+            owner_info="Queue position: waiting for ${oldest_ticket#*-}"
         fi
 
         # THE ARCHIVIST'S JITTER (ZSH-Native floating point)
@@ -62,7 +88,6 @@ claim_lock() {
         local jitter_sec=$(( 0.1 + (RANDOM / 32768.0 * 0.4) ))
         
         # MANDATE: vde-poll is the SOLE permitted wait primitive
-        # Pass owner info to the UI if vde_progress_wait_for_lock is available
         if command -v vde_progress_wait_for_lock >/dev/null 2>&1; then
             vde_progress_wait_for_lock "$(basename "${lock_file}")" "${attempt}" "${owner_info}"
         fi
@@ -73,6 +98,7 @@ claim_lock() {
     done
 
     # If we reach here, the forge has failed to secure the resource
+    _vde_lock_cleanup_retreat
     vde_log_error "Registry Lock Contention: Failed to claim ${lock_file} after ${max_attempts} cycles." "lock"
     return ${VDE_ERR_LOCK:-9}
 }
@@ -84,17 +110,28 @@ acquire_lock() { claim_lock "$@" }
 # Args: <lock_file>
 release_lock() {
     local lock_file="${1}"
+    local queue_dir="${lock_file}.queue"
+    local ticket_id="${VDE_LOCK_TICKETS[${lock_file}]}"
     
     if [[ -n "${VDE_LOCK_DEPTH[${lock_file}]}" ]]; then
         (( VDE_LOCK_DEPTH[${lock_file}]-- ))
         if [[ "${VDE_LOCK_DEPTH[${lock_file}]}" -le 0 ]]; then
             # Atomic cleanup
             [[ -d "${lock_file}" ]] && rm -rf "${lock_file}" 2>/dev/null
+            [[ -n "${ticket_id}" ]] && rm -f "${queue_dir}/${ticket_id}" 2>/dev/null
             unset "VDE_LOCK_DEPTH[${lock_file}]"
+            unset "VDE_LOCK_TICKETS[${lock_file}]"
+            
+            # Clean up queue dir if empty
+            if [[ -d "${queue_dir}" ]] && [[ -z "$(ls -A "${queue_dir}")" ]]; then
+                rm -rf "${queue_dir}" 2>/dev/null
+            fi
         fi
     else
         # Fallback for unexpected calls
         [[ -d "${lock_file}" ]] && rm -rf "${lock_file}" 2>/dev/null
+        [[ -n "${ticket_id}" ]] && rm -f "${queue_dir}/${ticket_id}" 2>/dev/null
+        unset "VDE_LOCK_TICKETS[${lock_file}]"
     fi
     return 0
 }

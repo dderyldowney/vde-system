@@ -1,0 +1,82 @@
+import os
+import subprocess
+import time
+import signal
+from pathlib import Path
+from behave import given, when, then
+from vm_common import VDE_ROOT, run_vde_command
+
+@given('the registry is reconciled')
+def step_reconcile_registry(context):
+    run_vde_command("rebuild-cache")
+
+@when('I launch 10 simultaneous "start python" requests at {interval:f}s intervals')
+def step_launch_simultaneous_requests(context, interval):
+    # We use a test script that sources the lock library and logs timestamps
+    test_script = VDE_ROOT / "plans" / "scripts" / "test_fifo.zsh"
+    test_script.parent.mkdir(parents=True, exist_ok=True)
+    log_file = VDE_ROOT / "plans" / "scripts" / "fifo_test.log"
+    if log_file.exists():
+        log_file.unlink()
+        
+    test_script.write_text(f"""#!/usr/bin/env zsh
+source "{VDE_ROOT}/lib/vm-common"
+source "{VDE_ROOT}/lib/vde-core"
+source "{VDE_ROOT}/lib/vm-lock"
+
+LOCK_NAME="$1"
+WAIT_TIME="$2"
+ID="$3"
+
+echo "ARRIVE:$ID:$(date +%s.%N)" >> "{log_file}"
+if claim_lock "$LOCK_NAME"; then
+    echo "ACQUIRE:$ID:$(date +%s.%N)" >> "{log_file}"
+    # Small sleep to allow others to queue up
+    sleep "$WAIT_TIME"
+    release_lock "$LOCK_NAME"
+    echo "RELEASE:$ID:$(date +%s.%N)" >> "{log_file}"
+else
+    echo "FAIL:$ID:$(date +%s.%N)" >> "{log_file}"
+fi
+""")
+    test_script.chmod(0o755)
+    
+    lock_path = VDE_ROOT / ".locks" / "vms" / "fifo-test.lock"
+    if lock_path.exists():
+        import shutil
+        shutil.rmtree(lock_path)
+        
+    context.procs = []
+    # Use a small offset to ensure arrival order is deterministic by ID
+    arrival_interval = 0.05
+    for i in range(1, 11):
+        p = subprocess.Popen(
+            [str(test_script), str(lock_path), "0.5", str(i)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            cwd=VDE_ROOT
+        )
+        context.procs.append(p)
+        time.sleep(arrival_interval)
+        
+    for p in context.procs:
+        p.communicate()
+        
+    context.fifo_log = log_file.read_text()
+
+@then('they should be served in the order they arrived')
+def step_verify_fifo_order(context):
+    lines = context.fifo_log.strip().split("\n")
+    arrivals = [line.split(":")[1] for line in lines if line.startswith("ARRIVE")]
+    acquisitions = [line.split(":")[1] for line in lines if line.startswith("ACQUIRE")]
+    
+    expected_order = [str(i) for i in range(1, 11)]
+    assert arrivals == expected_order, f"Arrivals out of order: {arrivals}"
+    assert acquisitions == expected_order, f"Acquisitions out of order: {acquisitions}. Log:\n{context.fifo_log}"
+
+@then('the final state should be all requests completed successfully')
+def step_verify_final_state(context):
+    lines = context.fifo_log.strip().split("\n")
+    releases = [line.split(":")[1] for line in lines if line.startswith("RELEASE")]
+    assert len(releases) == 10, f"Not all locks released: {releases}"

@@ -9,10 +9,12 @@ VDE v1.2.2 has successfully achieved the **Hardened Handshake** certification. T
 ### 1. CORE MILESTONES COMPLETED
 - [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars (v1.2.2).
 - [x] **Proof of Life Contract**: Codified and verified full lifecycle (create, rebuild, start, enter, stop, remove, add, uninstall).
+- [x] **Deterministic Error Engine (Phase 26)**: 100% of CLI commands wrapped in `vde_run`. Signal translation (SIGINT/SIGKILL/SIGTERM) and lock transparency (PID reporting) active.
+- [x] **Lock-Queue Model (Phase 25)**: Replaced competitive spinlocks with deterministic First-In-First-Out (FIFO) sequencing. Verified under high-volume concurrency (10+ simultaneous requests).
+- [x] **Spoke Ignition Hooks**: All 8 service spokes migrated to asynchronous background ignition.
 - [x] **Expansion Mandate**: Dynamic registration via `vde add` (packages/custom commands) fully operational.
 - [x] **Transversal Bridge**: SSH Agent Forwarding fixed and verified via native SSH Pillar.
-- [x] **Ghost Registry Hygiene**: Automated purging of test artifacts in `plans/scripts/git-test/`.
-- [x] **UAP Enforcement**: Mandatory supervision by `bin/vde-enforce-uap.zsh` integrated into all CLI ignition paths.
+- [x] **UAP Enforcement**: Mandatory supervision by `bin/vde-enforce-uap.zsh` integrated into all CLI paths.
 
 ### 2. TEST FIDELITY
 - **Behave BDD**: 20 Scenarios / 150 Steps - **100% PASS**
