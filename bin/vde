@@ -18,11 +18,16 @@ fi
 
 source "${VDE_ROOT_DIR}/lib/vm-common"
 source "${VDE_ROOT_DIR}/lib/vde-core"
+source "${VDE_ROOT_DIR}/lib/vm-lock"
+source "${VDE_ROOT_DIR}/lib/vde-progress"
 source "${VDE_ROOT_DIR}/lib/vde-naming"
 source "${VDE_ROOT_DIR}/lib/vde-docker"
 source "${VDE_ROOT_DIR}/lib/vde-templates"
 source "${VDE_ROOT_DIR}/lib/vde-ssh"
 source "${VDE_ROOT_DIR}/lib/vde-security"
+
+# Phase 26: Signal Translation Trap
+trap 'echo ""; vde_error_map 130 "Interrupted"; exit 130' SIGINT
 
 # Initial security check
 vde_security_init
@@ -32,12 +37,12 @@ COMMAND=$1
 case ${COMMAND} in
     rebuild)
         shift
-        "${VDE_ROOT_DIR}/bin/vde-rebuild" "$@"
+        vde_run "rebuild" "${VDE_ROOT_DIR}/bin/vde-rebuild" "$@"
         ;;
     create)
         shift
         # Map create to vde-rebuild
-        "${VDE_ROOT_DIR}/bin/vde-rebuild" "$@"
+        vde_run "create" "${VDE_ROOT_DIR}/bin/vde-rebuild" "$@"
         ;;
     start)
         vde_ensure_disk_space "${VDE_DISK_THRESHOLD:-95}" || exit $?
@@ -55,12 +60,12 @@ case ${COMMAND} in
             BASE_NAME="${CANONICAL_NAME#vde-}"
 
             local vm_lock="${VDE_VM_LOCKS_DIR}/${BASE_NAME}.lock"
-            claim_lock "${vm_lock}" 60 || { vde_error_map ${VDE_ERR_LOCK:-9} "${CANONICAL_NAME}"; continue; }
+            claim_lock "${vm_lock}" || { vde_error_map ${VDE_ERR_LOCK:-9} "${CANONICAL_NAME}"; continue; }
             {
                 # Conflict Prevention (Atomic Handshake)
                 if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
                     vde_log_info "Removing existing ${CANONICAL_NAME}..." "docker"
-                    docker rm -f "${CANONICAL_NAME}" >/dev/null 2>&1
+                    vde_run "${CANONICAL_NAME}" docker rm -f "${CANONICAL_NAME}" >/dev/null 2>&1
                 fi
 
                 if is_vm_running "${CANONICAL_NAME}"; then
@@ -104,7 +109,7 @@ case ${COMMAND} in
                 # Pre-ignition check: image must exist
                 if ! image_exists "${CANONICAL_NAME}"; then
                     vde_log_warn "Image for ${CANONICAL_NAME} not found. Attempting to rebuild..." "docker"
-                    "${VDE_ROOT_DIR}/bin/vde-rebuild" "${target_type}" || { vde_log_error "Rebuild failed for ${CANONICAL_NAME}"; continue; }
+                    vde_run "${CANONICAL_NAME}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${target_type}" || continue
                 fi
 
                 # Ignition Phase (The Handshake)

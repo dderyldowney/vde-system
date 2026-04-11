@@ -48,12 +48,25 @@ claim_lock() {
             return 0
         fi
         
+        # LOCK CONTENTION TRANSPARENCY (Phase 26)
+        local owner_info=""
+        if [[ -f "${pid_file}" ]]; then
+            local pid_data=$(cat "${pid_file}" 2>/dev/null)
+            local owner_pid="${pid_data%%:*}"
+            owner_info="PID ${owner_pid}"
+        fi
+
         # THE ARCHIVIST'S JITTER (ZSH-Native floating point)
         # Goal: 0.1s to 0.5s delay
         # Formula: 0.1 + (RANDOM / 32768.0 * 0.4)
         local jitter_sec=$(( 0.1 + (RANDOM / 32768.0 * 0.4) ))
         
         # MANDATE: vde-poll is the SOLE permitted wait primitive
+        # Pass owner info to the UI if vde_progress_wait_for_lock is available
+        if command -v vde_progress_wait_for_lock >/dev/null 2>&1; then
+            vde_progress_wait_for_lock "$(basename "${lock_file}")" "${attempt}" "${owner_info}"
+        fi
+
         "${VDE_ROOT_DIR}/bin/vde-poll" --wait "${jitter_sec}" "all" >/dev/null 2>&1
         
         (( attempt++ ))

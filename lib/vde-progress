@@ -399,7 +399,7 @@ vde_progress_wait_for_lock() {
     
     # Use yellow warning color for contention
     printf "\r%s" "$(printf ' %.0s' {1..200})"
-    printf "\r%s%s (Wait: %ss)... " "${VDE_PROGRESS_COLOR_WARNING}⏳ Waiting for lock: ${lock_name}${VDE_PROGRESS_COLOR_RESET}${VDE_PROGRESS_COLOR_DIM}${owner_str}${VDE_PROGRESS_COLOR_RESET}" "" "${elapsed}"
+    printf "\r%s%s (Wait: %ss)... \n" "${VDE_PROGRESS_COLOR_WARNING}⏳ Waiting for lock: ${lock_name}${VDE_PROGRESS_COLOR_RESET}${VDE_PROGRESS_COLOR_DIM}${owner_str}${VDE_PROGRESS_COLOR_RESET}" "" "${elapsed}"
 }
 
 # =============================================================================
