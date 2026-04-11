@@ -1,0 +1,8 @@
+{
+  "vm_name": "vde-testcfgcustompkg",
+  "vm_type": "lang",
+  "display_name": "Testcfgcustompkg",
+  "ssh_port": "",
+  "started_at": "2026-04-03T17:29:57Z",
+  "status": "running"
+}

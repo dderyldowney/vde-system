@@ -1,0 +1,8 @@
+{
+  "vm_name": "vde-kotlin",
+  "vm_type": "lang",
+  "display_name": "Kotlin",
+  "ssh_port": "",
+  "started_at": "2026-03-30T02:05:23Z",
+  "status": "running"
+}

@@ -1,0 +1,9 @@
+{
+  "vm_name": "vde-testcfgnodealias",
+  "vm_type": "lang",
+  "display_name": "Testcfgnodealias",
+  "ssh_port": 2220,
+  "service_port": "",
+  "created_at": "2026-04-02T20:59:23Z",
+  "status": "running"
+}

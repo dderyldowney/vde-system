@@ -1,0 +1,8 @@
+{
+  "vm_name": "vde-mysql",
+  "vm_type": "service",
+  "display_name": "MySQL",
+  "ssh_port": "",
+  "started_at": "2026-04-03T17:30:22Z",
+  "status": "running"
+}
