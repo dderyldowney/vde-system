@@ -1,8 +1,7 @@
-# **The Way of the VDE: v1.2.2 (The Sovereign Handshake)**
+# **The Way of the VDE: v1.2.3 (The Sovereign Baseline)**
 
+This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.2.3. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
-
-This is the Way of the VDE. Certified production-ready as of version 1.2.0. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
 ---
 
@@ -203,6 +202,6 @@ VDE SHALL use **MAJOR.MINOR.STEP** (e.g., 1.2.1) for all inventory control.
 * **pN (Security Patches)**: Security patches SHALL be tagged as `-pN` (e.g., 1.2.1-p1), containing only the minimal code required to remediate the vulnerability; no features or refactors are permitted in `-pN` releases.
 
 ---
-Version: 1.2.2
-Reference: VDE-SPEC v1.2.2
-
+Version: 1.2.3
+Reference: VDE-SPEC v1.2.3 (Baseline)
+---
