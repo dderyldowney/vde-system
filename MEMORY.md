@@ -58,7 +58,8 @@
 
 **ALL SESSIONS MUST ADHERE TO THESE RULES:**
 1. **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`. Bash is strictly forbidden.
-2. **Main Agent is Orchestrator ONLY**: Spawns swarms for multi-file implementation.
+2. **DEVELOP BRANCH ONLY**: All active work MUST occur on the `develop` branch. `main` is reserved for STABLE RELEASES ONLY. Direct work on `main` is prohibited.
+3. **Main Agent is Orchestrator ONLY**: Spawns swarms for multi-file implementation.
 3. **Enforcer Supervision (Rule A)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`.
 4. **Phase-End Re-Audit Swarm (Rule B)**: Mandatory re-audit swarm assuming errors exist.
 5. **Explicit Commit Gate (Rule C)**: Requires explicit 'commit now' approval.
