@@ -1,0 +1,8 @@
+{
+  "vm_name": "vde-ruby",
+  "vm_type": "lang",
+  "display_name": "Ruby",
+  "ssh_port": "",
+  "started_at": "2026-03-30T02:11:57Z",
+  "status": "running"
+}

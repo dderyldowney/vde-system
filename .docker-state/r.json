@@ -1,0 +1,8 @@
+{
+  "vm_name": "vde-r",
+  "vm_type": "lang",
+  "display_name": "R",
+  "ssh_port": "",
+  "started_at": "2026-03-30T02:05:27Z",
+  "status": "running"
+}

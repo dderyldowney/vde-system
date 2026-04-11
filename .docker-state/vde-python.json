@@ -1,0 +1,8 @@
+{
+  "vm_name": "vde-python",
+  "vm_type": "lang",
+  "display_name": "Python",
+  "ssh_port": 2214,
+  "status": "running",
+  "updated_at": "2026-04-08T03:20:09Z"
+}

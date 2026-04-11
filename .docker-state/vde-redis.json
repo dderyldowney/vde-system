@@ -1,0 +1,8 @@
+{
+  "vm_name": "vde-redis",
+  "vm_type": "service",
+  "display_name": "Redis",
+  "ssh_port": 2406,
+  "status": "running",
+  "updated_at": "2026-04-08T04:29:05Z"
+}

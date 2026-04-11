@@ -1,0 +1,8 @@
+{
+  "vm_name": "vde-couchdb",
+  "vm_type": "service",
+  "display_name": "CouchDB",
+  "ssh_port": "",
+  "started_at": "2026-04-03T17:30:42Z",
+  "status": "running"
+}

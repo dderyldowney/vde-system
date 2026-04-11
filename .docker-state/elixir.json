@@ -1,0 +1,8 @@
+{
+  "vm_name": "vde-elixir",
+  "vm_type": "lang",
+  "display_name": "Elixir",
+  "ssh_port": "",
+  "started_at": "2026-03-30T02:05:18Z",
+  "status": "running"
+}
