@@ -17,7 +17,7 @@ v1.2.3 is officially declared the functional baseline for the VDE project. All t
 - [x] **UAP Enforcement**: Mandatory supervision by `bin/vde-enforce-uap.zsh` integrated into all CLI paths.
 
 ### 2. TEST FIDELITY
-- **Behave BDD**: 21 Scenarios / 161 Steps - **100% PASS**
+- **Behave BDD**: 26 Scenarios / 153 Steps - **100% PASS**
 - **Unified Tagging**: `@system-spine` now serves as the primary audit gate.
 - **Performance**: Optimized setup/teardown and port discovery for high-velocity CI.
 

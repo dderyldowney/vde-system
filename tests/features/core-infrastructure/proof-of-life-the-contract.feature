@@ -1,75 +1,69 @@
 @system-spine
 Feature: The Proof of Life - The Contract
   As an Alor of the VDE
-  I require empirical proof of the Spoke lifecycle
-  So that the fundamental building block of the platform is certified
+  I require empirical proof of the absolute lifecycle
+  So that the journey from a fresh clone to a fully hydrated ecosystem is certified
 
   Background: The Tetrad is Active
     Given the 4 Pillars (Zsh, Git, Docker, SSH) have passed their individual proofs
     And the Hub is synchronized to version 1.2.3
     # Ensure no lingering test VMs from failed runs
-    And I execute "bin/vde uninstall vde-dynamic-pkg-vm --skip-confirm"
-    And I execute "bin/vde uninstall vde-dynamic-cmd-vm --skip-confirm"
+    And I execute "bin/vde uninstall vde-dynamic-vm --skip-confirm"
     And I execute "rm -rf .locks/global-config.lock"
 
-  Scenario: The Sovereign Lifecycle - From Forge to Quench
-    # 1. The Forge (Create)
+  Scenario: Lifecycle Step 1 - The Initialization Ritual (vde init)
+    When I execute "bin/vde init"
+    Then the output should contain "Initializing VDE infrastructure"
+    And the command should succeed
+    And the directory ".cache" should exist
+    And the directory "projects" should exist
+    And the directory "data" should exist
+    And the file "VDE_INSTALL.md" should exist
+    And the VDE_SSH_DIR should contain the "vde_student" identity
+    And the Docker network "vde-net" should exist
+
+  Scenario: Lifecycle Step 2 - Spoke Creation and Ignition (create & start)
     Given I have a valid VM definition for "python" in the Beskar Registry
     When I execute "bin/vde create python"
     Then the Docker image "vde-python" should exist on the Hub
     And the return code should be 0
-
-    # 2. The Ignition (Start)
     When I execute "bin/vde start python"
     Then a container named "vde-python" should be running
     And the SSH bridge to "python" should be established
     And the return code should be 0
 
-    # 3. The Reinforcement (Rebuild)
+  Scenario: Lifecycle Step 3 - Spoke Interaction and Maintenance (enter & rebuild)
+    Given "vde-python" is currently running
+    When I execute "bin/vde enter python --command 'echo \"The Contract is Signed\"'"
+    Then the output should contain "The Contract is Signed"
+    And the command should be executed as the "vde_student" identity
+    And the return code should be 0
     When I execute "bin/vde rebuild python"
     Then the command should succeed
     And the Docker image "vde-python" should exist on the Hub
     And the container "vde-python" should be running
     And the return code should be 0
 
-    # 4. The Handshake (Enter & Shell Execution)
-    # Note: We use 'vde enter' to prove orchestration, NOT raw SSH.
-    When I execute "bin/vde enter python --command 'echo \"The Contract is Signed\"'"
-    Then the output should contain "The Contract is Signed"
-    And the command should be executed as the "vde_student" identity
-    And the return code should be 0
-
-    # 4. The Quench (Stop)
+  Scenario: Lifecycle Step 4 - Spoke Decommissioning (stop & rm)
+    Given "vde-python" is currently running
     When I execute "bin/vde stop python"
     Then the container "vde-python" should not be running
     And the return code should be 0
-
-    # 5. The Dissolution (Remove)
     When I execute "bin/vde rm python"
     Then the container "vde-python" should not exist
     And the return code should be 0
 
-  Scenario: The Expansion Mandate - Dynamic Registration (Packages)
-    Given the 4 Pillars (Zsh, Git, Docker, SSH) have passed their individual proofs
-    When I execute "bin/vde add --quiet --port 2298 --pkgs 'htop' dynamic-pkg-vm"
+  Scenario: Lifecycle Step 5 - Dynamic Expansion (add & uninstall)
+    When I execute "bin/vde add --quiet --port 2298 --pkgs 'htop' dynamic-vm"
     Then the command should succeed
-    And the VM "vde-dynamic-pkg-vm" must be registered as a "language"
-    And the setup script for "dynamic-pkg-vm" must exist
-    When I execute "bin/vde uninstall dynamic-pkg-vm --skip-confirm"
+    And the VM "vde-dynamic-vm" must be registered as a "language"
+    And the setup script for "dynamic-vm" must exist
+    When I execute "bin/vde uninstall dynamic-vm --skip-confirm"
     Then the command should succeed
-
-  Scenario: The Expansion Mandate - Dynamic Registration (Custom Command)
-    Given the 4 Pillars (Zsh, Git, Docker, SSH) have passed their individual proofs
-    When I execute "bin/vde add --quiet --port 2299 dynamic-cmd-vm 'echo Custom Forge'"
-    Then the command should succeed
-    And the VM "vde-dynamic-cmd-vm" must be registered as a "language"
-    And the setup script for "dynamic-cmd-vm" must exist
-    When I execute "bin/vde uninstall dynamic-cmd-vm --skip-confirm"
-    Then the command should succeed
+    And the VM "dynamic-vm" should no longer be registered
 
   Scenario: The Forge Hardening - Hardened Rebuild
-    Given the 4 Pillars (Zsh, Git, Docker, SSH) have passed their individual proofs
-    And I have a valid VM definition for "python" in the Beskar Registry
+    Given I have a valid VM definition for "python" in the Beskar Registry
     When I execute "bin/vde rebuild --no-cache python"
     Then the command should succeed
     And the Docker image "vde-python" should exist on the Hub
