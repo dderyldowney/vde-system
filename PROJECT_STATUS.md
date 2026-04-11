@@ -8,7 +8,7 @@ v1.2.3 is officially declared the functional baseline for the VDE project. All t
 
 ### 1. CORE MILESTONES COMPLETED
 - [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars (v1.2.3).
-- [x] **Proof of Life Contract**: Codified and verified full lifecycle (create, rebuild, start, enter, stop, remove, add, uninstall).
+- [x] **Proof of Life Contract**: Codified and verified full lifecycle (init, create, rebuild, start, enter, stop, remove, add, uninstall).
 - [x] **Deterministic Error Engine (Phase 26)**: 100% of CLI commands wrapped in `vde_run`. Signal translation (SIGINT/SIGKILL/SIGTERM) and lock transparency (PID reporting) active.
 - [x] **Lock-Queue Model (Phase 25)**: Replaced competitive spinlocks with deterministic First-In-First-Out (FIFO) sequencing. Verified under high-volume concurrency (10+ simultaneous requests).
 - [x] **Spoke Ignition Hooks**: All 8 service spokes migrated to asynchronous background ignition.
@@ -17,7 +17,7 @@ v1.2.3 is officially declared the functional baseline for the VDE project. All t
 - [x] **UAP Enforcement**: Mandatory supervision by `bin/vde-enforce-uap.zsh` integrated into all CLI paths.
 
 ### 2. TEST FIDELITY
-- **Behave BDD**: 20 Scenarios / 150 Steps - **100% PASS**
+- **Behave BDD**: 21 Scenarios / 161 Steps - **100% PASS**
 - **Unified Tagging**: `@system-spine` now serves as the primary audit gate.
 - **Performance**: Optimized setup/teardown and port discovery for high-velocity CI.
 

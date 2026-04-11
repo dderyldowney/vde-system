@@ -230,7 +230,7 @@ vde_init_set_permissions() {
     find "${VDE_ROOT_DIR}/scripts" -type f \( -name "*.sh" -o -name "*.zsh" \) -exec chmod +x {} \; 2>/dev/null || true
     
     # Set SSH directory permissions (recursive for keys)
-    local ssh_dir="${HOME}/.ssh/vde"
+    local ssh_dir="${VDE_SSH_DIR}"
     if [[ -d "${ssh_dir}" ]] ; then
         chmod 700 "${ssh_dir}" 2>/dev/null || true
         # Set permissions on all subdirectories
@@ -344,41 +344,28 @@ if [[ "${NETWORKS_ONLY}" = "1" ]] ; then
         vde_init_show_status
     fi
 else
-    # Full setup mode - invoke build-and-start
+    # Full setup mode
     if [[ "${QUIET}" = "0" ]] ; then
-        echo "Running full VDE setup..."
-        echo ""
+        vde_log_info "Initializing VDE infrastructure..." "forge"
     fi
     
-    # Run build-and-start for complete setup
-    if [[ -f "${VDE_ROOT_DIR}/bin/build-and-start" ]] ; then
-        if [[ "${QUIET}" = "0" ]] ; then
-            "${VDE_ROOT_DIR}/bin/build-and-start"
-        else
-            "${VDE_ROOT_DIR}/bin/build-and-start" >/dev/null 2>&1
-        fi
-        # Apply enhanced permissions after build-and-start
-        vde_init_set_permissions
-    else
-        # Fallback: do setup manually if build-and-start doesn't exist
-        if ! vde_init_check_prerequisites; then
-            exit ${VDE_ERR_DOCKER}
-        fi
-        
-        vde_init_create_directory_structure
-        vde_init_generate_configs
-        vde_init_setup_ssh
-        
-        # Create production network
-        vde_init_create_network "${VDE_DOCKER_NETWORK}" "${FORCE}"
-        
-        # Create test network if requested
-        if [[ "${TESTING}" = "1" ]] ; then
-            vde_init_create_network "${VDE_TEST_NETWORK}" "${FORCE}"
-        fi
-        
-        vde_init_set_permissions
+    if ! vde_init_check_prerequisites; then
+        exit ${VDE_ERR_DOCKER}
     fi
+    
+    vde_init_create_directory_structure
+    vde_init_generate_configs
+    vde_init_setup_ssh
+    
+    # Create production network
+    vde_init_create_network "${VDE_DOCKER_NETWORK}" "${FORCE}"
+    
+    # Create test network if requested
+    if [[ "${TESTING}" = "1" ]] ; then
+        vde_init_create_network "${VDE_TEST_NETWORK}" "${FORCE}"
+    fi
+    
+    vde_init_set_permissions
     
     if [[ "${QUIET}" = "0" ]] ; then
         echo ""
