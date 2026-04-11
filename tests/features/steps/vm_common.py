@@ -698,10 +698,12 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
         clean_stdout = ansi_escape.sub('', raw_output)
         
         # Filter out VDE infrastructure logs (e.g. [INFO] Validating..., [SUCCESS] ..., etc)
-        # These headers confuse BDD step assertions.
+        # BUG FIX: Only strip timestamps, keep [LEVEL] tags as they are used for verification
+        # and ensure we don't strip lines that are pure data (like container names)
         filtered_lines = []
         for line in clean_stdout.splitlines():
-            if not re.match(r'^\[(INFO|SUCCESS|WARN|ERROR|DEBUG|DOCKER|FORGE|SSH|VDE)\]', line) and not re.match(r'^\d{4}-\d{2}-\d{2}T', line):
+            # Only strip if it matches the EXACT timestamp pattern at the start
+            if not re.match(r'^\d{4}-\d{2}-\d{2}T', line):
                 filtered_lines.append(line)
         clean_stdout = "\n".join(filtered_lines).strip()
 

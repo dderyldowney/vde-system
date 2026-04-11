@@ -54,7 +54,7 @@ Feature: System Spine Integrity
     And the return code should be 0
 
   @system-spine @critical-path @git
-  Scenario: Pillar II - The Chronicler's Record (Git)
+  Scenario: Pillar II - The Chronicler's Record (Git)       # tests/features/core-infrastructure/system-spine.feature:57
     Given a temporary workspace in "plans/scripts/git-test"
     When I execute "git init" in the workspace
     Then the directory ".git" should exist
