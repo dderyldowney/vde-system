@@ -21,6 +21,12 @@
     - Implemented background startup via the new Ignition Hook.
     - Achieved "Born Ready (BTO)" compliance by moving heavy hydration (venv/pkg installation) and directory ownership finalization to the build phase.
 - **Test Fidelity:** Updated `Makefile` to include `*.zsh` in all test targets and added reliable polling to the JupyterLab integration suite to account for service binding time.
+- **Deterministic Error Engine (Phase 26 - Absolute):**
+    - **Execution Wrapper:** Implemented `vde_run` in `lib/vde-core` to provide a unified, deterministic entry point for all command execution. It captures exit codes and system signals, immediately handing off to the centralized VDE Error Engine.
+    - **Signal Translation:** Hardened `lib/vde-errors` to map raw kernel signals (130 SIGINT, 137 SIGKILL, 143 SIGTERM) into clear, remediable UX feedback.
+    - **Global Interception:** Integrated a global `SIGINT` trap in `bin/vde` to provide instantaneous feedback and clean exits during user interruptions.
+    - **Lock Transparency:** Updated `lib/vm-lock` and `lib/vde-progress` to extract and report real process owners (PID/PGID) during resource contention, removing all "simulation" in favor of physical system state reporting.
+    - **100% BDD Fidelity:** Implemented and verified `error-handling.feature` using real environmental conditions (actual signals and physical lock files).
 
 ## SYSTEM BENCHMARKS (VDE 1.2.2)
 - **Canonical Ignition Speed:** 3.959s. This is the benchmark for 3-VM Parallel Ignition (python, postgres, redis) on current hardware. Any future refactor that slows this down is a deviation from the Way.
