@@ -40,8 +40,8 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
 
 ### **II. THE HEARTBEAT: THE PROOF OF LIFE CONTRACT**
 *   **Mandate L**: The contract at `plans/system-spine-contract.md` is the **Heartbeat** of the project.
-*   **Permitted States**: The only authorized VM lifecycle operations are: `create`, `rebuild`, `start`, `enter`, `stop`, `remove`, `add`, and `uninstall`.
-*   **Protocol Blockade**: Any failure to meet this standard is a **Blockage**. Remediation takes absolute precedence over all other work.
+*   **Permitted States**: The only authorized VM lifecycle operations are: `init`, `create`, `rebuild`, `start`, `enter`, `stop`, `remove`, `add`, and `uninstall`.
+*   **Protocol Blockade**: Any status other than **100% GREEN** on `@system-spine` and core tests is an immediate **Remediation Incident**. No secondary implementation or refactoring is permitted until the Heartbeat is restored.
 
 ### **III. THE UNYIELDING TETRAD: THE SYSTEM SPINE**
 Empirical verification of the four pillars is mandatory before any mission ignition:

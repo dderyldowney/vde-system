@@ -5,10 +5,10 @@
 
 ---
 
-## THE SOVEREIGN BASELINE: v1.2.3
-- **Baseline Status**: v1.2.3 is the absolute functional baseline for the VDE project. All previous versions are classified as historical artifacts.
-- **Onboarding Authority**: `VDE_INSTALL.md` is the sole ritual for system ignition and configuration.
-- **The Sovereign Baseline**: Deterministic Ignition, SSH Agent Forwarding, and Docker Socket bridges are certified stable at this baseline.
+## THE HEARTBEAT: PROOF OF LIFE CONTRACT
+- **Mandatory Lifecycle**: The Proof of Life Contract (init -> create -> start -> enter -> rebuild -> stop -> rm -> add -> uninstall) is the non-negotiable heartbeat of the VDE.
+- **Remediation Protocol**: Any status other than **100% GREEN** on `@system-spine` and core lifecycle tests triggers an immediate **Protocol Blockade**. No secondary features or refactoring are permitted until the heartbeat is restored to Green.
+
 
 ---
 
