@@ -23,8 +23,8 @@ Welcome, Foundling, to the VDE — the Beskar Hub for your development Spokes. W
 | Section | Description |
 |---------|-------------|
 | **🛡️ Why the Way?** | [The Seeker's Recon](docs/WHY_USE_VDE.md) - Learn the power of VDE |
-| **📘 The Warrior's Guide** | [USER_GUIDE.md](USER_GUIDE.md) - Step-by-step hydration for new Foundlings |
-| **Ignition Prerequisites** | [Requirements](docs/requirements.md) • [Quick Strike](docs/quick-start.md) |
+| **📘 The Warrior's Guide** | [VDE_INSTALL.md](VDE_INSTALL.md) - **MANDATORY**: Start here for initial installation and setup. |
+| **Ignition Prerequisites** | [Requirements](docs/requirements.md) • [VDE_INSTALL.md](VDE_INSTALL.md) |
 | **Sovereign Handshake** | [SSH Configuration](docs/ssh-configuration.md) • [Spoke Communication](docs/advanced-usage.md#inter-container-communication) • [Handshake Troubleshooting](docs/troubleshooting.md#ssh-agent-issues) |
 | **Core Mandates** | [Available Rituals](docs/available-scripts.md) • [Predefined Spokes](docs/predefined-vm-types.md) • [Command Reference](docs/command-reference.md) |
 | **The Beskar Vault** | [Extending the Creed](docs/extending-vde.md) • [Directory Hierarchy](docs/directory-structure.md) |

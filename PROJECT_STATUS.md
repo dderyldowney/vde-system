@@ -1,10 +1,10 @@
-# PROJECT STATUS - VDE v1.2.2 (Absolute)
+# PROJECT STATUS - VDE v1.2.3 (Absolute)
 
 **CURRENT STATE: 100% GREEN (HARDENED HANDSHAKE CERTIFIED)**
-**DATE:** 2026-04-10
+**DATE:** 2026-04-11
 
 ## EXECUTIVE SUMMARY
-VDE v1.2.2 has successfully achieved the **Hardened Handshake** certification. The infrastructure is empirically verified through the `@system-spine` tetrad and the **Proof of Life** lifecycle contract.
+VDE v1.2.3 has been released. This version introduces the **Sovereign Installation Ritual** via `VDE_INSTALL.md`, providing a unified, tested path for new Foundlings to join the Tribe.
 
 ### 1. CORE MILESTONES COMPLETED
 - [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars (v1.2.2).
