@@ -30,7 +30,8 @@ The main agent MUST complete these 8 steps sequentially before doing *anything e
 Violating any of these mandates is a failure of the agent's primary directive.
 
 1.  **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`. Bash is strictly forbidden. The agent MUST NOT use `bash` to execute commands.
-2.  **Main Agent is Orchestrator ONLY**: The Main Agent MUST NOT write implementation code if it spans >1 file. The Main Agent's job is planning, orchestrating, and verifying. *Exception: If sub-agents are technically unavailable, the Main Agent may perform direct implementation provided every action is strictly supervised by the Enforcer.*
+2.  **DEVELOP BRANCH ONLY (ABSOLUTE)**: All active work MUST occur on the `develop` branch. `main` is reserved for STABLE RELEASES ONLY. Direct work on `main` is strictly prohibited.
+3.  **Main Agent is Orchestrator ONLY**: The Main Agent MUST NOT write implementation code if it spans >1 file. The Main Agent's job is planning, orchestrating, and verifying. *Exception: If sub-agents are technically unavailable, the Main Agent may perform direct implementation provided every action is strictly supervised by the Enforcer.*
 3.  **Enforcer Supervision (Rule A)**: Every single action (shell commands, dispatches, verification steps, and cleanup) MUST be run under the supervision of the Enforcer (`bin/vde-enforce-uap.zsh`).
 4.  **Phase-End Re-Audit Swarm (Rule B)**: Every development phase MUST automatically conclude with a supervised re-audit swarm. This swarm MUST assume errors exist, search for regressions or weak spots, rerun all relevant Behave scenarios, and provide a summary of findings. Skipping or shortening this re-audit is a total mandate failure.
 5.  **Explicit Commit Gate (Rule C)**: Following a successful re-audit, the agent MUST ask for explicit 'commit now' approval from the user. No commits are allowed without this manual gate.

@@ -1,6 +1,7 @@
 # Session Handover — v1.2.2 Absolute Release
 
 **Current Status**: 🟢 VDE v1.2.2 ABSOLUTE HARDENING COMPLETE / 100% GREEN
+**Active Branch**: `develop` (STRICT MANDATE: Work on `develop` only)
 **Next Step**: High-Velocity Cluster Expansion (v1.3.0)
 
 ## Accomplishments (v1.2.2 Hardening Strike)
