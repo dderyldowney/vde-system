@@ -11,16 +11,35 @@ local vde_mysql_pkgs="default-mysql-server git docker.io"
 apt-get update
 apt-get install -y ${=vde_mysql_pkgs}
 
-# 3. PERSISTENCE ANCHOR (ONLY FOR SERVICES: mysql, redis, mongodb, rabbitmq, couchdb, nginx, postgres)
-# Append start command to devuser's .zshenv if not present
-local _zshenv="/home/devuser/.zshenv"
-if [[ "true" == "true" ]]; then
-    mkdir -p /home/devuser
-    touch "${_zshenv}"
-    grep -q "service mysql start" "${_zshenv}" || echo "sudo service mysql start >/dev/null 2>&1" >> "${_zshenv}"
-    chown devuser:devuser "${_zshenv}"
-fi
+# 3. SPOKE IGNITION REGISTRATION
+local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
+cat <<EOF > "${_spoke_ignition}"
+#!/usr/bin/env zsh
+# MySQL Spoke Ignition
+# Starts the server in the background on container start
 
-# 4. PURGING THE GHOSTS
+if ! service mysql status >/dev/null 2>&1; then
+    echo "[VDE-MYSQL] Forged in Beskar: Starting MySQL..."
+    sudo service mysql start >/dev/null 2>&1
+fi
+EOF
+chmod +x "${_spoke_ignition}"
+
+# 4. PERSISTENCE ANCHOR (Hardened Bridge)
+local _zshenv="/home/devuser/.zshenv"
+mkdir -p /home/devuser
+touch "${_zshenv}"
+# Remove legacy startup if present
+sed -i "/mysql start/d" "${_zshenv}"
+# Ensure bridge identity is available
+grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
+    echo "export SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock" >> "${_zshenv}"
+}
+chown devuser:devuser "${_zshenv}"
+
+# Stop service to maintain BTO state
+service mysql stop || true
+
+# 5. PURGING THE GHOSTS
 apt-get clean
 rm -rf /var/lib/apt/lists/*
