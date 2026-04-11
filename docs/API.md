@@ -1,6 +1,6 @@
 # VDE API Reference
 
-**Version:** 1.2.0 (The Hardened Handshake)
+**Version:** 1.2.3 (The Sovereign Baseline)
 **Status:** AUTHORITATIVE
 
 This document provides the complete API reference for the Virtual Development Environment (VDE) system.

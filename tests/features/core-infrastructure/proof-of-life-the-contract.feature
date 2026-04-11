@@ -6,7 +6,7 @@ Feature: The Proof of Life - The Contract
 
   Background: The Tetrad is Active
     Given the 4 Pillars (Zsh, Git, Docker, SSH) have passed their individual proofs
-    And the Hub is synchronized to version 1.2.2
+    And the Hub is synchronized to version 1.2.3
     # Ensure no lingering test VMs from failed runs
     And I execute "bin/vde uninstall vde-dynamic-pkg-vm --skip-confirm"
     And I execute "bin/vde uninstall vde-dynamic-cmd-vm --skip-confirm"

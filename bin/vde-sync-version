@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 #===============================================================================
-# VDE Version Synchronizer (v1.2.1 Hardened)
+# VDE Version Synchronizer (v1.2.3 Sovereign)
 #===============================================================================
 
 # 1. Initialize the Spine
@@ -25,18 +25,18 @@ vde_log_info "Synchronizing Tribe to Version: ${NEW_VER}" "forge"
 # 4. Strike docs/VDE-SPEC.md (The Beskar Source)
 # Synchronize the bottom footer if it exists
 sed -i '' -E "s/Version: [0-9.]+/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/docs/VDE-SPEC.md"
-sed -i '' -E "s/ARCHITECTURE v[0-9.]+/ARCHITECTURE v${NEW_VER}/" "${VDE_ROOT_DIR}/docs/VDE-SPEC.md"
+sed -i '' -E "s/ARCHITECTURE v[0-9.]+ .*/ARCHITECTURE v${NEW_VER} (The Sovereign Baseline)/" "${VDE_ROOT_DIR}/docs/VDE-SPEC.md"
 vde_log_success "Aligned docs/VDE-SPEC.md footer" "forge"
 
 # 5. Strike docs/ARCHITECTURE.md
-sed -i '' -E "1s/^# ARCHITECTURE v.*/# ARCHITECTURE v${NEW_VER} (Absolute)/" "${VDE_ROOT_DIR}/docs/ARCHITECTURE.md"
+sed -i '' -E "1s/^# ARCHITECTURE v.*/# ARCHITECTURE v${NEW_VER} (The Sovereign Baseline)/" "${VDE_ROOT_DIR}/docs/ARCHITECTURE.md"
 vde_log_success "Aligned docs/ARCHITECTURE.md" "forge"
 
 # 6. Strike .gemini/instructions.md
 # Update title and version footer
-sed -i '' -E "s/# \*\*The Way of the VDE: v[0-9.]+ .*\*\*/# **The Way of the VDE: v${NEW_VER} (The Sovereign Handshake)**/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
+sed -i '' -E "s/# \*\*The Way of the VDE: v[0-9.]+ .*\*\*/# **The Way of the VDE: v${NEW_VER} (The Sovereign Baseline)**/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
 sed -i '' -E "s/Version: [0-9.]+/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
-sed -i '' -E "s/VDE-SPEC v[0-9.]+/VDE-SPEC v${NEW_VER}/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
+sed -i '' -E "s/VDE-SPEC v[0-9.]+ .*/VDE-SPEC v${NEW_VER} (Baseline)/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
 vde_log_success "Aligned .gemini/instructions.md" "forge"
 
 # 7. Strike MEMORY.md

@@ -1,10 +1,10 @@
 <p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-# The Way of the VDE: v1.0.0 (The Sovereign Handshake)
+# The Way of the VDE: v1.2.3 (The Sovereign Baseline)
 
 ![CI Status](https://github.com/dderyldowney/vde-system/actions/workflows/vde-ci.yml/badge.svg)
 
-A sovereign, template-based ecosystem of Dockerized Spokes. Supporting 19+ Language Spokes and 7+ Service Spokes, forged for the warrior who demands consistent hydration and absolute isolation. Accessible via the **Sovereign Handshake (SSH)** with a single, unyielding identity.
+A sovereign, template-based ecosystem of Dockerized Spokes. Supporting 19+ Language Spokes and 7+ Service Spokes, forged for the warrior who demands consistent hydration and absolute isolation. Accessible via **The Sovereign Baseline (SSH)** with a single, unyielding identity.
 
 **The Language of the Tribe:** Strictly **ZSH 5.0+**. No bash-isms, no shortcuts. [See Requirements](docs/requirements.md)
 
@@ -25,12 +25,12 @@ Welcome, Foundling, to the VDE — the Beskar Hub for your development Spokes. W
 | **🛡️ Why the Way?** | [The Seeker's Recon](docs/WHY_USE_VDE.md) - Learn the power of VDE |
 | **📘 The Warrior's Guide** | [VDE_INSTALL.md](VDE_INSTALL.md) - **MANDATORY**: Start here for initial installation and setup. |
 | **Ignition Prerequisites** | [Requirements](docs/requirements.md) • [VDE_INSTALL.md](VDE_INSTALL.md) |
-| **Sovereign Handshake** | [SSH Configuration](docs/ssh-configuration.md) • [Spoke Communication](docs/advanced-usage.md#inter-container-communication) • [Handshake Troubleshooting](docs/troubleshooting.md#ssh-agent-issues) |
+| **The Sovereign Baseline** | [SSH Configuration](docs/ssh-configuration.md) • [Spoke Communication](docs/advanced-usage.md#inter-container-communication) • [Handshake Troubleshooting](docs/troubleshooting.md#ssh-agent-issues) |
 | **Core Mandates** | [Available Rituals](docs/available-scripts.md) • [Predefined Spokes](docs/predefined-vm-types.md) • [Command Reference](docs/command-reference.md) |
 | **The Beskar Vault** | [Extending the Creed](docs/extending-vde.md) • [Directory Hierarchy](docs/directory-structure.md) |
 | **The Forge** | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) • [Development Guide](docs/DEVELOPMENT_GUIDE.md) |
 | **The Tribe's Contribution** | [Contributing Guide](CONTRIBUTING.md) • [The Language of the Tribe](STYLE_GUIDE.md) • [Testing Mandates](docs/TESTING.md) |
-| **Ancient Intel** | [API Reference](docs/API.md) • [Architecture v1.0.0](docs/ARCHITECTURE.md) • [Best Practices](docs/best-practices.md) |
+| **Ancient Intel** | [API Reference](docs/API.md) • [Architecture v1.2.3](docs/ARCHITECTURE.md) • [Best Practices](docs/best-practices.md) |
 | **Reinforcements** | [Troubleshooting](docs/troubleshooting.md) • [Rebuild Mandates](docs/rebuild-guidelines.md) |
 | **Evolution** | [Evolution Guide](#the-evolution-of-armor) - Keeping the Hub up-to-date |
 
@@ -75,10 +75,10 @@ vde rebuild
 
 ## The Resol’nare (The Core Mandates) 🛡️
 
-The VDE provides isolated jails for your work, all accessible via the Sovereign Handshake. Every jail contains:
+The VDE provides isolated jails for your work, all accessible via **The Sovereign Baseline**. Every jail contains:
 
 - **The Tribal Identity** (`devuser` with zsh, neovim, and the oh-my-zsh ritual)
-- **The Sovereign Handshake** on auto-allocated, audited ports
+- **The Sovereign Baseline** on auto-allocated, audited ports
 - **Persistent Beskar** (Workspace) mounted from your host
 - **The Hub Network** for seamless inter-Spoke communication
 
@@ -108,7 +108,7 @@ vde create go
 # 4. Ignite the Spoke
 vde start go
 
-# 5. Connect via the Sovereign Handshake (The Code Contract)
+# 5. Connect via **The Sovereign Baseline** (The Code Contract)
 vde enter go                  # MANDATORY: 'vde enter go' MUST work (Code Contract).
 ssh vde-go                    # SECONDARY: 'ssh vde-go' SHOULD work.
 
@@ -127,7 +127,7 @@ cd ~/workspace
 
 ## SSH Agent Trust Bridge & Spoke Communication 🛡️
 
-VDE includes **Atomic SSH Agent Forwarding**, enabling the Sovereign Handshake between Spokes and with external repositories.
+VDE includes **Atomic SSH Agent Forwarding**, enabling **The Sovereign Baseline** between Spokes and with external repositories.
 
 ### The Way of the Bridge
 
@@ -187,14 +187,14 @@ See [Handshake Configuration](docs/ssh-configuration.md) for complete intel.
 | Document | Description |
 |----------|-------------|
 | [Extending the Creed](docs/extending-vde.md) | Forge new Spokes |
-| [The Sovereign Handshake](docs/ssh-configuration.md) | SSH setup, agent trust, and Spoke communication |
+| [**The Sovereign Baseline**](docs/ssh-configuration.md) | SSH setup, agent trust, and Spoke communication |
 | [Directory Hierarchy](docs/directory-structure.md) | The structure of the Hub |
 
 ### The Forge (Development) 💻
 
 | Document | Description |
 |----------|-------------|
-| [VSCode Remote-SSH](docs/vscode-remote-ssh.md) | Code in comfort via the Sovereign Handshake. |
+| [VSCode Remote-SSH](docs/vscode-remote-ssh.md) | Code in comfort via **The Sovereign Baseline**. |
 | [Development Guide](docs/DEVELOPMENT_GUIDE.md) | Example battle scenarios |
 
 ### Ancient Intel (Reference) 📖
@@ -203,7 +203,8 @@ See [Handshake Configuration](docs/ssh-configuration.md) for complete intel.
 |----------|-------------|
 | [API Rituals](docs/API.md) | Complete API reference for scripts and libraries |
 | [Technical Deep Dive](docs/Technical-Deep-Dive.md) | VDE Under the Hood |
-| [Architecture v1.0.0](docs/ARCHITECTURE.md) | Technical blueprint of the Hub |
+| [Architecture v1.2.3](docs/ARCHITECTURE.md) | Technical blueprint of the Hub |
+
 | [Advanced Strikes](docs/advanced-usage.md) | Advanced techniques and patterns |
 | [Rebuild Mandates](docs/rebuild-guidelines.md) | When to re-smelt your armor |
 | [The Way (Best Practices)](docs/best-practices.md) | Recommended practices for the Tribe |
@@ -279,9 +280,9 @@ vde list
 | Blockade | Resolution |
 |-------|----------|
 | Port Ambiguity | See [Troubleshooting → Port Conflicts](docs/troubleshooting.md#port-conflicts) |
-| Handshake Failure | See [Sovereign Handshake → Troubleshooting](docs/ssh-configuration.md#troubleshooting) |
+| Handshake Failure | See [**The Sovereign Baseline** → Troubleshooting](docs/ssh-configuration.md#troubleshooting) |
 | Agent Disconnect | See [Troubleshooting → SSH Agent Issues](docs/troubleshooting.md#ssh-agent-issues) |
-| Spoke-to-Spoke Block | See [Sovereign Handshake → Spoke Communication](docs/ssh-configuration.md#vm-to-vm-communication) |
+| Spoke-to-Spoke Block | See [**The Sovereign Baseline** → Spoke Communication](docs/ssh-configuration.md#vm-to-vm-communication) |
 | Spoke Won't Ignite | See [Rebuild Mandates](docs/rebuild-guidelines.md) |
 | VSCode Denied | See [VSCode Remote-SSH](docs/vscode-remote-ssh.md) |
 

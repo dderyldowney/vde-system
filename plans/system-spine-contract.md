@@ -2,7 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Establish the **System-Spine** as a cognitive context and implement empirical verification of the core tetrad (Zsh, Git, Docker, SSH) to achieve **v1.2.1 hardened handshake** certification. This plan codifies the **Proof of Life** standard (create, rebuild, start, enter, stop, remove).
+**Goal:** Establish the **System-Spine** as a cognitive context and implement empirical verification of the core tetrad (Zsh, Git, Docker, SSH) to achieve **v1.2.3 The Sovereign Baseline** certification.
+ This plan codifies the **Proof of Life** standard (create, rebuild, start, enter, stop, remove).
 
 **Architecture:** A lightweight, silent ZSH script `bin/vde-spine-check.zsh` will perform functional challenges for each of the four pillars. This script will be integrated into `bin/vde` as a mandatory pre-flight check. The System-Spine is codified as a cognitive context for all VDE operations and is finalized with the `@system-spine` git tag.
 
@@ -224,7 +225,7 @@ git commit -m "feat: codify The Proof of Life - The Contract"
 - [ ] **Step 1: Update TEST_STATUS_REPORT.md**
 ```markdown
 ## Section 16: System-Spine Enforcement
-- **Status**: PASSED (v1.2.1 hardened handshake certified)
+- **Status**: PASSED (v1.2.3 The Sovereign Baseline certified)
 - **Pillars Verified**: Zsh, Git, Docker, SSH
 - **Ignition Check**: Active in `bin/vde`
 - **Cognitive Context**: Established
@@ -236,8 +237,8 @@ Run: `python3 -m behave --tags=@system-spine`
 Expected: All scenarios PASS.
 
 - [ ] **Step 3: Apply git tag and commit final certification**
-Run: `git tag -f @system-spine -m "v1.2.1 hardened handshake certified"`
+Run: `git tag -f @system-spine -m "v1.2.3 The Sovereign Baseline certified"`
 ```bash
 git add tests/TEST_STATUS_REPORT.md
-git commit -m "docs: certify system-spine v1.2.1 hardened handshake"
+git commit -m "docs: certify system-spine v1.2.3 The Sovereign Baseline"
 ```
