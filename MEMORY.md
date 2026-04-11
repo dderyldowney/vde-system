@@ -1,15 +1,14 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-04-08T21:45:00Z
-**Version:** 1.0.0 (Official Release)
+**Last Updated:** 2026-04-11T14:00:00Z
+**Baseline Version:** 1.2.3 (The Sovereign Baseline)
 
 ---
 
-## THE MILESTONE: v1.2.3 — THE SOVEREIGN HANDSHAKE
-- **Official Release**: Cut on 2026-04-11. The VDE is now a production-ready developer utility with a unified onboarding experience.
-- **Sovereign Installation**: Codified `VDE_INSTALL.md` as the mandatory first ritual for all new Foundlings.
-- **Test Fidelity**: 100% GREEN status across all BDD, Unit, Integration, and Security tests.
-- **Core Stability**: Deterministic Ignition, Sovereign Identity (SSH), and Hardened Security (GID/Registry) are certified.
+## THE SOVEREIGN BASELINE: v1.2.3
+- **Baseline Status**: v1.2.3 is the absolute functional baseline for the VDE project. All previous versions are classified as historical artifacts.
+- **Onboarding Authority**: `VDE_INSTALL.md` is the sole ritual for system ignition and configuration.
+- **Sovereign Handshake**: Deterministic Ignition, SSH Agent Forwarding, and Docker Socket bridges are certified stable at this baseline.
 
 ---
 

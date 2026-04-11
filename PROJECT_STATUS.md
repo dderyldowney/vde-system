@@ -1,10 +1,10 @@
-# PROJECT STATUS - VDE v1.2.3 (Absolute)
+# PROJECT STATUS - VDE v1.2.3 (The Sovereign Baseline)
 
-**CURRENT STATE: 100% GREEN (HARDENED HANDSHAKE CERTIFIED)**
+**CURRENT STATE: 100% GREEN (SOVEREIGN BASELINE CERTIFIED)**
 **DATE:** 2026-04-11
 
 ## EXECUTIVE SUMMARY
-VDE v1.2.3 has been released. This version introduces the **Sovereign Installation Ritual** via `VDE_INSTALL.md`, providing a unified, tested path for new Foundlings to join the Tribe.
+v1.2.3 is officially declared the functional baseline for the VDE project. All technical debt from previous versions has been remediated or archived.
 
 ### 1. CORE MILESTONES COMPLETED
 - [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars (v1.2.2).
