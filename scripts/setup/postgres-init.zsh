@@ -35,15 +35,35 @@ sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" "${PG_BASE}/p
 service postgresql restart
 pg_isready -h localhost
 
-# 3. PERSISTENCE ANCHOR
+# 3. SPOKE IGNITION REGISTRATION
+local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
+cat <<EOF > "${_spoke_ignition}"
+#!/usr/bin/env zsh
+# PostgreSQL Spoke Ignition
+# Starts the database in the background on container start
+
+if ! pg_isready -h localhost >/dev/null 2>&1; then
+    echo "[VDE-POSTGRES] Forged in Beskar: Starting PostgreSQL..."
+    sudo service postgresql start >/dev/null 2>&1
+fi
+EOF
+chmod +x "${_spoke_ignition}"
+
+# 4. PERSISTENCE ANCHOR (Hardened Bridge)
 local _zshenv="/home/devuser/.zshenv"
 mkdir -p /home/devuser
 touch "${_zshenv}"
-grep -q "postgresql start" "${_zshenv}" || {
-    echo "sudo service postgresql start >/dev/null 2>&1" >> "${_zshenv}"
+# Remove legacy startup if present
+sed -i "/postgresql start/d" "${_zshenv}"
+# Ensure bridge identity is available
+grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
+    echo "export SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock" >> "${_zshenv}"
 }
 chown devuser:devuser "${_zshenv}"
 
-# 4. PURGING THE GHOSTS
+# Stop service to maintain BTO state
+service postgresql stop || true
+
+# 5. PURGING THE GHOSTS
 apt-get clean
 rm -rf /var/lib/apt/lists/*

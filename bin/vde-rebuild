@@ -223,9 +223,3 @@ done
 
 echo ""
 echo "Done!"
-@]}"; do
-    build_vm_image "${spoke}"
-done
-
-echo ""
-echo "Done!"
