@@ -2,58 +2,62 @@
 
 ## 1. The Rule Spine (UAP Enforcement)
 
-The core of VDE is supervised by `bin/vde-enforce-uap.zsh`. This script audits the workspace for compliance with the **Resol’nare** (Supreme Prohibitions).
+The Virtual Development Environment is governed by the **Universal Agent Protocol (UAP)**, enforced by `bin/vde-enforce-uap.zsh`. This sentinel script ensures every action adheres to the **Resol’nare** (Supreme Prohibitions).
 
-### Compliance Checks:
-- **ZSH-Native Flags**: Detects "Fake ZSH" by searching for `${(` parameter expansion patterns in scripts >30 lines.
-- **Shebang Purity**: Ensures `#!/usr/bin/env zsh` is universal.
-- **Ghost Detection**: Verifies that `apt` artifacts and temporary debris are purged.
+### Core Enforcement Mandates:
+- **ZSH Native Sovereignty**: Detects "Fake ZSH" by verifying the use of native parameter expansion `${(` and associative arrays. Usage of `bash` or 0-indexed arrays is a Class-A violation.
+- **Shebang Purity**: Recursively audits `bin/`, `lib/`, and `scripts/` to ensure `#!/usr/bin/env zsh` is the universal entry point.
+- **Ghost Detection**: Monitors for "Ghost Zones" (unauthorized root directories) and ensures build-time artifacts (`apt` lists) are purged.
+- **Supervised Execution**: Every CLI strike is wrapped in the Enforcer to maintain architectural integrity.
 
 ## 2. The Ignition Pipeline (The Smelting Ritual)
 
-VDE uses a reactive synchronization mechanism to ensure the runtime environment matches the configuration source.
+VDE employs a three-tier reactive synchronization pipeline to transform human-readable intent into high-performance runtime data.
 
-1.  **Manual Strike**: User edits `data/vm-types.conf`.
-2.  **The Translator**: Pure ZSH parsing (Rule G) hammers `.conf` into the atomic 8-field `.json` registry.
-3.  **The Smelt**: If `.json` is newer than `.cache`, the system re-smelts the tracking fob for O(1) runtime lookup.
-4.  **Ignition**: The `bin/vde` orchestrator verifies the cache before spawning any VM.
+1.  **The Source (`data/vm-types.conf`)**: The user-editable flat-file registry following the 8-field standard.
+2.  **The Registry (`data/vm-types.json`)**: The `vde_translate_conf_to_json` ritual (Rule G) hammers the `.conf` into a structured JSON archive using pure ZSH parsing.
+3.  **The Cache (`.cache/vm-types.cache`)**: The `smelt_vm_cache` process generates a ZSH-native associative array for O(1) runtime lookup.
+4.  **Ignition Sync**: The `bin/vde` orchestrator performs a timestamp audit. If source files are newer than the cache, a re-smelt is triggered automatically before Spoke ignition.
 
 ## 3. Concurrency & Atomic Stewardship
 
-VDE manages high-concurrency operations through a **Lock-Queue Model** (Phase 25).
+VDE manages high-concurrency operations (parallel builds and mass ignitions) via the **Lock-Queue Model** (Phase 25).
 
-### Atomic File Locking (`lib/vm-lock`)
-Uses kernel-level `mkdir` atomicity to manage:
-- **VM Locking**: `.locks/vms/<name>.lock` prevents race conditions during builds.
-- **Global Mutex**: `.locks/global-config.lock` protects the Beskar Registry.
-- **Heartbeat Proof**: Locks record `PID:PGID:TIMESTAMP` to allow deterministic recovery from hung processes.
+### FIFO Ticket-Based Locking (`lib/vm-lock`)
+Unlike traditional spinlocks, VDE uses a deterministic sequencing mechanism:
+- **Registration**: Every process requesting a lock creates a unique "Ticket" in `${lock_file}.queue/` using `${EPOCHREALTIME}-$$`.
+- **Oldest Ticket Priority**: The `claim_lock` function enforces FIFO order—only the process with the oldest timestamped ticket may pass the atomic gate.
+- **The Atomic Gate**: Uses kernel-level `mkdir` atomicity to claim the final directory-based lock.
+- **Ownership Proof**: Once claimed, the lock directory contains a `pid` file recording `PID:PGID:TIMESTAMP` for transparent monitoring and crash recovery.
 
-### Port Registry (`.cache/port-registry/`)
-Uses `<port>.lock` files to reserve SSH and service ports before assignment, preventing double-allocation in parallel ignitions.
+### Port Stewardship (`.locks/ports/`)
+To prevent double-allocation during parallel strikes, VDE reserves ports using `<port>.lock` markers. No Spoke is assigned a port until a physical diagnostic handshake (`docker run --rm`) and a lock acquisition are both successful.
 
 ## 4. Universal Script Parity (USP)
 
-Hydration logic is decoupled from Docker build-args. Every VM type has a corresponding ritual in `scripts/setup/`.
+VDE decouples environment hydration from Dockerfile complexity through USP rituals stored in `scripts/setup/`.
 
-- **Build Context**: The entire VDE root is the build context.
-- **Hydration**: The `vde-base` Dockerfile triggers the setup script: `zsh /vde/scripts/setup/<name>-init.zsh`.
-- **Hygiene**: Scripts MUST end with `apt-get clean && rm -rf /var/lib/apt/lists/*`.
+- **Hydration Ritual**: Every Spoke entry MUST point to a setup script (`<alias>-init.zsh`).
+- **Asynchronous Ignition**: Service Spokes (Postgres, Redis, etc.) register background ignition hooks in `/usr/local/bin/vde-spoke-ignition.zsh`, detaching service availability from the primary SSH gate.
+- **Born Ready (BTO)**: All hydration happens during the `docker build` phase. Runtime `apt` calls are strictly forbidden to ensure images are immutable and portable.
 
 ## 5. Cognitive Sovereignty (Section 13)
 
-VDE operations follow the **Mandalorian Sequence**:
-1.  **Kov'nyn (Think First)**: Strategic hypothesis and reasoning budget expenditure.
-2.  **Recon (Scout Deployment)**: Factual "Raw Ore" gathering via research tools.
-3.  **Forge Integration**: Internalizing facts into the strategy.
-4.  **Synthesis (Strike the Beskar)**: Minimal implementation derived from first principles.
-5.  **Ret'lini (Self-Critique)**: Validation against the Rule Spine.
+The "Alor" (Orchestrator) operates under the **Mandalorian Sequence**:
+1.  **Kov'nyn (Think First)**: Spend the reasoning budget to form a hypothesis before deploying tools.
+2.  **Recon (Scout Deployment)**: Use research scouts for factual ore (API signatures, error codes).
+3.  **Synthesis (Strike the Beskar)**: Implement code derived from first principles. Paraphrasing scouts is forbidden; all code must be forged in the Orchestrator's core.
+4.  **Ret'lini (The Revisit)**: Post-implementation self-critique against the Rule Spine.
 
-## 6. Security & Privacy Model
+## 6. Security & Infrastructure Bridge
 
-- **Identity Isolation**: The `vde_student` key is isolated to `~/.ssh/vde/`.
-- **Input Sanitization**: All user-supplied names are struck through `vde_normalize_name` (alphanumeric + dash whitelist) before touching the FS or `eval` sinks.
-- **Container Sovereignty**: The `vde-net` provides bridge isolation. The Docker socket is bridged via secure group-id alignment in `vde-entrypoint.zsh`.
+- **Identity Isolation**: The `vde_student` identity is confined to the `${VDE_SSH_DIR}` (`~/.ssh/vde/`), ensuring no leakage into the host's primary SSH config.
+- **Command Sanitization**: VDE has purged all `eval` usage in primary sinks. Commands are executed via native ZSH arrays `"${cmd[@]}"` to neutralize injection vectors.
+- **Sovereign Bridge**: SSH Agent forwarding is established via `socat` UNIX-proxying in the entrypoint, bypassing filesystem permission blocks on Darwin and Linux.
+- **Socket Sovereignty**: The Docker socket is bridged via dynamic GID mapping and secure `chmod 666` within the isolated `vde-net` environment.
 
 ---
-Version: 1.3.0
-Status: Hardened
+**Version**: 1.3.0
+**Status**: SOVEREIGN BASELINE CERTIFIED
+**Reference**: ARCHITECTURE v1.3.0
+---
