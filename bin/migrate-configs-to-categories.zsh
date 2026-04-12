@@ -23,6 +23,17 @@ CONFIGS_ROOT="${VDE_ROOT_DIR}/configs/docker"
 LANG_DIR="${CONFIGS_ROOT}/languages"
 SVC_DIR="${CONFIGS_ROOT}/services"
 
+# Portable Sed Helper (Rule G)
+vde_sed_inplace() {
+    local pattern="$1"
+    local file="$2"
+    if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' "${pattern}" "${file}"
+    else
+        sed -i "${pattern}" "${file}"
+    fi
+}
+
 echo "Starting configuration migration..."
 
 # 1. Create category directories
@@ -65,7 +76,7 @@ for vm in ${(k)VM_TYPE}; do
                 # Replace ../../../ with ../../../../
                 # Use a specific pattern to avoid over-replacing
                 if grep -q "\.\.\/\.\.\/\.\.\/" "${compose_file}" && ! grep -q "\.\.\/\.\.\/\.\.\/\.\.\/" "${compose_file}"; then
-                    sed -i '' 's|\.\./\.\./\.\./|\.\./\.\./\.\./\.\./|g' "${compose_file}"
+                    vde_sed_inplace 's|\.\./\.\./\.\./|\.\./\.\./\.\./\.\./|g' "${compose_file}"
                 fi
             fi
         fi
