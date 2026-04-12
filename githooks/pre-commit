@@ -3,9 +3,14 @@
 #
 # Enforces Rule C (Zsh Purity) and Rule 12 (Security Law)
 # and performs a silent spine check.
+set -e
 
 # Zsh-native parameter expansion (UAP Mandate 1)
 local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
+# Determine VDE root directory
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
 
 # 1. Zsh Purity Check (Rule C)
 # Scans staged .zsh and .sh files for #!/bin/bash or #!/bin/sh shebangs.
@@ -35,7 +40,14 @@ for file in "${staged_all[@]}"; do
     fi
 done
 
-# 3. Silent Spine Check
+# 3. Universal Script Parity (USP) Validation (Rule F)
+if [[ -f "${VDE_ROOT_DIR}/githooks/usp-validator.zsh" ]]; then
+    if ! zsh -e "${VDE_ROOT_DIR}/githooks/usp-validator.zsh"; then
+        exit 1
+    fi
+fi
+
+# 4. Silent Spine Check
 # Executes ./bin/vde-spine-check.zsh and blocks commit if it fails.
 if [[ -f "./bin/vde-spine-check.zsh" ]]; then
     if ! ./bin/vde-spine-check.zsh > /dev/null 2>&1; then
