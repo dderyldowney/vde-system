@@ -21,7 +21,6 @@ services:
       - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name=lua"
-    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
       - "2212:2212"

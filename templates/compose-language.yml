@@ -21,7 +21,6 @@ services:
       - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name={{NAME}}"
-    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
       - "{{SSH_PORT}}:{{SSH_PORT}}"
