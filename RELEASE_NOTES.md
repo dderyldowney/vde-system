@@ -7,4 +7,4 @@ This file tracks the evolution of the Virtual Development Environment. For detai
 ---
 ## 📦 Release History
 
-- [v1.3.0 (The Sovereign Baseline)](./docs/releases/v1.3.0.md) - 2026-04-12
+- [v1.3.0] (./docs/releases/v1.3.0.md)

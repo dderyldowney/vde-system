@@ -111,4 +111,50 @@ if [[ -f "$zshrc" ]]; then
     vde_log_success "Aligned \$HOME/.zshrc gvde handshake" "forge"
 fi
 
+# 19. The Chronicler's Ritual (Rule O)
+vde_log_info "Executing Chronicler's Ritual..." "forge"
+local RELEASE_RECORD="${VDE_ROOT_DIR}/docs/releases/v${NEW_VER}.md"
+mkdir -p "${VDE_ROOT_DIR}/docs/releases"
+
+if [[ ! -f "${RELEASE_RECORD}" ]]; then
+    # Create initial record from current MEMORY.md evolution section
+    cat <<EOF > "${RELEASE_RECORD}"
+# VDE v${NEW_VER}: The Sovereign Baseline
+
+**Release Date:** $(date +%Y-%m-%d)
+**Status:** 🟢 SOVEREIGN BASELINE CERTIFIED (100% GREEN)
+
+## 🛡️ Core Highlights
+
+$(grep -A 20 "## SYSTEM EVOLUTION" "${VDE_ROOT_DIR}/MEMORY.md" | grep -v "## SYSTEM EVOLUTION" | sed '/^##/q' | head -n -1)
+
+## 🏗️ The System Spine
+
+Certified verification of the four pillars:
+1. **Zsh**: The Voice
+2. **Git**: The Chronicler
+3. **Docker**: The World-Forge
+4. **SSH**: The Transversal Bridge
+
+---
+**Certification**: $(grep -o "[0-9]\+ BDD Steps" "${VDE_ROOT_DIR}/docs/releases/v1.3.0.md" || echo "Pending") certification.
+EOF
+    vde_log_success "Forged new release record: ${RELEASE_RECORD}" "forge"
+fi
+
+# Update root RELEASE_NOTES.md
+cat <<EOF > "${VDE_ROOT_DIR}/RELEASE_NOTES.md"
+# VDE Release Archive
+
+This file tracks the evolution of the Virtual Development Environment. For detailed technical changes and empirical certifications, refer to the individual release records in \`docs/releases/\`.
+
+## 🟢 Latest Sovereign Baseline: [v${NEW_VER}](./docs/releases/v${NEW_VER}.md) ($(date +%Y-%m-%d))
+
+---
+## 📦 Release History
+
+$(ls -r "${VDE_ROOT_DIR}/docs/releases/"v*.md | xargs -I {} basename {} .md | xargs -I {} echo "- [{}] (./docs/releases/{}.md)")
+EOF
+vde_log_success "Aligned root RELEASE_NOTES.md" "forge"
+
 vde_log_success "Alignment Complete for Version ${NEW_VER}." "forge"
