@@ -29,6 +29,7 @@
 - **Sovereign Baseline Mandate (Codified 2026-04-12):**
     - Defined "Sovereign Baseline" as the dynamic pointer to the current authoritative version in `docs/VDE-SPEC.md`.
     - Established "Usage Law": All actions must be measured against the Sovereign Baseline to ensure zero drift.
+    - **Rule J Hardening**: Explicitly codified that in case of any versioning discrepancy, `docs/VDE-SPEC.md` wins all arguments.
 
 ## SYSTEM EVOLUTION (2026-04-10) - VDE 1.3.0 HARDENING STRIKE
 - **Spoke Ignition Hook:** Implemented `/usr/local/bin/vde-spoke-ignition.zsh` hook in `scripts/vde-entrypoint.zsh`. This allows spokes to register background services that start automatically on container ignition, detaching them from the SSH gate lifecycle.

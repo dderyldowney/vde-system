@@ -18,6 +18,7 @@
 4.  **Baseline Alignment**:
     - Universally applied `1.3.0` version baseline across all active plans and scripts.
     - Codified the "Sovereign Baseline" mandate as the dynamic authority for versioning and compliance.
+    - Strengthened Rule J: `docs/VDE-SPEC.md` is now the absolute final authority in all versioning arguments.
 5.  **Lock-Queue Model (Phase 25 - The Sovereign Baseline)**:
     - Replaced competitive spinlocks with deterministic FIFO ticket-based sequencing in `lib/vm-lock`.
     - Eliminated "thundering herd" race conditions under high concurrency (10+ simultaneous requests).
