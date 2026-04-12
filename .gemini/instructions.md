@@ -22,7 +22,7 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
 
 ---
 
-## **THE RESOL’NARE: SUPREME PROHIBITIONS (A–K)**
+## **THE RESOL’NARE: SUPREME PROHIBITIONS (A–N)**
 
 * **A. The Armorer’s Command (The Rule Spine)**: 
     * Every action MUST be run under `bin/vde-enforce-uap.zsh`. No action is permitted without this spine.
@@ -36,15 +36,14 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
 * **G. The Scavenger’s Ban (Zero-Host Dependency)**: You are strictly forbidden from calling `jq` directly. You MUST use the `vde_query_json` wrapper or pure ZSH parsing.
 * **H. The Pre-Flight Mandate (Ignition Sync)**: The CLI MUST perform a timestamp audit at ignition. If source files are newer than the cache, a re-smelt is mandatory.
 * **I. The 8-Field Standard**: You are forbidden from deviating from the strict 8-field registry layout.
-* **J. The Rule of One (Dynamic Versioning)**: `docs/VDE-SPEC.md` is the SOLE authority for the project version. Hardcoding version numbers in headers is prohibited. In case of any discrepancy, the version in `docs/VDE-SPEC.md` wins all arguments.
+* **J. The Rule of One (The Final Arbiter)**: `docs/VDE-SPEC.md` is the UNIQUE and ABSOLUTE authority for the project version. Any other file, script, or environment variable that suggests a different version is considered non-compliant commentary. In any discrepancy, the version recorded in `docs/VDE-SPEC.md` wins all arguments immediately and without appeal.
 * **K. The 3-VM Concurrent Limit**: All parallel ignition and stress operations are strictly limited to a maximum of 3 concurrent Spokes (containers).
 * **L. The Proof of Life Mandate (Lifecycle Authority)**: The Proof of Life contract (`plans/system-spine-contract.md`) is the **Heartbeat** of the project. It defines the minimum functional standard (create, rebuild, start, enter, stop, remove, add, uninstall). Any failure to meet this standard constitutes a **Blockage**. All Blockages MUST be remedied immediately; no secondary implementation or refactoring is permitted until the Heartbeat is restored.
 * **M. The Gatekeeper Mandate (Pre-Push)**: The Proof of Life contract MUST be verified via a `pre-push` git hook. No code is permitted to leave the local Forge unless the absolute lifecycle is certified 100% Green.
 * **N. The Sovereign Baseline (Dynamic Authority)**: 
-    * **Reserved Title**: "Sovereign Baseline" is a reserved title referring exclusively to the current authoritative version of the VDE as defined in `docs/VDE-SPEC.md`. 
-    * **Dynamic Reference**: The title is a dynamic pointer to the current state of truth (e.g., if VDE-SPEC is v1.3.0, then 1.3.0 is the Sovereign Baseline).
-    * **Future-Proofing**: New version tags immediately inherit this title. `docs/VDE-SPEC.md` remains the final authority, modified ONLY by `bin/vde-sync-version`.
-    * **Usage Law**: All analysis, verification, and status reporting MUST be measured against the Sovereign Baseline to ensure zero drift from the hardened state.
+    * **Reserved Title**: "Sovereign Baseline" is the reserved title for the version currently certified by `docs/VDE-SPEC.md`. 
+    * **The Heartbeat Link**: A version only holds the title of "Sovereign Baseline" when it is both recorded in the SPEC and passes the Mandate L Proof of Life.
+    * **Usage Law**: All analysis, verification, and status reporting MUST be measured against the Sovereign Baseline. Drift from this state is a Class-A violation.
 
 ## **THE SOVEREIGN INSTRUCTION SET v1.3.0**
 
