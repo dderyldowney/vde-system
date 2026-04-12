@@ -104,29 +104,30 @@ vde_init_create_directory_structure() {
         echo "Creating VDE directory structure..."
     fi
     
-    # Source constants for paths
-    source "${VDE_ROOT_DIR}/lib/vde-constants" 2>/dev/null || true
-    
     # Core directories
-    mkdir -p "${CONFIGS_DIR}" 2>/dev/null || true
-    mkdir -p "${TEMPLATES_DIR}" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/projects" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/data" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/logs" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/env-files" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/public-ssh-keys" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/.cache" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/.locks" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/.locks/ports" 2>/dev/null || true
+    local dirs=(
+        "${VDE_ROOT_DIR}/projects"
+        "${VDE_ROOT_DIR}/data"
+        "${VDE_ROOT_DIR}/logs"
+        "${VDE_ROOT_DIR}/env-files"
+        "${VDE_ROOT_DIR}/public-ssh-keys"
+        "${VDE_ROOT_DIR}/.cache"
+        "${VDE_ROOT_DIR}/.locks"
+        "${VDE_ROOT_DIR}/.locks/ports"
+        "${VDE_ROOT_DIR}/.locks/vms"
+        "${VDE_ROOT_DIR}/configs"
+        "${VDE_ROOT_DIR}/templates"
+    )
+
+    for d in "${dirs[@]}"; do
+        mkdir -p "${d}" 2>/dev/null || true
+    done
     
-    # Data subdirectories
-    mkdir -p "${VDE_ROOT_DIR}/data/couchdb" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/data/mongodb" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/data/mysql" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/data/nginx" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/data/postgres" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/data/redis" 2>/dev/null || true
-    mkdir -p "${VDE_ROOT_DIR}/data/rabbitmq" 2>/dev/null || true
+    # Data subdirectories for core services
+    local service_dirs=(couchdb mongodb mysql nginx postgres redis rabbitmq jupyterlab)
+    for d in "${service_dirs[@]}"; do
+        mkdir -p "${VDE_ROOT_DIR}/data/${d}" 2>/dev/null || true
+    done
     
     if [[ "${QUIET}" = "0" ]] ; then
         echo "  ✓ Directories created"

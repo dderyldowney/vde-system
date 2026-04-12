@@ -17,6 +17,7 @@ export VDE_ROOT_DIR
 [[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
 [[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
 [[ -f "${VDE_ROOT_DIR}/lib/vde-naming" ]] && source "${VDE_ROOT_DIR}/lib/vde-naming" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-pulse.zsh" ]] && source "${VDE_ROOT_DIR}/lib/vde-pulse.zsh" &>/dev/null
 
 # Check arguments
 USER_OVERRIDE=""
@@ -39,6 +40,11 @@ fi
 
 VM_NAME="${1}"
 shift
+
+# Identity Pulse check: Ensure the SSH agent bridge is active
+if ! vde_identity_pulse "${VM_NAME}"; then
+    exit ${VDE_ERR_GENERAL:-1}
+fi
 
 # Get container name
 CONTAINER_NAME=$(vde_get_container_name "${VM_NAME}")
