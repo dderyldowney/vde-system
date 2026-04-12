@@ -47,7 +47,7 @@ services:
       - REDIS_ARGS=--save 60 1 --loglevel warning
 
     env_file:
-      - ../../../../env-files/vde-rabbitmq.env
+      - ../../../../env-files/rabbitmq.env
 
     networks:
       - vde-net

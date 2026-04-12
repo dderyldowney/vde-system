@@ -45,7 +45,7 @@ services:
       - REDIS_ARGS=--save 60 1 --loglevel warning
 
     env_file:
-      - ../../../../env-files/vde-{{NAME}}.env
+      - ../../../../env-files/{{NAME}}.env
 
     networks:
       - vde-net
