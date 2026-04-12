@@ -10,6 +10,7 @@ services:
         VM_NAME: {{NAME}}
         PKGS_TO_INSTALL: "{{PKGS}}"
         CUSTOM_BUILD_CMD: "{{CUSTOM_CMD}}"
+        POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
         UID: 1000
         GID: 1000
