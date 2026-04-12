@@ -17,6 +17,7 @@
     - Hardened all hooks with `set -e` and `zsh -e` for deterministic failure.
 4.  **Baseline Alignment**:
     - Universally applied `1.3.0` version baseline across all active plans and scripts.
+    - Codified the "Sovereign Baseline" mandate as the dynamic authority for versioning and compliance.
 5.  **Lock-Queue Model (Phase 25 - The Sovereign Baseline)**:
     - Replaced competitive spinlocks with deterministic FIFO ticket-based sequencing in `lib/vm-lock`.
     - Eliminated "thundering herd" race conditions under high concurrency (10+ simultaneous requests).
