@@ -1,3 +1,0 @@
-#!/usr/bin/env zsh
-# Legacy wrapper for 'vde create'
-exec "$(dirname "$0")/vde" create "$@"

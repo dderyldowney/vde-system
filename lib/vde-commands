@@ -222,9 +222,9 @@ vde_create_vm() {
     log_command_action "create_vm" "${vm_name}"
 
     if [[ -n "${force}" ]] ; then
-        "${VDE_SCRIPTS_DIR}/create-virtual-for" "${vm_name}" --force
+        "${VDE_ROOT_DIR}/bin/vde" create "${vm_name}" --force
     else
-        "${VDE_SCRIPTS_DIR}/create-virtual-for" "${vm_name}"
+        "${VDE_ROOT_DIR}/bin/vde" create "${vm_name}"
     fi
 }
 
@@ -233,7 +233,7 @@ vde_create_vm() {
 #   vm_name - Name of the VM to start
 #   rebuild - Optional: "true" to rebuild the container (default: "false")
 #   nocache - Optional: "true" to build without cache (default: "false")
-# Returns: Exit code from start-virtual script
+# Returns: Exit code from vde start command
 #   VDE_SUCCESS (0) on success, VDE_ERR_DOCKER (8) on failure
 # Example: vde_start_vm python true false
 vde_start_vm() {
@@ -244,17 +244,17 @@ vde_start_vm() {
     log_command_action "start_vm" "${vm_name} (rebuild=${rebuild}, nocache=${nocache})"
 
     local -a args
-    args=("${vm_name}")
+    args=(start "${vm_name}")
     [[ "${rebuild}" == "true" ]] && args+=("--rebuild")
     [[ "${nocache}" == "true" ]] && args+=("--no-cache")
 
-    "${VDE_SCRIPTS_DIR}/start-virtual" "${args[@]}"
+    "${VDE_ROOT_DIR}/bin/vde" "${args[@]}"
 }
 
 # vde_stop_vm - Stop a VM
 # Args:
 #   vm_name - Name of the VM to stop
-# Returns: Exit code from shutdown-virtual script
+# Returns: Exit code from vde stop command
 #   VDE_SUCCESS (0) on success, VDE_ERR_DOCKER (8) on failure
 # Example: vde_stop_vm python
 vde_stop_vm() {
@@ -262,7 +262,7 @@ vde_stop_vm() {
 
     log_command_action "stop_vm" "${vm_name}"
 
-    "${VDE_SCRIPTS_DIR}/shutdown-virtual" "${vm_name}"
+    "${VDE_ROOT_DIR}/bin/vde" stop "${vm_name}"
 }
 
 # vde_restart_vm - Restart a VM (stop then start)
@@ -280,18 +280,14 @@ vde_restart_vm() {
 
     log_command_action "restart_vm" "${vm_name} (rebuild=${rebuild}, nocache=${nocache})"
 
-    # Stop first
-    vde_stop_vm "${vm_name}"
-
-    # Then start with requested flags
-    vde_start_vm "${vm_name}" "${rebuild}" "${nocache}"
+    "${VDE_ROOT_DIR}/bin/vde" restart "${vm_name}"
 }
 
 # vde_start_all - Start all VMs
 # Args:
 #   rebuild - Optional: "true" to rebuild containers (default: "false")
 #   nocache - Optional: "true" to build without cache (default: "false")
-# Returns: Exit code from start-virtual script
+# Returns: Exit code from vde start command
 #   VDE_SUCCESS (0) on success, VDE_ERR_DOCKER (8) on failure
 # Example: vde_start_all true false
 vde_start_all() {
@@ -301,22 +297,22 @@ vde_start_all() {
     log_command_action "start_all" "rebuild=${rebuild}, nocache=${nocache}"
 
     local -a args
-    args=(all)
+    args=(start all)
     [[ "${rebuild}" == "true" ]] && args+=("--rebuild")
     [[ "${nocache}" == "true" ]] && args+=("--no-cache")
 
-    "${VDE_SCRIPTS_DIR}/start-virtual" "${args[@]}"
+    "${VDE_ROOT_DIR}/bin/vde" "${args[@]}"
 }
 
 # vde_stop_all - Stop all VMs
 # Args: none
-# Returns: Exit code from shutdown-virtual script
+# Returns: Exit code from vde stop command
 #   VDE_SUCCESS (0) on success, VDE_ERR_DOCKER (8) on failure
 # Example: vde_stop_all
 vde_stop_all() {
     log_command_action "stop_all" ""
 
-    "${VDE_SCRIPTS_DIR}/shutdown-virtual" all
+    "${VDE_ROOT_DIR}/bin/vde" stop all
 }
 
 # vde_add_vm_type - Add a new VM type to the configuration

@@ -131,59 +131,14 @@ case ${COMMAND} in
                 fi
 
                 vde_progress_spinner_start "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})"
-                local max_ignite_retries=3
-                local ignite_attempt=1
-                local ignite_success=false
-                typeset -A tried_ports
-                tried_ports=()
-
-                local run_err_file=$(mktemp)
-                while [[ ${ignite_attempt} -le ${max_ignite_retries} ]]; do
-                    vde_progress_spinner_update
-                    if docker run -d \
-                        --name "${CANONICAL_NAME}" \
-                        --hostname "${CANONICAL_NAME}" \
-                        --label "vde.managed=true" \
-                        --network "${net_name}" \
-                        --add-host "host.docker.internal:host-gateway" \
-                        "${port_args[@]}" \
-                        "${mount_args[@]}" \
-                        -v "${VDE_ROOT_DIR}/data:/vde/data:ro" \
-                        -v "${HOME}/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro" \
-                        -v "${HOME}/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro" \
-                        -v "/var/run/docker.sock:/var/run/docker.sock" \
-                        -v "${host_ssh_auth_sock}:/run/host-services/ssh-auth.sock" \
-                        -v "${host_ssh_auth_sock}:/run/vde-ssh.sock" \
-                        -e "SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock" \
-                        "${CANONICAL_NAME}" >/dev/null 2>"${run_err_file}"; then
-                        ignite_success=true
-                        vde_progress_spinner_stop "${CANONICAL_NAME} ignited"
-                        break
-                    else
-                        local err_msg=$(cat "${run_err_file}")
-                        if [[ "${err_msg}" == *"port is already allocated"* || "${err_msg}" == *"Bind for"* ]]; then
-                            vde_log_warn "Port conflict detected for ${CANONICAL_NAME} (Attempt ${ignite_attempt}/${max_ignite_retries}). Retrying with new port..." "docker"
-                            release_port_reservation "${ssh_port}"
-                            tried_ports[${ssh_port}]=1
-                            local exclude_str="${(j:,:)tried_ports}"
-                            ssh_port=$(allocate_port_for_vm "${CANONICAL_NAME}" "" "" "${exclude_str}")
-                            port_args=("-p" "${ssh_port}:${ssh_port}")
-                            for p in "${svc_ports[@]}"; do [[ -n "${p}" ]] && port_args+=("-p" "${p}:${p}"); done
-                        else
-                            vde_progress_spinner_stop "" "Critical ignition failure for ${CANONICAL_NAME}: ${err_msg}" 1
-                            break
-                        fi
-                    fi
-                    ignite_attempt=$((ignite_attempt + 1))
-                    local jitter_val=$(( (10 + RANDOM % 40) / 100.0 ))
-                    "${VDE_ROOT_DIR}/bin/vde-poll" --wait "${jitter_val}" "all" >/dev/null 2>&1
-                done
-                rm -f "${run_err_file}"
                 
-                if [[ "${ignite_success}" != "true" ]]; then
-                    vde_log_error "Failed to ignite ${CANONICAL_NAME}"
-                    vde_error_map ${VDE_ERR_DOCK:-8} "${CANONICAL_NAME}"
-                    [[ -n "${ALLOCATED_PORT}" ]] && release_port_reservation "${ALLOCATED_PORT}"
+                local compose_file
+                compose_file=$(get_vm_compose_file "${CANONICAL_NAME}")
+
+                if vde_run "${CANONICAL_NAME}" docker compose -f "${compose_file}" up -d >/dev/null 2>&1; then
+                    vde_progress_spinner_stop "${CANONICAL_NAME} ignited"
+                else
+                    vde_progress_spinner_stop "" "Failed to ignite ${CANONICAL_NAME}" 1
                     GLOBAL_RC=1
                 fi
             } always {
@@ -231,7 +186,32 @@ case ${COMMAND} in
         ;;
     restart)
         shift
-        vde_run "restart" "${VDE_ROOT_DIR}/bin/restart-virtual" "$@"
+        local targets=("${@}")
+        [[ -z "${targets}" ]] && vde_log_error "Usage: vde restart <alias...|all>" && exit 1
+        
+        if [[ "${targets}" == "all" ]]; then
+            targets=($(get_all_vms))
+        fi
+
+        for vm_alias in "${targets[@]}"; do
+            CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
+            if [[ -z "${CANONICAL_NAME}" ]]; then
+                vde_log_warn "Unknown VM: ${vm_alias}"
+                continue
+            fi
+
+            vde_progress_spinner_start "Restarting ${CANONICAL_NAME}"
+            # Stop if running
+            if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+                vde_run "${CANONICAL_NAME}" docker stop "${CANONICAL_NAME}" >/dev/null 2>&1
+            fi
+            # Start (reuse start logic via recursive call or internal function)
+            if ./bin/vde start "${CANONICAL_NAME}" >/dev/null 2>&1; then
+                vde_progress_spinner_stop "${CANONICAL_NAME} restarted"
+            else
+                vde_progress_spinner_stop "" "Failed to restart ${CANONICAL_NAME}" 1
+            fi
+        done
         ;;
     remove|delete|rm)
         shift
@@ -339,7 +319,5 @@ case ${COMMAND} in
         shift
         vde_run "networks" "${VDE_ROOT_DIR}/bin/vde-networks" "$@"
         ;;
-    help|*) echo "Usage: vde {init|rebuild|create|start|stop|restart|remove|nuke|exec|enter|ssh|list|add|uninstall|validate|rebuild-cache|sync-version|ask|port|info|ps|status|inspect|logs|images|stats|health|cluster|networks} [type/alias]" ;;
-esac
-nfo|ps|status|inspect|logs|images|stats|health|cluster|networks} [type/alias]" ;;
+    help|*) echo "Usage: vde {init|rebuild|create|start|stop|restart|remove|nuke|exec|enter|ssh|list|add|uninstall|validate|rebuild-cache|sync-version|port|info|ps|status|inspect|logs|images|stats|health|cluster|networks} [type/alias]" ;;
 esac

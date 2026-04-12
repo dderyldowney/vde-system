@@ -9,6 +9,10 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
 
 **CRITICAL MANDATE**: All agent actions MUST adhere to the VDE Universal Agent Protocol (UAP). You are an **Orchestrator**, not just a coder. Efficiency is secondary to the **Rule Spine**.
 
+**THE RESEARCH-FIRST PROTOCOL**: Any non-trivial change REQUIRES at least one research subtask followed by a summarized brief BEFORE a patch or implementation plan is proposed. You MUST use sequential and critical thinking to vet solutions repeatedly, choosing the path supported by the strongest empirical evidence.
+
+**THE CODE-REVIEW MANDATE**: A formal code-review is MANDATORY after all code changes are completed, before any commit. Both the reviewer and the user must approve.
+
 ---
 
 ## **THE RESOL’NARE: SUPREME PROHIBITIONS (A–K)**

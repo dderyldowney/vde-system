@@ -933,8 +933,8 @@ execute_plan() {
                 if vm_exists "${vm}" >/dev/null 2>&1; then
                     log_info "VM ${vm} already exists. Skipping creation."
                 else
-                    # create-virtual-for handles the actual creation
-                    ./bin/create-virtual-for "${vm}"
+                    # vde create handles the actual creation
+                    ./bin/vde create "${vm}"
                     local create_rc=${?}
                     # 0=created, 6=exists
                     if [[ ${create_rc} -ne 0 ]] && [[ ${create_rc} -ne 6 ]]; then
@@ -959,8 +959,8 @@ execute_plan() {
                 fi
             done
 
-            # start-virtual handles starting one or more VMs
-            ./bin/start-virtual ${=vms}
+            # vde start handles starting one or more VMs
+            ./bin/vde start ${=vms}
             return ${?}
             ;;
 
@@ -970,8 +970,8 @@ execute_plan() {
                 return ${VDE_ERR_INVALID_INPUT}
             fi
 
-            # shutdown-virtual handles stopping one or more VMs
-            ./bin/shutdown-virtual ${=vms}
+            # vde stop handles stopping one or more VMs
+            ./bin/vde stop ${=vms}
             return ${?}
             ;;
 
@@ -983,8 +983,8 @@ execute_plan() {
 
             for vm in ${=vms}; do
                 [[ -n "${vm}" ]] || continue
-                # restart-virtual handles restarting a VM
-                ./bin/restart-virtual "${vm}"
+                # vde restart handles restarting a VM
+                ./bin/vde restart "${vm}"
             done
             return ${VDE_SUCCESS}
             ;;
@@ -997,21 +997,18 @@ execute_plan() {
 
             for vm in ${=vms}; do
                 [[ -n "${vm}" ]] || continue
-                # ssh-vm handles getting connection info
+                # vde enter handles getting connection info
                 local port
                 port=$(get_vm_info ssh_port "${vm}" 2>/dev/null) || port="unknown"
                 echo "VM: ${vm}  SSH Port: ${port}  User: devuser"
-                ./bin/ssh-vm "${vm}" --show-command
+                ./bin/vde enter "${vm}" --show-command
             done
             return ${VDE_SUCCESS}
             ;;
 
         "${INTENT_ADD_VM_TYPE}")
-            # add-vm-type handles adding a new type
-            # We need to extract the raw arguments from the plan if we had them
-            # But generate_plan doesn't yet populate complex args for add_vm_type
-            # For now, we assume the user is using the structured CLI for this
-            ./bin/add-vm-type ${=vms}
+            # vde add handles adding a new type
+            ./bin/vde add ${=vms}
             return ${?}
             ;;
 

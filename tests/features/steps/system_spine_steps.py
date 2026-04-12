@@ -52,18 +52,18 @@ def step_verify_lock_created(context):
 @then('the container "{container_name}" should be started via direct Docker orchestration')
 def step_verify_docker_orchestration(context, container_name):
     # Verify it was started with the vde.managed=true label
+    import json
     result = subprocess.run(
-        ["docker", "inspect", "--format", '{{index .Config.Labels "vde.managed"}}', container_name],
+        ["docker", "inspect", "--format", "{{json .Config.Labels}}", container_name],
         capture_output=True, text=True
     )
-    label_val = result.stdout.strip()
-    if label_val != "true":
-        # Fallback: check all labels to see what is actually there
-        full_inspect = subprocess.run(
-            ["docker", "inspect", "--format", "{{json .Config.Labels}}", container_name],
-            capture_output=True, text=True
-        )
-        raise AssertionError(f"Container {container_name} is not VDE-managed. \nLabels found: {full_inspect.stdout.strip()}\nError: {result.stderr.strip()}")
+    assert result.returncode == 0, f"Failed to inspect container: {result.stderr}"
+    labels = json.loads(result.stdout.strip())
+    
+    # Check for vde.managed=true (handle both string and boolean if Docker returns it differently)
+    managed = str(labels.get("vde.managed", "")).lower()
+    if managed != "true":
+        raise AssertionError(f"Container {container_name} is not VDE-managed. \nLabels found: {result.stdout.strip()}")
 
 @then('the container should have been hydrated by "{script_path}"')
 def step_verify_hydration(context, script_path):

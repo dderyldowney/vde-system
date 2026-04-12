@@ -102,8 +102,13 @@ build_docker_ps_cmd() {
     [[ "${show_all}" = "1" ]] && cmd="${cmd} -a"
     cmd="${cmd} --format '${format}'"
     
-    # Always filter by vde.managed label
-    cmd="${cmd} --filter label=vde.managed=true"
+    # Add filters
+    local -a filters
+    
+    # Optional: Filter by vde.managed label unless specific filter provided
+    if [[ -z "${filter}" ]]; then
+        filters+=("--filter" "label=vde.managed=true")
+    fi
     
     # Add additional filter if provided
     if [[ -n "${filter}" ]]; then
@@ -114,14 +119,14 @@ build_docker_ps_cmd() {
             if [[ "${filter_value}" != vde-* ]]; then
                 filter_value="vde-${filter_value}"
             fi
-            cmd="${cmd} --filter name=${filter_value}"
+            filters+=("--filter" "name=${filter_value}")
         else
             # Pass through other filters
-            cmd="${cmd} --filter ${filter}"
+            filters+=("--filter" "${filter}")
         fi
     fi
     
-    echo "${cmd}"
+    echo "${cmd} ${filters[@]}"
 }
 
 # Build output based on format
