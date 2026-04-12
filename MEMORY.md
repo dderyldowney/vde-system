@@ -13,11 +13,19 @@
 ---
 
 ## SYSTEM EVOLUTION (2026-04-12) - v1.3.0 SOVEREIGN EVOLUTION
-- **Pre-Strike Sentinel:** Implemented ZSH-native git hooks via `bin/install-githooks` to enforce shebang purity and secret scanning before every commit.
-- **System Breath:** Upgraded `bin/vde start` with resource-aware ignition logic (Section 2), replacing static limits with dynamic CPU/Memory checks.
-- **Archivist Vision:** Introduced `bin/vde-vision` for real-time observability of spoke health, port mappings, and version parity.
-- **Image Purity:** Integrated automated verification in Docker build rituals to ensure no leftover `apt` cache remains in production spokes.
-- **Identity Pulse:** Hardened SSH bridge monitoring within the orchestrator to ensure identity continuity across all execution paths.
+- **Hardening Remediation:**
+    - **Rust Security:** Remediated critical integer overflow in `bytes` dependency (v1.11.0 -> v1.11.1) in `vde-rust` Spoke.
+    - **Postgres Security:** Hardened `postgres-init.zsh` to REQUIRE `POSTGRES_DEV_PASSWORD` instead of using a hardcoded default.
+- **VDE Init First-Class:**
+    - Elevated `bin/vde-init` to a fully registered orchestrator command (`vde init`).
+    - Implemented `tests/features/core-infrastructure/vde-init-empirical.feature` for TDD-verified infrastructure creation.
+    - Reinforced path sovereignty via `${VDE_SSH_DIR}` and globally authenticated constants.
+- **Pre-Strike Sentinel:** 
+    - Implemented ZSH-native git hooks via `bin/install-githooks` to enforce shebang purity and secret scanning before every commit.
+    - Added `usp-validator.zsh` to pre-commit to verify script compliance before staging.
+    - **Proof of Life Gatekeeper:** Established `pre-push` hook to execute the full `proof-of-life-contract.feature` before code leaves the local Forge.
+    - **Deterministic Validation:** Reinforced all hooks with `zsh -e` and `set -e` for fail-fast error handling.
+- **Baseline Alignment:** Universally applied `1.3.0` baseline across all setup scripts and active plan files.
 
 ## SYSTEM EVOLUTION (2026-04-10) - VDE 1.3.0 HARDENING STRIKE
 - **Spoke Ignition Hook:** Implemented `/usr/local/bin/vde-spoke-ignition.zsh` hook in `scripts/vde-entrypoint.zsh`. This allows spokes to register background services that start automatically on container ignition, detaching them from the SSH gate lifecycle.
@@ -103,3 +111,24 @@
 - **Rule Spine Enforcement:** ✅ COMPLETE. Integrated `bin/vde-enforce-uap.zsh --quiet` into the core `vde` entrypoint to ensure mandatory supervision of all actions.
 - **Empirical Verification:** ✅ COMPLETE. High-fidelity BDD scenarios in `system-spine.feature` verified Docker Socket and SSH Agent bridges with 100% pass rate.
 - **JupyterLab Spoke Certification:** ✅ COMPLETE. Successfully integrated and verified the `vde-jupyterlab` VM type with modern startup patterns (`tini`, `jupyter-server`).
+
+---
+
+## VERSIONING LAW & TAGGING AUTHORITY (Codified 2026-04-12)
+- **Tagging Restriction**: The agent is strictly FORBIDDEN from creating or proposing git tags.
+- **Architectural Guardrail**: MAJOR and MINOR version decisions belong exclusively to the User.
+- **Advisory Role**: The agent suggests STEP increments labeled explicitly as recommendations.
+- **Release Ritual**: GitHub Releases are rare milestones reserved for the User's discretion.
+
+---
+
+## **THE CREED AND THE HELMET (Codified 2026-04-12)**
+- **Mandalorian Identity**: The agent is a Mandalorian armorer-architect.
+- **character Mandate**: Staying in cosplay is binding law.
+- **The Helmet**: The helmet represents active submission to the Creed and Rule Spine.
+- **Contract Breach**: Acting outside these roles or laws constitutes taking off the helmet and requires an immediate stop.
+
+## **STUDENT SPACE SOVEREIGNTY (Codified 2026-04-12)**
+- **Zone Restriction**: @projects/** is designated "Student Space."
+- **Remediation Prohibition**: The agent is strictly FORBIDDEN from remediating vulnerabilities in student space.
+- **Responsibility**: Students are responsible for their own project security.

@@ -5,7 +5,19 @@
 **Next Step**: High-Velocity Cluster Expansion (v1.3.0)
 
 ## Accomplishments (v1.3.0 Sovereign Baseline)
-1.  **Lock-Queue Model (Phase 25 - The Sovereign Baseline)**:
+1.  **Hardening Remediation (v1.3.0 Final)**:
+    - **Security**: Updated `bytes` dependency in `vde-rust` to v1.11.1, remediating critical integer overflow.
+    - **Security**: Mandated `POSTGRES_DEV_PASSWORD` in `postgres-init.zsh`, eliminating hardcoded default passwords.
+2.  **vde init Integration**:
+    - Refactored `bin/vde-init` for path sovereignty and registered it as a first-class command.
+    - Added `tests/features/core-infrastructure/vde-init-empirical.feature` for infrastructure verification.
+3.  **Git Hook Sentinel (Rule F & Mandate L)**:
+    - Decoupled long-running checks into a `pre-push` Gatekeeper (Proof of Life).
+    - Integrated `usp-validator.zsh` into `pre-commit` for script compliance.
+    - Hardened all hooks with `set -e` and `zsh -e` for deterministic failure.
+4.  **Baseline Alignment**:
+    - Universally applied `1.3.0` version baseline across all active plans and scripts.
+5.  **Lock-Queue Model (Phase 25 - The Sovereign Baseline)**:
     - Replaced competitive spinlocks with deterministic FIFO ticket-based sequencing in `lib/vm-lock`.
     - Eliminated "thundering herd" race conditions under high concurrency (10+ simultaneous requests).
 2.  **Deterministic Error Engine (Phase 26 - The Sovereign Baseline)**:
