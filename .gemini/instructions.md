@@ -195,16 +195,38 @@ Feature: The Unyielding Tetrad Verification
     Then the output should contain "vde_student"
     And the return code should be 0
 
-## **17. INVENTORY CONTROL — THE LAW OF VERSIONING**
+## **17. VERSIONING LAW & TAGGING AUTHORITY**
 
 *"A warrior knows the weight of every plate in their armor. The record must be absolute."*
 
 VDE SHALL use **MAJOR.MINOR.STEP** (e.g., 1.3.0) for all inventory control.
 
-* **MAJOR**: Changes are only for covenant-level shifts or core behavior changes.
-* **MINOR**: Changes are only for substantial new capabilities (e.g., new VM types).
-* **STEP**: Changes are only for remediation, spine-hardening, and non-breaking improvements.
-* **pN (Security Patches)**: Security patches SHALL be tagged as `-pN` (e.g., 1.3.0-p1), containing only the minimal code required to remediate the vulnerability; no features or refactors are permitted in `-pN` releases.
+* **Versioning Law (MAJOR.MINOR.STEP)**:
+    * MAJOR and MINOR are architectural and doctrine-level decisions and are NEVER chosen or proposed by the agent.
+    * STEP tags (e.g., 1.3.1, 1.3.2) represent honest, incremental progress within the current MINOR line.
+* **Tagging Authority**:
+    * The agent is FORBIDDEN to create, push, or propose ANY git tags.
+    * The agent is FORBIDDEN to assume a specific next tag.
+    * Only the User may decide:
+        * When a STEP tag is actually created.
+        * When a MINOR or MAJOR version changes.
+        * When a GitHub ‘Release’ is published.
+* **Agent Role With Versions**:
+    * The agent MAY read and report the current version, summarize changes, and suggest whether a change 'feels' like a STEP, MINOR, or MAJOR shift.
+    * ANY such suggestion MUST be labeled: **"Recommendation only. Final version and tagging decisions belong to the User."**
+* **GitHub Releases vs Tags**:
+    * Git tags are CHEAP and FREQUENT markers created ONLY by the User.
+    * GitHub Releases are RARE, TEACHABLE milestones published ONLY by the User.
+    * Multiple STEP tags may exist without a GitHub Release; a Release may summarize several STEP tags.
+
+## **18. THE SOVEREIGN REPORTING FORMAT**
+
+All confirmations of compliance, instruction updates, or memory persistent actions MUST adhere to the following 4-step format:
+
+1.  **Rule Record Locations**: State the exact file path and section header where the rule was recorded.
+2.  **Exact Text Updated**: Quote the literal block of text added or modified.
+3.  **Spine Rules Hit**: List the specific Mandalorian Mandates or Resol’nare rules (e.g., Rule A, Rule C, Section 10.5) that governed the decision or code choice.
+4.  **Behavioral Changes**: Explain in 3–5 concise sentences how the agent's behavior will change going forward.
 
 ---
 Version: 1.3.0
