@@ -14,7 +14,7 @@ apt-get install -y ${=vde_js_pkgs}
 
 # Setup Node.js via NodeSource
 curl -fsSL https://deb.nodesource.com/setup_22.x -o /tmp/setup_node.sh
-bash /tmp/setup_node.sh
+sh /tmp/setup_node.sh
 apt-get install -y nodejs
 
 # 3. PURGING THE GHOSTS

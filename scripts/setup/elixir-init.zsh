@@ -18,7 +18,7 @@ locale-gen en_US.UTF-8
 # Installation for devuser
 INSTALL_SCRIPT="/tmp/install-elixir-as-devuser.sh"
 cat <<EOF > "${INSTALL_SCRIPT}"
-#!/bin/bash
+#!/usr/bin/env zsh
 set -e
 if [ ! -d "\$HOME/.asdf" ]; then
     git clone https://github.com/asdf-vm/asdf.git "\$HOME/.asdf" --branch v0.14.0
