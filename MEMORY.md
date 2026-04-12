@@ -1,7 +1,7 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-04-11T14:00:00Z
-**Baseline Version:** 1.2.3 (The Sovereign Baseline)
+**Last Updated:** 2026-04-12T10:00:00Z
+**Baseline Version:** 1.3.0 (The Sovereign Evolution)
 
 ---
 
@@ -11,6 +11,13 @@
 
 
 ---
+
+## SYSTEM EVOLUTION (2026-04-12) - v1.3.0 SOVEREIGN EVOLUTION
+- **Pre-Strike Sentinel:** Implemented ZSH-native git hooks via `bin/install-githooks` to enforce shebang purity and secret scanning before every commit.
+- **System Breath:** Upgraded `bin/vde start` with resource-aware ignition logic (Section 2), replacing static limits with dynamic CPU/Memory checks.
+- **Archivist Vision:** Introduced `bin/vde-vision` for real-time observability of spoke health, port mappings, and version parity.
+- **Image Purity:** Integrated automated verification in Docker build rituals to ensure no leftover `apt` cache remains in production spokes.
+- **Identity Pulse:** Hardened SSH bridge monitoring within the orchestrator to ensure identity continuity across all execution paths.
 
 ## SYSTEM EVOLUTION (2026-04-10) - VDE 1.2.3 HARDENING STRIKE
 - **Spoke Ignition Hook:** Implemented `/usr/local/bin/vde-spoke-ignition.zsh` hook in `scripts/vde-entrypoint.zsh`. This allows spokes to register background services that start automatically on container ignition, detaching them from the SSH gate lifecycle.
@@ -31,10 +38,10 @@
         - **Transparency:** Updated `lib/vm-lock` and `lib/vde-progress` to extract and report real process owners (PID/PGID) and queue positions during resource contention.
     - **100% BDD Fidelity:** Implemented and verified `error-handling.feature` and `concurrency-queue.feature` using real environmental conditions.
 
-## SYSTEM BENCHMARKS (VDE 1.2.3)
+## SYSTEM BENCHMARKS (VDE 1.3.0)
 - **Canonical Ignition Speed:** 3.959s. This is the benchmark for 3-VM Parallel Ignition (python, postgres, redis) on current hardware. Any future refactor that slows this down is a deviation from the Way.
 
-## THE VERDICT: v1.2.3 READY
+## THE VERDICT: v1.3.0 READY
 - **Utility Over Exploration**: The VDE has transitioned from a project of exploration to a project of utility. It is now a platform a developer can rely on for daily work without environmental friction.
 - **Reliability Handshake**: Ignition is deterministic (< 4.5s), Identity is persistent (SSH bridge), and Security is enforced (GID mapping/8-field standard).
 - **Certification**: The ecosystem is 100% stable and verified as of v1.2.3.

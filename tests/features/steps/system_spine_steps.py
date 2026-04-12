@@ -335,12 +335,12 @@ def step_pillars_passed(context):
     result = subprocess.run([str(VDE_ROOT / "bin" / "vde-spine-check.zsh")], capture_output=True, text=True)
     assert result.returncode == 0, f"Pillars verification failed: {result.stderr or result.stdout}"
 
-@given('the Hub is synchronized to version 1.2.3')
+@given('the Hub is synchronized to version 1.3.0')
 def step_hub_synced_version(context):
     spec_file = VDE_ROOT / "docs" / "VDE-SPEC.md"
     assert spec_file.exists(), "VDE-SPEC.md missing"
     content = spec_file.read_text()
-    assert "Version: 1.2.3" in content or "v1.2.3" in content, f"Hub version mismatch in VDE-SPEC.md: {content[:100]}"
+    assert "Version: 1.3.0" in content or "v1.3.0" in content, f"Hub version mismatch in VDE-SPEC.md: {content[:100]}"
 
 @given('I have a valid VM definition for "{vm_alias}" in the Beskar Registry')
 def step_valid_vm_definition(context, vm_alias):

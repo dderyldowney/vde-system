@@ -1,13 +1,13 @@
 #!/usr/bin/env zsh
 # install-githooks - Install VDE git hooks
 #
-# Installs project git hooks from bin/githooks/ to .git/hooks/
-
+# Installs project git hooks from githooks/ to .git/hooks/
 
 # ZSH-native logic demonstration (UAP Mandate 1)
 local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
-set -e
+# We do NOT set -e here because arithmetic increments can return 1 (which is NOT an error in this context)
+# Instead we will handle errors explicitly.
 
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
 PROJECT_ROOT="$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)"
@@ -25,7 +25,7 @@ echo "Installing VDE git hooks..."
 # Check if we're in a git repository
 if [[ ! -d "${HOOKS_DIR}" ]] ; then
     echo -e "${RED}Error: Not in a git repository${RESET}"
-    exit ${VDE_ERR_GENERAL}
+    exit 1
 fi
 
 # Check if source hooks exist
@@ -36,7 +36,7 @@ fi
 
 # Install each hook
 INSTALLED=0
-for hook in "${SOURCE_DIR}"/*; do
+for hook in "${SOURCE_DIR}"/*(N); do
     if [[ -f "${hook}" ]] ; then
         hook_name=$(basename "${hook}")
         target="${HOOKS_DIR}/${hook_name}"
@@ -51,7 +51,7 @@ for hook in "${SOURCE_DIR}"/*; do
         chmod +x "${target}"
 
         echo -e "  ${GREEN}✓${RESET} Installed: ${hook_name}"
-        ((INSTALLED++))
+        INSTALLED=$((INSTALLED + 1))
     fi
 done
 
@@ -62,5 +62,7 @@ else
     echo -e "${GREEN}Successfully installed ${INSTALLED} git hook(s)${RESET}"
     echo ""
     echo "Installed hooks:"
-    echo "  - pre-commit: Blocks deletion of protected config files"
+    echo "  - pre-commit: VDE Sentinel (Rule C & Rule 12)"
 fi
+
+exit 0

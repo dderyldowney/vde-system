@@ -10,14 +10,14 @@ Overview of all scripts included with VDE.
 
 ### VDE Unified Command (Recommended)
 
-The `vde` command is the canonical entry point for the **Sovereign Baseline**. It wraps all infrastructure logic in the `vde_run` safety layer, ensuring Zsh purity and system integrity.
+The `vde` command is the canonical entry point for the **Sovereign Evolution (v1.3.0)**. It wraps all infrastructure logic in the `vde_run` safety layer, ensuring Zsh purity and system integrity.
 
 | Command | Purpose | Usage |
 |---------|---------|-------|
 | `vde init` | **The Initialization Ritual**: Hydrate infrastructure, SSH keys, and networks. | `vde init` |
 | `vde create <vm>` | Create a new VM Spoke from the Beskar Registry. | `vde create python` |
 | `vde rebuild <vm>` | Re-forge a Spoke's Docker image (defaults to no-cache). | `vde rebuild python` |
-| `vde start <vm>` | Ignite a VM Spoke. | `vde start python` |
+| `vde start <vm>` | Ignite a VM Spoke. Performs "System Breath" resource check. | `vde start python` |
 | `vde stop <vm>` | Quench (stop) a running VM. | `vde stop postgres` |
 | `vde restart <vm>` | Restart one or more active Spokes. | `vde restart rust` |
 | `vde remove <vm>` | Dissolve (remove) a VM instance and its locks. (Aliases: `rm`, `delete`) | `vde remove rust` |
@@ -28,6 +28,7 @@ The `vde` command is the canonical entry point for the **Sovereign Baseline**. I
 | `vde uninstall <vm>` | Permanent Removal: Remove a Spoke type from the Registry. | `vde uninstall elixir` |
 | `vde list` | Audit all predefined and custom Spokes. | `vde list` |
 | `vde ps` | List all running VDE-managed containers. (Alias: `status`) | `vde ps` |
+| `vde vision` | **The Archivist’s Vision**: Real-time Markdown-based status grid. | `vde vision` |
 | `vde inspect <vm>` | Inspect container metadata and labels. | `vde inspect python` |
 | `vde logs <vm>` | Tail the logs of a specific Spoke. | `vde logs redis` |
 | `vde images` | List all VDE-managed Docker images. | `vde images` |
@@ -39,7 +40,6 @@ The `vde` command is the canonical entry point for the **Sovereign Baseline**. I
 | `vde rebuild-cache` | Force a re-smelt of the internal VM cache. | `vde rebuild-cache` |
 | `vde sync-version` | Synchronize versioning across the Hub and Spokes. | `vde sync-version` |
 | `vde port <alias>` | Retrieve the assigned SSH port for a Spoke. | `vde port python` |
-| `vde ask` | Consult the Oracle (Gemini) about the project state. | `vde ask "How do I add a new service?"` |
 | `vde info` | Detailed system and environment diagnostic dump. | `vde info` |
 
 ---
@@ -54,11 +54,15 @@ VDE_ROOT/
 │   ├── vde                     # Unified Command Entry Point (THE WAY)
 │   ├── vde-init                # Infrastructure Ritual Logic
 │   ├── vde-rebuild             # Image Re-forging Logic
+│   ├── vde-vision              # Observability Dashboard Logic
 │   ├── vde-networks            # Bridge Management
 │   ├── vde-ps / vde-logs       # Docker Proxy Tools
 │   ├── vde-enforce-uap.zsh     # The Rule Spine (Compliance)
-│   ├── vde-sync-version        # Version Synchronizer
+│   ├── install-githooks        # Activation Ritual for Forge Laws
 │   └── ...                     # Specialized lifecycle scripts
+├── githooks/
+│   ├── pre-commit              # The Pre-Strike Sentinel (Purity Gate)
+│   └── ...                     # Tracked Git hooks
 ├── lib/
 │   ├── vde-core                # Core Versioning & Pathing
 │   ├── vde-ssh                 # The Sovereign Handshake (SSH Bridge)

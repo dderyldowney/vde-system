@@ -1,4 +1,4 @@
-# VDE-SPEC v1.2.3 (The Sovereign Baseline)
+# VDE-SPEC v1.3.0 (The Sovereign Evolution)
 
 ## 1. Absolute Mandates (The Rule Spine)
 
@@ -28,20 +28,20 @@ All implementation strikes MUST follow the **Red-Green-Refactor** law codified i
 ## 4. Directory Structure
 
 - `bin/`: CLI entry points and UAP enforcement.
-- `lib/`: Hardened ZSH-native libraries.
-- `data/`: The Beskar Vault (Registry and Schemas).
-- `scripts/setup/`: USP-compliant hydration rituals.
-- `configs/docker/`: Hub and Spoke configurations.
-- `projects/`: User workspace mounted from host.
-- `.cache/`: High-speed runtime hydration and port registry.
-- `.locks/`: Atomic lifecycle spinlocks.
+- `lib/`: Shared Zsh libraries.
+- `data/`: Core VM types and configs.
+- `docs/`: Technical specifications and user manuals.
+- `scripts/`: USP initialization rituals.
+- `plans/`: Staging and diagnostic logs.
 
-## 5. Persistence & Identity
-
+---
+Version: 1.3.0
+Reference: ARCHITECTURE v1.3.0 (The Sovereign Baseline)
+---
 - **Identity Key**: All SSH operations MUST use the `vde_student` identity.
 - **Workspace Mapping**: `/home/devuser/workspace` maps to `projects/<name>/`.
 - **Data Persistence**: Databases and services map to `data/<name>/`.
 
 ---
-Version: 1.2.3
-Reference: ARCHITECTURE v1.2.3 (The Sovereign Baseline)
+Version: 1.3.0
+Reference: ARCHITECTURE v1.3.0 (The Sovereign Baseline)
