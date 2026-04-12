@@ -35,9 +35,7 @@ All implementation strikes MUST follow the **Red-Green-Refactor** law codified i
 - `plans/`: Staging and diagnostic logs.
 
 ---
-Version: 1.3.0
-Reference: ARCHITECTURE v1.3.0 (The Sovereign Baseline)
----
+
 - **Identity Key**: All SSH operations MUST use the `vde_student` identity.
 - **Workspace Mapping**: `/home/devuser/workspace` maps to `projects/<name>/`.
 - **Data Persistence**: Databases and services map to `data/<name>/`.
@@ -45,3 +43,4 @@ Reference: ARCHITECTURE v1.3.0 (The Sovereign Baseline)
 ---
 Version: 1.3.0
 Reference: ARCHITECTURE v1.3.0 (The Sovereign Baseline)
+---

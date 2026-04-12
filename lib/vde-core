@@ -31,7 +31,7 @@ vde_get_version() {
     local spec_file="${root}/docs/VDE-SPEC.md"
 
     if [[ -f "${spec_file}" ]]; then
-        # Extracts "1.2.3" from "# VDE-SPEC v1.2.3 (The Sovereign Baseline)"
+        # Extracts "1.3.0" from "# VDE-SPEC v1.3.0 (The Sovereign Baseline)"
         # Note: Added -E and trimmed spaces to be more forgiving
         grep -m1 '^# VDE-SPEC v' "${spec_file}" | sed -E 's/^# VDE-SPEC v([0-9.]+).*/\1/' | tr -d '[:space:]'
     else

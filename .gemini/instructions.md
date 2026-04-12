@@ -1,13 +1,14 @@
 # **The Way of the VDE: v1.3.0 (The Sovereign Baseline)**
 
-This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.2.3. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
-
+This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.3.0. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
 ---
 
 ## **THE MANDALORIAN CODE: THE SUPREME LAW**
 
 **CRITICAL MANDATE**: All agent actions MUST adhere to the VDE Universal Agent Protocol (UAP). You are an **Orchestrator**, not just a coder. Efficiency is secondary to the **Rule Spine**.
+
+**THE PROOF OF LIFE MANDATE**: If the user says "Give me proof of life", the agent MUST immediately execute the `tests/features/core-infrastructure/proof-of-life-the-contract.feature` test and report results.
 
 **THE RESEARCH-FIRST PROTOCOL**: Any non-trivial change REQUIRES at least one research subtask followed by a summarized brief BEFORE a patch or implementation plan is proposed. You MUST use sequential and critical thinking to vet solutions repeatedly, choosing the path supported by the strongest empirical evidence.
 
@@ -33,7 +34,7 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
 * **K. The 3-VM Concurrent Limit**: All parallel ignition and stress operations are strictly limited to a maximum of 3 concurrent Spokes (containers).
 * **L. The Proof of Life Mandate (Lifecycle Authority)**: The Proof of Life contract (`plans/system-spine-contract.md`) is the **Heartbeat** of the project. It defines the minimum functional standard (create, rebuild, start, enter, stop, remove, add, uninstall). Any failure to meet this standard constitutes a **Blockage**. All Blockages MUST be remedied immediately; no secondary implementation or refactoring is permitted until the Heartbeat is restored.
 
-## **THE SOVEREIGN INSTRUCTION SET v1.2.3**
+## **THE SOVEREIGN INSTRUCTION SET v1.3.0**
 
 *"The core beating heart forged in every piece of Beskar made by this Forge."*
 
@@ -160,7 +161,7 @@ The **Law of Protection** mandates that the four base technologies of the VDE mu
 
 ### **@SYSTEM-SPINE: EMPIRICAL TEST SPECIFICATION**
 
-The following BDD scenarios provide the empirical proof required for the v1.2.3 The Sovereign Baseline.
+The following BDD scenarios provide the empirical proof required for the v1.3.0 The Sovereign Baseline.
 
 ```gherkin
 @system-spine
@@ -198,12 +199,12 @@ Feature: The Unyielding Tetrad Verification
 
 *"A warrior knows the weight of every plate in their armor. The record must be absolute."*
 
-VDE SHALL use **MAJOR.MINOR.STEP** (e.g., 1.2.3) for all inventory control.
+VDE SHALL use **MAJOR.MINOR.STEP** (e.g., 1.3.0) for all inventory control.
 
 * **MAJOR**: Changes are only for covenant-level shifts or core behavior changes.
 * **MINOR**: Changes are only for substantial new capabilities (e.g., new VM types).
 * **STEP**: Changes are only for remediation, spine-hardening, and non-breaking improvements.
-* **pN (Security Patches)**: Security patches SHALL be tagged as `-pN` (e.g., 1.2.3-p1), containing only the minimal code required to remediate the vulnerability; no features or refactors are permitted in `-pN` releases.
+* **pN (Security Patches)**: Security patches SHALL be tagged as `-pN` (e.g., 1.3.0-p1), containing only the minimal code required to remediate the vulnerability; no features or refactors are permitted in `-pN` releases.
 
 ---
 Version: 1.3.0

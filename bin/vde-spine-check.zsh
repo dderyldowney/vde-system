@@ -8,7 +8,7 @@
 # Pillar III: Docker
 # Pillar IV: SSH (vde_student identity)
 #
-# Reference: VDE-SPEC v1.2.3
+# Reference: VDE-SPEC v1.3.0
 #===============================================================================
 
 # Pillar I: Zsh

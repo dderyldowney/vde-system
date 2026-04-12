@@ -19,7 +19,7 @@
 - **Image Purity:** Integrated automated verification in Docker build rituals to ensure no leftover `apt` cache remains in production spokes.
 - **Identity Pulse:** Hardened SSH bridge monitoring within the orchestrator to ensure identity continuity across all execution paths.
 
-## SYSTEM EVOLUTION (2026-04-10) - VDE 1.2.3 HARDENING STRIKE
+## SYSTEM EVOLUTION (2026-04-10) - VDE 1.3.0 HARDENING STRIKE
 - **Spoke Ignition Hook:** Implemented `/usr/local/bin/vde-spoke-ignition.zsh` hook in `scripts/vde-entrypoint.zsh`. This allows spokes to register background services that start automatically on container ignition, detaching them from the SSH gate lifecycle.
 - **Rebuild Hardening:** Updated `bin/vde-rebuild` to default to `NOCACHE=true` and `PULL=true`. This ensures all rebuilds are "Pure Beskar," pulling fresh layers from original source images and capturing script changes that Docker's build-cache might miss.
 - **Ignition Performance Optimization:** Redacted the recursive `sudo chown -R devuser:devuser /home/devuser` from the entrypoint. Replaced with targeted `chown` on `.ssh` directory. This resolves critical ignition blocks on large mounted workspaces (like JupyterLab).
@@ -44,7 +44,7 @@
 ## THE VERDICT: v1.3.0 READY
 - **Utility Over Exploration**: The VDE has transitioned from a project of exploration to a project of utility. It is now a platform a developer can rely on for daily work without environmental friction.
 - **Reliability Handshake**: Ignition is deterministic (< 4.5s), Identity is persistent (SSH bridge), and Security is enforced (GID mapping/8-field standard).
-- **Certification**: The ecosystem is 100% stable and verified as of v1.2.3.
+- **Certification**: The ecosystem is 100% stable and verified as of v1.3.0.
 - **Sovereign Bridges Re-Forged:** Implemented 'Symbolic Handshake' via `socat` UNIX-proxying in `scripts/vde-entrypoint.zsh`, bypassing virtual filesystem permission blocks on Darwin.
 - **Persistent Bridge established:** Added `.zshenv` export for `SSH_AUTH_SOCK` inside containers, ensuring non-interactive `vde exec` and login `vde enter` both inherit the host SSH agent identities.
 - **Atomic Handshake Hardening (Section 10.3):** Implemented dynamic probe naming (`vde-recon-probe-${port}-${RANDOM}`) and 3s strike timeouts to neutralize Darwin kernel race conditions.
