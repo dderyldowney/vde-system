@@ -36,7 +36,7 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
 * **G. The Scavenger’s Ban (Zero-Host Dependency)**: You are strictly forbidden from calling `jq` directly. You MUST use the `vde_query_json` wrapper or pure ZSH parsing.
 * **H. The Pre-Flight Mandate (Ignition Sync)**: The CLI MUST perform a timestamp audit at ignition. If source files are newer than the cache, a re-smelt is mandatory.
 * **I. The 8-Field Standard**: You are forbidden from deviating from the strict 8-field registry layout.
-* **J. The Rule of One (Dynamic Versioning)**: `docs/VDE-SPEC.md` is the SOLE authority for the project version. Hardcoding version numbers in headers is prohibited.
+* **J. The Rule of One (Dynamic Versioning)**: `docs/VDE-SPEC.md` is the SOLE authority for the project version. Hardcoding version numbers in headers is prohibited. In case of any discrepancy, the version in `docs/VDE-SPEC.md` wins all arguments.
 * **K. The 3-VM Concurrent Limit**: All parallel ignition and stress operations are strictly limited to a maximum of 3 concurrent Spokes (containers).
 * **L. The Proof of Life Mandate (Lifecycle Authority)**: The Proof of Life contract (`plans/system-spine-contract.md`) is the **Heartbeat** of the project. It defines the minimum functional standard (create, rebuild, start, enter, stop, remove, add, uninstall). Any failure to meet this standard constitutes a **Blockage**. All Blockages MUST be remedied immediately; no secondary implementation or refactoring is permitted until the Heartbeat is restored.
 * **M. The Gatekeeper Mandate (Pre-Push)**: The Proof of Life contract MUST be verified via a `pre-push` git hook. No code is permitted to leave the local Forge unless the absolute lifecycle is certified 100% Green.
