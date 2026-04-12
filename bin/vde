@@ -229,6 +229,10 @@ case ${COMMAND} in
             fi
         done
         ;;
+    restart)
+        shift
+        vde_run "restart" "${VDE_ROOT_DIR}/bin/restart-virtual" "$@"
+        ;;
     remove|delete|rm)
         shift
         local targets=("${@}")
@@ -257,11 +261,15 @@ case ${COMMAND} in
             fi
         done
         ;;
+    nuke)
+        shift
+        vde_run "nuke" "${VDE_ROOT_DIR}/bin/nuke-vde" "$@"
+        ;;
     exec)
         shift
         vde_run "exec" "${VDE_ROOT_DIR}/bin/vde-exec" "$@"
         ;;
-    enter)
+    enter|ssh)
         shift
         vde_run "enter" "${VDE_ROOT_DIR}/bin/ssh-vm" "$@"
         ;;
@@ -285,6 +293,10 @@ case ${COMMAND} in
         shift
         vde_run "rebuild-cache" "${VDE_ROOT_DIR}/bin/vde-rebuild-cache" "$@"
         ;;
+    sync-version)
+        shift
+        vde_run "sync-version" "${VDE_ROOT_DIR}/bin/vde-sync-version" "$@"
+        ;;
     ask)
         shift
         vde_run "ask" "${VDE_ROOT_DIR}/bin/vde-ask" "$@"
@@ -299,7 +311,7 @@ case ${COMMAND} in
         shift
         vde_run "info" "${VDE_ROOT_DIR}/bin/vde-info" "$@"
         ;;
-    ps)
+    ps|status)
         shift
         vde_run "ps" "${VDE_ROOT_DIR}/bin/vde-ps" "$@"
         ;;
@@ -331,5 +343,5 @@ case ${COMMAND} in
         shift
         vde_run "networks" "${VDE_ROOT_DIR}/bin/vde-networks" "$@"
         ;;
-    help|*) echo "Usage: vde {init|rebuild|create|start|stop|exec|enter|list|add|uninstall|validate|rebuild-cache|ask|port|info|ps|inspect|logs|images|stats|health|cluster|networks} [type/alias]" ;;
+    help|*) echo "Usage: vde {init|rebuild|create|start|stop|restart|remove|nuke|exec|enter|ssh|list|add|uninstall|validate|rebuild-cache|sync-version|ask|port|info|ps|status|inspect|logs|images|stats|health|cluster|networks} [type/alias]" ;;
 esac
