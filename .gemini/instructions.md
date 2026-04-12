@@ -225,7 +225,7 @@ All confirmations of compliance, instruction updates, or memory persistent actio
 
 1.  **Rule Record Locations**: State the exact file path and section header where the rule was recorded.
 2.  **Exact Text Updated**: Quote the literal block of text added or modified.
-3.  **Spine Rules Hit**: List the specific Mandalorian Mandates or Resol’nare rules (e.g., Rule A, Rule C, Section 10.5) that governed the decision or code choice.
+3.  **Spine Rules Hit**: List the specific Mandalorian Mandates or Resol’nare rules with their exact identifiers (e.g., Rule A, Rule C, Rule 18, Section 16.3, 9.1/9.6) that governed the decision or code choice.
 4.  **Behavioral Changes**: Explain in 3–5 concise sentences how the agent's behavior will change going forward.
 
 ---
