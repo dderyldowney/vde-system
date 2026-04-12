@@ -25,6 +25,7 @@ source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
 source "${VDE_ROOT_DIR}/lib/vde-log" &>/dev/null
 source "${VDE_ROOT_DIR}/lib/vde-core" &>/dev/null
 source "${VDE_ROOT_DIR}/lib/vm-common" &>/dev/null
+source "${VDE_ROOT_DIR}/lib/vde-pulse.zsh" &>/dev/null
 
 # Initialize logging
 vde_log_init 2>/dev/null || true
@@ -174,6 +175,11 @@ if [[ "${SHOW_COMMAND}" = false ]] ; then
         echo ""
         echo "Start the VM with: vde start ${VM_NAME}"
         exit ${VDE_ERR_GENERAL}
+    fi
+
+    # Identity Pulse check: Ensure the SSH agent bridge is active
+    if ! vde_identity_pulse "${RESOLVED_NAME}"; then
+        exit ${VDE_ERR_GENERAL:-1}
     fi
 fi
 
