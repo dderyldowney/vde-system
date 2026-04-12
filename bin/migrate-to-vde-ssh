@@ -182,7 +182,7 @@ echo "You can safely delete any old VDE entries from your personal ~/.ssh/config
 echo ""
 echo "Next steps:"
 echo "  • Rebuild VM images with new VDE key:"
-echo "    ./bin/create-virtual-for <vm-name>"
+echo "    vde create <vm-name>"
 echo "  • Test connection: vde ssh <vm>"
 echo ""
 
@@ -213,6 +213,6 @@ fi
 echo ""
 echo "Next steps:"
 echo "  • Rebuild VM images with new VDE key:"
-echo "    ./bin/create-virtual-for <vm-name>"
+echo "    vde create <vm-name>"
 echo "  • Test connection: vde_ssh <vm>-dev"
 echo ""

@@ -1,4 +1,5 @@
 FROM vde-base:latest
+LABEL project="vde" component="spoke" vde.managed="true"
 
 # Build-time arguments
 ARG PKGS_TO_INSTALL=""
