@@ -74,3 +74,8 @@ Feature: System Spine Integrity
     And I execute "ssh-add -l"
     Then the output should contain "vde_student"
     And the return code should be 0
+
+  @system-spine @image-purity @rule-12-5
+  Scenario: Spoke Image Purity Verification (Rule 12.5)
+    Given "vde-python" is currently running
+    Then the directory "/var/lib/apt/lists/" should be empty in the Spoke
