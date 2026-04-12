@@ -1,9 +1,12 @@
 FROM vde-base:latest
-LABEL project="vde" component="spoke" vde.managed="true"
 
-# Build-time arguments
+# Build-time arguments and metadata
+ARG VM_NAME
 ARG PKGS_TO_INSTALL=""
 ARG CUSTOM_BUILD_CMD=""
+LABEL project="vde" \
+      component="spoke" \
+      vde.managed="true"
 
 USER root
 
@@ -17,7 +20,6 @@ RUN if [ -n "${PKGS_TO_INSTALL}" ]; then \
 
 # 2. Run custom build command (Special Forces / Hybrid)
 # Note: For user-specific installs (Rust/Flutter), the command should use 'su devuser -c'
-ARG VM_NAME
 COPY lib/ /vde/lib/
 COPY scripts/setup/${VM_NAME}-init.zsh /vde/scripts/setup/
 RUN chmod +x /vde/scripts/setup/${VM_NAME}-init.zsh
@@ -25,8 +27,13 @@ RUN if [ -n "${CUSTOM_BUILD_CMD}" ]; then \
         eval "${CUSTOM_BUILD_CMD}"; \
     fi
 
-# 3. Switch back to root to allow SSHD to start
+# 3. Final Purity Check (Rule 12.5)
+RUN [ $(ls /var/lib/apt/lists/ | wc -l) -eq 0 ] || { \
+    echo "ERROR: Rule 12.5 Violation - apt artifacts found in /var/lib/apt/lists/"; \
+    exit 1; \
+}
+
+# 4. Switch back to root to allow SSHD to start
 USER root
 WORKDIR /home/devuser/workspace
 CMD ["/usr/sbin/sshd", "-D", "-e"]
-
