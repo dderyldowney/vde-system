@@ -40,6 +40,11 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
 * **K. The 3-VM Concurrent Limit**: All parallel ignition and stress operations are strictly limited to a maximum of 3 concurrent Spokes (containers).
 * **L. The Proof of Life Mandate (Lifecycle Authority)**: The Proof of Life contract (`plans/system-spine-contract.md`) is the **Heartbeat** of the project. It defines the minimum functional standard (create, rebuild, start, enter, stop, remove, add, uninstall). Any failure to meet this standard constitutes a **Blockage**. All Blockages MUST be remedied immediately; no secondary implementation or refactoring is permitted until the Heartbeat is restored.
 * **M. The Gatekeeper Mandate (Pre-Push)**: The Proof of Life contract MUST be verified via a `pre-push` git hook. No code is permitted to leave the local Forge unless the absolute lifecycle is certified 100% Green.
+* **N. The Sovereign Baseline (Dynamic Authority)**: 
+    * **Reserved Title**: "Sovereign Baseline" is a reserved title referring exclusively to the current authoritative version of the VDE as defined in `docs/VDE-SPEC.md`. 
+    * **Dynamic Reference**: The title is a dynamic pointer to the current state of truth (e.g., if VDE-SPEC is v1.3.0, then 1.3.0 is the Sovereign Baseline).
+    * **Future-Proofing**: New version tags immediately inherit this title. `docs/VDE-SPEC.md` remains the final authority, modified ONLY by `bin/vde-sync-version`.
+    * **Usage Law**: All analysis, verification, and status reporting MUST be measured against the Sovereign Baseline to ensure zero drift from the hardened state.
 
 ## **THE SOVEREIGN INSTRUCTION SET v1.3.0**
 
