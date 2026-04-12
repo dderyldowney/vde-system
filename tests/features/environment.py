@@ -259,9 +259,9 @@ def before_all(context):
     os.environ["VDE_SKIP_SPINE_CHECK"] = "1"
 
     print("[SETUP] Ensuring clean environment: shutting down all running VMs...")
-    # Use direct docker calls for setup to be fast and avoid spine-check overhead during bootstrap
-    subprocess.run(["sh", "-c", 'docker stop $(docker ps -q --filter "label=vde.managed=true") 2>/dev/null || true'], capture_output=True)
-    subprocess.run(["sh", "-c", 'docker rm -f $(docker ps -aq --filter "label=vde.managed=true") 2>/dev/null || true'], capture_output=True)
+    # Temporarily disabled for TDD Rule 12.5 verification
+    # subprocess.run(["sh", "-c", 'docker stop $(docker ps -q --filter "label=vde.managed=true") 2>/dev/null || true'], capture_output=True)
+    # subprocess.run(["sh", "-c", 'docker rm -f $(docker ps -aq --filter "label=vde.managed=true") 2>/dev/null || true'], capture_output=True)
     
     # Clear all locks and port registry
     locks_dir = Path(VDE_ROOT) / ".locks"

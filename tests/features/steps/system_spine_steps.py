@@ -148,9 +148,29 @@ def step_load_registry_spine(context):
 
 @given('"vde-python" is currently running')
 def step_ensure_running_python(context):
-    run_vde_command("start python")
+    context.vm_alias = "python"
+    from vm_common import container_is_running
+    if not container_is_running("vde-python"):
+        run_vde_command("start python")
     res = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", "vde-python"], capture_output=True, text=True)
     assert res.stdout.strip() == "true", "vde-python is not running"
+
+@then('the directory "{dir_path}" should be empty in the Spoke')
+def step_directory_empty_in_spoke(context, dir_path):
+    # Ensure vm_alias is set (fallback to python if needed)
+    vm_alias = getattr(context, 'vm_alias', 'python')
+    
+    # Use ls -A to list all files (including hidden ones, but excluding . and ..)
+    # We use vde_exec directly to avoid Zsh profile overhead if possible
+    result = run_vde_command(f"exec {vm_alias} ls -A {dir_path}")
+    
+    assert result.returncode == 0, f"Failed to list {dir_path} in {vm_alias}: {result.stderr}"
+    files = result.stdout.strip()
+    
+    if os.environ.get("VDE_DEBUG_TESTS") == "1":
+        print(f"DEBUG: ls -A {dir_path} output: '{files}'")
+        
+    assert not files, f"Directory {dir_path} is not empty in {vm_alias}. Found: {files}"
 
 @when('I run the one true way to stop "{vm_alias}"')
 def step_stop_vm(context, vm_alias):
