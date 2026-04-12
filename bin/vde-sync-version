@@ -26,7 +26,8 @@ vde_log_info "Synchronizing Tribe to Version: ${NEW_VER}" "forge"
 # Synchronize the bottom footer if it exists
 sed -i '' -E "s/Version: [0-9.]+/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/docs/VDE-SPEC.md"
 sed -i '' -E "s/ARCHITECTURE v[0-9.]+ .*/ARCHITECTURE v${NEW_VER} (The Sovereign Baseline)/" "${VDE_ROOT_DIR}/docs/VDE-SPEC.md"
-vde_log_success "Aligned docs/VDE-SPEC.md footer" "forge"
+sed -i '' -E "s/^# VDE-SPEC v[0-9.]+.*/# VDE-SPEC v${NEW_VER} (The Sovereign Evolution)/" "${VDE_ROOT_DIR}/docs/VDE-SPEC.md"
+vde_log_success "Aligned docs/VDE-SPEC.md" "forge"
 
 # 5. Strike docs/ARCHITECTURE.md
 sed -i '' -E "1s/^# ARCHITECTURE v.*/# ARCHITECTURE v${NEW_VER} (The Sovereign Baseline)/" "${VDE_ROOT_DIR}/docs/ARCHITECTURE.md"
@@ -37,6 +38,7 @@ vde_log_success "Aligned docs/ARCHITECTURE.md" "forge"
 sed -i '' -E "s/# \*\*The Way of the VDE: v[0-9.]+ .*\*\*/# **The Way of the VDE: v${NEW_VER} (The Sovereign Baseline)**/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
 sed -i '' -E "s/Version: [0-9.]+/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
 sed -i '' -E "s/VDE-SPEC v[0-9.]+ .*/VDE-SPEC v${NEW_VER} (Baseline)/" "${VDE_ROOT_DIR}/.gemini/instructions.md"
+sed -i '' -E "s/v[0-9.]+ The Sovereign Baseline/v${NEW_VER} The Sovereign Baseline/g" "${VDE_ROOT_DIR}/.gemini/instructions.md"
 vde_log_success "Aligned .gemini/instructions.md" "forge"
 
 # 7. Strike MEMORY.md
@@ -44,19 +46,62 @@ sed -i '' -E "s/Version: [0-9.]+/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/MEMORY.m
 sed -i '' -E "s/SYSTEM BENCHMARKS \(VDE [0-9.]+\)/SYSTEM BENCHMARKS (VDE ${NEW_VER})/" "${VDE_ROOT_DIR}/MEMORY.md"
 sed -i '' -E "s/THE MILESTONE: v[0-9.]+/THE MILESTONE: v${NEW_VER}/" "${VDE_ROOT_DIR}/MEMORY.md"
 sed -i '' -E "s/THE VERDICT: v[0-9.]+ READY/THE VERDICT: v${NEW_VER} READY/" "${VDE_ROOT_DIR}/MEMORY.md"
+sed -i '' -E "s/Baseline Version: [0-9.]+ .*/Baseline Version: ${NEW_VER} (The Sovereign Evolution)/" "${VDE_ROOT_DIR}/MEMORY.md"
 vde_log_success "Aligned MEMORY.md" "forge"
 
 # 8. Strike PROJECT_STATUS.md
-sed -i '' -E "s/# Project Status: VDE \(.* v[0-9.]+\)/# Project Status: VDE (Official Release v${NEW_VER})/" "${VDE_ROOT_DIR}/PROJECT_STATUS.md"
-sed -i '' -E "s/persistence \(v[0-9.]+\)/persistence (v${NEW_VER})/" "${VDE_ROOT_DIR}/PROJECT_STATUS.md"
+sed -i '' -E "s/# PROJECT STATUS - VDE v[0-9.]+ .*/# PROJECT STATUS - VDE v${NEW_VER} (The Sovereign Baseline)/" "${VDE_ROOT_DIR}/PROJECT_STATUS.md"
+sed -i '' -E "s/v[0-9.]+ is officially declared/v${NEW_VER} is officially declared/" "${VDE_ROOT_DIR}/PROJECT_STATUS.md"
+sed -i '' -E "s/Pillars \(v[0-9.]+\)/Pillars (v${NEW_VER})/" "${VDE_ROOT_DIR}/PROJECT_STATUS.md"
 vde_log_success "Aligned PROJECT_STATUS.md" "forge"
 
 # 9. Strike tests/TEST_STATUS_REPORT.md
 sed -i '' -E "s/# VDE Test Status Report \(.* v[0-9.]+\)/# VDE Test Status Report (Sovereign Certification v${NEW_VER})/" "${VDE_ROOT_DIR}/tests/TEST_STATUS_REPORT.md"
 sed -i '' -E "s/verified \(v[0-9.]+\)/verified (v${NEW_VER})/" "${VDE_ROOT_DIR}/tests/TEST_STATUS_REPORT.md"
+sed -i '' -E "s/Baseline: v[0-9.]+ .*/Baseline: v${NEW_VER} (The Sovereign Evolution)/" "${VDE_ROOT_DIR}/tests/TEST_STATUS_REPORT.md"
 vde_log_success "Aligned tests/TEST_STATUS_REPORT.md" "forge"
 
-# 10. Strike $HOME/.zshrc (The Host Handshake)
+# 10. Strike README.md
+sed -i '' -E "s/# The Way of the VDE: v[0-9.]+ .*/# The Way of the VDE: v${NEW_VER} (The Sovereign Baseline)/" "${VDE_ROOT_DIR}/README.md"
+sed -i '' -E "s/Architecture v[0-9.]+/Architecture v${NEW_VER}/g" "${VDE_ROOT_DIR}/README.md"
+vde_log_success "Aligned README.md" "forge"
+
+# 11. Strike docs/API.md
+sed -i '' -E "s/\*\*Version:\*\* [0-9.]+ .*/\*\*Version:\*\* ${NEW_VER} (The Sovereign Baseline)/" "${VDE_ROOT_DIR}/docs/API.md"
+vde_log_success "Aligned docs/API.md" "forge"
+
+# 12. Strike docs/TESTING.md
+sed -i '' -E "s/# VDE Testing Strategy - v[0-9.]+ .*/# VDE Testing Strategy - v${NEW_VER} (The Sovereign Baseline)/" "${VDE_ROOT_DIR}/docs/TESTING.md"
+sed -i '' -E "s/## 2. BDD PERFORMANCE METRICS \(v[0-9.]+\)/## 2. BDD PERFORMANCE METRICS (v${NEW_VER})/" "${VDE_ROOT_DIR}/docs/TESTING.md"
+sed -i '' -E "s/\*\*Status:\*\* SYSTEM CERTIFIED \(v[0-9.]+\)/\*\*Status:\*\* SYSTEM CERTIFIED (v${NEW_VER})/" "${VDE_ROOT_DIR}/docs/TESTING.md"
+vde_log_success "Aligned docs/TESTING.md" "forge"
+
+# 13. Strike docs/extending-vde.md
+sed -i '' -E "s/## Current VM Types \(v[0-9.]+ .*/## Current VM Types (v${NEW_VER} The Sovereign Baseline)/" "${VDE_ROOT_DIR}/docs/extending-vde.md"
+vde_log_success "Aligned docs/extending-vde.md" "forge"
+
+# 14. Strike docs/Technical-Deep-Dive.md
+sed -i '' -E "s/# VDE: Technical Deep-Dive \(v[0-9.]+ .*\)/# VDE: Technical Deep-Dive (v${NEW_VER} Sovereign)/" "${VDE_ROOT_DIR}/docs/Technical-Deep-Dive.md"
+sed -i '' -E "s/^Version: [0-9.]+/Version: ${NEW_VER}/" "${VDE_ROOT_DIR}/docs/Technical-Deep-Dive.md"
+vde_log_success "Aligned docs/Technical-Deep-Dive.md" "forge"
+
+# 15. Strike .gemini_security/REMEDIATION_PLAN.md
+sed -i '' -E "s/# VDE Remediation Strike Plan \(v[0-9.]+ .*\)/# VDE Remediation Strike Plan (v${NEW_VER} Sovereign)/" "${VDE_ROOT_DIR}/.gemini_security/REMEDIATION_PLAN.md"
+vde_log_success "Aligned .gemini_security/REMEDIATION_PLAN.md" "forge"
+
+# 16. Strike VDE_PROTOCOL.md
+sed -i '' -E "s/# VDE Project Protocol \(v[0-9.]+\)/# VDE Project Protocol (v${NEW_VER})/" "${VDE_ROOT_DIR}/VDE_PROTOCOL.md"
+vde_log_success "Aligned VDE_PROTOCOL.md" "forge"
+
+# 17. Strike BDD features and steps
+sed -i '' -E "s/synchronized to version [0-9.]+/synchronized to version ${NEW_VER}/" "${VDE_ROOT_DIR}/tests/features/core-infrastructure/proof-of-life-the-contract.feature"
+sed -i '' -E "s/synchronized to version [0-9.]+/synchronized to version ${NEW_VER}/" "${VDE_ROOT_DIR}/tests/features/core-infrastructure/student-daily-usage.feature"
+sed -i '' -E "s/Hub is synchronized to version [0-9.]+/Hub is synchronized to version ${NEW_VER}/" "${VDE_ROOT_DIR}/tests/features/steps/system_spine_steps.py"
+sed -i '' -E "s/Version: [0-9.]+/Version: ${NEW_VER}/g" "${VDE_ROOT_DIR}/tests/features/steps/system_spine_steps.py"
+sed -i '' -E "s/v[0-9.]+/v${NEW_VER}/g" "${VDE_ROOT_DIR}/tests/features/steps/system_spine_steps.py"
+vde_log_success "Aligned BDD features and steps" "forge"
+
+# 18. Strike $HOME/.zshrc (The Host Handshake)
 local zshrc="${HOME}/.zshrc"
 if [[ -f "$zshrc" ]]; then
     # Strikes the gvde function's handshake prompt version (v is optional)

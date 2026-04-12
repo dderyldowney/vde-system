@@ -78,7 +78,7 @@ def step_verify_hydration(context, script_path):
 
 @then('the SSH port should be atomically allocated and recorded in the registry')
 def step_verify_port_allocation(context):
-    # In v2.1.0, the authoritative port is recorded in .cache/vm-types.cache
+    # In v1.3.0, the authoritative port is recorded in .cache/vm-types.cache
     cache_file = VDE_ROOT / ".cache" / "vm-types.cache"
     assert cache_file.exists(), "VM types cache missing"
     
@@ -182,7 +182,7 @@ def step_verify_destroyed(context, container_name):
 @then('the SSH configuration should be preserved')
 def step_verify_ssh_preserved(context):
     # SSH config should NOT be deleted on 'remove' by mandate
-    # VDE v2.1.0 standard is ~/.ssh/vde/config
+    # VDE v1.3.0 standard is ~/.ssh/vde/config
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
     
     assert ssh_config.exists(), f"VDE SSH config missing at {ssh_config}"
