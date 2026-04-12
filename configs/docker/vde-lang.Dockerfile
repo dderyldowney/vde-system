@@ -4,6 +4,7 @@ FROM vde-base:latest
 ARG VM_NAME
 ARG PKGS_TO_INSTALL=""
 ARG CUSTOM_BUILD_CMD=""
+ARG POSTGRES_DEV_PASSWORD=""
 LABEL project="vde" \
       component="spoke" \
       vde.managed="true"

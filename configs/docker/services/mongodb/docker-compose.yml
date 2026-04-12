@@ -10,6 +10,7 @@ services:
         VM_NAME: mongodb
         PKGS_TO_INSTALL: ""
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/mongodb-init.zsh"
+        POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
         UID: 1000
         GID: 1000
