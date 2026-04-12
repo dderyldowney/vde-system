@@ -20,8 +20,9 @@ PG_VER=$(ls /etc/postgresql | head -n 1)
 PG_BASE="/etc/postgresql/${PG_VER}/main"
 
 # User & DB Creation (Idempotent)
+local pg_dev_pass="${POSTGRES_DEV_PASSWORD:-vde_pass}"
 su - postgres -c "psql -tc \"SELECT 1 FROM pg_user WHERE usename = 'devuser'\" | grep -q 1" || \
-su - postgres -c "psql -c \"CREATE USER devuser WITH PASSWORD 'vde_pass' SUPERUSER;\""
+su - postgres -c "psql -c \"CREATE USER devuser WITH PASSWORD '${pg_dev_pass}' SUPERUSER;\""
 
 su - postgres -c "psql -lqt | cut -d \| -f 1 | grep -qw devuser" || \
 su - postgres -c "createdb -O devuser devuser"

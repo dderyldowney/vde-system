@@ -1373,6 +1373,45 @@ ensure_vm_directories() {
     done
 }
 
+# vde_check_system_breath - Query Hub resources before ignition
+# Returns: VDE_SUCCESS (0) if strong, VDE_ERR_THROTTLED (10) if shallow
+# Outputs: Max concurrent VMs allowed (3 or 4)
+vde_check_system_breath() {
+    local ncpu load_avg
+    if [[ "$(uname)" == "Darwin" ]]; then
+        ncpu=$(sysctl -n hw.ncpu 2>/dev/null || echo 4)
+    else
+        ncpu=$(nproc 2>/dev/null || echo 4)
+    fi
+    # Ensure ncpu is a number
+    [[ "${ncpu}" =~ ^[0-9]+$ ]] || ncpu=4
+
+    # Extract 1-minute load average
+    load_avg=$(uptime | awk -F'load averages:|load average:' '{ print $2 }' | awk '{ print $1 }' | sed 's/,//g' 2>/dev/null)
+    # Ensure load_avg is a number (handle empty or non-numeric)
+    if [[ -z "${load_avg}" ]] || ! [[ "${load_avg}" =~ ^[0-9.]+$ ]]; then
+        load_avg=0.0
+    fi
+    
+    # 1. Throttling: Hub's breath is shallow
+    if (( load_avg > (ncpu * 1.5) )); then
+        vde_log_warn "The Hub's breath is shallow (Load: ${load_avg}, CPUs: ${ncpu}). Ignition throttled to preserve the Forge." "system"
+        echo "0" # Block all new ignition
+        return ${VDE_ERR_TIMEOUT:-5}
+    fi
+
+    # 2. Scaling: The Forge is strong
+    if (( ncpu >= 8 )) && (( load_avg < (ncpu * 0.5) )); then
+        vde_log_info "The Forge is strong. Allowing expanded expansion (4 Spokes)." "system"
+        echo "4"
+        return ${VDE_SUCCESS}
+    fi
+
+    # 3. Sovereign Baseline
+    echo "3"
+    return ${VDE_SUCCESS}
+}
+
 # =============================================================================
 # USAGE DISPLAY
 # =============================================================================

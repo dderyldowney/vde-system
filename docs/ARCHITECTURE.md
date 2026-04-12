@@ -1,4 +1,4 @@
-# ARCHITECTURE v1.2.3 (The Sovereign Baseline)
+# ARCHITECTURE v1.3.0 (The Sovereign Baseline)
 
 ## VERSION HISTORY
 | Version | Date       | Changes                                                                 |

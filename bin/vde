@@ -54,6 +54,25 @@ case ${COMMAND} in
         local targets=("${@}")
         [[ -z "${targets}" ]] && vde_log_error "Usage: vde start <alias...>" && exit 1
         
+        # 1. System Breath Check (Dynamic Scaling/Throttling)
+        local max_vms
+        max_vms=$(vde_check_system_breath)
+        local breath_rc=$?
+        max_vms="${max_vms:-3}" # Safe default
+        
+        if [[ ${breath_rc} -ne 0 ]] && [[ "${max_vms}" == "0" ]]; then
+            vde_log_error "Ignition aborted due to system resource constraints." "system"
+            exit ${breath_rc}
+        fi
+
+        # 2. Check current combat load
+        local running_count
+        running_count=$(docker_get_running | wc -w | tr -d ' ')
+        if (( running_count >= max_vms )); then
+            vde_log_error "Rule K Violation: Combat Load exceeded (${running_count}/${max_vms} VMs running). Quench a Spoke before igniting a new one." "system"
+            exit 1
+        fi
+
         local GLOBAL_RC=0
         for target_type in "${targets[@]}"; do
             CANONICAL_NAME=$(resolve_vm_name "${target_type}" 2>/dev/null)
@@ -319,5 +338,9 @@ case ${COMMAND} in
         shift
         vde_run "networks" "${VDE_ROOT_DIR}/bin/vde-networks" "$@"
         ;;
-    help|*) echo "Usage: vde {init|rebuild|create|start|stop|restart|remove|nuke|exec|enter|ssh|list|add|uninstall|validate|rebuild-cache|sync-version|port|info|ps|status|inspect|logs|images|stats|health|cluster|networks} [type/alias]" ;;
+    vision)
+        shift
+        vde_run "vision" "${VDE_ROOT_DIR}/bin/vde-vision" "$@"
+        ;;
+    help|*) echo "Usage: vde {init|rebuild|create|start|stop|restart|remove|nuke|exec|enter|ssh|list|add|uninstall|validate|rebuild-cache|sync-version|port|info|ps|status|inspect|logs|images|stats|health|cluster|networks|vision} [type/alias]" ;;
 esac
