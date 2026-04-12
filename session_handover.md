@@ -1,10 +1,10 @@
-# Session Handover — v1.2.3 (The Sovereign Baseline)
+# Session Handover — v1.3.0 (The Sovereign Baseline)
 
-**Current Status**: 🟢 VDE v1.2.3 SOVEREIGN BASELINE CERTIFIED / 100% GREEN
+**Current Status**: 🟢 VDE v1.3.0 SOVEREIGN BASELINE CERTIFIED / 100% GREEN
 **Active Branch**: `develop` (STRICT MANDATE: Work on `develop` only)
 **Next Step**: High-Velocity Cluster Expansion (v1.3.0)
 
-## Accomplishments (v1.2.3 Sovereign Baseline)
+## Accomplishments (v1.3.0 Sovereign Baseline)
 1.  **Lock-Queue Model (Phase 25 - The Sovereign Baseline)**:
     - Replaced competitive spinlocks with deterministic FIFO ticket-based sequencing in `lib/vm-lock`.
     - Eliminated "thundering herd" race conditions under high concurrency (10+ simultaneous requests).
@@ -31,5 +31,5 @@
 - **No Simulation**: All tests verified against physical system state (actual PIDs, real locks).
 - **Rule Spine**: Every action executed under `bin/vde-enforce-uap.zsh` supervision.
 
-**Version**: 1.2.3
+**Version**: 1.3.0
 **This is the Way.**

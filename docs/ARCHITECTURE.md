@@ -3,8 +3,8 @@
 ## VERSION HISTORY
 | Version | Date       | Changes                                                                 |
 | :---    | :---       | :---                                                                    |
-| 1.2.3   | 2026-04-11 | Established The Sovereign Baseline and VDE_INSTALL.md.                  |
-| 1.2.2   | 2026-04-10 | Absolute release with FIFO locking and deterministic signals.           |
+| 1.3.0   | 2026-04-11 | Established The Sovereign Baseline and VDE_INSTALL.md.                  |
+| 1.3.0   | 2026-04-10 | Absolute release with FIFO locking and deterministic signals.           |
 | 1.2.1   | 2026-04-09 | Hardened System Spine Tetrad and Rule Spine integration.                |
 | 1.2.0   | 2026-04-08 | Initial production release with Sovereign Handshake (SSH).              |
 

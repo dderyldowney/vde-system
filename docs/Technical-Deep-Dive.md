@@ -1,4 +1,4 @@
-# VDE: Technical Deep-Dive (v1.2.3 Sovereign)
+# VDE: Technical Deep-Dive (v1.3.0 Sovereign)
 
 ## 1. The Rule Spine (UAP Enforcement)
 
@@ -55,5 +55,5 @@ VDE operations follow the **Mandalorian Sequence**:
 - **Container Sovereignty**: The `vde-net` provides bridge isolation. The Docker socket is bridged via secure group-id alignment in `vde-entrypoint.zsh`.
 
 ---
-Version: 1.2.3
+Version: 1.3.0
 Status: Hardened
