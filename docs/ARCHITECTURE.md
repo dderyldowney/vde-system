@@ -1,22 +1,14 @@
 # ARCHITECTURE v1.3.0 (The Sovereign Baseline)
 
-## VERSION HISTORY
-| Version | Date       | Changes                                                                 |
-| :---    | :---       | :---                                                                    |
-| 1.3.0   | 2026-04-12 | Certified Sovereign Baseline with FIFO Ticket Locking and automated releases. |
-| 1.3.0   | 2026-04-11 | Established The Sovereign Baseline and VDE_INSTALL.md.                  |
-| 1.3.0   | 2026-04-10 | Absolute release with FIFO locking and deterministic signals.           |
-| 1.2.1   | 2026-04-09 | Hardened System Spine Tetrad and Rule Spine integration.                |
-
 ## 1. The Hub-and-Spoke Tiered Model
 
 VDE uses a three-tier inheritance and isolation model to ensure identity consistency while maintaining absolute Spoke autonomy.
 
 | Tier | Name | Component | Role |
 | :--- | :--- | :--- | :--- |
-| **Tier 1** | **The Hub** | `vde-base` | Defines Identity (`devuser`), Shell (`Zsh`), and the **Transversal Bridge** (SSH). |
+| **Tier 1** | **The Hub** | `vde-base` | Defines Identity (`devuser`), Shell (`Zsh`), and the **Sovereign Bridge** (SSH/Docker). |
 | **Tier 2** | **The Spoke** | `scripts/setup/` | **USP (Universal Script Parity)** rituals that hydrate the environment at build-time. |
-| **Tier 3** | **The Jail** | Container | The running process (e.g., `vde-python`). Optimized for ignition in <4.2s. |
+| **Tier 3** | **The Jail** | Container | The immutable running process bridged to the host. Optimized for ignition in <4.2s. |
 
 ## 2. The Ignition Pipeline (The Smelting Ritual)
 
@@ -33,33 +25,27 @@ VDE uses a reactive synchronization pipeline to transform human intent into high
 VDE uses a **Lock-Queue Model** to manage high-velocity parallel operations without race conditions.
 
 ### 3.1. FIFO Lock-Queue Sequencing (`lib/vm-lock`)
-- **Ticket Registration**: Every strike requesting a lock registers a unique timestamped "Ticket" file in `${lock_file}.queue/` using `${EPOCHREALTIME}-$$`.
-- **FIFO Enforcement**: The `claim_lock` function performs a line-check; only the process holding the **oldest ticket** (numerically sorted) is permitted to attempt the atomic `mkdir` gate.
-- **Ownership Proof**: Once claimed, the lock directory contains a `pid` file recording `PID:PGID:TIMESTAMP`.
-- **Paths**: Primary locks reside in `${VDE_ROOT_DIR}/.locks/vms/` and `global-config.lock`.
+- **Ticket Registration**: Every strike requesting a lock registers a unique "Ticket" file in `${lock_file}.queue/` using `${EPOCHREALTIME}-$$`.
+- **FIFO Enforcement**: Only the process holding the **oldest numerically sorted ticket** is permitted to attempt the atomic `mkdir` gate.
+- **Ownership Proof**: Once claimed, the lock directory contains a `pid` file recording `PID:PGID:TIMESTAMP` for transparent monitoring.
 
 ### 3.2. Port Stewardship (`lib/vde-docker`)
-- **Atomic Reservation**: Uses `${VDE_ROOT_DIR}/.locks/ports/port-<number>.lock` to prevent double-allocation during concurrent ignitions.
-- **Physical Handshake**: No port is assigned until a physical diagnostic probe (`docker run --rm`) verifies the port is not occupied by host-level "Scavenger" processes.
-- **Port Ranges**: Defined in `lib/vde-constants`: `VDE_LANG_PORT_START` (2200) and `VDE_SVC_PORT_START` (2400).
+- **Atomic Reservation**: Uses `.locks/ports/port-<number>.lock` to prevent double-allocation during concurrent ignitions.
+- **Physical Handshake**: No port is assigned until a physical diagnostic probe (`docker run --rm --name vde-port-probe-<port>`) verifies the port is not occupied.
+- **Port Ranges**: `VDE_LANG_PORT_START` (2200) and `VDE_SVC_PORT_START` (2400).
 
-### 3.3. Deterministic Error Engine (Phase 26)
-- **Signal Translation**: Kernel-level signals (SIGINT/130, SIGKILL/137, SIGTERM/143) are captured by the `vde_run` wrapper and mapped to UX-friendly remediation feedback via `vde_error_map`.
-- **Status Reporting**: All CLI operations utilize `vde_progress` (spinners and progress bars) for real-time visibility into lock contention and ignition states.
+## 4. Deterministic Error Engine (Phase 26)
 
-## 4. Universal Script Parity (USP) Logic
+All VDE operations are wrapped in the `vde_run` deterministic execution wrapper:
+- **Signal Translation**: Kernel signals (SIGINT/130, SIGKILL/137, SIGTERM/143) are captured and mapped to UX-friendly remediation feedback.
+- **Zero-Host Fidelity**: Errors are reported using the Sovereign Error Table defined in `lib/vde-constants`.
 
-Manufacturing logic is decoupled from container orchestration to ensure "Born Ready" (BTO) images:
-- **Registry Independence**: `vm-types.json` defines *what* exists; `scripts/setup/` defines *how* it is built.
-- **Asynchronous Spoke Ignition**: Service Spokes register background hooks in `/usr/local/bin/vde-spoke-ignition.zsh`, ensuring the SSH Gate remains fast while services ignite in the background.
-- **Image Hygiene**: Every USP ritual is mandated to "Purge the Ghosts" (`apt-get clean && rm -rf /var/lib/apt/lists/*`) to maintain immutable purity.
+## 5. Persistence & Sovereign Bridge
 
-## 5. Persistence & Identity Bridge
-
+- **Identity Isolation**: The `vde_student` key is isolated to `~/.ssh/vde/`.
+- **SSH Agent Bridge**: Established via `socat` UNIX-proxying in the entrypoint, mapping the host socket to `~/.ssh/vde/agent.sock` inside the container.
+- **Docker Socket Bridge**: Bridged via dynamic GID mapping and `chmod 666` within the isolated `vde-net` environment.
 - **Workspace Mapping**: `/home/devuser/workspace` maps to `projects/<alias>/` on the Hub.
-- **Sovereign Bridge**: SSH Agent forwarding is established via `socat` UNIX-proxying in the entrypoint, mapping the Hub socket to `${VDE_SSH_DIR}/agent.sock`.
-- **Identity Isolation**: The `vde_student` key is isolated to `~/.ssh/vde/` (`VDE_SSH_DIR`), preventing collision with personal identities.
-- **Naming Standard**: Controlled by `lib/vde-naming`. Containers always use `vde-<base_name>` (e.g., `vde-python`).
 
 ---
 Version: 1.3.0

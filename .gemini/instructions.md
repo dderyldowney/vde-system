@@ -234,16 +234,5 @@ VDE SHALL use **MAJOR.MINOR.STEP** (e.g., 1.3.0) for all inventory control.
     * GitHub Releases are RARE, TEACHABLE milestones published ONLY by the User.
     * Multiple STEP tags may exist without a GitHub Release; a Release may summarize several STEP tags.
 
-## **18. THE SOVEREIGN REPORTING FORMAT**
-
-All confirmations of compliance, instruction updates, or memory persistent actions MUST adhere to the following 4-step format:
-
-1.  **Rule Record Locations**: State the exact file path and section header where the rule was recorded.
-2.  **Exact Text Updated**: Quote the literal block of text added or modified.
-3.  **Spine Rules Hit**: List the specific Mandalorian Mandates or Resol’nare rules with their exact identifiers (e.g., Rule A, Rule C, Rule 18, Section 16.3, 9.1/9.6) that governed the decision or code choice.
-4.  **Behavioral Changes**: Explain in 3–5 concise sentences how the agent's behavior will change going forward.
-
----
-Version: 1.3.0
-Reference: VDE-SPEC v1.3.0 (Baseline)
----
+## **19. THE SOVEREIGN ARTIFACT SET (Codified 2026-04-12)**
+When a Sovereign Baseline release is cut, the following documents MUST be updated to match the new reality before tagging is allowed: `ARCHITECTURE.md`, `TECHNICAL_DEEP_DIVE.md`, `RELEASE_NOTES.md`, and `VDE-SPEC.md`. These four files move as a single artifact set for every Sovereign Baseline. If the system changes in a way the current spec cannot describe, the spec must be rewritten so that the implementation and `VDE-SPEC.md` are again in perfect agreement.
