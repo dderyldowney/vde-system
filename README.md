@@ -30,7 +30,7 @@ Welcome, Foundling, to the VDE — the Beskar Hub for your development Spokes. W
 | **The Beskar Vault** | [Extending the Creed](docs/extending-vde.md) • [Directory Hierarchy](docs/directory-structure.md) |
 | **The Forge** | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) • [Development Guide](docs/DEVELOPMENT_GUIDE.md) |
 | **The Tribe's Contribution** | [Contributing Guide](CONTRIBUTING.md) • [The Language of the Tribe](STYLE_GUIDE.md) • [Testing Mandates](docs/TESTING.md) |
-| **Ancient Intel** | [API Reference](docs/API.md) • [Architecture v1.3.0](docs/ARCHITECTURE.md) • [Best Practices](docs/best-practices.md) |
+| **Ancient Intel** | [API Reference](docs/API.md) • [Architecture v1.3.0](docs/ARCHITECTURE.md) • [Release Archive](https://github.com/dderyldowney/vde-system/tree/main/docs/releases) |
 | **Reinforcements** | [Troubleshooting](docs/troubleshooting.md) • [Rebuild Mandates](docs/rebuild-guidelines.md) |
 | **Evolution** | [Evolution Guide](#the-evolution-of-armor) - Keeping the Hub up-to-date |
 
