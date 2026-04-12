@@ -44,6 +44,10 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
     * **Reserved Title**: "Sovereign Baseline" is the reserved title for the version currently certified by `docs/VDE-SPEC.md`. 
     * **The Heartbeat Link**: A version only holds the title of "Sovereign Baseline" when it is both recorded in the SPEC and passes the Mandate L Proof of Life.
     * **Usage Law**: All analysis, verification, and status reporting MUST be measured against the Sovereign Baseline. Drift from this state is a Class-A violation.
+* **O. The Chronicler’s Mandate (Release Ritual)**:
+    * Every "Sovereign Baseline" MUST be documented in the permanent archive (`docs/releases/vX.Y.Z.md`).
+    * The root `RELEASE_NOTES.md` MUST be updated to point to the latest certified record.
+    * A release record is only valid if it includes the final empirical test pass counts and is certified by the Dual Audit Loop (Code + Security).
 
 ## **THE SOVEREIGN INSTRUCTION SET v1.3.0**
 
