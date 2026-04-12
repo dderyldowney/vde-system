@@ -62,7 +62,8 @@ else
     echo -e "${GREEN}Successfully installed ${INSTALLED} git hook(s)${RESET}"
     echo ""
     echo "Installed hooks:"
-    echo "  - pre-commit: VDE Sentinel (Rule C & Rule 12)"
+    echo "  - pre-commit: VDE Sentinel (Rule C, Rule 12, USP)"
+    echo "  - pre-push:   VDE Gatekeeper (Mandate L - Proof of Life)"
 fi
 
 exit 0

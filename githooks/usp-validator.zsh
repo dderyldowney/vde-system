@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # githooks/usp-validator.zsh - Codifies USP Mandates from usp-validation.feature
 # Part of the Pre-Strike Sentinel
+set -e
 
 # Determine VDE root directory
 VDE_ROOT_DIR="${0:a:h:h}"
