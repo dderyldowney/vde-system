@@ -297,10 +297,6 @@ case ${COMMAND} in
         shift
         vde_run "sync-version" "${VDE_ROOT_DIR}/bin/vde-sync-version" "$@"
         ;;
-    ask)
-        shift
-        vde_run "ask" "${VDE_ROOT_DIR}/bin/vde-ask" "$@"
-        ;;
     port)
         local vm_alias=$2
         CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
@@ -344,4 +340,6 @@ case ${COMMAND} in
         vde_run "networks" "${VDE_ROOT_DIR}/bin/vde-networks" "$@"
         ;;
     help|*) echo "Usage: vde {init|rebuild|create|start|stop|restart|remove|nuke|exec|enter|ssh|list|add|uninstall|validate|rebuild-cache|sync-version|ask|port|info|ps|status|inspect|logs|images|stats|health|cluster|networks} [type/alias]" ;;
+esac
+nfo|ps|status|inspect|logs|images|stats|health|cluster|networks} [type/alias]" ;;
 esac
