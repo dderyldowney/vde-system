@@ -43,7 +43,7 @@ services:
       - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock
 
     env_file:
-      - ../../../../env-files/vde-go.env
+      - ../../../../env-files/go.env
 
     networks:
       - vde-net
