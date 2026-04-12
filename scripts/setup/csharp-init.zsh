@@ -16,7 +16,7 @@ apt-get install -y ${=vde_csharp_pkgs}
 DOTNET_INSTALL_DIR="/usr/share/dotnet"
 mkdir -p "${DOTNET_INSTALL_DIR}"
 curl -sSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
-bash /tmp/dotnet-install.sh --version 8.0.100 --install-dir "${DOTNET_INSTALL_DIR}"
+sh /tmp/dotnet-install.sh --version 8.0.100 --install-dir "${DOTNET_INSTALL_DIR}"
 ln -sf "${DOTNET_INSTALL_DIR}/dotnet" /usr/bin/dotnet
 
 # 3. PERSISTENCE ANCHOR

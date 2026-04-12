@@ -15,6 +15,10 @@ apt-get install -y ${=vde_redis_pkgs}
 service redis-server stop || true
 pkill redis-server || true
 
+# Configure Redis for inter-VM communication
+sed -i 's/^bind .*/bind 0.0.0.0/' /etc/redis/redis.conf
+sed -i 's/^protected-mode yes/protected-mode no/' /etc/redis/redis.conf
+
 # 3. SPOKE IGNITION REGISTRATION
 local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
 cat <<EOF > "${_spoke_ignition}"

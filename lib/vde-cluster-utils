@@ -105,7 +105,7 @@ vde_cluster_list() {
             local name
             name=$(basename "${f}" .json)
             local vms
-            vms=$(jq -r '.vms | join(", ")' "${f}")
+            vms=$(vde_query_json -r '.vms | join(", ")' "${f}")
             printf "  %-20s [%s]\n" "${name}" "${vms}"
         fi
     done
@@ -134,4 +134,6 @@ vde_cluster_exists() {
         return ${VDE_SUCCESS}
     fi
     return ${VDE_ERR_NOT_FOUND}
+}
+OT_FOUND}
 }
