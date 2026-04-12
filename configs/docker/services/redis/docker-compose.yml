@@ -17,7 +17,6 @@ services:
     container_name: vde-redis
     hostname: vde-redis
     restart: unless-stopped
-    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
       - "2406:2406"

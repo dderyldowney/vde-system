@@ -17,7 +17,6 @@ services:
     container_name: vde-mysql
     hostname: vde-mysql
     restart: unless-stopped
-    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
       - "2402:2402"

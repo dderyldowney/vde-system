@@ -17,7 +17,6 @@ services:
     container_name: vde-jupyterlab
     hostname: vde-jupyterlab
     restart: unless-stopped
-    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
       - "2407:2407"

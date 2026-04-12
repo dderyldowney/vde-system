@@ -17,7 +17,6 @@ services:
     container_name: vde-{{NAME}}
     hostname: vde-{{NAME}}
     restart: unless-stopped
-    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
       - "{{SSH_PORT}}:{{SSH_PORT}}"

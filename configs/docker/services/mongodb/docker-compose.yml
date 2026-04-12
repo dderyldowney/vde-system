@@ -17,7 +17,6 @@ services:
     container_name: vde-mongodb
     hostname: vde-mongodb
     restart: unless-stopped
-    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
       - "2401:2401"

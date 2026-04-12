@@ -17,7 +17,6 @@ services:
     container_name: vde-postgres
     hostname: vde-postgres
     restart: unless-stopped
-    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
       - "2404:2404"

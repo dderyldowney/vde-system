@@ -17,7 +17,6 @@ services:
     container_name: vde-rabbitmq
     hostname: vde-rabbitmq
     restart: unless-stopped
-    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
       - "2405:2405"

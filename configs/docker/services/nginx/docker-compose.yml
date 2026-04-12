@@ -17,7 +17,6 @@ services:
     container_name: vde-nginx
     hostname: vde-nginx
     restart: unless-stopped
-    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
       - "2403:2403"

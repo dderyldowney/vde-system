@@ -21,7 +21,6 @@ services:
       - "vde.managed=true"
       - "vde.type=lang"
       - "vde.name=testport1"
-    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
       - "2219:2219"

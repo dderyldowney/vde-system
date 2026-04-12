@@ -17,7 +17,6 @@ services:
     container_name: vde-couchdb
     hostname: vde-couchdb
     restart: unless-stopped
-    command: ["/usr/local/bin/vde-entrypoint.zsh"]
 
     ports:
       - "2400:2400"
