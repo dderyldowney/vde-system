@@ -26,6 +26,9 @@
     - **Proof of Life Gatekeeper:** Established `pre-push` hook to execute the full `proof-of-life-contract.feature` before code leaves the local Forge.
     - **Deterministic Validation:** Reinforced all hooks with `zsh -e` and `set -e` for fail-fast error handling.
 - **Baseline Alignment:** Universally applied `1.3.0` baseline across all setup scripts and active plan files.
+- **Sovereign Baseline Mandate (Codified 2026-04-12):**
+    - Defined "Sovereign Baseline" as the dynamic pointer to the current authoritative version in `docs/VDE-SPEC.md`.
+    - Established "Usage Law": All actions must be measured against the Sovereign Baseline to ensure zero drift.
 
 ## SYSTEM EVOLUTION (2026-04-10) - VDE 1.3.0 HARDENING STRIKE
 - **Spoke Ignition Hook:** Implemented `/usr/local/bin/vde-spoke-ignition.zsh` hook in `scripts/vde-entrypoint.zsh`. This allows spokes to register background services that start automatically on container ignition, detaching them from the SSH gate lifecycle.
