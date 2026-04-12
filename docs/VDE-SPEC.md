@@ -9,7 +9,7 @@
 - **The Beskar Vault (Data Authority)**: `data/vm-types.json` and `data/vm-types.conf` are the sole sources of truth. Data integrity is maintained via the **8-Field Standard**: `type|name|aliases|display|pkgs|custom_cmd|env|ports`.
 - **Ignition Sync (Pre-Flight)**: The CLI MUST perform a timestamp audit at ignition. If source files are newer than the cache, a re-smelt is mandatory.
 - **The 3-VM Concurrent Limit**: Parallel ignition and stress operations are strictly limited to a maximum of 3 concurrent VMs.
-- **The Rule of One (Versioning)**: This document is the SOLE authority for the project version.
+- **The Rule of One (Versioning)**: This document is the SOLE authority for the project version. The current version defined here is known as the **Sovereign Baseline**.
 
 ## 2. Architecture (The Hub-and-Spoke Model)
 
