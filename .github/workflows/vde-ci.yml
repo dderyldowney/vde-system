@@ -17,7 +17,7 @@ on:
 # Enforce zsh as the default shell for all jobs and steps
 defaults:
   run:
-    shell: zsh
+    shell: zsh {0}
 
 env:
   VDE_ROOT_DIR: ${{ github.workspace }}
@@ -47,11 +47,11 @@ jobs:
           pip install ruff yamllint
 
       - name: Sovereign Audit (Rule A)
-        shell: zsh
+        shell: zsh {0}
         run: bin/vde-enforce-uap.zsh
 
       - name: Run zsh syntax check
-        shell: zsh
+        shell: zsh {0}
         run: |
           echo "Checking zsh script syntax..."
           for file in $(find bin lib scripts tests -type f \( -name "*.zsh" -o ! -name "*.*" \)); do
@@ -69,7 +69,7 @@ jobs:
         run: yamllint .github/workflows/ configs/docker/*/docker-compose.yml || true
 
       - name: Run ruff Python linter
-        shell: zsh
+        shell: zsh {0}
         run: |
           echo "Running ruff on Python files..."
           ruff check tests/ --output-format=github
@@ -92,7 +92,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y zsh jq && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
       - name: Run Sovereign Test Runner
-        shell: zsh
+        shell: zsh {0}
         run: |
           chmod +x tests/run-sovereign-tests.zsh
           ./tests/run-sovereign-tests.zsh
@@ -117,11 +117,11 @@ jobs:
           sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
       - name: Sovereign Audit (Rule A)
-        shell: zsh
+        shell: zsh {0}
         run: bin/vde-enforce-uap.zsh
 
       - name: Install kcov
-        shell: zsh
+        shell: zsh {0}
         run: |
           git clone https://github.com/SimonKagstrom/kcov.git
           cd kcov
@@ -132,7 +132,7 @@ jobs:
           rm -rf kcov
 
       - name: Run tests with coverage
-        shell: zsh
+        shell: zsh {0}
         run: |
           chmod +x bin/coverage.zsh
           ./bin/coverage.zsh all
@@ -169,26 +169,26 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
 
       - name: Sovereign Audit (Rule A)
-        shell: zsh
+        shell: zsh {0}
         run: bin/vde-enforce-uap.zsh
 
       - name: Generate Test Identity
-        shell: zsh
+        shell: zsh {0}
         run: |
           mkdir -p ~/.ssh/vde
           ssh-keygen -t ed25519 -f ~/.ssh/vde/vde_student -N "" -C "ci-test"
           chmod 600 ~/.ssh/vde/vde_student
 
       - name: Build VDE-BASE (The Hub)
-        shell: zsh
+        shell: zsh {0}
         run: bin/vde rebuild --vm base
 
       - name: Build VDE-LANG (Sample Spoke: Python)
-        shell: zsh
+        shell: zsh {0}
         run: bin/vde rebuild --vm python
 
       - name: Build VDE-SERVICE (Sample Spoke: Redis)
-        shell: zsh
+        shell: zsh {0}
         run: bin/vde rebuild --vm redis
 
   # =============================================================================
@@ -209,7 +209,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y zsh jq && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
       - name: Sovereign Audit (Rule A)
-        shell: zsh
+        shell: zsh {0}
         run: bin/vde-enforce-uap.zsh
 
       - name: Display CI Summary
