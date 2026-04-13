@@ -79,4 +79,6 @@ def step_attempt_start(context, vm_alias):
 
 @then('the output should contain the PID of the background process')
 def step_verify_pid_in_output(context):
-    assert str(context.background_pid) in context.command_output, f"PID {context.background_pid} not found in output: {context.command_output}"
+    from critical_steps import strip_ansi
+    clean_output = strip_ansi(context.command_output)
+    assert str(context.background_pid) in clean_output, f"PID {context.background_pid} not found in output: {clean_output}"

@@ -17,3 +17,9 @@ Feature: Universal Script Parity (USP) Validation
   Scenario: Prevent Ghost Scripts in Setup Directory
     Given the VDE registry is loaded
     Then every script in "scripts/setup/" must be associated with a registered VM
+
+  @usp @ritual @alias-resolution
+  Scenario: Distill Aliases to Primary Hydration Rituals
+    Given the VDE registry is loaded
+    Then every registered alias must resolve to its primary hydration ritual
+    And the resolution must point to a physical script on the Hub

@@ -933,6 +933,37 @@ resolve_vm_name() {
     return ${VDE_ERR_GENERAL}
 }
 
+# vde_get_hydration_script - Resolve hydration script for a VM alias or name
+# Returns the absolute path to the hydration ritual from the Beskar Registry.
+# Protocol: Resolves alias -> canonical name -> custom_cmd ritual.
+vde_get_hydration_script() {
+    local input="${1}"
+    local canonical_name
+    
+    canonical_name=$(resolve_vm_name "${input}" 2>/dev/null) || {
+        echo ""
+        return ${VDE_ERR_NOT_FOUND}
+    }
+    
+    # Extract path from custom_cmd (e.g., "zsh /vde/scripts/setup/python-init.zsh" -> "scripts/setup/python-init.zsh")
+    local cmd="${VM_CUSTOM_CMD[${canonical_name}]}"
+    local script_path
+    
+    # 1. Strip "zsh " prefix if present
+    script_path="${cmd#zsh }"
+    # 2. Strip "/vde/" root if present (internal jails map root to /vde/)
+    script_path="${script_path#/vde/}"
+    
+    # 3. If it is an absolute path on the host, return it. 
+    # Otherwise, resolve against VDE_ROOT_DIR.
+    if [[ "${script_path}" != /* ]]; then
+        script_path="${VDE_ROOT_DIR}/${script_path}"
+    fi
+
+    echo "${script_path}"
+    return 0
+}
+
 # validate_vm_name - Validate VM name against naming conventions
 # Alias for vde_validate_name from vde-naming
 validate_vm_name() {

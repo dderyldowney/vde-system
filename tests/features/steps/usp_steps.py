@@ -4,6 +4,7 @@ Ensures all setup scripts are present and hardened according to Phase 24 mandate
 """
 
 import os
+import subprocess
 from pathlib import Path
 from behave import given, then, step_matcher
 from vm_common import load_vm_types_raw, VDE_ROOT
@@ -28,14 +29,18 @@ def step_load_registry(context):
 def step_verify_scripts_exist(context):
     """Verify that every VM's custom_cmd points to an existing setup script."""
     for vm in context.all_vms:
-        custom_cmd = vm.get("custom_cmd", "")
-        assert custom_cmd, f"VM '{vm['name']}' missing custom_cmd"
+        vm_name = vm['name']
         
-        # Extract script path (assuming format: zsh /vde/scripts/setup/name-init.zsh)
-        script_path_str = custom_cmd.split()[-1].replace("/vde/", "")
-        script_path = VDE_ROOT / script_path_str
+        # Use the ritual to resolve the script path
+        cmd = f'source "{VDE_ROOT}/lib/vm-common"; load_vm_types >/dev/null 2>&1; vde_get_hydration_script "{vm_name}"'
+        res = subprocess.run(["zsh", "-c", cmd], capture_output=True, text=True, cwd=VDE_ROOT)
+        script_path_str = res.stdout.strip()
         
-        assert script_path.exists(), f"Setup script missing for '{vm['name']}': {script_path}"
+        assert res.returncode == 0, f"Ritual failed to resolve script for '{vm_name}'"
+        assert script_path_str, f"Ritual returned empty path for '{vm_name}'"
+        
+        script_path = Path(script_path_str)
+        assert script_path.exists(), f"Setup script missing for '{vm_name}': {script_path}"
         
         # Store scripts for subsequent checks
         if not hasattr(context, "setup_scripts"):

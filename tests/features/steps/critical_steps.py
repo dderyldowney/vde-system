@@ -32,6 +32,13 @@ LIB_DIR = VDE_ROOT / "lib"
 
 # ── helpers ────────────────────────────────────────────────────────────────
 
+def strip_ansi(text):
+    """Strip ANSI escape sequences from text."""
+    if not text:
+        return ""
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    return ansi_escape.sub('', text)
+
 
 def ensure_vm_accessible(context, vm_name: str, timeout: int = 30) -> bool:
     """
@@ -297,15 +304,17 @@ def step_unique_ports(context):
 
 @then('the output should contain "{text}"')
 def step_output_contains(context, text):
-    assert text in context.command_output, (
-        f"Expected '{text}' in output\nGot:\n{context.command_output}"
+    clean_output = strip_ansi(context.command_output)
+    assert text in clean_output, (
+        f"Expected '{text}' in output\nGot:\n{clean_output}"
     )
 
 
 @then('the output should NOT contain "{text}"')
 def step_output_not_contains(context, text):
-    assert text not in context.command_output, (
-        f"Expected '{text}' NOT in output\nGot:\n{context.command_output}"
+    clean_output = strip_ansi(context.command_output)
+    assert text not in clean_output, (
+        f"Expected '{text}' NOT in output\nGot:\n{clean_output}"
     )
 
 

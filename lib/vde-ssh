@@ -764,9 +764,10 @@ get_ssh_dir() {
 vde_get_host_ssh_sock() {
     local host_sock="${SSH_AUTH_SOCK:-}"
 
-    # 1. Check live environment
+    # 1. Check live environment (and resolve symlinks to absolute paths)
     if [[ -S "${host_sock}" ]]; then
-        echo "${host_sock}"
+        # Use zsh expansion to resolve absolute path
+        echo "${host_sock:a}"
         return ${VDE_SUCCESS}
     fi
 
@@ -775,7 +776,7 @@ vde_get_host_ssh_sock() {
         local parsed_sock
         parsed_sock=$(grep "^SSH_AUTH_SOCK=" "${VDE_SSH_AGENT_ENV}" | head -1 | sed 's/^SSH_AUTH_SOCK=\([^;]*\);.*/\1/')
         if [[ -S "${parsed_sock}" ]]; then
-            echo "${parsed_sock}"
+            echo "${parsed_sock:a}"
             return ${VDE_SUCCESS}
         fi
     fi
