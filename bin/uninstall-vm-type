@@ -283,10 +283,10 @@ remove_logs() {
 # Remove hydration script
 remove_hydration_script() {
     local _vm_target_type="${1}"
-    local _base_name="${_vm_target_type#vde-}"
-    local _init_script="${VDE_ROOT_DIR}/scripts/setup/${_base_name}-init.zsh"
+    local _init_script
+    _init_script=$(vde_get_hydration_script "${_vm_target_type}" 2>/dev/null)
 
-    if [[ -f "${_init_script}" ]]; then
+    if [[ -n "${_init_script}" && -f "${_init_script}" ]]; then
         if [[ "${DRY_RUN}" = "true" ]]; then
             print_info "[DRY RUN] Would remove hydration script: ${_init_script}"
         else

@@ -35,9 +35,9 @@ services:
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
-      - ${SSH_AUTH_SOCK}:/run/host-services/ssh-auth.sock
+      - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/host-services/ssh-auth.sock
       # VDE 2026 Sovereign Bridge
-      - ${SSH_AUTH_SOCK}:/run/vde-ssh.sock
+      - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/vde-ssh.sock
 
     environment:
       - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock
