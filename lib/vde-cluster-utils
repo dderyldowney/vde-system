@@ -1,86 +1,48 @@
 #!/usr/bin/env zsh
 # VDE Cluster Utilities
-# Functions for persisting and managing multi-VM clusters.
+# Helper functions for managing VM clusters
 # Source this library with: source ./lib/vde-cluster-utils
+#
+# These utilities provide higher-level management for groups of related VMs.
 
-# -----------------------
-# Source Guard
-# -----------------------
-
-# ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
-
-if [[ "${_VDE_CLUSTER_UTILS_LOADED:-}" = "1" ]] ; then
-    return 0 2>/dev/null || exit 0
-fi
-_VDE_CLUSTER_UTILS_LOADED=1
-
-# -----------------------
-# Dependencies
-# -----------------------
-[[ -z "${VDE_ROOT_DIR}" ]] && VDE_ROOT_DIR="${0:a:h:h}"
-[[ -f "${VDE_ROOT_DIR}/lib/vde-naming" ]] && source "${VDE_ROOT_DIR}/lib/vde-naming"
-
-# -----------------------
-# Constants
-# -----------------------
-VDE_CLUSTER_STATE_DIR="${VDE_ROOT_DIR}/.docker-state/clusters"
-
-# -----------------------
-# Cluster Management Functions
-# -----------------------
+# Cluster state directory
+VDE_CLUSTER_STATE_DIR="${VDE_DOCKER_STATE_DIR}/clusters"
 
 # vde_cluster_init - Ensure cluster state directory exists
 vde_cluster_init() {
-    if [[ ! -d "${VDE_CLUSTER_STATE_DIR}" ]] ; then
-        mkdir -p "${VDE_CLUSTER_STATE_DIR}"
-        chmod 700 "${VDE_CLUSTER_STATE_DIR}"
-    fi
+    mkdir -p "${VDE_CLUSTER_STATE_DIR}"
 }
 
-# vde_cluster_save - Save a group of VMs as a named cluster
+# vde_cluster_save - Save a cluster definition
 # Args: <name> <vms...>
 vde_cluster_save() {
     local name=$(vde_normalize_name "${1}")
     shift
-    local -a vms=("${@}")
-    
-    if [[ -z "${name}" ]] ; then
-        return ${VDE_ERR_INVALID_INPUT}
-    fi
-    
-    if [[ ${#vms} -eq 0 ]] ; then
-        return ${VDE_ERR_INVALID_INPUT}
-    fi
+    local vms=("$@")
     
     vde_cluster_init
     
+    # Simple JSON-like storage for now
     local cluster_file="${VDE_CLUSTER_STATE_DIR}/${name}.json"
-    local created_at
-    created_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    
-    # Convert VM array to JSON array string
-    local vms_json
-    vms_json=$(printf '%s\n' "${vms[@]}" | jq -R . | jq -s -c .)
-    
-    # Write JSON definition
-    cat > "${cluster_file}" <<EOF
-{
-  "name": "${name}",
-  "vms": ${vms_json},
-  "created_at": "${created_at}",
-  "description": "Multi-VM cluster"
-}
-EOF
-    
-    chmod 600 "${cluster_file}"
-    return ${VDE_SUCCESS}
+    echo "{\"name\": \"${name}\", \"vms\": [$(printf '"%s",' "${vms[@]}" | sed 's/,$//')]}" > "${cluster_file}"
 }
 
-# vde_cluster_load - Load VM names from a cluster definition
+# vde_cluster_list - List all defined clusters
+vde_cluster_list() {
+    vde_cluster_init
+    local f
+    for f in "${VDE_CLUSTER_STATE_DIR}"/*.json(N); do
+        if [[ -f "${f}" ]] ; then
+            local name=$(basename "${f}" .json)
+            local vms=$(vde_query_json -r '.vms | join(", ")' "${f}")
+            echo "${name}: ${vms}"
+        fi
+    done
+}
+
+# vde_cluster_get_vms - Get VMs in a cluster
 # Args: <name>
-# Returns: VDE_SUCCESS (0), outputs space-separated VM names to stdout
-vde_cluster_load() {
+vde_cluster_get_vms() {
     local name=$(vde_normalize_name "${1}")
     local cluster_file="${VDE_CLUSTER_STATE_DIR}/${name}.json"
     
@@ -88,33 +50,12 @@ vde_cluster_load() {
         return ${VDE_ERR_NOT_FOUND}
     fi
     
-    jq -r '.vms | join(" ")' "${cluster_file}"
-    return ${VDE_SUCCESS}
+    vde_query_json -r '.vms[]' "${cluster_file}"
 }
 
-# vde_cluster_list - List all saved clusters
-# Returns: VDE_SUCCESS (0), outputs cluster names and their VMs
-vde_cluster_list() {
-    if [[ ! -d "${VDE_CLUSTER_STATE_DIR}" ]] ; then
-        return ${VDE_SUCCESS}
-    fi
-    
-    local f
-    for f in "${VDE_CLUSTER_STATE_DIR}"/*.json(N); do
-        if [[ -f "${f}" ]] ; then
-            local name
-            name=$(basename "${f}" .json)
-            local vms
-            vms=$(vde_query_json -r '.vms | join(", ")' "${f}")
-            printf "  %-20s [%s]\n" "${name}" "${vms}"
-        fi
-    done
-    return ${VDE_SUCCESS}
-}
-
-# vde_cluster_remove - Delete a cluster definition
+# vde_cluster_delete - Delete a cluster definition
 # Args: <name>
-vde_cluster_remove() {
+vde_cluster_delete() {
     local name=$(vde_normalize_name "${1}")
     local cluster_file="${VDE_CLUSTER_STATE_DIR}/${name}.json"
     
@@ -134,6 +75,4 @@ vde_cluster_exists() {
         return ${VDE_SUCCESS}
     fi
     return ${VDE_ERR_NOT_FOUND}
-}
-OT_FOUND}
 }
