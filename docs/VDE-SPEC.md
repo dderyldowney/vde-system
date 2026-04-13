@@ -1,9 +1,10 @@
-# VDE-SPEC v1.3.0 (The Sovereign Evolution)
+# VDE-SPEC v1.3.1 (The Sovereign Evolution)
 
 ## 1. Absolute Mandates (The Rule Spine)
 
 - **Language of the Tribe (ZSH ONLY)**: All CLI tools, libraries, and jail shells MUST use `#!/usr/bin/env zsh`. `bash` is strictly prohibited. Enforcement is performed via deep content inspection for native parameter expansion `${(` and 1-indexed array usage.
 - **The Armorer’s Command (UAP)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`. This sentinel detects "Ghost Zones" (e.g., unauthorized root directories like `conductor/`), enforces shebang purity, and forbids `sleep` calls in favor of deterministic polling.
+- **Relative Mandates (CI/CD Purity)**: In non-interactive CI/CD environments, the ZSH purity mandate is strictly enforced to prevent deadlocks. Every automation script MUST explicitly source the `vde_core` library and operate in `VDE_CI_MODE=1` to bypass physical port handshakes where necessary.
 - **Born Ready (BTO)**: Every jail MUST be fully functional at image creation. Runtime `apt` calls or network-dependent configurations are prohibited to ensure immutability.
 - **Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`. USP rituals are mandated to "Purge the Ghosts" (`apt-get clean`) to maintain image hygiene.
 - **The Beskar Vault (Data Authority)**: `data/vm-types.json` and `data/vm-types.conf` are the sole sources of truth. Data integrity is maintained via the **8-Field Standard**: `type|name|aliases|display_name|pkgs|custom_cmd|service_port|ssh_port`.
@@ -46,6 +47,6 @@ When a Sovereign Baseline release is cut, the following documents MUST move as a
 - **Workspace Mapping**: `/home/devuser/workspace` maps to `projects/<alias>/` on the Hub.
 
 ---
-Version: 1.3.0
-Reference: ARCHITECTURE v1.3.0 (The Sovereign Baseline)
+Version: 1.3.1
+Reference: ARCHITECTURE v1.3.1 (The Sovereign Baseline)
 ---
