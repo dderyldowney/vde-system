@@ -1,4 +1,4 @@
-# VDE: Technical Deep-Dive (v1.3.1 Sovereign)
+# VDE: Technical Deep-Dive (1.3.1 Sovereign)
 
 ## 1. The Rule Spine (UAP Enforcement)
 
@@ -73,5 +73,5 @@ To ensure the Sovereign Baseline can be certified in non-interactive environment
 ---
 **Version**: 1.3.1
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE v1.3.1
+**Reference**: ARCHITECTURE 1.3.1
 ---

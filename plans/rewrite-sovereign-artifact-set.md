@@ -1,7 +1,7 @@
-# Implementation Plan: Sovereign Artifact Set Rewrite (v1.3.0)
+# Implementation Plan: Sovereign Artifact Set Rewrite (1.3.0)
 
 ## Objective
-To strictly enforce the Sovereign Artifact Set Mandate by completely rewriting `docs/VDE-SPEC.md`, `docs/ARCHITECTURE.md`, and `docs/Technical-Deep-Dive.md` from scratch. This ensures no vestiges of outdated documentation remain and that the documentation deeply and accurately represents the physical reality of the v1.3.0 codebase.
+To strictly enforce the Sovereign Artifact Set Mandate by completely rewriting `docs/VDE-SPEC.md`, `docs/ARCHITECTURE.md`, and `docs/Technical-Deep-Dive.md` from scratch. This ensures no vestiges of outdated documentation remain and that the documentation deeply and accurately represents the physical reality of the 1.3.0 codebase.
 
 ## Scope & Impact
 1.  **`docs/VDE-SPEC.md` (The Absolute Authority)**: Will be rewritten to explicitly detail the verified Universal Agent Protocol (UAP) rules, the 8-Field Registry Standard (`type|name|aliases|display_name|pkgs|custom_cmd|service_port|ssh_port`), the Directory Structure, and the Sovereign Artifact Set Mandate itself.

@@ -1,7 +1,7 @@
-# Implementation Plan: Sovereign Artifact Set Alignment (v1.3.0)
+# Implementation Plan: Sovereign Artifact Set Alignment (1.3.0)
 
 ## Objective
-To strictly enforce Rule 19 ("The Sovereign Artifact Set Mandate") by updating the core documentation artifacts to perfectly reflect the v1.3.0 implementation reality.
+To strictly enforce Rule 19 ("The Sovereign Artifact Set Mandate") by updating the core documentation artifacts to perfectly reflect the 1.3.0 implementation reality.
 
 ## Scope & Impact
 This aligns the following documents to the canonical `data/vm-types.conf` and `lib/vde-constants` realities:

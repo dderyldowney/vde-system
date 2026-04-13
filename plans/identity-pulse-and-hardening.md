@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement Active Bridge Monitoring (Identity Pulse), extend BDD for Image Purity, and align all documentation for the v1.3.0 release.
+**Goal:** Implement Active Bridge Monitoring (Identity Pulse), extend BDD for Image Purity, and align all documentation for the 1.3.0 release.
 
 **Architecture:**
 - **Identity Pulse**: A health-check mechanism that verifies the SSH agent bridge from within the Jail.

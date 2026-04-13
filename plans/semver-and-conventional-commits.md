@@ -1,4 +1,4 @@
-# VDE Implementation Plan: SemVer & Conventional Commits (v1.3.1-STEP)
+# VDE Implementation Plan: SemVer & Conventional Commits (1.3.1-STEP)
 
 ## Objective
 Update the core rules in `.gemini/instructions.md` to formally adopt Semantic Versioning (SemVer) for release numbering and Conventional Commits for Git history, creating a clear separation between version format and commit message formatting.
