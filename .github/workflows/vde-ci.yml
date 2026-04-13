@@ -156,9 +156,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Install dependencies
         shell: bash
         run: |
@@ -168,16 +165,21 @@ jobs:
           sudo curl -SL https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
-      - name: Sovereign Audit (Rule A)
-        shell: zsh {0}
-        run: bin/vde-enforce-uap.zsh
-
-      - name: Generate Test Identity
+      - name: Generate Test Identity & Start Agent
         shell: zsh {0}
         run: |
           mkdir -p ~/.ssh/vde
           ssh-keygen -t ed25519 -f ~/.ssh/vde/vde_student -N "" -C "ci-test"
           chmod 600 ~/.ssh/vde/vde_student
+          ssh-agent -s > agent_env
+          source agent_env
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> $GITHUB_ENV
+          ssh-add ~/.ssh/vde/vde_student
+
+      - name: Sovereign Audit (Rule A)
+        shell: zsh {0}
+        run: bin/vde-enforce-uap.zsh
 
       - name: Build VDE-BASE (The Hub)
         shell: zsh {0}
