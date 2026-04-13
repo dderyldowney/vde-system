@@ -183,11 +183,11 @@ jobs:
         shell: zsh {0}
         run: bin/vde rebuild --vm base
 
-      - name: Build VDE-LANG (Sample Spoke: Python)
+      - name: "Build VDE-LANG (Sample Spoke: Python)"
         shell: zsh {0}
         run: bin/vde rebuild --vm python
 
-      - name: Build VDE-SERVICE (Sample Spoke: Redis)
+      - name: "Build VDE-SERVICE (Sample Spoke: Redis)"
         shell: zsh {0}
         run: bin/vde rebuild --vm redis
 
