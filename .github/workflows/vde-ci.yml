@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y zsh
+          sudo apt-get install -y zsh jq
           sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
           wget -qO- "https://github.com/mvdan/sh/releases/download/v3.7.0/shfmt_v3.7.0_linux_amd64" > shfmt
           chmod +x shfmt
@@ -94,7 +94,7 @@ jobs:
 
       - name: Install dependencies
         shell: bash
-        run: sudo apt-get update && sudo apt-get install -y zsh && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+        run: sudo apt-get update && sudo apt-get install -y zsh jq && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
       - name: Sovereign Audit (Rule A)
         shell: zsh {0}
@@ -107,11 +107,11 @@ jobs:
 
           # Test VM type loading
           PYTHON_TYPE=$(get_vm_info type "python")
-          [[ "$PYTHON_TYPE" == "lang" ]] || { echo "python type check failed"; exit 1; }
+          [[ "$PYTHON_TYPE" == "lang" ]] || { echo "python type check failed: got '$PYTHON_TYPE'"; exit 1; }
           echo "✓ python type check passed"
 
           POSTGRES_TYPE=$(get_vm_info type "postgres")
-          [[ "$POSTGRES_TYPE" == "service" ]] || { echo "postgres type check failed"; exit 1; }
+          [[ "$POSTGRES_TYPE" == "service" ]] || { echo "postgres type check failed: got '$POSTGRES_TYPE'"; exit 1; }
           echo "✓ postgres type check passed"
 
           # Test VM discovery
@@ -171,7 +171,7 @@ jobs:
 
       - name: Install dependencies
         shell: bash
-        run: sudo apt-get update && sudo apt-get install -y zsh && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+        run: sudo apt-get update && sudo apt-get install -y zsh jq && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
       - name: Sovereign Audit (Rule A)
         shell: zsh {0}
@@ -245,7 +245,7 @@ jobs:
 
       - name: Install dependencies
         shell: bash
-        run: sudo apt-get update && sudo apt-get install -y zsh && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+        run: sudo apt-get update && sudo apt-get install -y zsh jq && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
       - name: Sovereign Audit (Rule A)
         shell: zsh {0}
@@ -288,7 +288,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y zsh cmake libcurl4-openssl-dev libelf-dev libdw-dev binutils-dev
+          sudo apt-get install -y zsh jq cmake libcurl4-openssl-dev libelf-dev libdw-dev binutils-dev
           sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
       - name: Sovereign Audit (Rule A)
@@ -367,35 +367,35 @@ jobs:
       matrix:
         include:
           # Language VMs - Fast (CI slower than local, doubled timeouts)
-          - {vm: c, category: lang, timeout: 20}
-          - {vm: cpp, category: lang, timeout: 20}
-          - {vm: asm, category: lang, timeout: 20}
-          - {vm: python, category: lang, timeout: 20}
-          - {vm: ruby, category: lang, timeout: 20}
-          - {vm: go, category: lang, timeout: 20}
-          - {vm: js, category: lang, timeout: 20}
-          - {vm: php, category: lang, timeout: 20}
-          - {vm: r, category: lang, timeout: 20}
-          - {vm: lua, category: lang, timeout: 20}
-          - {vm: elixir, category: lang, timeout: 20}
+          - {vm: c, category: languages, timeout: 20}
+          - {vm: cpp, category: languages, timeout: 20}
+          - {vm: asm, category: languages, timeout: 20}
+          - {vm: python, category: languages, timeout: 20}
+          - {vm: ruby, category: languages, timeout: 20}
+          - {vm: go, category: languages, timeout: 20}
+          - {vm: js, category: languages, timeout: 20}
+          - {vm: php, category: languages, timeout: 20}
+          - {vm: r, category: languages, timeout: 20}
+          - {vm: lua, category: languages, timeout: 20}
+          - {vm: elixir, category: languages, timeout: 20}
           # Language VMs - Medium (JVM install overhead)
-          - {vm: java, category: lang, timeout: 30}
-          - {vm: kotlin, category: lang, timeout: 30}
-          - {vm: scala, category: lang, timeout: 30}
-          - {vm: haskell, category: lang, timeout: 75}
+          - {vm: java, category: languages, timeout: 30}
+          - {vm: kotlin, category: languages, timeout: 30}
+          - {vm: scala, category: languages, timeout: 30}
+          - {vm: haskell, category: languages, timeout: 75}
           # Language VMs - Slow (Compile-heavy languages)
-          - {vm: csharp, category: lang, timeout: 60}
-          - {vm: rust, category: lang, timeout: 60}
-          - {vm: swift, category: lang, timeout: 60}
-          - {vm: flutter, category: lang, timeout: 60}
+          - {vm: csharp, category: languages, timeout: 60}
+          - {vm: rust, category: languages, timeout: 60}
+          - {vm: swift, category: languages, timeout: 60}
+          - {vm: flutter, category: languages, timeout: 60}
           # Service VMs
-          - {vm: postgres, category: service, timeout: 20}
-          - {vm: redis, category: service, timeout: 20}
-          - {vm: mongodb, category: service, timeout: 20}
-          - {vm: nginx, category: service, timeout: 20}
-          - {vm: couchdb, category: service, timeout: 20}
-          - {vm: mysql, category: service, timeout: 20}
-          - {vm: rabbitmq, category: service, timeout: 20}
+          - {vm: postgres, category: services, timeout: 20}
+          - {vm: redis, category: services, timeout: 20}
+          - {vm: mongodb, category: services, timeout: 20}
+          - {vm: nginx, category: services, timeout: 20}
+          - {vm: couchdb, category: services, timeout: 20}
+          - {vm: mysql, category: services, timeout: 20}
+          - {vm: rabbitmq, category: services, timeout: 20}
 
     steps:
       - name: Checkout repository
@@ -408,7 +408,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y zsh
+          sudo apt-get install -y zsh jq
           sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
           # Install docker-compose (standalone binary)
@@ -451,7 +451,7 @@ jobs:
         shell: zsh {0}
         run: |
           # Verify the selected VM has a configuration in the repo
-          VM_CONFIG="configs/docker/${{ matrix.vm }}/docker-compose.yml"
+          VM_CONFIG="configs/docker/${{ matrix.category }}/${{ matrix.vm }}/docker-compose.yml"
           if [[ ! -f "$VM_CONFIG" ]]; then
             echo "ERROR: VM configuration not found: $VM_CONFIG"
             echo "The VM '${{ matrix.vm }}' should have a config in the repo."
@@ -475,7 +475,7 @@ jobs:
           MAX_WAIT_SECONDS=$((${{ matrix.timeout }}*60))
           ELAPSED=0
           CONTAINER_NAME="${{ matrix.vm }}"
-          [[ "${{ matrix.category }}" == "lang" ]] && CONTAINER_NAME="${{ matrix.vm }}-dev"
+          [[ "${{ matrix.category }}" == "languages" ]] && CONTAINER_NAME="${{ matrix.vm }}-dev"
 
           while [ $ELAPSED -lt $MAX_WAIT_SECONDS ]; do
             if docker ps --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
@@ -490,15 +490,15 @@ jobs:
 
       - name: Get SSH port
         id: ssh-port
-        if: matrix.category == 'lang'
+        if: matrix.category == 'languages'
         run: |
-          COMPOSE_FILE="configs/docker/${{ matrix.vm }}/docker-compose.yml"
+          COMPOSE_FILE="configs/docker/${{ matrix.category }}/${{ matrix.vm }}/docker-compose.yml"
           SSH_PORT=$(grep ':22' "$COMPOSE_FILE" | grep -oE '[0-9]+' | head -1)
           echo "port=$SSH_PORT" >> $GITHUB_OUTPUT
           echo "SSH Port: $SSH_PORT"
 
       - name: Diagnose Container State
-        if: matrix.category == 'lang'
+        if: matrix.category == 'languages'
         run: |
           CONTAINER_NAME="${{ matrix.vm }}-dev"
           SSH_PORT="${{ steps.ssh-port.outputs.port }}"
@@ -526,7 +526,7 @@ jobs:
           docker logs --tail 50 "$CONTAINER_NAME" 2>&1 || true
 
       - name: Wait for SSH to be Ready
-        if: matrix.category == 'lang'
+        if: matrix.category == 'languages'
         run: |
           CONTAINER_NAME="${{ matrix.vm }}-dev"
           SSH_PORT="${{ steps.ssh-port.outputs.port }}"
@@ -576,7 +576,7 @@ jobs:
           exit 1
 
       - name: Test SSH Connection
-        if: matrix.category == 'lang'
+        if: matrix.category == 'languages'
         run: |
           SSH_PORT="${{ steps.ssh-port.outputs.port }}"
           CONTAINER_NAME="${{ matrix.vm }}-dev"
@@ -598,7 +598,7 @@ jobs:
           fi
 
       - name: Service VMs don't have SSH
-        if: matrix.category == 'service'
+        if: matrix.category == 'services'
         run: echo "::notice::Service VMs don't have SSH access - skipping SSH test"
 
       - name: Docker VM Lifecycle Integration Tests
@@ -641,7 +641,7 @@ jobs:
                      /etc/apt/sources.list.d/packages-microsoft-com-prod.list \
                      /etc/apt/sources.list.d/microsoft-ubuntu-*.list 2>/dev/null || true
           sudo apt-get update
-          sudo apt-get install -y zsh
+          sudo apt-get install -y zsh jq
           sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
           pip3 install --user behave
 
@@ -704,7 +704,7 @@ jobs:
 
       - name: Install dependencies
         shell: bash
-        run: sudo apt-get update && sudo apt-get install -y zsh && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+        run: sudo apt-get update && sudo apt-get install -y zsh jq && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
       - name: Sovereign Audit (Rule A)
         shell: zsh {0}
