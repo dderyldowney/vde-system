@@ -1,4 +1,4 @@
-# VDE: Technical Deep-Dive (v1.3.0 Sovereign)
+# VDE: Technical Deep-Dive (1.3.0 Sovereign)
 
 ## 1. The Rule Spine (UAP Enforcement)
 
@@ -68,5 +68,5 @@ All VDE operations are wrapped in `vde_run`, which captures return codes and map
 ---
 **Version**: 1.3.0
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE v1.3.0
+**Reference**: ARCHITECTURE 1.3.0
 ---

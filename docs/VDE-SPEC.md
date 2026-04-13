@@ -1,4 +1,4 @@
-# VDE-SPEC v1.3.1 (The Sovereign Evolution)
+# VDE-SPEC 1.3.1 (The Sovereign Evolution) (The Sovereign Evolution)
 
 ## 1. Absolute Mandates (The Rule Spine)
 
@@ -48,5 +48,5 @@ When a Sovereign Baseline release is cut, the following documents MUST move as a
 
 ---
 Version: 1.3.1
-Reference: ARCHITECTURE v1.3.1 (The Sovereign Baseline)
+Reference: ARCHITECTURE 1.3.1 (The Sovereign Baseline)
 ---

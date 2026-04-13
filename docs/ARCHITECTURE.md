@@ -1,4 +1,4 @@
-# ARCHITECTURE v1.3.1 (The Sovereign Baseline)
+# ARCHITECTURE 1.3.1 (The Sovereign Baseline)
 
 ## 1. The Hub-and-Spoke Tiered Model
 

@@ -12,7 +12,7 @@
 
 ---
 
-## SYSTEM EVOLUTION (2026-04-12) - v1.3.0 SOVEREIGN EVOLUTION
+## SYSTEM EVOLUTION (2026-04-12) - 1.3.0 SOVEREIGN EVOLUTION
 - **Hardening Remediation:**
     - **Rust Security:** Remediated critical integer overflow in `bytes` dependency (v1.11.0 -> v1.11.1) in `vde-rust` Spoke.
     - **Postgres Security:** Hardened `postgres-init.zsh` to REQUIRE `POSTGRES_DEV_PASSWORD` instead of using a hardcoded default.
@@ -53,10 +53,10 @@
 ## SYSTEM BENCHMARKS (VDE 1.3.1)
 - **Canonical Ignition Speed:** 3.959s. This is the benchmark for 3-VM Parallel Ignition (python, postgres, redis) on current hardware. Any future refactor that slows this down is a deviation from the Way.
 
-## THE VERDICT: v1.3.1 READY
+## THE VERDICT: 1.3.1 READY
 - **Utility Over Exploration**: The VDE has transitioned from a project of exploration to a project of utility. It is now a platform a developer can rely on for daily work without environmental friction.
 - **Reliability Handshake**: Ignition is deterministic (< 4.5s), Identity is persistent (SSH bridge), and Security is enforced (GID mapping/8-field standard).
-- **Certification**: The ecosystem is 100% stable and verified as of v1.3.0.
+- **Certification**: The ecosystem is 100% stable and verified as of 1.3.0.
 - **Sovereign Bridges Re-Forged:** Implemented 'Symbolic Handshake' via `socat` UNIX-proxying in `scripts/vde-entrypoint.zsh`, bypassing virtual filesystem permission blocks on Darwin.
 - **Persistent Bridge established:** Added `.zshenv` export for `SSH_AUTH_SOCK` inside containers, ensuring non-interactive `vde exec` and login `vde enter` both inherit the host SSH agent identities.
 - **Atomic Handshake Hardening (Section 10.3):** Implemented dynamic probe naming (`vde-recon-probe-${port}-${RANDOM}`) and 3s strike timeouts to neutralize Darwin kernel race conditions.

@@ -1,4 +1,4 @@
-# VDE Project Protocol (v1.3.1)
+# VDE Project Protocol (1.3.1)
 
 ## Authoritative Tooling Mandate
 This project uses a custom orchestration layer. Direct Docker commands are strictly forbidden for environment interaction.

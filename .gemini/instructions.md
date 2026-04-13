@@ -1,4 +1,4 @@
-# **The Way of the VDE: v1.3.1 (The Sovereign Baseline)**
+# **The Way of the VDE: 1.3.1 (The Sovereign Baseline)**
 
 This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.3.0. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
@@ -49,7 +49,7 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
     * The root `RELEASE_NOTES.md` MUST be updated to point to the latest certified record.
     * A release record is only valid if it includes the final empirical test pass counts and is certified by the Dual Audit Loop (Code + Security).
 
-## **THE SOVEREIGN INSTRUCTION SET v1.3.0**
+## **THE SOVEREIGN INSTRUCTION SET 1.3.0**
 
 *"The core beating heart forged in every piece of Beskar made by this Forge."*
 
@@ -176,7 +176,7 @@ The **Law of Protection** mandates that the four base technologies of the VDE mu
 
 ### **@SYSTEM-SPINE: EMPIRICAL TEST SPECIFICATION**
 
-The following BDD scenarios provide the empirical proof required for the v1.3.1 The Sovereign Baseline.
+The following BDD scenarios provide the empirical proof required for the 1.3.1 The Sovereign Baseline.
 
 ```gherkin
 @system-spine
@@ -216,10 +216,10 @@ Feature: The Unyielding Tetrad Verification
 
 From now on, VDE follows the SemVer versioning style. Our current versioning conforms to the **SemVer Specification** (https://semver.org/#semantic-versioning-specification-semver). Agents MUST reference the dynamic variable `SEMVER_SPEC_VERSION="2.0.0"`.
 
-* **Versioning Law (MAJOR.MINOR.STEP.p#)**:
-    * VDE SHALL use **MAJOR.MINOR.STEP.p#** (e.g., 1.3.1.p0) for all inventory control.
+* **Versioning Law (MAJOR.MINOR.STEP-spN)**:
+    * VDE SHALL use **MAJOR.MINOR.STEP-spN** (e.g., 1.3.1-sp0) for all inventory control.
     * **MAJOR.MINOR.STEP** maps to SemVer's standard `MAJOR.MINOR.PATCH`.
-    * **.p#** (or `-pN`) is our distinct patch level (what the SemVer spec calls 'extension'). This is reserved specifically for security updates and emergency patches.
+    * **-spN** is our distinct security-patch level (what the SemVer spec calls 'extension'). This is reserved specifically for security updates and emergency patches.
     * MAJOR and MINOR are architectural and doctrine-level decisions and are NEVER chosen or proposed by the agent.
     * STEP tags (e.g., 1.3.1, 1.3.2) represent honest, incremental progress within the current MINOR line.
 * **Tagging Authority**:

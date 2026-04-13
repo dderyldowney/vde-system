@@ -1,7 +1,7 @@
-# VDE CI Pipeline Update Plan - v1.3.0 Sovereign Baseline
+# VDE CI Pipeline Update Plan - 1.3.0 Sovereign Baseline
 
 ## Objective
-Resolve the ZSH installation deadlock ("chicken-and-egg") affecting GitHub Actions on the `ubuntu-latest` (Ubuntu 24.04) runners, while simultaneously enforcing the VDE v1.3.0 Sovereign Baseline mandates (specifically Rule A: UAP Enforcement).
+Resolve the ZSH installation deadlock ("chicken-and-egg") affecting GitHub Actions on the `ubuntu-latest` (Ubuntu 24.04) runners, while simultaneously enforcing the VDE 1.3.0 Sovereign Baseline mandates (specifically Rule A: UAP Enforcement).
 
 ## Key Files & Context
 - `.github/workflows/vde-ci.yml`: The primary CI pipeline with the global `shell: zsh {0}` default.
@@ -10,7 +10,7 @@ Resolve the ZSH installation deadlock ("chicken-and-egg") affecting GitHub Actio
 ## Proposed Solution
 The global `shell: zsh {0}` configuration in `vde-ci.yml` overrides the shell for all `run` commands. Since `ubuntu-latest` lacks ZSH by default, the command to install ZSH (`sudo apt-get install -y zsh`) fails because GitHub Actions attempts to execute it in the non-existent ZSH shell. 
 
-We will maintain the strict global ZSH default to ensure tests run natively but explicitly override the shell to `bash` strictly for the setup steps that install dependencies. Furthermore, to adhere to the v1.3.0 Sovereign Mandate, we will integrate `bin/vde-enforce-uap.zsh` as a mandatory validation gate before executing actual test payloads.
+We will maintain the strict global ZSH default to ensure tests run natively but explicitly override the shell to `bash` strictly for the setup steps that install dependencies. Furthermore, to adhere to the 1.3.0 Sovereign Mandate, we will integrate `bin/vde-enforce-uap.zsh` as a mandatory validation gate before executing actual test payloads.
 
 ## Implementation Steps
 
@@ -32,7 +32,7 @@ Update the `Install dependencies` (or `Install linting tools` / `Install zsh`) s
         run: sudo apt-get update && sudo apt-get install -y zsh
 ```
 
-### 2. Enforce v1.3.0 Sovereign Audit (Rule A)
+### 2. Enforce 1.3.0 Sovereign Audit (Rule A)
 Insert a mandatory "Sovereign Audit" step into the primary verification jobs (`lint`, `unit-tests`, `integration-tests`, `comprehensive-tests`, `bdd-tests`) immediately after installing ZSH:
 ```yaml
       - name: Sovereign Audit (Rule A)

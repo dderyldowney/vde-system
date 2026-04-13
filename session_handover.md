@@ -1,14 +1,14 @@
-# Session Handover — v1.3.0 (The Sovereign Baseline)
+# Session Handover — 1.3.0 (The Sovereign Baseline)
 
-**Current Status**: 🟢 VDE v1.3.0 SOVEREIGN BASELINE CERTIFIED / 100% GREEN
+**Current Status**: 🟢 VDE 1.3.0 SOVEREIGN BASELINE CERTIFIED / 100% GREEN
 **Active Branch**: `develop` (STRICT MANDATE: Work on `develop` only)
-**Next Step**: High-Velocity Cluster Expansion (v1.3.0)
+**Next Step**: High-Velocity Cluster Expansion (1.3.0)
 
 ## Paired Update Policy
 This file is part of a paired update set with [session_handover_remediation.md](./.gemini/PLANS/session_handover_remediation.md). Both files must be updated together to maintain synchronization between accomplishments and outstanding debt.
 
-## Accomplishments (v1.3.0 Sovereign Baseline)
-1.  **Hardening Remediation (v1.3.0 Final)**:
+## Accomplishments (1.3.0 Sovereign Baseline)
+1.  **Hardening Remediation (1.3.0 Final)**:
     - **Security**: Updated `bytes` dependency in `vde-rust` to v1.11.1, remediating critical integer overflow.
     - **Security**: Mandated `POSTGRES_DEV_PASSWORD` in `postgres-init.zsh`, eliminating hardcoded default passwords.
 2.  **vde init Integration**:
