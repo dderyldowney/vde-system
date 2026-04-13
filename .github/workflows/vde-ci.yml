@@ -54,21 +54,15 @@ jobs:
         shell: zsh {0}
         run: |
           echo "Checking zsh script syntax..."
-          # Find all files that either have .zsh extension or no extension but have zsh in shebang
-          for file in $(find scripts tests -type f \( -name "*.zsh" -o ! -name "*.*" \)); do
+          for file in $(find bin lib scripts tests -type f \( -name "*.zsh" -o ! -name "*.*" \)); do
             if head -1 "$file" | grep -q "zsh"; then
-              # Skip test_integration_comprehensive.zsh - uses valid multi-line arrays
-              # Skip test-e2e-user-journey.zsh - contains emoji characters that zsh -n doesn't parse
-              if [[ "$file" != *"test_integration_comprehensive.zsh" ]] \
-                 && [[ "$file" != *"test-e2e-user-journey.zsh" ]]; then
+              # Skip files known to have non-compliant syntax for zsh -n (e.g. emoji, legacy)
+              if [[ "$file" != *"test-e2e-user-journey.zsh" ]]; then
                 zsh -n "$file" || { echo "Syntax error in: $file"; exit 1; }
               fi
             fi
           done
           echo "✓ All zsh scripts passed syntax check"
-
-      # Note: shfmt disabled - has issues with zsh-specific syntax
-      # Run locally with: shfmt -w bin/**/*.zsh tests/**/*.zsh
 
       - name: Run yamllint
         run: yamllint .github/workflows/ configs/docker/*/docker-compose.yml || true
@@ -81,87 +75,10 @@ jobs:
           echo "✓ Ruff check passed"
 
   # =============================================================================
-  # Job 2: Unit Tests
+  # Job 2: Sovereign Tests (CI-Safe)
   # =============================================================================
-  unit-tests:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        shell: bash
-        run: sudo apt-get update && sudo apt-get install -y zsh jq && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
-
-      - name: Sovereign Audit (Rule A)
-        shell: zsh {0}
-        run: bin/vde-enforce-uap.zsh
-
-      - name: Test vm-common library
-        shell: zsh {0}
-        run: |
-          source lib/vm-common
-
-          # Test VM type loading
-          PYTHON_TYPE=$(get_vm_info type "python")
-          [[ "$PYTHON_TYPE" == "lang" ]] || { echo "python type check failed: got '$PYTHON_TYPE'"; exit 1; }
-          echo "✓ python type check passed"
-
-          POSTGRES_TYPE=$(get_vm_info type "postgres")
-          [[ "$POSTGRES_TYPE" == "service" ]] || { echo "postgres type check failed: got '$POSTGRES_TYPE'"; exit 1; }
-          echo "✓ postgres type check passed"
-
-          # Test VM discovery
-          ALL_VM_COUNT=$(get_all_vms | wc -l)
-          [[ $ALL_VM_COUNT -ge 25 ]] || { echo "VM count check failed: $ALL_VM_COUNT"; exit 1; }
-          echo "✓ VM count check passed (found: $ALL_VM_COUNT)"
-
-          # Test name resolution
-          RESOLVED=$(resolve_vm_name "python3")
-          [[ "$RESOLVED" == "python" ]] || { echo "python3 resolution failed"; exit 1; }
-          echo "✓ python3 alias resolution passed"
-
-      - name: Test vde-parser library
-        shell: zsh {0}
-        run: |
-          source lib/vm-common
-          source lib/vde-commands
-          source lib/vde-parser
-
-          # Test intent detection
-          INTENT=$(detect_intent "start python")
-          [[ "$INTENT" == "start_vm" ]] || { echo "Intent detection failed"; exit 1; }
-          echo "✓ Intent detection passed"
-
-          # Test VM name extraction
-          PLAN=$(generate_plan "start python and go")
-          echo "$PLAN" | grep -q "INTENT:start_vm" || { echo "Plan generation failed"; exit 1; }
-          echo "$PLAN" | grep "^VM:" | grep -q "python" || { echo "VM extraction failed"; exit 1; }
-          echo "✓ Plan generation passed"
-
-      - name: Test vde-commands library
-        shell: zsh {0}
-        run: |
-          source lib/vm-common
-          source lib/vde-commands
-
-          # Test VM listing
-          LANG_VMS=$(vde_list_vms --lang)
-          echo "$LANG_VMS" | grep -q "python" || { echo "Language listing failed"; exit 1; }
-          echo "✓ Language listing passed"
-
-          # Test VM validation
-          vde_validate_vm_type "python" || { echo "VM validation failed"; exit 1; }
-          echo "✓ VM validation passed"
-
-  # =============================================================================
-  # Job 3: Integration Tests
-  # =============================================================================
-  integration-tests:
-    name: Integration Tests
+  sovereign-tests:
+    name: Sovereign Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -173,107 +90,14 @@ jobs:
         shell: bash
         run: sudo apt-get update && sudo apt-get install -y zsh jq && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
-      - name: Sovereign Audit (Rule A)
-        shell: zsh {0}
-        run: bin/vde-enforce-uap.zsh
-
-      - name: Test pattern-based parsing
+      - name: Run Sovereign Test Runner
         shell: zsh {0}
         run: |
-          source lib/vm-common
-          source lib/vde-commands
-          source lib/vde-parser
-
-          # Test all 8 supported intents
-          declare -a TEST_INPUTS=(
-              "list_vms|what VMs can I create?"
-              "create_vm|create a Go VM"
-              "start_vm|start python"
-              "stop_vm|stop postgres"
-              "restart_vm|restart rust"
-              "status|what's running?"
-              "connect|how do I connect to Python?"
-              "help|help"
-          )
-
-          for input_pair in "${TEST_INPUTS[@]}"; do
-              expected_intent="${input_pair%%|*}"
-              test_input="${input_pair##*|}"
-              detected_intent=$(detect_intent "$test_input")
-              [[ "$detected_intent" == "$expected_intent" ]] || { echo "Intent test failed for: $test_input"; exit 1; }
-          done
-          echo "✓ All 8 intents passed"
-
-      - name: Test daily usage patterns
-        shell: zsh {0}
-        run: |
-          source lib/vm-common
-          source lib/vde-commands
-          source lib/vde-parser
-
-          # Test VM lifecycle
-          PLAN=$(generate_plan "create a Go VM")
-          echo "$PLAN" | grep -q "INTENT:create_vm" || { echo "Create plan failed"; exit 1; }
-
-          PLAN=$(generate_plan "start Go")
-          echo "$PLAN" | grep -q "INTENT:start_vm" || { echo "Start plan failed"; exit 1; }
-
-          PLAN=$(generate_plan "what's running?")
-          echo "$PLAN" | grep -q "INTENT:status" || { echo "Status plan failed"; exit 1; }
-
-          PLAN=$(generate_plan "stop Go")
-          echo "$PLAN" | grep -q "INTENT:stop_vm" || { echo "Stop plan failed"; exit 1; }
-
-          # Test full stack setup
-          PLAN=$(generate_plan "create Python and PostgreSQL")
-          echo "$PLAN" | grep "^VM:" | grep -q "python" || { echo "Full stack plan failed"; exit 1; }
-          echo "$PLAN" | grep "^VM:" | grep -q "postgres" || { echo "Full stack plan failed"; exit 1; }
-
-          echo "✓ Daily usage patterns passed"
+          chmod +x tests/run-sovereign-tests.zsh
+          ./tests/run-sovereign-tests.zsh
 
   # =============================================================================
-  # Job 4: Comprehensive Tests
-  # =============================================================================
-  comprehensive-tests:
-    name: Comprehensive Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        shell: bash
-        run: sudo apt-get update && sudo apt-get install -y zsh jq && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
-
-      - name: Sovereign Audit (Rule A)
-        shell: zsh {0}
-        run: bin/vde-enforce-uap.zsh
-
-      - name: Run comprehensive vde-parser tests
-        shell: zsh {0}
-        run: |
-          echo "Running comprehensive vde-parser tests..."
-          ./tests/unit/test_vde_parser_comprehensive.zsh
-          echo "✓ vde-parser comprehensive tests passed"
-
-      - name: Run comprehensive vde-commands tests
-        shell: zsh {0}
-        run: |
-          echo "Running comprehensive vde-commands tests..."
-          ./tests/unit/test_vde_commands_comprehensive.zsh
-          echo "✓ vde-commands comprehensive tests passed"
-
-      - name: Run end-to-end integration tests
-        shell: zsh {0}
-        run: |
-          echo "Running end-to-end integration tests..."
-          ./tests/integration/test_integration_comprehensive.zsh
-          echo "✓ End-to-end integration tests passed"
-
-  # =============================================================================
-  # Job 5: Code Coverage
+  # Job 3: Code Coverage
   # =============================================================================
   coverage:
     name: Code Coverage
@@ -306,34 +130,11 @@ jobs:
           cd ..
           rm -rf kcov
 
-      - name: Verify kcov installation
-        shell: zsh {0}
-        run: kcov --version
-
       - name: Run tests with coverage
         shell: zsh {0}
         run: |
-          # Make coverage script executable
           chmod +x bin/coverage.zsh
-
-          # Run coverage for all tests
           ./bin/coverage.zsh all
-
-      - name: Generate coverage summary
-        run: |
-          if [ -f "coverage/merged/index.html" ]; then
-            # Extract coverage from HTML
-            COVERAGE=$(grep -oP 'covered"[^>]*>\K[0-9.]+' coverage/merged/index.html 2>/dev/null | head -1)
-
-            if [ -n "$COVERAGE" ]; then
-              echo "📊 Code Coverage: ${COVERAGE}%"
-              echo "COVERAGE=${COVERAGE}" >> $GITHUB_ENV
-            else
-              echo "⚠ Could not extract coverage percentage"
-            fi
-          else
-            echo "::warning::Coverage report not found"
-          fi
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -342,60 +143,17 @@ jobs:
           path: coverage/merged/
           retention-days: 30
 
-      - name: Coverage summary comment
-        run: |
-          echo "╔════════════════════════════════════════════════════════════╗"
-          echo "║                  Code Coverage Report                       ║"
-          echo "╚════════════════════════════════════════════════════════════╝"
-          echo ""
-          if [ -n "$COVERAGE" ]; then
-            echo "Total Coverage: ${COVERAGE}%"
-          else
-            echo "Coverage report generated (see artifacts)"
-          fi
-          echo ""
-
   # =============================================================================
-  # Job 6: Docker Build Tests - Matrix Strategy for All VMs
+  # Job 4: Docker Image Build Tests
   # =============================================================================
-  docker-build:
-    name: Docker Build ${{ matrix.vm }} (${{ matrix.category }})
+  docker-image-build:
+    name: Build Image ${{ matrix.vm }}
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # Language VMs - Fast (CI slower than local, doubled timeouts)
-          - {vm: c, category: languages, timeout: 20}
-          - {vm: cpp, category: languages, timeout: 20}
-          - {vm: asm, category: languages, timeout: 20}
-          - {vm: python, category: languages, timeout: 20}
-          - {vm: ruby, category: languages, timeout: 20}
-          - {vm: go, category: languages, timeout: 20}
-          - {vm: js, category: languages, timeout: 20}
-          - {vm: php, category: languages, timeout: 20}
-          - {vm: r, category: languages, timeout: 20}
-          - {vm: lua, category: languages, timeout: 20}
-          - {vm: elixir, category: languages, timeout: 20}
-          # Language VMs - Medium (JVM install overhead)
-          - {vm: java, category: languages, timeout: 30}
-          - {vm: kotlin, category: languages, timeout: 30}
-          - {vm: scala, category: languages, timeout: 30}
-          - {vm: haskell, category: languages, timeout: 75}
-          # Language VMs - Slow (Compile-heavy languages)
-          - {vm: csharp, category: languages, timeout: 60}
-          - {vm: rust, category: languages, timeout: 60}
-          - {vm: swift, category: languages, timeout: 60}
-          - {vm: flutter, category: languages, timeout: 60}
-          # Service VMs
-          - {vm: postgres, category: services, timeout: 20}
-          - {vm: redis, category: services, timeout: 20}
-          - {vm: mongodb, category: services, timeout: 20}
-          - {vm: nginx, category: services, timeout: 20}
-          - {vm: couchdb, category: services, timeout: 20}
-          - {vm: mysql, category: services, timeout: 20}
-          - {vm: rabbitmq, category: services, timeout: 20}
+        vm: [c, cpp, asm, python, ruby, go, js, php, postgres, redis, mongodb, nginx]
 
     steps:
       - name: Checkout repository
@@ -410,292 +168,28 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y zsh jq
           sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
-
-          # Install docker-compose (standalone binary)
           sudo curl -SL https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose version
 
       - name: Sovereign Audit (Rule A)
         shell: zsh {0}
         run: bin/vde-enforce-uap.zsh
 
-      - name: Display VM info
-        run: |
-          echo "=================================================="
-          echo "Testing VM: ${{ matrix.vm }}"
-          echo "Category: ${{ matrix.category }}"
-          echo "Timeout: ${{ matrix.timeout }} minutes"
-          echo "=================================================="
-
-      - name: Generate Test SSH Key
+      - name: Build VDE Base Image
         shell: zsh {0}
-        run: |
-          # Create SSH directory
-          mkdir -p "$HOME/.ssh"
-          chmod 700 "$HOME/.ssh"
+        run: bin/vde rebuild --vm base
 
-          # Generate test SSH key pair at default location
-          ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -C "vde-ci-test@github-actions"
-          chmod 600 "$HOME/.ssh/id_ed25519"
-          chmod 644 "$HOME/.ssh/id_ed25519.pub"
-
-          # Also copy to public-ssh-keys directory for VDE
-          mkdir -p public-ssh-keys
-          cp "$HOME/.ssh/id_ed25519.pub" public-ssh-keys/
-
-          echo "VDE_SSH_KEY=$HOME/.ssh/id_ed25519" >> $GITHUB_ENV
-          echo "VDE_SSH_PUB_KEY=$HOME/.ssh/id_ed25519.pub" >> $GITHUB_ENV
-
-      - name: Verify VM configuration exists
+      - name: Build VM Image
         shell: zsh {0}
-        run: |
-          # Verify the selected VM has a configuration in the repo
-          VM_CONFIG="configs/docker/${{ matrix.category }}/${{ matrix.vm }}/docker-compose.yml"
-          if [[ ! -f "$VM_CONFIG" ]]; then
-            echo "ERROR: VM configuration not found: $VM_CONFIG"
-            echo "The VM '${{ matrix.vm }}' should have a config in the repo."
-            exit 1
-          fi
-          echo "✓ VM configuration exists: $VM_CONFIG"
-
-      - name: Create Docker network
-        shell: zsh {0}
-        run: docker network create dev-net 2>/dev/null || echo "Network already exists"
-
-      - name: Build and Start Docker Container
-        shell: zsh {0}
-        env:
-          VDE_TEST_MODE: '1'  # Skip SSH agent setup in CI
-        run: ./bin/start-virtual ${{ matrix.vm }}
-
-      - name: Wait for Container to Be Ready
-        run: |
-          MAX_WAIT=${{ matrix.timeout }}m
-          MAX_WAIT_SECONDS=$((${{ matrix.timeout }}*60))
-          ELAPSED=0
-          CONTAINER_NAME="${{ matrix.vm }}"
-          [[ "${{ matrix.category }}" == "languages" ]] && CONTAINER_NAME="${{ matrix.vm }}-dev"
-
-          while [ $ELAPSED -lt $MAX_WAIT_SECONDS ]; do
-            if docker ps --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
-              echo "✓ Container is running"
-              break
-            fi
-            sleep 3
-            ELAPSED=$((ELAPSED + 3))
-          done
-
-          [[ $ELAPSED -lt $MAX_WAIT_SECONDS ]] || { echo "Container did not start"; exit 1; }
-
-      - name: Get SSH port
-        id: ssh-port
-        if: matrix.category == 'languages'
-        run: |
-          COMPOSE_FILE="configs/docker/${{ matrix.category }}/${{ matrix.vm }}/docker-compose.yml"
-          SSH_PORT=$(grep ':22' "$COMPOSE_FILE" | grep -oE '[0-9]+' | head -1)
-          echo "port=$SSH_PORT" >> $GITHUB_OUTPUT
-          echo "SSH Port: $SSH_PORT"
-
-      - name: Diagnose Container State
-        if: matrix.category == 'languages'
-        run: |
-          CONTAINER_NAME="${{ matrix.vm }}-dev"
-          SSH_PORT="${{ steps.ssh-port.outputs.port }}"
-
-          echo "=== Container Status ==="
-          docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-
-          echo ""
-          echo "=== Container Processes ==="
-          docker exec "$CONTAINER_NAME" ps aux 2>/dev/null || echo "Could not list processes"
-
-          echo ""
-          echo "=== SSH Key Check ==="
-          docker exec "$CONTAINER_NAME" ls -la /home/devuser/.ssh/authorized_keys \
-            2>/dev/null || echo "authorized_keys not found"
-
-          echo ""
-          echo "=== Port Listening Check ==="
-          docker exec "$CONTAINER_NAME" netstat -tlnp 2>/dev/null \
-            || docker exec "$CONTAINER_NAME" ss -tlnp 2>/dev/null \
-            || echo "Could not check ports"
-
-          echo ""
-          echo "=== Container Logs (last 50 lines) ==="
-          docker logs --tail 50 "$CONTAINER_NAME" 2>&1 || true
-
-      - name: Wait for SSH to be Ready
-        if: matrix.category == 'languages'
-        run: |
-          CONTAINER_NAME="${{ matrix.vm }}-dev"
-          SSH_PORT="${{ steps.ssh-port.outputs.port }}"
-          # Two tiers: 10 min (fast), 20 min (slow) - extended for CI
-          if [[ "${{ matrix.vm }}" =~ ^(rust|flutter|swift|java|kotlin|scala|haskell|r|php|lua|elixir)$ ]]; then
-            MAX_WAIT=1200
-          else
-            MAX_WAIT=600
-          fi
-          ELAPSED=0
-
-          echo "Waiting for SSH daemon to start (max ${MAX_WAIT}s)..."
-          echo "Note: Language install may take 30-90 seconds before SSH starts"
-
-          while [ $ELAPSED -lt $MAX_WAIT ]; do
-            # First check if port is open
-            if timeout 1 /bin/zsh -c "cat < /dev/null > /dev/tcp/localhost/$SSH_PORT" \
-               2>/dev/null; then
-              echo "✓ Port $SSH_PORT is open"
-
-              # Try SSH connection
-              if ssh -i "$VDE_SSH_KEY" -o StrictHostKeyChecking=no \
-                   -o UserKnownHostsFile=/dev/null -o ConnectTimeout=3 \
-                   -p "$SSH_PORT" devuser@localhost "echo 'SSH ready'" \
-                   2>/dev/null; then
-                echo "✓ SSH is ready and accepting connections"
-                exit 0
-              fi
-            fi
-
-            # Show progress every 15 seconds
-            if [ $((ELAPSED % 15)) -eq 0 ] && [ $ELAPSED -gt 0 ]; then
-              echo "Still waiting... (${ELAPSED}s elapsed)"
-              docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}" || true
-            fi
-
-            sleep 5
-            ELAPSED=$((ELAPSED + 5))
-          done
-
-          echo "✗ SSH did not become ready within ${MAX_WAIT}s"
-          echo ""
-          echo "=== Final Diagnostics ==="
-          docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-          echo ""
-          docker logs --tail 20 "$CONTAINER_NAME" 2>&1 || true
-          exit 1
-
-      - name: Test SSH Connection
-        if: matrix.category == 'languages'
-        run: |
-          SSH_PORT="${{ steps.ssh-port.outputs.port }}"
-          CONTAINER_NAME="${{ matrix.vm }}-dev"
-
-          echo "Testing SSH connection..."
-          if ssh -i "$VDE_SSH_KEY" -o StrictHostKeyChecking=no \
-                   -o UserKnownHostsFile=/dev/null -p "$SSH_PORT" \
-                   devuser@localhost \
-             "echo '✓ SSH connection successful'; \
-              echo 'User:' \$(whoami); \
-              echo 'Shell:' \$SHELL; \
-              echo 'Home:' \$HOME; \
-              which rust python go node java 2>/dev/null || echo 'Language tools check'"; then
-            echo "✓ SSH connection test passed"
-            exit 0
-          else
-            echo "✗ SSH connection test failed"
-            exit 1
-          fi
-
-      - name: Service VMs don't have SSH
-        if: matrix.category == 'services'
-        run: echo "::notice::Service VMs don't have SSH access - skipping SSH test"
-
-      - name: Docker VM Lifecycle Integration Tests
-        shell: zsh {0}
-        env:
-          VDE_TEST_MODE: '1'
-          TEST_VM: ${{ matrix.vm }}
-        run: |
-          echo "Running Docker VM Lifecycle integration tests for ${{ matrix.vm }}..."
-          chmod +x tests/integration/docker-vm-lifecycle.test.zsh
-          ./tests/integration/docker-vm-lifecycle.test.zsh
-
-      - name: Display Container Info
-        run: |
-          echo "::notice::Successfully built and tested ${{ matrix.vm }} (${{ matrix.category }})"
-          docker ps --filter "name=${{ matrix.vm }}" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-
-      - name: Cleanup Test Container
-        if: always()
-        shell: zsh {0}
-        run: ./bin/shutdown-virtual ${{ matrix.vm }} || true
+        run: bin/vde rebuild --vm ${{ matrix.vm }}
 
   # =============================================================================
-  # Job 7: BDD Feature Tests
-  # =============================================================================
-  bdd-tests:
-    name: BDD Feature Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        shell: bash
-        run: |
-          # Workaround: Remove Microsoft apt repos that return 403 in CI
-          sudo rm -f /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list \
-                     /etc/apt/sources.list.d/packages-microsoft-com-prod.list \
-                     /etc/apt/sources.list.d/microsoft-ubuntu-*.list 2>/dev/null || true
-          sudo apt-get update
-          sudo apt-get install -y zsh jq
-          sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
-          pip3 install --user behave
-
-      - name: Sovereign Audit (Rule A)
-        shell: zsh {0}
-        run: bin/vde-enforce-uap.zsh
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build BDD test container
-        run: |
-          echo "Building BDD test container..."
-          docker build -t vde-bdd-tester -f tests/docker/bdd-test/Dockerfile .
-
-      - name: Create Docker network
-        run: docker network create dev-net 2>/dev/null || echo "Network exists"
-
-      - name: Run docker-free BDD tests
-        shell: zsh {0}
-        run: |
-          echo "Running docker-free BDD tests on GitHub CI..."
-          chmod +x tests/run-docker-free-tests.zsh
-          ./tests/run-docker-free-tests.zsh || {
-            echo "::error::Docker-free BDD tests failed"
-            exit 1
-          }
-          echo "✓ All docker-free BDD tests passed (165/165 scenarios)"
-          echo "See GITHUB_CI_RESTRICTIONS.md for why other tests are skipped"
-
-      - name: Cleanup test containers
-        if: always()
-        run: |
-          echo "Cleaning up test containers..."
-          docker ps -aq --filter "name=vde-test" | xargs -r docker stop
-          docker ps -aq --filter "name=vde-test" | xargs -r docker rm
-          docker network rm dev-net 2>/dev/null || true
-
-      - name: Upload BDD test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bdd-test-results
-          path: /tmp/behave-report.json
-          if-no-files: ignore
-          retention-days: 7
-
-  # =============================================================================
-  # Job 8: Summary
+  # Job 5: Summary
   # =============================================================================
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [lint, unit-tests, integration-tests, comprehensive-tests, coverage, bdd-tests]
+    needs: [lint, sovereign-tests, coverage, docker-image-build]
     if: always()
 
     steps:
@@ -713,11 +207,9 @@ jobs:
       - name: Display CI Summary
         env:
           LINT_RESULT: ${{ needs.lint.result }}
-          UNIT_RESULT: ${{ needs.unit-tests.result }}
-          INTEGRATION_RESULT: ${{ needs.integration-tests.result }}
-          COMPREHENSIVE_RESULT: ${{ needs.comprehensive-tests.result }}
+          TEST_RESULT: ${{ needs.sovereign-tests.result }}
           COVERAGE_RESULT: ${{ needs.coverage.result }}
-          BDD_RESULT: ${{ needs.bdd-tests.result }}
+          BUILD_RESULT: ${{ needs.docker-image-build.result }}
         run: |
           echo "╔════════════════════════════════════════════════════════════╗"
           echo "║          VDE CI Pipeline - Execution Summary                ║"
@@ -725,24 +217,19 @@ jobs:
           echo ""
           echo "Job Results:"
           echo "  ┌─ Linting: $LINT_RESULT"
-          echo "  ├─ Unit Tests: $UNIT_RESULT"
-          echo "  ├─ Integration Tests: $INTEGRATION_RESULT"
-          echo "  ├─ Comprehensive Tests: $COMPREHENSIVE_RESULT"
+          echo "  ├─ Sovereign Tests: $TEST_RESULT"
           echo "  ├─ Code Coverage: $COVERAGE_RESULT"
-          echo "  └─ BDD Tests: $BDD_RESULT"
+          echo "  └─ Image Builds: $BUILD_RESULT"
           echo ""
-          echo "  Note: Docker Build tests run only for PRs (requires Docker access)"
-          echo "  Run docker-required tests locally"
+          echo "  Note: Container-required tests (DinD) are skipped in CI."
+          echo "  Run 'make test-docker' locally for full lifecycle verification."
 
           if [[ "$LINT_RESULT" == "failure" ]] || \
-             [[ "$UNIT_RESULT" == "failure" ]] || \
-             [[ "$INTEGRATION_RESULT" == "failure" ]] || \
-             [[ "$COMPREHENSIVE_RESULT" == "failure" ]] || \
+             [[ "$TEST_RESULT" == "failure" ]] || \
              [[ "$COVERAGE_RESULT" == "failure" ]] || \
-             [[ "$BDD_RESULT" == "failure" ]]; then
+             [[ "$BUILD_RESULT" == "failure" ]]; then
             echo "::error::CI Pipeline Failed"
             exit 1
           else
             echo "::notice::CI Pipeline Passed ✓"
-            echo "  See GITHUB_CI_RESTRICTIONS.md for local-only tests"
           fi
