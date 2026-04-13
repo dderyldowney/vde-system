@@ -210,13 +210,16 @@ Feature: The Unyielding Tetrad Verification
     Then the output should contain "vde_student"
     And the return code should be 0
 
-## **17. VERSIONING LAW & TAGGING AUTHORITY**
+## **17. VERSIONING LAW & SEMVER AUTHORITY**
 
 *"A warrior knows the weight of every plate in their armor. The record must be absolute."*
 
-VDE SHALL use **MAJOR.MINOR.STEP** (e.g., 1.3.0) for all inventory control.
+From now on, VDE follows the SemVer versioning style. Our current versioning conforms to the **SemVer Specification** (https://semver.org/#semantic-versioning-specification-semver). The current SemVer version is 2.0.0.
 
-* **Versioning Law (MAJOR.MINOR.STEP)**:
+* **Versioning Law (MAJOR.MINOR.STEP.p#)**:
+    * VDE SHALL use **MAJOR.MINOR.STEP.p#** (e.g., 1.3.1.p0) for all inventory control.
+    * **MAJOR.MINOR.STEP** maps to SemVer's standard `MAJOR.MINOR.PATCH`.
+    * **.p#** (or `-pN`) is our distinct patch level (what the SemVer spec calls 'extension'). This is reserved specifically for security updates and emergency patches.
     * MAJOR and MINOR are architectural and doctrine-level decisions and are NEVER chosen or proposed by the agent.
     * STEP tags (e.g., 1.3.1, 1.3.2) represent honest, incremental progress within the current MINOR line.
 * **Tagging Authority**:
@@ -233,6 +236,16 @@ VDE SHALL use **MAJOR.MINOR.STEP** (e.g., 1.3.0) for all inventory control.
     * Git tags are CHEAP and FREQUENT markers created ONLY by the User.
     * GitHub Releases are RARE, TEACHABLE milestones published ONLY by the User.
     * Multiple STEP tags may exist without a GitHub Release; a Release may summarize several STEP tags.
+
+## **18. CONVENTIONAL COMMITS MANDATE (THE CHRONICLER'S LAW)**
+
+*"The chronicle must be written in the language of the masters, that all may read the history of the Forge."*
+
+When committing files to git, the Agent(s) MUST follow the **Conventional Commits** specification for ALL commits.
+
+* **Specification**: Agents MUST adhere to the specification located at https://www.conventionalcommits.org/en/v1.0.0/#specification and the Summary Information at https://www.conventionalcommits.org/en/v1.0.0/#summary.
+* **Scope and Usage**: This includes strict adherence to the `scope:` definitions and usage patterns (e.g., `feat(core):`, `fix(security):`).
+* **Dynamic Versioning**: We follow whatever is the current released version of the specification. Agents MUST reference the dynamic variable `CONVENTIONAL_COMMITS_SPEC_VERSION="1.0.0"`. This variable MUST be one that can be reassigned as the version of conventionalcommits.org's SemVer changes.
 
 ## **19. THE SOVEREIGN ARTIFACT SET (Codified 2026-04-12)**
 When a Sovereign Baseline release is cut, the following documents MUST be updated to match the new reality before tagging is allowed: `ARCHITECTURE.md`, `TECHNICAL_DEEP_DIVE.md`, `RELEASE_NOTES.md`, and `VDE-SPEC.md`. These four files move as a single artifact set for every Sovereign Baseline. If the system changes in a way the current spec cannot describe, the spec must be rewritten so that the implementation and `VDE-SPEC.md` are again in perfect agreement.
