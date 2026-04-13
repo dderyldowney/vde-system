@@ -91,6 +91,22 @@ def after_all(context):
         shutil.rmtree(context.temp_dir)
 
 
+def before_feature(context, feature):
+    """Trigger cleanup for pristine features."""
+    if "pristine" in feature.tags:
+        sweep_script = os.path.join(VDE_ROOT, "bin/vde-tactical-sweep.zsh")
+        if os.path.exists(sweep_script):
+            subprocess.run([sweep_script], check=False)
+
+
+def after_feature(context, feature):
+    """Cleanup after pristine features."""
+    if "pristine" in feature.tags:
+        sweep_script = os.path.join(VDE_ROOT, "bin/vde-tactical-sweep.zsh")
+        if os.path.exists(sweep_script):
+            subprocess.run([sweep_script], check=False)
+
+
 def before_scenario(context, scenario):
     """Reset state for each scenario."""
     context.output = ""
