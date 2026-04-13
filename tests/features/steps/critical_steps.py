@@ -4,13 +4,11 @@ Step definitions for @critical-path and @critical-infrastructure features.
 All steps invoke the ACTUAL VDE implementation — no mocks, no fakes.
 """
 
-import json
 import os
 import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
 
 from behave import given, then, when
 
@@ -19,16 +17,14 @@ steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
 
-from vm_common import (
-    BIN_DIR,
+from vm_common import (  # noqa: E402
     VDE_ROOT,
-    VM_TYPES_JSON,
     get_compose_file,
     get_ssh_port_from_compose,
     load_vm_types_raw,
     run_vde_command,
 )
-from shell_helpers import vde_poll
+from shell_helpers import vde_poll  # noqa: E402
 
 TEMPLATES_DIR = VDE_ROOT / "templates"
 LIB_DIR = VDE_ROOT / "lib"

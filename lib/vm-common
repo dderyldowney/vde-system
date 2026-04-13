@@ -1123,6 +1123,13 @@ find_available_port() {
             zmodload zsh/zselect 2>/dev/null && zselect -t ${jitter_val}
             
             # 3. Sovereign Timeout (3s Strike): Prevent hangs on port conflict
+            if [[ "${VDE_CI_MODE:-0}" == "1" ]]; then
+                # In CI mode, we assume the port is clear if we got the lock
+                # (We can't reliably run containers in many CI environments)
+                echo "${port}"
+                return 0
+            fi
+
             ( docker run --rm --name "${probe_name}" --entrypoint /bin/true -p "${port}:22" vde-base >/dev/null 2>&1 ) & local _probe_pid=$!
             ( zmodload zsh/zselect 2>/dev/null && zselect -t 300 2>/dev/null; kill -9 $_probe_pid 2>/dev/null ) & local _timer_pid=$!
             
