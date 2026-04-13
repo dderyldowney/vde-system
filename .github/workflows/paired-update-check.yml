@@ -7,7 +7,7 @@ on:
 # Enforce zsh as the default shell for all jobs and steps
 defaults:
   run:
-    shell: zsh {0}
+    shell: zsh
 
 jobs:
   verify:
@@ -18,10 +18,10 @@ jobs:
         shell: bash
         run: sudo apt-get update && sudo apt-get install -y zsh && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
       - name: Sovereign Audit (Rule A)
-        shell: zsh {0}
+        shell: zsh
         run: ./bin/vde-enforce-uap.zsh
       - name: Run paired update enforcer
-        shell: zsh {0}
+        shell: zsh
         run: |
           ./bin/paired_update_enforcer
           echo "Paired update check passed."

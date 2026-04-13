@@ -1,5 +1,8 @@
 # Remediation Plan: VDE v2.1.0 Sovereign Verification
 
+## Paired Update Policy
+This file is part of a paired update set with [session_handover.md](./session_handover.md). Both files must be updated together to maintain synchronization between accomplishments and outstanding debt.
+
 ## High-Priority Architectural Debt
 - **Sovereign Bridge Hardening**: Core logic exists in `scripts/vde-entrypoint.zsh` but requires idempotency hardening and empirical verification.
 - **USP Finalization**: Ensure 100% of registered VM types follow the hardened USP pattern (set -e, apt-get clean, rm -rf lists).
