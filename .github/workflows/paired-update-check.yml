@@ -9,6 +9,9 @@ defaults:
   run:
     shell: zsh {0}
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   verify:
     runs-on: ubuntu-latest
