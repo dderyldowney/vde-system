@@ -65,6 +65,7 @@ jobs:
           echo "✓ All zsh scripts passed syntax check"
 
       - name: Run yamllint
+        shell: bash
         run: yamllint .github/workflows/ configs/docker/*/docker-compose.yml || true
 
       - name: Run ruff Python linter
@@ -212,6 +213,7 @@ jobs:
         run: bin/vde-enforce-uap.zsh
 
       - name: Display CI Summary
+        shell: bash
         env:
           LINT_RESULT: ${{ needs.lint.result }}
           TEST_RESULT: ${{ needs.sovereign-tests.result }}
