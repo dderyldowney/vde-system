@@ -2,6 +2,7 @@ name: Paired Update Check
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 # Enforce zsh as the default shell for all jobs and steps
 defaults:
