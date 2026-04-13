@@ -4,7 +4,7 @@ name: VDE CI Pipeline
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, develop]
   schedule:
     - cron: '0 2 * * *'  # Nightly at 2 AM UTC
   workflow_dispatch:
