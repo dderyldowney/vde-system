@@ -114,6 +114,17 @@ _run_enforce_in_tmpdir() {
     )
 }
 
+_get_perm() {
+    local target="$1"
+    # Try Linux/GNU format first (%a)
+    local p=$(stat -c "%a" "$target" 2>/dev/null)
+    if [[ -z "$p" ]]; then
+        # Fallback to macOS/BSD format (%Lp)
+        p=$(stat -f "%Lp" "$target" 2>/dev/null)
+    fi
+    echo "$p"
+}
+
 test_enforce_permissions_creates_strict_dirs() {
     test_start "vde_security_enforce_permissions sets 0700 on sensitive dirs"
 
@@ -127,8 +138,7 @@ test_enforce_permissions_creates_strict_dirs() {
 
     local failed=0
     for dir in .cache .docker-state .locks; do
-        local perm
-        perm=$(stat -f "%Lp" "$tmpdir/$dir" 2>/dev/null || stat -c "%a" "$tmpdir/$dir" 2>/dev/null)
+        local perm=$(_get_perm "$tmpdir/$dir")
         if [[ "$perm" != "700" ]]; then
             failed=1
             break
@@ -157,8 +167,7 @@ test_enforce_permissions_data_logs() {
 
     local failed=0
     for dir in data logs; do
-        local perm
-        perm=$(stat -f "%Lp" "$tmpdir/$dir" 2>/dev/null || stat -c "%a" "$tmpdir/$dir" 2>/dev/null)
+        local perm=$(_get_perm "$tmpdir/$dir")
         if [[ "$perm" != "700" ]]; then
             failed=1
             break
@@ -186,8 +195,7 @@ test_enforce_permissions_env_files() {
 
     _run_enforce_in_tmpdir "$tmpdir"
 
-    local perm
-    perm=$(stat -f "%Lp" "$tmpdir/env-files/python.env" 2>/dev/null || stat -c "%a" "$tmpdir/env-files/python.env" 2>/dev/null)
+    local perm=$(_get_perm "$tmpdir/env-files/python.env")
 
     rm -rf "$tmpdir"
 
@@ -220,8 +228,7 @@ test_enforce_permissions_ssh_identity() {
 
     vde_security_enforce_permissions >/dev/null 2>&1
 
-    local perm
-    perm=$(stat -f "%Lp" "$test_identity" 2>/dev/null || stat -c "%a" "$test_identity" 2>/dev/null)
+    local perm=$(_get_perm "$test_identity")
 
     # Clean up test file if we created it
     if [[ $created_test_file -eq 1 ]]; then

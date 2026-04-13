@@ -95,8 +95,9 @@ test_vm_types_have_required_fields() {
 test_port_allocation_basic() {
     test_start "Port allocation (basic)"
 
-    # Clear port registry for test
-    rm -rf "$VDE_CACHE_DIR/port-registry"/*
+    # Clear port registry safely for test
+    mkdir -p "$VDE_CACHE_DIR/port-registry"
+    rm -rf "$VDE_CACHE_DIR/port-registry"/*(N)
 
     local port=$(find_available_port 2240 2250)
     if [[ -n "$port" ]]; then
