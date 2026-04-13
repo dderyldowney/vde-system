@@ -69,7 +69,7 @@ run_directory_with_coverage() {
 
     # Use setopt for null_glob behavior (zsh-specific)
     setopt local_options null_glob
-    for test_file in "${dir}"/*.sh; do
+    for test_file in "${dir}"/*.zsh; do
         if [[ -f "${test_file}" ]] ; then
             run_test_with_coverage "${test_file}"
             ((test_count++))

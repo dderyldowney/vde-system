@@ -720,10 +720,10 @@ get_vms_by_type() {
 
     case "${vm_type}" in
         lang)
-            echo "${lang_vms[@]}"
+            print -l "${lang_vms[@]}"
             ;;
         service)
-            echo "${service_vms[@]}"
+            print -l "${service_vms[@]}"
             ;;
         *)
             echo ""
@@ -734,13 +734,13 @@ get_vms_by_type() {
 # Get all language VMs
 get_lang_vms() {
     load_vm_types
-    echo "${lang_vms[@]}"
+    print -l "${lang_vms[@]}"
 }
 
 # Get all service VMs
 get_service_vms() {
     load_vm_types
-    echo "${service_vms[@]}"
+    print -l "${service_vms[@]}"
 }
 
 # Get all known VMs
@@ -749,7 +749,7 @@ get_all_vms() {
     #unsetopt XTRACE 2>/dev/null
     load_vm_types
     
-    echo "${lang_vms[@]}" "${service_vms[@]}"
+    print -l "${lang_vms[@]}" "${service_vms[@]}"
 }
 
 # =============================================================================
