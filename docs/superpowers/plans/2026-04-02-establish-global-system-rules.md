@@ -46,17 +46,6 @@ Integrate the three rules into the absolute failures section or as a new "Core M
 
 ---
 
-### Task 4: Update CLAUDE.md
-
-**Files:**
-- Modify: `CLAUDE.md`
-
-- [ ] **Step 1: Add Rule A, B, and C to "ABSOLUTE FAILURES TO AVOID"**
-
-Integrate the three rules into the absolute failures section.
-
----
-
 ### Task 5: Update docs/VDE-SPEC.md
 
 **Files:**
