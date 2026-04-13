@@ -1,6 +1,6 @@
 # VDE API Reference
 
-**Version:** 1.3.0 (The Sovereign Baseline)
+**Version:** 1.3.1 (The Sovereign Baseline)
 **Status:** AUTHORITATIVE
 
 This document provides the complete API reference for the Virtual Development Environment (VDE) system.

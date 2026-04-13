@@ -1,4 +1,4 @@
-# **The Way of the VDE: v1.3.0 (The Sovereign Baseline)**
+# **The Way of the VDE: v1.3.1 (The Sovereign Baseline)**
 
 This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.3.0. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
@@ -176,7 +176,7 @@ The **Law of Protection** mandates that the four base technologies of the VDE mu
 
 ### **@SYSTEM-SPINE: EMPIRICAL TEST SPECIFICATION**
 
-The following BDD scenarios provide the empirical proof required for the v1.3.0 The Sovereign Baseline.
+The following BDD scenarios provide the empirical proof required for the v1.3.1 The Sovereign Baseline.
 
 ```gherkin
 @system-spine

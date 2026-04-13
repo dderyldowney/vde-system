@@ -1,4 +1,4 @@
-# VDE: Technical Deep-Dive (v1.3.0 Sovereign)
+# VDE: Technical Deep-Dive (v1.3.1 Sovereign)
 
 ## 1. The Rule Spine (UAP Enforcement)
 
@@ -58,8 +58,20 @@ All CLI strikes are wrapped in `vde_run` to capture kernel-level signals and map
 - `VDE_ERR_LOCK (9)`
 - `VDE_ERR_SYNC_DRIFT (13)`
 
+## 7. CI/CD Hardening (The ZSH Deadlock Fix)
+
+To ensure the Sovereign Baseline can be certified in non-interactive environments (GitHub Actions), VDE implements a "Chicken-and-Egg" ZSH bootstrap fix.
+
+### 7.1. The ZSH Bootstrap ritual:
+- **Problem**: GitHub Actions default runners often lack a properly configured ZSH environment during the initial `actions/checkout` phase, leading to deadlocks when the Orchestrator attempts to enforce UAP.
+- **Solution**: The `tests/run-sovereign-tests.zsh` runner implements a pre-flight bootstrap that explicitly exports `SHELL=/usr/bin/zsh` and forces the sourcing of `~/.zshrc` logic into the runner's subshell.
+
+### 7.2. VDE_CI_MODE (Port Allocation Bypass):
+- **Mechanism**: When `VDE_CI_MODE=1` is detected, the `vde_docker_allocate_port` function bypasses the physical diagnostic probe (`docker run --rm`).
+- **Rationale**: In CI environments without DinD (Docker-in-Docker) capabilities, physical probes will always fail. `VDE_CI_MODE` permits the allocator to rely on the atomic file-system locks alone, ensuring the pipeline remains green in restricted environments.
+
 ---
-**Version**: 1.3.0
+**Version**: 1.3.1
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE v1.3.0
+**Reference**: ARCHITECTURE v1.3.1
 ---

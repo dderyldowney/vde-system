@@ -1,8 +1,8 @@
-# ARCHITECTURE v1.3.0 (The Sovereign Baseline)
+# ARCHITECTURE v1.3.1 (The Sovereign Baseline)
 
 ## 1. The Hub-and-Spoke Tiered Model
 
-VDE uses a three-tier inheritance and isolation model to ensure identity consistency while maintaining absolute Spoke autonomy.
+VDE uses a three-tier inheritance and isolation model to ensure identity consistency while maintaining absolute Spoke autonomy. The system has been purged of legacy agent debt (Claude Code) to ensure the Sovereign Bridge remains purely ZSH-driven.
 
 | Tier | Name | Component | Role |
 | :--- | :--- | :--- | :--- |
@@ -47,8 +47,15 @@ All VDE operations are wrapped in the `vde_run` deterministic execution wrapper:
 - **Docker Socket Bridge**: Bridged via dynamic GID mapping and `chmod 666` within the isolated `vde-net` environment.
 - **Workspace Mapping**: `/home/devuser/workspace` maps to `projects/<alias>/` on the Hub.
 
+## 6. Sovereign Testing Framework (The Gauntlet)
+
+VDE employs a dual-stream testing architecture to ensure high-velocity CI/CD without sacrificing physical validation.
+
+- **The Sovereign Runner (`tests/run-sovereign-tests.zsh`)**: A high-speed, CI-optimized runner that executes a subset of core infrastructure tests (The Tetrad) without requiring physical Docker-in-Docker (DinD) privileges.
+- **Physical Validation**: Full-lifecycle BDD scenarios (Behave/Python) are reserved for local Forge environments where physical container-within-container operations are permitted.
+
 ---
-Version: 1.3.0
+Version: 1.3.1
 Status: SOVEREIGN BASELINE CERTIFIED
 Reference: THE WAY OF THE VDE
 ---
