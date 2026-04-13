@@ -1,6 +1,6 @@
 # VDE Universal Agent Protocol (UAP)
 
-This document defines the **MANDATORY** development lifecycle and behavioral constraints for **ALL** AI agents (Gemini CLI, Claude Code, Kilo CLI, and any sub-agents) interacting with the VDE workspace.
+This document defines the **MANDATORY** development lifecycle and behavioral constraints for **ALL** AI agents (Gemini CLI and any sub-agents) interacting with the VDE workspace.
 
 **There are NO EXCEPTIONS to these rules. Rationalizing bypasses is a critical failure.**
 
@@ -108,11 +108,11 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ## 5. Agent-Platform Mapping
 
-| Capability | Gemini CLI | Claude Code / Kilo |
-|------------|------------|---------------------|
-| Plan Mode | `enter_plan_mode` | `/vde-plan` |
-| Sub-Agents | `generalist`, `codebase_investigator` | `Agent` tool |
-| Compliance | `/vde-enforce` | `/vde-enforce` |
-| Review | `/vde-review` | `/vde-review` |
+| Capability | Gemini CLI |
+|------------|------------|
+| Plan Mode | `enter_plan_mode` |
+| Sub-Agents | `generalist`, `codebase_investigator` |
+| Compliance | `/vde-enforce` |
+| Review | `/vde-review` |
 
 **The Agent Directory is the single source of truth. Rules apply regardless of which CLI is used.**

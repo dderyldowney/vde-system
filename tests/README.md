@@ -626,7 +626,7 @@ This policy was established after a critical bug where integration tests used pr
 
 **NEVER use fake test patterns in BDD step implementations.**
 
-Forbidden patterns (see `/CLAUDE.md`):
+Forbidden patterns (see `/GEMINI.md`):
 1. `assert True` - Always-passing assertions
 2. `context.xxx = True` - Setting flags without real verification
 3. `pass` statements in `@then` steps - Silent bypass of verification

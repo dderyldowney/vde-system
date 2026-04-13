@@ -33,7 +33,7 @@ if [[ -d "conductor" ]]; then
 fi
 
 # Mandatory config files (Mandate 0 & 14 integration)
-MANDATORY_FILES=("AGENTS.md" "GEMINI.md" "CLAUDE.md" "MEMORY.md")
+MANDATORY_FILES=("AGENTS.md" "GEMINI.md" "MEMORY.md")
 
 # Colors for output
 RED='\033[0;31m'

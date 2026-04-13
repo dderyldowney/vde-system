@@ -31,16 +31,6 @@ coverage/*
 *.swo
 *~
 
-# Claude Code CLI - local only (machine-specific)
-.claude/settings.local.json
-.claude/plans
-**/.claude/CLAUDE.md
-**/*.claude/CLAUDE.md
-
-# All CLAUDE.md files EXCEPT root (only /CLAUDE.md is tracked)
-**/CLAUDE.md
-!/CLAUDE.md
-
 # OS files
 .DS_Store
 Thumbs.db

@@ -60,7 +60,7 @@ $HOME/dev/
 │   ├── shutdown-virtual
 │   ├── build-and-start
 │   └── add-vm-type
-├── CLAUDE.md
+├── GEMINI.md
 └── README.md
 ```
 
