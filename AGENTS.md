@@ -19,9 +19,14 @@ The main agent MUST complete these 8 steps sequentially before doing *anything e
 4.  **Read @docs/VDE-SPEC.md**: Refresh knowledge of authoritative technical requirements and implementation priority.
 5.  **Read @PROJECT_STATUS.md**: Understand the current reliability, pass rates, and identified gaps.
 
-6.  **Query `memory` MCP**: Retrieve cross-session context and semantically relevant conversation history.
-7.  **Refresh Library Documentation**: Use `context7` to fetch up-to-date documentation for any relevant libraries or frameworks.
-8.  **Perform Housekeeping**: Strip dead logs, remove unused code, and meticulously verify `bin/` script compliance (ZSH shebangs only).
+6.  **THE SOVEREIGN STARTUP RITUAL**: Execute in sequence:
+    - `bin/vde-enforce-uap.zsh` (Sovereign Audit)
+    - `bin/vde-spine-check.zsh` (Spine Check)
+    - `python3 -m behave tests/features/core-infrastructure/proof-of-life-the-contract.feature` (Proof of Life)
+
+7.  **Query `memory` MCP**: Retrieve cross-session context and semantically relevant conversation history.
+8.  **Refresh Library Documentation**: Use `context7` to fetch up-to-date documentation for any relevant libraries or frameworks.
+9.  **Perform Housekeeping**: Strip dead logs, remove unused code, and meticulously verify `bin/` script compliance (ZSH shebangs only).
 
 ---
 
