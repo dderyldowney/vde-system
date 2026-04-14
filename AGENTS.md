@@ -67,10 +67,10 @@ Violating any of these mandates is a failure of the agent's primary directive.
 
 ## 3. The Development Lifecycle (Phases 0-5)
 
-All work must proceed through these phases in order. Skipping phases or "optimizing away" gates is a protocol violation.
+All work must proceed through these phases in order. Skipping phases or "optimizing away" gates is a protocol violation. These structural checkpoints—scoping the mission at ignition and proving the work at finalization—are central to our core design goals and ensure the purity of the Forge.
 
-### Phase 0: Discovery (Swarm Mode)
-- **Action**: Gather context using MCP services.
+### Phase 0: Mission Ignition (Swarm Mode)
+- **Action**: Strike the Signet. Execute `gh issue create` using the appropriate template to define the mission scope and intent. Gather context using MCP services.
 - **Swarm**: Spawn `scout` and `security-auditor` agents to map dependencies and security posture.
 - **Output**: Identification of DRY reuse opportunities and architectural constraints.
 
@@ -100,7 +100,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 - **Exit Gate**: **Reviewer Approval AND User Approval**.
 
 ### Phase 5: Finalization
-- **Action**: Final test run + commit using `/vde-commit`.
+- **Action**: Final test run + commit using `/vde-commit`. Submit the Beskar. Execute `gh pr create` using the mandated template. Ensure all mandatory evidence (Proof of Life, Gateway, Spine Check) is recorded in the Chronicle.
 - **Mandate**: Certification of the **Proof of Life** Heartbeat is mandatory before committing or pushing.
 - **Hygiene**: Update `MEMORY.md` and session handovers.
 

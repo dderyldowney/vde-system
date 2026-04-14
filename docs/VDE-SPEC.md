@@ -44,14 +44,16 @@ When a Sovereign Baseline release is cut, the following documents MUST move as a
 ## 6. The Sovereign Branching Strategy
 
 The Forge strictly enforces the following Git lifecycle to maintain the purity of the Baseline:
-1.  **`main` (The Sovereign Baseline)**: The stable production branch. Represents immutable releases.
-2.  **`develop` (The Anvil)**: The primary integration branch.
-3.  **Feature Branches (The Strike)**: All work MUST occur on a feature-named branch (e.g., `feat/name`) branching off `develop`.
-4. **The GitHub Workflow (The Signet)**: 
-    - **Issue Creation**: Missions must be recorded via `gh issue create`.
-    - **Authorization**: The armorer-architect (Agent) is granted the right to strike the Signet via `gh issue create` upon mission ignition.
-    - **Linking**: Commits or PR bodies MUST link the issue (e.g., `Closes #123`).
-    - **Acceptance & Deletion**: A feature branch is merged into `develop` ONLY when accepted. It MUST be deleted immediately following the merge.
+1.  **`main` (The Sovereign Baseline)**: The stable production branch. Represents immutable, certified releases. Only accepts merges from `develop` via a Release PR.
+2.  **`develop` (The Anvil)**: The primary integration branch where the Beskar is forged. Only accepts merges from feature branches via a Mission PR.
+3.  **Feature Branches (The Strike)**: All work MUST occur on a feature-named branch (e.g., `feat/name`) branching off the Anvil (`develop`).
+4.  **The Ritual of the Signet and the Chronicle**: 
+    - **The Signet (Issue)**: Every strike MUST begin with a Signet. The armorer-architect MUST use the authorized tool `gh issue create` to record the mission upon ignition.
+    - **The Chronicle (PR)**: Every strike MUST end with a Chronicle. The armorer-architect MUST use the authorized tool `gh pr create` to submit the forged work for the Code Review mandate.
+    - **The Heartbeat Templates**: The armorer MUST use the provided repository templates during these rituals to ensure the Heartbeat is documented and the Proof of Life contract is honored.
+    - **Authorization**: The armorer-architect (Agent) is granted the right to strike the Signet via `gh issue create` and submit the Chronicle via `gh pr create` upon mission completion. The agent is also authorized for read access (`gh issue view`, `gh pr view`) to monitor progress.
+    - **Linking**: Commits and the Chronicle MUST link the Signet (e.g., `Closes #123`).
+    - **Acceptance & Deletion**: A feature branch is merged into the Anvil ONLY when accepted and certified. It MUST be deleted immediately following the merge to keep the Forge clean.
 
 ---
 

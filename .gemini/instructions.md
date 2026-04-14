@@ -2,6 +2,27 @@
 
 This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.3.0. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
+MANDATE: In VDE workspace, follow instructions in AGENTS.md.
+
+> **VDE project startup:** Follow the 8-step checklist in `AGENTS.md` section 1. Sub-agents must NOT run startup steps — they inherit context from the main agent.
+
+---
+
+## Universal Agent Rules (ALL CLIs — Claude, Kilo, Gemini, any agent)
+
+These rules apply regardless of which CLI or AI agent is in use. A user must not need to care which CLI they are running — behaviour must be consistent.
+
+### Startup Scope (MAIN AGENT ONLY)
+
+> **Sub-agents spawned by the main agent must NOT run startup steps.** They inherit context from the main agent and must begin their assigned task immediately. Sub-agents inherit the 'Hot Forge' certification from the Orchestrator. They are strictly forbidden from running the Proof of Life ritual themselves to ensure context efficiency.
+
+### Sub-Agent Behaviour
+
+- Begin the assigned task immediately — no startup sequence, no context reloading.
+- Complete only the assigned scope. Do not expand beyond it.
+- Report back to the main agent when done or blocked.
+- Do not execute Proof of Life or startup rituals. Trust the Orchestrator's certification.
+
 ---
 
 ## **THE MANDALORIAN CODE: THE SUPREME LAW**
@@ -56,8 +77,11 @@ Failure of any ritual constitutes a **Protocol Blockade**.
     * A release record is only valid if it includes the final empirical test pass counts and is certified by the Dual Audit Loop (Code + Security).
 * **P. The Sovereign Branching Law (The Signet)**:
     * `main` is production. `develop` is the primary integration branch. All work MUST occur on feature branches originating from `develop`.
+    * **The Ritual**: Every mission is a Strike. Every Strike begins with a Signet (Issue) and ends with a Chronicle (PR).
     * Work MUST be tracked via GitHub Issues (`gh issue create`) and linked in PRs.
+    * For all central and core design goals, the Signet and Chronicle MUST be struck using the authorized GitHub templates. Failure to record the Heartbeat in the Chronicle is a violation of the Creed.
     * Feature branches are merged to `develop` ONLY upon acceptance and MUST be deleted immediately after.
+    * The agent is PRE-AUTHORIZED to use `gh issue create` and `gh pr create` to initialize missions and record the Signet of Intent and submit the Chronicle. The agent is also authorized for read access (`gh issue view/list`, `gh pr view/list`) to initialize, monitor, and submit missions.
 
 ## **THE SOVEREIGN INSTRUCTION SET 1.3.0**
 
