@@ -56,6 +56,7 @@ Violating any of these mandates is a failure of the agent's primary directive.
     - The Sovereign Startup Ritual (Alor only).
     - Committing or Pushing changes.
     - Direct implementation work on the lifecycle logic itself.
+16. **Authority of the Record**: Only the Orchestrator (Alor) and the User are permitted to alter The Record. Sub-agents (Verd'ika) are FORBIDDEN from making autonomous commits. They may only perform commits when explicitly instructed by the Orchestrator or the User, ensuring the intent and control remain centralized.
 
 ### !! CRITICAL FORBIDDEN PATTERNS !!
 - **NO BASH/SH SYNTAX:** This is a ZSH-only project. Use ZSH-specific features (e.g., `${(f)var}`, `**/*`, `ZSH arrays index at 1`).
@@ -110,6 +111,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 - **Main Agent**: Acts as the orchestrator. Synthesizes results, maintains `MEMORY.md`, and spawns swarms. **Does NOT write multi-file code UNLESS sub-agents are technically unavailable, in which case it may perform direct implementation provided every action is strictly supervised by the Enforcer.**
 - **Sub-Agents**: Specialized experts. They inherit context from the Main Agent and perform isolated, single-file tasks.
+- **Controlled Commits**: Sub-agents MUST NEVER make commits of their own accord. They operate strictly under the Orchestrator's intent. The Orchestrator may serialize commits using sub-agents, but the responsibility for the Record's integrity belongs to the Alor.
 - **Inheritance Mandate**: Sub-agents (Verd'ika) MUST inherit all context from the Alor (Main Agent). This includes the certification of the **Proof of Life** Heartbeat; sub-agents are strictly forbidden from executing this ritual themselves. Re-reading or freshly pulling files that are already present in the Main Agent's context (specifically those loaded via the `@` startup checklist) is strictly forbidden. This prevents infinite loops and context window crashes.
 - **Scope Limit**: If a sub-agent receives a task requiring >1 file edit, it **MUST STOP** and report back. It cannot expand its own scope or spawn its own sub-agents.
 - **Parallelism**: Swarms must be launched simultaneously in a single message block, not sequentially.

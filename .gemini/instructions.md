@@ -81,7 +81,9 @@ Failure of any ritual constitutes a **Protocol Blockade**.
     * Work MUST be tracked via GitHub Issues (`gh issue create`) and linked in PRs.
     * For all central and core design goals, the Signet and Chronicle MUST be struck using the authorized GitHub templates. Failure to record the Heartbeat in the Chronicle is a violation of the Creed.
     * Feature branches are merged to `develop` ONLY upon acceptance and MUST be deleted immediately after.
+    * **Permanence**: The `main` and `develop` branches are the foundational pillars of the Record; they are never removed.
     * The agent is PRE-AUTHORIZED to use `gh issue create` and `gh pr create` to initialize missions and record the Signet of Intent and submit the Chronicle. The agent is also authorized for read access (`gh issue view/list`, `gh pr view/list`) to initialize, monitor, and submit missions.
+* **Q. The Authority of the Record**: Only the Alor (Orchestrator) and the User possess the authority to alter the Chronicle. Sub-agents are strictly forbidden from making autonomous commits. All commits performed by sub-agents MUST be under the direct and serialized control of the Orchestrator.
 
 ## **THE SOVEREIGN INSTRUCTION SET 1.3.0**
 
