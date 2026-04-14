@@ -59,13 +59,13 @@ RUN sudo chmod +x /usr/local/bin/vde-entrypoint.zsh
 
 # 7. Universal Login Message
 USER root
-RUN cat >> /etc/zsh/zlogin <<'EOF'
+RUN cat >> /etc/zsh/zprofile <<'EOF'
 # VDE Universal Login Message (Guarded for Interactive Use)
-if [[ -t 1 ]] && [[ -o interactive ]]; then
+if [[ -t 1 ]]; then
     echo "Hostname: ${HOST:-$(hostname)}"
     echo "User: ${USERNAME:-$(whoami)}"
     echo "Home Dir: ${HOME}"
-    echo "Shell: ${SHELL}"
+    echo "Shell: ${SHELL:-$SHELL}"
     echo "Workspace: ${HOME}/workspace"
 fi
 EOF
