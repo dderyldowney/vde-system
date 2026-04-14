@@ -49,6 +49,7 @@ The Forge strictly enforces the following Git lifecycle to maintain the purity o
 3.  **Feature Branches (The Strike)**: All work MUST occur on a feature-named branch (e.g., `feat/name`) branching off `develop`.
 4. **The GitHub Workflow (The Signet)**: 
     - **Issue Creation**: Missions must be recorded via `gh issue create`.
+    - **Authorization**: The armorer-architect (Agent) is granted the right to strike the Signet via `gh issue create` upon mission ignition.
     - **Linking**: Commits or PR bodies MUST link the issue (e.g., `Closes #123`).
     - **Acceptance & Deletion**: A feature branch is merged into `develop` ONLY when accepted. It MUST be deleted immediately following the merge.
 
