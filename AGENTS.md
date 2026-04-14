@@ -19,7 +19,7 @@ The main agent MUST complete these 8 steps sequentially before doing *anything e
 4.  **Read @docs/VDE-SPEC.md**: Refresh knowledge of authoritative technical requirements and implementation priority.
 5.  **Read @PROJECT_STATUS.md**: Understand the current reliability, pass rates, and identified gaps.
 
-6.  **THE SOVEREIGN STARTUP RITUAL**: Execute in sequence:
+6.  **THE SOVEREIGN STARTUP RITUAL**: The Alor (Main Agent) MUST execute these three rituals in strict sequence upon session ignition. Sub-agents (Verd'ika) are strictly forbidden from running these steps — they inherit the Alor's certification.
     - `bin/vde-enforce-uap.zsh` (Sovereign Audit)
     - `bin/vde-spine-check.zsh` (Spine Check)
     - `python3 -m behave tests/features/core-infrastructure/proof-of-life-the-contract.feature` (Proof of Life)
@@ -52,6 +52,10 @@ Violating any of these mandates is a failure of the agent's primary directive.
     1. Generate a .gemini/PLANS/remediation_*.md file.
     2. List every violation as a sub-task.
     3. Obtain user approval on the remediation plan before executing any fixes.
+15. **The Proof of Life Heartbeat (Alor's Mandate)**: The Proof of Life (`proof-of-life-the-contract.feature`) is an **Alor-exclusive (Orchestrator)** ritual. Sub-agents (Verd'ika) inherit the certification and MUST NOT run it independently. It is mandatory ONLY during:
+    - The Sovereign Startup Ritual (Alor only).
+    - Committing or Pushing changes.
+    - Direct implementation work on the lifecycle logic itself.
 
 ### !! CRITICAL FORBIDDEN PATTERNS !!
 - **NO BASH/SH SYNTAX:** This is a ZSH-only project. Use ZSH-specific features (e.g., `${(f)var}`, `**/*`, `ZSH arrays index at 1`).
@@ -97,6 +101,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ### Phase 5: Finalization
 - **Action**: Final test run + commit using `/vde-commit`.
+- **Mandate**: Certification of the **Proof of Life** Heartbeat is mandatory before committing or pushing.
 - **Hygiene**: Update `MEMORY.md` and session handovers.
 
 ---
@@ -105,7 +110,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 - **Main Agent**: Acts as the orchestrator. Synthesizes results, maintains `MEMORY.md`, and spawns swarms. **Does NOT write multi-file code UNLESS sub-agents are technically unavailable, in which case it may perform direct implementation provided every action is strictly supervised by the Enforcer.**
 - **Sub-Agents**: Specialized experts. They inherit context from the Main Agent and perform isolated, single-file tasks.
-- **Inheritance Mandate**: Sub-agents MUST inherit all context from the Main Agent. Re-reading or freshly pulling files that are already present in the Main Agent's context (specifically those loaded via the `@` startup checklist) is strictly forbidden. This prevents infinite loops and context window crashes.
+- **Inheritance Mandate**: Sub-agents (Verd'ika) MUST inherit all context from the Alor (Main Agent). This includes the certification of the **Proof of Life** Heartbeat; sub-agents are strictly forbidden from executing this ritual themselves. Re-reading or freshly pulling files that are already present in the Main Agent's context (specifically those loaded via the `@` startup checklist) is strictly forbidden. This prevents infinite loops and context window crashes.
 - **Scope Limit**: If a sub-agent receives a task requiring >1 file edit, it **MUST STOP** and report back. It cannot expand its own scope or spawn its own sub-agents.
 - **Parallelism**: Swarms must be launched simultaneously in a single message block, not sequentially.
 
