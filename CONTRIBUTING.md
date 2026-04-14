@@ -214,6 +214,7 @@ Commit message prefixes:
 6.  **Describe changes:** Explain what and why in PR description.
 7.  **Link issues:** Reference related issues with `Fixes #123` or `Relates to #123`.
 8.  **Respond to feedback:** Address review comments promptly.
+9.  **Post-Merge Cleanup:** Once your PR is formally accepted and merged into `develop`, you MUST delete your feature branch.
 
 ### PR Description Template
 ```markdown
