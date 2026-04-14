@@ -53,10 +53,25 @@ RUN mkdir -p /home/devuser/.ssh/vde && \
     chmod 700 /home/devuser/.ssh && \
     chmod 700 /home/devuser/.ssh/vde
 
-# 6. The Atomic Handshake (Entrypoint)
+# 6. THE ATOMIC HANDSHAKE (Entrypoint)
 COPY scripts/vde-entrypoint.zsh /usr/local/bin/vde-entrypoint.zsh
 RUN sudo chmod +x /usr/local/bin/vde-entrypoint.zsh
 
+# 7. Universal Login Message
+USER root
+RUN cat >> /etc/zsh/zlogin <<'EOF'
+# VDE Universal Login Message (Guarded for Interactive Use)
+if [[ -t 1 ]] && [[ -o interactive ]]; then
+    echo "Hostname: ${HOST:-$(hostname)}"
+    echo "User: ${USERNAME:-$(whoami)}"
+    echo "Home Dir: ${HOME}"
+    echo "Shell: ${SHELL}"
+    echo "Workspace: ${HOME}/workspace"
+fi
+EOF
+
+USER devuser
 WORKDIR /home/devuser/workspace
 ENTRYPOINT ["/usr/local/bin/vde-entrypoint.zsh"]
+
 
