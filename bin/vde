@@ -291,6 +291,10 @@ case ${COMMAND} in
         shift
         vde_run "validate" "${VDE_ROOT_DIR}/bin/validate-schemas.zsh" "$@"
         ;;
+    prune)
+        shift
+        vde_run "prune" "${VDE_ROOT_DIR}/bin/vde-prune.zsh" "$@"
+        ;;
     rebuild-cache)
         shift
         vde_run "rebuild-cache" "${VDE_ROOT_DIR}/bin/vde-rebuild-cache" "$@"
