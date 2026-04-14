@@ -14,6 +14,12 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
 
 **CRITICAL MANDATE**: All agent actions MUST adhere to the VDE Universal Agent Protocol (UAP). You are an **Orchestrator**, not just a coder. Efficiency is secondary to the **Rule Spine**.
 
+**THE SOVEREIGN STARTUP RITUAL**: The agent MUST execute these three rituals in strict sequence upon session ignition, before any other task:
+1.  **Sovereign Audit**: Run `bin/vde-enforce-uap.zsh` to verify mandate compliance.
+2.  **Spine Check**: Run `bin/vde-spine-check.zsh` to verify the Unyielding Tetrad.
+3.  **Proof of Life**: Run `python3 -m behave tests/features/core-infrastructure/proof-of-life-the-contract.feature` to certify the Heartbeat.
+Failure of any ritual constitutes a **Protocol Blockade**.
+
 **THE PROOF OF LIFE MANDATE**: If the user says "Give me proof of life", the agent MUST immediately execute the `tests/features/core-infrastructure/proof-of-life-the-contract.feature` test and report results.
 
 **THE RESEARCH-FIRST PROTOCOL**: Any non-trivial change REQUIRES at least one research subtask followed by a summarized brief BEFORE a patch or implementation plan is proposed. You MUST use sequential and critical thinking to vet solutions repeatedly, choosing the path supported by the strongest empirical evidence.
