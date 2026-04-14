@@ -49,10 +49,11 @@ The Forge strictly enforces the following Git lifecycle to maintain the purity o
 3.  **Feature Branches (The Strike)**: All work MUST occur on a feature-named branch (e.g., `feat/name`) branching off the Anvil (`develop`).
 4.  **The Ritual of the Signet and the Chronicle**: 
     - **The Signet (Issue)**: Every strike MUST begin with a Signet. The armorer-architect MUST use the authorized tool `gh issue create` to record the mission upon ignition.
-    - **The Chronicle (PR)**: Every strike MUST end with a Chronicle. The armorer-architect MUST use the authorized tool `gh pr create` to submit the forged work for the Code Review mandate.
+    - **The Chronicle (PR)**: Every strike MUST end with a Chronicle. The armorer-architect MUST use the authorized tool `gh pr create` to submit the forged work for the Code Review mandate. The Chronicle MUST serve as the final "**Archive of the Strike**," explicitly linking the Signet ID, the PR ID, and the exact sequence of Commit SHAs.
     - **The Heartbeat Templates**: The armorer MUST use the provided repository templates during these rituals to ensure the Heartbeat is documented and the Proof of Life contract is honored.
     - **Authorization**: The armorer-architect (Agent) is granted the right to strike the Signet via `gh issue create` and submit the Chronicle via `gh pr create` upon mission completion. The agent is also authorized for read access (`gh issue view`, `gh pr view`) to monitor progress.
-    - **Linking**: Commits and the Chronicle MUST link the Signet (e.g., `Closes #123`).
+    - **The Record of Commits**: Every commit within the Strike MUST include the Signet ID in the header or body using the format: `scope: description [#ID]`. A commit without its Signet is a broken link in the chain.
+    - **Certification & Finality**: This triple-tie (Signet, PR, SHAs) is the only way to certify the Record. The Chronicle MUST link the Signet (e.g., `Closes #123`) to ensure the mission is closed in the permanent archive.
     - **Acceptance & Deletion**: A feature branch is merged into the Anvil ONLY when accepted and certified. It MUST be deleted immediately following the merge to keep the Forge clean.
 
 ---

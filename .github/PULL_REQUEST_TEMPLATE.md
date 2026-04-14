@@ -11,7 +11,16 @@ Closes # (Link to the initiating Issue)
 - [ ] **Red Gauntlet**: *Describe/Link the failing test created.*
 - [ ] **Green Victory**: *Paste pass results of the verification suite (`python3 -m behave ...`).*
 
-### **IV. Checklist of the Creed**
+### **IV. File Impact List (The Beskar Plates)**
+*List of files created or modified in this strike.*
+
+### **V. Refactoring Rationale (The Refiner's Fire)**
+*Explain why the code was structured this way. How does this strengthen the armor of the VDE?*
+
+### **VI. Discussion Summary (The Signet's Record)**
+*Briefly summarize any key decisions recorded on the Signet (Issue) that guided this forge.*
+
+### **VII. Checklist of the Creed**
 - [ ] **UAP Enforced**: `bin/vde-enforce-uap.zsh` passes.
 - [ ] **Spine Check**: `bin/vde-spine-check.zsh` is green.
 - [ ] **Gateway Passed**: `gateway-pillars.feature` is 100% successful.
