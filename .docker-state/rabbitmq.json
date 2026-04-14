@@ -1,8 +1,0 @@
-{
-  "vm_name": "vde-rabbitmq",
-  "vm_type": "service",
-  "display_name": "RabbitMQ",
-  "ssh_port": "",
-  "started_at": "2026-03-30T02:05:41Z",
-  "status": "running"
-}

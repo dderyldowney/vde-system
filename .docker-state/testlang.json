@@ -1,9 +1,0 @@
-{
-  "vm_name": "vde-testlang",
-  "vm_type": "lang",
-  "display_name": "Test Language",
-  "ssh_port": 2298,
-  "service_port": "",
-  "created_at": "2026-03-13T23:02:47Z",
-  "status": "running"
-}
