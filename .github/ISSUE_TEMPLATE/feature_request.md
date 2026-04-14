@@ -1,29 +1,15 @@
 ---
-name: Feature request
-about: Suggest an idea for VDE
-title: '[FEATURE] '
-labels: enhancement
-assignees: ''
+name: "🚀 Feature Request"
+about: "Propose an expansion of the Forge's capability"
+title: "[FEAT]: "
+labels: ["enhancement", "expansion"]
+assignees: ""
 ---
+### **I. Problem Statement (The Pain)**
+*What limits our current Forge?*
 
-## Problem Description
-What problem are you trying to solve? What limitation are you encountering?
+### **II. Proposed Solution (The Gain)**
+*How shall we expand the steel?*
 
-## Proposed Solution
-How do you envision this feature working? Please describe in detail.
-
-## Alternatives Considered
-What other approaches or features did you consider? Why did you choose this approach?
-
-## Additional Context
-Add any other context, examples, or mockups about the feature request here.
-
-## Impact Assessment
-- **Users affected**: [Who would benefit from this feature?]
-- **Priority**: [Low / Medium / High]
-- **Complexity**: [Low / Medium / High]
-
-## Willingness to Contribute
-- [ ] I would be willing to submit a PR for this feature
-- [ ] I would need guidance to implement this feature
-- [ ] I am unable to implement this feature at this time
+### **III. Alignment with The Way**
+*How does this respect the Rule Spine and Sovereign Baseline?*
