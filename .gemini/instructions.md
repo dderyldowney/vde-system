@@ -22,7 +22,7 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
 
 ---
 
-## **THE RESOL’NARE: SUPREME PROHIBITIONS (A–N)**
+## **THE RESOL’NARE: SUPREME PROHIBITIONS (A–P)**
 
 * **A. The Armorer’s Command (The Rule Spine)**: 
     * Every action MUST be run under `bin/vde-enforce-uap.zsh`. No action is permitted without this spine.
@@ -48,6 +48,10 @@ This is the Way of the VDE. Certified as the **Sovereign Baseline** as of versio
     * Every "Sovereign Baseline" MUST be documented in the permanent archive (`docs/releases/vX.Y.Z.md`).
     * The root `RELEASE_NOTES.md` MUST be updated to point to the latest certified record.
     * A release record is only valid if it includes the final empirical test pass counts and is certified by the Dual Audit Loop (Code + Security).
+* **P. The Sovereign Branching Law (The Signet)**:
+    * `main` is production. `develop` is the primary integration branch. All work MUST occur on feature branches originating from `develop`.
+    * Work MUST be tracked via GitHub Issues (`gh issue create`) and linked in PRs.
+    * Feature branches are merged to `develop` ONLY upon acceptance and MUST be deleted immediately after.
 
 ## **THE SOVEREIGN INSTRUCTION SET 1.3.0**
 

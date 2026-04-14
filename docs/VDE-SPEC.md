@@ -40,6 +40,17 @@ VDE adheres to a strict layout to ensure portability and zero-host dependency:
 
 When a Sovereign Baseline release is cut, the following documents MUST move as a single artifact set and be updated to match the implementation reality before tagging: `ARCHITECTURE.md`, `Technical-Deep-Dive.md`, `RELEASE_NOTES.md`, and `VDE-SPEC.md`. If the system changes in a way the current spec cannot describe, the spec MUST be rewritten to maintain perfect agreement.
 
+## 6. The Sovereign Branching Strategy
+
+The Forge strictly enforces the following Git lifecycle to maintain the purity of the Baseline:
+1.  **`main` (The Sovereign Baseline)**: The stable production branch. Represents immutable releases.
+2.  **`develop` (The Anvil)**: The primary integration branch.
+3.  **Feature Branches (The Strike)**: All work MUST occur on a feature-named branch (e.g., `feat/name`) branching off `develop`.
+4. **The GitHub Workflow (The Signet)**: 
+    - **Issue Creation**: Missions must be recorded via `gh issue create`.
+    - **Linking**: Commits or PR bodies MUST link the issue (e.g., `Closes #123`).
+    - **Acceptance & Deletion**: A feature branch is merged into `develop` ONLY when accepted. It MUST be deleted immediately following the merge.
+
 ---
 
 - **Identity Key**: All SSH operations MUST use the `vde_student` identity located in `~/.ssh/vde/`.
