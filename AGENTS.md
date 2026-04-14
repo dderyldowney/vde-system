@@ -82,6 +82,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ### Phase 2: Implementation (TDD + Swarm)
 - **Action**: Follow Red-Green-Refactor.
+- **Record the Discussion**: Significant architectural decisions, hurdles, or logic pivots MUST be recorded as comments on the Signet (Issue) to preserve the 'Why' for future warriors.
 - **Pre-Edit Gate (CRITICAL STOP)**:
   1. STATE: "I am about to make [N] direct edit(s) to [files]."
   2. COUNT: Is N > 1?
@@ -101,7 +102,8 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 - **Exit Gate**: **Reviewer Approval AND User Approval**.
 
 ### Phase 5: Finalization
-- **Action**: Final test run + commit using `/vde-commit`. Submit the Beskar. Execute `gh pr create` using the mandated template. Ensure all mandatory evidence (Proof of Life, Gateway, Spine Check) is recorded in the Chronicle.
+- **Action**: Final test run + commit using `/vde-commit`.
+- **Submit the Beskar**: The Chronicle (PR) MUST include: 1) High-level mission summary, 2) Complete list of modified files, 3) Rationale for refactoring, and 4) Mandatory Red/Green evidence. Execute `gh pr create` using the mandated template. Ensure all mandatory evidence (Proof of Life, Gateway, Spine Check) is recorded in the Chronicle.
 - **Mandate**: Certification of the **Proof of Life** Heartbeat is mandatory before committing or pushing.
 - **Hygiene**: Update `MEMORY.md` and session handovers.
 
