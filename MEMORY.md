@@ -96,3 +96,4 @@
 ## **STUDENT SPACE SOVEREIGNTY (Codified 2026-04-12)**
 - **Zone Restriction**: @projects/** is designated "Student Space."
 - **Remediation Prohibition**: The agent is strictly FORBIDDEN from remediating vulnerabilities in student space.
+# Fracture Test
