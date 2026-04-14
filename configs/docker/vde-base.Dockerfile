@@ -55,20 +55,12 @@ RUN mkdir -p /home/devuser/.ssh/vde && \
 
 # 6. THE ATOMIC HANDSHAKE (Entrypoint)
 COPY scripts/vde-entrypoint.zsh /usr/local/bin/vde-entrypoint.zsh
-RUN sudo chmod +x /usr/local/bin/vde-entrypoint.zsh
+COPY scripts/vde-motd.zsh /usr/local/bin/vde-motd.zsh
+RUN sudo chmod +x /usr/local/bin/vde-entrypoint.zsh /usr/local/bin/vde-motd.zsh
 
-# 7. Universal Login Message
+# 7. Universal Login Message (MOTD)
 USER root
-RUN cat >> /etc/zsh/zprofile <<'EOF'
-# VDE Universal Login Message (Guarded for Interactive Use)
-if [[ -t 1 ]]; then
-    echo "Hostname: ${HOST:-$(hostname)}"
-    echo "User: ${USERNAME:-$(whoami)}"
-    echo "Home Dir: ${HOME}"
-    echo "Shell: ${SHELL:-$SHELL}"
-    echo "Workspace: ${HOME}/workspace"
-fi
-EOF
+RUN echo 'zsh /usr/local/bin/vde-motd.zsh' >> /etc/zsh/zprofile
 
 USER devuser
 WORKDIR /home/devuser/workspace
