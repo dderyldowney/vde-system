@@ -6,6 +6,7 @@
 ---
 
 ## THE HEARTBEAT: PROOF OF LIFE CONTRACT
+- **Gateway Entrypoint**: The **Four Pillars Gateway** (`tests/features/core-infrastructure/gateway-pillars.feature`) is the mandatory entrypoint to the Proof of Life ritual. It MUST be passed with 100% success to certify the host environment's readiness. Failure results in an immediate **Program Blockade**.
 - **Mandatory Lifecycle**: The Proof of Life Contract (init -> create -> start -> enter -> rebuild -> stop -> rm -> add -> uninstall) is the non-negotiable heartbeat of the VDE.
 - **Remediation Protocol**: Any status other than **100% GREEN** on `@system-spine` and core lifecycle tests triggers an immediate **Protocol Blockade**. No secondary features or refactoring are permitted until the heartbeat is restored to Green.
 - **Proof of Life Certification (1.3.1)**: Successfully executed and verified the full contract with 100% pass rate (70/70 steps) following the Ingot Stash upgrade.

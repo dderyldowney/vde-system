@@ -2,6 +2,7 @@
 
 ## 1. Absolute Mandates (The Rule Spine)
 
+- **The Four Pillars Gateway**: Before the Proof of Life ritual is ignited, the host environment MUST pass the Four Pillars Gateway verification (`gateway-pillars.feature`). This verifies the presence and basic capability of Zsh, Git, Docker, and SSH. Any failure in this gateway constitutes an immediate **Program Blockade**; no further rituals or implementation work are permitted until the host is compliant.
 - **Language of the Tribe (ZSH ONLY)**: All CLI tools, libraries, and jail shells MUST use `#!/usr/bin/env zsh`. `bash` is strictly prohibited. Enforcement is performed via deep content inspection for native parameter expansion `${(` and 1-indexed array usage.
 - **The Armorer’s Command (UAP)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`. This sentinel detects "Ghost Zones" (e.g., unauthorized root directories like `conductor/`), enforces shebang purity, and forbids `sleep` calls in favor of deterministic polling.
 - **Relative Mandates (CI/CD Purity)**: In non-interactive CI/CD environments, the ZSH purity mandate is strictly enforced to prevent deadlocks. Every automation script MUST explicitly source the `vde_core` library and operate in `VDE_CI_MODE=1` to bypass physical port handshakes where necessary.

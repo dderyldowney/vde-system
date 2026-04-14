@@ -5,7 +5,7 @@
 **Goal:** Establish the **System-Spine** as a cognitive context and implement empirical verification of the core tetrad (Zsh, Git, Docker, SSH) to achieve **1.3.0 The Sovereign Baseline** certification.
  This plan codifies the **Proof of Life** standard (init, create, rebuild, start, enter, stop, remove).
 
-**Architecture:** A lightweight, silent ZSH script `bin/vde-spine-check.zsh` will perform functional challenges for each of the four pillars. This script will be integrated into `bin/vde` as a mandatory pre-flight check. The System-Spine is codified as a cognitive context for all VDE operations and is finalized with the `@system-spine` git tag.
+**Architecture:** The ritual begins with the **Four Pillars Gateway**, verifying tool-chain capability before VDE-specific hydration. A lightweight, silent ZSH script `bin/vde-spine-check.zsh` will perform functional challenges for each of the four pillars. This script will be integrated into `bin/vde` as a mandatory pre-flight check. The System-Spine is codified as a cognitive context for all VDE operations and is finalized with the `@system-spine` git tag.
 
 **Tech Stack:** Zsh, Docker, Git, SSH, Behave (Python).
 
@@ -125,6 +125,8 @@ git commit -m "feat: integrate system-spine cognitive check and 'create' command
 
 **Mandate: Ghost Registry Hygiene**
 The `plans/scripts/git-test/` directory MUST be purged before and after every test run to prevent nested `.git` objects from corrupting the Hub's index.
+
+- [ ] **Step 0: Ensure the **Four Pillars Gateway** (`gateway-pillars.feature`) is executed and passed as the first scenario of the Proof of Life ritual.**
 
 - [ ] **Step 1: Write "The Contract" BDD Feature**
 ```gherkin
