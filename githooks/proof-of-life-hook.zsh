@@ -4,7 +4,7 @@
 set -e
 
 # Determine VDE root directory
-VDE_ROOT_DIR="${0:a:h:h}"
+VDE_ROOT_DIR=$(git rev-parse --show-toplevel)
 export VDE_ROOT_DIR
 
 # Source core libraries
