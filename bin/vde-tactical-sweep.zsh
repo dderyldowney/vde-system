@@ -20,6 +20,7 @@ VDE_ROOT_DIR="${VDE_BIN_DIR:h}"
 # Tactical Sweep Parameters
 VDE_LOCKS_VMS_DIR="${VDE_ROOT_DIR}/.locks/vms"
 VDE_PORT_REGISTRY_DIR="${VDE_ROOT_DIR}/.cache/port-registry"
+VDE_DOCKER_STATE_DIR="${VDE_ROOT_DIR}/.docker-state"
 
 vde_log_info "[SWEEP] Commencing Tactical Forge Sweep..." "sweep"
 
@@ -56,6 +57,17 @@ if [[ -d "${VDE_PORT_REGISTRY_DIR}" ]]; then
         rm -rf "${VDE_PORT_REGISTRY_DIR}"/* 2>/dev/null
     fi
     vde_log_success "[SWEEP] Port registry at ${VDE_PORT_REGISTRY_DIR#${VDE_ROOT_DIR}/} cleared." "sweep"
+fi
+
+# 4. THE STATE PURGE: Clear ALL VM state JSON files
+if [[ -d "${VDE_DOCKER_STATE_DIR}" ]]; then
+    vde_log_info "[SWEEP] Purging Docker state registry..." "sweep"
+    # Use (N) to avoid errors if directory is empty
+    local states=("${VDE_DOCKER_STATE_DIR}"/*(N))
+    if [[ ${#states} -gt 0 ]]; then
+        rm -rf "${VDE_DOCKER_STATE_DIR}"/* 2>/dev/null
+    fi
+    vde_log_success "[SWEEP] Docker state directory at ${VDE_DOCKER_STATE_DIR#${VDE_ROOT_DIR}/} cleared." "sweep"
 fi
 
 vde_log_success "[SWEEP] Tactical Sweep Complete. The Forge is Pristine." "sweep"

@@ -1,8 +1,0 @@
-{
-  "vm_name": "vde-jupyterlab",
-  "vm_type": "service",
-  "display_name": "JupyterLab Data Science Suite",
-  "ssh_port": 2407,
-  "status": "running",
-  "updated_at": "2026-04-11T01:55:21Z"
-}

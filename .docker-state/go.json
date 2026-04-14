@@ -1,8 +1,0 @@
-{
-  "vm_name": "vde-go",
-  "vm_type": "lang",
-  "display_name": "Go",
-  "ssh_port": "",
-  "started_at": "2026-04-01T05:21:17Z",
-  "status": "running"
-}
