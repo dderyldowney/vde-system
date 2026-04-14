@@ -1,52 +1,36 @@
-# Session Handover — 1.3.0 (The Sovereign Baseline)
+# Session Handover — 1.3.1 (The Sovereign Baseline)
 
-**Current Status**: 🟢 VDE 1.3.0 SOVEREIGN BASELINE CERTIFIED / 100% GREEN
-**Active Branch**: `develop` (STRICT MANDATE: Work on `develop` only)
-**Next Step**: High-Velocity Cluster Expansion (1.3.0)
+**Current Status**: 🟢 VDE 1.3.1 SOVEREIGN BASELINE CERTIFIED / 100% GREEN
+**Active Branch**: `develop` (Rule P: Mandatory feature branches for all work)
+**Next Step**: High-Velocity Cluster Expansion & Release Ritual Automation
 
-## Paired Update Policy
-This file is part of a paired update set with [session_handover_remediation.md](./.gemini/PLANS/session_handover_remediation.md). Both files must be updated together to maintain synchronization between accomplishments and outstanding debt.
-
-## Accomplishments (1.3.0 Sovereign Baseline)
-1.  **Hardening Remediation (1.3.0 Final)**:
-    - **Security**: Updated `bytes` dependency in `vde-rust` to v1.11.1, remediating critical integer overflow.
-    - **Security**: Mandated `POSTGRES_DEV_PASSWORD` in `postgres-init.zsh`, eliminating hardcoded default passwords.
-2.  **vde init Integration**:
-    - Refactored `bin/vde-init` for path sovereignty and registered it as a first-class command.
-    - Added `tests/features/core-infrastructure/vde-init-empirical.feature` for infrastructure verification.
-3.  **Git Hook Sentinel (Rule F & Mandate L)**:
-    - Decoupled long-running checks into a `pre-push` Gatekeeper (Proof of Life).
-    - Integrated `usp-validator.zsh` into `pre-commit` for script compliance.
-    - Hardened all hooks with `set -e` and `zsh -e` for deterministic failure.
-4.  **Baseline Alignment**:
-    - Universally applied `1.3.0` version baseline across all active plans and scripts.
-    - Codified the "Sovereign Baseline" mandate as the dynamic authority for versioning and compliance.
-    - Strengthened Rule J: `docs/VDE-SPEC.md` is now the absolute final authority in all versioning arguments.
-5.  **Lock-Queue Model (Phase 25 - The Sovereign Baseline)**:
-    - Replaced competitive spinlocks with deterministic FIFO ticket-based sequencing in `lib/vm-lock`.
-    - Eliminated "thundering herd" race conditions under high concurrency (10+ simultaneous requests).
-2.  **Deterministic Error Engine (Phase 26 - The Sovereign Baseline)**:
-    - Implemented `vde_run` execution wrapper for system-wide signal awareness.
-    - Hardened Signal Translation (SIGINT, SIGKILL, SIGTERM) with descriptive remediation mapping.
-    - Integrated global `SIGINT` traps into the `bin/vde` orchestrator.
-3.  **Sovereign Ignition Hooks**:
-    - Migrated 100% of service spokes (MySQL, Postgres, Redis, etc.) to asynchronous background ignition via `/usr/local/bin/vde-spoke-ignition.zsh`.
-    - Achieved "Born Ready (BTO)" compliance by stopping services at hydration end and removing legacy `.zshenv` process leaks.
-4.  **100% BDD Fidelity**:
-    - Purged all "pink" (simulated) steps.
-    - Verified 155 high-fidelity scenarios using physical system states and real signals.
-5.  **Workspace Optimization**:
-    - Resolved critical ignition blocks on large workspaces by optimizing recursive `chown` logic in the entrypoint.
+## Accomplishments (1.3.1 Sovereign Baseline)
+1.  **Global Path Sanitization**:
+    - Purged all hardcoded personal paths (`/Users/dderyldowney`) from active logic, logs, and configuration.
+    - Achieved absolute environment portability via `$HOME` and `~` standards.
+2.  **Forge's Ingot Stash (Pruning Ritual)**:
+    - Upgraded pruning to a time-based, Git-native engine (`vde prune`).
+    - Implemented hard-stop 7-day retention while preserving historical tracking via `git mv`/`git rm`.
+    - Protected Sovereign Baseline (1.3.1) documentation from purge rituals.
+3.  **Sovereign Branching Law (Rule P)**:
+    - Codified mandatory Git lifecycle: `main` (stable) | `develop` (anvil) | `feature/*` (strike).
+    - Established GitHub Issue tracking and post-merge branch deletion as binding law.
+    - Integrated GitHub MCP services into `.gemini/settings.json`.
+4.  **SSH Config Hardening**:
+    - Fixed empty config regressions.
+    - Refactored `lib/vde-ssh` to write and protect the **Sovereign Baseline 1.3.1** header during atomic updates.
+5.  **Proof of Life Certification**:
+    - Verified the entire 1.3.1 lifecycle with 100% pass rate (70/70 steps).
 
 ## Imminent Actions
 - Expansion of the Tech Stack Cluster matrix (MEAN, LAMP, etc.).
-- Performance telemetry for the Error Engine (logging signal frequency).
-- Final UI polish for the `vde add` workflow.
+- Automation of the "Sovereign Release Ritual" (updating all artifacts in tandem).
+- Performance telemetry for the Ingot Stash (pruning efficiency).
 
 ## Mandate Compliance
 - **Sovereign ZSH Purity**: 100% compliant across all `bin/`, `lib/`, and `scripts/`.
-- **No Simulation**: All tests verified against physical system state (actual PIDs, real locks).
+- **The Signet**: All work in this session originated on `develop` and was synchronized with core mandates.
 - **Rule Spine**: Every action executed under `bin/vde-enforce-uap.zsh` supervision.
 
-**Version**: 1.3.0
+**Version**: 1.3.1
 **This is the Way.**
