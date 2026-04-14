@@ -31,7 +31,7 @@ The VDE repository strictly enforces a Sovereign Branching Strategy to maintain 
 1. **`main` (The Sovereign Baseline):** This is the stable, "production" branch. It represents the certified, immutable releases of the Forge.
 2. **`develop` (The Anvil):** This is the primary integration branch for all ongoing development.
 3. **Feature Branches (The Strike):** All design, creation, modification, or remediation work MUST be performed on a feature-named branch (e.g., `feat/new-vm-type`, `fix/ssh-bridge`) branching **off of `develop`**.
-4. **The Merge:** Once work on a feature branch survives the Trial of the Gauntlet (testing), it is merged **back into `develop`**.
+4. **The Merge & Deletion:** Once a feature branch survives the Trial of the Gauntlet (testing) and the code is formally **accepted**, it is merged back into `develop`. Immediately following a successful merge, the feature branch **MUST be deleted** to keep the Forge lean and prevent history corruption.
 
 ---
 
