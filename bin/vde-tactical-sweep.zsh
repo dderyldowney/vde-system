@@ -37,25 +37,25 @@ else
     vde_log_info "[SWEEP] No active Spokes detected." "sweep"
 fi
 
-# 2. THE LOCK BREAK: Clear ALL VM Lock files
+# 2. THE LOCK BREAK: Clear ALL VM and global configuration locks
 if [[ -d "${VDE_LOCKS_VMS_DIR}" ]]; then
     vde_log_info "[SWEEP] Breaking all VM locks..." "sweep"
-    # Use (N) to avoid errors if directory is empty
-    local locks=("${VDE_LOCKS_VMS_DIR}"/*(N))
-    if [[ ${#locks} -gt 0 ]]; then
-        rm -rf "${VDE_LOCKS_VMS_DIR}"/* 2>/dev/null
-    fi
-    vde_log_success "[SWEEP] Lock directory at ${VDE_LOCKS_VMS_DIR#${VDE_ROOT_DIR}/} cleared." "sweep"
+    rm -rf "${VDE_LOCKS_VMS_DIR}"/*(N) 2>/dev/null
+    vde_log_success "[SWEEP] VM locks cleared." "sweep"
+fi
+
+# Break global locks and queues (Phase 25/26)
+if [[ -d "${VDE_ROOT_DIR}/.locks" ]]; then
+    vde_log_info "[SWEEP] Breaking global configuration locks..." "sweep"
+    # Target specific global lock files and their .queue companions
+    rm -rf "${VDE_ROOT_DIR}/.locks"/global-config.lock*(N) 2>/dev/null
+    vde_log_success "[SWEEP] Global locks purged." "sweep"
 fi
 
 # 3. THE REGISTRY PURGE: Clear ALL port reservations
 if [[ -d "${VDE_PORT_REGISTRY_DIR}" ]]; then
     vde_log_info "[SWEEP] Purging port registry..." "sweep"
-    # Use (N) to avoid errors if directory is empty
-    local ports=("${VDE_PORT_REGISTRY_DIR}"/*(N))
-    if [[ ${#ports} -gt 0 ]]; then
-        rm -rf "${VDE_PORT_REGISTRY_DIR}"/* 2>/dev/null
-    fi
+    rm -rf "${VDE_PORT_REGISTRY_DIR}"/*(N) 2>/dev/null
     vde_log_success "[SWEEP] Port registry at ${VDE_PORT_REGISTRY_DIR#${VDE_ROOT_DIR}/} cleared." "sweep"
 fi
 
