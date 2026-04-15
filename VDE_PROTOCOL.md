@@ -33,6 +33,11 @@ The VDE repository strictly enforces a Sovereign Branching Strategy to maintain 
 3. **Semantic Targeting:** The Forge uses semantic roles (`VDE_PRODUCTION_BRANCH`, `VDE_ANVIL_BRANCH`) codified in `lib/vde-constants` to ensure portability.
 4. **Feature Branches (The Strike):** All design, creation, modification, or remediation work MUST be performed on a feature-named branch (e.g., `feat/new-vm-type`, `fix/ssh-bridge`) branching **off of the Anvil (`develop`)**.
 5. **The Merge & Deletion:** Once a feature branch survives the Trial of the Gauntlet (testing) and the code is formally **accepted**, it is merged back into the Anvil (`develop`). Immediately following a successful merge, the feature branch **MUST be deleted** to keep the Forge lean and prevent history corruption.
+6. **The Chronicle (Pull Requests):** The transition of code from the Strike (Feature Branch) to the Anvil (`develop`) is recorded in the Chronicle. This ritual ensures that only pure Beskar is integrated into the baseline, governed by four unbreakable laws:
+    *   **The Law of the Focused Strike:** Scope is absolute. A Pull Request MUST address ONLY the objectives defined in its Signet (Issue). Tangential refactoring or unrelated modifications are forbidden; they belong in their own Strike.
+    *   **The Unbreakable Link:** Every Chronicle entry MUST be forged with auto-closing keywords (e.g., `Closes #N`) linked to an authorized Signet. This ensures every line of code has a documented purpose in the history of the Forge.
+    *   **The Dual-Gate Review:** Certification requires two signatures. The Chronicler (AI Agent) must verify the technical integrity via `code-reviewer`, and the Alor (User) must grant the final blessing. No merge is permitted without both gates being unlocked.
+    *   **The Evidence Mandate:** Trust is earned, not given. The description of every Pull Request MUST contain literal, unedited test output from the Trial of the Gauntlet. Only 100% successful verification is accepted as proof of life.
 
 ---
 

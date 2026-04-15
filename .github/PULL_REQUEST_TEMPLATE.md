@@ -4,12 +4,16 @@
 *Summary of the mission and intent.*
 
 ### **II. Signet Link (Mission Tracking)**
-Closes # (Link to the initiating Issue)
+- [ ] **Unbreakable Link**: Closes # (Must use 'Closes #N' to auto-close the Signet)
 
 ### **III. The Trial of the Gauntlet (Test Plan)**
 **Mandatory Evidence of the Heartbeat**:
 - [ ] **Red Gauntlet**: *Describe/Link the failing test created.*
-- [ ] **Green Victory**: *Paste pass results of the verification suite (`python3 -m behave ...`).*
+- [ ] **Green Victory**:
+> **MANDATE**: Paste the **LITERAL TERMINAL OUTPUT** of the verification suite below. Paraphrasing or summaries are forbidden.
+```text
+(Paste terminal output here)
+```
 
 ### **IV. File Impact List (The Beskar Plates)**
 *List of files created or modified in this strike.*
@@ -21,6 +25,7 @@ Closes # (Link to the initiating Issue)
 *Briefly summarize any key decisions recorded on the Signet (Issue) that guided this forge.*
 
 ### **VII. Checklist of the Creed**
+- [ ] **Focused Strike**: Scope is strictly limited to the Signet; no tangential changes.
 - [ ] **UAP Enforced**: `bin/vde-enforce-uap.zsh` passes.
 - [ ] **Spine Check**: `bin/vde-spine-check.zsh` is green.
 - [ ] **Gateway Passed**: `gateway-pillars.feature` is 100% successful.

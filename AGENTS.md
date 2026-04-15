@@ -68,10 +68,11 @@ Violating any of these mandates is a failure of the agent's primary directive.
 
 ## 3. The Development Lifecycle (Phases 0-5)
 
-All work must proceed through these phases in order. Skipping phases or "optimizing away" gates is a protocol violation. These structural checkpoints—scoping the mission at ignition and proving the work at finalization—are central to our core design goals and ensure the purity of the Forge.
+All work must proceed through these phases in order. Skipping phases or "optimizing away" phases is a protocol violation. These structural checkpoints—scoping the mission at ignition and proving the work at finalization—are central to our core design goals and ensure the purity of the Forge.
 
 ### Phase 0: Mission Ignition (Swarm Mode)
 - **Action**: Strike the Signet. Execute `gh issue create` using the appropriate template to define the mission scope and intent. Gather context using MCP services.
+- **Constraint**: **Scope Creep Prohibition**. The mission scope is FINAL once the Signet is struck. ANY new requirement discovered during implementation MUST spawn a new, separate Signet (Issue).
 - **Swarm**: Spawn `scout` and `security-auditor` agents to map dependencies and security posture.
 - **Output**: Identification of DRY reuse opportunities and architectural constraints.
 
@@ -98,12 +99,14 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ### Phase 4: Review (Dual Approval)
 - **Action**: Run `/vde-review`.
+- **The Dual-Gate Mandate**: The Orchestrator MUST dispatch the `code-reviewer` agent and obtain its explicit approval BEFORE seeking User approval.
 - **Swarm**: `reviewer` agent performs deep logic, performance, and security audit.
-- **Exit Gate**: **Reviewer Approval AND User Approval**.
+- **Exit Gate**: **Reviewer Approval AND THEN User Approval**.
 
 ### Phase 5: Finalization
 - **Action**: Final test run + commit using `/vde-commit`.
-- **Submit the Beskar**: The Chronicle (PR) MUST include: 1) High-level mission summary, 2) Complete list of modified files, 3) Rationale for refactoring, and 4) Mandatory Red/Green evidence. Execute `gh pr create` using the mandated template. Ensure all mandatory evidence (Proof of Life, Gateway, Spine Check) is recorded in the Chronicle.
+- **Submit the Beskar**: The Chronicle (PR) MUST include: 1) High-level mission summary, 2) Complete list of modified files, 3) Rationale for refactoring, and 4) **Evidence Mandate**: Raw terminal output of the verification suite.
+- **The Unbreakable Link**: Every Chronicle (PR) MUST be linked to its Signet (Issue) using authorized GitHub auto-closing keywords (e.g., `Closes #N`).
 - **Mandate**: Certification of the **Proof of Life** Heartbeat is mandatory before committing or pushing.
 - **Hygiene**: Update `MEMORY.md` and session handovers.
 
