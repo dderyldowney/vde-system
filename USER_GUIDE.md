@@ -74,7 +74,7 @@ Once the pillars are active, open your **Zsh** terminal and run:
 
 ```zsh
 # Clone the repository
-git clone https://github.com/dderyldowney/vde-system.git ~/vde
+git clone -b main https://github.com/dderyldowney/vde-system.git ~/vde
 cd ~/vde
 
 # Add VDE to your PATH

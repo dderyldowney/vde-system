@@ -38,7 +38,7 @@ The VDE Hub uses the **Sovereign Baseline** to connect you to your Spokes.
 Open your terminal (Zsh) and clone the VDE repository.
 
 ```zsh
-git clone https://github.com/dderyldowney/vde-system.git ~/vde
+git clone -b main https://github.com/dderyldowney/vde-system.git ~/vde
 cd ~/vde
 ```
 
