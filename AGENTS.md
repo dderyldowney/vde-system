@@ -72,6 +72,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ### Phase 0: Mission Ignition (Swarm Mode)
 - **Action**: Strike the Signet. Execute `gh issue create` using the appropriate template to define the mission scope and intent. Gather context using MCP services.
+- **Scope Creep Prohibition**: The mission scope is FINAL once the Signet is struck. Forbidding any "while I'm at it" changes. ANY new requirement discovered during implementation MUST spawn a new, separate Signet (Issue). Mixing independent tasks in a single mission is a protocol violation.
 - **Swarm**: Spawn `scout` and `security-auditor` agents to map dependencies and security posture.
 - **Output**: Identification of DRY reuse opportunities and architectural constraints.
 
