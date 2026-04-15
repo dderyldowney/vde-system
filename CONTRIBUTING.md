@@ -17,8 +17,8 @@ Thank you for your interest in contributing to the VDE (Virtual Development Envi
 
 1. Fork the repository
 2. Clone your fork: `git clone -b main https://github.com/YOUR_USERNAME/vde-system.git`
-3. Checkout the development branch: `git checkout develop`
-4. Create a feature branch off develop: `git checkout -b feat/your-feature-name`
+3. Checkout the Anvil: `git checkout develop`
+4. Create a feature branch off the Anvil: `git checkout -b feat/your-feature-name`
 5. Make your changes
 6. Run tests: `make check` (or use the VDE orchestration tools)
 7. Commit and push: `git push origin feat/your-feature-name`
@@ -206,14 +206,14 @@ Commit message prefixes:
 
 ### Pull Request Process
 1.  **Branch Naming:** Use clear, descriptive names for your branches (e.g., `feat/add-rust-support`, `fix/port-allocation-bug`, `docs/update-readme`).
-2.  **Target Branch:** All Pull Requests MUST target the `develop` branch. PRs targeting `main` will be rejected unless they are official release preparations authorized by the Alor.
+2.  **Target Branch:** All Pull Requests MUST target the `develop` branch (**The Anvil**). PRs targeting `main` (Production) will be rejected unless they are official release preparations authorized by the Alor.
 3.  **Keep PRs focused:** One feature or fix per PR.
 4.  **Update documentation:** Include doc changes in the PR.
 5.  **Add tests:** Ensure all relevant tests (especially `@system-spine` if modifying core infrastructure) pass before submitting.
 6.  **Describe changes:** Explain what and why in PR description.
 7.  **Link issues:** Reference related issues with `Fixes #123` or `Relates to #123`.
 8.  **Respond to feedback:** Address review comments promptly.
-9.  **Post-Merge Cleanup:** Once your PR is formally accepted and merged into `develop`, you MUST delete your feature branch.
+9.  **Post-Merge Cleanup:** Once your PR is formally accepted and merged into the Anvil (`develop`), you MUST delete your feature branch.
 
 ### PR Description Template
 ```markdown
