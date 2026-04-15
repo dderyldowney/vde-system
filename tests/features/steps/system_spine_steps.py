@@ -104,7 +104,12 @@ def step_verify_ssh_env(context, container_name):
 
 @given('the VDE system is healthy')
 def step_system_healthy(context):
+    # Rebuild cache to ensure we have fresh data
     run_vde_command("rebuild-cache")
+    # Purge known_hosts to prevent SSH identification warnings breaking forwarding
+    from ssh_helpers import VDE_SSH_KNOWN_HOSTS
+    if VDE_SSH_KNOWN_HOSTS.exists():
+        VDE_SSH_KNOWN_HOSTS.unlink()
 
 @then('every VM defined in the Hub must have a corresponding USP init script')
 def step_verify_all_scripts(context):
