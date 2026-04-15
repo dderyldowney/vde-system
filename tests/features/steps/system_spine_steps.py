@@ -458,6 +458,29 @@ def step_verify_container_not_exist(context, container_name):
     res = subprocess.run(["docker", "ps", "-a", "--filter", f"name=^{container_name}$", "--format", "{{.Names}}"], capture_output=True, text=True)
     assert container_name not in res.stdout.strip().split('\n'), f"Container {container_name} still exists"
 
+@then('the SSH config should not contain an entry for "{alias}"')
+def step_ssh_config_no_entry(context, alias):
+    """Assert neither live nor project SSH config contains a Host entry for alias."""
+    from tests.features.steps.ssh_helpers import VDE_SSH_CONFIG, VDE_ROOT
+    host_pattern = f"Host {alias}"
+
+    live_contains = False
+    if VDE_SSH_CONFIG.exists():
+        live_contains = host_pattern in VDE_SSH_CONFIG.read_text()
+
+    project_config = VDE_ROOT / "configs" / "ssh" / "config"
+    project_contains = False
+    if project_config.exists():
+        project_contains = host_pattern in project_config.read_text()
+
+    assert not live_contains, (
+        f"Live SSH config (~/.ssh/vde/config) still contains entry for '{alias}'"
+    )
+    assert not project_contains, (
+        f"Project SSH config (configs/ssh/config) still contains entry for '{alias}'"
+    )
+
+
 def after_scenario(context, scenario):
     """Cleanup after each scenario to enforce hygiene."""
     if hasattr(context, 'workspace') and "git-test" in str(context.workspace):
