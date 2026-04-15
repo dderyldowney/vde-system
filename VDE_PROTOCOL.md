@@ -28,10 +28,11 @@ This project uses a custom orchestration layer. Direct Docker commands are stric
 
 The VDE repository strictly enforces a Sovereign Branching Strategy to maintain the purity of the Baseline:
 
-1. **`main` (The Sovereign Baseline):** This is the stable, "production" branch. It represents the certified, immutable releases of the Forge.
-2. **`develop` (The Anvil):** This is the primary integration branch for all ongoing development.
-3. **Feature Branches (The Strike):** All design, creation, modification, or remediation work MUST be performed on a feature-named branch (e.g., `feat/new-vm-type`, `fix/ssh-bridge`) branching **off of `develop`**.
-4. **The Merge & Deletion:** Once a feature branch survives the Trial of the Gauntlet (testing) and the code is formally **accepted**, it is merged back into `develop`. Immediately following a successful merge, the feature branch **MUST be deleted** to keep the Forge lean and prevent history corruption.
+1. **`main` (Production):** This is the stable production branch. It represents the certified, immutable **Sovereign Baseline** of the Forge.
+2. **`develop` (The Anvil):** This is the primary integration branch for all ongoing development. It is the **Default Branch** for repository operations to enable automated issue closure.
+3. **Semantic Targeting:** The Forge uses semantic roles (`VDE_PRODUCTION_BRANCH`, `VDE_ANVIL_BRANCH`) codified in `lib/vde-constants` to ensure portability.
+4. **Feature Branches (The Strike):** All design, creation, modification, or remediation work MUST be performed on a feature-named branch (e.g., `feat/new-vm-type`, `fix/ssh-bridge`) branching **off of the Anvil (`develop`)**.
+5. **The Merge & Deletion:** Once a feature branch survives the Trial of the Gauntlet (testing) and the code is formally **accepted**, it is merged back into the Anvil (`develop`). Immediately following a successful merge, the feature branch **MUST be deleted** to keep the Forge lean and prevent history corruption.
 
 ---
 

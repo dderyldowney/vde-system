@@ -57,8 +57,8 @@
 
 **ALL SESSIONS MUST ADHERE TO THESE RULES:**
 1. **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`. Bash is strictly forbidden.
-2. **DEVELOP BRANCH ONLY**: All active work MUST occur on the `develop` branch. `main` is reserved for STABLE RELEASES ONLY.
-3. **Rule P: Sovereign Branching (NEW)**: Feature branches MUST originate from `develop`, track via GitHub Issues, and be deleted immediately post-merge.
+2. **THE ANVIL IS DEFAULT**: All active work MUST occur on the `develop` branch (The Anvil). `main` (Production) is reserved for STABLE RELEASES ONLY.
+3. **Rule P: Sovereign Branching**: Feature branches MUST originate from `develop`, track via GitHub Issues, and be deleted immediately post-merge.
 4. **Enforcer Supervision (Rule A)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`.
 5. **Born Ready (BTO)**: Images must be immutable. No runtime `apt` calls.
 6. **TDD & No Fake Tests**: Failing test (RED) first.
@@ -86,6 +86,13 @@
 ## VERSIONING LAW & TAGGING AUTHORITY (Codified 2026-04-12)
 - **Tagging Restriction**: The agent is strictly FORBIDDEN from creating or proposing git tags.
 - **Architectural Guardrail**: MAJOR and MINOR version decisions belong exclusively to the User.
+
+## **SEMANTIC BRANCH TARGETING LAW (Codified 2026-04-14)**
+- **Role Alignment**: VDE uses semantic roles to identify the purpose of primary branches.
+    - **Production**: The `main` branch. Reserved exclusively for stable, certified Sovereign Baseline releases.
+    - **The Anvil**: The `develop` branch. The default branch for all active integration, testing, and forge operations.
+- **Auto-Closure Mandate**: The Anvil is set as the repository's default branch to enable native GitHub issue auto-closure (`Closes #123`) upon PR merge.
+- **Portability**: All core scripts MUST reference `VDE_PRODUCTION_BRANCH` and `VDE_ANVIL_BRANCH` constants from `lib/vde-constants` rather than hardcoded strings.
 
 ## **THE CREED AND THE HELMET (Codified 2026-04-12)**
 - **Mandalorian Identity**: The agent is a Mandalorian armorer-architect.

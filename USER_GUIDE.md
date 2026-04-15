@@ -70,7 +70,7 @@ To walk the Way on Windows, you must build a sanctuary that speaks the **Languag
 
 ### Final Step: Clone & Init
 
-**🛡️ The Sovereign Record:** The default branch for this repository is `develop`. For the stable, certified **Sovereign Baseline**, ensure you clone using the `-b main` flag as shown below.
+**🛡️ The Sovereign Record:** The default branch for this repository is `develop` (**The Anvil**). For the stable, certified **Sovereign Baseline** (**Production**), ensure you clone using the `-b main` flag as shown below.
 
 Once the pillars are active, open your **Zsh** terminal and run:
 

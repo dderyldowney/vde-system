@@ -6,7 +6,7 @@
 
 A sovereign, template-based ecosystem of Dockerized Spokes. Supporting 19+ Language Spokes and 7+ Service Spokes, forged for the warrior who demands consistent hydration and absolute isolation. Accessible via **The Sovereign Baseline (SSH)** with a single, unyielding identity.
 
-**🛡️ The Sovereign Record:** The default branch for this Forge is `develop` (The Anvil). For the stable, certified **Sovereign Baseline**, ensure you clone or switch to the `main` branch.
+**🛡️ The Sovereign Record:** The default branch for this Forge is `develop` (**The Anvil**). For the stable, certified **Sovereign Baseline** (**Production**), ensure you clone or switch to the `main` branch.
 
 **The Language of the Tribe:** Strictly **ZSH 5.0+**. No bash-isms, no shortcuts. [See Requirements](docs/requirements.md)
 

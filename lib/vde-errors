@@ -46,7 +46,7 @@ VDE_ERRORS_VERBOSE="${VDE_ERRORS_VERBOSE:-0}"
 export VDE_ERRORS_VERBOSE
 
 # Documentation base URL
-VDE_ERRORS_DOC_URL="${VDE_ERRORS_DOC_URL:-https://github.com/dderyldowney/VDE/blob/main/docs}"
+VDE_ERRORS_DOC_URL="${VDE_ERRORS_DOC_URL:-https://github.com/dderyldowney/vde-system/blob/${VDE_PRODUCTION_BRANCH:-main}/docs}"
 
 # Show remediation steps by default
 VDE_ERRORS_SHOW_SOLUTION="${VDE_ERRORS_SHOW_SOLUTION:-1}"
