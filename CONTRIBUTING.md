@@ -16,7 +16,7 @@ Thank you for your interest in contributing to the VDE (Virtual Development Envi
 ## Quick Start
 
 1. Fork the repository
-2. Clone your fork: `git clone -b main https://github.com/YOUR_USERNAME/vde-system.git`
+2. Clone your fork: `git clone -b stable https://github.com/YOUR_USERNAME/vde-system.git`
 3. Checkout the Anvil: `git checkout develop`
 4. Create a feature branch off the Anvil: `git checkout -b feat/your-feature-name`
 5. Make your changes
@@ -77,7 +77,7 @@ See [TESTING.md](docs/TESTING.md) for detailed installation instructions.
 ### Initial Setup
 ```zsh
 # Clone the repository
-git clone -b main https://github.com/YOUR_USERNAME/vde-system.git
+git clone -b stable https://github.com/YOUR_USERNAME/vde-system.git
 cd vde-system
 
 # Install dependencies (see TESTING.md)
