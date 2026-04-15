@@ -170,6 +170,10 @@ Certified verification of the four pillars:
 3. **Docker**: The World-Forge
 4. **SSH**: The Transversal Bridge
 
+## 🛡️ Sovereign Alignment
+- **Production Branch**: \`${VDE_PRODUCTION_BRANCH:-main}\` (Stable Baseline)
+- **Anvil Branch**: \`${VDE_ANVIL_BRANCH:-develop}\` (Active Forge)
+
 ---
 **Certification**: ${BDD_STEPS:-0} BDD Steps, ${BDD_SCENARIOS:-0} Scenarios, ${UNIT_TESTS:-0} Unit Tests, 100% PASS.
 **Dual Audit Loop**: 🟢 CODE AUDIT PASSED | 🟢 SECURITY AUDIT PASSED

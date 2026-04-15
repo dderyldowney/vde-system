@@ -35,11 +35,12 @@ The VDE Hub uses the **Sovereign Baseline** to connect you to your Spokes.
 ## 2. Installation Ritual (Step-by-Step)
 
 ### Step 1: Clone the Beskar Hub
-**🛡️ The Sovereign Record:** The default branch for this repository is `develop`. For the stable, certified **Sovereign Baseline**, ensure you clone using the `-b main` flag as shown below.
+**🛡️ The Sovereign Record:** The default branch for this repository is `develop` (The Anvil). For the stable, certified **Sovereign Baseline** (Production), ensure you clone using the `-b main` flag as shown below.
 
 Open your terminal (Zsh) and clone the VDE repository.
 
 ```zsh
+# Clone the stable Production branch (Sovereign Baseline)
 git clone -b main https://github.com/dderyldowney/vde-system.git ~/vde
 cd ~/vde
 ```
