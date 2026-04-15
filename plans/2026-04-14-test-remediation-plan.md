@@ -83,17 +83,17 @@ git commit -m "fix(bridge): protect protocol SSH agent forwarding from socat bri
 
 ### Task 3: Verification
 
-- [ ] **Step 1: Run error handling tests**
+- [x] **Step 1: Run error handling tests**
 
 Run: `python3 -m behave tests/features/core-infrastructure/error-handling.feature`
 Expected: PASS
 
-- [ ] **Step 2: Run system spine tests**
+- [x] **Step 2: Run system spine tests**
 
 Run: `python3 -m behave tests/features/core-infrastructure/system-spine.feature`
 Expected: PASS
 
-- [ ] **Step 3: Run full suite**
+- [x] **Step 3: Run full suite**
 
 Run: `python3 -m behave tests/features/core-infrastructure/`
 Expected: 100% PASS

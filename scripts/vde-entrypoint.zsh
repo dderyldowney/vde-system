@@ -89,8 +89,8 @@ if [[ -n "${_found_bridge}" ]]; then
             ln -sf "${_found_bridge}" "${_proxy_sock}"
         fi
         
-        # Persistent bridge for non-login shells
-        echo "export SSH_AUTH_SOCK=${_proxy_sock}" > /home/devuser/.zshenv
+        # Persistent bridge for non-login shells (Hardened: do not overwrite existing agent)
+        echo 'if [[ -z "${SSH_AUTH_SOCK}" ]]; then export SSH_AUTH_SOCK="'${_proxy_sock}'"; fi' > /home/devuser/.zshenv
         sudo chown devuser:devuser /home/devuser/.zshenv
         echo "[VDE-ENTRYPOINT] Persistent bridge established at /home/devuser/.zshenv"
     else
