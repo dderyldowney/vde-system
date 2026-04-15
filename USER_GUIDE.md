@@ -70,13 +70,15 @@ To walk the Way on Windows, you must build a sanctuary that speaks the **Languag
 
 ### Final Step: Clone & Init
 
+**🛡️ The Sovereign Record:** The default branch for this repository is `develop`. For the stable, certified **Sovereign Baseline**, ensure you clone using the `-b main` flag as shown below.
+
 Once the pillars are active, open your **Zsh** terminal and run:
 
 ```zsh
 # Clone the repository
 git clone -b main https://github.com/dderyldowney/vde-system.git ~/vde
 cd ~/vde
-
+...
 # Add VDE to your PATH
 echo 'export PATH="$HOME/vde/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
