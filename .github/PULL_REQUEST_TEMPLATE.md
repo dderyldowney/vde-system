@@ -4,12 +4,13 @@
 *Summary of the mission and intent.*
 
 ### **II. Signet Link (Mission Tracking)**
-Closes # (Link to the initiating Issue)
+**Mandatory Chronicle Link**:
+- [ ] **Signet Closed**: Closes #N (Use mandatory `Closes #N` / `Fixes #N` keywords for auto-closure).
 
 ### **III. The Trial of the Gauntlet (Test Plan)**
 **Mandatory Evidence of the Heartbeat**:
 - [ ] **Red Gauntlet**: *Describe/Link the failing test created.*
-- [ ] **Green Victory**: *Paste pass results of the verification suite (`python3 -m behave ...`).*
+- [ ] **Green Victory**: *Paste LITERAL TERMINAL OUTPUT of the verification suite (`python3 -m behave ...`). Paraphrasing is forbidden; the record must be absolute.*
 
 ### **IV. File Impact List (The Beskar Plates)**
 *List of files created or modified in this strike.*
@@ -25,6 +26,7 @@ Closes # (Link to the initiating Issue)
 - [ ] **Spine Check**: `bin/vde-spine-check.zsh` is green.
 - [ ] **Gateway Passed**: `gateway-pillars.feature` is 100% successful.
 - [ ] **Proof of Life**: `proof-of-life-the-contract.feature` is certified.
+- [ ] **Focused Strike**: Scope is strictly limited to the Signet; no tangential changes.
 - [ ] **Documentation**: `USER_GUIDE.md` and `VDE_INSTALL.md` are updated.
 
 ---
