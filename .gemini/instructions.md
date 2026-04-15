@@ -90,6 +90,10 @@ Failure of any ritual constitutes a **Protocol Blockade**.
     * Feature branches are merged into the Anvil (`develop`) ONLY upon acceptance and MUST be deleted immediately after.
     * **Permanence**: The Production (`main`) and Anvil (`develop`) branches are the foundational pillars of the Record; they are never removed.
     * The agent is PRE-AUTHORIZED to use `gh issue create` and `gh pr create` to initialize missions and record the Signet of Intent and submit the Chronicle. The agent is also authorized for read access (`gh issue view/list`, `gh pr view/list`) to initialize, monitor, and submit missions.
+    * **PRE-IMPLEMENTATION GATE (ABSOLUTE)**: Before writing a single line of implementation code or running any `git commit` on `develop`, the agent MUST have completed ALL of the following — no exceptions, no shortcuts, no "I'll retro-fix it later":
+        1. `gh issue create` — Signet OPEN with Issue number confirmed
+        2. `git checkout -b <type>/<slug>` from `develop` — feature branch ACTIVE
+        If either gate is missing, the agent MUST STOP, complete the gate, then proceed. Committing implementation directly to `develop` is a Creed violation that requires immediate retro-remediation and a process violation report to the User.
 * **Q. The Authority of the Record**: Only the Alor (Orchestrator) and the User possess the authority to alter the Chronicle. Sub-agents are strictly forbidden from making autonomous commits. All commits performed by sub-agents MUST be under the direct and serialized control of the Orchestrator.
 * **R. The Clan Leader Authority (PR & Merge Gate)**:
     * The agent MAY make regular local commits on the active feature branch as needed to preserve a clear and incremental history.
