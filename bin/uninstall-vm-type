@@ -11,8 +11,10 @@
 # The following are INVIOLATE and PRESERVED:
 # - configs/docker/<type>/ directory (docker-compose.yml)
 # - env-files/<type>.env (environment configuration)
-# - SSH config entries (static port assignments)
 # - projects/<type>/ directory (your code)
+#
+# NOTE: SSH config entries for dynamically-added VMs are removed on uninstall.
+# Statically-configured entries (managed by generate-all-configs) are unaffected.
 #
 # Usage: uninstall-vm-type <vm_type> [--dry-run] [--skip-confirm]
 #===============================================================================
@@ -330,8 +332,10 @@ main() {
         echo "The following are INVIOLATE and PRESERVED:"
         echo "  - configs/docker/<vm_type>/ directory"
         echo "  - env-files/<vm_type>.env file"
-        echo "  - SSH config entries"
         echo "  - projects/<vm_type>/ directory"
+        echo ""
+        echo "NOTE: SSH config entries for dynamically-added VMs are removed on uninstall."
+        echo "      Statically-configured entries (generate-all-configs) are unaffected."
         echo ""
         echo "Options:"
         echo "  --dry-run         Show what would be done without making changes"
@@ -356,8 +360,10 @@ main() {
         echo "The following are INVIOLATE and PRESERVED:"
         echo "  - configs/docker/<vm_type>/ directory"
         echo "  - env-files/<vm_type>.env file"
-        echo "  - SSH config entries"
         echo "  - projects/<vm_type>/ directory"
+        echo ""
+        echo "NOTE: SSH config entries for dynamically-added VMs are removed on uninstall."
+        echo "      Statically-configured entries (generate-all-configs) are unaffected."
         echo ""
         echo "Options:"
         echo "  --dry-run         Show what would be done without making changes"
@@ -433,8 +439,10 @@ main() {
     echo "The following are INVIOLATE and PRESERVED:"
     echo "  - configs/docker/${CANONICAL_NAME}/ directory"
     echo "  - env-files/${CANONICAL_NAME}.env file"
-    echo "  - SSH config entries"
     echo "  - projects/${CANONICAL_NAME}/ directory"
+    echo ""
+    echo "NOTE: SSH config entries for dynamically-added VMs are removed on uninstall."
+    echo "      Statically-configured entries (generate-all-configs) are unaffected."
     echo ""
 
     if [[ "${DRY_RUN}" = "true" ]]; then
