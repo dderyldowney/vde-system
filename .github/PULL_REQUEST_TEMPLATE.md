@@ -4,13 +4,16 @@
 *Summary of the mission and intent.*
 
 ### **II. Signet Link (Mission Tracking)**
-**Mandatory Chronicle Link**:
-- [ ] **Signet Closed**: Closes #N (Use mandatory `Closes #N` / `Fixes #N` keywords for auto-closure).
+- [ ] **Unbreakable Link**: Closes # (Must use 'Closes #N' to auto-close the Signet)
 
 ### **III. The Trial of the Gauntlet (Test Plan)**
 **Mandatory Evidence of the Heartbeat**:
 - [ ] **Red Gauntlet**: *Describe/Link the failing test created.*
-- [ ] **Green Victory**: *Paste LITERAL TERMINAL OUTPUT of the verification suite (`python3 -m behave ...`). Paraphrasing is forbidden; the record must be absolute.*
+- [ ] **Green Victory**:
+> **MANDATE**: Paste the **LITERAL TERMINAL OUTPUT** of the verification suite below. Paraphrasing or summaries are forbidden.
+```text
+(Paste terminal output here)
+```
 
 ### **IV. File Impact List (The Beskar Plates)**
 *List of files created or modified in this strike.*
@@ -22,11 +25,11 @@
 *Briefly summarize any key decisions recorded on the Signet (Issue) that guided this forge.*
 
 ### **VII. Checklist of the Creed**
+- [ ] **Focused Strike**: Scope is strictly limited to the Signet; no tangential changes.
 - [ ] **UAP Enforced**: `bin/vde-enforce-uap.zsh` passes.
 - [ ] **Spine Check**: `bin/vde-spine-check.zsh` is green.
 - [ ] **Gateway Passed**: `gateway-pillars.feature` is 100% successful.
 - [ ] **Proof of Life**: `proof-of-life-the-contract.feature` is certified.
-- [ ] **Focused Strike**: Scope is strictly limited to the Signet; no tangential changes.
 - [ ] **Documentation**: `USER_GUIDE.md` and `VDE_INSTALL.md` are updated.
 
 ---
