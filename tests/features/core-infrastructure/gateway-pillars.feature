@@ -42,3 +42,4 @@ Feature: The Four Pillars Gateway
     And the directory ".cache" should exist
     And the directory "projects" should exist
     And the file "VDE_INSTALL.md" should exist
+    And the file "VDE_INSTALL.md" should contain "git clone -b main"
