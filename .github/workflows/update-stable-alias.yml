@@ -1,0 +1,22 @@
+name: Update Stable Alias
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  update-stable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Force push to stable branch
+        run: |
+          git checkout -b stable
+          git push -f origin stable
