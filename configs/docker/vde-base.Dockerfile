@@ -38,6 +38,7 @@ RUN useradd -ms /bin/zsh -u 1000 devuser && \
 RUN mkdir -p /var/run/sshd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    echo "AllowAgentForwarding yes" >> /etc/ssh/sshd_config && \
     echo "AuthorizedKeysFile .ssh/vde/authorized_keys" >> /etc/ssh/sshd_config
 
 # 4. The Student Environment (Oh-My-Zsh)

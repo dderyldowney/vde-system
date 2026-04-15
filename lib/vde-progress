@@ -386,10 +386,10 @@ vde_progress_error() {
 }
 
 # vde_progress_wait_for_lock - Show a waiting message for lock contention
-# Args: <lock_name> <elapsed> [owner_info]
+# Args: <lock_name> <attempt> [owner_info]
 vde_progress_wait_for_lock() {
     local lock_name="${1}"
-    local elapsed="${2}"
+    local attempt="${2}"
     local owner="${3:-}"
     
     [[ "${VDE_PROGRESS_QUIET}" = "1" ]] && return
@@ -397,9 +397,15 @@ vde_progress_wait_for_lock() {
     local owner_str=""
     [[ -n "${owner}" ]] && owner_str=" (Held by: ${owner})"
     
-    # Use yellow warning color for contention
-    printf "\r%s" "$(printf ' %.0s' {1..200})"
-    printf "\r%s%s (Wait: %ss)... \n" "${VDE_PROGRESS_COLOR_WARNING}⏳ Waiting for lock: ${lock_name}${VDE_PROGRESS_COLOR_RESET}${VDE_PROGRESS_COLOR_DIM}${owner_str}${VDE_PROGRESS_COLOR_RESET}" "" "${elapsed}"
+    # In a TTY, we use \r to keep it on one line. 
+    # Otherwise, we just print a new line.
+    if [[ -t 1 ]]; then
+        printf "\r%s" "$(printf ' %.0s' {1..200})"
+        printf "\r%s⏳ Waiting for lock: %s%s (Attempt: %s)... " "${VDE_PROGRESS_COLOR_INFO}" "${lock_name}" "${owner_str}" "${attempt}${VDE_PROGRESS_COLOR_RESET}"
+    else
+        # Use stdout and newline to ensure flush
+        printf "⏳ Waiting for lock: %s%s (Attempt: %s)...\n" "${lock_name}" "${owner_str}" "${attempt}" >&1
+    fi
 }
 
 # =============================================================================

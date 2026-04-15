@@ -76,11 +76,13 @@ def before_all(context):
 
     # Ensure vde-net exists if docker is available
     try:
-        subprocess.run(
+        res = subprocess.run(
             ["docker", "network", "inspect", "vde-net"],
             capture_output=True,
             check=False,
         )
+        if res.returncode != 0:
+            subprocess.run(["docker", "network", "create", "vde-net"], check=False)
     except Exception:
         pass
 
