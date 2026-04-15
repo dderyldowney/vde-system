@@ -11,8 +11,10 @@
 # The following are INVIOLATE and PRESERVED:
 # - configs/docker/<type>/ directory (docker-compose.yml)
 # - env-files/<type>.env (environment configuration)
-# - SSH config entries (static port assignments)
 # - projects/<type>/ directory (your code)
+#
+# NOTE: SSH config entries for dynamically-added VMs are removed on uninstall.
+# Statically-configured entries (managed by generate-all-configs) are unaffected.
 #
 # Usage: uninstall-vm-type <vm_type> [--dry-run] [--skip-confirm]
 #===============================================================================
@@ -225,32 +227,46 @@ remove_docker_images() {
 # Remove SSH config entries
 remove_ssh_entries() {
     local _vm_target_type="${1}"
-
-    # Get VM category to determine SSH hostname
-    local vm_category
-    vm_category=$(get_vm_info type "${_vm_target_type}" 2>/dev/null || echo "")
-
-    local ssh_hosts=()
-
-    if [[ "${vm_category}" == "lang" ]]; then
-        ssh_hosts=("${_vm_target_type}-dev")
-    elif [[ "${vm_category}" == "service" ]]; then
-        ssh_hosts=("${_vm_target_type}")
-    else
-        # Default: treat as language
-        ssh_hosts=("${_vm_target_type}-dev")
-    fi
+    local _host_alias="${_vm_target_type}"
+    local project_ssh_config="${VDE_ROOT_DIR}/configs/ssh/config"
 
     if [[ "${DRY_RUN}" = "true" ]]; then
-        print_info "[DRY RUN] Would remove SSH config entries for: ${ssh_hosts[*]}"
+        print_info "[DRY RUN] Would remove SSH config entry for: ${_host_alias}"
         return 0
     fi
 
-    # SSH config entries are static - they should NOT be removed even when uninstalling
-    # because each VM type has a fixed port assignment (python=2213, rust=2216, etc.)
-    # The SSH config is managed by generate-all-configs and contains entries for all
-    # known VM types. Only known_hosts entries should be cleaned up.
-    print_info "SSH config entries preserved (managed by generate-all-configs)"
+    if [[ ! -f "${project_ssh_config}" ]]; then
+        print_info "No project SSH config found — nothing to remove"
+        return 0
+    fi
+
+    if ! grep -q "^Host ${_host_alias}$" "${project_ssh_config}" 2>/dev/null; then
+        print_info "No SSH config entry found for '${_host_alias}' — nothing to remove"
+        return 0
+    fi
+
+    local temp_file
+    temp_file=$(mktemp "${project_ssh_config}.tmp.XXXXXX")
+
+    # Remove the Host block for this alias — all indented lines belong to it;
+    # the next ^Host line (or EOF) terminates the block.
+    awk -v host="${_host_alias}" '
+        /^Host / { in_block = ($2 == host) }
+        !in_block { print }
+    ' "${project_ssh_config}" > "${temp_file}"
+
+    if ! mv "${temp_file}" "${project_ssh_config}"; then
+        print_error "Failed to update ${project_ssh_config}"
+        rm -f "${temp_file}" 2>/dev/null
+        return 1
+    fi
+    print_success "Removed SSH config entry for '${_host_alias}' from configs/ssh/config"
+
+    # Sync to live SSH config — mirrors the add-vm-type add path
+    if [[ -f "${VDE_SSH_CONFIG}" ]]; then
+        cp "${project_ssh_config}" "${VDE_SSH_CONFIG}"
+        print_success "Synced removal to ${VDE_SSH_CONFIG}"
+    fi
 }
 
 # Remove env files
@@ -316,8 +332,10 @@ main() {
         echo "The following are INVIOLATE and PRESERVED:"
         echo "  - configs/docker/<vm_type>/ directory"
         echo "  - env-files/<vm_type>.env file"
-        echo "  - SSH config entries"
         echo "  - projects/<vm_type>/ directory"
+        echo ""
+        echo "NOTE: SSH config entries for dynamically-added VMs are removed on uninstall."
+        echo "      Statically-configured entries (generate-all-configs) are unaffected."
         echo ""
         echo "Options:"
         echo "  --dry-run         Show what would be done without making changes"
@@ -342,8 +360,10 @@ main() {
         echo "The following are INVIOLATE and PRESERVED:"
         echo "  - configs/docker/<vm_type>/ directory"
         echo "  - env-files/<vm_type>.env file"
-        echo "  - SSH config entries"
         echo "  - projects/<vm_type>/ directory"
+        echo ""
+        echo "NOTE: SSH config entries for dynamically-added VMs are removed on uninstall."
+        echo "      Statically-configured entries (generate-all-configs) are unaffected."
         echo ""
         echo "Options:"
         echo "  --dry-run         Show what would be done without making changes"
@@ -419,8 +439,10 @@ main() {
     echo "The following are INVIOLATE and PRESERVED:"
     echo "  - configs/docker/${CANONICAL_NAME}/ directory"
     echo "  - env-files/${CANONICAL_NAME}.env file"
-    echo "  - SSH config entries"
     echo "  - projects/${CANONICAL_NAME}/ directory"
+    echo ""
+    echo "NOTE: SSH config entries for dynamically-added VMs are removed on uninstall."
+    echo "      Statically-configured entries (generate-all-configs) are unaffected."
     echo ""
 
     if [[ "${DRY_RUN}" = "true" ]]; then

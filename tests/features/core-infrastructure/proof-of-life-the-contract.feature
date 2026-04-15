@@ -62,6 +62,7 @@ Feature: The Proof of Life - The Contract
     When I execute "bin/vde uninstall dynamic-vm --skip-confirm"
     Then the command should succeed
     And the VM "dynamic-vm" should no longer be registered
+    And the SSH config should not contain an entry for "vde-dynamic-vm"
 
   Scenario: The Forge Hardening - Hardened Rebuild
     Given I have a valid VM definition for "python" in the Beskar Registry

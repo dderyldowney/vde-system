@@ -56,6 +56,7 @@
 ## CRITICAL: PROTOCOL ENFORCEMENT (THE CREED)
 
 **ALL SESSIONS MUST ADHERE TO THESE RULES:**
+0. **MANDATORY SESSION BOOTSTRAP**: If the CLI is Claude, `AGENTS.md` and `.gemini/instructions.md` MUST be read and fully applied at the start of every session, before any task. This requirement is codified in `CLAUDE.md`. Failure to do so is a Protocol Blockade.
 1. **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`. Bash is strictly forbidden.
 2. **THE ANVIL IS DEFAULT**: All active work MUST occur on the `develop` branch (The Anvil). `main` (Production) is reserved for STABLE RELEASES ONLY.
 3. **Rule P: Sovereign Branching**: Feature branches MUST originate from `develop`, track via GitHub Issues, and be deleted immediately post-merge.

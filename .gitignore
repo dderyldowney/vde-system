@@ -104,3 +104,4 @@ plans/scripts/git-test/
 tests/.test-tmp/
 .tmp.drivedownload/
 .tmp.driveupload/
+.claude/
