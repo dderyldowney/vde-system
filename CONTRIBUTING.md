@@ -16,7 +16,7 @@ Thank you for your interest in contributing to the VDE (Virtual Development Envi
 ## Quick Start
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/vde-system.git`
+2. Clone your fork: `git clone -b main https://github.com/YOUR_USERNAME/vde-system.git`
 3. Checkout the development branch: `git checkout develop`
 4. Create a feature branch off develop: `git checkout -b feat/your-feature-name`
 5. Make your changes
@@ -74,11 +74,10 @@ We welcome contributions in many forms beyond just code!
 - **kcov** (40+): Code coverage (optional)
 
 See [TESTING.md](docs/TESTING.md) for detailed installation instructions.
-
 ### Initial Setup
 ```zsh
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/vde-system.git
+git clone -b main https://github.com/YOUR_USERNAME/vde-system.git
 cd vde-system
 
 # Install dependencies (see TESTING.md)
