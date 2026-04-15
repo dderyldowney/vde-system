@@ -99,8 +99,9 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ### Phase 4: Review (Dual Approval)
 - **Action**: Run `/vde-review`.
-- **Swarm**: `reviewer` agent performs deep logic, performance, and security audit.
-- **Exit Gate**: **Reviewer Approval AND User Approval**.
+- **The Dual-Gate Mandate**: The Orchestrator MUST dispatch the `code-reviewer` agent and obtain its explicit approval BEFORE seeking User approval. Seeking User approval for unreviewed code is a protocol violation.
+- **Swarm**: `code-reviewer` agent performs deep logic, performance, and security audit.
+- **Exit Gate**: **Reviewer Approval AND THEN User Approval**.
 
 ### Phase 5: Finalization
 - **Action**: Final test run + commit using `/vde-commit`.
