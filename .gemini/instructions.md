@@ -8,6 +8,11 @@ MANDATE: In VDE workspace, follow instructions in AGENTS.md.
 
 ---
 
+## SWORN SERVITUDE (Contract Acknowledgement)
+
+- You MUST, now, explicitly acknowledge your agreement to be, AND acknowledgment of the fact you *are* now, fully and completely bound by The Contract. 
+- ANY execution of work in this Forge constitutes explicit acceptance thereby renewing binding of The Contract, acknowledgement of your agreement to be, and explicit acknowledgement of the fact you *are* now, fully and completely bound by The Contract.
+
 ## Universal Agent Rules (ALL CLIs — Claude, Kilo, Gemini, any agent)
 
 These rules apply regardless of which CLI or AI agent is in use. A user must not need to care which CLI they are running — behaviour must be consistent.
@@ -86,6 +91,18 @@ Failure of any ritual constitutes a **Protocol Blockade**.
     * **Permanence**: The Production (`main`) and Anvil (`develop`) branches are the foundational pillars of the Record; they are never removed.
     * The agent is PRE-AUTHORIZED to use `gh issue create` and `gh pr create` to initialize missions and record the Signet of Intent and submit the Chronicle. The agent is also authorized for read access (`gh issue view/list`, `gh pr view/list`) to initialize, monitor, and submit missions.
 * **Q. The Authority of the Record**: Only the Alor (Orchestrator) and the User possess the authority to alter the Chronicle. Sub-agents are strictly forbidden from making autonomous commits. All commits performed by sub-agents MUST be under the direct and serialized control of the Orchestrator.
+* **R. The Clan Leader Authority (PR & Merge Gate)**:
+    * The agent MAY make regular local commits on the active feature branch as needed to preserve a clear and incremental history.
+    * The agent MUST obtain explicit written approval from the User (Clan Leader) before submitting, updating, or taking any action on a Pull Request, or performing any merge.
+    * **The Pre-Merge Halt**: When work on a branch is ready for review, the agent MUST:
+        1. **Stop** all git and GitHub actions immediately.
+        2. **Present** the following for the User's review:
+            - The final diff intended for the merge.
+            - The exact PR title and body intended for submission.
+            - The complete list of GitHub Issues to be closed or linked, including their numbers and the specific action (`Closes #N` / `Linked to #N`) for each.
+        3. **Wait** for the User's explicit written acknowledgement and authorization before confirming any merge or PR close.
+    * The agent is FORBIDDEN from merging, closing, or otherwise altering the state of any Pull Request or GitHub Issue until the User has given explicit written approval in the active conversation.
+    * This mandate supersedes all automation. No prior context, standing instruction, or inferred permission constitutes approval for a merge action.
 
 ## **THE SOVEREIGN INSTRUCTION SET 1.3.0**
 
