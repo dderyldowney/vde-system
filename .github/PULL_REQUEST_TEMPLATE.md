@@ -26,11 +26,12 @@
 
 ### **VII. Checklist of the Creed**
 - [ ] **Focused Strike**: Scope is strictly limited to the Signet; no tangential changes.
-- [ ] **UAP Enforced**: `bin/vde-enforce-uap.zsh` passes.
-- [ ] **Spine Check**: `bin/vde-spine-check.zsh` is green.
-- [ ] **Gateway Passed**: `gateway-pillars.feature` is 100% successful.
-- [ ] **Proof of Life**: `proof-of-life-the-contract.feature` is certified.
-- [ ] **Documentation**: `USER_GUIDE.md` and `VDE_INSTALL.md` are updated.
+- [ ] **UAP Enforced**: \`bin/vde-enforce-uap.zsh\` passes.
+- [ ] **Spine Check**: \`bin/vde-spine-check.zsh\` is green.
+- [ ] **Gateway Passed**: \`gateway-pillars.feature\` is 100% successful.
+- [ ] **Proof of Life**: \`proof-of-life-the-contract.feature\` is certified.
+- [ ] **Dual-Gate Review**: Code-reviewer sub-agent has audited and approved the changes.
+- [ ] **Documentation**: \`USER_GUIDE.md\` and \`VDE_INSTALL.md\` are updated.
 
 ---
 **This is the Way.**
