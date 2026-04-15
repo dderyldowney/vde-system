@@ -6,7 +6,7 @@
 
 A sovereign, template-based ecosystem of Dockerized Spokes. Supporting 19+ Language Spokes and 7+ Service Spokes, forged for the warrior who demands consistent hydration and absolute isolation. Accessible via **The Sovereign Baseline (SSH)** with a single, unyielding identity.
 
-**🛡️ The Sovereign Record:** The default branch for this Forge is `develop` (**The Anvil**). For the stable, certified **Sovereign Baseline** (**Production**), ensure you clone or switch to the `main` branch.
+**🛡️ The Sovereign Record:** The default branch for this Forge is `develop` (**The Anvil**). For the stable, certified **Sovereign Baseline** (**Production**), ensure you clone or switch to the `stable` branch.
 
 **The Language of the Tribe:** Strictly **ZSH 5.0+**. No bash-isms, no shortcuts. [See Requirements](docs/requirements.md)
 
@@ -32,7 +32,7 @@ Welcome, Foundling, to the VDE — the Beskar Hub for your development Spokes. W
 | **The Beskar Vault** | [Extending the Creed](docs/extending-vde.md) • [Directory Hierarchy](docs/directory-structure.md) |
 | **The Forge** | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) • [Development Guide](docs/DEVELOPMENT_GUIDE.md) |
 | **The Tribe's Contribution** | [Contributing Guide](CONTRIBUTING.md) • [The Language of the Tribe](STYLE_GUIDE.md) • [Testing Mandates](docs/TESTING.md) |
-| **Ancient Intel** | [API Reference](docs/API.md) • [Architecture 1.3.1](docs/ARCHITECTURE.md) • [Release Archive](https://github.com/dderyldowney/vde-system/tree/main/docs/releases) |
+| **Ancient Intel** | [API Reference](docs/API.md) • [Architecture 1.3.1](docs/ARCHITECTURE.md) • [Release Archive](https://github.com/dderyldowney/vde-system/tree/stable/docs/releases) |
 | **Reinforcements** | [Troubleshooting](docs/troubleshooting.md) • [Rebuild Mandates](docs/rebuild-guidelines.md) |
 | **Evolution** | [Evolution Guide](#the-evolution-of-armor) - Keeping the Hub up-to-date |
 
