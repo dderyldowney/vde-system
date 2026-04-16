@@ -1,0 +1,56 @@
+name: Auto Label PR
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronized
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  auto-label:
+    name: Auto Label based on PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto Labeling
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const labels = [];
+            
+            // Regex to match type and optional breaking change (!)
+            // Pattern: type(scope)!: description or type!: description
+            const regex = /^(\w+)(?:\(.*\))?(!?):/;
+            const match = title.match(regex);
+            
+            if (match) {
+              const type = match[1];
+              const isBreaking = match[2] === '!';
+              
+              const validTypes = ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert'];
+              
+              if (validTypes.includes(type)) {
+                labels.push(type);
+              }
+              
+              if (isBreaking) {
+                labels.push('breaking-change');
+              }
+              
+              if (labels.length > 0) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number,
+                  labels: labels
+                });
+                console.log(`Applied labels: ${labels.join(', ')}`);
+              }
+            } else {
+              console.log('No conventional commit prefix found in title.');
+            }

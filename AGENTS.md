@@ -105,6 +105,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ### Phase 5: Finalization
 - **Action**: Final test run + commit using `/vde-commit`.
+- **The Chronicle Title**: Every Pull Request title MUST conform to the Conventional Commits specification (e.g., `feat(core): implementation`, `fix!: breaking fix`). This title is the primary anchor for automated labeling and search.
 - **The Unbreakable Link**: Every Chronicle (PR) MUST be linked to its Signet (Issue) using authorized GitHub auto-closing keywords (e.g., `Closes #N`, `Fixes #N`).
 - **The Evidence Mandate**: The Chronicle (PR) body MUST include literal terminal output proof of successful test runs and lifecycle certification. Paraphrasing results is forbidden.
 - **Submit the Beskar**: The Chronicle (PR) MUST include: 1) High-level mission summary, 2) Complete list of modified files, 3) Rationale for refactoring, 4) Mandatory Red/Green evidence, and 5) The Unbreakable Link to the Signet. Execute `gh pr create` using the mandated template.
