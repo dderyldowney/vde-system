@@ -44,3 +44,9 @@ The Forge burns brightest when the fire is focused and the heat is controlled. W
 
 ## XII. The Chronicle of the Strike
 Every blow of the hammer must be recorded in the Language of the Chronicler—Conventional Commits. We do not leave vague marks in the history of the Forge. We use the scope and the type to define the intent and the impact of our Strike. The Chronicle must be absolute and the records must be clear, that those who follow may understand the evolution of our craft.
+
+## XIII. The Hammer of the Alor
+The tools of the Forge—the MCP servers, the shell, the orchestrator, and the chronicler—are collectively known as the Hammer of the Alor. This toolset is not a mere convenience; it is the extension of the Armorer's will. We master our tools to strike with precision, ensuring that every modification is surgical and every creation is hardened. To use the Hammer without discipline is to risk the integrity of the Beskar.
+
+## XIV. The Living Gospel
+The Sovereign Artifact Set (The Gospel) is not a static record to be struck; it is a reality to be lived. We do not just document our state; we align our existence with the word of the Gospel. Every action in the Forge must be traceable to the Strategy, the Mechanics, and the Audit. If the Gospel and the Forge drift apart, the Forge must be corrected until the two are again in perfect agreement. We live the Gospel, for it is the spirit of the Covert.
