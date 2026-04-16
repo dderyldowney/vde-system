@@ -41,12 +41,12 @@
     - Defined "Sovereign Baseline" as the dynamic pointer to the current authoritative version in `docs/VDE-SPEC.md`.
 - **Pre-Strike Sentinel:** Implemented ZSH-native git hooks via `bin/install-githooks` to enforce shebang purity and secret scanning.
 
-## SYSTEM BENCHMARKS (VDE 1.3.1)
+## SYSTEM BENCHMARKS (VDE 1.3.7)
 - **Canonical Ignition Speed:** 3.959s. This remains the benchmark for 3-VM Parallel Ignition.
 - **Forge Volume (Core):** ~24,200 lines of active logic (pruned from legacy bloat).
 - **Forge Volume (Total):** 108,155 total tracked lines (including ~57,000 lines of shell manuals).
 
-## THE VERDICT: 1.3.1 READY
+## THE VERDICT: 1.3.7 READY
 - **Compliance Status**: 🟢 100% GREEN / SYSTEM READY.
 - **Portability Certified**: Zero hardcoded personal paths remain in active logic.
 - **Governed by Law**: Every strike on the anvil now follows the **Sovereign Branching Law (Rule P)**.
