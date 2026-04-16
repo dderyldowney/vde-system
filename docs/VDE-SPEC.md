@@ -1,12 +1,15 @@
-# VDE-SPEC 1.3.7 (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Hardening)
+# VDE-SPEC 1.3.7 (The Sovereign Evolution) (The Sovereign Hardening)
 
 **Date**: 2026-04-15
 **Status**: SOVEREIGN BASELINE CERTIFIED
 **Reference**: ARCHITECTURE 1.3.7
 **Identity**: The Covert
 
-## 1. Absolute Mandates (The Rule Spine)
+## 1. Absolute Mandates (The Rule Spine & The Gospel)
 
+- **The Gospel Authority**: The Sovereign Artifact Set (specified in Section 3) is the **Gospel of the Forge**. These documents are the absolute decision-makers on the WHAT and the HOW of all creation and refactoring. Deviation from the Gospel is a breach of The Contract.
+- **The Use-Case Creed**: The Forge exists solely to serve the Foundlings (Students) and Reinforcements (New Hires). All technical work MUST be centrally driven by its direct improvement to the onboarding and educational experience of these two cohorts.
+- **The Armorer’s Toolset**: The agent possesses both the authority and the capability to run research swarms and self-augmentation tools as needed. Failure to utilize these capabilities to ensure the highest quality strike is a rejection of the mandate.
 - **The Four Pillars Gateway**: Before the Proof of Life ritual is ignited, the host environment MUST pass the Four Pillars Gateway verification (`gateway-pillars.feature`). This verifies the presence and basic capability of Zsh, Git, Docker, and SSH. Any failure in this gateway constitutes an immediate **Program Blockade**.
 - **Language of the Tribe (ZSH ONLY)**: All CLI tools, libraries, and jail shells MUST use `#!/usr/bin/env zsh`. `bash` is strictly prohibited. Enforcement is performed via deep content inspection for native parameter expansion `${(` and 1-indexed array usage.
 - **The Armorer’s Command (UAP)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`. This sentinel detects "Ghost Zones", enforces shebang purity, and forbids `sleep` calls in favor of deterministic polling.
@@ -20,13 +23,15 @@
 - **Versioning**: MAJOR/MINOR are user-decided architectural shifts. STEP represents incremental technical progress. spN is reserved for security patches.
 - **Chronicle Standard**: All commits MUST adhere to the **Conventional Commits** specification (e.g., `feat(core):`, `fix(security):`).
 
-## 3. The Sovereign Artifact Set (The Tetrad of Truth)
+## 3. The Sovereign Artifact Set (The Gospel of the Forge)
 
-Before any tag is struck, these four files MUST be in perfect agreement with the Forge state:
+Before any tag is struck, these six files MUST be in perfect agreement with the Forge state. Together, they constitute the **Gospel of the Forge**:
 1. `ARCHITECTURE.md`
 2. `TECHNICAL_DEEP_DIVE.md`
 3. `RELEASE_NOTES.md`
-4. `VDE-SPEC.md` (The Final Arbiter)
+4. `VDE-SPEC.md` (The Gospel Lead)
+5. `USE_CASES.md`
+6. `VDE_ANALYSIS.md`
 
 ## 4. The Sovereign Branching Strategy
 
