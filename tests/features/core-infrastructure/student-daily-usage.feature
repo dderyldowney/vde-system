@@ -6,7 +6,7 @@ Feature: Student Daily Usage
 
   Background: The Environment is Ready
     Given the 4 Pillars (Zsh, Git, Docker, SSH) have passed their individual proofs
-    And the Hub is synchronized to version 1.3.1
+    And the Hub is synchronized to version 1.3.7
 
   Scenario: A Typical Study Session (Start, Code, Stop)
     Given I have a valid VM definition for "python" in the Beskar Registry
