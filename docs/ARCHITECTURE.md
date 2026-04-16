@@ -2,8 +2,8 @@
 
 ## 1. Philosophical Pillars (The Way)
 
-- **The Gospel**: The Sovereign Artifact Set (specified in Section 4) is the absolute authority. These documents are the primary decision-makers on the WHAT and the HOW of all creation and refactoring.
-- **The Creed**: The Forge exists solely to serve the **Foundlings** (Students) and **Reinforcements** (New Hires). Every technical strike must be centrally driven by its direct improvement to their experience.
+- **The Gospel**: The Sovereign Artifact Set (specified in Section 4) is the absolute authority. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring.
+- **The Creed**: The Forge exists solely to serve the **Foundlings** (Students) and **Reinforcements** (New Hires). This is **Creed**. Every technical strike must be centrally driven by its direct improvement to their experience.
 - **The Spine**: The system is built upon four non-negotiable technologies: **Zsh, Git, Docker, and SSH**.
 - **The Forge**: The Virtual Development Environment (VDE) is a modular, containerized ecosystem designed for secure, reproducible software engineering.
 - **The Chronicle**: History is preserved through strict adherence to Conventional Commits and automated GitHub workflows.
