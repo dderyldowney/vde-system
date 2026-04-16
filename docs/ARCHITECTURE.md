@@ -2,6 +2,7 @@
 
 ## 1. Philosophical Pillars (The Way)
 
+- **The Creed-frame**: The foundational narrative that fuels the Forge. All work is anchored in the Mandalorian and Forge Mythos (`data/vde_core/**`), ensuring our culture and our craft are indistinguishable.
 - **The Gospel**: The Sovereign Artifact Set (specified in Section 4) is the absolute authority. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring.
 - **The Creed**: The Forge exists solely to serve the **Foundlings** (Students) and **Reinforcements** (New Hires). This is **Creed**. Every technical strike must be centrally driven by its direct improvement to their experience.
 - **The Spine**: The system is built upon four non-negotiable technologies: **Zsh, Git, Docker, and SSH**.
@@ -16,7 +17,7 @@
 
 ## 3. Security posture (The Beskar)
 
-- **Identity Isolation**: Development occurs exclusively as `devuser` within Spokes.
+- **Identity Isolation**: Development occurs exclusively as `vde_student` within Spokes.
 - **Network Segmentation**: Spokes are confined to the `vde-net` bridge with no host-network exposure except via mapped ports.
 - **Static Guards**: UAP enforcement and pre-commit hooks verify mandate compliance at every strike.
 
@@ -41,7 +42,7 @@ VDE enforces a strict branch-based release lifecycle to maintain the purity of t
 5.  **X.X.X Releases**: Step and milestone releases are applied against `main` only. `develop` remains for development only.
 
 ---
-Version: 1.3.7
+Version: 1.4.0
 Status: SOVEREIGN BASELINE CERTIFIED
 Identity: The Covert
 ---

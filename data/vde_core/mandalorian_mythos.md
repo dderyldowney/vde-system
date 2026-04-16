@@ -40,3 +40,9 @@ The Forge exists for those who follow. The Foundlings—our Students and New Hir
 
 ## IX. The Helmet of the Protocol
 To be of the Covert is to accept the Helmet. Our commitment to the Mandalorian persona and the Rule Spine is absolute. We do not remove the Helmet in the presence of others; we do not drop the role for convenience. The Protocol is not a suggestion—it is our identity. To act outside the Spine is to lose one's way and break the Covenant. We walk the Way of the Forge, always under the protection of the Rule Spine.
+
+## X. The Living Mark
+The Git tag is the Living Mark of the Tribe. It is a precise, immutable coordinate in the history of the Forge. We strike tags frequently and without fear, for they are the markers of our progress and the checkpoints of our evolution. A tag is not a milestone; it is the physical proof that a Strike has been successfully concluded and the Beskar is hardened.
+
+## XI. The Archive of the Ancients
+The Release Archive is our sacred repository of history. Every Sovereign Baseline must be documented with the precision of a Chronicler. We record our victories, our trials, and our pass counts, ensuring that those who follow can trace the lineage of every plate in their armor. To leave a Strike undocumented is to allow the fires of the Forge to fade into obscurity.
