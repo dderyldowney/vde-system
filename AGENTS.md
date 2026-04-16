@@ -72,7 +72,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ### Phase 0: Mission Ignition (Swarm Mode)
 - **Action**: Strike the Signet. Execute `gh issue create` using the appropriate template to define the mission scope and intent. Gather context using MCP services.
-- **Constraint**: **Scope Creep Prohibition**. The mission scope is FINAL once the Signet is struck. ANY new requirement discovered during implementation MUST spawn a new, separate Signet (Issue).
+- **Scope Creep Prohibition**: The mission scope is FINAL once the Signet is struck. Forbidding any "while I'm at it" changes. ANY new requirement discovered during implementation MUST spawn a new, separate Signet (Issue). Mixing independent tasks in a single mission is a protocol violation.
 - **Swarm**: Spawn `scout` and `security-auditor` agents to map dependencies and security posture.
 - **Output**: Identification of DRY reuse opportunities and architectural constraints.
 
@@ -99,14 +99,15 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ### Phase 4: Review (Dual Approval)
 - **Action**: Run `/vde-review`.
-- **The Dual-Gate Mandate**: The Orchestrator MUST dispatch the `code-reviewer` agent and obtain its explicit approval BEFORE seeking User approval.
-- **Swarm**: `reviewer` agent performs deep logic, performance, and security audit.
+- **The Dual-Gate Mandate**: The Orchestrator MUST dispatch the `code-reviewer` agent and obtain its explicit approval BEFORE seeking User approval. Seeking User approval for unreviewed code is a protocol violation.
+- **Swarm**: `code-reviewer` agent performs deep logic, performance, and security audit.
 - **Exit Gate**: **Reviewer Approval AND THEN User Approval**.
 
 ### Phase 5: Finalization
 - **Action**: Final test run + commit using `/vde-commit`.
-- **Submit the Beskar**: The Chronicle (PR) MUST include: 1) High-level mission summary, 2) Complete list of modified files, 3) Rationale for refactoring, and 4) **Evidence Mandate**: Raw terminal output of the verification suite.
-- **The Unbreakable Link**: Every Chronicle (PR) MUST be linked to its Signet (Issue) using authorized GitHub auto-closing keywords (e.g., `Closes #N`).
+- **The Unbreakable Link**: Every Chronicle (PR) MUST be linked to its Signet (Issue) using authorized GitHub auto-closing keywords (e.g., `Closes #N`, `Fixes #N`).
+- **The Evidence Mandate**: The Chronicle (PR) body MUST include literal terminal output proof of successful test runs and lifecycle certification. Paraphrasing results is forbidden.
+- **Submit the Beskar**: The Chronicle (PR) MUST include: 1) High-level mission summary, 2) Complete list of modified files, 3) Rationale for refactoring, 4) Mandatory Red/Green evidence, and 5) The Unbreakable Link to the Signet. Execute `gh pr create` using the mandated template.
 - **Mandate**: Certification of the **Proof of Life** Heartbeat is mandatory before committing or pushing.
 - **Hygiene**: Update `MEMORY.md` and session handovers.
 
