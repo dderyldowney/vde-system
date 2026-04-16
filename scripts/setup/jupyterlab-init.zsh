@@ -6,7 +6,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_jupyter_pkgs="python3-pip python3-venv tini git docker.io"
+local vde_jupyter_pkgs="python3-pip python3-venv tini git docker.io libpq-dev postgresql-client"
 
 # 2. THE FORGE WORK
 apt-get update
@@ -16,16 +16,24 @@ apt-get install -y ${=vde_jupyter_pkgs}
 local _venv_path="/home/devuser/.vde-venv"
 sudo -u devuser python3 -m venv "${_venv_path}"
 
-# 4. Install DS stack (Jupyter Server is the modern backend)
+# 4. Install DS stack (Refined 2026 Alloy)
 sudo -u devuser "${_venv_path}/bin/pip" install --upgrade pip
 sudo -u devuser "${_venv_path}/bin/pip" install \
     jupyterlab \
     jupyter-server \
-    matplotlib \
-    scikit-learn \
-    tensorflow \
+    polars \
+    torch \
+    langgraph \
+    fastapi \
+    streamlit \
     numpy \
-    pandas
+    pandas \
+    matplotlib \
+    seaborn \
+    scipy \
+    "psycopg[binary]" \
+    sqlalchemy \
+    jupysql
 
 # 5. CONFIGURE JUPYTER SERVER (Modern Pattern)
 local _jupyter_config="/home/devuser/.jupyter/jupyter_server_config.py"
@@ -35,7 +43,10 @@ c.ServerApp.ip = '0.0.0.0'
 c.ServerApp.port = 8888
 c.ServerApp.open_browser = False
 c.ServerApp.root_dir = '/home/devuser/workspace'
-# Security: Token will be loaded from environment variable JUPYTER_TOKEN
+c.ServerApp.allow_root = True
+# Data Science Default: Zero-Gate Access for Internal Student Use
+c.ServerApp.token = ''
+c.ServerApp.password = ''
 EOF"
 
 # 6. PERSISTENCE ANCHOR (Hardened Background Pattern)

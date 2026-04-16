@@ -104,11 +104,11 @@ case "${ACTION}" in
             exit ${VDE_ERR_NOT_FOUND}
         fi
         
-        VMS=$(vde_cluster_load "${NAME}")
-        vde_log_info "Starting cluster '${NAME}' (VMs: ${VMS})..." "vde-cluster"
+        VMS=$(vde_cluster_get_vms "${NAME}")
+        vde_log_info "Starting cluster '${NAME}' (VMs: ${VMS//$'\n'/ })..." "vde-cluster"
         
         # Dispatch to vde start
-        zsh "${VDE_ROOT_DIR}/bin/vde" start ${=VMS}
+        "${VDE_ROOT_DIR}/bin/vde" start ${=VMS}
         exit ${?}
         ;;
 
@@ -124,11 +124,11 @@ case "${ACTION}" in
             exit ${VDE_ERR_NOT_FOUND}
         fi
         
-        VMS=$(vde_cluster_load "${NAME}")
-        vde_log_info "Stopping cluster '${NAME}' (VMs: ${VMS})..." "vde-cluster"
+        VMS=$(vde_cluster_get_vms "${NAME}")
+        vde_log_info "Stopping cluster '${NAME}' (VMs: ${VMS//$'\n'/ })..." "vde-cluster"
         
         # Dispatch to vde stop
-        zsh "${VDE_ROOT_DIR}/bin/vde" stop ${=VMS}
+        "${VDE_ROOT_DIR}/bin/vde" stop ${=VMS}
         exit ${?}
         ;;
 
@@ -144,7 +144,7 @@ case "${ACTION}" in
         fi
         NAME="${1}"
         
-        vde_cluster_remove "${NAME}"
+        vde_cluster_delete "${NAME}"
         if [[ ${?} -eq 0 ]] ; then
             vde_log_success "Cluster '${NAME}' removed." "vde-cluster"
         else
