@@ -20,6 +20,6 @@ When a conflict arises or a decision must be weighed, the documents apply in the
 7.  **RELEASE_NOTES.md**: The **Chronicle**. Historical record of every Sovereign Baseline release.
 
 ---
-**Current Sovereign Baseline: v1.3.7**
+**Current Sovereign Baseline: v1.4.0**
 **Identity: The Covert**
 **The Gospel is Seven. This is the Way.**

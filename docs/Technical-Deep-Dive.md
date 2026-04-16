@@ -87,7 +87,7 @@ The Forge mandates a deterministic release process centered on the `main` branch
 - **Artifact Synchronization**: Before any release is finalized on `main`, the seven Sovereign Artifacts (Strategy, Mechanics, Archive, Lead, Audit, Verdict, and Heartbeat) MUST be in perfect agreement with the code state.
 
 ---
-**Version**: 1.3.7
+**Version**: 1.4.0
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE 1.3.7
+**Reference**: ARCHITECTURE 1.4.0
 ---

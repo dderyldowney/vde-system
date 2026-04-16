@@ -56,6 +56,6 @@ The "Unyielding Tetrad" (Zsh, Git, Docker, SSH) forms a foundation that is remar
 *   **For Students:** Implement a **"Path of the Foundling"** onboarding script that introduces the rituals one by one.
 *   **For New Hires:** Maintain the **Rule Spine** without compromise. The friction they feel is simply the feeling of quality being forged.
 
-**THE VERDICT: 1.3.7 IS GREEN. THE FORGE IS STEADY.**
+**THE VERDICT: 1.4.0 IS GREEN. THE FORGE IS STEADY.**
 
 This is the Way.

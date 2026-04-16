@@ -1,4 +1,4 @@
-# VDE Test Status Report (Sovereign Certification v1.3.7)
+# VDE Test Status Report (Sovereign Certification v1.4.0)
 
 ## Core Infrastructure
 | Feature | Status | Description |
@@ -28,6 +28,6 @@
 
 ---
 **Certified by**: The Covert
-**Baseline**: 1.3.7
+**Baseline**: 1.4.0
 **Heartbeat**: 100% Green
 ---

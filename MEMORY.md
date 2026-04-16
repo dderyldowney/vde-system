@@ -1,7 +1,7 @@
 # VDE Project Memory
 
 **Last Updated:** 2026-04-15T20:45:00Z
-**Baseline Version:** 1.3.7 (The Sovereign Hardening)
+**Baseline Version:** 1.4.0 (The Sovereign Hardening)
 
 ---
 
@@ -9,11 +9,11 @@
 - **Gateway Entrypoint**: The **Four Pillars Gateway** (`tests/features/core-infrastructure/gateway-pillars.feature`) is the mandatory entrypoint to the Proof of Life ritual. It MUST be passed with 100% success to certify the host environment's readiness. Failure results in an immediate **Program Blockade**.
 - **Mandatory Lifecycle**: The Proof of Life Contract (init -> create -> start -> enter -> rebuild -> stop -> rm -> add -> uninstall) is the non-negotiable heartbeat of the VDE.
 - **Remediation Protocol**: Any status other than **100% GREEN** on `@system-spine` and core lifecycle tests triggers an immediate **Protocol Blockade**. No secondary features or refactoring are permitted until the heartbeat is restored to Green.
-- **Proof of Life Certification (1.3.7)**: Successfully verified the v1.3.7 hardening with 100% pass rate (72/72 steps).
+- **Proof of Life Certification (1.4.0)**: Successfully verified the v1.4.0 hardening with 100% pass rate (72/72 steps).
 
 ---
 
-## SYSTEM EVOLUTION (2026-04-15) - 1.3.7 SOVEREIGN BASELINE
+## SYSTEM EVOLUTION (2026-04-15) - 1.4.0 SOVEREIGN BASELINE
 - **Plan Audit & Remediation (The Great Pruning):**
     - Mission: Systematically audit, remediate, and archive all legacy plans.
     - Result: Remediated the `bin/add-vm-type` concurrency race condition by moving port allocation *inside* the global lock.

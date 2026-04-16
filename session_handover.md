@@ -1,10 +1,10 @@
-# Session Handover — 1.3.7 (The Sovereign Hardening)
+# Session Handover — 1.4.0 (The Sovereign Hardening)
 
-**Current Status**: 🟢 VDE 1.3.7 SOVEREIGN BASELINE CERTIFIED / 100% GREEN
+**Current Status**: 🟢 VDE 1.4.0 SOVEREIGN BASELINE CERTIFIED / 100% GREEN
 **Active Branch**: `develop` (The Hearth)
 **Next Step**: Phase 29: Tech Stack Clusters — Begin expansion of the Spoke hydration library (MEAN, LAMP, etc.) and harden the multi-VM coordination logic.
 
-## Accomplishments (1.3.7 Sovereign Hardening)
+## Accomplishments (1.4.0 Sovereign Hardening)
 1.  **Plan Audit & Remediation (The Great Pruning)**:
     - Remediated the long-standing `bin/add-vm-type` concurrency race condition.
     - Port allocation is now strictly atomic and serialized inside the global lock.
@@ -17,7 +17,7 @@
     - Enabled Dependabot (Dependencies) and CodeQL (SAST) active monitoring.
     - Established the `stable` branch alias automation.
 4.  **Living Law Alignment**:
-    - Synchronized `plans/Technical-Deep-Dive.md` and `AGENTS.md` with the 1.3.7 hardened reality.
+    - Synchronized `plans/Technical-Deep-Dive.md` and `AGENTS.md` with the 1.4.0 hardened reality.
 5.  **Proof of Life Certification**:
     - Verified the entire hardened Forge with 100% pass rate (245/245 steps).
 
@@ -31,6 +31,6 @@
 - **The Chronicle**: All work in this session was recorded via Signets (Issues) and Chronicles (PRs) linked by auto-closing keywords.
 - **Rule Spine**: Every action executed under `bin/vde-enforce-uap.zsh` supervision.
 
-**Version**: 1.3.7
+**Version**: 1.4.0
 **Identity**: The Covert
 **This is the Way.**
