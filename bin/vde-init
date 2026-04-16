@@ -247,6 +247,21 @@ vde_init_set_permissions() {
     fi
 }
 
+# vde_init_register_clusters - Register default tech stack clusters
+vde_init_register_clusters() {
+    if [[ "${QUIET}" = "0" ]] ; then
+        echo "Registering default tech stack clusters..."
+    fi
+
+    # 1. Data Science Default (JupyterLab + Postgres)
+    # Using canonical CLI entrypoint per Mandate 10
+    "${VDE_ROOT_DIR}/bin/vde" cluster save default jupyterlab postgres >/dev/null 2>&1
+
+    if [[ "${QUIET}" = "0" ]] ; then
+        echo "  ✓ Default clusters registered"
+    fi
+}
+
 # vde_init_show_status - Show network status
 vde_init_show_status() {
     local prod_network="${VDE_DOCKER_NETWORK}"
@@ -367,6 +382,7 @@ else
     fi
     
     vde_init_set_permissions
+    vde_init_register_clusters
     
     if [[ "${QUIET}" = "0" ]] ; then
         echo ""

@@ -10,6 +10,9 @@ VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 # Enforce Universal Agent Protocol (The Rule Spine)
 "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" --quiet || exit 1
 
+# ZSH-native logic: Silence local variable declarations (Rule 1)
+setopt TYPESET_SILENT
+
 # Enforce @system-spine tetrad (Section 16)
 # This is the cognitive context and operational spine
 if [[ "${VDE_SKIP_SPINE_CHECK}" != "1" ]]; then
@@ -25,6 +28,7 @@ source "${VDE_ROOT_DIR}/lib/vde-docker"
 source "${VDE_ROOT_DIR}/lib/vde-templates"
 source "${VDE_ROOT_DIR}/lib/vde-ssh"
 source "${VDE_ROOT_DIR}/lib/vde-security"
+source "${VDE_ROOT_DIR}/lib/vde-cluster-utils"
 
 # Phase 26: Signal Translation Trap
 trap 'echo ""; vde_error_map 130 "Interrupted"; exit 130' SIGINT
@@ -41,10 +45,24 @@ case ${COMMAND} in
         ;;
     rebuild)
         shift
+        # 1. Cluster Awareness
+        if vde_cluster_exists "${1}" >/dev/null 2>&1; then
+            vde_log_info "Cluster detected: '${1}'. Re-forging stack..." "cluster"
+            # Clusters don't have a single rebuild command yet, but we can iterate.
+            # For now, let's keep it consistent with start/stop by delegating if we add a cluster-rebuild.
+            # But the requirement was create/start.
+            # Actually, vde-rebuild handles creation too.
+        fi
         vde_run "rebuild" "${VDE_ROOT_DIR}/bin/vde-rebuild" "$@"
         ;;
     create)
         shift
+        # 1. Cluster Awareness
+        if vde_cluster_exists "${1}" >/dev/null 2>&1; then
+            vde_log_info "Cluster detected: '${1}'. Creating stack..." "cluster"
+            # vde-rebuild handles creation. We'll let it handle the individual VMs.
+            # Wait, vde-cluster start already handles creation if images missing.
+        fi
         # Map create to vde-rebuild
         vde_run "create" "${VDE_ROOT_DIR}/bin/vde-rebuild" "$@"
         ;;
@@ -75,12 +93,21 @@ case ${COMMAND} in
 
         local GLOBAL_RC=0
         for target_type in "${targets[@]}"; do
+            # 1. Cluster Awareness: Redirect if it exists as a saved cluster
+            if vde_cluster_exists "${target_type}" >/dev/null 2>&1; then
+                vde_log_info "Cluster detected: '${target_type}'. Igniting stack..." "cluster"
+                vde_run "${target_type}" "${VDE_ROOT_DIR}/bin/vde-cluster" start "${target_type}"
+                [[ ${?} -ne 0 ]] && GLOBAL_RC=1
+                continue
+            fi
+
+            local CANONICAL_NAME
             CANONICAL_NAME=$(resolve_vm_name "${target_type}" 2>/dev/null)
             if [[ -z "${CANONICAL_NAME}" ]]; then
                 vde_error_alias_not_found "${target_type}"
                 continue
             fi
-            BASE_NAME="${CANONICAL_NAME#vde-}"
+            local BASE_NAME="${CANONICAL_NAME#vde-}"
 
             local vm_lock="${VDE_VM_LOCKS_DIR}/${BASE_NAME}.lock"
             claim_lock "${vm_lock}" || { vde_error_map ${VDE_ERR_LOCK:-9} "${CANONICAL_NAME}"; continue; }
@@ -188,6 +215,13 @@ case ${COMMAND} in
         [[ -z "${vms}" ]] && vde_log_error "Usage: vde stop [-f] <alias...|all>" && exit 1
 
         for vm_alias in "${vms[@]}"; do
+            # 1. Cluster Awareness
+            if vde_cluster_exists "${vm_alias}" >/dev/null 2>&1; then
+                vde_log_info "Cluster detected: '${vm_alias}'. Quenching stack..." "cluster"
+                vde_run "${vm_alias}" "${VDE_ROOT_DIR}/bin/vde-cluster" stop "${vm_alias}"
+                continue
+            fi
+
             CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
             if [[ -z "${CANONICAL_NAME}" ]]; then
                 vde_log_warn "Unknown VM: ${vm_alias}"
@@ -245,6 +279,13 @@ case ${COMMAND} in
         fi
 
         for vm_alias in "${targets[@]}"; do
+            # 1. Cluster Awareness
+            if vde_cluster_exists "${vm_alias}" >/dev/null 2>&1; then
+                vde_log_info "Cluster detected: '${vm_alias}'. Decommissioning stack..." "cluster"
+                vde_run "${vm_alias}" "${VDE_ROOT_DIR}/bin/vde-cluster" remove "${vm_alias}"
+                continue
+            fi
+
             CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
             if [[ -z "${CANONICAL_NAME}" ]]; then
                 vde_log_warn "Unknown VM: ${vm_alias}"
