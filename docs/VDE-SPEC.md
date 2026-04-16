@@ -57,6 +57,13 @@ Automated orchestration ensures absolute traceability:
 - **Bridge Integrity**: `socat` proxying for SSH agent forwarding. The bridge is "Hardened Conditional"—it only exports `SSH_AUTH_SOCK` if the variable is empty, protecting protocol-native forwarding.
 - **Static Guards**: Pre-commit hooks verify shebang purity and secret scanning.
 
+## 7. Phase 29 Milestones (Expansion & Hardening)
+
+The Forge is currently advancing through Phase 29:
+- **Infrastructure Hardening**: Core guards (`vde_require_ssh`, `vde_require_docker`) upgraded from lazy-sourcing stubs to active physical verification probes (`ssh -V`, `docker info`).
+- **Cluster Expansion**: Formally introduced MEAN and LAMP tech stack clusters with coordinated hydration scripts and inter-VM awareness.
+- **State Integrity**: Codified `VDE_DOCKER_STATE_DIR` in `lib/vde-constants` to ensure deterministic cluster and container state management.
+
 ---
 Version: 1.3.7
 **Status**: HARDENED
