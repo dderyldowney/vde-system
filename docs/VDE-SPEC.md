@@ -1,8 +1,8 @@
-# VDE-SPEC 1.3.7 (The Sovereign Hardening)
+# VDE-SPEC 1.3.7 (The Sovereign Evolution) (The Sovereign Hardening)
 
 **Date**: 2026-04-15
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Version**: 1.3.7
+Version: 1.3.7
 **Reference**: ARCHITECTURE 1.3.7 (The Sovereign Baseline)
 **Identity**: The Covert
 
@@ -44,7 +44,7 @@ Before any tag is struck, these four files MUST be in perfect agreement with the
 - **Bridge Integrity**: `socat` proxying for SSH agent forwarding without host-path leaks.
 
 ---
-**Version**: 1.3.7
+Version: 1.3.7
 **Status**: HARDENED
 **Reference**: RESOL’NARE 1.3.7
 ---
