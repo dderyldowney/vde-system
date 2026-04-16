@@ -1,7 +1,7 @@
 # PROJECT STATUS - VDE 1.3.7 (The Sovereign Baseline)
 
 **CURRENT STATE: 100% GREEN (SOVEREIGN BASELINE CERTIFIED)**
-**DATE:** 2026-04-11
+**DATE:** 2026-04-15
 
 ## EXECUTIVE SUMMARY
 1.3.7 is officially declared the functional baseline for the VDE project. All technical debt from previous versions has been remediated or archived.
@@ -17,7 +17,7 @@
 - [x] **UAP Enforcement**: Mandatory supervision by `bin/vde-enforce-uap.zsh` integrated into all CLI paths.
 
 ### 2. TEST FIDELITY
-- **Behave BDD**: 26 Scenarios / 153 Steps - **100% PASS**
+- **Behave BDD**: 26 Scenarios / 245 Steps - **100% PASS**
 - **Unified Tagging**: `@system-spine` now serves as the primary audit gate.
 - **Performance**: Optimized setup/teardown and port discovery for high-velocity CI.
 

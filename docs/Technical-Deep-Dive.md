@@ -74,6 +74,15 @@ All VDE operations are wrapped in `vde_run`, which captures return codes and map
 - `VDE_ERR_LOCK (9)`
 - `VDE_ERR_SYNC_DRIFT (13)`
 
+## 8. The Sovereign Release Law
+
+The Forge mandates a deterministic release process centered on the `main` branch to ensure baseline immutability.
+
+- **Branch Sovereignty**: `develop` is for development only. Step tagging (X.X.X) and GitHub releases are strictly FORBIDDEN on `develop`.
+- **Release Anchor**: All version tags and GitHub releases MUST be anchored to the `main` branch SHA.
+- **The Stable Mirror**: Following a release on `main`, the released SHA is forcefully applied to the `stable` branch, ensuring it always mirrors the latest certified milestone.
+- **Artifact Synchronization**: Before any release is finalized on `main`, the seven Sovereign Artifacts (Strategy, Mechanics, Archive, Lead, Audit, Verdict, and Heartbeat) MUST be in perfect agreement with the code state.
+
 ---
 **Version**: 1.3.7
 **Status**: SOVEREIGN BASELINE CERTIFIED

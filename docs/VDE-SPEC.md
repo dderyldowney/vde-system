@@ -25,21 +25,23 @@
 
 ## 3. The Sovereign Artifact Set (The Gospel of the Forge)
 
-Before any tag is struck, these six files MUST be in perfect agreement with the Forge state. Together, they constitute the **Gospel of the Forge**:
+Before any tag is struck, these seven files MUST be in perfect agreement with the Forge state. Together, they constitute the **Gospel of the Forge**:
 1. `ARCHITECTURE.md`
 2. `TECHNICAL_DEEP_DIVE.md`
 3. `RELEASE_NOTES.md`
 4. `VDE-SPEC.md` (The Gospel Lead)
 5. `USE_CASES.md`
 6. `VDE_ANALYSIS.md`
+7. `PROJECT_STATUS.md`
 
 ## 4. The Sovereign Branching Strategy
 
 The Forge strictly enforces the following Git lifecycle to maintain the purity of the Baseline:
-1. **`main` (The Sovereign Baseline)**: The stable production branch. Represents immutable releases.
+1. **`main` (The Sovereign Baseline)**: The stable production branch. Represents immutable releases. **All step tagging (X.X.X) and GitHub releases MUST occur on this branch.**
 2. **`develop` (The Anvil)**: The primary integration branch and repository default.
 3. **Feature Branches (The Strike)**: All work MUST occur on a feature-named branch (`feat/`, `fix/`, `chore/`) branching off `develop`.
 4. **The Ritual**: Every mission begins with a Signet (Issue) and ends with a Chronicle (PR). Feature branches are merged to `develop` ONLY upon acceptance and MUST be deleted immediately after.
+5. **The Release Ritual**: Once `develop` is merged into `main`, the merge SHA on `main` is tagged with the version (e.g., 1.2.3). The GitHub Release is then created from that SHA on the `main` branch. Finally, this SHA is applied to the `stable` branch, overwriting its previous state. `develop` remains for development only.
 
 ## 5. The Chronicle Mandates (GitHub Workflow)
 
