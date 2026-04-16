@@ -37,26 +37,27 @@ Violating any of these mandates is a failure of the agent's primary directive.
 1.  **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`. Bash is strictly forbidden. The agent MUST NOT use `bash` to execute commands.
 2.  **THE ANVIL IS DEFAULT**: All active work MUST occur on the `develop` branch (The Anvil). `main` (Production) is reserved for STABLE RELEASES ONLY. Direct work on `main` is strictly prohibited.
 3.  **Main Agent is Orchestrator ONLY**: The Main Agent MUST NOT write implementation code if it spans >1 file. The Main Agent's job is planning, orchestrating, and verifying. *Exception: If sub-agents are technically unavailable, the Main Agent may perform direct implementation provided every action is strictly supervised by the Enforcer.*
-3.  **Enforcer Supervision (Rule A)**: Every single action (shell commands, dispatches, verification steps, and cleanup) MUST be run under the supervision of the Enforcer (`bin/vde-enforce-uap.zsh`).
-4.  **Phase-End Re-Audit Swarm (Rule B)**: Every development phase MUST automatically conclude with a supervised re-audit swarm. This swarm MUST assume errors exist, search for regressions or weak spots, rerun all relevant Behave scenarios, and provide a summary of findings. Skipping or shortening this re-audit is a total mandate failure.
-5.  **Explicit Commit Gate (Rule C)**: Following a successful re-audit, the agent MUST ask for explicit 'commit now' approval from the user. No commits are allowed without this manual gate.
-6.  **DRY is Sovereign**: No duplicate code or near-identical functions. Parameterize or consolidate.
-7.  **TDD is Non-Negotiable**: Failing test (RED) first, then minimal implementation (GREEN), then refactor.
-8.  **No Fake Tests**: `assert True`, `pass`, and placeholder context flags are strictly forbidden.
-9.  **Canonical Entrypoint**: `bin/vde` is the single canonical entrypoint. All operations must go through `bin/vde` subcommands; calling underlying scripts directly is out of mandate, except in tests whose explicit purpose is to unit‑test that script in isolation (not as a side effect of a normal bin/vde call).
-10. **MCP-First**: Always prefer MCP services (`sequential-thinking`, `context7`, etc.) over local CLI or internal tools.
-11. **User-Centric Perspective**: All interactions and tests must use the canonical `vde` CLI (e.g., `vde ssh`). Never call internal `bin/` scripts directly.
-12. **Dual Approval Gate**: Commits require BOTH code-reviewer (agent) and user approval.
-13. **No-Push Policy**: Never `git push` without explicit user instruction.
-14. **Automated Remediation Path:** If the Enforcer (vde-enforce-uap.zsh) returns a non-zero exit code OR outputs and `UAP-WARN`, the agent MUST NOT attempt to continue the current phase. It MUST immediately:
+4.  **Enforcer Supervision (Rule A)**: Every single action (shell commands, dispatches, verification steps, and cleanup) MUST be run under the supervision of the Enforcer (`bin/vde-enforce-uap.zsh`).
+5.  **Phase-End Re-Audit Swarm (Rule B)**: Every development phase MUST automatically conclude with a supervised re-audit swarm. This swarm MUST assume errors exist, search for regressions or weak spots, rerun all relevant Behave scenarios, and provide a summary of findings. Skipping or shortening this re-audit is a total mandate failure.
+6.  **Explicit Commit Gate (Rule C)**: Following a successful re-audit, the agent MUST ask for explicit 'commit now' approval from the user. No commits are allowed without this manual gate.
+7.  **DRY is Sovereign**: No duplicate code or near-identical functions. Parameterize or consolidate.
+8.  **TDD is Non-Negotiable**: Failing test (RED) first, then minimal implementation (GREEN), then refactor.
+9.  **No Fake Tests**: `assert True`, `pass`, and placeholder context flags are strictly forbidden.
+10. **Canonical Entrypoint**: `bin/vde` is the single canonical entrypoint. All operations must go through `bin/vde` subcommands; calling underlying scripts directly is out of mandate, except in tests whose explicit purpose is to unit‑test that script in isolation (not as a side effect of a normal bin/vde call).
+11. **MCP-First**: Always prefer MCP services (`sequential-thinking`, `context7`, etc.) over local CLI or internal tools.
+12. **User-Centric Perspective**: All interactions and tests must use the canonical `vde` CLI (e.g., `vde ssh`). Never call internal `bin/` scripts directly.
+13. **Dual Approval Gate**: Commits require BOTH code-reviewer (agent) and user approval.
+14. **No-Push Policy**: Never `git push` without explicit user instruction.
+15. **Automated Remediation Path**: If the Enforcer (vde-enforce-uap.zsh) returns a non-zero exit code OR outputs and `UAP-WARN`, the agent MUST NOT attempt to continue the current phase. It MUST immediately:
     1. Generate a .gemini/PLANS/remediation_*.md file.
     2. List every violation as a sub-task.
     3. Obtain user approval on the remediation plan before executing any fixes.
-15. **The Proof of Life Heartbeat (Alor's Mandate)**: The Proof of Life (`proof-of-life-the-contract.feature`) is an **Alor-exclusive (Orchestrator)** ritual. Sub-agents (Verd'ika) inherit the certification and MUST NOT run it independently. It is mandatory ONLY during:
+16. **The Proof of Life Heartbeat (Alor's Mandate)**: The Proof of Life (`proof-of-life-the-contract.feature`) is an **Alor-exclusive (Orchestrator)** ritual. Sub-agents (Verd'ika) inherit the certification and MUST NOT run it independently. It is mandatory ONLY during:
     - The Sovereign Startup Ritual (Alor only).
     - Committing or Pushing changes.
     - Direct implementation work on the lifecycle logic itself.
-16. **Authority of the Record**: Only the Orchestrator (Alor) and the User are permitted to alter The Record. Sub-agents (Verd'ika) are FORBIDDEN from making autonomous commits. They may only perform commits when explicitly instructed by the Orchestrator or the User, ensuring the intent and control remain centralized.
+17. **Authority of the Record**: Only the Orchestrator (Alor) and the User are permitted to alter The Record. Sub-agents (Verd'ika) are FORBIDDEN from making autonomous commits. They may only perform commits when explicitly instructed by the Orchestrator or the User, ensuring the intent and control remain centralized.
+18. **The Release Ritual (Absolute)**: Step tagging (X.X.X) and GitHub releases are FORBIDDEN on `develop`. They MUST be applied exclusively to the `main` branch. The SHA certified on `main` is then mirrored to `stable`.
 
 ### !! CRITICAL FORBIDDEN PATTERNS !!
 - **NO BASH/SH SYNTAX:** This is a ZSH-only project. Use ZSH-specific features (e.g., `${(f)var}`, `**/*`, `ZSH arrays index at 1`).
