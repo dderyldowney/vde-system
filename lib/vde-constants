@@ -260,6 +260,10 @@ VDE_LOCKS_DIR="${VDE_LOCKS_DIR:-${VDE_ROOT_DIR}/.locks}"
 VDE_VM_LOCKS_DIR="${VDE_VM_LOCKS_DIR:-${VDE_LOCKS_DIR}/vms}"
 VDE_PORT_LOCKS_DIR="${VDE_PORT_LOCKS_DIR:-${VDE_LOCKS_DIR}/ports}"
 
+# Docker and Container state
+VDE_DOCKER_STATE_DIR="${VDE_DOCKER_STATE_DIR:-${VDE_ROOT_DIR}/.docker-state}"
+export VDE_DOCKER_STATE_DIR
+
 # =============================================================================
 # FILE PATHS DERIVED FROM DIRECTORY CONSTANTS
 # =============================================================================
@@ -307,6 +311,7 @@ if [[ "${VDE_TEST_MODE:-0}" -ne 1 ]] ; then
              VDE_RETRY_MAX_DELAY VDE_STALE_LOCK_AGE VDE_LOCK_CHECK_INTERVAL \
              VDE_LOG_RETENTION_DAYS VDE_MAX_LOG_SIZE VDE_DOCKER_NETWORK VDE_TEST_NETWORK \
              VDE_COMPOSE_PROJECT_PREFIX VDE_CONTAINER_PREFIX \
+             VDE_DOCKER_STATE_DIR \
              VDE_PRODUCTION_BRANCH VDE_ANVIL_BRANCH VDE_STABLE_ALIAS \
              VDE_SSH_USER VDE_SSH_KEY_PREFERENCE VDE_HOME_DIR VDE_SSH_DIR \
              VDE_SSH_CONFIG VDE_SSH_KNOWN_HOSTS VDE_SSH_IDENTITY VDE_SSH_IDENTITY_PUB \

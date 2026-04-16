@@ -6,7 +6,7 @@ All available programming languages and services that can be created with VDE.
 
 ---
 
-## Language VMs (21 total, ports 2200-2299)
+## Language VMs (23 total, ports 2200-2299)
 
 | Name | Aliases | Display Name | Container Name | SSH Port | Install Command |
 |------|---------|--------------|----------------|----------|-----------------|
@@ -31,6 +31,8 @@ All available programming languages and services that can be created with VDE.
 | vde-swift | swift | Swift | vde-swift | 2218 | binutils, git, libc6-dev, curl |
 | vde-testport1 | testport1 | Test Port 1 | vde-testport1 | 2219 | test |
 | vde-testport2 | testport2 | Test Port 2 | vde-testport2 | 2220 | test |
+| vde-mean | mean | MEAN Stack (Node + MongoDB) | vde-mean | 2221 | Node.js, MongoDB client |
+| vde-lamp | lamp | LAMP Stack (PHP + MySQL + Nginx) | vde-lamp | 2222 | PHP, MySQL client |
 
 ---
 

@@ -190,6 +190,24 @@
               "custom_cmd": "zsh /vde/scripts/setup/testport2-init.zsh",
               "service_port": null,
               "ssh_port": 2220
+            },
+        {
+              "name": "vde-mean",
+              "aliases": ["mean"],
+              "display": "MEAN Stack (Node + MongoDB)",
+              "pkgs": null,
+              "custom_cmd": "zsh /vde/scripts/setup/mean-init.zsh",
+              "service_port": null,
+              "ssh_port": 2221
+            },
+        {
+              "name": "vde-lamp",
+              "aliases": ["lamp"],
+              "display": "LAMP Stack (PHP + MySQL + Nginx)",
+              "pkgs": null,
+              "custom_cmd": "zsh /vde/scripts/setup/lamp-init.zsh",
+              "service_port": null,
+              "ssh_port": 2222
             }
     ],
     "service": [
