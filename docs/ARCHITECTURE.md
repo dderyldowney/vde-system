@@ -1,4 +1,4 @@
-# ARCHITECTURE 1.3.7 (The Sovereign Baseline)
+# ARCHITECTURE 1.4.0 (The Sovereign Baseline)
 
 ## 1. Philosophical Pillars (The Way)
 
