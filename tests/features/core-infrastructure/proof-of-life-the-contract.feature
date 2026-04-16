@@ -1,4 +1,4 @@
-@system-spine
+@system-spine @pristine
 Feature: The Proof of Life - The Contract
   As an Alor of the VDE
   I require empirical proof of the absolute lifecycle
@@ -6,7 +6,7 @@ Feature: The Proof of Life - The Contract
 
   Background: The Tetrad is Active
     Given the 4 Pillars (Zsh, Git, Docker, SSH) have passed their individual proofs
-    And the Hub is synchronized to version 1.3.1
+    And the Hub is synchronized to version 1.3.7
     # Ensure no lingering test VMs from failed runs
     And I execute "bin/vde uninstall vde-dynamic-vm --skip-confirm"
     And I execute "rm -rf .locks/global-config.lock"
@@ -19,6 +19,7 @@ Feature: The Proof of Life - The Contract
     And the directory "projects" should exist
     And the directory "data" should exist
     And the file "VDE_INSTALL.md" should exist
+    And the file "VDE_INSTALL.md" should contain "git clone -b stable"
     And the VDE_SSH_DIR should contain the "vde_student" identity
     And the Docker network "vde-net" should exist
 
@@ -61,6 +62,7 @@ Feature: The Proof of Life - The Contract
     When I execute "bin/vde uninstall dynamic-vm --skip-confirm"
     Then the command should succeed
     And the VM "dynamic-vm" should no longer be registered
+    And the SSH config should not contain an entry for "vde-dynamic-vm"
 
   Scenario: The Forge Hardening - Hardened Rebuild
     Given I have a valid VM definition for "python" in the Beskar Registry

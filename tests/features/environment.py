@@ -76,11 +76,13 @@ def before_all(context):
 
     # Ensure vde-net exists if docker is available
     try:
-        subprocess.run(
+        res = subprocess.run(
             ["docker", "network", "inspect", "vde-net"],
             capture_output=True,
             check=False,
         )
+        if res.returncode != 0:
+            subprocess.run(["docker", "network", "create", "vde-net"], check=False)
     except Exception:
         pass
 
@@ -89,6 +91,22 @@ def after_all(context):
     """Global cleanup."""
     if hasattr(context, "temp_dir") and os.path.exists(context.temp_dir):
         shutil.rmtree(context.temp_dir)
+
+
+def before_feature(context, feature):
+    """Trigger cleanup for pristine features."""
+    if "pristine" in feature.tags:
+        sweep_script = os.path.join(VDE_ROOT, "bin/vde-tactical-sweep.zsh")
+        if os.path.exists(sweep_script):
+            subprocess.run([sweep_script], check=False)
+
+
+def after_feature(context, feature):
+    """Cleanup after pristine features."""
+    if "pristine" in feature.tags:
+        sweep_script = os.path.join(VDE_ROOT, "bin/vde-tactical-sweep.zsh")
+        if os.path.exists(sweep_script):
+            subprocess.run([sweep_script], check=False)
 
 
 def before_scenario(context, scenario):

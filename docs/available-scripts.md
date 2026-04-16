@@ -10,7 +10,7 @@ Overview of all scripts included with VDE.
 
 ### VDE Unified Command (Recommended)
 
-The `vde` command is the canonical entry point for the **Sovereign Evolution (v1.3.0)**. It wraps all infrastructure logic in the `vde_run` safety layer, ensuring Zsh purity and system integrity.
+The `vde` command is the canonical entry point for the **Sovereign Evolution (1.3.0)**. It wraps all infrastructure logic in the `vde_run` safety layer, ensuring Zsh purity and system integrity.
 
 | Command | Purpose | Usage |
 |---------|---------|-------|
@@ -37,6 +37,7 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution (v1
 | `vde cluster <cmd>` | Orchestrate multi-VM clusters (Tech Stacks). | `vde cluster start python-stack` |
 | `vde networks` | Audit and manage the `vde-net` Docker bridges. | `vde networks` |
 | `vde validate` | Verify the integrity of the Beskar Registry (JSON schemas). | `vde validate` |
+| `vde prune` | **The Pruning Ritual**: Archive old plans/scripts and purge aged logs. | `vde prune` |
 | `vde rebuild-cache` | Force a re-smelt of the internal VM cache. | `vde rebuild-cache` |
 | `vde sync-version` | Synchronize versioning across the Hub and Spokes. | `vde sync-version` |
 | `vde port <alias>` | Retrieve the assigned SSH port for a Spoke. | `vde port python` |

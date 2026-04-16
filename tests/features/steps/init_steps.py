@@ -36,3 +36,10 @@ def step_vm_not_registered(context, vm_alias):
 def step_file_exists(context, filename):
     path = VDE_ROOT / filename
     assert path.exists(), f"File {path} does not exist"
+
+@then('the file "{filename}" should contain "{text}"')
+def step_file_contains(context, filename, text):
+    path = VDE_ROOT / filename
+    assert path.exists(), f"File {path} does not exist"
+    content = path.read_text()
+    assert text in content, f"Expected '{text}' in {filename}, but not found."

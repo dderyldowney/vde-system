@@ -78,7 +78,7 @@ def step_verify_hydration(context, script_path):
 
 @then('the SSH port should be atomically allocated and recorded in the registry')
 def step_verify_port_allocation(context):
-    # In v1.3.1, the authoritative port is recorded in .cache/vm-types.cache
+    # In 1.3.7, the authoritative port is recorded in .cache/vm-types.cache
     cache_file = VDE_ROOT / ".cache" / "vm-types.cache"
     assert cache_file.exists(), "VM types cache missing"
     
@@ -104,7 +104,12 @@ def step_verify_ssh_env(context, container_name):
 
 @given('the VDE system is healthy')
 def step_system_healthy(context):
+    # Rebuild cache to ensure we have fresh data
     run_vde_command("rebuild-cache")
+    # Purge known_hosts to prevent SSH identification warnings breaking forwarding
+    from ssh_helpers import VDE_SSH_KNOWN_HOSTS
+    if VDE_SSH_KNOWN_HOSTS.exists():
+        VDE_SSH_KNOWN_HOSTS.unlink()
 
 @then('every VM defined in the Hub must have a corresponding USP init script')
 def step_verify_all_scripts(context):
@@ -202,7 +207,7 @@ def step_verify_destroyed(context, container_name):
 @then('the SSH configuration should be preserved')
 def step_verify_ssh_preserved(context):
     # SSH config should NOT be deleted on 'remove' by mandate
-    # VDE v1.3.1 standard is ~/.ssh/vde/config
+    # VDE 1.3.7 standard is ~/.ssh/vde/config
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
     
     assert ssh_config.exists(), f"VDE SSH config missing at {ssh_config}"
@@ -355,12 +360,12 @@ def step_pillars_passed(context):
     result = subprocess.run([str(VDE_ROOT / "bin" / "vde-spine-check.zsh")], capture_output=True, text=True)
     assert result.returncode == 0, f"Pillars verification failed: {result.stderr or result.stdout}"
 
-@given('the Hub is synchronized to version 1.3.1')
+@given('the Hub is synchronized to version 1.3.7')
 def step_hub_synced_version(context):
     spec_file = VDE_ROOT / "docs" / "VDE-SPEC.md"
     assert spec_file.exists(), "VDE-SPEC.md missing"
     content = spec_file.read_text()
-    assert "Version: 1.3.1" in content or "v1.3.1" in content, f"Hub version mismatch in VDE-SPEC.md: {content[:100]}"
+    assert "Version: 1.3.7" in content or "1.3.7" in content, f"Hub version mismatch in VDE-SPEC.md: {content[:100]}"
 
 @given('I have a valid VM definition for "{vm_alias}" in the Beskar Registry')
 def step_valid_vm_definition(context, vm_alias):
@@ -457,6 +462,29 @@ def step_verify_container_not_running(context, container_name):
 def step_verify_container_not_exist(context, container_name):
     res = subprocess.run(["docker", "ps", "-a", "--filter", f"name=^{container_name}$", "--format", "{{.Names}}"], capture_output=True, text=True)
     assert container_name not in res.stdout.strip().split('\n'), f"Container {container_name} still exists"
+
+@then('the SSH config should not contain an entry for "{alias}"')
+def step_ssh_config_no_entry(context, alias):
+    """Assert neither live nor project SSH config contains a Host entry for alias."""
+    from tests.features.steps.ssh_helpers import VDE_SSH_CONFIG, VDE_ROOT
+    host_pattern = f"Host {alias}"
+
+    live_contains = False
+    if VDE_SSH_CONFIG.exists():
+        live_contains = host_pattern in VDE_SSH_CONFIG.read_text()
+
+    project_config = VDE_ROOT / "configs" / "ssh" / "config"
+    project_contains = False
+    if project_config.exists():
+        project_contains = host_pattern in project_config.read_text()
+
+    assert not live_contains, (
+        f"Live SSH config (~/.ssh/vde/config) still contains entry for '{alias}'"
+    )
+    assert not project_contains, (
+        f"Project SSH config (configs/ssh/config) still contains entry for '{alias}'"
+    )
+
 
 def after_scenario(context, scenario):
     """Cleanup after each scenario to enforce hygiene."""

@@ -1,10 +1,12 @@
 <p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-# The Way of the VDE: v1.3.1 (The Sovereign Baseline)
+# The Way of the VDE: 1.3.7 (The Sovereign Baseline)
 
 ![CI Status](https://github.com/dderyldowney/vde-system/actions/workflows/vde-ci.yml/badge.svg)
 
 A sovereign, template-based ecosystem of Dockerized Spokes. Supporting 19+ Language Spokes and 7+ Service Spokes, forged for the warrior who demands consistent hydration and absolute isolation. Accessible via **The Sovereign Baseline (SSH)** with a single, unyielding identity.
+
+**🛡️ The Sovereign Record:** The default branch for this Forge is `develop` (**The Anvil**). For the stable, certified **Sovereign Baseline** (**Production**), ensure you clone or switch to the `stable` branch.
 
 **The Language of the Tribe:** Strictly **ZSH 5.0+**. No bash-isms, no shortcuts. [See Requirements](docs/requirements.md)
 
@@ -30,7 +32,7 @@ Welcome, Foundling, to the VDE — the Beskar Hub for your development Spokes. W
 | **The Beskar Vault** | [Extending the Creed](docs/extending-vde.md) • [Directory Hierarchy](docs/directory-structure.md) |
 | **The Forge** | [VSCode Remote-SSH](docs/vscode-remote-ssh.md) • [Development Guide](docs/DEVELOPMENT_GUIDE.md) |
 | **The Tribe's Contribution** | [Contributing Guide](CONTRIBUTING.md) • [The Language of the Tribe](STYLE_GUIDE.md) • [Testing Mandates](docs/TESTING.md) |
-| **Ancient Intel** | [API Reference](docs/API.md) • [Architecture v1.3.1](docs/ARCHITECTURE.md) • [Release Archive](https://github.com/dderyldowney/vde-system/tree/main/docs/releases) |
+| **Ancient Intel** | [API Reference](docs/API.md) • [Architecture 1.3.7](docs/ARCHITECTURE.md) • [Release Archive](https://github.com/dderyldowney/vde-system/tree/stable/docs/releases) |
 | **Reinforcements** | [Troubleshooting](docs/troubleshooting.md) • [Rebuild Mandates](docs/rebuild-guidelines.md) |
 | **Evolution** | [Evolution Guide](#the-evolution-of-armor) - Keeping the Hub up-to-date |
 
@@ -203,7 +205,7 @@ See [Handshake Configuration](docs/ssh-configuration.md) for complete intel.
 |----------|-------------|
 | [API Rituals](docs/API.md) | Complete API reference for scripts and libraries |
 | [Technical Deep Dive](docs/Technical-Deep-Dive.md) | VDE Under the Hood |
-| [Architecture v1.3.1](docs/ARCHITECTURE.md) | Technical blueprint of the Hub |
+| [Architecture 1.3.7](docs/ARCHITECTURE.md) | Technical blueprint of the Hub |
 
 | [Advanced Strikes](docs/advanced-usage.md) | Advanced techniques and patterns |
 | [Rebuild Mandates](docs/rebuild-guidelines.md) | When to re-smelt your armor |
@@ -303,3 +305,4 @@ For comprehensive technical intel, see these in-depth scrolls:
 This VDE system is provided as-is for the warrior's journey. Use it with honor.
 
 This is the Way.
+# Test

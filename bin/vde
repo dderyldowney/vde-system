@@ -149,6 +149,9 @@ case ${COMMAND} in
                     continue
                 fi
 
+                # EXPORT for Docker Compose consumption (Sovereign Bridge)
+                export VDE_HOST_SSH_AUTH_SOCK="${host_ssh_auth_sock}"
+
                 vde_progress_spinner_start "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})"
                 
                 local compose_file
@@ -287,6 +290,10 @@ case ${COMMAND} in
     validate)
         shift
         vde_run "validate" "${VDE_ROOT_DIR}/bin/validate-schemas.zsh" "$@"
+        ;;
+    prune)
+        shift
+        vde_run "prune" "${VDE_ROOT_DIR}/bin/vde-prune.zsh" "$@"
         ;;
     rebuild-cache)
         shift

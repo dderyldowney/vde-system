@@ -11,33 +11,37 @@ Before you ignite the Forge, you must have the following four pillars installed 
 ### Pillar I: Docker Desktop (The World-Forge)
 Docker is the engine that runs your isolated development Spokes.
 - **macOS:** [Download Docker Desktop for Mac](https://www.docker.com/products/docker-desktop).
-- **Windows:** [Download Docker Desktop for Windows](https://www.docker.com/products/docker-desktop) (Requires WSL 2).
+- **Windows:** [Download Docker Desktop for Windows](https://www.docker.com/products/docker-desktop) (Requires WSL 2 and integration enabled).
 - **Linux:** [Install Docker Engine](https://docs.docker.com/engine/install/).
 
 ### Pillar II: Git (The Chronicler)
 Git is required to pull the VDE Intel from the repository.
 - **macOS:** Comes pre-installed. Update via `brew install git`.
-- **Windows:** [Download Git for Windows](https://git-scm.com/download/win).
+- **Windows:** Install inside WSL distribution: `sudo apt install git`.
 - **Linux:** `sudo apt install git`.
 
 ### Pillar III: Zsh 5.0+ (The Voice of the Tribe)
 VDE is forged strictly in Zsh. **Bash is prohibited.**
 - **macOS:** Default shell since Catalina. Check with `zsh --version`.
-- **Linux/WSL:** `sudo apt install zsh`.
+- **Windows/Linux/WSL:** `sudo apt install zsh && chsh -s $(which zsh)` (Windows users: Must install inside WSL).
 
 ### Pillar IV: SSH (The Transversal Bridge)
 The VDE Hub uses the **Sovereign Baseline** to connect you to your Spokes.
 - **Requirement:** An active SSH client and agent on your host machine.
+- **Windows Users:** Ensure `ssh-agent` is running inside WSL (add `eval $(ssh-agent -s)` to `~/.zshrc`).
 
 ---
 
 ## 2. Installation Ritual (Step-by-Step)
 
 ### Step 1: Clone the Beskar Hub
+**🛡️ The Sovereign Record:** The default branch for this repository is `develop` (The Anvil). For the stable, certified **Sovereign Baseline** (Production), ensure you clone using the `-b stable` flag as shown below.
+
 Open your terminal (Zsh) and clone the VDE repository.
 
 ```zsh
-git clone https://github.com/dderyldowney/vde-system.git ~/vde
+# Clone the stable Production branch (Sovereign Baseline)
+git clone -b stable https://github.com/dderyldowney/vde-system.git ~/vde
 cd ~/vde
 ```
 

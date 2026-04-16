@@ -4,7 +4,7 @@
 set -e
 
 # Determine VDE root directory
-VDE_ROOT_DIR="${0:a:h:h}"
+VDE_ROOT_DIR=$(git rev-parse --show-toplevel)
 export VDE_ROOT_DIR
 
 # Source core libraries
@@ -26,7 +26,7 @@ if python3 -m behave "${VDE_ROOT_DIR}/tests/features/core-infrastructure/proof-o
     exit 0
 else
     echo -e "${RED}[ERROR] Mandate L Violation: Proof of Life Contract Failed.${RESET}"
-    echo -e "  The core VM lifecycle is broken. Commit blocked."
+    echo -e "  The core VM lifecycle is broken. Push blocked."
     echo -e "  Run 'python3 -m behave tests/features/core-infrastructure/proof-of-life-the-contract.feature' for details."
     exit 1
 fi

@@ -10,7 +10,7 @@ The Phase-End Re-Audit Swarm identified critical regressions following the conso
 - **Impact**: Blocks all integration and VM-lifecycle tests.
 
 ### 2. BDD Feature Failures
-- **Cache System**: `ASSERT FAILED: Cache file should exist at /Users/dderyldowney/VDE/.cache/vm-types.cache`.
+- **Cache System**: `ASSERT FAILED: Cache file should exist at ~/VDE/.cache/vm-types.cache`.
 - **Parser Intent**: Expected intents (e.g., `restart_vm`, `status`) are returning empty strings.
 - **Service Hardening**: Containers are reported as "not running" or failing to become healthy within timeouts.
 

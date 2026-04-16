@@ -23,6 +23,6 @@ Feature: Deterministic Error Engine
     Given the VDE system is healthy
     And a background process holds a lock on "python"
     When I attempt to start "python" in the foreground
-    Then the output should contain "Waiting for lock: python"
+    Then the output should contain "Waiting for lock: python.lock"
     And the output should contain "Held by:"
     And the output should contain the PID of the background process

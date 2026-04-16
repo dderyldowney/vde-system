@@ -1,9 +1,0 @@
-{
-  "vm_name": "vde-zig",
-  "vm_type": "lang",
-  "display_name": "Zig",
-  "ssh_port": 2219,
-  "service_port": "",
-  "created_at": "2026-03-19T20:36:18Z",
-  "status": "running"
-}

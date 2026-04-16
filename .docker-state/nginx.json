@@ -1,8 +1,0 @@
-{
-  "vm_name": "vde-nginx",
-  "vm_type": "service",
-  "display_name": "Nginx",
-  "ssh_port": "",
-  "started_at": "2026-03-30T02:12:21Z",
-  "status": "running"
-}

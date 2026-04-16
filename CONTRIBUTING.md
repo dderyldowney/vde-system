@@ -16,12 +16,13 @@ Thank you for your interest in contributing to the VDE (Virtual Development Envi
 ## Quick Start
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/vde-system.git`
-3. Create a branch: `git checkout -b feature/your-feature-name`
-4. Make your changes
-5. Run tests: `make check`
-6. Commit and push: `git push origin feature/your-feature-name`
-7. Open a Pull Request
+2. Clone your fork: `git clone -b stable https://github.com/YOUR_USERNAME/vde-system.git`
+3. Checkout the Anvil: `git checkout develop`
+4. Create a feature branch off the Anvil: `git checkout -b feat/your-feature-name`
+5. Make your changes
+6. Run tests: `make check` (or use the VDE orchestration tools)
+7. Commit and push: `git push origin feat/your-feature-name`
+8. Open a Pull Request targeting the `develop` branch
 
 See [Development Setup](#development-setup) for detailed instructions.
 
@@ -73,11 +74,10 @@ We welcome contributions in many forms beyond just code!
 - **kcov** (40+): Code coverage (optional)
 
 See [TESTING.md](docs/TESTING.md) for detailed installation instructions.
-
 ### Initial Setup
 ```zsh
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/vde-system.git
+git clone -b stable https://github.com/YOUR_USERNAME/vde-system.git
 cd vde-system
 
 # Install dependencies (see TESTING.md)
@@ -205,12 +205,15 @@ Commit message prefixes:
 - `ci:`: CI/CD changes
 
 ### Pull Request Process
-1. **Keep PRs focused**: One feature or fix per PR
-2. **Update documentation**: Include doc changes in the PR
-3. **Add tests**: Ensure tests pass locally
-4. **Describe changes**: Explain what and why in PR description
-5. **Link issues**: Reference related issues with `Fixes #123` or `Relates to #123`
-6. **Respond to feedback**: Address review comments promptly
+1.  **Branch Naming:** Use clear, descriptive names for your branches (e.g., `feat/add-rust-support`, `fix/port-allocation-bug`, `docs/update-readme`).
+2.  **Target Branch:** All Pull Requests MUST target the `develop` branch (**The Anvil**). PRs targeting `main` (Production) will be rejected unless they are official release preparations authorized by the Alor.
+3.  **Keep PRs focused:** One feature or fix per PR.
+4.  **Update documentation:** Include doc changes in the PR.
+5.  **Add tests:** Ensure all relevant tests (especially `@system-spine` if modifying core infrastructure) pass before submitting.
+6.  **Describe changes:** Explain what and why in PR description.
+7.  **Link issues:** Reference related issues with `Fixes #123` or `Relates to #123`.
+8.  **Respond to feedback:** Address review comments promptly.
+9.  **Post-Merge Cleanup:** Once your PR is formally accepted and merged into the Anvil (`develop`), you MUST delete your feature branch.
 
 ### PR Description Template
 ```markdown

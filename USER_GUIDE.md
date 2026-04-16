@@ -48,15 +48,17 @@ Before you can ignite the Forge, you need four core pillars installed on your ma
 3.  **Git:** Run `brew install git`.
 4.  **Docker Desktop:** [Download for Mac](https://www.docker.com/products/docker-desktop). Choose "Apple Chip" for M1/M2/M3 or "Intel Chip" for older Macs.
 
-### 🪟 For Windows Users
+### 🪟 The Windows Frontier (WSL 2)
 
-1.  **WSL 2 (Mandatory):** VDE requires a Linux environment on Windows. Open **PowerShell as Administrator** and run:
-    `wsl --install`
-    *Restart your computer after this completes.*
-2.  **Zsh:** Inside your WSL terminal (usually Ubuntu), run:
-    `sudo apt update && sudo apt install zsh`
-3.  **Git:** Inside WSL, run `sudo apt install git`.
-4.  **Docker Desktop:** [Download for Windows](https://www.docker.com/products/docker-desktop). Ensure "Use the WSL 2 based engine" is checked in Settings.
+To walk the Way on Windows, you must build a sanctuary that speaks the **Language of the Tribe**.
+
+1.  **WSL 2 (Mandatory):** Open **PowerShell as Administrator** and run `wsl --install`. Restart your machine to temper the changes.
+2.  **The Language (Zsh):** Inside your WSL terminal, install Zsh and Git:
+    `sudo apt update && sudo apt install zsh git curl -y`
+    Set Zsh as default: `chsh -s $(which zsh)`.
+3.  **The World-Forge (Docker):** [Download Docker Desktop](https://www.docker.com/products/docker-desktop). In Settings > Resources > WSL Integration, enable integration for your specific WSL distribution.
+4.  **The Bridge (SSH):** Add `eval $(ssh-agent -s) > /dev/null` to your `~/.zshrc` inside WSL to ensure the agent is ignited.
+5.  **Path Sovereignty:** **CRITICAL:** Clone VDE into the Linux filesystem (e.g., `~/vde`). Storing it on the Windows filesystem (`/mnt/c/...`) will cause severe performance degradation and break SSH key permissions.
 
 ### 🐧 For Linux Users
 
@@ -68,11 +70,13 @@ Before you can ignite the Forge, you need four core pillars installed on your ma
 
 ### Final Step: Clone & Init
 
+**🛡️ The Sovereign Record:** The default branch for this repository is `develop` (**The Anvil**). For the stable, certified **Sovereign Baseline** (**Production**), ensure you clone using the `-b stable` flag as shown below.
+
 Once the pillars are active, open your **Zsh** terminal and run:
 
 ```zsh
 # Clone the repository
-git clone https://github.com/dderyldowney/vde-system.git ~/vde
+git clone -b stable https://github.com/dderyldowney/vde-system.git ~/vde
 cd ~/vde
 
 # Add VDE to your PATH

@@ -690,28 +690,19 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
             print(f"[DEBUG] STDERR: {result.stderr}", file=sys.stderr)
             
         # Clean stdout: remove VDE log lines (timestamps or [LEVEL] markers)
-        # BUG FIX: Stop stripping logs, BDD tests need to see them for verification
+        # BUG FIX: Stop stripping logs entirely. BDD tests need to see them for verification.
+        # We only strip ANSI escape codes for the clean version.
         raw_output = result.stdout or ""
         
         # Strip ANSI escape codes for clean version
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        clean_stdout = ansi_escape.sub('', raw_output)
-        
-        # Filter out VDE infrastructure logs (e.g. [INFO] Validating..., [SUCCESS] ..., etc)
-        # BUG FIX: Only strip timestamps, keep [LEVEL] tags as they are used for verification
-        # and ensure we don't strip lines that are pure data (like container names)
-        filtered_lines = []
-        for line in clean_stdout.splitlines():
-            # Only strip if it matches the EXACT timestamp pattern at the start
-            if not re.match(r'^\d{4}-\d{2}-\d{2}T', line):
-                filtered_lines.append(line)
-        clean_stdout = "\n".join(filtered_lines).strip()
+        clean_stdout = ansi_escape.sub('', raw_output).strip()
 
         # Update context if provided
         if context:
             # IMPORTANT: Always populate even if command failed
             context.vde_command_output_raw = raw_output
-            context.vde_command_output = raw_output
+            context.vde_command_output = clean_stdout
             context.vde_command_exit_code = result.returncode
 
             # Legacy attributes used by some older step files

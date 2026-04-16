@@ -1,8 +1,0 @@
-{
-  "vm_name": "vde-postgres",
-  "vm_type": "service",
-  "display_name": "PostgreSQL",
-  "ssh_port": 2404,
-  "status": "running",
-  "updated_at": "2026-04-08T03:19:13Z"
-}

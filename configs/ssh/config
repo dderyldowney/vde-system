@@ -1,5 +1,6 @@
 # VDE (Virtual Development Environment) SSH Configuration
-# Generated on Sun Apr 12 17:23:14 EDT 2026
+# Sovereign Baseline: 1.3.1
+# Generated on Wed Apr 15 12:52:22 EDT 2026
 #
 # This file contains SSH config entries for all known language and service VMs.
 # Each VM type has a fixed SSH port assignment:
@@ -295,17 +296,5 @@ Host vde-jupyterlab
     IdentityFile ~/.ssh/vde/vde_student
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
-    ForwardAgent yes
-    LogLevel ERROR
-
-
-
-Host vde-dynamic-vm
-    HostName localhost
-    Port 2298
-    User devuser
-    IdentityFile /Users/dderyldowney/.ssh/vde/vde_student
-    StrictHostKeyChecking no
-    UserKnownHostsFile /Users/dderyldowney/.ssh/vde/known_hosts
     ForwardAgent yes
     LogLevel ERROR

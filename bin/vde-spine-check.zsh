@@ -8,7 +8,7 @@
 # Pillar III: Docker
 # Pillar IV: SSH (vde_student identity)
 #
-# Reference: VDE-SPEC v1.3.0
+# Reference: VDE-SPEC 1.3.0
 #===============================================================================
 
 # ZSH-native logic demonstration (UAP Mandate 1)

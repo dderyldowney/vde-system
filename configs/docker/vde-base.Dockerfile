@@ -38,6 +38,7 @@ RUN useradd -ms /bin/zsh -u 1000 devuser && \
 RUN mkdir -p /var/run/sshd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    echo "AllowAgentForwarding yes" >> /etc/ssh/sshd_config && \
     echo "AuthorizedKeysFile .ssh/vde/authorized_keys" >> /etc/ssh/sshd_config
 
 # 4. The Student Environment (Oh-My-Zsh)
@@ -53,10 +54,17 @@ RUN mkdir -p /home/devuser/.ssh/vde && \
     chmod 700 /home/devuser/.ssh && \
     chmod 700 /home/devuser/.ssh/vde
 
-# 6. The Atomic Handshake (Entrypoint)
+# 6. THE ATOMIC HANDSHAKE (Entrypoint)
 COPY scripts/vde-entrypoint.zsh /usr/local/bin/vde-entrypoint.zsh
-RUN sudo chmod +x /usr/local/bin/vde-entrypoint.zsh
+COPY scripts/vde-motd.zsh /usr/local/bin/vde-motd.zsh
+RUN sudo chmod +x /usr/local/bin/vde-entrypoint.zsh /usr/local/bin/vde-motd.zsh
 
+# 7. Universal Login Message (MOTD)
+USER root
+RUN echo 'zsh /usr/local/bin/vde-motd.zsh' >> /etc/zsh/zprofile
+
+USER devuser
 WORKDIR /home/devuser/workspace
 ENTRYPOINT ["/usr/local/bin/vde-entrypoint.zsh"]
+
 

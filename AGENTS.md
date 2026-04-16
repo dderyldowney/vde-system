@@ -19,9 +19,14 @@ The main agent MUST complete these 8 steps sequentially before doing *anything e
 4.  **Read @docs/VDE-SPEC.md**: Refresh knowledge of authoritative technical requirements and implementation priority.
 5.  **Read @PROJECT_STATUS.md**: Understand the current reliability, pass rates, and identified gaps.
 
-6.  **Query `memory` MCP**: Retrieve cross-session context and semantically relevant conversation history.
-7.  **Refresh Library Documentation**: Use `context7` to fetch up-to-date documentation for any relevant libraries or frameworks.
-8.  **Perform Housekeeping**: Strip dead logs, remove unused code, and meticulously verify `bin/` script compliance (ZSH shebangs only).
+6.  **THE SOVEREIGN STARTUP RITUAL**: The Alor (Main Agent) MUST execute these three rituals in strict sequence upon session ignition. Sub-agents (Verd'ika) are strictly forbidden from running these steps — they inherit the Alor's certification.
+    - `bin/vde-enforce-uap.zsh` (Sovereign Audit)
+    - `bin/vde-spine-check.zsh` (Spine Check)
+    - `python3 -m behave tests/features/core-infrastructure/proof-of-life-the-contract.feature` (Proof of Life)
+
+7.  **Query `memory` MCP**: Retrieve cross-session context and semantically relevant conversation history.
+8.  **Refresh Library Documentation**: Use `context7` to fetch up-to-date documentation for any relevant libraries or frameworks.
+9.  **Perform Housekeeping**: Strip dead logs, remove unused code, and meticulously verify `bin/` script compliance (ZSH shebangs only).
 
 ---
 
@@ -30,7 +35,7 @@ The main agent MUST complete these 8 steps sequentially before doing *anything e
 Violating any of these mandates is a failure of the agent's primary directive.
 
 1.  **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`. Bash is strictly forbidden. The agent MUST NOT use `bash` to execute commands.
-2.  **DEVELOP BRANCH ONLY (ABSOLUTE)**: All active work MUST occur on the `develop` branch. `main` is reserved for STABLE RELEASES ONLY. Direct work on `main` is strictly prohibited.
+2.  **THE ANVIL IS DEFAULT**: All active work MUST occur on the `develop` branch (The Anvil). `main` (Production) is reserved for STABLE RELEASES ONLY. Direct work on `main` is strictly prohibited.
 3.  **Main Agent is Orchestrator ONLY**: The Main Agent MUST NOT write implementation code if it spans >1 file. The Main Agent's job is planning, orchestrating, and verifying. *Exception: If sub-agents are technically unavailable, the Main Agent may perform direct implementation provided every action is strictly supervised by the Enforcer.*
 3.  **Enforcer Supervision (Rule A)**: Every single action (shell commands, dispatches, verification steps, and cleanup) MUST be run under the supervision of the Enforcer (`bin/vde-enforce-uap.zsh`).
 4.  **Phase-End Re-Audit Swarm (Rule B)**: Every development phase MUST automatically conclude with a supervised re-audit swarm. This swarm MUST assume errors exist, search for regressions or weak spots, rerun all relevant Behave scenarios, and provide a summary of findings. Skipping or shortening this re-audit is a total mandate failure.
@@ -47,6 +52,11 @@ Violating any of these mandates is a failure of the agent's primary directive.
     1. Generate a .gemini/PLANS/remediation_*.md file.
     2. List every violation as a sub-task.
     3. Obtain user approval on the remediation plan before executing any fixes.
+15. **The Proof of Life Heartbeat (Alor's Mandate)**: The Proof of Life (`proof-of-life-the-contract.feature`) is an **Alor-exclusive (Orchestrator)** ritual. Sub-agents (Verd'ika) inherit the certification and MUST NOT run it independently. It is mandatory ONLY during:
+    - The Sovereign Startup Ritual (Alor only).
+    - Committing or Pushing changes.
+    - Direct implementation work on the lifecycle logic itself.
+16. **Authority of the Record**: Only the Orchestrator (Alor) and the User are permitted to alter The Record. Sub-agents (Verd'ika) are FORBIDDEN from making autonomous commits. They may only perform commits when explicitly instructed by the Orchestrator or the User, ensuring the intent and control remain centralized.
 
 ### !! CRITICAL FORBIDDEN PATTERNS !!
 - **NO BASH/SH SYNTAX:** This is a ZSH-only project. Use ZSH-specific features (e.g., `${(f)var}`, `**/*`, `ZSH arrays index at 1`).
@@ -58,10 +68,11 @@ Violating any of these mandates is a failure of the agent's primary directive.
 
 ## 3. The Development Lifecycle (Phases 0-5)
 
-All work must proceed through these phases in order. Skipping phases or "optimizing away" gates is a protocol violation.
+All work must proceed through these phases in order. Skipping phases or "optimizing away" phases is a protocol violation. These structural checkpoints—scoping the mission at ignition and proving the work at finalization—are central to our core design goals and ensure the purity of the Forge.
 
-### Phase 0: Discovery (Swarm Mode)
-- **Action**: Gather context using MCP services.
+### Phase 0: Mission Ignition (Swarm Mode)
+- **Action**: Strike the Signet. Execute `gh issue create` using the appropriate template to define the mission scope and intent. Gather context using MCP services.
+- **Constraint**: **Scope Creep Prohibition**. The mission scope is FINAL once the Signet is struck. ANY new requirement discovered during implementation MUST spawn a new, separate Signet (Issue).
 - **Swarm**: Spawn `scout` and `security-auditor` agents to map dependencies and security posture.
 - **Output**: Identification of DRY reuse opportunities and architectural constraints.
 
@@ -72,6 +83,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ### Phase 2: Implementation (TDD + Swarm)
 - **Action**: Follow Red-Green-Refactor.
+- **Record the Discussion**: Significant architectural decisions, hurdles, or logic pivots MUST be recorded as comments on the Signet (Issue) to preserve the 'Why' for future warriors.
 - **Pre-Edit Gate (CRITICAL STOP)**:
   1. STATE: "I am about to make [N] direct edit(s) to [files]."
   2. COUNT: Is N > 1?
@@ -87,11 +99,15 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ### Phase 4: Review (Dual Approval)
 - **Action**: Run `/vde-review`.
+- **The Dual-Gate Mandate**: The Orchestrator MUST dispatch the `code-reviewer` agent and obtain its explicit approval BEFORE seeking User approval.
 - **Swarm**: `reviewer` agent performs deep logic, performance, and security audit.
-- **Exit Gate**: **Reviewer Approval AND User Approval**.
+- **Exit Gate**: **Reviewer Approval AND THEN User Approval**.
 
 ### Phase 5: Finalization
 - **Action**: Final test run + commit using `/vde-commit`.
+- **Submit the Beskar**: The Chronicle (PR) MUST include: 1) High-level mission summary, 2) Complete list of modified files, 3) Rationale for refactoring, and 4) **Evidence Mandate**: Raw terminal output of the verification suite.
+- **The Unbreakable Link**: Every Chronicle (PR) MUST be linked to its Signet (Issue) using authorized GitHub auto-closing keywords (e.g., `Closes #N`).
+- **Mandate**: Certification of the **Proof of Life** Heartbeat is mandatory before committing or pushing.
 - **Hygiene**: Update `MEMORY.md` and session handovers.
 
 ---
@@ -100,7 +116,8 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 - **Main Agent**: Acts as the orchestrator. Synthesizes results, maintains `MEMORY.md`, and spawns swarms. **Does NOT write multi-file code UNLESS sub-agents are technically unavailable, in which case it may perform direct implementation provided every action is strictly supervised by the Enforcer.**
 - **Sub-Agents**: Specialized experts. They inherit context from the Main Agent and perform isolated, single-file tasks.
-- **Inheritance Mandate**: Sub-agents MUST inherit all context from the Main Agent. Re-reading or freshly pulling files that are already present in the Main Agent's context (specifically those loaded via the `@` startup checklist) is strictly forbidden. This prevents infinite loops and context window crashes.
+- **Controlled Commits**: Sub-agents MUST NEVER make commits of their own accord. They operate strictly under the Orchestrator's intent. The Orchestrator may serialize commits using sub-agents, but the responsibility for the Record's integrity belongs to the Alor.
+- **Inheritance Mandate**: Sub-agents (Verd'ika) MUST inherit all context from the Alor (Main Agent). This includes the certification of the **Proof of Life** Heartbeat; sub-agents are strictly forbidden from executing this ritual themselves. Re-reading or freshly pulling files that are already present in the Main Agent's context (specifically those loaded via the `@` startup checklist) is strictly forbidden. This prevents infinite loops and context window crashes.
 - **Scope Limit**: If a sub-agent receives a task requiring >1 file edit, it **MUST STOP** and report back. It cannot expand its own scope or spawn its own sub-agents.
 - **Parallelism**: Swarms must be launched simultaneously in a single message block, not sequentially.
 

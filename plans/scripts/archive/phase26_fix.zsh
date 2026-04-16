@@ -4,7 +4,7 @@
 
 set -e
 
-VDE_ROOT="/Users/dderyldowney/VDE"
+VDE_ROOT="$HOME/VDE"
 
 # 1. Edit bin/vde
 # Change exit code from ${VDE_ERR_DOCKER:-5} to ${VDE_ERR_DOCKER:-8} in the start) case.

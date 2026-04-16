@@ -58,6 +58,17 @@ VDE_ERR_CACHE_INVALID=11
 VDE_ERR_SYNC_DRIFT=13
 
 # =============================================================================
+# BRANCH CONFIGURATION
+# =============================================================================
+# VDE uses semantic branch naming to ensure portability.
+# VDE_PRODUCTION_BRANCH: The stable, certified Sovereign Baseline (default: main)
+# VDE_ANVIL_BRANCH: The active integration and development branch (default: develop)
+
+VDE_PRODUCTION_BRANCH="${VDE_PRODUCTION_BRANCH:-main}"
+VDE_ANVIL_BRANCH="${VDE_ANVIL_BRANCH:-develop}"
+VDE_STABLE_ALIAS="stable"
+
+# =============================================================================
 # PORT CONFIGURATION
 # =============================================================================
 # VDE uses specific port ranges to avoid conflicts with common services.
@@ -296,6 +307,7 @@ if [[ "${VDE_TEST_MODE:-0}" -ne 1 ]] ; then
              VDE_RETRY_MAX_DELAY VDE_STALE_LOCK_AGE VDE_LOCK_CHECK_INTERVAL \
              VDE_LOG_RETENTION_DAYS VDE_MAX_LOG_SIZE VDE_DOCKER_NETWORK VDE_TEST_NETWORK \
              VDE_COMPOSE_PROJECT_PREFIX VDE_CONTAINER_PREFIX \
+             VDE_PRODUCTION_BRANCH VDE_ANVIL_BRANCH VDE_STABLE_ALIAS \
              VDE_SSH_USER VDE_SSH_KEY_PREFERENCE VDE_HOME_DIR VDE_SSH_DIR \
              VDE_SSH_CONFIG VDE_SSH_KNOWN_HOSTS VDE_SSH_IDENTITY VDE_SSH_IDENTITY_PUB \
              VDE_SSH_AGENT_ENV \
