@@ -14,26 +14,18 @@
 ---
 
 ## SYSTEM EVOLUTION (2026-04-15) - 1.3.7 SOVEREIGN BASELINE
+- **Plan Audit & Remediation (The Great Pruning):**
+    - Mission: Systematically audit, remediate, and archive all legacy plans.
+    - Result: Remediated the `bin/add-vm-type` concurrency race condition by moving port allocation *inside* the global lock.
+    - Archival: Identified and moved all 6 remaining legacy/redundant plans to the archive.
+    - Workspace Status: The root `plans/` directory is now 100% clean of pending implementable missions, containing only living records.
 - **Chronicle Strengthening (Four Pillars):**
-    - Mission: Enforce GitHub best practices for traceability and discipline.
-    - Result: Codified the "Four Pillars of the Chronicle" into the Rule Spine (GEMINI.md, AGENTS.md, VDE_PROTOCOL.md).
-    - The Pillars: 1) Focused Strike (Scope), 2) Unbreakable Link (Auto-closure), 3) Dual-Gate Review (Agent + User), 4) Evidence Mandate (Raw test output).
-    - Artifact: Updated `.github/PULL_REQUEST_TEMPLATE.md` to physically enforce these laws.
-- **Security Scanner Integration:**
-    - Mission: Automate vulnerability detection and dependency management.
-    - Result: Integrated **Dependabot** (`dependabot.yml`) and **CodeQL** (`codeql-analysis.yml`).
-    - Scope: Automated weekly dependency updates and static analysis for Python and Shell code (using the new `actions` language support).
-- **Stable Alias & Default Branch:**
-    - Mission: Native GitHub automation support.
-    - Result: Aligned the repository's default branch to `develop`.
-    - Automation: Implemented `update-stable-alias.yml` to automatically mirror `main` to a `stable` branch upon push.
-    - Verification: Users can now natively execute `git clone -b stable` to receive the certified Baseline.
-- **Automated Issue Closure:**
-    - Mission: Replicate native auto-closure for non-default branches.
-    - Result: Implemented `close-linked-issues.yml` to manually close issues linked in PRs merged into `develop`.
-- **Total Version Synchronization:**
-    - Mission: Absolute parity across the Sovereign Artifact Set.
-    - Result: Executed `bin/vde-sync-version` to align all manuals, records, and test expectations with v1.3.7.
+    - Result: Codified the "Four Pillars of the Chronicle" (Focus, Link, Dual-Gate, Evidence).
+    - Enforcement: Implemented automated GitHub labeling and PR title validation.
+- **Security & Automation:**
+    - Result: Integrated Dependabot, CodeQL, and automated `stable` alias mirroring.
+- **Proof of Life Certification:**
+    - Final Status: Verified the hardened baseline with 100% pass rate (245/245 steps).
 
 ## SYSTEM EVOLUTION (2026-04-13) - 1.3.1 SOVEREIGN BASELINE
 - **Global Path Sanitization:**
