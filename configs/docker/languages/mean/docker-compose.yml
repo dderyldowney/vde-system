@@ -1,0 +1,52 @@
+# Template for language VMs
+# Variables: mean, 2221, , zsh /vde/scripts/setup/mean-init.zsh
+name: vde-mean
+services:
+  vde-mean:
+    build:
+      context: ../../../..
+      dockerfile: configs/docker/vde-lang.Dockerfile
+      args:
+        VM_NAME: mean
+        PKGS_TO_INSTALL: ""
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/mean-init.zsh"
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+    image: vde-mean:latest
+    container_name: vde-mean
+    hostname: vde-mean
+    restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=mean"
+
+    ports:
+      - "2221:2221"
+
+    volumes:
+      - ../../../../:/vde:ro
+      - ../../../../projects/mean:/home/devuser/workspace
+      - ../../../../logs/mean:/logs
+      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
+      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
+      # Docker Socket Sovereignty (Physical Verification Law)
+      - /var/run/docker.sock:/var/run/docker.sock
+      # macOS Canonical Bridge (Hardened to use explicit host socket)
+      - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/host-services/ssh-auth.sock
+      # VDE 2026 Sovereign Bridge
+      - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/vde-ssh.sock
+
+    environment:
+      - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock
+
+    env_file:
+      - ../../../../env-files/mean.env
+
+    networks:
+      - vde-net
+
+networks:
+  vde-net:
+    external: true
