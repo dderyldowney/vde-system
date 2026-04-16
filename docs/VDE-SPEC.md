@@ -1,4 +1,4 @@
-# VDE-SPEC 1.3.7 (The Sovereign Evolution) (The Sovereign Hardening)
+# VDE-SPEC 1.3.7 (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Hardening)
 
 **Date**: 2026-04-15
 **Status**: SOVEREIGN BASELINE CERTIFIED
