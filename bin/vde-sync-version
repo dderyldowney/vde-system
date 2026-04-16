@@ -112,7 +112,12 @@ vde_log_success "Aligned .gemini_security/REMEDIATION_PLAN.md" "forge"
 vde_sed_inplace "s/# VDE Project Protocol \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?\)/# VDE Project Protocol (${NEW_VER})/" "${VDE_ROOT_DIR}/VDE_PROTOCOL.md"
 vde_log_success "Aligned VDE_PROTOCOL.md" "forge"
 
-# 16.1 Strike Miscellaneous Library and Tool Records
+# 16.1 Strike USE_CASES.md and VDE_ANALYSIS.md (Sovereign Artifact Set)
+vde_sed_inplace "s/\*\*Baseline\*\*: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/\*\*Baseline\*\*: ${NEW_VER}/" "${VDE_ROOT_DIR}/USE_CASES.md"
+vde_sed_inplace "s/\*\*Baseline\*\*: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/\*\*Baseline\*\*: ${NEW_VER}/" "${VDE_ROOT_DIR}/VDE_ANALYSIS.md"
+vde_log_success "Aligned USE_CASES.md and VDE_ANALYSIS.md" "forge"
+
+# 16.2 Strike Miscellaneous Library and Tool Records
 vde_sed_inplace "s/Sovereign Baseline [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Sovereign Baseline ${NEW_VER}/g" "${VDE_ROOT_DIR}/bin/vde-tactical-sweep.zsh"
 vde_sed_inplace "s/Sovereign Baseline: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Sovereign Baseline: ${NEW_VER}/g" "${VDE_ROOT_DIR}/lib/vde-ssh"
 vde_sed_inplace "s/\[v\][0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/\[v\]${NEW_VER}/" "${VDE_ROOT_DIR}/lib/vde-core"
