@@ -130,9 +130,13 @@ def step_verify_all_scripts(context):
 
 @then('every VM must be startable via the VDE orchestrator')
 def step_verify_all_startable(context):
-    # We won't start all 28 in one test to save time, but we verified the logic
-    # Maybe test one from each category
-    pass
+    # We sample a language and a service to ensure the logic holds across categories
+    sample_vms = ["python", "redis"]
+    for vm in sample_vms:
+        res = run_vde_command(f"start {vm}")
+        assert res.returncode == 0, f"Failed to start {vm} during matrix verification: {res.stderr}"
+        # Stop it to keep the Forge clean
+        run_vde_command(f"stop {vm}")
 
 @then('every VM must adhere to the 8-field registry standard')
 def step_verify_8_field_standard(context):
