@@ -1,4 +1,4 @@
-# VDE Remediation Strike Plan (1.3.1 Sovereign)
+# VDE Remediation Strike Plan (1.3.7 Sovereign)
 
 ## OVERVIEW
 This plan outlines the surgical strikes required to remediate the vulnerabilities identified in the 2026-04-09 Audit.
