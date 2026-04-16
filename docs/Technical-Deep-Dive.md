@@ -7,6 +7,8 @@ The Virtual Development Environment is governed by the **Universal Agent Protoco
 ### Core Enforcement Mandates:
 - **ZSH Native Sovereignty**: Detects "Fake ZSH" by verifying the use of native parameter expansion `${(` and associative arrays. Usage of `bash` or 0-indexed arrays is a Class-A violation.
 - **Shebang Purity**: Recursively audits `bin/`, `lib/`, and `scripts/` to ensure `#!/usr/bin/env zsh` is the universal entry point.
+- **The Use-Case Anchor**: Mandates that every technical refactor or infrastructure hardening strike is justified by its improvement to the **Foundling** (Student) or **Reinforcement** (New Hire) cohorts.
+- **The Armorer’s Toolset**: Explicitly authorizes the use of research swarms, self-augmentation tools, and parallel sub-agent orchestration to ensure the highest quality strike.
 - **Ghost Detection**: Monitors for "Ghost Zones" (unauthorized root directories) and ensures build-time artifacts (`apt` lists) are purged.
 - **Supervised Execution**: Every CLI strike is wrapped in the Enforcer to maintain architectural integrity.
 
