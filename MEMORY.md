@@ -35,12 +35,12 @@
 - **Sovereign Branching Strategy (The Signet):**
     - Result: Codified mandatory feature branch lifecycle.
 
-## SYSTEM BENCHMARKS (VDE 1.3.7)
+## SYSTEM BENCHMARKS (VDE 1.4.0)
 - **Canonical Ignition Speed:** 3.959s. Benchmark for 3-VM Parallel Ignition.
 - **Forge Volume (Core):** ~24,500 lines of active logic.
 - **Forge Volume (Total):** 108,300 total tracked lines.
 
-## THE VERDICT: 1.3.7 READY
+## THE VERDICT: 1.4.0 READY
 - **Compliance Status**: 🟢 100% GREEN / SYSTEM HARDENED.
 - **Security Certified**: CodeQL and Dependabot active.
 - **Workflow Automated**: Auto-closure and stable alias active.

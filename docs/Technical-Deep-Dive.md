@@ -1,4 +1,4 @@
-# VDE: Technical Deep-Dive (1.3.7 Sovereign)
+# VDE: Technical Deep-Dive (1.4.0 Sovereign)
 
 ## 1. The Rule Spine (UAP Enforcement)
 

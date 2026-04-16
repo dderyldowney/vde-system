@@ -1,6 +1,6 @@
 # VDE Professional Evaluation: Use Case Alignment
 
-**Baseline**: 1.3.7 (Sovereign)
+**Baseline**: 1.4.0 (Sovereign)
 **Status**: CERTIFIED
 **Auditor**: Mandalorian Armorer-Architect (Agent)
 

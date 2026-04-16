@@ -1,8 +1,8 @@
-# VDE-SPEC 1.3.7 (The Sovereign Evolution) (The Sovereign Hardening)
+# VDE-SPEC 1.4.0 (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Hardening)
 
 **Date**: 2026-04-15
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE 1.3.7
+**Reference**: ARCHITECTURE 1.4.0
 **Identity**: The Covert
 
 ## 1. Absolute Mandates (The Rule Spine & The Gospel)
@@ -65,7 +65,7 @@ The Forge is currently advancing through Phase 29:
 - **State Integrity**: Codified `VDE_DOCKER_STATE_DIR` in `lib/vde-constants` to ensure deterministic cluster and container state management.
 
 ---
-Version: 1.3.7
+Version: 1.4.0
 **Status**: HARDENED
-**Reference**: RESOL’NARE 1.3.7
+**Reference**: RESOL’NARE 1.4.0
 ---
