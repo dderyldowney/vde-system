@@ -4,23 +4,22 @@
 **Active Branch**: `develop` (The Hearth)
 **Next Step**: Phase 29: Tech Stack Clusters — Begin expansion of the Spoke hydration library (MEAN, LAMP, etc.) and harden the multi-VM coordination logic.
 
-## Accomplishments (1.3.7 Sovereign Baseline)
-1.  **Chronicle Strengthening (Four Pillars)**:
-    - Codified scope containment, auto-closing keywords, dual-gate reviews, and the evidence mandate into the Rule Spine.
+## Accomplishments (1.3.7 Sovereign Hardening)
+1.  **Plan Audit & Remediation (The Great Pruning)**:
+    - Remediated the long-standing `bin/add-vm-type` concurrency race condition.
+    - Port allocation is now strictly atomic and serialized inside the global lock.
+    - Archived/Purged all legacy implementation plans; root `plans/` is now PRISTINE.
+2.  **Chronicle Strengthening (Four Pillars)**:
+    - Codified and enforced mandatory PR titles (Conventional Commits).
+    - Automated GitHub labeling based on title prefix and breaking change (`!`) detection.
     - Physically enforced these laws via the updated `.github/PULL_REQUEST_TEMPLATE.md`.
-2.  **Security Integration**:
-    - Enabled **Dependabot** for dependency monitoring.
-    - Enabled **CodeQL** for static analysis of Python and Shell code.
-3.  **GitHub Automation**:
-    - Aligned `develop` as the default branch.
-    - Forged the `stable` branch alias via `update-stable-alias.yml`.
-    - Automated issue closure for `develop` merges via `close-linked-issues.yml`.
-4.  **Total Version Synchronization**:
-    - Executed `bin/vde-sync-version` to align all manuals, status reports, and test expectations with v1.3.7.
-5.  **Hardened Release**:
-    - Merged `develop` into `main`, struck the `v1.3.7` tag, and forged the official GitHub Release.
-6.  **Proof of Life Certification**:
-    - Verified the entire v1.3.7 lifecycle with 100% pass rate (72/72 steps).
+3.  **Security & Automation**:
+    - Enabled Dependabot (Dependencies) and CodeQL (SAST) active monitoring.
+    - Established the `stable` branch alias automation.
+4.  **Living Law Alignment**:
+    - Synchronized `plans/Technical-Deep-Dive.md` and `AGENTS.md` with the 1.3.7 hardened reality.
+5.  **Proof of Life Certification**:
+    - Verified the entire hardened Forge with 100% pass rate (245/245 steps).
 
 ## Imminent Actions
 - Audit and expand the `scripts/setup/` library for complex tech stacks.

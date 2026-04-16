@@ -1,4 +1,4 @@
-# VDE: Technical Deep-Dive (1.3.7 Sovereign)
+# VDE: Technical Deep-Dive (1.3.7 Hardened)
 
 ## 1. The Rule Spine (UAP Enforcement)
 
@@ -7,7 +7,7 @@ The Virtual Development Environment is governed by the **Universal Agent Protoco
 ### Core Enforcement Mandates:
 - **ZSH Native Sovereignty**: Detects "Fake ZSH" by verifying the use of native parameter expansion `${(` and associative arrays. Usage of `bash` or 0-indexed arrays is a Class-A violation.
 - **Shebang Purity**: Recursively audits `bin/`, `lib/`, and `scripts/` to ensure `#!/usr/bin/env zsh` is the universal entry point.
-- **Ghost Detection**: Monitors for "Ghost Zones" (unauthorized root directories), enforces shebang purity, and forbids `sleep` calls in favor of deterministic polling.
+- **Ghost Detection**: Monitors for "Ghost Zones" (unauthorized root directories) and ensures build-time artifacts (`apt` lists) are purged.
 - **Supervised Execution**: Every CLI strike is wrapped in the Enforcer to maintain architectural integrity.
 
 ## 2. The Ignition Pipeline (The Smelting Ritual)
@@ -15,47 +15,65 @@ The Virtual Development Environment is governed by the **Universal Agent Protoco
 VDE employs a three-tier reactive synchronization pipeline to transform human-readable intent into high-performance runtime data.
 
 1.  **The Source (`data/vm-types.conf`)**: The human-editable flat-file registry following the strict 8-field standard: `type|name|aliases|display_name|pkgs|custom_cmd|service_port|ssh_port`.
-2.  **The Registry (`data/vm-types.json`)**: The `vde_translate_conf_to_json` ritual hammers the `.conf` into a structured JSON archive using pure ZSH parsing to avoid host-level `jq` dependencies.
-3.  **The Cache (`.cache/vm-core.cache`)**: The `vde_core_save_cache` process generates a ZSH-native associative array for O(1) runtime lookup.
+2.  **The Registry (`data/vm-types.json`)**: The `vde_translate_conf_to_json` ritual (Rule G) hammers the `.conf` into a structured JSON archive using pure ZSH parsing to avoid host-level `jq` dependencies.
+3.  **The Cache (`.cache/vm-core.cache`)**: The `vde_core_save_cache` process generates a ZSH-native associative array (`VDE_CORE_VM_TYPE`, `VDE_CORE_VM_ALIASES`, `VDE_CORE_VM_DISPLAY`) for O(1) runtime lookup.
 4.  **Ignition Sync**: The `bin/vde` orchestrator performs a timestamp audit. If source files are newer than the cache, a re-smelt is triggered automatically before Spoke ignition.
 
 ## 3. Concurrency & Atomic Stewardship
 
-VDE manages high-concurrency operations via the **Lock-Queue Model**.
+VDE manages high-concurrency operations (parallel builds and mass ignitions) via the **Lock-Queue Model**.
 
 ### FIFO Ticket-Based Locking (`lib/vm-lock`)
-VDE uses a deterministic sequencing mechanism to prevent race conditions:
-- **Ticket Registration**: Every process requesting a lock creates a unique "Ticket" file.
-- **Oldest Ticket Priority**: The `claim_lock` function enforces FIFO order.
-- **The Atomic Gate**: Uses kernel-level `mkdir` atomicity to claim the final directory-based lock.
+VDE uses a deterministic sequencing mechanism to prevent "Thundering Herd" race conditions:
+- **Ticket Registration**: Every process requesting a lock creates a unique "Ticket" file in `${lock_file}.queue/` using `${EPOCHREALTIME}-$$`.
+- **Oldest Ticket Priority**: The `claim_lock` function enforces FIFO order—only the process with the oldest numerically sorted ticket file may proceed.
+- **The Atomic Gate**: Uses kernel-level `mkdir` atomicity to claim the final directory-based lock (`${lock_file}`).
+- **Ownership Proof**: Once claimed, the lock directory contains a `pid` file recording `PID:PGID:TIMESTAMP` for transparent monitoring and crash recovery.
+- **Paths**: Primary locks reside in `${VDE_ROOT_DIR}/.locks/vms/` and `global-config.lock`.
 
 ### Port Stewardship (`lib/vde-docker`)
-To prevent double-allocation during parallel strikes, VDE reserves ports using lock markers. No Spoke is assigned a port until:
+To prevent double-allocation during parallel strikes, VDE reserves ports using `${VDE_ROOT_DIR}/.locks/ports/port-<number>.lock` markers. No Spoke is assigned a port until:
 1.  **Kernel Referee**: The port lock directory is successfully created.
-2.  **The Seeker's Recon**: A physical diagnostic handshake verifies the port is not occupied.
-3.  **Hub Registry Check**: Verification that the port isn't pre-defined.
+2.  **The Seeker's Recon**: A physical diagnostic handshake (`docker run --rm`) verifies the port is not occupied by host-level "Scavenger" processes.
+3.  **Registry Serialization**: In `bin/add-vm-type`, the `find_available_ssh_port` command is executed *inside* the global config lock to prevent allocation races.
 
 ## 4. Universal Script Parity (USP)
 
 VDE decouples environment hydration from Dockerfile complexity through USP rituals stored in `scripts/setup/`.
 
 - **Hydration Ritual**: Every Spoke entry MUST point to a setup script (`<alias>-init.zsh`).
+- **Asynchronous Ignition**: Service Spokes register background ignition hooks in `/usr/local/bin/vde-spoke-ignition.zsh`, detaching service availability from the primary SSH gate.
 - **Born Ready (BTO)**: All hydration happens during the `docker build` phase. Runtime `apt` calls are strictly forbidden to ensure images are immutable and portable.
 
-## 5. Security & Infrastructure Bridge
+## 5. Security & Sovereign Bridge
 
 ### Identity Isolation (`lib/vde-security`)
-- **Key Isolation**: The `vde_student` identity is confined to `~/.ssh/vde/`.
-- **Permission Enforcement**: Recursive `700` to sensitive directories and `600` to identity files.
-- **Network Segmentation**: `vde-net` bridge ensures container isolation.
+- **Key Isolation**: The `vde_student` identity is confined to `${VDE_SSH_DIR}` (`~/.ssh/vde/`).
+- **Permission Enforcement**: `vde_security_enforce_permissions` applies recursive `700` to sensitive directories (`data/`, `logs/`, `.cache/`, `.locks/`) and `600` to identity/env files.
+- **Network Segmentation**: `vde-net` (bridge) ensures container isolation with `vde.managed=true` labeling.
 
-### Sovereign Bridge & Sanitization
-- **Command Sanitization**: Native ZSH arrays neutralize injection vectors.
-- **SSH Agent Trust**: Forwarding via `socat` UNIX-proxying in the entrypoint.
+### Bridge Hardening (Phase 27)
+- **Conditional Forwarding**: `vde-entrypoint.zsh` performs a "Sovereign Bridge Handshake." It only exports the `socat` proxy socket to `SSH_AUTH_SOCK` if the variable is empty, protecting protocol-native forwarding (`ssh -A`) from being overwritten.
+- **Persistence Anchor**: The bridge is preserved for non-login shells via conditional injection into `/home/devuser/.zshenv`.
+
+## 6. GitHub Workflow (The Chronicle)
+
+VDE enforces a machine-readable history through automated GitHub orchestration.
+
+- **Stable Alias**: The `stable` branch is an automated alias for `main`, kept in sync by the `update-stable-alias.yml` workflow.
+- **Automated Labeling**: PRs are automatically labeled (`feat`, `fix`, `chore`, `breaking-change`) based on their Conventional Commit titles.
+- **Title Validation**: The `verify-pr-title.yml` workflow rejects non-compliant PR titles, ensuring the Chronicle remains parseable.
+
+## 7. Deterministic Error Engine (Phase 26)
+
+All VDE operations are wrapped in `vde_run`, which captures return codes and maps them to the **Sovereign Error Table**:
+- `VDE_ERR_GENERAL (1)`
+- `VDE_ERR_NOT_FOUND (3)`
+- `VDE_ERR_LOCK (9)`
+- `VDE_ERR_SYNC_DRIFT (13)`
 
 ---
 **Version**: 1.3.7
 **Status**: SOVEREIGN BASELINE CERTIFIED
 **Reference**: ARCHITECTURE 1.3.7
-**Identity**: The Covert
 ---
