@@ -262,7 +262,7 @@ vde_translate_conf_to_json() {
               \"display\": \"$(_vde_escape_json "${_v_disp}")\",
               \"pkgs\": ${_v_pkgs_json},
               \"custom_cmd\": ${_v_cmd_json},
-              \"service_port\": ${_v_svc_json},
+              \"service_ports\": ${_v_svc_json},
               \"ssh_port\": ${_v_ssh_port_json}
             }"
 
@@ -489,7 +489,7 @@ vde_require_ssh() {
         local vde_key="${HOME}/.ssh/vde/vde_student"
         if [[ ! -f "${vde_key}" ]]; then
             # Log warning but don't fail, as some commands might not need the identity yet
-            vde_log_warning "VDE identity not found at ${vde_key}"
+            log_warning "VDE identity not found at ${vde_key}"
         fi
         _VDE_SSH_LOADED=1
     fi
@@ -504,8 +504,9 @@ vde_require_docker() {
             return ${VDE_ERR_NOT_FOUND:-3}
         fi
         # 2. Verify daemon responsiveness (The World-Forge)
+        # We use 'docker info' as it is the canonical probe for daemon health
         if ! docker info >/dev/null 2>&1; then
-            vde_log_error "Docker daemon is not responsive. Is it running?"
+            log_error "Docker daemon is not responsive. Is it running?"
             return ${VDE_ERR_GENERAL:-1}
         fi
         _VDE_DOCKER_LOADED=1

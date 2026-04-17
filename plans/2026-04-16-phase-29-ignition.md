@@ -17,7 +17,7 @@
 **Files:**
 - Modify: `lib/vde-core`
 
-- [ ] **Step 1: Harden vde_require_ssh**
+- [x] **Step 1: Harden vde_require_ssh**
     - Replace the current stub with logic that verifies the `ssh` binary and the `vde_student` identity.
 
 ```zsh
@@ -37,7 +37,7 @@ vde_require_ssh() {
 }
 ```
 
-- [ ] **Step 2: Harden vde_require_docker**
+- [x] **Step 2: Harden vde_require_docker**
     - Replace the current stub with a fast physical probe (`docker info`).
 
 ```zsh
@@ -65,9 +65,9 @@ vde_require_docker() {
 - Audit: `scripts/setup/`
 - Target: `MEAN`, `LAMP`, `ELK` stacks.
 
-- [ ] **Step 1: Audit existing multi-VM scripts**
+- [x] **Step 1: Audit existing multi-VM scripts**
     - Identify gaps in current coordination logic for clusters.
-- [ ] **Step 2: Harden vde cluster orchestration**
+- [x] **Step 2: Harden vde cluster orchestration**
     - Ensure `bin/vde-cluster` (or equivalent) uses the hardened `vde_run` and `vm-lock` mechanisms.
 
 ---
