@@ -18,13 +18,13 @@
 **Files:**
 - Modify: `scripts/setup/jupyterlab-init.zsh`
 
-- [ ] **Step 1: Update System Alloys**
+- [x] **Step 1: Update System Alloys**
     - Add `libpq-dev` and `postgresql-client` to `apt-get install`.
-- [ ] **Step 2: Install 2026 Library Alloy**
+- [x] **Step 2: Install 2026 Library Alloy**
     - Install `polars`, `torch`, `langgraph`, `fastapi`, `streamlit`.
     - Install Postgres bridges: `psycopg[binary]`, `sqlalchemy`, `jupysql`.
     - Retain foundations: `numpy`, `pandas`, `matplotlib`.
-- [ ] **Step 3: Enable Zero-Gate Access**
+- [x] **Step 3: Enable Zero-Gate Access**
     - Configure `jupyter_server_config.py` with empty token/password.
 
 ---
@@ -34,16 +34,16 @@
 **Files:**
 - Modify: `bin/vde-init`
 
-- [ ] **Step 1: Ensure Cluster Persistence**
+- [x] **Step 1: Ensure Cluster Persistence**
     - Add ritual to `bin/vde-init` to save `default` cluster.
-- [ ] **Step 2: Create Cluster**
+- [x] **Step 2: Create Cluster**
     - Command: `bin/vde cluster save default jupyterlab postgres`
 
 ---
 
 ### Task 3: Final Verification
 
-- [ ] **Step 1: Run Sovereign Audit**
+- [x] **Step 1: Run Sovereign Audit**
 - [ ] **Step 2: Verify 'vde start default'**
 - [ ] **Step 3: Request Code Review (Mandate 19)**
 - [ ] **Step 4: Commit and Link**
