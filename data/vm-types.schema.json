@@ -71,14 +71,9 @@
           "type": ["string", "null"],
           "description": "Custom shell command for non-apt installations (curl, git, etc.)"
         },
-        "service_port": {
+        "service_ports": {
           "type": ["string", "null"],
           "description": "Must be null for language VMs (no service ports)"
-        },
-        "service_ports": {
-          "type": "array",
-          "items": { "type": "integer" },
-          "description": "Optional list of service ports"
         },
         "ssh_port": {
           "type": "integer",
@@ -120,15 +115,10 @@
           "type": ["string", "null"],
           "description": "Custom shell command for non-apt installations (curl, git, etc.)"
         },
-        "service_port": {
+        "service_ports": {
           "type": ["string", "null"],
           "description": "Service port(s) to expose (comma-separated integers: '80' or '80,443')",
           "pattern": "^[0-9]+(,[0-9]+)*$"
-        },
-        "service_ports": {
-          "type": "array",
-          "items": { "type": "integer" },
-          "description": "Optional list of service ports"
         },
         "ssh_port": {
           "type": "integer",

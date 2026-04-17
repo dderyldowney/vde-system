@@ -262,7 +262,7 @@ vde_translate_conf_to_json() {
               \"display\": \"$(_vde_escape_json "${_v_disp}")\",
               \"pkgs\": ${_v_pkgs_json},
               \"custom_cmd\": ${_v_cmd_json},
-              \"service_port\": ${_v_svc_json},
+              \"service_ports\": ${_v_svc_json},
               \"ssh_port\": ${_v_ssh_port_json}
             }"
 
