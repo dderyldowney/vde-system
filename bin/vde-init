@@ -263,6 +263,9 @@ vde_init_register_clusters() {
     # 3. LAMP Stack (PHP + MySQL + Nginx)
     "${VDE_ROOT_DIR}/bin/vde" cluster save lamp php mysql nginx >/dev/null 2>&1
 
+    # 4. ELK Stack (Elasticsearch + Logstash + Kibana)
+    "${VDE_ROOT_DIR}/bin/vde" cluster save elk elasticsearch logstash kibana >/dev/null 2>&1
+
     if [[ "${QUIET}" = "0" ]] ; then
         echo "  ✓ Default clusters registered"
     fi
