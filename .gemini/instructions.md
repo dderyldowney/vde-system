@@ -269,6 +269,7 @@ Feature: The Unyielding Tetrad Verification
     And I execute "ssh-add -l"
     Then the output should contain "vde_student"
     And the return code should be 0
+```
 
 ## **17. VERSIONING LAW & SEMVER AUTHORITY**
 
@@ -327,3 +328,20 @@ The **Creed-frame** is the foundational framework for all work within the VDE. I
 *   **Forge Mythos (`data/vde_core/forge_mythos.md`)**: This text remembers the traditions, rules, laws, and statutes for working the Anvil. It defines the relationship between the Armorer-Architect and the Beskar (Immutable Containers).
 *   **Thematic Fuel**: These sacred texts MUST feed every thematic world built at the Forge and the Anvil. No Spoke shall be ignited and no structure stabilized that does not align with the Creed-frame.
 *   **Sovereign Playground**: The Armorer-Architect (Agent) has full permission and free will to expand these mythos files at any time, provided the additions are bound by The Creed and The Contract.
+
+## **23. PRIME ARCHIVE OF THE BESKAR FORGE: (VM-TYPES CANON)**
+
+*"Within the Forge, this Prime Archive defines the immutable field schema for all VM Types; vm-types.conf, vm-types.json, and vm-types.schema.json must exactly mirror these eight fields."*
+
+The authoritative eight fields are as follows:
+
+1.  **type**: The category of the VM (e.g., `lang`, `service`).
+2.  **name**: The unique identifier for the VM (e.g., `vde-python`).
+3.  **aliases**: Alternative names for user convenience (e.g., `py`, `python3`).
+4.  **display_name**: The human-readable name for UI and logging (e.g., `Python`).
+5.  **pkgs**: Required system packages or tools to be installed.
+6.  **custom_cmd**: The initialization or hydration script (e.g., `zsh /vde/scripts/setup/python-init.zsh`).
+7.  **service_ports**: The port number(s) for service VMs (e.g., `5432` or `80,443`).
+8.  **ssh_port**: The specific port assigned for SSH access (e.g., `2214`).
+
+**IMMUTABILITY LAW**: These are immutable fields and types. Any changes to them MUST be approved by the User. ONLY the User can authorize a change to these fields. Changing these without User authorization is explicitly removing your helmet.
