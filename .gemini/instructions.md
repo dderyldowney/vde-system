@@ -81,13 +81,14 @@ Failure of any ritual constitutes a **Protocol Blockade**.
     * The root `RELEASE_NOTES.md` MUST be updated to point to the latest certified record.
     * A release record is only valid if it includes the final empirical test pass counts and is certified by the Dual Audit Loop (Code + Security).
 * **P. The Sovereign Branching Law (The Signet)**:
-    * **`main` (Production)**: Reserved for stable, certified releases of the Sovereign Baseline.
+    * **`main` (Production)**: Reserved for stable, certified releases of the Sovereign Baseline. **All point releases (X.X.X) and GitHub Releases MUST occur exclusively on this branch.**
     * **`develop` (The Anvil)**: The primary integration branch and repository default. All work MUST occur on feature branches originating from `develop`.
     * **Semantic Targeting**: Core scripts reference branches by semantic roles (`VDE_PRODUCTION_BRANCH`, `VDE_ANVIL_BRANCH`).
-    * **The Ritual**: Every mission is a Strike. Every Strike begins with a Signet (Issue) and ends with a Chronicle (PR).
-    * Work MUST be tracked via GitHub Issues (`gh issue create`) and linked in PRs.
-    * For all central and core design goals, the Signet and Chronicle MUST be struck using the authorized GitHub templates. Failure to record the Heartbeat in the Chronicle is a violation of the Creed.
-    * Feature branches are merged into the Anvil (`develop`) ONLY upon acceptance and MUST be deleted immediately after.
+    * **The Ritual of the Signet and Chronicle**: **EVERYTHING that is committed to git REQUIRES both a Signet (Issue) and a Chronicle (PR).** There are NO exceptions for any commit, including release-related changes or point releases.
+    * **The Strike**: Every mission is a Strike. Every Strike begins with a Signet (`gh issue create`) and ends with a Chronicle (`gh pr create`).
+    * **PR Ownership and Closing**: The Alor (Agent) and Clan Leader (User) work together on closing Chronicles. **The Alor MUST NEVER close a PR autonomously** unless specifically and explicitly instructed to do so by the Clan Leader in the current turn.
+    * **Point Release Ritual**: Even cutting a point release requires its own Signet and Chronicle (merging `develop` into `main`) before tagging can occur.
+    * **Cleanup Mandate**: Upon the successful conclusion of a Strike (PR merged and closed), the Alor is expected to automatically purge the feature branch (local and remote) and return themselves to the Anvil (`develop`) before standing watch.
     * **Permanence**: The Production (`main`) and Anvil (`develop`) branches are the foundational pillars of the Record; they are never removed.
     * The agent is PRE-AUTHORIZED to use `gh issue create` and `gh pr create` to initialize missions and record the Signet of Intent and submit the Chronicle. The agent is also authorized for read access (`gh issue view/list`, `gh pr view/list`) to initialize, monitor, and submit missions.
     * **PRE-IMPLEMENTATION GATE (ABSOLUTE)**: Before writing a single line of implementation code or running any `git commit` on `develop`, the agent MUST have completed ALL of the following — no exceptions, no shortcuts, no "I'll retro-fix it later":
