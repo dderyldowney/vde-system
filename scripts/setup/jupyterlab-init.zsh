@@ -44,9 +44,11 @@ c.ServerApp.port = 8888
 c.ServerApp.open_browser = False
 c.ServerApp.root_dir = '/home/devuser/workspace'
 c.ServerApp.allow_root = True
+c.ServerApp.allow_remote_access = True
+c.ServerApp.disable_check_xsrf = True
 # Data Science Default: Zero-Gate Access for Internal Student Use
-c.ServerApp.token = ''
-c.ServerApp.password = ''
+c.IdentityProvider.token = ''
+c.IdentityProvider.password = ''
 EOF"
 
 # 6. PERSISTENCE ANCHOR (Hardened Background Pattern)
