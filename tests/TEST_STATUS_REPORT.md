@@ -1,4 +1,4 @@
-# VDE Test Status Report (Sovereign Certification v1.3.7)
+# VDE Test Status Report (Sovereign Certification v1.4.0)
 
 ## Core Infrastructure
 | Feature | Status | Description |
@@ -24,10 +24,10 @@
 | :--- | :--- | :--- |
 | **UAP Enforcement** | ✅ PASS | `bin/vde-enforce-uap.zsh` strictly active. |
 | **Spine Check** | ✅ PASS | `bin/vde-spine-check.zsh` silent pre-flight. |
-| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (1.3.7) |
+| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (1.4.0) |
 
 ---
 **Certified by**: The Covert
-**Baseline**: 1.3.7
+**Baseline**: 1.4.0
 **Heartbeat**: 100% Green
 ---

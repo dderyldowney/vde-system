@@ -2,7 +2,7 @@
 #===============================================================================
 # vde-tactical-sweep.zsh - Comprehensive Forge Cleanup Tool
 #
-# Part of the Sovereign Baseline 1.3.1.
+# Part of the Sovereign Baseline 1.4.0.
 # Mandate: Zero-Host Dependency & Zero-Ghost Persistence.
 # Forged in Beskar.
 #===============================================================================
@@ -20,7 +20,7 @@ VDE_ROOT_DIR="${VDE_BIN_DIR:h}"
 # Tactical Sweep Parameters
 VDE_LOCKS_VMS_DIR="${VDE_ROOT_DIR}/.locks/vms"
 VDE_PORT_REGISTRY_DIR="${VDE_ROOT_DIR}/.cache/port-registry"
-VDE_DOCKER_STATE_DIR="${VDE_ROOT_DIR}/.docker-state"
+# VDE_DOCKER_STATE_DIR sourced from vde-constants
 
 vde_log_info "[SWEEP] Commencing Tactical Forge Sweep..." "sweep"
 

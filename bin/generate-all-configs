@@ -60,12 +60,13 @@ get_service_port() {
 generate_ssh_config() {
   local ssh_config="${VDE_ROOT_DIR}/configs/ssh/config"
   local timestamp=$(date)
+  local current_version=$(vde_get_version)
   
   mkdir -p "$(dirname "${ssh_config}")"
   
   cat > "${ssh_config}" <<EOF
 # VDE (Virtual Development Environment) SSH Configuration
-# Sovereign Baseline: 1.3.1
+# Sovereign Baseline: ${current_version}
 # Generated on ${timestamp}
 #
 # This file contains SSH config entries for all known language and service VMs.

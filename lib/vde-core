@@ -31,7 +31,7 @@ vde_get_version() {
     local spec_file="${root}/docs/VDE-SPEC.md"
 
     if [[ -f "${spec_file}" ]]; then
-        # Extracts version from "# VDE-SPEC [v]1.3.1-sp0 (The Sovereign Baseline)"
+        # Extracts version from "# VDE-SPEC [v]1.4.0 (The Sovereign Baseline)"
         # Supports optional 'v' prefix and SemVer extensions like -spN
         grep -m1 '^# VDE-SPEC ' "${spec_file}" | sed -E 's/^# VDE-SPEC v?([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?).*/\1/' | tr -d '[:space:]'
     else
@@ -479,13 +479,17 @@ _VDE_DOCKER_LOADED=0
 _VDE_TEMPLATE_LOADED=0
 
 # vde_require_ssh - Ensure SSH functions are available
-# This is a stub that will be replaced by vm-common when fully loaded
 vde_require_ssh() {
     if [[ "${_VDE_SSH_LOADED}" == "0" ]] ; then
-        # If we're in core-only mode, we need to source vm-common
-        if [[ -z "${CONFIGS_DIR:-}" ]] ; then
-            # shellcheck source=vm-common
-            . "${VDE_ROOT_DIR}/lib/vm-common"
+        # 1. Verify binary availability
+        if ! command -v ssh >/dev/null 2>&1; then
+            return ${VDE_ERR_NOT_FOUND:-3}
+        fi
+        # 2. Verify identity existence (The Transversal Bridge)
+        local vde_key="${HOME}/.ssh/vde/vde_student"
+        if [[ ! -f "${vde_key}" ]]; then
+            # Log warning but don't fail, as some commands might not need the identity yet
+            vde_log_warning "VDE identity not found at ${vde_key}"
         fi
         _VDE_SSH_LOADED=1
     fi
@@ -495,9 +499,14 @@ vde_require_ssh() {
 # vde_require_docker - Ensure Docker functions are available
 vde_require_docker() {
     if [[ "${_VDE_DOCKER_LOADED}" == "0" ]] ; then
-        if [[ -z "${CONFIGS_DIR:-}" ]] ; then
-            # shellcheck source=vm-common
-            . "${VDE_ROOT_DIR}/lib/vm-common"
+        # 1. Verify binary
+        if ! command -v docker >/dev/null 2>&1; then
+            return ${VDE_ERR_NOT_FOUND:-3}
+        fi
+        # 2. Verify daemon responsiveness (The World-Forge)
+        if ! docker info >/dev/null 2>&1; then
+            vde_log_error "Docker daemon is not responsive. Is it running?"
+            return ${VDE_ERR_GENERAL:-1}
         fi
         _VDE_DOCKER_LOADED=1
     fi

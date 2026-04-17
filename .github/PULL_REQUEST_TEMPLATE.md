@@ -1,5 +1,7 @@
 # Pull Request: Submission of Beskar
 
+> **MANDATE**: PR Title MUST follow Conventional Commits: `type(scope): description` or `type!: description`.
+
 ### **I. Context (The Why)**
 *Summary of the mission and intent.*
 

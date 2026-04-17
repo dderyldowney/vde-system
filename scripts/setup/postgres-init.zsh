@@ -27,7 +27,10 @@ if [[ -z "${POSTGRES_DEV_PASSWORD}" ]]; then
 fi
 local pg_dev_pass="${POSTGRES_DEV_PASSWORD}"
 su - postgres -c "psql -tc \"SELECT 1 FROM pg_user WHERE usename = 'devuser'\" | grep -q 1" || \
-su - postgres -c "psql -c \"CREATE USER devuser WITH PASSWORD '${pg_dev_pass}' SUPERUSER;\""
+su - postgres -c "psql <<EOF
+CREATE USER devuser WITH PASSWORD '${pg_dev_pass}' SUPERUSER;
+EOF
+"
 
 su - postgres -c "psql -lqt | cut -d \| -f 1 | grep -qw devuser" || \
 su - postgres -c "createdb -O devuser devuser"

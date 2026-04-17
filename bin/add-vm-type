@@ -161,13 +161,6 @@ fi
 # -----------------------
 # Atomic Registry Update
 # -----------------------
-if [[ -z "${SSH_PORT}" ]]; then
-    log_info "No SSH port specified, auto-allocating..."
-    SSH_PORT=$(find_available_ssh_port 2200 2299 "${QUIET}")
-    vde_handle_error "port-allocation" "${VM_NAME}"
-    log_success "Allocated port: ${SSH_PORT}"
-fi
-
 local backup_file="${VM_TYPES_CONF}.bak"
 cp "${VM_TYPES_CONF}" "${backup_file}"
 
@@ -178,6 +171,14 @@ local global_lock="${VDE_LOCKS_DIR}/global-config.lock"
 claim_lock "${global_lock}" || vde_handle_error "lock-acquisition" "${global_lock}"
 
 {
+    # AUTO-ALLOCATE PORT (Inside Lock)
+    if [[ -z "${SSH_PORT}" ]]; then
+        log_info "No SSH port specified, auto-allocating inside lock..."
+        SSH_PORT=$(find_available_ssh_port 2200 2299 "${QUIET}")
+        vde_handle_error "port-allocation" "${VM_NAME}"
+        log_success "Allocated port: ${SSH_PORT}"
+    fi
+
     # TRIPLE-GATE VALIDATION (Inside Lock)
     # ----------------------------------
     # 1. Re-check VM existence
