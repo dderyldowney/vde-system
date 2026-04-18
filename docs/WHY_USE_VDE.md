@@ -69,16 +69,16 @@ Even if you've never used Terminal before, we've got you covered.
 VDE has a simple, unified command that does *everything*:
 
 ```zsh
-./bin/vde
+vde
 ```
+
+*(Note: Use `./bin/vde` if you haven't added it to your PATH yet!)*
 
 That's it. One command to remember. No memorizing a dozen different scripts. Just `vde`. Easy!
 
 **Need to see what's available?**
 ```zsh
-./bin/vde --help
-# or
-./bin/vde help
+vde help
 ```
 
 This shows you all available actions: creating VMs, starting/stopping, listing, checking status, and more.
@@ -90,13 +90,18 @@ This shows you all available actions: creating VMs, starting/stopping, listing, 
 Ready to have your mind blown (in the best way)? Here's all it takes to get started with Python:
 
 ```zsh
-# That's it. Seriously.
-./bin/vde create python
-./bin/vde start python
-ssh vde-python
+# Step 1: Ignite the Forge (only once!)
+vde init
+
+# Step 2: Forge your workspace
+vde create python
+
+# Step 3: Start and Enter
+vde start python
+vde enter python
 ```
 
-**Three commands.** That's all.
+**Four steps.** That's all.
 
 **And now...** 🎊 You have a fully-functional Python development environment with:
 - Python 3 and pip installed
@@ -112,9 +117,9 @@ ssh vde-python
 ## Want Rust Too? Go Ahead! 🦀
 
 ```zsh
-./bin/vde create rust
-./bin/vde start rust
-ssh vde-rust
+vde create rust
+vde start rust
+vde enter rust
 ```
 
 Boom! Now you have Python **and** Rust running side-by-side. No conflicts. No version wars. They don't even know each other exist (unless you want them to). You're basically a polyglot programmer now! 😎
@@ -123,24 +128,25 @@ Boom! Now you have Python **and** Rust running side-by-side. No conflicts. No ve
 
 ## What Can I Run? (Spoiler: Everything!) 🌍
 
-VDE supports **19 programming languages** out of the box — yes, seriously:
+VDE supports **23 programming languages** out of the box — yes, seriously:
 
 | Category | Languages |
 |----------|-----------|
-| **Systems** | C, C++, Assembly, Rust |
-| **Web** | JavaScript, PHP, Python |
-| **Enterprise** | Java, Kotlin, C# |
-| **Data Science** | Python, R |
-| **Modern** | Go, Elixir, Haskell, Scala |
+| **Systems** | C, C++, Assembly, Rust, Zig |
+| **Web** | JavaScript, PHP, Python, Ruby |
+| **Enterprise** | Java, Kotlin, C#, Scala |
+| **Data Science** | Python, R, JupyterLab |
+| **Modern** | Go, Elixir, Haskell, Swift |
 | **Mobile** | Flutter (Dart) |
-| **Scripting** | Ruby, Lua, Swift, Zig |
+| **Scripting** | Lua, Bash (internal use) |
 
-Plus **7 shared services** ready to go:
+Plus **8 shared services** ready to go:
 - PostgreSQL, MySQL (databases)
 - Redis (caching)
 - MongoDB (document store)
 - Nginx (web server)
 - RabbitMQ, CouchDB (messaging)
+- JupyterLab (data suite)
 
 All pre-configured. All ready to connect. All waiting for you. Your playground awaits! 🎠
 
@@ -154,7 +160,7 @@ Imagine you're working in your Python container and you need to test something a
 
 ```zsh
 # From inside your Python VM
-ssh vde-postgres psql -U devuser
+vde_ssh vde-postgres psql -U devuser
 ```
 
 That's it. You're now in PostgreSQL. Using **your** SSH keys. Without any setup. Magic!
@@ -177,13 +183,13 @@ Here's your workflow:
 
 ```zsh
 # Create everything
-./bin/vde create python js postgres redis
+vde create python js postgres redis
 
 # Start everything
-./bin/vde start python js postgres redis
+vde start python js postgres redis
 
 # Connect to your Python backend
-ssh vde-python
+vde enter python
 cd ~/workspace/my-app
 pip install -r requirements.txt
 python app.py
@@ -193,13 +199,13 @@ In another terminal:
 
 ```zsh
 # Connect to your JavaScript frontend
-ssh vde-js
+vde enter js
 cd ~/workspace/my-app
 npm install
 npm start
 ```
 
-Your Python app talks to `postgres` and `redis` by hostname. No connection strings to remember. No ports to memorize. It just works. *Like magic.* ✨
+Your Python app talks to `vde-postgres` and `vde-redis` by hostname. No connection strings to remember. No ports to memorize. It just works. *Like magic.* ✨
 
 ---
 
@@ -209,7 +215,7 @@ That's great! But consider:
 
 ### 🤔 Problem: Learning a New Language
 **Without VDE:** Install language, manage versions, risk breaking your current setup.
-**With VDE:** `./bin/vde create elixir` and you're done. Delete it when you're finished. Easy peasy!
+**With VDE:** `vde create elixir` and you're done. Delete it when you're finished. Easy peasy!
 
 ### 🤔 Problem: "Works on My Machine"
 **Without VDE:** Endless debugging of environment differences. Frustration for everyone.
@@ -241,7 +247,7 @@ But if you *do* know Docker, you'll love that VDE generates clean, readable `doc
 
 ## For the Curious: What's Actually Happening? 🤓
 
-When you run `./bin/vde create python`, VDE:
+When you run `vde create python`, VDE:
 
 1. Finds an available SSH port (automatically)
 2. Creates a Docker Compose configuration
@@ -251,7 +257,7 @@ When you run `./bin/vde create python`, VDE:
 6. Loads your SSH keys (or generates a pair if you don't have one)
 7. Gets everything ready for `vde start`
 
-When you run `./bin/vde start python`, VDE:
+When you run `vde start python`, VDE:
 
 1. Builds a Docker image with your language pre-installed
 2. Creates a container with:
@@ -262,7 +268,7 @@ When you run `./bin/vde start python`, VDE:
 3. Connects the container to the VDE network (so VMs can talk to each other)
 4. Starts the SSH server
 
-When you `ssh vde-python`:
+When you `vde enter python`:
 
 1. Your SSH connection goes directly into the container
 2. You land in `/home/devuser/workspace`
@@ -350,11 +356,11 @@ We get it! Sometimes you try something and it's not for you. Or maybe you're jus
 
 ```zsh
 # 1. Stop any running VMs
-./bin/vde stop all
+vde stop all
 
 # 2. Delete the VDE directory
 cd ..
-rm -rf dev/  # or whatever you named the directory
+rm -rf VDE/  # or whatever you named the directory
 ```
 
 **That's it!** No leftover packages. No system changes to undo. No registry keys to clean. The directory is gone, and so is VDE. Clean as a whistle! ✨
@@ -367,10 +373,10 @@ Your Docker images will take up some disk space (you can clean those with Docker
 
 ```zsh
 # Copy your projects somewhere safe
-cp -r dev/projects ~/my-projects-backup
+cp -r VDE/projects ~/my-projects-backup
 
 # Or move individual projects
-mv dev/projects/python/my-app ~/my-app
+mv VDE/projects/python/my-app ~/my-app
 ```
 
 Then delete VDE, and your projects live on. Safe and sound!
@@ -381,20 +387,21 @@ Then delete VDE, and your projects live on. Safe and sound!
 
 ## Ready to Give It a Try? (You Know You Want To!) 🎉
 
-**Your first VDE is three commands away:**
+**Your first VDE is four steps away:**
 
 ```zsh
 cd ~/dev  # or wherever you cloned this repo
-./bin/vde create python  # or any language you want!
-./bin/vde start python
-ssh vde-python
+vde init
+vde create python  # or any language you want!
+vde start python
+vde enter python
 ```
 
 **That's it!** Welcome to easier, more joyful development. You're going to love it here! 🏠
 
 ---
 
-## Want to Learn More? (We've Got You Covered!) 📚
+## Want Learn More? (We've Got You Covered!) 📚
 
 - [**Quick Start Guide**](./quick-start.md) - Step-by-step setup instructions
 - [**User Guide**](./USER_GUIDE.md) - Comprehensive BDD scenarios
@@ -407,17 +414,17 @@ ssh vde-python
 ## TL;DR (Because We Know You're Busy)
 
 **VDE gives you:**
-- 19 programming languages, ready in seconds
-- 7 shared services (databases, caching, etc.)
+- 23 programming languages, ready in seconds
+- 8 shared services (databases, caching, etc.)
 - Isolated environments (no conflicts ever!)
 - VM-to-VM communication
 - Natural language control
 - Zero Docker knowledge required
-- One unified command: `./bin/vde`
+- One unified command: `vde`
 - A fun, encouraging community (that's you!)
 
 **You give it:**
-- Three commands to get started
+- Four commands to get started
 
 **Want to leave?**
 - Two commands to completely remove it
