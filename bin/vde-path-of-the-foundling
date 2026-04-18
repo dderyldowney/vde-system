@@ -18,6 +18,15 @@ export VDE_ROOT_DIR
 source "${VDE_ROOT_DIR}/lib/vde-log" &>/dev/null
 source "${VDE_ROOT_DIR}/lib/vde-core" &>/dev/null
 
+# Parse arguments
+local AUTO_APPROVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -y|--yes) AUTO_APPROVE=1; shift ;;
+        *) shift ;;
+    esac
+done
+
 # Colors
 BOLD='\033[1m'
 CYAN='\033[0;36m'
@@ -40,9 +49,18 @@ echo "This ritual sets up your SSH keys and networks."
 echo ""
 echo "Command: vde init"
 echo ""
-read -q "REPLY?Shall we ignite the Forge? (y/n): "
-echo ""
-if [[ "${REPLY}" =~ ^[Yy]$ ]]; then
+
+local reply="n"
+if [[ "${AUTO_APPROVE}" == "1" ]]; then
+    reply="y"
+    echo "Shall we ignite the Forge? (y/n): y (auto-approved)"
+else
+    read -q "REPLY?Shall we ignite the Forge? (y/n): "
+    reply="${REPLY}"
+    echo ""
+fi
+
+if [[ "${reply}" =~ ^[Yy]$ ]]; then
     "${VDE_ROOT_DIR}/bin/vde-init"
     echo -e "${GREEN}✓ The Forge is ignited.${RESET}"
 else
@@ -56,9 +74,17 @@ echo ""
 echo -e "${BOLD}2. The Spine Check (Pillar Verification)${RESET}"
 echo "We must ensure the four pillars (Zsh, Git, Docker, SSH) are strong."
 echo ""
-read -q "REPLY?Shall we check the Spine? (y/n): "
-echo ""
-if [[ "${REPLY}" =~ ^[Yy]$ ]]; then
+
+if [[ "${AUTO_APPROVE}" == "1" ]]; then
+    reply="y"
+    echo "Shall we check the Spine? (y/n): y (auto-approved)"
+else
+    read -q "REPLY?Shall we check the Spine? (y/n): "
+    reply="${REPLY}"
+    echo ""
+fi
+
+if [[ "${reply}" =~ ^[Yy]$ ]]; then
     if "${VDE_ROOT_DIR}/bin/vde-spine-check.zsh"; then
         echo -e "${GREEN}✓ The Spine is strong.${RESET}"
     else
@@ -78,9 +104,17 @@ echo "Now we create your first workspace: the Python Spoke."
 echo ""
 echo "Command: vde create python"
 echo ""
-read -q "REPLY?Shall we forge the Python Spoke? (y/n): "
-echo ""
-if [[ "${REPLY}" =~ ^[Yy]$ ]]; then
+
+if [[ "${AUTO_APPROVE}" == "1" ]]; then
+    reply="y"
+    echo "Shall we forge the Python Spoke? (y/n): y (auto-approved)"
+else
+    read -q "REPLY?Shall we forge the Python Spoke? (y/n): "
+    reply="${REPLY}"
+    echo ""
+fi
+
+if [[ "${reply}" =~ ^[Yy]$ ]]; then
     "${VDE_ROOT_DIR}/bin/vde" create python
     echo -e "${GREEN}✓ The Python Spoke is forged.${RESET}"
 else
