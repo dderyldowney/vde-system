@@ -1,5 +1,5 @@
 # Template for service VMs
-# Variables: mysql, 2402, 3306, , zsh /vde/scripts/setup/mysql-init.zsh
+# Variables: mysql, 2402, {{SERVICE_PORTS}}, , zsh /vde/scripts/setup/mysql-init.zsh
 name: vde-mysql
 services:
   vde-mysql:

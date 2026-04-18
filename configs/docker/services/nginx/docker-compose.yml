@@ -1,5 +1,5 @@
 # Template for service VMs
-# Variables: nginx, 2403, 80,443, , zsh /vde/scripts/setup/nginx-init.zsh
+# Variables: nginx, 2403, {{SERVICE_PORTS}}, , zsh /vde/scripts/setup/nginx-init.zsh
 name: vde-nginx
 services:
   vde-nginx:

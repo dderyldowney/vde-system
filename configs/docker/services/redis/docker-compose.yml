@@ -1,5 +1,5 @@
 # Template for service VMs
-# Variables: redis, 2406, 6379,6380, , zsh /vde/scripts/setup/redis-init.zsh
+# Variables: redis, 2406, {{SERVICE_PORTS}}, , zsh /vde/scripts/setup/redis-init.zsh
 name: vde-redis
 services:
   vde-redis:
