@@ -1,1 +1,0 @@
-{"name": "elk", "vms": ["elasticsearch","logstash","kibana"]}
