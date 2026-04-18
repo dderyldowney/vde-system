@@ -139,6 +139,7 @@ test_log_warning() {
     if echo "$result" | grep -q "\[WARNING\] test warning"; then
         test_pass "log_warning"
         return
+        return
     fi
 
     test_fail "log_warning" "output missing [WARNING] prefix: $result"
@@ -366,6 +367,7 @@ test_timing_variables() {
 
     VDE_DEBUG_TIMING=0
     test_pass "timing functions"
+        return
 }
 
 # =============================================================================

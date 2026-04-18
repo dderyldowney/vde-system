@@ -91,11 +91,12 @@ test_validate_public_key_file() {
 
     # Create a test SSH key pair
     mkdir -p "$VDE_SSH_DIR"
-    ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -C "test@vde" 2>/dev/null
+    ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -q -C "test@vde" <<< y 2>/dev/null
 
     if [ -f "${VDE_SSH_IDENTITY}.pub" ]; then
         if validate_public_key_file "${VDE_SSH_IDENTITY}.pub" 2>/dev/null; then
             test_pass "validate_public_key_file - valid public key"
+        return
         else
             test_fail "validate_public_key_file - valid public key" "Validation failed"
         fi
@@ -126,12 +127,13 @@ test_check_for_private_keys_in_public_dir() {
 
     # Create a test SSH key pair
     mkdir -p "$VDE_SSH_DIR"
-    ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -C "test@vde" 2>/dev/null
+    ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -q -C "test@vde" <<< y 2>/dev/null
 
     # Check that the public key file exists and is valid (not a private key)
     local key_file="${VDE_SSH_IDENTITY}.pub"
     if [ -f "$key_file" ]; then
         test_pass "check_for_private_keys_in_public_dir - private key detected"
+        return
     else
         test_fail "check_for_private_keys_in_public_dir - private key detected" "Public key file not found at $key_file"
     fi
@@ -159,12 +161,13 @@ test_detect_ssh_keys() {
 
     # Create a test SSH key pair
     mkdir -p "$VDE_SSH_DIR"
-    ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -C "test@vde" 2>/dev/null
+    ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -q -C "test@vde" <<< y 2>/dev/null
 
     local result
     result=$(detect_ssh_keys 2>/dev/null)
     if [ "$result" = "$VDE_SSH_IDENTITY" ]; then
         test_pass "detect_ssh_keys - key exists"
+        return
     else
         test_fail "detect_ssh_keys - key exists" "Expected $VDE_SSH_IDENTITY, got $result"
     fi
@@ -192,12 +195,13 @@ test_get_ssh_pubkey() {
 
     # Create a test SSH key pair
     mkdir -p "$VDE_SSH_DIR"
-    ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -C "test@vde" 2>/dev/null
+    ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -q -C "test@vde" <<< y 2>/dev/null
 
     # Verify the public key file exists
     local pubkey_file="${VDE_SSH_IDENTITY}.pub"
     if [ -f "$pubkey_file" ]; then
         test_pass "get_ssh_pubkey - public key exists"
+        return
     else
         test_fail "get_ssh_pubkey - public key exists" "Public key file not found at $pubkey_file"
     fi
@@ -237,6 +241,7 @@ EOF
 
     if ssh_config_has_entry "test-host" 2>/dev/null; then
         test_pass "ssh_config_has_entry - entry exists"
+        return
     else
         test_fail "ssh_config_has_entry - entry exists" "Entry not found"
     fi
@@ -277,6 +282,7 @@ EOF
     if remove_ssh_config_entry "test-host" 2>/dev/null; then
         if ! ssh_config_has_entry "test-host" 2>/dev/null; then
             test_pass "remove_ssh_config_entry - remove entry"
+        return
         else
             test_fail "remove_ssh_config_entry - remove entry" "Entry still exists"
         fi
@@ -311,6 +317,7 @@ test_remove_known_hosts_entry() {
     if remove_known_hosts_entry "test-vm" "2200" 2>/dev/null; then
         if ! grep ":2200" "$VDE_SSH_KNOWN_HOSTS" 2>/dev/null; then
             test_pass "remove_known_hosts_entry - remove entry"
+        return
         else
             test_fail "remove_known_hosts_entry - remove entry" "Entry still exists"
         fi
@@ -342,11 +349,12 @@ test_ensure_vde_ssh_environment() {
     # Create the SSH directory and key directly (avoid sync_ssh_keys_to_vde which has grep issues)
     mkdir -p "$VDE_SSH_DIR"
 
-    if ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -C "test@vde" 2>/dev/null; then
+    if ssh-keygen -t ed25519 -f "$VDE_SSH_IDENTITY" -N "" -q -C "test@vde" <<< y 2>/dev/null; then
         chmod 600 "$VDE_SSH_IDENTITY"
         chmod 644 "$VDE_SSH_IDENTITY_PUB"
         if [ -f "$VDE_SSH_IDENTITY" ]; then
             test_pass "ensure_vde_ssh_environment - create SSH key"
+        return
         else
             test_fail "ensure_vde_ssh_environment - create SSH key" "Key file not created at $VDE_SSH_IDENTITY"
         fi

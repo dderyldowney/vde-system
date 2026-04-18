@@ -184,7 +184,9 @@ def container_exists(container_name):
             env=_vde_env(),
         )
         return full_name in result.stdout.split()
-    except Exception:
+    except Exception as e:
+        if os.environ.get("VDE_DEBUG_TESTS") == "1":
+            print(f"[DEBUG] container_exists check failed: {e}")
         return False
 
 
@@ -210,7 +212,9 @@ def container_is_running(container_name):
             env=_vde_env(),
         )
         return full_name in result.stdout
-    except Exception:
+    except Exception as e:
+        if os.environ.get("VDE_DEBUG_TESTS") == "1":
+            print(f"[DEBUG] container_exists check failed: {e}")
         return False
 
 
@@ -234,7 +238,9 @@ def get_container_id(container_name):
                     parts = line.split()
                     if parts:
                         return parts[0]
-    except Exception:
+    except Exception as e:
+        if os.environ.get("VDE_DEBUG_TESTS") == "1":
+            print(f"[DEBUG] get_container_id failed: {e}")
         pass
     return ""
 
@@ -302,7 +308,9 @@ def wait_for_container(container_name, timeout=30, vm_name=None):
             description=f"container {container_name} readiness"
         )
         return True
-    except Exception:
+    except Exception as e:
+        if os.environ.get("VDE_DEBUG_TESTS") == "1":
+            print(f"[DEBUG] container_exists check failed: {e}")
         return False
 
 
@@ -332,7 +340,9 @@ def vde_wait_for_container_healthy(vm_name, timeout=60):
             description=f"container {vm_name} health"
         )
         return True
-    except Exception:
+    except Exception as e:
+        if os.environ.get("VDE_DEBUG_TESTS") == "1":
+            print(f"[DEBUG] container_exists check failed: {e}")
         return False
 
 
@@ -497,42 +507,23 @@ def check_docker_network_exists(network_name):
 
 
 def check_zsh_available(context):
-    """Check if Zsh is available on the system.
-
-    Args:
-        context: Behave context object
-
-    Returns:
-        bool: True if Zsh is available, False otherwise
-    """
-    # For Docker-free tests, we assume Zsh is available (as VDE requires it)
-    return True
+    """Check if Zsh is available on the system."""
+    res = subprocess.run(["zsh", "--version"], capture_output=True)
+    return res.returncode == 0
 
 
 def check_ssh_keys_exist(context):
-    """Check if SSH keys exist in the expected location.
-
-    Args:
-        context: Behave context object
-
-    Returns:
-        bool: True if SSH keys exist, False otherwise
-    """
-    # For Docker-free tests, we assume SSH keys exist
-    return True
+    """Check if the VDE student SSH identity exists."""
+    # VDE_SSH_IDENTITY logic from ssh_helpers duplicated here for isolation
+    ssh_dir = Path.home() / ".ssh" / "vde"
+    priv_key = ssh_dir / "vde_student"
+    return priv_key.exists()
 
 
 def check_scripts_executable(context):
-    """Check if VDE scripts have executable permissions.
-
-    Args:
-        context: Behave context object
-
-    Returns:
-        bool: True if scripts are executable, False otherwise
-    """
-    # For Docker-free tests, we assume scripts are executable
-    return True
+    """Check if VDE scripts have executable permissions."""
+    vde_script = BIN_DIR / "vde"
+    return os.access(vde_script, os.X_OK)
 
 
 def get_vm_types():

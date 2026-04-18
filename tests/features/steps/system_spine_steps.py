@@ -9,7 +9,7 @@ import time
 import re
 from pathlib import Path
 from behave import given, when, then
-from vm_common import VDE_ROOT, run_vde_command, get_container_name
+from vm_common import VDE_ROOT, BIN_DIR, run_vde_command, get_container_name
 from critical_steps import strip_ansi
 
 @given('the VDE Hub "data/vm-types.conf" is the sole authority')
@@ -359,12 +359,11 @@ def step_agent_active_hub(context):
         res = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True)
         if "vde_student" not in res.stdout:
             subprocess.run(["ssh-add", str(vde_key)], capture_output=True)
-
 @given('the 4 Pillars (Zsh, Git, Docker, SSH) have passed their individual proofs')
 def step_pillars_passed(context):
-    # Run bin/vde-spine-check.zsh to verify all pillars
-    result = subprocess.run([str(VDE_ROOT / "bin" / "vde-spine-check.zsh")], capture_output=True, text=True)
-    assert result.returncode == 0, f"Pillars verification failed: {result.stderr or result.stdout}"
+    """Run bin/vde-spine-check.zsh to verify all pillars in a single ritual."""
+    res = subprocess.run([str(BIN_DIR / "vde-spine-check.zsh")], capture_output=True, text=True)
+    assert res.returncode == 0, f"System Spine Check Failed: {res.stdout} {res.stderr}"
 
 @given('the Hub is synchronized to version {version}')
 def step_hub_synced_version_param(context, version):

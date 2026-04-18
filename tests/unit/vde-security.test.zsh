@@ -90,6 +90,7 @@ test_functions_exist() {
 
     if [[ ${#missing[@]} -eq 0 ]]; then
         test_pass "all vde_security_* functions are defined"
+        return
     else
         test_fail "all vde_security_* functions are defined" "missing: ${missing[*]}"
     fi
@@ -149,6 +150,7 @@ test_enforce_permissions_creates_strict_dirs() {
 
     if [[ $failed -eq 0 ]]; then
         test_pass "vde_security_enforce_permissions sets 0700 on sensitive dirs"
+        return
     else
         test_fail "vde_security_enforce_permissions sets 0700 on sensitive dirs" "permission was not 700"
     fi
@@ -178,6 +180,7 @@ test_enforce_permissions_data_logs() {
 
     if [[ $failed -eq 0 ]]; then
         test_pass "vde_security_enforce_permissions sets 0700 on data/ and logs/"
+        return
     else
         test_fail "vde_security_enforce_permissions sets 0700 on data/ and logs/" "permission was not 700"
     fi
@@ -201,6 +204,7 @@ test_enforce_permissions_env_files() {
 
     if [[ "$perm" == "600" ]]; then
         test_pass "vde_security_enforce_permissions sets 0600 on *.env files"
+        return
     else
         test_fail "vde_security_enforce_permissions sets 0600 on *.env files" "permission was $perm, expected 600"
     fi
@@ -237,6 +241,7 @@ test_enforce_permissions_ssh_identity() {
 
     if [[ "$perm" == "600" ]]; then
         test_pass "vde_security_enforce_permissions sets 0600 on SSH identity file"
+        return
     else
         test_fail "vde_security_enforce_permissions sets 0600 on SSH identity file" "permission was $perm, expected 600"
     fi
@@ -269,6 +274,7 @@ EOF
 
     # We only care that the function didn't crash the test runner
     test_pass "vde_security_ensure_network handles absent Docker gracefully"
+        return
 }
 
 test_enforce_network_isolation_no_docker() {
@@ -276,7 +282,6 @@ test_enforce_network_isolation_no_docker() {
 
     local fake_bin
     fake_bin=$(mktemp -d)
-    # Simulate docker ps returning empty output (no containers)
     cat > "$fake_bin/docker" <<'EOF'
 #!/bin/sh
 if [ "$1" = "ps" ]; then
@@ -295,23 +300,20 @@ EOF
     rm -rf "$fake_bin"
 
     test_pass "vde_security_enforce_network_isolation handles absent Docker gracefully"
+        return
 }
 
 # =============================================================================
-# TESTS: Naming Validation
+# TESTS: vde_security_validate_naming
 # =============================================================================
 
-test_validate_naming_returns_success() {
+test_vde_security_validate_naming() {
     test_start "vde_security_validate_naming returns VDE_SUCCESS"
 
-    local fake_bin
-    fake_bin=$(mktemp -d)
-    # Simulate docker ps returning empty output (no containers)
-    cat > "$fake_bin/docker" <<'EOF'
-#!/bin/sh
-exit 0
-EOF
-    chmod +x "$fake_bin/docker"
+    # Mock PATH and vde_query_json to simulate no violations
+    local fake_bin=$(mktemp -d)
+    echo "#!/bin/zsh\necho 'vde-python'" > "$fake_bin/vde_query_json"
+    chmod +x "$fake_bin/vde_query_json"
 
     local orig_path="$PATH"
     export PATH="$fake_bin:$PATH"
@@ -324,8 +326,9 @@ EOF
 
     if [[ $rc -eq $VDE_SUCCESS ]]; then
         test_pass "vde_security_validate_naming returns VDE_SUCCESS"
+        return
     else
-        test_fail "vde_security_validate_naming returns VDE_SUCCESS" "returned $rc"
+        test_fail "vde_security_validate_naming" "expected success, got $rc"
     fi
 }
 
@@ -354,6 +357,7 @@ test_security_init_calls_all_three() {
 
     if [[ $called_network -eq 1 && $called_perms -eq 1 && $called_isolation -eq 1 ]]; then
         test_pass "vde_security_init invokes ensure_network, enforce_permissions, enforce_isolation"
+        return
     else
         local missing=""
         [[ $called_network -eq 0 ]] && missing+=" ensure_network"
@@ -381,8 +385,8 @@ test_enforce_permissions_env_files
 test_enforce_permissions_ssh_identity
 test_ensure_network_no_docker
 test_enforce_network_isolation_no_docker
-test_validate_naming_returns_success
 test_security_init_calls_all_three
+test_vde_security_validate_naming
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

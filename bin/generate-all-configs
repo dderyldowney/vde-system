@@ -135,7 +135,7 @@ generate_env_file() {
   cat > "${env_file}" <<EOF
 # Environment variables for ${name} development container
 SSH_PORT=${ssh_port}
-DATABASE_URL=postgresql://devuser:SuperSecretPassword123!@postgres:5432/${name}_dev_db
+DATABASE_URL=postgresql://devuser:\${POSTGRES_DEV_PASSWORD:-vde_dev_pass}@postgres:5432/${name}_dev_db
 REDIS_HOST=redis
 REDIS_PORT=6379
 EOF
