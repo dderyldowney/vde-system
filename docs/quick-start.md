@@ -10,97 +10,72 @@ Get up and running with VDE in minutes.
 
 ```zsh
 # 1. Navigate to your dev directory
-cd ~/dev  # or wherever you cloned this repo
+cd VDE
 
-# 2. List all predefined VM types
+# 2. Ignite the Forge (Mandatory Ritual)
+vde init
+
+# 3. List all predefined VM types
 vde list
 
-# 3. Create a new language VM (auto-allocates SSH port)
+# 4. Create a new language VM (auto-allocates SSH port)
 vde create go
 
-# 4. Start the VM
+# 5. Start the VM
 vde start go
 
-# 5. Connect via SSH
-ssh vde-go
-
-# 6. Start working
-cd ~/workspace  # Your project directory
+# 6. Step into the Spoke
+vde enter go
 ```
-
----
-
-> **💡 SSH Connection Help**
->
-> If `ssh vde-go` doesn't work, you can connect manually:
->
-> ```zsh
-> ssh devuser@localhost -p 2213
-> ```
->
-> **Why?** Your computer's username (like `alex` or `sam`) is different from the container's username (`devuser`). The SSH config above handles this automatically, but the manual command needs `devuser@`.
->
-> The `-p 2213` is the SSH port (each VM has its own port).
 
 ---
 
 ## What Just Happened?
 
-When you ran `vde create go`:
+When you ran `vde init`:
+1. **Security Environment**: Networks created and directory permissions enforced.
+2. **Environment Secrets**: `.env` instantiated from template.
+3. **SSH Forgery**: `vde_student` ed25519 key pair generated.
+4. **Config Priming**: Active SSH vault primed from canonical artifacts.
+5. **Foundation Building**: Foundational `vde-base` image built and baked with identity.
+6. **Spine Enforcement**: Git hooks installed.
 
-1. **Port Allocation**: SSH port 2213 was automatically assigned
-2. **Config Created**: `configs/docker/go/docker-compose.yml`
-3. **Directories Created**: `projects/go/`, `logs/go/`
-4. **Environment File**: `env-files/go.env`
-5. **SSH Config**: Entry added to `~/.ssh/vde/config`
-6. **SSH Agent**: Started automatically, keys loaded automatically
-7. **SSH Keys**: Detected or generated automatically
+When you ran `vde create go`:
+1. **Port Allocation**: SSH port automatically assigned.
+2. **Config Created**: `configs/docker/go/docker-compose.yml` (for documentation).
+3. **Directories Created**: `projects/go/`, `logs/go/`.
+4. **Environment File**: `env-files/go.env`.
 
 When you ran `vde start go`:
-
-1. **SSH Environment**: Agent verified, keys ready (automatic)
-2. **Image Built**: Docker image built from vde-base template
-3. **Container Started**: Container `vde-go` started
-4. **SSH Agent Forwarding**: Enabled for VM-to-VM and external communication
-5. **SSH Ready**: SSH server running on port 2213
-
-**All SSH setup is automatic** - no manual configuration required.
+1. **Spoke Ignition**: Spoke-specific Docker image built and container started.
+2. **SSH Bridge**: Secure transversal bridge established.
 
 ---
 
 ## VM-to-VM Communication
 
-With SSH agent forwarding, you can communicate between VMs:
+With SSH agent forwarding, your Spokes can communicate seamlessly:
 
 ```zsh
-# Create and start multiple VMs
-vde create python postgres
-vde start python postgres
-
-# From Python VM, connect to PostgreSQL
-ssh vde-python
-ssh vde-postgres psql -U devuser
-
-# Or from your host
-ssh vde-python
-# Now from within Python VM:
-ssh vde-postgres      # Uses your host's SSH keys!
+# From inside your Python Spoke, connect to PostgreSQL
+vde enter python
+vde_ssh vde-postgres psql -U devuser
 ```
 
-See [SSH Configuration](./ssh-configuration.md) for complete details.
+Your Spokes can talk to each other and external services using **your** credentials, safely forwarded through the Hub.
 
 ---
 
 ## Next Steps
 
-- **Create more VMs**: `vde create python`
-- **Start multiple VMs**: `vde start go python`
-- **Stop a VM**: `vde stop go`
-- **List VMs**: `vde list`
-- **Use VSCode**: Connect via Remote-SSH for full IDE support
+- **Induction Ritual**: Run `vde path-of-the-foundling` for an interactive tour.
+- **Foundling Guide**: Read `docs/FOUNDLING_GUIDE.md` for a simplified manual.
+- **Advanced Usage**: Follow the `USER_GUIDE.md` for more rituals.
 
 For more details, see [Command Reference](./command-reference.md).
 
 ---
 
 [← Back to README](../README.md)
+
+*[Home](../README.md) | [Quick Start](./quick-start.md) | [Documentation](./)*

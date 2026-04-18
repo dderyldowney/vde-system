@@ -1,5 +1,5 @@
 # Template for service VMs
-# Variables: couchdb, 2400, 5984, , zsh /vde/scripts/setup/couchdb-init.zsh
+# Variables: couchdb, 2400, {{SERVICE_PORTS}}, , zsh /vde/scripts/setup/couchdb-init.zsh
 name: vde-couchdb
 services:
   vde-couchdb:

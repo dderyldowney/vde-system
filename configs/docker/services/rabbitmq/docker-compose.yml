@@ -1,5 +1,5 @@
 # Template for service VMs
-# Variables: rabbitmq, 2405, 5672,15672, , zsh /vde/scripts/setup/rabbitmq-init.zsh
+# Variables: rabbitmq, 2405, {{SERVICE_PORTS}}, , zsh /vde/scripts/setup/rabbitmq-init.zsh
 name: vde-rabbitmq
 services:
   vde-rabbitmq:
