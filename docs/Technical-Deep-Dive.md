@@ -88,9 +88,10 @@ The Forge mandates a deterministic release process centered on the `main` branch
 
 ## 9. Infrastructure Hardening (Phase 29)
 
-VDE has evolved its core requirement checks from passive sourcing to active physical verification.
+VDE has evolved its core requirement checks and hydration rituals:
 - **Physical Probes**: `vde_require_docker` now executes `docker info` to verify daemon responsiveness, and `vde_require_ssh` verifies the physical presence of the `vde_student` identity.
-- **Inter-VM Awareness**: Tech Stack Clusters (MEAN, LAMP, ELK) now inject inter-VM environment variables (e.g., `DATABASE_URL`, `DB_HOST`, `MONGO_URI`) into the Spoke's `.zshenv` during hydration, creating a bonded cognitive context for the student.
+- **Inter-VM Awareness**: Tech Stack Clusters (MEAN, LAMP, ELK) now inject inter-VM environment variables into the Spoke's `.zshenv`.
+- **Native-Installer Hydration**: To ensure Spokes are "Born Ready" with current toolchains, hydration rituals (beginning with Rust) have transitioned from relying on host distribution packages (`apt-get`) to utilizing native installers (`rustup`). This ensures users receive the latest stable version of their environment by default, while maintaining identical outer behavior and CLI integration.
 
 ## 10. The Path of the Foundling (Onboarding)
 
