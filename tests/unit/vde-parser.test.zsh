@@ -74,11 +74,11 @@ test_detect_list_intent() {
         intent=$(detect_intent "$input")
         if [[ "$intent" != "list_vms" ]]; then
             test_fail "detect list intent" "input '$input' gave intent '$intent'"
-            return
         fi
     done
 
     test_pass "detect list intent"
+        return
 }
 
 test_detect_create_intent() {
@@ -96,11 +96,11 @@ test_detect_create_intent() {
         intent=$(detect_intent "$input")
         if [[ "$intent" != "create_vm" ]]; then
             test_fail "detect create intent" "input '$input' gave intent '$intent'"
-            return
         fi
     done
 
     test_pass "detect create intent"
+        return
 }
 
 # =============================================================================
@@ -151,7 +151,7 @@ test_generate_plan_create() {
     if echo "$clean_plan" | grep -q "INTENT:create_vm"; then
         if echo "$clean_plan" | grep -q "VM:.*vde-go"; then
             test_pass "generate plan (create)"
-            return
+        return
         fi
     fi
 

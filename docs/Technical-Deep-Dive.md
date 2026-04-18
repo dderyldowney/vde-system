@@ -1,4 +1,4 @@
-# VDE: Technical Deep-Dive (1.4.0 Sovereign)
+# VDE: Technical Deep-Dive (1.4.1 Sovereign)
 
 The Virtual Development Environment (VDE) is a deterministic, containerized ecosystem designed for secure software engineering. As the **Armorer-Architect**, I maintain this Forge using the **Hammer** of my toolset, ensuring that every container is smelted from pure **Ingots** (configurations) and hardened into immutable **Beskar**.
 
@@ -86,8 +86,20 @@ The Forge mandates a deterministic release process centered on the `main` branch
 - **The Stable Mirror**: Following a release on `main`, the released SHA is forcefully applied to the `stable` branch, ensuring it always mirrors the latest certified milestone.
 - **Artifact Synchronization**: Before any release is finalized on `main`, the seven Sovereign Artifacts (Strategy, Mechanics, Archive, Lead, Audit, Verdict, and Heartbeat) MUST be in perfect agreement with the code state.
 
+## 9. Infrastructure Hardening (Phase 29)
+
+VDE has evolved its core requirement checks from passive sourcing to active physical verification.
+- **Physical Probes**: `vde_require_docker` now executes `docker info` to verify daemon responsiveness, and `vde_require_ssh` verifies the physical presence of the `vde_student` identity.
+- **Inter-VM Awareness**: Tech Stack Clusters (MEAN, LAMP, ELK) now inject inter-VM environment variables (e.g., `DATABASE_URL`, `DB_HOST`, `MONGO_URI`) into the Spoke's `.zshenv` during hydration, creating a bonded cognitive context for the student.
+
+## 10. The Path of the Foundling (Onboarding)
+
+To reduce onboarding friction for new students, VDE provides an automated induction ritual:
+- **Foundling Guide**: A high-level philosophical and practical manual at `docs/FOUNDLING_GUIDE.md`.
+- **Interactive Induction**: `bin/vde-path-of-the-foundling` guides the user through their first Ignition, Spine Check, and Spoke Forge, certifying them as battle-ready without requiring deep architectural knowledge.
+
 ---
-**Version**: 1.4.0
+**Version**: 1.4.1
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE 1.4.0
+**Reference**: ARCHITECTURE 1.4.1
 ---

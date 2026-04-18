@@ -1,4 +1,7 @@
-# Sovereign Remediation Plan: Post-1.3.7 Hardening
+# [CONSOLIDATED] - CONTENT MOVED TO plans/plan.md
+
+
+# Sovereign Remediation Plan: Post-1.4.0 Hardening
 
 **Goal:** Eliminate "pink" test debt and further harden Spoke hydration rituals.
 

@@ -305,6 +305,28 @@ def step_unique_ports(context):
 @then('the output should contain "{text}"')
 def step_output_contains(context, text):
     clean_output = strip_ansi(context.command_output)
+    
+    # Special handling for vde_student in Pillar IV check (SSH identity verification)
+    if text == "vde_student" and "ssh-add -l" in getattr(context, 'last_command', ''):
+        # Verify the loaded key fingerprint matches the vde_student key
+        # VDE_ROOT is already imported from vm_common
+        vde_key = VDE_ROOT / ".ssh" / "vde" / "vde_student"
+        
+        # If we are in a test context where we simulate the hub, the key might be in ~/.ssh/vde
+        if not vde_key.exists():
+            vde_key = Path.home() / ".ssh" / "vde" / "vde_student"
+            
+        if not vde_key.exists():
+            assert False, f"VDE identity missing at {vde_key}"
+            
+        # Get fingerprint of the local key
+        res = subprocess.run(["ssh-keygen", "-l", "-f", str(vde_key)], capture_output=True, text=True)
+        local_fingerprint = res.stdout.split()[1]
+        
+        # Check if this fingerprint is in the agent output
+        assert local_fingerprint in clean_output, f"Fingerprint {local_fingerprint} not found in ssh-add -l output:\n{clean_output}"
+        return
+
     assert text in clean_output, (
         f"Expected '{text}' in output\nGot:\n{clean_output}"
     )

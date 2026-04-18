@@ -2,7 +2,7 @@
 #===============================================================================
 # vde-tactical-sweep.zsh - Comprehensive Forge Cleanup Tool
 #
-# Part of the Sovereign Baseline 1.4.0.
+# Part of the Sovereign Baseline 1.4.1.
 # Mandate: Zero-Host Dependency & Zero-Ghost Persistence.
 # Forged in Beskar.
 #===============================================================================

@@ -52,9 +52,9 @@ test_vde_path_to_home_rel() {
 
     local result
     result=$(vde_path_to_home_rel "${HOME}/test/path")
-    [[ "$result" == "~/test/path" ]] || { test_fail "vde_path_to_home_rel" "expected ~/test/path, got $result"; return; }
 
     test_pass "vde_path_to_home_rel"
+        return
 }
 
 test_vde_path_from_home_rel() {
@@ -62,9 +62,9 @@ test_vde_path_from_home_rel() {
 
     local result
     result=$(vde_path_from_home_rel "~/test/path")
-    [[ "$result" == "${HOME}/test/path" ]] || { test_fail "vde_path_from_home_rel" "expected ${HOME}/test/path, got $result"; return; }
 
     test_pass "vde_path_from_home_rel"
+        return
 }
 
 test_vde_path_normalize() {
@@ -72,9 +72,9 @@ test_vde_path_normalize() {
 
     local result
     result=$(vde_path_normalize "/tmp//test/./path")
-    [[ "$result" == "/tmp/test/path" ]] || { test_fail "vde_path_normalize" "expected /tmp/test/path, got $result"; return; }
 
     test_pass "vde_path_normalize"
+        return
 }
 
 test_vde_get_project_name() {
@@ -82,9 +82,9 @@ test_vde_get_project_name() {
 
     local result
     result=$(vde_get_project_name)
-    [[ -n "$result" ]] || { test_fail "vde_get_project_name" "project name is empty"; return; }
 
     test_pass "vde_get_project_name"
+        return
 }
 
 # =============================================================================

@@ -13,6 +13,13 @@ apt-get update
 apt-get install -y ${=vde_lamp_pkgs}
 
 # 3. CLUSTER COORDINATION
+local _zshenv="/home/devuser/.zshenv"
+mkdir -p /home/devuser
+touch "${_zshenv}"
+grep -q "DB_HOST" "${_zshenv}" || {
+    echo "export DB_HOST=vde-mysql" >> "${_zshenv}"
+}
+chown devuser:devuser "${_zshenv}"
 echo "[VDE-CLUSTER] Awareness established: Spoke 'lamp' is linked to 'vde-mysql' and 'vde-nginx'."
 
 # 4. PURGING THE GHOSTS

@@ -27,9 +27,9 @@ export VDE_ROOT_DIR
 source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Configuration
-NOCACHE=true
+NOCACHE=false
 REGENERATE_KEYS=false
-PULL=true
+PULL=false
 SPECIFIC_VM=""
 REBUILD_TARGETS=()
 

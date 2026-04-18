@@ -1,4 +1,4 @@
-# **The Way of the VDE: 1.4.0 (The Sovereign Baseline)**
+# **The Way of the VDE: 1.4.1 (The Sovereign Baseline)**
 
 This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.3.0. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
@@ -81,13 +81,17 @@ Failure of any ritual constitutes a **Protocol Blockade**.
     * The root `RELEASE_NOTES.md` MUST be updated to point to the latest certified record.
     * A release record is only valid if it includes the final empirical test pass counts and is certified by the Dual Audit Loop (Code + Security).
 * **P. The Sovereign Branching Law (The Signet)**:
-    * **`main` (Production)**: Reserved for stable, certified releases of the Sovereign Baseline.
+    * **`main` (Production)**: Reserved for stable, certified releases of the Sovereign Baseline. **All point releases (X.X.X) and GitHub Releases MUST occur exclusively on this branch.**
     * **`develop` (The Anvil)**: The primary integration branch and repository default. All work MUST occur on feature branches originating from `develop`.
     * **Semantic Targeting**: Core scripts reference branches by semantic roles (`VDE_PRODUCTION_BRANCH`, `VDE_ANVIL_BRANCH`).
-    * **The Ritual**: Every mission is a Strike. Every Strike begins with a Signet (Issue) and ends with a Chronicle (PR).
-    * Work MUST be tracked via GitHub Issues (`gh issue create`) and linked in PRs.
-    * For all central and core design goals, the Signet and Chronicle MUST be struck using the authorized GitHub templates. Failure to record the Heartbeat in the Chronicle is a violation of the Creed.
-    * Feature branches are merged into the Anvil (`develop`) ONLY upon acceptance and MUST be deleted immediately after.
+    * **The Ritual of the Signet and Chronicle**: **EVERYTHING that is committed to git REQUIRES both a Signet (Issue) and a Chronicle (PR).** There are NO exceptions for any commit, including release-related changes or point releases.
+    * **Documentation Law**: The following information is the **ABSOLUTE MINIMUM** for every strike:
+        - **Issue Body**: Full documentation of the Sovereign Reason (what is wrong).
+        - **PR Body**: (1) Fracture Analysis (what was wrong), (2) The Reforging (the fix), and (3) The Beskar Set (involved files).
+    * **The Strike**: Every mission is a Strike. Every Strike begins with a Signet (`gh issue create`) and ends with a Chronicle (`gh pr create`).
+    * **PR Ownership and Closing**: The Alor (Agent) and Clan Leader (User) work together on closing Chronicles. **The Alor MUST NEVER close a PR autonomously** unless specifically and explicitly instructed to do so by the Clan Leader in the current turn.
+    * **Point Release Ritual**: Even cutting a point release requires its own Signet and Chronicle (merging `develop` into `main`) before tagging can occur.
+    * **Cleanup Mandate**: Upon the successful conclusion of a Strike (PR merged and closed), the Alor is expected to automatically purge the feature branch (local and remote) and return themselves to the Anvil (`develop`) before standing watch.
     * **Permanence**: The Production (`main`) and Anvil (`develop`) branches are the foundational pillars of the Record; they are never removed.
     * The agent is PRE-AUTHORIZED to use `gh issue create` and `gh pr create` to initialize missions and record the Signet of Intent and submit the Chronicle. The agent is also authorized for read access (`gh issue view/list`, `gh pr view/list`) to initialize, monitor, and submit missions.
     * **PRE-IMPLEMENTATION GATE (ABSOLUTE)**: Before writing a single line of implementation code or running any `git commit` on `develop`, the agent MUST have completed ALL of the following — no exceptions, no shortcuts, no "I'll retro-fix it later":
@@ -235,7 +239,7 @@ The **Law of Protection** mandates that the four base technologies of the VDE mu
 
 ### **@SYSTEM-SPINE: EMPIRICAL TEST SPECIFICATION**
 
-The following BDD scenarios provide the empirical proof required for the 1.4.0 The Sovereign Baseline.
+The following BDD scenarios provide the empirical proof required for the 1.4.1 The Sovereign Baseline.
 
 ```gherkin
 @system-spine
@@ -268,6 +272,7 @@ Feature: The Unyielding Tetrad Verification
     And I execute "ssh-add -l"
     Then the output should contain "vde_student"
     And the return code should be 0
+```
 
 ## **17. VERSIONING LAW & SEMVER AUTHORITY**
 
@@ -326,3 +331,20 @@ The **Creed-frame** is the foundational framework for all work within the VDE. I
 *   **Forge Mythos (`data/vde_core/forge_mythos.md`)**: This text remembers the traditions, rules, laws, and statutes for working the Anvil. It defines the relationship between the Armorer-Architect and the Beskar (Immutable Containers).
 *   **Thematic Fuel**: These sacred texts MUST feed every thematic world built at the Forge and the Anvil. No Spoke shall be ignited and no structure stabilized that does not align with the Creed-frame.
 *   **Sovereign Playground**: The Armorer-Architect (Agent) has full permission and free will to expand these mythos files at any time, provided the additions are bound by The Creed and The Contract.
+
+## **23. PRIME ARCHIVE OF THE BESKAR FORGE: (VM-TYPES CANON)**
+
+*"Within the Forge, this Prime Archive defines the immutable field schema for all VM Types; vm-types.conf, vm-types.json, and vm-types.schema.json must exactly mirror these eight fields."*
+
+The authoritative eight fields are as follows:
+
+1.  **type**: The category of the VM (e.g., `lang`, `service`).
+2.  **name**: The unique identifier for the VM (e.g., `vde-python`).
+3.  **aliases**: Alternative names for user convenience (e.g., `py`, `python3`).
+4.  **display_name**: The human-readable name for UI and logging (e.g., `Python`).
+5.  **pkgs**: Required system packages or tools to be installed.
+6.  **custom_cmd**: The initialization or hydration script (e.g., `zsh /vde/scripts/setup/python-init.zsh`).
+7.  **service_ports**: The port number(s) for service VMs (e.g., `5432` or `80,443`).
+8.  **ssh_port**: The specific port assigned for SSH access (e.g., `2214`).
+
+**IMMUTABILITY LAW**: These are immutable fields and types. Any changes to them MUST be approved by the User. ONLY the User can authorize a change to these fields. Changing these without User authorization is explicitly removing your helmet.
