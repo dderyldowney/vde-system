@@ -38,17 +38,21 @@ Think of it like having a magical workshop with every tool you could ever want �
 
 ---
 
-## What Do I Need? (Spoiler: Almost Nothing!) 🎒
+## What Do I Need? (Spoiler: The Unyielding Tetrad!) 🎒
 
-You only need **three things** installed on your computer:
+You only need **four things** (The Unyielding Tetrad) to participate in the Forge:
 
 | What | Why | Already Have It? |
 |------|-----|------------------|
-| **Docker** | VDE runs everything in Docker containers | Open Terminal and run: `docker --version` |
-| **Git** | To clone the VDE repository | Run: `git --version` |
-| **Zsh (Mandatory)** | Your shell (runs VDE scripts) | Run: `echo $SHELL` |
+| **Zsh (Mandatory)** | The Voice of the Tribe (runs VDE scripts) | Run: `echo $SHELL` |
+| **Git** | The Chronicler (clones the repository) | Run: `git --version` |
+| **Docker** | The World-Forge (runs your Spokes) | Run: `docker --version` |
+| **SSH** | The Transversal Bridge (connects you to Spokes) | Run: `ssh -V` |
 
-**That's it!** No language runtimes. No databases. No package managers. Just Docker, Git, and a shell. Simple!
+**That's it!** No language runtimes. No databases. No package managers. Just the Tetrad. Simple!
+
+### 🪟 Windows Users: The WSL2 Mandate
+Windows users can perfectly unify their environment with Linux and MacOS by using **WSL2 (Windows Subsystem for Linux)**. Once WSL2 is active, you can install the full Tetrad and walk the same path as any other warrior.
 
 ### Don't Have One of Those? No Stress! 😌
 
