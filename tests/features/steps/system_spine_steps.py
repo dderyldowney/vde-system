@@ -9,7 +9,8 @@ import time
 import re
 from pathlib import Path
 from behave import given, when, then
-from vm_common import VDE_ROOT, run_vde_command, get_container_name
+from vm_common import VDE_ROOT, BIN_DIR, run_vde_command, get_container_name
+from critical_steps import strip_ansi
 
 @given('the VDE Hub "data/vm-types.conf" is the sole authority')
 def step_hub_authority(context):
@@ -78,7 +79,7 @@ def step_verify_hydration(context, script_path):
 
 @then('the SSH port should be atomically allocated and recorded in the registry')
 def step_verify_port_allocation(context):
-    # In 1.4.0, the authoritative port is recorded in .cache/vm-types.cache
+    # In 1.4.1, the authoritative port is recorded in .cache/vm-types.cache
     cache_file = VDE_ROOT / ".cache" / "vm-types.cache"
     assert cache_file.exists(), "VM types cache missing"
     
@@ -135,8 +136,9 @@ def step_verify_all_startable(context):
     for vm in sample_vms:
         res = run_vde_command(f"start {vm}")
         assert res.returncode == 0, f"Failed to start {vm} during matrix verification: {res.stderr}"
-        # Stop it to keep the Forge clean
+        # Stop and remove to keep the Forge pristine
         run_vde_command(f"stop {vm}")
+        run_vde_command(f"rm {vm}")
 
 @then('every VM must adhere to the 8-field registry standard')
 def step_verify_8_field_standard(context):
@@ -211,7 +213,7 @@ def step_verify_destroyed(context, container_name):
 @then('the SSH configuration should be preserved')
 def step_verify_ssh_preserved(context):
     # SSH config should NOT be deleted on 'remove' by mandate
-    # VDE 1.4.0 standard is ~/.ssh/vde/config
+    # VDE 1.4.1 standard is ~/.ssh/vde/config
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
     
     assert ssh_config.exists(), f"VDE SSH config missing at {ssh_config}"
@@ -357,19 +359,18 @@ def step_agent_active_hub(context):
         res = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True)
         if "vde_student" not in res.stdout:
             subprocess.run(["ssh-add", str(vde_key)], capture_output=True)
-
 @given('the 4 Pillars (Zsh, Git, Docker, SSH) have passed their individual proofs')
 def step_pillars_passed(context):
-    # Run bin/vde-spine-check.zsh to verify all pillars
-    result = subprocess.run([str(VDE_ROOT / "bin" / "vde-spine-check.zsh")], capture_output=True, text=True)
-    assert result.returncode == 0, f"Pillars verification failed: {result.stderr or result.stdout}"
+    """Run bin/vde-spine-check.zsh to verify all pillars in a single ritual."""
+    res = subprocess.run([str(BIN_DIR / "vde-spine-check.zsh")], capture_output=True, text=True)
+    assert res.returncode == 0, f"System Spine Check Failed: {res.stdout} {res.stderr}"
 
-@given('the Hub is synchronized to version 1.4.0')
-def step_hub_synced_version(context):
-    spec_file = VDE_ROOT / "docs" / "VDE-SPEC.md"
-    assert spec_file.exists(), "VDE-SPEC.md missing"
-    content = spec_file.read_text()
-    assert "Version: 1.4.0" in content or "1.4.0" in content, f"Hub version mismatch in VDE-SPEC.md: {content[:100]}"
+@given('the Hub is synchronized to version {version}')
+def step_hub_synced_version_param(context, version):
+    # Use the core versioning library logic
+    from vm_common import vde_get_version
+    current_ver = vde_get_version()
+    assert current_ver == version, f"Sync error: Hub at {current_ver}, expected {version}. Run bin/vde-sync-version."
 
 @given('I have a valid VM definition for "{vm_alias}" in the Beskar Registry')
 def step_valid_vm_definition(context, vm_alias):
@@ -405,6 +406,29 @@ def step_verify_ssh_bridge(context, vm_alias):
     # Handle both canonical and alias
     canonical = f"vde-{vm_alias}"
     assert canonical in content or vm_alias in content, f"SSH bridge not found in config for {vm_alias}"
+
+@then('the loaded SSH identities should include the VDE student key')
+def step_verify_vde_student_key_loaded(context):
+    """Verify the loaded key fingerprint matches the vde_student key."""
+    # VDE_ROOT is already imported from vm_common
+    vde_key = VDE_ROOT / ".ssh" / "vde" / "vde_student"
+    
+    # If we are in a test context where we simulate the hub, the key might be in ~/.ssh/vde
+    if not vde_key.exists():
+        vde_key = Path.home() / ".ssh" / "vde" / "vde_student"
+        
+    if not vde_key.exists():
+        assert False, f"VDE identity missing at {vde_key}"
+        
+    # Get fingerprint of the local key
+    res = subprocess.run(["ssh-keygen", "-l", "-f", str(vde_key)], capture_output=True, text=True)
+    local_fingerprint = res.stdout.split()[1]
+    
+    # Get current agent identities
+    clean_output = strip_ansi(context.command_output)
+    
+    # Check if this fingerprint is in the agent output
+    assert local_fingerprint in clean_output, f"Fingerprint {local_fingerprint} not found in ssh-add -l output:\n{clean_output}"
 
 @then('the command should be executed as the "{identity}" identity')
 def step_verify_command_identity(context, identity):

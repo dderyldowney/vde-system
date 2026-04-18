@@ -72,7 +72,7 @@ Feature: System Spine Integrity
     Given the "vde_student" identity exists at "~/.ssh/vde/"
     When the SSH agent is active on the Hub
     And I execute "ssh-add -l"
-    Then the output should contain "vde_student"
+    Then the loaded SSH identities should include the VDE student key
     And the return code should be 0
 
   @system-spine @image-purity @rule-12-5

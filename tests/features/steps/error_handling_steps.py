@@ -27,7 +27,10 @@ def step_simulate_sigint(context, command):
     try:
         os.killpg(proc.pid, signal.SIGINT)
     except ProcessLookupError:
-        pass
+        # Process already dead, this is a clean state
+        return
+    except Exception as e:
+        print(f"[ERROR] Signal delivery failed: {e}")
     
     try:
         context.command_output, _ = proc.communicate(timeout=5)
@@ -113,7 +116,10 @@ def step_attempt_start(context, vm_alias):
     try:
         os.killpg(proc.pid, signal.SIGINT)
     except ProcessLookupError:
-        pass
+        # Process already dead, this is a clean state
+        return
+    except Exception as e:
+        print(f"[ERROR] Signal delivery failed: {e}")
         
     # Final read
     try:

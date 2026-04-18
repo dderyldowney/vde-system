@@ -14,7 +14,8 @@ export VDE_ROOT_DIR
 
 # 1. Zsh Purity Check (Rule C)
 # Scans staged .zsh and .sh files for #!/bin/bash or #!/bin/sh shebangs.
-staged_files=($(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(zsh|sh)$"))
+# We append '|| true' to grep to prevent 'set -e' from exiting on no matches.
+staged_files=($(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(zsh|sh)$" || true))
 
 for file in "${staged_files[@]}"; do
     shebang=$(git show :"$file" | head -n 1)
@@ -28,11 +29,11 @@ done
 
 # 2. Secret Sentinel (Rule 12)
 # Regex-based search for hardcoded credentials (API_KEY, SECRET, PASSWORD) in staged changes.
-# Ignore files matching env.template.
-staged_all=($(git diff --cached --name-only --diff-filter=ACM | grep -v "env.template"))
+# Ignore files matching env.template and the env-files/ primer directory.
+staged_all=($(git diff --cached --name-only --diff-filter=ACM | grep -v "env.template" | grep -v "env-files/" || true))
 
 for file in "${staged_all[@]}"; do
-    if git diff --cached "$file" | grep -Ei "^[+].*(API_KEY|SECRET|PASSWORD)\s*="; then
+    if git diff --cached "$file" | grep -Ei "^[+].*(API_KEY|SECRET|PASSWORD)\s*=" > /dev/null 2>&1; then
         echo -e "\033[0;31m[ERROR] Rule 12 Violation (Security Law):\033[0m"
         echo -e "  File '$file' contains potential hardcoded credentials."
         echo -e "  Please use .env files or the project's secret management system."

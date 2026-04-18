@@ -1,13 +1,13 @@
-# PROJECT STATUS - VDE 1.4.0 (The Sovereign Baseline)
+# PROJECT STATUS - VDE 1.4.1 (The Sovereign Baseline)
 
 **CURRENT STATE: 100% GREEN (SOVEREIGN BASELINE CERTIFIED)**
 **DATE:** 2026-04-15
 
 ## EXECUTIVE SUMMARY
-1.4.0 is officially declared the functional baseline for the VDE project. All technical debt from previous versions has been remediated or archived.
+1.4.1 is officially declared the functional baseline for the VDE project. All technical debt from previous versions has been remediated or archived.
 
 ### 1. CORE MILESTONES COMPLETED
-- [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars (1.4.0).
+- [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars (1.4.1).
 - [x] **Proof of Life Contract**: Codified and verified full lifecycle (init, create, rebuild, start, enter, stop, remove, add, uninstall).
 - [x] **Deterministic Error Engine (Phase 26)**: 100% of CLI commands wrapped in `vde_run`. Signal translation (SIGINT/SIGKILL/SIGTERM) and lock transparency (PID reporting) active.
 - [x] **Lock-Queue Model (Phase 25)**: Replaced competitive spinlocks with deterministic First-In-First-Out (FIFO) sequencing. Verified under high-volume concurrency (10+ simultaneous requests).
@@ -28,3 +28,15 @@
 
 ---
 **STATUS: SYSTEM READY**
+
+## 4. CURRENT FOCUS & ROADMAP
+
+**Active Mission**: `plans/1.4.1-consolidated-plan.md`
+
+| Phase | Focus | Status |
+|-------|-------|--------|
+| 28 | Sovereign Release: Ingot Stash & Branching Laws | ✅ COMPLETE |
+| 29 | Tech Stack Clusters: Spoke Hydration & Hardening | 🚧 IN PROGRESS |
+| 30 | Onboarding Rituals: Path of the Foundling | 🚧 PENDING |
+
+**Next Strike**: Task 1 (Eliminate "Pink" Test Debt) of the Consolidated Plan.

@@ -44,7 +44,7 @@ get_ssh_port() {
 }
 
 # Get service port for a VM type (strips vde- prefix if needed)
-get_service_port() {
+get_service_ports() {
   local name="${1}"
   # Try with vde- prefix first, then without
   if [[ -n "${VM_SVC_PORT[vde-${name}]}" ]]; then
@@ -135,19 +135,19 @@ generate_env_file() {
   cat > "${env_file}" <<EOF
 # Environment variables for ${name} development container
 SSH_PORT=${ssh_port}
-DATABASE_URL=postgresql://devuser:SuperSecretPassword123!@postgres:5432/${name}_dev_db
+DATABASE_URL=postgresql://devuser:\${POSTGRES_DEV_PASSWORD:-vde_dev_pass}@postgres:5432/${name}_dev_db
 REDIS_HOST=redis
 REDIS_PORT=6379
 EOF
 
   # For service VMs, add the service-specific port variable
   if [[ "${is_service}" == "true" ]]; then
-    local service_port=$(get_service_port "${name}")
-    if [[ -n "${service_port}" ]]; then
+    local service_ports=$(get_service_ports "${name}")
+    if [[ -n "${service_ports}" ]]; then
       upper_name=$(echo "${name}" | tr '[:lower:]' '[:upper:]')
       # Handle multi-port services (comma-separated) - zsh compatible
       local -a ports
-      IFS=',' ports=("${(@s[,])service_port}")
+      IFS=',' ports=("${(@s[,])service_ports}")
       for port in "${ports[@]}"; do
         port=$(echo "${port}" | tr -d ' ')
         # For RabbitMQ which has management port on 15672
@@ -196,7 +196,7 @@ generate_service_config() {
   local pkgs="${2}"
   local custom_cmd="${3}"
   local ssh_port=$(get_ssh_port "${name}")
-  local service_port=$(get_service_port "${name}")
+  local service_ports=$(get_service_ports "${name}")
 
   local config_dir="${VDE_ROOT_DIR}/configs/docker/services/${name}"
   local compose_file="${config_dir}/docker-compose.yml"
@@ -211,10 +211,10 @@ generate_service_config() {
 
   # Build port mappings for services
   local port_mappings=""
-  if [[ -n "${service_port}" ]]; then
+  if [[ -n "${service_ports}" ]]; then
     # Split by comma and generate port mappings - handle zsh array
     local -a ports
-    IFS=',' ports=("${(@s[,])service_port}")
+    IFS=',' ports=("${(@s[,])service_ports}")
     for port in "${ports[@]}"; do
       port=$(echo "${port}" | tr -d ' ')
       port_mappings="${port_mappings}      - \"${port}:${port}\"\n"
@@ -224,7 +224,7 @@ generate_service_config() {
   # Replace variables in template
   # First handle service ports mapping block
   sed "s@##SERVICE_PORTS##@${port_mappings}@g" "${template_file}" | \
-  sed "s@{{NAME}}@${name}@g; s@{{SSH_PORT}}@${ssh_port}@g; s@{{PKGS}}@${pkgs}@g; s@{{CUSTOM_CMD}}@${custom_cmd}@g; s@{{SERVICE_PORT}}@${service_port}@g" > "${compose_file}"
+  sed "s@{{NAME}}@${name}@g; s@{{SSH_PORT}}@${ssh_port}@g; s@{{PKGS}}@${pkgs}@g; s@{{CUSTOM_CMD}}@${custom_cmd}@g; s@{{SERVICE_PORT}}@${service_ports}@g" > "${compose_file}"
 
   echo "Generated: ${compose_file}"
 

@@ -48,7 +48,6 @@ assert_equals() {
     local expected="$1"
     local actual="$2"
     if [[ "$actual" == "$expected" ]]; then
-        return 0
     fi
     echo "  Expected: '$expected'"
     echo "  Actual:   '$actual'"
@@ -122,6 +121,7 @@ test_assoc_init() {
     fi
 
     test_pass "_assoc_init"
+        return
 }
 
 test_assoc_set_get() {
@@ -135,8 +135,8 @@ test_assoc_set_get() {
 
     if [[ "$result" == "value1" ]]; then
         test_pass "_assoc_set/get"
-        _assoc_clear "TEST_SETGET"
         return
+        _assoc_clear "TEST_SETGET"
     fi
 
     test_fail "_assoc_set/get" "expected 'value1', got '$result'"
@@ -158,8 +158,8 @@ test_assoc_set_get_multiple() {
 
     if [[ "$v1" == "value1" ]] && [[ "$v2" == "value2" ]] && [[ "$v3" == "value3" ]]; then
         test_pass "_assoc_set/get (multiple keys)"
-        _assoc_clear "TEST_MULTI"
         return
+        _assoc_clear "TEST_MULTI"
     fi
 
     test_fail "_assoc_set/get" "values don't match: v1=$v1, v2=$v2, v3=$v3"
@@ -182,8 +182,8 @@ test_assoc_keys() {
        echo "$keys" | grep -q "banana" && \
        echo "$keys" | grep -q "grape"; then
         test_pass "_assoc_keys"
-        _assoc_clear "TEST_KEYS"
         return
+        _assoc_clear "TEST_KEYS"
     fi
 
     test_fail "_assoc_keys" "not all keys found: $keys"
@@ -199,8 +199,8 @@ test_assoc_has_key() {
     if _assoc_has_key "TEST_HASKEY" "existing"; then
         if ! _assoc_has_key "TEST_HASKEY" "nonexisting"; then
             test_pass "_assoc_has_key"
+        return
             _assoc_clear "TEST_HASKEY"
-            return
         fi
     fi
 
@@ -217,8 +217,8 @@ test_assoc_unset() {
 
     if ! _assoc_has_key "TEST_UNSET" "toremove"; then
         test_pass "_assoc_unset"
-        _assoc_clear "TEST_UNSET"
         return
+        _assoc_clear "TEST_UNSET"
     fi
 
     test_fail "_assoc_unset" "key still exists after unset"
@@ -261,8 +261,8 @@ test_special_chars_slash() {
 
     if [[ "$v1" == "value1" ]] && [[ "$v2" == "value2" ]]; then
         test_pass "special chars (slash collision)"
-        _assoc_clear "TEST_SLASH"
         return
+        _assoc_clear "TEST_SLASH"
     fi
 
     test_fail "special chars" "collision detected: a/b=$v1, a_b=$v2"
@@ -287,8 +287,8 @@ test_special_chars_complex() {
     if [[ "$v1" == "value1" ]] && [[ "$v2" == "value2" ]] && \
        [[ "$v3" == "value3" ]] && [[ "$v4" == "value4" ]]; then
         test_pass "special chars (complex keys)"
-        _assoc_clear "TEST_COMPLEX"
         return
+        _assoc_clear "TEST_COMPLEX"
     fi
 
     test_fail "special chars" "values don't match"
@@ -308,8 +308,8 @@ test_special_chars_preserves_original() {
     # Check that original keys are returned
     if echo "$keys" | grep -q "a/b/c" && echo "$keys" | grep -q "x_y_z"; then
         test_pass "special chars (key enumeration)"
-        _assoc_clear "TEST_ENUM"
         return
+        _assoc_clear "TEST_ENUM"
     fi
 
     test_fail "special chars" "keys not preserved: $keys"
@@ -327,8 +327,8 @@ test_empty_key_handling() {
 
     if [[ "$result" == "empty_value" ]]; then
         test_pass "empty key handling"
-        _assoc_clear "TEST_EMPTY"
         return
+        _assoc_clear "TEST_EMPTY"
     fi
 
     test_fail "empty key" "expected 'empty_value', got '$result'"
@@ -357,10 +357,10 @@ test_multiple_independent_arrays() {
 
     if [[ "$v1" == "value1" ]] && [[ "$v2" == "value2" ]] && [[ "$v3" == "value3" ]]; then
         test_pass "multiple independent arrays"
+        return
         _assoc_clear "ARRAY1"
         _assoc_clear "ARRAY2"
         _assoc_clear "ARRAY3"
-        return
     fi
 
     test_fail "multiple arrays" "values leaked between arrays"
@@ -415,6 +415,7 @@ test_shell_supports_native_assoc() {
 
     # Fallback mode is also acceptable
     test_pass "_shell_supports_native_assoc (fallback)"
+        return
 }
 
 # =============================================================================

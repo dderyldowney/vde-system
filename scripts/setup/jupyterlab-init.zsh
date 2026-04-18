@@ -44,9 +44,11 @@ c.ServerApp.port = 8888
 c.ServerApp.open_browser = False
 c.ServerApp.root_dir = '/home/devuser/workspace'
 c.ServerApp.allow_root = True
+c.ServerApp.allow_remote_access = True
+c.ServerApp.disable_check_xsrf = True
 # Data Science Default: Zero-Gate Access for Internal Student Use
-c.ServerApp.token = ''
-c.ServerApp.password = ''
+c.IdentityProvider.token = ''
+c.IdentityProvider.password = ''
 EOF"
 
 # 6. PERSISTENCE ANCHOR (Hardened Background Pattern)
@@ -61,6 +63,12 @@ chown devuser:devuser /logs
 # Guarded bridge setup (Jupyter startup moved to Ignition Hook)
 grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
     echo "export SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock" >> "${_zshenv}"
+}
+
+# 6.1 INTER-VM AWARENESS (Cluster Bonding)
+# Enable seamless connection to the postgres Spoke if present on the network
+grep -q "DATABASE_URL" "${_zshenv}" || {
+    echo "export DATABASE_URL=postgresql://devuser:\${POSTGRES_DEV_PASSWORD:-vde_dev_pass}@vde-postgres:5432/postgres_dev_db" >> "${_zshenv}"
 }
 chown devuser:devuser "${_zshenv}"
 

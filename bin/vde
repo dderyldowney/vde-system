@@ -30,6 +30,13 @@ source "${VDE_ROOT_DIR}/lib/vde-ssh"
 source "${VDE_ROOT_DIR}/lib/vde-security"
 source "${VDE_ROOT_DIR}/lib/vde-cluster-utils"
 
+# Source the centralized environment file if it exists (Rule 12)
+if [[ -f "${VDE_ROOT_DIR}/.env" ]] ; then
+    set -a
+    source "${VDE_ROOT_DIR}/.env"
+    set +a
+fi
+
 # Phase 26: Signal Translation Trap
 trap 'echo ""; vde_error_map 130 "Interrupted"; exit 130' SIGINT
 
@@ -42,6 +49,10 @@ case ${COMMAND} in
     init)
         shift
         vde_run "init" "${VDE_ROOT_DIR}/bin/vde-init" "$@"
+        ;;
+    path-of-the-foundling)
+        shift
+        vde_run "foundling" "${VDE_ROOT_DIR}/bin/vde-path-of-the-foundling" "$@"
         ;;
     rebuild)
         shift

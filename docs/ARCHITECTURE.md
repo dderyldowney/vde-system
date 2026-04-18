@@ -1,4 +1,4 @@
-# ARCHITECTURE 1.4.0 (The Sovereign Baseline)
+# ARCHITECTURE 1.4.1 (The Sovereign Baseline)
 
 ## 1. Philosophical Pillars (The Way)
 
@@ -14,6 +14,8 @@
 - **Hub**: The host machine, governing orchestration and security.
 - **Spokes**: Isolated containers (jails) where hydration and development occur.
 - **Bridges**: Secure transversal connections (SSH, socat) between the Hub and Spokes.
+- **Initialization Ritual (`vde init`)**: The automated process of forging keys and priming configurations to transform a raw clone into a battle-ready Hub.
+- **Path of the Foundling (`vde path-of-the-foundling`)**: The interactive induction script for new students.
 
 ## 3. Security posture (The Beskar)
 
