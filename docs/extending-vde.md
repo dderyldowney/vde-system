@@ -56,7 +56,7 @@ Before extending VDE, it helps to understand the Hub-and-Spoke model detailed in
 ### vm-types.conf Format (The 8-Field Standard)
 
 ```
-type|name|aliases|display_name|pkgs|custom_cmd|service_port|ssh_port
+type|name|aliases|display_name|pkgs|custom_cmd|service_ports|ssh_port
 ```
 
 | Field | Description | Example |
@@ -65,7 +65,7 @@ type|name|aliases|display_name|pkgs|custom_cmd|service_port|ssh_port
 | `display_name` | Human-readable name | `Zig` |
 | `pkgs` | Required system packages | `zig-sdk` |
 | `custom_cmd` | USP initialization script | `zsh /vde/scripts/setup/zig-init.zsh` |
-| `service_port` | Port number (services only) | `5432` |
+| `service_ports` | Port number (services only) | `5432` |
 
 ---
 

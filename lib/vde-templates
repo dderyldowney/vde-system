@@ -48,7 +48,7 @@ render_language_template() {
         NAME "${name}" SSH_PORT "${ssh_port}" INSTALL_CMD "${install_cmd}"
 }
 
-# render_service_template NAME SSH_PORT SERVICE_PORT INSTALL_CMD
+# render_service_template NAME SSH_PORT SERVICE_PORTS INSTALL_CMD
 # Render docker-compose.yml for service VM
 render_service_template() {
     local name="${1}" ssh_port="${2}" service_ports="${3}" install_cmd="${4:-}"
@@ -61,7 +61,7 @@ render_service_template() {
 
     local content
     content=$(render_template "${template_file}" \
-        NAME "${name}" SSH_PORT "${ssh_port}" SERVICE_PORT "${service_ports}" INSTALL_CMD "${install_cmd}")
+        NAME "${name}" SSH_PORT "${ssh_port}" SERVICE_PORTS "${service_ports}" INSTALL_CMD "${install_cmd}")
 
     # Handle multiple service ports if present
     if [[ -n "${service_ports}" ]] && [[ "${service_ports}" != "null" ]]; then

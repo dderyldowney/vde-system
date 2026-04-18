@@ -1,5 +1,5 @@
 # Template for service VMs
-# Variables: {{NAME}}, {{SSH_PORT}}, {{SERVICE_PORT}}, {{PKGS}}, {{CUSTOM_CMD}}
+# Variables: {{NAME}}, {{SSH_PORT}}, {{SERVICE_PORTS}}, {{PKGS}}, {{CUSTOM_CMD}}
 name: vde-{{NAME}}
 services:
   vde-{{NAME}}:

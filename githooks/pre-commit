@@ -29,8 +29,8 @@ done
 
 # 2. Secret Sentinel (Rule 12)
 # Regex-based search for hardcoded credentials (API_KEY, SECRET, PASSWORD) in staged changes.
-# Ignore files matching env.template.
-staged_all=($(git diff --cached --name-only --diff-filter=ACM | grep -v "env.template" || true))
+# Ignore files matching env.template and the env-files/ primer directory.
+staged_all=($(git diff --cached --name-only --diff-filter=ACM | grep -v "env.template" | grep -v "env-files/" || true))
 
 for file in "${staged_all[@]}"; do
     if git diff --cached "$file" | grep -Ei "^[+].*(API_KEY|SECRET|PASSWORD)\s*=" > /dev/null 2>&1; then

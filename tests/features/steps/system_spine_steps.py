@@ -406,6 +406,29 @@ def step_verify_ssh_bridge(context, vm_alias):
     canonical = f"vde-{vm_alias}"
     assert canonical in content or vm_alias in content, f"SSH bridge not found in config for {vm_alias}"
 
+@then('the loaded SSH identities should include the VDE student key')
+def step_verify_vde_student_key_loaded(context):
+    """Verify the loaded key fingerprint matches the vde_student key."""
+    # VDE_ROOT is already imported from vm_common
+    vde_key = VDE_ROOT / ".ssh" / "vde" / "vde_student"
+    
+    # If we are in a test context where we simulate the hub, the key might be in ~/.ssh/vde
+    if not vde_key.exists():
+        vde_key = Path.home() / ".ssh" / "vde" / "vde_student"
+        
+    if not vde_key.exists():
+        assert False, f"VDE identity missing at {vde_key}"
+        
+    # Get fingerprint of the local key
+    res = subprocess.run(["ssh-keygen", "-l", "-f", str(vde_key)], capture_output=True, text=True)
+    local_fingerprint = res.stdout.split()[1]
+    
+    # Get current agent identities
+    clean_output = strip_ansi(context.command_output)
+    
+    # Check if this fingerprint is in the agent output
+    assert local_fingerprint in clean_output, f"Fingerprint {local_fingerprint} not found in ssh-add -l output:\n{clean_output}"
+
 @then('the command should be executed as the "{identity}" identity')
 def step_verify_command_identity(context, identity):
     # If identity is "vde_student", we check if the SSH agent in the container has the key

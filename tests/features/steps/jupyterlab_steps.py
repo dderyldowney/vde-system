@@ -25,7 +25,7 @@ def step_verify_service_port(context, vm_name, expected_port):
     for cat in ["language", "service"]:
         for vm in vm_types.get("vms", {}).get(cat, []):
             if vm["name"] == vm_name:
-                assert vm.get("service_port") == expected_port, f"Expected port {expected_port}, got {vm.get('service_port')}"
+                assert vm.get("service_ports") == expected_port, f"Expected port {expected_port}, got {vm.get('service_ports')}"
                 found = True
                 break
     assert found, f"VM '{vm_name}' not found"
