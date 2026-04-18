@@ -1,10 +1,11 @@
 # PROJECT STATUS - VDE 1.4.1 (The Sovereign Baseline)
 
-**CURRENT STATE: 100% GREEN (SOVEREIGN BASELINE CERTIFIED)**
-**DATE:** 2026-04-15
+**CURRENT STATE: 100% GREEN (THE UNIQUE SOVEREIGN BASELINE)**
+**DATE:** 2026-04-18
+**RELEASE:** [VDE 1.4.1](https://github.com/dderyldowney/vde-system/releases/tag/1.4.1)
 
 ## EXECUTIVE SUMMARY
-1.4.1 is officially declared the functional baseline for the VDE project. All technical debt from previous versions has been remediated or archived.
+1.4.1 is hereby declared the **New Sovereign Baseline** across the entire platform. This version represents the absolute functional and security standard for the Forge. All previous versions (1.3.x and earlier) are preserved for historical archival use only and are no longer supported for active Forge operations.
 
 ### 1. CORE MILESTONES COMPLETED
 - [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars (1.4.1).
