@@ -197,8 +197,17 @@ vde_init_build_base_image() {
         echo "Building foundational vde-base image..."
     fi
 
+    # Check if image already exists to avoid redundant build during init
+    if docker image inspect vde-base:latest >/dev/null 2>&1; then
+        if [[ "${QUIET}" = "0" ]] ; then
+            echo "  ✓ vde-base image already exists"
+        fi
+        return 0
+    fi
+
     # Using the canonical vde-rebuild tool per mandate
-    if "${VDE_ROOT_DIR}/bin/vde-rebuild" --vm base >/dev/null 2>&1; then
+    # We do NOT suppress output here so the user can see progress (or errors)
+    if "${VDE_ROOT_DIR}/bin/vde-rebuild" --vm base; then
         if [[ "${QUIET}" = "0" ]] ; then
             echo "  ✓ vde-base image built successfully"
         fi
