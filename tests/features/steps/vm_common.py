@@ -34,6 +34,19 @@ IN_TEST_MODE = os.environ.get("VDE_TEST_MODE") == "1"
 ALLOW_CLEANUP = IN_CONTAINER or IN_TEST_MODE
 
 
+def vde_get_version():
+    """Extract the current VDE version from docs/VDE-SPEC.md."""
+    spec_file = VDE_ROOT / "docs" / "VDE-SPEC.md"
+    if not spec_file.exists():
+        return "0.0.0-unknown"
+    
+    import re
+    content = spec_file.read_text()
+    # Matches: "Version: 1.4.1" or "# VDE-SPEC 1.4.1"
+    m = re.search(r"(?:Version:|VDE-SPEC)\s+([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?)", content)
+    return m.group(1) if m else "0.0.0-unknown"
+
+
 def get_vm_conf_dir(vm_name):
     """Get VM configuration directory in configs/docker/<category>/."""
     # Normalize name (remove vde- prefix if present)
