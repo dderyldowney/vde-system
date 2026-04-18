@@ -56,6 +56,7 @@ Automated orchestration ensures absolute traceability:
 - **Reporting Minimums (MANDATORY)**:
     - **Issue Bodies**: MUST include full documentation of what is wrong (the "Sovereign Reason" for the Issue).
     - **PR Bodies**: MUST include (1) What was wrong, (2) What the fix was, and (3) A complete list of Files involved. This is the absolute minimum acceptable information.
+- **The Pre-Release Declaration Mandate**: BEFORE merging any release Chronicle into Production (`main`), a dedicated Declaration Ritual MUST be performed. This ritual updates `PROJECT_STATUS.md` to declare the new version as the unique baseline and relegates previous entries in `RELEASE_NOTES.md` to the archive. The release merge cannot proceed until this declaration is recorded in the Anvil.
 
 ## 6. Security & Infrastructure Bridge
 
