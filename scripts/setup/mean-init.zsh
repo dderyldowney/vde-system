@@ -18,6 +18,13 @@ sh /tmp/setup_node.sh
 apt-get install -y nodejs
 
 # 3. CLUSTER COORDINATION
+local _zshenv="/home/devuser/.zshenv"
+mkdir -p /home/devuser
+touch "${_zshenv}"
+grep -q "MONGO_URI" "${_zshenv}" || {
+    echo "export MONGO_URI=mongodb://vde-mongodb:27017" >> "${_zshenv}"
+}
+chown devuser:devuser "${_zshenv}"
 echo "[VDE-CLUSTER] Awareness established: Spoke 'mean' is linked to 'vde-mongodb'."
 
 # 4. PURGING THE GHOSTS

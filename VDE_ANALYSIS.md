@@ -1,6 +1,6 @@
 # VDE Technical Analysis: Architectural Integrity & DX Evaluation
 
-**Baseline**: 1.4.0 (Sovereign)
+**Baseline**: 1.4.1 (Sovereign)
 **Status**: VERIFIED
 **Auditor**: Senior Software Engineer & AI Systems Architect
 

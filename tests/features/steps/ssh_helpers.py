@@ -17,20 +17,15 @@ from pathlib import Path
 steps_dir = os.path.dirname(os.path.abspath(__file__))
 if steps_dir not in sys.path:
     sys.path.insert(0, steps_dir)
-from config import VDE_ROOT
+
+# Import shared configuration and constants from vm_common
+from vm_common import VDE_ROOT, run_vde_command, docker_ps, container_exists, ALLOW_CLEANUP
 
 # VDE SSH Isolation - All SSH operations use these paths
 VDE_SSH_DIR = Path.home() / ".ssh" / "vde"
 VDE_SSH_CONFIG = VDE_SSH_DIR / "config"
 VDE_SSH_KNOWN_HOSTS = VDE_SSH_DIR / "known_hosts"
 VDE_SSH_IDENTITY = VDE_SSH_DIR / "vde_student"
-
-
-# =============================================================================
-# SSH Helper Functions for Real Verification
-# =============================================================================
-
-from vm_common import run_vde_command, docker_ps, container_exists
 
 
 def ssh_agent_is_running():
@@ -55,8 +50,10 @@ def ssh_agent_is_running():
                         result = subprocess.run(["kill", "-0", pid], capture_output=True)
                         if result.returncode == 0:
                             return True
-        except Exception:
-            pass
+        except Exception as e:
+            if os.environ.get("VDE_DEBUG_TESTS") == "1":
+                print(f"[DEBUG] SSH agent check failed: {e}")
+            return False
 
     # Check system SSH agent
     try:
@@ -84,8 +81,10 @@ def ssh_agent_has_keys():
                     parts = line.split(";")[0].split("=")
                     if len(parts) == 2:
                         env["SSH_AGENT_PID"] = parts[1].strip('"').strip("'")
-        except Exception:
-            pass
+        except Exception as e:
+            if os.environ.get("VDE_DEBUG_TESTS") == "1":
+                print(f"[DEBUG] SSH agent check failed: {e}")
+            return False
 
     try:
         result = subprocess.run(
@@ -134,8 +133,10 @@ def ssh_config_get_host_entry(host):
                             break
                         entry.append(lines[j])
                     return "\n".join(entry)
-        except Exception:
-            pass
+        except Exception as e:
+            if os.environ.get("VDE_DEBUG_TESTS") == "1":
+                print(f"[DEBUG] SSH agent check failed: {e}")
+            return False
     return None
 
 
@@ -258,11 +259,6 @@ def vm_has_private_keys(vm_name):
         pass
 
     return False
-
-
-# Test mode detection - ALLOW_CLEANUP indicates we can modify state
-# When VDE_TEST_CLEANUP is not 'false', we allow cleanup operations
-ALLOW_CLEANUP = os.environ.get("VDE_TEST_CLEANUP", "true") != "false"
 
 
 # =============================================================================

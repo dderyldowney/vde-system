@@ -50,6 +50,10 @@ case ${COMMAND} in
         shift
         vde_run "init" "${VDE_ROOT_DIR}/bin/vde-init" "$@"
         ;;
+    path-of-the-foundling)
+        shift
+        vde_run "foundling" "${VDE_ROOT_DIR}/bin/vde-path-of-the-foundling" "$@"
+        ;;
     rebuild)
         shift
         # 1. Cluster Awareness

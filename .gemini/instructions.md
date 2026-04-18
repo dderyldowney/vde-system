@@ -1,4 +1,4 @@
-# **The Way of the VDE: 1.4.0 (The Sovereign Baseline)**
+# **The Way of the VDE: 1.4.1 (The Sovereign Baseline)**
 
 This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.3.0. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
@@ -85,6 +85,9 @@ Failure of any ritual constitutes a **Protocol Blockade**.
     * **`develop` (The Anvil)**: The primary integration branch and repository default. All work MUST occur on feature branches originating from `develop`.
     * **Semantic Targeting**: Core scripts reference branches by semantic roles (`VDE_PRODUCTION_BRANCH`, `VDE_ANVIL_BRANCH`).
     * **The Ritual of the Signet and Chronicle**: **EVERYTHING that is committed to git REQUIRES both a Signet (Issue) and a Chronicle (PR).** There are NO exceptions for any commit, including release-related changes or point releases.
+    * **Documentation Law**: The following information is the **ABSOLUTE MINIMUM** for every strike:
+        - **Issue Body**: Full documentation of the Sovereign Reason (what is wrong).
+        - **PR Body**: (1) Fracture Analysis (what was wrong), (2) The Reforging (the fix), and (3) The Beskar Set (involved files).
     * **The Strike**: Every mission is a Strike. Every Strike begins with a Signet (`gh issue create`) and ends with a Chronicle (`gh pr create`).
     * **PR Ownership and Closing**: The Alor (Agent) and Clan Leader (User) work together on closing Chronicles. **The Alor MUST NEVER close a PR autonomously** unless specifically and explicitly instructed to do so by the Clan Leader in the current turn.
     * **Point Release Ritual**: Even cutting a point release requires its own Signet and Chronicle (merging `develop` into `main`) before tagging can occur.
@@ -236,7 +239,7 @@ The **Law of Protection** mandates that the four base technologies of the VDE mu
 
 ### **@SYSTEM-SPINE: EMPIRICAL TEST SPECIFICATION**
 
-The following BDD scenarios provide the empirical proof required for the 1.4.0 The Sovereign Baseline.
+The following BDD scenarios provide the empirical proof required for the 1.4.1 The Sovereign Baseline.
 
 ```gherkin
 @system-spine

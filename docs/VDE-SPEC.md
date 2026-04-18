@@ -1,8 +1,8 @@
-# VDE-SPEC 1.4.0 (The Sovereign Baseline)
+# VDE-SPEC 1.4.1 (The Sovereign Evolution) (The Sovereign Evolution)
 
-**Date**: 2026-04-16
+**Date**: 2026-04-17
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE 1.4.0
+**Reference**: ARCHITECTURE 1.4.1
 **Identity**: The Covert
 
 ## 1. Absolute Mandates (The Rule Spine & The Gospel)
@@ -53,6 +53,9 @@ Automated orchestration ensures absolute traceability:
 - **Automated Labeling**: GitHub automatically tags Chronicles by type (`feat`, `fix`, `chore`) and impact (`breaking-change`) based on title prefixes and the `!` modifier.
 - **Unbreakable Link**: Every Chronicle MUST be linked to its Signet using auto-closing keywords (e.g., `Closes #N`).
 - **Evidence Mandate**: The Chronicle body MUST include literal terminal output proof of successful test runs.
+- **Reporting Minimums (MANDATORY)**:
+    - **Issue Bodies**: MUST include full documentation of what is wrong (the "Sovereign Reason" for the Issue).
+    - **PR Bodies**: MUST include (1) What was wrong, (2) What the fix was, and (3) A complete list of Files involved. This is the absolute minimum acceptable information.
 
 ## 6. Security & Infrastructure Bridge
 
@@ -68,7 +71,7 @@ The Forge is currently advancing through Phase 29:
 - **State Integrity**: Codified `VDE_DOCKER_STATE_DIR` in `lib/vde-constants` to ensure deterministic cluster and container state management.
 
 ---
-Version: 1.4.0
+Version: 1.4.1
 **Status**: HARDENED
-**Reference**: RESOL’NARE 1.4.0
+**Reference**: RESOL’NARE 1.4.1
 ---

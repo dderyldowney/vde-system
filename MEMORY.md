@@ -35,12 +35,12 @@
 - **Sovereign Branching Strategy (The Signet):**
     - Result: Codified mandatory feature branch lifecycle.
 
-## SYSTEM BENCHMARKS (VDE 1.4.0)
+## SYSTEM BENCHMARKS (VDE 1.4.1)
 - **Canonical Ignition Speed:** 3.959s. Benchmark for 3-VM Parallel Ignition.
 - **Forge Volume (Core):** ~24,500 lines of active logic.
 - **Forge Volume (Total):** 108,300 total tracked lines.
 
-## THE VERDICT: 1.4.0 READY
+## THE VERDICT: 1.4.1 READY
 - **Compliance Status**: 🟢 100% GREEN / SYSTEM HARDENED.
 - **Security Certified**: CodeQL and Dependabot active.
 - **Workflow Automated**: Auto-closure and stable alias active.
@@ -67,14 +67,17 @@
 
 ---
 
-## CURRENT FOCUS: Phase 29 (Tech Stack Expansion)
+## CURRENT FOCUS: 1.4.1 Sovereign Evolution
 
-**Goal:** Broaden the Spoke hydration library and Tech Stack Cluster matrix.
+**Active Mission**: `plans/1.4.1-consolidated-plan.md`
 
-| # | Phase | Focus | Status |
-|---|-------|-------|--------|
-| 28 | Sovereign Release | Ingot Stash & Branching Laws | ✅ COMPLETE |
-| 29 | Tech Stack Clusters | Spoke Hydration Expansion | 🚧 NEXT |
+**Goal:** Finalize the 1.4.1 baseline by eliminating "pink" test debt, hardening infrastructure requirements, and forging the "Path of the Foundling" onboarding experience.
+
+| Phase | Focus | Status |
+|-------|-------|--------|
+| 28 | Sovereign Release | ✅ COMPLETE |
+| 29 | Tech Stack Clusters | 🚧 IN PROGRESS |
+| 30 | Onboarding Rituals | 🚧 PENDING |
 
 ---
 
