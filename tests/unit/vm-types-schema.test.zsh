@@ -133,8 +133,8 @@ import json, sys
 with open('$VM_TYPES_JSON') as f:
     data = json.load(f)
 for idx, vm in enumerate(data['vms']['language']):
-    assert 'service_port' in vm, f'language[{idx}] ({vm.get(\"name\", \"?\")}): missing service_port field'
-    assert vm['service_port'] is None or vm['service_port'] == '', f'language[{idx}] ({vm[\"name\"]}): service_port must be null or empty, got {vm[\"service_port\"]}'
+    assert 'service_ports' in vm, f'language[{idx}] ({vm.get(\"name\", \"?\")}): missing service_ports field'
+    assert vm['service_ports'] is None or vm['service_ports'] == '', f'language[{idx}] ({vm[\"name\"]}): service_ports must be null or empty, got {vm[\"service_ports\"]}'
 print('PASS')
 " || return 1
 }
@@ -161,7 +161,7 @@ for idx, vm in enumerate(data['vms']['service']):
     assert 'name' in vm, f'service[{idx}]: missing name'
     assert 'display' in vm, f'service[{idx}]: missing display'
     assert 'pkgs' in vm or 'custom_cmd' in vm, f'service[{idx}]: missing installation fields'
-    assert 'service_port' in vm, f'service[{idx}]: missing service_port'
+    assert 'service_ports' in vm, f'service[{idx}]: missing service_ports'
 print('PASS')
 " || return 1
 }
@@ -172,13 +172,13 @@ import json, sys
 with open('$VM_TYPES_JSON') as f:
     data = json.load(f)
 for idx, vm in enumerate(data['vms']['service']):
-    assert isinstance(vm['service_port'], str), f'service[{idx}] ({vm.get(\"name\", \"?\")}): service_port must be string, got {type(vm[\"service_port\"]).__name__}'
+    assert isinstance(vm['service_ports'], str), f'service[{idx}] ({vm.get(\"name\", \"?\")}): service_ports must be string, got {type(vm[\"service_ports\"]).__name__}'
 print('PASS')
 " || return 1
 }
 
 test_service_vms_port_pattern() {
-    invalid_ports=$(jq -r '.vms.service[] | select(.service_port | test("^[0-9]+(,[0-9]+)*$") | not) | "\(.name): \(.service_port)"' "$VM_TYPES_JSON")
+    invalid_ports=$(jq -r '.vms.service[] | select(.service_ports | test("^[0-9]+(,[0-9]+)*$") | not) | "\(.name): \(.service_ports)"' "$VM_TYPES_JSON")
 
     if [[ -n "$invalid_ports" ]]; then
         echo "Invalid service VM ports (must be comma-separated integers): $invalid_ports"
@@ -215,13 +215,13 @@ assert 'language' in data['vms'] and 'service' in data['vms'], 'Missing VM type 
 for vm in data['vms']['language']:
     assert 'name' in vm and 'display' in vm, f'Language VM missing required fields: {vm.get(\"name\", \"?\")}'
     assert 'pkgs' in vm or 'custom_cmd' in vm, f'Language VM missing installation fields: {vm.get(\"name\", \"?\")}'
-    assert vm.get('service_port') is None or vm.get('service_port') == '', f'Language VM must have null or empty service_port: {vm[\"name\"]}'
+    assert vm.get('service_ports') is None or vm.get('service_ports') == '', f'Language VM must have null or empty service_ports: {vm[\"name\"]}'
 
 # Service VM validation
 for vm in data['vms']['service']:
-    assert 'name' in vm and 'display' in vm and 'service_port' in vm, f'Service VM missing required fields: {vm.get(\"name\", \"?\")}'
+    assert 'name' in vm and 'display' in vm and 'service_ports' in vm, f'Service VM missing required fields: {vm.get(\"name\", \"?\")}'
     assert 'pkgs' in vm or 'custom_cmd' in vm, f'Service VM missing installation fields: {vm.get(\"name\", \"?\")}'
-    assert isinstance(vm['service_port'], str), f'Service VM service_port must be string: {vm[\"name\"]}'
+    assert isinstance(vm['service_ports'], str), f'Service VM service_ports must be string: {vm[\"name\"]}'
 
 print('PASS')
 " || return 1

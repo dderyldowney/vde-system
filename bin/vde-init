@@ -152,6 +152,34 @@ vde_init_generate_configs() {
     fi
 }
 
+# vde_init_setup_env - Set up .env file
+vde_init_setup_env() {
+    if [[ "${QUIET}" = "0" ]] ; then
+        echo "Initializing environment files..."
+    fi
+
+    local env_file="${VDE_ROOT_DIR}/.env"
+    local template_file="${VDE_ROOT_DIR}/.env.template"
+
+    if [[ ! -f "${env_file}" ]] ; then
+        if [[ -f "${template_file}" ]] ; then
+            cp "${template_file}" "${env_file}"
+            chmod 600 "${env_file}"
+            if [[ "${QUIET}" = "0" ]] ; then
+                echo "  ✓ Created .env from template"
+            fi
+        else
+            vde_log_error "Environment template missing: ${template_file}"
+            return 1
+        fi
+    else
+        if [[ "${QUIET}" = "0" ]] ; then
+            echo "  ✓ .env already exists"
+        fi
+    fi
+    return 0
+}
+
 # vde_init_setup_ssh - Set up SSH keys and agent
 vde_init_setup_ssh() {
     if [[ "${QUIET}" = "0" ]] ; then
@@ -443,6 +471,7 @@ else
     fi
     
     vde_init_create_directory_structure
+    vde_init_setup_env
     vde_init_generate_configs
     vde_init_setup_ssh
     vde_init_build_base_image
