@@ -158,17 +158,63 @@ vde_init_setup_ssh() {
         echo "Setting up SSH keys and agent..."
     fi
 
-    # Run the SSH setup script
+    # 1. Run the SSH setup script for base key/agent setup
+    # This ensures keys are generated and agent is running
     if "${VDE_ROOT_DIR}/bin/ssh-agent-setup" --init 2>/dev/null; then
         if [[ "${QUIET}" = "0" ]] ; then
             echo "  ✓ SSH environment configured"
         fi
-        return 0
     else
         if [[ "${QUIET}" = "0" ]] ; then
             echo "  ⚠ SSH setup had warnings (may be OK)"
         fi
-        return 0  # Don't fail on SSH issues
+    fi
+
+    # 2. Prime the pump: Copy canonical artifact to active vault
+    # This satisfies the mandate to use the known-good copy of the file for init
+    local artifact_config="${VDE_ROOT_DIR}/configs/ssh/config"
+    if [[ -f "${artifact_config}" ]] ; then
+        if [[ "${QUIET}" = "0" ]] ; then
+            echo "  Priming SSH config from canonical artifact..."
+        fi
+        mkdir -p "$(dirname "${VDE_SSH_CONFIG}")"
+        cp "${artifact_config}" "${VDE_SSH_CONFIG}"
+        chmod 600 "${VDE_SSH_CONFIG}"
+        if [[ "${QUIET}" = "0" ]] ; then
+            echo "  ✓ SSH config primed"
+        fi
+    else
+        vde_error_simple "Canonical SSH artifact not found at ${artifact_config}"
+        return ${VDE_ERR_NOT_FOUND}
+    fi
+
+    return 0
+}
+
+# vde_init_build_base_image - Build foundational vde-base image
+vde_init_build_base_image() {
+    if [[ "${QUIET}" = "0" ]] ; then
+        echo "Building foundational vde-base image..."
+    fi
+
+    # Check if image already exists to avoid redundant build during init
+    if docker image inspect vde-base:latest >/dev/null 2>&1; then
+        if [[ "${QUIET}" = "0" ]] ; then
+            echo "  ✓ vde-base image already exists"
+        fi
+        return 0
+    fi
+
+    # Using the canonical vde-rebuild tool per mandate
+    # We do NOT suppress output here so the user can see progress (or errors)
+    if "${VDE_ROOT_DIR}/bin/vde-rebuild" --vm base; then
+        if [[ "${QUIET}" = "0" ]] ; then
+            echo "  ✓ vde-base image built successfully"
+        fi
+        return 0
+    else
+        vde_error_simple "Failed to build vde-base image"
+        return ${VDE_ERR_GENERAL}
     fi
 }
 
@@ -244,6 +290,24 @@ vde_init_set_permissions() {
     
     if [[ "${QUIET}" = "0" ]] ; then
         echo "  ✓ Permissions set"
+    fi
+}
+
+# vde_init_install_githooks - Install VDE Git hooks
+vde_init_install_githooks() {
+    if [[ "${QUIET}" = "0" ]] ; then
+        echo "Installing VDE Git hooks..."
+    fi
+
+    # Using the dedicated installation script
+    if "${VDE_ROOT_DIR}/bin/install-githooks" >/dev/null 2>&1; then
+        if [[ "${QUIET}" = "0" ]] ; then
+            echo "  ✓ Git hooks installed"
+        fi
+        return 0
+    else
+        vde_error_simple "Failed to install Git hooks"
+        return ${VDE_ERR_GENERAL}
     fi
 }
 
@@ -381,6 +445,7 @@ else
     vde_init_create_directory_structure
     vde_init_generate_configs
     vde_init_setup_ssh
+    vde_init_build_base_image
     
     # Create production network
     vde_init_create_network "${VDE_DOCKER_NETWORK}" "${FORCE}"
@@ -391,6 +456,7 @@ else
     fi
     
     vde_init_set_permissions
+    vde_init_install_githooks
     vde_init_register_clusters
     
     if [[ "${QUIET}" = "0" ]] ; then

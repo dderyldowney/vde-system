@@ -38,6 +38,7 @@ Thumbs.db
 # Docker
 *.log
 .locks/
+.docker-state/
 
 # Python cache files
 __pycache__
