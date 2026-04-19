@@ -13,6 +13,7 @@ local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 [[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants"
 [[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
 [[ -f "${VDE_ROOT_DIR}/lib/vde-log" ]] && source "${VDE_ROOT_DIR}/lib/vde-log"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core"
 
 #===============================================================================
 # Metrics Configuration
@@ -98,15 +99,10 @@ vde_metrics_record() {
     # Create new metric entry
     local new_entry="{\"value\": ${value}, \"unit\": \"${unit}\", \"timestamp\": \"${timestamp}\"}"
     
-    # Use jq if available, otherwise fallback to simple append
-    if command -v jq >/dev/null 2>&1; then
-        echo "${metrics_json}" | jq --arg n "${escaped_name}" --argjson v "${new_entry}" \
-            '.metrics[$n] = .metrics[$n] // [] | .metrics[$n] += [$v] | .last_updated = "'"${timestamp}"'"' > "${VDE_METRICS_FILE}.${$}" 2>/dev/null
-        command mv "${VDE_METRICS_FILE}.${$}" "${VDE_METRICS_FILE}" 2>/dev/null
-    else
-        # Fallback: just append to counters in memory
-        _VDE_METRICS_COUNTERS["${metric_name}"]=$((${_VDE_METRICS_COUNTERS[${metric_name}]:-0} + value))
-    fi
+    # Use central wrapper for JQ operations (Rule G Hardening)
+    echo "${metrics_json}" | vde_query_json --arg n "${escaped_name}" --argjson v "${new_entry}" \
+        '.metrics[$n] = .metrics[$n] // [] | .metrics[$n] += [$v] | .last_updated = "'"${timestamp}"'"' > "${VDE_METRICS_FILE}.${$}" 2>/dev/null
+    command mv "${VDE_METRICS_FILE}.${$}" "${VDE_METRICS_FILE}" 2>/dev/null
     
     return 0
 }
@@ -182,11 +178,7 @@ vde_metrics_get() {
     local pattern="${1:-.*}"
     
     if [[ -f "${VDE_METRICS_FILE}" ]] ; then
-        if command -v jq >/dev/null 2>&1; then
-            command jq -r ".metrics | to_entries[] | select(.key | test(\"${pattern}\")) | \"\(.key): \(.value)\"" "${VDE_METRICS_FILE}" 2>/dev/null || true
-        else
-            command cat "${VDE_METRICS_FILE}"
-        fi
+        vde_query_json -r ".metrics | to_entries[] | select(.key | test(\"${pattern}\")) | \"\(.key): \(.value)\"" "${VDE_METRICS_FILE}" 2>/dev/null || true
     fi
 }
 
@@ -196,24 +188,18 @@ vde_metrics_get_value() {
     local metric_name="${1}"
     
     if [[ -f "${VDE_METRICS_FILE}" ]] ; then
-        if command -v jq >/dev/null 2>&1; then
-            command jq -r ".metrics[\"${metric_name}\"] | last | .value // 0" "${VDE_METRICS_FILE}" 2>/dev/null || echo "0"
-        fi
+        vde_query_json -r ".metrics[\"${metric_name}\"] | last | .value // 0" "${VDE_METRICS_FILE}" 2>/dev/null || echo "0"
     fi
 }
 
 # Get metrics statistics
 vde_metrics_stats() {
     if [[ -f "${VDE_METRICS_FILE}" ]] ; then
-        if command -v jq >/dev/null 2>&1; then
-            command jq '{
-                total_metrics: (.metrics | length),
-                last_updated: .last_updated,
-                sample_metrics: .metrics | to_entries |.[0:5] | map("\(.key): \(.value | length) entries")
-            }' "${VDE_METRICS_FILE}" 2>/dev/null || true
-        else
-            command cat "${VDE_METRICS_FILE}"
-        fi
+        vde_query_json '{
+            total_metrics: (.metrics | length),
+            last_updated: .last_updated,
+            sample_metrics: .metrics | to_entries |.[0:5] | map("\(.key): \(.value | length) entries")
+        }' "${VDE_METRICS_FILE}" 2>/dev/null || true
     fi
 }
 
@@ -239,11 +225,11 @@ vde_metrics_summary() {
     
     if [[ -f "${VDE_METRICS_FILE}" ]] ; then
         local total_entries
-        total_entries=$(command jq '.metrics | map_values(length) | values | add // 0' "${VDE_METRICS_FILE}" 2>/dev/null || echo "0")
+        total_entries=$(vde_query_json '.metrics | map_values(length) | values | add // 0' "${VDE_METRICS_FILE}" 2>/dev/null || echo "0")
         echo "Total metric entries: ${total_entries}"
         echo ""
         echo "Recent metrics:"
-        command jq -r '.metrics | to_entries[] | "  \(.key): \(.value | length) entries"' "${VDE_METRICS_FILE}" 2>/dev/null || true
+        vde_query_json -r '.metrics | to_entries[] | "  \(.key): \(.value | length) entries"' "${VDE_METRICS_FILE}" 2>/dev/null || true
     fi
 }
 
@@ -304,15 +290,13 @@ vde_metrics_record_cache_miss() {
 # Get cache hit rate percentage
 vde_metrics_get_cache_hit_rate() {
     if [[ -f "${VDE_METRICS_FILE}" ]] ; then
-        if command -v jq >/dev/null 2>&1; then
-            local hits=$(command jq -r ".metrics[\"${VDE_METRICS_CACHE_HIT_RATE}.hit\"] | length // 0" "${VDE_METRICS_FILE}" 2>/dev/null || echo "0")
-            local misses=$(command jq -r ".metrics[\"${VDE_METRICS_CACHE_HIT_RATE}.miss\"] | length // 0" "${VDE_METRICS_FILE}" 2>/dev/null || echo "0")
-            local total=$((hits + misses))
-            if [[ "${total}" -gt 0 ]] ; then
-                echo $((hits * 100 / total))
-            else
-                echo "0"
-            fi
+        local hits=$(vde_query_json -r ".metrics[\"${VDE_METRICS_CACHE_HIT_RATE}.hit\"] | length // 0" "${VDE_METRICS_FILE}" 2>/dev/null || echo "0")
+        local misses=$(vde_query_json -r ".metrics[\"${VDE_METRICS_CACHE_HIT_RATE}.miss\"] | length // 0" "${VDE_METRICS_FILE}" 2>/dev/null || echo "0")
+        local total=$((hits + misses))
+        if [[ "${total}" -gt 0 ]] ; then
+            echo $((hits * 100 / total))
+        else
+            echo "0"
         fi
     fi
 }
