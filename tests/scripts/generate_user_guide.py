@@ -127,22 +127,22 @@ def parse_vm_types_conf():
             if line.startswith("#") or not line:
                 continue
 
-            # Parse: type|name|aliases|display_name|install_command|service_port
+            # Parse: type|name|aliases|display|install_command|service_ports
             parts = line.split("|")
             if len(parts) >= 6:
                 vm_type = parts[0].strip()
                 name = parts[1].strip()
                 aliases = parts[2].strip() if len(parts) > 2 else ""
-                display_name = parts[3].strip() if len(parts) > 3 else name
+                display = parts[3].strip() if len(parts) > 3 else name
                 install_cmd = parts[4].strip() if len(parts) > 4 else ""
-                svc_port = parts[5].strip() if len(parts) > 5 else ""
+                service_ports = parts[5].strip() if len(parts) > 5 else ""
 
                 entry = {
                     "name": name,
                     "aliases": aliases,
-                    "display": display_name,
+                    "display": display,
                     "install": install_cmd,
-                    "port": svc_port,
+                    "service_ports": service_ports,
                 }
 
                 if vm_type == "lang":
@@ -585,10 +585,10 @@ def format_scenario_for_user_guide(scenario_name, scenario_body):
     lines = []
 
     # Clean up scenario name for display
-    display_name = scenario_name.replace("-", " ").capitalize()
+    display = scenario_name.replace("-", " ").capitalize()
 
     # 1. Scenario title
-    lines.append(f"**Scenario: {display_name}**\n")
+    lines.append(f"**Scenario: {display}**\n")
     lines.append("")
 
     # 2. Gherkin steps in code block
@@ -835,7 +835,7 @@ def generate_quick_reference():
     for vm in vm_types["services"]:
         name = vm["display"]
         cmd = f"`vde create {vm['name']}`"
-        port = vm["port"] or "-"
+        port = vm["service_ports"] or "-"
         service_rows.append(f"| {name} | {cmd} | {port} |")
 
     return f"""## Quick Reference Card 📇
