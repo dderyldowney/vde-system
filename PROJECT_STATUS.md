@@ -32,12 +32,13 @@
 
 ## 4. CURRENT FOCUS & ROADMAP
 
-**Active Mission**: `plans/1.4.1-consolidated-plan.md`
+**Active Mission**: Phase 31 (Advanced Orchestration and DNS Discovery)
 
 | Phase | Focus | Status |
 |-------|-------|--------|
 | 28 | Sovereign Release: Ingot Stash & Branching Laws | ✅ COMPLETE |
 | 29 | Tech Stack Clusters: Spoke Hydration & Hardening | ✅ COMPLETE |
 | 30 | Onboarding Rituals: Path of the Foundling | ✅ COMPLETE |
+| 31 | Advanced Orchestration: DNS Discovery & Bridge | 🛠 IN PLANNING |
 
-**Next Strike**: Phase 31 (Advanced Orchestration and DNS Discovery).
+**Next Strike**: Phase 32 (Agent Self-Correction & Auto-Remediation).

@@ -57,6 +57,12 @@ VDE decouples environment hydration from Dockerfile complexity through USP ritua
 - **Permission Enforcement**: `vde_security_enforce_permissions` applies recursive `700` to sensitive directories (`data/`, `logs/`, `.cache/`, `.locks/`) and `600` to identity/env files.
 - **Network Segmentation**: `vde-net` (bridge) ensures container isolation with `vde.managed=true` labeling.
 
+### SSH Identity Auto-Remediation (The Hard Rule)
+VDE enforces absolute determinism for the **Transversal Bridge**. If the `vde_student` identity is missing, the initialization lifecycle triggers an immediate remediation:
+- **Inline Generation**: `vde init` detects the missing key and immediately invokes `vde ssh-setup init` inline. This generates the ed25519 identity and initializes the SSH agent without requiring a process restart.
+- **Unified Lifecycle**: By integrating SSH management (`ssh-setup`, `ssh-sync`) directly into the `vde` router, the Forge ensures that all bridge-related operations are audited and wrapped in the Deterministic Error Engine.
+- **Forced Refresh**: The `--force` flag on `vde init` is propagated to the SSH layer, ensuring a clean overwrite of the bridge identity when a total Forge refresh is requested.
+
 ### Bridge Hardening (Phase 27)
 - **Conditional Forwarding**: `vde-entrypoint.zsh` performs a "Sovereign Bridge Handshake." It only exports the `socat` proxy socket to `SSH_AUTH_SOCK` if the variable is empty, protecting protocol-native forwarding (`ssh -A`) from being overwritten.
 - **Persistence Anchor**: The bridge is preserved for non-login shells via conditional injection into `/home/devuser/.zshenv`.

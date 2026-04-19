@@ -53,7 +53,7 @@ Initialize VDE infrastructure - complete project setup.
 Options:
   -n, --networks-only    Only create networks, skip full setup
   -t, --testing          Create vde-testing network for tests
-  -f, --force            Force recreate networks (delete and recreate)
+  -f, --force            Force recreate networks and refresh SSH keys
   -q, --quiet            Suppress output
   -h, --help             Show this help message
 
@@ -183,20 +183,11 @@ vde_init_setup_env() {
 # vde_init_setup_ssh - Set up SSH keys and agent
 vde_init_setup_ssh() {
     if [[ "${QUIET}" = "0" ]] ; then
-        echo "Setting up SSH keys and agent..."
+        echo "Finalizing SSH configuration..."
     fi
 
-    # 1. Run the SSH setup script for base key/agent setup
-    # This ensures keys are generated and agent is running
-    if "${VDE_ROOT_DIR}/bin/ssh-agent-setup" --init 2>/dev/null; then
-        if [[ "${QUIET}" = "0" ]] ; then
-            echo "  ✓ SSH environment configured"
-        fi
-    else
-        if [[ "${QUIET}" = "0" ]] ; then
-            echo "  ⚠ SSH setup had warnings (may be OK)"
-        fi
-    fi
+    # SSH environment (keys/agent/sync) is handled via the inline Hard Rule in the main block.
+    # Here we perform the specific "prime the pump" configuration copy for init.
 
     # 2. Prime the pump: Copy canonical artifact to active vault
     # This satisfies the mandate to use the known-good copy of the file for init
@@ -468,6 +459,29 @@ else
     
     if ! vde_init_check_prerequisites; then
         exit ${VDE_ERR_DOCKER}
+    fi
+    
+    # Hard Rule: Ensure SSH environment exists before proceeding
+    # If 'vde_student' key is missing, or if forced refresh, initialize SSH environment NOW
+    if [[ -z "${VDE_SSH_IDENTITY}" ]] || [[ ! -f "${VDE_SSH_IDENTITY}" ]] || [[ "${FORCE}" = "1" ]] ; then
+        if [[ "${QUIET}" = "0" ]] ; then
+            if [[ "${FORCE}" = "1" ]] ; then
+                vde_log_info "Forcing refresh of SSH environment..." "forge"
+            else
+                vde_log_info "'vde_student' key not found. Initializing SSH setup..." "forge"
+            fi
+        fi
+        
+        # Run SSH setup init via the main CLI entrypoint
+        local ssh_force_flag=""
+        [[ "${FORCE}" = "1" ]] && ssh_force_flag="--force"
+        
+        # We use the full path to avoid any ambiguity
+        "${VDE_ROOT_DIR}/bin/vde" ssh-setup init ${ssh_force_flag} || exit $?
+        
+        if [[ "${QUIET}" = "0" ]] ; then
+            vde_log_info "SSH environment ensured. Continuing initialization..." "forge"
+        fi
     fi
     
     vde_init_create_directory_structure
