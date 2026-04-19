@@ -15,10 +15,10 @@ VDE_ROOT_DIR="${0:a:h:h}"
 vde_log_init 2>/dev/null || true
 
 # Health status codes
-readonly VDE_HEALTH_OK=0
-readonly VDE_HEALTH_MINOR=1
-readonly VDE_HEALTH_MAJOR=2
-readonly VDE_HEALTH_CRITICAL=3
+[[ -z "${VDE_HEALTH_OK}" ]] && readonly VDE_HEALTH_OK=0
+[[ -z "${VDE_HEALTH_MINOR}" ]] && readonly VDE_HEALTH_MINOR=30
+[[ -z "${VDE_HEALTH_MAJOR}" ]] && readonly VDE_HEALTH_MAJOR=31
+[[ -z "${VDE_HEALTH_CRITICAL}" ]] && readonly VDE_HEALTH_CRITICAL=32
 
 # Health check results
 typeset -gA _VDE_HEALTH_CHECKS=()
@@ -352,10 +352,10 @@ vde_health_report_text() {
     
     local status_text
     case "${_VDE_HEALTH_OVERALL}" in
-        0) status_text="HEALTHY" ;;
-        1) status_text="MINOR ISSUES" ;;
-        2) status_text="MAJOR ISSUES" ;;
-        3) status_text="CRITICAL FAILURE" ;;
+        ${VDE_HEALTH_OK}) status_text="HEALTHY" ;;
+        ${VDE_HEALTH_MINOR}) status_text="MINOR ISSUES" ;;
+        ${VDE_HEALTH_MAJOR}) status_text="MAJOR ISSUES" ;;
+        ${VDE_HEALTH_CRITICAL}) status_text="CRITICAL FAILURE" ;;
         *) status_text="UNKNOWN" ;;
     esac
     
@@ -404,10 +404,10 @@ vde_health_report_json() {
     
     local status_text
     case "${_VDE_HEALTH_OVERALL}" in
-        0) status_text="healthy" ;;
-        1) status_text="minor_issues" ;;
-        2) status_text="major_issues" ;;
-        3) status_text="critical" ;;
+        ${VDE_HEALTH_OK}) status_text="healthy" ;;
+        ${VDE_HEALTH_MINOR}) status_text="minor_issues" ;;
+        ${VDE_HEALTH_MAJOR}) status_text="major_issues" ;;
+        ${VDE_HEALTH_CRITICAL}) status_text="critical" ;;
         *) status_text="unknown" ;;
     esac
     
