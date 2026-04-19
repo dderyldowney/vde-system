@@ -294,13 +294,16 @@ vde_health_memory() {
         mem_usage=$(command free 2>/dev/null | command grep Mem | command awk '{print int($3/$2 * 100)}' || echo 0)
     fi
     
+    local triage=""
     if [[ "${mem_usage}" -ge 90 ]]; then
         health_status="CRITICAL"
         message="Memory usage is ${mem_usage}%"
+        triage="ACTION: Quench Spokes with 'vde stop all' or 'vde nuke' to reclaim host resources."
         _VDE_HEALTH_CRITICAL_COUNT=$((_VDE_HEALTH_CRITICAL_COUNT + 1))
     elif [[ "${mem_usage}" -ge 80 ]]; then
         health_status="MAJOR"
         message="Memory usage is ${mem_usage}%"
+        triage="ADVICE: System memory is low. Consider stopping unused VMs."
         _VDE_HEALTH_MAJOR_COUNT=$((_VDE_HEALTH_MAJOR_COUNT + 1))
     elif [[ "${mem_usage}" -ge 70 ]]; then
         health_status="MINOR"
@@ -310,7 +313,7 @@ vde_health_memory() {
         message="Memory usage is ${mem_usage}%"
     fi
     
-    _VDE_HEALTH_CHECKS[${check_name}]="${health_status}|${message}"
+    _VDE_HEALTH_CHECKS[${check_name}]="${health_status}|${message}|${triage}"
 }
 
 #===============================================================================
@@ -375,8 +378,10 @@ vde_health_report_text() {
     
     for check in "${(@k)_VDE_HEALTH_CHECKS}"; do
         local result="${_VDE_HEALTH_CHECKS[${check}]}"
-        local health_status="${result%%|*}"
-        local rest="${result#*|}"
+        local parts=("${(@s:|:)result}")
+        local health_status="${parts[1]}"
+        local message="${parts[2]}"
+        local triage="${parts[3]:-}"
         
         local status_indicator
         case "${health_status}" in
@@ -388,7 +393,8 @@ vde_health_report_text() {
         esac
         
         echo "  ${status_indicator} ${check}"
-        echo "         ${rest}"
+        echo "         ${message}"
+        [[ -n "${triage}" ]] && echo "         \033[1;33m${triage}\033[0m"
         echo ""
     done
     
@@ -428,12 +434,15 @@ vde_health_report_json() {
         first=0
         
         local result="${_VDE_HEALTH_CHECKS[${check}]}"
-        local health_status="${result%%|*}"
-        local rest="${result#*|}"
+        local parts=("${(@s:|:)result}")
+        local health_status="${parts[1]}"
+        local message="${parts[2]}"
+        local triage="${parts[3]:-}"
         
         echo "    \"${check}\": {"
-        echo "      \"status\": \"${status}\","
-        echo "      \"message\": \"${rest}\""
+        echo "      \"status\": \"${health_status}\","
+        echo "      \"message\": \"${message}\","
+        echo "      \"triage\": \"${triage}\""
         echo -n "    }"
     done
     
