@@ -8,7 +8,7 @@
 VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 # Enforce Universal Agent Protocol (The Rule Spine)
-"${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" --quiet || exit 1
+"${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" --quiet || exit ${VDE_ERR_GENERAL}
 
 # Indicate orchestrated execution for sub-scripts
 export VDE_ORCHESTRATED=1
@@ -20,7 +20,7 @@ setopt TYPESET_SILENT
 # This is the cognitive context and operational spine
 # Auto-skip for initialization commands that establish the spine
 if [[ "${VDE_SKIP_SPINE_CHECK}" != "1" ]] && [[ "$1" != "init" ]] && [[ "$1" != "ssh-setup" ]]; then
-    "${VDE_ROOT_DIR}/bin/vde-spine-check.zsh" --quiet || exit 1
+    "${VDE_ROOT_DIR}/bin/vde-spine-check.zsh" --quiet || exit ${VDE_ERR_GENERAL}
 fi
 
 source "${VDE_ROOT_DIR}/lib/vm-common"
@@ -85,7 +85,7 @@ case ${COMMAND} in
         vde_ensure_disk_space "${VDE_DISK_THRESHOLD:-95}" || exit $?
         shift
         local targets=("${@}")
-        [[ -z "${targets}" ]] && vde_log_error "Usage: vde start <alias...>" && exit 1
+        [[ -z "${targets}" ]] && vde_log_error "Usage: vde start <alias...>" && exit ${VDE_ERR_GENERAL}
         
         # 1. System Breath Check (Dynamic Scaling/Throttling)
         local max_vms
@@ -103,7 +103,7 @@ case ${COMMAND} in
         running_count=$(docker_get_running | wc -w | tr -d ' ')
         if (( running_count >= max_vms )); then
             vde_log_error "Rule K Violation: Combat Load exceeded (${running_count}/${max_vms} VMs running). Quench a Spoke before igniting a new one." "system"
-            exit 1
+            exit ${VDE_ERR_GENERAL}
         fi
 
         local GLOBAL_RC=0
@@ -227,7 +227,7 @@ case ${COMMAND} in
             vms=($(get_all_vms))
         fi
 
-        [[ -z "${vms}" ]] && vde_log_error "Usage: vde stop [-f] <alias...|all>" && exit 1
+        [[ -z "${vms}" ]] && vde_log_error "Usage: vde stop [-f] <alias...|all>" && exit ${VDE_ERR_GENERAL}
 
         for vm_alias in "${vms[@]}"; do
             # 1. Cluster Awareness
@@ -258,7 +258,7 @@ case ${COMMAND} in
     restart)
         shift
         local targets=("${@}")
-        [[ -z "${targets}" ]] && vde_log_error "Usage: vde restart <alias...|all>" && exit 1
+        [[ -z "${targets}" ]] && vde_log_error "Usage: vde restart <alias...|all>" && exit ${VDE_ERR_GENERAL}
         
         if [[ "${targets}" == "all" ]]; then
             targets=($(get_all_vms))
@@ -287,7 +287,7 @@ case ${COMMAND} in
     remove|delete|rm)
         shift
         local targets=("${@}")
-        [[ -z "${targets}" ]] && vde_log_error "Usage: vde remove <alias...|all>" && exit 1
+        [[ -z "${targets}" ]] && vde_log_error "Usage: vde remove <alias...|all>" && exit ${VDE_ERR_GENERAL}
 
         if [[ "${targets}" == "all" ]]; then
             targets=($(get_all_vms))
