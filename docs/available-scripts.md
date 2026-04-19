@@ -45,6 +45,32 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution (1.
 | `vde sync-version` | Synchronize versioning across the Hub and Spokes. | `vde sync-version` |
 | `vde port <alias>` | Retrieve the assigned SSH port for a Spoke. | `vde port python` |
 | `vde info` | Detailed system and environment diagnostic dump. | `vde info` |
+| `vde-enforce-uap.zsh` | **The Rule Spine**: Enforce Universal Agent Protocol compliance. | `bin/vde-enforce-uap.zsh` |
+| `vde-spine-check.zsh` | **The Tetrad Check**: Verify Zsh, Git, Docker, and SSH pillars. | `bin/vde-spine-check.zsh` |
+
+---
+
+## Maintenance & Development Scripts
+
+These scripts provide specialized maintenance, automation, and development support.
+
+| Script | Purpose |
+|--------|---------|
+| `vde-bootstrap` | Initial Hub installation and dependency check. |
+| `generate-all-configs` | Smelt all Spoke compose and SSH configurations. |
+| `cleanup-ports` | Purge stale or orphaned entries from the port registry. |
+| `vde-prune.zsh` | Archive old plans/scripts and purge aged logs. |
+| `validate-schemas.zsh` | Verify Beskar Registry integrity against JSON schemas. |
+| `vde-tactical-sweep.zsh` | Perform a project-wide cleanup of containers and locks. |
+| `vde-poll` | Continuous health monitoring of the Spoke ecosystem. |
+| `install-githooks` | Install the VDE Sentinel and Gatekeeper git hooks. |
+| `check-zsh-shebang.zsh` | CI ritual to enforce the Zsh-only mandate. |
+| `coverage.zsh` | Generate code coverage reports for the Forge. |
+| `targeted-test.zsh` | Execute specific BDD or unit test suites. |
+| `paired_update_enforcer` | Mandate L ritual to ensure PR/Remediation alignment. |
+| `vde-rebuild-cache` | Force a re-smelt of the internal VM cache. |
+| `vde-sync-version` | Synchronize versioning across the entire Forge. |
+| `nuke-vde` | **The Great Quench**: Safe removal of all VDE artifacts. |
 
 ---
 
