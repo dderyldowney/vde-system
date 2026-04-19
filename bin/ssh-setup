@@ -25,6 +25,13 @@ export VDE_ROOT_DIR
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
 source "${VDE_ROOT_DIR}/lib/vm-common"
 
+# DEPRECATION GUARD: Enforce unified command usage
+if [[ -z "${VDE_ORCHESTRATED}" ]]; then
+    vde_log_warn "Standalone execution of $(basename "$0") is deprecated." "ssh"
+    vde_log_warn "Please use 'vde ssh-setup' instead." "ssh"
+    echo ""
+fi
+
 # Parse command line arguments
 ACTION="${1:-status}"
 
