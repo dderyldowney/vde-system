@@ -1,7 +1,7 @@
 # VDE Project Memory
 
-**Last Updated:** 2026-04-15T20:45:00Z
-**Baseline Version:** 1.4.0 (The Sovereign Hardening)
+**Last Updated:** 2026-04-18T19:30:00Z
+**Baseline Version:** 1.4.1 (The Sovereign Evolution)
 
 ---
 
@@ -9,9 +9,21 @@
 - **Gateway Entrypoint**: The **Four Pillars Gateway** (`tests/features/core-infrastructure/gateway-pillars.feature`) is the mandatory entrypoint to the Proof of Life ritual. It MUST be passed with 100% success to certify the host environment's readiness. Failure results in an immediate **Program Blockade**.
 - **Mandatory Lifecycle**: The Proof of Life Contract (init -> create -> start -> enter -> rebuild -> stop -> rm -> add -> uninstall) is the non-negotiable heartbeat of the VDE.
 - **Remediation Protocol**: Any status other than **100% GREEN** on `@system-spine` and core lifecycle tests triggers an immediate **Protocol Blockade**. No secondary features or refactoring are permitted until the heartbeat is restored to Green.
-- **Proof of Life Certification (1.4.0)**: Successfully verified the v1.4.0 hardening with 100% pass rate (72/72 steps).
+- **Proof of Life Certification (1.4.1)**: Successfully verified the v1.4.1 evolution with 100% pass rate (72/72 steps).
 
 ---
+
+## SYSTEM EVOLUTION (2026-04-18) - 1.4.1 SOVEREIGN EVOLUTION
+- **SSH Key "Hard Rule" Implementation:**
+    - Mission: Automate SSH key generation within `vde init` to eliminate boot loops.
+    - Result: Implemented inline `ssh-setup init` within `bin/vde-init`. Missing keys are now generated immediately during initialization.
+    - Forced Refresh: The `--force` flag now explicitly triggers SSH key regeneration.
+- **Unified SSH Management:**
+    - Result: Integrated `ssh-setup` and `ssh-sync` as first-class subcommands in the unified `vde` CLI.
+- **Onboarding Ritual (Path of the Foundling):**
+    - Result: Forged `bin/vde-path-of-the-foundling` and `docs/FOUNDLING_GUIDE.md` to streamline the user journey.
+- **Test Debt Remediation:**
+    - Result: Eliminated all "pink" test debt, replacing `pass` stubs with empirical verification logic.
 
 ## SYSTEM EVOLUTION (2026-04-15) - 1.4.0 SOVEREIGN BASELINE
 - **Plan Audit & Remediation (The Great Pruning):**
@@ -54,10 +66,11 @@
 1. **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`.
 2. **THE ANVIL IS DEFAULT**: All active work MUST occur on the `develop` branch.
 3. **Rule P: Sovereign Branching**: Feature branches MUST originate from `develop`, track via GitHub Issues, and be deleted immediately post-merge.
-4. **Enforcer Supervision (Rule A)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`.
-5. **Born Ready (BTO)**: Images must be immutable. No runtime `apt` calls.
-6. **TDD & No Fake Tests**: Failing test (RED) first.
-7. **Empirical Proof Mandate**: PRs MUST contain raw terminal output proof.
+4. **Detailed Signet Mandate**: Every GitHub Issue (Signet) MUST include exhaustive technical detail, exact command mappings, and specific mission scope at the moment of creation to enable immediate remediation planning.
+5. **Enforcer Supervision (Rule A)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`.
+6. **Born Ready (BTO)**: Images must be immutable. No runtime `apt` calls.
+7. **TDD & No Fake Tests**: Failing test (RED) first.
+8. **Empirical Proof Mandate**: PRs MUST contain raw terminal output proof.
 
 ---
 
@@ -67,17 +80,16 @@
 
 ---
 
-## CURRENT FOCUS: 1.4.1 Sovereign Evolution
+## CURRENT FOCUS: Phase 31 - Advanced Orchestration
 
-**Active Mission**: `plans/1.4.1-consolidated-plan.md`
+**Active Mission**: Advanced Orchestration (DNS Discovery)
 
-**Goal:** Finalize the 1.4.1 baseline by eliminating "pink" test debt, hardening infrastructure requirements, and forging the "Path of the Foundling" onboarding experience.
+**Goal:** Implement inter-Spoke DNS resolution and discovery to allow VMs to communicate via hostnames rather than static IP/Port mappings.
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| 28 | Sovereign Release | ✅ COMPLETE |
-| 29 | Tech Stack Clusters | ✅ COMPLETE |
-| 30 | Onboarding Rituals | ✅ COMPLETE |
+| 31 | Advanced Orchestration | 🛠 IN PLANNING |
+| 32 | Agent Self-Correction | ⏳ QUEUED |
 
 ---
 
