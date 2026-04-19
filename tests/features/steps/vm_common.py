@@ -543,7 +543,7 @@ def get_vm_types():
             line = line.strip()
             # Skip empty lines and comments
             if line and not line.startswith("#"):
-                # Parse format: type|name|aliases|display_name|install_command|service_port
+                # Parse format: type|name|aliases|display|install_command|service_ports
                 parts = line.split("|")
                 if len(parts) >= 2:
                     vm_types.append(parts[1].strip())

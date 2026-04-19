@@ -269,7 +269,7 @@ _is_cache_valid() {
 
 # Load VM types from configuration file
 # Uses cache if available and valid
-# Format: shortname|type|display_name|install_command|port_base
+# Format: type|name|aliases|display|pkgs|custom_cmd|service_ports|ssh_port
 load_vm_types() {
     local no_cache=0
     [[ "${1}" == "--no-cache" ]] && no_cache=1
@@ -866,7 +866,7 @@ get_vm_type() {
 }
 
 # Get VM display name
-get_vm_display_name() {
+get_vm_display() {
     local vm_name="${1}"
     local resolved
     resolved=$(resolve_vm_name "${vm_name}" 2>/dev/null) || resolved="${vm_name}"

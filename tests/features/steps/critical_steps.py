@@ -195,7 +195,7 @@ def step_render_lang_template(context, name, port):
     assert template.exists(), f"Template not found: {template}"
     r = _zsh_with_common(
         f'render_template "{template}" NAME "{name}" SSH_PORT "{port}" '
-        f'INSTALL_CMD "echo test" SERVICE_PORT "" 2>/dev/null'
+        f'INSTALL_CMD "echo test" SERVICE_PORTS "" 2>/dev/null'
     )
     assert r.returncode == 0, f"render_template failed: {r.stderr}"
     # Strip log lines (lines starting with date or [INFO])
@@ -657,14 +657,14 @@ def step_rel_path_is_dir(context, rel_path):
 
 
 @when(
-    'I render the service template with NAME="{name}" SSH_PORT="{port}" SERVICE_PORT="{svc_port}"'
+    'I render the service template with NAME="{name}" SSH_PORT="{port}" SERVICE_PORTS="{svc_port}"'
 )
 def step_render_svc_template(context, name, port, svc_port):
     template = TEMPLATES_DIR / "compose-service.yml"
     assert template.exists(), f"Template not found: {template}"
     r = _zsh_with_common(
         f'render_template "{template}" NAME "{name}" SSH_PORT "{port}" '
-        f'INSTALL_CMD "echo test" SERVICE_PORT "{svc_port}" 2>/dev/null'
+        f'INSTALL_CMD "echo test" SERVICE_PORTS "{svc_port}" 2>/dev/null'
     )
     assert r.returncode == 0, f"render_template failed: {r.stderr}"
     lines = [

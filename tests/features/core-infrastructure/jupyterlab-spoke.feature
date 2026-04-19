@@ -9,7 +9,7 @@ Feature: JupyterLab Data Science Spoke
   @registry @identity
   Scenario: Verify JupyterLab VM Registry Identity
     Then the VM "vde-jupyterlab" must be registered as a "service"
-    And the VM "vde-jupyterlab" must have service port "8888"
+    And the VM "vde-jupyterlab" must have service ports "8888"
     And the VM "vde-jupyterlab" must have SSH port "2407"
     And the VM "vde-jupyterlab" must support alias "jupyterlab"
 
