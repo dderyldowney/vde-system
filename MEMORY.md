@@ -66,10 +66,11 @@
 1. **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`.
 2. **THE ANVIL IS DEFAULT**: All active work MUST occur on the `develop` branch.
 3. **Rule P: Sovereign Branching**: Feature branches MUST originate from `develop`, track via GitHub Issues, and be deleted immediately post-merge.
-4. **Enforcer Supervision (Rule A)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`.
-5. **Born Ready (BTO)**: Images must be immutable. No runtime `apt` calls.
-6. **TDD & No Fake Tests**: Failing test (RED) first.
-7. **Empirical Proof Mandate**: PRs MUST contain raw terminal output proof.
+4. **Detailed Signet Mandate**: Every GitHub Issue (Signet) MUST include exhaustive technical detail, exact command mappings, and specific mission scope at the moment of creation to enable immediate remediation planning.
+5. **Enforcer Supervision (Rule A)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`.
+6. **Born Ready (BTO)**: Images must be immutable. No runtime `apt` calls.
+7. **TDD & No Fake Tests**: Failing test (RED) first.
+8. **Empirical Proof Mandate**: PRs MUST contain raw terminal output proof.
 
 ---
 
