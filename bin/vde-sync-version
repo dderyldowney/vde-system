@@ -12,7 +12,7 @@ source "${VDE_ROOT_DIR}/lib/vde-core"
 
 # 2. Extract the current version from the Beskar Source
 local NEW_VER=$(vde_get_version)
-[[ -z "$NEW_VER" || "$NEW_VER" == "0.0.0-unknown" ]] && { echo "ERROR: No version in Spec."; exit 1; }
+[[ -z "$NEW_VER" || "$NEW_VER" == "0.0.0-unknown" ]] && { echo "ERROR: No version in Spec."; exit ${VDE_ERR_GENERAL}; }
 
 # 3. Logging Fallbacks
 if ! command -v vde_log_info >/dev/null; then
