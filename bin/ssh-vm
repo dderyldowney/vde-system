@@ -27,6 +27,13 @@ source "${VDE_ROOT_DIR}/lib/vde-core" &>/dev/null
 source "${VDE_ROOT_DIR}/lib/vm-common" &>/dev/null
 source "${VDE_ROOT_DIR}/lib/vde-pulse.zsh" &>/dev/null
 
+# DEPRECATION GUARD: Enforce unified command usage
+if [[ -z "${VDE_ORCHESTRATED}" ]]; then
+    vde_log_warn "Standalone execution of $(basename "$0") is deprecated." "ssh"
+    vde_log_warn "Please use 'vde enter' or 'vde ssh' instead." "ssh"
+    echo ""
+fi
+
 # Initialize logging
 vde_log_init 2>/dev/null || true
 

@@ -182,7 +182,7 @@ VDE uses SSH agent forwarding for secure authentication.
 - Let VDE handle SSH setup automatically (no manual configuration needed)
 - Your SSH keys are automatically detected and loaded
 - Multiple SSH key types are supported (ed25519, RSA, ECDSA, DSA)
-- Use `ssh-agent-setup` script to view SSH status
+- Use `vde ssh-setup status` to view SSH status
 
 ### Use SSH Keys Only
 

@@ -10,6 +10,9 @@ VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 # Enforce Universal Agent Protocol (The Rule Spine)
 "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" --quiet || exit 1
 
+# Indicate orchestrated execution for sub-scripts
+export VDE_ORCHESTRATED=1
+
 # ZSH-native logic: Silence local variable declarations (Rule 1)
 setopt TYPESET_SILENT
 
