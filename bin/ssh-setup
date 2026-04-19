@@ -33,11 +33,12 @@ if [[ "${ACTION}" == "--help" ]] || [[ "${ACTION}" == "-h" ]] ; then
     cat <<EOF
 VDE SSH Setup - Manage VDE SSH Environment
 
-Usage: vde ssh-setup <action>
+Usage: vde ssh-setup <action> [options]
 
 Actions:
   status    Show SSH environment status (default)
   init      Initialize SSH environment (keys, agent, config)
+              Use --force or -f to regenerate existing keys
   start     Start SSH agent and load VDE key
   stop      Stop VDE-specific SSH agent
   autostart Configure shell to auto-start SSH agent on login
@@ -47,6 +48,7 @@ Examples:
   vde ssh-setup              # Show status
   vde ssh-setup status       # Show status (explicit)
   vde ssh-setup init         # Full setup: keys + agent + config
+  vde ssh-setup init --force # Force regenerate keys
   vde ssh-setup start        # Start agent and load keys
   vde ssh-setup stop         # Stop the VDE-specific agent
   vde ssh-setup autostart    # Auto-start agent on shell login
@@ -135,6 +137,11 @@ fi
 # Initialize Mode -- Full SSH setup
 # ==============================================================================
 if [[ "${ACTION}" == "init" ]] ; then
+    local force_flag=""
+    if [[ "$2" == "--force" ]] || [[ "$2" == "-f" ]]; then
+        force_flag="--force"
+    fi
+
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"
     echo "║          VDE SSH Environment Initialization                ║"
@@ -147,12 +154,21 @@ if [[ "${ACTION}" == "init" ]] ; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
-    if ensure_vde_ssh_environment; then
-        log_success "✓ VDE SSH directory: ${VDE_SSH_DIR}"
-        log_success "✓ VDE SSH key: ${VDE_SSH_IDENTITY}"
+    if [[ "${force_flag}" == "--force" ]]; then
+        if vde_ssh_regenerate_keys; then
+            log_success "✓ VDE SSH keys regenerated"
+        else
+            log_error "✗ Failed to regenerate VDE SSH keys"
+            exit ${VDE_ERR_GENERAL}
+        fi
     else
-        log_error "✗ Failed to set up VDE SSH environment"
-        exit ${VDE_ERR_GENERAL}
+        if ensure_vde_ssh_environment; then
+            log_success "✓ VDE SSH directory: ${VDE_SSH_DIR}"
+            log_success "✓ VDE SSH key: ${VDE_SSH_IDENTITY}"
+        else
+            log_error "✗ Failed to set up VDE SSH environment"
+            exit ${VDE_ERR_GENERAL}
+        fi
     fi
 
     echo ""

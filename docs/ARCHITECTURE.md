@@ -14,7 +14,8 @@
 - **Hub**: The host machine, governing orchestration and security.
 - **Spokes**: Isolated containers (jails) where hydration and development occur.
 - **Bridges**: Secure transversal connections (SSH, socat) between the Hub and Spokes.
-- **Initialization Ritual (`vde init`)**: The automated process of forging keys and priming configurations to transform a raw clone into a battle-ready Hub.
+- **Unified Command Router (`bin/vde`)**: A centralized CLI orchestrator that routes all operations, including Spoke lifecycles and infrastructure tasks (`vde ssh-setup`, `vde ssh-sync`), ensuring all execution occurs under the UAP Enforcer.
+- **Initialization Ritual (`vde init`)**: The automated process of forging keys and priming configurations to transform a raw clone into a battle-ready Hub. Subject to the **SSH Hard Rule**, missing keys are generated inline without restarting the process.
 - **Path of the Foundling (`vde path-of-the-foundling`)**: The interactive induction script for new students.
 
 ## 3. Security posture (The Beskar)
@@ -44,7 +45,7 @@ VDE enforces a strict branch-based release lifecycle to maintain the purity of t
 5.  **X.X.X Releases**: Step and milestone releases are applied against `main` only. `develop` remains for development only.
 
 ---
-Version: 1.4.0
+Version: 1.4.1
 Status: SOVEREIGN BASELINE CERTIFIED
 Identity: The Covert
 ---

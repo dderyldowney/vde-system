@@ -15,7 +15,8 @@ setopt TYPESET_SILENT
 
 # Enforce @system-spine tetrad (Section 16)
 # This is the cognitive context and operational spine
-if [[ "${VDE_SKIP_SPINE_CHECK}" != "1" ]]; then
+# Auto-skip for initialization commands that establish the spine
+if [[ "${VDE_SKIP_SPINE_CHECK}" != "1" ]] && [[ "$1" != "init" ]] && [[ "$1" != "ssh-setup" ]]; then
     "${VDE_ROOT_DIR}/bin/vde-spine-check.zsh" --quiet || exit 1
 fi
 
@@ -392,6 +393,14 @@ case ${COMMAND} in
     cluster)
         shift
         vde_run "cluster" "${VDE_ROOT_DIR}/bin/vde-cluster" "$@"
+        ;;
+    ssh-setup)
+        shift
+        vde_run "ssh-setup" "${VDE_ROOT_DIR}/bin/ssh-setup" "$@"
+        ;;
+    ssh-sync)
+        shift
+        vde_run "ssh-sync" "${VDE_ROOT_DIR}/bin/ssh-sync" "$@"
         ;;
     networks)
         shift
