@@ -283,8 +283,8 @@ test_enforce_network_isolation_no_docker() {
     local fake_bin
     fake_bin=$(mktemp -d)
     cat > "$fake_bin/docker" <<'EOF'
-#!/bin/sh
-if [ "$1" = "ps" ]; then
+#!/usr/bin/env zsh
+if [[ "$1" == "ps" ]]; then
     exit 0
 fi
 exit 1

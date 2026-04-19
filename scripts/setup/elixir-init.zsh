@@ -21,7 +21,7 @@ INSTALL_SCRIPT="/tmp/install-elixir-as-devuser.sh"
 cat <<EOF > "${INSTALL_SCRIPT}"
 #!/usr/bin/env zsh
 set -e
-if [ ! -d "\$HOME/.asdf" ]; then
+if [[ ! -d "\$HOME/.asdf" ]]; then
     git clone https://github.com/asdf-vm/asdf.git "\$HOME/.asdf" --branch v0.14.0
 fi
 source "\$HOME/.asdf/asdf.sh"

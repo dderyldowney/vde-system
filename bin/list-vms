@@ -230,7 +230,7 @@ if [[ -n "${FILTER}" ]]; then
         
         if [[ "${match_found}" == "false" ]] && [[ "${SHOW_CREATED}" == "false" ]]; then
             vde_error_simple "VM not found: ${FILTER}" "list-vms"
-            exit 1
+            exit ${VDE_ERR_NOT_FOUND}
         fi
     fi
 fi

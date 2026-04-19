@@ -15,7 +15,7 @@ apt-get update
 apt-get install -y ${=vde_flutter_pkgs}
 
 # Setup Flutter for devuser
-su devuser -c "if [ ! -d \"${dev_home}/flutter\" ]; then git clone --depth 1 https://github.com/flutter/flutter.git ${dev_home}/flutter; fi && export PATH=\"\$PATH:${dev_home}/flutter/bin\" && ${dev_home}/flutter/bin/flutter precache"
+su devuser -c "if [[ ! -d \"${dev_home}/flutter\" ]]; then git clone --depth 1 https://github.com/flutter/flutter.git ${dev_home}/flutter; fi && export PATH=\"\$PATH:${dev_home}/flutter/bin\" && ${dev_home}/flutter/bin/flutter precache"
 
 # 3. PERSISTENCE ANCHOR
 local _zshenv="${dev_home}/.zshenv"
