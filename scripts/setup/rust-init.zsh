@@ -39,7 +39,7 @@ touch "${_zshenv}" "${_zshrc}"
 # Ensures cargo and rustc are available immediately upon 'vde enter'.
 # .zshenv handles environment for all shells (mandated for non-interactive tools).
 grep -q "cargo/bin" "${_zshenv}" || {
-  echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> "${_zshenv}"
+  echo "export PATH=\"\${dev_home}/.cargo/bin:\$PATH\"" >> "${_zshenv}"
 }
 
 # .zshrc ensures interactive shell path inheritance and prioritization.
@@ -47,13 +47,13 @@ grep -q "cargo/bin" "${_zshenv}" || {
 grep -q "cargo/bin" "${_zshrc}" || {
   echo '' >> "${_zshrc}"
   echo '# Rust Toolchain' >> "${_zshrc}"
-  echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> "${_zshrc}"
+  echo "export PATH=\"\${dev_home}/.cargo/bin:\$PATH\"" >> "${_zshrc}"
 }
 
 # Anchor: Sovereign SSH Bridge identity 
 # Mandated by the Rule Spine for Git operations using host keys.
 grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
-  echo 'if [[ -z "${SSH_AUTH_SOCK}" ]]; then export SSH_AUTH_SOCK="$HOME/.ssh/vde/agent.sock"; fi' >> "${_zshenv}"
+  echo "if [[ -z \"\${SSH_AUTH_SOCK}\" ]]; then export SSH_AUTH_SOCK=\"\${dev_home}/.ssh/vde/agent.sock\"; fi" >> "${_zshenv}"
 }
 
 chown devuser:devuser "${_zshenv}" "${_zshrc}"

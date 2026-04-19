@@ -15,7 +15,7 @@ if [[ -f "${VDE_ROOT_DIR}/lib/vm-common" ]]; then
     source "${VDE_ROOT_DIR}/lib/vm-common"
 else
     echo "CRITICAL: lib/vm-common not found."
-    exit 1
+    exit ${VDE_ERR_GENERAL}
 fi
 
 # --- 3. USAGE ---
