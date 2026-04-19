@@ -307,7 +307,7 @@ backup_ssh_config() {
 merge_ssh_config_entry() {
     local host_alias="${1}"
     local ssh_port="${2}"
-    local display_name="${3}"
+    local display="${3}"
     local identity_file="${4:-${VDE_SSH_IDENTITY}}"  # Default to VDE_SSH_IDENTITY if not provided
 
     local ssh_config="${VDE_SSH_CONFIG}"
@@ -356,7 +356,7 @@ Host ${host_alias}
 add_ssh_config_entry() {
     local host_alias="${1}"
     local ssh_port="${2}"
-    local display_name="${3}"
+    local display="${3}"
     local identity_file="${4:-${VDE_SSH_IDENTITY}}"
 
     local ssh_config="${VDE_SSH_CONFIG}"
@@ -635,12 +635,12 @@ verify_ssh_config() {
 }
 
 # Setup SSH for VM-to-VM communication
-# Args: <vm_name> <ssh_port> [<display_name>]
+# Args: <vm_name> <ssh_port> [<display>]
 # Returns: VDE_SUCCESS (0) on success
 setup_ssh_for_vm() {
     local vm_name="${1}"
     local ssh_port="${2}"
-    local display_name="${3:-${vm_name}}"
+    local display="${3:-${vm_name}}"
 
     # Generate or validate SSH key
     if ! validate_or_create_ssh_key; then
@@ -651,7 +651,7 @@ setup_ssh_for_vm() {
     # Add SSH config entry - use vde- prefix for SSH host
     local ssh_host
     ssh_host=$(vde_get_ssh_host "${vm_name}")
-    if ! add_ssh_config_entry "${ssh_host}" "${ssh_port}" "${display_name}" "${VDE_SSH_IDENTITY}"; then
+    if ! add_ssh_config_entry "${ssh_host}" "${ssh_port}" "${display}" "${VDE_SSH_IDENTITY}"; then
         _error "Failed to add SSH config entry for '${ssh_host}'"
         return ${VDE_ERR_GENERAL}
     fi

@@ -19,7 +19,7 @@ The Virtual Development Environment is governed by the **Universal Agent Protoco
 
 VDE employs a three-tier reactive synchronization pipeline to transform human-readable intent into high-performance runtime data.
 
-1.  **The Source (`data/vm-types.conf`)**: The human-editable flat-file registry following the strict 8-field standard: `type|name|aliases|display_name|pkgs|custom_cmd|service_port|ssh_port`.
+1.  **The Source (`data/vm-types.conf`)**: The human-editable flat-file registry following the strict 8-field standard: `type|name|aliases|display|pkgs|custom_cmd|service_ports|ssh_port`.
 2.  **The Registry (`data/vm-types.json`)**: The `vde_translate_conf_to_json` ritual (Rule G) hammers the `.conf` into a structured JSON archive using pure ZSH parsing to avoid host-level `jq` dependencies.
 3.  **The Cache (`.cache/vm-core.cache`)**: The `vde_core_save_cache` process generates a ZSH-native associative array (`VDE_CORE_VM_TYPE`, `VDE_CORE_VM_ALIASES`, `VDE_CORE_VM_DISPLAY`) for O(1) runtime lookup.
 4.  **Ignition Sync**: The `bin/vde` orchestrator performs a timestamp audit. If source files are newer than the cache, a re-smelt is triggered automatically before Spoke ignition.

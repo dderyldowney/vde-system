@@ -280,7 +280,7 @@ if [[ ${#lang_created} -gt 0 ]] && [[ "${LIST_TYPE}" != "service" ]]; then
         echo "Language VMs:"
     fi
     for name in "${lang_created[@]}"; do
-        _vm_display=$(get_vm_display_name "${name}")
+        _vm_display=$(get_vm_display "${name}")
         _vm_aliases=$(_assoc_get "VM_ALIASES" "${name}" 2>/dev/null) || _vm_aliases=""
         display_vm "${name}" "lang" "${_vm_display}" "${_vm_aliases}"
 
@@ -296,7 +296,7 @@ if [[ ${#service_created} -gt 0 ]] && [[ "${LIST_TYPE}" != "lang" ]]; then
         echo "Service VMs:"
     fi
     for name in "${service_created[@]}"; do
-        _vm_display=$(get_vm_display_name "${name}")
+        _vm_display=$(get_vm_display "${name}")
         _vm_aliases=$(_assoc_get "VM_ALIASES" "${name}" 2>/dev/null) || _vm_aliases=""
         display_vm "${name}" "service" "${_vm_display}" "${_vm_aliases}"
     done

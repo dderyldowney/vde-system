@@ -17,8 +17,8 @@ def step_verify_vm_type(context, vm_name, expected_type):
     found = any(vm["name"] == vm_name for vm in vms)
     assert found, f"VM '{vm_name}' not found in category '{expected_type}'"
 
-@then(r'the VM "(.+)" must have service port "(.+)"')
-def step_verify_service_port(context, vm_name, expected_port):
+@then(r'the VM "(.+)" must have service ports "(.+)"')
+def step_verify_service_ports(context, vm_name, expected_port):
     """Verify the service port in the registry."""
     vm_types = load_vm_types_raw()
     found = False

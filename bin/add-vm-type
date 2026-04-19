@@ -66,7 +66,7 @@ EOF
 VM_TYPE_STR=""
 SVC_PORT=""
 SSH_PORT=""
-DISPLAY_NAME=""
+DISPLAY=""
 INSTALL_CMD=""
 ALIASES=""
 PKGS=""
@@ -87,7 +87,7 @@ while [[ ${#} -gt 0 ]]; do
             shift 2
             ;;
         --display)
-            DISPLAY_NAME="${2}"
+            DISPLAY="${2}"
             shift 2
             ;;
         --pkgs)
@@ -154,8 +154,8 @@ if [[ -z "${VM_TYPE_STR}" ]]; then
 fi
 
 # Ensure display name satisfies schema (minLength: 1)
-if [[ -z "${DISPLAY_NAME}" ]]; then
-    DISPLAY_NAME="${VM_NAME:c}"
+if [[ -z "${DISPLAY}" ]]; then
+    DISPLAY="${VM_NAME:c}"
 fi
 
 # -----------------------
@@ -194,8 +194,8 @@ claim_lock "${global_lock}" || vde_handle_error "lock-acquisition" "${global_loc
     fi
 
     # 1. Atomic Update to Raw Beskar (.conf)
-    # 8-FIELD STANDARD: type|name|aliases|display|pkgs|custom_cmd|env|ports
-    local _entry="${VM_TYPE_STR}|vde-${VM_NAME}|${ALIASES}|${DISPLAY_NAME}|${PKGS}|zsh /vde/scripts/setup/${VM_NAME}-init.zsh|${SVC_PORT}|${SSH_PORT}"
+    # 8-FIELD STANDARD: type|name|aliases|display|pkgs|custom_cmd|service_ports|ssh_port
+    local _entry="${VM_TYPE_STR}|vde-${VM_NAME}|${ALIASES}|${DISPLAY}|${PKGS}|zsh /vde/scripts/setup/${VM_NAME}-init.zsh|${SVC_PORT}|${SSH_PORT}"
     local _conf_tmp="${VM_TYPES_CONF}.tmp.${$}"
     cp "${VM_TYPES_CONF}" "${_conf_tmp}"
     echo "${_entry}" >> "${_conf_tmp}"

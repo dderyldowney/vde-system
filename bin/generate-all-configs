@@ -224,7 +224,7 @@ generate_service_config() {
   # Replace variables in template
   # First handle service ports mapping block
   sed "s@##SERVICE_PORTS##@${port_mappings}@g" "${template_file}" | \
-  sed "s@{{NAME}}@${name}@g; s@{{SSH_PORT}}@${ssh_port}@g; s@{{PKGS}}@${pkgs}@g; s@{{CUSTOM_CMD}}@${custom_cmd}@g; s@{{SERVICE_PORT}}@${service_ports}@g" > "${compose_file}"
+  sed "s@{{NAME}}@${name}@g; s@{{SSH_PORT}}@${ssh_port}@g; s@{{PKGS}}@${pkgs}@g; s@{{CUSTOM_CMD}}@${custom_cmd}@g; s@{{SERVICE_PORTS}}@${service_ports}@g" > "${compose_file}"
 
   echo "Generated: ${compose_file}"
 

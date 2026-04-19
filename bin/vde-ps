@@ -161,20 +161,21 @@ else
                     # Use docker ps for basic info, state file for additional details
                     local status ports
                     status=$(echo "${state_json}" | vde_query_json -r '.status // "unknown"' 2>/dev/null)
-                    local display_name
-                    display_name=$(echo "${state_json}" | vde_query_json -r '.display_name // ""' 2>/dev/null)
-                    
+                    local display
+                    display=$(echo "${state_json}" | vde_query_json -r '.display // ""' 2>/dev/null)
+
                     # Get container status from Docker
                     local docker_status
-                    docker_status=$(docker ps -a --filter "name=${container}" --format "{{.Status}}" 2>/dev/null)
+                    docker_status=$(vm_container_status "${container}" 2>/dev/null || echo "unknown")
                     local docker_ports
                     docker_ports=$(docker ps -a --filter "name=${container}" --format "{{.Ports}}" 2>/dev/null)
-                    
-                    if [[ -n "${display_name}" ]]; then
-                        printf "%-18s %-22s %-26s %s\n" "" "${container} (${display_name})" "${docker_status}" "${docker_ports}"
+
+                    if [[ -n "${display}" ]]; then
+                        printf "%-18s %-22s %-26s %s\n" "" "${container} (${display})" "${docker_status}" "${docker_ports}"
                     else
                         printf "%-18s %-22s %-26s %s\n" "" "${container}" "${docker_status}" "${docker_ports}"
                     fi
+
                 else
                     # Fallback to docker ps output
                     docker ps -a --filter "name=${container}" --format '%-18s %-22s %-26s %-25s' '' '{{.Names}}' '{{.Status}}' '{{.Ports}}' 2>/dev/null || true
