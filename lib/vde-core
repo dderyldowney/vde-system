@@ -191,8 +191,21 @@ vde_query_json() {
     if command -v jq >/dev/null 2>&1; then
         jq "$@"
     else
+        # --- PATH TRANSLATION (Rule G Hardening) ---
+        # If the host lacks JQ, we must translate host-absolute paths to the /vde container mount.
+        local args=()
+        local arg
+        for arg in "$@"; do
+            # Replace VDE_ROOT_DIR with /vde for container execution
+            if [[ "${arg}" == "${VDE_ROOT_DIR}"* ]]; then
+                args+=("${arg/${VDE_ROOT_DIR}//vde}")
+            else
+                args+=("${arg}")
+            fi
+        done
+        
         # Use -i for interactive/stdin pipe support
-        docker run --rm -i -v "${VDE_ROOT_DIR}:/vde" vde-base jq "$@"
+        docker run --rm -i -v "${VDE_ROOT_DIR}:/vde" vde-base jq "${args[@]}"
     fi
 }
 
