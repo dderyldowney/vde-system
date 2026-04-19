@@ -20,8 +20,9 @@ sh /tmp/dotnet-install.sh --version 8.0.100 --install-dir "${DOTNET_INSTALL_DIR}
 ln -sf "${DOTNET_INSTALL_DIR}/dotnet" /usr/bin/dotnet
 
 # 3. PERSISTENCE ANCHOR
-local _zshenv="/home/devuser/.zshenv"
-mkdir -p /home/devuser
+local dev_home=~devuser
+local _zshenv="${dev_home}/.zshenv"
+mkdir -p "${dev_home}"
 touch "${_zshenv}"
 grep -q "DOTNET_ROOT" "${_zshenv}" || {
     echo "export DOTNET_ROOT=${DOTNET_INSTALL_DIR}" >> "${_zshenv}"

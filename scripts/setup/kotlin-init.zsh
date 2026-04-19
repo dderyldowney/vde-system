@@ -15,7 +15,8 @@ mkdir -p /usr/share/man/man1
 apt-get install -y ${=vde_kotlin_pkgs}
 
 # SDKMAN INITIALIZATION
-export SDKMAN_DIR="/home/devuser/.sdkman"
+local dev_home=~devuser
+export SDKMAN_DIR="${dev_home}/.sdkman"
 export sdkman_auto_answer=true
 
 # Force clean start if directory is a ghost
@@ -35,8 +36,8 @@ if [[ -f "$_sdk_init" ]]; then
 fi
 
 # 3. PERSISTENCE ANCHOR
-local _zshenv="/home/devuser/.zshenv"
-mkdir -p /home/devuser
+local _zshenv="${dev_home}/.zshenv"
+mkdir -p "${dev_home}"
 touch "${_zshenv}"
 grep -q "SDKMAN_DIR" "${_zshenv}" || {
     {

@@ -18,8 +18,9 @@ sh /tmp/setup_node.sh
 apt-get install -y nodejs
 
 # 3. CLUSTER COORDINATION
-local _zshenv="/home/devuser/.zshenv"
-mkdir -p /home/devuser
+local dev_home=~devuser
+local _zshenv="${dev_home}/.zshenv"
+mkdir -p ${dev_home}
 touch "${_zshenv}"
 grep -q "MONGO_URI" "${_zshenv}" || {
     echo "export MONGO_URI=mongodb://vde-mongodb:27017" >> "${_zshenv}"

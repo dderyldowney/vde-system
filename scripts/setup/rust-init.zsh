@@ -29,7 +29,7 @@ fi'
 # Injects pathing and environment variables into .zshenv and .zshrc.
 # These anchors ensure that the Rust toolchain and Sovereign Bridge 
 # survive 'vde rebuild' and 'vde stop/start' cycles.
-local dev_home="~devuser"
+local dev_home=~devuser
 local _zshenv="${dev_home}/.zshenv"
 local _zshrc="${dev_home}/.zshrc"
 
