@@ -10,6 +10,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     git \
     curl \
     wget \
+    jq \
     build-essential \
     procps \
     locales \

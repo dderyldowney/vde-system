@@ -320,22 +320,8 @@ load_vm_types() {
                 . "${VM_TYPES_CACHE}" >/dev/null 2>&1
             fi
             if [[ $? -eq 0 ]]; then
-                # Extract simple arrays from cache (grep-based extraction as fallback)
-                local lang_line svc_line
-                lang_line=$(grep "^lang_vms=" "${VM_TYPES_CACHE}" 2>/dev/null)
-                svc_line=$(grep "^service_vms=" "${VM_TYPES_CACHE}" 2>/dev/null)
-                if [[ -n "${lang_line}" ]]; then
-                    local content=${lang_line#*=\(}
-                    content=${content%\)}
-                    lang_vms=($(echo ${content}))
-                fi
-                if [[ -n "${svc_line}" ]]; then
-                    local content=${svc_line#*=\(}
-                    content=${content%\)}
-                    service_vms=($(echo ${content}))
-                fi
                 use_cache=1
-                # Mark as loaded but we still need VM_INSTALL check below if JSON exists
+                # Mark as loaded
                 export _VM_TYPES_LOADED=1
             fi
         fi
