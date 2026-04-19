@@ -13,8 +13,9 @@ apt-get update
 apt-get install -y ${=vde_lamp_pkgs}
 
 # 3. CLUSTER COORDINATION
-local _zshenv="/home/devuser/.zshenv"
-mkdir -p /home/devuser
+local dev_home=~devuser
+local _zshenv="${dev_home}/.zshenv"
+mkdir -p "${dev_home}"
 touch "${_zshenv}"
 grep -q "DB_HOST" "${_zshenv}" || {
     echo "export DB_HOST=vde-mysql" >> "${_zshenv}"

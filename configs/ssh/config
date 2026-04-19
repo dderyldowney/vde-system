@@ -1,6 +1,6 @@
 # VDE (Virtual Development Environment) SSH Configuration
 # Sovereign Baseline: 1.4.1
-# Generated on Sun Apr 19 15:20:29 EDT 2026
+# Generated on Sun Apr 19 15:41:51 EDT 2026
 #
 # This file contains SSH config entries for all known language and service VMs.
 # Each VM type has a fixed SSH port assignment:

@@ -16,6 +16,7 @@ apt-get install -y ${=vde_elixir_pkgs}
 locale-gen en_US.UTF-8
 
 # Installation for devuser
+local dev_home=~devuser
 INSTALL_SCRIPT="/tmp/install-elixir-as-devuser.sh"
 cat <<EOF > "${INSTALL_SCRIPT}"
 #!/usr/bin/env zsh
@@ -36,8 +37,8 @@ chmod +x "${INSTALL_SCRIPT}"
 su - devuser -c "${INSTALL_SCRIPT}"
 
 # 3. PERSISTENCE ANCHOR
-local _zshenv="/home/devuser/.zshenv"
-mkdir -p /home/devuser
+local _zshenv="${dev_home}/.zshenv"
+mkdir -p ${dev_home}
 touch "${_zshenv}"
 grep -q "asdf.sh" "${_zshenv}" || {
     echo 'source $HOME/.asdf/asdf.sh' >> "${_zshenv}"

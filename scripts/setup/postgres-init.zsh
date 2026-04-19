@@ -59,14 +59,15 @@ EOF
 chmod +x "${_spoke_ignition}"
 
 # 4. PERSISTENCE ANCHOR (Hardened Bridge)
-local _zshenv="/home/devuser/.zshenv"
-mkdir -p /home/devuser
+local dev_home=~devuser
+local _zshenv="${dev_home}/.zshenv"
+mkdir -p "${dev_home}"
 touch "${_zshenv}"
 # Remove legacy startup if present
 sed -i "/postgresql start/d" "${_zshenv}"
 # Ensure bridge identity is available
 grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
-    echo "export SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock" >> "${_zshenv}"
+    echo "export SSH_AUTH_SOCK=${dev_home}/.ssh/vde/agent.sock" >> "${_zshenv}"
 }
 chown devuser:devuser "${_zshenv}"
 
