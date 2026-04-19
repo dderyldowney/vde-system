@@ -33,7 +33,7 @@ VERBOSE=0
 # Argument Parsing
 # =============================================================================
 
-while [ ${#} -gt 0 ]; do
+while [[ ${#} -gt 0 ]]; do
     case "${1}" in
         -v|--verbose)
             VERBOSE=1
@@ -114,9 +114,9 @@ version_ge() {
     v2_major=${v2_major:-0}
     v2_minor=${v2_minor:-0}
     
-    if [ "${v1_major}" -gt "${v2_major}" ]; then
+    if [[ "${v1_major}" -gt "${v2_major}" ]]; then
         return 0
-    elif [ "${v1_major}" -eq "${v2_major}" ] && [ "${v1_minor}" -ge "${v2_minor}" ]; then
+    elif [[ "${v1_major}" -eq "${v2_major}" && "${v1_minor}" -ge "${v2_minor}" ]]; then
         return 0
     else
         return 1
@@ -164,7 +164,7 @@ run_tests_in_shell() {
     
     # Run the test script with the specified shell
     local test_args=""
-    if [ "${VERBOSE}" -eq 1 ]; then
+    if [[ "${VERBOSE}" -eq 1 ]]; then
         test_args="-v"
     fi
     
@@ -189,7 +189,7 @@ main() {
     echo "Minimum version: zsh ${MIN_ZSH_VERSION}"
     
     # Check if test script exists
-    if [ ! -f "${_TEST_SCRIPT}" ]; then
+    if [[ ! -f "${_TEST_SCRIPT}" ]]; then
         log_error "Test script not found: ${_TEST_SCRIPT}"
         exit 1
     fi
@@ -232,10 +232,10 @@ main() {
     echo "Shells skipped: ${shells_skipped}"
     echo ""
     
-    if [ "${shells_failed}" -eq 0 ] && [ "${shells_tested}" -gt 0 ]; then
+    if [[ "${shells_failed}" -eq 0 && "${shells_tested}" -gt 0 ]]; then
         log_success "All tests passed!"
         return 0
-    elif [ "${shells_tested}" -eq 0 ]; then
+    elif [[ "${shells_tested}" -eq 0 ]]; then
         log_warning "No shells were tested"
         return 1
     else
