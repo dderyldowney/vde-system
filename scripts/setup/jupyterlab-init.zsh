@@ -69,7 +69,7 @@ grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
 # 6.1 INTER-VM AWARENESS (Cluster Bonding)
 # Enable seamless connection to the postgres Spoke if present on the network
 grep -q "DATABASE_URL" "${_zshenv}" || {
-    echo "export DATABASE_URL=postgresql://devuser:\${POSTGRES_DEV_PASSWORD:-vde_dev_pass}@vde-postgres:5432/postgres_dev_db" >> "${_zshenv}"
+    echo "export DATABASE_URL=postgresql://devuser:\${POSTGRES_DEV_PASSWORD}@vde-postgres:5432/postgres_dev_db" >> "${_zshenv}"
 }
 chown devuser:devuser "${_zshenv}"
 
