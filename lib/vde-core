@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Essential Core Library)
 # VDE Core Library - Essential Functions for VDE
 # Source this library with: source ./lib/vde-core
 # Requires: zsh 5.0+
