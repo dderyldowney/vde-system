@@ -20,7 +20,14 @@
 ### **IV. File Impact List (The Beskar Plates)**
 *List of files created or modified in this strike.*
 
-### **V. Refactoring Rationale (The Refiner's Fire)**
+### **V. Architectural Tagging Report (@armor | @forge | @shared-law)**
+> **MANDATE**: For EVERY strike, you MUST list each touched artifact and its classification according to the **Test of the Two Fires**.
+
+| Artifact | Classification | Justification |
+| :--- | :--- | :--- |
+| (Path) | `@armor` / `@forge` / `@shared-law` | (Brief reason) |
+
+### **VI. Refactoring Rationale (The Refiner's Fire)**
 *Explain why the code was structured this way. How does this strengthen the armor of the VDE?*
 
 ### **VI. Discussion Summary (The Signet's Record)**
