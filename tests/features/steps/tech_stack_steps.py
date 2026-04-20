@@ -1,3 +1,4 @@
+# @shared-law (Symbiotic Integration Steps)
 """
 Step definitions for Integrated Tech Stack verification.
 """

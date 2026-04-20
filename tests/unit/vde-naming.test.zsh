@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Unit Test)
 # Unit Tests for vde-naming Library
 # Tests VM naming conventions and resolution
 

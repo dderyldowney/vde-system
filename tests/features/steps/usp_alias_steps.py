@@ -1,3 +1,4 @@
+# @shared-law (Symbiotic Integration Steps)
 """
 Step definitions for USP Alias Resolution.
 Verifies that aliases distill correctly to primary rituals using the vde_get_hydration_script ritual.
