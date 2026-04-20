@@ -1,4 +1,4 @@
-# VDE-SPEC 1.4.1 (The Sovereign Evolution) (The Sovereign Evolution)
+# VDE-SPEC 1.4.1 (The Sovereign Evolution)
 
 **Date**: 2026-04-17
 **Status**: SOVEREIGN BASELINE CERTIFIED
