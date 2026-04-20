@@ -7,10 +7,10 @@
 # used throughout the VDE system. Centralizing these values improves:
 # - Maintainability: Change values in one place
 # - Documentation: Each constant is explained
-# - Consistency: All scripts use the same values
+# consistency: All scripts use the same values
 #
-# Shell Compatibility: This file uses POSIX-compatible syntax for portability
-# across zsh 5.0+, bash 4.0+, and bash 3.x (with limitations)
+# Language: This is a ZSH-exclusive library. Use of bash is strictly forbidden
+# by Mandate C of the Mandalorian Creed.
 
 # =============================================================================
 # SOURCE GUARD
@@ -200,7 +200,6 @@ VDE_PORT_PROBE_COOLDOWN=500
 VDE_SSH_USER="${VDE_SSH_USER:-devuser}"
 
 # SSH key types in order of preference (most secure first)
-# Note: Array syntax is compatible with both bash and zsh
 VDE_SSH_KEY_PREFERENCE="${VDE_SSH_KEY_PREFERENCE:-vde_student id_ecdsa id_rsa id_dsa}"
 
 # =============================================================================
