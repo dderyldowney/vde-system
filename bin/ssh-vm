@@ -15,12 +15,12 @@ source "$PROJECT_ROOT/lib/vde-constants"
 source "$PROJECT_ROOT/lib/vde-core"
 source "$PROJECT_ROOT/lib/vm-common"
 
-# Ensure UAP compliance
-[[ -f "$PROJECT_ROOT/bin/vde-enforce-uap.zsh" ]] && source "$PROJECT_ROOT/bin/vde-enforce-uap.zsh"
+# Ensure technical integrity (Project 1 foundations)
+[[ -f "$PROJECT_ROOT/bin/vde-check-tetrad.zsh" ]] && "$PROJECT_ROOT/bin/vde-check-tetrad.zsh"
 
 # Default configuration
-VDE_SSH_USER="${VDE_SSH_USER:-vde_student}"
-VDE_SSH_IDENTITY="${VDE_SSH_IDENTITY:-$HOME/.ssh/vde/vde_student}"
+local target_user="${VDE_SSH_USER:-vde_student}"
+local target_identity="${VDE_SSH_IDENTITY:-$HOME/.ssh/vde/vde_student}"
 SHOW_COMMAND=false
 EXTRA_ARGS=()
 
@@ -31,9 +31,9 @@ usage() {
     echo "Usage: $(basename "$0") [options] <vm-alias> [command]"
     echo ""
     echo "Options:"
-    echo "  -u, --user <user>      SSH user (default: $VDE_SSH_USER)"
-    echo "  -i, --identity <path>  Identity file (default: $VDE_SSH_IDENTITY)"
-    echo "  -c, --command          Show the SSH command instead of executing"
+    echo "  -u, --user <user>      SSH user (default: $target_user)"
+    echo "  -i, --identity <path>  Identity file (default: $target_identity)"
+    echo "  --show-command         Show the SSH command instead of executing"
     echo "  -h, --help             Show this help message"
     echo ""
     echo "Environment Variables:"
@@ -44,17 +44,18 @@ usage() {
 # =============================================================================
 # Argument Parsing
 # =============================================================================
+VM_ALIAS=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -u|--user)
-            VDE_SSH_USER="$2"
+            target_user="$2"
             shift 2
             ;;
         -i|--identity)
-            VDE_SSH_IDENTITY="$2"
+            target_identity="$2"
             shift 2
             ;;
-        -c|--command)
+        --show-command)
             SHOW_COMMAND=true
             shift
             ;;
@@ -62,45 +63,51 @@ while [[ $# -gt 0 ]]; do
             usage
             exit "${VDE_SUCCESS}"
             ;;
+        --command)
+            shift
+            EXTRA_ARGS=("$@")
+            set --
+            ;;
         -*)
             vde_log_error "Unknown option: $1" "ssh-vm"
             usage
             exit "${VDE_ERR_INVALID_ARGS}"
             ;;
         *)
-            break
+            if [[ -z "$VM_ALIAS" ]]; then
+                VM_ALIAS="$1"
+                shift
+            else
+                # If we already have a VM alias, the rest is the command
+                EXTRA_ARGS=("$@")
+                set --
+            fi
             ;;
     esac
 done
 
-if [[ $# -lt 1 ]]; then
+if [[ -z "${VM_ALIAS}" ]]; then
     vde_log_error "Missing VM alias" "ssh-vm"
     usage
     exit "${VDE_ERR_INVALID_ARGS}"
-fi
-
-VM_ALIAS="$1"
-shift
-
-# Handle remaining arguments as a command to execute on the VM
-if [[ $# -gt 0 ]]; then
-    EXTRA_ARGS=("$@")
 fi
 
 # =============================================================================
 # Spoke Resolution
 # =============================================================================
 
+# Load VM types (required for name resolution)
+load_vm_types
+
 # Validate VM exists
-if ! is_vm_registered "$VM_ALIAS"; then
+if ! is_known_vm "$VM_ALIAS"; then
     vde_log_error "VM alias '${VM_ALIAS}' is not registered." "ssh-vm"
     exit "${VDE_ERR_NOT_FOUND}"
 fi
 
 # Get VM Details
-VM_INFO=$(get_vm_by_alias "$VM_ALIAS")
-SSH_PORT=$(get_field_by_name "ssh_port" "$VM_INFO")
-VM_NAME=$(get_field_by_name "name" "$VM_INFO")
+VM_NAME=$(resolve_vm_name "$VM_ALIAS")
+SSH_PORT=$(get_vm_ssh_port "$VM_NAME")
 
 # Check if Spoke is running
 CONTAINER_ID=$(docker ps -q -f "name=${VM_NAME}")
@@ -115,17 +122,17 @@ fi
 # =============================================================================
 
 # Expand tilde in identity path if present
-VDE_SSH_IDENTITY="${VDE_SSH_IDENTITY/#\~/$HOME}"
+target_identity="${target_identity/#\~/$HOME}"
 
 # Ensure identity file exists
-if [[ ! -f "${VDE_SSH_IDENTITY}" ]]; then
-    vde_log_error "SSH identity file not found: ${VDE_SSH_IDENTITY}" "ssh-vm"
+if [[ ! -f "${target_identity}" ]]; then
+    vde_log_error "SSH identity file not found: ${target_identity}" "ssh-vm"
     vde_log_info "Run 'bin/ssh-setup' to generate VDE identities." "ssh-vm"
     exit "${VDE_ERR_SSH}"
 fi
 
 # Ensure correct permissions on identity file
-chmod 600 "${VDE_SSH_IDENTITY}"
+chmod 600 "${target_identity}"
 
 # =============================================================================
 # Connection Parameters
@@ -151,10 +158,11 @@ SSH_OPTS=(
 # Assemble Command
 SSH_CMD=(
     ssh
+    -tt
     "${SSH_OPTS[@]}"
-    -i "${VDE_SSH_IDENTITY}"
+    -i "${target_identity}"
     -p "${SSH_PORT}"
-    "${VDE_SSH_USER}@${SSH_HOST}"
+    "${target_user}@${SSH_HOST}"
 )
 
 # Append command if provided
