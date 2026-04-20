@@ -25,38 +25,22 @@ sudo -u devuser sh -c 'if ! command -v rustc >/dev/null; then \
   curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path; \
 fi'
 
-# 3. PERSISTENCE ANCHORS (User Personalization & Shell Integration)
-# Injects pathing and environment variables into .zshenv and .zshrc.
-# These anchors ensure that the Rust toolchain and Sovereign Bridge 
-# survive 'vde rebuild' and 'vde stop/start' cycles.
-local dev_home=~devuser
-local _zshenv="${dev_home}/.zshenv"
-local _zshrc="${dev_home}/.zshrc"
+# 3. PERSISTENCE ANCHORS
+# Direct injection as commanded by the Clan Leader.
+# Ensures the cargo path is the UNIQUE and VERY LAST LINE of $HOME/.zshrc and $HOME/.zshenv.
 
-touch "${_zshenv}" "${_zshrc}"
+sudo -u devuser zsh -c '
+    # Ensure configuration files exist
+    touch ~/.zshenv ~/.zshrc
 
-# Anchor: Rust Toolchain Pathing
-# Ensures cargo and rustc are available immediately upon 'vde enter'.
-# .zshenv handles environment for all shells (mandated for non-interactive tools).
-grep -q "cargo/bin" "${_zshenv}" || {
-  echo "export PATH=\"\${dev_home}/.cargo/bin:\$PATH\"" >> "${_zshenv}"
-}
+    # Purge existing entries to ensure uniqueness
+    sed -i "/\.cargo\/bin/d" ~/.zshenv
+    sed -i "/\.cargo\/bin/d" ~/.zshrc
 
-# .zshrc ensures interactive shell path inheritance and prioritization.
-# This fixes IS171 where Cargo was missing in interactive devuser sessions.
-grep -q "cargo/bin" "${_zshrc}" || {
-  echo '' >> "${_zshrc}"
-  echo '# Rust Toolchain' >> "${_zshrc}"
-  echo "export PATH=\"\${dev_home}/.cargo/bin:\$PATH\"" >> "${_zshrc}"
-}
-
-# Anchor: Sovereign SSH Bridge identity 
-# Mandated by the Rule Spine for Git operations using host keys.
-grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
-  echo "if [[ -z \"\${SSH_AUTH_SOCK}\" ]]; then export SSH_AUTH_SOCK=\"\${dev_home}/.ssh/vde/agent.sock\"; fi" >> "${_zshenv}"
-}
-
-chown devuser:devuser "${_zshenv}" "${_zshrc}"
+    # Append the mandated path export to the end of the files
+    echo "export PATH=\"\$HOME/.cargo/bin:\$PATH\"" >> ~/.zshenv
+    echo "export PATH=\"\$HOME/.cargo/bin:\$PATH\"" >> ~/.zshrc
+'
 
 # 4. PURGING THE GHOSTS
 # Clean up build artifacts to maintain a hardened, immutable baseline.

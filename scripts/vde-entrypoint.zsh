@@ -90,9 +90,11 @@ if [[ -n "${_found_bridge}" ]]; then
         fi
         
         # Persistent bridge for non-login shells (Hardened: do not overwrite existing agent)
-        echo 'if [[ -z "${SSH_AUTH_SOCK}" ]]; then export SSH_AUTH_SOCK="'${_proxy_sock}'"; fi' > /home/devuser/.zshenv
+        grep -q "SSH_AUTH_SOCK" /home/devuser/.zshenv 2>/dev/null || {
+            echo 'if [[ -z "${SSH_AUTH_SOCK}" ]]; then export SSH_AUTH_SOCK="'${_proxy_sock}'"; fi' >> /home/devuser/.zshenv
+        }
         sudo chown devuser:devuser /home/devuser/.zshenv
-        echo "[VDE-ENTRYPOINT] Persistent bridge established at /home/devuser/.zshenv"
+        echo "[VDE-ENTRYPOINT] Persistent bridge verified at /home/devuser/.zshenv"
     else
         echo "[VDE-ENTRYPOINT] SUCCESS: SSH agent already established via protocol forwarding."
     fi
