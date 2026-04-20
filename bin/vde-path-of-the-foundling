@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-path-of-the-foundling - Interactive Onboarding for VDE
+set -e
 # Guide a new student through the first rituals of the Forge.
 #===============================================================================
 

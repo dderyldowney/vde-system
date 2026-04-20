@@ -64,7 +64,7 @@ Examples:
 See also:
   vde ssh-sync               Sync SSH keys to build context
 EOF
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -137,7 +137,7 @@ if [[ "${ACTION}" == "status" ]] ; then
     fi
 
     echo ""
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -244,7 +244,7 @@ if [[ "${ACTION}" == "init" ]] ; then
     echo "  • Connect:     ssh -F ~/.ssh/vde/config <vm>"
     echo ""
 
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -260,7 +260,7 @@ if [[ "${ACTION}" == "start" ]] ; then
         log_error "Failed to start/find SSH agent"
         exit ${VDE_ERR_GENERAL}
     fi
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -273,7 +273,7 @@ if [[ "${ACTION}" == "stop" ]] ; then
         log_error "Failed to stop VDE SSH agent"
         exit ${VDE_ERR_GENERAL}
     fi
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -288,7 +288,7 @@ if [[ "${ACTION}" == "generate" ]] ; then
         log_success "✓ VDE SSH config updated"
         echo ""
         echo "Config location: ${VDE_SSH_CONFIG}"
-        exit 0
+        exit ${VDE_SUCCESS}
     else
         log_error "✗ Failed to generate SSH config"
         exit ${VDE_ERR_GENERAL}
@@ -336,7 +336,7 @@ fi"
     echo "VDE SSH agent will now auto-start on new shell sessions."
     echo "To apply to current shell, run:"
     echo "  source ${shell_config}"
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================

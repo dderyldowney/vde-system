@@ -13,6 +13,8 @@
 # ZSH-native logic demonstration (UAP Mandate 1)
 local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
+set -e
+
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
@@ -49,7 +51,7 @@ CONTAINERS=$(docker ps --format '{{.Names}}' | grep "^${VDE_PREFIX}" | tr '\n' '
 
 if [[ -z "${CONTAINERS}" ]] ; then
     echo "No VDE containers running"
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 if [[ ${QUIET} -eq 1 ]] ; then
@@ -58,4 +60,4 @@ else
     docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}' ${CONTAINERS}
 fi
 
-exit 0
+exit ${VDE_SUCCESS}

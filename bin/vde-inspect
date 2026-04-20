@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-inspect - Inspect a VDE container
+set -e
 # Usage: vde-inspect <vm_name> [options]
 #
 # Options:

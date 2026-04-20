@@ -45,7 +45,7 @@ See also:
   vde ssh-setup           Manage VDE SSH environment
   vde ssh-setup init      Initialize SSH keys and sync
 EOF
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -61,7 +61,7 @@ if sync_ssh_keys_to_vde; then
     echo ""
     echo "Build context location: ${VDE_ROOT_DIR}/public-ssh-keys/"
     echo ""
-    exit 0
+    exit ${VDE_SUCCESS}
 else
     log_error "✗ Failed to sync SSH key"
     echo ""

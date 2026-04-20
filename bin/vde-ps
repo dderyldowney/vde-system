@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-ps - List VDE containers
+set -e
 # Usage: vde-ps [options]
 #
 # Options:
@@ -191,4 +192,4 @@ else
     fi
 fi
 
-exit 0
+exit ${VDE_SUCCESS}

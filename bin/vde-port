@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-port - Show port mappings for a VDE container
+set -e
 # Usage: vde-port <vm_name> [port]
 #
 # Options:

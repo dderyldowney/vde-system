@@ -56,7 +56,7 @@ done
 
 if [[ ${failed} -eq 0 ]]; then
     echo "SUCCESS: All scripts use zsh shebang"
-    exit 0
+    exit ${VDE_SUCCESS}
 else
     echo ""
     echo "ERROR: Some scripts do not use zsh shebang"

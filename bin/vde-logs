@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-logs - Show logs for a VDE container
+set -e
 # Usage: vde-logs <vm_name> [options]
 #
 # Options:
@@ -62,4 +63,4 @@ else
     docker logs --tail "${TAIL}" "${CONTAINER_NAME}"
 fi
 
-exit 0
+exit ${VDE_SUCCESS}

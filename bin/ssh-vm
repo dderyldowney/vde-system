@@ -24,6 +24,8 @@ source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
 source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
 source "${VDE_ROOT_DIR}/lib/vde-log" &>/dev/null
 source "${VDE_ROOT_DIR}/lib/vde-core" &>/dev/null
+set -e
+
 source "${VDE_ROOT_DIR}/lib/vm-common" &>/dev/null
 source "${VDE_ROOT_DIR}/lib/vde-pulse.zsh" &>/dev/null
 
@@ -89,7 +91,7 @@ while [[ ${#} -gt 0 ]] ; do
         -h|--help)
             if [[ -z "${VM_NAME}" ]] ; then
                 show_usage
-                exit 0
+                exit ${VDE_SUCCESS}
             else
                 EXTRA_ARGS+=("${1}")
                 shift
@@ -204,11 +206,13 @@ fi
 # Either show or execute the command
 if [[ "${SHOW_COMMAND}" = true ]] ; then
     echo "${SSH_CMD[@]}"
-    exit 0
+    exit ${VDE_SUCCESS}
 else
     # Only log "Connecting..." if it's an interactive shell
     if [[ ${#EXTRA_ARGS[@]} -eq 0 ]] ; then
         vde_log_info "Connecting to ${SSH_HOST_ALIAS}..." "ssh-vm"
     fi
     exec "${SSH_CMD[@]}"
+fi
+${SSH_CMD[@]}"
 fi

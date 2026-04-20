@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # VDE CLI - Unified Virtual Development Environment
+set -e
 # Version: ${VDE_VERSION:-$(vde_get_version)}
 #===============================================================================
 

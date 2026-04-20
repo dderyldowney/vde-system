@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-enforce-uap.zsh - Universal Agent Protocol Enforcement (Hardened)
+set -e
 #
 # Enforces the Strict Core Mandates from AGENTS.md:
 # 1. Sovereign ZSH Purity (Shebang & Content)
