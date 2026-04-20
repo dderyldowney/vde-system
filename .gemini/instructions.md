@@ -111,6 +111,17 @@ Failure of any ritual constitutes a **Protocol Blockade**.
         3. **Wait** for the User's explicit written acknowledgement and authorization before confirming any merge or PR close.
     * The agent is FORBIDDEN from merging, closing, or otherwise altering the state of any Pull Request or GitHub Issue until the User has given explicit written approval in the active conversation.
     * This mandate supersedes all automation. No prior context, standing instruction, or inferred permission constitutes approval for a merge action.
+* **S. The Forge Templates (Empirical Clarity)**:
+    * The agent MUST strictly adhere to the mandatory Markdown templates located in `templates/forge-mythos/` for all primary communications and recordings.
+    * **Mandatory Usage**:
+        - **Pull Requests**: Use `PULL_REQUEST_TEMPLATE.md`.
+        - **Bug Reports**: Use `BUG_REPORT_TEMPLATE.md`.
+        - **Feature Requests**: Use `FEATURE_REQUEST_TEMPLATE.md`.
+        - **Status Reports**: Use `STATUS_REPORT_TEMPLATE.md`.
+        - **Audits & Verdicts**: Use `SCOUT_REPORT_FORMAT.md`, `ENFORCER_VERDICT_FORMAT.md`, `REVIEWER_VERDICT_FORMAT.md`, and `SECURITY_AUDIT_REPORT_FORMAT.md`.
+        - **Remediation**: Use `REMEDIATION_PLAN_FORMAT.md`.
+    * **The Chronicler’s Law**: Commit messages MUST follow the format defined in `COMMIT_MESSAGE_FORMAT.md`.
+    * Failure to utilize these templates constitutes a procedural fracture and requires immediate remediation.
 
 ## **THE SOVEREIGN INSTRUCTION SET 1.3.0**
 
