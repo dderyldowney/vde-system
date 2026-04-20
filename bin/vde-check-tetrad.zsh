@@ -33,12 +33,22 @@ done
 
 # 3. Environment Integrity
 VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-REQUIRED_DIRS=("data" ".cache" "lib" "scripts")
+REQUIRED_DIRS=("data" "lib" "scripts")
+TRANSIENT_DIRS=(".cache")
 
+# Check source directories (fatal if missing)
 for dir in "${REQUIRED_DIRS[@]}"; do
     if [[ ! -d "${VDE_ROOT_DIR}/${dir}" ]]; then
         echo -e "${RED}[ERROR] Missing core directory: ${dir}${RESET}"
         exit 1
+    fi
+done
+
+# Check transient directories (create if missing)
+for dir in "${TRANSIENT_DIRS[@]}"; do
+    if [[ ! -d "${VDE_ROOT_DIR}/${dir}" ]]; then
+        mkdir -p "${VDE_ROOT_DIR}/${dir}"
+        echo -e "${YELLOW}[INFO] Initialized missing directory: ${dir}${RESET}"
     fi
 done
 
