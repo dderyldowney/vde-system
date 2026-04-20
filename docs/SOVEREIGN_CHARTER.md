@@ -9,43 +9,58 @@ This Charter defines the dual-mission architecture of the VDE. It is the foundat
 The VDE ecosystem is architected as two distinct projects that operate independently but work in hierarchical harmony to ensure the absolute integrity of the product and its development.
 
 ### 1. Project 1: The Armor (The VDE Engine Product)
-**The Armor** is the student-facing product—the core engine that enables the Virtual Development Environment.
+**The Armor** is the physical, student-facing product—the core engine that enables the Virtual Development Environment.
 
 *   **Individual Use**: Providing a robust, isolated, and standardized CLI for "Foundlings" (students) to ignite development Spokes (VMs). It handles container orchestration, network isolation, and workspace management.
+*   **Target**: **Specific**. It serves *this* project (VDE) and its specialized container requirements.
 *   **Sovereign Dependencies**: It depends **exclusively** on the **Unyielding Tetrad** (zsh, git, docker, ssh).
-*   **AI-Blindness**: It is designed to be **AI-unaware**. It does not know about GitHub, the `gh` CLI, or any AI governance rules. It must function perfectly in a "naked" environment with only the Tetrad present.
-*   **Integrity Gate**: Protected by the **Lightweight Technical Gate** (`bin/vde-check-tetrad.zsh`), which verifies the physical environment before ignition.
+*   **AI-Blindness**: It is designed to be **AI-unaware** and **Hub-blind**. It must function perfectly without any Project 2 components or `gh` CLI access.
+*   **Integrity Gate**: Protected by the **Lightweight Technical Gate** (`bin/vde-check-tetrad.zsh`).
 
-### 2. Project 2: The Forge (The Development AI-Governance System)
-**The Forge** is the development rig—the system used to build, audit, and evolve The Armor.
+### 2. Project 2: The Forge (Development AI-Governance System)
+**The Forge** is the universal development, auditing, and governance rig.
 
 *   **Individual Use**: Enforcing the **Rule Spine** (Mandalorian Creed) and Mandates during the development lifecycle. It owns "GitHub Life," managing Issues, PRs, CI/CD, and release synchronization.
-*   **Core Tools**: It uses the **GitHub CLI (`gh`)** as its foundational binary to interact with the Hub. It includes all agent instructions (`AGENTS.md`), Forge rules (`.gemini/`), and CI workflows.
-*   **Role**: It acts as the "Architect" that builds the Armor. While it is mandatory for our governed development process, it is entirely optional for the student running the Armor.
-*   **Integrity Gate**: Protected by the **Heavy Governance Gate** (`bin/vde-enforce-uap.zsh`), which performs deep audits of ZSH purity, mandate compliance, and structural governance.
+*   **Target**: **Universal**. It serves **"Any Thing"**—tools and protocols that could theoretically serve *any* project (regardless of tech stack) to ensure governed development.
+*   **Core Tools**: It uses the **GitHub CLI (`gh`)** as its foundational binary to interact with the Hub. It includes all agent instructions, Forge rules, and CI workflows.
+*   **Role**: It acts as the "Architect" that builds the Armor.
 
 ---
 
-## II. How They Work Together as a "System"
+## II. The Hierarchical Component Outline
+
+*   **VDE Sovereign System**
+    *   **Project 1: The Armor (@armor)**
+        *   **Code (Binaries)**: `bin/vde`, `bin/ssh-vm`, `bin/vde-init`, `bin/vde-rebuild`, `bin/vde-start`, `bin/vde-stop`, `bin/vde-rm`.
+        *   **Code (Libraries)**: `lib/vde-docker`, `lib/vde-ssh`, `lib/vm-lock`, `lib/vde-naming`, `lib/vde-path-utils`, `lib/vde-progress`.
+        *   **Docs**: `VDE_INSTALL.md`, `USER_GUIDE.md`, `FOUNDLING_GUIDE.md`.
+        *   **Tests**: `tests/unit/*.zsh` (Engine Unit Tests), `tests/features/steps/init_steps.py` (Foundational Steps).
+        *   **Rituals**: Engine Ignition (`vde init`), Spoke Smelting (`vde rebuild`), Transversal Bridge (`vde enter`).
+    *   **Project 2: The Forge (@forge)**
+        *   **Code (Binaries)**: `bin/vde-enforce-uap.zsh`, `bin/paired_update_enforcer`, `bin/cleanup-ports`, `bin/vde-tactical-sweep.zsh`.
+        *   **Code (Libraries)**: `lib/vde-audit`, `lib/vde-metrics` (Generic Governance).
+        *   **Docs**: `AGENTS.md`, `GEMINI.md`, `docs/GITHUB_LIFECYCLE.md`, `CONTRIBUTING.md`.
+        *   **Tests**: CI/CD Workflows, AI-governance validation steps.
+        *   **Rituals**: The Signet and Chronicle (GitHub Flow), Code Review Gates, AI-Agent Dispatch.
+    *   **The Foundation (@shared-law)**
+        *   **Code (Gates)**: `bin/vde-check-tetrad.zsh` (Technical Integrity Gate).
+        *   **Code (Libraries)**: `lib/vde-core`, `lib/vde-constants`, `lib/vde-shell-compat`, `lib/vm-common`.
+        *   **Data**: `data/vm-types.json`, `data/vm-types.schema.json`.
+        *   **Docs**: `SOVEREIGN_CHARTER.md`, `VDE-SPEC.md`, `ARCHITECTURE.md`.
+        *   **Tests**: `tests/features/core-infrastructure/*.feature` (Proof of Life, Technical Integrity).
+
+---
+
+## III. How They Work Together (The Symbiotic Covenant)
 
 The relationship is hierarchical: **The Forge builds the Armor.**
 
-1.  **The Foundation Link**: The Forge cannot be lit without the Armor. The Heavy Gate (P2) always trips the Technical Gate (P1) first. You cannot have AI-governance on an environment that doesn't have the 4 Pillars (Tetrad) active.
-2.  **The Shielded Product**: During development, we use the Forge (AI agents, `gh`, CI/CD) to modify the codebase. However, the resulting code (The Armor) is meticulously decoupled so that it remains purely driven by the Tetrad, unaware of the complex Forge machinery that created it.
-3.  **The Dual-Gate Flow**:
-    *   **Student Usage**: Only the **Light Gate** is tripped. The system is fast, technical, and simple.
-    *   **Developer Usage**: Every action trips the **Heavy Gate**. The system is rigorous, audited, and compliant with the Creed.
-4.  **The Strike Loop**: Every change follows the Forge's **Ritual of the Signet and Chronicle** (Issue -> PR), ensuring that the Armor's evolution is documented, tested via real-time atomic audits, and certified green by the Hub's CI sensors.
-
----
-
-## III. The Charter of the Two Fires (Mythos)
-
-This is the codified Creed of the Forge, defining the relationship between the Beskar and the Armorer.
-
-- **Project 1 (The Armor)**: The Beskar itself. It is the shield that protects the Foundling. It must be strong, pure, and independent. If the Armorer falls, the Armor must still hold the line. It answers only to the **Four Pillars of the Ancestors**.
-- **Project 2 (The Forge)**: The Armorer, the Tools, and the Fire. It is the ritual by which the Armor is shaped. It answers to the **Rule Spine** and the **Sovereign Mandates**. It speaks through the **Hub** to certify that every plate is forged in truth.
-- **The Symbiotic Covenant**: The Forge cannot burn without the Four Pillars. Every ritual of the Forge first honors the Armor. The Armor is the product of the Forge, but once forged, it stands alone, unburdened by the memory of the tools that made it.
+1.  **The Foundation Link**: The Forge cannot be lit without the Armor. The Heavy Gate (P2) ALWAYS trips the Technical Gate (P1) first.
+2.  **The Shielded Product**: During development, we use the Forge (AI agents, `gh`, CI/CD) to modify the codebase. However, the resulting code (The Armor) is meticulously decoupled so that it remains purely driven by the Tetrad.
+3.  **The Decision Rule (Test of the Two Fires)**: Before a strike acts, classify the strike:
+    - **Armor Strike (@armor)**: Satisfies a physical runtime requirement for the specific VDE product (Naked Machine Audit).
+    - **Forge Strike (@forge)**: Satisfies a universal requirement for governed development, "Any Thing" automation, or AI discipline (Governance Guard Audit).
+    - **Shared-Law Strike (@shared-law)**: Modifies the foundational bridge or pillars used by both (Symbiotic Link Audit).
 
 ---
 
