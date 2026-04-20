@@ -113,6 +113,13 @@ Failure of any ritual constitutes a **Protocol Blockade**.
     * This mandate supersedes all automation. No prior context, standing instruction, or inferred permission constitutes approval for a merge action.
 * **S. The Forge Templates (Empirical Clarity)**:
     * The agent MUST strictly adhere to the mandatory Markdown templates located in `templates/forge-mythos/` for all primary communications and recordings.
+    * **Checklist of the Creed**:
+        - [ ] Focused Strike (scope limited to Signet)
+        - [ ] Enforcer passed
+        - [ ] Rule Spine green
+        - [ ] Heartbeat certified
+        - [ ] Dual-Gate Review complete
+        - [ ] Documentation updated
     * **Mandatory Usage**:
         - **Pull Requests**: Use `PULL_REQUEST_TEMPLATE.md`.
         - **Bug Reports**: Use `BUG_REPORT_TEMPLATE.md`.
@@ -359,4 +366,6 @@ The authoritative eight fields are as follows:
 8.  **ssh_port**: The specific port assigned for SSH access (e.g., `2214`).
 
 **IMMUTABILITY LAW**: These are immutable fields and types. Any changes to them MUST be approved by the User. ONLY the User can authorize a change to these fields. Changing these without User authorization is explicitly removing your helmet.
+ving your helmet.
+User can authorize a change to these fields. Changing these without User authorization is explicitly removing your helmet.
 ving your helmet.
