@@ -8,8 +8,8 @@ set -e
 # Source libraries
 VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-# Enforce Universal Agent Protocol (The Rule Spine)
-"${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" --quiet || exit ${VDE_ERR_GENERAL}
+# Technical Integrity Gate (Project 1: The Armor)
+"${VDE_ROOT_DIR}/bin/vde-check-tetrad.zsh" || exit ${VDE_ERR_GENERAL}
 
 # Indicate orchestrated execution for sub-scripts
 export VDE_ORCHESTRATED=1

@@ -11,6 +11,12 @@ set -e
 
 VDE_ROOT_DIR="${0:a:h:h}"
 
+# 0. Technical Integrity Gate (Project 1 Dependency)
+# The Forge cannot be lit without the Unyielding Tetrad.
+if [[ -f "${VDE_ROOT_DIR}/bin/vde-check-tetrad.zsh" ]]; then
+    "${VDE_ROOT_DIR}/bin/vde-check-tetrad.zsh" || exit 1
+fi
+
 # Parse flags
 quiet=0
 if [[ "${1}" == "--quiet" || "${1}" == "-q" ]]; then
@@ -115,9 +121,13 @@ if [[ $errors -gt 0 ]] || [[ $warnings -gt 0 ]]; then
 else
     [[ $quiet -eq 0 ]] && echo -e "\n${GREEN}[UAP-SUCCESS]${NC} All core mandates satisfied. Agent is cleared for action."
     # Support wrapping commands for Mandatory Enforcer Supervision (Mandate 3)
-    if [[ $# -gt 0 ]]; then
-        [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-EXEC]${NC} Executing supervised command: $@"
-        exec "$@"
+    # Only execute if the script is NOT being sourced (detecting via ZSH_EVAL_CONTEXT)
+    if [[ $# -gt 0 && "${ZSH_EVAL_CONTEXT}" != *"toplevel"* ]]; then
+        # If the only argument is --quiet, don't try to exec it
+        if [[ "$1" != "--quiet" ]]; then
+            [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-EXEC]${NC} Executing supervised command: $@"
+            exec "$@"
+        fi
     fi
     exit 0
 fi

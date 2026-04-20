@@ -21,6 +21,10 @@ test_setup() {
     # Create temporary test directory
     TEST_TMP_DIR=$(mktemp -d)
     [[ "$VERBOSE" == "true" ]] && echo "Test temp dir: $TEST_TMP_DIR"
+
+    # Create atomic copies of production data and schema for real-time check
+    cp "$PROJECT_ROOT/data/vm-types.json" "$TEST_TMP_DIR/vm-types.json"
+    cp "$PROJECT_ROOT/data/vm-types.schema.json" "$TEST_TMP_DIR/vm-types.schema.json"
 }
 
 test_teardown() {
@@ -56,7 +60,7 @@ run_test() {
 # =============================================================================
 
 test_check_schema_integrity_valid() {
-    local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
+    local schema_file="$TEST_TMP_DIR/vm-types.schema.json"
 
     vde_check_schema_integrity "$schema_file" >/dev/null 2>&1
     test_assert "[[ $? -eq $VDE_SUCCESS ]]" "Valid schema passes integrity check"
@@ -90,11 +94,11 @@ test_check_schema_integrity_missing_fields() {
 # =============================================================================
 
 test_validate_json_schema_valid() {
-    local json_file="$PROJECT_ROOT/data/vm-types.json"
-    local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
+    local json_file="$TEST_TMP_DIR/vm-types.json"
+    local schema_file="$TEST_TMP_DIR/vm-types.schema.json"
 
     vde_validate_json_schema "$json_file" "$schema_file" >/dev/null 2>&1
-    test_assert "[[ $? -eq $VDE_SUCCESS ]]" "Valid JSON passes schema validation"
+    test_assert "[[ $? -eq $VDE_SUCCESS ]]" "Real vm-types.json passes schema validation"
 }
 
 test_validate_json_schema_missing_json() {
@@ -107,7 +111,7 @@ test_validate_json_schema_missing_json() {
 
 test_validate_json_schema_missing_schema() {
     local json_file="$PROJECT_ROOT/data/vm-types.json"
-    local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
+    local schema_file="$TEST_TMP_DIR/missing.schema.json"
 
     vde_validate_json_schema "$json_file" "$schema_file" >/dev/null 2>&1
     test_assert "[[ $? -eq $VDE_ERR_NOT_FOUND ]]" "Missing schema returns NOT_FOUND"
@@ -117,14 +121,14 @@ test_validate_json_schema_invalid_data() {
     local json_file="$TEST_TMP_DIR/invalid-vm-types.json"
     local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
 
-    # Create JSON missing required fields
+    # Create JSON missing required fields and with invalid name
     cat > "$json_file" <<'EOF'
 {
   "version": "1.0",
   "vms": {
     "language": [
       {
-        "name": "test"
+        "name": "invalid-name"
       }
     ],
     "service": []
@@ -140,17 +144,16 @@ test_validate_json_schema_language_vm_with_port() {
     local json_file="$TEST_TMP_DIR/lang-with-port.json"
     local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
 
-    # Create language VM with non-null port (invalid)
+    # Create language VM with invalid ssh_port (out of range)
     cat > "$json_file" <<'EOF'
 {
   "version": "1.0",
   "vms": {
     "language": [
       {
-        "name": "test",
-        "display": "Test",
-        "install": "echo test",
-        "port": "8080"
+        "name": "vde-test-lang",
+        "display": "Test Language",
+        "ssh_port": 9999
       }
     ],
     "service": []
@@ -159,14 +162,14 @@ test_validate_json_schema_language_vm_with_port() {
 EOF
 
     vde_validate_json_schema "$json_file" "$schema_file" >/dev/null 2>&1
-    test_assert "[[ $? -eq $VDE_ERR_INVALID_DATA ]]" "Language VM with port returns INVALID_DATA"
+    test_assert "[[ $? -eq $VDE_ERR_INVALID_DATA ]]" "Language VM with invalid port returns INVALID_DATA"
 }
 
 test_validate_json_schema_service_vm_without_port() {
     local json_file="$TEST_TMP_DIR/service-without-port.json"
     local schema_file="$PROJECT_ROOT/data/vm-types.schema.json"
 
-    # Create service VM without port (invalid)
+    # Create service VM without ssh_port (invalid)
     cat > "$json_file" <<'EOF'
 {
   "version": "1.0",
@@ -174,9 +177,8 @@ test_validate_json_schema_service_vm_without_port() {
     "language": [],
     "service": [
       {
-        "name": "test",
-        "display": "Test",
-        "install": "echo test"
+        "name": "vde-test-service",
+        "display": "Test Service"
       }
     ]
   }
