@@ -62,6 +62,8 @@ The relationship is hierarchical: **The Forge builds the Armor.**
     - **Forge Strike (@forge)**: Satisfies a universal requirement for governed development, "Any Thing" automation, or AI discipline (Governance Guard Audit).
     - **Shared-Law Strike (@shared-law)**: Modifies the foundational bridge or pillars used by both (Symbiotic Link Audit).
 
+4.  **The Tagging Report**: For EVERY strike, the agent MUST produce an explicit **Tagging Report** listing each touched artifact and its classification. This report is recorded in the permanent Chronicle (PR body) to build an empirical database of architectural ownership.
+
 ---
 
 **This is the Way.**

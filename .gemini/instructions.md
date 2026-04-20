@@ -399,3 +399,4 @@ To build a database of feature ownership and shared laws, ALL artifacts (code, t
 - **Tests (BDD/Behave)**: Apply the tag at the Feature and Scenario levels.
 - **Documentation**: Include the tag in the metadata or section headers.
 - **Strikes**: Every PR and Issue MUST state its primary architectural tag in the body.
+- **Tagging Report**: For EVERY strike, you will produce an explicit Tagging Report listing each touched artifact and whether it is `@armor`, `@forge`, or `@shared-law` according to the Test of the Two Fires. This report MUST be recorded in the strike itself (PR/Issue body) as permanent documentation.
