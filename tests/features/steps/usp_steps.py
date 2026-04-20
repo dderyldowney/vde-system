@@ -1,3 +1,4 @@
+# @shared-law (Symbiotic Integration Steps)
 """
 Step definitions for Universal Script Parity (USP) validation.
 Ensures all setup scripts are present and hardened according to Phase 24 mandates.

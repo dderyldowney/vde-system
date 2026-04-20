@@ -403,6 +403,7 @@ To build a database of feature ownership and shared laws, ALL artifacts (code, t
 - **@shared-law**: Artifacts forming the foundational bridge or used by both Projects (e.g., core constants, technical gates).
 
 **Implementation Law**:
+- **Absolute Tagging**: All newly created or modified artifacts (code, tests, scripts, docs, configs, rituals, and GitHub issues/PRs) MUST be explicitly tagged as `@armor`, `@forge`, or `@shared-law` according to the Test of the Two Fires before a strike is considered complete.
 - **Code/Libraries**: Include the tag in the header comments.
 - **Tests (BDD/Behave)**: Apply the tag at the Feature and Scenario levels.
 - **Documentation**: Include the tag in the metadata or section headers.

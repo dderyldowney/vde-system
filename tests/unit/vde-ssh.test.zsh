@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Unit Test)
 # Unit Tests for vde-ssh Library
 # Tests SSH key management and configuration functions
 

@@ -1,11 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://vde.local/schemas/vm-types.schema.json",
+  "comment": "@shared-law (Beskar Registry Schema Authority)",
   "title": "VDE VM Type Configuration",
   "description": "Schema for VDE VM type static configuration. Defines VM types with SSH ports for Docker host access and service ports for infrastructure VMs.",
   "type": "object",
   "required": ["version", "vms"],
   "properties": {
+    "@shared-law": {
+      "type": "string",
+      "description": "Architectural lineage tag"
+    },
     "version": {
       "type": "string",
       "description": "Configuration schema version",

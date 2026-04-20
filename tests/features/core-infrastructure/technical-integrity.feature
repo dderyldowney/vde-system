@@ -1,4 +1,4 @@
-@project-1 @technical-integrity
+@shared-law @project-1 @technical-integrity
 Feature: VDE Technical Integrity Gate (The Armor)
   As a student or developer using the VDE
   I require a purely technical verification of my environment

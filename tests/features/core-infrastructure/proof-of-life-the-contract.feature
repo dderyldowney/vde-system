@@ -1,4 +1,4 @@
-@system-spine @pristine
+@shared-law @system-spine @pristine
 Feature: The Proof of Life - The Contract
   As an Alor of the VDE
   I require empirical proof of the absolute lifecycle

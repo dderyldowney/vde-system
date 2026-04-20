@@ -1,3 +1,4 @@
+# @armor (Engine BDD Steps)
 """
 Step definitions for the System Spine Integrity feature.
 Ensures the Hub-and-Spoke architecture is fully operational and enforced.
