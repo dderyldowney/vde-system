@@ -330,9 +330,19 @@ When committing files to git, the Agent(s) MUST follow the **Conventional Commit
 * **Dynamic Versioning**: We follow whatever is the current released version of the specification. Agents MUST reference the dynamic variable `CONVENTIONAL_COMMITS_SPEC_VERSION="1.0.0"`. This variable MUST be one that can be reassigned as the version of conventionalcommits.org's version changes.
 
 ## **19. THE SOVEREIGN ARTIFACT SET (Codified 2026-04-12)**
-When a Sovereign Baseline release is cut, the following documents MUST be updated to match the new reality before tagging is allowed: `ARCHITECTURE.md`, `TECHNICAL_DEEP_DIVE.md`, `RELEASE_NOTES.md`, `VDE-SPEC.md`, `USE_CASES.md`, `VDE_ANALYSIS.md`, and `PROJECT_STATUS.md`. These seven files move as a single artifact set for every Sovereign Baseline. The Sovereign Artifact Set is the **Gospel of the Forge**. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation. If the system changes in a way the current spec cannot describe, the spec must be rewritten so that the implementation and the Gospel are again in perfect agreement.
+When a Sovereign Baseline release is cut, the following documents MUST be updated to match the new reality before tagging is allowed: `ARCHITECTURE.md`, `TECHNICAL_DEEP_DIVE.md`, `RELEASE_NOTES.md`, `VDE-SPEC.md`, `USE_CASES.md`, `VDE_ANALYSIS.md`, `PROJECT_STATUS.md`, and `SOVEREIGN_CHARTER.md`. These eight files move as a single artifact set for every Sovereign Baseline.
+ The Sovereign Artifact Set is the **Gospel of the Forge**. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation. If the system changes in a way the current spec cannot describe, the spec must be rewritten so that the implementation and the Gospel are again in perfect agreement.
 
-## **20. THE USE-CASE CREED (Codified 2026-04-15)**
+## **20. THE SOVEREIGN CHARTER (The Law of the Two Projects)**
+The VDE ecosystem is architected as two distinct projects with hierarchical responsibilities, as codified in `docs/SOVEREIGN_CHARTER.md`:
+
+1.  **Project 1: The Armor (The VDE Engine Product)**: The student-facing development environment. It is AI-blind, GitHub-blind, and depends strictly on the **Unyielding Tetrad** (zsh, git, docker, ssh). Protected by the **Lightweight Technical Gate** (`bin/vde-check-tetrad.zsh`).
+2.  **Project 2: The Forge (Development AI-Governance System)**: The automated governance and development rig. It manages GitHub life via `gh` CLI, enforces Mandates, and audits development. Protected by the **Heavy Governance Gate** (`bin/vde-enforce-uap.zsh`).
+
+**The Symbiotic Covenant**: The Forge cannot burn without the Armor. The Heavy Gate (P2) ALWAYS trips the Technical Gate (P1) first. The Armor is the product; the Forge is the Armorer.
+
+## **21. THE USE-CASE CREED (Codified 2026-04-15)**
+
 The Forge exists solely to serve the Foundlings (Students) and Reinforcements (New Hires). This is **Creed**. All technical work, refactoring, and infrastructure hardening MUST be centrally driven by its direct improvement to the onboarding and educational experience of these two cohorts. When doing any Forge-work, the Gospel documents MUST be the primary filters for all decisions. A change without a use-case anchor or that contradicts the Gospel is a deviation from the Way.
 
 ## **21. THE ARMORER’S TOOLSET (The Capability Mandate)**
