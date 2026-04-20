@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-init - Initialize VDE infrastructure
+set -e
 # Usage: vde-init [options]
 #
 # Options:
@@ -413,7 +414,7 @@ while [[ ${#} -gt 0 ]] ; do
             ;;
         -h|--help)
             vde_init_usage
-            exit 0
+            exit ${VDE_SUCCESS}
             ;;
         *)
             echo "Unknown option: ${1}"
@@ -512,4 +513,4 @@ else
     fi
 fi
 
-exit 0
+exit ${VDE_SUCCESS}

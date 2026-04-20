@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-tactical-sweep.zsh - Comprehensive Forge Cleanup Tool
+set -e
 #
 # Part of the Sovereign Baseline 1.4.1.
 # Mandate: Zero-Host Dependency & Zero-Ghost Persistence.
@@ -71,4 +72,4 @@ if [[ -d "${VDE_DOCKER_STATE_DIR}" ]]; then
 fi
 
 vde_log_success "[SWEEP] Tactical Sweep Complete. The Forge is Pristine." "sweep"
-exit 0
+exit ${VDE_SUCCESS}

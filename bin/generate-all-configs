@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # generate-all-configs - Generate all configuration files for VDE
+set -e
 #
 # This script generates:
 # - docker-compose.yml files for all VM types

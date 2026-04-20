@@ -100,7 +100,7 @@ while [[ ${#} -gt 0 ]]; do
             ;;
         --help|-h)
             show_usage
-            exit 0
+            exit ${VDE_SUCCESS}
             ;;
         *)
             # First positional argument is the name

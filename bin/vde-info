@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-info - Show VDE system and VM information
+set -e
 # Usage: vde-info [vm_name]
 #===============================================================================
 
@@ -94,4 +95,4 @@ if [[ "${VM_STATUS}" == "running" ]]; then
 Exposed Ports: {{range $p, $conf := .NetworkSettings.Ports}}{{$p}} -> {{(index $conf 0).HostPort}}{{end}}' "${CONTAINER}"
 fi
 
-exit 0
+exit ${VDE_SUCCESS}

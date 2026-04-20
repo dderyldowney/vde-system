@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 # Validate all JSON schemas in the VDE system
+set -e
 # Usage: ./bin/validate-schemas.zsh [--verbose]
 
 # Determine VDE root directory

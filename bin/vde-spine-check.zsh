@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-spine-check.zsh - @system-spine Empirical Check Script
+set -e
 #
 # Verifies the Unyielding Tetrad of VDE:
 # Pillar I: Zsh 5.0+

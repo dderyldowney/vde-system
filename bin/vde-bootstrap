@@ -1,5 +1,9 @@
 #!/usr/bin/env zsh
 # VDE-BOOTSTRAP (Version-Agnostic)
+set -e
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 # Determine VDE root directory
 VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"

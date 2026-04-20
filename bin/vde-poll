@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 #===============================================================================
 # vde-poll - Deterministic Readiness Polling Utility
+set -e
 # Anchored in ZSH for Tier 3: Spoke Environment Verification
 # Part of the VDE v2.0.6 Hardened Rule Spine
 #===============================================================================
