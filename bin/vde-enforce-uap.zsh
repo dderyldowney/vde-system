@@ -84,18 +84,19 @@ audit_file_content() {
         errors=$((errors + 1))
     fi
 
-    local tag_found=$(sed -n '2,3p' "$file" | grep -E "^#? ?@(armor|forge|shared-law) \(.+\)")
+    # Support # (Shell/Python/INI) and <!-- --> (XML/Markdown)
+    local tag_found=$(sed -n '2,3p' "$file" | grep -E "^(#|<!--|//) ?@(armor|forge|shared-law) \(.+\)")
     if [[ -z "${tag_found}" ]]; then
         echo -e "${RED}[UAP-ERROR]${NC} Missing or invalid architectural tag in lines 2-3 of ${file#${VDE_ROOT_DIR}/}."
         echo "Expected Pattern: @armor|@forge|@shared-law (Functional Effect)"
         errors=$((errors + 1))
     fi
 
-    # Only audit ZSH logic for scripts
-    if [[ "$file" != *.md && "$file" != *.json && "$file" != *.schema.json && "$file" != *.env && "$file" != *.template ]]; then
+    # Only audit ZSH logic for scripts (skip data and documentation)
+    if [[ "$file" != *.md && "$file" != *.json && "$file" != *.schema.json && "$file" != *.env && "$file" != *.template && "$file" != *.sql && "$file" != *.conf && "$file" != *.yml && "$file" != *.ini ]]; then
         # Mandate 1: Sovereign Shebang Check
         read -r first_line < "$file"
-        if [[ "${first_line}" != "#!/usr/bin/env zsh" ]]; then
+        if [[ "${first_line}" != "#!/usr/bin/env zsh" && "${first_line}" != "#!/usr/bin/env python3" && "${first_line}" != "#!/bin/zsh" ]]; then
             echo -e "${RED}[UAP-ERROR]${NC} Non-canonical shebang in ${file#${VDE_ROOT_DIR}/}. Expected #!/usr/bin/env zsh"
             errors=$((errors + 1))
         fi
