@@ -63,17 +63,17 @@ git commit -m "docs(forge): update User Guide installation to use interactive in
 **Files:**
 - Modify: `docs/FOUNDLING_GUIDE.md`
 
-- [ ] **Step 1: Rename Ignition section**
+- [x] **Step 1: Rename Ignition section**
 Rename "Initialization (The Ignition)" to "The Path of the Foundling (Interactive Induction)".
 
-- [ ] **Step 2: Update ritual instructions**
+- [x] **Step 2: Update ritual instructions**
 Replace the `vde init` block with `vde path-of-the-foundling`.
 Update the text to explain that the script will ask for permission at each step (Ignition -> Spine Check -> Spoke Creation).
 
-- [ ] **Step 3: Align Step-by-Step guide**
+- [x] **Step 3: Align Step-by-Step guide**
 Update subsequent sections to reflect that the Python Spoke is created during the Path, rather than as a separate manual step.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 ```bash
 git add docs/FOUNDLING_GUIDE.md
 git commit -m "docs(forge): refactor Foundling Guide around the interactive induction"
