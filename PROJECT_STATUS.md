@@ -1,3 +1,4 @@
+<!-- @shared-law (Sovereign Artifact Set) -->
 # PROJECT STATUS - VDE 1.4.1 (The Sovereign Baseline)
 
 **CURRENT STATE: 100% GREEN (THE UNIQUE SOVEREIGN BASELINE)**

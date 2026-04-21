@@ -1,3 +1,4 @@
+<!-- @shared-law (Sovereign Artifact Set) -->
 # VDE Professional Evaluation: Use Case Alignment
 
 **Baseline**: 1.4.1 (Sovereign)

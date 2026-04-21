@@ -1,3 +1,4 @@
+<!-- @shared-law (Sovereign Artifact Set) -->
 # VDE Sovereign Charter: The Law of the Two Projects
 
 This Charter defines the dual-mission architecture of the VDE. It is the foundational covenant that ensures the absolute integrity of the product and its governed evolution.
