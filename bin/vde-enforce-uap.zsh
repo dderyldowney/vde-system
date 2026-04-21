@@ -40,6 +40,20 @@ if [[ -d "conductor" ]]; then
     exit 1
 fi
 
+# Rule 3 Enforcement: plans/ Subdirectory Lock
+if [[ -d "plans" ]]; then
+    for item in plans/*(N/); do
+        local sub_name="${item:t}"
+        if [[ "${sub_name}" != "scripts" && "${sub_name}" != "archive" ]]; then
+            echo "\033[1;31m[CRITICAL FAILURE]\033[0m Ghost Zone 'plans/${sub_name}/' detected."
+            echo "Protocol Violation: Rule 3 (Ghost Zone Prohibition)."
+            echo "Purging unauthorized artifacts and halting session..."
+            rm -rf "${item}"
+            exit 1
+        fi
+    done
+fi
+
 # Mandatory config files (Mandate 0 & 14 integration)
 MANDATORY_FILES=("AGENTS.md" "GEMINI.md" "MEMORY.md")
 
