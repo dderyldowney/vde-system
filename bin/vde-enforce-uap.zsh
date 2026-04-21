@@ -77,6 +77,11 @@ audit_file_content() {
     local file=$1
     local first_line
     
+    # Skip binary files
+    if ! (file "$file" | grep -qE "text|JSON|XML|source"); then
+        return
+    fi
+    
     # Mandate 24: Absolute Tagging Rule (Line 2 or 3)
     # Architectural tags can NEVER be on the first line.
     if head -n 1 "$file" | grep -qE "@armor|@forge|@shared-law"; then
@@ -84,8 +89,8 @@ audit_file_content() {
         errors=$((errors + 1))
     fi
 
-    # Support # (Shell/Python/INI) and <!-- --> (XML/Markdown)
-    local tag_found=$(sed -n '2,3p' "$file" | grep -E "^(#|<!--|//) ?@(armor|forge|shared-law) \(.+\)")
+    # Support # (Shell/Python/INI), <!-- --> (XML/Markdown), " (JSON), // (JS/C), -- (SQL)
+    local tag_found=$(sed -n '2,3p' "$file" | grep -E "^\\s*(?:#|<!--|//|\"|--|;)\\s*@(armor|forge|shared-law)(?:\"?:\\s*\")?\\s*\\(([^)]+)\\)\\s*(?:-->|\")?,?\\s*$")
     if [[ -z "${tag_found}" ]]; then
         echo -e "${RED}[UAP-ERROR]${NC} Missing or invalid architectural tag in lines 2-3 of ${file#${VDE_ROOT_DIR}/}."
         echo "Expected Pattern: @armor|@forge|@shared-law (Functional Effect)"
