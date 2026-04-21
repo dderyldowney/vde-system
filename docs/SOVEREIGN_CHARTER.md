@@ -92,16 +92,16 @@ To ensure total architectural accountability, all artifacts MUST adhere to the f
 Architectural tags sit exclusively on **line 2 or 3**. Line 1 is reserved for shebangs, primary document headers, or JSON root structures.
 
 ### 2. The Literate Syntax Standard
-| Language / Format | Literate Syntax |
-| :--- | :--- |
-| **ZSH / Python / Shell / ENV** | `# @tag (Functional Effect)` |
-| **JSON / JSON-Schema** | `"@tag": "(Functional Effect)",` |
-| **Markdown** | `<!-- @tag (Functional Effect) -->` |
-| **YAML / Dockerfile** | `# @tag (Functional Effect)` |
-| **SQL** | `-- @tag (Functional Effect)` |
+| Language / Format | Literate Syntax | Example |
+| :--- | :--- | :--- |
+| **ZSH / Python / Shell / ENV** | `# @tag (Effect)` | `# @armor (Engine Core)` |
+| **JSON / JSON-Schema** | `"@tag": "(Effect)",` | `"@shared-law": "(Data Schema)",` |
+| **Markdown** | `<!-- @tag (Effect) -->` | `<!-- @forge (Governance) -->` |
+| **YAML / Dockerfile** | `# @tag (Effect)` | `# @armor (Base Image)` |
+| **SQL** | `-- @tag (Effect)` | `-- @shared-law (Storage)` |
 
 ### 3. Verification
-Tag compliance is verified by the **UAP Sentinel** during every audit ritual. Non-compliant artifacts constitute a **Protocol Fracture** and must be remediated before any further work proceeds.
+Tag compliance is verified by the **UAP Sentinel** via the **Universal Architectural Regex**. Non-compliant artifacts constitute a **Protocol Fracture** and must be remediated before any further work proceeds.
 
 ---
 
