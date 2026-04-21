@@ -1,5 +1,5 @@
 # VDE VM Types Configuration
-<!-- @shared-law (Sovereign Data Index) -->
+<!-- @armor (Registry Documentation) -->
 
 This directory contains the VM type configuration for the VDE system.
 
