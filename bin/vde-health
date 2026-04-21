@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (System Health Audit)
 set -e
 #===============================================================================
 # vde-health - Health Check Command for VDE

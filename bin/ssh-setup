@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (SSH Configuration)
 # VDE SSH Setup Command
 # Manages VDE SSH environment through the vde unified interface
 #

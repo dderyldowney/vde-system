@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Path Utilities)
 # VDE Path Utilities
 # Path conversion functions for HOME-relative and absolute path handling
 # Source this library with: source ./lib/vde-path-utils

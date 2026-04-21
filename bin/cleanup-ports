@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Port Management)
 #===============================================================================
 # cleanup-ports - Remove stale port-registry entries
 set -e

@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Security Guard)
 # VDE Security Library
 # Enforces isolation and security policies for VDE
 # Source this library with: source ./lib/vde-security

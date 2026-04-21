@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Concurrency Locking)
 # VDE Atomic File Locking Library (v2.0.8 Hardened)
 # Codified under THE ARCHIVIST’S INTEL (Section 11)
 # Forged in Beskar

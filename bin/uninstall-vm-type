@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (VM Management)
 #===============================================================================
 # uninstall-vm-type - Remove a language or service type from VDE
 set -e

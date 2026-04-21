@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Resource Statistics)
 #===============================================================================
 # vde-stats - Show resource usage for VDE containers
 # Usage: vde-stats [options]

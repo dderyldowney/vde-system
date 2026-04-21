@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Command Execution)
 set -e
 #===============================================================================
 # vde-exec - Execute a command in a VDE container
