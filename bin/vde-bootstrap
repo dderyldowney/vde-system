@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @shared-law (Bootstrap Ritual)
+# @armor (Bootstrap Ritual)
 # VDE-BOOTSTRAP (Version-Agnostic)
 set -e
 

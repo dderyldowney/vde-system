@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
+# @armor (Shell Compatibility Layer)
 # VDE Shell Compatibility Layer
-# @shared-law (Zsh-Native Abstraction Layer)
 # Provides zsh-native abstractions for shell features
 # Source this library with: source ./lib/vde-shell-compat
 #

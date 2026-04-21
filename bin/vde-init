@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @shared-law (Initialization Ritual)
+# @armor (Engine Ignition)
 #===============================================================================
 # vde-init - Initialize VDE infrastructure
 set -e
