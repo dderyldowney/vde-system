@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Informational Display)
 #===============================================================================
 # vde-info - Show VDE system and VM information
 set -e

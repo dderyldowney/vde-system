@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Cache Management)
 #===============================================================================
 # vde-rebuild-cache - Invalidate and regenerate VM types cache
 # Usage: vde-rebuild-cache [options]
