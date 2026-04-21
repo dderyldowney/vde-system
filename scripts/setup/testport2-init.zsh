@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Spoke Hydration)
 # VDE USP Hydration Script: testport2
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar

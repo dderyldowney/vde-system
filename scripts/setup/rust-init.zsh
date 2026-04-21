@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Spoke Hydration)
 # VDE USP Hydration Ritual: rust
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar

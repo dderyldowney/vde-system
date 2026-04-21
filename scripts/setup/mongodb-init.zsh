@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Spoke Hydration)
 # VDE USP Hydration Ritual: mongodb
 # Forged in Beskar
 set -e
