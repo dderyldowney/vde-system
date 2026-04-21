@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @forge (Remediation Strike)
 # remediate-installation-ambiguity.zsh - Resolve AmbiguousStep (V12)
 # Mandate: ZSH ONLY.
 

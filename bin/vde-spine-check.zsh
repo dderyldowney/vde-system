@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Technical Integrity Gate)
 #===============================================================================
 # vde-spine-check.zsh - @system-spine Empirical Check Script
 set -e

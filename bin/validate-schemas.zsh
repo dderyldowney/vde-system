@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @forge (Governance Validation)
 # Validate all JSON schemas in the VDE system
 set -e
 # Usage: ./bin/validate-schemas.zsh [--verbose]

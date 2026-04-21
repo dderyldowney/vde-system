@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Initialization Ritual)
 #===============================================================================
 # vde-init - Initialize VDE infrastructure
 set -e

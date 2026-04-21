@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @forge (Maintenance Pruning)
 # VDE Pruning Ritual (Forge's Ingot Stash)
 # Usage: vde prune [--timeframe <7d|3d|24h|12h>]
 
