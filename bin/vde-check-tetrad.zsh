@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Technical Gate)
+# @armor (Technical Integrity Gate)
 #===============================================================================
 # vde-check-tetrad.zsh - VDE Technical Integrity Gate (Project 1: The Armor)
 # 

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Informational Display)
+# @armor (Resource Discovery)
 # list-vms - List all predefined VM types
 # Enhanced with --name-only flag and improved formatting
 
