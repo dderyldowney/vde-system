@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Port Management)
 #===============================================================================
 # vde-port - Show port mappings for a VDE container
 set -e

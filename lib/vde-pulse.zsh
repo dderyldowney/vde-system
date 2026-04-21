@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Pulse)
 # VDE Identity Pulse Library
 # Active Bridge Monitoring for SSH agent connectivity
 # Source this library with: source ./lib/vde-pulse.zsh

@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Metrics Collection)
 #===============================================================================
 # vde-metrics - Metrics Collection Library for VDE
 # Tracks performance metrics, command latency, and error rates

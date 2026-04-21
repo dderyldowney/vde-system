@@ -1,3 +1,4 @@
+# @armor (Base Image)
 # VDE-BASE (The Hub)
 FROM debian:bookworm-slim
 LABEL project="vde" component="hub"

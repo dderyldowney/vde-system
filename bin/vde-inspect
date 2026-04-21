@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Container Inspection)
 #===============================================================================
 # vde-inspect - Inspect a VDE container
 set -e

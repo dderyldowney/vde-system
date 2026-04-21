@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (State Management)
 # Real-Time Docker State Functions for VDE
 # These functions query Docker directly for container state,
 # providing accurate real-time status instead of relying on config files.

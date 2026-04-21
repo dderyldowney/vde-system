@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Command Parsing)
 # VDE Natural Language Parser
 # Parses natural language input into structured VDE commands
 # Source this library with: source ./lib/vde-parser
@@ -11,7 +12,7 @@
 #
 # Shell Compatibility (Stage 4):
 # - Uses vde-shell-compat for portable operations
-# - Supports zsh 5.0+, bash 4.0+, bash 3.x (with fallbacks)
+# - Supports zsh 5.0+
 #
 # Return Codes: All functions use standardized return codes from vde-constants:
 #   VDE_SUCCESS (0)        - Operation completed successfully

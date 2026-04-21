@@ -1,3 +1,4 @@
+# @armor (Language Spoke Image)
 FROM vde-base:latest
 
 # Build-time arguments and metadata

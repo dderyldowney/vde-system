@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Pathing Safeguard)
 # Intended to be sourced by entry points (e.g. bin/vde) during startup.
 
 

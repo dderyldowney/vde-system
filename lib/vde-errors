@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Error Handling)
 # VDE Error Messages Library
 # Provides contextual error messages with remediation steps
 # Source this library with: source ./lib/vde-errors
@@ -9,7 +10,7 @@
 # - Documentation link integration
 # - Verbose mode support for detailed error output
 #
-# Shell Compatibility: POSIX-compliant (sh, bash, zsh)
+# Shell Compatibility: ZSH-exclusive (ZSH 5.0+)
 #
 # Usage:
 #   source ./lib/vde-errors

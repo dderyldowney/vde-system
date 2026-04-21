@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (SSH Key Sync)
 # VDE SSH Sync Command
 # Syncs VDE SSH public keys to the build context
 #

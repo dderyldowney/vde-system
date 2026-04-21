@@ -10,8 +10,8 @@
 # - Documentation: Each constant is explained
 # consistency: All scripts use the same values
 #
-# Language: This is a ZSH-exclusive library. Use of bash is strictly forbidden
-# by Mandate C of the Mandalorian Creed.
+# Language: This is a ZSH-exclusive library. Use of non-ZSH shells is strictly 
+# forbidden by Mandate C of the Mandalorian Creed.
 
 # =============================================================================
 # SOURCE GUARD

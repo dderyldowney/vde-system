@@ -1,6 +1,6 @@
 # **The Beskar Map: The Sovereign Artifact Set**
 
-The **Sovereign Artifact Set** is the hardened, synchronized baseline of truth for the VDE. Known as the **Gospel of the Forge**, this collection of seven documents constitutes the absolute authority on the system's architecture, rules, purpose, and implementation.
+The **Sovereign Artifact Set** is the hardened, synchronized baseline of truth for the VDE. Known as the **Gospel of the Forge**, this collection of eight documents constitutes the absolute authority on the system's architecture, rules, purpose, and implementation.
 
 ## **Purpose**
 The SAS ensures that the written record and the physical implementation of the Forge are always in perfect agreement. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation. No release can be tagged, and no significant change can be merged, until this artifact set is updated to reflect the new reality.
@@ -18,8 +18,9 @@ When a conflict arises or a decision must be weighed, the documents apply in the
 5.  **VDE_ANALYSIS.md**: The **Context**. Research findings and empirical evidence.
 6.  **PROJECT_STATUS.md**: The **Pulse**. The authoritative record of active state, progress, and health.
 7.  **RELEASE_NOTES.md**: The **Chronicle**. Historical record of every Sovereign Baseline release.
+8.  **SOVEREIGN_CHARTER.md**: The **Law**. The dual-mission architecture and symbiotic covenant.
 
 ---
 **Current Sovereign Baseline: v1.4.0**
 **Identity: The Covert**
-**The Gospel is Seven. This is the Way.**
+**The Gospel is Eight. This is the Way.**
