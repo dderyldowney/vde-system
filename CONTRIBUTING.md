@@ -1,3 +1,6 @@
+# CONTRIBUTING
+<!-- @armor (Student Documentation) -->
+<!-- @shared-law (The Path of Contribution) -->
 # Contributing to VDE
 
 Thank you for your interest in contributing to the VDE (Virtual Development Environment) project!

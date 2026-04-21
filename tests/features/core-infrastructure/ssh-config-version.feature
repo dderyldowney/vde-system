@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (System Spine Contract)
 @system-spine
 Feature: SSH Configuration Version Alignment
   As an Alor of the VDE

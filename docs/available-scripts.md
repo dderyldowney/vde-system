@@ -1,4 +1,5 @@
 # Available Scripts
+<!-- @shared-law (Sovereign Documentation) -->
 
 Overview of all scripts included with VDE.
 

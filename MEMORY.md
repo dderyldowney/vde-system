@@ -1,4 +1,5 @@
 # VDE Project Memory
+<!-- @shared-law (Tribal Memory) -->
 
 **Last Updated:** 2026-04-18T19:30:00Z
 **Baseline Version:** 1.4.1 (The Sovereign Evolution)

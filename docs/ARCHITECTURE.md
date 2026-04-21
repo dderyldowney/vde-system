@@ -1,3 +1,5 @@
+# ARCHITECTURE
+<!-- @shared-law (Sovereign Documentation) -->
 <!-- @shared-law (Sovereign Artifact Set) -->
 # ARCHITECTURE 1.4.1 (The Sovereign Baseline)
 

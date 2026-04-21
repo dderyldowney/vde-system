@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @forge (Legacy Tooling)
 # VDE SSH Migration Script
 # Migrates existing VDE SSH setup to isolated ~/.ssh/vde/ directory
 #

@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (System Spine Contract)
 @student-workflow
 Feature: Student Daily Usage
   As a new student user studying computer programming

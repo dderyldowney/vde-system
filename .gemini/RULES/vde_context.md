@@ -1,4 +1,5 @@
 # VDE PROJECT CONTEXT
+<!-- @forge (Agent Logic) -->
 **Working Directory:** `~/VDE` | **Project:** VDE (Virtual Development Environment) — Docker-based container orchestration for 19+ language VMs with shared services.
 
 ## Session Startup (MANDATORY)

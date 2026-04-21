@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @forge (Legacy Tooling)
 # finalize-ssh-deduplication.zsh - Resolve AmbiguousStep between core and hardening
 # Mandate: ZSH ONLY.
 

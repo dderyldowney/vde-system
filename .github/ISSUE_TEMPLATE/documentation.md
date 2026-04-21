@@ -1,3 +1,5 @@
+# DOCUMENTATION
+<!-- @shared-law (Signet Template) -->
 ---
 name: Documentation
 about: Report issues or suggest improvements for VDE documentation

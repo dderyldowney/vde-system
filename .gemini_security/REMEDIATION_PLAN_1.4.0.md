@@ -1,4 +1,5 @@
 # Security Remediation Plan: 1.4.0 Baseline Strike
+<!-- @forge (Remediation Strike Record) -->
 
 ## Objective
 To remediate critical security vulnerabilities identified during the 1.4.0 Baseline Strike.

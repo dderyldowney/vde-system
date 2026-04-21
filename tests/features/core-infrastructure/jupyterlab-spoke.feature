@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (System Spine Contract)
 @core-infrastructure @jupyterlab @service @system-spine
 Feature: JupyterLab Data Science Spoke
   The VDE provides a specialized JupyterLab VM with a pre-configured Data Science stack

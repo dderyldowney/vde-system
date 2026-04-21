@@ -1,4 +1,5 @@
 # DEVELOPMENT WORKFLOW PHASES
+<!-- @forge (Agent Logic) -->
 
 ## Pre-Edit Gate (MANDATORY — applies to ALL phases)
 

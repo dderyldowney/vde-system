@@ -1,3 +1,5 @@
+# VDE-SPEC
+<!-- @forge (Agent Logic) -->
 Compare implementation against VDE-SPEC.md — find gaps and violations.
 
 ## Usage

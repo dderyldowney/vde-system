@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (Infrastructure Foundation)
 # Environment files (contain secrets)
 .env
 .env.*

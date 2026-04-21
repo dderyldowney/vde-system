@@ -1,4 +1,5 @@
 # Design Spec: Fueling Thematic Worlds through Mythos
+<!-- @forge (Development Chronicle) -->
 
 ## 1. Problem Statement
 The current Mythos files ('data/vde_core/mandalorian_mythos.md' and 'data/vde_core/forge_mythos.md') describe the traditions and identities of the Covert but lack an explicit link to the "thematic worlds" being built at the Forge (the local development environment) and the Anvil (the integration infrastructure). This link is necessary to codify how our narrative identity drives our architectural decisions.

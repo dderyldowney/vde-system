@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Pre-Commit Sentinel)
 # pre-commit - VDE Sentinel Hook
 #
 # Enforces Rule C (Zsh Purity) and Rule 12 (Security Law)

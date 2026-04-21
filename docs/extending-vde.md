@@ -1,3 +1,6 @@
+# EXTENDING-VDE
+<!-- @shared-law (Sovereign Documentation) -->
+<!-- @forge (Development Documentation) -->
 # Extending VDE
 
 VDE is designed to be easily extensible. You can add support for new programming languages, new services, or customize existing ones without modifying core library code. The entire system is data-driven through configuration files and templates.

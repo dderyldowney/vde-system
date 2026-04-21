@@ -1,4 +1,5 @@
 # Rebuild Guidelines
+<!-- @shared-law (Sovereign Documentation) -->
 
 When and how to rebuild your VDE containers.
 

@@ -1,3 +1,5 @@
+# VDE-TEST
+<!-- @forge (Agent Logic) -->
 Smart test runner — detects what changed and runs the minimal appropriate tests.
 
 ## Usage

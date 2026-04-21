@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Test Suite)
 # VDE Empirical Strike: Integrated Tech Stack
 # Objective: Verify the Python/Postgres/Redis stack with direct CLI interaction.
 # Codified under Section 14 (The Trial of the Gauntlet).

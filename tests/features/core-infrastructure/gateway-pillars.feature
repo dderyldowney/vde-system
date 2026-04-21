@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (System Spine Contract)
 @core-infrastructure @gateway @system-spine
 Feature: The Four Pillars Gateway
   As an Alor of the VDE

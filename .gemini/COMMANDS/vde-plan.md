@@ -1,4 +1,5 @@
 # /vde-plan Command (UAP Edition)
+<!-- @forge (Agent Logic) -->
 
 Plan a VDE feature or fix following the Phase 0-1 UAP mandates.
 

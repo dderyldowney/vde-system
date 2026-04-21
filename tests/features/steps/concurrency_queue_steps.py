@@ -1,4 +1,8 @@
+# VDE ARCHITECTURAL RECORD
 # @shared-law (Symbiotic Integration Steps)
+# @armor (BDD Integration Logic)
+# @armor (BDD Step Definition)
+# @armor (BDD Step Definition)
 import os
 import subprocess
 import time

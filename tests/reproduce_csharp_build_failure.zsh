@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Test Suite)
 # tests/reproduce_csharp_build_failure.zsh
 
 set -e

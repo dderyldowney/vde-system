@@ -1,3 +1,6 @@
+# SESSION HANDOVER
+<!-- @shared-law (Operational Doctrine) -->
+<!-- @shared-law (Memory Transfer Ritual) -->
 # Session Handover: 1.4.1 Sovereign Baseline - Rust Path Remediation
 
 ## Current Status

@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+<!-- @armor (Engine Test Suite) -->
 {
   "version": "1.0",
   "description": "Pytest configuration for VDE unit tests",

@@ -1,3 +1,5 @@
+# USER GUIDE
+<!-- @armor (Student Documentation) -->
 <p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
 # VDE User Guide: The Student's Path

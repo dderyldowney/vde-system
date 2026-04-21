@@ -1,4 +1,5 @@
 # VDE Commands Reference
+<!-- @forge (Agent Logic) -->
 
 ## Commands
 

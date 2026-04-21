@@ -1,3 +1,5 @@
+# WHY USE VDE
+<!-- @shared-law (Sovereign Documentation) -->
 <p align="center"><img src="imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
 # Why VDE? Your Development Playground Awaits! 🎉

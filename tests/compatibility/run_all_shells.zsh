@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Test Suite)
 # VDE Shell Test Runner
 # Executes the compatibility test suite for zsh
 #

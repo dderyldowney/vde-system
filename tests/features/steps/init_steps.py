@@ -1,4 +1,8 @@
+# VDE ARCHITECTURAL RECORD
 # @armor (Engine BDD Steps)
+# @armor (BDD Integration Logic)
+# @armor (BDD Step Definition)
+# @armor (BDD Step Definition)
 import os
 import subprocess
 from pathlib import Path

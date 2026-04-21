@@ -1,4 +1,5 @@
 # SUB-AGENT & MCP MANDATE (MANDATORY)
+<!-- @forge (Agent Logic) -->
 
 ## Core Mandate
 

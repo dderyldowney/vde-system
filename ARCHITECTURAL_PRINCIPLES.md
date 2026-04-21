@@ -1,3 +1,5 @@
+# ARCHITECTURAL PRINCIPLES
+<!-- @shared-law (Sovereign Philosophy) -->
 The architectural principles defining the **Sovereign Baseline 1.4.0** are governed by a hierarchical and narrative-driven framework designed for absolute technical integrity and portability. This environment, referred to as the **Forge**, operates under the following core architectural pillars:
 
 ### **1\. The Gospel: Sovereign Artifact Set (SAS)**

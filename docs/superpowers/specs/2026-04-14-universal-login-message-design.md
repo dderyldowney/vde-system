@@ -1,4 +1,5 @@
 # Design Spec: Universal VM Login Message
+<!-- @forge (Development Chronicle) -->
 
 **Date:** 2026-04-14
 **Status:** Approved

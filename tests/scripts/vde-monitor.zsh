@@ -1,4 +1,6 @@
 #!/usr/bin/env zsh
+# @armor (Engine Test Suite)
+# @forge (CI Utility)
 
 # VDE Infrastructure Monitor: The "Truth Gate" Dashboard
 # Purpose: Real-time visibility into container lifecycles and Exit Codes.

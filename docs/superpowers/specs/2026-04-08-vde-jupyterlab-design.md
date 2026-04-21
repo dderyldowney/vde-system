@@ -1,4 +1,5 @@
 # VDE Design Spec: JupyterLab Data Science Suite
+<!-- @forge (Development Chronicle) -->
 
 **Date:** 2026-04-08
 **Status:** Approved (Brainstorming Phase Complete)

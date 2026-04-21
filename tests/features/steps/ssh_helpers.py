@@ -1,4 +1,8 @@
+# VDE ARCHITECTURAL RECORD
 # @armor (Engine BDD Steps)
+# @armor (BDD Integration Logic)
+# @armor (BDD Step Definition)
+# @armor (BDD Step Definition)
 """
 SSH Helper Functions for VDE Test Steps.
 

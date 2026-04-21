@@ -1,3 +1,5 @@
+# REMEDIATION PLAN FORMAT
+<!-- @forge (Governance Template) -->
 ## Remediation Plan
 
 ### Violations

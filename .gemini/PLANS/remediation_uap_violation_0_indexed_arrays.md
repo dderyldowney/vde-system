@@ -1,4 +1,5 @@
 # Remediation Plan: UAP Violation - 0-indexed Arrays
+<!-- @forge (Agent Logic) -->
 
 **Violation**: The Enforcer detected 0-indexed arrays in `bin/vde` and `bin/shutdown-all`.
 **Mandate**: Mandate 14 (ZSH-native only, 1-indexed arrays).

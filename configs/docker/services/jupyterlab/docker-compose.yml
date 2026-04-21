@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for service VMs
 # Variables: jupyterlab, 2407, {{SERVICE_PORTS}}, , zsh /vde/scripts/setup/jupyterlab-init.zsh
 name: vde-jupyterlab

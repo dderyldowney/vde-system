@@ -1,4 +1,5 @@
 # VDE Test Tagging Scheme
+<!-- @armor (Engine Test Suite) -->
 
 ## Fast Tests (No Docker Required)
 

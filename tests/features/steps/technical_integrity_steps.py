@@ -1,4 +1,7 @@
 from behave import given, when, then
+# @armor (BDD Integration Logic)
+# @armor (BDD Step Definition)
+# @armor (BDD Step Definition)
 import subprocess
 import os
 

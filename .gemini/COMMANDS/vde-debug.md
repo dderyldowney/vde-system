@@ -1,3 +1,5 @@
+# VDE-DEBUG
+<!-- @forge (Agent Logic) -->
 Debug failing tests or runtime errors in VDE using a parallel swarm.
 
 ## Usage

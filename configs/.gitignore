@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Configuration Blueprint)
 # Environment files
 .env
 .env.*

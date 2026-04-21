@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
 # Variables: ruby, 2215, , zsh /vde/scripts/setup/ruby-init.zsh
 name: vde-ruby

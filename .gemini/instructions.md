@@ -1,4 +1,5 @@
 # **The Way of the VDE: 1.4.1 (The Sovereign Baseline)**
+<!-- @forge (Sovereign Law Source) -->
 
 This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.4.1. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
@@ -389,14 +390,72 @@ The authoritative eight fields are as follows:
 
 To build a database of feature ownership and shared laws, ALL artifacts (code, tests, steps, libraries) MUST be tagged according to their Project alignment:
 
-- **@armor**: Artifacts required for the engine runtime (Project 1). Must be AI-blind and Hub-blind.
-- **@forge**: Artifacts required for development-time governance, CI/CD, or AI instruction (Project 2).
-- **@shared-law**: Artifacts forming the foundational bridge or used by both Projects (e.g., core constants, technical gates).
+- **@armor**: Explicitly Project 1, **The Armor** (the product) related files. Artifacts required for the engine runtime. Must be AI-blind and Hub-blind.
+- **@forge**: Explicitly Project 2, **The Forge** (development AI-governance rig) related files. Artifacts required for development-time governance, CI/CD, or AI instruction.
+- **@shared-law**: Explicitly shared files between the 2 Projects (**The Spinal Cord**). Artifacts forming the foundational bridge or used by both Projects (e.g., core constants, technical gates).
+
+**Operational Modes**:
+To maintain strict focus and project separation, the Forge utilizes two primary operational states:
+1.  **Armor Mode**: Activated by the command "We are in Armor mode". The agent automatically switches focus to Project 1 (@armor) files and runtime product requirements. This is the top-level view of work until told otherwise.
+2.  **Forge Mode**: Activated by the command "We are in Forge mode". The active work surface is @forge and allowed @shared-law files only. However, unless explicitly stated otherwise, the PRIMARY MISSION TARGET is the Armor product (@armor). Any change to Forge should be designed and evaluated by how well it improves the creation, reliability, and maintainability of Armor. Think: "Forge mode, Armor mission" — we touch Forge to better build Armor, not for its own sake.
+
+**The Transition Rule**: If working on the Armor and a change is required to the Forge to better create the product, the agent MUST explicitly switch to Forge mode before proceeding with Forge-related modifications.
 
 **Implementation Law**:
-- **Absolute Tagging**: All newly created or modified artifacts (code, tests, scripts, docs, configs, rituals, and GitHub issues/PRs) MUST be explicitly tagged as `@armor`, `@forge`, or `@shared-law` according to the Test of the Two Fires before a strike is considered complete.
-- **Code/Libraries**: Include the tag in the header comments.
+- **Immediate Classification**: When any new artifact is created, it shall be immediately classified and tagged as '@armor', '@forge', or '@shared-law' before any further work proceeds, and verification that the correct tag was used, including the '()' containing the Functional Effect is both correct and used.
+- **Absolute Tagging**: All newly created or modified artifacts (code, tests, scripts, docs, configs, rituals, and GitHub issues/PRs) MUST be explicitly tagged according to the Test of the Two Fires before a strike is considered complete.
+- **Code/Libraries**: Include the tag in the header comments (Line 2 or 3).
 - **Tests (BDD/Behave)**: Apply the tag at the Feature and Scenario levels.
 - **Documentation**: Include the tag in the metadata or section headers.
 - **Strikes**: Every PR and Issue MUST state its primary architectural tag in the body.
-- **Tagging Report**: For EVERY strike, you will produce an explicit Tagging Report listing each touched artifact and whether it is `@armor`, `@forge`, or `@shared-law` according to the Test of the Two Fires. This report MUST be recorded in the strike itself (PR/Issue body) as permanent documentation.
+- **Tagging Report**: For EVERY strike and every session report provided to the Clan Leader, you MUST produce an explicit **Final Architectural Tagging Report** listing each touched artifact, its domain (@armor, @forge, or @shared-law), and its functional effect (the text within the parentheses of the tag). This report MUST be recorded in the strike itself (PR/Issue body) and at the conclusion of every session interaction as permanent documentation.
+
+**MANDATORY LABELING RULE FOR dderyldowney/vde-system REPOSITORY**:
+
+Every file in every commit MUST contain a functional effect tag in the FIRST 3 LINES.
+Every commit MUST be labeled with ALL functional effect tags present across ALL files.
+
+**Tag Pattern**: `# @armor|@forge|@shared-law (Functional Effect)`
+
+**MANDATORY POSITIONING RULE**:
+- Architectural tags can **NEVER** be on the first line of a file.
+- The first line is reserved for file-specific content (e.g., shebangs, primary headers).
+- Tags MUST be placed on **line 2 or 3** of the file.
+
+**TAGGING REQUIREMENTS**:
+1.  **BEFORE committing**, scan ALL files being modified.
+2.  For **EACH** file, check **LINES 2 and 3** for the tag pattern.
+3.  If **ANY** file is **MISSING** the tag or has it on **LINE 1**, you MUST:
+    - **STOP** the commit process.
+    - **Analyze** that specific file's placement and purpose in the system.
+    - **Determine** which functional area it belongs to (@armor, @forge, or @shared-law).
+    - **ADD/MOVE** the appropriate tag to line 2 or 3 of that file.
+    - **Verify** the tag is correct and correctly positioned before proceeding.
+4.  Once **ALL** files have tags, apply GitHub labels based on **ALL** tags found:
+    - `@armor` present → add label: "armor"
+    - `@forge` present → add label: "forge"
+    - `@shared-law` present → add label: "shared-law"
+
+**VERIFICATION PROCESS FOR UNTAGGED FILES**:
+- Examine the file's location in the repository structure.
+- Review its dependencies and imports.
+- Check which systems it interacts with.
+- Determine if it is:
+    - Armor-specific (belongs to `@armor`)
+    - Forge-specific (belongs to `@forge`)
+    - Shared between both systems (belongs to `@shared-law`)
+- **Do NOT guess** - verify the file's role explicitly before assigning a tag.
+
+**MANDATORY ENFORCEMENT**:
+- **NO file** can be committed without a tag in the first 3 lines (specifically line 2 or 3).
+- **NO commit** can proceed if **ANY file** lacks a tag or has a tag on line 1.
+- The **agent MUST** make the tagging decision, not the user.
+- All tags must be accurate based on the file's actual system placement.
+- GitHub labels must reflect **ALL tags** found across ALL files in the commit.
+
+**Tagging Report Format**:
+| Path | Domain | Functional Effect |
+| :--- | :--- | :--- |
+| (file path) | @armor | (Functional description) |
+| (file path) | @forge | (Functional description) |
+| (file path) | @shared-law | (Functional description) |

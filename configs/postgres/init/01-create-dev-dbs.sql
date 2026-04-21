@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+<!-- @armor (Spoke Configuration Blueprint) -->
 -- Create language-specific development databases
 
 -- Python development database

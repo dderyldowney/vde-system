@@ -1,3 +1,5 @@
+# VDE-NEW-VM
+<!-- @forge (Agent Logic) -->
 Guided workflow to add a new VM type following VDE-SPEC.md.
 
 ## Usage

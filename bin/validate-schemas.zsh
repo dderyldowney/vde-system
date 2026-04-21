@@ -103,7 +103,7 @@ validate_json_config() {
     fi
 
     # Validate JSON against schema
-    if vde_validate_json_schema "${json_file}" "${schema_file}" 2>/dev/null; then
+    if vde_validate_json_schema "${json_file}" "${schema_file}"; then
         print_check "JSON validation: ${config_name}" 0
         return 0
     else
