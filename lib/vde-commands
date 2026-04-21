@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Command Wrappers)
 # VDE Commands Library
 # Wrapper functions for all VDE operations
 # Source this library with: source ./lib/vde-commands

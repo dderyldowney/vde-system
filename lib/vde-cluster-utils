@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Cluster Utilities)
 # VDE Cluster Utilities
 # Helper functions for managing VM clusters
 # Source this library with: source ./lib/vde-cluster-utils
