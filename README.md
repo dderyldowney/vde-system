@@ -171,10 +171,17 @@ See [Handshake Configuration](docs/ssh-configuration.md) for complete intel.
 
 ### Ignition (The Journey Begins) 🌟
 
+```zsh
+# Take the Path of the Foundling (Interactive Onboarding)
+vde path-of-the-foundling
+```
+
+This script automates the ignition ritual, the spine check, and your first Spoke creation.
+
 | Document | Description |
 |----------|-------------|
 | [Requirements](docs/requirements.md) | Hub requirements and prerequisites |
-| [Quick Strike](docs/quick-start.md) | Ignite your Spokes in minutes. |
+| [Quick Start](docs/quick-start.md) | Ignite your Spokes in minutes. |
 
 ### Core Mandates 🌟
 
