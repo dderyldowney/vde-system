@@ -51,23 +51,23 @@ To maintain strict focus and project separation, the VDE utilizes two primary op
 
 *   **VDE Sovereign System**
     *   **Project 1: The Armor (@armor)**
-        *   **Code (Binaries)**: `bin/vde`, `bin/ssh-vm`, `bin/vde-init`, `bin/vde-rebuild`, `bin/vde-start`, `bin/vde-stop`, `bin/vde-rm`.
-        *   **Code (Libraries)**: `lib/vde-docker`, `lib/vde-ssh`, `lib/vm-lock`, `lib/vde-naming`, `lib/vde-path-utils`, `lib/vde-progress`.
+        *   **Code (Binaries)**: `bin/vde`, `bin/ssh-vm`, `bin/vde-init`, `bin/vde-rebuild`, `bin/vde-start`, `bin/vde-stop`, `bin/vde-rm`, `bin/vde-bootstrap`, `bin/vde-spine-check.zsh`, `bin/vde-check-tetrad.zsh`.
+        *   **Code (Libraries)**: `lib/vde-core`, `lib/vde-constants`, `lib/vde-shell-compat`, `lib/vm-common`, `lib/vde-docker`, `lib/vde-ssh`, `lib/vm-lock`, `lib/vde-naming`, `lib/vde-path-utils`, `lib/vde-progress`.
+        *   **Data**: `data/vm-types.json`, `data/vm-types.conf`, `data/vm-types.schema.json`.
         *   **Docs**: `VDE_INSTALL.md`, `USER_GUIDE.md`, `FOUNDLING_GUIDE.md`.
-        *   **Tests**: `tests/unit/*.zsh` (Engine Unit Tests), `tests/features/steps/init_steps.py` (Foundational Steps).
+        *   **Tests**: `tests/unit/*.zsh` (Engine Unit Tests).
         *   **Rituals**: Engine Ignition (`vde init`), Spoke Smelting (`vde rebuild`), Transversal Bridge (`vde enter`).
     *   **Project 2: The Forge (@forge)**
         *   **Code (Binaries)**: `bin/vde-enforce-uap.zsh`, `bin/paired_update_enforcer`, `bin/cleanup-ports`, `bin/vde-tactical-sweep.zsh`.
         *   **Code (Libraries)**: `lib/vde-audit`, `lib/vde-metrics` (Generic Governance).
         *   **Docs**: `AGENTS.md`, `GEMINI.md`, `docs/GITHUB_LIFECYCLE.md`, `CONTRIBUTING.md`.
-        *   **Tests**: CI/CD Workflows, AI-governance validation steps.
+        *   **Tests**: `tests/features/*.feature` (BDD Features), `tests/features/steps/*.py` (Step Definitions), CI/CD Workflows.
         *   **Rituals**: The Signet and Chronicle (GitHub Flow), Code Review Gates, AI-Agent Dispatch.
     *   **The Foundation (@shared-law)**
-        *   **Code (Gates)**: `bin/vde-check-tetrad.zsh` (Technical Integrity Gate).
-        *   **Code (Libraries)**: `lib/vde-core`, `lib/vde-constants`, `lib/vde-shell-compat`, `lib/vm-common`.
-        *   **Data**: `data/vm-types.json`, `data/vm-types.schema.json`.
+        *   **The Spinal Cord**: Shared foundational files that bridge technical integrity and governance.
         *   **Docs**: `SOVEREIGN_CHARTER.md`, `VDE-SPEC.md`, `ARCHITECTURE.md`.
-        *   **Tests**: `tests/features/core-infrastructure/*.feature` (Proof of Life, Technical Integrity).
+        *   **Records**: `MEMORY.md`, `RELEASE_NOTES.md`, `PROJECT_STATUS.md`.
+        *   **Infrastructure**: `Makefile`, `.gitignore`, `.editorconfig`.
 
 ---
 
