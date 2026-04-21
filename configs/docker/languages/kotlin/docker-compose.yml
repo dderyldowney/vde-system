@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
 # Variables: kotlin, 2211, , zsh /vde/scripts/setup/kotlin-init.zsh
 name: vde-kotlin

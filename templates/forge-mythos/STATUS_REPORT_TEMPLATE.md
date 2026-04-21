@@ -1,3 +1,5 @@
+# STATUS REPORT TEMPLATE
+<!-- @forge (Governance Template) -->
 ### I. Kov'nyn — Think First
 Opening hypothesis, constraints identified, reasoning budget spent.
 

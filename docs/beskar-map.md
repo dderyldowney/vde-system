@@ -1,3 +1,6 @@
+# BESKAR-MAP
+<!-- @shared-law (Sovereign Documentation) -->
+<!-- @shared-law (Sovereign Artifact Set) -->
 # **The Beskar Map: The Sovereign Artifact Set**
 
 The **Sovereign Artifact Set** is the hardened, synchronized baseline of truth for the VDE. Known as the **Gospel of the Forge**, this collection of eight documents constitutes the absolute authority on the system's architecture, rules, purpose, and implementation.

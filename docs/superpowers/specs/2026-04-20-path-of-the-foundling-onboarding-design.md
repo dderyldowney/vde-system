@@ -1,4 +1,5 @@
 # Spec: Path of the Foundling Onboarding Integration
+<!-- @forge (Development Chronicle) -->
 
 **Goal**: Establish `vde path-of-the-foundling` as the primary, interactive entry point for new students, replacing fragmented manual instructions.
 

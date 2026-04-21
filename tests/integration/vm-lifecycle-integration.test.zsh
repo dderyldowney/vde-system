@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Test Suite)
 # Integration Tests for VM Lifecycle (v2.1.0 Hardened)
 # Tests end-to-end VM creation, startup, and management workflows
 

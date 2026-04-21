@@ -1,4 +1,5 @@
 # VDE Agents Reference
+<!-- @forge (Agent Logic) -->
 
 ## Agent Responsibility Map
 

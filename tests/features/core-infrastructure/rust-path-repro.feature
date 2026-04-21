@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (System Spine Contract)
 @core-infrastructure @rust @path
 Feature: Rust VM Path Verification
   As a developer using the Rust VM

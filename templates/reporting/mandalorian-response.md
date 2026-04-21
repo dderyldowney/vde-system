@@ -1,4 +1,5 @@
 # MANDALORIAN REPORTING TEMPLATE
+<!-- @forge (Mandalorian Response Template) -->
 
 ### **I. Kov'nyn — The Headbutt (Think First)**
 *Opening hypothesis, constraints identification, and reasoning budget expenditure.*

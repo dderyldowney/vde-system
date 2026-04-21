@@ -1,3 +1,5 @@
+# COMMIT MESSAGE FORMAT
+<!-- @forge (Governance Template) -->
 <type>(<scope>): <description>
 
 - Detail 1

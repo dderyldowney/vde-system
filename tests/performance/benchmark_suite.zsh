@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Test Suite)
 # Performance Benchmark Suite for VDE
 
 TEST_DIR="$(cd "$(dirname "${0}")" && pwd)"

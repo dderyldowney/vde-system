@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
 # Variables: haskell, 2208, , zsh /vde/scripts/setup/haskell-init.zsh
 name: vde-haskell

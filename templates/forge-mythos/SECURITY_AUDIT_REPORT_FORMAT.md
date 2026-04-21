@@ -1,3 +1,5 @@
+# SECURITY AUDIT REPORT FORMAT
+<!-- @forge (Governance Template) -->
 AUDIT SCOPE: <files/components>
 CRITICAL (blocks commit): <issue> — <file:line> — <remediation>
 HIGH (fix now): <issue> — <file:line>

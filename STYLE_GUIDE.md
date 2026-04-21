@@ -1,3 +1,6 @@
+# STYLE GUIDE
+<!-- @shared-law (Operational Doctrine) -->
+<!-- @shared-law (Beskar Aesthetics) -->
 Coding standards and style guidelines for the VDE (Virtual Development Environment) project.
 
 ## Table of Contents

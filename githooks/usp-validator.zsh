@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (USP Validation Ritual)
 # githooks/usp-validator.zsh - Codifies USP Mandates from usp-validation.feature
 # Part of the Pre-Strike Sentinel
 set -e

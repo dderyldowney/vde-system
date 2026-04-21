@@ -1,4 +1,6 @@
 """
+# @armor (BDD Integration Logic)
+# @armor (BDD Integration Logic)
 BDD Hooks for VDE test scenarios - SIMPLIFIED + PARSER OPTIMIZATION
 
 This environment runs minimal setup and lets tests define their own requirements.

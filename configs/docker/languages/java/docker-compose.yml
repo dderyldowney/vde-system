@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
 # Variables: java, 2209, , zsh /vde/scripts/setup/java-init.zsh
 name: vde-java

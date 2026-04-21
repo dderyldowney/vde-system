@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
 # Variables: swift, 2218, , zsh /vde/scripts/setup/swift-init.zsh
 name: vde-swift

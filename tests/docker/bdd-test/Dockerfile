@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Engine Test Suite)
 # BDD Test Runner Container for VDE
 # Runs behave (Python BDD framework) to test .feature files
 

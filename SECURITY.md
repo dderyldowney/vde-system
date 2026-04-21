@@ -1,3 +1,6 @@
+# SECURITY
+<!-- @armor (Student Documentation) -->
+<!-- @shared-law (Sentinel's Code) -->
 # Security Policy
 
 ## Supported Versions

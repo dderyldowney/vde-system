@@ -1,3 +1,5 @@
+# PULL REQUEST TEMPLATE
+<!-- @forge (Governance Template) -->
 ## PR: Submission of Beskar
 > Title MUST follow Conventional Commits: `type(scope): description`
 > Example: `feat(core): add SSH tunnel support`, `fix!: breaking change to port allocation`

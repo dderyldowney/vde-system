@@ -1,4 +1,5 @@
 # VDE (Virtual Development Environment)
+<!-- @shared-law (Sovereign Documentation) -->
 
 VDE is a Docker-based container orchestration system for managing 20+ language VMs and 7+ service VMs. It provides a unified interface for creating, starting, stopping, and managing development environments with features like SSH agent forwarding, natural language command parsing, and template-based configuration generation.
 

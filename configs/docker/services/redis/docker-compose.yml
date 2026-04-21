@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for service VMs
 # Variables: redis, 2406, {{SERVICE_PORTS}}, , zsh /vde/scripts/setup/redis-init.zsh
 name: vde-redis

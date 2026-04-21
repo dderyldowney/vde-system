@@ -1,4 +1,7 @@
 """
+# @armor (BDD Integration Logic)
+# @armor (BDD Step Definition)
+# @armor (BDD Step Definition)
 Step definitions for JupyterLab Data Science Spoke verification.
 """
 

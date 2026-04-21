@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Pre-Push Gatekeeper)
 # pre-push - VDE Gatekeeper Hook
 #
 # Enforces Mandate L (Proof of Life) before code leaves the local Forge.

@@ -1,4 +1,5 @@
 # Session Termination & Cleanup Protocol
+<!-- @forge (Agent Logic) -->
 
 ## Automatic Housekeeping
 Once a fix is confirmed or the primary task is complete, you are MANDATED to perform these steps as part of the "Definition of Done":

@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
 # Variables: displaytest, 2204, , zsh /vde/scripts/setup/displaytest-init.zsh
 name: vde-displaytest

@@ -77,35 +77,52 @@ audit_file_content() {
     local file=$1
     local first_line
     
-    # Mandate 1: Sovereign Shebang Check
-    read -r first_line < "$file"
-    if [[ "${first_line}" != "#!/usr/bin/env zsh" ]]; then
-        echo -e "${RED}[UAP-ERROR]${NC} Non-canonical shebang in ${file#${VDE_ROOT_DIR}/}. Expected #!/usr/bin/env zsh"
+    # Mandate 24: Absolute Tagging Rule (Line 2 or 3)
+    # Architectural tags can NEVER be on the first line.
+    if head -n 1 "$file" | grep -qE "@armor|@forge|@shared-law"; then
+        echo -e "${RED}[UAP-ERROR]${NC} Architectural tag found on line 1 of ${file#${VDE_ROOT_DIR}/}. Move to line 2 or 3."
         errors=$((errors + 1))
     fi
 
-    # Forbidden Pattern: Sleep Calls [CRITICAL FORBIDDEN PATTERNS]
-    if grep -qE "\bsleep [0-9]+" "$file"; then
-        echo -e "${RED}[UAP-ERROR]${NC} Forbidden 'sleep' found in ${file#${VDE_ROOT_DIR}/}. Use polling."
+    local tag_found=$(sed -n '2,3p' "$file" | grep -E "^#? ?@(armor|forge|shared-law) \(.+\)")
+    if [[ -z "${tag_found}" ]]; then
+        echo -e "${RED}[UAP-ERROR]${NC} Missing or invalid architectural tag in lines 2-3 of ${file#${VDE_ROOT_DIR}/}."
+        echo "Expected Pattern: @armor|@forge|@shared-law (Functional Effect)"
         errors=$((errors + 1))
     fi
 
-    # Bash-ism: Single Brackets [CRITICAL FORBIDDEN PATTERNS]
-    if grep -q " \[ " "$file" && ! grep -q " \[\[ " "$file"; then
-         echo -e "${YELLOW}[UAP-WARN]${NC} Potential Bash-style '[' in ${file#${VDE_ROOT_DIR}/}. Use ZSH '[[ ]]'"
-         warnings=$((warnings + 1))
-    fi
+    # Only audit ZSH logic for scripts
+    if [[ "$file" != *.md && "$file" != *.json && "$file" != *.schema.json && "$file" != *.env && "$file" != *.template ]]; then
+        # Mandate 1: Sovereign Shebang Check
+        read -r first_line < "$file"
+        if [[ "${first_line}" != "#!/usr/bin/env zsh" ]]; then
+            echo -e "${RED}[UAP-ERROR]${NC} Non-canonical shebang in ${file#${VDE_ROOT_DIR}/}. Expected #!/usr/bin/env zsh"
+            errors=$((errors + 1))
+        fi
 
-    # Mandate 1: 0-indexed Arrays (Shibboleth)
-    if grep -q "\[0\]" "$file"; then
-        echo -e "${RED}[UAP-ERROR]${NC} 0-indexed array found in ${file#${VDE_ROOT_DIR}/}. ZSH is 1-indexed."
-        errors=$((errors + 1))
-    fi
+        # Forbidden Pattern: Sleep Calls [CRITICAL FORBIDDEN PATTERNS]
+        if grep -qE "\bsleep [0-9]+" "$file"; then
+            echo -e "${RED}[UAP-ERROR]${NC} Forbidden 'sleep' found in ${file#${VDE_ROOT_DIR}/}. Use polling."
+            errors=$((errors + 1))
+        fi
 
-    # Mandate 1: "Fake ZSH" Detection (Checks for lack of expansion flags)
-    if [[ $(wc -l < "$file") -gt 30 ]] && ! grep -q "\${(" "$file"; then
-        echo -e "${YELLOW}[UAP-WARN]${NC} ${file#${VDE_ROOT_DIR}/} lacks ZSH parameter flags. Verify ZSH-native logic."
-        warnings=$((warnings + 1))
+        # Bash-ism: Single Brackets [CRITICAL FORBIDDEN PATTERNS]
+        if grep -q " \[ " "$file" && ! grep -q " \[\[ " "$file"; then
+             echo -e "${YELLOW}[UAP-WARN]${NC} Potential Bash-style '[' in ${file#${VDE_ROOT_DIR}/}. Use ZSH '[[ ]]'"
+             warnings=$((warnings + 1))
+        fi
+
+        # Mandate 1: 0-indexed Arrays (Shibboleth)
+        if grep -q "\[0\]" "$file"; then
+            echo -e "${RED}[UAP-ERROR]${NC} 0-indexed array found in ${file#${VDE_ROOT_DIR}/}. ZSH is 1-indexed."
+            errors=$((errors + 1))
+        fi
+
+        # Mandate 1: "Fake ZSH" Detection (Checks for lack of expansion flags)
+        if [[ $(wc -l < "$file") -gt 30 ]] && ! grep -q "\${(" "$file"; then
+            echo -e "${YELLOW}[UAP-WARN]${NC} ${file#${VDE_ROOT_DIR}/} lacks ZSH parameter flags. Verify ZSH-native logic."
+            warnings=$((warnings + 1))
+        fi
     fi
 }
 
@@ -116,17 +133,26 @@ check_dir() {
     
     [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-CHECK]${NC} Auditing directory: ${dir#${VDE_ROOT_DIR}/}"
     for file in "${dir}"/*(N.); do
-        # Only audit executable scripts or known logic files (skip markdown and data)
-        if [[ -f "$file" && "$file" != *.md && "$file" != *.json ]]; then
+        # Audit all files in these directories
+        if [[ -f "$file" ]]; then
             audit_file_content "$file"
         fi
     done
 }
 
-# Run Audits on bin/, lib/, and .gemini/
+# Run Audits on core directories
 check_dir "${VDE_ROOT_DIR}/bin"
 check_dir "${VDE_ROOT_DIR}/lib"
 check_dir "${VDE_ROOT_DIR}/.gemini"
+check_dir "${VDE_ROOT_DIR}/env-files"
+check_dir "${VDE_ROOT_DIR}/scripts"
+check_dir "${VDE_ROOT_DIR}/data"
+check_dir "${VDE_ROOT_DIR}/docs"
+check_dir "${VDE_ROOT_DIR}/templates"
+check_dir "${VDE_ROOT_DIR}/tests"
+check_dir "${VDE_ROOT_DIR}/githooks"
+check_dir "${VDE_ROOT_DIR}/.github"
+check_dir "${VDE_ROOT_DIR}/.gemini_security"
 
 # 4. Final Verdict [REWRITTEN]
 if [[ $errors -gt 0 ]] || [[ $warnings -gt 0 ]]; then

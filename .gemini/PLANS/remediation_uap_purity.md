@@ -1,4 +1,5 @@
 # Remediation Plan: UAP Purity (bin/vde-sync-version)
+<!-- @forge (Agent Logic) -->
 
 **Author:** Gemini CLI
 **Date:** 2026-04-04

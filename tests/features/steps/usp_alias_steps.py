@@ -1,4 +1,8 @@
+# VDE ARCHITECTURAL RECORD
 # @shared-law (Symbiotic Integration Steps)
+# @armor (BDD Integration Logic)
+# @armor (BDD Step Definition)
+# @armor (BDD Step Definition)
 """
 Step definitions for USP Alias Resolution.
 Verifies that aliases distill correctly to primary rituals using the vde_get_hydration_script ritual.

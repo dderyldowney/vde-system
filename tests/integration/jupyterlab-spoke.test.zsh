@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Test Suite)
 # Integration Test for vde-jupyterlab (The Sovereign DS Spoke)
 # Part of the VDE Certification Suite
 

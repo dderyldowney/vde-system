@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for service VMs
 # Variables: couchdb, 2400, {{SERVICE_PORTS}}, , zsh /vde/scripts/setup/couchdb-init.zsh
 name: vde-couchdb

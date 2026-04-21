@@ -1,4 +1,5 @@
 # APPROVED:
+<!-- @forge (Governance Template) -->
 REVIEWER: APPROVED
 DRY: CLEAN | FAKE TESTS: NONE | GOSPEL: COMPLIANT
 Ready for User Approval.

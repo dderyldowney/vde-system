@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for service VMs
 # Variables: rabbitmq, 2405, {{SERVICE_PORTS}}, , zsh /vde/scripts/setup/rabbitmq-init.zsh
 name: vde-rabbitmq

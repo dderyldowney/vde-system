@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
 # Variables: python, 2214, , zsh /vde/scripts/setup/python-init.zsh
 name: vde-python

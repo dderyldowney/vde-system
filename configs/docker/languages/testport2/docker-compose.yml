@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
 # Variables: testport2, 2220, , zsh /vde/scripts/setup/testport2-init.zsh
 name: vde-testport2

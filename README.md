@@ -1,3 +1,5 @@
+# README
+<!-- @armor (Student Documentation) -->
 <p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
 # The Way of the VDE: 1.4.1 (The Sovereign Baseline)

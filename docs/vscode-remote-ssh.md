@@ -1,4 +1,5 @@
 # VSCode Remote-SSH
+<!-- @shared-law (Sovereign Documentation) -->
 
 Using VSCode Remote-SSH with VDE for full IDE support in your containers.
 

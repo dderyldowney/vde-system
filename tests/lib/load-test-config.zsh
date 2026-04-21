@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Test Suite)
 # Zsh test config loader - reads schema-validated JSON configs
 # Allows zsh unit tests to use pytest-config.json settings
 

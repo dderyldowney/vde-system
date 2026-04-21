@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (System Spine Contract)
 @core-infrastructure @system-spine
 Feature: System Spine Integrity
 

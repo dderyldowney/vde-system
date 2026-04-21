@@ -1,3 +1,6 @@
+# CLAUDE
+<!-- @forge (Agent Instructions) -->
+<!-- @shared-law (Agent Instructions) -->
 Read and apply @AGENTS.md
 
 ## STRIKE PROTOCOL — MANDATORY. NO EXCEPTIONS.

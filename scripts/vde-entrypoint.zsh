@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Spoke Lifecycle)
 #===============================================================================
 # VDE-ENTRYPOINT (The Atomic Handshake)
 # Dynamically aligns container identity with host resources (Docker/SSH)

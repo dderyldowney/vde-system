@@ -1,4 +1,7 @@
 import os
+# @armor (BDD Integration Logic)
+# @armor (BDD Step Definition)
+# @armor (BDD Step Definition)
 import subprocess
 import time
 import signal

@@ -1,4 +1,5 @@
 # BDD Step Definitions Directory
+<!-- @armor (Engine Test Suite) -->
 
 This directory contains the purified BDD (Behavior-Driven Development) step definitions for the VDE test suite. Every step in this directory performs **real physical verification** of the Forge.
 

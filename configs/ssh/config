@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Configuration Blueprint)
 # VDE (Virtual Development Environment) SSH Configuration
 # Sovereign Baseline: 1.4.1
 # Generated on Sun Apr 19 17:55:23 EDT 2026
@@ -318,6 +320,14 @@ Host vde-jupyterlab
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
     LogLevel ERROR
+
+
+
+
+
+
+
+
 
 
 

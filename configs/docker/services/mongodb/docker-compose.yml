@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for service VMs
 # Variables: mongodb, 2401, {{SERVICE_PORTS}}, , zsh /vde/scripts/setup/mongodb-init.zsh
 name: vde-mongodb

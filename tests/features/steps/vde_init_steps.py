@@ -1,4 +1,8 @@
+# VDE ARCHITECTURAL RECORD
 # @armor (Engine BDD Steps)
+# @armor (BDD Integration Logic)
+# @armor (BDD Step Definition)
+# @armor (BDD Step Definition)
 from behave import given, when, then
 import os
 import shutil

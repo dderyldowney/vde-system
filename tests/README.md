@@ -1,4 +1,5 @@
 # VDE Test Suite Documentation
+<!-- @armor (Engine Test Suite) -->
 
 Complete testing documentation for the Virtual Development Environment (VDE) system.
 

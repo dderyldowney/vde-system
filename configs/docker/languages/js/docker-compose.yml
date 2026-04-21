@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
 # Variables: js, 2210, , zsh /vde/scripts/setup/js-init.zsh
 name: vde-js

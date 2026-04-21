@@ -1,4 +1,5 @@
 # Design Spec: Finalize Anti-Entropy Registry Sweep
+<!-- @forge (Development Chronicle) -->
 
 ## 1. Problem Statement
 The `vde-lang` build fails because the custom build commands reference scripts in `/vde/scripts/`, which are not currently included in the Docker image during the build process.

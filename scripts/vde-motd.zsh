@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Spoke Lifecycle)
 #===============================================================================
 # VDE-MOTD (Message of the Day)
 # Outputs consistent environment metadata for interactive users.

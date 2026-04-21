@@ -1,3 +1,5 @@
+# SOVEREIGN CHARTER
+<!-- @shared-law (Sovereign Documentation) -->
 <!-- @shared-law (Sovereign Artifact Set) -->
 # VDE Sovereign Charter: The Law of the Two Projects
 
@@ -9,7 +11,7 @@ This Charter defines the dual-mission architecture of the VDE. It is the foundat
 
 The VDE ecosystem is architected as two distinct projects that operate independently but work in hierarchical harmony to ensure the absolute integrity of the product and its development.
 
-### 1. Project 1: The Armor (The VDE Engine Product)
+### 1. Project 1: The Armor (The VDE Engine Product) — @armor
 **The Armor** is the physical, student-facing product—the core engine that enables the Virtual Development Environment.
 
 *   **Individual Use**: Providing a robust, isolated, and standardized CLI for "Foundlings" (students) to ignite development Spokes (VMs). It handles container orchestration, network isolation, and workspace management.
@@ -17,18 +19,35 @@ The VDE ecosystem is architected as two distinct projects that operate independe
 *   **Sovereign Dependencies**: It depends **exclusively** on the **Unyielding Tetrad** (zsh, git, docker, ssh).
 *   **AI-Blindness**: It is designed to be **AI-unaware** and **Hub-blind**. It must function perfectly without any Project 2 components or `gh` CLI access.
 *   **Integrity Gate**: Protected by the **Lightweight Technical Gate** (`bin/vde-check-tetrad.zsh`).
+*   **Architectural Tag**: `@armor` — Explicitly marks all Project 1 related files.
 
-### 2. Project 2: The Forge (Development AI-Governance System)
+### 2. Project 2: The Forge (Development AI-Governance System) — @forge
 **The Forge** is the universal development, auditing, and governance rig.
 
 *   **Individual Use**: Enforcing the **Rule Spine** (Mandalorian Creed) and Mandates during the development lifecycle. It owns "GitHub Life," managing Issues, PRs, CI/CD, and release synchronization.
 *   **Target**: **Universal**. It serves **"Any Thing"**—tools and protocols that could theoretically serve *any* project (regardless of tech stack) to ensure governed development.
 *   **Core Tools**: It uses the **GitHub CLI (`gh`)** as its foundational binary to interact with the Hub. It includes all agent instructions, Forge rules, and CI workflows.
 *   **Role**: It acts as the "Architect" that builds the Armor.
+*   **Architectural Tag**: `@forge` — Explicitly marks all Project 2 related files.
+
+### 3. The Spinal Cord (The Foundation) — @shared-law
+**The Spinal Cord** represents the shared files and foundational pillars that both projects rely upon to maintain the integrity of the combined system.
+*   **Architectural Tag**: `@shared-law` — Explicitly marks all shared foundational files.
 
 ---
 
-## II. The Hierarchical Component Outline
+## II. Operational Modes
+
+To maintain strict focus and project separation, the VDE utilizes two primary operational modes:
+
+1.  **Armor Mode**: Activated by the command "We are in Armor mode". The agent automatically switches focus to Project 1 (@armor) files and runtime product requirements. This is the top-level view of work until told otherwise.
+2.  **Forge Mode**: Activated by the command "We are in Forge mode". The agent automatically switches focus to Project 2 (@forge) files, governance protocols, and development rig enhancements. This is the top-level view of work until told otherwise.
+
+**The Decision Rule**: When working on the Armor, if a change is needed to the Forge to better create the product, the mode must be explicitly switched to Forge mode.
+
+---
+
+## III. The Hierarchical Component Outline
 
 *   **VDE Sovereign System**
     *   **Project 1: The Armor (@armor)**

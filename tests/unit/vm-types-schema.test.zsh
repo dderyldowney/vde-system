@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Test Suite)
 # @armor (Engine Unit Test)
 # Unit tests for VM Types JSON Schema
 # Tests schema validation for VDE VM type configuration

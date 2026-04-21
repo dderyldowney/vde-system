@@ -1,4 +1,5 @@
 # Command Reference
+<!-- @shared-law (Sovereign Documentation) -->
 
 Complete reference for all VDE commands.
 

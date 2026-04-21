@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
 # Variables: asm, 2200, , zsh /vde/scripts/setup/asm-init.zsh
 name: vde-asm

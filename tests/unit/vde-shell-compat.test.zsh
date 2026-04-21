@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Test Suite)
 # @armor (Engine Unit Test)
 # Unit Tests for vde-shell-compat Library
 # Tests shell compatibility layer and associative array operations

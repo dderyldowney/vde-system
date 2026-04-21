@@ -1,4 +1,5 @@
 # /vde-review Command (UAP Edition)
+<!-- @forge (Agent Logic) -->
 
 Full Logic and Security Audit. Enforces the Reviewer side of the Dual Approval gate.
 

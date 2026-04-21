@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
 # Variables: elixir, 2205, , zsh /vde/scripts/setup/elixir-init.zsh
 name: vde-elixir

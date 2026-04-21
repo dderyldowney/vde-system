@@ -1,3 +1,5 @@
+# ENFORCER VERDICT FORMAT
+<!-- @forge (Governance Template) -->
 ENFORCER: PASS or BLOCKED
 Mandates Checked: TDD ✓ | DRY ✓ | Swarm ✓ | No Fakes ✓ | Voice ✓
 

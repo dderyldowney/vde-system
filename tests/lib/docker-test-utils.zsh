@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Test Suite)
 # =============================================================================
 # docker-test-utils.zsh — Shared Docker test lifecycle utilities
 #

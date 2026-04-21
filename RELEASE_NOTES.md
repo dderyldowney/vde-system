@@ -1,5 +1,5 @@
-<!-- @shared-law (Sovereign Artifact Set) -->
 # VDE Release Archive
+<!-- @shared-law (Sovereign Artifact Set) -->
 
 This file tracks the evolution of the Virtual Development Environment. For detailed technical changes and empirical certifications, refer to the individual release records in `docs/releases/`.
 

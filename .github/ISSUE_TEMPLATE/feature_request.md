@@ -1,3 +1,5 @@
+# FEATURE REQUEST
+<!-- @shared-law (Signet Template) -->
 ---
 name: "🚀 Feature Request"
 about: "Propose an expansion of the Forge's capability"

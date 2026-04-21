@@ -1,3 +1,5 @@
+# BUG REPORT TEMPLATE
+<!-- @forge (Governance Template) -->
 ## Heartbeat Status
 Paste health check / smoke test output here.
 

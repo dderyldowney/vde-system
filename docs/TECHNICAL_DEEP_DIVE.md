@@ -1,3 +1,5 @@
+# TECHNICAL DEEP DIVE
+<!-- @shared-law (Sovereign Documentation) -->
 <!-- @shared-law (Sovereign Artifact Set) -->
 # VDE: Technical Deep-Dive (1.4.1 Sovereign)
 

@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (System Spine Contract)
 @vde-init @core-infrastructure
 Feature: vde init (Sovereign Baseline)
   As an Alor of the VDE

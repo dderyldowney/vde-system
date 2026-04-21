@@ -1,4 +1,5 @@
 # REQUIRED OUTPUT FORMATS
+<!-- @forge (Agent Logic) -->
 ## Git Commit Format
 ```zsh
 git commit -m "<type>: <description>

@@ -1,3 +1,6 @@
+# TROUBLESHOOTING
+<!-- @shared-law (Sovereign Documentation) -->
+<!-- @armor (Student Documentation) -->
 # Troubleshooting
 
 Common issues and solutions for VDE.

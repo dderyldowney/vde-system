@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Test Suite)
 # @armor (Engine Unit Test)
 # Unit Tests for vde-docker Library
 # Tests image management and configuration logic

@@ -1,4 +1,8 @@
+# VDE ARCHITECTURAL RECORD
 # @armor (Engine BDD Steps)
+# @armor (BDD Integration Logic)
+# @armor (BDD Step Definition)
+# @armor (BDD Step Definition)
 """
 Step definitions for the System Spine Integrity feature.
 Ensures the Hub-and-Spoke architecture is fully operational and enforced.

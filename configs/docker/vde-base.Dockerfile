@@ -1,3 +1,4 @@
+# VDE ARCHITECTURAL RECORD
 # @armor (Base Image)
 # VDE-BASE (The Hub)
 FROM debian:bookworm-slim

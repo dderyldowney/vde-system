@@ -1,4 +1,5 @@
 # VDE API Reference
+<!-- @shared-law (Sovereign Documentation) -->
 
 **Version:** 1.4.1 (The Sovereign Baseline)
 **Status:** AUTHORITATIVE

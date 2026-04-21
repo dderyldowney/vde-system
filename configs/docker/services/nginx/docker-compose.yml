@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
 # Template for service VMs
 # Variables: nginx, 2403, {{SERVICE_PORTS}}, , zsh /vde/scripts/setup/nginx-init.zsh
 name: vde-nginx

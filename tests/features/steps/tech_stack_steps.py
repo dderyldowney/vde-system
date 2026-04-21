@@ -1,4 +1,8 @@
+# VDE ARCHITECTURAL RECORD
 # @shared-law (Symbiotic Integration Steps)
+# @armor (BDD Integration Logic)
+# @armor (BDD Step Definition)
+# @armor (BDD Step Definition)
 """
 Step definitions for Integrated Tech Stack verification.
 """
