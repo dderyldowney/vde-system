@@ -713,7 +713,6 @@ generate_vm_ssh_config() {
     cat <<EOF > "${VDE_SSH_CONFIG}"
 # VDE (Virtual Development Environment) SSH Configuration
 # Sovereign Baseline: 1.4.1
-# Generated on $(date)
 #
 # This file contains SSH config entries for all known language and service VMs.
 # Each VM type has a fixed SSH port assignment:
