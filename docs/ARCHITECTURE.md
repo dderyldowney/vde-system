@@ -27,7 +27,18 @@
 - **Network Segmentation**: Spokes are confined to the `vde-net` bridge with no host-network exposure except via mapped ports.
 - **Static Guards**: UAP enforcement and pre-commit hooks verify mandate compliance at every strike.
 
-## 4. The Sovereign Artifact Set (The Gospel)
+## 4. Absolute Mandates (The Laws)
+
+- **Unyielding Tetrad**: Every operation depends on the guaranteed presence and behavior of Zsh, Git, Docker, and SSH.
+- **Project Separation**: Project 1 (The Armor) must remain strictly AI-blind and depend only on the Tetrad. Project 2 (The Forge) provides the governance layer.
+- **The Mandate of Architectural Tagging**: 100% of artifacts (code, tests, docs, config) MUST be tagged according to their Project alignment (@armor, @forge, or @shared-law).
+    - **The Positioning Law**: Tags MUST be placed on **line 2 or 3** of every file. Line 1 is reserved for shebangs or file-specific headers.
+    - **Literate Syntax**: Tags must use the native comment syntax for the file format.
+    - **Operational Modes**: "Forge mode, Armor mission" — Forge development must prioritize product excellence.
+- **Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`.
+- **The Heartbeat**: Continuous certification of the VM lifecycle via BDD automation.
+
+## 5. The Sovereign Artifact Set (The Gospel)
 
 The following eight files move as a single artifact set for every Sovereign Baseline. They must be in perfect agreement with the Forge state before any tag is struck:
 1. `ARCHITECTURE.md` (The Strategy)

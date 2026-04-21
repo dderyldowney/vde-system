@@ -18,7 +18,15 @@
 - **The Gospel Authority**: The Sovereign Artifact Set (specified in Section 3) is the **Gospel of the Forge**. 
  These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring. Deviation from the Gospel is a breach of The Contract.
 - **The Use-Case Creed**: The Forge exists solely to serve the Foundlings (Students) and Reinforcements (New Hires). This is **Creed**. All technical work MUST be centrally driven by its direct improvement to the onboarding and educational experience of these two cohorts.
-- **The Mandate of Architectural Tagging**: ALL artifacts (code, tests, docs) MUST be tagged according to their Project alignment (`@armor`, `@forge`, or `@shared-law`) to maintain clear ownership and visibility.
+- **The Mandate of Architectural Tagging**: ALL artifacts (code, tests, docs, config) MUST be tagged according to their Project alignment (@armor, @forge, or @shared-law) to maintain clear ownership and visibility.
+    - **The Positioning Law**: Tags MUST be placed on **line 2 or 3** of every file. Line 1 is reserved for shebangs or file-specific headers.
+    - **Literate Syntax**: Tags must use the native comment syntax for the file format:
+        - **Shell/ENV/Python**: `# @tag (Effect)`
+        - **JSON**: `"@tag": "(Effect)",`
+        - **Markdown**: `<!-- @tag (Effect) -->`
+        - **YAML/Dockerfile**: `# @tag (Effect)`
+        - **SQL**: `-- @tag (Effect)`
+    - **The Universal Sentinel**: Detection is enforced by the UAP Sentinel via the **Universal Architectural Regex**.
 - **The Armorer’s Toolset**: The agent possesses both the authority and the capability to run research swarms and self-augmentation tools as needed. Failure to utilize these capabilities to ensure the highest quality strike is a rejection of the mandate.
 - **The Four Pillars Gateway**: Before the Proof of Life ritual is ignited, the host environment MUST pass the Four Pillars Gateway verification (`gateway-pillars.feature`). This verifies the presence and basic capability of Zsh, Git, Docker, and SSH. Any failure in this gateway constitutes an immediate **Program Blockade**.
 - **Language of the Tribe (ZSH ONLY)**: All CLI tools, libraries, and jail shells MUST use `#!/usr/bin/env zsh`. `bash` is strictly prohibited. Enforcement is performed via deep content inspection for native parameter expansion `${(` and 1-indexed array usage.

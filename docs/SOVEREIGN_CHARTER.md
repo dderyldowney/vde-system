@@ -84,6 +84,25 @@ The relationship is hierarchical: **The Forge builds the Armor.**
 
 4.  **The Tagging Report**: For EVERY strike, the agent MUST produce an explicit **Tagging Report** listing each touched artifact and its classification. This report is recorded in the permanent Chronicle (PR body) to build an empirical database of architectural ownership.
 
+## IV. Sovereign Tagging Specification
+
+To ensure total architectural accountability, all artifacts MUST adhere to the following specification:
+
+### 1. The Positioning Law
+Architectural tags sit exclusively on **line 2 or 3**. Line 1 is reserved for shebangs, primary document headers, or JSON root structures.
+
+### 2. The Literate Syntax Standard
+| Language / Format | Literate Syntax |
+| :--- | :--- |
+| **ZSH / Python / Shell / ENV** | `# @tag (Functional Effect)` |
+| **JSON / JSON-Schema** | `"@tag": "(Functional Effect)",` |
+| **Markdown** | `<!-- @tag (Functional Effect) -->` |
+| **YAML / Dockerfile** | `# @tag (Functional Effect)` |
+| **SQL** | `-- @tag (Functional Effect)` |
+
+### 3. Verification
+Tag compliance is verified by the **UAP Sentinel** during every audit ritual. Non-compliant artifacts constitute a **Protocol Fracture** and must be remediated before any further work proceeds.
+
 ---
 
 **This is the Way.**
