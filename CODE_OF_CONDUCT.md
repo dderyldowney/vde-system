@@ -1,6 +1,5 @@
 # CODE OF CONDUCT
-<!-- @armor (Student Documentation) -->
-<!-- @shared-law (Tribal Conduct) -->
+<!-- @armor (Product Ethics) -->
 # Contributor Covenant Code of Conduct
 
 ## Our Pledge

@@ -1,6 +1,5 @@
 # VDE PROTOCOL
-<!-- @shared-law (Operational Doctrine) -->
-<!-- @shared-law (Operational Doctrine) -->
+<!-- @armor (Operational Doctrine) -->
 # VDE Project Protocol (1.4.1)
 
 ## Authoritative Tooling Mandate
