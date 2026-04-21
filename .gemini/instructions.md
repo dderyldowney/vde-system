@@ -346,7 +346,7 @@ When committing files to git, the Agent(s) MUST follow the **Conventional Commit
 * **Dynamic Versioning**: We follow whatever is the current released version of the specification. Agents MUST reference the dynamic variable `CONVENTIONAL_COMMITS_SPEC_VERSION="1.0.0"`. This variable MUST be one that can be reassigned as the version of conventionalcommits.org's version changes.
 
 ## **19. THE SOVEREIGN ARTIFACT SET (Codified 2026-04-12)**
-When a Sovereign Baseline release is cut, the following documents MUST be updated to match the new reality before tagging is allowed: `ARCHITECTURE.md`, `TECHNICAL_DEEP_DIVE.md`, `RELEASE_NOTES.md`, `VDE-SPEC.md`, `USE_CASES.md`, `VDE_ANALYSIS.md`, `PROJECT_STATUS.md`, and `SOVEREIGN_CHARTER.md`. These eight files move as a single artifact set for every Sovereign Baseline.
+When a Sovereign Baseline release is cut, the following documents MUST be updated to match the new reality before tagging is allowed: `ARCHITECTURE.md`, `TECHNICAL_DEEP_DIVE.md`, `RELEASE_NOTES.md`, `VDE-SPEC.md`, `USE_CASES.md`, `VDE_ANALYSIS.md`, `PROJECT_STATUS.md`, `STDLIB.md` and `SOVEREIGN_CHARTER.md`. These nine files move as a single artifact set for every Sovereign Baseline.
  The Sovereign Artifact Set is the **Gospel of the Forge**. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation. If the system changes in a way the current spec cannot describe, the spec must be rewritten so that the implementation and the Gospel are again in perfect agreement.
 
 ## **20. THE USE-CASE CREED (Codified 2026-04-15)**

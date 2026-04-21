@@ -31,6 +31,10 @@ VDE is a Docker-based container orchestration system for managing 20+ language V
 
 VDE uses a modular library architecture that separates concerns and enables code reuse:
 
+### Standard Libraries Documentation (stdlib)
+
+The VDE Standard Library is a modular, comprehensive collection of ZSH libraries designed for the Virtual Development Environment (VDE) system. It is located at `docs/STDLIB.md`.
+
 ### Libraries (lib/)
 
 | Library | Purpose |
