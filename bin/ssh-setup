@@ -304,16 +304,8 @@ if [[ "${ACTION}" == "autostart" ]] ; then
     echo "Configuring shell to auto-start SSH agent..."
     echo ""
 
-    # Detect shell config file
-    local shell_config=""
-    if [[ "${ZSH_VERSION}" ]] ; then
-        shell_config="${HOME}/.zshrc"
-    elif [[ "${BASH_VERSION}" ]] ; then
-        shell_config="${HOME}/.bashrc"
-    else
-        # Default to zshrc
-        shell_config="${HOME}/.zshrc"
-    fi
+    # Detect shell config file (ZSH ONLY - UAP Mandate 1)
+    local shell_config="${HOME}/.zshrc"
 
     # Marker for our addition
     local marker="# VDE SSH Agent Auto-Start"

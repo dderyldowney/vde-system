@@ -10,7 +10,7 @@
 # - Elapsed time display for long operations
 # - Quiet mode support (--quiet flag to disable)
 #
-# Shell Compatibility: POSIX-compliant (sh, bash, zsh)
+# Shell Compatibility: zsh
 #
 # Usage:
 #   source ./lib/vde-progress

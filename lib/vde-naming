@@ -8,7 +8,7 @@
 #   Directories (configs/docker/): <name> (e.g., python, postgres)
 #   Containers & SSH Aliases: vde-<name> (e.g., vde-python, vde-postgres)
 #
-# Shell Compatibility: POSIX-compliant (sh, bash, zsh)
+# Shell Compatibility: ZSH-exclusive (ZSH 5.0+)
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)

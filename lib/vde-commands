@@ -6,9 +6,9 @@
 # This library provides high-level command wrappers for VDE operations.
 # All functions log their actions and provide consistent error handling.
 #
-# Shell Compatibility (Stage 4):
-# - Uses POSIX-compatible syntax
-# - Supports zsh 5.0+, bash 4.0+, bash 3.x
+# Shell Compatibility:
+# - ZSH 5.0+ (Mandatory)
+# - Not POSIX-compliant (Uses ZSH extensions for efficiency)
 #
 # Return Codes: All functions use standardized return codes from vde-constants:
 #   VDE_SUCCESS (0)        - Operation completed successfully

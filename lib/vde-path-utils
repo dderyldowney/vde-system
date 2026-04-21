@@ -136,7 +136,7 @@ vde_path_normalize() {
         return ${VDE_ERR_GENERAL}
     fi
 
-    # Use cd to resolve . and .. (works in zsh and bash)
+    # Use cd to resolve . and ..
     if [[ -d "${path}" ]] || [[ -f "${path}" ]]; then
         cd "${path}" 2>/dev/null && pwd
     else

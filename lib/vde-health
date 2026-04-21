@@ -86,10 +86,10 @@ vde_check_ssh_port() {
         return ${VDE_ERR_GENERAL}
     fi
 
-    # Check if port is accessible using netcat or bash
+    # Check if port is accessible using ZSH built-ins or system tools
     typeset -F elapsed=0
     while (( elapsed < timeout )); do
-        # Try bash/zsh built-in TCP check first (faster)
+        # Try ZSH built-in TCP check first (faster)
         # Using a subshell with redirection is more portable than 'timeout' which might not be installed
         if ( (zsh -c "exec 3<>/dev/tcp/localhost/${ssh_port}" >/dev/null 2>&1) ) 2>/dev/null; then
             return ${VDE_SUCCESS}
