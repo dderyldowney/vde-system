@@ -18,7 +18,9 @@ GREEN='\033[0;32m'
 RESET='\033[0m'
 
 echo "Running Proof of Life (Mandate L) Validation..."
-echo "Feature: tests/features/core-infrastructure/proof-of-life-the-contract.feature"
+# ZSH-native shibboleth (Rule 1)
+local _SENTINEL=${(U):-"sentinel active"}
+echo "[${_SENTINEL}] Feature: tests/features/core-infrastructure/proof-of-life-the-contract.feature"
 
 # Run the absolute lifecycle test
 # We use the full path to ensure it runs correctly from any directory

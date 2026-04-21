@@ -29,8 +29,8 @@ echo "Running Universal Script Parity (USP) Validation..."
 load_vm_types
 
 # 1. Registration & Presence Check
-# Get all registered VM names (canonical names)
-local registered_vms=($(get_all_vms))
+# ZSH-native shibboleth (Rule 1): Expand keys from associative array
+local registered_vms=(${(k)VDE_CORE_VM_DISPLAY})
 local setup_dir="${VDE_ROOT_DIR}/scripts/setup"
 
 # Check if every registered VM has a setup script

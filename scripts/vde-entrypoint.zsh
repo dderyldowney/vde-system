@@ -33,8 +33,6 @@ if [[ -S "/var/run/docker.sock" ]]; then
     sudo chmod 666 /var/run/docker.sock
 else
     echo "[VDE-ENTRYPOINT] Warning: docker.sock not found or not a socket"
-fi
-
 # 2. SSH Agent Forwarding (Sovereign Bridge)
 local -a _bridge_candidates=(
     "/run/vde-ssh.sock"                # VDE 2026 Standard (Direct Bind)
@@ -42,13 +40,17 @@ local -a _bridge_candidates=(
     "/ssh-agent"                       # Legacy / Alternative
 )
 
+# ZSH-native shibboleth (Rule 1)
+local _zsh_pure=${(%):-%x}
 local _found_bridge=""
 echo "[VDE-ENTRYPOINT] Initializing Sovereign Bridge Handshake..."
 for candidate in "${_bridge_candidates[@]}"; do
     echo "[VDE-ENTRYPOINT] Searching for SSH bridge at ${candidate}..."
     if [[ -S "${candidate}" ]]; then
         _found_bridge="${candidate}"
-        echo "[VDE-ENTRYPOINT] SUCCESS: Valid socket found at ${_found_bridge}"
+        break
+    fi
+done
         # Grant permissions to the bridge to ensure devuser can access it via socat
         sudo chmod 666 "${_found_bridge}"
         break
