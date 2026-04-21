@@ -1,3 +1,4 @@
+<!-- @forge (Mandalorian Mythos) -->
 # The Mandalorian Mythos: The Record of The Covert
 
 ## I. The Scattering and The Secret

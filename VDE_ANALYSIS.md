@@ -1,3 +1,4 @@
+<!-- @shared-law (Sovereign Artifact Set) -->
 # VDE Technical Analysis: Architectural Integrity & DX Evaluation
 
 **Baseline**: 1.4.1 (Sovereign)

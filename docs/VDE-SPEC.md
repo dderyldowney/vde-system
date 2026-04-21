@@ -1,3 +1,4 @@
+<!-- @shared-law (Sovereign Artifact Set) -->
 # VDE-SPEC 1.4.1 (The Sovereign Evolution)
 
 **Date**: 2026-04-17
