@@ -45,14 +45,14 @@ git commit -m "docs(forge): lead with path-of-the-foundling in README"
 **Files:**
 - Modify: `USER_GUIDE.md`
 
-- [ ] **Step 1: Update Installation ritual**
+- [x] **Step 1: Update Installation ritual**
 Find section `1. Installation & Ignition`.
 Replace `# Ignite the Forge (Sets up networks and keys)` command `vde init` with `vde path-of-the-foundling`.
 
-- [ ] **Step 2: Update Reference section**
+- [x] **Step 2: Update Reference section**
 Ensure `vde init` remains in the "Essential Commands" table for repair/manual use, but add `vde path-of-the-foundling` as the "Recommended Onboarding Ritual".
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 ```bash
 git add USER_GUIDE.md
 git commit -m "docs(forge): update User Guide installation to use interactive induction"
