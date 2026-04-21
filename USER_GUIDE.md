@@ -83,8 +83,8 @@ cd ~/vde
 echo 'export PATH="$HOME/vde/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 
-# Ignite the Forge (Sets up networks and keys)
-vde init
+# Take the Path of the Foundling (Interactive Onboarding)
+vde path-of-the-foundling
 ```
 
 </details>
@@ -215,6 +215,7 @@ Your Python VM can now talk to the Postgres and Redis VMs automatically. The con
 
 | Command | Action |
 | :--- | :--- |
+| `vde path-of-the-foundling` | The recommended interactive onboarding ritual for new students. |
 | `vde init` | Initialize or repair the VDE infrastructure. |
 | `vde list` | Show all registered and running VMs. |
 | `vde create <alias>` | Build a new VM image. |
