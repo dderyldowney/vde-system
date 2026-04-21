@@ -40,7 +40,7 @@
 
 ## 5. The Sovereign Artifact Set (The Gospel)
 
-The following eight files move as a single artifact set for every Sovereign Baseline. They must be in perfect agreement with the Forge state before any tag is struck:
+The following nine files move as a single artifact set for every Sovereign Baseline. They must be in perfect agreement with the Forge state before any tag is struck:
 1. `ARCHITECTURE.md` (The Strategy)
 2. `TECHNICAL_DEEP_DIVE.md` (The Mechanics)
 3. `RELEASE_NOTES.md` (The Archive)
@@ -49,6 +49,7 @@ The following eight files move as a single artifact set for every Sovereign Base
 6. `VDE_ANALYSIS.md` (The Engineering Verdict)
 7. `PROJECT_STATUS.md` (The Living Heartbeat)
 8. `SOVEREIGN_CHARTER.md` (The Dual-Mission Constitution)
+9. `STDLIB.md` (The Main Library)
 
 ## 5. The Release Ritual (The Living Mark)
 

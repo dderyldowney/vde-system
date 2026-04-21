@@ -43,7 +43,7 @@
 
 ## 3. The Sovereign Artifact Set (The Gospel of the Forge)
 
-Before any tag is struck, these eight files MUST be in perfect agreement with the Forge state. Together, they constitute the **Gospel of the Forge**:
+Before any tag is struck, these nine files MUST be in perfect agreement with the Forge state. Together, they constitute the **Gospel of the Forge**:
 1. `ARCHITECTURE.md`
 2. `TECHNICAL_DEEP_DIVE.md`
 3. `RELEASE_NOTES.md`
@@ -52,6 +52,7 @@ Before any tag is struck, these eight files MUST be in perfect agreement with th
 6. `VDE_ANALYSIS.md`
 7. `PROJECT_STATUS.md`
 8. `SOVEREIGN_CHARTER.md`
+9. `STDLIB.md`
 
 ## 4. The Sovereign Branching Strategy
 
