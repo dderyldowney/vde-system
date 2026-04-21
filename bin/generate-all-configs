@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Config Smelting ritual)
 #===============================================================================
 # generate-all-configs - Generate all configuration files for VDE
 set -e

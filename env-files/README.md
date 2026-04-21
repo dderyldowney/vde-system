@@ -1,3 +1,4 @@
+<!-- @armor (Environment Documentation) -->
 # Environment Files - DO NOT DELETE
 
 **CRITICAL**: These files are REQUIRED dependencies for docker-compose.yml configurations.

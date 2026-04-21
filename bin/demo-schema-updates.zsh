@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @forge (Dev Demonstration)
 # Demo: Schema Update Mechanisms
 # Demonstrates version detection, compatibility checking, backup, and validation
 

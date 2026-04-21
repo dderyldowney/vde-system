@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @forge (Governance Activation)
 # install-githooks - Install VDE git hooks
 #
 # Installs project git hooks from githooks/ to .git/hooks/

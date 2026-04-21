@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @forge (Observability Dashboard)
 #===============================================================================
 # vde-vision - Observability Dashboard for VDE
 # Provides a real-time Markdown-based status grid of the Sovereign environment.
