@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Template Engine)
+# @armor (Hydration Blueprints)
 # VDE Templates Library
 # Template rendering and VM creation from templates
 # Source this library with: source ./lib/vde-templates
