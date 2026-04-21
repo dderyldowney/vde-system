@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (System Spine Contract)
+# @forge (Governance Verification)
 @core-infrastructure @concurrency @locking
 Feature: Concurrency Lock-Queue Model (FIFO)
   As an Alor of the VDE

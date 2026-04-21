@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (System Spine Contract)
+# @forge (Governance Verification)
 @core-infrastructure @rust @path
 Feature: Rust VM Path Verification
   As a developer using the Rust VM

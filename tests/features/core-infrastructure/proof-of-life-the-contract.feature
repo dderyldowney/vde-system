@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (System Spine Contract)
+# @forge (Governance Verification)
 @shared-law @system-spine @pristine
 Feature: The Proof of Life - The Contract
   As an Alor of the VDE

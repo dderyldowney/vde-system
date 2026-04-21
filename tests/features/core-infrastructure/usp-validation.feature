@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (System Spine Contract)
+# @forge (Governance Verification)
 @core-infrastructure @usp-validation @system-spine
 Feature: Universal Script Parity (USP) Validation
   The VDE system enforces Universal Script Parity (USP) to ensure that every VM

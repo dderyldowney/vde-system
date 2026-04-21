@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (System Spine Contract)
+# @forge (Governance Verification)
 @student-workflow
 Feature: Student Daily Usage
   As a new student user studying computer programming

@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (System Spine Contract)
+# @forge (Governance Verification)
 @system-spine
 Feature: SSH Configuration Version Alignment
   As an Alor of the VDE

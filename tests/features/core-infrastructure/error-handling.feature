@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (System Spine Contract)
+# @forge (Governance Verification)
 @core-infrastructure @error-handling @system-spine
 Feature: Deterministic Error Engine
   As an Alor of the VDE

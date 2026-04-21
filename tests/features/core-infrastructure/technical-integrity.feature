@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (System Spine Contract)
+# @forge (Governance Verification)
 @shared-law @project-1 @technical-integrity
 Feature: VDE Technical Integrity Gate (The Armor)
   As a student or developer using the VDE
