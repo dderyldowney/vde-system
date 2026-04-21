@@ -41,7 +41,7 @@ The VDE ecosystem is architected as two distinct projects that operate independe
 To maintain strict focus and project separation, the VDE utilizes two primary operational modes:
 
 1.  **Armor Mode**: Activated by the command "We are in Armor mode". The agent automatically switches focus to Project 1 (@armor) files and runtime product requirements. This is the top-level view of work until told otherwise.
-2.  **Forge Mode**: Activated by the command "We are in Forge mode". The agent automatically switches focus to Project 2 (@forge) files, governance protocols, and development rig enhancements. This is the top-level view of work until told otherwise.
+2.  **Forge Mode**: Activated by the command "We are in Forge mode". The active work surface is @forge and allowed @shared-law files only. However, unless explicitly stated otherwise, the PRIMARY MISSION TARGET is the Armor product (@armor). Any change to Forge should be designed and evaluated by how well it improves the creation, reliability, and maintainability of Armor. Think: "Forge mode, Armor mission" — we touch Forge to better build Armor, not for its own sake. This is the top-level view of work until told otherwise.
 
 **The Decision Rule**: When working on the Armor, if a change is needed to the Forge to better create the product, the mode must be explicitly switched to Forge mode.
 
