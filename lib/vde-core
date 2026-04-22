@@ -291,6 +291,7 @@ vde_translate_conf_to_json() {
         local _v_json_tmp="${_v_json_file}.tmp.${$}"
         {
             echo "{"
+            echo "  \"@armor\": \"(Beskar Registry DNA)\","
             echo "  \"version\": \"1.1\","
             echo "  \"vms\": {"
             echo "    \"language\": ["
@@ -325,6 +326,7 @@ _vde_core_save_cache() {
     # Write cache using native zsh associative array syntax for speed
     {
         echo "# VDE VM Types Cache - Auto-generated"
+        echo "# @armor (Beskar Registry Cache)"
         echo "typeset -gA VDE_CORE_VM_TYPE VDE_CORE_VM_ALIASES VDE_CORE_VM_DISPLAY"
         echo ""
         
