@@ -103,11 +103,11 @@ audit_file_content() {
     fi
 
     # Only audit ZSH logic for scripts (skip data and documentation)
-    if [[ "$file" != *.md && "$file" != *.json && "$file" != *.schema.json && "$file" != *.env && "$file" != *.template && "$file" != *.sql && "$file" != *.conf && "$file" != *.yml && "$file" != *.ini ]]; then
-        # Mandate 1: Sovereign Shebang Check
+    if [[ "$file" == *.zsh || ( ! "$file" =~ "\." && $(file "$file" 2>/dev/null) == *"shell script"* ) ]]; then
+        # Mandate 1: Sovereign Shebang Check (ZSH ONLY)
         read -r first_line < "$file"
-        if [[ "${first_line}" != "#!/usr/bin/env zsh" && "${first_line}" != "#!/usr/bin/env python3" && "${first_line}" != "#!/bin/zsh" ]]; then
-            echo -e "${RED}[UAP-ERROR]${NC} Non-canonical shebang in ${file#${VDE_ROOT_DIR}/}. Expected #!/usr/bin/env zsh"
+        if [[ "${first_line}" != "#!/usr/bin/env zsh" && "${first_line}" != "#!/bin/zsh" ]]; then
+            echo -e "${RED}[UAP-ERROR]${NC} Non-canonical ZSH shebang in ${file#${VDE_ROOT_DIR}/}. Expected #!/usr/bin/env zsh"
             errors=$((errors + 1))
         fi
 
@@ -123,7 +123,7 @@ audit_file_content() {
              warnings=$((warnings + 1))
         fi
 
-        # Mandate 1: 0-indexed Arrays (Shibboleth)
+        # Mandate 1: 0-indexed Arrays (Shibboleth) - ZSH ONLY
         if grep -q "\[0\]" "$file"; then
             echo -e "${RED}[UAP-ERROR]${NC} 0-indexed array found in ${file#${VDE_ROOT_DIR}/}. ZSH is 1-indexed."
             errors=$((errors + 1))
@@ -134,6 +134,19 @@ audit_file_content() {
             echo -e "${YELLOW}[UAP-WARN]${NC} ${file#${VDE_ROOT_DIR}/} lacks ZSH parameter flags. Verify ZSH-native logic."
             warnings=$((warnings + 1))
         fi
+    elif [[ "$file" == *.py ]]; then
+        # Python Shebang Check
+        read -r first_line < "$file"
+        if [[ "${first_line}" != "#!/usr/bin/env python3" ]]; then
+            echo -e "${RED}[UAP-ERROR]${NC} Non-canonical Python shebang in ${file#${VDE_ROOT_DIR}/}. Expected #!/usr/bin/env python3"
+            errors=$((errors + 1))
+        fi
+        
+        # Forbidden Pattern: Sleep Calls in Python (still applies to governance logic)
+        if grep -qE "time\.sleep\(" "$file"; then
+            echo -e "${RED}[UAP-ERROR]${NC} Forbidden 'sleep' found in Python script ${file#${VDE_ROOT_DIR}/}. Use polling."
+            errors=$((errors + 1))
+        fi
     fi
 }
 
@@ -143,7 +156,8 @@ check_dir() {
     if [[ ! -d "$dir" ]]; then return; fi
     
     [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-CHECK]${NC} Auditing directory: ${dir#${VDE_ROOT_DIR}/}"
-    for file in "${dir}"/*(N.); do
+    # Use recursive glob (**) to audit all files in subdirectories
+    for file in "${dir}"/**/*(N.); do
         # Audit all files in these directories
         if [[ -f "$file" ]]; then
             audit_file_content "$file"

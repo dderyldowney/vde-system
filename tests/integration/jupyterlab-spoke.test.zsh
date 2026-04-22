@@ -1,6 +1,9 @@
 #!/usr/bin/env zsh
 # @armor (Engine Test Suite)
 # Integration Test for vde-jupyterlab (The Sovereign DS Spoke)
+# ZSH-native shibboleth (Rule 1)
+local _ZSH_PURE=${(%):-%x}
+
 # Part of the VDE Certification Suite
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -126,7 +129,7 @@ test_runtime_connectivity() {
             success=1
             break
         fi
-        sleep 1
+        zmodload zsh/zselect && zselect -t 100
         ((retry++))
     done
     

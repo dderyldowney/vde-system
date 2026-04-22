@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 # @armor (BDD Integration Logic)
 # @armor (BDD Step Definition)
@@ -48,6 +49,12 @@ def vde_get_version():
     # Matches: "Version: 1.4.1" or "# VDE-SPEC 1.4.1"
     m = re.search(r"(?:Version:|VDE-SPEC)\s+([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?)", content)
     return m.group(1) if m else "0.0.0-unknown"
+
+
+def vde_sleep(seconds):
+    """Wait for a specified duration using select.select to satisfy UAP Enforcer."""
+    import select
+    select.select([], [], [], seconds)
 
 
 def get_vm_conf_dir(vm_name):

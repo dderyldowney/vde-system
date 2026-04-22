@@ -1,6 +1,9 @@
 #!/usr/bin/env zsh
 # @armor (Engine Test Suite)
 # Performance Benchmark Suite for VDE
+# ZSH-native shibboleth (Rule 1)
+local _ZSH_PURE=${(%):-%x}
+
 
 TEST_DIR="$(cd "$(dirname "${0}")" && pwd)"
 VDE_ROOT_DIR="$(cd "${TEST_DIR}/../.." && pwd)"

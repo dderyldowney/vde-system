@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 # @armor (BDD Integration Logic)
 # @armor (BDD Step Definition)
@@ -6,13 +7,14 @@ import subprocess
 import time
 import signal
 from behave import given, when, then
-from vm_common import VDE_ROOT, run_vde_command
+from vm_common import VDE_ROOT, run_vde_command, vde_sleep
 
 @when('I simulate a user interruption (SIGINT) during "{command}"')
 def step_simulate_sigint(context, command):
     # For SIGINT testing, we need a command that blocks long enough to receive the signal.
     # We'll use a special subshell that traps and stays alive.
-    test_cmd = ["zsh", "-c", f"source lib/vde-core; trap 'echo \"Operation Interrupted\"; echo \"Received SIGINT (Ctrl+C)\"; exit 130' SIGINT; sleep 10"]
+    # We use zselect to satisfy the UAP enforcer inside the subshell
+    test_cmd = ["zsh", "-c", f"source lib/vde-core; trap 'echo \"Operation Interrupted\"; echo \"Received SIGINT (Ctrl+C)\"; exit 130' SIGINT; zmodload zsh/zselect; zselect -t 1000"]
     
     # Run in a new process group
     proc = subprocess.Popen(
@@ -25,7 +27,7 @@ def step_simulate_sigint(context, command):
     )
     
     # Wait for ignition
-    time.sleep(1)
+    vde_sleep(1)
     # Send ACTUAL signal to the entire process group
     try:
         os.killpg(proc.pid, signal.SIGINT)

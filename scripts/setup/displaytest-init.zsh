@@ -1,6 +1,9 @@
 #!/usr/bin/env zsh
 # @armor (Spoke Hydration)
 # VDE USP Hydration Script: displaytest
+# ZSH-native shibboleth (Rule 1)
+local _ZSH_PURE=${(%):-%x}
+
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
 set -e

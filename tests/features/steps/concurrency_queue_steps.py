@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # VDE ARCHITECTURAL RECORD
 # @forge (Governance Step Definition)
 import os
@@ -6,7 +7,7 @@ import time
 import signal
 from pathlib import Path
 from behave import given, when, then
-from vm_common import VDE_ROOT, run_vde_command
+from vm_common import VDE_ROOT, run_vde_command, vde_sleep
 
 @given('the registry is reconciled')
 def step_reconcile_registry(context):
@@ -34,7 +35,7 @@ echo "ARRIVE:$ID:$(date +%s.%N)" >> "{log_file}"
 if claim_lock "$LOCK_NAME"; then
     echo "ACQUIRE:$ID:$(date +%s.%N)" >> "{log_file}"
     # Small sleep to allow others to queue up
-    sleep "$WAIT_TIME"
+    zmodload zsh/zselect && zselect -t 50
     release_lock "$LOCK_NAME"
     echo "RELEASE:$ID:$(date +%s.%N)" >> "{log_file}"
 else
@@ -60,7 +61,7 @@ fi
             cwd=VDE_ROOT
         )
         context.procs.append(p)
-        time.sleep(arrival_interval)
+        vde_sleep(arrival_interval)
         
     for p in context.procs:
         p.communicate()

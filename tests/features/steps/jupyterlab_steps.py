@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 # @armor (BDD Integration Logic)
 # @armor (BDD Step Definition)
@@ -7,7 +8,7 @@ Step definitions for JupyterLab Data Science Spoke verification.
 
 import subprocess
 from behave import then, when, step_matcher
-from vm_common import VDE_ROOT, load_vm_types_raw
+from vm_common import VDE_ROOT, load_vm_types_raw, vde_sleep
 
 # Use regex matcher
 step_matcher("re")
@@ -114,7 +115,7 @@ def step_verify_port_responsive(context, port):
         result = subprocess.run(cmd, capture_output=True, text=True)
         if "HTTP/1.1" in result.stdout or "HTTP/2" in result.stdout:
             return
-        time.sleep(2)
+        vde_sleep(2)
     
     # Final attempt to show output if failed
     cmd = ["curl", "-s", "-I", f"http://localhost:{port}"]

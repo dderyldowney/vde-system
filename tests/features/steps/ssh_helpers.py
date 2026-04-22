@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # VDE ARCHITECTURAL RECORD
 # @armor (Engine BDD Steps)
 # @armor (BDD Integration Logic)
