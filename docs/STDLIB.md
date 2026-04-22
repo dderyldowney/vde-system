@@ -1,4 +1,6 @@
 
+<!-- @armor (Standard Library Manual) -->
+<!-- @shared-law (Sovereign Artifact Set) -->
 # VDE Standard Library (stdlib) Documentation
 
 **Repository**: dderyldowney/vde-system  
