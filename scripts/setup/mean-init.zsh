@@ -22,7 +22,7 @@ sh /tmp/setup_node.sh
 apt-get install -y nodejs
 
 # 3. CLUSTER COORDINATION
-local dev_home=~devuser
+local dev_home=$HOME
 local _zshenv="${dev_home}/.zshenv"
 mkdir -p ${dev_home}
 touch "${_zshenv}"

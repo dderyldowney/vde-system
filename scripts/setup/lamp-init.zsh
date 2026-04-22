@@ -17,7 +17,7 @@ apt-get update
 apt-get install -y ${=vde_lamp_pkgs}
 
 # 3. CLUSTER COORDINATION
-local dev_home=~devuser
+local dev_home=$HOME
 local _zshenv="${dev_home}/.zshenv"
 mkdir -p "${dev_home}"
 touch "${_zshenv}"

@@ -20,7 +20,7 @@ apt-get install -y ${=vde_elixir_pkgs}
 locale-gen en_US.UTF-8
 
 # Installation for devuser
-local dev_home=~devuser
+local dev_home=$HOME
 INSTALL_SCRIPT="/tmp/install-elixir-as-devuser.sh"
 cat <<EOF > "${INSTALL_SCRIPT}"
 #!/usr/bin/env zsh

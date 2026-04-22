@@ -17,7 +17,7 @@ apt-get update
 apt-get install -y ${=vde_jupyter_pkgs}
 
 # 3. Create a dedicated venv for Jupyter
-local dev_home=~devuser
+local dev_home=$HOME
 local _venv_path="${dev_home}/.vde-venv"
 sudo -u devuser python3 -m venv "${_venv_path}"
 
