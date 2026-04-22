@@ -43,6 +43,9 @@ done
 
 # Check library files in lib/
 for file in $(find lib -type f 2>/dev/null); do
+    # Skip backup files explicitly
+    [[ "${file}" == *".bak" ]] && continue
+
     shebang=$(head -1 "${file}" 2>/dev/null || true)
     
     if [[ "${shebang}" =~ ^#! ]]; then

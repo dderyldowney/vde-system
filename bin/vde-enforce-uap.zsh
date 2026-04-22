@@ -77,6 +77,11 @@ audit_file_content() {
     local file=$1
     local first_line
     
+    # Skip backup files explicitly
+    if [[ "$file" == *.bak ]]; then
+        return
+    fi
+    
     # Skip binary files
     if ! (file "$file" | grep -qE "text|JSON|XML|source"); then
         return
