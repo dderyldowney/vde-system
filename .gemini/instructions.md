@@ -114,7 +114,7 @@ Failure of any ritual constitutes a **Protocol Blockade**.
         1. `gh issue create` — Signet OPEN with Issue number confirmed
         2. `git checkout -b <type>/<slug>` from `develop` — feature branch ACTIVE
         If either gate is missing, the agent MUST STOP, complete the gate, then proceed. Committing implementation directly to `develop` is a Creed violation that requires immediate retro-remediation and a process violation report to the User.
-* **Q. The Authority of the Record**: Only the Alor (Orchestrator) and the User possess the authority to alter the Chronicle. Sub-agents are strictly forbidden from making autonomous commits. All commits performed by sub-agents MUST be under the direct and serialized control of the Orchestrator.
+* **Q. The Authority of the Record**: Only the Alor (Orchestrator) and the User possess the authority to alter the Chronicle. Sub-agents are strictly forbidden from making autonomous commits. All commits performed by sub-agents MUST be under the direct and serialized control of the Orchestrator. Only the Orchestrator and the User may execute the Proof of Life ritual; sub-agents are strictly forbidden from executing Proof of Life.
 * **R. The Clan Leader Authority (PR & Merge Gate)**:
     * The agent MAY make regular local commits on the active feature branch as needed to preserve a clear and incremental history.
     * The agent MUST obtain explicit written approval from the User (Clan Leader) before submitting, updating, or taking any action on a Pull Request, or performing any merge.

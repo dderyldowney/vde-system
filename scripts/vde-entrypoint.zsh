@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 # @armor (Spoke Lifecycle)
+local _zsh_pure=${(%):-%x}
 #===============================================================================
 # VDE-ENTRYPOINT (The Atomic Handshake)
 # Dynamically aligns container identity with host resources (Docker/SSH)

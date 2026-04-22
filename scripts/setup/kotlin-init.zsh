@@ -19,7 +19,7 @@ mkdir -p /usr/share/man/man1
 apt-get install -y ${=vde_kotlin_pkgs}
 
 # SDKMAN INITIALIZATION
-local dev_home=~devuser
+local dev_home=$HOME
 export SDKMAN_DIR="${dev_home}/.sdkman"
 export sdkman_auto_answer=true
 

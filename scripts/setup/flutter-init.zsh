@@ -8,7 +8,7 @@ local _ZSH_PURE=${(%):-%x}
 # Forged in Beskar
 set -e
 
-local dev_home=~devuser
+local dev_home=$HOME
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive

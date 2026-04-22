@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-# @armor (BDD Integration Logic)
+# @forge (Governance Step Definition)
 # @armor (BDD Step Definition)
 # @armor (BDD Step Definition)
 Step definitions for @critical-path and @critical-infrastructure features.

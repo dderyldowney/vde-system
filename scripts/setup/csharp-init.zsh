@@ -24,7 +24,7 @@ sh /tmp/dotnet-install.sh --version 8.0.100 --install-dir "${DOTNET_INSTALL_DIR}
 ln -sf "${DOTNET_INSTALL_DIR}/dotnet" /usr/bin/dotnet
 
 # 3. PERSISTENCE ANCHOR
-local dev_home=~devuser
+local dev_home=$HOME
 local _zshenv="${dev_home}/.zshenv"
 mkdir -p "${dev_home}"
 touch "${_zshenv}"
