@@ -1,6 +1,9 @@
 #!/usr/bin/env zsh
 # @armor (Spoke Hydration)
 # VDE USP Hydration Ritual: rust
+# ZSH-native shibboleth (Rule 1)
+local _ZSH_PURE=${(%):-%x}
+
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
 #

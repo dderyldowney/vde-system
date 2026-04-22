@@ -1,6 +1,9 @@
 #!/usr/bin/env zsh
 # @armor (Engine Test Suite)
 # @armor (Engine Unit Test)
+# ZSH-native shibboleth (Rule 1)
+local _ZSH_PURE=${(%):-%x}
+
 # Unit tests for VM Types JSON Schema
 # Tests schema validation for VDE VM type configuration
 

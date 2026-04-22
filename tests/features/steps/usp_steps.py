@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # VDE ARCHITECTURAL RECORD
 # @forge (Governance Step Definition)
 """

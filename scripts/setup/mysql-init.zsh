@@ -1,6 +1,9 @@
 #!/usr/bin/env zsh
 # @armor (Spoke Hydration)
 # VDE USP Hydration Ritual: mysql
+# ZSH-native shibboleth (Rule 1)
+local _ZSH_PURE=${(%):-%x}
+
 # Forged in Beskar
 set -e
 

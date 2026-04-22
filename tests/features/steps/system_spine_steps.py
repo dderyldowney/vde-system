@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # VDE ARCHITECTURAL RECORD
 # @armor (Engine BDD Steps)
 # @armor (BDD Integration Logic)
@@ -14,7 +15,7 @@ import time
 import re
 from pathlib import Path
 from behave import given, when, then
-from vm_common import VDE_ROOT, BIN_DIR, run_vde_command, get_container_name
+from vm_common import VDE_ROOT, BIN_DIR, run_vde_command, get_container_name, vde_sleep
 from critical_steps import strip_ansi
 
 @given('the VDE Hub "data/vm-types.conf" is the sole authority')
@@ -232,8 +233,7 @@ def step_execute_inside(context, command, vm_alias, user):
     context.vm_alias = vm_alias
     
     # Give the entrypoint a moment to finish the Atomic Handshake if just started
-    import time
-    time.sleep(2)
+    vde_sleep(2)
 
     # SPECIAL CASE: For SSH Agent verification, we MUST use the Transversal Bridge (SSH protocol)
     # because docker exec doesn't forward agents and Darwin socket mounts are unreliable.

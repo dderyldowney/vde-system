@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (VM Management Intelligence)
+# @armor (Registry Logic)
 # VM Common Library for VDE Management Scripts
 # Source this library with: source ./lib/vm-common
 # Requires: zsh 5.0+
@@ -208,7 +208,7 @@ export PORT_REGISTRY_FILE
 # VM TYPE DEFINITIONS (ASSOCIATIVE ARRAYS)
 # =============================================================================
 
-declare -A VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT
+declare -A VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORTS
 
 # =============================================================================
 # VM DOCKER CONFIG (ASSOCIATIVE ARRAYS)
@@ -271,7 +271,7 @@ load_vm_types() {
     [[ "${VDE_NO_CACHE:-0}" == "1" ]] && no_cache=1
 
     # Ensure arrays are globally declared
-    typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_CUSTOM_CMD VM_SVC_PORT VM_SSH_PORT
+    typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_CUSTOM_CMD VM_SVC_PORTS VM_SSH_PORT
     typeset -ga lang_vms service_vms
 
     # Guard to prevent redundant loading in the same process
@@ -371,8 +371,8 @@ load_vm_types() {
                     _info "Parsing VM types from JSON via JQ: ${VM_TYPES_JSON}"
                     local _v_p_configs
                     _v_p_configs=$(vde_query_json -r '
-                        (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_ports//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
-                        (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_ports//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
+                        (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORTS[\(.name)]=\(.service_ports//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
+                        (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORTS[\(.name)]=\(.service_ports//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
                     ' "${VM_TYPES_JSON}" 2>/dev/null)
 
                     if [[ -n "${_v_p_configs}" ]]; then
@@ -395,7 +395,7 @@ load_vm_types() {
                         VM_DISPLAY[${_v_name}]="${_v_disp}"
                         VM_INSTALL[${_v_name}]="${_v_pkgs}"
                         VM_CUSTOM_CMD[${_v_name}]="${_v_cmd}"
-                        VM_SVC_PORT[${_v_name}]="${_v_env}"
+                        VM_SVC_PORTS[${_v_name}]="${_v_env}"
                         VM_SSH_PORT[${_v_name}]="${_v_port}"
                     done < "${VM_TYPES_CONF}"
                 else
@@ -479,10 +479,10 @@ load_vm_types() {
                         print -r -- "VM_CUSTOM_CMD[${key}]='${value}'"
                     done
                     echo ""
-                    echo "typeset -gA VM_SVC_PORT"
-                    for key in "${(@k)VM_SVC_PORT}"; do
-                        value="${VM_SVC_PORT[${key}]//'/'\\''}"
-                        print -r -- "VM_SVC_PORT[${key}]='${value}'"
+                    echo "typeset -gA VM_SVC_PORTS"
+                    for key in "${(@k)VM_SVC_PORTS}"; do
+                        value="${VM_SVC_PORTS[${key}]//'/'\\''}"
+                        print -r -- "VM_SVC_PORTS[${key}]='${value}'"
                     done
                     echo ""
                     echo "typeset -gA VM_SSH_PORT"
@@ -1346,7 +1346,7 @@ get_vm_ssh_port() {
 get_vm_service_ports() {
     local vm_name="${1}"
     load_vm_types >/dev/null 2>&1
-    local ports="${VM_SVC_PORT[${vm_name}]}"
+    local ports="${VM_SVC_PORTS[${vm_name}]}"
     if [[ -n "${ports}" ]] && [[ "${ports}" != "null" ]]; then
         echo "${ports}"
         return ${VDE_SUCCESS}

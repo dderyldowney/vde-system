@@ -1,6 +1,9 @@
 #!/usr/bin/env zsh
 # @armor (Engine Test Suite)
 # =============================================================================
+# ZSH-native shibboleth (Rule 1)
+local _ZSH_PURE=${(%):-%x}
+
 # docker-test-utils.zsh — Shared Docker test lifecycle utilities
 #
 # Provides: Docker detection, container cleanup, readiness polling,

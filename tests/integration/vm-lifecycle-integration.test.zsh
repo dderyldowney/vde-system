@@ -1,6 +1,9 @@
 #!/usr/bin/env zsh
 # @armor (Engine Test Suite)
 # Integration Tests for VM Lifecycle (v2.1.0 Hardened)
+# ZSH-native shibboleth (Rule 1)
+local _ZSH_PURE=${(%):-%x}
+
 # Tests end-to-end VM creation, startup, and management workflows
 
 # Don't use set -e as it interferes with test counting
@@ -176,11 +179,11 @@ test_file_locking_exclusion() {
     rm -rf "$lock_file"
 
     # Acquire in subshell
-    ( claim_lock "$lock_file" && sleep 1 && release_lock "$lock_file" ) &
+    ( claim_lock "$lock_file" && zmodload zsh/zselect && zselect -t 100 && release_lock "$lock_file" ) &
     local pid=$!
     
     # Give subshell a head start
-    sleep 0.2
+    zmodload zsh/zselect && zselect -t 20
 
     # Verify lock exists
     if [[ -d "$lock_file" ]]; then
@@ -222,7 +225,7 @@ test_cache_invalidation() {
     local old_mtime=$(_get_mtime "$cache_file")
     
     # Touch source file to invalidate cache
-    sleep 1.1
+    zmodload zsh/zselect && zselect -t 110
     touch "$PROJECT_ROOT/data/vm-types.json"
     
     unset _VM_TYPES_LOADED

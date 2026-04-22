@@ -51,7 +51,7 @@ To maintain strict focus and project separation, the VDE utilizes two primary op
 
 *   **VDE Sovereign System**
     *   **Project 1: The Armor (@armor)**
-        *   **Code (Binaries)**: `bin/vde`, `bin/ssh-vm`, `bin/vde-init`, `bin/vde-rebuild`, `bin/vde-start`, `bin/vde-stop`, `bin/vde-rm`, `bin/vde-bootstrap`, `bin/vde-spine-check.zsh`, `bin/vde-check-tetrad.zsh`.
+        *   **Code (Binaries)**: `bin/vde`, `bin/ssh-vm`, `bin/vde-init`, `bin/vde-rebuild`, `bin/vde-ps`, `bin/list-vms`, `bin/vde-info`, `bin/vde-port`, `bin/vde-health`, `bin/vde-images`, `bin/vde-stats`, `bin/vde-logs`, `bin/vde-bootstrap`, `bin/vde-spine-check.zsh`, `bin/vde-check-tetrad.zsh`.
         *   **Code (Libraries)**: `lib/vde-core`, `lib/vde-constants`, `lib/vde-shell-compat`, `lib/vm-common`, `lib/vde-docker`, `lib/vde-ssh`, `lib/vm-lock`, `lib/vde-naming`, `lib/vde-path-utils`, `lib/vde-progress`.
         *   **Data**: `data/vm-types.json`, `data/vm-types.conf`, `data/vm-types.schema.json`.
         *   **Docs**: `VDE_INSTALL.md`, `USER_GUIDE.md`, `FOUNDLING_GUIDE.md`.

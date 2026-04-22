@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 # @armor (BDD Integration Logic)
 # @armor (BDD Step Definition)
@@ -46,7 +47,7 @@ def strip_ansi(text):
 def ensure_vm_accessible(context, vm_name: str, timeout: int = 30) -> bool:
     """
     Deterministically verify VM is ready for SSH connections.
-    Replaces fake time.sleep() calls with real whoami checks via vde-poll.
+    Replaces fake sleep() calls with real whoami checks via vde-poll.
     """
     vde_name = vm_name.removeprefix("vde-")
     
