@@ -38,7 +38,7 @@ All libraries enforce **ZSH-only** semantics (ZSH 5.0+) for optimal performance 
 
 ## Core Libraries
 
-### vde-core (@armor)
+### vde-core (@armor) (Engine Core Intelligence)
 **Purpose**: Essential initialization, versioning, and core functions  
 **Size**: 29.4 KB  
 **Key Functions**:
@@ -58,7 +58,7 @@ VERSION=$(vde_get_version)
 
 ---
 
-### vde-constants
+### vde-constants (@armor) (Engine Constants)
 **Purpose**: Centralized configuration and magic numbers  
 **Size**: 13.7 KB  
 **Key Constants**:
@@ -109,7 +109,7 @@ VERSION=$(vde_get_version)
 
 ---
 
-### vde-shell-compat
+### vde-shell-compat (@armor) (Shell Compatibility Layer)
 **Purpose**: ZSH-native abstractions for shell features  
 **Size**: 12.8 KB  
 **Key Functions**:
@@ -134,7 +134,7 @@ value=$(_assoc_get "MY_MAP" "key1")
 
 ---
 
-### vm-common
+### vm-common (@armor) (VM Management Intelligence)
 **Purpose**: High-level VM management and orchestration  
 **Size**: 49.9 KB  
 **Key Sections**:
@@ -157,7 +157,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ## Support Libraries
 
-### vde-log
+### vde-log (@armor) (Logging Engine)
 **Purpose**: Structured logging with rotation and multiple output formats  
 **Size**: 14.4 KB  
 **Features**:
@@ -184,7 +184,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-errors
+### vde-errors (@armor) (Error Handling)
 **Purpose**: Contextual error messages with remediation steps  
 **Size**: 15.9 KB  
 **Features**:
@@ -210,7 +210,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-audit
+### vde-audit (@armor) (Resource Auditing)
 **Purpose**: Audit logging for security and compliance  
 **Size**: 9.9 KB  
 **Features**:
@@ -240,7 +240,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ## Specialized Libraries
 
-### vde-docker
+### vde-docker (@armor) (Docker Operations)
 **Purpose**: Docker container lifecycle management  
 **Size**: 16.8 KB  
 **Key Functions**:
@@ -258,7 +258,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-docker-state
+### vde-docker-state (@armor) (Runtime State Management)
 **Purpose**: Real-time Docker state queries  
 **Size**: 5.8 KB  
 **Key Functions**:
@@ -279,7 +279,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-ssh
+### vde-ssh (@armor) (SSH Operations)
 **Purpose**: SSH key management and configuration  
 **Size**: 24.9 KB  
 **Key Functions**:
@@ -303,7 +303,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-health
+### vde-health (@armor) (Health Checks)
 **Purpose**: Container health checking  
 **Size**: 13.3 KB  
 **Key Functions**:
@@ -322,7 +322,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-metrics
+### vde-metrics (@armor) (Metrics Collection)
 **Purpose**: Performance metrics collection and analysis  
 **Size**: 11.0 KB  
 **Key Functions**:
@@ -347,7 +347,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ## Utility Libraries
 
-### vde-naming
+### vde-naming (@armor) (Naming Conventions)
 **Purpose**: VM naming conventions and validation  
 **Size**: 3.6 KB  
 **Key Functions**:
@@ -366,7 +366,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-path-utils
+### vde-path-utils (@armor) (Path Utilities)
 **Purpose**: Cross-platform path handling  
 **Size**: 5.8 KB  
 **Key Functions**:
@@ -386,7 +386,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-progress
+### vde-progress (@armor) (Progress Indicators)
 **Purpose**: Progress indicators for long operations  
 **Size**: 15.7 KB  
 **Features**:
@@ -412,7 +412,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-parser
+### vde-parser (@armor) (Command Parsing)
 **Purpose**: Natural language command parsing  
 **Size**: 39.1 KB  
 **Key Functions**:
@@ -434,7 +434,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-templates
+### vde-templates (@armor) (Hydration Blueprints)
 **Purpose**: Template rendering for VM creation  
 **Size**: 3.6 KB  
 **Key Functions**:
@@ -451,7 +451,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-security
+### vde-security (@armor) (Security Guard)
 **Purpose**: Security policy enforcement  
 **Size**: 5.2 KB  
 **Key Functions**:
@@ -470,7 +470,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-cluster-utils
+### vde-cluster-utils (@armor) (Cluster Utilities)
 **Purpose**: Multi-VM cluster management  
 **Size**: 2.3 KB  
 **Key Functions**:
@@ -488,7 +488,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-commands
+### vde-commands (@armor) (Command Wrappers)
 **Purpose**: High-level command wrappers  
 **Size**: 15.7 KB  
 **Key Functions**:
@@ -501,11 +501,11 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 - `vde_get_vm_status()` - Get VM status
 - `vde_get_ssh_info()` - Get SSH connection info
 - `vde_resolve_alias()` - Resolve alias to VM name
-- `vde_validate_vm_type()` - Validate VM type
+- `vde_resolve_vm_type()` - Validate VM type
 
 ---
 
-### vde-pulse.zsh
+### vde-pulse.zsh (@armor) (Engine Pulse)
 **Purpose**: SSH agent bridge monitoring  
 **Size**: 2.3 KB  
 **Key Functions**:
@@ -515,7 +515,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vde-root & vde-root-guard
+### vde-root & vde-root-guard (@armor) (Engine Pathing Core & Safeguard)
 **Purpose**: Project root detection and validation  
 **Sizes**: 1.1 KB, 1.4 KB  
 
@@ -530,7 +530,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vm-lock (@armor)
+### vm-lock (@armor) (Concurrency Locking)
 **Purpose**: Atomic file-based concurrency locking  
 **Size**: 5.1 KB  
 **Key Functions**:
@@ -634,30 +634,30 @@ fi
 ```
 vde-system/
 ├── lib/
-│   ├── vde-audit              # Audit logging
-│   ├── vde-cluster-utils      # Cluster management
-│   ├── vde-commands           # Command wrappers
-│   ├── vde-constants          # Magic numbers & config
-│   ├── vde-core               # Essential functions
-│   ├── vde-docker             # Docker management
-│   ├── vde-docker-state       # Real-time state
-│   ├── vde-errors             # Error handling
-│   ├── vde-health             # Health checks
-│   ├── vde-log                # Logging system
-│   ├── vde-metrics            # Metrics collection
-│   ├── vde-naming             # Naming conventions
-│   ├── vde-parser             # Command parsing
-│   ├── vde-path-utils         # Path utilities
-│   ├── vde-progress           # Progress indicators
-│   ├── vde-pulse.zsh          # Agent monitoring
-│   ├── vde-root               # Root detection
-│   ├── vde-root-guard         # Root validation
-│   ├── vde-security           # Security enforcement
-│   ├── vde-shell-compat       # Shell compatibility
-│   ├── vde-ssh                # SSH management
-│   ├── vde-templates          # Template rendering
-│   ├── vm-common              # VM orchestration
-│   └── vm-lock                # Concurrency locking
+│   ├── vde-audit              # Resource Auditing
+│   ├── vde-cluster-utils      # Cluster Utilities
+│   ├── vde-commands           # Command Wrappers
+│   ├── vde-constants          # Engine Constants
+│   ├── vde-core               # Engine Core Intelligence
+│   ├── vde-docker             # Docker Operations
+│   ├── vde-docker-state       # Runtime State Management
+│   ├── vde-errors             # Error Handling
+│   ├── vde-health             # Health Checks
+│   ├── vde-log                # Logging Engine
+│   ├── vde-metrics            # Metrics Collection
+│   ├── vde-naming             # Naming Conventions
+│   ├── vde-parser             # Command Parsing
+│   ├── vde-path-utils         # Path Utilities
+│   ├── vde-progress           # Progress Indicators
+│   ├── vde-pulse.zsh          # Engine Pulse
+│   ├── vde-root               # Engine Pathing Core
+│   ├── vde-root-guard         # Engine Pathing Safeguard
+│   ├── vde-security           # Security Guard
+│   ├── vde-shell-compat       # Shell Compatibility Layer
+│   ├── vde-ssh                # SSH Operations
+│   ├── vde-templates          # Hydration Blueprints
+│   ├── vm-common              # VM Management Intelligence
+│   └── vm-lock                # Concurrency Locking
 ```
 
 ---
@@ -742,4 +742,4 @@ export TEMPLATES_DIR="${VDE_ROOT_DIR}/templates"
 
 ---
 
-**End of VDE Standard Library Documentation**ntation**
+**End of VDE Standard Library Documentation**
