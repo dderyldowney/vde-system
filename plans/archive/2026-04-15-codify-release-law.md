@@ -13,7 +13,7 @@
 ### Task 1: Update VDE-SPEC.md (The Gospel Lead)
 
 **Files:**
-- Modify: `/Users/dderyldowney/VDE/docs/VDE-SPEC.md`
+- Modify: `$HOME/VDE/docs/VDE-SPEC.md`
 
 - [ ] **Step 1: Update Section 4 with the Release Law and Ritual**
 
@@ -33,7 +33,7 @@ The Forge strictly enforces the following Git lifecycle to maintain the purity o
 ### Task 2: Update ARCHITECTURE.md (The Strategy)
 
 **Files:**
-- Modify: `/Users/dderyldowney/VDE/docs/ARCHITECTURE.md`
+- Modify: `$HOME/VDE/docs/ARCHITECTURE.md`
 
 - [ ] **Step 1: Update Section 4 to include the 7th file and Release Law reference**
 
@@ -55,7 +55,7 @@ The following seven files move as a single artifact set for every Sovereign Base
 ### Task 3: Update Technical-Deep-Dive.md (The Mechanics)
 
 **Files:**
-- Modify: `/Users/dderyldowney/VDE/docs/Technical-Deep-Dive.md`
+- Modify: `$HOME/VDE/docs/Technical-Deep-Dive.md`
 
 - [ ] **Step 1: Add Section 8 for the Sovereign Artifact Set and Release Law**
 
@@ -70,7 +70,7 @@ The Sovereign Artifact Set consists of SEVEN files (including `PROJECT_STATUS.md
 ### Task 4: Update AGENTS.md (The Behavioral Mandates)
 
 **Files:**
-- Modify: `/Users/dderyldowney/VDE/AGENTS.md`
+- Modify: `$HOME/VDE/AGENTS.md`
 
 - [ ] **Step 1: Add Mandate 17 to Section 2**
 

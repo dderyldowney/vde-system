@@ -42,7 +42,7 @@ Expected: Switched to a new branch 'fix/rust-init-tilde-expansion'
 Run: `replace` tool on `scripts/setup/rust-init.zsh`
 ```javascript
 {
-  "file_path": "/Users/dderyldowney/VDE/scripts/setup/rust-init.zsh",
+  "file_path": "$HOME/VDE/scripts/setup/rust-init.zsh",
   "old_string": "local dev_home=\"~devuser\"",
   "new_string": "local dev_home=~devuser",
   "instruction": "Unquote dev_home assignment to allow Zsh tilde expansion per MANDATE."
@@ -61,12 +61,12 @@ Expected: Line 37 matches exactly (no quotes).
 
 - [ ] **Step 1: Run reproduction script to confirm fix logic**
 
-Run: `zsh /Users/dderyldowney/VDE/plans/scripts/repro_tilde_bug.zsh`
+Run: `zsh $HOME/VDE/plans/scripts/repro_tilde_bug.zsh`
 Expected: Output confirms unquoted tilde expands to a path (e.g., `/var/root`).
 
 - [ ] **Step 2: Verify no regressions in rust-init.zsh**
 
-Run: `zsh -n /Users/dderyldowney/VDE/scripts/setup/rust-init.zsh`
+Run: `zsh -n $HOME/VDE/scripts/setup/rust-init.zsh`
 Expected: No syntax errors.
 
 ### Task 4: Submit Chronicle and Cleanup
@@ -94,5 +94,5 @@ Run: `gh pr create --title "fix: unquote dev_home in rust-init.zsh" --body "Frac
 
 - [ ] **Step 4: Cleanup Staging**
 
-Run: `rm /Users/dderyldowney/VDE/plans/scripts/repro_tilde_bug.zsh`
+Run: `rm $HOME/VDE/plans/scripts/repro_tilde_bug.zsh`
 Expected: Artifact removed.

@@ -23,4 +23,4 @@ CLEAN AREAS: <List passed checks>
 
 - Run as part of the Phase 0 context gathering or Phase 4 review.
 - Never modify files; report only.
-- Flag any hardcoded paths (`/home/`, `/Users/`) as violations of the portability mandate.
+- Flag any hardcoded paths (\`/home/\`, \`/Users/\`) as violations of the portability mandate.

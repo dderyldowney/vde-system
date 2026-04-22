@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 # Enforce zsh as the default shell for all jobs and steps
 defaults:
   run:
