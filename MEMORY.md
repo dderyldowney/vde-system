@@ -110,3 +110,11 @@
 - Refactored **USER_GUIDE.md** into a ritual-aligned sequence mirroring `vde path-of-the-foundling`.
 - Upgraded **UAP Sentinel** with Universal Architectural Regex for literate tagging.
 - Resolved **volatile SSH config timestamp** issue to prevent git churn.
+
+## 2026-04-21: Sovereign Realignment & UAP Hardening (1.4.1-CSR)
+- **Strike Outcome**: Total alignment of the 1.4.1 Sovereign Baseline.
+- **Architectural Shift**: Realigned all core binaries, libraries, and documentation into designated Project domains (@armor, @forge, @shared-law).
+- **Registry Alignment**: Synchronized 'display' and 'service_ports' naming standards across the Beskar Registry (JSON/CONF) and runtime libraries (lib/vm-common, lib/vde-core).
+- **Sentinel Hardening**: Upgraded 'bin/vde-enforce-uap.zsh' to be recursive (using ** glob) and file-type aware (ZSH vs Python vs Dockerfile), eliminating false positives.
+- **Purification**: Remediated real UAP violations by adding ZSH shibboleths and replacing forbidden 'sleep' calls with deterministic polling (zselect/select).
+- **Status**: 100% Green on Sovereign Audit and Proof of Life.

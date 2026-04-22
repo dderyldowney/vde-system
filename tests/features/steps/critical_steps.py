@@ -125,13 +125,27 @@ def step_load_all_vms(context):
     context.svc_vms = svcs
 
 
+@given(u'the container "vde-rust" is running')
+def step_rust_running(context):
+    container_name = "vde-rust"
+    r = run_vde_command("ps -q", timeout=10, context=context)
+    if container_name not in r.stdout.splitlines():
+        # Using "rust" alias for start
+        result = run_vde_command("start rust", timeout=300, context=context)
+        assert result.returncode == 0, f"Could not start rust: {result.stdout}"
+
+    # Ensure it's ready (SSH accessible)
+    ensure_vm_accessible(context, "rust")
+    context.container_name = container_name
+
+
 @given('container "{container_name}" is running')
 def step_container_running(context, container_name):
     r = run_vde_command("ps -q", timeout=10, context=context)
     if container_name not in r.stdout.splitlines():
         vde_name = container_name.removeprefix("vde-")
         result = run_vde_command(f"start {vde_name}", timeout=300, context=context)
-        assert result.returncode == 0, f"Could not start {vde_name}: {result.stderr}"
+        assert result.returncode == 0, f"Could not start {vde_name}: {result.stdout}"
     context.container_name = container_name
 
 
