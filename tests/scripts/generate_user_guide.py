@@ -227,7 +227,7 @@ def extract_scenarios_from_feature(content):
             feature_tags = [tag.strip() for tag in re.findall(r"@(\w+(?:-\w+)*)", tag_text)]
 
     # Pattern to match scenarios with optional tags before them
-    scenario_pattern = r"(?:((?:\s*@\w+(?:-\w+)*\n)+)*)\s*Scenario:\s*(.+?)\n((?:\s*(?:Given|When|Then|And)\s+.+(?:\n|$))+)"
+    scenario_pattern = r"((?:\s*@\w+(?:-\w+)*)*)\s*Scenario:\s*(.+?)\n((?:\s*(?:Given|When|Then|And)\s+.+(?:\n|$))+)"
     scenarios = []
     for match in re.finditer(scenario_pattern, content, re.MULTILINE):
         tag_block = match.group(1) or ""
