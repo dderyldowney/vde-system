@@ -16,6 +16,9 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: read
+
 # Enforce zsh as the default shell for all jobs and steps
 defaults:
   run:
