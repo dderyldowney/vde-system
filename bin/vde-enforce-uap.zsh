@@ -179,7 +179,12 @@ check_dir "${VDE_ROOT_DIR}/githooks"
 check_dir "${VDE_ROOT_DIR}/.github"
 check_dir "${VDE_ROOT_DIR}/.gemini_security"
 
-# 4. Final Verdict [REWRITTEN]
+# 4. Continuous Security & Privacy Audit
+if [[ -f "${VDE_ROOT_DIR}/bin/vde-security-audit.zsh" ]]; then
+    zsh "${VDE_ROOT_DIR}/bin/vde-security-audit.zsh" || errors=$((errors + 1))
+fi
+
+# 5. Final Verdict [REWRITTEN]
 if [[ $errors -gt 0 ]] || [[ $warnings -gt 0 ]]; then
     echo -e "\n${RED}[UAP-FAILURE]${NC} $errors violations and $warnings warnings detected."
     echo -e "${YELLOW}[MANDATE 14 ACTIVE]${NC} Agent must halt current phase and generate a remediation plan."
