@@ -277,7 +277,7 @@ main() {
     
     # Skip if already has config (unless --force)
     local config_file="${VDE_ROOT_DIR}/configs/docker/languages/${short_name}/docker-compose.yml"
-    if [[ -f "${config_file}" ]] && [[ "${FORCE_REGENERATE}" != "true" ]]; then
+    if [[ -f "${config_file}" && "${FORCE_REGENERATE}" != "true" ]]; then
       ((skipped_count++))
       continue
     fi
@@ -295,7 +295,7 @@ main() {
     
     # Skip if already has config (unless --force)
     local config_file="${VDE_ROOT_DIR}/configs/docker/services/${short_name}/docker-compose.yml"
-    if [[ -f "${config_file}" ]] && [[ "${FORCE_REGENERATE}" != "true" ]]; then
+    if [[ -f "${config_file}" && "${FORCE_REGENERATE}" != "true" ]]; then
       ((skipped_count++))
       continue
     fi

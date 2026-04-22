@@ -295,8 +295,22 @@ def step_verify_forwarded_identities(context):
 
 @given('the Hub is active')
 def step_hub_active(context):
-    # The Hub is the host machine running these tests
-    pass
+    # Verify Pillar I: Zsh
+    res = subprocess.run(['zsh', '--version'], capture_output=True, text=True, timeout=5)
+    assert res.returncode == 0, "zsh not responding"
+    assert "zsh" in res.stdout.lower(), "Unexpected zsh version output"
+
+    # Verify Pillar II: Git
+    res_git = subprocess.run(['git', '--version'], capture_output=True, text=True, timeout=5)
+    assert res_git.returncode == 0, "git not responding"
+
+    # Verify Pillar III: Docker
+    res_docker = subprocess.run(["docker", "info"], capture_output=True, timeout=15)
+    assert res_docker.returncode == 0, "Docker daemon not responsive or socket inaccessible"
+
+    # Verify Pillar IV: SSH
+    res_ssh = subprocess.run(['ssh', '-V'], capture_output=True, text=True, timeout=5)
+    assert res_ssh.returncode == 0, "ssh not responding"
 
 @step('I execute "{command}"')
 def step_execute_command(context, command):

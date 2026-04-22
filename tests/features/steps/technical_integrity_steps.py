@@ -1,13 +1,21 @@
 from behave import given, when, then
 # @armor (BDD Integration Logic)
-# @armor (BDD Step Definition)
-# @armor (BDD Step Definition)
 import subprocess
-import os
+from pathlib import Path
+from vm_common import VDE_ROOT, BIN_DIR, VM_TYPES_JSON
 
 @given('the environment is being initialized')
 def step_impl(context):
-    pass
+    # Using absolute paths via VDE_ROOT
+    locks_dir = VDE_ROOT / ".locks"
+    if locks_dir.exists():
+        # Using rglob to search all subdirectories for rogue locks
+        locks = list(locks_dir.rglob("*.lock"))
+        assert not locks, f"Rogue VDE locks found: {[str(l) for l in locks]}"
+
+    # Verify presence of bin/vde
+    vde_script = BIN_DIR / "vde"
+    assert vde_script.exists(), f"bin/vde missing from {BIN_DIR}"
 
 @given('the Unyielding Tetrad is installed')
 def step_impl(context):
@@ -21,5 +29,6 @@ def step_impl(context, command):
 
 @given('the VDE root directory is active')
 def step_impl(context):
-    # Already established in environment
-    pass
+    assert VM_TYPES_JSON.exists(), f"data/vm-types.json missing from {VM_TYPES_JSON.parent}"
+    vde_script = BIN_DIR / "vde"
+    assert vde_script.exists(), f"bin/vde missing from {BIN_DIR}"

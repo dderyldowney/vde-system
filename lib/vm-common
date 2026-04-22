@@ -473,6 +473,12 @@ load_vm_types() {
                         print -r -- "VM_DISPLAY[${key}]='${value}'"
                     done
                     echo ""
+                    echo "typeset -gA VM_INSTALL"
+                    for key in "${(@k)VM_INSTALL}"; do
+                        value="${VM_INSTALL[${key}]//'/'\\''}"
+                        print -r -- "VM_INSTALL[${key}]='${value}'"
+                    done
+                    echo ""
                     echo "typeset -gA VM_CUSTOM_CMD"
                     for key in "${(@k)VM_CUSTOM_CMD}"; do
                         value="${VM_CUSTOM_CMD[${key}]//'/'\\''}"
