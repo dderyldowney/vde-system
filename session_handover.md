@@ -1,31 +1,20 @@
-# Session Handover: 2026-04-21
+# VDE Session Handover: 1.4.1 (The Sovereign Baseline)
+<!-- @shared-law (The Record) -->
 
-## State: SOVEREIGN BASELINE 1.4.1 (Aligned & Purified)
+## CURRENT STATE: 100% GREEN
+**Date**: 2026-04-22
+**Last Alor Activity**: Hardened BDD verification steps and remediated vde-init structural fracture.
 
-### 1. Completed Strikes
-- **Sovereign Realignment (Issue #259, PR #260)**:
-    - Consolidated all active plans in `plans/` into a single strike.
-    - Purged unused scripts and archived old plans.
-    - Realigned the entire codebase into Project domains (@armor, @forge, @shared-law).
-    - Synchronized `display` and `service_ports` standards.
-    - Hardened `bin/vde-enforce-uap.zsh` (recursive audit, file-type awareness).
-    - Purified all ZSH and Python scripts to satisfy UAP Mandates (shibboleths, no sleep).
-    - Certified 100% Green on all audits.
+## STRIKES COMPLETED
+1. **BDD Hardening (Issue #261)**: Purged 22 'pink' steps. Implemented Rust VM startup verification. Fixed VM_INSTALL cache bug.
+2. **vde-init Remediation (Issue #262)**: Healed Zsh arithmetic bug (( i++ )) in config smelting ritual. Verified 100% Green pass rate for initialization.
 
-### 2. Current Forge Status
-- **Heartbeat**: 100% Green (72/72 steps passed).
-- **UAP Sentinel**: 100% Success (0 violations, 0 warnings).
-- **Branch**: `develop` (Clean, PR #260 merged).
-- **Open Signets**: None.
-- **Pending Chronicles**: None.
+## PENDING MISSION: Phase 31 (DNS Discovery)
+- **Status**: IN PLANNING.
+- **Immediate Task**: Final Tactical Sweep of BDD step definitions to ensure zero remaining 'pink' placeholders.
 
-### 3. Recommendations for Next Watch
-- **Point Release**: The current state is extremely stable and aligned. Consider cutting a point release (e.g., 1.4.2) to mark this purification milestone.
-- **Feature Expansion**: With the engine now properly isolated and the sentinel hardened, the Forge is ready for new high-complexity Spokes or advanced cluster logic.
-
-### 4. Technical Debt Resolved
-- UAP warnings in `scripts/setup/` and `tests/` are fully resolved.
-- False positives in UAP Enforcer for Python and Dockerfiles are eliminated.
-- Direct `jq` calls in `vde-ps` and `vde-cluster-utils` are replaced with `vde_query_json`.
+## FRACTURE WATCH
+- Monitor 'bin/generate-all-configs' for any latent arithmetic edge cases.
+- Monitor BDD execution time; 'vde init' now takes ~8s due to hardened verification.
 
 **This is the Way.**

@@ -1,0 +1,54 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Spoke Orchestration Blueprint)
+# Template for language VMs
+# Variables: postgres, 2404, , zsh /vde/scripts/setup/postgres-init.zsh
+name: vde-postgres
+services:
+  vde-postgres:
+    build:
+      context: ../../../..
+      dockerfile: configs/docker/vde-lang.Dockerfile
+      args:
+        VM_NAME: postgres
+        PKGS_TO_INSTALL: ""
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/postgres-init.zsh"
+        USERNAME: devuser
+        UID: 1000
+        GID: 1000
+    image: vde-postgres:latest
+    container_name: vde-postgres
+    hostname: vde-postgres
+    restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=postgres"
+
+    ports:
+      - "2404:2404"
+
+    volumes:
+      - ../../../../:/vde:ro
+      - ../../../../projects/postgres:/home/devuser/workspace
+      - ../../../../logs/postgres:/logs
+      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
+      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
+      # Docker Socket Sovereignty (Physical Verification Law)
+      - /var/run/docker.sock:/var/run/docker.sock
+      # macOS Canonical Bridge (Hardened to use explicit host socket)
+      - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/host-services/ssh-auth.sock
+      # VDE 2026 Sovereign Bridge
+      - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/vde-ssh.sock
+
+    environment:
+      - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock
+
+    env_file:
+      - ../../../../env-files/postgres.env
+
+    networks:
+      - vde-net
+
+networks:
+  vde-net:
+    external: true

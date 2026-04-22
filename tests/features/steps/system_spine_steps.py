@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # VDE ARCHITECTURAL RECORD
-# @armor (Engine BDD Steps)
-# @armor (BDD Integration Logic)
-# @armor (BDD Step Definition)
-# @armor (BDD Step Definition)
+# @shared-law (Engine BDD Steps)
+# @shared-law (BDD Integration Logic)
+# @shared-law (BDD Step Definition)
+# @shared-law (BDD Step Definition)
 """
 Step definitions for the System Spine Integrity feature.
 Ensures the Hub-and-Spoke architecture is fully operational and enforced.
@@ -13,6 +13,7 @@ import os
 import subprocess
 import time
 import re
+import shutil
 from pathlib import Path
 from behave import given, when, then
 from vm_common import VDE_ROOT, BIN_DIR, run_vde_command, get_container_name, vde_sleep
@@ -79,9 +80,29 @@ def step_verify_hydration(context, script_path):
     assert full_path.exists(), f"Hydration script missing: {script_path}"
     
     # Verify hydration result in container (e.g. check for a specific package or file)
-    # For python, we check if python3 is installed
-    result = run_vde_command(f"exec {context.vm_alias} which python3")
-    assert "python3" in result.stdout, "Container hydration failed (python3 not found)"
+    # We use dynamic verification based on the VM alias to ensure the correct binary exists
+    local_name = context.vm_alias.replace("vde-", "")
+    
+    # Map VM aliases to their authoritative binaries/sentinels
+    SENTINELS = {
+        "postgres": "psql --version",
+        "redis": "redis-cli --version",
+        "mongodb": "mongosh --version",
+        "mysql": "mysql --version",
+        "nginx": "nginx -v",
+        "rabbitmq": "rabbitmq-diagnostics -q check_running",
+        "jupyterlab": "jupyter --version",
+        "python": "python3 --version",
+        "rust": "cargo --version",
+        "go": "go version",
+        "js": "node --version"
+    }
+    
+    # Default to python3 for unknown languages, as it is the VDE standard binary
+    check_cmd = SENTINELS.get(local_name, "python3 --version")
+    
+    result = run_vde_command(f"exec {context.vm_alias} {check_cmd}")
+    assert result.returncode == 0, f"Container hydration failed for {context.vm_alias} (Binary '{check_cmd}' not functional)"
 
 @then('the SSH port should be atomically allocated and recorded in the registry')
 def step_verify_port_allocation(context):
@@ -103,20 +124,45 @@ def step_verify_port_allocation(context):
     port = match.group(1)
     assert int(port) > 0, f"Invalid port recorded: {port}"
 
-@then('I should be able to SSH into "{container_name}" and verify the environment')
-def step_verify_ssh_env(context, container_name):
-    # Use vde enter to verify a real login shell environment
-    result = run_vde_command(fr"enter {context.vm_alias} echo \$SHELL")
-    assert "/bin/zsh" in result.stdout, f"Unexpected shell configuration: {result.stdout}"
-
 @given('the VDE system is healthy')
 def step_system_healthy(context):
-    # Rebuild cache to ensure we have fresh data
+    # 1. Rebuild cache to ensure we have fresh data
     run_vde_command("rebuild-cache")
-    # Purge known_hosts to prevent SSH identification warnings breaking forwarding
-    from ssh_helpers import VDE_SSH_KNOWN_HOSTS
-    if VDE_SSH_KNOWN_HOSTS.exists():
-        VDE_SSH_KNOWN_HOSTS.unlink()
+    
+    # 2. Verify Docker socket is accessible
+    res_docker = subprocess.run(["docker", "info"], capture_output=True, timeout=15)
+    assert res_docker.returncode == 0, f"Docker socket inaccessible: {res_docker.stderr}"
+    
+    # 3. Check for at least 500MB free space in the VDE root
+    usage = shutil.disk_usage(VDE_ROOT)
+    free_mb = usage.free / (1024 * 1024)
+    assert free_mb > 500, f"Insufficient disk space in VDE root: {free_mb:.1f}MB free (min 500MB required)"
+    
+    # 4. Scan logs/vde.log for recent "CRITICAL" or "ERROR" lock failures
+    log_file = VDE_ROOT / "logs" / "vde.log"
+    if log_file.exists():
+        # Check last 50 lines for critical failures
+        try:
+            with open(log_file, 'r') as f:
+                lines = f.readlines()[-50:]
+                for line in lines:
+                    if ("CRITICAL" in line or "ERROR" in line) and "lock" in line.lower():
+                        raise AssertionError(f"Recent lock failure detected in logs: {line.strip()}")
+        except Exception as e:
+            if isinstance(e, AssertionError):
+                raise
+            pass
+
+    # 5. Purge known_hosts to prevent SSH identification warnings breaking forwarding
+    try:
+        from ssh_helpers import VDE_SSH_KNOWN_HOSTS
+        if VDE_SSH_KNOWN_HOSTS.exists():
+            VDE_SSH_KNOWN_HOSTS.unlink()
+    except ImportError:
+        # Fallback if ssh_helpers not available
+        known_hosts = Path.home() / ".ssh" / "vde" / "known_hosts"
+        if known_hosts.exists():
+            known_hosts.unlink()
 
 @then('every VM defined in the Hub must have a corresponding USP init script')
 def step_verify_all_scripts(context):
@@ -163,31 +209,6 @@ def step_load_registry_spine(context):
     context.vm_types = load_vm_types_raw()
     context.container_name = "vde-python" # Default for this scenario
 
-@given('"vde-python" is currently running')
-def step_ensure_running_python(context):
-    context.vm_alias = "python"
-    from vm_common import container_is_running
-    if not container_is_running("vde-python"):
-        run_vde_command("start python")
-    res = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", "vde-python"], capture_output=True, text=True)
-    assert res.stdout.strip() == "true", "vde-python is not running"
-
-@then('the directory "{dir_path}" should be empty in the Spoke')
-def step_directory_empty_in_spoke(context, dir_path):
-    # Ensure vm_alias is set (fallback to python if needed)
-    vm_alias = getattr(context, 'vm_alias', 'python')
-    
-    # Use ls -A to list all files (including hidden ones, but excluding . and ..)
-    # We use vde_exec directly to avoid Zsh profile overhead if possible
-    result = run_vde_command(f"exec {vm_alias} ls -A {dir_path}")
-    
-    assert result.returncode == 0, f"Failed to list {dir_path} in {vm_alias}: {result.stderr}"
-    files = result.stdout.strip()
-    
-    if os.environ.get("VDE_DEBUG_TESTS") == "1":
-        print(f"DEBUG: ls -A {dir_path} output: '{files}'")
-        
-    assert not files, f"Directory {dir_path} is not empty in {vm_alias}. Found: {files}"
 
 @when('I run the one true way to stop "{vm_alias}"')
 def step_stop_vm(context, vm_alias):
@@ -342,11 +363,6 @@ def step_execute_workspace(context, command):
     context.command_output = result.stdout + result.stderr
     context.command_exit_code = result.returncode
 
-@then('the directory "{path}" should exist')
-def step_dir_exists(context, path):
-    # Relative to workspace if defined, else relative to VDE_ROOT
-    base = getattr(context, 'workspace', VDE_ROOT)
-    assert (base / path).exists(), f"Directory {path} does not exist in {base}"
 
 @given('the Docker daemon is responsive')
 def step_docker_responsive(context):
@@ -382,7 +398,28 @@ def step_agent_active_hub(context):
 def step_pillars_passed(context):
     """Run bin/vde-spine-check.zsh to verify all pillars in a single ritual."""
     res = subprocess.run([str(BIN_DIR / "vde-spine-check.zsh")], capture_output=True, text=True)
-    assert res.returncode == 0, f"System Spine Check Failed: {res.stdout} {res.stderr}"
+    
+    # Verify success markers for all 4 pillars
+    markers = [
+        "[OK] Pillar I: Zsh",
+        "[OK] Pillar II: Git",
+        "[OK] Pillar III: Docker",
+        "[OK] Pillar IV: SSH"
+    ]
+    
+    # Pillar III might have an INFO marker in CI
+    ci_marker = "[INFO] Pillar III (Docker): Skipping diagnostic probe in CI mode"
+    
+    output = res.stdout + res.stderr
+    missing = []
+    for marker in markers:
+        if marker not in output:
+            if "Pillar III" in marker and ci_marker in output:
+                continue
+            missing.append(marker)
+            
+    assert res.returncode == 0, f"System Spine Check Failed (RC {res.returncode}):\n{output}"
+    assert not missing, f"Missing success markers in spine check output: {', '.join(missing)}\nOutput:\n{output}"
 
 @given('the Hub is synchronized to version {version}')
 def step_hub_synced_version_param(context, version):
