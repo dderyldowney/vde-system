@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
-# Variables: testport2, 2220, , zsh /vde/scripts/setup/testport2-init.zsh
+# Variables: testport2, 2220, -, zsh /vde/scripts/setup/testport2-init.zsh
 name: vde-testport2
 services:
   vde-testport2:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: testport2
-        PKGS_TO_INSTALL: ""
+        PKGS_TO_INSTALL: "-"
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/testport2-init.zsh"
         USERNAME: devuser
         UID: 1000
@@ -47,7 +47,14 @@ services:
       - ../../../../env-files/testport2.env
 
     networks:
-      - vde-net
+      vde-net:
+        aliases:
+          - "testport2"
+          - "vde-testport2"
+
+    extra_hosts:
+      - "vde-host:host-gateway"
+      - "host:host-gateway"
 
 networks:
   vde-net:

@@ -47,7 +47,14 @@ services:
       - ../../../../env-files/{{NAME}}.env
 
     networks:
-      - vde-net
+      vde-net:
+        aliases:
+          - "{{NAME}}"
+          - "vde-{{NAME}}"
+
+    extra_hosts:
+      - "vde-host:host-gateway"
+      - "host:host-gateway"
 
 networks:
   vde-net:

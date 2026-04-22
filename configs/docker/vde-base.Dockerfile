@@ -13,13 +13,17 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     curl \
     wget \
     jq \
+    iputils-ping \
+    dnsutils \
+    netcat-openbsd \
+    socat \
     build-essential \
     procps \
     locales \
     ca-certificates \
     gnupg \
     lsb-release \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 1.1 Install Docker CLI (for Sovereign features)
 RUN mkdir -p /etc/apt/keyrings && \

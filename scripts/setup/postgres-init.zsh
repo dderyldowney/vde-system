@@ -29,12 +29,11 @@ if [[ -z "${POSTGRES_DEV_PASSWORD}" ]]; then
     echo -e "  The Forge requires a password to be provided via the environment for Spoke ignition."
     exit 1
 fi
-local pg_dev_pass="${POSTGRES_DEV_PASSWORD}"
+
+# Securely pass password to postgres user for creation
+echo "[POSTGRES-INIT] Ensuring 'devuser' exists with secure credentials..."
 su - postgres -c "psql -tc \"SELECT 1 FROM pg_user WHERE usename = 'devuser'\" | grep -q 1" || \
-su - postgres -c "psql <<EOF
-CREATE USER devuser WITH PASSWORD '${pg_dev_pass}' SUPERUSER;
-EOF
-"
+su - postgres -c "psql -c \"CREATE USER devuser WITH PASSWORD '${POSTGRES_DEV_PASSWORD}' SUPERUSER;\""
 
 su - postgres -c "psql -lqt | cut -d \| -f 1 | grep -qw devuser" || \
 su - postgres -c "createdb -O devuser devuser"
@@ -53,11 +52,11 @@ local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
 cat <<EOF > "${_spoke_ignition}"
 #!/usr/bin/env zsh
 # PostgreSQL Spoke Ignition
-# Starts the database in the background on container start
+# Forged in Beskar
 
 if ! pg_isready -h localhost >/dev/null 2>&1; then
-    echo "[VDE-POSTGRES] Forged in Beskar: Starting PostgreSQL..."
-    sudo service postgresql start >/dev/null 2>&1
+    echo "[VDE-POSTGRES] Igniting PostgreSQL cluster..."
+    /usr/bin/pg_ctlcluster 15 main start
 fi
 EOF
 chmod +x "${_spoke_ignition}"

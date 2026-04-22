@@ -45,7 +45,8 @@ _VM_COMMON_LOADED=1
 # If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
 if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
     # Zsh-native path detection (UAP Mandate 1)
-    _VM_COMMON_SOURCE="${(%):-%x}"
+    # %N is the standard way to get the sourced file path in ZSH
+    _VM_COMMON_SOURCE="${(%):-%N}"
     
     # Calculate absolute path to root (lib/ is one level below VDE root)
     VDE_ROOT_DIR="$(cd "$(dirname "${_VM_COMMON_SOURCE}")/.." && pwd)"

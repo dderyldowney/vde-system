@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @armor (Spoke Orchestration Blueprint)
 # Template for service VMs
-# Variables: nginx, 2403, {{SERVICE_PORTS}}, , zsh /vde/scripts/setup/nginx-init.zsh
+# Variables: nginx, 2403, 80,443, -, zsh /vde/scripts/setup/nginx-init.zsh
 name: vde-nginx
 services:
   vde-nginx:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: nginx
-        PKGS_TO_INSTALL: ""
+        PKGS_TO_INSTALL: "-"
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/nginx-init.zsh"
         POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
@@ -25,7 +25,6 @@ services:
       - "2403:2403"
       - "80:80"
       - "443:443"
-
 
     volumes:
       - ../../../../:/vde:ro
@@ -52,7 +51,14 @@ services:
       - ../../../../env-files/nginx.env
 
     networks:
-      - vde-net
+      vde-net:
+        aliases:
+          - "nginx"
+          - "vde-nginx"
+
+    extra_hosts:
+      - "vde-host:host-gateway"
+      - "host:host-gateway"
 
     labels:
       - "vde.managed=true"

@@ -34,6 +34,8 @@ if [[ -S "/var/run/docker.sock" ]]; then
     sudo chmod 666 /var/run/docker.sock
 else
     echo "[VDE-ENTRYPOINT] Warning: docker.sock not found or not a socket"
+fi
+
 # 2. SSH Agent Forwarding (Sovereign Bridge)
 local -a _bridge_candidates=(
     "/run/vde-ssh.sock"                # VDE 2026 Standard (Direct Bind)
@@ -41,19 +43,13 @@ local -a _bridge_candidates=(
     "/ssh-agent"                       # Legacy / Alternative
 )
 
-# ZSH-native shibboleth (Rule 1)
-local _zsh_pure=${(%):-%x}
+# 3. Sovereign Bridge Handshake
 local _found_bridge=""
-# ZSH-native shibboleth (Rule 1)
-local _zsh_pure=${(%):-%x}
 echo "[VDE-ENTRYPOINT] Initializing Sovereign Bridge Handshake..."
 for candidate in "${_bridge_candidates[@]}"; do
     echo "[VDE-ENTRYPOINT] Searching for SSH bridge at ${candidate}..."
     if [[ -S "${candidate}" ]]; then
         _found_bridge="${candidate}"
-        break
-    fi
-done
         # Grant permissions to the bridge to ensure devuser can access it via socat
         sudo chmod 666 "${_found_bridge}"
         break
@@ -64,6 +60,7 @@ done
         if [[ -n "${_inner_sock}" ]]; then
             _found_bridge="${_inner_sock}"
             echo "[VDE-ENTRYPOINT] RECOVERY: Found inner socket at ${_found_bridge}"
+            sudo chmod 666 "${_found_bridge}"
             break
         fi
     fi
@@ -109,7 +106,7 @@ else
     echo "[VDE-ENTRYPOINT] Blockade: Verification of Section 10.5 will fail."
 fi
 
-# 3. Universal Port Configuration (Rule I)
+# 4. Universal Port Configuration (Rule I)
 local _types_json="/vde/data/vm-types.json"
 local _vde_ssh_port=22 # Default fallback
 
@@ -137,7 +134,7 @@ if [[ -f "${_types_json}" ]]; then
         echo "[VDE-ENTRYPOINT] Authoritative SSH Port: ${_vde_ssh_port}"
     fi
 
-    # 4. Generate Global SSH Client Config (VM-to-VM Bridge)
+    # 5. Generate Global SSH Client Config (VM-to-VM Bridge)
     echo "[VDE-ENTRYPOINT] Generating VM-to-VM bridge configuration..."
     mkdir -p "/home/devuser/.ssh"
     echo "# VDE Universal VM-to-VM Bridge" > "/home/devuser/.ssh/config"
@@ -179,9 +176,10 @@ echo "[VDE-ENTRYPOINT] Handshake complete. Starting SSH Gate on port ${_vde_ssh_
 # Use /usr/local/bin to avoid being overwritten by /vde mount
 local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
 if [[ -f "${_spoke_ignition}" ]]; then
-    echo "[VDE-ENTRYPOINT] Triggering Spoke Ignition: ${_spoke_ignition}..."
-    # Execute in background, detached from the SSH gate
-    zsh "${_spoke_ignition}" &
+    echo "[VDE-ENTRYPOINT] Triggering Spoke Ignition as root: ${_spoke_ignition}..."
+    # Execute in background as root to allow service starts
+    # Specific spoke scripts should drop privileges if needed
+    /usr/bin/zsh "${_spoke_ignition}" &
 fi
 
 # 6. Start SSH Server (The Gate)

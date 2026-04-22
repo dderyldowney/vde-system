@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
-# Variables: lua, 2212, , zsh /vde/scripts/setup/lua-init.zsh
+# Variables: lua, 2212, -, zsh /vde/scripts/setup/lua-init.zsh
 name: vde-lua
 services:
   vde-lua:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: lua
-        PKGS_TO_INSTALL: ""
+        PKGS_TO_INSTALL: "-"
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/lua-init.zsh"
         USERNAME: devuser
         UID: 1000
@@ -47,7 +47,14 @@ services:
       - ../../../../env-files/lua.env
 
     networks:
-      - vde-net
+      vde-net:
+        aliases:
+          - "lua"
+          - "vde-lua"
+
+    extra_hosts:
+      - "vde-host:host-gateway"
+      - "host:host-gateway"
 
 networks:
   vde-net:

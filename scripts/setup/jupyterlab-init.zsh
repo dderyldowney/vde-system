@@ -17,7 +17,7 @@ apt-get update
 apt-get install -y ${=vde_jupyter_pkgs}
 
 # 3. Create a dedicated venv for Jupyter
-local dev_home=$HOME
+local dev_home="/home/devuser"
 local _venv_path="${dev_home}/.vde-venv"
 sudo -u devuser python3 -m venv "${_venv_path}"
 
@@ -73,7 +73,7 @@ grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
 # 6.1 INTER-VM AWARENESS (Cluster Bonding)
 # Enable seamless connection to the postgres Spoke if present on the network
 grep -q "DATABASE_URL" "${_zshenv}" || {
-    echo "export DATABASE_URL=postgresql://devuser:\${POSTGRES_DEV_PASSWORD}@vde-postgres:5432/postgres_dev_db" >> "${_zshenv}"
+    echo "export DATABASE_URL=postgresql://devuser:\${POSTGRES_DEV_PASSWORD}@postgres:5432/postgres_dev_db" >> "${_zshenv}"
 }
 chown devuser:devuser "${_zshenv}"
 
