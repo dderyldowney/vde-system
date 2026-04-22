@@ -64,9 +64,9 @@ To maintain strict focus and project separation, the VDE utilizes two primary op
         *   **Tests**: `tests/features/*.feature` (BDD Features), `tests/features/steps/*.py` (Step Definitions), CI/CD Workflows.
         *   **Rituals**: The Signet and Chronicle (GitHub Flow), Code Review Gates, AI-Agent Dispatch.
     *   **The Foundation (@shared-law)**
-        *   **The Spinal Cord**: Shared foundational files that bridge technical integrity and governance.
-        *   **Docs**: `SOVEREIGN_CHARTER.md`, `VDE-SPEC.md`, `ARCHITECTURE.md`.
-        *   **Records**: `MEMORY.md`, `RELEASE_NOTES.md`, `PROJECT_STATUS.md`.
+        *   **The Spinal Cord**: The foundational bridge and shared law defining the relationship between Armor and Forge.
+        *   **Docs (The Gospel)**: `ARCHITECTURE.md`, `TECHNICAL_DEEP_DIVE.md`, `RELEASE_NOTES.md`, `VDE-SPEC.md`, `USE_CASES.md`, `VDE_ANALYSIS.md`, `PROJECT_STATUS.md`, `SOVEREIGN_CHARTER.md`, `STDLIB.md`.
+        *   **Records**: `MEMORY.md`.
         *   **Infrastructure**: `Makefile`, `.gitignore`, `.editorconfig`.
 
 ---
