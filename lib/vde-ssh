@@ -341,7 +341,6 @@ Host ${host_alias}
 
     mkdir -p "$(dirname "${ssh_config}")"
 
-    echo "" >> "${temp_file}"
     echo "${entry}" >> "${temp_file}"
     chmod 600 "${temp_file}"
 
@@ -385,7 +384,6 @@ Host ${host_alias}
     ForwardAgent yes
     LogLevel ERROR"
 
-    echo "" >> "${temp_file}"
     echo "${entry}" >> "${temp_file}"
     chmod 600 "${temp_file}"
 
