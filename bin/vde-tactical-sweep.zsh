@@ -72,5 +72,12 @@ if [[ -d "${VDE_DOCKER_STATE_DIR}" ]]; then
     vde_log_success "[SWEEP] Docker state directory at ${VDE_DOCKER_STATE_DIR#${VDE_ROOT_DIR}/} cleared." "sweep"
 fi
 
+# 5. THE TMP PURGE: Clear ephemeral artifact directory
+if [[ -d "${VDE_ROOT_DIR}/.tmp" ]]; then
+    vde_log_info "[SWEEP] Purging ephemeral artifacts (.tmp/)..." "sweep"
+    rm -rf "${VDE_ROOT_DIR}/.tmp"/*(N) 2>/dev/null
+    vde_log_success "[SWEEP] Ephemeral artifacts purged." "sweep"
+fi
+
 vde_log_success "[SWEEP] Tactical Sweep Complete. The Forge is Pristine." "sweep"
 exit ${VDE_SUCCESS}
