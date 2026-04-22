@@ -93,6 +93,8 @@ test_run_report.txt
 # Session and agent files
 SESSION_STATE.md
 .agents/
+.gemini/settings.json
+.gemini/settings.local.json
 
 # Backup files
 *.old
