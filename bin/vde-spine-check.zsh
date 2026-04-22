@@ -26,6 +26,7 @@ main() {
         echo "[CRITICAL] Pillar I (Zsh) failed: Zsh 5.0+ required." >&2
         return 1
     fi
+    [[ $quiet -eq 0 ]] && echo "[OK] Pillar I: Zsh 5.0+ detected."
 
     # Pillar II: Git
     if ! command -v git &>/dev/null; then
@@ -35,6 +36,7 @@ main() {
     local git_test_dir=$(mktemp -d)
     (cd "${git_test_dir}" && git init --quiet --template='' && rm -rf .git) || { echo "[CRITICAL] Pillar II (Git) failed: git init failed."; return 1; }
     rmdir "${git_test_dir}"
+    [[ $quiet -eq 0 ]] && echo "[OK] Pillar II: Git is operational."
 
     # Pillar III: Docker
     if ! docker info &>/dev/null; then
@@ -50,6 +52,7 @@ main() {
             echo "[CRITICAL] Pillar III (Docker) failed: Alpine diagnostic probe failed." >&2
             return 1
         fi
+        [[ $quiet -eq 0 ]] && echo "[OK] Pillar III: Docker is operational."
     fi
 
     # Pillar IV: SSH
@@ -81,6 +84,7 @@ main() {
             return 1
         fi
     fi
+    [[ $quiet -eq 0 ]] && echo "[OK] Pillar IV: SSH identity (vde_student) is loaded."
 
     [[ $quiet -eq 0 ]] && echo "[SUCCESS] The Unyielding Tetrad is active. Sovereign Ecosystem stable."
     return 0

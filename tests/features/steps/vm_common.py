@@ -201,7 +201,7 @@ def container_exists(container_name):
 
 
 def container_is_running(container_name):
-    """Check if a VDE container is currently running via vde ps.
+    """Check if a VDE container is currently running via docker inspect.
 
     Args:
         container_name: Name of the container to check (with or without vde- prefix)
@@ -210,21 +210,18 @@ def container_is_running(container_name):
         bool: True if container is running, False otherwise
     """
     try:
-        simple_name = container_name.replace("vde-", "")
-        full_name = f"vde-{simple_name}"
-        # Use explicit filtering for speed and accuracy
+        full_name = f"vde-{container_name.replace('vde-', '')}"
+        # Use direct docker inspect for ground truth state
         result = subprocess.run(
-            ["zsh", str(BIN_DIR / "vde"), "ps", "-q", "--filter", f"name={simple_name}"],
+            ["docker", "inspect", "-f", "{{.State.Running}}", full_name],
             capture_output=True,
             text=True,
-            timeout=15,
-            cwd=str(VDE_ROOT),
-            env=_vde_env(),
+            timeout=10
         )
-        return full_name in result.stdout
+        return result.returncode == 0 and result.stdout.strip() == "true"
     except Exception as e:
         if os.environ.get("VDE_DEBUG_TESTS") == "1":
-            print(f"[DEBUG] container_exists check failed: {e}")
+            print(f"[DEBUG] container_is_running check failed: {e}")
         return False
 
 
@@ -235,24 +232,28 @@ def get_container_id(container_name):
         container_name: Name of the container to look up
 
     Returns:
-        str: Container ID if found, empty string if not found
+        str: Container ID if found
+
+    Raises:
+        RuntimeError: If container is missing or lookup fails
     """
     try:
+        full_name = f"vde-{container_name.replace('vde-', '')}"
         result = subprocess.run(
-            [str(BIN_DIR / "vde"), "ps"], capture_output=True, text=True, timeout=10
+            ["docker", "inspect", "-f", "{{.Id}}", full_name],
+            capture_output=True,
+            text=True,
+            timeout=10
         )
         if result.returncode == 0:
-            for line in result.stdout.strip().split("\n"):
-                if container_name in line:
-                    # Extract container ID from ps output
-                    parts = line.split()
-                    if parts:
-                        return parts[0]
+            return result.stdout.strip()
+        
+        # Proper error if missing
+        raise RuntimeError(f"Container '{full_name}' not found: {result.stderr.strip()}")
     except Exception as e:
-        if os.environ.get("VDE_DEBUG_TESTS") == "1":
-            print(f"[DEBUG] get_container_id failed: {e}")
-        pass
-    return ""
+        if isinstance(e, RuntimeError):
+            raise
+        raise RuntimeError(f"Failed to lookup container ID for '{container_name}': {e}")
 
 
 def get_compose_file(vm_name):

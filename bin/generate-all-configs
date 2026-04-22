@@ -278,15 +278,16 @@ main() {
     # Skip if already has config (unless --force)
     local config_file="${VDE_ROOT_DIR}/configs/docker/languages/${short_name}/docker-compose.yml"
     if [[ -f "${config_file}" && "${FORCE_REGENERATE}" != "true" ]]; then
-      ((skipped_count++))
+      (( skipped_count += 1 ))
+      (( env_skipped_count += 1 ))
       continue
     fi
 
     local pkgs="$(get_vm_info install "${short_name}" 2>/dev/null || echo "")"
     local custom_cmd="$(get_vm_info custom_cmd "${short_name}" 2>/dev/null || echo "")"
     generate_language_config "${short_name}" "${pkgs}" "${custom_cmd}"
-    ((generated_count++))
-    ((env_generated_count++))
+    (( generated_count += 1 ))
+    (( env_generated_count += 1 ))
   done
 
   # Process service VMs
@@ -296,15 +297,16 @@ main() {
     # Skip if already has config (unless --force)
     local config_file="${VDE_ROOT_DIR}/configs/docker/services/${short_name}/docker-compose.yml"
     if [[ -f "${config_file}" && "${FORCE_REGENERATE}" != "true" ]]; then
-      ((skipped_count++))
+      (( skipped_count += 1 ))
+      (( env_skipped_count += 1 ))
       continue
     fi
 
     local pkgs="$(get_vm_info install "${short_name}" 2>/dev/null || echo "")"
     local custom_cmd="$(get_vm_info custom_cmd "${short_name}" 2>/dev/null || echo "")"
     generate_service_config "${short_name}" "${pkgs}" "${custom_cmd}"
-    ((generated_count++))
-    ((env_generated_count++))
+    (( generated_count += 1 ))
+    (( env_generated_count += 1 ))
   done
 
   # Always generate SSH config (it's authoritative)
