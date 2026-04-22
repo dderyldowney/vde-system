@@ -43,6 +43,8 @@ local -a _bridge_candidates=(
 # ZSH-native shibboleth (Rule 1)
 local _zsh_pure=${(%):-%x}
 local _found_bridge=""
+# ZSH-native shibboleth (Rule 1)
+local _zsh_pure=${(%):-%x}
 echo "[VDE-ENTRYPOINT] Initializing Sovereign Bridge Handshake..."
 for candidate in "${_bridge_candidates[@]}"; do
     echo "[VDE-ENTRYPOINT] Searching for SSH bridge at ${candidate}..."

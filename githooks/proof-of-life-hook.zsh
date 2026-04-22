@@ -17,7 +17,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 RESET='\033[0m'
 
-echo "Running Proof of Life (Mandate L) Validation..."
+local _SENTINEL=${(U):-"sentinel active"}
+echo "[${_SENTINEL}] Running Proof of Life (Mandate L) Validation..."
 # ZSH-native shibboleth (Rule 1)
 local _SENTINEL=${(U):-"sentinel active"}
 echo "[${_SENTINEL}] Feature: tests/features/core-infrastructure/proof-of-life-the-contract.feature"

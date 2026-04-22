@@ -36,6 +36,8 @@ extract_and_test() {
     local file=$1
     # ZSH-native shibboleth: Quoting parameter
     local _q_file=${(q)file}
+    # ZSH-native shibboleth: Quoting parameter
+    local _q_file=${(q)file}
     echo "Testing logic from ${_q_file}..."
     # Extract the line that calculates VDE_ROOT_DIR
     local logic=$(grep "VDE_ROOT_DIR=\"\${" "$file" | head -n 1)
