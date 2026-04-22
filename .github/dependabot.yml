@@ -1,12 +1,13 @@
 # VDE ARCHITECTURAL RECORD
-<!-- @shared-law (Dependency Maintenance) -->
+# @shared-law (Dependency Maintenance)
 version: 2
 updates:
-  - package-ecosystem: "pip"
-    directory: "/"
+  - package-ecosystem: pip
+    directory: /
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "github-actions"
-    directory: "/"
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: weekly
+
