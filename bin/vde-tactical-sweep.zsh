@@ -79,5 +79,15 @@ if [[ -d "${VDE_ROOT_DIR}/.tmp" ]]; then
     vde_log_success "[SWEEP] Ephemeral artifacts purged." "sweep"
 fi
 
+# 6. THE GHOST PURGE: Remove all *.bak files recursively
+vde_log_info "[SWEEP] Purging all ghost files (*.bak)..." "sweep"
+local ghost_files=("${VDE_ROOT_DIR}"/**/*.bak(N))
+if [[ ${#ghost_files} -gt 0 ]]; then
+    rm -f "${ghost_files[@]}" 2>/dev/null
+    vde_log_success "[SWEEP] ${#ghost_files} ghost files purged." "sweep"
+else
+    vde_log_info "[SWEEP] No ghost files detected." "sweep"
+fi
+
 vde_log_success "[SWEEP] Tactical Sweep Complete. The Forge is Pristine." "sweep"
 exit ${VDE_SUCCESS}
