@@ -38,7 +38,7 @@ All libraries enforce **ZSH-only** semantics (ZSH 5.0+) for optimal performance 
 
 ## Core Libraries
 
-### vde-core
+### vde-core (@armor)
 **Purpose**: Essential initialization, versioning, and core functions  
 **Size**: 29.4 KB  
 **Key Functions**:
@@ -530,7 +530,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
-### vm-lock
+### vm-lock (@armor)
 **Purpose**: Atomic file-based concurrency locking  
 **Size**: 5.1 KB  
 **Key Functions**:
@@ -742,4 +742,4 @@ export TEMPLATES_DIR="${VDE_ROOT_DIR}/templates"
 
 ---
 
-**End of VDE Standard Library Documentation**
+**End of VDE Standard Library Documentation**ntation**
