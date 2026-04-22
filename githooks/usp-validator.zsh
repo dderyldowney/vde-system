@@ -30,7 +30,7 @@ load_vm_types
 
 # 1. Registration & Presence Check
 # ZSH-native shibboleth (Rule 1): Expand keys from associative array
-local registered_vms=(${(k)VDE_CORE_VM_DISPLAY})
+local registered_vms=(${(k)VM_DISPLAY})
 local setup_dir="${VDE_ROOT_DIR}/scripts/setup"
 
 # Check if every registered VM has a setup script
@@ -58,7 +58,8 @@ for script in "${setup_dir}"/*-init.zsh(N); do
         fi
     done
     if [[ ${found} -eq 0 ]]; then
-        echo -e "${YELLOW}[WARN] USP Ghost: Script 'scripts/setup/${script_base}' exists but '${vm_alias}' is not in the Beskar Registry.${RESET}"
+        echo -e "${RED}[ERROR] USP Violation: Script 'scripts/setup/${script_base}' exists but '${vm_alias}' is not in the Beskar Registry.${RESET}"
+        EXIT_CODE=1
     fi
 done
 
