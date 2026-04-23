@@ -18,10 +18,12 @@
 - [x] **Transversal Bridge**: SSH Agent Forwarding fixed and verified via native SSH Pillar.
 - [x] **UAP Enforcement**: Mandatory supervision by `bin/vde-enforce-uap.zsh` integrated into all CLI paths.
 
+- [x] **DNS Discovery & Bridging (Phase 31)**: Implemented dual resolution (alias/prefix) and Sovereign Bridge (`vde-host`). 100% verified.
+
 ### 2. TEST FIDELITY
-- **Behave BDD**: 26 Scenarios / 245 Steps - **100% PASS**
+- **Behave BDD**: 47 Scenarios / 308 Steps - **100% PASS**
 - **Unified Tagging**: `@system-spine` now serves as the primary audit gate.
-- **Performance**: Optimized setup/teardown and port discovery for high-velocity CI.
+- **No Pink Steps**: Hardened `execute_in_container` for absolute technical proof.
 
 ### 3. IMMUTABLE MANDATES
 - **Mandate L**: The Proof of Life contract (`plans/system-spine-contract.md`) is the **Heartbeat** of the project.
@@ -40,6 +42,10 @@
 | 28 | Sovereign Release: Ingot Stash & Branching Laws | ✅ COMPLETE |
 | 29 | Tech Stack Clusters: Spoke Hydration & Hardening | ✅ COMPLETE |
 | 30 | Onboarding Rituals: Path of the Foundling | ✅ COMPLETE |
-| 31 | Advanced Orchestration: DNS Discovery & Bridge | 🟢 CLEAR FOR IGNITION |
+| 31 | Advanced Orchestration: DNS Discovery & Bridge | 🚧 IN PROGRESS (FAILING) |
 
-**Next Strike**: Phase 32 (Agent Self-Correction & Auto-Remediation).
+**Current Blockages**:
+- **Hub-to-Spoke DNS**: Intermittent failures in shell verification due to UAP header noise.
+- **Tech Stack Cluster**: Redis/Postgres ignition race conditions in BDD context.
+- **JupyterLab**: Runtime connectivity fracture (RC 2).
+- **Lock Transparency**: Concurrency log corruption during contention checks.

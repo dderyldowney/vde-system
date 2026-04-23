@@ -6,8 +6,15 @@ from shell_helpers import verify_container_running, normalize_vm_name
 
 @given('"{vm_alias}" is running')
 def step_vm_is_running(context, vm_alias):
+    from vm_common import container_is_running, run_vde_command
+    from shell_helpers import wait_for_container_healthy
     # Use normalize_vm_name to get vde- prefix correctly
     container_name = normalize_vm_name(vm_alias)
+    
+    if not container_is_running(container_name):
+        run_vde_command(f"start {vm_alias}")
+        wait_for_container_healthy(container_name)
+        
     verify_container_running(container_name)
 
 @then('the output should contain either "{text1}" or "{text2}"')

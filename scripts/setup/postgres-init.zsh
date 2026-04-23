@@ -56,7 +56,7 @@ cat <<EOF > "${_spoke_ignition}"
 
 if ! pg_isready -h localhost >/dev/null 2>&1; then
     echo "[VDE-POSTGRES] Igniting PostgreSQL cluster..."
-    /usr/bin/pg_ctlcluster 15 main start
+    sudo service postgresql start
 fi
 EOF
 chmod +x "${_spoke_ignition}"

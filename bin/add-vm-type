@@ -3,8 +3,8 @@
 set -e
 
 # Source shared library
-VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
-VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)}"
+# Use zsh-native absolute path detection (Rule 1)
+VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vm-common"
@@ -93,6 +93,10 @@ while [[ ${#} -gt 0 ]]; do
             ;;
         --pkgs)
             PKGS="${2}"
+            shift 2
+            ;;
+        --custom)
+            CUSTOM_CMD="${2}"
             shift 2
             ;;
         --quiet)

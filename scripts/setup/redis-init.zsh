@@ -28,17 +28,18 @@ local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
 cat <<EOF > "${_spoke_ignition}"
 #!/usr/bin/env zsh
 # Redis Spoke Ignition
-# Starts the server in the background on container start
+# Forged in Beskar
 
-if ! pgrep -f "redis-server" >/dev/null; then
-    echo "[VDE-REDIS] Forged in Beskar: Starting Redis..."
-    sudo /usr/bin/redis-server /etc/redis/redis.conf --daemonize yes >/dev/null 2>&1
+if ! pgrep -x "redis-server" >/dev/null; then
+    echo "[VDE-REDIS] Igniting Redis server..."
+    /usr/bin/redis-server /etc/redis/redis.conf --daemonize yes
 fi
 EOF
 chmod +x "${_spoke_ignition}"
 
 # 4. PERSISTENCE ANCHOR (Hardened Bridge)
-local dev_home=$HOME
+
+local dev_home="/home/devuser"
 local _zshenv="${dev_home}/.zshenv"
 mkdir -p "${dev_home}"
 touch "${_zshenv}"

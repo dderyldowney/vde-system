@@ -71,7 +71,8 @@ if [[ -n "${_found_bridge}" ]]; then
     # Minimum viable chown for bridge functionality
     # Avoid recursive blocks on large directories like .vde-venv
     sudo chown devuser:devuser "/home/devuser"
-    sudo chown -R devuser:devuser "/home/devuser/.ssh"
+    # Only chown directories in .ssh, skip read-only mounted files
+    find "/home/devuser/.ssh" -type d -exec sudo chown devuser:devuser {} +
     
     chmod 700 "/home/devuser/.ssh"
     chmod 700 "/home/devuser/.ssh/vde"

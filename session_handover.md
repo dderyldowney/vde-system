@@ -1,22 +1,23 @@
-# VDE Session Handover: 1.4.1 (The Sovereign Baseline)
-<!-- @shared-law (The Record) -->
+# VDE Session Handover: Phase 31 UNSTABLE (Active Remediation)
 
-## CURRENT STATE: 100% GREEN
-**Date**: 2026-04-22
-**Baseline**: 1.4.1
+## 1. SOVEREIGN STATE
+- **Baseline**: 1.4.1 (Certified)
+- **Active Branch**: `feat/phase-31-dns-discovery`
+- **Strike Goal**: Phase 31 — DNS Discovery & Sovereign Bridge Expansion.
+- **Heartbeat**: ❌ RED. Multiple scenarios failing in `system-spine.feature` and `tech-stack-cluster.feature`.
 
-## MISSION STATUS: FORGE PRISTINE
-All realignment, hardening, and purification strikes from the 1.4.1 plan have been concluded. The workspace is free of ghost files, temporary artifacts, and historical path leaks.
+## 2. THE CURRENT BLOCKAGES (The Struggle)
+- **Log Noise Interference**: UAP success markers and library logs are corrupting shell verification. `vde enter` and `vde exec` output cannot be cleanly parsed by current BDD steps.
+- **Service Ignition Races**: Background hooks (`vde-spoke-ignition.zsh`) are igniting services, but `vde-poll` and `pg_isready` checks are tripping before readiness is absolute.
+- **JupyterLab Permissions**: Runtime connectivity (RC 2) persists despite home directory hardening.
 
-## STRIKES COMPLETED (Post-1.4.0)
-1. **Empirical BDD Hardening**: 80+ Given/Then steps replaced with system Ground Truth.
-2. **Security Remediation**: ReDoS and Workflow Permission alerts resolved and verified.
-3. **Automated Sentinels**: Security/Privacy audits integrated into pre-push and Hub CI.
-4. **vde-init Hardening**: Permanent fix for Zsh-specific arithmetic exit code bug.
+## 3. PENDING TASKS (Next Ignition)
+1. **Bypass Zsh Headers**: Refactor `shell_helpers.py` or `critical_steps.py` to use `docker exec` for technical verification, bypassing the Zsh/UAP initialization entirely.
+2. **Harden Ignition Polling**: Use explicit `vde-poll` calls with increased timeouts (60s+) for all tech stack components.
+3. **Debug JupyterLab**: Enter the Spoke manually and trace the RC 2 error.
 
-## PENDING MISSION: Phase 31 (DNS Discovery)
-- **Status**: 🟢 CLEAR FOR IGNITION.
-- **Objective**: Implement Spoke-to-Spoke DNS resolution within the 'vde-net' bridge.
-- **Protocol**: Start with Research-First reconnaissance of current Docker bridge configuration.
+## 4. TECHNICAL FOB (Context)
+- `bin/generate-all-configs --force` renders the Phase 31 DNS aliases correctly.
+- `vde-host` resolution is functional but test expectations for literal output are fragile.
 
-**This is the Way.**
+**The helmet is on. The work remains.**

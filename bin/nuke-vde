@@ -15,17 +15,18 @@
 
 # Note: set -e is intentionally disabled to avoid false exits from array operations
 # The script has proper error handling via return codes
-set -e
+# set -e
 
-# Determine VDE root directory
-VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
-VDE_ROOT_DIR="$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)"
+# Use zsh-native absolute path detection (Rule 1)
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
 
 # Source shared library
 source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
 source "${VDE_ROOT_DIR}/lib/vde-constants"
 source "${VDE_ROOT_DIR}/lib/vde-errors"
 source "${VDE_ROOT_DIR}/lib/vde-log"
+source "${VDE_ROOT_DIR}/lib/vde-naming"
 source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vm-common"
 
@@ -289,38 +290,46 @@ remove_all_vms() {
     echo ""
     print_info "Step 2: Removing all VM configurations..."
 
-    local vms
-    vms=$(get_all_vms 2>/dev/null || echo "")
+    # Ensure types are loaded
+    load_vm_types
 
-    if [[ -z "${vms}" ]]; then
-        print_info "No VMs found to remove"
-        return 0
-    fi
-
-    local vm
     local removed_count=0
+    local -a all_vms
+    all_vms=("${lang_vms[@]}" "${service_vms[@]}")
 
-    for vm in "${(@f)vms}"; do
-        if [[ -n "${vm}" ]]; then
-            local compose_file="${VDE_ROOT_DIR}/configs/docker/${vm}/docker-compose.yml"
-            local env_dir="${VDE_ROOT_DIR}/env-files/${vm}"
-
-            print_info "VM configuration preserved (manual deletion required): ${vm}"
-            if [[ -f "${compose_file}" ]]; then
-                print_info "  Compose file preserved: ${compose_file}"
-            fi
-            if [[ -d "${env_dir}" ]]; then
-                print_info "  Env dir preserved: ${env_dir}/"
-            fi
-
-            ((removed_count++))
+    for vm_name in "${all_vms[@]}"; do
+        local short_name="${vm_name#vde-}"
+        local type
+        type=$(get_vm_type "${vm_name}" 2>/dev/null || echo "service")
+        
+        local category="services"
+        if [[ "${type}" == "language" ]]; then
+            category="languages"
         fi
+        
+        local config_dir="${VDE_ROOT_DIR}/configs/docker/${category}/${short_name}"
+        local env_file="${VDE_ROOT_DIR}/env-files/${short_name}.env"
+
+        if [[ "${DRY_RUN}" = "true" ]]; then
+            [[ -d "${config_dir}" ]] && print_info "[DRY RUN] Would remove config dir: ${config_dir#${VDE_ROOT_DIR}/}"
+            [[ -f "${env_file}" ]] && print_info "[DRY RUN] Would remove env file: ${env_file#${VDE_ROOT_DIR}/}"
+        else
+            if [[ -d "${config_dir}" ]]; then
+                rm -rf "${config_dir}"
+                print_success "Removed config dir: ${short_name}"
+            fi
+            if [[ -f "${env_file}" ]]; then
+                rm -f "${env_file}"
+                print_success "Removed env file: ${short_name}.env"
+            fi
+        fi
+        ((removed_count++))
     done
 
     if [[ "${DRY_RUN}" = "true" ]]; then
-        print_info "[DRY RUN] Would remove ${removed_count} VM configuration(s)"
+        print_info "[DRY RUN] Would process ${removed_count} VM(s)"
     else
-        print_success "Removed ${removed_count} VM configuration(s)"
+        print_success "Processed ${removed_count} VM(s)"
     fi
 }
 
@@ -401,31 +410,35 @@ remove_docker_resources() {
     fi
 }
 
-# Remove SSH config entries
+# Remove SSH directory (The SSH Pillar)
 remove_ssh_config_entries() {
     echo ""
-    print_info "Step 5: Removing VDE SSH configuration..."
+    print_info "Step 5: Decommissioning VDE SSH Pillar..."
 
     if [[ -d "${VDE_SSH_DIR}" ]]; then
         if [[ "${DRY_RUN}" = "true" ]]; then
-            print_info "[DRY RUN] Would remove VDE SSH directory: ${VDE_SSH_DIR}"
+            print_info "[DRY RUN] Would remove entire SSH directory: ${VDE_SSH_DIR}"
             return 0
         fi
         print_info "Removing VDE SSH directory: ${VDE_SSH_DIR}"
         rm -rf "${VDE_SSH_DIR}"
-        print_success "Removed VDE SSH configuration"
+        print_success "VDE SSH directory removed"
     else
-        print_info "VDE SSH directory not found"
+        print_info "VDE SSH directory already absent: ${VDE_SSH_DIR}"
     fi
 }
 
-# Remove VDE directories (keeping project structure)
+# Remove VDE directories (Total Erasure)
 remove_vde_directories() {
     echo ""
-    print_info "Step 6: Removing VDE directories..."
+    print_info "Step 6: Purging VDE operational directories..."
 
     local dirs_to_remove=(
+        "data"
         "logs"
+        "env-files"
+        ".cache"
+        ".locks"
     )
 
     for dir in "${dirs_to_remove[@]}"; do
@@ -433,9 +446,6 @@ remove_vde_directories() {
         if [[ -d "${dir_path}" ]]; then
             if [[ "${DRY_RUN}" = "true" ]]; then
                 print_info "[DRY RUN] Would remove directory: ${dir}/"
-                du -sh "${dir_path}" 2>/dev/null | while read -r size path; do
-                    print_info "[DRY RUN]   Size: ${size}"
-                done
             else
                 print_info "Removing: ${dir}/"
                 rm -rf "${dir_path}"
@@ -580,10 +590,10 @@ main() {
 
     if [[ "${DRY_RUN}" = "true" ]]; then
         print_info "To run the actual uninstall, run:"
-        echo "  ${0}"
+        echo "  vde nuke"
         echo ""
         print_info "Or with backup:"
-        echo "  ${0} --no-backup"
+        echo "  vde nuke --no-backup"
         echo ""
     else
         if [[ -d "${BACKUP_LOCATION}/${UNINSTALL_BACKUP_DIR}" ]]; then
