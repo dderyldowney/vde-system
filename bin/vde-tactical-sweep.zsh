@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Maintenance Cleanup)
+# @armor (Engine Core)
 #===============================================================================
 # vde-tactical-sweep.zsh - Comprehensive Forge Cleanup Tool
 set -e

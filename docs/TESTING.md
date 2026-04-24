@@ -1,5 +1,5 @@
 # VDE Testing Strategy - 1.4.1 (The Sovereign Baseline)
-<!-- @shared-law (Sovereign Documentation) -->
+<!-- @shared-law (Sovereign Law) -->
 
 This document defines the absolute empirical standards for the Virtual Development Environment (VDE). All functional code MUST be verified by this suite.
 

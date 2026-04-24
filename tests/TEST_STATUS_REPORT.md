@@ -1,5 +1,5 @@
 # VDE Test Status Report (Sovereign Certification v1.4.0)
-<!-- @armor (Engine Test Suite) -->
+<!-- @forge (Governance Sentinel) -->
 
 ## Core Infrastructure
 | Feature | Status | Description |

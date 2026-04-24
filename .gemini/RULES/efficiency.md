@@ -1,5 +1,5 @@
 # Agentic Efficiency & Performance Protocol
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 
 ## Broad-Spectrum Discovery
 Prioritize search over manual navigation to prevent "chasing" functions one-by-one.

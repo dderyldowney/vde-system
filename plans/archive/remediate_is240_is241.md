@@ -1,5 +1,5 @@
-# Remediate IS240 & IS241 (@forge & @shared-law) Implementation Plan
 
+<!-- @shared-law (Forge Component) -->
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Complete architectural tagging for the Forge and Shared-Law domains, focusing on mythos documents, Data Authority files, and the Sovereign Artifact Set. Also implement UAP hardening for the `plans/` directory.

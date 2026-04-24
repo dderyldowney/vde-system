@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+# @forge (Governance Sentinel)
 # VDE ARCHITECTURAL RECORD
-# @forge (DNS Discovery Steps)
 from behave import given, when, then
 from vm_common import run_vde_command
 from shell_helpers import verify_container_running, normalize_vm_name

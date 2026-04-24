@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @shared-law (FIFO Stress Test Script)
+# @armor (Engine Core)
 VDE_ROOT="${VDE_ROOT:-$(cd "$(dirname "$0:A")/../.." && pwd)}"
 source "$VDE_ROOT/lib/vm-common"
 source "$VDE_ROOT/lib/vde-core"

@@ -1,5 +1,5 @@
 # REQUIRED OUTPUT FORMATS
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 ## Git Commit Format
 ```zsh
 git commit -m "<type>: <description>

@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for service VMs
 # Variables: mysql, 2402, 3306, -, zsh /vde/scripts/setup/mysql-init.zsh
 name: vde-mysql

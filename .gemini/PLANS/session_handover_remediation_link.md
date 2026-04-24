@@ -1,5 +1,5 @@
 # Session Handover: Remediation Plan Linkage
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 
 This document provides pointers to the remediation plan that accompanies the session handover. The remediation plan is designed to be read in parallel with this handover to ensure alignment and traceability between high-level handoff information and concrete implementation steps.
 

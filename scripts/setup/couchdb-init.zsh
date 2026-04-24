@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Spoke Hydration)
+# @armor (Engine Core)
 # VDE USP Hydration Script: couchdb
 # Client-only hydration to satisfy matrix requirements
 # Forged in Beskar

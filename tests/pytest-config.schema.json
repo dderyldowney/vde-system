@@ -1,6 +1,6 @@
 # VDE ARCHITECTURAL RECORD
-<!-- @armor (Engine Test Suite) -->
 {
+  "@forge": "(Governance Sentinel)",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://vde.local/schemas/pytest-config.schema.json",
   "title": "VDE Pytest Configuration",

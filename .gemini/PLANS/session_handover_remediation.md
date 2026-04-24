@@ -1,5 +1,5 @@
 # Remediation Plan: VDE v2.1.0 Sovereign Verification
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 
 ## Paired Update Policy
 This file is part of a paired update set with [session_handover.md](./session_handover.md). Both files must be updated together to maintain synchronization between accomplishments and outstanding debt.

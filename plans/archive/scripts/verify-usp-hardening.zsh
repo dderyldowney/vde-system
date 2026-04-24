@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @shared-law (Forge Component)
+# @armor (Engine Core)
 # VDE Phase 24 Compliance Auditor
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar

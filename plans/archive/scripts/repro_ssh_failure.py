@@ -1,5 +1,5 @@
 import subprocess
-# @shared-law (Forge Component)
+# @armor (Engine Core)
 import os
 import sys
 

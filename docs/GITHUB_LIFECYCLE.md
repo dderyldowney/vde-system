@@ -1,5 +1,5 @@
 # VDE GitHub Infrastructure Lifecycle
-<!-- @shared-law (Sovereign Documentation) -->
+<!-- @shared-law (Sovereign Law) -->
 
 This document defines the official procedures and lifecycle for interacting with the VDE Hub (GitHub). The VDE ecosystem consists of two distinct projects with separate responsibilities.
 

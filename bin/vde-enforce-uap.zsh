@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Governance Auditor)
+# @forge (Governance Sentinel)
 #===============================================================================
 # vde-enforce-uap.zsh - Universal Agent Protocol Enforcement (Hardened)
 set -e

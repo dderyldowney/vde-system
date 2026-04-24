@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for service VMs
 # Variables: postgres, 2404, 5432, -, zsh /vde/scripts/setup/postgres-init.zsh
 name: vde-postgres

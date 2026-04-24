@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (ZPTY Signal Injection Rig)
+# @armor (Engine Core)
 zmodload zsh/zpty
 VDE_ROOT_DIR="${0:a:h:h:h}"
 

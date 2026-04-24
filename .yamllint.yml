@@ -1,6 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Infrastructure Foundation)
-<!-- @shared-law (YAML Linter Configuration) -->
+# @shared-law (Forge Component)
 ---
 extends: default
 

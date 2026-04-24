@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Pathing Safeguard)
+# @armor (Engine Core)
 # Intended to be sourced by entry points (e.g. bin/vde) during startup.
 
 

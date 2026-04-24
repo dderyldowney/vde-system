@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Image Management)
+# @armor (Engine Core)
 set -e
 #===============================================================================
 # vde-images - List VDE Docker images

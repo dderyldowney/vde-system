@@ -1,5 +1,5 @@
 # Security Remediation Plan
-<!-- @forge (Remediation Strike Record) -->
+<!-- @forge (Governance Sentinel) -->
 
 ## Findings
 1. **CRITICAL - Command Injection Vulnerability (eval):** The `bin/vde-ps` command builds a filter parameter string and uses `eval` to execute the resulting `docker ps` command. If a malicious user supplies an unsanitized string (e.g. via `--filter`), it allows for arbitrary host command execution.

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Spoke Entrypoint Ritual)
+# @armor (Engine Core)
 # ZSH-native shibboleth: ${(%):-%x}
 # VDE Sovereign Entrypoint
 # Version: 2.5.1 (Hardened SSH Bridge)

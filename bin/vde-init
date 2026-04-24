@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Ignition Ritual)
+# @armor (Engine Core)
 #===============================================================================
 # vde-init - Initialize VDE infrastructure
 set -e

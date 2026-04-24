@@ -1,5 +1,5 @@
 # VDE Agents Reference
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 
 ## Agent Responsibility Map
 

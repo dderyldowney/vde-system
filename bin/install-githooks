@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Governance Activation)
+# @armor (Engine Core)
 # install-githooks - Install VDE git hooks
 #
 # Installs project git hooks from githooks/ to .git/hooks/

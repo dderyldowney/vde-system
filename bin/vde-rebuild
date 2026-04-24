@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Spoke Rebuilding)
+# @armor (Engine Core)
 #===============================================================================
 # vde-rebuild - Rebuild all VDE Docker images
 # Usage: vde-rebuild [options] [vm_name...]

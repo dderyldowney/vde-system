@@ -1,6 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Verification)
-@shared-law @system-spine @pristine
+# @forge (Governance Sentinel)
 Feature: The Proof of Life - The Contract
   As an Alor of the VDE
   I require empirical proof of the absolute lifecycle

@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: go, 2207, -, zsh /vde/scripts/setup/go-init.zsh
 name: vde-go

@@ -1,7 +1,6 @@
 # VDE ARCHITECTURAL RECORD
-<!-- @armor (Engine Test Suite) -->
-<!-- @armor (Engine Test Suite) -->
 {
+  "@forge": "(Governance Sentinel)",
   "failures": [
     {
       "id": "do-000",

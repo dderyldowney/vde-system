@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Command Parsing)
+# @armor (Engine Core)
 # VDE Natural Language Parser
 # Parses natural language input into structured VDE commands
 # Source this library with: source ./lib/vde-parser

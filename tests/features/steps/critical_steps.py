@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
+# @forge (Governance Sentinel)
 """
-# @forge (Governance Step Definition)
-# @armor (BDD Step Definition)
-# @armor (BDD Step Definition)
 Step definitions for @critical-path and @critical-infrastructure features.
 
 All steps invoke the ACTUAL VDE implementation — no mocks, no fakes.

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Project Assets)
+# @armor (Engine Core)
 set -e
 # bin/generate_video
 # Usage: ./generate_video <output_path> [tape_commands...]

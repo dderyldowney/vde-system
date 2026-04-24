@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for service VMs
 # Variables: nginx, 2403, 80,443, -, zsh /vde/scripts/setup/nginx-init.zsh
 name: vde-nginx

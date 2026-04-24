@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Spoke Matrix Certification)
+# @armor (Engine Core)
 VDE_ROOT_DIR="${0:a:h:h:h}"
 source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
 source "${VDE_ROOT_DIR}/lib/vde-constants"

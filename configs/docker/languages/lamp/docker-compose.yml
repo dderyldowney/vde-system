@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: lamp, 2222, -, zsh /vde/scripts/setup/lamp-init.zsh
 name: vde-lamp

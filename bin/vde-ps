@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Process Status)
+# @armor (Engine Core)
 #===============================================================================
 # vde-ps - List VDE containers
 set -e

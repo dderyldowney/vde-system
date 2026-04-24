@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+# @forge (Governance Sentinel)
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Step Definition)
 """
 Step definitions for USP Alias Resolution.
 Verifies that aliases distill correctly to primary rituals using the vde_get_hydration_script ritual.

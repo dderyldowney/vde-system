@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @forge (DNS Discovery Verification)
+# @forge (Governance Sentinel)
 @advanced-orchestration @dns
 Feature: Spoke-to-Spoke DNS Discovery
   As an Alor of the VDE

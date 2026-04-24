@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Network Management)
+# @armor (Engine Core)
 #===============================================================================
 # vde-networks - List/Create VDE Docker networks
 # Usage: vde-networks [options]

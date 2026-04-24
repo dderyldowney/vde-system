@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Student Onboarding Ritual)
+# @armor (Engine Core)
 #===============================================================================
 # vde-path-of-the-foundling - Interactive Onboarding for VDE
 set -e

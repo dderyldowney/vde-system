@@ -1,5 +1,5 @@
 # COMMIT MESSAGE FORMAT
-<!-- @forge (Governance Template) -->
+<!-- @shared-law (Sovereign Law) -->
 <type>(<scope>): <description>
 
 - Detail 1

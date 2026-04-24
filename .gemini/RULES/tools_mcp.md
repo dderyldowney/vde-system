@@ -1,5 +1,5 @@
 # TOOLS & AGENTS REFERENCE
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 - PRIMARY: Use MCP services (sequential-thinking, github, context7, fetch) before local tools | Explore Agent: Codebase exploration | yume-implementer: Fixing guardian issues | yume-guardian: Reviewing for fake testing patterns | code-reviewer: Security and logic audits
 ## Sub-Agents (Task Tool)
 | Agent | Purpose | Phase |

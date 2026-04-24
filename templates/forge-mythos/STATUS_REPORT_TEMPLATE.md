@@ -1,5 +1,5 @@
 # STATUS REPORT TEMPLATE
-<!-- @forge (Governance Template) -->
+<!-- @shared-law (Sovereign Law) -->
 ### I. Kov'nyn — Think First
 Opening hypothesis, constraints identified, reasoning budget spent.
 

@@ -1,5 +1,5 @@
 # VDE Commands Reference
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 
 ## Commands
 

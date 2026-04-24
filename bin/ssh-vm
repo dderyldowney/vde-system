@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Transversal Bridge)
+# @armor (Engine Core)
 # VDE Spoke Access - SSH Connector
 # Provides direct SSH access to VDE Spoke containers
 

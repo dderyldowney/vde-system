@@ -1,5 +1,5 @@
 # Strike Design: Fix Tilde Expansion Bug in rust-init.zsh
-<!-- @forge (Development Chronicle) -->
+<!-- @shared-law (Sovereign Law) -->
 
 ## Fracture Analysis
 File: `scripts/setup/rust-init.zsh`

@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: dynamic-vm, 2298, htop, zsh /vde/scripts/setup/dynamic-vm-init.zsh
 name: vde-dynamic-vm

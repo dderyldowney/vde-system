@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Logging Engine)
+# @armor (Engine Core)
 #===============================================================================
 # vde-logging - Structured Logging Library for VDE
 # Provides JSON/text structured logging with rotation and level control.

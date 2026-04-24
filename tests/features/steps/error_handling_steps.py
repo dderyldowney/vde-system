@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+# @forge (Governance Sentinel)
 # VDE ARCHITECTURAL RECORD
-# @forge (Error Handling Steps)
 from behave import given, when, then
 import subprocess
 import os

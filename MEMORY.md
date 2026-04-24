@@ -1,5 +1,5 @@
 # VDE Beskar Record: 1.4.1 (The Sovereign Baseline)
-<!-- @shared-law (The Record) -->
+<!-- @shared-law (Forge Component) -->
 
 ## SOVEREIGN STATE
 - **Baseline**: 1.4.1 (Certified 2026-04-22)

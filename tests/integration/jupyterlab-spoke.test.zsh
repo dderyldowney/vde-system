@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Test Suite)
+# @forge (Governance Sentinel)
 # Integration Test for vde-jupyterlab (The Sovereign DS Spoke)
 # ZSH-native shibboleth (Rule 1)
 local _ZSH_PURE=${(%):-%x}

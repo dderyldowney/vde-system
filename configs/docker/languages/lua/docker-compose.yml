@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: lua, 2212, -, zsh /vde/scripts/setup/lua-init.zsh
 name: vde-lua

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Test Suite)
+# @forge (Governance Sentinel)
 # VDE Sovereign Test Runner (1.3.0)
 # This script runs all CI-safe tests (Unit Tests + Image Logic).
 # It STRICTLY EXCLUDES any tests that require running containers (DinD).

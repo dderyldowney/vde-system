@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Orchestrator)
+# @armor (Engine Core)
 #===============================================================================
 # VDE CLI - Unified Virtual Development Environment
 set -e

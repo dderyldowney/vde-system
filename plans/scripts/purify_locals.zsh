@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Sovereign Purification Script)
+# @armor (Engine Core)
 # Purges illegal top-level 'local' declarations by converting them to 'typeset'.
 
 files_purified=0

@@ -1,5 +1,5 @@
 # Available Scripts
-<!-- @shared-law (Sovereign Documentation) -->
+<!-- @shared-law (Sovereign Law) -->
 
 Overview of all scripts included with VDE.
 

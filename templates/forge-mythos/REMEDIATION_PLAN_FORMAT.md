@@ -1,5 +1,5 @@
 # REMEDIATION PLAN FORMAT
-<!-- @forge (Governance Template) -->
+<!-- @shared-law (Sovereign Law) -->
 ## Remediation Plan
 
 ### Violations

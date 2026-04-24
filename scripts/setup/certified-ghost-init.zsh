@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Ghost Hydration Ritual)
+# @armor (Engine Core)
 # VDE USP Hydration Script: certified-ghost
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar

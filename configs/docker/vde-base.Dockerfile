@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Base Image)
+# @shared-law (Forge Component)
 # VDE-BASE (The Hub)
 FROM debian:bookworm-slim
 LABEL project="vde" component="hub"

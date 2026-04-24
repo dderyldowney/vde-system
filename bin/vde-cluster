@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Cluster Orchestration)
+# @armor (Engine Core)
 set -e
 #===============================================================================
 # vde-cluster - Multi-VM Cluster Management for VDE

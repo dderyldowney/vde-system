@@ -1,5 +1,5 @@
 # REMEDIATION PLAN: UAP Ghost Zone Violation
-<!-- @forge (Remediation Plan) -->
+<!-- @forge (Governance Sentinel) -->
 
 ## Fracture Analysis
 - **Violation**: Rule 3 (Ghost Zone Prohibition).

@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: testport1, 2219, -, zsh /vde/scripts/setup/testport1-init.zsh
 name: vde-testport1

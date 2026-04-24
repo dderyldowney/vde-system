@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: mongodb, 2401, , zsh /vde/scripts/setup/mongodb-init.zsh
 name: vde-mongodb

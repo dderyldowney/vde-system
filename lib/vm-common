@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Registry Logic)
+# @armor (Engine Core)
 # VM Common Library for VDE Management Scripts
 # Source this library with: source ./lib/vm-common
 # Requires: zsh 5.0+

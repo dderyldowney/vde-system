@@ -1,6 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-<!-- @shared-law (Infrastructure Foundation) -->
-<!-- @shared-law (Repository Exclusion Rules) -->
+# @shared-law (Forge Component)
 # Project directories - track immediate child directories, ignore their contents
 projects/*/
 projects/*/*

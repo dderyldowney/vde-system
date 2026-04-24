@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Progress Indicators)
+# @armor (Engine Core)
 # VDE Progress Indicators Library
 # Provides progress bars, spinners, and timing feedback for long operations
 # Source this library with: source ./lib/vde-progress

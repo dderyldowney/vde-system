@@ -1,5 +1,5 @@
 # Beskar-Steel Trap Implementation Plan (VDE v2.0.6)
-<!-- @shared-law (Forge Component) -->
+<!-- @armor (Engine Core) -->
 
 ## 1. lib/vm-common Update
 - **save_port_to_registry(vm, port)**:

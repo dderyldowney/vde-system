@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Test Suite)
+# @forge (Governance Sentinel)
 # VDE Shell Test Runner
 # Executes the compatibility test suite for zsh
 #

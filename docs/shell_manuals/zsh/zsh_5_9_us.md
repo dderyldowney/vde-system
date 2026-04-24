@@ -1,5 +1,5 @@
 # ZSH 5 9 US
-<!-- @forge (Shell Documentation Intel) -->
+<!-- @shared-law (Sovereign Law) -->
 
 ---
 **Page 1**

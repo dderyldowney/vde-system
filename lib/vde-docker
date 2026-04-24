@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Docker Operations)
+# @armor (Engine Core)
 # VDE Docker Library
 # Docker container management for VDE VMs
 # Source this library with: source ./lib/vde-docker

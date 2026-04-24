@@ -1,7 +1,6 @@
 # VDE ARCHITECTURAL RECORD
-<!-- @shared-law (Infrastructure Foundation) -->
-<!-- @shared-law (Shell Formatter Configuration) -->
 {
+  "@shared-law": "(Forge Component)",
   "indent": 2,
   "binary-next-line": true,
   "switch-case-indent": true,

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Absolute Spoke Re-forging)
+# @armor (Engine Core)
 VDE_ROOT_DIR="${0:a:h:h:h}"
 source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
 source "${VDE_ROOT_DIR}/lib/vde-constants"

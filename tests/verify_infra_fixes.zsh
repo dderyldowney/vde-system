@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Test Suite)
+# @forge (Governance Sentinel)
 # tests/verify_infra_fixes.zsh
 
 # This test verifies that VDE_ROOT_DIR and VDE_CACHE_DIR are correctly set

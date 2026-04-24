@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: --custom, 2299, htop, zsh /vde/scripts/setup/--custom-init.zsh
 name: vde---custom

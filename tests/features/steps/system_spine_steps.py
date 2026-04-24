@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
+# @forge (Governance Sentinel)
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Engine BDD Steps)
-# @shared-law (BDD Integration Logic)
-# @shared-law (BDD Step Definition)
 # @shared-law (BDD Step Definition)
 """
 Step definitions for the System Spine Integrity feature.

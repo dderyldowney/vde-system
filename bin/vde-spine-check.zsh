@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Technical Integrity Gate)
+# @armor (Engine Core)
 #===============================================================================
 # vde-spine-check.zsh - @system-spine Empirical Check Script
 set -e

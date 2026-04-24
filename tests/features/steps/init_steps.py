@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
+# @forge (Governance Sentinel)
 # VDE ARCHITECTURAL RECORD
-# @armor (Engine BDD Steps)
-# @armor (BDD Integration Logic)
-# @armor (BDD Step Definition)
 # @armor (BDD Step Definition)
 import os
 import subprocess

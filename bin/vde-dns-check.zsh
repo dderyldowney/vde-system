@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Network Diagnostic Handshake)
+# @armor (Engine Core)
 # ZSH-native shibboleth: ${(%):-%x}
 #===============================================================================
 # vde-dns-check - Verify cross-Spoke DNS resolution within vde-net

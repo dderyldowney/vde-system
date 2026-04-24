@@ -1,6 +1,6 @@
 # Plan: Synchronize Hub Labels and Searches with Architectural Domains
+<!-- @shared-law (Forge Component) -->
 
-This plan outlines the steps to synchronize GitHub labels and documentation searches with the VDE architectural domains: `@armor`, `@forge`, and `@shared-law`.
 
 ## Mission
 Ensure that the Hub (GitHub) and documentation provide immediate access to strikes categorized by their architectural domain.

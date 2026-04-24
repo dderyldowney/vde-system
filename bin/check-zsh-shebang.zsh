@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (CI Purity Check)
+# @armor (Engine Core)
 # check-zsh-shebang - Verify all scripts use zsh shebang
 # This script is used in CI to enforce zsh-only policy
 

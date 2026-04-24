@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for service VMs
 # Variables: couchdb, 2400, 5984, -, zsh /vde/scripts/setup/couchdb-init.zsh
 name: vde-couchdb

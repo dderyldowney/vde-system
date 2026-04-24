@@ -1,6 +1,5 @@
 # VDE-SPEC
-<!-- @shared-law (Sovereign Documentation) -->
-<!-- @shared-law (Sovereign Artifact Set) -->
+<!-- @shared-law (Sovereign Law) -->
 # VDE-SPEC 1.4.1 (The Sovereign Evolution)
 
 **Date**: 2026-04-17

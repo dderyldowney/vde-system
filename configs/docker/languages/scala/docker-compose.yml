@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: scala, 2217, -, zsh /vde/scripts/setup/scala-init.zsh
 name: vde-scala

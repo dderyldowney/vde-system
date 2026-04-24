@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: cpp, 2202, -, zsh /vde/scripts/setup/cpp-init.zsh
 name: vde-cpp

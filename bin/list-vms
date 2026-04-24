@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Resource Discovery)
+# @armor (Engine Core)
 # list-vms - List all predefined VM types
 # Enhanced with --name-only flag and improved formatting
 

@@ -1,5 +1,5 @@
 # Implementation Plan: Phase 24 Bucket 1 - Configuration Management Hardening
-<!-- @shared-law (Forge Component) -->
+<!-- @armor (Engine Core) -->
 
 **Objective:** Replace placeholder and "fake" logic in `tests/features/steps/configuration_management_steps.py` with real behavioral verification for all scenarios in `configuration-management.feature`.
 

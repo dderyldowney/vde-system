@@ -1,5 +1,5 @@
 # GitHub CI Test Restrictions
-<!-- @armor (Engine Test Suite) -->
+<!-- @forge (Governance Sentinel) -->
 
 **Status:** All `docker-required/` tests CANNOT run on GitHub CI due to Docker-in-Docker limitations.
 

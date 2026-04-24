@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Sovereign Law)
 # Template for language VMs
 # Variables: {{NAME}}, {{SSH_PORT}}, {{PKGS}}, {{CUSTOM_CMD}}
 name: vde-{{NAME}}

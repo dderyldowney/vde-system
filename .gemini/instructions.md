@@ -1,5 +1,5 @@
 # **The Way of the VDE: 1.4.1 (The Sovereign Baseline)**
-<!-- @forge (Sovereign Law Source) -->
+<!-- @forge (Governance Sentinel) -->
 
 This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.4.1. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 

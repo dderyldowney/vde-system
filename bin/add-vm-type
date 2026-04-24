@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (VM Management)
+# @armor (Engine Core)
 set -e
 
 # Source shared library

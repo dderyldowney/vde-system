@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
+# @forge (Governance Sentinel)
 """
-# @armor (BDD Integration Logic)
-# @armor (BDD Step Definition)
-# @armor (BDD Step Definition)
 Shared configuration for VDE BDD tests.
 
 This module provides a single source of truth for test configuration.

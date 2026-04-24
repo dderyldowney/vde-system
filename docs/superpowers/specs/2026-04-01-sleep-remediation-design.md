@@ -1,5 +1,5 @@
 # Spec: Phase 23 Sleep Call Remediation
-<!-- @forge (Development Chronicle) -->
+<!-- @shared-law (Sovereign Law) -->
 
 **Date:** 2026-04-01
 **Topic:** Remediating non-compliant 'sleep' calls to improve deterministic readiness.

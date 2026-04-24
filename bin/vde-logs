@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Log Inspection)
+# @armor (Engine Core)
 #===============================================================================
 # vde-logs - Show logs for a VDE container
 set -e

@@ -1,6 +1,5 @@
 # ARCHITECTURE
-<!-- @shared-law (Sovereign Documentation) -->
-<!-- @shared-law (Sovereign Artifact Set) -->
+<!-- @shared-law (Sovereign Law) -->
 # ARCHITECTURE 1.4.1 (The Sovereign Baseline)
 
 ## 1. Philosophical Pillars (The Way)

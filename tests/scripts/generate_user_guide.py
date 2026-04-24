@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-# @armor (BDD Integration Logic)
-# @forge (CI Utility)
+# @forge (Governance Sentinel)
 """
 Generate USER_GUIDE.md from PASSING BDD test scenarios only.
 

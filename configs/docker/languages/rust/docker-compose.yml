@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: rust, 2216, -, zsh /vde/scripts/setup/rust-init.zsh
 name: vde-rust

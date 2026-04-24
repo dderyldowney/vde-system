@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Foundation Bootstrap)
+# @armor (Engine Core)
 # VDE-BOOTSTRAP (Version-Agnostic)
 set -e
 

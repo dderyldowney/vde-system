@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Resource Auditing)
+# @armor (Engine Core)
 #===============================================================================
 # vde-audit - Audit Logging Library for VDE
 # Records all state-changing operations for security and compliance

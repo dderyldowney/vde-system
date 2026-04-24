@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (SSH Agent Orchestration)
+# @armor (Engine Core)
 # VDE SSH Agent Setup
 # Automatically sets up SSH keys, agent, and configuration
 

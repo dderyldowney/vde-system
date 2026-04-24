@@ -1,7 +1,6 @@
 {
-  "@armor": "(Beskar Registry DNA)",
+  "@armor": "(Engine Core)",
   "$id": "https://vde.local/schemas/vm-types.schema.json",
-  "comment": "@armor (Beskar Registry Schema)",
   "title": "VDE VM Type Configuration",
   "description": "Schema for VDE VM type static configuration. Defines VM types with SSH ports for Docker host access and service ports for infrastructure VMs.",
   "type": "object",

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (CI Metrics)
+# @armor (Engine Core)
 # VDE Coverage Script
 # Runs test suite with code coverage using kcov
 

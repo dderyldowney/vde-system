@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Legacy Tooling)
+# @armor (Engine Core)
 # remediate-ssh-ambiguity.zsh - Resolve AmbiguousStep (V3)
 # Mandate: ZSH ONLY.
 

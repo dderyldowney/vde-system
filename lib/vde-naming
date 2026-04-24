@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Naming Conventions)
+# @armor (Engine Core)
 # VDE Naming Conventions Library
 # Enforces consistent naming for VMs and validates naming patterns
 # Source this library with: source ./lib/vde-naming

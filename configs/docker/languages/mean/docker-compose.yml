@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: mean, 2221, -, zsh /vde/scripts/setup/mean-init.zsh
 name: vde-mean

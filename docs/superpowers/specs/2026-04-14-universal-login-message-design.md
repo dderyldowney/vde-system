@@ -1,5 +1,5 @@
 # Design Spec: Universal VM Login Message
-<!-- @forge (Development Chronicle) -->
+<!-- @shared-law (Sovereign Law) -->
 
 **Date:** 2026-04-14
 **Status:** Approved

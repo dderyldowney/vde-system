@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Polling Engine)
+# @armor (Engine Core)
 #===============================================================================
 # vde-poll - Deterministic Readiness Polling Utility
 set -e
