@@ -1,4 +1,5 @@
 # Implementation Plan: VDE Phase 27 — The Sovereign Ecosystem (Sovereign Verification)
+<!-- @shared-law (Forge Component) -->
 
 **Version**: 2.1.0 (Hardened)
 **Objective**: Hardening and Empirical Verification of the "Sovereign Bridges" (Docker Socket & SSH Agent Forwarding).

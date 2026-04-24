@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Forge Component)
 # test-pulse-tdd.zsh - Physical verification of Identity Pulse sentinel
 
 VDE_ROOT_DIR="$(pwd)"

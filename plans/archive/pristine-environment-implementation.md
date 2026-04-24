@@ -1,4 +1,5 @@
 # Pristine Testing Environment Implementation Plan
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Ensure the testing environment is absolutely clean and pristine before and after the execution of the `proof-of-life-the-contract.feature` test suite, without disrupting the sequential dependencies between scenarios.

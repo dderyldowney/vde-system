@@ -1,4 +1,5 @@
 # Section 11.1 The Archivist's Intel Tool Mandate
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Update Section 11.1 to mandate the Researcher sub-agent to use its Google Search tool to scout the galaxy for solutions.

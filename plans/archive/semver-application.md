@@ -1,4 +1,5 @@
 # VDE Implementation Plan: SemVer Application (1.3.1-sp1)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Apply the new SemVer versioning format (`MAJOR.MINOR.STEP-spN`) across the Sovereign Artifact Set and ensure `bin/vde-sync-version` uses regular expressions that comply with SemVer requirements.

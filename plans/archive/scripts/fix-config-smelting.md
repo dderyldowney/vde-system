@@ -1,4 +1,5 @@
 # Implementation Plan: Pure ZSH Configuration Management (The Scavenger's Ban)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Eliminate dependency on `jq` for core VM configuration tasks (smelting and loading) by using pure ZSH string manipulation. This ensures high performance and 100% portability even on systems without `jq` or Docker, adhering to Rule G.

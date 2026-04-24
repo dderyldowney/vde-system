@@ -1,4 +1,5 @@
 # Remediation Plan: ZSH Native Compliance for lib/vm-lock
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Remediate the [UAP-WARN] in `lib/vm-lock` regarding ZSH parameter flags to achieve a clean [UAP-SUCCESS].

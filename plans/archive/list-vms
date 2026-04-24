@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Forge Component)
 # list-vms - List all predefined VM types
 # Enhanced with --name-only flag and improved formatting
 

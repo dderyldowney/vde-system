@@ -1,4 +1,5 @@
 # Implementation Plan: Absolute Architectural Tagging Mandate
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 To codify into the Supreme Law that all artifacts MUST be architecturally tagged before any strike can be considered complete, ensuring total traceability and project alignment.

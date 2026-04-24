@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Forge Component)
 set -e
 #===============================================================================
 # vde-cluster - Multi-VM Cluster Management for VDE

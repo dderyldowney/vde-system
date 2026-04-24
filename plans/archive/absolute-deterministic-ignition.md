@@ -1,4 +1,5 @@
 # Absolute Deterministic Ignition Plan
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Apply the Section 10 "Physical Handshake" (Docker Probe) discipline to all port allocation authorities and harden the global locking mechanism to achieve 100% deterministic success under concurrent load.

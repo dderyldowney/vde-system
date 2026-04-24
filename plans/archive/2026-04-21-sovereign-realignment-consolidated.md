@@ -1,4 +1,5 @@
 # Consolidated Sovereign Realignment & Purification Plan (Issue 1.4.1-CSR)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 This consolidated strike aims to achieve total alignment with the Sovereign Baseline (1.4.1) by addressing architectural fractures, removing hardcoded environmental dependencies, and purifying technical debt identified by the UAP Enforcer.

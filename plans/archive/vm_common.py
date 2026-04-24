@@ -1,1 +1,1 @@
-test
+test# @shared-law (Forge Component)

@@ -1,4 +1,5 @@
 # Remediation Plan: settings.json False Positive
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Fix the UAP Enforcer's auditing logic which is incorrectly flagging `.gemini/settings.json` as a script requiring a shebang.

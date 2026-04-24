@@ -1,4 +1,5 @@
 # Implementation Plan: Fix Hardcoded Paths in Setup Scripts (Issue 174)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Remove all hardcoded `/home/devuser` paths from the `scripts/setup/` hydration scripts to comply with the mandate for relative pathing and portability. Replace them with robust Zsh `~devuser` variable assignments.

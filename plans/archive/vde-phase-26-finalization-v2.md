@@ -1,4 +1,5 @@
 # Implementation Plan: VDE Phase 26 Finalization (v2)
+<!-- @shared-law (Forge Component) -->
 
 **Objective**: Remediate Network Isolation bypass and Error Map misalignment discovered during Phase 26 regression.
 

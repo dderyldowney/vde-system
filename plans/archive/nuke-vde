@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Forge Component)
 #===============================================================================
 # uninstall-vde - Remove VDE completely
 #

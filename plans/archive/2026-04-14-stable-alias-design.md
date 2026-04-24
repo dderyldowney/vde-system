@@ -1,4 +1,5 @@
 # Design Spec: Automated 'stable' Alias for Main Branch
+<!-- @shared-law (Forge Component) -->
 
 **Date:** 2026-04-14
 **Status:** Approved

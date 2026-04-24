@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Forge Component)
 # plans/scripts/refactor_setup_simple.zsh
 # Refactor simple setup scripts to follow the mandatory pattern
 
