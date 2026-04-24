@@ -175,7 +175,14 @@ case ${COMMAND} in
 
                 # Pre-ignition check: image must exist
                 if ! image_exists "${CANONICAL_NAME}"; then
-                    vde_log_warn "Image for ${CANONICAL_NAME} not found. Attempting to rebuild..." "docker"
+                    vde_log_warn "Image for ${CANONICAL_NAME} not found. Checking foundations..." "docker"
+                    if ! image_exists "vde-base"; then
+                        vde_log_error "Foundational image 'vde-base' is missing." "docker"
+                        vde_log_error "Ritual Required: Run 'vde init' or 'vde rebuild base' to restore foundations." "docker"
+                        GLOBAL_RC=1
+                        continue
+                    fi
+                    vde_log_info "Base image verified. Attempting to rebuild ${CANONICAL_NAME}..." "docker"
                     vde_run "${CANONICAL_NAME}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${target_type}" || continue
                 fi
 
@@ -201,10 +208,16 @@ case ${COMMAND} in
                 local compose_file
                 compose_file=$(get_vm_compose_file "${CANONICAL_NAME}")
 
+                if [[ ! -f "${compose_file}" ]]; then
+                    vde_progress_spinner_stop "" "Manifest not found for ${CANONICAL_NAME}. Run 'vde create ${CANONICAL_NAME#vde-}' first." 1
+                    GLOBAL_RC=1
+                    continue
+                fi
+
                 if vde_run "${CANONICAL_NAME}" docker compose -f "${compose_file}" up -d >/dev/null 2>&1; then
                     vde_progress_spinner_stop "${CANONICAL_NAME} ignited"
                 else
-                    vde_progress_spinner_stop "" "Failed to ignite ${CANONICAL_NAME}" 1
+                    vde_progress_spinner_stop "" "Failed to ignite ${CANONICAL_NAME} (Check Docker logs)" 1
                     GLOBAL_RC=1
                 fi
             } always {
@@ -339,7 +352,22 @@ case ${COMMAND} in
         ;;
     add)
         shift
-        vde_run "add" "${VDE_ROOT_DIR}/bin/add-vm-type" "$@"
+        local args=()
+        local custom_cmd=""
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                --custom)
+                    custom_cmd="$2"
+                    shift 2
+                    ;;
+                *)
+                    args+=("$1")
+                    shift
+                    ;;
+            esac
+        done
+        [[ -n "${custom_cmd}" ]] && args+=("--custom" "${custom_cmd}")
+        vde_run "add" "${VDE_ROOT_DIR}/bin/add-vm-type" "${args[@]}"
         ;;
     uninstall)
         shift
@@ -364,7 +392,7 @@ case ${COMMAND} in
     port)
         local vm_alias=$2
         CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
-        vde_run "port" vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${TYPES_JSON}"
+        vde_run "port" vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${VM_TYPES_JSON}"
         exit $?
         ;;
     info)

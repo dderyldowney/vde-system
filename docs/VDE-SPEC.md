@@ -89,6 +89,8 @@ The Forge is currently advancing through Phase 29:
 - **Cluster Expansion**: Formally introduced MEAN and LAMP tech stack clusters with coordinated hydration scripts and inter-VM awareness.
 - **State Integrity**: Codified `VDE_DOCKER_STATE_DIR` in `lib/vde-constants` to ensure deterministic cluster and container state management.
 
+- **Phase 31 (DNS Discovery & Bridge)**: [HARDENED] Implemented Spoke-to-Spoke and Hub-to-Spoke resolution within the vde-net bridge.
+
 ---
 Version: 1.4.1
 **Status**: HARDENED

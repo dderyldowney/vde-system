@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
-# Variables: scala, 2217, , zsh /vde/scripts/setup/scala-init.zsh
+# Variables: scala, 2217, -, zsh /vde/scripts/setup/scala-init.zsh
 name: vde-scala
 services:
   vde-scala:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: scala
-        PKGS_TO_INSTALL: ""
+        PKGS_TO_INSTALL: "-"
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/scala-init.zsh"
         USERNAME: devuser
         UID: 1000
@@ -47,7 +47,14 @@ services:
       - ../../../../env-files/scala.env
 
     networks:
-      - vde-net
+      vde-net:
+        aliases:
+          - "scala"
+          - "vde-scala"
+
+    extra_hosts:
+      - "vde-host:host-gateway"
+      - "host:host-gateway"
 
 networks:
   vde-net:

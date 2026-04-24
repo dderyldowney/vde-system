@@ -269,6 +269,10 @@ def step_execute_inside(context, command, vm_alias, user):
         vde_cmd = f"exec {user_flag} {vm_alias} {command}"
         context.last_command = command # Store the inner command for special case handling
         context.last_result = run_vde_command(vde_cmd)
+        
+    # Sync with critical_steps expectations
+    context.command_exit_code = context.last_result.returncode
+    context.command_output = context.last_result.stdout + context.last_result.stderr
     
     if os.environ.get("VDE_DEBUG_TESTS") == "1":
         print(f"DEBUG: Command: {vde_cmd}")

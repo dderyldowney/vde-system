@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
-# Variables: python, 2214, , zsh /vde/scripts/setup/python-init.zsh
+# Variables: python, 2214, -, zsh /vde/scripts/setup/python-init.zsh
 name: vde-python
 services:
   vde-python:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: python
-        PKGS_TO_INSTALL: ""
+        PKGS_TO_INSTALL: "-"
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/python-init.zsh"
         USERNAME: devuser
         UID: 1000
@@ -47,7 +47,14 @@ services:
       - ../../../../env-files/python.env
 
     networks:
-      - vde-net
+      vde-net:
+        aliases:
+          - "python"
+          - "vde-python"
+
+    extra_hosts:
+      - "vde-host:host-gateway"
+      - "host:host-gateway"
 
 networks:
   vde-net:

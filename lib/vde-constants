@@ -301,10 +301,7 @@ VDE_MSG_LOCK_FAILED="Failed to acquire lock for VM '%s'"
 VDE_MSG_NO_SSH_KEY="SSH key not found: '%s'"
 
 # Make all constants readonly if not in test mode
-# Use ZSH flag ${(z)...} to demonstrate compliance
 if [[ "${VDE_TEST_MODE:-0}" -ne 1 ]] ; then
-    # List all variables to be made readonly
-    local -a constants_to_lock=(${(z)VDE_SSH_KEY_PREFERENCE})
     readonly VDE_SUCCESS \
              VDE_ERR_GENERAL VDE_ERR_INVALID_INPUT VDE_ERR_NOT_FOUND VDE_ERR_PERMISSION \
              VDE_ERR_TIMEOUT VDE_ERR_EXISTS VDE_ERR_DEPENDENCY VDE_ERR_DOCKER VDE_ERR_LOCK \
