@@ -290,7 +290,7 @@ Host vde-certified-ghost
     PasswordAuthentication no
     ForwardAgent yes
     RequestTTY yes
-# VDE VM: vde-couchdb
+# VDE VM: vde-dynamic-vm
 # @armor (SSH Bridge Template)
 Host vde-couchdb
     HostName localhost
