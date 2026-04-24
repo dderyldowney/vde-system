@@ -4,8 +4,8 @@ import os
 import re
 from pathlib import Path
 
-# The VDE Root - Hardcoded to the current workspace root to avoid directory drift
-VDE_ROOT = Path("/Users/dderyldowney/VDE")
+# The VDE Root - Calculated relative to the script location (conductor/ is root level)
+VDE_ROOT = Path(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Tagging logic based on Mandate 24
 def get_tag_info(file_path):
