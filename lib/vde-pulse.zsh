@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Pulse)
+# @armor (Engine Core)
 # VDE Identity Pulse Library
 # Active Bridge Monitoring for SSH agent connectivity
 # Source this library with: source ./lib/vde-pulse.zsh
@@ -35,8 +35,8 @@ vde_identity_pulse() {
     # Return non-zero if the socket is broken (RC 2) or container is unreachable.
     
     # Use -u devuser to match vde-exec and ssh-vm default user
-    # We use a subshell to capture exit code correctly without affecting main shell
-    ( docker exec -u devuser "${container_name}" ssh-add -l &>/dev/null )
+    # We source .zshenv to ensure SSH_AUTH_SOCK is set correctly.
+    ( docker exec -u devuser "${container_name}" zsh -c "source ~devuser/.zshenv 2>/dev/null; ssh-add -l" &>/dev/null )
     local rc=$?
 
     # RC 0: Success (identities found)

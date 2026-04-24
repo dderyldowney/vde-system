@@ -1,4 +1,5 @@
 # Implementation Plan: Align Rule 23 (display vs display_name)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Align Rule 23 and the 8-Field Registry standard across the entire codebase to consistently use `display` instead of `display_name`, and pluralize `service_port` to `service_ports`. This addresses the architectural fracture between the Beskar Registry (JSON) and the runtime state generation, ensuring total alignment with the Sovereign Baseline.

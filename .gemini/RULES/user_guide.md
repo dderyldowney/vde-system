@@ -1,5 +1,5 @@
 # USER GUIDE GENERATION
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 The `USER_GUIDE.md` documents the COMPLETE user experience. Users will use Docker, so scenarios requiring Docker MUST be included.
 ## Generation Workflow
 **1. Run FULL test suite locally (Docker required):** `./tests/run-full-test-suite.zsh`

@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (CI/CD Sovereign Workflow)
+# @forge (Governance Sentinel)
 name: Verify PR Title
 
 on:

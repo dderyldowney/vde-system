@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # test-pulse-tdd.zsh - Physical verification of Identity Pulse sentinel
 
 VDE_ROOT_DIR="$(pwd)"

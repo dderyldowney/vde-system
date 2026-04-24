@@ -1,5 +1,5 @@
 # FEATURE REQUEST TEMPLATE
-<!-- @forge (Governance Template) -->
+<!-- @shared-law (Sovereign Law) -->
 ## Problem (The Pain)
 What limits current capability.
 

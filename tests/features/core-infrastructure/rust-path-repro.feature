@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Verification)
+# @forge (Governance Sentinel)
 @core-infrastructure @rust @path
 Feature: Rust VM Path Verification
   As a developer using the Rust VM

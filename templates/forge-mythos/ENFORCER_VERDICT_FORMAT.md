@@ -1,5 +1,5 @@
 # ENFORCER VERDICT FORMAT
-<!-- @forge (Governance Template) -->
+<!-- @shared-law (Sovereign Law) -->
 ENFORCER: PASS or BLOCKED
 Mandates Checked: TDD ✓ | DRY ✓ | Swarm ✓ | No Fakes ✓ | Voice ✓
 

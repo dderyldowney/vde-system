@@ -1,5 +1,5 @@
 # Code Review Remediation Plan
-<!-- @forge (Remediation Strike Record) -->
+<!-- @forge (Governance Sentinel) -->
 
 ## Findings
 1. **CRITICAL - UAP Violation (Shebang):** `scripts/setup/elixir-init.zsh` uses `#!/bin/bash`. All shell scripts MUST use `#!/usr/bin/env zsh`.

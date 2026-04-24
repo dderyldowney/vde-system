@@ -1,4 +1,5 @@
 # Implementation Plan: Sovereign Artifact Set Rewrite (1.3.0)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 To strictly enforce the Sovereign Artifact Set Mandate by completely rewriting `docs/VDE-SPEC.md`, `docs/ARCHITECTURE.md`, and `docs/Technical-Deep-Dive.md` from scratch. This ensures no vestiges of outdated documentation remain and that the documentation deeply and accurately represents the physical reality of the 1.3.0 codebase.

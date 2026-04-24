@@ -1,5 +1,5 @@
 # APPROVED:
-<!-- @forge (Governance Template) -->
+<!-- @shared-law (Sovereign Law) -->
 REVIEWER: APPROVED
 DRY: CLEAN | FAKE TESTS: NONE | GOSPEL: COMPLIANT
 Ready for User Approval.

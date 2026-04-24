@@ -1,5 +1,5 @@
 # VDE Technical Analysis: Architectural Integrity & DX Evaluation
-<!-- @shared-law (Sovereign Artifact Set) -->
+<!-- @shared-law (Forge Component) -->
 
 **Baseline**: 1.4.1 (Sovereign)
 **Status**: VERIFIED

@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Verification)
+# @forge (Governance Sentinel)
 @core-infrastructure @tech-stack @cluster @system-spine
 Feature: Integrated Tech Stack (Python, PostgreSQL, Redis)
   The VDE provides a pre-verified tech stack for students, ensuring that

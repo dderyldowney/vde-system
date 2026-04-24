@@ -1,4 +1,5 @@
 # Implementation Plan: Align jq Calls with vde_query_json Wrapper (Issue 176)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Migrate direct `jq` calls in `lib/vde-metrics` to the `vde_query_json` safety wrapper to ensure full compliance with Rule G (The Scavenger's Ban) and provide a robust fallback to Docker-based parsing if the host lacks the `jq` binary.

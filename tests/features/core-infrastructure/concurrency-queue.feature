@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Verification)
+# @forge (Governance Sentinel)
 @core-infrastructure @concurrency @locking
 Feature: Concurrency Lock-Queue Model (FIFO)
   As an Alor of the VDE

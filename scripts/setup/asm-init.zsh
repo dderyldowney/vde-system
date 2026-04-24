@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
-# @armor (Spoke Hydration)
+# @armor (Engine Core)
 # VDE USP Hydration Script: asm
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
@@ -10,7 +10,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_asm_pkgs="nasm yasm gdb git docker.io"
+typeset vde_asm_pkgs="nasm yasm gdb git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

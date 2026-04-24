@@ -1,5 +1,5 @@
 # BUG REPORT
-<!-- @shared-law (Signet Template) -->
+<!-- @forge (Governance Sentinel) -->
 ---
 name: "🐞 Bug Report"
 about: "Report a fracture in the Forge's steel"

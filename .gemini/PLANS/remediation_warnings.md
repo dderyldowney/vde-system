@@ -1,5 +1,5 @@
 # Remediation Plan: ZSH-Native Compliance (Mandate 14)
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 
 The VDE Enforcer has identified 54 files with `UAP-WARN` flags, indicating potential Bash-isms or a lack of ZSH-native logic (specifically parameter expansion flags). Per Mandate 14, these warnings are treated as failures and must be remediated.
 

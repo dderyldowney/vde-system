@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Polling Engine)
+# @armor (Engine Core)
 #===============================================================================
 # vde-poll - Deterministic Readiness Polling Utility
 set -e
@@ -9,7 +9,7 @@ set -e
 
 # --- 1. BOOTSTRAP & ROOT DISCOVERY ---
 _VDE_POLL_SCRIPT_PATH="${(%):-%x}"
-VDE_ROOT_DIR="$(cd "$(dirname "${_VDE_POLL_SCRIPT_PATH}")/.." && pwd)"
+VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 # --- 2. SOURCE CORE ECOSYSTEM ---
@@ -49,7 +49,7 @@ EOF
 
 # --- 4. ARGUMENT PARSING ---
 zmodload zsh/zutil
-local -A opts
+typeset -A opts
 zparseopts -D -A opts -health -port: -exec: -network: -state: -count: -timeout: -interval: -wait:
 
 VM_NAME="$1"

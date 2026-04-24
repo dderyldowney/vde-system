@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Process Status)
+# @armor (Engine Core)
 #===============================================================================
 # vde-ps - List VDE containers
 set -e
@@ -70,11 +70,11 @@ VDE_PREFIX="${VDE_CONTAINER_PREFIX:-dev}"
 get_vm_name_from_container() {
     local container="${1}"
     # Language VMs: python-dev -> python
-    if [[ "${container}" =~ ^(.+)-dev$ ]]; then
-        echo "${match[1]}"
+    if [[ "${container}" == *-dev ]]; then
+        echo "${container%-dev}"
     # Service VMs: vde-postgres -> postgres
-    elif [[ "${container}" =~ ^vde-(.+)$ ]]; then
-        echo "${match[1]}"
+    elif [[ "${container}" == vde-* ]]; then
+        echo "${container#vde-}"
     else
         echo "${container}"
     fi
@@ -115,8 +115,8 @@ run_docker_ps() {
     # Add additional filter if provided
     if [[ -n "${filter}" ]]; then
         # Parse filter - support "name=value" format
-        if [[ "${filter}" =~ ^name=(.+)$ ]]; then
-            local filter_value="${match[1]}"
+        if [[ "${filter}" == name=* ]]; then
+            local filter_value="${filter#name=}"
             # Add vde- prefix if not present for exact name match
             if [[ "${filter_value}" != vde-* ]]; then
                 filter_value="vde-${filter_value}"

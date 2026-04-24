@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: cpp, 2202, -, zsh /vde/scripts/setup/cpp-init.zsh
 name: vde-cpp
@@ -41,7 +41,7 @@ services:
       - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/vde-ssh.sock
 
     environment:
-      - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock
+      - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
       - ../../../../env-files/cpp.env

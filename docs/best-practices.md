@@ -1,5 +1,5 @@
 # Best Practices
-<!-- @shared-law (Sovereign Documentation) -->
+<!-- @shared-law (Sovereign Law) -->
 
 Recommended practices for working with VDE effectively.
 

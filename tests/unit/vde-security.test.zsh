@@ -1,6 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Test Suite)
-# @armor (Engine Unit Test)
+# @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
 local _ZSH_PURE=${(%):-%x}
 
@@ -263,7 +262,8 @@ test_ensure_network_no_docker() {
     local fake_bin
     fake_bin=$(mktemp -d)
     cat > "$fake_bin/docker" <<'EOF'
-#!/bin/sh
+#!/usr/bin/env zsh
+# @armor (Unit Test: Security Sentinel)
 exit 1
 EOF
     chmod +x "$fake_bin/docker"

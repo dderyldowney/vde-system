@@ -1,4 +1,5 @@
 # Final Gospel Audit Plan
+<!-- @shared-law (Forge Component) -->
 
 **STATUS: 100% COMPLETE**
 **DATE:** 2026-04-18

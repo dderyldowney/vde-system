@@ -1,5 +1,5 @@
 # /vde-enforce Command (UAP Edition)
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 
 Universal Supervisor Pass. Verifies compliance with Phase 0-5 lifecycle and UAP mandates.
 

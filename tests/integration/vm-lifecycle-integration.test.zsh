@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Test Suite)
+# @forge (Governance Sentinel)
 # Integration Tests for VM Lifecycle (v2.1.0 Hardened)
 # ZSH-native shibboleth (Rule 1)
 local _ZSH_PURE=${(%):-%x}

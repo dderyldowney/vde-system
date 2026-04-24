@@ -1,4 +1,5 @@
 # VDE CI Pipeline Update Plan - 1.3.0 Sovereign Baseline
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Resolve the ZSH installation deadlock ("chicken-and-egg") affecting GitHub Actions on the `ubuntu-latest` (Ubuntu 24.04) runners, while simultaneously enforcing the VDE 1.3.0 Sovereign Baseline mandates (specifically Rule A: UAP Enforcement).

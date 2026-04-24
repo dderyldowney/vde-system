@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+# @forge (Governance Sentinel)
 from behave import given, when, then
-# @forge (Governance Step Definition)
 import subprocess
 from pathlib import Path
 from vm_common import VDE_ROOT, BIN_DIR, VM_TYPES_JSON

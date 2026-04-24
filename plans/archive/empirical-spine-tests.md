@@ -1,4 +1,5 @@
 # Plan: Empirical Proof for the Tetrad of the Forge (The Law of Protection)
+<!-- @shared-law (Forge Component) -->
 
 **Goal:** Formally codify and execute empirical BDD tests in `tests/features/core-infrastructure/system-spine.feature` to prove the four base technologies (Docker, Git, Zsh, SSH) are fully functional on the Hub, as mandated by Section 16: "The Law of Protection — The Unyielding Tetrad".
 

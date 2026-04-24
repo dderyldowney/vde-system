@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Remediation Strike)
+# @armor (Engine Core)
 set -e
 
 # Use python for reliable multi-line/regex replacement in step file

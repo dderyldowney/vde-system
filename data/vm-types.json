@@ -1,5 +1,5 @@
 {
-  "@armor": "(Beskar Registry DNA)",
+  "@armor": "(Engine Core)",
   "version": "1.1",
   "vms": {
     "language": [
@@ -209,6 +209,15 @@
               "custom_cmd": "zsh /vde/scripts/setup/lamp-init.zsh",
               "service_ports": null,
               "ssh_port": 2222
+            },
+        {
+              "name": "vde-certified-ghost",
+              "aliases": [],
+              "display": "certified-ghost",
+              "pkgs": "htop",
+              "custom_cmd": "zsh /vde/scripts/setup/certified-ghost-init.zsh",
+              "service_ports": null,
+              "ssh_port": 2297
             }
     ],
     "service": [

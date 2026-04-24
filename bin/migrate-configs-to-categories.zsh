@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Refactoring Tool)
+# @armor (Engine Core)
 # migrate-configs-to-categories.zsh - Reorganize VDE configs into languages/services
 set -e
 # Part of Phase P Architectural Refactoring

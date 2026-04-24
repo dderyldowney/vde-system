@@ -1,5 +1,5 @@
 # MCP Configuration Documentation
-<!-- @shared-law (Sovereign Documentation) -->
+<!-- @shared-law (Sovereign Law) -->
 
 ## Overview
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (SSH Operations)
+# @armor (Engine Core)
 # VDE SSH Library
 # SSH key management and configuration for VDE
 # Source this library with: source ./lib/vde-ssh

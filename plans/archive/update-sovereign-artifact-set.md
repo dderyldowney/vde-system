@@ -1,4 +1,5 @@
 # Implementation Plan: Sovereign Artifact Set Alignment (1.3.0)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 To strictly enforce Rule 19 ("The Sovereign Artifact Set Mandate") by updating the core documentation artifacts to perfectly reflect the 1.3.0 implementation reality.

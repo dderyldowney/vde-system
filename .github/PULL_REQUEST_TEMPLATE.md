@@ -1,5 +1,5 @@
 # Pull Request: Submission of Beskar
-<!-- @shared-law (Chronicle Template) -->
+<!-- @forge (Governance Sentinel) -->
 
 > **MANDATE**: PR Title MUST follow Conventional Commits: `type(scope): description` or `type!: description`.
 

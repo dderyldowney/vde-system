@@ -1,5 +1,5 @@
 # Remediation Plan: System Health Failure (v2.0.6) - COMPLETED
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 
 **Detection Source:** `bin/vde-health` (Exit Code 3)
 **Timestamp:** 2026-04-07T08:26:45-0400

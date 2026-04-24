@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Destructive Cleanup)
+# @armor (Engine Core)
 #===============================================================================
 # uninstall-vde - Remove VDE completely
 #

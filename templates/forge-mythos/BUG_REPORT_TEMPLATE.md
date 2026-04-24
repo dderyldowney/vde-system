@@ -1,5 +1,5 @@
 # BUG REPORT TEMPLATE
-<!-- @forge (Governance Template) -->
+<!-- @shared-law (Sovereign Law) -->
 ## Heartbeat Status
 Paste health check / smoke test output here.
 

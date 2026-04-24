@@ -1,4 +1,5 @@
 # Plan: Phase 26 Finalization — Error Engine & UX Hardening (Revised)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Finalize Phase 26 by implementing robust signal translation and enhancing concurrency transparency. NO SIMULATION. ACTUAL IMPLEMENTATION ONLY.

@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
-# @armor (Spoke Hydration)
+# @armor (Engine Core)
 # VDE USP Hydration Script: elixir
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
@@ -10,7 +10,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_elixir_pkgs="git curl build-essential libssl-dev automake autoconf libncurses5-dev unzip wget locales ca-certificates docker.io"
+typeset vde_elixir_pkgs="git curl build-essential libssl-dev automake autoconf libncurses5-dev unzip wget locales ca-certificates docker.io"
 
 # 2. THE FORGE WORK
 apt-get update
@@ -20,7 +20,7 @@ apt-get install -y ${=vde_elixir_pkgs}
 locale-gen en_US.UTF-8
 
 # Installation for devuser
-local dev_home=$HOME
+typeset dev_home=$HOME
 INSTALL_SCRIPT="/tmp/install-elixir-as-devuser.sh"
 cat <<EOF > "${INSTALL_SCRIPT}"
 #!/usr/bin/env zsh
@@ -41,7 +41,7 @@ chmod +x "${INSTALL_SCRIPT}"
 su - devuser -c "${INSTALL_SCRIPT}"
 
 # 3. PERSISTENCE ANCHOR
-local _zshenv="${dev_home}/.zshenv"
+typeset _zshenv="${dev_home}/.zshenv"
 mkdir -p ${dev_home}
 touch "${_zshenv}"
 grep -q "asdf.sh" "${_zshenv}" || {

@@ -1,5 +1,5 @@
 # VDE Test Tagging Scheme
-<!-- @armor (Engine Test Suite) -->
+<!-- @forge (Governance Sentinel) -->
 
 ## Fast Tests (No Docker Required)
 

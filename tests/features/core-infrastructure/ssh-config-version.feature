@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Verification)
+# @forge (Governance Sentinel)
 @system-spine
 Feature: SSH Configuration Version Alignment
   As an Alor of the VDE

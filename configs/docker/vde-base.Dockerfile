@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Base Image)
+# @shared-law (Forge Component)
 # VDE-BASE (The Hub)
 FROM debian:bookworm-slim
 LABEL project="vde" component="hub"
@@ -17,6 +17,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     dnsutils \
     netcat-openbsd \
     socat \
+    vim \
     build-essential \
     procps \
     locales \

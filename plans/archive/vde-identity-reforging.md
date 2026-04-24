@@ -1,4 +1,5 @@
 # Identity Re-Forging Strike: v1.0.0 Refactor
+<!-- @shared-law (Forge Component) -->
 
 ## Background & Motivation
 The VDE Identity needs to reflect its specific purpose within the Creed. The generic `id_ed25519` key name must be refactored to `vde_student` across the ecosystem, strictly distinguishing between the key type (ed25519) and the file name.

@@ -1,5 +1,5 @@
 # VDE Installation & Configuration Guide
-<!-- @armor (Student Documentation) -->
+<!-- @shared-law (Forge Component) -->
 
 Welcome, Foundling! This guide will walk you through the **Installation Ritual** for the Virtualized Development Environment (VDE). Follow these steps to forge your sovereign development ecosystem.
 

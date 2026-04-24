@@ -1,5 +1,5 @@
 # VDE-NEW-VM
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 Guided workflow to add a new VM type following VDE-SPEC.md.
 
 ## Usage

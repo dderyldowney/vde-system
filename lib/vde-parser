@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Command Parsing)
+# @armor (Engine Core)
 # VDE Natural Language Parser
 # Parses natural language input into structured VDE commands
 # Source this library with: source ./lib/vde-parser
@@ -753,8 +753,11 @@ generate_plan() {
             cluster_name=$(echo "${il}" | sed -E 's/.*(cluster|stack|group|as)[[:space:]]+(the[[:space:]]+)?([a-z0-9_-]+).*/\3/' | head -n1)
             
             # Refinement for "the [name] cluster"
-            if [[ "${il}" =~ "the ([a-z0-9_-]+) (cluster|stack)" ]]; then
-                cluster_name="${match[1]}"
+            if [[ "${il}" == *"the "* && ( "${il}" == *" cluster"* || "${il}" == *" stack"* ) ]]; then
+                local name="${il#*the }"
+                name="${name% cluster*}"
+                name="${name% stack*}"
+                cluster_name="${name}"
             fi
 
             # If sed didn't match and returned the whole line, or returned a common noise word

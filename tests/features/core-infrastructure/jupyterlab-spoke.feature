@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Verification)
+# @forge (Governance Sentinel)
 @core-infrastructure @jupyterlab @service @system-spine
 Feature: JupyterLab Data Science Spoke
   The VDE provides a specialized JupyterLab VM with a pre-configured Data Science stack

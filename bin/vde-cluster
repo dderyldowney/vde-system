@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Cluster Orchestration)
+# @armor (Engine Core)
 set -e
 #===============================================================================
 # vde-cluster - Multi-VM Cluster Management for VDE
@@ -18,7 +18,7 @@ set -e
 # Determine VDE root directory
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 if [[ -z "${VDE_ROOT_DIR}" ]] ; then
     VDE_ROOT_DIR="${0:a:h:h}"

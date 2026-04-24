@@ -1,4 +1,5 @@
 # Proposal: The Tightened Mark (Architectural Classification)
+<!-- @shared-law (Forge Component) -->
 
 ## I. The Decision Rule (The Pyramid Peak)
 

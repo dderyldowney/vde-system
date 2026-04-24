@@ -1,5 +1,5 @@
 # LIFECYCLE OF A SPOKE
-<!-- @shared-law (Sovereign Documentation) -->
+<!-- @shared-law (Sovereign Law) -->
 **The Lifecycle of a Spoke in the VDE Sovereign Baseline** (1.4.1) is governed by "The Tether" (Proof of Life Contract), a non-negotiable functional sequence that ensures system integrity from initial hydration to final decommissioning.
 
 ### **At a Glance: The Spoke Lifecycle**

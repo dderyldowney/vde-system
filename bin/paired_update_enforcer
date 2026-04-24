@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Mandate L Enforcer)
+# @armor (Engine Core)
 set -euo pipefail
 
 HANDOVER="session_handover.md"

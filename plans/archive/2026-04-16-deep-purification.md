@@ -1,4 +1,5 @@
 # Security Remediation: Deep Purification Plan - The Reclamation Strike (1.4.0)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 To eliminate exposed secrets and resolve absolute git repository corruption by re-initializing the VDE repository from the certified 1.4.0 Sovereign Baseline.

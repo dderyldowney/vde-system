@@ -1,4 +1,5 @@
 # Design Spec: BDD Test Suite Remediation (SIGINT & SSH Agent)
+<!-- @shared-law (Forge Component) -->
 
 **Date:** 2026-04-14
 **Status:** Approved

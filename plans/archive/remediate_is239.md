@@ -1,8 +1,7 @@
-# Remediate IS239 (Code-Review: @armor) Implementation Plan
 
+<!-- @shared-law (Forge Component) -->
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Resolve all findings from Issue #239 by applying `@armor` tags to core scripts and libraries, purifying `bin/vde-poll` of `sleep`, and removing stale bash compatibility headers.
 
 **Architecture:** We will systematically edit the headers of all core binaries and libraries to include the `@armor` architectural tag. We will refactor `bin/vde-poll` to strictly rely on ZSH's `zselect` for sub-second precision, failing fast if the module is unavailable. Finally, we will scan for and remove all documentation claiming `bash` compatibility, rewriting any lingering bashisms into native ZSH.
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env zsh
-# @forge (Legacy Tooling)
+# @armor (Engine Core)
 # remediate-ssh-ambiguity.zsh - Resolve AmbiguousStep (V3)
 # Mandate: ZSH ONLY.
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 set -e
 

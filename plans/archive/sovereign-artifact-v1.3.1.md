@@ -1,4 +1,5 @@
 # Sovereign Artifact Set Update Plan - 1.3.1
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Comply with VDE Sovereign Baseline mandates (Rule 19 and Rule O) by documenting the completion of the CI/CD remediation effort before the user formally cuts the 1.3.1 release.

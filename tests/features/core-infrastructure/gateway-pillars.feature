@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Verification)
+# @forge (Governance Sentinel)
 @core-infrastructure @gateway @system-spine
 Feature: The Four Pillars Gateway
   As an Alor of the VDE

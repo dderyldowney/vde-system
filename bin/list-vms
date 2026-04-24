@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Resource Discovery)
+# @armor (Engine Core)
 # list-vms - List all predefined VM types
 # Enhanced with --name-only flag and improved formatting
 
@@ -99,11 +99,10 @@ display_vm() {
 
     # Apply filter if specified
     if [[ -n "${FILTER}" ]]; then
-        if [[ ! "${name}" =~ "${FILTER}" ]] && [[ ! "${display}" =~ "${FILTER}" ]] && [[ ! "${vm_aliases}" =~ "${FILTER}" ]]; then
+        if [[ "${name}" != *"${FILTER}"* ]] && [[ "${display}" != *"${FILTER}"* ]] && [[ "${vm_aliases}" != *"${FILTER}"* ]]; then
             return
         fi
     fi
-
     if [[ "${NAME_ONLY}" == "true" ]]; then
         # Show hostname (for language VMs: name-dev, for services: name)
         local hostname
@@ -170,11 +169,10 @@ display_vm_type() {
 
     # Apply filter if specified
     if [[ -n "${FILTER}" ]]; then
-        if [[ ! "${name}" =~ "${FILTER}" ]] && [[ ! "${display}" =~ "${FILTER}" ]] && [[ ! "${vm_aliases}" =~ "${FILTER}" ]]; then
+        if [[ "${name}" != *"${FILTER}"* ]] && [[ "${display}" != *"${FILTER}"* ]] && [[ "${vm_aliases}" != *"${FILTER}"* ]]; then
             return
         fi
     fi
-
     if [[ "${NAME_ONLY}" == "true" ]]; then
         printf "%s\n" "${name}"
     else

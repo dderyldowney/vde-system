@@ -1,5 +1,5 @@
 # VDE Design Spec: JupyterLab Data Science Suite
-<!-- @forge (Development Chronicle) -->
+<!-- @shared-law (Sovereign Law) -->
 
 **Date:** 2026-04-08
 **Status:** Approved (Brainstorming Phase Complete)

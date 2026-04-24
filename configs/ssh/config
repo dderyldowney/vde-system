@@ -1,4 +1,5 @@
 # VDE SSH Configuration
+# @shared-law (Forge Component)
 # Sovereign Baseline: 1.4.1
 # DO NOT EDIT MANUALLY
 
@@ -278,7 +279,19 @@ Host vde-lamp
     PasswordAuthentication no
     ForwardAgent yes
     RequestTTY yes
-# VDE VM: vde-couchdb
+# VDE VM: vde-certified-ghost
+# @armor (SSH Bridge Template)
+Host vde-certified-ghost
+    HostName localhost
+    Port 2297
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    RequestTTY yes
+# VDE VM: vde-dynamic-vm
 # @armor (SSH Bridge Template)
 Host vde-couchdb
     HostName localhost

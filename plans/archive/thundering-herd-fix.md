@@ -1,4 +1,5 @@
 # Neutralize the "Thundering Herd" on the Global Config
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Update the registry logic to include a "Staggered Retry" (randomized initial delay and robust jittered backoff) for the `global-config.lock` to prevent the "Thundering Herd" effect during parallel operations.

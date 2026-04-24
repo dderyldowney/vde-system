@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: rabbitmq, 2405, , zsh /vde/scripts/setup/rabbitmq-init.zsh
 name: vde-rabbitmq

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+# @forge (Governance Sentinel)
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Step Definition)
 import os
 import subprocess
 import time

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Health Checks)
+# @armor (Engine Core)
 # VDE Health Check Library
 # Comprehensive health checks for VDE containers
 # Source this library with: source ./lib/vde-health
@@ -380,9 +380,5 @@ vde_health_check() {
 }
 
 # Export functions for use in other scripts
-export -f vde_check_container_running 2>/dev/null || true
-export -f vde_check_ssh_port 2>/dev/null || true
-export -f vde_check_ssh_login 2>/dev/null || true
-export -f vde_check_language_tool 2>/dev/null || true
-export -f vde_wait_for_container_healthy 2>/dev/null || true
-export -f vde_health_check 2>/dev/null || true
+# Note: ZSH does not support 'export -f'. Functions are available to subshells
+# if they are defined in a sourced script or autoloaded.

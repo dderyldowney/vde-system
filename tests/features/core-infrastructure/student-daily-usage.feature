@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Verification)
+# @forge (Governance Sentinel)
 @student-workflow
 Feature: Student Daily Usage
   As a new student user studying computer programming

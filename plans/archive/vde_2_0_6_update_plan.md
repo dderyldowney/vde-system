@@ -1,4 +1,5 @@
 # VDE 2.0.6 Architectural Alignment Plan
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Update the session files (`MEMORY.md`, `session_handover.md`, `.gemini/PLANS/session_handover_remediation.md`) and core documentation to properly reflect the VDE-SPEC v2.0.6 mandates, the new Tiered Hub-and-Spoke model, the Ignition Sync pipeline, and the `bin/vde-sync-version` integration.

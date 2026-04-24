@@ -1,6 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Verification)
-@shared-law @project-1 @technical-integrity
+# @forge (Governance Sentinel)
 Feature: VDE Technical Integrity Gate (The Armor)
   As a student or developer using the VDE
   I require a purely technical verification of my environment

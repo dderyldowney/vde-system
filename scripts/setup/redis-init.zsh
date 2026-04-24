@@ -1,15 +1,15 @@
 #!/usr/bin/env zsh
-# @armor (Spoke Hydration)
+# @armor (Engine Core)
 # VDE USP Hydration Ritual: redis
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Forged in Beskar
 set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_redis_pkgs="redis-server redis-tools git docker.io"
+typeset vde_redis_pkgs="redis-server redis-tools git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update
@@ -24,7 +24,7 @@ sed -i 's/^bind .*/bind 0.0.0.0/' /etc/redis/redis.conf
 sed -i 's/^protected-mode yes/protected-mode no/' /etc/redis/redis.conf
 
 # 3. SPOKE IGNITION REGISTRATION
-local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
+typeset _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
 cat <<EOF > "${_spoke_ignition}"
 #!/usr/bin/env zsh
 # Redis Spoke Ignition
@@ -39,8 +39,8 @@ chmod +x "${_spoke_ignition}"
 
 # 4. PERSISTENCE ANCHOR (Hardened Bridge)
 
-local dev_home="/home/devuser"
-local _zshenv="${dev_home}/.zshenv"
+typeset dev_home="/home/devuser"
+typeset _zshenv="${dev_home}/.zshenv"
 mkdir -p "${dev_home}"
 touch "${_zshenv}"
 # Remove legacy startup if present

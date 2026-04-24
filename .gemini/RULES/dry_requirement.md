@@ -1,5 +1,5 @@
 # DRY Requirement (MANDATORY)
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 
 **Don't Repeat Yourself** - This is a hardcore requirement for ALL code in the VDE project.
 

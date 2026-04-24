@@ -1,4 +1,5 @@
 # VDE Session Handover: Phase 31 UNSTABLE (Active Remediation)
+<!-- @shared-law (Forge Component) -->
 
 ## 1. SOVEREIGN STATE
 - **Baseline**: 1.4.1 (Certified)

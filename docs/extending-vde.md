@@ -1,6 +1,5 @@
 # EXTENDING-VDE
-<!-- @shared-law (Sovereign Documentation) -->
-<!-- @forge (Development Documentation) -->
+<!-- @shared-law (Sovereign Law) -->
 # Extending VDE
 
 VDE is designed to be easily extensible. You can add support for new programming languages, new services, or customize existing ones without modifying core library code. The entire system is data-driven through configuration files and templates.
@@ -197,7 +196,7 @@ readonly INTENT_CUSTOM="custom"
 
 2. **Add detection pattern** in `detect_intent()`:
 ```zsh
-if [[ "$input_lower" =~ "custom pattern" ]]; then
+if [[ "$input_lower" == *"custom pattern"* ]]; then
     echo "$INTENT_CUSTOM"
     return
 fi

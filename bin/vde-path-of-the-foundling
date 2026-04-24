@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Student Onboarding Ritual)
+# @armor (Engine Core)
 #===============================================================================
 # vde-path-of-the-foundling - Interactive Onboarding for VDE
 set -e
@@ -9,7 +9,7 @@ set -e
 # Determine VDE root directory
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 if [[ -z "${VDE_ROOT_DIR}" ]] ; then
     VDE_ROOT_DIR="${0:a:h:h}"
@@ -21,7 +21,7 @@ source "${VDE_ROOT_DIR}/lib/vde-log" &>/dev/null
 source "${VDE_ROOT_DIR}/lib/vde-core" &>/dev/null
 
 # Parse arguments
-local AUTO_APPROVE=0
+typeset AUTO_APPROVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -y|--yes) AUTO_APPROVE=1; shift ;;
@@ -52,7 +52,7 @@ echo ""
 echo "Command: vde init"
 echo ""
 
-local reply="n"
+typeset reply="n"
 if [[ "${AUTO_APPROVE}" == "1" ]]; then
     reply="y"
     echo "Shall we ignite the Forge? (y/n): y (auto-approved)"
@@ -62,7 +62,7 @@ else
     echo ""
 fi
 
-if [[ "${reply}" =~ ^[Yy]$ ]]; then
+if [[ "${reply}" == [Yy] ]]; then
     "${VDE_ROOT_DIR}/bin/vde-init"
     echo -e "${GREEN}✓ The Forge is ignited.${RESET}"
 else
@@ -86,7 +86,7 @@ else
     echo ""
 fi
 
-if [[ "${reply}" =~ ^[Yy]$ ]]; then
+if [[ "${reply}" == [Yy] ]]; then
     if "${VDE_ROOT_DIR}/bin/vde-spine-check.zsh"; then
         echo -e "${GREEN}✓ The Spine is strong.${RESET}"
     else
@@ -116,7 +116,7 @@ else
     echo ""
 fi
 
-if [[ "${reply}" =~ ^[Yy]$ ]]; then
+if [[ "${reply}" == [Yy] ]]; then
     "${VDE_ROOT_DIR}/bin/vde" create python
     echo -e "${GREEN}✓ The Python Spoke is forged.${RESET}"
 else

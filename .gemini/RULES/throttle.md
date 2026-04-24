@@ -1,5 +1,5 @@
 # Rate Limit & Efficiency Protocol
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 
 ## Anti-Fragmentation & Batching
 The API gateway is sensitive; you must minimize request frequency.

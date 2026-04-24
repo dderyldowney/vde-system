@@ -1,4 +1,5 @@
 # Implementation Plan: Forge PostgreSQL (vde-postgres)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Forge the `vde-postgres` service environment with full server installation, database initialization, and remote access configuration, adhering to alphabetical re-indexing and port mandates.

@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
-# @forge (Maintenance Pruning)
+# @armor (Engine Core)
 # VDE Pruning Ritual (Forge's Ingot Stash)
 # Usage: vde prune [--timeframe <7d|3d|24h|12h>]
 
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 set -e
 
 VDE_ROOT="${VDE_ROOT_DIR:-$HOME/VDE}"
@@ -14,7 +14,7 @@ if [[ "$1" == "--timeframe" && -n "$2" ]]; then
 fi
 
 # Convert timeframe to minutes for find
-local minutes=10080 # Default 7d
+typeset minutes=10080 # Default 7d
 case "$TIMEFRAME" in
     *d) minutes=$(( ${TIMEFRAME%d} * 24 * 60 )) ;;
     *h) minutes=$(( ${TIMEFRAME%h} * 60 )) ;;

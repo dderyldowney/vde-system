@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Verification)
+# @forge (Governance Sentinel)
 @core-infrastructure @error-handling @system-spine
 Feature: Deterministic Error Engine
   As an Alor of the VDE

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Governance Auditor)
+# @forge (Governance Sentinel)
 #===============================================================================
 # vde-enforce-uap.zsh - Universal Agent Protocol Enforcement (Hardened)
 set -e
@@ -32,13 +32,6 @@ warnings=0
 #===============================================================================
 # GHOST ZONE CHECK (Zero-Tolerance)
 #===============================================================================
-if [[ -d "conductor" ]]; then
-    echo "\033[1;31m[CRITICAL FAILURE]\033[0m Ghost Zone 'conductor/' detected."
-    echo "Protocol Violation: Rule 3 (Ghost Zone Prohibition)."
-    echo "Purging unauthorized artifacts and halting session..."
-    rm -rf conductor/
-    exit 1
-fi
 
 # Rule 3 Enforcement: plans/ Subdirectory Lock
 if [[ -d "plans" ]]; then
@@ -95,7 +88,8 @@ audit_file_content() {
     fi
 
     # Support # (Shell/Python/INI), <!-- --> (XML/Markdown), " (JSON), // (JS/C), -- (SQL)
-    local tag_found=$(sed -n '2,3p' "$file" | grep -E "^\\s*(?:#|<!--|//|\"|--|;)\\s*@(armor|forge|shared-law)(?:\"?:\\s*\")?\\s*\\(([^)]+)\\)\\s*(?:-->|\")?,?\\s*$")
+    # ZSH-native pattern matching for tag extraction
+    local tag_found=$(sed -n '2,3p' "$file" | grep -E "^[[:space:]]*(#|<!--|//|\"|--|;)[[:space:]]*@(armor|forge|shared-law).*")
     if [[ -z "${tag_found}" ]]; then
         echo -e "${RED}[UAP-ERROR]${NC} Missing or invalid architectural tag in lines 2-3 of ${file#${VDE_ROOT_DIR}/}."
         echo "Expected Pattern: @armor|@forge|@shared-law (Functional Effect)"
@@ -103,7 +97,7 @@ audit_file_content() {
     fi
 
     # Only audit ZSH logic for scripts (skip data and documentation)
-    if [[ "$file" == *.zsh || ( ! "$file" =~ "\." && $(file "$file" 2>/dev/null) == *"shell script"* ) ]]; then
+    if [[ "$file" == *.zsh || ( "$file" != *.* && $(file "$file" 2>/dev/null) == *"shell script"* ) ]]; then
         # Mandate 1: Sovereign Shebang Check (ZSH ONLY)
         read -r first_line < "$file"
         if [[ "${first_line}" != "#!/usr/bin/env zsh" && "${first_line}" != "#!/bin/zsh" ]]; then

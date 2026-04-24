@@ -1,4 +1,5 @@
 # VDE Session v2.0.6 Initialization Plan
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Initialize the VDE Session v2.0.6 following the mandatory startup checklist and protocol updates.

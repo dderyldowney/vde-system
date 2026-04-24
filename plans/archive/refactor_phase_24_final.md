@@ -1,4 +1,5 @@
 # Refactor Phase 24 Final - Setup Scripts Hardening
+<!-- @shared-law (Forge Component) -->
 
 Refactor all target setup scripts in `scripts/setup/` to follow the mandatory VDE 2.0.6 USP pattern.
 

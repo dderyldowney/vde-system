@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # plans/scripts/refactor_setup_simple.zsh
 # Refactor simple setup scripts to follow the mandatory pattern
 

@@ -1,6 +1,5 @@
 # FOUNDLING GUIDE
-<!-- @shared-law (Sovereign Documentation) -->
-<!-- @armor (Student Documentation) -->
+<!-- @shared-law (Sovereign Law) -->
 # Path of the Foundling: A Student's Guide to VDE
 
 Welcome, Foundling. You have entered the Forge. This guide explains the "Rituals" (commands) and "Creed" (rules) you will follow to learn the ways of engineering.

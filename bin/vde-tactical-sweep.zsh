@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Maintenance Cleanup)
+# @armor (Engine Core)
 #===============================================================================
 # vde-tactical-sweep.zsh - Comprehensive Forge Cleanup Tool
 set -e
@@ -10,7 +10,7 @@ set -e
 #===============================================================================
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native tactical sweep"}
+typeset _zsh_compliance_flag=${(z):-"zsh native tactical sweep"}
 
 VDE_BIN_DIR="${0:a:h}"
 VDE_ROOT_DIR="${VDE_BIN_DIR:h}"
@@ -28,7 +28,7 @@ vde_log_info "[SWEEP] Commencing Tactical Forge Sweep..." "sweep"
 
 # 1. THE QUENCH: Stop and Purge ALL VDE Containers
 vde_log_info "[SWEEP] Purging all 'vde-' containers..." "sweep"
-local containers
+typeset containers
 containers=($(docker ps -aq --filter "name=vde-"))
 
 if [[ ${#containers} -gt 0 ]]; then
@@ -81,7 +81,7 @@ fi
 
 # 6. THE GHOST PURGE: Remove all *.bak files recursively
 vde_log_info "[SWEEP] Purging all ghost files (*.bak)..." "sweep"
-local ghost_files=("${VDE_ROOT_DIR}"/**/*.bak(N))
+typeset ghost_files=("${VDE_ROOT_DIR}"/**/*.bak(N))
 if [[ ${#ghost_files} -gt 0 ]]; then
     rm -f "${ghost_files[@]}" 2>/dev/null
     vde_log_success "[SWEEP] ${#ghost_files} ghost files purged." "sweep"

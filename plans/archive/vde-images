@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Forge Component)
 set -e
 #===============================================================================
 # vde-images - List VDE Docker images

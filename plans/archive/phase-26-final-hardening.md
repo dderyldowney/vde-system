@@ -1,4 +1,5 @@
 # Phase 26 Final Hardening Strike Plan
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Implement `lib/vm-lock` with the "Registry Retry Ritual" (Staggered Jitter 0.1s-0.5s, 10-attempt limit, `mkdir` atomicity) and update all registry operations to use it.

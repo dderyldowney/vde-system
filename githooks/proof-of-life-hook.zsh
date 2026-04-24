@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @shared-law (Proof of Life Integration)
+# @forge (Governance Sentinel)
 # githooks/proof-of-life-hook.zsh - Enforces Mandate L (Proof of Life)
 # Part of the Pre-Strike Sentinel
 set -e

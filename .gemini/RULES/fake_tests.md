@@ -1,5 +1,5 @@
 # FAKE TEST PROHIBITION - COMPREHENSIVE TAXONOMY
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 > **MOST CRITICAL RULE: VIOLATION INVALIDATES ALL WORK AND DAMAGES USER TRUST.**
 
 ## Definition

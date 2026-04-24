@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Language Spoke Image)
+# @shared-law (Forge Component)
 FROM vde-base:latest
 
 # Build-time arguments and metadata

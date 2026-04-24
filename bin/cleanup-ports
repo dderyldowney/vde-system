@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Port Management)
+# @armor (Engine Core)
 #===============================================================================
 # cleanup-ports - Remove stale port-registry entries
 set -e
@@ -50,7 +50,7 @@ if [[ ! -d "${port_dir}" ]]; then
 fi
 
 # Use ZSH expansion flag (f) to split file list for compliance
-local -a port_files
+typeset -a port_files
 port_files=( ${(f)"$(ls -1 "${port_dir}"/*.port(N) 2>/dev/null)"} )
 
 if [[ ${#port_files[@]} -eq 0 ]]; then

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-# @armor (BDD Integration Logic)
-# @forge (CI Utility)
+# @forge (Governance Sentinel)
 """
 Scan test files for fake test patterns.
 Identifies violations of the Fake Test Prohibition rules.

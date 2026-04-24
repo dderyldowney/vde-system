@@ -1,6 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @forge (Governance Verification)
-@shared-law @system-spine @pristine
+# @forge (Governance Sentinel)
 Feature: The Proof of Life - The Contract
   As an Alor of the VDE
   I require empirical proof of the absolute lifecycle
@@ -15,7 +14,7 @@ Feature: The Proof of Life - The Contract
 
   Scenario: Lifecycle Step 1 - The Initialization Ritual (vde init)
     When I execute "bin/vde init"
-    Then the output should contain "Initializing VDE infrastructure"
+    Then the output should contain "VDE Initialization"
     And the command should succeed
     And the directory ".cache" should exist
     And the directory "projects" should exist
@@ -37,7 +36,7 @@ Feature: The Proof of Life - The Contract
 
   Scenario: Lifecycle Step 3 - Spoke Interaction and Maintenance (enter & rebuild)
     Given "vde-python" is currently running
-    When I execute "bin/vde enter python --command 'echo \"The Contract is Signed\"'"
+    When I execute "bin/vde enter python 'echo \"The Contract is Signed\"'"
     Then the output should contain "The Contract is Signed"
     And the command should be executed as the "vde_student" identity
     And the return code should be 0
@@ -48,7 +47,7 @@ Feature: The Proof of Life - The Contract
     And the return code should be 0
 
   Scenario: Lifecycle Step 4 - Spoke Decommissioning (stop & rm)
-    Given "vde-python" is currently running
+    Given "python" is running
     When I execute "bin/vde stop python"
     Then the container "vde-python" should not be running
     And the return code should be 0

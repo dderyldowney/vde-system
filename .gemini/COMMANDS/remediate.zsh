@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Agent Logic)
+# @forge (Governance Sentinel)
 # .gemini/COMMANDS/remediate.zsh
 
 # 1. Capture the failure log from the Enforcer

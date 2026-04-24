@@ -1,5 +1,5 @@
 # Remediation Plan: Fraudulent Docker Logic (Audit Alert)
-<!-- @forge (Agent Logic) -->
+<!-- @forge (Governance Sentinel) -->
 
 ## Issue
 An audit of `tests/features/steps/` revealed step definitions using `time.sleep()` to simulate delays instead of deterministically polling Docker events. This violates the "NO SLEEP CALLS" mandate.

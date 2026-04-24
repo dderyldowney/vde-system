@@ -1,6 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-<!-- @shared-law (Infrastructure Foundation) -->
-<!-- @shared-law (Unified Ritual Orchestrator) -->
+# @shared-law (Forge Component)
 # VDE Makefile
 # Targets for testing and development
 

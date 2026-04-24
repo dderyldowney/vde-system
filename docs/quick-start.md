@@ -1,6 +1,5 @@
 # QUICK-START
-<!-- @shared-law (Sovereign Documentation) -->
-<!-- @armor (Student Documentation) -->
+<!-- @shared-law (Sovereign Law) -->
 # Quick Start
 
 Get up and running with VDE in minutes.

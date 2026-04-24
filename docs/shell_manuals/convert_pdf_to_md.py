@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# @forge (Shell Documentation Intel)
+# @shared-law (Sovereign Law)
 """Convert PDF to Markdown using PyMuPDF (fitz)."""
 import sys
 import fitz  # PyMuPDF

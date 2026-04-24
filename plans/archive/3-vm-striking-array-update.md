@@ -1,4 +1,5 @@
 # Section 10 Verification Law Update
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 To bring the orchestrator into compliance with Section 10 by performing a surgical strike on `lib/vm-common` to replace the "Host Assumption" with the "Physical Handshake" (Docker Probe).

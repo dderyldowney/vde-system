@@ -1,5 +1,5 @@
 # Advanced Usage
-<!-- @shared-law (Sovereign Documentation) -->
+<!-- @shared-law (Sovereign Law) -->
 
 Advanced techniques and patterns for power users.
 

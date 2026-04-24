@@ -1,4 +1,5 @@
 # Implementation Plan: Strengthening the Chronicle (GitHub Workflow)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 To strictly codify the "Four Pillars of the Chronicle" into the VDE's operating manuals (`GEMINI.md`, `AGENTS.md`, and `VDE_PROTOCOL.md`) to enforce best practices for GitHub Issues and Pull Requests.

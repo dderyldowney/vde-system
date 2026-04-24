@@ -1,5 +1,5 @@
 # DOCUMENTATION
-<!-- @shared-law (Signet Template) -->
+<!-- @forge (Governance Sentinel) -->
 ---
 name: Documentation
 about: Report issues or suggest improvements for VDE documentation

@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
-# @armor (Spoke Hydration)
+# @armor (Engine Core)
 # VDE USP Hydration Ritual: postgres
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
@@ -10,7 +10,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_postgres_pkgs="postgresql postgresql-contrib git docker.io"
+typeset vde_postgres_pkgs="postgresql postgresql-contrib git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update
@@ -48,7 +48,7 @@ service postgresql restart
 pg_isready -h localhost
 
 # 3. SPOKE IGNITION REGISTRATION
-local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
+typeset _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
 cat <<EOF > "${_spoke_ignition}"
 #!/usr/bin/env zsh
 # PostgreSQL Spoke Ignition
@@ -62,8 +62,8 @@ EOF
 chmod +x "${_spoke_ignition}"
 
 # 4. PERSISTENCE ANCHOR (Hardened Bridge)
-local dev_home=$HOME
-local _zshenv="${dev_home}/.zshenv"
+typeset dev_home=$HOME
+typeset _zshenv="${dev_home}/.zshenv"
 mkdir -p "${dev_home}"
 touch "${_zshenv}"
 # Remove legacy startup if present

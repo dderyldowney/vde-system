@@ -1,6 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Infrastructure Foundation)
-<!-- @shared-law (Shell Linter Configuration) -->
+# @shared-law (Forge Component)
 # Shellcheck configuration for VDE scripts
 # This project uses zsh only - sh/bash scripts are forbidden
 

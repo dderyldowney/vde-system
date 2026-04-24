@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 #===============================================================================
 # fleet_rebuild_strike.zsh - Full Fleet No-Cache Rebuild (Report Only)
 # Mandatory Audit for VDE v2.0.6 "Born Ready" compliance.

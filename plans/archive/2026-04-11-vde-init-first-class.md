@@ -1,4 +1,5 @@
 # The Integration of `vde init` (Sovereign Baseline)
+<!-- @shared-law (Forge Component) -->
 
 ## 1. Objective
 Elevate the orphaned `bin/vde-init` script to a fully registered, functional, and empirically tested first-class command in the VDE Orchestrator. This ensures VDE can be initialized cleanly by new users without relying on legacy fallback patterns.

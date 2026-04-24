@@ -1,5 +1,5 @@
 # Directory Structure
-<!-- @shared-law (Sovereign Documentation) -->
+<!-- @shared-law (Sovereign Law) -->
 
 The complete directory layout of a VDE installation.
 

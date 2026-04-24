@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Spoke Orchestration Blueprint)
+# @shared-law (Forge Component)
 # Template for language VMs
 # Variables: jupyterlab, 2407, python3-pip python3-venv tini, zsh /vde/scripts/setup/jupyterlab-init.zsh
 name: vde-jupyterlab

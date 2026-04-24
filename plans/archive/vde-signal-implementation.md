@@ -1,4 +1,5 @@
 # Plan: actual Signal Verification (Phase 26)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Implement actual signal verification using resource contention. NO SIMULATIONS.

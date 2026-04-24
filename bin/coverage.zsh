@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (CI Metrics)
+# @armor (Engine Core)
 # VDE Coverage Script
 # Runs test suite with code coverage using kcov
 
@@ -8,7 +8,7 @@
 # Colors for output
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'

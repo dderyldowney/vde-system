@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Forge Component)
 # VDE Setup Scripts Updater
 # Enforces UAP and adds 'git' and 'docker.io' to package lists.
 set -e
