@@ -2,7 +2,7 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Script: php
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
@@ -10,7 +10,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_php_pkgs="php php-cli php-xml php-mbstring php-curl composer git docker.io"
+typeset vde_php_pkgs="php php-cli php-xml php-mbstring php-curl composer git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

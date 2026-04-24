@@ -2,21 +2,21 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Ritual: nginx
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Forged in Beskar
 set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_nginx_pkgs="nginx-extras git docker.io"
+typeset vde_nginx_pkgs="nginx-extras git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update
 apt-get install -y ${=vde_nginx_pkgs}
 
 # 3. SPOKE IGNITION REGISTRATION
-local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
+typeset _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
 cat <<EOF > "${_spoke_ignition}"
 #!/usr/bin/env zsh
 # Nginx Spoke Ignition
@@ -30,8 +30,8 @@ EOF
 chmod +x "${_spoke_ignition}"
 
 # 4. PERSISTENCE ANCHOR (Hardened Bridge)
-local dev_home=$HOME
-local _zshenv="${dev_home}/.zshenv"
+typeset dev_home=$HOME
+typeset _zshenv="${dev_home}/.zshenv"
 mkdir -p "${dev_home}"
 touch "${_zshenv}"
 # Remove legacy startup if present

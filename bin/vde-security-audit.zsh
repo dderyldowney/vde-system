@@ -3,10 +3,10 @@
 #===============================================================================
 # vde-security-audit.zsh - Continuous CodeQL & Privacy Monitoring
 #===============================================================================
-local _zsh_pure=${(%):-%x}
+typeset _zsh_pure=${(%):-%x}
 
 # 1. Dynamic Repo Discovery (Rule 4 Alignment)
-local _repo=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
+typeset _repo=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
 if [[ -z "${_repo}" ]]; then
     echo "[SECURITY] Warning: Could not determine repository name. Skipping CodeQL audit."
 else
@@ -26,7 +26,7 @@ fi
 echo "[SECURITY] Scanning for Absolute Path Leaks..."
 # Purge matches for the literal pattern in this script and exclude common non-text dirs
 # Using grep -r to find absolute /Users/ paths while excluding self and known artifacts
-local _leaks=$(grep -r "/Users/" . \
+typeset _leaks=$(grep -r "/Users/" . \
     --exclude-dir=.git \
     --exclude-dir=.cache \
     --exclude-dir=logs \

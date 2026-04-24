@@ -2,21 +2,21 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Script: kotlin
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Forged in Beskar
 set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_kotlin_pkgs="curl git unzip zip"
+typeset vde_kotlin_pkgs="curl git unzip zip"
 
 # 2. THE FORGE WORK
 apt-get update
 apt-get install -y ${=vde_kotlin_pkgs} default-jdk
 
 # 3. KOTLIN INSTALLATION (Hardened Home)
-local dev_home="/home/devuser"
+typeset dev_home="/home/devuser"
 mkdir -p "${dev_home}"
 
 if [[ ! -d "${dev_home}/.sdkman" ]]; then
@@ -26,7 +26,7 @@ if [[ ! -d "${dev_home}/.sdkman" ]]; then
 fi
 
 # 4. PERSISTENCE ANCHOR
-local _zshenv="${dev_home}/.zshenv"
+typeset _zshenv="${dev_home}/.zshenv"
 {
     echo 'export SDKMAN_DIR="${HOME}/.sdkman"'
     echo '[[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"'

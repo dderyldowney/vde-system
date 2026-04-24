@@ -10,7 +10,7 @@ source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 # -----------------------
 # Usage
@@ -166,11 +166,11 @@ fi
 # -----------------------
 # Atomic Registry Update
 # -----------------------
-local backup_file="${VM_TYPES_CONF}.bak"
+typeset backup_file="${VM_TYPES_CONF}.bak"
 cp "${VM_TYPES_CONF}" "${backup_file}"
 
 log_info "Updating Pure Beskar registry..."
-local global_lock="${VDE_LOCKS_DIR}/global-config.lock"
+typeset global_lock="${VDE_LOCKS_DIR}/global-config.lock"
 
 # The Seeker's Staggered Entry (Rule 10 Enhancement)
 claim_lock "${global_lock}" || vde_handle_error "lock-acquisition" "${global_lock}"
@@ -223,7 +223,7 @@ claim_lock "${global_lock}" || vde_handle_error "lock-acquisition" "${global_loc
 log_success "Registry updated and port committed."
 
 # Create the hydration script if it doesn't exist
-local _init_script="${VDE_ROOT_DIR}/scripts/setup/${VM_NAME}-init.zsh"
+typeset _init_script="${VDE_ROOT_DIR}/scripts/setup/${VM_NAME}-init.zsh"
 if [[ ! -f "${_init_script}" ]]; then
     log_info "Forging USP hydration script: ${_init_script}"
     mkdir -p "$(dirname "${_init_script}")"
@@ -236,7 +236,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_${VM_NAME}_pkgs=""
+typeset vde_${VM_NAME}_pkgs=""
 
 # 2. THE FORGE WORK
 ${INSTALL_CMD}
@@ -250,7 +250,7 @@ EOF
 fi
 
 # Update configs/ssh/config with the new entry
-local project_ssh_config="${VDE_ROOT_DIR}/configs/ssh/config"
+typeset project_ssh_config="${VDE_ROOT_DIR}/configs/ssh/config"
 if [[ -f "${project_ssh_config}" ]]; then
     cat >> "${project_ssh_config}" <<SSHEOF
 

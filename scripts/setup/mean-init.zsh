@@ -2,14 +2,14 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Script: mean
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Forged in Beskar
 set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_mean_pkgs="curl git gnupg"
+typeset vde_mean_pkgs="curl git gnupg"
 
 # 2. THE FORGE WORK
 apt-get update
@@ -32,8 +32,8 @@ if ! command -v mongosh >/dev/null 2>&1; then
 fi
 
 # 5. CLUSTER COORDINATION
-local dev_home="/home/devuser"
-local _zshenv="${dev_home}/.zshenv"
+typeset dev_home="/home/devuser"
+typeset _zshenv="${dev_home}/.zshenv"
 mkdir -p ${dev_home}
 touch "${_zshenv}"
 grep -q "MONGO_URI" "${_zshenv}" || {

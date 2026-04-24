@@ -49,7 +49,7 @@ EOF
 
 # --- 4. ARGUMENT PARSING ---
 zmodload zsh/zutil
-local -A opts
+typeset -A opts
 zparseopts -D -A opts -health -port: -exec: -network: -state: -count: -timeout: -interval: -wait:
 
 VM_NAME="$1"

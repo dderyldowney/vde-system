@@ -5,7 +5,7 @@
 # Installs project git hooks from githooks/ to .git/hooks/
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 # We do NOT set -e here because arithmetic increments can return 1 (which is NOT an error in this context)
 # Instead we will handle errors explicitly.

@@ -2,14 +2,14 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Script: scala
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Forged in Beskar
 set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_scala_pkgs="curl git unzip zip default-jdk scala"
+typeset vde_scala_pkgs="curl git unzip zip default-jdk scala"
 
 # 2. THE FORGE WORK
 apt-get update

@@ -2,14 +2,14 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Script: mongodb
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Forged in Beskar
 set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_mongodb_pkgs="curl git gnupg"
+typeset vde_mongodb_pkgs="curl git gnupg"
 
 # 2. THE FORGE WORK
 apt-get update

@@ -9,7 +9,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 # Ensure technical integrity
 load_vm_types
 
-local -a all_vms
+typeset -a all_vms
 all_vms=(${lang_vms[@]} ${service_vms[@]})
 
 vde_log_info "Starting Spoke Matrix Certification gauntlet (${#all_vms[@]} VMs)..." "audit"

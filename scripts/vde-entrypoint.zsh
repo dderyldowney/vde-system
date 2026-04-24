@@ -21,9 +21,9 @@ fi
 
 # 2. Sovereign SSH Bridge (The Transversal Handshake)
 # We prioritize the Sovereign Bridge socket mapping
-local _found_bridge=""
-local _proxy_sock="/run/vde-ssh.sock"
-local _bridge_candidates=(
+typeset _found_bridge=""
+typeset _proxy_sock="/run/vde-ssh.sock"
+typeset _bridge_candidates=(
     "/run/vde-ssh.sock"
     "/run/host-services/ssh-auth.sock"
     "/home/devuser/.ssh/vde/agent.sock"
@@ -50,7 +50,7 @@ fi
 
 # 3. SPOKE IGNITION HOOKS
 # Trigger automated hydration background services as root
-local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
+typeset _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
 if [[ -f "${_spoke_ignition}" ]]; then
     echo "[VDE-ENTRYPOINT] Triggering Spoke Ignition..."
     zsh "${_spoke_ignition}" &

@@ -11,11 +11,11 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 # Ensure technical integrity
 load_vm_types
 
-local -a all_vms
+typeset -a all_vms
 all_vms=(${lang_vms[@]} ${service_vms[@]})
 
 # Resolve base image timestamp
-local base_created=$(docker inspect -f '{{.Created}}' vde-base:latest 2>/dev/null || echo "0")
+typeset base_created=$(docker inspect -f '{{.Created}}' vde-base:latest 2>/dev/null || echo "0")
 
 vde_log_info "Initiating Smart Re-forging (${#all_vms[@]} Spokes)..." "forge"
 

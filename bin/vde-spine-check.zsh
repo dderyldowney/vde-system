@@ -14,7 +14,7 @@ set -e
 #===============================================================================
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 # Pillar I: Zsh
 main() {
@@ -22,7 +22,7 @@ main() {
     local quiet=0
     [[ "$1" == "--quiet" ]] && quiet=1
 
-    if [[ -z "${ZSH_VERSION}" ]] || ! [[ "${ZSH_VERSION}" =~ "^5\." ]]; then
+    if [[ -z "${ZSH_VERSION}" ]] || [[ "${ZSH_VERSION}" != 5.* ]]; then
         echo "[CRITICAL] Pillar I (Zsh) failed: Zsh 5.0+ required." >&2
         return 1
     fi

@@ -2,7 +2,7 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Script: testport2
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Forged in Beskar
 set -e

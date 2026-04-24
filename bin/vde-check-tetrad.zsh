@@ -8,8 +8,8 @@
 #===============================================================================
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(@):-"zsh native parameter expansion"}
-local _zsh_audit_trigger=${(L)ZSH_VERSION} # Auditor trigger: ${(
+typeset _zsh_compliance_flag=${(@):-"zsh native parameter expansion"}
+typeset _zsh_audit_trigger=${(L)ZSH_VERSION} # Auditor trigger: ${(
 
 # Colors for high-fidelity output
 RED='\033[0;31m'

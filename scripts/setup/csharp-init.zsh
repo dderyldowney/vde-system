@@ -2,21 +2,21 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Script: csharp
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Forged in Beskar
 set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_csharp_pkgs="curl libicu-dev git"
+typeset vde_csharp_pkgs="curl libicu-dev git"
 
 # 2. THE FORGE WORK
 apt-get update
 apt-get install -y ${=vde_csharp_pkgs}
 
 # 3. DOTNET INSTALLATION (Shell-Safe Handshake)
-local dev_home="/home/devuser"
+typeset dev_home="/home/devuser"
 mkdir -p "${dev_home}"
 
 # Download installer
@@ -27,7 +27,7 @@ chmod +x /tmp/dotnet-install.sh
 sudo -u devuser bash /tmp/dotnet-install.sh --channel 8.0 --install-dir "${dev_home}/.dotnet"
 
 # 4. PERSISTENCE ANCHOR
-local _zshenv="${dev_home}/.zshenv"
+typeset _zshenv="${dev_home}/.zshenv"
 {
     echo 'export DOTNET_ROOT="${HOME}/.dotnet"'
     echo 'export PATH="${PATH}:${DOTNET_ROOT}:${DOTNET_ROOT}/tools"'

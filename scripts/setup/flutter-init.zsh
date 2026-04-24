@@ -2,21 +2,21 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Script: flutter
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Forged in Beskar
 set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_flutter_pkgs="curl git xz-utils zip unzip libglu1-mesa"
+typeset vde_flutter_pkgs="curl git xz-utils zip unzip libglu1-mesa"
 
 # 2. THE FORGE WORK
 apt-get update
 apt-get install -y ${=vde_flutter_pkgs}
 
 # 3. FLUTTER SDK INSTALLATION (Hardened Home)
-local dev_home="/home/devuser"
+typeset dev_home="/home/devuser"
 mkdir -p "${dev_home}"
 
 if [[ ! -d "${dev_home}/flutter" ]]; then
@@ -26,7 +26,7 @@ if [[ ! -d "${dev_home}/flutter" ]]; then
 fi
 
 # 4. PERSISTENCE ANCHOR
-local _zshenv="${dev_home}/.zshenv"
+typeset _zshenv="${dev_home}/.zshenv"
 {
     echo 'export PATH="${PATH}:${HOME}/flutter/bin"'
 } >> "${_zshenv}"

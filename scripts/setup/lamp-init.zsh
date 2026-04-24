@@ -2,7 +2,7 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Script: lamp
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
@@ -10,15 +10,15 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_lamp_pkgs="php php-cli php-xml php-mbstring php-curl composer default-mysql-client git docker.io"
+typeset vde_lamp_pkgs="php php-cli php-xml php-mbstring php-curl composer default-mysql-client git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update
 apt-get install -y ${=vde_lamp_pkgs}
 
 # 3. CLUSTER COORDINATION
-local dev_home="/home/devuser"
-local _zshenv="${dev_home}/.zshenv"
+typeset dev_home="/home/devuser"
+typeset _zshenv="${dev_home}/.zshenv"
 mkdir -p "${dev_home}"
 touch "${_zshenv}"
 grep -q "DB_HOST" "${_zshenv}" || {

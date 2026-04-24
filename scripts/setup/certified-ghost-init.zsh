@@ -7,7 +7,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_ghost_pkgs="htop neofetch"
+typeset vde_ghost_pkgs="htop neofetch"
 
 # 2. THE FORGE WORK
 apt-get update

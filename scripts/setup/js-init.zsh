@@ -2,7 +2,7 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Script: js
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
@@ -10,7 +10,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_js_pkgs="curl git build-essential docker.io"
+typeset vde_js_pkgs="curl git build-essential docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

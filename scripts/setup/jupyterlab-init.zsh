@@ -2,7 +2,7 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Script: jupyterlab
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
@@ -10,15 +10,15 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_jupyter_pkgs="python3-pip python3-venv tini git docker.io libpq-dev postgresql-client"
+typeset vde_jupyter_pkgs="python3-pip python3-venv tini git docker.io libpq-dev postgresql-client"
 
 # 2. THE FORGE WORK
 apt-get update
 apt-get install -y ${=vde_jupyter_pkgs}
 
 # 3. Create a dedicated venv for Jupyter
-local dev_home="/home/devuser"
-local _venv_path="${dev_home}/.vde-venv"
+typeset dev_home="/home/devuser"
+typeset _venv_path="${dev_home}/.vde-venv"
 sudo -u devuser python3 -m venv "${_venv_path}"
 
 # 4. Install DS stack (Refined 2026 Alloy)
@@ -41,7 +41,7 @@ sudo -u devuser "${_venv_path}/bin/pip" install \
     jupysql
 
 # 5. CONFIGURE JUPYTER SERVER (Modern Pattern)
-local _jupyter_config="${dev_home}/.jupyter/jupyter_server_config.py"
+typeset _jupyter_config="${dev_home}/.jupyter/jupyter_server_config.py"
 sudo -u devuser mkdir -p ${dev_home}/.jupyter
 sudo -u devuser zsh -c "cat <<EOF > ${_jupyter_config}
 c.ServerApp.ip = '0.0.0.0'
@@ -57,7 +57,7 @@ c.IdentityProvider.password = ''
 EOF"
 
 # 6. PERSISTENCE ANCHOR (Hardened Background Pattern)
-local _zshenv="${dev_home}/.zshenv"
+typeset _zshenv="${dev_home}/.zshenv"
 mkdir -p ${dev_home}
 touch "${_zshenv}"
 
@@ -78,7 +78,7 @@ grep -q "DATABASE_URL" "${_zshenv}" || {
 chown devuser:devuser "${_zshenv}"
 
 # 7. SPOKE IGNITION REGISTRATION
-local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
+typeset _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
 cat <<EOF > "${_spoke_ignition}"
 #!/usr/bin/env zsh
 # JupyterLab Spoke Ignition

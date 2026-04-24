@@ -2,7 +2,7 @@
 # @armor (Spoke Hydration)
 # VDE USP Hydration Ritual: rust
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
@@ -15,7 +15,7 @@ set -e
 # 1. THE PACKAGE ALLOY
 # Define system-level dependencies for Rust development and build-time hydration.
 export DEBIAN_FRONTEND=noninteractive
-local vde_rust_pkgs="build-essential curl git pkg-config libssl-dev ca-certificates docker.io"
+typeset vde_rust_pkgs="build-essential curl git pkg-config libssl-dev ca-certificates docker.io"
 
 # 2. THE FORGE WORK
 # Perform the physical smelting of system packages.

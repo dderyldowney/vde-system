@@ -48,8 +48,8 @@ for file in $(find lib -type f 2>/dev/null); do
 
     shebang=$(head -1 "${file}" 2>/dev/null || true)
     
-    if [[ "${shebang}" =~ ^#! ]]; then
-        if [[ "${shebang}" =~ (zsh|/bin/zsh) ]]; then
+    if [[ "${shebang}" == \#\!* ]]; then
+        if [[ "${shebang}" == *zsh* ]]; then
             continue
         else
             echo "FAIL: ${file} uses non-zsh shebang: ${shebang}"

@@ -7,7 +7,7 @@ set -e
 # Determine VDE root directory
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 VDE_SCRIPTS_DIR="${0:A:h}"
 if [[ -z "${VDE_ROOT_DIR}" ]] ; then
@@ -201,7 +201,7 @@ main() {
 
         for json_file in "${json_files[@]}"; do
             # Skip schema files
-            if [[ "${json_file}" =~ \.schema\.json$ ]] ; then
+            if [[ "${json_file}" == *.schema.json ]] ; then
                 continue
             fi
             [[ -f "${json_file}" ]] && validate_json_config "${json_file}"

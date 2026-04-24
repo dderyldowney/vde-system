@@ -7,13 +7,13 @@
 # 1. Initialize the Spine
 emulate -L zsh
 setopt LOCAL_OPTIONS
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 set -e
 VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(pwd)}"
 source "${VDE_ROOT_DIR}/lib/vde-core"
 
 # 2. Extract the current version from the Beskar Source
-local NEW_VER=$(vde_get_version)
+typeset NEW_VER=$(vde_get_version)
 [[ -z "$NEW_VER" || "$NEW_VER" == "0.0.0-unknown" ]] && { echo "ERROR: No version in Spec."; exit ${VDE_ERR_GENERAL}; }
 
 # 3. Logging Fallbacks
@@ -135,7 +135,7 @@ vde_sed_inplace "s/[0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/${NEW_VER}/g" "${VDE_ROOT_
 vde_log_success "Aligned BDD features and steps" "forge"
 
 # 18. Strike $HOME/.zshrc (The Host Handshake)
-local zshrc="${HOME}/.zshrc"
+typeset zshrc="${HOME}/.zshrc"
 if [[ -f "$zshrc" ]]; then
     # Strikes the gvde function's handshake prompt version (v is optional)
     vde_sed_inplace "s/Initialize VDE Session v?[0-9.]+(-sp[0-9]+)?/Initialize VDE Session ${NEW_VER}/" "$zshrc"
@@ -146,17 +146,17 @@ fi
 
 # 19. The Chronicler's Ritual (Rule O)
 vde_log_info "Executing Chronicler's Ritual..." "forge"
-local RELEASE_RECORD="${VDE_ROOT_DIR}/docs/releases/${NEW_VER}.md"
+typeset RELEASE_RECORD="${VDE_ROOT_DIR}/docs/releases/${NEW_VER}.md"
 mkdir -p "${VDE_ROOT_DIR}/docs/releases"
 
 # Extract Empirical Metrics
-local BDD_SCENARIOS=$(grep "| \*\*Behave Scenarios\*\* |" "${VDE_ROOT_DIR}/tests/TEST_STATUS_REPORT.md" | sed -E 's/.*\| ([0-9]+) passed.*/\1/')
-local BDD_STEPS=$(grep "Behave BDD" "${VDE_ROOT_DIR}/PROJECT_STATUS.md" | sed -E 's/.* ([0-9]+) Steps.*/\1/')
-local UNIT_TESTS=$(grep "| \*\*ZSH Unit Tests\*\* |" "${VDE_ROOT_DIR}/tests/TEST_STATUS_REPORT.md" | sed -E 's/.*\| ([0-9]+) passed.*/\1/')
-local GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "Naked-Forge")
+typeset BDD_SCENARIOS=$(grep "| \*\*Behave Scenarios\*\* |" "${VDE_ROOT_DIR}/tests/TEST_STATUS_REPORT.md" | sed -E 's/.*\| ([0-9]+) passed.*/\1/')
+typeset BDD_STEPS=$(grep "Behave BDD" "${VDE_ROOT_DIR}/PROJECT_STATUS.md" | sed -E 's/.* ([0-9]+) Steps.*/\1/')
+typeset UNIT_TESTS=$(grep "| \*\*ZSH Unit Tests\*\* |" "${VDE_ROOT_DIR}/tests/TEST_STATUS_REPORT.md" | sed -E 's/.*\| ([0-9]+) passed.*/\1/')
+typeset GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "Naked-Forge")
 
 # Audit Loop Verification
-local AUDIT_STATUS="🔴 PENDING"
+typeset AUDIT_STATUS="🔴 PENDING"
 grep -q "100% GREEN" "${VDE_ROOT_DIR}/PROJECT_STATUS.md" && AUDIT_STATUS="🟢 CERTIFIED (100% GREEN)"
 
 if [[ ! -f "${RELEASE_RECORD}" ]]; then
