@@ -112,6 +112,13 @@ vde_run() {
     
     # If failure detected, hand off to Error Engine
     if [[ $rc -ne 0 ]]; then
+        # SPECIAL CASE: For 'exec' or 'enter', we return the actual exit code 
+        # without triggering the Hub's error engine, as the Spoke's command 
+        # might return non-zero for legitimate reasons (e.g. ssh-add -l empty).
+        if [[ "${info}" == "exec" || "${info}" == "enter" || "${info}" == "ssh" ]]; then
+            return $rc
+        fi
+
         if command -v vde_error_map >/dev/null 2>&1; then
             vde_error_map $rc "${info}"
         else

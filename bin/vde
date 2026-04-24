@@ -22,10 +22,11 @@ source "${VDE_ROOT_DIR}/lib/vde-cluster-utils"
 source "${VDE_ROOT_DIR}/lib/vm-common"
 
 # Initialize logging
-vde_log_init 2>/dev/null || true
-
-# Initial security check
-vde_security_init
+if [[ "${VDE_QUIET:-0}" != "1" ]]; then
+    vde_log_init 2>/dev/null || true
+    # Initial security check
+    vde_security_init
+fi
 
 # Signal Interception Mandate (Hardened)
 # We ensure the termination report is physically printed before exit
@@ -39,32 +40,49 @@ shift # past command
 # UNIVERSAL TARGET RESOLUTION (Clusters & Aliases)
 # =========================================================================
 # Commands that target VMs/Clusters
-local -a targets=()
-local input_targets=()
-local force=false
+typeset -a input_targets=()
+typeset -a ACTION_ARGS=()
+typeset -a targets=()
+typeset force=false
 
-# 1. Parse common flags and initial targets
+# 1. Parse flags and initial targets
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -f|--force) force=true; shift ;;
-        *) input_targets+=("$1"); shift ;;
+        -q|--quiet) export VDE_QUIET=1; shift ;;
+        *)
+            # For commands that take a target and then a command (exec, enter, ssh),
+            # we only take the first non-flag argument as the target and the rest as ACTION_ARGS.
+            if [[ "${ACTION}" == "exec" || "${ACTION}" == "enter" || "${ACTION}" == "ssh" ]]; then
+                input_targets+=("$1")
+                shift
+                ACTION_ARGS=("$@")
+                set -- # Clear remaining args to break loop
+            else
+                input_targets+=("$1")
+                shift
+            fi
+            ;;
     esac
 done
 
 # 2. Resolve every target (VM or Cluster)
-for t in "${input_targets[@]}"; do
-    if [[ "${t}" == "default" ]]; then
-        targets+=("jupyterlab" "postgres")
-    elif vde_cluster_exists "${t}" >/dev/null 2>&1; then
-        # Expand cluster members using Zsh-native expansion
-        local members=$(vde_query_json -r '.vms[]' "${VDE_CLUSTER_STATE_DIR}/${t}.json")
-        targets+=(${=members})
-    elif [[ "${t}" == "all" ]]; then
-        targets+=($(get_all_vms))
-    else
-        targets+=("${t}")
-    fi
-done
+if [[ ${#input_targets} -gt 0 ]]; then
+    for t in "$input_targets[@]"; do
+        if [[ "${t}" == "default" ]]; then
+            targets+=("jupyterlab" "postgres")
+        elif vde_cluster_exists "${t}" >/dev/null 2>&1; then
+            # Expand cluster members using Zsh-native expansion
+            local members=$(vde_query_json -r '.vms[]' "${VDE_CLUSTER_STATE_DIR}/${t}.json")
+            targets+=(${=members})
+        elif [[ "${t}" == "all" ]]; then
+            targets+=($(get_all_vms))
+        else
+            targets+=("${t}")
+        fi
+    done
+fi
+
 
 case ${ACTION} in
     init)
@@ -223,10 +241,15 @@ case ${ACTION} in
         vde_run "nuke" "${VDE_ROOT_DIR}/bin/nuke-vde" "${input_targets[@]}"
         ;;
     exec)
-        vde_run "exec" "${VDE_ROOT_DIR}/bin/vde-exec" "${targets[@]}"
+        # Use first target as VM, rest as ACTION_ARGS
+        local vm_target="${targets[1]}"
+        [[ -z "${vm_target}" ]] && vde_log_error "Usage: vde exec <vm_name> <command>" && exit 1
+        vde_run "exec" "${VDE_ROOT_DIR}/bin/vde-exec" "${vm_target}" "${ACTION_ARGS[@]}"
         ;;
     enter|ssh)
-        vde_run "enter" "${VDE_ROOT_DIR}/bin/ssh-vm" "${targets[@]}"
+        local vm_target="${targets[1]}"
+        [[ -z "${vm_target}" ]] && vde_log_error "Usage: vde enter <vm_name> [command]" && exit 1
+        vde_run "enter" "${VDE_ROOT_DIR}/bin/ssh-vm" "${vm_target}" "${ACTION_ARGS[@]}"
         ;;
     list)
         vde_run "list" "${VDE_ROOT_DIR}/bin/list-vms" "${input_targets[@]}"
@@ -274,6 +297,9 @@ case ${ACTION} in
     images)
         vde_run "images" "${VDE_ROOT_DIR}/bin/vde-images" "${input_targets[@]}"
         ;;
+    networks)
+        vde_run "networks" "${VDE_ROOT_DIR}/bin/vde-networks" "${input_targets[@]}"
+        ;;
     stats)
         vde_run "stats" "${VDE_ROOT_DIR}/bin/vde-stats" "${targets[@]}"
         ;;
@@ -317,6 +343,7 @@ Diagnostics & Discovery:
   dns-check <s> <t> Verify DNS resolution between Source and Target Spokes.
   info <name>     Display detailed metadata and registry status for a Spoke.
   ps              List all active VDE containers and their statuses.
+  networks        List and manage VDE Docker networks.
   health          Execute the Sovereign Audit for the Hub and infrastructure.
   stats <name>    Display real-time resource usage for Spokes.
   port <name>     Retrieve the specific SSH or service port for an alias.
