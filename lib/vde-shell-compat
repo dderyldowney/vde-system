@@ -109,7 +109,8 @@ _get_script_dir() {
 # SECURITY: Prevents command injection into eval sinks
 _is_valid_var_name() {
     local name="${1}"
-    [[ "${name}" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]
+    # Use standard shell variable name pattern
+    [[ "${name}" == [a-zA-Z_][a-zA-Z0-9_]* ]]
 }
 
 # =============================================================================

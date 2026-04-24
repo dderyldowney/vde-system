@@ -197,7 +197,7 @@ readonly INTENT_CUSTOM="custom"
 
 2. **Add detection pattern** in `detect_intent()`:
 ```zsh
-if [[ "$input_lower" =~ "custom pattern" ]]; then
+if [[ "$input_lower" == *"custom pattern"* ]]; then
     echo "$INTENT_CUSTOM"
     return
 fi
