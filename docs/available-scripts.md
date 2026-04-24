@@ -46,6 +46,9 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution (1.
 | `vde sync-version` | Synchronize versioning across the Hub and Spokes. | `vde sync-version` |
 | `vde port <alias>` | Retrieve the assigned SSH port for a Spoke. | `vde port python` |
 | `vde info` | Detailed system and environment diagnostic dump. | `vde info` |
+| `vde dns-check` | **The Handshake Ritual**: Verify cross-Spoke DNS resolution. | `vde dns-check <src> <tgt> [port]` |
+| `vde matrix-audit` | Exhaustive verification of every registered VM type (Serialized). | `vde matrix-audit` |
+| `vde matrix-rebuild` | Comprehensive non-cached re-forging of the absolute Spoke matrix. | `vde matrix-rebuild` |
 | `vde-enforce-uap.zsh` | **The Rule Spine**: Enforce Universal Agent Protocol compliance. | `bin/vde-enforce-uap.zsh` |
 | `vde-spine-check.zsh` | **The Tetrad Check**: Verify Zsh, Git, Docker, and SSH pillars. | `bin/vde-spine-check.zsh` |
 

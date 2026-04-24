@@ -23,7 +23,7 @@ Feature: System Spine Integrity
   @user-guide-starting-stopping
   Scenario: VM Lifecycle Termination (Stop/Remove)
     Given the VDE Registry is loaded
-    And "vde-python" is currently running
+    And "python" is running
     When I run the one true way to stop "python"
     Then the container "vde-python" should be stopped
     And the VM-level lock should be released
@@ -34,7 +34,7 @@ Feature: System Spine Integrity
   @bridge @docker-socket
   Scenario: Sovereign Docker Socket Access
     Given the VDE system is healthy
-    And "vde-python" is currently running
+    And "python" is running
     When I execute "docker ps" inside "vde-python" as "devuser"
     Then the command execution should succeed
     And the execution output should contain "vde-python"
@@ -42,7 +42,7 @@ Feature: System Spine Integrity
   @bridge @ssh-forwarding @user-guide-ssh-keys
   Scenario: SSH Agent Forwarding Verification
     Given the VDE system is healthy
-    And "vde-python" is currently running
+    And "python" is running
     And I have identities loaded in my host SSH agent
     When I execute "ssh-add -l" inside "vde-python" as "devuser"
     Then the command execution should succeed
@@ -79,5 +79,6 @@ Feature: System Spine Integrity
 
   @system-spine @image-purity @rule-12-5
   Scenario: Spoke Image Purity Verification (Rule 12.5)
-    Given "vde-python" is currently running
+    Given "python" is running
     Then the directory "/var/lib/apt/lists/" should be empty in the Spoke
+    And the directory "~" should contain the required DNA files

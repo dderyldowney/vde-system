@@ -1,36 +1,36 @@
 # VDE ARCHITECTURAL RECORD
 # @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
-# Variables: haskell, 2208, -, zsh /vde/scripts/setup/haskell-init.zsh
-name: vde-haskell
+# Variables: --custom, 2299, htop, zsh /vde/scripts/setup/--custom-init.zsh
+name: vde---custom
 services:
-  vde-haskell:
+  vde---custom:
     build:
       context: ../../../..
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
-        VM_NAME: haskell
-        PKGS_TO_INSTALL: "-"
-        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/haskell-init.zsh"
+        VM_NAME: --custom
+        PKGS_TO_INSTALL: "htop"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/--custom-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000
-    image: vde-haskell:latest
-    container_name: vde-haskell
-    hostname: vde-haskell
+    image: vde---custom:latest
+    container_name: vde---custom
+    hostname: vde---custom
     restart: unless-stopped
     labels:
       - "vde.managed=true"
       - "vde.type=lang"
-      - "vde.name=haskell"
+      - "vde.name=--custom"
 
     ports:
-      - "2208:2208"
+      - "2299:2299"
 
     volumes:
       - ../../../../:/vde:ro
-      - ../../../../projects/haskell:/home/devuser/workspace
-      - ../../../../logs/haskell:/logs
+      - ../../../../projects/--custom:/home/devuser/workspace
+      - ../../../../logs/--custom:/logs
       - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
       - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
@@ -41,16 +41,16 @@ services:
       - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/vde-ssh.sock
 
     environment:
-      - SSH_AUTH_SOCK=/run/vde-ssh.sock
+      - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock
 
     env_file:
-      - ../../../../env-files/haskell.env
+      - ../../../../env-files/--custom.env
 
     networks:
       vde-net:
         aliases:
-          - "haskell"
-          - "vde-haskell"
+          - "--custom"
+          - "vde---custom"
 
     extra_hosts:
       - "vde-host:host-gateway"

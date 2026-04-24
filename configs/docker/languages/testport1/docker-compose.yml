@@ -41,7 +41,7 @@ services:
       - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/vde-ssh.sock
 
     environment:
-      - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock
+      - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
       - ../../../../env-files/testport1.env

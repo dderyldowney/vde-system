@@ -17,6 +17,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     dnsutils \
     netcat-openbsd \
     socat \
+    vim \
     build-essential \
     procps \
     locales \

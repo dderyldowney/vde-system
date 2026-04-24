@@ -112,6 +112,7 @@ def execute_in_container(
     This bypasses ZSH/UAP log headers for technical verification.
     """
     try:
+        import shlex
         cmd = ["docker", "exec"]
         if user:
             cmd.extend(["-u", user])
@@ -120,7 +121,7 @@ def execute_in_container(
             # We use zsh as it's the mandated tribe language
             cmd.extend([container_name, "zsh", "-c", command])
         else:
-            cmd.extend([container_name] + command.split())
+            cmd.extend([container_name] + shlex.split(command))
             
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         if os.environ.get("VDE_DEBUG_TESTS") == "1":

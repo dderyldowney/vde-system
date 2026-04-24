@@ -278,6 +278,18 @@ Host vde-lamp
     PasswordAuthentication no
     ForwardAgent yes
     RequestTTY yes
+# VDE VM: vde-certified-ghost
+# @armor (SSH Bridge Template)
+Host vde-certified-ghost
+    HostName localhost
+    Port 2297
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    RequestTTY yes
 # VDE VM: vde-couchdb
 # @armor (SSH Bridge Template)
 Host vde-couchdb

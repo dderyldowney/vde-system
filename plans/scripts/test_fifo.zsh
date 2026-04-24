@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 # @armor (Concurrency Test Rig)
+# Use zsh-native absolute path detection (Rule 1)
 VDE_ROOT_DIR="${0:a:h:h:h}"
 source "${VDE_ROOT_DIR}/lib/vm-common"
 source "${VDE_ROOT_DIR}/lib/vde-core"

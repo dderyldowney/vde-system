@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # @armor (Spoke Hydration)
-# VDE USP Hydration Ritual: mongodb
+# VDE USP Hydration Script: mongodb
 # ZSH-native shibboleth (Rule 1)
 local _ZSH_PURE=${(%):-%x}
 
@@ -9,42 +9,21 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_mongodb_pkgs="mongodb-org-shell mongodb git docker.io"
+local vde_mongodb_pkgs="curl git gnupg"
 
 # 2. THE FORGE WORK
 apt-get update
 apt-get install -y ${=vde_mongodb_pkgs}
 
-# 3. SPOKE IGNITION REGISTRATION
-local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
-cat <<EOF > "${_spoke_ignition}"
-#!/usr/bin/env zsh
-# MongoDB Spoke Ignition
-# Starts the database in the background on container start
-
-if ! service mongodb status >/dev/null 2>&1; then
-    echo "[VDE-MONGODB] Forged in Beskar: Starting MongoDB..."
-    sudo service mongodb start >/dev/null 2>&1
+# 3. MONGODB SHELL (Hardened Source)
+if ! command -v mongosh >/dev/null 2>&1; then
+    echo "[VDE-MONGODB] Installing MongoDB Shell..."
+    curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/mongodb-server-7.0.gpg
+    echo "deb [[ signed-by=/etc/apt/trusted.gpg.d/mongodb-server-7.0.gpg ]] http://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" | tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+    apt-get update
+    apt-get install -y mongodb-mongosh
 fi
-EOF
-chmod +x "${_spoke_ignition}"
 
-# 4. PERSISTENCE ANCHOR (Hardened Bridge)
-local dev_home=$HOME
-local _zshenv="${dev_home}/.zshenv"
-mkdir -p ${dev_home}
-touch "${_zshenv}"
-# Remove legacy startup if present
-sed -i "/mongodb start/d" "${_zshenv}"
-# Ensure bridge identity is available
-grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
-    echo "export SSH_AUTH_SOCK=${dev_home}/.ssh/vde/agent.sock" >> "${_zshenv}"
-}
-chown devuser:devuser "${_zshenv}"
-
-# Stop service to maintain BTO state
-service mongodb stop || true
-
-# 5. PURGING THE GHOSTS
+# 4. PURGING THE GHOSTS
 apt-get clean
 rm -rf /var/lib/apt/lists/*

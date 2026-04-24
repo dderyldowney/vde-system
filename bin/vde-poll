@@ -9,7 +9,7 @@ set -e
 
 # --- 1. BOOTSTRAP & ROOT DISCOVERY ---
 _VDE_POLL_SCRIPT_PATH="${(%):-%x}"
-VDE_ROOT_DIR="$(cd "$(dirname "${_VDE_POLL_SCRIPT_PATH}")/.." && pwd)"
+VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 # --- 2. SOURCE CORE ECOSYSTEM ---
