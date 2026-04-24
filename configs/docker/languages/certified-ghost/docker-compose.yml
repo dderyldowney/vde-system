@@ -1,36 +1,36 @@
 # VDE ARCHITECTURAL RECORD
 # @armor (Spoke Orchestration Blueprint)
 # Template for language VMs
-# Variables: haskell, 2208, -, zsh /vde/scripts/setup/haskell-init.zsh
-name: vde-haskell
+# Variables: certified-ghost, 2297, htop, zsh /vde/scripts/setup/certified-ghost-init.zsh
+name: vde-certified-ghost
 services:
-  vde-haskell:
+  vde-certified-ghost:
     build:
       context: ../../../..
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
-        VM_NAME: haskell
-        PKGS_TO_INSTALL: "-"
-        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/haskell-init.zsh"
+        VM_NAME: certified-ghost
+        PKGS_TO_INSTALL: "htop"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/certified-ghost-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000
-    image: vde-haskell:latest
-    container_name: vde-haskell
-    hostname: vde-haskell
+    image: vde-certified-ghost:latest
+    container_name: vde-certified-ghost
+    hostname: vde-certified-ghost
     restart: unless-stopped
     labels:
       - "vde.managed=true"
       - "vde.type=lang"
-      - "vde.name=haskell"
+      - "vde.name=certified-ghost"
 
     ports:
-      - "2208:2208"
+      - "2297:2297"
 
     volumes:
       - ../../../../:/vde:ro
-      - ../../../../projects/haskell:/home/devuser/workspace
-      - ../../../../logs/haskell:/logs
+      - ../../../../projects/certified-ghost:/home/devuser/workspace
+      - ../../../../logs/certified-ghost:/logs
       - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
       - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
@@ -44,13 +44,13 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
-      - ../../../../env-files/haskell.env
+      - ../../../../env-files/certified-ghost.env
 
     networks:
       vde-net:
         aliases:
-          - "haskell"
-          - "vde-haskell"
+          - "certified-ghost"
+          - "vde-certified-ghost"
 
     extra_hosts:
       - "vde-host:host-gateway"

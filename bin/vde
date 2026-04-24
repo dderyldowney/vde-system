@@ -6,253 +6,156 @@ set -e
 # Version: ${VDE_VERSION:-$(vde_get_version)}
 #===============================================================================
 
-# Source libraries
-VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# Use zsh-native absolute path detection (Rule 1)
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
 
-# Technical Integrity Gate (Project 1: The Armor)
-"${VDE_ROOT_DIR}/bin/vde-check-tetrad.zsh" || exit ${VDE_ERR_GENERAL}
-
-# Indicate orchestrated execution for sub-scripts
-export VDE_ORCHESTRATED=1
-
-# ZSH-native logic: Silence local variable declarations (Rule 1)
-setopt TYPESET_SILENT
-
-# Enforce @system-spine tetrad (Section 16)
-# This is the cognitive context and operational spine
-# Auto-skip for initialization commands that establish the spine
-if [[ "${VDE_SKIP_SPINE_CHECK}" != "1" ]] && [[ "$1" != "init" ]] && [[ "$1" != "ssh-setup" ]]; then
-    "${VDE_ROOT_DIR}/bin/vde-spine-check.zsh" --quiet || exit ${VDE_ERR_GENERAL}
-fi
-
-source "${VDE_ROOT_DIR}/lib/vm-common"
-source "${VDE_ROOT_DIR}/lib/vde-core"
-source "${VDE_ROOT_DIR}/lib/vm-lock"
-source "${VDE_ROOT_DIR}/lib/vde-progress"
+# Source shared library
+source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
+source "${VDE_ROOT_DIR}/lib/vde-constants"
+source "${VDE_ROOT_DIR}/lib/vde-errors"
+source "${VDE_ROOT_DIR}/lib/vde-log"
 source "${VDE_ROOT_DIR}/lib/vde-naming"
+source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vde-docker"
-source "${VDE_ROOT_DIR}/lib/vde-templates"
-source "${VDE_ROOT_DIR}/lib/vde-ssh"
-source "${VDE_ROOT_DIR}/lib/vde-security"
 source "${VDE_ROOT_DIR}/lib/vde-cluster-utils"
+source "${VDE_ROOT_DIR}/lib/vm-common"
 
-# Source the centralized environment file if it exists (Rule 12)
-if [[ -f "${VDE_ROOT_DIR}/.env" ]] ; then
-    set -a
-    source "${VDE_ROOT_DIR}/.env"
-    set +a
-fi
-
-# Phase 26: Signal Translation Trap
-trap 'echo ""; vde_error_map 130 "Interrupted"; exit 130' SIGINT
+# Initialize logging
+vde_log_init 2>/dev/null || true
 
 # Initial security check
 vde_security_init
 
+# Signal Interception Mandate (Hardened)
+# We ensure the termination report is physically printed before exit
+trap 'vde_error_terminated; exit 130' SIGINT SIGTERM
+
 # Main command router
-COMMAND=$1
-case ${COMMAND} in
+ACTION=$1
+shift # past command
+
+# =========================================================================
+# UNIVERSAL TARGET RESOLUTION (Clusters & Aliases)
+# =========================================================================
+# Commands that target VMs/Clusters
+local -a targets=()
+local input_targets=()
+local force=false
+
+# 1. Parse common flags and initial targets
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -f|--force) force=true; shift ;;
+        *) input_targets+=("$1"); shift ;;
+    esac
+done
+
+# 2. Resolve every target (VM or Cluster)
+for t in "${input_targets[@]}"; do
+    if [[ "${t}" == "default" ]]; then
+        targets+=("jupyterlab" "postgres")
+    elif vde_cluster_exists "${t}" >/dev/null 2>&1; then
+        # Expand cluster members using Zsh-native expansion
+        local members=$(vde_query_json -r '.vms[]' "${VDE_CLUSTER_STATE_DIR}/${t}.json")
+        targets+=(${=members})
+    elif [[ "${t}" == "all" ]]; then
+        targets+=($(get_all_vms))
+    else
+        targets+=("${t}")
+    fi
+done
+
+case ${ACTION} in
     init)
-        shift
-        vde_run "init" "${VDE_ROOT_DIR}/bin/vde-init" "$@"
+        vde_run "init" "${VDE_ROOT_DIR}/bin/vde-init" "${input_targets[@]}"
         ;;
-    path-of-the-foundling)
-        shift
-        vde_run "foundling" "${VDE_ROOT_DIR}/bin/vde-path-of-the-foundling" "$@"
+    foundling|path-of-the-foundling)
+        vde_run "foundling" "${VDE_ROOT_DIR}/bin/vde-path-of-the-foundling" "${input_targets[@]}"
         ;;
-    rebuild)
-        shift
-        # 1. Cluster Awareness
-        if vde_cluster_exists "${1}" >/dev/null 2>&1; then
-            vde_log_info "Cluster detected: '${1}'. Re-forging stack..." "cluster"
-            # Clusters don't have a single rebuild command yet, but we can iterate.
-            # For now, let's keep it consistent with start/stop by delegating if we add a cluster-rebuild.
-            # But the requirement was create/start.
-            # Actually, vde-rebuild handles creation too.
-        fi
-        vde_run "rebuild" "${VDE_ROOT_DIR}/bin/vde-rebuild" "$@"
-        ;;
-    create)
-        shift
-        # 1. Cluster Awareness
-        if vde_cluster_exists "${1}" >/dev/null 2>&1; then
-            vde_log_info "Cluster detected: '${1}'. Creating stack..." "cluster"
-            # vde-rebuild handles creation. We'll let it handle the individual VMs.
-            # Wait, vde-cluster start already handles creation if images missing.
-        fi
-        # Map create to vde-rebuild
-        vde_run "create" "${VDE_ROOT_DIR}/bin/vde-rebuild" "$@"
+    rebuild|create)
+        vde_run "${ACTION}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${targets[@]}"
         ;;
     start)
         vde_ensure_disk_space "${VDE_DISK_THRESHOLD:-95}" || exit $?
-        shift
-        local targets=("${@}")
-        [[ -z "${targets}" ]] && vde_log_error "Usage: vde start <alias...>" && exit ${VDE_ERR_GENERAL}
+        [[ -z "${targets}" ]] && vde_log_error "Usage: vde start <alias...|default>" && exit ${VDE_ERR_GENERAL}
         
-        # 1. System Breath Check (Dynamic Scaling/Throttling)
-        local max_vms
-        max_vms=$(vde_check_system_breath)
+        # System Breath Check
+        local max_vms=$(vde_check_system_breath)
         local breath_rc=$?
-        max_vms="${max_vms:-3}" # Safe default
-        
+        max_vms="${max_vms:-3}"
         if [[ ${breath_rc} -ne 0 ]] && [[ "${max_vms}" == "0" ]]; then
             vde_log_error "Ignition aborted due to system resource constraints." "system"
             exit ${breath_rc}
         fi
 
-        # 2. Check current combat load
-        local running_count
-        running_count=$(docker_get_running | wc -w | tr -d ' ')
+        # Check combat load
+        local running_count=$(docker_get_running | wc -w | tr -d ' ')
         if (( running_count >= max_vms )); then
-            vde_log_error "Rule K Violation: Combat Load exceeded (${running_count}/${max_vms} VMs running). Quench a Spoke before igniting a new one." "system"
+            vde_log_error "Rule K Violation: Combat Load exceeded (${running_count}/${max_vms} VMs running)."
             exit ${VDE_ERR_GENERAL}
         fi
 
         local GLOBAL_RC=0
         for target_type in "${targets[@]}"; do
-            # 1. Cluster Awareness: Redirect if it exists as a saved cluster
-            if vde_cluster_exists "${target_type}" >/dev/null 2>&1; then
-                vde_log_info "Cluster detected: '${target_type}'. Igniting stack..." "cluster"
-                vde_run "${target_type}" "${VDE_ROOT_DIR}/bin/vde-cluster" start "${target_type}"
-                [[ ${?} -ne 0 ]] && GLOBAL_RC=1
-                continue
-            fi
-
-            local CANONICAL_NAME
-            CANONICAL_NAME=$(resolve_vm_name "${target_type}" 2>/dev/null)
+            local CANONICAL_NAME=$(resolve_vm_name "${target_type}" 2>/dev/null)
             if [[ -z "${CANONICAL_NAME}" ]]; then
                 vde_error_alias_not_found "${target_type}"
                 continue
             fi
+            
             local BASE_NAME="${CANONICAL_NAME#vde-}"
+            local target_type_val=$(get_vm_type "${CANONICAL_NAME}" 2>/dev/null || echo "language")
+            local ssh_port=$(get_vm_ssh_port "${CANONICAL_NAME}")
+            
+            if [[ "${force}" == "true" ]]; then
+                vde_log_info "Forcing re-ignition of ${CANONICAL_NAME}..." "docker"
+                vde_run "${CANONICAL_NAME}" docker stop "${CANONICAL_NAME}" >/dev/null 2>&1 || true
+                vde_run "${CANONICAL_NAME}" docker rm -f "${CANONICAL_NAME}" >/dev/null 2>&1 || true
+            fi
 
-            local vm_lock="${VDE_VM_LOCKS_DIR}/${BASE_NAME}.lock"
-            claim_lock "${vm_lock}" || { vde_error_map ${VDE_ERR_LOCK:-9} "${CANONICAL_NAME}"; continue; }
-            {
-                # Conflict Prevention (Atomic Handshake)
-                if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
-                    vde_log_info "Removing existing ${CANONICAL_NAME}..." "docker"
-                    vde_run "${CANONICAL_NAME}" docker rm -f "${CANONICAL_NAME}" >/dev/null 2>&1
-                fi
+            if container_is_running "${CANONICAL_NAME}"; then
+                vde_log_info "${CANONICAL_NAME} is already running." "docker"
+                continue
+            fi
 
-                if is_vm_running "${CANONICAL_NAME}"; then
-                    vde_log_info "${CANONICAL_NAME} is already running."
-                    continue
-                fi
+            vde_progress_spinner_start "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})"
+            
+            local compose_file=$(get_vm_compose_file "${CANONICAL_NAME}")
+            if [[ ! -f "${compose_file}" ]]; then
+                vde_progress_spinner_stop "" "Manifest not found for ${CANONICAL_NAME}. Run 'vde create ${BASE_NAME}' first." 1
+                GLOBAL_RC=1
+                continue
+            fi
 
-                # Ignition Logic
-                vde_log_info "Igniting ${CANONICAL_NAME}..." "docker"
-                
-                # Fetch Docker-specific config from registry/templates
-                local ssh_port svc_port_str net_name
-                ssh_port=$(get_vm_ssh_port "${CANONICAL_NAME}")
-                svc_port_str=$(get_vm_service_ports "${CANONICAL_NAME}")
-                net_name="${VDE_DOCKER_NETWORK:-vde-net}"
-                
-                # Convert comma-separated ports to docker -p flags
-                local -a port_args
-                port_args=("-p" "${ssh_port}:${ssh_port}")
-                local -a svc_ports
-                local IFS=','
-                svc_ports=(${(s:,:)svc_port_str})
-                for p in "${svc_ports[@]}"; do
-                    [[ -n "${p}" ]] && port_args+=("-p" "${p}:${p}")
-                done
-
-                # Resolve mounts
-                local mount_str
-                mount_str=$(get_vm_mounts "${CANONICAL_NAME}")
-                local -a mount_args
-                mount_args=()
-                local IFS='|'
-                for m in ${(s:|:)mount_str}; do
-                    local src="${m%%:*}"
-                    local dst="${m#*:}"
-                    # Resolve relative source paths against project root
-                    [[ "${src}" != /* ]] && src="${VDE_ROOT_DIR}/${src}"
-                    mount_args+=("-v" "${src}:${dst}")
-                done
-
-                # Pre-ignition check: image must exist
-                if ! image_exists "${CANONICAL_NAME}"; then
-                    vde_log_warn "Image for ${CANONICAL_NAME} not found. Checking foundations..." "docker"
-                    if ! image_exists "vde-base"; then
-                        vde_log_error "Foundational image 'vde-base' is missing." "docker"
-                        vde_log_error "Ritual Required: Run 'vde init' or 'vde rebuild base' to restore foundations." "docker"
-                        GLOBAL_RC=1
-                        continue
-                    fi
-                    vde_log_info "Base image verified. Attempting to rebuild ${CANONICAL_NAME}..." "docker"
-                    vde_run "${CANONICAL_NAME}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${target_type}" || continue
-                fi
-
-                # Ignition Phase (The Handshake)
-                # We prioritize the LIVE host SSH agent socket bridge via unified discovery
-                local host_ssh_auth_sock
-                host_ssh_auth_sock=$(vde_get_host_ssh_sock)
-
-                # Physical Handshake Verification (Section 10.3)
-                if [[ ! -S "${host_ssh_auth_sock}" ]]; then
-                    vde_log_error "SSH Bridge Blockade: Host socket not found or invalid." "ssh"
-                    vde_log_error "Attempted Path: ${host_ssh_auth_sock:-[EMPTY]}" "ssh"
-                    vde_log_error "Check your SSH agent: echo \$SSH_AUTH_SOCK" "ssh"
+            # Pre-ignition check: image must exist
+            if ! image_exists "${CANONICAL_NAME}"; then
+                vde_log_warn "Image for ${CANONICAL_NAME} not found. Checking foundations..." "docker"
+                if ! image_exists "vde-base"; then
+                    vde_log_error "Foundational image 'vde-base' is missing. Run 'vde init' to restore." "docker"
+                    vde_progress_spinner_stop "" "Base image missing" 1
                     GLOBAL_RC=1
                     continue
                 fi
+                vde_run "${CANONICAL_NAME}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${target_type_val}" || continue
+            fi
 
-                # EXPORT for Docker Compose consumption (Sovereign Bridge)
-                export VDE_HOST_SSH_AUTH_SOCK="${host_ssh_auth_sock}"
-
-                vde_progress_spinner_start "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})"
-                
-                local compose_file
-                compose_file=$(get_vm_compose_file "${CANONICAL_NAME}")
-
-                if [[ ! -f "${compose_file}" ]]; then
-                    vde_progress_spinner_stop "" "Manifest not found for ${CANONICAL_NAME}. Run 'vde create ${CANONICAL_NAME#vde-}' first." 1
-                    GLOBAL_RC=1
-                    continue
-                fi
-
-                if vde_run "${CANONICAL_NAME}" docker compose -f "${compose_file}" up -d >/dev/null 2>&1; then
-                    vde_progress_spinner_stop "${CANONICAL_NAME} ignited"
-                else
-                    vde_progress_spinner_stop "" "Failed to ignite ${CANONICAL_NAME} (Check Docker logs)" 1
-                    GLOBAL_RC=1
-                fi
-            } always {
-                release_lock "${vm_lock}"
-            }
+            # Canonical Ignition Handshake
+            if vde_run "${CANONICAL_NAME}" docker compose -f "${compose_file}" up -d >/dev/null 2>&1; then
+                vde_progress_spinner_stop "${CANONICAL_NAME} ignited"
+            else
+                vde_progress_spinner_stop "" "Failed to ignite ${CANONICAL_NAME}" 1
+                GLOBAL_RC=1
+            fi
         done
         exit ${GLOBAL_RC}
         ;;
 
     stop)
-        shift
-        local targets=("${@}")
-        local force=false
-        # Filter out flags
-        local vms=()
-        for t in "${targets[@]}"; do
-            [[ "${t}" == "-f" || "${t}" == "--force" ]] && force=true && continue
-            vms+=("${t}")
-        done
+        [[ -z "${targets}" ]] && vde_log_error "Usage: vde stop [-f] <alias...|default|all>" && exit ${VDE_ERR_GENERAL}
 
-        if [[ "${vms}" == "all" ]]; then
-            vms=($(get_all_vms))
-        fi
-
-        [[ -z "${vms}" ]] && vde_log_error "Usage: vde stop [-f] <alias...|all>" && exit ${VDE_ERR_GENERAL}
-
-        for vm_alias in "${vms[@]}"; do
-            # 1. Cluster Awareness
-            if vde_cluster_exists "${vm_alias}" >/dev/null 2>&1; then
-                vde_log_info "Cluster detected: '${vm_alias}'. Quenching stack..." "cluster"
-                vde_run "${vm_alias}" "${VDE_ROOT_DIR}/bin/vde-cluster" stop "${vm_alias}"
-                continue
-            fi
-
-            CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
+        for vm_alias in "${targets[@]}"; do
+            local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
             if [[ -z "${CANONICAL_NAME}" ]]; then
                 vde_log_warn "Unknown VM: ${vm_alias}"
                 continue
@@ -270,28 +173,21 @@ case ${COMMAND} in
             fi
         done
         ;;
-    restart)
-        shift
-        local targets=("${@}")
-        [[ -z "${targets}" ]] && vde_log_error "Usage: vde restart <alias...|all>" && exit ${VDE_ERR_GENERAL}
-        
-        if [[ "${targets}" == "all" ]]; then
-            targets=($(get_all_vms))
-        fi
 
+    restart)
+        [[ -z "${targets}" ]] && vde_log_error "Usage: vde restart <alias...|default|all>" && exit ${VDE_ERR_GENERAL}
+        
         for vm_alias in "${targets[@]}"; do
-            CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
+            local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
             if [[ -z "${CANONICAL_NAME}" ]]; then
                 vde_log_warn "Unknown VM: ${vm_alias}"
                 continue
             fi
 
             vde_progress_spinner_start "Restarting ${CANONICAL_NAME}"
-            # Stop if running
             if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
                 vde_run "${CANONICAL_NAME}" docker stop "${CANONICAL_NAME}" >/dev/null 2>&1
             fi
-            # Start (reuse start logic via recursive call or internal function)
             if ./bin/vde start "${CANONICAL_NAME}" >/dev/null 2>&1; then
                 vde_progress_spinner_stop "${CANONICAL_NAME} restarted"
             else
@@ -299,24 +195,12 @@ case ${COMMAND} in
             fi
         done
         ;;
-    remove|delete|rm)
-        shift
-        local targets=("${@}")
-        [[ -z "${targets}" ]] && vde_log_error "Usage: vde remove <alias...|all>" && exit ${VDE_ERR_GENERAL}
 
-        if [[ "${targets}" == "all" ]]; then
-            targets=($(get_all_vms))
-        fi
+    remove|delete|rm)
+        [[ -z "${targets}" ]] && vde_log_error "Usage: vde remove <alias...|default|all>" && exit ${VDE_ERR_GENERAL}
 
         for vm_alias in "${targets[@]}"; do
-            # 1. Cluster Awareness
-            if vde_cluster_exists "${vm_alias}" >/dev/null 2>&1; then
-                vde_log_info "Cluster detected: '${vm_alias}'. Decommissioning stack..." "cluster"
-                vde_run "${vm_alias}" "${VDE_ROOT_DIR}/bin/vde-cluster" remove "${vm_alias}"
-                continue
-            fi
-
-            CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
+            local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
             if [[ -z "${CANONICAL_NAME}" ]]; then
                 vde_log_warn "Unknown VM: ${vm_alias}"
                 continue
@@ -334,114 +218,122 @@ case ${COMMAND} in
             fi
         done
         ;;
+
     nuke)
-        shift
-        vde_run "nuke" "${VDE_ROOT_DIR}/bin/nuke-vde" "$@"
+        vde_run "nuke" "${VDE_ROOT_DIR}/bin/nuke-vde" "${input_targets[@]}"
         ;;
     exec)
-        shift
-        vde_run "exec" "${VDE_ROOT_DIR}/bin/vde-exec" "$@"
+        vde_run "exec" "${VDE_ROOT_DIR}/bin/vde-exec" "${targets[@]}"
         ;;
     enter|ssh)
-        shift
-        vde_run "enter" "${VDE_ROOT_DIR}/bin/ssh-vm" "$@"
+        vde_run "enter" "${VDE_ROOT_DIR}/bin/ssh-vm" "${targets[@]}"
         ;;
     list)
-        shift
-        vde_run "list" "${VDE_ROOT_DIR}/bin/list-vms" "$@"
+        vde_run "list" "${VDE_ROOT_DIR}/bin/list-vms" "${input_targets[@]}"
         ;;
     add)
-        shift
-        local args=()
-        local custom_cmd=""
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                --custom)
-                    custom_cmd="$2"
-                    shift 2
-                    ;;
-                *)
-                    args+=("$1")
-                    shift
-                    ;;
-            esac
-        done
-        [[ -n "${custom_cmd}" ]] && args+=("--custom" "${custom_cmd}")
-        vde_run "add" "${VDE_ROOT_DIR}/bin/add-vm-type" "${args[@]}"
+        vde_run "add" "${VDE_ROOT_DIR}/bin/add-vm-type" "${input_targets[@]}"
         ;;
     uninstall)
-        shift
-        vde_run "uninstall" "${VDE_ROOT_DIR}/bin/uninstall-vm-type" "$@"
+        vde_run "uninstall" "${VDE_ROOT_DIR}/bin/uninstall-vm-type" "${input_targets[@]}"
         ;;
     validate)
-        shift
-        vde_run "validate" "${VDE_ROOT_DIR}/bin/validate-schemas.zsh" "$@"
+        vde_run "validate" "${VDE_ROOT_DIR}/bin/validate-schemas.zsh" "${input_targets[@]}"
         ;;
     prune)
-        shift
-        vde_run "prune" "${VDE_ROOT_DIR}/bin/vde-prune.zsh" "$@"
+        vde_run "prune" "${VDE_ROOT_DIR}/bin/vde-prune.zsh" "${input_targets[@]}"
         ;;
     rebuild-cache)
-        shift
-        vde_run "rebuild-cache" "${VDE_ROOT_DIR}/bin/vde-rebuild-cache" "$@"
+        vde_run "rebuild-cache" "${VDE_ROOT_DIR}/bin/vde-rebuild-cache" "${input_targets[@]}"
         ;;
     sync-version)
-        shift
-        vde_run "sync-version" "${VDE_ROOT_DIR}/bin/vde-sync-version" "$@"
+        vde_run "sync-version" "${VDE_ROOT_DIR}/bin/vde-sync-version" "${input_targets[@]}"
         ;;
     port)
-        local vm_alias=$2
-        CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
+        local vm_alias=${targets[1]}
+        local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
         vde_run "port" vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${VM_TYPES_JSON}"
         exit $?
         ;;
     info)
-        shift
-        vde_run "info" "${VDE_ROOT_DIR}/bin/vde-info" "$@"
+        vde_run "info" "${VDE_ROOT_DIR}/bin/vde-info" "${targets[@]}"
         ;;
     ps|status)
-        shift
-        vde_run "ps" "${VDE_ROOT_DIR}/bin/vde-ps" "$@"
+        vde_run "ps" "${VDE_ROOT_DIR}/bin/vde-ps" "${input_targets[@]}"
         ;;
     inspect)
+        vde_run "inspect" "${VDE_ROOT_DIR}/bin/vde-inspect" "${targets[@]}"
+        ;;
+    dns-check)
         shift
-        vde_run "inspect" "${VDE_ROOT_DIR}/bin/vde-inspect" "$@"
+        "${VDE_ROOT_DIR}/bin/vde-dns-check.zsh" "$@"
         ;;
     logs)
-        shift
-        vde_run "logs" "${VDE_ROOT_DIR}/bin/vde-logs" "$@"
+        vde_run "logs" "${VDE_ROOT_DIR}/bin/vde-logs" "${targets[@]}"
         ;;
     images)
-        shift
-        vde_run "images" "${VDE_ROOT_DIR}/bin/vde-images" "$@"
+        vde_run "images" "${VDE_ROOT_DIR}/bin/vde-images" "${input_targets[@]}"
         ;;
     stats)
-        shift
-        vde_run "stats" "${VDE_ROOT_DIR}/bin/vde-stats" "$@"
+        vde_run "stats" "${VDE_ROOT_DIR}/bin/vde-stats" "${targets[@]}"
         ;;
     health)
-        shift
-        vde_run "health" "${VDE_ROOT_DIR}/bin/vde-health" "$@"
+        vde_run "health" "${VDE_ROOT_DIR}/bin/vde-health" "${input_targets[@]}"
         ;;
     cluster)
-        shift
-        vde_run "cluster" "${VDE_ROOT_DIR}/bin/vde-cluster" "$@"
-        ;;
-    ssh-setup)
-        shift
-        vde_run "ssh-setup" "${VDE_ROOT_DIR}/bin/ssh-setup" "$@"
-        ;;
-    ssh-sync)
-        shift
-        vde_run "ssh-sync" "${VDE_ROOT_DIR}/bin/ssh-sync" "$@"
-        ;;
-    networks)
-        shift
-        vde_run "networks" "${VDE_ROOT_DIR}/bin/vde-networks" "$@"
+        vde_run "cluster" "${VDE_ROOT_DIR}/bin/vde-cluster" "${input_targets[@]}"
         ;;
     vision)
-        shift
-        vde_run "vision" "${VDE_ROOT_DIR}/bin/vde-vision" "$@"
+        vde_run "vision" "${VDE_ROOT_DIR}/bin/vde-vision" "${input_targets[@]}"
         ;;
-    help|*) echo "Usage: vde {init|rebuild|create|start|stop|restart|remove|nuke|exec|enter|ssh|list|add|uninstall|validate|rebuild-cache|sync-version|port|info|ps|status|inspect|logs|images|stats|health|cluster|networks|vision} [type/alias]" ;;
+    matrix-audit)
+        vde_run "matrix-audit" "${VDE_ROOT_DIR}/bin/vde-matrix-audit.zsh" "${input_targets[@]}"
+        ;;
+    matrix-rebuild)
+        vde_run "matrix-rebuild" "${VDE_ROOT_DIR}/bin/vde-matrix-rebuild.zsh" "${input_targets[@]}"
+        ;;
+    help|-h|--help)
+        cat <<EOF
+VDE Unified Command - The Sovereign Orchestrator
+Usage: vde <command> [arguments]
+
+Core Commands:
+  init            Initialize the VDE Forge, generate configs, and smelting foundation images.
+  create <name>   Forge a specific VM Spoke or cluster. Resolves aliases and units.
+  rebuild <name>  Destroy and re-forge a Spoke (use --no-cache to ignore Docker layer cache).
+  start <name>    Ignite a Spoke or cluster (e.g., 'vde start default').
+  stop <name>     Quench a running Spoke or cluster unit.
+  restart <name>  Reset a Spoke or cluster unit.
+  remove <name>   Remove Spoke containers and ephemeral state.
+  nuke            The Nuclear Option: Complete erasure of all VDE artifacts and data.
+
+Spoke Operations:
+  enter <name>    Enter a Spoke's login shell (Zsh) via the Transversal Bridge.
+  exec <name> <c> Execute a command inside a Spoke without interactive shell.
+  ssh <name>      Connect to a Spoke via raw SSH using the VDE identity.
+  logs <name>     Tail logs for a specific Spoke or cluster unit.
+
+Diagnostics & Discovery:
+  dns-check <s> <t> Verify DNS resolution between Source and Target Spokes.
+  info <name>     Display detailed metadata and registry status for a Spoke.
+  ps              List all active VDE containers and their statuses.
+  health          Execute the Sovereign Audit for the Hub and infrastructure.
+  stats <name>    Display real-time resource usage for Spokes.
+  port <name>     Retrieve the specific SSH or service port for an alias.
+  validate        Verify the integrity of Beskar Registry schemas.
+
+Matrix Management:
+  matrix-audit    Exhaustive verification of every registered VM type (Serialized).
+  matrix-rebuild  Comprehensive non-cached re-forging of the absolute Spoke matrix.
+  cluster <act>   Manage named units (save, list, start, stop, remove).
+
+Paths:
+  path-of-the-foundling  Guide a new warrior through the VDE setup rituals.
+
+Version: $(vde_get_version)
+This is the Way.
+EOF
+        exit 0
+        ;;
+    *) echo "Unknown command. Run 'vde help' for usage." ;;
 esac

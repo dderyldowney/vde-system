@@ -7,10 +7,11 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_certified-ghost_pkgs=""
+local vde_ghost_pkgs="htop neofetch"
 
 # 2. THE FORGE WORK
-apt-get update -y && apt-get install -y htop
+apt-get update
+apt-get install -y ${=vde_ghost_pkgs}
 
 # 3. PURGING THE GHOSTS
 apt-get clean

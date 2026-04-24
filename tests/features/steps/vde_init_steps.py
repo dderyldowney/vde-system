@@ -12,14 +12,26 @@ from pathlib import Path
 from vm_common import VDE_ROOT, run_vde_command
 
 @given('the Hub is uninitialized')
-def step_impl(context):
-    """Confirm the Hub is ready for initialization. We don't delete data, but we ensure core artifacts are present or reconstructable."""
+def step_hub_uninitialized(context):
+    """Confirm the Hub is ready for initialization."""
     assert VDE_ROOT.exists(), f"VDE root {VDE_ROOT} does not exist"
-    # The 'uninitialized' state in VDE means no .cache or missing keys
-    # We don't purge here for safety, but we could check for absence if we wanted a strict test.
-    # For now, we verify the Hub is active as the baseline.
-    res = subprocess.run(["zsh", "bin/vde", "info"], capture_output=True, text=True, cwd=VDE_ROOT)
-    assert res.returncode == 0, "VDE Hub is not responsive"
+    
+    # 1. Quench all
+    subprocess.run(["zsh", "bin/vde", "stop", "all"], capture_output=True, cwd=VDE_ROOT)
+    
+    # 2. Break all locks
+    lock_dir = VDE_ROOT / ".locks"
+    if lock_dir.exists():
+        shutil.rmtree(lock_dir)
+    
+    # 3. Purge cache
+    cache_dir = VDE_ROOT / ".cache"
+    if cache_dir.exists():
+        shutil.rmtree(cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    
+    # 4. Remove network
+    subprocess.run(["docker", "network", "rm", "vde-net"], capture_output=True, cwd=VDE_ROOT)
 
 @when('I execute "bin/vde init"')
 def step_impl(context):
