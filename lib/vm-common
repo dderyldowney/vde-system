@@ -46,13 +46,18 @@ _VM_COMMON_LOADED=1
 if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
     # Zsh-native path detection (UAP Mandate 1)
     # %N is the standard way to get the sourced file path in ZSH
-    _VM_COMMON_SOURCE="${(%):-%N}"
-    
+    _VM_COMMON_SOURCE="${(%):-%x}"
+
     # Calculate absolute path to root (lib/ is one level below VDE root)
     VDE_ROOT_DIR="$(cd "$(dirname "${_VM_COMMON_SOURCE}")/.." && pwd)"
 fi
 export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 
+# Mandate 3: Support VDE_QUIET for clean output
+# Also suppress in test mode to ensure clean verification
+if [[ "${VDE_TEST_MODE:-0}" == "1" ]]; then
+    export VDE_QUIET=1
+fi
 # =============================================================================
 # DEPENDENCIES (CORE)
 # =============================================================================
@@ -901,7 +906,7 @@ resolve_vm_name() {
     fi
     
     # 2. Check with vde- prefix if not already present
-    if [[ ! "${input}" =~ ^vde- ]]; then
+    if [[ "${input}" != vde-* ]]; then
         local prefixed="vde-${input}"
         if [[ -n "${VM_TYPE[${prefixed}]}" ]]; then
             echo "${prefixed}"
@@ -1077,7 +1082,7 @@ release_port_reservation() {
     local input="${1}"
     
     # If input is a number, it's a port
-    if [[ "${input}" =~ ^[0-9]+$ ]]; then
+    if [[ "${input}" == [0-9]# ]]; then
         release_port "${input}"
     else
         # Find the port associated with this VM and release it
@@ -1411,12 +1416,12 @@ vde_check_system_breath() {
         ncpu=$(nproc 2>/dev/null || echo 4)
     fi
     # Ensure ncpu is a number
-    [[ "${ncpu}" =~ ^[0-9]+$ ]] || ncpu=4
+    [[ "${ncpu}" == [0-9]# ]] || ncpu=4
 
     # Extract 1-minute load average
     load_avg=$(uptime | awk -F'load averages:|load average:' '{ print $2 }' | awk '{ print $1 }' | sed 's/,//g' 2>/dev/null)
     # Ensure load_avg is a number (handle empty or non-numeric)
-    if [[ -z "${load_avg}" ]] || ! [[ "${load_avg}" =~ ^[0-9.]+$ ]]; then
+    if [[ -z "${load_avg}" ]] || [[ "${load_avg}" != [0-9.]# ]]; then
         load_avg=0.0
     fi
     

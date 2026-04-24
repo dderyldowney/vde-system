@@ -307,13 +307,5 @@ vde_metrics_get_cache_hit_rate() {
 #===============================================================================
 
 # Export functions
-export -f vde_metrics_init >/dev/null 2>&1 || true
-export -f vde_metrics_record >/dev/null 2>&1 || true
-export -f vde_metrics_increment >/dev/null 2>&1 || true
-export -f vde_metrics_decrement >/dev/null 2>&1 || true
-export -f vde_metrics_timing_start >/dev/null 2>&1 || true
-export -f vde_metrics_timing_end >/dev/null 2>&1 || true
-export -f vde_metrics_time_command >/dev/null 2>&1 || true
-export -f vde_metrics_get >/dev/null 2>&1 || true
-export -f vde_metrics_export >/dev/null 2>&1 || true
-export -f vde_metrics_reset >/dev/null 2>&1 || true
+# Note: ZSH does not support 'export -f'. Functions are available to subshells
+# if they are defined in a sourced script or autoloaded.

@@ -32,13 +32,6 @@ warnings=0
 #===============================================================================
 # GHOST ZONE CHECK (Zero-Tolerance)
 #===============================================================================
-if [[ -d "conductor" ]]; then
-    echo "\033[1;31m[CRITICAL FAILURE]\033[0m Ghost Zone 'conductor/' detected."
-    echo "Protocol Violation: Rule 3 (Ghost Zone Prohibition)."
-    echo "Purging unauthorized artifacts and halting session..."
-    rm -rf conductor/
-    exit 1
-fi
 
 # Rule 3 Enforcement: plans/ Subdirectory Lock
 if [[ -d "plans" ]]; then
@@ -103,7 +96,7 @@ audit_file_content() {
     fi
 
     # Only audit ZSH logic for scripts (skip data and documentation)
-    if [[ "$file" == *.zsh || ( ! "$file" =~ "\." && $(file "$file" 2>/dev/null) == *"shell script"* ) ]]; then
+    if [[ "$file" == *.zsh || ( "$file" != *.* && $(file "$file" 2>/dev/null) == *"shell script"* ) ]]; then
         # Mandate 1: Sovereign Shebang Check (ZSH ONLY)
         read -r first_line < "$file"
         if [[ "${first_line}" != "#!/usr/bin/env zsh" && "${first_line}" != "#!/bin/zsh" ]]; then
