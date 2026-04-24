@@ -58,7 +58,8 @@ kill_orphan_ssh_agents() {
     while IFS= read -r pid; do
         [[ -z "${pid}" ]] && continue
         local ppid
-        ppid=$(ps -o ppid= -p "${pid}" 2>/dev/null | tr -d ' ')
+        ppid=$(ps -o ppid= -p "${pid}" 2>/dev/null)
+        ppid="${ppid// /}"
         if [[ "${ppid}" == "1" ]]; then
             echo "[CLEANUP] Killing orphaned ssh-agent PID ${pid}"
             kill "${pid}" 2>/dev/null && ((killed++))
@@ -84,17 +85,33 @@ kill_orphan_test_sessions() {
 
         # Get process start time
         local etime
-        etime=$(ps -o etime= -p "${pid}" 2>/dev/null | tr -d ' ')
+        etime=$(ps -o etime= -p "${pid}" 2>/dev/null)
+        etime="${etime// /}" # ZSH-native removal of spaces
         [[ -z "${etime}" ]] && continue
 
-        # Parse etime format: [[dd-]hh:]mm:ss
+        # Parse etime format: [[dd-]hh:]mm:ss using ZSH-native pattern matching
         local seconds=0
-        if [[ "${etime}" =~ ^([0-9]+)-([0-9]+):([0-9]+):([0-9]+)$ ]]; then
-            seconds=$(( ${match[1]} * 86400 + ${match[2]} * 3600 + ${match[3]} * 60 + ${match[4]} ))
-        elif [[ "${etime}" =~ ^([0-9]+):([0-9]+):([0-9]+)$ ]]; then
-            seconds=$(( ${match[1]} * 3600 + ${match[2]} * 60 + ${match[3]} ))
-        elif [[ "${etime}" =~ ^([0-9]+):([0-9]+)$ ]]; then
-            seconds=$(( ${match[1]} * 60 + ${match[2]} ))
+        if [[ "${etime}" == [0-9]#-[0-9][0-9]:[0-9][0-9]:[0-9][0-9] ]]; then
+            # Format: dd-hh:mm:ss
+            local days="${etime%%-*}"
+            local rest="${etime#*-}"
+            local hours="${rest%%:*}"
+            rest="${rest#*:}"
+            local mins="${rest%%:*}"
+            local secs="${rest#*:}"
+            seconds=$(( days * 86400 + hours * 3600 + mins * 60 + secs ))
+        elif [[ "${etime}" == [0-9]#:[0-9][0-9]:[0-9][0-9] ]]; then
+            # Format: hh:mm:ss
+            local hours="${etime%%:*}"
+            local rest="${etime#*:}"
+            local mins="${rest%%:*}"
+            local secs="${rest#*:}"
+            seconds=$(( hours * 3600 + mins * 60 + secs ))
+        elif [[ "${etime}" == [0-9]#:[0-9][0-9] ]]; then
+            # Format: mm:ss
+            local mins="${etime%%:*}"
+            local secs="${etime#*:}"
+            seconds=$(( mins * 60 + secs ))
         fi
 
         if [[ ${seconds} -gt ${cutoff_seconds} ]]; then

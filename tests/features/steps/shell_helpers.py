@@ -48,9 +48,26 @@ def _run_vde_command(
     """Run a vde command and return the result."""
     vde_root = _get_vde_root()
     vde_script = os.path.join(vde_root, "bin", "vde")
-    cmd = ["zsh", vde_script] + args
+    
+    # Use zsh -o pipefail -ec for the Unbroken Link pattern
+    cmd = ["zsh", "-o", "pipefail", "-ec", f'"{vde_script}" "$@"', "--"] + args
+    
+    # Default to quiet mode for tests (Mandate 3)
+    # Use shell=False to bypass macOS SIP environment sanitization
+    full_env = os.environ.copy()
+    full_env["VDE_ROOT_DIR"] = vde_root
+    full_env["VDE_QUIET"] = "1"
+    full_env["VDE_TEST_MODE"] = "1"
+    
     return subprocess.run(
-        cmd, capture_output=True, text=True, timeout=timeout, check=check, cwd=vde_root
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        check=check,
+        cwd=vde_root,
+        env=full_env,
+        shell=False
     )
 
 
@@ -108,31 +125,40 @@ def execute_in_container(
     container_name: str, command: str, timeout: int = 30, use_shell: bool = True, user: str = "devuser"
 ) -> Dict[str, Any]:
     """
-    Execute a command inside a VDE container using direct docker exec.
-    This bypasses ZSH/UAP log headers for technical verification.
+    Execute a command inside a VDE container using the vde orchestrator.
+    This ensures compliance with Rule 1 and Rule 15 while providing high-fidelity proof.
     """
+    print(f"DEBUG: execute_in_container calling _run_vde_command with {container_name} '{command}'")
     try:
-        import shlex
-        cmd = ["docker", "exec"]
+        args = ["exec"]
         if user:
-            cmd.extend(["-u", user])
+            args.extend(["--user", user])
             
+        args.append(container_name)
+        
         if use_shell:
-            # We use zsh as it's the mandated tribe language
-            cmd.extend([container_name, "zsh", "-c", command])
+            # vde-exec already uses zsh -c internally
+            args.append(command)
         else:
-            cmd.extend([container_name] + shlex.split(command))
+            import shlex
+            args.extend(shlex.split(command))
             
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        result = _run_vde_command(args, timeout=timeout)
+        
         if os.environ.get("VDE_DEBUG_TESTS") == "1":
-            print(f"DEBUG: execute_in_container cmd: {cmd}")
+            print(f"DEBUG: execute_in_container args: {args}")
             print(f"DEBUG: execute_in_container stdout: {result.stdout}")
             print(f"DEBUG: execute_in_container stderr: {result.stderr}")
-        return {"stdout": result.stdout, "stderr": result.stderr, "returncode": result.returncode}
+            
+        # Return a result that step_command_succeed can handle
+        from vm_common import CommandResult
+        return CommandResult(result.stdout, result.stderr, result.returncode, args=args)
     except subprocess.TimeoutExpired as e:
-        return {"stdout": "", "stderr": str(e), "returncode": -1}
+        from vm_common import CommandResult
+        return CommandResult("", str(e), -1)
     except Exception as e:
-        return {"stdout": "", "stderr": str(e), "returncode": 1}
+        from vm_common import CommandResult
+        return CommandResult("", str(e), 1)
 
 
 def verify_command_output(
