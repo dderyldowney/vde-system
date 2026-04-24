@@ -4,7 +4,8 @@ import os
 import re
 from pathlib import Path
 
-VDE_ROOT = Path("/Users/dderyldowney/VDE")
+# The VDE Root - Calculated relative to the script location
+VDE_ROOT = Path(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 def get_tag_info(file_path):
     rel_path = str(file_path.relative_to(VDE_ROOT))
@@ -44,10 +45,8 @@ def process_file(file_path):
     # PURGE: Remove any existing tags in first 5 lines
     tag_pattern = re.compile(r'@(armor|forge|shared-law)')
     new_lines = []
-    purged = False
     for i, line in enumerate(lines):
         if i < 5 and tag_pattern.search(line):
-            purged = True
             continue
         new_lines.append(line)
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # @forge (Governance Sentinel)
 # VDE ARCHITECTURAL RECORD
-# @shared-law (BDD Step Definition)
 """
 Step definitions for the System Spine Integrity feature.
 Ensures the Hub-and-Spoke architecture is fully operational and enforced.

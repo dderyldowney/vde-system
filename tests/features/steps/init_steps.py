@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # @forge (Governance Sentinel)
 # VDE ARCHITECTURAL RECORD
-# @armor (BDD Step Definition)
 import os
 import subprocess
 from pathlib import Path
