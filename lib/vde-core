@@ -32,7 +32,7 @@ vde_get_version() {
     local spec_file="${root}/docs/VDE-SPEC.md"
 
     if [[ -f "${spec_file}" ]]; then
-        # Extracts version from "# VDE-SPEC [v]1.4.1 (The Sovereign Baseline)"
+        # Extracts version from "# VDE-SPEC [v]1.5.0 (The Sovereign Baseline)"
         # Supports optional 'v' prefix and SemVer extensions like -spN
         grep -m1 '^# VDE-SPEC ' "${spec_file}" | sed -E 's/^# VDE-SPEC v?([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?).*/\1/' | tr -d '[:space:]'
     else
@@ -299,7 +299,7 @@ vde_translate_conf_to_json() {
         {
             echo "{"
             echo "  \"@armor\": \"(Beskar Registry DNA)\","
-            echo "  \"version\": \"1.1\","
+            echo "  \"version\": \"${VDE_VERSION:-$(vde_get_version)}\","
             echo "  \"vms\": {"
             echo "    \"language\": ["
             echo "${(j:,\n:)_v_lang_entries}"

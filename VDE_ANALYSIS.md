@@ -1,7 +1,7 @@
 # VDE Technical Analysis: Architectural Integrity & DX Evaluation
 <!-- @shared-law (Forge Component) -->
 
-**Baseline**: 1.4.1 (Sovereign)
+**Baseline**: 1.5.0 (Sovereign)
 **Status**: VERIFIED
 **Auditor**: Senior Software Engineer & AI Systems Architect
 

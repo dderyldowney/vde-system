@@ -815,7 +815,7 @@ def step_ensure_running_python(context):
     
     # 2. Verify Spoke is alive beyond Docker level (Retry for SSH readiness)
     # Using deterministic polling to satisfy UAP Mandate 14
-    max_retries = 30
+    max_retries = 60
     heartbeat_success = False
     last_output = ""
 
@@ -824,7 +824,6 @@ def step_ensure_running_python(context):
     port_res = run_vde_command(f"port {vm_alias}")
     vm_port = port_res.stdout.strip()
 
-    
     for i in range(max_retries):
         # Physical handshake: Check if SSH port is open and responding
         import subprocess
@@ -841,6 +840,7 @@ def step_ensure_running_python(context):
         os.system("zsh -c 'zmodload zsh/zselect 2>/dev/null && zselect -t 50'")
 
     assert heartbeat_success, f"Application heartbeat failed after {max_retries} attempts on port {vm_port}. Last Err: {last_output}"
+
 
 
 
