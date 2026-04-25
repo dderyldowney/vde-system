@@ -33,6 +33,10 @@
 - **Registry Serialization**: To prevent "Thundering Herd" race conditions, all modifications to the VM registry and port allocation MUST be performed *inside* the global config lock (`global-config.lock`). Port availability MUST be verified via a physical diagnostic handshake (`docker run --rm`).
 - **Born Ready (BTO)**: Every jail MUST be fully functional at image creation. Runtime `apt` calls or network-dependent configurations are prohibited to ensure immutability.
 - **Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`. USP rituals are mandated to "Purge the Ghosts" (`apt-get clean`) to maintain image hygiene.
+- **The AI-Blind Runtime (Core Tenet)**: The Forge (AI logic, agentic intelligence, and GitHub lifecycle automation) SHALL NOT be active, available, or accessible during Project 1 (Armor) runtime. The student environment must be 100% deterministic, autonomous, and AI-blind.
+- **Pure Relative Pathing**: All artifacts MUST be executed and accessed relative to VDE_ROOT_DIR to ensure absolute portability of both the combined system and its individual projects.
+- **The Rule of One**: This SPEC is the unique and absolute authority on the project version and the Sovereign Artifact Set state. Any discrepancy between implementation and SPEC must be resolved in favor of the SPEC.
+
 
 ## 2. Technical Inventory Control (SemVer)
 

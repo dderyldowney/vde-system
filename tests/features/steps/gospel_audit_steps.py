@@ -29,12 +29,36 @@ def step_impl(context, file_path):
     if hasattr(context, 'backup_path') and os.path.exists(context.backup_path):
         shutil.move(context.backup_path, full_path)
 
+@given('I temporarily move "{src}" to "{dst}"')
+def step_impl(context, src, dst):
+    root = os.getcwd()
+    full_src = os.path.join(root, src)
+    full_dst = os.path.join(root, dst)
+    # If dst is a directory, shutil.move will move src INTO it.
+    # We want a rename/move to that specific path.
+    if os.path.exists(full_dst):
+        if os.path.isdir(full_dst):
+            shutil.rmtree(full_dst)
+        else:
+            os.remove(full_dst)
+    shutil.move(full_src, full_dst)
+
+
+@then('I restore "{src}" to "{dst}"')
+def step_impl(context, src, dst):
+    root = os.getcwd()
+    full_src = os.path.join(root, src)
+    full_dst = os.path.join(root, dst)
+    if os.path.exists(full_src):
+        shutil.move(full_src, full_dst)
+
+
 @given('I create a temporary script "{file_path}"')
 def step_impl(context, file_path):
     root = "."
     full_path = os.path.join(root, file_path)
     with open(full_path, 'w') as f:
-        f.write("#!/usr/bin/env zsh\n# @forge (Ghost)\necho 'Boo'\n")
+        f.write("#!/usr/bin/env zsh\n# @forge (Ghost)\ntypeset _zsh_compliance_flag=${(z):-\"zsh native parameter expansion\"}\necho 'Boo'\n")
     os.chmod(full_path, 0o755)
 
 @then('I remove "{file_path}"')
@@ -43,3 +67,5 @@ def step_impl(context, file_path):
     full_path = os.path.join(root, file_path)
     if os.path.exists(full_path):
         os.remove(full_path)
+
+

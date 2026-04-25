@@ -73,11 +73,13 @@ vde_log_info "Sovereign Artifact Set Aligned." "forge"
 
 # 6. Strike .gemini/instructions.md
 # Update title and version footer
-vde_sed_inplace "s/# \*\*The Way of the VDE: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*\*\*/# **The Way of the VDE: ${NEW_VER} (The Sovereign Baseline)**/" "./.gemini/instructions.md"
-vde_sed_inplace "s/Version: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Version: ${NEW_VER}/" "./.gemini/instructions.md"
-vde_sed_inplace "s/VDE-SPEC [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/VDE-SPEC ${NEW_VER} (Baseline)/" "./.gemini/instructions.md"
-vde_sed_inplace "s/[0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? The Sovereign Baseline/${NEW_VER} The Sovereign Baseline/g" "./.gemini/instructions.md"
-vde_log_success "Aligned .gemini/instructions.md" "forge"
+if [[ -f "./.gemini/instructions.md" ]]; then
+    vde_sed_inplace "s/# \*\*The Way of the VDE: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*\*\*/# **The Way of the VDE: ${NEW_VER} (The Sovereign Baseline)**/" "./.gemini/instructions.md"
+    vde_sed_inplace "s/Version: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Version: ${NEW_VER}/" "./.gemini/instructions.md"
+    vde_sed_inplace "s/VDE-SPEC [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/VDE-SPEC ${NEW_VER} (Baseline)/" "./.gemini/instructions.md"
+    vde_sed_inplace "s/[0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? The Sovereign Baseline/${NEW_VER} The Sovereign Baseline/g" "./.gemini/instructions.md"
+    vde_log_success "Aligned .gemini/instructions.md" "forge"
+fi
 
 # 7. Strike MEMORY.md
 vde_sed_inplace "s/Version: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Version: ${NEW_VER}/" "./MEMORY.md"
