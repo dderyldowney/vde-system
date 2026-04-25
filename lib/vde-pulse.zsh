@@ -5,7 +5,7 @@
 # Source this library with: source ./lib/vde-pulse.zsh
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 if [[ "${_VDE_PULSE_LOADED:-}" = "1" ]] ; then
     return 0 2>/dev/null || exit 0
