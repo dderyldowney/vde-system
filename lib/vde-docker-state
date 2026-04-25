@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # Real-Time Docker State Functions for VDE
 # These functions query Docker directly for container state,
 # providing accurate real-time status instead of relying on config files.
@@ -16,7 +17,7 @@
 # Returns: VDE_SUCCESS (0), outputs container name to stdout
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 _get_container_name() {
     vde_get_container_name "${1}"

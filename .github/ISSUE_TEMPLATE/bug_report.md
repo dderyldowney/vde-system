@@ -1,3 +1,5 @@
+# BUG REPORT
+<!-- @forge (Governance Sentinel) -->
 ---
 name: "🐞 Bug Report"
 about: "Report a fracture in the Forge's steel"

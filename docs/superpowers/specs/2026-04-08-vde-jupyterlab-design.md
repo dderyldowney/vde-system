@@ -1,4 +1,5 @@
 # VDE Design Spec: JupyterLab Data Science Suite
+<!-- @shared-law (Sovereign Law) -->
 
 **Date:** 2026-04-08
 **Status:** Approved (Brainstorming Phase Complete)
@@ -20,7 +21,7 @@ The `vde-jupyterlab` VM is categorized as a **Service** spoke to allow for expos
   "display": "JupyterLab Data Science Suite",
   "pkgs": "python3-pip python3-venv",
   "custom_cmd": "zsh /vde/scripts/setup/jupyterlab-init.zsh",
-  "service_port": "8888",
+  "service_ports": "8888",
   "ssh_port": 2407
 }
 ```

@@ -1,9 +1,11 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # list-vms - List all predefined VM types
 # Enhanced with --name-only flag and improved formatting
 
 # Reset all zsh options to defaults to avoid local var printing issues
 emulate zsh
+set -e
 
 # Determine VDE root directory
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
@@ -75,7 +77,7 @@ while [[ ${#} -gt 0 ]]; do
             echo "  list-vms --name-only        # Show only names/hostnames"
             echo "  list-vms python             # Search for 'python'"
             echo "  list-vms --lang script      # Search for script in languages"
-            exit 0
+            exit ${VDE_SUCCESS}
             ;;
         *)
             FILTER="${1}"
@@ -97,11 +99,10 @@ display_vm() {
 
     # Apply filter if specified
     if [[ -n "${FILTER}" ]]; then
-        if [[ ! "${name}" =~ "${FILTER}" ]] && [[ ! "${display}" =~ "${FILTER}" ]] && [[ ! "${vm_aliases}" =~ "${FILTER}" ]]; then
+        if [[ "${name}" != *"${FILTER}"* ]] && [[ "${display}" != *"${FILTER}"* ]] && [[ "${vm_aliases}" != *"${FILTER}"* ]]; then
             return
         fi
     fi
-
     if [[ "${NAME_ONLY}" == "true" ]]; then
         # Show hostname (for language VMs: name-dev, for services: name)
         local hostname
@@ -168,11 +169,10 @@ display_vm_type() {
 
     # Apply filter if specified
     if [[ -n "${FILTER}" ]]; then
-        if [[ ! "${name}" =~ "${FILTER}" ]] && [[ ! "${display}" =~ "${FILTER}" ]] && [[ ! "${vm_aliases}" =~ "${FILTER}" ]]; then
+        if [[ "${name}" != *"${FILTER}"* ]] && [[ "${display}" != *"${FILTER}"* ]] && [[ "${vm_aliases}" != *"${FILTER}"* ]]; then
             return
         fi
     fi
-
     if [[ "${NAME_ONLY}" == "true" ]]; then
         printf "%s\n" "${name}"
     else
@@ -230,7 +230,7 @@ if [[ -n "${FILTER}" ]]; then
         
         if [[ "${match_found}" == "false" ]] && [[ "${SHOW_CREATED}" == "false" ]]; then
             vde_error_simple "VM not found: ${FILTER}" "list-vms"
-            exit 1
+            exit ${VDE_ERR_NOT_FOUND}
         fi
     fi
 fi
@@ -250,7 +250,7 @@ if [[ ${#all_vms} -eq 0 ]]; then
         echo ""
         echo "Run 'vde create <name>' to create one."
     fi
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # Separate VMs by type for categorized display
@@ -280,7 +280,7 @@ if [[ ${#lang_created} -gt 0 ]] && [[ "${LIST_TYPE}" != "service" ]]; then
         echo "Language VMs:"
     fi
     for name in "${lang_created[@]}"; do
-        _vm_display=$(get_vm_display_name "${name}")
+        _vm_display=$(get_vm_display "${name}")
         _vm_aliases=$(_assoc_get "VM_ALIASES" "${name}" 2>/dev/null) || _vm_aliases=""
         display_vm "${name}" "lang" "${_vm_display}" "${_vm_aliases}"
 
@@ -296,7 +296,7 @@ if [[ ${#service_created} -gt 0 ]] && [[ "${LIST_TYPE}" != "lang" ]]; then
         echo "Service VMs:"
     fi
     for name in "${service_created[@]}"; do
-        _vm_display=$(get_vm_display_name "${name}")
+        _vm_display=$(get_vm_display "${name}")
         _vm_aliases=$(_assoc_get "VM_ALIASES" "${name}" 2>/dev/null) || _vm_aliases=""
         display_vm "${name}" "service" "${_vm_display}" "${_vm_aliases}"
     done

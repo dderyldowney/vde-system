@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (Forge Component)
 # VDE Makefile
 # Targets for testing and development
 

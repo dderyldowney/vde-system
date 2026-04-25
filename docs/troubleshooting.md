@@ -1,3 +1,5 @@
+# TROUBLESHOOTING
+<!-- @shared-law (Sovereign Law) -->
 # Troubleshooting
 
 Common issues and solutions for VDE.

@@ -1,5 +1,13 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE-BOOTSTRAP (Version-Agnostic)
+set -e
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
+# Determine VDE root directory
+VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 VDE_SSH_DIR="$HOME/.ssh/vde"
 VDE_KEY="$VDE_SSH_DIR/vde_student"
@@ -20,8 +28,8 @@ else
 fi
 
 # Refresh the Passport in the project root
-mkdir -p "./public-ssh-keys"
-cp "${VDE_KEY}.pub" "./public-ssh-keys/vde_student.pub"
+mkdir -p "${VDE_ROOT_DIR}/public-ssh-keys"
+cp "${VDE_KEY}.pub" "${VDE_ROOT_DIR}/public-ssh-keys/vde_student.pub"
 
 echo "==> VDE: Bootstrap Complete."
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE SSH Setup Command
 # Manages VDE SSH environment through the vde unified interface
 #
@@ -14,7 +15,7 @@
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 set -e
 
@@ -25,6 +26,13 @@ export VDE_ROOT_DIR
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
 source "${VDE_ROOT_DIR}/lib/vm-common"
 
+# DEPRECATION GUARD: Enforce unified command usage
+if [[ -z "${VDE_ORCHESTRATED}" ]]; then
+    vde_log_warn "Standalone execution of $(basename "$0") is deprecated." "ssh"
+    vde_log_warn "Please use 'vde ssh-setup' instead." "ssh"
+    echo ""
+fi
+
 # Parse command line arguments
 ACTION="${1:-status}"
 
@@ -33,11 +41,12 @@ if [[ "${ACTION}" == "--help" ]] || [[ "${ACTION}" == "-h" ]] ; then
     cat <<EOF
 VDE SSH Setup - Manage VDE SSH Environment
 
-Usage: vde ssh-setup <action>
+Usage: vde ssh-setup <action> [options]
 
 Actions:
   status    Show SSH environment status (default)
   init      Initialize SSH environment (keys, agent, config)
+              Use --force or -f to regenerate existing keys
   start     Start SSH agent and load VDE key
   stop      Stop VDE-specific SSH agent
   autostart Configure shell to auto-start SSH agent on login
@@ -47,6 +56,7 @@ Examples:
   vde ssh-setup              # Show status
   vde ssh-setup status       # Show status (explicit)
   vde ssh-setup init         # Full setup: keys + agent + config
+  vde ssh-setup init --force # Force regenerate keys
   vde ssh-setup start        # Start agent and load keys
   vde ssh-setup stop         # Stop the VDE-specific agent
   vde ssh-setup autostart    # Auto-start agent on shell login
@@ -55,7 +65,7 @@ Examples:
 See also:
   vde ssh-sync               Sync SSH keys to build context
 EOF
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -128,13 +138,18 @@ if [[ "${ACTION}" == "status" ]] ; then
     fi
 
     echo ""
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
 # Initialize Mode -- Full SSH setup
 # ==============================================================================
 if [[ "${ACTION}" == "init" ]] ; then
+    local force_flag=""
+    if [[ "$2" == "--force" ]] || [[ "$2" == "-f" ]]; then
+        force_flag="--force"
+    fi
+
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"
     echo "║          VDE SSH Environment Initialization                ║"
@@ -147,12 +162,21 @@ if [[ "${ACTION}" == "init" ]] ; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
-    if ensure_vde_ssh_environment; then
-        log_success "✓ VDE SSH directory: ${VDE_SSH_DIR}"
-        log_success "✓ VDE SSH key: ${VDE_SSH_IDENTITY}"
+    if [[ "${force_flag}" == "--force" ]]; then
+        if vde_ssh_regenerate_keys; then
+            log_success "✓ VDE SSH keys regenerated"
+        else
+            log_error "✗ Failed to regenerate VDE SSH keys"
+            exit ${VDE_ERR_GENERAL}
+        fi
     else
-        log_error "✗ Failed to set up VDE SSH environment"
-        exit ${VDE_ERR_GENERAL}
+        if ensure_vde_ssh_environment; then
+            log_success "✓ VDE SSH directory: ${VDE_SSH_DIR}"
+            log_success "✓ VDE SSH key: ${VDE_SSH_IDENTITY}"
+        else
+            log_error "✗ Failed to set up VDE SSH environment"
+            exit ${VDE_ERR_GENERAL}
+        fi
     fi
 
     echo ""
@@ -221,7 +245,7 @@ if [[ "${ACTION}" == "init" ]] ; then
     echo "  • Connect:     ssh -F ~/.ssh/vde/config <vm>"
     echo ""
 
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -237,7 +261,7 @@ if [[ "${ACTION}" == "start" ]] ; then
         log_error "Failed to start/find SSH agent"
         exit ${VDE_ERR_GENERAL}
     fi
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -250,7 +274,7 @@ if [[ "${ACTION}" == "stop" ]] ; then
         log_error "Failed to stop VDE SSH agent"
         exit ${VDE_ERR_GENERAL}
     fi
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -265,7 +289,7 @@ if [[ "${ACTION}" == "generate" ]] ; then
         log_success "✓ VDE SSH config updated"
         echo ""
         echo "Config location: ${VDE_SSH_CONFIG}"
-        exit 0
+        exit ${VDE_SUCCESS}
     else
         log_error "✗ Failed to generate SSH config"
         exit ${VDE_ERR_GENERAL}
@@ -280,16 +304,8 @@ if [[ "${ACTION}" == "autostart" ]] ; then
     echo "Configuring shell to auto-start SSH agent..."
     echo ""
 
-    # Detect shell config file
-    local shell_config=""
-    if [[ "${ZSH_VERSION}" ]] ; then
-        shell_config="${HOME}/.zshrc"
-    elif [[ "${BASH_VERSION}" ]] ; then
-        shell_config="${HOME}/.bashrc"
-    else
-        # Default to zshrc
-        shell_config="${HOME}/.zshrc"
-    fi
+    # Detect shell config file (ZSH ONLY - UAP Mandate 1)
+    local shell_config="${HOME}/.zshrc"
 
     # Marker for our addition
     local marker="# VDE SSH Agent Auto-Start"
@@ -313,7 +329,7 @@ fi"
     echo "VDE SSH agent will now auto-start on new shell sessions."
     echo "To apply to current shell, run:"
     echo "  source ${shell_config}"
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================

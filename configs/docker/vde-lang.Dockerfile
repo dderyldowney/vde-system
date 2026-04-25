@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (Forge Component)
 FROM vde-base:latest
 
 # Build-time arguments and metadata

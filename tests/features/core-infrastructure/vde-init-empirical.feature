@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @forge (Governance Sentinel)
 @vde-init @core-infrastructure
 Feature: vde init (Sovereign Baseline)
   As an Alor of the VDE

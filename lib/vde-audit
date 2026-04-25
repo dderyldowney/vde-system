@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 #===============================================================================
 # vde-audit - Audit Logging Library for VDE
 # Records all state-changing operations for security and compliance
@@ -7,7 +8,7 @@
 # Source dependencies
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 [[ -z "${VDE_ROOT_DIR}" ]] && VDE_ROOT_DIR="${0:a:h:h}"
 [[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants"
@@ -320,9 +321,5 @@ EOF
 #===============================================================================
 
 # Export functions
-export -f vde_audit_init >/dev/null 2>&1 || true
-export -f vde_audit_log >/dev/null 2>&1 || true
-export -f vde_audit_query >/dev/null 2>&1 || true
-export -f vde_audit_export_csv >/dev/null 2>&1 || true
-export -f vde_audit_export_json >/dev/null 2>&1 || true
-export -f vde_audit_recent >/dev/null 2>&1 || true
+# Note: ZSH does not support 'export -f'. Functions are available to subshells
+# if they are defined in a sourced script or autoloaded.

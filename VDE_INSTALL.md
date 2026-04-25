@@ -1,4 +1,5 @@
 # VDE Installation & Configuration Guide
+<!-- @shared-law (Forge Component) -->
 
 Welcome, Foundling! This guide will walk you through the **Installation Ritual** for the Virtualized Development Environment (VDE). Follow these steps to forge your sovereign development ecosystem.
 
@@ -35,13 +36,13 @@ The VDE Hub uses the **Sovereign Baseline** to connect you to your Spokes.
 ## 2. Installation Ritual (Step-by-Step)
 
 ### Step 1: Clone the Beskar Hub
-**🛡️ The Sovereign Record:** The default branch for this repository is `develop` (The Anvil). For the stable, certified **Sovereign Baseline** (Production), ensure you clone using the `-b stable` flag as shown below.
+**🛡️ The Sovereign Record:** The default branch for this repository is `develop` (The Anvil). For the stable, certified **Sovereign Baseline** (Production), ensure you clone the `main` branch.
 
 Open your terminal (Zsh) and clone the VDE repository.
 
 ```zsh
 # Clone the stable Production branch (Sovereign Baseline)
-git clone -b stable https://github.com/dderyldowney/vde-system.git ~/vde
+git clone https://github.com/dderyldowney/vde-system.git ~/vde
 cd ~/vde
 ```
 
@@ -53,11 +54,25 @@ echo 'export PATH="$HOME/vde/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-### Step 3: Ignite the Forge (The One True Way)
-Run the `init` command. This single ritual hydrates your entire infrastructure (directories, networks, and SSH identities).
+### Step 3: Sovereign Bootstrap (The Passport Ritual)
+Execute the bootstrap ritual to generate your VDE SSH identity and prepare the Hub's credentials.
+
+```zsh
+vde-bootstrap
+```
+
+### Step 4: Ignite the Forge (The One True Way)
+Run the `init` command. This single ritual hydrates your entire infrastructure (directories, networks, and internal caches).
 
 ```zsh
 vde init
+```
+
+### Step 5: Install the Sentinels (Git Hooks)
+Install the project git hooks to ensure every commit and push remains compliant with the Rule Spine.
+
+```zsh
+install-githooks
 ```
 
 ---

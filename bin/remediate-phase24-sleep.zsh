@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 set -e
 
 # Use python for reliable multi-line/regex replacement in step file

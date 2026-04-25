@@ -1,3 +1,5 @@
+# FEATURE REQUEST
+<!-- @forge (Governance Sentinel) -->
 ---
 name: "🚀 Feature Request"
 about: "Propose an expansion of the Forge's capability"

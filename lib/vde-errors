@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @shared-law (Sovereign Law)
 # VDE Error Messages Library
 # Provides contextual error messages with remediation steps
 # Source this library with: source ./lib/vde-errors
@@ -9,7 +10,7 @@
 # - Documentation link integration
 # - Verbose mode support for detailed error output
 #
-# Shell Compatibility: POSIX-compliant (sh, bash, zsh)
+# Shell Compatibility: ZSH-exclusive (ZSH 5.0+)
 #
 # Usage:
 #   source ./lib/vde-errors
@@ -30,7 +31,7 @@
 # =============================================================================
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 if [[ "${_VDE_ERRORS_LOADED:-}" == "1" ]] ; then
     return 0 2>/dev/null || exit 0
@@ -366,15 +367,23 @@ vde_error_map() {
     local info="${2:-}"
     
     case "${code}" in
-        ${VDE_ERR_NOT_FOUND:-2}) vde_error_vm_not_found "${info}" ;;
-        ${VDE_ERR_PERMISSION:-3}) vde_error_permission_denied "${info}" ;;
+        ${VDE_ERR_INVALID_INPUT:-2}) vde_error_show "Invalid Input" "Required arguments missing or malformed" "Check command syntax: vde <cmd> --help" ;;
+        ${VDE_ERR_NOT_FOUND:-3}) vde_error_vm_not_found "${info}" ;;
+        ${VDE_ERR_PERMISSION:-4}) vde_error_permission_denied "${info}" ;;
         ${VDE_ERR_TIMEOUT:-5}) vde_error_ssh_connection_failed "${info}" ;;
         ${VDE_ERR_EXISTS:-6}) vde_error_container_exists "${info}" ;;
+        ${VDE_ERR_DEPENDENCY:-7}) vde_error_show "Dependency Error" "A required tool or service is missing" "Ensure Docker and SSH are active: vde health" ;;
         ${VDE_ERR_DOCKER:-8}) vde_error_docker_build_failed "${info}" ;;
         ${VDE_ERR_LOCK:-9}) vde_error_show "Failed to acquire lock" "System timeout or kernel EEXIST" "Retry the command or check for deadlocks." ;;
         ${VDE_ERR_INVALID_DATA:-10}) vde_error_show "Invalid Data Structure" "JSON Schema validation failed" "Run 'vde validate' to fix the registry." ;;
+        ${VDE_ERR_CACHE_INVALID:-11}) vde_error_show "Cache Stale or Invalid" "The VM cache must be regenerated" "Run 'vde rebuild-cache' to synchronize." ;;
         ${VDE_ERR_LOCK_CONTENTION:-12}) vde_error_lock_contention "${info}" ;;
         ${VDE_ERR_SYNC_DRIFT:-13}) vde_error_sync_drift "${info}" ;;
+        
+        # --- HEALTH CHECK CODES (Rule 16) ---
+        ${VDE_HEALTH_MINOR:-30}) vde_log_warn "Health Check: Minor issues detected." "health" ;;
+        ${VDE_HEALTH_MAJOR:-31}) vde_log_error "Health Check: Major issues detected." "health" ;;
+        ${VDE_HEALTH_CRITICAL:-32}) vde_log_error "Health Check: Critical failure detected." "health" ;;
         
         # --- POSIX SIGNAL TRANSLATION (Rule 26 Hardening) ---
         130) vde_error_show "Operation Interrupted" "Received SIGINT (Ctrl+C)" "The operation was cancelled by the user. Some partial state may remain. Clean up with 'vde stop' if necessary." ;;

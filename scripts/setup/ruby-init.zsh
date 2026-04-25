@@ -1,12 +1,16 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE USP Hydration Script: ruby
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
 set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_ruby_pkgs="ruby-full git docker.io"
+typeset vde_ruby_pkgs="ruby-full git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

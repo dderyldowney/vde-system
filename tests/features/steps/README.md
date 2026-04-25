@@ -1,4 +1,5 @@
 # BDD Step Definitions Directory
+<!-- @forge (BDD Registry Sync) -->
 
 This directory contains the purified BDD (Behavior-Driven Development) step definitions for the VDE test suite. Every step in this directory performs **real physical verification** of the Forge.
 
@@ -9,6 +10,7 @@ The following files contain the 100%Green certified step definitions:
 | File | Purpose |
 |------|---------|
 | `system_spine_steps.py` | Core Hub/Spoke integrity and Pillar verification. |
+| `technical_integrity_steps.py` | Technical integrity verification and Tetrad presence checks. |
 | `critical_steps.py` | Cross-feature common assertions and ANSI stripping. |
 | `vde_init_steps.py` | Initialization ritual verification. |
 | `tech_stack_steps.py` | Tech Stack Cluster coordination checks. |
@@ -21,6 +23,7 @@ The following files contain the 100%Green certified step definitions:
 
 ## Shared Helpers
 
+- `config.py`: Single source of truth for BDD path calculations and test environments.
 - `vm_common.py`: The single source of truth for VM constants and command execution.
 - `ssh_helpers.py`: Isolated SSH agent and identity verification logic.
 - `shell_helpers.py`: Adaptive polling (`vde-poll`) and container execution.

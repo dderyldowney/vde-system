@@ -1,5 +1,9 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE USP Hydration Ritual: rust
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
 #
@@ -11,7 +15,7 @@ set -e
 # 1. THE PACKAGE ALLOY
 # Define system-level dependencies for Rust development and build-time hydration.
 export DEBIAN_FRONTEND=noninteractive
-local vde_rust_pkgs="build-essential curl git pkg-config libssl-dev ca-certificates docker.io"
+typeset vde_rust_pkgs="build-essential curl git pkg-config libssl-dev ca-certificates docker.io"
 
 # 2. THE FORGE WORK
 # Perform the physical smelting of system packages.
@@ -21,35 +25,26 @@ apt-get install -y ${=vde_rust_pkgs}
 # Rust-Specific Smelting: Install rustup via the Sovereign Mirror.
 # This ensures the Spoke is "Born Ready" (BTO) at image creation.
 # Using the standard mirror with hardened TLS requirements.
-# We ensure the home directory exists before installation.
-mkdir -p /home/devuser
-chown devuser:devuser /home/devuser
-
 sudo -u devuser sh -c 'if ! command -v rustc >/dev/null; then \
   curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path; \
 fi'
 
-# 3. PERSISTENCE ANCHORS (User Personalization & Shell Integration)
-# Injects pathing and environment variables into .zshenv.
-# These anchors ensure that the Rust toolchain and Sovereign Bridge 
-# survive 'vde rebuild' and 'vde stop/start' cycles.
-local _zshenv="/home/devuser/.zshenv"
-mkdir -p /home/devuser
-touch "${_zshenv}"
+# 3. PERSISTENCE ANCHORS
+# Direct injection as commanded by the Clan Leader.
+# Ensures the cargo path is the UNIQUE and VERY LAST LINE of $HOME/.zshrc and $HOME/.zshenv.
 
-# Anchor: Rust Toolchain Pathing
-# Ensures cargo and rustc are available immediately upon 'vde enter'.
-grep -q "cargo/env" "${_zshenv}" || {
-  echo 'source $HOME/.cargo/env' >> "${_zshenv}"
-}
+sudo -u devuser zsh -c '
+    # Ensure configuration files exist
+    touch ~/.zshenv ~/.zshrc
 
-# Anchor: Sovereign SSH Bridge identity 
-# Mandated by the Rule Spine for Git operations using host keys.
-grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
-  echo 'if [[ -z "${SSH_AUTH_SOCK}" ]]; then export SSH_AUTH_SOCK="/home/devuser/.ssh/vde/agent.sock"; fi' >> "${_zshenv}"
-}
+    # Purge existing entries to ensure uniqueness
+    sed -i "/\.cargo\/bin/d" ~/.zshenv
+    sed -i "/\.cargo\/bin/d" ~/.zshrc
 
-chown devuser:devuser "${_zshenv}"
+    # Append the mandated path export to the end of the files
+    echo "export PATH=\"\$HOME/.cargo/bin:\$PATH\"" >> ~/.zshenv
+    echo "export PATH=\"\$HOME/.cargo/bin:\$PATH\"" >> ~/.zshrc
+'
 
 # 4. PURGING THE GHOSTS
 # Clean up build artifacts to maintain a hardened, immutable baseline.

@@ -1,3 +1,5 @@
+# VDE-DEBUG
+<!-- @forge (Governance Sentinel) -->
 Debug failing tests or runtime errors in VDE using a parallel swarm.
 
 ## Usage

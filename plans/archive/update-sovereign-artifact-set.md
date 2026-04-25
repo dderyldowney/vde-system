@@ -1,4 +1,5 @@
 # Implementation Plan: Sovereign Artifact Set Alignment (1.3.0)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 To strictly enforce Rule 19 ("The Sovereign Artifact Set Mandate") by updating the core documentation artifacts to perfectly reflect the 1.3.0 implementation reality.
@@ -12,7 +13,7 @@ This aligns the following documents to the canonical `data/vm-types.conf` and `l
 ## Implementation Steps
 
 1. **Update `docs/VDE-SPEC.md`:**
-   - Correct the 8-Field Standard in Section 1 from `type|name|aliases|display|pkgs|custom_cmd|env|ports` to `type|name|aliases|display_name|pkgs|custom_cmd|service_port|ssh_port`.
+   - Correct the 8-Field Standard in Section 1 from `type|name|aliases|display|pkgs|custom_cmd|env|ports` to `type|name|aliases|display|pkgs|custom_cmd|service_ports|ssh_port`.
    - Restore the missing Section 4 (Directory Structure) and renumber the Sovereign Artifact Set Mandate to Section 5.
 
 2. **Update `docs/ARCHITECTURE.md`:**

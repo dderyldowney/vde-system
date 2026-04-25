@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # check-zsh-shebang - Verify all scripts use zsh shebang
 # This script is used in CI to enforce zsh-only policy
 
@@ -26,9 +27,9 @@ for file in ${(f)"$(find . -type f -name "*.zsh" -o -name "*.sh" 2>/dev/null)"};
     shebang=$(head -1 "${file}" 2>/dev/null || true)
     
     # Check if it has a shebang
-    if [[ "${shebang}" =~ ^#! ]]; then
+    if [[ "${shebang}" == \#\!* ]]; then
         # Check if it's zsh
-        if [[ "${shebang}" =~ (zsh|/bin/zsh) ]]; then
+        if [[ "${shebang}" == *(zsh|/bin/zsh)* ]]; then
             continue
         else
             echo "FAIL: ${file} uses non-zsh shebang: ${shebang}"
@@ -42,10 +43,13 @@ done
 
 # Check library files in lib/
 for file in $(find lib -type f 2>/dev/null); do
+    # Skip backup files explicitly
+    [[ "${file}" == *".bak" ]] && continue
+
     shebang=$(head -1 "${file}" 2>/dev/null || true)
     
-    if [[ "${shebang}" =~ ^#! ]]; then
-        if [[ "${shebang}" =~ (zsh|/bin/zsh) ]]; then
+    if [[ "${shebang}" == \#\!* ]]; then
+        if [[ "${shebang}" == *zsh* ]]; then
             continue
         else
             echo "FAIL: ${file} uses non-zsh shebang: ${shebang}"
@@ -56,7 +60,7 @@ done
 
 if [[ ${failed} -eq 0 ]]; then
     echo "SUCCESS: All scripts use zsh shebang"
-    exit 0
+    exit ${VDE_SUCCESS}
 else
     echo ""
     echo "ERROR: Some scripts do not use zsh shebang"

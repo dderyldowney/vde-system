@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE Commands Library
 # Wrapper functions for all VDE operations
 # Source this library with: source ./lib/vde-commands
@@ -6,9 +7,9 @@
 # This library provides high-level command wrappers for VDE operations.
 # All functions log their actions and provide consistent error handling.
 #
-# Shell Compatibility (Stage 4):
-# - Uses POSIX-compatible syntax
-# - Supports zsh 5.0+, bash 4.0+, bash 3.x
+# Shell Compatibility:
+# - ZSH 5.0+ (Mandatory)
+# - Not POSIX-compliant (Uses ZSH extensions for efficiency)
 #
 # Return Codes: All functions use standardized return codes from vde-constants:
 #   VDE_SUCCESS (0)        - Operation completed successfully
@@ -23,7 +24,7 @@
 # Prevent multiple sourcing which causes readonly variable errors
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 if [[ "${_VDE_COMMANDS_LOADED:-}" == "1" ]] ; then
     return 0 2>/dev/null || exit 0

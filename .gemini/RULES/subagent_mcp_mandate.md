@@ -1,4 +1,5 @@
 # SUB-AGENT & MCP MANDATE (MANDATORY)
+<!-- @forge (Governance Sentinel) -->
 
 ## Core Mandate
 

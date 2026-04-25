@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (Forge Component)
 -- Create language-specific development databases
 
 -- Python development database

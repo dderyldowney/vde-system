@@ -1,12 +1,16 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE USP Hydration Script: haskell
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
 set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_haskell_pkgs="ghc cabal-install git docker.io"
+typeset vde_haskell_pkgs="ghc cabal-install git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update

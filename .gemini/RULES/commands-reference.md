@@ -1,4 +1,5 @@
 # VDE Commands Reference
+<!-- @forge (Governance Sentinel) -->
 
 ## Commands
 

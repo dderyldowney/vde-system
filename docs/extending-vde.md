@@ -1,3 +1,5 @@
+# EXTENDING-VDE
+<!-- @shared-law (Sovereign Law) -->
 # Extending VDE
 
 VDE is designed to be easily extensible. You can add support for new programming languages, new services, or customize existing ones without modifying core library code. The entire system is data-driven through configuration files and templates.
@@ -56,16 +58,16 @@ Before extending VDE, it helps to understand the Hub-and-Spoke model detailed in
 ### vm-types.conf Format (The 8-Field Standard)
 
 ```
-type|name|aliases|display_name|pkgs|custom_cmd|service_ports|ssh_port
+type|name|aliases|display|pkgs|custom_cmd|service_ports|ssh_port
 ```
 
 | Field | Description | Example |
 |-------|-------------|---------|
 | `type` | `lang` or `service` | `lang` |
-| `display_name` | Human-readable name | `Zig` |
+| `display` | Human-readable name | `Zig` |
 | `pkgs` | Required system packages | `zig-sdk` |
 | `custom_cmd` | USP initialization script | `zsh /vde/scripts/setup/zig-init.zsh` |
-| `service_ports` | Port number (services only) | `5432` |
+| `service_ports` | Port number(s) (services only) | `5432` |
 
 ---
 
@@ -194,7 +196,7 @@ readonly INTENT_CUSTOM="custom"
 
 2. **Add detection pattern** in `detect_intent()`:
 ```zsh
-if [[ "$input_lower" =~ "custom pattern" ]]; then
+if [[ "$input_lower" == *"custom pattern"* ]]; then
     echo "$INTENT_CUSTOM"
     return
 fi
@@ -210,7 +212,7 @@ fi
 
 ---
 
-## Current VM Types (1.4.1 The Sovereign Baseline)
+## Current VM Types (1.5.0 The Sovereign Baseline)
 
 VDE supports 29+ pre-configured VM types including Python, Go, Rust, PostgreSQL, Redis, and JupyterLab.
 

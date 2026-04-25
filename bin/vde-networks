@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 #===============================================================================
 # vde-networks - List/Create VDE Docker networks
 # Usage: vde-networks [options]
@@ -9,10 +10,12 @@
 #   -a, --all       Show all VDE networks (vde-*)
 #===============================================================================
 
+set -e
+
 # Determine VDE root directory
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
@@ -72,4 +75,4 @@ else
     docker network ls --format 'table {{.Name}}\t{{.Driver}}\t{{.Scope}}' | grep "^${VDE_NETWORK_FILTER}" || true
 fi
 
-exit 0
+exit ${VDE_SUCCESS}

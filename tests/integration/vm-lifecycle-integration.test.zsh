@@ -1,12 +1,16 @@
 #!/usr/bin/env zsh
+# @forge (Governance Sentinel)
 # Integration Tests for VM Lifecycle (v2.1.0 Hardened)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
 # Tests end-to-end VM creation, startup, and management workflows
 
 # Don't use set -e as it interferes with test counting
 # set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+typeset SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+typeset PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source core libraries
 export VDE_ROOT_DIR="$PROJECT_ROOT"
@@ -15,14 +19,14 @@ source "$PROJECT_ROOT/lib/vm-common"
 source "$PROJECT_ROOT/lib/vm-lock"
 
 # Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RESET='\033[0m'
+typeset RED='\033[0;31m'
+typeset GREEN='\033[0;32m'
+typeset YELLOW='\033[1;33m'
+typeset RESET='\033[0m'
 
 # Test counters
-TESTS_PASSED=0
-TESTS_FAILED=0
+typeset TESTS_PASSED=0
+typeset TESTS_FAILED=0
 
 # Helper functions
 test_start() {
@@ -175,11 +179,11 @@ test_file_locking_exclusion() {
     rm -rf "$lock_file"
 
     # Acquire in subshell
-    ( claim_lock "$lock_file" && sleep 1 && release_lock "$lock_file" ) &
+    ( claim_lock "$lock_file" && zmodload zsh/zselect && zselect -t 100 && release_lock "$lock_file" ) &
     local pid=$!
     
     # Give subshell a head start
-    sleep 0.2
+    zmodload zsh/zselect && zselect -t 20
 
     # Verify lock exists
     if [[ -d "$lock_file" ]]; then
@@ -221,7 +225,7 @@ test_cache_invalidation() {
     local old_mtime=$(_get_mtime "$cache_file")
     
     # Touch source file to invalidate cache
-    sleep 1.1
+    zmodload zsh/zselect && zselect -t 110
     touch "$PROJECT_ROOT/data/vm-types.json"
     
     unset _VM_TYPES_LOADED

@@ -1,10 +1,11 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # install-githooks - Install VDE git hooks
 #
 # Installs project git hooks from githooks/ to .git/hooks/
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 # We do NOT set -e here because arithmetic increments can return 1 (which is NOT an error in this context)
 # Instead we will handle errors explicitly.
@@ -23,31 +24,31 @@ RESET='\033[0m'
 echo "Installing VDE git hooks..."
 
 # Check if we're in a git repository
-if [[ ! -d "${PROJECT_ROOT}/.git" ]] ; then
+if [[ ! -d "${PROJECT_ROOT}/.git" ]]; then
     echo -e "${RED}Error: Not in a git repository${RESET}"
-    exit 1
+    exit ${VDE_ERR_GENERAL}
 fi
 
 # Ensure hooks directory exists
-if [[ ! -d "${HOOKS_DIR}" ]] ; then
+if [[ ! -d "${HOOKS_DIR}" ]]; then
     mkdir -p "${HOOKS_DIR}"
 fi
 
 # Check if source hooks exist
-if [[ ! -d "${SOURCE_DIR}" ]] ; then
+if [[ ! -d "${SOURCE_DIR}" ]]; then
     echo -e "${YELLOW}Warning: No hooks to install in ${SOURCE_DIR}${RESET}"
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # Install each hook
 INSTALLED=0
 for hook in "${SOURCE_DIR}"/*(N); do
-    if [[ -f "${hook}" ]] ; then
+    if [[ -f "${hook}" ]]; then
         hook_name=$(basename "${hook}")
         target="${HOOKS_DIR}/${hook_name}"
 
         # Remove existing hook
-        if [[ -e "${target}" ]] ; then
+        if [[ -e "${target}" ]]; then
             rm -f "${target}"
         fi
 
@@ -60,7 +61,7 @@ for hook in "${SOURCE_DIR}"/*(N); do
     fi
 done
 
-if [[ ${INSTALLED} -eq 0 ]] ; then
+if [[ ${INSTALLED} -eq 0 ]]; then
     echo -e "${YELLOW}No hooks found to install${RESET}"
 else
     echo ""
@@ -71,4 +72,4 @@ else
     echo "  - pre-push:   VDE Gatekeeper (Mandate L - Proof of Life)"
 fi
 
-exit 0
+exit ${VDE_SUCCESS}

@@ -1,11 +1,13 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # Validate all JSON schemas in the VDE system
+set -e
 # Usage: ./bin/validate-schemas.zsh [--verbose]
 
 # Determine VDE root directory
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 VDE_SCRIPTS_DIR="${0:A:h}"
 if [[ -z "${VDE_ROOT_DIR}" ]] ; then
@@ -101,7 +103,7 @@ validate_json_config() {
     fi
 
     # Validate JSON against schema
-    if vde_validate_json_schema "${json_file}" "${schema_file}" 2>/dev/null; then
+    if vde_validate_json_schema "${json_file}" "${schema_file}"; then
         print_check "JSON validation: ${config_name}" 0
         return 0
     else
@@ -199,7 +201,7 @@ main() {
 
         for json_file in "${json_files[@]}"; do
             # Skip schema files
-            if [[ "${json_file}" =~ \.schema\.json$ ]] ; then
+            if [[ "${json_file}" == *.schema.json ]] ; then
                 continue
             fi
             [[ -f "${json_file}" ]] && validate_json_config "${json_file}"

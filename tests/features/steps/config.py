@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# @forge (Governance Sentinel)
 """
 Shared configuration for VDE BDD tests.
 

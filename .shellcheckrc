@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (Forge Component)
 # Shellcheck configuration for VDE scripts
 # This project uses zsh only - sh/bash scripts are forbidden
 

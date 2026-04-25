@@ -1,4 +1,8 @@
 #!/usr/bin/env zsh
+# @forge (Governance Sentinel)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
 # Unit Tests for vde-docker Library
 # Tests image management and configuration logic
 #
@@ -18,20 +22,20 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 source "${VDE_ROOT_DIR}/lib/vde-docker"
 
 # Test configuration
-TESTS_PASSED=0
-TESTS_FAILED=0
+typeset TESTS_PASSED=0
+typeset TESTS_FAILED=0
 
 # Colors
 if [[ -t 1 ]]; then
-    GREEN='\033[0;32m'
-    RED='\033[0;31m'
-    YELLOW='\033[1;33m'
-    RESET='\033[0m'
+    typeset GREEN='\033[0;32m'
+    typeset RED='\033[0;31m'
+    typeset YELLOW='\033[1;33m'
+    typeset RESET='\033[0m'
 else
-    GREEN=''
-    RED=''
-    YELLOW=''
-    RESET=''
+    typeset GREEN=''
+    typeset RED=''
+    typeset YELLOW=''
+    typeset RESET=''
 fi
 
 test_start() {

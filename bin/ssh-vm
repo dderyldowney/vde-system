@@ -1,207 +1,176 @@
 #!/usr/bin/env zsh
-#===============================================================================
-# ssh-vm - SSH into a VDE VM using the isolated VDE SSH configuration
-#
-# Usage: ssh-vm <vm_name> [command] [args...]
-#
-# Options:
-#   --show-command    Show the full SSH command instead of executing it
-#===============================================================================
+# @armor (Engine Core)
+# VDE Spoke Access - SSH Connector
+# Provides direct SSH access to VDE Spoke containers
 
-# Determine VDE root directory
-
-# ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
-
-if [[ -z "${VDE_ROOT_DIR}" ]] ; then
-    VDE_ROOT_DIR="${0:a:h:h}"
-fi
+# 1. ENVIRONMENT & CONTEXT
+# Use zsh-native absolute path detection (Rule 1)
+typeset VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
-# Source core libraries
-source "${VDE_ROOT_DIR}/lib/vde-shell-compat" &>/dev/null
-source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
-source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
-source "${VDE_ROOT_DIR}/lib/vde-log" &>/dev/null
-source "${VDE_ROOT_DIR}/lib/vde-core" &>/dev/null
-source "${VDE_ROOT_DIR}/lib/vm-common" &>/dev/null
-source "${VDE_ROOT_DIR}/lib/vde-pulse.zsh" &>/dev/null
-
-# Initialize logging
-vde_log_init 2>/dev/null || true
-
-# --- ENVIRONMENT RECOVERY (Rule G Hardening) ---
-# If SSH_AUTH_SOCK is missing or invalid, attempt recovery from VDE agent environment
-if [[ ! -S "${SSH_AUTH_SOCK}" ]]; then
-    local _vde_agent_env="${HOME}/.ssh/vde/agent_env"
-    if [[ -f "${_vde_agent_env}" ]]; then
-        local _recovered_sock=$(grep "^SSH_AUTH_SOCK=" "${_vde_agent_env}" | head -1 | sed 's/^SSH_AUTH_SOCK=\([^;]*\);.*/\1/')
-        if [[ -S "${_recovered_sock}" ]]; then
-            export SSH_AUTH_SOCK="${_recovered_sock}"
-        fi
+# Parse flags early for quiet mode (Mandate 3)
+for arg in "$@"; do
+    if [[ "${arg}" == "-q" || "${arg}" == "--quiet" ]]; then
+        export VDE_QUIET=1
+        break
     fi
+done
+
+# Source dependencies
+source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
+source "${VDE_ROOT_DIR}/lib/vde-constants"
+source "${VDE_ROOT_DIR}/lib/vde-core"
+source "${VDE_ROOT_DIR}/lib/vm-common"
+
+# Ensure technical integrity (Project 1 foundations)
+if [[ "${VDE_QUIET:-0}" != "1" ]]; then
+    [[ -f "${VDE_ROOT_DIR}/bin/vde-check-tetrad.zsh" ]] && "${VDE_ROOT_DIR}/bin/vde-check-tetrad.zsh"
+else
+    [[ -f "${VDE_ROOT_DIR}/bin/vde-check-tetrad.zsh" ]] && "${VDE_ROOT_DIR}/bin/vde-check-tetrad.zsh" --quiet
 fi
 
-#===============================================================================
+# Default configuration
+typeset target_user="${VDE_SSH_USER:-vde_student}"
+typeset target_identity="${VDE_SSH_IDENTITY:-$HOME/.ssh/vde/vde_student}"
+typeset SHOW_COMMAND=false
+typeset -a EXTRA_ARGS=()
+typeset VM_ALIAS=""
+
+# SSH Options for high-fidelity technical proof
+typeset -a SSH_OPTS=(
+    "-o StrictHostKeyChecking=no"
+    "-o UserKnownHostsFile=/dev/null"
+    "-o LogLevel=ERROR"
+    "-o ConnectTimeout=5"
+)
+
+# =============================================================================
 # Usage
-#===============================================================================
-
-show_usage() {
-    cat <<EOF
-Usage: vde ssh <vm_name> [command] [args...] [--show-command]
-
-SSH into a VDE VM using the isolated VDE SSH configuration.
-
-Arguments:
-  vm_name          Name or alias of the VM to connect to
-  command          Optional command to execute on the VM
-
-Options:
-  --show-command   Show the full SSH command instead of executing it
-  -h, --help       Show this help message
-
-Examples:
-  vde ssh python                # Interactive shell in the Python VM
-  vde ssh python whoami         # Run whoami in the Python VM
-  vde ssh rust --show-command   # Show the SSH command for Rust VM
-EOF
+# =============================================================================
+usage() {
+    echo "Usage: $(basename "$0") [options] <vm-alias> [command]"
+    echo ""
+    echo "Options:"
+    echo "  -u, --user <user>      Connect as specified user (default: devuser)"
+    echo "  -i, --identity <path>  Use specified SSH identity key"
+    echo "  -q, --quiet            Suppress output (except for remote command)"
+    echo "  --show-command         Display the raw SSH command instead of executing"
+    echo "  -h, --help             Show this help message"
 }
 
-#===============================================================================
-# Main
-#===============================================================================
+# =============================================================================
+# Argument Parsing
+# =============================================================================
 
-# Parse arguments
-SHOW_COMMAND=false
-VM_NAME=""
-EXTRA_ARGS=()
-SSH_OPTS=()
-
-while [[ ${#} -gt 0 ]] ; do
-    case "${1}" in
-        -h|--help)
-            if [[ -z "${VM_NAME}" ]] ; then
-                show_usage
-                exit 0
-            else
-                EXTRA_ARGS+=("${1}")
-                shift
-            fi
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -u|--user)
+            target_user="$2"
+            shift 2
             ;;
-        --show-command|--show-cmd)
+        -i|--identity)
+            target_identity="$2"
+            shift 2
+            ;;
+        -q|--quiet)
+            export VDE_QUIET=1
+            shift
+            ;;
+        --show-command)
             SHOW_COMMAND=true
             shift
             ;;
-        --command)
-            # Take next argument as command
-            EXTRA_ARGS+=("${2}")
-            shift 2
-            ;;
-        --)
-            # Strict separator: everything after this is command/args
-            shift
-            EXTRA_ARGS+=("${@}")
-            # Stop parsing VDE options
-            set -- 
-            ;;
-        -o)
-            # Capture -o and its value
-            if [[ -z "${VM_NAME}" ]] ; then
-                SSH_OPTS+=("-o" "${2}")
-                shift 2
-            else
-                EXTRA_ARGS+=("${1}")
-                shift
-            fi
+        -h|--help)
+            usage
+            exit ${VDE_SUCCESS}
             ;;
         -*)
-            # Capture any other flags (e.g., -v, -p, -X)
-            if [[ -z "${VM_NAME}" ]] ; then
-                SSH_OPTS+=("${1}")
-                shift
-            else
-                EXTRA_ARGS+=("${1}")
-                shift
-            fi
+            vde_log_error "Unknown option: $1" "ssh-vm"
+            usage
+            exit ${VDE_ERR_INVALID_INPUT}
             ;;
         *)
-            if [[ -z "${VM_NAME}" ]] ; then
-                VM_NAME="${1}"
+            if [[ -z "$VM_ALIAS" ]]; then
+                VM_ALIAS="$1"
                 shift
             else
-                # Once we have the VM name, everything else is the command
-                EXTRA_ARGS+=("${1}")
-                shift
+                EXTRA_ARGS=("$@")
+                set --
             fi
             ;;
     esac
 done
 
-# Validate VM name was provided
-if [[ -z "${VM_NAME}" ]] ; then
-    vde_error_simple "Missing VM name argument."
-    echo ""
-    show_usage
+if [[ -z "${VM_ALIAS}" ]]; then
+    if [[ "${VDE_QUIET:-0}" != "1" ]]; then
+        vde_log_error "Missing VM alias" "ssh-vm"
+        usage
+    fi
     exit ${VDE_ERR_INVALID_INPUT}
 fi
 
-# Ensure VDE SSH environment is initialized (skip if only showing command)
-if [[ "${SHOW_COMMAND}" = false ]] ; then
-    ensure_ssh_environment
-    if [[ ${?} -ne 0 ]] ; then
-        vde_error_simple "Failed to initialize VDE SSH environment."
-        exit ${VDE_ERR_GENERAL}
+# =============================================================================
+# Execution
+# =============================================================================
+
+# Load VM types (required for name resolution)
+load_vm_types >/dev/null 2>&1
+
+# Get VM Details
+VM_NAME=$(resolve_vm_name "$VM_ALIAS")
+# If VM_NAME is empty, it might be that VM_ALIAS is already the canonical name
+if [[ -z "${VM_NAME}" ]]; then
+    if [[ "${VM_ALIAS}" == vde-* ]]; then
+        VM_NAME="${VM_ALIAS}"
+    else
+        vde_log_error "VM alias '${VM_ALIAS}' is not registered." "ssh-vm"
+        exit "${VDE_ERR_NOT_FOUND}"
     fi
 fi
 
-# Load VM types (required for name resolution and running state check)
-# Always load if we need to resolve names, but use --no-cache to avoid security checks if possible?
-# Actually, load_vm_types should be safe if we set VDE_SKIP_AUTO_LOAD for the whole session
-load_vm_types
+SSH_PORT=$(get_vm_ssh_port "$VM_NAME")
 
-# Resolve VM name (handle aliases)
-RESOLVED_NAME=$(resolve_vm_name "${VM_NAME}")
-if [[ ${?} -ne 0 ]] || [[ -z "${RESOLVED_NAME}" ]] ; then
-    vde_error_simple "Unknown VM or alias: ${VM_NAME}"
-    echo ""
-    echo "Run 'vde list' to see available VMs."
-    exit ${VDE_ERR_NOT_FOUND}
+# Check if Spoke is running
+CONTAINER_ID=$(docker ps -q -f "name=${VM_NAME}")
+if [[ -z "${CONTAINER_ID}" ]]; then
+    vde_log_error "Spoke '${VM_ALIAS}' (${VM_NAME}) is not running." "ssh-vm"
+    vde_log_info "Run 'vde start ${VM_ALIAS}' to ignite the Spoke." "ssh-vm"
+    exit 1
 fi
 
-# Check if VM is running (skip if only showing command)
-if [[ "${SHOW_COMMAND}" = false ]] ; then
-    if ! is_vm_running "${RESOLVED_NAME}"; then
-        vde_error_simple "VM '${RESOLVED_NAME}' is not running."
-        echo ""
-        echo "Start the VM with: vde start ${VM_NAME}"
-        exit ${VDE_ERR_GENERAL}
-    fi
+# Resolve SSH Host (handle Hub-to-Spoke DNS)
+typeset SSH_HOST="127.0.0.1"
 
-    # Identity Pulse check: Ensure the SSH agent bridge is active
-    if ! vde_identity_pulse "${RESOLVED_NAME}"; then
-        exit ${VDE_ERR_GENERAL:-1}
-    fi
+# Assemble Command
+typeset -a SSH_CMD=(
+    ssh
+    -A  # Enable Agent Forwarding (Rule 15)
+)
+
+# Only request pseudo-terminal if no remote command is provided
+if [[ ${#EXTRA_ARGS[@]} -eq 0 ]]; then
+    SSH_CMD+=("-tt")
 fi
 
-# Determine SSH host alias based on VM type
-SSH_HOST_ALIAS=$(vde_get_ssh_host "${RESOLVED_NAME}")
+SSH_CMD+=(
+    "${SSH_OPTS[@]}"
+    -i "${target_identity}"
+    -p "${SSH_PORT}"
+    "${target_user}@${SSH_HOST}"
+)
 
-# Build SSH command as array
-SSH_CMD=(ssh -tt -A -F "${VDE_SSH_CONFIG}" -o "UserKnownHostsFile=${VDE_SSH_KNOWN_HOSTS}" ${SSH_OPTS[@]} "${SSH_HOST_ALIAS}")
-
-# Append extra arguments if any (the command to run)
-if [[ ${#EXTRA_ARGS[@]} -gt 0 ]] ; then
+# Append command if provided
+if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
     SSH_CMD+=("${EXTRA_ARGS[@]}")
 fi
 
-# Either show or execute the command
 if [[ "${SHOW_COMMAND}" = true ]] ; then
     echo "${SSH_CMD[@]}"
-    exit 0
+    exit ${VDE_SUCCESS}
 else
     # Only log "Connecting..." if it's an interactive shell
     if [[ ${#EXTRA_ARGS[@]} -eq 0 ]] ; then
-        vde_log_info "Connecting to ${SSH_HOST_ALIAS}..." "ssh-vm"
+        vde_log_info "Connecting to ${VM_ALIAS}..." "ssh-vm"
     fi
     exec "${SSH_CMD[@]}"
 fi

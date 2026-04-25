@@ -1,18 +1,22 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE USP Hydration Ritual: rabbitmq
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
 # Forged in Beskar
 set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_rabbitmq_pkgs="erlang-nox rabbitmq-server git docker.io"
+typeset vde_rabbitmq_pkgs="erlang-nox rabbitmq-server git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update
 apt-get install -y ${=vde_rabbitmq_pkgs}
 
 # 3. SPOKE IGNITION REGISTRATION
-local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
+typeset _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
 cat <<EOF > "${_spoke_ignition}"
 #!/usr/bin/env zsh
 # RabbitMQ Spoke Ignition
@@ -26,14 +30,15 @@ EOF
 chmod +x "${_spoke_ignition}"
 
 # 4. PERSISTENCE ANCHOR (Hardened Bridge)
-local _zshenv="/home/devuser/.zshenv"
-mkdir -p /home/devuser
+typeset dev_home=$HOME
+typeset _zshenv="${dev_home}/.zshenv"
+mkdir -p "${dev_home}"
 touch "${_zshenv}"
 # Remove legacy startup if present
 sed -i "/rabbitmq-server start/d" "${_zshenv}"
 # Ensure bridge identity is available
 grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
-    echo "export SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock" >> "${_zshenv}"
+    echo "export SSH_AUTH_SOCK=${dev_home}/.ssh/vde/agent.sock" >> "${_zshenv}"
 }
 chown devuser:devuser "${_zshenv}"
 

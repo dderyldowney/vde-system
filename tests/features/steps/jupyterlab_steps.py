@@ -1,10 +1,12 @@
+#!/usr/bin/env python3
+# @forge (Governance Sentinel)
 """
 Step definitions for JupyterLab Data Science Spoke verification.
 """
 
 import subprocess
 from behave import then, when, step_matcher
-from vm_common import VDE_ROOT, load_vm_types_raw
+from vm_common import VDE_ROOT, load_vm_types_raw, vde_sleep
 
 # Use regex matcher
 step_matcher("re")
@@ -17,8 +19,8 @@ def step_verify_vm_type(context, vm_name, expected_type):
     found = any(vm["name"] == vm_name for vm in vms)
     assert found, f"VM '{vm_name}' not found in category '{expected_type}'"
 
-@then(r'the VM "(.+)" must have service port "(.+)"')
-def step_verify_service_port(context, vm_name, expected_port):
+@then(r'the VM "(.+)" must have service ports "(.+)"')
+def step_verify_service_ports(context, vm_name, expected_port):
     """Verify the service port in the registry."""
     vm_types = load_vm_types_raw()
     found = False
@@ -111,7 +113,7 @@ def step_verify_port_responsive(context, port):
         result = subprocess.run(cmd, capture_output=True, text=True)
         if "HTTP/1.1" in result.stdout or "HTTP/2" in result.stdout:
             return
-        time.sleep(2)
+        vde_sleep(2)
     
     # Final attempt to show output if failed
     cmd = ["curl", "-s", "-I", f"http://localhost:{port}"]

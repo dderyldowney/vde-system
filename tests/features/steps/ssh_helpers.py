@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# @forge (Governance Sentinel)
+# VDE ARCHITECTURAL RECORD
 """
 SSH Helper Functions for VDE Test Steps.
 
@@ -202,54 +205,18 @@ def vm_has_private_keys(vm_name):
         ]
 
         for key_name in private_key_patterns:
-            # Use docker exec to check if the private key file exists in container
-            result = subprocess.run(
-                [
-                    "docker",
-                    "exec",
-                    container_name,
-                    "sh",
-                    "-c",
-                    f"test -f /home/devuser/.ssh/{key_name} && echo FOUND",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
+            # Use the orchestrator for high-fidelity proof (Rule 1 & 15)
+            result = run_vde_command(f"exec {vm_name} 'test -f /home/devuser/.ssh/{key_name} && echo FOUND'")
 
             if result.returncode == 0 and "FOUND" in result.stdout:
                 return True  # Private key found
 
         # Also check /home/devuser/.ssh/ if devuser is the user
-        result = subprocess.run(
-            [
-                "docker",
-                "exec",
-                container_name,
-                "sh",
-                "-c",
-                "test -d /home/devuser/.ssh && echo EXISTS",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
+        result = run_vde_command(f"exec {vm_name} 'test -d /home/devuser/.ssh && echo EXISTS'")
 
         if result.returncode == 0 and "EXISTS" in result.stdout:
             for key_name in private_key_patterns:
-                result = subprocess.run(
-                    [
-                        "docker",
-                        "exec",
-                        container_name,
-                        "sh",
-                        "-c",
-                        f"test -f /home/devuser/.ssh/{key_name} && echo FOUND",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                )
+                result = run_vde_command(f"exec {vm_name} 'test -f /home/devuser/.ssh/{key_name} && echo FOUND'")
 
                 if result.returncode == 0 and "FOUND" in result.stdout:
                     return True

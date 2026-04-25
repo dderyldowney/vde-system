@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @forge (Governance Sentinel)
 
 # VDE Infrastructure Monitor: The "Truth Gate" Dashboard
 # Purpose: Real-time visibility into container lifecycles and Exit Codes.

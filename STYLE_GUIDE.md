@@ -1,3 +1,5 @@
+# STYLE GUIDE
+<!-- @shared-law (Forge Component) -->
 Coding standards and style guidelines for the VDE (Virtual Development Environment) project.
 
 ## Table of Contents

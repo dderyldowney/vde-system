@@ -1,4 +1,5 @@
 # VDE VM Docker Configuration
+<!-- @shared-law (Sovereign Law) -->
 
 Centralized Docker configuration for all VDE VMs including compose file locations, environment files, and mount paths.
 

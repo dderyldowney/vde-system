@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# @forge (Governance Sentinel)
+# VDE ARCHITECTURAL RECORD
 """
 Step definitions for Universal Script Parity (USP) validation.
 Ensures all setup scripts are present and hardened according to Phase 24 mandates.

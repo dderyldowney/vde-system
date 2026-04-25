@@ -1,4 +1,5 @@
 # [CONSOLIDATED] - CONTENT MOVED TO plans/plan.md
+<!-- @shared-law (Forge Component) -->
 
 
 # Phase 29: Tech Stack Clusters & Infrastructure Hardening

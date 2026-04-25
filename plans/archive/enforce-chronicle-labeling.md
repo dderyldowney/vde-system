@@ -1,4 +1,5 @@
 # Implementation Plan: Enforcement of Chronicle Labeling
+<!-- @shared-law (Forge Component) -->
 
 ## Goal
 Automate the synchronization of Conventional Commit types with GitHub labels and enforce compliant Pull Request titles to ensure absolute system-wide search and traceability.

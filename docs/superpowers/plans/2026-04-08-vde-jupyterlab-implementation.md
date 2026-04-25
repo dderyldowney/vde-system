@@ -1,4 +1,5 @@
 # vde-jupyterlab Implementation Plan
+<!-- @shared-law (Sovereign Law) -->
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -25,7 +26,7 @@
   "display": "JupyterLab Data Science Suite",
   "pkgs": "python3-pip python3-venv",
   "custom_cmd": "zsh /vde/scripts/setup/jupyterlab-init.zsh",
-  "service_port": "8888",
+  "service_ports": "8888",
   "ssh_port": 2407
 }
 ```

@@ -1,4 +1,8 @@
 #!/usr/bin/env zsh
+# @forge (Governance Sentinel)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
 # Unit Tests for vde-security Library
 # Tests security policy enforcement functions
 #
@@ -10,8 +14,8 @@
 # Don't use set -e as it interferes with test counting
 # set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+typeset SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+typeset PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source dependencies in correct order
 export VDE_ROOT_DIR="$PROJECT_ROOT"
@@ -20,21 +24,21 @@ source "$PROJECT_ROOT/lib/vde-log"
 source "$PROJECT_ROOT/lib/vde-security"
 
 # Test configuration
-VERBOSE=${VERBOSE:-false}
-TESTS_PASSED=0
-TESTS_FAILED=0
+typeset VERBOSE=${VERBOSE:-false}
+typeset TESTS_PASSED=0
+typeset TESTS_FAILED=0
 
 # Colors
 if [[ -t 1 ]]; then
-    GREEN='\033[0;32m'
-    RED='\033[0;31m'
-    YELLOW='\033[0;33m'
-    RESET='\033[0m'
+    typeset GREEN='\033[0;32m'
+    typeset RED='\033[0;31m'
+    typeset YELLOW='\033[0;33m'
+    typeset RESET='\033[0m'
 else
-    GREEN=''
-    RED=''
-    YELLOW=''
-    RESET=''
+    typeset GREEN=''
+    typeset RED=''
+    typeset YELLOW=''
+    typeset RESET=''
 fi
 
 test_start() {
@@ -258,7 +262,8 @@ test_ensure_network_no_docker() {
     local fake_bin
     fake_bin=$(mktemp -d)
     cat > "$fake_bin/docker" <<'EOF'
-#!/bin/sh
+#!/usr/bin/env zsh
+# @armor (Unit Test: Security Sentinel)
 exit 1
 EOF
     chmod +x "$fake_bin/docker"
@@ -283,8 +288,8 @@ test_enforce_network_isolation_no_docker() {
     local fake_bin
     fake_bin=$(mktemp -d)
     cat > "$fake_bin/docker" <<'EOF'
-#!/bin/sh
-if [ "$1" = "ps" ]; then
+#!/usr/bin/env zsh
+if [[ "$1" == "ps" ]]; then
     exit 0
 fi
 exit 1

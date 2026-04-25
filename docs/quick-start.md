@@ -1,3 +1,5 @@
+# QUICK-START
+<!-- @shared-law (Sovereign Law) -->
 # Quick Start
 
 Get up and running with VDE in minutes.
@@ -12,19 +14,14 @@ Get up and running with VDE in minutes.
 # 1. Navigate to your dev directory
 cd VDE
 
-# 2. Ignite the Forge (Mandatory Ritual)
-vde init
+# 2. Ignite the Forge (The Path of the Foundling)
+vde path-of-the-foundling
 
-# 3. List all predefined VM types
-vde list
-
-# 4. Create a new language VM (auto-allocates SSH port)
+# 3. Create your first VM (e.g., Go)
 vde create go
 
-# 5. Start the VM
+# 4. Start and Enter the Spoke
 vde start go
-
-# 6. Step into the Spoke
 vde enter go
 ```
 
@@ -32,13 +29,12 @@ vde enter go
 
 ## What Just Happened?
 
-When you ran `vde init`:
-1. **Security Environment**: Networks created and directory permissions enforced.
-2. **Environment Secrets**: `.env` instantiated from template.
-3. **SSH Forgery**: `vde_student` ed25519 key pair generated.
-4. **Config Priming**: Active SSH vault primed from canonical artifacts.
-5. **Foundation Building**: Foundational `vde-base` image built and baked with identity.
-6. **Spine Enforcement**: Git hooks installed.
+When you ran `vde path-of-the-foundling`:
+1. **Interactive Induction**: A step-by-step ritual guided you through project initialization.
+2. **Infrastructure Smelting**: Networks created and directory permissions enforced.
+3. **Identity Forgery**: `vde_student` SSH keys generated and agent primed.
+4. **Foundation Building**: Foundational `vde-base` image built and baked with identity.
+5. **Spine Check**: Core Tetrad (Zsh, Git, Docker, SSH) verified and Git hooks installed.
 
 When you ran `vde create go`:
 1. **Port Allocation**: SSH port automatically assigned.

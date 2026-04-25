@@ -1,4 +1,5 @@
 # Codify Mandalorian Creed and Student Space Sovereignty
+<!-- @shared-law (Forge Component) -->
 
 **Goal:** Update the project's supreme instructions to formalize the agent's persona and restrict remediation in student space.
 

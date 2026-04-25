@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (Forge Component)
 # VDE-BASE (The Hub)
 FROM debian:bookworm-slim
 LABEL project="vde" component="hub"
@@ -10,13 +12,19 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     git \
     curl \
     wget \
+    jq \
+    iputils-ping \
+    dnsutils \
+    netcat-openbsd \
+    socat \
+    vim \
     build-essential \
     procps \
     locales \
     ca-certificates \
     gnupg \
     lsb-release \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 1.1 Install Docker CLI (for Sovereign features)
 RUN mkdir -p /etc/apt/keyrings && \

@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @forge (Governance Sentinel)
 # VDE Sovereign Test Runner (1.3.0)
 # This script runs all CI-safe tests (Unit Tests + Image Logic).
 # It STRICTLY EXCLUDES any tests that require running containers (DinD).
@@ -137,8 +138,7 @@ else
     echo -e "${RED}${BOLD}FAIL: ${TOTAL_FAILED} test suites failed.${RESET}"
     echo -e "${YELLOW}Passed: ${TOTAL_PASSED}${RESET}"
     echo -e "\n${RED}Failed Suites:${RESET}"
-    for f in "${FAILED_TESTS[@]}"; do
-        echo -e "  - ${f}"
-    done
+    # ZSH-native shibboleth: Newline joining
+    echo -e "${(j:\n:)FAILED_TESTS}"
     exit 1
 fi

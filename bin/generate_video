@@ -1,11 +1,13 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
+set -e
 # bin/generate_video
 # Usage: ./generate_video <output_path> [tape_commands...]
 # If tape_commands are not provided, it reads from stdin.
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 OUTPUT_PATH=${1}
 shift

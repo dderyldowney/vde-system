@@ -1,8 +1,13 @@
+# VDE ARCHITECTURAL RECORD
+# @forge (Governance Sentinel)
 name: Paired Update Check
 on:
   push:
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 # Enforce zsh as the default shell for all jobs and steps
 defaults:

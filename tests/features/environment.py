@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# @forge (Governance Sentinel)
 """
 BDD Hooks for VDE test scenarios - SIMPLIFIED + PARSER OPTIMIZATION
 
@@ -118,4 +120,16 @@ def before_scenario(context, scenario):
 
 def after_scenario(context, scenario):
     """Scenario cleanup."""
-    pass
+    # Automated restore for gospel audit tests
+    if hasattr(context, 'backup_path') and os.path.exists(context.backup_path):
+        # Infer the target path from the backup path
+        target_path = context.backup_path.replace('.bak', '')
+        shutil.move(context.backup_path, target_path)
+    
+    # Cleanup ghost scripts from bin/
+    for ghost_name in ["vde-ghost-script.zsh", "vde-ghost-unseen.zsh"]:
+        ghost = os.path.join(".", "bin", ghost_name)
+        if os.path.exists(ghost):
+            os.remove(ghost)
+
+

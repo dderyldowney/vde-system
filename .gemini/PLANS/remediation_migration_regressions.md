@@ -1,4 +1,5 @@
 # Remediation Plan: Migration Regressions (Rule B)
+<!-- @forge (Governance Sentinel) -->
 
 The Phase-End Re-Audit Swarm identified critical regressions following the consolidation into `.gemini/`.
 

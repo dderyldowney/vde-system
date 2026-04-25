@@ -1,6 +1,8 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 #===============================================================================
 # vde-logs - Show logs for a VDE container
+set -e
 # Usage: vde-logs <vm_name> [options]
 #
 # Options:
@@ -11,7 +13,7 @@
 # Determine VDE root directory
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
@@ -62,4 +64,4 @@ else
     docker logs --tail "${TAIL}" "${CONTAINER_NAME}"
 fi
 
-exit 0
+exit ${VDE_SUCCESS}

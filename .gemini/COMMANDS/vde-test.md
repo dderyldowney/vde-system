@@ -1,3 +1,5 @@
+# VDE-TEST
+<!-- @forge (Governance Sentinel) -->
 Smart test runner — detects what changed and runs the minimal appropriate tests.
 
 ## Usage

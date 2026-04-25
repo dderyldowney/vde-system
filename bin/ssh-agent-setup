@@ -1,15 +1,26 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE SSH Agent Setup
 # Automatically sets up SSH keys, agent, and configuration
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 set -e
 
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
+
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
 source "${VDE_ROOT_DIR}/lib/vm-common"
+
+# DEPRECATION GUARD: Enforce unified command usage
+if [[ -z "${VDE_ORCHESTRATED}" ]]; then
+    vde_log_warn "Standalone execution of $(basename "$0") is deprecated." "ssh"
+    vde_log_warn "Please use 'vde ssh-setup' instead." "ssh"
+    echo ""
+fi
 
 # Parse command line arguments
 ACTION="status"
@@ -45,7 +56,7 @@ while [[ ${#} -gt 0 ]] ; do
             echo "  ${0}              # Show status only"
             echo "  ${0} --init       # Full setup: keys + agent + config"
             echo "  ${0} --start      # Start agent and load keys"
-            exit 0
+            exit ${VDE_SUCCESS}
             ;;
         *)
             echo "Unknown option: ${1}"
@@ -126,7 +137,7 @@ if [[ "${ACTION}" == "status" ]] ; then
     fi
 
     echo ""
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -220,7 +231,7 @@ if [[ "${ACTION}" == "init" ]] ; then
     echo "                  Or use: vde_ssh python-dev"
     echo ""
 
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -242,5 +253,5 @@ if [[ "${ACTION}" == "start" ]] ; then
 
     echo ""
     ssh-add -l 2>/dev/null || echo "  (no keys loaded)"
-    exit 0
+    exit ${VDE_SUCCESS}
 fi

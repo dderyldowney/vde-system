@@ -1,3 +1,5 @@
+# SECURITY
+<!-- @shared-law (Forge Component) -->
 # Security Policy
 
 ## Supported Versions

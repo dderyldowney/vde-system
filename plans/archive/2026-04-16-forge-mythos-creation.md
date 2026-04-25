@@ -1,4 +1,5 @@
 # Forge Mythos and Mandalorian Mythos Creation Plan
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 To establish the foundational lore and thematic framework ("Creed-frame") for the VDE Covert by authoring two sacred texts: `mandalorian_mythos.md` and `forge_mythos.md`.

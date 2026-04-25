@@ -1,4 +1,6 @@
+# VDE ARCHITECTURAL RECORD
 {
+  "@forge": "(Governance Sentinel)",
   "version": "1.0",
   "description": "Pytest configuration for VDE unit tests",
   "pytest": {

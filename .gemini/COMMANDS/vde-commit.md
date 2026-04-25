@@ -1,4 +1,5 @@
 # /vde-commit Command (UAP Edition)
+<!-- @forge (Governance Sentinel) -->
 
 Verified Git Finalization following Phase 5 UAP mandates.
 

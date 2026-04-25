@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE SSH Sync Command
 # Syncs VDE SSH public keys to the build context
 #
@@ -9,12 +10,22 @@
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 set -e
 
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
+
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
 source "${VDE_ROOT_DIR}/lib/vm-common"
+
+# DEPRECATION GUARD: Enforce unified command usage
+if [[ -z "${VDE_ORCHESTRATED}" ]]; then
+    vde_log_warn "Standalone execution of $(basename "$0") is deprecated." "ssh"
+    vde_log_warn "Please use 'vde ssh-sync' instead." "ssh"
+    echo ""
+fi
 
 # Parse command line arguments
 if [[ "${1}" == "--help" ]] || [[ "${1}" == "-h" ]] ; then
@@ -35,7 +46,7 @@ See also:
   vde ssh-setup           Manage VDE SSH environment
   vde ssh-setup init      Initialize SSH keys and sync
 EOF
-    exit 0
+    exit ${VDE_SUCCESS}
 fi
 
 # ==============================================================================
@@ -51,7 +62,7 @@ if sync_ssh_keys_to_vde; then
     echo ""
     echo "Build context location: ${VDE_ROOT_DIR}/public-ssh-keys/"
     echo ""
-    exit 0
+    exit ${VDE_SUCCESS}
 else
     log_error "✗ Failed to sync SSH key"
     echo ""

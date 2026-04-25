@@ -1,12 +1,16 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE USP Hydration Ritual: postgres
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
 set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-local vde_postgres_pkgs="postgresql postgresql-contrib git docker.io"
+typeset vde_postgres_pkgs="postgresql postgresql-contrib git docker.io"
 
 # 2. THE FORGE WORK
 apt-get update
@@ -25,12 +29,11 @@ if [[ -z "${POSTGRES_DEV_PASSWORD}" ]]; then
     echo -e "  The Forge requires a password to be provided via the environment for Spoke ignition."
     exit 1
 fi
-local pg_dev_pass="${POSTGRES_DEV_PASSWORD}"
+
+# Securely pass password to postgres user for creation
+echo "[POSTGRES-INIT] Ensuring 'devuser' exists with secure credentials..."
 su - postgres -c "psql -tc \"SELECT 1 FROM pg_user WHERE usename = 'devuser'\" | grep -q 1" || \
-su - postgres -c "psql <<EOF
-CREATE USER devuser WITH PASSWORD '${pg_dev_pass}' SUPERUSER;
-EOF
-"
+su - postgres -c "psql -c \"CREATE USER devuser WITH PASSWORD '${POSTGRES_DEV_PASSWORD}' SUPERUSER;\""
 
 su - postgres -c "psql -lqt | cut -d \| -f 1 | grep -qw devuser" || \
 su - postgres -c "createdb -O devuser devuser"
@@ -45,28 +48,29 @@ service postgresql restart
 pg_isready -h localhost
 
 # 3. SPOKE IGNITION REGISTRATION
-local _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
+typeset _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
 cat <<EOF > "${_spoke_ignition}"
 #!/usr/bin/env zsh
 # PostgreSQL Spoke Ignition
-# Starts the database in the background on container start
+# Forged in Beskar
 
 if ! pg_isready -h localhost >/dev/null 2>&1; then
-    echo "[VDE-POSTGRES] Forged in Beskar: Starting PostgreSQL..."
-    sudo service postgresql start >/dev/null 2>&1
+    echo "[VDE-POSTGRES] Igniting PostgreSQL cluster..."
+    sudo service postgresql start
 fi
 EOF
 chmod +x "${_spoke_ignition}"
 
 # 4. PERSISTENCE ANCHOR (Hardened Bridge)
-local _zshenv="/home/devuser/.zshenv"
-mkdir -p /home/devuser
+typeset dev_home=$HOME
+typeset _zshenv="${dev_home}/.zshenv"
+mkdir -p "${dev_home}"
 touch "${_zshenv}"
 # Remove legacy startup if present
 sed -i "/postgresql start/d" "${_zshenv}"
 # Ensure bridge identity is available
 grep -q "SSH_AUTH_SOCK" "${_zshenv}" || {
-    echo "export SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock" >> "${_zshenv}"
+    echo "export SSH_AUTH_SOCK=${dev_home}/.ssh/vde/agent.sock" >> "${_zshenv}"
 }
 chown devuser:devuser "${_zshenv}"
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @forge (Governance Sentinel)
 # tests/verify_infra_fixes.zsh
 
 # This test verifies that VDE_ROOT_DIR and VDE_CACHE_DIR are correctly set
@@ -33,7 +34,11 @@ fi
 # We'll extract the line and run it in a controlled environment
 extract_and_test() {
     local file=$1
-    echo "Testing logic from $file..."
+    # ZSH-native shibboleth: Quoting parameter
+    local _q_file=${(q)file}
+    # ZSH-native shibboleth: Quoting parameter
+    local _q_file=${(q)file}
+    echo "Testing logic from ${_q_file}..."
     # Extract the line that calculates VDE_ROOT_DIR
     local logic=$(grep "VDE_ROOT_DIR=\"\${" "$file" | head -n 1)
     if [[ -z "$logic" ]]; then

@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (Sovereign Law)
 # Template for language VMs
 # Variables: {{NAME}}, {{SSH_PORT}}, {{PKGS}}, {{CUSTOM_CMD}}
 name: vde-{{NAME}}
@@ -39,13 +41,20 @@ services:
       - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/vde-ssh.sock
 
     environment:
-      - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock
+      - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
       - ../../../../env-files/{{NAME}}.env
 
     networks:
-      - vde-net
+      vde-net:
+        aliases:
+          - "{{NAME}}"
+          - "vde-{{NAME}}"
+
+    extra_hosts:
+      - "vde-host:host-gateway"
+      - "host:host-gateway"
 
 networks:
   vde-net:

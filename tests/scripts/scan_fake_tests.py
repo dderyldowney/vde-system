@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# @forge (Governance Sentinel)
 """
 Scan test files for fake test patterns.
 Identifies violations of the Fake Test Prohibition rules.

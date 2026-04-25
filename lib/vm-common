@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VM Common Library for VDE Management Scripts
 # Source this library with: source ./lib/vm-common
 # Requires: zsh 5.0+
@@ -43,20 +44,20 @@ _VM_COMMON_LOADED=1
 
 # If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
 if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
-    # Derivation logic for VDE root directory
-    if [[ -n "${ZSH_VERSION}" ]]; then
-        # zsh-specific way to get the path of the current file being sourced
-        _VM_COMMON_SOURCE="${(%):-%x}"
-    else
-        # fallback for other shells
-        _VM_COMMON_SOURCE="${BASH_SOURCE[1]:-${0}}"
-    fi
-    
+    # Zsh-native path detection (UAP Mandate 1)
+    # %N is the standard way to get the sourced file path in ZSH
+    _VM_COMMON_SOURCE="${(%):-%x}"
+
     # Calculate absolute path to root (lib/ is one level below VDE root)
     VDE_ROOT_DIR="$(cd "$(dirname "${_VM_COMMON_SOURCE}")/.." && pwd)"
 fi
 export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 
+# Mandate 3: Support VDE_QUIET for clean output
+# Also suppress in test mode to ensure clean verification
+if [[ "${VDE_TEST_MODE:-0}" == "1" ]]; then
+    export VDE_QUIET=1
+fi
 # =============================================================================
 # DEPENDENCIES (CORE)
 # =============================================================================
@@ -213,7 +214,7 @@ export PORT_REGISTRY_FILE
 # VM TYPE DEFINITIONS (ASSOCIATIVE ARRAYS)
 # =============================================================================
 
-declare -A VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORT
+declare -A VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_SVC_PORTS
 
 # =============================================================================
 # VM DOCKER CONFIG (ASSOCIATIVE ARRAYS)
@@ -269,14 +270,14 @@ _is_cache_valid() {
 
 # Load VM types from configuration file
 # Uses cache if available and valid
-# Format: shortname|type|display_name|install_command|port_base
+# Format: type|name|aliases|display|pkgs|custom_cmd|service_ports|ssh_port
 load_vm_types() {
     local no_cache=0
     [[ "${1}" == "--no-cache" ]] && no_cache=1
     [[ "${VDE_NO_CACHE:-0}" == "1" ]] && no_cache=1
 
     # Ensure arrays are globally declared
-    typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_CUSTOM_CMD VM_SVC_PORT VM_SSH_PORT
+    typeset -gA VM_TYPE VM_ALIASES VM_DISPLAY VM_INSTALL VM_CUSTOM_CMD VM_SVC_PORTS VM_SSH_PORT
     typeset -ga lang_vms service_vms
 
     # Guard to prevent redundant loading in the same process
@@ -320,22 +321,8 @@ load_vm_types() {
                 . "${VM_TYPES_CACHE}" >/dev/null 2>&1
             fi
             if [[ $? -eq 0 ]]; then
-                # Extract simple arrays from cache (grep-based extraction as fallback)
-                local lang_line svc_line
-                lang_line=$(grep "^lang_vms=" "${VM_TYPES_CACHE}" 2>/dev/null)
-                svc_line=$(grep "^service_vms=" "${VM_TYPES_CACHE}" 2>/dev/null)
-                if [[ -n "${lang_line}" ]]; then
-                    local content=${lang_line#*=\(}
-                    content=${content%\)}
-                    lang_vms=($(echo ${content}))
-                fi
-                if [[ -n "${svc_line}" ]]; then
-                    local content=${svc_line#*=\(}
-                    content=${content%\)}
-                    service_vms=($(echo ${content}))
-                fi
                 use_cache=1
-                # Mark as loaded but we still need VM_INSTALL check below if JSON exists
+                # Mark as loaded
                 export _VM_TYPES_LOADED=1
             fi
         fi
@@ -390,8 +377,8 @@ load_vm_types() {
                     _info "Parsing VM types from JSON via JQ: ${VM_TYPES_JSON}"
                     local _v_p_configs
                     _v_p_configs=$(vde_query_json -r '
-                        (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_ports//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
-                        (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORT[\(.name)]=\(.service_ports//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
+                        (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORTS[\(.name)]=\(.service_ports//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
+                        (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORTS[\(.name)]=\(.service_ports//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
                     ' "${VM_TYPES_JSON}" 2>/dev/null)
 
                     if [[ -n "${_v_p_configs}" ]]; then
@@ -399,6 +386,14 @@ load_vm_types() {
                     fi
                 elif [[ -f "${VM_TYPES_CONF}" ]]; then
                     _info "Parsing VM types from Raw Beskar (.conf) via Pure ZSH..."
+                    
+                    # Extract version from comment header
+                    local _v_conf_ver
+                    _v_conf_ver=$(grep -m1 "^# Version:" "${VM_TYPES_CONF}" | awk '{print $3}' | tr -d '\r')
+                    [[ -z "${_v_conf_ver}" ]] && _v_conf_ver=$(vde_get_version) # Dynamic fallback from Gospel
+
+
+                    
                     local _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _v_extra
                     while IFS='|' read -r _v_type _v_name _v_aliases _v_disp _v_pkgs _v_cmd _v_env _v_port _v_extra; do
                         [[ -z "${_v_name}" || "${_v_type}" == "#"* ]] && continue
@@ -414,7 +409,7 @@ load_vm_types() {
                         VM_DISPLAY[${_v_name}]="${_v_disp}"
                         VM_INSTALL[${_v_name}]="${_v_pkgs}"
                         VM_CUSTOM_CMD[${_v_name}]="${_v_cmd}"
-                        VM_SVC_PORT[${_v_name}]="${_v_env}"
+                        VM_SVC_PORTS[${_v_name}]="${_v_env}"
                         VM_SSH_PORT[${_v_name}]="${_v_port}"
                     done < "${VM_TYPES_CONF}"
                 else
@@ -466,10 +461,16 @@ load_vm_types() {
                 # Create cache directory
                 mkdir -p "${VDE_CACHE_DIR}"
 
+                # Use the extracted version for the cache
+                local _v_final_ver="${_v_conf_ver:-1.4.1}"
+                [[ -f "${VM_TYPES_JSON}" ]] && _v_final_ver="1.4.1" # JSON is the primary authority
+
                 # Generate cache file with proper zsh associative array syntax
                 local cache_tmp="${VM_TYPES_CACHE}.tmp.${$}"
                 {
                     echo "# VM Types Cache - Auto-generated by load_vm_types()"
+                    echo "# @armor (Beskar Registry DNA)"
+                    echo "# Version: ${_v_final_ver}"
                     echo "# DO NOT EDIT MANUALLY"
                     echo "# VM_INSTALL array is NOT cached due to shell command complexity"
                     echo ""
@@ -491,16 +492,22 @@ load_vm_types() {
                         print -r -- "VM_DISPLAY[${key}]='${value}'"
                     done
                     echo ""
+                    echo "typeset -gA VM_INSTALL"
+                    for key in "${(@k)VM_INSTALL}"; do
+                        value="${VM_INSTALL[${key}]//'/'\\''}"
+                        print -r -- "VM_INSTALL[${key}]='${value}'"
+                    done
+                    echo ""
                     echo "typeset -gA VM_CUSTOM_CMD"
                     for key in "${(@k)VM_CUSTOM_CMD}"; do
                         value="${VM_CUSTOM_CMD[${key}]//'/'\\''}"
                         print -r -- "VM_CUSTOM_CMD[${key}]='${value}'"
                     done
                     echo ""
-                    echo "typeset -gA VM_SVC_PORT"
-                    for key in "${(@k)VM_SVC_PORT}"; do
-                        value="${VM_SVC_PORT[${key}]//'/'\\''}"
-                        print -r -- "VM_SVC_PORT[${key}]='${value}'"
+                    echo "typeset -gA VM_SVC_PORTS"
+                    for key in "${(@k)VM_SVC_PORTS}"; do
+                        value="${VM_SVC_PORTS[${key}]//'/'\\''}"
+                        print -r -- "VM_SVC_PORTS[${key}]='${value}'"
                     done
                     echo ""
                     echo "typeset -gA VM_SSH_PORT"
@@ -866,7 +873,7 @@ get_vm_type() {
 }
 
 # Get VM display name
-get_vm_display_name() {
+get_vm_display() {
     local vm_name="${1}"
     local resolved
     resolved=$(resolve_vm_name "${vm_name}" 2>/dev/null) || resolved="${vm_name}"
@@ -912,7 +919,7 @@ resolve_vm_name() {
     fi
     
     # 2. Check with vde- prefix if not already present
-    if [[ ! "${input}" =~ ^vde- ]]; then
+    if [[ "${input}" != vde-* ]]; then
         local prefixed="vde-${input}"
         if [[ -n "${VM_TYPE[${prefixed}]}" ]]; then
             echo "${prefixed}"
@@ -1088,7 +1095,7 @@ release_port_reservation() {
     local input="${1}"
     
     # If input is a number, it's a port
-    if [[ "${input}" =~ ^[0-9]+$ ]]; then
+    if [[ "${input}" == [0-9]# ]]; then
         release_port "${input}"
     else
         # Find the port associated with this VM and release it
@@ -1364,7 +1371,7 @@ get_vm_ssh_port() {
 get_vm_service_ports() {
     local vm_name="${1}"
     load_vm_types >/dev/null 2>&1
-    local ports="${VM_SVC_PORT[${vm_name}]}"
+    local ports="${VM_SVC_PORTS[${vm_name}]}"
     if [[ -n "${ports}" ]] && [[ "${ports}" != "null" ]]; then
         echo "${ports}"
         return ${VDE_SUCCESS}
@@ -1422,12 +1429,12 @@ vde_check_system_breath() {
         ncpu=$(nproc 2>/dev/null || echo 4)
     fi
     # Ensure ncpu is a number
-    [[ "${ncpu}" =~ ^[0-9]+$ ]] || ncpu=4
+    [[ "${ncpu}" == [0-9]# ]] || ncpu=4
 
     # Extract 1-minute load average
     load_avg=$(uptime | awk -F'load averages:|load average:' '{ print $2 }' | awk '{ print $1 }' | sed 's/,//g' 2>/dev/null)
     # Ensure load_avg is a number (handle empty or non-numeric)
-    if [[ -z "${load_avg}" ]] || ! [[ "${load_avg}" =~ ^[0-9.]+$ ]]; then
+    if [[ -z "${load_avg}" ]] || [[ "${load_avg}" != [0-9.]# ]]; then
         load_avg=0.0
     fi
     

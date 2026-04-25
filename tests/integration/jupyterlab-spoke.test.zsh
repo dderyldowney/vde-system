@@ -1,9 +1,13 @@
 #!/usr/bin/env zsh
+# @forge (Governance Sentinel)
 # Integration Test for vde-jupyterlab (The Sovereign DS Spoke)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
 # Part of the VDE Certification Suite
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+typeset SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+typeset PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source core libraries
 export VDE_ROOT_DIR="$PROJECT_ROOT"
@@ -11,14 +15,14 @@ source "$PROJECT_ROOT/lib/vde-constants"
 source "$PROJECT_ROOT/lib/vm-common"
 
 # Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RESET='\033[0m'
+typeset RED='\033[0;31m'
+typeset GREEN='\033[0;32m'
+typeset YELLOW='\033[1;33m'
+typeset RESET='\033[0m'
 
 # Test counters
-TESTS_PASSED=0
-TESTS_FAILED=0
+typeset TESTS_PASSED=0
+typeset TESTS_FAILED=0
 
 # Helper functions
 test_start() {
@@ -125,7 +129,7 @@ test_runtime_connectivity() {
             success=1
             break
         fi
-        sleep 1
+        zmodload zsh/zselect && zselect -t 100
         ((retry++))
     done
     

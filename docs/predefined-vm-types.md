@@ -1,4 +1,5 @@
 # Predefined VM Types
+<!-- @shared-law (Sovereign Law) -->
 
 All available programming languages and services that can be created with VDE.
 

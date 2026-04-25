@@ -1,4 +1,5 @@
-# VDE Remediation Strike Plan (1.4.1 Sovereign)
+# VDE Remediation Strike Plan (1.5.0 Sovereign)
+<!-- @forge (Governance Sentinel) -->
 
 ## OVERVIEW
 This plan outlines the surgical strikes required to remediate the vulnerabilities identified in the 2026-04-09 Audit.

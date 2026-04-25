@@ -1,3 +1,5 @@
+# VDE-SPEC
+<!-- @forge (Governance Sentinel) -->
 Compare implementation against VDE-SPEC.md — find gaps and violations.
 
 ## Usage

@@ -1,4 +1,5 @@
 # MANDALORIAN REPORTING TEMPLATE
+<!-- @shared-law (Sovereign Law) -->
 
 ### **I. Kov'nyn — The Headbutt (Think First)**
 *Opening hypothesis, constraints identification, and reasoning budget expenditure.*

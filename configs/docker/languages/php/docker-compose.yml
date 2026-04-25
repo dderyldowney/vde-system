@@ -1,5 +1,7 @@
+# VDE ARCHITECTURAL RECORD
+# @shared-law (Forge Component)
 # Template for language VMs
-# Variables: php, 2213, , zsh /vde/scripts/setup/php-init.zsh
+# Variables: php, 2213, -, zsh /vde/scripts/setup/php-init.zsh
 name: vde-php
 services:
   vde-php:
@@ -8,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: php
-        PKGS_TO_INSTALL: ""
+        PKGS_TO_INSTALL: "-"
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/php-init.zsh"
         USERNAME: devuser
         UID: 1000
@@ -39,13 +41,20 @@ services:
       - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/vde-ssh.sock
 
     environment:
-      - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock
+      - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
       - ../../../../env-files/php.env
 
     networks:
-      - vde-net
+      vde-net:
+        aliases:
+          - "php"
+          - "vde-php"
+
+    extra_hosts:
+      - "vde-host:host-gateway"
+      - "host:host-gateway"
 
 networks:
   vde-net:

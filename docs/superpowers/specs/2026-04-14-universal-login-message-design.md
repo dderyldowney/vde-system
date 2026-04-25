@@ -1,4 +1,5 @@
 # Design Spec: Universal VM Login Message
+<!-- @shared-law (Sovereign Law) -->
 
 **Date:** 2026-04-14
 **Status:** Approved

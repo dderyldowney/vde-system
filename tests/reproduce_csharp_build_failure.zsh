@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @forge (Governance Sentinel)
 # tests/reproduce_csharp_build_failure.zsh
 
 set -e

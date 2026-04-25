@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE Core Library - Essential Functions for VDE
 # Source this library with: source ./lib/vde-core
 # Requires: zsh 5.0+
@@ -26,12 +27,12 @@
 # -----------------------
 # The Rule of One: Extract version from the Beskar Source (docs/VDE-SPEC.md)
 vde_get_version() {
-    # Resolve the root directory relative to the script's location if not set
-    local root="${VDE_ROOT_DIR:-$(pwd)}"
+    # Resolve the root directory relative to the current context
+    local root="${VDE_ROOT_DIR:-.}"
     local spec_file="${root}/docs/VDE-SPEC.md"
 
     if [[ -f "${spec_file}" ]]; then
-        # Extracts version from "# VDE-SPEC [v]1.4.1 (The Sovereign Baseline)"
+        # Extracts version from "# VDE-SPEC [v]1.5.0 (The Sovereign Baseline)"
         # Supports optional 'v' prefix and SemVer extensions like -spN
         grep -m1 '^# VDE-SPEC ' "${spec_file}" | sed -E 's/^# VDE-SPEC v?([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?).*/\1/' | tr -d '[:space:]'
     else
@@ -58,9 +59,9 @@ _VDE_CORE_GUARD_LOADED=1
 # shellcheck disable=SC2296
 _VDE_CORE_SCRIPT_PATH="${(%):-%N}"
 
-# If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
+# If VDE_ROOT_DIR is already exported, use it. Otherwise, assume current directory.
 if [[ -z "${VDE_ROOT_DIR:-}" ]] ; then
-    VDE_ROOT_DIR="$(cd "$(dirname "${_VDE_CORE_SCRIPT_PATH}")/.." && pwd)"
+    VDE_ROOT_DIR="."
 fi
 export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 
@@ -111,6 +112,13 @@ vde_run() {
     
     # If failure detected, hand off to Error Engine
     if [[ $rc -ne 0 ]]; then
+        # SPECIAL CASE: For 'exec' or 'enter', we return the actual exit code 
+        # without triggering the Hub's error engine, as the Spoke's command 
+        # might return non-zero for legitimate reasons (e.g. ssh-add -l empty).
+        if [[ "${info}" == "exec" || "${info}" == "enter" || "${info}" == "ssh" ]]; then
+            return $rc
+        fi
+
         if command -v vde_error_map >/dev/null 2>&1; then
             vde_error_map $rc "${info}"
         else
@@ -191,8 +199,21 @@ vde_query_json() {
     if command -v jq >/dev/null 2>&1; then
         jq "$@"
     else
+        # --- PATH TRANSLATION (Rule G Hardening) ---
+        # If the host lacks JQ, we must translate host-absolute paths to the /vde container mount.
+        local args=()
+        local arg
+        for arg in "$@"; do
+            # Replace VDE_ROOT_DIR with /vde for container execution
+            if [[ "${arg}" == "${VDE_ROOT_DIR}"* ]]; then
+                args+=("${arg/${VDE_ROOT_DIR}//vde}")
+            else
+                args+=("${arg}")
+            fi
+        done
+        
         # Use -i for interactive/stdin pipe support
-        docker run --rm -i -v "${VDE_ROOT_DIR}:/vde" vde-base jq "$@"
+        docker run --rm -i -v "${VDE_ROOT_DIR}:/vde" vde-base jq "${args[@]}"
     fi
 }
 
@@ -277,7 +298,8 @@ vde_translate_conf_to_json() {
         local _v_json_tmp="${_v_json_file}.tmp.${$}"
         {
             echo "{"
-            echo "  \"version\": \"1.1\","
+            echo "  \"@armor\": \"(Beskar Registry DNA)\","
+            echo "  \"version\": \"${VDE_VERSION:-$(vde_get_version)}\","
             echo "  \"vms\": {"
             echo "    \"language\": ["
             echo "${(j:,\n:)_v_lang_entries}"
@@ -311,6 +333,7 @@ _vde_core_save_cache() {
     # Write cache using native zsh associative array syntax for speed
     {
         echo "# VDE VM Types Cache - Auto-generated"
+        echo "# @armor (Beskar Registry Cache)"
         echo "typeset -gA VDE_CORE_VM_TYPE VDE_CORE_VM_ALIASES VDE_CORE_VM_DISPLAY"
         echo ""
         

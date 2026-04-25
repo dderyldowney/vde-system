@@ -1,3 +1,5 @@
+# DOCUMENTATION
+<!-- @forge (Governance Sentinel) -->
 ---
 name: Documentation
 about: Report issues or suggest improvements for VDE documentation

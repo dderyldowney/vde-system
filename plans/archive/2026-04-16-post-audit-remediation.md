@@ -1,4 +1,5 @@
 # [CONSOLIDATED] - CONTENT MOVED TO plans/plan.md
+<!-- @shared-law (Forge Component) -->
 
 
 # Sovereign Remediation Plan: Post-1.4.0 Hardening

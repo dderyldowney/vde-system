@@ -1,8 +1,11 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 #===============================================================================
 # vde-vision - Observability Dashboard for VDE
 # Provides a real-time Markdown-based status grid of the Sovereign environment.
 #===============================================================================
+
+set -e
 
 # Source dependencies
 VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"

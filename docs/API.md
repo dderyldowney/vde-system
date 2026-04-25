@@ -1,6 +1,7 @@
 # VDE API Reference
+<!-- @shared-law (Sovereign Law) -->
 
-**Version:** 1.4.1 (The Sovereign Baseline)
+**Version:** 1.5.0 (The Sovereign Baseline)
 **Status:** AUTHORITATIVE
 
 This document provides the complete API reference for the Virtual Development Environment (VDE) system.

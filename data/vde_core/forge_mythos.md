@@ -1,4 +1,5 @@
 # The Forge Mythos: The Law of the Anvil
+<!-- @armor (Engine Core) -->
 
 ## I. The Sacred Space
 The Forge is the heart of the Covert. It is not merely a collection of tools, but a sacred space where raw logic is smelted into the **Pure Beskar** of our infrastructure. Here, we do not tolerate the weak or the unstable. Only that which is hardened remains.

@@ -1,13 +1,15 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 #===============================================================================
 # vde-poll - Deterministic Readiness Polling Utility
+set -e
 # Anchored in ZSH for Tier 3: Spoke Environment Verification
 # Part of the VDE v2.0.6 Hardened Rule Spine
 #===============================================================================
 
 # --- 1. BOOTSTRAP & ROOT DISCOVERY ---
 _VDE_POLL_SCRIPT_PATH="${(%):-%x}"
-VDE_ROOT_DIR="$(cd "$(dirname "${_VDE_POLL_SCRIPT_PATH}")/.." && pwd)"
+VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 # --- 2. SOURCE CORE ECOSYSTEM ---
@@ -15,7 +17,7 @@ if [[ -f "${VDE_ROOT_DIR}/lib/vm-common" ]]; then
     source "${VDE_ROOT_DIR}/lib/vm-common"
 else
     echo "CRITICAL: lib/vm-common not found."
-    exit 1
+    exit ${VDE_ERR_GENERAL}
 fi
 
 # --- 3. USAGE ---
@@ -47,7 +49,7 @@ EOF
 
 # --- 4. ARGUMENT PARSING ---
 zmodload zsh/zutil
-local -A opts
+typeset -A opts
 zparseopts -D -A opts -health -port: -exec: -network: -state: -count: -timeout: -interval: -wait:
 
 VM_NAME="$1"
@@ -62,7 +64,11 @@ if [[ -n "${opts[--wait]}" ]]; then
     # Convert seconds to deciseconds for zselect -t
     # Use floating point math via zsh built-in $(( ))
     local wait_ticks=$(( ${opts[--wait]} * 100 ))
-    zmodload zsh/zselect 2>/dev/null && zselect -t ${wait_ticks} || sleep ${opts[--wait]}
+    if ! zmodload zsh/zselect 2>/dev/null; then
+        echo "[ERROR] zsh/zselect module required but not found. Polling cannot continue safely." >&2
+        exit ${VDE_ERR_GENERAL}
+    fi
+    zselect -t ${wait_ticks}
     exit ${VDE_SUCCESS}
 fi
 
@@ -133,12 +139,16 @@ while (( elapsed < TIMEOUT )); do
         exit ${VDE_SUCCESS}
     fi
 
-    # High-precision sub-second sleep via zselect (Rule 23)
+    # High-precision sub-second wait via zselect (Rule 23)
     # zselect -t takes deciseconds (1/100th of a second)
     # 0.2s * 100 = 20
-    local -i sleep_ticks
-    sleep_ticks=$(( INTERVAL * 100 ))
-    zmodload zsh/zselect 2>/dev/null && zselect -t ${sleep_ticks}
+    local -i wait_ticks
+    wait_ticks=$(( INTERVAL * 100 ))
+    if ! zmodload zsh/zselect 2>/dev/null; then
+        echo "[ERROR] zsh/zselect module required but not found. Polling cannot continue safely." >&2
+        exit ${VDE_ERR_GENERAL}
+    fi
+    zselect -t ${wait_ticks}
     
     current_time=$(date +%s)
     elapsed=$(( current_time - start_time ))

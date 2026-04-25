@@ -1,4 +1,5 @@
 # Environment Files - DO NOT DELETE
+<!-- @armor (Hydration Documentation) -->
 
 **CRITICAL**: These files are REQUIRED dependencies for docker-compose.yml configurations.
 

@@ -1,10 +1,14 @@
 #!/usr/bin/env zsh
+# @forge (Governance Sentinel)
 # VDE Empirical Strike: Integrated Tech Stack
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
 # Objective: Verify the Python/Postgres/Redis stack with direct CLI interaction.
 # Codified under Section 14 (The Trial of the Gauntlet).
 
 # 1. Initialize Spine
-VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+typeset VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vde-log"
 
@@ -47,7 +51,7 @@ echo "[4/5] Testing inter-VM bridge (Python -> Services)..."
 "${VDE_ROOT_DIR}/bin/vde-exec" redis sudo /usr/bin/redis-server /etc/redis/redis.conf --daemonize yes >/dev/null 2>&1
 
 # Give them a second to breathe
-sleep 2
+zmodload zsh/zselect && zselect -t 200
 
 # Test Postgres Connectivity from Python Spoke
 if "${VDE_ROOT_DIR}/bin/vde-exec" python pg_isready -h vde-postgres -p 5432; then

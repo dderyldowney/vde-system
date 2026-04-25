@@ -1,90 +1,29 @@
-# VDE Project Memory
+# VDE Beskar Record: 1.4.1 (The Sovereign Baseline)
+<!-- @shared-law (Forge Component) -->
 
-**Last Updated:** 2026-04-15T20:45:00Z
-**Baseline Version:** 1.4.0 (The Sovereign Hardening)
+## SOVEREIGN STATE
+- **Baseline**: 1.4.1 (Certified 2026-04-22)
+- **Status**: 100% GREEN (PEAK INTEGRITY)
+- **Heartbeat**: Certified via Mandate L; automated via pre-push and CI.
 
----
+## CORE MEMORIES
+- **Security & Privacy Gate**: Established local/remote sentinels (bin/vde-security-audit.zsh). CodeQL monitoring is now non-negotiable.
+- **Privacy Purification**: All absolute home path leaks purged globally ($HOME used exclusively).
+- **Rule Q Enforcement**: Orchestrator-exclusive Proof of Life is active.
+- **BDD Hardening**: Purged all 'pink' steps; implemented real empirical Docker/SSH heartbeats.
+- **vde-init Remediation**: Healed Zsh arithmetic fracture ((( i++ )) bug).
 
-## THE HEARTBEAT: PROOF OF LIFE CONTRACT
-- **Gateway Entrypoint**: The **Four Pillars Gateway** (`tests/features/core-infrastructure/gateway-pillars.feature`) is the mandatory entrypoint to the Proof of Life ritual. It MUST be passed with 100% success to certify the host environment's readiness. Failure results in an immediate **Program Blockade**.
-- **Mandatory Lifecycle**: The Proof of Life Contract (init -> create -> start -> enter -> rebuild -> stop -> rm -> add -> uninstall) is the non-negotiable heartbeat of the VDE.
-- **Remediation Protocol**: Any status other than **100% GREEN** on `@system-spine` and core lifecycle tests triggers an immediate **Protocol Blockade**. No secondary features or refactoring are permitted until the heartbeat is restored to Green.
-- **Proof of Life Certification (1.4.0)**: Successfully verified the v1.4.0 hardening with 100% pass rate (72/72 steps).
+- **Phase 31 (DNS & Bridge) [CERTIFIED]**: 
+  - Implementation of dual DNS aliases (short/prefixed) certified via Docker DNS.
+  - Sovereign Bridge (`vde-host`, `host`) mapped to `host-gateway` for Hub-to-Spoke communication.
+  - Refactored `bin/generate-all-configs` for Zsh-native efficiency (Direct array access).
+  - Hardened BDD verification via `execute_in_container` (direct `docker exec`) to bypass UAP log headers.
+  - Resolved structural fractures in `vde-entrypoint.zsh` for root-powered Spoke ignition.
+  - Standardized hydration rituals (LAMP/MEAN/Jupyter) on short-alias discovery.
+  - **Gospel Synchronization Strike**: Purified the Sovereign Artifact Set (VDE-SPEC.md, command-reference.md, directory-structure.md, STDLIB.md) to match 1.4.1 Baseline.
+  - **Test Suite Remediation**: Fixed deprecated CLI options and hardened DNS resolution assertions in BDD scenarios.
+  - **Path Purification**: Remediated absolute path leaks in `plans/scripts/`.
+  - Timestamped 1.4.1 Baseline to 2026-04-24.
+  - **STATUS**: 100% GREEN. Heartbeat certified. Documentation synchronized. Phase 32 ignition authorized.
 
----
-
-## SYSTEM EVOLUTION (2026-04-15) - 1.4.0 SOVEREIGN BASELINE
-- **Plan Audit & Remediation (The Great Pruning):**
-    - Mission: Systematically audit, remediate, and archive all legacy plans.
-    - Result: Remediated the `bin/add-vm-type` concurrency race condition by moving port allocation *inside* the global lock.
-    - Archival: Identified and moved all 6 remaining legacy/redundant plans to the archive.
-    - Workspace Status: The root `plans/` directory is now 100% clean of pending implementable missions, containing only living records.
-- **Chronicle Strengthening (Four Pillars):**
-    - Result: Codified the "Four Pillars of the Chronicle" (Focus, Link, Dual-Gate, Evidence).
-    - Enforcement: Implemented automated GitHub labeling and PR title validation.
-- **Security & Automation:**
-    - Result: Integrated Dependabot, CodeQL, and automated `stable` alias mirroring.
-- **Proof of Life Certification:**
-    - Final Status: Verified the hardened baseline with 100% pass rate (245/245 steps).
-
-## SYSTEM EVOLUTION (2026-04-13) - 1.3.1 SOVEREIGN BASELINE
-- **Global Path Sanitization:**
-    - Result: Replaced all identifiers with `$HOME` or `~` across the entire Forge.
-- **Forge's Ingot Stash (Pruning Ritual):**
-    - Result: Implemented `bin/vde-prune.zsh` with Git-native engine.
-- **Sovereign Branching Strategy (The Signet):**
-    - Result: Codified mandatory feature branch lifecycle.
-
-## SYSTEM BENCHMARKS (VDE 1.4.1)
-- **Canonical Ignition Speed:** 3.959s. Benchmark for 3-VM Parallel Ignition.
-- **Forge Volume (Core):** ~24,500 lines of active logic.
-- **Forge Volume (Total):** 108,300 total tracked lines.
-
-## THE VERDICT: 1.4.1 READY
-- **Compliance Status**: 🟢 100% GREEN / SYSTEM HARDENED.
-- **Security Certified**: CodeQL and Dependabot active.
-- **Workflow Automated**: Auto-closure and stable alias active.
-
----
-
-## CRITICAL: PROTOCOL ENFORCEMENT (THE CREED)
-
-**ALL SESSIONS MUST ADHERE TO THESE RULES:**
-0. **MANDATORY SESSION BOOTSTRAP**: If the CLI is Claude, `AGENTS.md` and `.gemini/instructions.md` MUST be read and fully applied at the start of every session.
-1. **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`.
-2. **THE ANVIL IS DEFAULT**: All active work MUST occur on the `develop` branch.
-3. **Rule P: Sovereign Branching**: Feature branches MUST originate from `develop`, track via GitHub Issues, and be deleted immediately post-merge.
-4. **Enforcer Supervision (Rule A)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`.
-5. **Born Ready (BTO)**: Images must be immutable. No runtime `apt` calls.
-6. **TDD & No Fake Tests**: Failing test (RED) first.
-7. **Empirical Proof Mandate**: PRs MUST contain raw terminal output proof.
-
----
-
-## PROJECT MISSION (Single Source of Truth)
-
-**VDE** (Virtual Development Environment) enables users to create/manage Docker-based development VMs via natural language commands using a Beskar-forged ZSH ecosystem.
-
----
-
-## CURRENT FOCUS: 1.4.1 Sovereign Evolution
-
-**Active Mission**: `plans/1.4.1-consolidated-plan.md`
-
-**Goal:** Finalize the 1.4.1 baseline by eliminating "pink" test debt, hardening infrastructure requirements, and forging the "Path of the Foundling" onboarding experience.
-
-| Phase | Focus | Status |
-|-------|-------|--------|
-| 28 | Sovereign Release | ✅ COMPLETE |
-| 29 | Tech Stack Clusters | 🚧 IN PROGRESS |
-| 30 | Onboarding Rituals | 🚧 PENDING |
-
----
-
-## VERSIONING LAW & TAGGING AUTHORITY
-- **Identity Lock**: "We are The Covert" (Rule 13).
-- **Thesis surveillance**: Interplay monitoring active.
-
-## **SEMANTIC BRANCH TARGETING LAW**
-- **Living Mark**: The `stable` alias mirror is the production entry point.
-- **Auto-Closure**: Natively supported via default branch `develop` and manual CI fallback.
+**This is the Way.**

@@ -1,4 +1,5 @@
 # @System-Spine Implementation Plan
+<!-- @shared-law (Sovereign Law) -->
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -23,7 +24,7 @@ Expected: `Missing`
 ```zsh
 #!/usr/bin/env zsh
 # Pillar I: Zsh
-if [[ -z "${ZSH_VERSION}" ]] || ! [[ "${ZSH_VERSION}" =~ "^5\." ]]; then
+if [[ -z "${ZSH_VERSION}" ]] || [[ "${ZSH_VERSION}" != 5.* ]]; then
     echo "[CRITICAL] Pillar I (Zsh) failed: Zsh 5.0+ required." >&2
     exit 1
 fi

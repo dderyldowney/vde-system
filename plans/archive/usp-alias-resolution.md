@@ -1,4 +1,5 @@
 # VDE Implementation Plan: USP Alias Resolution (1.3.1-STEP)
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Implement dynamic alias hydration script resolution to enforce Universal Script Parity (USP) without redundant symlinks, ensuring the Beskar Registry (`data/vm-types.json`) acts as the Sole Source of Truth.

@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @forge (Governance Sentinel)
 @core-infrastructure @usp-validation @system-spine
 Feature: Universal Script Parity (USP) Validation
   The VDE system enforces Universal Script Parity (USP) to ensure that every VM

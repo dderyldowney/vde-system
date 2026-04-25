@@ -1,10 +1,12 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # Targeted Test Runner for VDE
+set -e
 # Focuses on speed and isolation for iterative development.
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 VDE_ROOT="$(cd "$(dirname "${0}")/.." && pwd)"
 cd "${VDE_ROOT}" || exit ${VDE_ERR_GENERAL}

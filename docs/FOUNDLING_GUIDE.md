@@ -1,3 +1,5 @@
+# FOUNDLING GUIDE
+<!-- @shared-law (Sovereign Law) -->
 # Path of the Foundling: A Student's Guide to VDE
 
 Welcome, Foundling. You have entered the Forge. This guide explains the "Rituals" (commands) and "Creed" (rules) you will follow to learn the ways of engineering.
@@ -12,17 +14,20 @@ The VDE (Virtual Development Environment) provides you with "Spokes" (isolated c
 
 ## 2. Core Rituals (The Commands)
 
-### Initialization (The Ignition)
-When you first clone this repository, you must ignite the Forge:
+### The Path of the Foundling (Interactive Induction)
+When you first clone this repository, you must begin your journey:
 ```zsh
-vde init
+vde path-of-the-foundling
 ```
-This sets up your SSH keys, creates the networks, and prepares the "World-Forge" (Docker).
+This interactive script will guide you through:
+- **Ignition**: Setting up your SSH keys and creating the networks.
+- **Spine Check**: Verifying that your Hub is ready (Zsh, Git, Docker, and SSH).
+- **First Spoke**: Creating your very first Python workspace automatically.
 
 ### Creating a Spoke (The Forge)
-To create a workspace for a specific language (e.g., Python):
+If you followed the Path above, your Python Spoke was already created. To create a workspace for another specific language:
 ```zsh
-vde create python
+vde create <alias>
 ```
 
 ### Starting and Entering (The Handshake)

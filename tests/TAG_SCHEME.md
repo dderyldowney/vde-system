@@ -1,4 +1,5 @@
 # VDE Test Tagging Scheme
+<!-- @forge (Governance Sentinel) -->
 
 ## Fast Tests (No Docker Required)
 

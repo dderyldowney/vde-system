@@ -1,5 +1,7 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # migrate-configs-to-categories.zsh - Reorganize VDE configs into languages/services
+set -e
 # Part of Phase P Architectural Refactoring
 
 # Reset all zsh options to defaults to avoid local var printing issues

@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @forge (Governance Sentinel)
 @core-infrastructure @gateway @system-spine
 Feature: The Four Pillars Gateway
   As an Alor of the VDE
@@ -42,4 +44,4 @@ Feature: The Four Pillars Gateway
     And the directory ".cache" should exist
     And the directory "projects" should exist
     And the file "VDE_INSTALL.md" should exist
-    And the file "VDE_INSTALL.md" should contain "git clone -b stable"
+    And the file "VDE_INSTALL.md" should contain "git clone https://github.com/dderyldowney/vde-system.git"

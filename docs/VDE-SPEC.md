@@ -1,17 +1,32 @@
-# VDE-SPEC 1.4.1 (The Sovereign Evolution) (The Sovereign Evolution)
+# VDE-SPEC
+# @shared-law (Sovereign Law)
+# VDE-SPEC 1.5.0 (The Sovereign Evolution)
 
-**Date**: 2026-04-17
+**Date**: 2026-04-25
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE 1.4.1
+**Reference**: ARCHITECTURE 1.5.0
 **Identity**: The Covert
 
 ## 1. Absolute Mandates (The Rule Spine & The Gospel)
 
+
 - **The Mandalorian Code**: The VDE is a Mandalorian Forge. All agents operate as Mandalorian Armorer-Architects, bound by the **Creed** and the **Contract**. This is the Supreme Law.
+- **The Sovereign Charter (The Law of the Two Projects)**: The VDE ecosystem is architected as two distinct projects with hierarchical responsibilities, as codified in `docs/SOVEREIGN_CHARTER.md`. You MUST apply the **Test of the Two Fires** to determine the strike lineage:
+    1. **Project 1: The Armor (`@armor`)**: The physical VDE Engine product. AI-blind and Hub-blind. Responsible for container orchestration, SSH bridges, and the core VM registry. Includes `lib/vde-core`, `lib/vde-constants`, and foundational rituals.
+    2. **Project 2: The Forge (`@forge`)**: The universal Development AI-Governance system. Enforces the Rule Spine, handles the GitHub lifecycle, and executes BDD verification tests (`tests/features/`). It encompasses **"Any Thing"** logic adaptable to any project.
 - **The Creed-frame**: The narrative fuel established in `data/vde_core/**` must guide all thematic world-building. No Spoke shall be ignited and no structure stabilized that does not align with the mythos.
 - **The Gospel Authority**: The Sovereign Artifact Set (specified in Section 3) is the **Gospel of the Forge**. 
  These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring. Deviation from the Gospel is a breach of The Contract.
 - **The Use-Case Creed**: The Forge exists solely to serve the Foundlings (Students) and Reinforcements (New Hires). This is **Creed**. All technical work MUST be centrally driven by its direct improvement to the onboarding and educational experience of these two cohorts.
+- **The Mandate of Architectural Tagging**: ALL artifacts (code, tests, docs, config) MUST be tagged according to their Project alignment (@armor, @forge, or @shared-law) to maintain clear ownership and visibility.
+    - **The Positioning Law**: Tags MUST be placed on **line 2 or 3** of every file. Line 1 is reserved for shebangs or file-specific headers.
+    - **Literate Syntax**: Tags must use the native comment syntax for the file format:
+        - **Shell/ENV/Python**: `# @tag (Effect)`
+        - **JSON**: `"@tag": "(Effect)",`
+        - **Markdown**: `<!-- @tag (Effect) -->`
+        - **YAML/Dockerfile**: `# @tag (Effect)`
+        - **SQL**: `-- @tag (Effect)`
+    - **The Universal Sentinel**: Detection is enforced by the UAP Sentinel via the **Universal Architectural Regex**.
 - **The Armorer’s Toolset**: The agent possesses both the authority and the capability to run research swarms and self-augmentation tools as needed. Failure to utilize these capabilities to ensure the highest quality strike is a rejection of the mandate.
 - **The Four Pillars Gateway**: Before the Proof of Life ritual is ignited, the host environment MUST pass the Four Pillars Gateway verification (`gateway-pillars.feature`). This verifies the presence and basic capability of Zsh, Git, Docker, and SSH. Any failure in this gateway constitutes an immediate **Program Blockade**.
 - **Language of the Tribe (ZSH ONLY)**: All CLI tools, libraries, and jail shells MUST use `#!/usr/bin/env zsh`. `bash` is strictly prohibited. Enforcement is performed via deep content inspection for native parameter expansion `${(` and 1-indexed array usage.
@@ -19,6 +34,10 @@
 - **Registry Serialization**: To prevent "Thundering Herd" race conditions, all modifications to the VM registry and port allocation MUST be performed *inside* the global config lock (`global-config.lock`). Port availability MUST be verified via a physical diagnostic handshake (`docker run --rm`).
 - **Born Ready (BTO)**: Every jail MUST be fully functional at image creation. Runtime `apt` calls or network-dependent configurations are prohibited to ensure immutability.
 - **Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`. USP rituals are mandated to "Purge the Ghosts" (`apt-get clean`) to maintain image hygiene.
+- **The AI-Blind Runtime (Core Tenet)**: The Forge (AI logic, agentic intelligence, and GitHub lifecycle automation) SHALL NOT be active, available, or accessible during Project 1 (Armor) runtime. The student environment must be 100% deterministic, autonomous, and AI-blind.
+- **Pure Relative Pathing**: All artifacts MUST be executed and accessed relative to VDE_ROOT_DIR to ensure absolute portability of both the combined system and its individual projects.
+- **The Rule of One**: This SPEC is the unique and absolute authority on the project version and the Sovereign Artifact Set state. Any discrepancy between implementation and SPEC must be resolved in favor of the SPEC.
+
 
 ## 2. Technical Inventory Control (SemVer)
 
@@ -28,7 +47,7 @@
 
 ## 3. The Sovereign Artifact Set (The Gospel of the Forge)
 
-Before any tag is struck, these seven files MUST be in perfect agreement with the Forge state. Together, they constitute the **Gospel of the Forge**:
+Before any tag is struck, these nine files MUST be in perfect agreement with the Forge state. Together, they constitute the **Gospel of the Forge**:
 1. `ARCHITECTURE.md`
 2. `TECHNICAL_DEEP_DIVE.md`
 3. `RELEASE_NOTES.md`
@@ -36,6 +55,8 @@ Before any tag is struck, these seven files MUST be in perfect agreement with th
 5. `USE_CASES.md`
 6. `VDE_ANALYSIS.md`
 7. `PROJECT_STATUS.md`
+8. `SOVEREIGN_CHARTER.md`
+9. `STDLIB.md`
 
 ## 4. The Sovereign Branching Strategy
 
@@ -72,8 +93,11 @@ The Forge is currently advancing through Phase 29:
 - **Cluster Expansion**: Formally introduced MEAN and LAMP tech stack clusters with coordinated hydration scripts and inter-VM awareness.
 - **State Integrity**: Codified `VDE_DOCKER_STATE_DIR` in `lib/vde-constants` to ensure deterministic cluster and container state management.
 
+- **Phase 31 (DNS Discovery & Bridge)**: [CERTIFIED] Implemented high-fidelity Spoke-to-Spoke and Hub-to-Spoke resolution with BDD verification.
+- **Phase 32 (Forge Intelligence)**: [PLANNED] Implementation of Self-Augmenting Sentinel and automated documentation synchronization.
+
 ---
-Version: 1.4.1
+Version: 1.5.0
 **Status**: HARDENED
 **Reference**: RESOL’NARE 1.4.1
 ---

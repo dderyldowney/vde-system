@@ -1,0 +1,73 @@
+#!/usr/bin/env zsh
+# @shared-law (Forge Component)
+set -e
+#===============================================================================
+# vde-exec - Execute a command in a VDE container
+# Usage: vde-exec <vm_name> <command> [args...]
+#===============================================================================
+
+# Determine VDE root directory
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
+
+# Source core libraries
+[[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-naming" ]] && source "${VDE_ROOT_DIR}/lib/vde-naming" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-pulse.zsh" ]] && source "${VDE_ROOT_DIR}/lib/vde-pulse.zsh" &>/dev/null
+
+# Check arguments
+USER_OVERRIDE=""
+while [[ ${#} -gt 0 ]] ; do
+    case "${1}" in
+        -u|--user)
+            USER_OVERRIDE="${2}"
+            shift 2
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [[ -z "${1}" ]] ; then
+    echo "Usage: vde-exec [-u user] <vm_name> <command> [args...]"
+    exit ${VDE_ERR_INVALID_INPUT:-2}
+fi
+
+VM_NAME="${1}"
+shift
+
+# Identity Pulse check: Ensure the SSH agent bridge is active
+if ! vde_identity_pulse "${VM_NAME}"; then
+    exit ${VDE_ERR_GENERAL:-1}
+fi
+
+# Get container name
+CONTAINER_NAME=$(vde_get_container_name "${VM_NAME}")
+
+# Use -i always, -t only if attached to a terminal
+DOCKER_OPTS="-i"
+[[ -t 0 ]] && DOCKER_OPTS="${DOCKER_OPTS} -t"
+
+# Use specified user or default to devuser
+if [[ -n "${USER_OVERRIDE}" ]] ; then
+    DOCKER_OPTS="${DOCKER_OPTS} -u ${USER_OVERRIDE}"
+else
+    # Default to devuser for VDE containers
+    # Official images might not have devuser, but we use vde-base
+    DOCKER_OPTS="${DOCKER_OPTS} -u devuser"
+fi
+
+# Execute the command
+# We use docker exec directly with arguments to avoid shell injection
+# If we need the user environment, we use zsh -c but pass the command as a separate argument
+# to the remote zsh to ensure it's not parsed by the container's shell entry point.
+# We pass CONTAINER_NAME as $0 to zsh -c so that $@ contains the full command.
+exec docker exec ${=DOCKER_OPTS} "${CONTAINER_NAME}" \
+    zsh -c "source ~devuser/.zshenv 2>/dev/null; exec \"\$@\"" "${CONTAINER_NAME}" "${@}"

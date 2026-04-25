@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE Templates Library
 # Template rendering and VM creation from templates
 # Source this library with: source ./lib/vde-templates
@@ -14,7 +15,11 @@ fi
 _VDE_TEMPLATES_LOADED=1
 
 # Dependencies
-[[ -z "${VDE_ROOT_DIR}" ]] && VDE_ROOT_DIR="${0:a:h:h}"
+if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
+    # Reliable ZSH-native path detection for sourced scripts
+    local _vde_templates_source="${(%):-%N}"
+    VDE_ROOT_DIR="$(cd "$(dirname "${_vde_templates_source}")/.." && pwd)"
+fi
 [[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants"
 [[ -f "${VDE_ROOT_DIR}/lib/vde-log" ]] && source "${VDE_ROOT_DIR}/lib/vde-log"
 
@@ -43,9 +48,9 @@ render_template() {
 # render_language_template NAME SSH_PORT INSTALL_CMD
 # Render docker-compose.yml for language VM
 render_language_template() {
-    local name="${1}" ssh_port="${2}" install_cmd="${3:-}"
+    local name="${1}" ssh_port="${2}" custom_cmd="${3:-}"
     render_template "${TEMPLATES_DIR}/compose-language.yml" \
-        NAME "${name}" SSH_PORT "${ssh_port}" INSTALL_CMD "${install_cmd}"
+        NAME "${name}" SSH_PORT "${ssh_port}" CUSTOM_CMD "${custom_cmd}"
 }
 
 # render_service_template NAME SSH_PORT SERVICE_PORTS INSTALL_CMD
@@ -61,7 +66,7 @@ render_service_template() {
 
     local content
     content=$(render_template "${template_file}" \
-        NAME "${name}" SSH_PORT "${ssh_port}" SERVICE_PORTS "${service_ports}" INSTALL_CMD "${install_cmd}")
+        NAME "${name}" SSH_PORT "${ssh_port}" SERVICE_PORTS "${service_ports}" CUSTOM_CMD "${custom_cmd}")
 
     # Handle multiple service ports if present
     if [[ -n "${service_ports}" ]] && [[ "${service_ports}" != "null" ]]; then
@@ -95,9 +100,10 @@ render_ssh_entry() {
     local host
     host="$(vde_get_ssh_host "${vm_name}")"
 
+    # Use '~' for paths to avoid absolute path leaks in the audit
     render_template "${TEMPLATES_DIR}/ssh-config.tmpl" \
         SSH_HOST "${host}" SSH_PORT "${port}" \
-        IDENTITY_FILE "${VDE_SSH_IDENTITY:-${HOME}/.ssh/vde/vde_student}" \
-        KNOWN_HOSTS_FILE "${VDE_SSH_KNOWN_HOSTS:-${HOME}/.ssh/vde/known_hosts}" \
+        IDENTITY_FILE "~/.ssh/vde/vde_student" \
+        KNOWN_HOSTS_FILE "~/.ssh/vde/known_hosts" \
         COMMENT "VDE VM: ${vm_name}"
 }

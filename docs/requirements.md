@@ -1,4 +1,5 @@
 # Requirements
+<!-- @shared-law (Sovereign Law) -->
 
 This document outlines the system requirements for running the VDE (Virtual Development Environment).
 

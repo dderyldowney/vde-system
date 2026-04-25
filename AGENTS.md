@@ -1,3 +1,5 @@
+# AGENTS
+<!-- @shared-law (Forge Component) -->
 # VDE Universal Agent Protocol (UAP)
 
 This document defines the **MANDATORY** development lifecycle and behavioral constraints for **ALL** AI agents (Gemini CLI and any sub-agents) interacting with the VDE workspace.

@@ -1,15 +1,19 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "@armor": "(Engine Core)",
   "$id": "https://vde.local/schemas/vm-types.schema.json",
   "title": "VDE VM Type Configuration",
   "description": "Schema for VDE VM type static configuration. Defines VM types with SSH ports for Docker host access and service ports for infrastructure VMs.",
   "type": "object",
   "required": ["version", "vms"],
   "properties": {
+    "@armor": {
+      "type": "string",
+      "description": "Architectural lineage tag"
+    },
     "version": {
       "type": "string",
       "description": "Configuration schema version",
-      "pattern": "^[0-9]+\\.[0-9]+$"
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+(-sp[0-9]+)?)?$"
     },
     "description": {
       "type": "string",

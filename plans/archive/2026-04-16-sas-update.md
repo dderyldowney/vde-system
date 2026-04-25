@@ -1,4 +1,5 @@
 # Plan: Sovereign Artifact Set Update and 1.4.0 Release
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 To deeply integrate the new Creed-frame narrative (Mandalorian and Forge Mythos) into the six members of the Sovereign Artifact Set (SAS). Following this, submit the changes as a PR, merge to `develop`, and prepare for the 1.4.0 tag and GitHub Release.

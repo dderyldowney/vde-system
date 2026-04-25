@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE Naming Conventions Library
 # Enforces consistent naming for VMs and validates naming patterns
 # Source this library with: source ./lib/vde-naming
@@ -7,11 +8,10 @@
 #   Directories (configs/docker/): <name> (e.g., python, postgres)
 #   Containers & SSH Aliases: vde-<name> (e.g., vde-python, vde-postgres)
 #
-# Shell Compatibility: POSIX-compliant (sh, bash, zsh)
-
+# Shell Compatibility: ZSH-exclusive (ZSH 5.0+)
 
 # ZSH-native logic demonstration (UAP Mandate 1)
-local _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 if [[ "${_VDE_NAMING_LOADED:-}" = "1" ]] ; then
     return 0 2>/dev/null || exit 0
@@ -19,37 +19,37 @@ fi
 _VDE_NAMING_LOADED=1
 
 # Patterns
-VDE_NAME_PATTERN='^[a-z0-9-]+$'
+VDE_NAME_PATTERN='[a-z0-9-]# ' # ZSH extended glob pattern
 
 # vde_validate_name - Validate a VM name
 vde_validate_name() {
     local name="${1}"
-    
+
     if [[ -z "${name}" ]] ; then
         echo "VM name cannot be empty"
         return ${VDE_ERR_GENERAL}
     fi
-    
+
     # Allow names with or without vde- prefix for validation
     local base_name="${name#vde-}"
-    
-    # HARDENING: Use ZSH native matching to strictly enforce pattern and block newlines
-    if [[ ! "${base_name}" =~ ^[a-z0-9-]+$ ]]; then
+
+    # HARDENING: Ensure no invalid characters exist (lowercase alphanumeric + dash only)
+    if [[ "${base_name}" == *[^a-z0-9-]* ]]; then
         echo "VM name must be lowercase alphanumeric (a-z, 0-9) and can include dashes"
         return ${VDE_ERR_GENERAL}
     fi
-    
+
     return 0
 }
 
 # vde_validate_name_or_fail - Validate and exit on failure
 vde_validate_name_or_fail() {
     local name="${1}"
-    
+
     if ! vde_validate_name "${name}"; then
         local msg
         msg=$(vde_validate_name "${name}")
-        log_error "${msg}"
+        vde_log_error "${msg}"
         exit ${VDE_ERR_INVALID_INPUT}
     fi
 }
@@ -58,8 +58,7 @@ vde_validate_name_or_fail() {
 # This is used for directory paths and metadata lookups.
 # SECURITY: Strictly enforces alphanumeric + dash to prevent path traversal.
 vde_normalize_name() {
-    local name="${1}"
-    name=$(echo "${name}" | tr '[:upper:]' '[:lower:]')
+    local name="${(L)1}"
     name="${name#vde-}"
     # Strip everything except lowercase a-z, 0-9, and -
     echo "${name//[^a-z0-9-]/}"
@@ -69,7 +68,7 @@ vde_normalize_name() {
 vde_get_container_name() {
     local vm_name="${1}"
     # Ensure it starts with vde-
-    if [[ ! "${vm_name}" =~ ^vde- ]] ; then
+    if [[ "${vm_name}" != vde-* ]] ; then
         echo "vde-${vm_name}"
     else
         echo "${vm_name}"
@@ -84,46 +83,4 @@ vde_get_ssh_host() {
 # vde_get_hostname - Get the internal hostname (same as container name)
 vde_get_hostname() {
     vde_get_container_name "${1}"
-}
-
-# vde_detect_vm_type_from_name - Detect VM type from name
-vde_detect_vm_type_from_name() {
-    local name="${1}"
-    local base_name="${name#vde-}"
-    
-    # Try looking it up in known VM types
-    if [[ -n "${VM_TYPE[${base_name}]:-}" ]] ; then
-        echo "${VM_TYPE[${base_name}]}"
-        return 0
-    fi
-
-    # Fallback to common patterns
-    case "${base_name}" in
-        python|rust|js|go|ruby|c|cpp|asm|java|kotlin|swift|php|scala|r|lua|flutter|elixir|haskell)
-            echo "lang"
-            ;;
-        postgres|redis|mongodb|nginx|couchdb|mysql|rabbitmq)
-            echo "service"
-            ;;
-        *)
-            echo "lang"
-            ;;
-    esac
-}
-
-# vde_format_name_help - Show naming help
-vde_format_name_help() {
-    cat <<EOF
-VM Naming Conventions:
-
-Config Directories:
-  - Format: <name> (e.g., configs/docker/python)
-
-Containers & SSH Access:
-  - Format: vde-<name> (e.g., vde-python, vde-postgres)
-
-Rules:
-  - Names must be lowercase alphanumeric with dashes
-  - Use the vde- prefix for all CLI and SSH interactions
-EOF
 }

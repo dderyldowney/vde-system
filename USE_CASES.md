@@ -1,6 +1,7 @@
 # VDE Professional Evaluation: Use Case Alignment
+<!-- @shared-law (Forge Component) -->
 
-**Baseline**: 1.4.1 (Sovereign)
+**Baseline**: 1.5.0 (Sovereign)
 **Status**: CERTIFIED
 **Auditor**: Mandalorian Armorer-Architect (Agent)
 
@@ -44,7 +45,7 @@ The "Unyielding Tetrad" (Zsh, Git, Docker, SSH) forms a foundation that is remar
 ### 5. Identified Fractures (Points of Refinement)
 
 1.  **Orchestration Complexity:** The reliance on pure ZSH for complex JSON parsing (without `jq`) is a noble but difficult path. While it satisfies the "Scavenger’s Ban," it increases the maintenance burden of the core library.
-2.  **Documentation Density:** The "Sovereign Artifact Set" is comprehensive but dispersed. A new hire must read four major documents to understand the current state.
+2.  **Documentation Density:** The "Sovereign Artifact Set" is comprehensive but dispersed. A new hire must read several major documents to understand the current state.
 3.  **The "Pink Step" Debt:** As recorded in memory, there are still placeholder steps in the test suite. A Sovereign Baseline is only as strong as its weakest test.
 
 ---
@@ -56,6 +57,6 @@ The "Unyielding Tetrad" (Zsh, Git, Docker, SSH) forms a foundation that is remar
 *   **For Students:** Implement a **"Path of the Foundling"** onboarding script that introduces the rituals one by one.
 *   **For New Hires:** Maintain the **Rule Spine** without compromise. The friction they feel is simply the feeling of quality being forged.
 
-**THE VERDICT: 1.4.0 IS GREEN. THE FORGE IS STEADY.**
+**THE VERDICT: 1.4.1 IS GREEN. THE FORGE IS STEADY.**
 
 This is the Way.

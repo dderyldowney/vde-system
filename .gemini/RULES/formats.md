@@ -1,4 +1,5 @@
 # REQUIRED OUTPUT FORMATS
+<!-- @forge (Governance Sentinel) -->
 ## Git Commit Format
 ```zsh
 git commit -m "<type>: <description>

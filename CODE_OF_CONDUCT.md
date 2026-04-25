@@ -1,3 +1,5 @@
+# CODE OF CONDUCT
+<!-- @shared-law (Forge Component) -->
 # Contributor Covenant Code of Conduct
 
 ## Our Pledge

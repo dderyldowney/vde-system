@@ -1,4 +1,5 @@
 # REMEDIATION CHECKLIST (From SAST Recon)
+<!-- @forge (Governance Sentinel) -->
 
 ## 1. Path Traversal & File System Safety
 - [x] **lib/vde-cluster-utils**: Sanitize `name` in `vde_cluster_save` (Line 52).

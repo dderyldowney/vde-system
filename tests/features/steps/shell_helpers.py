@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# @forge (Governance Sentinel)
+# VDE ARCHITECTURAL RECORD
 """
 VDE helper functions for BDD tests.
 
@@ -42,18 +45,37 @@ def _run_vde_command(
     """Run a vde command and return the result."""
     vde_root = _get_vde_root()
     vde_script = os.path.join(vde_root, "bin", "vde")
-    cmd = ["zsh", vde_script] + args
+    
+    # Use zsh -o pipefail -ec for the Unbroken Link pattern
+    cmd = ["zsh", "-o", "pipefail", "-ec", f'"{vde_script}" "$@"', "--"] + args
+    
+    # Default to quiet mode for tests (Mandate 3)
+    # Use shell=False to bypass macOS SIP environment sanitization
+    full_env = os.environ.copy()
+    full_env["VDE_ROOT_DIR"] = vde_root
+    full_env["VDE_QUIET"] = "1"
+    full_env["VDE_TEST_MODE"] = "1"
+    
     return subprocess.run(
-        cmd, capture_output=True, text=True, timeout=timeout, check=check, cwd=vde_root
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        check=check,
+        cwd=vde_root,
+        env=full_env,
+        shell=False
     )
 
 
 def _run_vde_ps(args: List[str], timeout: int = 10) -> subprocess.CompletedProcess:
-    """Run vde ps command."""
-    vde_root = _get_vde_root()
-    vde_script = os.path.join(vde_root, "bin", "vde")
-    cmd = ["zsh", vde_script, "ps"] + args
-    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=vde_root)
+    """Run docker ps directly for clean JSON output."""
+    format_str = '{"id":"{{.ID}}","name":"{{.Names}}","image":"{{.Image}}","status":"{{.Status}}","ports":"{{.Ports}}"}'
+    cmd = ["docker", "ps", "--format", format_str]
+    # Filter out --json if passed, as we're doing it manually now
+    clean_args = [a for a in args if a != "--json"]
+    cmd.extend(clean_args)
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
 
 def vde_poll(args: List[str], timeout: int = 30, description: str = "condition") -> None:
@@ -97,30 +119,43 @@ def wait_for_container_healthy(container_name: str, timeout: int = 30) -> None:
 
 
 def execute_in_container(
-    container_name: str, command: str, timeout: int = 30, use_shell: bool = True
+    container_name: str, command: str, timeout: int = 30, use_shell: bool = True, user: str = "devuser"
 ) -> Dict[str, Any]:
     """
-    Execute a command inside a VDE container using vde exec.
-
-    Args:
-        container_name: Name of the container
-        command: Command to execute (string, will be split if use_shell=False)
-        timeout: Command timeout in seconds (default: 30)
-        use_shell: If True, run via 'sh -c' (shell interpretation).
-                   If False, run command directly (no shell).
-
-    Returns:
-        Dict with 'stdout', 'stderr', 'returncode'
+    Execute a command inside a VDE container using the vde orchestrator.
+    This ensures compliance with Rule 1 and Rule 15 while providing high-fidelity proof.
     """
+    print(f"DEBUG: execute_in_container calling _run_vde_command with {container_name} '{command}'")
     try:
+        args = ["exec"]
+        if user:
+            args.extend(["--user", user])
+            
+        args.append(container_name)
+        
         if use_shell:
-            cmd_args = ["exec", container_name, "sh", "-c", command]
+            # vde-exec already uses zsh -c internally
+            args.append(command)
         else:
-            cmd_args = ["exec", container_name] + command.split()
-        result = _run_vde_command(cmd_args, timeout=timeout, check=False)
-        return {"stdout": result.stdout, "stderr": result.stderr, "returncode": result.returncode}
+            import shlex
+            args.extend(shlex.split(command))
+            
+        result = _run_vde_command(args, timeout=timeout)
+        
+        if os.environ.get("VDE_DEBUG_TESTS") == "1":
+            print(f"DEBUG: execute_in_container args: {args}")
+            print(f"DEBUG: execute_in_container stdout: {result.stdout}")
+            print(f"DEBUG: execute_in_container stderr: {result.stderr}")
+            
+        # Return a result that step_command_succeed can handle
+        from vm_common import CommandResult
+        return CommandResult(result.stdout, result.stderr, result.returncode, args=args)
     except subprocess.TimeoutExpired as e:
-        return {"stdout": "", "stderr": str(e), "returncode": -1}
+        from vm_common import CommandResult
+        return CommandResult("", str(e), -1)
+    except Exception as e:
+        from vm_common import CommandResult
+        return CommandResult("", str(e), 1)
 
 
 def verify_command_output(
@@ -151,18 +186,23 @@ def get_container_env_var(container_name: str, var_name: str) -> Optional[str]:
 
 
 def verify_container_running(container_name: str) -> Dict[str, str]:
-    """Verify that a container is running using `vde ps`."""
+    """Verify that a container is running using direct docker ps."""
     try:
-        result = _run_vde_ps(["--json", "--filter", f"name={container_name}"])
+        # Use name exact match to avoid partial matches (e.g., vde-python-worker matching vde-python)
+        result = _run_vde_ps(["--filter", f"name=^/{container_name}$"])
         if result.returncode != 0:
-            raise DockerVerificationError(f"vde ps command failed: {result.stderr}")
+            raise DockerVerificationError(f"docker ps command failed: {result.stderr}")
+        
         output = result.stdout.strip()
-        if not output or output == "[]":
+        if not output:
+             raise DockerVerificationError(f"Container '{container_name}' is not running")
+        
+        # docker ps --format with multiple results produces NDJSON
+        lines = output.splitlines()
+        if not lines:
             raise DockerVerificationError(f"Container '{container_name}' is not running")
-        containers = json.loads(output)
-        if not containers:
-            raise DockerVerificationError(f"Container '{container_name}' is not running")
-        c = containers[0]
+            
+        c = json.loads(lines[0])
         return {
             "ID": c.get("id", ""),
             "Image": c.get("image", ""),

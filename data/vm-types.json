@@ -1,213 +1,187 @@
 {
-  "version": "1.1",
+  "@armor": "(Beskar Registry DNA)",
+  "version": "1.5.0",
   "vms": {
     "language": [
         {
               "name": "vde-asm",
               "aliases": ["asm","assembler","nasm"],
               "display": "Assembler",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/asm-init.zsh",
-              "service_ports": null,
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/asm-init.zsh",
+              "service_ports": "",
               "ssh_port": 2200
             },
         {
               "name": "vde-c",
               "aliases": ["c"],
               "display": "C",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/c-init.zsh",
-              "service_ports": null,
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/c-init.zsh",
+              "service_ports": "",
               "ssh_port": 2201
             },
         {
               "name": "vde-cpp",
               "aliases": ["cpp","c++","gcc"],
               "display": "C++",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/cpp-init.zsh",
-              "service_ports": null,
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/cpp-init.zsh",
+              "service_ports": "",
               "ssh_port": 2202
             },
         {
               "name": "vde-csharp",
               "aliases": ["csharp","dotnet"],
               "display": "C#",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/csharp-init.zsh",
-              "service_ports": null,
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/csharp-init.zsh",
+              "service_ports": "",
               "ssh_port": 2203
             },
         {
               "name": "vde-displaytest",
               "aliases": ["displaytest"],
               "display": "Go Language",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/displaytest-init.zsh",
-              "service_ports": null,
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/displaytest-init.zsh",
+              "service_ports": "",
               "ssh_port": 2204
             },
         {
               "name": "vde-elixir",
               "aliases": ["elixir","ex","iex"],
               "display": "Elixir",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/elixir-init.zsh",
-              "service_ports": null,
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/elixir-init.zsh",
+              "service_ports": "",
               "ssh_port": 2205
             },
         {
               "name": "vde-flutter",
               "aliases": ["flutter","dart"],
               "display": "Flutter",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/flutter-init.zsh",
-              "service_ports": null,
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/flutter-init.zsh",
+              "service_ports": "",
               "ssh_port": 2206
             },
         {
               "name": "vde-go",
               "aliases": ["go","golang"],
               "display": "Go",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/go-init.zsh",
-              "service_ports": null,
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/go-init.zsh",
+              "service_ports": "",
               "ssh_port": 2207
             },
         {
               "name": "vde-haskell",
-              "aliases": ["haskell","ghc"],
+              "aliases": ["haskell","hs"],
               "display": "Haskell",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/haskell-init.zsh",
-              "service_ports": null,
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/haskell-init.zsh",
+              "service_ports": "",
               "ssh_port": 2208
             },
         {
               "name": "vde-java",
-              "aliases": ["java","jdk"],
+              "aliases": ["java"],
               "display": "Java",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/java-init.zsh",
-              "service_ports": null,
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/java-init.zsh",
+              "service_ports": "",
               "ssh_port": 2209
             },
         {
               "name": "vde-js",
-              "aliases": ["js","node","nodejs","npm"],
-              "display": "Node.js",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/js-init.zsh",
-              "service_ports": null,
+              "aliases": ["js","javascript","node"],
+              "display": "JavaScript",
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/js-init.zsh",
+              "service_ports": "",
               "ssh_port": 2210
             },
         {
               "name": "vde-kotlin",
-              "aliases": ["kotlin"],
+              "aliases": ["kotlin","kt"],
               "display": "Kotlin",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/kotlin-init.zsh",
-              "service_ports": null,
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/kotlin-init.zsh",
+              "service_ports": "",
               "ssh_port": 2211
-            },
-        {
-              "name": "vde-lua",
-              "aliases": ["lua"],
-              "display": "Lua",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/lua-init.zsh",
-              "service_ports": null,
-              "ssh_port": 2212
             },
         {
               "name": "vde-php",
               "aliases": ["php"],
               "display": "PHP",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/php-init.zsh",
-              "service_ports": null,
-              "ssh_port": 2213
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/php-init.zsh",
+              "service_ports": "",
+              "ssh_port": 2212
             },
         {
               "name": "vde-python",
-              "aliases": ["python","python3","py"],
+              "aliases": ["py","python3"],
               "display": "Python",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/python-init.zsh",
-              "service_ports": null,
-              "ssh_port": 2214
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/python-init.zsh",
+              "service_ports": "",
+              "ssh_port": 2213
             },
         {
               "name": "vde-ruby",
-              "aliases": ["ruby"],
+              "aliases": ["ruby","rb"],
               "display": "Ruby",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/ruby-init.zsh",
-              "service_ports": null,
-              "ssh_port": 2215
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/ruby-init.zsh",
+              "service_ports": "",
+              "ssh_port": 2214
             },
         {
               "name": "vde-rust",
-              "aliases": ["rust","rs","rustc"],
+              "aliases": ["rust","rs"],
               "display": "Rust",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/rust-init.zsh",
-              "service_ports": null,
-              "ssh_port": 2216
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/rust-init.zsh",
+              "service_ports": "",
+              "ssh_port": 2215
             },
         {
               "name": "vde-scala",
               "aliases": ["scala"],
               "display": "Scala",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/scala-init.zsh",
-              "service_ports": null,
-              "ssh_port": 2217
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/scala-init.zsh",
+              "service_ports": "",
+              "ssh_port": 2216
             },
         {
               "name": "vde-swift",
               "aliases": ["swift"],
               "display": "Swift",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/swift-init.zsh",
-              "service_ports": null,
-              "ssh_port": 2218
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/swift-init.zsh",
+              "service_ports": "",
+              "ssh_port": 2217
             },
         {
               "name": "vde-testport1",
               "aliases": ["testport1"],
               "display": "Test Port 1",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/testport1-init.zsh",
-              "service_ports": null,
-              "ssh_port": 2219
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/testport1-init.zsh",
+              "service_ports": "",
+              "ssh_port": 2218
             },
         {
               "name": "vde-testport2",
               "aliases": ["testport2"],
               "display": "Test Port 2",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/testport2-init.zsh",
-              "service_ports": null,
-              "ssh_port": 2220
-            },
-        {
-              "name": "vde-mean",
-              "aliases": ["mean"],
-              "display": "MEAN Stack (Node + MongoDB)",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/mean-init.zsh",
-              "service_ports": null,
-              "ssh_port": 2221
-            },
-        {
-              "name": "vde-lamp",
-              "aliases": ["lamp"],
-              "display": "LAMP Stack (PHP + MySQL + Nginx)",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/lamp-init.zsh",
-              "service_ports": null,
-              "ssh_port": 2222
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/testport2-init.zsh",
+              "service_ports": "",
+              "ssh_port": 2219
             }
     ],
     "service": [
@@ -215,8 +189,8 @@
               "name": "vde-couchdb",
               "aliases": ["couchdb"],
               "display": "CouchDB",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/couchdb-init.zsh",
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/couchdb-init.zsh",
               "service_ports": "5984",
               "ssh_port": 2400
             },
@@ -224,8 +198,8 @@
               "name": "vde-mongodb",
               "aliases": ["mongodb","mongo"],
               "display": "MongoDB",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/mongodb-init.zsh",
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/mongodb-init.zsh",
               "service_ports": "27017",
               "ssh_port": 2401
             },
@@ -233,8 +207,8 @@
               "name": "vde-mysql",
               "aliases": ["mysql"],
               "display": "MySQL",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/mysql-init.zsh",
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/mysql-init.zsh",
               "service_ports": "3306",
               "ssh_port": 2402
             },
@@ -242,26 +216,26 @@
               "name": "vde-nginx",
               "aliases": ["nginx"],
               "display": "Nginx",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/nginx-init.zsh",
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/nginx-init.zsh",
               "service_ports": "80,443",
               "ssh_port": 2403
             },
         {
               "name": "vde-postgres",
-              "aliases": ["postgres","postgresql","pg","database"],
+              "aliases": ["postgres","psql","postgresql"],
               "display": "PostgreSQL",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/postgres-init.zsh",
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/postgres-init.zsh",
               "service_ports": "5432",
               "ssh_port": 2404
             },
         {
               "name": "vde-rabbitmq",
-              "aliases": ["rabbitmq"],
+              "aliases": ["rabbitmq","mq"],
               "display": "RabbitMQ",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/rabbitmq-init.zsh",
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/rabbitmq-init.zsh",
               "service_ports": "5672,15672",
               "ssh_port": 2405
             },
@@ -269,17 +243,17 @@
               "name": "vde-redis",
               "aliases": ["redis"],
               "display": "Redis",
-              "pkgs": null,
-              "custom_cmd": "zsh /vde/scripts/setup/redis-init.zsh",
-              "service_ports": "6379,6380",
+              "pkgs": "",
+              "custom_cmd": "zsh ./scripts/setup/redis-init.zsh",
+              "service_ports": "6379",
               "ssh_port": 2406
             },
         {
               "name": "vde-jupyterlab",
-              "aliases": ["jupyter","lab","notebook","jupyterlab"],
-              "display": "JupyterLab Data Science Suite",
+              "aliases": ["jupyterlab","notebook"],
+              "display": "JupyterLab",
               "pkgs": "python3-pip python3-venv tini",
-              "custom_cmd": "zsh /vde/scripts/setup/jupyterlab-init.zsh",
+              "custom_cmd": "zsh ./scripts/setup/jupyterlab-init.zsh",
               "service_ports": "8888",
               "ssh_port": 2407
             }

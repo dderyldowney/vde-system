@@ -1,4 +1,6 @@
+# VDE ARCHITECTURAL RECORD
 {
+  "@forge": "(Governance Sentinel)",
   "failures": [
     {
       "id": "do-000",

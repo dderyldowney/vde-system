@@ -1,3 +1,5 @@
+# VDE ARCHITECTURAL RECORD
+# @forge (Governance Sentinel)
 ---
 name: VDE CI Pipeline
 
@@ -14,6 +16,9 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: read
+
 # Enforce zsh as the default shell for all jobs and steps
 defaults:
   run:
@@ -25,6 +30,27 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
+  # =============================================================================
+  # Job 0: Security Audit
+  # =============================================================================
+  security:
+    name: Security & Privacy Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Install dependencies
+        shell: bash
+        run: sudo apt-get update && sudo apt-get install -y zsh && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+      - name: Run VDE Security Sentinel
+        shell: zsh {0}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./bin/vde-security-audit.zsh
+
   # =============================================================================
   # Job 1: Linting
   # =============================================================================

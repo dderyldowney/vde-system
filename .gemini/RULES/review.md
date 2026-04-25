@@ -1,4 +1,5 @@
 # Code Review Protocol
+<!-- @forge (Governance Sentinel) -->
 
 When performing a review in this project, adhere to the following standards:
 
