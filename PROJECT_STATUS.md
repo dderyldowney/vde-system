@@ -1,4 +1,4 @@
-# PROJECT STATUS - VDE 1.4.1 (The Sovereign Baseline)
+# PROJECT STATUS - VDE 1.5.0 (The Sovereign Baseline)
 # @shared-law (Forge Component)
 
 **CURRENT STATE: 100% GREEN (THE UNIQUE SOVEREIGN BASELINE)**
@@ -9,7 +9,7 @@
 1.4.1 is hereby certified as the **Sovereign Baseline** and hardened for absolute Zsh-native purity. This version represents the absolute functional, security, and structural standard for the Forge. The **Great Purification Strike** has eradicated all known Bashisms and tagging debt.
 
 ### 1. CORE MILESTONES COMPLETED
-- [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars (1.4.1).
+- [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars (1.5.0).
 - [x] **Proof of Life Contract**: Codified and verified full lifecycle (init, create, rebuild, start, enter, stop, remove, add, uninstall).
 - [x] **The Great Purification (Stage 2)**: Eradicated 979 files of illegal locals, Bash-style regex (=~), and forbidden exports. 100% Mandate C compliance.
 - [x] **Mandate 24 Enforcement**: 100% of files (979) tagged with architectural domains (@armor, @forge, @shared-law).

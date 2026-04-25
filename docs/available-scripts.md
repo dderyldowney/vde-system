@@ -1,5 +1,5 @@
 # Available Scripts
-<!-- @shared-law (Sovereign Law) -->
+# @shared-law (Sovereign Law)
 
 Overview of all scripts included with VDE.
 
@@ -51,6 +51,8 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution (1.
 | `vde matrix-rebuild` | Comprehensive non-cached re-forging of the absolute Spoke matrix. | `vde matrix-rebuild` |
 | `vde-enforce-uap.zsh` | **The Rule Spine**: Enforce Universal Agent Protocol compliance. | `bin/vde-enforce-uap.zsh` |
 | `vde-spine-check.zsh` | **The Tetrad Check**: Verify Zsh, Git, Docker, and SSH pillars. | `bin/vde-spine-check.zsh` |
+| `vde-gospel-audit.zsh` | **The Gospel Auditor**: Verify structural integrity of the Sovereign Artifact Set. | `bin/vde-gospel-audit.zsh` |
+| `vde-heal-docs.zsh` | **The Self-Healer**: Autonomously synchronize Gospel documentation with the physical Forge. | `bin/vde-heal-docs.zsh` |
 
 ---
 
@@ -75,6 +77,21 @@ These scripts provide specialized maintenance, automation, and development suppo
 | `vde-rebuild-cache` | Force a re-smelt of the internal VM cache. |
 | `vde-sync-version` | Synchronize versioning across the entire Forge. |
 | `nuke-vde` | **The Great Quench**: Safe removal of all VDE artifacts. |
+| `add-vm-type` | Low-level script to register a new VM type in the Beskar Registry. |
+| `list-vms` | Low-level script to audit registered VM types. |
+| `uninstall-vm-type` | Low-level script to permanently remove a VM type. |
+| `ssh-setup` | Orchestrate local SSH key generation and configuration. |
+| `ssh-agent-setup` | Secure initialization of the SSH agent for the Forge. |
+| `ssh-sync` | Synchronize SSH public keys to the Docker build context. |
+| `ssh-vm` | Primary bridge logic for connecting to Spoke SSH servers. |
+| `vde-check-tetrad.zsh` | Fast technical gate for verifying core dependencies. |
+| `vde-security-audit.zsh` | Execute deep security and privacy audits across the Forge. |
+| `vde-matrix-audit.zsh` | Logic for exhaustive verification of the Spoke matrix. |
+| `vde-matrix-rebuild.zsh` | Logic for comprehensive re-forging of all Spoke images. |
+| `demo-schema-updates.zsh` | Ritual to demonstrate and verify registry schema evolution. |
+| `generate_video` | Generate procedural video content for Forge documentation. |
+| `remediate-installation-ambiguity.zsh` | Patch script to resolve installation path drift. |
+| `remediate-phase24-sleep.zsh` | Tactical remediation for forbidden sleep calls. |
 
 ---
 
@@ -98,32 +115,30 @@ VDE_ROOT/
 │   ├── pre-commit              # The Pre-Strike Sentinel (Purity Gate)
 │   └── ...                     # Tracked Git hooks
 ├── lib/
-│   ├── vde-core                # Core Versioning & Pathing
-│   ├── vde-ssh                 # The Sovereign Handshake (SSH Bridge)
-│   ├── vde-lock                # FIFO Lock-Queue Model
-│   ├── vde-errors              # Deterministic Error Translation
-│   ├── vm-common               # Registry & Registry Operations
-│   └── ...                     # Shared Zsh modules
-├── data/
-│   ├── vm-types.conf           # The Raw Beskar (Source)
-│   └── vm-types.json           # The Pure Beskar (Registry)
-├── scripts/
-│   └── setup/                  # USP Hydration Rituals (-init.zsh)
-└── templates/                  # Compose & Config Blueprints
 ```
 
 ---
 
-## Making Scripts Executable
+## Undocumented Scripts (Pending Classification)
 
-The Rule Spine mandates that all scripts must be Zsh-compliant and executable. VDE enforces this automatically during `init`, but you can strike them manually if needed:
-
-```zsh
-# Inside VDE_ROOT
-chmod +x bin/*
-chmod +x scripts/setup/*.zsh
-```
-
----
-
-[← Back to README](../README.md)
+| Script | Purpose |
+|--------|---------|
+| `migrate-configs-to-categories.zsh` | Automatically discovered - documentation pending. |
+| `vde-cluster` | Automatically discovered - documentation pending. |
+| `vde-dns-check.zsh` | Automatically discovered - documentation pending. |
+| `vde-exec` | Automatically discovered - documentation pending. |
+| `vde-health` | Automatically discovered - documentation pending. |
+| `vde-images` | Automatically discovered - documentation pending. |
+| `vde-info` | Automatically discovered - documentation pending. |
+| `vde-init` | Automatically discovered - documentation pending. |
+| `vde-inspect` | Automatically discovered - documentation pending. |
+| `vde-logs` | Automatically discovered - documentation pending. |
+| `vde-networks` | Automatically discovered - documentation pending. |
+| `vde-path-of-the-foundling` | Automatically discovered - documentation pending. |
+| `vde-port` | Automatically discovered - documentation pending. |
+| `vde-ps` | Automatically discovered - documentation pending. |
+| `vde-rebuild` | Automatically discovered - documentation pending. |
+| `vde-stats` | Automatically discovered - documentation pending. |
+| `vde-vision` | Automatically discovered - documentation pending. |
+| `vde-demo-intelligence.zsh` | Automatically discovered - documentation pending. |
+| `vde-armor-heal.zsh` | Automatically discovered - documentation pending. |

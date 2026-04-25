@@ -1,5 +1,5 @@
 # SOVEREIGN CHARTER
-<!-- @shared-law (Sovereign Law) -->
+# @shared-law (Sovereign Law)
 # VDE Sovereign Charter: The Law of the Two Projects
 
 This Charter defines the dual-mission architecture of the VDE. It is the foundational covenant that ensures the absolute integrity of the product and its governed evolution.
@@ -76,7 +76,8 @@ The relationship is hierarchical: **The Forge builds the Armor.**
 
 1.  **The Foundation Link**: The Forge cannot be lit without the Armor. The Heavy Gate (P2) ALWAYS trips the Technical Gate (P1) first.
 2.  **The Shielded Product**: During development, we use the Forge (AI agents, `gh`, CI/CD) to modify the codebase. However, the resulting code (The Armor) is meticulously decoupled so that it remains purely driven by the Tetrad.
-3.  **The Decision Rule (Test of the Two Fires)**: Before a strike acts, classify the strike:
+3.  **The Forge Restriction (Core Tenet)**: The Forge (AI-Agentic Intelligence, GitHub automation, and Governance auditing) burns exclusively for the Armorer-Architect during the development strike. Once the Armor is forged and delivered to the Foundling, the Forge is quenched. The Forge SHALL NOT be running, available, or accessible during the student's primary runtime. The Armor must remain 100% autonomous, deterministic, and AI-blind.
+4.  **The Decision Rule (Test of the Two Fires)**: Before a strike acts, classify the strike:
     - **Armor Strike (@armor)**: Satisfies a physical runtime requirement for the specific VDE product (Naked Machine Audit).
     - **Forge Strike (@forge)**: Satisfies a universal requirement for governed development, "Any Thing" automation, or AI discipline (Governance Guard Audit).
     - **Shared-Law Strike (@shared-law)**: Modifies the foundational bridge or pillars used by both (Symbiotic Link Audit).
