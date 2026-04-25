@@ -1,7 +1,7 @@
 # Directory Structure
 <!-- @shared-law (Sovereign Law) -->
 
-The complete directory layout of a VDE installation.
+The complete directory layout of the **Sovereign Baseline (1.4.1)** installation.
 
 [← Back to README](../README.md)
 
@@ -10,124 +10,69 @@ The complete directory layout of a VDE installation.
 ## Root Structure
 
 ```
-$HOME/dev/
-├── backup/
-│   └── ssh/                    # SSH config backups
-├── configs/
-│   └── docker/
-│       ├── vde-base.Dockerfile # Base image for all VMs
-│       ├── python/             # Per-VM configs (auto-created)
-│       │   └── docker-compose.yml
-│       ├── rust/
-│       ├── js/
-│       └── ...
-├── data/                       # Persistent data for services
-│   ├── postgres/
-│   ├── mongodb/
-│   └── redis/
-├── docs/                       # Documentation
-│   ├── requirements.md
-│   ├── quick-start.md
-│   ├── command-reference.md
-│   └── ...
-├── env-files/                  # Environment variables per VM
-│   ├── python.env
-│   ├── rust.env
-│   └── ...
-├── logs/                       # Logs per VM
-│   ├── python/
-│   ├── rust/
-│   └── ...
-├── projects/                   # Project source code
-│   ├── python/
-│   ├── rust/
-│   ├── js/
-│   └── ...
-├── public-ssh-keys/            # SSH public keys for containers
-├── bin/
-│   ├── lib/
-│   │   ├── vm-common           # Shared library
-│   │   ├── vde-commands        # Command wrappers
-│   │   └── vde-parser          # Natural language parser
-│   ├── templates/              # Docker compose templates
-│   │   ├── compose-language.yml
-│   │   ├── compose-service.yml
-│   │   └── ssh-entry.txt
-│   ├── data/
-│   │   └── vm-types.conf       # VM type definitions
-│   ├── list-vms
-│   ├── create-virtual-for
-│   ├── start-virtual
-│   ├── shutdown-virtual
-│   ├── build-and-start
-│   └── add-vm-type
-├── GEMINI.md
-└── README.md
+VDE_ROOT/
+├── .cache/             # Persistent associative array caches and port registry
+├── .docker-state/      # Real-time container state archives for status tracking
+├── .gemini/            # Agent instructions, commands, and strike plans
+├── .gemini_security/   # Security remediation plans and vulnerability audits
+├── .git/               # The Chronicler's archive (Git repository)
+├── .locks/             # FIFO ticket-based concurrency locks (global and per-VM)
+├── .test-tmp/          # Ephemeral workspace for BDD test execution
+├── .tmp/               # General system-level temporary storage
+├── backup/             # Automated backups of SSH keys and system states
+├── bin/                # Unified CLI orchestrator and binary rituals
+├── configs/            # Docker Compose and service-specific configurations
+├── data/               # Beskar Registry (vm-types) and service persistence
+├── docs/               # The Gospel of the Forge (Sovereign Artifact Set)
+├── env-files/          # Per-Spoke environment variables and DNS aliases
+├── githooks/           # Pre-strike sentinels and lifecycle gates
+├── lib/                # Standard Library (stdlib) Zsh modules
+├── logs/               # Per-Spoke application logs and audit trails
+├── plans/              # Implementation plans, task logs, and staging artifacts
+├── projects/           # Foundling workspace (Source code mounts for language VMs)
+├── public-ssh-keys/    # SSH public keys for authorized container injection
+├── scripts/            # Hydration rituals (setup) and Spoke ignition logic
+├── templates/          # Docker Compose and SSH configuration blueprints
+├── tests/              # BDD Feature specifications and empirical proofs
+├── MEMORY.md           # Sovereign session record and mission history
+└── README.md           # Entry point and high-level mission overview
 ```
 
 ---
 
 ## Key Directories Explained
 
-### `configs/docker/`
+### `.locks/`
+VDE uses a deterministic FIFO locking model to manage concurrency.
+- `global-config.lock`: Serializes modifications to the Beskar Registry.
+- `vms/`: Per-Spoke locks for parallel builds and mass ignitions.
+- `ports/`: Atomic reservations for SSH and service ports.
 
-Contains Docker Compose configurations for each VM. Auto-generated when you create a VM.
-
-**Base Image:**
-- `vde-base.Dockerfile` - The base image all VMs build from
-
-**Per-VM Configs:**
-- `python/docker-compose.yml` - Python container config
-- `postgres/docker-compose.yml` - PostgreSQL container config
-
-### `projects/`
-
-Source code for language VMs. Each language VM has its own subdirectory that's mounted into the container at `/home/devuser/workspace`.
-
-```
-projects/python/my-api/    # Mounted to vde-python:/home/devuser/workspace
-projects/rust/web-service/ # Mounted to vde-rust:/home/devuser/workspace
-```
-
-### `data/`
-
-Persistent data for service VMs (databases, caches, etc.).
-
-```
-data/postgres/    # PostgreSQL data files
-data/redis/       # Redis persistence files
-```
-
-### `env-files/`
-
-Environment variables for each VM. These are sourced by Docker Compose when starting containers.
-
-```zsh
-# python.env example
-SSH_PORT=2213
-PYTHON_VERSION=3.11
-```
-
-### `logs/`
-
-Application logs for each VM.
-
-```
-logs/python/    # Python app logs
-logs/nginx/     # Nginx access and error logs
-```
+### `.docker-state/`
+Contains JSON archives reflecting the real-time status of VDE containers. This directory ensures that `vde status` and `vde vision` remain accurate without polling the Docker daemon excessively.
 
 ### `bin/`
+The unified command surface. **Mandate 10** requires all operations to flow through `bin/vde`.
+- `vde`: The canonical command router (The Way).
+- `vde-enforce-uap.zsh`: The Rule Spine sentinel (Governance).
+- `vde-init`: The Initialization Ritual logic.
+- `vde-path-of-the-foundling`: Interactive student onboarding.
 
-All management scripts and libraries.
+### `lib/` (Standard Library)
+Modular Zsh 5.0+ libraries following the **ZSH ONLY** mandate.
+- `vm-common`: High-level Spoke orchestration.
+- `vde-core`: Pathing, versioning, and deterministic execution.
+- `vde-ssh`: The Sovereign Bridge (SSH management).
+- `vde-docker`: Container lifecycle management.
 
-| Component | Purpose |
-|-----------|---------|
-| `lib/vm-common` | Core VM management functions |
-| `lib/vde-commands` | Command wrapper functions |
-| `lib/vde-parser` | Natural language parser |
-| `templates/` | Docker Compose templates |
-| `data/vm-types.conf` | VM type definitions |
+### `projects/`
+The primary workspace for language Spokes. Each subdirectory is mounted as a volume into the corresponding container at `/home/devuser/workspace`.
+
+### `data/`
+Persistent storage for service Spokes (e.g., PostgreSQL databases, Redis dumps) and the authoritative **Beskar Registry** (`vm-types.json`).
+
+### `env-files/`
+Configuration payloads sourced by Docker Compose. These files contain the **Phase 31 DNS aliases** and Spoke-specific metadata.
 
 ---
 

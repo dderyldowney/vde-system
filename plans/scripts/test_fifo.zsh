@@ -1,21 +1,31 @@
 #!/usr/bin/env zsh
-# @armor (Engine Core)
-VDE_ROOT="${VDE_ROOT:-$(cd "$(dirname "$0:A")/../.." && pwd)}"
-source "$VDE_ROOT/lib/vm-common"
-source "$VDE_ROOT/lib/vde-core"
-source "$VDE_ROOT/lib/vm-lock"
+# @forge (Testing)
+# Purified: 2026-04-24
+#===============================================================================
+
+# Establish context
+if [[ -z "${VDE_ROOT_DIR}" ]]; then
+    VDE_ROOT_DIR="${0:a:h:h:h}"
+fi
+export VDE_ROOT_DIR
+
+source "${VDE_ROOT_DIR}/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vde-core"
+source "${VDE_ROOT_DIR}/lib/vm-lock"
 
 LOCK_NAME="$1"
 WAIT_TIME="$2"
 ID="$3"
 
-echo "ARRIVE:$ID:$(date +%s.%N)" >> "$VDE_ROOT/plans/scripts/fifo_test.log"
+LOG_FILE="${VDE_ROOT_DIR}/plans/scripts/fifo_test.log"
+
+echo "ARRIVE:$ID:$(date +%s.%N)" >> "${LOG_FILE}"
 if claim_lock "$LOCK_NAME"; then
-    echo "ACQUIRE:$ID:$(date +%s.%N)" >> "$VDE_ROOT/plans/scripts/fifo_test.log"
+    echo "ACQUIRE:$ID:$(date +%s.%N)" >> "${LOG_FILE}"
     # Small sleep to allow others to queue up
     zmodload zsh/zselect && zselect -t 50
     release_lock "$LOCK_NAME"
-    echo "RELEASE:$ID:$(date +%s.%N)" >> "$VDE_ROOT/plans/scripts/fifo_test.log"
+    echo "RELEASE:$ID:$(date +%s.%N)" >> "${LOG_FILE}"
 else
-    echo "FAIL:$ID:$(date +%s.%N)" >> "$VDE_ROOT/plans/scripts/fifo_test.log"
+    echo "FAIL:$ID:$(date +%s.%N)" >> "${LOG_FILE}"
 fi

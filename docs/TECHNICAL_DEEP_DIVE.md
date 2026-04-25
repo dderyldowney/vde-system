@@ -126,6 +126,13 @@ To reduce onboarding friction for new students, VDE provides an automated induct
 - **Foundling Guide**: A high-level philosophical and practical manual at `docs/FOUNDLING_GUIDE.md`.
 - **Interactive Induction**: `bin/vde-path-of-the-foundling` guides the user through their first Ignition, Spine Check, and Spoke Forge, certifying them as battle-ready without requiring deep architectural knowledge.
 
+## 12. DNS Discovery & Bridging (Phase 31)
+
+VDE implements a high-fidelity internal network resolution system to facilitate inter-VM communication and Hub-to-Spoke bridging.
+- **Dual Resolution**: Every Spoke is accessible via its canonical name (`vde-<alias>`) and its short alias (`<alias>`) within the `vde-net` bridge.
+- **Sovereign Bridge**: The `vde-host` (mapped to `host-gateway`) provides a deterministic route for Spokes to communicate back to the Hub or access host-level services.
+- **Handshake Verification**: The `vde dns-check` command provides empirical proof of cross-Spoke connectivity, ensuring the Transversal Bridge is active.
+
 ---
 **Version**: 1.4.1
 **Status**: SOVEREIGN BASELINE CERTIFIED
