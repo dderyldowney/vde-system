@@ -13,8 +13,8 @@ else
 fi
 
 # Config file paths
-PYTEST_CONFIG_JSON="${TEST_CONFIG_ROOT}/tests/pytest-config.json"
-PYTEST_SCHEMA_JSON="${TEST_CONFIG_ROOT}/tests/pytest-config.schema.json"
+typeset PYTEST_CONFIG_JSON="${TEST_CONFIG_ROOT}/tests/pytest-config.json"
+typeset PYTEST_SCHEMA_JSON="${TEST_CONFIG_ROOT}/tests/pytest-config.schema.json"
 
 # Default config values (used if JSON load fails)
 typeset -g TEST_TIMEOUT_DEFAULT=60

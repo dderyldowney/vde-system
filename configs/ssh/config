@@ -1,10 +1,9 @@
 # VDE SSH Configuration
-# @shared-law (Forge Component)
 # Sovereign Baseline: 1.4.1
 # DO NOT EDIT MANUALLY
 
 # VDE VM: vde-asm
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-asm
     HostName localhost
     Port 2200
@@ -16,7 +15,7 @@ Host vde-asm
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-c
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-c
     HostName localhost
     Port 2201
@@ -28,7 +27,7 @@ Host vde-c
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-cpp
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-cpp
     HostName localhost
     Port 2202
@@ -40,7 +39,7 @@ Host vde-cpp
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-csharp
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-csharp
     HostName localhost
     Port 2203
@@ -52,7 +51,7 @@ Host vde-csharp
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-displaytest
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-displaytest
     HostName localhost
     Port 2204
@@ -64,7 +63,7 @@ Host vde-displaytest
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-elixir
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-elixir
     HostName localhost
     Port 2205
@@ -76,7 +75,7 @@ Host vde-elixir
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-flutter
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-flutter
     HostName localhost
     Port 2206
@@ -88,7 +87,7 @@ Host vde-flutter
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-go
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-go
     HostName localhost
     Port 2207
@@ -100,7 +99,7 @@ Host vde-go
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-haskell
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-haskell
     HostName localhost
     Port 2208
@@ -112,7 +111,7 @@ Host vde-haskell
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-java
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-java
     HostName localhost
     Port 2209
@@ -124,7 +123,7 @@ Host vde-java
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-js
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-js
     HostName localhost
     Port 2210
@@ -136,7 +135,7 @@ Host vde-js
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-kotlin
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-kotlin
     HostName localhost
     Port 2211
@@ -148,7 +147,7 @@ Host vde-kotlin
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-lua
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-lua
     HostName localhost
     Port 2212
@@ -160,7 +159,7 @@ Host vde-lua
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-php
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-php
     HostName localhost
     Port 2213
@@ -172,7 +171,7 @@ Host vde-php
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-python
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-python
     HostName localhost
     Port 2214
@@ -184,7 +183,7 @@ Host vde-python
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-ruby
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-ruby
     HostName localhost
     Port 2215
@@ -196,7 +195,7 @@ Host vde-ruby
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-rust
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-rust
     HostName localhost
     Port 2216
@@ -208,7 +207,7 @@ Host vde-rust
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-scala
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-scala
     HostName localhost
     Port 2217
@@ -220,7 +219,7 @@ Host vde-scala
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-swift
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-swift
     HostName localhost
     Port 2218
@@ -232,7 +231,7 @@ Host vde-swift
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-testport1
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-testport1
     HostName localhost
     Port 2219
@@ -244,7 +243,7 @@ Host vde-testport1
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-testport2
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-testport2
     HostName localhost
     Port 2220
@@ -256,7 +255,7 @@ Host vde-testport2
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-mean
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-mean
     HostName localhost
     Port 2221
@@ -268,7 +267,7 @@ Host vde-mean
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-lamp
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-lamp
     HostName localhost
     Port 2222
@@ -280,7 +279,7 @@ Host vde-lamp
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-certified-ghost
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-certified-ghost
     HostName localhost
     Port 2297
@@ -292,7 +291,7 @@ Host vde-certified-ghost
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-dynamic-vm
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-couchdb
     HostName localhost
     Port 2400
@@ -304,7 +303,7 @@ Host vde-couchdb
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-mongodb
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-mongodb
     HostName localhost
     Port 2401
@@ -316,7 +315,7 @@ Host vde-mongodb
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-mysql
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-mysql
     HostName localhost
     Port 2402
@@ -328,7 +327,7 @@ Host vde-mysql
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-nginx
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-nginx
     HostName localhost
     Port 2403
@@ -340,7 +339,7 @@ Host vde-nginx
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-postgres
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-postgres
     HostName localhost
     Port 2404
@@ -352,7 +351,7 @@ Host vde-postgres
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-rabbitmq
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-rabbitmq
     HostName localhost
     Port 2405
@@ -364,7 +363,7 @@ Host vde-rabbitmq
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-redis
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-redis
     HostName localhost
     Port 2406
@@ -376,7 +375,7 @@ Host vde-redis
     ForwardAgent yes
     RequestTTY yes
 # VDE VM: vde-jupyterlab
-# @armor (SSH Bridge Template)
+# @shared-law (Sovereign Law)
 Host vde-jupyterlab
     HostName localhost
     Port 2407

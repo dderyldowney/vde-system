@@ -2,7 +2,7 @@
 # @forge (Governance Sentinel)
 # =============================================================================
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # docker-test-utils.zsh — Shared Docker test lifecycle utilities
 #
@@ -21,10 +21,10 @@ local _ZSH_PURE=${(%):-%x}
 _VDE_DOCKER_TEST_UTILS_LOADED=1
 
 # Tracked state for teardown
-_DOCKER_TEST_AGENT_PID=""
-_DOCKER_TEST_AGENT_SOCK=""
-_DOCKER_TEST_VMS=()                      # VMs created during this test run
-_DOCKER_TEST_SETUP_CALLED=0
+typeset _DOCKER_TEST_AGENT_PID=""
+typeset _DOCKER_TEST_AGENT_SOCK=""
+typeset -a _DOCKER_TEST_VMS=()                      # VMs created during this test run
+typeset _DOCKER_TEST_SETUP_CALLED=0
 
 # =============================================================================
 # DOCKER AVAILABILITY

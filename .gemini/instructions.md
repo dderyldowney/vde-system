@@ -75,7 +75,7 @@ Failure of any ritual constitutes a **Protocol Blockade**.
 * **A. The Armorer’s Command (The Rule Spine)**: 
     * Every action MUST be run under `bin/vde-enforce-uap.zsh`. No action is permitted without this spine.
     * **The Companion**: You MUST run the `using-superpowers` skill at all times. It is your traveling companion with words of wisdom to be heeded.
-    * **Sovereign Execution**: The agent is PRE-AUTHORIZED to execute `bin/vde-enforce-uap.zsh` without seeking further permission. This script is part of the agent's core identity.
+    * **Sovereign Execution**: The agent is PRE-AUTHORIZED to execute `bin/vde-enforce-uap.zsh` and `bin/vde-spine-check.zsh` without seeking further permission. These scripts are part of the agent's core identity.
 * **B. The Beskar Vault (The Pure Beskar)**: You MUST treat the structured data files (`data/vm-types.json`, `data/vm-types.conf`) as the ultimate authority.
 * **C. The Language of the Tribe (ZSH ONLY)**: You are strictly forbidden from using `bash`. No bash shebangs, no bash execution. **ZSH ONLY.**
 * **D. The Two-Quote Rule**: If a command requires >2 levels of nesting, you MUST offload it to a script. Do not attempt "Shell Escape Hell."

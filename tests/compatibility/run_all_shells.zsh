@@ -17,18 +17,18 @@
 
 # Get script directory
 # shellcheck disable=SC2296
-_RUNNER_SCRIPT_PATH="${(%):-%x}"
-_RUNNER_DIR="$(cd "$(dirname "${_RUNNER_SCRIPT_PATH}")" && pwd)"
-_TEST_SCRIPT="${_RUNNER_DIR}/test_shell_compat.zsh"
+typeset _RUNNER_SCRIPT_PATH="${(%):-%x}"
+typeset _RUNNER_DIR="$(cd "$(dirname "${_RUNNER_SCRIPT_PATH}")" && pwd)"
+typeset _TEST_SCRIPT="${_RUNNER_DIR}/test_shell_compat.zsh"
 
 # Shell to test
-SHELL_TO_TEST="zsh"
+typeset SHELL_TO_TEST="zsh"
 
 # Minimum version
-MIN_ZSH_VERSION="5.0"
+typeset MIN_ZSH_VERSION="5.0"
 
 # Options
-VERBOSE=0
+typeset VERBOSE=0
 
 # =============================================================================
 # Argument Parsing

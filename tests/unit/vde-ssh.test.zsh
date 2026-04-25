@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests for vde-ssh Library
 # Tests SSH key management and configuration functions
@@ -10,26 +10,26 @@ local _ZSH_PURE=${(%):-%x}
 export VDE_TEST_MODE=1
 
 # Get project root dynamically
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+typeset SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+typeset PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 export VDE_ROOT_DIR="$PROJECT_ROOT"
 
 # Test configuration
-VERBOSE=${VERBOSE:-false}
-TESTS_PASSED=0
-TESTS_FAILED=0
+typeset VERBOSE=${VERBOSE:-false}
+typeset TESTS_PASSED=0
+typeset TESTS_FAILED=0
 
 # Colors
 if [[ -t 1 ]]; then
-    GREEN='\033[0;32m'
-    RED='\033[0;31m'
-    YELLOW='\033[0;33m'
-    RESET='\033[0m'
+    typeset GREEN='\033[0;32m'
+    typeset RED='\033[0;31m'
+    typeset YELLOW='\033[0;33m'
+    typeset RESET='\033[0m'
 else
-    GREEN=''
-    RED=''
-    YELLOW=''
-    RESET=''
+    typeset GREEN=''
+    typeset RED=''
+    typeset YELLOW=''
+    typeset RESET=''
 fi
 
 test_start() {

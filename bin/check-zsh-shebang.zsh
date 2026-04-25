@@ -27,9 +27,9 @@ for file in ${(f)"$(find . -type f -name "*.zsh" -o -name "*.sh" 2>/dev/null)"};
     shebang=$(head -1 "${file}" 2>/dev/null || true)
     
     # Check if it has a shebang
-    if [[ "${shebang}" =~ ^#! ]]; then
+    if [[ "${shebang}" == \#\!* ]]; then
         # Check if it's zsh
-        if [[ "${shebang}" =~ (zsh|/bin/zsh) ]]; then
+        if [[ "${shebang}" == *(zsh|/bin/zsh)* ]]; then
             continue
         else
             echo "FAIL: ${file} uses non-zsh shebang: ${shebang}"
