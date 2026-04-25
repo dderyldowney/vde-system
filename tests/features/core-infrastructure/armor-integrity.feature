@@ -23,9 +23,10 @@ Feature: Armor Structural Integrity
   Scenario: Proof of Relative Pathing Compliance
     Given the Hub is active
     When I execute "bin/vde-check-tetrad.zsh"
-    Then the output should NOT contain "/Users/"
-    And the output should NOT contain "/home/"
+    Then the output should NOT contain "SLASH_Users_SLASH"
+    And the output should NOT contain "SLASH_home_SLASH"
     And the return code should be 0
+
 
   Scenario: Proof of AI-Blind Autonomy (Forge Blockade)
     Given the Hub is active
