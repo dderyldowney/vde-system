@@ -47,14 +47,14 @@ the server itself. Logic lives in VDE. The server is a neutral conduit.
 - **SSE / Streamable HTTP** — for remote cloud-hosted agents (claude.ai chat
   via tunnel, Gemini, etc.)
 
-Both transports supported from day one.
+Both transports are supported from day one.
 
 ### 5. Secure by Default
 - Tunnel access (ngrok or Cloudflare Tunnel) for cloud agent connectivity
 - No credentials baked into the server — auth via environment variables
 - Read-only mode flag for safe inspection without write risk
 - Filesystem scope locked to `~/VDE` by default; 
-  configurable but explicit
+  configurable via `VDE_ROOT_DIR` environment variable but explicit
 
 ---
 
@@ -113,7 +113,7 @@ Both transports supported from day one.
 ┌──────────────▼──────────────────────────────────┐
 │           Forge Bridge MCP Server                │
 │              (FastMCP — Python)                  │
-│         Running on localhost:8000                │
+│         Running on localhost:<port> (default 8000)       │
 │                                                  │
 │  ┌─────────────┐  ┌──────────┐  ┌────────────┐  │
 │  │ fs_tools    │  │git_tools │  │gospel_tools│  │
