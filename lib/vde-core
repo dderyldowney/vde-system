@@ -27,8 +27,8 @@
 # -----------------------
 # The Rule of One: Extract version from the Beskar Source (docs/VDE-SPEC.md)
 vde_get_version() {
-    # Resolve the root directory relative to the script's location if not set
-    local root="${VDE_ROOT_DIR:-$(pwd)}"
+    # Resolve the root directory relative to the current context
+    local root="${VDE_ROOT_DIR:-.}"
     local spec_file="${root}/docs/VDE-SPEC.md"
 
     if [[ -f "${spec_file}" ]]; then
@@ -59,9 +59,9 @@ _VDE_CORE_GUARD_LOADED=1
 # shellcheck disable=SC2296
 _VDE_CORE_SCRIPT_PATH="${(%):-%N}"
 
-# If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
+# If VDE_ROOT_DIR is already exported, use it. Otherwise, assume current directory.
 if [[ -z "${VDE_ROOT_DIR:-}" ]] ; then
-    VDE_ROOT_DIR="$(cd "$(dirname "${_VDE_CORE_SCRIPT_PATH}")/.." && pwd)"
+    VDE_ROOT_DIR="."
 fi
 export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 

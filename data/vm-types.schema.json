@@ -13,7 +13,7 @@
     "version": {
       "type": "string",
       "description": "Configuration schema version",
-      "pattern": "^[0-9]+\\.[0-9]+$"
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+(-sp[0-9]+)?)?$"
     },
     "description": {
       "type": "string",

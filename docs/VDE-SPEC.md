@@ -1,8 +1,8 @@
 # VDE-SPEC
-<!-- @shared-law (Sovereign Law) -->
+# @shared-law (Sovereign Law)
 # VDE-SPEC 1.4.1 (The Sovereign Evolution)
 
-**Date**: 2026-04-24
+**Date**: 2026-04-25
 **Status**: SOVEREIGN BASELINE CERTIFIED
 **Reference**: ARCHITECTURE 1.4.1
 **Identity**: The Covert

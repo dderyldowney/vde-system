@@ -6,8 +6,8 @@ set -e
 # Version: ${VDE_VERSION:-$(vde_get_version)}
 #===============================================================================
 
-# Use zsh-native absolute path detection (Rule 1)
-VDE_ROOT_DIR="${0:a:h:h}"
+# Use strictly relative pathing (Mandate)
+VDE_ROOT_DIR="."
 export VDE_ROOT_DIR
 
 # Source shared library
@@ -272,6 +272,12 @@ case ${ACTION} in
     sync-version)
         vde_run "sync-version" "${VDE_ROOT_DIR}/bin/vde-sync-version" "${input_targets[@]}"
         ;;
+    audit)
+        vde_run "audit" "${VDE_ROOT_DIR}/bin/vde-gospel-audit.zsh" "$@"
+        ;;
+    heal)
+        vde_run "heal" "${VDE_ROOT_DIR}/bin/vde-heal-docs.zsh" "$@"
+        ;;
     port)
         local vm_alias=${targets[1]}
         local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
@@ -340,6 +346,8 @@ Spoke Operations:
   logs <name>     Tail logs for a specific Spoke or cluster unit.
 
 Diagnostics & Discovery:
+  audit           Verify the structural integrity of the Sovereign Artifact Set.
+  heal            Autonomously synchronize the Gospel with the physical Forge.
   dns-check <s> <t> Verify DNS resolution between Source and Target Spokes.
   info <name>     Display detailed metadata and registry status for a Spoke.
   ps              List all active VDE containers and their statuses.
