@@ -1,13 +1,13 @@
 #!/usr/bin/env zsh
 # @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests for VDE Schema Validation Functions
 # Tests centralized JSON schema validation in vde-core
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+typeset SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+typeset PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Source dependencies
 source "$PROJECT_ROOT/lib/vde-shell-compat"
@@ -15,10 +15,10 @@ source "$PROJECT_ROOT/lib/vde-constants"
 source "$PROJECT_ROOT/lib/vde-core"
 
 # Test configuration
-VERBOSE=${VERBOSE:-false}
-TESTS_PASSED=0
-TESTS_FAILED=0
-TEST_TMP_DIR=""
+typeset VERBOSE=${VERBOSE:-false}
+typeset TESTS_PASSED=0
+typeset TESTS_FAILED=0
+typeset TEST_TMP_DIR=""
 
 # Test helpers
 test_setup() {

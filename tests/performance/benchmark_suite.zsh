@@ -2,18 +2,18 @@
 # @forge (Governance Sentinel)
 # Performance Benchmark Suite for VDE
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 
-TEST_DIR="$(cd "$(dirname "${0}")" && pwd)"
-VDE_ROOT_DIR="$(cd "${TEST_DIR}/../.." && pwd)"
+typeset TEST_DIR="$(cd "$(dirname "${0}")" && pwd)"
+typeset VDE_ROOT_DIR="$(cd "${TEST_DIR}/../.." && pwd)"
 
-TESTS_PASSED=0
-TESTS_FAILED=0
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[0;33m'
-RESET='\033[0m'
+typeset -g TESTS_PASSED=0
+typeset -g TESTS_FAILED=0
+typeset GREEN='\033[0;32m'
+typeset RED='\033[0;31m'
+typeset YELLOW='\033[0;33m'
+typeset RESET='\033[0m'
 test_start() { echo -e "${YELLOW}Benchmarking: ${1}${RESET}" }
 test_pass() { echo -e "  ${GREEN}✓ PASS: ${1}${RESET}"; ((TESTS_PASSED++)) }
 test_fail() { echo -e "  ${RED}✗ FAIL: ${1} - ${2}${RESET}"; ((TESTS_FAILED++)) }

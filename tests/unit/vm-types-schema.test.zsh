@@ -1,22 +1,22 @@
 #!/usr/bin/env zsh
 # @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
-local _ZSH_PURE=${(%):-%x}
+typeset _ZSH_PURE=${(%):-%x}
 
 # Unit tests for VM Types JSON Schema
 # Tests schema validation for VDE VM type configuration
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+typeset SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+typeset PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Paths
-VM_TYPES_JSON="${PROJECT_ROOT}/data/vm-types.json"
-VM_TYPES_SCHEMA="${PROJECT_ROOT}/data/vm-types.schema.json"
+typeset VM_TYPES_JSON="${PROJECT_ROOT}/data/vm-types.json"
+typeset VM_TYPES_SCHEMA="${PROJECT_ROOT}/data/vm-types.schema.json"
 
 # Test configuration
-VERBOSE=${VERBOSE:-false}
-TESTS_PASSED=0
-TESTS_FAILED=0
+typeset VERBOSE=${VERBOSE:-false}
+typeset TESTS_PASSED=0
+typeset TESTS_FAILED=0
 
 # Test helpers
 test_assert() {
