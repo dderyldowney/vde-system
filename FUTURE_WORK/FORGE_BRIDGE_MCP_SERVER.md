@@ -184,7 +184,7 @@ sub-project, or dependency. VDE does not depend on Forge Bridge.
 
 Forge Bridge depends on VDE only in the sense that VDE is its primary initial
 target filesystem. Forge Bridge is designed to be reusable against any local
-project repo with minimal configuration.
+project repo, with any agentic agent (like Gemini CLI+extension, Claude Code, Kilo, etc al.) with minimal configuration.
 
 ---
 
