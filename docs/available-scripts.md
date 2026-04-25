@@ -141,3 +141,4 @@ VDE_ROOT/
 | `vde-stats` | Automatically discovered - documentation pending. |
 | `vde-vision` | Automatically discovered - documentation pending. |
 | `vde-demo-intelligence.zsh` | Automatically discovered - documentation pending. |
+| `vde-armor-heal.zsh` | Automatically discovered - documentation pending. |

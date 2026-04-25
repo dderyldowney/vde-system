@@ -813,13 +813,37 @@ def step_ensure_running_python(context):
     # Deterministic wait for health
     wait_for_container_healthy("vde-python")
     
-    # 2. Verify Spoke is alive beyond Docker level
-    # Use -o BatchMode=yes and -q if possible (via vde enter)
-    heartbeat_res = run_vde_command("enter python 'echo BEYOND_DOCKER_HEARTBEAT'")
+    # 2. Verify Spoke is alive beyond Docker level (Retry for SSH readiness)
+    # Using deterministic polling to satisfy UAP Mandate 14
+    max_retries = 30
+    heartbeat_success = False
+    last_output = ""
 
-    # Strip UAP markers for this specific check
-    clean_stdout = heartbeat_res.stdout.replace("[SUCCESS] Technical Integrity Verified. The Armor is ready.", "").strip()
-    assert "BEYOND_DOCKER_HEARTBEAT" in clean_stdout, f"Application heartbeat failed. Out: {heartbeat_res.stdout}"
+    # Use raw SSH to bypass VDE CLI overhead for the heartbeat check
+    vm_alias = context.vm_alias
+    port_res = run_vde_command(f"port {vm_alias}")
+    vm_port = port_res.stdout.strip()
+
+    
+    for i in range(max_retries):
+        # Physical handshake: Check if SSH port is open and responding
+        import subprocess
+        res = subprocess.run(
+            ["ssh", "-p", vm_port, "-o", "ConnectTimeout=2", "-o", "BatchMode=yes", "devuser@127.0.0.1", "echo BEYOND_DOCKER_HEARTBEAT"],
+            capture_output=True, text=True
+        )
+        if "BEYOND_DOCKER_HEARTBEAT" in res.stdout:
+            heartbeat_success = True
+            break
+        last_output = res.stderr
+        # Fast jittered poll
+        import os
+        os.system("zsh -c 'zmodload zsh/zselect 2>/dev/null && zselect -t 50'")
+
+    assert heartbeat_success, f"Application heartbeat failed after {max_retries} attempts on port {vm_port}. Last Err: {last_output}"
+
+
+
 
 
 @then('the directory "{dir_path}" should be empty in the Spoke')
