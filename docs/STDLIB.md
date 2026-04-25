@@ -139,10 +139,12 @@ value=$(_assoc_get "MY_MAP" "key1")
 **Key Sections**:
 - Directory constants setup
 - Logging aliases (log_info, log_error, log_success)
-- VM type loading and caching
+- VM type loading and caching (Phase 31 Dual Resolution)
 - Docker integration (lazy loading)
 - SSH management (lazy loading)
 - Template rendering (lazy loading)
+- `resolve_vm_name()` - Resolve alias or short name to canonical vde- prefixed name
+- `vde_get_hydration_script()` - Resolve the absolute path to a Spoke's hydration ritual
 
 **Dependencies**: vde-core, vde-constants, vde-errors, vde-naming, vde-log, vde-shell-compat, vde-security, vde-path-utils, vde-progress, vm-lock
 

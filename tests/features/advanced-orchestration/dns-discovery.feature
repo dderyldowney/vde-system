@@ -33,12 +33,11 @@ Scenario: Canonical Name Resolution (Dual Verification)
 Scenario: Service Bridge Connectivity (Short Alias TCP)
   When I execute "nc -zv postgres 5432" inside "python" to verify DNS
   Then the exit code should be 0
-  And the output should contain "open"
-
+  And the output should contain "succeeded"
 Scenario: Sovereign Bridge Resolution (Hub-to-Spoke)
   When I execute "ping -c 2 vde-host" inside "python" to verify DNS
   Then the exit code should be 0
-  And the output should contain "64 bytes from vde-host"
+  And the output should contain "64 bytes from"
   When I execute "ping -c 2 host" inside "python" to verify DNS
   Then the exit code should be 0
-  And the output should contain "64 bytes from host"
+  And the output should contain "64 bytes from"

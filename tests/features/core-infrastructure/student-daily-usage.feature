@@ -15,7 +15,7 @@ Feature: Student Daily Usage
     When I execute "bin/vde start python"
     Then a container named "vde-python" should be running
     And the SSH bridge to "python" should be established
-    When I execute "bin/vde enter python --command 'python3 --version'"
+    When I execute "bin/vde enter python 'python3 --version'"
     Then the command should succeed
     And the output should contain "Python 3."
     When I execute "bin/vde stop python"
@@ -27,7 +27,7 @@ Feature: Student Daily Usage
     Then the Docker image "vde-go" should exist on the Hub
     When I execute "bin/vde start go"
     Then a container named "vde-go" should be running
-    When I execute "bin/vde enter go --command 'go version'"
+    When I execute "bin/vde enter go 'go version'"
     Then the command should succeed
     And the output should contain "go version"
     When I execute "bin/vde stop go"
