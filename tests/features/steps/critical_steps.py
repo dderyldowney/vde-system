@@ -828,7 +828,12 @@ def step_ensure_running_python(context):
         # Physical handshake: Check if SSH port is open and responding
         import subprocess
         res = subprocess.run(
-            ["ssh", "-p", vm_port, "-o", "ConnectTimeout=2", "-o", "BatchMode=yes", "devuser@127.0.0.1", "echo BEYOND_DOCKER_HEARTBEAT"],
+            ["ssh", "-p", vm_port, 
+             "-o", "ConnectTimeout=2", 
+             "-o", "BatchMode=yes", 
+             "-o", "StrictHostKeyChecking=no", 
+             "-o", "UserKnownHostsFile=/dev/null", 
+             "devuser@127.0.0.1", "echo BEYOND_DOCKER_HEARTBEAT"],
             capture_output=True, text=True
         )
         if "BEYOND_DOCKER_HEARTBEAT" in res.stdout:

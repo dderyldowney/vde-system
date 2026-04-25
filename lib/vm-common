@@ -332,7 +332,9 @@ load_vm_types() {
     if [[ "${use_cache}" -eq 0 ]]; then
         # GLOBAL CONFIGURATION LOCK: Prevent redundant re-smelting
         local global_lock="${VDE_LOCKS_DIR}/global-config.lock"
-        claim_lock "${global_lock}" || return ${VDE_ERR_LOCK}
+        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+            claim_lock "${global_lock}" || return ${VDE_ERR_LOCK}
+        fi
         
         {
             # Double-check if another process just finished smelting the cache while we waited
@@ -369,7 +371,9 @@ load_vm_types() {
                         vde_validate_json_schema "${VM_TYPES_JSON}" "${schema_file}" >/dev/null 2>&1 || {
                             log_error "VM types JSON schema validation failed"
                             # If we fail validation, we MUST release the lock and return
-                            release_lock "${global_lock}"
+                            if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+                                release_lock "${global_lock}"
+                            fi
                             return ${VDE_ERR_INVALID_DATA}
                         }
                     fi
@@ -414,7 +418,9 @@ load_vm_types() {
                     done < "${VM_TYPES_CONF}"
                 else
                     _error "No configuration source found (JSON/CONF missing)"
-                    release_lock "${global_lock}"
+                    if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+                        release_lock "${global_lock}"
+                    fi
                     return ${VDE_ERR_NOT_FOUND}
                 fi
 
@@ -533,7 +539,9 @@ load_vm_types() {
                 _info "VM types cached for faster loading"
             fi
         } always {
-            release_lock "${global_lock}"
+            if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+                release_lock "${global_lock}"
+            fi
         }
     else
         _info "VM types loaded from cache"
