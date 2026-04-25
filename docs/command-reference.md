@@ -56,6 +56,10 @@ vde init --force
 vde create python
 vde create postgres
 ```
+**Details**:
+- **Atomic Port Allocation**: Automatically reserves a unique SSH port from the dynamic range (2200-2499) and records it in the Beskar Registry.
+- **Workspace Initialization**: Creates required directories in `projects/`, `logs/`, and `.locks/vms/`.
+- **SSH Synchronization**: Appends the Spoke's identity and connection parameters to `configs/ssh/config`.
 
 ### Ignition and Quenching
 ```zsh
