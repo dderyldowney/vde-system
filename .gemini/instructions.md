@@ -118,6 +118,7 @@ Failure of any ritual constitutes a **Protocol Blockade**.
 * **R. The Clan Leader Authority (PR & Merge Gate)**:
     * The agent MAY make regular local commits on the active feature branch as needed to preserve a clear and incremental history.
     * The agent MUST obtain explicit written approval from the User (Clan Leader) before submitting, updating, or taking any action on a Pull Request, or performing any merge.
+    * **The Automated Review Mandate**: Once ANY PR, Issue, or commit has been pushed to GitHub, the agent MUST explicitly check for `sourcery-ai` comments or reviews. Sourcery-AI MUST be listened to, and the agent MUST immediately plan and execute remediations for any of its suggestions before proceeding to the Pre-Merge Halt.
     * **The Pre-Merge Halt**: When work on a branch is ready for review, the agent MUST:
         1. **Stop** all git and GitHub actions immediately.
         2. **Present** the following for the User's review:
