@@ -28,6 +28,14 @@ def step_execute_dns_check(context, command, vm_alias):
 
 @then('the output should contain either "{text1}" or "{text2}"')
 def step_output_contains_either(context, text1, text2):
-    output = getattr(context, 'command_output', "")
+    if hasattr(context, "command_output"):
+        output = context.command_output
+    elif hasattr(context, "last_result"):
+        output = context.last_result.stdout + context.last_result.stderr
+    else:
+        raise AssertionError(
+            "No command_output or last_result on context; ensure a preceding step executes a command."
+        )
+
     assert text1 in output or text2 in output, \
         f"Neither '{text1}' nor '{text2}' found in output: {output}"
