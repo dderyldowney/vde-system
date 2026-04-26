@@ -26,9 +26,12 @@ fi
 echo "[SECURITY] Scanning for Absolute Path Leaks..."
 # Purge matches for the literal pattern in this script and exclude common non-text dirs
 # Using grep -r to find absolute /Users/ paths while excluding self and known artifacts
+# We explicitly exclude .tmp.driveupload/download as they contain ephemeral artifacts with absolute paths
 typeset _leaks=$(grep -r "/Users/" . \
     --exclude-dir=.git \
     --exclude-dir=.cache \
+    --exclude-dir=.tmp.driveupload \
+    --exclude-dir=.tmp.drivedownload \
     --exclude-dir=logs \
     --exclude-dir=node_modules \
     --exclude-dir=__pycache__ \
@@ -40,7 +43,9 @@ typeset _leaks=$(grep -r "/Users/" . \
 
 if [[ ${_leaks} -gt 0 ]]; then
     echo -e "\033[0;31m[CRITICAL] Absolute Path Leaks Detected in Workspace!\033[0m"
-    grep -r "/Users/" . --exclude-dir={.git,.cache,logs,node_modules,__pycache__,SKILLS} --exclude={"*.pdf","vde-security-audit.zsh","vde-root-guard","README.md"} | head -n 5
+    grep -r "/Users/" . \
+        --exclude-dir={.git,.cache,.tmp.driveupload,.tmp.drivedownload,logs,node_modules,__pycache__,SKILLS} \
+        --exclude={"*.pdf","vde-security-audit.zsh","vde-root-guard","README.md"} | head -n 5
     exit 1
 fi
 echo "[SECURITY] Privacy Leak Audit: PASS"

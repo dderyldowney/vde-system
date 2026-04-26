@@ -296,16 +296,10 @@ if [[ "${QUIET}" == "false" ]]; then
     # Regenerate Configs
     # -----------------------
     log_info "Regenerating VDE configurations..."
-    "${BIN_DIR}/generate-all-configs" >/dev/null 2>&1
+    "${VDE_ROOT_DIR}/bin/generate-all-configs" >/dev/null 2>&1
 fi
 
 log_success "VM type '${VM_NAME}' added successfully!"
-echo ""
-echo "Next steps:"
-echo "  1. Create the VM: vde create ${VM_NAME}"
-echo "  2. Start the VM:  vde start ${VM_NAME}"
-echo ""
-essfully!"
 echo ""
 echo "Next steps:"
 echo "  1. Create the VM: vde create ${VM_NAME}"

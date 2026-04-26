@@ -17,13 +17,15 @@
 devuser with passwordless sudo, SSH key auth only, neovim/LazyVim
 
 ## Project Portability (FUNDAMENTAL)
-The project is **fully portable** - can be moved anywhere without regeneration.
+The project is **fully portable** - can be moved anywhere without regeneration. The default mandate is **Relative-Paths-Only** for host-side operations.
 
 | Component | Location | Notes |
 |-----------|----------|-------|
 | `VDE_ROOT_DIR` | Derived from `bin/vde` | Auto-updates on project move |
 | `VDE_SSH_DIR` | `$HOME/.ssh/vde` | Fixed, independent of project |
 | Cache | `.cache/` | Contains only VM metadata (no paths) |
-| Compose files | `configs/docker/*/docker-compose.yml` | Use relative `../../../` paths |
+| Compose files | `configs/docker/*/docker-compose.yml` | Use relative `../../../` paths for build contexts |
+
+**Absolute Path Exemption:** While the host-side VDE ecosystem MUST use relative paths for portability, **in-container paths** (e.g., `/vde/scripts/setup/...`, `/home/devuser/...`, `/var/lib/...`) MUST remain absolute, as the container filesystem structure is fixed and expects exact locations.
 
 **Move project:** `mv ~/VDE ~/vde-system` → works immediately, no regeneration needed.
