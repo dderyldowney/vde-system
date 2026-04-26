@@ -26,11 +26,23 @@ Host vde-c
     PasswordAuthentication no
     ForwardAgent yes
     RequestTTY yes
+# VDE VM: vde-certified-ghost
+# @shared-law (Sovereign Law)
+Host vde-certified-ghost
+    HostName localhost
+    Port 2202
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    RequestTTY yes
 # VDE VM: vde-cpp
 # @shared-law (Sovereign Law)
 Host vde-cpp
     HostName localhost
-    Port 2202
+    Port 2203
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -42,7 +54,7 @@ Host vde-cpp
 # @shared-law (Sovereign Law)
 Host vde-csharp
     HostName localhost
-    Port 2203
+    Port 2204
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -54,7 +66,7 @@ Host vde-csharp
 # @shared-law (Sovereign Law)
 Host vde-displaytest
     HostName localhost
-    Port 2204
+    Port 2205
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -66,7 +78,7 @@ Host vde-displaytest
 # @shared-law (Sovereign Law)
 Host vde-elixir
     HostName localhost
-    Port 2205
+    Port 2206
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -78,7 +90,7 @@ Host vde-elixir
 # @shared-law (Sovereign Law)
 Host vde-flutter
     HostName localhost
-    Port 2206
+    Port 2207
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -90,7 +102,7 @@ Host vde-flutter
 # @shared-law (Sovereign Law)
 Host vde-go
     HostName localhost
-    Port 2207
+    Port 2208
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -102,7 +114,7 @@ Host vde-go
 # @shared-law (Sovereign Law)
 Host vde-haskell
     HostName localhost
-    Port 2208
+    Port 2209
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -114,7 +126,7 @@ Host vde-haskell
 # @shared-law (Sovereign Law)
 Host vde-java
     HostName localhost
-    Port 2209
+    Port 2210
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -126,7 +138,7 @@ Host vde-java
 # @shared-law (Sovereign Law)
 Host vde-js
     HostName localhost
-    Port 2210
+    Port 2211
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -138,7 +150,43 @@ Host vde-js
 # @shared-law (Sovereign Law)
 Host vde-kotlin
     HostName localhost
-    Port 2211
+    Port 2212
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    RequestTTY yes
+# VDE VM: vde-lamp
+# @shared-law (Sovereign Law)
+Host vde-lamp
+    HostName localhost
+    Port 2213
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    RequestTTY yes
+# VDE VM: vde-lua
+# @shared-law (Sovereign Law)
+Host vde-lua
+    HostName localhost
+    Port 2214
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    RequestTTY yes
+# VDE VM: vde-mean
+# @shared-law (Sovereign Law)
+Host vde-mean
+    HostName localhost
+    Port 2215
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -150,7 +198,7 @@ Host vde-kotlin
 # @shared-law (Sovereign Law)
 Host vde-php
     HostName localhost
-    Port 2212
+    Port 2216
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -162,7 +210,7 @@ Host vde-php
 # @shared-law (Sovereign Law)
 Host vde-python
     HostName localhost
-    Port 2213
+    Port 2217
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -174,7 +222,7 @@ Host vde-python
 # @shared-law (Sovereign Law)
 Host vde-ruby
     HostName localhost
-    Port 2214
+    Port 2218
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -186,7 +234,7 @@ Host vde-ruby
 # @shared-law (Sovereign Law)
 Host vde-rust
     HostName localhost
-    Port 2215
+    Port 2219
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -198,7 +246,7 @@ Host vde-rust
 # @shared-law (Sovereign Law)
 Host vde-scala
     HostName localhost
-    Port 2216
+    Port 2220
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -210,7 +258,7 @@ Host vde-scala
 # @shared-law (Sovereign Law)
 Host vde-swift
     HostName localhost
-    Port 2217
+    Port 2221
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -222,7 +270,7 @@ Host vde-swift
 # @shared-law (Sovereign Law)
 Host vde-testport1
     HostName localhost
-    Port 2218
+    Port 2222
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -234,7 +282,7 @@ Host vde-testport1
 # @shared-law (Sovereign Law)
 Host vde-testport2
     HostName localhost
-    Port 2219
+    Port 2223
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -254,11 +302,23 @@ Host vde-couchdb
     PasswordAuthentication no
     ForwardAgent yes
     RequestTTY yes
+# VDE VM: vde-jupyterlab
+# @shared-law (Sovereign Law)
+Host vde-jupyterlab
+    HostName localhost
+    Port 2401
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    RequestTTY yes
 # VDE VM: vde-mongodb
 # @shared-law (Sovereign Law)
 Host vde-mongodb
     HostName localhost
-    Port 2401
+    Port 2402
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -270,7 +330,7 @@ Host vde-mongodb
 # @shared-law (Sovereign Law)
 Host vde-mysql
     HostName localhost
-    Port 2402
+    Port 2403
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -282,7 +342,7 @@ Host vde-mysql
 # @shared-law (Sovereign Law)
 Host vde-nginx
     HostName localhost
-    Port 2403
+    Port 2404
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -294,7 +354,7 @@ Host vde-nginx
 # @shared-law (Sovereign Law)
 Host vde-postgres
     HostName localhost
-    Port 2404
+    Port 2405
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -306,7 +366,7 @@ Host vde-postgres
 # @shared-law (Sovereign Law)
 Host vde-rabbitmq
     HostName localhost
-    Port 2405
+    Port 2406
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -317,18 +377,6 @@ Host vde-rabbitmq
 # VDE VM: vde-redis
 # @shared-law (Sovereign Law)
 Host vde-redis
-    HostName localhost
-    Port 2406
-    User devuser
-    IdentityFile ~/.ssh/vde/vde_student
-    UserKnownHostsFile ~/.ssh/vde/known_hosts
-    StrictHostKeyChecking no
-    PasswordAuthentication no
-    ForwardAgent yes
-    RequestTTY yes
-# VDE VM: vde-jupyterlab
-# @shared-law (Sovereign Law)
-Host vde-jupyterlab
     HostName localhost
     Port 2407
     User devuser

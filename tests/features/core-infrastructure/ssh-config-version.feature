@@ -7,5 +7,5 @@ Feature: SSH Configuration Version Alignment
   So that the Forge remains synchronized
 
   Scenario: Verify SSH Configuration Version
-    Given the Hub is synchronized to version 1.4.1
-    Then the file "configs/ssh/config" should contain "Sovereign Baseline: 1.4.1"
+    Given the Hub is synchronized to version 1.5.0
+    Then the file "configs/ssh/config" should contain "Sovereign Baseline: 1.5.0"
