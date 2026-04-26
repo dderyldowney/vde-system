@@ -142,3 +142,4 @@ VDE_ROOT/
 | `vde-vision` | Automatically discovered - documentation pending. |
 | `vde-demo-intelligence.zsh` | Automatically discovered - documentation pending. |
 | `vde-armor-heal.zsh` | Automatically discovered - documentation pending. |
+| `temp-leak-test.zsh` | Automatically discovered - documentation pending. |
