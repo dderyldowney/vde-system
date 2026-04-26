@@ -1,5 +1,5 @@
 # CODE OF CONDUCT
-<!-- @shared-law (Forge Component) -->
+<!-- @armor (Product Ethics) -->
 # Contributor Covenant Code of Conduct
 
 ## Our Pledge

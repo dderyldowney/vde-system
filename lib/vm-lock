@@ -73,14 +73,29 @@ claim_lock() {
             fi
         fi
         
-        # LOCK CONTENTION TRANSPARENCY (Phase 26)
+        # LOCK CONTENTION TRANSPARENCY & STALE LOCK BUSTER (Phase 32)
         local owner_info=""
         if [[ -f "${pid_file}" ]]; then
             local pid_data=$(cat "${pid_file}" 2>/dev/null)
             local owner_pid="${pid_data%%:*}"
             owner_info="PID ${owner_pid}"
+
+            # THE STALE LOCK BUSTER
+            if [[ -n "${owner_pid}" ]] && ! kill -0 "${owner_pid}" 2>/dev/null; then
+                vde_log_warn "Busting stale lock ${lock_file} (Owner PID ${owner_pid} is dead)" "lock"
+                rm -rf "${lock_file}" 2>/dev/null
+                continue
+            fi
         elif [[ "${oldest_ticket}" != "${ticket_id}" ]]; then
             owner_info="Queue position: waiting for ${oldest_ticket#*-}"
+
+            # THE STALE TICKET BUSTER
+            local ticket_pid="${oldest_ticket##*-}"
+            if [[ -n "${ticket_pid}" ]] && ! kill -0 "${ticket_pid}" 2>/dev/null; then
+                vde_log_warn "Busting stale ticket ${oldest_ticket} (Owner PID ${ticket_pid} is dead)" "lock"
+                rm -f "${queue_dir}/${oldest_ticket}" 2>/dev/null
+                continue
+            fi
         fi
 
         # THE ARCHIVIST'S JITTER (ZSH-Native floating point)
@@ -93,7 +108,8 @@ claim_lock() {
             vde_progress_wait_for_lock "$(basename "${lock_file}")" "${attempt}" "${owner_info}"
         fi
 
-        "${VDE_ROOT_DIR}/bin/vde-poll" --wait "${jitter_sec}" "all" >/dev/null 2>&1
+        # SAFETY: Set VDE_NO_LOCK=1 to prevent recursive storms if vde-poll loads vm-common
+        VDE_NO_LOCK=1 "${VDE_ROOT_DIR}/bin/vde-poll" --wait "${jitter_sec}" "all" >/dev/null 2>&1
         
         (( attempt++ ))
     done

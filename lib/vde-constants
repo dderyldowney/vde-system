@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @shared-law (Sovereign Law)
+# @armor (Engine Constants)
 # VDE Constants Library
 # Centralized constants for the Virtual Development Environment
 # Source this library with: source ./lib/vde-constants
@@ -244,7 +244,7 @@ VDE_SSH_AGENT_ENV="${VDE_SSH_AGENT_ENV:-${VDE_SSH_DIR}/agent_env}"
 # Core VDE directories - can be overridden by setting VDE_*_DIR environment variables
 
 # Root directory of the VDE project. Must be explicitly set by scripts sourcing this.
-VDE_ROOT_DIR="${VDE_ROOT_DIR:-$(cd "$(dirname "${(%):-%x}")/.." && pwd)}" # Fallback if not set by caller
+VDE_ROOT_DIR="${${(%):-%x}:h:h}"
 
 # Configuration directory (e.g., configs/docker)
 CONFIGS_DIR="${VDE_CONFIGS_DIR:-${VDE_ROOT_DIR}/configs/docker}"
