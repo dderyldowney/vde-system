@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: rust, 2219, , zsh /vde/scripts/setup/rust-init.zsh
+# Variables: rust, 2215, , zsh ./scripts/setup/rust-init.zsh
 name: vde-rust
 services:
   vde-rust:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: rust
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/rust-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/rust-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000
@@ -25,7 +25,7 @@ services:
       - "vde.name=rust"
 
     ports:
-      - "2219:2219"
+      - "2215:2215"
 
     volumes:
       - ../../../../:/vde:ro

@@ -1,8 +1,8 @@
 # VDE-SPEC
 # @shared-law (Sovereign Law)
-# VDE-SPEC 1.5.0 (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution)
+# VDE-SPEC 1.5.0 (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution) (The Sovereign Evolution)
 
-**Date**: 2026-04-26
+**Date**: 2026-04-25
 **Status**: SOVEREIGN BASELINE CERTIFIED
 **Reference**: ARCHITECTURE 1.5.0
 **Identity**: The Covert
@@ -35,7 +35,7 @@
 - **Born Ready (BTO)**: Every jail MUST be fully functional at image creation. Runtime `apt` calls or network-dependent configurations are prohibited to ensure immutability.
 - **Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`. USP rituals are mandated to "Purge the Ghosts" (`apt-get clean`) to maintain image hygiene.
 - **The AI-Blind Runtime (Core Tenet)**: The Forge (AI logic, agentic intelligence, and GitHub lifecycle automation) SHALL NOT be active, available, or accessible during Project 1 (Armor) runtime. The student environment must be 100% deterministic, autonomous, and AI-blind.
-- **Pure Relative Pathing**: All artifacts MUST be executed and accessed relative to VDE_ROOT_DIR to ensure absolute portability of both the combined system and its individual projects. EXCEPTION: PROJECT_ROOT is an authorized absolute path variable required for tool-ecosystem bootstrapping. Its usage is permitted in entry points and test scripts.
+- **Pure Relative Pathing**: All artifacts MUST be executed and accessed relative to VDE_ROOT_DIR to ensure absolute portability of both the combined system and its individual projects.
 - **The Rule of One**: This SPEC is the unique and absolute authority on the project version and the Sovereign Artifact Set state. Any discrepancy between implementation and SPEC must be resolved in favor of the SPEC.
 
 
@@ -99,5 +99,5 @@ The Forge is currently advancing through Phase 29:
 ---
 Version: 1.5.0
 **Status**: HARDENED
-**Reference**: RESOL’NARE 1.5.0
+**Reference**: RESOL’NARE 1.4.1
 ---

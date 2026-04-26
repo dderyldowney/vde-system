@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Infrastructure Automation)
+# @shared-law (Forge Component)
 
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR

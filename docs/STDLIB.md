@@ -1,5 +1,5 @@
 # VDE Standard Library (stdlib) Documentation
-# @shared-law (Sovereign Law)
+<!-- @shared-law (Sovereign Law) -->
 
 
 **Repository**: dderyldowney/vde-system  

@@ -1,4 +1,5 @@
 # VDE SESSION HANDOVER: 2026-04-26 02:30
+<!-- @shared-law (Forge Component) -->
 
 ## 1. STRATEGIC CONTEXT
 - **Mission**: Remediation of Startup Blockade and Certification of Phase 31/32.

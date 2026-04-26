@@ -1,4 +1,5 @@
 # Remediation Plan for Infinite Recursion Loop in Locking Mechanism
+<!-- @shared-law (Forge Component) -->
 
 ## 1. Rule Record Locations
 - `bin/vde-poll` (Sections 2, 4, 4.5)

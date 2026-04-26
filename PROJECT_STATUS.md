@@ -1,5 +1,5 @@
 # PROJECT STATUS - VDE 1.5.0 (The Sovereign Baseline)
-# @shared-law (Forge Component)
+<!-- @shared-law (Forge Component) -->
 
 **CURRENT STATE: 100% GREEN (THE UNIQUE SOVEREIGN BASELINE)**
 **DATE:** 2026-04-24

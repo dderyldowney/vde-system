@@ -1,5 +1,5 @@
 # Sourcery-AI Remediation Plan
-<!-- @forge (Remediation Plan) -->
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Address the feedback provided by the automated auditor (Sourcery-AI) on PR #285. This ensures the BDD test suite remains resilient across platforms and the documentation provides sufficient semantic detail for users.

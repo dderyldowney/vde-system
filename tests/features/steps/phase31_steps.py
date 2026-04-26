@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# VDE ARCHITECTURAL RECORD
 # @forge (Governance Sentinel)
+# VDE ARCHITECTURAL RECORD
 from behave import given, when, then
 import yaml
 from pathlib import Path

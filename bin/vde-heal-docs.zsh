@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Self-Healer)
+# @armor (Engine Core)
 #===============================================================================
 # vde-heal-docs.zsh - Sovereign Gospel Self-Healing Sentinel
 #

@@ -1,6 +1,6 @@
 # Standardize VDE_ROOT_DIR Derivation Design
+<!-- @shared-law (Sovereign Law) -->
 
-# @forge (Governance Guard Audit)
 
 ## Goal
 Standardize the derivation of `VDE_ROOT_DIR` across all binaries and libraries to ensure absolute portability by using absolute path resolution (`:a:h:h`) in Zsh.

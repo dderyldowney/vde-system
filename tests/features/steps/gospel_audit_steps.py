@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# @forge (Governance Steps)
+# @forge (Governance Sentinel)
 from behave import given, when, then
 import os
 import shutil

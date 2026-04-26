@@ -1,5 +1,5 @@
 # Forge Bridge — Agent-Agnostic Local MCP Server
-<!-- @forge (VDE MCP Server) -->
+<!-- @shared-law (Forge Component) -->
 
 **Status:** Founding Specification — Pre-Strike  
 **Created:** 2026-04-25  

@@ -148,6 +148,9 @@ is_vm_running() {
     return ${VDE_ERR_NOT_FOUND}
 }
 
+# Alias for backward compatibility and orchestrator expectations
+container_is_running() { is_vm_running "${@}"; }
+
 # =============================================================================
 # SSH PORT MANAGEMENT
 # =============================================================================

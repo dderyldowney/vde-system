@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: elixir, 2206, , zsh /vde/scripts/setup/elixir-init.zsh
+# Variables: elixir, 2205, , zsh ./scripts/setup/elixir-init.zsh
 name: vde-elixir
 services:
   vde-elixir:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: elixir
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/elixir-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/elixir-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000
@@ -25,7 +25,7 @@ services:
       - "vde.name=elixir"
 
     ports:
-      - "2206:2206"
+      - "2205:2205"
 
     volumes:
       - ../../../../:/vde:ro

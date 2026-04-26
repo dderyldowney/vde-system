@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: ruby, 2218, , zsh /vde/scripts/setup/ruby-init.zsh
+# Variables: ruby, 2214, , zsh ./scripts/setup/ruby-init.zsh
 name: vde-ruby
 services:
   vde-ruby:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: ruby
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/ruby-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/ruby-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000
@@ -25,7 +25,7 @@ services:
       - "vde.name=ruby"
 
     ports:
-      - "2218:2218"
+      - "2214:2214"
 
     volumes:
       - ../../../../:/vde:ro

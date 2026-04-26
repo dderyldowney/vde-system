@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: displaytest, 2205, , zsh /vde/scripts/setup/displaytest-init.zsh
+# Variables: displaytest, 2204, , zsh ./scripts/setup/displaytest-init.zsh
 name: vde-displaytest
 services:
   vde-displaytest:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: displaytest
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/displaytest-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/displaytest-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000
@@ -25,7 +25,7 @@ services:
       - "vde.name=displaytest"
 
     ports:
-      - "2205:2205"
+      - "2204:2204"
 
     volumes:
       - ../../../../:/vde:ro

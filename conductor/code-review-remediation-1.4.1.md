@@ -1,5 +1,5 @@
 # Code Review Remediation Plan: VDE Forge (CR-1.4.1)
-# @forge (Sovereign Remediation Blueprint)
+<!-- @shared-law (Forge Component) -->
 
 ## Background & Motivation
 A comprehensive architectural and technical code review was conducted on the `develop` branch of the VDE Forge. While the core is strong, the Sentinel unmasked several lingering fractures related to **Mandate C (ZSH ONLY)** and **Mandate 24 (Mandatory Labeling Rule)**. These impurities include top-level `local` declarations in specific libraries/hooks, residual `=~` regex usage, and missing architectural tags in configuration and initialization files.

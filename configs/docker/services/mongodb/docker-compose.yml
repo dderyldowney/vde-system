@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: mongodb, 2402, 27017, , zsh /vde/scripts/setup/mongodb-init.zsh
+# Variables: mongodb, 2401, 27017, , zsh ./scripts/setup/mongodb-init.zsh
 name: vde-mongodb
 services:
   vde-mongodb:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: mongodb
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/mongodb-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/mongodb-init.zsh"
         POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
         UID: 1000
@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "2402:2402"
+      - "2401:2401"
       - "27017:27017"
 
     volumes:

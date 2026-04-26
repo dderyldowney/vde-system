@@ -1,5 +1,5 @@
 # REMEDIATION PLAN: STARTUP BLOCKADE
-<!-- @forge (Governance Sentinel) -->
+<!-- @shared-law (Forge Component) -->
 
 ## Sovereign Reason
 The Sovereign Audit (`bin/vde-enforce-uap.zsh`) failed during the 1.5.0 Startup Ritual with 6 critical violations:

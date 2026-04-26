@@ -826,15 +826,9 @@ def step_ensure_running_python(context):
 
     for i in range(max_retries):
         # Physical handshake: Check if SSH port is open and responding
-        # Note: We use insecure options (StrictHostKeyChecking=no) specifically for the BDD heartbeat 
-        # to ensure the test suite is not blocked by host key verification prompts.
         import subprocess
         res = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=2", 
-             "-o", "BatchMode=yes", 
-             "-o", "StrictHostKeyChecking=no", 
-             "-o", "UserKnownHostsFile=/dev/null",
-             f"vde-{vm_alias}", "echo BEYOND_DOCKER_HEARTBEAT"],
+            ["ssh", "-p", vm_port, "-o", "ConnectTimeout=2", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "devuser@127.0.0.1", "echo BEYOND_DOCKER_HEARTBEAT"],
             capture_output=True, text=True
         )
         if "BEYOND_DOCKER_HEARTBEAT" in res.stdout:
@@ -857,11 +851,6 @@ def step_directory_empty_in_spoke(context, dir_path):
     # Use raw container execution (bypasses UAP logs)
     from shell_helpers import execute_in_container
     container_name = f"vde-{getattr(context, 'vm_alias', 'python')}"
-
-    # NOTE: /home/devuser and /vde are never truly empty due to mandatory DNA files.
-    # We bypass this assertion for those paths to avoid contradictory logic.
-    if dir_path in ["/home/devuser", "/vde", "/home/vde_student", "~"]:
-        return
 
     result = execute_in_container(container_name, f"ls -A {dir_path}")
     assert result.returncode == 0, f"Failed to list {dir_path} in {container_name}: {result.stderr}"

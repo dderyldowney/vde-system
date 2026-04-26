@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: nginx, 2404, 80,443, , zsh /vde/scripts/setup/nginx-init.zsh
+# Variables: nginx, 2403, 80,443, , zsh ./scripts/setup/nginx-init.zsh
 name: vde-nginx
 services:
   vde-nginx:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: nginx
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/nginx-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/nginx-init.zsh"
         POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
         UID: 1000
@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "2404:2404"
+      - "2403:2403"
       - "80:80"
       - "443:443"
 

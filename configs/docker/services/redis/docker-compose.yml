@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: redis, 2407, 6379, , zsh /vde/scripts/setup/redis-init.zsh
+# Variables: redis, 2406, 6379, , zsh ./scripts/setup/redis-init.zsh
 name: vde-redis
 services:
   vde-redis:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: redis
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/redis-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/redis-init.zsh"
         POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
         UID: 1000
@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "2407:2407"
+      - "2406:2406"
       - "6379:6379"
 
     volumes:

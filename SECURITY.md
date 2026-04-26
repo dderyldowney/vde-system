@@ -1,5 +1,5 @@
 # SECURITY
-<!-- @armor (Product Security Policy) -->
+<!-- @shared-law (Forge Component) -->
 # Security Policy
 
 ## Supported Versions

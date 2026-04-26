@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Healer)
+# @armor (Engine Core)
 #===============================================================================
 # vde-armor-heal.zsh - Deterministic Armor Self-Healing Engine
 #

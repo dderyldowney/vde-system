@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Sovereign Bridge)
+# @forge (Governance Sentinel)
 @advanced-orchestration @dns @phase31
 Feature: Phase 31 - Spoke-to-Spoke DNS & Sovereign Bridge
   As an Alor of the VDE

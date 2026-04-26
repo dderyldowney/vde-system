@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+# @forge (Governance Sentinel)
 # VDE ARCHITECTURAL RECORD
-# @armor (Engine Core)
 from behave import given, when, then
 import os
 import shutil

@@ -1,4 +1,5 @@
 # Stale Lock Buster & VDE Poll Process Explosion Remediation Plan
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Fix the infinite recursion/process explosion in `vde-poll` due to float math errors with `zselect`, and implement a Stale Lock Buster in `lib/vm-lock` to handle dead PIDs holding locks or queue tickets.

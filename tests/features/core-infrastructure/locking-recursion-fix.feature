@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @armor (Engine Core)
+# @forge (Governance Sentinel)
 @core-infrastructure @locking @recursion
 Feature: Anti-Recursion and Hardened Locking
   As an Alor of the VDE

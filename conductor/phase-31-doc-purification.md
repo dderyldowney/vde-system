@@ -1,5 +1,5 @@
 # Phase 31 Documentation Purification and Closure Plan
-<!-- @forge (Implementation Plan) -->
+<!-- @shared-law (Forge Component) -->
 
 ## Objective
 Complete Phase 31 by purifying the documentation, updating the Sovereign Artifact Set (starting with `VDE-SPEC.md`), and empirically verifying the test suite. This ensures the "Gospel" is in perfect harmony with the 1.4.1 Sovereign Baseline before igniting Phase 32.

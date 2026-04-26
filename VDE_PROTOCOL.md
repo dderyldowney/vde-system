@@ -1,5 +1,5 @@
 # VDE PROTOCOL
-<!-- @armor (Operational Doctrine) -->
+<!-- @shared-law (Forge Component) -->
 # VDE Project Protocol (1.5.0)
 
 ## Authoritative Tooling Mandate

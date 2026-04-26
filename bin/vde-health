@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Health Check)
+# @forge (Governance Sentinel)
 set -e
 #===============================================================================
 # vde-health - Health Check Command for VDE

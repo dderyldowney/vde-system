@@ -1,4 +1,5 @@
 # FINAL CERTIFICATION STRIKE PLAN (CORRECTED)
+<!-- @shared-law (Forge Component) -->
 
 ## 1. Relative-Paths-Only Mandate Refinement
 `VDE_ROOT_DIR` must always be the directory that `bin/vde` is **under**. We must use Zsh-native relative path derivation to ensure the system remains portable and AI-blind to absolute host paths.

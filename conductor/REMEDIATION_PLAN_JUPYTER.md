@@ -1,4 +1,5 @@
 # JUPYTERLAB RACE CONDITION REMEDIATION
+<!-- @shared-law (Forge Component) -->
 
 ## 1. Problem Analysis
 The JupyterLab integration test is failing due to two distinct race conditions:

@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: postgres, 2405, 5432, , zsh /vde/scripts/setup/postgres-init.zsh
+# Variables: postgres, 2404, 5432, , zsh ./scripts/setup/postgres-init.zsh
 name: vde-postgres
 services:
   vde-postgres:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: postgres
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/postgres-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/postgres-init.zsh"
         POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
         UID: 1000
@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "2405:2405"
+      - "2404:2404"
       - "5432:5432"
 
     volumes:
