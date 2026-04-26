@@ -139,7 +139,7 @@ fi
 # Default install command if not specified
 if [[ -z "${INSTALL_CMD}" ]]; then
     if [[ -n "${PKGS}" ]]; then
-        INSTALL_CMD="apt-get update -y && apt-get install -y ${PKGS}"
+        INSTALL_CMD="apt-get update -y && apt-get install -y ${PKGS} && apt-get clean && rm -rf /var/lib/apt/lists/*"
     else
         INSTALL_CMD="echo 'Hydration complete'"
     fi
@@ -300,6 +300,12 @@ if [[ "${QUIET}" == "false" ]]; then
 fi
 
 log_success "VM type '${VM_NAME}' added successfully!"
+echo ""
+echo "Next steps:"
+echo "  1. Create the VM: vde create ${VM_NAME}"
+echo "  2. Start the VM:  vde start ${VM_NAME}"
+echo ""
+essfully!"
 echo ""
 echo "Next steps:"
 echo "  1. Create the VM: vde create ${VM_NAME}"
