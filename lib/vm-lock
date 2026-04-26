@@ -19,6 +19,8 @@ typeset -gA VDE_LOCK_TICKETS
 # claim_lock - Atomic locking with "Lock-Queue Model" (Phase 25 FIFO)
 # Args: <lock_file>
 claim_lock() {
+    if [[ "${VDE_NO_LOCK:-0}" == "1" ]]; then return 0; fi
+
     local lock_file="${1}"
     local max_attempts=30 # Increased for high-concurrency queuing
     local attempt=1
@@ -51,11 +53,39 @@ claim_lock() {
     }
 
     while [[ ${attempt} -le ${max_attempts} ]]; do
+        # STALE LOCK BUSTER (Restore the Heartbeat)
+        if [[ -f "${pid_file}" ]]; then
+            local pid_data=$(cat "${pid_file}" 2>/dev/null)
+            local owner_pid="${pid_data%%:*}"
+            local lock_timestamp="${pid_data##*:}"
+            local now=$(date +%s)
+            
+            if [[ -n "${owner_pid}" ]] && ! ps -p "${owner_pid}" >/dev/null 2>&1; then
+                # Grace period: Only bust if lock is at least 10 seconds old
+                if [[ $(( now - lock_timestamp )) -gt 10 ]]; then
+                    vde_log_warn "Busting stale lock ${lock_file} (Owner PID ${owner_pid} is dead)" "lock"
+                    rm -rf "${lock_file}" 2>/dev/null
+                    continue
+                fi
+            fi
+        fi
+
         # 2. THE LINE CHECK (FIFO Enforcement)
         # Find the oldest ticket (numerically sorted by timestamp)
         local oldest_ticket
         oldest_ticket=$(ls -1 "${queue_dir}" 2>/dev/null | sort -n | head -n 1)
         
+        # STALE TICKET BUSTER: If the oldest ticket belongs to a dead process, purge it
+        if [[ -n "${oldest_ticket}" && "${oldest_ticket}" != "${ticket_id}" ]]; then
+            local ticket_pid="${oldest_ticket##*-}"
+            if [[ -n "${ticket_pid}" ]] && ! ps -p "${ticket_pid}" >/dev/null 2>&1; then
+                vde_log_warn "Busting stale ticket ${oldest_ticket} (Owner PID ${ticket_pid} is dead)" "lock"
+                rm -f "${queue_dir}/${oldest_ticket}" 2>/dev/null
+                # Continue loop to re-evaluate 'oldest_ticket'
+                continue
+            fi
+        fi
+
         if [[ "${oldest_ticket}" == "${ticket_id}" ]]; then
             # At the front of the line! THE ATOMIC GATE: mkdir is atomic at the kernel level
             if mkdir "${lock_file}" 2>/dev/null; then
@@ -73,29 +103,14 @@ claim_lock() {
             fi
         fi
         
-        # LOCK CONTENTION TRANSPARENCY & STALE LOCK BUSTER (Phase 32)
+        # LOCK CONTENTION TRANSPARENCY (Phase 26)
         local owner_info=""
         if [[ -f "${pid_file}" ]]; then
             local pid_data=$(cat "${pid_file}" 2>/dev/null)
             local owner_pid="${pid_data%%:*}"
             owner_info="PID ${owner_pid}"
-
-            # THE STALE LOCK BUSTER
-            if [[ -n "${owner_pid}" ]] && ! kill -0 "${owner_pid}" 2>/dev/null; then
-                vde_log_warn "Busting stale lock ${lock_file} (Owner PID ${owner_pid} is dead)" "lock"
-                rm -rf "${lock_file}" 2>/dev/null
-                continue
-            fi
         elif [[ "${oldest_ticket}" != "${ticket_id}" ]]; then
             owner_info="Queue position: waiting for ${oldest_ticket#*-}"
-
-            # THE STALE TICKET BUSTER
-            local ticket_pid="${oldest_ticket##*-}"
-            if [[ -n "${ticket_pid}" ]] && ! kill -0 "${ticket_pid}" 2>/dev/null; then
-                vde_log_warn "Busting stale ticket ${oldest_ticket} (Owner PID ${ticket_pid} is dead)" "lock"
-                rm -f "${queue_dir}/${oldest_ticket}" 2>/dev/null
-                continue
-            fi
         fi
 
         # THE ARCHIVIST'S JITTER (ZSH-Native floating point)
@@ -126,6 +141,8 @@ acquire_lock() { claim_lock "$@" }
 # release_lock - Release atomic lock
 # Args: <lock_file>
 release_lock() {
+    if [[ "${VDE_NO_LOCK:-0}" == "1" ]]; then return 0; fi
+
     local lock_file="${1}"
     local queue_dir="${lock_file}.queue"
     local ticket_id="${VDE_LOCK_TICKETS[${lock_file}]}"

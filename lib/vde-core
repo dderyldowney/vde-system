@@ -227,12 +227,17 @@ vde_translate_conf_to_json() {
 
     # GLOBAL CONFIGURATION LOCK: Ensure atomic translation
     local global_lock="${VDE_LOCKS_DIR}/global-config.lock"
-    claim_lock "${global_lock}" || return ${VDE_ERR_LOCK}
+    if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+        claim_lock "${global_lock}" || return ${VDE_ERR_LOCK}
+    fi
 
     {
         # Double-check if another process already translated while we waited
         if [[ -f "$_v_json_file" && ! ("$_v_conf_file" -nt "$_v_json_file") ]]; then
             vde_log_info "Pure Beskar already reconciled (Concurrency Win)." "forge"
+            if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+                release_lock "${global_lock}"
+            fi
             return ${VDE_SUCCESS}
         fi
 
@@ -314,7 +319,9 @@ vde_translate_conf_to_json() {
         mv "$_v_json_tmp" "$_v_json_file"
         vde_log_success "The Pure Beskar (.json) has been reconciled via Pure ZSH." "forge"
     } always {
-        release_lock "${global_lock}"
+        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+            release_lock "${global_lock}"
+        fi
     }
 }
 # -----------------------

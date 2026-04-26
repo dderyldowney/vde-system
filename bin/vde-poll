@@ -52,17 +52,27 @@ INTERVAL=${opts[--interval]:-0.2}
 
 # --- 4.5 FIXED WAIT STRIKE ---
 if [[ -n "${opts[--wait]}" ]]; then
-    # Use direct echo/print if vde_log_info is not yet sourced
-    echo "[INFO] [poll] Executing fixed wait: ${opts[--wait]}s (Jitter/Stagger Mandate)..."
-    # Convert seconds to deciseconds for zselect -t
-    # Use floating point math via zsh built-in $(( ))
-    local wait_ticks=$(( ${opts[--wait]} * 100 ))
-    wait_ticks=${wait_ticks%.*}
-    if ! zmodload zsh/zselect 2>/dev/null; then
-        echo "[ERROR] zsh/zselect module required but not found. Polling cannot continue safely." >&2
-        exit ${VDE_ERR_GENERAL:-1}
+    # Note: We use echo here because vde-log is not yet sourced to break recursion
+    [[ "${VDE_QUIET:-0}" != "1" ]] && echo "[INFO] [poll] Executing fixed wait: ${opts[--wait]}s (Jitter/Stagger Mandate)..."
+    # Convert seconds to deciseconds for zselect -t (integer required)
+    # Use floating point math then round to integer
+    local wait_val="${opts[--wait]}"
+    # Remove whitespace
+    wait_val="${wait_val// /}"
+    # Use Zsh arithmetic to convert to deciseconds and truncate to integer
+    local wait_ticks=$(( wait_val * 100 ))
+    # Strip trailing decimal point if it exists (Zsh arithmetic might return 10.)
+    wait_ticks="${wait_ticks%.*}"
+    if command -v perl >/dev/null 2>&1; then
+        perl -e "select(undef, undef, undef, ${opts[--wait]});"
+    elif zmodload zsh/zselect 2>/dev/null; then
+        # Try zselect but don't fail if it returns 1 (common on macOS)
+        zselect -t ${wait_ticks} || true
+    else
+        # Fallback to integer sleep (at least 1s)
+        local sleep_int=$(( ${opts[--wait]} > 0 ? ( ${opts[--wait]} + 0.9 ) : 1 ))
+        sleep ${sleep_int%.*}
     fi
-    zselect -t ${wait_ticks}
     exit ${VDE_SUCCESS:-0}
 fi
 
@@ -141,16 +151,18 @@ while (( elapsed < TIMEOUT )); do
         exit ${VDE_SUCCESS}
     fi
 
-    # High-precision sub-second wait via zselect (Rule 23)
+    # High-precision sub-second wait (Rule 23)
     # zselect -t takes deciseconds (1/100th of a second)
-    # 0.2s * 100 = 20
     local wait_ticks=$(( INTERVAL * 100 ))
-    wait_ticks=${wait_ticks%.*}
-    if ! zmodload zsh/zselect 2>/dev/null; then
-        echo "[ERROR] zsh/zselect module required but not found. Polling cannot continue safely." >&2
-        exit ${VDE_ERR_GENERAL}
+    wait_ticks="${wait_ticks%.*}"
+
+    if command -v perl >/dev/null 2>&1; then
+        perl -e "select(undef, undef, undef, ${INTERVAL});"
+    elif zmodload zsh/zselect 2>/dev/null; then
+        zselect -t ${wait_ticks} || true
+    else
+        sleep 1
     fi
-    zselect -t ${wait_ticks}
     
     current_time=$(date +%s)
     elapsed=$(( current_time - start_time ))

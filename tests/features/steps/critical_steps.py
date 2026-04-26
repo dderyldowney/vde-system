@@ -826,10 +826,15 @@ def step_ensure_running_python(context):
 
     for i in range(max_retries):
         # Physical handshake: Check if SSH port is open and responding
-        # Use canonical VDE hostname to leverage ~/.ssh/vde/config options (StrictHostKeyChecking no)
+        # Note: We use insecure options (StrictHostKeyChecking=no) specifically for the BDD heartbeat 
+        # to ensure the test suite is not blocked by host key verification prompts.
         import subprocess
         res = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=2", "-o", "BatchMode=yes", f"vde-{vm_alias}", "echo BEYOND_DOCKER_HEARTBEAT"],
+            ["ssh", "-o", "ConnectTimeout=2", 
+             "-o", "BatchMode=yes", 
+             "-o", "StrictHostKeyChecking=no", 
+             "-o", "UserKnownHostsFile=/dev/null",
+             f"vde-{vm_alias}", "echo BEYOND_DOCKER_HEARTBEAT"],
             capture_output=True, text=True
         )
         if "BEYOND_DOCKER_HEARTBEAT" in res.stdout:
