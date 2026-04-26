@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: lua, 2214, , zsh /vde/scripts/setup/lua-init.zsh
+# Variables: lua, 2220, , zsh /vde/scripts/setup/lua-init.zsh
 name: vde-lua
 services:
   vde-lua:
@@ -25,7 +25,7 @@ services:
       - "vde.name=lua"
 
     ports:
-      - "2214:2214"
+      - "2220:2220"
 
     volumes:
       - ../../../../:/vde:ro

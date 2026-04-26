@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: kotlin, 2211, , zsh ./scripts/setup/kotlin-init.zsh
+# Variables: kotlin, 2211, , zsh /vde/scripts/setup/kotlin-init.zsh
 name: vde-kotlin
 services:
   vde-kotlin:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: kotlin
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/kotlin-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/kotlin-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000

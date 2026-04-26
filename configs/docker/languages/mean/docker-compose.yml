@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: mean, 2215, , zsh /vde/scripts/setup/mean-init.zsh
+# Variables: mean, 2221, , zsh /vde/scripts/setup/mean-init.zsh
 name: vde-mean
 services:
   vde-mean:
@@ -25,7 +25,7 @@ services:
       - "vde.name=mean"
 
     ports:
-      - "2215:2215"
+      - "2221:2221"
 
     volumes:
       - ../../../../:/vde:ro

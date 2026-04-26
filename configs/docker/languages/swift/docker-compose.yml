@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: swift, 2217, , zsh ./scripts/setup/swift-init.zsh
+# Variables: swift, 2217, , zsh /vde/scripts/setup/swift-init.zsh
 name: vde-swift
 services:
   vde-swift:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: swift
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/swift-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/swift-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000

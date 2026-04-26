@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: js, 2210, , zsh ./scripts/setup/js-init.zsh
+# Variables: js, 2210, , zsh /vde/scripts/setup/js-init.zsh
 name: vde-js
 services:
   vde-js:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: js
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/js-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/js-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000

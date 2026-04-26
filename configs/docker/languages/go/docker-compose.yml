@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: go, 2207, , zsh ./scripts/setup/go-init.zsh
+# Variables: go, 2207, , zsh /vde/scripts/setup/go-init.zsh
 name: vde-go
 services:
   vde-go:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: go
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/go-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/go-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000

@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: python, 2213, , zsh ./scripts/setup/python-init.zsh
+# Variables: python, 2213, , zsh /vde/scripts/setup/python-init.zsh
 name: vde-python
 services:
   vde-python:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: python
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/python-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/python-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000

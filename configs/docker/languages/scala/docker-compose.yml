@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: scala, 2216, , zsh ./scripts/setup/scala-init.zsh
+# Variables: scala, 2216, , zsh /vde/scripts/setup/scala-init.zsh
 name: vde-scala
 services:
   vde-scala:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: scala
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/scala-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/scala-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000

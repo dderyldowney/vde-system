@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: couchdb, 2400, 5984, , zsh ./scripts/setup/couchdb-init.zsh
+# Variables: couchdb, 2400, 5984, , zsh /vde/scripts/setup/couchdb-init.zsh
 name: vde-couchdb
 services:
   vde-couchdb:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: couchdb
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/couchdb-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/couchdb-init.zsh"
         POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
         UID: 1000

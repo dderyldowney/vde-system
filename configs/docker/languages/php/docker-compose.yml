@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: php, 2212, , zsh ./scripts/setup/php-init.zsh
+# Variables: php, 2212, , zsh /vde/scripts/setup/php-init.zsh
 name: vde-php
 services:
   vde-php:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: php
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/php-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/php-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000

@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: mysql, 2402, 3306, , zsh ./scripts/setup/mysql-init.zsh
+# Variables: mysql, 2402, 3306, , zsh /vde/scripts/setup/mysql-init.zsh
 name: vde-mysql
 services:
   vde-mysql:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: mysql
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/mysql-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/mysql-init.zsh"
         POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
         UID: 1000

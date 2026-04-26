@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: certified-ghost, 2202, , zsh /vde/scripts/setup/certified-ghost-init.zsh
+# Variables: certified-ghost, 2223, , zsh /vde/scripts/setup/certified-ghost-init.zsh
 name: vde-certified-ghost
 services:
   vde-certified-ghost:
@@ -25,7 +25,7 @@ services:
       - "vde.name=certified-ghost"
 
     ports:
-      - "2202:2202"
+      - "2223:2223"
 
     volumes:
       - ../../../../:/vde:ro

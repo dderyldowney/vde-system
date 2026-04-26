@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: testport1, 2218, , zsh ./scripts/setup/testport1-init.zsh
+# Variables: testport1, 2218, , zsh /vde/scripts/setup/testport1-init.zsh
 name: vde-testport1
 services:
   vde-testport1:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: testport1
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/testport1-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/testport1-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000

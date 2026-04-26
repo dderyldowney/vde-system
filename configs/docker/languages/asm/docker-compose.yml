@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: asm, 2200, , zsh ./scripts/setup/asm-init.zsh
+# Variables: asm, 2200, , zsh /vde/scripts/setup/asm-init.zsh
 name: vde-asm
 services:
   vde-asm:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: asm
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/asm-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/asm-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000

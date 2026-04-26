@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: haskell, 2208, , zsh ./scripts/setup/haskell-init.zsh
+# Variables: haskell, 2208, , zsh /vde/scripts/setup/haskell-init.zsh
 name: vde-haskell
 services:
   vde-haskell:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: haskell
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/haskell-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/haskell-init.zsh"
         USERNAME: devuser
         UID: 1000
         GID: 1000

@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: rabbitmq, 2405, 5672,15672, , zsh ./scripts/setup/rabbitmq-init.zsh
+# Variables: rabbitmq, 2405, 5672,15672, , zsh /vde/scripts/setup/rabbitmq-init.zsh
 name: vde-rabbitmq
 services:
   vde-rabbitmq:
@@ -11,7 +11,7 @@ services:
       args:
         VM_NAME: rabbitmq
         PKGS_TO_INSTALL: ""
-        CUSTOM_BUILD_CMD: "zsh ./scripts/setup/rabbitmq-init.zsh"
+        CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/rabbitmq-init.zsh"
         POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
         UID: 1000

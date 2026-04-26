@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: lamp, 2213, , zsh /vde/scripts/setup/lamp-init.zsh
+# Variables: lamp, 2222, , zsh /vde/scripts/setup/lamp-init.zsh
 name: vde-lamp
 services:
   vde-lamp:
@@ -25,7 +25,7 @@ services:
       - "vde.name=lamp"
 
     ports:
-      - "2213:2213"
+      - "2222:2222"
 
     volumes:
       - ../../../../:/vde:ro
