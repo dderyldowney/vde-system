@@ -25,7 +25,7 @@
 | :--- | :--- | :--- |
 | **UAP Enforcement** | ✅ PASS | `bin/vde-enforce-uap.zsh` strictly active. |
 | **Spine Check** | ✅ PASS | `bin/vde-spine-check.zsh` silent pre-flight. |
-| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (1.5.0) |
+| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (1.5.1) |
 
 ---
 **Certified by**: The Covert
