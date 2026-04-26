@@ -7,7 +7,7 @@ typeset _ZSH_PURE=${(%):-%x}
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
 #
-# Release: Sovereign Baseline 1.4.1
+# Release: Sovereign Baseline 1.5.1
 # Objective: Hardened build-time hydration with Rust Mirror verification.
 
 set -e
