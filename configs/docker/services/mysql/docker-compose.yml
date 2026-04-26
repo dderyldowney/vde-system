@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Forge Component)
+# @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: mysql, 2402, 3306, -, zsh /vde/scripts/setup/mysql-init.zsh
+# Variables: mysql, 2403, 3306, , zsh /vde/scripts/setup/mysql-init.zsh
 name: vde-mysql
 services:
   vde-mysql:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: mysql
-        PKGS_TO_INSTALL: "-"
+        PKGS_TO_INSTALL: ""
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/mysql-init.zsh"
         POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "2402:2402"
+      - "2403:2403"
       - "3306:3306"
 
     volumes:

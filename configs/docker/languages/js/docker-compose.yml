@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Forge Component)
+# @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: js, 2210, -, zsh /vde/scripts/setup/js-init.zsh
+# Variables: js, 2211, , zsh /vde/scripts/setup/js-init.zsh
 name: vde-js
 services:
   vde-js:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: js
-        PKGS_TO_INSTALL: "-"
+        PKGS_TO_INSTALL: ""
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/js-init.zsh"
         USERNAME: devuser
         UID: 1000
@@ -25,7 +25,7 @@ services:
       - "vde.name=js"
 
     ports:
-      - "2210:2210"
+      - "2211:2211"
 
     volumes:
       - ../../../../:/vde:ro

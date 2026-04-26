@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Forge Component)
+# @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: ruby, 2215, -, zsh /vde/scripts/setup/ruby-init.zsh
+# Variables: ruby, 2218, , zsh /vde/scripts/setup/ruby-init.zsh
 name: vde-ruby
 services:
   vde-ruby:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: ruby
-        PKGS_TO_INSTALL: "-"
+        PKGS_TO_INSTALL: ""
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/ruby-init.zsh"
         USERNAME: devuser
         UID: 1000
@@ -25,7 +25,7 @@ services:
       - "vde.name=ruby"
 
     ports:
-      - "2215:2215"
+      - "2218:2218"
 
     volumes:
       - ../../../../:/vde:ro

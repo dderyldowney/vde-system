@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Forge Component)
+# @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: certified-ghost, 2297, htop, zsh /vde/scripts/setup/certified-ghost-init.zsh
+# Variables: certified-ghost, 2202, , zsh /vde/scripts/setup/certified-ghost-init.zsh
 name: vde-certified-ghost
 services:
   vde-certified-ghost:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: certified-ghost
-        PKGS_TO_INSTALL: "htop"
+        PKGS_TO_INSTALL: ""
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/certified-ghost-init.zsh"
         USERNAME: devuser
         UID: 1000
@@ -25,7 +25,7 @@ services:
       - "vde.name=certified-ghost"
 
     ports:
-      - "2297:2297"
+      - "2202:2202"
 
     volumes:
       - ../../../../:/vde:ro

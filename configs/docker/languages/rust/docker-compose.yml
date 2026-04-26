@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Forge Component)
+# @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: rust, 2216, -, zsh /vde/scripts/setup/rust-init.zsh
+# Variables: rust, 2219, , zsh /vde/scripts/setup/rust-init.zsh
 name: vde-rust
 services:
   vde-rust:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: rust
-        PKGS_TO_INSTALL: "-"
+        PKGS_TO_INSTALL: ""
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/rust-init.zsh"
         USERNAME: devuser
         UID: 1000
@@ -25,7 +25,7 @@ services:
       - "vde.name=rust"
 
     ports:
-      - "2216:2216"
+      - "2219:2219"
 
     volumes:
       - ../../../../:/vde:ro

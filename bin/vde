@@ -6,8 +6,8 @@ set -e
 # Version: ${VDE_VERSION:-$(vde_get_version)}
 #===============================================================================
 
-# Use strictly relative pathing (Mandate)
-VDE_ROOT_DIR="."
+# Use strictly absolute pathing (Mandate)
+VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 # Source shared library

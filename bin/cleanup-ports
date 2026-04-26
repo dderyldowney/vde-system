@@ -16,8 +16,8 @@ set -e
 #   --dry-run   Show what would be removed without removing anything
 #===============================================================================
 
-VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
-VDE_ROOT_DIR="$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)"
+# Determine VDE root directory
+VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 source "${VDE_ROOT_DIR}/lib/vm-common"

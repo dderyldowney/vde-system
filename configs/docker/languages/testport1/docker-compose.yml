@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Forge Component)
+# @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: testport1, 2219, -, zsh /vde/scripts/setup/testport1-init.zsh
+# Variables: testport1, 2222, , zsh /vde/scripts/setup/testport1-init.zsh
 name: vde-testport1
 services:
   vde-testport1:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: testport1
-        PKGS_TO_INSTALL: "-"
+        PKGS_TO_INSTALL: ""
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/testport1-init.zsh"
         USERNAME: devuser
         UID: 1000
@@ -25,7 +25,7 @@ services:
       - "vde.name=testport1"
 
     ports:
-      - "2219:2219"
+      - "2222:2222"
 
     volumes:
       - ../../../../:/vde:ro

@@ -7,7 +7,8 @@ set -e
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 # Determine VDE root directory
-VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+VDE_ROOT_DIR="${0:a:h:h}"
+export VDE_ROOT_DIR
 
 VDE_SSH_DIR="$HOME/.ssh/vde"
 VDE_KEY="$VDE_SSH_DIR/vde_student"
