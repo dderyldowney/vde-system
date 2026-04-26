@@ -46,6 +46,15 @@ sudo -u devuser zsh -c '
     echo "export PATH=\"\$HOME/.cargo/bin:\$PATH\"" >> ~/.zshrc
 '
 
+# 3.5. COMPONENT HYDRATION
+# Install rust-analyzer as devuser, with cargo/bin already on PATH from the
+# persistence anchors above. Must run after .zshrc/.zshenv are written.
+sudo -u devuser zsh -c '
+    export PATH="$HOME/.cargo/bin:$PATH"
+    rustup component add rust-analyzer
+    rustup component add rust-src
+'
+
 # 4. PURGING THE GHOSTS
 # Clean up build artifacts to maintain a hardened, immutable baseline.
 apt-get clean
