@@ -12,14 +12,6 @@ _VDE_POLL_SCRIPT_PATH="${(%):-%x}"
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
-# --- 2. SOURCE CORE ECOSYSTEM ---
-if [[ -f "${VDE_ROOT_DIR}/lib/vm-common" ]]; then
-    source "${VDE_ROOT_DIR}/lib/vm-common"
-else
-    echo "CRITICAL: lib/vm-common not found."
-    exit ${VDE_ERR_GENERAL}
-fi
-
 # --- 3. USAGE ---
 show_usage() {
     cat <<EOF
@@ -53,23 +45,33 @@ typeset -A opts
 zparseopts -D -A opts -health -port: -exec: -network: -state: -count: -timeout: -interval: -wait:
 
 VM_NAME="$1"
-[[ -z "${VM_NAME}" && -z "${opts[--network]}" && -z "${opts[--count]}" && -z "${opts[--wait]}" ]] && show_usage && exit ${VDE_ERR_INVALID_INPUT}
+[[ -z "${VM_NAME}" && -z "${opts[--network]}" && -z "${opts[--count]}" && -z "${opts[--wait]}" ]] && show_usage && exit ${VDE_ERR_INVALID_INPUT:-2}
 
 TIMEOUT=${opts[--timeout]:-30}
 INTERVAL=${opts[--interval]:-0.2}
 
 # --- 4.5 FIXED WAIT STRIKE ---
 if [[ -n "${opts[--wait]}" ]]; then
-    vde_log_info "Executing fixed wait: ${opts[--wait]}s (Jitter/Stagger Mandate)..." "poll"
+    # Use direct echo/print if vde_log_info is not yet sourced
+    echo "[INFO] [poll] Executing fixed wait: ${opts[--wait]}s (Jitter/Stagger Mandate)..."
     # Convert seconds to deciseconds for zselect -t
     # Use floating point math via zsh built-in $(( ))
     local wait_ticks=$(( ${opts[--wait]} * 100 ))
+    wait_ticks=${wait_ticks%.*}
     if ! zmodload zsh/zselect 2>/dev/null; then
         echo "[ERROR] zsh/zselect module required but not found. Polling cannot continue safely." >&2
-        exit ${VDE_ERR_GENERAL}
+        exit ${VDE_ERR_GENERAL:-1}
     fi
     zselect -t ${wait_ticks}
-    exit ${VDE_SUCCESS}
+    exit ${VDE_SUCCESS:-0}
+fi
+
+# --- 2. SOURCE CORE ECOSYSTEM ---
+if [[ -f "${VDE_ROOT_DIR}/lib/vm-common" ]]; then
+    source "${VDE_ROOT_DIR}/lib/vm-common"
+else
+    echo "CRITICAL: lib/vm-common not found."
+    exit ${VDE_ERR_GENERAL:-1}
 fi
 
 CONTAINER_NAME=$(resolve_vm_name "${VM_NAME}" 2>/dev/null) || CONTAINER_NAME="${VM_NAME}"
@@ -142,8 +144,8 @@ while (( elapsed < TIMEOUT )); do
     # High-precision sub-second wait via zselect (Rule 23)
     # zselect -t takes deciseconds (1/100th of a second)
     # 0.2s * 100 = 20
-    local -i wait_ticks
-    wait_ticks=$(( INTERVAL * 100 ))
+    local wait_ticks=$(( INTERVAL * 100 ))
+    wait_ticks=${wait_ticks%.*}
     if ! zmodload zsh/zselect 2>/dev/null; then
         echo "[ERROR] zsh/zselect module required but not found. Polling cannot continue safely." >&2
         exit ${VDE_ERR_GENERAL}

@@ -44,12 +44,8 @@ _VM_COMMON_LOADED=1
 
 # If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
 if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
-    # Zsh-native path detection (UAP Mandate 1)
-    # %N is the standard way to get the sourced file path in ZSH
-    _VM_COMMON_SOURCE="${(%):-%x}"
-
-    # Calculate absolute path to root (lib/ is one level below VDE root)
-    VDE_ROOT_DIR="$(cd "$(dirname "${_VM_COMMON_SOURCE}")/.." && pwd)"
+    # Zsh-native path detection (Rule 1)
+    VDE_ROOT_DIR="${${(%):-%x}:a:h:h}"
 fi
 export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 
@@ -332,7 +328,9 @@ load_vm_types() {
     if [[ "${use_cache}" -eq 0 ]]; then
         # GLOBAL CONFIGURATION LOCK: Prevent redundant re-smelting
         local global_lock="${VDE_LOCKS_DIR}/global-config.lock"
-        claim_lock "${global_lock}" || return ${VDE_ERR_LOCK}
+        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+            claim_lock "${global_lock}" || return ${VDE_ERR_LOCK}
+        fi
         
         {
             # Double-check if another process just finished smelting the cache while we waited
@@ -369,7 +367,7 @@ load_vm_types() {
                         vde_validate_json_schema "${VM_TYPES_JSON}" "${schema_file}" >/dev/null 2>&1 || {
                             log_error "VM types JSON schema validation failed"
                             # If we fail validation, we MUST release the lock and return
-                            release_lock "${global_lock}"
+                            [[ "${VDE_NO_LOCK:-0}" != "1" ]] && release_lock "${global_lock}"
                             return ${VDE_ERR_INVALID_DATA}
                         }
                     fi
@@ -414,7 +412,7 @@ load_vm_types() {
                     done < "${VM_TYPES_CONF}"
                 else
                     _error "No configuration source found (JSON/CONF missing)"
-                    release_lock "${global_lock}"
+                    [[ "${VDE_NO_LOCK:-0}" != "1" ]] && release_lock "${global_lock}"
                     return ${VDE_ERR_NOT_FOUND}
                 fi
 
@@ -533,7 +531,9 @@ load_vm_types() {
                 _info "VM types cached for faster loading"
             fi
         } always {
-            release_lock "${global_lock}"
+            if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+                release_lock "${global_lock}"
+            fi
         }
     else
         _info "VM types loaded from cache"
