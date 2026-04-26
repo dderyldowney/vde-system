@@ -1,5 +1,5 @@
 # CONTRIBUTING
-<!-- @shared-law (Forge Component) -->
+<!-- @armor (Development Onboarding) -->
 # Contributing to VDE
 
 Thank you for your interest in contributing to the VDE (Virtual Development Environment) project!
