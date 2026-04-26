@@ -84,7 +84,7 @@ cat <<EOF > "${_spoke_ignition}"
 # JupyterLab Spoke Ignition
 # Starts the DS stack in the background on container start
 
-if ! pgrep -f "jupyter-server" >/dev/null; then
+if ! pgrep -f "jupyter-lab" >/dev/null; then
     echo "[VDE-JUPYTER] Forged in Beskar: Starting JupyterLab..." >> /logs/jupyter.log
     sudo -u devuser nohup tini -g -- ${_venv_path}/bin/jupyter lab --config=${_jupyter_config} >> /logs/jupyter.log 2>&1 &
 fi

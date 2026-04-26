@@ -10,9 +10,14 @@ def step_impl(context):
     # Using absolute paths via VDE_ROOT
     locks_dir = VDE_ROOT / ".locks"
     if locks_dir.exists():
-        # Using rglob to search all subdirectories for rogue locks
-        locks = list(locks_dir.rglob("*.lock"))
-        assert not locks, f"Rogue VDE locks found: {[str(l) for l in locks]}"
+        # Valid locks are directories (FIFO queues)
+        # Rogue locks would be unexpected individual files
+        rogue_locks = []
+        for p in locks_dir.rglob("*"):
+            if p.is_file() and p.suffix == ".lock":
+                rogue_locks.append(str(p))
+        
+        assert not rogue_locks, f"Rogue VDE lock files found: {rogue_locks}"
 
     # Verify presence of bin/vde
     vde_script = BIN_DIR / "vde"
