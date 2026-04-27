@@ -14,9 +14,14 @@
 - **The Sovereign Charter (The Law of the Two Projects)**: The VDE ecosystem is architected as two distinct projects with hierarchical responsibilities, as codified in `docs/SOVEREIGN_CHARTER.md`. You MUST apply the **Test of the Two Fires** to determine the strike lineage:
     1. **Project 1: The Armor (`@armor`)**: The physical VDE Engine product. AI-blind and Hub-blind. Responsible for container orchestration, SSH bridges, and the core VM registry. Includes `lib/vde-core`, `lib/vde-constants`, and foundational rituals.
     2. **Project 2: The Forge (`@forge`)**: The universal Development AI-Governance system. Enforces the Rule Spine, handles the GitHub lifecycle, and executes BDD verification tests (`tests/features/`). It encompasses **"Any Thing"** logic adaptable to any project.
+- **The Unyielding Tetrad (The System Spine)**: The system MUST empirically verify the four core pillars before any mission ignition:
+    1. **Pillar I: Zsh** (The Voice) - Minimum version 5.0. Verifies native associative array support.
+    2. **Pillar II: Git** (The Chronicler) - Minimum version 2.30. Enforces Conventional Commits.
+    3. **Pillar III: Docker** (The World-Forge) - Version 20.10+. Manages Spoke lifecycles.
+    4. **Pillar IV: SSH** (The Transversal Bridge) - Requires the `vde_student` identity to be active in the Hub's agent.
+- **The Proof of Life Contract (Mandate L)**: The lifecycle defined in `plans/system-spine-contract.md` is the project's **Heartbeat**. It mandates that ALL Spokes must reliably execute: `init`, `create`, `rebuild`, `start`, `enter`, `stop`, `remove`, `add`, and `uninstall`. Failure of any state is a Protocol Blockade.
 - **The Creed-frame**: The narrative fuel established in `data/vde_core/**` must guide all thematic world-building. No Spoke shall be ignited and no structure stabilized that does not align with the mythos.
-- **The Gospel Authority**: The Sovereign Artifact Set (specified in Section 3) is the **Gospel of the Forge**. 
- These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring. Deviation from the Gospel is a breach of The Contract.
+- **The Gospel Authority**: The Sovereign Artifact Set (specified in Section 3) is the **Gospel of the Forge**. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring. **1.5.1 is now the unique Sovereign Baseline. All prior versions and releases are of historical archival value only.**
 - **The Use-Case Creed**: The Forge exists solely to serve the Foundlings (Students) and Reinforcements (New Hires). This is **Creed**. All technical work MUST be centrally driven by its direct improvement to the onboarding and educational experience of these two cohorts.
 - **The Mandate of Architectural Tagging**: ALL artifacts (code, tests, docs, config) MUST be tagged according to their Project alignment (@armor, @forge, or @shared-law) to maintain clear ownership and visibility.
     - **The Positioning Law**: Tags MUST be placed on **line 2 or 3** of every file. Line 1 is reserved for shebangs or file-specific headers.

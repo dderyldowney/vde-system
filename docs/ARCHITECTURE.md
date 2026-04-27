@@ -1,15 +1,16 @@
 # ARCHITECTURE
 <!-- @shared-law (Sovereign Law) -->
-# ARCHITECTURE 1.5.0 (The Sovereign Baseline)
+# ARCHITECTURE 1.5.1 (The Sovereign Baseline)
 
 ## 1. Philosophical Pillars (The Way)
 
-- **The Creed-frame**: The foundational narrative that fuels the Forge. All work is anchored in the Mandalorian and Forge Mythos (`data/vde_core/**`), ensuring our culture and our craft are indistinguishable.
-- **The Gospel**: The Sovereign Artifact Set (specified in Section 4) is the absolute authority. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring.
-- **The Creed**: The Forge exists solely to serve the **Foundlings** (Students) and **Reinforcements** (New Hires). This is **Creed**. Every technical strike must be centrally driven by its direct improvement to their experience.
-- **The Spine**: The system is built upon four non-negotiable technologies: **Zsh, Git, Docker, and SSH**.
-- **The Forge**: The Virtual Development Environment (VDE) is a modular, containerized ecosystem designed for secure, reproducible software engineering.
-- **The Chronicle**: History is preserved through strict adherence to Conventional Commits and automated GitHub workflows.
+- **The Sovereign Charter (The Law of the Two Projects)**: The VDE is architected as two distinct but symbiotic projects:
+    1. **Project 1: The Armor (`@armor`)**: The student-facing Engine. It is AI-blind, Hub-blind, and depends strictly on the Unyielding Tetrad. It provides the runtime environment.
+    2. **Project 2: The Forge (`@forge`)**: The universal Development AI-Governance system. It manages the GitHub lifecycle, enforces mandates, and audits technical integrity.
+- **The Symbiotic Covenant**: The Forge shapes the Armor. Every change to the Forge must be justified by how it improves the Armor product for Foundlings (Students).
+- **The Creed-frame**: The narrative fuel established in `data/vde_core/**` must guide all thematic world-building.
+- **The Gospel**: The Sovereign Artifact Set is the absolute authority. 1.5.1 is the unique Sovereign Baseline.
+- **The Spine**: The system is built upon the **Unyielding Tetrad**: **Zsh, Git, Docker, and SSH**.
 
 ## 2. Structural Design (The Armor)
 

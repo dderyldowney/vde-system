@@ -17,7 +17,23 @@ The Virtual Development Environment is governed by the **Universal Agent Protoco
 - **Ghost Detection**: Monitors for "Ghost Zones" (unauthorized root directories) and ensures build-time artifacts (`apt` lists) are purged.
 - **Supervised Execution**: Every CLI strike is wrapped in the Enforcer to maintain architectural integrity.
 
-## 2. The Ignition Pipeline (The Smelting Ritual)
+## 2. Advanced Orchestration (The Heartbeat)
+
+### 2.1. The Locking Engine (`lib/vm-lock`)
+The VDE utilizes a robust, PID-aware locking mechanism to prevent race conditions during Spoke ignition and registration.
+- **Mutual Exclusion**: Guaranteed via atomic file creation (`mkdir`) in the `.locks/` directory.
+- **Stale Lock Buster**: Implemented a 10s timeout that verifies if the lock's owner PID is still active on the Hub. If the PID is dead, the lock is automatically purged.
+- **Recursive Prevention**: Ecosystem sourcing is strategically deferred until after the primary lock acquisition to eliminate infinite initialization loops.
+
+### 2.2. Dynamic Port Allocation (`lib/vde-docker`)
+Port conflicts are eliminated through an empirical diagnostic handshake:
+- **Registry Authority**: Every VM Type has a hardcoded `ssh_port` and optional `service_ports`.
+- **Diagnostic Probe**: Before ignition, the system executes a port-check ritual. If a port is occupied on the Hub, the system automatically rotates to the next available candidate, ensuring the Spoke can always be bridged.
+
+### 2.3. Universal Script Parity (USP)
+To ensure portability and reliability, every registered VM must have a corresponding hydration script in `scripts/setup/`.
+- **Naming Law**: The script must be named `<alias>-init.zsh`.
+- **Path Sovereignty**: All hydration commands within the Beskar Registry MUST use absolute `/vde/` paths to ensure reliability within the Spoke's internal filesystem.
 
 VDE employs a three-tier reactive synchronization pipeline to transform human-readable intent into high-performance runtime data.
 
