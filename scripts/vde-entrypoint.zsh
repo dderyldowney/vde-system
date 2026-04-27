@@ -48,7 +48,21 @@ else
     echo "[VDE-ENTRYPOINT] WARNING: No SSH bridge found. Forwarding disabled."
 fi
 
-# 3. SPOKE IGNITION HOOKS
+# 3. SSH IDENTITY MANDATE (Rule 14 Readiness)
+# We ensure the Spoke has host keys for the Transversal Bridge
+if [[ ! -f /etc/ssh/ssh_host_rsa_key ]]; then
+    echo "[VDE-ENTRYPOINT] Generating SSH host keys..."
+    sudo ssh-keygen -A
+fi
+
+# 3.1. Dynamic Port Handshake
+# If SSH_PORT is provided, we update the daemon configuration
+if [[ -n "${SSH_PORT}" ]]; then
+    echo "[VDE-ENTRYPOINT] Configuring SSH to listen on port ${SSH_PORT}..."
+    sudo sed -i "s/^#\?Port .*/Port ${SSH_PORT}/" /etc/ssh/sshd_config
+fi
+
+# 4. SPOKE IGNITION HOOKS
 # Trigger automated hydration background services as root
 typeset _spoke_ignition="/usr/local/bin/vde-spoke-ignition.zsh"
 if [[ -f "${_spoke_ignition}" ]]; then
