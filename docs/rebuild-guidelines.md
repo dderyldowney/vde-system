@@ -1,7 +1,7 @@
 # Rebuild Guidelines
 <!-- @shared-law (Sovereign Law) -->
 
-When and how to rebuild your VDE containers.
+When and how to rebuild containers in the **Sovereign Baseline (1.5.1)**.
 
 [← Back to README](../README.md)
 
@@ -12,11 +12,11 @@ When and how to rebuild your VDE containers.
 | Scenario | Command | Why |
 |----------|---------|-----|
 | Daily development | No rebuild needed | Containers are stateless |
-| Dockerfiles change | `vde start <vm> --rebuild` | Rebuild images with new Dockerfile |
-| SSH keys change | `vde start <vm> --rebuild` | New keys need to be baked in |
-| Environment variables change | `vde start <vm> --rebuild` | env-files are read at build time |
-| Base images update | `vde start <vm> --rebuild --no-cache` | Ensure fresh base image |
-| Installing system packages | `vde start <vm> --rebuild` | Packages install during build |
+| Dockerfiles change | `vde rebuild <vm>` | Rebuild images with new Dockerfile |
+| SSH keys change | `vde rebuild <vm>` | New keys need to be baked in |
+| Environment variables change | `vde rebuild <vm>` | env-files are read at build time |
+| Base images update | `vde rebuild --no-cache <vm>` | Ensure fresh base image |
+| Installing system packages | `vde rebuild <vm>` | Packages install during build |
 
 ---
 
@@ -26,20 +26,20 @@ When and how to rebuild your VDE containers.
 
 ```zsh
 # Rebuild single VM
-vde start python --rebuild
+vde rebuild python
 
 # Full clean rebuild
-vde start python --rebuild --no-cache
+vde rebuild --no-cache python
 ```
 
 ### Multiple VMs
 
 ```zsh
 # Rebuild multiple VMs
-vde start python go rust --rebuild
+vde rebuild python go rust
 
 # Rebuild all VMs
-vde start all --rebuild
+vde rebuild all
 ```
 
 ---
@@ -48,7 +48,7 @@ vde start all --rebuild
 
 ### Preserved Across Rebuilds
 
-- Source code in `projects/<name>/`
+- Source code in `$HOME/workspace/` (synced to `projects/<name>/` on Hub)
 - Data in `data/<name>/` (for services)
 - SSH configuration entries
 - Environment files (unless you edit them)
@@ -56,9 +56,9 @@ vde start all --rebuild
 ### Rebuilt
 
 - Docker images
-- Container filesystem
-- Installed packages
-- User configuration inside container
+- Container filesystem (outside of workspace/data)
+- Installed system packages
+- User configuration inside container (outside of persisted volumes)
 
 ---
 
@@ -68,28 +68,28 @@ vde start all --rebuild
 
 ```zsh
 # Rebuild all VMs that use the base image
-vde start all --rebuild
+vde rebuild all
 ```
 
 ### After Adding System Packages
 
 ```zsh
 # Rebuild specific VM
-vde start python --rebuild
+vde rebuild python
 ```
 
 ### After Updating SSH Keys
 
 ```zsh
 # Rebuild to bake in new keys
-vde start all --rebuild
+vde rebuild all
 ```
 
 ### After Base Image Update
 
 ```zsh
 # Full clean rebuild
-vde start all --rebuild --no-cache
+vde rebuild --no-cache all
 ```
 
 ---
@@ -97,32 +97,28 @@ vde start all --rebuild --no-cache
 ## Troubleshooting Rebuilds
 
 ### Rebuild Takes Too Long
-
+By default, `vde rebuild` uses `--no-cache` to ensure purity. If you are iterating quickly and want to use cache, use:
 ```zsh
-# Use cached layers (faster, but may not pick up all changes)
+# Start with rebuild (inherits Docker cache)
 vde start python --rebuild
 ```
 
 ### Rebuild Doesn't Pick Up Changes
-
+Ensure you are using the standard ritual:
 ```zsh
-# Force rebuild without cache
-vde start python --rebuild --no-cache
+vde rebuild <vm>
 ```
 
 ### Container Won't Start After Rebuild
-
 ```zsh
 # Check logs
-docker logs <container-name>
+vde logs <alias>
 
 # Check docker-compose.yml syntax
-docker-compose -f configs/docker/<name>/docker-compose.yml config
-
-# Try no-cache rebuild
-vde start <name> --rebuild --no-cache
+vde info <alias>
 ```
 
 ---
 
 [← Back to README](../README.md)
+**This is the Way.**

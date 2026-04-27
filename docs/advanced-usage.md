@@ -1,7 +1,7 @@
 # Advanced Usage
 <!-- @shared-law (Sovereign Law) -->
 
-Advanced techniques and patterns for power users.
+Advanced techniques and patterns for power users in the **Sovereign Baseline (1.5.1)**.
 
 [← Back to README](../README.md)
 

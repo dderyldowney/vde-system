@@ -28,7 +28,16 @@ vde list python
 vde ps
 
 # Check status of specific VMs
-vde status python postgres
+vde ps python postgres
+```
+
+### Detailed Information
+```zsh
+# Inspect container metadata and labels
+vde inspect python
+
+# Audit the configuration of a specific Spoke
+vde info rust
 ```
 
 ### The Archivist’s Vision
@@ -43,7 +52,7 @@ vde vision
 
 ### Infrastructure Initialization
 ```zsh
-# Hydrate infrastructure, generate keys, and build base image
+# Hydrate infrastructure, generate vde_student keys, and build base image
 vde init
 
 # Force a clean overwrite of all configurations
@@ -54,12 +63,10 @@ vde init --force
 ```zsh
 # Create configuration and directories for a VM
 vde create python
-vde create postgres
 ```
 **Details**:
-- **Atomic Port Allocation**: Automatically reserves a unique SSH port from the dynamic range (2200-2499) and records it in the Beskar Registry.
-- **Workspace Initialization**: Creates required directories in `projects/`, `logs/`, and `.locks/vms/`.
-- **SSH Synchronization**: Appends the Spoke's identity and connection parameters to `configs/ssh/config`.
+- **Atomic Port Allocation**: Automatically reserves a unique SSH port and records it in the Beskar Registry.
+- **Workspace Initialization**: Syncs `$HOME/workspace/` to the host's `projects/` directory.
 
 ### Ignition and Quenching
 ```zsh
@@ -77,7 +84,7 @@ vde restart rust
 
 ### Maintenance and Re-forging
 ```zsh
-# Rebuild a Spoke's Docker image
+# Rebuild a Spoke's Docker image (refreshes image)
 vde rebuild python
 
 # Full clean rebuild without cache
@@ -97,9 +104,8 @@ vde rm rust
 
 ### Sovereign Handshake (SSH)
 ```zsh
-# Enter a Spoke's login shell
+# Enter a Spoke's login shell as devuser
 vde enter python
-vde ssh python
 ```
 
 ### Command Execution
@@ -112,6 +118,12 @@ vde exec go "go version"
 ```zsh
 # Retrieve the assigned SSH port for a Spoke
 vde port python
+```
+
+### Logs
+```zsh
+# Tail the logs of a specific Spoke
+vde logs redis
 ```
 
 ---
@@ -129,7 +141,7 @@ vde cluster stop mean-stack
 ### DNS Handshake
 ```zsh
 # Verify cross-Spoke DNS resolution within vde-net
-vde dns-check <src_vm> <target_vm> [port]
+vde dns-check python postgres
 ```
 
 ---
@@ -167,12 +179,12 @@ vde rebuild-cache
 ### Path of the Foundling
 ```zsh
 # Interactive induction ritual for new students
-vde path-of-the-foundling
+bin/vde path-of-the-foundling
 ```
 
 ### System Health
 ```zsh
-# Run System Spine health checks
+# Run System Spine health checks (Spine Check)
 vde health
 ```
 
@@ -191,3 +203,4 @@ vde nuke
 ---
 
 [← Back to README](../README.md)
+**This is the Way.**

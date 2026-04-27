@@ -21,6 +21,7 @@ VDE_ROOT/
 ├── .tmp/               # General system-level temporary storage
 ├── backup/             # Automated backups of SSH keys and system states
 ├── bin/                # Unified CLI orchestrator and binary rituals
+├── conductor/          # Strike orchestration and mass tagger logic
 ├── configs/            # Docker Compose and service-specific configurations
 ├── data/               # Beskar Registry (vm-types) and service persistence
 ├── docs/               # The Gospel of the Forge (Sovereign Artifact Set)
@@ -32,7 +33,7 @@ VDE_ROOT/
 ├── projects/           # Foundling workspace (Source code mounts for language VMs)
 ├── public-ssh-keys/    # SSH public keys for authorized container injection
 ├── scripts/            # Hydration rituals (setup) and Spoke ignition logic
-├── templates/          # Docker Compose and SSH configuration blueprints
+├── templates/          # Blueprints including forge-mythos rituals
 ├── tests/              # BDD Feature specifications and empirical proofs
 ├── MEMORY.md           # Sovereign session record and mission history
 └── README.md           # Entry point and high-level mission overview
@@ -66,7 +67,7 @@ Modular Zsh 5.0+ libraries following the **ZSH ONLY** mandate.
 - `vde-docker`: Container lifecycle management.
 
 ### `projects/`
-The primary workspace for language Spokes. Each subdirectory is mounted as a volume into the corresponding container at `/home/devuser/workspace`.
+The primary workspace for language Spokes. Each subdirectory is mounted as a volume into the corresponding container at `$HOME/workspace/`.
 
 ### `data/`
 Persistent storage for service Spokes (e.g., PostgreSQL databases, Redis dumps) and the authoritative **Beskar Registry** (`vm-types.json`).

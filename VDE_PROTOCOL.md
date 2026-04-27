@@ -1,61 +1,61 @@
 # VDE PROTOCOL
-<!-- @shared-law (Forge Component) -->
-# VDE Project Protocol (1.5.1)
+<!-- @shared-law (Operational Protocol) -->
+# The Protocol of the Forge (1.5.1)
 
-## Authoritative Tooling Mandate
-This project uses a custom orchestration layer. Direct Docker commands are strictly forbidden for environment interaction.
+This protocol defines the immutable laws for interacting with the **Sovereign Baseline**. Deviation from these rituals is a breach of the Creed and may trigger a Protocol Blockade.
 
-### 1. The "Anti-Exec" Rule
+---
+
+## 1. Authoritative Tooling (The Rule Spine)
+
+The VDE uses a custom orchestration layer to maintain isolation and hydration parity. Direct interaction with the underlying World-Forge (Docker) is strictly forbidden for standard development.
+
+### The "Anti-Exec" Rule
 - **NEVER** use `docker exec` to enter a container.
-- **ALWAYS** use `bin/vde enter <alias>` to ensure SSH bridge and environment variables are active.
+- **ALWAYS** use `vde enter <alias>` to ensure the SSH bridge, user identity (`devuser`), and tribal environment are active.
 
-### 2. Ignition & Lifecycle
+### Lifecycle Mandates
 - **NEVER** use `docker run` or `docker start` manually.
-- **ALWAYS** use `bin/vde start <alias>` to exercise the port-mapping and volume-mounting logic.
-- **ALWAYS** use `bin/vde rebuild <alias>` for image generation to ensure the `CUSTOM_BUILD_CMD` logic is applied.
-
-### 3. Data Authority (Material Truth)
-- All configuration resides in `data/vm-types.json`.
-- The library logic resides in `lib/vm-common`.
-- Schema validation is handled by `vde-core`.
-
-### 4. Identity
-- All development happens as `devuser`.
-- Root is only used for system-level background processes (like `sshd`).
-
+- **ALWAYS** use `vde start <alias>` to exercise the port-mapping, volume-mounting, and DNS discovery logic.
+- **ALWAYS** use `vde rebuild <alias>` for image generation to ensure the **Born Ready (BTO)** build-time hydration is applied.
 
 ---
 
-## **VI. THE LAWS OF THE FORGE (BRANCHING)**
+## 2. Material Truth (Data Authority)
 
-The VDE repository strictly enforces a Sovereign Branching Strategy to maintain the purity of the Baseline:
-
-1. **`main` (Production):** This is the stable production branch. It represents the certified, immutable **Sovereign Baseline** of the Forge.
-2. **`develop` (The Anvil):** This is the primary integration branch for all ongoing development. It is the **Default Branch** for repository operations to enable automated issue closure.
-3. **Semantic Targeting:** The Forge uses semantic roles (`VDE_PRODUCTION_BRANCH`, `VDE_ANVIL_BRANCH`) codified in `lib/vde-constants` to ensure portability.
-4. **Feature Branches (The Strike):** All design, creation, modification, or remediation work MUST be performed on a feature-named branch (e.g., `feat/new-vm-type`, `fix/ssh-bridge`) branching **off of the Anvil (`develop`)**.
-5. **The Merge & Deletion:** Once a feature branch survives the Trial of the Gauntlet (testing) and the code is formally **accepted**, it is merged back into the Anvil (`develop`). Immediately following a successful merge, the feature branch **MUST be deleted** to keep the Forge lean and prevent history corruption.
-6. **The Chronicle (Pull Requests):** The transition of code from the Strike (Feature Branch) to the Anvil (`develop`) is recorded in the Chronicle. This ritual ensures that only pure Beskar is integrated into the baseline, governed by four unbreakable laws:
-    *   **The Law of the Focused Strike:** Scope is absolute. A Pull Request MUST address ONLY the objectives defined in its Signet (Issue). Tangential refactoring or unrelated modifications are forbidden; they belong in their own Strike.
-    *   **The Unbreakable Link:** Every Chronicle entry MUST be forged with auto-closing keywords (e.g., `Closes #N`) linked to an authorized Signet. This ensures every line of code has a documented purpose in the history of the Forge.
-    *   **The Dual-Gate Review:** Certification requires two signatures. The Chronicler (AI Agent) must verify the technical integrity via `code-reviewer`, and the Alor (User) must grant the final blessing. No merge is permitted without both gates being unlocked.
-    *   **The Evidence Mandate:** Trust is earned, not given. The description of every Pull Request MUST contain literal, unedited test output from the Trial of the Gauntlet. Only 100% successful verification is accepted as proof of life.
+- **The Beskar Registry**: `data/vm-types.json` is the sole source of truth for Spoke definitions.
+- **Registry Serialization**: All modifications to the registry or port allocation MUST occur inside the global configuration lock (`global-config.lock`) to prevent race conditions.
+- **The Physical Handshake**: We do not "assume" a port is free; we **claim** it through a physical diagnostic handshake (`docker run --rm`) before assignment.
 
 ---
 
-## **V. THE LAWS OF THE FORGE (GIT HOOKS)**
+## 3. The Laws of the Forge (Branching)
 
-The VDE repository enforces its mandates through physical gatekeepers known as the "Laws of the Forge." These are version-controlled Git hooks stored in the root-level `githooks/` directory.
+We maintain the purity of the Baseline through a strict Git lifecycle:
 
-### **1. The Pre-Strike Sentinel**
-The `pre-commit` hook is the primary guardian of the repository. It performs the following automated checks before any commit is accepted:
-*   **Rule C (Zsh Purity):** Strictly blocks any script using unauthorized shebangs (e.g., `bash`, `sh`). Only `zsh` is permitted.
-*   **Rule 12 (Security Law):** Scans staged changes for hardcoded credentials (API keys, secrets, passwords).
-*   **Silent Spine Check:** Automatically executes the `@system-spine` check to ensure the technological pillars are active and stable.
+1. **`main` (Production)**: Reserved for stable, certified releases of the Sovereign Baseline. **All releases and tags occur here.**
+2. **`develop` (The Anvil)**: The primary integration branch and default for the repository. All feature work originates here.
+3. **The Strike (Feature Branch)**: All work MUST occur on branches originating from `develop` using the format `<type>/<slug>` (e.g., `feat/dns-bridge`).
+4. **The Ritual of the Signet and Chronicle**:
+    - Every strike begins with a **Signet** (GitHub Issue).
+    - Every strike ends with a **Chronicle** (Pull Request).
+    - Commits MUST follow **Conventional Commits** (`feat:`, `fix:`, etc.).
+    - Merged branches MUST be purged (local and remote) immediately.
 
-### **2. Activation Ritual**
-To activate these guardians on a new machine or after a fresh clone, you MUST run the installation script:
-```zsh
-./bin/install-githooks
-```
-This script symlinks the tracked files from `githooks/` into your local `.git/hooks/` directory, ensuring that the project's security laws are active for all contributors.
+---
+
+## 4. The Mandate of Architectural Tagging (Rule 24)
+
+Every file in the ecosystem MUST be tagged on line 2 or 3 to define its Project lineage:
+
+- **`@armor`**: The physical product (student-facing development engine).
+- **`@forge`**: The governance system (universal AI-governance and CI/CD).
+- **`@shared-law`**: The foundational bridge connecting the two.
+
+---
+
+## 5. Certification (Proof of Life)
+
+No strike is considered complete until it passes the **Mandate L (Proof of Life)** audit. This verifies the absolute lifecycle (`init`, `create`, `rebuild`, `start`, `enter`, `stop`, `remove`, `add`, `uninstall`) remains functional.
+
+**This is the Way.**

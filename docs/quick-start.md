@@ -1,6 +1,6 @@
 # QUICK-START
 <!-- @shared-law (Sovereign Law) -->
-# Quick Start
+# Quick Start (Sovereign Baseline 1.5.1)
 
 Get up and running with VDE in minutes.
 
@@ -10,65 +10,49 @@ Get up and running with VDE in minutes.
 
 ## First-Time Setup
 
-```zsh
-# 1. Navigate to your dev directory
-cd VDE
-
-# 2. Ignite the Forge (The Path of the Foundling)
-vde path-of-the-foundling
-
-# 3. Create your first VM (e.g., Go)
-vde create go
-
-# 4. Start and Enter the Spoke
-vde start go
-vde enter go
-```
+1. **Verify Prereqs**: Ensure the **Unyielding Tetrad** (Zsh 5.0+, Git, Docker, and SSH) is installed. 
+   - *Windows Users*: You MUST use **WSL2** (run `wsl --install` in PowerShell) to create your Linux sanctuary first.
+2. **Clone the Baseline**:
+   ```zsh
+   git clone https://github.com/dderyldowney/vde-system.git ~/vde
+   cd ~/vde
+   ```
+3. **Take the Path of the Foundling**:
+   ```zsh
+   bin/vde path-of-the-foundling
+   ```
 
 ---
 
 ## What Just Happened?
 
-When you ran `vde path-of-the-foundling`:
-1. **Interactive Induction**: A step-by-step ritual guided you through project initialization.
-2. **Infrastructure Smelting**: Networks created and directory permissions enforced.
-3. **Identity Forgery**: `vde_student` SSH keys generated and agent primed.
-4. **Foundation Building**: Foundational `vde-base` image built and baked with identity.
-5. **Spine Check**: Core Tetrad (Zsh, Git, Docker, SSH) verified and Git hooks installed.
+When you ran `bin/vde path-of-the-foundling`:
+1. **Interactive Induction**: A step-by-step ritual guided you through initial configuration.
+2. **Infrastructure Smelting**: `vde init` was executed automatically, creating networks and enforcing permissions.
+3. **Identity Forgery**: Your unique `vde_student` SSH identity key was generated and primed.
+4. **Foundation Building**: The foundational `vde-base` image was built and baked with your identity.
+5. **Certification**: Your first Spoke was created and ignited to certify the Transversal Bridge.
 
-When you ran `vde create go`:
-1. **Port Allocation**: SSH port automatically assigned.
-2. **Config Created**: `configs/docker/go/docker-compose.yml` (for documentation).
-3. **Directories Created**: `projects/go/`, `logs/go/`.
-4. **Environment File**: `env-files/go.env`.
+## Daily Workflow
 
-When you ran `vde start go`:
-1. **Spoke Ignition**: Spoke-specific Docker image built and container started.
-2. **SSH Bridge**: Secure transversal bridge established.
-
----
-
-## VM-to-VM Communication
-
-With SSH agent forwarding, your Spokes can communicate seamlessly:
-
-```zsh
-# From inside your Python Spoke, connect to PostgreSQL
-vde enter python
-vde_ssh vde-postgres psql -U devuser
-```
-
-Your Spokes can talk to each other and external services using **your** credentials, safely forwarded through the Hub.
+1. **Ignite & Enter**: 
+   ```zsh
+   vde start python && vde enter python
+   ```
+2. **Code**: You are now the `devuser`. Work in `$HOME/workspace/`. This directory is **persistently synced** to `projects/python` on your Hub (host machine).
+3. **Persist**: Anything saved in `$HOME/workspace/` survives even if you `vde rebuild` the Spoke.
+4. **Quench**: 
+   ```zsh
+   vde stop python
+   ```
 
 ---
 
 ## Next Steps
 
-- **Induction Ritual**: Run `vde path-of-the-foundling` for an interactive tour.
-- **Foundling Guide**: Read `docs/FOUNDLING_GUIDE.md` for a simplified manual.
-- **Advanced Usage**: Follow the `USER_GUIDE.md` for more rituals.
-
-For more details, see [Command Reference](./command-reference.md).
+- **User Guide**: Read the full [USER_GUIDE.md](../USER_GUIDE.md) for advanced rituals.
+- **Foundling Guide**: Read [docs/FOUNDLING_GUIDE.md](./FOUNDLING_GUIDE.md) for a simplified manual.
+- **Reference**: See [Command Reference](./command-reference.md) for all rituals.
 
 ---
 

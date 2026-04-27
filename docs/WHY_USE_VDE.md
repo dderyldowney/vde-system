@@ -2,7 +2,7 @@
 <!-- @shared-law (Sovereign Law) -->
 <p align="center"><img src="imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-# Why VDE? Your Development Playground Awaits! 🎉
+# Why VDE? Your Development Playground Awaits! (1.5.1) 🎉
 
 [← Back to README](../README.md)
 
@@ -12,118 +12,102 @@
 
 ## Hey There! 👋
 
-So you've heard about this VDE thing and you're wondering... should I try it? **Short answer: Yes!** **Longer answer: Keep reading and we'll show you why this might just be the best thing that happens to your development journey.
+So you've heard about this VDE thing and you're wondering... should I try it? **Short answer: Yes!** Whether you're a total beginner or a seasoned pro, VDE is here to make your life easier.
 
-Whether you're a total beginner or a seasoned pro, whether you code in Python or Rust or something entirely new — VDE is here to make your life easier. Let's dive in!
+VDE is a dual-project ecosystem:
+1. **Project 1: The Armor (`@armor`)**: The physical engine providing your isolated development Spokes.
+2. **Project 2: The Forge (`@forge`)**: The governance system that ensures your environment is always certified and battle-ready.
 
 ---
 
 ## The Problem: "It Worked on My Laptop..." 😩
 
-We've *all* been there, and friend, it is *not* fun. You spend more time setting up your environment than actually writing code:
-
-- Installing Python 3.11 (but your project needs 3.9... oops)
-- Fighting with version conflicts (`npm install` giving you nightmares?)
-- Setting up databases that mysteriously fail on your teammate's computer
-- Spending more time configuring than actually creating
-- That awful moment when your local environment breaks and you have to start over
-
-**Sound familiar?** If you're nodding your head right now, you're in the right place. We've got something that will make all of this go away.
+We've *all* been there:
+- Installing Python 3.11 but the project needs 3.9.
+- Fighting with `npm` version conflicts.
+- Databases that work for you but fail for your teammates.
+- Your local machine getting slower as you install more "bloatware."
 
 ---
 
 ## The Solution: VDE — Your New Best Friend! 🌟
 
-**VDE (Virtual Development Environment)** gives you isolated, ready-to-use containers for *any* programming language or service you can dream of.
+**VDE (Virtual Development Environment)** gives you isolated, ready-to-use containers (Spokes) for *any* programming language or service.
 
-Think of it like having a magical workshop with every tool you could ever want — each tool in its own dedicated workspace, always ready, always clean, never interfering with anything else. And the best part? Your code is safe on your own computer! ✨
+Think of it like a magical workshop. Every tool has its own dedicated workspace, always clean, never interfering with anything else. Your code is safe on your own computer, but it runs in a professional Linux environment. ✨
 
 ---
 
 ## What Do I Need? (The Unyielding Tetrad) 🎒
 
-You only need **four things** (The Unyielding Tetrad) installed on your computer:
+You only need **four things** (The Unyielding Tetrad) on your computer:
 
-| What | Why | Already Have It? |
-|------|-----|------------------|
-| **Zsh (Mandatory)** | The Voice of the Tribe (runs VDE scripts) | Run: `echo $SHELL` |
-| **Git** | The Chronicler (clones the repository) | Run: `git --version` |
-| **Docker** | The World-Forge (runs your Spokes) | Run: `docker --version` |
-| **SSH** | The Transversal Bridge (connects you to Spokes) | Run: `ssh -V` |
+| What | Why | Requirement |
+|------|-----|-------------|
+| **Zsh** | The Voice of the Tribe | Version 5.0+ (**ZSH ONLY**) |
+| **Git** | The Chronicler | Version 2.30+ |
+| **Docker** | The World-Forge | Desktop or Engine |
+| **SSH** | The Transversal Bridge | OpenSSH Client |
 
-**That's it!** No language runtimes. No databases. No package managers. Just the Tetrad. Simple!
+**That's it!** No language runtimes. No databases. Just the Tetrad.
 
 ### 🪟 Windows Users: The WSL2 Mandate
-Windows users can perfectly unify their environment with Linux and MacOS by using **WSL2 (Windows Subsystem for Linux)**. Once WSL2 is active, you can install the full Tetrad and walk the same path as any other warrior.
+Windows users unify their path by using **WSL2 (Windows Subsystem for Linux)**. Once you're in a WSL2 shell, you have the same powerful environment as Linux and macOS users.
 
 ---
 
-## One Command to Rule Them All 👑
+## The Onboarding Ritual: One Command to Rule Them All 👑
 
-VDE has a simple, unified command that does *everything*:
+VDE has a simple induction ritual that handles everything for you:
 
 ```zsh
-vde
+bin/vde path-of-the-foundling
 ```
 
-*(Note: Use `./bin/vde` if you haven't added it to your PATH yet!)*
-
-That's it. One command to remember. No memorizing a dozen different scripts. Just `vde`. Easy!
+This ritual will:
+1. Verify your Tetrad health.
+2. Generate your `vde_student` SSH keys.
+3. **Automatically run `vde init`** to hydrate your Forge.
+4. Walk you through creating and entering your first Python Spoke.
 
 ---
 
-## Getting Started: It's This Easy 🚀
-
-Ready to have your mind blown? Here's all it takes to get started:
+## Your Daily Rhythm: It's This Easy 🚀
 
 ```zsh
-# Step 1: Ignite the Forge (only once!)
-vde init
-
-# Step 2: Forge your workspace
+# Step 1: Forge your workspace
 vde create python
 
-# Step 3: Start and Enter
+# Step 2: Start and Enter
 vde start python
 vde enter python
 ```
 
-**And now...** 🎊 You have a fully-functional Python environment with its own isolated workspace. 
-
-**Wait, where is my code?** 📂
-When you are inside a Spoke (like Python), you work in `/home/devuser/workspace`. This is a **Reflection** of the `projects/` directory inside your VDE folder on your computer. Anything you save there is already saved on your laptop! No moving files, no manual sync. It's just there.
+**And now...** 🎊 You are inside the Spoke as `devuser`. Your code lives at `$HOME/workspace/`, which is **persistently synced** to your host computer. Save your work there, and it will survive even if you rebuild the Spoke!
 
 ---
 
 ## What Can I Run? (Spoiler: Everything!) 🌍
 
-VDE supports **23 programming languages** and **8 shared services** out of the box:
+VDE supports **24 programming languages/stacks** and **8 shared services** out of the box:
 
 | Category | Highlights |
 |----------|-----------|
-| **Languages** | Python, Rust, Go, JavaScript, C++, Zig, Flutter, Java, and more! |
-| **Services** | PostgreSQL, MySQL, Redis, MongoDB, Nginx, RabbitMQ, and more! |
-
-All pre-configured. All ready to connect. All waiting for you.
+| **Languages** | Python, Rust, Go, JS, C++, Elixir, Flutter, Java, Lua, MEAN, LAMP, and more! |
+| **Services** | PostgreSQL, MySQL, Redis, MongoDB, Nginx, RabbitMQ, JupyterLab, and more! |
 
 ---
 
-## The "Magic" Part: VMs Talking to VMs ✨
+## The "Magic" Part: Spokes Talking to Spokes ✨
 
-Imagine you're working in your Python container and you need to test something against a database. You don't need to exit or mess with connection strings:
+VDE 1.5.1 features automated **DNS Discovery**. If you're in your Python Spoke and need your database, just use its name:
 
 ```zsh
 # From inside your Python Spoke
-vde_ssh vde-postgres psql -U devuser
+psql -h vde-postgres -U devuser
 ```
 
-Your Spokes can talk to each other and to the outside world using **your** credentials, safely forwarded through the SSH bridge.
-
----
-
-## You're in Control (Even If You Don't Know Docker) 🎮
-
-VDE handles all the Docker complexity for you. You don't need to know how to write Dockerfiles or configure networks. **VDE does it all.** You just focus on coding!
+Spokes talk to each other and to your Hub (`vde-host`) through a secure, isolated bridge.
 
 ---
 
@@ -131,50 +115,26 @@ VDE handles all the Docker complexity for you. You don't need to know how to wri
 
 ### For Beginners 👶
 - Learn any language without installation nightmares.
-- Experiment freely — you can't break your actual computer!
+- Experiment freely — you can't break your computer!
 
 ### For Experienced Developers 💼
 - Rapid environment switching.
-- Consistent environments across teams — "It works on *everyone's* machine!"
+- Total parity — "It works on *everyone's* machine!"
 
 ### For Tinkerers 🔧
 - Try a new language for a weekend, then `vde remove` it. No traces left.
 
 ---
 
-## What If I Want to Stop Using VDE? 👋
-
-We get it! Sometimes you're done or just want to clean up. VDE is designed to be completely removable with a single ritual.
-
-### The Removal Ritual ☢️
+## Ready to Give It a Try? 🎉
 
 ```zsh
-# Dissolve the entire Forge, images, networks, and configurations
-vde nuke
+git clone https://github.com/dderyldowney/vde-system.git ~/vde
+cd ~/vde
+bin/vde path-of-the-foundling
 ```
 
-**Manual cleanup (if you prefer):**
-1. Stop all containers: `vde stop all`
-2. Delete the VDE directory.
-3. Delete the isolated SSH vault: `rm -rf ~/.ssh/vde`
-
-**That's it!** No leftover packages. No system changes to undo. Clean as a whistle! ✨
-
----
-
-## Ready to Give It a Try? (You Know You Want To!) 🎉
-
-**Your first VDE is four steps away:**
-
-```zsh
-cd VDE
-vde init
-vde create python
-vde start python
-vde enter python
-```
-
-**That's it!** Welcome to easier, more joyful development. You're going to love it here! 🏠
+**Welcome to easier, more joyful development. This is the Way.** 🏠
 
 ---
 

@@ -23,8 +23,7 @@
 
 ## 3. Security posture (The Beskar)
 
-- **Identity Isolation**: Development occurs exclusively as `vde_student` within Spokes.
-- **Network Segmentation**: Spokes are confined to the `vde-net` bridge with no host-network exposure except via mapped ports.
+- **Identity Isolation**: Development occurs exclusively as `devuser` within Spokes. The `vde_student` key is the unique identity used to authenticate the bridge.
 - **Static Guards**: UAP enforcement and pre-commit hooks verify mandate compliance at every strike.
 
 ## 4. Absolute Mandates (The Laws)
@@ -61,7 +60,7 @@ VDE enforces a strict branch-based release lifecycle to maintain the purity of t
 5.  **X.X.X Releases**: Step and milestone releases are applied against `main` only. `develop` remains for development only.
 
 ---
-Version: 1.5.0
+Version: 1.5.1
 Status: SOVEREIGN BASELINE CERTIFIED
 Identity: The Covert
 ---
