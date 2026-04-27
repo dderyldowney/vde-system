@@ -292,7 +292,7 @@ Host vde-certified-ghost
     RequestTTY yes
 # VDE VM: vde-dynamic-vm
 # @shared-law (Sovereign Law)
-Host vde-dynamic-vm
+Host vde-couchdb
     HostName localhost
     Port 2400
     User devuser
