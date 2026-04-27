@@ -57,12 +57,12 @@ test_registry_presence() {
 test_identity_assignment() {
     test_start "jupyterlab has correct port assignments"
     local ssh_port=$(get_vm_info ssh_port "vde-jupyterlab")
-    local svc_ports=$(get_vm_info svc_port "vde-jupyterlab")
+    local svc_ports=$(get_vm_info svc_ports "vde-jupyterlab")
     
-    if [[ "$ssh_port" == "2407" && "$svc_ports" == "8888" ]]; then
+    if [[ "$ssh_port" == "2401" && "$svc_ports" == "8888" ]]; then
         test_pass
     else
-        test_fail "Ports incorrect: SSH=$ssh_port (expected 2407), SVC=$svc_ports (expected 8888)"
+        test_fail "Ports incorrect: SSH=$ssh_port (expected 2401), SVC=$svc_ports (expected 8888)"
     fi
 }
 
@@ -113,30 +113,38 @@ test_workspace_mount_override() {
 test_runtime_connectivity() {
     test_start "jupyterlab container is responsive on port 8888"
     
-    # Check if container is running
-    if ! docker ps --filter name=vde-jupyterlab --filter status=running | grep -q vde-jupyterlab; then
-        echo -n "(igniting...) "
-        "$PROJECT_ROOT/bin/vde" start jupyterlab >/dev/null 2>&1
+    # Mandate: Force fresh ignition to ensure empirical proof of the current Beskar
+    "$PROJECT_ROOT/bin/vde" stop jupyterlab >/dev/null 2>&1 || true
+    "$PROJECT_ROOT/bin/vde" rm jupyterlab >/dev/null 2>&1 || true
+    
+    echo -n "(igniting...) "
+    if ! "$PROJECT_ROOT/bin/vde" start jupyterlab >/dev/null 2>&1; then
+        test_fail "Failed to ignite vde-jupyterlab"
+        return 1
     fi
     
-    # Polling for service readiness (Jupyter can take a few seconds to bind)
-    local max_retries=15
-    local retry=0
-    local success=0
-    
-    while [[ $retry -lt $max_retries ]]; do
-        if curl -s -I http://localhost:8888 | grep -q "HTTP/1.1"; then
-            success=1
-            break
-        fi
-        zmodload zsh/zselect && zselect -t 100
-        ((retry++))
-    done
-    
-    if [[ $success -eq 1 ]]; then
-        test_pass
+    # Use vde-poll to monitor hydration (Rule 23)
+    # Mandate: JupyterLab has a ~12 minute hydration window. We wait 15m (900s).
+    echo -n "(polling process...) "
+    if "${PROJECT_ROOT}/bin/vde-poll" --exec "pgrep -f jupyter-lab" --timeout 900 jupyterlab; then
+        echo -n "(polling HTTP port...) "
+        local max_retries=900
+        local retry=0
+        
+        while [[ $retry -lt $max_retries ]]; do
+            # We use localhost here because the port is mapped to the Hub
+            if curl -s -I http://localhost:8888 | grep -q "HTTP/1.1"; then
+                test_pass
+                return 0
+            fi
+            # MANDATE: vde-poll is the SOLE permitted wait primitive
+            "${PROJECT_ROOT}/bin/vde-poll" --wait 1 all >/dev/null 2>&1
+            (( retry++ ))
+            [[ $(( retry % 10 )) -eq 0 ]] && echo -n "."
+        done
+        test_fail "JupyterLab UI not responding on port 8888 after 900s"
     else
-        test_fail "JupyterLab UI not responding on port 8888 after ${max_retries}s"
+        test_fail "JupyterLab process not found after 900s"
     fi
 }
 

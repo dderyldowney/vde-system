@@ -7,7 +7,7 @@ typeset _ZSH_PURE=${(%):-%x}
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
 #
-# Release: Sovereign Baseline 1.4.1
+# Release: Sovereign Baseline 1.5.1
 # Objective: Hardened build-time hydration with Rust Mirror verification.
 
 set -e
@@ -44,6 +44,15 @@ sudo -u devuser zsh -c '
     # Append the mandated path export to the end of the files
     echo "export PATH=\"\$HOME/.cargo/bin:\$PATH\"" >> ~/.zshenv
     echo "export PATH=\"\$HOME/.cargo/bin:\$PATH\"" >> ~/.zshrc
+'
+
+# 3.5. COMPONENT HYDRATION
+# Install rust-analyzer as devuser, with cargo/bin already on PATH from the
+# persistence anchors above. Must run after .zshrc/.zshenv are written.
+sudo -u devuser zsh -c '
+    export PATH="$HOME/.cargo/bin:$PATH"
+    rustup component add rust-analyzer
+    rustup component add rust-src
 '
 
 # 4. PURGING THE GHOSTS

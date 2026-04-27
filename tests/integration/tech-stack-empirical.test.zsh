@@ -18,7 +18,9 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 # 2. Setup: Ensure clean slate
 echo "[1/5] Purging existing containers..."
-"${VDE_ROOT_DIR}/bin/vde" stop all >/dev/null 2>&1
+"${VDE_ROOT_DIR}/bin/vde" stop all -f >/dev/null 2>&1
+
+
 
 # 3. Ignition: Start the fleet
 echo "[2/5] Igniting Python, PostgreSQL, and Redis..."

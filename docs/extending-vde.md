@@ -212,7 +212,7 @@ fi
 
 ---
 
-## Current VM Types (1.5.0 The Sovereign Baseline)
+## Current VM Types (1.5.1 The Sovereign Baseline)
 
 VDE supports 29+ pre-configured VM types including Python, Go, Rust, PostgreSQL, Redis, and JupyterLab.
 

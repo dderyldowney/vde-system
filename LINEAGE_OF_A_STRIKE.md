@@ -1,5 +1,5 @@
 # LINEAGE OF A STRIKE: vde start <target>
-# @shared-law (Sovereign Documentation)
+<!-- @shared-law (Forge Component) -->
 
 This document traces the technical and architectural lineage of a single `vde start` command as it moves from the initial sparks of the Forge through the armored shell of the Engine.
 

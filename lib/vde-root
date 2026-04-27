@@ -27,5 +27,5 @@ if [[ -n "$ROOT_FOUND" ]]; then
   return 0
 fi
 
-# Fallback: use the present working directory as root
-export VDE_ROOT_DIR="${PWD}"
+# Fallback: derive root from script location
+export VDE_ROOT_DIR="${${(%):-%x}:a:h:h}"

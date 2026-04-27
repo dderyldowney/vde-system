@@ -59,6 +59,25 @@ def vde_sleep(seconds):
     select.select([], [], [], seconds)
 
 
+def resolve_vm_name(vm_input):
+    """Resolve VM name or alias to canonical vde- name. Parity with lib/vm-common."""
+    if not vm_input:
+        return ""
+    
+    # 1. Check as-is
+    vm_types = load_vm_types_raw()
+    full_name = vm_input if vm_input.startswith("vde-") else f"vde-{vm_input}"
+    
+    for cat in ["language", "service"]:
+        for vm in vm_types.get("vms", {}).get(cat, []):
+            if vm.get("name") == full_name:
+                return full_name
+            if vm_input in vm.get("aliases", []):
+                return vm.get("name")
+                
+    return full_name
+
+
 def get_vm_conf_dir(vm_name):
     """Get VM configuration directory in configs/docker/<category>/."""
     # Normalize name (remove vde- prefix if present)
@@ -651,7 +670,10 @@ def run_vde_command(command, timeout=300, context=None, input_text=None, env=Non
         "stats",
         "info",
         "ask",
+        "validate",
         "validate-schemas",
+        "heal",
+        "audit",
     }
 
     # Standardize to list of args
@@ -824,6 +846,25 @@ def get_container_name(vm_name):
     Canonical implementation - adds vde- prefix if not present.
     """
     return f"vde-{vm_name}"
+
+
+def get_vm_info(field, vm_name):
+    """Get a specific metadata field for a VM from vm-types.json.
+    
+    Args:
+        field: The field to retrieve (e.g., 'ssh_port', 'service_ports')
+        vm_name: The name of the VM (with or without vde- prefix)
+    """
+    vm_types = load_vm_types_raw()
+    full_name = f"vde-{vm_name.replace('vde-', '')}"
+    
+    # Check languages and services
+    for cat in ["language", "service"]:
+        for vm in vm_types.get("vms", {}).get(cat, []):
+            if vm.get("name") == full_name:
+                return str(vm.get(field, ""))
+                
+    return ""
 
 
 def get_vm_name(container_name):

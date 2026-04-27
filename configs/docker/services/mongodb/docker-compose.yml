@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Forge Component)
+# @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: mongodb, 2401, 27017, -, zsh /vde/scripts/setup/mongodb-init.zsh
+# Variables: mongodb, 2401, 27017, , zsh /vde/scripts/setup/mongodb-init.zsh
 name: vde-mongodb
 services:
   vde-mongodb:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: mongodb
-        PKGS_TO_INSTALL: "-"
+        PKGS_TO_INSTALL: ""
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/mongodb-init.zsh"
         POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser

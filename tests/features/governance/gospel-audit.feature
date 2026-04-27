@@ -1,5 +1,5 @@
 # Sovereign Gospel Integrity
-# @forge (Governance Audit)
+# @forge (Governance Sentinel)
 Feature: Sovereign Gospel Integrity
   As an Alor of the VDE
   I require empirical proof that the Gospel is synchronized with the physical implementation

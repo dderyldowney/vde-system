@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Forge Component)
+# @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: elixir, 2205, -, zsh /vde/scripts/setup/elixir-init.zsh
+# Variables: elixir, 2205, , zsh /vde/scripts/setup/elixir-init.zsh
 name: vde-elixir
 services:
   vde-elixir:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: elixir
-        PKGS_TO_INSTALL: "-"
+        PKGS_TO_INSTALL: ""
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/elixir-init.zsh"
         USERNAME: devuser
         UID: 1000

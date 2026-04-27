@@ -1,5 +1,5 @@
 # VDE SSH Configuration
-# Sovereign Baseline: 1.5.0
+# Sovereign Baseline: 1.5.1
 # DO NOT EDIT MANUALLY
 
 # VDE VM: vde-asm
@@ -235,6 +235,54 @@ Host vde-testport1
 Host vde-testport2
     HostName localhost
     Port 2219
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    RequestTTY yes
+# VDE VM: vde-lua
+# @shared-law (Sovereign Law)
+Host vde-lua
+    HostName localhost
+    Port 2220
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    RequestTTY yes
+# VDE VM: vde-mean
+# @shared-law (Sovereign Law)
+Host vde-mean
+    HostName localhost
+    Port 2221
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    RequestTTY yes
+# VDE VM: vde-lamp
+# @shared-law (Sovereign Law)
+Host vde-lamp
+    HostName localhost
+    Port 2222
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    RequestTTY yes
+# VDE VM: vde-certified-ghost
+# @shared-law (Sovereign Law)
+Host vde-certified-ghost
+    HostName localhost
+    Port 2223
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts

@@ -1,6 +1,6 @@
 # VDE PROTOCOL
 <!-- @shared-law (Forge Component) -->
-# VDE Project Protocol (1.5.0)
+# VDE Project Protocol (1.5.1)
 
 ## Authoritative Tooling Mandate
 This project uses a custom orchestration layer. Direct Docker commands are strictly forbidden for environment interaction.

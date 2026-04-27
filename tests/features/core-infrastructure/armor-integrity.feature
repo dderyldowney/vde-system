@@ -1,5 +1,5 @@
 # Armor Structural Integrity
-# @armor (Technical Integrity)
+# @forge (Governance Sentinel)
 Feature: Armor Structural Integrity
   As a student using the VDE
   I require empirical proof that the Armor can detect its own fractures

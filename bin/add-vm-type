@@ -139,7 +139,7 @@ fi
 # Default install command if not specified
 if [[ -z "${INSTALL_CMD}" ]]; then
     if [[ -n "${PKGS}" ]]; then
-        INSTALL_CMD="apt-get update -y && apt-get install -y ${PKGS}"
+        INSTALL_CMD="apt-get update -y && apt-get install -y ${PKGS} && apt-get clean && rm -rf /var/lib/apt/lists/*"
     else
         INSTALL_CMD="echo 'Hydration complete'"
     fi
@@ -296,7 +296,7 @@ if [[ "${QUIET}" == "false" ]]; then
     # Regenerate Configs
     # -----------------------
     log_info "Regenerating VDE configurations..."
-    "${BIN_DIR}/generate-all-configs" >/dev/null 2>&1
+    "${VDE_ROOT_DIR}/bin/generate-all-configs" >/dev/null 2>&1
 fi
 
 log_success "VM type '${VM_NAME}' added successfully!"

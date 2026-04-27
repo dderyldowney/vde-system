@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Gospel Auditor)
+# @armor (Engine Core)
 #===============================================================================
 # vde-gospel-audit.zsh - Sovereign Artifact Integrity Sentinel
 #

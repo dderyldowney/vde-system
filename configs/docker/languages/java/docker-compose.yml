@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Forge Component)
+# @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: java, 2209, -, zsh /vde/scripts/setup/java-init.zsh
+# Variables: java, 2209, , zsh /vde/scripts/setup/java-init.zsh
 name: vde-java
 services:
   vde-java:
@@ -10,7 +10,7 @@ services:
       dockerfile: configs/docker/vde-lang.Dockerfile
       args:
         VM_NAME: java
-        PKGS_TO_INSTALL: "-"
+        PKGS_TO_INSTALL: ""
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/java-init.zsh"
         USERNAME: devuser
         UID: 1000

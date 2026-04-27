@@ -1,29 +1,22 @@
-# VDE Beskar Record: 1.4.1 (The Sovereign Baseline)
+# VDE Beskar Record: 1.5.0 (The Sovereign Evolution)
 <!-- @shared-law (Forge Component) -->
 
 ## SOVEREIGN STATE
-- **Baseline**: 1.4.1 (Certified 2026-04-22)
+- **Baseline**: 1.5.0 (Certified 2026-04-26)
 - **Status**: 100% GREEN (PEAK INTEGRITY)
 - **Heartbeat**: Certified via Mandate L; automated via pre-push and CI.
 
 ## CORE MEMORIES
-- **Security & Privacy Gate**: Established local/remote sentinels (bin/vde-security-audit.zsh). CodeQL monitoring is now non-negotiable.
-- **Privacy Purification**: All absolute home path leaks purged globally ($HOME used exclusively).
-- **Rule Q Enforcement**: Orchestrator-exclusive Proof of Life is active.
-- **BDD Hardening**: Purged all 'pink' steps; implemented real empirical Docker/SSH heartbeats.
-- **vde-init Remediation**: Healed Zsh arithmetic fracture ((( i++ )) bug).
+- **Locking Storm Remediation**: Fixed infinite recursion in `vde-poll` by moving ecosystem sourcing below the `--wait` block. Implemented `VDE_NO_LOCK` bypass and 10s "Stale Lock Buster" in `lib/vm-lock`.
+- **Registry Restoration**: Re-added missing entries (`certified-ghost`, `lamp`, `lua`, `mean`) to Beskar Registry and ensured all hydration commands use absolute `/vde/` paths for in-container reliability.
+- **Project Portability**: Standardized `VDE_ROOT_DIR` calculation using zsh-native absolute detection. Documented "Absolute Path Exemption" for container-internal filesystem paths.
+- **Path Purification**: Purged absolute host-path leaks in `.tmp.driveupload` and updated `vde-security-audit.zsh` to exclude ephemeral artifacts.
+- **Phase 31 (DNS & Bridge) [CERTIFIED]**: Verified Spoke-to-Spoke and Hub-to-Spoke resolution.
+- **Phase 32 (Forge Intelligence) [CERTIFIED]**: Validated auto-remediation and registry healing rituals.
+- **Sovereign Initialization (1.5.0)**: Completed session ignition with a 100% success rate across all rituals (UAP Audit, Spine Check, Proof of Life).
 
-- **Phase 31 (DNS & Bridge) [CERTIFIED]**: 
-  - Implementation of dual DNS aliases (short/prefixed) certified via Docker DNS.
-  - Sovereign Bridge (`vde-host`, `host`) mapped to `host-gateway` for Hub-to-Spoke communication.
-  - Refactored `bin/generate-all-configs` for Zsh-native efficiency (Direct array access).
-  - Hardened BDD verification via `execute_in_container` (direct `docker exec`) to bypass UAP log headers.
-  - Resolved structural fractures in `vde-entrypoint.zsh` for root-powered Spoke ignition.
-  - Standardized hydration rituals (LAMP/MEAN/Jupyter) on short-alias discovery.
-  - **Gospel Synchronization Strike**: Purified the Sovereign Artifact Set (VDE-SPEC.md, command-reference.md, directory-structure.md, STDLIB.md) to match 1.4.1 Baseline.
-  - **Test Suite Remediation**: Fixed deprecated CLI options and hardened DNS resolution assertions in BDD scenarios.
-  - **Path Purification**: Remediated absolute path leaks in `plans/scripts/`.
-  - Timestamped 1.4.1 Baseline to 2026-04-24.
-  - **STATUS**: 100% GREEN. Heartbeat certified. Documentation synchronized. Phase 32 ignition authorized.
+## THE NEXT STRIKE (CRITICAL)
+- **Absolute Objective**: Verify that the entire Forge is fully functional on a clean terminal.
+- **Synchronization**: Ensure every artifact is synchronized to `develop` and pushed to `origin`. No work is considered complete until the remote record mirrors the local Beskar.
 
 **This is the Way.**

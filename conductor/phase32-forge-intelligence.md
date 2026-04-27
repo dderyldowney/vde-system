@@ -1,8 +1,7 @@
 # Phase 32: Forge Intelligence (The Self-Augmenting Sentinel)
-# @forge (Strike Plan)
+<!-- @shared-law (Forge Component) -->
 
 **Status**: DRAFT (Pending Clan Leader Approval)
-**Target**: `@shared-law` and `@forge`
 **Branch**: `feat/phase32-forge-intelligence`
 
 ## Background & Motivation

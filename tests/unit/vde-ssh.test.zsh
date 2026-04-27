@@ -169,7 +169,7 @@ test_detect_ssh_keys() {
 
     local result
     result=$(detect_ssh_keys 2>/dev/null)
-    if [[ "$result" = "$VDE_SSH_IDENTITY" ]]; then
+    if [[ "$result" == "$VDE_SSH_IDENTITY" ]]; then
         test_pass "detect_ssh_keys - key exists"
         return
     else

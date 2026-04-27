@@ -103,7 +103,7 @@ def step_verify_hydration(context, script_path):
 
 @then('the SSH port should be atomically allocated and recorded in the registry')
 def step_verify_port_allocation(context):
-    # In 1.5.0, the authoritative port is recorded in .cache/vm-types.cache
+    # In 1.5.1, the authoritative port is recorded in .cache/vm-types.cache
     cache_file = VDE_ROOT / ".cache" / "vm-types.cache"
     assert cache_file.exists(), "VM types cache missing"
     
@@ -237,7 +237,7 @@ def step_verify_destroyed(context, container_name):
 @then('the SSH configuration should be preserved')
 def step_verify_ssh_preserved(context):
     # SSH config should NOT be deleted on 'remove' by mandate
-    # VDE 1.5.0 standard is ~/.ssh/vde/config
+    # VDE 1.5.1 standard is ~/.ssh/vde/config
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
     
     assert ssh_config.exists(), f"VDE SSH config missing at {ssh_config}"
@@ -340,8 +340,23 @@ def step_hub_active(context):
     res_ssh = subprocess.run(['ssh', '-V'], capture_output=True, text=True, timeout=5)
     assert res_ssh.returncode == 0, "ssh not responding"
 
+@step('I execute "{command}" inside "{vm_name}"')
+def step_execute_inside(context, command, vm_name):
+    from vm_common import run_vde_command
+    # Standardize to use vde exec bridge which handles environment and sourcing
+    result = run_vde_command(f"exec {vm_name} {command}")
+    context.last_result = result
+    context.command_output = result.stdout + result.stderr
+    context.command_exit_code = result.returncode
+
 @step('I execute "{command}"')
 def step_execute_command(context, command):
+    # Handle the 'inside' pattern if it appears in the command string itself
+    import re
+    match = re.match(r'(.*) inside "(.*)"', command)
+    if match:
+        cmd, vm = match.groups()
+        return step_execute_inside(context, cmd, vm)
 
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     context.last_result = result

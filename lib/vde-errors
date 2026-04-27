@@ -10,7 +10,7 @@
 # - Documentation link integration
 # - Verbose mode support for detailed error output
 #
-# Shell Compatibility: ZSH-exclusive (ZSH 5.0+)
+# Shell Compatibility: ZSH ONLY (Language of the Tribe)
 #
 # Usage:
 #   source ./lib/vde-errors

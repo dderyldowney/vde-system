@@ -1,6 +1,6 @@
 # ARCHITECTURE
 <!-- @shared-law (Sovereign Law) -->
-# ARCHITECTURE 1.4.1 (The Sovereign Baseline)
+# ARCHITECTURE 1.5.0 (The Sovereign Baseline)
 
 ## 1. Philosophical Pillars (The Way)
 
@@ -60,7 +60,7 @@ VDE enforces a strict branch-based release lifecycle to maintain the purity of t
 5.  **X.X.X Releases**: Step and milestone releases are applied against `main` only. `develop` remains for development only.
 
 ---
-Version: 1.4.1
+Version: 1.5.0
 Status: SOVEREIGN BASELINE CERTIFIED
 Identity: The Covert
 ---

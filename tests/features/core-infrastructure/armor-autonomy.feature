@@ -1,5 +1,5 @@
 # Armor Independent Autonomy
-# @armor (Technical Autonomy)
+# @forge (Governance Sentinel)
 Feature: Armor Independent Autonomy
   As a student using the VDE
   I require empirical proof that the Armor is self-correcting and self-healing

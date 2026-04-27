@@ -1,5 +1,5 @@
 # Remediation Plan: Absolute Path Leak Purification
-<!-- @forge (Remediation Plan) -->
+<!-- @forge (Governance Sentinel) -->
 
 ## Objective
 Remediate the [CRITICAL] Protocol Fracture detected by the UAP Enforcer in `plans/scripts/test_fifo.zsh`. Purge all hardcoded absolute paths to ensure workspace portability and security.

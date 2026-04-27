@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Hydration Ritual)
+# @armor (Engine Core)
 # Forged in Beskar: vde-lamp
 set -e
 export DEBIAN_FRONTEND=noninteractive

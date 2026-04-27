@@ -1,5 +1,5 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Forge Component)
+# @shared-law (Sovereign Law)
 # Template for service VMs
 # Variables: jupyterlab, 2407, 8888, python3-pip python3-venv tini, zsh /vde/scripts/setup/jupyterlab-init.zsh
 name: vde-jupyterlab
