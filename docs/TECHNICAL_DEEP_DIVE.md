@@ -90,7 +90,7 @@ The `vde-enforce-uap.zsh` sentinel utilizes the **Universal Architectural Regex*
 ## 6. Security & Sovereign Bridge
 
 ### Identity Isolation (`lib/vde-security`)
-- **Key Isolation**: The `vde_student` identity is confined to `${VDE_SSH_DIR}` (`~/.ssh/vde/`).
+- **Identity Isolation**: All development activities within a Spoke are performed as the `devuser` account. Authentication is secured via the `vde_student` identity key, which is confined to `${VDE_SSH_DIR}` (`~/.ssh/vde/`).
 - **Permission Enforcement**: `vde_security_enforce_permissions` applies recursive `700` to sensitive directories (`data/`, `logs/`, `.cache/`, `.locks/`) and `600` to identity/env files.
 - **Network Segmentation**: `vde-net` (bridge) ensures container isolation with `vde.managed=true` labeling.
 
@@ -102,7 +102,7 @@ VDE enforces absolute determinism for the **Transversal Bridge**. If the `vde_st
 
 ### Bridge Hardening (Phase 27)
 - **Conditional Forwarding**: `vde-entrypoint.zsh` performs a "Sovereign Bridge Handshake." It only exports the `socat` proxy socket to `SSH_AUTH_SOCK` if the variable is empty, protecting protocol-native forwarding (`ssh -A`) from being overwritten.
-- **Persistence Anchor**: The bridge is preserved for non-login shells via conditional injection into `/home/devuser/.zshenv`.
+- **Persistence Anchor**: The bridge is preserved for non-login shells via conditional injection into `$HOME/.zshenv`.
 
 ## 7. GitHub Workflow (The Chronicle)
 
@@ -150,7 +150,7 @@ VDE implements a high-fidelity internal network resolution system to facilitate 
 - **Handshake Verification**: The `vde dns-check` command provides empirical proof of cross-Spoke connectivity, ensuring the Transversal Bridge is active.
 
 ---
-**Version**: 1.5.0
+**Version**: 1.5.1
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE 1.5.0
+**Reference**: ARCHITECTURE 1.5.1
 ---

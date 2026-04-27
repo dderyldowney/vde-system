@@ -2,8 +2,8 @@
 <!-- @shared-law (Forge Component) -->
 
 ## 1. STRATEGIC CONTEXT
-- **Mission**: Initialize Session 1.5.0 and Update Record.
-- **Sovereign Baseline**: 1.5.0 (CERTIFIED)
+- **Mission**: Initialize Session 1.5.1 and Update Record.
+- **Sovereign Baseline**: 1.5.1 (CERTIFIED)
 - **Status**: 100% GREEN (Verified via Proof of Life)
 - **Heartbeat**: Certified via `proof-of-life-the-contract.feature`.
 

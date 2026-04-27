@@ -1,265 +1,81 @@
-# VDE (Virtual Development Environment)
-<!-- @shared-law (Sovereign Law) -->
+# VDE Development Guide
+<!-- @forge (AI Governance) -->
 
-VDE is a Docker-based container orchestration system for managing 20+ language VMs and 7+ service VMs. It provides a unified interface for creating, starting, stopping, and managing development environments with features like SSH agent forwarding, natural language command parsing, and template-based configuration generation.
+**Version:** 1.5.1 (The Sovereign Baseline)
 
 ## Code Style
 
-- **All shell scripts must use zsh** (`#!/usr/bin/env zsh` or `#!/bin/zsh`)
-  - Zsh version: 5.0 or later required
-  - `/bin/sh` and `/usr/bin/env sh` are strictly forbidden
-- **Indentation**: 2 spaces (no tabs)
-- **Line length**: Maximum 120 characters (soft limit)
-- **Trailing whitespace**: Never include trailing whitespace
-- **Final newline**: Every file must end in a newline
+- **All shell scripts must use zsh** (`#!/usr/bin/env zsh`)
+  - Zsh version: 5.0 or later required.
+  - `bash` usage is strictly prohibited (Mandate C).
+- **Indentation**: 2 spaces.
+- **Mandate 24 (Tagging)**: Every file MUST be tagged as `@armor`, `@forge`, or `@shared-law` on Line 2 or 3.
 
-### Naming Conventions
-- **Constants**: `UPPER_CASE_WITH_UNDERSCORES`
-- **Local variables**: `lower_case_with_underscores`
-- **Environment variables**: `UPPER_CASE_WITH_UNDERSCORES`
-- **Private variables/functions**: Prefix with `_` (e.g., `_private_var`, `_helper_function`)
-- **Public functions**: `lower_case_with_underscores`
+## Architecture: The Two Projects
 
-### Key Patterns
-- **Always quote variables**: `"$VAR"` not `$VAR`
-- **Use `[[`** for string comparisons (not `[` or `((`)
-- **Always use `local`** for function-scoped variables
-- **Return exit codes**: 0 for success, non-zero for failure
-- **Print to stdout for data, stderr for errors
+1.  **The Armor (`@armor`)**: The student-facing product. Must be AI-blind and depend strictly on the Tetrad.
+2.  **The Forge (`@forge`)**: The governance and auditing system. Manages the lifecycle and AI integration.
 
-## Architecture
+### Libraries (`lib/`)
 
-VDE uses a modular library architecture that separates concerns and enables code reuse:
+All VDE logic is modular. For detailed function references, see `docs/STDLIB.md`.
 
-### Standard Libraries Documentation (stdlib)
-
-The VDE Standard Library is a modular, comprehensive collection of ZSH libraries designed for the Virtual Development Environment (VDE) system. It is located at `docs/STDLIB.md`.
-
-### Libraries (lib/)
-
-| Library | Purpose |
-|---------|---------|
-| **vde-constants** | Centralized constants (return codes, port ranges, timeouts) |
-| **vde-errors** | Error messages with remediation steps |
-| **vde-log** | Structured logging with rotation (JSON/text/syslog) |
-| **vde-core** | Essential VDE functions (VM types, queries, caching) |
-| **vm-common** | Full VDE functionality (VM types, ports, Docker, SSH, templates) |
-| **vde-commands** | Safe wrapper functions for VDE operations |
-| **vde-parser** | Pattern-based natural language parser (intent detection, entity extraction) |
-| **vde-naming** | VM naming conventions and validation |
-| **vde-progress** | Progress bars and status indicators |
-| **vde-audit** | VM audit trails and change tracking |
-| **vde-metrics** | Performance metrics and monitoring |
-| **vde-health** | Health checks and system status |
-| **vde-path-utils** | Path manipulation utilities |
-
-### VM Architecture
-- **Service VMs (7 total)**: Ports 2400-2499 (postgres, redis, mongodb, nginx, mysql, rabbitmq, couchdb)
-- **Port Registry**: `.cache/port-registry` for fast port lookups
-
-### Command Parser Architecture
-- **9 supported intents**: list_vms, create_vm, start_vm, stop_vm, restart_vm, status, connect, add_vm_type, help
-- **Data-driven VM types**: `data/vm-types.conf` (pipe-delimited format)
+| Library | Domain | Purpose |
+|---------|--------|---------|
+| **vde-core** | `@armor` | Essential initialization and JSON queries. |
+| **vm-common** | `@armor` | The primary orchestrator for Spoke lifecycles. |
+| **vde-ssh** | `@armor` | Transversal Bridge management. |
+| **vde-enforce-uap** | `@forge` | The Rule Spine enforcement engine. |
 
 ## Testing
 
-- **BDD Framework**: Behave (Python) for behavior-driven testing
-- **Test Location**: `tests/features/`
-- **Test Categories**:
-  - Docker-free tests (no container dependencies) — `tests/features/docker-free/`
-  - Docker-required tests (full integration tests) — `tests/features/docker-required/`
-- **Test Execution**: `./run-tests.zsh` for all tests, `./run-vde-parser-tests.zsh` for parser tests
+As of 1.5.1, the suite is certified at **100% Fidelity**.
+
+- **BDD Framework**: Behave (Python).
+- **Counts**: 17 Scenarios, 137 Steps.
+- **Protocol**: No functional code is committed without a failing test (Trial of the Gauntlet).
 
 ### Test Commands
 ```zsh
-./run-tests.zsh              # Run all tests
-./run-vde-parser-tests.zsh   # Run parser-specific tests
-behave tests/features/       # Run BDD tests directly
+vde health              # Fast Spine Check
+make test               # Full suite (Unit + BDD)
+behave tests/features/  # BDD only
 ```
 
 ## Security
 
-- **SSH Agent Forwarding**: Private keys NEVER leave the host; only authentication socket is forwarded (read-only mount)
-- **SSH Key Management**: All keys detected and loaded automatically; public keys synced to `public-ssh-keys/`
-- **Validation**: All user inputs validated before execution; VM names validated for format
-- **No secrets in code**: API keys, credentials, and secrets must never be committed
-- **Parameter expansion**: Use parameterized queries for any external system interactions
-- **Error handling**: Provide meaningful error messages with remediation steps via `vde-errors` library
-
+- **Identity**: Spokes run as `devuser`. The Hub uses the `vde_student` key for authentication.
+- **Agent Forwarding**: Authentication is proxied via `socat`; private keys never enter the Spoke.
+- **Sanitization**: All user input is normalized via `vde-naming` to prevent path traversal.
 
 ---
 
-## Development Workflows
+## Development Workflows (Examples)
 
-Example workflows for common development scenarios with VDE.
-
-[← Back to README](../README.md)
-
----
-
-### Example 1: Python API with PostgreSQL
-
-A full-stack Python API with PostgreSQL database.
+### Example: Python + PostgreSQL Stack
 
 ```zsh
-## 1. Create Python VM
-vde create python
-
-## 2. Create PostgreSQL VM
-vde create postgres
-
-## 3. Start both VMs
+# 1. Forge the tech stack
 vde start python postgres
 
-## 4. Connect to Python VM
-ssh vde-python
+# 2. Enter as devuser
+vde enter python
 
-## 5. Set up project
+# 3. Work in the synced workspace
 cd ~/workspace
-python -m venv .venv
-source .venv/bin/activate
-pip install fastapi uvicorn psycopg2-binary
+# (Syncs to projects/python on your Hub)
 
-## 6. Test database connection
-ssh postgres
-createdb testdb
-exit
-
-psql -h postgres -U devuser -d testdb
-
-## 7. Run your API
-uvicorn main:app --reload
+# 4. Connect to the database via DNS
+psql -h vde-postgres -U devuser
 ```
 
----
+### Daily Rhythm
 
-### Example 2: Full-Stack JavaScript with Redis
-
-Node.js/Express application with Redis caching.
-
-```zsh
-## 1. Create VMs
-vde create js
-vde create redis
-
-## 2. Start VMs
-vde start js redis
-
-## 3. Connect to JS VM
-ssh vde-js
-
-## 4. Set up Express app
-cd ~/workspace
-npm init -y
-npm install express redis
-
-## 5. Create app
-cat > app.js << 'EOF'
-const express = require('express');
-const redis = require('redis');
-const app = express();
-
-const client = redis.createClient({
-  host: 'redis',
-  port: 6379
-});
-
-app.get('/', (req, res) => {
-  res.send('Hello from VDE!');
-});
-
-app.listen(3000, () => {
-  console.log('Server running on port 3000');
-});
-EOF
-
-## 6. Run app
-node app.js
-```
-
----
-
-### Example 3: Microservices with Multiple Languages
-
-A microservices architecture using different languages for each service.
-
-```zsh
-## 1. Create VMs for each service
-vde create python   # API Gateway
-vde create go       # Payment Service
-vde create rust     # Analytics Service
-vde create postgres # Database
-vde create redis    # Cache
-
-## 2. Start all VMs
-vde start python go rust postgres redis
-
-## 3. Each service runs in its own VM
-## Python: ssh vde-python
-## Go: ssh vde-go
-## Rust: ssh vde-rust
-
-## 4. Services communicate via Docker network
-## vde-python can access: postgres, redis
-## vde-go can access: postgres, redis
-## etc.
-```
-
----
-
-### Daily Workflow
-
-#### Morning Setup
-
-```zsh
-## Start your development environments
-vde start python postgres redis
-```
-
-#### During Development
-
-```zsh
-## Check what's running
-docker ps
-
-## Connect to your primary VM
-ssh vde-python
-
-## Work in the container
-cd ~/workspace
-## ... do work ...
-```
-
-#### Evening Cleanup
-
-```zsh
-## Stop everything to save resources
-vde stop all
-```
-
----
-
-### Troubleshooting Workflow
-
-When something isn't working:
-
-```zsh
-## 1. Check container status
-vde status
-
-## 2. Check container logs
-docker logs vde-python
-
-## 3. Restart with rebuild
-vde start python --rebuild
-
-## 4. Connect and debug
-ssh vde-python
-## ... investigate inside container ...
-```
+1. **Morning**: `vde start python postgres`
+2. **During**: `vde enter python` -> code in `~/workspace/`
+3. **Evening**: `vde stop all`
 
 ---
 
 [← Back to README](../README.md)
-
-
+**This is the Way.**

@@ -14,13 +14,13 @@ The System Spine tetrad is the foundational audit gate. If any pillar fails, the
 | IV     | **SSH**    | `ssh-add -l` identity check (The Bridge) |
 
 ## 2. BDD PERFORMANCE METRICS (1.5.1)
-As of **2026-04-10**, the VDE Behavior Driven Development suite is at **100% Fidelity**.
+As of **2026-04-26**, the VDE Behavior Driven Development suite is at **100% Fidelity**.
 
 | Metric | Count | Status |
 |--------|-------|--------|
 | **Total Features** | 5 | ✅ GREEN |
-| **Total Scenarios** | 20 | ✅ GREEN |
-| **Total Steps** | 150 | ✅ GREEN |
+| **Total Scenarios** | 17 | ✅ GREEN |
+| **Total Steps** | 137 | ✅ GREEN |
 | **Undefined Steps** | 0 | ✅ NONE |
 | **Pass Rate** | 100% | ✅ ABSOLUTE |
 

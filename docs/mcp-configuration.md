@@ -1,7 +1,7 @@
 # MCP Configuration Documentation
-<!-- @shared-law (Sovereign Law) -->
+<!-- @forge (AI Governance) -->
 
-## Overview
+## Overview (1.5.1)
 
 This document describes the MCP (Model Context Protocol) server configuration for the VDE project. MCP servers extend the capabilities of the Gemini CLI by providing specialized tools for various tasks.
 

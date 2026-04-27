@@ -59,9 +59,10 @@ vde <command> [options] [args]
 | Command | Description |
 |---------|-------------|
 | `create <vm>` | Create a new VM from templates |
+| `rebuild <vm>` | Destroy and re-forge a Spoke (supports --no-cache) |
 | `start <vm>` | Ignite a VM (Deterministic) |
 | `stop <vm>` | Shutdown a VM (Graceful) |
-| `restart <vm>` | Cycle a VM (Supports --rebuild) |
+| `restart <vm>` | Reset a Spoke or cluster unit |
 | `list` | List available Spokes |
 | `status` | Show real-time Hub status |
 | `health` | Execute Sovereign Audit |

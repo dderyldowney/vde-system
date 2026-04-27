@@ -8,7 +8,7 @@ Feature: The Four Pillars Gateway
 
   Background: Hub Readiness
     Given the Hub is active
-    And the Hub is synchronized to version 1.5.0
+    And the Hub is synchronized to version 1.5.1
 
   @pillar-1 @docker
   Scenario: Pillar I - The World-Forge (Docker Readiness)

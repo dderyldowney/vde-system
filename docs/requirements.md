@@ -1,93 +1,89 @@
 # Requirements
 <!-- @shared-law (Sovereign Law) -->
 
-This document outlines the system requirements for running the VDE (Virtual Development Environment).
+This document outlines the system requirements for the **Sovereign Baseline (1.5.1)**.
 
 [← Back to README](../README.md)
 
 ---
 
-## Shell Requirements (The Rule Spine)
+## The Unyielding Tetrad (Mandatory)
 
-VDE is a **ZSH-ONLY** ecosystem. Support for other shells has been deprecated to ensure absolute architectural consistency and cognitive sovereignty.
+The VDE depends on four core pillars. These MUST be installed and active on your host machine (the Hub) before you begin.
 
-| Shell | Version | Support Level | Notes |
-|-------|---------|---------------|-------|
-| **zsh** | 5.0+ | **Mandatory** | Required for Rule Spine compliance and native associative arrays |
-
-### Checking Your Shell Version
-
-```zsh
-# Check zsh version
-zsh --version
-```
-
-### Mandated Shell
-
-**zsh 5.0+** is the only supported shell. It provides the native associative array support and glob expansion required by the VDE libraries.
-
-### Installing ZSH
-
-**macOS:**
-zsh is the default shell and pre-installed on macOS.
-
-**Ubuntu/Debian:**
-```zsh
-sudo apt-get update && sudo apt-get install zsh
-```
-
-**RHEL/CentOS/Fedora:**
-```zsh
-sudo dnf install zsh
-```
+| Pillar | Requirement | Purpose | Minimum Version |
+| :--- | :--- | :--- | :--- |
+| **I. Zsh** | Version 5.0+ | The Voice of the Tribe. **ZSH ONLY.** | 5.0 |
+| **II. Git** | Version 2.30+ | The Chronicler of your history. | 2.30 |
+| **III. Docker** | Desktop / Engine | The World-Forge for your Spokes. | 20.10 |
+| **IV. SSH** | OpenSSH Client | The Transversal Bridge to your Spokes. | (Any) |
 
 ---
 
-## System Requirements
+## Platform-Specific Prerequisites
 
-| Requirement | Purpose | Minimum Version |
-|-------------|---------|-----------------|
-| **Docker** | Container runtime | Docker Desktop or Engine 20.10+ |
-| **docker-compose** | Multi-container orchestration | 1.29+ or Docker Compose V2 |
-| **SSH key pair** | Container authentication | `vde_student` (ed25519) |
+### 🪟 Windows Users: The WSL2 Mandate
+Windows users MUST operate within **WSL2 (Windows Subsystem for Linux)**. This ensures Zsh-native purity and professional parity with Linux/macOS.
+- **Requirement**: WSL2 active with a Linux distribution (e.g., Ubuntu).
+- **Docker**: Docker Desktop for Windows configured to use the WSL2 based engine.
+
+### 🍎 macOS Users
+- **Docker**: Docker Desktop for Mac (Intel or Apple Silicon).
+- **Zsh**: Native shell (pre-installed).
+
+### 🐧 Linux Users
+- **Docker**: Docker Engine and Docker Compose.
+- **Privileges**: Your user must be in the `docker` group to run commands without `sudo`.
 
 ---
 
-## Verifying Your Setup
+## Spoke Identity & Security
 
-Run these commands to verify everything is ready:
+VDE uses a strictly isolated identity model:
+- **User Account**: All Spokes run as the `devuser` account.
+- **SSH Identity Key**: Access is secured via a unique `vde_student` identity key, confined to `~/.ssh/vde/`.
+- **Workspace**: Your code lives at `$HOME/workspace/` inside the Spoke, synced to `projects/` on your Hub.
+
+---
+
+## Verifying Your Setup (The Spine Check)
+
+Once your prerequisites are installed, you can verify your Hub's readiness by running:
 
 ```zsh
-# Check shell version
-echo "Shell: $SHELL"
+# Verify the Tetrad
 zsh --version
-
-# Check Docker is running
-docker ps
-
-# Check docker-compose is available
-docker-compose --version || docker compose version
-
-# Check for VDE SSH keys
-ls -la ~/.ssh/vde/vde_student
+git --version
+docker version
+ssh -V
 ```
 
-If you don't have VDE SSH keys, run the bootstrap ritual:
+### Initial Certification
+If you have just cloned the repository, run the induction ritual to automatically configure your environment and verify all requirements:
+
 ```zsh
-./bin/vde-bootstrap
+bin/vde path-of-the-foundling
+```
+
+### Continuous Verification
+At any time, you can audit your Hub's compliance with the Rule Spine:
+```zsh
+vde health
 ```
 
 ---
 
 ## Environment Variables
 
-VDE respects these environment variables:
+VDE respects these environment variables (most are auto-detected):
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `VDE_ROOT_DIR` | Root directory of the VDE repository | (Auto-detected) |
-| `VDE_DEBUG_TIMING` | Enable performance timing output | `0` |
+| `VDE_DOCKER_NETWORK` | The isolated bridge name | `vde-net` |
+| `VDE_SSH_DIR` | The isolated key vault | `~/.ssh/vde` |
 
 ---
 
 [← Back to README](../README.md)
+**This is the Way.**
