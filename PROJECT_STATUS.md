@@ -2,21 +2,23 @@
 <!-- @shared-law (Forge Component) -->
 
 **CURRENT STATE: 100% GREEN (THE UNIQUE SOVEREIGN BASELINE)**
-**DATE:** 2026-04-24
-**RELEASE:** [VDE 1.4.1](https://github.com/dderyldowney/vde-system/releases/tag/1.4.1)
+**DATE:** 2026-04-26
+**RELEASE:** [VDE 1.5.1](https://github.com/dderyldowney/vde-system/releases/tag/1.5.1)
 
 ## EXECUTIVE SUMMARY
-1.4.1 is hereby certified as the **Sovereign Baseline** and hardened for absolute Zsh-native purity. This version represents the absolute functional, security, and structural standard for the Forge. The **Great Purification Strike** has eradicated all known Bashisms and tagging debt.
+1.5.1 is hereby certified as the **Sovereign Baseline** and hardened for absolute Zsh-native purity. This version represents the absolute functional, security, and structural standard for the Forge. **All prior versions and releases are of historical archival value only.** The **Sovereign 1.5.1 Shift** has finalized the transition to a fully governed, multi-project ecosystem with verified architectural tagging and absolute lifecycle certification.
 
 ### 1. CORE MILESTONES COMPLETED
-- [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars (1.5.1).
+- [x] **Sovereign Baseline 1.5.1**: Certified project-wide version synchronization and deployment.
+- [x] **System Spine Tetrad**: Empirical verification of Zsh, Git, Docker, and SSH Pillars.
 - [x] **Proof of Life Contract**: Codified and verified full lifecycle (init, create, rebuild, start, enter, stop, remove, add, uninstall).
-- [x] **The Great Purification (Stage 2)**: Eradicated 979 files of illegal locals, Bash-style regex (=~), and forbidden exports. 100% Mandate C compliance.
-- [x] **Mandate 24 Enforcement**: 100% of files (979) tagged with architectural domains (@armor, @forge, @shared-law).
-- [x] **Deterministic Error Engine (Phase 26)**: 100% of CLI commands wrapped in `vde_run`. Signal translation and lock transparency active.
-- [x] **DNS Discovery & Bridging (Phase 31)**: Implemented dual resolution (alias/prefix) and Sovereign Bridge (`vde-host`). High-fidelity technical proof verified via BDD.
-- [x] **Transversal Bridge**: SSH Agent Forwarding fixed and verified via native SSH Pillar.
-- [x] **SIP-Safe Orchestration**: BDD steps hardened against macOS environment sanitization (shell=False).
+- [x] **Locking Storm Remediation**: Eliminated recursive initialization storms and implemented PID-aware stale lock busting.
+- [x] **Registry Healing**: Restored all historical VM types and standardized absolute paths for hydration.
+- [x] **Great Purification Strike**: 100% Mandate C (Zsh Only) compliance across all 980+ files.
+- [x] **Mandate 24 Enforcement**: 100% of files tagged with architectural domains (@armor, @forge, @shared-law).
+- [x] **DNS Discovery & Bridging (Phase 31)**: Implemented dual resolution (alias/prefix) and Sovereign Bridge (`vde-host`).
+- [x] **Forge Intelligence (Phase 32)**: Automated registry healing and version synchronization rituals active.
+
 
 ### 2. TEST FIDELITY
 - **Behave BDD**: 17 Core scenarios, 137 steps - **100% PASS** (Purified set)
