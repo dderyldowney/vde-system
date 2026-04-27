@@ -1,7 +1,7 @@
 # SSH Configuration & Agent Forwarding
 <!-- @shared-law (Sovereign Law) -->
 
-VDE provides **automatic SSH configuration** and **SSH agent forwarding** for seamless VM-to-VM, VM-to-Host, and VM-to-External communication.
+VDE provides **automatic SSH configuration** and **SSH agent forwarding** for seamless communication in the **Sovereign Baseline (1.5.1)**.
 
 [← Back to README](../README.md)
 

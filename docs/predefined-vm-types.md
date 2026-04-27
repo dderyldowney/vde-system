@@ -1,7 +1,7 @@
 # Predefined VM Types
 <!-- @shared-law (Sovereign Law) -->
 
-All available programming languages and services that can be created with VDE.
+All available programming languages and services in the **Sovereign Baseline (1.5.1)**.
 
 [← Back to README](../README.md)
 

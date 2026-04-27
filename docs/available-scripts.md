@@ -25,7 +25,7 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution (1.
 | `vde remove <vm>` | Dissolve (remove) a VM instance and its locks. (Aliases: `rm`, `delete`) | `vde remove rust` |
 | `vde nuke` | **The Great Quench**: Remove all VDE artifacts (prompts for backup). | `vde nuke` |
 | `vde exec <vm> <cmd>` | Execute a command inside a Spoke without a full login shell. | `vde exec go "go version"` |
-| `vde enter <vm>` | The Sovereign Handshake: Enter a Spoke's login shell. (Alias: `ssh`) | `vde enter rust` |
+| `vde enter <vm>` | The Sovereign Handshake: Enter a Spoke's login shell. (Alias: `ssh`, `connect`) | `vde enter rust` |
 | `vde add <name>` | Dynamic Expansion: Register a new Spoke type. | `vde add --pkgs "htop" myvm` |
 | `vde uninstall <vm>` | Permanent Removal: Remove a Spoke type from the Registry. | `vde uninstall elixir` |
 | `vde list` | Audit all predefined and custom Spokes. | `vde list` |
@@ -74,9 +74,6 @@ These scripts provide specialized maintenance, automation, and development suppo
 | `coverage.zsh` | Generate code coverage reports for the Forge. |
 | `targeted-test.zsh` | Execute specific BDD or unit test suites. |
 | `paired_update_enforcer` | Mandate L ritual to ensure PR/Remediation alignment. |
-| `vde-rebuild-cache` | Force a re-smelt of the internal VM cache. |
-| `vde-sync-version` | Synchronize versioning across the entire Forge. |
-| `nuke-vde` | **The Great Quench**: Safe removal of all VDE artifacts. |
 | `add-vm-type` | Low-level script to register a new VM type in the Beskar Registry. |
 | `list-vms` | Low-level script to audit registered VM types. |
 | `uninstall-vm-type` | Low-level script to permanently remove a VM type. |
@@ -92,6 +89,9 @@ These scripts provide specialized maintenance, automation, and development suppo
 | `generate_video` | Generate procedural video content for Forge documentation. |
 | `remediate-installation-ambiguity.zsh` | Patch script to resolve installation path drift. |
 | `remediate-phase24-sleep.zsh` | Tactical remediation for forbidden sleep calls. |
+| `migrate-configs-to-categories.zsh` | Migrate Spoke configurations to new categorized structure. |
+| `vde-armor-heal.zsh` | Emergency healing script for Project 1 (Armor) components. |
+| `nuke-vde` | **The Great Quench**: Safe removal of all VDE artifacts. |
 
 ---
 
@@ -117,13 +117,14 @@ VDE_ROOT/
 ├── lib/
 ```
 
+**This is the Way.**
+
 ---
 
 ## Undocumented Scripts (Pending Classification)
 
 | Script | Purpose |
 |--------|---------|
-| `migrate-configs-to-categories.zsh` | Automatically discovered - documentation pending. |
 | `vde-cluster` | Automatically discovered - documentation pending. |
 | `vde-dns-check.zsh` | Automatically discovered - documentation pending. |
 | `vde-exec` | Automatically discovered - documentation pending. |
@@ -138,8 +139,7 @@ VDE_ROOT/
 | `vde-port` | Automatically discovered - documentation pending. |
 | `vde-ps` | Automatically discovered - documentation pending. |
 | `vde-rebuild` | Automatically discovered - documentation pending. |
+| `vde-rebuild-cache` | Automatically discovered - documentation pending. |
 | `vde-stats` | Automatically discovered - documentation pending. |
+| `vde-sync-version` | Automatically discovered - documentation pending. |
 | `vde-vision` | Automatically discovered - documentation pending. |
-| `vde-demo-intelligence.zsh` | Automatically discovered - documentation pending. |
-| `vde-armor-heal.zsh` | Automatically discovered - documentation pending. |
-| `temp-leak-test.zsh` | Automatically discovered - documentation pending. |

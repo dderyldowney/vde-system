@@ -1,7 +1,7 @@
 # VSCode Remote-SSH
 <!-- @shared-law (Sovereign Law) -->
 
-Using VSCode Remote-SSH with VDE for full IDE support in your containers.
+Using VSCode Remote-SSH with VDE in the **Sovereign Baseline (1.5.1)**.
 
 [← Back to README](../README.md)
 
@@ -22,7 +22,7 @@ Install the [Remote-SSH extension](https://marketplace.visualstudio.com/items?it
 ### 3. Open Your Project
 
 ```zsh
-File > Open Folder > /home/devuser/workspace
+File > Open Folder > $HOME/workspace/
 ```
 
 ---
@@ -54,7 +54,7 @@ Install these extensions inside your VMs for the best experience:
 ## VSCode Workflow
 
 1. **Connect** to VM via Remote-SSH
-2. **Open** your project: `File > Open Folder > /home/devuser/workspace`
+2. **Open** your project: `File > Open Folder > $HOME/workspace/`
 3. **Edit** files with full IDE support
 4. **Run** tests using the integrated terminal
 5. **Debug** using VSCode's debugger

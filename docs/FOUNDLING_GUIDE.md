@@ -1,8 +1,8 @@
 # FOUNDLING GUIDE
 <!-- @shared-law (Sovereign Law) -->
-# Path of the Foundling: A Student's Guide to VDE
+# Path of the Foundling: A Student's Guide to VDE (1.5.1)
 
-Welcome, Foundling. You have entered the Forge. This guide explains the "Rituals" (commands) and "Creed" (rules) you will follow to learn the ways of engineering.
+Welcome, Foundling. You have entered the Forge. This guide explains the "Rituals" (commands) and "Creed" (rules) you will follow to learn the ways of engineering within the **Sovereign Baseline (1.5.1)**.
 
 ---
 
@@ -12,45 +12,44 @@ The VDE (Virtual Development Environment) provides you with "Spokes" (isolated c
 - Everything is disposable. If you break a Spoke, you just "Re-forge" (rebuild) it.
 - You learn professional tools (Docker, Zsh, SSH) from day one.
 
-## 2. Core Rituals (The Commands)
+## 2. The Onboarding Ritual (The First Strike)
 
-### The Path of the Foundling (Interactive Induction)
-When you first clone this repository, you must begin your journey:
+When you first clone this repository, you MUST begin your journey by taking the **Path of the Foundling**. This ritual handles all initial configuration and certifies your Forge.
+
 ```zsh
-vde path-of-the-foundling
+bin/vde path-of-the-foundling
 ```
-This interactive script will guide you through:
-- **Ignition**: Setting up your SSH keys and creating the networks.
-- **Spine Check**: Verifying that your Hub is ready (Zsh, Git, Docker, and SSH).
-- **First Spoke**: Creating your very first Python workspace automatically.
+
+**What this ritual does:**
+- **Ignition**: Performs the `vde init` ritual automatically, setting up your `vde_student` SSH keys and creating the networks.
+- **Spine Check**: Verifies that your Hub is ready (Zsh, Git, Docker, and SSH).
+- **First Spoke**: Guides you through forging and entering your very first Python workspace.
+
+## 3. Core Rituals (The Commands)
 
 ### Creating a Spoke (The Forge)
-If you followed the Path above, your Python Spoke was already created. To create a workspace for another specific language:
+To create a workspace for a specific language or service:
 ```zsh
 vde create <alias>
 ```
 
 ### Starting and Entering (The Handshake)
-To start your Spoke and step inside:
+To start your Spoke and step inside as the `devuser`:
 ```zsh
-vde start python
-vde enter python
+vde start <alias>
+vde enter <alias>
 ```
-Once inside, you are in a pure Linux environment, ready to code.
+Once inside, you operate at `$HOME/workspace/`. This directory is **persistently synced** to `projects/<alias>` on your host computer, ensuring your work survives if you rebuild the Spoke image.
 
 ### Closing the Spoke (The Quench)
 When your study session is done:
 ```zsh
-vde stop python
+vde stop <alias>
 ```
 
-## 3. The Beskar Rules (Your Creed)
+## 4. The Beskar Rules (Your Creed)
 1. **Never use Bash**: We speak ZSH. All your scripts must start with `#!/usr/bin/env zsh`.
 2. **Born Ready**: Your Spokes should have everything they need when they are created. 
-3. **The Proof of Life**: We don't believe a system works; we prove it. Run the tests frequently.
-
-## 4. Next Steps
-- Follow the `USER_GUIDE.md` for more advanced rituals.
-- Use `vde help` to see all available commands.
+3. **The Proof of Life**: We don't believe a system works; we prove it. The Forge is certified by the Heartbeat.
 
 This is the Way.

@@ -1,7 +1,7 @@
 # VDE GitHub Infrastructure Lifecycle
-<!-- @shared-law (Sovereign Law) -->
+<!-- @forge (AI Governance) -->
 
-This document defines the official procedures and lifecycle for interacting with the VDE Hub (GitHub). The VDE ecosystem consists of two distinct projects with separate responsibilities.
+This document defines the official procedures and lifecycle for interacting with the VDE Hub (GitHub). The VDE ecosystem consists of two distinct projects with separate responsibilities, governed by the **Sovereign Baseline (1.5.1)**.
 
 ## 1. Project Separation
 
@@ -21,13 +21,16 @@ All development on the Armor (Project 1) must be governed by the Forge (Project 
 1.  **Signet (Issue)**: Create an Issue detailing the "Sovereign Reason".
     - Command: `gh issue create --title "..." --body "..."`
     - *Note: `gh` is a mandatory requirement for the Forge development backend.*
-2.  **Strike (Branch)**: Create a feature branch from `develop`.
+2.  **The Anvil (Branching)**: VDE follows a strict branching model:
+    - **`develop` (The Anvil)**: The primary integration branch and repository default. All work MUST occur on feature branches originating here.
+    - **`main` (Production)**: Reserved for stable, certified releases of the Sovereign Baseline. All step tagging and GitHub releases occur here.
+3.  **Strike (Branch)**: Create a feature branch from `develop`.
     - Command: `git checkout -b <type>/<slug> develop`
-3.  **Reforging (Development)**: Apply changes using the iterative **Plan -> Act -> Validate** cycle.
-4.  **Chronicle (PR)**: Create a Pull Request linking to the Signet.
+4.  **Reforging (Development)**: Apply changes using the iterative **Plan -> Act -> Validate** cycle.
+5.  **Chronicle (PR)**: Create a Pull Request linking to the Signet.
     - Command: `gh pr create --title "..." --body "..."`
-5.  **Audit (CI/CD)**: All GitHub Actions, workflows, and scanner bots must report **100% GREEN**.
-6.  **Finalization**: Merge is performed ONLY by the Clan Leader (User) after a successful Code Review.
+6.  **Audit (CI/CD)**: All GitHub Actions, workflows, and scanner bots must report **100% GREEN**.
+7.  **Finalization**: Merge is performed ONLY by the Clan Leader (User) after a successful Code Review.
 
 ## 3. CI/CD Heartbeat
 

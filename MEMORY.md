@@ -1,8 +1,8 @@
-# VDE Beskar Record: 1.5.0 (The Sovereign Evolution)
+# VDE Beskar Record: 1.5.1 (The Sovereign Evolution)
 <!-- @shared-law (Forge Component) -->
 
 ## SOVEREIGN STATE
-- **Baseline**: 1.5.0 (Certified 2026-04-26)
+- **Baseline**: 1.5.1 (Certified 2026-04-27)
 - **Status**: 100% GREEN (PEAK INTEGRITY)
 - **Heartbeat**: Certified via Mandate L; automated via pre-push and CI.
 
@@ -13,7 +13,7 @@
 - **Path Purification**: Purged absolute host-path leaks in `.tmp.driveupload` and updated `vde-security-audit.zsh` to exclude ephemeral artifacts.
 - **Phase 31 (DNS & Bridge) [CERTIFIED]**: Verified Spoke-to-Spoke and Hub-to-Spoke resolution.
 - **Phase 32 (Forge Intelligence) [CERTIFIED]**: Validated auto-remediation and registry healing rituals.
-- **Sovereign Initialization (1.5.0)**: Completed session ignition with a 100% success rate across all rituals (UAP Audit, Spine Check, Proof of Life).
+- **Sovereign Initialization (1.5.1)**: Completed session ignition with a 100% success rate across all rituals (UAP Audit, Spine Check, Proof of Life).
 
 ## THE NEXT STRIKE (CRITICAL)
 - **Absolute Objective**: Verify that the entire Forge is fully functional on a clean terminal.

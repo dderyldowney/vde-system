@@ -1,7 +1,7 @@
 # Best Practices
 <!-- @shared-law (Sovereign Law) -->
 
-Recommended practices for working with VDE effectively.
+Recommended practices for working with VDE effectively in the **Sovereign Baseline (1.5.1)**.
 
 [← Back to README](../README.md)
 
@@ -11,76 +11,70 @@ Recommended practices for working with VDE effectively.
 
 ### 1. Work in Projects Directory
 
-All code is in `projects/<lang>/` which persists on your host.
+All code is in `projects/<lang>/` which persists on your host (the Hub).
 
 ```zsh
-# Good: Work in projects directory
-cd ~/dev/projects/python/my-api
-# Edit files, they appear in container at ~/workspace
+# Good: Work in projects directory on your host
+cd ~/vde/projects/python/my-api
+# Edit files, they appear in container at $HOME/workspace/
 
 # Access via SSH - files are mounted from host
-ssh vde-python
-cd ~/workspace  # Mounted from ~/dev/projects/python/
-# Files persist here even after rebuild
+vde enter python
+cd ~/workspace  # Persistently synced to ~/vde/projects/python/
+# Files persist here even after image rebuilds
 ```
 
 ### 2. Use VSCode Remote-SSH
 
-Edit code locally with full IDE support.
+Edit code locally with full IDE support while executing in the Spoke.
 
 ```
-1. Connect VSCode to VM via Remote-SSH
-2. Open the workspace folder
+1. Connect VSCode to VM via Remote-SSH (e.g., vde-python)
+2. Open the folder: $HOME/workspace/
 3. Edit files with full language support
-4. Use integrated terminal for commands
+4. Use integrated terminal for vde commands
 ```
 
 ### 3. Commit Often
 
-Your code is safe on the host, containers are ephemeral.
+Your code is safe on the host; containers are ephemeral.
 
 ```zsh
-# Git repo on host
-cd ~/dev/projects/python/my-api
+# Git repo on host (The Hub)
+cd ~/vde/projects/python/my-api
 git commit -am "Work in progress"
 
-# Container can be rebuilt anytime
-vde start python --rebuild
-# Your code is still there
+# Spoke can be rebuilt anytime
+vde rebuild python
+# Your code is still there in $HOME/workspace/
 ```
 
 ### 4. Use Service VMs
 
-Databases and caches run in separate containers.
+Databases and caches run in separate containers for isolation and parity.
 
 ```zsh
 # Good: Use separate service containers
-vde create postgres
-vde create redis
+vde start postgres redis
 
 # Connect from language container
-ssh vde-python
-psql -h postgres -U devuser  # Works!
+vde enter python
+psql -h vde-postgres -U devuser  # Works via DNS discovery!
 ```
 
-### 5. SSH Between Containers
+### 5. Multi-Spoke Interaction
 
-All VMs share the `vde-net` network and have SSH agent forwarding enabled.
+All VMs share the `vde-net` bridge and have SSH agent forwarding enabled.
 
 ```zsh
-# From vde-python, connect to postgres using host's SSH keys
+# From vde-python, connect to postgres using Hub's SSH keys
 ssh vde-postgres
-psql -h localhost -U devuser
-
-# Or use service names as hostnames
-psql -h postgres -U devuser
 ```
 
-**VM-to-VM Best Practices:**
-- Use SSH for service-to-service communication (leverages agent forwarding)
-- All VMs can authenticate using your host's SSH keys
-- Git operations work from any VM using your credentials
-- No need to copy keys to individual VMs
+**Inter-Spoke Best Practices:**
+- Use canonical names (`vde-postgres`) for communication.
+- Leverage SSH agent forwarding for Git operations inside Spokes.
+- No need to copy keys into Spokes; the `vde_student` key remains on the Hub.
 
 ---
 
@@ -93,13 +87,13 @@ psql -h postgres -U devuser
 vde start python postgres
 
 # Avoid: Starting everything unless needed
-vde start all  # Uses more resources
+vde start all  # Consumes Hub resources
 ```
 
 ### Stop When Done
 
 ```zsh
-# Stop VMs to free resources
+# Stop VMs to free memory/CPU
 vde stop python postgres
 
 # Or stop all
@@ -109,8 +103,7 @@ vde stop all
 ### Check Status Regularly
 
 ```zsh
-# See what's running
-docker ps
+vde ps
 ```
 
 ---
@@ -119,7 +112,7 @@ docker ps
 
 ### Keep SSH Config Updated
 
-VDE automatically manages `~/.ssh/vde/config`, but verify it:
+VDE automatically manages `~/.ssh/vde/config` during the `init` and `create` rituals.
 
 ```zsh
 # Check SSH entries
@@ -129,40 +122,11 @@ cat ~/.ssh/vde/config | grep -A 5 "Host "
 ### Backup Important Data
 
 ```zsh
-# Service data persists on host
-ls ~/data/postgres/
+# Service data persists on host in the data/ directory
+ls ~/vde/data/postgres/
 
 # Back it up regularly
-tar -czf postgres-backup.tar.gz ~/data/postgres/
-```
-
-### Use Environment Variables
-
-Store configuration in `env-files/<name>.env`:
-
-```zsh
-# env-files/python.env
-SSH_PORT=2213
-PYTHON_VERSION=3.11
-DEBUG=true
-```
-
----
-
-## Performance
-
-### Rebuild Only When Needed
-
-See [Rebuild Guidelines](./rebuild-guidelines.md) for details.
-
-### Monitor Resource Usage
-
-```zsh
-# Check container resource usage
-docker stats
-
-# See disk usage
-docker system df
+tar -czf postgres-backup.tar.gz ~/vde/data/postgres/
 ```
 
 ---
@@ -171,89 +135,42 @@ docker system df
 
 ### SSH Agent Forwarding
 
-VDE uses SSH agent forwarding for secure authentication.
+VDE uses SSH agent forwarding to keep your environment secure.
 
 **Security Model:**
-- Private keys **NEVER leave** the host machine
-- Only the authentication socket is forwarded to containers
-- Containers cannot modify the SSH agent socket (read-only mount)
-- All VMs can authenticate using your host's SSH keys
+- Private keys **NEVER leave the Hub** machine.
+- Only the authentication socket is forwarded to Spokes (read-only).
+- Spokes authenticate using the `vde_student` key via the bridge.
 
 **Best Practices:**
-- Let VDE handle SSH setup automatically (no manual configuration needed)
-- Your SSH keys are automatically detected and loaded
-- Multiple SSH key types are supported (ed25519, RSA, ECDSA, DSA)
-- Use `vde ssh-setup status` to view SSH status
-
-### Use SSH Keys Only
-
-Password authentication is disabled. VDE automatically generates SSH keys if you don't have any.
-
-```zsh
-# VDE handles this automatically - no manual steps needed
-vde create python
-vde start python
-# SSH keys are detected, generated if needed, and loaded automatically
-```
-
-### Keep Containers Updated
-
-```zsh
-# Rebuild with latest base image
-vde start python --rebuild --no-cache
-```
+- Let `vde path-of-the-foundling` handle SSH setup automatically.
+- Ensure the `vde_student` key is loaded in your host agent (`ssh-add -l`).
+- Use `vde health` to verify the Transversal Bridge integrity.
 
 ### Use Sudo Judiciously
 
-You have passwordless sudo in containers, but use it carefully:
+You have passwordless `sudo` as the `devuser` inside Spokes, but use it carefully:
 
 ```zsh
-# In container
+# In Spoke
 sudo apt-get update  # Needed for system packages
-# But prefer user-space tools when possible
-```
-
----
-
-## Troubleshooting
-
-### Check Logs First
-
-```zsh
-# Container logs
-docker logs <container-name>
-```
-
-### Verify Networking
-
-```zsh
-# Check Docker network
-docker network ls | grep vde-net
-
-# Test connectivity
-docker exec vde-python ping postgres
-```
-
-### Use Verbose SSH
-
-```zsh
-# Debug SSH issues
-ssh -v vde-go
+# But prefer build-time hydration (vde rebuild) for permanent changes.
 ```
 
 ---
 
 ## Documentation
 
-### Keep README Updated
+### Keep READMEs Updated
 
-Each project should have its own README:
+Each project in `projects/` should have its own README:
 
 ```zsh
 # projects/python/my-api/README.md
-# Document how to run, test, and deploy
+# Document how to run, test, and deploy your specific app
 ```
 
 ---
 
 [← Back to README](../README.md)
+**This is the Way.**

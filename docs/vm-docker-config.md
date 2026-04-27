@@ -1,7 +1,7 @@
 # VDE VM Docker Configuration
 <!-- @shared-law (Sovereign Law) -->
 
-Centralized Docker configuration for all VDE VMs including compose file locations, environment files, and mount paths.
+Centralized Docker configuration for VDE VMs in the **Sovereign Baseline (1.5.1)**.
 
 ## Overview
 
@@ -37,7 +37,7 @@ The VM Docker configuration system provides:
       "env_file": "env-files/python.env",
       "image": "dev-python:latest",
       "container_name": "vde-python",
-      "workspace_mount": "projects/python:/home/devuser/workspace",
+      "workspace_mount": "projects/python:$HOME/workspace/",
       "logs_mount": "logs/python:/logs"
     }
   },
@@ -90,7 +90,7 @@ Each language VM has:
 | `env_file` | string | `env-files/{lang}.env` | Environment variables file |
 | `image` | string | `dev-{lang}:latest` | Docker image name |
 | `container_name` | string | `{lang}-dev` | Container name (must end with `-dev`) |
-| `workspace_mount` | string | `projects/{lang}:/home/devuser/workspace` | Workspace volume mount |
+| `workspace_mount` | string | `projects/{lang}:$HOME/workspace/` | Workspace volume mount |
 | `logs_mount` | string | `logs/{lang}:/logs` | Logs volume mount |
 
 ### Service VM Config
@@ -139,7 +139,7 @@ echo ${VM_CONTAINER_NAME[python]}
 # Output: vde-python
 
 echo ${VM_WORKSPACE_MOUNT[python]}
-# Output: projects/python:/home/devuser/workspace
+# Output: projects/python:$HOME/workspace/
 ```
 
 **Using helper function:**
@@ -323,7 +323,7 @@ VDE Project Root
     "env_file": "env-files/newlang.env",
     "image": "dev-newlang:latest",
     "container_name": "vde-newlang",
-    "workspace_mount": "projects/newlang:/home/devuser/workspace",
+    "workspace_mount": "projects/newlang:$HOME/workspace/",
     "logs_mount": "logs/newlang:/logs"
   }
 }
