@@ -460,8 +460,8 @@ load_vm_types() {
                 mkdir -p "${VDE_CACHE_DIR}"
 
                 # Use the extracted version for the cache
-                local _v_final_ver="${_v_conf_ver:-1.4.1}"
-                [[ -f "${VM_TYPES_JSON}" ]] && _v_final_ver="1.4.1" # JSON is the primary authority
+                local _v_final_ver="${_v_conf_ver:-1.5.1}"
+                [[ -f "${VM_TYPES_JSON}" ]] && _v_final_ver="1.5.1" # JSON is the primary authority
 
                 # Generate cache file with proper zsh associative array syntax
                 local cache_tmp="${VM_TYPES_CACHE}.tmp.${$}"
