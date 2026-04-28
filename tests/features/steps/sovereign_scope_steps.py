@@ -1,4 +1,5 @@
-# @armor (Sovereign Scope Steps)
+#!/usr/bin/env python3
+# @armor (Sovereign Scope Step Definitions)
 from behave import given, when, then
 import os
 import subprocess
