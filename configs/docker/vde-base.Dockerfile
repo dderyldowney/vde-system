@@ -39,17 +39,19 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
-RUN useradd -ms /bin/zsh -u 1000 devuser && \
-    echo "devuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-
 # 3. SSH Server Configuration (The Gate)
 RUN mkdir -p /var/run/sshd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
     echo "AllowAgentForwarding yes" >> /etc/ssh/sshd_config && \
-    echo "AuthorizedKeysFile .ssh/vde/authorized_keys" >> /etc/ssh/sshd_config
+    echo "AuthorizedKeysFile /home/devuser/.ssh/vde/authorized_keys" >> /etc/ssh/sshd_config && \
+    echo "StrictModes no" >> /etc/ssh/sshd_config
 
-# 4. The Student Environment (Oh-My-Zsh)
+# 4. The Student Environment (User & Oh-My-Zsh)
+RUN useradd -ms /bin/zsh -u 1000 devuser && \
+    echo "devuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    chmod 755 /home/devuser
+
 USER devuser
 WORKDIR /home/devuser
 
@@ -57,10 +59,11 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
     git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
 # 5. SSH Key Preparation
-# We create the directory; the CLI 'vde-bootstrap' will handle key injection.
+# The VDE public key is injected dynamically via the entrypoint (Option B)
 RUN mkdir -p /home/devuser/.ssh/vde && \
     chmod 700 /home/devuser/.ssh && \
-    chmod 700 /home/devuser/.ssh/vde
+    chmod 700 /home/devuser/.ssh/vde && \
+    chown -R devuser:devuser /home/devuser/.ssh
 
 # 6. THE ATOMIC HANDSHAKE (Entrypoint)
 COPY scripts/vde-entrypoint.zsh /usr/local/bin/vde-entrypoint.zsh
@@ -74,5 +77,3 @@ RUN echo 'zsh /usr/local/bin/vde-motd.zsh' >> /etc/zsh/zprofile
 USER devuser
 WORKDIR /home/devuser/workspace
 ENTRYPOINT ["/usr/local/bin/vde-entrypoint.zsh"]
-
-

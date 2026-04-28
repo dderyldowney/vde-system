@@ -3,6 +3,7 @@
 #===============================================================================
 # VDE CLI - Unified Virtual Development Environment
 set -e
+export VDE_ORCHESTRATED=1
 # Version: ${VDE_VERSION:-$(vde_get_version)}
 #===============================================================================
 
@@ -20,6 +21,13 @@ source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vde-docker"
 source "${VDE_ROOT_DIR}/lib/vde-cluster-utils"
 source "${VDE_ROOT_DIR}/lib/vm-common"
+
+# Global SSH Agent Discovery
+# Ensures all orchestrated commands inherit the isolated VDE agent,
+# even if launched from a clean shell without ~/.zshrc integration.
+if [[ -f "${HOME}/.ssh/vde/agent_env" ]]; then
+    source "${HOME}/.ssh/vde/agent_env" >/dev/null 2>&1
+fi
 
 # Initialize logging
 if [[ "${VDE_QUIET:-0}" != "1" ]]; then

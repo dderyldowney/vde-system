@@ -201,6 +201,10 @@ vde_init_setup_ssh() {
         mkdir -p "$(dirname "${VDE_SSH_CONFIG}")"
         cp "${artifact_config}" "${VDE_SSH_CONFIG}"
         chmod 600 "${VDE_SSH_CONFIG}"
+
+        # HARD RULE: Always sync keys to .env during init to ensure harmony
+        "${VDE_ROOT_DIR}/bin/vde" ssh-sync >/dev/null 2>&1
+
         if [[ "${QUIET}" = "0" ]] ; then
             echo "  ✓ SSH config primed"
         fi

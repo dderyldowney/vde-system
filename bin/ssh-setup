@@ -146,9 +146,13 @@ fi
 # ==============================================================================
 if [[ "${ACTION}" == "init" ]] ; then
     local force_flag=""
-    if [[ "$2" == "--force" ]] || [[ "$2" == "-f" ]]; then
-        force_flag="--force"
-    fi
+    # Check all remaining arguments for force flag
+    for arg in "$@"; do
+        if [[ "${arg}" == "--force" ]] || [[ "${arg}" == "-f" ]]; then
+            force_flag="--force"
+            break
+        fi
+    done
 
     echo ""
     echo "╔════════════════════════════════════════════════════════════╗"

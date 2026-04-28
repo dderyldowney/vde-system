@@ -25,6 +25,7 @@ VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 source "${VDE_ROOT_DIR}/lib/vm-common"
+export VDE_IN_REBUILD=1
 
 # Configuration
 NOCACHE=false

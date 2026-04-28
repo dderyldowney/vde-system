@@ -10,14 +10,25 @@ export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 echo "[VDE-ENTRYPOINT] Initializing Spoke Identity..."
 
-# 1. Identity & Permissions
-# We ensure devuser owns their home and the VDE identity
-if [[ "$(whoami)" == "root" ]]; then
-    # Fix ownership of devuser home (targeting directories only for speed)
-    find "/home/devuser/.ssh" -type d -exec chown devuser:devuser {} +
-    chmod 700 "/home/devuser/.ssh"
-    chmod 700 "/home/devuser/.ssh/vde"
+# 1. Identity & Permissions (Hardened)
+# We ensure the SSH directory exists and has the correct permissions.
+# We use sudo to ensure we can fix ownership if old build artifacts exist.
+sudo mkdir -p /home/devuser/.ssh/vde
+sudo chmod 755 /home/devuser  # sshd requires home NOT to be group-writable
+sudo chmod 700 /home/devuser/.ssh
+sudo chmod 700 /home/devuser/.ssh/vde
+
+# 1.1. Dynamic SSH Identity Injection (Option B)
+# We write the public key from the environment variable to the isolated vault
+if [[ -n "${VDE_AUTHORIZED_KEY}" ]]; then
+    echo "[VDE-ENTRYPOINT] Injecting Dynamic SSH Identity..."
+    echo "${VDE_AUTHORIZED_KEY}" | sudo tee /home/devuser/.ssh/vde/authorized_keys >/dev/null
+    sudo chmod 644 /home/devuser/.ssh/vde/authorized_keys
 fi
+
+# Force reclaim ownership for devuser
+sudo chown -R devuser:devuser /home/devuser/.ssh
+sudo chown devuser:devuser /home/devuser/.zshenv 2>/dev/null || true
 
 # 2. Sovereign SSH Bridge (The Transversal Handshake)
 # We prioritize the Sovereign Bridge socket mapping

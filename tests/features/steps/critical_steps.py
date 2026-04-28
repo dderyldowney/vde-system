@@ -826,9 +826,19 @@ def step_ensure_running_python(context):
 
     for i in range(max_retries):
         # Physical handshake: Check if SSH port is open and responding
+        # HARDENED: We must use the VDE identity and force IdentitiesOnly to pass the Gatekeeper
         import subprocess
+        import os
+        vde_identity = os.path.expanduser("~/.ssh/vde/vde_student")
         res = subprocess.run(
-            ["ssh", "-p", vm_port, "-o", "ConnectTimeout=2", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "devuser@127.0.0.1", "echo BEYOND_DOCKER_HEARTBEAT"],
+            ["ssh", "-p", vm_port, 
+             "-i", vde_identity,
+             "-o", "IdentitiesOnly=yes",
+             "-o", "ConnectTimeout=2", 
+             "-o", "BatchMode=yes", 
+             "-o", "StrictHostKeyChecking=no", 
+             "-o", "UserKnownHostsFile=/dev/null", 
+             "devuser@127.0.0.1", "echo BEYOND_DOCKER_HEARTBEAT"],
             capture_output=True, text=True
         )
         if "BEYOND_DOCKER_HEARTBEAT" in res.stdout:
