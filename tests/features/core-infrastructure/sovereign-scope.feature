@@ -1,4 +1,4 @@
-# VDE BDD Feature
+# VDE BDD Feature: Sovereign Scope
 # @armor (Sovereign Scope Hardening)
 Feature: The Sovereign Scope - Absolute Scoping
   As an Alor of the VDE
