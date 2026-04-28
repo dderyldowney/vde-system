@@ -2,7 +2,7 @@
 # @armor (Engine Core)
 # ZSH-native shibboleth: ${(%):-%x}
 # VDE Sovereign Entrypoint
-# Version: 2.5.1 (Hardened SSH Bridge)
+# Version: 2.5.2 (Hardened SSH Bridge + Sourcery Remediations)
 #===============================================================================
 
 # Ensure path includes local bin
@@ -10,25 +10,36 @@ export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 echo "[VDE-ENTRYPOINT] Initializing Spoke Identity..."
 
+# Sourcery Remediation 1: Portable privilege escalation helper.
+# When the entrypoint already runs as root (UID 0), sudo is unnecessary and
+# may not even be present in minimal images. This helper transparently handles
+# both cases so the rest of the script is context-agnostic.
+_root_exec() {
+    if [[ "$(id -u)" -eq 0 ]]; then
+        "$@"
+    else
+        sudo "$@"
+    fi
+}
+
 # 1. Identity & Permissions (Hardened)
 # We ensure the SSH directory exists and has the correct permissions.
-# We use sudo to ensure we can fix ownership if old build artifacts exist.
-sudo mkdir -p /home/devuser/.ssh/vde
-sudo chmod 755 /home/devuser  # sshd requires home NOT to be group-writable
-sudo chmod 700 /home/devuser/.ssh
-sudo chmod 700 /home/devuser/.ssh/vde
+_root_exec mkdir -p /home/devuser/.ssh/vde
+_root_exec chmod 755 /home/devuser  # sshd requires home NOT to be group-writable
+_root_exec chmod 700 /home/devuser/.ssh
+_root_exec chmod 700 /home/devuser/.ssh/vde
 
 # 1.1. Dynamic SSH Identity Injection (Option B)
 # We write the public key from the environment variable to the isolated vault
 if [[ -n "${VDE_AUTHORIZED_KEY}" ]]; then
     echo "[VDE-ENTRYPOINT] Injecting Dynamic SSH Identity..."
-    echo "${VDE_AUTHORIZED_KEY}" | sudo tee /home/devuser/.ssh/vde/authorized_keys >/dev/null
-    sudo chmod 644 /home/devuser/.ssh/vde/authorized_keys
+    echo "${VDE_AUTHORIZED_KEY}" | _root_exec tee /home/devuser/.ssh/vde/authorized_keys >/dev/null
+    _root_exec chmod 644 /home/devuser/.ssh/vde/authorized_keys
 fi
 
 # Force reclaim ownership for devuser
-sudo chown -R devuser:devuser /home/devuser/.ssh
-sudo chown devuser:devuser /home/devuser/.zshenv 2>/dev/null || true
+_root_exec chown -R devuser:devuser /home/devuser/.ssh
+_root_exec chown devuser:devuser /home/devuser/.zshenv 2>/dev/null || true
 
 # 2. Sovereign SSH Bridge (The Transversal Handshake)
 # We prioritize the Sovereign Bridge socket mapping
@@ -63,14 +74,23 @@ fi
 # We ensure the Spoke has host keys for the Transversal Bridge
 if [[ ! -f /etc/ssh/ssh_host_rsa_key ]]; then
     echo "[VDE-ENTRYPOINT] Generating SSH host keys..."
-    sudo ssh-keygen -A
+    _root_exec ssh-keygen -A
 fi
 
 # 3.1. Dynamic Port Handshake
-# If SSH_PORT is provided, we update the daemon configuration
+# Sourcery Remediations 2 & 3: Validate SSH_PORT is a numeric value in the
+# legal range before touching sshd_config. Then apply a deterministic rewrite:
+# remove ALL existing Port directives and append a single canonical one so the
+# final configuration is unambiguous regardless of what the base image ships.
 if [[ -n "${SSH_PORT}" ]]; then
-    echo "[VDE-ENTRYPOINT] Configuring SSH to listen on port ${SSH_PORT}..."
-    sudo sed -i "s/^#\?Port .*/Port ${SSH_PORT}/" /etc/ssh/sshd_config
+    if [[ "${SSH_PORT}" =~ ^[0-9]+$ ]] && (( SSH_PORT >= 1 && SSH_PORT <= 65535 )); then
+        echo "[VDE-ENTRYPOINT] Configuring SSH to listen on port ${SSH_PORT}..."
+        # Strip any existing Port lines (commented or active), then append one.
+        _root_exec sed -i '/^#\?Port /d' /etc/ssh/sshd_config
+        echo "Port ${SSH_PORT}" | _root_exec tee -a /etc/ssh/sshd_config >/dev/null
+    else
+        echo "[VDE-ENTRYPOINT] WARNING: SSH_PORT '${SSH_PORT}' is not a valid port number (1-65535). Skipping port configuration."
+    fi
 fi
 
 # 4. SPOKE IGNITION HOOKS
