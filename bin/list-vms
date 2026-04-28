@@ -198,7 +198,7 @@ get_created_vms() {
     state_dir=$(get_docker_state_dir)
     
     if [[ -d "${state_dir}" ]] && [[ -n "$(ls -A "${state_dir}" 2>/dev/null)" ]]; then
-        for f in "${state_dir}"/*.json; do
+        for f in "${state_dir}"/*.json(N); do
             [[ -f "${f}" ]] && basename "${f}" .json
         done
     fi

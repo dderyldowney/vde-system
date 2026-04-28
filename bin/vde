@@ -11,6 +11,9 @@ export VDE_ORCHESTRATED=1
 VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
+# The Sovereign Scope Mandate: All operations must execute from within the Armor root
+cd "${VDE_ROOT_DIR}" || { echo "CRITICAL ERROR: Failed to enter Sovereign Scope (${VDE_ROOT_DIR})"; exit 1; }
+
 # Source shared library
 source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
 source "${VDE_ROOT_DIR}/lib/vde-constants"

@@ -243,8 +243,11 @@ VDE_SSH_AGENT_ENV="${VDE_SSH_AGENT_ENV:-${VDE_SSH_DIR}/agent_env}"
 # =============================================================================
 # Core VDE directories - can be overridden by setting VDE_*_DIR environment variables
 
-# Root directory of the VDE project. Must be explicitly set by scripts sourcing this.
-VDE_ROOT_DIR="${${(%):-%x}:h:h}"
+# Root directory of the VDE project. (Mandate 24: Absolute Scope)
+if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
+    VDE_ROOT_DIR="${${(%):-%x}:a:h:h}"
+fi
+export VDE_ROOT_DIR
 
 # Configuration directory (e.g., configs/docker)
 CONFIGS_DIR="${VDE_CONFIGS_DIR:-${VDE_ROOT_DIR}/configs/docker}"

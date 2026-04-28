@@ -234,7 +234,7 @@ sync_ssh_keys_to_vde() {
     #   vde ssh-sync → rebuild base → sync_ssh_keys_to_vde → rebuild base → …
     # When VDE_IN_REBUILD=1 (set by bin/vde-rebuild at startup), the trigger
     # is skipped because we are already inside a rebuild cycle.
-    if [[ -z "${VDE_IN_REBUILD}" ]]; then
+    if [[ -z "${VDE_IN_REBUILD}" ]] && [[ "${VDE_TEST_MODE:-0}" != "1" ]]; then
         log_info "Key synced. Triggering base image rebuild (VDE-CASCADE-01)..."
         "${VDE_ROOT_DIR}/bin/vde" rebuild base 2>/dev/null || \
             _warn "Base image rebuild failed after key sync — manual 'vde rebuild base' may be required."
