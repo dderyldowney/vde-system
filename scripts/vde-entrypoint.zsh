@@ -11,9 +11,10 @@ export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 echo "[VDE-ENTRYPOINT] Initializing Spoke Identity..."
 
 # Sourcery Remediation 1: Portable privilege escalation helper.
-# When the entrypoint already runs as root (UID 0), sudo is unnecessary and
-# may not even be present in minimal images. This helper transparently handles
-# both cases so the rest of the script is context-agnostic.
+# REQUIREMENT: This entrypoint MUST be launched as root (UID 0) OR have sudo
+# available. In the VDE Forge, containers run as devuser with NOPASSWD sudo
+# (see vde-base.Dockerfile). Minimal images without sudo MUST invoke this
+# entrypoint via 'docker run --user root' or equivalent.
 _root_exec() {
     if [[ "$(id -u)" -eq 0 ]]; then
         "$@"

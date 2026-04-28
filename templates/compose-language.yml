@@ -42,8 +42,8 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
-      - ../../../../env-files/{{NAME}}.env
       - ../../../../.env
+      - ../../../../env-files/{{NAME}}.env
 
     networks:
       vde-net:

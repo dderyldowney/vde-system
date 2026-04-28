@@ -44,8 +44,9 @@ RUN mkdir -p /var/run/sshd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
     echo "AllowAgentForwarding yes" >> /etc/ssh/sshd_config && \
-    echo "AuthorizedKeysFile /home/devuser/.ssh/vde/authorized_keys" >> /etc/ssh/sshd_config && \
-    echo "StrictModes no" >> /etc/ssh/sshd_config
+    echo "AuthorizedKeysFile /home/devuser/.ssh/vde/authorized_keys" >> /etc/ssh/sshd_config
+# Note: StrictModes defaults to 'yes'. The entrypoint enforces correct ownership
+# and permissions at runtime, so StrictModes yes is safe and intentional.
 
 # 4. The Student Environment (User & Oh-My-Zsh)
 RUN useradd -ms /bin/zsh -u 1000 devuser && \
