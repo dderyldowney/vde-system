@@ -40,6 +40,7 @@ typeset VM_ALIAS=""
 typeset -a SSH_OPTS=(
     "-o StrictHostKeyChecking=no"
     "-o UserKnownHostsFile=/dev/null"
+    "-o IdentitiesOnly=yes"
     "-o LogLevel=ERROR"
     "-o ConnectTimeout=5"
 )

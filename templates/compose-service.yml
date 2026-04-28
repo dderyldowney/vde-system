@@ -29,8 +29,6 @@ services:
       - ../../../../:/vde:ro
       - ../../../../data/{{NAME}}:/data
       - ../../../../logs/{{NAME}}:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Persistence mapping
       - ../../../../data/{{NAME}}/pgdata:/var/lib/postgresql/data
       # Docker Socket Sovereignty (Physical Verification Law)
@@ -47,6 +45,7 @@ services:
       - REDIS_ARGS=--save 60 1 --loglevel warning
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/{{NAME}}.env
 
     networks:

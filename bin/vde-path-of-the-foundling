@@ -49,7 +49,7 @@ echo -e "${BOLD}1. The Ignition Ritual (Initialization)${RESET}"
 echo "Every Forge must be ignited before it can strike Beskar."
 echo "This ritual sets up your SSH keys and networks."
 echo ""
-echo "Command: vde init"
+echo "Command: vde init -f"
 echo ""
 
 typeset reply="n"
@@ -63,7 +63,7 @@ else
 fi
 
 if [[ "${reply}" == [Yy] ]]; then
-    "${VDE_ROOT_DIR}/bin/vde-init"
+    "${VDE_ROOT_DIR}/bin/vde-init" -f
     echo -e "${GREEN}✓ The Forge is ignited.${RESET}"
 else
     echo "The Forge remains cold. Return when you are ready."

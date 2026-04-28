@@ -3,6 +3,7 @@
 #===============================================================================
 # VDE CLI - Unified Virtual Development Environment
 set -e
+export VDE_ORCHESTRATED=1
 # Version: ${VDE_VERSION:-$(vde_get_version)}
 #===============================================================================
 
@@ -20,6 +21,13 @@ source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vde-docker"
 source "${VDE_ROOT_DIR}/lib/vde-cluster-utils"
 source "${VDE_ROOT_DIR}/lib/vm-common"
+
+# Global SSH Agent Discovery
+# Ensures all orchestrated commands inherit the isolated VDE agent,
+# even if launched from a clean shell without ~/.zshrc integration.
+if [[ -f "${HOME}/.ssh/vde/agent_env" ]]; then
+    source "${HOME}/.ssh/vde/agent_env" >/dev/null 2>&1
+fi
 
 # Initialize logging
 if [[ "${VDE_QUIET:-0}" != "1" ]]; then
@@ -159,7 +167,11 @@ case ${ACTION} in
             fi
 
             # Canonical Ignition Handshake
-            if vde_run "${CANONICAL_NAME}" docker compose -f "${compose_file}" up -d >/dev/null 2>&1; then
+            local -a compose_up_cmd=(docker compose -f "${compose_file}")
+            [[ -f "${VDE_ROOT_DIR}/.env" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/.env")
+            compose_up_cmd+=(up -d)
+
+            if vde_run "${CANONICAL_NAME}" "${compose_up_cmd[@]}" >/dev/null 2>&1; then
                 vde_progress_spinner_stop "${CANONICAL_NAME} ignited"
             else
                 vde_progress_spinner_stop "" "Failed to ignite ${CANONICAL_NAME}" 1
@@ -250,6 +262,21 @@ case ${ACTION} in
         local vm_target="${targets[1]}"
         [[ -z "${vm_target}" ]] && vde_log_error "Usage: vde enter <vm_name> [command]" && exit 1
         vde_run "enter" "${VDE_ROOT_DIR}/bin/ssh-vm" "${vm_target}" "${ACTION_ARGS[@]}"
+        ;;
+    ssh-setup)
+        local -a ssh_args=("${input_targets[@]}")
+        [[ "${force}" == "true" ]] && ssh_args+=(--force)
+        vde_run "ssh-setup" "${VDE_ROOT_DIR}/bin/ssh-setup" "${ssh_args[@]}"
+        ;;
+    ssh-sync)
+        local -a ssh_args=("${input_targets[@]}")
+        [[ "${force}" == "true" ]] && ssh_args+=(--force)
+        vde_run "ssh-sync" "${VDE_ROOT_DIR}/bin/ssh-sync" "${ssh_args[@]}"
+        ;;
+    ssh-agent-setup)
+        local -a ssh_args=("${input_targets[@]}")
+        [[ "${force}" == "true" ]] && ssh_args+=(--force)
+        vde_run "ssh-agent-setup" "${VDE_ROOT_DIR}/bin/ssh-agent-setup" "${ssh_args[@]}"
         ;;
     list)
         vde_run "list" "${VDE_ROOT_DIR}/bin/list-vms" "${input_targets[@]}"
