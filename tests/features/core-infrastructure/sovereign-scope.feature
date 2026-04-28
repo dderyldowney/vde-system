@@ -1,5 +1,5 @@
 # VDE BDD Feature
-@armor (Sovereign Scope Hardening)
+# @armor (Sovereign Scope Hardening)
 Feature: The Sovereign Scope - Absolute Scoping
   As an Alor of the VDE
   I require the Forge to anchor itself to the project root
