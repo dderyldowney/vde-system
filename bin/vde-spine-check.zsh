@@ -56,6 +56,10 @@ main() {
     fi
 
     # Pillar IV: SSH
+    if [[ -f "${HOME}/.ssh/vde/agent_env" ]]; then
+        source "${HOME}/.ssh/vde/agent_env" >/dev/null 2>&1
+    fi
+
     local ssh_identities
     ssh_identities=$(ssh-add -l 2>/dev/null || echo "")
     

@@ -25,6 +25,7 @@ VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 source "${VDE_ROOT_DIR}/lib/vm-common"
+export VDE_IN_REBUILD=1
 
 # Configuration
 NOCACHE=false
@@ -168,10 +169,12 @@ build_vm_image() {
     
     # Export required variables for hardening
     export POSTGRES_DEV_PASSWORD="${POSTGRES_DEV_PASSWORD}"
-    local build_cmd="docker compose -f ${compose_file} build"
-    [[ "${NOCACHE}" == "true" ]] && build_cmd="${build_cmd} --no-cache"
+    local -a build_cmd=(docker compose -f "${compose_file}")
+    [[ -f "${VDE_ROOT_DIR}/.env" ]] && build_cmd+=(--env-file "${VDE_ROOT_DIR}/.env")
+    build_cmd+=(build)
+    [[ "${NOCACHE}" == "true" ]] && build_cmd+=(--no-cache)
     
-    if eval "${build_cmd}"; then
+    if vde_run "${canonical_name}" "${build_cmd[@]}"; then
         echo "✓ ${canonical_name} rebuilt successfully"
         return 0
     else

@@ -209,10 +209,35 @@ sync_ssh_keys_to_vde() {
     cp "${VDE_SSH_IDENTITY_PUB}" "${dest_path}"
     chmod 644 "${dest_path}"
 
+    # Inject the key into the global .env file (Option B)
+    local env_file="${VDE_ROOT_DIR}/.env"
+    if [[ -f "${env_file}" ]]; then
+        local pub_key="$(cat "${dest_path}")"
+        # Clean existing entry to prevent duplicates
+        if [[ "$(uname)" == "Darwin" ]]; then
+            sed -i '' '/^VDE_AUTHORIZED_KEY=/d' "${env_file}"
+        else
+            sed -i '/^VDE_AUTHORIZED_KEY=/d' "${env_file}"
+        fi
+        echo "VDE_AUTHORIZED_KEY=\"${pub_key}\"" >> "${env_file}"
+    fi
+
     check_for_private_keys_in_public_dir "${VDE_SSH_KEYS_DIR}"
 
     if [[ ! -f "${VDE_SSH_KEYS_DIR}/.keep" ]] ; then
         touch "${VDE_SSH_KEYS_DIR}/.keep"
+    fi
+
+    # VDE-CASCADE-01: Smelt Guard
+    # Trigger a base image rebuild to incorporate the refreshed key state.
+    # The VDE_IN_REBUILD guard prevents an infinite recursion loop:
+    #   vde ssh-sync → rebuild base → sync_ssh_keys_to_vde → rebuild base → …
+    # When VDE_IN_REBUILD=1 (set by bin/vde-rebuild at startup), the trigger
+    # is skipped because we are already inside a rebuild cycle.
+    if [[ -z "${VDE_IN_REBUILD}" ]]; then
+        log_info "Key synced. Triggering base image rebuild (VDE-CASCADE-01)..."
+        "${VDE_ROOT_DIR}/bin/vde" rebuild base 2>/dev/null || \
+            _warn "Base image rebuild failed after key sync — manual 'vde rebuild base' may be required."
     fi
 
     return ${VDE_SUCCESS}
