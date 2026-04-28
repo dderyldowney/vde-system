@@ -1,6 +1,6 @@
 ## Session State: Standby
 - **Objective**: All work on v1.5.1 is complete.
-- **Last Action**: Corrected release archives to reflect the true Sovereign SHA.
-- **Current SHA**: 9a70c2ed59497ba0c5c7aea57b2f95e2485465f8
+- **Last Action**: Finalized and purged archives for the 1.5.1 release.
+- **Current SHA**: a19c968676c046534dcd8c80561526219991df85
 - **Next Step**: Awaiting new orders from the Clan Leader.
 - **Architectural Tagging**: @forge (Chronicle Update)
