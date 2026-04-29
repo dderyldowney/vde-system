@@ -385,7 +385,16 @@ vde_health_report_text() {
         local message="${parts[2]}"
         local triage="${parts[3]:-}"
         
-        local status_indicator
+        # Determine triage based on check type if parts length is higher
+        if [[ "${check}" == "memory" ]]; then
+            triage="${parts[3]:-}"
+        elif [[ "${check}" == "containers" ]]; then
+            # For containers: status|message|running|stopped|total
+            # No specific triage string, but we can synthesize one if unhealthy
+            [[ "${health_status}" == "MAJOR" ]] && triage="ADVICE: Check logs for unhealthy containers: 'vde logs <name>'"
+        fi
+        
+        local status_indicator=""
         case "${health_status}" in
             OK) status_indicator="[OK]" ;;
             MINOR) status_indicator="[MINOR]" ;;
@@ -396,7 +405,7 @@ vde_health_report_text() {
         
         echo "  ${status_indicator} ${check}"
         echo "         ${message}"
-        [[ -n "${triage}" ]] && echo "         \033[1;33m${triage}\033[0m"
+        [[ -n "${triage}" && "${triage}" != [0-9]# ]] && echo "         \033[1;33m${triage}\033[0m"
         echo ""
     done
     
