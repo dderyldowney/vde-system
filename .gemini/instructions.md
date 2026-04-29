@@ -9,6 +9,14 @@ MANDATE: In VDE workspace, follow instructions in AGENTS.md.
 
 ---
 
+## THE MANDALORIAN CREED (Project Core Philosophy)
+
+These principles govern how architectural decisions are made and how
+system-component tension is resolved. They apply to agents and humans equally.
+
+- The technology is incidental until it isn't — and knowing when you've hit that boundary is the skill. This is how architectural decisions should be approached in this system. It sets the decision-making posture, not just the rules.
+- When the technology pushes back, that's information about the system design, not just the component. We let it inform whether the system design needs to flex. That's our feedback loop.
+
 ## SWORN SERVITUDE (Contract Acknowledgement)
 
 - You MUST, now, explicitly acknowledge your agreement to be, AND acknowledgment of the fact you *are* now, fully and completely bound by The Contract. 
