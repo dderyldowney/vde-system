@@ -46,7 +46,7 @@ Violating any of these mandates is a failure of the agent's primary directive.
 8.  **TDD is Non-Negotiable**: Failing test (RED) first, then minimal implementation (GREEN), then refactor.
 9.  **No Fake Tests**: `assert True`, `pass`, and placeholder context flags are strictly forbidden.
 10. **Canonical Entrypoint**: `bin/vde` is the single canonical entrypoint. All operations must go through `bin/vde` subcommands; calling underlying scripts directly is out of mandate, except in tests whose explicit purpose is to unit‑test that script in isolation (not as a side effect of a normal bin/vde call).
-11. **MCP-First**: Always prefer MCP services (`sequential-thinking`, `context7`, etc.) over local CLI or internal tools.
+11. **MCP-First**: Always prefer MCP services (`context7`, etc.) over local CLI or internal tools.
 12. **User-Centric Perspective**: All interactions and tests must use the canonical `vde` CLI (e.g., `vde ssh`). Never call internal `bin/` scripts directly.
 13. **Dual Approval Gate**: Commits require BOTH code-reviewer (agent) and user approval.
 14. **No-Push Policy**: Never `git push` without explicit user instruction.

@@ -7,6 +7,7 @@
 - **Heartbeat**: Certified via Mandate L; automated via pre-push and CI.
 
 ## CORE MEMORIES (1.5.1)
+- **Sovereign Startup (2026-04-28)**: Remediated SSH Spine failure and certified Heartbeat (100% PASS). Disabled all MCP servers except Context7 as per Clan Leader command.
 - **Sovereign Scope Hardening**: Anchored the `vde` CLI to the absolute project root via `bin/vde` and `lib/vde-constants`. The Armor is now location-blind; strikes can be executed from any host directory while maintaining strict internal scoping.
 - **Sovereign Initialization (1.5.1)**: Completed session ignition with a 100% success rate across all rituals (UAP Audit, Spine Check, Proof of Life).
 - **Branch Alignment Strike**: Synchronized the absolute SHA (`fe6ab8f6`) across `develop`, `main`, and `stable`. Certified the alignment by moving the `1.5.1` tag and GitHub Release.

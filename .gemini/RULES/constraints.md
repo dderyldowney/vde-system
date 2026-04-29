@@ -1,6 +1,6 @@
 # CRITICAL OPERATING CONSTRAINTS
 <!-- @forge (Governance Sentinel) -->
-- Sequential-thinking REQUIRED via `mcp__sequential-thinking__sequentialthinking` | MCP-first: Use MCP services BEFORE internal/local commands
+- Context7 REQUIRED | MCP-first: Use MCP services BEFORE internal/local commands
 - No code/tests/implementation before Phase 2 (Planning first), mode transitions strict (Phase 1 return permitted per workflow.md violation protocol), no commits before final approval
 - **CODE REVIEW MANDATORY**: All code changes MUST be reviewed before commit. See Phase 4 workflow.
 - **DRY Principle MANDATORY**: All code and tests must follow DRY. See `.gemini/RULES/dry_requirement.md`
