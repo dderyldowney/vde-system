@@ -2,13 +2,12 @@
 # @armor (Engine Core)
 # ZSH-native shibboleth: ${(%):-%x}
 # VDE Sovereign Entrypoint
-# Version: 2.5.2 (Hardened SSH Bridge + Sourcery Remediations)
+# Version: 2.5.4 (Hardened permissions + Sourcery Remediations)
 #===============================================================================
 
-# Ensure path includes local bin
-export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-
-echo "[VDE-ENTRYPOINT] Initializing Spoke Identity..."
+# Ensure path includes local bin and VDE lib, but PRESERVE existing PATH (Rule 24)
+# We append system paths to avoid shadowing Spoke-specific binaries (like Cargo)
+export PATH="${PATH}:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 # Sourcery Remediation 1: Portable privilege escalation helper.
 # REQUIREMENT: This entrypoint MUST be launched as root (UID 0) OR have sudo
@@ -22,6 +21,23 @@ _root_exec() {
         sudo "$@"
     fi
 }
+
+echo "[VDE-ENTRYPOINT] Initializing Spoke Identity..."
+
+# 0. Sovereign Docker Socket (The World-Forge Bridge)
+# If the socket is mounted, ensure devuser has access.
+# Sourcery Remediation: Use group-based hardening instead of world-writable.
+if [[ -S "/var/run/docker.sock" ]]; then
+    echo "[VDE-ENTRYPOINT] Hardening Docker Socket permissions..."
+    # If the docker group exists, use it; otherwise, fallback to 666 for portability
+    if grep -q "^docker:" /etc/group; then
+        _root_exec chown root:docker /var/run/docker.sock
+        _root_exec chmod 660 /var/run/docker.sock
+        _root_exec usermod -aG docker devuser
+    else
+        _root_exec chmod 666 /var/run/docker.sock 2>/dev/null || true
+    fi
+fi
 
 # 1. Identity & Permissions (Hardened)
 # We ensure the SSH directory exists and has the correct permissions.
@@ -55,8 +71,9 @@ typeset _bridge_candidates=(
 for candidate in "${_bridge_candidates[@]}"; do
     if [[ -S "${candidate}" ]]; then
         _found_bridge="${candidate}"
-        # Ensure world-readability for the bridge proxy
-        chmod 666 "${_found_bridge}" 2>/dev/null || true
+        # Sourcery Remediation: Avoid world-writable bridge sockets.
+        # We ensure devuser owns the bridge or has group access.
+        _root_exec chown devuser:devuser "${_found_bridge}" 2>/dev/null || _root_exec chmod 666 "${_found_bridge}" 2>/dev/null || true
         break
     fi
 done
@@ -64,9 +81,13 @@ done
 if [[ -n "${_found_bridge}" ]]; then
     echo "[VDE-ENTRYPOINT] Sovereign Bridge Established: ${_found_bridge}"
     export SSH_AUTH_SOCK="${_found_bridge}"
-    # Persist for subshells
-    echo "export SSH_AUTH_SOCK=${_found_bridge}" > /home/devuser/.zshenv
-    chown devuser:devuser /home/devuser/.zshenv
+    # Persist for subshells (Append to avoid overwriting build-time PATH)
+    if ! grep -q "SSH_AUTH_SOCK" /home/devuser/.zshenv 2>/dev/null; then
+        echo "export SSH_AUTH_SOCK=${_found_bridge}" | _root_exec tee -a /home/devuser/.zshenv >/dev/null
+    else
+        _root_exec sed -i "s|export SSH_AUTH_SOCK=.*|export SSH_AUTH_SOCK=${_found_bridge}|" /home/devuser/.zshenv
+    fi
+    _root_exec chown devuser:devuser /home/devuser/.zshenv
 else
     echo "[VDE-ENTRYPOINT] WARNING: No SSH bridge found. Forwarding disabled."
 fi
@@ -110,4 +131,3 @@ else
     # Default to an interactive zsh shell if no command provided
     exec /bin/zsh
 fi
-EOF

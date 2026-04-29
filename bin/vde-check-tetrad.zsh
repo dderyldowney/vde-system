@@ -78,7 +78,7 @@ local CURRENT_VER=$(vde_get_version)
 local JSON_VER=$(vde_query_json ".version" "./data/vm-types.json" | tr -d '"')
 
 if [[ "${JSON_VER}" != "${CURRENT_VER}" ]]; then
-    echo -e "${YELLOW}[WARN] Baseline Drift: Registry (${JSON_VER}) mismatch with Engine (${CURRENT_VER})${RESET}"
+    echo -e "${RED}[ERROR] Baseline Drift: Registry (${JSON_VER}) mismatch with Engine (${CURRENT_VER})${RESET}"
     echo -e "${YELLOW}[AUTO] Attempting Armor Self-Correction...${RESET}"
     if zsh "./bin/vde-armor-heal.zsh"; then
         echo -e "${GREEN}[SUCCESS] Baseline synchronized.${RESET}"

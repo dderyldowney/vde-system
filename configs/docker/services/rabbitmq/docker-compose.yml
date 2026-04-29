@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: rabbitmq, 2405, 5672,15672, , zsh /vde/scripts/setup/rabbitmq-init.zsh
+# Variables: rabbitmq, 2406, 5672,15672, , zsh /vde/scripts/setup/rabbitmq-init.zsh
 name: vde-rabbitmq
 services:
   vde-rabbitmq:
@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "2405:2405"
+      - "2406:2406"
       - "5672:5672"
       - "15672:15672"
 
@@ -30,8 +30,6 @@ services:
       - ../../../../:/vde:ro
       - ../../../../data/rabbitmq:/data
       - ../../../../logs/rabbitmq:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Persistence mapping
       - ../../../../data/rabbitmq/pgdata:/var/lib/postgresql/data
       # Docker Socket Sovereignty (Physical Verification Law)
@@ -48,6 +46,7 @@ services:
       - REDIS_ARGS=--save 60 1 --loglevel warning
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/rabbitmq.env
 
     networks:

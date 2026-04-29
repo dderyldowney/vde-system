@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: lua, 2220, , zsh /vde/scripts/setup/lua-init.zsh
+# Variables: lua, 2214, , zsh /vde/scripts/setup/lua-init.zsh
 name: vde-lua
 services:
   vde-lua:
@@ -25,14 +25,12 @@ services:
       - "vde.name=lua"
 
     ports:
-      - "2220:2220"
+      - "2214:2214"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../projects/lua:/home/devuser/workspace
       - ../../../../logs/lua:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
@@ -44,6 +42,7 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/lua.env
 
     networks:

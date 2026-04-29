@@ -31,8 +31,6 @@ services:
       - ../../../../:/vde:ro
       - ../../../../projects/c:/home/devuser/workspace
       - ../../../../logs/c:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
@@ -44,6 +42,7 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/c.env
 
     networks:

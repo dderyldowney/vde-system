@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: lamp, 2222, , zsh /vde/scripts/setup/lamp-init.zsh
+# Variables: lamp, 2213, , zsh /vde/scripts/setup/lamp-init.zsh
 name: vde-lamp
 services:
   vde-lamp:
@@ -25,14 +25,12 @@ services:
       - "vde.name=lamp"
 
     ports:
-      - "2222:2222"
+      - "2213:2213"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../projects/lamp:/home/devuser/workspace
       - ../../../../logs/lamp:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
@@ -44,6 +42,7 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/lamp.env
 
     networks:

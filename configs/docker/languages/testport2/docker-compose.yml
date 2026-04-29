@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: testport2, 2219, , zsh /vde/scripts/setup/testport2-init.zsh
+# Variables: testport2, 2223, , zsh /vde/scripts/setup/testport2-init.zsh
 name: vde-testport2
 services:
   vde-testport2:
@@ -25,14 +25,12 @@ services:
       - "vde.name=testport2"
 
     ports:
-      - "2219:2219"
+      - "2223:2223"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../projects/testport2:/home/devuser/workspace
       - ../../../../logs/testport2:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
@@ -44,6 +42,7 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/testport2.env
 
     networks:

@@ -41,7 +41,7 @@ fi
 
 # Signal Interception Mandate (Hardened)
 # We ensure the termination report is physically printed before exit
-trap 'vde_error_terminated; exit 130' SIGINT SIGTERM
+trap 'vde_error_map 130; exit 130' SIGINT SIGTERM
 
 # Main command router
 ACTION=$1

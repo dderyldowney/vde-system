@@ -1,6 +1,6 @@
 # VDE ARCHITECTURAL RECORD
 # @forge (Governance Sentinel)
-@core-infrastructure @tech-stack @cluster @system-spine
+@core-infrastructure @tech-stack @cluster @system-spine @pristine
 Feature: Integrated Tech Stack (Python, PostgreSQL, Redis)
   The VDE provides a pre-verified tech stack for students, ensuring that
   language VMs and service VMs can be ignited and utilized as a single unit.
@@ -16,7 +16,7 @@ Feature: Integrated Tech Stack (Python, PostgreSQL, Redis)
 
     
     # Deterministic Readiness (Standard DNS Names)
-    And the VM "python" must be responsive on port "2214"
+    And the VM "python" must be responsive on port "2217"
     And the VM "postgres" must be responsive on port "5432"
     And the VM "redis" must be responsive on port "6379"
     
