@@ -170,8 +170,13 @@ case ${ACTION} in
             fi
 
             # Canonical Ignition Handshake
+            local vm_env_file
+            vm_env_file=$(get_vm_env_file "${CANONICAL_NAME}")
+            
             local -a compose_up_cmd=(docker compose -f "${compose_file}")
             [[ -f "${VDE_ROOT_DIR}/.env" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/.env")
+            [[ -f "${VDE_ROOT_DIR}/${vm_env_file}" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/${vm_env_file}")
+            
             compose_up_cmd+=(up -d)
 
             if vde_run "${CANONICAL_NAME}" "${compose_up_cmd[@]}" >/dev/null 2>&1; then
