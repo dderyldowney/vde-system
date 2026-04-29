@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: certified-ghost, 2223, , zsh /vde/scripts/setup/certified-ghost-init.zsh
+# Variables: certified-ghost, 2202, , zsh /vde/scripts/setup/certified-ghost-init.zsh
 name: vde-certified-ghost
 services:
   vde-certified-ghost:
@@ -25,14 +25,12 @@ services:
       - "vde.name=certified-ghost"
 
     ports:
-      - "2223:2223"
+      - "2202:2202"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../projects/certified-ghost:/home/devuser/workspace
       - ../../../../logs/certified-ghost:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
@@ -44,6 +42,7 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/certified-ghost.env
 
     networks:

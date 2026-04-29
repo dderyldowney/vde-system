@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: php, 2212, , zsh /vde/scripts/setup/php-init.zsh
+# Variables: php, 2216, , zsh /vde/scripts/setup/php-init.zsh
 name: vde-php
 services:
   vde-php:
@@ -25,14 +25,12 @@ services:
       - "vde.name=php"
 
     ports:
-      - "2212:2212"
+      - "2216:2216"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../projects/php:/home/devuser/workspace
       - ../../../../logs/php:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
@@ -44,6 +42,7 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/php.env
 
     networks:

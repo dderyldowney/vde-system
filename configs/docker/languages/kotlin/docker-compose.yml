@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: kotlin, 2211, , zsh /vde/scripts/setup/kotlin-init.zsh
+# Variables: kotlin, 2212, , zsh /vde/scripts/setup/kotlin-init.zsh
 name: vde-kotlin
 services:
   vde-kotlin:
@@ -25,14 +25,12 @@ services:
       - "vde.name=kotlin"
 
     ports:
-      - "2211:2211"
+      - "2212:2212"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../projects/kotlin:/home/devuser/workspace
       - ../../../../logs/kotlin:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
@@ -44,6 +42,7 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/kotlin.env
 
     networks:

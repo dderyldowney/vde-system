@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: postgres, 2404, 5432, , zsh /vde/scripts/setup/postgres-init.zsh
+# Variables: postgres, 2405, 5432, , zsh /vde/scripts/setup/postgres-init.zsh
 name: vde-postgres
 services:
   vde-postgres:
@@ -22,15 +22,13 @@ services:
     restart: unless-stopped
 
     ports:
-      - "2404:2404"
+      - "2405:2405"
       - "5432:5432"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../data/postgres:/data
       - ../../../../logs/postgres:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Persistence mapping
       - ../../../../data/postgres/pgdata:/var/lib/postgresql/data
       # Docker Socket Sovereignty (Physical Verification Law)
@@ -47,6 +45,7 @@ services:
       - REDIS_ARGS=--save 60 1 --loglevel warning
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/postgres.env
 
     networks:

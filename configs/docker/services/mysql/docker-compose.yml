@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: mysql, 2402, 3306, , zsh /vde/scripts/setup/mysql-init.zsh
+# Variables: mysql, 2403, 3306, , zsh /vde/scripts/setup/mysql-init.zsh
 name: vde-mysql
 services:
   vde-mysql:
@@ -22,15 +22,13 @@ services:
     restart: unless-stopped
 
     ports:
-      - "2402:2402"
+      - "2403:2403"
       - "3306:3306"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../data/mysql:/data
       - ../../../../logs/mysql:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Persistence mapping
       - ../../../../data/mysql/pgdata:/var/lib/postgresql/data
       # Docker Socket Sovereignty (Physical Verification Law)
@@ -47,6 +45,7 @@ services:
       - REDIS_ARGS=--save 60 1 --loglevel warning
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/mysql.env
 
     networks:

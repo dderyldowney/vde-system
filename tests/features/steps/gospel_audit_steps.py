@@ -30,6 +30,7 @@ def step_impl(context, file_path):
         shutil.move(context.backup_path, full_path)
 
 @given('I temporarily move "{src}" to "{dst}"')
+@when('I temporarily move "{src}" to "{dst}"')
 def step_impl(context, src, dst):
     root = os.getcwd()
     full_src = os.path.join(root, src)
@@ -61,11 +62,20 @@ def step_impl(context, file_path):
         f.write("#!/usr/bin/env zsh\n# @forge (Ghost)\ntypeset _zsh_compliance_flag=${(z):-\"zsh native parameter expansion\"}\necho 'Boo'\n")
     os.chmod(full_path, 0o755)
 
+@given('I create a temporary directory "{dir_path}"')
+@when('I create a temporary directory "{dir_path}"')
+def step_impl(context, dir_path):
+    root = "."
+    full_path = os.path.join(root, dir_path)
+    os.makedirs(full_path, exist_ok=True)
+
 @then('I remove "{file_path}"')
+@when('I remove "{file_path}"')
 def step_impl(context, file_path):
     root = "."
     full_path = os.path.join(root, file_path)
     if os.path.exists(full_path):
-        os.remove(full_path)
-
-
+        if os.path.isdir(full_path):
+            shutil.rmtree(full_path)
+        else:
+            os.remove(full_path)
