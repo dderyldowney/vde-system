@@ -1,5 +1,5 @@
 # FOUNDATION.md
-# @forge (Formal Epistemic Architecture Reference — Constitutional Governance Document)
+<!-- @forge (Formal Epistemic Architecture Reference — Constitutional Governance Document) -->
 
 > For an accessible introduction to this framework, see [PROJECT_PHILOSOPHY.md](./PROJECT_PHILOSOPHY.md)
 

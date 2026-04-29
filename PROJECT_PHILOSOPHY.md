@@ -1,5 +1,5 @@
 # PROJECT_PHILOSOPHY.md
-# @forge (Agent Onboarding and Epistemic Governance — Human and Agent Orientation Document)
+<!-- @forge (Agent Onboarding and Epistemic Governance — Human and Agent Orientation Document) -->
 
 > For the formal academic treatment of this framework, see [FOUNDATION.md](./FOUNDATION.md)
 
