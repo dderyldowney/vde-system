@@ -7,8 +7,8 @@ export VDE_ORCHESTRATED=1
 # Version: ${VDE_VERSION:-$(vde_get_version)}
 #===============================================================================
 
-# Use strictly absolute pathing (Mandate)
-VDE_ROOT_DIR="${0:a:h:h}"
+# Use strictly relative pathing (Mandate)
+VDE_ROOT_DIR="${0:h:h}"
 export VDE_ROOT_DIR
 
 # The Sovereign Scope Mandate: All operations must execute from within the Armor root

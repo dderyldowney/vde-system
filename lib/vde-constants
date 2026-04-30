@@ -247,7 +247,8 @@ VDE_SSH_AGENT_ENV="${VDE_SSH_AGENT_ENV:-${VDE_SSH_DIR}/agent_env}"
 
 # Root directory of the VDE project. (Mandate 24: Absolute Scope)
 if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
-    VDE_ROOT_DIR="${${(%):-%x}:a:h:h}"
+    VDE_ROOT_DIR="${(%):-%x}"
+    VDE_ROOT_DIR="${VDE_ROOT_DIR:h:h}"
 fi
 export VDE_ROOT_DIR
 

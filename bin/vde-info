@@ -8,7 +8,7 @@ set -e
 
 # Determine VDE root directory
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
-    export VDE_ROOT_DIR="${0:a:h:h}"
+    export VDE_ROOT_DIR="${0:h:h}"
 fi
 
 # Source core libraries

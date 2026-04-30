@@ -23,7 +23,7 @@ set -e
 
 # Determine VDE root directory
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
-VDE_ROOT_DIR="$(cd "${VDE_SCRIPTS_DIR}/.." && pwd)"
+VDE_ROOT_DIR="${0:h:h}"
 
 # Source shared library
 source "${VDE_ROOT_DIR}/lib/vde-shell-compat"

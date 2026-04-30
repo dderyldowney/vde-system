@@ -14,7 +14,7 @@ typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 set -e
 
-VDE_ROOT_DIR="${0:a:h:h}"
+VDE_ROOT_DIR="${0:h:h}"
 export VDE_ROOT_DIR
 
 VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"

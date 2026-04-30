@@ -8,7 +8,7 @@
 set -e
 
 # Source dependencies
-VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+VDE_ROOT_DIR="${0:h:h}"
 
 # Enforce Universal Agent Protocol (The Rule Spine)
 "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" --quiet || exit 1

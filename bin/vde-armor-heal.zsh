@@ -18,7 +18,7 @@ typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 set -e
 
 # Use strictly relative pathing (Mandate)
-VDE_ROOT_DIR="."
+VDE_ROOT_DIR="${0:h:h}"
 source "./lib/vde-core"
 
 # Colors for high-fidelity output

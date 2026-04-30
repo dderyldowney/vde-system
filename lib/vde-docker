@@ -32,7 +32,10 @@ _VDE_DOCKER_LOADED=1
 # If VDE_ROOT_DIR is already exported, use it. Otherwise, derive it.
 if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
     _VDE_DOCKER_SCRIPT_PATH="${(%):-%x}"
-    VDE_ROOT_DIR="${0:a:h:h}"
+    if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
+    VDE_ROOT_DIR="${(%):-%x}"
+    VDE_ROOT_DIR="${VDE_ROOT_DIR:h:h}"
+fi
 fi
 export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 

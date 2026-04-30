@@ -4,8 +4,8 @@
 # Provides direct SSH access to VDE Spoke containers
 
 # 1. ENVIRONMENT & CONTEXT
-# Use zsh-native absolute path detection (Rule 1)
-typeset VDE_ROOT_DIR="${0:a:h:h}"
+# Use zsh-native relative path detection
+typeset VDE_ROOT_DIR="${0:h:h}"
 export VDE_ROOT_DIR
 
 # Parse flags early for quiet mode (Mandate 3)

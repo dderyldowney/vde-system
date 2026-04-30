@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
-VDE_ROOT_DIR="${0:a:h:h}"
+VDE_ROOT_DIR="${0:h:h}"
 source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
 source "${VDE_ROOT_DIR}/lib/vde-constants"
 source "${VDE_ROOT_DIR}/lib/vde-log"

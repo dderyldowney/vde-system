@@ -9,7 +9,7 @@
 set -e
 
 # Establish context
-VDE_ROOT_DIR="${0:a:h:h}"
+VDE_ROOT_DIR="${0:h:h}"
 export VDE_ROOT_DIR
 
 # Source libraries

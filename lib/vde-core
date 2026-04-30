@@ -61,7 +61,10 @@ _VDE_CORE_SCRIPT_PATH="${(%):-%N}"
 
 # If VDE_ROOT_DIR is already exported, use it. Otherwise, assume current directory.
 if [[ -z "${VDE_ROOT_DIR:-}" ]] ; then
-    VDE_ROOT_DIR="."
+    if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
+    VDE_ROOT_DIR="${(%):-%x}"
+    VDE_ROOT_DIR="${VDE_ROOT_DIR:h:h}"
+fi
 fi
 export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 

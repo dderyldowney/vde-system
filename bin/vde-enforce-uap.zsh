@@ -10,7 +10,7 @@ set -e
 # 3. Structural Integrity (Mandatory Configs)
 #===============================================================================
 
-VDE_ROOT_DIR="${0:a:h:h}"
+VDE_ROOT_DIR="${0:h:h}"
 
 # 0. Technical Integrity Gate (Project 1 Dependency)
 # The Forge cannot be lit without the Unyielding Tetrad.

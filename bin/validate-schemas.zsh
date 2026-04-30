@@ -11,7 +11,7 @@ typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 VDE_SCRIPTS_DIR="${0:A:h}"
 if [[ -z "${VDE_ROOT_DIR}" ]] ; then
-    export VDE_ROOT_DIR="${VDE_SCRIPTS_DIR:h}"
+    export VDE_ROOT_DIR="${0:h:h}"
 fi
 PROJECT_ROOT="${VDE_ROOT_DIR}"
 
