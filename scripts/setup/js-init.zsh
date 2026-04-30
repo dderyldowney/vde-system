@@ -21,7 +21,8 @@ curl -fsSL https://deb.nodesource.com/setup_22.x -o /tmp/setup_node.sh
 sh /tmp/setup_node.sh
 apt-get install -y nodejs
 
-# 3. PURGING THE GHOSTS
-apt-get clean
-rm -rf /var/lib/apt/lists/*
+# 3. PURGING THE GHOSTS (Rule 12.5)
+export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core"
+vde_purge_ghosts
 rm -f /tmp/setup_node.sh

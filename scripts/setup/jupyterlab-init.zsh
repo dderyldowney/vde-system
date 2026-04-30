@@ -96,6 +96,7 @@ chmod +x "${_spoke_ignition}"
 chown -R devuser:devuser "${_venv_path}"
 chown -R devuser:devuser ${dev_home}/.jupyter
 
-# 9. PURGING THE GHOSTS
-apt-get clean
-rm -rf /var/lib/apt/lists/*
+# 9. PURGING THE GHOSTS (Rule 12.5)
+export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core"
+vde_purge_ghosts

@@ -13,7 +13,7 @@ LABEL project="vde" \
 
 USER root
 
-# 1. Install standard packages as root
+# 1. Install standard packages as root (Rule 12.5: purge lists after install)
 RUN if [ -n "${PKGS_TO_INSTALL}" ]; then \
         apt-get update && \
         apt-get upgrade -y && \
@@ -31,10 +31,15 @@ RUN if [ -n "${CUSTOM_BUILD_CMD}" ]; then \
     fi
 
 # 3. Final Purity Check (Rule 12.5)
-RUN [ $(ls /var/lib/apt/lists/ | wc -l) -eq 0 ] || { \
-    echo "ERROR: Rule 12.5 Violation - apt artifacts found in /var/lib/apt/lists/"; \
-    exit 1; \
-}
+# Ensures hydration scripts 'purged the ghosts' (vde_purge_ghosts)
+RUN if [ -d /var/lib/apt/lists/ ]; then \
+        count=$(ls -A /var/lib/apt/lists/ | grep -v "partial" | wc -l); \
+        if [ "$count" -gt 0 ]; then \
+            echo "ERROR: Rule 12.5 Violation - apt artifacts found in /var/lib/apt/lists/"; \
+            ls -al /var/lib/apt/lists/; \
+            exit 1; \
+        fi \
+    fi
 
 # 4. Switch back to root to allow SSHD to start
 USER root

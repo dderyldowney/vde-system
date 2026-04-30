@@ -122,6 +122,12 @@ done
 #===============================================================================
 
 build_base_image() {
+    local base_lock="${VDE_LOCKS_DIR}/vms/vde-base.lock"
+    if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+        claim_lock "${base_lock}" || return ${VDE_ERR_LOCK}
+        trap "release_lock '${base_lock}'" INT TERM HUP
+    fi
+
     local -a build_cmd=(docker build)
     [[ "${PULL}" == "true" ]] && build_cmd+=(--pull)
     build_cmd+=(-t vde-base:latest -f "${CONFIGS_DIR}/vde-base.Dockerfile" "${VDE_ROOT_DIR}")
@@ -137,9 +143,17 @@ build_base_image() {
     
     if "${build_cmd[@]}"; then
         echo "✓ vde-base:latest built successfully"
+        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+            trap - INT TERM HUP
+            release_lock "${base_lock}"
+        fi
         return 0
     else
         echo "✗ Failed to build vde-base:latest"
+        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+            trap - INT TERM HUP
+            release_lock "${base_lock}"
+        fi
         return ${VDE_ERR_GENERAL}
     fi
 }
@@ -162,6 +176,13 @@ build_vm_image() {
         return 1
     fi
     
+    # MANDATE: Secure Atomic Lock before rebuilding Spoke (Phase 25)
+    local vm_lock="${VDE_LOCKS_DIR}/vms/${canonical_name}.lock"
+    if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+        claim_lock "${vm_lock}" || return ${VDE_ERR_LOCK}
+        trap "release_lock '${vm_lock}'" INT TERM HUP
+    fi
+    
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "Rebuilding ${canonical_name}..."
@@ -180,9 +201,17 @@ build_vm_image() {
     
     if vde_run "${canonical_name}" "${build_cmd[@]}"; then
         echo "✓ ${canonical_name} rebuilt successfully"
+        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+            trap - INT TERM HUP
+            release_lock "${vm_lock}"
+        fi
         return 0
     else
         echo "✗ Failed to rebuild ${canonical_name}"
+        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+            trap - INT TERM HUP
+            release_lock "${vm_lock}"
+        fi
         return 1
     fi
 }

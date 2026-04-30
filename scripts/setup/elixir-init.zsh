@@ -50,7 +50,8 @@ grep -q "asdf.sh" "${_zshenv}" || {
 }
 chown devuser:devuser "${_zshenv}"
 
-# 4. PURGING THE GHOSTS
-apt-get clean
-rm -rf /var/lib/apt/lists/*
+# 4. PURGING THE GHOSTS (Rule 12.5)
+export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core"
+vde_purge_ghosts
 rm -f "${INSTALL_SCRIPT}"
