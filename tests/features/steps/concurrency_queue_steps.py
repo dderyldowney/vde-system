@@ -22,24 +22,26 @@ def step_launch_simultaneous_requests(context, interval):
     if log_file.exists():
         log_file.unlink()
         
-    test_script.write_text(f"""#!/usr/bin/env zsh
-source "{VDE_ROOT}/lib/vm-common"
-source "{VDE_ROOT}/lib/vde-core"
-source "{VDE_ROOT}/lib/vm-lock"
+    test_script.write_text("""#!/usr/bin/env zsh
+# @shared-law (FIFO Lock Empirical Test Harness — Concurrency Proof)
+VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:A:h:h:h}}"
+source "${VDE_ROOT_DIR}/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vde-core"
+source "${VDE_ROOT_DIR}/lib/vm-lock"
 
 LOCK_NAME="$1"
 WAIT_TIME="$2"
 ID="$3"
+typeset LOG_FILE="${VDE_ROOT_DIR}/plans/scripts/fifo_test.log"
 
-echo "ARRIVE:$ID:$(date +%s.%N)" >> "{log_file}"
+echo "ARRIVE:$ID:$(date +%s.%N)" >> "${LOG_FILE}"
 if claim_lock "$LOCK_NAME"; then
-    echo "ACQUIRE:$ID:$(date +%s.%N)" >> "{log_file}"
-    # Small sleep to allow others to queue up
+    echo "ACQUIRE:$ID:$(date +%s.%N)" >> "${LOG_FILE}"
     zmodload zsh/zselect && zselect -t 50
     release_lock "$LOCK_NAME"
-    echo "RELEASE:$ID:$(date +%s.%N)" >> "{log_file}"
+    echo "RELEASE:$ID:$(date +%s.%N)" >> "${LOG_FILE}"
 else
-    echo "FAIL:$ID:$(date +%s.%N)" >> "{log_file}"
+    echo "FAIL:$ID:$(date +%s.%N)" >> "${LOG_FILE}"
 fi
 """)
     test_script.chmod(0o755)

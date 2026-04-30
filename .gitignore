@@ -115,3 +115,5 @@ tests/.test-tmp/
 .tmp.driveupload/
 .claude/
 plans/matrix-audit-report.md
+plans/scripts/fifo_test.log
+/pretty.output

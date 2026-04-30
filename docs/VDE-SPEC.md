@@ -1,6 +1,6 @@
 # VDE-SPEC
 # @shared-law (Sovereign Law)
-# VDE-SPEC 1.5.1 (The Sovereign Evolution) (The Sovereign Evolution)
+# VDE-SPEC 1.5.1 (The Sovereign Evolution)
 
 **Date**: 2026-04-30
 **Status**: SOVEREIGN BASELINE CERTIFIED
