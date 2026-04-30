@@ -16,6 +16,7 @@ typeset vde_python_pkgs="python3 python3-pip python-is-python3 postgresql-client
 apt-get update
 apt-get install -y ${=vde_python_pkgs}
 
-# 3. PURGING THE GHOSTS
-apt-get clean
-rm -rf /var/lib/apt/lists/*
+# 3. PURGING THE GHOSTS (Rule 12.5)
+export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core"
+vde_purge_ghosts

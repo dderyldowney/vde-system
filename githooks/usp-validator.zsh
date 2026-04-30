@@ -75,16 +75,17 @@ for file in $(git diff --cached --name-only --diff-filter=ACM | grep 'scripts/se
         EXIT_CODE=1
     fi
 
-    # Check for 'apt-get clean'
-    if ! grep -q "apt-get clean" <<< "${content}"; then
-        echo -e "${RED}[ERROR] USP Violation: '${file}' missing 'apt-get clean' mandate.${RESET}"
-        EXIT_CODE=1
-    fi
-
-    # Check for 'rm -rf /var/lib/apt/lists/*'
-    if ! grep -q "rm -rf /var/lib/apt/lists/\*" <<< "${content}"; then
-        echo -e "${RED}[ERROR] USP Violation: '${file}' missing ghost purging mandate (rm -rf /var/lib/apt/lists/*).${RESET}"
-        EXIT_CODE=1
+    # Check for BTO ghost purge (Rule 12.5)
+    # Canonical form: vde_purge_ghosts; legacy inline also accepted during migration
+    if ! grep -q "vde_purge_ghosts" <<< "${content}"; then
+        if ! grep -q "apt-get clean" <<< "${content}"; then
+            echo -e "${RED}[ERROR] USP Violation: '${file}' missing 'apt-get clean' mandate.${RESET}"
+            EXIT_CODE=1
+        fi
+        if ! grep -q "rm -rf /var/lib/apt/lists/\*" <<< "${content}"; then
+            echo -e "${RED}[ERROR] USP Violation: '${file}' missing ghost purging mandate (rm -rf /var/lib/apt/lists/*).${RESET}"
+            EXIT_CODE=1
+        fi
     fi
 
     # Check for 'DEBIAN_FRONTEND=noninteractive'

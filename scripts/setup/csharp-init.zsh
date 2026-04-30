@@ -34,7 +34,8 @@ typeset _zshenv="${dev_home}/.zshenv"
 } >> "${_zshenv}"
 chown devuser:devuser "${_zshenv}"
 
-# 5. PURGING THE GHOSTS
-apt-get clean
-rm -rf /var/lib/apt/lists/*
+# 5. PURGING THE GHOSTS (Rule 12.5)
+export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core"
+vde_purge_ghosts
 rm -f /tmp/dotnet-install.sh

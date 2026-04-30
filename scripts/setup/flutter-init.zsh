@@ -34,6 +34,7 @@ typeset _zshenv="${dev_home}/.zshenv"
 # Set ownership for the whole home directory to ensure devuser has access
 chown -R devuser:devuser "${dev_home}"
 
-# 5. PURGING THE GHOSTS
-apt-get clean
-rm -rf /var/lib/apt/lists/*
+# 5. PURGING THE GHOSTS (Rule 12.5)
+export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core"
+vde_purge_ghosts

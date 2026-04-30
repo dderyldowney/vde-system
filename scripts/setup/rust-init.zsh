@@ -55,7 +55,8 @@ sudo -u devuser zsh -c '
     rustup component add rust-src
 '
 
-# 4. PURGING THE GHOSTS
+# 4. PURGING THE GHOSTS (Rule 12.5)
 # Clean up build artifacts to maintain a hardened, immutable baseline.
-apt-get clean
-rm -rf /var/lib/apt/lists/*
+export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core"
+vde_purge_ghosts

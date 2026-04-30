@@ -192,6 +192,18 @@ _vde_core_get_mtime() {
     fi
 }
 
+# vde_purge_ghosts - BTO Purge Ritual (Rule 12.5)
+# Ensures image immutability by removing all transient apt artifacts.
+vde_purge_ghosts() {
+    if command -v apt-get >/dev/null 2>&1; then
+        apt-get clean 2>/dev/null
+        rm -rf /var/lib/apt/lists/*
+        rm -rf /var/cache/apt/archives/*
+        # Ensure the directory exists but is empty (Rule 12.5 compliance)
+        mkdir -p /var/lib/apt/lists/partial
+    fi
+}
+
 # vde_query_json - Zero-Host-Dependency JQ Wrapper (The Scavenger's Ban)
 # Adheres to Rule G: Prevents host dependency by falling back to Docker
 # Args: <jq_args> (variable)
