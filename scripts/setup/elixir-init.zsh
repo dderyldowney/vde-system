@@ -52,6 +52,6 @@ chown devuser:devuser "${_zshenv}"
 
 # 4. PURGING THE GHOSTS (Rule 12.5)
 export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
-[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core"
+source "${VDE_ROOT_DIR}/lib/vde-core" || { echo "CRITICAL: vde-core library missing" >&2; exit 1; }
 vde_purge_ghosts
 rm -f "${INSTALL_SCRIPT}"
