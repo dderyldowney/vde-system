@@ -39,12 +39,12 @@ print_header() {
 }
 
 print_check() {
-    ((TOTAL_CHECKS++))
+    ((TOTAL_CHECKS++)) || true
     if [[ ${2} -eq 0 ]] ; then
-        ((PASSED_CHECKS++))
+        ((PASSED_CHECKS++)) || true
         echo "✓ ${1}"
     else
-        ((FAILED_CHECKS++))
+        ((FAILED_CHECKS++)) || true
         echo "✗ ${1}"
     fi
 }
@@ -129,6 +129,13 @@ check_error_codes() {
         check_status=1
     else
         print_check "Error code defined: VDE_ERR_CACHE_INVALID" 0
+    fi
+
+    if [[ -z "${VDE_ERR_NO_PORT:-}" ]] ; then
+        print_check "Error code defined: VDE_ERR_NO_PORT" 1
+        check_status=1
+    else
+        print_check "Error code defined: VDE_ERR_NO_PORT" 0
     fi
 
     return ${check_status}

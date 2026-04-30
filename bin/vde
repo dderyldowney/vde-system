@@ -84,7 +84,8 @@ if [[ ${#input_targets} -gt 0 ]]; then
             targets+=("jupyterlab" "postgres")
         elif vde_cluster_exists "${t}" >/dev/null 2>&1; then
             # Expand cluster members using Zsh-native expansion
-            local members=$(vde_query_json -r '.vms[]' "${VDE_CLUSTER_STATE_DIR}/${t}.json")
+            local normalized_cluster=$(vde_normalize_name "${t}")
+            local members=$(vde_query_json -r '.vms[]' "${VDE_CLUSTER_STATE_DIR}/${normalized_cluster}.json")
             targets+=(${=members})
         elif [[ "${t}" == "all" ]]; then
             targets+=($(get_all_vms))
@@ -166,7 +167,7 @@ case ${ACTION} in
                     GLOBAL_RC=1
                     continue
                 fi
-                vde_run "${CANONICAL_NAME}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${target_type_val}" || continue
+                vde_run "${CANONICAL_NAME}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${BASE_NAME}" || continue
             fi
 
             # Canonical Ignition Handshake

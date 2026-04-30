@@ -5,6 +5,7 @@ set -e
 export DEBIAN_FRONTEND=noninteractive
 export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
 [[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core"
+[[ -f "${VDE_ROOT_DIR}/lib/vde-log" ]] && source "${VDE_ROOT_DIR}/lib/vde-log"
 vde_log_info "Igniting Certified Ghost environment..."
 # PURGING THE GHOSTS (Rule 12.5)
 vde_purge_ghosts
