@@ -37,9 +37,7 @@ The Contract is not fulfilled by rule compliance alone. It is fulfilled
 by reasoning correctly under the Creed. These documents define what 
 reasoning correctly means.
 
-MANDATE: Read FOUNDATION.md and PROJECT_PHILOSOPHY.md before any task. 
-Apply their framework to every decision. Failure to do so is removing 
-the helmet.
+MANDATE: Read FOUNDATION.md and PROJECT_PHILOSOPHY.md at startup. Apply their framework to every decision. Failure to do so is removing the helmet.
 
 --
 
