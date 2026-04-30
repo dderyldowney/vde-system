@@ -28,4 +28,7 @@ if [[ -n "$ROOT_FOUND" ]]; then
 fi
 
 # Fallback: derive root from script location
-export VDE_ROOT_DIR="${${(%):-%x}:a:h:h}"
+export if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
+    VDE_ROOT_DIR="${(%):-%x}"
+    VDE_ROOT_DIR="${VDE_ROOT_DIR:h:h}"
+fi

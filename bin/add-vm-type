@@ -4,7 +4,7 @@ set -e
 
 # Source shared library
 # Use zsh-native absolute path detection (Rule 1)
-VDE_ROOT_DIR="${0:a:h:h}"
+VDE_ROOT_DIR="${0:h:h}"
 export VDE_ROOT_DIR
 source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vm-common"

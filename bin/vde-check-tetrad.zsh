@@ -34,7 +34,7 @@ done
 
 # 3. Environment Integrity
 # Use strictly relative pathing (Mandate)
-VDE_ROOT_DIR="."
+VDE_ROOT_DIR="${0:h:h}"
 REQUIRED_DIRS=("data" "lib" "scripts")
 REQUIRED_FILES=("data/vm-types.json" "lib/vde-core" "lib/vm-common")
 TRANSIENT_DIRS=(".cache")

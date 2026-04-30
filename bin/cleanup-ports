@@ -17,7 +17,7 @@ set -e
 #===============================================================================
 
 # Determine VDE root directory
-VDE_ROOT_DIR="${0:a:h:h}"
+VDE_ROOT_DIR="${0:h:h}"
 export VDE_ROOT_DIR
 
 source "${VDE_ROOT_DIR}/lib/vm-common"
