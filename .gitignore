@@ -95,6 +95,9 @@ SESSION_STATE.md
 .gemini/settings.json
 .gemini/settings.local.json
 
+# Agent-specific config wiring (conductor)
+conductor/
+
 # Backup files
 *.old
 *.backup
