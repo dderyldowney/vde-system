@@ -114,3 +114,4 @@ tests/.test-tmp/
 .tmp.drivedownload/
 .tmp.driveupload/
 .claude/
+plans/matrix-audit-report.md
