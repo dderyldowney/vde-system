@@ -94,6 +94,7 @@ SESSION_STATE.md
 .agents/
 .gemini/settings.json
 .gemini/settings.local.json
+.worktrees/
 
 # Agent-specific config wiring (conductor)
 conductor/
