@@ -11,13 +11,18 @@ def step_impl(context, file_path):
     full_path = os.path.join(root, file_path)
     context.backup_path = full_path + '.bak'
     shutil.copy2(full_path, context.backup_path)
-    
+
+    def _restore():
+        if os.path.exists(context.backup_path):
+            shutil.move(context.backup_path, full_path)
+    context.add_cleanup(_restore)
+
     with open(full_path, 'r') as f:
         data = json.load(f)
-    
+
     # Intentional drift
     data['version'] = "9.9.9-drift"
-    
+
     with open(full_path, 'w') as f:
         json.dump(data, f, indent=2)
 
@@ -61,6 +66,7 @@ def step_impl(context, file_path):
     with open(full_path, 'w') as f:
         f.write("#!/usr/bin/env zsh\n# @forge (Ghost)\ntypeset _zsh_compliance_flag=${(z):-\"zsh native parameter expansion\"}\necho 'Boo'\n")
     os.chmod(full_path, 0o755)
+    context.add_cleanup(lambda: os.remove(full_path) if os.path.exists(full_path) else None)
 
 @given('I create a temporary directory "{dir_path}"')
 @when('I create a temporary directory "{dir_path}"')

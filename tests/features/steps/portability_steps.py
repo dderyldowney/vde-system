@@ -15,6 +15,7 @@ class MockResult:
 @given('I change the current working directory to "{path}"')
 def step_impl(context, path):
     context.original_cwd = os.getcwd()
+    context.add_cleanup(lambda: os.chdir(context.original_cwd))
     os.chdir(path)
     context.current_cwd = os.getcwd()
 
