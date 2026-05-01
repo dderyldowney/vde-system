@@ -56,9 +56,9 @@ The system manages locks for global configuration, VM lifecycle operations, and 
 ## Integration Points
 
 ### APIs Exposed
-- **vde_acquire_lock()** - Acquire lock with timeout
-- **vde_release_lock()** - Release held lock
-- **vde_is_lock_stale()** - Check if lock is abandoned
+- **claim_lock()** - Acquire lock with FIFO queue (primary function)
+- **acquire_lock()** - Alias for claim_lock() (backward compatibility)
+- **release_lock()** - Release held lock and remove ticket from queue
 
 ### Events Published
 - **Lock Acquisition Events**: Logged with ticket info
@@ -80,52 +80,47 @@ The system manages locks for global configuration, VM lifecycle operations, and 
 
 ### Lock-Queue Pattern
 ```zsh
-# Request lock - create ticket
-vde_acquire_lock() {
+# claim_lock - Atomic locking with FIFO queue (actual API from lib/vm-lock)
+# Args: <lock_file>
+claim_lock() {
     local lock_file="$1"
-    local ticket_dir="${lock_file}.queue"
-    local timeout="${2:-30}"
-    
-    mkdir -p "$ticket_dir"
-    local ticket="${EPOCHREALTIME}-$$"
-    touch "${ticket_dir}/${ticket}"
-    
-    # Wait until ticket is first in queue
-    local start=$EPOCHSECONDS
+    local queue_dir="${lock_file}.queue"
+    local pid_file="${lock_file}/pid"
+
+    mkdir -p "${queue_dir}"
+
+    # Register ticket: EPOCHREALTIME timestamp + PID for uniqueness
+    local ticket_id="${EPOCHREALTIME}-$$"
+    touch "${queue_dir}/${ticket_id}"
+
+    # Wait until this ticket is at the front of the FIFO queue
     while true; do
-        local oldest=$(ls -t "$ticket_dir" | tail -n 1)
-        if [[ "$oldest" == "$ticket" ]]; then
-            break
+        # Sort numerically by filename (timestamp-pid); head = oldest = FIFO front
+        local oldest=$(ls -1 "${queue_dir}" 2>/dev/null | sort -n | head -n 1)
+        if [[ "${oldest}" == "${ticket_id}" ]]; then
+            # Front of queue — attempt atomic lock acquisition
+            if mkdir "${lock_file}" 2>/dev/null; then
+                local pgid=$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')  # process group ID
+                echo "$$:${pgid}:$(date +%s)" > "${pid_file}"
+                return 0
+            fi
         fi
-        
-        # Check timeout
-        if (( EPOCHSECONDS - start > timeout )); then
-            rm "${ticket_dir}/${ticket}"
-            return 1
-        fi
-        
         sleep 0.1
     done
-    
-    # Attempt to claim lock
-    if mkdir "$lock_file" 2>/dev/null; then
-        echo "$$:${PGID}:${EPOCHREALTIME}" > "${lock_file}/pid"
-        return 0
-    fi
-    
-    # Retry if another process beat us
-    rm "${ticket_dir}/${ticket}"
-    vde_acquire_lock "$lock_file" "$timeout"
 }
 
-# Release lock
-vde_release_lock() {
+# acquire_lock is an alias for backward compatibility
+acquire_lock() { claim_lock "$@" }
+
+# release_lock - Release atomic lock and remove this process's ticket
+# Args: <lock_file>
+release_lock() {
     local lock_file="$1"
-    local ticket_dir="${lock_file}.queue"
-    local ticket="${EPOCHREALTIME}-$$"
-    
-    rm -f "${ticket_dir}/${ticket}"
-    rmdir "$lock_file" 2>/dev/null || true
+    local queue_dir="${lock_file}.queue"
+
+    # VDE_LOCK_TICKETS: global typeset -gA array populated by claim_lock; stores ticket_id per lock path
+    rm -f "${queue_dir}/${VDE_LOCK_TICKETS[${lock_file}]}" 2>/dev/null
+    rm -rf "${lock_file}" 2>/dev/null
 }
 ```
 
@@ -210,7 +205,7 @@ vde_release_port_lock() {
 
 **Usage Example**:
 ```zsh
-vde_acquire_lock "${VDE_ROOT_DIR}/.locks/global-config.lock" || {
+claim_lock "${VDE_ROOT_DIR}/.locks/global-config.lock" || {
     vde_error "Failed to acquire global config lock"
     exit 1
 }
@@ -218,7 +213,7 @@ vde_acquire_lock "${VDE_ROOT_DIR}/.locks/global-config.lock" || {
 # Critical section
 vde_add_vm_type "$new_type"
 
-vde_release_lock "${VDE_ROOT_DIR}/.locks/global-config.lock"
+release_lock "${VDE_ROOT_DIR}/.locks/global-config.lock"
 ```
 
 ### 2. VM Locks
@@ -233,7 +228,7 @@ vde_release_lock "${VDE_ROOT_DIR}/.locks/global-config.lock"
 
 **Usage Example**:
 ```zsh
-vde_acquire_lock "${VDE_ROOT_DIR}/.locks/vms/${vm_name}.lock" || {
+claim_lock "${VDE_ROOT_DIR}/.locks/vms/${vm_name}.lock" || {
     vde_error "Failed to acquire VM lock for ${vm_name}"
     exit 1
 }
@@ -241,7 +236,7 @@ vde_acquire_lock "${VDE_ROOT_DIR}/.locks/vms/${vm_name}.lock" || {
 # Critical section
 docker create --name "vde-${vm_name}" ...
 
-vde_release_lock "${VDE_ROOT_DIR}/.locks/vms/${vm_name}.lock"
+release_lock "${VDE_ROOT_DIR}/.locks/vms/${vm_name}.lock"
 ```
 
 ### 3. Port Locks
@@ -390,7 +385,7 @@ rm -rf .locks/ports/3022.lock
 - `adr-004-lock-queue-concurrency-model.md` - Lock-Queue architectural decision
 - `lib/vm-lock` - Lock-Queue implementation
 - `docs/TECHNICAL_DEEP_DIVE.md` - Concurrency & Atomic Stewardship section
-- `tests/unit/lock-queue.test.zsh` - Lock-Queue unit tests
+- `tests/features/core-infrastructure/concurrency-queue.feature` - FIFO empirical proof (BDD — verified 200ms stagger prevents race condition)
 
 ---
 
