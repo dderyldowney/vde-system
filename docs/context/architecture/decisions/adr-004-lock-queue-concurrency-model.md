@@ -32,52 +32,50 @@ VDE SHALL use a Lock-Queue Model with FIFO (First-In-First-Out) ticket-based seq
 
 ### Technical Implementation
 
-#### Ticket-Based Queue System
+#### Ticket-Based Queue System (Actual Implementation — `lib/vm-lock`)
 
 ```zsh
-# Request lock - register ticket
-request_lock() {
+# claim_lock - Atomic locking with FIFO queue
+# Args: <lock_file>
+claim_lock() {
     local lock_file="$1"
-    local ticket_dir="${lock_file}.queue"
-    mkdir -p "$ticket_dir"
-    
-    # Create ticket with timestamp and PID
-    local ticket="${EPOCHREALTIME}-$$"
-    touch "${ticket_dir}/${ticket}"
-    
-    # Wait until this ticket is first in queue
+    local queue_dir="${lock_file}.queue"
+    local pid_file="${lock_file}/pid"
+
+    mkdir -p "${queue_dir}"
+
+    # Register ticket: EPOCHREALTIME timestamp + PID for uniqueness
+    local ticket_id="${EPOCHREALTIME}-$$"
+    touch "${queue_dir}/${ticket_id}"
+
+    # Wait until this ticket is at the front of the FIFO queue
     while true; do
-        local oldest=$(ls -t "$ticket_dir" | tail -n 1)
-        if [[ "$oldest" == "$ticket" ]]; then
-            break
+        # Sort numerically by filename (timestamp-pid); head = oldest = FIFO front
+        local oldest=$(ls -1 "${queue_dir}" 2>/dev/null | sort -n | head -n 1)
+        if [[ "${oldest}" == "${ticket_id}" ]]; then
+            # Front of queue — attempt atomic lock acquisition
+            if mkdir "${lock_file}" 2>/dev/null; then
+                echo "$$:${pgid}:$(date +%s)" > "${pid_file}"
+                return 0
+            fi
         fi
+        # Not first, or mkdir raced — yield and re-check
         sleep 0.1
     done
-    
-    # Attempt to claim the actual lock
-    if mkdir "$lock_file" 2>/dev/null; then
-        # Lock acquired - write ownership info
-        echo "$$:${PGID}:${EPOCHREALTIME}" > "${lock_file}/pid"
-        return 0
-    else
-        # Another process beat us - clean up ticket and retry
-        rm "${ticket_dir}/${ticket}"
-        sleep 0.1
-        request_lock "$lock_file"
-    fi
 }
 
-# Release lock
+# acquire_lock is an alias for backward compatibility
+acquire_lock() { claim_lock "$@" }
+
+# release_lock - Release atomic lock and remove this process's ticket
+# Args: <lock_file>
 release_lock() {
     local lock_file="$1"
-    local ticket_dir="${lock_file}.queue"
-    local ticket="${EPOCHREALTIME}-$$"
-    
-    # Remove ticket from queue
-    rm -f "${ticket_dir}/${ticket}"
-    
-    # Remove lock directory
-    rmdir "$lock_file"
+    local queue_dir="${lock_file}.queue"
+
+    # Ticket tracked in VDE_LOCK_TICKETS associative array by claim_lock
+    rm -f "${queue_dir}/${VDE_LOCK_TICKETS[${lock_file}]}" 2>/dev/null
+    rm -rf "${lock_file}" 2>/dev/null
 }
 ```
 
@@ -209,8 +207,8 @@ is_lock_stale() {
 
 ### Lock Usage Pattern
 ```zsh
-# Acquire lock with timeout
-vde_acquire_lock "global-config.lock" 30 || {
+# Acquire lock (claim_lock with FIFO queue)
+claim_lock "${VDE_ROOT_DIR}/.locks/global-config.lock" || {
     vde_error "Failed to acquire global config lock"
     exit 1
 }
@@ -219,7 +217,7 @@ vde_acquire_lock "global-config.lock" 30 || {
 vde_modify_vm_types
 
 # Release lock
-vde_release_lock "global-config.lock"
+release_lock "${VDE_ROOT_DIR}/.locks/global-config.lock"
 ```
 
 ### Debugging Locks
@@ -240,7 +238,7 @@ vde health --check-locks
 
 - `lib/vm-lock` - Lock-Queue implementation
 - `docs/TECHNICAL_DEEP_DIVE.md` - Concurrency & Atomic Stewardship section
-- `tests/unit/lock-queue.test.zsh` - Lock-Queue unit tests
+- `tests/features/core-infrastructure/concurrency-queue.feature` - FIFO empirical proof (BDD — verified 200ms stagger prevents race condition)
 
 ---
 

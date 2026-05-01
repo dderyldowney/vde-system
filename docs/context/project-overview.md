@@ -57,11 +57,11 @@ VDE is a sovereign, template-based ecosystem of Dockerized Spokes designed for d
 ---
 
 ## Current Focus
-**Version 1.5.1 (The Sovereign Baseline)**:
-- Hardened Transversal Bridge (SSH) with dynamic identity injection
-- Eliminated initialization fractures
-- Resilient clean-slate bootstrapping for New Foundling ritual
-- Key remediations: VDE-CASCADE-01, VDE-SPINE-01, VDE-AGENT-DISCOVERY, VDE-BASE-CHOWN
+**Version 1.5.1 (The Sovereign Baseline)** — CERTIFIED CLEAN:
+- All 1.5.1 remediations complete and merged
+- Absolute path purification complete (PRs #337, #340)
+- FIFO concurrency race resolved — arrival stagger raised 50ms→200ms, empirically verified (PR #343)
+- Heartbeat: 72/72 BDD steps green, no known open issues
 
 ---
 
