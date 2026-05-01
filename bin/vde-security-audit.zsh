@@ -27,14 +27,12 @@ echo "[SECURITY] Scanning for Absolute Path Leaks..."
 # Exclude dirs and files shared by both the counting and display grep passes
 typeset -a _scan_exclude_dirs=(.git .cache .claude .tmp.driveupload .tmp.drivedownload logs node_modules __pycache__ SKILLS)
 typeset -a _scan_exclude_files=(vde-security-audit.zsh vde-root-guard README.md)
-typeset _grep_excludes=()
+typeset -a _grep_excludes=()
 for _d in "${_scan_exclude_dirs[@]}"; do _grep_excludes+=(--exclude-dir="${_d}"); done
 for _f in "${_scan_exclude_files[@]}"; do _grep_excludes+=(--exclude="${_f}"); done
 _grep_excludes+=(--exclude="*.pdf")
 
-typeset _leaks=$(grep -r "/Users/" . "${_grep_excludes[@]}" | wc -l)
-
-if [[ ${_leaks} -gt 0 ]]; then
+if grep -rq "/Users/" . "${_grep_excludes[@]}"; then
     echo -e "\033[0;31m[CRITICAL] Absolute Path Leaks Detected in Workspace!\033[0m"
     grep -r "/Users/" . "${_grep_excludes[@]}" | head -n 5
     exit 1

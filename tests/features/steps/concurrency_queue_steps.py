@@ -9,6 +9,9 @@ from pathlib import Path
 from behave import given, when, then
 from vm_common import VDE_ROOT, run_vde_command, vde_sleep
 
+# ZSH startup + 3-source ≈ 102ms; 200ms ensures deterministic FIFO ordering
+ARRIVAL_INTERVAL_SECONDS = 0.200
+
 @given('the registry is reconciled')
 def step_reconcile_registry(context):
     run_vde_command("rebuild-cache")
@@ -53,8 +56,7 @@ fi
         shutil.rmtree(lock_path)
         
     context.procs = []
-    # Use a small offset to ensure arrival order is deterministic by ID
-    arrival_interval = 0.200
+    arrival_interval = interval
     for i in range(1, 11):
         p = subprocess.Popen(
             [str(test_script), str(lock_path), "0.5", str(i)],

@@ -10,6 +10,6 @@ Feature: Concurrency Lock-Queue Model (FIFO)
   Scenario: Strict FIFO Ordering of Concurrent Requests
     Given the VDE system is healthy
     And the registry is reconciled
-    When I launch 10 simultaneous "start python" requests at 0.0s intervals
+    When I launch 10 simultaneous "start python" requests at 0.200s intervals
     Then they should be served in the order they arrived
     And the final state should be all requests completed successfully
