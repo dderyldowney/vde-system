@@ -308,6 +308,9 @@ case ${ACTION} in
     sync-version)
         vde_run "sync-version" "${VDE_ROOT_DIR}/bin/vde-sync-version" "${input_targets[@]}"
         ;;
+    sync-context)
+        vde_run "sync-context" "${VDE_ROOT_DIR}/bin/vde-sync-context" "${input_targets[@]}"
+        ;;
     audit)
         vde_run "audit" "${VDE_ROOT_DIR}/bin/vde-gospel-audit.zsh" "$@"
         ;;
@@ -392,6 +395,7 @@ Diagnostics & Discovery:
   stats <name>    Display real-time resource usage for Spokes.
   port <name>     Retrieve the specific SSH or service port for an alias.
   validate        Verify the integrity of Beskar Registry schemas.
+  sync-context    Review and refresh VDE context docs against current codebase.
 
 Matrix Management:
   matrix-audit    Exhaustive verification of every registered VM type (Serialized).
