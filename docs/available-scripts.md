@@ -148,3 +148,4 @@ VDE_ROOT/
 *   **Purpose**: Mass path purification utility. Replaces absolute path derivation logic (:a) with Zsh-native relative derivation across the entire VDE ecosystem.
 *   **Tags**: @forge (Sovereign Cleanup Utility)
 | `vde-purify-paths.zsh` | Automatically discovered - documentation pending. |
+| `vde-sync-context` | Automatically discovered - documentation pending. |
