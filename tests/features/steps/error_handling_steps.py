@@ -4,6 +4,7 @@
 from behave import given, when, then
 import subprocess
 import os
+import shutil
 from pathlib import Path
 from vm_common import VDE_ROOT, run_vde_command
 
@@ -15,6 +16,7 @@ def step_background_lock(context, vm_alias):
     (lock_dir / "pid").write_text(f"{pid}")
     (lock_dir / f"ticket-0000000001-{pid}").touch()
     context.background_pid = pid
+    context.add_cleanup(lambda: shutil.rmtree(str(lock_dir), ignore_errors=True))
 
 @when('I simulate a user interruption (SIGINT) during "{command_str}"')
 def step_physical_sigint(context, command_str):

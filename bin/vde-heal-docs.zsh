@@ -17,6 +17,7 @@ set -e
 
 # Use relative pathing (Mandate)
 source "./lib/vde-core"
+source "./lib/vde-log"   # vde_translate_conf_to_json calls vde_log_success
 
 # Colors for output
 RED='\033[0;31m'
@@ -26,11 +27,22 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}[HEAL]${NC} Initiating Sovereign Self-Healing Ritual..."
 
-# 2. Synchronize Versions (The Baseline)
+# 2. Validate and restore data/vm-types.json from data/vm-types.conf if corrupted
+echo -e "${GREEN}[HEAL]${NC} Validating Registry JSON integrity..."
+if ! python3 -c "import json,sys; json.load(sys.stdin)" < "./data/vm-types.json" 2>/dev/null; then
+    echo -e "${YELLOW}[WARN]${NC} data/vm-types.json is invalid or corrupt — restoring from data/vm-types.conf..."
+    rm -f "./data/vm-types.json"
+    vde_translate_conf_to_json "./data/vm-types.conf" "./data/vm-types.json"
+    echo -e "${GREEN}[INFO]${NC} data/vm-types.json restored from data/vm-types.conf"
+else
+    echo -e "${GREEN}[INFO]${NC} data/vm-types.json is valid — no restoration required"
+fi
+
+# 3. Synchronize Versions (The Baseline)
 echo -e "${GREEN}[HEAL]${NC} Synchronizing Version Baseline..."
 zsh "./bin/vde-sync-version"
 
-# 3. Update Dates across Sovereign Artifact Set
+# 4. Update Dates across Sovereign Artifact Set
 echo -e "${GREEN}[HEAL]${NC} Synchronizing Artifact Dates..."
 CURRENT_DATE=$(date +%Y-%m-%d)
 SOVEREIGN_ARTIFACTS=(
@@ -64,7 +76,7 @@ for file in "${SOVEREIGN_ARTIFACTS[@]}"; do
     fi
 done
 
-# 4. Synchronize bin/ with available-scripts.md
+# 5. Synchronize bin/ with available-scripts.md
 echo -e "${GREEN}[HEAL]${NC} Synchronizing Script Documentation..."
 AVAILABLE_SCRIPTS_DOC="./docs/available-scripts.md"
 

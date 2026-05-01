@@ -43,7 +43,7 @@ vde_log_info "Synchronizing Sovereign Artifact Set..." "forge"
 # 4.1 Strike docs/VDE-SPEC.md (The Beskar Source)
 vde_sed_inplace "s/Version: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Version: ${NEW_VER}/" "./docs/VDE-SPEC.md"
 vde_sed_inplace "s/ARCHITECTURE [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/ARCHITECTURE ${NEW_VER} (The Sovereign Baseline)/" "./docs/VDE-SPEC.md"
-vde_sed_inplace "s/^# VDE-SPEC [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?(\s+\(.*\))?/# VDE-SPEC ${NEW_VER} (The Sovereign Evolution)/" "./docs/VDE-SPEC.md"
+vde_sed_inplace "s/^# VDE-SPEC [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?([[:space:]]+\(.*\))?/# VDE-SPEC ${NEW_VER} (The Sovereign Evolution)/" "./docs/VDE-SPEC.md"
 vde_log_success "Aligned docs/VDE-SPEC.md" "forge"
 
 # 4.2 Strike docs/ARCHITECTURE.md

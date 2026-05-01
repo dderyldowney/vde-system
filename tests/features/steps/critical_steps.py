@@ -866,7 +866,10 @@ def step_directory_empty_in_spoke(context, dir_path):
     assert result.returncode == 0, f"Failed to list {dir_path} in {container_name}: {result.stderr}"
 
     files = result.stdout.strip()
-    assert files == "", f"Directory {dir_path} is not empty in {container_name}. Found: {files}"
+    if files:
+        # partial/ is a standard apt working directory — not a Born Ready violation
+        real_files = [f for f in files.splitlines() if f.strip() not in ("partial",)]
+        assert not real_files, f"Directory {dir_path} is not empty in {container_name}. Found: {files}"
 
 @then('the directory "{dir_path}" should contain the required DNA files')
 def step_directory_contains_dna(context, dir_path):
