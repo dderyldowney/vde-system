@@ -250,11 +250,33 @@ remove_ssh_entries() {
     local temp_file
     temp_file=$(mktemp "${project_ssh_config}.tmp.XXXXXX")
 
-    # Remove the Host block for this alias — all indented lines belong to it;
-    # the next ^Host line (or EOF) terminates the block.
+    # Remove the Host block for this alias, including its preceding comment header
+    # lines (# VDE VM: ... and # @shared-law ...). A streaming single-pass awk
+    # cannot do this correctly because comment lines print before in_block is set,
+    # and the next block's comments are suppressed while in_block=1. Buffer the
+    # entire file to identify the exact deletion range: backward through '#' lines
+    # for the header, forward through indented/blank lines for the block body.
     awk -v host="${_host_alias}" '
-        /^Host / { in_block = ($2 == host) }
-        !in_block { print }
+        { lines[NR] = $0 }
+        END {
+            dstart = 0; dend = 0
+            for (i = 1; i <= NR; i++) {
+                n = split(lines[i], a)
+                if (n >= 2 && a[1] == "Host" && a[2] == host) {
+                    s = i - 1
+                    while (s >= 1 && substr(lines[s], 1, 1) == "#") s--
+                    dstart = s + 1
+                    e = i + 1
+                    while (e <= NR && (lines[e] ~ /^[[:space:]]/ || lines[e] == "")) e++
+                    dend = e - 1
+                    break
+                }
+            }
+            for (i = 1; i <= NR; i++) {
+                if (dstart > 0 && i >= dstart && i <= dend) continue
+                print lines[i]
+            }
+        }
     ' "${project_ssh_config}" > "${temp_file}"
 
     if ! mv "${temp_file}" "${project_ssh_config}"; then
