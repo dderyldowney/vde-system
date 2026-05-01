@@ -100,6 +100,7 @@ claim_lock() {
         if [[ "${oldest}" == "${ticket_id}" ]]; then
             # Front of queue — attempt atomic lock acquisition
             if mkdir "${lock_file}" 2>/dev/null; then
+                local pgid=$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')  # process group ID
                 echo "$$:${pgid}:$(date +%s)" > "${pid_file}"
                 return 0
             fi
@@ -117,7 +118,7 @@ release_lock() {
     local lock_file="$1"
     local queue_dir="${lock_file}.queue"
 
-    # Ticket tracked in VDE_LOCK_TICKETS by claim_lock
+    # VDE_LOCK_TICKETS: global typeset -gA array populated by claim_lock; stores ticket_id per lock path
     rm -f "${queue_dir}/${VDE_LOCK_TICKETS[${lock_file}]}" 2>/dev/null
     rm -rf "${lock_file}" 2>/dev/null
 }
