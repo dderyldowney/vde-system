@@ -2,7 +2,7 @@
 <!-- @armor (Student Documentation) -->
 <p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-# The Way of the VDE: 1.5.1 (The Sovereign Baseline)
+# The Way of the VDE: 1.5.2 (The Sovereign Baseline)
 
 ![CI Status](https://github.com/dderyldowney/vde-system/actions/workflows/vde-ci.yml/badge.svg)
 
@@ -67,7 +67,7 @@ bin/vde path-of-the-foundling
 | **🛠️ Installation** | [VDE_INSTALL.md](VDE_INSTALL.md) - Prerequisite setup and Induction. |
 | **📜 Protocol** | [VDE_PROTOCOL.md](VDE_PROTOCOL.md) - The Laws of the Forge and Branching. |
 | **🤝 Contributing** | [CONTRIBUTING.md](CONTRIBUTING.md) - How to join the Tribe's effort. |
-| **📐 Architecture** | [Architecture 1.5.1](docs/ARCHITECTURE.md) - The Blueprint. |
+| **📐 Architecture** | [Architecture 1.5.2](docs/ARCHITECTURE.md) - The Blueprint. |
 
 ---
 
