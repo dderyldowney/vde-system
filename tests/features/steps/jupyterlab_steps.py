@@ -72,7 +72,7 @@ def step_verify_usp_compliance(context, alias):
     content = script_path.read_text()
     
     assert "set -e" in content, "Missing 'set -e'"
-    assert "apt-get clean" in content, "Missing 'apt-get clean'"
+    assert "apt-get clean" in content or "vde_purge_ghosts" in content, "Missing 'apt-get clean' (or canonical vde_purge_ghosts delegation)"
     assert "DEBIAN_FRONTEND=noninteractive" in content, "Missing DEBIAN_FRONTEND"
     assert "Forged in Beskar" in content, "Missing Beskar header"
 

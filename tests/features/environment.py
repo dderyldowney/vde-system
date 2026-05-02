@@ -95,12 +95,23 @@ def after_all(context):
         shutil.rmtree(context.temp_dir)
 
 
+def _cleanup_feature_containers(tags):
+    """Purge containers associated with specific feature tags."""
+    if "dns" in tags:
+        for container in ["vde-python", "vde-postgres"]:
+            subprocess.run(["docker", "rm", "-f", container], capture_output=True, check=False)
+    if "jupyterlab" in tags:
+        subprocess.run(["docker", "rm", "-f", "vde-jupyterlab"], capture_output=True, check=False)
+
+
 def before_feature(context, feature):
     """Trigger cleanup for pristine features."""
     if "pristine" in feature.tags:
         sweep_script = os.path.join(VDE_ROOT, "bin/vde-tactical-sweep.zsh")
         if os.path.exists(sweep_script):
             subprocess.run([sweep_script], check=False)
+    
+    _cleanup_feature_containers(feature.tags)
 
 
 def after_feature(context, feature):
@@ -109,6 +120,8 @@ def after_feature(context, feature):
         sweep_script = os.path.join(VDE_ROOT, "bin/vde-tactical-sweep.zsh")
         if os.path.exists(sweep_script):
             subprocess.run([sweep_script], check=False)
+    
+    _cleanup_feature_containers(feature.tags)
 
 
 def before_scenario(context, scenario):

@@ -25,9 +25,6 @@ Global configuration can be found at:
 |---------|---------|--------|
 | `context7` | Up-to-date documentation and code examples | ✅ Configured |
 | `gemini-docs-mcp` | Gemini API and CLI documentation | ✅ Configured |
-| `redis-mcp-server` | Natural language interface for Redis | ✅ Configured |
-| `github` | PRs, issues, file operations, code review | ✅ Configured |
-| `sequential-thinking` | Complex reasoning, debugging, planning | ✅ Configured |
 | `MCP_DOCKER` | Docker operations and gateway | ✅ Configured |
 
 ## Configuration File (.gemini/settings.json)

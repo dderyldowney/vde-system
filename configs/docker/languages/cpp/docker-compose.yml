@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: cpp, 2202, , zsh /vde/scripts/setup/cpp-init.zsh
+# Variables: cpp, 2203, , zsh /vde/scripts/setup/cpp-init.zsh
 name: vde-cpp
 services:
   vde-cpp:
@@ -25,14 +25,12 @@ services:
       - "vde.name=cpp"
 
     ports:
-      - "2202:2202"
+      - "2203:2203"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../projects/cpp:/home/devuser/workspace
       - ../../../../logs/cpp:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
@@ -44,6 +42,7 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/cpp.env
 
     networks:

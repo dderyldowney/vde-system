@@ -1,6 +1,6 @@
 # VDE ARCHITECTURAL RECORD
 # @forge (Governance Sentinel)
-@core-infrastructure @system-spine
+@core-infrastructure @system-spine @pristine
 Feature: System Spine Integrity
 
   @spine @critical-path @user-guide-first-vm

@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: jupyterlab, 2407, 8888, python3-pip python3-venv tini, zsh /vde/scripts/setup/jupyterlab-init.zsh
+# Variables: jupyterlab, 2401, 8888, python3-pip python3-venv tini, zsh /vde/scripts/setup/jupyterlab-init.zsh
 name: vde-jupyterlab
 services:
   vde-jupyterlab:
@@ -22,15 +22,13 @@ services:
     restart: unless-stopped
 
     ports:
-      - "2407:2407"
+      - "2401:2401"
       - "8888:8888"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../data/jupyterlab:/data
       - ../../../../logs/jupyterlab:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Persistence mapping
       - ../../../../data/jupyterlab/pgdata:/var/lib/postgresql/data
       # Docker Socket Sovereignty (Physical Verification Law)
@@ -47,6 +45,7 @@ services:
       - REDIS_ARGS=--save 60 1 --loglevel warning
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/jupyterlab.env
 
     networks:

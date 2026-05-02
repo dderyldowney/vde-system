@@ -64,17 +64,21 @@ def step_verify_header_ritual(context, ritual_name):
             
     assert not missing, f"Scripts missing ritual '{ritual_name}': {', '.join(missing)}"
 
+APT_CLEANUP_PATTERNS = {"apt-get clean", "rm -rf /var/lib/apt/lists/*"}
+
 @then(r"every script must have '(.+)' (?:for|to) (.+)")
 def step_verify_script_content(context, pattern, reason):
     """Verify that every setup script contains the required hardening pattern."""
     assert hasattr(context, "setup_scripts"), "No setup scripts found to check"
-    
+
     missing = []
     for script in context.setup_scripts:
         content = script.read_text()
         if pattern not in content:
+            if pattern in APT_CLEANUP_PATTERNS and "vde_purge_ghosts" in content:
+                continue
             missing.append(script.name)
-            
+
     assert not missing, f"Scripts missing '{pattern}' ({reason}): {', '.join(missing)}"
 
 @then(r'every script in "(.+)" must be associated with a registered VM')

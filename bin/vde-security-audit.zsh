@@ -24,28 +24,17 @@ fi
 
 # 3. Privacy Leak Guard (Absolute Path Detection)
 echo "[SECURITY] Scanning for Absolute Path Leaks..."
-# Purge matches for the literal pattern in this script and exclude common non-text dirs
-# Using grep -r to find absolute /Users/ paths while excluding self and known artifacts
-# We explicitly exclude .tmp.driveupload/download as they contain ephemeral artifacts with absolute paths
-typeset _leaks=$(grep -r "/Users/" . \
-    --exclude-dir=.git \
-    --exclude-dir=.cache \
-    --exclude-dir=.tmp.driveupload \
-    --exclude-dir=.tmp.drivedownload \
-    --exclude-dir=logs \
-    --exclude-dir=node_modules \
-    --exclude-dir=__pycache__ \
-    --exclude-dir=SKILLS \
-    --exclude="*.pdf" \
-    --exclude="vde-security-audit.zsh" \
-    --exclude="vde-root-guard" \
-    --exclude="README.md" | wc -l)
+# Exclude dirs and files shared by both the counting and display grep passes
+typeset -a _scan_exclude_dirs=(.git .cache .claude .tmp.driveupload .tmp.drivedownload logs node_modules __pycache__ SKILLS output)
+typeset -a _scan_exclude_files=(vde-security-audit.zsh vde-root-guard README.md)
+typeset -a _grep_excludes=()
+for _d in "${_scan_exclude_dirs[@]}"; do _grep_excludes+=(--exclude-dir="${_d}"); done
+for _f in "${_scan_exclude_files[@]}"; do _grep_excludes+=(--exclude="${_f}"); done
+_grep_excludes+=(--exclude="*.pdf")
 
-if [[ ${_leaks} -gt 0 ]]; then
+if grep -rq "/Users/" . "${_grep_excludes[@]}"; then
     echo -e "\033[0;31m[CRITICAL] Absolute Path Leaks Detected in Workspace!\033[0m"
-    grep -r "/Users/" . \
-        --exclude-dir={.git,.cache,.tmp.driveupload,.tmp.drivedownload,logs,node_modules,__pycache__,SKILLS} \
-        --exclude={"*.pdf","vde-security-audit.zsh","vde-root-guard","README.md"} | head -n 5
+    grep -r "/Users/" . "${_grep_excludes[@]}" | head -n 5
     exit 1
 fi
 echo "[SECURITY] Privacy Leak Audit: PASS"

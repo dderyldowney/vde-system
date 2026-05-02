@@ -9,7 +9,7 @@ typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 set -e
 
-VDE_ROOT_DIR="${0:a:h:h}"
+VDE_ROOT_DIR="${0:h:h}"
 STEPS_DIR="${VDE_ROOT_DIR}/tests/features/steps"
 SSH_STEPS="${STEPS_DIR}/vde_ssh_hardening_steps.py"
 

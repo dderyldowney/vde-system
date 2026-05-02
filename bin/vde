@@ -7,8 +7,8 @@ export VDE_ORCHESTRATED=1
 # Version: ${VDE_VERSION:-$(vde_get_version)}
 #===============================================================================
 
-# Use strictly absolute pathing (Mandate)
-VDE_ROOT_DIR="${0:a:h:h}"
+# Use strictly relative pathing (Mandate)
+VDE_ROOT_DIR="${0:h:h}"
 export VDE_ROOT_DIR
 
 # The Sovereign Scope Mandate: All operations must execute from within the Armor root
@@ -23,7 +23,11 @@ source "${VDE_ROOT_DIR}/lib/vde-naming"
 source "${VDE_ROOT_DIR}/lib/vde-core"
 source "${VDE_ROOT_DIR}/lib/vde-docker"
 source "${VDE_ROOT_DIR}/lib/vde-cluster-utils"
+# Heal requires degraded-mode startup — skip auto-load so corrupted JSON doesn't
+# block the very command that restores it.
+[[ "${1}" == "heal" ]] && export VDE_SKIP_AUTO_LOAD=1
 source "${VDE_ROOT_DIR}/lib/vm-common"
+unset VDE_SKIP_AUTO_LOAD
 
 # Global SSH Agent Discovery
 # Ensures all orchestrated commands inherit the isolated VDE agent,
@@ -41,7 +45,7 @@ fi
 
 # Signal Interception Mandate (Hardened)
 # We ensure the termination report is physically printed before exit
-trap 'vde_error_terminated; exit 130' SIGINT SIGTERM
+trap 'vde_error_map 130; exit 130' SIGINT SIGTERM
 
 # Main command router
 ACTION=$1
@@ -84,7 +88,8 @@ if [[ ${#input_targets} -gt 0 ]]; then
             targets+=("jupyterlab" "postgres")
         elif vde_cluster_exists "${t}" >/dev/null 2>&1; then
             # Expand cluster members using Zsh-native expansion
-            local members=$(vde_query_json -r '.vms[]' "${VDE_CLUSTER_STATE_DIR}/${t}.json")
+            local normalized_cluster=$(vde_normalize_name "${t}")
+            local members=$(vde_query_json -r '.vms[]' "${VDE_CLUSTER_STATE_DIR}/${normalized_cluster}.json")
             targets+=(${=members})
         elif [[ "${t}" == "all" ]]; then
             targets+=($(get_all_vms))
@@ -166,12 +171,17 @@ case ${ACTION} in
                     GLOBAL_RC=1
                     continue
                 fi
-                vde_run "${CANONICAL_NAME}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${target_type_val}" || continue
+                vde_run "${CANONICAL_NAME}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${BASE_NAME}" || continue
             fi
 
             # Canonical Ignition Handshake
+            local vm_env_file
+            vm_env_file=$(get_vm_env_file "${CANONICAL_NAME}")
+            
             local -a compose_up_cmd=(docker compose -f "${compose_file}")
             [[ -f "${VDE_ROOT_DIR}/.env" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/.env")
+            [[ -f "${VDE_ROOT_DIR}/${vm_env_file}" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/${vm_env_file}")
+            
             compose_up_cmd+=(up -d)
 
             if vde_run "${CANONICAL_NAME}" "${compose_up_cmd[@]}" >/dev/null 2>&1; then
@@ -302,6 +312,9 @@ case ${ACTION} in
     sync-version)
         vde_run "sync-version" "${VDE_ROOT_DIR}/bin/vde-sync-version" "${input_targets[@]}"
         ;;
+    sync-context)
+        vde_run "sync-context" "${VDE_ROOT_DIR}/bin/vde-sync-context" "${input_targets[@]}"
+        ;;
     audit)
         vde_run "audit" "${VDE_ROOT_DIR}/bin/vde-gospel-audit.zsh" "$@"
         ;;
@@ -386,6 +399,7 @@ Diagnostics & Discovery:
   stats <name>    Display real-time resource usage for Spokes.
   port <name>     Retrieve the specific SSH or service port for an alias.
   validate        Verify the integrity of Beskar Registry schemas.
+  sync-context    Review and refresh VDE context docs against current codebase.
 
 Matrix Management:
   matrix-audit    Exhaustive verification of every registered VM type (Serialized).

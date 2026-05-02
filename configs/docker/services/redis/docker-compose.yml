@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: redis, 2406, 6379, , zsh /vde/scripts/setup/redis-init.zsh
+# Variables: redis, 2407, 6379, , zsh /vde/scripts/setup/redis-init.zsh
 name: vde-redis
 services:
   vde-redis:
@@ -22,15 +22,13 @@ services:
     restart: unless-stopped
 
     ports:
-      - "2406:2406"
+      - "2407:2407"
       - "6379:6379"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../data/redis:/data
       - ../../../../logs/redis:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Persistence mapping
       - ../../../../data/redis/pgdata:/var/lib/postgresql/data
       # Docker Socket Sovereignty (Physical Verification Law)
@@ -47,6 +45,7 @@ services:
       - REDIS_ARGS=--save 60 1 --loglevel warning
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/redis.env
 
     networks:

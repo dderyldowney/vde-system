@@ -61,7 +61,10 @@ _VDE_CORE_SCRIPT_PATH="${(%):-%N}"
 
 # If VDE_ROOT_DIR is already exported, use it. Otherwise, assume current directory.
 if [[ -z "${VDE_ROOT_DIR:-}" ]] ; then
-    VDE_ROOT_DIR="."
+    if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
+    VDE_ROOT_DIR="${(%):-%x}"
+    VDE_ROOT_DIR="${VDE_ROOT_DIR:h:h}"
+fi
 fi
 export VDE_ROOT_DIR # Ensure VDE_ROOT_DIR is always exported
 
@@ -189,6 +192,18 @@ _vde_core_get_mtime() {
         fi
     else
         echo "0"
+    fi
+}
+
+# vde_purge_ghosts - BTO Purge Ritual (Rule 12.5)
+# Ensures image immutability by removing all transient apt artifacts.
+vde_purge_ghosts() {
+    if command -v apt-get >/dev/null 2>&1; then
+        apt-get clean 2>/dev/null
+        rm -rf /var/lib/apt/lists/*
+        rm -rf /var/cache/apt/archives/*
+        # Ensure the directory exists but is empty (Rule 12.5 compliance)
+        mkdir -p /var/lib/apt/lists/partial
     fi
 }
 

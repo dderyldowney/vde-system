@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: js, 2210, , zsh /vde/scripts/setup/js-init.zsh
+# Variables: js, 2211, , zsh /vde/scripts/setup/js-init.zsh
 name: vde-js
 services:
   vde-js:
@@ -25,14 +25,12 @@ services:
       - "vde.name=js"
 
     ports:
-      - "2210:2210"
+      - "2211:2211"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../projects/js:/home/devuser/workspace
       - ../../../../logs/js:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
@@ -44,6 +42,7 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/js.env
 
     networks:

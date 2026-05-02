@@ -94,6 +94,10 @@ SESSION_STATE.md
 .agents/
 .gemini/settings.json
 .gemini/settings.local.json
+.worktrees/
+
+# Agent-specific config wiring (conductor)
+conductor/
 
 # Backup files
 *.old
@@ -110,3 +114,6 @@ tests/.test-tmp/
 .tmp.drivedownload/
 .tmp.driveupload/
 .claude/
+plans/matrix-audit-report.md
+plans/scripts/fifo_test.log
+/pretty.output

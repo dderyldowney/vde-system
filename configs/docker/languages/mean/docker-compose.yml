@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: mean, 2221, , zsh /vde/scripts/setup/mean-init.zsh
+# Variables: mean, 2215, , zsh /vde/scripts/setup/mean-init.zsh
 name: vde-mean
 services:
   vde-mean:
@@ -25,14 +25,12 @@ services:
       - "vde.name=mean"
 
     ports:
-      - "2221:2221"
+      - "2215:2215"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../projects/mean:/home/devuser/workspace
       - ../../../../logs/mean:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
@@ -44,6 +42,7 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/mean.env
 
     networks:

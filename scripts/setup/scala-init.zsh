@@ -25,6 +25,7 @@ if ! command -v sbt >/dev/null 2>&1; then
     apt-get install -y sbt
 fi
 
-# 4. PURGING THE GHOSTS
-apt-get clean
-rm -rf /var/lib/apt/lists/*
+# 4. PURGING THE GHOSTS (Rule 12.5)
+export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
+source "${VDE_ROOT_DIR}/lib/vde-core" || { echo "CRITICAL: vde-core library missing" >&2; exit 1; }
+vde_purge_ghosts

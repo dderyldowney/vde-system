@@ -8,8 +8,9 @@
 
 ## The Reforging (The Fix)
 - [x] **Purge Ghost Zone**: `conductor/` directory has been removed by the Enforcer.
-- [ ] **Verification**: Re-run `bin/vde-enforce-uap.zsh` to ensure all Ghost Zones are cleared.
-- [ ] **Deep Audit**: Check `plans/` for unauthorized subdirectories (Rule 3 also locks `plans/` to `scripts/` and `archive/`).
+- [x] **Verification**: `bin/vde-enforce-uap.zsh` → `[UAP-SUCCESS]` (2026-04-29).
+- [x] **Deep Audit**: `plans/` contains only `scripts/` and active plan files — clean.
+- [x] **Gitignore**: `conductor/` added to `.gitignore` as agent-specific config wiring (2026-04-29).
 
 ## The Beskar Set
 - `conductor/` (DELETED)

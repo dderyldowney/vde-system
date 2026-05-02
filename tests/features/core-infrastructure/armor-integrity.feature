@@ -13,11 +13,12 @@ Feature: Armor Structural Integrity
     And the return code should be 1
     And I restore "data/vm-types.json.hidden" to "data/vm-types.json"
 
-  Scenario: Detection of Armor Baseline Drift
+  Scenario: Detection and Healing of Armor Baseline Drift
     Given I have an intentional version mismatch in "data/vm-types.json"
     When I execute "bin/vde-check-tetrad.zsh"
     Then the output should contain "[ERROR] Baseline Drift"
-    And the return code should be 1
+    And the output should contain "[SUCCESS] Baseline synchronized"
+    And the return code should be 0
     And I restore "data/vm-types.json" to its original state
 
   Scenario: Proof of Relative Pathing Compliance

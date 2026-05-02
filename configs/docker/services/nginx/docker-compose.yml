@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for service VMs
-# Variables: nginx, 2403, 80,443, , zsh /vde/scripts/setup/nginx-init.zsh
+# Variables: nginx, 2404, 80,443, , zsh /vde/scripts/setup/nginx-init.zsh
 name: vde-nginx
 services:
   vde-nginx:
@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "2403:2403"
+      - "2404:2404"
       - "80:80"
       - "443:443"
 
@@ -30,8 +30,6 @@ services:
       - ../../../../:/vde:ro
       - ../../../../data/nginx:/data
       - ../../../../logs/nginx:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Persistence mapping
       - ../../../../data/nginx/pgdata:/var/lib/postgresql/data
       # Docker Socket Sovereignty (Physical Verification Law)
@@ -48,6 +46,7 @@ services:
       - REDIS_ARGS=--save 60 1 --loglevel warning
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/nginx.env
 
     networks:

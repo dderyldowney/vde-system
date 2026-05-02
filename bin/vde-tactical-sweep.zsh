@@ -12,8 +12,8 @@ set -e
 # ZSH-native logic demonstration (UAP Mandate 1)
 typeset _zsh_compliance_flag=${(z):-"zsh native tactical sweep"}
 
-VDE_BIN_DIR="${0:a:h}"
-VDE_ROOT_DIR="${VDE_BIN_DIR:h}"
+VDE_BIN_DIR="${0:h}"
+VDE_ROOT_DIR="${0:h:h}"
 
 # Source Constants & Errors for Protocol Integrity
 [[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && . "${VDE_ROOT_DIR}/lib/vde-constants"

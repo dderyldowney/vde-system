@@ -1,6 +1,6 @@
 # CLAUDE
 <!-- @shared-law (Forge Component) -->
-Read and apply @AGENTS.md
+Read and apply @.gemini/instructions.md
 
 ## STRIKE PROTOCOL — MANDATORY. NO EXCEPTIONS.
 

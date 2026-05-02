@@ -23,7 +23,10 @@ _VDE_PATH_UTILS_LOADED=1
 _VDE_PATH_UTILS_SCRIPT_PATH="${(%):-%x}"
 
 if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
-    VDE_ROOT_DIR="$(cd "$(dirname "${_VDE_PATH_UTILS_SCRIPT_PATH}")/.." && pwd)"
+    if [[ -z "${VDE_ROOT_DIR:-}" ]]; then
+    VDE_ROOT_DIR="${(%):-%x}"
+    VDE_ROOT_DIR="${VDE_ROOT_DIR:h:h}"
+fi
 fi
 
 # =============================================================================

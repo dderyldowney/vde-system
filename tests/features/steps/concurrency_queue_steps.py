@@ -9,6 +9,9 @@ from pathlib import Path
 from behave import given, when, then
 from vm_common import VDE_ROOT, run_vde_command, vde_sleep
 
+# ZSH startup + 3-source ≈ 102ms; 200ms ensures deterministic FIFO ordering
+ARRIVAL_INTERVAL_SECONDS = 0.200
+
 @given('the registry is reconciled')
 def step_reconcile_registry(context):
     run_vde_command("rebuild-cache")
@@ -22,24 +25,27 @@ def step_launch_simultaneous_requests(context, interval):
     if log_file.exists():
         log_file.unlink()
         
-    test_script.write_text(f"""#!/usr/bin/env zsh
-source "{VDE_ROOT}/lib/vm-common"
-source "{VDE_ROOT}/lib/vde-core"
-source "{VDE_ROOT}/lib/vm-lock"
+    test_script.write_text("""#!/usr/bin/env zsh
+# @shared-law (FIFO Lock Empirical Test Harness — Concurrency Proof)
+VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:A:h:h:h}}"
+# depth: plans/scripts/<name>.zsh is 3 levels below VDE root (plans/scripts → plans → VDE)
+source "${VDE_ROOT_DIR}/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vde-core"
+source "${VDE_ROOT_DIR}/lib/vm-lock"
 
 LOCK_NAME="$1"
 WAIT_TIME="$2"
 ID="$3"
+typeset LOG_FILE="${VDE_ROOT_DIR}/plans/scripts/fifo_test.log"
 
-echo "ARRIVE:$ID:$(date +%s.%N)" >> "{log_file}"
+echo "ARRIVE:$ID:$(date +%s.%N)" >> "${LOG_FILE}"
 if claim_lock "$LOCK_NAME"; then
-    echo "ACQUIRE:$ID:$(date +%s.%N)" >> "{log_file}"
-    # Small sleep to allow others to queue up
+    echo "ACQUIRE:$ID:$(date +%s.%N)" >> "${LOG_FILE}"
     zmodload zsh/zselect && zselect -t 50
     release_lock "$LOCK_NAME"
-    echo "RELEASE:$ID:$(date +%s.%N)" >> "{log_file}"
+    echo "RELEASE:$ID:$(date +%s.%N)" >> "${LOG_FILE}"
 else
-    echo "FAIL:$ID:$(date +%s.%N)" >> "{log_file}"
+    echo "FAIL:$ID:$(date +%s.%N)" >> "${LOG_FILE}"
 fi
 """)
     test_script.chmod(0o755)
@@ -50,8 +56,7 @@ fi
         shutil.rmtree(lock_path)
         
     context.procs = []
-    # Use a small offset to ensure arrival order is deterministic by ID
-    arrival_interval = 0.05
+    arrival_interval = interval
     for i in range(1, 11):
         p = subprocess.Popen(
             [str(test_script), str(lock_path), "0.5", str(i)],
@@ -76,7 +81,7 @@ def step_verify_fifo_order(context):
     
     expected_order = [str(i) for i in range(1, 11)]
     assert arrivals == expected_order, f"Arrivals out of order: {arrivals}"
-    assert acquisitions == expected_order, f"Acquisitions out of order: {acquisitions}. Log:\n{context.fifo_log}"
+    assert acquisitions == arrivals, f"FIFO violated: served {acquisitions} but arrived {arrivals}. Log:\n{context.fifo_log}"
 
 @then('the final state should be all requests completed successfully')
 def step_verify_final_state(context):

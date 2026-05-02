@@ -34,7 +34,7 @@ done
 
 # 3. Environment Integrity
 # Use strictly relative pathing (Mandate)
-VDE_ROOT_DIR="."
+VDE_ROOT_DIR="${0:h:h}"
 REQUIRED_DIRS=("data" "lib" "scripts")
 REQUIRED_FILES=("data/vm-types.json" "lib/vde-core" "lib/vm-common")
 TRANSIENT_DIRS=(".cache")
@@ -78,7 +78,7 @@ local CURRENT_VER=$(vde_get_version)
 local JSON_VER=$(vde_query_json ".version" "./data/vm-types.json" | tr -d '"')
 
 if [[ "${JSON_VER}" != "${CURRENT_VER}" ]]; then
-    echo -e "${YELLOW}[WARN] Baseline Drift: Registry (${JSON_VER}) mismatch with Engine (${CURRENT_VER})${RESET}"
+    echo -e "${RED}[ERROR] Baseline Drift: Registry (${JSON_VER}) mismatch with Engine (${CURRENT_VER})${RESET}"
     echo -e "${YELLOW}[AUTO] Attempting Armor Self-Correction...${RESET}"
     if zsh "./bin/vde-armor-heal.zsh"; then
         echo -e "${GREEN}[SUCCESS] Baseline synchronized.${RESET}"

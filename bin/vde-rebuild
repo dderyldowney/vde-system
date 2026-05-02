@@ -21,7 +21,7 @@ typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 set -e
 
 # Use zsh-native absolute path detection (Rule 1)
-VDE_ROOT_DIR="${0:a:h:h}"
+VDE_ROOT_DIR="${0:h:h}"
 export VDE_ROOT_DIR
 
 source "${VDE_ROOT_DIR}/lib/vm-common"
@@ -122,6 +122,12 @@ done
 #===============================================================================
 
 build_base_image() {
+    local base_lock="${VDE_LOCKS_DIR}/vms/vde-base.lock"
+    if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+        claim_lock "${base_lock}" || return ${VDE_ERR_LOCK}
+        trap "release_lock '${base_lock}'" INT TERM HUP
+    fi
+
     local -a build_cmd=(docker build)
     [[ "${PULL}" == "true" ]] && build_cmd+=(--pull)
     build_cmd+=(-t vde-base:latest -f "${CONFIGS_DIR}/vde-base.Dockerfile" "${VDE_ROOT_DIR}")
@@ -137,9 +143,17 @@ build_base_image() {
     
     if "${build_cmd[@]}"; then
         echo "✓ vde-base:latest built successfully"
+        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+            trap - INT TERM HUP
+            release_lock "${base_lock}"
+        fi
         return 0
     else
         echo "✗ Failed to build vde-base:latest"
+        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+            trap - INT TERM HUP
+            release_lock "${base_lock}"
+        fi
         return ${VDE_ERR_GENERAL}
     fi
 }
@@ -162,23 +176,42 @@ build_vm_image() {
         return 1
     fi
     
+    # MANDATE: Secure Atomic Lock before rebuilding Spoke (Phase 25)
+    local vm_lock="${VDE_LOCKS_DIR}/vms/${canonical_name}.lock"
+    if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+        claim_lock "${vm_lock}" || return ${VDE_ERR_LOCK}
+        trap "release_lock '${vm_lock}'" INT TERM HUP
+    fi
+    
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "Rebuilding ${canonical_name}..."
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
-    # Export required variables for hardening
-    export POSTGRES_DEV_PASSWORD="${POSTGRES_DEV_PASSWORD}"
+    # Resolve Spoke-specific env file (Rule 4.1)
+    local vm_env_file
+    vm_env_file=$(get_vm_env_file "${canonical_name}")
+
     local -a build_cmd=(docker compose -f "${compose_file}")
     [[ -f "${VDE_ROOT_DIR}/.env" ]] && build_cmd+=(--env-file "${VDE_ROOT_DIR}/.env")
+    [[ -f "${VDE_ROOT_DIR}/${vm_env_file}" ]] && build_cmd+=(--env-file "${VDE_ROOT_DIR}/${vm_env_file}")
+    
     build_cmd+=(build)
     [[ "${NOCACHE}" == "true" ]] && build_cmd+=(--no-cache)
     
     if vde_run "${canonical_name}" "${build_cmd[@]}"; then
         echo "✓ ${canonical_name} rebuilt successfully"
+        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+            trap - INT TERM HUP
+            release_lock "${vm_lock}"
+        fi
         return 0
     else
         echo "✗ Failed to rebuild ${canonical_name}"
+        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+            trap - INT TERM HUP
+            release_lock "${vm_lock}"
+        fi
         return 1
     fi
 }

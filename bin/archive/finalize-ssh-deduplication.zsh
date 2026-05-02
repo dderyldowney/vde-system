@@ -5,7 +5,7 @@
 
 set -e
 
-VDE_ROOT_DIR="${0:a:h:h}"
+VDE_ROOT_DIR="${0:h:h}"
 HARDENING_STEPS="${VDE_ROOT_DIR}/tests/features/steps/vde_ssh_hardening_steps.py"
 CORE_STEPS="${VDE_ROOT_DIR}/tests/features/steps/ssh_core_steps.py"
 

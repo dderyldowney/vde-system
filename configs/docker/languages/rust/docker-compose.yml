@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: rust, 2215, , zsh /vde/scripts/setup/rust-init.zsh
+# Variables: rust, 2219, , zsh /vde/scripts/setup/rust-init.zsh
 name: vde-rust
 services:
   vde-rust:
@@ -25,14 +25,12 @@ services:
       - "vde.name=rust"
 
     ports:
-      - "2215:2215"
+      - "2219:2219"
 
     volumes:
       - ../../../../:/vde:ro
       - ../../../../projects/rust:/home/devuser/workspace
       - ../../../../logs/rust:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
@@ -44,6 +42,7 @@ services:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/rust.env
 
     networks:
