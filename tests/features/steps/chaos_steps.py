@@ -68,6 +68,7 @@ echo "Simulated apt artifacts created."
     with open("scripts/setup/chaos-init.zsh", "w") as f:
         f.write(content)
     os.chmod("scripts/setup/chaos-init.zsh", 0o755)
+    context.add_cleanup(lambda: os.remove("scripts/setup/chaos-init.zsh") if os.path.exists("scripts/setup/chaos-init.zsh") else None)
 
 @given(u'a VM "vde-chaos" registered with this script')
 def step_impl(context):
@@ -78,6 +79,12 @@ def step_impl(context):
         f.write("lang|chaos|chaos|Chaos VM|curl|zsh /vde/scripts/setup/chaos-init.zsh||2299\n")
     # Force re-smelt
     subprocess.run(["zsh", "-c", "bin/vde-matrix-rebuild.zsh --quiet"])
+
+    def _restore_conf():
+        if hasattr(context, 'conf_bak') and os.path.exists(context.conf_bak):
+            subprocess.run(["mv", context.conf_bak, "data/vm-types.conf"])
+            subprocess.run(["zsh", "-c", "bin/vde-matrix-rebuild.zsh --quiet"])
+    context.add_cleanup(_restore_conf)
 
 @when(u'I execute "vde create chaos"')
 def step_impl(context):
@@ -94,10 +101,3 @@ def step_impl(context):
     # We expect to see the 'partial' directory listed.
     assert "Rule 12.5 Violation - apt artifacts found in /var/lib/apt/lists/" in context.res.stdout or "Rule 12.5 Violation - apt artifacts found in /var/lib/apt/lists/" in context.res.stderr
     assert "/var/lib/apt/lists/partial" in context.res.stdout or "/var/lib/apt/lists/partial" in context.res.stderr
-
-    # Clean up after test
-    if hasattr(context, 'conf_bak'):
-        subprocess.run(["mv", context.conf_bak, "data/vm-types.conf"])
-        subprocess.run(["zsh", "-c", "bin/vde-matrix-rebuild.zsh --quiet"])
-    if os.path.exists("scripts/setup/chaos-init.zsh"):
-        os.remove("scripts/setup/chaos-init.zsh")
