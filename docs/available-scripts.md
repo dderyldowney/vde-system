@@ -93,6 +93,8 @@ These scripts provide specialized maintenance, automation, and development suppo
 | `remediate-phase24-sleep.zsh` | Tactical remediation for forbidden sleep calls. |
 | `migrate-configs-to-categories.zsh` | Migrate Spoke configurations to new categorized structure. |
 | `vde-armor-heal.zsh` | Emergency healing script for Project 1 (Armor) components. |
+| `vde-purify-paths.zsh` | Mass path purification utility. Replaces absolute path derivation logic (:a) with Zsh-native relative derivation. |
+| `vde-sync-context` | Review and refresh VDE context documentation against the current codebase state. |
 | `nuke-vde` | **The Great Quench**: Safe removal of all VDE artifacts. |
 
 ---
@@ -118,9 +120,5 @@ VDE_ROOT/
 │   └── ...                     # Tracked Git hooks
 ├── lib/
 ```
-
-**This is the Way.**
-
----
 
 **This is the Way.**
