@@ -33,7 +33,6 @@ def _register_container_cleanup(context, cmd):
                 capture_output=True
             )
             # Clear any stale VM lock left by a SIGKILL'd vde process
-            import shutil
             lock_dir = VDE_ROOT / ".locks" / "vms" / f"{a}.lock"
             shutil.rmtree(str(lock_dir), ignore_errors=True)
         context.add_cleanup(_cleanup)

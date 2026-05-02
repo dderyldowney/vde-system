@@ -101,10 +101,3 @@ def step_impl(context):
     # We expect to see the 'partial' directory listed.
     assert "Rule 12.5 Violation - apt artifacts found in /var/lib/apt/lists/" in context.res.stdout or "Rule 12.5 Violation - apt artifacts found in /var/lib/apt/lists/" in context.res.stderr
     assert "/var/lib/apt/lists/partial" in context.res.stdout or "/var/lib/apt/lists/partial" in context.res.stderr
-
-    # Clean up after test
-    if hasattr(context, 'conf_bak'):
-        subprocess.run(["mv", context.conf_bak, "data/vm-types.conf"])
-        subprocess.run(["zsh", "-c", "bin/vde-matrix-rebuild.zsh --quiet"])
-    if os.path.exists("scripts/setup/chaos-init.zsh"):
-        os.remove("scripts/setup/chaos-init.zsh")
