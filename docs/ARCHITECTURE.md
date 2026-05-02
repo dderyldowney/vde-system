@@ -1,6 +1,6 @@
 # ARCHITECTURE
 <!-- @shared-law (Sovereign Law) -->
-# ARCHITECTURE 1.5.1 (The Sovereign Baseline)
+# ARCHITECTURE 1.5.2 (The Sovereign Baseline)
 
 ## 1. Philosophical Pillars (The Way)
 
@@ -9,7 +9,7 @@
     2. **Project 2: The Forge (`@forge`)**: The universal Development AI-Governance system. It manages the GitHub lifecycle, enforces mandates, and audits technical integrity.
 - **The Symbiotic Covenant**: The Forge shapes the Armor. Every change to the Forge must be justified by how it improves the Armor product for Foundlings (Students).
 - **The Creed-frame**: The narrative fuel established in `data/vde_core/**` must guide all thematic world-building.
-- **The Gospel**: The Sovereign Artifact Set is the absolute authority. 1.5.1 is the unique Sovereign Baseline.
+- **The Gospel**: The Sovereign Artifact Set is the absolute authority. 1.5.2 is the unique Sovereign Baseline.
 - **The Spine**: The system is built upon the **Unyielding Tetrad**: **Zsh, Git, Docker, and SSH**.
 
 ## 2. Structural Design (The Armor)
@@ -60,7 +60,7 @@ VDE enforces a strict branch-based release lifecycle to maintain the purity of t
 5.  **X.X.X Releases**: Step and milestone releases are applied against `main` only. `develop` remains for development only.
 
 ---
-Version: 1.5.1
+Version: 1.5.2
 Status: SOVEREIGN BASELINE CERTIFIED
 Identity: The Covert
 ---
