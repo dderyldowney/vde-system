@@ -149,9 +149,19 @@ check_dir() {
     local dir=$1
     if [[ ! -d "$dir" ]]; then return; fi
     
+    # Skip archive directory
+    if [[ "${dir}" == *"bin/archive" ]]; then
+        return
+    fi
+
     [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-CHECK]${NC} Auditing directory: ${dir#${VDE_ROOT_DIR}/}"
     # Use recursive glob (**) to audit all files in subdirectories
     for file in "${dir}"/**/*(N.); do
+        # Skip files in archive subdirectories
+        if [[ "$file" == *"bin/archive/"* ]]; then
+            continue
+        fi
+
         # Audit all files in these directories
         if [[ -f "$file" ]]; then
             audit_file_content "$file"
