@@ -11,7 +11,7 @@ Overview of all scripts included with VDE.
 
 ### VDE Unified Command (Recommended)
 
-The `vde` command is the canonical entry point for the **Sovereign Evolution (1.5.1)**. It wraps all infrastructure logic in the `vde_run` safety layer, ensuring Zsh purity and system integrity.
+The `vde` command is the canonical entry point for the **Sovereign Evolution (1.5.2)**. It wraps all infrastructure logic in the `vde_run` safety layer, ensuring Zsh purity and system integrity.
 
 | Command | Purpose | Usage |
 |---------|---------|-------|
@@ -36,6 +36,8 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution (1.
 | `vde images` | List all VDE-managed Docker images. | `vde images` |
 | `vde stats` | View real-time resource usage of active Spokes. | `vde stats` |
 | `vde health` | Run the System Spine health check. | `vde health` |
+| `vde audit` | Verify the structural integrity of the Sovereign Artifact Set. | `vde audit` |
+| `vde check-tetrad` | **The Tetrad Check**: Verify Zsh, Git, Docker, and SSH pillars. (Alias: `spine-check`) | `vde check-tetrad` |
 | `vde cluster <cmd>` | Orchestrate multi-VM clusters (Tech Stacks). | `vde cluster start python-stack` |
 | `vde ssh-setup` | Manage VDE SSH environment (keys, agent, config). | `vde ssh-setup init` |
 | `vde ssh-sync` | Sync VDE SSH public keys to the build context. | `vde ssh-sync` |
@@ -121,31 +123,4 @@ VDE_ROOT/
 
 ---
 
-## Undocumented Scripts (Pending Classification)
-
-| Script | Purpose |
-|--------|---------|
-| `vde-cluster` | Automatically discovered - documentation pending. |
-| `vde-dns-check.zsh` | Automatically discovered - documentation pending. |
-| `vde-exec` | Automatically discovered - documentation pending. |
-| `vde-health` | Automatically discovered - documentation pending. |
-| `vde-images` | Automatically discovered - documentation pending. |
-| `vde-info` | Automatically discovered - documentation pending. |
-| `vde-init` | Automatically discovered - documentation pending. |
-| `vde-inspect` | Automatically discovered - documentation pending. |
-| `vde-logs` | Automatically discovered - documentation pending. |
-| `vde-networks` | Automatically discovered - documentation pending. |
-| `vde-path-of-the-foundling` | Automatically discovered - documentation pending. |
-| `vde-port` | Automatically discovered - documentation pending. |
-| `vde-ps` | Automatically discovered - documentation pending. |
-| `vde-rebuild` | Automatically discovered - documentation pending. |
-| `vde-rebuild-cache` | Automatically discovered - documentation pending. |
-| `vde-stats` | Automatically discovered - documentation pending. |
-| `vde-sync-version` | Automatically discovered - documentation pending. |
-| `vde-vision` | Automatically discovered - documentation pending. |
-
-### bin/vde-purify-paths.zsh
-*   **Purpose**: Mass path purification utility. Replaces absolute path derivation logic (:a) with Zsh-native relative derivation across the entire VDE ecosystem.
-*   **Tags**: @forge (Sovereign Cleanup Utility)
-| `vde-purify-paths.zsh` | Automatically discovered - documentation pending. |
-| `vde-sync-context` | Automatically discovered - documentation pending. |
+**This is the Way.**
