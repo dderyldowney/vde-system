@@ -1,6 +1,7 @@
-## Project Status: 1.5.1 (Sovereign Baseline) - Released
+## Project Status: 1.5.2 (Sovereign Baseline) - Released
+<!-- @shared-law (Forge Component) -->
 
-- **Version**: 1.5.1
+- **Version**: 1.5.2
 - **Status**: Stable / Released
 - **Summary**: This version hardens the Transversal Bridge (SSH), eliminates initialization fractures, and introduces a resilient dynamic identity injection system. The Forge is now fully capable of clean-slate bootstrapping as per the New Foundling ritual.
 - **Key Remediations**:
@@ -8,4 +9,4 @@
   - VDE-SPINE-01 (Isolated Agent Discovery)
   - VDE-AGENT-DISCOVERY (Global Agent Discovery)
   - VDE-BASE-CHOWN (Base Image Build Permissions)
-- **Current SHA**: a19c968676c046534dcd8c80561526219991df85
+- **Current SHA**: adc83d3d5b5c432f3da5c97fbcbfd74c36af540f
