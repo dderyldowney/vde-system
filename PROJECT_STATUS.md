@@ -9,4 +9,4 @@
   - VDE-SPINE-01 (Isolated Agent Discovery)
   - VDE-AGENT-DISCOVERY (Global Agent Discovery)
   - VDE-BASE-CHOWN (Base Image Build Permissions)
-- **Current SHA**: adc83d3d5b5c432f3da5c97fbcbfd74c36af540f
+- **Current SHA**: d458730e28133012ba1647e2050189ffbdf39f38

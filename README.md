@@ -6,7 +6,7 @@
 
 ![CI Status](https://github.com/dderyldowney/vde-system/actions/workflows/vde-ci.yml/badge.svg)
 
-A sovereign, template-based ecosystem of Dockerized Spokes. Forged for the warrior who demands absolute isolation, consistent hydration, and governed development. 1.5.1 is the **Sovereign Baseline**, certified through the Proof of Life contract.
+A sovereign, template-based ecosystem of Dockerized Spokes. Forged for the warrior who demands absolute isolation, consistent hydration, and governed development. 1.5.2 is the **Sovereign Baseline**, certified through the Proof of Life contract.
 
 **🛡️ The Sovereign Record:** The default branch for this Forge is `develop` (**The Anvil**). Stable, certified releases reside on `main` (**Production**).
 

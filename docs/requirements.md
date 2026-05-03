@@ -1,7 +1,7 @@
 # Requirements
 <!-- @shared-law (Sovereign Law) -->
 
-This document outlines the system requirements for the **Sovereign Baseline (1.5.1)**.
+This document outlines the system requirements for the **Sovereign Baseline (1.5.2)**.
 
 [← Back to README](../README.md)
 
