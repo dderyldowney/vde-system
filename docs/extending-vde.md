@@ -1,6 +1,6 @@
 # EXTENDING-VDE
 <!-- @shared-law (Sovereign Law) -->
-# Extending VDE (1.5.1)
+# Extending VDE (1.5.2)
 
 VDE is designed to be easily extensible. You can add support for new programming languages or services by updating the **Beskar Registry** and creating hydration scripts.
 
