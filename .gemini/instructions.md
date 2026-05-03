@@ -1,7 +1,7 @@
 # **The Way of the VDE: 1.5.2 (The Sovereign Baseline)**
 <!-- @forge (Governance Sentinel) -->
 
-This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.5.1. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
+This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.5.2. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
 MANDATE: In VDE workspace, follow instructions in AGENTS.md.
 
@@ -180,7 +180,7 @@ Failure of any ritual constitutes a **Protocol Blockade**.
     * **The Chronicler’s Law**: Commit messages MUST follow the format defined in `COMMIT_MESSAGE_FORMAT.md`.
     * Failure to utilize these templates constitutes a procedural fracture and requires immediate remediation.
 
-## **THE SOVEREIGN INSTRUCTION SET 1.5.1**
+## **THE SOVEREIGN INSTRUCTION SET 1.5.2**
 
 *"The core beating heart forged in every piece of Beskar made by this Forge."*
 
@@ -495,8 +495,8 @@ Every commit MUST be labeled with ALL functional effect tags present across ALL 
 | (file path) | @forge | (Functional description) |
 | (file path) | @shared-law | (Functional description) |
 
-## SESSION STATUS (2026-04-28)
+## SESSION STATUS (2026-05-03)
 - **Status**: 100% Green (Heartbeat Certified)
-- **SHA**: fe6ab8f6 (Aligned: develop, main, stable)
-- **Tag**: 1.5.1 (Moved to certified SHA)
-- **Strike**: Sovereign Scope Hardening complete.
+- **SHA**: d458730e (main/stable — 1.5.2 tag) / b21b9cc2 (develop, clean)
+- **Tag**: 1.5.2 (Sovereign Baseline — CERTIFIED)
+- **Strike**: Peripheral Gospel Drift Remediation complete.
