@@ -1,7 +1,7 @@
 # Command Reference
 <!-- @shared-law (Sovereign Law) -->
 
-Complete reference for all VDE commands in the **Sovereign Baseline (1.5.1)**.
+Complete reference for all VDE commands in the **Sovereign Baseline (1.5.2)**.
 
 [← Back to README](../README.md)
 

@@ -2,7 +2,7 @@
 <!-- @shared-law (Sovereign Law) -->
 <p align="center"><img src="imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-# Why VDE? Your Development Playground Awaits! (1.5.1) 🎉
+# Why VDE? Your Development Playground Awaits! (1.5.2) 🎉
 
 [← Back to README](../README.md)
 
@@ -100,7 +100,7 @@ VDE supports **24 programming languages/stacks** and **8 shared services** out o
 
 ## The "Magic" Part: Spokes Talking to Spokes ✨
 
-VDE 1.5.1 features automated **DNS Discovery**. If you're in your Python Spoke and need your database, just use its name:
+VDE 1.5.2 features automated **DNS Discovery**. If you're in your Python Spoke and need your database, just use its name:
 
 ```zsh
 # From inside your Python Spoke
