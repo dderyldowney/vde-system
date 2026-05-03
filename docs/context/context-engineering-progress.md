@@ -2,7 +2,7 @@
 <!-- @forge (Context Documentation) -->
 
 **Project**: VDE (Virtualized Development Environment)  
-**Version**: 1.5.1 (Sovereign Baseline)  
+**Version**: 1.5.2 (Sovereign Baseline)  
 **Repository**: https://github.com/dderyldowney/vde-system  
 **Default Branch**: develop (The Anvil)  
 **Root Directory**: `${VDE_ROOT_DIR}` (typically `~/VDE`)  
@@ -46,7 +46,7 @@ to understand our methodology and where we left off, then help me with [your spe
 3. **Lock-Queue Model**: FIFO sequencing for determinism
 4. **Mandalorian Creed Framework**: Narrative-driven development philosophy
 
-**Current Focus**: 1.5.1 release - Sovereign Baseline with hardened SSH bridge and clean-slate bootstrapping
+**Current Focus**: 1.5.2 (Sovereign Baseline) — CERTIFIED. Gospel drift remediation complete across all documentation layers. Next: retag 1.5.2 on main, update GitHub Release, mirror to stable. Branching strategy transitioning to develop → stable → main for future releases.
 
 **Team Size**: Solo developer with AI collaboration (agent governance framework)
 

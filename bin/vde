@@ -318,6 +318,9 @@ case ${ACTION} in
     audit)
         vde_run "audit" "${VDE_ROOT_DIR}/bin/vde-gospel-audit.zsh" "$@"
         ;;
+    check-tetrad|spine-check)
+        vde_run "check-tetrad" "${VDE_ROOT_DIR}/bin/vde-check-tetrad.zsh" "$@"
+        ;;
     heal)
         vde_run "heal" "${VDE_ROOT_DIR}/bin/vde-heal-docs.zsh" "$@"
         ;;
@@ -390,6 +393,7 @@ Spoke Operations:
 
 Diagnostics & Discovery:
   audit           Verify the structural integrity of the Sovereign Artifact Set.
+  check-tetrad    Verify the Unyielding Tetrad (Zsh, Git, Docker, SSH) and core integrity.
   heal            Autonomously synchronize the Gospel with the physical Forge.
   dns-check <s> <t> Verify DNS resolution between Source and Target Spokes.
   info <name>     Display detailed metadata and registry status for a Spoke.

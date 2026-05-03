@@ -1,7 +1,7 @@
 # MCP Configuration Documentation
 <!-- @forge (AI Governance) -->
 
-## Overview (1.5.1)
+## Overview (1.5.2)
 
 This document describes the MCP (Model Context Protocol) server configuration for the VDE project. MCP servers extend the capabilities of the Gemini CLI by providing specialized tools for various tasks.
 
