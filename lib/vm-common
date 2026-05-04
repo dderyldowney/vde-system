@@ -577,7 +577,15 @@ get_vm_compose_file() {
 get_vm_env_file() {
     local raw_name
     raw_name=$(vde_normalize_name "${1}")
-    echo "env-files/${raw_name}.env"
+    local expected="env-files/${raw_name}.env"
+    local legacy="env-files/vde-${raw_name}.env"
+
+    if [[ -f "${VDE_ROOT_DIR}/${expected}" ]] && [[ -f "${VDE_ROOT_DIR}/${legacy}" ]]; then
+        # Log to stderr so it doesn't interfere with command substitution capturing stdout
+        vde_log_warn "Ambiguous environment files detected for ${raw_name}. Using ${expected}, ignoring legacy ${legacy}." "vde" >&2
+    fi
+
+    echo "${expected}"
 }
 
 # get_vm_image - Derives image name from Hub name
@@ -783,20 +791,32 @@ is_known_vm() {
     return ${VDE_ERR_NOT_FOUND}
 }
 
-# vm_is_created - Check if a VM has been created (config generated)
+# vde_validate_vm_assets - Validates existence of VM compose and env files
 # Args: <vm_name>
-# Returns: 0 if created (compose and env files exist), 1 otherwise
-vm_is_created() {
+# Returns: 0 if both exist, 1 if missing.
+vde_validate_vm_assets() {
     local vm_name="${1}"
     local compose_file
     compose_file=$(get_vm_compose_file "${vm_name}")
     local env_file
     env_file=$(get_vm_env_file "${vm_name}")
 
-    if [[ -f "${VDE_ROOT_DIR}/${compose_file}" ]] && [[ -f "${VDE_ROOT_DIR}/${env_file}" ]]; then
-        return 0
+    if [[ ! -f "${VDE_ROOT_DIR}/${compose_file}" ]]; then
+        return 1
     fi
-    return ${VDE_ERR_GENERAL}
+
+    if [[ ! -f "${VDE_ROOT_DIR}/${env_file}" ]]; then
+        return 1
+    fi
+
+    return 0
+}
+
+# vm_is_created - Check if a VM has been created (config generated)
+# Args: <vm_name>
+# Returns: 0 if created (compose and env files exist), 1 otherwise
+vm_is_created() {
+    vde_validate_vm_assets "${1}"
 }
 
 # vm_template_exists - Check if a VM template exists
