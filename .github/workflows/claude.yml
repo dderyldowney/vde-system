@@ -1,4 +1,5 @@
 name: Claude Code
+# @forge (Automated Issue/PR interaction via Claude)
 
 on:
   issue_comment:
