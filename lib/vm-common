@@ -577,7 +577,7 @@ get_vm_compose_file() {
 get_vm_env_file() {
     local raw_name
     raw_name=$(vde_normalize_name "${1}")
-    echo "env-files/vde-${raw_name}.env"
+    echo "env-files/${raw_name}.env"
 }
 
 # get_vm_image - Derives image name from Hub name
@@ -788,24 +788,12 @@ is_known_vm() {
 # Returns: 0 if created (compose and env files exist), 1 otherwise
 vm_is_created() {
     local vm_name="${1}"
-    local raw_name="${vm_name#vde-}"
-    local full_name="vde-${raw_name}"
-    local configs_dir="${VDE_CONFIGS_DIR:-${VDE_ROOT_DIR}/configs/docker}"
-    local env_dir="${VDE_ENV_DIR:-${VDE_ROOT_DIR}/env-files}"
-    
-    # 1. Check NEW category-specific path first
-    local category
-    category=$(get_vm_category "${vm_name}")
-    if [[ "${category}" != "unknown" ]]; then
-        if [[ -f "${configs_dir}/${category}/${raw_name}/docker-compose.yml" ]] && \
-           [[ -f "${env_dir}/${full_name}.env" ]]; then
-            return 0
-        fi
-    fi
+    local compose_file
+    compose_file=$(get_vm_compose_file "${vm_name}")
+    local env_file
+    env_file=$(get_vm_env_file "${vm_name}")
 
-    # 2. Fallback to OLD conventional path
-    if [[ -f "${configs_dir}/${raw_name}/docker-compose.yml" ]] && \
-       [[ -f "${env_dir}/${full_name}.env" ]]; then
+    if [[ -f "${VDE_ROOT_DIR}/${compose_file}" ]] && [[ -f "${VDE_ROOT_DIR}/${env_file}" ]]; then
         return 0
     fi
     return ${VDE_ERR_GENERAL}
