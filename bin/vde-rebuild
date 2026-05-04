@@ -27,6 +27,9 @@ export VDE_ROOT_DIR
 source "${VDE_ROOT_DIR}/lib/vm-common"
 export VDE_IN_REBUILD=1
 
+# Function trace support (activates only when VDE_TRACE_MODE is set)
+[[ -f "${VDE_ROOT_DIR}/lib/vde-trace-bootstrap" ]] && source "${VDE_ROOT_DIR}/lib/vde-trace-bootstrap"
+
 # Configuration
 NOCACHE=false
 REGENERATE_KEYS=false
@@ -136,6 +139,9 @@ build_base_image() {
         build_cmd+=(--no-cache)
     fi
     
+    # Debug: show assembled command in trace mode
+    [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "build_cmd=${build_cmd[*]}"
+    
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "Building vde-base:latest..."
@@ -192,12 +198,23 @@ build_vm_image() {
     local vm_env_file
     vm_env_file=$(get_vm_env_file "${canonical_name}")
 
-    local -a build_cmd=(docker compose -f "${compose_file}")
+    local -a build_cmd=(docker compose)
+    [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "build_cmd=${build_cmd[*]}"
+    
+    build_cmd+=(-f "${compose_file}")
+    [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "build_cmd=${build_cmd[*]}"
+    
     [[ -f "${VDE_ROOT_DIR}/.env" ]] && build_cmd+=(--env-file "${VDE_ROOT_DIR}/.env")
+    [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "build_cmd=${build_cmd[*]}"
+    
     [[ -f "${VDE_ROOT_DIR}/${vm_env_file}" ]] && build_cmd+=(--env-file "${VDE_ROOT_DIR}/${vm_env_file}")
+    [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "build_cmd=${build_cmd[*]}"
     
     build_cmd+=(build)
+    [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "build_cmd=${build_cmd[*]}"
+    
     [[ "${NOCACHE}" == "true" ]] && build_cmd+=(--no-cache)
+    [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "build_cmd=${build_cmd[*]}"
     
     if vde_run "${canonical_name}" "${build_cmd[@]}"; then
         echo "✓ ${canonical_name} rebuilt successfully"

@@ -121,21 +121,32 @@ vde_run() {
         local final_cmd=""
         if [[ "${cmd[1]}" == *"/ssh-vm" || "${cmd[1]}" == *"/vde-exec" ]]; then
             # Execute with --show-command to resolve the final SSH/Docker call
-            final_cmd=$("${cmd[@]}" --show-command 2>/dev/null)
+            # Note: ${cmd[2,-1]} gives elements from 2nd to last (Zsh 1-indexed range)
+            local raw_output resolved_path
+            resolved_path="${cmd[1]:a}"
+            raw_output=$("${resolved_path}" --show-command --quiet "${(@)cmd[2,-1]}" 2>&1) || true
+            # Strip ANSI codes and find the actual command line (starts with ssh or docker)
+            final_cmd="$(echo "${raw_output}" | sed $'s/\x1b\\[[0-9;]*m//g' | grep -E "^[[:space:]]*(ssh|docker) " | head -n 1 | sed 's/^[[:space:]]*//')"
             if [[ -n "${final_cmd}" ]]; then
-                 if (( ${+functions[_vde_trace_record_entry]} )); then
-                    _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|${final_cmd}||")
-                 fi
-                 return 0
+                if [[ -n "${VDE_TRACE_FILE:-}" ]]; then
+                    print -r -- "EXEC	${_VDE_TRACE_CALL_DEPTH}	${final_cmd}		" >> "${VDE_TRACE_FILE}"
+                fi
+                return 0
             fi
         fi
 
-        # 3. RECORD external script/binary calls and return 0
-        if [[ -f "${cmd[1]}" || "${cmd[1]}" == "/"* || "${cmd[1]}" == "docker" || "${cmd[1]}" == "ssh" ]]; then
-            if (( ${+functions[_vde_trace_record_entry]} )); then
-                _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|vde_run ${info} ${cmd[*]}||")
-            fi
-            return 0
+        # 3. For docker/ssh commands, invoke them (shims will intercept and record EXEC)
+        if [[ "${cmd[1]}" == "docker" || "${cmd[1]}" == "ssh" ]]; then
+            "${cmd[@]}"
+            return $?
+        fi
+
+        # 4. For external scripts, EXECUTE them so they can trace their own functions
+        # The script will source vde-trace-bootstrap and install its own wrappers
+        if [[ -f "${cmd[1]}" || "${cmd[1]}" == "/"* ]] && [[ -x "${cmd[1]:a}" ]]; then
+            # Execute the script - it will inherit VDE_TRACE_MODE and install its own tracers
+            "${cmd[@]}"
+            return $?
         fi
     fi
     

@@ -114,9 +114,17 @@ fi
 # Install trace wrappers after target resolution so the trace starts clean at dispatch
 if [[ -n "${_VDE_FT_PENDING}" ]]; then
     source "${VDE_ROOT_DIR}/lib/vde-function-trace"
-    vde_trace_install
     export VDE_TRACE_MODE=1
-    _VDE_TRACE_RECORDS+=("DISPATCH|0|${ACTION}|${VDE_ROOT_DIR}/bin/vde||targets=(${targets[*]:-}) force=${force:-false}")
+    # Initialize trace file AFTER setting VDE_TRACE_MODE
+    if [[ -z "${VDE_TRACE_FILE:-}" ]]; then
+        export VDE_TRACE_FILE="${TMPDIR:-/tmp}/vde-trace-${$}.log"
+        : > "${VDE_TRACE_FILE}"
+    fi
+    vde_trace_install
+    # Write DISPATCH record to trace file (tab-separated)
+    local _dispatch_record="DISPATCH	0	${ACTION}	${VDE_ROOT_DIR}/bin/vde	0	targets=(${targets[*]:-}) force=${force:-false}"
+    _VDE_TRACE_RECORDS+=("${_dispatch_record}")
+    [[ -n "${VDE_TRACE_FILE:-}" ]] && print -r -- "${_dispatch_record}" >> "${VDE_TRACE_FILE}"
     trap 'vde_trace_display' EXIT
     unset _VDE_FT_PENDING
 fi
@@ -199,11 +207,20 @@ case ${ACTION} in
             local vm_env_file
             vm_env_file=$(get_vm_env_file "${CANONICAL_NAME}")
             
-            local -a compose_up_cmd=(docker compose -f "${compose_file}")
+            local -a compose_up_cmd=(docker compose)
+            [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
+            
+            compose_up_cmd+=(-f "${compose_file}")
+            [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
+            
             [[ -f "${VDE_ROOT_DIR}/.env" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/.env")
+            [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
+            
             [[ -f "${VDE_ROOT_DIR}/${vm_env_file}" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/${vm_env_file}")
+            [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
             
             compose_up_cmd+=(up -d)
+            [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
 
             if vde_run "${CANONICAL_NAME}" "${compose_up_cmd[@]}" >/dev/null 2>&1; then
                 vde_progress_spinner_stop "${CANONICAL_NAME} ignited"

@@ -34,6 +34,10 @@ while [[ ${#} -gt 0 ]] ; do
             SHOW_COMMAND=true
             shift
             ;;
+        -q|--quiet)
+            export VDE_QUIET=1
+            shift
+            ;;
         *)
             break
             ;;
@@ -41,7 +45,7 @@ while [[ ${#} -gt 0 ]] ; do
 done
 
 if [[ -z "${1}" ]] ; then
-    echo "Usage: vde-exec [-u user] [--show-command] <vm_name> <command> [args...]"
+    echo "Usage: vde-exec [-u user] [-q|--quiet] [--show-command] <vm_name> <command> [args...]"
     exit ${VDE_ERR_INVALID_INPUT:-2}
 fi
 
