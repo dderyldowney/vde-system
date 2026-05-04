@@ -74,6 +74,9 @@ _vde_trace_record_exit() {
     (( _VDE_TRACE_CALL_DEPTH > 0 )) && (( _VDE_TRACE_CALL_DEPTH-- )) || true
 }
 
+# Executor shims: intercept side-effecting calls before they fire.
+# To add a new executor: define a shell function with the same name below,
+# record "EXEC|..." in _VDE_TRACE_RECORDS when VDE_TRACE_MODE is set, return 0.
 _vde_trace_shim_executors() {
     docker() {
         if [[ -n "${VDE_TRACE_MODE}" ]]; then
