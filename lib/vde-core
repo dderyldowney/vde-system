@@ -108,6 +108,36 @@ vde_run() {
     local info="${1}"
     shift
     local cmd=("$@")
+
+    # TRACE MODE INTERCEPTION: If tracing, capture final intent and skip execution
+    if [[ -n "${VDE_TRACE_MODE}" ]]; then
+        # 1. ALLOW read-only helpers needed for state resolution
+        if [[ "${cmd[1]}" == "vde_query_json" ]]; then
+            "${cmd[@]}"
+            return $?
+        fi
+
+        # 2. DIVE into leaf wrappers to get the final execution command
+        local final_cmd=""
+        if [[ "${cmd[1]}" == *"/ssh-vm" || "${cmd[1]}" == *"/vde-exec" ]]; then
+            # Execute with --show-command to resolve the final SSH/Docker call
+            final_cmd=$("${cmd[@]}" --show-command 2>/dev/null)
+            if [[ -n "${final_cmd}" ]]; then
+                 if (( ${+functions[_vde_trace_record_entry]} )); then
+                    _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|${final_cmd}||")
+                 fi
+                 return 0
+            fi
+        fi
+
+        # 3. RECORD external script/binary calls and return 0
+        if [[ -f "${cmd[1]}" || "${cmd[1]}" == "/"* || "${cmd[1]}" == "docker" || "${cmd[1]}" == "ssh" ]]; then
+            if (( ${+functions[_vde_trace_record_entry]} )); then
+                _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|vde_run ${info} ${cmd[*]}||")
+            fi
+            return 0
+        fi
+    fi
     
     # Execute actual command
     "${cmd[@]}"

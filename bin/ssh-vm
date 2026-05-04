@@ -132,11 +132,13 @@ fi
 SSH_PORT=$(get_vm_ssh_port "$VM_NAME")
 
 # Check if Spoke is running
-CONTAINER_ID=$(docker ps -q -f "name=${VM_NAME}")
-if [[ -z "${CONTAINER_ID}" ]]; then
-    vde_log_error "Spoke '${VM_ALIAS}' (${VM_NAME}) is not running." "ssh-vm"
-    vde_log_info "Run 'vde start ${VM_ALIAS}' to ignite the Spoke." "ssh-vm"
-    exit 1
+if [[ "${SHOW_COMMAND}" != "true" ]]; then
+    CONTAINER_ID=$(docker ps -q -f "name=${VM_NAME}")
+    if [[ -z "${CONTAINER_ID}" ]]; then
+        vde_log_error "Spoke '${VM_ALIAS}' (${VM_NAME}) is not running." "ssh-vm"
+        vde_log_info "Run 'vde start ${VM_ALIAS}' to ignite the Spoke." "ssh-vm"
+        exit 1
+    fi
 fi
 
 # Resolve SSH Host (handle Hub-to-Spoke DNS)

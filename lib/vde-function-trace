@@ -80,58 +80,20 @@ _vde_trace_record_exit() {
 _vde_trace_shim_executors() {
     docker() {
         if [[ -n "${VDE_TRACE_MODE}" ]]; then
-            case "$1" in
-                compose)
-                    # Scan all args for the compose verb (may follow flags like -f)
-                    local _vde_verb=""
-                    local _vde_arg
-                    for _vde_arg in "$@"; do
-                        case "${_vde_arg}" in
-                            up|build|down|run) _vde_verb="${_vde_arg}"; break ;;
-                        esac
-                    done
-                    case "${_vde_verb}" in
-                        up|build|down|run)
-                            _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|docker $*||")
-                            return 0
-                            ;;
-                    esac
-                    ;;
-                build)
-                    _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|docker $*||")
-                    return 0
-                    ;;
-                run)
-                    case "$2" in
-                        --rm|-i|-d|-it|--rm*)
-                            _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|docker $*||")
-                            return 0
-                            ;;
-                    esac
-                    ;;
-            esac
-            command docker "$@"
-            return $?
+            if (( ${+functions[_vde_trace_record_entry]} )); then
+                _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|docker $*||")
+            fi
+            return 0
         fi
         command docker "$@"
     }
 
     ssh() {
         if [[ -n "${VDE_TRACE_MODE}" ]]; then
-            if [[ "$1" != "-"* ]]; then
+            if (( ${+functions[_vde_trace_record_entry]} )); then
                 _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|ssh $*||")
-                return 0
             fi
-            case "$1" in
-                -T|-N|-f)
-                    _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|ssh $*||")
-                    return 0
-                    ;;
-                *)
-                    command ssh "$@"
-                    return $?
-                    ;;
-            esac
+            return 0
         fi
         command ssh "$@"
     }
