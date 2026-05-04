@@ -23,11 +23,20 @@ export VDE_ROOT_DIR
 
 # Check arguments
 USER_OVERRIDE=""
+SHOW_COMMAND=false
 while [[ ${#} -gt 0 ]] ; do
     case "${1}" in
         -u|--user)
             USER_OVERRIDE="${2}"
             shift 2
+            ;;
+        --show-command)
+            SHOW_COMMAND=true
+            shift
+            ;;
+        -q|--quiet)
+            export VDE_QUIET=1
+            shift
             ;;
         *)
             break
@@ -36,7 +45,7 @@ while [[ ${#} -gt 0 ]] ; do
 done
 
 if [[ -z "${1}" ]] ; then
-    echo "Usage: vde-exec [-u user] <vm_name> <command> [args...]"
+    echo "Usage: vde-exec [-u user] [-q|--quiet] [--show-command] <vm_name> <command> [args...]"
     exit ${VDE_ERR_INVALID_INPUT:-2}
 fi
 
@@ -44,8 +53,10 @@ VM_NAME="${1}"
 shift
 
 # Identity Pulse check: Ensure the SSH agent bridge is active
-if ! vde_identity_pulse "${VM_NAME}"; then
-    exit ${VDE_ERR_GENERAL:-1}
+if [[ "${SHOW_COMMAND}" != "true" ]]; then
+    if ! vde_identity_pulse "${VM_NAME}"; then
+        exit ${VDE_ERR_GENERAL:-1}
+    fi
 fi
 
 # Get container name
@@ -60,12 +71,19 @@ if [[ -n "${USER_OVERRIDE}" ]] ; then
     DOCKER_OPTS="${DOCKER_OPTS} -u ${USER_OVERRIDE}"
 else
     # Default to devuser for VDE containers
-    # Official images might not have devuser, but we use vde-base
     DOCKER_OPTS="${DOCKER_OPTS} -u devuser"
 fi
 
-# Execute the command
-# We use eval to ensure pipes, redirections and expansions are handled by the Spoke shell.
-# We pass the full command as a single string to the remote shell.
-exec docker exec ${=DOCKER_OPTS} "${CONTAINER_NAME}" \
+# Assemble Command
+typeset -a DOCKER_CMD=(
+    docker exec ${=DOCKER_OPTS} "${CONTAINER_NAME}"
     zsh -c "source ~devuser/.zshenv 2>/dev/null; eval \"\$*\"" "${CONTAINER_NAME}" "${@}"
+)
+
+if [[ "${SHOW_COMMAND}" == "true" ]]; then
+    echo "${DOCKER_CMD[@]}"
+    exit ${VDE_SUCCESS:-0}
+fi
+
+# Execute the command
+exec "${DOCKER_CMD[@]}"
