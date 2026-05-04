@@ -1,0 +1,232 @@
+#!/usr/bin/env zsh
+# @forge (Function Trace: Support Diagnostic Tool)
+# Provides vde_trace_install() and vde_trace_display() for the function-trace command.
+# Invoked from bin/vde when ACTION=function-trace.
+
+typeset -ga _VDE_TRACE_RECORDS=()
+typeset -gi _VDE_TRACE_CALL_DEPTH=0
+
+# Install trace wrappers on all currently-loaded VDE functions.
+# Must be called after all lib files are sourced.
+vde_trace_install() {
+    zmodload zsh/parameter 2>/dev/null || {
+        print "ERROR: zsh/parameter module not available" >&2
+        return 1
+    }
+
+    # Resolve VDE_ROOT_DIR to absolute path so relative-sourced files match correctly
+    local _vt_root="${VDE_ROOT_DIR:a}"
+
+    local fname src_file abs_src
+    for fname in ${(k)functions_source}; do
+        src_file="${functions_source[$fname]}"
+        # Normalize relative paths to absolute using resolved root
+        if [[ "${src_file}" == /* ]]; then
+            abs_src="${src_file}"
+        else
+            abs_src="${_vt_root}/${src_file##./}"
+        fi
+        [[ "${abs_src}" == "${_vt_root}"/* ]] || continue
+        [[ "${fname}" =~ "^(_vde_trace|vde_trace)" ]] && continue
+        _vde_trace_wrap_function "${fname}" "${abs_src}"
+    done
+
+    _vde_trace_shim_executors
+}
+
+_vde_trace_wrap_function() {
+    local fname="$1"
+    local src_file="$2"
+    local safe="${fname//[^a-zA-Z0-9_]/_}"
+    local orig_name="_vde_trace_orig_${safe}"
+
+    local orig_body="${functions[$fname]}"
+    [[ -z "${orig_body}" ]] && return 0
+
+    eval "${orig_name}() {
+${orig_body}
+}"
+
+    eval "
+${fname}() {
+    if [[ -n \"\${VDE_TRACE_MODE}\" ]]; then
+        _vde_trace_record_entry '${fname}' '${src_file}' \"\$@\"
+        local _tr_rc=0
+        ${orig_name} \"\$@\" || _tr_rc=\$?
+        _vde_trace_record_exit
+        return \${_tr_rc}
+    fi
+    ${orig_name} \"\$@\"
+}
+"
+}
+
+_vde_trace_record_entry() {
+    local fname="$1" src_file="$2"
+    shift 2
+    local is_int=0
+    [[ "${fname}" == _* ]] && is_int=1
+    _VDE_TRACE_RECORDS+=("CALL|${_VDE_TRACE_CALL_DEPTH}|${fname}|${src_file}|${is_int}|$*")
+    (( ++_VDE_TRACE_CALL_DEPTH ))
+}
+
+_vde_trace_record_exit() {
+    (( _VDE_TRACE_CALL_DEPTH > 0 )) && (( _VDE_TRACE_CALL_DEPTH-- )) || true
+}
+
+# Executor shims: intercept side-effecting calls before they fire.
+# To add a new executor: define a shell function with the same name below,
+# record "EXEC|..." in _VDE_TRACE_RECORDS when VDE_TRACE_MODE is set, return 0.
+_vde_trace_shim_executors() {
+    docker() {
+        if [[ -n "${VDE_TRACE_MODE}" ]]; then
+            case "$1" in
+                compose)
+                    # Scan all args for the compose verb (may follow flags like -f)
+                    local _vde_verb=""
+                    local _vde_arg
+                    for _vde_arg in "$@"; do
+                        case "${_vde_arg}" in
+                            up|build|down|run) _vde_verb="${_vde_arg}"; break ;;
+                        esac
+                    done
+                    case "${_vde_verb}" in
+                        up|build|down|run)
+                            _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|docker $*||")
+                            return 0
+                            ;;
+                    esac
+                    ;;
+                build)
+                    _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|docker $*||")
+                    return 0
+                    ;;
+                run)
+                    case "$2" in
+                        --rm|-i|-d|-it|--rm*)
+                            _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|docker $*||")
+                            return 0
+                            ;;
+                    esac
+                    ;;
+            esac
+            command docker "$@"
+            return $?
+        fi
+        command docker "$@"
+    }
+
+    ssh() {
+        if [[ -n "${VDE_TRACE_MODE}" ]]; then
+            if [[ "$1" != "-"* ]]; then
+                _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|ssh $*||")
+                return 0
+            fi
+            case "$1" in
+                -T|-N|-f)
+                    _VDE_TRACE_RECORDS+=("EXEC|${_VDE_TRACE_CALL_DEPTH}|ssh $*||")
+                    return 0
+                    ;;
+                *)
+                    command ssh "$@"
+                    return $?
+                    ;;
+            esac
+        fi
+        command ssh "$@"
+    }
+}
+
+# Format and display the collected call trace.
+# Called via trap EXIT from bin/vde.
+vde_trace_display() {
+    unset VDE_TRACE_MODE
+
+    local use_color=0
+    [[ -t 1 ]] && use_color=1
+
+    local bold="" dim="" cyan="" yellow="" reset=""
+    if [[ "${use_color}" == "1" ]]; then
+        bold="\033[1m"
+        dim="\033[2m"
+        cyan="\033[36m"
+        yellow="\033[33m"
+        reset="\033[0m"
+    fi
+
+    print ""
+    print "${bold}══════════════════════════════════════════════${reset}"
+    print "${bold}  VDE FUNCTION TRACE${reset}"
+    print "${bold}══════════════════════════════════════════════${reset}"
+    print ""
+
+    local _vt_root="${VDE_ROOT_DIR:a}"
+    local prev_lib="" prev_lib_depth=0 found_exec=0
+    local -a parts=()
+    local type="" depth="" fname="" src_file="" is_int="" params="" relative_src=""
+    local lib_rel_depth=0 indent_str="" i=0
+
+    for record in "${_VDE_TRACE_RECORDS[@]}"; do
+        parts=("${(s:|:)record}")
+        type="${parts[1]}"
+        depth="${parts[2]}"
+        fname="${parts[3]}"
+        src_file="${parts[4]}"
+        is_int="${parts[5]}"
+        params="${(j:|:)parts[6,-1]}"
+
+        relative_src="${${src_file:a}/${_vt_root}/\$VDE_ROOT_DIR}"
+
+        if [[ "${type}" == "EXEC" ]]; then
+            found_exec=1
+            print "${yellow}▶ [EXECUTOR] ${fname}${reset}"
+            print ""
+            break
+        fi
+
+        if [[ "${type}" == "DISPATCH" ]]; then
+            print "${bold}[dispatch: vde ${fname}]${reset}"
+            print "Params: ${params}"
+            print "File: ${relative_src}"
+            print ""
+            prev_lib="${src_file}"
+            prev_lib_depth=0
+            continue
+        fi
+
+        if [[ "${src_file}" != "${prev_lib}" ]]; then
+            [[ -n "${prev_lib}" ]] && print ""
+            prev_lib="${src_file}"
+            prev_lib_depth="${depth}"
+        fi
+
+        lib_rel_depth=$(( depth - prev_lib_depth ))
+        indent_str=""
+        for (( i=0; i<lib_rel_depth; i++ )); do
+            indent_str+="  "
+        done
+
+        if [[ "${is_int}" == "1" ]]; then
+            print "${indent_str}${dim}[internal] Function: ${fname}()${reset}"
+        else
+            print "${indent_str}${cyan}Function: ${fname}()${reset}"
+        fi
+
+        if [[ -n "${params}" ]]; then
+            print "${indent_str}Params: ${params}"
+        else
+            print "${indent_str}Params: (none)"
+        fi
+        print "${indent_str}File: ${relative_src}"
+        print ""
+    done
+
+    if [[ "${found_exec}" == "0" ]] && [[ ${#_VDE_TRACE_RECORDS[@]} -gt 0 ]]; then
+        print "${dim}(trace complete — no executor boundary reached)${reset}"
+    elif [[ ${#_VDE_TRACE_RECORDS[@]} -eq 0 ]]; then
+        print "${yellow}(no function calls recorded)${reset}"
+    fi
+
+    print "${bold}══════════════════════════════════════════════${reset}"
+    print ""
+}
