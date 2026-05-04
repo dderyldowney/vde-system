@@ -51,6 +51,18 @@ trap 'vde_error_map 130; exit 130' SIGINT SIGTERM
 ACTION=$1
 shift # past command
 
+# ── FUNCTION TRACE MODE ──────────────────────────────────────────────────
+# Re-parse the real sub-command now so target resolution works correctly.
+# Actual wrapper installation is deferred until after target resolution
+# so that infrastructure calls (vde_cluster_exists etc.) don't pollute the trace.
+_VDE_FT_PENDING=""
+if [[ "${ACTION}" == "function-trace" ]]; then
+    _VDE_FT_PENDING=1
+    ACTION="$1"
+    shift
+fi
+# ─────────────────────────────────────────────────────────────────────────
+
 # =========================================================================
 # UNIVERSAL TARGET RESOLUTION (Clusters & Aliases)
 # =========================================================================
@@ -99,6 +111,15 @@ if [[ ${#input_targets} -gt 0 ]]; then
     done
 fi
 
+# Install trace wrappers after target resolution so the trace starts clean at dispatch
+if [[ -n "${_VDE_FT_PENDING}" ]]; then
+    source "${VDE_ROOT_DIR}/lib/vde-function-trace"
+    vde_trace_install
+    export VDE_TRACE_MODE=1
+    _VDE_TRACE_RECORDS+=("DISPATCH|0|${ACTION}|${VDE_ROOT_DIR}/bin/vde||targets=(${targets[*]:-}) force=${force:-false}")
+    trap 'vde_trace_display' EXIT
+    unset _VDE_FT_PENDING
+fi
 
 case ${ACTION} in
     init)
@@ -400,6 +421,7 @@ Diagnostics & Discovery:
   ps              List all active VDE containers and their statuses.
   networks        List and manage VDE Docker networks.
   health          Execute the Sovereign Audit for the Hub and infrastructure.
+  function-trace  Trace the full function call chain for a command without executing it.
   stats <name>    Display real-time resource usage for Spokes.
   port <name>     Retrieve the specific SSH or service port for an alias.
   validate        Verify the integrity of Beskar Registry schemas.
