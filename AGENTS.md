@@ -115,6 +115,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 - **Submit the Beskar**: The Chronicle (PR) MUST include: 1) High-level mission summary, 2) Complete list of modified files, 3) Rationale for refactoring, 4) Mandatory Red/Green evidence, and 5) The Unbreakable Link to the Signet. Execute `gh pr create` using the mandated template.
 - **Mandate**: Certification of the **Proof of Life** Heartbeat is mandatory before committing or pushing.
 - **Hygiene**: Update `MEMORY.md` and session handovers.
+- **Cleanup Mandate (MANDATORY)**: Upon the successful conclusion of a Strike (PR merged and closed), the Alor MUST automatically purge the feature branch (**BOTH local and remote**) and return themselves to the Anvil (`develop`) before standing watch. Failure to clean both is a hygiene violation.
 
 ---
 

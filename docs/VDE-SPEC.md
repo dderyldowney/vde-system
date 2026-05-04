@@ -1,10 +1,10 @@
 # VDE-SPEC
 # @shared-law (Sovereign Law)
-# VDE-SPEC 1.5.2 (The Sovereign Evolution)
+# VDE-SPEC 1.5.3 (The Sovereign Evolution)
 
-**Date**: 2026-05-01
+**Date**: 2026-05-04
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE 1.5.2
+**Reference**: ARCHITECTURE 1.5.3
 **Identity**: The Covert
 
 ## 1. Absolute Mandates (The Rule Spine & The Gospel)
@@ -102,7 +102,7 @@ The Forge is currently advancing through Phase 29:
 - **Phase 32 (Forge Intelligence)**: [CERTIFIED] Implementation of Self-Augmenting Sentinel and automated documentation synchronization.
 
 ---
-Version: 1.5.2
+Version: 1.5.3
 **Status**: HARDENED
 **Reference**: RESOL’NARE 1.5.2
 ---
