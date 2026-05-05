@@ -96,16 +96,17 @@ render_service_template() {
     echo "${content}"
 }
 
-# render_ssh_entry VM_NAME PORT
+# render_ssh_entry VM_NAME PORT [HOSTNAME]
 # Render SSH config entry for VM
 render_ssh_entry() {
-    local vm_name="${1}" port="${2}"
+    local vm_name="${1}" port="${2}" hostname="${3:-localhost}"
     local host
     host="$(vde_get_ssh_host "${vm_name}")"
 
     # Use '~' for paths to avoid absolute path leaks in the audit
     render_template "${TEMPLATES_DIR}/ssh-config.tmpl" \
         SSH_HOST "${host}" SSH_PORT "${port}" \
+        HOST_NAME "${hostname}" \
         IDENTITY_FILE "~/.ssh/vde/vde_student" \
         KNOWN_HOSTS_FILE "~/.ssh/vde/known_hosts" \
         COMMENT "VDE VM: ${vm_name}"
