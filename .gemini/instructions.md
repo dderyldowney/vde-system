@@ -1,7 +1,7 @@
 # **The Way of the VDE: 1.5.3 (The Sovereign Baseline)**
 <!-- @forge (Governance Sentinel) -->
 
-This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.5.2. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
+This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.5.3. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
 
 MANDATE: In VDE workspace, follow instructions in AGENTS.md.
 
@@ -496,8 +496,8 @@ Every commit MUST be labeled with ALL functional effect tags present across ALL 
 | (file path) | @forge | (Functional description) |
 | (file path) | @shared-law | (Functional description) |
 
-## SESSION STATUS (2026-05-03)
+## SESSION STATUS (2026-05-04)
 - **Status**: 100% Green (Heartbeat Certified)
-- **SHA**: d458730e (main/stable — 1.5.2 tag) / b21b9cc2 (develop, clean)
-- **Tag**: 1.5.2 (Sovereign Baseline — CERTIFIED)
-- **Strike**: Peripheral Gospel Drift Remediation complete.
+- **SHA**: 063b3b65 (main/stable — 1.5.3 certified) / f605ff3d (develop, clean)
+- **Tag**: 1.5.3 (Sovereign Baseline — CERTIFIED)
+- **Strike**: Spoke-to-Spoke SSH Connectivity complete.

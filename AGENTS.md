@@ -70,7 +70,23 @@ Violating any of these mandates is a failure of the agent's primary directive.
 
 ---
 
-## 3. The Development Lifecycle (Phases 0-5)
+## 3. Sovereign Branching Law (The Signet)
+
+- **`main` (Production)**: Reserved for certified releases of the Sovereign Baseline. **GitHub Releases and mandatory version tags (X.X.X) MUST occur exclusively on this branch.** `main` is always mirrored from `stable`.
+- **`stable`**: The intermediate stability branch. It represents the last certified release plus any pending stable updates. `develop` merges into `stable`.
+- **`develop` (The Anvil)**: The primary integration branch and repository default. All work MUST occur on feature branches originating from `develop`.
+- **Semantic Targeting**: Core scripts reference branches by semantic roles (`VDE_PRODUCTION_BRANCH`, `VDE_ANVIL_BRANCH`).
+- **The Ritual of the Signet and Chronicle**: **EVERYTHING that is committed to git REQUIRES both a Signet (Issue) and a Chronicle (PR).** There are NO exceptions for any commit, including release-related changes or point releases.
+- **The Strike**: Every mission is a Strike. Every Strike begins with a Signet (`gh issue create`) and ends with a Chronicle (`gh pr create`).
+- **PR Ownership and Closing**: The Alor (Agent) and Clan Leader (User) work together on closing Chronicles. **The Alor MUST NEVER close a PR autonomously** unless specifically and explicitly instructed to do so by the Clan Leader in the current turn.
+- **Release Ritual**: Cutting a point release requires its own Signet and Chronicle (merging `stable` into `main`) before tagging can occur on `main`.
+- **Cleanup Mandate (MANDATORY)**: Upon the successful conclusion of a Strike (PR merged and closed), the Alor MUST automatically purge the feature branch (**BOTH local and remote**) and return themselves to the Anvil (`develop`) before standing watch. Failure to clean both is a hygiene violation.
+- **Permanence**: The Production (`main`), `stable`, and Anvil (`develop`) branches are the foundational pillars of the Record; they are never removed.
+- The agent is PRE-AUTHORIZED to use `gh issue create` and `gh pr create` to initialize missions and record the Signet of Intent and submit the Chronicle. The agent is also authorized for read access (`gh issue view/list`, `gh pr view/list`) to initialize, monitor, and submit missions.
+- **PRE-IMPLEMENTATION GATE (ABSOLUTE)**: Before writing a single line of implementation code or running any `git commit` on `develop`, the agent MUST have completed ALL of the following — no exceptions, no shortcuts, no "I'll retro-fix it later":
+    1. `gh issue create` — Signet OPEN with Issue number confirmed
+    2. `git checkout -b <type>/<slug>` from `develop` — feature branch ACTIVE
+    If either gate is missing, the agent MUST STOP, complete the gate, then proceed. Committing implementation directly to `develop` is a Creed violation that requires immediate retro-remediation and a process violation report to the User.
 
 All work must proceed through these phases in order. Skipping phases or "optimizing away" phases is a protocol violation. These structural checkpoints—scoping the mission at ignition and proving the work at finalization—are central to our core design goals and ensure the purity of the Forge.
 
