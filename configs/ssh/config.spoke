@@ -290,6 +290,18 @@ Host vde-testport2
     PasswordAuthentication no
     ForwardAgent yes
     RequestTTY yes
+# VDE VM: vde-dynamic-vm
+# @shared-law (Sovereign Law)
+Host vde-dynamic-vm
+    HostName vde-dynamic-vm
+    Port 2298
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    RequestTTY yes
 # VDE VM: vde-couchdb
 # @shared-law (Sovereign Law)
 Host vde-couchdb
