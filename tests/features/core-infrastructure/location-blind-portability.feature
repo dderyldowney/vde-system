@@ -10,7 +10,7 @@ Feature: Location-Blind Portability
 
   Scenario: Invoking VDE CLI from an external directory
     Given I change the current working directory to "/tmp"
-    When I execute the absolute path of "bin/vde" with "list --lang --name-only"
+    When I execute the absolute path of "bin/vde" with "list --lang --name-only -a"
     Then the output should contain "vde-"
     And the return code should be 0
 
