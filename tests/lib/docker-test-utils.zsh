@@ -69,6 +69,38 @@ kill_orphan_ssh_agents() {
     return 0
 }
 
+# kill_all_transient_ssh_agents
+# Kills ALL ssh-agent processes except the VDE shared agent.
+# Use this for aggressive cleanup when orphaned agents accumulate.
+kill_all_transient_ssh_agents() {
+    local vde_agent_pid=""
+    local vde_agent_env="${VDE_SSH_DIR:-${HOME}/.ssh/vde}/agent_env"
+    local killed=0
+    local preserved=0
+    
+    # Get VDE's shared agent PID to preserve it
+    if [[ -f "${vde_agent_env}" ]]; then
+        vde_agent_pid=$(grep "^SSH_AGENT_PID=" "${vde_agent_env}" 2>/dev/null | sed 's/SSH_AGENT_PID=\([0-9]*\).*/\1/')
+    fi
+    
+    echo "[CLEANUP] Scanning for ssh-agent processes..."
+    [[ -n "${vde_agent_pid}" ]] && echo "[CLEANUP] Preserving VDE agent PID ${vde_agent_pid}"
+    
+    while IFS= read -r pid; do
+        [[ -z "${pid}" ]] && continue
+        if [[ "${pid}" == "${vde_agent_pid}" ]]; then
+            echo "[CLEANUP]   Preserving VDE shared agent: ${pid}"
+            ((preserved++))
+            continue
+        fi
+        echo "[CLEANUP]   Killing transient ssh-agent PID ${pid}"
+        kill "${pid}" 2>/dev/null && ((killed++))
+    done < <(pgrep -x ssh-agent 2>/dev/null)
+    
+    echo "[CLEANUP] Killed ${killed} transient ssh-agent(s), preserved ${preserved} VDE agent(s)"
+    return 0
+}
+
 # kill_orphan_test_sessions
 # Kills zsh processes running vde test scripts that have been running > 10 min.
 # Prevents accumulation of stuck/disconnected test sessions.
@@ -315,14 +347,30 @@ docker_test_teardown() {
 # Full container sweep for safety
 cleanup_vde_containers
 
-# Note: We do NOT kill the agent here anymore if we want to reuse it
-# across the entire suite. The main suite runner (run-full-test-suite.zsh)
-# or the setup-ssh-agent.zsh --cleanup will handle final termination.
-if [[ -n "${_DOCKER_TEST_AGENT_PID}" ]]; then
-    echo "[TEARDOWN] Released VDE ssh-agent reference (PID ${_DOCKER_TEST_AGENT_PID})"
+# Kill the SSH agent we started (unless it's a shared VDE agent)
+# Only kill agents we started ourselves via the fallback path
+if [[ -n "${_DOCKER_TEST_AGENT_PID}" ]] && [[ -n "${_DOCKER_TEST_AGENT_SOCK}" ]]; then
+    # Check if this is the VDE centralized agent or a fallback agent
+    local vde_agent_env="${VDE_SSH_DIR:-${HOME}/.ssh/vde}/agent_env"
+    local is_vde_agent=0
+    
+    if [[ -f "${vde_agent_env}" ]]; then
+        local env_pid
+        env_pid=$(grep "^SSH_AGENT_PID=" "${vde_agent_env}" 2>/dev/null | sed 's/SSH_AGENT_PID=\([0-9]*\).*/\1/')
+        [[ "${env_pid}" == "${_DOCKER_TEST_AGENT_PID}" ]] && is_vde_agent=1
+    fi
+    
+    if [[ ${is_vde_agent} -eq 0 ]]; then
+        # This is a fallback agent we started - kill it
+        echo "[TEARDOWN] Killing fallback ssh-agent (PID ${_DOCKER_TEST_AGENT_PID})"
+        kill "${_DOCKER_TEST_AGENT_PID}" 2>/dev/null || true
+        [[ -S "${_DOCKER_TEST_AGENT_SOCK}" ]] && rm -f "${_DOCKER_TEST_AGENT_SOCK}" 2>/dev/null
+    else
+        echo "[TEARDOWN] Preserving VDE shared ssh-agent (PID ${_DOCKER_TEST_AGENT_PID})"
+    fi
 fi
 
-# Kill any remaining remaining test artifacts (not the agent)
+# Kill any remaining test artifacts
 kill_orphan_test_sessions
 
 
