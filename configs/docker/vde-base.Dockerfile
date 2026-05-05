@@ -66,6 +66,10 @@ RUN mkdir -p /home/devuser/.ssh/vde && \
     chmod 700 /home/devuser/.ssh/vde && \
     chown -R devuser:devuser /home/devuser/.ssh
 
+# 5.1. Internal SSH Configuration (Lateral Bridge)
+COPY --chown=devuser:devuser configs/ssh/config.spoke /home/devuser/.ssh/config
+RUN chmod 600 /home/devuser/.ssh/config
+
 # 6. THE ATOMIC HANDSHAKE (Entrypoint)
 COPY scripts/vde-entrypoint.zsh /usr/local/bin/vde-entrypoint.zsh
 COPY scripts/vde-motd.zsh /usr/local/bin/vde-motd.zsh
