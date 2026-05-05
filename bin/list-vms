@@ -244,7 +244,7 @@ if [[ -n "${created_vms}" ]] || [[ -n "${docker_vms}" ]]; then
     all_vms=(${(f)"$(echo "${created_vms}\n${docker_vm_names}" | grep -v '^$' | sort -u)"})
 fi
 
-if [[ ${#all_vms} -eq 0 ]]; then
+if [[ ${#all_vms} -eq 0 ]] && [[ "${SHOW_CREATED}" == "false" ]]; then
     if [[ "${NAME_ONLY}" == "false" ]]; then
         echo "No VMs created yet."
         echo ""
