@@ -88,6 +88,7 @@ test_run_report.txt
 !/test_shutdown.zsh
 !bin/**/*.zsh
 !lib/**/*.zsh
+!plans/scripts/**/*.zsh
 
 # Session and agent files
 SESSION_STATE.md
