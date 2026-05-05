@@ -179,6 +179,7 @@ case ${ACTION} in
 
             if is_vm_running "${CANONICAL_NAME}"; then
                 vde_log_info "${CANONICAL_NAME} is already running." "docker"
+                vde_print_next_steps "start" "${CANONICAL_NAME}"
                 continue
             fi
 
@@ -238,6 +239,7 @@ case ${ACTION} in
 
             if vde_run "${CANONICAL_NAME}" "${compose_up_cmd[@]}" >/dev/null 2>&1; then
                 vde_progress_spinner_stop "${CANONICAL_NAME} ignited"
+                vde_print_next_steps "start" "${CANONICAL_NAME}"
             else
                 vde_progress_spinner_stop "" "Failed to ignite ${CANONICAL_NAME}" 1
                 GLOBAL_RC=1
@@ -250,6 +252,7 @@ case ${ACTION} in
     stop)
         [[ -z "${targets}" ]] && vde_log_error "Usage: vde stop [-f] <alias...|default|all>" && exit ${VDE_ERR_GENERAL}
 
+        local last_stopped=""
         for vm_alias in "${targets[@]}"; do
             local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
             if [[ -z "${CANONICAL_NAME}" ]]; then
@@ -261,6 +264,7 @@ case ${ACTION} in
                 vde_progress_spinner_start "Stopping ${CANONICAL_NAME}"
                 if vde_run "${CANONICAL_NAME}" docker stop "${CANONICAL_NAME}" >/dev/null 2>&1; then
                     vde_progress_spinner_stop "${CANONICAL_NAME} stopped"
+                    last_stopped="${CANONICAL_NAME}"
                 else
                     vde_progress_spinner_stop "" "Failed to stop ${CANONICAL_NAME}" 1
                 fi
@@ -268,11 +272,13 @@ case ${ACTION} in
                 vde_log_info "${CANONICAL_NAME} is not running." "vde"
             fi
         done
+        [[ -n "${last_stopped}" ]] && vde_print_next_steps "stop" "${last_stopped}"
         ;;
 
     restart)
         [[ -z "${targets}" ]] && vde_log_error "Usage: vde restart <alias...|default|all>" && exit ${VDE_ERR_GENERAL}
         
+        local last_restarted=""
         for vm_alias in "${targets[@]}"; do
             local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
             if [[ -z "${CANONICAL_NAME}" ]]; then
@@ -286,15 +292,18 @@ case ${ACTION} in
             fi
             if ./bin/vde start "${CANONICAL_NAME}" >/dev/null 2>&1; then
                 vde_progress_spinner_stop "${CANONICAL_NAME} restarted"
+                last_restarted="${CANONICAL_NAME}"
             else
                 vde_progress_spinner_stop "" "Failed to restart ${CANONICAL_NAME}" 1
             fi
         done
+        [[ -n "${last_restarted}" ]] && vde_print_next_steps "restart" "${last_restarted}"
         ;;
 
     remove|delete|rm)
         [[ -z "${targets}" ]] && vde_log_error "Usage: vde remove <alias...|default|all>" && exit ${VDE_ERR_GENERAL}
 
+        local last_removed=""
         for vm_alias in "${targets[@]}"; do
             local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
             if [[ -z "${CANONICAL_NAME}" ]]; then
@@ -306,6 +315,7 @@ case ${ACTION} in
                 vde_progress_spinner_start "Removing container ${CANONICAL_NAME}"
                 if vde_run "${CANONICAL_NAME}" docker rm -f "${CANONICAL_NAME}" >/dev/null 2>&1; then
                     vde_progress_spinner_stop "${CANONICAL_NAME} removed"
+                    last_removed="${CANONICAL_NAME}"
                 else
                     vde_progress_spinner_stop "" "Failed to remove ${CANONICAL_NAME}" 1
                 fi
@@ -313,6 +323,7 @@ case ${ACTION} in
                 vde_log_info "No container found for ${CANONICAL_NAME}." "vde"
             fi
         done
+        [[ -n "${last_removed}" ]] && vde_print_next_steps "rm" "${last_removed}"
         ;;
 
     nuke)

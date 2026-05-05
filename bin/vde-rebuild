@@ -280,3 +280,10 @@ done
 
 echo ""
 echo "Done!"
+
+# Show Next Steps for the last rebuilt spoke (or base if no spokes)
+if [[ ${#spokes[@]} -gt 0 ]]; then
+    vde_print_next_steps "rebuild" "${spokes[-1]}"
+else
+    vde_print_next_steps "create"
+fi

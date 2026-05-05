@@ -300,8 +300,4 @@ if [[ "${QUIET}" == "false" ]]; then
 fi
 
 log_success "VM type '${VM_NAME}' added successfully!"
-echo ""
-echo "Next steps:"
-echo "  1. Create the VM: vde create ${VM_NAME}"
-echo "  2. Start the VM:  vde start ${VM_NAME}"
-echo ""
+vde_print_next_steps "add" "${VM_NAME}"
