@@ -182,6 +182,13 @@ case ${ACTION} in
                 continue
             fi
 
+            # VM-level lock: prevent concurrent operations on the same Spoke
+            local vm_lock="${VDE_ROOT_DIR}/.locks/vms/${BASE_NAME}.lock"
+            claim_lock "${vm_lock}" || {
+                GLOBAL_RC=1
+                continue
+            }
+
             vde_progress_spinner_start "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})"
             
             local compose_file=$(get_vm_compose_file "${CANONICAL_NAME}")
@@ -235,6 +242,7 @@ case ${ACTION} in
                 vde_progress_spinner_stop "" "Failed to ignite ${CANONICAL_NAME}" 1
                 GLOBAL_RC=1
             fi
+            release_lock "${vm_lock}"
         done
         exit ${GLOBAL_RC}
         ;;
