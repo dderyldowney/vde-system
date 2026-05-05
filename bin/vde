@@ -203,6 +203,13 @@ case ${ACTION} in
                 vde_run "${CANONICAL_NAME}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${BASE_NAME}" || continue
             fi
 
+            # DISCOVERY: Resolve the authoritative host SSH agent socket (Phase 31)
+            # This ensures the Spoke is linked to the VDE isolated agent, not the host default.
+            if [[ -z "${VDE_HOST_SSH_AUTH_SOCK:-}" ]]; then
+                export VDE_HOST_SSH_AUTH_SOCK=$(vde_get_host_ssh_sock)
+                vde_log_debug "Auto-discovered VDE_HOST_SSH_AUTH_SOCK: ${VDE_HOST_SSH_AUTH_SOCK}" "ssh"
+            fi
+
             # Canonical Ignition Handshake
             local vm_env_file
             vm_env_file=$(get_vm_env_file "${CANONICAL_NAME}")
