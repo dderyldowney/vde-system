@@ -49,6 +49,7 @@ Actions:
               Use --force or -f to regenerate existing keys
   start     Start SSH agent and load VDE key
   stop      Stop VDE-specific SSH agent
+  cleanup   Kill all transient ssh-agent processes (preserves VDE shared agent)
   autostart Configure shell to auto-start SSH agent on login
   generate  Regenerate VM SSH config only
 
@@ -59,6 +60,7 @@ Examples:
   vde ssh-setup init --force # Force regenerate keys
   vde ssh-setup start        # Start agent and load keys
   vde ssh-setup stop         # Stop the VDE-specific agent
+  vde ssh-setup cleanup      # Kill orphaned/transient ssh-agents
   vde ssh-setup autostart    # Auto-start agent on shell login
   vde ssh-setup generate     # Regenerate SSH config for VMs
 
@@ -301,11 +303,56 @@ if [[ "${ACTION}" == "generate" ]] ; then
 fi
 
 # ==============================================================================
-# Autostart Mode -- Configure shell to auto-start SSH agent
+# Cleanup Mode -- Kill all transient ssh-agents (preserve VDE shared agent)
+# ==============================================================================
+if [[ "${ACTION}" == "cleanup" ]] ; then
+    echo ""
+    echo "Cleaning up transient ssh-agent processes..."
+    echo ""
+    
+    local vde_agent_pid=""
+    local vde_agent_env="${VDE_SSH_DIR}/agent_env"
+    local killed=0
+    local preserved=0
+    
+    # Get VDE's shared agent PID to preserve it
+    if [[ -f "${vde_agent_env}" ]]; then
+        vde_agent_pid=$(grep "^SSH_AGENT_PID=" "${vde_agent_env}" 2>/dev/null | sed 's/SSH_AGENT_PID=\([0-9]*\).*/\1/')
+    fi
+    
+    if [[ -n "${vde_agent_pid}" ]]; then
+        echo "VDE shared agent PID: ${vde_agent_pid} (will be preserved)"
+    fi
+    
+    # Find and kill all ssh-agent processes
+    while IFS= read -r pid; do
+        [[ -z "${pid}" ]] && continue
+        if [[ "${pid}" == "${vde_agent_pid}" ]]; then
+            log_info "Preserving VDE shared agent: ${pid}"
+            ((preserved++))
+            continue
+        fi
+        echo "  Killing transient ssh-agent PID ${pid}"
+        kill "${pid}" 2>/dev/null && ((killed++))
+    done < <(pgrep -x ssh-agent 2>/dev/null)
+    
+    echo ""
+    if [[ ${killed} -gt 0 ]]; then
+        log_success "Killed ${killed} transient ssh-agent(s)"
+    else
+        log_info "No transient ssh-agents found"
+    fi
+    [[ ${preserved} -gt 0 ]] && log_info "Preserved ${preserved} VDE shared agent(s)"
+    
+    exit ${VDE_SUCCESS}
+fi
+
+# ==============================================================================
+# Autostart Mode -- Configure shell to auto-start SSH agent (VDE Isolated)
 # ==============================================================================
 if [[ "${ACTION}" == "autostart" ]] ; then
     echo ""
-    echo "Configuring shell to auto-start SSH agent..."
+    echo "Configuring shell to auto-start VDE SSH agent..."
     echo ""
 
     # Detect shell config file (ZSH ONLY - UAP Mandate 1)
@@ -313,9 +360,18 @@ if [[ "${ACTION}" == "autostart" ]] ; then
 
     # Marker for our addition
     local marker="# VDE SSH Agent Auto-Start"
+    
+    # Use VDE's centralized agent management to prevent orphaned agents
+    # This ensures only ONE agent is shared across all shells
     local entry="${marker}
-if [[ -f \"${VDE_SSH_IDENTITY}\" ]] ; then
-    eval \$(ssh-agent -s) 2>/dev/null
+# VDE SSH Agent - Uses centralized agent to prevent orphans
+if [[ -f \"${VDE_SSH_DIR}/agent_env\" ]]; then
+    source \"${VDE_SSH_DIR}/agent_env\" >/dev/null 2>&1
+fi
+if [[ -z \"\${SSH_AUTH_SOCK:-}\" ]] || [[ ! -S \"\${SSH_AUTH_SOCK}\" ]]; then
+    # No agent running - start VDE isolated agent
+    (umask 077; ssh-agent -s > \"${VDE_SSH_DIR}/agent_env\")
+    source \"${VDE_SSH_DIR}/agent_env\" >/dev/null 2>&1
     ssh-add \"${VDE_SSH_IDENTITY}\" 2>/dev/null
 fi"
 
@@ -331,6 +387,7 @@ fi"
 
     echo ""
     echo "VDE SSH agent will now auto-start on new shell sessions."
+    echo "Uses centralized agent at ${VDE_SSH_DIR}/agent_env to prevent orphans."
     echo "To apply to current shell, run:"
     echo "  source ${shell_config}"
     exit ${VDE_SUCCESS}
@@ -341,6 +398,6 @@ fi
 # ==============================================================================
 echo "Unknown action: ${ACTION}"
 echo ""
-echo "Valid actions: status, init, start, autostart, generate"
+echo "Valid actions: status, init, start, stop, cleanup, autostart, generate"
 echo "Run 'vde ssh-setup --help' for usage information"
 exit ${VDE_ERR_GENERAL}
