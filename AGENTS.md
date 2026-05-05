@@ -88,6 +88,52 @@ Violating any of these mandates is a failure of the agent's primary directive.
     2. `git checkout -b <type>/<slug>` from `develop` — feature branch ACTIVE
     If either gate is missing, the agent MUST STOP, complete the gate, then proceed. Committing implementation directly to `develop` is a Creed violation that requires immediate retro-remediation and a process violation report to the User.
 
+All work must proceed through these phases in order. Skipping phases or "optimizing away" phases is a protocol violation. These structural checkpoints—scoping the mission at ignition and proving the work at finalization—are central to our core design goals and ensure the purity of the Forge.
+
+### Phase 0: Mission Ignition (Swarm Mode)
+- **Action**: Strike the Signet. Execute `gh issue create` using the appropriate template to define the mission scope and intent. Gather context using MCP services.
+- **Scope Creep Prohibition**: The mission scope is FINAL once the Signet is struck. Forbidding any "while I'm at it" changes. ANY new requirement discovered during implementation MUST spawn a new, separate Signet (Issue). Mixing independent tasks in a single mission is a protocol violation.
+- **Swarm**: Spawn `scout` and `security-auditor` agents to map dependencies and security posture.
+- **Output**: Identification of DRY reuse opportunities and architectural constraints.
+
+### Phase 1: Planning (Hard Gate)
+- **Action**: Use `EnterPlanMode` / `vde-plan`.
+- **Constraint**: Design a TDD strategy with explicit failing test cases.
+- **Exit Gate**: **Explicit User Approval**.
+
+### Phase 2: Implementation (TDD + Swarm)
+- **Action**: Follow Red-Green-Refactor.
+- **Record the Discussion**: Significant architectural decisions, hurdles, or logic pivots MUST be recorded as comments on the Signet (Issue) to preserve the 'Why' for future warriors.
+- **Pre-Edit Gate (CRITICAL STOP)**:
+  1. STATE: "I am about to make [N] direct edit(s) to [files]."
+  2. COUNT: Is N > 1?
+     - MAIN AGENT: **STOP.** Spawn a coder sub-agent swarm. **DO NOT PROCEED DIRECTLY.**
+     - SUB-AGENT: **STOP.** Report back: "This task requires >1 file edit. Split into a swarm or re-assign."
+     - N = 1: Proceed directly.
+  3. AFTER: Run `/vde-enforce` to verify compliance.
+
+### Phase 3: Audit (The Guardian)
+- **Action**: Run `/vde-enforce` (or `yume-guardian` equivalent).
+- **Checks**: Automated verification of TDD (red state existence), DRY, and Swarm compliance.
+- **Exit Gate**: Must return **PASS (CLEAN)**.
+
+### Phase 4: Review (Dual Approval)
+- **Action**: Run `/vde-review`.
+- **The Dual-Gate Mandate**: The Orchestrator MUST dispatch the `code-reviewer` agent and obtain its explicit approval BEFORE seeking User approval. Seeking User approval for unreviewed code is a protocol violation.
+- **Swarm**: `code-reviewer` agent performs deep logic, performance, and security audit.
+- **Exit Gate**: **Reviewer Approval AND THEN User Approval**.
+
+### Phase 5: Finalization
+- **Action**: Final test run + commit using `/vde-commit`.
+- **The Chronicle Title**: Every Pull Request title MUST conform to the Conventional Commits specification (e.g., `feat(core): implementation`, `fix!: breaking fix`). This title is the primary anchor for automated labeling and search.
+- **The Unbreakable Link**: Every Chronicle (PR) MUST be linked to its Signet (Issue) using authorized GitHub auto-closing keywords (e.g., `Closes #N`, `Fixes #N`).
+- **The Evidence Mandate**: The Chronicle (PR) body MUST include literal terminal output proof of successful test runs and lifecycle certification. Paraphrasing results is forbidden.
+- **Submit the Beskar**: The Chronicle (PR) MUST include: 1) High-level mission summary, 2) Complete list of modified files, 3) Rationale for refactoring, 4) Mandatory Red/Green evidence, and 5) The Unbreakable Link to the Signet. Execute `gh pr create` using the mandated template.
+- **Mandate**: Certification of the **Proof of Life** Heartbeat is mandatory before committing or pushing.
+- **Hygiene**: Update `MEMORY.md` and session handovers.
+- **Cleanup Mandate (MANDATORY)**: Upon the successful conclusion of a Strike (PR merged and closed), the Alor MUST automatically purge the feature branch (**BOTH local and remote**) and return themselves to the Anvil (`develop`) before standing watch. Failure to clean both is a hygiene violation.
+- **Permanence**: The Production (`main`), `stable`, and Anvil (`develop`) branches are the foundational pillars of the Record; they are never removed.
+
 ---
 
 ## 4. Swarm Orchestration Rules
