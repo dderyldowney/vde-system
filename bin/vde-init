@@ -34,6 +34,7 @@ export VDE_ROOT_DIR
 [[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
 [[ -f "${VDE_ROOT_DIR}/lib/vde-log" ]] && source "${VDE_ROOT_DIR}/lib/vde-log" &>/dev/null
 [[ -f "${VDE_ROOT_DIR}/lib/vde-security" ]] && source "${VDE_ROOT_DIR}/lib/vde-security" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core" &>/dev/null
 
 # Initialize security environment (network, permissions)
 vde_security_init
@@ -515,6 +516,7 @@ else
         echo "╚════════════════════════════════════════════════════════════╝"
         echo ""
         vde_init_show_status
+        vde_print_next_steps "init"
     fi
 fi
 
