@@ -25,10 +25,10 @@ vde list python
 ### Process Status
 ```zsh
 # List all running VDE-managed containers
-vde ps
+vde list
 
 # Check status of specific VMs
-vde ps python postgres
+vde list python postgres
 ```
 
 ### Detailed Information
