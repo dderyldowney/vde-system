@@ -384,7 +384,7 @@ rm -rf .locks/ports/3022.lock
 
 - `adr-004-lock-queue-concurrency-model.md` - Lock-Queue architectural decision
 - `lib/vm-lock` - Lock-Queue implementation
-- `docs/TECHNICAL_DEEP_DIVE.md` - Concurrency & Atomic Stewardship section
+- `docs/architecture/data-flow.md` - Concurrency & Atomic Stewardship section
 - `tests/features/core-infrastructure/concurrency-queue.feature` - FIFO empirical proof (BDD — verified 200ms stagger prevents race condition)
 
 ---

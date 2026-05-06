@@ -18,7 +18,7 @@ The main agent MUST complete these 8 steps sequentially before doing *anything e
 1.  **Read @MEMORY.md**: Understand the current project mission, recent achievements, and immediate focus.
 2.  **Read @session_handover.md**: Identify the specific goals and constraints of the current session.
 3.  **Read @plans/session_handover_remediation.md**: Identify strategic debt and pending fixes.
-4.  **Read @docs/VDE-SPEC.md**: Refresh knowledge of authoritative technical requirements and implementation priority.
+4.  **Read @docs/governance/vde-spec.md**: Refresh knowledge of authoritative technical requirements and implementation priority.
 5.  **Read @PROJECT_STATUS.md**: Understand the current reliability, pass rates, and identified gaps.
 
 6.  **THE SOVEREIGN STARTUP RITUAL**: The Alor (Main Agent) MUST execute these three rituals in strict sequence upon session ignition. Sub-agents (Verd'ika) are strictly forbidden from running these steps — they inherit the Alor's certification.

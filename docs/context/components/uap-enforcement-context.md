@@ -438,7 +438,7 @@ fi
 
 - `adr-001-zsh-only-requirement.md` - ZSH-only architectural decision
 - `ARCHITECTURAL_PRINCIPLES.md` - UAP specification
-- `VDE-SPEC.md` - Mandate of Architectural Tagging
+- `docs/governance/vde-spec.md` - Mandate of Architectural Tagging
 - `bin/vde-enforce-uap.zsh` - UAP Sentinel implementation
 
 ---

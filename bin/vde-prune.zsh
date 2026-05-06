@@ -50,9 +50,9 @@ safe_mv() {
 echo "Commencing the Forge's Ingot Stash Ritual (Timeframe: ${TIMEFRAME}, ${minutes}m)..."
 
 # Extract the Sovereign Baseline
-CURRENT_BASELINE=$(head -n 1 "${VDE_ROOT}/docs/VDE-SPEC.md" | awk '{print $2}')
-if [[ "$CURRENT_BASELINE" == "VDE-SPEC" ]]; then
-    CURRENT_BASELINE=$(head -n 1 "${VDE_ROOT}/docs/VDE-SPEC.md" | awk '{print $3}')
+CURRENT_BASELINE=$(head -n 1 "${VDE_ROOT}/docs/governance/vde-spec.md" | awk '{print $2}')
+
+    CURRENT_BASELINE=$(head -n 1 "${VDE_ROOT}/docs/governance/vde-spec.md" | awk '{print $3}')
 fi
 echo "Protecting Sovereign Baseline: ${CURRENT_BASELINE}"
 

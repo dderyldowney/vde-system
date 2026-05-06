@@ -22,7 +22,7 @@ What aspect of the documentation needs improvement?
 ## Location
 Which document(s) need improvement?
 - [ ] README.md
-- [ ] CONTRIBUTING.md
+- [ ] docs/development/contributing.md
 - [ ] STYLE_GUIDE.md
 - [ ] TESTING.md
 - [ ] docs/ directory (specify file)

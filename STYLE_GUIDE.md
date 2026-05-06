@@ -254,7 +254,7 @@ Not:
 #!/bin/sh   # Wrong - we use zsh features
 ```
 
-Reference: See [`.gemini/RULES/shell-config.md`](.gemini/RULES/shell-config.md) for project shell paths.
+Reference: See `.gemini/RULES/` directory for project conventions.
 
 ### File Organization
 For larger scripts, organize with sections:

@@ -63,11 +63,11 @@ bin/vde path-of-the-foundling
 
 | Section | Description |
 |---------|-------------|
-| **📘 Warrior's Guide** | [USER_GUIDE.md](USER_GUIDE.md) - Complete walkthrough for students. |
-| **🛠️ Installation** | [VDE_INSTALL.md](VDE_INSTALL.md) - Prerequisite setup and Induction. |
-| **📜 Protocol** | [VDE_PROTOCOL.md](VDE_PROTOCOL.md) - The Laws of the Forge and Branching. |
-| **🤝 Contributing** | [CONTRIBUTING.md](CONTRIBUTING.md) - How to join the Tribe's effort. |
-| **📐 Architecture** | [Architecture 1.5.4](docs/ARCHITECTURE.md) - The Blueprint. |
+| **📘 Warrior's Guide** | [Getting Started](docs/guides/getting-started.md) - Complete walkthrough for students. |
+| **🛠️ Installation** | [Installation Guide](docs/operations/installation.md) - Prerequisite setup and Induction. |
+| **📜 Protocol** | [VDE Protocol](docs/governance/vde-protocol.md) - The Laws of the Forge and Branching. |
+| **🤝 Contributing** | [Contributing](docs/development/contributing.md) - How to join the Tribe's effort. |
+| **📐 Architecture** | [Architecture 1.5.4](docs/architecture/overview.md) - The Blueprint. |
 
 ---
 

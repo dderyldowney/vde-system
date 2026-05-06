@@ -19,8 +19,8 @@ Feature: The Proof of Life - The Contract
     And the directory ".cache" should exist
     And the directory "projects" should exist
     And the directory "data" should exist
-    And the file "VDE_INSTALL.md" should exist
-    And the file "VDE_INSTALL.md" should contain "git clone https://github.com/dderyldowney/vde-system.git"
+    And the file "docs/operations/installation.md" should exist
+    And the file "docs/operations/installation.md" should contain "git clone -b stable https://github.com/dderyldowney/vde-system.git"
     And the VDE_SSH_DIR should contain the "vde_student" identity
     And the Docker network "vde-net" should exist
 

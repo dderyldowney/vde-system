@@ -28,15 +28,15 @@ errors=0
 
 # 2. The Sovereign Artifact Set
 SOVEREIGN_ARTIFACTS=(
-    "docs/ARCHITECTURE.md"
-    "docs/TECHNICAL_DEEP_DIVE.md"
-    "RELEASE_NOTES.md"
-    "docs/VDE-SPEC.md"
+    "docs/architecture/overview.md"
+    "docs/architecture/data-flow.md"
+    "docs/changelogs/current.md"
+    "docs/governance/vde-spec.md"
     "USE_CASES.md"
     "VDE_ANALYSIS.md"
     "PROJECT_STATUS.md"
-    "docs/SOVEREIGN_CHARTER.md"
-    "docs/STDLIB.md"
+    "docs/governance/sovereign-charter.md"
+    "docs/api/library-api.md"
 )
 
 echo -e "${GREEN}[AUDIT]${NC} Auditing Sovereign Artifact Set..."
@@ -50,7 +50,7 @@ done
 # 3. Version Consistency Check
 echo -e "${GREEN}[AUDIT]${NC} Verifying Version Consistency..."
 GOSPEL_VER=$(vde_get_version)
-echo -e "${GREEN}[INFO]${NC} Gospel Version (VDE-SPEC.md): ${GOSPEL_VER}"
+echo -e "${GREEN}[INFO]${NC} Gospel Version (docs/governance/vde-spec.md): ${GOSPEL_VER}"
 
 # Check data/vm-types.json
 if [[ -f "./data/vm-types.json" ]]; then

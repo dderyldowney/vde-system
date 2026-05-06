@@ -21,7 +21,7 @@ From `$ARGUMENTS`, determine:
 
 - Scout agent: find the failing file, trace dependency chain, check `git log` for last working state
 - Log analyzer agent: parse error output, identify root cause pattern
-- Spec checker agent: verify expected behavior against `docs/VDE-SPEC.md`
+- Spec checker agent: verify expected behavior against `docs/governance/vde-spec.md`
 
 **Step 3: Isolate and Reproduce**
 
@@ -44,7 +44,7 @@ python3 -m behave tests/features/core-infrastructure/<feature>.feature --tags=@<
 FAILURE TYPE: <Zsh|Python|Docker|SSH>
 FILE: <path:line>
 DEPENDENCY CHAIN: <if Zsh, trace from upstream root>
-SPEC REFERENCE: <docs/VDE-SPEC.md section>
+SPEC REFERENCE: <docs/governance/vde-spec.md section>
 ROOT CAUSE: <exact explanation>
 FIX: <specific minimal change>
 VERIFICATION: <exact command to confirm fix>

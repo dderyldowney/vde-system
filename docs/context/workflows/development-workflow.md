@@ -362,10 +362,10 @@ gh pr create --title "fix(armor): resolve ssh connection timeout" --body "..."
 
 ## References
 
-- `docs/GITHUB_LIFECYCLE.md` - GitHub lifecycle details
-- `VDE-SPEC.md` - Chronicle Mandates section
-- `SOVEREIGN_CHARTER.md` - Test of the Two Fires
-- `CONTRIBUTING.md` - Contribution guidelines
+- `docs/development/github-lifecycle.md` - GitHub lifecycle details
+- `docs/governance/vde-spec.md` - Chronicle Mandates section
+- `docs/governance/sovereign-charter.md` - Test of the Two Fires
+- `docs/development/contributing.md` - Contribution guidelines
 
 ---
 

@@ -143,8 +143,8 @@ SSH_PORT_ACTUAL=$(find_available_port "$SSH_PORT_BASE")
 
 - `lib/vde-ssh` - SSH bridge implementation
 - `docs/ssh-configuration.md` - SSH setup and usage guide
-- `docs/TECHNICAL_DEEP_DIVE.md` - Security & Sovereign Bridge section
-- `VDE_PROTOCOL.md` - Identity isolation requirements
+- `docs/architecture/data-flow.md` - Security & Sovereign Bridge section
+- `docs/governance/vde-protocol.md` - Identity isolation requirements
 
 ---
 

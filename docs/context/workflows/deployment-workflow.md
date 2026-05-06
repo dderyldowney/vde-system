@@ -61,7 +61,7 @@ Before initiating release ritual, verify:
 2. **Tests Pass**: Full test suite passes on develop
 3. **Gospel Agreement**: All 9 Sovereign Artifact documents in sync
 4. **UAP Compliance**: No violations in codebase
-5. **Documentation Updated**: RELEASE_NOTES.md, VDE-SPEC.md, etc.
+5. **Documentation Updated**: docs/changelogs/current.md, docs/governance/vde-spec.md, etc.
 6. **No Blocking Issues**: No open issues blocking release
 
 ### Step 1: Create Release Branch (Optional)
@@ -71,13 +71,13 @@ git checkout develop
 git checkout -b release/1.6.0
 
 # Finalize release notes
-vim RELEASE_NOTES.md
+vim docs/changelogs/current.md
 
-# Update version in VDE-SPEC.md
-vim docs/VDE-SPEC.md
+# Update version in docs/governance/vde-spec.md
+vim docs/governance/vde-spec.md
 
 # Commit release prep
-git add RELEASE_NOTES.md docs/VDE-SPEC.md
+git add docs/changelogs/current.md docs/governance/vde-spec.md
 git commit -m "chore(release): prepare 1.6.0 release"
 ```
 
@@ -108,7 +108,7 @@ git push origin 1.6.0
 # Create GitHub Release from tag
 gh release create 1.6.0 \
   --title "VDE 1.6.0 - The Sovereign Evolution" \
-  --notes-file RELEASE_NOTES.md
+  --notes-file docs/changelogs/current.md
 ```
 
 ### Step 5: Update Stable Alias
@@ -183,15 +183,15 @@ MAJOR.MINOR.STEP-spN
 
 Before any release tag, these 9 documents MUST be in perfect agreement:
 
-1. **ARCHITECTURE.md** - The Strategy
-2. **TECHNICAL_DEEP_DIVE.md** - The Mechanics
-3. **RELEASE_NOTES.md** - The Archive
-4. **VDE-SPEC.md** - The Gospel Lead & Version Arbiter
+1. **docs/architecture/overview.md** - The Strategy
+2. **docs/architecture/data-flow.md** - The Mechanics
+3. **docs/changelogs/current.md** - The Archive
+4. **docs/governance/vde-spec.md** - The Gospel Lead & Version Arbiter
 5. **USE_CASES.md** - The Audit
 6. **VDE_ANALYSIS.md** - The Engineering Verdict
 7. **PROJECT_STATUS.md** - The Living Heartbeat
-8. **SOVEREIGN_CHARTER.md** - The Dual-Mission Constitution
-9. **STDLIB.md** - The Main Library
+8. **docs/governance/sovereign-charter.md** - The Dual-Mission Constitution
+9. **docs/api/library-api.md** - The Main Library
 
 ### Validation Command
 ```bash
@@ -200,15 +200,15 @@ bin/vde-gospel-audit.zsh
 
 # Output:
 # 📜 Gospel Audit: Validating Sovereign Artifact Set...
-# ✅ ARCHITECTURE.md: PASSED
-# ✅ TECHNICAL_DEEP_DIVE.md: PASSED
-# ✅ RELEASE_NOTES.md: PASSED
-# ✅ VDE-SPEC.md: PASSED (Version: 1.6.0)
+# ✅ docs/architecture/overview.md: PASSED
+# ✅ docs/architecture/data-flow.md: PASSED
+# ✅ docs/changelogs/current.md: PASSED
+# ✅ docs/governance/vde-spec.md: PASSED (Version: 1.6.0)
 # ✅ USE_CASES.md: PASSED
 # ✅ VDE_ANALYSIS.md: PASSED
 # ✅ PROJECT_STATUS.md: PASSED
-# ✅ SOVEREIGN_CHARTER.md: PASSED
-# ✅ STDLIB.md: PASSED
+# ✅ docs/governance/sovereign-charter.md: PASSED
+# ✅ docs/api/library-api.md: PASSED
 # ✅ GOSPEL AUDIT PASSED: All 9 documents in agreement
 ```
 
@@ -298,9 +298,9 @@ git push origin develop
 ## Post-Release Tasks
 
 ### 1. Update Documentation
-- [ ] Verify RELEASE_NOTES.md is complete
-- [ ] Update USER_GUIDE.md if features changed
-- [ ] Update VDE_INSTALL.md if installation changed
+- [ ] Verify docs/changelogs/current.md is complete
+- [ ] Update docs/guides/getting-started.md if features changed
+- [ ] Update docs/operations/installation.md if installation changed
 - [ ] Update CHANGELOG if maintained
 
 ### 2. Communicate Release
@@ -341,7 +341,7 @@ gh pr merge --squash
 # 4. Tag and release
 git tag 1.5.2
 git push origin 1.5.2
-gh release create 1.5.2 --notes-file RELEASE_NOTES.md
+gh release create 1.5.2 --notes-file docs/changelogs/current.md
 
 # 5. Update stable
 git checkout stable
@@ -383,9 +383,9 @@ git push --force origin stable
 
 ## References
 
-- `VDE-SPEC.md` - Sovereign Branching Strategy section
-- `docs/GITHUB_LIFECYCLE.md` - GitHub lifecycle details
-- `RELEASE_NOTES.md` - Release history
+- `docs/governance/vde-spec.md` - Sovereign Branching Strategy section
+- `docs/development/github-lifecycle.md` - GitHub lifecycle details
+- `docs/changelogs/current.md` - Release history
 - `PROJECT_STATUS.md` - Current system status
 
 ---
