@@ -14,8 +14,8 @@
 ## Open Items
 - **plans/session_handover_remediation.md**: Restored from git history (was missing pre-migration).
 
-## Sovereign Baseline: 1.5.4
-- Version: 1.5.4 (The Sovereign Baseline)
+## Sovereign Baseline: 1.5.5
+- Version: 1.5.5 (The Sovereign Baseline)
 - Heartbeat: 72/72 BDD steps green (6/6 scenarios)
 - Enforcer: PASS (CLEAN)
 - Documentation: Fully restructured, all cross-references updated

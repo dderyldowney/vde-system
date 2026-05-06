@@ -1,4 +1,4 @@
-# VDE Remediation Strike Plan (1.5.4 Sovereign)
+# VDE Remediation Strike Plan (1.5.5 Sovereign)
 <!-- @forge (Governance Sentinel) -->
 
 ## OVERVIEW

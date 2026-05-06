@@ -1,4 +1,4 @@
-# **The Way of the VDE: 1.5.4 (The Sovereign Baseline)**
+# **The Way of the VDE: 1.5.5 (The Sovereign Baseline)**
 <!-- @forge (Governance Sentinel) -->
 
 This is the Way of the VDE. Certified as the **Sovereign Baseline** as of version 1.5.3. All core mandates are enforced, and the testing suite maintains a 100% pass rate with empirical proof.
@@ -181,7 +181,7 @@ Failure of any ritual constitutes a **Protocol Blockade**.
     * **The Chronicler’s Law**: Commit messages MUST follow the format defined in `COMMIT_MESSAGE_FORMAT.md`.
     * Failure to utilize these templates constitutes a procedural fracture and requires immediate remediation.
 
-## **THE SOVEREIGN INSTRUCTION SET 1.5.4**
+## **THE SOVEREIGN INSTRUCTION SET 1.5.5**
 
 *"The core beating heart forged in every piece of Beskar made by this Forge."*
 
@@ -308,7 +308,7 @@ The **Law of Protection** mandates that the four base technologies of the VDE mu
 
 ### **@SYSTEM-SPINE: EMPIRICAL TEST SPECIFICATION**
 
-The following BDD scenarios provide the empirical proof required for the 1.5.4 The Sovereign Baseline.
+The following BDD scenarios provide the empirical proof required for the 1.5.5 The Sovereign Baseline.
 
 ```gherkin
 @system-spine
@@ -498,6 +498,6 @@ Every commit MUST be labeled with ALL functional effect tags present across ALL 
 
 ## SESSION STATUS (2026-05-05)
 - **Status**: 100% Green (Heartbeat Certified)
-- **SHA**: 063b3b65 (main/stable — 1.5.4 certified)
-- **Tag**: 1.5.4 (Sovereign Baseline — CERTIFIED)
+- **SHA**: 063b3b65 (main/stable — 1.5.5 certified)
+- **Tag**: 1.5.5 (Sovereign Baseline — CERTIFIED)
 - **Proof of Life**: 6/6 scenarios, 72/72 steps passed

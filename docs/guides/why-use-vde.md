@@ -2,7 +2,7 @@
 <!-- @shared-law (Sovereign Law) -->
 <p align="center"><img src="imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-# Why VDE? Your Development Playground Awaits! (1.5.4) 🎉
+# Why VDE? Your Development Playground Awaits! (1.5.5) 🎉
 
 [← Back to README](../../README.md)
 

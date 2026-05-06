@@ -1,7 +1,7 @@
 # VDE Professional Evaluation: Use Case Alignment
 <!-- @shared-law (Forge Component) -->
 
-**Baseline**: 1.5.4 (Sovereign)
+**Baseline**: 1.5.5 (Sovereign)
 **Status**: CERTIFIED
 **Auditor**: Mandalorian Armorer-Architect (Agent)
 
@@ -57,6 +57,6 @@ The "Unyielding Tetrad" (Zsh, Git, Docker, SSH) forms a foundation that is remar
 *   **For Students:** Implement a **"Path of the Foundling"** onboarding script that introduces the rituals one by one.
 *   **For New Hires:** Maintain the **Rule Spine** without compromise. The friction they feel is simply the feeling of quality being forged.
 
-**THE VERDICT: 1.5.4 IS GREEN. THE FORGE IS STEADY.**
+**THE VERDICT: 1.5.5 IS GREEN. THE FORGE IS STEADY.**
 
 This is the Way.

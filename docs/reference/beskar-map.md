@@ -24,6 +24,6 @@ When a conflict arises or a decision must be weighed, the documents apply in the
 9.  **docs/api/library-api.md**: The **Muscle**. The detailed reference for core library functions.
 
 ---
-**Current Sovereign Baseline: v1.5.4**
+**Current Sovereign Baseline: v1.5.5**
 **Identity: The Covert**
 **The Gospel is Nine. This is the Way.**

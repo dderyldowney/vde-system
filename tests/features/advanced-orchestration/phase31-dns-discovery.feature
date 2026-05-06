@@ -8,7 +8,7 @@ Feature: Phase 31 - Spoke-to-Spoke DNS & Sovereign Bridge
 
   Background: Core Services are Active
     Given the VDE system is healthy
-    And the Hub is synchronized to version 1.5.4
+    And the Hub is synchronized to version 1.5.5
     And "python" is running
     And "postgres" is running
 
