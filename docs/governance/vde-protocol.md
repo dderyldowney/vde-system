@@ -1,6 +1,6 @@
 # VDE PROTOCOL
 <!-- @shared-law (Operational Protocol) -->
-# The Protocol of the Forge (1.5.2)
+# The Protocol of the Forge
 
 This protocol defines the immutable laws for interacting with the **Sovereign Baseline**. Deviation from these rituals is a breach of the Creed and may trigger a Protocol Blockade.
 
