@@ -5,7 +5,7 @@
 **Repository**: dderyldowney/vde-system  
 **Version**: 1.5.4 (The Sovereign Baseline)  
 **Language**: ZSH 5.0+  
-**Last Updated**: 2026-05-04
+**Last Updated**: 2026-05-06
 
 ---
 
@@ -507,12 +507,36 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 ---
 
 ### vde-pulse.zsh (@armor) (Engine Pulse)
-**Purpose**: SSH agent bridge monitoring  
-**Size**: 2.3 KB  
+**Purpose**: SSH agent bridge monitoring
+**Size**: 2.3 KB
 **Key Functions**:
 - `vde_identity_pulse()` - Verify SSH agent bridge is active
 
 **Purpose**: Ensures SSH agent inside container is accessible
+
+---
+
+### vde-function-trace (@armor) (Function Execution Tracing)
+**Purpose**: Traces function execution paths and timing for debugging
+**Size**: ~3 KB
+**Key Functions**:
+- `vde_trace_install` - Install trace hooks
+- `vde_trace_display` - Display accumulated trace records
+- `vde_trace_record` - Record a function dispatch event
+
+**Features**:
+- Records function name, timestamp, and targets
+- Triggered via `VDE_TRACE_MODE=1`
+- Auto-displays on EXIT trap
+
+---
+
+### vde-trace-bootstrap (@armor) (Trace System Bootstrap)
+**Purpose**: Initializes the tracing subsystem early in the VDE lifecycle
+**Size**: ~1 KB
+**Key Functions**:
+- Bootstraps trace mode before full library load
+- Ensures trace hooks are in place for all subsequent operations
 
 ---
 
@@ -643,6 +667,7 @@ vde-system/
 │   ├── vde-docker             # Docker Operations
 │   ├── vde-docker-state       # Runtime State Management
 │   ├── vde-errors             # Error Handling
+│   ├── vde-function-trace     # Function Execution Tracing
 │   ├── vde-health             # Health Checks
 │   ├── vde-log                # Logging Engine
 │   ├── vde-metrics            # Metrics Collection
@@ -657,6 +682,7 @@ vde-system/
 │   ├── vde-shell-compat       # Shell Compatibility Layer
 │   ├── vde-ssh                # SSH Operations
 │   ├── vde-templates          # Hydration Blueprints
+│   ├── vde-trace-bootstrap    # Trace System Bootstrap
 │   ├── vm-common              # VM Management Intelligence
 │   └── vm-lock                # Concurrency Locking
 ```

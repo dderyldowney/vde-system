@@ -3,20 +3,20 @@
 
 ## Overview
 
-This document describes the MCP (Model Context Protocol) server configuration for the VDE project. MCP servers extend the capabilities of the Gemini CLI by providing specialized tools for various tasks.
+This document describes the MCP (Model Context Protocol) server configuration for the VDE project. MCP servers extend the capabilities of AI agents by providing specialized tools for various tasks.
 
-> **MANDATE**: All agents MUST utilize these connected MCP servers as their primary interface for system interaction. Documentation updates and technical queries MUST utilize `context7` and `gemini-docs-mcp`.
+> **MANDATE**: All agents MUST utilize connected MCP servers as their primary interface for system interaction. Documentation updates and technical queries MUST utilize `context7`.
 
 ## Configuration Location
 
-The project-specific MCP configuration is located at:
+The project-specific Kilo configuration is located at:
 ```
-.gemini/settings.json
+kilo.json
 ```
 
 Global configuration can be found at:
 ```
-~/.gemini/settings.json
+~/.config/kilo/settings.json
 ```
 
 ## Configured Services
@@ -24,102 +24,42 @@ Global configuration can be found at:
 | Service | Purpose | Status |
 |---------|---------|--------|
 | `context7` | Up-to-date documentation and code examples | ✅ Configured |
-| `gemini-docs-mcp` | Gemini API and CLI documentation | ✅ Configured |
-| `MCP_DOCKER` | Docker operations and gateway | ✅ Configured |
+| `github` | GitHub repository and issue management | ✅ Configured |
 
-## Configuration File (.gemini/settings.json)
+## context7
 
-```json
-{
-  "mcp": {
-    "allowed": [
-      "context7",
-      "gemini-docs-mcp",
-      "MCP_DOCKER",
-      "github",
-      "redis",
-      "firebase",
-      "google-workspace"
-    ]
-  },
-  "mcpServers": {
-    "context7": {
-      "timeout": 60000,
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp@latest"]
-    },
-    "MCP_DOCKER": {
-      "command": "docker",
-      "args": ["mcp", "gateway", "run"]
-    }
-  }
-}
-```
+Context7 provides up-to-date documentation and code examples. It is configured to run via `npx`. Ensure you have an internet connection for the first run.
 
-## Setup Instructions
-
-### 1. Context7 Setup
-
-Context7 provides up-to-date documentation. It is configured to run via `npx`. Ensure you have an internet connection for the first run.
-
-### 2. Redis MCP Server
-
-The Redis MCP server can be configured via `uvx` or `docker`. For VDE, we prefer the Docker-based approach for isolation:
-
-```zsh
-gemini mcp add redis docker run --rm --name redis-mcp-server -i -e REDIS_URL=redis://localhost:6379/0 mcp-redis
-```
-
-### 3. GitHub Token Setup
-
-The GitHub MCP server requires a personal access token:
-
-1. Generate a GitHub Personal Access Token:
-   - Go to: https://github.com/settings/tokens
-   - Create token with scopes: `repo`, `read:org`, `read:user`
-
-2. Set the environment variable:
-   ```zsh
-   export GITHUB_TOKEN="your_token_here"
-   ```
-
-## Service Details
-
-### context7
 - **Package:** `@upstash/context7-mcp`
 - **Purpose:** Prevents outdated or hallucinated API responses by providing real-time documentation.
 - **Usage:** "Researcher, use context7 to find the latest Next.js routing patterns."
 
-### gemini-docs-mcp
-- **Purpose:** Specialized documentation for Gemini API and CLI features.
-- **Usage:** Must be used before any Gemini API integration.
+## GitHub MCP
 
-### redis-mcp-server
-- **Package:** `mcp-redis`
-- **Purpose:** Natural language interface for managing and searching data in Redis.
-- **Usage:** "Database Admin, check the user session cache in Redis."
+The GitHub MCP server provides access to repository management, issues, PRs, and code search.
 
-### MCP_DOCKER
-- **Purpose:** Bridge between the CLI and Docker runtime for VM management.
+- **Purpose:** GitHub lifecycle automation (Issues, PRs, code search, repository management)
+- **Requirement:** `gh` CLI authenticated and active
+
+---
 
 ## Troubleshooting
 
 ### Check Configuration
+
 ```zsh
-cat .gemini/settings.json | jq .
+cat kilo.json | python3 -m json.tool
 ```
 
-### Test Individual Server
+### Verify context7 Connectivity
+
 ```zsh
-npx -y @modelcontextprotocol/server-[name]
+npx -y @upstash/context7-mcp@latest --help
 ```
 
-### Clear NPX Cache (if issues)
-```zsh
-npm cache clean --force
-```
+---
 
 ## References
 
-- [MCP Implementation Plan](../plans/specs/mcp-implementation-plan.md)
-- [Kilo Code MCP Rules](../../../.gemini/RULES/tools_mcp.md)
+- [Kilo Documentation](https://kilo.ai/docs)
+- [Context7 Documentation](https://github.com/upstash/context7-mcp)

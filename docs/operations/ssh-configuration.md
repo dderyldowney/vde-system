@@ -44,7 +44,7 @@ Priority order: ed25519 > ecdsa-sk > ed25519-sk > ecdsa > rsa > dsa
 │                                                                  │
 │  ┌──────────────┐         ┌──────────────────────────────────┐ │
 │  │ VDE SSH Keys │         │ SSH Agent                        │ │
-│  │ ~/.ssh/vde/vde/  │◄────────┤ • Holds private keys             │ │
+│  │ ~/.ssh/vde/  │◄────────┤ • Holds private keys             │ │
 │  │ vde_student  │         │ • Never exposes keys directly     │ │
 │  │ ...         │         │ • Socket: $SSH_AUTH_SOCK         │ │
 │  └──────────────┘         └──────────────▲───────────────────┘ │
@@ -74,7 +74,7 @@ Priority order: ed25519 > ecdsa-sk > ed25519-sk > ecdsa > rsa > dsa
 
 ### What Happens Automatically
 
-When you run `create-virtual-for` or `start-virtual`, VDE automatically:
+When you run `vde create` or `vde start`, VDE automatically:
 
 1. **Starts SSH agent** if not running
 2. **Detects all SSH keys** in `~/.ssh/vde/`
@@ -90,12 +90,8 @@ vde create python
 vde start python
 
 # Connect using VDE commands (recommended)
-vde ssh python          # Handles SSH config automatically
-vde connect python      # Alias for 'vde ssh'
-
-# Can also use aliases
-vde ssh py             # Uses Python's alias
-vde connect py         # Same with connect
+vde enter python          # Enter the Spoke's login shell
+vde enter py             # Uses Python's alias
 
 # Or connect directly with SSH (requires -F flag)
 ssh -F ~/.ssh/vde/config vde-python
@@ -104,19 +100,6 @@ ssh -F ~/.ssh/vde/config vde-python
 alias vssh='ssh -F ~/.ssh/vde/config'
 vssh vde-python
 ```
-
-### SSH Key Types Supported
-
-VDE automatically detects and uses any of these key types:
-
-- **vde_student** (preferred)
-- **id_ecdsa**
-- **id_rsa**
-- **id_ecdsa_sk**
-- **vde_student_sk**
-- **id_dsa** (legacy)
-
-Priority order: ed25519 > ecdsa > rsa > dsa
 
 ---
 
@@ -128,12 +111,12 @@ SSH from one VM to another using your host's SSH keys:
 
 ```zsh
 # From your host
-ssh vde-go                    # Connect to Go VM
+vde enter go              # Connect to Go VM
 
-# From within Go VM
-ssh vde-python                # SSH to Python VM
-ssh vde-rust pwd              # Run command on Rust VM
-scp vde-python:/data/file .   # Copy file from Python VM
+# From within Go VM (via SSH agent forwarding)
+ssh vde-python            # SSH to Python VM
+ssh vde-rust pwd          # Run command on Rust VM
+scp vde-python:/data/file .  # Copy file from Python VM
 ```
 
 ### Full Stack Example
@@ -143,24 +126,10 @@ scp vde-python:/data/file .   # Copy file from Python VM
 vde create python postgres redis
 vde start python postgres redis
 
-# From Python VM, connect to services
-ssh vde-python
-ssh vde-postgres psql -U devuser    # Connect to PostgreSQL
-ssh vde-redis redis-cli             # Connect to Redis
-```
-
-### Microservices Example
-
-```zsh
-# Create microservices architecture
-vde create go python rust postgres
-vde start go python rust postgres
-
-# From Go VM (API gateway)
-ssh vde-go
-ssh vde-python svc_status           # Call Python service
-ssh vde-rust analytics              # Call Rust analytics
-ssh vde-postgres "psql -c 'SELECT * FROM users'"  # Query database
+# From Python VM, connect to services via DNS discovery
+vde enter python
+psql -h vde-postgres -U devuser    # Connect to PostgreSQL
+redis-cli -h vde-redis             # Connect to Redis
 ```
 
 ### SSH Config for VM-to-VM
@@ -171,7 +140,7 @@ VDE automatically generates these entries in `~/.ssh/vde/config`:
 # Python Dev VM
 Host vde-python
     HostName localhost
-    Port 2213
+    Port 2217
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     IdentitiesOnly yes
@@ -179,7 +148,7 @@ Host vde-python
 # Go Dev VM
 Host vde-go
     HostName localhost
-    Port 2206
+    Port 2208
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     IdentitiesOnly yes
@@ -192,15 +161,6 @@ This allows VMs to SSH to each other via `localhost:<port>`.
 ## VM-to-Host Communication
 
 Execute commands on your host from within any VM:
-
-### Using the `to-host` Helper
-
-```zsh
-# From within any VM
-to-host ls ~/dev                    # List host's dev directory
-to-host tail -f logs/app.log        # View host's log files
-to-host docker ps                   # Check host's containers
-```
 
 ### Direct Docker Commands
 
@@ -244,7 +204,7 @@ vde health  # Includes SSH status check
 ```
 
 This shows:
-- SSH agent running status
+- SSH agent run status
 - Available SSH keys
 - Keys loaded in agent
 - Running VMs
@@ -340,7 +300,7 @@ Regenerate VM SSH config:
 vde health
 ```
 
-### Permission Denied (Publickey)
+### Permission Denied (publickey)
 
 **Symptom**: `Permission denied (publickey)`
 
@@ -365,12 +325,12 @@ cat ~/.ssh/vde/config
 4. Rebuild VM with updated keys:
 ```zsh
 vde stop python
-vde start python --rebuild
+vde start python
 ```
 
 ### Connection Refused
 
-**Symptom**: `ssh: connect to host localhost port 2213: Connection refused`
+**Symptom**: `ssh: connect to host localhost port 2217: Connection refused`
 
 **Solutions**:
 
@@ -405,45 +365,10 @@ ssh -vvv vde-python
 
 ---
 
-## Migration from Manual Setup
-
-If you previously set up SSH manually:
-
-### Old Way (Manual)
-
-```zsh
-# 1. Generate key
-ssh-keygen -t ed25519
-
-# 2. Copy to VDE
-cp ~/.ssh/vde/vde_student.pub ~/dev/public-ssh-keys/
-
-# 3. Create SSH entry manually
-cat >> ~/.ssh/vde/config << 'EOF'
-Host vde-python
-    HostName localhost
-    Port 2213
-    User devuser
-    IdentityFile ~/.ssh/vde/vde_student
-EOF
-```
-
-### New Way (Automatic)
-
-```zsh
-# Just create VM - everything else is automatic
-vde create python
-vde start python
-```
-
-All manual steps are now handled by VDE automatically.
-
----
-
 ## Best Practices
 
 1. **Let VDE handle SSH setup**: Don't manually configure SSH agent or keys
-2. **Use VM aliases**: Use `vde-python` instead of `localhost -p 2213`
+2. **Use VM aliases**: Use `vde-python` instead of `localhost -p 2217`
 3. **Use the vde CLI**: Prefer `vde create/start/stop` over direct script calls
 4. **Check status with vde health**: Run `vde health` for comprehensive system status including SSH agent status
 5. **Multiple keys are supported**: All your keys are automatically detected and loaded
@@ -455,7 +380,7 @@ All manual steps are now handled by VDE automatically.
 
 ## Related Documentation
 
-- [Quick Start](../quick-start.md) - Getting started with VDE
+- [Quick Start](../guides/getting-started.md) - Getting started with VDE
 - [Advanced Usage](../guides/advanced-usage.md) - VM-to-VM communication patterns
 - [Architecture](../architecture/overview.md) - Technical architecture details
 - [Troubleshooting](./troubleshooting.md) - Common issues and solutions

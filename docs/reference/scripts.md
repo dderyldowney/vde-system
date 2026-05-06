@@ -25,7 +25,7 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution**. 
 | `vde remove <vm>` | Dissolve (remove) a VM instance and its locks. (Aliases: `rm`, `delete`) | `vde remove rust` |
 | `vde nuke` | **The Great Quench**: Remove all VDE artifacts (prompts for backup). | `vde nuke` |
 | `vde exec <vm> <cmd>` | Execute a command inside a Spoke without a full login shell. | `vde exec go "go version"` |
-| `vde enter <vm>` | The Sovereign Handshake: Enter a Spoke's login shell. (Alias: `ssh`, `connect`) | `vde enter rust` |
+| `vde enter <vm>` | The Sovereign Handshake: Enter a Spoke's login shell. (Alias: `ssh`) | `vde enter rust` |
 | `vde add <name>` | Dynamic Expansion: Register a new Spoke type. | `vde add --pkgs "htop" myvm` |
 | `vde uninstall <vm>` | Permanent Removal: Remove a Spoke type from the Registry. | `vde uninstall elixir` |
 | `vde list` | Audit all predefined and custom Spokes. | `vde list` |
@@ -122,28 +122,3 @@ VDE_ROOT/
 ```
 
 **This is the Way.**
-
----
-
-## Undocumented Scripts (Pending Classification)
-
-| Script | Purpose |
-|--------|---------|
-| `vde-cluster` | Automatically discovered - documentation pending. |
-| `vde-dns-check.zsh` | Automatically discovered - documentation pending. |
-| `vde-exec` | Automatically discovered - documentation pending. |
-| `vde-health` | Automatically discovered - documentation pending. |
-| `vde-images` | Automatically discovered - documentation pending. |
-| `vde-info` | Automatically discovered - documentation pending. |
-| `vde-init` | Automatically discovered - documentation pending. |
-| `vde-inspect` | Automatically discovered - documentation pending. |
-| `vde-logs` | Automatically discovered - documentation pending. |
-| `vde-networks` | Automatically discovered - documentation pending. |
-| `vde-path-of-the-foundling` | Automatically discovered - documentation pending. |
-| `vde-port` | Automatically discovered - documentation pending. |
-| `vde-ps` | Automatically discovered - documentation pending. |
-| `vde-rebuild` | Automatically discovered - documentation pending. |
-| `vde-rebuild-cache` | Automatically discovered - documentation pending. |
-| `vde-stats` | Automatically discovered - documentation pending. |
-| `vde-sync-version` | Automatically discovered - documentation pending. |
-| `vde-vision` | Automatically discovered - documentation pending. |
