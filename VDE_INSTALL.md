@@ -1,8 +1,8 @@
 # VDE INSTALLATION
 <!-- @armor (Installation Ritual) -->
-# The Installation Ritual (1.5.2)
+# The Installation Ritual (1.5.4)
 
-Welcome, Foundling. To ignite your own Forge and walk the path of the VDE, you must first secure the **Unyielding Tetrad** on your host machine. This process establishes and certifies your **Sovereign Baseline 1.5.2**.
+Welcome, Foundling. To ignite your own Forge and walk the path of the VDE, you must first secure the **Unyielding Tetrad** on your host machine. This process establishes and certifies your **Sovereign Baseline 1.5.4**.
 
 ---
 
@@ -48,8 +48,8 @@ Once your prerequisites are verified and you are in a **Zsh shell**, the journey
 
 ### Step 1: Clone the Baseline
 ```zsh
-git clone https://github.com/dderyldowney/vde-system.git ~/vde
-cd ~/vde
+git clone -b stable https://github.com/dderyldowney/vde-system.git ~/VDE
+cd ~/VDE
 ```
 
 ### Step 2: Take the Path of the Foundling (MANDATORY)
