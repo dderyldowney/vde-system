@@ -122,3 +122,28 @@ VDE_ROOT/
 ```
 
 **This is the Way.**
+
+---
+
+## Undocumented Scripts (Pending Classification)
+
+| Script | Purpose |
+|--------|---------|
+| `vde-cluster` | Automatically discovered - documentation pending. |
+| `vde-dns-check.zsh` | Automatically discovered - documentation pending. |
+| `vde-exec` | Automatically discovered - documentation pending. |
+| `vde-health` | Automatically discovered - documentation pending. |
+| `vde-images` | Automatically discovered - documentation pending. |
+| `vde-info` | Automatically discovered - documentation pending. |
+| `vde-init` | Automatically discovered - documentation pending. |
+| `vde-inspect` | Automatically discovered - documentation pending. |
+| `vde-logs` | Automatically discovered - documentation pending. |
+| `vde-networks` | Automatically discovered - documentation pending. |
+| `vde-path-of-the-foundling` | Automatically discovered - documentation pending. |
+| `vde-port` | Automatically discovered - documentation pending. |
+| `vde-ps` | Automatically discovered - documentation pending. |
+| `vde-rebuild` | Automatically discovered - documentation pending. |
+| `vde-rebuild-cache` | Automatically discovered - documentation pending. |
+| `vde-stats` | Automatically discovered - documentation pending. |
+| `vde-sync-version` | Automatically discovered - documentation pending. |
+| `vde-vision` | Automatically discovered - documentation pending. |

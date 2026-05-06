@@ -1,7 +1,7 @@
 # VDE Development Guide
 <!-- @forge (AI Governance) -->
 
-**Version:** 1.5.2 (The Sovereign Baseline)
+**Version:** 1.5.4 (The Sovereign Baseline)
 
 ## Code Style
 

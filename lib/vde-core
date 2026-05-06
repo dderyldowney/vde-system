@@ -32,7 +32,7 @@ vde_get_version() {
     local spec_file="${root}/docs/VDE-SPEC.md"
 
     if [[ -f "${spec_file}" ]]; then
-        # Extracts version from "# VDE-SPEC [v]1.5.3 (The Sovereign Baseline)"
+        # Extracts version from "# VDE-SPEC [v]1.5.4 (The Sovereign Baseline)"
         # Supports optional 'v' prefix and SemVer extensions like -spN
         grep -m1 '^# VDE-SPEC ' "${spec_file}" | sed -E 's/^# VDE-SPEC v?([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?).*/\1/' | tr -d '[:space:]'
     else
@@ -976,4 +976,83 @@ vde_time_end() {
             echo "[TIMING] ${label}: ${duration_ms}ms" >&2
         fi
     fi
+}
+
+#===============================================================================
+# Next Steps Helper - Guidance for Students and New Hires
+#===============================================================================
+# Displays contextual next steps based on the command just executed.
+# Always ends with 'vde list' as the final suggestion.
+#
+# Usage: vde_print_next_steps <command_type> [vm_name]
+#
+# Examples:
+#   vde_print_next_steps "init"
+#   vde_print_next_steps "start" "python"
+#   vde_print_next_steps "rm" "python"
+#===============================================================================
+vde_print_next_steps() {
+    local cmd_type="${1:-}"
+    local vm_name="${2:-}"
+    local vm_alias="${vm_name#vde-}"
+
+    echo ""
+    echo "Next:"
+
+    case "${cmd_type}" in
+        init)
+            echo "  vde create <name>  - forge your first VM (e.g., vde create python)"
+            ;;
+        create|rebuild)
+            if [[ -n "${vm_alias}" ]]; then
+                echo "  vde start ${vm_alias}   - ignite your VM"
+            else
+                echo "  vde start <name>   - ignite your VM"
+            fi
+            ;;
+        start)
+            if [[ -n "${vm_alias}" ]]; then
+                echo "  vde enter ${vm_alias}   - enter your VM"
+            else
+                echo "  vde enter <name>   - enter your VM"
+            fi
+            ;;
+        stop)
+            if [[ -n "${vm_alias}" ]]; then
+                echo "  vde start ${vm_alias}   - re-ignite your VM"
+            else
+                echo "  vde start <name>   - re-ignite your VM"
+            fi
+            ;;
+        rm|remove)
+            if [[ -n "${vm_alias}" ]]; then
+                echo "  vde create ${vm_alias}  - re-forge your VM"
+            else
+                echo "  vde create <name>  - re-forge your VM"
+            fi
+            ;;
+        add)
+            if [[ -n "${vm_alias}" ]]; then
+                echo "  vde create ${vm_alias}  - forge the new VM type"
+            else
+                echo "  vde create <name>  - forge the new VM type"
+            fi
+            ;;
+        uninstall)
+            echo "  vde create <name>  - forge a new VM type"
+            ;;
+        restart)
+            if [[ -n "${vm_alias}" ]]; then
+                echo "  vde enter ${vm_alias}   - enter your VM"
+            else
+                echo "  vde enter <name>   - enter your VM"
+            fi
+            ;;
+        *)
+            # Generic fallback
+            echo "  vde help           - view all commands"
+            ;;
+    esac
+
+    echo "  vde list           - list status of all created Spokes"
 }

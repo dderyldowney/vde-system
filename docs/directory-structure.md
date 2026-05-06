@@ -1,7 +1,7 @@
 # Directory Structure
 <!-- @shared-law (Sovereign Law) -->
 
-The complete directory layout of the **Sovereign Baseline (1.5.2)** installation.
+The complete directory layout of the **Sovereign Baseline (1.5.4)** installation.
 
 [← Back to README](../README.md)
 

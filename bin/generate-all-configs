@@ -107,21 +107,29 @@ main() {
     # 3. Smelt SSH Configuration
     vde_log_info "Syncing SSH Pillar..." "ssh"
     local ssh_config="${VDE_ROOT_DIR}/configs/ssh/config"
+    local spoke_config="${VDE_ROOT_DIR}/configs/ssh/config.spoke"
     local current_version=$(vde_get_version)
     
-    {
-        echo "# VDE SSH Configuration"
-        echo "# Sovereign Baseline: ${current_version}"
-        echo "# DO NOT EDIT MANUALLY"
-        echo ""
-    } > "${ssh_config}"
+    local header="# VDE SSH Configuration
+# Sovereign Baseline: ${current_version}
+# DO NOT EDIT MANUALLY
+"
+    
+    echo "${header}" > "${ssh_config}"
+    echo "${header}" > "${spoke_config}"
 
     for vm_name in "${lang_vms[@]}" "${service_vms[@]}"; do
         local port="${VM_SSH_PORT[${vm_name}]}"
-        [[ -n "${port}" ]] && render_ssh_entry "${vm_name}" "${port}" >> "${ssh_config}"
+        if [[ -n "${port}" ]]; then
+            # Hub Config: uses 'localhost'
+            render_ssh_entry "${vm_name}" "${port}" "localhost" >> "${ssh_config}"
+            # Spoke Config: uses container name (e.g., vde-python)
+            local container_name=$(vde_get_ssh_host "${vm_name}")
+            render_ssh_entry "${vm_name}" "${port}" "${container_name}" >> "${spoke_config}"
+        fi
     done
     
-    chmod 600 "${ssh_config}"
+    chmod 600 "${ssh_config}" "${spoke_config}"
     vde_log_success "Sovereign Configuration Smelted Successfully." "smelter"
 }
 

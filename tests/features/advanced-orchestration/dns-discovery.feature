@@ -8,7 +8,7 @@ Feature: Spoke-to-Spoke DNS Discovery
 
   Background: Core Services are Active
     Given the VDE system is healthy
-    And the Hub is synchronized to version 1.5.2
+    And the Hub is synchronized to version 1.5.4
     And "python" is running
     And "postgres" is running
 

@@ -10,13 +10,24 @@ from vm_common import VDE_ROOT, run_vde_command
 
 @given('a background process holds a lock on "{vm_alias}"')
 def step_background_lock(context, vm_alias):
+    import time
     lock_dir = VDE_ROOT / ".locks" / "vms" / f"{vm_alias}.lock"
     lock_dir.mkdir(parents=True, exist_ok=True)
-    pid = 99999
-    (lock_dir / "pid").write_text(f"{pid}")
-    (lock_dir / f"ticket-0000000001-{pid}").touch()
+    # Use the behave process PID — guaranteed alive during the test.
+    # A dead PID would be purged by the stale-ticket buster before
+    # lock contention is ever reached.
+    pid = os.getpid()
+    now = int(time.time())
+    # Format must match claim_lock's "PID:PGID:TIMESTAMP" so the
+    # stale-buster sees a fresh timestamp and does NOT remove it.
+    (lock_dir / "pid").write_text(f"{pid}:{pid}:{now}")
+    # Ticket queue entry for the holding process
+    queue_dir = lock_dir.parent / f"{vm_alias}.lock.queue"
+    queue_dir.mkdir(parents=True, exist_ok=True)
+    (queue_dir / f"0000000001-{pid}").touch()
     context.background_pid = pid
     context.add_cleanup(lambda: shutil.rmtree(str(lock_dir), ignore_errors=True))
+    context.add_cleanup(lambda: shutil.rmtree(str(queue_dir), ignore_errors=True))
 
 def _register_container_cleanup(context, cmd):
     """Register cleanup for any container started by a 'start <alias>' command.
