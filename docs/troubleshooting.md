@@ -1,8 +1,8 @@
 # TROUBLESHOOTING
 <!-- @shared-law (Sovereign Law) -->
-# Troubleshooting (1.5.2)
+# Troubleshooting (1.5.4)
 
-Common issues and solutions for VDE in the **Sovereign Baseline (1.5.2)**.
+Common issues and solutions for VDE in the **Sovereign Baseline (1.5.4)**.
 
 [← Back to README](../README.md)
 

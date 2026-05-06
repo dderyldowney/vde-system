@@ -32,7 +32,7 @@ vde_get_version() {
     local spec_file="${root}/docs/VDE-SPEC.md"
 
     if [[ -f "${spec_file}" ]]; then
-        # Extracts version from "# VDE-SPEC [v]1.5.3 (The Sovereign Baseline)"
+        # Extracts version from "# VDE-SPEC [v]1.5.4 (The Sovereign Baseline)"
         # Supports optional 'v' prefix and SemVer extensions like -spN
         grep -m1 '^# VDE-SPEC ' "${spec_file}" | sed -E 's/^# VDE-SPEC v?([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?).*/\1/' | tr -d '[:space:]'
     else
