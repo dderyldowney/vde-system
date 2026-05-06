@@ -1,7 +1,7 @@
 # Predefined VM Types
 <!-- @shared-law (Sovereign Law) -->
 
-All available programming languages and services in the **Sovereign Baseline (1.5.4)**.
+All available programming languages and services in the **Sovereign Baseline (1.5.5)**.
 
 [← Back to README](../../README.md)
 

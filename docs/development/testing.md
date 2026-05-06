@@ -1,4 +1,4 @@
-# VDE Testing Strategy - 1.5.4 (The Sovereign Baseline)
+# VDE Testing Strategy - 1.5.5 (The Sovereign Baseline)
 <!-- @shared-law (Sovereign Law) -->
 
 This document defines the absolute empirical standards for the Virtual Development Environment (VDE). All functional code MUST be verified by this suite.
@@ -13,7 +13,7 @@ The System Spine tetrad is the foundational audit gate. If any pillar fails, the
 | III    | **Docker** | `docker run --rm` diagnostic probe (The World-Forge) |
 | IV     | **SSH**    | `ssh-add -l` identity check (The Bridge) |
 
-## 2. BDD PERFORMANCE METRICS (1.5.4)
+## 2. BDD PERFORMANCE METRICS (1.5.5)
 As of **2026-05-06**, the VDE Behavior Driven Development suite is at **100% Fidelity**.
 
 | Metric | Count | Status |
@@ -25,7 +25,7 @@ As of **2026-05-06**, the VDE Behavior Driven Development suite is at **100% Fid
 | **Pass Rate** | 100% | ✅ ABSOLUTE |
 
 ## 3. CORE INFRASTRUCTURE SUITE
-Located in `tests/features/core-infrastructure/` (19 feature files as of 1.5.4):
+Located in `tests/features/core-infrastructure/` (19 feature files as of 1.5.5):
 
 - **proof-of-life-the-contract.feature**: Verifies the 8 lifecycle states (create, rebuild, start, enter, stop, remove, add, uninstall).
 - **system-spine.feature**: Hardens the 4 Pillars and deterministic Hub-to-Spoke ignition.
@@ -73,4 +73,4 @@ behave --tags @system-spine
 - **USP Compliance**: Every hydration script in `scripts/setup/` must pass the `usp-validation` suite before it is considered production Beskar.
 
 ---
-**Status:** SYSTEM CERTIFIED (1.5.4)
+**Status:** SYSTEM CERTIFIED (1.5.5)

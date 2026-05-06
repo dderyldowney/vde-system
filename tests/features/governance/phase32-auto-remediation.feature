@@ -8,7 +8,7 @@ Feature: Phase 32 - Forge Intelligence & Auto-Remediation
 
   Background: The Forge is Initialized
     Given the VDE system is healthy
-    And the Hub is synchronized to version 1.5.4
+    And the Hub is synchronized to version 1.5.5
 
   Scenario: Empirical Proof: Registry Self-Healing (CONF -> JSON)
     Given I corrupt the Beskar Registry "data/vm-types.json" with invalid content
@@ -19,7 +19,7 @@ Feature: Phase 32 - Forge Intelligence & Auto-Remediation
   Scenario: Empirical Proof: Gospel Version Synchronization
     Given I intentionally drift the version in "docs/changelogs/current.md" to "0.0.1"
     When I execute "bin/vde heal"
-    Then the file "docs/changelogs/current.md" should contain the Sovereign Baseline version "1.5.4"
+    Then the file "docs/changelogs/current.md" should contain the Sovereign Baseline version "1.5.5"
     And the Gospel Audit must report "synchronized"
 
   Scenario: Empirical Proof: Path Leak Remediation (Blockade Simulation)

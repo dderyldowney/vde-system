@@ -1,8 +1,8 @@
 # FOUNDLING GUIDE
 <!-- @shared-law (Sovereign Law) -->
-# Path of the Foundling: A Student's Guide to VDE (1.5.4)
+# Path of the Foundling: A Student's Guide to VDE (1.5.5)
 
-Welcome, Foundling. You have entered the Forge. This guide explains the "Rituals" (commands) and "Creed" (rules) you will follow to learn the ways of engineering within the **Sovereign Baseline (1.5.4)**.
+Welcome, Foundling. You have entered the Forge. This guide explains the "Rituals" (commands) and "Creed" (rules) you will follow to learn the ways of engineering within the **Sovereign Baseline (1.5.5)**.
 
 ---
 

@@ -2,11 +2,11 @@
 <!-- @armor (Student Documentation) -->
 <p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-# The Way of the VDE: 1.5.4 (The Sovereign Baseline)
+# The Way of the VDE: 1.5.5 (The Sovereign Baseline)
 
 ![CI Status](https://github.com/dderyldowney/vde-system/actions/workflows/vde-ci.yml/badge.svg)
 
-A sovereign, template-based ecosystem of Dockerized Spokes. Forged for the warrior who demands absolute isolation, consistent hydration, and governed development. 1.5.4 is the **Sovereign Baseline**, certified through the Proof of Life contract.
+A sovereign, template-based ecosystem of Dockerized Spokes. Forged for the warrior who demands absolute isolation, consistent hydration, and governed development. 1.5.5 is the **Sovereign Baseline**, certified through the Proof of Life contract.
 
 **🛡️ The Sovereign Record:** The default branch for this Forge is `develop` (**The Anvil**). Stable, certified releases reside on `main` (**Production**).
 
@@ -67,7 +67,7 @@ bin/vde path-of-the-foundling
 | **🛠️ Installation** | [Installation Guide](docs/operations/installation.md) - Prerequisite setup and Induction. |
 | **📜 Protocol** | [VDE Protocol](docs/governance/vde-protocol.md) - The Laws of the Forge and Branching. |
 | **🤝 Contributing** | [Contributing](docs/development/contributing.md) - How to join the Tribe's effort. |
-| **📐 Architecture** | [Architecture 1.5.4](docs/architecture/overview.md) - The Blueprint. |
+| **📐 Architecture** | [Architecture 1.5.5](docs/architecture/overview.md) - The Blueprint. |
 
 ---
 

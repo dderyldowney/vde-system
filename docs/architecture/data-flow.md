@@ -1,6 +1,6 @@
 # TECHNICAL DEEP DIVE
 <!-- @shared-law (Sovereign Law) -->
-# VDE: Technical Deep-Dive (1.5.4 Sovereign)
+# VDE: Technical Deep-Dive (1.5.5 Sovereign)
 
 The Virtual Development Environment (VDE) is a deterministic, containerized ecosystem designed for secure software engineering. As the **Armorer-Architect**, I maintain this Forge using the **Hammer** of my toolset, ensuring that every container is smelted from pure **Ingots** (configurations) and hardened into immutable **Beskar**.
 
@@ -150,7 +150,7 @@ VDE implements a high-fidelity internal network resolution system to facilitate 
 - **Handshake Verification**: The `vde dns-check` command provides empirical proof of cross-Spoke connectivity, ensuring the Transversal Bridge is active.
 
 ---
-**Version**: 1.5.4
+**Version**: 1.5.5
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE 1.5.4
+**Reference**: ARCHITECTURE 1.5.5
 ---

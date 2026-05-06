@@ -1,8 +1,8 @@
 # VDE INSTALLATION
 <!-- @armor (Installation Ritual) -->
-# The Installation Ritual (1.5.4)
+# The Installation Ritual (1.5.5)
 
-Welcome, Foundling. To ignite your own Forge and walk the path of the VDE, you must first secure the **Unyielding Tetrad** on your host machine. This process establishes and certifies your **Sovereign Baseline 1.5.4**.
+Welcome, Foundling. To ignite your own Forge and walk the path of the VDE, you must first secure the **Unyielding Tetrad** on your host machine. This process establishes and certifies your **Sovereign Baseline 1.5.5**.
 
 ---
 
