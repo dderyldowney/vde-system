@@ -1,6 +1,6 @@
 # LIFECYCLE OF A SPOKE
 <!-- @armor (Container Orchestration) -->
-**The Lifecycle of a Spoke in the VDE Sovereign Baseline (1.5.2)** is governed by the **Proof of Life Contract**, a non-negotiable functional sequence that ensures system integrity from initial hydration to final decommissioning.
+**The Lifecycle of a Spoke in the VDE Sovereign Baseline (1.5.4)** is governed by the **Proof of Life Contract**, a non-negotiable functional sequence that ensures system integrity from initial hydration to final decommissioning.
 
 ### **At a Glance: The Spoke Lifecycle**
 

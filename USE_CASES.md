@@ -1,7 +1,7 @@
 # VDE Professional Evaluation: Use Case Alignment
 <!-- @shared-law (Forge Component) -->
 
-**Baseline**: 1.5.3 (Sovereign)
+**Baseline**: 1.5.4 (Sovereign)
 **Status**: CERTIFIED
 **Auditor**: Mandalorian Armorer-Architect (Agent)
 

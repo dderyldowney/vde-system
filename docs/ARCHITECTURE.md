@@ -1,6 +1,6 @@
 # ARCHITECTURE
 <!-- @shared-law (Sovereign Law) -->
-# ARCHITECTURE 1.5.2 (The Sovereign Baseline)
+# ARCHITECTURE 1.5.4 (The Sovereign Baseline)
 
 ## 1. Philosophical Pillars (The Way)
 
@@ -9,7 +9,7 @@
     2. **Project 2: The Forge (`@forge`)**: The universal Development AI-Governance system. It manages the GitHub lifecycle, enforces mandates, and audits technical integrity.
 - **The Symbiotic Covenant**: The Forge shapes the Armor. Every change to the Forge must be justified by how it improves the Armor product for Foundlings (Students).
 - **The Creed-frame**: The narrative fuel established in `data/vde_core/**` must guide all thematic world-building.
-- **The Gospel**: The Sovereign Artifact Set is the absolute authority. 1.5.2 is the unique Sovereign Baseline.
+- **The Gospel**: The Sovereign Artifact Set is the absolute authority. 1.5.4 is the unique Sovereign Baseline.
 - **The Spine**: The system is built upon the **Unyielding Tetrad**: **Zsh, Git, Docker, and SSH**.
 
 ## 2. Structural Design (The Armor)
@@ -53,14 +53,14 @@ The following nine files move as a single artifact set for every Sovereign Basel
 ## 5. The Release Ritual (The Living Mark)
 
 VDE enforces a strict branch-based release lifecycle to maintain the purity of the Baseline:
-1.  **Develop (`develop`)**: The primary integration branch. All work occurs here or on branches originating from it.
-2.  **Main (`main`)**: The stable production branch. **All step tagging (X.X.X) and GitHub releases MUST occur on this branch.**
-3.  **The Ritual**: Once `develop` is merged into `main`, the merge SHA on `main` is tagged with the version. The GitHub Release is then created from that SHA on the `main` branch.
-4.  **The Mirror**: Finally, this SHA is applied to the `stable` branch, overwriting its previous state.
-5.  **X.X.X Releases**: Step and milestone releases are applied against `main` only. `develop` remains for development only.
+1.  **Develop (`develop`)**: The Anvil. Primary integration branch and repository default. All work occurs here or on feature branches originating from it.
+2.  **Stable (`stable`)**: Intermediate stability branch. Represents the last certified release plus pending stable updates. `develop` merges into `stable`.
+3.  **Main (`main`)**: Production branch. Reserved for certified releases. **All step tagging (X.X.X) and GitHub releases MUST occur exclusively on this branch.** `main` is mirrored from `stable`.
+4.  **The Ritual**: Work flows: `develop` → `stable` → `main`. Only `main` receives version tags and GitHub releases.
+5.  **X.X.X Releases**: Step and milestone releases are applied against `main` only after merging from `stable`.
 
 ---
-Version: 1.5.2
+Version: 1.5.4
 Status: SOVEREIGN BASELINE CERTIFIED
 Identity: The Covert
 ---
