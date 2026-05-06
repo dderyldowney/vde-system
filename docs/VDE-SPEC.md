@@ -1,10 +1,10 @@
 # VDE-SPEC
 # @shared-law (Sovereign Law)
-# VDE-SPEC 1.5.3 (The Sovereign Evolution)
+# VDE-SPEC 1.5.4 (The Sovereign Evolution)
 
-**Date**: 2026-05-04
+**Date**: 2026-05-05
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE 1.5.3
+**Reference**: ARCHITECTURE 1.5.4
 **Identity**: The Covert
 
 ## 1. Absolute Mandates (The Rule Spine & The Gospel)
@@ -21,7 +21,7 @@
     4. **Pillar IV: SSH** (The Transversal Bridge) - Requires the `vde_student` identity to be active in the Hub's agent.
 - **The Proof of Life Contract (Mandate L)**: The lifecycle defined in `plans/system-spine-contract.md` is the project's **Heartbeat**. It mandates that ALL Spokes must reliably execute: `init`, `create`, `rebuild`, `start`, `enter`, `stop`, `remove`, `add`, and `uninstall`. Failure of any state is a Protocol Blockade.
 - **The Creed-frame**: The narrative fuel established in `data/vde_core/**` must guide all thematic world-building. No Spoke shall be ignited and no structure stabilized that does not align with the mythos.
-- **The Gospel Authority**: The Sovereign Artifact Set (specified in Section 3) is the **Gospel of the Forge**. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring. **1.5.2 is now the unique Sovereign Baseline. All prior versions and releases are of historical archival value only.**
+- **The Gospel Authority**: The Sovereign Artifact Set (specified in Section 3) is the **Gospel of the Forge**. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring. **1.5.4 is now the unique Sovereign Baseline. All prior versions and releases are of historical archival value only.**
 - **The Use-Case Creed**: The Forge exists solely to serve the Foundlings (Students) and Reinforcements (New Hires). This is **Creed**. All technical work MUST be centrally driven by its direct improvement to the onboarding and educational experience of these two cohorts.
 - **The Mandate of Architectural Tagging**: ALL artifacts (code, tests, docs, config) MUST be tagged according to their Project alignment (@armor, @forge, or @shared-law) to maintain clear ownership and visibility.
     - **The Positioning Law**: Tags MUST be placed on **line 2 or 3** of every file. Line 1 is reserved for shebangs or file-specific headers.
@@ -66,11 +66,12 @@ Before any tag is struck, these nine files MUST be in perfect agreement with the
 ## 4. The Sovereign Branching Strategy
 
 The Forge strictly enforces the following Git lifecycle to maintain the purity of the Baseline:
-1. **`main` (The Sovereign Baseline)**: The stable production branch. Represents immutable releases. **All step tagging (X.X.X) and GitHub releases MUST occur on this branch.**
-2. **`develop` (The Anvil)**: The primary integration branch and repository default.
-3. **Feature Branches (The Strike)**: All work MUST occur on a feature-named branch (`feat/`, `fix/`, `chore/`) branching off `develop`.
-4. **The Ritual**: Every mission begins with a Signet (Issue) and ends with a Chronicle (PR). Feature branches are merged to `develop` ONLY upon acceptance and MUST be deleted immediately after.
-5. **The Release Ritual**: Once `develop` is merged into `main`, the merge SHA on `main` is tagged with the version (e.g., 1.2.3). The GitHub Release is then created from that SHA on the `main` branch. Finally, this SHA is applied to the `stable` branch, overwriting its previous state. `develop` remains for development only.
+1. **`main` (Production)**: Reserved for certified releases of the Sovereign Baseline. **GitHub Releases and mandatory version tags (X.X.X) MUST occur exclusively on this branch.** `main` is always mirrored from `stable`.
+2. **`stable`**: The intermediate stability branch. It represents the last certified release plus any pending stable updates. `develop` merges into `stable`.
+3. **`develop` (The Anvil)**: The primary integration branch and repository default. All work MUST occur on feature branches originating from `develop`.
+4. **Feature Branches (The Strike)**: All work MUST occur on a feature-named branch (`feat/`, `fix/`, `chore/`) branching off `develop`.
+5. **The Ritual**: Every mission begins with a Signet (Issue) and ends with a Chronicle (PR). Feature branches are merged to `develop` ONLY upon acceptance and MUST be deleted immediately after.
+6. **The Release Ritual**: Work flows: `develop` → `stable` → `main`. Only `main` receives version tags and GitHub releases.
 
 ## 5. The Chronicle Mandates (GitHub Workflow)
 
@@ -102,7 +103,7 @@ The Forge is currently advancing through Phase 29:
 - **Phase 32 (Forge Intelligence)**: [CERTIFIED] Implementation of Self-Augmenting Sentinel and automated documentation synchronization.
 
 ---
-Version: 1.5.3
+Version: 1.5.4
 **Status**: HARDENED
-**Reference**: RESOL’NARE 1.5.2
+**Reference**: RESOL’NARE 1.5.4
 ---

@@ -1,7 +1,7 @@
 # VDE VM Docker Configuration
 <!-- @shared-law (Sovereign Law) -->
 
-Centralized Docker configuration for VDE VMs in the **Sovereign Baseline (1.5.2)**.
+Centralized Docker configuration for VDE VMs in the **Sovereign Baseline (1.5.4)**.
 
 ## Overview
 

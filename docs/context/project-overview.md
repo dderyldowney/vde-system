@@ -2,7 +2,7 @@
 <!-- @forge (Context Documentation) -->
 
 **Project**: Virtual Development Environment (VDE)  
-**Version**: 1.5.2 (The Sovereign Baseline)  
+**Version**: 1.5.4 (The Sovereign Baseline)  
 **Last Updated**: 2026-05-03
 
 ---
@@ -57,12 +57,11 @@ VDE is a sovereign, template-based ecosystem of Dockerized Spokes designed for d
 ---
 
 ## Current Focus
-**Version 1.5.2 (The Sovereign Baseline)** — CERTIFIED:
-- Gospel drift remediation complete across all documentation layers (PRs #365, #367)
-- feat/expose-check-tetrad merged (PR #363) — check-tetrad command exposed in vde CLI (@armor)
-- Heartbeat: 72/72 BDD steps green, no known open issues
-- Next: Retag 1.5.2 on main, update GitHub Release SHA, mirror to stable
-- Branching strategy transitioning: future releases via develop → stable → main
+**Version 1.5.4 (The Sovereign Baseline)** — CERTIFIED:
+- Version sync from 1.5.3 to 1.5.4 complete
+- Heartbeat: 72/72 BDD steps green (6/6 scenarios)
+- All Sovereign Artifact Set documents aligned to 1.5.4
+- Branching strategy: develop → stable → main
 
 ---
 
