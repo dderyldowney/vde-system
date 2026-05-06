@@ -2,9 +2,9 @@
 # @shared-law (Forge Component)
 
 ## SOVEREIGN STATE
-- **Baseline**: 1.5.4 (Sovereign Baseline) — CERTIFIED
+- **Baseline**: 1.5.5 (Sovereign Baseline) — CERTIFIED
 - **develop**: `99e5744e` (HEAD — pre gospel-drift remediation)
-- **main**: `063b3b65` (production — 1.5.4 tag, GitHub Release Latest)
+- **main**: `063b3b65` (production — 1.5.5 tag, GitHub Release Latest)
 - **stable**: `063b3b65` (mirrored from main)
 - **Status**: 100% GREEN (PEAK INTEGRITY)
 - **Heartbeat**: 6/6 scenarios, 72/72 steps — 100% GREEN
@@ -23,9 +23,9 @@
 4. `docs/operations/mcp-configuration.md` — Removed versioned header "(1.5.2)"
 5. `docs/guides/why-use-vde.md` — Removed versioned DNS discovery claim
 6. `docs/guides/advanced-usage.md` — Removed versioned baseline claim
-7. `.gemini/instructions.md` — Updated instruction set header 1.5.2 → 1.5.4
-8. `VDE_ANALYSIS.md` — Updated baseline version 1.5.2 → 1.5.4
-9. `USE_CASES.md` — Updated verdict version 1.5.2 → 1.5.4
+7. `.gemini/instructions.md` — Updated instruction set header 1.5.2 → 1.5.5
+8. `VDE_ANALYSIS.md` — Updated baseline version 1.5.2 → 1.5.5
+9. `USE_CASES.md` — Updated verdict version 1.5.2 → 1.5.5
 
 ## BRANCHING STRATEGY
 Feature work on `develop` → merge to `stable` (QA) → merge to `main` (Release)

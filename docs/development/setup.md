@@ -1,7 +1,7 @@
 # VDE Development Guide
 <!-- @forge (AI Governance) -->
 
-**Version:** 1.5.4 (The Sovereign Baseline)
+**Version:** 1.5.5 (The Sovereign Baseline)
 
 ## Code Style
 
@@ -29,7 +29,7 @@ All VDE logic is modular. For detailed function references, see `docs/api/librar
 
 ## Testing
 
-As of 1.5.4, the suite is certified at **100% Fidelity**.
+As of 1.5.5, the suite is certified at **100% Fidelity**.
 
 - **BDD Framework**: Behave (Python).
 - **Counts**: 17 Scenarios, 137 Steps.

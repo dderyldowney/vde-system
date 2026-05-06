@@ -1,10 +1,10 @@
 # VDE-SPEC
 # @shared-law (Sovereign Law)
-# VDE-SPEC 1.5.4 (The Sovereign Evolution)
+# VDE-SPEC 1.5.5 (The Sovereign Evolution)
 
-**Date**: 2026-05-05
+**Date**: 2026-05-06
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE 1.5.4
+**Reference**: ARCHITECTURE 1.5.5
 **Identity**: The Covert
 
 ## 1. Absolute Mandates (The Rule Spine & The Gospel)
@@ -22,7 +22,7 @@
     - **Core Guards**: `vde_require_ssh` verifies SSH binary availability and `vde_student` identity file existence; `vde_require_docker` verifies Docker binary availability and daemon responsiveness via `docker info`.
 - **The Proof of Life Contract (Mandate L)**: The lifecycle defined in `plans/system-spine-contract.md` is the project's **Heartbeat**. It mandates that ALL Spokes must reliably execute: `init`, `create`, `rebuild`, `start`, `enter`, `stop`, `remove`, `add`, and `uninstall`. Failure of any state is a Protocol Blockade.
 - **The Creed-frame**: The narrative fuel established in `data/vde_core/**` must guide all thematic world-building. No Spoke shall be ignited and no structure stabilized that does not align with the mythos.
-- **The Gospel Authority**: The Sovereign Artifact Set (specified in Section 3) is the **Gospel of the Forge**. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring. **1.5.4 is now the unique Sovereign Baseline. All prior versions and releases are of historical archival value only.**
+- **The Gospel Authority**: The Sovereign Artifact Set (specified in Section 3) is the **Gospel of the Forge**. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring. **1.5.5 is now the unique Sovereign Baseline. All prior versions and releases are of historical archival value only.**
 - **The Use-Case Creed**: The Forge exists solely to serve the Foundlings (Students) and Reinforcements (New Hires). This is **Creed**. All technical work MUST be centrally driven by its direct improvement to the onboarding and educational experience of these two cohorts.
 - **The Mandate of Architectural Tagging**: ALL artifacts (code, tests, docs, config) MUST be tagged according to their Project alignment (@armor, @forge, or @shared-law) to maintain clear ownership and visibility.
     - **The Positioning Law**: Tags MUST be placed on **line 2 or 3** of every file. Line 1 is reserved for shebangs or file-specific headers.
@@ -103,7 +103,7 @@ Automated orchestration ensures absolute traceability:
 - **Phase 32 (Forge Intelligence)**: [CERTIFIED] Self-healing Gospel synchronization and auto-remediation (`bin/vde heal`). Restores registry from authority, corrects version drift, and detects path leaks via UAP enforcement.
 
 ---
-Version: 1.5.4
+Version: 1.5.5
 **Status**: HARDENED
-**Reference**: RESOL’NARE 1.5.4
+**Reference**: RESOL'NARE 1.5.5
 ---

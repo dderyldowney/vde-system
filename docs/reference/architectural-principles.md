@@ -1,10 +1,10 @@
 # ARCHITECTURAL PRINCIPLES
 <!-- @shared-law (Forge Component) -->
-The architectural principles defining the **Sovereign Baseline 1.5.4** are governed by a hierarchical and narrative-driven framework designed for absolute technical integrity and portability. This environment, referred to as the **Forge**, operates under the following core architectural pillars:
+The architectural principles defining the **Sovereign Baseline 1.5.5** are governed by a hierarchical and narrative-driven framework designed for absolute technical integrity and portability. This environment, referred to as the **Forge**, operates under the following core architectural pillars:
 
 ### **1. The Gospel: Sovereign Artifact Set (SAS)**
 
-The SAS is the "synchronized baseline of truth" for the environment. Version 1.5.4 formally defines this set as **nine authoritative documents** that must be in perfect agreement before any version tag is struck. These documents serve as the definitive "decision-makers" on all system logic and implementation:
+The SAS is the "synchronized baseline of truth" for the environment. Version 1.5.5 formally defines this set as **nine authoritative documents** that must be in perfect agreement before any version tag is struck. These documents serve as the definitive "decision-makers" on all system logic and implementation:
 
 1. **docs/governance/vde-spec.md (The Rule of One)**: The absolute authority for versioning and laws.
 2. **USE_CASES.md (The Creed)**: Defines the "Why" and filters work by educational value for Students (Foundlings) and New Hires (Reinforcements).
@@ -26,7 +26,7 @@ The system architecture is strictly enforced by the **UAP**, a sentinel layer (`
 
 ### **3. Structural Design: Hub-and-Spoke Model**
 
-The 1.5.4 baseline utilizes a three-tier inheritance model:
+The 1.5.5 baseline utilizes a three-tier inheritance model:
 
 * **The Hub**: The host machine governing orchestration, security, and global configuration.
 * **The Spoke**: Isolated containers (Jails) where hydration occurs via **Universal Script Parity (USP)**—a mandate that every VM entry points to a specific setup script.
@@ -34,7 +34,7 @@ The 1.5.4 baseline utilizes a three-tier inheritance model:
 
 ### **4. Concurrency & Determinism**
 
-Architectural stability in 1.5.4 is maintained through deterministic state management:
+Architectural stability in 1.5.5 is maintained through deterministic state management:
 
 * **Lock-Queue Model**: Competitive spinlocks are replaced with a First-In-First-Out (FIFO) sequencing mechanism using unique ticket files to prevent "Thundering Herd" race conditions during high-volume operations.
 * **Registry Serialization**: All modifications to VM registries and port allocations must occur inside a global configuration lock (`global-config.lock`).
