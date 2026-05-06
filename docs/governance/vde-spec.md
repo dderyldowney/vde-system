@@ -19,6 +19,7 @@
     2. **Pillar II: Git** (The Chronicler) - Minimum version 2.30. Enforces Conventional Commits.
     3. **Pillar III: Docker** (The World-Forge) - Version 20.10+. Manages Spoke lifecycles.
     4. **Pillar IV: SSH** (The Transversal Bridge) - Requires the `vde_student` identity to be active in the Hub's agent.
+    - **Core Guards**: `vde_require_ssh` verifies SSH binary availability and `vde_student` identity file existence; `vde_require_docker` verifies Docker binary availability and daemon responsiveness via `docker info`.
 - **The Proof of Life Contract (Mandate L)**: The lifecycle defined in `plans/system-spine-contract.md` is the project's **Heartbeat**. It mandates that ALL Spokes must reliably execute: `init`, `create`, `rebuild`, `start`, `enter`, `stop`, `remove`, `add`, and `uninstall`. Failure of any state is a Protocol Blockade.
 - **The Creed-frame**: The narrative fuel established in `data/vde_core/**` must guide all thematic world-building. No Spoke shall be ignited and no structure stabilized that does not align with the mythos.
 - **The Gospel Authority**: The Sovereign Artifact Set (specified in Section 3) is the **Gospel of the Forge**. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring. **1.5.4 is now the unique Sovereign Baseline. All prior versions and releases are of historical archival value only.**
@@ -92,15 +93,14 @@ Automated orchestration ensures absolute traceability:
 - **Bridge Integrity**: `socat` proxying for SSH agent forwarding. The bridge is "Hardened Conditional"—it only exports `SSH_AUTH_SOCK` if the variable is empty, protecting protocol-native forwarding.
 - **Static Guards**: Pre-commit hooks verify shebang purity and secret scanning.
 
-## 7. Phase 29 Milestones (Expansion & Hardening)
+## 7. Phase Milestones (Expansion & Hardening)
 
-The Forge is currently advancing through Phase 29:
-- **Infrastructure Hardening**: Core guards (`vde_require_ssh`, `vde_require_docker`) upgraded from lazy-sourcing stubs to active physical verification probes (`ssh -V`, `docker info`).
-- **Cluster Expansion**: Formally introduced MEAN and LAMP tech stack clusters with coordinated hydration scripts and inter-VM awareness.
-- **State Integrity**: Codified `VDE_DOCKER_STATE_DIR` in `lib/vde-constants` to ensure deterministic cluster and container state management.
-
-- **Phase 31 (DNS Discovery & Bridge)**: [CERTIFIED] Implemented high-fidelity Spoke-to-Spoke and Hub-to-Spoke resolution with BDD verification.
-- **Phase 32 (Forge Intelligence)**: [CERTIFIED] Implementation of Self-Augmenting Sentinel and automated documentation synchronization.
+- **Phase 29 (Infrastructure Hardening)**: [CERTIFIED]
+    - Core guards (`vde_require_ssh`, `vde_require_docker`) verify binary availability and service responsiveness. `vde_require_docker` probes daemon via `docker info`; `vde_require_ssh` verifies binary presence and `vde_student` identity file.
+    - **Cluster Expansion**: Registered MEAN and LAMP tech stack VMs with dedicated hydration scripts (`scripts/setup/mean-init.zsh`, `scripts/setup/lamp-init.zsh`).
+    - **State Integrity**: Codified `VDE_DOCKER_STATE_DIR` in `lib/vde-constants` to ensure deterministic cluster and container state management.
+- **Phase 31 (DNS Discovery & Bridge)**: [CERTIFIED] Implemented high-fidelity Spoke-to-Spoke and Hub-to-Spoke resolution with BDD verification (`bin/vde-dns-check.zsh`).
+- **Phase 32 (Forge Intelligence)**: [CERTIFIED] Self-healing Gospel synchronization and auto-remediation (`bin/vde heal`). Restores registry from authority, corrects version drift, and detects path leaks via UAP enforcement.
 
 ---
 Version: 1.5.4
