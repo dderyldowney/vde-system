@@ -97,24 +97,29 @@ vde rebuild --no-cache all
 ## Troubleshooting Rebuilds
 
 ### Rebuild Takes Too Long
-By default, `vde rebuild` uses `--no-cache` to ensure purity. If you are iterating quickly and want to use cache, use:
+
+If you are iterating quickly and want to use cache:
+
 ```zsh
 # Start with rebuild (inherits Docker cache)
 vde start python --rebuild
 ```
 
 ### Rebuild Doesn't Pick Up Changes
+
 Ensure you are using the standard ritual:
+
 ```zsh
 vde rebuild <vm>
 ```
 
 ### Container Won't Start After Rebuild
+
 ```zsh
 # Check logs
 vde logs <alias>
 
-# Check docker-compose.yml syntax
+# Check container info
 vde info <alias>
 ```
 
