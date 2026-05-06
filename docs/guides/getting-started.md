@@ -1,8 +1,8 @@
-# USER GUIDE
+# GETTING STARTED
 <!-- @armor (Student Documentation) -->
 <p align="center"><img src="../imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-# VDE User Guide: The Path of the Foundling (1.5.2)
+# VDE Getting Started: The Path of the Foundling
 
 Welcome to the **Virtualized Development Environment (VDE)**. This guide is your map to forging a sovereign development ecosystem.
 
@@ -32,7 +32,7 @@ bin/vde path-of-the-foundling
 Inside any Spoke, you operate as the `devuser`. Your code lives at `$HOME/workspace/`. This directory is **persistently synced** to `projects/<alias>` on your host machine. Save your work here to ensure it survives Spoke rebuilds.
 
 ### Clusters and Discovery
-VDE 1.5.2 supports multi-Spoke tech stacks:
+VDE supports multi-Spoke tech stacks:
 ```vde start python postgres redis```
 Spokes discover each other automatically by name. Python can reach Postgres at `vde-postgres` and Redis at `vde-redis`.
 

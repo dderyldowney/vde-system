@@ -181,7 +181,7 @@ Failure of any ritual constitutes a **Protocol Blockade**.
     * **The Chronicler’s Law**: Commit messages MUST follow the format defined in `COMMIT_MESSAGE_FORMAT.md`.
     * Failure to utilize these templates constitutes a procedural fracture and requires immediate remediation.
 
-## **THE SOVEREIGN INSTRUCTION SET 1.5.2**
+## **THE SOVEREIGN INSTRUCTION SET 1.5.4**
 
 *"The core beating heart forged in every piece of Beskar made by this Forge."*
 
