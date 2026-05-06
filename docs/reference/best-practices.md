@@ -103,7 +103,7 @@ vde stop all
 ### Check Status Regularly
 
 ```zsh
-vde ps
+vde list
 ```
 
 ---

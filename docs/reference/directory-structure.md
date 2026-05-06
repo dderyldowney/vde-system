@@ -17,8 +17,6 @@ VDE_ROOT/
 ├── .gemini_security/   # Security remediation plans and vulnerability audits
 ├── .git/               # The Chronicler's archive (Git repository)
 ├── .locks/             # FIFO ticket-based concurrency locks (global and per-VM)
-├── .test-tmp/          # Ephemeral workspace for BDD test execution
-├── .tmp/               # General system-level temporary storage
 ├── backup/             # Automated backups of SSH keys and system states
 ├── bin/                # Unified CLI orchestrator and binary rituals
 ├── conductor/          # Strike orchestration and mass tagger logic
