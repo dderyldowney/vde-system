@@ -21,9 +21,11 @@ All development on the Armor (Project 1) must be governed by the Forge (Project 
 1.  **Signet (Issue)**: Create an Issue detailing the "Sovereign Reason".
     - Command: `gh issue create --title "..." --body "..."`
     - *Note: `gh` is a mandatory requirement for the Forge development backend.*
-2.  **The Anvil (Branching)**: VDE follows a strict branching model:
+2.  **The Anvil (Branching)**: VDE follows a strict three-branch model:
     - **`develop` (The Anvil)**: The primary integration branch and repository default. All work MUST occur on feature branches originating here.
-    - **`main` (Production)**: Reserved for stable, certified releases of the Sovereign Baseline. All step tagging and GitHub releases occur here.
+    - **`stable`**: The intermediate stability branch. Represents the last certified release plus any pending stable updates. **Users ALWAYS clone `stable` for the most current stable code.**
+    - **`main` (Production)**: Reserved for certified releases of the Sovereign Baseline. All step tagging and GitHub releases occur here. `main` is always mirrored from `stable`.
+    - **Flow**: `develop` → `stable` → `main`
 3.  **Strike (Branch)**: Create a feature branch from `develop`.
     - Command: `git checkout -b <type>/<slug> develop`
 4.  **Reforging (Development)**: Apply changes using the iterative **Plan -> Act -> Validate** cycle.
