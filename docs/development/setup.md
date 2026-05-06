@@ -29,7 +29,7 @@ All VDE logic is modular. For detailed function references, see `docs/api/librar
 
 ## Testing
 
-As of 1.5.1, the suite is certified at **100% Fidelity**.
+As of 1.5.4, the suite is certified at **100% Fidelity**.
 
 - **BDD Framework**: Behave (Python).
 - **Counts**: 17 Scenarios, 137 Steps.
