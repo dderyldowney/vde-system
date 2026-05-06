@@ -101,11 +101,37 @@ Failure of any ritual constitutes a **Protocol Blockade**.
 
 **THE CODE-REVIEW MANDATE**: A formal code-review is MANDATORY after all code changes are completed, before any commit. Both the reviewer and the user must approve.
 
+**THE BOT FEEDBACK MANDATE (The Four Sentinels)**: Before ANY Pull Request is closed, merged, or considered complete, the agent MUST query and remediate feedback from ALL active CI sentinels. This is a PRE-CLOSE GATE — no PR may be finalized while any sentinel has open findings.
+
+* **Scope**: The four sentinels are:
+    1. **kilo-code-bot** — AI code review suggestions on PRs
+    2. **sourcery-ai** — Automated code quality review comments
+    3. **dependabot** — Dependency vulnerability and update alerts
+    4. **CodeQL** — Security and static analysis alerts
+
+* **Pre-Close Audit Ritual**: Before closing a PR, the agent MUST:
+    1. **Check PR Review Comments**: `gh pr view <N> --comments` — scan for kilo-code-bot and sourcery-ai review comments
+    2. **Check CodeQL Alerts**: `gh api repos/{owner}/{repo}/code-scanning/alerts?state=open` — verify no open code scanning alerts introduced by the PR
+    3. **Check Dependabot Alerts**: `gh api repos/{owner}/{repo}/dependabot/alerts` — verify no dependency vulnerabilities introduced
+    4. **Remediate ALL Open Findings**: Every open comment, suggestion, or alert MUST be addressed (fixed, resolved, or documented as intentionally deferred with user approval) BEFORE the PR is closed
+    5. **Report Clearance**: Confirm all four sentinels are CLEAR before requesting merge or close
+
+* **Automation Enforcement**: The agent MUST NOT assume "no alerts = clean." The agent MUST explicitly query each sentinel and report the result. If any sentinel returns findings, the PR MUST NOT be closed until all findings are remediated or explicitly waived by the User.
+
+* **PR Body Evidence**: The Chronicle (PR body) MUST include a **Sentinel Clearance Report** confirming all four sentinels were checked and cleared:
+    ```
+    ## Sentinel Clearance
+    - [ ] kilo-code-bot: CLEAR
+    - [ ] sourcery-ai: CLEAR
+    - [ ] dependabot: CLEAR
+    - [ ] CodeQL: CLEAR
+    ```
+
 ---
 
-## **THE RESOL’NARE: SUPREME PROHIBITIONS (A–P)**
+## **THE RESOL'NARE: SUPREME PROHIBITIONS (A–P)**
 
-* **A. The Armorer’s Command (The Rule Spine)**: 
+* **A. The Armorer's Command (The Rule Spine)**: 
     * Every action MUST be run under `bin/vde-enforce-uap.zsh`. No action is permitted without this spine.
     * **The Companion**: You MUST run the `using-superpowers` skill at all times. It is your traveling companion with words of wisdom to be heeded. The use of the `context7` MCP server is also REQUIRED at all times.
     * **Sovereign Execution**: The agent is PRE-AUTHORIZED to execute `bin/vde-enforce-uap.zsh` and `bin/vde-spine-check.zsh` without seeking further permission. These scripts are part of the agent's core identity.
