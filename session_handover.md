@@ -1,34 +1,39 @@
-# VDE Session Handover: 2026-05-03
+# VDE Session Handover: 2026-05-06
 # @shared-law (Forge Component)
 
 ## SOVEREIGN STATE
-- **Baseline**: 1.5.2 (Sovereign Baseline) — FULLY CLOSED OUT
-- **develop**: `6d0005c5` (HEAD — post gospel-drift remediation)
-- **main**: `e2096965` (production — 1.5.2 tag, GitHub Release Latest)
-- **stable**: `e2096965` (mirrored from main)
+- **Baseline**: 1.5.4 (Sovereign Baseline) — CERTIFIED
+- **develop**: `99e5744e` (HEAD — pre gospel-drift remediation)
+- **main**: `063b3b65` (production — 1.5.4 tag, GitHub Release Latest)
+- **stable**: `063b3b65` (mirrored from main)
 - **Status**: 100% GREEN (PEAK INTEGRITY)
 - **Heartbeat**: 6/6 scenarios, 72/72 steps — 100% GREEN
 - **Gospel Audit**: GOSPEL-SUCCESS (all Sovereign Artifacts synchronized)
 
-## STRIKE SUMMARY: 1.5.2 Closeout
-- **PR #363** — feat(armor): expose check-tetrad command in vde CLI
-- **PR #365** — fix(docs): remediate peripheral gospel drift for 1.5.2 (14 files)
-- **PR #367** — fix(docs): remediate secondary docs gospel drift + docs/context/ (21 files)
-- **PR #369** — chore(release): merge develop → main for 1.5.2 Sovereign Baseline closeout
-- **Tag 1.5.2** — force-retagged to `e2096965` (new main SHA post-closeout merges)
-- **GitHub Release** — updated to `e2096965`, published as Latest
-- **stable** — mirrored from main @ `e2096965`
+## STRIKE SUMMARY: Purge Stale 1.5.2 References
+- **Issue #408** — fix(docs): purge stale 1.5.2 references and update session handover
+- **PR Pending** — fix(docs): purge stale 1.5.2 references from active documentation
+- **9 documentation files** updated to remove stale version references
+- **session_handover.md** refreshed with current sovereign state
 
-## BRANCHING STRATEGY (POST-1.5.2)
-Future releases use the new three-tier flow:
-1. Feature work on `develop`
-2. Merge `develop` → `stable` (QA/integration gate — let it bake)
-3. Merge `stable` → `main` as official Release (never skip stable)
-4. Retag + GitHub Release always on `main`
+## CHANGES MADE
+1. `docs/guides/getting-started.md` — Renamed from "User Guide" to "Getting Started", removed 1.5.2 references
+2. `docs/governance/vde-protocol.md` — Removed versioned title "(1.5.2)"
+3. `docs/reference/scripts.md` — Removed versioned reference "(1.5.2)"
+4. `docs/operations/mcp-configuration.md` — Removed versioned header "(1.5.2)"
+5. `docs/guides/why-use-vde.md` — Removed versioned DNS discovery claim
+6. `docs/guides/advanced-usage.md` — Removed versioned baseline claim
+7. `.gemini/instructions.md` — Updated instruction set header 1.5.2 → 1.5.4
+8. `VDE_ANALYSIS.md` — Updated baseline version 1.5.2 → 1.5.4
+9. `USE_CASES.md` — Updated verdict version 1.5.2 → 1.5.4
+
+## BRANCHING STRATEGY
+Feature work on `develop` → merge to `stable` (QA) → merge to `main` (Release)
+Retag + GitHub Release always on `main`
 
 ## NEXT STEPS
-- Forge is clean and standing watch on `develop`.
-- No open issues or pending strikes.
-- Ready for Phase 33+ new mission objectives under the new branching strategy.
+- PR #408 pending review and merge
+- After merge: clean up feature branch (local + remote)
+- Forge standing watch on `develop`
 
 **This is the Way.**

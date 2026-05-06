@@ -11,7 +11,7 @@ Overview of all scripts included with VDE.
 
 ### VDE Unified Command (Recommended)
 
-The `vde` command is the canonical entry point for the **Sovereign Evolution (1.5.2)**. It wraps all infrastructure logic in the `vde_run` safety layer, ensuring Zsh purity and system integrity.
+The `vde` command is the canonical entry point for the **Sovereign Evolution**. It wraps all infrastructure logic in the `vde_run` safety layer, ensuring Zsh purity and system integrity.
 
 | Command | Purpose | Usage |
 |---------|---------|-------|
