@@ -23,4 +23,4 @@ assignees: ""
 
 ### **IV. Environment Details**
 - **OS**: 
-- **VDE Version**: (from `docs/VDE-SPEC.md`)
+- **VDE Version**: (from `docs/governance/vde-spec.md`)

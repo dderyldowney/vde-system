@@ -1,6 +1,6 @@
 # VDE-NEW-VM
 <!-- @forge (Governance Sentinel) -->
-Guided workflow to add a new VM type following VDE-SPEC.md.
+Guided workflow to add a new VM type following docs/governance/vde-spec.md.
 
 ## Usage
 /vde-new-vm $ARGUMENTS
@@ -34,7 +34,7 @@ grep "ssh_port" data/vm-types.json | sort
 
 - Scout A: find most similar existing VM in `data/vm-types.json` as data template
 - Scout B: find matching compose template in `configs/docker/` as file template
-- Spec reader: extract required fields from `docs/VDE-SPEC.md` VM configuration section
+- Spec reader: extract required fields from `docs/governance/vde-spec.md` VM configuration section
 
 **Step 4: Implementation Plan**
 
@@ -42,7 +42,7 @@ Present to user:
 ```
 VM TYPE: <name> (<lang|service>)
 SSH PORT: <assigned port>
-SPEC SECTION: <docs/VDE-SPEC.md reference>
+SPEC SECTION: <docs/governance/vde-spec.md reference>
 FILES TO CREATE/MODIFY:
   - data/vm-types.json — add entry
   - configs/docker/vde-<name>/docker-compose.yml — from <template VM>

@@ -6,7 +6,7 @@
 
 ![CI Status](https://github.com/dderyldowney/vde-system/actions/workflows/vde-ci.yml/badge.svg)
 
-A sovereign, template-based ecosystem of Dockerized Spokes. Forged for the warrior who demands absolute isolation, consistent hydration, and governed development. 1.5.2 is the **Sovereign Baseline**, certified through the Proof of Life contract.
+A sovereign, template-based ecosystem of Dockerized Spokes. Forged for the warrior who demands absolute isolation, consistent hydration, and governed development. 1.5.4 is the **Sovereign Baseline**, certified through the Proof of Life contract.
 
 **🛡️ The Sovereign Record:** The default branch for this Forge is `develop` (**The Anvil**). Stable, certified releases reside on `main` (**Production**).
 
@@ -40,7 +40,7 @@ If you are new to the Creed, execute the onboarding ritual:
 
 ```zsh
 # 1. Clone the Baseline
-git clone https://github.com/dderyldowney/vde-system.git ~/vde
+git clone -b stable https://github.com/dderyldowney/vde-system.git ~/vde
 cd ~/vde
 
 # 2. Take the Path of the Foundling
@@ -63,11 +63,11 @@ bin/vde path-of-the-foundling
 
 | Section | Description |
 |---------|-------------|
-| **📘 Warrior's Guide** | [USER_GUIDE.md](USER_GUIDE.md) - Complete walkthrough for students. |
-| **🛠️ Installation** | [VDE_INSTALL.md](VDE_INSTALL.md) - Prerequisite setup and Induction. |
-| **📜 Protocol** | [VDE_PROTOCOL.md](VDE_PROTOCOL.md) - The Laws of the Forge and Branching. |
-| **🤝 Contributing** | [CONTRIBUTING.md](CONTRIBUTING.md) - How to join the Tribe's effort. |
-| **📐 Architecture** | [Architecture 1.5.4](docs/ARCHITECTURE.md) - The Blueprint. |
+| **📘 Warrior's Guide** | [Getting Started](docs/guides/getting-started.md) - Complete walkthrough for students. |
+| **🛠️ Installation** | [Installation Guide](docs/operations/installation.md) - Prerequisite setup and Induction. |
+| **📜 Protocol** | [VDE Protocol](docs/governance/vde-protocol.md) - The Laws of the Forge and Branching. |
+| **🤝 Contributing** | [Contributing](docs/development/contributing.md) - How to join the Tribe's effort. |
+| **📐 Architecture** | [Architecture 1.5.4](docs/architecture/overview.md) - The Blueprint. |
 
 ---
 

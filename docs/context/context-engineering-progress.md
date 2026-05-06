@@ -268,11 +268,11 @@ docs/context/
 - **Workflow Directory**: `docs/context/workflows/`
 
 ### Key Project References
-- **Project Philosophy**: `PROJECT_PHILOSOPHY.md`
+- **Project Philosophy**: `docs/governance/project-philosophy.md`
 - **Architecture Principles**: `ARCHITECTURAL_PRINCIPLES.md`
 - **Project Status**: `PROJECT_STATUS.md`
 - **Main README**: `README.md`
-- **Architecture Doc**: `docs/ARCHITECTURE.md`
+- **Architecture Doc**: `docs/architecture/overview.md`
 
 ---
 
@@ -306,7 +306,7 @@ Once Phase 1 is complete, Phase 2 will create:
 
 ### How to Work on This Project
 
-1. **Always read PROJECT_PHILOSOPHY.md first** - This establishes the Mandalorian Creed framework
+1. **Always read docs/governance/project-philosophy.md first** - This establishes the Mandalorian Creed framework
 2. **Respect the UAP** - ZSH only, zero-host dependency, Born Ready containers
 3. **Follow the hierarchy** - CREED → ARMORER CREED → Tooling/Workflow rules
 4. **Use existing governance documents** - The 9-document Sovereign Artifact Set is authoritative

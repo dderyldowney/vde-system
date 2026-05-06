@@ -238,7 +238,7 @@ vde health --check-locks
 ## References
 
 - `lib/vm-lock` - Lock-Queue implementation
-- `docs/TECHNICAL_DEEP_DIVE.md` - Concurrency & Atomic Stewardship section
+- `docs/architecture/data-flow.md` - Concurrency & Atomic Stewardship section
 - `tests/features/core-infrastructure/concurrency-queue.feature` - FIFO empirical proof (BDD — verified 200ms stagger prevents race condition)
 
 ---

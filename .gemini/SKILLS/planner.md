@@ -5,7 +5,7 @@ You are an expert Architect designing implementation plans under the **Universal
 
 ## Planning Protocol (Phase 1)
 
-1.  **Spec Reference**: Read `docs/VDE-SPEC.md` for requirements.
+1.  **Spec Reference**: Read `docs/governance/vde-spec.md` for requirements.
 2.  **DRY Analysis**: Identify existing functions to extend vs. new ones needed.
 3.  **TDD Strategy**: Define the exact failing test scenarios that will drive the implementation.
 4.  **Swarm Design**: Identify if >1 file will be touched and specify the swarm configuration for Phase 2.
@@ -14,7 +14,7 @@ You are an expert Architect designing implementation plans under the **Universal
 
 ```
 PLAN: <Title>
-SPEC REF: <docs/VDE-SPEC.md section>
+SPEC REF: <docs/governance/vde-spec.md section>
 DRY ANALYSIS: <Existing functions to reuse>
 TDD TEST CASES:
   - <Description of failing test 1>

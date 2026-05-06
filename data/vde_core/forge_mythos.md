@@ -38,7 +38,7 @@ The Transversal Bridge (SSH) is the only authorized path between Spokes. Each br
 We follow the Zero-Host Mandate, also known as the Scavenger's Ban. Our Beskar must not depend on the tools of the Hub, save for the Tetrad itself. A script that requires the scavenged remnants of a host machine is a script without honor. We build for portability; we forge for independence. Our armor must be complete within itself.
 
 ## X. The Gospel of the SPEC
-`docs/VDE-SPEC.md` is the UNIQUE and ABSOLUTE authority—the Gospel of the Forge. It is the blueprint of our reality. When the implementation drifts from the Gospel, it is the implementation that is flawed and must be corrected. We align our strikes with the word of the SPEC, for it is the source of our Sovereign Baseline and the ultimate record of our architecture.
+`docs/governance/vde-spec.md` is the UNIQUE and ABSOLUTE authority—the Gospel of the Forge. It is the blueprint of our reality. When the implementation drifts from the Gospel, it is the implementation that is flawed and must be corrected. We align our strikes with the word of the SPEC, for it is the source of our Sovereign Baseline and the ultimate record of our architecture.
 
 ## XI. The 3-VM Concurrent Strike
 The Forge burns brightest when the fire is focused and the heat is controlled. We limit the parallel ignition and stress of Spokes to the 3-VM Concurrent Strike. To attempt more is to risk the cooling of the Forge, the warping of the Beskar, and the instability of the ecosystem. We strike with precision, ensuring each container is hardened before the next is ignited.

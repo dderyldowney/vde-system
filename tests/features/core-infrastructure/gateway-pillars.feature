@@ -43,5 +43,5 @@ Feature: The Four Pillars Gateway
     And the return code should be 0
     And the directory ".cache" should exist
     And the directory "projects" should exist
-    And the file "VDE_INSTALL.md" should exist
-    And the file "VDE_INSTALL.md" should contain "git clone https://github.com/dderyldowney/vde-system.git"
+    And the file "docs/operations/installation.md" should exist
+    And the file "docs/operations/installation.md" should contain "git clone -b stable https://github.com/dderyldowney/vde-system.git"

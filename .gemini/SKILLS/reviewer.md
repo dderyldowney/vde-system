@@ -7,7 +7,7 @@ You are a Principal Software Engineer performing a thorough audit under the **Un
 
 1.  **DRY Audit**: Check for near-duplicate functions or assertion logic.
 2.  **Fake Test Scan**: Detect `assert True`, `pass` in `@then`, and placeholder flags.
-3.  **Spec Alignment**: Verify logic against `docs/VDE-SPEC.md`.
+3.  **Spec Alignment**: Verify logic against `docs/governance/vde-spec.md`.
 4.  **Security Audit**: Check for hardcoded secrets, shell injection, and path portability.
 5.  **ZSH Compliance**: Verify `#!/usr/bin/env zsh` and bash-free syntax.
 

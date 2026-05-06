@@ -250,9 +250,9 @@ vde port --list
 
 ## References
 
-- `ARCHITECTURE.md` - System architecture overview
-- `TECHNICAL_DEEP_DIVE.md` - Advanced orchestration details
-- `VDE-SPEC.md` - Hub specifications and requirements
+- `docs/architecture/overview.md` - System architecture overview
+- `docs/architecture/data-flow.md` - Advanced orchestration details
+- `docs/governance/vde-spec.md` - Hub specifications and requirements
 - `lib/vde-core` - Core implementation
 
 ---

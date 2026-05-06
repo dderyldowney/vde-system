@@ -384,7 +384,7 @@ vde ps --all | awk '{print $1}' | xargs -I {} vde stop {}
 
 ## References
 
-- `VDE-SPEC.md` - Mandate L (Proof of Life Contract)
+- `docs/governance/vde-spec.md` - Mandate L (Proof of Life Contract)
 - `docs/Lifecycle_Of_A_Spoke.md` - Detailed lifecycle documentation
 - `lib/vde-core` - Core lifecycle implementation
 - `tests/features/lifecycle.feature` - BDD lifecycle tests

@@ -174,7 +174,7 @@ fi
 
 ## References
 
-- `docs/TECHNICAL_DEEP_DIVE.md` - Born Ready (BTO) section
+- `docs/architecture/data-flow.md` - Born Ready (BTO) section
 - `lib/vde-docker` - Container build and management
 - `scripts/vde-entrypoint.zsh` - Container entrypoint
 - `bin/vde-rebuild` - Container rebuild command

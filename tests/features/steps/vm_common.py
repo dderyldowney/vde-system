@@ -41,8 +41,8 @@ ALLOW_CLEANUP = IN_CONTAINER or IN_TEST_MODE
 
 
 def vde_get_version():
-    """Extract the current VDE version from docs/VDE-SPEC.md."""
-    spec_file = VDE_ROOT / "docs" / "VDE-SPEC.md"
+    """Extract the current VDE version from docs/governance/vde-spec.md."""
+    spec_file = VDE_ROOT / "docs" / "governance" / "vde-spec.md"
     if not spec_file.exists():
         return "0.0.0-unknown"
     
