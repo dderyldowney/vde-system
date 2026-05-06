@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # @forge (Governance Sentinel)
 """
-Generate USER_GUIDE.md from PASSING BDD test scenarios only.
+Generate docs/guides/getting-started.md from PASSING BDD test scenarios only.
 
 This script:
 1. Reads Behave JSON output to identify which scenarios passed
@@ -21,7 +21,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).parent.parent.parent
 FEATURES_DIR = REPO_ROOT / "tests" / "features"
 BEHAVE_JSON_FILE = REPO_ROOT / "tests" / "behave-results.json"
-OUTPUT_FILE = REPO_ROOT / "USER_GUIDE.md"
+OUTPUT_FILE = REPO_ROOT / "docs/guides/getting-started.md"
 INTROS_YAML_FILE = REPO_ROOT / "docs" / "user-guide-intros.yml"
 VM_TYPES_CONF_FILE = REPO_ROOT / "data" / "vm-types.conf"
 
@@ -948,7 +948,7 @@ Look at you go! You now have:
 
 def generate_user_guide(passing_scenarios=None):
     """
-    Generate the complete USER_GUIDE.md with only passing scenarios.
+    Generate the complete docs/guides/getting-started.md with only passing scenarios.
 
     Phase 2 Fix: Loads intros from YAML instead of hardcoded dict
     Phase 3 Fix: Actually writes scenarios to the guide (was broken before)

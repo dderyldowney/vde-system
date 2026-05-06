@@ -338,9 +338,9 @@ vde enter <alias>
 
 ## References
 
-- `ARCHITECTURE.md` - Hub-and-Spoke model
+- `docs/architecture/overview.md` - Hub-and-Spoke model
 - `docs/Lifecycle_Of_A_Spoke.md` - Detailed lifecycle documentation
-- `TECHNICAL_DEEP_DIVE.md` - Universal Script Parity section
+- `docs/architecture/data-flow.md` - Universal Script Parity section
 - `scripts/vde-entrypoint.zsh` - Universal entrypoint implementation
 
 ---

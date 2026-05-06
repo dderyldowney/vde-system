@@ -1,6 +1,6 @@
 # VDE-SPEC
 <!-- @forge (Governance Sentinel) -->
-Compare implementation against VDE-SPEC.md — find gaps and violations.
+Compare implementation against docs/governance/vde-spec.md — find gaps and violations.
 
 ## Usage
 /vde-spec $ARGUMENTS
@@ -11,7 +11,7 @@ Compare implementation against VDE-SPEC.md — find gaps and violations.
 
 **Step 1: Load Spec Context**
 
-Read `docs/VDE-SPEC.md`. Focus on `$ARGUMENTS` section if specified; otherwise audit all sections.
+Read `docs/governance/vde-spec.md`. Focus on `$ARGUMENTS` section if specified; otherwise audit all sections.
 
 **Step 2: Compliance Swarm (spawn simultaneously per spec section)**
 
@@ -30,7 +30,7 @@ For each spec requirement:
 **Step 4: Report**
 
 ```
-SPEC VERSION: <from docs/VDE-SPEC.md header>
+SPEC VERSION: <from docs/governance/vde-spec.md header>
 SCOPE: <section audited>
 
 COMPLIANT: <N requirements>
@@ -41,4 +41,4 @@ VIOLATIONS (differs from spec): <list with file:line>
 RECOMMENDATION: <prioritized action list>
 ```
 
-NOTE: Spec modifications require explicit user authorization. Report gaps; do not silently change VDE-SPEC.md.
+NOTE: Spec modifications require explicit user authorization. Report gaps; do not silently change docs/governance/vde-spec.md.

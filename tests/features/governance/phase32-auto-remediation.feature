@@ -17,9 +17,9 @@ Feature: Phase 32 - Forge Intelligence & Auto-Remediation
     And the schema validation must pass for "data/vm-types.json"
 
   Scenario: Empirical Proof: Gospel Version Synchronization
-    Given I intentionally drift the version in "RELEASE_NOTES.md" to "0.0.1"
+    Given I intentionally drift the version in "docs/changelogs/current.md" to "0.0.1"
     When I execute "bin/vde heal"
-    Then the file "RELEASE_NOTES.md" should contain the Sovereign Baseline version "1.5.4"
+    Then the file "docs/changelogs/current.md" should contain the Sovereign Baseline version "1.5.4"
     And the Gospel Audit must report "synchronized"
 
   Scenario: Empirical Proof: Path Leak Remediation (Blockade Simulation)

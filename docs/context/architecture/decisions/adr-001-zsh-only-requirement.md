@@ -96,8 +96,8 @@ Any file using bash-specific syntax or bash shebang constitutes a Class-A violat
 - `bin/vde-enforce-uap.zsh` - UAP Sentinel implementation
 - `bin/check-zsh-shebang.zsh` - Shebang validation script
 - `lib/vde-shell-compat` - Shell compatibility library
-- `docs/TECHNICAL_DEEP_DIVE.md` - Technical details on enforcement
-- `PROJECT_PHILOSOPHY.md` - Epistemic architecture rationale
+- `docs/architecture/data-flow.md` - Technical details on enforcement
+- `docs/governance/project-philosophy.md` - Epistemic architecture rationale
 
 ---
 

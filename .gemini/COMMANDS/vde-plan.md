@@ -12,7 +12,7 @@ Plan a VDE feature or fix following the Phase 0-1 UAP mandates.
 The Main Agent MUST spawn a scout swarm simultaneously to establish ground truth:
 - Scout Agent: Explore codebase for DRY reuse opportunities.
 - Memory MCP: Query cross-session context.
-- sequential-thinking MCP: Analyze requirements against VDE-SPEC.md.
+- sequential-thinking MCP: Analyze requirements against docs/governance/vde-spec.md.
 
 ### Phase 1: Plan Construction
 Using swarm results, the Planner Agent designs a strategy that includes:

@@ -69,22 +69,22 @@ VDE is a sovereign, template-based ecosystem of Dockerized Spokes designed for d
 
 ### Sovereign Artifact Set (The Gospel - Authoritative Documents)
 These 9 documents move as a single artifact and must be in perfect agreement before any release:
-1. `ARCHITECTURE.md` - High-level system design and structural principles
-2. `TECHNICAL_DEEP_DIVE.md` - Granular component logic and workflows
-3. `RELEASE_NOTES.md` - Historical record of all Sovereign Baseline releases
-4. `VDE-SPEC.md` - Version authority and system laws (The Gospel Lead)
+1. `docs/architecture/overview.md` - High-level system design and structural principles
+2. `docs/architecture/data-flow.md` - Granular component logic and workflows
+3. `docs/changelogs/current.md` - Historical record of all Sovereign Baseline releases
+4. `docs/governance/vde-spec.md` - Version authority and system laws (The Gospel Lead)
 5. `USE_CASES.md` - Defines the "Why" and filters work by educational value
 6. `VDE_ANALYSIS.md` - Research findings and empirical engineering verdicts
 7. `PROJECT_STATUS.md` - Authoritative record of active system health and state
-8. `SOVEREIGN_CHARTER.md` - The dual-mission constitution (Armor + Forge)
-9. `STDLIB.md` - The main library reference
+8. `docs/governance/sovereign-charter.md` - The dual-mission constitution (Armor + Forge)
+9. `docs/api/library-api.md` - The main library reference
 
 ### Additional Essential Documentation
-- `PROJECT_PHILOSOPHY.md` - The Mandalorian Creed framework and epistemic architecture
-- `VDE_EPISTEMIC_MAPPING.md` - VDE governance mapped to arxiv 2506.17331 (epistemic integrity)
-- `docs/GITHUB_LIFECYCLE.md` - Signet (Issue) and Chronicle (PR) rituals
-- `VDE_PROTOCOL.md` - The Laws of the Forge and branching strategy
-- `USER_GUIDE.md` - Complete walkthrough for students
+- `docs/governance/project-philosophy.md` - The Mandalorian Creed framework and epistemic architecture
+- `docs/governance/vde-epistemic-mapping.md` - VDE governance mapped to arxiv 2506.17331 (epistemic integrity)
+- `docs/development/github-lifecycle.md` - Signet (Issue) and Chronicle (PR) rituals
+- `docs/governance/vde-protocol.md` - The Laws of the Forge and branching strategy
+- `docs/guides/getting-started.md` - Complete walkthrough for students
 
 ---
 

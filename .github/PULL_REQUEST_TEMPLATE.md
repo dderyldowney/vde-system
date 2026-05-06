@@ -41,7 +41,7 @@
 - [ ] **Gateway Passed**: \`gateway-pillars.feature\` is 100% successful.
 - [ ] **Proof of Life**: \`proof-of-life-the-contract.feature\` is certified.
 - [ ] **Dual-Gate Review**: Code-reviewer sub-agent has audited and approved the changes.
-- [ ] **Documentation**: \`USER_GUIDE.md\` and \`VDE_INSTALL.md\` are updated.
+- [ ] **Documentation**: \`docs/guides/getting-started.md\` and \`docs/operations/installation.md\` are updated.
 
 ---
 **This is the Way.**

@@ -46,15 +46,15 @@ zsh "./bin/vde-sync-version"
 echo -e "${GREEN}[HEAL]${NC} Synchronizing Artifact Dates..."
 CURRENT_DATE=$(date +%Y-%m-%d)
 SOVEREIGN_ARTIFACTS=(
-    "docs/ARCHITECTURE.md"
-    "docs/TECHNICAL_DEEP_DIVE.md"
-    "RELEASE_NOTES.md"
-    "docs/VDE-SPEC.md"
+    "docs/architecture/overview.md"
+    "docs/architecture/data-flow.md"
+    "docs/changelogs/current.md"
+    "docs/governance/vde-spec.md"
     "USE_CASES.md"
     "VDE_ANALYSIS.md"
     "PROJECT_STATUS.md"
-    "docs/SOVEREIGN_CHARTER.md"
-    "docs/STDLIB.md"
+    "docs/governance/sovereign-charter.md"
+    "docs/api/library-api.md"
 )
 
 # Portable Sed Helper

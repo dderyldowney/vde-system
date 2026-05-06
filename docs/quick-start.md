@@ -50,9 +50,9 @@ When you ran `bin/vde path-of-the-foundling`:
 
 ## Next Steps
 
-- **User Guide**: Read the full [USER_GUIDE.md](../USER_GUIDE.md) for advanced rituals.
-- **Foundling Guide**: Read [docs/FOUNDLING_GUIDE.md](./FOUNDLING_GUIDE.md) for a simplified manual.
-- **Reference**: See [Command Reference](./command-reference.md) for all rituals.
+- **User Guide**: Read the full [User Guide](./guides/getting-started.md) for advanced rituals.
+- **Foundling Guide**: Read [Foundling Guide](./guides/foundling-guide.md) for a simplified manual.
+- **Reference**: See [Command Reference](./reference/commands.md) for all rituals.
 
 ---
 

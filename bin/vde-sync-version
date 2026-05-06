@@ -40,28 +40,28 @@ vde_sed_inplace() {
 # These four files MUST move as a single artifact set for every Sovereign Baseline.
 vde_log_info "Synchronizing Sovereign Artifact Set..." "forge"
 
-# 4.1 Strike docs/VDE-SPEC.md (The Beskar Source)
-vde_sed_inplace "s/Version: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Version: ${NEW_VER}/" "./docs/VDE-SPEC.md"
-vde_sed_inplace "s/ARCHITECTURE [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/ARCHITECTURE ${NEW_VER} (The Sovereign Baseline)/" "./docs/VDE-SPEC.md"
-vde_sed_inplace "s/^# VDE-SPEC [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?([[:space:]]+\(.*\))?/# VDE-SPEC ${NEW_VER} (The Sovereign Evolution)/" "./docs/VDE-SPEC.md"
-vde_log_success "Aligned docs/VDE-SPEC.md" "forge"
+# 4.1 Strike docs/governance/vde-spec.md (The Beskar Source)
+vde_sed_inplace "s/Version: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Version: ${NEW_VER}/" "./docs/governance/vde-spec.md"
+vde_sed_inplace "s/ARCHITECTURE [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/ARCHITECTURE ${NEW_VER} (The Sovereign Baseline)/" "./docs/governance/vde-spec.md"
+vde_sed_inplace "s/^# VDE-SPEC [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?([[:space:]]+\(.*\))?/# VDE-SPEC ${NEW_VER} (The Sovereign Evolution)/" "./docs/governance/vde-spec.md"
+vde_log_success "Aligned docs/governance/vde-spec.md" "forge"
 
-# 4.2 Strike docs/ARCHITECTURE.md
-vde_sed_inplace "1s/^# ARCHITECTURE .*/# ARCHITECTURE ${NEW_VER} (The Sovereign Baseline)/" "./docs/ARCHITECTURE.md"
-vde_log_success "Aligned docs/ARCHITECTURE.md" "forge"
+# 4.2 Strike docs/architecture/overview.md
+vde_sed_inplace "1s/^# ARCHITECTURE .*/# ARCHITECTURE ${NEW_VER} (The Sovereign Baseline)/" "./docs/architecture/overview.md"
+vde_log_success "Aligned docs/architecture/overview.md" "forge"
 
-# 4.3 Strike docs/TECHNICAL_DEEP_DIVE.md (The Archive Record)
-vde_sed_inplace "s/# VDE: Technical Deep-Dive \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*\)/# VDE: Technical Deep-Dive (${NEW_VER} Sovereign)/" "./docs/TECHNICAL_DEEP_DIVE.md"
-vde_sed_inplace "s/^Version: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Version: ${NEW_VER}/" "./docs/TECHNICAL_DEEP_DIVE.md"
-vde_log_success "Aligned docs/TECHNICAL_DEEP_DIVE.md" "forge"
+# 4.3 Strike docs/architecture/data-flow.md (The Archive Record)
+vde_sed_inplace "s/# VDE: Technical Deep-Dive \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*\)/# VDE: Technical Deep-Dive (${NEW_VER} Sovereign)/" "./docs/architecture/data-flow.md"
+vde_sed_inplace "s/^Version: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Version: ${NEW_VER}/" "./docs/architecture/data-flow.md"
+vde_log_success "Aligned docs/architecture/data-flow.md" "forge"
 
-# 4.4 Strike docs/SOVEREIGN_CHARTER.md
-vde_sed_inplace "s/# THE VDE SOVEREIGN CHARTER v[0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/# THE VDE SOVEREIGN CHARTER v${NEW_VER}/" "./docs/SOVEREIGN_CHARTER.md"
-vde_log_success "Aligned docs/SOVEREIGN_CHARTER.md" "forge"
+# 4.4 Strike docs/governance/sovereign-charter.md
+vde_sed_inplace "s/# THE VDE SOVEREIGN CHARTER v[0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/# THE VDE SOVEREIGN CHARTER v${NEW_VER}/" "./docs/governance/sovereign-charter.md"
+vde_log_success "Aligned docs/governance/sovereign-charter.md" "forge"
 
-# 4.5 Strike docs/STDLIB.md
-vde_sed_inplace "s/\*\*Version\*\*:[ ]+[0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/\*\*Version\**: ${NEW_VER}/" "./docs/STDLIB.md"
-vde_log_success "Aligned docs/STDLIB.md" "forge"
+# 4.5 Strike docs/api/library-api.md
+vde_sed_inplace "s/\*\*Version\*\*:[ ]+[0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/\*\*Version\**: ${NEW_VER}/" "./docs/api/library-api.md"
+vde_log_success "Aligned docs/api/library-api.md" "forge"
 
 # 4.6 Strike data/vm-types.json
 vde_sed_inplace "s/\"version\":[ ]+\"[^\"]+\"/\"version\": \"${NEW_VER}\"/" "./data/vm-types.json"
@@ -106,27 +106,27 @@ vde_sed_inplace "s/# The Way of the VDE: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/#
 vde_sed_inplace "s/Architecture [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Architecture ${NEW_VER}/g" "./README.md"
 vde_log_success "Aligned README.md" "forge"
 
-# 11. Strike docs/API.md
-vde_sed_inplace "s/\*\*Version:\*\* [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/\*\*Version:\*\* ${NEW_VER} (The Sovereign Baseline)/" "./docs/API.md"
-vde_log_success "Aligned docs/API.md" "forge"
+# 11. Strike docs/api/cli-api.md
+vde_sed_inplace "s/\*\*Version:\*\* [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/\*\*Version:\*\* ${NEW_VER} (The Sovereign Baseline)/" "./docs/api/cli-api.md"
+vde_log_success "Aligned docs/api/cli-api.md" "forge"
 
-# 12. Strike docs/TESTING.md
-vde_sed_inplace "s/# VDE Testing Strategy - [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/# VDE Testing Strategy - ${NEW_VER} (The Sovereign Baseline)/" "./docs/TESTING.md"
-vde_sed_inplace "s/## 2. BDD PERFORMANCE METRICS \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?\)/## 2. BDD PERFORMANCE METRICS (${NEW_VER})/" "./docs/TESTING.md"
-vde_sed_inplace "s/\*\*Status:\*\* SYSTEM CERTIFIED \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?\)/\*\*Status:\*\* SYSTEM CERTIFIED (${NEW_VER})/" "./docs/TESTING.md"
-vde_log_success "Aligned docs/TESTING.md" "forge"
+# 12. Strike docs/development/testing.md
+vde_sed_inplace "s/# VDE Testing Strategy - [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/# VDE Testing Strategy - ${NEW_VER} (The Sovereign Baseline)/" "./docs/development/testing.md"
+vde_sed_inplace "s/## 2. BDD PERFORMANCE METRICS \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?\)/## 2. BDD PERFORMANCE METRICS (${NEW_VER})/" "./docs/development/testing.md"
+vde_sed_inplace "s/\*\*Status:\*\* SYSTEM CERTIFIED \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?\)/\*\*Status:\*\* SYSTEM CERTIFIED (${NEW_VER})/" "./docs/development/testing.md"
+vde_log_success "Aligned docs/development/testing.md" "forge"
 
-# 13. Strike docs/extending-vde.md
-vde_sed_inplace "s/## Current VM Types \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/## Current VM Types (${NEW_VER} The Sovereign Baseline)/" "./docs/extending-vde.md"
-vde_log_success "Aligned docs/extending-vde.md" "forge"
+# 13. Strike docs/guides/extending-vde.md
+vde_sed_inplace "s/## Current VM Types \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/## Current VM Types (${NEW_VER} The Sovereign Baseline)/" "./docs/guides/extending-vde.md"
+vde_log_success "Aligned docs/guides/extending-vde.md" "forge"
 
 # 15. Strike .gemini_security/REMEDIATION_PLAN.md
 vde_sed_inplace "s/# VDE Remediation Strike Plan \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*\)/# VDE Remediation Strike Plan (${NEW_VER} Sovereign)/" "./.gemini_security/REMEDIATION_PLAN.md"
 vde_log_success "Aligned .gemini_security/REMEDIATION_PLAN.md" "forge"
 
-# 16. Strike VDE_PROTOCOL.md
-vde_sed_inplace "s/# VDE Project Protocol \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?\)/# VDE Project Protocol (${NEW_VER})/" "./VDE_PROTOCOL.md"
-vde_log_success "Aligned VDE_PROTOCOL.md" "forge"
+# 16. Strike docs/governance/vde-protocol.md
+vde_sed_inplace "s/# VDE Project Protocol \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?\)/# VDE Project Protocol (${NEW_VER})/" "./docs/governance/vde-protocol.md"
+vde_log_success "Aligned docs/governance/vde-protocol.md" "forge"
 
 # 16.1 Strike USE_CASES.md and VDE_ANALYSIS.md (Sovereign Artifact Set)
 vde_sed_inplace "s/\*\*Baseline\*\*: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/\*\*Baseline\*\*: ${NEW_VER}/" "./USE_CASES.md"

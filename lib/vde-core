@@ -25,11 +25,11 @@
 # -----------------------
 # VDE Versioning
 # -----------------------
-# The Rule of One: Extract version from the Beskar Source (docs/VDE-SPEC.md)
+# The Rule of One: Extract version from the Beskar Source (docs/governance/vde-spec.md)
 vde_get_version() {
     # Resolve the root directory relative to the current context
     local root="${VDE_ROOT_DIR:-.}"
-    local spec_file="${root}/docs/VDE-SPEC.md"
+    local spec_file="${root}/docs/governance/vde-spec.md"
 
     if [[ -f "${spec_file}" ]]; then
         # Extracts version from "# VDE-SPEC [v]1.5.4 (The Sovereign Baseline)"
