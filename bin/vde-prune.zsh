@@ -50,7 +50,7 @@ safe_mv() {
 echo "Commencing the Forge's Ingot Stash Ritual (Timeframe: ${TIMEFRAME}, ${minutes}m)..."
 
 # Extract the Sovereign Baseline
-CURRENT_BASELINE=$(grep -oP '(?<=Version: )\S+' "${VDE_ROOT}/docs/governance/vde-spec.md")
+CURRENT_BASELINE=$(awk '/^Version:/ {print $2; exit}' "${VDE_ROOT}/docs/governance/vde-spec.md")
 echo "Protecting Sovereign Baseline: ${CURRENT_BASELINE}"
 
 # 1. Hard Stop Delete (> timeframe) "No Mercy"
