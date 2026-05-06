@@ -12,23 +12,24 @@ This document defines the **MANDATORY** development lifecycle and behavioral con
 
 **DO NOT EXECUTE ANY TASK OR WRITE ANY CODE UNTIL THIS CHECKLIST IS COMPLETE.**
 
-The main agent MUST complete these 8 steps sequentially before doing *anything else* (other than read-only discovery to find these files). 
+The main agent MUST complete these 10 steps sequentially before doing *anything else* (other than read-only discovery to find these files). 
 *Note: Sub-agents inherit this context and MUST skip these steps to begin their assigned task immediately.*
 
-1.  **Read @MEMORY.md**: Understand the current project mission, recent achievements, and immediate focus.
-2.  **Read @session_handover.md**: Identify the specific goals and constraints of the current session.
-3.  **Read @plans/session_handover_remediation.md**: Identify strategic debt and pending fixes.
-4.  **Read @docs/governance/vde-spec.md**: Refresh knowledge of authoritative technical requirements and implementation priority.
-5.  **Read @PROJECT_STATUS.md**: Understand the current reliability, pass rates, and identified gaps.
+1.  **Read @.gemini/instructions.md**: Read and apply the file following all instructions.
+2.  **Read @MEMORY.md**: Understand the current project mission, recent achievements, and immediate focus.
+3.  **Read @session_handover.md**: Identify the specific goals and constraints of the current session.
+4.  **Read @plans/session_handover_remediation.md**: Identify strategic debt and pending fixes.
+5.  **Read @docs/governance/vde-spec.md**: Refresh knowledge of authoritative technical requirements and implementation priority.
+6.  **Read @PROJECT_STATUS.md**: Understand the current reliability, pass rates, and identified gaps.
 
-6.  **THE SOVEREIGN STARTUP RITUAL**: The Alor (Main Agent) MUST execute these three rituals in strict sequence upon session ignition. Sub-agents (Verd'ika) are strictly forbidden from running these steps — they inherit the Alor's certification.
+7.  **THE SOVEREIGN STARTUP RITUAL**: The Alor (Main Agent) MUST execute these three rituals in strict sequence upon session ignition. Sub-agents (Verd'ika) are strictly forbidden from running these steps — they inherit the Alor's certification.
     - `bin/vde-enforce-uap.zsh` (Sovereign Audit)
     - `bin/vde-spine-check.zsh` (Spine Check)
     - `python3 -m behave tests/features/core-infrastructure/proof-of-life-the-contract.feature` (Proof of Life)
 
-7.  **Query `memory` MCP**: Retrieve cross-session context and semantically relevant conversation history.
-8.  **Refresh Library Documentation**: Use `context7` to fetch up-to-date documentation for any relevant libraries or frameworks.
-9.  **Perform Housekeeping**: Strip dead logs, remove unused code, and meticulously verify `bin/` script compliance (ZSH shebangs only).
+8.  **Query `memory` MCP**: Retrieve cross-session context and semantically relevant conversation history.
+9.  **Refresh Library Documentation**: Use `context7` to fetch up-to-date documentation for any relevant libraries or frameworks.
+10.  **Perform Housekeeping**: Strip dead logs, remove unused code, and meticulously verify `bin/` script compliance (ZSH shebangs only).
 
 ---
 
