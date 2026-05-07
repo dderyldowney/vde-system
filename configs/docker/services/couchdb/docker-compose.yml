@@ -12,7 +12,6 @@ services:
         VM_NAME: couchdb
         PKGS_TO_INSTALL: ""
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/couchdb-init.zsh"
-        POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
         UID: 1000
         GID: 1000

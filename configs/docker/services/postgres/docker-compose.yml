@@ -12,7 +12,6 @@ services:
         VM_NAME: postgres
         PKGS_TO_INSTALL: ""
         CUSTOM_BUILD_CMD: "zsh /vde/scripts/setup/postgres-init.zsh"
-        POSTGRES_DEV_PASSWORD: "${POSTGRES_DEV_PASSWORD}"
         USERNAME: devuser
         UID: 1000
         GID: 1000
