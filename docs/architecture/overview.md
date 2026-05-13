@@ -19,7 +19,8 @@
 - **Bridges**: Secure transversal connections (SSH, socat) between the Hub and Spokes.
 - **Unified Command Router (`bin/vde`)**: A centralized CLI orchestrator that routes all operations, including Spoke lifecycles and infrastructure tasks (`vde ssh-setup`, `vde ssh-sync`), ensuring all execution occurs under the UAP Enforcer.
 - **Initialization Ritual (`vde init`)**: The automated process of forging keys and priming configurations to transform a raw clone into a battle-ready Hub. Subject to the **SSH Hard Rule**, missing keys are generated inline without restarting the process.
-- **Path of the Foundling (`vde path-of-the-foundling`)**: The interactive induction script for new students.
+- **Path of the Foundling (`vde path-of-the-foundling`)**: The interactive induction script for new students. Launched automatically by the bootstrap script below.
+- **Bootstrap (`scripts/bootstrap.sh`)**: The front door. A POSIX-compatible script that checks the 4 pillars, clones VDE, and launches onboarding. Works in any shell before Zsh is installed.
 
 ## 3. Security posture (The Beskar)
 

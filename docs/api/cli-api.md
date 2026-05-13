@@ -150,6 +150,14 @@ vde <command> [options] [args]
 |---------|---------|-------------|
 | `path-of-the-foundling` | `foundling` | Interactive induction ritual for new students |
 
+#### Bootstrap (Pre-Install)
+
+```zsh
+bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh)
+```
+
+Checks the 4 pillars, clones VDE, and launches `path-of-the-foundling`. Works in any shell (bash or zsh).
+
 ---
 
 ## 3. Library API

@@ -10,13 +10,15 @@ Welcome to the **Virtualized Development Environment (VDE)**. This guide is your
 
 ## 1. Onboarding: The Path of the Foundling
 
-If you have just cloned the repository, your first strike MUST be the **Path of the Foundling**. This ritual handles the initial configuration, runs `vde init` for you, and certifies your Forge while teaching you the core commands in order.
+**One command gets you everything:**
 
 ```zsh
-bin/vde path-of-the-foundling
+bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh)
 ```
 
-### The Lifecycle You Will Learn:
+This checks your system, clones VDE, and launches the onboarding ritual. If anything's missing, it tells you exactly what to install.
+
+The onboarding ritual (`path-of-the-foundling`) then walks you through the lifecycle:
 1.  **`vde init`**: The Initialization Ritual. Hydrates your Hub and generates your `vde_student` SSH identity key.
 2.  **`vde create <alias>`**: The Smelting Ritual. Creates an immutable Docker image for a Spoke.
 3.  **`vde start <alias>`**: The Ignition Ritual. Brings the Spoke to life as a running container.
