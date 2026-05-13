@@ -6,9 +6,28 @@ Welcome, Foundling. To ignite your own Forge and walk the path of the VDE, you m
 
 ---
 
-## 1. Prerequisites (The Unyielding Tetrad)
+## 1. One-Command Install (The Fast Path)
 
-Before you begin, ensure these four pillars are active. Once you are in a Zsh terminal (native or WSL2), the VDE rituals are universal across Linux, macOS, and Windows.
+Run this in any terminal (bash or zsh):
+
+```zsh
+bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh)
+```
+
+This single command will:
+
+1. **Check the 4 pillars** (Zsh, Git, Docker, SSH) and tell you exactly what to install if anything's missing.
+2. **Clone VDE** from the `stable` branch.
+3. **Launch the onboarding ritual** (`path-of-the-foundling`) which sets up SSH keys, builds the base image, and walks you through your first spoke.
+4. **Add VDE to your PATH** automatically.
+
+If anything is missing, the script prints the one command you need to fix it. Re-run the bootstrap command after installing.
+
+---
+
+## 2. Platform-Specific Prerequisites (If You Prefer Manual Setup)
+
+The 4 pillars below are required. The bootstrap script checks for all of them automatically — but if you want to install them yourself first:
 
 | Pillar | Requirement | Purpose |
 | :--- | :--- | :--- |
@@ -17,10 +36,7 @@ Before you begin, ensure these four pillars are active. Once you are in a Zsh te
 | **III. Docker** | Desktop / Engine | The World-Forge for your Spokes. |
 | **IV. SSH** | Agent Active | The Transversal Bridge to your Spokes. |
 
-### 🏁 Platform-Specific Setup
-
-#### 🪟 Windows (The WSL2 Path)
-For Windows users, the journey begins by creating a Linux sanctuary:
+### 🪟 Windows (The WSL2 Path)
 1.  **Enable WSL2**: Open PowerShell as Administrator and run `wsl --install`. Restart your computer.
 2.  **Install Ubuntu**: If it didn't install automatically, find "Ubuntu" in the Microsoft Store and launch it.
 3.  **Install Docker Desktop**: Download and install [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop). In Settings, ensure **"Use the WSL 2 based engine"** is enabled and your Ubuntu distribution is checked under **Resources > WSL Integration**.
@@ -30,50 +46,28 @@ For Windows users, the journey begins by creating a Linux sanctuary:
     sudo apt update && sudo apt install zsh git openssh-client -y
     ```
 
-#### 🍎 macOS
+### 🍎 macOS
 1.  **Install Docker Desktop**: Download and install [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop).
 2.  **Install Git**: Open Terminal and run `git --version` (macOS will prompt to install command line tools if missing).
 3.  **Zsh**: macOS uses Zsh by default. Verify with `zsh --version`.
 4.  **SSH**: OpenSSH is built into macOS. Verify with `ssh -V`.
 
-#### 🐧 Linux
+### 🐧 Linux
 1.  **Install Docker**: Follow the [official engine installation](https://docs.docker.com/engine/install/) for your distro.
 2.  **Install Prereqs**: Use your package manager to install `zsh`, `git`, and `openssh-client` (e.g., `sudo apt install zsh git openssh-client`).
 
 ---
 
-## 2. Installation Sequence (The Fast Path)
+## 3. Manual Installation
 
-Once your prerequisites are verified and you are in a **Zsh shell**, the journey is universal:
+If you prefer to set everything up yourself:
 
-### Step 1: Clone the Baseline
 ```zsh
 git clone -b stable https://github.com/dderyldowney/vde-system.git ~/VDE
 cd ~/VDE
-```
-
-### Step 2: Take the Path of the Foundling (MANDATORY)
-The `path-of-the-foundling` ritual is the **unique mechanism** for initial configuration and system certification. It will guide you through the hydration of your Forge, perform the `vde init` ritual automatically, and teach you the lifecycle of the Beskar.
-
-```zsh
 bin/vde path-of-the-foundling
 ```
 
-**This ritual automates:**
-1.  **Bootstrap**: Generating your `vde_student` SSH identity key.
-2.  **Initialization (`init`)**: Hydrating core infrastructure, networks, and registries.
-3.  **Certification**: Forging and entering your first development Spoke.
-4.  **Sentinel Activation**: Installing the Git hooks that guard the Rule Spine.
-
----
-
-## 3. Post-Installation
-
-Add the VDE rituals to your shell's environment to ensure they are available from anywhere:
-
-```zsh
-echo 'export PATH="$HOME/vde/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
-```
+The `path-of-the-foundling` ritual is the onboarding mechanism. It performs `vde init` automatically, sets up your `vde_student` SSH identity, builds the base image, and walks you through creating your first Python spoke.
 
 **This is the Way.**

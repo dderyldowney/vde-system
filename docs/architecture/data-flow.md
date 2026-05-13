@@ -138,9 +138,10 @@ VDE has evolved its core requirement checks and hydration rituals:
 
 ## 11. The Path of the Foundling (Onboarding)
 
-To reduce onboarding friction for new students, VDE provides an automated induction ritual:
-- **Foundling Guide**: A high-level philosophical and practical manual at `docs/guides/foundling-guide.md`.
+To reduce onboarding friction for new students, VDE provides a layered induction system:
+- **Bootstrap (`scripts/bootstrap.sh`)**: The front door. A POSIX-compatible script that checks the 4 pillars on any platform, clones VDE from `stable`, and launches the onboarding. Works in bash before Zsh is installed.
 - **Interactive Induction**: `bin/vde-path-of-the-foundling` guides the user through their first Ignition, Spine Check, and Spoke Forge, certifying them as battle-ready without requiring deep architectural knowledge.
+- **Foundling Guide**: A high-level philosophical and practical manual at `docs/guides/foundling-guide.md`.
 
 ## 12. DNS Discovery & Bridging (Phase 31)
 

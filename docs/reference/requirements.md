@@ -59,7 +59,13 @@ ssh -V
 ```
 
 ### Initial Certification
-If you have just cloned the repository, run the induction ritual to automatically configure your environment and verify all requirements:
+If you have just cloned the repository, the fastest path is the bootstrap script:
+
+```zsh
+bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh)
+```
+
+Or run the induction ritual manually:
 
 ```zsh
 bin/vde path-of-the-foundling
