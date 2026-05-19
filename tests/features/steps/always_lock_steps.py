@@ -16,7 +16,10 @@ from pathlib import Path
 from behave import given, when, then
 
 # ── paths ──────────────────────────────────────────────────────────────────
-_FILE  = __file__ if '__file__' in dir() else os.path.abspath('.')
+try:
+    _FILE = __file__
+except NameError:
+    _FILE = os.path.abspath('.')
 _STEPS = os.path.dirname(os.path.abspath(_FILE))
 if _STEPS not in sys.path:
     sys.path.insert(0, _STEPS)
@@ -34,16 +37,6 @@ def _env():
     e["VDE_TEST_MODE"] = "1"
     e["VDE_QUIET"]     = "1"
     return e
-
-
-def _popen_zsh(script: str):
-    """Run zsh with a long-lived pseudo-tty so we can stream single commands."""
-    import subprocess
-    return subprocess.Popen(
-        ["zsh", "-c", script],
-        stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL, env=_env(),
-    )
 
 
 # ── GIVEN ───────────────────────────────────────────────────────────────────
@@ -95,14 +88,15 @@ claim_lock "{lock}" 2>/dev/null
 
 def _call(probe_cmd: str) -> str:
     """Write probe to a temp file, run it, return stdout."""
-    tmp = Path(tempfile.mktemp(suffix=".zsh", prefix="vde_lock_"))
-    tmp.write_text(probe_cmd)
+    fd, tmppath = tempfile.mkstemp(suffix=".zsh", prefix="vde_lock_")
+    os.write(fd, probe_cmd.encode())
+    os.close(fd)
     env = _env()
     r = __import__("subprocess").run(
-        ["zsh", "-c", str(tmp)],
+        ["zsh", "-c", tmppath],
         capture_output=True, text=True, timeout=20, env=env,
     )
-    tmp.unlink(missing_ok=True)
+    os.unlink(tmppath)
     return r.stdout.strip()
 
 
