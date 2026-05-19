@@ -180,7 +180,7 @@ _vde_lock_cleanup_on_exit() {
 
     local q ticket ld pf pd
     for q in "${locks_dir}"/*.queue(N/) "${vms_dir}"/*.queue(N/); do
-        for ticket in "${q}/"*-$$(N); do
+        for ticket in "${q}"/*-$$(N); do
             rm -f "${ticket}" 2>/dev/null
         done
     done
