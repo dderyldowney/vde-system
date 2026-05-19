@@ -193,9 +193,9 @@ _vde_lock_cleanup_on_exit() {
     done
 }
 
-# add-zsh-hook is idempotent; guard against subshell registration so the hook
-# does not fire on $() or nested-shell exit and remove locks the parent still holds.
-if [[ ${ZSH_SUBSHELL:-0} -eq 0 ]]; then
-    autoload -U add-zsh-hook 2>/dev/null
-    add-zsh-hook zshexit _vde_lock_cleanup_on_exit 2>/dev/null
-fi
+# add-zsh-hook is idempotent; register zshexit hook for lock cleanup in all shells
+# to handle WSL2/ZSH 5.8.x where {always} blocks don't reliably fire.
+# The cleanup function is safe to run in any shell context as it only removes
+# locks owned by the current shell's PID.
+autoload -U add-zsh-hook 2>/dev/null
+add-zsh-hook zshexit _vde_lock_cleanup_on_exit 2>/dev/null
