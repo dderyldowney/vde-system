@@ -169,3 +169,33 @@ release_lock() {
     fi
     return 0
 }
+
+# ZSH 5.8.x on WSL2/Ubuntu does not reliably fire {always} blocks on function return,
+# leaving global-config.lock and queue tickets on disk after every vde invocation.
+# This hook fires unconditionally on shell exit, bypassing the always path entirely.
+_vde_lock_cleanup_on_exit() {
+    local locks_dir="${VDE_LOCKS_DIR:-${VDE_ROOT_DIR}/.locks}"
+    local vms_dir="${VDE_VM_LOCKS_DIR:-${locks_dir}/vms}"
+    [[ -d "${locks_dir}" ]] || return 0
+
+    local q ticket ld pf pd
+    for q in "${locks_dir}"/*.queue(N/) "${vms_dir}"/*.queue(N/); do
+        for ticket in "${q}/"*-$$(N); do
+            rm -f "${ticket}" 2>/dev/null
+        done
+    done
+
+    for ld in "${locks_dir}"/*.lock(N/) "${vms_dir}"/*.lock(N/); do
+        pf="${ld}/pid"
+        [[ -f "${pf}" ]] || continue
+        pd=$(< "${pf}" 2>/dev/null)
+        [[ "${pd%%:*}" == "$$" ]] && rm -rf "${ld}" 2>/dev/null
+    done
+}
+
+# add-zsh-hook is idempotent; guard against subshell registration so the hook
+# does not fire on $() or nested-shell exit and remove locks the parent still holds.
+if [[ ${ZSH_SUBSHELL:-0} -eq 0 ]]; then
+    autoload -U add-zsh-hook 2>/dev/null
+    add-zsh-hook zshexit _vde_lock_cleanup_on_exit 2>/dev/null
+fi
