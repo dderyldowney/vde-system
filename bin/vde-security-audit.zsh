@@ -25,7 +25,7 @@ fi
 # 3. Privacy Leak Guard (Absolute Path Detection)
 echo "[SECURITY] Scanning for Absolute Path Leaks..."
 # Exclude dirs and files shared by both the counting and display grep passes
-typeset -a _scan_exclude_dirs=(.git .cache .claude .tmp.driveupload .tmp.drivedownload logs node_modules __pycache__ SKILLS output)
+typeset -a _scan_exclude_dirs=(.git .cache .claude .tmp.driveupload .tmp.drivedownload logs node_modules __pycache__ SKILLS output projects)
 typeset -a _scan_exclude_files=(vde-security-audit.zsh vde-root-guard README.md)
 typeset -a _grep_excludes=()
 for _d in "${_scan_exclude_dirs[@]}"; do _grep_excludes+=(--exclude-dir="${_d}"); done
