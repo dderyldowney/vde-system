@@ -374,11 +374,10 @@ vde_translate_conf_to_json() {
 
         mv "$_v_json_tmp" "$_v_json_file"
         vde_log_success "The Pure Beskar (.json) has been reconciled via Pure ZSH." "forge"
-    } always {
-        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
-            release_lock "${global_lock}"
-        fi
     }
+    if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+        release_lock "${global_lock}"
+    fi
 }
 # -----------------------
 # Core VM Type Loading (Minimal with Caching)
