@@ -16,6 +16,24 @@ _VM_LOCK_LOADED=1
 typeset -gA VDE_LOCK_DEPTH
 typeset -gA VDE_LOCK_TICKETS
 
+# is_process_alive - Check if a process is running
+is_process_alive() {
+    local pid="$1"
+    # Check if PID is empty or not a number
+    if [[ -z "$pid" || ! "$pid" =~ ^[0-9]+$ ]]; then
+        return 1
+    fi
+    # Try kill -0 first (most efficient, doesn't actually signal)
+    if kill -0 "$pid" 2>/dev/null; then
+        return 0
+    fi
+    # Fall back to ps -p
+    if ps -p "$pid" >/dev/null 2>&1; then
+        return 0
+    fi
+    return 1
+}
+
 # claim_lock - Atomic locking with "Lock-Queue Model" (Phase 25 FIFO)
 # Args: <lock_file>
 claim_lock() {
@@ -60,7 +78,7 @@ claim_lock() {
             local lock_timestamp="${pid_data##*:}"
             local now=$(date +%s)
             
-            if [[ -n "${owner_pid}" ]] && ! ps -p "${owner_pid}" >/dev/null 2>&1; then
+            if [[ -n "${owner_pid}" ]] && ! is_process_alive "${owner_pid}"; then
                 # Grace period: Only bust if lock is at least 10 seconds old
                 if [[ $(( now - lock_timestamp )) -gt 10 ]]; then
                     vde_log_warn "Busting stale lock ${lock_file} (Owner PID ${owner_pid} is dead)" "lock"
@@ -69,7 +87,7 @@ claim_lock() {
                 fi
             fi
         fi
-
+        
         # 2. THE LINE CHECK (FIFO Enforcement)
         # Find the oldest ticket (numerically sorted by timestamp)
         local oldest_ticket
@@ -78,14 +96,14 @@ claim_lock() {
         # STALE TICKET BUSTER: If the oldest ticket belongs to a dead process, purge it
         if [[ -n "${oldest_ticket}" && "${oldest_ticket}" != "${ticket_id}" ]]; then
             local ticket_pid="${oldest_ticket##*-}"
-            if [[ -n "${ticket_pid}" ]] && ! ps -p "${ticket_pid}" >/dev/null 2>&1; then
+            if [[ -n "${ticket_pid}" ]] && ! is_process_alive "${ticket_pid}"; then
                 vde_log_warn "Busting stale ticket ${oldest_ticket} (Owner PID ${ticket_pid} is dead)" "lock"
                 rm -f "${queue_dir}/${oldest_ticket}" 2>/dev/null
                 # Continue loop to re-evaluate 'oldest_ticket'
                 continue
             fi
         fi
-
+        
         if [[ "${oldest_ticket}" == "${ticket_id}" ]]; then
             # At the front of the line! THE ATOMIC GATE: mkdir is atomic at the kernel level
             if mkdir "${lock_file}" 2>/dev/null; then
@@ -112,7 +130,7 @@ claim_lock() {
         elif [[ "${oldest_ticket}" != "${ticket_id}" ]]; then
             owner_info="Queue position: waiting for ${oldest_ticket#*-}"
         fi
-
+        
         # THE ARCHIVIST'S JITTER (ZSH-Native floating point)
         # Goal: 0.1s to 0.5s delay
         # Formula: 0.1 + (RANDOM / 32768.0 * 0.4)
@@ -122,13 +140,13 @@ claim_lock() {
         if command -v vde_progress_wait_for_lock >/dev/null 2>&1; then
             vde_progress_wait_for_lock "$(basename "${lock_file}")" "${attempt}" "${owner_info}"
         fi
-
+        
         # SAFETY: Set VDE_NO_LOCK=1 to prevent recursive storms if vde-poll loads vm-common
         VDE_NO_LOCK=1 "${VDE_ROOT_DIR}/bin/vde-poll" --wait "${jitter_sec}" "all" >/dev/null 2>&1
         
         (( attempt++ ))
     done
-
+    
     # If we reach here, the forge has failed to secure the resource
     _vde_lock_cleanup_retreat
     vde_log_error "Registry Lock Contention: Failed to claim ${lock_file} after ${max_attempts} cycles." "lock"
