@@ -9,6 +9,11 @@ import subprocess
 from pathlib import Path
 from vm_common import VDE_ROOT, run_vde_command
 
+# Named constants for test fixture PIDs/tickets - high numbers avoid collisions
+TEST_STALE_PID_BASE = 99999
+TEST_STALE_PID_MULTIPLE = [11111, 22222, 33333, 44444, 55555]
+TEST_STALE_PID_MASS_START = 100000
+
 @given('a stale lock exists on "{lock_name}" with a dead PID and 15s age')
 def step_create_stale_lock(context, lock_name):
     lock_path = VDE_ROOT / ".locks" / lock_name
@@ -17,7 +22,7 @@ def step_create_stale_lock(context, lock_name):
     # Use a likely non-existent large PID and an old timestamp
     stale_time = int(time.time()) - 15
     with open(pid_file, 'w') as f:
-        f.write(f"99999:{stale_time}")
+        f.write(f"{TEST_STALE_PID_BASE}:{stale_time}")
     context.stale_lock_path = lock_path
 
 @then('the stale lock should be automatically purged')
@@ -90,18 +95,18 @@ def step_create_abrupt_termination_lock(context):
     lock_path = VDE_ROOT / ".locks" / "global-config.lock"
     lock_path.mkdir(parents=True, exist_ok=True)
     pid_file = lock_path / "pid"
-    # Use PID 99999 which won't exist, simulating abrupt termination
+    # Use TEST_STALE_PID_BASE which won't exist, simulating abrupt termination
     stale_time = int(time.time()) - 5
     with open(pid_file, 'w') as f:
-        f.write(f"99999:99999:{stale_time}")
+        f.write(f"{TEST_STALE_PID_BASE}:{TEST_STALE_PID_BASE}:{stale_time}")
     context.stale_lock_path = lock_path
 
 @given('multiple stale tickets exist in the lock queue from dead PIDs')
 def step_create_multiple_stale_tickets(context):
     queue_dir = VDE_ROOT / ".locks" / "global-config.lock.queue"
     queue_dir.mkdir(parents=True, exist_ok=True)
-    # Create multiple stale tickets
-    for i in [11111, 22222, 33333, 44444, 55555]:
+    # Create multiple stale tickets using named constant PIDs
+    for i in TEST_STALE_PID_MULTIPLE:
         ticket_file = queue_dir / f"1714491950-{i}"
         ticket_file.touch()
     context.stale_queue_dir = queue_dir
@@ -114,18 +119,18 @@ def step_verify_queue_cleanup(context):
 
 @given('stale locks and tickets exist from previous sessions')
 def step_create_stale_artifacts(context):
-    # Create stale lock
+    # Create stale lock using TEST_STALE_PID_BASE - 1 to avoid collision with other tests
     lock_path = VDE_ROOT / ".locks" / "global-config.lock"
     lock_path.mkdir(parents=True, exist_ok=True)
     pid_file = lock_path / "pid"
     stale_time = int(time.time()) - 20
     with open(pid_file, 'w') as f:
-        f.write(f"99998:99998:{stale_time}")
+        f.write(f"{TEST_STALE_PID_BASE - 1}:{TEST_STALE_PID_BASE - 1}:{stale_time}")
     
     # Create stale ticket
     queue_dir = VDE_ROOT / ".locks" / "global-config.lock.queue"
     queue_dir.mkdir(parents=True, exist_ok=True)
-    ticket_file = queue_dir / "1714490000-99998"
+    ticket_file = queue_dir / f"1714490000-{TEST_STALE_PID_BASE - 1}"
     ticket_file.touch()
 
 @then('lock system health should be verified')
@@ -151,8 +156,14 @@ def step_verify_auto_cleanup(context):
 
 @given('WSL2 environment is detected')
 def step_detect_wsl2(context):
-    context.wsl2_detected = os.environ.get('WSL_DISTRO_NAME') or \
-                            (os.path.exists('/proc/version') and 'microsoft' in open('/proc/version').read().lower())
+    wsl_detected = False
+    if os.environ.get('WSL_DISTRO_NAME'):
+        wsl_detected = True
+    elif os.path.exists('/proc/version'):
+        with open('/proc/version') as f:
+            if 'microsoft' in f.read().lower():
+                wsl_detected = True
+    context.wsl2_detected = wsl_detected
 
 @when('a VDE process receives termination signal')
 def step_simulate_termination(context):
@@ -168,11 +179,12 @@ def step_simulate_mass_termination(context):
         pid_file = lock_path / "pid"
         stale_time = int(time.time()) - 20
         with open(pid_file, 'w') as f:
-            f.write(f"{100000 + i}:{100000 + i}:{stale_time}")
+            # Use TEST_STALE_PID_MASS_START + i for unique PIDs per termination
+            f.write(f"{TEST_STALE_PID_MASS_START + i}:{TEST_STALE_PID_MASS_START + i}:{stale_time}")
         
         queue_dir = lock_path.parent / f"global-config-{i}.lock.queue"
         queue_dir.mkdir(parents=True, exist_ok=True)
-        ticket_file = queue_dir / f"1714490000-{100000 + i}"
+        ticket_file = queue_dir / f"1714490000-{TEST_STALE_PID_MASS_START + i}"
         ticket_file.touch()
 
 @then('the zshexit hook should clean all owned tickets')
