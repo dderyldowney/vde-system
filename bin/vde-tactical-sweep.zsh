@@ -48,10 +48,11 @@ fi
 
 # Break global locks and queues (Phase 25/26)
 if [[ -d "${VDE_ROOT_DIR}/.locks" ]]; then
-    vde_log_info "[SWEEP] Breaking global configuration locks..." "sweep"
+    vde_log_info "[SWEEP] Breaking global configuration locks and queues..." "sweep"
     # Target specific global lock files and their .queue companions
     rm -rf "${VDE_ROOT_DIR}/.locks"/global-config.lock*(N) 2>/dev/null
-    vde_log_success "[SWEEP] Global locks purged." "sweep"
+    rm -rf "${VDE_ROOT_DIR}/.locks"/global-config.lock.queue*(N/) 2>/dev/null
+    vde_log_success "[SWEEP] Global locks and queues purged." "sweep"
 fi
 
 # 3. THE REGISTRY PURGE: Clear ALL port reservations

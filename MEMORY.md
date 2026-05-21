@@ -59,3 +59,26 @@ git clone -b stable https://github.com/dderyldowney/vde-system.git VDE
 cd VDE
 bin/vde path-of-the-foundling
 ```
+
+## WSL2 LOCKS REMEDIATION STATUS
+**Phase:** Longterm Wait — Pending WSL2 Beta Tester Volunteers
+
+### Completed (Safe, Environment-Agnostic)
+- Tactical sweep (`bin/vde-tactical-sweep.zsh`) now cleans queue directories
+- 5 scenario BDD test coverage (`tests/core-infrastructure/wsl2-locks-remediation.feature`)
+- 12 WSL2 test step definitions simulating dead PID conditions
+- All 72 Proof of Life steps passing
+
+### Deferred (Requires WSL2 Testing Environment)
+- WSL2 detection flag (`VDE_WSL2_DETECTED` in `lib/vde-constants`) — cannot validate false-positive detection
+- Enhanced `zshexit` hook — race condition risks without WSL2
+- Pre-flight lock health check — premature cleanup risks without WSL2
+- Root `bin/vde` caller ID validation — WSL2-specific logic unvalidated
+
+### Why Deferred
+Per VDE Protocol: No environment-specific logic shall be implemented without empirical testing on target environment. WSL2 fixes blocked pending volunteer beta testers.
+
+### Current System Status
+- Existing lock system handles WSL2 via stale lock buster (57-70) and stale ticket buster (79-87)
+- 10-second grace period provides legitimate process cleanup window
+- Tests simulate dead PID conditions without WSL2-specific code
