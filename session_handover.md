@@ -3,14 +3,15 @@
 
 ## SOVEREIGN STATE
 - **Baseline**: 1.5.5 (Sovereign Baseline) — CERTIFIED
-- **develop**: `4053d890` (HEAD — fix(ci): resolve prune syntax error, add Bot Feedback Mandate #427)
+- **develop**: `fb4b4650` (HEAD — docs(wsl2): establish WSL2 locks remediation plan and test coverage #452)
 - **main**: `55d287dd` (production — 1.5.5 tag, GitHub Release Latest)
-- **stable**: `d7c252df` (merge: develop → stable — vde-release.zsh automation)
+- **stable**: `fb4b4650` (mirrors develop — synchronized)
 - **Status**: 100% GREEN (PEAK INTEGRITY)
 - **Heartbeat**: 6/6 scenarios, 72/72 steps — 100% GREEN
 - **Gospel Audit**: GOSPEL-SUCCESS (all Sovereign Artifacts synchronized)
 
 ## RECENT STRIKES (1.5.5 Sovereign Baseline)
+- **PR #452** — docs(wsl2): establish WSL2 locks remediation plan and test coverage ✅ MERGED
 - **PR #427** — fix(ci): resolve prune syntax error and add Bot Feedback Mandate ✅ MERGED
 - **PR #425** — release(vde): bump to 1.5.5 Sovereign Baseline ✅ MERGED
 - **PR #423** — fix(docs): correct docs/operations/ to match implementation ✅ MERGED
@@ -30,8 +31,13 @@ Retag + GitHub Release always on `main`
 Tags (X.X.X) and GitHub Releases occur EXCLUSIVELY on `main`. No tags on `develop` or `stable`.
 
 ## NEXT STEPS
-- Merge develop into stable to sync latest changes (#427)
 - Forge standing watch on `develop`
+
+## OPEN ISSUES FOR NEXT STRIKE
+- **#442** — feat(forge): establish canonical connection to local Ollama daemon
+- **#441** — feat(governance): enhance function-trace with JSONL export and secure dry-run
+
+**This is the Way.**
 
 ## PENDING WSL2 LOCKS REMEDIATION (Longterm Wait)
 **Status:** Deferred pending WSL2 beta tester volunteers

@@ -4,10 +4,10 @@
 ## SOVEREIGN BASELINE: 1.5.5
 - VDE 1.5.5 is the unique, global Sovereign Baseline.
 - All prior versions (1.5.4, 1.5.2, 1.5.1, 1.5.0) are of historical archival value only.
-- Heartbeat Certified: 2026-05-06 (6/6 scenarios, 72/72 steps)
+- Heartbeat Certified: 2026-05-20 (6/6 scenarios, 72/72 steps)
 - **Latest Release**: Tag 1.5.5 on main (SHA 55d287dd)
-- **develop HEAD**: 4053d890 (#427 — fix(ci): resolve prune syntax error)
-- **stable HEAD**: d7c252df (merge: vde-release.zsh automation)
+- **develop HEAD**: fb4b4650 (WSL2 locks remediation docs and tests merged)
+- **stable HEAD**: fb4b4650 (mirrors develop — synchronized)
 
 ## 2026-05-06
 ## Security Audit: Postgres Dev Secret Build Arg Exposure
@@ -78,7 +78,6 @@ bin/vde path-of-the-foundling
 ### Why Deferred
 Per VDE Protocol: No environment-specific logic shall be implemented without empirical testing on target environment. WSL2 fixes blocked pending volunteer beta testers.
 
-### Current System Status
-- Existing lock system handles WSL2 via stale lock buster (57-70) and stale ticket buster (79-87)
-- 10-second grace period provides legitimate process cleanup window
-- Tests simulate dead PID conditions without WSL2-specific code
+## NEXT STRIKES QUEUE
+1. **#442** — feat(forge): establish canonical connection to local Ollama daemon
+2. **#441** — feat(governance): enhance function-trace with JSONL export and secure dry-run
