@@ -59,6 +59,10 @@ WORKDIR /home/devuser
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && \
     git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
+# Force xterm-256color when connecting from ghostty.
+# xterm-ghostty terminfo is not installed on this host.
+RUN printf 'if [[ "$TERM" == "xterm-ghostty" ]]; then\n    export TERM=xterm-256color\nfi\n' >> ~/.zshrc
+
 # 5. SSH Key Preparation
 # The VDE public key is injected dynamically via the entrypoint (Option B)
 RUN mkdir -p /home/devuser/.ssh/vde && \
