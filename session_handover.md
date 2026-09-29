@@ -1,16 +1,23 @@
-# VDE Session Handover: 2026-05-06
+# VDE Session Handover: 2026-09-29
 # @shared-law (Forge Component)
 
 ## SOVEREIGN STATE
-- **Baseline**: 1.5.5 (Sovereign Baseline) — CERTIFIED
-- **develop**: `fb4b4650` (HEAD — docs(wsl2): establish WSL2 locks remediation plan and test coverage #452)
-- **main**: `55d287dd` (production — 1.5.5 tag, GitHub Release Latest)
-- **stable**: `fb4b4650` (mirrors develop — synchronized)
+- **Baseline**: 1.5.6 (Sovereign Baseline) — CERTIFIED
+- **develop**: `9959e6fe` (HEAD — Merge PR #462, release/1.5.6)
+- **main**: `55d287dd` (production — still at 1.5.5; not yet rolled to 1.5.6)
+- **1.5.6 tag / GitHub Release (Latest)**: `f0eecd6a` — a `stable` merge commit. This deviates from the TAGS POLICY below (tags on `main` only). Outstanding: roll `stable` into `main` and re-tag on `main`.
+- **stable**: `f0eecd6a` (1.5.6 release)
 - **Status**: 100% GREEN (PEAK INTEGRITY)
 - **Heartbeat**: 6/6 scenarios, 72/72 steps — 100% GREEN
 - **Gospel Audit**: GOSPEL-SUCCESS (all Sovereign Artifacts synchronized)
 
-## RECENT STRIKES (1.5.5 Sovereign Baseline)
+## RECENT STRIKES (1.5.6 Sovereign Baseline)
+- **PR #462** — chore(release): VDE 1.5.6 Sovereign Baseline ✅ MERGED
+- **PR #460** — fix(docker): pre-create host projects/data/logs dirs to prevent root-owned bind mounts ✅ MERGED
+- **PR #458** — fix(docker): stop entrypoint from corrupting host docker.sock group ownership ✅ MERGED
+- **PR #455** — feat(base): inject TERM override for ghostty into devuser ~/.zshrc ✅ MERGED
+
+## PRIOR STRIKES (1.5.5 Sovereign Baseline)
 - **PR #452** — docs(wsl2): establish WSL2 locks remediation plan and test coverage ✅ MERGED
 - **PR #427** — fix(ci): resolve prune syntax error and add Bot Feedback Mandate ✅ MERGED
 - **PR #425** — release(vde): bump to 1.5.5 Sovereign Baseline ✅ MERGED
