@@ -39,6 +39,25 @@ Feature: System Spine Integrity
     Then the command execution should succeed
     And the execution output should contain "vde-python"
 
+  @bridge @docker-socket @host-safety
+  Scenario: Host Docker Socket Ownership Is Never Corrupted By A Spoke
+    Given the VDE system is healthy
+    And "python" is running
+    And the host Docker socket group ownership is recorded before ignition
+    When I run the one true way to stop "python"
+    And I run the one true way to start "python"
+    Then the host Docker socket group ownership must be unchanged after ignition
+
+  @bridge @workspace-mount @host-safety
+  Scenario: Host Workspace Directory Is Host-Owned After Fresh Ignition
+    Given the VDE system is healthy
+    And "python" is running
+    When I run the one true way to stop "python"
+    And the host workspace and logs directories for "python" are removed
+    And I run the one true way to start "python"
+    Then the host workspace directory for "python" must be owned by the invoking user
+    And devuser must be able to write inside the "python" workspace
+
   @bridge @ssh-forwarding @user-guide-ssh-keys
   Scenario: SSH Agent Forwarding Verification
     Given the VDE system is healthy

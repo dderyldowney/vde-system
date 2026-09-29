@@ -2,7 +2,7 @@
 # @armor (Engine Core)
 # ZSH-native shibboleth: ${(%):-%x}
 # VDE Sovereign Entrypoint
-# Version: 2.5.4 (Hardened permissions + Sourcery Remediations)
+# Version: 2.5.5 (Issue #457: Host-safe Docker socket GID handling)
 #===============================================================================
 
 # Ensure path includes local bin and VDE lib, but PRESERVE existing PATH (Rule 24)
@@ -25,18 +25,26 @@ _root_exec() {
 echo "[VDE-ENTRYPOINT] Initializing Spoke Identity..."
 
 # 0. Sovereign Docker Socket (The World-Forge Bridge)
-# If the socket is mounted, ensure devuser has access.
-# Sourcery Remediation: Use group-based hardening instead of world-writable.
+#
+# Issue #457: This socket is typically bind-mounted from the HOST (DooD).
+# The entrypoint MUST NEVER chown/chmod/groupadd this socket at runtime --
+# any of those mutate identity based on the CONTAINER's own /etc/group or
+# /etc/passwd, which is assigned at image-build time and has no relation
+# to the HOST's actual GID for "docker". A prior version of this block did
+# `chown root:docker /var/run/docker.sock`, which silently corrupted the
+# HOST socket's group ownership to whatever GID the container happened to
+# call "docker" -- observed colliding with the host's unrelated "_ssh"
+# group and locking every host user in the real "docker" group out of
+# their own daemon.
+#
+# Fix: supplementary group access is granted entirely at container LAUNCH
+# time via Compose's `group_add:` (see templates/compose-*.yml), which
+# receives the host socket's numeric GID as a runtime-supplied value
+# (VDE_DOCKER_SOCK_GID, computed by bin/vde right before `docker compose
+# up`). Nothing GID-related is baked into the Dockerfile or mutated here,
+# so the image stays portable across hosts with differing GIDs.
 if [[ -S "/var/run/docker.sock" ]]; then
-    echo "[VDE-ENTRYPOINT] Hardening Docker Socket permissions..."
-    # If the docker group exists, use it; otherwise, fallback to 666 for portability
-    if grep -q "^docker:" /etc/group; then
-        _root_exec chown root:docker /var/run/docker.sock
-        _root_exec chmod 660 /var/run/docker.sock
-        _root_exec usermod -aG docker devuser
-    else
-        _root_exec chmod 666 /var/run/docker.sock 2>/dev/null || true
-    fi
+    echo "[VDE-ENTRYPOINT] Docker Socket present (access granted via launch-time group_add, no runtime mutation)."
 fi
 
 # 1. Identity & Permissions (Hardened)
