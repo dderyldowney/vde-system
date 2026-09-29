@@ -47,7 +47,10 @@ vde_sed_inplace "s/^# VDE-SPEC [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?([[:space:]]+\(
 vde_log_success "Aligned docs/governance/vde-spec.md" "forge"
 
 # 4.2 Strike docs/architecture/overview.md
-vde_sed_inplace "1s/^# ARCHITECTURE .*/# ARCHITECTURE ${NEW_VER} (The Sovereign Baseline)/" "./docs/architecture/overview.md"
+# NOTE: not line-1-anchored (previously "1s/...", a bug -- the versioned
+# header lives on line 3, after the bare title and tag comment, so the old
+# pattern silently never matched and this file drifted on every release).
+vde_sed_inplace "s/^# ARCHITECTURE [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/# ARCHITECTURE ${NEW_VER} (The Sovereign Baseline)/" "./docs/architecture/overview.md"
 vde_log_success "Aligned docs/architecture/overview.md" "forge"
 
 # 4.3 Strike docs/architecture/data-flow.md (The Archive Record)
@@ -61,6 +64,10 @@ vde_log_success "Aligned docs/governance/sovereign-charter.md" "forge"
 
 # 4.5 Strike docs/api/library-api.md
 vde_sed_inplace "s/\*\*Version\*\*:[ ]+[0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/\*\*Version\**: ${NEW_VER}/" "./docs/api/library-api.md"
+# NOTE: the adjacent "Last Updated" date was previously never touched by this
+# script -- a Version bump with a stale date next to it is the exact class of
+# silent doc drift this Strike (Issue #461) exists to close. Keep it current.
+vde_sed_inplace "s/\*\*Last Updated\*\*: [0-9]{4}-[0-9]{2}-[0-9]{2}/\*\*Last Updated\*\*: $(date +%Y-%m-%d)/" "./docs/api/library-api.md"
 vde_log_success "Aligned docs/api/library-api.md" "forge"
 
 # 4.6 Strike data/vm-types.json
@@ -114,6 +121,10 @@ vde_log_success "Aligned docs/api/cli-api.md" "forge"
 vde_sed_inplace "s/# VDE Testing Strategy - [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/# VDE Testing Strategy - ${NEW_VER} (The Sovereign Baseline)/" "./docs/development/testing.md"
 vde_sed_inplace "s/## 2. BDD PERFORMANCE METRICS \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?\)/## 2. BDD PERFORMANCE METRICS (${NEW_VER})/" "./docs/development/testing.md"
 vde_sed_inplace "s/\*\*Status:\*\* SYSTEM CERTIFIED \([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?\)/\*\*Status:\*\* SYSTEM CERTIFIED (${NEW_VER})/" "./docs/development/testing.md"
+# NOTE: the "As of <date>" sentence under the metrics header was previously
+# never touched, leaving a stale date sitting right under a freshly-bumped
+# version header (Issue #461).
+vde_sed_inplace "s/As of \*\*[0-9]{4}-[0-9]{2}-[0-9]{2}\*\*,/As of \*\*$(date +%Y-%m-%d)\*\*,/" "./docs/development/testing.md"
 vde_log_success "Aligned docs/development/testing.md" "forge"
 
 # 13. Strike docs/guides/extending-vde.md
@@ -227,7 +238,7 @@ This file tracks the evolution of the Virtual Development Environment. For detai
 ---
 ## 📦 Release History
 
-$(ls -r "./docs/releases/"*.md | xargs -I {} basename {} .md | xargs -I {} echo "- [{}] (./docs/releases/{}.md)")
+$(ls -r "./docs/releases/"*.md | xargs -I {} basename {} .md | xargs -I {} echo "- [{}](./docs/releases/{}.md)")
 EOF
 vde_log_success "Aligned root RELEASE_NOTES.md" "forge"
 
