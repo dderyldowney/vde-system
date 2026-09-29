@@ -3,9 +3,9 @@
 
 
 **Repository**: dderyldowney/vde-system  
-**Version**: 1.5.5 (The Sovereign Baseline)  
+**Version**: 1.5.6 (The Sovereign Baseline)  
 **Language**: ZSH 5.0+  
-**Last Updated**: 2026-05-06
+**Last Updated**: 2026-09-29
 
 ---
 

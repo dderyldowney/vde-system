@@ -1,4 +1,4 @@
-# **The Way of the VDE: 1.5.5 (The Sovereign Baseline)**
+# **The Way of the VDE: 1.5.6 (The Sovereign Baseline)**
 <!-- @forge (Governance Sentinel) -->
 
 MANDATE: In VDE workspace, follow instructions in AGENTS.md.
