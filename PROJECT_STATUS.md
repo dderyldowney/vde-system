@@ -5,5 +5,5 @@
 - **Status**: Stable / Certified
 - **Summary**: Point release closing two host-ownership-corruption defects (#457 docker.sock group, #459 root-owned bind-mount dirs). All Proof of Life scenarios pass (6/6 scenarios, 72/72 steps). The Forge heartbeat is strong.
 - **Proof of Life**: 2026-09-29 - 6 scenarios passed, 72 steps passed
-- **Release SHA**: 762d66ac (code baseline, as recorded in docs/releases/1.5.6.md). The 1.5.6 tag currently sits on the later `stable` merge commit f0eecd6a, which contains it; see session_handover.md for the tag-placement note.
+- **Release SHA**: 762d66ac (code baseline, as recorded in docs/releases/1.5.6.md). The 1.5.6 tag and GitHub Release live on `main`, at the merge that rolled `stable` into `main`, which contains it.
 - **Previous Baseline SHA**: 55d287dd (1.5.5, tag 1.5.5 on main)

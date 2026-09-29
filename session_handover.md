@@ -4,9 +4,9 @@
 ## SOVEREIGN STATE
 - **Baseline**: 1.5.6 (Sovereign Baseline) — CERTIFIED
 - **develop**: `9959e6fe` (HEAD — Merge PR #462, release/1.5.6)
-- **main**: `55d287dd` (production — still at 1.5.5; not yet rolled to 1.5.6)
-- **1.5.6 tag / GitHub Release (Latest)**: `f0eecd6a` — a `stable` merge commit. This deviates from the TAGS POLICY below (tags on `main` only). Outstanding: roll `stable` into `main` and re-tag on `main`.
-- **stable**: `f0eecd6a` (1.5.6 release)
+- **main**: production — rolled to 1.5.6 (`stable` merged into `main`)
+- **1.5.6 tag / GitHub Release (Latest)**: on `main`, per the TAGS POLICY below
+- **stable**: 1.5.6 release, synchronized with `main`
 - **Status**: 100% GREEN (PEAK INTEGRITY)
 - **Heartbeat**: 6/6 scenarios, 72/72 steps — 100% GREEN
 - **Gospel Audit**: GOSPEL-SUCCESS (all Sovereign Artifacts synchronized)

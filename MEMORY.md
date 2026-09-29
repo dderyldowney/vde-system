@@ -5,9 +5,9 @@
 - VDE 1.5.6 is the unique, global Sovereign Baseline.
 - All prior versions (1.5.5, 1.5.4, 1.5.2, 1.5.1, 1.5.0) are of historical archival value only.
 - Heartbeat Certified: 2026-09-29 (6/6 scenarios, 72/72 steps)
-- **Latest Release**: Tag 1.5.6 (SHA f0eecd6a, a stable merge commit containing code baseline 762d66ac from docs/releases/1.5.6.md); `main` is still at 1.5.5 (55d287dd), not yet rolled forward
+- **Latest Release**: Tag 1.5.6 on `main` (contains code baseline 762d66ac from docs/releases/1.5.6.md)
 - **develop HEAD**: 9959e6fe (Merge PR #462, release/1.5.6)
-- **stable HEAD**: f0eecd6a (1.5.6 release)
+- **stable HEAD**: 1.5.6 release, synchronized with `main`
 
 ## 2026-05-06
 ## Security Audit: Postgres Dev Secret Build Arg Exposure
