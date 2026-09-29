@@ -244,6 +244,34 @@ case ${ACTION} in
                 vde_log_debug "Resolved VDE_DOCKER_SOCK_GID: ${VDE_DOCKER_SOCK_GID}" "docker"
             fi
 
+            # DISCOVERY: Ensure HOST-owned bind-mount directories exist (Issue #459)
+            # Docker auto-creates a missing bind-mount source directory itself,
+            # owned root:root -- silently breaking devuser's ability to write
+            # to their own workspace/logs on a freshly-created VM. Pre-create
+            # these as the invoking host user before every ignition, mirroring
+            # the pattern bin/vde-init already uses for data/<service> at init
+            # time, but generalized to run lazily here so it also covers VM
+            # types added later via `vde add` (never pre-created at init).
+            #
+            # NOTE: every templates/compose-service.yml-derived VM also bind-
+            # mounts a nested data/<name>/pgdata directory (a pre-existing
+            # templating artifact applied even to non-Postgres services like
+            # redis/mysql -- not this Strike's concern to rename, but its
+            # existence IS this Strike's concern: that nested path needs its
+            # own mkdir, or Docker auto-vivifies IT as root one level deeper).
+            local vm_category=$(get_vm_category "${CANONICAL_NAME}" 2>/dev/null)
+            case "${vm_category}" in
+                languages)
+                    mkdir -p "${VDE_ROOT_DIR}/projects/${BASE_NAME}" "${VDE_ROOT_DIR}/logs/${BASE_NAME}"
+                    ;;
+                services)
+                    mkdir -p "${VDE_ROOT_DIR}/data/${BASE_NAME}/pgdata" "${VDE_ROOT_DIR}/logs/${BASE_NAME}"
+                    ;;
+                *)
+                    mkdir -p "${VDE_ROOT_DIR}/logs/${BASE_NAME}"
+                    ;;
+            esac
+
             # Canonical Ignition Handshake
             local vm_env_file
             vm_env_file=$(get_vm_env_file "${CANONICAL_NAME}")
