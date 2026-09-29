@@ -212,6 +212,25 @@ def step_stop_vm(context, vm_alias):
     res = run_vde_command(f"stop {vm_alias}")
     assert res.returncode == 0, f"vde stop failed: {res.stderr}"
 
+# Issue #457: Guard against the container entrypoint corrupting the HOST
+# Docker socket's group ownership (it must only ever manage devuser's group
+# membership by GID, never chown the host-mounted socket by group name).
+_HOST_DOCKER_SOCK = Path("/var/run/docker.sock")
+
+@given('the host Docker socket group ownership is recorded before ignition')
+def step_record_host_socket_gid(context):
+    assert _HOST_DOCKER_SOCK.exists(), f"Host Docker socket missing: {_HOST_DOCKER_SOCK}"
+    context.host_socket_gid_before = _HOST_DOCKER_SOCK.stat().st_gid
+
+@then('the host Docker socket group ownership must be unchanged after ignition')
+def step_verify_host_socket_gid_unchanged(context):
+    assert _HOST_DOCKER_SOCK.exists(), f"Host Docker socket missing: {_HOST_DOCKER_SOCK}"
+    gid_after = _HOST_DOCKER_SOCK.stat().st_gid
+    assert gid_after == context.host_socket_gid_before, (
+        f"Host Docker socket group ownership was corrupted by spoke ignition! "
+        f"before={context.host_socket_gid_before} after={gid_after}"
+    )
+
 @then('the container "{container_name}" should be stopped')
 def step_verify_stopped(context, container_name):
     res = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", container_name], capture_output=True, text=True)

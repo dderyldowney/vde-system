@@ -39,6 +39,14 @@ Feature: System Spine Integrity
     Then the command execution should succeed
     And the execution output should contain "vde-python"
 
+  @bridge @docker-socket @host-safety
+  Scenario: Host Docker Socket Ownership Is Never Corrupted By A Spoke
+    Given the VDE system is healthy
+    And the host Docker socket group ownership is recorded before ignition
+    When I run the one true way to stop "python"
+    And I run the one true way to start "python"
+    Then the host Docker socket group ownership must be unchanged after ignition
+
   @bridge @ssh-forwarding @user-guide-ssh-keys
   Scenario: SSH Agent Forwarding Verification
     Given the VDE system is healthy
