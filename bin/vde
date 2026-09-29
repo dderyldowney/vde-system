@@ -218,6 +218,32 @@ case ${ACTION} in
                 vde_log_debug "Auto-discovered VDE_HOST_SSH_AUTH_SOCK: ${VDE_HOST_SSH_AUTH_SOCK}" "ssh"
             fi
 
+            # DISCOVERY: Resolve the HOST Docker socket's GID (Issue #457)
+            # Supplied to Compose as `group_add` so devuser gains access to the
+            # bind-mounted docker.sock WITHOUT the container ever chown'ing the
+            # host file itself (which corrupts host-side ownership -- see
+            # scripts/vde-entrypoint.zsh for the full incident writeup). Nothing
+            # GID-related is baked into the Dockerfile; it is supplied fresh at
+            # every ignition so the image stays portable across hosts.
+            #
+            # Fallback is devuser's OWN primary GID (1000, matching the UID/GID
+            # build args every image is built with) rather than 0/root -- if we
+            # can't resolve the real socket GID (stat missing, socket absent,
+            # e.g. Docker Desktop's non-standard macOS socket path), this makes
+            # group_add an inert no-op (devuser is already in its own group)
+            # instead of silently escalating devuser into the root group.
+            if [[ -z "${VDE_DOCKER_SOCK_GID:-}" ]]; then
+                if [[ -S "/var/run/docker.sock" ]]; then
+                    if [[ "$(uname)" == "Darwin" ]]; then
+                        export VDE_DOCKER_SOCK_GID=$(stat -f '%g' /var/run/docker.sock 2>/dev/null)
+                    else
+                        export VDE_DOCKER_SOCK_GID=$(stat -c '%g' /var/run/docker.sock 2>/dev/null)
+                    fi
+                fi
+                export VDE_DOCKER_SOCK_GID="${VDE_DOCKER_SOCK_GID:-1000}"
+                vde_log_debug "Resolved VDE_DOCKER_SOCK_GID: ${VDE_DOCKER_SOCK_GID}" "docker"
+            fi
+
             # Canonical Ignition Handshake
             local vm_env_file
             vm_env_file=$(get_vm_env_file "${CANONICAL_NAME}")
