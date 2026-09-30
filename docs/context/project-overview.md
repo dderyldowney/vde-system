@@ -57,10 +57,10 @@ VDE is a sovereign, template-based ecosystem of Dockerized Spokes designed for d
 ---
 
 ## Current Focus
-**Version 1.5.5 (The Sovereign Baseline)** — CERTIFIED:
+**Version 1.5.6 (The Sovereign Baseline)** — CERTIFIED:
 - Version sync from 1.5.3 to 1.5.5 complete
 - Heartbeat: 72/72 BDD steps green (6/6 scenarios)
-- All Sovereign Artifact Set documents aligned to 1.5.5
+- All Sovereign Artifact Set documents aligned to 1.5.6
 - Branching strategy: develop → stable → main
 
 ---

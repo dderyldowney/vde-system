@@ -61,7 +61,7 @@ VDE enforces a strict branch-based release lifecycle to maintain the purity of t
 5.  **X.X.X Releases**: Step and milestone releases are applied against `main` only after merging from `stable`.
 
 ---
-Version: 1.5.5
+Version: 1.5.6
 Status: SOVEREIGN BASELINE CERTIFIED
 Identity: The Covert
 ---
