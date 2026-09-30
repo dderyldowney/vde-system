@@ -1,10 +1,10 @@
 # VDE-SPEC
 # @shared-law (Sovereign Law)
-# VDE-SPEC 1.5.5 (The Sovereign Evolution)
+# VDE-SPEC 1.5.6 (The Sovereign Evolution)
 
-**Date**: 2026-05-06
+**Date**: 2026-09-29
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE 1.5.5
+**Reference**: ARCHITECTURE 1.5.6
 **Identity**: The Covert
 
 ## 1. Absolute Mandates (The Rule Spine & The Gospel)
@@ -22,7 +22,7 @@
     - **Core Guards**: `vde_require_ssh` verifies SSH binary availability and `vde_student` identity file existence; `vde_require_docker` verifies Docker binary availability and daemon responsiveness via `docker info`.
 - **The Proof of Life Contract (Mandate L)**: The lifecycle defined in `plans/system-spine-contract.md` is the project's **Heartbeat**. It mandates that ALL Spokes must reliably execute: `init`, `create`, `rebuild`, `start`, `enter`, `stop`, `remove`, `add`, and `uninstall`. Failure of any state is a Protocol Blockade.
 - **The Creed-frame**: The narrative fuel established in `data/vde_core/**` must guide all thematic world-building. No Spoke shall be ignited and no structure stabilized that does not align with the mythos.
-- **The Gospel Authority**: The Sovereign Artifact Set (specified in Section 3) is the **Gospel of the Forge**. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring. **1.5.5 is now the unique Sovereign Baseline. All prior versions and releases are of historical archival value only.**
+- **The Gospel Authority**: The Sovereign Artifact Set (specified in Section 3) is the **Gospel of the Forge**. These documents are the **limiting, or expanding, decision makers** on the **WHAT** and the **HOW** of all creation and refactoring. **1.5.6 is now the unique Sovereign Baseline. All prior versions and releases are of historical archival value only.**
 - **The Use-Case Creed**: The Forge exists solely to serve the Foundlings (Students) and Reinforcements (New Hires). This is **Creed**. All technical work MUST be centrally driven by its direct improvement to the onboarding and educational experience of these two cohorts.
 - **The Mandate of Architectural Tagging**: ALL artifacts (code, tests, docs, config) MUST be tagged according to their Project alignment (@armor, @forge, or @shared-law) to maintain clear ownership and visibility.
     - **The Positioning Law**: Tags MUST be placed on **line 2 or 3** of every file. Line 1 is reserved for shebangs or file-specific headers.
@@ -36,6 +36,7 @@
 - **The Armorer’s Toolset**: The agent possesses both the authority and the capability to run research swarms and self-augmentation tools as needed. Failure to utilize these capabilities to ensure the highest quality strike is a rejection of the mandate.
 - **The Four Pillars Gateway**: Before the Proof of Life ritual is ignited, the host environment MUST pass the Four Pillars Gateway verification (`gateway-pillars.feature`). This verifies the presence and basic capability of Zsh, Git, Docker, and SSH. Any failure in this gateway constitutes an immediate **Program Blockade**.
 - **Language of the Tribe (ZSH ONLY)**: All CLI tools, libraries, and jail shells MUST use `#!/usr/bin/env zsh`. `bash` is strictly prohibited. Enforcement is performed via deep content inspection for native parameter expansion `${(` and 1-indexed array usage.
+    - **HELMET LEVEL FAILURE**: Use of `sh`, `bash`, `fish`, or any shell OTHER THAN zsh constitutes immediate helmet removal and Protocol Blockade. This is a CREED VIOLATION of the highest order.
 - **The Armorer’s Command (UAP)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`. This sentinel detects "Ghost Zones", enforces shebang purity, and forbids `sleep` calls in favor of deterministic polling.
 - **Registry Serialization**: To prevent "Thundering Herd" race conditions, all modifications to the VM registry and port allocation MUST be performed *inside* the global config lock (`global-config.lock`). Port availability MUST be verified via a physical diagnostic handshake (`docker run --rm`).
 - **Born Ready (BTO)**: Every jail MUST be fully functional at image creation. Runtime `apt` calls or network-dependent configurations are prohibited to ensure immutability.
@@ -103,7 +104,7 @@ Automated orchestration ensures absolute traceability:
 - **Phase 32 (Forge Intelligence)**: [CERTIFIED] Self-healing Gospel synchronization and auto-remediation (`bin/vde heal`). Restores registry from authority, corrects version drift, and detects path leaks via UAP enforcement.
 
 ---
-Version: 1.5.5
+Version: 1.5.6
 **Status**: HARDENED
-**Reference**: RESOL'NARE 1.5.5
+**Reference**: RESOL'NARE 1.5.6
 ---

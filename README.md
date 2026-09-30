@@ -2,7 +2,7 @@
 <!-- @armor (Student Documentation) -->
 <p align="center"><img src="docs/imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-# The Way of the VDE: 1.5.5 (The Sovereign Baseline)
+# The Way of the VDE: 1.5.6 (The Sovereign Baseline)
 
 ![CI Status](https://github.com/dderyldowney/vde-system/actions/workflows/vde-ci.yml/badge.svg)
 
@@ -34,16 +34,27 @@ The Forge does not ignite without the four pillars. Every mission begins with a 
 
 ---
 
-## The Path of the Foundling (Quick Start) 🚀
+## Get Coding in 60 Seconds 🚀
 
-If you are new to the Creed, execute the onboarding ritual:
+**One command. That's it.**
 
 ```zsh
-# 1. Clone the Baseline
-git clone -b stable https://github.com/dderyldowney/vde-system.git ~/vde
-cd ~/vde
+bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh)
+```
 
-# 2. Take the Path of the Foundling
+This checks your system, installs nothing you don't want, and walks you through setup.
+If something's missing, it tells you exactly what to install and how.
+
+**Windows?** Open PowerShell as Administrator, run `wsl --install`, restart,
+then run the command above from your Ubuntu terminal.
+
+---
+
+### Manual install
+
+```zsh
+git clone -b stable https://github.com/dderyldowney/vde-system.git ~/VDE
+cd ~/VDE
 bin/vde path-of-the-foundling
 ```
 
@@ -67,7 +78,7 @@ bin/vde path-of-the-foundling
 | **🛠️ Installation** | [Installation Guide](docs/operations/installation.md) - Prerequisite setup and Induction. |
 | **📜 Protocol** | [VDE Protocol](docs/governance/vde-protocol.md) - The Laws of the Forge and Branching. |
 | **🤝 Contributing** | [Contributing](docs/development/contributing.md) - How to join the Tribe's effort. |
-| **📐 Architecture** | [Architecture 1.5.5](docs/architecture/overview.md) - The Blueprint. |
+| **📐 Architecture** | [Architecture 1.5.6](docs/architecture/overview.md) - The Blueprint. |
 
 ---
 

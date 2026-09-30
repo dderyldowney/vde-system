@@ -1,7 +1,7 @@
 # VDE API Reference
 <!-- @shared-law (Sovereign Law) -->
 
-**Version:** 1.5.5 (The Sovereign Baseline)
+**Version:** 1.5.6 (The Sovereign Baseline)
 **Status:** AUTHORITATIVE
 
 This document provides the complete API reference for the Virtual Development Environment (VDE) system.
@@ -149,6 +149,14 @@ vde <command> [options] [args]
 | Command | Aliases | Description |
 |---------|---------|-------------|
 | `path-of-the-foundling` | `foundling` | Interactive induction ritual for new students |
+
+#### Bootstrap (Pre-Install)
+
+```zsh
+bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh)
+```
+
+Checks the 4 pillars, clones VDE, and launches `path-of-the-foundling`. Works in any shell (bash or zsh).
 
 ---
 

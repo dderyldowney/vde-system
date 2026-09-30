@@ -58,17 +58,18 @@ Windows users unify their path by using **WSL2 (Windows Subsystem for Linux)**. 
 
 ## The Onboarding Ritual: One Command to Rule Them All 👑
 
-VDE has a simple induction ritual that handles everything for you:
+VDE has a one-command install that handles everything:
 
 ```zsh
-bin/vde path-of-the-foundling
+bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh)
 ```
 
 This ritual will:
-1. Verify your Tetrad health.
-2. Generate your `vde_student` SSH keys.
-3. **Automatically run `vde init`** to hydrate your Forge.
-4. Walk you through creating and entering your first Python Spoke.
+1. Check your system for the 4 pillars and tell you exactly what to install if anything's missing.
+2. Clone VDE and launch the onboarding.
+3. Generate your `vde_student` SSH keys.
+4. **Automatically run `vde init`** to hydrate your Forge.
+5. Walk you through creating and entering your first Python Spoke.
 
 ---
 
@@ -129,9 +130,7 @@ Spokes talk to each other and to your Hub (`vde-host`) through a secure, isolate
 ## Ready to Give It a Try? 🎉
 
 ```zsh
-git clone https://github.com/dderyldowney/vde-system.git ~/vde
-cd ~/vde
-bin/vde path-of-the-foundling
+bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh)
 ```
 
 **Welcome to easier, more joyful development. This is the Way.** 🏠

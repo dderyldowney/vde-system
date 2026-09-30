@@ -10,17 +10,23 @@ Get up and running with VDE in minutes.
 
 ## First-Time Setup
 
-1. **Verify Prereqs**: Ensure the **Unyielding Tetrad** (Zsh 5.0+, Git, Docker, and SSH) is installed. 
-   - *Windows Users*: You MUST use **WSL2** (run `wsl --install` in PowerShell) to create your Linux sanctuary first.
-2. **Clone the Baseline**:
-   ```zsh
-   git clone https://github.com/dderyldowney/vde-system.git ~/vde
-   cd ~/vde
-   ```
-3. **Take the Path of the Foundling**:
-   ```zsh
-   bin/vde path-of-the-foundling
-   ```
+**One command:**
+
+```zsh
+bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh)
+```
+
+This checks your system, clones VDE, and walks you through setup. If anything's missing (Zsh, Git, Docker, SSH), it tells you exactly what to install and how.
+
+- *Windows Users*: Open PowerShell as Administrator, run `wsl --install`, restart, then run the command above from your Ubuntu terminal.
+
+**Prefer manual setup?**
+
+```zsh
+git clone -b stable https://github.com/dderyldowney/vde-system.git ~/VDE
+cd ~/VDE
+bin/vde path-of-the-foundling
+```
 
 ---
 

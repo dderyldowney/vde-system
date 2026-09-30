@@ -533,11 +533,10 @@ load_vm_types() {
                 mv "${cache_tmp}" "${VM_TYPES_CACHE}"
                 _info "VM types cached for faster loading"
             fi
-        } always {
-            if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
-                release_lock "${global_lock}"
-            fi
         }
+        if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
+            release_lock "${global_lock}"
+        fi
     else
         _info "VM types loaded from cache"
     fi

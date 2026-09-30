@@ -14,11 +14,13 @@ The VDE (Virtual Development Environment) provides you with "Spokes" (isolated c
 
 ## 2. The Onboarding Ritual (The First Strike)
 
-When you first clone this repository, you MUST begin your journey by taking the **Path of the Foundling**. This ritual handles all initial configuration and certifies your Forge.
+**One command sets up everything:**
 
 ```zsh
-bin/vde path-of-the-foundling
+bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh)
 ```
+
+This checks your system, clones VDE, and launches the onboarding. If anything's missing, it tells you exactly what to install.
 
 **What this ritual does:**
 - **Ignition**: Performs the `vde init` ritual automatically, setting up your `vde_student` SSH keys and creating the networks.

@@ -23,21 +23,6 @@ service postgresql start || true
 PG_VER=$(ls /etc/postgresql | head -n 1)
 PG_BASE="/etc/postgresql/${PG_VER}/main"
 
-# User & DB Creation (Idempotent)
-if [[ -z "${POSTGRES_DEV_PASSWORD}" ]]; then
-    echo -e "${RED}[ERROR] Rule 12 Violation: POSTGRES_DEV_PASSWORD is not set.${RESET}"
-    echo -e "  The Forge requires a password to be provided via the environment for Spoke ignition."
-    exit 1
-fi
-
-# Securely pass password to postgres user for creation
-echo "[POSTGRES-INIT] Ensuring 'devuser' exists with secure credentials..."
-su - postgres -c "psql -tc \"SELECT 1 FROM pg_user WHERE usename = 'devuser'\" | grep -q 1" || \
-su - postgres -c "psql -c \"CREATE USER devuser WITH PASSWORD '${POSTGRES_DEV_PASSWORD}' SUPERUSER;\""
-
-su - postgres -c "psql -lqt | cut -d \| -f 1 | grep -qw devuser" || \
-su - postgres -c "createdb -O devuser devuser"
-
 # Configuration Hardening
 grep -q "0.0.0.0/0" "${PG_BASE}/pg_hba.conf" || \
 echo "host all all 0.0.0.0/0 md5" >> "${PG_BASE}/pg_hba.conf"
@@ -57,6 +42,18 @@ cat <<EOF > "${_spoke_ignition}"
 if ! pg_isready -h localhost >/dev/null 2>&1; then
     echo "[VDE-POSTGRES] Igniting PostgreSQL cluster..."
     sudo service postgresql start
+fi
+
+# User & DB Creation (Idempotent Runtime Initialization)
+if [[ -n "\${POSTGRES_DEV_PASSWORD}" ]]; then
+    echo "[VDE-POSTGRES] Ensuring 'devuser' exists with secure credentials..."
+    sudo su - postgres -c "psql -tc \"SELECT 1 FROM pg_user WHERE usename = 'devuser'\" | grep -q 1" || \
+    sudo su - postgres -c "psql -c \"CREATE USER devuser WITH PASSWORD '\${POSTGRES_DEV_PASSWORD}' SUPERUSER;\""
+
+    sudo su - postgres -c "psql -lqt | cut -d \| -f 1 | grep -qw devuser" || \
+    sudo su - postgres -c "createdb -O devuser devuser"
+else
+    echo "[VDE-POSTGRES] WARNING: POSTGRES_DEV_PASSWORD not set. Skipping user initialization."
 fi
 EOF
 chmod +x "${_spoke_ignition}"
