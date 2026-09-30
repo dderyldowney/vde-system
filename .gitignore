@@ -20,6 +20,8 @@ data/mongodb/*
 public-ssh-keys/*
 coverage/*
 .cache.test-backup/
+.cache/
+.kilo/
 
 # Backup files
 *.bak
