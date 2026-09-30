@@ -70,4 +70,22 @@ bin/vde path-of-the-foundling
 
 The `path-of-the-foundling` ritual is the onboarding mechanism. It performs `vde init` automatically, sets up your `vde_student` SSH identity, builds the base image, and walks you through creating your first Python spoke.
 
+## 4. Contributor Setup (The Forge)
+
+Only needed for developing VDE itself (running the Proof of Life / `behave`), not for using it.
+
+- **direnv** is required. It loads the project-local `.venv` automatically when you `cd` into the repo.
+- One-time setup:
+
+```zsh
+sudo apt install direnv python3-venv   # Debian/Ubuntu
+brew install direnv                    # macOS (venv ships with python3)
+# then hook direnv into ~/.zshrc: eval "$(direnv hook zsh)"
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt
+direnv allow
+```
+
+---
+
 **This is the Way.**

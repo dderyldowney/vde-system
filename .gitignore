@@ -22,6 +22,8 @@ coverage/*
 .cache.test-backup/
 .cache/
 .kilo/
+.venv/
+.direnv/
 
 # Backup files
 *.bak
@@ -61,6 +63,7 @@ output/
 tests/test-logs/
 *.log
 *.txt
+!requirements-dev.txt
 !scripts/setup/*.zsh
 !plans/scripts/**/*.log
 !plans/scripts/**/*.txt
