@@ -2,7 +2,7 @@
 <!-- @forge (Context Documentation) -->
 
 **Project**: VDE (Virtualized Development Environment)  
-**Version**: 1.5.5 (Sovereign Baseline)  
+**Version**: 1.5.6 (Sovereign Baseline)  
 **Repository**: https://github.com/dderyldowney/vde-system  
 **Default Branch**: develop (The Anvil)  
 **Root Directory**: `${VDE_ROOT_DIR}` (typically `~/VDE`)  

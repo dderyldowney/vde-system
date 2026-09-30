@@ -2,7 +2,7 @@
 <!-- @forge (Context Documentation) -->
 
 **Project**: Virtual Development Environment (VDE)  
-**Version**: 1.5.5 (The Sovereign Baseline)  
+**Version**: 1.5.6 (The Sovereign Baseline)  
 **Last Updated**: 2026-05-03
 
 ---
