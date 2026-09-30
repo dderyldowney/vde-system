@@ -151,7 +151,7 @@ VDE implements a high-fidelity internal network resolution system to facilitate 
 - **Handshake Verification**: The `vde dns-check` command provides empirical proof of cross-Spoke connectivity, ensuring the Transversal Bridge is active.
 
 ---
-**Version**: 1.5.5
+**Version**: 1.5.6
 **Status**: SOVEREIGN BASELINE CERTIFIED
-**Reference**: ARCHITECTURE 1.5.5
+**Reference**: ARCHITECTURE 1.5.6
 ---

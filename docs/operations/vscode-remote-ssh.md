@@ -1,7 +1,7 @@
 # VSCode Remote-SSH
 <!-- @shared-law (Sovereign Law) -->
 
-Using VSCode Remote-SSH with VDE in the **Sovereign Baseline (1.5.5)**.
+Using VSCode Remote-SSH with VDE in the **Sovereign Baseline (1.5.6)**.
 
 [← Back to README](../../README.md)
 
