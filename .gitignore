@@ -23,6 +23,7 @@ coverage/*
 .cache/
 .kilo/
 .venv/
+.direnv/
 
 # Backup files
 *.bak
