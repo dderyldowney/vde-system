@@ -78,7 +78,9 @@ Only needed for developing VDE itself (running the Proof of Life / `behave`), no
 - One-time setup:
 
 ```zsh
-sudo apt install direnv        # then hook it into ~/.zshrc: eval "$(direnv hook zsh)"
+sudo apt install direnv python3-venv   # Debian/Ubuntu
+brew install direnv                    # macOS (venv ships with python3)
+# then hook direnv into ~/.zshrc: eval "$(direnv hook zsh)"
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 direnv allow
