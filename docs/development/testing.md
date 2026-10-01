@@ -14,18 +14,27 @@ The System Spine tetrad is the foundational audit gate. If any pillar fails, the
 | IV     | **SSH**    | `ssh-add -l` identity check (The Bridge) |
 
 ## 2. BDD PERFORMANCE METRICS (1.5.6)
-As of **2026-09-29**, the VDE Behavior Driven Development suite is at **100% Fidelity**.
+Measured on **2026-09-30** at commit `6308fe33`: full run of `behave tests/features/` on Linux with Docker 29.8.2 (6 min 17 s, the Python `jsonschema` module available to subprocesses). The suite is **not** at 100%.
 
 | Metric | Count | Status |
 |--------|-------|--------|
-| **Total Features** | 25 | ✅ GREEN |
-| **Total Scenarios** | 101 | ✅ GREEN |
-| **Total Steps** | 637 | ✅ GREEN |
+| **Total Features** | 28 (26 passed, 2 failed) | ❌ 2 FAILING |
+| **Total Scenarios** | 116 (107 passed, 9 failed) | ❌ 9 FAILING |
+| **Total Steps** | 720 (638 passed, 9 failed, 73 skipped) | ❌ 9 FAILING |
 | **Undefined Steps** | 0 | ✅ NONE |
-| **Pass Rate** | 100% | ✅ ABSOLUTE |
+| **Scenario Pass Rate** | 92.2% (107 of 116) | ❌ BELOW 100% |
+
+The Proof of Life (`proof-of-life-the-contract.feature`) passed 6 of 6 scenarios in this run. The CI-safe Sovereign Tests runner (`./tests/run-sovereign-tests.zsh`) passed 12 of 12 suites with `jsonschema` available and 11 of 12 without it (tracked in #492).
+
+Failing scenarios at this commit, with the cause seen in the run log:
+
+- `student-guidance/next-steps-guidance.feature` (8 scenarios, lines 14-78): the shared step `the Hub is synchronized to version 1.5.3` fails with `Sync error: Hub at 1.5.6, expected 1.5.3`, so none of them reaches the command under test. The version is hard-coded in the feature.
+- `governance/gospel-audit.feature:20` "Detection of Undocumented Scripts": the audit printed `[GOSPEL-SUCCESS]` instead of `[CRITICAL FAILURE] Undocumented scripts detected`. `bin/vde-gospel-audit.zsh` skips its undocumented-script check when `docs/available-scripts.md` is missing, and that file does not exist in the repository.
+
+Running the full suite against a Docker host is not side-effect free. In this measurement it removed the 4 stopped `vde-*` containers that existed beforehand (seen by comparing `docker ps -a` before and after; the responsible scenario was not identified) and re-dated tracked documents through the doc-sync scripts. Run it on a disposable host, or commit first and review `git status` afterwards.
 
 ## 3. CORE INFRASTRUCTURE SUITE
-Located in `tests/features/core-infrastructure/` (19 feature files as of 1.5.5):
+Located in `tests/features/core-infrastructure/` (22 feature files at commit `6308fe33`; the following is a non-exhaustive selection):
 
 - **proof-of-life-the-contract.feature**: Verifies the 8 lifecycle states (create, rebuild, start, enter, stop, remove, add, uninstall).
 - **system-spine.feature**: Hardens the 4 Pillars and deterministic Hub-to-Spoke ignition.

@@ -14,8 +14,8 @@
 ## Open Items
 - **plans/session_handover_remediation.md**: Restored from git history (was missing pre-migration).
 
-## Sovereign Baseline: 1.5.5
-- Version: 1.5.5 (The Sovereign Baseline)
-- Heartbeat: 72/72 BDD steps green (6/6 scenarios)
-- Enforcer: PASS (CLEAN)
-- Documentation: Fully restructured, all cross-references updated
+## Sovereign Baseline: 1.5.6 (measured 2026-09-30 at commit `6308fe33`)
+- Version: 1.5.6 (The Sovereign Baseline)
+- Heartbeat: Proof of Life 6 of 6 scenarios passed. Full BDD suite: 107 of 116 scenarios passed, 9 failed (details in `docs/development/testing.md`).
+- Enforcer: `bin/vde-enforce-uap.zsh` success, exit 0.
+- Documentation: not re-verified for 1.5.6. Known gap: the 1.5.5 entries in `docs/changelogs/current.md` are dead links.
