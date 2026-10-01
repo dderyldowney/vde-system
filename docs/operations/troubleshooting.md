@@ -136,9 +136,11 @@ sudo auditctl -w "$(git rev-parse --absolute-git-dir)/config" -p wa -k vde-git-c
 print -r -- "-w $(git rev-parse --absolute-git-dir)/config -p wa -k vde-git-config" | sudo tee /etc/audit/rules.d/vde-git-config.rules
 sudo augenrules --load
 
-# 4. Confirm exactly one vde-git-config rule is loaded
-sudo auditctl -l
+# 4. Confirm exactly one vde-git-config rule is loaded (exits non-zero otherwise)
+test "$(sudo auditctl -l | grep -F -c -- '-k vde-git-config')" -eq 1
 ```
+
+Step 3 writes the repository path into the rules file unquoted, and it was not tested with a path that contains whitespace. If your repository path has spaces, treat reboot persistence as unsupported (the `auditctl` command in step 2 is quoted and is unaffected).
 
 After the next flip, read the record:
 
