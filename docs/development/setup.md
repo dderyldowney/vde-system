@@ -29,10 +29,12 @@ All VDE logic is modular. For detailed function references, see `docs/api/librar
 
 ## Testing
 
-As of 1.5.5, the suite is certified at **100% Fidelity**.
+Measured on 2026-09-30 at commit `6308fe33` (1.5.6; Linux, zsh 5.9, Python 3.12, Docker 29.8.2). The full BDD suite is **not** at 100%; the failing scenarios and their causes are listed in [Testing](testing.md).
 
 - **BDD Framework**: Behave (Python).
-- **Counts**: 17 Scenarios, 137 Steps.
+- **Full suite** (`behave tests/features/`): 116 scenarios, 720 steps. **107 scenarios passed, 9 failed**; 638 steps passed, 9 failed, 73 skipped.
+- **Proof of Life** (`proof-of-life-the-contract.feature`): 6 of 6 scenarios passed.
+- **Sovereign Tests** (`./tests/run-sovereign-tests.zsh`, the CI-safe subset): 12 of 12 suites passed when the Python `jsonschema` module was available, 11 of 12 without it (tracked in #492).
 - **Protocol**: No functional code is committed without a failing test (Trial of the Gauntlet).
 
 ### Test Commands

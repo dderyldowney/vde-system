@@ -1,5 +1,18 @@
-# VDE Test Status Report (Sovereign Certification v1.5.5)
+# VDE Test Status Report (measured on 1.5.6)
 <!-- @forge (Governance Sentinel) -->
+
+Measured on 2026-09-30 at commit `6308fe33` (Linux, Docker 29.8.2). The suite as a whole is **not** at 100%; the failing scenarios and their causes are listed in [docs/development/testing.md](../docs/development/testing.md).
+
+| Suite | Result |
+| :--- | :--- |
+| Full BDD suite (`behave tests/features/`) | 107 of 116 scenarios passed, 9 failed; 638 of 720 steps passed, 9 failed, 73 skipped; 26 of 28 features passed |
+| Proof of Life (`proof-of-life-the-contract.feature`) | 6 of 6 scenarios passed |
+| Sovereign Tests (`tests/run-sovereign-tests.zsh`) | 12 of 12 suites with the Python `jsonschema` module available; 11 of 12 without it (tracked in #492) |
+| Spine check (`bin/vde-spine-check.zsh`) | all 4 pillars OK |
+| UAP enforcement (`bin/vde-enforce-uap.zsh`) | success, exit 0 |
+| Gospel audit (`bin/vde-gospel-audit.zsh`) | success, but its undocumented-script check is skipped because `docs/available-scripts.md` does not exist |
+
+The rows in the tables below are exercised by these results: the four pillars by the spine check, the lifecycle rows by the six Proof of Life scenarios (init; create and start; enter and rebuild; stop and rm; add and uninstall; hardened rebuild), and the Sovereign Bridges row by the spoke-to-spoke SSH and DNS discovery features, which passed in the full run.
 
 ## Core Infrastructure
 | Feature | Status | Description |
@@ -28,7 +41,7 @@
 | **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (1.5.6) |
 
 ---
-**Certified by**: The Covert
-**Baseline**: 1.4.0
-**Heartbeat**: 100% Green
+**Measured**: 2026-09-30
+**Baseline**: 1.5.6 (commit `6308fe33`)
+**Heartbeat (Proof of Life)**: 6 of 6 scenarios passed
 ---
