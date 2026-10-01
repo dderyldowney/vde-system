@@ -113,6 +113,47 @@ $HOME/workspace/
 
 ---
 
+## `git checkout` Fails: "this operation must be run in a work tree"
+
+**Problem:** `core.bare` in `.git/config` was flipped to `true` by something other than you.
+
+**Immediate fix:**
+
+```zsh
+git config core.bare false
+```
+
+**Find out what did it (Linux audit watch, needs `sudo`):** a file watcher shows *when* the file changed, but only the kernel audit subsystem records *which process* wrote it. Run these from the repository root.
+
+```zsh
+# 1. Install the audit daemon (Debian/Ubuntu)
+sudo apt install -y auditd
+
+# 2. Watch writes and attribute changes to .git/config (lasts until reboot)
+sudo auditctl -w "$(git rev-parse --absolute-git-dir)/config" -p wa -k vde-git-config
+
+# 3. Make the rule survive reboots
+print -r -- "-w $(git rev-parse --absolute-git-dir)/config -p wa -k vde-git-config" | sudo tee /etc/audit/rules.d/vde-git-config.rules
+sudo augenrules --load
+
+# 4. Confirm exactly one vde-git-config rule is loaded (exits non-zero otherwise)
+test "$(sudo auditctl -l | grep -F -c -- '-k vde-git-config')" -eq 1
+```
+
+Step 3 writes the repository path into the rules file unquoted, and it was not tested with a path that contains whitespace. If your repository path has spaces, treat reboot persistence as unsupported (the `auditctl` command in step 2 is quoted and is unaffected).
+
+After the next flip, read the record:
+
+```zsh
+sudo ausearch -k vde-git-config -i --start today
+```
+
+Each event names the writer in its `SYSCALL` line (`comm=`, `exe=`, `pid=`, `ppid=`, `auid=`), and the `PROCTITLE` line shows the full command line. `git config` rewrites the file through `config.lock` and a `rename`; the watch follows that, so every write is caught. The `ppid` points at the parent process (for example a Git GUI or an editor integration), which `ps` can no longer tell you once it exits.
+
+Note: if `ausearch` prints events for `git config` only, the flip came from a `git` command. A process that edits the file directly will appear under its own `comm=`/`exe=`.
+
+---
+
 ## Complete Reset (The Great Quench)
 
 If the Forge is hopelessly fractured and you need a clean start:
