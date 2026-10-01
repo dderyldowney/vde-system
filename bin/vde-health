@@ -263,7 +263,7 @@ vde_health_memory() {
     # Get memory usage
     local mem_usage=0
     
-    if _is_zsh || [[ "$(uname)" == "Darwin" ]]; then
+    if [[ "$(uname)" == "Darwin" ]]; then
         # macOS: Use vm_stat to calculate memory usage percentage
         local vm_stat_output
         vm_stat_output=$(command vm_stat 2>/dev/null)
