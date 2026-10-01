@@ -128,13 +128,37 @@ vde_health_containers() {
         return
     fi
     
-    # Get container states
+    # Get container states. Run docker on its own so a failure is reported as
+    # a failure instead of being read as "zero containers".
     local running
     local stopped
     local total
-    
-    running=$(docker ps -q 2>/dev/null | command wc -l || echo 0)
-    total=$(docker ps -aq 2>/dev/null | command wc -l || echo 0)
+    local running_ids
+    local all_ids
+
+    if ! running_ids=$(docker ps -q 2>/dev/null) || ! all_ids=$(docker ps -aq 2>/dev/null); then
+        health_status="MAJOR"
+        message="Container state could not be determined (docker ps failed)"
+        _VDE_HEALTH_MAJOR_COUNT=$((_VDE_HEALTH_MAJOR_COUNT + 1))
+        _VDE_HEALTH_CHECKS[${check_name}]="${health_status}|${message}"
+        return
+    fi
+
+    # Query unhealthy containers before classifying anything, so a failed query
+    # returns before any MINOR/MAJOR count has been incremented for this check.
+    local unhealthy_ids
+    if ! unhealthy_ids=$(docker ps --filter "health=unhealthy" -q 2>/dev/null); then
+        health_status="MAJOR"
+        message="Unhealthy-container state could not be determined (docker ps failed)"
+        _VDE_HEALTH_MAJOR_COUNT=$((_VDE_HEALTH_MAJOR_COUNT + 1))
+        _VDE_HEALTH_CHECKS[${check_name}]="${health_status}|${message}"
+        return
+    fi
+
+    local -a running_list=(${(f)running_ids})
+    local -a all_list=(${(f)all_ids})
+    running=${#running_list}
+    total=${#all_list}
     stopped=$((total - running))
     
     if [[ "${total}" -eq 0 ]]; then
@@ -150,8 +174,8 @@ vde_health_containers() {
     fi
     
     # Check for unhealthy containers
-    local unhealthy
-    unhealthy=$(docker ps --filter "health=unhealthy" -q 2>/dev/null | command wc -l || echo 0)
+    local -a unhealthy_list=(${(f)unhealthy_ids})
+    local unhealthy=${#unhealthy_list}
     if [[ "${unhealthy}" -gt 0 ]]; then
         health_status="MAJOR"
         message="${unhealthy} unhealthy containers detected"
@@ -231,11 +255,20 @@ vde_health_disk() {
     local health_status="OK"
     local message=""
     
-    # Get disk usage
-    local disk_usage
-    disk_usage=$(command df -h / 2>/dev/null | command tail -1 | command awk '{print $5}' | command tr -d '%' || echo 0)
-    
-    if [[ "${disk_usage}" -ge 90 ]]; then
+    # Get disk usage. Run df on its own and require a numeric result, so a
+    # failure is reported as a failure instead of an empty percentage.
+    local disk_usage=""
+    local df_output
+    local parsed
+    if df_output=$(command df -h / 2>/dev/null) && parsed=$(print -r -- "${df_output}" | command tail -1 | command awk '{print $5}' | command tr -d '%'); then
+        disk_usage="${parsed}"
+    fi
+
+    if [[ "${disk_usage}" != <-> ]]; then
+        health_status="MAJOR"
+        message="Disk usage could not be determined"
+        _VDE_HEALTH_MAJOR_COUNT=$((_VDE_HEALTH_MAJOR_COUNT + 1))
+    elif [[ "${disk_usage}" -ge 90 ]]; then
         health_status="CRITICAL"
         message="Disk usage is ${disk_usage}%"
         _VDE_HEALTH_CRITICAL_COUNT=$((_VDE_HEALTH_CRITICAL_COUNT + 1))
@@ -260,15 +293,15 @@ vde_health_memory() {
     local health_status="OK"
     local message=""
     
-    # Get memory usage
-    local mem_usage=0
-    
+    # Get memory usage. mem_usage stays empty unless a measurement succeeds, so
+    # a failed measurement is reported instead of read as 0%.
+    local mem_usage=""
+
     if [[ "$(uname)" == "Darwin" ]]; then
         # macOS: Use vm_stat to calculate memory usage percentage
         local vm_stat_output
-        vm_stat_output=$(command vm_stat 2>/dev/null)
-        
-        if [[ -n "${vm_stat_output}" ]]; then
+
+        if vm_stat_output=$(command vm_stat 2>/dev/null) && [[ -n "${vm_stat_output}" ]]; then
             # Get page count values
             local free_pages
             local active_pages
@@ -292,10 +325,23 @@ vde_health_memory() {
             fi
         fi
     else
-        # Linux: Use free command
-        mem_usage=$(command free 2>/dev/null | command grep Mem | command awk '{print int($3/$2 * 100)}' || echo 0)
+        # Linux: Use free command. Run it on its own so its failure is not
+        # hidden by the pipeline that parses its output.
+        local free_output
+        local parsed
+        if free_output=$(command free 2>/dev/null) && parsed=$(print -r -- "${free_output}" | command grep Mem | command awk '{print int($3/$2 * 100)}'); then
+            mem_usage="${parsed}"
+        fi
     fi
-    
+
+    if [[ "${mem_usage}" != <-> ]]; then
+        health_status="MAJOR"
+        message="Memory usage could not be determined"
+        _VDE_HEALTH_MAJOR_COUNT=$((_VDE_HEALTH_MAJOR_COUNT + 1))
+        _VDE_HEALTH_CHECKS[${check_name}]="${health_status}|${message}"
+        return
+    fi
+
     local triage=""
     if [[ "${mem_usage}" -ge 90 ]]; then
         health_status="CRITICAL"
