@@ -198,13 +198,15 @@ run_command() {
 
 #### Glob Qualifiers
 ```zsh
-# Null glob (no error if no matches)
-setopt local_options null_glob
+# (N) qualifier: no error if there are no matches
 for file in *.sh(N); do
     echo "Found: $file"
 done
+```
 
-# Case-insensitive glob (the (#i) flag requires extended_glob)
+#### Glob Flags
+```zsh
+# Case-insensitive glob: (#i) is a glob flag, not a qualifier, and requires extended_glob
 setopt local_options extended_glob
 for file in (#i)*.txt; do
     echo "Found: $file"
