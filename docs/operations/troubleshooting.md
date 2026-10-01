@@ -140,7 +140,9 @@ sudo augenrules --load
 test "$(sudo auditctl -l | grep -F -c -- '-k vde-git-config')" -eq 1
 ```
 
-Step 3 writes the repository path into the rules file unquoted, and it was not tested with a path that contains whitespace. If your repository path has spaces, treat reboot persistence as unsupported (the `auditctl` command in step 2 is quoted and is unaffected).
+Step 3 does not work if the repository path contains whitespace: a rules-file entry with a space in the path did not load, quoted or unquoted (`auditctl -R` exited 1 and no rule was loaded). The shell-quoted `auditctl -w` command in step 2 does work with spaces, so in that case use step 2 only and re-run it after each reboot.
+
+Persistence was checked without rebooting: `sudo augenrules --check` reports `No change`, and after deleting the live rules (`sudo auditctl -D`) and restarting `auditd` (its unit runs `augenrules --load`) the rule came back from the rules file and still recorded writes. An actual reboot was not tested.
 
 After the next flip, read the record:
 
@@ -148,9 +150,13 @@ After the next flip, read the record:
 sudo ausearch -k vde-git-config -i --start today
 ```
 
-Each event names the writer in its `SYSCALL` line (`comm=`, `exe=`, `pid=`, `ppid=`, `auid=`), and the `PROCTITLE` line shows the full command line. `git config` rewrites the file through `config.lock` and a `rename`; the watch follows that, so every write is caught. The `ppid` points at the parent process (for example a Git GUI or an editor integration), which `ps` can no longer tell you once it exits.
+Each event names the writer in its `SYSCALL` line (`comm=`, `exe=`, `pid=`, `ppid=`, `auid=`), and the `PROCTITLE` line shows the full command line. `git` rewrites the file through `config.lock` and a `rename`; the watch follows that, so every write is caught. The `ppid` points at the parent process (for example a Git GUI or an editor integration), which `ps` can no longer tell you once it exits.
 
-Note: if `ausearch` prints events for `git config` only, the flip came from a `git` command. A process that edits the file directly will appear under its own `comm=`/`exe=`.
+Expect a noisy log: every `git` command that rewrites `.git/config` is recorded, not only `git config`. In practice that included `git push -u ...` (two events each, when it sets the upstream), `git branch -d ...` (removing a branch's config section) and `git config ...`, plus `auditctl` itself whenever rules are loaded. So `comm=git` alone does not identify a culprit. Match the event time to when `git checkout` started failing, then read `proctitle=` and `ppid=`: a writer that is not one of your own commands (a Git GUI, an editor integration or an agent tool) is the lead. To list every command that wrote the file:
+
+```zsh
+sudo ausearch -k vde-git-config -i --start today | grep -E 'proctitle=' | sed -E 's/.*proctitle=//' | sort | uniq -c | sort -rn
+```
 
 ---
 
