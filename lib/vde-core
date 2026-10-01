@@ -628,24 +628,28 @@ vde_check_schema_integrity() {
     fi
 
     # Check if valid JSON
-    if ! python3 -c "import json; json.load(open('${schema_file}'))" 2>/dev/null; then
+    if ! python3 -c "import json, sys; json.load(open(sys.argv[1]))" "${schema_file}" 2>/dev/null; then
         log_error "Schema file is not valid JSON: ${schema_file}"
         return ${VDE_ERR_INVALID_DATA:-4}
     fi
 
     # Check for required schema fields
     if ! python3 -c "
-import json
-with open('${schema_file}') as f:
+import json, sys
+with open(sys.argv[1]) as f:
     schema = json.load(f)
 assert '\$schema' in schema or 'type' in schema, 'Missing required schema fields'
-" 2>/dev/null; then
+" "${schema_file}" 2>/dev/null; then
         log_error "Schema file missing required fields: ${schema_file}"
         return ${VDE_ERR_INVALID_DATA:-4}
     fi
 
     return ${VDE_SUCCESS:-0}
 }
+
+# Directory of this library (resolved when the file is sourced), used to find
+# lib/vde-json-validate.py.
+typeset -g _VDE_CORE_LIB_DIR="${${(%):-%x}:A:h}"
 
 # vde_validate_json_schema - Validate JSON file against its schema
 # Args: <json_file> <schema_file>
@@ -670,44 +674,24 @@ vde_validate_json_schema() {
         return ${VDE_ERR_INVALID_DATA:-4}
     fi
 
-    # Validate JSON against schema
-    if python3 -c "
-import json, sys
+    # Validate JSON against schema. VDE_SCHEMA_VALIDATOR selects the validator:
+    # auto (default: jsonschema if importable, else the built-in one), builtin,
+    # or jsonschema (required). The built-in validator refuses, rather than
+    # ignores, anything it does not implement, so it is never a weaker silent
+    # fallback. See lib/vde-json-validate.py.
+    local validator_script="${_VDE_CORE_LIB_DIR}/vde-json-validate.py"
+    if [[ ! -f "${validator_script}" ]]; then
+        log_error "Schema validator helper not found: ${validator_script}"
+        return ${VDE_ERR_NOT_FOUND:-3}
+    fi
 
-try:
-    with open('${schema_file}') as f:
-        schema = json.load(f)
-    with open('${json_file}') as f:
-        data = json.load(f)
-    
-    # Try using jsonschema if installed
-    try:
-        import jsonschema
-        jsonschema.validate(instance=data, schema=schema)
-        sys.exit(0)
-    except ImportError:
-        # Fallback to basic structural validation if jsonschema not available
-        if schema.get('type') == 'object':
-            required = schema.get('required', [])
-            for field in required:
-                if field not in data:
-                    print(f'Missing required field: {field}', file=sys.stderr)
-                    sys.exit(1)
-        sys.exit(0)
-    except Exception as e:
-        print(f'Schema validation error: {e}', file=sys.stderr)
-        sys.exit(1)
-except Exception as e:
-    print(f'Validation script error: {e}', file=sys.stderr)
-    sys.exit(1)
-" ; then
-        : # Success
-    else
+    local validator_used
+    if ! validator_used=$(python3 "${validator_script}" "${schema_file}" "${json_file}" "${VDE_SCHEMA_VALIDATOR:-auto}"); then
         log_error "JSON validation failed: ${json_file}"
         return ${VDE_ERR_INVALID_DATA:-4}
     fi
 
-    log_info "Schema validation passed: ${json_file}"
+    log_info "Schema validation passed (${validator_used}): ${json_file}"
     return ${VDE_SUCCESS:-0}
 }
 
