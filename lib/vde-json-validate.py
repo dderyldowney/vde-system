@@ -21,6 +21,14 @@ with JSON Schema 2020-12 semantics, and it REFUSES (exit 1, explicit message)
 anything else, including any unknown keyword, a non-local $ref, or a "$schema"
 other than 2019-09/2020-12. Refusing instead of ignoring is what keeps it from
 becoming a silent fake pass.
+
+Constructs that are valid JSON Schema but deliberately NOT implemented, and so
+refused: boolean schemas (for example "items": true), "$ref" with sibling
+keywords, a "required" list with duplicate names, and every keyword outside the
+supported list below (enum, const, oneOf, patternProperties, ...). A
+"jsonschema" module older than 4.0 (no Draft202012Validator) is not used: its
+default draft is version-dependent, so "auto" uses the built-in validator and
+says so.
 """
 
 import json
@@ -160,6 +168,9 @@ class BuiltinValidator:
         elif key == "required":
             if not (isinstance(value, list) and all(isinstance(n, str) for n in value)):
                 self.refuse(path, "required (not a list of names)")
+            if len(value) != len(set(value)):
+                # jsonschema's metaschema requires the names to be unique.
+                self.refuse(path, "required (duplicate names)")
         elif key == "properties":
             if not isinstance(value, dict):
                 self.refuse(path, "properties (not an object)")
@@ -293,7 +304,16 @@ def main(argv):
         try:
             import jsonschema
 
-            validator = "jsonschema"
+            if hasattr(jsonschema, "Draft202012Validator"):
+                validator = "jsonschema"
+            elif mode == "jsonschema":
+                return fail(
+                    "VDE_SCHEMA_VALIDATOR=jsonschema but the installed jsonschema module has no "
+                    "Draft202012Validator (it is older than 4.0); upgrade it or use auto/builtin"
+                )
+            # In auto mode an older module is not used: its default draft is
+            # version-dependent, so the built-in validator (2020-12) is used and
+            # reported by name instead.
         except ImportError:
             if mode == "jsonschema":
                 return fail(
@@ -302,16 +322,13 @@ def main(argv):
 
     if validator == "jsonschema":
         try:
-            # The default draft depends on the jsonschema version, so pin it to
-            # 2020-12 (what the built-in validator implements); an explicit
-            # "$schema" in the schema still wins.
-            default = getattr(jsonschema, "Draft202012Validator", None)
-            if default is None:
-                jsonschema.validate(instance=data, schema=schema)
-            else:
-                validator_class = jsonschema.validators.validator_for(schema, default=default)
-                validator_class.check_schema(schema)
-                validator_class(schema).validate(data)
+            # Pin the default draft to 2020-12 (what the built-in validator
+            # implements); an explicit "$schema" in the schema still wins.
+            validator_class = jsonschema.validators.validator_for(
+                schema, default=jsonschema.Draft202012Validator
+            )
+            validator_class.check_schema(schema)
+            validator_class(schema).validate(data)
         except (jsonschema.exceptions.ValidationError, jsonschema.exceptions.SchemaError) as error:
             return fail(f"Schema validation error: {error}")
         except Exception as error:  # noqa: BLE001

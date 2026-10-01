@@ -208,6 +208,7 @@ typeset SVC_OK='{"name":"vde-svc","display":"Svc","ssh_port":2401}'
 typeset -a VALIDATOR_FIXTURES=(
     "valid_minimal|ok|[${LANG_OK}]|[${SVC_OK}]|"
     "valid_empty_lists|ok|[]|[]|"
+    "valid_integer_valued_float_port|ok|[{\"name\":\"vde-test\",\"display\":\"T\",\"ssh_port\":2201.0}]|[]|"
     "valid_null_pkgs|ok|[{\"name\":\"vde-test\",\"display\":\"T\",\"ssh_port\":2201,\"pkgs\":null}]|[]|"
     "bad_name_pattern|bad|[{\"name\":\"invalid-name\",\"display\":\"T\",\"ssh_port\":2201}]|[]|"
     "missing_required_fields|bad|[{\"name\":\"vde-a\"}]|[]|"
@@ -349,6 +350,49 @@ test_builtin_validator_accepts_recursive_ref_with_root_id() {
     test_assert "[[ $? -eq $VDE_SUCCESS ]]" "a recursive \$ref to the root with a root \$id accepts valid data"
     _validate_with builtin "$bad" "$schema_file"
     test_assert "[[ $? -eq $VDE_ERR_INVALID_DATA ]]" "a recursive \$ref to the root rejects invalid nested data"
+}
+
+# Constructs the built-in validator does not implement are refused explicitly
+# (never ignored): boolean "items", "$ref" with sibling keywords, and a
+# "required" list with duplicate names (which jsonschema's metaschema rejects).
+_assert_builtin_refuses() {
+    local label="$1" schema_json="$2" data_json="$3"
+    local schema_file="$TEST_TMP_DIR/refuse-${label}.schema.json"
+    local json_file="$TEST_TMP_DIR/refuse-${label}.json"
+    local output rc
+    print -r -- "$schema_json" > "$schema_file"
+    print -r -- "$data_json" > "$json_file"
+    output=$( ( export VDE_SCHEMA_VALIDATOR=builtin; vde_validate_json_schema "$json_file" "$schema_file" ) 2>&1 )
+    rc=$?
+    test_assert "[[ $rc -eq $VDE_ERR_INVALID_DATA ]]" "built-in validator refuses ${label}"
+    [[ $output == *unsupported* ]]
+    test_assert "[[ $? -eq 0 ]]" "the ${label} refusal says unsupported"
+}
+
+test_builtin_validator_refuses_unimplemented_constructs() {
+    _assert_builtin_refuses boolean-items '{"type":"array","items":true}' '[1]'
+    _assert_builtin_refuses ref-with-sibling '{"type":"object","properties":{"a":{"$ref":"#/definitions/s","minLength":1}},"definitions":{"s":{"type":"string"}}}' '{"a":"x"}'
+    _assert_builtin_refuses duplicate-required '{"type":"object","required":["a","a"]}' '{"a":1}'
+}
+
+# A jsonschema module older than 4.0 has no Draft202012Validator, so its default
+# draft is version-dependent. auto must then use the built-in validator (and say
+# so), and an explicit jsonschema mode must refuse with a clear message.
+test_old_jsonschema_module_is_not_used_unpinned() {
+    local stub="$TEST_TMP_DIR/old-jsonschema"
+    local output rc
+    mkdir -p "$stub/jsonschema"
+    print -r -- 'def validate(instance, schema): raise SystemExit("unpinned jsonschema.validate must not be called")' > "$stub/jsonschema/__init__.py"
+    output=$( ( export PYTHONPATH="$stub" VDE_SCHEMA_VALIDATOR=auto; vde_validate_json_schema "$TEST_TMP_DIR/vm-types.json" "$TEST_TMP_DIR/vm-types.schema.json" ) 2>&1 )
+    rc=$?
+    test_assert "[[ $rc -eq $VDE_SUCCESS ]]" "auto mode still validates when the jsonschema module is too old"
+    [[ $output == *"(builtin)"* ]]
+    test_assert "[[ $? -eq 0 ]]" "auto mode names the built-in validator when jsonschema is too old"
+    output=$( ( export PYTHONPATH="$stub" VDE_SCHEMA_VALIDATOR=jsonschema; vde_validate_json_schema "$TEST_TMP_DIR/vm-types.json" "$TEST_TMP_DIR/vm-types.schema.json" ) 2>&1 )
+    rc=$?
+    test_assert "[[ $rc -eq $VDE_ERR_INVALID_DATA ]]" "explicit jsonschema mode refuses a module that is too old"
+    [[ $output == *Draft202012Validator* ]]
+    test_assert "[[ $? -eq 0 ]]" "the too-old message names Draft202012Validator"
 }
 
 test_missing_validator_helper_is_reported() {
@@ -499,6 +543,8 @@ run_test_suite() {
     run_test test_builtin_validator_fails_closed_on_nested_id
     run_test test_builtin_validator_resolves_percent_encoded_ref
     run_test test_builtin_validator_accepts_recursive_ref_with_root_id
+    run_test test_builtin_validator_refuses_unimplemented_constructs
+    run_test test_old_jsonschema_module_is_not_used_unpinned
     run_test test_missing_validator_helper_is_reported
     run_test test_deeply_nested_json_gives_message_not_traceback
     run_test test_builtin_validator_handles_quote_in_schema_path
