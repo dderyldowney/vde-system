@@ -34,7 +34,7 @@ Failing scenarios at this commit, with the cause seen in the run log:
 Running the full suite against a Docker host is not side-effect free. In this measurement it removed the 4 stopped `vde-*` containers that existed beforehand (seen by comparing `docker ps -a` before and after; the responsible scenario was not identified) and re-dated tracked documents through the doc-sync scripts. Run it on a disposable host, or commit first and review `git status` afterwards.
 
 ## 3. CORE INFRASTRUCTURE SUITE
-Located in `tests/features/core-infrastructure/` (22 feature files at commit `6308fe33`):
+Located in `tests/features/core-infrastructure/` (22 feature files at commit `6308fe33`; the following is a non-exhaustive selection):
 
 - **proof-of-life-the-contract.feature**: Verifies the 8 lifecycle states (create, rebuild, start, enter, stop, remove, add, uninstall).
 - **system-spine.feature**: Hardens the 4 Pillars and deterministic Hub-to-Spoke ignition.
