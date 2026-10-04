@@ -103,6 +103,35 @@ Architectural tags sit exclusively on **line 2 or 3**. Line 1 is reserved for sh
 ### 3. Verification
 Tag compliance is verified by the **UAP Sentinel** via the **Universal Architectural Regex**. Non-compliant artifacts constitute a **Protocol Fracture** and must be remediated before any further work proceeds.
 
+## V. The Agent Isolation Law (The Law of the Two Keyrings)
+
+VDE has its **own** ssh-agent, separate from the user's. This Law binds **both** projects: the Armor (the standalone, student-facing product) and the Forge (the development rig and its tests), in daily operation and in tests alike.
+
+### 1. VDE's Agent
+*   **Where it lives**: entirely inside `~/.ssh/vde` (the `VDE_SSH_DIR`). It listens on the dedicated socket `~/.ssh/vde/agent.sock` (`VDE_SSH_AGENT_SOCK`), and `~/.ssh/vde/agent_env` records it.
+*   **What it holds**: exactly VDE's allowed key set, preloaded onto it: `vde_student`, the key for the Spokes' `devuser` account.
+*   **What identifies it**: the socket path alone. An `agent_env` that records any other socket (the user's agent, a legacy agent on a random `/tmp` socket) is invalid and is replaced; an agent on any other socket is never VDE's to use, stop, clean up or kill.
+
+### 2. The User's Agent
+*   VDE tooling, tests and the Forge SHALL NOT use, read, load keys into, forward, or kill the user's personal agent (or the desktop session's agent), and SHALL NOT read the user's own keys in `~/.ssh`.
+*   VDE knows only two identities: `devuser`, the account inside the Spokes, and `~/.ssh/vde`. The local user is the person at the keyboard and is not VDE's concern.
+*   VDE's agent is never exported into the user's shell. It is started in a subprocess (`vde ssh-setup start`, the spine check, `ensure_ssh_agent`).
+
+### 3. Connections to Spokes
+*   Every host entry VDE generates pins `IdentityAgent` to VDE's socket with `IdentitiesOnly yes`, so `ForwardAgent` forwards only VDE's agent. This holds for the template (`templates/ssh-config.tmpl` and its generated artifacts), the `lib/vde-ssh` generators, and `bin/add-vm-type`; `bin/ssh-vm` pins the same agent.
+*   The socket VDE mounts into the Spokes is VDE's own (`vde_get_host_ssh_sock`); it never falls back to the caller's `SSH_AUTH_SOCK`.
+
+### 4. The Forge's Tests
+*   Step definitions and helpers use only VDE's agent, through `tests/features/steps/ssh_helpers.py`. If it is not running they start it the VDE way and never fall back to the user's agent.
+*   Cleanup helpers delegate to `bin/ssh-setup cleanup`, which is an allowlist: only a stray agent on a socket inside `~/.ssh/vde` is ever killed.
+
+### 5. The Fail-Safe
+Ownership is established by the dedicated socket path (section 1): VDE may adopt and record a responsive agent found on `~/.ssh/vde/agent.sock`. Outside that path ownership is never assumed: an agent on any other socket is left alone, and VDE says so.
+
+On the dedicated socket itself, when VDE cannot be sure what it would be acting on (a socket that does not answer, a recorded PID that cannot be found or now belongs to another process, a path that cannot be resolved), VDE kills, deletes and replaces nothing and reports it instead.
+
+`ssh-setup cleanup` is the separate, narrower case of section 4: it kills only a stray agent whose own command line shows it was started on a socket inside `~/.ssh/vde` (never the dedicated one, the one `agent_env` records, or the one the caller exports), and compares resolved absolute paths only.
+
 ---
 
 **This is the Way.**
