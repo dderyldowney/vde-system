@@ -44,16 +44,18 @@ _spine_socket_listening() {
 # Wait about 100ms without a fixed sleep (the project forbids those). zselect -t
 # counts hundredths of a second. Where the zselect module cannot be loaded, wait
 # on a FIFO nobody writes to instead: read -t gives the same pause using only
-# builtins, so the polling below never degrades into an instant retry loop.
+# builtins. Returns 1 when no pause could be established (neither zselect nor a
+# FIFO is available), so the caller knows it cannot wait instead of silently
+# retrying in an instant loop.
 _spine_pause() {
     if zmodload zsh/zselect 2>/dev/null; then
         zselect -t 10 >/dev/null 2>&1 || true
         return 0
     fi
     local fifo fd
-    fifo=$(mktemp -u "${TMPDIR:-/tmp}/spine-pause.XXXXXX") || return 0
-    mkfifo "${fifo}" 2>/dev/null || return 0
-    exec {fd}<>"${fifo}"
+    fifo=$(mktemp -u "${TMPDIR:-/tmp}/spine-pause.XXXXXX") || return 1
+    mkfifo "${fifo}" 2>/dev/null || return 1
+    exec {fd}<>"${fifo}" || { rm -f -- "${fifo}"; return 1; }
     read -t 0.1 -u ${fd} 2>/dev/null || true
     exec {fd}>&-
     rm -f -- "${fifo}"
@@ -61,13 +63,17 @@ _spine_pause() {
 }
 
 # Poll instead of sleeping: run the command "$2..." up to $1 times, about 100ms
-# apart, and succeed as soon as it does.
+# apart. Returns 0 as soon as the command succeeds, 1 when every attempt failed,
+# and 2 when it could not wait between attempts (inconclusive: neither a success
+# nor an exhausted check, so callers must choose the safe reading themselves).
 _spine_poll() {
     local attempts="$1" i
     shift
     for (( i = 1; i <= attempts; i++ )); do
         "$@" && return 0
-        (( i < attempts )) && _spine_pause
+        if (( i < attempts )); then
+            _spine_pause || return 2
+        fi
     done
     return 1
 }
@@ -179,11 +185,15 @@ main() {
             else
                 # A concurrent run may have bound the socket a moment ago and not
                 # started listening yet. Poll for about a second before removing
-                # anything.
-                if _spine_poll 10 _spine_socket_listening "${vde_sock}"; then
-                    can_start=0
-                else
+                # anything. The socket is removed only when every probe was
+                # refused: if listening shows up, or the poll could not wait
+                # (inconclusive), it is kept.
+                local poll_rc=0
+                _spine_poll 10 _spine_socket_listening "${vde_sock}" || poll_rc=$?
+                if [[ $poll_rc -eq 1 ]]; then
                     rm -f -- "${vde_sock}"
+                else
+                    can_start=0
                 fi
             fi
         fi
