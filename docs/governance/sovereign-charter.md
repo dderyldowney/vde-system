@@ -126,7 +126,11 @@ VDE has its **own** ssh-agent, separate from the user's. This Law binds **both**
 *   Cleanup helpers delegate to `bin/ssh-setup cleanup`, which is an allowlist: only a stray agent on a socket inside `~/.ssh/vde` is ever killed.
 
 ### 5. The Fail-Safe
-When ownership cannot be proven (the socket answers but the process is unknown, a path cannot be resolved, a recorded PID now belongs to another process), VDE leaves the agent alone and says so. It never kills, deletes or replaces an agent in doubt.
+Ownership is established by the dedicated socket path (section 1): VDE may adopt and record a responsive agent found on `~/.ssh/vde/agent.sock`. Outside that path ownership is never assumed: an agent on any other socket is left alone, and VDE says so.
+
+On the dedicated socket itself, when VDE cannot be sure what it would be acting on (a socket that does not answer, a recorded PID that cannot be found or now belongs to another process, a path that cannot be resolved), VDE kills, deletes and replaces nothing and reports it instead.
+
+`ssh-setup cleanup` is the separate, narrower case of section 4: it kills only a stray agent whose own command line shows it was started on a socket inside `~/.ssh/vde` (never the dedicated one, the one `agent_env` records, or the one the caller exports), and compares resolved absolute paths only.
 
 ---
 
