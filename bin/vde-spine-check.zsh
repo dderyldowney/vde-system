@@ -16,6 +16,58 @@ set -e
 # ZSH-native logic demonstration (UAP Mandate 1)
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
+# Helpers for Pillar IV. Every one names the VDE socket explicitly: none of them
+# reads or modifies the inherited SSH_AUTH_SOCK.
+
+# Socket recorded in agent_env $1, read in a subshell so nothing is exported
+_spine_recorded_sock() {
+    [[ -f "$1" ]] || return 0
+    ( source "$1" >/dev/null 2>&1; print -r -- "${SSH_AUTH_SOCK:-}" ) || true
+}
+
+# True if something accepts connections on unix socket $1. A dead leftover socket
+# file refuses; a live agent accepts. Without the zsocket module a live agent
+# cannot be told from a dead leftover, so be conservative and say "listening":
+# the caller then refuses to remove the socket instead of risking an orphan.
+_spine_socket_listening() {
+    if zmodload zsh/net/socket 2>/dev/null; then
+        if zsocket "$1" 2>/dev/null; then
+            exec {REPLY}>&-
+            return 0
+        fi
+        return 1
+    fi
+    return 0
+}
+
+# True if the agent on socket $1 answers: ssh-add -l exits 0 (identities) or 1
+# (empty agent) when it does, and 2 when there is no agent. Bounded by `timeout`
+# where it exists so a stuck agent cannot hang the check.
+_spine_agent_answers() {
+    local rc=0
+    [[ -S "$1" ]] || return 1
+    if (( $+commands[timeout] )); then
+        SSH_AUTH_SOCK="$1" timeout 5 ssh-add -l &>/dev/null || rc=$?
+    else
+        SSH_AUTH_SOCK="$1" ssh-add -l &>/dev/null || rc=$?
+    fi
+    [[ $rc -eq 0 || $rc -eq 1 ]]
+}
+
+# Record the agent on socket $1 in agent_env $2, atomically (temp file + mv). The
+# PID is added when an agent started with exactly "ssh-agent -s -a <socket>" is
+# found; otherwise the file holds the socket only.
+_spine_record_agent_env() {
+    local sock="$1" file="$2" pid=""
+    pid=$(pgrep -u "${UID}" -fx -- "ssh-agent -s -a ${sock}" 2>/dev/null | head -1) || pid=""
+    (
+        umask 077
+        print -r -- "SSH_AUTH_SOCK=${sock}; export SSH_AUTH_SOCK;"
+        [[ -n "${pid}" ]] && print -r -- "SSH_AGENT_PID=${pid}; export SSH_AGENT_PID;"
+        true
+    ) > "${file}.new" && mv -f -- "${file}.new" "${file}"
+}
+
 # Pillar I: Zsh
 main() {
     # Check for quiet flag
@@ -56,29 +108,99 @@ main() {
     fi
 
     # Pillar IV: SSH
-    # Adopt the centralized VDE agent only if it is reachable. A stale agent_env
-    # (dead PID, missing socket) must not override a live inherited SSH_AUTH_SOCK.
-    # ssh-add -l exits 0 (identities) or 1 (empty agent) when reachable, 2 otherwise.
-    local agent_env="${HOME}/.ssh/vde/agent_env"
-    if [[ -f "${agent_env}" ]]; then
-        local agent_rc=0
-        (source "${agent_env}" >/dev/null 2>&1; ssh-add -l &>/dev/null) || agent_rc=$?
-        if [[ $agent_rc -ne 0 && $agent_rc -ne 1 ]]; then
-            [[ $quiet -eq 0 ]] && echo "[INFO] Pillar IV (SSH): ${agent_env} is stale; using inherited SSH_AUTH_SOCK."
+    # VDE has its OWN ssh-agent, separate from the user's personal one. It listens
+    # on a dedicated socket inside ~/.ssh/vde and knows only vde_student. This
+    # pillar never reads, uses or modifies the inherited SSH_AUTH_SOCK: every
+    # agent call below names the VDE socket for that one command only.
+    local vde_dir="${HOME}/.ssh/vde"
+    local agent_env="${vde_dir}/agent_env"
+    local vde_sock="${vde_dir}/agent.sock"
+    local vde_key="${vde_dir}/vde_student"
+
+    # A stuck agent must not hang the check (or a pre-push hook): bound ssh-add
+    # where `timeout` exists. Without it behaviour is unchanged.
+    local -a vde_timeout=()
+    (( $+commands[timeout] )) && vde_timeout=(timeout 5)
+
+    local agent_available=1
+    local agent_recorded=0
+    [[ -f "${agent_env}" && "$(_spine_recorded_sock "${agent_env}")" == "${vde_sock}" ]] && agent_recorded=1
+
+    if _spine_agent_answers "${vde_sock}"; then
+        if [[ $agent_recorded -eq 0 ]]; then
+            # The agent is running on VDE's socket but agent_env is missing, stale or
+            # points elsewhere (for example at the user's personal agent): re-record it.
+            _spine_record_agent_env "${vde_sock}" "${agent_env}"
+            [[ $quiet -eq 0 ]] && echo "[INFO] Pillar IV (SSH): re-recorded the VDE agent in ${agent_env}."
+        fi
+    else
+        # No VDE agent answered: start a new one on the dedicated socket. A socket
+        # file that refuses connections is a crashed agent's leftover, and ssh-agent
+        # will not reuse it, so it is removed. A socket that still accepts
+        # connections belongs to a live agent that did not answer in time: it must
+        # never be orphaned or replaced. Connecting is exact, unlike matching the
+        # agent's command line, which depends on how the path was spelled.
+        local can_start=1
+        if [[ -S "${vde_sock}" ]]; then
+            if _spine_socket_listening "${vde_sock}"; then
+                can_start=0
+            else
+                # A concurrent run may have bound the socket a moment ago and not
+                # started listening yet. Give it a second and look again before
+                # removing anything.
+                sleep 1
+                if _spine_socket_listening "${vde_sock}"; then
+                    can_start=0
+                else
+                    rm -f -- "${vde_sock}"
+                fi
+            fi
+        fi
+
+        if [[ $can_start -eq 0 ]]; then
+            if [[ "${VDE_CI_MODE:-0}" == "1" ]]; then
+                agent_available=0
+                [[ $quiet -eq 0 ]] && echo "[INFO] Pillar IV (SSH): the VDE agent on ${vde_sock} did not answer in CI mode. Skipping identity add."
+            else
+                echo "[CRITICAL] Pillar IV (SSH) failed: a VDE agent is listening on ${vde_sock} but does not answer. If no VDE agent is really running, remove that socket file and run the check again." >&2
+                return 1
+            fi
         else
-            source "${agent_env}" >/dev/null 2>&1
+            # Start into a temp file and move it into place only on success, so a failed
+            # start can never leave agent_env empty.
+            mkdir -p "${vde_dir}"
+            if (umask 077; ssh-agent -s -a "${vde_sock}" > "${agent_env}.new") 2>/dev/null; then
+                mv -f -- "${agent_env}.new" "${agent_env}"
+                [[ $quiet -eq 0 ]] && echo "[INFO] Pillar IV (SSH): started the VDE agent on ${vde_sock}."
+            else
+                rm -f -- "${agent_env}.new"
+                # Another run (for example the pre-push hook beside a manual run) may
+                # have won the race to start the agent: give it a moment, then re-probe.
+                sleep 0.5
+                if _spine_agent_answers "${vde_sock}"; then
+                    [[ "$(_spine_recorded_sock "${agent_env}")" == "${vde_sock}" ]] || _spine_record_agent_env "${vde_sock}" "${agent_env}"
+                    [[ $quiet -eq 0 ]] && echo "[INFO] Pillar IV (SSH): another run started the VDE agent on ${vde_sock}."
+                elif [[ "${VDE_CI_MODE:-0}" == "1" ]]; then
+                    agent_available=0
+                    [[ $quiet -eq 0 ]] && echo "[INFO] Pillar IV (SSH): could not start the VDE agent in CI mode. Skipping identity add."
+                else
+                    echo "[CRITICAL] Pillar IV (SSH) failed: could not start the VDE agent on ${vde_sock}." >&2
+                    return 1
+                fi
+            fi
         fi
     fi
 
     # ssh-add -l prints each key's comment, not its filename, so match on fingerprint.
-    local vde_key="${HOME}/.ssh/vde/vde_student"
     local vde_fingerprint=""
     if [[ -f "${vde_key}.pub" ]]; then
         vde_fingerprint=$(ssh-keygen -lf "${vde_key}.pub" 2>/dev/null | awk '{print $2}') || vde_fingerprint=""
     fi
 
-    local ssh_identities
-    ssh_identities=$(ssh-add -l 2>/dev/null || echo "")
+    local ssh_identities=""
+    if [[ $agent_available -eq 1 ]]; then
+        ssh_identities=$(SSH_AUTH_SOCK="${vde_sock}" ${vde_timeout} ssh-add -l 2>/dev/null || echo "")
+    fi
 
     local identity_loaded=0
     if [[ -n "${vde_fingerprint}" ]]; then
@@ -88,30 +210,32 @@ main() {
     fi
 
     if [[ $identity_loaded -eq 0 ]]; then
-        # Attempt to add if missing
-        if [[ -f "${vde_key}" ]]; then
-            # In CI mode, if we don't have an agent, we might need to skip the physical add
-            # if we can't ensure an agent is running here.
-            # But let's try to add it.
-            if [[ -z "${SSH_AUTH_SOCK:-}" ]] && [[ "${VDE_CI_MODE:-0}" == "1" ]]; then
-                [[ $quiet -eq 0 ]] && echo "[INFO] Pillar IV (SSH): Skipping identity add in CI mode (No SSH_AUTH_SOCK)."
-            else
-                ssh-add "${vde_key}" &>/dev/null || { 
-                    # If we are in CI and it failed, maybe it's okay to skip if the key exists
-                    if [[ "${VDE_CI_MODE:-0}" == "1" ]]; then
-                        [[ $quiet -eq 0 ]] && echo "[INFO] Pillar IV (SSH): ssh-add failed in CI, but key exists. Proceeding."
-                    else
-                        echo "[CRITICAL] Pillar IV (SSH) failed: Failed to add vde_student identity."
-                        return 1
-                    fi
-                }
-            fi
-        else
+        # The key file must exist even when no agent could be used (CI mode)
+        if [[ ! -f "${vde_key}" ]]; then
             echo "[CRITICAL] Pillar IV (SSH) failed: vde_student identity not found at ${vde_key}." >&2
             return 1
         fi
+        if [[ $agent_available -eq 1 ]]; then
+            # Add the key to the VDE agent only
+            SSH_AUTH_SOCK="${vde_sock}" ${vde_timeout} ssh-add "${vde_key}" &>/dev/null || {
+                # If we are in CI and it failed, maybe it's okay to skip if the key exists
+                if [[ "${VDE_CI_MODE:-0}" == "1" ]]; then
+                    [[ $quiet -eq 0 ]] && echo "[INFO] Pillar IV (SSH): ssh-add failed in CI, but key exists. Proceeding."
+                else
+                    echo "[CRITICAL] Pillar IV (SSH) failed: Failed to add vde_student identity."
+                    return 1
+                fi
+            }
+        fi
     fi
-    [[ $quiet -eq 0 ]] && echo "[OK] Pillar IV: SSH identity (vde_student) is loaded."
+
+    if [[ $agent_available -eq 1 ]]; then
+        [[ $quiet -eq 0 ]] && echo "[OK] Pillar IV: SSH identity (vde_student) is loaded."
+    else
+        # CI mode only: there was no usable VDE agent, so the key file was checked
+        # but nothing was loaded or verified in an agent
+        [[ $quiet -eq 0 ]] && echo "[OK] Pillar IV: SSH skipped in CI mode (no usable VDE agent; key file present, identity not verified)."
+    fi
 
     [[ $quiet -eq 0 ]] && echo "[SUCCESS] The Unyielding Tetrad is active. Sovereign Ecosystem stable."
     return 0
