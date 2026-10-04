@@ -79,10 +79,12 @@ _docker_test_ssh_cleanup() {
     local output rc=0
     # VDE_SSH_DIR is passed explicitly: it may be an unexported shell variable here
     output=$(VDE_ORCHESTRATED=1 VDE_SSH_DIR="${VDE_SSH_DIR:-}" zsh "${root}/bin/ssh-setup" cleanup 2>&1) || rc=$?
-    # $'\e' is zsh's own escape, so this strips colours with GNU and BSD sed alike.
+    # The escape character is put in a variable first: $'\e' is not expanded inside
+    # double quotes, and a literal ESC makes this work with GNU and BSD sed alike.
     # Drop only known noise, so any unexpected message from ssh-setup still shows.
+    local esc=$'\e'
     print -r -- "${output}" \
-        | sed "s/$'\e'\[[0-9;]*m//g" \
+        | sed "s/${esc}\[[0-9;]*m//g" \
         | grep -v -E '^[[:space:]]*$|VM types loaded|^Cleaning up transient' \
         | sed 's/^/[CLEANUP] /' || true
     if (( rc != 0 )); then
