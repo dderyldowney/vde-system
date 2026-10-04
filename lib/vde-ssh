@@ -51,6 +51,11 @@ _VDE_SSH_LOADED=1
 # SSH keys directory for public keys (allow override for tests)
 VDE_SSH_KEYS_DIR="${VDE_SSH_KEYS_DIR:-${VDE_ROOT_DIR}/public-ssh-keys}"
 
+# VDE's own ssh-agent listens on a dedicated socket inside VDE_SSH_DIR. That path
+# alone identifies it: an agent on any other socket (a legacy random /tmp agent,
+# the user's personal agent) is never treated as VDE's.
+VDE_SSH_AGENT_SOCK="${VDE_SSH_AGENT_SOCK:-${VDE_SSH_DIR}/agent.sock}"
+
 # Lock files for atomic operations
 SSH_CONFIG_LOCK="${VDE_CACHE_DIR:-${VDE_ROOT_DIR}/.cache}/.ssh_config.lock"
 
@@ -362,6 +367,8 @@ Host ${host_alias}
     StrictHostKeyChecking no
     UserKnownHostsFile ${VDE_SSH_KNOWN_HOSTS}
     ForwardAgent yes
+    IdentityAgent \"${VDE_SSH_AGENT_SOCK}\"
+    IdentitiesOnly yes
     LogLevel ERROR"
 
     mkdir -p "$(dirname "${ssh_config}")"
@@ -407,6 +414,8 @@ Host ${host_alias}
     StrictHostKeyChecking no
     UserKnownHostsFile ${VDE_SSH_KNOWN_HOSTS}
     ForwardAgent yes
+    IdentityAgent \"${VDE_SSH_AGENT_SOCK}\"
+    IdentitiesOnly yes
     LogLevel ERROR"
 
     echo "${entry}" >> "${temp_file}"
@@ -515,8 +524,8 @@ remove_known_hosts_entry() {
 # SSH AGENT FUNCTIONS
 # =============================================================================
 
-# Check if SSH agent is running
-# Returns: 0 if running, 1 otherwise
+# Check if VDE's own SSH agent is running
+# Returns: 0 if running (and exported into this process), 1 otherwise
 ssh_agent_is_running() {
     # 1. Clear any inherited SSH variables to ensure total isolation
     # This prevents VDE from accidentally using your personal agent.
@@ -527,22 +536,101 @@ ssh_agent_is_running() {
         source "${VDE_SSH_AGENT_ENV}" >/dev/null 2>&1
     fi
 
-    # 3. Check if the VDE-specific agent is valid
-    if [[ -n "${SSH_AUTH_SOCK:-}" ]] && [[ -S "${SSH_AUTH_SOCK}" ]] ; then
+    # 3. VDE's agent is the one on VDE's dedicated socket, and nothing else. An
+    # agent_env that records any other socket (a legacy random /tmp agent, the
+    # user's personal agent) is not VDE's agent.
+    if [[ "${SSH_AUTH_SOCK:-}" == "${VDE_SSH_AGENT_SOCK}" ]] && [[ -S "${SSH_AUTH_SOCK}" ]] ; then
         # If we have a PID, check if it's still alive
-        if [[ -n "${SSH_AGENT_PID:-}" ]] ; then
-            if ! ps -p "${SSH_AGENT_PID}" >/dev/null 2>&1; then
-                return 1
-            fi
+        if [[ -n "${SSH_AGENT_PID:-}" ]] && ! ps -p "${SSH_AGENT_PID}" >/dev/null 2>&1; then
+            unset SSH_AUTH_SOCK SSH_AGENT_PID
+            return 1
         fi
-        
-        # Verify socket is actually responding
-        if ssh-add -l >/dev/null 2>&1 || [[ ${?} -eq 1 ]] ; then
+
+        # Verify socket is actually responding (exit 0 = keys, 1 = empty agent).
+        # Bounded where `timeout` exists, so a stuck agent cannot hang VDE.
+        local -a agent_timeout=()
+        (( $+commands[timeout] )) && agent_timeout=(timeout 5)
+        local agent_rc=0
+        ${agent_timeout} ssh-add -l >/dev/null 2>&1 || agent_rc=$?
+        if [[ ${agent_rc} -eq 0 || ${agent_rc} -eq 1 ]] ; then
             return 0
         fi
     fi
 
-    # Discovery fallback removed for total isolation
+    # Not VDE's agent: do not leave another agent exported into this process
+    unset SSH_AUTH_SOCK SSH_AGENT_PID
+    return 1
+}
+
+# PID of the VDE agent started on the dedicated socket, or nothing. Matches the
+# exact command line VDE starts its agent with; the socket path is escaped so its
+# characters (dots, brackets, ...) are never read as a pattern.
+_vde_ssh_agent_pid() {
+    local pattern
+    pattern=$(print -r -- "ssh-agent -s -a ${VDE_SSH_AGENT_SOCK}" | sed 's/[][\\.*^$+?(){}|]/\\&/g')
+    pgrep -u "${UID}" -fx -- "${pattern}" 2>/dev/null | head -1
+    return 0
+}
+
+# Adopt a VDE agent that is alive on its dedicated socket while agent_env is
+# missing, stale or points elsewhere (for example after agent_env was deleted or
+# rewritten): record it atomically and export it. Returns 1 if nothing answers on
+# that socket. The PID is found by an exact command-line match for how VDE starts
+# its agent; otherwise agent_env holds the socket only.
+_vde_ssh_adopt_running_agent() {
+    [[ -S "${VDE_SSH_AGENT_SOCK}" ]] || return 1
+    local -a adopt_timeout=()
+    (( $+commands[timeout] )) && adopt_timeout=(timeout 5)
+    local adopt_rc=0
+    SSH_AUTH_SOCK="${VDE_SSH_AGENT_SOCK}" ${adopt_timeout} ssh-add -l >/dev/null 2>&1 || adopt_rc=$?
+    [[ ${adopt_rc} -eq 0 || ${adopt_rc} -eq 1 ]] || return 1
+
+    local adopt_pid=""
+    adopt_pid=$(_vde_ssh_agent_pid) || adopt_pid=""
+    # A unique temp file, so concurrent callers can never clobber each other's
+    local adopt_env_new
+    adopt_env_new=$(mktemp "${VDE_SSH_AGENT_ENV}.XXXXXX") || return 1
+    (
+        print -r -- "SSH_AUTH_SOCK=${VDE_SSH_AGENT_SOCK}; export SSH_AUTH_SOCK;"
+        [[ -n "${adopt_pid}" ]] && print -r -- "SSH_AGENT_PID=${adopt_pid}; export SSH_AGENT_PID;"
+        true
+    ) > "${adopt_env_new}" && mv -f -- "${adopt_env_new}" "${VDE_SSH_AGENT_ENV}" || { rm -f -- "${adopt_env_new}"; return 1; }
+    source "${VDE_SSH_AGENT_ENV}" >/dev/null 2>&1
+    export SSH_AUTH_SOCK
+    [[ -n "${adopt_pid}" ]] && export SSH_AGENT_PID
+    return 0
+}
+
+# True if VDE's agent is running, or one is alive on its socket and can be adopted
+_vde_ssh_agent_ready() {
+    ssh_agent_is_running || _vde_ssh_adopt_running_agent
+}
+
+# True if unix socket $1 is provably a dead leftover (the connection is refused).
+# Anything else (a live agent, permissions, no zsocket module) is "not provably
+# dead", so the caller never removes a socket in doubt. zsocket reports failures
+# only as a message, so it runs in a subshell with the C locale.
+_vde_ssh_socket_is_dead() {
+    zmodload zsh/net/socket 2>/dev/null || return 1
+    local out rc=0
+    out=$(LC_ALL=C zsocket "$1" 2>&1) || rc=$?
+    [[ ${rc} -ne 0 && "${out}" == *"connection refused"* ]]
+}
+
+# Poll instead of sleeping (the project forbids fixed sleeps): run "$2..." up to
+# $1 times about 100ms apart (zselect -t counts hundredths of a second). Returns
+# 0 as soon as the command succeeds, 1 when every attempt failed, 2 when it could
+# not wait (inconclusive).
+_vde_ssh_poll() {
+    local attempts="$1" i
+    shift
+    for (( i = 1; i <= attempts; i++ )); do
+        "$@" && return 0
+        if (( i < attempts )); then
+            zmodload zsh/zselect 2>/dev/null || return 2
+            zselect -t 10 >/dev/null 2>&1 || true
+        fi
+    done
     return 1
 }
 
@@ -551,18 +639,43 @@ ssh_agent_is_running() {
 ensure_ssh_agent() {
     local started_new=0
     
-    if ! ssh_agent_is_running; then
+    if ! ssh_agent_is_running && ! _vde_ssh_adopt_running_agent; then
         # Ensure VDE_SSH_DIR exists
         mkdir -p "${VDE_SSH_DIR}"
         chmod 700 "${VDE_SSH_DIR}"
 
-        # Start new agent and save to environment file
-        (umask 077; ssh-agent -s > "${VDE_SSH_AGENT_ENV}")
-        source "${VDE_SSH_AGENT_ENV}" >/dev/null 2>&1
-        
-        export SSH_AUTH_SOCK
-        export SSH_AGENT_PID
-        started_new=1
+        # A socket file left by a crashed agent is removed (ssh-agent will not reuse
+        # it), but only when the connection is provably refused. Anything else may
+        # be a live agent that did not answer in time: never orphan or replace it.
+        if [[ -S "${VDE_SSH_AGENT_SOCK}" ]] ; then
+            if _vde_ssh_socket_is_dead "${VDE_SSH_AGENT_SOCK}" ; then
+                rm -f -- "${VDE_SSH_AGENT_SOCK}"
+            else
+                log_error "A VDE SSH agent socket exists at ${VDE_SSH_AGENT_SOCK} but does not answer. If no VDE agent is really running, remove that file and try again."
+                return ${VDE_ERR_GENERAL}
+            fi
+        fi
+
+        # Start the agent on the dedicated socket into a temp file and move it into
+        # place only on success, so a failed start can never leave agent_env empty.
+        local agent_env_new
+        agent_env_new=$(mktemp "${VDE_SSH_AGENT_ENV}.XXXXXX") || return ${VDE_ERR_GENERAL}
+        if (umask 077; ssh-agent -s -a "${VDE_SSH_AGENT_SOCK}" > "${agent_env_new}") 2>/dev/null ; then
+            mv -f -- "${agent_env_new}" "${VDE_SSH_AGENT_ENV}"
+            source "${VDE_SSH_AGENT_ENV}" >/dev/null 2>&1
+
+            export SSH_AUTH_SOCK
+            export SSH_AGENT_PID
+            started_new=1
+        else
+            rm -f -- "${agent_env_new}"
+            # Another process may have won the race to start it, and may not have
+            # written agent_env yet: poll briefly, adopting the agent once it answers.
+            if ! _vde_ssh_poll 5 _vde_ssh_agent_ready ; then
+                log_error "Could not start the VDE SSH agent on ${VDE_SSH_AGENT_SOCK} (path is ${#VDE_SSH_AGENT_SOCK} characters; unix socket paths are limited to about 104)."
+                return ${VDE_ERR_GENERAL}
+            fi
+        fi
     fi
 
     # Ensure VDE SSH keys exist (generates if missing)
@@ -602,15 +715,51 @@ ensure_ssh_agent() {
 # Stop SSH agent and clean up environment
 # Returns: VDE_SUCCESS (0) on success
 stop_ssh_agent() {
-    # 1. Load from VDE-specific environment file
+    # 1. Load from VDE-specific environment file, starting from a clean slate so an
+    # inherited (personal) agent can never be mistaken for the recorded one
+    unset SSH_AUTH_SOCK SSH_AGENT_PID
     if [[ -f "${VDE_SSH_AGENT_ENV}" ]] ; then
         source "${VDE_SSH_AGENT_ENV}" >/dev/null 2>&1
+    elif [[ -S "${VDE_SSH_AGENT_SOCK}" ]] ; then
+        # No record, but something is on VDE's dedicated socket (agent_env was
+        # deleted while the agent kept running): stop that agent below.
+        export SSH_AUTH_SOCK="${VDE_SSH_AGENT_SOCK}"
     else
-        log_debug "No VDE SSH agent environment file found at ${VDE_SSH_AGENT_ENV}"
+        vde_log_debug "No VDE SSH agent environment file found at ${VDE_SSH_AGENT_ENV}" "ssh"
         return ${VDE_SUCCESS}
     fi
 
-    # 2. Kill the agent process if it exists
+    # 2. Only an agent on VDE's dedicated socket is VDE's to stop. If agent_env
+    # records anything else (a legacy random /tmp agent, the user's personal
+    # agent) leave that agent alone and just drop the stale record.
+    if [[ "${SSH_AUTH_SOCK:-}" != "${VDE_SSH_AGENT_SOCK}" ]] ; then
+        vde_log_warn "${VDE_SSH_AGENT_ENV} does not record VDE's agent (${SSH_AUTH_SOCK:-no socket}); leaving that agent running" "ssh"
+        rm -f "${VDE_SSH_AGENT_ENV}" 2>/dev/null
+        unset SSH_AUTH_SOCK
+        unset SSH_AGENT_PID
+        return ${VDE_SUCCESS}
+    fi
+
+    # An adopted agent may be recorded without a PID: look for it by the exact
+    # command line VDE starts it with. If it still answers and cannot be found,
+    # do not delete its socket and record (that would orphan a running agent):
+    # report that it could not be stopped.
+    # A recorded PID is trusted only while it is still an ssh-agent: after a crash
+    # or reboot the number may belong to an unrelated process, which must never be
+    # killed. In that case look the agent up by its command line instead.
+    if [[ -n "${SSH_AGENT_PID:-}" && "$(ps -o comm= -p "${SSH_AGENT_PID}" 2>/dev/null)" != "ssh-agent" ]] ; then
+        SSH_AGENT_PID=""
+    fi
+    if [[ -z "${SSH_AGENT_PID:-}" ]] ; then
+        SSH_AGENT_PID=$(_vde_ssh_agent_pid)
+    fi
+    if [[ -z "${SSH_AGENT_PID:-}" ]] && [[ -S "${SSH_AUTH_SOCK}" ]] && ! _vde_ssh_socket_is_dead "${SSH_AUTH_SOCK}" ; then
+        log_error "The VDE SSH agent on ${SSH_AUTH_SOCK} is running but its PID is unknown; not removing its socket. Stop it manually, then run this again."
+        unset SSH_AUTH_SOCK SSH_AGENT_PID
+        return ${VDE_ERR_GENERAL}
+    fi
+
+    # 3. Kill the agent process if it exists
     if [[ -n "${SSH_AGENT_PID:-}" ]] ; then
         if ps -p "${SSH_AGENT_PID}" >/dev/null 2>&1; then
             log_info "Stopping VDE SSH agent (PID: ${SSH_AGENT_PID})..."
@@ -618,15 +767,15 @@ stop_ssh_agent() {
         fi
     fi
 
-    # 3. Clean up the socket if it exists
+    # 4. Clean up the socket if it exists
     if [[ -n "${SSH_AUTH_SOCK:-}" ]] && [[ -S "${SSH_AUTH_SOCK}" ]] ; then
         rm -f "${SSH_AUTH_SOCK}" 2>/dev/null
     fi
 
-    # 4. Remove the environment file
+    # 5. Remove the environment file
     rm -f "${VDE_SSH_AGENT_ENV}" 2>/dev/null
 
-    # 5. Unset environment variables in current shell
+    # 6. Unset environment variables in current shell
     unset SSH_AUTH_SOCK
     unset SSH_AGENT_PID
 
@@ -793,24 +942,18 @@ get_ssh_dir() {
     echo "${VDE_SSH_DIR}"
 }
 
-# vde_get_host_ssh_sock - Discover the authoritative host SSH agent socket
-# Priority: 1. Live environment, 2. VDE agent environment file
+# vde_get_host_ssh_sock - Discover VDE's own SSH agent socket on the host
+# Source: the VDE agent environment file only (never the user's live agent)
 # Returns: Outputs socket path to stdout, VDE_SUCCESS (0) if found
 vde_get_host_ssh_sock() {
-    local host_sock="${SSH_AUTH_SOCK:-}"
-
-    # 1. Check live environment (and resolve symlinks to absolute paths)
-    if [[ -S "${host_sock}" ]]; then
-        # Use zsh expansion to resolve absolute path
-        echo "${host_sock:a}"
-        return ${VDE_SUCCESS}
-    fi
-
-    # 2. Attempt discovery from VDE agent environment file
+    # VDE's own agent only. The live SSH_AUTH_SOCK is deliberately never consulted:
+    # it is normally the user's personal agent, and this socket is mounted into the
+    # VMs. VDE's agent is the one on its dedicated socket recorded in agent_env.
     if [[ -f "${VDE_SSH_AGENT_ENV}" ]]; then
         local parsed_sock
         parsed_sock=$(grep "^SSH_AUTH_SOCK=" "${VDE_SSH_AGENT_ENV}" | head -1 | sed 's/^SSH_AUTH_SOCK=\([^;]*\);.*/\1/')
-        if [[ -S "${parsed_sock}" ]]; then
+        if [[ "${parsed_sock}" == "${VDE_SSH_AGENT_SOCK}" && -S "${parsed_sock}" ]]; then
+            # Use zsh expansion to resolve absolute path
             echo "${parsed_sock:a}"
             return ${VDE_SUCCESS}
         fi
