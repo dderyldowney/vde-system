@@ -381,11 +381,20 @@ def step_verify_forwarded_identities(context):
     # Use the orchestrator for high-fidelity proof (Rule 1 & 15)
     vm_alias = getattr(context, 'vm_alias', 'python')
     res = run_vde_command(f"exec {vm_alias} ssh-add -l")
-    
-    # ssh-add -l returns 0 if identities found, 1 if agent empty but reachable.
-    # Both are acceptable proof that the bridge is functional.
-    assert "SHA256:" in res.stdout or "The agent has no identities." in res.stdout, \
-        f"No identities found and agent possibly unreachable: {res.stdout}"
+
+    # The Spoke must see VDE's own agent, not the developer's and not an empty one,
+    # so VDE's key (vde_student) has to be among the forwarded identities. Matching
+    # on its fingerprint proves which agent was forwarded; the old check accepted any
+    # key, and even an empty agent, so it could not detect an isolation regression.
+    pub_key = Path.home() / ".ssh" / "vde" / "vde_student.pub"
+    assert pub_key.exists(), f"VDE's public key is missing at {pub_key}"
+    fingerprint = subprocess.run(
+        ["ssh-keygen", "-lf", str(pub_key)], capture_output=True, text=True
+    ).stdout.split()[1]
+    assert fingerprint in res.stdout, (
+        f"VDE's key {fingerprint} is not among the identities forwarded into the Spoke; "
+        f"the Spoke must see VDE's own agent. Got: {res.stdout}"
+    )
 
 @given('the Hub is active')
 def step_hub_active(context):
