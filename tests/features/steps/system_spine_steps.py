@@ -386,14 +386,43 @@ def step_verify_forwarded_identities(context):
     # so VDE's key (vde_student) has to be among the forwarded identities. Matching
     # on its fingerprint proves which agent was forwarded; the old check accepted any
     # key, and even an empty agent, so it could not detect an isolation regression.
-    pub_key = Path.home() / ".ssh" / "vde" / "vde_student.pub"
-    assert pub_key.exists(), f"VDE's public key is missing at {pub_key}"
-    fingerprint = subprocess.run(
-        ["ssh-keygen", "-lf", str(pub_key)], capture_output=True, text=True
-    ).stdout.split()[1]
-    assert fingerprint in res.stdout, (
-        f"VDE's key {fingerprint} is not among the identities forwarded into the Spoke; "
-        f"the Spoke must see VDE's own agent. Got: {res.stdout}"
+    # One key per directory, from the two places VDE's key can live: under VDE_ROOT
+    # (a simulated Hub) and the real ~/.ssh/vde (where VDE's agent loads it from).
+    # Within a directory the public key is preferred: it needs no passphrase, so
+    # reading it can never prompt. The private key is the fallback (ssh-keygen -lf
+    # prints its fingerprint too), read with no stdin and a timeout so it cannot hang
+    # the run. Any of VDE's fingerprints appearing proves VDE's agent was forwarded.
+    candidates = []
+    for base in (VDE_ROOT / ".ssh" / "vde", Path.home() / ".ssh" / "vde"):
+        found = next((c for c in (base / "vde_student.pub", base / "vde_student") if c.exists()), None)
+        if found is not None:
+            candidates.append(found)
+    assert candidates, (
+        "VDE identity missing (looked in "
+        f"{VDE_ROOT / '.ssh' / 'vde'} and {Path.home() / '.ssh' / 'vde'})"
+    )
+
+    fingerprints, problems = [], []
+    for vde_key in candidates:
+        try:
+            keygen = subprocess.run(
+                ["ssh-keygen", "-lf", str(vde_key)],
+                capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=10,
+            )
+        except subprocess.TimeoutExpired:
+            problems.append(f"timed out reading {vde_key}")
+            continue
+        fields = keygen.stdout.split()
+        if keygen.returncode == 0 and len(fields) > 1:
+            fingerprints.append(fields[1])
+        else:
+            problems.append(f"{vde_key}: {keygen.stderr.strip() or keygen.stdout.strip()}")
+    assert fingerprints, f"Could not read the fingerprint of VDE's key: {'; '.join(problems)}"
+
+    assert any(fp in res.stdout for fp in fingerprints), (
+        f"VDE's key {', '.join(fingerprints)} is not among the identities forwarded into "
+        f"the Spoke; the Spoke must see VDE's own agent. exec rc={res.returncode}, "
+        f"stdout: {res.stdout!r}, stderr: {res.stderr!r}"
     )
 
 @given('the Hub is active')
