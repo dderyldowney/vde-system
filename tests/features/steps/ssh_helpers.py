@@ -47,7 +47,8 @@ def _recorded_agent_sock():
     """
     try:
         text = VDE_SSH_AGENT_ENV.read_text()
-    except OSError:
+    except (OSError, UnicodeError):
+        # Unreadable or not valid UTF-8: treat the file as invalid, never crash
         return None
     match = re.search(r"^\s*SSH_AUTH_SOCK=([^;\s]+)", text, re.MULTILINE)
     return match.group(1).strip("\"'") if match else None
