@@ -49,7 +49,8 @@ Actions:
               Use --force or -f to regenerate existing keys
   start     Start SSH agent and load VDE key
   stop      Stop VDE-specific SSH agent
-  cleanup   Kill all transient ssh-agent processes (preserves VDE shared agent)
+  cleanup   Kill your transient ssh-agent processes (preserves the VDE shared agent,
+            the agent in your current environment, and session/service agents)
   autostart Configure shell to auto-start SSH agent on login
   generate  Regenerate VM SSH config only
 
@@ -60,7 +61,7 @@ Examples:
   vde ssh-setup init --force # Force regenerate keys
   vde ssh-setup start        # Start agent and load keys
   vde ssh-setup stop         # Stop the VDE-specific agent
-  vde ssh-setup cleanup      # Kill orphaned/transient ssh-agents
+  vde ssh-setup cleanup      # Kill orphaned/transient ssh-agents (not session agents)
   vde ssh-setup autostart    # Auto-start agent on shell login
   vde ssh-setup generate     # Regenerate SSH config for VMs
 
@@ -303,47 +304,113 @@ if [[ "${ACTION}" == "generate" ]] ; then
 fi
 
 # ==============================================================================
-# Cleanup Mode -- Kill all transient ssh-agents (preserve VDE shared agent)
+# Cleanup Mode -- Kill transient ssh-agents you own (preserve shared/session agents)
 # ==============================================================================
 if [[ "${ACTION}" == "cleanup" ]] ; then
     echo ""
     echo "Cleaning up transient ssh-agent processes..."
     echo ""
-    
-    local vde_agent_pid=""
+
     local vde_agent_env="${VDE_SSH_DIR}/agent_env"
     local killed=0
     local preserved=0
-    
-    # Get VDE's shared agent PID to preserve it
+    local -a protected=()
+    local pid env_pid env_sock agent_sock
+
+    # Candidate PIDs for the ssh-agent behind socket $1. ssh-agent makes itself
+    # non-dumpable, so /proc/<pid>/fd and ss/lsof cannot map socket to PID.
+    # Fall back to its naming convention: the socket is agent.<launcher-pid> and
+    # the daemon is the next PID or the one after. This is a best-effort guess
+    # that errs towards sparing an agent, never towards killing a live one.
+    _cleanup_pids_for_socket() {
+        local base="${1:t}"
+        [[ "${base}" == agent.<-> ]] || return 0
+        print -r -- $(( ${base#agent.} + 1 ))
+        print -r -- $(( ${base#agent.} + 2 ))
+    }
+
+    # True when agent $1 is session/service managed: it wraps a command
+    # (e.g. "ssh-agent startplasma-x11") or runs in the foreground with -D.
+    # Only a bare "ssh-agent" (as started by "ssh-agent -s") is transient.
+    _cleanup_agent_is_managed() {
+        local -a args
+        local i=2
+        # An unreadable command line (race, permissions) is spared, never killed
+        args=("${(@f)$(tr '\0' '\n' < "/proc/${1}/cmdline" 2>/dev/null)}") || return 0
+        [[ -n "${args[1]}" ]] || return 0
+        while (( i <= ${#args} )); do
+            case "${args[i]}" in
+                -D) return 0 ;;
+                -a|-E|-O|-P|-t) i=$((i + 2)) ;;
+                -*) i=$((i + 1)) ;;
+                *) return 0 ;;
+            esac
+        done
+        return 1
+    }
+
+    # Socket path an agent was started with ("ssh-agent -a <path>"), if any.
+    # This is exact, unlike the agent.<pid> naming guess above, so it also
+    # protects agents on custom sockets whose PID is not recorded or is stale.
+    _cleanup_agent_socket_arg() {
+        local -a args
+        local i
+        args=("${(@f)$(tr '\0' '\n' < "/proc/${1}/cmdline" 2>/dev/null)}") || return 0
+        for (( i = 2; i < ${#args}; i++ )); do
+            if [[ "${args[i]}" == "-a" ]]; then
+                print -r -- "${args[i+1]}"
+                return 0
+            fi
+        done
+        return 0
+    }
+
+    # Preserve the VDE shared agent: the PID and the socket recorded in agent_env
     if [[ -f "${vde_agent_env}" ]]; then
-        vde_agent_pid=$(grep "^SSH_AGENT_PID=" "${vde_agent_env}" 2>/dev/null | sed 's/SSH_AGENT_PID=\([0-9]*\).*/\1/')
+        env_pid=$(grep "^SSH_AGENT_PID=" "${vde_agent_env}" 2>/dev/null | sed 's/SSH_AGENT_PID=\([0-9]*\).*/\1/')
+        env_sock=$(grep -o "SSH_AUTH_SOCK=[^;]*" "${vde_agent_env}" 2>/dev/null | head -1 | cut -d= -f2)
+        [[ -n "${env_pid}" ]] && protected+=("${env_pid}")
+        [[ -n "${env_sock}" ]] && protected+=(${(f)"$(_cleanup_pids_for_socket "${env_sock}")"})
     fi
-    
-    if [[ -n "${vde_agent_pid}" ]]; then
-        echo "VDE shared agent PID: ${vde_agent_pid} (will be preserved)"
-    fi
-    
-    # Find and kill all ssh-agent processes
-    while IFS= read -r pid; do
-        [[ -z "${pid}" ]] && continue
-        if [[ "${pid}" == "${vde_agent_pid}" ]]; then
-            log_info "Preserving VDE shared agent: ${pid}"
-            ((preserved++))
+
+    # Preserve the agent this shell is using right now
+    [[ -n "${SSH_AGENT_PID:-}" ]] && protected+=("${SSH_AGENT_PID}")
+    [[ -n "${SSH_AUTH_SOCK:-}" ]] && protected+=(${(f)"$(_cleanup_pids_for_socket "${SSH_AUTH_SOCK}")"})
+
+    # Sweep only this user's agents
+    for pid in $(pgrep -u "${UID}" -x ssh-agent 2>/dev/null); do
+        # Defunct (zombie) entries are already dead; there is nothing to kill
+        [[ "$(ps -o stat= -p "${pid}" 2>/dev/null)" == Z* ]] && continue
+        if (( ${protected[(Ie)${pid}]} )); then
+            log_info "Preserving shared/current agent: ${pid}"
+            preserved=$((preserved + 1))
+            continue
+        fi
+        agent_sock=$(_cleanup_agent_socket_arg "${pid}")
+        if [[ -n "${agent_sock}" ]] && [[ "${agent_sock}" == "${env_sock}" || "${agent_sock}" == "${SSH_AUTH_SOCK:-}" ]]; then
+            log_info "Preserving shared/current agent on ${agent_sock}: ${pid}"
+            preserved=$((preserved + 1))
+            continue
+        fi
+        if _cleanup_agent_is_managed "${pid}"; then
+            log_info "Preserving session/service-managed agent: ${pid}"
+            preserved=$((preserved + 1))
             continue
         fi
         echo "  Killing transient ssh-agent PID ${pid}"
-        kill "${pid}" 2>/dev/null && ((killed++))
-    done < <(pgrep -x ssh-agent 2>/dev/null)
-    
+        if kill "${pid}" 2>/dev/null; then
+            killed=$((killed + 1))
+        fi
+    done
+
     echo ""
     if [[ ${killed} -gt 0 ]]; then
         log_success "Killed ${killed} transient ssh-agent(s)"
     else
         log_info "No transient ssh-agents found"
     fi
-    [[ ${preserved} -gt 0 ]] && log_info "Preserved ${preserved} VDE shared agent(s)"
-    
+    [[ ${preserved} -gt 0 ]] && log_info "Preserved ${preserved} agent(s) (shared, current or session-managed)"
+
     exit ${VDE_SUCCESS}
 fi
 
