@@ -263,6 +263,8 @@ Host vde-${VM_NAME}
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ssh/vde/known_hosts
     ForwardAgent yes
+    IdentityAgent ~/.ssh/vde/agent.sock
+    IdentitiesOnly yes
     LogLevel ERROR
 SSHEOF
     log_success "Entry added to configs/ssh/config"
