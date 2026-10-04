@@ -252,6 +252,18 @@ fi
 # Update configs/ssh/config with the new entry
 typeset project_ssh_config="${VDE_ROOT_DIR}/configs/ssh/config"
 if [[ -f "${project_ssh_config}" ]]; then
+    # The identity, the known-hosts file and VDE's own agent socket follow the VDE
+    # directory and its overrides, exactly as render_ssh_entry derives them, and are
+    # written in '~' form when they live under the home directory (no absolute path
+    # leaks in the audit); an override elsewhere keeps its real path.
+    typeset vde_dir="${VDE_SSH_DIR:-${HOME}/.ssh/vde}"
+    typeset entry_identity="${VDE_SSH_IDENTITY:-${vde_dir}/vde_student}"
+    typeset entry_known_hosts="${VDE_SSH_KNOWN_HOSTS:-${vde_dir}/known_hosts}"
+    typeset entry_agent_sock="${VDE_SSH_AGENT_SOCK:-${vde_dir}/agent.sock}"
+    [[ "${entry_identity}" == "${HOME}/"* ]] && entry_identity="~/${entry_identity#${HOME}/}"
+    [[ "${entry_known_hosts}" == "${HOME}/"* ]] && entry_known_hosts="~/${entry_known_hosts#${HOME}/}"
+    [[ "${entry_agent_sock}" == "${HOME}/"* ]] && entry_agent_sock="~/${entry_agent_sock#${HOME}/}"
+
     cat >> "${project_ssh_config}" <<SSHEOF
 
 
@@ -259,11 +271,11 @@ Host vde-${VM_NAME}
     HostName localhost
     Port ${SSH_PORT}
     User devuser
-    IdentityFile ~/.ssh/vde/vde_student
+    IdentityFile ${entry_identity}
     StrictHostKeyChecking no
-    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    UserKnownHostsFile ${entry_known_hosts}
     ForwardAgent yes
-    IdentityAgent ~/.ssh/vde/agent.sock
+    IdentityAgent ${entry_agent_sock}
     IdentitiesOnly yes
     LogLevel ERROR
 SSHEOF
