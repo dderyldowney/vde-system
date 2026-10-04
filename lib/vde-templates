@@ -96,6 +96,14 @@ render_service_template() {
     echo "${content}"
 }
 
+# _vde_templates_tilde_path PATH
+# Print PATH with the home directory collapsed to '~' (unchanged if it is elsewhere)
+_vde_templates_tilde_path() {
+    local p="${1}"
+    [[ "${p}" == "${HOME}/"* ]] && p="~/${p#${HOME}/}"
+    print -r -- "${p}"
+}
+
 # render_ssh_entry VM_NAME PORT [HOSTNAME]
 # Render SSH config entry for VM
 render_ssh_entry() {
@@ -103,11 +111,23 @@ render_ssh_entry() {
     local host
     host="$(vde_get_ssh_host "${vm_name}")"
 
-    # Use '~' for paths to avoid absolute path leaks in the audit
+    # The three VDE paths handed to the template are derived together from the VDE
+    # directory and its overrides, so they agree with each other and with what the
+    # libraries use: IDENTITY_FILE, KNOWN_HOSTS_FILE and AGENT_SOCK (VDE's own agent
+    # socket, available to the template as {{AGENT_SOCK}}). Each is passed in '~'
+    # form when it lives under the home directory (no absolute path leaks in the
+    # audit); anywhere else (an override) the real path is used.
+    local vde_dir="${VDE_SSH_DIR:-${HOME}/.ssh/vde}"
+    local identity_file known_hosts_file agent_sock
+    identity_file="$(_vde_templates_tilde_path "${VDE_SSH_IDENTITY:-${vde_dir}/vde_student}")"
+    known_hosts_file="$(_vde_templates_tilde_path "${VDE_SSH_KNOWN_HOSTS:-${vde_dir}/known_hosts}")"
+    agent_sock="$(_vde_templates_tilde_path "${VDE_SSH_AGENT_SOCK:-${vde_dir}/agent.sock}")"
+
     render_template "${TEMPLATES_DIR}/ssh-config.tmpl" \
         SSH_HOST "${host}" SSH_PORT "${port}" \
         HOST_NAME "${hostname}" \
-        IDENTITY_FILE "~/.ssh/vde/vde_student" \
-        KNOWN_HOSTS_FILE "~/.ssh/vde/known_hosts" \
+        IDENTITY_FILE "${identity_file}" \
+        KNOWN_HOSTS_FILE "${known_hosts_file}" \
+        AGENT_SOCK "${agent_sock}" \
         COMMENT "VDE VM: ${vm_name}"
 }
