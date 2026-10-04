@@ -56,16 +56,39 @@ main() {
     fi
 
     # Pillar IV: SSH
-    if [[ -f "${HOME}/.ssh/vde/agent_env" ]]; then
-        source "${HOME}/.ssh/vde/agent_env" >/dev/null 2>&1
+    # Adopt the centralized VDE agent only if it is reachable. A stale agent_env
+    # (dead PID, missing socket) must not override a live inherited SSH_AUTH_SOCK.
+    # ssh-add -l exits 0 (identities) or 1 (empty agent) when reachable, 2 otherwise.
+    local agent_env="${HOME}/.ssh/vde/agent_env"
+    if [[ -f "${agent_env}" ]]; then
+        local agent_rc=0
+        (source "${agent_env}" >/dev/null 2>&1; ssh-add -l &>/dev/null) || agent_rc=$?
+        if [[ $agent_rc -ne 0 && $agent_rc -ne 1 ]]; then
+            [[ $quiet -eq 0 ]] && echo "[INFO] Pillar IV (SSH): ${agent_env} is stale; using inherited SSH_AUTH_SOCK."
+        else
+            source "${agent_env}" >/dev/null 2>&1
+        fi
+    fi
+
+    # ssh-add -l prints each key's comment, not its filename, so match on fingerprint.
+    local vde_key="${HOME}/.ssh/vde/vde_student"
+    local vde_fingerprint=""
+    if [[ -f "${vde_key}.pub" ]]; then
+        vde_fingerprint=$(ssh-keygen -lf "${vde_key}.pub" 2>/dev/null | awk '{print $2}') || vde_fingerprint=""
     fi
 
     local ssh_identities
     ssh_identities=$(ssh-add -l 2>/dev/null || echo "")
-    
-    if ! grep -q "vde_student" <<< "${ssh_identities}"; then
+
+    local identity_loaded=0
+    if [[ -n "${vde_fingerprint}" ]]; then
+        grep -qF "${vde_fingerprint}" <<< "${ssh_identities}" && identity_loaded=1
+    else
+        grep -q "vde_student" <<< "${ssh_identities}" && identity_loaded=1
+    fi
+
+    if [[ $identity_loaded -eq 0 ]]; then
         # Attempt to add if missing
-        local vde_key="${HOME}/.ssh/vde/vde_student"
         if [[ -f "${vde_key}" ]]; then
             # In CI mode, if we don't have an agent, we might need to skip the physical add
             # if we can't ensure an agent is running here.
