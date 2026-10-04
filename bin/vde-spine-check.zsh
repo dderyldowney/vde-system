@@ -25,19 +25,51 @@ _spine_recorded_sock() {
     ( source "$1" >/dev/null 2>&1; print -r -- "${SSH_AUTH_SOCK:-}" ) || true
 }
 
-# True if something accepts connections on unix socket $1. A dead leftover socket
-# file refuses; a live agent accepts. Without the zsocket module a live agent
-# cannot be told from a dead leftover, so be conservative and say "listening":
-# the caller then refuses to remove the socket instead of risking an orphan.
+# True if something may be listening on unix socket $1. Only "connection refused"
+# proves the socket is a dead leftover; a live agent accepts. Any other failure
+# (permissions, a busy agent) and a zsh without the zsocket module cannot be told
+# from a live agent, so be conservative and say "listening": the caller then
+# refuses to remove the socket instead of risking an orphan. zsocket reports
+# failures only as a message, so it runs in a subshell with the C locale (the
+# message must not be translated); the probe connection closes with the subshell.
 _spine_socket_listening() {
-    if zmodload zsh/net/socket 2>/dev/null; then
-        if zsocket "$1" 2>/dev/null; then
-            exec {REPLY}>&-
-            return 0
-        fi
-        return 1
-    fi
+    zmodload zsh/net/socket 2>/dev/null || return 0
+    local out rc=0
+    out=$(LC_ALL=C zsocket "$1" 2>&1) || rc=$?
+    [[ $rc -eq 0 ]] && return 0
+    [[ "${out}" == *"connection refused"* ]] && return 1
     return 0
+}
+
+# Wait about 100ms without a fixed sleep (the project forbids those). zselect -t
+# counts hundredths of a second. Where the zselect module cannot be loaded, wait
+# on a FIFO nobody writes to instead: read -t gives the same pause using only
+# builtins, so the polling below never degrades into an instant retry loop.
+_spine_pause() {
+    if zmodload zsh/zselect 2>/dev/null; then
+        zselect -t 10 >/dev/null 2>&1 || true
+        return 0
+    fi
+    local fifo fd
+    fifo=$(mktemp -u "${TMPDIR:-/tmp}/spine-pause.XXXXXX") || return 0
+    mkfifo "${fifo}" 2>/dev/null || return 0
+    exec {fd}<>"${fifo}"
+    read -t 0.1 -u ${fd} 2>/dev/null || true
+    exec {fd}>&-
+    rm -f -- "${fifo}"
+    return 0
+}
+
+# Poll instead of sleeping: run the command "$2..." up to $1 times, about 100ms
+# apart, and succeed as soon as it does.
+_spine_poll() {
+    local attempts="$1" i
+    shift
+    for (( i = 1; i <= attempts; i++ )); do
+        "$@" && return 0
+        (( i < attempts )) && _spine_pause
+    done
+    return 1
 }
 
 # True if the agent on socket $1 answers: ssh-add -l exits 0 (identities) or 1
@@ -146,10 +178,9 @@ main() {
                 can_start=0
             else
                 # A concurrent run may have bound the socket a moment ago and not
-                # started listening yet. Give it a second and look again before
-                # removing anything.
-                sleep 1
-                if _spine_socket_listening "${vde_sock}"; then
+                # started listening yet. Poll for about a second before removing
+                # anything.
+                if _spine_poll 10 _spine_socket_listening "${vde_sock}"; then
                     can_start=0
                 else
                     rm -f -- "${vde_sock}"
@@ -175,16 +206,15 @@ main() {
             else
                 rm -f -- "${agent_env}.new"
                 # Another run (for example the pre-push hook beside a manual run) may
-                # have won the race to start the agent: give it a moment, then re-probe.
-                sleep 0.5
-                if _spine_agent_answers "${vde_sock}"; then
+                # have won the race to start the agent: poll for it briefly.
+                if _spine_poll 5 _spine_agent_answers "${vde_sock}"; then
                     [[ "$(_spine_recorded_sock "${agent_env}")" == "${vde_sock}" ]] || _spine_record_agent_env "${vde_sock}" "${agent_env}"
                     [[ $quiet -eq 0 ]] && echo "[INFO] Pillar IV (SSH): another run started the VDE agent on ${vde_sock}."
                 elif [[ "${VDE_CI_MODE:-0}" == "1" ]]; then
                     agent_available=0
                     [[ $quiet -eq 0 ]] && echo "[INFO] Pillar IV (SSH): could not start the VDE agent in CI mode. Skipping identity add."
                 else
-                    echo "[CRITICAL] Pillar IV (SSH) failed: could not start the VDE agent on ${vde_sock}." >&2
+                    echo "[CRITICAL] Pillar IV (SSH) failed: could not start the VDE agent on ${vde_sock} (path is ${#vde_sock} characters; unix socket paths are limited to about 104)." >&2
                     return 1
                 fi
             fi
