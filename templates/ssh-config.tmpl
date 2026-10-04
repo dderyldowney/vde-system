@@ -9,4 +9,6 @@ Host {{SSH_HOST}}
     StrictHostKeyChecking no
     PasswordAuthentication no
     ForwardAgent yes
+    IdentityAgent ~/.ssh/vde/agent.sock
+    IdentitiesOnly yes
     RequestTTY yes
