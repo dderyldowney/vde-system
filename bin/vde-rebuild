@@ -201,7 +201,16 @@ build_vm_image() {
     local -a build_cmd=(docker compose)
     [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "build_cmd=${build_cmd[*]}"
     
-    build_cmd+=(-f "${compose_file}")
+    # Base manifest first, then any opt-in overlay (Signet #526). The overlay
+    # carries device_cgroup_rules and VDE_USB_TTY_NODES, which take effect when
+    # the container is (re)created; it must be present at build and at ignition
+    # so the rendered config does not drift between the two.
+    local -a compose_files
+    compose_files=( ${(f)"$(get_vm_compose_files "${canonical_name}")"} )
+    local _cf
+    for _cf in "${compose_files[@]}"; do
+        build_cmd+=(-f "${_cf}")
+    done
     [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "build_cmd=${build_cmd[*]}"
     
     [[ -f "${VDE_ROOT_DIR}/.env" ]] && build_cmd+=(--env-file "${VDE_ROOT_DIR}/.env")

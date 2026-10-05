@@ -124,11 +124,58 @@ def after_feature(context, feature):
     _cleanup_feature_containers(feature.tags)
 
 
+def _hub_has_serial_board():
+    """True when a real USB serial board is attached to the Hub right now."""
+    import glob
+
+    return bool(glob.glob("/dev/ttyUSB*") or glob.glob("/dev/ttyACM*"))
+
+
 def before_scenario(context, scenario):
     """Reset state for each scenario."""
     context.output = ""
     context.exit_code = 0
     context.last_command = ""
+
+    # USB passthrough hardware gate (Signet #526).
+    # Scenarios tagged @hardware exercise a physically attached development
+    # board. When none is present they are SKIPPED LOUDLY -- never passed --
+    # per the 100% Real Tests Mandate. Simulating device state is forbidden.
+    if "hardware" in scenario.tags and not _hub_has_serial_board():
+        reason = (
+            "SKIPPED (no hardware): '%s' requires a USB serial board attached "
+            "to the Hub (/dev/ttyUSB* or /dev/ttyACM*). None is present, so "
+            "this scenario is skipped rather than passed." % scenario.name
+        )
+        print("\n[VDE-HARDWARE-GATE] " + reason)
+        scenario.skip(reason)
+        return
+
+    # Scenarios tagged @hardware-interactive need a board physically plugged or
+    # unplugged DURING the run, so they cannot execute unattended. They run only
+    # when VDE_HW_INTERACTIVE=1 declares the Clan Leader is present to act.
+    if "hardware-interactive" in scenario.tags and os.environ.get(
+        "VDE_HW_INTERACTIVE"
+    ) != "1":
+        reason = (
+            "SKIPPED (needs a human): '%s' requires a board to be physically "
+            "plugged or unplugged mid-scenario. Set VDE_HW_INTERACTIVE=1 and "
+            "run it while present to act on the prompts." % scenario.name
+        )
+        print("\n[VDE-HARDWARE-GATE] " + reason)
+        scenario.skip(reason)
+        return
+
+    # The mirror gate: scenarios tagged @no-board prove behaviour with an EMPTY
+    # Hub and cannot be judged while a board is plugged in.
+    if "no-board" in scenario.tags and _hub_has_serial_board():
+        reason = (
+            "SKIPPED (board attached): '%s' proves behaviour with NO serial "
+            "board on the Hub, but one is currently attached. Unplug it to run "
+            "this scenario." % scenario.name
+        )
+        print("\n[VDE-HARDWARE-GATE] " + reason)
+        scenario.skip(reason)
 
 
 def after_scenario(context, scenario):

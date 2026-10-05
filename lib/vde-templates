@@ -56,6 +56,14 @@ render_language_template() {
         NAME "${name}" SSH_PORT "${ssh_port}" CUSTOM_CMD "${custom_cmd}"
 }
 
+# render_usb_template NAME
+# Render the USB serial passthrough overlay for a Spoke (Signet #526).
+# Presence of the rendered file is the opt-in; see templates/compose-usb.yml.
+render_usb_template() {
+    local name="${1}"
+    render_template "${TEMPLATES_DIR}/compose-usb.yml" NAME "${name}"
+}
+
 # render_service_template NAME SSH_PORT SERVICE_PORTS INSTALL_CMD
 # Render docker-compose.yml for service VM
 render_service_template() {

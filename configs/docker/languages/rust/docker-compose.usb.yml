@@ -1,0 +1,60 @@
+# VDE ARCHITECTURAL RECORD
+# @armor (Engine Core)
+# Template for the USB serial passthrough overlay (Signet #526).
+# Variables: rust
+#
+# Rendered only for Spokes that are centre-mass in embedded development
+# (python, rust, c, cpp). Presence of the rendered file is the opt-in: the
+# compose selection helper in lib/vm-common appends it to the base compose
+# file when it exists.
+#
+# Mechanism:
+#   - device_cgroup_rules grants the two serial majors. This is the real
+#     containment boundary; a Spoke holding only these rules cannot reach
+#     USB bus devices on major 189 (verified: open refused with EPERM).
+#   - VDE_USB_TTY_NODES tells the entrypoint which nodes to pre-create at
+#     every start. Container /dev is a fresh tmpfs, so pre-creation runs on
+#     each ignition. Pre-created nodes survive unplug/replug with no host
+#     watcher and no Spoke restart (verified on the Hub).
+#   - Spare slots are load-bearing: a replug while a port is held open
+#     returns the board on the NEXT minor, and an unprivileged user cannot
+#     mknod the new node themselves (EACCES).
+#
+# No privileged mode. No devices: mappings (a devices: entry for an absent
+# host node makes the Spoke fail to start). No group_add, no host gid.
+#
+# SCOPING: the rules enumerate EXACT minors matching VDE_USB_TTY_NODES, not
+# a wildcard major. "c 188:* rmw" would grant all 256 usb-serial minors while
+# the entrypoint only ever creates ttyUSB0-3 -- wider than needed for no gain.
+# Enumerating keeps the grant to precisely the slots that exist, so a board on
+# a minor outside the declared range (another user's, on a shared Hub) is
+# refused by the kernel. The two lists are derived from the same spec and MUST
+# stay in agreement: raising a count means adding the matching rule.
+#
+# SECURITY: within the declared range the grant is per-slot, not per-board, so
+# any usb-serial or cdc-acm device landing on those minors is reachable, and
+# devuser holds NOPASSWD sudo. The grant cannot reach USB bus devices on major
+# 189: the kernel refuses the open even for a node fabricated with mknod as
+# root. See docs/guides/usb-serial-boards.md.
+services:
+  vde-rust:
+    environment:
+      - VDE_USB_TTY_NODES=ttyUSB:188:8 ttyACM:166:4
+    device_cgroup_rules:
+      # ttyUSB0-7: usb-serial (CP210x, CH340, FTDI). Sized for four boards
+      # attached at once plus four spares, because a replug while a port is
+      # held open moves the board to the next free minor and an unprivileged
+      # user cannot mknod the replacement.
+      - "c 188:0 rmw"
+      - "c 188:1 rmw"
+      - "c 188:2 rmw"
+      - "c 188:3 rmw"
+      - "c 188:4 rmw"
+      - "c 188:5 rmw"
+      - "c 188:6 rmw"
+      - "c 188:7 rmw"
+      # ttyACM0-3: cdc-acm (ATmega16U2, native-USB boards)
+      - "c 166:0 rmw"
+      - "c 166:1 rmw"
+      - "c 166:2 rmw"
+      - "c 166:3 rmw"

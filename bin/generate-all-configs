@@ -28,6 +28,52 @@ FORCE=false
 [[ "$1" == "--force" || "$1" == "-f" ]] && FORCE=true
 
 #===============================================================================
+# USB Serial Passthrough Opt-In (Signet #526)
+#
+# Spokes centre-mass in embedded development. Presence of the rendered
+# docker-compose.usb.yml is the opt-in signal consumed by the compose
+# selection helper in lib/vm-common; no registry field is involved.
+#===============================================================================
+typeset -ga VDE_USB_OPT_IN_SPOKES
+VDE_USB_OPT_IN_SPOKES=(python rust c cpp)
+
+# smelt_usb_overlay SHORT_NAME CONFIG_DIR
+# Render the USB overlay for an opted-in Spoke, or REVOKE it for one that is
+# not. Presence of the file is the grant, so de-opting MUST delete it:
+# leaving a stale overlay keeps applying device rules to a Spoke that is no
+# longer opted in. Idempotent unless FORCE.
+smelt_usb_overlay() {
+    local short_name="${1}" config_dir="${2}"
+    local overlay_file="${config_dir}/docker-compose.usb.yml"
+
+    # Zsh-native membership test (reverse subscript); no external tools.
+    if [[ -z "${VDE_USB_OPT_IN_SPOKES[(r)${short_name}]}" ]]; then
+        if [[ -f "${overlay_file}" ]]; then
+            rm -f "${overlay_file}"
+            vde_log_info "Revoked USB overlay: ${short_name} (not opted in)" "smelter"
+        fi
+        return 0
+    fi
+
+    [[ "${FORCE}" == "false" && -s "${overlay_file}" ]] && return 0
+
+    mkdir -p "${config_dir}"
+
+    # Render into a variable FIRST. Redirecting straight into the destination
+    # truncates it before the renderer can fail, and an empty overlay is
+    # accepted silently by compose while the -s guard above then treats it as
+    # already forged -- leaving USB silently off until someone runs --force.
+    local overlay_manifest
+    if ! overlay_manifest=$(render_usb_template "${short_name}") || [[ -z "${overlay_manifest}" ]]; then
+        vde_log_error "Failed to render USB overlay for ${short_name}; leaving existing file untouched" "smelter"
+        return 1
+    fi
+
+    echo "${overlay_manifest}" > "${overlay_file}"
+    vde_log_info "Forged USB overlay: ${short_name}" "smelter"
+}
+
+#===============================================================================
 # Smelting Logic
 #===============================================================================
 
@@ -46,6 +92,12 @@ smelt_vm_configs() {
         local config_dir="${VDE_ROOT_DIR}/configs/docker/${category}/${short_name}"
         local compose_file="${config_dir}/docker-compose.yml"
         local env_file="${VDE_ROOT_DIR}/env-files/${short_name}.env"
+
+        # USB overlay is independent of the base manifest: handle it before
+        # the skip so an established install gains it without --force, and so
+        # a de-opted Spoke has its overlay revoked even when its base manifest
+        # is already present.
+        [[ "${category}" == "languages" ]] && smelt_usb_overlay "${short_name}" "${config_dir}"
 
         if [[ "${FORCE}" == "false" && -f "${compose_file}" && -f "${env_file}" ]]; then
             continue

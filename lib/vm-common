@@ -571,6 +571,29 @@ get_vm_compose_file() {
     fi
 }
 
+# get_vm_compose_files - Derives the ordered compose file list for a Spoke
+# Args: <vm_name>
+# Prints one path per line: the base compose file first, then any overlay.
+#
+# The base file MUST come first: compose resolves relative paths (build
+# context, env_file) against the first -f file, and overlays carry none.
+#
+# The USB serial overlay (Signet #526) is opt-in by file presence; no
+# registry field is consulted. Callers expand with ${(f)...} and pass each
+# path with its own -f.
+get_vm_compose_files() {
+    local vm_name="${1}"
+    local base_file
+    base_file=$(get_vm_compose_file "${vm_name}")
+
+    echo "${base_file}"
+
+    local usb_overlay="${base_file:h}/docker-compose.usb.yml"
+    [[ -f "${VDE_ROOT_DIR}/${usb_overlay}" ]] && echo "${usb_overlay}"
+
+    return 0
+}
+
 # get_vm_env_file - Derives env file path from Hub name
 # Args: <vm_name>
 get_vm_env_file() {
