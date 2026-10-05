@@ -164,6 +164,69 @@ if [[ -z "${DISPLAY}" ]]; then
 fi
 
 # -----------------------
+# Field Normalisation (Signet #534)
+# -----------------------
+# The 8-Field Standard uses "-" for an absent value, not a blank. A blank is
+# not merely cosmetic: the renderer passes the field through to
+# PKGS_TO_INSTALL, and configs/docker/vde-lang.Dockerfile guards on
+# [ -n "${PKGS_TO_INSTALL}" ], so a non-placeholder empty-ish value changes
+# whether the image runs apt at build time. Blanks also leave the entry
+# structurally unlike every sibling, which is a trap for anything parsing it.
+
+# The primary name MUST appear among its own aliases. Resolution happens to
+# work without it through name derivation, but then the Vault does not record
+# what the Spoke answers to.
+if [[ -z "${ALIASES}" ]]; then
+    ALIASES="${VM_NAME}"
+else
+    # Zsh-native membership test; prepend when absent so the primary name leads.
+    typeset -a _alias_list
+    _alias_list=( ${(s:,:)ALIASES} )
+    if [[ -z "${_alias_list[(r)${VM_NAME}]}" ]]; then
+        ALIASES="${VM_NAME},${ALIASES}"
+    fi
+fi
+
+# An alias must be unique across the Vault. Nothing validated this before, and
+# a duplicate makes the two resolvers disagree for the same input:
+# VM_ALIAS_MAP is built last-write-wins over file order, while resolve_vm_name
+# checks the vde- prefix ahead of the alias table.
+typeset _claimed
+for _claimed in ${(s:,:)ALIASES}; do
+    if awk -F'|' -v want="${_claimed}" '
+        /^(lang|service)\|/ {
+            n = split($3, a, ",")
+            for (i = 1; i <= n; i++) if (a[i] == want) { print $2; exit }
+        }' "${VM_TYPES_CONF}" | grep -q .; then
+        log_error "Alias '${_claimed}' is already claimed by $(awk -F'|' -v want="${_claimed}" '/^(lang|service)\|/ { n = split($3, a, ","); for (i = 1; i <= n; i++) if (a[i] == want) { print $2; exit } }' "${VM_TYPES_CONF}")"
+        log_error "Aliases must be unique, or resolution becomes ambiguous."
+        exit ${VDE_ERR_EXISTS}
+    fi
+done
+
+[[ -n "${PKGS}" ]] || PKGS="-"
+[[ -n "${SVC_PORT}" ]] || SVC_PORT="-"
+
+# An explicitly supplied --ssh-port must also respect the type's range, or the
+# auto-allocation fix above is trivially bypassed and the Vault still ends up
+# schema-invalid (and therefore un-uninstallable).
+if [[ -n "${SSH_PORT}" ]]; then
+    typeset -i _want_lo _want_hi
+    if [[ "${VM_TYPE_STR}" == "service" ]]; then
+        _want_lo=${VDE_SVC_PORT_START}
+        _want_hi=${VDE_SVC_PORT_END}
+    else
+        _want_lo=${VDE_LANG_PORT_START}
+        _want_hi=${VDE_LANG_PORT_END}
+    fi
+    if (( SSH_PORT < _want_lo || SSH_PORT > _want_hi )); then
+        log_error "SSH port ${SSH_PORT} is outside the ${VM_TYPE_STR} range ${_want_lo}-${_want_hi}."
+        log_error "data/vm-types.schema.json rejects it, which would leave the registry invalid and uninstall unable to run."
+        exit ${VDE_ERR_INVALID:-1}
+    fi
+fi
+
+# -----------------------
 # Atomic Registry Update
 # -----------------------
 typeset backup_file="${VM_TYPES_CONF}.bak"
@@ -179,7 +242,21 @@ claim_lock "${global_lock}" || vde_handle_error "lock-acquisition" "${global_loc
     # AUTO-ALLOCATE PORT (Inside Lock)
     if [[ -z "${SSH_PORT}" ]]; then
         log_info "No SSH port specified, auto-allocating inside lock..."
-        SSH_PORT=$(find_available_ssh_port 2200 2299 "${QUIET}")
+        # Allocate from the range that matches the TYPE (Signet #534).
+        # Hard-coding the language range meant a service type received a 22xx
+        # port, which data/vm-types.schema.json rejects (serviceVM requires
+        # 2400-2499). The resulting Vault failed its own schema, and because
+        # uninstall validates on load it then REFUSED to run -- so the
+        # canonical tool created state the canonical tool could not remove.
+        typeset -i _port_lo _port_hi
+        if [[ "${VM_TYPE_STR}" == "service" ]]; then
+            _port_lo=${VDE_SVC_PORT_START}
+            _port_hi=${VDE_SVC_PORT_END}
+        else
+            _port_lo=${VDE_LANG_PORT_START}
+            _port_hi=${VDE_LANG_PORT_END}
+        fi
+        SSH_PORT=$(find_available_ssh_port "${_port_lo}" "${_port_hi}" "${QUIET}")
         vde_handle_error "port-allocation" "${VM_NAME}"
         log_success "Allocated port: ${SSH_PORT}"
     fi
@@ -202,8 +279,46 @@ claim_lock "${global_lock}" || vde_handle_error "lock-acquisition" "${global_loc
     # 8-FIELD STANDARD: type|name|aliases|display|pkgs|custom_cmd|service_ports|ssh_port
     local _entry="${VM_TYPE_STR}|vde-${VM_NAME}|${ALIASES}|${DISPLAY}|${PKGS}|zsh /vde/scripts/setup/${VM_NAME}-init.zsh|${SVC_PORT}|${SSH_PORT}"
     local _conf_tmp="${VM_TYPES_CONF}.tmp.${$}"
-    cp "${VM_TYPES_CONF}" "${_conf_tmp}"
-    echo "${_entry}" >> "${_conf_tmp}"
+
+    # Insert INSIDE the entry's own type block, alphabetically by Spoke name
+    # (Signet #534). Appending to the end of the file put language entries
+    # after the service block, outside the section the header documents, so a
+    # reader scanning "Language VMs" would not see them. Both loaders group on
+    # field 1, so nothing broke -- the file simply stopped matching its own
+    # documented layout.
+    typeset -a _conf_body
+    # "${(@f)...}" preserves empty elements. The unquoted form ${(f)"$(<f)"}
+    # drops them, which silently deletes the blank lines that separate the
+    # type blocks every time the registry is rewritten.
+    _conf_body=( "${(@f)$(<${VM_TYPES_CONF})}" )
+
+    typeset -i _insert_at=0 _idx
+    typeset _row_name
+    for (( _idx = 1; _idx <= ${#_conf_body}; _idx++ )); do
+        [[ "${_conf_body[_idx]}" == "${VM_TYPE_STR}|"* ]] || continue
+        _row_name="${${(s:|:)_conf_body[_idx]}[2]}"
+        if [[ "${_row_name}" > "vde-${VM_NAME}" ]]; then
+            _insert_at=${_idx}
+            break
+        fi
+        _insert_at=$(( _idx + 1 ))
+    done
+
+    if (( _insert_at > 0 && _insert_at <= ${#_conf_body} )); then
+        _conf_body[${_insert_at}]=( "${_entry}" "${_conf_body[${_insert_at}]}" )
+        print -rl -- "${_conf_body[@]}" > "${_conf_tmp}"
+    elif (( _insert_at > ${#_conf_body} )); then
+        # Sorts after the final line: append, rather than splicing past the
+        # end. Splicing an unset element expands it to "" and leaves a
+        # spurious trailing blank line in the registry.
+        _conf_body+=( "${_entry}" )
+        print -rl -- "${_conf_body[@]}" > "${_conf_tmp}"
+    else
+        # No existing rows of this type: fall back to appending.
+        cp "${VM_TYPES_CONF}" "${_conf_tmp}"
+        print -r -- "${_entry}" >> "${_conf_tmp}"
+    fi
+
     mv "${_conf_tmp}" "${VM_TYPES_CONF}"
     
     # 2. Re-smelt JSON from CONF (vde_translate_conf_to_json handles its own lock)
@@ -229,7 +344,11 @@ if [[ ! -f "${_init_script}" ]]; then
     mkdir -p "$(dirname "${_init_script}")"
     cat <<EOF > "${_init_script}"
 #!/usr/bin/env zsh
+# @armor (Engine Core)
 # VDE USP Hydration Script: ${VM_NAME}
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=\${(%):-%x}
+
 # Part of the Universal Script Parity (USP) mandate.
 # Forged in Beskar
 set -e
@@ -303,14 +422,24 @@ if [[ "${QUIET}" == "false" ]]; then
     log_info "Triggering the Ignition Ritual..."
     "${VDE_ROOT_DIR}/bin/vde" rebuild-cache
 
-    # -----------------------
-    # Summary
-    # -----------------------
-    # -----------------------
-    # Regenerate Configs
-    # -----------------------
-    log_info "Regenerating VDE configurations..."
-    "${VDE_ROOT_DIR}/bin/generate-all-configs" >/dev/null 2>&1
+fi
+
+# -----------------------
+# Regenerate Configs (Signet #534)
+# -----------------------
+# MUST run regardless of --quiet. generate-all-configs is what writes
+# configs/ssh/config.spoke and the configs/docker/<category>/<name>/ manifest;
+# the surgical append above only touches configs/ssh/config. Gating this on
+# --quiet meant a quiet registration produced a half-configured Spoke, and
+# uninstall now always regenerates, so the pair would be asymmetric in the
+# opposite direction. The Proof of Life registers dynamic-vm with --quiet, so
+# this path is exercised on every heartbeat.
+log_info "Regenerating VDE configurations..."
+"${VDE_ROOT_DIR}/bin/generate-all-configs" >/dev/null 2>&1
+
+# Keep the live SSH config in step with the regenerated project config.
+if [[ -f "${project_ssh_config}" && -f "${VDE_SSH_CONFIG}" ]]; then
+    cp "${project_ssh_config}" "${VDE_SSH_CONFIG}"
 fi
 
 log_success "VM type '${VM_NAME}' added successfully!"
