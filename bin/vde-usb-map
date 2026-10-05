@@ -1,0 +1,81 @@
+#!/usr/bin/env zsh
+# @armor (Engine Core)
+# vde-usb-map - report stable per-port names for USB serial boards (Signet #528).
+#
+# Invoked through the canonical entrypoint: "vde usb-map <spoke> [...]".
+# Refreshes the map inside each named Spoke and prints it, because a container
+# receives no udev events and so cannot notice a plug on its own.
+
+emulate -L zsh
+setopt pipe_fail
+
+VDE_ROOT_DIR="${0:h:h}"
+export VDE_ROOT_DIR
+
+source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
+source "${VDE_ROOT_DIR}/lib/vde-constants"
+source "${VDE_ROOT_DIR}/lib/vde-log"
+source "${VDE_ROOT_DIR}/lib/vde-naming"
+source "${VDE_ROOT_DIR}/lib/vm-common"
+
+typeset -i GLOBAL_RC=0
+typeset -a SKIPPED=()
+
+usb_map_spoke() {
+  local target="${1}"
+  local canonical
+  canonical=$(resolve_vm_name "${target}" 2>/dev/null)
+  [[ -n "${canonical}" ]] || canonical="${target}"
+  local container
+  container=$(vde_get_container_name "${canonical}" 2>/dev/null)
+  [[ -n "${container}" ]] || container="vde-${canonical}"
+
+  # A stopped Spoke is not a failure for a reporting command: "vde usb-map all"
+  # resolves every registered VM, most of which are normally down. Collect them
+  # and summarise once instead of erroring per Spoke.
+  if ! docker inspect -f '{{.State.Running}}' "${container}" 2>/dev/null | grep -q '^true$'; then
+    SKIPPED+=( "${target}" )
+    return 0
+  fi
+
+  print -r -- "━━━ ${container} ━━━"
+  if ! docker exec "${container}" /usr/local/bin/vde-usb-map.zsh; then
+    vde_log_error "Could not build the USB port map inside '${container}'." "usb-map"
+    GLOBAL_RC=1
+    return 1
+  fi
+
+  return 0
+}
+
+main() {
+  local -a targets
+  targets=( "$@" )
+
+  if (( ${#targets} == 0 )); then
+    print -r -- "Usage: vde usb-map <spoke> [spoke ...]"
+    print -r -- ""
+    print -r -- "Reports the stable per-port name of every USB serial board visible"
+    print -r -- "to a Spoke. Names come from the physical USB port path, so a board"
+    print -r -- "keeps its name across a replug into the same socket even when its"
+    print -r -- "ttyUSB<n> changes."
+    print -r -- ""
+    print -r -- "Run this after plugging a board in: a container gets no udev events."
+    return 0
+  fi
+
+  local target
+  for target in "${targets[@]}"; do
+    usb_map_spoke "${target}"
+  done
+
+  if (( ${#SKIPPED} > 0 )); then
+    print -r -- ""
+    print -r -- "Not running, so not mapped: ${SKIPPED[*]}"
+    print -r -- "Ignite one with: vde start <name>"
+  fi
+
+  return ${GLOBAL_RC}
+}
+
+main "$@"

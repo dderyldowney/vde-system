@@ -468,6 +468,11 @@ case ${ACTION} in
         shift
         "${VDE_ROOT_DIR}/bin/vde-dns-check.zsh" "$@"
         ;;
+    usb-map)
+        # Resolved targets, so "all", "default" and cluster names expand the
+        # same way they do for every other VM-targeting subcommand.
+        vde_run "usb-map" "${VDE_ROOT_DIR}/bin/vde-usb-map" "${targets[@]}"
+        ;;
     logs)
         vde_run "logs" "${VDE_ROOT_DIR}/bin/vde-logs" "${targets[@]}"
         ;;
@@ -521,6 +526,7 @@ Diagnostics & Discovery:
   check-tetrad    Verify the Unyielding Tetrad (Zsh, Git, Docker, SSH) and core integrity.
   heal            Autonomously synchronize the Gospel with the physical Forge.
   dns-check <s> <t> Verify DNS resolution between Source and Target Spokes.
+  usb-map <name>    Report stable per-port names for attached USB serial boards.
   info <name>     Display detailed metadata and registry status for a Spoke.
   ps              List all active VDE containers and their statuses.
   networks        List and manage VDE Docker networks.

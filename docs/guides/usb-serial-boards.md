@@ -60,6 +60,65 @@ with serial.Serial("/dev/ttyUSB0", 115200, timeout=1) as port:
     print(port.readline())
 ```
 
+## Telling identical boards apart
+
+If you have two or more boards of the same model, `ttyUSB0` and `ttyUSB1` are
+assigned by **enumeration order**, not by which socket you used. Plug them in
+in a different order, or reboot, and they can swap.
+
+`/dev/serial/by-id/` does not save you either. Most USB-serial bridges report a
+fixed serial baked into the chip rather than a per-unit one — a CP2102 commonly
+reports `0001` on every board — so identical boards produce **colliding**
+by-id entries. And `/dev/serial/by-id/` does not exist inside a Spoke at all,
+because containers have no udev.
+
+Use the **physical port** instead. Each Spoke maintains:
+
+```
+/dev/vde/by-port/<port-path>  ->  /dev/ttyUSB<n>
+```
+
+where `<port-path>` looks like `1-3.3` — bus 1, hub port 3, downstream port 3.
+That is a property of the socket the cable is in, so it does not move when
+enumeration order changes.
+
+List it with the canonical command:
+
+```zsh
+vde usb-map python
+```
+
+```
+━━━ vde-python ━━━
+node=/dev/ttyUSB1  port=1-3.3  name=/dev/vde/by-port/1-3.3  vid:pid=10c4:ea60  serial=0001
+```
+
+Open the stable name rather than the raw node, and your code keeps working
+when the number moves:
+
+```python
+import serial
+with serial.Serial("/dev/vde/by-port/1-3.3", 115200, timeout=1) as port:
+    print(port.readline())
+```
+
+Label the sockets physically once and the mapping stays meaningful: the board
+in a given socket always answers to the same name, so "the ESP32 wired to the
+STM32" becomes an address you can hard-code.
+
+### Refresh after plugging in
+
+**A container receives no udev events**, so the map is accurate as of the last
+time it was built — at Spoke ignition, or the last `vde usb-map`. After
+plugging a board into a running Spoke:
+
+```zsh
+vde usb-map python
+```
+
+The device nodes themselves need no refresh; only the names do. There is no
+background watcher by design.
+
 ## Which node is my board?
 
 Run this on the **Hub**, not in the Spoke:

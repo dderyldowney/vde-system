@@ -568,13 +568,20 @@ def step_board_replugged(context):
 def step_hold_open(context, spoke):
     node = _host_board_node()
     container = f"vde-{spoke}"
-    # os.pause() blocks on a signal with no timer and no polling loop, so the
-    # descriptor stays open without a forbidden sleep call.
+    # signal.pause() blocks until a signal is handled: no timer, no polling
+    # loop, so the descriptor stays open without a forbidden sleep call.
+    # It is signal.pause(), NOT os.pause() -- os has no such attribute, and
+    # getting it wrong kills the holder instantly with AttributeError AFTER
+    # the pid file is written, which looks exactly like a holder that died on
+    # unplug. SIGHUP is ignored as well, so a hangup from the device going
+    # away cannot terminate the holder while the scenario still needs the old
+    # minor pinned; with SIG_IGN installed, pause() simply keeps blocking.
     holder = (
-        f"nohup python3 -c \"import os;"
+        f"nohup python3 -c \"import os,signal;"
+        f"signal.signal(signal.SIGHUP, signal.SIG_IGN);"
         f"fd=os.open('{node}', os.O_RDWR|os.O_NOCTTY|os.O_NONBLOCK);"
         f"open('/tmp/vde-usb-holder.pid','w').write(str(os.getpid()));"
-        f"os.pause()\" >/dev/null 2>&1 &"
+        f"[signal.pause() for _ in iter(int, 1)]\" >/dev/null 2>&1 &"
     )
     execute_in_container(container, holder, timeout=30)
     context.usb_held_node = node
