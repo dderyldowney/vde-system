@@ -194,14 +194,22 @@ def _vault_restore(snapshot, throwaway_names=()):
         # <name>.port and mkdirs port-<port>.lock; leaving those behind makes
         # find_available_ssh_port skip a port nothing holds, which steadily
         # exhausts the 2200-2299 language range across repeated runs.
-        port_file = os.path.join(port_registry, f"{name}.port")
+        # allocate_ssh_port runs the name through vde_normalize_name, which
+        # strips the "vde-" prefix, so the record is "<name>.port". Both
+        # spellings are handled anyway: if that normalisation ever changes,
+        # a silent port leak is the failure mode, and leaks are expensive --
+        # 27 ports were consumed from the 2200-2299 range before the original
+        # version of this cleanup was found to be targeting the wrong path.
         allocated = None
-        try:
-            with open(port_file, encoding="utf-8") as handle:
-                allocated = handle.read().strip()
-        except (FileNotFoundError, OSError):
-            pass
-        if os.path.exists(port_file):
+        for candidate in (f"{name}.port", f"vde-{name}.port"):
+            port_file = os.path.join(port_registry, candidate)
+            if not os.path.exists(port_file):
+                continue
+            try:
+                with open(port_file, encoding="utf-8") as handle:
+                    allocated = handle.read().strip() or allocated
+            except OSError:
+                pass
             os.remove(port_file)
         if allocated:
             lock_dir = os.path.join(port_registry, f"port-{allocated}.lock")

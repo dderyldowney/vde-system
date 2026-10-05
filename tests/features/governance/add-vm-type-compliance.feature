@@ -79,3 +79,14 @@ Feature: The Canonical VM Type Tool Produces Compliant Artifacts
     Then the command should fail
     And the registry must no longer contain "svcbad"
     And the registry must satisfy its own schema
+
+  @spec @port-reclaim
+  Scenario: Uninstalling a VM type reclaims its SSH port
+    Given the VDE registry is loaded
+    When I register the throwaway VM type "portcycle" through the canonical entrypoint
+    Then the command should succeed
+    And an SSH port must be recorded for "portcycle"
+    When I remove the throwaway VM type "portcycle" through the canonical entrypoint
+    Then the command should succeed
+    And no SSH port may remain recorded for "portcycle"
+    And the port lock for "portcycle" must have been released

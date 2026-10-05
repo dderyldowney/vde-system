@@ -421,14 +421,87 @@ def step_schema_valid(context):
         if "minimum" in props and "maximum" in props:
             bounds[kind] = (props["minimum"], props["maximum"])
 
+    # Fail loudly if the shape is not what we expect. Iterating absent
+    # collections would yield an empty offenders list and PASS, so a change to
+    # the JSON shape would silently disable this check entirely.
+    assert bounds, (
+        "could not read ssh_port bounds for languageVM/serviceVM from "
+        "data/vm-types.schema.json; the schema shape changed and this check "
+        "would otherwise pass without verifying anything"
+    )
+    vms = vault.get("vms")
+    assert isinstance(vms, dict), f"vms is {type(vms).__name__}, expected a mapping"
+
     offenders = []
+    checked = 0
     for kind, (low, high) in bounds.items():
-        for vm in vault.get("vms", {}).get(kind, []):
+        collection = vms.get(kind)
+        assert isinstance(collection, list) and collection, (
+            f"vms.{kind} is missing or empty in the Vault; this check would "
+            f"otherwise verify nothing for {kind} entries"
+        )
+        for vm in collection:
             port = vm.get("ssh_port")
+            checked += 1
             if not isinstance(port, int) or not low <= port <= high:
                 offenders.append((vm.get("name"), port, f"{low}-{high}"))
 
+    assert checked, "no VM entries were examined; the check verified nothing"
     assert not offenders, (
         "the registry violates its own schema: "
         + "; ".join(f"{n} has ssh_port {p}, expected {r}" for n, p, r in offenders)
+    )
+
+
+# ---------------------------------------------------------------------------
+# SSH port reclamation (Signet #534, folded scope)
+# ---------------------------------------------------------------------------
+
+PORT_REGISTRY = ".cache/port-registry"
+
+
+def _port_record(name):
+    """The recorded port for a Spoke, or None. vde_normalize_name strips the
+    vde- prefix, so the record is '<name>.port'; both spellings are checked so
+    a change to that normalisation surfaces as a failure, not a silent pass."""
+    for candidate in (f"{name}.port", f"vde-{name}.port"):
+        path = get_vde_root() / PORT_REGISTRY / candidate
+        if path.is_file():
+            value = path.read_text(encoding="utf-8").strip()
+            if value:
+                return value
+    return None
+
+
+@then('an SSH port must be recorded for "{name}"')
+def step_port_recorded(context, name):
+    port = _port_record(name)
+    assert port, (
+        f"no port record found for {name} under {PORT_REGISTRY}; the "
+        f"reclamation assertion that follows would then pass vacuously"
+    )
+    context.usb_recorded_port = port
+
+    lock = get_vde_root() / PORT_REGISTRY / f"port-{port}.lock"
+    assert lock.is_dir(), f"port lock {lock} was not created for {name}"
+
+
+@then('no SSH port may remain recorded for "{name}"')
+def step_port_released(context, name):
+    port = _port_record(name)
+    assert port is None, (
+        f"uninstall left a port record for {name} holding port {port}. "
+        f"find_available_ssh_port then skips a port nothing holds, and the "
+        f"range is finite."
+    )
+
+
+@then('the port lock for "{name}" must have been released')
+def step_port_lock_released(context, name):
+    port = getattr(context, "usb_recorded_port", None)
+    assert port, "no port was recorded earlier, so release cannot be asserted"
+    lock = get_vde_root() / PORT_REGISTRY / f"port-{port}.lock"
+    assert not lock.exists(), (
+        f"the port lock {lock} survived uninstall, so port {port} stays "
+        f"claimed by a Spoke that no longer exists"
     )

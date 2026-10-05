@@ -556,6 +556,22 @@ main() {
     # configs/ssh/config and configs/ssh/config.spoke from the registry, which
     # is what clears the stale host block that surgical editing of the former
     # alone used to leave in the latter. Mirrors add-vm-type.
+    # Reclaim the SSH port (Signet #534). lib/vde-docker's vde_port_release
+    # removes both the <name>.port record and the port-<n>.lock directory, but
+    # nothing ever called it from the uninstall path -- so every removed VM
+    # type permanently consumed a port from its range. The Proof of Life
+    # registers and uninstalls dynamic-vm on every run, so the Hub leaked one
+    # port per heartbeat; find_available_ssh_port then skips ports nothing
+    # holds, and the range is finite.
+    if [[ "${DRY_RUN}" != "true" ]]; then
+        if (( ${+functions[vde_port_release]} )); then
+            vde_port_release "${CANONICAL_NAME}"
+            print_success "SSH port released for '${CANONICAL_NAME}'"
+        else
+            print_warning "vde_port_release unavailable; the SSH port for '${CANONICAL_NAME}' remains claimed"
+        fi
+    fi
+
     # Gated on DRY_RUN alone, deliberately. Regeneration is idempotent, and
     # gating it on "a registry row was actually removed" meant uninstall could
     # not heal a Spoke whose row was already gone while a host block lingered
