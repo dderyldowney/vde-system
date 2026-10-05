@@ -75,6 +75,8 @@ bin/vde path-of-the-foundling
 | Section | Description |
 |---------|-------------|
 | **📘 Warrior's Guide** | [Getting Started](docs/guides/getting-started.md) - Complete walkthrough for students. |
+| **🔌 Hardware** | [USB Serial Boards](docs/guides/usb-serial-boards.md) - Using development boards from inside a Spoke. |
+| **🔬 Embedded** | [Embedded Development](docs/guides/embedded-development.md) - The embed Spoke: Python, C, C++, Rust and LLVM in one place. |
 | **🛠️ Installation** | [Installation Guide](docs/operations/installation.md) - Prerequisite setup and Induction. |
 | **📜 Protocol** | [VDE Protocol](docs/governance/vde-protocol.md) - The Laws of the Forge and Branching. |
 | **🤝 Contributing** | [Contributing](docs/development/contributing.md) - How to join the Tribe's effort. |

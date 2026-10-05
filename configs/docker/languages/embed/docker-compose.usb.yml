@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
 # @armor (Engine Core)
 # Template for the USB serial passthrough overlay (Signet #526).
-# Variables: cpp
+# Variables: embed
 #
 # Rendered only for Spokes that do embedded work: the embed Spoke, plus the
 # four languages centre-mass in the field (python, rust, c, cpp). Presence of
@@ -39,7 +39,7 @@
 # 189: the kernel refuses the open even for a node fabricated with mknod as
 # root. See docs/guides/usb-serial-boards.md.
 services:
-  vde-cpp:
+  vde-embed:
     environment:
       - VDE_USB_TTY_NODES=ttyUSB:188:8 ttyACM:166:4
     device_cgroup_rules:

@@ -3,8 +3,9 @@
 # Template for the USB serial passthrough overlay (Signet #526).
 # Variables: rust
 #
-# Rendered only for Spokes that are centre-mass in embedded development
-# (python, rust, c, cpp). Presence of the rendered file is the opt-in: the
+# Rendered only for Spokes that do embedded work: the embed Spoke, plus the
+# four languages centre-mass in the field (python, rust, c, cpp). Presence of
+# the rendered file is the opt-in: the
 # compose selection helper in lib/vm-common appends it to the base compose
 # file when it exists.
 #
@@ -18,14 +19,15 @@
 #     watcher and no Spoke restart (verified on the Hub).
 #   - Spare slots are load-bearing: a replug while a port is held open
 #     returns the board on the NEXT minor, and an unprivileged user cannot
-#     mknod the new node themselves (EACCES).
+#     mknod the new node themselves (EACCES). The counts below allow four
+#     boards attached at once on each bus type, plus spares.
 #
 # No privileged mode. No devices: mappings (a devices: entry for an absent
 # host node makes the Spoke fail to start). No group_add, no host gid.
 #
 # SCOPING: the rules enumerate EXACT minors matching VDE_USB_TTY_NODES, not
 # a wildcard major. "c 188:* rmw" would grant all 256 usb-serial minors while
-# the entrypoint only ever creates ttyUSB0-3 -- wider than needed for no gain.
+# the entrypoint only ever creates the declared nodes -- wider than needed for no gain.
 # Enumerating keeps the grant to precisely the slots that exist, so a board on
 # a minor outside the declared range (another user's, on a shared Hub) is
 # refused by the kernel. The two lists are derived from the same spec and MUST

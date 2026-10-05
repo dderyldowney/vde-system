@@ -35,7 +35,7 @@ FORCE=false
 # selection helper in lib/vm-common; no registry field is involved.
 #===============================================================================
 typeset -ga VDE_USB_OPT_IN_SPOKES
-VDE_USB_OPT_IN_SPOKES=(python rust c cpp)
+VDE_USB_OPT_IN_SPOKES=(python rust c cpp embed)
 
 # smelt_usb_overlay SHORT_NAME CONFIG_DIR
 # Render the USB overlay for an opted-in Spoke, or REVOKE it for one that is
