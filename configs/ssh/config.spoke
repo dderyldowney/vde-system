@@ -100,6 +100,20 @@ Host vde-elixir
     IdentityAgent ~/.ssh/vde/agent.sock
     IdentitiesOnly yes
     RequestTTY yes
+# VDE VM: vde-embed
+# @shared-law (Sovereign Law)
+Host vde-embed
+    HostName vde-embed
+    Port 2224
+    User devuser
+    IdentityFile ~/.ssh/vde/vde_student
+    UserKnownHostsFile ~/.ssh/vde/known_hosts
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    ForwardAgent yes
+    IdentityAgent ~/.ssh/vde/agent.sock
+    IdentitiesOnly yes
+    RequestTTY yes
 # VDE VM: vde-flutter
 # @shared-law (Sovereign Law)
 Host vde-flutter

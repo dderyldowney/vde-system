@@ -23,6 +23,7 @@ Feature: USB Serial Board Passthrough
     And a USB overlay must exist for the Spoke "rust"
     And a USB overlay must exist for the Spoke "c"
     And a USB overlay must exist for the Spoke "cpp"
+    And a USB overlay must exist for the Spoke "embed"
     And no USB overlay must exist for the Spoke "go"
 
   @config @usb-opt-in
@@ -46,6 +47,7 @@ Feature: USB Serial Board Passthrough
       | rust   |
       | c      |
       | cpp    |
+      | embed  |
 
   @config @usb-compose-selection
   Scenario: Compose invocations include the overlay only where it exists

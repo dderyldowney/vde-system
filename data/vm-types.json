@@ -67,6 +67,15 @@
               "ssh_port": 2206
             },
         {
+              "name": "vde-embed",
+              "aliases": ["embed","embedded"],
+              "display": "Embedded",
+              "pkgs": "",
+              "custom_cmd": "zsh /vde/scripts/setup/embed-init.zsh",
+              "service_ports": "",
+              "ssh_port": 2224
+            },
+        {
               "name": "vde-flutter",
               "aliases": ["flutter","dart"],
               "display": "Flutter",

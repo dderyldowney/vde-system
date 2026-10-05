@@ -102,6 +102,16 @@ def _cleanup_feature_containers(tags):
             subprocess.run(["docker", "rm", "-f", container], capture_output=True, check=False)
     if "jupyterlab" in tags:
         subprocess.run(["docker", "rm", "-f", "vde-jupyterlab"], capture_output=True, check=False)
+    # Rule K caps the Hub at 3 concurrent Spokes. These features ignite Spokes
+    # to verify real device state, so leaving them running makes the NEXT suite
+    # fail with "Combat Load exceeded" -- including the Proof of Life, which
+    # must start vde-python. Purge rather than stop, so the entrypoint re-runs
+    # and the device nodes and port map are rebuilt on the next ignition.
+    if "usb-serial" in tags:
+        for container in ["vde-python", "vde-go"]:
+            subprocess.run(["docker", "rm", "-f", container], capture_output=True, check=False)
+    if "embed-spoke" in tags:
+        subprocess.run(["docker", "rm", "-f", "vde-embed"], capture_output=True, check=False)
 
 
 def before_feature(context, feature):

@@ -7,7 +7,7 @@ All available programming languages and services in the **Sovereign Baseline (1.
 
 ---
 
-## Language VMs (24 total, SSH ports 2200–2223)
+## Language VMs (25 total, SSH ports 2200–2299)
 
 | Name | Aliases | Display Name | SSH Port |
 |------|---------|--------------|----------|
@@ -18,6 +18,7 @@ All available programming languages and services in the **Sovereign Baseline (1.
 | vde-csharp | csharp, dotnet | C# | 2204 |
 | vde-displaytest | displaytest | Go Language | 2205 |
 | vde-elixir | elixir, ex, iex | Elixir | 2206 |
+| vde-embed | embed, embedded | Embedded | 2224 |
 | vde-flutter | flutter, dart | Flutter | 2207 |
 | vde-go | go, golang | Go | 2208 |
 | vde-haskell | haskell, hs | Haskell | 2209 |
