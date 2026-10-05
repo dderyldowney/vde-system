@@ -153,6 +153,14 @@ if [[ -n "${VDE_USB_TTY_NODES}" ]]; then
         done
     done
     unset _spec _name _rest _major _count _i _node
+
+    # Stable per-port names (Signet #528). Derived from sysfs, which is
+    # visible inside a container even though udev is not. Accurate as of
+    # ignition; re-run "vde usb-map <spoke>" after plugging a board in.
+    if [[ -x /usr/local/bin/vde-usb-map.zsh ]]; then
+        /usr/local/bin/vde-usb-map.zsh >/dev/null 2>&1 \
+            || echo "[VDE-ENTRYPOINT] WARNING: USB port map could not be built."
+    fi
 fi
 
 # 3. SSH IDENTITY MANDATE (Rule 14 Readiness)

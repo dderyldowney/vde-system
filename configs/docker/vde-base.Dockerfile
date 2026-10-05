@@ -76,8 +76,11 @@ RUN chmod 600 /home/devuser/.ssh/config
 
 # 6. THE ATOMIC HANDSHAKE (Entrypoint)
 COPY scripts/vde-entrypoint.zsh /usr/local/bin/vde-entrypoint.zsh
+# USB port map resolver (Signet #528). Inert unless the Spoke carries the USB
+# serial overlay, so it is safe in every image.
+COPY scripts/vde-usb-map.zsh /usr/local/bin/vde-usb-map.zsh
 COPY scripts/vde-motd.zsh /usr/local/bin/vde-motd.zsh
-RUN sudo chmod +x /usr/local/bin/vde-entrypoint.zsh /usr/local/bin/vde-motd.zsh
+RUN sudo chmod +x /usr/local/bin/vde-entrypoint.zsh /usr/local/bin/vde-motd.zsh /usr/local/bin/vde-usb-map.zsh
 
 # 7. Universal Login Message (MOTD)
 USER root

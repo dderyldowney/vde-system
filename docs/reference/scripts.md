@@ -49,6 +49,7 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution**. 
 | `vde port <alias>` | Retrieve the assigned SSH port for a Spoke. | `vde port python` |
 | `vde info` | Detailed system and environment diagnostic dump. | `vde info` |
 | `vde dns-check` | **The Handshake Ritual**: Verify cross-Spoke DNS resolution. | `vde dns-check <src> <tgt> [port]` |
+| `vde usb-map` | **The Socket Ledger**: Report stable per-port names for attached USB serial boards. | `vde usb-map <name> [name ...]` |
 | `vde matrix-audit` | Exhaustive verification of every registered VM type (Serialized). | `vde matrix-audit` |
 | `vde matrix-rebuild` | Comprehensive non-cached re-forging of the absolute Spoke matrix. | `vde matrix-rebuild` |
 | `vde-enforce-uap.zsh` | **The Rule Spine**: Enforce Universal Agent Protocol compliance. | `bin/vde-enforce-uap.zsh` |
