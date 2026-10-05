@@ -100,6 +100,61 @@ else
     echo "[VDE-ENTRYPOINT] WARNING: No SSH bridge found. Forwarding disabled."
 fi
 
+# 2.5. USB SERIAL DEVICE NODES (Signet #526)
+# Opt-in via VDE_USB_TTY_NODES, set only by the per-Spoke USB overlay.
+# Format: "<name>:<major>:<count>" entries, e.g. "ttyUSB:188:4 ttyACM:166:2".
+#
+# Container /dev is a fresh tmpfs on every start, so this runs each ignition.
+# Nodes are pre-created so a board can be plugged, unplugged and replugged
+# while the Spoke runs: a node with no device behind it fails open() with
+# ENXIO (empty slot) or ENODEV (stale port still held), and begins working
+# again the moment the kernel re-registers that port. Spare slots matter
+# because a replug while the port is held open returns the board on the NEXT
+# minor, and an unprivileged user cannot mknod the new node (EACCES).
+#
+# Node creation and node access are gated SEPARATELY: CAP_MKNOD creates the
+# node, while the device cgroup rule gates open(). A node created without the
+# matching rule exists but fails open() with EPERM. No probing open() is done
+# here on purpose: opening a usb-serial port asserts DTR, which would reset an
+# attached ESP32 on every Spoke ignition.
+#
+# Failure here MUST NEVER block the Spoke from starting.
+if [[ -n "${VDE_USB_TTY_NODES}" ]]; then
+    echo "[VDE-ENTRYPOINT] Pre-creating USB serial nodes..."
+    typeset -a _usb_specs
+    _usb_specs=( ${=VDE_USB_TTY_NODES} )
+
+    for _spec in "${_usb_specs[@]}"; do
+        if [[ ! "${_spec}" =~ ^[A-Za-z]+:[0-9]+:[0-9]+$ ]]; then
+            echo "[VDE-ENTRYPOINT] WARNING: ignoring malformed VDE_USB_TTY_NODES entry '${_spec}'."
+            continue
+        fi
+
+        _name="${_spec%%:*}"
+        _rest="${_spec#*:}"
+        _major="${_rest%%:*}"
+        _count="${_rest#*:}"
+
+        for (( _i = 0; _i < _count; _i++ )); do
+            _node="/dev/${_name}${_i}"
+            if [[ ! -e "${_node}" ]]; then
+                if ! _root_exec mknod -m 0660 "${_node}" c "${_major}" "${_i}" 2>/dev/null; then
+                    echo "[VDE-ENTRYPOINT] WARNING: could not create ${_node} (CAP_MKNOD missing or /dev not writable?)."
+                    continue
+                fi
+            fi
+            # Group ownership comes from the Spoke's own devuser group, not a
+            # host gid: the node is this container's file. SSH logins rebuild
+            # supplementary groups from /etc/group, so the PRIMARY group is
+            # used and group_add is deliberately avoided.
+            _root_exec chgrp devuser "${_node}" 2>/dev/null || \
+                echo "[VDE-ENTRYPOINT] WARNING: could not chgrp ${_node}."
+            _root_exec chmod 0660 "${_node}" 2>/dev/null || true
+        done
+    done
+    unset _spec _name _rest _major _count _i _node
+fi
+
 # 3. SSH IDENTITY MANDATE (Rule 14 Readiness)
 # We ensure the Spoke has host keys for the Transversal Bridge
 if [[ ! -f /etc/ssh/ssh_host_rsa_key ]]; then

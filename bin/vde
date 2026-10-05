@@ -279,7 +279,14 @@ case ${ACTION} in
             local -a compose_up_cmd=(docker compose)
             [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
             
-            compose_up_cmd+=(-f "${compose_file}")
+            # Base manifest first, then any opt-in overlay (Signet #526).
+            # Compose resolves relative paths against the first -f file.
+            local -a compose_files
+            compose_files=( ${(f)"$(get_vm_compose_files "${CANONICAL_NAME}")"} )
+            local _cf
+            for _cf in "${compose_files[@]}"; do
+                compose_up_cmd+=(-f "${_cf}")
+            done
             [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
             
             [[ -f "${VDE_ROOT_DIR}/.env" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/.env")
