@@ -505,3 +505,95 @@ def step_port_lock_released(context, name):
         f"the port lock {lock} survived uninstall, so port {port} stays "
         f"claimed by a Spoke that no longer exists"
     )
+
+
+# ---------------------------------------------------------------------------
+# The forged ritual must RUN, not merely exist (Signet #534)
+# ---------------------------------------------------------------------------
+#
+# The Proof of Life asserts only that the setup script for a dynamically added
+# Spoke EXISTS. Nothing in the heartbeat ever builds such a Spoke, so a ritual
+# that parses but dies at run time went unnoticed: a Spoke name is not a shell
+# identifier, and "typeset vde_dynamic-vm_pkgs" fails with "not valid in this
+# context", which under the ritual's own set -e aborts it before the work
+# section. These steps close that gap at the layer the defect lives in, rather
+# than adding a multi-minute image build to the heartbeat.
+
+
+@when('I register the throwaway VM type "{name}" with install command "{install_cmd}"')
+def step_register_with_cmd(context, name, install_cmd):
+    if hasattr(context, "vault_throwaway"):
+        context.vault_throwaway.add(name)
+    result = subprocess.run(
+        ["bin/vde", "add", name, install_cmd],
+        cwd=str(get_vde_root()),
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    context.last_result = result
+    context.command_output = result.stdout + result.stderr
+    context.command_exit_code = result.returncode
+    context.forge_marker = install_cmd.split()[-1] if install_cmd else ""
+
+
+@then('the hydration ritual for "{name}" must declare only valid shell identifiers')
+def step_ritual_identifiers(context, name):
+    """
+    A variable name may hold only [A-Za-z0-9_] and may not begin with a digit.
+    Interpolating a Spoke name into one is the defect: hyphens are legal in
+    Spoke names and illegal in identifiers.
+    """
+    offenders = []
+    for line in _ritual_text(name).splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("typeset "):
+            continue
+        decl = stripped[len("typeset ") :].lstrip()
+        ident = re.split(r"[=\s]", decl, maxsplit=1)[0]
+        # ${...} forms are computed at run time and are not literal identifiers.
+        if ident.startswith("${"):
+            continue
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", ident):
+            offenders.append((ident, stripped))
+
+    assert not offenders, (
+        "the forged ritual declares variable name(s) that zsh will reject at "
+        "run time, aborting the ritual before its work section:\n"
+        + "\n".join(f"  {i!r} in {l!r}" for i, l in offenders)
+    )
+
+
+@then('the hydration ritual for "{name}" must execute and reach its work section')
+def step_ritual_executes(context, name):
+    """
+    Run the real ritual in a throwaway container, the way the image build does
+    (the registry's custom_cmd is `zsh /vde/scripts/setup/<name>-init.zsh`),
+    and assert it reaches the install command. Parsing is not enough: the
+    hyphen defect passes `zsh -n` and fails only when executed.
+    """
+    marker = getattr(context, "forge_marker", "")
+    assert marker, "no marker recorded from the install command"
+
+    root = str(get_vde_root())
+    result = subprocess.run(
+        [
+            "docker", "run", "--rm",
+            "-v", f"{root}:/vde",
+            "--entrypoint", "zsh",
+            "vde-base:latest",
+            f"/vde/scripts/setup/{name}-init.zsh",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    combined = result.stdout + result.stderr
+    assert "not valid in this context" not in combined, (
+        f"the forged ritual died on an invalid variable name before its work "
+        f"section:\n{combined}"
+    )
+    assert marker in combined, (
+        f"the forged ritual never reached its work section: the marker "
+        f"{marker!r} was not emitted. Exit {result.returncode}.\n{combined}"
+    )

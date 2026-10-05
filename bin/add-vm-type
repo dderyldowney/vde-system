@@ -207,22 +207,63 @@ done
 [[ -n "${PKGS}" ]] || PKGS="-"
 [[ -n "${SVC_PORT}" ]] || SVC_PORT="-"
 
-# An explicitly supplied --ssh-port must also respect the type's range, or the
-# auto-allocation fix above is trivially bypassed and the Vault still ends up
-# schema-invalid (and therefore un-uninstallable).
-if [[ -n "${SSH_PORT}" ]]; then
-    typeset -i _want_lo _want_hi
-    if [[ "${VM_TYPE_STR}" == "service" ]]; then
-        _want_lo=${VDE_SVC_PORT_START}
-        _want_hi=${VDE_SVC_PORT_END}
+# -----------------------
+# Port Range Authority (Signet #534)
+# -----------------------
+# ONE mapping from type to bounds, read from data/vm-types.schema.json, which
+# is the authority on what the registry may contain (Mandate B, Mandate J).
+#
+# Validation and allocation use DIFFERENT windows on purpose:
+#   - validation accepts anything the schema accepts, so an explicit
+#     --ssh-port is never refused for a value the Vault would happily hold.
+#   - allocation draws from the narrower VDE_*_PORT_START/END window, which is
+#     the range the Forge conventionally hands out.
+# Validating against the allocator's window would reject working registrations
+# (language ports 2300-2399 are schema-valid) while claiming the schema
+# rejected them, which is both a regression and a false error message.
+_vde_schema_port_bounds() {
+    local kind="${1}"
+    local defn="languageVM"
+    [[ "${kind}" == "service" ]] && defn="serviceVM"
+
+    local lo hi
+    lo=$(vde_query_json -r ".definitions.${defn}.properties.ssh_port.minimum" "${VDE_ROOT_DIR}/data/vm-types.schema.json" 2>/dev/null)
+    hi=$(vde_query_json -r ".definitions.${defn}.properties.ssh_port.maximum" "${VDE_ROOT_DIR}/data/vm-types.schema.json" 2>/dev/null)
+
+    [[ "${lo}" == <-> && "${hi}" == <-> ]] || return 1
+    print -r -- "${lo} ${hi}"
+}
+
+_vde_alloc_port_bounds() {
+    local kind="${1}"
+    if [[ "${kind}" == "service" ]]; then
+        print -r -- "${VDE_SVC_PORT_START} ${VDE_SVC_PORT_END}"
     else
-        _want_lo=${VDE_LANG_PORT_START}
-        _want_hi=${VDE_LANG_PORT_END}
+        print -r -- "${VDE_LANG_PORT_START} ${VDE_LANG_PORT_END}"
     fi
+}
+
+# The type must be one the schema actually defines. Without this, --type foo
+# writes a row no definition covers, which the schema rejects and which the
+# alias scan's /^(lang|service)\|/ filter cannot even see.
+if [[ "${VM_TYPE_STR}" != "lang" && "${VM_TYPE_STR}" != "service" ]]; then
+    log_error "Unknown VM type '${VM_TYPE_STR}'. Only 'lang' and 'service' are defined by data/vm-types.schema.json."
+    exit ${VDE_ERR_INVALID_INPUT}
+fi
+
+if [[ -n "${SSH_PORT}" ]]; then
+    typeset _schema_bounds
+    if ! _schema_bounds=$(_vde_schema_port_bounds "${VM_TYPE_STR}"); then
+        log_error "Could not read ssh_port bounds for ${VM_TYPE_STR} from data/vm-types.schema.json."
+        exit ${VDE_ERR_INVALID_DATA}
+    fi
+    typeset -i _want_lo=${${=_schema_bounds}[1]}
+    typeset -i _want_hi=${${=_schema_bounds}[2]}
+
     if (( SSH_PORT < _want_lo || SSH_PORT > _want_hi )); then
-        log_error "SSH port ${SSH_PORT} is outside the ${VM_TYPE_STR} range ${_want_lo}-${_want_hi}."
-        log_error "data/vm-types.schema.json rejects it, which would leave the registry invalid and uninstall unable to run."
-        exit ${VDE_ERR_INVALID:-1}
+        log_error "SSH port ${SSH_PORT} is outside the ${VM_TYPE_STR} range ${_want_lo}-${_want_hi} defined by data/vm-types.schema.json."
+        log_error "Registering it would leave the registry schema-invalid, and uninstall validates on load, so the entry could not be removed."
+        exit ${VDE_ERR_INVALID_INPUT}
     fi
 fi
 
@@ -242,21 +283,14 @@ claim_lock "${global_lock}" || vde_handle_error "lock-acquisition" "${global_loc
     # AUTO-ALLOCATE PORT (Inside Lock)
     if [[ -z "${SSH_PORT}" ]]; then
         log_info "No SSH port specified, auto-allocating inside lock..."
-        # Allocate from the range that matches the TYPE (Signet #534).
-        # Hard-coding the language range meant a service type received a 22xx
-        # port, which data/vm-types.schema.json rejects (serviceVM requires
-        # 2400-2499). The resulting Vault failed its own schema, and because
-        # uninstall validates on load it then REFUSED to run -- so the
-        # canonical tool created state the canonical tool could not remove.
-        typeset -i _port_lo _port_hi
-        if [[ "${VM_TYPE_STR}" == "service" ]]; then
-            _port_lo=${VDE_SVC_PORT_START}
-            _port_hi=${VDE_SVC_PORT_END}
-        else
-            _port_lo=${VDE_LANG_PORT_START}
-            _port_hi=${VDE_LANG_PORT_END}
-        fi
-        SSH_PORT=$(find_available_ssh_port "${_port_lo}" "${_port_hi}" "${QUIET}")
+        # Allocate from the range matching the TYPE (Signet #534), via the
+        # single mapping defined above. Hard-coding the language range meant a
+        # service type received a 22xx port, which the schema rejects, leaving
+        # a Vault that uninstall refused to load -- so the canonical tool
+        # created state the canonical tool could not remove.
+        typeset _alloc_bounds
+        _alloc_bounds=$(_vde_alloc_port_bounds "${VM_TYPE_STR}")
+        SSH_PORT=$(find_available_ssh_port "${${=_alloc_bounds}[1]}" "${${=_alloc_bounds}[2]}" "${QUIET}")
         vde_handle_error "port-allocation" "${VM_NAME}"
         log_success "Allocated port: ${SSH_PORT}"
     fi
@@ -338,6 +372,14 @@ claim_lock "${global_lock}" || vde_handle_error "lock-acquisition" "${global_loc
 log_success "Registry updated and port committed."
 
 # Create the hydration script if it doesn't exist
+# A VM name is a Spoke name, not a shell identifier: "dynamic-vm" and
+# "certified-ghost" are legal names but illegal variable names. Interpolating
+# one into "typeset vde_${VM_NAME}_pkgs" produced a ritual that PARSES but
+# fails at run time -- "typeset: not valid in this context" -- and because the
+# ritual carries set -e it then exited 1 BEFORE the install command, so the
+# Spoke hydrated nothing while the build reported success. The Proof of Life
+# registers dynamic-vm on every run, so this was silently live.
+typeset _pkgs_var="vde_${VM_NAME//[^A-Za-z0-9_]/_}_pkgs"
 typeset _init_script="${VDE_ROOT_DIR}/scripts/setup/${VM_NAME}-init.zsh"
 if [[ ! -f "${_init_script}" ]]; then
     log_info "Forging USP hydration script: ${_init_script}"
@@ -355,7 +397,7 @@ set -e
 
 # 1. THE PACKAGE ALLOY
 export DEBIAN_FRONTEND=noninteractive
-typeset vde_${VM_NAME}_pkgs=""
+typeset ${_pkgs_var}=""
 
 # 2. THE FORGE WORK
 ${INSTALL_CMD}
@@ -427,19 +469,29 @@ fi
 # -----------------------
 # Regenerate Configs (Signet #534)
 # -----------------------
-# MUST run regardless of --quiet. generate-all-configs is what writes
+# Runs regardless of --quiet. generate-all-configs is what writes
 # configs/ssh/config.spoke and the configs/docker/<category>/<name>/ manifest;
-# the surgical append above only touches configs/ssh/config. Gating this on
-# --quiet meant a quiet registration produced a half-configured Spoke, and
-# uninstall now always regenerates, so the pair would be asymmetric in the
-# opposite direction. The Proof of Life registers dynamic-vm with --quiet, so
-# this path is exercised on every heartbeat.
+# the surgical append above only touches configs/ssh/config, so gating this on
+# --quiet produced a half-configured Spoke. Note that bin/vde consumes -q
+# BEFORE dispatch (bin/vde:79 sets VDE_QUIET and does not forward the flag),
+# so QUIET is always false via the canonical entrypoint; this matters only for
+# direct invocation of bin/add-vm-type.
+#
+# Guarded, not bare: errexit is live here, and generate-all-configs returns
+# non-zero on a render failure. Unguarded, a regen failure would abort AFTER
+# the registry row, JSON re-smelt, port record and hydration ritual were all
+# written -- leaving the caller a non-zero status with no summary and the work
+# actually committed. bin/uninstall-vm-type guards the identical call the same
+# way, which is what makes the pair symmetric.
 log_info "Regenerating VDE configurations..."
-"${VDE_ROOT_DIR}/bin/generate-all-configs" >/dev/null 2>&1
-
-# Keep the live SSH config in step with the regenerated project config.
-if [[ -f "${project_ssh_config}" && -f "${VDE_SSH_CONFIG}" ]]; then
-    cp "${project_ssh_config}" "${VDE_SSH_CONFIG}"
+if "${VDE_ROOT_DIR}/bin/generate-all-configs" >/dev/null 2>&1; then
+    # Keep the live SSH config in step with the regenerated project config.
+    if [[ -f "${project_ssh_config}" && -f "${VDE_SSH_CONFIG}" ]]; then
+        cp "${project_ssh_config}" "${VDE_SSH_CONFIG}"
+    fi
+else
+    log_error "Configuration regeneration failed after the registry was committed."
+    log_error "The entry for '${VM_NAME}' exists; run 'bin/generate-all-configs' to finish, or 'vde uninstall ${VM_NAME}' to back it out."
 fi
 
 log_success "VM type '${VM_NAME}' added successfully!"

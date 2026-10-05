@@ -90,3 +90,11 @@ Feature: The Canonical VM Type Tool Produces Compliant Artifacts
     Then the command should succeed
     And no SSH port may remain recorded for "portcycle"
     And the port lock for "portcycle" must have been released
+
+  @spec @usp @hyphenated
+  Scenario: A forged ritual for a hyphenated Spoke name actually executes
+    Given the VDE registry is loaded
+    When I register the throwaway VM type "zz-hyphen" with install command "print FORGE-WORK-RAN"
+    Then the command should succeed
+    And the hydration ritual for "zz-hyphen" must declare only valid shell identifiers
+    And the hydration ritual for "zz-hyphen" must execute and reach its work section
