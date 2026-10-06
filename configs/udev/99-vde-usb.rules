@@ -27,6 +27,13 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="10c4", ATTR{idProduct}=="ea60", TEST=="power/
 # Verify: udevadm info -q property -n /dev/ttyUSB0 | grep ID_MM_DEVICE_IGNORE
 SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ENV{ID_MM_DEVICE_IGNORE}="1"
 SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", ENV{ID_MM_DEVICE_IGNORE}="1"
+# Arduino CDC-ACM boards (Mega2560 R3 = 2341:0042). A CDC-ACM device looks like
+# a modem to ModemManager, so these need the ignore even more than a UART
+# bridge does. Verified 2026-10-06: the Mega arrived with ID_MM_CANDIDATE=1 set
+# and no ignore, which is the "first upload after plugging in fails" cause.
+# Whole-vendor match: covers Uno/Leonardo/Micro/Due as well.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2a03", ENV{ID_MM_DEVICE_IGNORE}="1"
 
 # ---------------------------------------------------------------------------
 # 2b. FIXED HOST-SIDE NAMES PER BOARD
@@ -46,7 +53,14 @@ SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", ENV{ID_MM_D
 #   arduino-cli upload -b arduino:avr:mega -p /dev/mega2560
 # ---------------------------------------------------------------------------
 SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="esp32"
-SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="mega2560"
+# Mega2560: ELEGOO ships the ATmega16U2 USB interface with Arduino's genuine
+# vendor id, NOT a CH340/CP2102 serial-bridge clone -- so it is CDC-ACM
+# (/dev/ttyACM<#>, major 166) and a distinct vendor from the ESP32's CP2102.
+# Verified on hardware 2026-10-06: 2341:0042 "Arduino SA Mega 2560 R3 (CDC ACM)".
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0042", SYMLINK+="mega2560"
+# CH340/CH341-bridged clones, kept for other boards that may turn up.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="ch340"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="5523", SYMLINK+="ch341"
 # ST-LINK virtual COM port (serial console only -- SWD flashing needs raw USB
 # on major 189, which a Spoke cannot reach; flash the STM32 from the Hub).
 SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="374b", SYMLINK+="stlink-vcp"
