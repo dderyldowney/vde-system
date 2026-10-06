@@ -276,6 +276,22 @@ case ${ACTION} in
             local vm_env_file
             vm_env_file=$(get_vm_env_file "${CANONICAL_NAME}")
             
+            # DISCOVERY: a recreated container presents a NEW SSH host key on
+            # the same localhost:<port>, so the stale known_hosts entry breaks
+            # the next connection. Plain ssh warns and continues (the Spoke
+            # config sets StrictHostKeyChecking no), but VSCode Remote-SSH
+            # fails hard and the Spoke looks dead for no visible reason.
+            # remove_known_hosts_entry() already existed in lib/vde-ssh with no
+            # caller; purge before every ignition. Harmless when the key has
+            # not changed, since the client simply re-learns it.
+            if ! typeset -f remove_known_hosts_entry >/dev/null 2>&1; then
+                [[ -f "${VDE_ROOT_DIR}/lib/vde-ssh" ]] && source "${VDE_ROOT_DIR}/lib/vde-ssh"
+            fi
+            if typeset -f remove_known_hosts_entry >/dev/null 2>&1; then
+                remove_known_hosts_entry "${CANONICAL_NAME}" "${ssh_port}" >/dev/null 2>&1 || true
+                vde_log_debug "Purged known_hosts for ${CANONICAL_NAME} (port ${ssh_port})" "ssh"
+            fi
+
             local -a compose_up_cmd=(docker compose)
             [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
             
