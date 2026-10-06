@@ -364,7 +364,10 @@ claim_lock "${global_lock}" || vde_handle_error "lock-acquisition" "${global_loc
     allocate_ssh_port "vde-${VM_NAME}" "${SSH_PORT}"
     
     # 4. Invalidate cache to force Ignition on next load
-    rm -f "${VDE_ROOT_DIR}/.cache/vm-types.cache" 2>/dev/null
+    # VDE_CACHE_DIR is overridable (lib/vde-constants); hardcoding the path
+    # left the real cache stale, and the regen then rewrote configs/ssh/config
+    # from stale data, erasing the entry appended moments earlier.
+    rm -f "${VDE_CACHE_DIR}/vm-types.cache" 2>/dev/null
 } always {
     release_lock "${global_lock}"
 }
@@ -491,7 +494,11 @@ if "${VDE_ROOT_DIR}/bin/generate-all-configs" >/dev/null 2>&1; then
     fi
 else
     log_error "Configuration regeneration failed after the registry was committed."
-    log_error "The entry for '${VM_NAME}' exists; run 'bin/generate-all-configs' to finish, or 'vde uninstall ${VM_NAME}' to back it out."
+    log_error "The entry for '${VM_NAME}' exists, but its compose manifest and SSH entries were NOT written."
+    log_error "Finish with 'bin/generate-all-configs', or back it out with 'vde uninstall ${VM_NAME}'."
+    # Must not fall through to log_success: the Spoke is half-registered, and
+    # a caller checking only the exit code would treat it as usable.
+    exit ${VDE_ERR_GENERAL:-1}
 fi
 
 log_success "VM type '${VM_NAME}' added successfully!"
