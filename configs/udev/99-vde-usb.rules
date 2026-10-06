@@ -1,0 +1,39 @@
+# VDE embedded development -- Hub-side USB rules.
+# Diagnosed 2026-10-06 on deryl-macbook-pro (T2 MacBook Pro, VIA Labs dock).
+
+# ---------------------------------------------------------------------------
+# 1. KEEP THE DOCK AWAKE
+# The VIA Labs hubs runtime-suspend after a device is removed and then fail to
+# detect the next attach. Symptom: every downstream port reports "not attached"
+# and the board looks dead, while power/runtime_status reads "suspended".
+# Verify: cat /sys/bus/usb/devices/1-3/power/runtime_status   # want: active
+# ---------------------------------------------------------------------------
+SUBSYSTEM=="usb", ATTR{idVendor}=="2109", ATTR{idProduct}=="2817", TEST=="power/control", ATTR{power/control}="on"
+SUBSYSTEM=="usb", ATTR{idVendor}=="2109", ATTR{idProduct}=="0817", TEST=="power/control", ATTR{power/control}="on"
+SUBSYSTEM=="usb", ATTR{idVendor}=="10c4", ATTR{idProduct}=="ea60", TEST=="power/control", ATTR{power/control}="on"
+
+# ---------------------------------------------------------------------------
+# 2. KEEP ModemManager OFF THE BOARDS
+# ModemManager probes new serial devices and holds the port for a few seconds,
+# which makes the first upload after plugging in fail. ID_MM_CANDIDATE=1 was
+# confirmed set on this host's CP210x.
+# Per docs/guides/usb-serial-boards.md. CP210x and CH340 shown.
+# ---------------------------------------------------------------------------
+# NOTE: these MUST match SUBSYSTEM=="tty", not "usb". ModemManager reads
+# ID_MM_DEVICE_IGNORE from the tty device, and udev properties do not propagate
+# from a parent to its children -- a SUBSYSTEM=="usb" rule sets the property on
+# the wrong device and has no effect. ATTRS{} (plural) walks up to the USB
+# parent, so the vendor/product match still works from the tty.
+# Verify: udevadm info -q property -n /dev/ttyUSB0 | grep ID_MM_DEVICE_IGNORE
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", ENV{ID_MM_DEVICE_IGNORE}="1"
+
+# ---------------------------------------------------------------------------
+# 3. MIGRATE SPOKE PORT NAMES WITH THE BOARD
+# A container gets no udev events, so /dev/vde/by-port/<port> goes stale when a
+# replug moves the board to a new minor. This re-points it on the kernel event.
+# Event-driven, NOT a watcher: fires once per event, no sleep, no poll loop
+# (AGENTS.md:69). Dispatched via systemd-run --no-block so udev is never
+# blocked waiting on Docker.
+# ---------------------------------------------------------------------------
+SUBSYSTEM=="tty", KERNEL=="ttyUSB*|ttyACM*", ACTION=="add|remove", RUN+="/usr/bin/systemd-run --no-block --collect /usr/local/bin/vde-usb-remap"

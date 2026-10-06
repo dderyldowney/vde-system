@@ -179,19 +179,37 @@ your board's real vendor and product IDs:
 lsusb
 
 # /etc/udev/rules.d/99-vde-usb.rules  (example: CP210x and CH340)
-SUBSYSTEM=="usb", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ENV{ID_MM_DEVICE_IGNORE}="1"
-SUBSYSTEM=="usb", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", ENV{ID_MM_DEVICE_IGNORE}="1"
 ```
+
+Match `SUBSYSTEM=="tty"`, not `"usb"`. `ModemManager` reads
+`ID_MM_DEVICE_IGNORE` from the **tty** device, and udev properties do not
+propagate from a parent to its children, so a `SUBSYSTEM=="usb"` rule sets the
+property on the wrong device and has no effect at all. `ATTRS{}` (plural) walks
+up to the USB parent, so the vendor/product match still works from the tty.
 
 Then reload:
 
 ```zsh
 sudo udevadm control --reload
-sudo udevadm trigger
+sudo udevadm trigger --subsystem-match=tty --action=change
 ```
+
+Confirm it took:
+
+```zsh
+udevadm info -q property -n /dev/ttyUSB0 | grep ID_MM_DEVICE_IGNORE   # want: 1
+```
+
+`ID_MM_CANDIDATE=1` remains set alongside it; that is `ModemManager`'s own
+earlier tag and is harmless. `ID_MM_DEVICE_IGNORE` is the one it obeys.
 
 This tells `ModemManager` to leave those devices alone without disabling it
 system-wide.
+
+A ready-made rules file covering this, Hub autosuspend and automatic port-name
+refresh lives in `configs/udev/`; see its README to install.
 
 ### The node vanishes right after plugging in
 
