@@ -1,15 +1,42 @@
-# VDE Session Handover: 2026-09-29
+# VDE Session Handover: 2026-10-05
 # @shared-law (Forge Component)
 
 ## SOVEREIGN STATE
 - **Baseline**: 1.5.6 (Sovereign Baseline) — CERTIFIED
-- **develop**: `fbb60eef` at the 1.5.6 roll (Merge PR #464); later doc-only PRs advance it
+- **develop**: `2fe4cbb0` (Merge PR #536)
 - **main**: `4d02d116` (production — 1.5.6, Merge PR #468 stable → main)
-- **1.5.6 tag / GitHub Release (Latest)**: `4d02d116` on `main` (re-tagged from an earlier misplacement on `stable`, per the TAGS POLICY below)
 - **stable**: `7cc412f1` at the 1.5.6 roll (Merge PR #467)
-- **Status**: 100% GREEN (PEAK INTEGRITY)
-- **Heartbeat**: 6/6 scenarios, 72/72 steps — 100% GREEN
-- **Gospel Audit**: GOSPEL-SUCCESS (all Sovereign Artifacts synchronized)
+- **Status**: 100% GREEN
+- **Heartbeat**: 6/6 scenarios, 72/72 steps
+- **Gospel Audit**: GOSPEL-SUCCESS
+
+## CURRENT PROGRAMME: USB hardware access for embedded work
+
+Students plug development boards into the Hub and use them from inside a Spoke.
+
+- **PR #527** (Signet #526) — USB serial passthrough for `python`, `rust`, `c`, `cpp` ✅ MERGED
+- **PR #529** (Signet #528) — stable per-port device names ✅ MERGED
+- **PR #535** (Signet #533) — the `embed` Spoke: Python, C, C++, Rust, full LLVM suite ✅ MERGED
+- **PR #536** (Signet #534) — ten defects in `vde add` / `vde uninstall` ✅ MERGED
+
+Boards surface as `/dev/ttyUSB<n>` and `/dev/ttyACM<n>`: eight and four slots, hotplug tolerant, enumerated device-cgroup rules (no wildcards), stable names under `/dev/vde/by-port/` keyed to the physical socket. See `docs/guides/usb-serial-boards.md` and `docs/guides/embedded-development.md`.
+
+## NEXT STRIKE
+
+- **#539** — USB debug-probe access (SWD/JTAG) for `vde-embed` only. Grants bus 1 (128 enumerated rules on major 189) plus `/dev/bus/usb:ro`; bus 7 (the T2 virtual controller holding every internal device) stays kernel-refused. Includes udev rules installed on the Hub and `devuser` added to `dialout` and `plugdev`. **Gated on an STM32F3DISCOVERY arriving 2026-10-12 to 2026-10-14**; the mechanism is provable before then, the probe-specific behaviour is not.
+
+## OPEN, DEFERRED BY THE CLAN LEADER
+
+Not actionable until open issues are reviewed as a set:
+
+- **#530** Gospel audit's script check silently skips on a stale doc path
+- **#531** `templates/compose-language.yml` has drifted from its 32 generated files
+- **#532** `dns-check` shifts argv the dispatcher already consumed
+- **#537** the Proof of Life never builds what it adds, leaving add→create uncertified
+- **#538** 17 deferred findings from the #534 review
+- **#540** this handover refresh
+
+Pre-dating the programme: **#441** function-trace JSONL export, **#442** Ollama daemon connection.
 
 ## RECENT STRIKES (1.5.6 Sovereign Baseline)
 - **PR #462** — chore(release): VDE 1.5.6 Sovereign Baseline ✅ MERGED
