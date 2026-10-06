@@ -147,6 +147,17 @@ remove_vm_type_entry() {
                     
                     # Invalidate the cache
                     rm -f "${VDE_CACHE_DIR}/vm-types.cache" 2>/dev/null || true
+
+                    # Regenerate from the Vault, mirroring add-vm-type (Signet
+                    # #534). Without this, configs/ssh/config.spoke keeps a
+                    # host block for a Spoke that no longer exists: the block
+                    # is written by generate-all-configs, which truncates and
+                    # rebuilds both SSH files from the registry, and only
+                    # configs/ssh/config is edited surgically below. That
+                    # asymmetry is why uninstalled Spokes left stale entries
+                    # behind. The registry is the authority (Mandate B), so the
+                    # derived files are rebuilt from it rather than hand-edited.
+                    # Derived configs are rebuilt unconditionally below.
                 else
                     rm -f "${temp_file}"
                     print_info "No entry found for '${_vm_target_type}' in vm-types.conf"
@@ -540,6 +551,52 @@ main() {
 
     echo ""
     echo "============================================================================="
+    # Rebuild the derived configs from the Vault now that the lock is released
+    # (Signet #534). generate-all-configs truncates and rewrites BOTH
+    # configs/ssh/config and configs/ssh/config.spoke from the registry, which
+    # is what clears the stale host block that surgical editing of the former
+    # alone used to leave in the latter. Mirrors add-vm-type.
+    # Reclaim the SSH port (Signet #534). lib/vde-docker's vde_port_release
+    # removes both the <name>.port record and the port-<n>.lock directory, but
+    # nothing ever called it from the uninstall path -- so every removed VM
+    # type permanently consumed a port from its range. The Proof of Life
+    # registers and uninstalls dynamic-vm on every run, so the Hub leaked one
+    # port per heartbeat; find_available_ssh_port then skips ports nothing
+    # holds, and the range is finite.
+    if [[ "${DRY_RUN}" != "true" ]]; then
+        if (( ${+functions[vde_port_release]} )); then
+            vde_port_release "${CANONICAL_NAME}"
+            print_success "SSH port released for '${CANONICAL_NAME}'"
+        else
+            print_warning "vde_port_release unavailable; the SSH port for '${CANONICAL_NAME}' remains claimed"
+        fi
+    fi
+
+    # Gated on DRY_RUN alone, deliberately. Regeneration is idempotent, and
+    # gating it on "a registry row was actually removed" meant uninstall could
+    # not heal a Spoke whose row was already gone while a host block lingered
+    # in config.spoke -- exactly the state this Signet repairs. Re-running
+    # uninstall is the natural user response, and it must do something.
+    if [[ "${DRY_RUN}" != "true" ]]; then
+        print_info "Regenerating VDE configurations from the registry..."
+        if "${VDE_ROOT_DIR}/bin/generate-all-configs" >/dev/null 2>&1; then
+            print_success "Derived configurations rebuilt"
+
+            # Sync AFTER the regen, not before. remove_ssh_entries syncs
+            # earlier in the run; if its block parser found nothing to delete
+            # (a hand-edited entry, or a layout differing from the template it
+            # documents), the regen repairs configs/ssh/config while the live
+            # config would keep the dead host block indefinitely.
+            typeset _project_ssh="${VDE_ROOT_DIR}/configs/ssh/config"
+            if [[ -f "${_project_ssh}" && -f "${VDE_SSH_CONFIG}" ]]; then
+                cp "${_project_ssh}" "${VDE_SSH_CONFIG}"
+                print_success "Live SSH config synced"
+            fi
+        else
+            print_warning "Could not regenerate configurations; configs/ssh/config.spoke may retain a stale entry for '${CANONICAL_NAME}'"
+        fi
+    fi
+
     if [[ "${DRY_RUN}" = "true" ]]; then
         print_success "DRY RUN COMPLETE - No changes were made"
     else

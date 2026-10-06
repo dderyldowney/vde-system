@@ -134,11 +134,133 @@ def after_feature(context, feature):
     _cleanup_feature_containers(feature.tags)
 
 
+# Files a VM-type registration mutates. Scenarios tagged @vault-mutating are
+# wrapped in a backup/restore of these, so a failure mid-registration cannot
+# leave the Beskar Vault or the SSH configs altered.
+_VAULT_FILES = (
+    "data/vm-types.conf",
+    "data/vm-types.json",
+    "configs/ssh/config",
+    "configs/ssh/config.spoke",
+)
+
+# add-vm-type copies configs/ssh/config to the LIVE ssh config, which lives
+# outside the repository. Restoring only the in-repo files would leave the
+# user's real ~/.ssh/vde/config carrying a Host block for a throwaway Spoke,
+# pointing at a port that no longer exists.
+def _live_ssh_config():
+    if not VDE_SSH_DIR:
+        return None
+    return os.path.join(VDE_SSH_DIR, "config")
+
+
+def _vault_backup():
+    """
+    Snapshot the Vault and the live SSH config.
+
+    Keys are repo-relative paths, except the live SSH config which is keyed by
+    its absolute path since it sits outside the repository.
+    """
+    snapshot = {}
+    targets = [os.path.join(VDE_ROOT, rel) for rel in _VAULT_FILES]
+    live = _live_ssh_config()
+    if live:
+        targets.append(live)
+
+    for full in targets:
+        try:
+            with open(full, "rb") as handle:
+                snapshot[full] = handle.read()
+        except FileNotFoundError:
+            snapshot[full] = None
+    return snapshot
+
+
+def _vault_restore(snapshot, throwaway_names=()):
+    """Put the Vault back exactly as it was and purge generated artifacts."""
+    # Snapshot keys are already absolute.
+    for full, content in snapshot.items():
+        if content is None:
+            if os.path.exists(full):
+                os.remove(full)
+        else:
+            with open(full, "wb") as handle:
+                handle.write(content)
+
+    port_registry = os.path.join(VDE_ROOT, ".cache/port-registry")
+
+    for name in throwaway_names:
+        # Reclaim the allocated port. lib/vm-common:1057 records it as
+        # <name>.port and mkdirs port-<port>.lock; leaving those behind makes
+        # find_available_ssh_port skip a port nothing holds, which steadily
+        # exhausts the 2200-2299 language range across repeated runs.
+        # allocate_ssh_port runs the name through vde_normalize_name, which
+        # strips the "vde-" prefix, so the record is "<name>.port". Both
+        # spellings are handled anyway: if that normalisation ever changes,
+        # a silent port leak is the failure mode, and leaks are expensive --
+        # 27 ports were consumed from the 2200-2299 range before the original
+        # version of this cleanup was found to be targeting the wrong path.
+        allocated = None
+        for candidate in (f"{name}.port", f"vde-{name}.port"):
+            port_file = os.path.join(port_registry, candidate)
+            if not os.path.exists(port_file):
+                continue
+            try:
+                with open(port_file, encoding="utf-8") as handle:
+                    allocated = handle.read().strip() or allocated
+            except OSError:
+                pass
+            os.remove(port_file)
+        if allocated:
+            lock_dir = os.path.join(port_registry, f"port-{allocated}.lock")
+            if os.path.isdir(lock_dir):
+                shutil.rmtree(lock_dir, ignore_errors=True)
+
+        for rel in (
+            f"env-files/{name}.env",
+            f"scripts/setup/{name}-init.zsh",
+            "data/vm-types.conf.bak",
+        ):
+            full = os.path.join(VDE_ROOT, rel)
+            if os.path.exists(full):
+                os.remove(full)
+
+        # Service types land under configs/docker/services, not languages.
+        for category in ("languages", "services"):
+            config_dir = os.path.join(VDE_ROOT, "configs/docker", category, name)
+            if os.path.isdir(config_dir):
+                shutil.rmtree(config_dir, ignore_errors=True)
+
+    # The loader caches the Vault; a stale cache would outlive the restore.
+    cache = os.path.join(VDE_ROOT, ".cache/vm-types.cache")
+    if os.path.exists(cache):
+        os.remove(cache)
+
+
 def _hub_has_serial_board():
     """True when a real USB serial board is attached to the Hub right now."""
     import glob
 
     return bool(glob.glob("/dev/ttyUSB*") or glob.glob("/dev/ttyACM*"))
+
+
+def _scenario_tags(scenario):
+    """
+    Every tag that applies to a scenario, including tags inherited from the
+    Feature.
+
+    scenario.tags holds ONLY the scenario's own tags, so a gate keyed on it
+    silently does nothing when the tag is declared at Feature level. That
+    failure mode is invisible: the gate does not error, it just never fires.
+    """
+    try:
+        return scenario.effective_tags
+    except AttributeError:  # behave < 1.2.7
+        tags = set(scenario.tags)
+        feature = getattr(scenario, "feature", None)
+        if feature is not None:
+            tags.update(feature.tags)
+        return tags
 
 
 def before_scenario(context, scenario):
@@ -147,11 +269,16 @@ def before_scenario(context, scenario):
     context.exit_code = 0
     context.last_command = ""
 
+    # Snapshot the Vault before any scenario that registers a VM type.
+    if "vault-mutating" in _scenario_tags(scenario):
+        context.vault_snapshot = _vault_backup()
+        context.vault_throwaway = set()
+
     # USB passthrough hardware gate (Signet #526).
     # Scenarios tagged @hardware exercise a physically attached development
     # board. When none is present they are SKIPPED LOUDLY -- never passed --
     # per the 100% Real Tests Mandate. Simulating device state is forbidden.
-    if "hardware" in scenario.tags and not _hub_has_serial_board():
+    if "hardware" in _scenario_tags(scenario) and not _hub_has_serial_board():
         reason = (
             "SKIPPED (no hardware): '%s' requires a USB serial board attached "
             "to the Hub (/dev/ttyUSB* or /dev/ttyACM*). None is present, so "
@@ -164,7 +291,7 @@ def before_scenario(context, scenario):
     # Scenarios tagged @hardware-interactive need a board physically plugged or
     # unplugged DURING the run, so they cannot execute unattended. They run only
     # when VDE_HW_INTERACTIVE=1 declares the Clan Leader is present to act.
-    if "hardware-interactive" in scenario.tags and os.environ.get(
+    if "hardware-interactive" in _scenario_tags(scenario) and os.environ.get(
         "VDE_HW_INTERACTIVE"
     ) != "1":
         reason = (
@@ -178,7 +305,7 @@ def before_scenario(context, scenario):
 
     # The mirror gate: scenarios tagged @no-board prove behaviour with an EMPTY
     # Hub and cannot be judged while a board is plugged in.
-    if "no-board" in scenario.tags and _hub_has_serial_board():
+    if "no-board" in _scenario_tags(scenario) and _hub_has_serial_board():
         reason = (
             "SKIPPED (board attached): '%s' proves behaviour with NO serial "
             "board on the Hub, but one is currently attached. Unplug it to run "
@@ -190,6 +317,14 @@ def before_scenario(context, scenario):
 
 def after_scenario(context, scenario):
     """Scenario cleanup."""
+    # Restore the Vault unconditionally, so a failed registration cannot leave
+    # the registry, the SSH configs or the generated artifacts altered.
+    if hasattr(context, "vault_snapshot"):
+        _vault_restore(
+            context.vault_snapshot, getattr(context, "vault_throwaway", ())
+        )
+        del context.vault_snapshot
+
     # Automated restore for gospel audit tests
     if hasattr(context, 'backup_path') and os.path.exists(context.backup_path):
         # Infer the target path from the backup path
