@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+# @forge (Governance Sentinel)
+"""Reset an ESP32 over DTR/RTS and capture its boot banner.
+
+Stdlib only -- no pyserial -- so it runs unchanged inside a VDE spoke.
+Opens with O_NOCTTY, so an unplug cannot SIGHUP it; you get ENXIO/EIO instead.
+
+Usage:
+  esp-probe [port] [seconds]
+
+  port     defaults to /dev/esp32, else the first /dev/ttyUSB*.
+           Inside a VDE spoke use /dev/vde/by-port/<port-path>.
+  seconds  capture window, default 3.
+
+Exit: 0 if any bytes were captured, 1 if none, 2 on open failure.
+"""
+import fcntl, glob, os, select, sys, termios, time
+
+TIOCMGET, TIOCMSET = 0x5415, 0x5418
+DTR, RTS = 0x002, 0x004
+
+
+def pick_port():
+    if len(sys.argv) > 1:
+        return sys.argv[1]
+    if os.path.exists("/dev/esp32"):
+        return "/dev/esp32"
+    found = sorted(glob.glob("/dev/ttyUSB*"))
+    return found[0] if found else "/dev/ttyUSB0"
+
+
+def main():
+    port = pick_port()
+    window = float(sys.argv[2]) if len(sys.argv) > 2 else 3.0
+    try:
+        fd = os.open(port, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
+    except OSError as e:
+        print(f"{port}: {e.strerror} (errno {e.errno})", file=sys.stderr)
+        return 2
+
+    try:
+        a = termios.tcgetattr(fd)
+        a[0] = a[1] = a[3] = 0
+        a[2] = termios.CS8 | termios.CREAD | termios.CLOCAL
+        a[4] = a[5] = termios.B115200
+        termios.tcsetattr(fd, termios.TCSANOW, a)
+
+        def bits():
+            return int.from_bytes(fcntl.ioctl(fd, TIOCMGET, b"\0" * 4), sys.byteorder)
+
+        def drive(dtr, rts):
+            v = bits()
+            v = (v | DTR) if dtr else (v & ~DTR)
+            v = (v | RTS) if rts else (v & ~RTS)
+            fcntl.ioctl(fd, TIOCMSET, v.to_bytes(4, sys.byteorder))
+
+        print(f"port {port} @115200, modem bits 0x{bits():03x}", file=sys.stderr)
+        drive(False, True)          # assert EN -> reset
+        time.sleep(0.12)
+        drive(False, False)         # release -> normal boot
+        termios.tcflush(fd, termios.TCIFLUSH)
+
+        buf, deadline = b"", time.time() + window
+        while time.time() < deadline:
+            if select.select([fd], [], [], 0.2)[0]:
+                try:
+                    chunk = os.read(fd, 4096)
+                except BlockingIOError:
+                    continue
+                except OSError as e:
+                    print(f"read: {e.strerror} (board unplugged?)", file=sys.stderr)
+                    break
+                if chunk:
+                    buf += chunk
+
+        print(f"captured {len(buf)} bytes", file=sys.stderr)
+        if not buf:
+            return 1
+        sys.stdout.write(buf.decode("utf-8", "replace"))
+        return 0
+    finally:
+        os.close(fd)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
