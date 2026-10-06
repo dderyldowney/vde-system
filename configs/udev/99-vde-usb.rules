@@ -29,6 +29,30 @@ SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ENV{ID_MM_D
 SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", ENV{ID_MM_DEVICE_IGNORE}="1"
 
 # ---------------------------------------------------------------------------
+# 2b. FIXED HOST-SIDE NAMES PER BOARD
+# The ttyUSB<#> minor moves on replug, so a bare /dev/ttyUSB1 in a flash
+# command is a moving target and an easy way to aim a payload at the wrong
+# board. Each board here uses a DIFFERENT bridge chip, so vid:pid identifies
+# it unambiguously -- unlike the CP2102's serial, which is the generic "0001"
+# and collides across identical boards.
+#
+# These are host-side only. Inside a Spoke use /dev/vde/by-port/<port>
+# (section 3); a container gets no udev events and so sees none of these.
+#
+# Verified 2026-10-06: esp32 (CP2102). mega2560 (CH340) NOT yet verified --
+# board not in hand; confirm the vid:pid with lsusb when it arrives.
+#
+#   espflash --port /dev/esp32
+#   arduino-cli upload -b arduino:avr:mega -p /dev/mega2560
+# ---------------------------------------------------------------------------
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="esp32"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="mega2560"
+# ST-LINK virtual COM port (serial console only -- SWD flashing needs raw USB
+# on major 189, which a Spoke cannot reach; flash the STM32 from the Hub).
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="374b", SYMLINK+="stlink-vcp"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="3748", SYMLINK+="stlink-vcp"
+
+# ---------------------------------------------------------------------------
 # 3. MIGRATE SPOKE PORT NAMES WITH THE BOARD
 # A container gets no udev events, so /dev/vde/by-port/<port> goes stale when a
 # replug moves the board to a new minor. This re-points it on the kernel event.
