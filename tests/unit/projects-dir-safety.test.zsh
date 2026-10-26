@@ -181,6 +181,17 @@ _run_spd() {  # $1=forge ; rest=args
     SPD_RC=$?
 }
 
+# A forge that ALSO carries the config smelter + templates, so a re-point can
+# actually regenerate Spoke configs (the plain _make_spd_forge omits them, which
+# makes set-projects-dir skip regen -- fine for the other tests).
+_make_spd_forge_full() {  # $1=dotenv_base ; echoes forge root
+    local forge; forge="$(_make_spd_forge "${1}")"
+    cp "${REPO_ROOT}/bin/generate-all-configs" "${forge}/bin/generate-all-configs"
+    chmod +x "${forge}/bin/generate-all-configs"
+    cp -R "${REPO_ROOT}/templates" "${forge}/templates"
+    print -r -- "${forge}"
+}
+
 test_spd_injection_refused() {
     test_start "vde-set-projects-dir refuses command substitution (no code runs)"
     local old; old="$(mktemp -d "${SANDBOX_ROOT}/spdold.XXXXXX")"
@@ -274,6 +285,37 @@ test_init_env_rewrite_preserves_special_chars() {
     assert_eq ".env stores the exact special-char base" "${base:A}" "$(_env_val "${root}")"
 }
 
+# -----------------------------------------------------------------------------
+# Re-point must REWRITE existing Spokes (Signet #546). The smelter skips Spokes
+# whose compose/env already exist, so set-projects-dir must force-regenerate --
+# otherwise an existing Spoke keeps its old literal mount and never reads the new
+# base. We pre-seed a stale python Spoke (literal mount + env) and assert the
+# re-point rewrites its mount to the ${VDE_PROJECTS_DIR:-...} interpolation.
+# -----------------------------------------------------------------------------
+test_spd_repoint_rewrites_existing_spoke_mount() {
+    test_start "vde-set-projects-dir re-point force-regenerates an existing Spoke's mount"
+    local old; old="$(mktemp -d "${SANDBOX_ROOT}/spdregen-old.XXXXXX")"
+    local new="${SANDBOX_ROOT}/spdregen-new.${RANDOM}"
+    local forge; forge="$(_make_spd_forge_full "${old}")"
+
+    # Pre-seed a STALE python Spoke: a literal projects mount + its env file.
+    # (Both existing is exactly what made the pre-fix, non-forced regen skip it.)
+    mkdir -p "${forge}/configs/docker/languages/python" "${forge}/env-files"
+    print -rl -- "    volumes:" \
+        "      - ../../../../projects/python:/home/devuser/workspace" \
+        > "${forge}/configs/docker/languages/python/docker-compose.yml"
+    print -r -- "SSH_PORT=2201" > "${forge}/env-files/python.env"
+
+    typeset SPD_OUT SPD_RC
+    _run_spd "${forge}" "${new}"
+
+    local pyc; pyc="$(find "${forge}/configs" -path '*languages/python*' -name 'docker-compose.yml' 2>/dev/null | head -1)"
+    assert_eq   "re-point succeeds"                         "${VDE_SUCCESS}" "${SPD_RC}"
+    assert_true "python compose still present after regen"  "[[ -f '${pyc}' ]]"
+    assert_true "mount is now the \${VDE_PROJECTS_DIR:-...} interpolation" "grep -q 'VDE_PROJECTS_DIR:-' '${pyc}'"
+    assert_false "stale literal projects/python mount is gone" "grep -qE '^[[:space:]]*- [.][.]/[.][.]/[.][.]/[.][.]/projects/python:' '${pyc}'"
+}
+
 # =============================================================================
 # Run
 # =============================================================================
@@ -289,6 +331,7 @@ test_spd_nested_base_refused
 test_spd_moves_only_known_vms
 test_spd_env_rewrite_preserves_special_chars
 test_init_env_rewrite_preserves_special_chars
+test_spd_repoint_rewrites_existing_spoke_mount
 
 echo ""
 echo "=============================================="

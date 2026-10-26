@@ -248,7 +248,11 @@ vde_set_projects_dir_update_env "${NEW_BASE}"
 # from .env on next start. This regenerates config only; no image is rebuilt.
 typeset configs_regenerated=0
 if [[ -x "${VDE_ROOT_DIR}/bin/generate-all-configs" ]]; then
-    if "${VDE_ROOT_DIR}/bin/generate-all-configs" >/dev/null 2>&1; then
+    # --force is REQUIRED: the smelter skips Spokes whose compose/env already
+    # exist, so without it a re-point leaves existing Spokes on their old literal
+    # mount and they never pick up the new base. Forcing rewrites every Spoke's
+    # compose to the ${VDE_PROJECTS_DIR:-...} interpolation that reads .env at up.
+    if "${VDE_ROOT_DIR}/bin/generate-all-configs" --force >/dev/null 2>&1; then
         echo "  ✓ Regenerated Spoke configurations"
         configs_regenerated=1
     else
