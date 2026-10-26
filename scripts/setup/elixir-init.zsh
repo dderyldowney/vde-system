@@ -38,7 +38,10 @@ asdf global elixir 1.16.0-otp-26
 EOF
 
 chmod +x "${INSTALL_SCRIPT}"
-su - devuser -c "${INSTALL_SCRIPT}"
+# Mandate C (ZSH ONLY): run the (zsh) installer explicitly under zsh as devuser,
+# not via su's ambiguous login shell. Matches the python/rust spokes'
+# `sudo -u devuser zsh` pattern; $HOME resolves to devuser's home as there.
+sudo -u devuser zsh "${INSTALL_SCRIPT}"
 
 # 3. PERSISTENCE ANCHOR
 typeset _zshenv="${dev_home}/.zshenv"
