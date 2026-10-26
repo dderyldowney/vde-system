@@ -209,4 +209,52 @@ git push origin main                # Authentication works automatically
 
 ---
 
+## The Configurable Projects Base
+
+Every Spoke syncs its workspace to a subfolder beneath a single **Projects base**: alias `rust` lands at `<base>/rust`, alias `python` at `<base>/python`, each bind-mounted into the Spoke at `/home/devuser/workspace`. By default the base is `$VDE_ROOT/projects`, but it is fully relocatable — a lever worth pulling if you already keep a central or shared projects tree.
+
+### Pointing VDE at an existing central tree
+
+The base may be **any directory you control**, inside or outside the Forge. The Forge expands `~` and environment variables, creates the directory if it is missing, and requires only that it be writable:
+
+```zsh
+# Interactive: choose it during onboarding
+vde path-of-the-foundling          # the prompt accepts e.g. $HOME/Projects
+```
+
+VDE never overwrites or deletes anything already living at the base. It *adds* its own `<base>/<alias>` subfolders, and if a same-named folder already exists it is **adopted** (used as-is), never clobbered. This makes it safe to aim VDE straight at a directory where you already keep work — a shared `~/Projects`, a monorepo checkout, or a synced cloud folder.
+
+### Non-interactive overrides (`--projects-dir`, `VDE_PROJECTS_DIR`)
+
+For scripted or headless provisioning, skip the prompt:
+
+```zsh
+# Flag form
+vde init --projects-dir "$HOME/Projects"
+
+# Environment form (honored by init)
+export VDE_PROJECTS_DIR="$HOME/code/vde"
+vde init
+```
+
+Either way the Forge records your choice as an **absolute path** in the `VDE_PROJECTS_DIR` key of `.env`, which becomes the single source of truth for every Spoke.
+
+### Re-pointing later with `vde set-projects-dir`
+
+Change your mind after you have been working? Re-point the base in one ritual:
+
+```zsh
+vde set-projects-dir "$HOME/Projects"
+```
+
+This safely **moves** your existing alias folders from the old base to the new one, updates `.env`, and regenerates Spoke configs. Two guarantees matter: name **collisions are skipped** (if `<new-base>/python` already exists, the old one is left in place rather than overwritten or deleted), and **no image rebuild** is required — Spokes pick up the new location on their next start.
+
+### Data integrity on teardown (`vde nuke`)
+
+`vde nuke` erases VDE's own state — Spokes, images, the Docker network and volumes, the VDE SSH config and keys at `$HOME/.ssh/vde`, and operational directories (`logs/`, `env-files/`, caches, locks). It **never** deletes your Projects base or your database `data/`, whether they live in-tree or at an external path you configured. Before destroying anything, nuke **offers to move** your projects and data to a safe location first (or to continue as-is), and warns you if they currently sit inside the VDE folder. Removing the VDE program itself afterward is a manual step — you delete the VDE folder by hand.
+
+See the [Getting Started](getting-started.md) and [Foundling Guide](foundling-guide.md) for the student-facing narrative of these same mechanics.
+
+---
+
 [← Back to README](../../README.md)

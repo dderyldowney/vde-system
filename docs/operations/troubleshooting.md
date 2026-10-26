@@ -113,6 +113,32 @@ $HOME/workspace/
 
 ---
 
+## My Projects Aren't Where I Expected / I Want to Move Them
+
+**Problem:** Your code is landing somewhere you didn't intend, or you've decided your **Projects base** belongs in a different folder.
+
+**Solution:** Re-point the base at any location you control:
+
+```zsh
+vde set-projects-dir <new-path>
+```
+
+This safely moves your existing per-alias folders to the new base — it skips any name collisions and never overwrites or deletes what is already there — updates the `.env` record (`VDE_PROJECTS_DIR`), and regenerates the Spoke configs. The new location takes effect on each Spoke's next start; no rebuild is required. Each alias continues to appear at `$HOME/workspace/` inside its Spoke, now backed by `<new-path>/<alias>` on your Hub.
+
+To see where your base currently points, check `VDE_PROJECTS_DIR` in your `.env`.
+
+---
+
+## Will `vde nuke` Delete My Code or Databases?
+
+**Problem:** You want to reset the Forge but fear losing your work.
+
+**Solution:** No — the Great Quench **preserves both your `projects/` and your database `data/`**, whether they live in-tree or at an external base like `$HOME/Projects`. `vde nuke` tears down only VDE's own state: Spokes, images, networks and volumes, the SSH config and keys at `$HOME/.ssh/vde`, and the `logs/`, `env-files/`, caches, and locks.
+
+Before it removes anything, `vde nuke` offers to **move your `projects/` and `data/` to safety first** (or lets you continue as-is), and it warns you if either still lives inside the VDE folder. Even after the Quench, the program itself remains until you manually delete the VDE folder — so your code and databases are never swept away by the reset.
+
+---
+
 ## `git checkout` Fails: "this operation must be run in a work tree"
 
 **Problem:** `core.bare` in `.git/config` was flipped to `true` by something other than you.

@@ -10,7 +10,19 @@
 # and launches the onboarding ritual.
 #
 # Usage:
-#   bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh)
+#   bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh) [--projects-dir PATH]
+#
+# Options:
+#   --projects-dir PATH   Set the Projects base (each VM lives at <base>/<alias>).
+#                         Bootstrap is INTENTIONALLY non-interactive — a zero-touch
+#                         install with no prompts — so this flag (or a pre-exported
+#                         VDE_PROJECTS_DIR; the flag wins) is the ONLY way to pick a
+#                         non-default base during install. Defaults to <VDE>/projects.
+#                         You can change it any time later with: vde set-projects-dir
+#   -h, --help            Show this help and exit.
+#
+# Environment:
+#   VDE_PROJECTS_DIR      Same effect as --projects-dir (the flag wins if both set).
 #===============================================================================
 # NOTE: We intentionally do NOT use `set -e` here because check_pillar returns
 # non-zero for missing pillars, and we need to check ALL pillars before exiting.
@@ -27,6 +39,75 @@ DIM='\033[2m'
 RESET='\033[0m'
 
 MISSING=0
+
+#===============================================================================
+# Options — choose the Projects base at install time.
+#
+# Bootstrap never prompts (zero-touch install), so the base is taken, in order:
+#   1. --projects-dir PATH   (highest — wins over the environment)
+#   2. a pre-exported VDE_PROJECTS_DIR
+#   3. otherwise the default (<VDE>/projects), changeable later via
+#      `vde set-projects-dir`.
+# The resolved value is exported so the onboarding ritual (vde-init) honors it.
+# Only a leading ~ is expanded here; vde-init performs the full validation and
+# refuses command substitution in the path.
+#===============================================================================
+PROJECTS_DIR_FLAG=""
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --projects-dir)
+            if [ "$#" -lt 2 ]; then
+                echo "Error: --projects-dir requires a path argument (e.g. --projects-dir \"\$HOME/Projects\")." >&2
+                exit 1
+            fi
+            PROJECTS_DIR_FLAG="$2"
+            shift 2
+            ;;
+        --projects-dir=*)
+            PROJECTS_DIR_FLAG="${1#*=}"
+            shift
+            ;;
+        -h|--help)
+            cat <<'USAGE'
+VDE Bootstrap — the one-command front door.
+
+Usage:
+  bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh) [--projects-dir PATH]
+
+Options:
+  --projects-dir PATH   Set the Projects base (each VM lives at <base>/<alias>).
+                        Bootstrap is non-interactive (no prompts), so this flag
+                        -- or a pre-exported VDE_PROJECTS_DIR -- is the ONLY way
+                        to choose a non-default base during install. The flag
+                        wins if both are set. Default: <VDE>/projects.
+                        Change it later with: vde set-projects-dir PATH
+  -h, --help            Show this help and exit.
+
+Environment:
+  VDE_PROJECTS_DIR      Same effect as --projects-dir (the flag wins if both set).
+USAGE
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            echo "Try: --help" >&2
+            exit 1
+            ;;
+    esac
+done
+
+# Flag wins over a pre-exported value; expand only a leading ~, then export so
+# `vde path-of-the-foundling -y` -> vde-init resolves this base.
+if [ -n "${PROJECTS_DIR_FLAG}" ]; then
+    VDE_PROJECTS_DIR="${PROJECTS_DIR_FLAG}"
+fi
+if [ -n "${VDE_PROJECTS_DIR:-}" ]; then
+    case "${VDE_PROJECTS_DIR}" in
+        "~")   VDE_PROJECTS_DIR="${HOME}" ;;
+        "~/"*) VDE_PROJECTS_DIR="${HOME}/${VDE_PROJECTS_DIR#\~/}" ;;
+    esac
+    export VDE_PROJECTS_DIR
+fi
 
 #===============================================================================
 # Detect platform
@@ -256,6 +337,12 @@ echo -e "${BOLD}${CYAN}╔══════════════════
 echo -e "║         Starting setup...                                  ║"
 echo -e "╚════════════════════════════════════════════════════════════╝${RESET}"
 echo ""
+
+# Show the chosen base so a non-default install is visible (it won't be prompted).
+if [ -n "${VDE_PROJECTS_DIR:-}" ]; then
+    echo -e "  ${DIM}Projects base: ${VDE_PROJECTS_DIR}${RESET}"
+    echo ""
+fi
 
 # bin/vde has a zsh shebang — the kernel handles the interpreter swap.
 # We pass -y to auto-approve the onboarding steps.

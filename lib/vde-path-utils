@@ -161,6 +161,39 @@ vde_get_project_name() {
     echo "${VDE_ROOT_DIR:t}"
 }
 
+# Get the effective projects base directory (absolute)
+# Resolution order:
+#   1. VDE_PROJECTS_DIR in the environment (exported or a plain shell var)
+#   2. The VDE_PROJECTS_DIR key persisted in ${VDE_ROOT_DIR}/.env -- the source
+#      of truth written by `vde init` / `vde set-projects-dir`. The vde CLI does
+#      not otherwise load .env into the environment, so callers that run in a
+#      fresh shell (bin/vde, lib/vm-common, bin/vde-set-projects-dir) would
+#      otherwise resolve the default while Docker mounts the configured base.
+#   3. The in-tree default ${VDE_ROOT_DIR}/projects
+# Usage: vde_projects_dir
+# Output: /path/to/projects (or the student-controlled override)
+vde_projects_dir() {
+    if [[ -n "${VDE_PROJECTS_DIR}" ]]; then
+        print -r -- "${VDE_PROJECTS_DIR}"
+        return 0
+    fi
+
+    local env_file="${VDE_ROOT_DIR}/.env"
+    if [[ -f "${env_file}" ]]; then
+        local line val
+        # Plain grep per the Scavenger's Ban (no jq); last assignment wins.
+        line=$(grep -E '^VDE_PROJECTS_DIR=' "${env_file}" 2>/dev/null | tail -1)
+        val="${line#VDE_PROJECTS_DIR=}"
+        val="${val%$'\r'}"   # tolerate CRLF-edited .env
+        if [[ -n "${val}" ]]; then
+            print -r -- "${val}"
+            return 0
+        fi
+    fi
+
+    print -r -- "${VDE_ROOT_DIR}/projects"
+}
+
 # Check if a path is under HOME directory
 # Usage: vde_is_home_path "/home/user/.ssh"
 # Output: 0 (true) or 1 (false)

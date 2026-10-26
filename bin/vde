@@ -133,6 +133,9 @@ case ${ACTION} in
     init)
         vde_run "init" "${VDE_ROOT_DIR}/bin/vde-init" "${input_targets[@]}"
         ;;
+    set-projects-dir)
+        vde_run "set-projects-dir" "${VDE_ROOT_DIR}/bin/vde-set-projects-dir" "${input_targets[@]}"
+        ;;
     foundling|path-of-the-foundling)
         vde_run "foundling" "${VDE_ROOT_DIR}/bin/vde-path-of-the-foundling" "${input_targets[@]}"
         ;;
@@ -262,7 +265,7 @@ case ${ACTION} in
             local vm_category=$(get_vm_category "${CANONICAL_NAME}" 2>/dev/null)
             case "${vm_category}" in
                 languages)
-                    mkdir -p "${VDE_ROOT_DIR}/projects/${BASE_NAME}" "${VDE_ROOT_DIR}/logs/${BASE_NAME}"
+                    mkdir -p "$(vde_projects_dir)/${BASE_NAME}" "${VDE_ROOT_DIR}/logs/${BASE_NAME}"
                     ;;
                 services)
                     mkdir -p "${VDE_ROOT_DIR}/data/${BASE_NAME}/pgdata" "${VDE_ROOT_DIR}/logs/${BASE_NAME}"
@@ -530,6 +533,7 @@ Core Commands:
   restart <name>  Reset a Spoke or cluster unit.
   remove <name>   Remove Spoke containers and ephemeral state.
   nuke            The Nuclear Option: Complete erasure of all VDE artifacts and data.
+  set-projects-dir   Change where your Projects base lives and relink existing project folders.
 
 Spoke Operations:
   enter <name>    Enter a Spoke's login shell (Zsh) via the Transversal Bridge.

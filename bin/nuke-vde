@@ -40,6 +40,12 @@ vde_log_init 2>/dev/null || true
 SKIP_CONFIRM=false
 SKIP_BACKUP=false
 DRY_RUN=false
+# Relocate tracking — set by offer_relocate_before_nuke so the end-of-run summary
+# can report where your work actually lives (the old base no longer holds moved
+# content, so it must not be reported as "KEPT" there).
+RELOCATE_DEST=""
+PROJECTS_RELOCATED=false
+DATA_RELOCATED=false
 BACKUP_LOCATION="${HOME}/Desktop"
 BACKUP_TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 UNINSTALL_BACKUP_DIR="vde-backup-${BACKUP_TIMESTAMP}"
@@ -433,8 +439,17 @@ remove_vde_directories() {
     echo ""
     print_info "Step 6: Purging VDE operational directories..."
 
+    # Nuke erases VDE's own operational state and NOTHING that holds the student's
+    # work. Two directories are NEVER destroyed:
+    #   - projects/  the student's source (and a student may even point VDE at a
+    #                directory of their own like $HOME/Projects via VDE_PROJECTS_DIR;
+    #                VDE only ever creates its <base>/<alias> subfolders there).
+    #   - data/      database service volumes (Postgres/MySQL/Mongo/etc.) the student
+    #                has created; re-created services re-adopt this data.
+    # NEVER add "projects" or "data" to this list, and NEVER resolve the projects
+    # base via vde_projects_dir() here. Removing that content is always a manual,
+    # deliberate act by the user.
     local dirs_to_remove=(
-        "data"
         "logs"
         "env-files"
         ".cache"
@@ -453,6 +468,140 @@ remove_vde_directories() {
             fi
         fi
     done
+}
+
+# _safe_move_tree SRC DST [KNOWN_ONLY]
+# Move children of SRC into DST without ever overwriting or deleting anything.
+# A name that already exists at DST is left in place (skipped). Hidden entries
+# (e.g. .git) are moved too. Never removes SRC content on its own.
+#
+# When KNOWN_ONLY is "true", move ONLY children whose basename is a registered
+# VDE Spoke alias (is_known_vm succeeds). This is for a Projects base that may
+# also hold the student's own unrelated repos (e.g. ~/Projects, ~/GitHub): VDE
+# owns only its <base>/<alias> subfolders, so every other entry is left exactly
+# in place -- never moved, deleted, or overwritten. Mirrors bin/vde-set-projects-dir.
+_safe_move_tree() {
+    local src="${1}" dst="${2}" known_only="${3:-false}"
+    [[ -d "${src}" ]] || return 0
+    [[ -n "$(ls -A "${src}" 2>/dev/null)" ]] || return 0
+    if ! mkdir -p "${dst}" 2>/dev/null; then
+        print_warning "Cannot create ${dst}; left ${src} in place."
+        return 0
+    fi
+    local child name target
+    for child in "${src}"/*(NND); do
+        name="${child:t}"
+        # Restricted to VDE-owned folders: leave anything that is not a
+        # registered Spoke alias exactly where it is.
+        if [[ "${known_only}" == "true" ]] && ! is_known_vm "${name}" 2>/dev/null; then
+            continue
+        fi
+        target="${dst}/${name}"
+        if [[ -e "${target}" ]]; then
+            print_warning "Skipping '${name}': already exists at ${dst} (left in place)."
+            continue
+        fi
+        if mv "${child}" "${target}" 2>/dev/null; then
+            print_success "Moved '${name}' -> ${dst}/"
+        else
+            print_warning "Could not move '${name}'; left in place."
+        fi
+    done
+    return 0
+}
+
+# offer_relocate_before_nuke - Give the user a chance to move their kept work out.
+# Nuke never deletes projects/ or data/, but if they live inside the VDE folder
+# the user may want them elsewhere before they remove the program directory. This
+# offers a safe (never-overwriting) move, or lets them authorize nuke to proceed
+# as-is. Skipped for --dry-run, --skip-confirm, and non-interactive sessions.
+offer_relocate_before_nuke() {
+    [[ "${DRY_RUN}" = "true" ]] && return 0
+    [[ "${SKIP_CONFIRM}" = "true" ]] && return 0
+    [[ -t 0 ]] || return 0
+
+    local projects_base data_base
+    projects_base="$(vde_projects_dir 2>/dev/null)"
+    [[ -z "${projects_base}" ]] && projects_base="${VDE_ROOT_DIR}/projects"
+    data_base="${VDE_ROOT_DIR}/data"
+
+    echo ""
+    print_info "Your projects and database data are KEPT by nuke — never deleted:"
+    echo "  - Projects: ${projects_base}"
+    echo "  - Data:     ${data_base}"
+
+    local inside_warn=false
+    [[ "${projects_base}" == "${VDE_ROOT_DIR}" || "${projects_base}" == "${VDE_ROOT_DIR}/"* ]] && inside_warn=true
+    [[ "${data_base}" == "${VDE_ROOT_DIR}/"* ]] && inside_warn=true
+    if [[ "${inside_warn}" = "true" ]]; then
+        echo ""
+        print_warning "Some of this lives INSIDE the VDE folder. If you later remove the VDE"
+        print_warning "folder, anything still inside it is lost. Consider moving it out now."
+    fi
+    echo ""
+
+    if ! ask_yes_no "Move your projects/data to a safe location first?" "n"; then
+        print_info "Continuing — your projects and data stay where they are."
+        return 0
+    fi
+
+    local dest
+    printf "  New location (created if needed): "
+    read -r dest
+    dest="${dest/#\~/${HOME}}"
+    # A path is a directory name, never a command. Refuse command/process/
+    # arithmetic substitution before the (e) expansion runs (matches vde-init and
+    # vde-set-projects-dir), so a pasted/typed "$(...)" cannot execute here.
+    if [[ "${dest}" == *'$('* ]] || [[ "${dest}" == *'`'* ]] \
+       || [[ "${dest}" == *'$['* ]] || [[ "${dest}" == *'<('* ]] \
+       || [[ "${dest}" == *'>('* ]] || [[ "${dest}" == *'=('* ]]; then
+        print_warning "Location may not contain command substitution — continuing without moving."
+        return 0
+    fi
+    dest="${(e)dest}"
+    [[ -n "${dest}" ]] && dest="${dest:A}"
+    if [[ -z "${dest}" ]]; then
+        print_info "No location given — continuing without moving."
+        return 0
+    fi
+    if ! mkdir -p "${dest}" 2>/dev/null || [[ ! -w "${dest}" ]]; then
+        print_warning "Cannot write to ${dest} — continuing without moving."
+        return 0
+    fi
+
+    # The relocate exists to rescue work that lives INSIDE the VDE folder before it
+    # is removed. A Projects base OUTSIDE the VDE folder is never endangered by
+    # removing VDE, so leave it exactly where it is -- moving a student's own
+    # ~/Projects would be surprising and unwanted.
+    local projects_inside=false
+    [[ "${projects_base}" == "${VDE_ROOT_DIR}" || "${projects_base}" == "${VDE_ROOT_DIR}/"* ]] \
+        && projects_inside=true
+
+    if [[ "${projects_inside}" != "true" ]]; then
+        print_info "Projects base ${projects_base} is outside the VDE folder — left in place (safe)."
+    elif typeset -f is_known_vm >/dev/null 2>&1; then
+        # Move ONLY VDE-owned per-alias subfolders; the base may be shared with the
+        # student's own unrelated repos, which must never be touched.
+        _safe_move_tree "${projects_base}" "${dest}/projects" "true"
+        # Only claim a relocate if something actually landed at the destination.
+        [[ -d "${dest}/projects" && -n "$(ls -A "${dest}/projects" 2>/dev/null)" ]] \
+            && PROJECTS_RELOCATED=true
+    else
+        print_warning "VM registry unavailable (vm-common failed to load); NOT moving your"
+        print_warning "projects. They stay at ${projects_base} (nothing was touched or stranded)."
+    fi
+
+    # The data base is VDE's own in-tree service-volume store; move it wholesale.
+    _safe_move_tree "${data_base}" "${dest}/data"
+    [[ -d "${dest}/data" && -n "$(ls -A "${dest}/data" 2>/dev/null)" ]] && DATA_RELOCATED=true
+
+    if [[ "${PROJECTS_RELOCATED}" = "true" || "${DATA_RELOCATED}" = "true" ]]; then
+        RELOCATE_DEST="${dest}"
+        print_success "Your work was moved under: ${dest}"
+    else
+        print_info "Nothing needed moving — your work is unchanged."
+    fi
+    return 0
 }
 
 #===============================================================================
@@ -485,15 +634,18 @@ main() {
                 echo "  -h, --help        Show this help message"
                 echo ""
                 echo "This script will:"
-                echo "  1. Optionally backup data/ and projects/ directories"
-                echo "  2. Shutdown all VMs"
-                echo "  3. Remove all VM configurations"
-                echo "  4. Remove all VDE Docker images"
-                echo "  5. Remove Docker network and volumes"
-                echo "  6. Remove SSH config entries"
-                echo "  7. Remove VDE directories (data, logs, env-files)"
+                echo "  1. Offer to move your projects/data to a safe location first"
+                echo "  2. Optionally back up data/ and projects/ directories"
+                echo "  3. Shut down all VMs"
+                echo "  4. Remove all VM configurations"
+                echo "  5. Remove all VDE Docker images"
+                echo "  6. Remove Docker network and volumes"
+                echo "  7. Remove VDE SSH config and keys (${VDE_SSH_DIR})"
+                echo "  8. Remove VDE operational directories (logs, env-files, caches, locks)"
                 echo ""
-                echo "After running this script, you can safely:"
+                echo "It KEEPS your projects and database data/ — these are never deleted."
+                echo ""
+                echo "To finish removing the VDE program afterward, you can:"
                 echo "  cd .. && rm -rf $(basename "${VDE_ROOT_DIR}")"
                 exit ${VDE_SUCCESS}
                 ;;
@@ -504,6 +656,18 @@ main() {
                 ;;
         esac
     done
+
+    # Resolve the student's real projects base once and export it, so both the
+    # relocate step and the KEPT summary act on the REAL base even when the student
+    # re-pointed VDE at their own folder (e.g. $HOME/Projects). vde_projects_dir
+    # (from lib/vde-path-utils) already reads VDE_PROJECTS_DIR from .env and strips
+    # a trailing CRLF, so no hand-rolled grep/parse is needed here (and the CRLF
+    # tolerance of FIX #4 is covered by the helper).
+    if [[ -z "${VDE_PROJECTS_DIR}" ]]; then
+        local _resolved_pd
+        _resolved_pd="$(vde_projects_dir 2>/dev/null)"
+        [[ -n "${_resolved_pd}" ]] && export VDE_PROJECTS_DIR="${_resolved_pd}"
+    fi
 
     #===========================================================================
     # Confirmation
@@ -518,8 +682,12 @@ main() {
     echo "  - All VMs and their configurations"
     echo "  - All VDE Docker images"
     echo "  - Docker network and volumes"
-    echo "  - SSH config entries for VDE"
-    echo "  - data/, logs/, env-files/ directories"
+    echo "  - VDE SSH config and keys: ${VDE_SSH_DIR}"
+    echo "  - logs/, env-files/, caches and locks"
+    echo ""
+    print_success "This will KEEP (never deleted by nuke):"
+    echo "  - Your projects  (including an external base like \$HOME/Projects)"
+    echo "  - Your database data/  (your service volumes)"
     echo ""
     print_warning "This action is NOT reversible!"
     echo "  All VDE configuration will be permanently deleted."
@@ -547,12 +715,20 @@ main() {
     fi
 
     #===========================================================================
-    # Backup (if requested)
+    # Backup (if requested) — BEFORE any relocate, so the backup captures the
+    # work while it still sits at its original location (relocate empties it).
     #===========================================================================
 
     if [[ "${SKIP_BACKUP}" != "true" ]]; then
         offer_backup
     fi
+
+    #===========================================================================
+    # Relocate kept work (optional) — move projects/data out before nuke, or
+    # authorize nuke to proceed as-is.
+    #===========================================================================
+
+    offer_relocate_before_nuke
 
     #===========================================================================
     # Execute uninstall steps
@@ -588,6 +764,45 @@ main() {
     echo "============================================================================="
     echo ""
 
+    local _kept_projects _kept_data
+    _kept_projects="$(vde_projects_dir 2>/dev/null)"
+    [[ -z "${_kept_projects}" ]] && _kept_projects="${VDE_ROOT_DIR}/projects"
+    _kept_data="${VDE_ROOT_DIR}/data"
+
+    # If the optional relocate step actually MOVED your work, it no longer lives
+    # at the old base -- report where it is now so this summary stays truthful.
+    local _relocated=false
+    if [[ "${PROJECTS_RELOCATED}" = "true" && -n "${RELOCATE_DEST}" ]]; then
+        _kept_projects="${RELOCATE_DEST}/projects"
+        _relocated=true
+    fi
+    if [[ "${DATA_RELOCATED}" = "true" && -n "${RELOCATE_DEST}" ]]; then
+        _kept_data="${RELOCATE_DEST}/data"
+        _relocated=true
+    fi
+
+    if [[ "${DRY_RUN}" = "true" ]]; then
+        print_success "KEPT (a real nuke never deletes these):"
+    elif [[ "${_relocated}" = "true" ]]; then
+        print_success "KEPT — your work was NOT deleted (moved to your chosen location):"
+    else
+        print_success "KEPT — your work was NOT deleted:"
+    fi
+    echo "  - Your projects:      ${_kept_projects}"
+    echo "  - Your database data: ${_kept_data}"
+    echo "    (an external base such as \$HOME/Projects is left completely untouched)"
+    echo ""
+    if [[ "${DRY_RUN}" = "true" ]]; then
+        print_info "REMOVED (a real nuke deletes these):"
+    else
+        print_info "REMOVED — VDE itself is gone:"
+    fi
+    echo "  - VDE Spokes, images, Docker network/volumes"
+    echo "  - VDE SSH config and keys: ${VDE_SSH_DIR}"
+    echo "  - VDE operational dirs: logs/, env-files/, caches, locks"
+    echo "  - The VDE program and its scripts are removed by the final step below."
+    echo ""
+
     if [[ "${DRY_RUN}" = "true" ]]; then
         print_info "To run the actual uninstall, run:"
         echo "  vde nuke"
@@ -602,9 +817,13 @@ main() {
             echo ""
         fi
 
-        print_info "To remove the VDE project directory, run:"
+        print_info "To finish removing the VDE program and its scripts, run:"
         echo "  cd .."
         echo "  rm -rf $(basename "${VDE_ROOT_DIR}")"
+        echo ""
+        print_warning "Heads up: that removes the whole VDE folder. If your projects or"
+        print_warning "data still live INSIDE it, move them out first (the move step above"
+        print_warning "offered this). An external base like \$HOME/Projects is unaffected."
         echo ""
     fi
 

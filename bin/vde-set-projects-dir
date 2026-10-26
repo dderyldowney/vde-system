@@ -1,0 +1,284 @@
+#!/usr/bin/env zsh
+# @armor (Engine Core)
+#===============================================================================
+# vde-set-projects-dir - Re-point the Projects base for an existing Forge
+set -e
+# Usage: vde set-projects-dir [<new-path>]
+#
+# Arguments:
+#   <new-path>    Absolute or ~/env-expanded path to the new Projects base.
+#                 If omitted, you are prompted for it.
+#
+# The Projects base is the directory under which every Spoke alias gets its own
+# subfolder (<base>/<alias>). It defaults to ${VDE_ROOT_DIR}/projects but may
+# live ANYWHERE you control (e.g. ~/Projects), even outside the Forge.
+#
+# This ritual:
+#   - Resolves the target to an absolute, writable directory (creating it).
+#   - Moves each existing per-alias project subfolder from the old base to the
+#     new base (never overwriting; name collisions are warned and skipped).
+#   - Updates the VDE_PROJECTS_DIR key in the repo-root .env.
+#
+# Your Spokes pick up the new location on their next start. No rebuild is
+# needed: the Compose mount interpolates .env at `up`.
+#===============================================================================
+
+# Determine VDE root directory
+VDE_ROOT_DIR="${0:h:h}"
+export VDE_ROOT_DIR
+
+# Source core libraries
+[[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-constants" ]] && source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-errors" ]] && source "${VDE_ROOT_DIR}/lib/vde-errors" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-log" ]] && source "${VDE_ROOT_DIR}/lib/vde-log" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-core" ]] && source "${VDE_ROOT_DIR}/lib/vde-core" &>/dev/null
+[[ -f "${VDE_ROOT_DIR}/lib/vde-path-utils" ]] && source "${VDE_ROOT_DIR}/lib/vde-path-utils" &>/dev/null
+# vm-common provides is_known_vm (prefixed/unprefixed aware), used to move only
+# folders VDE actually owns when re-pointing a shared Projects base.
+[[ -f "${VDE_ROOT_DIR}/lib/vm-common" ]] && source "${VDE_ROOT_DIR}/lib/vm-common" &>/dev/null
+
+#===============================================================================
+# Functions
+#===============================================================================
+
+# vde_set_projects_dir_usage - Display usage information
+vde_set_projects_dir_usage() {
+    cat <<EOF
+Usage: vde set-projects-dir [<new-path>]
+
+Re-point the Projects base for an existing Forge.
+
+Arguments:
+  <new-path>    New Projects base. Absolute, ~/-relative, or env-expanded.
+                If omitted, you will be prompted.
+
+The Projects base is where every Spoke alias gets its own subfolder
+(<base>/<alias>). It can live anywhere you control, e.g. ~/Projects.
+Existing per-alias project folders are moved to the new base, the
+VDE_PROJECTS_DIR key in .env is updated, and your Spokes use the new
+location on next start (no rebuild needed).
+
+Examples:
+  vde set-projects-dir ~/Projects
+  vde set-projects-dir /mnt/data/vde-projects
+  vde set-projects-dir                      # prompt for the path
+
+EOF
+}
+
+# vde_set_projects_dir_resolve - Expand ~ and env vars, resolve to absolute
+# Args: ${1} = raw path
+# Output: absolute path on stdout
+vde_set_projects_dir_resolve() {
+    local raw="${1}"
+
+    # Expand leading ~ and any embedded environment variables (zsh-native)
+    raw="${raw/#\~/${HOME}}"
+    raw="${(e)raw}"
+
+    # Resolve to absolute. Relative paths hang off the current directory.
+    if [[ "${raw}" != /* ]]; then
+        raw="${PWD}/${raw}"
+    fi
+
+    # Normalise (collapse . and .. and trailing slashes) via zsh modifier
+    print -r -- "${raw:A}"
+}
+
+# vde_set_projects_dir_update_env - Set the VDE_PROJECTS_DIR key in .env
+# Args: ${1} = new absolute base
+vde_set_projects_dir_update_env() {
+    local new_base="${1}"
+    local env_file="${VDE_ROOT_DIR}/.env"
+
+    if [[ ! -f "${env_file}" ]]; then
+        : > "${env_file}"
+        chmod 600 "${env_file}" 2>/dev/null || true
+    fi
+
+    # zsh-native rewrite: a path may contain &, |, \, which break sed. Read the
+    # file into lines, replace the last VDE_PROJECTS_DIR= assignment (or append),
+    # and write it back verbatim.
+    local -a lines
+    lines=("${(@f)$(<"${env_file}")}")
+    local -i i found=0
+    for (( i = ${#lines}; i >= 1; i-- )); do
+        if [[ "${lines[$i]}" == VDE_PROJECTS_DIR=* ]]; then
+            lines[$i]="VDE_PROJECTS_DIR=${new_base}"
+            found=1
+            break
+        fi
+    done
+    (( found )) || lines+=("VDE_PROJECTS_DIR=${new_base}")
+    print -rl -- "${lines[@]}" > "${env_file}"
+    chmod 600 "${env_file}" 2>/dev/null || true
+}
+
+#===============================================================================
+# Main
+#===============================================================================
+
+# Help flag
+if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+    vde_set_projects_dir_usage
+    exit ${VDE_SUCCESS}
+fi
+
+# Resolve the CURRENT base before anything changes
+OLD_BASE="$(vde_projects_dir)"
+OLD_BASE="${OLD_BASE:A}"
+
+# Acquire the target path (argument or prompt)
+TARGET_RAW="${1}"
+if [[ -z "${TARGET_RAW}" ]]; then
+    echo ""
+    echo "Your Projects base is where each Spoke alias gets its own subfolder."
+    echo "It can live anywhere you control, e.g. ~/Projects."
+    echo "Current base: ${OLD_BASE}"
+    echo ""
+    printf "New Projects base: "
+    read -r TARGET_RAW
+fi
+
+if [[ -z "${TARGET_RAW}" ]]; then
+    vde_error_simple "No path provided. Nothing to do."
+    exit ${VDE_ERR_INVALID_INPUT}
+fi
+
+# A path is a directory name, never a command. Only ~ and $VAR expansion are
+# intended, so refuse command/process/arithmetic substitution before any
+# expansion runs -- otherwise a value like "$(...)", backticks or <(...) would
+# execute when the student merely meant to name a folder. (Checked here in the
+# main shell, not inside the resolver's command substitution, so the refusal
+# actually halts the script.)
+if [[ "${TARGET_RAW}" == *'$('* ]] || [[ "${TARGET_RAW}" == *'`'* ]] \
+   || [[ "${TARGET_RAW}" == *'$['* ]] || [[ "${TARGET_RAW}" == *'<('* ]] \
+   || [[ "${TARGET_RAW}" == *'>('* ]] || [[ "${TARGET_RAW}" == *'=('* ]]; then
+    vde_error_simple "Projects base may not contain command substitution ( \$(...), \`...\`, \$[...], <(...), >(...), =(...) )."
+    exit ${VDE_ERR_INVALID_INPUT}
+fi
+
+# Resolve to an absolute, normalised path
+NEW_BASE="$(vde_set_projects_dir_resolve "${TARGET_RAW}")"
+
+# No-op when the base is unchanged
+if [[ "${NEW_BASE}" == "${OLD_BASE}" ]]; then
+    echo "Projects base is already '${NEW_BASE}'. Nothing to move."
+    exit ${VDE_SUCCESS}
+fi
+
+# Refuse moving the base INTO its own subdirectory. The move loop globs the old
+# base's children, which would then include the new base itself -- it would try
+# to move the new base into itself and tangle the tree. Choosing a location
+# outside the current base keeps the move well-defined.
+if [[ "${NEW_BASE}" == "${OLD_BASE}"/* ]]; then
+    vde_error_simple "New base '${NEW_BASE}' is inside the current base '${OLD_BASE}'. Choose a location outside it."
+    exit ${VDE_ERR_INVALID_INPUT}
+fi
+
+echo ""
+echo "Re-pointing Projects base:"
+echo "  From: ${OLD_BASE}"
+echo "  To:   ${NEW_BASE}"
+echo ""
+
+# Create the new base if it does not exist
+if [[ ! -d "${NEW_BASE}" ]]; then
+    if ! mkdir -p "${NEW_BASE}" 2>/dev/null; then
+        vde_error_simple "Cannot create new Projects base: ${NEW_BASE}"
+        exit ${VDE_ERR_PERMISSION}
+    fi
+fi
+
+# Verify the new base is a directory the student controls (writable)
+if [[ ! -d "${NEW_BASE}" || ! -w "${NEW_BASE}" ]]; then
+    vde_error_simple "New Projects base is not a writable directory: ${NEW_BASE}"
+    exit ${VDE_ERR_PERMISSION}
+fi
+
+# Move each existing per-alias subfolder from the old base to the new base.
+# CRITICAL: a student may point VDE at a directory that already holds their own
+# unrelated work (e.g. ~/GitHub, which may contain other repos). We move ONLY
+# the folders VDE owns -- those whose name is a registered VM -- and never touch
+# the student's other directories. Nesting inside each alias folder (e.g.
+# python/jupyterlabs) is preserved by moving the whole directory. Student data
+# is never deleted or overwritten.
+if ! typeset -f is_known_vm >/dev/null 2>&1; then
+    vde_error_simple "VM registry unavailable (vm-common failed to load); refusing to re-point so your project files are never stranded at the old base."
+    exit ${VDE_ERR_GENERAL}
+fi
+
+typeset -i moved=0 skipped=0
+if [[ -d "${OLD_BASE}" ]]; then
+    for alias_dir in "${OLD_BASE}"/*(N/); do
+        alias_name="${alias_dir:t}"
+
+        # Leave anything that is not a VDE Spoke alias exactly where it is.
+        if ! is_known_vm "${alias_name}" 2>/dev/null; then
+            continue
+        fi
+
+        dest="${NEW_BASE}/${alias_name}"
+
+        if [[ -e "${dest}" ]]; then
+            vde_log_warn "Skipping '${alias_name}': already exists at destination (left in place for you)." 2>/dev/null \
+                || echo "  ! Skipping '${alias_name}': already exists at destination (left in place for you)."
+            (( ++skipped ))
+            continue
+        fi
+
+        if mv "${alias_dir}" "${dest}" 2>/dev/null; then
+            echo "  ✓ Moved '${alias_name}'"
+            (( ++moved ))
+        else
+            vde_log_warn "Could not move '${alias_name}'; left in place at old base." 2>/dev/null \
+                || echo "  ! Could not move '${alias_name}'; left in place at old base."
+            (( ++skipped ))
+        fi
+    done
+fi
+
+# Update the runtime source of truth
+vde_set_projects_dir_update_env "${NEW_BASE}"
+
+# Regenerate Compose configs so EVERY Spoke -- including ones created before this
+# feature existed, whose generated compose still holds a literal projects path --
+# carries the ${VDE_PROJECTS_DIR:-...} interpolation line and reads the new base
+# from .env on next start. This regenerates config only; no image is rebuilt.
+typeset configs_regenerated=0
+if [[ -x "${VDE_ROOT_DIR}/bin/generate-all-configs" ]]; then
+    if "${VDE_ROOT_DIR}/bin/generate-all-configs" >/dev/null 2>&1; then
+        echo "  ✓ Regenerated Spoke configurations"
+        configs_regenerated=1
+    else
+        vde_log_warn "Could not regenerate Spoke configurations; recreate affected Spokes (vde remove <name> && vde create <name>) to pick up the new base." 2>/dev/null \
+            || echo "  ! Could not regenerate Spoke configurations; recreate affected Spokes (vde remove <name> && vde create <name>) to pick up the new base."
+    fi
+fi
+
+# Summary
+echo ""
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║          Projects Base Re-pointed                        ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+echo "  New base:       ${NEW_BASE}"
+echo "  Folders moved:  ${moved}"
+if (( skipped > 0 )); then
+    echo "  Folders skipped: ${skipped} (name already existed; left for you to merge)"
+fi
+echo ""
+echo "  .env updated:   VDE_PROJECTS_DIR=${NEW_BASE}"
+echo ""
+if (( configs_regenerated )); then
+    echo "  Your Spokes will use the new location the next time you start them."
+    echo "  No rebuild is needed — the mount reads .env on 'vde start'."
+else
+    echo "  Recreate affected Spokes (vde remove <name> && vde create <name>) so"
+    echo "  they mount the new location. Your moved project files are already safe."
+fi
+echo ""
+echo "This is the Way."
+
+exit ${VDE_SUCCESS}
