@@ -57,7 +57,30 @@ vde init
 
 # Force a clean overwrite of all configurations
 vde init --force
+
+# Set the Projects base directory without prompting
+vde init --projects-dir "$HOME/Projects"
+vde init --projects-dir=/srv/students/projects
 ```
+**Projects base precedence** (highest wins): `--projects-dir <path>` flag → exported
+`VDE_PROJECTS_DIR` → existing `VDE_PROJECTS_DIR` in `.env` → interactive prompt →
+default `${VDE_ROOT_DIR}/projects`.
+
+### Re-point the Projects Base
+```zsh
+# Move the Projects base to a new location (prompts if path omitted)
+vde set-projects-dir "$HOME/Projects"
+vde set-projects-dir
+```
+**Details**:
+- Resolves, creates, and validates the new base (expands `~` and env vars,
+  absolutizes the path, and requires it to be writable).
+- **Moves** each existing per-alias subfolder from the old base to the new one.
+  Any name collision is **SKIPPED** — an existing target is never overwritten or
+  deleted.
+- Updates the `.env` key `VDE_PROJECTS_DIR` and regenerates Spoke compose configs.
+- No image rebuild is required; Spokes pick up the new base on their next start.
+- Reports exactly what was moved and what was skipped.
 
 ### Spoke Creation
 ```zsh
@@ -196,9 +219,16 @@ vde prune
 
 ### The Great Quench
 ```zsh
-# Safe removal of all VDE artifacts (prompts for backup)
+# Safe removal of VDE's own state (preserves projects + data)
 vde nuke
 ```
+**Details**:
+- **Preserves** both the Projects base (`projects/` or `VDE_PROJECTS_DIR`) and the
+  database `data/` directory — in-tree or external, they are never deleted.
+- Offers to move `projects/` and `data/` to a safe location before proceeding.
+- Removes VDE's own state: Spokes, images, the Docker network and volumes, SSH
+  config and keys at `$HOME/.ssh/vde`, and the `logs/`, `env-files/`, caches, and
+  lock directories.
 
 ---
 

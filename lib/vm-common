@@ -1437,7 +1437,7 @@ ensure_vm_directories() {
     fi
 
     if [[ "${vm_type}" = "lang" ]]; then
-        dirs=("${config_dest}" "${VDE_ROOT_DIR}/projects/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
+        dirs=("${config_dest}" "$(vde_projects_dir)/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
     else
         dirs=("${config_dest}" "${VDE_ROOT_DIR}/data/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
     fi

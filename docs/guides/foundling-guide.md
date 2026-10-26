@@ -43,6 +43,14 @@ vde enter <alias>
 ```
 Once inside, you operate at `$HOME/workspace/`. This directory is **persistently synced** to `projects/<alias>` on your host computer, ensuring your work survives if you rebuild the Spoke image.
 
+> **Where your projects live:** During onboarding (`vde path-of-the-foundling` / `vde init`), the Forge asks you to choose a **Projects base** — the folder that every Spoke's workspace syncs beneath. Press Enter to accept the default, `projects/` inside the Forge, or type a path of your own.
+>
+> The base can live **anywhere you control**, inside or outside the Forge — `$HOME/Projects`, `~/code/vde`, or a directory where you already keep your work. The Forge expands `~` and environment variables, creates the folder if it does not exist, and asks only that it be writable. Each Spoke alias then gets its own subfolder beneath it: `<base>/python`, `<base>/rust`, and so on, mounted inside the Spoke at `$HOME/workspace/`.
+>
+> **The Forge never harms what is already there.** It only *adds* its own `<base>/<alias>` subfolders. If a folder of that name already exists, the Forge **adopts** it — uses it exactly as it stands — and never overwrites or deletes your files. So you may safely point the Forge at a directory that already holds your projects.
+>
+> Prefer not to answer the prompt? Set it non-interactively with `vde init --projects-dir <path>` or by exporting `VDE_PROJECTS_DIR`. The Forge stores your choice as an absolute path in the `VDE_PROJECTS_DIR` key of your `.env`. To move the base later, run `vde set-projects-dir <path>`: your existing alias folders move with it (name collisions are skipped, never clobbered) and Spokes use the new spot on their next start — no rebuild. And when you eventually run `vde nuke`, your Projects base and your `data/` are never deleted; the Forge even offers to relocate them to safety first.
+
 ### Closing the Spoke (The Quench)
 When your study session is done:
 ```zsh

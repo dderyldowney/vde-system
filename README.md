@@ -45,6 +45,14 @@ bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable
 This checks your system, installs nothing you don't want, and walks you through setup.
 If something's missing, it tells you exactly what to install and how.
 
+**Want your code outside the VDE install?** Set your Projects base — the dir where each VM is mounted as `<base>/<alias>` for your workspace — with `--projects-dir` (or a pre-exported `VDE_PROJECTS_DIR`):
+
+```zsh
+bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh) --projects-dir ~/Projects
+```
+
+The install is non-interactive, so this is the only way to set a non-default base at install (flag wins over `VDE_PROJECTS_DIR`); omit for the default `<VDE>/projects`, or change it later with `vde set-projects-dir PATH`.
+
 **Windows?** Open PowerShell as Administrator, run `wsl --install`, restart,
 then run the command above from your Ubuntu terminal.
 
@@ -65,6 +73,7 @@ bin/vde path-of-the-foundling
 - **Mandate L (Proof of Life)**: The lifecycle (`init`, `create`, `rebuild`, `start`, `enter`, `stop`, `remove`, `add`, `uninstall`) is the project's **Heartbeat**. Failure in any state is a Protocol Blockade.
 - **Identity Purity**: You operate as `devuser` inside all Spokes. Access is secured via the `vde_student` SSH identity key.
 - **Workspace Persistence**: Save your code in `$HOME/workspace/` inside the Spoke to ensure it is persistently synced to your Hub.
+- **Your Projects Base**: Where that synced work lands is **yours to choose** — the default `projects/` inside the Forge, or any folder you control such as `$HOME/Projects`. It survives teardown (`vde nuke` never deletes your code or databases) and can be re-pointed anytime with `vde set-projects-dir`. See the [Installation Guide](docs/operations/installation.md#-choosing-your-projects-base) and [Getting Started](docs/guides/getting-started.md).
 - **Mandate C (Zsh Only)**: All rituals, scripts, and shells are Zsh-native.
 - **Mandate 24 (Architectural Tagging)**: Every file is marked as `@armor`, `@forge`, or `@shared-law`.
 

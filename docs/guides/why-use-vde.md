@@ -88,6 +88,18 @@ vde enter python
 
 ---
 
+## Your Stuff Stays Yours 🗝️
+
+Here's the part that really sets you free: **your source code and your database data belong to *you*, and they live wherever *you* choose.**
+
+- 📂 **Pick your own home.** During onboarding you choose a **Projects base** — the folder your Spokes sync beneath. Keep the default, or point it at a directory you already use, like `~/Projects`. Each Spoke gets its own tidy subfolder (`<base>/rust`, `<base>/python`, ...), and VDE *never* touches files that are already there — it just moves in next door.
+- 🔀 **Change your mind anytime.** Run `vde set-projects-dir <path>` and VDE safely moves your work to the new spot. No rebuilds, nothing clobbered.
+- 🛡️ **Teardown can't hurt you.** Even `vde nuke` — the big red button that wipes VDE itself — leaves your `projects/` and your `data/` completely untouched, and *offers to move them somewhere safe first.* Your work outlives the Forge.
+
+No lock-in. No surprises. Just your code, in your place, on your terms. ✨
+
+---
+
 ## What Can I Run? (Spoiler: Everything!) 🌍
 
 VDE supports **24 programming languages/stacks** and **8 shared services** out of the box:

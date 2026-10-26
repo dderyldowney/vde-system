@@ -64,11 +64,23 @@ Modular Zsh 5.0+ libraries following the **ZSH ONLY** mandate.
 - `vde-ssh`: The Sovereign Bridge (SSH management).
 - `vde-docker`: Container lifecycle management.
 
-### `projects/`
-The primary workspace for language Spokes. Each subdirectory is mounted as a volume into the corresponding container at `$HOME/workspace/`.
+### `projects/` (The Projects Base)
+The primary workspace for language Spokes. By default the Projects base is
+`projects/` under the repository root, but it is **configurable** via the
+`VDE_PROJECTS_DIR` environment / `.env` key to any directory the student controls,
+inside or outside the repo (e.g. `$HOME/Projects`).
+
+Each Spoke alias gets its own subfolder in the `<base>/<alias>` layout, which is
+mounted into the corresponding container at `/home/devuser/workspace`. Re-point the
+base at any time with `vde set-projects-dir`, or set it during `vde init --projects-dir <path>`.
+
+The Projects base is **preserved by `vde nuke`** — it is never deleted, in-tree or
+external (nuke offers to move it to a safe location first).
 
 ### `data/`
-Persistent storage for service Spokes (e.g., PostgreSQL databases, Redis dumps) and the authoritative **Beskar Registry** (`vm-types.json`).
+Persistent storage for service Spokes (e.g., PostgreSQL databases, Redis dumps) and
+the authoritative **Beskar Registry** (`vm-types.json`). Like the Projects base, the
+database `data/` directory is **preserved by `vde nuke`** and never deleted.
 
 ### `env-files/`
 Configuration payloads sourced by Docker Compose. These files contain the **Phase 31 DNS aliases** and Spoke-specific metadata.

@@ -18,6 +18,14 @@ bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable
 
 This checks your system, clones VDE, and walks you through setup. If anything's missing (Zsh, Git, Docker, SSH), it tells you exactly what to install and how.
 
+**Pick a non-default Projects base (optional):**
+
+```zsh
+bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable/scripts/bootstrap.sh) --projects-dir ~/Projects
+```
+
+`--projects-dir` (or the `VDE_PROJECTS_DIR` env var, with the flag winning) sets the base dir where each VM gets `<base>/<alias>` mounted as your workspace — set it so your code lives where you want (e.g. `~/Projects`). The install is non-interactive (no prompt), so the flag/env var is the only way to set a non-default base at install; omit for the default (`<VDE>/projects`) and change it later with `vde set-projects-dir PATH`.
+
 - *Windows Users*: Open PowerShell as Administrator, run `wsl --install`, restart, then run the command above from your Ubuntu terminal.
 
 **Prefer manual setup?**
@@ -34,10 +42,11 @@ bin/vde path-of-the-foundling
 
 When you ran `bin/vde path-of-the-foundling`:
 1. **Interactive Induction**: A step-by-step ritual guided you through initial configuration.
-2. **Infrastructure Smelting**: `vde init` was executed automatically, creating networks and enforcing permissions.
-3. **Identity Forgery**: Your unique `vde_student` SSH identity key was generated and primed.
-4. **Foundation Building**: The foundational `vde-base` image was built and baked with your identity.
-5. **Certification**: Your first Spoke was created and ignited to certify the Transversal Bridge.
+2. **Choosing Your Projects Base**: You were asked where your code should live — your **Projects base**. Press Enter for the default (`$VDE_ROOT/projects`, inside the Forge), or point it at any folder you control, such as `$HOME/Projects`. Each Spoke's alias then gets its own `<base>/<alias>` subfolder, which is exactly what you see at `$HOME/workspace/` from inside that Spoke.
+3. **Infrastructure Smelting**: `vde init` was executed automatically, creating networks and enforcing permissions.
+4. **Identity Forgery**: Your unique `vde_student` SSH identity key was generated and primed.
+5. **Foundation Building**: The foundational `vde-base` image was built and baked with your identity.
+6. **Certification**: Your first Spoke was created and ignited to certify the Transversal Bridge.
 
 ## Daily Workflow
 

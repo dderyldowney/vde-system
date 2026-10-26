@@ -23,7 +23,8 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution**. 
 | `vde stop <vm>` | Quench (stop) a running VM. | `vde stop postgres` |
 | `vde restart <vm>` | Restart one or more active Spokes. | `vde restart rust` |
 | `vde remove <vm>` | Dissolve (remove) a VM instance and its locks. (Aliases: `rm`, `delete`) | `vde remove rust` |
-| `vde nuke` | **The Great Quench**: Remove all VDE artifacts (prompts for backup). | `vde nuke` |
+| `vde nuke` | **The Great Quench**: Remove VDE's own state; **preserves** `projects/` and `data/` (offers to move them first). | `vde nuke` |
+| `vde set-projects-dir [<path>]` | Re-point the Projects base: move per-alias subfolders, update `.env` (`VDE_PROJECTS_DIR`), regenerate compose configs. | `vde set-projects-dir "$HOME/Projects"` |
 | `vde exec <vm> <cmd>` | Execute a command inside a Spoke without a full login shell. | `vde exec go "go version"` |
 | `vde enter <vm>` | The Sovereign Handshake: Enter a Spoke's login shell. (Alias: `ssh`) | `vde enter rust` |
 | `vde add <name>` | Dynamic Expansion: Register a new Spoke type. | `vde add --pkgs "htop" myvm` |
@@ -66,7 +67,8 @@ These scripts provide specialized maintenance, automation, and development suppo
 | Script | Purpose |
 |--------|---------|
 | `vde-bootstrap` | Initial Hub installation and dependency check. |
-| `generate-all-configs` | Smelt all Spoke compose and SSH configurations. |
+| `vde-set-projects-dir` | **@armor Engine Core** (zsh): Re-point the Projects base — resolve/create/validate the new base, move per-alias subfolders (skipping collisions), update `.env` `VDE_PROJECTS_DIR`, and regenerate compose configs via `generate-all-configs`. |
+| `generate-all-configs` | Smelt all Spoke compose and SSH configurations. Invoked by `vde-set-projects-dir` after the base changes. |
 | `cleanup-ports` | Purge stale or orphaned entries from the port registry. |
 | `vde-prune.zsh` | Archive old plans/scripts and purge aged logs. |
 | `validate-schemas.zsh` | Verify Beskar Registry integrity against JSON schemas. |
@@ -96,7 +98,7 @@ These scripts provide specialized maintenance, automation, and development suppo
 | `vde-armor-heal.zsh` | Emergency healing script for Project 1 (Armor) components. |
 | `vde-purify-paths.zsh` | Mass path purification utility. Replaces absolute path derivation logic (:a) with Zsh-native relative derivation. |
 | `vde-sync-context` | Review and refresh VDE context documentation against the current codebase state. |
-| `nuke-vde` | **The Great Quench**: Safe removal of all VDE artifacts. |
+| `nuke-vde` | **The Great Quench**: Remove VDE's own state (Spokes, images, Docker network/volumes, SSH config+keys at `$HOME/.ssh/vde`, logs, env-files, caches, locks). **Preserves** `projects/` and `data/` and offers to move them to a safe location first. |
 
 ---
 

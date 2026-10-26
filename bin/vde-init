@@ -10,6 +10,7 @@ set -e
 #   -t, --testing          Create vde-testing network for tests
 #   -f, --force            Force recreate networks (delete and recreate)
 #   -q, --quiet            Suppress output
+#       --projects-dir P   Set the Projects base directory (skip prompt)
 #   -h, --help             Show this help message
 #
 # This script provides complete VDE initialization:
@@ -58,6 +59,7 @@ Options:
   -t, --testing          Create vde-testing network for tests
   -f, --force            Force recreate networks and refresh SSH keys
   -q, --quiet            Suppress output
+      --projects-dir P   Set the Projects base directory (skip prompt)
   -h, --help             Show this help message
 
 This script performs complete VDE initialization:
@@ -108,8 +110,10 @@ vde_init_create_directory_structure() {
     fi
     
     # Core directories
+    # The Projects base may live outside VDE_ROOT_DIR (resolved by
+    # vde_init_resolve_projects_dir); fall back to the in-tree default.
     local dirs=(
-        "${VDE_ROOT_DIR}/projects"
+        "${VDE_PROJECTS_BASE:-${VDE_ROOT_DIR}/projects}"
         "${VDE_ROOT_DIR}/data"
         "${VDE_ROOT_DIR}/logs"
         "${VDE_ROOT_DIR}/env-files"
@@ -180,6 +184,134 @@ vde_init_setup_env() {
             echo "  ✓ .env already exists"
         fi
     fi
+    return 0
+}
+
+# vde_init_resolve_projects_dir - Determine, create, verify, and persist the
+# Projects base directory (the folder VDE drops a per-VM subfolder into).
+#
+# Precedence:
+#   1. --projects-dir <path> flag                 (no prompt)
+#   2. VDE_PROJECTS_DIR already in the environment (no prompt)
+#   3. VDE_PROJECTS_DIR already set in .env        (honored, no prompt)
+#   4. Interactive prompt (when on a TTY and not --quiet)
+#   5. Default "${VDE_ROOT_DIR}/projects"
+#
+# The student's answer may use a leading ~ or env vars and may point ANYWHERE
+# they control (inside or outside VDE_ROOT_DIR). The resolved ABSOLUTE path is
+# created, verified writable, persisted to .env as VDE_PROJECTS_DIR, and exposed
+# to the rest of init via VDE_PROJECTS_BASE.
+vde_init_resolve_projects_dir() {
+    local env_file="${VDE_ROOT_DIR}/.env"
+    local default_base="${VDE_ROOT_DIR}/projects"
+    local base="" do_prompt=0 persist=1
+
+    if [[ -n "${PROJECTS_DIR_FLAG}" ]] ; then
+        base="${PROJECTS_DIR_FLAG}"
+    elif [[ -n "${VDE_PROJECTS_DIR}" ]] ; then
+        base="${VDE_PROJECTS_DIR}"
+    else
+        # Honor a value already recorded in .env; otherwise prompt or default.
+        local existing=""
+        [[ -f "${env_file}" ]] && existing="$(grep -E '^VDE_PROJECTS_DIR=' "${env_file}" 2>/dev/null | tail -1)"
+        existing="${existing#VDE_PROJECTS_DIR=}"
+        existing="${existing%$'\r'}"   # tolerate CRLF-edited .env (matches lib/vde-path-utils)
+        if [[ -n "${existing}" ]] ; then
+            base="${existing}"
+        elif [[ -t 0 && "${QUIET}" = "0" ]] ; then
+            do_prompt=1
+        else
+            base="${default_base}"
+        fi
+    fi
+
+    local answer abs
+    while true; do
+        if [[ "${do_prompt}" = "1" ]] ; then
+            echo ""
+            echo "Where should your Projects live?"
+            echo "This is the base folder VDE creates a subfolder in for each VM you make (e.g. <base>/python, <base>/rust)."
+            echo "It can be ANYWHERE you control — it does NOT have to live inside VDE. Examples: ~/Projects, ~/code/vde. Press Enter to accept the default."
+            answer=""
+            read "answer?Projects base [${default_base}]: "
+            [[ -z "${answer}" ]] && answer="${default_base}"
+        else
+            answer="${base}"
+        fi
+
+        # Expand a leading ~ and any embedded env vars, then absolutize.
+        answer="${answer/#\~/${HOME}}"
+
+        # A path names a directory, never a command. Refuse command/process/
+        # arithmetic substitution before expansion so a typed value cannot
+        # execute code; only ~ and $VAR expansion are intended.
+        if [[ "${answer}" == *'$('* ]] || [[ "${answer}" == *'`'* ]] \
+           || [[ "${answer}" == *'$['* ]] || [[ "${answer}" == *'<('* ]] \
+           || [[ "${answer}" == *'>('* ]] || [[ "${answer}" == *'=('* ]] ; then
+            if [[ "${do_prompt}" = "1" ]] ; then
+                echo "  ✗ A path may not contain command substitution ( \$(...), backticks, \$[...], <(...), >(...), =( ) ). Choose another."
+                continue
+            else
+                vde_log_warn "Projects base contains command substitution; refusing. Using default ${default_base} for this run (saved base unchanged)" 2>/dev/null || \
+                    echo "  ! Projects base contains command substitution; refusing. Using default ${default_base} for this run (saved base unchanged)"
+                abs="${default_base:A}"
+                mkdir -p "${abs}" 2>/dev/null || true
+                base="${abs}"
+                persist=0   # never overwrite a configured .env base with the fallback default
+                break
+            fi
+        fi
+
+        answer="${(e)answer}"
+        abs="${answer:A}"
+
+        # Must be creatable and writable by the current user (a dir they control).
+        if mkdir -p "${abs}" 2>/dev/null && [[ -d "${abs}" && -w "${abs}" ]] ; then
+            base="${abs}"
+            break
+        fi
+
+        if [[ "${do_prompt}" = "1" ]] ; then
+            echo "  ✗ '${abs}' can't be created or isn't writable by you. Choose another."
+            continue
+        else
+            vde_log_warn "Projects base '${abs}' not usable right now; using default ${default_base} for this run (saved base unchanged — it may just be unmounted)" 2>/dev/null || \
+                echo "  ! Projects base '${abs}' not usable right now; using default ${default_base} for this run (saved base unchanged — it may just be unmounted)"
+            abs="${default_base:A}"
+            mkdir -p "${abs}" 2>/dev/null || true
+            base="${abs}"
+            persist=0   # a transiently-unreachable base must not be silently repointed in .env
+            break
+        fi
+    done
+
+    # Persist the resolved absolute base to .env (runtime source of truth).
+    # persist=0 when we fell back to the default (bad input or a transiently
+    # unreachable configured base): never clobber the saved base in that case.
+    if [[ "${persist}" = "1" && -f "${env_file}" ]] ; then
+        local -a lines
+        lines=("${(@f)$(<"${env_file}")}")
+        local -i i found=0
+        for (( i = ${#lines}; i >= 1; i-- )); do
+            if [[ "${lines[$i]}" == VDE_PROJECTS_DIR=* ]]; then
+                lines[$i]="VDE_PROJECTS_DIR=${base}"
+                found=1
+                break
+            fi
+        done
+        (( found )) || lines+=("VDE_PROJECTS_DIR=${base}")
+        print -rl -- "${lines[@]}" > "${env_file}"
+        chmod 600 "${env_file}" 2>/dev/null || true
+    fi
+
+    # Expose for the remaining init steps and this process.
+    VDE_PROJECTS_BASE="${base}"
+    export VDE_PROJECTS_DIR="${base}"
+
+    if [[ "${QUIET}" = "0" ]] ; then
+        echo "  ✓ Projects base: ${base}"
+    fi
+
     return 0
 }
 
@@ -288,7 +420,13 @@ vde_init_set_permissions() {
     chmod 755 "${VDE_ROOT_DIR}/.cache" 2>/dev/null || true
     chmod 755 "${VDE_ROOT_DIR}/.locks" 2>/dev/null || true
     chmod 755 "${VDE_ROOT_DIR}/.locks/ports" 2>/dev/null || true
-    chmod 755 "${VDE_ROOT_DIR}/projects" 2>/dev/null || true
+    # Only touch permissions on an in-tree projects base that VDE owns. A student
+    # may point VDE at an existing directory of their own (e.g. $HOME/Projects);
+    # we must never alter the permissions of a directory we did not create.
+    typeset _projects_base="${VDE_PROJECTS_BASE:-${VDE_ROOT_DIR}/projects}"
+    if [[ "${_projects_base}" == "${VDE_ROOT_DIR}/projects" ]]; then
+        chmod 755 "${_projects_base}" 2>/dev/null || true
+    fi
     chmod 755 "${VDE_ROOT_DIR}/data" 2>/dev/null || true
     chmod 755 "${VDE_ROOT_DIR}/logs" 2>/dev/null || true
     chmod 755 "${VDE_ROOT_DIR}/env-files" 2>/dev/null || true
@@ -399,11 +537,26 @@ NETWORKS_ONLY=0
 TESTING=0
 FORCE=0
 QUIET=0
+PROJECTS_DIR_FLAG=""
 
 while [[ ${#} -gt 0 ]] ; do
     case "${1}" in
         -n|--networks-only)
             NETWORKS_ONLY=1
+            shift
+            ;;
+        --projects-dir)
+            # Require a value; otherwise `shift 2` on a lone flag aborts under
+            # set -e with a cryptic shift error instead of a usage message.
+            if [[ ${#} -lt 2 ]] ; then
+                vde_error_simple "--projects-dir requires a path argument (e.g. --projects-dir \"\$HOME/Projects\")."
+                exit ${VDE_ERR_INVALID_INPUT}
+            fi
+            PROJECTS_DIR_FLAG="${2}"
+            shift 2
+            ;;
+        --projects-dir=*)
+            PROJECTS_DIR_FLAG="${1#*=}"
             shift
             ;;
         -t|--testing)
@@ -491,8 +644,9 @@ else
         fi
     fi
     
-    vde_init_create_directory_structure
     vde_init_setup_env
+    vde_init_resolve_projects_dir
+    vde_init_create_directory_structure
     vde_init_generate_configs
     vde_init_setup_ssh
     vde_init_build_base_image
